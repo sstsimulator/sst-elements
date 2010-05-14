@@ -16,6 +16,9 @@ nicmodel:     Rolf Riesen <rolf@sandia.gov>
 power:        Genie Hsieh <myhsieh@sandia.gov>
 routermodel:  Rolf Riesen <rolf@sandia.gov>
 portals4_sm:  Scott Hemmert <kshemme@sandia.gov>
+mcniagara     Jeanine Cook
+mcopteron     Jeanine Cook
+psst          Georgia Tech
 
 
 Unclaimed
@@ -24,9 +27,6 @@ Unclaimed
 bus
 cpu
 cpuV2
-mcniagara
-mcopteron
-psst
 xbar
 xbarShell
 xbarV2

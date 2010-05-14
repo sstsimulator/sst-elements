@@ -30,7 +30,7 @@
 
 #include <vector>
 #include <fstream>
-#include <sst/component.h>
+#include <sst/core/component.h>
 using namespace SST;
 #include <sst_stdint.h>
 typedef uint32_t uint32;
@@ -180,7 +180,7 @@ public:
     uint32 payload[HDR_SIZE+PKT_SIZE];
 };
 
-#include <sst/compEvent.h>
+#include <sst/core/compEvent.h>
 #include <sst_stdint.h>
 
 struct RtrEvent : public CompEvent {

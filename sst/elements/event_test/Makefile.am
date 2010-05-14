@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/components/include
+AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libevent_test.la

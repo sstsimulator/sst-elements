@@ -21,13 +21,13 @@
 #include <cstdlib>
 #include <stdlib.h>
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/compEvent.h>
-#include <sst/link.h>
-#include <sst/timeConverter.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/compEvent.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 
-#include "elements/portals4_sm/trig_nic/trig_nic_event.h"
+#include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 #include "portals.h"
 
 using namespace SST;

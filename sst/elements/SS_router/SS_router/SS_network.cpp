@@ -25,8 +25,8 @@
 
 #include "SS_network.h"
 
-#include <paramUtil.h>
-#include <sst/debug.h>
+#include <sst/elements/include/paramUtil.h>
+#include <sst/core/debug.h>
 
 Network::Network( SST::Component::Params_t params )
 {

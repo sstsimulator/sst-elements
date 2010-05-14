@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/elements/include
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/sst/elements/include
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libSS_router.la

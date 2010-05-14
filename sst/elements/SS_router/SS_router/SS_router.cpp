@@ -26,8 +26,8 @@
 #include <sstream>
 
 #include "SS_router.h"
-#include <paramUtil.h>
-#include <sst/eventHandler1Arg.h>
+#include <sst/elements/include/paramUtil.h>
+#include <sst/core/eventHandler1Arg.h>
 #include "SS_routerInternals.cpp"
 #include "SS_routerEvent.cpp"
 

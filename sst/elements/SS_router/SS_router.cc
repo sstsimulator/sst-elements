@@ -11,9 +11,9 @@
 
 #include <sst_config.h>
 
-#include <sst/element.h>
-#include "elements/SS_router/SS_router/SS_router.h"
-#include "elements/SS_router/test_driver/RtrIF.h"
+#include "sst/core/element.h"
+#include "sst/elements/SS_router/SS_router/SS_router.h"
+#include "sst/elements/SS_router/test_driver/RtrIF.h"
 
 static Component* 
 create_router(SST::ComponentId_t id, 

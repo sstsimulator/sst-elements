@@ -28,12 +28,12 @@
 
 #include <deque>
 
-#include <sst/sst.h>
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
-#include <sst/log.h>
-#include <paramUtil.h>
+#include <sst/core/sst.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/log.h>
+#include <sst/elements/include/paramUtil.h>
 #include "SS_network.h"
 
 #define RTRIF_DBG 1 

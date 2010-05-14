@@ -13,10 +13,10 @@
 #ifndef _EVENT_TEST_H
 #define _EVENT_TEST_H
 
-#include <sst/event.h>
-#include <sst/component.h>
-#include <sst/link.h>
-#include <sst/timeConverter.h>
+#include <sst/core/event.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 
 
 class event_test : public SST::Component {

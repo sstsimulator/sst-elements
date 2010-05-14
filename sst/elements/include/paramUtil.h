@@ -15,7 +15,7 @@
 #define _PARAMUTIL_H
 
 #include <errno.h>
-#include <sst/component.h>
+#include <sst/core/component.h>
 
 inline long str2long( std::string str )
 {

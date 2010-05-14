@@ -17,7 +17,7 @@
 #include <utility>
 #include <boost/tuple/tuple.hpp>
 
-#include <sst/event.h>
+#include <sst/core/event.h>
 #include "trig_cpu.h"
 
 class algorithm {

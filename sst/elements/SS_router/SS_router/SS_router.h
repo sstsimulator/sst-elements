@@ -32,10 +32,10 @@
 #include <vector>
 
 #include <queue>
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/log.h>
-#include <sst/link.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/log.h>
+#include <sst/core/link.h>
 
 #include "SS_network.h"
 

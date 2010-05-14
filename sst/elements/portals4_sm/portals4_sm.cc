@@ -11,7 +11,7 @@
 
 #include <sst_config.h>
 
-#include <sst/element.h>
+#include <sst/core/element.h>
 
 #include "trig_cpu/trig_cpu.h"
 #include "trig_nic/trig_nic.h"

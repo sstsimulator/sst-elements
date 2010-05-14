@@ -19,9 +19,9 @@
 #include <queue>
 
 #include "portals_types.h"
-#include <sst/sst.h>
+#include <sst/core/sst.h>
 
-#include "elements/portals4_sm/trig_nic/trig_nic_event.h"
+#include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
 class trig_cpu;
 

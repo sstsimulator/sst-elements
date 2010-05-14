@@ -12,10 +12,10 @@
 
 #include <sst_config.h>
 
-#include <sst/element.h>
+#include <sst/core/element.h>
 
 #include "trig_cpu.h"
-#include "elements/portals4_sm/trig_nic/trig_nic_event.h"
+#include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
 #include "allreduce_narytree.h"
 #include "allreduce_narytree_trig.h"
