@@ -21,7 +21,7 @@
 			  <verbose>5</verbose>
 			  <ssBackEnd>1</ssBackEnd>
 			  <cores>33</cores>
-			  <ssConfig>sst/trunk/sst/elements/rs2.conf</ssConfig>
+			  <ssConfig>sst/trunk/sst/elements/sampleConfigs/rs2.conf</ssConfig>
 			  <mem.initialCredit>   8 </mem.initialCredit>
 			  <mem.readRespCredit>  1 </mem.readRespCredit>
 			  <mem.writeRespCredit> 1 </mem.writeRespCredit>
