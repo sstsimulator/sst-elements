@@ -20,7 +20,7 @@
 #include "ssb_bitmap.h"
 #include "ssb_cache.h"
 #include "prefetch.h"
-#include "sst/event.h"
+#include "sst/core/event.h"
 
 #define GET_IMIX 1
 

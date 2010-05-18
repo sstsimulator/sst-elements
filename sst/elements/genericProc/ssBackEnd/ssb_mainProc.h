@@ -52,12 +52,14 @@ public:
   }
   thread* getThread() const {return thr;}
   void setThread(thread *t) {
-    if (thr != NULL) {
-      ERROR("Trying to overwrite a running thread!");
+    if (thr && !thr->isDead() && !pipeClear()) {
+	ERROR("Trying to overwrite a running thread!");
     }
-    thr = t;
-    fetch_pred_PC = thr->getStartPC();
-    thr->assimilate(myProc);
+    thr = t;    
+    if (thr) {
+      fetch_pred_PC = thr->getStartPC();
+      thr->assimilate(myProc);
+    }
   }
   virtual unsigned getFEBDelay() {return 0;}
   //component* getNICMem() const {return nicComp;}

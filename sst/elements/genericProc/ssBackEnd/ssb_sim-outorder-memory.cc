@@ -79,7 +79,7 @@ convProc::dl1_access_fn(enum mem_cmd cmd,	/* access cmd, Read or Write */
 	  return 0;
 	}
       } else {
-	return cplx_mem_access_latency(cmd, baddr, bsize, needMM);
+	return cplx_mem_access_latency(Read, baddr, bsize, needMM);
       }
     }
 }
@@ -102,7 +102,7 @@ convProc::dl2_access_fn(enum mem_cmd cmd,	/* access cmd, Read or Write */
       return 0;
     }
   } else {
-    return cplx_mem_access_latency(cmd, baddr, bsize, needMM);
+    return cplx_mem_access_latency(Read, baddr, bsize, needMM);
   }
 }
 
@@ -137,7 +137,7 @@ if (cache_il2)
 	else
 	  panic("writes to instruction memory not supported");
       } else {
-	return cplx_mem_access_latency(cmd, baddr, bsize, needMM);
+	return cplx_mem_access_latency(Read, baddr, bsize, needMM);
       }
     }
 }
@@ -158,7 +158,7 @@ convProc::il2_access_fn(enum mem_cmd cmd,	/* access cmd, Read or Write */
     else
       panic("writes to instruction memory not supported");
   } else {
-    return cplx_mem_access_latency(cmd, baddr, bsize, needMM);
+    return cplx_mem_access_latency(Read, baddr, bsize, needMM);
   }
 }
 
@@ -231,7 +231,10 @@ void convProc::mmSendParcel(instruction *inst) {
   // memory controller sees a 'store' is on a writeback.
   iType = LOAD;
 
-  myProc->sendMemoryReq( iType, address, inst, myCoreID);
+  if (myProc->sendMemoryReq( iType, address, inst, myCoreID) == false) {
+    printf("Memory Send Request Failed\n");
+    abort();
+  }
 }
 
 //: Send an instruction to main memory
