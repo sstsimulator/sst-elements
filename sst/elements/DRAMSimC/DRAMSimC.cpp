@@ -37,6 +37,10 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
         }
     }
 
+    if ( params.find( "clock" ) != params.end() ) {
+      frequency = params["clock"];
+    }
+
     DBG("new id=%lu\n",id);
 
     m_memChan = new memChan_t( *this, params, "bus" );
@@ -141,6 +145,7 @@ bool DRAMSimC::clock( Cycle_t current )
                             convertType( event->reqType );
         DBG("transType=%d addr=%#lx\n", transType, event->addr );
         m_transQ.push_back( Transaction( transType, event->addr, NULL));
+	delete event;
     }
 
     int ret = 1; 

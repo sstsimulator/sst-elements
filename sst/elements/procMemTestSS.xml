@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <config>
-    stopAtCycle=1000000000
+    stopAtCycle=10000000000
     run-mode=both
 </config>
 
@@ -14,12 +14,17 @@
 			  <execFile>sst/trunk/components/genericProc/programs/fooPrint</execFile>
 			  <execFile>sst/trunk/components/genericProc/programs/gups_distro/gups_serial</execFile>
 			  <execFile>sst/trunk/components/genericProc/programs/pthreadTest</execFile>
+			  <execFile>sst/trunk/components/genericProc/programs/memBludge</execFile>
+			  <execFile>sst/trunk/sst/elements/genericProc/programs/gups_distro/gups_notserial</execFile>
 			  <externalMem>1</externalMem>
-			  <maxMMOut>32</maxMMOut>
+			  <maxMMOut>64</maxMMOut>
 			  <verbose>5</verbose>
 			  <ssBackEnd>1</ssBackEnd>
-			  <cores>2</cores>
-			  <ssConfig>sst/trunk/components/rs-opteron.conf</ssConfig>
+			  <cores>33</cores>
+			  <ssConfig>sst/trunk/sst/elements/rs2.conf</ssConfig>
+			  <mem.initialCredit>   8 </mem.initialCredit>
+			  <mem.readRespCredit>  1 </mem.readRespCredit>
+			  <mem.writeRespCredit> 1 </mem.writeRespCredit>
 			 </params>
 			<links>
 				<link id="cpu2mem">
@@ -35,7 +40,7 @@
  	<component id="mem0">
  		<DRAMSimC>
  			<params>
-			  <clock>2000000000.0</clock>
+			  <clock>1.0 Ghz</clock>
 			  <systemini>system.ini</systemini>
 			  <deviceini>ini/DDR3_micron_32M_8B_x8_sg15.ini</deviceini>
 			  <pwd>DRAMSim</pwd>

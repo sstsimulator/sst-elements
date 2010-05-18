@@ -13,9 +13,9 @@
 #ifndef _DRAMSIMC_H
 #define _DRAMSIMC_H
 
-#include <sst/log.h>
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
+#include <sst/core/log.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
 #include <memoryChannel.h>
 #include <MemorySystem.h>
 
@@ -89,10 +89,11 @@ inline DRAMSim::TransactionType
             DRAMSimC::convertType( memChan_t::event_t::reqType_t type )
 {
     switch( type ) {
-        case memChan_t::event_t::READ:
-            return DRAMSim::DATA_READ;
-        case memChan_t::event_t::WRITE:
-            return DRAMSim::DATA_WRITE;
+    case memChan_t::event_t::READ:
+      return DRAMSim::DATA_READ;
+    case memChan_t::event_t::WRITE:
+      return DRAMSim::DATA_WRITE;
+    default: ;
     }
     return (DRAMSim::TransactionType)-1;
 }

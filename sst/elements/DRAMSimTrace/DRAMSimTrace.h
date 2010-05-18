@@ -1,8 +1,8 @@
 #ifndef _DRAMSIMFRONT_H
 #define _DRAMSIMFRONT_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
 #include <memoryDev.h>
 #include <fstream>
 #include <Transaction.h>
