@@ -18,7 +18,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "sst/component.h"
+#include "sst/core/component.h"
 
 #include "thread.h"
 #include "fe_debug.h"

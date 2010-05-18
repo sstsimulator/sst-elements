@@ -30,7 +30,7 @@
    in memory, not just the addresses specified in the binary
 */
 
-#include "memory.h"
+#include "fe_memory.h"
 
 simAddress memory::segRange[MemTypes][2] = {
   { 0, 0 }, /* Error */

@@ -17,7 +17,7 @@
 
 #include <vector>
 using std::vector;
-#include "sst/boost.h"
+//#include "sst/boost.h"
 
 //: Abstract Pool class
 //

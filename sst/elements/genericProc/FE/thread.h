@@ -16,7 +16,7 @@
 #define THREAD_H
 
 #include "instruction.h"
-#include "memory.h"
+#include "fe_memory.h"
 
 #include <vector>
 using namespace std;
@@ -24,8 +24,8 @@ using namespace std;
 #include <string>
 using std::string;
 
-#include "sst/boost.h"
-#include "sst/component.h"
+//#include "sst/boost.h"
+#include "sst/core/component.h"
 
 // forward declare function from ppcMachine.h so that we don't ahve to
 // drag all that code into here.

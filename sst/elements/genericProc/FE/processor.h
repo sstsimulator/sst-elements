@@ -16,8 +16,8 @@
 #define PROCESSOR_H
 
 #include "sst_stdint.h" // for uint*_t
-#include "sst/component.h"
-#include <sst/cpunicEvent.h>
+#include "sst/core/component.h"
+#include <sst/core/cpunicEvent.h>
 #include "thread.h"
 #include "memory.h"
 #include "ptoVMapper.h"

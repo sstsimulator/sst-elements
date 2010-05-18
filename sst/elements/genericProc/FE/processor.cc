@@ -15,9 +15,9 @@
 #include "sst_config.h"
 #endif
 
-#include "sst/component.h"
+#include "sst/core/component.h"
 #include "processor.h"
-#include "memory.h"
+#include "fe_memory.h"
 //#include "configuration.h"
 //#include "pim.h"
 //#include "level1/level1.h"

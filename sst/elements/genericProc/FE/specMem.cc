@@ -13,7 +13,7 @@
 
 
 #include "specMem.h"
-#include "memory.h"
+#include "fe_memory.h"
 
 uint8 specMemory::getSpecByte(const simAddress sa) {
   specMap::iterator i;

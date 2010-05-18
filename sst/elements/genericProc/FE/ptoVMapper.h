@@ -14,7 +14,7 @@
 
 #include "global.h" // for simAddress
 #include <map>
-#include "sst/boost.h"
+//#include "sst/boost.h"
 
 typedef enum { CACHED, UNCACHED, WC } memType_t;
 
