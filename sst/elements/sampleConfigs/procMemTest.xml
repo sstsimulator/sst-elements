@@ -12,7 +12,7 @@
 			<params>
               <debug>0</debug>
 			  <clock>2.0Ghz</clock>
-			  <execFile>components/genericProc/programs/fooPrint</execFile>
+			  <execFile>sst/trunk/sst/elements/genericProc/programs/fooPrint</execFile>
 			  <verbose>0</verbose>
 			  <externalMem>1</externalMem>
 			 </params>
