@@ -13,8 +13,8 @@
 
 #include "proc.h"
 #include "FE/thread.h"
-#include "sst/boost.h"
-#include <sst/cpunicEvent.h>
+//#include "sst/boost.h"
+#include <sst/core/cpunicEvent.h>
 #include <algorithm>
 
 int gproc_debug;
@@ -45,6 +45,11 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   tSource.init(this, paramsC);
   myThread = 0;
   needThreadSwap = 0;
+
+#if TIME_MEM
+   numMemReq = 0;
+   memReqLat = 0;;
+#endif
 
   memory_t* tmp = new memory_t( );
   // construct the params for the memory device
@@ -151,10 +156,18 @@ void proc::processMemDevResp( ) {
     } else {
       memReqMap_t::iterator mi = memReqMap.find(inst);
       if (mi != memReqMap.end()) {
+#if TIME_MEM
+	numMemReq++;
+	uint64_t startTime = mi->second.second;
+	uint64_t lat = getCurrentSimTimeNano() - startTime;
+	memReqLat += lat;
+	static int c = 0; c++;
+	if ((c % 0xff) == 0) printf("lat %llu\n", lat);
+#endif
         // hand it off
-	    mProcs[mi->second]->handleMemEvent(inst);
-	    // remove the reference
-	    memReqMap.erase(mi);
+	mProcs[mi->second.first]->handleMemEvent(inst);
+	// remove the reference
+	memReqMap.erase(mi);
       } else {
 	    printf("Got back memory req for instruction we never issued\n");
 	    exit(-1);
@@ -185,19 +198,23 @@ int proc::Finish() {
       mProcs[c]->finish();
     }
   }
+#if TIME_MEM
+  printf("%llu Memory Requests, avg lat. %.2fns\n", numMemReq, 
+	 double(memReqLat)/double(numMemReq));
+#endif
   printf("proc finished at %llu ns\n", getCurrentSimTimeNano());
   return false;
 }
 
 // if we have extra threads, try to swap them in 
-void proc::swapThreads(bool quanta) {
+void proc::swapThreads(bool quanta, bool refill) {
   // check if there is anyone to swap in...
   if (threadQ.empty()) {
     return;
   } else {
     // check if this is a normal thread quanta, or if we have already
     // told cores to flush
-    if (quanta) {
+    if (quanta || refill) {
       // try to add threads until we have added them all, tried to, or
       // adding a thread failed
       bool done = false;
@@ -215,8 +232,8 @@ void proc::swapThreads(bool quanta) {
 	tries--;
       }
       // if we weren't able to add them all, tell some processors to
-      // flush
-      if (!threadQ.empty()) {
+      // flush, unless we are refilling already opened slots
+      if (!threadQ.empty() && !refill) {
 	int numToFlush = std::max(threadQ.size(), mProcs.size());
 	int tellFlush = std::min(numToFlush, int(mProcs.size()));
 	for (int i = 0; i < tellFlush; ++i) {
@@ -235,6 +252,7 @@ void proc::swapThreads(bool quanta) {
     } else {
       // we have asked processors to clear their pipelines.
       // check which processors are available
+      int cleared = 0;
       for (vector<mainProc *>::iterator i = mProcs.begin();
 	   i != mProcs.end(); ++i) {
 	mainProc *p = *i;
@@ -245,10 +263,12 @@ void proc::swapThreads(bool quanta) {
 	  // reset the processor to take new threads
 	  p->setThread(NULL);
 	  p->setClearPipe(0);
+	  cleared++;
 	}
       }
-      // try to reschedual waiting threads
-      swapThreads(1);
+      // try to reschedual waiting threads, but don't try to clear
+      // processors again if we can't
+      swapThreads(0,1);
     }
   }
 }
@@ -260,10 +280,10 @@ bool proc::preTic(Cycle_t c) {
 
   if (!mProcs.empty()) {
     // Note: need to be able to adjust thread schedualer quantum
-    if (((c & 0x1fffff) == 0))  {
-      swapThreads(1);
+    if (((c & 0x1ffff) == 0))  {
+      swapThreads(1,0);
     } else if (needThreadSwap && ((c & 0xf) == 0)) {
-      swapThreads(0);
+      swapThreads(0,0);
     }
 
     for (int c = 0; c < cores; ++c) {
@@ -326,13 +346,21 @@ bool proc::addThread(thread *t) {
     for (vector<mainProc *>::iterator i = mProcs.begin();
 	 i != mProcs.end(); ++i) {
       mainProc *p = *i;
+      // clean up dead threads
+      thread *pt = p->getThread();
+      if (pt && pt->isDead()) {
+	_GPROC_DBG(2, "Removing Dead Thread from processor core\n");
+	p->setThread(NULL);
+	delete pt;
+      }
+      // check if processor is available
       if (p->getThread() == NULL) {
 	p->setThread(t);
 	return true;
       }
     }
     // couldn't find a slot
-    WARN("all cores full!");
+    _GPROC_DBG(2, "all cores full, queueing thread %p\n", t);
     threadQ.push_back(t);
     return false;
   }
@@ -349,7 +377,8 @@ bool proc::isLocal(const simAddress, const simPID) {
 }
 
 bool proc::spawnToCoProc(const PIM_coProc, thread* t, simRegister hint) {
-  return addThread(t);
+  addThread(t);
+  return true;
 }
 
 bool proc::switchAddrMode(PIM_addrMode) {
@@ -422,9 +451,13 @@ bool proc::sendMemoryReq( instType iType,
     }
   }   
 
-  if (!mProcs.empty() && (i != (instruction*)(~0))) {
+  if (!mProcs.empty() && (i != (instruction*)(~0))) {    
     // if we need to, record the memory event
-    memReqMap[i] = mProcID;
+#if TIME_MEM
+    memReqMap[i] = memReqRec_t(mProcID,getCurrentSimTimeNano());
+#else
+    memReqMap[i] = memReqRec_t(mProcID,0);
+#endif
   }
   //INFO("Issuing mem req for addr=%#lx (type=%d, tag=%p) %d\n", 
   //     (unsigned long) address, iType, i, memReqMap.size());

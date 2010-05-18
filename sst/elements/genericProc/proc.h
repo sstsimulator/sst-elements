@@ -12,11 +12,12 @@
 #ifndef PROC_H_
 #define PROC_H_
 
-#include "sst/eventFunctor.h"
-#include "sst/component.h"
-#include <sst/link.h>
-#include <sst/cpunicEvent.h>
+#include "sst/core/eventFunctor.h"
+#include "sst/core/component.h"
+#include <sst/core/link.h>
+#include <sst/core/cpunicEvent.h>
 #include <memory.h>
+#include "fe_memory.h"
 
 #include "ssBackEnd/ssb_mainProc.h"
 #include "FE/thread.h"
@@ -33,6 +34,8 @@ using namespace SST;
 #else
 #define _GPROC_DBG( lvl, fmt, args...)
 #endif
+
+#define TIME_MEM 1
 
 extern int gproc_debug;
 
@@ -95,10 +98,17 @@ BOOST_SERIALIZE {
   int cores; 
   // the simple-scalar-based processor model
   vector<mainProc *> mProcs;
+  // record of who a memory request belongs to, and when it was issued
+  typedef pair<int, uint64_t> memReqRec_t;
   // map of outgoing memory request instructions to cores
-  typedef map<instruction *, int> memReqMap_t;
+  typedef map<instruction *, memReqRec_t> memReqMap_t;
   memReqMap_t memReqMap;
   instruction* onDeckInst;
+
+#if TIME_MEM
+  uint64_t numMemReq;
+  uint64_t memReqLat;
+#endif
 
   ClockHandler_t* clockHandler;
   Event::Handler_t *NICeventHandler;
@@ -107,7 +117,7 @@ BOOST_SERIALIZE {
   Params_t& params;
 
   bool addThread(thread *);
-  void swapThreads(bool quanta);
+  void swapThreads(bool quanta, bool refill);
   // flag to determine if we are flushing pipes and need to check for
   // thread swaps
   bool needThreadSwap;
