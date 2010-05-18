@@ -15,7 +15,7 @@
 #define LOADINFO_H
 
 #include <global.h>
-#include "sst/boost.h"
+//#include "sst/boost.h"
 
 struct LoadInfo { 
   friend class boost::serialization::access;

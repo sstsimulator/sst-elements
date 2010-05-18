@@ -19,7 +19,7 @@
 #include "SCall.h"
 #include "sim_syscalls_compat.hpp"
 #include "sys/sysctl.h"
-#include <sst/cpunicEvent.h>
+#include <sst/core/cpunicEvent.h>
 #include <fcntl.h> // KBW: for open() and others
 #include <sys/stat.h> // KBW: for fstat()
 #include "sst_stdint.h" // for uint64_t

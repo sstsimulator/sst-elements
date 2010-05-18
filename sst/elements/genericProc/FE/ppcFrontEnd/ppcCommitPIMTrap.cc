@@ -17,7 +17,7 @@
 #include "regs.h"
 #include "fe_debug.h"
 #include <sim_trace.h>
-#include <sst/simulation.h> // for current cycle count (i.e. Simulation)
+#include <sst/core/simulation.h> // for current cycle count (i.e. Simulation)
 
 ppcThread* ppcInstruction::createThreadWithStack(processor* proc,
 						 simRegister *regs)

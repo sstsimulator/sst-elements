@@ -24,8 +24,8 @@
 
 #include "loadInfo.h"
 
-#include "sst/boost.h"
-#include "sst/component.h"
+//#include "sst/boost.h"
+#include "sst/core/component.h"
 
 #include "regs.h"
 

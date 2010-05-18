@@ -62,7 +62,7 @@
 #include "host.h"
 #include "misc.h"
 #include "ieee-fp.h"
-#include "sst/boost.h"
+//#include "sst/boost.h"
 
 /* Macros and such for softFloat */
 #include "softfloat/softfloat.h"
