@@ -13,8 +13,8 @@
 #include <sst_config.h>
 
 #include "xbar.h"
-// #include <sst/memEvent.h>
-#include "../cpu/myMemEvent.h"
+// #include <sst/core/memEvent.h>
+#include "sst/elements/cpu/myMemEvent.h"
 
 BOOST_CLASS_EXPORT( SST::MyMemEvent )
 //BOOST_IS_MPI_DATATYPE( SST::MyMemEvent )

@@ -15,9 +15,9 @@
 #ifndef _CPU_DATA_H
 #define _CPU_DATA_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 
 
 using namespace SST;

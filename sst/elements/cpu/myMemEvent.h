@@ -2,7 +2,7 @@
 #ifndef _MYMEMEVENT_H
 #define _MYMEMEVENT_H
 
-#include <sst/compEvent.h>
+#include <sst/core/compEvent.h>
 
 namespace SST {
 

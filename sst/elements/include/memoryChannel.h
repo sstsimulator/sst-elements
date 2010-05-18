@@ -20,7 +20,7 @@
 #define _MC_DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
-#include <eventChannel.h>
+#include <sst/elements/include/eventChannel.h>
 #include <map>
 
 using namespace SST;

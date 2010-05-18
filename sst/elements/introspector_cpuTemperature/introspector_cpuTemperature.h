@@ -12,9 +12,9 @@
 #ifndef _INTROSPECTOR_CPUTEMPERATURE_H
 #define _INTROSPECTOR_CPUTEMPERATURE_H
 
-#include <sst/eventFunctor.h>
-//#include <sst/component.h>
-#include <sst/introspector.h>
+#include <sst/core/eventFunctor.h>
+//#include <sst/core/component.h>
+#include <sst/core/introspector.h>
 
 
 using namespace SST;

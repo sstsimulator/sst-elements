@@ -13,11 +13,11 @@
 #ifndef _XBAR_H
 #define _XBAR_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/log.h>
-#include <memoryChannel.h>
-#include <memMap.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/log.h>
+#include <sst/elements/include/memoryChannel.h>
+#include <sst/elements/include/memMap.h>
 
 #ifndef XBARV2_DBG
 #define XBARV2_DBG 0

@@ -14,9 +14,9 @@
 #define _ROUTERMODEL_H
 
 #include <string.h>
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 
 using namespace SST;
 

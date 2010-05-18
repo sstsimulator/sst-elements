@@ -13,10 +13,10 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
-#include <sst/timeConverter.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 
 using namespace SST;
 

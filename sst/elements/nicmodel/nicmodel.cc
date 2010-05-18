@@ -2,12 +2,12 @@
 
 #include <arpa/inet.h>      // for endianness
 #include <sys/param.h>      // for endianness
-#include <sst/cpunicEvent.h>
+#include <sst/core/cpunicEvent.h>
 #include "nicmodel.h"
 #include "netsim_model.h"
 #include "routing.h"
 
-#include "../../user_includes/netsim/netsim_internal.h"
+#include "user_includes/netsim/netsim_internal.h"
 
 
 

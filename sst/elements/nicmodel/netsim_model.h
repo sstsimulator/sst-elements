@@ -2,8 +2,8 @@
 #define _NETSIM_MODEL_H
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/list.hpp>
-#include <sst/cpunicEvent.h>
-#include <sst/link.h>
+#include <sst/core/cpunicEvent.h>
+#include <sst/core/link.h>
 
 
 

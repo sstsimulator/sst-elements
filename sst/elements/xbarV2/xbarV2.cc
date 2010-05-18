@@ -16,7 +16,7 @@
 #include <sstream>
 
 #include "xbarV2.h"
-#include <paramUtil.h>
+#include <sst/elements/include/paramUtil.h>
 
 #define DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)

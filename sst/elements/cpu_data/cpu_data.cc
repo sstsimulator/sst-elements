@@ -13,7 +13,7 @@
 #include <sst_config.h>
 #include "cpu_data.h"
 
-#include <sst/memEvent.h>
+#include <sst/core/memEvent.h>
 
 
 bool Cpu_data::clock( Cycle_t current)

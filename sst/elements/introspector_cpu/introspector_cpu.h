@@ -12,8 +12,8 @@
 #ifndef _INTROSPECTOR_CPU_H
 #define _INTROSPECTOR_CPU_H
 
-#include <sst/eventFunctor.h>
-#include <sst/introspector.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/introspector.h>
 
 
 using namespace SST;

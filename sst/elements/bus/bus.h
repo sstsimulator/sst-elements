@@ -13,11 +13,11 @@
 #ifndef _BUS_H
 #define _BUS_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/log.h>
-#include <memoryChannel.h>
-#include <memMap.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/log.h>
+#include <sst/elements/include/memoryChannel.h>
+#include <sst/elements/include/memMap.h>
 
 #ifndef BUS_DBG
 #define BUS_DBG 0

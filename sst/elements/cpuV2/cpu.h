@@ -13,9 +13,9 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <memoryDev.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/elements/include/memoryDev.h>
 
 #ifndef CPUV2_DBG
 #define CPUV2_DBG

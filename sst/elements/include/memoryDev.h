@@ -14,8 +14,8 @@
 #ifndef _MEMORY_DEV_H
 #define _MEMORY_DEV_H
 
-#include <memoryIF.h>
-#include <memoryChannel.h>
+#include <sst/elements/include/memoryIF.h>
+#include <sst/elements/include/memoryChannel.h>
 
 #define MEMORYDEV_DBG 1 
 #ifndef MEMORYDEV_DBG
@@ -62,6 +62,6 @@ class MemoryDev :
 template < typename addrT, typename cookieT, typename dataT, typename fooT >\
 retType MemoryDev< addrT, cookieT, dataT, fooT >\
 
-#include <memoryDev2.h>
+#include <sst/elements/include/memoryDev2.h>
 
 #endif

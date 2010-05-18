@@ -13,8 +13,8 @@
 #include <sst_config.h>
 
 #include "routermodel.h"
-#include <sst/cpunicEvent.h>
-#include <sst/eventHandler1Arg.h>
+#include <sst/core/cpunicEvent.h>
+#include <sst/core/eventHandler1Arg.h>
 
 int router_model_debug;
 

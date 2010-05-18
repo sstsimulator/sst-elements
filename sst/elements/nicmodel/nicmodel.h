@@ -1,12 +1,12 @@
 #ifndef _NICMODEL_H
 #define _NICMODEL_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 #include "netsim_model.h"
 #include "routing.h"
-#include "../../user_includes/netsim/netsim_internal.h"
+#include "user_includes/netsim/netsim_internal.h"
 
 
 using namespace SST;

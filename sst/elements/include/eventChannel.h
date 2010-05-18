@@ -13,10 +13,10 @@
 #ifndef _EVENT_CHANNEL_H
 #define _EVENT_CHANNEL_H
 
-#include <sst/component.h>
-#include <sst/compEvent.h>
-#include <sst/link.h>
-#include <sst/log.h>
+#include <sst/core/component.h>
+#include <sst/core/compEvent.h>
+#include <sst/core/link.h>
+#include <sst/core/log.h>
 
 #ifndef EVENTCHANNEL_DBG
 #define EVENTCHANNEL_DBG 0 
@@ -93,6 +93,6 @@ class EventChannel
 template < typename eventT >\
 retType EventChannel< eventT >\
 
-#include <eventChannel2.h>
+#include <sst/elements/include/eventChannel2.h>
 
 #endif

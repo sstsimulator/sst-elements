@@ -13,7 +13,7 @@
 #include <sst_config.h>
 
 #include "cpu.h"
-#include <sst/timeConverter.h>
+#include <sst/core/timeConverter.h>
 #include "myMemEvent.h"
 
 BOOST_CLASS_EXPORT( SST::MyMemEvent )
