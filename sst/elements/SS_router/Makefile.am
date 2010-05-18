@@ -17,6 +17,11 @@ libSS_router_la_SOURCES = \
 	test_driver/RtrIF.h \
 	test_driver/dummy.cc
 
+sstdir = $(includedir)/sst/elements/SS_router
+nobase_sst_HEADERS = \
+	SS_router/RtrIF.h \
+	SS_router/SS_network.h
+
 EXTRA_DIST = \
 	SS_router/SS_routerInternals.cpp \
 	SS_router/SS_routerEvent.cpp
