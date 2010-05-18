@@ -20,8 +20,8 @@
 #include <queue>
 #include "specMem.h"
 #include "fe_debug.h"
-#include <sst/boost.h>
-#include <boost/serialization/array.hpp>
+//#include <sst/boost.h>
+//#include <boost/serialization/array.hpp>
 
 //: Interface for memory objects
 //!SEC:Framework
