@@ -18,7 +18,7 @@
 #include <strings.h>
 //#include "fe_debug.h"
 #include <fcntl.h>
-
+#include <assert.h>
 
 
 #define INVALID_FD -1
