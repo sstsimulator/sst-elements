@@ -16,7 +16,7 @@
 #include <sst/core/timeConverter.h>
 #include "myMemEvent.h"
 
-BOOST_CLASS_EXPORT( SST::MyMemEvent )
+//BOOST_CLASS_EXPORT( SST::MyMemEvent )
 //BOOST_IS_MPI_DATATYPE( SST::MyMemEvent )
 
 // bool Cpu::clock( Cycle_t current, Time_t epoch )
