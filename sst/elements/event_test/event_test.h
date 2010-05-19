@@ -18,7 +18,6 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-
 class event_test : public SST::Component {
 public:
     event_test( SST::ComponentId_t id, SST::Component::Params_t& params );
@@ -29,7 +28,6 @@ public:
     }
     
 private:
-
     int my_id;
     int count_to;
     int latency;
@@ -38,7 +36,6 @@ private:
     SST::Link* link;
     
     bool handleEvent( SST::Event *ev );
-
 };
 
 #endif

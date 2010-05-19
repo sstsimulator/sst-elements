@@ -10,13 +10,16 @@
 // distribution.
 
 
-#include <sst_config.h>
+#include "sst_config.h"
+#include "sst/core/serialization/element.h"
+#include "sst/core/serialization/types.h"
+
+#include "sst/core/element.h"
 
 #include "event_test.h"
 #include "myEvent.h"
 
 using namespace SST;
-// BOOST_CLASS_EXPORT( SST::MyEvent )
 
 event_test::event_test( ComponentId_t id, Params_t& params ) :
     Component( id )
@@ -83,11 +86,29 @@ bool event_test::handleEvent(Event* ev) {
     return false;
 }
     
-extern "C" {
-event_test*
-event_testAllocComponent( SST::ComponentId_t id, 
-			  SST::Component::Params_t& params )
+BOOST_CLASS_EXPORT( MyEvent )
+
+static Component*
+create_event_test(SST::ComponentId_t id, 
+                  SST::Component::Params_t& params)
 {
     return new event_test( id, params );
 }
+
+
+static const ElementInfoComponent components[] = {
+    { "event_test",
+      "Event test driver",
+      NULL,
+      create_event_test
+    },
+    { NULL, NULL, NULL, NULL }
+};
+
+extern "C" {
+    ElementLibraryInfo event_test_eli = {
+        "event_test",
+        "Event serialization / passing test driver",
+        components,
+    };
 }
