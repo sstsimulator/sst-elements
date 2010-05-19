@@ -14,6 +14,7 @@
 #define COMPONENTS_TRIG_CPU_BCAST_TREE_H
 
 #include "algorithm.h"
+#include <string.h>		       // for memcpy()
 
 class bcast_tree :  public algorithm {
 public:

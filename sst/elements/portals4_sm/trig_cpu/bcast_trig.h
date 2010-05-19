@@ -16,6 +16,7 @@
 #include "algorithm.h"
 #include "trig_cpu.h"
 #include "portals.h"
+#include <string.h>		       // for memcpy()
 
 class bcast_tree_triggered :  public algorithm {
 public:

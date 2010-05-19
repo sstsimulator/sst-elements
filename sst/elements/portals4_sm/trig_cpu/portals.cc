@@ -15,6 +15,8 @@
 
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
+#include <string.h>		       // for memcpy()
+
 using namespace SST;
 using namespace std;
 

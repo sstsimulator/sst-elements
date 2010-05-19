@@ -15,6 +15,7 @@
 #include "sst_config.h"
 
 #include "trig_nic.h"
+#include <string.h>		       // for memcpy()
 
 using namespace SST;
 

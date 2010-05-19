@@ -13,6 +13,8 @@
 #ifndef COMPONENTS_TRIG_CPU_PORTALS_TYPES_H
 #define COMPONENTS_TRIG_CPU_PORTALS_TYPES_H
 
+#include "sst/sst_stdint.h"
+
 typedef uint32_t ptl_size_t;
 
 typedef int32_t ptl_handle_ct_t;
