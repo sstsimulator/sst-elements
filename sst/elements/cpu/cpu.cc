@@ -11,13 +11,13 @@
 
 
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
+#include "sst/core/serialization/types.h"
 
 #include "cpu.h"
 #include <sst/core/timeConverter.h>
 #include "myMemEvent.h"
 
-//BOOST_CLASS_EXPORT( SST::MyMemEvent )
-//BOOST_IS_MPI_DATATYPE( SST::MyMemEvent )
 
 // bool Cpu::clock( Cycle_t current, Time_t epoch )
 bool Cpu::clock( Cycle_t current )
@@ -67,11 +67,5 @@ cpuAllocComponent( SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT
 BOOST_CLASS_EXPORT(Cpu)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Cpu, bool, SST::Cycle_t, SST::Time_t )
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Cpu, bool, SST::Cycle_t)
-#endif
+BOOST_CLASS_EXPORT(SST::MyMemEvent)

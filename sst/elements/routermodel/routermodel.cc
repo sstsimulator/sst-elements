@@ -11,6 +11,8 @@
 
 
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
+#include "sst/core/serialization/types.h"
 
 #include "routermodel.h"
 #include <sst/core/cpunicEvent.h>
@@ -104,12 +106,4 @@ routermodelAllocComponent(SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT
 BOOST_CLASS_EXPORT(Routermodel)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4(SST::EventHandler,
-//     Routermodel, bool, SST::Time_t, SST::Event *)
-
-BOOST_CLASS_EXPORT_TEMPLATE3(SST::EventHandler,
-    Routermodel, bool, SST::Event *)
-#endif

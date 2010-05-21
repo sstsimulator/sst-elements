@@ -11,6 +11,8 @@
 
 
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
+#include "sst/core/serialization/types.h"
 
 #include "xbar.h"
 // #include <sst/core/memEvent.h>
@@ -79,18 +81,4 @@ Xbar* xbarAllocComponent( SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT
 BOOST_CLASS_EXPORT(Xbar)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Xbar, bool, SST::Cycle_t, SST::Time_t )
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Xbar, bool, SST::Time_t, SST::Event* )
-    
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Xbar, bool, SST::Cycle_t )
-
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Xbar, bool, SST::Event* )
-#endif

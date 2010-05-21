@@ -98,12 +98,3 @@ Cpu* mcniagaraAllocComponent( SST::ComponentId_t id, SST::Simulation* sim,
     return new Cpu( id, sim, params );
 }
 }
-
-#if WANT_CHECKPOINT_SUPPORT
-BOOST_CLASS_EXPORT(Cpu)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Cpu, bool, SST::Cycle_t, SST::Time_t )
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Cpu, bool, SST::Cycle_t)
-#endif

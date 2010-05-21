@@ -60,7 +60,7 @@ class Cpu : public Component {
                                                 ( this, &Cpu::clock );
             _CPU_DBG("-->frequency=%s\n",frequency.c_str());
             TimeConverter* tc = registerClock( frequency, handler );
-	    printf("CPU period: %ld\n",tc->getFactor());
+	    printf("CPU period: %ld\n",(long int) tc->getFactor());
             _CPU_DBG("Done registering clock\n");
             
         }
@@ -78,59 +78,28 @@ class Cpu : public Component {
         Cpu( const Cpu& c );
 	Cpu() {}
 
-/*         bool clock( Cycle_t, Time_t ); */
         bool clock( Cycle_t );
-        ClockHandler_t* handler;
         bool handler1( Time_t time, Event *e );
 
+        ClockHandler_t* handler;
         Params_t    params;
         Link*       mem;
         state_t     state;
         who_t       who;
 	std::string frequency;
 
-#if WANT_CHECKPOINT_SUPPORT
-        BOOST_SERIALIZE {
-	    printf("cpu::serialize()\n");
-            _AR_DBG( Cpu, "start\n" );
-	    printf("  doing void cast\n");
-            BOOST_VOID_CAST_REGISTER( Cpu*, Component* );
-	    printf("  base serializing: component\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );
-	    printf("  serializing: mem\n");
-            ar & BOOST_SERIALIZATION_NVP( mem );
-	    printf("  serializing: handler\n");
-            ar & BOOST_SERIALIZATION_NVP( handler );
-            _AR_DBG( Cpu, "done\n" );
-        }
-/*         SAVE_CONSTRUCT_DATA( Cpu ) { */
-/* 	    printf("cpu::save_construct_data\n"); */
-/*             _AR_DBG( Cpu, "\n" ); */
-
-/*             ComponentId_t   id     = t->_id; */
-/* /\*             Clock*          clock  = t->_clock; *\/ */
-/*             Simulation*     sim  = t->simulation; */
-/*             Params_t        params = t->params; */
-
-/*             ar << BOOST_SERIALIZATION_NVP( id ); */
-/*             ar << BOOST_SERIALIZATION_NVP( sim ); */
-/*             ar << BOOST_SERIALIZATION_NVP( params ); */
-/*         }  */
-/*         LOAD_CONSTRUCT_DATA( Cpu ) { */
-/* 	    printf("cpu::load_construct_data\n"); */
-/*             _AR_DBG( Cpu, "\n" ); */
-
-/*             ComponentId_t   id; */
-/*             Simulation*     sim; */
-/*             Params_t        params; */
-
-/*             ar >> BOOST_SERIALIZATION_NVP( id ); */
-/*             ar >> BOOST_SERIALIZATION_NVP( sim ); */
-/*             ar >> BOOST_SERIALIZATION_NVP( params ); */
-
-/*             ::new(t)Cpu( id, sim, params ); */
-/*         } */
-#endif
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        boost::serialization::base_object<Component>(*this);
+        ar & BOOST_SERIALIZATION_NVP(handler);
+        ar & BOOST_SERIALIZATION_NVP(params);
+        ar & BOOST_SERIALIZATION_NVP(mem);
+        ar & BOOST_SERIALIZATION_NVP(state);
+        ar & BOOST_SERIALIZATION_NVP(who);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+    }
 };
 
 #endif

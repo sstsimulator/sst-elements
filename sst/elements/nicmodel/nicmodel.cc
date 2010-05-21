@@ -1,15 +1,28 @@
+// Copyright 2009-2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
+#include "sst/core/serialization/types.h"
 
 #include <arpa/inet.h>      // for endianness
 #include <sys/param.h>      // for endianness
+
 #include <sst/core/cpunicEvent.h>
 #include "nicmodel.h"
 #include "netsim_model.h"
 #include "routing.h"
 
 #include "user_includes/netsim/netsim_internal.h"
-
-
 
 bool
 // Nicmodel::handle_nic_events(Time_t time, Event *event)
@@ -233,14 +246,4 @@ nicmodelAllocComponent(SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT
-
 BOOST_CLASS_EXPORT(Nicmodel)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4(SST::EventHandler,
-//     Nicmodel, bool, SST::Time_t, SST::Event *)
-
-BOOST_CLASS_EXPORT_TEMPLATE3(SST::EventHandler,
-    Nicmodel, bool, SST::Event *)
-
-#endif

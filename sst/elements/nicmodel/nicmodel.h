@@ -292,11 +292,7 @@ class Nicmodel : public Component {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            _AR_DBG(Nicmodel,"start\n");
-            boost::serialization::
-                void_cast_register(static_cast<Nicmodel*>(NULL), 
-                                   static_cast<Component*>(NULL));
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+            boost::serialization::base_object<Component>(*this);
 	    ar & BOOST_SERIALIZATION_NVP(cpuHandler);
 	    ar & BOOST_SERIALIZATION_NVP(netHandler);
 	    ar & BOOST_SERIALIZATION_NVP(cpu);
@@ -315,9 +311,8 @@ class Nicmodel : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(rcv_router_delays);
 	    ar & BOOST_SERIALIZATION_NVP(rcv_msgs);
 	    ar & BOOST_SERIALIZATION_NVP(rcv_total_hops);
-	    ar & BOOST_SERIALIZATION_NVP(vrinfo);
+            //	    ar & BOOST_SERIALIZATION_NVP(vrinfo);
 	    ar & BOOST_SERIALIZATION_NVP(tc);
-            _AR_DBG(Nicmodel,"done\n");
         }
 
         template<class Archive>

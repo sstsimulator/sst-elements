@@ -141,6 +141,7 @@ class Cpu_data : public Component {
     private:
 
         Cpu_data( const Cpu_data& c );
+    Cpu_data() { }
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
@@ -154,50 +155,14 @@ class Cpu_data : public Component {
 	std::string frequency;
 	std::string pushIntrospector;
 
-
-#if WANT_CHECKPOINT_SUPPORT2	
-        BOOST_SERIALIZE {
-	    printf("Cpu_data::serialize()\n");
-            _AR_DBG( Cpu_data, "start\n" );
-	    printf("  doing void cast\n");
-            BOOST_VOID_CAST_REGISTER( Cpu_data*, Component* );
-	    printf("  base serializing: component\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );
-	    printf("  serializing: mem\n");
-            ar & BOOST_SERIALIZATION_NVP( mem );
-	    printf("  serializing: handler\n");
-            ar & BOOST_SERIALIZATION_NVP( handler );
-            _AR_DBG( Cpu_data, "done\n" );
-        }
-
-
-/*
-        SAVE_CONSTRUCT_DATA( Cpu_data ) {
-            _AR_DBG( Cpu_data, "\n" );
-
-            ComponentId_t   id     = t->_id;
-            Clock*          clock  = t->_clock;
-            Params_t        params = t->params;
-
-            ar << BOOST_SERIALIZATION_NVP( id );
-            ar << BOOST_SERIALIZATION_NVP( clock );
-            ar << BOOST_SERIALIZATION_NVP( params );
-        } 
-        LOAD_CONSTRUCT_DATA( Cpu_data ) {
-            _AR_DBG( Cpu_data, "\n" );
-
-            ComponentId_t   id;
-            Clock*          clock;
-            Params_t        params;
-
-            ar >> BOOST_SERIALIZATION_NVP( id );
-            ar >> BOOST_SERIALIZATION_NVP( clock );
-            ar >> BOOST_SERIALIZATION_NVP( params );
-
-            ::new(t)Cpu_data( id, clock, params );
-        } 
-*/
-#endif
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        boost::serialization::base_object<Component>(*this);
+        // ar & BOOST_SERIALIZATION_NVP( mem );
+        // ar & BOOST_SERIALIZATION_NVP( handler );
+    }
 };
 
 #endif

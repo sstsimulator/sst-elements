@@ -91,13 +91,14 @@ class Xbar : public Component {
 	Link*       selfPull;
 	std::string frequency;
 
-#if WANT_CHECKPOINT_SUPPORT
-        BOOST_SERIALIZE {
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version )
+        {
+            boost::serialization::base_object<Component>(*this);
 	    printf("xbaf::serialize()\n");
             _AR_DBG(Xbar,"start\n");
-            BOOST_VOID_CAST_REGISTER( Xbar*, Component* );
 	    printf("  base serializing: Component\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );
 	    printf("  serializing: cpu\n");
             ar & BOOST_SERIALIZATION_NVP( cpu );
 	    printf("  serializing: nic\n");
@@ -108,26 +109,6 @@ class Xbar : public Component {
             ar & BOOST_SERIALIZATION_NVP( eventHandler );
             _AR_DBG(Xbar,"done\n");
         }
-/*         SAVE_CONSTRUCT_DATA( Xbar ) { */
-/*             _AR_DBG(Xbar,"\n"); */
-/*             ComponentId_t     id     = t->_id; */
-/*             Simulation*       sim    = t->simulation; */
-/*             Params_t          params = t->params; */
-/*             ar << BOOST_SERIALIZATION_NVP( id ); */
-/*             ar << BOOST_SERIALIZATION_NVP( sim ); */
-/*             ar << BOOST_SERIALIZATION_NVP( params ); */
-/*         } */
-/*         LOAD_CONSTRUCT_DATA( Xbar ) { */
-/*             _AR_DBG(Xbar,"\n"); */
-/*             ComponentId_t     id; */
-/*             Simulation*       sim; */
-/*             Params_t          params; */
-/*             ar >> BOOST_SERIALIZATION_NVP( id ); */
-/*             ar >> BOOST_SERIALIZATION_NVP( sim ); */
-/*             ar >> BOOST_SERIALIZATION_NVP( params ); */
-/*             ::new(t)Xbar( id, sim, params ); */
-/*         } */
-#endif
 };
 
 #endif

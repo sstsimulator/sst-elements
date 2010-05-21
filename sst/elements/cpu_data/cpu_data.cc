@@ -11,8 +11,10 @@
 
 
 #include <sst_config.h>
-#include "cpu_data.h"
+#include "sst/core/serialization/element.h"
+#include "sst/core/serialization/types.h"
 
+#include "cpu_data.h"
 #include <sst/core/memEvent.h>
 
 
@@ -94,12 +96,5 @@ Cpu_data* cpu_dataAllocComponent( SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT2
 BOOST_CLASS_EXPORT(Cpu_data)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Cpu_data, bool, SST::Cycle_t, SST::Time_t )
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Cpu_data, bool, SST::Cycle_t)
-#endif
 
