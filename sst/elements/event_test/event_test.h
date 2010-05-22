@@ -28,6 +28,8 @@ public:
     }
     
 private:
+    event_test() { }
+
     int my_id;
     int count_to;
     int latency;
@@ -36,6 +38,17 @@ private:
     SST::Link* link;
     
     bool handleEvent( SST::Event *ev );
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        boost::serialization::base_object<Component>(*this);
+        ar & BOOST_SERIALIZATION_NVP(my_id);
+        ar & BOOST_SERIALIZATION_NVP(count_to);
+        ar & BOOST_SERIALIZATION_NVP(latency);
+        ar & BOOST_SERIALIZATION_NVP(done);
+    }
 };
 
 #endif
