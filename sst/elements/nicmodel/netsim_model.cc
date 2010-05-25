@@ -47,7 +47,7 @@ int len;
 	    } else   {
 		len= e->msg_len;
 	    }
-	    printf("========================== match() found one!\n");
+	    // printf("========================== match() found one!\n");
 	    add_rcv_completion(completion, e, RCV_COMPLETION, NETSIM_SUCCESS, len, e->msg_match_bits, p->user_data, p->buf);
 
 	    // printf("========================== match() remove it from the posted Q!\n");
@@ -56,7 +56,7 @@ int len;
 	}
     }
 
-    printf("========================== match() found nothing\n");
+    // printf("========================== match() found nothing\n");
     return false;
 
 }  // End of match
