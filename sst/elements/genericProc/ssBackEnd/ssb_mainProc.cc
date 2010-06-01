@@ -17,10 +17,15 @@
 
 
 mainProc::mainProc(string configFile, threadSource &tS, int maxMMOut, 
-		   processor *p, int id) : 
-  convProc(configFile, p, maxMMOut, id), confFile(configFile), myProc(p) {
+		   processor *p, int id, map<string,string> prefInit) : 
+  convProc(configFile, p, maxMMOut, id, prefInit), confFile(configFile),
+  myProc(p) {
   tSource = &tS;
   mainProcID = id; 
+}
+
+uint64_t mainProc::getCurrentCycle() {
+  return myProc->getCurrentSimTime();
 }
 
 void mainProc::setup() {

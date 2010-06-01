@@ -47,6 +47,7 @@ protected:
   //processor *nicProc;
   //PIM_NICChip *pimNIC;
 public:
+  virtual uint64_t getCurrentCycle(); 
   void setClearPipe(bool p) {
     clearPipe = p;
   }
@@ -67,7 +68,7 @@ public:
   //PIM_NICChip* getPimNIC() const {return pimNIC;}
   int getMainProcID() const {return mainProcID;}
   mainProc(string configFile, threadSource &tSource, int maxMMO, processor *p,
-	   int id);
+	   int id, map<string,string> prefInit);
   virtual void setup();
   virtual void finish();
   //virtual void handleParcel(parcel *p);

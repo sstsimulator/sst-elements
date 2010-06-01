@@ -11,6 +11,7 @@
 
 
 #include "ssb_sim-outorder.h"
+#include "processor.h"
 
 //: handle frame request
 frameID convProc::requestFrame(int size) {

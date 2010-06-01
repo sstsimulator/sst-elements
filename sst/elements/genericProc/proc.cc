@@ -52,11 +52,14 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
 #endif
 
   memory_t* tmp = new memory_t( );
-  // construct the params for the memory device
-  Params_t memParams;
+  // construct the params for the memory device and prefetcher
+  Params_t memParams, prefInit;
   for (Params_t::iterator pi = paramsC.begin(); pi != paramsC.end(); ++pi) {
     if (pi->first.find("mem.") == 0) {
       memParams[pi->first] = pi->second;
+    }
+    if (pi->first.find("pref.") == 0) {
+      prefInit[pi->first] = pi->second;
     }
   }
   tmp->devAdd(  new memory_t::dev_t( *this, memParams, "mem0" ), 0, 
@@ -118,7 +121,8 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   // if we are using the simple scalar backend, initialize it
   if (ssBackEnd) {
     for (int c = 0; c < cores; ++c) {
-      mProcs.push_back(new mainProc(ssConfig, tSource, maxMMOut, this, c));
+      mProcs.push_back(new mainProc(ssConfig, tSource, maxMMOut, this, c, 
+				    prefInit));
     }
   } else {
     mProcs.clear();

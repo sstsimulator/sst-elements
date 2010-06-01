@@ -437,7 +437,8 @@ protected:
    * ssb_sim-outorder-constructor.h
    */ 
 public:
-  convProc(string configFile, processor *p, int maxMMOut, int coreNum);
+  convProc(string configFile, processor *p, int maxMMOut, int coreNum,
+	   map<string,string> prefetchInit);
   //component *getMemCtrl() {return memCtrl;}
 protected:
 

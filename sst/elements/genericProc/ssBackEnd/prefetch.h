@@ -71,13 +71,36 @@ public:
   virtual void sendToMem(instruction *p)=0;
   //: Tell processor to 'wake up' an instruction 
   virtual void wakeUpPrefetched(instruction*)=0;
+  //: current cycle count
+  virtual uint64_t getCurrentCycle()=0;
 };
 
 //: Prefetcher
 //
 // A semi-generic prefetcher. Currently only implements OBL prefetch. 
 class prefetcher {
-  string prename;
+  typedef map<string,string> paramMap_t;
+  //: config parameters
+  paramMap_t params;
+  int getValue(string s) {
+    paramMap_t::iterator i = params.find(s);
+    if (i != params.end()) {
+      printf("getValue %s: %s (%d)\n", s.c_str(), i->second.c_str(), atoi(i->second.c_str()));
+      return atoi(i->second.c_str());
+    } else {
+      return -1;
+    }
+  }
+  string getStrValue(string s) {
+    paramMap_t::iterator i = params.find(s);
+    if (i != params.end()) {
+      printf("getStrValue %s: %s\n", s.c_str(), i->second.c_str());
+      return i->second;
+    } else {
+      return "";
+    }
+  }
+
   //: pointer to "parent" processor
   prefetchProc *proc;
   //: Use Tagged OBL?
@@ -221,12 +244,12 @@ class prefetcher {
 
   bool memReq(const simAddress, bool &);
 public:
-  prefetcher(string, prefetchProc *, prefetchMC *);
+  prefetcher(paramMap_t, prefetchProc *, prefetchMC *);
   typedef enum {INST, DATA} memAccType;
   typedef enum {READ,WRITE} memAccDir;
   void memRef(const simAddress, const memAccType, const memAccDir, bool hit);
   void reportCacheEject(const simAddress);
-  //bool handleParcel(parcel *p);
+  bool handleParcel(instruction *p);
   bool isPreFetching(const simAddress);
   void setWakeUp(instruction *, simAddress);
   void finish();

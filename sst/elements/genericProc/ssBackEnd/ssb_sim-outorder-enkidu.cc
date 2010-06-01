@@ -78,9 +78,8 @@ void convProc::handleMemEvent( instruction* inst ) {
 
   // check with prefetcher
   if (pref) {
-    printf("fix %s %d\n", __FILE__, __LINE__);
-    bool wasP = 0;
-    //bool wasP = pref->handleParcel(e);
+    //printf("fix %s %d\n", __FILE__, __LINE__);
+    bool wasP = pref->handleParcel(inst);
     if (wasP) return;
   }
 

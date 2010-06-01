@@ -25,6 +25,10 @@
 			  <mem.initialCredit>   8 </mem.initialCredit>
 			  <mem.readRespCredit>  1 </mem.readRespCredit>
 			  <mem.writeRespCredit> 1 </mem.writeRespCredit>
+
+			  <pref.name>obl</pref.name>
+			  <pref.obl.tagged>0</pref.obl.tagged>
+			  <pref.obl.degree>2</pref.obl.degree>
 			 </params>
 			<links>
 				<link id="cpu2mem">
@@ -40,7 +44,7 @@
  	<component id="mem0">
  		<DRAMSimC>
  			<params>
-			  <clock>1.0 Ghz</clock>
+			  <clock>1.5 Ghz</clock>
 			  <systemini>system.ini</systemini>
 			  <deviceini>ini/DDR3_micron_32M_8B_x8_sg15.ini</deviceini>
 			  <pwd>DRAMSim</pwd>

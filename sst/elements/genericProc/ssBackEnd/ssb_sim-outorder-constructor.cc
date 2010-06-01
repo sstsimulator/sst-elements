@@ -16,7 +16,8 @@
 #define MAX_RS_LINKS 1024
 
 //: Constructor
-convProc::convProc(string configFile, processor *p, int maxMMOut, int coreNum )
+convProc::convProc(string configFile, processor *p, int maxMMOut, int coreNum,
+		   map<string,string> prefetchInit)
   : myProc(p), myCoreID(coreNum),
     clearPipe(0), isSyncing(0), clockRatio(1), iFetchBlocker(0), 
     rs_free_list(MAX_RS_LINKS), last_inst_missed(FALSE), 
@@ -63,17 +64,12 @@ convProc::convProc(string configFile, processor *p, int maxMMOut, int coreNum )
   }
 #endif
 
-#warning prefetcher broken
-#if 0
-  string pre = configuration::getStrValueWithDefault(cfgstr + ":prefetch", "");
-  if (pre != "NULL" && pre != "") {
-    pref = new prefetcher(cfgstr + ":prefetch",this, pMC);
-  } else {
+  // init prefetcher
+  if (prefetchInit.empty()) {
     pref = 0;
+  } else {
+    pref = new prefetcher(prefetchInit,this, 0);
   }
-#else
-  pref = 0;
-#endif
 
   ptrace_nelt = 0;
   bimod_nelt = 1;

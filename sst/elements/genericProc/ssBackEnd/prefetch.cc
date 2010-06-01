@@ -23,13 +23,11 @@ const int cacheShift = 6;
 pool<fakeDMAInstruction> prefetcher::fakeInst;
 
 //: Constructor
-prefetcher::prefetcher(string nm, prefetchProc *p, prefetchMC *_mc) : 
-  prename(nm), proc(p), requestsIssued(0), requestsHit(0),
+prefetcher::prefetcher(paramMap_t initStr, prefetchProc *p,
+		       prefetchMC *_mc) : 
+  params(initStr), proc(p), requestsIssued(0), requestsHit(0),
   overPage(0), tooLate(0), adaptions(0), subTotalReq(0),
   subRequestsHit(0), streamReq(0), streamsDetected(0), mc(_mc), streamRequestsHit(0), rr(0) {
-#if 1
-  ERROR("Prefetcher not supported");
-#else  
 
   inWin = 0;
 
@@ -37,22 +35,21 @@ prefetcher::prefetcher(string nm, prefetchProc *p, prefetchMC *_mc) :
     WARN("Prefetch: memory controller is _not_ prefetch aware\n");
   }
 
+#if 0
   stats = configuration::getValue(prename+":stats");
   if (stats <= 0) stats = 0;
   else stats = 1;
+#else
+  stats = 1;
+#endif
 
-  string pretype = configuration::getStrValue(prename);
+  string pretype = getStrValue("pref.name");
   if (pretype == "obl" || pretype == "obls") {
-    if (configuration::getValue(":simpleMemory") == 1) {
-      printf("Prefetcher not supported with simpleMemory\n");
-      exit(-1);
-    }
-
     if (pretype == "obls") {
       printf("Using Stream Prefetcher.\n");
-      streams = configuration::getValue(prename+":stream:streams");
-      windowL = configuration::getValue(prename+":stream:window");
-      detLeng = configuration::getValue(prename+":stream:length");
+      streams = getValue("pref.stream.streams");
+      windowL = getValue("pref.stream.window");
+      detLeng = getValue("pref.stream.length");
       if (streams <= 0 || detLeng < 2 || windowL <= detLeng) {
 	printf("stream prefetcher misconfigured\n");
 	exit(-1);
@@ -65,11 +62,11 @@ prefetcher::prefetcher(string nm, prefetchProc *p, prefetchMC *_mc) :
     }
 
     printf("Using OBL (One Block Lookahead) Prefetcher.\n");
-    tagged = configuration::getValue(prename+":obl:tagged");
-    degree = configuration::getValue(prename+":obl:degree");
-    pageShift = configuration::getValue(prename+":pageShift");
-    adaptive = configuration::getValue(prename+":obl:adaptive");
-    loadAware = configuration::getValue(prename+":loadAware");
+    tagged = getValue("pref.obl.tagged");
+    degree = getValue("pref.obl.degree");
+    pageShift = getValue("pref.pageShift");
+    adaptive = getValue("pref.obl.adaptive");
+    loadAware = getValue("pref.loadAware");
     if (loadAware >= 1) {loadAware = 1; printf("  load aware\n");}
     else {loadAware = 0;}
     if (tagged >= 1) {tagged = 1; printf("  tagged\n");}
@@ -84,7 +81,7 @@ prefetcher::prefetcher(string nm, prefetchProc *p, prefetchMC *_mc) :
     else {pageShift = 12; printf("  pageShift 12 (default)\n");}
 
     if (adaptive) {
-      int q = configuration::getValue(prename+":obl:adaptive:quantaPow2");
+      int q = getValue("pref.obl.adaptive.quantaPow2");
       if (q < 1) {
 	printf("adaptive prefetcher quanta invalid\n"); exit(-1);
       } else {
@@ -95,9 +92,9 @@ prefetcher::prefetcher(string nm, prefetchProc *p, prefetchMC *_mc) :
 	printf("  adapt quanta mask 0x%llx\n", adaptQuantaMask);
       }
 
-      adaptMax = configuration::getValue(prename+":obl:adaptive:maxDegree");
-      decDeg = configuration::getValue(prename+":obl:adaptive:decDeg100");
-      incDeg = configuration::getValue(prename+":obl:adaptive:incDeg100");
+      adaptMax = getValue("pref.obl.adaptive.maxDegree");
+      decDeg = getValue("pref.obl.adaptive.decDeg100");
+      incDeg = getValue("pref.obl.adaptive.incDeg100");
       if (adaptMax < 2 || decDeg < 0 || incDeg < 0 || decDeg > incDeg) {
 	printf("misconfigured adaptive OBL\n");
 	exit(-1);
@@ -107,7 +104,6 @@ prefetcher::prefetcher(string nm, prefetchProc *p, prefetchMC *_mc) :
     printf("%s prefetcher not supported\n", pretype.c_str());
     exit(-1);
   }
-#endif
 }
 
 //: Detects if a given address is being prefetched
@@ -272,9 +268,6 @@ bool prefetcher::memReq(const simAddress nextBlock, bool &loaded) {
 // (dir), and if the reference "hit" the cache should be provided.
 void prefetcher::memRef(const simAddress memEA, const memAccType type, 
 			const memAccDir dir, bool hit) {
-#if 1
-  ERROR("Prefetcher not supported");
-#else
   totalReq++; subTotalReq++;
   // check our hit rate
   if (stats) {
@@ -292,7 +285,7 @@ void prefetcher::memRef(const simAddress memEA, const memAccType type,
 
   // adapt if called for
   if (adaptive && (subTotalReq > 0) && 
-      ((component::Cycle() & adaptQuantaMask) == 0)) {    
+      ((proc->getCurrentCycle() & adaptQuantaMask) == 0)) {    
     int hitRate = int(double(subRequestsHit*100)/double(subTotalReq));
     //printf("%d\n", hitRate);
 
@@ -334,10 +327,8 @@ void prefetcher::memRef(const simAddress memEA, const memAccType type,
     printf("%llu %d %.2f %.2f\n", component::cycle(), addrs.size(), double(component::cycle())/double(requestsIssued), double(totalReq)/double(requestsIssued));
   }
 #endif
-#endif
 }
 
-#if 0
 //: Filter parcels for memory returns
 //
 // This should be called by the parent processor in its 'handleParcel'
@@ -345,8 +336,8 @@ void prefetcher::memRef(const simAddress memEA, const memAccType type,
 // this function will handle the parcel, including deallocating it,
 // and return 'true'. If not, the parcel will not be modified and the
 // function will return 'false'.
-bool prefetcher::handleParcel(parcel *p) {
-  instruction *inst = p->inst();
+bool prefetcher::handleParcel(instruction *inst) {
+  //instruction *inst = p->inst();
   if (inst) {
     set<fakeDMAInstruction*>::iterator i = fakes.find((fakeDMAInstruction*)inst);
     if (i != fakes.end()) {
@@ -386,13 +377,12 @@ bool prefetcher::handleParcel(parcel *p) {
 #if 0
       else printf(" addr not in addrs\n");
 #endif
-      parcel::deleteParcel(p);
+      //parcel::deleteParcel(p);
       return true;
     }
   }
   return false;
 }
-#endif
 
 
 //: Report ejection from Cache
@@ -417,7 +407,7 @@ void prefetcher::reportCacheEject(const simAddress memEA) {
 //
 // print stats.
 void prefetcher::finish() {
-  printf("Prefetcher %s:\n", prename.c_str());
+  printf("Prefetcher :\n");
   printf("pre: requestsIssued: %llu\n", requestsIssued);
   if (streams) {
     printf("pre: stream Requests: %llu\n", streamReq);
