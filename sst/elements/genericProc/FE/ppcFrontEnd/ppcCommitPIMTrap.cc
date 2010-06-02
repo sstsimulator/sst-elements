@@ -500,7 +500,7 @@ bool ppcInstruction::Perform_PIM_READFX(processor	*proc,
 
   if (proc->getFE(addr) == 1) {
     // it is full, do the read, and set the bit as needed
-    if (regs[0] == ntohl(SS_PIM_READFE)) {
+    if ((unsigned long)regs[0] == ntohl(SS_PIM_READFE)) {
       // if we need to, empty the FE bit
       proc->setFE(addr, 0);
     } 

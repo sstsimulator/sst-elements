@@ -23,6 +23,7 @@
 #include <fcntl.h> // KBW: for open() and others
 #include <sys/stat.h> // KBW: for fstat()
 #include "sst_stdint.h" // for uint64_t
+#include <limits> // for numeric_limits
 
 extern	"C"
 {
@@ -482,7 +483,7 @@ bool ppcInstruction::Perform_SYS_gettimeofday(processor* proc,
     regs[3] = htonl(retV);
 
     // detect error
-    if (regs[3] == htonl(-1)) {
+    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
 	nextPC = htonl(ntohl(nextPC) - 4);
     }
 
@@ -577,7 +578,7 @@ bool ppcInstruction::Perform_SYS_fstat(processor* proc, simRegister *regs,
     regs[3] = htonl(retV);
 
     // detect error
-    if (ntohl(regs[3]) == -1) {
+    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
 	nextPC = htonl(ntohl(nextPC) - 4);
     } else {
 	parent->CopyToSIM(ntohl(regs[4]), &ss_sbuf32, sizeof(ss_sbuf32));
@@ -614,7 +615,7 @@ bool ppcInstruction::Perform_SYS_lstat(processor*   proc,
     regs[3] = htonl(retV);
 
     // detect error
-    if (regs[3] == htonl(-1)) {
+    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
 	nextPC = htonl(ntohl(nextPC) - 4);
     } else {
 	parent->CopyToSIM(ntohl(regs[4]), &ss_sbuf32, sizeof(ss_sbuf32));
@@ -652,7 +653,7 @@ bool ppcInstruction::Perform_SYS_stat(processor*   proc,
     regs[3] = htonl(retV);
 
     // detect error
-    if (regs[3] == htonl(-1)) {
+    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
 	nextPC = htonl(ntohl(nextPC) - 4);
     } else {
 	parent->CopyToSIM(ntohl(regs[4]), &ss_sbuf32, sizeof(ss_sbuf32));
@@ -711,7 +712,7 @@ bool ppcInstruction::Perform_SYS_read(processor   *proc,
     regs[3] = htonl(retV);
 
     // detect error
-    if (regs[3] == htonl(-1)) {
+    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
 	nextPC = htonl(ntohl(nextPC) - 4);
     }
 
@@ -763,8 +764,8 @@ bool ppcInstruction::Perform_SYS_write(processor   *proc,
 
   if (size_t(ntohl(regs[3])) != numBytes) {
     WARN("write err 1\n");
-    regs[3] = htonl((uint32_t)-1);
-  } else if (ntohl(regs[3]) == -1) {
+    regs[3] = htonl(numeric_limits<uint32_t>::max() /* -1 */);
+  } else if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
     WARN("write err 2\n");
     nextPC = htonl(ntohl(nextPC) - 4);
   }
@@ -786,7 +787,7 @@ bool ppcInstruction::Perform_SYS_writev(processor   *proc,
 	return true;
     }
 
-    for (int i = 0; i < ntohl(regs[5]); i++) 
+    for (unsigned i = 0; i < ntohl(regs[5]); i++) 
     {	
 	struct myiovec {
 	    simAddress iov_base;
@@ -888,7 +889,7 @@ bool ppcInstruction::Perform_SYS_getrusage(processor* proc,
     }
 
     // detect error
-    if (regs[3] == htonl(-1)) {
+    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) {
 	nextPC = htonl(ntohl(nextPC) - 4); /* BSD-ism; we're backtracking 1 word */
     }
 
@@ -919,7 +920,7 @@ ppcInstruction::Perform_SYS_getrlimit(processor* proc,
 		    (unsigned int)rl.rlim_max);
 	    rl.rlim_cur = hton64(rl.rlim_cur);
 	    rl.rlim_max = hton64(rl.rlim_max);
-	    if (regs[3] == htonl(-1)) regs[3] = htonl(errno);
+	    if (ntohl(regs[3]) == numeric_limits<uint32_t>::max() /* -1 */) regs[3] = htonl(errno);
 	    break;
     }
 
