@@ -1250,13 +1250,11 @@ ieee_DIVT (int f, unsigned long long a, unsigned long long b, unsigned long long
 
 
 
-void printull(unsigned long long u){
-
-unsigned int *pi = (unsigned int *)&u;
-printf("%x",*pi);
-pi++;
-printf("%x\n",*pi);
-
+void printull(const unsigned long long u){
+    unsigned int pi[2];
+    BOOST_STATIC_ASSERT((sizeof(unsigned int)*2) == sizeof(unsigned long long));
+    memcpy(pi, &u, sizeof(unsigned int)*2);
+    printf("%x%x\n",pi[0], pi[1]);
 }
 
 
