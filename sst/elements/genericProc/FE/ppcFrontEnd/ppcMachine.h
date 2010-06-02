@@ -1180,8 +1180,16 @@ void print_bits(void* ptr, int nBytes);
 #define TEST_NEG(X)       (((X & FLAG_NEG)!=0))
 #define TEST_INF(X)       (((X & FLAG_INF)!=0))
 #define TEST_ZERO(X)      (((X & FLAG_ZERO)!=0))
-#define TEST_SNAN_S(X)    (((*(unsigned int*)&X & 1<<22)==0))
-#define TEST_SNAN_D(X)    (((*(unsigned long long*)&X>>51 & 1)==0))
+static inline bool TEST_SNAN_S(const double X) {
+    unsigned int t;
+    memcpy(&t, &X, sizeof(unsigned int));
+    return ((t & (1<<22)) == 0);
+}
+static inline bool TEST_SNAN_D(const double X) {
+    unsigned long long t;
+    memcpy(&t, &X, sizeof(unsigned long long));
+    return (((t>>51) & 1) == 0);
+}
 
 int FPClassify_D(double value);  // Classify a double precision floating value
 int FPClassify_S(float value);   // Classify a single precision floating value

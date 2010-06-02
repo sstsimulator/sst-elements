@@ -125,6 +125,7 @@ vector<thread*> ppcThread::init(processor *proc,
   bool on_ppc = 0;
 #endif
   /* initialize default values to use ppc native assembly */
+  ppcInstruction::fpu_mode = ASM_PPC;
   ppcInstruction::fpu_mode_software  = 0;
   ppcInstruction::fpu_mode_cplusplus = 0;
   ppcInstruction::fpu_mode_asm_x86   = 0;
@@ -163,6 +164,7 @@ vector<thread*> ppcThread::init(processor *proc,
     ppcInstruction::fpu_mode_cplusplus = 0;
     ppcInstruction::fpu_mode_asm_ppc   = 0;
     ppcInstruction::fpu_mode_asm_x86   = 0;
+    ppcInstruction::fpu_mode = SOFTWARE;
   }
   else if(_fpu_mode_cplusplus==1) 
   {
@@ -180,6 +182,7 @@ vector<thread*> ppcThread::init(processor *proc,
     ppcInstruction::fpu_mode_cplusplus = 1;
     ppcInstruction::fpu_mode_asm_ppc   = 0;
     ppcInstruction::fpu_mode_asm_x86   = 0;
+    ppcInstruction::fpu_mode = CPLUSPLUS;
   }
 
   /* wcm: could rework some of this to also detect x86 assembly sometime. */

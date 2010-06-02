@@ -167,7 +167,7 @@ bool ppcLoader::loadSections(const mach_header *mh,
       
       // We copy everything to the data segment, and some things to
       // the text segment
-      bool ret;
+      bool ret = false;
       if (subset==0) {
 	if (useExec||1) {
 	  ret = ppcLoader::CopyToTEXT(ntohl(sec->addr), Data, ntohl(sec->size));

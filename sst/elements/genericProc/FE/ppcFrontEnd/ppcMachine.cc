@@ -606,9 +606,11 @@ word_t readUpper(const qword_t w) {
   return (word_t)((w>>32) & 0xffffffff);
 }
 
+BOOST_STATIC_ASSERT(sizeof(qword_t) == sizeof(double));
+
 qword_t readWhole(const double d) {
-  qword_t w = *((qword_t*)&d);
-  //printf("readWhole %f -> %llx\n", d, w);
+  qword_t w;
+  memcpy(&w, &d, sizeof(qword_t));
   return w;
 }
 
@@ -633,12 +635,11 @@ qword_t endian_swap(qword_t value)
 #endif
 }
 
-dfloat_t convertDWToDouble(qword_t q)
+dfloat_t convertDWToDouble(const qword_t q)
 {
-  //printf("gets: %llx returns: %f\n", q, *((dfloat_t *)(& q)));
-  //return *((dfloat_t *)(& q)); 
-  qword_t t = q;
-  return *((dfloat_t *)(& t)); 
+  double t;
+  memcpy(&t, &q, sizeof(double));
+  return t;
 }
 
 

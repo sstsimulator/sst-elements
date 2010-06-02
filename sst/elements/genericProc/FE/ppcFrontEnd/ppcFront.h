@@ -47,6 +47,8 @@ const int ppcRegSize = 32+64+(32*altivecWordSize); //int, fp, and altivec regist
 class processor; 
 class ppcThread;
 
+typedef enum { SOFTWARE, CPLUSPLUS, ASM_PPC/*, ASM_X86*/ } fpu_mode_t;
+
 //: PowerPC instruction
 //!SEC:ppcFront
 class ppcInstruction : public instruction {
@@ -64,10 +66,11 @@ class ppcInstruction : public instruction {
     ar & BOOST_SERIALIZATION_NVP(totalCommitted);
     ar & BOOST_SERIALIZATION_NVP(parent);
     ar & BOOST_SERIALIZATION_NVP(magicStack);
+    ar & BOOST_SERIALIZATION_NVP(fpu_mode);
     ar & BOOST_SERIALIZATION_NVP(fpu_mode_software);
-    ar & BOOST_SERIALIZATION_NVP(fpu_mode_cplusplus); 
-    ar & BOOST_SERIALIZATION_NVP(fpu_mode_asm_ppc);   
-    ar & BOOST_SERIALIZATION_NVP(fpu_mode_asm_x86);     
+    ar & BOOST_SERIALIZATION_NVP(fpu_mode_cplusplus);
+    ar & BOOST_SERIALIZATION_NVP(fpu_mode_asm_ppc);
+    ar & BOOST_SERIALIZATION_NVP(fpu_mode_asm_x86);
     ar & BOOST_SERIALIZATION_NVP(debugPrintFPSCR);
     ar & BOOST_SERIALIZATION_NVP(_NPC);
     ar & BOOST_SERIALIZATION_NVP(_TPC);
@@ -101,6 +104,7 @@ class ppcInstruction : public instruction {
 
   // FPU Configuration mode
   static bool little_endian;
+  static fpu_mode_t fpu_mode;
   static bool fpu_mode_software;   /* software IEEE compliant FPU operations             */
   static bool fpu_mode_cplusplus;  /* do op'n using C code (not IEEE compliant FPU)      */
   static bool fpu_mode_asm_ppc;    /* Use native PPC assembly when on a PPC              */
