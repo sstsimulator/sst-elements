@@ -5801,18 +5801,11 @@ DEFINST(DIVWOD,				0x7D7,
 
 CONNECT(FDIVS_LINK)
 
-
 #ifdef __ppc__
-#define FDIVS_IMPL_PPC_ASM(double_dest,fpscrout,fpscrin,double_a,double_b) {  \
-    asm volatile ("mtfsf 0xFF,%2\n fdivs %0,%3,%4\n mffs %1"     \
-         : "=f" (double_dest), "=f" (fpscrout)          \
-         : "f" (fpscrin), "f" (double_a),               \
-           "f" (double_b) );                \
-}
+#define ONLY_PPC(x) x
 #else
-#define FDIVS_IMPL_PPC_ASM(one,two,three,four,five) abort()
+#define ONLY_PPC(x) abort()
 #endif
-
 
 #define FDIVS_IMPL						\
 {								\
@@ -5838,10 +5831,10 @@ CONNECT(FDIVS_LINK)
 	    assert(0);                                          \
         } else if(ppcInstruction::fpu_mode_asm_ppc)  {          \
             /* double_dest = double_a * double_c; */            \
-            asm ("mtfsf 0xFF,%2\n fdivs %0,%3,%4\n mffs %1"     \
+            ONLY_PPC(asm ("mtfsf 0xFF,%2\n fdivs %0,%3,%4\n mffs %1"     \
                  : "=f" (double_dest), "=f" (fpscrout)          \
                  : "f" (fpscrin), "f" (double_a),               \
-                   "f" (double_b) );                            \
+                   "f" (double_b) ));                            \
             fp1 = (int *) (&fpscrout);                          \
             memcpy(&_fp, (fp1+1), 4);                           \
 	}                                                       \
@@ -5872,16 +5865,6 @@ DEFINST(FDIVSD,				0x25,
         PPC_DCR, DNA, DNA,		PPC_DCR, DNA)
 
 
-#ifdef __ppc__
-#define FSUBS_IMPL_PPC_ASM(double_dest,fpscrout,fpscrin,double_a,double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fsubs %0,%3,%4\n mffs %1"  \
-                : "=f" (double_dest), "=f" (fpscrout)       \
-                : "f" (fpscrin), "f" (double_a),            \
-                  "f" (double_b) )
-#else
-#define FSUBS_IMPL_PPC_ASM(...) abort()
-#endif
-
 #define FSUBS_IMPL                                 \
 {                                                   \
     qword_t _a, _b;                                  \
@@ -5909,7 +5892,10 @@ DEFINST(FDIVSD,				0x25,
 	    abort();                                        \
 	    case ASM_PPC:				    \
             /* double_dest = double_a - double_b;      */   \
-	    FSUBS_IMPL_PPC_ASM(double_dest,fpscrout,fpscrin,double_a,double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fsubs %0,%3,%4\n mffs %1"  \
+                : "=f" (double_dest), "=f" (fpscrout)       \
+                : "f" (fpscrin), "f" (double_a),            \
+                  "f" (double_b) ));			    \
             fp1 = (int *) (&fpscrout);                      \
             memcpy(&_fp, (fp1+1), 4);                       \
 	    break;					    \
@@ -5941,19 +5927,6 @@ DEFINST(FSUBSD,				0x29,
         FloatADD,			F_FCOMP,
         PPC_DFPR(FD), PPC_DFPSCR,       PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPSCR,
         PPC_DCR, DNA, DNA,		PPC_DCR, DNA)
-
-
-#ifdef __ppc__
-#define FADS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b) \
-            asm volatile("mtfsf 0xFF,%2\n fadds %0,%3,%4\n mffs %1" \
-                : "=f" (double_dest),				    \
-                  "=f" (fpscrout)				    \
-                : "f" (fpscrin),				    \
-                  "f" (double_a),				    \
-                  "f" (double_b) )
-#else
-#define FADS_IMPL_ASM_PPC(...) abort()
-#endif
 
 #define FADDS_IMPL                             \
 {                                               \
@@ -5991,7 +5964,12 @@ DEFINST(FSUBSD,				0x29,
                               float_rounding_flags);		    \
 	    } break;						    \
 	    case ASM_PPC:					    \
-	    FADS_IMPL_ASM_PPC(double_dest,fpscrout,fpscrin,double_a,double_b); \
+            ONLY_PPC(asm volatile("mtfsf 0xFF,%2\n fadds %0,%3,%4\n mffs %1" \
+                : "=f" (double_dest),				    \
+                  "=f" (fpscrout)				    \
+                : "f" (fpscrin),				    \
+                  "f" (double_a),				    \
+                  "f" (double_b) ));				    \
             fp1 = (int *) (&fpscrout);				    \
             memcpy(&_fp, (fp1+1), 4);				    \
 	    break;						    \
@@ -6023,16 +6001,6 @@ DEFINST(FADDSD,				0x2B,
         PPC_DFPR(FD), PPC_DFPSCR,       PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPSCR,
         PPC_DCR, DNA, DNA,		PPC_DCR, DNA)
 
-#ifdef __ppc__
-#define FMULS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c) \
-            asm volatile ("mtfsf 0xFF,%2\n fmuls %0,%3,%4\n mffs %1"  \
-                 : "=f" (double_dest), "=f" (fpscrout)       \
-                 : "f" (fpscrin), "f" (double_a),            \
-                   "f" (double_c) )
-#else
-#define FMULS_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FMULS_IMPL                                  \
 {                                                    \
     qword_t _a, _c;                                   \
@@ -6056,7 +6024,10 @@ DEFINST(FADDSD,				0x2B,
 	    fprintf(stderr,"need softfloat implementation of fmuls\n"); \
 	    abort();					     \
 	    case ASM_PPC:				     \
-	    FMULS_IMPL_ASM_PPC(double_dest,fpscrout,fpscrin,double_a,double_c); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fmuls %0,%3,%4\n mffs %1"  \
+                 : "=f" (double_dest), "=f" (fpscrout)       \
+                 : "f" (fpscrin), "f" (double_a),            \
+                   "f" (double_c) ));			     \
             fp1 = (int *) (&fpscrout);                       \
             memcpy(&_fp, (fp1+1), 4);                        \
 	    break;					     \
@@ -6187,16 +6158,6 @@ DEFINST(FRESD,				0x31,
 	PPC_DCR, DNA, DNA,		DNA,DNA)
 
 
-#ifdef __ppc__
-#define FNMSUBS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fnmsubs %0,%3,%4,%5\n mffs %1"  \
-                : "=f" (double_dest), "=f" (fpscrout)             \
-                : "f" (fpscrin), "f" (double_a),                  \
-                  "f" (double_c), "f" (double_b) )
-#else
-#define FNMSUBS_IMPL_ASM_PPC(...) abort()
-#endif
-
 /* frD = -( (frA * frC) - frB ) */
 #define FNMSUBS_IMPL                                          \
 {                                                              \
@@ -6226,7 +6187,10 @@ DEFINST(FRESD,				0x31,
 	    abort();						  \
 	    case ASM_PPC:					  \
             /* double_dest = double_a * double_c - double_b;  */  \
-	    FNMSUBS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fnmsubs %0,%3,%4,%5\n mffs %1"  \
+                : "=f" (double_dest), "=f" (fpscrout)             \
+                : "f" (fpscrin), "f" (double_a),                  \
+                  "f" (double_c), "f" (double_b) ));		  \
             fp1 = (int *) (&fpscrout);                            \
             memcpy(&_fp, (fp1+1), 4);                             \
 	    break;						  \
@@ -6259,16 +6223,6 @@ DEFINST(FNMSUBSD,                     0x3D,
         PPC_DFPR(FD), PPC_DFPSCR,     PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPR(FC),
         PPC_DCR, DNA, DNA,            PPC_DFPSCR, PPC_DCR)
 
-#ifdef __ppc__
-#define FMSUBS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fmsubs %0,%3,%4,%5\n mffs %1"     \
-                : "=f" (double_dest), "=f" (fpscrout)               \
-                : "f" (fpscrin), "f" (double_a),                    \
-                  "f" (double_c), "f" (double_b) )
-#else
-#define FMSUBS_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FMSUBS_IMPL                                 \
 {                                                    \
     qword_t _a, _b,_c;                                \
@@ -6296,7 +6250,10 @@ DEFINST(FNMSUBSD,                     0x3D,
 	    fprintf(stderr,"need softfloat implementation of fmsubs\n"); \
 	    abort();						    \
 	    case ASM_PPC:					    \
-	    FMSUBS_IMPL_ASM_PPC(double_dest, fpscrout,fpscrin,double_a,double_c,double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fmsubs %0,%3,%4,%5\n mffs %1"     \
+                : "=f" (double_dest), "=f" (fpscrout)               \
+                : "f" (fpscrin), "f" (double_a),                    \
+                  "f" (double_c), "f" (double_b) ));		    \
             fp1 = (int *) (&fpscrout);                              \
             memcpy(&_fp, (fp1+1), 4);                               \
 	    break;						    \
@@ -6326,17 +6283,6 @@ DEFINST(FMSUBSD,                      0x39,
         PPC_DFPR(FD), PPC_DFPSCR,     PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPR(FC),
         PPC_DCR, DNA, DNA,            PPC_DFPSCR, PPC_DCR)
 
-
-#ifdef __ppc__
-#define FMADDS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fmadds %0,%3,%4,%5\n mffs %1"      \
-                 : "=f" (double_dest), "=f" (fpscrout)               \
-                 : "f" (fpscrin), "f" (double_a),                    \
-                   "f" (double_c), "f" (double_b) )
-#else
-#define FMADDS_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FMADDS_IMPL                                      \
 {                                                         \
     qword_t _a, _b,_c;                                     \
@@ -6365,7 +6311,10 @@ DEFINST(FMSUBSD,                      0x39,
 	    abort();						     \
 	    case ASM_PPC:					     \
             /* double_dest = double_a * double_c + double_b;   */    \
-	    FMADDS_IMPL_ASM_PPC(double_dest,fpscrout,fpscrin,double_a,double_c,double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fmadds %0,%3,%4,%5\n mffs %1"      \
+                 : "=f" (double_dest), "=f" (fpscrout)               \
+                 : "f" (fpscrin), "f" (double_a),                    \
+                   "f" (double_c), "f" (double_b) ));		     \
             fp1 = (int *) (&fpscrout);                               \
             memcpy(&_fp, (fp1+1), 4);                                \
 	    break;						     \
@@ -6400,16 +6349,6 @@ DEFINST(FMADDSD,                      0x3B,
         PPC_DCR, DNA, DNA,            PPC_DFPSCR, PPC_DCR)
 
 
-#ifdef __ppc__
-#define FNMADDS_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fnmadds %0,%3,%4,%5\n mffs %1"     \
-                 : "=f" (double_dest), "=f" (fpscrout)               \
-                 : "f" (fpscrin), "f" (double_a),                    \
-                   "f" (double_c), "f" (double_b) )
-#else
-#define FNMADDS_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FNMADDS_IMPL                                     \
 {                                                         \
     qword_t _a, _b,_c;                                     \
@@ -6437,7 +6376,10 @@ DEFINST(FMADDSD,                      0x3B,
 	    fprintf(stderr,"need softfloat implementation of fnmadds\n"); \
 	    abort();						     \
 	    case ASM_PPC:					     \
-	    FNMADDS_IMPL_ASM_PPC(double_dest,fpscrout,fpscrin,double_a,double_c,double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fnmadds %0,%3,%4,%5\n mffs %1"     \
+                 : "=f" (double_dest), "=f" (fpscrout)               \
+                 : "f" (fpscrin), "f" (double_a),                    \
+                   "f" (double_c), "f" (double_b) ));		     \
             fp1 = (int *) (&fpscrout);                               \
             memcpy(&_fp, (fp1+1), 4);                                \
 	    break;						     \
@@ -6470,17 +6412,6 @@ DEFINST(FNMADDSD,                     0x3F,
         PPC_DFPR(FD), PPC_DFPSCR,     PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPR(FC),
         PPC_DCR, DNA, DNA,            PPC_DFPSCR, PPC_DCR)
 
-#ifdef __ppc__
-#define FSQRTS_IMPL_PPC_ASM(fpscrout) do { \
-	    register double fpscrin=0.0;                      \
-            asm volatile ("mtfsf 0xFF,%2\nfsqrts %0,%3\nmffs %1" \
-                 : "=f" (double_dest), "=f" (fpscrout)         \
-                 : "f" (fpscrin), "f" (double_a) );            \
-} while (0)
-#else
-#define FSQRTS_IMPL_PPC_ASM(fpscrout) abort()
-#endif
-
 #define FSQRTS_IMPL						\
 {								\
     qword_t _a;							\
@@ -6502,7 +6433,10 @@ DEFINST(FNMADDSD,                     0x3F,
 	    abort();						\
 	    case ASM_PPC: {					\
 		double fpscrout = 0.0;				\
-		FSQRTS_IMPL_PPC_ASM(fpscrout);			\
+		ONLY_PPC(register double fpscrin=0.0;                      \
+		asm volatile ("mtfsf 0xFF,%2\nfsqrts %0,%3\nmffs %1" \
+                 : "=f" (double_dest), "=f" (fpscrout)         \
+                 : "f" (fpscrin), "f" (double_a) ));            \
 		fp1 = (int *) (&fpscrout);			\
 		memcpy(&_fp, (fp1+1), 4);			\
 	    } break;						\
@@ -6708,17 +6642,6 @@ DEFINST(FRSPD,				0x019,
 
 #ifdef FP_ROUND_CONVERSION_INST
 
-#ifdef __ppc__
-#define FCTIW_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fctiw %0,%3\n mffs %1" \
-                 : "=f" (double_dest),                          \
-                   "=f" (fpscrout)                              \
-                 : "f"  (fpscrin),                              \
-                   "f"  (double_b) )
-#else
-#define FCTIW_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FCTIW_IMPL					  \
 {							   \
     int *fp1;                                               \
@@ -6764,7 +6687,11 @@ DEFINST(FRSPD,				0x019,
 		    float_rounding_flags);                      \
 	    } break;						\
 	    case ASM_PPC:					\
-	    FCTIW_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fctiw %0,%3\n mffs %1" \
+                 : "=f" (double_dest),                          \
+                   "=f" (fpscrout)                              \
+                 : "f"  (fpscrin),                              \
+                   "f"  (double_b) ));				\
             fp1 = (int *) (&fpscrout);                          \
             memcpy(&_fp, (fp1+1), 4);                           \
 	    break;						\
@@ -6808,15 +6735,6 @@ DEFINST(FCTIWD,				0x01D,
 
 
 #ifdef FP_ROUND_CONVERSION_INST
-
-#ifdef __ppc__
-#define FCTIWZ_IMPL_ASM(double_dest,fpscrout,fpscrin,double_b) \
-    asm volatile ("mtfsf 0xFF,%2\n fctiwz %0,%3\n mffs %1\n"    \
-                          : "=f" (double_dest), "=f" (fpscrout)	\
-                          : "f" (fpscrin), "f" (double_b) );
-#else
-#define FCTIWZ_IMPL_ASM(...) abort()
-#endif
 
 #define FCTIWZ_IMPL							\
 {									\
@@ -6863,7 +6781,9 @@ DEFINST(FCTIWD,				0x01D,
 		    float_exception_flags, float_rounding_flags);	\
 	    } break;							\
 	    case ASM_PPC:						\
-	    FCTIWZ_IMPL_ASM(double_dest,fpscrout,fpscrin,double_b);	\
+	    ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fctiwz %0,%3\n mffs %1\n"    \
+                          : "=f" (double_dest), "=f" (fpscrout)		\
+                          : "f" (fpscrin), "f" (double_b) ));		\
 	    fp1 = (int *) (&fpscrout);					\
 	    memcpy(&_fp, (fp1+1), 4);					\
 	    break;							\
@@ -6905,16 +6825,6 @@ DEFINST(FCTIWZD,			0x1F,
         PPC_DFPR(FD),PPC_DFPSCR,        PPC_DFPR(FB),PPC_DFPSCR,DNA,
         PPC_DCR, DNA, DNA,		PPC_DCR, DNA)
 
-#ifdef __ppc__
-#define FDIV_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b) \
-           asm volatile ("mtfsf 0xFF,%2\n fdiv %0,%3,%4\n mffs %1"         \
-               : "=f" (double_dest), "=f" (fpscrout)             \
-               : "f" (fpscrin), "f" (double_a),                  \
-                 "f" (double_b) )
-#else
-#define FDIV_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FDIV_IMPL                                                \
 {                                                                \
    qword_t _a, _b;                                               \
@@ -6950,7 +6860,10 @@ DEFINST(FCTIWZD,			0x1F,
                              float_rounding_flags);              \
 	    } break; \
 	   case ASM_PPC: \
-	   FDIV_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b); \
+           ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fdiv %0,%3,%4\n mffs %1"         \
+               : "=f" (double_dest), "=f" (fpscrout)             \
+               : "f" (fpscrin), "f" (double_a),                  \
+                 "f" (double_b) ));				 \
            fp1 = (int *) (&fpscrout);                            \
            memcpy(&_fp, (fp1+1), 4);                             \
 	   break; \
@@ -7117,18 +7030,6 @@ DEFINST(FMRD,                   0x091,
         PPC_DFPR(FD), DNA,      PPC_DFPR(FB), PPC_DFPSCR, PPC_DCR,
         DNA, DNA, DNA,          DNA, DNA)
 
-#ifdef __ppc__
-#define FSUB_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fsub %0,%3,%4\n mffs %1"                \
-                 : "=f" (double_dest),                                    \
-                   "=f" (fpscrout)                                        \
-                 : "f"  (fpscrin),                                        \
-                   "f"  (double_a),                                       \
-                   "f"  (double_b) )
-#else
-#define FSUB_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FSUB_IMPL                                                         \
 {                                                                         \
     qword_t _a, _b;                                                       \
@@ -7164,7 +7065,12 @@ DEFINST(FMRD,                   0x091,
                               float_rounding_flags);                      \
 	    } break; \
 	    case ASM_PPC: \
-	    FSUB_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fsub %0,%3,%4\n mffs %1"                \
+                 : "=f" (double_dest),                                    \
+                   "=f" (fpscrout)                                        \
+                 : "f"  (fpscrin),                                        \
+                   "f"  (double_a),                                       \
+                   "f"  (double_b) ));					  \
             fp1 = (int *) (&fpscrout);                                    \
             memcpy(&_fp, (fp1+1), 4);                                     \
 	    break; \
@@ -7195,18 +7101,6 @@ DEFINST(FSUBD,				0x29,
         PPC_DFPR(FD), PPC_DFPSCR,       PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPSCR,
         PPC_DCR, DNA, DNA,		PPC_DCR, DNA)
 
-
-#ifdef __ppc__
-#define FADD_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fadd %0,%3,%4\n mffs %1"                \
-                 : "=f" (double_dest),                                    \
-                   "=f" (fpscrout)                                        \
-                 : "f"  (fpscrin),                                        \
-                   "f"  (double_a),                                       \
-                   "f"  (double_b) )
-#else
-#define FADD_IMPL_ASM_PPC(...) abort()
-#endif
 
 #define FADD_IMPL                                         \
 {                                                          \
@@ -7241,7 +7135,12 @@ DEFINST(FSUBD,				0x29,
                               float_rounding_flags);                      \
 	    } break; \
 	    case ASM_PPC: \
-	    FADD_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fadd %0,%3,%4\n mffs %1"                \
+                 : "=f" (double_dest),                                    \
+                   "=f" (fpscrout)                                        \
+                 : "f"  (fpscrin),                                        \
+                   "f"  (double_a),                                       \
+                   "f"  (double_b) ));					  \
             fp1 = (int *) (&fpscrout);					  \
             memcpy(&_fp, (fp1+1), 4);					  \
 	    break; \
@@ -7310,19 +7209,6 @@ DEFINST(FSELD,                  0x2F,
         PPC_DFPR(FD),DNA,       PPC_DFPR(FA),PPC_DFPR(FB),PPC_DFPR(FC),
         DNA,DNA,DNA,            DNA,DNA)
 
-#ifdef __ppc__
-#define FNMSUB_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fnmsub %0,%3,%4,%5\n mffs %1"      \
-            : "=f" (double_dest),                                    \
-              "=f" (fpscrout)                                        \
-            : "f" (fpscrin),                                         \
-              "f" (double_a),                                        \
-              "f" (double_c),                                        \
-              "f" (double_b) )
-#else
-#define FNMSUB_IMPL_ASM_PPC(...) abort()
-#endif
-
 #define FNMSUB_IMPL                                                  \
 {                                                                    \
     qword_t _a, _b,_c;                                               \
@@ -7363,7 +7249,13 @@ DEFINST(FSELD,                  0x2F,
                               float_rounding_flags);                 \
 	    } break; \
 	    case ASM_PPC: \
-	    FNMSUB_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fnmsub %0,%3,%4,%5\n mffs %1"      \
+            : "=f" (double_dest),                                    \
+              "=f" (fpscrout)                                        \
+            : "f" (fpscrin),                                         \
+              "f" (double_a),                                        \
+              "f" (double_c),                                        \
+              "f" (double_b) ));				     \
             fp1 = (int *) (&fpscrout);                               \
             memcpy(&_fp, (fp1+1), 4);                                \
 	    break; \
@@ -7392,18 +7284,6 @@ DEFINST(FNMSUBD,                      0x3D,
         FloatMULT,           F_FCOMP,
         PPC_DFPR(FD), PPC_DFPSCR,     PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPR(FC),
         PPC_DCR, DNA, DNA,            PPC_DFPSCR, PPC_DCR)
-
-#ifdef __ppc__
-#define FMUL_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c) \
-            asm volatile ("mtfsf 0xFF,%2\n fmul %0,%3,%4\n mffs %1"                \
-               : "=f" (double_dest),                                      \
-                 "=f" (fpscrout)                                          \
-               : "f" (fpscrin),                                           \
-                 "f" (double_a),                                          \
-                 "f" (double_c) )
-#else
-#define FMUL_IMPL_ASM_PPC(...) abort()
-#endif
 
 #define FMUL_IMPL                                                         \
 {                                                                         \
@@ -7440,7 +7320,12 @@ DEFINST(FNMSUBD,                      0x3D,
                               float_rounding_flags);                      \
 	    } break; \
 	    case ASM_PPC: \
-	    FMUL_IMPL_ASM_PPC(double_dest, fpscrout, fpscrin, double_a, double_c); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fmul %0,%3,%4\n mffs %1"                \
+               : "=f" (double_dest),                                      \
+                 "=f" (fpscrout)                                          \
+               : "f" (fpscrin),                                           \
+                 "f" (double_a),                                          \
+                 "f" (double_c) ));					  \
             fp1 = (int *) (&fpscrout);                                    \
             memcpy(&_fp, (fp1+1), 4);                                     \
 	    break; \
@@ -7471,19 +7356,6 @@ DEFINST(FMULD,				0x33,
         FloatMULT,			F_FCOMP,
         PPC_DFPR(FD), PPC_DFPSCR,       PPC_DFPR(FA), PPC_DFPR(FC), PPC_DFPSCR,
         PPC_DCR, DNA, DNA,		PPC_DCR, DNA)
-
-#ifdef __ppc__
-#define FMSUB_IMPL_PPC_ASM(double_dest,fpscrout,fpscrin,double_a,double_c,double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fmsub %0,%3,%4,%5\n mffs %1"       \
-                 : "=f" (double_dest),                               \
-                   "=f" (fpscrout)                                   \
-                 :  "f" (fpscrin),                                   \
-                    "f" (double_a),                                  \
-                    "f" (double_c),                                  \
-                    "f" (double_b) )
-#else
-#define FMSUB_IMPL_PPC_ASM(...) abort()
-#endif
 
 #define FMSUB_IMPL                                                   \
 {                                                                    \
@@ -7534,7 +7406,13 @@ DEFINST(FMULD,				0x33,
 	    } break; \
 	    case ASM_PPC: \
             /* double_dest = double_a * double_c - double_b;  */     \
-	    FMSUB_IMPL_PPC_ASM(double_dest,fpscrout,fpscrin,double_a,double_c,double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fmsub %0,%3,%4,%5\n mffs %1"       \
+                 : "=f" (double_dest),                               \
+                   "=f" (fpscrout)                                   \
+                 :  "f" (fpscrin),                                   \
+                    "f" (double_a),                                  \
+                    "f" (double_c),                                  \
+                    "f" (double_b) ));				     \
             fp1 = (int *) (&fpscrout);                               \
             memcpy(&_fp, (fp1+1), 4);                                \
 	    break; \
@@ -7570,17 +7448,6 @@ DEFINST(FMSUBD,                       0x39,
         PPC_DCR, DNA, DNA,            PPC_DFPSCR, PPC_DCR)
 
 
-
-#ifdef __ppc__
-#define FMADD_IMPL_PPC_ASM(double_dest,pfscrout,fpscrin,double_a,double_c,double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fmadd %0,%3,%4,%5\n mffs %1"         \
-                 : "=f" (double_dest), "=f" (fpscrout)                 \
-                 : "f" (fpscrin), "f" (double_a),                      \
-                   "f" (double_c), "f" (double_b) )
-#else
-#define FMADD_IMPL_PPC_ASM(...) abort()
-#endif
-
 #define FMADD_IMPL                                                     \
 {                                                                      \
     qword_t _a, _b,_c;                                                 \
@@ -7598,12 +7465,6 @@ DEFINST(FMSUBD,                       0x39,
         _a = PPC_FPR_DW(FA);                                           \
         _b = PPC_FPR_DW(FB);                                           \
         _c = PPC_FPR_DW(FC);                                           \
-        /*ptempf = (word_t *) (&double_a);                             \
-        asm("stfd %0, 0(%1)": : "f" (_a), "g" (*ptempf) : "r0" );      \
-        ptempf = (word_t *) (&double_b);                               \
-        asm("stfd %0, 0(%1)": : "f" (_b), "g" (*ptempf) : "r0" );      \
-        ptempf = (word_t *) (&double_c);			       \
-        asm("stfd %0, 0(%1)": : "f" (_c), "g" (*ptempf) : "r0" );*/    \
         memcpy(&double_a, &_a, sizeof(_a));			       \
         memcpy(&double_b, &_b, sizeof(_b));			       \
         memcpy(&double_c, &_c, sizeof(_c));			       \
@@ -7641,7 +7502,10 @@ DEFINST(FMSUBD,                       0x39,
 	    } break; \
 	    case ASM_PPC: \
             /* double_dest = double_a * double_c + double_b;*/         \
-	    FMADD_IMPL_PPC_ASM(double_dest, fpscrout, fpscrin, double_a, double_c, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fmadd %0,%3,%4,%5\n mffs %1"         \
+                 : "=f" (double_dest), "=f" (fpscrout)                 \
+                 : "f" (fpscrin), "f" (double_a),                      \
+                   "f" (double_c), "f" (double_b) ));		       \
             fp1 = (int *) (&fpscrout);                                 \
             memcpy(&_fp, (fp1+1), 4);                                  \
 	    break; \
@@ -7672,16 +7536,6 @@ DEFINST(FMADDD,                       0x3B,
         FloatMULT,                    F_FCOMP,
         PPC_DFPR(FD), PPC_DFPSCR,     PPC_DFPR(FA), PPC_DFPR(FB), PPC_DFPR(FC),
         DNA, DNA, DNA,                PPC_DFPSCR, PPC_DCR)
-
-#ifdef __ppc__
-#define FNMADD_IMPL_PPC_ASM(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) \
-            asm volatile ("mtfsf 0xFF,%2\n fnmadd %0,%3,%4,%5\n mffs %1"        \
-                 : "=f" (double_dest), "=f" (fpscrout)                 \
-                 : "f" (fpscrin), "f" (double_a),                      \
-                   "f" (double_c), "f" (double_b) )
-#else
-#define FNMADD_IMPL_PPC_ASM(double_dest, fpscrout, fpscrin, double_a, double_c, double_b) abort()
-#endif
 
 #define FNMADD_IMPL                                                    \
 {                                                                      \
@@ -7723,7 +7577,10 @@ DEFINST(FMADDD,                       0x3B,
 	    } break; \
 	    case ASM_PPC: \
             /* double_dest = -(double_a * double_c + double_b);   */   \
-	    FNMADD_IMPL_PPC_ASM(double_dest, fpscrout, fpscrin, double_a, double_c, double_b); \
+            ONLY_PPC(asm volatile ("mtfsf 0xFF,%2\n fnmadd %0,%3,%4,%5\n mffs %1"        \
+                 : "=f" (double_dest), "=f" (fpscrout)                 \
+                 : "f" (fpscrin), "f" (double_a),                      \
+                   "f" (double_c), "f" (double_b) ));		       \
             fp1 = (int *) (&fpscrout);                                 \
             memcpy(&_fp, (fp1+1), 4);                                  \
 	    break; \
@@ -7999,19 +7856,6 @@ DEFINST(MFFSD,                  0x48F,
         PPC_DFPR(FD),PPC_DCR,   PPC_DFPSCR,PPC_DCR,DNA,
         DNA, DNA, DNA,		DNA, DNA)
 
-#ifdef __ppc__
-#define FSQRT_IMPL_PPC_ASM(double_dest,fpscrout,double_a) do { \
-    register double fpscrin = 0.0; \
-    __asm__ __volatile__ ("mtfsf 0xFF,%2\nfsqrt %0,%3\nmffs %1"          \
-             : "=f" (double_dest),                          \
-               "=f" (fpscrout)                              \
-             : "f" (fpscrin),    /*bug here??? */           \
-               "f" (double_a) );			    \
-} while (0)
-#else
-#define FSQRT_IMPL_PPC_ASM(double_dest,fpscrout,double_a) abort()
-#endif
-
 #define FSQRT_IMPL                                 \
 {						    \
   qword_t _a;                                        \
@@ -8044,7 +7888,12 @@ DEFINST(MFFSD,                  0x48F,
 	} break;                                            \
 	case ASM_PPC:					    \
 	double fpscrout;				    \
-	FSQRT_IMPL_PPC_ASM(double_dest,fpscrout,double_a);  \
+	ONLY_PPC(register double fpscrin = 0.0; \
+	asm volatile ("mtfsf 0xFF,%2\nfsqrt %0,%3\nmffs %1"          \
+             : "=f" (double_dest),                          \
+               "=f" (fpscrout)                              \
+             : "f" (fpscrin),    /*bug here??? */           \
+               "f" (double_a) ));			    \
         fp1 = (int *) (&fpscrout);                          \
         memcpy(&_fp, (fp1+1), 4);                           \
 	break;						    \
