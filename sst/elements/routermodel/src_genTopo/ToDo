@@ -1,6 +1,7 @@
 - Get rid of fixed max number of NICs per router
 - Clos topology
 - Butterfly topology
+
 DONE - More than one NIC per router?
 DONE - Flattened butterfly topology
 DONE - Implement 3-D meshes and tori
