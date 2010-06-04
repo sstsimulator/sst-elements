@@ -1,7 +1,7 @@
 #include <arpa/inet.h>		// For endian conversion
-#include <sst/cpunicEvent.h>
+#include <sst/core/cpunicEvent.h>
 #include "netsim_model.h"
-#include "../../user_includes/netsim/netsim_internal.h"
+#include "user_includes/netsim/netsim_internal.h"
 
 
 
