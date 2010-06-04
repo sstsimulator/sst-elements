@@ -88,7 +88,8 @@ void SS_router::advanceEventQ () {
             break;
 
         default:
-            printf ("%ld: router %d Error: unknown event type\n", cycle(), routerID);
+            printf ("%ld: router %d Error: unknown event type\n", 
+                    (unsigned long) cycle(), routerID);
         }
     }
 }
@@ -203,7 +204,7 @@ void SS_router::arbitrateInToOut () {
             if (!queue_selected) {
                 if ( inQ->skipQs.size() == 0) {
                     printf ("%ld: Error router %d inQ %d has vc ready count %d, no queues ready\n",
-                            cycle(), routerID, i, inQ->ready_vcQs);
+                            (unsigned long) cycle(), routerID, i, inQ->ready_vcQs);
                 }
                 continue;
             }
@@ -282,17 +283,17 @@ void SS_router::arbitrateOutToLCB () {
                         in_queue |= 1 << curr_vc;
                         if (oLCB->ready_outQ_count[curr_vc]<=0)
                             printf ("%ld: router %d oLCB %d skipped VC %d skipped with %d tokens and %d ready\n",
-                                    cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
+                                    (unsigned long) cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
                                     oLCB->ready_outQ_count[curr_vc]);
 
-                        DBprintf ("%lld: router %d oLCB %d skipped VC %d skipped with %d tokens and %d ready\n",
-                                  cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc], oLCB->ready_outQ_count[curr_vc]);
+                        DBprintf ("%ld: router %d oLCB %d skipped VC %d skipped with %d tokens and %d ready\n",
+                                  (unsigned long) cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc], oLCB->ready_outQ_count[curr_vc]);
                     } else {
                         DBprintf ("%ld: router %d oLCB %d skipped VC %d selected\n",
                                   cycle(), routerID, i, curr_vc);
                         if (oLCB->ready_outQ_count[curr_vc]<=0)
                             printf ("%ld: router %d oLCB %d skipped VC %d selected with %d tokens and %d ready\n",
-                                    cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
+                                    (unsigned long) cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
                                     oLCB->ready_outQ_count[curr_vc]);
 
                         vc_selected = 1;
@@ -311,11 +312,11 @@ void SS_router::arbitrateOutToLCB () {
                             in_queue |= 1 << curr_vc;
                             if (oLCB->ready_outQ_count[curr_vc]<=0)
                                 printf ("%ld: router %d oLCB %d regular VC %d skipped with %d tokens and %d ready\n",
-                                        cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
+                                        (unsigned long) cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
                                         oLCB->ready_outQ_count[curr_vc]);
 
-                            DBprintf ("%lld: router %d oLCB %d regular VC %d skipped with %d tokens and %d ready\n",
-                                      cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
+                            DBprintf ("%ld: router %d oLCB %d regular VC %d skipped with %d tokens and %d ready\n",
+                                      (unsigned long) cycle(), routerID, i, curr_vc, oLCB->vcTokens[curr_vc],
                                       oLCB->ready_outQ_count[curr_vc]);
                         }
                     } else if (oLCB->ready_outQ_count[curr_vc] > 0) {
@@ -323,7 +324,7 @@ void SS_router::arbitrateOutToLCB () {
                                   cycle(), routerID, i, curr_vc);
                         if (in_queue & (1 << curr_vc))
                             printf("%ld: router %d oLCB %d selecting VC %d in queue\n",
-                                   cycle(), routerID, i, curr_vc);
+                                   (unsigned long) cycle(), routerID, i, curr_vc);
 
                         vc_selected = 1;
                         ovc = curr_vc;
@@ -357,25 +358,26 @@ void SS_router::arbitrateOutToLCB () {
 
             if (max_count == 0) {
                 printf ("%ld: Error: router %d LCB %d had vc %d ready count %d vc_selected %d, but no ready output queues\n",
-                        cycle(), routerID, oLCB->link, ovc, oLCB->ready_outQ_count[ovc], vc_selected);
+                        (unsigned long) cycle(), routerID, oLCB->link, ovc, oLCB->ready_outQ_count[ovc], vc_selected);
                 continue;
             }
 
             ilink = *rr;
             deque<rtrP*> *theQ = &(oQs[ilink].vcQ[ovc]);
-            DBprintf ("%lld: router %d has output Q %d:%d:%d ready, size %d\n",
-                      cycle(), routerID, oLCB->link, ilink, ovc, (int)theQ->size());
+            DBprintf ("%ld: router %d has output Q %d:%d:%d ready, size %d\n",
+                      (unsigned long) cycle(), routerID, oLCB->link, ilink, ovc, (int)theQ->size());
 
             rp = theQ->front();
-            DBprintf ("%lld: router %d out Q %d:%d:%d trying to send parcel to oLCB\n", cycle(),
+            DBprintf ("%ld: router %d out Q %d:%d:%d trying to send parcel to oLCB\n", 
+                      (unsigned long) cycle(),
                       routerID, oLCB->link, ilink, ovc );
 
             if (oLCB->size_flits + rp->flits >= oLCB_maxSize_flits)
                 printf("%ld: router %d out Q %d:%d:%d  Error! not enough space in oLCB!\n",
-                       cycle(), routerID, oLCB->link, ilink, ovc);
+                       (unsigned long) cycle(), routerID, oLCB->link, ilink, ovc);
             if (oLCB->vcTokens[ovc] < rp->flits)
                 printf("%ld: router %d out Q %d:%d:%d  Error! not enough tokens in VC!\n",
-                       cycle(), routerID, oLCB->link, ilink, ovc);
+                       (unsigned long) cycle(), routerID, oLCB->link, ilink, ovc);
 
             oLCB->vc_rr = (oLCB->vc_rr + 1) % ROUTER_NUM_VCS;
             theQ->pop_front();
@@ -500,14 +502,16 @@ void SS_router::DebugEvent() {
         tmp.push_back(rtrEventQ[i]);
     }
 
-    printf ("DebugEvent: %ld: router %d event q size %ld\n", cycle(), routerID, (long int)rtrEventQ.size());
+    printf ("DebugEvent: %ld: router %d event q size %ld\n", 
+            (unsigned long) cycle(), routerID, (long int)rtrEventQ.size());
 
     while (!tmp.empty()) {
         event = tmp[0];
         pop_heap(tmp.begin(), tmp.end(), rtrEvent_gt);
         tmp.pop_back();
 
-        printf ("Debug: %ld: router %d event %d, cycle %lld\n", cycle(), routerID, event->type, event->cycle);
+        printf ("Debug: %ld: router %d event %d, cycle %lld\n", 
+                (unsigned long) cycle(), routerID, event->type, event->cycle);
     }
 
 }

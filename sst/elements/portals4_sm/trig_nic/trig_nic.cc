@@ -21,16 +21,16 @@ using namespace SST;
 
 trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     RtrIF(id,params),
+    msg_latency(40),
     ptl_latency(20),
     ptl_msg_latency(10),
-    msg_latency(40),
     rtr_q_size(0),
     rtr_q_max_size(4),
+    latency_ct_post(10),
+    latency_ct_host_update(20),
     dma_in_progress(false),
     rr_dma(false),
-    new_dma(true),
-    latency_ct_post(10),
-    latency_ct_host_update(20)
+    new_dma(true)
 {
 
     ClockHandler_t*  clockHandler = new EventHandler< trig_nic, bool, Cycle_t >
@@ -551,7 +551,7 @@ bool trig_nic::processPtlEvent( Event *e ) {
 	    }
 	    else {
 		printf("%d: Message arrived with no match in PT Entry %d @ %lu from %d\n",
-		       m_id,header.pt_index,getCurrentSimTimeNano(),ev->src);
+		       m_id,header.pt_index,(unsigned long) getCurrentSimTimeNano(),ev->src);
 		abort();
 	    }
 	  

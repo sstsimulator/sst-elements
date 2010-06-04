@@ -57,7 +57,7 @@ private:
             return eventQP.size();
         }
 
-        bool willTake( int numFlits ) {
+        bool willTake( unsigned int numFlits ) {
             return (numFlits <= tokensP );
         }
 
@@ -166,7 +166,7 @@ public:
 
         db_RtrIF("Done registering clock\n");
 
-        for ( int i=0; i < num_vcP; i++ ) {
+        for ( unsigned int i=0; i < num_vcP; i++ ) {
             toNicMapP[i] = new ToNic();
             toRtrMapP[i] = new ToRtr(num_tokens,toRtrQP);
         }
@@ -176,20 +176,20 @@ public:
 
     void finish() {}
 
-    bool toNicQ_empty(int vc)
+    bool toNicQ_empty(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         return toNicMapP[vc]->empty();
     }
 
-    RtrEvent *toNicQ_front(int vc)
+    RtrEvent *toNicQ_front(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         db_RtrIF("vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
-    void toNicQ_pop(int vc)
+    void toNicQ_pop(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         db_RtrIF("vc=%d\n",vc);
@@ -200,7 +200,7 @@ public:
     bool send2Rtr( RtrEvent *event)
     {
         networkPacket* pkt = &event->u.packet;
-        if ( pkt->vc() >= num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
+        if ( pkt->vc() >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
         bool retval = toRtrMapP[pkt->vc()]->push( event );
         if ( retval )
             db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
@@ -221,7 +221,7 @@ private:
     size_t  m_dummySize;
     size_t  m_dummyOffset;
 
-    bool rtrWillTake( int vc, int numFlits )
+    bool rtrWillTake( unsigned int vc, int numFlits )
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"\n");
         db_RtrIF("vc=%d numFlits=%d\n",vc,numFlits);
@@ -268,7 +268,7 @@ private:
 
         pkt->vc() = RTR_2_NIC_VC(pkt->vc());
 
-        if ( pkt->vc() >= num_vcP ) {
+        if ( pkt->vc() >= (int) num_vcP ) {
             _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc(),pkt);
         }
 
@@ -277,7 +277,7 @@ private:
         toNicMapP[pkt->vc()]->push_back( event );
     }
 
-    void returnTokens2Nic( int vc, uint32_t num )
+    void returnTokens2Nic( unsigned int vc, uint32_t num )
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"\n");
         db_RtrIF("vc=%d numFlits=%d\n", vc, num );

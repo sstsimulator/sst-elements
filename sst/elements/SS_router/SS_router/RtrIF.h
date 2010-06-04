@@ -47,68 +47,11 @@
 namespace SST {
 
 class RtrIF : public Component {
-
-private:
-
-    int rtrCountP;
-
-    typedef std::deque<RtrEvent*> ToNic;
-
-    class ToRtr {
-
-        int tokensP;
-        deque<RtrEvent*> &eventQP;
-
-    public:
-        ToRtr( int num_tokens, deque<RtrEvent*> &eventQ ) :
-                tokensP(num_tokens), eventQP(eventQ) {}
-
-        bool push( RtrEvent* event) {
-            networkPacket* pkt = &event->u.packet;
-            if ( pkt->sizeInFlits() > tokensP ) return false;
-            tokensP -= pkt->sizeInFlits();
-            eventQP.push_back(event);
-            return true;
-        }
-        int size() {
-            return eventQP.size();
-        }
-
-        bool willTake( int numFlits ) {
-            return (numFlits <= tokensP );
-        }
-
-        void returnTokens( int num ) {
-            tokensP += num;
-        }
-    };
-
-    map<int,ToNic*>         toNicMapP;
-    map<int,ToRtr*>         toRtrMapP;
-
-    uint                    num_vcP;
-
-    deque<RtrEvent*>        toRtrQP;
-
-    Link*                   m_rtrLink;
-    Log< RTRIF_DBG >&       m_dbg;
-    Log< RTRIF_DBG >&       m_dummyDbg;
-    Log<>&                  m_log;
-
-
-protected:
-    int                     m_id;
-    std::string             frequency;
-    
 public:
-    int Finish() {
-      return 0;
-	}
-
-   RtrIF( ComponentId_t id, Params_t& params ) :
+    RtrIF( ComponentId_t id, Params_t& params ) :
         Component(id),
-        num_vcP(2),
         rtrCountP(0),
+        num_vcP(2),
         m_dbg( *new Log< RTRIF_DBG >( "RtrIF::", false ) ),
         m_dummyDbg( *new Log< RTRIF_DBG >( "Dummy::RtrIF::", false ) ),
         m_log( *new Log<>( "INFO RtrIF: ", false ) )
@@ -164,18 +107,6 @@ public:
                        ( this, &RtrIF::processEvent );
 
         m_rtrLink = LinkAdd( "rtr", handler );
-	
-/*         handler = new EventHandler< */
-/*                             RtrIF, bool, Event* > */
-/*                        ( this, &RtrIF::processCPUEvent ); */
-
-/*         m_cpuLink = LinkAdd( "cpu", handler ); */
-	
-/*         m_selfLink = selfLink( "self"); */
-
-/*         Params_t tmp_params; */
-/*         findParams( "dummy.", params, tmp_params ); */
-/*         dummyInit( tmp_params, frequency ); */
 
         ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
                                                 ( this, &RtrIF::clock );
@@ -186,28 +117,26 @@ public:
 
         db_RtrIF("Done registering clock\n");
 
-        for ( int i=0; i < num_vcP; i++ ) {
+        for ( unsigned int i=0; i < num_vcP; i++ ) {
             toNicMapP[i] = new ToNic();
             toRtrMapP[i] = new ToRtr(num_tokens,toRtrQP);
         }
-/* 	printf("Finish construction RtrIF\n"); */
-
     }
 
-    bool toNicQ_empty(int vc)
+    bool toNicQ_empty(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         return toNicMapP[vc]->empty();
     }
 
-    RtrEvent *toNicQ_front(int vc)
+    RtrEvent *toNicQ_front(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         db_RtrIF("vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
-    void toNicQ_pop(int vc)
+    void toNicQ_pop(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         db_RtrIF("vc=%d\n",vc);
@@ -217,9 +146,8 @@ public:
 
     bool send2Rtr( RtrEvent *event)
     {
-/*       printf("In send2Rtr\n"); */
-      networkPacket* pkt = &event->u.packet;
-        if ( pkt->vc() >= num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
+        networkPacket* pkt = &event->u.packet;
+        if ( pkt->vc() >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
         bool retval = toRtrMapP[pkt->vc()]->push( event );
         if ( retval )
             db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
@@ -231,41 +159,20 @@ public:
         return retval;
     }
 
+    int Finish() { return 0; }
+
 private:
-
-//     void dummyInit( Params_t, std::string );
-//     bool dummyLoad( Cycle_t cycle );
-//     int   m_dummyFd_in;
-//     int   m_dummyFd_out;
-//     size_t  m_dummySize;
-//     size_t  m_dummyOffset;
-
     bool rtrWillTake( int vc, int numFlits )
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
         db_RtrIF("vc=%d numFlits=%d\n",vc,numFlits);
         return toRtrMapP[vc]->willTake( numFlits );
     }
-
-
-//     bool processCPUEvent( Event* e)
-//     {
-//       // Just put event into self link and add the latency
-//       // through the NIC to it
-// /*       printf("Got an event from the cpu, forwarding it on\n"); */
-// 	// If this is a portals event, then we add the latency
-// 	// specified in the trig_nic_event
-// 	trig_nic_event* ev = static_cast<trig_nic_event*>(e);
-// 	m_selfLink->Send(ev->portals ? ev->latency : m_latency,ev);
-//       return false;
-//     }
-
     
     bool processEvent( Event* e)
     {
         RtrEvent* event = static_cast<RtrEvent*>(e);
 
-/* 	printf("In processEvent()\n"); */
         db_RtrIF("type=%ld\n",event->type);
 
         switch ( event->type ) {
@@ -301,7 +208,7 @@ private:
 
         pkt->vc() = RTR_2_NIC_VC(pkt->vc());
 
-        if ( pkt->vc() >= num_vcP ) {
+        if ( pkt->vc() >= (int) num_vcP ) {
             _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc(),pkt);
         }
 
@@ -312,7 +219,7 @@ private:
 
     void returnTokens2Nic( int vc, uint32_t num )
     {
-        if ( vc >= num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
         db_RtrIF("vc=%d numFlits=%d\n", vc, num );
         toRtrMapP[vc]->returnTokens( num );
     }
@@ -349,6 +256,56 @@ private:
         rtrCountP -= cyc;
         return ret;
     }
+
+    typedef std::deque<RtrEvent*> ToNic;
+
+    class ToRtr {
+    public:
+        ToRtr( int num_tokens, deque<RtrEvent*> &eventQ ) :
+                tokensP(num_tokens), eventQP(eventQ) {}
+
+        bool push( RtrEvent* event) {
+            networkPacket* pkt = &event->u.packet;
+            if ( pkt->sizeInFlits() > (unsigned int) tokensP ) return false;
+            tokensP -= pkt->sizeInFlits();
+            eventQP.push_back(event);
+            return true;
+        }
+
+        int size() {
+            return eventQP.size();
+        }
+
+        bool willTake( int numFlits ) {
+            return (numFlits <= tokensP );
+        }
+
+        void returnTokens( int num ) {
+            tokensP += num;
+        }
+
+    private:
+        int tokensP;
+        deque<RtrEvent*> &eventQP;
+    };
+
+    int rtrCountP;
+    map<int,ToNic*>         toNicMapP;
+    map<int,ToRtr*>         toRtrMapP;
+
+    uint                    num_vcP;
+
+    deque<RtrEvent*>        toRtrQP;
+
+    Link*                   m_rtrLink;
+    Log< RTRIF_DBG >&       m_dbg;
+    Log< RTRIF_DBG >&       m_dummyDbg;
+    Log<>&                  m_log;
+
+protected:
+    int                     m_id;
+    std::string             frequency;
 };
+
 }
 #endif

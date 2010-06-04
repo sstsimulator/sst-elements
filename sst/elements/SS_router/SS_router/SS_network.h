@@ -83,15 +83,7 @@ using namespace std;
 #define LINK_POS_Z 4
 #define LINK_NEG_Z 5
 
-static const char* LinkNames[] = {
-    "xPos",
-    "xNeg",
-    "yPos",
-    "yNeg",
-    "zPos",
-    "zNeg",
-    "nic",
-};
+extern const char* LinkNames[];
 
 #define REVERSE_DIR(dir, opp) switch (dir) { \
   case LINK_POS_X: opp = LINK_NEG_X; break;    \

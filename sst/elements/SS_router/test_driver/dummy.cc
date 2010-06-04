@@ -107,13 +107,15 @@ bool::RtrIF::dummyLoad ( Cycle_t cycle ) {
 	    break;
 	}
 	if ( m_id == 0 )
-	    printf("%d: Sending event to node %d on cycle %lu\n",m_id,m_current_send_node,cycle);
+	    printf("%d: Sending event to node %d on cycle %lu\n",
+                   m_id, m_current_send_node, (unsigned long) cycle);
 	m_current_send_node++;
 	break;  // Only send one per cycle
     }
 
     if ( !m_exit && m_node_recvd >= (m_num_nodes) && m_current_send_node >= m_num_nodes ) {
-	printf("%d: Unregistering exit on cycle %lu\n",m_id,cycle);
+	printf("%d: Unregistering exit on cycle %lu\n",
+               m_id, (unsigned long) cycle);
 	m_exit = true;
         unregisterExit();
     }

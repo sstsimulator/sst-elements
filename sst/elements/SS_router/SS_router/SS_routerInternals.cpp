@@ -38,7 +38,8 @@ void SS_router::InLCB ( RtrEvent *e, int ilink, int ivc, int flits) {
     rp->flits = flits;
 
     if (!route(rp)) {
-        printf ("%ld: Error: router %d could not route\n", cycle(), routerID);
+        printf ("%ld: Error: router %d could not route\n", 
+                (unsigned long) cycle(), routerID);
         rpPool.returnRp(rp);
         return;
     }
@@ -84,14 +85,15 @@ bool SS_router::LCBtoInQ_start (rtrP *rp)
     inLCB[rp->ilink].size_flits -= rp->flits;
     inputQ[rp->ilink].size_flits[rp->ivc] += rp->flits;
 
-    DBprintf ("%lld: router %d, %d flits to inputQ %d:%d on cycle %lld size is %d\n",
-              cycle(), routerID, rp->flits, rp->ilink, rp->ivc,
-              event->cycle, inputQ[rp->ilink].size_flits[rp->ivc]);
+    DBprintf ("%ld: router %d, %d flits to inputQ %d:%d on cycle %ld size is %d\n",
+              (unsigned long) cycle(), routerID, rp->flits, rp->ilink, rp->ivc,
+              (unsigned long) event->cycle, inputQ[rp->ilink].size_flits[rp->ivc]);
 
     if ( inputQ[rp->ilink].size_flits[rp->ivc] >
             rtrInput_maxQSize_flits[rp->ilink]) {
         printf ("%ld: Error: rp %p to router %d, inputQ:%d:%d: size = %d, max size = %d, size %d\n",
-                cycle(), rp, routerID, rp->ilink, rp->ivc, inputQ[rp->ilink].size_flits[rp->ivc],
+                (unsigned long) cycle(), rp, routerID, rp->ilink, 
+                rp->ivc, inputQ[rp->ilink].size_flits[rp->ivc],
                 rtrInput_maxQSize_flits[rp->ilink], rp->flits);
         return false;
     }

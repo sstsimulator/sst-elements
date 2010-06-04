@@ -33,6 +33,16 @@
 
 using namespace std;
 
+const char* LinkNames[] = {
+    "xPos",
+    "xNeg",
+    "yPos",
+    "yNeg",
+    "zPos",
+    "zNeg",
+    "nic",
+};
+
 //: Router function to pass tokens back
 // When tokens are returned, this might cause an output queue to become ready to accept data
 void SS_router::updateToken_flits( int link, int vc, int flits )
@@ -75,10 +85,10 @@ void SS_router::returnToken_flits (int dir, int flits, int vc) {
 //: Constructor
 SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         Component( id ),
-        oLCB_maxSize_flits(512),
-        m_cycle(0),
-        dumpTables(false),
         overheadMultP(1.5),
+        oLCB_maxSize_flits(512),
+        dumpTables(false),
+        m_cycle(0),
         m_dbg( *new Log< SS_ROUTER_DBG >( "SS_router::", false ) ),
         m_log( *new Log<>( "INFO SS_router: ", false ) )
 {
@@ -487,8 +497,10 @@ void SS_router::setupRoutingTable( Params_t params, int nodes,
                                    int xDim, int yDim, int zDim) {
 
     DBprintf("\n");
+#if 0
     int dateline[ROUTER_NUM_LINKS];
     bool crossDateline[ROUTER_NUM_LINKS];
+#endif
 
     if ( params.find( "xDateline" ) == params.end() ) {
         _abort(SS_router,"couldn't find xDateline\n" );
