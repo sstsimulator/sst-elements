@@ -245,6 +245,7 @@ public:
         printf("Min time: %lu ns\n", (unsigned long) min);
         printf("Avg time: %lu ns\n", (unsigned long) (total_time/total_num));
         printf("Total num: %d\n", total_num);
+        fflush(NULL);
     }
 
     static void
@@ -254,6 +255,7 @@ public:
         printf("Overall Min time: %lu ns\n", (unsigned long) overall_min);
         printf("Overall Avg time: %lu ns\n", (unsigned long) (overall_total_time/overall_total_num));
         printf("Overall Total num: %d\n", overall_total_num);
+        fflush(NULL);
     }
 
     static int
