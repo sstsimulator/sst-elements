@@ -7,10 +7,10 @@
 #include <math.h>
 #include <string>
 #include <map>
-#include <sst/component.h>
-#include <sst/debug.h>
-#include <sst/sst.h>
-#include <sst/boost.h>
+#include <sst/core/component.h>
+#include <sst/core/debug.h>
+#include <sst/core/sst.h>
+#include <sst/core/boost.h>
 
 
 /*********Sim-Panalyzer************/
@@ -23,18 +23,18 @@ extern "C"{
 #ifdef PANALYZER_H
 
 #ifdef LV1_PANALYZER_H
-#include "../../sst/techModels/libsim-panalyzer/lv1_opts.h"
-#include "../../sst/techModels/libsim-panalyzer/lv1_panalyzer.h"
-#include "../../sst/techModels/libsim-panalyzer/lv1_cache_panalyzer.h"
-#include "../../sst/techModels/libsim-panalyzer/io_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/lv1_opts.h"
+#include "../sst/core/techModels/libsim-panalyzer/lv1_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/lv1_cache_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/io_panalyzer.h"
 #endif
 
 #ifdef LV2_PANALYZER_H
-#include "../../sst/techModels/libsim-panalyzer/technology.h"
-#include "../../sst/techModels/libsim-panalyzer/alu_panalyzer.h"
-#include "../../sst/techModels/libsim-panalyzer/mult_panalyzer.h"
-#include "../../sst/techModels/libsim-panalyzer/fpu_panalyzer.h"
-#include "../../sst/techModels/libsim-panalyzer/uarch_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/technology.h"
+#include "../sst/core/techModels/libsim-panalyzer/alu_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/mult_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/fpu_panalyzer.h"
+#include "../sst/core/techModels/libsim-panalyzer/uarch_panalyzer.h"
 #endif //lv2_panalyzer_h
 
 #endif //panalyzer_h
@@ -46,12 +46,12 @@ extern "C"{
 
 /*added for McPAT05 power analysis */
 #ifdef McPAT05_H
-#include "../../sst/techModels/libMcPAT/io.h"
-#include "../../sst/techModels/libMcPAT/logic.h"
-#include "../../sst/techModels/libMcPAT/full_decoder.h"
-#include "../../sst/techModels/libMcPAT/crossbarswitch.h"
-#include "../../sst/techModels/libMcPAT/basic_circuit.h"
-#include "../../sst/techModels/libMcPAT/processor.h"
+#include "../sst/core/techModels/libMcPAT/io.h"
+#include "../sst/core/techModels/libMcPAT/logic.h"
+#include "../sst/core/techModels/libMcPAT/full_decoder.h"
+#include "../sst/core/techModels/libMcPAT/crossbarswitch.h"
+#include "../sst/core/techModels/libMcPAT/basic_circuit.h"
+#include "../sst/core/techModels/libMcPAT/processor.h"
 #endif //mcpat05_h
 
 
@@ -60,12 +60,12 @@ extern "C"{
 
 /*added for McPAT06 power analysis */
 #ifdef McPAT06_H
-#include "../../sst/techModels/libMcPATbeta/io.h"
-#include "../../sst/techModels/libMcPATbeta/logic.h"
-//#include "../../sst/techModels/libMcPATbeta/full_decoder.h"
-//#include "../../sst/techModels/libMcPATbeta/crossbarswitch.h"
-#include "../../sst/techModels/libMcPATbeta/basic_circuit.h"
-#include "../../sst/techModels/libMcPATbeta/processor.h"
+#include "../sst/core/techModels/libMcPATbeta/io.h"
+#include "../sst/core/techModels/libMcPATbeta/logic.h"
+//#include "../sst/core/techModels/libMcPATbeta/full_decoder.h"
+//#include "../sst/core/techModels/libMcPATbeta/crossbarswitch.h"
+#include "../sst/core/techModels/libMcPATbeta/basic_circuit.h"
+#include "../sst/core/techModels/libMcPATbeta/processor.h"
 #endif //mcpat06_h
 
 

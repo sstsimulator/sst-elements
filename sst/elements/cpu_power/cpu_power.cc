@@ -1,7 +1,7 @@
 #include <sst_config.h>
 #include "cpu_power.h"
 
-#include <sst/memEvent.h>
+#include <sst/core/memEvent.h>
 
 
 bool Cpu_power::clock( Cycle_t current)

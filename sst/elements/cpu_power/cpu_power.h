@@ -4,10 +4,10 @@
 #ifndef _CPU_POWER_H
 #define _CPU_POWER_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
-#include <sst/timeConverter.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 #include "../power/power.h"
 
 using namespace SST;

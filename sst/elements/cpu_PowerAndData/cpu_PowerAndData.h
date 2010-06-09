@@ -15,9 +15,9 @@
 #ifndef _CPU_POWERANDDATA_H
 #define _CPU_POWERANDDATA_H
 
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/link.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
 #include "../power/power.h"
 
 using namespace SST;
