@@ -51,7 +51,6 @@ class MemoryDev :
         virtual bool write( addr_t, data_t*, cookie_t );
         virtual bool popCookie( cookie_t& );
         
-    private: // functions 
         bool send( addr_t, data_t*, cookie_t, typename event_t::reqType_t );
 
     private: // data

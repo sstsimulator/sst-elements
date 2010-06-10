@@ -16,11 +16,13 @@
 #include "ssb_sim-outorder.h"
 #include "FE/pimSysCallTypes.h"
 #include "FE/thread.h"
+#include "smpProc.h"
 
 class genericNIC;
 class thread;
 class genericNetwork;
 class PIM_NICChip;
+class proc;
 
 /** Main Processor (Conventional CPU)
 
@@ -32,6 +34,7 @@ class mainProc : public convProc {
   string confFile;
   threadSource *tSource;
   processor *myProc;
+  proc *myP;
 public:
   //: List of all mainProcs
   //static vector<mainProc*> mainProcs;
@@ -68,7 +71,7 @@ public:
   //PIM_NICChip* getPimNIC() const {return pimNIC;}
   int getMainProcID() const {return mainProcID;}
   mainProc(string configFile, threadSource &tSource, int maxMMO, processor *p,
-	   int id, map<string,string> prefInit);
+	   int id, map<string,string> prefInit, proc *pp);
   virtual void setup();
   virtual void finish();
   //virtual void handleParcel(parcel *p);
@@ -82,6 +85,16 @@ public:
   virtual exceptType readSpecial(const PIM_cmd, const int nInArgs, 
 				 const int nOutArgs, const simRegister *args,
 				 simRegister *rets);
+
+  /* coherency protocol stuff */
+  friend class smpProc;
+  smpProc coher;
+  virtual void handleCoher(const simAddress a, const enum mem_cmd cmd) {
+      coher.handleCoher(a, cmd);
+  }
+  virtual void noteWrite(const simAddress a) {
+      coher.noteWrite(a);
+  }
 };
 
 #endif

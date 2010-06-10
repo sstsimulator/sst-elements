@@ -45,10 +45,16 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   tSource.init(this, paramsC);
   myThread = 0;
   needThreadSwap = 0;
+  coherent = 1;
+  maxOutstandingSpecReq = 8;
 
 #if TIME_MEM
-   numMemReq = 0;
-   memReqLat = 0;;
+  totalMemReq = 0;
+  totalSpecialMemReq = 0;
+  numMemReq = 0;
+  memReqLat = 0;
+  memSpecialReqLat = 0;
+  memStores = 0;
 #endif
 
   memory_t* tmp = new memory_t( );
@@ -56,7 +62,8 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   Params_t memParams, prefInit;
   for (Params_t::iterator pi = paramsC.begin(); pi != paramsC.end(); ++pi) {
     if (pi->first.find("mem.") == 0) {
-      memParams[pi->first] = pi->second;
+      string memS(pi->first, 4);
+      memParams[memS] = pi->second;
     }
     if (pi->first.find("pref.") == 0) {
       prefInit[pi->first] = pi->second;
@@ -75,7 +82,10 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   NICeventHandler = new EventHandler<proc, bool, Event *>
     (this, &proc::handle_nic_events);
 
-  netLinks.push_back(LinkAdd("net0", NICeventHandler));
+  // turned off network until we can check for it
+  Link *nl = LinkAdd("net0", NICeventHandler);
+  if (nl) netLinks.push_back(nl);
+
   
   clockHandler = new EventHandler< proc, bool, Cycle_t>
     ( this, &proc::preTic );
@@ -83,7 +93,7 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   // find config parameters
   std::string clockSpeed = "1GHz";
   string ssConfig;
-  Params_t::iterator it = params.begin();
+  Params_t::iterator it = params.begin();  
   while( it != params.end() ) {
     _GPROC_DBG(1, "key=%s value=%s\n",
 	       it->first.c_str(),it->second.c_str());
@@ -109,6 +119,12 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
     if (!it->first.compare("ssConfig"))   {
       ssConfig = it->second;
     }
+    if (!it->first.compare("coherent"))   {
+      sscanf(it->second.c_str(), "%d", &coherent);
+    }
+    if (!it->first.compare("maxSpecReq"))   {
+      sscanf(it->second.c_str(), "%d", &maxOutstandingSpecReq);
+    }
     ++it;
   }
 
@@ -122,7 +138,8 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   if (ssBackEnd) {
     for (int c = 0; c < cores; ++c) {
       mProcs.push_back(new mainProc(ssConfig, tSource, maxMMOut, this, c, 
-				    prefInit));
+				    prefInit, this));
+      outstandingSpecReq.push_back(0);
     }
   } else {
     mProcs.clear();
@@ -158,6 +175,7 @@ void proc::processMemDevResp( ) {
       // core
       mProcs[0]->handleMemEvent(inst);
     } else {
+      // Check the standard memory request map
       memReqMap_t::iterator mi = memReqMap.find(inst);
       if (mi != memReqMap.end()) {
 #if TIME_MEM
@@ -169,12 +187,32 @@ void proc::processMemDevResp( ) {
 	if ((c % 0xff) == 0) printf("lat %llu\n", lat);
 #endif
         // hand it off
-	mProcs[mi->second.first]->handleMemEvent(inst);
+	int owningProc = mi->second.first;
+	mProcs[owningProc]->handleMemEvent(inst);
+
 	// remove the reference
 	memReqMap.erase(mi);
       } else {
-	    printf("Got back memory req for instruction we never issued\n");
-	    exit(-1);
+	// check the special memory request map
+	memReqMap_t::iterator mi2 = memSpecReqMap.find(inst);
+	if (mi != memSpecReqMap.end()) {
+#if TIME_MEM
+	  uint64_t startTime = mi2->second.second;
+	  uint64_t lat = getCurrentSimTimeNano() - startTime;
+	  memSpecialReqLat += lat;
+	  static int c = 0; c++;
+	  if ((c % 0xff) == 0) printf("slat %llu\n", lat);
+#endif
+	  // decrement outstanding request count
+	  int owningProc = mi2->second.first;
+	  outstandingSpecReq[owningProc]--;
+
+	  //remove the ref
+	  memSpecReqMap.erase(mi2);	  
+	} else {
+	  ERROR("Got back memory req for instruction we never issued\n");
+	  exit(-1);
+	}
       }
     }
   }  
@@ -203,8 +241,9 @@ int proc::Finish() {
     }
   }
 #if TIME_MEM
-  printf("%llu Memory Requests, avg lat. %.2fns\n", numMemReq, 
-	 double(memReqLat)/double(numMemReq));
+  printf("%llu Total Memory Requests\n", totalMemReq);
+  printf("%llu Timed Memory Requests, avg lat. %.2fns %llu stores\n", numMemReq, 
+	 double(memReqLat)/double(numMemReq), memStores);
 #endif
   printf("proc finished at %llu ns\n", getCurrentSimTimeNano());
   return false;
@@ -291,7 +330,11 @@ bool proc::preTic(Cycle_t c) {
     }
 
     for (int c = 0; c < cores; ++c) {
+      // sigh... we use this so we know which core is currently
+      // running. 
+      currentRunningCore = c;
       mProcs[c]->preTic();
+      currentRunningCore = -1;
     }
   } else {
     if (myThread) {
@@ -370,6 +413,30 @@ bool proc::addThread(thread *t) {
   }
 }
 
+int proc::postMessage(msgType t, simAddress addr, mainProc* poster) {
+  if (!isCoherent())
+    return 0;
+  
+  int nP = mProcs.size();
+  for(int i=0; i < nP; ++i) {
+    mainProc* targP = mProcs[i];
+    if (targP != poster) {
+      switch(t) {
+      case READ_MISS:
+	targP->coher.busReadMiss(addr); break;
+      case WRITE_MISS:
+	targP->coher.busWriteMiss(addr); break;
+      case WRITE_HIT:
+	targP->coher.busWriteHit(addr); break;
+      default:
+	printf("unknown bus message tyoe %d\n", t);
+      }
+    }
+  }
+  registerPost();
+  return 0;
+}
+
 bool proc::insertThread(thread* t) {
   addThread(t);
   return true;
@@ -437,10 +504,59 @@ bool proc::externalMemoryModel() {
   return externalMem;
 }
 
+bool proc::sendMemoryParcel(uint64_t address, instruction *inst, 
+			    int mProcID) {
+  // check and see if we can make another special request
+  if (outstandingSpecReq[mProcID] < maxOutstandingSpecReq) {
+    outstandingSpecReq[mProcID]++;
+    
+    // normally, we'd need a switch statement of some sort to figure out
+    // what sort of request we are sending. For now, we just assume AMO
+    
+    // get UID
+    static int count = 0; 
+    // we use a unique identifier casted to a instruction * because we
+    // don't actully need to track this instruction, and it is possible
+    // to get multiple copies of the same poitner in the map
+    int uid = (++count); if (uid == 0) uid = (++count);
+    
+    
+    // send the memory request
+    //bool ret = memory[0]->send(address, inst, memory_t::dev_t::event_t::RMW);
+    // for now we can just pretend its a READ
+    bool ret = memory[0]->read(address, (instruction*)uid);
+    if (!ret) {
+      INFO("Memory send parcel failed to Write");
+    }
+    // Register the instruction
+    memReqMap_t::iterator mi = memSpecReqMap.find((instruction*)uid);
+    if (mi != memSpecReqMap.end()) {
+      WARN("UID already in use!\n");
+    }
+#if TIME_MEM
+    memSpecReqMap[(instruction*)uid] = memReqRec_t(mProcID,getCurrentSimTimeNano());
+#else
+    memSpecReqMap[(instruction*)uid] = memReqRec_t(mProcID,0);
+#endif
+    
+    static int c = 0; if ((c++ & 0xff) == 0) {
+      printf("%d AMOs %ld\n", c, memSpecReqMap.size());    
+    }
+    
+    return ret;
+  } else {
+    return false;
+  }
+}
+
+
 bool proc::sendMemoryReq( instType iType,
             uint64_t address, instruction *i, int mProcID) {
     
   //note:it is not clear that a failure to send is handled anywhere...
+#if TIME_MEM
+  totalMemReq++;
+#endif
 
   _GPROC_DBG(1,"instruction type %d\n", iType );
   if ( iType == STORE ) {

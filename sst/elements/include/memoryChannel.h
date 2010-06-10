@@ -29,7 +29,7 @@ template < typename addrT = unsigned long,
             typename dataT = unsigned long >
 struct MemEvent 
 {
-        typedef enum { READ = 0, WRITE, INV_REQ } reqType_t;
+  typedef enum { READ = 0, WRITE, RMW, INV_REQ } reqType_t;
         typedef enum { REQUEST = 0, RESPONSE, INV_MSG } msgType_t;
 
         typedef dataT data_t;

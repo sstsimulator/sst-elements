@@ -42,20 +42,18 @@ long feedbackterms[] = {
 };
 
 unsigned int lfsr_bits = 0;
-unsigned int lfsr_state = 0x1; // afr: changed from 0
-unsigned int
-lfsr (void)
+lfsr (unsigned int *lfsr_state)
 {
-  if (lfsr_state & 0x1)
+  if (*lfsr_state & 0x1)
     {
-      lfsr_state = (lfsr_state >> 1) ^ feedbackterms[lfsr_bits];
+      *lfsr_state = (*lfsr_state >> 1) ^ feedbackterms[lfsr_bits];
     }
   else
     {
-      lfsr_state = (lfsr_state >> 1);
+      *lfsr_state = (*lfsr_state >> 1);
     }
   //PIM_quickPrint(lfsr_bits,lfsr_state,55);
-  return lfsr_state;
+  return *lfsr_state;
 }
 
 #endif /* RANDOM_IS_LFSR */
@@ -63,7 +61,7 @@ lfsr (void)
 #ifdef DO_RANDOMS_BEFOREHAND
 # define GET_NEXT_INDEX(i,size) indices[i]
 #else
-# define GET_NEXT_INDEX(i,size) random () % size
+# define GET_NEXT_INDEX(i,size,state) random (state) % size
 #endif /* DO_RANDOMS_BEFOREHAND */
 
 /* GUPS for 8-bit wide data, serial */
@@ -73,10 +71,11 @@ gups8 (uint8 *field, unsigned long iters, unsigned long size)
   uint8 data;
   unsigned long i;
   unsigned long long index;
+  unsigned int state=1;
 
   for (i = 0; i < iters; i++)
     {
-      index = GET_NEXT_INDEX(i,size);
+      index = GET_NEXT_INDEX(i,size,&state);
       data = field[index];
       data = data + ((uint8) iters);
       field[index] = data;
@@ -89,15 +88,25 @@ gups16 (uint16 *field, unsigned long iters, unsigned long size, int myT)
 {
   uint16 data;
   unsigned long i;
+  unsigned int state = myT+1;
   unsigned long long index;
   unsigned long long offset = iters*myT;
   for (i = 0; i < iters; i++)
     {
-      index = GET_NEXT_INDEX(i+offset,size);
+      index = GET_NEXT_INDEX(i+offset,size, &state);
       //PIM_quickPrint(i,(int)&field[index],myT);
+#if USE_AMO
+      //PIM_AMO(&field[index], PIM_AMO_ADD16, iters);
+      int status = 0;
+      do {
+	status = PIM_AMO(&field[index], PIM_AMO_ADD16, index);
+      } while (status == 0);
+#else
       data = field[index];
-      data = data + ((uint16) iters);
+      //data = data + ((uint16) iters);
+      data = data + ((uint16) index);
       field[index] = data;
+#endif
     }
 }
 
@@ -116,10 +125,11 @@ gups32 (uint32 *field, unsigned long iters, unsigned long size)
   uint32 data;
   unsigned long i;
   unsigned long long index;
+  unsigned int state=1;
 
   for (i = 0; i < iters; i++)
     {
-      index = GET_NEXT_INDEX(i,size);
+      index = GET_NEXT_INDEX(i,size,&state);
       data = field[index];
       data = data + ((uint32) iters);
       field[index] = data;
@@ -133,10 +143,11 @@ gups64 (uint64 *field, unsigned long iters, unsigned long size)
   uint64 data;
   unsigned long i;
   unsigned long long index;
+  unsigned int state=1;
 
   for (i = 0; i < iters; i++)
     {
-      index = GET_NEXT_INDEX(i,size);
+      index = GET_NEXT_INDEX(i,size,&state);
       data = field[index];
       data = data + ((uint64) iters);
       field[index] = data;
@@ -152,7 +163,7 @@ timetest (void *field, unsigned long iters, unsigned long size)
 
   for (i = 0; i < iters; i++)
     {
-      index = random (); /* % size; */
+      //index = random (); /* % size; */
       /* data = field[index]; */
       /* data = data + ((uint8) iters); */
       /* field[index] = data; */
@@ -198,7 +209,7 @@ calc_indices (uint64 updates, uint64 nelems)
     }
   for (i = 0; i < updates; i++)
     {
-      indices[i] = random () % nelems;
+      //indices[i] = random () % nelems;
     }
 }
 
@@ -248,7 +259,7 @@ main (int argc, char **argv)
   scanf ("%llu %f %llu", &updates, &expt, &width);
 #else
   updates = 25600*16;
-  expt = 25.0;
+  expt = 26.0; //25.0;
   width = 16;
   PIM_quickPrint(updates,expt,(int)size);
 #endif
@@ -258,7 +269,7 @@ main (int argc, char **argv)
 #if USE_INPUT
   size = (uint64) exp (expt * ln2);
 #else
-  size = (uint64) 33554432;
+  size = (uint64) 67108864; //33554432;
 #endif
   size -= (size % 256);
   assert (size > 0 && (size % 256 == 0));

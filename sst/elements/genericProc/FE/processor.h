@@ -70,12 +70,9 @@ class processor : public SST::Component, public memory,  public ptoVmapper
 #endif
   //static vector<memory_interface*> fullCopies;
   //static vector<processor*> procs;
-  //: Unique processor number
-  //
-  // Each processor has its own unique processor ID number.
-  int myProcNum;
-  int myCoreNum;
-  int numCores;
+protected:
+  int currentRunningCore;
+private:
 
   volatile bool nic_response;
 
@@ -101,9 +98,8 @@ public:
   //processor(int name, base_memory *baseM, int coreNum = 0) : 
   processor(ComponentId_t id, Params_t& params) : 
     Component( id  ), memory(0),
-    myCoreNum(0), numCores(1)
+    currentRunningCore(-1)
   {
-    myProcNum = 0;//procs.size(); procs.push_back(this);
     setUpLocalDistribution(12, 1); // kbw: this is a total hack, but then, so's the previous line
     nic_response= false;
     INFO("Processor at %p initialized\n", this);
@@ -118,12 +114,13 @@ public:
   bool CopyToSIM(simAddress dest, const simPID, void* source, const unsigned int Bytes);
   bool LoadToSIM(simAddress dest, const simPID, void* source, const unsigned int Bytes);
   bool CopyFromSIM(void* dest, const simAddress source, const simPID, const unsigned int Bytes);
-  //: Return processor's unique id
-  int getProcNum() const {return myProcNum;}
-  //: Return processor's core num 
-  int getCoreNum() const {return myCoreNum;}
-  //: Return num of cores 
-  int getNumCores() const {return numCores;}
+  //: Return processor's unique id - broken
+  int getProcNum() const {return -1;}
+  //: Return processor's core num - broken
+  int getCoreNum() const {return -1;}
+  //: Return num of cores - broken
+  int getNumCores() const {return -1;}
+  int getCurrentRunningCore() const {return currentRunningCore;}
   //: Request a frame for a thread
   //
   // A thread can request a frame from a processor of words
@@ -230,9 +227,16 @@ public:
   int getNICresponse(void) {return !staging_area.empty();}
 
   virtual bool externalMemoryModel() = 0;
+  //:send a (load/store) request to memory
   virtual bool sendMemoryReq( instType, uint64_t address,
 			       instruction *inst, int mProcID) = 0;
-
+  //: send a non-load/store request to memory (e.g. AMO)
+  //
+  // Note: this function will have to change format at some point to
+  // accomodate other L2 in-mem ops
+  virtual bool sendMemoryParcel(uint64_t address, instruction *inst, 
+				int mProcID) = 0;
+    
   void addNICevent(CPUNicEvent *e) {
     staging_area.push_back(e);
   }

@@ -791,3 +791,43 @@ bool ppcInstruction::Perform_PIM_MEM_REGION_GET(processor       *proc,
 
   return true;
 }
+
+//: Send an Atomic Memory Operations to memory
+// 
+// Note: we actually do the operaiton here, not in the memory
+// component, due to the execute-on-fetch problem.
+bool ppcInstruction::Perform_PIM_AMO(processor *proc, simRegister *regs) {
+  simAddress addr    = ntohl(regs[3]);
+  PIM_amo_types op   = (PIM_amo_types)ntohl(regs[4]);
+  uint32 immediate = ntohl(regs[5]);
+
+  // perform the operation
+  // get the info from memory
+  simRegister data = ntohl(proc->ReadMemory32(addr,0));
+  simRegister modified;
+
+  switch(op) {
+  case PIM_AMO_XOR:
+    modified = data ^ immediate;
+    proc->WriteMemory32(addr, ntohl(modified), 0); 
+    break;
+  case PIM_AMO_ADD16: // a 16-bit add
+    {
+      //printf("AMO ADD16 to addr %x\n", addr);
+      uint16 data16 = ntohl(proc->ReadMemory16(addr,0));
+      data16 += (uint16)immediate;
+      proc->WriteMemory16(addr, ntohl(data16), 0); 
+    }
+    break;
+  default:
+    ERROR("Unrecognized PIM_AMO_type %d.\n", op);
+  }
+
+  // send the parcel to memory
+  bool ret = proc->sendMemoryParcel(addr, this, proc->getCurrentRunningCore());
+  // set result. A failure of sendMemoryParcel() probably indicates
+  // the need to retry
+  regs[3] = ntohl(ret);
+
+  return true;
+}

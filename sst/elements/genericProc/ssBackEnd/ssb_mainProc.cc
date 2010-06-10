@@ -17,9 +17,10 @@
 
 
 mainProc::mainProc(string configFile, threadSource &tS, int maxMMOut, 
-		   processor *p, int id, map<string,string> prefInit) : 
+		   processor *p, int id, map<string,string> prefInit,
+		   proc *pp) : 
   convProc(configFile, p, maxMMOut, id, prefInit), confFile(configFile),
-  myProc(p) {
+  myProc(p), myP(pp), coher(this) {
   tSource = &tS;
   mainProcID = id; 
 }
@@ -58,6 +59,7 @@ void mainProc::setup() {
 void mainProc::finish(){
   printf("Main proc %d:\n", mainProcID);
   convProc::finish();
+  coher.finish();
 }
 
 

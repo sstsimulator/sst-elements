@@ -48,6 +48,10 @@ class Memory :
         virtual bool popCookie( cookie_t& );
         virtual bool map( addr_t, addr_t, length_t );
 
+  //sort of a bypass function for things that are not straight
+  //reads/writes
+  bool send(addr_t addr, cookie_t cookie, typename dev_t::event_t::reqType_t type);
+
     private: // type
         typedef MemMap< addr_t, addr_t, dev_t* >  devMap_t;
         typedef MemMap< addr_t, addr_t, std::pair< addr_t, addr_t > >  memMap_t;
@@ -135,6 +139,17 @@ Memory< addrT, cookieT, dataT >::write( addr_t addr, data_t* data,
     return (*dev)->write( addr, data, cookie );
 }
 
+template < typename addrT, typename cookieT, typename dataT >
+inline bool 
+Memory< addrT, cookieT, dataT >::send(addr_t addr, cookie_t cookie, 
+				      typename dev_t::event_t::reqType_t type) {
+  addr = calcAddr( addr );
+  dev_t**  dev = m_devMap.find( addr );
+  if ( dev == NULL ) {
+    _abort( Memory, "m_devMap.find( %#lx ) failed\n", (unsigned long)addr);
+  }
+  return (*dev)->send( addr, NULL, cookie, type );
+}
 
 template < typename addrT, typename cookieT, typename dataT >
 inline bool 

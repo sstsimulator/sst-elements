@@ -13,49 +13,35 @@
 #ifndef SMPPROC_H
 #define SMPPROC_H
 
-#include "ssb_mainProc.h"
-#include "smpMemory.h"
+#include "ssb.h"
+#include "ssb_memory.h"
 #include <map>
 
 using namespace std;
 
+class mainProc;
+
 //: Conventinoal SMP processor
-//!SEC:shmem
-class smpProc : public mainProc, public sharedMemProc {
+class smpProc {
   typedef enum {INVALID, SHARED, EXCLUSIVE} blkTag;
   typedef map<simAddress, blkTag> tagMap;
   tagMap blkTags;
-  smpMemory *sharedMem;
   void writeBackBlock(simAddress);
   unsigned long long invalidates[2];
   unsigned long long busMemAccess;
+  unsigned long long writeBacks;
+  mainProc *myMainProc;
+  simAddress getBAddr(simAddress a);
 public:
-  smpProc(string cfgstr, smpMemory *sm, component *mc, genericNetwork *net, int sysNum, prefetchMC *pmc);
-  virtual unsigned getFEBDelay() {return 8;}
+  smpProc(mainProc *mp);
+  //virtual unsigned getFEBDelay() {return 8;}
   virtual void noteWrite(const simAddress a);
   virtual void busReadMiss(simAddress);
   virtual void busWriteMiss(simAddress);
   virtual void busWriteHit(simAddress);
-  virtual void setup();
-  virtual void preTic();
   virtual void finish();
-  virtual void handleParcel(parcel *p);
-  virtual bool spawnToCoProc(const PIM_coProc, thread* t, simRegister hint);
 
-  virtual unsigned int cplx_mem_access_latency(const enum mem_cmd cmd,
-					       const md_addr_t baddr,
-					       const int bsize,
-					       bool &needMM);
-
-  virtual uint8 ReadMemory8(const simAddress, const bool);
-  virtual uint16 ReadMemory16(const simAddress, const bool);
-  virtual uint32 ReadMemory32(const simAddress, const bool);
-  virtual bool WriteMemory8(const simAddress, const uint8, const bool);
-  virtual bool WriteMemory16(const simAddress, const uint16, const bool);
-  virtual bool WriteMemory32(const simAddress, const uint32, const bool);
-  virtual uint8 getFE(const simAddress);
-  virtual void setFE(const simAddress, const uint8 FEValue);
-  virtual void squashSpec();
+  virtual void handleCoher(const simAddress, const enum mem_cmd cmd);
 };
 
 #endif

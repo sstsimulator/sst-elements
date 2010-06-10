@@ -11,7 +11,23 @@
    asm volatile("" : <output reg> : <input reg> : <clobbered reg> )
 */
 
-
+//: Send an Atomic Memory Operations to memory
+//
+// A failure (return 0) probably indicates a need to retry
+_INLINE_ int PIM_AMO(void *addr, PIM_amo_types op, int imm)
+{
+  int result;
+  asm volatile ("mr r3, %1\n" /* addr */
+		"mr r4, %2\n" /* operation */
+		"mr r5, %3\n" /* immediate value */
+		"li r0, "SS_PIM_AMO_STR"\n" /* Set to syscall */
+		"sc\n" /* make the "system call" */
+		"mr %0, r3, 0\n" /* Collect results*/
+                : "=r" (result)
+  	        : "r" (addr), "r" (op), "r" (imm)
+		: "r0", "r3", "r4", "r5", "memory");
+  return result;
+}
 
 //:Fork a new thread (DEPRECATED)
 //

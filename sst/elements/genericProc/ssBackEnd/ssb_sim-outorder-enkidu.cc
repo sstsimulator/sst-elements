@@ -22,10 +22,15 @@ void convProc::finish(){
   sim_print_stats(stdout);
 
 #if WANT_LSQ_HIST == 1
-  printf("LSQ Historgram:\n");
-  for(map<int, counter_t>::iterator i = LSQ_hist.begin();
-      i != LSQ_hist.end(); ++i) {
-    printf("%d: %llu\n", i->first, (long long unsigned)i->second);
+  {
+    int n = 0;
+    printf("LSQ Historgram:\n");
+    for(map<int, counter_t>::iterator i = LSQ_hist.begin();
+	i != LSQ_hist.end(); ++i, ++n) {
+      printf("%2d: %10llu ", i->first, (long long unsigned)i->second);
+      if ((n % 4) == 3) printf("\n");
+    }
+    printf("\n");
   }
 #endif
   

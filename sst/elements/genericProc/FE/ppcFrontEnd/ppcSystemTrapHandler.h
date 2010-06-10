@@ -117,4 +117,6 @@ bool  Perform_PIM_BULK_set_FE(processor* thread, simRegister *, simRegister);
   bool	Perform_NETSIM_SYS_CALL(processor*, simRegister *, simRegister &);
   bool	Perform_NETSIM_TX_CALL(processor*, simRegister *, simRegister &);
 
+bool Perform_PIM_AMO(processor *, simRegister*);
+
 #endif

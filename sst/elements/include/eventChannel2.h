@@ -161,7 +161,7 @@ EVENTCHANNEL( inline bool )::VirtChan::clock( Cycle_t cycle )
 EVENTCHANNEL( inline bool )::VirtChan::handler( event_t* event )
 {
     if ( event->type == event_t::EVENT ) {
-        _EC_DBG("%s: got event\n", m_name.c_str() );
+        //_EC_DBG("%s: got event\n", m_name.c_str() );
         m_inQ.push_back( event );
     } else if ( event->type == event_t::CREDIT ) {
         m_creditAvail += event->credit;

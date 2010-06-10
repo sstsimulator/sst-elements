@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <config>
-    stopAtCycle=10000000000
+    stopAtCycle=100000000000
     run-mode=both
 </config>
 
@@ -21,14 +21,15 @@
 			  <verbose>5</verbose>
 			  <ssBackEnd>1</ssBackEnd>
 			  <cores>33</cores>
+			  <coherent>0</coherent>
 			  <ssConfig>sst/trunk/sst/elements/sampleConfigs/rs2.conf</ssConfig>
 			  <mem.initialCredit>   8 </mem.initialCredit>
 			  <mem.readRespCredit>  1 </mem.readRespCredit>
 			  <mem.writeRespCredit> 1 </mem.writeRespCredit>
 
-			  <pref.name>obl</pref.name>
-			  <pref.obl.tagged>0</pref.obl.tagged>
-			  <pref.obl.degree>2</pref.obl.degree>
+			  <Xpref.name>obl</Xpref.name>
+			  <Xpref.obl.tagged>0</Xpref.obl.tagged>
+			  <Xpref.obl.degree>2</Xpref.obl.degree>
 			 </params>
 			<links>
 				<link id="cpu2mem">

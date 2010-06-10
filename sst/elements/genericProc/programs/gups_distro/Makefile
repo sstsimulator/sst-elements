@@ -50,11 +50,19 @@ r10k_MARKS=$(patsubst %,%.r10k,$(MARKS))
 ALL_MARKS=$(sort $(viram_MARKS) $(r10k_MARKS))
 ALL_OBJS=$(sort $(GUPS_OBJS) $(GUPS_VIRAMOBJS))
 
+nonserial: gups_notserial gups_notserial_amo
+
 gups_notserial: gups_notserial.o 
+	$(CC) -o $@ $(LIB) $< $(LIBS)
+
+gups_notserial_amo: gups_notserial_amo.o 
 	$(CC) -o $@ $(LIB) $< $(LIBS)
 
 gups_notserial.o: gups_notserial.c gups_sysheaders.h gups_types.h
 	$(CC) $(CFLAGS) -funroll-loops -O3 -UDO_RANDOMS_BEFOREHAND -DRANDOM_IS_LFSR -o $@ -c $<
+
+gups_notserial_amo.o: gups_notserial.c gups_sysheaders.h gups_types.h
+	$(CC) $(CFLAGS) -DUSE_AMO -funroll-loops -O3 -UDO_RANDOMS_BEFOREHAND -DRANDOM_IS_LFSR -o $@ -c $<
 
 gups_serial: gups_serial.o 
 	$(CC) -o $@ $(LIB) $< $(LIBS)

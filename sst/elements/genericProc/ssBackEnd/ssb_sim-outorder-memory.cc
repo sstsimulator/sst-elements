@@ -267,5 +267,6 @@ unsigned int convProc::cplx_mem_access_latency(const enum mem_cmd cmd,
     myProc->sendMemoryReq( STORE, baddr, (instruction*)~0, myCoreID);
     if (pref) pref->reportCacheEject(baddr);
   }
+  handleCoher(baddr, cmd);
   return 1;
 }

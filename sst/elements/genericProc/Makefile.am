@@ -129,6 +129,8 @@ libgenericProc_la_SOURCES = \
 	ssBackEnd/ssb_stats.cc \
 	ssBackEnd/ssb_stats.h \
 	ssBackEnd/ssb_version.h \
+	ssBackEnd/smpProc.h \
+	ssBackEnd/smpProc.cc \
 	FE/ppcFrontEnd/softfloat/softfloat.c \
 	FE/ppcFrontEnd/softfloat/softfloat.h \
 	FE/ppcFrontEnd/softfloat/softfloat_macros.h \

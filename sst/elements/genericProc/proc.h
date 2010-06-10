@@ -78,7 +78,7 @@ BOOST_SERIALIZE {
   }
 #endif
 
-//  typedef MemoryDev< uint64_t, instruction* > memDev_t; 
+  //  typedef MemoryDev< uint64_t, instruction* > memDev_t; 
   typedef Memory< uint64_t, instruction* > memory_t; 
   // links to memory
   std::vector< memory_t* > memory;
@@ -96,18 +96,35 @@ BOOST_SERIALIZE {
   int maxMMOut;
   // number of cores
   int cores; 
+  // coherency
+  int coherent;
+  // maximum number of outstanding special memory requests per core
+  int maxOutstandingSpecReq;
   // the simple-scalar-based processor model
   vector<mainProc *> mProcs;
+  // count of outstanding special memory requests
+  vector <int> outstandingSpecReq;
   // record of who a memory request belongs to, and when it was issued
   typedef pair<int, uint64_t> memReqRec_t;
   // map of outgoing memory request instructions to cores
   typedef map<instruction *, memReqRec_t> memReqMap_t;
+  // map of outgoing normal (load, store) memory requests
+  //
+  // maps instructions to cores
   memReqMap_t memReqMap;
+  // map of special memory requests
+  //
+  // e.g. AMOs
+  memReqMap_t memSpecReqMap;
   instruction* onDeckInst;
 
 #if TIME_MEM
+  uint64_t totalMemReq;
+  uint64_t totalSpecialMemReq;
   uint64_t numMemReq;
   uint64_t memReqLat;
+  uint64_t memSpecialReqLat;
+  uint64_t memStores;
 #endif
 
   ClockHandler_t* clockHandler;
@@ -122,7 +139,17 @@ BOOST_SERIALIZE {
   // thread swaps
   bool needThreadSwap;
   std::deque<thread*> threadQ;
+
 public:
+  /* shared memory coherency protocol handling */  
+  //: Bus Message types
+  typedef enum {READ_MISS, WRITE_MISS, WRITE_HIT} msgType;
+  // Post a message to the bus
+  int postMessage(msgType t, simAddress addr, mainProc* poster);
+  //: add in contention on the bus (if any)
+  void registerPost() {;};
+  const bool isCoherent() const {return coherent;}
+
   virtual int Setup();
   virtual int Finish();
   virtual bool preTic( Cycle_t );
@@ -144,6 +171,8 @@ public:
   virtual bool externalMemoryModel();
   virtual bool sendMemoryReq( instType, uint64_t address, 
 			       instruction*, int mProcID);
+  virtual bool sendMemoryParcel(uint64_t address, instruction *inst, 
+				int mProcID);
 };
 
 #endif

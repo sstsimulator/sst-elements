@@ -456,7 +456,8 @@ protected:
   /*enum md_fault_type new_mem_access(struct mem_t *mem, enum mem_cmd cmd,
 				    md_addr_t addr, void *vp,
 				    int nbytes);*/
-  virtual void noteWrite(const simAddress a) {;};
+  virtual void noteWrite(const simAddress a) = 0;
+  virtual void handleCoher(const simAddress, const enum mem_cmd cmd) = 0;
   uint dl1_access_fn(enum mem_cmd cmd,  md_addr_t baddr, int bsize,
 		     struct cache_blk_t *blk,  tick_t now, bool&);
   uint dl2_access_fn(enum mem_cmd cmd,  md_addr_t baddr,  int bsize,		
