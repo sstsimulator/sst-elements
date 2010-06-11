@@ -128,7 +128,7 @@ BOOST_SERIALIZE {
 #endif
 
   ClockHandler_t* clockHandler;
-  Event::Handler_t *NICeventHandler;
+  EventHandler_t *NICeventHandler;
 
   ComponentId_t id;
   Params_t& params;

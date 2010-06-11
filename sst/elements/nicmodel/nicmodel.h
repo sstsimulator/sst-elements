@@ -264,8 +264,8 @@ class Nicmodel : public Component {
 	void hton_params(netsim_params_t *params);
 	void insert_graph_link(const char *from, const char *to);
 
-	Event::Handler_t *cpuHandler;
-	Event::Handler_t *netHandler;
+	EventHandler_t *cpuHandler;
+	EventHandler_t *netHandler;
 
         Params_t params;
         Link *cpu;

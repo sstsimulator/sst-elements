@@ -119,7 +119,7 @@ class Routermodel : public Component {
         Routermodel(const Routermodel &c);
 	bool handle_port_events(Event *, int in_port);
 	Link *initPort(int port, char *link_name);
-	Event::Handler_t *RouterPortHandler;
+	EventHandler_t *RouterPortHandler;
 
         Params_t params;
 

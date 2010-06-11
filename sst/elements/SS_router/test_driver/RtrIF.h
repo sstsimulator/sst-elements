@@ -147,7 +147,7 @@ public:
 
         registerExit();
 
-        Event::Handler_t*   handler = new EventHandler<
+        EventHandler_t*   handler = new EventHandler<
                             RtrIF, bool, Event* >
                        ( this, &RtrIF::processEvent );
 

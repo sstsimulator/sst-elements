@@ -307,7 +307,7 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
     for (int dir = 0; dir < ROUTER_NUM_LINKS + 1; dir++) {
         //set up this nodes router link to the neighbor router
 
-        Event::Handler_t*   handler = new EventHandler1Arg< 
+        EventHandler_t*   handler = new EventHandler1Arg< 
                             SS_router, bool, Event*, int >
                        ( this, &SS_router::handleParcel, dir );
 

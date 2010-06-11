@@ -45,7 +45,7 @@ event_test::event_test( ComponentId_t id, Params_t& params ) :
     registerExit();
     done = false;
 
-    Event::Handler_t* linkHandler = new EventHandler<event_test,bool,Event*>
+    EventHandler_t* linkHandler = new EventHandler<event_test,bool,Event*>
 	(this,&event_test::handleEvent);
 
     link = LinkAdd( "link", linkHandler );

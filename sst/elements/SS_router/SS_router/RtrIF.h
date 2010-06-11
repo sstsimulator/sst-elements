@@ -102,7 +102,7 @@ public:
         m_log.write("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
         m_log.write("nic id=%d frequency=%s\n", m_id, frequency.c_str());
 
-        Event::Handler_t*   handler = new EventHandler<
+        EventHandler_t*   handler = new EventHandler<
                             RtrIF, bool, Event* >
                        ( this, &RtrIF::processEvent );
 

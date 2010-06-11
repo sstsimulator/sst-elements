@@ -82,7 +82,7 @@ class Xbar : public Component {
 	bool selfEvent( Event*);
 	
         ClockHandler_t* clockHandler;
-        Event::Handler_t* eventHandler;
+        EventHandler_t* eventHandler;
 
         Params_t    params;
         Link*       cpu;

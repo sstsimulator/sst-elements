@@ -237,14 +237,14 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     
     registerExit();
     
-    Event::Handler_t*   handler = new EventHandler<
+    EventHandler_t*   handler = new EventHandler<
         trig_cpu, bool, Event* >
 //         ( this, use_portals ? &trig_cpu::processEventPortals : &trig_cpu::processEvent );
         ( this, &trig_cpu::processEventPortals );
     nic = LinkAdd( "nic", handler );
     nic->setDefaultTimeBase(defaultTimeBase);
 
-    Event::Handler_t* selfLinkHandler = new EventHandler<
+    EventHandler_t* selfLinkHandler = new EventHandler<
 	trig_cpu, bool, Event* >
 	(this,&trig_cpu::event_handler );
     self = selfLink("self", selfLinkHandler);
@@ -252,7 +252,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     // defaultTimeBase.  May not be able to fix that.
     self->setDefaultTimeBase(defaultTimeBase);
 
-    Event::Handler_t* nic_timing_handler = new EventHandler<
+    EventHandler_t* nic_timing_handler = new EventHandler<
 	trig_cpu, bool, Event* >
 	(this,&trig_cpu::event_nic_timing );
     nic_timing_link = selfLink("nic_timing_link", nic_timing_handler);
@@ -260,7 +260,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     // defaultTimeBase.  May not be able to fix that.
     nic_timing_link->setDefaultTimeBase(registerTimeBase("1ns",false));
 
-    Event::Handler_t* dma_return_handler = new EventHandler<
+    EventHandler_t* dma_return_handler = new EventHandler<
 	trig_cpu, bool, Event* >
 	(this,&trig_cpu::event_dma_return );
     dma_return_link = selfLink("dma_return_link", dma_return_handler);
@@ -268,7 +268,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     // defaultTimeBase.  May not be able to fix that.
     dma_return_link->setDefaultTimeBase(registerTimeBase("1ns",false));
 
-    Event::Handler_t* pio_delay_handler = new EventHandler<
+    EventHandler_t* pio_delay_handler = new EventHandler<
 	trig_cpu, bool, Event* >
 	(this,&trig_cpu::event_pio_delay );
     pio_delay_link = selfLink("pio_delay_link", pio_delay_handler);
@@ -292,7 +292,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
 //     if ( use_portals ) {
 //         ptl = new portals(this);
       
-//         Event::Handler_t* ptlLinkHandler = new EventHandler<
+//         EventHandler_t* ptlLinkHandler = new EventHandler<
 //             trig_cpu, bool, Event* >
 //             (this,&trig_cpu::ptlNICHandler );
 //         ptl_link = selfLink("ptl", ptlLinkHandler);
@@ -304,7 +304,7 @@ void
 trig_cpu::initPortals() {
     ptl = new portals(this);
     
-//     Event::Handler_t* ptlLinkHandler = new EventHandler<
+//     EventHandler_t* ptlLinkHandler = new EventHandler<
 //     trig_cpu, bool, Event* >
 // 	(this,&trig_cpu::ptlNICHandler );
 //     ptl_link = selfLink("ptl", ptlLinkHandler);

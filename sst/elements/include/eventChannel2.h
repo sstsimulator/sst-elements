@@ -37,7 +37,7 @@ EVENTCHANNEL()::EventChannel( Component& comp,
         }
     }
 
-    Event::Handler_t*   handler = new EventHandler< EventChannel, bool, Event* >
+    EventHandler_t*   handler = new EventHandler< EventChannel, bool, Event* >
                        ( this, &EventChannel::handler );
 
     if ( ! handler ) {

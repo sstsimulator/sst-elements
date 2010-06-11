@@ -82,7 +82,7 @@ Link *
 Routermodel::initPort(int port, char *link_name)
 {
 
-Event::Handler_t *tmpHandler;
+EventHandler_t *tmpHandler;
 
     tmpHandler= new EventHandler1Arg< Routermodel, bool, Event *, int >
 	(this, &Routermodel::handle_port_events, port);

@@ -55,7 +55,7 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     nextToRtr = NULL;
 
     // Set up the link to the CPU
-    Event::Handler_t* handler = new EventHandler<
+    EventHandler_t* handler = new EventHandler<
     trig_nic, bool, Event* >
 	( this, &trig_nic::processCPUEvent );
     
