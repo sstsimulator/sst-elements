@@ -158,6 +158,8 @@ public:
   proc(ComponentId_t id, Params_t& params);
   proc(ComponentId_t id, Params_t& params, int dummy);
 
+  //: Return num of cores
+  virtual int getNumCores() const {return mProcs.size();}
   virtual bool insertThread(thread*);
   virtual bool isLocal(const simAddress, const simPID);
   virtual bool spawnToCoProc(const PIM_coProc, thread* t, simRegister hint);

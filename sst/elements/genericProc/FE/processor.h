@@ -115,11 +115,11 @@ public:
   bool LoadToSIM(simAddress dest, const simPID, void* source, const unsigned int Bytes);
   bool CopyFromSIM(void* dest, const simAddress source, const simPID, const unsigned int Bytes);
   //: Return processor's unique id - broken
-  int getProcNum() const {return -1;}
+  int getProcNum() const {return 1;}
   //: Return processor's core num - broken
-  int getCoreNum() const {return -1;}
-  //: Return num of cores - broken
-  int getNumCores() const {return -1;}
+  int getCoreNum() const {return getCurrentRunningCore();}
+  //: Return num of cores 
+  virtual int getNumCores() const = 0;
   int getCurrentRunningCore() const {return currentRunningCore;}
   //: Request a frame for a thread
   //
