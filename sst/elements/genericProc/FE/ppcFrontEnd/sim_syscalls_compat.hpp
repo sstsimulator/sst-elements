@@ -129,6 +129,7 @@ typedef struct stat_ppc_32_t {
 #endif
 
 
+#if 0
 /* conversion function to ensure proper byte-alignment when
  * running 32-bit programs in the 64-bit simulator */
 static void statToStat32(stat_s* source, stat32_s* target)
@@ -173,6 +174,7 @@ static void statToStat32(stat_s* source, stat32_s* target)
     target->st_ctimespec.tv_nsec = source->st_ctimespec.tv_nsec;
 #endif // _POSIX_C_SOURCE
 };
+#endif
 
 
 // the system rusage struct varies from 32 to 64bit in size,
