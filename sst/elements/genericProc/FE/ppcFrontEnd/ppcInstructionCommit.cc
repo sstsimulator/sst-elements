@@ -326,7 +326,9 @@ string ppcInstruction::op_args(uint32_t op, simRegister *registers, ppc_regs_t &
     char tmp[100] = {0};
     while (*s) {
 	switch (*s) {
-	    case 'a': snprintf(tmp, 100, "r%d[0x%08x]", RA, GPR(RA)); break;
+	    case 'a': if (RA == 0) { snprintf(tmp, 100, "0"); }
+		      else { snprintf(tmp, 100, "r%d[0x%08x]", RA, GPR(RA)); }
+		      break;
 	    case 'b': snprintf(tmp, 100, "r%d[0x%08x]", RB, GPR(RB)); break;
 	    case 'c': snprintf(tmp, 100, "r%d[0x%08x]", RC, GPR(RC)); break;
 	    case 'd': snprintf(tmp, 100, "r%d[0x%08x]", RD, GPR(RD)); break;
