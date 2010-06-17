@@ -5,6 +5,8 @@ AC_DEFUN([SST_sstdisksim_CONFIG], [
     [AS_HELP_STRING([--with-disksim@<:@=DIR@:>@],
       [Use DiskSim package installed in optionally specified DIR])])
 
+  happy="yes"
+
   AS_IF([test "$with_disksim" = "no"], [happy="no"])
 
   CPPFLAGS_saved="$CPPFLAGS"
