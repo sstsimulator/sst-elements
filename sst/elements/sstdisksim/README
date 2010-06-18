@@ -1,0 +1,14 @@
+Notes:
+
+You need to install *all* disksim libraries before this will work.  
+libdisksim does not automatically give you all libraries built in the
+disksim package.
+These libraries are:
+libdisksim.a
+libparam.a
+libddbg.a
+libmemsmodel.a
+libmems_internals.a
+libdiskmodel.a
+
+
