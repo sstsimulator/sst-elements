@@ -94,15 +94,15 @@ sstdisksim::sstdisksim( ComponentId_t id, Simulation* sim, Params_t& params ) :
   std::string outputFile = "";
   long long numSectors;
   
-  /*
+  
   if ( params.find( "debug" ) != params.end() ) 
   {
     if ( params[ "debug" ].compare( "yes" ) == 0 ) 
     {
       m_dbg.enable();
     }
-    }
-
+  }
+ 
 
   Params_t::iterator it = params.begin();
   while( it != params.end() ) 
@@ -124,9 +124,9 @@ sstdisksim::sstdisksim( ComponentId_t id, Simulation* sim, Params_t& params ) :
     }
 
     ++it;
-    }*/
+  }
 
-  /*
+  
   __disksim = disksim_interface_initialize(parameterFile.c_str(), 
 					   outputFile.c_str(),
 					   syssim_report_completion,
@@ -135,7 +135,7 @@ sstdisksim::sstdisksim( ComponentId_t id, Simulation* sim, Params_t& params ) :
 					   syssim_deschedule_callback,
 					   0,
 					   0,
-					   0);*/
+					   0);
 
   __completed = 0;
   __now = 0;
@@ -160,7 +160,7 @@ sstdisksim::~sstdisksim()
 int 
 sstdisksim::Finish()
 {
-  //  disksim_interface_shutdown(__disksim, __now);
+  disksim_interface_shutdown(__disksim, __now);
 
   printf("Shutting sstdisksim down\n");
 
@@ -174,7 +174,7 @@ sstdisksim::clock( Cycle_t cycle )
   {
     __now = __next_event;
     __next_event = -1;
-    //    disksim_interface_internal_event(__disksim, __now, 0);
+    disksim_interface_internal_event(__disksim, __now, 0);
   }
   
   if (!__completed) 
