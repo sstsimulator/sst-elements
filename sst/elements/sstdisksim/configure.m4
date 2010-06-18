@@ -21,7 +21,9 @@ AC_DEFUN([SST_sstdisksim_CONFIG], [
      SSTDISKSIM_LDFLAGS=])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([disksim_interface.h], [SSTDISKSIM_LIB="-ldisksim"], [happy="no"])
+  AC_CHECK_HEADERS([disksim_interface.h], 
+                   [SSTDISKSIM_LIB="-ldisksim -lddbg -lparam -ldiskmodel -lmems_internals -lmemsmodel"], 
+	   	   [happy="no"])
 #  SSTDISKSIM_LIB="-ldisksim"
   AC_LANG_POP(C++)
 
