@@ -24,7 +24,7 @@ libgenericProc_la_SOURCES = \
         FE/mallocSysCall.h \
         FE/mallocSysCall.cc \
         FE/memSpace.cc \
-	FE/memory.h \
+	FE/fe_memory.h \
 	FE/memory.cc \
 	FE/pimSysCallDefs.h \
 	FE/pimSysCallTypes.h \
