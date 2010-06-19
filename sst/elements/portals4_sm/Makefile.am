@@ -29,6 +29,10 @@ libportals4_sm_la_SOURCES = \
 	trig_cpu/barrier_dissem.h \
 	trig_cpu/barrier_dissem_trig.h \
 	trig_cpu/test_portals.h \
+	trig_cpu/portals_types.h \
+	trig_cpu/test_mpi.h \
+	trig_cpu/ping_pong.h \
+	trig_cpu/bandwidth.h \
 	trig_nic/trig_nic.cc \
 	trig_nic/trig_nic.h \
 	trig_nic/trig_nic_event.h
