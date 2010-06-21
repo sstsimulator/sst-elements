@@ -129,7 +129,7 @@ typedef struct stat_ppc_32_t {
 #endif
 
 
-#if 0
+#ifdef __x86_64__
 /* conversion function to ensure proper byte-alignment when
  * running 32-bit programs in the 64-bit simulator */
 static void statToStat32(stat_s* source, stat32_s* target)
