@@ -87,6 +87,7 @@ bool event_test::handleEvent(Event* ev) {
 }
     
 BOOST_CLASS_EXPORT( MyEvent )
+BOOST_CLASS_EXPORT( event_test )
 
 static Component*
 create_event_test(SST::ComponentId_t id, 
