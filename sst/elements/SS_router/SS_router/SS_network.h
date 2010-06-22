@@ -30,9 +30,12 @@
 
 #include <vector>
 #include <fstream>
+
 #include <sst/core/component.h>
-using namespace SST;
 #include <sst_stdint.h>
+
+
+using namespace SST;
 typedef uint32_t uint32;
 typedef unsigned int uint;
 
@@ -170,13 +173,26 @@ public:
     }
 
     uint32 payload[HDR_SIZE+PKT_SIZE];
+
+private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_NVP(_destNum);
+        ar & BOOST_SERIALIZATION_NVP(_sourceNum);
+        ar & BOOST_SERIALIZATION_NVP(_sizeInFlits);
+        ar & BOOST_SERIALIZATION_NVP(_vc);
+        ar & BOOST_SERIALIZATION_NVP(_link);
+        ar & BOOST_SERIALIZATION_NVP(payload);
+    }
 };
 
-#include <sst/core/compEvent.h>
-#include <sst_stdint.h>
-
-struct RtrEvent : public CompEvent {
+class RtrEvent : public Event {
+public:
     typedef enum { Credit, Packet } msgType_t;
+
     int             type;
     union {
         networkPacket   packet;
@@ -185,6 +201,17 @@ struct RtrEvent : public CompEvent {
             int             vc;
         } credit;
     } u;
+
+private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void
+    serialize(Archive & ar, const unsigned int version )
+    {
+        ar & boost::serialization::base_object<SST::Event>(*this);
+        ar & BOOST_SERIALIZATION_NVP(type);
+        ar & BOOST_SERIALIZATION_NVP(u);
+    }
 };
 
 #endif

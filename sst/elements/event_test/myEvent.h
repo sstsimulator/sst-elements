@@ -1,11 +1,11 @@
 #ifndef _MYEVENT_H
 #define _MYEVENT_H
 
-#include <sst/core/compEvent.h>
+#include <sst/core/event.h>
 
-class MyEvent : public SST::CompEvent {
+class MyEvent : public SST::Event {
 public:
-    MyEvent() : SST::CompEvent() { }
+    MyEvent() : SST::Event() { }
     int count;
 
 private:
@@ -14,7 +14,7 @@ private:
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        boost::serialization::base_object<CompEvent>(*this);
+        ar & boost::serialization::base_object<SST::Event>(*this);
         ar & BOOST_SERIALIZATION_NVP(count);
     }
 }; 

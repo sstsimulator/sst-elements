@@ -150,7 +150,7 @@ class Routermodel : public Component {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            boost::serialization::base_object<Component>(*this);
+            ar & boost::serialization::base_object<Component>(*this);
 	    ar & BOOST_SERIALIZATION_NVP(params);
             //	    ar & BOOST_SERIALIZATION_NVP(port);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

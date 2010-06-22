@@ -95,7 +95,7 @@ class Xbar : public Component {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            boost::serialization::base_object<Component>(*this);
+            ar & boost::serialization::base_object<Component>(*this);
 	    printf("xbaf::serialize()\n");
             _AR_DBG(Xbar,"start\n");
 	    printf("  base serializing: Component\n");
