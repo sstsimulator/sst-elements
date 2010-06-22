@@ -69,8 +69,10 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
       prefInit[pi->first] = pi->second;
     }
   }
-  tmp->devAdd(  new memory_t::dev_t( *this, memParams, "mem0" ), 0, 
-		0x100000000ULL );
+  /* This does not work right with the new link behavior, because it connects and sends messages
+   * tmp->devAdd(  new memory_t::dev_t( *this, memParams, "mem0" ), 0,
+		0x100000000ULL );*/
+
 #if 0
   tmp->map( 0x0, 0x0, 0x100000 );
   tmp->map( 0x100000, 0x200000, 0x1000 );
@@ -86,7 +88,7 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   Link *nl = LinkAdd("net0", NICeventHandler);
   if (nl) netLinks.push_back(nl);
 
-  
+
   clockHandler = new EventHandler< proc, bool, Cycle_t>
     ( this, &proc::preTic );
 
