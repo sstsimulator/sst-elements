@@ -30,6 +30,10 @@ static SysTime __next_event;	/* next event */
 static 	int __completed;	/* last request was completed */
 static 	sstdisksim_stat __st;
 
+double syssim_gettime() {
+	return __now; 
+}
+
 void
 panic(const char *s)
 {
@@ -128,7 +132,6 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __disksim = disksim_interface_initialize(parameterFile.c_str(), 
 					   outputFile.c_str(),
 					   syssim_report_completion,
-					   // NULL, NULL, NULL,
 					   syssim_schedule_callback,
 					   syssim_deschedule_callback,
 					   0,
@@ -138,6 +141,10 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __completed = 0;
   __now = 0;
   __next_event = -1;
+
+  ClockHandler_t* handler;
+  handler = new EventHandler< sstdisksim, bool, Cycle_t >
+    ( this, &sstdisksim::clock );
 
   printf("Starting disksim up\n");
   return;
@@ -188,11 +195,28 @@ sstdisksim::clock( Cycle_t cycle )
 void 
 sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
-}       
+  struct disksim_itnerface;
+  struct disksim_request r;
+  r.start = __now;
+  r.flags = DISKSIM_READ;
+  r.devno = 0;
+  r.bytecount = 512; /*TODO: Need sector size set elsewhere, perhaps?*/
+  r.blkno = 0;  /*TODO: Maybe change this elsewhere as well */
+
+  disksim_interface_request_arrive(__disksim, __now, &r);
+}
 
 void 
 sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
+  struct disksim_request r;
+  r.start = __now;
+  r.flags = DISKSIM_WRITE;
+  r.devno = 0;
+  r.bytecount = 512; /*TODO: Need sector size set elsewhere, perhaps?*/
+  r.blkno = 0;  /*TODO: Maybe change this elsewhere as well */
+
+  disksim_interface_request_arrive(__disksim, __now, &r);
 }
 
 extern "C" {
