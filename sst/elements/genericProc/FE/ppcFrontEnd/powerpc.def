@@ -556,9 +556,9 @@ DEFINST(ANDISD,			0x1D,
 #define LWZ_IMPL                                               \
 {                                                              \
     word_t _result;                                            \
-    enum md_fault_type _fault;                                 \
+    enum md_fault_type _fault = md_fault_none;                 \
     if(RA==0) {                                                \
-      _result = READ_WORD(OFS, _fault);		       \
+      _result = READ_WORD(OFS, _fault);		               \
     } else {                                                   \
         _result = READ_WORD(GPR(RA)+SEXT16(OFS), _fault);      \
     }							       \
@@ -583,7 +583,7 @@ DEFINST(LWZ,                    0x20,
 #define LWZU_IMPL                                               \
    {                                                            \
     word_t _result;                                             \
-    enum md_fault_type _fault;                                  \
+    enum md_fault_type _fault = md_fault_none;                  \
     if(RA==0||(RA==RD))                                         \
         {                                                       \
            DECLARE_FAULT(md_fault_invalidinstruction);          \
@@ -607,7 +607,7 @@ DEFINST(LWZU,				0x21,
 #define LBZ_IMPL							\
    {									\
      byte_t _result;							\
-     enum md_fault_type _fault;						\
+     enum md_fault_type _fault = md_fault_none;				\
 									\
      if(RA==0){								\
 		_result = READ_BYTE(SEXT16(OFS),_fault);		\
@@ -632,7 +632,7 @@ DEFINST(LBZ,			0x22,
 #define LBZU_IMPL                                                       \
    {                                                                    \
      byte_t _result;                                                    \
-     enum md_fault_type _fault;                                         \
+     enum md_fault_type _fault = md_fault_none;                         \
                                                                         \
      if((RA==0)||(RA==RD)){                                             \
                 DECLARE_FAULT(md_fault_invalidinstruction);		\
@@ -655,21 +655,21 @@ DEFINST(LBZU,				0x23,
 
 
 
-#define STW_IMPL                                                       \
-{                                                                      \
-    word_t _src;                                                       \
-    enum md_fault_type _fault;                                         \
-                                                                       \
-    _src = (word_t)GPR(RS);                                            \
-    if(RA==0) {                                                        \
-        WRITE_WORD(_src,  OFS, _fault);                                \
-    }                                                                  \
-    else {                                                             \
-        WRITE_WORD(_src, GPR(RA) + SEXT16(OFS), _fault);               \
-    }                                                                  \
-    if (_fault != md_fault_none) {                                     \
-        DECLARE_FAULT(_fault);                                         \
-    }                                                                  \
+#define STW_IMPL							\
+{									\
+    word_t _src;							\
+    enum md_fault_type _fault = md_fault_none;                          \
+									\
+    _src = (word_t)GPR(RS);						\
+    if(RA==0) {								\
+        WRITE_WORD(_src,  OFS, _fault);					\
+    }									\
+    else {								\
+        WRITE_WORD(_src, GPR(RA) + SEXT16(OFS), _fault);		\
+    }									\
+    if (_fault != md_fault_none) {					\
+        DECLARE_FAULT(_fault);						\
+    }									\
 }
                 
 DEFINST(STW,               0x24,
@@ -682,7 +682,7 @@ DEFINST(STW,               0x24,
 #define STWU_IMPL                                                   \
 {                                                                   \
     word_t _rS;                                                     \
-    enum md_fault_type _fault;                                      \
+    enum md_fault_type _fault = md_fault_none;                      \
     uint32 _ea = GPR(RA)+SEXT16(OFS);   /* wcm: unsigned long */    \
     if(RA==0){                                                      \
         DECLARE_FAULT(md_fault_invalidinstruction);                 \
@@ -706,7 +706,7 @@ DEFINST(STWU,                   0x25,
 #define STB_IMPL						\
    {								\
 	byte_t	_src;						\
-	enum md_fault_type _fault;                              \
+	enum md_fault_type _fault = md_fault_none;              \
 	_src=(byte_t)(word_t)GPR(RS);				\
         if(RA==0){                                              \
                  WRITE_BYTE(_src, OFS, _fault);			\
@@ -729,7 +729,7 @@ DEFINST(STB,			0x26,
 #define STBU_IMPL                                                   \
    {                                                                \
         byte_t  _src;                                               \
-        enum md_fault_type _fault;                                  \
+        enum md_fault_type _fault = md_fault_none;                  \
         if(RA==0){                                                  \
 		 DECLARE_FAULT(md_fault_invalidinstruction);        \
         }							    \
@@ -753,7 +753,7 @@ DEFINST(STBU,                   0x27,
 #define LHZ_IMPL                                                        \
    {                                                                    \
     half_t _result;                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0)                                                           \
         {                                                               \
            _result = READ_HALF(OFS, _fault);                            \
@@ -780,7 +780,7 @@ DEFINST(LHZ,                    0x28,
 #define LHZU_IMPL                                                       \
    {                                                                    \
     half_t _result;                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0||(RA==RD))                                                 \
         {                                                               \
 	   DECLARE_FAULT(md_fault_invalidinstruction);			\
@@ -806,7 +806,7 @@ DEFINST(LHZU,				0x29,
 #define LHA_IMPL                                                        \
    {                                                                    \
     shalf_t _result;                                                    \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0)								\
 	{								\
 	   _result = READ_HALF(OFS, _fault);				\
@@ -833,7 +833,7 @@ DEFINST(LHA,                    0x2A,
 #define LHAU_IMPL                                                       \
    {                                                                    \
     shalf_t _result;                                                    \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if((RA==0)||(RA==RD)){                                              \
                 DECLARE_FAULT(md_fault_invalidinstruction);             \
         }                                                               \
@@ -857,7 +857,7 @@ DEFINST(LHAU,				0x2B,
 #define STHU_IMPL							\
    {									\
     half_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
                                                                         \
     if(RA==0){								\
 		 DECLARE_FAULT(md_fault_invalidinstruction);            \
@@ -883,7 +883,7 @@ DEFINST(STHU,			0x2D,
 #define STH_IMPL                                                        \
    {                                                                    \
     half_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
                                                                         \
     _src = (half_t)(word_t)GPR(RS);                                     \
     if(RA==0){                                                          \
@@ -906,7 +906,7 @@ DEFINST(STH,                   0x2C,
 #define LMW_IMPL							\
    {                                                                    \
     word_t _result,_reg;						\
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     sword_t _ea;							\
     if(RA==0)                                                           \
         {                                                               \
@@ -939,7 +939,7 @@ DEFINST(LMW,                0x2E,
 #define STMW_IMPL                                                       \
    {                                                                    \
     word_t _result,_reg;                                                \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     sword_t _ea;                                                        \
     if(RA==0)                                                           \
         {                                                               \
@@ -975,16 +975,16 @@ DEFINST(STMW,           0x2F,
         DNA,DNA,DNA,    DNA, DNA)
 
 #define WORD_TO_DFLOAT(word, dfloat) do { \
-    sfloat_t _tmp_; \
-    memcpy(&_tmp_, &word, sizeof(sfloat_t)); \
-    dfloat = _tmp_; \
+    IF_CMMT(sfloat_t _tmp_); \
+    IF_CMMT(memcpy(&_tmp_, &word, sizeof(sfloat_t))); \
+    IF_CMMT(dfloat = _tmp_); \
 } while (0)
 
 #define LFS_IMPL                                                        \
    {                                                                    \
      word_t _result;                                                    \
-     enum md_fault_type _fault;                                         \
-     dfloat_t _da;							\
+     enum md_fault_type _fault = md_fault_none;                         \
+     IF_CMMT(dfloat_t _da);						\
      if(RA==0){                                                         \
                 _result = READ_WORD(OFS,_fault);                        \
         }                                                               \
@@ -1009,9 +1009,8 @@ DEFINST(LFS,                    0x30,
 #define LFSU_IMPL                                                       \
    {                                                                    \
      word_t _result;                                                    \
-     enum md_fault_type _fault;                                         \
-     dfloat_t _da;							\
-                                                                        \
+     enum md_fault_type _fault = md_fault_none;                         \
+     IF_CMMT(dfloat_t _da);						\
      if(RA==0){                                                         \
 	 DECLARE_FAULT(md_fault_invalidinstruction);			\
      }									\
@@ -1034,13 +1033,13 @@ DEFINST(LFSU,				0x31,
 
 
 
-#define LFD_IMPL                                                     \
-  {								     \
-    enum md_fault_type _fault;                                       \
-    sword_t _ea;						     \
-    qword_t _res;						     \
-    if(RA==0)                                                        \
-      _ea = OFS;						     \
+#define LFD_IMPL							\
+  {									\
+    enum md_fault_type _fault = md_fault_none;				\
+    sword_t _ea;							\
+    qword_t _res;							\
+    if(RA==0)								\
+      _ea = OFS;							\
     else								\
       _ea = GPR(RA) + OFS;						\
     _res = READ_DOUBLE(_ea, _fault);					\
@@ -1058,29 +1057,29 @@ DEFINST(LFD,			0x32,
 
 
 
-#define LFDU_IMPL                                                     \
-{                                                                     \
-    word_t _result_hi, _result_lo;                                    \
-    enum md_fault_type _fault;                                        \
-    sword_t _ea;						      \
-    qword_t _res;                                                     \
-    if(RA==0){							      \
-        DECLARE_FAULT(md_fault_invalidinstruction);                   \
-    } else{							      \
-        _ea = GPR(RA) + OFS;                                          \
-        _result_hi = READ_WORD(_ea, _fault);                          \
-        if (_fault != md_fault_none)                                  \
-	    DECLARE_FAULT(_fault);                                    \
-        _result_lo = READ_WORD(_ea + 4, _fault);                      \
-	if (_fault != md_fault_none)                                  \
-            DECLARE_FAULT(_fault);                                    \
-        _res = ((qword_t)_result_hi)<<32;			      \
-        _res = _res || (qword_t) _result_lo;			      \
-        memcpy( (&_res), &_result_hi, sizeof(word_t) );               \
-        memcpy( (word_t *) (&_res)+1, &_result_lo, sizeof(word_t) );  \
-        PPC_SET_FPR_DW(FD, _res);                                     \
-        SET_GPR(RA,_ea);					      \
-    }								      \
+#define LFDU_IMPL							\
+{									\
+    word_t _result_hi, _result_lo;					\
+    enum md_fault_type _fault = md_fault_none;                          \
+    sword_t _ea;							\
+    qword_t _res;							\
+    if(RA==0){								\
+        DECLARE_FAULT(md_fault_invalidinstruction);			\
+    } else{								\
+        _ea = GPR(RA) + OFS;						\
+        _result_hi = READ_WORD(_ea, _fault);				\
+        if (_fault != md_fault_none)					\
+	    DECLARE_FAULT(_fault);					\
+        _result_lo = READ_WORD(_ea + 4, _fault);			\
+	if (_fault != md_fault_none)					\
+            DECLARE_FAULT(_fault);					\
+        _res = ((qword_t)_result_hi)<<32;				\
+        _res = _res || (qword_t) _result_lo;				\
+        memcpy( (&_res), &_result_hi, sizeof(word_t) );			\
+        memcpy( (word_t *) (&_res)+1, &_result_lo, sizeof(word_t) );	\
+        PPC_SET_FPR_DW(FD, _res);					\
+        SET_GPR(RA,_ea);						\
+    }									\
 }
 
 
@@ -1108,7 +1107,7 @@ DEFINST(LFDU,				0x33,
 
 #define STFS_IMPL						    \
 {								    \
-    enum md_fault_type _fault;                                      \
+    enum md_fault_type _fault = md_fault_none;                      \
     float tempf=0;						    \
     word_t *ptempf;						    \
     IF_CMMT(qword_t _d = PPC_FPR_DW(FS));			    \
@@ -1139,7 +1138,7 @@ DEFINST(STFS,			0x34,
 
 #define STFSU_IMPL                                                  \
 {                                                                   \
-    enum md_fault_type _fault;                                      \
+    enum md_fault_type _fault = md_fault_none;                      \
     IF_CMMT(float tempf);                                         \
     IF_CMMT(word_t *ptempf);                                      \
     IF_CMMT(qword_t _d =PPC_FPR_DW(FS));                          \
@@ -1164,7 +1163,7 @@ DEFINST(STFSU,                  0x35,
 
 #define STFD_IMPL							\
   {									\
-    enum md_fault_type _fault;						\
+    enum md_fault_type _fault = md_fault_none;				\
     IF_CMMT(qword_t _d = PPC_FPR_DW(FS));				\
     if(RA==0){								\
       WRITE_DOUBLE(_d, OFS, _fault);					\
@@ -1184,7 +1183,7 @@ DEFINST(STFD,                   0x36,
 
 #define STFDU_IMPL                                                      \
    {                                                                    \
-        enum md_fault_type _fault;                                      \
+        enum md_fault_type _fault = md_fault_none;                      \
         if(RA==0){                                                      \
                 DECLARE_FAULT(md_fault_invalidinstruction);             \
                 }                                                       \
@@ -2292,7 +2291,7 @@ DEFINST(SUBFCOD,			0x411,
 #define LWZX_IMPL                                                       \
    {                                                                    \
     word_t _result;                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0)                                                           \
         {                                                               \
            _result = READ_WORD(GPR(RB), _fault);                        \
@@ -2394,7 +2393,7 @@ DEFINST(DCBST,                  0x6C,
 #define LWZUX_IMPL                                                      \
    {                                                                    \
     word_t _result;                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0||(RA==RD))                                                 \
         {                                                               \
            DECLARE_FAULT(md_fault_invalidinstruction);                  \
@@ -2419,7 +2418,7 @@ DEFINST(LWZUX,				0x6E,
 #define LBZX_IMPL							\
    {									\
      byte_t _result;                                                    \
-     enum md_fault_type _fault;                                         \
+     enum md_fault_type _fault = md_fault_none;                         \
                                                                         \
      if(RA==0){                                                         \
                 _result = READ_BYTE(GPR(RB),_fault);                    \
@@ -2474,7 +2473,7 @@ DEFINST(DCBF,			0xAC,
 
 #define LVX_IMPL                                                  \
   {                                                               \
-    md_fault_type _fault;					  \
+    md_fault_type _fault = md_fault_none;			  \
     simAddress _tmemEA;						  \
     if (RA==0) {						  \
       _tmemEA = GPR(RB);					  \
@@ -2499,7 +2498,7 @@ DEFINST(DCBF,			0xAC,
 #define LBZUX_IMPL                                                      \
    {                                                                    \
      byte_t _result;                                                    \
-     enum md_fault_type _fault;                                         \
+     enum md_fault_type _fault = md_fault_none;				\
                                                                         \
      if((RA==0)||(RA==RD)){                                             \
                 DECLARE_FAULT(md_fault_invalidinstruction);             \
@@ -2551,7 +2550,7 @@ DEFINST(MTCRF,                  0x120,
 #define STWX_IMPL                                                       \
    {                                                                    \
     word_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;				\
     _src = (word_t)GPR(RS);						\
                                                                         \
     if(RA==0){                                                          \
@@ -2586,7 +2585,7 @@ DEFINST(STWCXD,                 0x12D,
 #define STWUX_IMPL                                                      \
    {                                                                    \
     word_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
                                                                         \
     if(RA==0){                                                          \
                  DECLARE_FAULT(md_fault_invalidinstruction);            \
@@ -2609,7 +2608,7 @@ DEFINST(STWUX,                  0x16E,
 #define STBX_IMPL                                                       \
    {                                                                    \
         byte_t  _src;                                                   \
-        enum md_fault_type _fault;                                      \
+        enum md_fault_type _fault = md_fault_none;                      \
         _src=(byte_t)(word_t)GPR(RS);                                   \
         if(RA==0){                                                      \
                  WRITE_BYTE(_src, GPR(RB), _fault);                     \
@@ -2630,7 +2629,7 @@ DEFINST(STBX,                   0x1AE,
 
 #define STVX_IMPL						  \
   {								  \
-    md_fault_type _fault;					  \
+    md_fault_type _fault = md_fault_none;			    \
     simAddress _tmemEA;						  \
     if (RA==0) {						  \
       _tmemEA = GPR(RB);					  \
@@ -2671,7 +2670,7 @@ DEFINST(DCBTST,                 0x1EC,
 #define STBUX_IMPL                                                      \
    {                                                                    \
         byte_t  _src;                                                   \
-        enum md_fault_type _fault;                                      \
+        enum md_fault_type _fault = md_fault_none;                      \
         if(RA==0){                                                      \
                  DECLARE_FAULT(md_fault_invalidinstruction);            \
         }                                                               \
@@ -2715,7 +2714,7 @@ DEFINST(DCBT,                   0x22C,
 #define LHZX_IMPL                                                       \
    {                                                                    \
     half_t _result;                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0)                                                           \
         {                                                               \
            _result = READ_HALF(GPR(RB), _fault);                        \
@@ -2741,7 +2740,7 @@ DEFINST(LHZX,                   0x22E,
 #define ECIWX_IMPL                                              \
 {                                                               \
     IF_CMMT(word_t _result=0);                                  \
-    enum md_fault_type _fault;                                  \
+    enum md_fault_type _fault = md_fault_none;                  \
     printf("warning, ECIWX instr\n");				\
     assert(0);                                                  \
     if(RA==0){                                                  \
@@ -2768,7 +2767,7 @@ DEFINST(ECIWX,                  0x26C,
 #define LHZUX_IMPL                                                      \
    {                                                                    \
     half_t _result;                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0||(RA==RD))                                                 \
         {                                                               \
            DECLARE_FAULT(md_fault_invalidinstruction);                  \
@@ -2837,7 +2836,7 @@ DEFINST(MFSPR,                 0x2A6,
 #define LHAX_IMPL							\
    {                                                                    \
     shalf_t _result;                                                    \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if(RA==0){								\
 	 _result = READ_HALF(GPR(RB), _fault);				\
         }                                                               \
@@ -2878,7 +2877,7 @@ DEFINST(MFTB, 0x2E6,
 #define LHAUX_IMPL                                                      \
    {                                                                    \
     shalf_t _result;                                                    \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     if((RA==0)||(RA==RD)){                                              \
                 DECLARE_FAULT(md_fault_invalidinstruction);             \
         }                                                               \
@@ -2904,7 +2903,7 @@ DEFINST(LHAUX,				0x2EE,
 #define STHX_IMPL							\
    {                                                                    \
     half_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     _src = (half_t)(word_t)GPR(RS);					\
                                                                         \
     if(RA==0){                                                          \
@@ -2933,7 +2932,7 @@ need to be checked*/
 #define ECOWX_IMPL                                                   \
 {                                                                    \
     IF_CMMT(word_t _result=0);                                       \
-    enum md_fault_type _fault;                                       \
+    enum md_fault_type _fault = md_fault_none;                       \
     printf("warning, ECOWX instr\n");				     \
     assert(0);                                                       \
     if(RA==0){                                                       \
@@ -2957,7 +2956,7 @@ DEFINST(ECOWX,                  0x36C,
 #define STHUX_IMPL                                                      \
 {                                                                       \
     half_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
                                                                         \
     if(RA==0){                                                          \
         DECLARE_FAULT(md_fault_invalidinstruction);                     \
@@ -3056,7 +3055,7 @@ DEFINST(MCRXR,                  0x400,
         sword_t _ea;                            \
         word_t _n, _r,_i, _val;                 \
         byte_t _result;                         \
-        enum md_fault_type _fault;              \
+        enum md_fault_type _fault = md_fault_none;\
         if(RA==0){                              \
                 _ea=GPR(RB);                    \
         }                                       \
@@ -3096,7 +3095,7 @@ DEFINST(LSWX,                   0x42A,
 #define LWBRX_IMPL                                                \
    {                                                              \
      byte_t _src1, _src2, _src3, _src4;                           \
-     enum md_fault_type _fault;                                   \
+     enum md_fault_type _fault = md_fault_none;                   \
      sword_t _ea;						  \
      if(RA==0){                                                   \
 	_ea= GPR(RB);						  \
@@ -3131,8 +3130,8 @@ DEFINST(LWBRX,                  0x42C,
 #define LFSX_IMPL                                                       \
 {									\
     word_t _result;							\
-    enum md_fault_type _fault;						\
-    dfloat_t _da;							\
+    enum md_fault_type _fault = md_fault_none;				\
+    IF_CMMT(dfloat_t _da);						\
     if(RA==0){								\
 	_result = READ_WORD(GPR(RB),_fault);				\
     }									\
@@ -3158,8 +3157,8 @@ DEFINST(LFSX,                   0x42E,
 #define LFSUX_IMPL                                                      \
 {									\
     word_t _result;							\
-    enum md_fault_type _fault;						\
-    dfloat_t _da;							\
+    enum md_fault_type _fault = md_fault_none;				\
+    IF_CMMT(dfloat_t _da);						\
     if(RA==0){								\
 	DECLARE_FAULT(md_fault_invalidinstruction);			\
     }									\
@@ -3186,7 +3185,7 @@ DEFINST(LFSUX,				0x46E,
 	sword_t _ea;				\
 	word_t _n, _r,_i, _val;			\
 	byte_t _result;				\
-	enum md_fault_type _fault;		\
+	enum md_fault_type _fault = md_fault_none;  \
 	if(RA==0){				\
 		_ea=0;				\
 	}					\
@@ -3228,7 +3227,7 @@ DEFINST(LSWI,			0x4AA,
 
 #define LFDX_IMPL                                                       \
   {                                                                     \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     sword_t _ea;							\
     qword_t _res;                                                       \
     if(RA==0) _ea = GPR(RB);                                            \
@@ -3253,7 +3252,7 @@ DEFINST(LFDX,                   0x4AE,
 #define LFDUX_IMPL                                                      \
   {                                                                     \
     word_t _result_hi, _result_lo;                                      \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     sword_t _ea;							\
     qword_t _res;							\
     if(RA==0){                                                          \
@@ -3293,7 +3292,7 @@ DEFINST(LFDUX,				0x4EE,
         sword_t _ea;                            \
         word_t _n, _r,_i, _val;                 \
         byte_t _result;                         \
-        enum md_fault_type _fault;              \
+        enum md_fault_type _fault = md_fault_none;  \
         if(RA==0){                              \
                 _ea=GPR(RB);                    \
         }                                       \
@@ -3331,7 +3330,7 @@ DEFINST(STSWX,                  0x52A,
 #define STWBRX_IMPL                                                     \
    {                                                                    \
     word_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
+    enum md_fault_type _fault = md_fault_none;                          \
     byte_t _src1, _src2, _src3, _src4;                                  \
     _src1 =(byte_t)( (word_t)(GPR(RS)) & 0xff );                        \
     _src2 =(byte_t)( ((word_t)(GPR(RS)) & 0xff00)>>8 );                 \
@@ -3358,7 +3357,7 @@ DEFINST(STWBRX,                 0x52C,
 
 #define STFSX_IMPL                                                  \
 {                                                                   \
-   enum md_fault_type _fault;                                       \
+   enum md_fault_type _fault = md_fault_none;                       \
    IF_CMMT(float tempf);                                          \
    IF_CMMT(word_t *ptempf);                                       \
    IF_CMMT(double double_a);                                      \
@@ -3389,7 +3388,7 @@ DEFINST(STFSX,                  0x52E,
 
 #define STFSUX_IMPL                                                  \
 {                                                                    \
-    enum md_fault_type _fault;                                       \
+    enum md_fault_type _fault = md_fault_none;                          \
     IF_CMMT(float tempf);                                          \
     IF_CMMT(word_t *ptempf);                                       \
     IF_CMMT(qword_t _d =PPC_FPR_DW(FS));                           \
@@ -3417,7 +3416,7 @@ DEFINST(STFSUX,                 0x56E,
     sword_t _ea;                                      \
     word_t _n, _r,_i, _val;                           \
     byte_t _result;                                   \
-    enum md_fault_type _fault;                        \
+    enum md_fault_type _fault = md_fault_none;          \
     if(RA==0)                                         \
         _ea=0;                                        \
     else                                              \
@@ -3456,7 +3455,7 @@ DEFINST(STSWI,                  0x5AA,
 
 #define STFDX_IMPL                                      \
 {                                                       \
-    enum md_fault_type _fault;                          \
+    enum md_fault_type _fault = md_fault_none;          \
     sword_t _ea;					\
     if(RA==0) {                                         \
         _ea=GPR(RB);					\
@@ -3483,7 +3482,7 @@ DEFINST(STFDX,            0x5AE,
 
 #define STFDUX_IMPL                                                 \
 {                                                                   \
-    enum md_fault_type _fault;                                      \
+    enum md_fault_type _fault = md_fault_none;                      \
     if(RA==0){                                                      \
         DECLARE_FAULT(md_fault_invalidinstruction);                 \
     } else {                                                        \
@@ -3509,7 +3508,7 @@ DEFINST(STFDUX,                 0x5EE,
 #define LHBRX_IMPL						    \
 {								    \
     byte_t _src1, _src2;					    \
-    enum md_fault_type _fault;                                      \
+    enum md_fault_type _fault = md_fault_none;                      \
     sword_t _ea;						    \
     if(RA!=0){                                                      \
         _ea=GPR(RA)+GPR(RB);					    \
@@ -3552,7 +3551,7 @@ DEFINST(EIEIO,			0x6AC,
 #define STHBRX_IMPL							\
    {									\
     half_t _src;							\
-    enum md_fault_type _fault;						\
+    enum md_fault_type _fault = md_fault_none;				\
     byte_t _src1, _src2;						\
     _src1 =(byte_t)( (word_t)(GPR(RS)) & 0xff );			\
     _src2 =(byte_t)( ((word_t)(GPR(RS)) & 0xff00)>>8 );			\
@@ -3615,7 +3614,7 @@ DEFINST(DCBZ,                   0x7EC,
 
 #define STFIWX_IMPL						\
    {								\
-        enum md_fault_type _fault;				\
+        enum md_fault_type _fault = md_fault_none;		\
         if(RA==0){						\
                  WRITE_WORD((PPC_FPR_UW(FS)), GPR(RB), _fault);	\
                 }						\
@@ -7928,7 +7927,7 @@ DEFINST(FSQRTD,				0x2D,
 
 #define FRSQRTE_IMPL							  \
    {									  \
-	qword_t _b,_fc;							  \
+	qword_t _b;							  \
 	dfloat_t _fb;							  \
 	qword_t _a;							  \
 	word_t _fp;							  \
@@ -7973,6 +7972,7 @@ DEFINST(FSQRTD,				0x2D,
 		 PPC_SET_FPSCR_VXSQRT;					  \
 	}								  \
 	else {								  \
+		qword_t _fc = 0;					  \
 		_fb=1.0/sqrt(_fb);					  \
 		_fp=FPSCR;						  \
                 memcpy(&_fc, &_fb, sizeof(qword_t));                      \
@@ -7999,7 +7999,7 @@ DEFINST(FRSQRTE,			0x34,
 
 #define FRSQRTED_IMPL							  \
 {									  \
-    qword_t  _a, _b, _fc;						  \
+    qword_t  _a, _b;							  \
     dfloat_t _fb;							  \
     word_t   _fp;							  \
     _b  = PPC_FPR_DW(FB);						  \
@@ -8043,6 +8043,7 @@ DEFINST(FRSQRTE,			0x34,
 	PPC_SET_FPSCR_VXSQRT;						  \
     }									  \
     else {								  \
+	qword_t _fc = 0;						  \
 	_fb=1.0/sqrt(_fb);						  \
         _fp=(word_t)FPSCR;						  \
 	memcpy(&_fc, &_fb, sizeof(qword_t));				  \

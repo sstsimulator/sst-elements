@@ -220,7 +220,7 @@ ppcInstruction::CommitWriteDouble (simAddress sa, uint64_t dd, bool isSpec, proc
   {									\
     word_t _result;                                                     \
     word_t ea;								\
-    enum md_fault_type _fault;						\
+    enum md_fault_type _fault = md_fault_none;				\
     if(RA==0) {								\
 	ea = GPR(RB);							\
     } else {								\
@@ -257,12 +257,12 @@ ppcInstruction::CommitWriteDouble (simAddress sa, uint64_t dd, bool isSpec, proc
    reservation for the address and notes which thread is reserving.
    The store only goes through if the right thread has the
    reservation. */
-#undef EXEC_STWCXD			      
+#undef EXEC_STWCXD
 #define EXEC_STWCXD							\
    {                                                                    \
     word_t _src;                                                        \
-    enum md_fault_type _fault;                                          \
-    _src = (word_t)GPR(RS);                                     	\
+    enum md_fault_type _fault = md_fault_none;                          \
+    _src = (word_t)GPR(RS);						\
     word_t ea;								\
                                                                         \
     if(RA==0){                                                          \
