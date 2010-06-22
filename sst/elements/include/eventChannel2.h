@@ -46,6 +46,7 @@ EVENTCHANNEL()::EventChannel( Component& comp,
 
     m_log.write("creating link \"%s\"\n", name.c_str());
     Link* link = comp.LinkAdd( name, handler );
+    assert(link != NULL);
 
     m_vcV.resize( numVC );
 
