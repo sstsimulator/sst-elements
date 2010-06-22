@@ -172,7 +172,7 @@ void XbarV2::Port::doOutput( )
     }
 }
 
-XbarV2::Port::Port* XbarV2::Port::findDstPort( addr_t addr )
+XbarV2::Port* XbarV2::Port::findDstPort( addr_t addr )
 {
     Port** ptr = m_memMap.find( addr);
     if ( ptr ) return *ptr;
