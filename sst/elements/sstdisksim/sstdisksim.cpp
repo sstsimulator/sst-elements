@@ -86,14 +86,13 @@ syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
   add_statistics(&__st, t - r->start);
 }
 
-sstdisksim::sstdisksim( ComponentId_t id, Simulation* sim, Params_t& params ) :
+sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   Component( id ),
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
   std::string parameterFile = "";
   std::string outputFile = "";
-  long long numSectors;
-  
+  long long numSectors = 0;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -101,8 +100,7 @@ sstdisksim::sstdisksim( ComponentId_t id, Simulation* sim, Params_t& params ) :
     {
       m_dbg.enable();
     }
-  }
- 
+  } 
 
   Params_t::iterator it = params.begin();
   while( it != params.end() ) 
@@ -198,9 +196,9 @@ sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 }
 
 extern "C" {
-  sstdisksim* sstdisksimAllocComponent( SST::ComponentId_t id,  SST::Simulation* sim,
+  sstdisksim* sstdisksimAllocComponent( SST::ComponentId_t id,
 					SST::Component::Params_t& params )
   {
-    return new sstdisksim( id, sim, params );
+    return new sstdisksim( id, params );
   }
 }

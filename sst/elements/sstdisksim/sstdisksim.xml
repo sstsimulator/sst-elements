@@ -6,7 +6,7 @@
 	<component id="sstdisksim" >	
 		<sstdisksim>
 			<params> 
-                <param_file>unknown.parv</param_file>
+                <param_file>/Users/miwesto/trunk/sst/core/sstdisksim/testdir.parv</param_file>
                 <output_file>out.disksim</output_file>
                 <num_sectors>10000</num_sectors>
             </params>

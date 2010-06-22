@@ -11,4 +11,6 @@ libmemsmodel.a
 libmems_internals.a
 libdiskmodel.a
 
-
+When running this, make certain that _all_ related disk parameter
+files are in the location you are running from.  Otherwise, errors will 
+result.

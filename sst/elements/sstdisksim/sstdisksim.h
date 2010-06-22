@@ -43,7 +43,7 @@ class sstdisksim : public Component {
 
     public: // functions
 
-        sstdisksim( ComponentId_t id, Simulation* sim, Params_t& params );
+        sstdisksim( ComponentId_t id, Params_t& params );
 	~sstdisksim();
         int Finish();
 
