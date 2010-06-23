@@ -159,7 +159,7 @@ class Cpu_data : public Component {
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version )
     {
-        ar & boost::serialization::base_object<Component>(*this);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
         // ar & BOOST_SERIALIZATION_NVP( mem );
         // ar & BOOST_SERIALIZATION_NVP( handler );
     }

@@ -20,34 +20,31 @@
 
 class event_test : public SST::Component {
 public:
-    event_test( SST::ComponentId_t id, SST::Component::Params_t& params );
+    event_test(SST::ComponentId_t id, SST::Component::Params_t& params);
+    event_test();
 
     int Setup();
-    int Finish() {
-	return 0;
-    }
+    int Finish();
     
 private:
-    event_test() { }
+    bool handleEvent( SST::Event *ev );
 
     int my_id;
     int count_to;
     int latency;
     bool done;
-
     SST::Link* link;
-    
-    bool handleEvent( SST::Event *ev );
 
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version )
     {
-        ar & boost::serialization::base_object<Component>(*this);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
         ar & BOOST_SERIALIZATION_NVP(my_id);
         ar & BOOST_SERIALIZATION_NVP(count_to);
         ar & BOOST_SERIALIZATION_NVP(latency);
         ar & BOOST_SERIALIZATION_NVP(done);
+        ar & BOOST_SERIALIZATION_NVP(link);
     }
 };
 

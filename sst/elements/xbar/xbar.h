@@ -67,7 +67,7 @@ class Xbar : public Component {
             clockHandler = new EventHandler< Xbar, bool, Cycle_t >
                                                 ( this, &Xbar::clock );
 
-            TimeConverter* tc = registerClock( frequency, clockHandler );
+            registerClock( frequency, clockHandler );
             _XBAR_DBG("Done registering clock\n",id);
         }
 
@@ -95,7 +95,7 @@ class Xbar : public Component {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            ar & boost::serialization::base_object<Component>(*this);
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    printf("xbaf::serialize()\n");
             _AR_DBG(Xbar,"start\n");
 	    printf("  base serializing: Component\n");

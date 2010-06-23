@@ -209,7 +209,7 @@ private:
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        ar & boost::serialization::base_object<SST::Event>(*this);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(type);
         ar & BOOST_SERIALIZATION_NVP(u);
     }

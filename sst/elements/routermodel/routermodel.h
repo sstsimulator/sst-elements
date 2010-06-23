@@ -56,7 +56,7 @@ class Routermodel : public Component {
 		}
 
 		if (!it->first.compare("hop_delay"))   {
-		    sscanf(it->second.c_str(), "%ld", &hop_delay);
+		    sscanf(it->second.c_str(), "%ld", (long int*) &hop_delay);
 		}
 
 		if (!it->first.compare("component_name"))   {
@@ -150,7 +150,7 @@ class Routermodel : public Component {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            ar & boost::serialization::base_object<Component>(*this);
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
             //	    ar & BOOST_SERIALIZATION_NVP(port);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

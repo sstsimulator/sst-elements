@@ -20,21 +20,19 @@
 
 using namespace SST;
 
-event_test::event_test( ComponentId_t id, Params_t& params ) :
-    Component( id )
+event_test::event_test(ComponentId_t id, Params_t& params) :
+    Component(id),
+    done(false)
 {
-
     if ( params.find("id") == params.end() ) {
         _abort(event_test,"couldn't find node id\n");
     }
     my_id = strtol( params[ "id" ].c_str(), NULL, 0 );
-    
 
     if ( params.find("count_to") == params.end() ) {
         _abort(event_test,"couldn't find count_to\n");
     }
     count_to = strtol( params[ "count_to" ].c_str(), NULL, 0 );
-
 
     if ( params.find("latency") == params.end() ) {
         _abort(event_test,"couldn't find latency\n");
@@ -42,17 +40,24 @@ event_test::event_test( ComponentId_t id, Params_t& params ) :
     latency = strtol( params[ "latency" ].c_str(), NULL, 0 );
     
     registerExit();
-    done = false;
 
     EventHandler_t* linkHandler = new EventHandler<event_test,bool,Event*>
 	(this,&event_test::handleEvent);
 
     link = LinkAdd( "link", linkHandler );
     registerTimeBase("1ns");
-    
 }
 
-int event_test::Setup() {
+
+event_test::event_test()
+{
+    // for serialization only
+}
+
+
+int
+event_test::Setup()
+{
     if ( my_id == 0 ) {
 	MyEvent* event = new MyEvent();
 	event->count = 0;
@@ -65,7 +70,17 @@ int event_test::Setup() {
     return 0;
 }
 
-bool event_test::handleEvent(Event* ev) {
+
+int
+event_test::Finish()
+{
+    return 0;
+}
+
+
+bool
+event_test::handleEvent(Event* ev)
+{
     MyEvent* event = static_cast<MyEvent*>(ev);
     // See if we have counted far enough, if not, increment and send
     // back
@@ -84,9 +99,12 @@ bool event_test::handleEvent(Event* ev) {
     }    
     return false;
 }
+
+
+// Element Libarary / Serialization stuff
     
-BOOST_CLASS_EXPORT( MyEvent )
-BOOST_CLASS_EXPORT( event_test )
+BOOST_CLASS_EXPORT(MyEvent)
+BOOST_CLASS_EXPORT(event_test)
 
 static Component*
 create_event_test(SST::ComponentId_t id, 
@@ -94,7 +112,6 @@ create_event_test(SST::ComponentId_t id,
 {
     return new event_test( id, params );
 }
-
 
 static const ElementInfoComponent components[] = {
     { "event_test",
