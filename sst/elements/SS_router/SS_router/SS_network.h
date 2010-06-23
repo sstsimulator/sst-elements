@@ -32,6 +32,7 @@
 #include <fstream>
 
 #include <sst/core/component.h>
+#include <sst/core/event.h>
 #include <sst_stdint.h>
 
 
