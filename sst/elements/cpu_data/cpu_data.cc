@@ -12,7 +12,6 @@
 
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
-#include "sst/core/serialization/types.h"
 
 #include "cpu_data.h"
 #include <sst/core/memEvent.h>

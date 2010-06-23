@@ -12,7 +12,6 @@
 
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
-#include "sst/core/serialization/types.h"
 
 #include "routermodel.h"
 #include <sst/core/cpunicEvent.h>
