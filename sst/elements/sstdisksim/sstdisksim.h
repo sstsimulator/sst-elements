@@ -13,12 +13,11 @@
 #define _SSTDISKSIM_H
 
 #include <sst/log.h>
-#include <sst/eventFunctor.h>
-#include <sst/component.h>
-#include <sst/simulation.h>
+#include <sst/core/eventFunctor.h>
+#include <sst/core/component.h>
+#include <sst/core/simulation.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <MemorySystem.h>
 
 #include "syssim_driver.h"
 #include <disksim_interface.h>
@@ -53,6 +52,7 @@ class sstdisksim : public Component {
 	Simulation* __sim;
 	Params_t __params;
 	ComponentId_t __id;
+
 	//	SysTime __now;		/* current time */
 	//	SysTime __next_event;	/* next event */
 	//	int __completed;	/* last request was completed */

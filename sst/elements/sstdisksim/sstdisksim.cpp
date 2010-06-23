@@ -97,6 +97,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   std::string parameterFile = "";
   std::string outputFile = "";
   long long numSectors = 0;
+  std::string frequency = "";
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -120,6 +121,10 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     {
       outputFile = it->second;
     }
+    if ( ! it->first.compare("clock") ) 
+    {
+      frequency = it->second;
+    }
     if ( ! it->first.compare("num_sectors") ) 
     {
       numSectors = atol((it->second).c_str());
@@ -128,7 +133,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     ++it;
   }
 
-  
+ 
   __disksim = disksim_interface_initialize(parameterFile.c_str(), 
 					   outputFile.c_str(),
 					   syssim_report_completion,
@@ -142,9 +147,19 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __now = 0;
   __next_event = -1;
 
-  ClockHandler_t* handler;
-  handler = new EventHandler< sstdisksim, bool, Cycle_t >
+  ClockHandler_t* handler = new EventHandler< sstdisksim, bool, Cycle_t >
     ( this, &sstdisksim::clock );
+  
+  if ( ! handler ) 
+  {
+    _abort(sstdisksim, "couldn't create clock handler");
+  }
+  
+  TimeConverter* tc = registerClock( frequency, handler );
+  if ( ! tc ) 
+  {
+    _abort(sstdisksim, "couldn't register clock handler");
+  }
 
   printf("Starting disksim up\n");
   return;
@@ -195,28 +210,27 @@ sstdisksim::clock( Cycle_t cycle )
 void 
 sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
-  struct disksim_itnerface;
-  struct disksim_request r;
-  r.start = __now;
-  r.flags = DISKSIM_READ;
-  r.devno = 0;
-  r.bytecount = 512; /*TODO: Need sector size set elsewhere, perhaps?*/
-  r.blkno = 0;  /*TODO: Maybe change this elsewhere as well */
+  struct disksim_request* r = new(struct disksim_request);
+  r->start = __now;
+  r->flags = DISKSIM_READ;
+  r->devno = 0;
+  r->bytecount = SECTOR;
+  r->blkno = addr;
 
-  disksim_interface_request_arrive(__disksim, __now, &r);
+  disksim_interface_request_arrive(__disksim, __now, r);
 }
 
 void 
 sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
-  struct disksim_request r;
-  r.start = __now;
-  r.flags = DISKSIM_WRITE;
-  r.devno = 0;
-  r.bytecount = 512; /*TODO: Need sector size set elsewhere, perhaps?*/
-  r.blkno = 0;  /*TODO: Maybe change this elsewhere as well */
+  struct disksim_request* r = new(struct disksim_request);
+  r->start = __now;
+  r->flags = DISKSIM_WRITE;
+  r->devno = 0;
+  r->bytecount = SECTOR;
+  r->blkno = addr;
 
-  disksim_interface_request_arrive(__disksim, __now, &r);
+  disksim_interface_request_arrive(__disksim, __now, r);
 }
 
 extern "C" {

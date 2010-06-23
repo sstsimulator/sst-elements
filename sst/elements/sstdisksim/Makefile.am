@@ -6,7 +6,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 EXTRA_DIST = sstdisksim.xml
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libsstdisksim.la
+comp_LTLIBRARIES = libsstdisksim.la 
 libsstdisksim_la_SOURCES = \
 	sstdisksim.cpp \
 	sstdisksim.h 
