@@ -17,6 +17,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/eventFunctor.h>
 
 class event_test : public SST::Component {
 public:
@@ -37,7 +38,7 @@ private:
 
     friend class boost::serialization::access;
     template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
+    void save(Archive & ar, const unsigned int version) const
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
         ar & BOOST_SERIALIZATION_NVP(my_id);
@@ -46,6 +47,23 @@ private:
         ar & BOOST_SERIALIZATION_NVP(done);
         ar & BOOST_SERIALIZATION_NVP(link);
     }
+
+    template<class Archive>
+    void load(Archive & ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+        ar & BOOST_SERIALIZATION_NVP(my_id);
+        ar & BOOST_SERIALIZATION_NVP(count_to);
+        ar & BOOST_SERIALIZATION_NVP(latency);
+        ar & BOOST_SERIALIZATION_NVP(done);
+        ar & BOOST_SERIALIZATION_NVP(link);
+
+        SST::EventHandler_t* linkHandler = new SST::EventHandler<event_test,bool,SST::Event*>
+            (this,&event_test::handleEvent);
+        link->setFunctor(linkHandler);
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 #endif
