@@ -10,7 +10,6 @@
 #include <sst/core/component.h>
 #include <sst/core/debug.h>
 #include <sst/core/sst.h>
-#include <sst/core/boost.h>
 
 
 /*********Sim-Panalyzer************/
