@@ -162,6 +162,9 @@ bool Bus::clock( Cycle_t current )
                 DBG("write Ready %d\n", m_readBusy);
                 m_writeBusy = false;
                 break;
+        default:
+            fprintf(stderr, "Bus::clock(): Unhandled event %d\n", 
+                    (int) (*iter)->doResp());
         }
     }
 
