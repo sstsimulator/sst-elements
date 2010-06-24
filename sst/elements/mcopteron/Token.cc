@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include <memory.h>
+#include <string.h> // for memset()
 #include <Token.h>
 #include <FunctionalUnit.h>
 
