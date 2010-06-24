@@ -54,6 +54,10 @@ class sstdisksim : public Component {
 	Params_t __params;
 	ComponentId_t __id;
 
+	/* To be removed later-this is just to test the component
+	   before we start having trace-reading functionality. */
+	int numsectors;
+
 	//	SysTime __now;		/* current time */
 	//	SysTime __next_event;	/* next event */
 	//	int __completed;	/* last request was completed */
@@ -67,6 +71,31 @@ class sstdisksim : public Component {
 
         void readBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
         void writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
+
+	SST::Link* link;
+	
+	friend class boost::serialization::access;
+	template<class Archive>
+	  void save(Archive & ar, const unsigned int version) const
+	  {
+	    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+	    ar & BOOST_SERIALIZATION_NVP(numsectors);
+	    ar & BOOST_SERIALIZATION_NVP(link);
+	  }
+	
+	template<class Archive>
+	  void load(Archive & ar, const unsigned int version)
+	  {
+	    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+	    ar & BOOST_SERIALIZATION_NVP(numsectors);
+	    ar & BOOST_SERIALIZATION_NVP(link);
+	    
+	    /*	    SST::EventHandler_t* linkHandler = new SST::EventHandler<event_test,bool,SST::Event*>
+	      (this,&event_test::handleEvent);
+	      link->setFunctor(linkHandler);*/
+	  }
+	
+	BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 	/*	void panic(const char* s);
 	void print_statistics(sstdisksim_stat *s, const char *title);
