@@ -10,6 +10,5 @@ nobase_sst_HEADERS = \
 	memoryDev2.h \
 	paramUtil.h \
 	eventChannel2.h \
-	memory.h \
 	memoryDev.h \
 	memoryIF.h

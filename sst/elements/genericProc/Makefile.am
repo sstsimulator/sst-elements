@@ -13,6 +13,7 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libgenericProc.la
 libgenericProc_la_SOURCES = \
+	memory.h \
 	proc.h \
 	proc.cc \
 	FE/fe_debug.h \
