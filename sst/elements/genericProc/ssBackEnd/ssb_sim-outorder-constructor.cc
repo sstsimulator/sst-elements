@@ -18,7 +18,7 @@
 //: Constructor
 convProc::convProc(string configFile, processor *p, int maxMMOut, int coreNum,
 		   map<string,string> prefetchInit)
-  : myProc(p), myCoreID(coreNum),
+  : tickCount(0), myProc(p), myCoreID(coreNum),
     clearPipe(0), isSyncing(0), clockRatio(1), iFetchBlocker(0), 
     rs_free_list(MAX_RS_LINKS), last_inst_missed(FALSE), 
     last_inst_tmissed(FALSE),
@@ -26,7 +26,7 @@ convProc::convProc(string configFile, processor *p, int maxMMOut, int coreNum,
     sim_num_loads(0), sim_total_loads(0), sim_num_branches(0), 
     sim_total_branches(0), inst_seq(0), ptrace_seq(0), spec_mode(FALSE),
     lsq_mult(FALSE), ruu_fetch_issue_delay(0), ruu_dispatch_delay(0),
-    pred_perfect(FALSE), fu_pool(NULL), tickCount(0) {
+    pred_perfect(FALSE), fu_pool(NULL) {
   instructionSize = 4; //default
   //requestFullMemCopy(this);
 
