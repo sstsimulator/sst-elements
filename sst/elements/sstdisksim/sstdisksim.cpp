@@ -30,10 +30,12 @@ static SysTime __next_event;	/* next event */
 static 	int __completed;	/* last request was completed */
 static 	sstdisksim_stat __st;
 
+/******************************************************************************/
 double syssim_gettime() {
 	return __now; 
 }
 
+/******************************************************************************/
 void
 panic(const char *s)
 {
@@ -41,6 +43,7 @@ panic(const char *s)
   exit(1);
 }
 
+/******************************************************************************/
 void
 print_statistics(sstdisksim_stat *s, const char *title)
 {
@@ -51,6 +54,7 @@ print_statistics(sstdisksim_stat *s, const char *title)
   printf("%s: n=%d average=%f std. deviation=%f\n", title, s->n, avg, std);
 }
 
+/******************************************************************************/
 void
 add_statistics(sstdisksim_stat *s, double x)
 {
@@ -59,6 +63,7 @@ add_statistics(sstdisksim_stat *s, double x)
   s->sqr += x*x;
 }
 
+/******************************************************************************/
 /*
  * Schedule next callback at time t.
  * Note that there is only *one* outstanding callback at any given time.
@@ -73,6 +78,7 @@ syssim_schedule_callback(disksim_interface_callback_t fn,
 }
 
 
+/******************************************************************************/
 /*
  * de-scehdule a callback.
  */
@@ -82,6 +88,7 @@ syssim_deschedule_callback(double t, void *ctx)
   __next_event = -1;
 }
 
+/******************************************************************************/
 void
 syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
 {
@@ -90,6 +97,7 @@ syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
   add_statistics(&__st, t - r->start);
 }
 
+/******************************************************************************/
 sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   Component( id ),
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
@@ -143,7 +151,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 					   0,
 					   0);
 
-  __completed = 0;
+  __completed = 1;
   __now = 0;
   __next_event = -1;
 
@@ -165,6 +173,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   return;
 }
 
+/******************************************************************************/
 sstdisksim::sstdisksim( const sstdisksim& c ) :
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
@@ -173,10 +182,19 @@ sstdisksim::sstdisksim( const sstdisksim& c ) :
   __next_event = -1;
 }
 
+/******************************************************************************/
 sstdisksim::~sstdisksim()
 {
 }
 
+/******************************************************************************/
+int
+sstdisksim::Setup()
+{
+  return 0;
+}
+
+/******************************************************************************/
 int 
 sstdisksim::Finish()
 {
@@ -187,6 +205,8 @@ sstdisksim::Finish()
   return 0;
 }
 
+
+/******************************************************************************/
 bool 
 sstdisksim::clock( Cycle_t cycle )
 {
@@ -207,6 +227,7 @@ sstdisksim::clock( Cycle_t cycle )
   return false;
 }
 
+/******************************************************************************/
 void 
 sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
@@ -220,6 +241,7 @@ sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
   disksim_interface_request_arrive(__disksim, __now, r);
 }
 
+/******************************************************************************/
 void 
 sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
@@ -233,6 +255,7 @@ sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
   disksim_interface_request_arrive(__disksim, __now, r);
 }
 
+/******************************************************************************/
 extern "C" {
   sstdisksim* sstdisksimAllocComponent( SST::ComponentId_t id,
 					SST::Component::Params_t& params )

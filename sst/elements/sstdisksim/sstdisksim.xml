@@ -6,7 +6,7 @@
 	<component id="sstdisksim" >	
 		<sstdisksim>
 			<params> 
-		<clock>1ns</clock>
+		<clock>4Ghz</clock>
                 <param_file>/Users/miwesto/trunk/sst/elements/sstdisksim/disksim-src/seagate/testdir.parv</param_file>
                 <output_file>out.disksim</output_file>
                 <num_sectors>10000</num_sectors>

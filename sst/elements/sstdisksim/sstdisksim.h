@@ -44,6 +44,7 @@ class sstdisksim : public Component {
 
         sstdisksim( ComponentId_t id, Params_t& params );
 	~sstdisksim();
+	int Setup();
         int Finish();
 
     private: // types
