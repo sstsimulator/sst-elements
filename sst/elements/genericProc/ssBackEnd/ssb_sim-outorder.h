@@ -44,11 +44,11 @@ class convProc : public prefetchProc
    * data members
    */ 
 
-  long tickCount;
+  unsigned long long tickCount;
   processor *myProc;
   int myCoreID;
 public:
-  long long TimeStamp() const {
+  unsigned long long TimeStamp() const {
     return tickCount;
   }
 
