@@ -23,14 +23,12 @@
 #include <queue>
 #include <memoryDev.h>
 #include <memMap.h>
-#include <sst/core/component.h>
 
 template < typename addrT = uint64_t, 
             typename cookieT = unsigned long,
             typename dataT = unsigned long  >
 class Memory :
-    public MemoryIF< addrT, cookieT >,
-    public SST::Component
+    public MemoryIF< addrT, cookieT >
 {
     public: // types
         typedef MemoryDev< addrT, cookieT > dev_t;
@@ -40,7 +38,7 @@ class Memory :
         typedef dataT                       data_t;
 
     public: // functions
-	Memory(SST::ComponentId_t id, SST::Component::Params_t& params);
+	Memory();
         bool devAdd( dev_t*, addr_t, addr_t );
 
         virtual bool read( addr_t, cookie_t );
@@ -69,8 +67,7 @@ class Memory :
 };
 
 template < typename addrT, typename cookieT, typename dataT >
-Memory< addrT, cookieT, dataT >::Memory(SST::ComponentId_t id, SST::Component::Params_t& params) :
-    Component(id),
+Memory< addrT, cookieT, dataT >::Memory() :
     m_dbg( *new Log< MEMORY_DBG >( "Memory::" ) )
 {
 }
