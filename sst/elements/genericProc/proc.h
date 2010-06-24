@@ -39,6 +39,35 @@ using namespace SST;
 
 extern int gproc_debug;
 
+// "memory" class
+class mem : public Component {
+    private:
+	MemoryChannel<uint64_t> *memchan;
+    public:
+	mem(ComponentId_t id, Params_t& params) :
+	    Component(id)
+	{
+	    memchan = new MemoryChannel<uint64_t>(*this, params, "bus");
+	    ClockHandler_t *handler = new EventHandler<mem,bool,Cycle_t>(this, &mem::clock);
+	    std::string frequency = params["clock"];
+	    if (frequency == "") {
+		INFO("Using default frequency for genericMem (2.0 GHz)");
+		frequency = "2.0 GHz";
+	    }
+	    registerClock(frequency, handler);
+	}
+	bool clock(Cycle_t thisCycle)
+	{
+	    MemoryChannel<uint64_t>::event_t *event;
+	    while (memchan->recv(&event)) {
+		event->msgType = MemoryChannel<uint64_t>::event_t::RESPONSE;
+		if (!memchan->send(event)) {
+		    abort(); // this is ugly
+		}
+	    }
+	    return false;
+	}
+};
 
 // "processor" class
 class proc : public processor {
@@ -78,8 +107,10 @@ BOOST_SERIALIZE {
   }
 #endif
 
+public:
   //  typedef MemoryDev< uint64_t, instruction* > memDev_t; 
   typedef Memory< uint64_t, instruction* > memory_t; 
+private:
   // links to memory
   std::vector< memory_t* > memory;
   // links to other processors

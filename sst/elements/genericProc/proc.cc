@@ -11,6 +11,9 @@
 
 #include <sst_config.h>
 
+#include <sst/core/component.h>
+#include <sst/core/element.h>
+
 #include "proc.h"
 #include "FE/thread.h"
 //#include "sst/boost.h"
@@ -19,14 +22,40 @@
 
 int gproc_debug;
 
+static Component*
+create_genericProc_cpu(SST::ComponentId_t id,
+		       SST::Component::Params_t& params)
+{
+    return new proc(id, params);
+}
+
+static Component*
+create_genericProc_mem(SST::ComponentId_t id,
+			  SST::Component::Params_t& params)
+{
+    return new mem(id, params);
+}
+
+static const ElementInfoComponent components[] = {
+    { "genericProc",
+      "Generic Processing Unit (CPU-ish) to run a single ppc application",
+      NULL,
+      create_genericProc_cpu,
+    },
+    { "genericMem",
+      "Generic Memory Unit to go with the genericProc",
+      NULL,
+      create_genericProc_mem,
+    },
+    {NULL, NULL, NULL, NULL}
+};
 
 extern "C" {
-  proc* genericProcAllocComponent( SST::ComponentId_t id,
-				   SST::Component::Params_t& params )
-  {
-    proc* ret = new proc( id, params );
-    return ret;
-  }
+  ElementLibraryInfo genericProc_eli = {
+      "genericProc",
+      "simple processor for running PPC applications",
+      components,
+  };
 }
 
 // dummy constructor, called in deserialization. 
@@ -57,8 +86,16 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   memStores = 0;
 #endif
 
-  memory_t* tmp = new memory_t( );
-  // construct the params for the memory device and prefetcher
+  /* memory_t is an interface to a (set of) memory device(s), which will, given
+   * an address, identify which device owns the address and use the link to
+   * that device for timing data; however, memory_t will hold the actual memory
+   * contents. In this case, that's actually overkill, because there is only
+   * ever ONE memory device. */
+  memory_t* tmp = new memory_t;
+  assert(tmp);
+  // construct the params for the memory device (specifically, the memoryDev,
+  // which is a memoryChannel, which is an eventChannel);
+  // NOTE: a memoryDevice is ***NOT*** a component
   Params_t memParams, prefInit;
   for (Params_t::iterator pi = paramsC.begin(); pi != paramsC.end(); ++pi) {
     if (pi->first.find("mem.") == 0) {
@@ -69,9 +106,12 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
       prefInit[pi->first] = pi->second;
     }
   }
-  /* This does not work right with the new link behavior, because it connects and sends messages
-   * tmp->devAdd(  new memory_t::dev_t( *this, memParams, "mem0" ), 0,
-		0x100000000ULL );*/
+  /* This will connect to whatever device happens to be on the other side of
+   * the "mem0" link in the SDL. The "mem0" link MUST exist, and MUST be a
+   * memory device (if all else fails, use genericProc.genericMem) */
+  memory_t::dev_t *dev = new memory_t::dev_t( *this, memParams, "mem0" );
+  assert(dev);
+  tmp->devAdd(  dev, 0, 0x100000000ULL );
 
 #if 0
   tmp->map( 0x0, 0x0, 0x100000 );
@@ -85,8 +125,8 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
     (this, &proc::handle_nic_events);
 
   // turned off network until we can check for it
-  Link *nl = LinkAdd("net0", NICeventHandler);
-  if (nl) netLinks.push_back(nl);
+  /*Link *nl = LinkAdd("net0", NICeventHandler);
+  if (nl) netLinks.push_back(nl);*/
 
 
   clockHandler = new EventHandler< proc, bool, Cycle_t>
@@ -484,8 +524,9 @@ bool proc::forwardToNetsimNIC(int call_num, char *params, const size_t params_le
   }
 
   // Send the event to the NIC
-  CompEvent *e= static_cast<CompEvent *>(event);
-  netLinks[0]->Send(e);
+  //CompEvent *e= static_cast<CompEvent *>(event);
+  abort();
+  //netLinks[0]->Send(e);
 
   return false;
 }
@@ -571,7 +612,7 @@ bool proc::sendMemoryReq( instType iType,
       INFO("Memory Failed to Read");
       return false;
     }
-  }   
+  }
 
   if (!mProcs.empty() && (i != (instruction*)(~0))) {    
     // if we need to, record the memory event
