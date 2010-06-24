@@ -101,6 +101,8 @@ class prefetcher {
     }
   }
 
+  int cacheShift;
+
   //: pointer to "parent" processor
   prefetchProc *proc;
   //: Use Tagged OBL?

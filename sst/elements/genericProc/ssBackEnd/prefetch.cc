@@ -16,16 +16,16 @@
 #include "ssb_DMA_fakeInst.h"
 #include "FE/fe_debug.h"
 
-#warning this should be a config var
-const int cacheShift = 6;
-
 //: Pool of Fake insrtuctions 
 pool<fakeDMAInstruction> prefetcher::fakeInst;
 
 //: Constructor
 prefetcher::prefetcher(paramMap_t initStr, prefetchProc *p,
 		       prefetchMC *_mc) : 
-  params(initStr), proc(p), requestsIssued(0), requestsHit(0),
+  params(initStr), 
+  cacheShift(6),
+  proc(p),
+  requestsIssued(0), requestsHit(0),
   overPage(0), tooLate(0), adaptions(0), subTotalReq(0),
   subRequestsHit(0), streamReq(0), streamsDetected(0), mc(_mc), streamRequestsHit(0), rr(0) {
 
@@ -42,6 +42,13 @@ prefetcher::prefetcher(paramMap_t initStr, prefetchProc *p,
 #else
   stats = 1;
 #endif
+
+  {
+      int cs = getValue("pref.cacheShift");
+      if (cs != -1) {
+	  cacheShift = cs;
+      }
+  }
 
   string pretype = getStrValue("pref.name");
   if (pretype == "obl" || pretype == "obls") {
