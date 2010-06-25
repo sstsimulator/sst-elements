@@ -28,7 +28,7 @@
 
 #include <deque>
 
-#include <sst/core/sst.h>
+#include <sst/core/sst_types.h>
 #include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>

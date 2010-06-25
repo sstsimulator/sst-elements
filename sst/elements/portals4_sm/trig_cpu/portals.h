@@ -19,7 +19,7 @@
 #include <queue>
 
 #include "portals_types.h"
-#include <sst/core/sst.h>
+#include <sst/core/sst_types.h>
 
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
