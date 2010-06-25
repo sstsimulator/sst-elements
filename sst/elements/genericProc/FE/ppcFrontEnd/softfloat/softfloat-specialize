@@ -68,7 +68,7 @@ typedef struct {
 | otherwise returns 0.
 *----------------------------------------------------------------------------*/
 
-flag float32_is_nan( float32 a )
+static flag float32_is_nan( float32 a )
 {
 
     return ( 0xFF000000 < (bits32) ( a<<1 ) );
@@ -148,7 +148,7 @@ static float32 propagateFloat32NaN( float32 a, float32 b )
 | otherwise returns 0.
 *----------------------------------------------------------------------------*/
 
-flag float64_is_nan( float64 a )
+static flag float64_is_nan( float64 a )
 {
 
     return ( LIT64( 0xFFE0000000000000 ) < (bits64) ( a<<1 ) );
@@ -238,7 +238,7 @@ static float64 propagateFloat64NaN( float64 a, float64 b )
 | NaN; otherwise returns 0.
 *----------------------------------------------------------------------------*/
 
-flag floatx80_is_nan( floatx80 a )
+static flag floatx80_is_nan( floatx80 a )
 {
 
     return ( ( a.high & 0x7FFF ) == 0x7FFF ) && (bits64) ( a.low<<1 );
@@ -332,7 +332,7 @@ static floatx80 propagateFloatx80NaN( floatx80 a, floatx80 b )
 | otherwise returns 0.
 *----------------------------------------------------------------------------*/
 
-flag float128_is_nan( float128 a )
+static flag float128_is_nan( float128 a )
 {
 
     return

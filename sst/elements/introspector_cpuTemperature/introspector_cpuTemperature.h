@@ -58,7 +58,8 @@ class Introspector_cpuTemperature : public Introspector {
                                                 ( this, &Introspector_cpuTemperature::pullData );
             _INTROSPECTOR_CPUTEMPERATURE_DBG("-->frequency=%s\n",frequency.c_str());
             TimeConverter* tc = registerClock( frequency, handler );
-	    printf("INTROSPECTOR_CPUTEMPERATURE period: %ld\n",tc->getFactor());
+	    printf("INTROSPECTOR_CPUTEMPERATURE period: %ld\n",
+                   (long int) tc->getFactor());
             _INTROSPECTOR_CPUTEMPERATURE_DBG("Done registering clock\n");
 
             

@@ -5,7 +5,7 @@
 /// @brief Constructor
 ///
 FunctionalUnit::FunctionalUnit(FunctionalUnitTypes type, const char *name, unsigned int id) :
-    type(type), name(name), id(id)
+    name(name), type(type), id(id)
 {
    occupiedUntilCycle = 0;
    numFreeCycles = numOccupiedCycles = latestCycle = 0;

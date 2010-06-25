@@ -19,7 +19,8 @@ bool Introspector_cpuTemperature::pullData( Cycle_t current )
     //_INTROSPECTOR_DBG("id=%lu currentCycle=%lu \n", Id(), current );
 	Component *c;
 
-        printf("introspector_cpuTemperature pulls data @ cycle %ld\n", current ); //current here specifies it's the #th call
+        printf("introspector_cpuTemperature pulls data @ cycle %ld\n", 
+               (long int) current ); //current here specifies it's the #th call
 	for( Database_t::iterator iter = DatabaseInt.begin();
                             iter != DatabaseInt.end(); ++iter )
     	{

@@ -57,7 +57,7 @@ bool Introspector_cpu::mpiCollectInt( Cycle_t current )
 	    std::cout << " The maximum value of data is " << maxvalue << std::endl;
 
 	    std::cout << "Gather data into vector: ";
-   	    for(int ii=0; ii < arrayvalue.size(); ii++)
+   	    for(unsigned int ii=0; ii < arrayvalue.size(); ii++)
             {
                  std::cout << arrayvalue[ii] << " ";
             }
