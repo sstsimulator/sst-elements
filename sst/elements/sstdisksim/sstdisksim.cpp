@@ -25,16 +25,6 @@
 #define DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
-static SysTime __now;		/* current time */
-static SysTime __next_event;	/* next event */
-static 	int __completed;	/* last request was completed */
-static 	sstdisksim_stat __st;
-
-/******************************************************************************/
-double syssim_gettime() {
-	return __now; 
-}
-
 /******************************************************************************/
 void
 panic(const char *s)
@@ -74,7 +64,8 @@ syssim_schedule_callback(disksim_interface_callback_t fn,
 			 SysTime t, 
 			 void *ctx)
 {
-  __next_event = t;
+  sstdisksim* ptr = (sstdisksim*)ctx;
+  ptr->__next_event = t;
 }
 
 
@@ -85,16 +76,18 @@ syssim_schedule_callback(disksim_interface_callback_t fn,
 void
 syssim_deschedule_callback(double t, void *ctx)
 {
-  __next_event = -1;
+  sstdisksim* ptr = (sstdisksim*)ctx;
+  ptr->__next_event = -1;
 }
 
 /******************************************************************************/
 void
 syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
 {
-  __completed = 1;
-  __now = t;
-  add_statistics(&__st, t - r->start);
+  sstdisksim* ptr = (sstdisksim*)ctx;
+  ptr->__completed = 1;
+  ptr->__now = t;
+  add_statistics(&(ptr->__st), t - r->start);
 }
 
 /******************************************************************************/
@@ -147,7 +140,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 					   syssim_report_completion,
 					   syssim_schedule_callback,
 					   syssim_deschedule_callback,
-					   0,
+					   this,
 					   0,
 					   0);
 
@@ -201,20 +194,6 @@ sstdisksim::Finish()
 bool 
 sstdisksim::clock( Cycle_t cycle )
 {
-  while(__next_event >= 0) 
-  {
-    __now = __next_event;
-    __next_event = -1;
-    disksim_interface_internal_event(__disksim, __now, 0);
-  }
-  
-  if (!__completed) 
-  {
-    fprintf(stderr,
-	    "disksim sim: internal error. Last event not completed\n");
-    exit(1);
-  }
-
   return false;
 }
 
@@ -230,6 +209,20 @@ sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
   r->blkno = addr;
 
   disksim_interface_request_arrive(__disksim, __now, r);
+
+  while(__next_event >= 0) 
+  {
+    __now = __next_event;
+    __next_event = -1;
+    disksim_interface_internal_event(__disksim, __now, 0);
+  }
+  
+  if (!__completed) 
+  {
+    fprintf(stderr,
+	    "disksim sim: internal error. Last event not completed\n");
+    exit(1);
+  }
 }
 
 /******************************************************************************/
@@ -244,6 +237,20 @@ sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
   r->blkno = addr;
 
   disksim_interface_request_arrive(__disksim, __now, r);
+
+  while(__next_event >= 0) 
+  {
+    __now = __next_event;
+    __next_event = -1;
+    disksim_interface_internal_event(__disksim, __now, 0);
+  }
+  
+  if (!__completed) 
+  {
+    fprintf(stderr,
+	    "disksim sim: internal error. Last event not completed\n");
+    exit(1);
+  }
 }
 
 /******************************************************************************/

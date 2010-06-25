@@ -42,6 +42,11 @@ class sstdisksim : public Component {
 
     public: // functions
 
+         SysTime __now;		/* current time */
+         SysTime __next_event;	/* next event */
+	 int __completed;	/* last request was completed */
+	 sstdisksim_stat __st;
+
         sstdisksim( ComponentId_t id, Params_t& params );
 	~sstdisksim();
 	int Setup();
