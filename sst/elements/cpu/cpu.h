@@ -30,63 +30,65 @@ using namespace SST;
 class Cpu : public Component {
         typedef enum { WAIT, SEND } state_t;
         typedef enum { WHO_NIC, WHO_MEM } who_t;
-    public:
-        Cpu( ComponentId_t id, Params_t& params ) :
-            Component( id ),
-            params( params ),
-            state(SEND),
-            who(WHO_MEM), 
-            frequency( "2.2GHz" )
-        {
-            _CPU_DBG( "new id=%lu\n", id );
 
-            registerExit();
+public:
+    Cpu( ComponentId_t id, Params_t& params ) :
+        Component( id ),
+        params( params ),
+        state(SEND),
+        who(WHO_MEM), 
+        frequency( "2.2GHz" )
+    {
+        _CPU_DBG( "new id=%lu\n", id );
 
-            Params_t::iterator it = params.begin(); 
-            while( it != params.end() ) { 
-                _CPU_DBG("key=%s value=%s\n",
-                            it->first.c_str(),it->second.c_str());
-                if ( ! it->first.compare("clock") ) {
-/*                     sscanf( it->second.c_str(), "%f", &frequency ); */
-		    frequency = it->second;
-                }    
-                ++it;
-            } 
+        registerExit();
+
+        Params_t::iterator it = params.begin(); 
+        while( it != params.end() ) { 
+            _CPU_DBG("key=%s value=%s\n",
+                     it->first.c_str(),it->second.c_str());
+            if ( ! it->first.compare("clock") ) {
+                /*                     sscanf( it->second.c_str(), "%f", &frequency ); */
+                frequency = it->second;
+            }    
+            ++it;
+        } 
             
-            mem = LinkAdd( "MEM" );
-/*             handler = new EventHandler< Cpu, bool, Cycle_t, Time_t > */
-/*                                                 ( this, &Cpu::clock ); */
-            handler = new EventHandler< Cpu, bool, Cycle_t >
-                                                ( this, &Cpu::clock );
-            _CPU_DBG("-->frequency=%s\n",frequency.c_str());
-            TimeConverter* tc = registerClock( frequency, handler );
-	    printf("CPU period: %ld\n",(long int) tc->getFactor());
-            _CPU_DBG("Done registering clock\n");
+        mem = LinkAdd( "MEM" );
+        /*             handler = new EventHandler< Cpu, bool, Cycle_t, Time_t > */
+        /*                                                 ( this, &Cpu::clock ); */
+        handler = new EventHandler< Cpu, bool, Cycle_t >
+            ( this, &Cpu::clock );
+        _CPU_DBG("-->frequency=%s\n",frequency.c_str());
+        TimeConverter* tc = registerClock( frequency, handler );
+        printf("CPU period: %ld\n",(long int) tc->getFactor());
+        _CPU_DBG("Done registering clock\n");
             
-        }
-        int Setup() {
-            _CPU_DBG("\n");
-            return 0;
-        }
-        int Finish() {
-            _CPU_DBG("\n");
-            return 0;
-        }
+    }
 
-    private:
+    int Setup() {
+        _CPU_DBG("\n");
+        return 0;
+    }
 
-        Cpu( const Cpu& c );
-	Cpu() {}
+    int Finish() {
+        _CPU_DBG("\n");
+        return 0;
+    }
 
-        bool clock( Cycle_t );
-        bool handler1( Time_t time, Event *e );
+private:
+    Cpu( const Cpu& c );
+    Cpu() :  Component(-1) {} // for serialization only
 
-        ClockHandler_t* handler;
-        Params_t    params;
-        Link*       mem;
-        state_t     state;
-        who_t       who;
-	std::string frequency;
+    bool clock( Cycle_t );
+    bool handler1( Time_t time, Event *e );
+
+    ClockHandler_t* handler;
+    Params_t    params;
+    Link*       mem;
+    state_t     state;
+    who_t       who;
+    std::string frequency;
 
     friend class boost::serialization::access;
     template<class Archive>

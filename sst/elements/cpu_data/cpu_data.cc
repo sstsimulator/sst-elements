@@ -95,5 +95,3 @@ Cpu_data* cpu_dataAllocComponent( SST::ComponentId_t id,
 }
 }
 
-BOOST_CLASS_EXPORT(Cpu_data)
-

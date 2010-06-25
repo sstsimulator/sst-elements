@@ -73,7 +73,7 @@ class Xbar : public Component {
 
     private:
 
-	Xbar() {}
+        Xbar() : Component(-1) {} // for serialization only
         Xbar( const Xbar& c );
 /*         bool clock( Cycle_t, Time_t  ); */
         bool clock( Cycle_t );

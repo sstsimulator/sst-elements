@@ -35,7 +35,6 @@ class Cpu_data : public Component {
     public:
         Cpu_data( ComponentId_t id, Params_t& params ) :
             Component( id ),
-            params( params ),
             state(SEND),
             who(WHO_MEM), 
             frequency( "2.2GHz" )
@@ -65,9 +64,9 @@ class Cpu_data : public Component {
                                                 ( this, &Cpu_data::pushData );
 
             TimeConverter* tc = registerClock( frequency, handler );
-	    TimeConverter* tcPush = registerClock( frequency, handlerPush );
+	    registerClock( frequency, handlerPush );
 
-	    printf("CPU_DATA period: %ld\n",tc->getFactor());
+	    printf("CPU_DATA period: %ld\n", (long int)tc->getFactor());
             _CPU_DATA_DBG("Done registering clock\n");
 
 	    counts = 0;
@@ -139,30 +138,19 @@ class Cpu_data : public Component {
 	uint64_t num_RAS_write;
 
     private:
-
+        Cpu_data();
         Cpu_data( const Cpu_data& c );
-    Cpu_data() { }
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
         ClockHandler_t *handler, *handlerPush;
         bool handler1( Time_t time, Event *e );
 
-        Params_t    params;
         Link*       mem;
         state_t     state;
         who_t       who;
 	std::string frequency;
 	std::string pushIntrospector;
-
-    friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        // ar & BOOST_SERIALIZATION_NVP( mem );
-        // ar & BOOST_SERIALIZATION_NVP( handler );
-    }
 };
 
 #endif

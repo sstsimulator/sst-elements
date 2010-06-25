@@ -22,12 +22,15 @@
 class event_test : public SST::Component {
 public:
     event_test(SST::ComponentId_t id, SST::Component::Params_t& params);
-    event_test();
 
     int Setup();
     int Finish();
     
 private:
+    event_test();  // for serialization only
+    event_test(const event_test&); // do not implement
+    void operator=(const event_test&); // do not implement
+
     bool handleEvent( SST::Event *ev );
 
     int my_id;

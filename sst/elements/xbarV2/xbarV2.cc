@@ -84,8 +84,8 @@ XbarV2::XbarV2( ComponentId_t id, Params_t& params ) :
 XbarV2::Port::Port( Component& comp, memMap_t& memMap, entryV_t& entryV,
             int numPorts, int portNum, addr_t addr, length_t length,
             bool enableDbg ) :
-    m_numPorts( numPorts ),
     m_portNum( portNum ),
+    m_numPorts( numPorts ),
     m_memMap( memMap ),
     m_curEvent( NULL ),
     m_entryV( entryV ),
@@ -146,8 +146,6 @@ void XbarV2::Port::doOutput( )
     static Entry* entry = NULL;
 
     if ( entry == NULL ) {
-        event_t* event = NULL;
-        cookie_t cookie = NULL;
         Cycle_t oldest = (Cycle_t)-1;
         for ( int srcPort = 0; srcPort < m_numPorts; srcPort++ )
         {

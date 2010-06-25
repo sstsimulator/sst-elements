@@ -49,7 +49,8 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
 }
 
 
-event_test::event_test()
+event_test::event_test() :
+    Component(-1)
 {
     // for serialization only
 }
