@@ -174,15 +174,6 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 }
 
 /******************************************************************************/
-sstdisksim::sstdisksim( const sstdisksim& c ) :
-  m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
-{
-  __completed = 0; 
-  __now = 0;
-  __next_event = -1;
-}
-
-/******************************************************************************/
 sstdisksim::~sstdisksim()
 {
 }
