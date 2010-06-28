@@ -122,10 +122,6 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     {
       outputFile = it->second;
     }
-    if ( ! it->first.compare("clock") ) 
-    {
-      frequency = it->second;
-    }
     if ( ! it->first.compare("num_sectors") ) 
     {
       numSectors = atol((it->second).c_str());
@@ -148,19 +144,6 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __now = 0;
   __next_event = -1;
 
-  ClockHandler_t* handler = new EventHandler< sstdisksim, bool, Cycle_t >
-    ( this, &sstdisksim::clock );
-  
-  if ( ! handler ) 
-  {
-    _abort(sstdisksim, "couldn't create clock handler");
-  }
-  
-  TimeConverter* tc = registerClock( frequency, handler );
-  if ( ! tc ) 
-  {
-    _abort(sstdisksim, "couldn't register clock handler");
-  }
 
   printf("Starting disksim up\n");
   return;
@@ -187,14 +170,6 @@ sstdisksim::Finish()
   printf("Shutting sstdisksim down\n");
 
   return 0;
-}
-
-
-/******************************************************************************/
-bool 
-sstdisksim::clock( Cycle_t cycle )
-{
-  return false;
 }
 
 /******************************************************************************/
@@ -254,6 +229,21 @@ sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 }
 
 /******************************************************************************/
+bool 
+sstdisksim::handleEvent(Event* ev)
+{
+  sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
+  if ( event->etype == READ )
+    readBlock(event->id, event->addr, 0);
+  else
+    writeBlock(event->id, event->addr, 0);
+  return false;
+}
+
+//BOOST_CLASS_EXPORT(sstdisksim_event)
+//BOOST_CLASS_EXPORT(sstdisksim)
+
+/******************************************************************************/
 extern "C" {
   sstdisksim* sstdisksimAllocComponent( SST::ComponentId_t id,
 					SST::Component::Params_t& params )
@@ -261,3 +251,4 @@ extern "C" {
     return new sstdisksim( id, params );
   }
 }
+
