@@ -596,12 +596,12 @@ bool ppcInstruction::Perform_PIM_UNLOCK(processor *proc, simRegister *regs)
   int current_state = proc->getFE(ntohl(regs[3]));
   if (base_memory::getDefaultFEB() == 1) {
     regs[0] = ntohl(SS_PIM_FILL_FE);
-    if (current_state != 0) {
+    if (ppcThread::verbose > 5 && current_state != 0) {
       INFO("unlocking a currently unlocked address: %p\n", 
 	   (void*)(size_t)ntohl(regs[3]));
     }
   } else {
-    if (current_state == 0) {
+    if (ppcThread::verbose > 5 && current_state == 0) {
       INFO("unlocking a currently unlocked address: %p\n", 
 	   (void*)(size_t)ntohl(regs[3]));
     }
