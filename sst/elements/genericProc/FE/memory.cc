@@ -485,8 +485,8 @@ bool base_memory::_WriteMemory32(const simAddress sa, const uint32 Data,
 bool base_memory::_WriteMemory64(const simAddress sa, const uint64 Data,
 			   const bool spec)
 {
-  if (spec) {    
-    printf("fix me %s %d\n", __FILE__, __LINE__);
+  if (spec) {
+    ERROR("speculative WriteMemory64 is broken (only have writeSpec32). Consult Arun.\n");
     return specMem.writeSpec32(sa, Data);
   } else {
     uint8 *Page = GetPage(sa);
@@ -494,7 +494,6 @@ bool base_memory::_WriteMemory64(const simAddress sa, const uint64 Data,
 
     unsigned int index = sa&PageMask;
     if (index + 8 > PageSize) {
-      printf("split write %s %d\n", __FILE__, __LINE__);
 	uint8 *Page2 = GetPage(sa+8);
 	memcpy(&(Page[index]), &Data, PageSize-index);
 	memcpy(Page2, ((uint8*)&Data)+PageSize-index, 8-(PageSize-index));
