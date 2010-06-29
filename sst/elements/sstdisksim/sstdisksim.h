@@ -53,6 +53,8 @@ class sstdisksim : public Component {
   sstdisksim_stat __st;
   
  private:
+
+  bool __done;
   sstdisksim_stat __disksim_stat;
   struct disksim_interface* __disksim;
   Simulation* __sim;
@@ -67,8 +69,8 @@ class sstdisksim : public Component {
   
   sstdisksim( const sstdisksim& c );
   
-  void readBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
-  void writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
+  SysTime readBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
+  SysTime writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
   bool handleEvent(Event* ev);
 
   SST::Link* link;

@@ -100,6 +100,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   long long numSectors = 0;
   std::string frequency = "";
   __id = id;
+  __done = 0;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -166,15 +167,27 @@ sstdisksim::~sstdisksim()
 int
 sstdisksim::Setup()
 {
-  sstdisksim_event* event = new sstdisksim_event();
-
   if ( __id == 0 )
   {
-    event->etype = READ;
-    event->id = 0;
-    event->addr = 0;
-    link->Send(0, event);
+    for ( int i = 0; i < 20; i++ )
+    {
+      sstdisksim_event* event = new sstdisksim_event();
+      event->id = 0;
+      event->addr = 0;
+      event->total_io_time = 0;
+      event->done = 0;
+      if ( i%2 == 0 )
+	event->etype = READ;
+      else
+	event->etype = WRITE;
+
+      link->Send(0, event);
+    }
   }
+
+  sstdisksim_event* event = new sstdisksim_event();
+  event->done = 1;
+  link->Send(0, event);
 
   return 0;
 }
@@ -191,7 +204,7 @@ sstdisksim::Finish()
 }
 
 /******************************************************************************/
-void 
+SysTime
 sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
   struct disksim_request* r = new(struct disksim_request);
@@ -216,10 +229,12 @@ sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 	    "disksim sim: internal error. Last event not completed\n");
     exit(1);
   }
+
+  return __now;
 }
 
 /******************************************************************************/
-void 
+SysTime
 sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 {
   struct disksim_request* r = new(struct disksim_request);
@@ -244,6 +259,7 @@ sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
 	    "disksim sim: internal error. Last event not completed\n");
     exit(1);
   }
+  return __now;
 }
 
 /******************************************************************************/
@@ -251,14 +267,20 @@ bool
 sstdisksim::handleEvent(Event* ev)
 {
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
+  if ( event->done )
+  {
+    if ( !__done )
+    {
+      __done = true;
+      unregisterExit();
+    }
+    return false;
+  }
+
   if ( event->etype == READ )
-    readBlock(event->id, event->addr, 0);
+    event->total_io_time = readBlock(event->id, event->addr, 0);
   else
-    writeBlock(event->id, event->addr, 0);
-
-  link->Send(0, event);
-
-  unregisterExit();
+    event->total_io_time = writeBlock(event->id, event->addr, 0);
 
   return false;
 }
@@ -292,11 +314,3 @@ extern "C"
     components
   };
 }
-/*extern "C" {
-  sstdisksim* sstdisksimAllocComponent( SST::ComponentId_t id,
-					SST::Component::Params_t& params )
-  {
-    return new sstdisksim( id, params );
-  }
-  }*/
-
