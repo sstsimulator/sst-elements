@@ -33,7 +33,7 @@
 using namespace SST;
 
 class portals;
-class algorithm;
+class application;
 
 struct posted_recv {
     int handle;
@@ -202,7 +202,7 @@ private:
 
   std::string frequency;
 
-    algorithm *coll_algo;
+    application *app;
 
     // Buffers to hold data going to NIC.  Need these to properly
     // model contention and to properly throttle bandwidth

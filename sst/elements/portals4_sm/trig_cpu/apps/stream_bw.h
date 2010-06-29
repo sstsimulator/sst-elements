@@ -10,18 +10,20 @@
 // distribution.
 
 
-#ifndef COMPONENTS_TRIG_CPU_PING_PONG_H
-#define COMPONENTS_TRIG_CPU_PING_PONG_H
+#ifndef COMPONENTS_TRIG_CPU_STREAM_BW_H
+#define COMPONENTS_TRIG_CPU_STREAM_BW_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
 #define PP_BUF_SIZE 1
 
-class ping_pong :  public algorithm {
+class stream_bw :  public application {
 public:
-    ping_pong(trig_cpu *cpu) : algorithm(cpu)
+    stream_bw(trig_cpu *cpu) : cpu(cpu), state(0)
     {
+        my_id = cpu->getMyId();
+        num_nodes = cpu->getNumNodes();
         ptl = cpu->getPortalsHandle();
     }
 
@@ -116,9 +118,9 @@ public:
     }
 
 private:
-    ping_pong();
-    ping_pong(const algorithm& a);
-    void operator=(ping_pong const&);
+    stream_bw();
+    stream_bw(const application& a);
+    void operator=(stream_bw const&);
 
     trig_cpu *cpu;
     portals *ptl;

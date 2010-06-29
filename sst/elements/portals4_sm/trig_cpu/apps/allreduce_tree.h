@@ -13,12 +13,12 @@
 #ifndef COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_H
 #define COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
-class allreduce_tree :  public algorithm {
+class allreduce_tree :  public application {
 public:
-    allreduce_tree(trig_cpu *cpu) : algorithm(cpu)
+    allreduce_tree(trig_cpu *cpu) : application(cpu)
     {
         radix = cpu->getRadix();
     }
@@ -146,7 +146,7 @@ public:
 
 private:
     allreduce_tree();
-    allreduce_tree(const algorithm& a);
+    allreduce_tree(const application& a);
     void operator=(allreduce_tree const&);
 
     SimTime_t start_time;

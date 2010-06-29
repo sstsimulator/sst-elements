@@ -13,14 +13,14 @@
 #ifndef COMPONENTS_TRIG_CPU_BANDWIDTH_H
 #define COMPONENTS_TRIG_CPU_BANDWIDTH_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
 #define BW_BUF_SIZE (128*1024)
 
-class bandwidth :  public algorithm {
+class bandwidth :  public application {
 public:
-    bandwidth(trig_cpu *cpu) : algorithm(cpu)
+    bandwidth(trig_cpu *cpu) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
     }
@@ -267,7 +267,7 @@ public:
 
 private:
     bandwidth();
-    bandwidth(const algorithm& a);
+    bandwidth(const application& a);
     void operator=(bandwidth const&);
 
     trig_cpu *cpu;

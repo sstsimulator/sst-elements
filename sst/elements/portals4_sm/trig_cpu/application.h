@@ -10,8 +10,8 @@
 // distribution.
 
 
-#ifndef COMPONENTS_TRIG_CPU_ALGORITHM_H
-#define COMPONENTS_TRIG_CPU_ALGORITHM_H
+#ifndef COMPONENTS_TRIG_CPU_APPLICATION_H
+#define COMPONENTS_TRIG_CPU_APPLICATION_H
 
 #include <vector>
 #include <utility>
@@ -20,18 +20,18 @@
 #include <sst/core/event.h>
 #include "trig_cpu.h"
 
-class algorithm {
+class application {
 public:
     virtual bool operator()(SST::Event *ev) = 0;
 
 protected:
-    algorithm(trig_cpu *cpu) : cpu(cpu), state(0)
+    application(trig_cpu *cpu) : cpu(cpu), state(0)
     {
         my_id = cpu->getMyId();
         num_nodes = cpu->getNumNodes();
     }
 
-    virtual ~algorithm() { }
+    virtual ~application() { }
 
     /**
      * Returns the floor form of binary logarithm for a 32 bit integer.
@@ -76,8 +76,8 @@ protected:
     int num_nodes;
 
 private:
-    algorithm(const algorithm& a);
-    void operator=(algorithm const&);
+    application(const application& a);
+    void operator=(application const&);
 };
 
 /* Yeah for Duff's Device.  Google it. */
@@ -85,4 +85,4 @@ private:
 #define crReturn() do { state=__LINE__; return false; case __LINE__:; } while (0)
 #define crFinish() state = 0 ;  }
 
-#endif // COMPONENTS_TRIG_CPU_ALGORITHM_H
+#endif // COMPONENTS_TRIG_CPU_APPLICATION_H

@@ -13,12 +13,12 @@
 #ifndef COMPONENTS_TRIG_CPU_BARRIER_TREE_H
 #define COMPONENTS_TRIG_CPU_BARRIER_TREE_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
-class barrier_tree :  public algorithm {
+class barrier_tree :  public application {
 public:
-    barrier_tree(trig_cpu *cpu) : algorithm(cpu)
+    barrier_tree(trig_cpu *cpu) : application(cpu)
     {
         radix = cpu->getRadix();
 
@@ -68,7 +68,7 @@ public:
 
 private:
     barrier_tree();
-    barrier_tree(const algorithm& a);
+    barrier_tree(const application& a);
     void operator=(barrier_tree const&);
 
     SimTime_t start_time;

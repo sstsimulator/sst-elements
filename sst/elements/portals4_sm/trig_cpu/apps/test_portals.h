@@ -13,14 +13,14 @@
 #ifndef COMPONENTS_TRIG_CPU_TEST_PORTALS_H
 #define COMPONENTS_TRIG_CPU_TEST_PORTALS_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
 #define BUF_SIZE 32
 
-class test_portals :  public algorithm {
+class test_portals :  public application {
 public:
-    test_portals(trig_cpu *cpu) : algorithm(cpu)
+    test_portals(trig_cpu *cpu) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
     }
@@ -139,7 +139,7 @@ public:
 
 private:
     test_portals();
-    test_portals(const algorithm& a);
+    test_portals(const application& a);
     void operator=(test_portals const&);
 
     trig_cpu *cpu;

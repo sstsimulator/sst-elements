@@ -22,7 +22,7 @@ print_usage(char *argv0)
 {
     char *app = basename(argv0);
 
-    fprintf(stderr, "Usage: %s [OPTION]...\n", app);
+    fprintf(stderr, "Usage: %s --application=<application> [OPTION]...\n", app);
     fprintf(stderr, "Generate SDL file for triggered CPU/NIC\n\n");
     fprintf(stderr, "Mandatory arguments to long options are mandatory for short options too.\n");
     fprintf(stderr, "  -x, --xdim=COUNT       Size of x dimension (default: 8)\n");
@@ -37,8 +37,7 @@ print_usage(char *argv0)
     fprintf(stderr, "      --latency=COUNT   Latency (in ns)\n");
     fprintf(stderr, "      --message_size=SIZE Size in bytes of message\n");
     fprintf(stderr, "      --chunk_size=SIZE Size in bytes of pipeline chunk\n");
-    fprintf(stderr, "      --collective=STRING Collective to run (default: allreduce)\n");
-    fprintf(stderr, "      --algorithm=STRING Algorithm to run (default: tree)\n");
+    fprintf(stderr, "      --application=STRING Application to run (required)\n");
     fprintf(stderr, "      --output=FILENAME  Output should be sent to FILENAME (default: stdout)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "NOTE: If noise_runs is non-zero, noise_interval and noise_duration\n");
@@ -61,8 +60,7 @@ static struct option longopts[] = {
     { "chunk_size",     required_argument, NULL, 'w' },
     { "output",         required_argument, NULL, 'o' },
     { "help",           no_argument,       NULL, 'h' },
-    { "collective",     required_argument, NULL, 'c' },
-    { "algorithm",      required_argument, NULL, 'a' },
+    { "application",    required_argument, NULL, 'a' },
     { NULL,             0,                 NULL, 0   }
 };
 
@@ -78,8 +76,7 @@ main(int argc, char **argv)
     int latency = 500;
     int msg_size = 1 * 1024 * 1024;
     int chunk_size = 16 * 1024;
-    char *collective = "allreduce";
-    char *algorithm = "tree";
+    char *application = NULL;
     char * nic_link_latency = "150ns";
     FILE *output = stdout;
     
@@ -127,11 +124,8 @@ main(int argc, char **argv)
         case 'h':
             print_usage(argv[0]);
             exit(0);
-        case 'c':
-            collective = optarg;
-            break;
         case 'a':
-            algorithm = optarg;
+            application = optarg;
             break;
         default:
             print_usage(argv[0]);
@@ -150,6 +144,11 @@ main(int argc, char **argv)
     }
 
     if (0 != noise_runs && (NULL == noise_interval || NULL == noise_duration)) {
+        print_usage(argv[0]);
+        exit(1);
+    }
+
+    if (NULL == application) {
         print_usage(argv[0]);
         exit(1);
     }
@@ -204,8 +203,7 @@ main(int argc, char **argv)
     fprintf(output, "    <noiseRuns> %d </noiseRuns>\n", noise_runs);
     fprintf(output, "    <noiseInterval> %s </noiseInterval>\n", noise_interval);
     fprintf(output, "    <noiseDuration> %s </noiseDuration>\n", noise_duration);
-    fprintf(output, "    <collective> %s </collective>\n", collective);
-    fprintf(output, "    <algorithm> %s </algorithm>\n", algorithm);
+    fprintf(output, "    <application> %s </application>\n", application);
     fprintf(output, "    <latency> %d </latency>\n", latency);    
     fprintf(output, "    <msg_size> %d </msg_size>\n", msg_size);    
     fprintf(output, "    <chunk_size> %d </chunk_size>\n", chunk_size);    

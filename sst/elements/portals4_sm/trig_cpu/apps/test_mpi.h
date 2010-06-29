@@ -13,14 +13,14 @@
 #ifndef COMPONENTS_TRIG_CPU_TEST_MPI_H
 #define COMPONENTS_TRIG_CPU_TEST_MPI_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
 #define TEST_MPI_BUF_SIZE 32
 
-class test_mpi :  public algorithm {
+class test_mpi :  public application {
 public:
-    test_mpi(trig_cpu *cpu) : algorithm(cpu)
+    test_mpi(trig_cpu *cpu) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
     }
@@ -101,7 +101,7 @@ public:
 
 private:
     test_mpi();
-    test_mpi(const algorithm& a);
+    test_mpi(const application& a);
     void operator=(test_mpi const&);
 
     trig_cpu *cpu;

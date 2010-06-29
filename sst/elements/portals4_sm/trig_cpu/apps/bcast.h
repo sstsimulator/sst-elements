@@ -13,12 +13,12 @@
 #ifndef COMPONENTS_TRIG_CPU_BCAST_TREE_H
 #define COMPONENTS_TRIG_CPU_BCAST_TREE_H
 
-#include "algorithm.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include <string.h>		       // for memcpy()
 
-class bcast_tree :  public algorithm {
+class bcast_tree :  public application {
 public:
-    bcast_tree(trig_cpu *cpu) : algorithm(cpu)
+    bcast_tree(trig_cpu *cpu) : application(cpu)
     {
         radix = cpu->getRadix();
         msg_size = cpu->getMessageSize();
@@ -75,7 +75,7 @@ public:
 
 private:
     bcast_tree();
-    bcast_tree(const algorithm& a);
+    bcast_tree(const application& a);
     void operator=(bcast_tree const&);
 
     SimTime_t start_time;

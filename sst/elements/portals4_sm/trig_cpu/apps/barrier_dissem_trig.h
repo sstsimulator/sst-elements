@@ -13,13 +13,13 @@
 #ifndef COMPONENTS_TRIG_CPU_BARRIER_DISSEMINATION_TRIGGERED_H
 #define COMPONENTS_TRIG_CPU_BARRIER_DISSEMINATION_TRIGGERED_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
-#include "portals.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/portals.h"
 
-class barrier_dissemination_triggered :  public algorithm {
+class barrier_dissemination_triggered :  public application {
 public:
-    barrier_dissemination_triggered(trig_cpu *cpu) : algorithm(cpu), init(false)
+    barrier_dissemination_triggered(trig_cpu *cpu) : application(cpu), init(false)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();
@@ -104,7 +104,7 @@ public:
 
 private:
     barrier_dissemination_triggered();
-    barrier_dissemination_triggered(const algorithm& a);
+    barrier_dissemination_triggered(const application& a);
     void operator=(barrier_dissemination_triggered const&);
 
     portals *ptl;

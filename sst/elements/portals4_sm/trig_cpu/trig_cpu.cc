@@ -17,27 +17,24 @@
 #include "trig_cpu.h"
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
-#include "allreduce_narytree.h"
-#include "allreduce_narytree_trig.h"
-#include "allreduce_recdbl.h"
-#include "allreduce_recdbl_trig.h"
-#include "allreduce_tree.h"
-#include "allreduce_tree_trig.h"
-
-#include "bcast.h"
-#include "bcast_trig.h"
-
-#include "barrier_tree.h"
-#include "barrier_tree_trig.h"
-#include "barrier_recdbl.h"
-#include "barrier_recdbl_trig.h"
-#include "barrier_dissem.h"
-#include "barrier_dissem_trig.h"
-
-#include "test_portals.h"
-#include "test_mpi.h"
-#include "ping_pong.h"
-#include "bandwidth.h"
+#include "apps/allreduce_narytree.h"
+#include "apps/allreduce_narytree_trig.h"
+#include "apps/allreduce_recdbl.h"
+#include "apps/allreduce_recdbl_trig.h"
+#include "apps/allreduce_tree.h"
+#include "apps/allreduce_tree_trig.h"
+#include "apps/bcast.h"
+#include "apps/bcast_trig.h"
+#include "apps/barrier_tree.h"
+#include "apps/barrier_tree_trig.h"
+#include "apps/barrier_recdbl.h"
+#include "apps/barrier_recdbl_trig.h"
+#include "apps/barrier_dissem.h"
+#include "apps/barrier_dissem_trig.h"
+#include "apps/test_portals.h"
+#include "apps/test_mpi.h"
+#include "apps/ping_pong.h"
+#include "apps/bandwidth.h"
 
 SimTime_t trig_cpu::min = 10000000;
 SimTime_t trig_cpu::max = 0;
@@ -153,86 +150,63 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
                                                                   false)->getFactor());
     }
 
-    if (params.find("collective") == params.end()) {
-        _abort(RtrIF, "couldn't find collective\n");
+    if (params.find("application") == params.end()) {
+        _abort(RtrIF, "couldn't find application\n");
     }
-    std::string collective = params["collective"];
-    if (params.find("algorithm") == params.end()) {
-        _abort(RtrIF, "couldn't find algorithm\n");
-    }
-    std::string algorithm = params["algorithm"];
+    std::string application = params["application"];
 
     initPortals();
     use_portals = true;
 
-    if (collective == "allreduce") {
-        if (algorithm == "tree") {
-            use_portals = false;
-            coll_algo = new allreduce_tree(this);
-        } else if (algorithm == "narytree") {
-            use_portals = false;
-            coll_algo = new allreduce_narytree(this);
-        } else if (algorithm == "recursive_doubling") {
-            use_portals = false;
-            coll_algo = new allreduce_recdbl(this);
-        } else if (algorithm == "tree_triggered") {
-	    use_portals = true;
-            coll_algo = new allreduce_tree_triggered(this);
-        } else if (algorithm == "narytree_triggered") {
-	    use_portals = true;
-            coll_algo = new allreduce_narytree_triggered(this);
-        } else if (algorithm == "recursive_doubling_triggered") {
-	    use_portals = true;
-            coll_algo = new allreduce_recdbl_triggered(this);
-        } else {
-            _abort(trig_cpu, "Invalid algorithm %s:%s\n", collective.c_str(), algorithm.c_str());
-        }
-
-    } else if (collective == "bcast") {
-        if (algorithm == "tree") {
-            use_portals = false;
-	    coll_algo = new bcast_tree(this);
-        } else if (algorithm == "tree_triggered") {
-	    coll_algo = new bcast_tree_triggered(this);
-        } else {
-            _abort(trig_cpu, "Invalid algorithm %s:%s\n", collective.c_str(), algorithm.c_str());
-        }
-
-    } else if (collective == "barrier") {
-        if (algorithm == "tree") {
-	    use_portals = false;
-	    coll_algo = new barrier_tree(this);
-        } else if (algorithm == "recursive_doubling") {
-            use_portals = false;
-            coll_algo = new barrier_recdbl(this);
-        } else if (algorithm == "dissemination") {
-            use_portals = false;
-            coll_algo = new barrier_dissemination(this);
-        } else if (algorithm == "tree_triggered") {
-	    coll_algo = new barrier_tree_triggered(this);
-        } else if (algorithm == "recursive_doubling_triggered") {
-            coll_algo = new barrier_recdbl_triggered(this);
-        } else if (algorithm == "dissemination_triggered") {
-            coll_algo = new barrier_dissemination_triggered(this);
-        } else {
-            _abort(trig_cpu, "Invalid algorithm %s:%s\n", collective.c_str(), algorithm.c_str());
-        }
-
-    } else if ( collective == "test_portals" ) {
-        coll_algo = new test_portals(this);
-
-    } else if ( collective == "test_mpi" ) {
+    if (application == "allreduce.tree") {
+        use_portals = false;
+        app = new allreduce_tree(this);
+    } else if (application == "allreduce.narytree") {
+        use_portals = false;
+        app = new allreduce_narytree(this);
+    } else if (application == "allreduce.recursive_doubling") {
+        use_portals = false;
+        app = new allreduce_recdbl(this);
+    } else if (application == "allreduce.tree_triggered") {
+        use_portals = true;
+        app = new allreduce_tree_triggered(this);
+    } else if (application == "allreduce.narytree_triggered") {
+        use_portals = true;
+        app = new allreduce_narytree_triggered(this);
+    } else if (application == "allreduce.recursive_doubling_triggered") {
+        use_portals = true;
+        app = new allreduce_recdbl_triggered(this);
+    } else if (application == "bcast.tree") {
+        use_portals = false;
+        app = new bcast_tree(this);
+    } else if (application == "bcast.tree_triggered") {
+        app = new bcast_tree_triggered(this);
+    } else if (application == "barrier.tree") {
+        use_portals = false;
+        app = new barrier_tree(this);
+    } else if (application == "barrier.recursive_doubling") {
+        use_portals = false;
+        app = new barrier_recdbl(this);
+    } else if (application == "barrier.dissemination") {
+        use_portals = false;
+        app = new barrier_dissemination(this);
+    } else if (application == "barrier.tree_triggered") {
+        app = new barrier_tree_triggered(this);
+    } else if (application == "barrier.recursive_doubling_triggered") {
+        app = new barrier_recdbl_triggered(this);
+    } else if (application == "barrier.dissemination_triggered") {
+        app = new barrier_dissemination_triggered(this);
+    } else if (application == "test_portals" ) {
+        app = new test_portals(this);
+    } else if (application == "test_mpi" ) {
 	use_portals = false;
-        coll_algo = new test_mpi(this);
-
-    } else if ( collective == "ping_pong" ) {
-      coll_algo = new ping_pong(this);
-
-    } else if ( collective == "bandwidth" ) {
-        coll_algo = new bandwidth(this);
-
+        app = new test_mpi(this);
+    } else if (application == "ping_pong" ) {
+        app = new ping_pong(this);
+    } else if (application == "bandwidth" ) {
+        app = new bandwidth(this);
     } else {
-        _abort(RtrIF, "Invalid collective: %s\n", collective.c_str());
+        _abort(RtrIF, "Invalid application: %s\n", application.c_str());
     }
     
     registerExit();
@@ -533,7 +507,7 @@ trig_cpu::event_handler(Event* ev)
 	switch (top_state) {
 	case 0:
 	    // No noise
-	    done = (*coll_algo)(ev);
+	    done = (*app)(ev);
 // 	    printf("done = %d\n",done);
 	    if (done) {
 		top_state = 1;
@@ -557,7 +531,7 @@ trig_cpu::event_handler(Event* ev)
 		return false;
 	    }
 	case 3:
-	    done = (*coll_algo)(ev);
+	    done = (*app)(ev);
 	    if (done) {
 		current_run++;
 		top_state = 2;

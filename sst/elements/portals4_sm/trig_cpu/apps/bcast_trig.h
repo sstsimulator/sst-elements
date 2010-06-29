@@ -13,14 +13,14 @@
 #ifndef COMPONENTS_TRIG_CPU_BCAST_TREE_TRIGGERED_H
 #define COMPONENTS_TRIG_CPU_BCAST_TREE_TRIGGERED_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
-#include "portals.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/portals.h"
 #include <string.h>		       // for memcpy()
 
-class bcast_tree_triggered :  public algorithm {
+class bcast_tree_triggered :  public application {
 public:
-    bcast_tree_triggered(trig_cpu *cpu) : algorithm(cpu), init(false)
+    bcast_tree_triggered(trig_cpu *cpu) : application(cpu), init(false)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();
@@ -162,7 +162,7 @@ public:
 
 private:
     bcast_tree_triggered();
-    bcast_tree_triggered(const algorithm& a);
+    bcast_tree_triggered(const application& a);
     void operator=(bcast_tree_triggered const&);
 
     bool init;

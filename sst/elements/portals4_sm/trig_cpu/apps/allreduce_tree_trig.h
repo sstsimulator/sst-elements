@@ -10,19 +10,23 @@
 // distribution.
 
 
-#ifndef COMPONENTS_TRIG_CPU_ALLREDUCE_NARYTREE_TRIGGERED_H
-#define COMPONENTS_TRIG_CPU_ALLREDUCE_NARYTREE_TRIGGERED_H
+#ifndef COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_TRIGGERED_H
+#define COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_TRIGGERED_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
-#include "portals.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/portals.h"
 
-class allreduce_narytree_triggered :  public algorithm {
+class allreduce_tree_triggered :  public application {
 public:
-    allreduce_narytree_triggered(trig_cpu *cpu) : algorithm(cpu)
+    allreduce_tree_triggered(trig_cpu *cpu) : application(cpu)
     {
-        ptl = cpu->getPortalsHandle();
         radix = cpu->getRadix();
+        ptl = cpu->getPortalsHandle();
+
+        // compute my root and children
+        boost::tie(my_root, my_children) = buildBinomialTree(radix);
+        num_children = my_children.size();
     }
 
     bool
@@ -59,7 +63,7 @@ public:
             break;
 
         case 1:
-            /* setup algorithm.  This is the point we should reset to in the completion case. */
+            /* setup application.  This is the point we should reset to in the completion case. */
 
             // 200ns startup time
             start_time = cpu->getCurrentSimTimeNano();
@@ -81,17 +85,12 @@ public:
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &user_md_h);
 
-            my_num_children = 0;
-            for (int i = 1 ; i <= radix ; ++i) {
-                if (radix * my_id + i < num_nodes) my_num_children++;
-            }
-
-            state = (0 == my_num_children) ? 2 : 3;
+            state = (num_children == 0) ? 2 : 3;
             break;
 
         case 2:
             // leaf node - push directly to the upper level's up tree
-            ptl->PtlAtomic(user_md_h, 0, 8, 0, (my_id - 1) / radix, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
+            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_root, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
             state = 8;
             break;
 
@@ -106,13 +105,13 @@ public:
             if (0 == my_id) {
                 // setup trigger to move data to right place, then send
                 // data out of there down the tree
-                ptl->PtlTriggeredPut(up_tree_md_h, 0, 8, 0, my_id, PT_DOWN, 0, 0, NULL, 
-                                     0, up_tree_ct_h, my_num_children + 1);
+                ptl->PtlTriggeredPut(up_tree_md_h, 0, 8, 0, my_root, PT_DOWN, 0, 0, NULL, 
+                                     0, up_tree_ct_h, num_children+1);
             } else {
                 // setup trigger to move data up the tree when we get enough updates
-                ptl->PtlTriggeredAtomic(up_tree_md_h, 0, 8, 0, (my_id - 1) / radix, PT_UP,
+                ptl->PtlTriggeredAtomic(up_tree_md_h, 0, 8, 0, my_root, PT_UP,
                                         0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
-                                        up_tree_ct_h, my_num_children + 1);
+                                        up_tree_ct_h, num_children+1);
             }
             state = 5;
             break;
@@ -120,21 +119,21 @@ public:
         case 5:
             // and to clean up after ourselves
             ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
-                                 0, up_tree_ct_h, my_num_children + 1);
+                                 0, up_tree_ct_h, num_children+1);
             state = 6;
             break;
 
         case 6:
-            ptl->PtlTriggeredCTInc(up_tree_ct_h, -(my_num_children + 2), up_tree_ct_h, my_num_children + 2);
+            ptl->PtlTriggeredCTInc(up_tree_ct_h, -(num_children+2), up_tree_ct_h, num_children+2);
 
-            loop_var = 1;
+            loop_var = 0;
             state = 7;
             break;
 
         case 7:
             // setup trigger to move data down the tree when we get our down data
-            if (loop_var <= my_num_children) {
-                ptl->PtlTriggeredPut(user_md_h, 0, 8, 0, radix * my_id + loop_var, PT_DOWN,
+            if (loop_var < num_children) {
+                ptl->PtlTriggeredPut(user_md_h, 0, 8, 0, my_children[num_children-1-loop_var], PT_DOWN,
                                      0, 0, NULL, 0, user_ct_h, 1);
                 loop_var++;
                 break;
@@ -143,13 +142,13 @@ public:
             break;
 
         case 8:
-            if (ptl->PtlCTWait(user_ct_h, 1)) state = 9;
+            if (ptl->PtlCTWait(user_ct_h, 1))  state = 9;
             break;
 
         case 9:
             trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
+            // Unbind ME so that next iteration will work
             ptl->PtlMEUnlink(user_me_h);
-            ptl->PtlCTFree(user_ct_h);
             state = 1;
             return true;
 
@@ -162,17 +161,17 @@ public:
     }
 
 private:
-    allreduce_narytree_triggered();
-    allreduce_narytree_triggered(const algorithm& a);
-    void operator=(allreduce_narytree_triggered const&);
+    allreduce_tree_triggered();
+    allreduce_tree_triggered(const application& a);
+    void operator=(allreduce_tree_triggered const&);
 
     portals *ptl;
+
     SimTime_t start_time;
     int radix;
+    int curr_radix;
+    int level;
     int loop_var;
-    int my_num_children;
-
-    ptl_handle_ct_t ct_handle;
 
     ptl_handle_ct_t up_tree_ct_h;
     ptl_handle_me_t up_tree_me_h;
@@ -184,8 +183,12 @@ private:
 
     ptl_handle_md_t zero_md_h;
 
+    int my_root;
+    std::vector<int> my_children;
+    int num_children;
+
     static const int PT_UP = 0;
     static const int PT_DOWN = 1;
 };
 
-#endif // COMPONENTS_TRIG_CPU_ALLREDUCE_NARYTREE_TRIGGERED_H
+#endif // COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_TRIGGERED_H

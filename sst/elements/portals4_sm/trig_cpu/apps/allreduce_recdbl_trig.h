@@ -13,13 +13,13 @@
 #ifndef COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_TRIGGERED_H
 #define COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_TRIGGERED_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
-#include "portals.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/portals.h"
 
-class allreduce_recdbl_triggered :  public algorithm {
+class allreduce_recdbl_triggered :  public application {
 public:
-    allreduce_recdbl_triggered(trig_cpu *cpu) : algorithm(cpu)
+    allreduce_recdbl_triggered(trig_cpu *cpu) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
     }
@@ -176,7 +176,7 @@ public:
 
 private:
     allreduce_recdbl_triggered();
-    allreduce_recdbl_triggered(const algorithm& a);
+    allreduce_recdbl_triggered(const application& a);
     void operator=(allreduce_recdbl_triggered const&);
 
     portals *ptl;

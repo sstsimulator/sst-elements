@@ -13,12 +13,12 @@
 #ifndef COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_H
 #define COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_H
 
-#include "algorithm.h"
-#include "trig_cpu.h"
+#include "sst/elements/portals4_sm/trig_cpu/application.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
-class allreduce_recdbl :  public algorithm {
+class allreduce_recdbl :  public application {
 public:
-    allreduce_recdbl(trig_cpu *cpu) : algorithm(cpu)
+    allreduce_recdbl(trig_cpu *cpu) : application(cpu)
     {
     }
 
@@ -91,7 +91,7 @@ public:
 
 private:
     allreduce_recdbl();
-    allreduce_recdbl(const algorithm& a);
+    allreduce_recdbl(const application& a);
     void operator=(allreduce_recdbl const&);
 
     SimTime_t start_time;
