@@ -274,6 +274,7 @@ class ppcThread : public thread {
   typedef pair<simAddress, simPID> addrPair;
   typedef map<addrPair, ppcThread*> reservedSetT;
   static reservedSetT reservedSet;
+  addrPair reservedAddr; // for LWARX/STWCX; should probably be attached to the processor rather than here, but...
   //: Program Counter
   simRegister   ProgramCounter;
   bool setStack;

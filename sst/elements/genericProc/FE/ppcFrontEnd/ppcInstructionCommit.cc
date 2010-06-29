@@ -231,23 +231,34 @@ ppcInstruction::CommitWriteDouble (simAddress sa, uint64_t dd, bool isSpec, proc
       DECLARE_FAULT(_fault);						\
     SET_GPR(RD, _result);						\
     if (isSpec == 0) {							\
+      static int steal = 0;						\
       ppcThread::addrPair resAddr(ea, parent->_pid);			\
       ppcThread::reservedSetT &rSet = ppcThread::reservedSet;		\
+      /* un-reserve anything else I've previously reserved */		\
+      if (rSet.find(parent->reservedAddr) != rSet.end() &&		\
+	      rSet[parent->reservedAddr] == parent) {			\
+	  rSet.erase(parent->reservedAddr);				\
+      }									\
       if (rSet.find(resAddr) != rSet.end()) {				\
 	/* someone already has it */					\
-	static int steal = 0;						\
 	steal++;							\
-	if ((steal & 0x3ff) == 0) {					\
-	  rSet[resAddr] = parent;					\
-	  ERROR("stealing %p-%ld for %p @ %llu\n",                      \
-                (void*)(size_t)ea, (long int) parent->_pid, parent, \
-	        (unsigned long long) NOW);							\
+	if (rSet[resAddr] == NULL) {					\
+	  ERROR("nobody admits to owning %p!\n", (void*)(intptr_t)ea);	\
+	} else if (rSet[resAddr] == parent) {				\
+	  ERROR("thread %p(%ld) already owns %p!\n", parent,		\
+		  (long int)parent->_pid, (void*)(intptr_t)ea);		\
+	} else if ((steal & 0x3ff) == 0) {				\
+	  ERROR("too much lwarx stealing %p-%ld for %p @ %llu... owned by %p\n",       \
+                (void*)(size_t)ea, (long int) parent->_pid, parent,	\
+	        (unsigned long long) NOW, rSet[resAddr]);				\
 	} else {							\
 	  _exception = YIELD_EXCEPTION;					\
 	  didCommit = false;						\
 	}								\
       } else {								\
+	steal = 0; \
 	rSet[resAddr] =	parent;						\
+	parent->reservedAddr = resAddr;					\
 	/*printf("reserving %p-%ld for %p\n", (void*)ea, parent->_pid, parent);*/ \
       }									\
     }									\
@@ -470,8 +481,8 @@ bool ppcInstruction::commit(processor *proc, const bool isSpec)
       char XERstr[11] = {0};
       snprintf(XERstr, 11, "0x%08x", XER);
       strswap(XERstr+2, '0', '_');
-      printf("-0x140a000: Commit %6s %#-7x %33s %-47s CR:%8s XER:%8s FPSCR:%8s %s%lu\n", 
-	     /*parent,*/ /* -%p */
+      printf("%p: Commit %6s %#-7x %33s %-47s CR:%8s XER:%8s FPSCR:%8s %s%lu\n", 
+	     parent, /* %p */
 	     MD_OP_NAME(simOp),  /* %6s */
 	     CPC, /* %#x */
 	     tmp, /* %s */
