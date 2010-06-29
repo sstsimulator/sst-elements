@@ -2116,14 +2116,12 @@ CONNECT(CMP_LINK)
 	else{								\
 		_a = GPR(RA);						\
 		_b = GPR(RB);						\
-		if(_a<_b) _c=0x8;					\
-		else{							\
-                if (_a>_b) _c=0x4;					\
-			else	  _c=0x2;				\
-		}							\
-		_c = _c | (PPC_GET_XER_SO);				\
-		_c = _c << ( (7-CRFD)*4 );				\
-		_mask = ~( 0xf << 4 * (7 - CRFD));			\
+		if (_a<_b)	_c=0x8;					\
+		else if (_a>_b) _c=0x4;					\
+		else	        _c=0x2;					\
+		_c |= (PPC_GET_XER_SO);					\
+		_c <<= ( 4 * (7-CRFD) );				\
+		_mask = ~( 0xf << (4 * (7-CRFD)));			\
 		PPC_SET_CR( (CR & _mask)  | _c);			\
 	}								\
    }
