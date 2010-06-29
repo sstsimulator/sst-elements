@@ -9,14 +9,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
-#include "sstdisksim.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+
+#include "sstdisksim.h"
+#include "sst/core/element.h"
 
 #define	BLOCK	4096
 #define	SECTOR	512
@@ -99,6 +99,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   std::string outputFile = "";
   long long numSectors = 0;
   std::string frequency = "";
+  __id = id;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -130,6 +131,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     ++it;
   }
 
+  registerExit();
  
   __disksim = disksim_interface_initialize(parameterFile.c_str(), 
 					   outputFile.c_str(),
@@ -143,9 +145,15 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __completed = 1;
   __now = 0;
   __next_event = -1;
+  
+  EventHandler_t* linkHandler = new EventHandler<sstdisksim,bool,Event*>
+    (this,&sstdisksim::handleEvent);
+  link = LinkAdd( "link", linkHandler );
 
+  registerTimeBase("1ns");
 
   printf("Starting disksim up\n");
+
   return;
 }
 
@@ -158,6 +166,16 @@ sstdisksim::~sstdisksim()
 int
 sstdisksim::Setup()
 {
+  sstdisksim_event* event = new sstdisksim_event();
+
+  if ( __id == 0 )
+  {
+    event->etype = READ;
+    event->id = 0;
+    event->addr = 0;
+    link->Send(0, event);
+  }
+
   return 0;
 }
 
@@ -237,18 +255,48 @@ sstdisksim::handleEvent(Event* ev)
     readBlock(event->id, event->addr, 0);
   else
     writeBlock(event->id, event->addr, 0);
+
+  link->Send(0, event);
+
+  unregisterExit();
+
   return false;
 }
 
 //BOOST_CLASS_EXPORT(sstdisksim_event)
 //BOOST_CLASS_EXPORT(sstdisksim)
+/******************************************************************************/
+static Component*
+create_sstdisksim(SST::ComponentId_t id, 
+                  SST::Component::Params_t& params)
+{
+    return new sstdisksim( id, params );
+}
 
 /******************************************************************************/
-extern "C" {
+static const ElementInfoComponent components[] = {
+    { "sstdisksim",
+      "sstdisksim driver",
+      NULL,
+      create_sstdisksim
+    },
+    { NULL, NULL, NULL, NULL }
+};
+
+/******************************************************************************/
+extern "C" 
+{
+  ElementLibraryInfo sstdisksim_eli = {
+    "sstdisksim",
+    "sstdisksim serilaization",
+    components
+  };
+}
+/*extern "C" {
   sstdisksim* sstdisksimAllocComponent( SST::ComponentId_t id,
 					SST::Component::Params_t& params )
   {
     return new sstdisksim( id, params );
   }
-}
+  }*/
 
