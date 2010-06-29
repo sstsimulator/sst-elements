@@ -584,8 +584,8 @@ extern unsigned int md_op2flags[];
 #define CRBA            RA
 #define CRBB            RB
 
-#define CRFD		((inst & 0x03800000)>>23)
-#define CRFS		((inst & 0x001C0000)>>18)
+#define CRFD		((inst >> 23) & 0x7)
+#define CRFS		((inst >> 18) & 0x7)
 
 /* Used in decoding the PowerPC instructions*/
 #define MTFSFI_FM       ((inst>>17)&0xff)
