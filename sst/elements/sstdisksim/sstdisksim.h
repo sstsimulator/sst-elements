@@ -49,7 +49,6 @@ class sstdisksim : public Component {
 
   SysTime __now;		/* current time */
   SysTime __next_event;	/* next event */
-  int __completed;	/* last request was completed */
   sstdisksim_stat __st;
   
  private:
@@ -69,8 +68,11 @@ class sstdisksim : public Component {
   
   sstdisksim( const sstdisksim& c );
   
-  SysTime readBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
-  SysTime writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle);
+  unsigned long sstdisksim_process_event(sstdisksim_event* ev);
+  unsigned long processBlock(unsigned long blkno,
+			     unsigned long count,
+			     int devno, 
+			     eventtype etype);
   bool handleEvent(Event* ev);
 
   SST::Link* link;

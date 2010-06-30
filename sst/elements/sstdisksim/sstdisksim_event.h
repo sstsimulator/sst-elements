@@ -8,9 +8,9 @@ enum eventtype {READ, WRITE};
 class sstdisksim_event : public SST::Event {
 public:
   eventtype etype;
-  int id;
-  int addr;
-  double total_io_time;
+  unsigned long pos;
+  unsigned long count;
+  unsigned long devno;
   bool done;
  sstdisksim_event() : SST::Event() { }
 
@@ -22,9 +22,9 @@ private:
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
       ar & BOOST_SERIALIZATION_NVP(etype);
-      ar & BOOST_SERIALIZATION_NVP(id);
-      ar & BOOST_SERIALIZATION_NVP(addr);
-      ar & BOOST_SERIALIZATION_NVP(total_io_time);      
+      ar & BOOST_SERIALIZATION_NVP(pos);
+      ar & BOOST_SERIALIZATION_NVP(count);
+      ar & BOOST_SERIALIZATION_NVP(devno);
       ar & BOOST_SERIALIZATION_NVP(done);      
     }
 }; 

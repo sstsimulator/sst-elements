@@ -85,7 +85,7 @@ void
 syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
 {
   sstdisksim* ptr = (sstdisksim*)ctx;
-  ptr->__completed = 1;
+  r->completed = 1;
   ptr->__now = t;
   add_statistics(&(ptr->__st), t - r->start);
 }
@@ -146,7 +146,6 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 					   0,
 					   0);
 
-  __completed = 1;
   __now = 0;
   __next_event = -1;
   
@@ -172,12 +171,12 @@ sstdisksim::Setup()
 {
   if ( __id == 0 )
   {
-    for ( int i = 0; i < 20; i++ )
+    for ( int i = 0; i < 400; i++ )
     {
       sstdisksim_event* event = new sstdisksim_event();
-      event->id = 0;
-      event->addr = 0;
-      event->total_io_time = 0;
+      event->count = 512*33+15;
+      event->pos = 0;
+      event->devno = 0;
       event->done = 0;
       if ( i%2 == 0 )
 	event->etype = READ;
@@ -207,62 +206,61 @@ sstdisksim::Finish()
 }
 
 /******************************************************************************/
-SysTime
-sstdisksim::readBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
+unsigned long
+sstdisksim::processBlock(unsigned long blkno,
+			 unsigned long count,
+			 int devno,
+			 eventtype etype)
 {
-  struct disksim_request* r = new(struct disksim_request);
-  r->start = __now;
-  r->flags = DISKSIM_READ;
-  r->devno = 0;
-  r->bytecount = SECTOR;
-  r->blkno = addr;
+  struct disksim_request r;
+  memset(&r, 0, sizeof(struct disksim_request));
 
-  disksim_interface_request_arrive(__disksim, __now, r);
+  if ( etype == READ )
+    r.flags = DISKSIM_READ;
+  else
+    r.flags = DISKSIM_WRITE;
 
-  while(__next_event >= 0) 
+  r.start = __now;
+  r.devno = devno;
+  r.bytecount = count;
+  r.blkno = blkno;
+
+  r.completed = 0;
+  disksim_interface_request_arrive(__disksim, __now, &r);
+
+  while( __next_event >= 0 ) 
   {
     __now = __next_event;
     __next_event = -1;
     disksim_interface_internal_event(__disksim, __now, 0);
   }
   
-  if (!__completed) 
+  if ( ! r.completed ) 
   {
     fprintf(stderr,
 	    "disksim sim: internal error. Last event not completed\n");
-    exit(1);
+    return -1;
   }
 
-  return __now;
+  return count;
 }
 
 /******************************************************************************/
-SysTime
-sstdisksim::writeBlock(unsigned id, uint64_t addr, uint64_t clockcycle)
+unsigned long
+sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 {
-  struct disksim_request* r = new(struct disksim_request);
-  r->start = __now;
-  r->flags = DISKSIM_WRITE;
-  r->devno = 0;
-  r->bytecount = SECTOR;
-  r->blkno = addr;
+  unsigned long sector;
+  unsigned long nblks;
+  unsigned long nbytes;
 
-  disksim_interface_request_arrive(__disksim, __now, r);
+  sector = ev->pos/SECTOR;
+  nbytes = (ev->pos % SECTOR) + ev->count;
+  nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
 
-  while(__next_event >= 0) 
-  {
-    __now = __next_event;
-    __next_event = -1;
-    disksim_interface_internal_event(__disksim, __now, 0);
-  }
-  
-  if (!__completed) 
-  {
-    fprintf(stderr,
-	    "disksim sim: internal error. Last event not completed\n");
-    exit(1);
-  }
-  return __now;
+  return processBlock(sector,
+		      nblks * SECTOR,
+		      ev->devno,
+		      ev->etype);
 }
 
 /******************************************************************************/
@@ -270,7 +268,10 @@ bool
 sstdisksim::handleEvent(Event* ev)
 {
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
-  if ( event->done )
+
+  /* This sstdisksim process has been shutdown; 
+     behave accordingly */
+  if ( event->done || __done )
   {
     if ( !__done )
     {
@@ -281,11 +282,7 @@ sstdisksim::handleEvent(Event* ev)
     return false;
   }
 
-  if ( event->etype == READ )
-    event->total_io_time = readBlock(event->id, event->addr, 0);
-  else
-    event->total_io_time = writeBlock(event->id, event->addr, 0);
-
+  sstdisksim_process_event(event);
   return false;
 }
 
