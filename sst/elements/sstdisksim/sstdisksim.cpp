@@ -101,6 +101,9 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   std::string frequency = "";
   __id = id;
   __done = 0;
+  __st.n = 0;
+  __st.sum = 0;
+  __st.sqr = 0;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -273,6 +276,7 @@ sstdisksim::handleEvent(Event* ev)
     {
       __done = true;
       unregisterExit();
+      print_statistics(&__st, "response time");
     }
     return false;
   }
