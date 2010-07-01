@@ -72,7 +72,7 @@ class mem : public Component {
 	    memchan = new MemoryChannel<uint64_t>(*this, params, "bus");
 	    ClockHandler_t *handler = new EventHandler<mem,bool,Cycle_t>(this, &mem::clock);
 	    std::string frequency = params["clock"];
-	    if (frequency == "") {
+	    if (frequency.length() == 0) {
 		INFO("Using default frequency for genericMem (2.0 GHz)");
 		frequency = "2.0 GHz";
 	    }

@@ -463,16 +463,18 @@ bool ppcInstruction::Perform_SYS_gettimeofday(processor* proc,
 	timezone_s tzp;
 	retV = gettimeofday(&tp, &tzp);
     } else {
-	tp.tv_sec = 0;
-	tp.tv_usec = parent->home->getCurrentSimTimeMicro();
-	if (tp.tv_usec > 1e6) {
-	    tp.tv_sec = tp.tv_usec * 1e-6;
-	    tp.tv_usec -= (tp.tv_sec * 1e6);
+	uint64_t microTime = parent->home->getCurrentSimTimeMicro();
+	if (microTime > 1e6) {
+	  tp.tv_sec = microTime * 1e-6;
+	  tp.tv_usec = microTime - (tp.tv_sec * 1e6);
+	} else {
+	  tp.tv_sec = 0;
+	  tp.tv_usec = microTime;
 	}
     }
     timevalToTimeval32(&tp, &tp32);
 
-    INFO("gettimeofday: sec(%d,%d), usec(%d,%d)\n", (int)tp.tv_sec, (int)tp32.tv_sec, (int)tp.tv_usec,(int)tp32.tv_usec);
+    INFO("gettimeofday: sec(%d,%d), usec(%d,%d) %llu\n", (int)tp.tv_sec, (int)tp32.tv_sec, (int)tp.tv_usec,(int)tp32.tv_usec, parent->home->getCurrentSimTimeMicro());
 
     tp32.tv_sec  = htonl(tp32.tv_sec);
     tp32.tv_usec = htonl(tp32.tv_usec);
