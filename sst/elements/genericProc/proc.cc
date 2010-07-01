@@ -36,6 +36,12 @@ create_genericProc_mem(SST::ComponentId_t id,
     return new mem(id, params);
 }
 
+static Component*
+create_testClock(SST::ComponentId_t id, SST::Component::Params_t& params)
+{
+    return new tester(id, params);
+}
+
 static const ElementInfoComponent components[] = {
     { "genericProc",
       "Generic Processing Unit (CPU-ish) to run a single ppc application",
@@ -46,6 +52,11 @@ static const ElementInfoComponent components[] = {
       "Generic Memory Unit to go with the genericProc",
       NULL,
       create_genericProc_mem,
+    },
+    { "testClock",
+      "1Ghz Clock test component; simply prints the clock every cycle",
+      NULL,
+      create_testClock,
     },
     {NULL, NULL, NULL, NULL}
 };

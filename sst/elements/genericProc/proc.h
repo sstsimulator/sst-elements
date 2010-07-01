@@ -39,6 +39,28 @@ using namespace SST;
 
 extern int gproc_debug;
 
+// "test" class
+class tester : public Component {
+    public:
+	tester(ComponentId_t id, Params_t &params) :
+	    Component(id)
+	{
+	    ClockHandler_t *handler = new EventHandler<tester,bool,Cycle_t>(this, &tester::clock);
+	    std::string frequency = params["clock"];
+	    if (frequency.length() == 0) {
+		INFO("Using default frequency for tester (1.0 GHz)");
+		frequency = "1.0 GHz";
+	    }
+	    printf("generating tester with freq '%s' (len:%i)\n", frequency.c_str(), (int)frequency.length());
+	    registerClock(frequency, handler);
+	}
+	bool clock(Cycle_t thisCycle)
+	{
+	    printf("cycle is now: %llu\n", (unsigned long long)getCurrentSimTime());
+	    return false;
+	}
+};
+
 // "memory" class
 class mem : public Component {
     private:
