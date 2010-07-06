@@ -67,7 +67,12 @@ class Xbar : public Component {
             clockHandler = new EventHandler< Xbar, bool, Cycle_t >
                                                 ( this, &Xbar::clock );
 
-            registerClock( frequency, clockHandler );
+            TimeConverter* tc = registerClock( frequency, clockHandler );
+	    cpu->setDefaultTimeBase(tc);
+	    nic->setDefaultTimeBase(tc);
+	    selfPush->setDefaultTimeBase(tc);
+	    selfPull->setDefaultTimeBase(tc);
+
             _XBAR_DBG("Done registering clock\n",id);
         }
 
