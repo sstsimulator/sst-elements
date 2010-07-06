@@ -18,6 +18,7 @@
 #include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
 #include "../power/power.h"
 
 using namespace SST;
@@ -68,6 +69,7 @@ class Cpu_PowerAndData : public Component {
             TimeConverter* tc = registerClock( frequency, handler );
 	    TimeConverter* tcPush = registerClock( frequency, handlerPush );
 
+	    mem->setDefaultTimeBase(tc);
 	    printf("CPU_POWERANDDATA period: %ld\n",tc->getFactor());
             _CPU_POWERANDDATA_DBG("Done registering clock\n");
 
@@ -90,7 +92,7 @@ class Cpu_PowerAndData : public Component {
         int Setup() {
  	    
 	    power = new Power(Id());
-            power->setTech(Id(), params, CACHE_IL1);
+            power->setTech(Id(), params, CACHE_IL1, McPAT);
 	    //power->setTech(Id(), params, CACHE_IL2);
 	    /*power->setTech(Id(), params, CACHE_DL1);
 	    //power->setTech(Id(), params, CACHE_DL2);
@@ -129,7 +131,7 @@ class Cpu_PowerAndData : public Component {
         }
         int Finish() {
             _CPU_POWERANDDATA_DBG("\n");
-	    unregisterExit();
+	    //unregisterExit();
             return 0;
         }
 	
@@ -182,6 +184,8 @@ class Cpu_PowerAndData : public Component {
     private:
 
         Cpu_PowerAndData( const Cpu_PowerAndData& c );
+	Cpu_PowerAndData() :  Component(-1) {} // for serialization only
+
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
@@ -202,49 +206,18 @@ class Cpu_PowerAndData : public Component {
 	std::pair<bool, double*> p_double;
 	usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
 
-#if WANT_CHECKPOINT_SUPPORT2	
-        BOOST_SERIALIZE {
-	    printf("Cpu_PowerAndData::serialize()\n");
-            _AR_DBG( Cpu_PowerAndData, "start\n" );
-	    printf("  doing void cast\n");
-            BOOST_VOID_CAST_REGISTER( Cpu_PowerAndData*, Component* );
-	    printf("  base serializing: component\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );
-	    printf("  serializing: mem\n");
-            ar & BOOST_SERIALIZATION_NVP( mem );
-	    printf("  serializing: handler\n");
-            ar & BOOST_SERIALIZATION_NVP( handler );
-            _AR_DBG( Cpu_PowerAndData, "done\n" );
-        }
-
-
-/*
-        SAVE_CONSTRUCT_DATA( Cpu_PowerAndData ) {
-            _AR_DBG( Cpu_PowerAndData, "\n" );
-
-            ComponentId_t   id     = t->_id;
-            Clock*          clock  = t->_clock;
-            Params_t        params = t->params;
-
-            ar << BOOST_SERIALIZATION_NVP( id );
-            ar << BOOST_SERIALIZATION_NVP( clock );
-            ar << BOOST_SERIALIZATION_NVP( params );
-        } 
-        LOAD_CONSTRUCT_DATA( Cpu_PowerAndData ) {
-            _AR_DBG( Cpu_PowerAndData, "\n" );
-
-            ComponentId_t   id;
-            Clock*          clock;
-            Params_t        params;
-
-            ar >> BOOST_SERIALIZATION_NVP( id );
-            ar >> BOOST_SERIALIZATION_NVP( clock );
-            ar >> BOOST_SERIALIZATION_NVP( params );
-
-            ::new(t)Cpu_PowerAndData( id, clock, params );
-        } 
-*/
-#endif
+ friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+        ar & BOOST_SERIALIZATION_NVP(handler);
+        ar & BOOST_SERIALIZATION_NVP(params);
+        ar & BOOST_SERIALIZATION_NVP(mem);
+        ar & BOOST_SERIALIZATION_NVP(state);
+        ar & BOOST_SERIALIZATION_NVP(who);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+    }
 };
 
 #endif
