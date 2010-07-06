@@ -45,9 +45,11 @@ class Cpu_power : public Component {
             } 
             
             mem = LinkAdd( "MEM" );
-            handler = new EventHandler< Cpu_power, bool, Cycle_t >
+            handler = new SST::EventHandler< Cpu_power, bool, Cycle_t >
                                                 ( this, &Cpu_power::clock );
             TimeConverter* tc = registerClock( frequency, handler );
+	  
+	    mem->setDefaultTimeBase(tc);
 	    printf("CPU_POWER period: %ld\n",tc->getFactor());
             _CPU_POWER_DBG("Done registering clock\n");
 
@@ -56,51 +58,55 @@ class Cpu_power : public Component {
         int Setup() {
             // report/register power dissipation	    
 	    power = new Power(Id());
-            power->setTech(Id(), params, CACHE_IL1);
-	    //power->setTech(Id(), params, CACHE_IL2);
-	    power->setTech(Id(), params, CACHE_DL1);
-	    //power->setTech(Id(), params, CACHE_DL2);
-	    power->setTech(Id(), params, CACHE_ITLB);
-	    power->setTech(Id(), params, CACHE_DTLB);
-	    power->setTech(Id(), params, RF);
-	    power->setTech(Id(), params, IB);	    
-    	    /*power->setTech(Id(), params, ISSUE_Q);
-	    power->setTech(Id(), params, INST_DECODER);*/
-	    power->setTech(Id(), params, PIPELINE);
-	    power->setTech(Id(), params, BYPASS);	    	    	    	    
-	    /*power->setTech(Id(), params, LOGIC);*/
-	    power->setTech(Id(), params, EXEU_ALU);
-	    power->setTech(Id(), params, EXEU_FPU);
-	    /*power->setTech(Id(), params, EXEU);*/
-	    power->setTech(Id(), params, LSQ);
-	    power->setTech(Id(), params, BPRED);
-	    power->setTech(Id(), params, SCHEDULER_U);
-	    power->setTech(Id(), params, RENAME_U);
-	    /*power->setTech(Id(), params, RAT);
-	    power->setTech(Id(), params, ROB);*/
-	    power->setTech(Id(), params, BTB);
-	    power->setTech(Id(), params, LOAD_Q);
-	    power->setTech(Id(), params, CACHE_L1DIR);
-	    power->setTech(Id(), params, CACHE_L2DIR);
-	    power->setTech(Id(), params, CACHE_L2);
-	    power->setTech(Id(), params, CACHE_L3);
-	    power->setTech(Id(), params, MEM_CTRL);
-	    power->setTech(Id(), params, ROUTER);
-	    //power->setTech(Id(), params, CLOCK); //clock should be the last in McPAT
-	    //power->setTech(Id(), params, IO);
+            power->setTech(Id(), params, CACHE_IL1, McPAT);
+	    power->setTech(Id(), params, CACHE_DL1, McPAT);
+	    power->setTech(Id(), params, CACHE_ITLB, McPAT);
+	    power->setTech(Id(), params, CACHE_DTLB, McPAT);
+	    power->setTech(Id(), params, RF, McPAT);
+	    power->setTech(Id(), params, IB, McPAT);
+	    power->setTech(Id(), params, PIPELINE, McPAT);
+	    power->setTech(Id(), params, BYPASS, McPAT);
+	    //power->setTech(Id(), params, EXEU_ALU, McPAT);
+	    //power->setTech(Id(), params, EXEU_FPU, McPAT);
+	    power->setTech(Id(), params, LSQ, McPAT);
+	    power->setTech(Id(), params, BPRED, McPAT);
+	    power->setTech(Id(), params, SCHEDULER_U, McPAT);
+	    power->setTech(Id(), params, RENAME_U, McPAT);
+	    //power->setTech(Id(), params, BTB, McPAT);
+	    power->setTech(Id(), params, LOAD_Q, McPAT);
+	    power->setTech(Id(), params, CACHE_L1DIR, McPAT);
+	    power->setTech(Id(), params, CACHE_L2DIR, McPAT);
+	    power->setTech(Id(), params, CACHE_L2, McPAT);
+	    power->setTech(Id(), params, CACHE_L3, McPAT);
+	    //power->setTech(Id(), params, MEM_CTRL, McPAT);
+	    power->setTech(Id(), params, ROUTER, McPAT);
            return 0;
         }
         int Finish() {
-	    pstats = readPowerStats(this);
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": current total power = " << pstats.currentPower << " W" << std::endl;
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": leakage power = " << pstats.leakagePower << " W" << std::endl;
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": runtime power = " << pstats.runtimeDynamicPower << " W" << std::endl;
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": TDP = " << pstats.TDP << " W" << std::endl;
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": total energy = " << pstats.totalEnergy << " J" << std::endl;
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": peak power = " << pstats.peak << " W" << std::endl;
-	    using namespace io_interval; std::cout <<"ID " << Id() <<": current cycle = " << pstats.currentCycle << std::endl;
+	    std::pair<bool, Pdissipation_t> res = readPowerStats(this);
+	    if(res.first){ 
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": current total power = " << res.second.currentPower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": leakage power = " << res.second.leakagePower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": runtime power = " << res.second.runtimeDynamicPower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": TDP = " << res.second.TDP << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": total energy = " << res.second.totalEnergy << " J" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": peak power = " << res.second.peak << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L2 current total power = " << res.second.itemizedCurrentPower.L2 << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L2 leakage power = " << res.second.itemizedLeakagePower.L2 << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L2 runtime power = " << res.second.itemizedRuntimeDynamicPower.L2 << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L3 current total power = " << res.second.itemizedCurrentPower.L3 << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L3 leakage power = " << res.second.itemizedLeakagePower.L3 << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L3 runtime power = " << res.second.itemizedRuntimeDynamicPower.L3 << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L1dir current total power = " << res.second.itemizedCurrentPower.L1dir << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L1dir leakage power = " << res.second.itemizedLeakagePower.L1dir << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L1dir runtime power = " << res.second.itemizedRuntimeDynamicPower.L1dir << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L2dir current total power = " << res.second.itemizedCurrentPower.L2dir << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L2dir leakage power = " << res.second.itemizedLeakagePower.L2dir << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << Id() <<": L2dir runtime power = " << res.second.itemizedRuntimeDynamicPower.L2dir << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << Id() <<": current sime time = " << res.second.currentSimTime << " second" << std::endl;
+	    }
             _CPU_POWER_DBG("\n");
-	    unregisterExit();
+	    //unregisterExit();
             return 0;
         }
 
@@ -108,6 +114,7 @@ class Cpu_power : public Component {
     private:
 
         Cpu_power( const Cpu_power& c );
+	Cpu_power() :  Component(-1) {} // for serialization only
 
         bool clock( Cycle_t );
         ClockHandler_t* handler;
@@ -118,55 +125,25 @@ class Cpu_power : public Component {
         state_t     state;
         who_t       who;
 	std::string frequency;
+	
 
 	Pdissipation_t pdata, pstats;
 	Power *power;
 	usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
 
 
-#if WANT_CHECKPOINT_SUPPORT2	
-        BOOST_SERIALIZE {
-	    printf("cpu_power::serialize()\n");
-            _AR_DBG( Cpu_power, "start\n" );
-	    printf("  doing void cast\n");
-            BOOST_VOID_CAST_REGISTER( Cpu_power*, Component* );
-	    printf("  base serializing: component\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );
-	    printf("  serializing: mem\n");
-            ar & BOOST_SERIALIZATION_NVP( mem );
-	    printf("  serializing: handler\n");
-            ar & BOOST_SERIALIZATION_NVP( handler );
-            _AR_DBG( Cpu_power, "done\n" );
-        }
-
-
-/*
-        SAVE_CONSTRUCT_DATA( Cpu_power ) {
-            _AR_DBG( Cpu_power, "\n" );
-
-            ComponentId_t   id     = t->_id;
-            Clock*          clock  = t->_clock;
-            Params_t        params = t->params;
-
-            ar << BOOST_SERIALIZATION_NVP( id );
-            ar << BOOST_SERIALIZATION_NVP( clock );
-            ar << BOOST_SERIALIZATION_NVP( params );
-        } 
-        LOAD_CONSTRUCT_DATA( Cpu_power ) {
-            _AR_DBG( Cpu_power, "\n" );
-
-            ComponentId_t   id;
-            Clock*          clock;
-            Params_t        params;
-
-            ar >> BOOST_SERIALIZATION_NVP( id );
-            ar >> BOOST_SERIALIZATION_NVP( clock );
-            ar >> BOOST_SERIALIZATION_NVP( params );
-
-            ::new(t)Cpu_power( id, clock, params );
-        } 
-*/
-#endif
+	  friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+        ar & BOOST_SERIALIZATION_NVP(handler);
+        ar & BOOST_SERIALIZATION_NVP(params);
+        ar & BOOST_SERIALIZATION_NVP(mem);
+        ar & BOOST_SERIALIZATION_NVP(state);
+        ar & BOOST_SERIALIZATION_NVP(who);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+    }
 };
 
 #endif

@@ -1,17 +1,22 @@
 #include <sst_config.h>
-#include "cpu_power.h"
+#include "sst/core/serialization/element.h"
 
-#include <sst/core/memEvent.h>
+
+#include <sst/core/timeConverter.h>
+#include "myMemEvent.h"
+#include "cpu_power.h"
 
 
 bool Cpu_power::clock( Cycle_t current)
 {
     //_CPU_POWER_DBG("id=%lu currentCycle=%lu \n", Id(), current );
 
-    MemEvent* event = NULL; 
+    MyMemEvent* event = NULL; 
+
+    if (current == 100000 ) unregisterExit();
 
     if ( state == SEND ) { 
-        if ( ! event ) event = new MemEvent();
+        if ( ! event ) event = new MyMemEvent();
 
         if ( who == WHO_MEM ) { 
             event->address = 0x1000; 
@@ -26,47 +31,56 @@ bool Cpu_power::clock( Cycle_t current)
 
 	/* set up counts */
 	//first reset all counts to zero
-	power->resetCounts(mycounts); 
+	power->resetCounts(&mycounts); 
 	//then set up "this"-related counts
-	mycounts.branch_read=2;  mycounts.branch_write=2; mycounts.RAS_read=2; mycounts.RAS_write=2;
-	mycounts.il1_read=1; mycounts.il1_readmiss=0; mycounts.IB_read=2; mycounts.IB_write=2; mycounts.BTB_read=2; mycounts.BTB_write=2;
-	mycounts.int_win_read=4; mycounts.int_win_write=2; mycounts.fp_win_read=4; mycounts.fp_win_write=2; mycounts.ROB_read=2; mycounts.ROB_write=2;
-	mycounts.iFRAT_read=2; mycounts.iFRAT_write=2; mycounts.iFRAT_search=0; mycounts.fFRAT_read=2; mycounts.fFRAT_write=2; mycounts.fFRAT_search=0; mycounts.iRRAT_write=2;
+	mycounts.branch_read=2; mycounts.branch_write=2; mycounts.RAS_read=2; mycounts.RAS_write=2;
+	mycounts.il1_read[0]=1; mycounts.il1_readmiss[0]=0; mycounts.IB_read[0]=2; mycounts.IB_write[0]=2; mycounts.BTB_read[0]=2; mycounts.BTB_write[0]=2; mycounts.ID_inst_read[0]=2; mycounts.ID_operand_read[0]=2; mycounts.ID_misc_read[0]=2;
+	mycounts.int_win_read=4; mycounts.int_win_write=2; mycounts.int_win_search=2; mycounts.fp_win_read=4; mycounts.fp_win_write=2; mycounts.fp_win_search=2; mycounts.ROB_read=2; mycounts.ROB_write=2;
+	mycounts.iFRAT_read=2; mycounts.iFRAT_write=2; mycounts.iFRAT_search=0; mycounts.fFRAT_read=2; mycounts.fFRAT_write=2; mycounts.fFRAT_search=0; mycounts.iRRAT_read=2;
+        mycounts.fRRAT_read=2; mycounts.iRRAT_write=2;
         mycounts.fRRAT_write=2; mycounts.ifreeL_read=2; mycounts.ifreeL_write=4; mycounts.ffreeL_read=2; mycounts.ffreeL_write=4; mycounts.idcl_read=0; mycounts.fdcl_read=0;
-	mycounts.dl1_read=1; mycounts.dl1_readmiss=0; mycounts.dl1_write=1; mycounts.dl1_writemiss=0; mycounts.LSQ_read=1; mycounts.LSQ_write=1;
-	mycounts.itlb_read=1; mycounts.itlb_readmiss=0; mycounts.dtlb_read=1; mycounts.dtlb_readmiss=0;
+	mycounts.dl1_read[0]=1; mycounts.dl1_readmiss[0]=0; mycounts.dl1_write[0]=1; mycounts.dl1_writemiss[0]=0; mycounts.LSQ_read[0]=1; mycounts.LSQ_write[0]=1; mycounts.loadQ_read[0]=1; mycounts.loadQ_write[0]=1;
+	mycounts.itlb_read[0]=1; mycounts.itlb_readmiss[0]=0; mycounts.dtlb_read[0]=1; mycounts.dtlb_readmiss[0]=0;
 	mycounts.int_regfile_reads=2; mycounts.int_regfile_writes=2; mycounts.float_regfile_reads=2; mycounts.float_regfile_writes=2; mycounts.RFWIN_read=2; mycounts.RFWIN_write=2;
 	mycounts.bypass_access=1;
 	mycounts.router_access=1;
-	mycounts.L2_read=1; mycounts.L2_readmiss=0; mycounts.L2_write=1; mycounts.L2_writemiss=0; mycounts.L3_read=1; mycounts.L3_readmiss=0; mycounts.L3_write=1; mycounts.L3_writemiss=0;
-	mycounts.L1Dir_read=1; mycounts.L1Dir_readmiss=0; mycounts.L1Dir_write=1; mycounts.L1Dir_writemiss=0; mycounts.L2Dir_read=1; mycounts.L2Dir_readmiss=0; mycounts.L2Dir_write=1;
-        mycounts.L2Dir_writemiss=0;
+	mycounts.L2_read[0]=1; mycounts.L2_readmiss[0]=0; mycounts.L2_write[0]=1; mycounts.L2_writemiss[0]=0; mycounts.L3_read[0]=1; mycounts.L3_readmiss[0]=0; mycounts.L3_write[0]=1; mycounts.L3_writemiss[0]=0;
+	mycounts.L1Dir_read[0]=1; mycounts.L1Dir_readmiss[0]=0; mycounts.L1Dir_write[0]=1; mycounts.L1Dir_writemiss[0]=0; mycounts.L2Dir_read[0]=1; mycounts.L2Dir_readmiss[0]=0; mycounts.L2Dir_write[0]=1;
+        mycounts.L2Dir_writemiss[0]=0;
+	mycounts.L2_read[1]=1; mycounts.L2_readmiss[1]=0; mycounts.L2_write[1]=1; mycounts.L2_writemiss[1]=0; mycounts.L3_read[1]=1; mycounts.L3_readmiss[1]=0; mycounts.L3_write[1]=1; mycounts.L3_writemiss[1]=0;
+	mycounts.L1Dir_read[1]=1; mycounts.L1Dir_readmiss[1]=0; mycounts.L1Dir_write[1]=1; mycounts.L1Dir_writemiss[1]=0; mycounts.L2Dir_read[1]=1; mycounts.L2Dir_readmiss[1]=0; mycounts.L2Dir_write[1]=1;
+        mycounts.L2Dir_writemiss[1]=0;
+	mycounts.L2_read[2]=1; mycounts.L2_readmiss[2]=0; mycounts.L2_write[2]=1; mycounts.L2_writemiss[2]=0; mycounts.L3_read[2]=1; mycounts.L3_readmiss[2]=0; mycounts.L3_write[2]=1; mycounts.L3_writemiss[2]=0;
+	mycounts.L1Dir_read[2]=1; mycounts.L1Dir_readmiss[2]=0; mycounts.L1Dir_write[2]=1; mycounts.L1Dir_writemiss[2]=0; mycounts.L2Dir_read[2]=1; mycounts.L2Dir_readmiss[2]=0; mycounts.L2Dir_write[2]=1;
+        mycounts.L2Dir_writemiss[2]=0;
 	mycounts.memctrl_read=1; mycounts.memctrl_write=1;
+	mycounts.il1_ReadorWrite=0;  mycounts.il1_access=1;
+	mycounts.il1_accessaddress=198643; mycounts.il1_latency=1;
 	
 
 	/* McPAT beta */
-	pdata = power->getPower(current, CACHE_IL1, mycounts, 1);
-	pdata = power->getPower(current, CACHE_DL1, mycounts, 1);  
-	pdata = power->getPower(current, CACHE_ITLB, mycounts, 1); 
-	pdata = power->getPower(current, CACHE_DTLB, mycounts, 1); 
-	pdata = power->getPower(current, RF, mycounts, 1);
-	pdata = power->getPower(current, IB, mycounts, 1);
-	pdata = power->getPower(current, PIPELINE, mycounts, 1);
-	pdata = power->getPower(current, BYPASS, mycounts, 1);
-	pdata = power->getPower(current, EXEU_ALU, mycounts, 1);
-	pdata = power->getPower(current, EXEU_FPU, mycounts, 1);
-	pdata = power->getPower(current, LSQ, mycounts, 1);  
-	pdata = power->getPower(current, BPRED, mycounts, 1); 
-	pdata = power->getPower(current, SCHEDULER_U, mycounts, 1);
-	pdata = power->getPower(current, RENAME_U, mycounts, 1);
-	pdata = power->getPower(current, BTB, mycounts, 1);
-	pdata = power->getPower(current, LOAD_Q, mycounts, 1);  
-	pdata = power->getPower(current, CACHE_L1DIR, mycounts, 1);
-	pdata = power->getPower(current, CACHE_L2DIR, mycounts, 1);
-	pdata = power->getPower(current, CACHE_L2, mycounts, 1);
-	pdata = power->getPower(current, CACHE_L3, mycounts, 1);		
-	pdata = power->getPower(current, MEM_CTRL, mycounts, 1);
-	pdata = power->getPower(current, ROUTER, mycounts, 1); 
+	pdata = power->getPower(this, CACHE_IL1, mycounts);
+	pdata = power->getPower(this, CACHE_DL1, mycounts);
+	pdata = power->getPower(this, CACHE_ITLB, mycounts);
+	pdata = power->getPower(this, CACHE_DTLB, mycounts);
+	pdata = power->getPower(this, RF, mycounts);
+	pdata = power->getPower(this, IB, mycounts);
+	pdata = power->getPower(this, PIPELINE, mycounts);
+	pdata = power->getPower(this, BYPASS, mycounts);
+	//pdata = power->getPower(this, EXEU_ALU, mycounts); This contribute to large power dissipation due to 2.2GH
+	//pdata = power->getPower(this, EXEU_FPU, mycounts); This contribute to large power dissipation due to 2.2GH
+	pdata = power->getPower(this, LSQ, mycounts);
+	pdata = power->getPower(this, BPRED, mycounts);
+	pdata = power->getPower(this, SCHEDULER_U, mycounts);
+	pdata = power->getPower(this, RENAME_U, mycounts);
+	//pdata = power->getPower(this, BTB, mycounts); inorder doesn't have BTB or BPT
+	pdata = power->getPower(this, LOAD_Q, mycounts);
+	pdata = power->getPower(this, CACHE_L1DIR, mycounts);
+	pdata = power->getPower(this, CACHE_L2DIR, mycounts);
+	pdata = power->getPower(this, CACHE_L2, mycounts);
+	pdata = power->getPower(this, CACHE_L3, mycounts);
+	//pdata = power->getPower(this, MEM_CTRL, mycounts); This contribute to large power dissipation due to 2.2GH
+	pdata = power->getPower(this, ROUTER, mycounts); 
 
 
 	/* McPAT alpha 
@@ -124,10 +138,11 @@ bool Cpu_power::clock( Cycle_t current)
 
         mem->Send( (Cycle_t)3, event );
         state = WAIT;
+	std::cout << "CPU " << Id() << "::clock -> sending a MEM event at cycle "<< current <<std::endl;
 
 
     } else {
-        if ( ( event = static_cast< MemEvent* >( mem->Recv() ) ) ) {
+        if ( ( event = static_cast< MyMemEvent* >( mem->Recv() ) ) ) {
             _CPU_POWER_DBG("got a MEM event address=%#lx\n", event->address );
 
 	    //pdata = power->getPower(current, CACHE_IL1, "1:1:1:1:1:0", 1);  
@@ -151,6 +166,7 @@ bool Cpu_power::clock( Cycle_t current)
 	    //regPowerStats(pdata);
 
             state = SEND;
+	    std::cout << "CPU " << Id() << "::clock -> got a MEM event at cycle "<< current <<std::endl;
 	   
         }
     }
@@ -165,12 +181,6 @@ Cpu_power* cpu_powerAllocComponent( SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT2
 BOOST_CLASS_EXPORT(Cpu_power)
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Cpu_power, bool, SST::Cycle_t, SST::Time_t )
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Cpu_power, bool, SST::Cycle_t)
-#endif
+BOOST_CLASS_EXPORT(SST::MyMemEvent)
 
