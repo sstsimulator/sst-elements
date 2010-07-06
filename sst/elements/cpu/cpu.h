@@ -57,10 +57,11 @@ public:
         mem = LinkAdd( "MEM" );
         /*             handler = new EventHandler< Cpu, bool, Cycle_t, Time_t > */
         /*                                                 ( this, &Cpu::clock ); */
-        handler = new EventHandler< Cpu, bool, Cycle_t >
+        handler = new SST::EventHandler< Cpu, bool, Cycle_t >
             ( this, &Cpu::clock );
         _CPU_DBG("-->frequency=%s\n",frequency.c_str());
         TimeConverter* tc = registerClock( frequency, handler );
+	mem->setDefaultTimeBase(tc);
         printf("CPU period: %ld\n",(long int) tc->getFactor());
         _CPU_DBG("Done registering clock\n");
             

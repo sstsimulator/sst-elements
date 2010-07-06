@@ -26,7 +26,7 @@ bool Cpu::clock( Cycle_t current )
 //     printf("In CPU::clock\n");
     MyMemEvent* event = NULL; 
 
-    if (current == 100 ) unregisterExit();
+    if (current == 100000 ) unregisterExit();
 
     if ( state == SEND ) { 
         if ( ! event ) event = new MyMemEvent();
@@ -42,14 +42,14 @@ bool Cpu::clock( Cycle_t current )
         _CPU_DBG("xxx: send a MEM event address=%#lx @ cycle %ld\n", event->address, current );
 // 	mem->Send( 3 * epoch, event );
 	mem->Send( (Cycle_t)3, event );
-// 	printf("CPU::clock -> setting state to WAIT\n");
+ 	std::cout << "CPU " << Id() << "::clock -> setting state to WAIT at cycle "<< current <<std::endl;
         state = WAIT;
     } else {
 // 	printf("Entering state WAIT\n");
         if ( ( event = static_cast< MyMemEvent* >( mem->Recv() ) ) ) {
 // 	    printf("Got a mem event\n");
 	  _CPU_DBG("xxx: got a MEM event address=%#lx @ cycle %ld\n", event->address, current );
-// 	  printf("CPU::clock -> setting state to SEND\n");
+	std::cout << "CPU " << Id() << "::clock -> setting state to SEND at cycle "<< current <<std::endl;
             state = SEND;
         }
     }
