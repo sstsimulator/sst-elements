@@ -146,10 +146,9 @@
     <clock>2.2GHz</clock>
     <rev>1.5</rev>
     <power_monitor>YES</power_monitor>
-    <power_model>McPAT</power_model>
     <power_level>2</power_level>    
     <supply_voltage>1.5</supply_voltage>
-    <McPAT_XMLfile>/home/myhsieh/Desktop/trunk/sst/techModels/libMcPATbeta/McPATOOO.xml</McPAT_XMLfile>
+    <McPAT_XMLfile>/home/myhsieh/Desktop/trunk/sst/techModels/libMcPATbeta07/Niagara1.xml</McPAT_XMLfile>
     <core_temperature>360</core_temperature>
     <core_tech_node>32</core_tech_node>
     <core_clock_rate>2200000000</core_clock_rate>
@@ -159,13 +158,23 @@
     <core_number_hardware_threads>2</core_number_hardware_threads>
     <machine_bits>64</machine_bits>
     <machine_type>0</machine_type> 
-    <archi_Regs_IRF_size>32</archi_Regs_IRF_size> 
+    <number_of_IL1s>1</number_of_IL1s>
+    <number_of_DL1s>1</number_of_DL1s>
+    <number_of_ITLBs>1</number_of_ITLBs>
+    <number_of_DTLBs>1</number_of_DTLBs>
+    <number_of_L2s>3</number_of_L2s>
+    <number_of_L3s>2</number_of_L3s>
+    <number_of_L1Directories>3</number_of_L1Directories>
+    <number_of_L2Directories>1</number_of_L2Directories>
+    <archi_Regs_IRF_size>32</archi_Regs_IRF_size>
     <archi_Regs_FRF_size>32</archi_Regs_FRF_size>
     <core_phy_Regs_IRF_size>80</core_phy_Regs_IRF_size>
     <core_phy_Regs_FRF_size>80</core_phy_Regs_FRF_size>
     <core_issue_width>4</core_issue_width>
+    <core_peak_issue_width>4</core_peak_issue_width>
     <core_register_windows_size>8</core_register_windows_size> 
-    <core_opcode_width>11</core_opcode_width>	
+    <core_opcode_width>11</core_opcode_width>
+    <core_micro_opcode_width>11</core_micro_opcode_width>	
     <core_instruction_window_size>64</core_instruction_window_size> 
     <core_decode_width>4</core_decode_width> 
     <core_instruction_length>32</core_instruction_length>
@@ -174,7 +183,8 @@
     <core_fp_issue_width>1</core_fp_issue_width>
     <core_fp_instruction_window_size>64</core_fp_instruction_window_size>  
     <ALU_per_core>1</ALU_per_core> 
-    <FPU_per_core>1</FPU_per_core>	
+    <FPU_per_core>1</FPU_per_core>
+    <MUL_per_core>1</MUL_per_core>	
     <core_store_buffer_size>8</core_store_buffer_size> 
     <core_memory_ports>1</core_memory_ports>	
     <core_fetch_width>4</core_fetch_width> 
@@ -191,17 +201,17 @@
     <cache_il1_miss_buffer_size>16</cache_il1_miss_buffer_size>
     <cache_il1_fill_buffer_size>16</cache_il1_fill_buffer_size>
     <cache_il1_prefetch_buffer_size>16</cache_il1_prefetch_buffer_size>
-    <cache_l1dir_sC>1048576</cache_l1dir_sC>
+    <cache_l1dir_sC>1048576,1048576,1048576</cache_l1dir_sC>
     <cache_l1dir_clock_rate>3500000000</cache_l1dir_clock_rate>
-    <cache_l1dir_line_size>16</cache_l1dir_line_size>
-    <cache_l1dir_number_banks>1</cache_l1dir_number_banks>
-    <cache_l1dir_associativity>16</cache_l1dir_associativity>
-    <cache_l1dir_throughput>2</cache_l1dir_throughput>
-    <cache_l1dir_latency>100</cache_l1dir_latency>
-    <cache_l1dir_miss_buffer_size>8</cache_l1dir_miss_buffer_size>
-    <cache_l1dir_fill_buffer_size>8</cache_l1dir_fill_buffer_size>
-    <cache_l1dir_prefetch_buffer_size>8</cache_l1dir_prefetch_buffer_size>
-    <cache_l1dir_wbb_buffer_sizes>8</cache_l1dir_wbb_buffer_sizes> 
+    <cache_l1dir_line_size>16,16,16</cache_l1dir_line_size>
+    <cache_l1dir_number_banks>1,1,1</cache_l1dir_number_banks>
+    <cache_l1dir_associativity>16,16,16</cache_l1dir_associativity>
+    <cache_l1dir_throughput>2,2,2</cache_l1dir_throughput>
+    <cache_l1dir_latency>100,100,100</cache_l1dir_latency>
+    <cache_l1dir_miss_buffer_size>8,8,8</cache_l1dir_miss_buffer_size>
+    <cache_l1dir_fill_buffer_size>8,8,8</cache_l1dir_fill_buffer_size>
+    <cache_l1dir_prefetch_buffer_size>8,8,8</cache_l1dir_prefetch_buffer_size>
+    <cache_l1dir_wbb_buffer_size>8,8,8</cache_l1dir_wbb_buffer_size> 
     <cache_l1dir_device_type>0</cache_l1dir_device_type>
     <cache_l1dir_directory_type>1</cache_l1dir_directory_type>
     <cache_dl1_sC>16384</cache_dl1_sC>
@@ -213,10 +223,10 @@
     <cache_dl1_miss_buffer_size>16</cache_dl1_miss_buffer_size>
     <cache_dl1_fill_buffer_size>16</cache_dl1_fill_buffer_size>
     <cache_dl1_prefetch_buffer_size>16</cache_dl1_prefetch_buffer_size>
-    <cache_dl1_wbb_buffer_sizes>16</cache_dl1_wbb_buffer_sizes>    
+    <cache_dl1_wbb_buffer_size>16</cache_dl1_wbb_buffer_size>    
     <cache_itlb_number_entries>128</cache_itlb_number_entries> 
     <cache_dtlb_number_entries>128</cache_dtlb_number_entries>
-    <bpred_prediction_width>4</bpred_prediction_width>
+    <bpred_prediction_width>0</bpred_prediction_width>
     <bpred_global_predictor_bits>2</bpred_global_predictor_bits>
     <bpred_global_predictor_entries>4096</bpred_global_predictor_entries>
     <bpred_local_predictor_size>10</bpred_local_predictor_size>
@@ -234,16 +244,16 @@
     <alu_sC>50</alu_sC>
     <fpu_sC>350</fpu_sC>
     <cache_l2_clock_rate>3500000000</cache_l2_clock_rate>
-    <cache_l2_sC>262144</cache_l2_sC>
-    <cache_l2_line_size>64</cache_l2_line_size>
-    <cache_l2_number_banks>1</cache_l2_number_banks>
-    <cache_l2_associativity>16</cache_l2_associativity>
-    <cache_l2_throughput>2</cache_l2_throughput>
-    <cache_l2_latency>100</cache_l2_latency>
-    <cache_l2_miss_buffer_size>8</cache_l2_miss_buffer_size>
-    <cache_l2_fill_buffer_size>8</cache_l2_fill_buffer_size>
-    <cache_l2_prefetch_buffer_size>8</cache_l2_prefetch_buffer_size>
-    <cache_l2_wbb_buffer_sizes>8</cache_l2_wbb_buffer_sizes>
+    <cache_l2_sC>262144,288888,244444</cache_l2_sC>
+    <cache_l2_line_size>64,64,64</cache_l2_line_size>
+    <cache_l2_number_banks>1,1,1</cache_l2_number_banks>
+    <cache_l2_associativity>16,16,16</cache_l2_associativity>
+    <cache_l2_throughput>2,2,2</cache_l2_throughput>
+    <cache_l2_latency>100,100,100</cache_l2_latency>
+    <cache_l2_miss_buffer_size>8,8,8</cache_l2_miss_buffer_size>
+    <cache_l2_fill_buffer_size>8,8,8</cache_l2_fill_buffer_size>
+    <cache_l2_prefetch_buffer_size>8,8,8</cache_l2_prefetch_buffer_size>
+    <cache_l2_wbb_buffer_size>8,8,8</cache_l2_wbb_buffer_size>
     <cache_l2_device_type>1</cache_l2_device_type>
     <cache_l2dir_sC>1048576</cache_l2dir_sC>
     <cache_l2dir_clock_rate>3500000000</cache_l2dir_clock_rate>
@@ -255,20 +265,20 @@
     <cache_l2dir_miss_buffer_size>8</cache_l2dir_miss_buffer_size>
     <cache_l2dir_fill_buffer_size>8</cache_l2dir_fill_buffer_size>
     <cache_l2dir_prefetch_buffer_size>8</cache_l2dir_prefetch_buffer_size>
-    <cache_l2dir_wbb_buffer_sizes>8</cache_l2dir_wbb_buffer_sizes> 
+    <cache_l2dir_wbb_buffer_size>8</cache_l2dir_wbb_buffer_size> 
     <cache_l2dir_device_type>0</cache_l2dir_device_type>
     <cache_l2dir_directory_type>1</cache_l2dir_directory_type>
     <cache_l3_clock_rate>3500000000</cache_l3_clock_rate>
-    <cache_l3_sC>1048576</cache_l3_sC>
-    <cache_l3_line_size>64</cache_l3_line_size>
-    <cache_l3_number_banks>1</cache_l3_number_banks>
-    <cache_l3_associativity>16</cache_l3_associativity>
-    <cache_l3_throughput>2</cache_l3_throughput>
-    <cache_l3_latency>100</cache_l3_latency>
-    <cache_l3_miss_buffer_size>16</cache_l3_miss_buffer_size>
-    <cache_l3_fill_buffer_size>16</cache_l3_fill_buffer_size>
-    <cache_l3_prefetch_buffer_size>16</cache_l3_prefetch_buffer_size>
-    <cache_l3_wbb_buffer_sizes>16</cache_l3_wbb_buffer_sizes>
+    <cache_l3_sC>1048576,1048576</cache_l3_sC>
+    <cache_l3_line_size>64,64</cache_l3_line_size>
+    <cache_l3_number_banks>1,1</cache_l3_number_banks>
+    <cache_l3_associativity>16,16</cache_l3_associativity>
+    <cache_l3_throughput>2,2</cache_l3_throughput>
+    <cache_l3_latency>100,100</cache_l3_latency>
+    <cache_l3_miss_buffer_size>16,16</cache_l3_miss_buffer_size>
+    <cache_l3_fill_buffer_size>16,16</cache_l3_fill_buffer_size>
+    <cache_l3_prefetch_buffer_size>16,16</cache_l3_prefetch_buffer_size>
+    <cache_l3_wbb_buffer_size>16,16</cache_l3_wbb_buffer_size>
     <cache_l3_device_type>0</cache_l3_device_type>
     <exeu_sC>100.0</exeu_sC>
     <mc_clock_rate>400000000</mc_clock_rate>
@@ -294,6 +304,7 @@
     <router_topology>RING</router_topology>
     <core_number_of_NoCs>1</core_number_of_NoCs>   	    		   
 </cpu1_params>
+
 
 <cpu2_params>
     <clock>2.2GHz</clock>
@@ -327,11 +338,11 @@
 </cpu_link_params>
 
 <|-- reference definition -->
-<xbar_clock>2GHz</xbar_clock>
+<xbar_clock>1GHz</xbar_clock>
 
 <|-- reference definition -->
 <xbar_link_params>
-	<lat>10ns</lat>
+	<lat>2ns</lat>
     <name>port1</name>
 </xbar_link_params>
 
@@ -351,7 +362,6 @@
 			</links>
 		</cpu_power>
 	</component>
-
 	<component id="cpu1.xbar">	
 		<xbar>
             <params>
@@ -366,6 +376,7 @@
                     </params>
 				</link>
 				<link id="xbar2xbar">
+					 <params lat="100" name="port1" />
                     <params reference=xbar_link_params />
 				</link>
 			</links>
@@ -381,13 +392,13 @@
 			<links>
 				<link id="xbar2xbar">
 					<params>
-                         <lat>10ns</lat>
+                         <lat>2ns</lat>
                         <name>port1</name>
                     </params>
 				</link>
 				<link id="cpu2xbar">
 					 <params>
-                        <lat>1ns</lat>
+                        <lat>2ns</lat>
                         <name>port0</name>
 					 </params>
 				</link>
@@ -400,6 +411,7 @@
             <params>
                 <cpuId>0xdeadbeee</cpuId>
                 <params reference=cpu2_params />
+		<rev>1.5</rev>
             </params>
 			<links>
 				<link id="cpu2xbar">
