@@ -148,7 +148,7 @@
     <power_monitor>YES</power_monitor>
     <power_level>2</power_level>    
     <supply_voltage>1.5</supply_voltage>
-    <McPAT_XMLfile>/home/myhsieh/Desktop/trunk/sst/techModels/libMcPATbeta07/Niagara1.xml</McPAT_XMLfile>
+    <McPAT_XMLfile>/home/myhsieh/Desktop/trunk/sst/core/techModels/libMcPATbeta/Niagara1.xml</McPAT_XMLfile>
     <core_temperature>360</core_temperature>
     <core_tech_node>32</core_tech_node>
     <core_clock_rate>2200000000</core_clock_rate>
