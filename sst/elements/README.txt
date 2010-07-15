@@ -13,6 +13,7 @@ event_test:   Scott Hemmert <kshemme@sandia.gov>
 genericProc:  Arun Rodrigues <afrodri@sandia.gov>
               Kyle Wheeler <kbwheel@sandia.gov>
 nicmodel:     Rolf Riesen <rolf@sandia.gov>
+patterns:     Rolf Riesen <rolf@sandia.gov>
 power:        Genie Hsieh <myhsieh@sandia.gov>
 routermodel:  Rolf Riesen <rolf@sandia.gov>
 portals4_sm:  Scott Hemmert <kshemme@sandia.gov>
