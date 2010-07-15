@@ -7,9 +7,9 @@
 		<genericProc.genericProc>
 			<params>
 			  <clock>2.0 Ghz</clock>
-			  <cores>2</cores>
-			  <execFile>/Users/kbwheel/qthreads/build.sst-unix/test/test_basic</execFile>
-			  <verbose>5</verbose>
+			  <cores>4</cores>
+			  <execFile>/Users/kbwheel/mtgl.svn/test/test_cc</execFile>
+			  <verbose>0</verbose>
 			  <ssBackEnd>1</ssBackEnd>
 			  <ssConfig>sst/elements/sampleConfigs/rs-opteron.conf</ssConfig>
 			 </params>
