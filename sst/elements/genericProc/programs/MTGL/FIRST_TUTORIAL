@@ -1,0 +1,170 @@
+This tutorial will help get you started with using MTGL. You may also refer 
+to www.sandia.gov/MTGL for other (and future) tutorials. 
+
+We'll assume that you're on the XMT.  At every step, if something goes wrong,
+please contact Jon Berry (jberry@sandia.gov, 505 284-4021).
+
+1) To do a debugging build on the XMT:
+
+> autoreconf -i -f -s
+> ./configure  CC=cc CXX=c++ CFLAGS=-g CXXFLAGS=-g
+
+      For a performance configuration, replace the -g in the flags
+  options with -O3.  Dont' type "make" yet!  XMT compilation is really
+  slow and we don't need to build all of the tests.
+
+2)  To prepare for snapshotting graphs in and out:
+
+> fsworker &
+
+    This will print a number.  Copy and paste it into your SWORKER_EP
+    environment variable:
+
+> export SWORKER_EP=<number>
+
+3)  Generate a graph:  we'll generate a directed "r-mat" graph 
+				(google Faloutsos r-mat)
+
+> cd test
+> make rmat2file
+> mtarun -m 4 ./rmat2file
+usage: ./rmat2file <scale> <deg> <a> <b> <c> <d> <file_root> <dimacs|matrixmarket|snapshot>
+
+   scale:  2^<scale> vertices
+   deg:    ave deg <deg>
+   a,b,c,d: the r-mat parameters (see R-MAT: A recursive model for graph mining)
+   file_root:  the full pathname of a lustre directory (usually /scratch)
+   snapshot:   dimacs and matrixmarket currently don't work with XMT's snapshot 
+
+> mtarun -m 4 ./rmat2file 10 8 0.45 0.15 0.15 0.25 /scratch1/rmat_graphs snapshot
+> ls /scratch1/rmat_graphs/rmat-10.8.*
+  /scratch1/rmat_graphs/rmat-10.8.dests  /scratch1/rmat_graphs/rmat-10.8.srcs
+
+
+These two files contain the sources and destinations of the edges in an r-mat
+graph of 1000 vertices.
+
+NOTE: IF YOU ATTEMPT TO GENERATE LARGE R-MAT GRAPHS WITH CHALLENGING PARAMETERS
+SUCH AS 0.57, 0.19, 0.19, 0.05, MANY DUPLICATE EDGES ARE GENERATED AND THE 
+RESULTING HASH COLLISIONS LEAD TO LOW UTILIZATION.  TO GENERATE LARGE GRAPHS
+IN THIS CONTEXT, USE A SMALL NUMBER OF PROCESSORS AND RUN OVERNIGHT.
+
+3) Run an algorithm:  we'll try connected components.
+
+> make test_cc
+> jberry@thrlogin01(~/mtgl-repo/branches/mtgl-03-05-2009/test)$ !mtar
+> mtarun -m 4 ./test_cc /scratch1/rmat_graphs/rmat-10.8.srcs 
+
+SNAPSHOT /scratch1/rmat_graphs/rmat-10.8.srcs /scratch1/rmat_graphs/rmat-10.8.dests...
+swEP_sring: 1d400100000
+swEP 000001d400100000 
+psearch: 0.012864
+gcc_sv time: 0.043397
+largest has 830 vertices
+there are 195 connected components
+sv time (going through edges): 0.021822
+largest has 830 vertices
+there are 195 connected components
+sv time (going through adjs (non-qthread)): 0.013590
+largest has 830 vertices
+there are 195 connected components
+
+This read in the graph via snapshot, created an undirected version of the 
+graph, and ran three different connected components algorithms on it. 
+
+4) Generate a custom graph for debugging purposes
+
+   Often, we'll want to run on some small graph for debugging.  Here's
+   a convenient way to generate one in a format that can be snapshotted in.
+   Instead of running rmat2graph, we'll run "custom2fil."  This will read
+   a simple file format and produce snapshot-able srcs and dests files.
+
+   Example:  Put your directed edges into a text file (test.s in this case).
+	     Use vertex names in 0..n-1.  The custom2file program is currently
+	     set up to generate undirected graphs, but this can be changed
+             by editing custom2file.cpp and passing a different parameter 
+	     to "gen_custom_graph()".
+
+        jberry$ cat test.s
+        0 1
+        1 2
+        2 0
+	jberry$
+
+   Now we'll generate the files we need for snapshot:
+
+jberry$ mtarun -m 1 ./custom2file /scratch1/custom/test_graph snapshot < test.s
+custom2file...
+0 1
+1 2
+2 0
+Writing SNAPSHOT files...
+write_snap: m: 3
+Done Writing SNAPSHOT files...
+jberry$
+
+    And finally, we can run on our custom input:
+
+jberry $mtarun -m 4 ./test_cc /scratch1/rmat_graphs/test_graph.srcs 
+SNAPSHOT /scratch1/rmat_graphs/test_graph.srcs /scratch1/rmat_graphs/test_graph.dests...
+swEP_sring: 8c00100000
+swEP 0000008c00100000 
+psearch: 0.002820
+gcc_sv time: 0.681078
+largest has 3 vertices
+there are 1 connected components
+sv time (going through edges): 0.025598
+largest has 3 vertices
+there are 1 connected components
+sv time (going through adjs (non-qthread)): 0.001925
+largest has 3 vertices
+there are 1 connected components
+jberry@thrlogin01(~/tmp/031909/branches/mtgl-03-05-2009/test)$ 
+
+
+
+
+jberry@thrlogin01(~/tmp/031909/branches/mtgl-03-05-2009/test)$ 
+
+
+5) Back up and try to understand what's going on:
+
+   a) Read "A First MTGL Example" on the MTGL wiki:  www.sandia.gov/MTGL
+   b) > make test_static_graph1
+   c) > mtarun -m 2 ./test_static_graph1 10
+   d) > pproc test_static_graph1
+   e) > app2 test_static_graph1.ap2
+   f) click the "show compiler annotations" icon at the upper right.
+
+6) Three of the MTGL tests are in runnable shape: test_cc, test_bfs, and 
+   test_pagerank.  Others may or may not be, but these three represent several 
+   kernels.  test_cc invokes a "psearch," which is a parallel recursive search 
+   (not a BFS) and test_pagerank shows how to iterate effectively through 
+   an adjacency structure (pagerank.hpp, Lines 302-312 in the compute_acc f
+   unction for bidirectional graphs). test_bfs is a prototype attempt to
+   load balance among all adjacencies of queue elements at the current level.
+   This works well on the Sun Niagara, but the XMT version traps too much.
+   test_bfs will appear to be much slower than the versions of bfs described
+   in Step 6 below.  However, we find that it outperforms these simple 
+   methods on some challenging real data.
+
+7) Not yet for unlimited release, I've included a file from Cray doing
+   their BFS based on stream counting.  bfs_new.cc is Petr Konecny's
+   BFS, which is coded to run on synthetic, generated data.  bfs_mtgl.cc
+   is an "mtgl-ization" of this code that'll run the same way that test_cc
+   does (give it the name of a .srcs snapshot file).
+
+   c++ -par -I.. -o bfs_mtgl bfs_mtgl.cc -lm -lprand
+
+   This search still has issues, especially on real data.  However, it's
+   a nice example of how to mtgl-ize an XMT C code.  The advantage of 
+   mtgl-izing is that the resulting code can be run on any data structure
+   for which there exists an mtgl adapter.
+
+8) Doxygen documentation can be generated as follows:
+
+  $ cd doc
+  $ doxygen
+
+Note, though, that many deprecated or immature things will appear in
+the documentation.  This will improve over time.
