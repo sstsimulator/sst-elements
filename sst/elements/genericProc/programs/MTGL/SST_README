@@ -1,0 +1,1 @@
+In order to build for the SST, all you have to do is make sure you're using the wrapper compiler (i.e. CXX=powerpc-sst-darwin8.11.0-g++).
