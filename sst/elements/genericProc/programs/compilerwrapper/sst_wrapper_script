@@ -1,0 +1,199 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+use File::Basename;
+
+my $home = "/Users/kbwheel";
+my $includedir = $home . "/include";
+my $libdir = $home . "/sstlib";
+my $CC = "/usr/bin/gcc";
+my $CXX = "/usr/bin/g++";
+my $FC = "gfortran";
+my $debug_flag = "-gstabs+";
+my $extra_includes = "$home/iaaSST/trunk/components/genericProc/programs/";
+my $extra_cppflags = " -DSST ";
+my $extra_cflags = " -arch ppc -static -force_cpusubtype_ALL -fno-exceptions -fno-pic";
+my $extra_cxxflags = " -DSST -arch ppc -static -force_cpusubtype_ALL -fno-exceptions -fno-pic";
+my $extra_fflags = "";
+my $extra_ldflags = "-arch ppc -static -Wl,-search_paths_first";
+my $extra_libs = "-lstdc++ -lc_static -lm_ppc -lmCommon_ppc -lgcc_static -lssthack -lc_static -lgcc_static";
+
+$ENV{'MACOSX_DEPLOYMENT_TARGET'} = '10.3';
+
+# Someone might want to fix for windows
+my $include_flag = "-I";
+my $libdir_flag = "-L";
+
+my $lang = "none";
+my $comp = "";
+my $preproc_flags = $include_flag . $includedir;
+my $comp_flags = "";
+my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
+my $libs = $extra_libs;
+
+
+# add any special OS X version flags.
+$osx_version = `uname -r`;
+if ($osx_version =~ /^7\./) {
+    # need to do nothing...
+} elsif ($osx_version =~ /^8./) {
+    # -D__LDBL_MANT_DIG=53 removes the name munging of gcc-4.x for printf and friends
+    $preproc_flags .= " " . "-U__LDBL_MANT_DIG__ -D__LDBL_MANT_DIG__=53";
+} elsif ($osx_version =~ /^9./) {
+    # -D__LDBL_MANT_DIG=53 removes the name munging of gcc-4.x for printf and friends
+    # -D_NOSTD_SOURCE does something required at the time?
+    # -D__DARWIN_UNIX03=0 turns of UNIX03 support, as our libc doesn't do that
+    $preproc_flags .= " " . "-U__LDBL_MANT_DIG__ -D__LDBL_MANT_DIG__=53 -D_NOSTD_SOURCE -D__DARWIN_UNIX03=0"
+} elsif ($osx_version =~ /^10./) {
+    # -D__LDBL_MANT_DIG=53 removes the name munging of gcc-4.x for printf and friends
+    # -D_NOSTD_SOURCE does something required at the time?
+    # -D__DARWIN_UNIX03=0 turns of UNIX03 support, as our libc doesn't do that
+    $preproc_flags .= " " . "-U__LDBL_MANT_DIG__ -D__LDBL_MANT_DIG__=53 -D_NOSTD_SOURCE -D__DARWIN_UNIX03=0"
+} else {
+	print "Unknown version of OS X: " . $osx_version . "\n";
+}
+
+
+sub check_env {
+    my $envvar = shift;
+    my $str = shift;
+
+    foreach my $var (("SST_")) {
+        my $testvar = $var . $envvar;
+        if (exists($ENV{$testvar})) {
+            $str = $ENV{$testvar};
+            return $str;
+        }
+    }
+
+    return $str;
+}
+
+sub add_extra_includes {
+    my $str = $extra_cppflags;
+    my @includes = split(' ', $extra_includes);
+    for my $include (@includes) {
+        $str .= $include_flag . $include . " ";
+    }
+
+    return $str;
+}
+
+
+if (basename($0) eq "powerpc-sst-darwin8.11.0-gcc") {
+    $lang = "C";
+    $comp = check_env("CC", $CC);
+    $preproc_flags .= " " . add_extra_includes();
+    $comp_flags = $extra_cflags;
+    # no special libs for C
+} elsif (basename($0) eq "powerpc-sst-darwin8.11.0-g++") {
+    $lang = "C++";
+    $comp = check_env("CXX", $CXX);
+    $preproc_flags .= " " . add_extra_includes();
+    $comp_flags = $extra_cxxflags;
+} elsif (basename($0) eq "powerpc-sst-darwin8.11.0-gfortran") {
+    $lang = "FC";
+    $comp = check_env("FC", $FC);
+    # no extra includes for F77.
+    $comp_flags = $extra_fflags;
+} elsif (basename($0) eq "sst-build-config") {
+    # our own little program...
+    if (scalar(@ARGV) == 1) {
+        if ($ARGV[0] eq "--prefix") {
+            print $home . "\n";
+            exit (0);
+        } elsif ($ARGV[0] eq "--libs") {
+            print $extra_libs . "\n";
+            exit (0);
+        }
+    }
+    print "Usage: sst-build-config [OPTION]\n\n";
+    print "Available values for OPTION are:\n\n";
+    print "  --prefix    SST build environment prefix\n";
+    print "  --libs      List of libraries needed to link\n";
+    print "              an SST application\n";
+
+    exit 1;
+}
+
+if ($lang eq "none") {
+    print "Could not determine requested language\n";
+    exit 1;
+}
+if ($comp eq "") {
+    print "No " . $lang . " support.  As such, the " . $lang . " compiler is non-functional.\n";
+    exit 1;
+}
+
+
+# figure out what user wants
+my @args = @ARGV;
+my $want_preproc = 1;
+my $want_compile = 1;
+my $want_link = 1;
+my $dry_run = 0;
+my $disable_flags = 1;
+my $real_flag = 0;
+my @appargs = ();
+
+while (scalar(@args) > 0) {
+    my $arg = shift(@args);
+
+    if ($arg eq "-showme") {
+        $dry_run = 1;
+    } else {
+        if ($arg eq "-c") {
+            $want_link = 0;
+            $real_flag = 1;
+		} elsif ($arg eq "-g") {
+			$arg = $debug_flag;
+        } elsif ($arg eq "-E" || $arg eq "-M") {
+            $want_compile = 0;
+            $want_link = 0;
+            $real_flag = 1;
+        } elsif ($arg eq "-S") {
+            $want_link = 0;
+            $real_flag = 1;
+        } elsif ($arg =~ /^-.*/) {
+            $real_flag = 1;
+        } else {
+            $real_flag = 1;
+            $disable_flags = 0;
+        }
+        push(@appargs, $arg);
+    }
+}
+
+if ($disable_flags == 1 && !($dry_run == 1 && $real_flag == 0)) {
+    $want_preproc = $want_compile = $want_link = 0;
+}
+
+my @exec_argv = ();
+
+# assemble command
+push(@exec_argv, split(' ', $comp));
+if ($want_preproc == 1) {
+    push(@exec_argv, split(' ', $preproc_flags));
+}
+if ($want_compile == 1) {
+    push(@exec_argv, split(' ', $comp_flags));
+}
+push(@exec_argv, @appargs);
+if ($want_link == 1) {
+    push(@exec_argv, split(' ', $linker_flags));
+    push(@exec_argv, split(' ', $libs));
+}
+
+@exec_argv = grep(!/\-fPIC|\-fpic/, @exec_argv);
+
+if ($dry_run == 1) {
+    print join(" ", @exec_argv) . "\n";
+    exit 0;
+}
+
+$cmd = shift(@exec_argv);
+if ($real_flag == 0) {
+    @exec_argv = ();
+}
+
+exec($cmd, (@exec_argv)) || die "Could not exec " . $exec_argv[0] . ": $!\n";

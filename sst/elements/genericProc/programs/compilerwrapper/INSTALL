@@ -1,0 +1,1 @@
+To install this, copy all the scripts to somewhere in your path. Then link powerpc-sst-darwin8.11.0-{gcc,g++,gfortran} to sst_wrapper_script and put them in your path as well.
