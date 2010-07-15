@@ -1,0 +1,27 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_reindex \- reposition an entry in a multimap after changing key field values
+.sp
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "int cp_multimap_reindex(cp_multimap *" map ", void *" before ", void *" after ");
+.sp
+.SH DESCRIPTION
+.B cp_multimap_reindex
+must be called to correctly reposition an entry when changing fields that 
+affect entry placement with reference to map indices. This requires creating a
+new entry with the modified value. Reindexing removes the old entry from the 
+map and inserts the new entry instead.
+.sp
+.SH RETURN VALUE
+.B cp_multimap_reindex
+return zero on success or non-zero on error. Possible error codes are
+.B CP_LOCK_FAILED
+on locking failure or
+.B CP_UNIQUE_INDEX_VIOLATION 
+if the modified value can not be reconciled with existing index constraints. 
+.SH SEE ALSO
+.BR cp_multimap_insert (3), 
+.BR cp_multimap_contains (3), 
+.BR cp_multimap_remove (3) 

@@ -1,0 +1,115 @@
+.TH "cp_socket" 3 "MAY 2006" "libcprops" "cp_httpclient"
+.SH NAME
+cp_httpclient_fetch, cp_httpclient_fetch_nb, 
+cp_httpclient_fetch_ctl, cp_httpclient_fetch_nb_exec, 
+cp_httpclient_fetch_ctl_exec \- perfrom an http call
+.SH SYNOPSIS
+#include <sys/poll.h>
+.br
+#include <cprops/httpclient.h>
+
+.BI "cp_httpclient_result *
+.ti +5n
+.BI "cp_httpclient_fetch(cp_httpclient *" client ", char *" uri ");
+.br
+.BI "int cp_httpclient_fetch_nb(cp_httpclient *" client ", char *" uri ", 
+.ti +27n
+.BI "void *" id ", cp_httpclient_callback " callback ",
+.ti +27n
+.BI "int " background ");
+.br
+.BI "int cp_httpclient_fetch_nb_exec();"
+.br
+.BI "int cp_httpclient_fetch_ctl(cp_httpclient_ctl *ctl, 
+.ti +28n
+.BI "cp_httpclient *" client ",
+.ti +28n
+.BI "char *" uri ", void *" id ", 
+.ti +28n
+.BI "cp_httpclient_callback " callback ");
+.br
+.BI "int cp_httpclient_fetch_ctl_exec(cp_httpclient_ctl *" ctl ");
+
+.SH DESCRIPTION
+the fetch functions operate on a successfully initialized the cp_httpclient 
+object
+.I client
+and attempt to retrieve the content under the given
+.I uri 
+value. 
+.SS synchronous interface - cp_httpclient_fetch
+.B cp_httpclient_fetch
+performs an HTTP call and returns a 
+.BR cp_httpclient_result (3)
+object containing a status code and the results, if any, represented as a
+.BR cp_http_response (3)
+object. This method will block until fully reading the server response or an
+error occurs.
+
+.SS asynchronous interface - cp_httpclient_fetch_nb
+.B cp_httpclient_fetch_nb
+adds the HTTP request to an execution stack and returns immediately. Results 
+are obtained when a callback is made to the specified
+.I callback
+function, which must follow this prototype:
+
+.nf
+  void (*callback)(cp_httpclient_result *response);
+.fi
+.br
+The callback function is invoked once results have been read from the server or
+an error occurs.
+.sp
+If the 
+.I background
+parameter is non-zero, requests will be performed by a background thread.
+Otherwise transfers must be driven by calling 
+.B cp_httpclient_fetch_nb_exec
+which returns the number of on-going transfers. A return value of zero
+indicates all transfers have completed. If the return value is non-zero 
+cp_httpclient_fetch_nb_exec must be called again. To prevent spinning, or more
+generally to determine whether there is data to send or receive on any of the
+connections, applications should retrieve an array of 
+.B struct pollfd
+structures by calling 
+.B cp_httpclient_ctl_default_get_pollfds
+and use this array to call
+.BR poll (2) 
+with a non-zero timeout value. Pass a non-null pointer to an int value to 
+cp_httpclient_ctl_default_get_pollfds for the 
+.I num
+parameter to be set to the size of the struct pollfd array.
+
+.SS grouping transfers
+To execute requests by group or to control the number of threads involved in 
+performing background transfers, applications may dynamically create a transfer
+control stack
+.BR cp_httpclient_ctl (3).
+Adding requests is then done with \fBcp_httpclient_fetch_ctl\fP. If the control
+stack is not initialized to perform transfers in a separate thread (or 
+threads), applications must control execution with 
+.B cp_httpclient_fetch_ctl_exec
+and polling on the struct pollfd array given by
+.B cp_httpclient_ctl_get_pollfds
+as required.
+.SH RETURN VALUE
+.B cp_httpclient_fetch
+returns NULL on internal memory allocation failures, a cp_httpclient_result
+object representing the transfer result otherwise.
+.br
+.B cp_httpclient_fetch_nb
+and
+.B cp_httpclient_fetch_ctl
+return zero on success or non-zero if the request could not be registered.
+.br
+.B cp_httpclient_fetch_nb_exec
+and
+.B cp_httpclient_fetch_ctl_exec
+return -1 on memory allocation failure, or the number of executing requests on
+the default or user created transfer stack respectively. A value of zero 
+indicates that all transfers have completed (or none were requested yet).
+.SH SEE ALSO
+.BR cp_httpclient_result (3),
+.BR cp_httpclient_ctl (3)
+
+

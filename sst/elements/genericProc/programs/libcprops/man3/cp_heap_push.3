@@ -1,0 +1,30 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_push, cp_heap_pop \- push / pop an item on / from a heap
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "void *cp_heap_push(cp_heap *" heap ", void *" item ");
+.br
+.BI "void *cp_heap_pop(cp_heap *" heap ");
+
+.SH DESCRIPTION
+cp_heap_push inserts the given \fIitem\fP to the \fIheap\fP. If 
+COLLECTION_MODE_COPY is set and the heap was initialized with a non-null copy
+function, the copy of the item obtained by invoking the copy function is 
+inserted rather than the item itself. 
+.sp
+cp_heap_pop returns the minimum item from the heap as determined using the heap
+compare function set at initialization. If the COLLECTION_MODE_DEEP mode bit is
+set and the heap was initialized with a non-null item destructor function, the
+destructor function in called on the item being removed. 
+
+.SH RETURN VALUE
+cp_heap_push returns the affected item on success or NULL on allocation failure.
+.sp
+cp_heap_pop returns the minimum item or NULL if the heap is empty.
+
+.SH SEE ALSO
+.BR cp_heap_create (3),
+.BR cp_heap_set_mode (3)

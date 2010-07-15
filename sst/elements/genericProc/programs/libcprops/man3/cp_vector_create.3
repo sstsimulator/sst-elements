@@ -1,0 +1,61 @@
+.TH cp_vector 3 "MARCH 2006" libcprops.0.0.12 "libcprops - cp_vector"
+.SH NAME
+cp_vector_create, cp_vector_create_by_option \- create a vector object
+.SH SYNOPSIS
+#include <cprops/vector.h>
+
+.BI "cp_vector *cp_vector_create(int " size ");
+.sp
+.BI "cp_vector *cp_vector_create_by_option(int " size ", 
+.ti +38n
+.BI "int " mode ", 
+.ti +38n
+.BI "cp_copy_fn " copy_item ",
+.ti +38n
+.BI "cp_destructor_fn " free_item ");
+.sp
+.BI "cp_vector *cp_vector_wrap(void **" data ", int " len ", int " mode ");
+.SH DESCRIPTION
+.B cp_vector_create_by_option
+creates a vector with initial storage for 
+.I size
+items
+with the given \fImode\fP, using
+.I copy_item
+to copy items on insertion if 
+.I mode
+has the 
+.B COLLECTION_MODE_COPY
+bit set, and
+.I free_item
+to release items if 
+.I mode
+has the 
+.B COLLECTION_MODE_DEEP
+bit set. 
+.sp
+.B cp_vector_create
+is equivalent to 
+
+.RS +3n
+.nf
+cp_vector_create_by_mode(size, COLLECTION_MODE_MULTIPLE_VALUES, 
+                         NULL, NULL)
+.fi
+.RE
+
+.B cp_vector_wrap
+creates a cp_vector object with the given 
+.I data
+parameter as its content, setting the initial size to
+.I size
+and the operation mode to \fImode\fP.
+.SH RETURN VALUE
+a newly created 
+.B cp_vector
+on success or 
+NULL
+on failure.
+.SH SEE ALSO
+.BR cp_vector_destroy (3),
+.BR cp_vector_destroy_custom (3)

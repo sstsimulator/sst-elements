@@ -1,0 +1,82 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_insert, 
+cp_hashlist_insert_by_option, 
+cp_hashlist_append, 
+cp_hashlist_append_by_option \- add a mapping to a hashlist 
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+
+.BI "void *cp_hashlist_insert(cp_hashlist *" list ", void *" key ", void *" value ");
+.br
+.BI "void *cp_hashlist_insert_by_option(cp_hashlist *" list ", 
+.ti +35n
+.BI "void *" key ", 
+.ti +35n
+.BI "void *" value ", 
+.ti +35n
+.BI "int " mode ");
+.br
+.BI "void *cp_hashlist_append(cp_hashlist *" list ", void *" key ", void *" value ");
+.br
+.BI "void *cp_hashlist_append_by_option(cp_hashlist *" list ", 
+.ti +35n
+.BI "void *" key ", 
+.ti +35n
+.BI "void *" value ", 
+.ti +35n
+.BI "int " mode ");
+
+
+.SH DESCRIPTION
+\fBcp_hashlist_insert\fP adds a mapping from \fIkey\fP to \fIvalue\fP using the
+current mode on \fIlist\fP. The new mapping is prepended to the list. The 
+effect of various mode bits is as follows:
+.TP
+\fBCOLLECTION_MODE_DEEP\fP - if a mapping for \fIkey\fP already exists, the
+destructor functions are called on the existing \fIkey\fP and \fIvalue\fP and 
+they are replaced with the new settings - unless \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP is set.
+.TP
+\fBCOLLECTION_MODE_MULTIPLE_VALUES\fP - allows multiple mappings for a given
+key.
+.TP
+\fBCOLLECTION_MODE_COPY\fP - the copy functions specified on list creation
+are used to store copies of the \fIkey\fP and \fIvalue\fP.
+.TP 
+\fBCOLLECTION_MODE_NOSYNC\fP - no locking is performed on insertion.
+.TP
+\fBCOLLECTION_MODE_NORESIZE\fP - a resize will not be triggered even if the
+fill factor exceeds the maximum setting for the internal table.
+.P
+.B cp_hashlist_insert_by_option
+allows specifying a \fBmode\fP setting overriding the current list mode, with 
+the exception that the \fBCOLLECTION_MODE_NOSYNC\fP bit on the \fIoption\fP
+parameter has no effect.
+.sp
+.B cp_hashlist_append
+and
+.B cp_hashlist_append_by_option 
+are similar to 
+.B cp_hashlist_insert
+and 
+.B cp_hashlist_insert_by_option
+respectively, with the difference that the new mapping is appended to the list.
+.SH RETURN VALUE
+insertion functions return a pointer to the actual inserted value, which may be
+different to the \fIvalue\fP parameter if \fBCOLLECTION_MODE_COPY\fP is set, or
+\fBNULL \fP if the insertion failed.
+
+.SH ERRORS
+.TP
+\fBEINVAL\fP the \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP mode bit is not set and
+a mapping for \fIkey\fP already exists
+.TP
+\fBENOMEM\fP an internal allocation failed.
+
+.SH "SEE ALSO"
+.BR cp_hashlist (3),
+.BR cp_hashlist_get (3),
+.BR cp_hashlist_set_mode (3),
+.BR cp_hashlist_set_max_fill_factor (3)
+

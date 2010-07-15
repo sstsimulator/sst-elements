@@ -1,0 +1,50 @@
+# cpsvc - an http server - Makefile
+#
+# This is the Makefile for cpsvc on windows. 
+#
+# Copyright (c) 2005-2007 by Ilan Aelion
+# iaelion@users.sourceforge.net
+# 
+# 2007-11-30 V 0.1.7 beta
+#
+############################################################################
+
+CC=CL
+LD=LINK
+RM=DEL /Q
+
+CFLAGS=/I. /DWIN32 /D_WINDOWS
+LDFLAGS=/incremental:no /subsystem:console ..\libcprops.lib
+LIBS=WS2_32.lib
+
+!INCLUDE win.mak
+
+!IF "$(CPSP_SOURCES)" != ""
+CPSP_WORKER=cpsp_worker.obj cpsp_worker.exe
+!ENDIF
+
+SVC_SRC = file.c cgi.c $(CPSP_SOURCES)
+SVC_HDR = $(SVC_SRC:.c=.h)
+SVC_OBJ = $(SVC_SRC:.c=.obj) cpsvc.obj
+
+all: linkdir cpsvc.exe
+
+linkdir:
+	@IF not exist cprops\config.h mkdir cprops
+	@copy /y ..\*.h cprops > nul: 2>&1
+
+cpsvc.exe: $(SVC_OBJ) $(CPSP_WORKER)
+	$(LD) $(LDFLAGS) $(SVC_OBJ) /out:$@ $(LIBS)
+
+!IF "$(CPSP_SOURCES)" != ""
+cpsp_worker.exe:
+	$(LD) $(LDFLAGS) cpsp.obj cpsp_invoker.obj cpsp_worker.obj /out:$@ $(LIBS)
+!ENDIF
+
+%.obj : %.c %.h
+	$(CC) $(CFLAGS) -c $< /out:$@
+
+.PHONY: all clean install uninstall linkdir
+
+clean: 
+	$(RM) $(SVC_OBJ) cpsvc.exe $(CPSP_WORKER) *.log

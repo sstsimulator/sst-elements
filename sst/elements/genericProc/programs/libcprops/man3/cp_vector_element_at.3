@@ -1,0 +1,16 @@
+.TH cp_vector 3 "MARCH 2006" libcprops-0.0.12 "libcprops - cp_vector"
+.SH NAME
+cp_vector_element_at \- return the element at the given position
+.SH SYNOPSIS
+#include <cprops/vector.h>
+
+.BI "void *cp_vector_element_at(cp_vector *" vector ", int " index ");
+.SH DESCRIPTION
+.B cp_vector_element_at
+returns the element set at the given \fIindex\fP. Index ranges from 0 to 
+cp_vector_size() - 1.
+.SH RETURN VALUE
+the element at the given position or NULL if no element is set or the index is
+out of range. 
+.SH SEE ALSO
+.BR cp_vector_size (3)

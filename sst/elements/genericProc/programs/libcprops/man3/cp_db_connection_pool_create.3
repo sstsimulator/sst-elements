@@ -1,0 +1,40 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_pool_create, cp_db_connection_pool_destroy \- create / 
+deallocate a connection pool
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_db_connection_pool *
+.ti +5n
+.BI "cp_db_connection_pool_create(cp_data_source *" data_source ",
+.ti +34n
+.BI "int " min_size ", 
+.ti +34n
+.BI "int " max_size ",
+.ti +34n
+.BI "int " initial_size ");
+.br
+.BI "void cp_db_connection_pool_destroy(cp_db_connection_pool *" pool ");
+
+.SH DESCRIPTION
+.B cp_db_connection_pool_create
+creates a database connection pool for connections on the given 
+\fIdata_source\fP. Connections may be obtained from the pool by calling 
+.BR cp_db_connection_pool_get_connection (3).
+Connections remain open until the pool is stopped by calling
+.BR cp_db_connection_pool_shutdown (3),
+which closes all open connections. The pool must be explicitly deallocated
+by calling 
+\fBcp_db_connection_pool_destroy\fP. 
+.SH RETURN VALUE
+.B cp_db_connection_pool_create
+returns a
+.B cp_db_connection_pool
+structure representing the newly created connection pool on success or NULL on
+failure.
+.SH SEE ALSO
+.BR cp_db_connection_pool_shutdown (3),
+.BR cp_db_connection_pool_get_connection (3),
+.BR cp_db_connection_pool_release_connection (3)

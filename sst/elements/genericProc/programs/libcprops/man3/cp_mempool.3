@@ -1,0 +1,47 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_mempool \- a memory pool implementation
+
+.SH DESCRIPTION 
+cp_mempool is a memory pool for fixed allocation sizes. 
+.sp
+.BR cp_shared_mempool (3) 
+is a shareable memory pool implementation based on cp_mempool. Both cp_mempool 
+and cp_shared_mempool represent a trade off of memory for speed and should not 
+be used if memory is tight or if the total allocation may exceed the amount of 
+physical memory available to the program, so as to prevent swapping. Note that 
+even if using the provided cp_mempool_free or cp_shared_mempool_free 
+functions, the memory returned to the pool is kept for future requests and is 
+ultimately released back to the general "malloc" library only when the memory 
+pool is destroyed. 
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/mempool.h>\fP.
+.sp
+.BI "cp_mempool *cp_mempool_create_by_option(const int " mode ", 
+.ti +40
+.BI "const size_t " chunksize ", 
+.ti +40
+.BI "size_t " multiple ");
+.br
+.BI "cp_mempool *cp_mempool_create(const size_t " chunksize ");
+.br
+.BI "int cp_mempool_inc_refcount(cp_mempool *" pool ");
+.br
+.BI "void *cp_mempool_alloc(cp_mempool * const " pool ");
+.br
+.BI "void *cp_mempool_calloc(cp_mempool * const " pool ");
+.br
+.BI "int cp_mempool_free(cp_mempool * const " pool ", void *" data ");
+.br
+.BI "void cp_mempool_destroy(cp_mempool *" pool ");
+
+.SH AUTHOR
+cp_mempool was contributed to libcprops by Kyle Wheeler.
+
+.SH SEE ALSO
+.BR cp_mempool_create (3),
+.BR cp_mempool_alloc (3), 
+.BR cp_mempool_free (3), 
+.BR cp_mempool_destroy (3),
+.BR cp_shared_mempool (3)

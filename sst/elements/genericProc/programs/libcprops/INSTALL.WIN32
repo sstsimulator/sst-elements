@@ -1,0 +1,50 @@
+installation instructions
+=========================
+
+Copyright (C) 2005-2007 Ilan Aelion
+
+This library is distributed under the LGPL (see COPYING) and may in the future
+be alternatively distributed under the BSD license.
+
+==============================================================================
+
+Currently libcprops compiles with MSVC 6.0 and NMAKE on WIN32 platforms. If you
+are interested in adapting cprops for cygwin or mingw, or for different 
+compilers, including newer MSVC versions, or for WIN64, please contact me at 
+iaelion at users dot sourceforge dot net.
+
+A few additional packages are required to compile libcprops on Windows. These
+are mostly optional with the exception of PCRE which is needed in any case. 
+PCRE may be obtained from http://gnuwin32.sourceforge.net/packages/pcre.htm
+
+Other dependencies: 
+
+(1) If you want SSL capabilities, you'll need libssl. You could obtain a WIN32
+OpenSSL distribution here: http://www.slproweb.com/products/Win32OpenSSL.html
+
+(2) If you plan on using cpsp, you will need lex / yacc or equivalents. You 
+could obtain flex and bison WIN32 binaries at  
+http://www.monmouth.com/~wstreett/lex-yacc/lex-yacc.html
+
+(3) If you want to use cp_dbms with postgres or mysql, you will require a 
+client installation of the database including the developer files. In
+particular for postgres you will require a distribution that includes libpq.lib
+ - libpq.a doesn't link when using MSVC. 
+
+
+The general procedure to build cprops is
+
+      > configure.bat
+      > nmake
+
+The configure script will prompt you for the location of the PCRE distribution
+and several other options.
+
+After running nmake, you should be able to link with the resulting 
+libcprops.lib library and / or libcprops.dll. 
+
+please report problems to iaelion@users.sourceforge.net. For the time being I 
+won't be able to solve problems that arise when using a compiler other than 
+MSVC 6.0 or if running WIN64. If you can provide patches for such systems, I'll 
+gladly include them in future versions.
+

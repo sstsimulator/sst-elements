@@ -1,0 +1,25 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_callback \- run a callback on all items in a heap
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "void cp_heap_callback(cp_heap *" heap ", cp_callback_fn " cb ", void *" prm ");
+
+.SH DESCRIPTION
+cp_heap_callback locks the heap unless the COLLECTION_MODE_NOSYNC bit is set,
+iterates over heap items and invokes the callback function \fIcb\fP. The 
+callback function should follow this prototype:
+
+.RS
+.nf
+int cb(void *item, void *prm);
+.fi
+.RE
+
+The callback function is invoked on each heap item. The \fIprm\fP parameter is
+set to the value given in the call to cp_heap_callback. The callback iteration
+is stopped if the callback invocation returns non-zero.
+.sp
+

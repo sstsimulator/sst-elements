@@ -1,0 +1,144 @@
+.TH cp_rbtree 3 "MAY 2006" libcprops.0.1.3 "libcprops - cp_rbtree"
+.SH NAME
+cp_rbtree_insert, cp_rbtree_get, cp_rbtree_delete, cp_rbtree_contains, 
+cp_rbtree_callback, cp_rbtree_callback_preorder, cp_rbtree_callback_postorder, 
+cp_rbtree_count \- red-black tree operations
+
+.SH SYNOPSIS
+#include <cprops/rb.h>
+.br
+#include <cprops/vector.h>
+
+.BI "void *cp_rbtree_insert(cp_rbtree *" tree ", void *" key ", void *" value ");
+.br
+.BI "void *cp_rbtree_get(cp_rbtree *" tree ", void *" key ");
+.br
+.BI "void *cp_rbtree_delete(cp_rbtree *" tree ", void *" key ");
+.br
+.BI "int cp_rbtree_contains(cp_rbtree *" tree ", void *" key ");
+.br
+.BI "int cp_rbtree_callback_preorder(cp_rbtree *" tree ", 
+.ti +32n
+.BI "cp_callback_fn " callback ", 
+.ti +32n
+.BI "void *" key ");
+.br
+.BI "int cp_rbtree_callback(cp_rbtree *" tree ", 
+.ti +23n
+.BI "cp_callback_fn " callback ",
+.ti +23n
+.BI "void *" key ");
+.br
+.BI "int cp_rbtree_callback_postorder(cp_rbtree *" tree ",
+.ti +33n
+.BI "cp_callback_fn " callback ", 
+.ti +33n
+.BI "void *" key ");
+.br
+.BI "long cp_rbtree_count(cp_rbtree *" tree ");
+
+.SH DESCRIPTION
+.B cp_rbtree_insert
+adds a mapping for the given 
+.I key
+to the given \fIvalue\fP. If a mapping for the given key already exists and 
+COLLECTION_MODE_MULTIPLE_VALUES is not set, the current mapping is replaced, 
+and, if COLLECTION_MODE_DEEP is set, the old mapping key and value are
+destroyed. If COLLECTION_MODE_MULTIPLE_VALUES is set, the new value is added to
+the existing values mapped to the given key. By default 
+COLLECTION_MODE_MULTIPLE_VALUES is not set. 
+.br
+If COLLECTION_MODE_COPY is set, the given 
+.I key
+and
+.I value
+parameters are copied before being inserted. Unless COLLECTION_MODE_NOSYNC is
+set, the insert function will write-lock the tree before performing the 
+insertion. 
+.sp
+.B cp_rbtree_get
+returns the current mapping for the requested \fIkey\fP or NULL if none exists.
+Unless COLLECTION_MODE_NOSYNC is set, the tree is read-locked. If 
+COLLECTION_MODE_MULTIPLE_VALUES is set, the returned value is a 
+.BR cp_vector (3)
+object containing all values for the given key. 
+.sp
+.B cp_rbtree_delete
+removes the current mapping for the given 
+.I key
+and returns the 
+.I value 
+associated to it or NULL if there was no mapping for the given key. The return 
+value is usable to indicate that a deletion has taken place. Note that the 
+returned pointer may be invalid if COLLECTION_MODE_DEEP is set and the tree 
+has a non-null value destructor function set. Unless COLLECTION_MODE_NOSYNC is
+set, the deletion function write-locks the tree. 
+.sp
+.B cp_rbtree_contains
+returns non-zero if the tree contains a mapping for the given 
+.I key
+or zero if not.
+.sp
+.B cp_rbtree_callback
+performs an in-order scan of the tree, invoking the given callback function 
+with each mapping and the given parameter. 
+.B cp_rbtree_callback_preorder
+performs a pre-order scan of the tree, and 
+.B cp_rbtree_callback_postorder
+performs a post-order scan of the tree. The callback iteration is 
+terminated if the callback function returns non-zero. The prototype for the 
+callback function is as follows:
+
+.nf
+int callback_fn(void *entry, void *client_prm);
+.fi
+
+The callback function is invoked iteratively with 
+.I entry
+pointing to the current tree node. Here is an example callback function 
+implementation, which prints the key and value addresses for each mapping:
+
+.nf 
+int callback(void *entry, void *prm)
+{
+	cp_rbnode *node = entry;
+	printf("key %p, value %p\n", node->key, node->value);
+	return 0;
+}
+.fi
+
+.sp
+.B cp_rbtree_count
+returns the number of mappings currently stored in a tree.
+
+.SH RETURN VALUE
+.B cp_rbtree_insert 
+and 
+.B cp_rbtree_delete 
+return the affected value on success or NULL on failure. 
+.B cp_rbtree_get 
+returns the value mapped to the requested key or NULL on failure or if no such 
+mapping exists.
+.sp
+Note that these functions may fail if locking fails. This means that for a
+synchronized table (ie COLLECTION_MODE_NOSYNC not set), cp_rbtree_get could
+return NULL although a mapping actually exists. Applications should check 
+errno to determine whether no mapping was found (errno not set) or locking has
+failed (errno will be set to EBUSY, EINVAL or EDEADLK).
+.sp
+.B cp_rbtree_contains
+returns non-zero if the tree contains a mapping for the requested key or zero
+if no mapping was found or on locking errors - see above. 
+.sp
+.B cp_rbtree_callback
+returns 0 if the iteration completes successfully, -1 on locking error, or the 
+non-zero value returned by the callback function causing the iteration to abort.
+.sp
+.B cp_rbtree_count
+returns the number of mappings currently stored.
+.SH SEE ALSO
+.BR cp_rbtree_lock (3), 
+.BR cp_rbtree_set_mode (3),
+.BR cp_vector (3)
+.BR errno (3)
+

@@ -1,0 +1,25 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_verify_hostname \- compare the host name used for a connection to the
+host name given in the certificate presented by the server
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "int cp_client_verify_hostname(cp_client *" client ");
+.SH DESCRIPTION
+.B cp_client_verify_hostname
+may be called on 
+.B cp_client
+sockets created with 
+.B cp_client_create_ssl
+and successfully connected with \fBcp_client_connect\fP to determine if the 
+host name given in the server certificate matches the host name used to make
+connection.
+.SH RETURN VALUE
+.B cp_client_verify_hostname
+returns non-zero if the host name used
+to make the connection matches the host name given in the server certificate, 
+or zero on mismatch.
+.SH SEE ALSO
+.BR cp_client_create_ssl (3),
+.BR cp_client_connect (3)

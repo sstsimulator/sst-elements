@@ -1,0 +1,97 @@
+.TH "cp_socket" 3 "MAY 2006" "libcprops" "cp_httpclient"
+.SH NAME
+cp_httpclient_ctl, cp_httpclient_ctl_create, cp_httpclient_ctl_destroy, 
+cp_httpcilent_ctl_get_pollfds \- http client api
+.SH SYNOPSIS
+#include <sys/poll.h>
+.br
+#include <cprops/httpclient.h>
+
+.BI "cp_httpclient_ctl *cp_httpclient_ctl_create(int " background ");
+.br
+.BI "void cp_httpclient_ctl_destroy(cp_httpclient_ctl *" ctl ");
+.sp
+.BI "struct pollfd *
+.ti +5n
+.BI "cp_httpclient_ctl_get_pollfds(cp_httpclient_ctl *" ctl ", int *" num ");
+
+.sp 
+On systems without 
+.BR poll (2)
+.sp
+#include <sys/select.h>
+.br
+#include <cprops/httpclient.h>
+
+.BI "fd_set *
+.ti +5n
+.BI "cp_httpclient_ctl_get_read_fd_set(cp_httpclient_ctl *" ctl ", int *" num ");
+.br
+.BI "fd_set *
+.ti +5n
+.BI "cp_httpclient_ctl_get_write_fd_set(cp_httpclient_ctl *" ctl ", int *" num ");
+
+.SH DESCRIPTION
+The default fetch functions group all http requests in one of two execution
+stacks - the asynchronous transfer stack or the asynchronous background
+transfer stack which differs in that requests are executed in a separate 
+thread. Applications may require processing requests in separate groups, or on
+machines with multiple cpus, it may be desireable to process requests in 
+multiple background threads. 
+.sp
+.B cp_httpclient_ctl_create
+creates a new execution stack. The 
+.I background
+parameter determines the number of threads made available for processing 
+requests. If 
+.I background
+is 1, a background thread is started to process requests on the created
+controller. If
+.I background
+is 2 or higher, a thread pool is created to process requests with the parameter
+value used as the maximal pool size. 
+If
+.I background 
+is zero, no additional threads are started, and requests must be driven by 
+calls to 
+.BR cp_httpclient_fetch_ctl_exec (3).
+In this case applications should poll on the struct pollfd array returned by
+.B cp_httpclient_ctl_get_pollfds
+with a non-zero value to prevent spinning on the call to 
+cp_httpclient_ctl_exec. If not NULL, the 
+.I num
+parameter to cp_httpclient_ctl_get_pollfds is set to the number of entries in 
+the struct pollfd array.
+.sp
+.B cp_httpclient_ctl_destroy
+stops any threads associated with a cp_httpclient_ctl object and performs 
+clean up.
+.SH RETURN VALUE
+.B cp_httpclient_ctl_create
+returns a newly allocated cp_httpclient_ctl object on success or NULL on 
+memory allocation failure. 
+.sp
+.B cp_httpclient_ctl_get_pollfds
+returns an array of struct pollfd objects which may be used in a call to 
+.BR poll (2)
+or NULL on a memory allocation failure or if the transfer control stack 
+contains no entries. In addition, if not NULL the
+.I num
+parameter is set to the number of entries in the array.
+.sp
+On systems where
+.BR poll (2)
+is unavailable, the 
+.B cp_httpclient_ctl_get_read_fd_set
+and
+.B cp_httpclient_ctl_get_write_fd_set
+are defined instead. These functions return a pointer to an fd_set structure 
+set with the applicable file descriptors, which may be used in a call to 
+select(). In this case the 
+.I num
+parameter is set to the value largest file descriptor in the set rather than to
+the total number of file descriptors. 
+.SH SEE ALSO
+.BR cp_httpclient_fetch_ctl (3),
+.BR cp_httpclient_fetch_ctl_exec (3)
+

@@ -1,0 +1,20 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_set_min_size \- set the minimal internal table size on a 
+cp_hashlist
+
+.SH SYNOPSIS
+#include <cprops/hashlist.h>
+
+.BI "void cp_hashlist_set_min_size(cp_hashlist *" list ", 
+.ti +30n
+.BI "unsigned long " min_size ");
+.SH DESCRIPTION
+.B cp_hashlist_set_min_size
+sets the minimal size of internal lookup table to \fImin_size\fP. On creation, 
+this value is set to the size hint given to the constructor function. This is 
+to  prevent tables from resizing upon entry removal shortly after creation if 
+the table contains few items.
+.SH SEE ALSO
+.BR cp_hashlist_create (3),
+.BR cp_hashlist_set_min_fill_factor (3)

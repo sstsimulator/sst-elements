@@ -1,0 +1,129 @@
+.TH "cp_socket" 3 "MAY 2006" "libcprops" "cp_httpclient"
+.SH NAME
+cp_httpclient_set_header, cp_httpclient_set_auto_drop_headers, 
+cp_httpclient_drop_headers, cp_httpclient_set_parameter,
+cp_httpclient_set_auto_drop_parameters, cp_httpclient_drop_parameters, 
+cp_httpclient_set_http_version, cp_httpclient_set_request_type, 
+cp_httpclient_set_user_agent, cp_httpclient_set_timeout, 
+cp_httpclient_set_retry, cp_httpclient_allow_redirects,
+cp_httpclient_set_max_redirects, 
+cp_httpclient_set_cookie_jar \- control http client behavior
+.SH SYNOPSIS
+#include <cprops/httpclient.h>
+
+.BI "void cp_httpclient_set_header(cp_httpclient *" client ",
+.ti +30n
+.BI "char *" header ", char *" value ");
+.br
+.BI "void cp_httpclient_set_auto_drop_headers(cp_httpclient *" client ", 
+.ti +41n
+.BI "short " mode ");
+.br
+.BI "void cp_httpclient_drop_headers(cp_httpclient *" client ");
+.br
+.BI "void *cp_httpclient_set_parameter(cp_httpclient *" client ", 
+.ti +34n
+.BI "char *" name ", char *" value ");
+.br
+.BI "void cp_httpclient_set_auto_drop_parameters(cp_httpclient *" client ", 
+.ti +44n
+.BI "short " mode ");
+.br
+.BI "void cp_httpclient_drop_parameters(cp_httpclient *" client ");
+.br
+.BI "void cp_httpclient_set_http_version(cp_httpclient *" client ", 
+.ti +36n
+.BI "cp_http_version " version ");
+.br
+.BI "void cp_httpclient_set_request_type(cp_httpclient *" client ", 
+.ti +36n
+.BI "cp_http_request_type " type ");
+.br
+.BI "void cp_httpclient_set_user_agent(cp_httpclient *" client ", char *" agent ");
+.br
+.BI "void cp_httpclient_set_timeout(cp_httpclient *" client ",
+.ti +31n
+.BI "int " sec ", int " usec ");
+.br
+.BI "void cp_httpclient_set_retry(cp_httpclient *" client ", int " retry_count ");
+.br
+.BI "void cp_httpclient_allow_redirects(cp_httpclient *" client ", int " mode ");
+.br
+.BI "void cp_httpclient_set_max_redirects(cp_httpclient *" client ", int " max ");
+.br
+.BI "void cp_httpclient_set_cookie_jar(cp_httpclient *" client ", cp_trie *" jar ");
+.SH DESCRIPTION
+.B cp_httpclient_set_header
+sets the header
+.I name
+to the value \fIvalue\fP. All subsequent requests on this client will have the 
+header set unless 
+.I auto_drop_headers
+is set, 
+.B cp_httpclient_drop_headers
+is called or
+.B cp_httpclient_set_header
+is called again with a NULL \fIvalue\fP. The
+.B auto_drop_headers
+mode may be set by calling 
+.B cp_httpclient_set_auto_drop_headers
+with a non-zero value to enable auto-dropping or zero to disable. By default
+headers are kept between requests. 
+.sp
+.B cp_httpclient_set_parameter
+sets a GET or POST parameter with the name
+.I name
+to the value \fIvalue\fP. Subsequent calls to set the parameter
+.I name
+to a different 
+.I value
+override any existing value. As a special case, a value of NULL removes the 
+parameter altogether. 
+.br
+By default parameters are not kept between requests. To enable this call
+.B cp_httpclient_set_auto_drop_parameters
+with a zero
+.I mode
+value. If auto_drop_parameters is disabled, 
+.B cp_httpclient_drop_parameters 
+may be called to clear the exiting parameter set.
+.sp
+.B cp_httpclient_set_http_version
+sets the HTTP version to be used for requests. Applicable 
+.I version
+values are HTTP_1_1 (default) and HTTP_1_0. 
+.sp
+.B cp_httpclient_set_request_type
+sets the request type. The default is GET.
+.sp
+.B cp_httpclient_set_user_agent
+sets the value of the User-Agent header. The default is libcprops-(version) 
+where (version) is the cprops version number.
+.sp
+.B cp_httpclient_set_timeout
+allows setting the timeout for the underlying tcp connection in seconds and
+microseconds.
+.sp
+.B cp_httpclient_set_retry
+sets the number of connection retries to attempt on connection errors. The 
+default is 3.
+.sp
+.B cp_httpclient_set_max_redirects
+sets the maximal number of server redirect directives (HTTP 302, 301 etc) to
+follow during the processing of a single request. The default value is 10. 
+.br
+Call 
+.B cp_httpclient_allow_redirects
+with a zero or non-zero
+.I mode
+value to disable or enable redirects respectively. Redirects are enabled by 
+default. If disabled and presented with a HTTP 302 response the 
+.BR cp_http_result (3)
+for the request will contain the redirect page issued by the server.
+.sp
+.B cp_httpclient_set_cookie_jar
+allows setting a client to use a user defined cookie jar. By default all 
+clients share one cookie jar. The cookie jar is a cp_trie (3) object.
+
+.SH SEE ALSO
+.BR cp_trie (3)

@@ -1,0 +1,48 @@
+# cprops examples - Makefile
+#
+# This is a Makefile for cprops examples on Windows. 
+#
+# Copyright (c) 2005-2007 by Ilan Aelion
+# iaelion@users.sourceforge.net
+# 
+# 2007-11-30 V 0.1.7
+#
+###############################################
+
+CC=CL
+LD=LINK
+RM=DEL /Q
+
+CFLAGS=/I. /DWIN32 /D_WINDOWS
+LDFLAGS=/incremental:no /subsystem:console ..\libcprops.lib
+LIBS=WS2_32.lib
+!INCLUDE win.mak
+
+EXAMPLE_SRC = test_avl.c test_avl_multi.c test_trie.c test_trie2.c \
+	      test_rb.c test_splay.c test_client.c test_heap.c \
+	      test_hashtable.c test_hashtable2.c test_hashlist.c \
+	      test_hashlist_iterator.c test_list.c test_list_iterator.c \
+	      test_vector.c test_priority_list.c test_httpclient.c \
+	      test_httpasync.c test_mempool.c test_sorted_hash.c \
+		  test_narytree.c test_multimap.c test_reindex.c \
+		  test_reindex_unique.c $(OPT_SRC)
+
+EXAMPLE_OBJ = $(EXAMPLE_SRC:.c=.obj)
+EXAMPLE_EXE = $(EXAMPLE_SRC:.c=.exe)
+
+all: linkdir $(EXAMPLE_EXE)
+	@echo $@: done
+
+linkdir:
+	@IF not exist cprops\config.h mkdir cprops
+	@copy /y ..\*.h cprops > nul: 2>&1
+
+$(EXAMPLE_EXE): $(EXAMPLE_OBJ)
+	@echo $@: done
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $(@:.obj=.c) /o:$@
+	$(LD) $(LDFLAGS) $@ kernel32.lib $(LIBS)
+
+clean: 
+	$(RM) $(EXAMPLE_OBJ) $(EXAMPLE_EXE)

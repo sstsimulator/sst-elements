@@ -1,0 +1,218 @@
+.TH cp_hashlist_iterator 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_iterator \- an iterator for cp_hashlist structures 
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+.sp
+.BI "cp_hashlist_iterator *
+.ti +5n
+.BI "cp_hashlist_create_iterator(cp_hashlist *" list ", int " lock_mode ");
+.br
+.BI "int cp_hashlist_iterator_init(cp_hashlist_iterator *" iterator ", 
+.ti +30n
+.BI "cp_hashlist *" list ", 
+.ti +30n
+.BI "int " lock_mode ");
+.br
+.BI "int cp_hashlist_iterator_init_tail(cp_hashlist_iterator *" iterator ", 
+.ti +35n
+.BI "cp_hashlist *" list ", 
+.ti +35n
+.BI "int " lock_mode ");
+.br
+.BI "int cp_hashlist_iterator_release(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void cp_hashlist_iterator_destroy(cp_hashlist_iterator *" iterator ");
+.sp
+.BI "void cp_hashlist_iterator_head(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void cp_hashlist_iterator_tail(cp_hashlist_iterator *" iterator ");
+.br
+.BI "int cp_hashlist_iterator_to_key(cp_hashlist_iterator *" iterator ", 
+.ti +32n
+.BI "void *" key ");
+.sp
+.BI "cp_hashlist_entry *
+.ti +5n
+.BI "cp_hashlist_iterator_next(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void *cp_hashlist_iterator_next_key(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void *cp_hashlist_iterator_next_value(cp_hashlist_iterator *" iterator ");
+.sp
+.BI "cp_hashlist_entry *
+.ti +5n
+.BI "cp_hashlist_iterator_prev(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void *cp_hashlist_iterator_prev_key(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void *cp_hashlist_iterator_prev_value(cp_hashlist_iterator *" iterator ");
+.sp
+.BI "cp_hashlist_entry *
+.ti +5n
+.BI "cp_hashlist_iterator_curr(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void *cp_hashlist_iterator_curr_key(cp_hashlist_iterator *" iterator ");
+.br
+.BI "void *cp_hashlist_iterator_curr_value(cp_hashlist_iterator *" iterator ");
+.sp
+.BI "void *cp_hashlist_entry_get_key(cp_hashlist_entry *" entry ");
+.br
+.BI "void *cp_hashlist_entry_get_value(cp_hashlist_entry *" entry ");
+.sp
+.BI "cp_hashlist_entry *"
+.ti +5n
+.BI "cp_hashlist_iterator_insert(cp_hashlist_iterator *" iterator ", 
+.ti +33n
+.BI "void *" key ", 
+.ti +33n
+.BI "void *" value ");
+.br
+.BI "cp_hashlist_entry *"
+.ti +5n
+.BI "cp_hashlist_iterator_append(cp_hashlist_iterator *" iterator ", 
+.ti +33n
+.BI "void *" key ", 
+.ti +33n
+.BI "void *" value ");
+.br
+.BI "cp_hashlist_entry *"
+.ti +5n
+.BI "cp_hashlist_iterator_remove(cp_hashlist_iterator *" iterator ");
+.SH DESCRIPTION
+\fBcp_hashlist_iterator\fP is an iterator for cp_hashlist structures. 
+.I <cprops/hashlist.h>
+provides functions for list traversal and for making structural changes to 
+lists.
+.SH ITERATOR INITIALIZATION / FINALIZATION
+.B cp_hashlist_create_iterator
+returns a pointer to a newly allocated iterator pointing to the head of the 
+list. If called with 
+.I lock_mode 
+set to
+.B COLLECTION_LOCK_READ
+the list will be locked for reading. If called with 
+.B COLLECTION_LOCK_WRITE
+the list will be locked for writing. Unless the list was created with the 
+.B COLLECTION_MODE_NOSYNC
+mode bit set, iterator functions may only perform structural changes with 
+write-lock iterators.
+.br
+.B cp_hashlist_iterator_init
+initializes an existing 
+.I iterator
+by associating it with hashlist \fIlist\fP, setting it at the head position and
+performing the locking specified by \fIlock_mode\fP.
+.B cp_hashlist_iterator_init_tail 
+is similar but sets the iterator at the tail position. 
+.sp
+.B cp_hashlist_iterator_release 
+unlocks the list, but need not be called explicitly if calling 
+\fBcp_hashlist_iterator_destroy\fP. If you allocate the iterator with 
+\fBcp_hashlist_create_iterator\fP, call 
+.B cp_hashlist_iterator_destroy
+to perform cleanup. If you declare an iterator instance on the stack, perform 
+cleanup with \fBcp_hashlist_iterator_release\fP. Iterators that are created or
+initialized in a mode other than 
+.B COLLECTION_LOCK_NONE 
+must be released or destroyed to prevent deadlocks.
+
+.SH ITERATOR POSITIONING AND ITEM RETRIEVAL
+.hy 0
+.B cp_hashlist_iterator_head
+and 
+.B cp_hashlist_iterator_tail
+position the iterator at the first and last positions in the list respectively.
+.br
+.B cp_hashlist_iterator_to_key
+positions the iterator at the first occurence of 
+.I key
+in the list if it exists.
+.br
+.B cp_hashlist_iterator_next 
+and 
+.B cp_hashlist_iterator_prev 
+return the internal entry structure at the current iterator position and move 
+the iterator to the next or previous entry respectively. 
+.B cp_hashlist_iterator_curr 
+returns the internal entry structure at the current iterator position but does 
+not advance the iterator position. 
+.B cp_hashlist_entry_get_key
+and 
+.B cp_hashlist_entry_get_value
+may be used to retrieve key and value from the returned structure.
+.br
+\fBcp_hashlist_iterator_next_key\fP, \fBcp_hashlist_iterator_next_value\fP,
+\fBcp_hashlist_iterator_curr_key\fP, \fPcp_hashlist_iterator_curr_value\fP,
+.B cp_hashlist_iterator_prev_key
+and
+.B cp_hashlist_iterator_prev_value
+do not return an internal entry structure but the mapping key as indicated by
+their names.
+.SH LIST MANIPULATION
+.hy
+unless the underlying list mode has the \fBCOLLECTION_MODE_NOSYNC\fP bit set,
+iterator functions that structurally change a list require the iterator to 
+have been created or initialized with \fBCOLLECTION_LOCK_WRITE\fP.
+.B cp_hashlist_iterator_insert
+and 
+.B cp_hashlist_iterator_append
+add the item specified by the 
+.I item
+parameter to the list before or after the current iterator position 
+respectively. An exception is when inserting an item at the beginning of the 
+list or appending an item at the end after the iterator has been moved beyond 
+list limits, in which cases the item will still be added to the list in the 
+extreme position. 
+.br
+.B cp_hashlist_iterator_remove
+removes the item from the current iterator position and advances the iterator 
+one step towards the end of the list if possible, or one step towards the 
+beginning if not.
+.SH RETURN VALUE
+.hy
+.B cp_hashlist_create_iterator
+returns the newly allocated iterator or 
+.B NULL
+if memory allocation failed or if the requested lock could not be obtained. 
+.br
+.B cp_hashlist_iterator_init
+and 
+.B cp_hashlist_iterator_init_tail 
+return 0 on success or non-zero if the requested lock could not be obtained. 
+.br
+.B cp_hashlist_iterator_to_key 
+returns 0 if the requested key could be found or -1 if not.
+.br
+\fBcp_hashlist_iterator_next\fP, \fBcp_hashlist_iterator_prev\fP and
+\fBcp_hashlist_iterator_curr\fP return the list item at the current iterator
+position or NULL if the list is empty or if the iterator has been positioned 
+beyond list limits by a previous call.
+.br
+.B cp_hashlist_iterator_insert
+and
+.B cp_hashlist_iterator_append
+return the newly created 
+.B cp_hashlist_entry
+on success or
+.B NULL
+on error.
+.SH ERRORS
+.B cp_hashlist_iterator_insert
+and
+.B cp_hashlist_iterator_append
+may set 
+.B EINVAL
+or \fBENOMEM\fP. 
+.B cp_hashlist_iterator_create
+may set \fBENOMEM\fP.
+.TP
+.B EINVAL
+the iterator does not own the required lock type for inserting or appending. 
+.TP
+.B ENOMEM
+an internal memory allocation failed.
+
+.SH "SEE ALSO"
+.BR cp_hashlist(3)

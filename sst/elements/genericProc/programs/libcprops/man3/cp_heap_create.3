@@ -1,0 +1,68 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_create, cp_heap_create_by_option cp_heap_destroy \- create / destroy
+a heap
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "cp_heap *cp_heap_create(cp_compare_fn " cmp "); 
+.br
+.B cp_heap *
+.ti +5n
+.BI "cp_heap_create_by_option(int " mode ", 
+.ti +30n
+.BI "int " size_hint ", 
+.ti +30n
+.BI "cp_compare_fn " compare_fn ",
+.ti +30n
+.BI "cp_copy " copy ", 
+.ti +30n 
+.BI "cp_destructor_fn " dtr ");    
+.sp
+
+.BI "void cp_heap_destroy(cp_heap *" heap ");
+
+.SH DESCRIPTION
+cp_heap_create creates an empty synchronized heap using the given compare 
+function. The compare function should implement ``strcmp semantics'' and 
+conform to the following prototype:
+
+.RS
+.nf
+int comp(void *a, void *b);
+.fi
+.RE
+
+The return value should be 
+.br
+ > 0  if A > B
+.br
+ = 0  if A == B
+.br
+ < 0  if A < B
+.br
+where A and B are the items pointed at by pointers a and b respectively. The
+functions cp_hash_compare_* defined in <cprops/hashtable.h> may be used for
+cp_heap as well. 
+.sp
+cp_heap_create_by_option allow specifying an initial mode, a size hint and item
+copy and destructor functions. The constructed heap is initialized with 
+sufficient storage to accomodate at least \fIsize_hint\fP items. If the heap
+mode has the COLLECTION_MODE_NOSYNC bit set, heap operations do not perform
+locking. If the COLLECTION_MODE_COPY bit is set, subsequent cp_heap_push (3) 
+calls will insert the copy obtained using the \fIcopy\fP function to the heap. 
+If the COLLETION_MODE_DEEP bit is set, cp_heap_pop (3) and cp_heap_destroy (3)
+invoke the \fIdtr\fP function on the items being removed from the heap. 
+.sp
+cp_heap_destroy releases the memory associated with the given \fIheap\fP.
+
+.SH RETURN VALUE
+cp_heap_create and cp_heap_create_by_option return a newly allocated heap 
+structure on success or NULL on failure. 
+
+.SH SEE ALSO
+.BR cp_hashtable (3),
+.BR cp_heap_push (3),
+.BR cp_heap_pop (3)
+

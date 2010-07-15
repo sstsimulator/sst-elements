@@ -1,0 +1,15 @@
+cprops sample code
+------------------
+
+To compile the examples in this directory,
+
+  $ make
+
+If dynamic linking is enabled (the default on linux) and you haven't done 
+'make install' in the root directory, you'll probably get a message complaining
+about not being able to find libcprops.so when you try to run the test 
+programs. To let the dynamic linker know where to find libcprops.so you'll 
+need to do something like
+
+  $ export LD_LIBRARY_PATH=../.libs
+

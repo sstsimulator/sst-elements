@@ -1,0 +1,49 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_set_mode, cp_hashtable_unset_mode \- set/unset hashtable mode bits 
+.SH SYNOPSIS
+.B #include <cprops/hashtable.h>
+
+.BI "int cp_hashtable_set_mode(cp_hashtable *" table ", int " mode ");
+.br
+.BI "int cp_hashtable_get_mode(cp_hashtable *" table ");
+.br
+.BI "int cp_hashtable_unset_mode(cp_hashtable *" table ", int " mode ");
+.SH DESCRIPTION
+\fBcp_hashtable_set_mode\fP sets the mode bit specified by \fImode\fP by 
+logically ORing them with the currently set mode bits on the specified 
+\fItable\fP. \fBcp_hashtable_unset_mode\fP resets the bits set in the parameter
+to zero and \fBcp_hashtable_get_mode\fP returns the current operation mode. The
+effect of mode bit settings is as follows:
+.TP
+\fBCOLLECTION_MODE_DEEP\fP - when removing or replacing a mapping, the
+destructor functions are called on the \fIkey\fP and \fIvalue\fP constituting
+the mapping. 
+.TP
+\fBCOLLECTION_MODE_MULTIPLE_VALUES\fP - allows multiple mappings for a given
+key on insertion. When retrieving values the results are given in a newly 
+allocated \fBcp_list\fP, even if it contains only one entry.
+.TP
+\fBCOLLECTION_MODE_COPY\fP - on insertion, the applicable copy functions 
+specified are used to store copies of the \fIkey\fP and \fIvalue\fP.
+.TP 
+\fBCOLLECTION_MODE_NOSYNC\fP - operations are performed with no locking. 
+Synchronization features should not be used on tables created in this mode.
+.TP
+\fBCOLLECTION_MODE_NORESIZE\fP - the table is not extended on insertion nor
+compacted on removal regardless of maximal and minimal fill factor settings. 
+.SH RETURN VALUE
+.B cp_hashtable_get_mode
+returns the table mode on success or -1 if a locking error occurs.
+.br
+.B cp_hashtable_set_mode
+returns 0 on success, -1 if a locking error occurs or EINVAL if attempting to
+set COLLECTION_MODE_NOSYNC while the current thread owns the table lock.
+.B cp_hashtable_unset_mode
+returns 0 on success or -1 if a locking error occurs.
+
+.SH "SEE ALSO"
+.BR cp_hashtable (3),
+.BR cp_hashtable_create (3),
+.BR cp_hashtable_put (3),
+.BR cp_hashtable_get (3)

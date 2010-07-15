@@ -1,0 +1,54 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_http_service \- http service descriptor
+.SH SYNOPSIS
+#include <cprops/http.h>
+
+.BI "cp_http_service *
+.ti +5n
+.BR "cp_http_service_create(char *" name ", char *" path ", 
+.ti +28n
+.BI "cp_http_service_callback " service ");
+.sp
+.BI "void cp_http_service_delete(cp_http_service *" service ");
+.sp
+.SH DESCRIPTION
+With the libcprops http server socket api, defining services is done by
+wrapping handler functions for specific uri prefixes in a  
+.B cp_http_service
+struct and registered with a cp_httpsocket. The service function should follow
+this prototype:
+
+.RS
+.nf
+int service(cp_http_request *request, cp_http_response *response);
+.fi
+.RE
+
+and return one of the integer values
+.B HTTP_CONNECTION_POLICY_CLOSE
+or
+.B HTTP_CONNECTION_POLICY_KEEP_ALIVE
+as required per request. For each request the service function registered to 
+handle the request uri prefix is invoked with a 
+.I request
+wrapper describing the request and an empty
+.I response 
+wrapper which will be written to the remote client when the service handler 
+returns.
+.sp
+.B cp_http_service_create
+creates a service with the name \fIname\fP, uri prefix
+.I path
+and service handler \fIservice\fP. 
+.B cp_http_service_delete
+finalizes a service descriptor struct.
+.sp
+.B cp_httpsocket_register_service 
+associates a service with a cp_httpsocket. Services may be associated with 
+multiple socket instances.
+.SH SEE ALSO
+.BR cp_httpsocket (3),
+.BR cp_http_request (3),
+.BR cp_http_response (3)
+

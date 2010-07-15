@@ -1,0 +1,14 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_len \- return the length of a cp_string
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "int cp_string_len(cp_string *" str ");
+.SH DESCRIPTION
+returns the length of the given string. Since the 
+.B cp_string
+structure keeps track of the internal buffer's used length, this is an O(1) 
+operation.
+.SH RETURN VALUE
+the length of the given string.

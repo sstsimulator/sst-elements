@@ -1,0 +1,68 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_remove, cp_hashlist_remove_deep, 
+cp_hashlist_remove_by_option, cp_hashlist_remove_head, 
+cp_hashlist_remove_head_by_option, cp_hashlist_remove_tail, 
+cp_hashlist_remove_tail_by_option \- remove mappings from a hashlist 
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+
+.BI "void *cp_hashlist_remove(cp_hashlist *" list ", void *" key ");
+.br
+.BI "void *cp_hashlist_remove_deep(cp_hashlist *" list ", void *" key ");
+.br
+.BI "void *cp_hashlist_remove_by_option(cp_hashlist *" list ", 
+.ti +35n
+.BI "void *" key ", int " mode ");
+.br
+.BI "void *cp_hashlist_remove_head(cp_hashlist *" list ");
+.br
+.BI "void *cp_hashlist_remove_head_by_option(cp_hashlist *" list ", int " mode ");
+.br
+.BI "void *cp_hashlist_remove_tail(cp_hashlist *" list ");
+.br
+.BI "void *cp_hashlist_remove_tail_by_option(cp_hashlist *" list ", int " mode ");
+
+.SH DESCRIPTION
+.B cp_hashlist_remove
+attempts to remove the mapping for 
+.I key
+from hashlist \fIlist\fP. If 
+.B COLLECTION_MODE_MULTIPLE_VALUES
+is set all mappings for this key are removed. If
+.B COLLECTION_MODE_DEEP
+is set the finalization functions set at table initialization are invoked upon
+the key and value being removed.
+.sp
+.B cp_hashlist_remove_deep
+is the same as 
+.B cp_hashlist_remove
+with the
+.B COLLECTION_MODE_DEEP
+bit set.
+.sp
+.B cp_hashlist_remove_head
+and 
+.B cp_hashlist_remove_tail
+remove the first and last mappings from the list respectively.
+.B cp_hashlist_remove_head_by_option
+and
+.B cp_hashlist_remove_tail_by_option 
+allow specifying a 
+.I mode
+other than the current list mode, with the reservation that synchronization
+behavior is determined by the list mode and is not affected by the 
+.I mode
+parameter.
+.SH RETURN VALUE
+.B cp_hashlist_remove
+and
+.B cp_hashlist_remove_deep
+return a pointer to the last removed value - which may no longer be valid if 
+the memory it points to is released by the finalization function, or 
+.B NULL
+if no mapping was found for \fIkey\fP.
+.SH "SEE ALSO"
+.BR cp_hashlist_create (3),
+.BR cp_hashlist_set_mode (3)

@@ -1,0 +1,37 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_lock, cp_multimap_rdlock, cp_multimap_wrlock, cp_multimap_unlock \- multimap locking functions
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "int cp_multimap_lock(cp_multimap *" tree ", int " type ");
+.br
+.BI "int cp_multimap_rdlock(cp_multimap *" tree ");
+.br
+.BI "int cp_multimap_wrlock(cp_multimap *" tree ");
+.br
+.BI "int cp_multimap_unlock(cp_multimap *" tree ");
+.sp
+.SH DESCRIPTION
+.B cp_multimap_lock
+and 
+.B cp_multimap_unlock
+provide locking for maps not initialized with the
+.I COLLECTION_MODE_NOSYNC
+mode bit set. 
+.B cp_multimap_rdlock
+and
+.B cp_multimap_wrlock
+are aliases for 
+.B cp_multimap_lock
+with a 
+.I type
+parameter of
+.B COLLECTION_LOCK_READ
+and 
+.B COLLECTION_LOCK_WRITE
+respectively.
+.sp
+.SH RETURN VALUE
+locking functions return 0 on success, non-zero on error.

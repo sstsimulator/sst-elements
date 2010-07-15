@@ -1,0 +1,60 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_http_session \- http session object
+.SH SYNOPSIS
+#include <cprops/http.h>
+
+.BI "void *cp_http_session_get(cp_http_session *" session ", char *" key ");
+.br
+.BI "void *cp_http_session_set(cp_http_session *" session ",
+.ti +26n
+.BI "char *" key ", void *" value ");
+.br
+.BI "void *cp_http_session_set_dtr(cp_http_session *" session ",
+.ti +30n
+.BI "char *" key ", void *" value ", 
+.ti +30n
+.BI "cp_destructor_fn " dtr ");
+.br
+.BI "void cp_http_session_set_validity(cp_http_session *" session ",
+.ti +34n
+.BR "long " sec ");
+.br
+.BI "short cp_http_session_is_fresh(cp_http_session *" session ");
+
+.SH DESCRIPTION
+If configured with support for http sessions, http services may create a 
+session by calling \fBcp_http_request_get_session\fP (3). Sessions are 
+implemented with browser cookies if supported by the client or with url 
+rewriting otherwise. When a new session is created the 
+.I fresh
+flag on it is set so that 
+.B cp_http_session_is_fresh 
+returns non-zero. In normal operation, when the service function returns 
+cp_http_response object is written to the client. However when a service 
+function creates a new session, the response is set pending and the client 
+receives a redirect to a fixed uri to allow the framework to determine whether 
+it supports cookies. The pending response is written to the client in response 
+to the redirect request. On subsequent calls to the service function 
+cp_http_session_is_fresh returns 0.
+.sp
+.B cp_http_session_set
+sets the value
+.I value
+under the key \fIkey\fP. 
+.B cp_http_session_set_dtr
+allows setting a destructor function to be called on the stored value to 
+perform cleanup. No cleanup is done on items stored with cp_http_session_set or
+with cp_http_session_set_dtr if the specified destructor is null. 
+.br
+.B cp_http_session_get
+retrieves the value stored under key \fIkey\fP. 
+.sp
+.B cp_http_session_set_validity
+sets the session validity to \fIsec\fP seconds. Default validity is 24 hours.
+
+.SH SEE ALSO
+.BR cp_http_request_get_session (3),
+.BR cp_http_service (3),
+.BR cp_httpsocket (3)
+

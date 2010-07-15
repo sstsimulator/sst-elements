@@ -1,0 +1,26 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_shared_mempool_free \- return memory block to a shared memory pool
+
+.SH SYNOPSIS
+#include <cprops/mempool.h>
+.sp
+.BI "void cp_shared_mempool_free(cp_shared_mempool *" pool ", void *" p ");
+
+.SH DESCRIPTION
+.B cp_shared_mempool_free
+returns  a memory chunk obtained from 
+.BR cp_shared_mempool_alloc (3) 
+or 
+.BR cp_mempool_calloc (3)
+to the memory pool for reuse. Note that this does not actually release the 
+memory block to the operating system. Memory allocated by cp_shared_mempool is
+only returned to the operating system on pool destruction.
+
+.SH RETURN VALUE
+zero on success or non-zero on locking failure if COLLECTION_MODE_NOSYNC is 
+not set.
+
+.SH SEE ALSO
+.BR cp_shared_mempool_alloc (3), 
+.BR cp_mempool (3)

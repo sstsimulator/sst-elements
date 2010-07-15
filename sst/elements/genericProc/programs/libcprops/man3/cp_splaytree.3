@@ -1,0 +1,85 @@
+.TH cp_splaytree 3 "MAY 2006" libcprops.0.1.3 "libcprops - cp_splaytree"
+.SH NAME
+cp_splaytree \- an splay tree implementation
+
+.SH DESCRIPTION
+.B cp_splaytree
+is a general purpose splay tree implementation. In splay trees, every tree 
+operation (insert, delete, lookup) brings the affected node to the root of the
+tree. This makes splay trees useful for applications where the search space is
+much larger than the group of mappings most frequently accessed. A drawback in 
+applications where the tree can be accessed from multiple threads is that
+since the lookup operation changes the tree structure, the tree must be write-
+locked during lookup. In other collection implementations lookup requires a
+read-lock only, allowing simultaneous access from multiple readers.
+.sp
+A tree is created with cp_splaytree_create(3) or 
+cp_splaytree_create_by_option(3) and deallocated with cp_splaytree_destroy(3).
+After creation behavior may be changed by calling cp_splaytree_set_mode(3) and
+cp_splaytree_unset_mode(3) to set and unset mode bits. Mappings may be added 
+with cp_splaytree_insert(3), retrieved with cp_splaytree_get(3) and removed 
+with cp_splaytree_delete(3). For more details see the documentation for 
+specific functions.
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/splay.h>\fP.
+.sp
+.BI "cp_splaytree *cp_splaytree_create(cp_compare_fn " cmp "); 
+.br
+.B cp_splaytree *
+.ti +5n
+.BI "cp_splaytree_create_by_option(int " mode ", 
+.ti +35n
+.BI "cp_compare_fn " compare_fn ",
+.ti +35n
+.BI "cp_copy_fn " copy_key ", 
+.ti +35n 
+.BI "cp_destructor_fn " free_key ");    
+.ti +35n
+.BI "cp_copy_fn " copy_value "
+.ti +35n 
+.BI "cp_destructor_fn " free_value ");    
+.sp
+
+.BI "void cp_splaytree_destroy(cp_splaytree *" tree ");
+.br
+.BI "void cp_splaytree_destroy_custom(cp_splaytree *" tree ",
+.ti +33n
+.BI "cp_destructor_fn " dk ",
+.ti +33n
+.BI "cp_destructor_fn " dv ");
+.sp
+
+.BI "void *cp_splaytree_insert(cp_splaytree *" tree ", void *" key ", void *" value ");
+.br
+.BI "void *cp_splaytree_get(cp_splaytree *" tree ", void *" key ");
+.br
+.BI "void *cp_splaytree_delete(cp_splaytree *" tree ", void *" key ");
+.br
+.BI "int cp_splaytree_contains(cp_splaytree *" tree ", void *" key ");
+.br
+.BI "long cp_splaytree_count(cp_splaytree *" tree ");
+.sp
+
+.BI "int cp_splaytree_get_mode(cp_splaytree *" tree ");
+.br
+.BI "void cp_splaytree_set_mode(cp_splaytree *" tree ", int " mode ");
+.br
+.BI "void cp_splaytree_unset_mode(cp_splaytree *" tree ", int " mode ");
+
+.sp
+.BI "int cp_splaytree_lock(cp_splaytree *" tree ", int " type ");
+.br
+.BI "int cp_splaytree_unlock(cp_splaytree *" tree ");
+.br
+.BI "int cp_splaytree_rdlock(cp_splaytree *" tree ");
+.br
+.BI "int cp_splaytree_wrlock(cp_splaytree *" tree ");
+
+
+.SH SEE ALSO
+.BR cp_splaytree_create (3),
+.BR cp_splaytree_insert (3),
+.BR cp_splaytree_lock (3), 
+.BR cp_splaytree_set_mode (3),
+.BR cprops (3)

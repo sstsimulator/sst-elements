@@ -1,0 +1,79 @@
+cprops - c prototyping tools
+============================
+
+The c prototyping tools library consists of implementations for several widely 
+used data structures and patterns, rudimentary tcp / httpd functionality and
+a database abstraction layer. Object oriented development environments usually 
+feature readymade implementations of such tools. 
+
+Coding in c often allows better performance and closer control over application
+behavior, which can be crucial in real life situations. libcprops provides 
+generic tools for application development in plain c covering basic data 
+structure implementations, persistence, threading and tcp communication. 
+
+	data structures
+	---------------
+	o	linked list
+	o	heap
+	o	priority_list
+	o	hashtable
+	o	hashlist
+	o	sorted hash
+	o	AVL tree
+	o	red-black tree
+	o	splay tree
+	o	N-ary tree
+	o	PATRICIA tree - a character trie
+	o	multimap - a data structure to support multiple indices
+	
+	application level
+	-----------------
+	o	cp_mempool, cp_shared_mempool - memory pool
+	o	cp_thread - thread pool
+	o	cp_client, cp_socket - tcp sockets
+	o	cp_httpclient, cp_httpsocket - an HTTP socket api
+	o	cp_dbms - a database abstraction layer
+
+
+For your entertainment, the distribution comes with cpsvc, a web server based
+on the cprops api and featuring support for CGI and cpsp, a c based page 
+scripting environment. For more on cpsvc and cpsp see README under the svc/ 
+directory.
+
+Dependencies
+============
+
+ * libcprops relies on the POSIX threads api for synchronization features.
+
+ * ssl features are implemented with OpenSSL. 
+
+ * the build process uses libtool (see 
+   http://www.gnu.org/software/libtool/libtool.html)
+
+ * cp_dbms postgres support is based on libpq
+
+ * cp_dbms mysql support is based on libmysqlclient
+ 
+Compiling
+=========
+Once you've installed the library (see INSTALL), you should be able to compile
+and link against either libcprops.a or libcprops.so, depending on the 
+configuration settings you chose. Here's how you might compile the included
+testhttpsrv.c program on linux:
+
+$ gcc -D_REENTRANT -D_XOPEN_SOURCE=500 -c testhttpsrv.c
+$ gcc -o testhttpsrv testhttpsrv.o -lcprops -lpthread -lssl
+
+on Solaris, add -lsocket to the link command.
+
+Documentation
+=============
+In the works. Man pages for data structures as well as socket, thread pool and 
+http socket apis are available under man3 directory. To see an overview of the 
+library before installing try 
+
+$ man -M . cprops
+
+
+Thank you for choosing libcprops. If you find a bug, please email 
+iaelion@users.sourceforge.net.

@@ -1,0 +1,80 @@
+.TH cp_rbtree 3 "MAY 2006" libcprops.0.1.2 "libcprops - cp_rbtree"
+.SH NAME
+cp_rbtree_create, cp_rbtree_create_by_option, cp_rbtree_destroy,
+cp_rbtree_destroy_custom \- red-black tree constructor / desctructor functions
+
+.SH SYNOPSIS
+
+#include <cprops/rb.h>
+
+.BI "cp_rbtree *cp_rbtree_create(cp_compare_fn " cmp "); 
+.br
+.B cp_rbtree *
+.ti +5n
+.BI "cp_rbtree_create_by_option(int " mode ", 
+.ti +32n
+.BI "cp_compare_fn " compare_fn ",
+.ti +32n
+.BI "cp_copy_fn " copy_key ", 
+.ti +32n 
+.BI "cp_destructor_fn " free_key ",
+.ti +32n
+.BI "cp_copy_fn " copy_value ",
+.ti +32n 
+.BI "cp_destructor_fn " free_value ");    
+.sp
+
+.BI "void cp_rbtree_destroy(cp_rbtree *" tree ");
+.br
+.BI "void cp_rbtree_destroy_custom(cp_rbtree *" tree ",
+.ti +30n
+.BI "cp_destructor_fn " dk ",
+.ti +30n
+.BI "cp_destructor_fn " dv ");
+
+.SH DESCRIPTION
+.B cp_rbtree_create
+allocates and initializes an red-black tree object with the given compare 
+function. The compare function should follow this prototype:
+
+.nf
+  int cmp(void *a, void *b);
+.fi
+
+and return 0 for matching keys, > 0 if a > b and < 0 if a < b (strcmp 
+semantics). The created tree is not synchronized (COLLECTION_MODE_NOSYNC mode
+bit is set). 
+.sp
+.B cp_rbtree_create_by_option
+allows specifying an initial operation mode. Note that unless 
+COLLECTION_MODE_NOSYNC is set on the 
+.I mode
+parameter, tree operations are synchronized. The 
+.I copy_key
+and 
+.I copy_value
+functions are used on insertion if COLLECTION_MODE_COPY is set. If 
+COLLECTION_MODE_COPY is set and either of these is NULL, inserted keys and / or
+values are inserted directly rather than copies. 
+.br
+The
+.I free_key
+and
+.I free_value
+functions are used on item removal or tree destruction if COLLECTION_MODE_DEEP
+is set. If COLLECTION_MODE_DEEP is set and either of these is NULL, no cleanup
+is performed on keys and / or values. This makes it possible to apply the copy/
+deep mechanism to keys or values only. 
+.sp
+.B cp_rbtree_destroy
+recursively deallocates the tree structure using the current mode settings. 
+.B cp_rbtree_destroy_custom
+sets the COLLECTION_MODE_DEEP mode bit and destroys the tree using the given
+key and value destructor functions. Specifying a NULL destructor function or 
+functions precludes key deallocation, value deallocation or both. 
+
+.SH RETURN VALUE
+.B cp_rbtree_create
+and 
+.B cp_rbtree_create_by_option
+return a newly allocated cp_rbtree object on success or NULL on failure. 

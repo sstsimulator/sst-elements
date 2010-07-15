@@ -1,0 +1,19 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_update \- send an SQL command on a database connection
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "int cp_db_connection_update(cp_db_connection *" connection ", char *" query ");
+.SH DESCRIPTION
+.B cp_db_connection_update
+performs the query
+.I query
+on the connection described by 
+.I connection
+and returns an integer value representing the query result status. Return codes
+depend on the underlying implementation.
+.SH RETURN VALUE
+actual return codes depend on the underlying implementation. As a rule zero 
+indicates success and non-zero indicates an error condition.

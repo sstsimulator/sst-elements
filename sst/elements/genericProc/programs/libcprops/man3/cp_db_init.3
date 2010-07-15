@@ -1,0 +1,23 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_init, cp_db_shutdown \- initialize / shut down db abstraction layer
+.SH SYNOPSIS
+#include <cprops/db.h>
+.BI "int cp_db_init();
+.br
+.BI "int cp_db_shutdown();"
+.SH DESCRIPTION
+.B cp_db_init
+initializes the internal data structures used by the data base abstraction 
+layer.
+.sp
+.B cp_db_shutdown
+releases the memory allocated by the data base abstraction layers and invokes 
+implementation shutdown calls. 
+.SH RETURN VALUE
+.B cp_db_init 
+returns zero on success or non zero if already initialized. 
+.br
+.B cp_db_shutdown 
+returns zero on success or non zero if not initialized.
+

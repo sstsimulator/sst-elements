@@ -1,0 +1,44 @@
+# cpsp - a server page compiler - Makefile
+#
+# This is the Makefile for cpsp pages on windows. 
+# It requires MSVC 6.0 and NMAKE.
+#
+# Copyright (c) 2005-2007 by Ilan Aelion
+# iaelion@users.sourceforge.net
+# 
+# 2007-11-30 V 0.1.7 beta
+#
+###############################################
+
+CC=CL
+LD=LINK
+CFLAGS = /I $(PREF) /I $(incdir) $(CFLAGS)
+LDFLAGS = /libpath:$(PREF)..\.. $(LDFLAGS)
+LIBS = libcprops.lib $(LIBS)
+
+!IF defined(libdir)
+!IF not "$(libdir)" == ""
+LDFLAGS=$(LDFLAGS) /libpath:$(libdir)
+!ENDIF
+!ENDIF
+
+!INCLUDE win.cpsp.mak
+
+LDFLAGS = $(LDFLAGS) /libpath:$(top_builddir)
+
+all: 
+	@echo cpsp page makefile - don't invoke directly; call cpsp-gen.bat instead
+
+cpsp-page: $(CPSP_TARGET)
+	@echo compiling $(CPSP_TARGET)
+	$(CC) $(CFLAGS) $(CPSPCFLAGS) /c $(CPSP_TARGET) \
+		/Fo$(CPSP_TARGET:.c=.obj)
+	$(LD) /dll $(LDFLAGS) $(CPSP_TARGET:.c=.obj) $(CPSPLDFLAGS) \
+		/out:$(CPSP_TARGET_DLL) $(LIBS) $(CPSPLIBS)
+
+$(CPSP_TARGET): $(CPSP_SRC)
+	$(EXECPREF)cpsp < $(CPSP_SRC) > $(CPSP_TARGET)
+
+clean:
+	$(RM) *.obj *.dll _cpsp_*
+

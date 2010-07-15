@@ -1,0 +1,23 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_cstrcat \- concatenate a null terminated string to a cp_string
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "cp_string *cp_string_cstrcat(cp_string *" str ", char *" appendum ");
+.SH DESCRIPTION
+.B cp_string_cstrcat
+copies the string represented by 
+.I src
+to the end of \fIdst\fP. If necessary the internal buffer of the destination 
+string is reallocated to accomodate for the source string.
+
+.SH RETURN VALUE
+the 
+.I dst
+parameter on success or 
+.B NULL
+on failure. 
+.SH SEE ALSO
+.BR cp_string_cat (3),
+.BR cp_string_cat_bin (3)

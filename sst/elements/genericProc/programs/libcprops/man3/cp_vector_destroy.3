@@ -1,0 +1,17 @@
+.TH cp_vector 3 "MARCH 2006" libcprops.0.0.12 "libcprops - cp_vector"
+.SH NAME
+cp_vector_destroy, cp_vector_destroy_custom \- delete a vector object
+.SH SYNOPSIS
+#include <cprops/vector.h>
+
+.BI "void cp_vector_destroy(cp_vector *" vector ");
+.sp
+.BI "void cp_vector_destroy_custom(cp_vector *" vector ", 
+.ti +30n
+.BI "cp_destructor_fn " dtr ");
+.SH DESCRIPTION
+.B cp_vector_destroy
+deallocates a vector object. 
+.B cp_vector_destroy_custom
+does the same, but also allows specifying a destructor function \fIdtr\fP, 
+which, if not is, is called on each item stored in the vector.

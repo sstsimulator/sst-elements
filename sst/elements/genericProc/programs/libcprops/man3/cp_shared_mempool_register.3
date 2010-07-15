@@ -1,0 +1,31 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_shared_mempool_register \- register an allocation size with a shared memory
+pool
+
+.SH SYNOPSIS
+#include <cprops/mempool.h>
+.sp
+.BI "cp_mempool *cp_shared_mempool_register(cp_shared_mempool *" pool ", 
+.ti +39n
+.BI "size_t " size ");
+
+.SH DESCRIPTION
+.B cp_shared_mempool_register
+registers the block size
+.I size
+with the pool \fIpool\fP. Although not strictly necessary, this will usually 
+result in better performance both in terms of speed and allocation overhead 
+than when using cp_shared_mempool for aribitrary (i.e. unregistered) size 
+allocations. 
+
+.SH RETURN VALUE
+the 
+
+.SH SEE ALSO
+.BR cp_shared_mempool_create (3), 
+.BR cp_shared_mempool_destroy (3), 
+.BR cp_shared_mempool_register (3), 
+.BR cp_shared_mempool_alloc (3), 
+.BR cp_shared_mempool_free (3),
+.BR cp_mempool (3)

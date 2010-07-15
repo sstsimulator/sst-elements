@@ -1,0 +1,68 @@
+.TH "cp_thread_pool" 3 "OCTOBER 2005" "libcprops" "libcprops - cp_thread_pool"
+.SH NAME
+cp_pooled_thread_client_interface \- an interface for thread pool clients
+.SH SYNOPSIS
+#include <cprops/thread.h>
+
+.BI "cp_pooled_thread_client_interface *"
+.ti +5n
+.BI "cp_pooled_thread_client_interface_create("
+.ti +10n
+.BI "cp_pooled_thread_scheduler *" owner, " void *" client ", 
+.ti +10n
+.BI "int " min_threads ", int " max_threads ", 
+.ti +10n
+.BI "cp_pooled_thread_report_load " report_load ", 
+.ti +10n
+.BI "cp_pooled_thread_shrink " shrink ", 
+.ti +10n
+.BI "cp_thread_action " action ", void *" action_prm ", 
+.ti +10n
+.BI "cp_thread_stop_fn " stop_fn ", void *" stop_prm ");
+.sp
+.BI "void cp_pooled_thread_client_interface_destroy("
+.ti +10n
+.BI "cp_pooled_thread_client_interface *" client ");
+.sp
+.BI "void cp_pooled_thread_client_get_nb("
+.ti +10n
+.BI "cp_pooled_thread_client_interface *" client ");
+.sp
+.BI "void cp_pooled_thread_client_get("
+.ti +10
+.BI "cp_pooled_thread_client_interface *" client ");
+.sp
+.BI "void cp_pooled_thread_client_get_stoppable_nb("
+.ti +10n
+.BI "cp_pooled_thread_client_interface *" client ");
+.sp
+.BI "void cp_pooled_thread_client_get_stoppable("
+.ti +10n
+.BI "cp_pooled_thread_client_interface *" client ");
+.sp
+.BI "void cp_pooled_thread_client_negociate("
+.ti +10n
+.BI "cp_pooled_thread_client_interface *" client ");
+.SH DESCRIPTION
+.PP
+cp_pooled_thread_client_interface associates an action (thread function) 
+with a \fBcp_pooled_thread_scheduler\fP for clients that require a variable 
+number of threads. This interface holds 3 functions pointers that must be 
+supplied by client code: 
+.sp
+ o report_load - should return a measure of the load for this client's action,
+.ti +3n
+such as the number of open requests the client has to handle  
+ o shrink - will be called by the framework to stop one client thread
+ o action - the thread function for this client
+.sp
+application code should call the cp_pooled_thread_client_get* functions to 
+instantiate threads, thereby activating the load balancing framework.
+.sp
+.B cp_pooled_thread_client_negociate
+should be called by client code on high loads to request additional threads
+from the framework. 
+.SH SEE ALSO
+.BR cp_thread (3),
+.BR cp_thread_pool (3),
+.BR cp_pooled_thread_scheduler (3)

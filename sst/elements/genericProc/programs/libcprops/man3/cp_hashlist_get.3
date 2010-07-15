@@ -1,0 +1,63 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_get,
+cp_hashlist_get_head, 
+cp_hashlist_get_tail \- retrieve a hashlist entry by key or position
+
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+
+.BI "void *cp_hashlist_get(cp_hashlist *" list ", void *" key ");
+.br
+.BI "void *cp_hashlist_get_head(cp_hashlist *" list ");
+.br
+.BI "void *cp_hashlist_get_tail(cp_hashlist *" list ");
+.SH DESCRIPTION
+.B cp_hashlist_get_head 
+returns the value stored at the first position in the 
+list. 
+.br
+.B cp_hashtable_get_tail 
+returns the value stored at the last position in the 
+list.
+.sp
+\fBcp_hashlist_get\fP looks up the value stored under \fIkey\fP. If
+.B COLLECTION_MODE_MULTIPLE_VALUES
+is set, a 
+.B cp_list
+containing all matches for the requested key is returned. Unless
+.B COLLECTION_MODE_LIST_ORDER
+is set, the items in the result list are ordered by insertion order rather than
+the order in which they appear in the list, since this ordering is typically 
+much faster. 
+.sp
+The result list is created with the same mode and the same copy and 
+finalization functions as \fIlist\fP. This can easily lead to unwanted 
+results - for example, if 
+.B COLLECTION_MODE_DEEP 
+is set but
+.B COLLECTION_MODE_COPY
+isn't, or vice versa. Assume an application where the finalization functions 
+for the master list release the memory associated with entry values. In the 
+first case, the finalization functions for the matching entries will be called 
+when the result list is released, leaving pointers to unallocated memory in the
+master list. Furthermore, if the application attempts to release the master 
+list, the finalization functions are called to release the same memory again. 
+.br 
+In the other case, items are duplicated and not 
+necessarily released, thereby creating a memory leak. Other interesting 
+phenomena may emerge in a multithreaded environment as a result of the common
+synchronization of result list and master list. With hashlists,  
+.B COLLECTION_MODE_MULTIPLE_VALUES 
+should be used with utmost caution and only if necessary.
+
+.SH RETURN VALUE
+get functions return the requested value, or \fBNULL\fP on error, if there is
+no mapping for the specified key when performing a lookup by key, or if the 
+list empty when retrieving the head or tail value.
+.SH "SEE ALSO"
+.BR cp_list (3),
+.BR cp_hashtable_get(3),
+.BR cp_hashlist (3),
+.BR cp_hashlist_iterator (3)

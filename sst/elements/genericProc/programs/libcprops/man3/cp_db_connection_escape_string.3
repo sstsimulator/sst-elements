@@ -1,0 +1,55 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_escape_string, cp_db_connection_escape_binary,
+cp_db_connection_unescape_binary \- string conversions for SQL queries
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "char *cp_db_connection_escape_string(cp_db_connection *" connection ", 
+.ti +37n
+.BI "char *" src ",
+.ti +37n
+.BI "int " len ");
+.br
+.BI "char *cp_db_connection_escape_binary(cp_db_connection *" connection ", 
+.ti +37n
+.BI "char *" src ", 
+.ti +37n
+.BI "int " src_len ", 
+.ti +37n
+.BI "int *" res_len ");
+.br
+.BI "cp_string *"
+.ti +5n
+.BI "cp_db_connection_unescape_binary(cp_db_connection *" connection ",
+.ti +38n
+.BI "char *" src ");
+.SH DESCRIPTION
+.B cp_db_connection_escape_string
+prepares a string for inclusion in an SQL query. This may entail escaping quote
+marks etc.
+.br
+.B cp_db_connection_escape_binary 
+prepares a binary string for inclusion in an SQL query, for instance when 
+performing an insert into a binary large object type column.
+.br
+.B cp_db_connection_unescape_binary
+converts a text string representing binary data returned by a query to actual
+binary data.
+.sp
+Driver implementations are not strictly required to implement these functions,
+but may be expected to implement at least \fBcp_db_connection_escape_binary\fP.
+.SH RETURN VALUE
+On success,
+.B cp_db_connection_escape_string
+and
+.B cp_db_connection_escape_binary
+return a null terminated string representing the escaped data.
+.B cp_db_connection_unescape_binary
+returns a
+.BR cp_string (3)
+representing the binary data.
+.sp
+NULL is returned if the driver for the database in use does not implement these
+methods.

@@ -1,0 +1,51 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_connect \- establish a tcp connection 
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "int cp_client_connect(cp_client *" client ");
+.SH DESCRIPTION
+.B cp_client_connect
+attempts to establish the connection described by a 
+.B cp_client
+created with 
+.B cp_client_create
+or \fBcp_client_create_ssl\fP. By default as many as three retries may be made.
+This value may be set by calling \fBcp_client_set_retry\fP.
+.sp
+For ssl sockets, once the tcp connection is established, an ssl handshake will
+be attempted and the server certificate will be verified on success. On 
+verification failure the connection will fail or succeed depending on the 
+verification mode requested when creating the cp_client structure. The 
+certificate presented by the server in the ssl handshake process may be 
+retrieved and examined by calling 
+\fBcp_client_get_server_certificate\fP. 
+.sp
+.B cp_client_verify_hostname
+may be used to check whether the host name given in the server certificate 
+matches the host name used for the connection.
+.sp
+Successful calls to 
+.B cp_client_connect
+should be matched with a call to
+.B cp_client_close
+once the communication is done.
+.SH RETURN VALUE
+.B cp_client_connect 
+returns zero on success or -1 on failure.
+.B cp_client_connect_ssl 
+returns zero on success, -1 on failure or a positive 
+number indicating a verification error if the ssl handshake succeeds but the
+server certificate does not verify. Positive return codes match the description
+for the openssl command line utility
+.BR verify (1), 
+with the added semantic of X509_V_ERR_APPLICATION_VERIFICATION possibly 
+indicating that no server certificate was presented. 
+.SH SEE ALSO
+.BR cp_client_set_retry (3),
+.BR cp_client_get_server_certificate (3),
+.BR cp_client_verify_hostname (3), 
+.BR cp_client_set_retry (3),
+.BR cp_client_close (3)
+.BR verify (1)

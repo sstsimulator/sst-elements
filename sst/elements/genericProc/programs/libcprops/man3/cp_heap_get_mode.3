@@ -1,0 +1,40 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_get_mode, cp_heap_set_mode, cp_heap_unset_mode \- retrieve or change 
+heap mode settings
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "int cp_heap_get_mode(cp_heap *" heap ");
+.br
+.BI "void cp_heap_set_mode(cp_heap *" heap ", int " mode ");
+.br
+.BI "void cp_heap_unset_mode(cp_heap *" heap ", int " mode ");
+
+.SH DESCRIPTION
+The following mode bits affect heap function behavior:
+.sp
+.B COLLECTION_MODE_COPY 
+ - if the heap was initialized with a non-null copy function, this function is
+invoked by cp_heap_push (3) when inserting items in the heap.
+.br
+.B COLLECTION_MODE_DEEP
+ - if the heap was initialized with a non-null item destructor function, this
+function is invoked by cp_heap_pop (3) when removing items and by 
+cp_heap_destroy (3) when deallocating the heap.
+.br
+.B COLLECTION_MODE_NOSYNC
+ - if set, heap operations do not perform locking. 
+.sp
+cp_heap_set_mode may be used to set the specified \fImode\fP bits.
+.br
+cp_heap_unset_mode may be used to unset the specified \fImode\fP bits.
+
+.SH RETURN VALUE
+cp_heap_get_mode returns the current heap mode settings. 
+
+.SH SEE ALSO
+.BR cp_heap_create (3),
+.BR cp_heap_push (3),
+.BR cp_heap_lock (3)

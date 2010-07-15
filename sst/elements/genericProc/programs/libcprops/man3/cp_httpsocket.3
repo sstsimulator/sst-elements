@@ -1,0 +1,103 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_httpsocket \- http server socket api
+.SH SYNOPSIS
+#include <cprops/http.h>
+
+.BI "int cp_http_init();"
+.br
+.BI "int cp_http_stop_all();"
+.br
+.BI "void cp_http_shutdown();"
+.sp
+.BI "cp_httpsocket *cp_httpsocket_create(int " port ", 
+.ti +36n
+.BI "cp_http_service_callback " service "); 
+.sp
+.BI "cp_httpsocket *"
+.ti +5n
+.BI "cp_httpsocket_create_ssl(int " port ", 
+.ti +30n
+.BI "cp_http_service_callback " service " 
+.ti +30n
+.BI "char *" certificate_file ",
+.ti +30n
+.BI "char *" key_file ",
+.ti +30n
+.BI "int " verification_mode ");
+.sp
+.BI "void cp_httpsocket_delete(cp_httpsocket *" sock ");
+.sp
+.BI "int cp_httpsocket_listen(cp_httpsocket *" sock ");
+.sp
+.BI "int cp_httpsocket_register_service(cp_httpsocket *" server ", 
+.ti +35n
+.BI "cp_http_service *" service ");
+.sp
+.BI "void *cp_httpsocket_unregister_service(cp_httpsocket *" server ", 
+.ti +39n
+.BI "cp_http_service *" service ");
+.SS SOCKET SETTINGS
+.sp
+.BI "void cp_httpsocket_set_keepalive(cp_httpsocket *" socket ", int " sec ");
+.br
+.BI "void cp_httpsocket_set_server_name(cp_httpsocket *" socket ", char *" name ");
+.br
+.BI "void cp_httpsocket_set_backlog(cp_socket *" sock ", int " backlog ");
+.br
+.BI "void cp_httpsocket_set_delay(cp_socket *" sock ", struct timeval " delay ");
+.br
+.BI "void cp_httpsocket_set_delay_sec(cp_socket *" sock ", long " sec ");
+.br
+.BI "void cp_httpsocket_set_delay_usec(cp_socket *" sock ", long " usec ");
+.br
+.BI "void cp_httpsocket_set_poolsize_min(cp_socket *" sock ", int " min ");
+.br
+.BI "void cp_httpsocket_set_poolsize_max(cp_socket *" sock ", int " max ");
+.SH DESCRIPTION
+libcprops implements http server socket functionality with the cp_httpsock
+struct. Before using the framework call 
+.B cp_http_init
+to initialize request parsing facilities. This should be matched by a call to 
+.B cp_http_shutdown
+when done. These calls override cp_socket_init and cp_socket_shutdown.
+.B cp_httpsocket_stop_all
+could be called from a shutdown hook to close all open sockets and cause 
+cp_httpsocket_listen to return.
+.sp
+To listen on a port, first instantiate a server socket by calling
+\fBcp_httpsocket_create\fP. The cp_httpsocket struct is a wrapper for a 
+cp_socket backed by a thread pool to serve simultaneous requests. The 
+.I service
+parameter defines the default 
+.BR cp_http_service (3).
+The action to be taken in response to a request for a given uri prefix is 
+defined by means of a service. If no default service is set, the framework 
+returns an error 501 (NOT IMPLEMENTED) page for unhandled uris. Otherwise 
+services may be registered per uri with \fBcp_httpsocket_register_service\fP. 
+Services may be removed by calling \fBcp_httpsocket_unregister_service\fP. 
+.sp
+Call 
+.B cp_httpsocket_listen
+to activate the socket. Services may still be registered after this call.
+.sp
+If libcprops was configured with --enable-ssl (default), SSL features are 
+available on sockets created with \fBcp_httpsocket_create_ssl\fP, which 
+requires the path to a 
+.I certificate_file
+and a
+.I key_file
+as well. The 
+.I verification_method
+may be one of 
+.B SSL_VERIFY_NONE
+or \fBSSL_VERIFY_PEER\fP, optionally modified with
+.B SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+and / or \fBSSL_VERIFY_CLIENT_ONCE\fP - see 
+.BR SSL_CTX_set_verify (3).
+
+.SH SEE ALSO
+.BR cp_http_service (3),
+.BR cp_http_request (3),
+.BR cp_http_response (3),
+.BR SSL_CTX_set_verify (3)

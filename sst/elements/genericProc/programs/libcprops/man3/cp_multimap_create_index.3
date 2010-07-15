@@ -1,0 +1,37 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_create_index \- add an index on a multimap
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "cp_index *cp_multimap_create_index(cp_multimap *" map ", 
+.ti +35n
+.BI "cp_index_type " type ",
+.ti +35n
+.BI "cp_key_fn " key ", 
+.ti +35n
+.BI "cp_compare_fn " cmp ",
+.ti +35n
+.BI "int *" err ");
+.br
+
+.SH DESCRIPTION
+.B cp_multimap_create_index
+creates an index on an existing multimap. 
+.sp
+.I type
+may be one of
+.B CP_UNIQUE
+or \fBCP_MULTIPLE\fP. 
+
+.SH RETURN VALUE
+.B cp_multimap_create_index
+returns the newly created index or NULL on error. If the 
+.I err
+parameter is not NULL, the integer it points to is set to 
+.B CP_MEMORY_ALLOCATION_FAILURE
+on allocation failure, or 
+.B CP_EXISTS
+if an index with the same key and comparison functions already exists.
+

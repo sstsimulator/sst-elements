@@ -1,0 +1,11 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_reset \- reset a cp_string structure
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "void cp_string_reset(cp_string *" str ");
+.SH DESCRIPTION
+.B cp_string_reset
+reallocates memory in a cp_string's internal buffer to an empty string and 
+resets the length to zero.

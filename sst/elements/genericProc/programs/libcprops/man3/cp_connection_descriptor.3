@@ -1,0 +1,35 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_connection_descriptor \- connection descriptor for cp_socket connections
+.SH SYNOPSIS
+#include <cprops/socket.h>
+
+.BI "cp_socket *cp_connection_descriptor_get_socket("
+.ti +10n
+.BI "cp_connection_descriptor " descriptor ");
+.sp
+.BI "struct sockaddr_in *cp_connection_descriptor_get_addr("
+.ti +10n
+.BI "cp_connection_descriptor " descriptor ");
+.sp
+.BI "int cp_connection_descriptor_get_fd("
+.ti +10n
+.BI "cp_connection_descriptor " descriptor ");
+.SH DESCRIPTION
+Connections made by a cp_socket created with CPSOCKET_STRATEGY_THREADPOOL call
+a user defined thread function with the connection information wrapped in a
+.B cp_connection_descriptor 
+struct. 
+.sp
+.B cp_connection_descriptor_get_socket
+returns a pointer to the originating cp_socket;
+.sp
+.B cp_connection_descriptor_get_addr
+returns a pointer to a 
+.B struct sockaddr_in 
+describing the address the connection was made from; and
+.sp
+.B cp_connection_descriptor_get_fd
+returns to file descriptor number for this connection.
+.SH SEE ALSO
+.BR cp_socket (3)

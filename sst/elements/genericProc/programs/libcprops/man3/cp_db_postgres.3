@@ -1,0 +1,59 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_postgres, cp_postgres_data_source \- cp_dbms postgres driver 
+.SH SYNOPSIS
+#include <cprops/db.h>
+#include <cprops/db_postgres.h>
+
+.BI "cp_data_source *
+.ti +5n
+.BI "cp_postgres_data_source(char *" host ", 
+.ti +29n
+.BI "int " port ", 
+.ti +29n
+.BI "char *" login ", 
+.ti +29n
+.BI "char *" password ", 
+.ti +29n
+.BI "char *" db_name ", 
+.ti +29n
+.BI "char *" options ", 
+.ti +29n
+.BI "char *" sslmode ",
+.ti +29n
+.BI "char *" krbsrvname ",
+.ti +29n
+.BI "char *" service ");
+.SH DESCRIPTION
+If configured --with-postgres, cprops provides a driver to access PostgresQL
+databases through the cp_dbms api. To use this api, create a data source
+with 
+.B "postgres"
+as the driver name. 
+.sp
+In addition to the basic connection parameters, the postgres driver recognizes
+the following parameters if inserted as keys on the 
+.I prm
+table parameter to  
+.BR cp_dbms_get_data_source_prm (3):
+.sp
+
+.RS +3n
+.nf
+options    --  Command-line options to be sent to the server. 
+sslmode    --  determines whether or with what priority an SSL connection will 
+               be negotiated with the server. 
+krbsrvname --  Kerberos service name to use when authenticating with Kerberos 5.
+service    --  Service name to use for additional parameters. 
+.fi
+.RE
+
+For more on these options, see the postgres libpq documentation. 
+.sp
+If cprops was configured to link cp_dbms drivers statically, 
+the postgres driver need not be loaded dynamically and 
+.B cp_postgres_data_source
+may be called directly to obtain connections.
+.SH SEE ALSO
+.BR cp_dbms_get_data_source (3),
+.BR cp_dbms_get_data_source_prm (3)

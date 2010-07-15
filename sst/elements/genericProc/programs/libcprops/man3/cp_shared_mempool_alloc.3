@@ -1,0 +1,35 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_shared_mempool_alloc, cp_shared_mempool_calloc \- obtain memory block from 
+a shareable memory pool
+
+.SH SYNOPSIS
+#include <cprops/mempool.h>
+.sp
+.BI "void *cp_shared_mempool_alloc(cp_shared_mempool *" pool ", size_t " size ");
+.br
+.BI "void *cp_shared_mempool_calloc(cp_shared_mempool *" pool ", size_t " size ");
+
+.SH DESCRIPTION
+.B cp_shared_mempool_alloc 
+attempts to obtain a memory block of at least 
+.I size
+bytes from the shared memory pool \fIpool\fP. 
+.B cp_shared_mempool_calloc
+is the same, but also sets the content of the returned memory block to zeros. 
+.sp
+For best results, use cp_shared_mempool to allocate fixed size blocks and 
+register these sizes with the pool with
+.BR cp_shared_mempool_register (3) 
+in advance. cp_shared_mempool may also be used for arbitrary sized allocations, 
+but this entails a larger allocation overhead and may be slower than native 
+malloc/ free on some platforms. 
+
+.SH RETURN VALUE
+A memory block of at least 
+.I size
+bytes on success or NULL on failure. 
+.SH SEE ALSO
+.BR cp_shared_mempool_register (3), 
+.BR cp_shared_mempool_free (3),
+.BR cp_mempool (3)

@@ -1,0 +1,54 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_timestampz, cp_timestampz_create, cp_timestampz_create_prm, 
+cp_timestampz_destroy, cp_timestampz_localtime \- an object to represent time
+and time zone
+
+.SH SYNOPSIS
+#include <time.h>
+#include <sys/time.h>
+#include <cprops/db.h>
+
+.BI "cp_timestampz *cp_timestampz_create(struct timeval *" tm ", 
+.ti +37n
+.BI "int " minuteswest ");
+.br
+.BI "cp_timestampz *
+.ti +5n
+.BI "cp_timestampz_create_prm(int " sec_since_epoch ", int " microsec ",
+.ti +37n
+.BI "int " minwest ");
+.br
+.BI "void cp_timestampz_destroy(cp_timestampz *" tmz ");
+.br
+.BI "struct tm *cp_timestampz_localtime(cp_timestampz *" tmz ", struct tm *" res ");
+.SH DESCRIPTION
+.B cp_timestampz
+represents time as with a 
+.B struct timeval
+and an integer describing the time zone as the number of minutes west of UTC.
+.br
+.B cp_timestampz_create
+and
+.B cp_timestampz_create_prm
+create a new time stamp structure. 
+.br
+.B cp_timestampz_destroy
+deallocates a time stamp object.
+.br
+.B cp_timestampz_localtime
+returns broken-down time in a \fBstruct tm\fP.
+.SH RETURN VALUE
+.B cp_timestampz_create
+and
+.B cp_timestampz_create_prm
+return a newly allocated
+.B cp_timestampz
+structure on success or NULL if memory for the new structure could not be 
+allocated.
+.B cp_timestampz_localtime
+returns a 
+.B struct tm *
+representing the localtime for the given timestamp and time zone.
+.SH SEE ALSO
+.BR localtime (3)

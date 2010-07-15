@@ -1,0 +1,20 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_statement_set_binary \- request statement results in binary/text format
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_statement_set_binary(cp_db_statement *" stmt ", int " binary ");
+.SH DESCRIPTION
+.B cp_db_statement_set_binary
+sets the 
+.I binary
+flag on a prepared statement, indicating that results should be returned in 
+text format if
+.I binary
+is zero or binary format if
+.I binary
+is non-zero. Driver implementations may ignore this flag - e.g. the 
+.B mysql
+driver always returns prepared statement results in binary format.

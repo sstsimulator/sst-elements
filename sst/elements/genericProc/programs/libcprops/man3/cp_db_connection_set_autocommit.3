@@ -1,0 +1,13 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_set_autocommit \- set a connection's autocommit behavior
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_set_autocommit(cp_db_connection *" conn ", int " state ");
+.SH DESCRIPTION
+.B cp_db_connection_set_autocommit
+sets autocommit off if
+.I state 
+is zero or on if it is non-zero.

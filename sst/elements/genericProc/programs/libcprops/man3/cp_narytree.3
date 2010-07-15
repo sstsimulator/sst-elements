@@ -1,0 +1,96 @@
+.TH cp_narytree 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_narytree"
+.SH NAME
+cp_narytree \- an in-memory btree implementation
+
+.SH DESCRIPTION
+.B cp_narytree
+is an N-ary tree implementation. The order of the tree, i.e. the maximal number
+of child nodes a node can have, may be set at instantiation. In particular 
+btrees of order 3 are equivalent to red-black trees. In a btree, each node must
+contain at least (order / 2) items, with the exception of the root node. This
+implies a certain degree of height balancing. Btrees allow creating a 
+relatively flat tree, and are typically used where the cost involved in tree 
+traversal is high, as in a disk access. However due to cache line optimizations
+in current processors, in-memory btrees may outperform other data structures
+for well chosen tree orders. 
+.sp
+cp_narytree instances may be created with a specifiable degree of internal or 
+external synchronization and entry memory management. 
+.sp
+A tree is created with cp_narytree_create(3) or cp_narytree_create_by_option(3) 
+and deallocated with cp_narytree_destroy(3). After creation behavior may be 
+changed by calling cp_narytree_set_mode(3) and cp_narytree_unset_mode(3) to set
+and unset mode bits. Mappings may be added with cp_narytree_insert(3), retrieved
+with cp_narytree_get(3) and removed with cp_narytree_delete(3). For more details
+see the documentation for specific functions.
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/nary.h>\fP.
+.sp
+.BI "cp_narytree *cp_narytree_create(int " order ", cp_compare_fn " cmp "); 
+.br
+.B cp_narytree *
+.ti +5n
+.BI "cp_narytree_create_by_option(int " mode ", 
+.ti +34n
+.BI "int " order ",
+.ti +34n
+.BI "cp_compare_fn " compare_fn ",
+.ti +34n
+.BI "cp_copy_fn " copy_key ", 
+.ti +34n 
+.BI "cp_destructor_fn " free_key ");    
+.ti +34n
+.BI "cp_copy_fn " copy_value "
+.ti +34n 
+.BI "cp_destructor_fn " free_value ");    
+.sp
+
+.BI "void cp_narytree_destroy(cp_narytree *" tree ");
+.br
+.BI "void cp_narytree_destroy_custom(cp_narytree *" tree ",
+.ti +32n
+.BI "cp_destructor_fn " key_dtr ",
+.ti +32n
+.BI "cp_destructor_fn " value_dtr ");
+.sp
+
+.BI "void *cp_narytree_insert(cp_narytree *" tree ", void *" key ", void *" value ");
+.br
+.BI "void *cp_narytree_get(cp_narytree *" tree ", void *" key ");
+.br
+.BI "void *cp_narytree_delete(cp_narytree *" tree ", void *" key ");
+.br
+.BI "int cp_narytree_contains(cp_narytree *" tree ", void *" key ");
+.br
+.BI "int cp_narytree_callback(cp_narytree *" tree ", 
+.ti +25n
+.BI "cp_callback_fn " callback ", 
+.ti +25n
+.BI "void *" prm ")
+.br
+.BI "long cp_narytree_count(cp_narytree *" tree ");
+.sp
+
+.BI "int cp_narytree_get_mode(cp_narytree *" tree ");
+.br
+.BI "void cp_narytree_set_mode(cp_narytree *" tree ", int " mode ");
+.br
+.BI "void cp_narytree_unset_mode(cp_narytree *" tree ", int " mode ");
+
+.sp
+.BI "int cp_narytree_lock(cp_narytree *" tree ", int " type ");
+.br
+.BI "int cp_narytree_unlock(cp_narytree *" tree ");
+.br
+.BI "int cp_narytree_rdlock(cp_narytree *" tree ");
+.br
+.BI "int cp_narytree_wrlock(cp_narytree *" tree ");
+
+
+.SH SEE ALSO
+.BR cp_narytree_create (3),
+.BR cp_narytree_insert (3),
+.BR cp_narytree_lock (3), 
+.BR cp_narytree_set_mode (3),
+.BR cprops (3)

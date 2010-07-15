@@ -1,0 +1,149 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_socket \- tcp server socket api
+.SH SYNOPSIS
+#include <cprops/socket.h>
+
+.BI "void cp_socket_init();"
+.br
+.BI "void cp_socket_stop_all();"
+.br
+.BI "void cp_socket_shutdown();"
+.br
+.BI "cp_socket *cp_socket_create(int " port ",
+.ti +28n
+.BI "cp_socket_strategy " strategy ", 
+.ti +28n
+.BI "void *" connection_handler ");
+.sp
+.BI "cp_socket *cp_socket_create_ssl(int " port ", 
+.ti +32n
+.BI "cp_socket_strategy " strategy ", 
+.ti +32n
+.BI "void *" fn ",
+.ti +32n
+.BI "char *" certificate_file ",
+.ti +32n
+.BI "char *" key_file ",
+.ti +32n
+.BI "int verification_mode);
+.sp
+.BI "void cp_socket_delete(cp_socket *" sock ");
+.sp
+.BI "int cp_socket_listen(cp_socket *" sock ");
+.sp
+.BI "int cp_socket_select(cp_socket *" sock ");
+.sp
+.BI "int cp_socket_connection_close(cp_socket *" sock ", int " fd ");
+.SS SOCKET SETTINGS
+.sp
+.BI "void cp_socket_set_backlog(cp_socket *" sock ", int " backlog ");
+.br
+.BI "void cp_socket_set_delay(cp_socket *" sock ", struct timeval " delay ");
+.br
+.BI "void cp_socket_set_delay_sec(cp_socket *" sock ", long " sec ");
+.br
+.BI "void cp_socket_set_delay_usec(cp_socket *" sock ", long " usec ");
+.br
+.BI "void cp_socket_set_poolsize_min(cp_socket *" sock ", int " min ");
+.br
+.BI "void cp_socket_set_poolsize_max(cp_socket *" sock ", int " max ");
+.br
+.BI "void cp_socket_set_owner(cp_socket *" sock ", void *" owner ");
+.SH DESCRIPTION
+cp_socket is a tcp server socket. 
+.B cp_socket_create
+creates a socket to listen on the specified \fIport\fP. \fIstrategy\fP may be
+one of \fBCPSOCKET_STRATEGY_CALLBACK\fP or \fBCPSOCKET_STRATEGY_THREADPOOL\fP.
+This determines the socket's behavior once a connection is accepted. If 
+.B CPSOCKET_STRATEGY_CALLBACK
+is specified, the 
+.I connection_handler
+function is expected to follow this prototype:
+.RS +3n
+.nf
+
+int connection_handler_callback(cp_socket *sock, int fd);
+
+.fi
+.RE
+In this case the cp_socket framework accpets connections and calls the 
+specified callback every time data is available for reading. 
+.br
+If 
+.B CPSOCKET_STRATEGY_THREADPOOL
+is specified, a thread pool is instantiated to handle connections, and each
+connection is assigned to a separate thread. When a connection is accepted, 
+the
+.I connection_handler
+specified for the socket is invoked with a newly created
+.BI cp_connection_descriptor (3)
+parameter. It is the responsibilty of the connection handler to close the
+connection by calling \fBcp_socket_connection_close\fP and to deallocate
+the connection descriptor by calling \fBcp_connection_descriptor_delete\fP when
+done serving a connection. The connection handler should also check the 
+cp_socket \fBclosing\fP flag and exit if it is set to prevent hanging on 
+shutdown. 
+.br
+The prototype for the connection handler thread function should match
+.RS +3n
+.nf
+
+void *connection_handler_fn(void *connection_descriptor);
+
+.fi
+.RE
+.sp
+If libcprops was configured with --enable-ssl (default), SSL features are 
+available on sockets created with \fBcp_socket_create_ssl\fP, which requires 
+the path to a 
+.I certificate_file
+and a
+.I key_file
+as well. The 
+.I verification_method
+may be one of 
+.B SSL_VERIFY_NONE
+or \fBSSL_VERIFY_PEER\fP, optionally modified with
+.B SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+and / or \fBSSL_VERIFY_CLIENT_ONCE\fP - see 
+.BR SSL_CTX_set_verify (3).
+.sp
+Once created, socket behavior parameters can be modified with 
+\fBcp_socket_set_backlog\fP and \fBcp_socket_set_delay\fP. 
+.B cp_socket_set_poolsize_min
+and 
+.B cp_socket_set_poolsize_max
+are relevant if using \fBCPSOCKET_STRATEGY_THREADPOOL\fP. These settings should
+be made before calling cp_socket_listen.
+.sp 
+.B cp_socket_listen 
+attempts to create a SOCK_STREAM socket with socket(), bind to a local port 
+with bind(), and set the socket to listen for connections with listen().
+.sp
+Finally, call
+.B cp_socket_select
+to begin accepting connections. 
+.sp
+Cleanup is performed by calling \fBcp_socket_delete\fP.
+.sp
+Before using the cp_socket api, it is recommended to call \fBcp_socket_init\fP,
+which initializes global tracking structures later used to perform cleanup and
+installs a signal handler to trap SIGPIPE. If not invoked explicitly it will 
+be called by cp_socket_create, but this has disadvantages in that it could 
+result in unwanted behavior on shutdown on some systems, for instance if the 
+first create call is made on a different thread than the thread which calls 
+cp_socket_shutdown(), and that it will also override any previously installed 
+handling for SIGPIPE. 
+.sp
+.B cp_socket_stop_all
+closes all sockets and could be called by a shutdown hook to cause 
+cp_socket_select to return. 
+.sp
+.B cp_socket_shutdown 
+should be called to perform cleanup. 
+
+.SH SEE ALSO
+.BR cp_connection_descriptor (3),
+.BR cp_httpsocket (3),
+.BR SSL_CTX_set_verify (3)

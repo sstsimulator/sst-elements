@@ -1,0 +1,17 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_get_server_certificate \- return the certificate pesented by the server for an ssl connection
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "X509 *cp_client_get_server_certificate(cp_client *" client ");
+.SH DESCRIPTION
+.B cp_client_get_server_certificate
+may be called on 
+.B cp_client
+sockets created with 
+.B cp_client_create_ssl
+and successfully connected with \fBcp_client_connect\fP to retrieve a 
+descriptor of the certificate presented by the server during the ssl handshake.
+.SH RETURN VALUE
+The server certificate if available or NULL otherwise.

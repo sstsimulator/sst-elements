@@ -1,0 +1,12 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_close \- release the memory allocated by a database connection
+descriptor
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_destroy(cp_db_connection *" connection ");
+.SH DESCRIPTION
+.B cp_db_connection_destroy
+deallocates the memory associated with a database connection descriptor.

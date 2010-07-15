@@ -1,0 +1,70 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_insert, cp_multimap_remove, cp_multimap_remove_by_index \- add or remove entries from a multimap
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "void *cp_multimap_insert(cp_multimap *" tree ", void *" entry ", int *" err ");
+.sp
+.BI "void *cp_multimap_remove(cp_multimap *" tree ", void *" entry ");
+.br
+.BI "void *cp_multimap_remove_by_index(cp_multimap *" map ",
+.ti +34n
+.BI "cp_index *" index ", 
+.ti +34n
+.BI "void *" entry ");
+.br
+
+.SH DESCRIPTION
+.B cp_multimap_insert
+adds the given
+.I entry
+to a multimap. On error, if 
+.I err
+is non-null, the integer it points to is set to one of \fBCP_LOCK_FAILED\fP, 
+.B CP_UNIQUE_INDEX_VIOLATION
+or \fBCP_MEMORY_ALLOCATION_FAILURE\fP.
+.sp
+.B cp_multimap_remove
+attempts to remove the item described by 
+.I entry
+from the mapping. On success the address of the actual item removed is 
+returned. Notice that this address may not be usable if the map has the 
+.B COLLECTION_MODE_DEEP
+bit set. 
+.sp
+.B cp_multimap_remove_by_index
+allows removing multiple items with a single call if 
+.I index
+is non-unique. 
+.sp
+.SH RETURN VALUE
+On success, 
+.B cp_multimap_insert 
+returns the item inserted to the map, which may be different than the 
+parameter given if the map has the 
+.B COLLECTION_MODE_COPY
+mode bit set. A NULL return value indicates an error in the insertion. In this
+case, if the
+.I err
+parameter is non-null, the integer it points to is set to 
+.B CP_LOCK_FAILED
+on locking errors, 
+.B CP_UNIQUE_INDEX_VIOLATION
+if a unique index would be violated by the requested insertion, or
+.B CP_MEMORY_ALLOCATION_FAILURE
+on allocation error. 
+.sp
+.B cp_multimap_remove 
+returns the item removed or NULL on error or if the requested item was not 
+found.
+.sp
+.B cp_multimap_remove_by_index 
+returns the item removed or the wrapping cp_vector for non-unique indices. A return value of NULL indicates an error or that the requested item was not found. 
+.sp
+.SH SEE ALSO
+.BR cp_multimap_get (3), 
+.BR cp_multimap_find (3), 
+.BR cp_multimap_reindex (3),
+.BR cp_multimap_contains (3)

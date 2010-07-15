@@ -1,0 +1,22 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_pool_shutdown \- stop a connection pool
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "int cp_db_connection_pool_shutdown(cp_db_connection_pool *" pool ");
+.SH DESCRIPTION
+.B cp_db_connection_pool_shutdown
+closes all open connections in the connection pool \fIpool\fP.  The pool itself
+is not deallocated. To deallocate the pool call 
+\fBcp_db_connection_pool_destroy\fP. 
+.sp
+If connections have been obtained from the pool and were not yet released with 
+\fBcp_db_connection_pool_release_connection\fP, the shutdown process blocks 
+until these connections are released. 
+.SH RETURN VALUE
+.B cp_db_connection_pool_shutdown
+always returns 0.
+.SH SEE ALSO
+.BR cp_db_connection_pool_destroy (3)

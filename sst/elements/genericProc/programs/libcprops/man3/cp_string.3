@@ -1,0 +1,46 @@
+.TH cp_string 3 "MARCH 2006" libcprops.0.0.11 "libcprops - cp_string"
+.SH NAME
+cp_string \- a string wrapper
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/str.h>\fP.
+
+.BI "cp_string *cp_string_create(char *" data ", int " len ");
+.br
+.BI "void cp_string_delete(cp_string *" str ");
+.br
+.BI "void cp_string_reset(cp_string *" str ");
+.br
+.BI "cp_string *cp_string_cstrcpy(cp_string *" str ", char *" cstr ");
+.br
+.BI "cp_string *cp_string_cpy(cp_string *" dst ", cp_string *" src ");
+.br
+.BI "cp_string *cp_string_dup(cp_string *" src ");
+.br
+.BI "cp_string *cp_string_cstrdup(char *" src ");
+.br
+.BI "cp_string *cp_string_cat(cp_string *" str ", cp_string *" appendum ");
+.br
+.BI "cp_string *cp_string_cat_bin(cp_string *" str ", void *" bin ", int " len ");
+.br
+.BI "cp_string *cp_string_cstrcat(cp_string *" str ", char *" cstr ");
+.br
+.BI "int cp_string_cmp(cp_string *" s1 ", cp_string *" s2 ");
+.br
+.BI "int cp_string_len(cp_string *" str ");
+.br
+.BI "char *cp_string_tocstr(cp_string *" str ");
+.br
+.BI "cp_string *cp_string_read(int " fd ", int " len ");
+.br
+.BI "int cp_string_write(cp_string *" str ", int " fd ");
+.br
+.BI "void cp_string_dump(cp_string *" str ");
+.br
+.BI "void cp_string_flip(cp_string *" str ")";
+.SH DESCRIPTION
+.B cp_string
+is a generalized string implementation. The string length is managed by the 
+wrapper thereby making string length lookup trivial and more importantly, 
+allowing null bytes and therefor binary data. 
+.sp
+For more detailed descriptions see the man pages for the individual functions.

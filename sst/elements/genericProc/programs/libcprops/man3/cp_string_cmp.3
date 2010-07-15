@@ -1,0 +1,28 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_cmp \- string comparison function
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "int cp_string_cmp(cp_string *" s1 ", cp_string *" s2 ");
+.SH DESCRIPTION
+.B cp_string_cmp
+compares the internal buffers of
+.I s1
+and \fIs2\fP and returns less than, equal to, or greater than zero if
+.I s1
+is less than, matches, or is greater than 
+.I s2
+respectively.
+
+.SH RETURN VALUE
+0 if the strings are identical
+.br
+< 0 if 
+.I s1
+is less than
+.I s2
+.br
+> 0 if 
+.I s1
+is greater than \fIs2\fP.

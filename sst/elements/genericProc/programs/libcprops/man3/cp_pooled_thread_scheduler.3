@@ -1,0 +1,119 @@
+.TH "cp_thread_pool" 3 "OCTOBER 2005" "libcprops" "cp_thread_pool"
+.SH NAME
+cp_pooled_thread_scheduler \- a load balancing component for pooled threads
+.SH SYNOPSIS
+#include <cprops/thread.h>
+
+.BI "cp_pooled_thread_scheduler *"
+.ti +5n
+.BI "cp_pooled_thread_scheduler_create(cp_thread_pool *" pool ");
+.sp
+.BI "void cp_pooled_thread_scheduler_destroy("
+.ti +10n
+.BI "cp_pooled_thread_scheduler *" scheduler ");
+.sp
+.BI "void cp_pooled_thread_scheduler_register_client("
+.ti +10n
+.BI "cp_pooled_thread_scheduler *" scheduler ",
+.ti +10n
+.BI cp_pooled_thread_client_interface *" client ");
+.sp
+.SH DESCRIPTION
+.br
+The pooled cp_thread scheduler interface is meant for use by clients who 
+require a variable number of threads. Each such component should create an 
+instance of cp_pooled_thread_client_interface and use the api functions to get 
+threads from the underlying cp_thread_pool. To use the scheduler,
+.sp
+ o create a thread pool 
+.br
+ o instantiate the scheduler with the thread pool
+.br
+ o create cp_pooled_thread_client_interfaces instances describing the 
+.ti +3n
+actions to be load balanced
+.br
+ o register the client interface instances with the scheduler.
+.sp
+.B cp_pooled_thread_scheduler_create
+creates a scheduler instance for the specified \fIpool\fP. 
+.B cp_pooled_thread_scheduler_destroy
+performs cleanup of scheduler instances.
+.B cp_pooled_thread_scheduler_register_client
+registers a client with the scheduler.
+.SH EXAMPLE
+.PP
+.nf
+
+\fBcp_pooled_thread_scheduler\fP *main_scheduler; 
+...
+component_a_start(component_a *a, ...)
+{
+    a->scheduler_interface = 
+        cp_pooled_thread_client_interface_create(main_scheduler, a, 
+            2, 10, component_a_report_load, component_a_stop_thread, 
+            component_a_thread_run, a);
+.PP
+\fP\fP
+.PP
+\fC\fC
+.PP
+.nf
+     ...
+.PP
+\fP\fP
+.PP
+\fC\fC
+.PP
+.nf
+    for (i = 0; i < a->scheduler_interface->min; i++)
+        cp_pooled_thread_client_get(a->scheduler_interface);
+}
+.PP
+\fP\fP
+.PP
+\fC\fC
+.PP
+.nf
+component_b_start(component_b *b, ...)
+{
+    b->scheduler_interface = 
+        cp_pooled_thread_client_interface_create(main_scheduler, b, 
+            2, 10, component_a_report_load, component_a_stop_thread, 
+            component_a_thread_run, b);
+.PP
+\fP\fP
+.PP
+\fC\fC
+.PP
+.nf
+     ...
+.PP
+\fP\fP
+.PP
+\fC\fC
+.PP
+.nf
+    for (i = 0; i < b->scheduler_interface->min; i++)
+        cp_pooled_thread_client_get(b->scheduler_interface);
+}
+.PP
+\fP\fP
+.PP
+\fC\fC
+.PP
+.nf
+ 
+.PP
+
+.br
+In this example, the cp_threads for component_a and component_b will be 
+managed jointly, since their cp_pooled_thread_client_interface *'s have
+the same \fBcp_pooled_thread_scheduler\fP *. \fP\fP
+.PP
+\fC\fC\fP\fP
+.PP
+.SH SEE ALSO
+.BR cp_thread_pool (3),
+.BR cp_pooled_thread_client_interface (3)
+

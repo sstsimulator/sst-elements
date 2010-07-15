@@ -1,0 +1,76 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_execute_statement, cp_db_connection_execute_statement_args \-
+execute a prepared statement
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "int cp_db_connection_execute_statement(cp_db_connection *" connection ",
+.ti +39n
+.BI "cp_db_statement *" statement ", 
+.ti +39n
+.BI "cp_vector *" prm ",
+.ti +39n
+.BI "cp_result_set **" results "); 
+.sp
+.BI "int cp_db_connection_execute_statement_args(cp_db_connection *" connection ",
+.ti +44n
+.BI "cp_db_statement *" statement ", 
+.ti +44n
+.BI "cp_result_set **" results ", ...); 
+.SH DESCRIPTION
+.B cp_db_connection_execute_statement
+executes the prepared statement
+.I statement
+on the connection \fIconnection\fP. Parameter lengths 
+creates a prepared statement with
+.I prm_count
+parameters of the types given by
+.I prm_types
+for the query
+.I query
+on the connection \fIconnection\fP. Parameters are specified as '?' in the 
+query string; implementations may support other formats in addition. The 
+parameters in the 
+.I prm
+vector should correspond to the parameter types specified on statement 
+creation. Parameter types map as follows:
+
+.RS +3n
+.nf
+	CP_FIELD_TYPE_BOOLEAN     --   short
+	CP_FIELD_TYPE_CHAR        --   char *
+	CP_FIELD_TYPE_SHORT       --   short
+	CP_FIELD_TYPE_INT         --   int
+	CP_FIELD_TYPE_LONG        --   long
+	CP_FIELD_TYPE_LONG_LONG   --   long long
+	CP_FIELD_TYPE_FLOAT       --   float
+	CP_FIELD_TYPE_DOUBLE      --   double
+	CP_FIELD_TYPE_VARCHAR     --   char *
+	CP_FIELD_TYPE_BLOB        --   cp_string
+	CP_FIELD_TYPE_DATE        --   cp_timestampz
+	CP_FIELD_TYPE_TIME        --   cp_timestampz
+	CP_FIELD_TYPE_TIMESTAMP   --   cp_timestampz
+.fi
+.RE
+
+Notice the asymmetry with 
+.B cp_db_connection_select
+in that CP_FIELD_TYPE_CHAR and CP_FIELD_TYPE_VARCHAR type fields are passed as
+.B char *
+rather than \fBcp_string\fP. 
+.sp
+If the statements returns results and the 
+.I results
+parameter is not NULL, it is set to point to the created result set.
+.sp
+.B cp_db_connection_execute_statement_args
+allows specifying parameters as elipsis parameters rather than in a cp_vector
+structure.
+.SH RETURN VALUE
+zero on success or non-zero on failure. 
+.SH SEE ALSO
+.BR cp_db_connection_select (3),
+.BR cp_string (3),
+.BR cp_vector (3)

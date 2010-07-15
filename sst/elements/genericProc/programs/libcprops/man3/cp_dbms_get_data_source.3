@@ -1,0 +1,51 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_dbms_get_data_source, cp_dbms_get_data_source_prm \- obtain a database
+connection factory
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_data_source *"
+.ti +5n
+.BI "cp_dbms_get_data_source(char *" driver ", char *" host ", int " port ", 
+.ti +29n
+.BI "char *" user ", char *" passwd ", char *" db_name ");
+.br
+.BI "cp_data_source *"
+.ti +5n
+.BI "cp_dbms_get_data_source_prm(char *" driver ", char *" host ", int " port ",
+.ti +33n
+.BI "char *" user ", char *" passwd ",
+.ti +33n
+.BI "char *" db_name ", cp_hashtable *" prm ");
+.br
+.SH DESCRIPTION
+.B cp_dbms_get_data_source
+attempts to obtain a connection factory for the given 
+.I driver
+name to the given database
+.I db_name
+at the given 
+.I host
+and 
+.I port
+with the user name
+.I user
+and password \fIpasswd\fP. 
+.sp
+.B cp_dbms_get_data_source_prm
+allows passing additional implementation specific parameters in the hash table
+\fIprm\fP. For the key names and values available see the man pages for 
+specific implementations.
+.sp
+Implementation specific functions returning a data source object may be 
+available if cprops was configured to link dbms driver modules statically. See 
+the driver implementation man pages for details.
+.SH RETURN VALUE
+a
+.B cp_data_source
+connection factory object for the given parameters on success or NULL on 
+failure.
+.SH SEE ALSO
+.BR cp_db_postgres (3),
+.BR cp_db_mysql (3)

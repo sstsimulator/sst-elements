@@ -1,0 +1,41 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_destroy, 
+cp_hashtable_destroy_shallow, 
+cp_hashtable_destroy_deep, 
+cp_hashtable_destroy_custom \- hashtable destructor functions
+.SH SYNOPSIS
+
+.B #include <cprops/hashtable.h>
+
+.BI "void cp_hashtable_destroy(cp_hashtable *" table ");
+.br
+.BI "void cp_hashtable_destroy_shallow(cp_hashtable *" table ");
+.br 
+.BI "void cp_hashtable_destroy_deep(cp_hashtable *" table ");
+.br
+.BI "void cp_hashtable_destroy_custom(cp_hashtable *" table ",
+.ti +33n
+.BI "cp_destructor_fn " key_destructor ",
+.ti +33n
+.BI "cp_destructor_fn " value_destructor ");
+
+.SH DESCRIPTION
+.B cp_hashtable_destroy
+removes all entries from a hashtable, invoking the destructor functions 
+specified for keys and values if not null and if the table mode has the 
+.B COLLECTION_MODE_DEEP
+bit set, and finally deallocates internal storage and the
+.B cp_hashtable
+structure itself. Regardless of table mode,
+.B cp_hashtable_destroy_shallow
+never invokes key and item destructor functions, 
+.B cp_hashtable_destroy_deep 
+always invokes (non-null) key and item destructor functions, and
+.B cp_hashtable_destroy_custom
+always invokes the specified non-null \fIkey_destructor\fP and 
+\fIvalue_destructor\fP functions on keys and values respectively.
+
+.SH "SEE ALSO"
+.BR cp_hashtable (3),
+.BR cp_hashtable_create (3)

@@ -1,0 +1,422 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_dbms \- dbms abstraction api
+.SH SYNOPSIS
+#include <cprops/db.h>
+.SS DBMS FRAMEWORK INITIALIZATION / FINALIZATION
+.BI "int cp_db_init();
+.br
+.BI "int cp_db_shutdown();"
+.SS DATA SOURCE FUNCTIONS
+.BI "int cp_dbms_load_driver(char *" name ");
+.br
+.BI "cp_data_source *"
+.ti +5n
+.BI "cp_dbms_get_data_source(char *" driver ", char *" host ", int " port ", 
+.ti +29n
+.BI "char *" user ", char *" passwd ", char *" db_name ");
+.br
+.BI "cp_data_source *"
+.ti +5n
+.BI "cp_dbms_get_data_source_prm(char *" driver ", char *" host ", int " port ",
+.ti +33n
+.BI "char *" user ", char *" passwd ",
+.ti +33n
+.BI "char *" db_name ", cp_hashtable *" prm ");
+.br
+.BI "cp_db_connection *
+.ti +5n
+.BI "cp_data_source_get_connection(cp_data_source *" data_source ");
+.br
+.BI "void cp_data_source_destroy(cp_data_source *" data_source ");
+.SS CONNECTION POOL FUNCTIONS
+.BI "cp_db_connection_pool *
+.ti +5n
+.BI "cp_db_connection_pool_create(cp_data_source *" data_source ",
+.ti +34n
+.BI "int " min_size ", 
+.ti +34n
+.BI "int " max_size ",
+.ti +34n
+.BI "int " initial_size ");
+.br
+.BI "int cp_db_connection_pool_shutdown(cp_db_connection_pool *" pool ");
+.br
+.BI "void cp_db_connection_pool_destroy(cp_db_connection_pool *" pool ");
+.br
+.BI "void cp_db_connection_pool_set_blocking(cp_db_connection_pool *" pool ", 
+.ti +40n
+.BI "int " block ");
+.br
+.BI "cp_db_connection *
+.ti +5n
+.BI "cp_db_connection_pool_get_connection(cp_db_connection_pool *" pool ");
+.br
+.BI "void "
+.ti +2n
+.BI "cp_db_connection_pool_release_connection(cp_db_connection_pool *" pool ", 
+.ti +43n
+.BI "cp_db_connection *" conn ");
+.SS CONNECTION BEHAVIOR SETTINGS
+.BI "void cp_db_connection_set_fetch_metadata(cp_db_connection *" connection ",
+.ti +41n
+.BI "int " mode ");
+.br
+.BI "void cp_db_connection_set_read_result_set_at_once(cp_db_connection *" conn ", 
+.ti +50n
+.BI "int " mode ");
+.br
+.BI "void cp_db_connection_set_fetch_size(cp_db_connection *" connection ",
+.ti +37n
+.BI "int " fetch_size ");
+.br
+.BI "void cp_db_connection_set_autocommit(cp_db_connection *" conn ", int " state ");
+.SS OPERATIONS ON A DBMS CONNECTION
+.BI "cp_result_set *
+.ti +5n
+.BI "cp_db_connection_select(cp_db_connection *" connection ", char *" query ");
+.br
+.BI "int cp_db_connection_update(cp_db_connection *" connection ", char *" query ");
+.br
+.BI "int cp_db_connection_close(cp_db_connection *" connection ");
+.br
+.BI "void cp_db_connection_destroy(cp_db_connection *" connection ");
+.br
+.BI "int cp_db_connection_commit(cp_db_connection *" conn ");
+.br
+.BI "int cp_db_connection_rollback(cp_db_connection *" conn ");
+.SS PREPARED STATEMENTS
+.BI "cp_db_statement *
+.ti +5n
+.BI "cp_db_connection_prepare_statement(cp_db_connection *" connection ",
+.ti +40n
+.BI "int " prm_count ",
+.ti +40n
+.BI "cp_field_type *" prm_types ", 
+.ti +40n
+.BI "char *" query ");
+.br
+.BI "void cp_db_statement_set_binary(cp_db_statement *" stmt ", int " binary ");
+.br
+.BI "int cp_db_connection_execute_statement(cp_db_connection *" connection ",
+.ti +39n
+.BI "cp_db_statement *" statement ", 
+.ti +39n
+.BI "cp_vector *" prm ",
+.ti +39n
+.BI "cp_result_set **" results "); 
+.br
+.BI "int cp_db_connection_execute_statement_args(cp_db_connection *" connection ",
+.ti +44n
+.BI "cp_db_statement *" statement ", 
+.ti +44n
+.BI "cp_result_set **" results ", ...); 
+.br
+.BI "void cp_db_connection_close_statement(cp_db_connection *" connection ", 
+.ti +38n
+.BI "cp_db_statement *" statement ");
+.SS OPERATIONS ON A RESULT SET
+.BI "void cp_result_set_autodispose(cp_result_set *" rs ", int " state ");
+.br
+.BI "int cp_result_set_is_binary(cp_result_set *" result_set ");
+.br
+.BI "cp_vector *cp_result_set_get_headers(cp_result_set *" result_set ");
+.br
+.BI "char *cp_result_set_get_header(cp_result_set *" result_set ", int " column ");
+.br
+.BI "cp_vector *cp_result_set_get_field_types(cp_result_set *" result_set ");
+.br
+.BI "cp_field_type cp_result_set_get_field_type(cp_result_set *" rs ", int " col ");
+.br
+.BI "int cp_result_set_field_count(cp_result_set *" result_set ");
+.br
+.BI "int cp_result_set_row_count(cp_result_set *" result_set ");
+.br
+.BI "cp_vector *cp_result_set_next(cp_result_set *" result_set ");
+.br
+.BI "void cp_result_set_release_row(cp_result_set *" result_set ", 
+.ti +31n
+.BI "cp_vector *" row ");
+.br
+.BI "void cp_result_set_destroy(cp_result_set *" result_set ");
+.br
+.SS UTILITY FUNCTIONS
+.BI "char *cp_db_connection_escape_string(cp_db_connection *" connection ", 
+.ti +37n
+.BI "char *" src ",
+.ti +37n
+.BI "int " len ");
+.br
+.BI "char *cp_db_connection_escape_binary(cp_db_connection *" connection ", 
+.ti +37n
+.BI "char *" src ", 
+.ti +37n
+.BI "int " src_len ", 
+.ti +37n
+.BI "int *" res_len ");
+.br
+.BI "cp_string *"
+.ti +5n
+.BI "cp_db_connection_unescape_binary(cp_db_connection *" connection ",
+.ti +38n
+.BI "char *" src ");
+
+.SH DESCRIPTION
+The 
+.B cp_dbms
+module is a dbms abstraction layer providing a uniform api to access relational
+databases. 
+.B cp_dbms
+is available if cprops was configured with the --enable-cp-dbms flag or if 
+cprops was configured to support one or more databases. Currently cprops 
+delivers with optional support for postgres (requires configuration option 
+--with-postgres) and mysql (requires configuration option --with-mysql). The 
+following outlines the steps involved in accessing a dbms using the cp_dbms 
+module.
+.SS INITIALIZATION
+.B cp_dbms_init()
+must be called before any other dbms api functions.
+.SS INSTANTIATING A CONNECTION FACTORY
+DBMS connections are obtained from a connection factory, or a data source in 
+cp_dbms terminology. Connections may be retrieved from a connection pool, but 
+in this case too they are ultimately created by a data source. Data source 
+creation is highly dependent on the underlying dbms api. If cprops was 
+configured to link dbms drivers statically, implementation specific functions 
+may be used to instantiate the data source. Otherwise drivers are compiled into
+shared objects and must be loaded by calling 
+.BR cp_dbms_load_driver (3).
+Once loaded a data source may be obtained by calling 
+.BR cp_dbms_get_data_source (3)
+with standard parameters or
+.BR cp_dbms_get_data_source_prm (3)
+which allows specifying database specific options as named parameters in a
+hashtable (see 
+.BR cp_db_postgres (3)
+or
+.BR cp_db_mysql (3)
+for implementation specific details).
+.sp
+Multiple data sources may be used simultaneously to connect to different 
+databases or even to the same database with different connection parameters, eg
+as different users.
+.SS OBTAINING A CONNECTION
+Once a data source is created it may be used directly to obtain connections
+with 
+.BR cp_data_source_get_connection (3).
+Alternately, the data source may be used to instantiate a connection pool with
+.BR cp_db_connection_pool_create (3),
+and then connections may be obtained from the connection pool by calling
+.BR cp_db_connection_pool_get_connection(3).
+Connections obtained from a connection pool should be returned to the pool by 
+calling 
+.BR cp_db_connection_pool_release_connection (3)
+and not closed explicitly.
+.SS PERFORMING QUERIES
+.BR cp_db_connection_select (3)
+performs a SELECT query and returns a result set on success. 
+.BR cp_db_connection_update (3)
+may be used to issue an INSERT, UPDATE, DELETE, or any other query not 
+returning a result set. 
+.sp
+By default, the full result set returned by a query is read at once, and no
+additional ``metadata'' (eg field types) is read. Connection behavior other 
+than the default may be requested by calling 
+.BR cp_db_connection_set_fetch_metadata (3), 
+.BR cp_db_connection_set_read_result_set_at_once (3)
+and
+.BR cp_db_connection_set_fetch_size (3).
+.SS PREPARED STATEMENTS
+Prepared statements may be created by calling 
+cp_db_connection_prepare_statment, which returns a statement descriptor 
+structure. Call 
+.BR cp_db_statment_set_binary (3) 
+to request results in binary format before executing the statement. 
+Implementations may or may not respect this setting, so the actual format the 
+results are returned in may be determined by calling 
+.BR cp_result_set_is_binary (3).
+In particular, the 
+.B mysql
+driver always returns prepared statement results in binary format.
+.sp
+Once the statement has been successfully prepared, call 
+.BR cp_db_connection_execute_statement
+with a parameter vector.
+.SS PROCESSING QUERY RESULTS
+.BR cp_result_set_next (3)
+returns a
+.B cp_vector
+representing a row, containing 
+.B cp_string
+structures representing the fields, which may be null and may contain binary 
+data. Call
+.BR cp_result_set_is_binary (3)
+to determine whether results are in text or binary format. See 
+.B DATA TYPES
+for more on result formats.
+.sp
+.BR cp_result_set_get_headers (3)
+and
+.BR cp_result_set_get_field_types (3)
+may be called to provide additional information about the contents of a result
+set, but are not guaranteed to succeed once the result set retrieval is 
+complete. It is advisable to set 
+.B cp_db_connection_set_fetch_metadata
+on before issuing a query if this information may later be required. 
+.sp
+.BR cp_result_set_row_count (3)
+returns the number of rows read from the database so far, and may be different 
+than the total number of rows the query will return or the number of rows 
+retrieved with
+.B cp_result_set_next
+before fully scanning the result set.
+.sp 
+Result rows should be released by calling
+.BR cp_result_set_release_row (3).
+.SS CLEANUP
+Call
+.BR cp_result_set_destroy (3)
+when a result set is no longer needed.
+.sp
+For connections, call 
+.BR cp_db_connection_pool_release_connection (3)
+on connections obtained from a connection pool or
+.BR cp_db_connection_close (3)
+and 
+.BR cp_db_connection_destroy (3)
+on connections obtained directly from a data source. 
+.sp
+Connection pools must first be stopped with
+.BR cp_db_connection_pool_shutdown (3),
+then deallocated with
+.BR cp_db_connection_pool_destroy (3).
+.sp
+Data sources are deallocated with
+.BR cp_data_source_destroy (3).
+.SS DATA TYPES
+.B cp_dbms
+supports the following set of data types:
+.sp
+.RS +3n
+.nf
+	CP_FIELD_TYPE_BOOLEAN
+	CP_FIELD_TYPE_CHAR
+	CP_FIELD_TYPE_SHORT
+	CP_FIELD_TYPE_INT
+	CP_FIELD_TYPE_LONG
+	CP_FIELD_TYPE_LONG_LONG
+	CP_FIELD_TYPE_FLOAT
+	CP_FIELD_TYPE_DOUBLE
+	CP_FIELD_TYPE_VARCHAR
+	CP_FIELD_TYPE_BLOB
+	CP_FIELD_TYPE_DATE
+	CP_FIELD_TYPE_TIME
+	CP_FIELD_TYPE_TIMESTAMP
+.fi
+.RE
+
+In binary result sets, types are represented as their respective c types, with
+the exception of CP_FIELD_TYPE_BLOB which is represented as a 
+.B cp_string (3)
+and CP_FIELD_TYPE_DATE, CP_FIELD_TYPE_TIME and CP_FIELD_TYPE_TIMESTAMP which 
+are represented as 
+.B cp_timestampz (3)
+structures.
+.br
+In text mode all fields are represented as 
+.B cp_string (3)
+structures. 
+.SH EXAMPLE
+The following code issues a simple SELECT query to a postgres database and 
+prints out the results. To use the same example for mysql, replace the driver
+descriptor string "postgres" with the driver descriptor string "mysql".
+
+.RS +3n
+.nf
+#include <string.h>
+#include <cprops/db.h>
+#include <cprops/str.h>
+#include <cprops/log.h>
+
+int main(int argc, char *argv[])
+{
+	cp_data_source *ds = NULL;
+	cp_db_connection *conn = NULL;
+	cp_result_set *rs;
+
+	char *host = "localhost";
+	int port = 0;
+	char *login = "test";
+	char *password = "test";
+	char *db_name = "test";
+	
+	cp_log_init("test_pq.log", LOG_LEVEL_DEBUG);
+	cp_db_init();
+	
+    if (cp_dbms_load_driver("postgres"))
+    {
+        cp_error(CP_DBMS_NO_DRIVER, "can\\'t load driver");
+        goto DONE;
+    }
+
+    ds = cp_dbms_get_data_source("postgres", host, port, login, 
+	                             password, db_name);
+
+	if (ds == NULL)
+	{
+		cp_error(CP_DBMS_CONNECTION_FAILURE, "can\\'t connect");
+		goto DONE;
+	}
+
+	conn = cp_data_source_get_connection(ds);
+	if (conn == NULL)
+	{
+		cp_error(CP_DBMS_CONNECTION_FAILURE, "can\\'t connect");
+		goto DONE;
+	}
+
+	rs = cp_db_connection_select(conn, "SELECT * FROM test");
+	if (rs)
+	{
+		int i;
+		cp_vector *r;
+
+		cp_result_set_autodispose(rs, 1); /* release rows on set destruction */
+
+		while ((r = cp_result_set_next(rs)) != NULL)
+		{
+			for (i = 0; i < rs->field_count; i++)
+				printf(" | %s", cp_string_tocstr(cp_vector_element_at(r, i)));
+			printf(" |\\n");
+			cp_vector_destroy(r);
+		}
+
+		cp_result_set_destroy(rs);
+	}
+
+	cp_db_connection_close(conn);
+
+DONE:
+	if (conn) 
+		cp_db_connection_destroy(conn);
+
+	if (ds)
+		cp_data_source_destroy(ds);
+
+	cp_db_shutdown();
+	cp_log_close();
+
+	return 0;
+}
+
+.fi
+.RE
+
+for notes on compiling and linking see 
+.BR cprops (3).
+.SH SEE ALSO
+.BR cp_data_source (3),
+.BR cp_db_connection (3),
+.BR cp_result_set (3),
+.BR cp_db_connection_pool (3),
+.BR cp_postgres_data_source (3),
+.BR cp_mysql_data_source (3)

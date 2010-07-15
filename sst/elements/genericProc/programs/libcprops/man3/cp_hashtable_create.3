@@ -1,0 +1,148 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_create, cp_hashtable_create_by_mode, 
+cp_hashtable_create_copy_mode, cp_hashtable_create_by_option \- hashtable 
+constructor functions
+.SH SYNOPSIS
+
+.B #include <cprops/hashtable.h>
+
+.BI "cp_hashtable *cp_hashtable_create(unsigned long " size_hint ", 
+.ti +34n
+.BI "cp_hashfunction " hash_fn ",
+.ti +34n
+.BI "cp_compare_fn "compare_fn ");
+.br
+.BI "cp_hashtable *cp_hashtable_create_by_mode(int " mode ", 
+.ti +42n
+.BI "unsigned long " size_hint ",
+.ti +42n
+.BI "cp_hashfunction " hash_fn ", 
+.ti +42n
+.BI "cp_compare_fn " compare_fn ");
+.br
+.B cp_hashtable *
+.ti +5n
+.BI "cp_hashtable_create_copy_mode(unsigned long " size_hint ",
+.ti +35n
+.BI "cp_hashfunction " cp_hashfn ",
+.ti +35n
+.BI "cp_compare_fn " compare_fn ",
+.ti +35n
+.BI "cp_copy_fn " copy_key ",
+.ti +35n 
+.BI "cp_destructor_fn " free_key ");
+.ti +35n 
+.BI "cp_copy_fn " copy_value "
+.ti +35n 
+.BI "cp_destructor_fn " free_value ");
+.br
+.B cp_hashtable *
+.ti +5n
+.BI "cp_hashtable_create_by_option(int " mode ", 
+.ti +35n
+.BI "unsigned long " size_hint ",
+.ti +35n
+.BI "cp_hashfunction " hash_fn ",
+.ti +35n 
+.BI "cp_compare_fn " compare_fn ",
+.ti +35n
+.BI "cp_copy_fn " copy_key ", 
+.ti +35n 
+.BI "cp_destructor_fn " free_key ");
+.ti +35n
+.BI "cp_copy_fn " copy_value "
+.ti +35n 
+.BI "cp_destructor_fn " free_value ");
+
+.SH DESCRIPTION
+\fBcp_hashtable_create\fP creates a hashtable using \fIsize_hint\fP as an 
+estimate for the required table size. Items are indexed using the specified \fIhash_fn\fP. The hash function should be defined as 
+
+.RS
+.nf
+unsigned long hash_fn(void *key);
+.fi
+.RE
+
+and ideally return evenly distributed values in the lower bits for different 
+\fIkey\fP values. The hash function's return value for a particular key is 
+known as the \fIhash code\fP for this key and this number taken modulo the 
+internal table size determines the index for the given key. Since the hash 
+function is not known in advance and the table size is kept on the order of 
+the number of entries, this index is not necessarily unique. Therefore a 
+comparison function defined as
+
+.RS
+.nf
+int hash_compare(void *a, void *b);
+.fi
+.RE
+
+is needed to identify the requested key upon retrieval if multiple keys map to
+the same index. The comparison function should return 0 for matching items, 
+non-zero otherwise (``strcmp semantics''). A frequent error is to write the 
+comparison function so that it returns 1 'for a successful match', leading to
+unexpected behavior - typically, on low fill factors, items 'disappear', on 
+higher fill factors, false matches are returned. 
+.sp
+Tables created with the default mode (0) synchronize all table operations (item
+insertion, retrieval and removal, table resizing and deleting) and perform no
+memory management - keys and values are neither copied nor deallocated. 
+Different behavior can also be specified by calling 
+\fBcp_hashtable_create_by_mode\fP and specifying a non-zero \fImode\fP value, 
+e.g. \fBCOLLECTION_MODE_NOSYNC\fP where table access is done in a single thread
+or is synchronized externally. \fBcp_hashtable_create_copy_mode\fP creates a
+table with the \fBCOLLECTION_MODE_COPY\fP and \fBCOLLECTION_MODE_DEEP\fP bits
+set. If non-null \fIcopy_key\fP and \fIcopy_value\fP functions are specified, 
+they are used to insert copies of the keys and values given in insertion 
+functions respectively. Likewise, the \fIfree_key\fP and \fIfree_value\fP
+functions will, if not null, be called upon key and value respectively when 
+removing an entry from the table. Both functions' prototypes should follow
+
+.RS
+.nf
+void *copy_function(void *item);
+.fi
+.RE
+
+\fBcp_hashtable_create_by_option\fP is simillar to 
+.B cp_hashtable_create_copy_mode
+but allows specifying any \fImode\fP. Note that copy functions will only be 
+called if \fBCOLLECTION_MODE_COPY\fP is set and finalization functions will
+only be called if \fBCOLLECTION_MODE_DEEP\fP is set. 
+.sp
+By default tables will resize on insertion when the number of entries in the 
+table exceeds 70% of the internal table size, and on removal when the number of
+entries goes below 5% of the internal table size. Resizing is a potentially
+unpleasant affair, requiring the remapping of all entries in the table. A 
+dedicated thread is kicked up to do this unless the mode bit 
+\fBCOLLECTION_MODE_NOSYNC\fP is set, in which case resizing is done 
+synchronouosly. Resizing can be suppressed by setting 
+\fBCOLLECTION_MODE_NORESIZE\fP. Upper and lower fill factors may be set with 
+\fBcp_hashtable_set_max_fill_factor\fP and 
+\fBcp_hashtable_set_min_fill_factor\fP respectively. The table will not be 
+resized below \fImin_size\fP which is set to \fIsize_hint\fP on 
+initialization and can be changed with \fBcp_hashtable_set_min_size\fP.
+.sp
+All mode bits can be set or reset after creation time by calling 
+\fBcp_hashtable_set_mode\fP and \fBcp_hashtable_unset_mode\fP. Note that tables
+constructed with \fBCOLLECTION_MODE_NOSYNC\fP set do not initialize the 
+synchronization features, and subsequent attempts to perform thread safe
+operations may behave unpredictably. If a hashtable may be accessed by multiple
+threads at any point, it should not be initialized with 
+\fBCOLLECTION_MODE_NOSYNC\fP.
+
+.SH RETURN VALUE
+all constructor functions return a pointer to a newly allocated hashtable 
+instance on success, or \fBNULL\fP on failure. 
+
+.SH ERRORS
+.B ENOMEM
+an internal memory allocation failed.
+
+.SH "SEE ALSO"
+.BR cp_hashtable (3),
+.BR cp_hashtable_set_mode (3),
+.BR cp_hashtable_set_max_fill_factor (3),
+.BR cp_hashlist (3)

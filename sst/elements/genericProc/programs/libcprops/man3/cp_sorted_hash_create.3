@@ -1,0 +1,132 @@
+.TH cp_sorted_hash 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_sorted_hash"
+.SH NAME
+cp_sorted_hash_create, cp_sorted_hash_create_by_option, cp_sorted_hash_destroy,
+cp_sorted_hash_destroy_custom \- sorted hash constructor/ destructor functions
+
+.SH SYNOPSIS
+#include <cprops/sorted_hash.h>
+.sp
+
+.BI "cp_sorted_hash *cp_sorted_hash_create(cp_hashfunction " hash ", 
+.ti +38n
+.BI "cp_compare_fn " cmp_key ", 
+.ti +38n
+.BI "cp_mapping_cmp_fn " cmp_mapping ");
+.br
+.BI "cp_sorted_hash *
+.ti +5n
+.BI "cp_sorted_hash_create_by_option(int " mode ", 
+.ti +37n
+.BI "unsigned long " size_hint ",
+.ti +37n
+.BI "cp_hashfunction " hash ", 
+.ti +37n
+.BI "cp_compare_fn cmp_key, 
+.ti +37n
+.BI "cp_mapping_cmp_fn " cmp_mapping ", 
+.ti +37n
+.BI "cp_copy_fn " key_copy ", 
+.ti +37n
+.BI "cp_destructor_fn " key_dtr ",
+.ti +37n
+.BI "cp_copy_fn " val_copy ", 
+.ti +37n
+.BI "cp_destructor_fn " val_dtr ");
+.sp
+.BI "void cp_sorted_hash_destroy(cp_sorted_hash *" table ");
+.br
+.BI "void cp_sorted_hash_destroy_custom(cp_sorted_hash *" table ", 
+.ti +35n
+.BI "cp_destructor_fn " key_dtr ",
+.ti +35n
+.BI "cp_destructor_fn " val_dtr ");
+
+.SH DESCRIPTION
+.B cp_sorted_hash_create
+creates a sorted hash using the given hash and comparison functions for key
+lookups and the given mapping comparison function for ordering. This allows
+performing lookups by key while preserving an ordering based on the key, value
+or both. As a special case if a NULL mapping comparison function is specified 
+the collection is ordered by key ordering. This results in a data structure 
+supporting both ordering and lookups in amortized O(1) time, at the price of 
+slower insertion and removal operations and a larger memory overhead per item. 
+.br 
+The prototypes for hash, key compare and mapping comparison functions are as 
+follows:
+
+.nf
+unsigned long hash_fn(void *key);
+int compare_fn(void *key1, void *key2);
+int mapping_cmp_fn(cp_mapping *mapping1, cp_mapping *mapping2);
+.fi
+
+The key compare function should follow this prototype:
+
+.nf
+  int cmp(void *a, void *b);
+.fi
+
+and return 0 for matching keys, > 0 if a > b and < 0 if a < b (strcmp
+semantics). The created tree is not synchronized (COLLECTION_MODE_NOSYNC mode
+bit is set).
+.sp
+.B cp_mapping
+structure is defined as follows:
+
+.nf
+typedef struct _cp_mapping
+{
+    void *key;
+    void *value;
+} cp_mapping;
+.fi
+
+The following macros may be used to obtain key and value from a cp_mapping 
+object:
+
+.BI "void *cp_mapping_key(cp_mapping *" m ");
+.br
+.BI "void *cp_mapping_value(cp_mapping *" m ");
+
+
+.sp
+.B cp_sorted_hash_create_by_option
+allows specifying an initial operation mode. Note that unless
+COLLECTION_MODE_NOSYNC is set on the
+.I mode
+parameter, tree operations are synchronized. The
+.I key_copy
+and
+.I value_copy
+functions are used on insertion if COLLECTION_MODE_COPY is set. If
+COLLECTION_MODE_COPY is set and either of these is NULL, inserted keys and / or
+values are inserted directly rather than copies.
+.br
+The
+.I key_dtr
+and
+.I value_dtr
+functions are used on item removal or tree destruction if COLLECTION_MODE_DEEP
+is set. If COLLECTION_MODE_DEEP is set and either of these is NULL, no cleanup
+is performed on keys and / or values. This makes it possible to apply the copy/
+deep mechanism to keys or values only.
+.sp
+.B cp_sorted_hash_destroy
+deallocates the mapping structure using the current mode settings.
+.B cp_sorted_hash_destroy_custom
+sets the COLLECTION_MODE_DEEP mode bit and destroys the collection using the 
+given key and value destructor functions. Specifying a NULL destructor 
+function or functions precludes key deallocation, value deallocation or both.
+
+.SH RETURN VALUE
+.B cp_sorted_hash_create
+and
+.B cp_sorted_hash_create_by_option
+return a newly allocated cp_sorted_hash object on success or NULL on failure.
+
+.SH SEE ALSO
+.BR cp_hashtable (3), 
+.BR cp_sorted_hash_insert (3), 
+.BR cp_sorted_hash_callback (3), 
+.BR cp_sorted_hash_set_mode (3), 
+.BR cp_sorted_hash_lock (3) 

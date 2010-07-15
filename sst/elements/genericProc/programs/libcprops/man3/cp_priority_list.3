@@ -1,0 +1,151 @@
+.TH cp_list 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops overview"
+.SH NAME
+cp_priority_list \- a priority queue implementation
+.SH SYNOPSIS
+
+.B #include <cprops/priority_list.h>
+.sp
+.BI "cp_priority_list *cp_priority_list_create(int " immediate ",
+.ti +42n
+.BI "int " normal ", int *" weights "); 
+.br
+.B cp_priority_list *
+.ti +5n
+.BI "cp_priority_list_create_by_option(int " immediate ", 
+.ti +39n
+.BI "int " normal ",
+.ti +39n
+.BI "int *" weights ",
+.ti +39n
+.BI "cp_compare_fn " compare_fn ",
+.ti +39n
+.BI "cp_copy_fn " copy_fn ", 
+.ti +39n
+.BI "cp_destructor_fn " destructor_fn ", 
+.ti +39n
+.BI "int "mode ");
+.br
+.BI "void cp_priority_list_destroy(cp_priority_list *" list ");
+.br 
+.BI "void cp_priority_list_destroy_by_option(cp_priority_list *" list ",
+.ti +40n
+.BI "int " option ");
+.sp
+.BI "void *cp_priority_list_insert(cp_priority_list *" list ",
+.ti +30n
+.BI "void *" item ", int " priority ");
+.br
+.BI "void *cp_priority_list_insert_by_option(cp_priority_list *" list ",
+.ti +40n 
+.BI "void *" item ",
+.ti +40n
+.BI "int " priority ",
+.ti +40n
+.BI "int " mode ");
+.sp
+.BI "void *cp_priority_list_get_next(cp_priority_list *" list ");
+.br
+.BI "void *cp_priority_list_get_next_by_option(cp_priority_list *" list ",
+.ti +42n
+.BI "int " mode ");
+.sp
+.BI "int cp_priority_list_lock(cp_priority_list *" list ", int " lock_mode ");
+.br
+.BI "int cp_priority_list_rdlock(cp_priority_list *" list ");
+.br
+.BI "int cp_priority_list_wrlock(cp_priority_list *" list ");
+.br
+.BI "int cp_priority_list_unlock(cp_priority_list *" list ");
+.sp
+.BI "long cp_priority_list_item_count(cp_priority_list *" list ");
+.br
+.BI "int cp_priority_list_is_empty(cp_priority_list *" list ");
+
+.SH DESCRIPTION
+\fBcp_priority_list\fP is a priority queue implementation featuring an 
+optional ``immediate'' priority queue and any number of ``normal'' weighted
+queues. Internally each of these is implemented as a separate linked list.
+Normal priority queues are assigned weights at instantiation. These weights 
+are the number of items that are extracted from a queue before switching to 
+the next queue, to the extent that the queues are full and there are no 
+immediate priority items. E.g. defining two normal priority queues with
+weights 5 and 3, extraction methods will attempt to extract 5 items from the
+index 1 queue, then 3 item from the index 2 queue and so forth. Index 0 is
+reserved for the immediate priority queue. 
+.br
+Items pushed with the same priority index are extracted in order (FIFO). 
+
+.SH CONSTRUCTOR / DESTRUCTOR FUNCTIONS
+\fBcp_priority_list_create\fP creates a priority list with \fInormal\fP normal
+priority queues with weights as defined by the \fIweights\fP array. If 
+\fIimmediate\fP is non-zero, the list will be created with an immediate queue.
+.br
+The default mode for priority lists is \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP 
+and item insertion and removal are synchronized. Different behavior can be 
+requested with \fBcp_priority_list_create_by_option\fP which allows specifying
+a different \fImode\fP, an item comparison function \fIcompare_fn\fP which is 
+used if \fInot\fP setting the \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP bit, a 
+copy function \fIcopy_fn\fP which is used if setting the 
+\fBCOLLECTION_MODE_COPY\fP bit and an item destructor function
+.I destructor_fn which is invoked upon item removal if the 
+.B COLLECTION_MODE_DEEP
+mode bit is set. For additional disscussion of mode bits see 
+.BR cp_list(3).
+
+.SH ADDING ITEMS
+\fBcp_priority_list_insert\fP adds an item in the list's default mode to the 
+queue with the index \fIpriority\fP. The index \fI0\fP denotes the 
+\fIimmediate\fP priority queue. \fBcp_priority_list_insert_by_option\fP allows
+specifying the operation mode with the \fImode\fP parameter. Note that unless
+the \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP bit is set all lists are scanned to
+ensure that the item being inserted is not already present. 
+
+.SH RETREIVING ITEMS
+\fBcp_priority_list_get_next\fP returns the next item from the list by priority
+using the list's default mode. The next item is determined as described above. 
+\fBcp_priority_list_get_next_by_option\fP uses the mode specified by the 
+\fImode\fP parameter. In particular setting the \fBCOLLECTION_MODE_DEEP\fP bit
+will have the effect of calling \fBfree\fP(3) on the retreived item. 
+.br
+Both functions return \fBNULL\fP if the list is empty.
+
+.SH SYNCHRONIZATION
+call \fBcp_priority_list_lock\fP with the \fImode\fP parameter set to
+\fBCOLLECTION_LOCK_READ\fP to obtain a read-lock, or to
+\fBCOLLECTION_LOCK_WRITE\fP to obtain a write-lock on a list. The macros
+\fBcp_priority_list_rdlock\fP and \fBcp_priority_list_wrlock\fP may also be 
+used to the same effect. Calls to locking functions must be coupled with a 
+call to \fBcp_priority_list_unlock\fP to release the lock. As for other 
+collection objects, explicit locking is only required when several operations
+must complete before allowing other threads access to the list. Otherwise 
+single list operations are synchronized unless COLLECTION_MODE_NOSYNC is 
+specified.
+.sp
+Priority lists are synchronized by default. Create the list with the 
+\fBCOLLECTION_MODE_NOSYNC\fP mode bit set to override this. 
+
+.SH OTHER
+\fBcp_priority_list_item_count\fP returns the number of items currently in the 
+list.
+.br
+\fBcp_priority_list_is_empty\fP returns non-zero is the list is empty, 0 otherwise.
+
+.SH RETURN VALUE
+constructor functions return a pointer to a newly allocated 
+\fBcp_priority_list\fP or \fBNULL\fP on failure.
+.br
+insertion and retrieval and removal functions return a pointer to the added 
+item or \fBNULL\fP if the operation failed. 
+.br
+synchronization functions return 0 on success, non-zero on error.
+
+.SH ERRORS
+.TP 
+.B EINVAL
+attempting to insert an item with an undefined priority index.
+.TP
+.B ENOMEM
+an internal memory allocation failed.
+
+.SH "SEE ALSO"
+.BR cp_list (3)

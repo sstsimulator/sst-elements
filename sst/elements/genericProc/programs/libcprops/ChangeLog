@@ -1,0 +1,266 @@
+ChangeLog for libcprops
+-----------------------
+
+Version 0.1.8 15-Dec-2007
+
+ o   fixed test_reindex.c and test_reindex_unique test programs
+ o   fixed cp_multimap reindexing fiasco
+ o   fixed cp_multimap item removal bug 
+
+Version 0.1.7 30-Nov-2007
+
+ o   added cp_multimap - a data structure based on cp_rbtree which allows
+     creating multiple indices on tree content
+ o 	 added call to SSL_library_init() for openssl 0.98e and missing error
+ 	 checking on context creation. Thanks to Johny Jugianto	for pointing this
+ 	 out.
+ o   added cp_*_find functions to locate nearest keys using CP_OP_* 
+     operators in cp_avltree, cp_rbtree, cp_splaytree and cp_sorted_hash
+ o   fixed a bug reading headers with leading whitespace in httpclient.c 
+ o   cp_client now performs DNS lookup using (gnu) gethostbyname_r if available
+     - apart for being reentrant, this improves name resolution in some setups 
+ o   added missing include directive in cpsp.c - thanks to Francois 
+     Deppierraz and Martin Albrecht for pointing this out
+ o   fixed memory leak in cp_mempool_destroy - thanks to Kyle Wheeler for 
+     patch
+
+Version 0.1.6 15-Sep-2006
+
+ o   added cp_narytree, an in-memory btree implementation
+ o   dropped ``inline'' keyword throughout the code
+ o   added cp_sorted_hash, an ordered hash table implementation
+ o   added cp_mempool, a fixed size memory pool
+ o   added cp_shared_mempool, a shareable collection of mempools
+ o   changed hash code and table sizes to unsigned long
+ o   improved dependency checking in build process. In particular the build 
+     will run if the makefile itself has been changed, e.g. after running 
+     ./configure.
+ o   changed HAVE_* defines in config.h to CP_HAS_* to allow inclusion
+     in other autoconf'ed packages
+ o   fixed build on netbsd
+ o   fixed open bsd warnings
+
+Version 0.1.5 1-Aug-2006
+
+ o   win32 port
+ o   added cp_heap, a heap implementation based on libheap, contributed to
+     libcprops by Kyle Wheeler
+ o   replaced recursive tree deletion functions with iterative versions
+     in rb.c, avl.c and splay.c. Thanks to Kyle Wheeler for patch.
+ o   cp_hashlist_iterator_remove was setting the iterator position to a
+     pointer in the released entry - fixed
+ o   cp_splaytree_insert fixed to increment item count. Thanks to Kyle
+     Wheeler for this and the next bug fix.
+ o   cp_hashlist_destroy_custom was ignoring the parameter destructor 
+     functions - fixed
+
+
+Version 0.1.4 15-Jun-2006
+
+ o   improved request body reading in cp_httpsocket - POST body now handled 
+     correctly
+ o   in cgi service: POST data now written to CGI stdin
+ o   HTTP_COOKIE CGI environment variable now correctly set
+ o   fixed bug reading http response in cp_httpclient with 
+     Transfer-Encoding: chunked
+ o   fixed transaction handling in cp_trie_unlock
+ o   including <sys/types.h> in client.h on FreeBSD, NetBSD
+ o   if poll(2) is not available, select(2) is used instead and httpclient.h 
+     defines cp_httpclient_ctl_default_get_fds and cp_httpclient_ctl_get_fds 
+     rather than cp_httpclient_ctl_default_get_pollfds and
+     cp_httpclient_ctl_get_pollfds. 
+ o   if dlfcn.h not available, dbms dynamic linking disabled and db.o not 
+     compiled unless dbms enabled explicitly or through --with-postgres or 
+     --with-mysql options
+ o   fixed build on Mac OS X
+
+Version 0.1.3 30-May-2006
+
+ o   added cp_rbtree - a red-black tree implementation
+ o   added cp_splay - a splay tree implementation
+ o   added support for COLLECTION_MODE_MULTIPLE_VALUES in cp_avltree 
+ o   fixed cp_string_dump to prevent printing one-after-last character
+ o   added cp_string_filter() to delete all occurrences of a character from a
+     string
+ o   added utility function filter_string to delete all occurrences of a 
+     character from a null terminated string
+ o   changed allocation check order to prevent a possible SEGV on allocation
+     failure in cp_pooled_thread_create() - thanks to smartyxt for reporting
+     this
+ o   changed cp_vector_destroy() and cp_vector_destroy_custom to check for
+     NULL values
+ o   fixed build in client.c and httpclient.c when ssl is disabled
+
+Version 0.1.2 23-May-2006
+-------------------------
+
+ o   added cp_avltree - an AVL tree implementation
+ o   changed cp_XXX_lock() and cp_XXX_unlock() function semantics to lock the
+     collection while allowing the thread owning the lock to call collection
+     insert, delete, search etc. functions without deadlocking. This allows
+     writing transaction like code where the collection lock() and unlock()
+     functions behave like a 'start transaction' and 'end transaction' - at
+     least as far as synchronization is concerned, which is more intuitive and
+     solves an issue that would otherwise require digging into the internals
+     of the specific collection at use (ie, better ``encapsulation''). On the
+     downside, code relying on the old behavior will have to be rewritten.
+     Affected collections are cp_list, cp_priority_list, cp_hashtable, 
+     cp_hashlist and cp_trie.
+ o   added cp_list_get_mode(), cp_list_set_mode() and cp_list_unset_mode() 
+     functions
+ o   added cp_priority_list_get_mode(), cp_priority_list_set_mode() and 
+     cp_priority_list_unset_mode() functions
+ o   changed the return value of cp_hashtable_set_mode,
+     cp_hashtable_unset_mode, cp_hashtable_set_min_size, 
+     cp_hashtable_set_min_fill_factor, cp_hashtable_set_max_fill_factor 
+     and cp_hashtable_remove_all from void to int to report locking failure
+ o   changed the return value of cp_hashlist_set_mode,
+     cp_hashlist_unset_mode, cp_hashlist_set_min_size, 
+     cp_hashlist_set_min_fill_factor, cp_hashlist_set_max_fill_factor and
+     cp_hashlist_callback from void to int to report locking failure
+ o   added functions cp_trie_get_mode, cp_trie_set_mode, cp_trie_unset_mode
+ o   cleanup - removed some old #if 0 sections
+ o   added a Makefile for the examples directory
+ o   fixed memory leak in cp_hashtable_contains
+ o   fixed memory leak in cp_list_iterator_remove
+ o   fixed bad address in cp_list_iterator_prev after iterator is moved beyond
+     the end of the list
+ o   fixed SEGV when attempting cp_dbms_load_driver() without having loaded 
+     any drivers
+ o   fixed an invalid memory access when performing redirects in cp_httpclient
+ o   fixed compiler warnings, memory leaks in example programs
+
+Version 0.1.1 16-May-2006
+-------------------------
+
+ o   fixed cp_trie_remove()
+ o   fixed false positives in cp_trie_exact_match()
+ o   httpclient - fixed redirect when Location header contains a uri only 
+     rather than a complete url
+
+Version 0.1 10-May-2006
+-----------------------
+
+ o   added cp_httpclient - an http client socket api supporting multiple 
+     simultaneous requests, redirects, cookies, ssl and proxies. 
+ o   added function cp_trie_fetch_matches() to return a vector containing the 
+     exact match and all existing prefix matches for a given key
+ o   added function cp_string_flip() to reverse the contents of a cp_string
+ o   added command line option -l to cpsvc to specify log level
+ o   fixed cp_client_read_string read length to prevent buffer overwrites
+ o   added generic pointer hash function, compare function cp_hash_addr() and
+     cp_hash_compare_addr() in hashtable.c
+ o   cp_string_create(char *ptr, int len) checks for negative len values
+ o   added function cp_thread_pool_wait() to block until pool is idle
+ o   fixed cp_socket_create_ssl() to prevent initialization with an invalid
+     SSL_CTX
+ o   added cp_hashtable_get_mode() to retrieve current operation mode
+ o   added ssl_verification_error_str() to return a literal describing ssl 
+     verification error codes.
+ o   added cp_vector_wrap() to create a vector to wrap a void ** array
+
+Version 0.0.13 11-Apr-2006
+--------------------------
+
+ o   added db.h - a RDBMS connectivity api
+ o   added db_postgres.h - an implementation of the persistence api for postgres
+ o   added db_mysql.h - an implementation of the persistence api for mysql
+ o   added error codes CP_METHOD_NOT_IMPLEMENTED, CP_DBMS_CONNECTION_FAILURE,
+     CP_DBMS_QUERY_FAILED, CP_DBMS_CLIENT_ERROR and CP_DBMS_STATEMENT_ERROR
+ o   fixed check for available threads in thread pool in
+     cp_thread_pool_get_impl - thanks to smartyxt for pointing this out
+ o   added check for malloc failure in cp_hashlist_create_iterator - thanks to
+     smartyxt for pointing this out
+ o   added cp_string_append_char, cp_string_write_file and cp_string_read_file
+     functions to cp_string
+ o   fixed double free in cp_vector_destroy_custom when free_item is not null
+ o   fixed cp_vector_set_element to respect COLLECTION_MODE_COPY
+ o   fixed cp_dump in log.c to print out the last character
+
+Version 0.0.12 15-Mar-2006
+--------------------------
+
+ o   added cp_client - a tcp socket api with SSL support
+ o   fixed CGI service to work with SSL
+ o   fixed cp_httpsocket shutdown when using SSL
+ o   added man pages for cp_string
+ o   cp_vector_set_element calls free_item when replacing vector items if
+     COLLECTION_MODE_DEEP is set
+ o   boundary checking in cp_vector_set_element and cp_vector_element_at
+ o   added man pages for cp_vector
+
+Version 0.0.11 08-Mar-2006
+--------------------------
+
+ o   support for HTTP 1.1 pipelining
+ o   fixed CGI path resolution
+ o   fixed http framework to handle Keep-Alive correctly
+ o   fixed threadpool thread function to check for pool shutdown
+ o   cp_list does not allocate lock for NOSYNC lists
+ o   in log.c, fixed cp_dump() extra byte printout
+ o   cp_socket_stop_all ignores multiple calls
+ o   in file service (svc/file.c), fixed mime type resolution by extension
+
+Version 0.0.10 5-Mar-2006
+-------------------------
+
+ o   fixed build for svc and cpsp subdirectories when root directory is not
+     named ``cprops''
+	 
+Version 0.0.8 27-Feb-2006
+-------------------------
+
+ o   support for CGI in cpsvc
+ o   support for serverside scripting (cpsp) in cpsvc
+ o   extended cp_string functionality
+ o   added shutdown callbacks to cp_socket, cp_httpsocket
+ o   fixed deadlock on session expiration
+ o   fixed HTTP POST ``INCORRECT REQUEST BODY LENGTH'' errors
+ o   fixed `make install' to include config.h unconditionally
+ o   fixed memory leak in trie.c - thanks to Pier Paolo Glave for patch
+ o   fixed invalid access in linked_list.c - thanks to Pier Paolo Glave
+
+Version 0.0.7 30-Jan-2006
+-------------------------
+
+ o   support for http sessions
+ o   support for http cookies
+ o   extended test program
+ o   fixes to cp_vector
+ o   added thread number registry to log.c
+ o   added cp_string *content field to http response for binary content
+ o   fixes to cp_string
+ o   fix to cp_trie_exact_match - thanks to Pier Paolo Glave
+
+Version 0.0.6 14-Jan-2006
+-------------------------
+ o   added collection mode support in cp_trie
+ o   fixed vanishing key bug in cp_trie_add
+
+Version 0.0.5 13-Jan-2006
+-------------------------
+ o   added SSL support for cp_socket, cp_httpsocket
+
+Version 0.0.4 9-Jan-2006
+------------------------
+ o   fixed http socket behavior on client side close
+
+Version 0.0.3 8-Jan-2006
+------------------------
+ o   fixed build on Solaris and BSD
+
+Version 0.0.2 2-Jan-2006
+------------------------
+ o   added man pages for thread framework
+ o   added documentation for socket, http socket api
+ o   thread pool waits on stopping threads
+ o   signal thread pool when returning a thread
+ o   http service routing by prefix rather than full string match
+ o   added doxygen directives
+ o   fixed thread pool bug (pending request at shutdown time)
+ o   cleanup
+
+Version 0.0.1 27-Dec-2005
+-------------------------
+ o   initial release
+

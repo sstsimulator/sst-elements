@@ -1,0 +1,15 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_close \- close a database connection
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "int cp_db_connection_close(cp_db_connection *" connection ");
+.SH DESCRIPTION
+.B cp_db_connection_close
+closes the database connection described by \fIconnection\fP.
+.SH RETURN VALUE
+.B cp_db_connection_close
+returns zero on success or an implementation dependent non-zero value 
+indicating an error.

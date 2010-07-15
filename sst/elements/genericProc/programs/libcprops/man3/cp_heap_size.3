@@ -1,0 +1,19 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_size \- return the current heap capacity
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "int cp_heap_size(cp_heap *" heap ");
+
+.SH DESCRIPTION
+cp_heap_count returns the current heap capacity, which is approximately the 
+number of items that may be stored in the heap before the heap is resized, 
+including the current content. If this number is much higher than the number of 
+items currently stored, cp_heap_contract (3) may be called to decrease the 
+heap capacity.
+
+.SH SEE ALSO
+.BR cp_heap_count (3),
+.BR cp_heap_contract (3)

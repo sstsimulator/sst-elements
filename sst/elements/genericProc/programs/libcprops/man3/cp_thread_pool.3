@@ -1,0 +1,102 @@
+.TH "cp_thread_pool" 3 "OCTOBER 2005" "libcprops" "libcprops - cp_thread_pool"
+.SH NAME
+cp_thread_pool \- a thread pool implementation
+.SH SYNOPSIS
+.B #include <cprops/thread.h>
+
+.BI "cp_thread_pool *cp_thread_pool_create(int " min_size ", int " max_size ");
+.sp
+.BI "void cp_thread_pool_destroy(cp_thread_pool *" pool ");
+.sp
+.BI "int cp_thread_pool_stop(cp_thread_pool *" pool ");
+.sp
+.BI "cp_thread *cp_thread_pool_get(cp_thread_pool *" pool ",
+.ti +30n
+.BI "cp_thread_action " action ", void *" prm ");
+.sp
+.BI "cp_thread *cp_thread_pool_get_stoppable(cp_thread_pool *" pool ", 
+.ti +40n
+.BI "cp_thread_action " action ", 
+.ti +40n
+.BI "void *" action_prm ", 
+.ti +40n
+.BI "cp_thread_stop_fn " stop_fn ", 
+.ti +40n
+.BI "void *" stop_prm ");
+.sp
+.BI "cp_thread *cp_thread_pool_get_nb(cp_thread_pool *" pool ",
+.ti +33n
+.BI "cp_thread_action " action ", void *" prm ");
+.sp
+.BI "cp_thread *cp_thread_pool_get_stoppable_nb(cp_thread_pool *" pool ", 
+.ti +43n
+.BI "cp_thread_action " action ", 
+.ti +43n
+.BI "void *" action_prm ", 
+.ti +43n
+.BI "cp_thread_stop_fn " stop_fn ", 
+.ti +43n
+.BI "void *" stop_prm ");
+.sp
+.BI "cp_thread *cp_thread_pool_get_impl(cp_thread_pool *" pool ", 
+.ti +35n
+.BI "cp_thread_action " action ", 
+.ti +35n
+.BI "void *" action_prm ", 
+.ti +35n
+.BI "cp_thread_stop_fn " stop_fn ", 
+.ti +35n
+.BI "void *" stop_prm ",
+.ti +35n
+.BI "int " block ");
+.sp 
+.BI "int cp_thread_pool_wait(cp_thread_pool *" pool ");
+.sp
+.BI "int cp_thread_pool_count_available(cp_thread_pool *" pool ");
+.br
+.SH DESCRIPTION
+When calling \fBcp_thread_pool_create\fP \fImin\fP
+threads are created and set in wait mode.
+\fBcp_thread_pool_get\fP
+requests a thread from the pool. If one is available the function specified by
+the \fIaction\fP parameter is invoked with the given \fIprm\fP parameter. If 
+no thread is available but the pool size is less than the \fImax\fP
+value given at creation time, a new thread is created to perform the requested
+action. Otherwise \fBcp_thread_pool_get\fP will block until a thread becomes 
+available or \fBcp_thread_pool_stop\fP is called on the pool, either directly 
+or by \fBcp_thread_pool_destroy\fP. 
+.sp
+\fBcp_thread_pool_get_nb\fP never blocks but may return \fBNULL\fP if the pool
+has reached maximal size and no free threads are available.
+.sp
+\fBcp_thread_pool_get_stoppable\fP
+allows specifying a stop function and an optional stop parameter. The stop
+function is called by the framework on shutdown - enabling client code to 
+terminate and perform cleanup for example. If no stop parameter is set, the 
+stop function is invoked with the action parameter the client thread was 
+initialized with. 
+\fBcp_thread_pool_get_stoppable_nb \fP
+is the equivalent non-blocking version.
+.sp
+The stop function should be defined as 
+
+.RS +5n
+.nf
+int cp_thread_stop_function(void *stop_prm);
+.fi
+.RE
+
+.sp
+Load balancing different operations by switching threads from one to the other
+can be done by defining a 
+.BR cp_pooled_thread_client_interface (3)
+for each action and registering them with the same 
+.BR cp_pooled_thread_scheduler (3).
+.sp
+.B cp_thread_pool_wait
+blocks until all threads are done executing.
+
+.SH SEE ALSO
+.BR cp_pooled_thread_client_interface (3),
+.BR cp_pooled_thread_scheduler (3)
+

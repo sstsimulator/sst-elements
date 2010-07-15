@@ -1,0 +1,47 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_remove, cp_hashtable_remove_deep, cp_hashtable_remove_all \- 
+remove mappings from a hashtable 
+.SH SYNOPSIS
+
+.B #include <cprops/hashtable.h>
+
+.BI "void *cp_hashtable_remove(cp_hashtable *" table ", void *" key ");
+.br
+.BI "int cp_hashtable_remove_deep(cp_hashtable *" table ", void *" key ");
+.br
+.BI "int cp_hashtable_remove_all(cp_hashtable *" table ");
+.SH DESCRIPTION
+.B cp_hashtable_remove
+attempts to remove the mapping for 
+.I key
+from hashtable \fItable\fP. If 
+.B COLLECTION_MODE_MULTIPLE_VALUES
+is set all mappings for this key are removed. If
+.B COLLECTION_MODE_DEEP
+is set the finalization functions set at table initialization are invoked upon
+the key and value being removed.
+.sp
+.B cp_hashtable_remove_deep
+is the same as 
+.B cp_hashtable_remove
+with the
+.B COLLECTION_MODE_DEEP
+bit set.
+.sp
+.B cp_hashtable_remove_all
+removes all mappings from the table.
+.SH RETURN VALUE
+.B cp_hashtable_remove
+and
+.B cp_hashtable_remove_deep
+return a pointer to the last removed value - which may no longer be valid if 
+the memory it points to is released by the finalization function, or 
+.B NULL
+if no mapping was found for \fIkey\fP.
+.br
+.B cp_hashtable_remove_all
+returns 0 on success or non-zero on locking failure.
+.SH "SEE ALSO"
+.BR cp_hashtable_create (3),
+.BR cp_hashtable_set_mode (3)

@@ -1,0 +1,36 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_pool_get_connection, 
+cp_db_connection_pool_release_connection \- retrieve / return a connection from
+a connection pool
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_db_connection *
+.ti +5n
+.BI "cp_db_connection_pool_get_connection(cp_db_connection_pool *" pool ");
+.br
+.BI "void "
+.ti +2n
+.BI "cp_db_connection_pool_release_connection(cp_db_connection_pool *" pool ", 
+.ti +43n
+.BI "cp_db_connection *" conn ");
+.SH DESCRIPTION
+.B cp_db_connection_pool_get_connection
+retrieves a connection from a connection pool. If the connection pool has no
+more connections available cp_db_connection_pool_get_connection either returns
+NULL, or blocks until a connection becomes available if the pool was set to 
+block.
+.sp
+.B cp_db_connection_pool_release_connection 
+returns a connection to the pool for reuse. Connections retrieved with 
+cp_db_connection_pool_get_connection should not be closed explicitly.
+.SH RETURN VALUE
+.B cp_db_connection_pool_create
+returns a
+.B cp_db_connection_pool
+structure representing the newly created connection pool on success or NULL on
+failure.
+.SH SEE ALSO
+.BR cp_db_connection_pool_set_blocking (3)

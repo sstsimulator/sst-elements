@@ -1,0 +1,16 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_data_source_destroy \- release a database connection factory
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_data_source_destroy(cp_data_source *" data_source ");
+.SH DESCRIPTION
+.B cp_data_source_destroy
+releases the memory associated with a 
+.B cp_data_source
+connection factory.
+.SH SEE ALSO
+.BR cp_dbms_get_data_source (3),
+.BR cp_db_postgres (3),
+.BR cp_db_mysql (3)

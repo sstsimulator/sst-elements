@@ -1,0 +1,28 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_set_min_fill_factor, cp_hashlist_set_max_fill_factor \- set
+minimal/maximal fill factors for internal table resizing 
+.SH SYNOPSIS
+#include <cprops/hashlist.h>
+
+.BI "int cp_hashlist_set_min_fill_factor(cp_hashlist *" list ", int " factor ");
+.br
+.BI "int cp_hashlist_set_max_fill_factor(cp_hashlist *" list ", int " factor ");
+.SH DESCRIPTION
+\fIfactor\fP is the fill factor in percent beyond which an internal table 
+resize will be triggered upon entry removal 
+(\fBcp_hashlist_set_min_fill_factor\fP) or insertion 
+(\fBcp_hashlist_set_max_fill_factor\fP). The default values are 5 and 70 
+respectively. 
+.sp
+Resizing may be disabled completely by setting the 
+.B COLLECTION_MODE_NORESIZE
+bit on the list's mode.
+.SH RETURN VALUE
+.B cp_hashlist_set_min_fill_factor
+and 
+.B cp_hashlist_set_max_fill_factor
+return 0 on success or -1 on locking failure.
+.SH SEE ALSO
+.BR cp_hashlist_set_min_size (3),
+.BR cp_hashlist_set_mode (3)

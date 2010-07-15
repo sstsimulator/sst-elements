@@ -1,0 +1,17 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_tocstr \- retrieve the underlying character pointer from a cp_string
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "char *cp_string_tocstr(cp_string *" str ");
+.SH DESCRIPTION
+.B cp_string
+objects allocate a buffer at least one byte bigger than required to hold the 
+length of the data they contain. 
+.B cp_string_tocstr
+sets this extra byte to '\\0'
+and returns a pointer to the internal buffer. 
+
+.SH RETURN VALUE
+a pointer to the internal buffer, which is guaranteed to be null terminated.

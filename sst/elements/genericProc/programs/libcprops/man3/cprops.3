@@ -1,0 +1,165 @@
+.TH libcprops 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops overview"
+.SH NAME
+cprops \- the c prototyping tools library
+.SH DESCRIPTION
+the cprops library consists of implementations for several widely used data
+structures, logging facilities, threading and load balancing as well as 
+rudimentary tcp/httpd functionality. 
+
+the public types and functions defined by cprops are prefixed with 'cp_' to 
+allow usage with other libraries that might implement similar types. Other
+functions are for internal use and may not be supported in future releases. 
+
+Here's a list of goodies.
+
+.B data structures
+.TP 
+.B cp_string
+a 'safe string' implementation
+.TP
+.B cp_vector
+a 'safe array' implementation
+.TP
+.B cp_list
+a doubly linked list implementation
+.TP
+.B cp_heap
+a heap implementation
+.TP
+.B cp_priority_list
+a 'priority list' implementation featuring an optional 'immediate' and any 
+number of 'normal' priority queues. Queue weights are assigned on creation. The
+extraction algorithm is a weight based round robin with override priority for
+the 'immediate' queue if one is defined.
+.TP 
+.B cp_hashtable
+a hashtable implementation
+.TP 
+.B cp_hashlist
+a hashtable supporting insertion order conservation and quick iteration.
+.TP 
+.B cp_sorted_hash
+an ordered hash table implementation.
+.TP
+.B cp_avltree
+an AVL tree implementation. AVL trees are height balanced binary trees with a
+guaranteed lookup time of O(log n). Advantages over hashtables are that 
+hashtables require a hash function, do not maintain iteration order (although 
+hashlists do) and have a worst case lookup time of O(n). 
+.TP
+.B cp_rbtree
+a red-black tree implementation. Red black trees are height balanced binary
+trees simillar in performance to AVL trees. On average, insertion and deletion 
+operations are faster than in AVL trees, whereas lookups may be somewhat
+slower. 
+.TP
+.B cp_splaytree
+a splay tree implementation. In splay trees, every tree operation (insert, 
+delete, lookup) brings the affected node to the root of the tree. This makes
+splay trees useful for applications where the search space is much larger 
+than the group of mappings most frequently accessed. A drawback in 
+applications where the tree can be accessed from multiple threads is that
+since the lookup operation changes the tree structure, the tree must be write-
+locked during lookup. In other collection implementations lookup requires a
+read-lock only, allowing simultaneous access from multiple readers. 
+.TP 
+.B cp_narytree
+an in-memory btree implementation. Btrees allow creating a relatively flat 
+tree, and are typically used where the cost involved in tree traversal is 
+high, as in a disk access. However due to cache line optimizations in current 
+processors, in-memory btrees may outperform other data structures for well 
+chosen tree orders.
+.TP 
+.B cp_trie
+a character trie implementation which can be used for string prefix matching, 
+and is used internally in the \fBhttp\fP service implementation for routing 
+requests to services by uri.
+
+.P
+.hy 0
+insertion, extraction an removal operations on collection types are 
+synchronized by default. This behavior can be controlled by creating instances
+using the *_by_mode constructor versions with COLLECTION_MODE_NOSYNC, or by 
+calling the *_by_mode api functions.
+
+.B general purpose tools
+.TP
+.B cp_mempool, cp_shared_mempool
+cp_mempool is a memory pool for fixed allocation sizes. cp_shared_mempool 
+is a shareable memory pool implementation based on cp_mempool. The memory 
+returned to the pool is kept for future requests and is ultimately released 
+back to the general "malloc" library when the memory pool is destroyed.
+.TP
+.B cp_thread_pool
+a thread pool implementation. Threads are created on pool initialization and
+exit on pool destruction. When client code exits the thread returns to the 
+pool to wait for the next request. This eliminates the thread creation time 
+overhead. 
+.TP
+.B cp_pooled_thread_scheduler
+a load balancer for cp_thread_pool clients. The pooled cp_thread scheduler 
+interface is meant for use by clients who require a variable number of 
+cp_threads. Each such component may create an instance of 
+cp_pooled_thread_client_interface and use the api functions to get cp_threads
+from the underlying cp_thread_pool. Load balancing is managed distributedly, 
+based on load factors reported by scheduler clients. 
+.TP
+.B cp_client
+a tcp client socket. Create a cp_client with a host string and a port,
+for ssl connections specify a certificate authority certificate file or 
+directory. 
+.TP
+.B cp_socket
+a tcp 'server socket' implementation. Create a cp_socket to listen on a port, 
+specify a callback to implemet your communication protocol (libcprops 
+provides a basic http implementation you could plug in) and the strategy
+you want for handling multiple connections - use a thread pool to serve each 
+connection on its own thread or specify a callback to process requests by a 
+single thread as they are read in a more select()-like approach.
+.TP 
+.B cp_httpclient
+an http client implementation. cp_httpclient objects are created to retrieve 
+content from a specific host and port. The same object may be reused for the 
+same uri or other uris. cp_httpclient supports ssl, proxies, cookies, and 
+redirects and offers synchronous, asynchronous and multi-threaded interfaces.
+.TP
+.B cp_httpsocket
+a partial http implementation. Based on cp_socket. Instantiate a 
+cp_httpsocket to listen on a port, register cp_http_services per uri, receive 
+an cp_http_request and fill up a cp_http_response structure to respond to 
+requests. 
+.TP 
+.B dbms abstraction layer - cp_dbms
+cprops provides a dbms abstraction layer, allowing performing dbms operations
+through a unified api independent of the actual implementation. Currently
+postgres and mysql are supported. Switching between datbases is nearly  
+transparent - the only difference is the database specific call to create a
+connection factory.
+.TP
+.B logging
+cprops provides simple logging facilities. 
+
+.SH DEPENDENCIES
+libcprops uses the pthread and POSIX regex libraries.
+
+.SH COMPILING AND LINKING
+compiling and linking require the same command line syntax required to link 
+with the pthread library. 
+.sp
+on linux, compile with -D_REENTRANT -D_XOPEN_SOURCE=500. Link with -lpthread
+-lcprops.
+.P
+.SH "SEE ALSO"
+.BR cp_string (3),
+.BR cp_vector (3),
+.BR cp_list (3),
+.BR cp_priority_list (3),
+.BR cp_hashtable (3),
+.BR cp_hashlist (3),
+.BR cp_trie (3),
+.BR cp_thread (3),
+.BR cp_client (3),
+.BR cp_socket (3),
+.BR cp_httpsocket (3),
+.BR cp_dbms (3),
+.BR cp_log (3)

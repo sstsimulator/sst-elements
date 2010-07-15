@@ -1,0 +1,22 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_cpy \- copy a cp_string
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "cp_string *cp_string_cpy(cp_string *" dst ", cp_string *" src ");
+.SH DESCRIPTION
+.B cp_string_cpy
+copies the string represented by 
+.I src
+onto \fIdst\fP. If necessary the internal buffer of the destination string is 
+reallocated to accomodate for the source string.
+
+.SH RETURN VALUE
+the 
+.I dst
+parameter on success or 
+.B NULL
+on failure. 
+.SH SEE ALSO
+.BR cp_string_cstrcpy (3)

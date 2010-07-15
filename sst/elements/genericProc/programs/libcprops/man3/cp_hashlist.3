@@ -1,0 +1,211 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist \- a hashtable supporting insertion order conservation and quick
+iteration
+
+.SH DESCRIPTION
+.B cp_hashlist
+may be viewed as a hashtable where nodes are inserted in a linked list to 
+express their iteration order or equivalently, as a linked list where entries
+are keyed to permit random access lookups. Like \fBcp_hashtable\fP, this 
+implementation makes it possible to specify the degree of internal or external 
+synchronization and entry memory management as well as several performance
+tuning parameters - namely the load factor limits for internal table resizing.
+.SH INTERFACE
+.I <cprops/hashlist.h>
+defines the following functions: 
+.SS CONSTRUCTOR FUNCTIONS
+.BI "cp_hashlist *cp_hashlist_create(unsigned long " size_hint ", 
+.ti +32n
+.BI "cp_hashfunction " hash_fn ", 
+.ti +32n
+.BI "cp_compare_fn " compare_fn ");
+.sp
+.BI "cp_hashlist *cp_hashlist_create_by_mode(int " mode ", 
+.ti +40n
+.BI "unsigned long " size_hint ", 
+.ti +40n
+.BI "cp_hashfunction " hash_fn ", 
+.ti +40n
+.BI "cp_compare_fn " compare_fn ");
+.sp
+.BI "cp_hashlist *cp_hashlist_create_by_option(int " mode ", 
+.ti +42n
+.BI "unsigned long " size_hint ", 
+.ti +42n
+.BI "cp_hashfunction " cp_hash_fn ", 
+.ti +42n
+.BI "cp_compare_fn  " compare_fn ",
+.ti +42n
+.BI "cp_copy_fn " copy_key ", 
+.ti +42n
+.BI "cp_destructor_fn " key_free ", 
+.ti +42n
+.BI "cp_copy_fn " copy_value "
+.ti +42n
+.BI "cp_destructor_fn "free_value "); 
+.SS DESTRUCTOR FUNCTIONS
+.BI "void cp_hashlist_destroy(cp_hashlist *" list ");
+.br
+
+.BI "void cp_hashlist_destroy_by_option(cp_hashlist *" list ", int " mode ");
+.sp
+.BI "void cp_hashlist_destroy_custom(cp_hashlist *" list ", 
+.ti +32n
+.BI "cp_destructor_fn " dk ", 
+.ti +32n
+.BI "cp_destructor_fn " dv ");
+.SS ADDING MAPPINGS
+.BI "void *cp_hashlist_insert(cp_hashlist *" list ", void *" key ", void *" value ");
+.br
+.BI "void *cp_hashlist_insert_by_option(cp_hashlist *" list ", 
+.ti +35n
+.BI "void *" key ", 
+.ti +35n
+.BI "void *" value ", 
+.ti +35n
+.BI "int " mode ");
+.br
+.BI "void *cp_hashlist_append(cp_hashlist *" list ", void *" key ", void *" value ");
+.br
+.BI "void *cp_hashlist_append_by_option(cp_hashlist *" list ", 
+.ti +35n
+.BI "void *" key ", 
+.ti +35n
+.BI "void *" value ", 
+.ti +35n
+.BI "int " mode ");
+.br
+.SS REMOVING MAPPINGS
+.BI "void *cp_hashlist_remove(cp_hashlist *" list ", void *" key ");
+.br
+.BI "void *cp_hashlist_remove_deep(cp_hashlist *" list ", void *" key ");
+.br
+.BI "void *cp_hashlist_remove_by_option(cp_hashlist *" list ", 
+.ti +35n
+.BI "void *" key ", int " mode ");
+.br
+.BI "void *cp_hashlist_remove_head(cp_hashlist *" list ");
+.br
+.BI "void *cp_hashlist_remove_head_by_option(cp_hashlist *" list ", int " mode ");
+.br
+.BI "void *cp_hashlist_remove_tail(cp_hashlist *" list ");
+.br
+.BI "void *cp_hashlist_remove_tail_by_option(cp_hashlist *" list ", int " mode ");
+.br
+.SS ITEM RETRIEVAL
+.BI "void *cp_hashlist_get(cp_hashlist *" list ", void *" key ");
+.br
+.BI "void *cp_hashlist_get_head(cp_hashlist *" list ");
+.br
+.BI "void *cp_hashlist_get_tail(cp_hashlist *" list ");
+.SS BEHAVIOR
+.BI "int cp_hashlist_get_mode(cp_hashlist *" list ");
+.br
+.BI "int cp_hashlist_set_mode(cp_hashlist *" list ", int " mode ");
+.br
+.BI "int cp_hashlist_unset_mode(cp_hashlist *" list ", int " mode ");
+.br
+.BI "int cp_hashlist_set_min_size(cp_hashlist *" list ", long " size ");
+.br
+.BI "int cp_hashlist_set_min_fill_factor(cp_hashlist *" list ", int " factor ");
+.br
+.BI "int cp_hashlist_set_max_fill_factor(cp_hashlist *" list ", int " factor ");
+.SS SYNCHRONIZATION
+.BI "int cp_hashlist_lock(cp_hashlist *" list ", int " type ");
+.br
+.BI "int cp_hashlist_unlock(cp_hashlist *" list ");
+.br
+.BI "int cp_hashlist_rdlock(cp_hashlist *" list ");
+.br
+.BI "int cp_hashlist_wrlock(cp_hashlist *" list ");
+.SS OTHER
+.BI "int cp_hashlist_callback(cp_hashlist *" list ",
+.ti +25n
+.BI "int (*" cb ")(void *key, void *value, void *id),
+.ti +25n
+.BI "void *" id ");
+.br
+.BI "unsigned long cp_hashlist_item_count(cp_hashlist *" list ");
+.br
+.BI "int cp_hashlist_is_empty(cp_hashlist *" list "); 
+.br
+
+
+.SH EXAMPLE
+The following code creates a hashlist, inserts mappings, performs a lookup and
+prints the keys in reverse order. 
+
+.RS +3n
+.nf
+#include <cprops/hashlist.h>
+#include <stdio.h>
+#include <string.h> /* strcmp and strdup */
+#include <stdlib.h> /* free */
+#include <errno.h>  /* perror */
+
+int main(int argc, char *argv[])
+{
+	char key[32];
+	char value[32];
+	char *res;
+	cp_hashlist *t;
+	cp_hashlist_iterator *i;
+	int j;
+
+	t = cp_hashlist_create_by_option(COLLECTION_MODE_NOSYNC | 
+                                      COLLECTION_MODE_DEEP |
+                                      COLLECTION_MODE_COPY,
+                                      10,
+                                      cp_hash_string,
+                                      (cp_compare_fn) strcmp,
+                                      (cp_copy_fn) strdup,
+                                      (cp_destructor_fn) free,
+                                      (cp_copy_fn) strdup,
+                                      (cp_destructor_fn) free);
+	if (t == NULL)
+	{
+		perror(argv[0]);
+		exit(1);
+	}
+
+	for (j = 0; j < 10; j++)
+	{
+		sprintf(key, "ENTRY (%d)", j);
+		sprintf(value, "VALUE (%d)", j);
+		if (cp_hashlist_insert(t, key, value) == NULL)
+		{
+			perror(argv[0]);
+			exit(1);
+		}
+	}
+	
+	res = cp_hashlist_get(t, "ENTRY (5)");
+	printf("looking up entry #5: %s\\n", res ? res : "not found");
+
+	printf("iterating over list values:\\n");
+	i = cp_hashlist_create_iterator(t, COLLECTION_LOCK_NONE);
+	while ((res = cp_hashlist_iterator_next_value(i)))
+		printf("\\to\\t%s\\n", res);
+
+	cp_hashlist_iterator_destroy(i);
+	cp_hashlist_destroy(t);
+
+	return 0;
+}
+.fi
+.RE
+
+for notes on compiling and linking see 
+.BR cprops (3).
+
+.SH SEE ALSO
+.BR cp_hashlist_iterator (3),
+.BR cp_hashlist_create (3),
+.BR cp_hashlist_destroy (3),
+.BR cp_hashlist_get (3),
+.BR cp_hashlist_insert (3),
+.BR cp_hashlist_lock (3), 
+.BR cp_hashlist_set_mode (3),
+.BR cp_hashtable (3),
+.BR cprops (3)

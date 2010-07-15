@@ -1,0 +1,14 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_close_statement \- close a prepared statement
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_close_statement(cp_db_connection *" connection ", 
+.ti +38n
+.BI "cp_db_statement *" statement ");
+.SH DESCRIPTION
+.B cp_db_connection_close_statement
+closes and deallocates a prepared statement created with
+.BR cp_db_connection_prepare_statement (3).

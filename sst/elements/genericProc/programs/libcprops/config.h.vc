@@ -1,0 +1,47 @@
+#ifndef _CP_CONFIG_H
+#define _CP_CONFIG_H
+
+#include "config-cpwin.h"
+
+#ifndef _WINDOWS
+#define _WINDOWS
+#endif
+
+#ifndef cplusplus
+#ifndef inline
+#define inline
+#endif
+#endif /* cplusplus */
+
+#define CP_HAS_PCRE 1
+#define CP_HAS_STRDUP 1
+
+#undef CP_HAS_VARIADIC_MACROS
+#undef CP_HAS_INLINE
+#undef CP_HAS_VSNPRINTF
+#undef CP_HAS_REGEX_H
+#undef CP_HAS_STRINGS_H
+#undef CP_HAS_DIRENT_H
+#undef CP_HAS_NETDB_H
+#undef CP_HAS_PTHREAD_H
+#undef CP_HAS_STRCASECMP
+#undef CP_HAS_STRNCASECMP
+#undef CP_HAS_SRANDOM
+#undef CP_HAS_RANDOM
+#undef CP_HAS_STAT
+#undef CP_HAS_GETHOSTBYNAME
+#undef CP_HAS_READ
+#undef CP_HAS_WRITE
+#undef CP_HAS_STRINGS_H
+#undef CP_HAS_ADDRINFO
+#undef CP_HAS_UNISTD_H
+#undef CP_HAS_GETOPT
+#undef CP_HAS_SYS_TIME_H
+#undef CP_HAS_LOCALTIME_R
+#undef CP_HAS_LONG_LONG
+#undef CP_HAS_STRPTIME
+#undef CP_HAS_DLFCN_H
+#undef CP_HAS_GETCWD
+#undef CP_HAS_NETINET_IN_H
+
+#endif /* _CP_CONFIG_H */

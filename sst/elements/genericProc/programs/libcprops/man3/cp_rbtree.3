@@ -1,0 +1,101 @@
+.TH cp_rbtree 3 "MAY 2006" libcprops.0.1.3 "libcprops - cp_rbtree"
+.SH NAME
+cp_rbtree \- an red-black tree implementation
+
+.SH DESCRIPTION
+.B cp_rbtree
+is a general purpose red-black tree implementation. red-black trees are height 
+balanced binary trees with a guaranteed lookup complexity of O(log n). Red 
+black trees are typically somewhat faster than AVL trees for insertion and
+deletion operations, and possibly somewhat slower for lookups. 
+.br
+Instances may be created with a specifiable degree of internal or external 
+synchronization and entry memory management. 
+.sp
+A tree is created with cp_rbtree_create(3) or cp_rbtree_create_by_option(3) 
+and deallocated with cp_rbtree_destroy(3). After creation behavior may be 
+changed by calling cp_rbtree_set_mode(3) and cp_rbtree_unset_mode(3) to set
+and unset mode bits. Mappings may be added with cp_rbtree_insert(3), retrieved
+with cp_rbtree_get(3) and removed with cp_rbtree_delete(3). For more details
+see the documentation for specific functions.
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/rb.h>\fP.
+.sp
+.BI "cp_rbtree *cp_rbtree_create(cp_compare_fn " cmp "); 
+.br
+.B cp_rbtree *
+.ti +5n
+.BI "cp_rbtree_create_by_option(int " mode ", 
+.ti +32n
+.BI "cp_compare_fn " compare_fn ",
+.ti +32n
+.BI "cp_copy_fn " copy_key ", 
+.ti +32n 
+.BI "cp_destructor_fn " free_key ");    
+.ti +32n
+.BI "cp_copy_fn " copy_value "
+.ti +32n 
+.BI "cp_destructor_fn " free_value ");    
+.sp
+
+.BI "void cp_rbtree_destroy(cp_rbtree *" tree ");
+.br
+.BI "void cp_rbtree_destroy_custom(cp_rbtree *" tree ",
+.ti +30n
+.BI "cp_destructor_fn " dk ",
+.ti +30n
+.BI "cp_destructor_fn " dv ");
+.sp
+
+.BI "int cp_rbtree_callback_preorder(cp_rbtree *" tree ",
+.ti +32n
+.BI "cp_callback_fn " callback ",
+.ti +32n
+.BI "void *" prm ");
+.br
+.BI "int cp_rbtree_callback(cp_rbtree *" tree ", cp_callback_fn " callback ",
+.ti +23n
+.BI "void *" prm ");
+.br
+.BI "int cp_rbtree_callback_postorder(cp_rbtree *" tree ",
+.ti +33n
+.BI "cp_callback_fn " callback ",
+.ti +33n
+.BI "void *" prm ");
+.sp
+
+.BI "void *cp_rbtree_insert(cp_rbtree *" tree ", void *" key ", void *" value ");
+.br
+.BI "void *cp_rbtree_get(cp_rbtree *" tree ", void *" key ");
+.br
+.BI "void *cp_rbtree_delete(cp_rbtree *" tree ", void *" key ");
+.br
+.BI "int cp_rbtree_contains(cp_rbtree *" tree ", void *" key ");
+.br
+.BI "long cp_rbtree_count(cp_rbtree *" tree ");
+.sp
+
+.BI "int cp_rbtree_get_mode(cp_rbtree *" tree ");
+.br
+.BI "void cp_rbtree_set_mode(cp_rbtree *" tree ", int " mode ");
+.br
+.BI "void cp_rbtree_unset_mode(cp_rbtree *" tree ", int " mode ");
+
+.sp
+.BI "int cp_rbtree_lock(cp_rbtree *" tree ", int " type ");
+.br
+.BI "int cp_rbtree_unlock(cp_rbtree *" tree ");
+.br
+.BI "int cp_rbtree_rdlock(cp_rbtree *" tree ");
+.br
+.BI "int cp_rbtree_wrlock(cp_rbtree *" tree ");
+
+
+.SH SEE ALSO
+.BR cp_rbtree_create (3),
+.BR cp_rbtree_insert (3),
+.BR cp_rbtree_lock (3), 
+.BR cp_rbtree_set_mode (3),
+.BR cprops (3)
+

@@ -1,0 +1,14 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_dbms_load_driver \- load a dbms driver implementation
+.SH SYNOPSIS
+#include <cprops/db.h>
+.BI "int cp_dbms_load_driver(char *" name ");
+.SH DESCRIPTION
+.B cp_dbms_load_driver
+attempts to load the dbms driver implementation for the given \fIname\fP. 
+Driver implementations are compiled into shared object files and follow the 
+pattern 'libcp_dbms_NAME.so' where NAME is the dbms name. 
+.SH RETURN VALUE
+zero on success or non-zero if the requested driver could not be loaded.
+

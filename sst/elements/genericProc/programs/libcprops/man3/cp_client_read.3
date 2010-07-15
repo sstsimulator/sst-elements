@@ -1,0 +1,24 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_read, cp_client_read_string \- read from a tcp connection
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "int cp_client_read(cp_client *" client ", char *" buf ", int " len ");
+.sp
+.BI "int cp_client_read_string(cp_client *" client ", cp_string *" str ", int " len ");
+.SH DESCRIPTION
+.B cp_client_read
+reads up to
+.I len
+bytes from the connection associated with cp_client
+.I client
+into the buffer \fIbuf\fP. 
+.B cp_client_read_string
+reads up to 
+.I len 
+bytes into the cp_string \fIstr\fP.
+.SH RETURN VALUE
+0 on end of file, -1 on error or the number of bytes successfully read.
+.SH SEE ALSO
+.BR cp_client_write (3)

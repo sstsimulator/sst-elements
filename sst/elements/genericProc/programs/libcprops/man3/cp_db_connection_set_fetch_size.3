@@ -1,0 +1,16 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_set_fetch_size \- set number of rows to be retrieved at a time
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_set_fetch_size(cp_db_connection *" connection ",
+.ti +37n
+.BI "int " fetch_size ");
+.SH DESCRIPTION
+.B cp_db_connection_set_fetch_size
+sets the number of result rows to be read at a time. If this value is zero, the
+complete result set is read at once.
+.SH SEE ALSO
+.BR cp_result_set_next (3)

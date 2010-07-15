@@ -1,0 +1,27 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_use_mempool, cp_multimap_share_mempool \- use a memory pool for internal multimap allocations
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "int cp_multimap_use_mempool(cp_multimap *" tree ", cp_mempool *" pool ");
+.br
+.BI "int cp_multimap_share_mempool(cp_multimap *" tree ", 
+.ti +30n
+.BI "cp_shared_mempool *" pool ");
+.sp
+.SH DESCRIPTION
+.B cp_multimap_use_mempool
+sets the map to use given mempool or allocate a new one if pool is NULL.
+.sp
+.B cp_multimap_share_mempool
+sets the map to use a shared memory pool.
+.sp
+.SH RETURN VALUE
+.B cp_multimap_use_mempool
+and
+.B cp_multimap_share_mempool
+return zero on success or non-zero on failure. Faliures may be due to locking 
+errors, memory allocation failure, or if the map is not empty when attempting
+to assign a mempool. 

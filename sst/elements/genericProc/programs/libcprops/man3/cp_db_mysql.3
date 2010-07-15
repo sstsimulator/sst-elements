@@ -1,0 +1,54 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_mysql, cp_mysql_data_source \- cp_dbms mysql driver 
+.SH SYNOPSIS
+#include <cprops/db.h>
+#include <cprops/db_mysql.h>
+
+.BI "cp_data_source *
+.ti +5n
+.BI "cp_mysql_data_source(char *" host ", 
+.ti +26n
+.BI "int " port ", 
+.ti +26n
+.BI "char *" login ", 
+.ti +26n
+.BI "char *" password ", 
+.ti +26n
+.BI "char *" db_name ", 
+.ti +26n
+.BI "char *" unix_socket ", 
+.ti +26n
+.BI "unsigned long " client_flag ");
+.SH DESCRIPTION
+If configured --with-mysql, cprops provides a driver to access mysql databases 
+through the cp_dbms api. To use this api, create a data source
+with 
+.B "mysql"
+as the driver name. 
+.sp
+In addition to the basic connection parameters, the mysql driver recognizes
+the following parameters if inserted as keys on the 
+.I prm
+table parameter to  
+.BR cp_dbms_get_data_source_prm (3):
+.sp
+
+.RS +3n
+.nf
+unix_socket  --  specifies the socket or named pipe that should be used.
+client_flag  --  a combination of flags to enable features such as compression,
+                 timeout handling and others.
+.fi
+.RE
+
+For more on these options, see the mysql libmysqlclient documentation for 
+mysql_real_connect(). 
+.sp
+If cprops was configured to link cp_dbms drivers statically, 
+the mysql driver need not be loaded dynamically and 
+.B cp_mysql_data_source
+may be called directly to obtain connections.
+.SH SEE ALSO
+.BR cp_dbms_get_data_source (3),
+.BR cp_dbms_get_data_source_prm (3)

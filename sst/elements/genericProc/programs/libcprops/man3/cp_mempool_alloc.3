@@ -1,0 +1,31 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_mempool_alloc, cp_mempool_calloc \- obtain memory block from a memory pool
+
+.SH SYNOPSIS
+#include <cprops/mempool.h>
+.sp
+.BI "void *cp_mempool_alloc(cp_mempool * const " pool ");
+.br
+.BI "void *cp_mempool_calloc(cp_mempool * const " pool ");
+
+.SH DESCRIPTION 
+.B cp_mempool_alloc
+returns an uninitialized memory block of the size defined at pool creation time
+from the memory pool. 
+.sp
+.B cp_mempool_calloc 
+returns a memory block of the size defined at pool creation time, initialized 
+to contain zeros. 
+
+.SH RETURN VALUE
+a pointer to a memory block of the requested size or NULL if no more memory is
+available. 
+.B cp_mempool 
+will expand automatically if the internal allocation is exhausted, but may fail if the internal expansion operation fails. 
+
+.SH SEE ALSO
+.BR cp_mempool_create (3),
+.BR cp_mempool_free (3), 
+.BR cp_mempool_destroy (3),
+.BR cp_shared_mempool (3)

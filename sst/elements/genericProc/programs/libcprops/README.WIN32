@@ -1,0 +1,61 @@
+cprops - c prototyping tools
+============================
+
+See INSTALL.WIN32 for installation instructions. 
+
+
+The cprops WIN32 port provides some emulation for unix apis. 
+
+(1) the following functions are emulated for windows:
+
+#include <cprops/util.h>
+
+char *strndup(char *src, int maxlen);
+int gettimeofday(struct timeval *res, struct timezone *tz);
+int getopt(int argc, char *argv[], char *fmt);
+char *inet_ntop(int af, const void *src, char *dst, size_t cnt);
+void *dlopen(char *file, int mode);
+int dlclose(void *handle);
+void *dlsym(void *handle, char *name);
+char *dlerror();
+
+getcwd is defined to _getcwd
+strcasecmp is defined to _stricmp
+
+(2) cprops provides a pthread-like api. On unix platforms these calls are 
+    mapped directly to pthread functions. On windows the win32 api is used to
+    emulate the desired behavior. 
+
+#include <cprops/collection.h>
+
+typedef HANDLE cp_thread; /* thread object */
+typedef HANDLE *cp_lock;  /* lock object */
+typedef HANDLE *cp_mutex; /* mutex object */
+typedef struct cp_cond;   /* condition variable */
+
+int cp_thread_create(cp_thread t, 
+                     void *attributes, 
+                     void *(*fn)(void *), 
+                     void *prm);
+void cp_thread_join(cp_thread t, void **exit);
+void cp_thread_detach(cp_thread t);
+cp_thread cp_thread_self();
+int cp_thread_equal(cp_thread p, cp_thread q);
+
+void cp_mutex_init(cp_mutex *mutex, void *attr, int rc);
+int cp_mutex_lock(cp_mutex *mutex);
+int cp_mutex_unlock(cp_mutex *mutex);
+void cp_mutex_destroy(cp_mutex *mutex);
+
+int cp_cond_init(cp_cond *cv, const void *attr); 
+int cp_cond_wait(cp_cond *cv, cp_mutex *mutex);
+int cp_cond_signal(cp_cond *cv);
+int cp_cond_broadcast(cp_cond *cv);
+int cp_cond_destroy(cp_cond *cv);
+
+int cp_lock_init(cp_lock *lock, void *attr);
+int cp_lock_rdlock(cp_lock *lock);
+int cp_lock_wrlock(cp_lock *lock);
+int cp_lock_unlock(cp_lock *lock);
+int cp_lock_destroy(cp_lock *lock);
+

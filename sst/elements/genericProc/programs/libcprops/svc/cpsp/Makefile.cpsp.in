@@ -1,0 +1,59 @@
+# cpsp - a server page compiler - Makefile
+#
+# This is the Makefile for cpsp pages. If it has the name "Makefile.cpsp.in" 
+# then it is a template for a Makefile;  to generate the actual Makefile, run 
+# ./configure in the cprops base directory. 
+#
+# Copyright (c) 2005-2007 by Ilan Aelion
+# iaelion@users.sourceforge.net
+# 
+# 2007-11-30 V 0.1.7 beta
+#
+###############################################
+
+top_builddir = @root_dir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+libdir = $(DESTDIR)@libdir@
+incdir = $(DESTDIR)@includedir@
+bindir = $(DESTDIR)@bindir@
+
+FNAME=$(firstword $(MAKEFILE_LIST))
+PREF0=$(subst /, ,$(FNAME))
+SUFF=$(if $(PREF0),$(word $(words $(PREF0)),$(PREF0)))
+PREF=$(patsubst %$(SUFF),%,$(FNAME))
+EXECPREF=$(if $(PREF),$(PREF),./)
+
+LEX = @LEX@
+YACC = @YACC@
+CC = @CC@
+CFLAGS = -I $(PREF) -I $(incdir) @CFLAGS@ 
+LDFLAGS = -L$(libdir) -L$(PREF)../../.libs @LDFLAGS@
+LIBS = -lcprops @LIBS@
+
+XLIBP = $(libdir):$(PREF)../../.libs:@LDFLAGS@
+XLIBQ = $(subst -L,:,$(strip $(XLIBP)))
+XLIB := $(subst : ,,$(XLIBQ))
+
+CPSPCFLAGS=$(shell grep 'CPSPCFLAGS=' $(CPSP_SRC) | sed 's/.*=//'|sed 's/%>//')
+CPSPLDFLAGS=$(shell grep 'CPSPLDFLAGS=' $(CPSP_SRC)|sed 's/.*=//'|sed 's/%>//')
+CPSPLIBS=$(shell grep 'CPSPLIBS=' $(CPSP_SRC) | sed 's/.*=//'|sed 's/%>//')
+
+all: 
+	@echo cpsp page makefile - don't invoke directly; call cpsp-gen.sh instead
+
+cpsp-page: $(CPSP_TARGET)
+	@echo compiling $(CPSP_TARGET)
+	$(CC) -shared -fPIC -g $(CFLAGS) $(CPSPCFLAGS) -c $(CPSP_TARGET) \
+		-o $(CPSP_TARGET:.c=.o)
+	$(CC) -shared -g $(CPSP_TARGET:.c=.o) $(CPSPLDFLAGS) \
+		-o $(subst _cpsp_,gen_cpsp_,$(CPSP_TARGET:.c=.so)) $(CPSPLIBS)
+
+$(CPSP_TARGET): $(CPSP_SRC)
+	LD_LIBRARY_PATH=$(XLIB) $(EXECPREF)cpsp < $(CPSP_SRC) > $(CPSP_TARGET)
+
+
+clean:
+	rm -f core* *.o *.so _cpsp_*
+

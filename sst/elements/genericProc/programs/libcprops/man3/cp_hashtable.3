@@ -1,0 +1,252 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable \- a general purpose hashtable implementation
+
+.SH DESCRIPTION
+.B cp_hashtable
+is a general purpose hashtable implementation. Instances may be created with a
+specifiable degree of internal or external synchronization and entry memory 
+management. It is also possible to specify the load factors controlling when
+internal table resizes occur. 
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/hashtable.h>\fP.
+.SS CONSTRUCTOR FUNCTIONS
+.br
+.BI "cp_hashtable *cp_hashtable_create(unsigned long " size_hint ", 
+.ti +34n
+.BI "cp_hashfunction " hash_fn ",
+.ti +34n
+.BI "cp_compare_fn "compare_fn ");
+.br
+.BI "cp_hashtable *cp_hashtable_create_by_mode(int " mode ", 
+.ti +42n
+.BI "int " size_hint ",
+.ti +42n
+.BI "cp_hashfunction " hash_fn ", 
+.ti +42n
+.BI "cp_compare_fn " compare_fn ");
+.br
+.B cp_hashtable *
+.ti +5n
+.BI "cp_hashtable_create_copy_mode(unsigned long " size_hint ",
+.ti +35n
+.BI "cp_hashfunction " cp_hashfn ",
+.ti +35n
+.BI "cp_compare_fn " compare_fn ",
+.ti +35n
+.BI "cp_copy_fn " copy_key ",
+.ti +35n 
+.BI "cp_destructor_fn " free_key ");    
+.ti +35n 
+.BI "cp_copy_fn " copy_value "
+.ti +35n 
+.BI "cp_destructor_fn " free_value ");    
+.br
+.B cp_hashtable *
+.ti +5n
+.BI "cp_hashtable_create_by_option(int " mode ", 
+.ti +35n
+.BI "unsigned long " size_hint ",
+.ti +35n
+.BI "cp_hashfunction " hash_fn ",
+.ti +35n 
+.BI "cp_compare_fn " compare_fn ",
+.ti +35n
+.BI "cp_copy_fn " copy_key ", 
+.ti +35n 
+.BI "cp_destructor_fn " free_key ");    
+.ti +35n
+.BI "cp_copy_fn " copy_value "
+.ti +35n 
+.BI "cp_destructor_fn " free_value ");    
+
+.SS DESTRUCTOR FUNCTIONS
+.br
+.BI "void cp_hashtable_destroy(cp_hashtable *" table ");
+.br
+.BI "void cp_hashtable_destroy_shallow(cp_hashtable *" table ");
+.br 
+.BI "void cp_hashtable_destroy_deep(cp_hashtable *" table ");
+.br
+.BI "void cp_hashtable_destroy_custom(cp_hashtable *" table ",
+.ti +33n
+.BI "cp_destructor_fn " dk ",
+.ti +33n
+.BI "cp_destructor_fn " dv ");
+
+.SS ITEM INSERTION
+.br
+.BI "void *cp_hashtable_put(cp_hashtable *" table ", void *" key ", void *" value ");
+.br
+.BI "void *cp_hashtable_put_by_option(cp_hashtable *" table ", void *" key ", 
+.ti +33n
+.BI "void *" value ", int " mode ");
+.br
+.BI "void *cp_hashtable_put_safe(cp_hashtable *" table ", void * "key ", 
+.ti +28n
+.BI "void *" value ");
+.br
+.BI "void *cp_hashtable_put_copy(cp_hashtable *" table ", void *" key ",
+.ti +28n
+.BI "void *" value ");
+
+.SS ITEM RETRIEVAL
+.br
+.BI "void *cp_hashtable_get(cp_hashtable *" table ", void *" key ");
+.br
+.BI "void *cp_hashtable_get_by_option(cp_hashtable *" table ", void *" key ",
+.ti +33n
+.BI "int " mode ");
+.br
+.BI "void **cp_hashtable_get_keys(cp_hashtable *" table ");
+.br
+.BI "void **cp_hashtable_get_values(cp_hashtable *" table ");
+.br
+.BI "int cp_hashtable_contains(cp_hashtable *" table ", void *" key ");
+
+.SS ITEM REMOVAL
+.br
+.BI "void *cp_hashtable_remove(cp_hashtable *" table ", void *" key ");
+.br
+.BI "int cp_hashtable_remove_deep(cp_hashtable *" table ", void *" key ");
+.br
+.BI "int cp_hashtable_remove_all(cp_hashtable *" table ");
+
+.SS BEHAVIOR
+.br
+.BI "int cp_hashtable_set_mode(cp_hashtable *" table ", int " mode ");
+.br
+.BI "int cp_hashtable_unset_mode(cp_hashtable *" table ", int " mode ");
+.br
+.BI "int cp_hashtable_set_min_size(cp_hashtable *" table ", int " size ");
+.br
+.BI "int cp_hashtable_set_min_fill_factor(cp_hashtable *" table ", int " factor ");
+.br
+.BI "int cp_hashtable_set_max_fill_factor(cp_hashtable *" table ", int " factor ");
+
+.SS SYNCHRONIZATION
+.br
+.BI "int cp_hashtable_lock(cp_hashtable *" table ", int " type ");
+.br
+.BI "int cp_hashtable_unlock(cp_hashtable *" table ");
+.br
+.BI "int cp_hashtable_rdlock(cp_hashtable *" table ");
+.br
+.BI "int cp_hashtable_wrlock(cp_hashtable *" table ");
+
+.SS OTHER
+.br
+.BI "unsigned long cp_hashtable_count(cp_hashtable *" table ");
+.br
+.BI "cp_hashtable_is_empty(cp_hashtable *" table ");
+
+.SS HASH- and COMPARISON FUNCTIONS
+libcprops provides the following hash function implementations for primitives and null terminated strings:
+
+.RS
+.nf
+.BR	"unsigned long cp_hash_char(void *" key ");
+.br
+.BR "int cp_hash_compare_char(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_int(void *" key ");
+.br
+.BR "int cp_hash_compare_int(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_long(void *" key ");
+.br
+.BR "int cp_hash_compare_long(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_float(void *" key ");
+.br
+.BR "int cp_hash_compare_float(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_double(void *" key ");
+.br
+.BR "int cp_hash_compare_double(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_addr(void *" key ");
+.br
+.BR "int cp_hash_compare_addr(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_string(void *" key ");
+.br
+.BR "int cp_hash_compare_string(void *" a ", void *" b ");
+.br
+.BR "unsigned long cp_hash_istring(void *" key ");
+.br
+.BR "int cp_hash_compare_istring(void *" a ", void *" b ");
+.fi
+.RE
+
+.SH EXAMPLE
+The following code creates a hashtable mapping names to phone numbers. The
+hash function used is \fBcp_hash_istring\fP, a case insensitive hash function 
+for null terminated strings.
+
+.RS
+.nf
+#include <stdio.h>
+#include <string.h>		/* for strdup */
+#include <strings.h>	/* for strcasecmp */
+#include <stdlib.h>		/* for free */
+#include <cprops/hashtable.h>
+
+int main()
+{
+    cp_hashtable *t =
+        cp_hashtable_create_by_option(COLLECTION_MODE_NOSYNC |
+                                      COLLECTION_MODE_COPY |
+                                      COLLECTION_MODE_DEEP,
+                                      10,
+                                      cp_hash_istring,
+                                      (cp_compare_fn) strcasecmp,
+                                      (cp_copy_fn) strdup,
+                                      (cp_destructor_fn) free,
+                                      (cp_copy_fn) strdup,
+                                      (cp_destructor_fn) free);
+
+    cp_hashtable_put(t, "ed", "123");
+    cp_hashtable_put(t, "zed", "345");
+    cp_hashtable_put(t, "fred", "789");
+
+    while (1)
+    {
+        char name[80];
+        char *number;
+
+        printf("enter name [quit]: ");
+        name[0] = '\\0';
+        fgets(name, 80, stdin);
+        name[strlen(name) - 1] = '\\0'; /* chop newline */
+        if (name[0] == '\\0') break;
+
+        if ((number = cp_hashtable_get(t, name)) != NULL)
+            printf("%s: %s\\n", name, number);
+        else
+            printf("no entry for %s\\n", name);
+    }
+
+    cp_hashtable_destroy(t);
+    return 0;
+}
+
+.fi
+.RE
+
+for notes on compiling and linking see 
+.BR cprops (3).
+
+.SH SEE ALSO
+.BR cp_hashtable_create (3),
+.BR cp_hashtable_destroy (3),
+.BR cp_hashtable_get (3),
+.BR cp_hashtable_put (3),
+.BR cp_hashtable_lock (3), 
+.BR cp_hashtable_set_mode (3),
+.BR cp_hashtable_contains (3), 
+.BR cp_hashtable_get_keys (3), 
+.BR cp_hashtable_count (3),
+.BR cp_hashlist (3),
+.BR cprops (3)

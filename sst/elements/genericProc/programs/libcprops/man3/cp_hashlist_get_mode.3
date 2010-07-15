@@ -1,0 +1,15 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_get_mode \- get hashlist mode bit settings 
+.SH SYNOPSIS
+.B #include <cprops/hashlist.h>
+
+.BI "int cp_hashlist_get_mode(cp_hashlist *" list ");
+.SH DESCRIPTION
+.B cp_hashlist_get_mode
+returns the current mode bit settings for hashlist \fIlist\fP. For more on the 
+effect of specific mode bits, see \fBcp_hashlist_set_mode\fP (3).
+.SH RETURN VALUE
+the current mode settings for hashlist \fIlist\fP.
+.SH "SEE ALSO"
+.BR cp_hashlist_set_mode (3)

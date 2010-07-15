@@ -1,0 +1,18 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_close \- close a tcp connection 
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "int cp_client_close(cp_client *" client ");
+.SH DESCRIPTION
+.B cp_client_close
+closes an open tcp connection associated with the cp_client \fIclient\fP.
+.SH RETURN VALUE
+0 on successful operation, -1 on failure. 
+.B cp_client_close 
+may fail if the connection is not open. Errors on close may also indicate a 
+failure on a previous write operation.
+.SH SEE ALSO
+.BR cp_client_connect (3),
+.BR cp_client_ssl_connect (3)

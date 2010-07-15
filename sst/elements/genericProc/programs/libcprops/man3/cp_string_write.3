@@ -1,0 +1,16 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_write \- write a string to an open file descriptor
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "int cp_string_write(cp_string *" str ", int " fd ");
+.SH DESCRIPTION
+.B cp_string_writes
+the internal buffer of the string
+.I str
+to the open file descriptor \fIfd\fP.
+.SH RETURN VALUE
+the number of bytes actually written.
+.SH SEE ALSO
+.BR cp_string_read (3)

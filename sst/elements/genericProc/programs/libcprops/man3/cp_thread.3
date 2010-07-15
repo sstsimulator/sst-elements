@@ -1,0 +1,37 @@
+.TH "cp_thread" 3 "OCTOBER 2005" "libcprops" "libcprops - cp_thread"
+.ad l
+.nh
+.SH NAME
+cp_thread \- cprops thread framework
+.SH DESCRIPTION
+<cprops/thread.h> defines the cprops thread framework, offering thread
+pooling and load balancing. The current implementation is based on the POSIX 
+thread api. In particular the 
+.B cp_thread
+structure is a mnemonic for \fBpthread_t\fP, and the \fBcp_thread_create\fP(), 
+\fBcp_thread_join\fP and \fBcp_thread_detach\fP functions are mnemonics for the
+pthread_* counterparts. The main intended usage is through the 
+.BR cp_thread_pool (3)
+structure so that threads would normally be created in the 
+process of the pool initialization rather than with an explicit function call.
+.sp
+The prototype for client thread functions should match
+
+.RS +5n
+.nf
+void *thread_fn(void *prm);
+.fi
+.RE
+
+.sp
+Load balancing is done by creating multiple thread pools sharing the same
+.BR cp_pooled_thread_scheduler (3) 
+object.
+
+.SH SEE ALSO
+.BR cp_thread_pool (3),
+.BR cp_pooled_thread_scheduler (3),
+.BR cp_pooled_thread_client_interface (3),
+.BR pthread_create (3), 
+.BR pthread_join (3),
+.BR pthread_detach (3)

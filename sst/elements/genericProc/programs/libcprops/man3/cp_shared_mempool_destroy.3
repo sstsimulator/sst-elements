@@ -1,0 +1,20 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_shared_mempool_destroy \- deallocate a shareable memory pool
+
+.SH SYNOPSIS
+#include <cprops/mempool.h>
+.sp
+.BI "void cp_shared_mempool_destroy(cp_shared_mempool *" pool ");
+
+.SH DESCRIPTION
+.B cp_shared_mempool_destroy
+deallocates a shared memory pool created with
+.BR cp_shared_mempool_create (3)
+or 
+.BR cp_shared_mempool_create_by_option (3),
+its internal memory pools and all associated memory. 
+
+.SH SEE ALSO
+.BR cp_shared_mempool_create (3), 
+.BR cp_mempool (3)

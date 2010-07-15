@@ -1,0 +1,73 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client \- tcp client api
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "cp_client *cp_client_create(char *" host ", int " port ");
+.br
+.BI "void cp_client_destroy(cp_client *" client ");
+.br
+.BI "void cp_client_set_retry(cp_client *" client ", int " retry_count ");
+.br
+.BI "int cp_client_connect(cp_client *" client ");
+.br
+.BI "int cp_client_close(cp_client *" client ");
+.br
+.BI "int cp_client_read(cp_client *" client ", char *" buf ", int " len ");
+.br
+.BI "int cp_client_read_string(cp_client *" client ", cp_string *" str ", int " len ");
+.br
+.BI "int cp_client_write(cp_client *" client ", char *" buf ", int " len ");
+.br
+.BI "int cp_client_write_string(cp_client *" client ", cp_string *" str ");
+.SS SSL specific functions
+.BI "void cp_client_ssl_init();
+.br
+.BI "void cp_client_ssl_shutdown();
+.br
+.BI "cp_client *cp_client_create_ssl(char *host, int " port ", 
+.ti +32n
+.BI "char *" CA_file ",  char *" CA_directory ",
+.ti +32n
+.BI "int " verification_mode "); 
+.br
+.BI "int cp_client_verify_hostname(cp_client *" client ");
+.br
+.BI "X509 *cp_client_get_server_certificate(cp_client *" client ");
+.SH DESCRIPTION
+cp_client is a tcp client socket. 
+.B cp_client_create
+or 
+.B cp_client_create_ssl
+create a socket to connect to the specified host and port, 
+.B cp_client_connect
+attempt to create the connection, 
+.B cp_client_close
+closes the connection and
+.B cp_client_destroy
+deallocates the client structure. Once a connection has been established 
+.B cp_client_read
+or 
+.B cp_client_read_string
+may be used to read from the open connection and
+.B cp_client_write
+or
+.B cp_client_write_string
+may be used to write. 
+.sp
+SSL functionality is implemented using the openssl api. Functions specific to
+secure connections are available if the libcprops installation was configured 
+to use ssl. 
+.sp
+For more on specific functions see the individual function man pages. 
+.SH SEE ALSO
+.BR cp_client_ssl_init (3),
+.BR cp_client_create (3),
+.BR cp_client_destroy (3), 
+.BR cp_client_set_retry (3),
+.BR cp_client_connect (3),
+.BR cp_client_verify_hostname (3),
+.BR cp_client_read (3),
+.BR cp_client_write (3),
+.BR cp_client_close (3)

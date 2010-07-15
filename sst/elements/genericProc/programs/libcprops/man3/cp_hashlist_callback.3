@@ -1,0 +1,26 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_callback \- invoke a callback on hashlist mappings
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+
+.BI "int cp_hashlist_callback(cp_hashlist *" list ",
+.ti +25n
+.BI "int (*" cb ")(void *key, void *value, void *id),
+.ti +25n
+.BI "void *" id ");
+
+.SH DESCRIPTION
+.B cp_hashlist_callback
+iterates over all entries in a hashlist, invoking the callback function 
+.I cb
+on each key / value pair in the list. In addition the 
+.I id
+parameter is passed to the callback function with no change.
+.sp
+Iteration stops if the callback returns non-zero or after the callback has been
+invoked on all mappings.
+.SH RETURN VALUE
+.B cp_hashlist_callback
+returns 0 on success or -1 on locking failure.

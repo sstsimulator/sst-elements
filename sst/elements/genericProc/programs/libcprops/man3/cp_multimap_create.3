@@ -1,0 +1,58 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_create, cp_multimap_create_by_option, cp_multimap_destroy, cp_multimap_destroy_custom \- create / destroy a multimap
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "cp_multimap *cp_multimap_create(cp_key_fn " key_fn ", cp_compare_fn " cmp ");
+.br
+.BI cp_multimap *
+.ti +5n
+.BI "cp_multimap_create_by_option(int " mode ", cp_key_fn " key_fn ", 
+.ti +34n
+.BI "cp_compare_fn " cmp ", 
+.ti +34n
+.BI "cp_copy_fn " copy ", 
+.ti +34n
+.BI "cp_destructor_fn " dtr ");
+.sp
+.BI "void cp_multimap_destroy(cp_multimap *" tree ");
+.br
+.BI "void cp_multimap_destroy_custom(cp_multimap *" tree ", 
+.ti +32n
+.BI "cp_destructor_fn " dtr ");
+.br
+.SH DESCRIPTION
+.B cp_multimap_create
+creates a multimap with a unique primary index instantiated with the given key 
+and comparison functions. The returned map is synchronized, and does not copy
+entries on insertion or delete them on removal. 
+.sp
+
+.B cp_multimap_create_by_option
+allows specifying mode bits and an item copy and destructor function. If the 
+.I mode
+parameter has the 
+.B COLLECTION_MODE_MULTIPLE_VALUES
+bit set, the default index based on the given key and comparison functions is
+assumed to allow multiple values. In this case an additional unique index is 
+created implicitly. 
+
+.sp
+Additional indices may be added at any point after creation time by calling
+\fBcp_multimap_create_index\fP. 
+
+.B cp_multimap_destroy
+frees the memory associated with a multimap. 
+.B cp_multimap_destroy_custom
+sets the item destructor function to the \fIdtr\fP parameter and deallocates
+the multimap. Note that the entry destructor function is called only if the map
+has the  
+.B COLLECTION_MODE_DEEP
+mode bit set. Calling
+.B cp_multimap_destroy_custom 
+does not set this bit. 
+
+.SH SEE ALSO
+.BR cp_multimap_create_index (3) 

@@ -1,0 +1,161 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_result_set, cp_result_set_is_binary, cp_result_set_get_headers,
+cp_result_set_get_header, cp_result_set_get_field_types, 
+cp_result_set_get_field_type, cp_result_set_field_count, 
+cp_result_set_row_count, cp_result_set_next, cp_result_set_autodispose
+cp_result_set_release_row, cp_result_set_destroy \- result set functions
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_vector *cp_result_set_next(cp_result_set *" result_set ");
+.br
+.BI "void cp_result_set_autodispose(cp_result_set *" rs ", int " state ");
+.br
+.BI "void cp_result_set_release_row(cp_result_set *" result_set ", 
+.ti +31n
+.BI "cp_vector *" row ");
+.br
+.BI "void cp_result_set_destroy(cp_result_set *" result_set ");
+.br
+.BI "int cp_result_set_is_binary(cp_result_set *" result_set ");
+.br
+.BI "cp_vector *cp_result_set_get_headers(cp_result_set *" result_set ");
+.br
+.BI "char *cp_result_set_get_header(cp_result_set *" result_set ", int " column ");
+.br
+.BI "cp_vector *cp_result_set_get_field_types(cp_result_set *" result_set ");
+.br
+.BI "cp_field_type cp_result_set_get_field_type(cp_result_set *" rs ", int " col ");
+.br
+.BI "int cp_result_set_field_count(cp_result_set *" result_set ");
+.br
+.BI "int cp_result_set_row_count(cp_result_set *" result_set ");
+.SH DESCRIPTION
+Once a result set has been obtained from a call to
+.BR cp_db_connection_select (3)
+or 
+.BR cp_db_connection_execute_statement (3),
+result rows may be retrieved as 
+.BR cp_vector (3)
+structures by calling \fBcp_result_set_next\fP. Row vectors represent field
+content as
+.BR cp_string (3)
+objects if the results are in text format, or for results in binary format, by 
+field type as follows:
+
+.RS +3n
+.nf
+	CP_FIELD_TYPE_BOOLEAN     --   short
+	CP_FIELD_TYPE_CHAR        --   cp_string
+	CP_FIELD_TYPE_SHORT       --   short
+	CP_FIELD_TYPE_INT         --   int
+	CP_FIELD_TYPE_LONG        --   long
+	CP_FIELD_TYPE_LONG_LONG   --   long long
+	CP_FIELD_TYPE_FLOAT       --   float
+	CP_FIELD_TYPE_DOUBLE      --   double
+	CP_FIELD_TYPE_VARCHAR     --   cp_string
+	CP_FIELD_TYPE_BLOB        --   cp_string
+	CP_FIELD_TYPE_DATE        --   cp_timestampz
+	CP_FIELD_TYPE_TIME        --   cp_timestampz
+	CP_FIELD_TYPE_TIMESTAMP   --   cp_timestampz
+.fi
+.RE
+
+.B cp_result_set_is_binary
+may be called to check what format result rows are in. Result set format 
+depends on the driver implementation for the database being queried. For 
+prepared statements, results may be requested in binary or text format by
+calling
+.BR cp_db_statement_set_binary (3),
+but implementations may or may not respect this setting. It is therefor 
+recommended, if in doubt, to consult
+.B cp_result_set_is_binary
+before processing results.
+.sp
+To request the result set to perform memory management, call
+.B cp_result_set_autodispose
+with a non-zero
+.I state
+value before retrieving result rows. Otherwise result rows should be released
+by calling \fBcp_result_set_release_row\fP. 
+.sp
+The result set itself must be released by calling \fBcp_result_set_destroy\fP.
+.sp
+.SS META DATA
+.B cp_result_set_get_headers
+returns a 
+.B cp_vector
+containing column titles represented as character pointers.
+.br
+.B cp_result_set_get_header
+is a convenience method for obtaining field title by index.
+.br
+.B cp_result_set_get_field_types
+returns a
+.B cp_vector
+containing opinters to 
+.B cp_field_type
+codes describing the column's content type.
+.br
+.B cp_result_set_get_field_type
+is a convenience method for obtaining field type by index.
+.br
+.B cp_result_set_field_count
+returns the number of columns in the result set.
+.br
+.B cp_result_set_row_count
+returns the number of rows fetched and byffered so far. This number may be less
+than the total number of rows for the originating query before all results have
+been fetched. If the read size requested on the connection is not one (1), this
+number may also be larger than the number of rows returned by 
+\fBcp_result_set_next\fP. The number of rows actually fetched from the database
+may be affected by calling 
+.BR cp_db_connection_set_read_result_set_at_once (3)
+and
+.BR cp_db_connection_set_fetch_size (3)
+before the call to execute the query.
+.SH RETURN VALUE
+.B cp_result_set_next
+returns a 
+.B cp_vector
+describing the next result row or NULL if no more results are available.
+.br
+.B cp_result_set_is_binary
+returns non-zero if results are in binary format, zero if results are in text
+format.
+.br
+.B cp_result_set_get_headers
+returns a
+.B cp_vector
+containing column titles as character pointers, or NULL if no meta data is 
+available.
+.br
+.B cp_result_set_get_header
+returns the title for the given column index as a character pointer or NULL if
+no meta data is available.
+.br
+.B cp_result_set_get_field_types
+returns a 
+.B cp_vector
+containing pointers to 
+.B cp_field_type
+codes describing column content or NULL if no meta data is available.
+.br
+.B cp_result_set_get_field_type
+returns the field type for the given column index or -1 if no meta data is 
+available.
+.br
+.B cp_result_set_field_count
+returns the number of columns in the result set.
+.br
+.B cp_result_set_row_count
+returns the number of rows read and buffered so far. 
+.SH SEE ALSO
+.BR cp_db_connection_set_read_result_set_at_once (3),
+.BR cp_db_connection_set_fetch_size (3),
+.BR cp_db_connection_select (3),
+.BR cp_db_connection_execute_statement (3),
+.BR cp_vector (3),
+.BR cp_string (3),
+.BR cp_timestampz (3)

@@ -1,0 +1,60 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_select \- perform a SELECT query on a database connection
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_result_set *
+.ti +5n
+.BI "cp_db_connection_select(cp_db_connection *" connection ", char *" query ");
+.SH DESCRIPTION
+.B cp_db_connection_select
+performs the query
+.I query
+on the connection described by 
+.I connection
+and returns a 
+.B cp_result_set
+with the results. Result rows are retrieved with 
+.BR cp_result_set_next (3)
+and should be released by calling
+.BR cp_result_set_release_row (3).
+The rows may contain results in text or in binary format, depending on the 
+underlying implementation's behavior. Call
+.BR cp_result_set_is_binary (3)
+to check what format the results are in. In text format, column values are
+represented by
+.BR cp_string (3)
+objects. In binary format, results are represented as follows:
+
+.RS +3n
+.nf
+	CP_FIELD_TYPE_BOOLEAN     --   short
+	CP_FIELD_TYPE_CHAR        --   cp_string
+	CP_FIELD_TYPE_SHORT       --   short
+	CP_FIELD_TYPE_INT         --   int
+	CP_FIELD_TYPE_LONG        --   long
+	CP_FIELD_TYPE_LONG_LONG   --   long long
+	CP_FIELD_TYPE_FLOAT       --   float
+	CP_FIELD_TYPE_DOUBLE      --   double
+	CP_FIELD_TYPE_VARCHAR     --   cp_string
+	CP_FIELD_TYPE_BLOB        --   cp_string
+	CP_FIELD_TYPE_DATE        --   cp_timestampz
+	CP_FIELD_TYPE_TIME        --   cp_timestampz
+	CP_FIELD_TYPE_TIMESTAMP   --   cp_timestampz
+.fi
+.RE
+
+Results should be released with
+.BR cp_result_set_destroy (3).
+.sp
+for more on result set usage, see
+.BR cp_result_set (3).
+.SH RETURN VALUE
+.B cp_db_connection_select 
+returns a result set representing the query results on success or NULL on 
+failure.
+.SH SEE ALSO
+.BR cp_result_set (3),
+.BR cp_timestampz (3)

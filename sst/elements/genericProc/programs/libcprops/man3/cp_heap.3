@@ -1,0 +1,77 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap \- a heap implementation
+
+.SH DESCRIPTION
+.B cp_heap
+is a general purpose heap implementation.
+.sp
+A heap is created with cp_heap_create(3) or cp_heap_create_by_option(3) 
+and deallocated with cp_heap_destroy(3). After creation behavior may be 
+changed by calling cp_heap_set_mode(3) and cp_heap_unset_mode(3) to set
+and unset mode bits. Items may be pushed on the heap with cp_heap_push(3).
+cp_heap_pop(3) returns the minimum value in the heap, as determined using
+the compare function provided at creation time. The cp_hash_compare_* 
+functions defined in \fI<cprops/hashtable.h>\fP may be used for primitive
+types and null terminated strings. For more details see the documentation 
+for specific functions.
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/heap.h>\fP.
+.sp
+.BI "cp_heap *cp_heap_create(cp_compare_fn " cmp "); 
+.br
+.B cp_heap *
+.ti +5n
+.BI "cp_heap_create_by_option(int " mode ", 
+.ti +30n
+.BI "int " size_hint ", 
+.ti +30n
+.BI "cp_compare_fn " compare_fn ",
+.ti +30n
+.BI "cp_copy " copy ", 
+.ti +30n 
+.BI "cp_destructor_fn " dtr ");    
+.sp
+
+.BI "void cp_heap_destroy(cp_heap *" heap ");
+.sp
+
+.BI "void *cp_heap_push(cp_heap *" heap ", void *" item ");
+.br
+.BI "void *cp_heap_pop(cp_heap *" heap ");
+.sp
+.BI "void *cp_heap_peek(cp_heap *" heap ");
+.br
+.BI "void cp_heap_callback(cp_heap *" heap ", cp_callback_fn " cb ", void *" prm ");
+.sp
+
+.BI "int cp_heap_count(cp_heap *" heap ");
+.br
+.BI "int cp_heap_size(cp_heap *" heap ");
+.br
+.BI "int cp_heap_contract(cp_heap *" heap ");
+.sp
+
+.BI "int cp_heap_get_mode(cp_heap *" heap ");
+.br
+.BI "void cp_heap_set_mode(cp_heap *" heap ", int " mode ");
+.br
+.BI "void cp_heap_unset_mode(cp_heap *" heap ", int " mode ");
+
+.sp
+.BI "int cp_heap_lock(cp_heap *" heap ", int " type ");
+.br
+.BI "int cp_heap_unlock(cp_heap *" heap ");
+
+
+.SH AUTHOR
+cp_heap is based on libheap by Kyle Wheeler and Branden Moore.
+
+.SH SEE ALSO
+.BR cp_heap_create (3),
+.BR cp_heap_push (3),
+.BR cp_heap_lock (3), 
+.BR cp_heap_set_mode (3),
+.BR cp_hashtable (3),
+.BR cprops (3)

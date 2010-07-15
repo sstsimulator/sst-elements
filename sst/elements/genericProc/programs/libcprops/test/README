@@ -1,0 +1,20 @@
+=================================================
+cert.pem, key.pem, cacert.pem - test certificates 
+=================================================
+
+ o  in the main build directory, compile the testhttpsrv program with
+
+      $ make test
+ 
+ o  run the test program:
+
+      $ LD_LIBRARY_PATH=. ./testhttpsrv -s -c test/cert.pem -k test/key.pem
+
+    on some systems you might need to add the path to the openssl libraries
+    to the LD_LIBRARY_PATH setting.
+    
+ o  load the cacert.pem certificate in the client (eg browser)
+ 
+ o  test by connecting to https://localhost:5000. to use a different port
+    invoke testhttpsrv with -p [port]
+ 

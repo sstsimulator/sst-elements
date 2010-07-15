@@ -1,0 +1,29 @@
+.TH cp_vector 3 "MARCH 2006" libcprops-0.0.12 "libcprops - cp_vector"
+.SH NAME
+cp_vector_add_element, cp_vector_set_element \- add / set an element in a vector
+.SH SYNOPSIS
+#include <cprops/vector.h>
+
+.BI "void *cp_vector_add_element(cp_vector *" vector ", void * " element ");
+.sp
+.BI "void *cp_vector_set_element(cp_vector *" vector ", int " index ", 
+.ti +28n
+.BI "void * " element ");
+.SH DESCRIPTION
+.B cp_vector_add_element
+appends the entry
+.I element
+to the given \fIvector\fP, extending the internal storage size if necessary. 
+.sp
+.B cp_vector_set_element
+sets the element at the given
+.I index
+to the given value, allocating additional internal storage if 
+.I index
+is greater than the current vector size. If an entry already exists at the 
+specified index, the 
+.I COLLECTION_MODE_DEEP
+mode bit is set and the item destructor function is not NULL, the item
+destructor function is called upon the existing entry.
+.SH RETURN VALUE
+the inserted item on success or NULL on failure.

@@ -1,0 +1,24 @@
+.TH "cp_socket" 3 "MAY 2006" "libcprops" "cp_httpclient"
+.SH NAME
+cp_httpclient_init, cp_httpclient_shutdown \- initialize / finalize http client api
+.SH SYNOPSIS
+#include <cprops/httpclient.h>
+
+.BI "int cp_httpclient_init();
+.br
+.BI "int cp_httpclient_shutdown();
+.SH DESCRIPTION
+.B cp_httpclient_init
+initializes the services provided by the cp_httpclient api and must be called
+before processing any HTTP requests. 
+.br
+.B cp_httpclient_shutdown
+stops any background threads started to service HTTP requests and performs 
+cleanup.
+.SH RETURN VALUE
+.B cp_httpclient_init
+returns 0 on success, -1 on error or 1 if already initialized. Initialization 
+may fail if memory for the internal structures cannot be allocated.
+.br
+.B cp_httpclient_shutdown
+returns 0 on success or 1 if already initialized.

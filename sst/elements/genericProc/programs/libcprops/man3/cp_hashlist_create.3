@@ -1,0 +1,125 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_create, cp_hashlist_create_by_mode, cp_hashlist_create_by_option 
+\- hashlist constructor functions
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+
+.BI "cp_hashlist *cp_hashlist_create(unsigned long " size_hint ", 
+.ti +32n
+.BI "cp_hashfunction " hash_fn ",
+.ti +32n
+.BI "cp_compare_fn "compare_fn ");
+.sp
+.BI "cp_hashlist *cp_hashlist_create_by_mode(int " mode ", 
+.ti +40n
+.BI "unsigned long " size_hint ",
+.ti +40n
+.BI "cp_hashfunction " hash_fn ", 
+.ti +40n
+.BI "cp_compare_fn " compare_fn ");
+.sp
+.B cp_hashlist *
+.ti +5n
+.BI "cp_hashlist_create_by_option(int " mode ", 
+.ti +34n
+.BI "unsigned long " size_hint ",
+.ti +34n
+.BI "cp_hashfunction " hash_fn ",
+.ti +34n 
+.BI "cp_compare_fn " compare_fn ",
+.ti +34n
+.BI "cp_copy_fn " copy_key ", 
+.ti +34n 
+.BI "cp_destructor_fn " free_key ");
+.ti +34n
+.BI "cp_copy_fn " copy_value "
+.ti +34n 
+.BI "cp_destructor_fn " free_value ");
+
+.SH DESCRIPTION
+.B cp_hashlist_create
+creates a hashlist using 
+.I size_hint
+as an estimate for the required list size, 
+.I hash_fn
+to index items by key, and the comparison function \fIcompare_fn\fP. The hash
+function should follow the following prototype
+
+.RS
+.nf
+unsigned long hash_fn(void *key);
+.fi
+.RE
+
+and should return a number based on the key so that different keys yield 
+different numbers to the extent possible. However since different keys may 
+yield the same hash code a comparison function defined as
+
+.RS
+.nf
+int hash_compare(void *a, void *b);
+.fi
+.RE
+
+is needed to ultimately identify the requested key upon retrieval. The 
+comparison function should return 0 for matching items, non-zero otherwise. See
+.BR cp_hashtable_create (3)
+for more on hash and comparison functions and
+.BR cp_hashtable (3)
+for a list of predefined hash functions for primitives and null terminated
+strings.
+.sp
+Lists created with the default mode (0) synchronize table operations (item
+insertion, iteration, retrieval and removal, internal table resizing and 
+deleting) and perform no memory management. Different behavior can also be 
+specified by calling \fBcp_hashlist_create_by_mode\fP and specifying a 
+\fImode\fP value. See
+.BR cp_hashlist_set_mode (3)
+for a list of mode bits and their effect on list behavior.
+.sp
+In addition to list mode, \fBcp_hashlist_create_by_option\fP allows specifying 
+copy and finalization functions for keys and values respectively. Copy 
+functions are called on insertion if not NULL and \fBCOLLECTION_MODE_COPY\fP is
+set and finalization functions are called on removal if not NULL and
+\fBCOLLECTION_MODE_DEEP\fP is set. Copy functions should be defined as 
+
+.RS
+.nf
+void *copy_fn(void *);
+.fi
+.RE
+
+and should return a pointer to a copy of the key or value passed. Destructor 
+functions should be defined as
+
+.RS
+.nf
+void *destructor_fn(void *);
+.fi
+.RE
+
+and should release the memory associated with the key or value passed. 
+.sp
+All mode bits can be set or reset after creation time by calling 
+\fBcp_hashlist_set_mode\fP and \fBcp_hashlist_unset_mode\fP. Note that lists
+constructed with \fBCOLLECTION_MODE_NOSYNC\fP set do not initialize the 
+synchronization features, and subsequent attempts to perform thread safe
+operations may behave unpredictably. Hashlists that may be accessed by multiple
+threads at any point should not be initialized with 
+\fBCOLLECTION_MODE_NOSYNC\fP.
+
+.SH RETURN VALUE
+all constructor functions return a pointer to a newly allocated hashlist 
+instance on success, or \fBNULL\fP on failure. 
+
+.SH ERRORS
+.B ENOMEM
+an internal memory allocation failed.
+
+.SH "SEE ALSO"
+.BR cp_hashlist (3),
+.BR cp_hashlist_set_mode (3),
+.BR cp_hashlist_set_max_fill_factor (3),
+.BR cp_hashlist (3)

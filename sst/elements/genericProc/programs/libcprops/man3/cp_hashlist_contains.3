@@ -1,0 +1,14 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_contains \- test a hashlist for the existence of a mapping
+.SH SYNOPSIS
+.B #include <cprops/hashlist.h>
+
+.BI "int cp_hashlist_contains(cp_hashlist *" list ", void *" key ");
+.SH DESCRIPTION
+\fBcp_hashlist_contains\fP tests if the hashlist \fIlist\fP contains a 
+mapping for the key \fIkey\fP. 
+.SH RETURN VALUE
+non-zero if a mapping for \fIkey\fP is found, zero if not.
+.SH "SEE ALSO"
+.BR cp_hashlist_get (3)

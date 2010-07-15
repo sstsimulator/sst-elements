@@ -1,0 +1,192 @@
+cpsvc README
+============
+
+cpsvc is a simple c based web server. It currently features
+
+ o	an HTTP 1.1 file server
+ o	support for CGI scripts
+ o	cpsp - a c serverside scripting framework
+
+BUILDING cpsvc
+-------------
+
+if libcprops is configured libcprops --with-cpsvc, the executable cpsvc should 
+be built when building libcprops. If not, run
+
+ $ ./configure 
+ $ make
+
+in the root directory. if installing use the --bindir parameter to the 
+configure script to specify where you want the executables installed, then 
+install with
+
+ $ make install
+
+
+RUNNING cpsvc
+-------------
+cpsvc recognizes the following options and flags:
+
+  -d   path       --  document root
+  -b   path       --  path to cpsp binaries
+  -C   path       --  cgi-bin path
+  -m   mimetypes  --  mime types definition file
+  -u   run cpsp scripts on main instance
+
+SSL options: 
+  -s   use ssl    --  must be specified to use ssl
+  -c   file       --  ssl certificate file (pem)
+  -k   file       --  ssl key file (pem)
+  -f   fail connection on verification failure
+  -o   only verify client once
+  -v   verify client
+
+
+cpsp scripts
+------------
+a cpsp (cp server page) script is an html template allowing embedded c code. 
+The following tags are recognized: 
+
+(1) <%@ MAKE-VARIABLE value %>
+(2) <%! GLOBAL CODE %>
+(3) <% SERVICE FUNCTION CODE %>
+(4) <%= CSTR %>
+
+unescaped content is interpreted as html. 
+
+(1) Make variables currently recognized are
+	 o  CPSPCFLAGS  - the generated c code will be compiled with these 
+	                  additional flags
+	 o  CPSPLDFLAGS - the resulting object file will be linked with these
+	                  additional flags
+	 o  CPSPLIBS    - additional libraries to link (e.g. -lm)
+
+(2) Global code is emitted to the generated interim c file before the generated
+    service function, regardless of where it occurs in the .cpsp template. 
+
+(3) Service function code is written to the generated cpsp service function in 
+    the order in which it appears in the .cpsp source. The following variables 
+	are defined automatically within the context of the service function:
+
+     o  cp_http_request *request   - request descriptor
+     o  cp_http_response *response - response descriptor
+     o  cp_http_session *session   - the session object
+     o  cp_string *content         - a reference to the reponse content
+
+(4) Run time literals: within the generated service function, runtime literals
+    are interpreted as null terminated strings. 
+
+cpsp functions
+--------------
+
+(1) service function (generated)
+(2) initialization
+(3) finalization
+
+(1) service function (generated) - requests to a uri ending with a .cpsp 
+    extension invoke the cpsp framework, which takes the corresponding cpsp 
+    file and generates a service function of the following prototype:
+
+        int cpsp_service_function(cp_http_request *request, 
+		                          cp_http_response *response)
+
+    in the context of the service function, the automatic variable ``session''
+    points to a session object. 
+
+(2) initialization - cpsp files are compiled into a shared object. If this 
+    object contains a function named ``cpsp_init'' it is executed once, when 
+    the cpsp is loaded. The prototype for the init function is
+
+	    void cpsp_init();
+
+	
+(3) finalization - if the cpsp object contains a function named
+    ``cpsp_destroy'' it is called once, when the cpsp is unloaded. The 
+    prototype for this function is
+
+        void cpsp_destroy();
+
+
+cpsp example
+------------
+assuming a header file ``lookup.h'' defining a function 
+  
+  char *lookup(char *name);
+
+which returns the number for the given name; and an object file ``lookup.o''
+containing the compiled implementation of this function, the following cpsp
+script looks up the number for the name given as a parameter. 
+
+================================= lookup.cpsp ================================
+
+<%@ CPSPLDFLAGS lookup.o %>
+<%! #include "lookup.h" %>
+<%
+	char *uname = cp_http_session_get(session, "USERNAME");
+	char *name = cp_http_request_get_parameter(request, "NAME");
+	char *number = lookup(name);
+%>
+<HTML>
+<HEAD> <TITLE> lookup </TITLE> </HEAD>
+<BODY> 
+<%
+    if (uname)
+    {
+%>
+logged in as <%= uname >
+<%
+    }
+    else
+    {
+%>
+not logged in
+<%
+    }
+%>
+<br>
+<FORM ACTION="lookup.cpsp" METHOD=POST>
+Name:
+<INPUT TYPE=TEXT NAME="NAME" VALUE="<%= name %>">
+<%
+    if (number == NULL)
+    {
+%>
+Sorry, no entry for <%= name %>
+<%
+    }
+    else
+    {
+%>
+Number: <%= number %>
+<%
+    }
+%>
+<INPUT TYPE=SUBMIT VALUE="lookup">
+</FORM>
+</BODY>
+</HTML>
+
+==============================================================================
+
+cpsp runtime characteristics
+----------------------------
+cpsp scripts are compiled and linked into shared objects. On startup, cpsvc
+forks worker processes to run cpsp pages. New requests run on the next 
+available worker instance. Sessions are bound to the worker instance they were
+created on. This approach was chosen to promote stability rather than speed: If
+a script causes a crash, the main cpsvc process remains to fork a new worker 
+instance to replace the crashed worker instance. The client receives a HTTP 500
+page and if the system limit allows, a core dump of the crashed process is 
+written. 
+
+The first call to a script triggers a page compilation if required. If the 
+compilation succeeds, the resulting code is loaded. Implemented this way, cpsp 
+is as stable as CGI, but is still fast beyond the first call since the code 
+resides in memory. This of course also allows keeping session information in 
+memory.
+
+To trade safety for maximal speed, if cpsvc is invoked with the -u flag scripts
+are not executed on a separate instance, which means a script crash causes the 
+whole service to crash. In return the serialization and deserialization 
+overhead is eliminated. 
+

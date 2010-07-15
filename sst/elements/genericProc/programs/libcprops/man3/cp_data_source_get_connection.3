@@ -1,0 +1,19 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_data_source_get_connection \- obtain a database connection from a connection
+factory
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_db_connection *
+.ti +5n
+.BI "cp_data_source_get_connection(cp_data_source *" data_source ");
+.SH DESCRIPTION
+.B cp_data_source_get_connection
+opens a new connection with the parameters specified in the creation of the
+connection factory \fIdata_source\fP.
+.SH RETURN VALUE
+a
+.B cp_db_connection
+structure representing the newly created connection on success or NULL on
+failure.

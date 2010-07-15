@@ -1,0 +1,196 @@
+.TH cp_trie 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_trie"
+.SH NAME
+cp_trie \- a character trie implementation
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/trie.h>\fP.
+
+.BI "cp_trie *cp_trie_create(int " mode ");
+.br
+.BI "cp_trie *cp_trie_create_trie(int " mode ",
+.ti +29n
+.BI "cp_copy_fn " copy_leaf ", 
+.ti +29n
+.BI "cp_destructor_fn " delete_leaf ");
+.br
+.BI "int cp_trie_destroy(cp_trie *" trie ");
+.br
+.BI "int cp_trie_add(cp_trie *" trie ", char *" key ", void *" leaf ");
+.br
+.BI "int cp_trie_remove(cp_trie *" trie ", char *" key ", void **" leaf ");
+.br
+.BI "int cp_trie_prefix_match(cp_trie *" trie ", char *" key ", void **" leaf ");
+.br
+.BI "void *cp_trie_exact_match(cp_trie *" trie ", char *" key "); 
+.br
+.BI "cp_vector *cp_trie_fetch_matches(cp_trie *" trie ", char *" key ");
+.sp
+.BI "int cp_trie_lock(cp_trie *" trie ", int " type ");
+.br
+.BI "int cp_trie_rdlock(cp_trie *" trie ");
+.br
+.BI "int cp_trie_wrlock(cp_trie *" trie "); 
+.br
+.BI "int cp_trie_unlock(cp_trie *" trie ");
+.sp
+.BI "int cp_trie_get_mode(cp_trie *" trie ");
+.br
+.BI "int cp_trie_set_mode(cp_trie *" trie ", int " mode ");
+.br
+.BI "int cp_trie_unset_mode(cp_trie *" trie ", int " mode ");
+
+.SH DESCRIPTION
+.B cp_trie
+is a Patricia tree implementation. The trie data sructure allows efficient 
+string prefix matching. Lookup time is O(m) = O(1) where m is the length of 
+the key being matched. cp_trie could also be used instead of cp_hashtable for 
+string keys. Tries have some advantages over hashtables in that the worst case 
+performance remains O(1) for tries in contrast to O(n) for hash tables, no 
+hash function is required, and no full scale rehashing or balancing is 
+necessary.
+
+.B cp_trie_create
+creates a new trie structure, which should be deallocated by calling
+\fBcp_trie_destroy\fP. 
+.B cp_trie_create_trie 
+also allows setting a
+.I copy_leaf
+function which is used when adding leaves if 
+.I mode
+has the 
+.B COLLECTION_MODE_COPY
+set and a
+.I delete_leaf
+function which is used when removing leaves or deleting the trie if 
+.I mode
+has the
+.B COLLECTION_MODE_DEEP
+bit set.
+.sp
+.B cp_trie_add
+sets the mapping for the given 
+.I key
+to
+\fIleaf\fP.
+.B cp_trie_remove
+removes the mapping for 
+.I key
+from the trie and sets 
+.I leaf
+to the removed leaf.
+.sp
+.B cp_trie_prefix_match
+returns the 
+.I leaf
+matched by the longest prefix of 
+.I key
+mapped by the trie. Eg having constructed a trie containing only the mappings 
+"a" => "XXX" and "abc" => "YYY", a search for "abcde" would return "YYY". 
+.sp
+.B cp_trie_exact_match 
+returns the leaf mapped to by 
+.I key
+uniquely.
+.sp
+.B cp_trie_fetch_matches
+returns a vector containing all values along the path represented by 
+.I key
+including the exact match if it exists.
+.sp
+Collection mode bits may be set with
+.B cp_trie_set_mode
+and cleared with \fBcp_trie_unset_mode\fP. Note that the COLLECTION_MODE_NOSYNC
+bit may not be set while the calling thread owns the collection lock (ie after
+calling cp_trie_lock and before calling cp_trie_unlock). 
+.sp
+Unless COLLECTION_MODE_NOSYNC is set, single trie operations are synchronized. 
+Applications that require transaction-like operations should perform locking
+explicitly by calling 
+.B cp_trie_lock
+with 
+.I type
+set to COLLECTION_LOCK_WRITE or COLLECTION_LOCK_READ, or equivalently, 
+.B cp_trie_wrlock
+or \fBcp_trie_rdlock\fP. When the operation is complete, the lock must be 
+released with \fBcp_trie_unlock\fP.
+.SH RETURN VALUE
+.B cp_trie_create
+returns a new trie structure or NULL if a memory allocation failed.
+.sp
+.B cp_trie_destroy returns 0 or -1 if 
+.I trie
+is NULL.
+.sp
+.B cp_trie_add 
+and 
+.B cp_trie_remove
+returns 0 on success or non-zero if a synchronization operation failed.
+.sp
+.B cp_trie_prefix_match
+returns the number of prefices mapping to leaves found on the way to the 
+longest prefix, or zero if no match was found. 
+.sp
+.B cp_trie_exact_match 
+returns the leaf mapped to 
+.I key
+or NULL if no such mapping exists.
+.sp
+.B cp_trie_fetch_matches
+returns all leaves along the path described by
+.I key
+or NULL if no matches exist or on memory allocation failure. 
+.sp
+Retrieval and insertion functions may return NULL if locking fails. This 
+however should not normally occur unless accessing the trie lock directly 
+rather than performing synchronization through the api functions.
+.SH EXAMPLE
+The following code creates a trie, inserts mappings entered on the standard 
+input, then attempts matches for keys entered on the standard input.
+
+.RS +3n
+.nf
+#include <stdio.h>
+#include <string.h>
+#include "collection.h"
+#include "trie.h"
+
+int main(int argc, char *argv[])
+{
+	char key[80];
+	char val[80];
+	char *match;
+	cp_trie *t = cp_trie_create(COLLECTION_MODE_NOSYNC);
+	int sub;
+
+	printf("enter mappings as [key value], \\"next\\" or \\'n\\' when done\\n");
+	while (1)
+	{
+		scanf("%s", key);
+		if (strcmp(key, "n") == 0 || strcmp(key, "next") == 0) break;
+		scanf("%s", val);
+		
+		printf("adding %s => %s\\n", key, val);
+		cp_trie_add(t, key, strdup(val));
+	}
+
+	printf("enter key to match - \\'q\\' or \\"quit\\" to quit\\n");
+	while (1)
+	{
+		scanf("%s", key);
+		if (strcmp(key, "q") == 0 || strcmp(key, "quit") == 0)
+			break;
+		
+		sub = cp_trie_prefix_match(t, key, &match);
+		printf("match for %s: %s [%d]\\n", 
+			   key, match ? match : "none", sub);
+	}
+
+	cp_trie_destroy(t);
+
+	return 0;
+}
+.fi
+.RE
+
+for notes on compiling and linking see 
+.BR cprops (3).

@@ -1,0 +1,91 @@
+.TH "cp_socket" 3 "MAY 2006" "libcprops" "cp_httpclient"
+.SH NAME
+cp_httpclient_create, cp_httpclient_create_proxy, 
+cp_httpclient_create_ssl, cp_httpclient_create_proxy_ssl,
+cp_httpclient_destroy, cp_httpclient_reopen \- http client wrapper constructor 
+/ destructor functions
+
+.SH SYNOPSIS
+#include <cprops/httpclient.h>
+
+.BI "cp_httpclient *cp_httpclient_create(char *" host ", int " port ");
+.br
+.BI "cp_httpclient *
+.ti +5n
+.BI "cp_httpclient_create_proxy(char *" host ", int " port ",
+.ti +32n
+.BI "char *" proxy_host ", int " proxy_port ");
+.br
+.BI "cp_httpclient *cp_httpclient_create_ssl(char *" host ", int " port ", 
+.ti +40n
+.BI "char *" CA_file ", char *" CA_path ",
+.ti +40n
+.BI "int " verification_mode ");
+.br
+.BI "cp_httpclient *
+.ti +5n
+.BI "cp_httpclient_create_proxy_ssl(char *" host ", int " port ",
+.ti +36n
+.BI "char *" proxy_host ", int " proxy_port "),
+.br
+.ti +36n
+.BI "char *" CA_file ", char *" CA_path ",
+.ti +36n
+.BI "int " verification_mode ");
+.br
+.BI "void cp_httpclient_destroy(cp_httpclient *" client ");
+.sp
+.BI "int cp_httpclient_reopen(cp_httpclient *" client ", char *" host ", int " port ");
+.SH DESCRIPTION
+cp_httpclient represents a tcp connection to a specific host on a specific port
+and other information required to relay HTTP requests and retrieve server
+responses. 
+.sp
+.B cp_httpclient_create
+creates a client wrapper for the requested host and port. Creation will fail if
+the requested host can not be found.
+.br
+.B cp_httpclient_create_proxy
+creates a client wrapper for the requested host and port, but connects instead
+to the requested 
+.I proxy_host
+and therefore creation will fail if the
+.I proxy_host
+cannot be found, and may succeed even if the requested 
+.I host
+does not exist.
+.sp
+.B cp_httpclient_create_ssl
+creates a client using the certificates given in the
+.I CA_file
+or under the 
+.I CA_path
+parameter. A value of SSL_VERIFY_PEER or SSL_VERIFY_NONE must be provided for
+the 
+.I verification_mode
+parameter.
+.br
+.B cp_httpclient_create_proxy_ssl
+will create an ssl connection to the proxy. 
+.sp
+.B cp_httpclient_create_ssl 
+and
+.B cp_httpclient_create_proxy_ssl
+are available if libcprops was configured to use ssl (default).
+.sp 
+.B cp_httpclient_destroy
+closes the underlying connection if it is open and deallocates the client 
+object.
+.sp
+.B cp_httpclient_reopen
+reassigns a client object for a different host:port pair. 
+.SH RETURN VALUE
+\fBcp_httpclient_create\fP, \fBcp_httpclient_create_proxy\fP, 
+\fBcp_httpclient_create_ssl\fP and 
+.B cp_httpclient_create_proxy_ssl
+return a newly created client object or NULL on memory allocation failure or if
+the requested host or proxy host could not be found.
+.sp
+.B cp_httpclient_reopen
+returns zero on success or -1 on memory allocation failures or if the new host
+could not be found.

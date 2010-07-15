@@ -1,0 +1,18 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_contract \- reduce allocated heap size to accomodate for the current
+number of items
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "int cp_heap_contract(cp_heap *" heap ");
+
+.SH DESCRIPTION
+cp_heap represents a heap data structure internally using a pointer array which
+is resized when it becomes full. After removing items, the internal array
+remains at the maximal size required during operation. To adapt the internal
+array size for the current heap usage, call cp_heap_contract. 
+
+.SH RETURN VALUE
+cp_heap_contract returns 0 on success, non-zero if reallocation fails. 

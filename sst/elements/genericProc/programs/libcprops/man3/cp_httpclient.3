@@ -1,0 +1,224 @@
+.TH "cp_socket" 3 "MAY 2006" "libcprops" "cp_httpclient"
+.SH NAME
+cp_httpclient \- http client api
+.SH SYNOPSIS
+#include <cprops/httpclient.h>
+
+.SS API INITIALIZATION / FINALIZATION
+.BI "int cp_httpclient_init();
+.br
+.BI "int cp_httpclient_shutdown();
+.br
+.SS CLIENT CREATION / CLEANUP
+.BI "cp_httpclient *cp_httpclient_create(char *" host ", int " port ");
+.br
+.BI "cp_httpclient *
+.ti +5n
+.BI "cp_httpclient_create_proxy(char *" host ", int " port ",
+.ti +32n
+.BI "char *" proxy_host ", int " proxy_port ");
+.br
+.BI "cp_httpclient *cp_httpclient_create_ssl(char *" host ", int " port ", 
+.ti +40n
+.BI "char *" CA_file ", char *" CA_path ",
+.ti +40n
+.BI "int " verification_mode ");
+.br
+.BI "cp_httpclient *
+.ti +5n
+.BI "cp_httpclient_create_proxy_ssl(char *" host ", int " port ",
+.ti +36n
+.BI "char *" proxy_host ", int " proxy_port "),
+.br
+.ti +36n
+.BI "char *" CA_file ", char *" CA_path ",
+.ti +36n
+.BI "int " verification_mode ");
+.br
+.BI "void cp_httpclient_destroy(cp_httpclient *" client ");
+.sp
+.BI "int cp_httpclient_reopen(cp_httpclient *" client ", char *" host ", int " port ");
+.br
+.SS HTTP SETTINGS
+.BI "void cp_httpclient_set_header(cp_httpclient *" client ",
+.ti +30n
+.BI "char *" header ", char *" value ");
+.br
+.BI "void cp_httpclient_set_auto_drop_headers(cp_httpclient *" client ", 
+.ti +41n
+.BI "short " mode ");
+.br
+.BI "void cp_httpclient_drop_headers(cp_httpclient *" client ");
+.br
+.BI "void *cp_httpclient_set_parameter(cp_httpclient *" client ", 
+.ti +34n
+.BI "char *" name ", char *" value ");
+.br
+.BI "void cp_httpclient_set_auto_drop_parameters(cp_httpclient *" client ", 
+.ti +44n
+.BI "short " mode ");
+.br
+.BI "void cp_httpclient_drop_parameters(cp_httpclient *" client ");
+.br
+.BI "void cp_httpclient_set_http_version(cp_httpclient *" client ", 
+.ti +36n
+.BI "cp_http_version " version ");
+.br
+.BI "void cp_httpclient_set_request_type(cp_httpclient *" client ", 
+.ti +36n
+.BI "cp_http_request_type " type ");
+.br
+.BI "void cp_httpclient_set_user_agent(cp_httpclient *" client ", char *" agent ");
+.br
+.BI "void cp_httpclient_set_timeout(cp_httpclient *" client ",
+.ti +31n
+.BI "int " sec ", int " usec ");
+.br
+.BI "void cp_httpclient_set_retry(cp_httpclient *" client ", int " retry_count ");
+.br
+.BI "void cp_httpclient_set_max_redirects(cp_httpclient *" client ", int " max ");
+.br
+.BI "void cp_httpclient_set_cookie_jar(cp_httpclient *" client ", cp_trie *" jar ");
+.SS ISSUING REQUESTS
+.BI "cp_httpclient_result *
+.ti +5n
+.BI "cp_httpclient_fetch(cp_httpclient *" client ", char *" uri ");
+.br
+.BI "int cp_httpclient_fetch_nb(cp_httpclient *" client ", char *" uri ", 
+.ti +27n
+.BI "void *" id ", cp_httpclient_callback " callback ",
+.ti +27n
+.BI "int " background ");
+.br
+.BI "struct pollfd *cp_httpclient_ctl_default_get_pollfds(int *" num ");
+.br
+.BI "fd_set *cp_httpclient_ctl_default_get_read_fd_set(int *" num ");
+.br
+.BI "fd_set *cp_httpclient_ctl_default_get_write_fd_set(int *" num ");
+.br
+.BI "int cp_httpclient_fetch_nb_exec();"
+.br
+.SS GENERALIZED INTERFACE
+.BI "cp_httpclient_ctl *cp_httpclient_ctl_create(int " background ");
+.br
+.BI "void cp_httpclient_ctl_destroy(cp_httpclient_ctl *" ctl ");
+.sp
+.BI "struct pollfd *
+.ti +5n
+.BI "cp_httpclient_ctl_get_pollfds(cp_httpclient_ctl *" ctl ", int *" num ");
+.br
+.BI "fd_set *
+.ti +5n
+.BI "cp_httpclient_ctl_get_read_fd_set(cp_httpclient_ctl *" ctl ", int *" num ");
+.br
+.BI "fd_set *
+.ti +5n
+.BI "cp_httpclient_ctl_get_write_fd_set(cp_httpclient_ctl *" ctl ", int *" num ");
+.sp
+.BI "int cp_httpclient_fetch_ctl(cp_httpclient_ctl *ctl, 
+.ti +28n
+.BI "cp_httpclient *" client ",
+.ti +28n
+.BI "char *" uri ", void *" id ", 
+.ti +28n
+.BI "cp_httpclient_callback " callback ");
+.br
+.BI "int cp_httpclient_fetch_ctl_exec(cp_httpclient_ctl *" ctl ");
+.SS RESULT HANDLING
+.BI "void cp_httpclient_result_destroy(cp_httpclient_result *" res ");
+.br
+.BI "cp_httpclient *
+.ti +5n
+.BI "cp_httpclient_result_get_client(cp_httpclient_result *" res ");
+.br
+.BI "void *cp_httpclient_result_id(cp_httpclient_result *" res ");
+.br
+.BI "cp_http_result_status 
+.ti +5n
+.BI "cp_httpclient_result_status(cp_httpclient_result *" res ");
+.br
+.BI "cp_http_response *
+.ti +5n
+.BI "cp_httpclient_result_get_response(cp_httpclient_result *" res ");
+
+.SH DESCRIPTION
+cp_httpclient represents a tcp connection to a specific host on a specific port
+and other information required to relay HTTP requests and retrieve server
+responses. Requests may be issued using a blocking interface, a non-blocking
+interface and a non-blocking background interface, in which case they are 
+performed by a different thread. Using the non blocking interfaces, requests 
+are processed by polling on an internal cp_httpclient_ctl object. Requests may
+be assigned to dynamically created cp_httpclient_ctl objects so as to separate
+execution into different groups. 
+.sp
+Here is a description of possible scenarios for performing HTTP calls. 
+.SS single thread, blocking:
+.nf +3n
+  o  create a client
+  o  issue a call to \fBcp_httpclient_fetch\fP, specifying a uri. The call is 
+     processed inline and blocks until a response is read or an error 
+     occurs.
+  o  once done processing the result structure, release it by calling
+     \fBcp_httpclient_result_destroy\fP()
+.fi
+.SS single thread, multiple requests - non-blocking:
+.nf
+  o  create a client for each distinct host : port pair 
+  o  for each client, issue a call to \fBcp_httpclient_fetch_nb\fP, 
+     specifying a uri, an id and a callback, with a value of \fI0\fP for the 
+     \fIbackground\fP parameter. The request is added to an internal control 
+     stack.
+  o  repeatedly call \fBcp_httpclient_fetch_nb_exec\fP() until it returns 0. 
+  o  you might want to call poll() to prevent spinning on the call to 
+     cp_httpclient_fetch_nb_exec(). use
+     \fBcp_httpclient_ctl_default_get_pollfds\fP() to retrieve an array
+     of struct pollfd objects for the underlying file descriptors and 
+     call poll() with a non-zero timeout. 
+     On systems where poll (2) is unavailable, equivalent select (2) based
+     functions are available - see cp_httpclient_ctl (3).
+  o  cp_httpclient_fetch_nb_exec will perform the callbacks given when 
+     issuing the requests. Do not call cp_httpclient_result_destroy -
+     the cp_httpclient_result objects are released by the framework in 
+     this case.
+.fi
+.SS multi-threaded
+.nf
+  o  create a client for each distinct host : port pair 
+  o  for each client, issue a call to \fBcp_httpclient_fetch_nb\fP, 
+     specifying a uri, an id and a callback, with a value of \fI1\fP for the 
+     \fIbackground\fP parameter. The request is added to an internal control 
+     stack and the requests are processed in a separate thread. 
+     Completed requests or errors will trigger the respective callbacks 
+     with cp_httpclient_result objects describing the server response. 
+     The result objects are released by the framework.
+.fi
+
+.SS grouping transfers
+.nf
+  o  create an asynchronous interface control block by calling
+     cp_httpclient_ctl(). The \fIbackground\fP value determines the control
+     block behavior as follows:
+  o  with a \fIbackground\fP value of 0 proceed as detailed under single
+     thread, but use \fBcp_httpclient_fetch_ctl()\fP,
+     \fBcp_httpclient_fetch_ctl_exec\fP and \fBcp_httpclient_ctl_get_pollfds()\fP 
+     rather than the functions for the default group transferring.
+  o  with a non-zero \fIbackground\fP value proceed as detailed under 
+     multi-threaded. For values of 2 or above a thread pool of the given 
+     size will be used to perform transfers. Which could make sense on 
+     machines with more than one cpu when the callback processing time 
+     is comparable to the network time.  
+.fi
+
+In all cases, a call to cp_httpclient_init() to initialize the api must be made
+before issuing requests. cp_httpclient_shutdown() must be called to perform 
+cleanup.
+
+.sp
+for more detail see the man pages for specific functions.
+.SH SEE ALSO
+.BR cp_httpclient_create (3),
+.BR cp_httpclient_set_header (3),
+.BR cp_httpclient_fetch (3),
+.BR cp_httpclient_ctl (3),
+.BR cp_httpclient_result (3)
+

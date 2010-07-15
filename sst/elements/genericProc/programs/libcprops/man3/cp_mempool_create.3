@@ -1,0 +1,52 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_mempool_create, cp_mempool_create_by_option \- create a memory pool
+
+.SH SYNOPSIS 
+#include <cprops/mempool.h>
+.sp
+.BI "cp_mempool *cp_mempool_create(const size_t " chunksize ");
+.br
+.BI "cp_mempool *cp_mempool_create_by_option(const int " mode ", 
+.ti +40
+.BI "const size_t " chunksize ", 
+.ti +40
+.BI "size_t " multiple ");
+
+.SH DESCRIPTION
+.B cp_mempool_create 
+instiantiates a memory pool serving 
+.I chunksize
+byte items. Internally the memory pool allocates several pages at a time, and
+serves pointers to 
+.I chunksize 
+memory areas inside these blocks. 
+.sp
+.B cp_mempool_create_by_option 
+allows setting mode bit flags and the number of 
+.I chunksize
+items to fit in an internal allocation block. 
+.sp 
+When creating a pool with 
+.BR cp_mempool_create,
+allocation and deallocation operations, i.e. 
+.BR cp_mempool_alloc (3) 
+and 
+.BR cp_mempool_free (3),
+are not synchronized by default. If you choose to share a memory pool between 
+different threads, unset the
+.B COLLECTION_MODE_NOSYNC
+mode bit or create the pool using
+.BR cp_mempool_create_by_mode. 
+
+.SH RETURN VALUE
+a pointer to a newly allocated
+.B cp_mempool
+object or NULL on failure. 
+
+.SH SEE ALSO
+.BR cp_mempool_inc_refcount (3),
+.BR cp_mempool_alloc (3), 
+.BR cp_mempool_free (3), 
+.BR cp_mempool_destroy (3),
+.BR cp_shared_mempool (3)

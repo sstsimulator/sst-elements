@@ -1,0 +1,26 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_pool_set_blocking \- set a connection pool's behavior when
+a connection is requested and none are available
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_pool_set_blocking(cp_db_connection_pool *" pool ", 
+.ti +40n
+.BI "int " block ");
+.SH DESCRIPTION
+.B cp_db_connection_pool_set_blocking
+sets the 
+.I block
+flag on a connection pool to the specified value. If this is non-zero, no
+connections are available and the connection pool has reached its maximal size,
+.B cp_db_connection_pool_get_connection 
+will block until a connection becomes available.
+.sp
+The 
+.I block
+flag is not set by default. 
+.SH SEE ALSO
+.BR cp_db_connection_pool_shutdown (3),
+.BR cp_db_connection_pool_get_connection (3)

@@ -1,0 +1,36 @@
+.TH "cp_string" 3 "MARCH 2006" "libcprops" "cp_string"
+.SH NAME
+cp_string_create \- string constructor function
+.SH SYNOPSIS
+#include <cprops/str.h>
+
+.BI "cp_string *cp_string_create(char *" data ", int " len ");
+.SH DESCRIPTION
+.B cp_string_create
+creates a new
+.B cp_string
+by allocating (
+.I len
++ 1) bytes and copying the first 
+.I len
+bytes of
+.I data
+on to the 
+.B cp_string
+structure. 
+
+.SH RETURN VALUE
+the newly allocated 
+.B cp_string
+structure on success or 
+.B NULL
+on failure. 
+.B cp_string_create
+may fail on systems where 
+.BR malloc (3)
+might fail.
+.SH SEE ALSO
+.BR cp_string_dup (3),
+.BR cp_string_cstrdup (3),
+.BR cp_string_delete (3),
+.BR malloc (3)

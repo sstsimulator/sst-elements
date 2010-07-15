@@ -1,0 +1,66 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_get,
+cp_hashtable_get_by_option \- lookup a hashtable entry by key 
+
+.SH SYNOPSIS
+
+.B #include <cprops/hashtable.h>
+
+.BI "void *cp_hashtable_get(cp_hashtable *" table ", void *" key ");
+.br
+.BI "void *cp_hashtable_get_by_option(cp_hashtable *" table ", void *" key ",
+.ti +33n
+.BI "int " mode ");
+.br 
+.SH DESCRIPTION
+\fBcp_hashtable_get\fP looks up the value stored under \fIkey\fP. 
+\fBcp_hashtable_get_by_option\fP allows specifying the retrieval \fImode\fP as
+well. If
+.B COLLECTION_MODE_MULTIPLE_VALUES
+is set the hashtable is searched for multiple matches for \fIkey\fP and the 
+result, even if it is a single item, is returned in a newly created 
+\fIcp_list\fP. The result list is created with the same mode, value copy 
+function and value destructor as the hashtable. Hence the result list contains
+copies of values if 
+.B COLLECTION_MODE_COPY
+was set on the table, and calling the list destructor triggers calls to the 
+value finalization function if 
+.B COLLECTION_MODE_DEEP 
+is set. Also note that like 
+.B cp_list_iterator
+and
+.B cp_hashlist_iterator
+the table and the result list share the same synchronization mechanism. These 
+features add up to a consistent api behavior but also introduce certain 
+subtleties. Potential complications are avoided by refraining from using the
+.B COLLECTION_MODE_DEEP
+bit with hashtables.
+.SH RETURN VALUE
+get functions return the value the \fIkey\fP maps to, or if 
+\fBCOLLECTION_MODE_MULTIPLE_VALUES\fP is set, a pointer to a newly created
+\fIcp_list\fP containing all matches; or \fBNULL\fP on error or if there is no 
+mapping for the specified key. NULL may also be returned if a locking error
+occurs.  
+
+.SH ERRORS
+.TP
+.B EINVAL
+ - the 
+.I table
+or
+.I key
+parameter are NULL.
+.TP
+.B ENOMEM
+ - 
+.B COLLECTION_MODE_MULTIPLE_VALUES
+is set and the result list creation failed.
+.TP 
+.B EDEADLK
+ - a locking error occured. This should not normally come up unless accessing
+the collection lock directly rather than using api calls. 
+.SH "SEE ALSO"
+.BR cp_hashtable (3),
+.BR cp_hashlist_get (3),
+.BR cp_list (3)

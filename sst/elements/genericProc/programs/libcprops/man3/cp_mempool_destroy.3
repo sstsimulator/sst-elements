@@ -1,0 +1,23 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_mempool_destroy \- deallocate a memory pool
+
+.SH SYNOPSIS 
+#include <cprops/mempool.h>
+.sp
+.BI "void cp_mempool_destroy(cp_mempool *" pool ");
+
+.SH DESCRIPTION
+.B cp_mempool_destroy
+decreases the reference count on a memory pool created with 
+.BR cp_mempool_create(3)
+or
+.BR cp_mempool_create_by_option (3).
+When the reference count reaches zero, the pool and all memory associated with
+it are deallocated. 
+
+.SH SEE ALSO
+.BR cp_mempool_create (3),
+.BR cp_mempool_alloc (3), 
+.BR cp_mempool_free (3), 
+.BR cp_shared_mempool (3)

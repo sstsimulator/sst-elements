@@ -1,0 +1,24 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_write, cp_client_write_string \- write from a tcp connection
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "int cp_client_write(cp_client *" client ", char *" buf ", int " len ");
+.sp
+.BI "int cp_client_write_string(cp_client *" client ", cp_string *" str ");
+.SH DESCRIPTION
+.B cp_client_write
+attempts to write
+.I len
+bytes to the connection associated with the cp_client
+.I client
+from the buffer \fIbuf\fP. 
+.B cp_client_write_string
+attempts to write the cp_string
+.I str
+to the client.
+.SH RETURN VALUE
+the number of bytes successfully written on success or -1 on error.
+.SH SEE ALSO
+.BR cp_client_read (3)

@@ -1,0 +1,80 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_callback, cp_multimap_callback_by_index, cp_multimap_callback_preorder, cp_multimap_callback_postorder \- invoke a callback on items in a multi-map
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.br
+.BI "int cp_multimap_callback(cp_multimap *" tree ", 
+.ti +25n
+.BI "cp_callback_fn " callback ", 
+.ti +25n
+.BI "void *" prm ");
+.br
+.BI "int cp_multimap_callback_by_index(cp_multimap *" tree ", 
+.ti +34n
+.BI "cp_index *" index ", 
+.ti +34n
+.BI "cp_callback_fn " callback ", 
+.ti +34n
+.BI "void *" prm ");
+.br
+.BI "int cp_multimap_callback_preorder(cp_multimap *" tree ", 
+.ti +34n
+.BI "cp_callback_fn " callback ", 
+.ti +34n
+.BI "void *" prm ");
+.br
+.BI "int cp_multimap_callback_postorder(cp_multimap *" tree ", 
+.ti +35n
+.BI "cp_callback_fn " callback ", 
+.ti +35n
+.BI "void *" prm ");
+
+.SH DESCRIPTION
+.B cp_multimap_callback*
+perform a scan of the map, invoking the given callback function 
+with each entry and the given parameter. The callback iteration is 
+terminated if the callback function returns non-zero. The prototype for the 
+callback function is as follows:
+
+.nf
+int callback_fn(void *entry, void *client_prm);
+.fi
+
+The callback function is invoked iteratively with 
+.I entry
+pointing at the current tree node. This is a
+.B cp_index_map_node
+object. The 
+.B entry
+member points to the actual entry, on unique indices, or to a 
+.B cp_vector
+on non-unique indices. See
+.BR cp_multimap (3)
+for an example of a callback function implementation.
+.sp
+.B cp_mutlimap_callback
+performs an in-order iteration. 
+.B cp_multimap_callback_preorder
+and 
+.B cp_multimap_callback_postorder
+perform a pre- and postorder iteration respectively. 
+.B cp_multimap_callback_by_index
+allows specifying a secondary index to perform an in-order iterator with. The 
+.I index
+parameter must be a 
+.B cp_index
+created by calling 
+.B cp_multimap_create_index
+on the map being searched. 
+.br
+.SH RETURN VALUE
+0 if the iteration completes, or the non-zero value returned by the 
+.I callback
+function terminating the iteration. 
+.br
+.SH SEE ALSO
+.BR cp_multimap (3),
+.BR cp_multimap_create_index (3),
+.BR cp_vector (3)

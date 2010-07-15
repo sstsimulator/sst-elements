@@ -1,0 +1,14 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_set_fetch_metadata \- set connection to request query result
+meta data
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_set_fetch_metadata(cp_db_connection *" connection ",
+.ti +41n
+.BI "int " mode ");
+.SH DESCRIPTION
+.B cp_db_connection_set_fetch_metadata
+sets the connection to fetch result set meta data for SELECT queries. 

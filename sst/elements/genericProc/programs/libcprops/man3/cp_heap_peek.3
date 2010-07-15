@@ -1,0 +1,14 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_peek \- retrieve the item on the top of the heap
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "void *cp_heap_peek(cp_heap *" heap ");
+
+.SH DESCRIPTION
+cp_heap_peek returns the item at the top of the heap.
+
+.SH RETURN VALUE
+the minimum item or NULL if the heap is empty.

@@ -1,0 +1,97 @@
+.TH cp_list_iterator 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_list"
+.SH NAME
+cp_list_iterator \- an iterator for cp_list structures 
+.SH SYNOPSIS
+
+.B #include <cprops/linked_list.h>
+.sp
+.BI "cp_list_iterator *cp_list_create_iterator(cp_list *" list ", 
+.ti +42n
+.BI "int " lock_mode ");
+.br
+.BI "int cp_list_iterator_release(cp_list_iterator *" iterator ");
+.br
+.BI "int cp_list_iterator_destroy(cp_list_iterator *" iterator ");
+.sp
+.BI "int cp_list_iterator_init(cp_list_iterator *" iterator ", cp_list *" list ",
+.ti +26n
+.BI "int " lock_mode ");
+.br
+.BI "int cp_list_iterator_init_tail(cp_list_iterator *" iterator ", 
+.ti +31n
+.BI "cp_list *" list ", int " lock_mode ");
+.sp
+.BI "int cp_list_iterator_head(cp_list_iterator *" iterator ");
+.br
+.BI "int cp_list_iterator_tail(cp_list_iterator *" iterator ");
+.br
+.BI "void *cp_list_iterator_next(cp_list_iterator *" iterator ");
+.br
+.BI "void *cp_list_iterator_prev(cp_list_iterator *" iterator ");
+.br
+.BI "void *cp_list_iterator_curr(cp_list_iterator *" iterator ");
+.sp
+.BI "void *cp_list_iterator_insert(cp_list_iterator *" iterator ",
+.ti +30n
+.BI "void *" item ");
+.br
+.BI "void *cp_list_iterator_append(cp_list_iterator *" iterator ", 
+.ti +30n
+.BI "void *" item ");
+.br
+.BI "void *cp_list_iterator_remove(cp_list_iterator *" iterator ");
+
+.SH DESCRIPTION
+\fBcp_list_iterator\fP is an iterator for cp_list structures. 
+
+.SH ITERATOR INITIALIZATION / FINALIZATION
+\fBcp_list_create_iterator\fP returns a pointer to a newly allocated iterator
+pointing to the head of the list. If called with \fIlock_mode\fP set to
+\fBCOLLECTION_LOCK_READ\fP the list will be locked for reading. If called with 
+\fBCOLLECTION_LOCK_WRITE\fP the list will be locked for writing.
+.sp
+\fBcp_list_iterator_release\fP unlocks the list, but need not be called 
+explicitly if calling \fBcp_list_iterator_destroy\fP. If you allocate the 
+iterator with \fBcp_list_create_iterator\fP, call 
+\fBcp_list_iterator_destroy\fP to perform cleanup. If you declare an iterator 
+instance on the stack, perform cleanup with \fBcp_list_iterator_release\fP.
+
+.SH ITERATOR POSITIONING AND ITEM RETRIEVAL
+\fBcp_list_iterator_init\fP initializes an iterator by performing the requested
+locking and positioning the iterator at the first position in the list.
+\fBcp_list_iterator_init_tail\fP does the same but positions the iterator at 
+the last position in the list. \fBcp_list_iterator_head\fP and 
+\fBcp_list_iterator_tail\fP position the iterator at the first and last 
+positions in the list respectively. \fBcp_list_iterator_next\fP and 
+\fBcp_list_iterator_prev\fP return the entry at the current iterator position
+and move the iterator to the next or previous entry respectively. 
+\fBcp_list_iterator_curr\fP returns the entry at the current iterator position
+but does not advance the iterator position.
+
+.SH LIST MANIPULATION
+unless the underlying list mode has the \fBCOLLECTION_MODE_NOSYNC\fP bit set,
+iterator functions that structurally change a list require the iterator to 
+have been initialized with \fBCOLLECTION_LOCK_WRITE\fP.
+\fBcp_list_iterator_insert\fP and \fBcp_list_iterator_append\fP add the item
+specified by the \fIitem\fP parameter to the list before or after the current
+iterator position respectively. An exception is when inserting an item at the
+beginning of the list or appending an item at the end after the iterator has 
+been moved beyond list limits, in which cases the item will still be added to 
+the list in the extreme position. 
+.br
+\fBcp_list_iterator_remove\fP removes the item from the current iterator 
+position and advances the iterator one step towards the bottom of the list if 
+possible, or one step towards the top if not.
+
+.SH RETURN VALUE
+\fBcp_list_create_iterator\fP returns the newly allocated iterator or 
+\fBNULL\fP if memory allocation failed or if the requested lock could not be
+obtained. \fBcp_list_iterator_init\fP and \fBcp_list_iterator_init_tail\fP 
+return 0 on success or non-zero if the requested lock could not be obtained. 
+\fBcp_list_iterator_next\fP, \fBcp_list_iterator_prev\fP and
+\fBcp_list_iterator_curr\fP return the list item at the current iterator
+position or NULL if the list is empty or if the iterator has been positioned 
+beyond list limits by a previous call.
+
+.SH "SEE ALSO"
+.BR cp_list(3)

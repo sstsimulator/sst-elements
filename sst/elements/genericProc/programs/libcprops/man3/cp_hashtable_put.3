@@ -1,0 +1,68 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_put, 
+cp_hashtable_put_by_option, 
+cp_hashtable_put_safe, 
+cp_hashtable_put_copy \- add an entry to a hashtable 
+.SH SYNOPSIS
+
+.B #include <cprops/hashtable.h>
+
+.BI "void *cp_hashtable_put(cp_hashtable *" table ", void *" key ", void *" value ");
+.br
+.BI "void *cp_hashtable_put_by_option(cp_hashtable *" table ", void *" key ", 
+.ti +33n
+.BI "void *" value ", int " mode ");
+.br
+.BI "void *cp_hashtable_put_safe(cp_hashtable *" table ", void * "key ", 
+.ti +28n
+.BI "void *" value ");
+.br
+.BI "void *cp_hashtable_put_copy(cp_hashtable *" table ", void *" key ",
+.ti +28n
+.BI "void *" value ");
+
+.SH DESCRIPTION
+\fBcp_hashtable_put\fP adds a mapping from \fIkey\fP to \fIvalue\fP using the
+current mode on \fItable\fP. The effect of various mode bits is as follows:
+.TP
+\fBCOLLECTION_MODE_DEEP\fP - if a mapping for \fIkey\fP already exists, the
+destructor functions are called on the existing \fIkey\fP and \fIvalue\fP and 
+they are replaced with the new settings - unless \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP is set.
+.TP
+\fBCOLLECTION_MODE_MULTIPLE_VALUES\fP - allows multiple mappings for a given
+key.
+.TP
+\fBCOLLECTION_MODE_COPY\fP - the copy functions specified on table creation
+are used to store copies of the \fIkey\fP and \fIvalue\fP.
+.TP 
+\fBCOLLECTION_MODE_NOSYNC\fP - no locking is performed on insertion.
+.TP
+\fBCOLLECTION_MODE_NORESIZE\fP - a resize will not be triggered even if the
+fill factor exceeds the maximum setting for the table.
+.P
+.B cp_hashtable_put_by_option
+allows specifying a \fBmode\fP setting overriding the current table mode, with 
+the exception that the \fBCOLLECTION_MODE_NOSYNC\fP bit on the \fIoption\fP
+parameter has no effect.
+.sp
+.B cp_hashtable_put_safe
+has the effect of an insertion with the \fBCOLLECTION_MODE_DEEP\fP bit set.
+.B cp_hashtable_put_copy 
+has the effect of an insertion with the \fBCOLLECTION_MODE_COPY\fP bit set.
+
+.SH RETURN VALUE
+insertion functions return a pointer to the actual inserted value, which may be
+different to the \fIvalue\fP parameter if \fBCOLLECTION_MODE_COPY\fP is set, or
+\fBNULL\fP if the insertion failed.
+
+.SH ERRORS
+.TP
+\fBENOMEM\fP - an internal allocation failed.
+
+.SH "SEE ALSO"
+.BR cp_hashtable (3),
+.BR cp_hashtable_get (3),
+.BR cp_hashtable_set_mode (3),
+.BR cp_hashtable_set_max_fill_factor (3)
+

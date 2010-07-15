@@ -1,0 +1,38 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_prepare_statement \- create a prepared statement
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "cp_db_statement *
+.ti +5n
+.BI "cp_db_connection_prepare_statement(cp_db_connection *" connection ",
+.ti +40n
+.BI "int " prm_count ",
+.ti +40n
+.BI "cp_field_type *" prm_types ", 
+.ti +40n
+.BI "char *" query ");
+.SH DESCRIPTION
+.B cp_db_connection_prepare_statement
+creates a prepared statement with
+.I prm_count
+parameters of the types given by
+.I prm_types
+for the query
+.I query
+on the connection \fIconnection\fP. Parameters are specified as '?' in the 
+query string; implementations may support other formats in addition. See 
+.BR cp_db_connection_select (3)
+for a list of the parameter types that may be used in the 
+.I prm_type
+parameter type specification vector.
+.SH RETURN VALUE
+a
+.B cp_db_statement
+representing the prepared statement on success or NULL on failure.
+.SH SEE ALSO
+.BR cp_db_statement_set_binary (3),
+.BR cp_db_connection_execute_statement (3),
+.BR cp_db_connection_close_statement (3)

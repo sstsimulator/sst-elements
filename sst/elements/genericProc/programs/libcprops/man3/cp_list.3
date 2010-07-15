@@ -1,0 +1,192 @@
+.TH cp_list 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_list"
+.SH NAME
+cp_list \- a doubly linked list implementation
+.SH SYNOPSIS
+
+.B #include <cprops/linked_list.h>
+
+.B cp_list *cp_list_create();
+.br
+.B cp_list *cp_list_create_nosync();
+.br
+.BI "cp_list *cp_list_create_list(int " mode ", 
+.ti +29n
+.BR "cp_compare_fn " compare_fn ",  
+.ti +29n
+.BI "cp_copy_fn " copy_fn ", 
+.ti +29n
+.BR "cp_destructor_fn " item_destructor ");
+.br
+.BI "void cp_list_destroy(cp_list *" list ");
+.br
+.BI "void cp_list_destroy_by_option(cp_list *" list ", int " option ");
+.br
+.BI "void cp_list_destroy_custom(cp_list *" list ", cp_destructor_fn " fn ");
+.sp
+.BI "void *cp_list_insert(cp_list *" list ", void *" item ");
+.br
+.BI "void *cp_list_append(cp_list *" list ", void *" item ");
+.br
+.BI "void *cp_list_insert_after(cp_list *" list ", void *" item ", void *" existing ");
+.br
+.BI "void *cp_list_insert_before(cp_list *" list ", void *" item ", void *" existing ");
+.sp
+.BI "void *cp_list_remove(cp_list *" list ", void *" item ");
+.br
+.BI "void *cp_list_remove_head(cp_list *" list ");
+.br
+.BI "void *cp_list_remove_tail(cp_list *" list ");
+.sp
+.BI "void *cp_list_search(cp_list *" list ", void *" item ");
+.br
+.BI "int cp_list_callback(cp_list *" list ", 
+.ti +21n
+.BI "int (*" action ")(void *, void *),
+.ti +21n
+.BI "void *" identifier ");
+.br
+.BI "void *cp_list_get_head(cp_list *" list ");
+.br
+.BI "void *cp_list_get_tail(cp_list *" list ");
+.sp
+.BI "int cp_list_lock(cp_list *" list ", int " mode ");
+.br
+.BI "int cp_list_rdlock(cp_list *" list ");
+.br
+.BI "int cp_list_wrlock(cp_list *" list ");
+.br
+.BI "int cp_list_unlock(cp_list *" list ");
+.sp
+.BI "long cp_list_item_count(cp_list *" list ");
+.br
+.BI "int cp_list_is_empty(cp_list *" list ");
+.br
+.SH DESCRIPTION
+\fBcp_list\fP is a doubly linked list implementation. 
+.SH CONSTRUCTOR / DESTRUCTOR FUNCTIONS
+.hy 0
+the zero parameter constructor function \fBcp_list_create\fP is equivalent to 
+\fBcp_list_create(COLLECTION_MODE_MULTIPLE_VALUES, NULL, NULL)\fP and is 
+What You Usually Want. 
+.br
+Lists can also be created with the \fBCOLLECTION_MODE_COPY\fP and 
+\fBCOLLECTION_MODE_DEEP\fP bits set. This requires a pointer to a 
+\fBcp_copy_fn\fP function defined as
+.sp
+.ti +5n
+.BI "void *fn(void *" value ")
+.sp
+to be passed as the \fIcopy_fn\fP parameter to \fBcp_list_create_list\fP.
+the copy function should be capable of duplicating entries and would be used 
+to delegate the responsibility for memory management to the cp_list. A list 
+created with the \fBCOLLECTION_MODE_DEEP\fP flag will call the 
+.I item_destructor 
+if not NULL on all elements upon calling \fBcp_list_destroy\fP. It is possible
+to invoke a different destructor function on list items upon list deallocation
+by calling
+.B cp_list_destroy_custom
+with the \fIfn\fP parameter pointing to a custom destructor function for list 
+items. To avoid any destructor call on list items on a list instantiated with 
+\fBCOLLECTION_MODE_DEEP\fP, call 
+.B cp_list_destroy_by_option
+with the 
+.B COLLECTION_MODE_DEEP 
+bit unset. 
+.sp
+\fBNOTE:\fP be sure to instantiate lists with
+\fBCOLLECTION_MODE_MULTIPLE_VALUES\fP - unless you want a list that contains 
+unique values. This will require a non-null \fIcompare_fn\fP parameter to be 
+passed to \fBcp_list_create_list.\fP the comparison function should be defined 
+as
+.sp
+.ti +5n
+.BR "int *fn(void *" a ", void *" b ")
+.sp
+and return 0 for matching entries, non-zero otherwise (``strcmp semantics'').
+On lists instantiated without \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP set, every 
+insert operation entails a full list scan to avoid duplicates. This could 
+represent a serious performance hit for large sets. If you really need a 
+linked list with no duplicates, consider using a \fBcp_hashlist\fP instead. 
+
+.SH ADDING ITEMS
+.hy 0
+\fBcp_list_insert\fP adds an item at the top of the list. 
+\fBcp_list_append \fP adds an item at the end of the list. The 
+\fBcp_list_insert_before\fP and \fBcp_list_insert_after \fP functions can only
+be used if the list was instantiated with a \fBcp_compare_fn\fP function. If
+the \fIexisting\fP item can't be matched, \fBcp_list_insert_before\fP adds the
+new item is added at the first position in the list and 
+\fBcp_list_insert_after\fP at the last position.
+
+.SH DELETING ITEMS
+.hy 0
+.B cp_list_remove
+scans the list for the item \fIitem\fP and removes it if found. This function 
+can only be used if the list was instantiated with a \fBcp_compare_fn\fP
+function. The \fBcp_list_remove_head\fP and \fBcp_list_remove_tail\fP
+functions remove the item from the top or bottom of the list, respectively.
+.br
+for lists defined with \fB COLLECTION_MODE_DEEP\fP, the removal functions will 
+free the memory for the removed item. The pointer returned will be pointing to 
+deallocated space. It can be used to tell whether the removal operation 
+succeeded or not, but should probably not be dereferenced. 
+
+.SH ITEM RETRIEVAL
+.hy 0
+\fBcp_list_get_head\fP returns the item at the top of the list and
+\fBcp_list_get_tail\fP returns the item at the end of the list. 
+\fBcp_list_search\fP attempts to find an item matching the \fIitem\fP 
+parameter and can only be used if the list was instantiated with a 
+\fBcp_compare_fn\fP function. \fBcp_list_callback\fP iterates over the list 
+calling \fIaction\fP on each item. The first parameter to the callback 
+function is the list item, the second is the \fIidentifier\fP specified by
+the caller. A non-zero return value from the callback stops the iteration.
+
+.SH SYNCHRONIZATION
+.hy 0
+call \fBcp_list_lock\fP with the \fImode\fP parameter set to
+\fBCOLLECTION_LOCK_READ\fP to obtain a read-lock, or to
+\fBCOLLECTION_LOCK_WRITE\fP to obtain a write-lock on a list. The macros
+\fBcp_list_rdlock\fP and \fBcp_list_wrlock\fP may also be used to the same 
+effect. Calls to locking functions must be coupled with a call to
+\fBcp_list_unlock\fP to release the lock. Unless COLLECTION_MODE_NOSYNC is set
+tree operations are synchronized and to not require explicit locking. This is 
+however necessary in a transaction-like scenario in which several consecutive
+operations must be executed while locking the collection for access by other 
+threads. When a thread obtains a lock with cp_list_lock or its equivalents 
+subsequent list operations on this thread do not attempt to obtain the list
+lock (which would cause a deadlock), while list operations on other threads do.
+It is the responsibility of the application to perform the right kind of 
+locking for the operations that may occur while the list is locked. If there is
+any chance that items may be added or removed, the list must be write-locked. 
+Otherwise the list may be read-locked. 
+.sp
+.B cp_list
+instances are synchronized by default. That is, read operations obtain a 
+read-lock and insertion or removal operations obtain a write lock on the list.
+If you're creating a list that will only be used within a single thread, or 
+will only be accessed in code which is synchronized externally, avoid the 
+overhead by creating the list with \fBcp_create_list_nosync()\fP, which is 
+equivalent to 
+.B cp_list_create_list(COLLECTION_MODE_MULTIPLE_VALUES | COLLECTION_MODE_NOSYNC)
+
+.SH OTHER
+.hy 0
+\fBcp_list_item_count\fP returns the number of items currently in the list.
+.br
+\fBcp_list_is_empty\fP returns non-zero is the list is empty, 0 otherwise.
+
+.SH RETURN VALUE
+.hy 0
+constructor functions return a pointer to a newly allocated \fBcp_list\fP or 
+\fBNULL\fP on failure.
+.br
+insertion, retrieval and removal functions return a pointer to the relevant 
+item or \fBNULL \fP if the operation failed.
+.br
+synchronization functions return 0 on success, non-zero on error.
+
+.SH "SEE ALSO"
+.BR cp_list_iterator (3),
+.BR cp_priority_list (3),
+.BR cp_hashlist (3)

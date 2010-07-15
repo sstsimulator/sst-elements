@@ -1,0 +1,14 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_set_retry \- set connection retry count on a cp_client structure
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "void cp_client_set_retry(cp_client *" client ", int " retry_count ");
+.SH DESCRIPTION
+.B cp_client_set_retry
+sets the number of retries to be made when attempting to establish a connection
+in a subsequent call to \fBcp_client_connect\fP. By default a connection will
+be attempted up to three times. 
+.SH SEE ALSO
+.BR cp_client_connect (3)

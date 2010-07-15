@@ -1,0 +1,77 @@
+.TH cp_sorted_hash 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_sorted_hash"
+.SH NAME
+cp_sorted_hash_get_mode, cp_sorted_hash_set_mode, 
+cp_sorted_hash_unset_mode \- ordered hash table collection mode
+
+.SH SYNOPSIS
+#include <cprops/sorted_hash.h>
+.sp
+.BI "int cp_sorted_hash_get_mode(cp_sorted_hash *" table ");
+.br
+.BI "int cp_sorted_hash_set_mode(cp_sorted_hash *" table ", int " mode ");
+.br
+.BI "int cp_sorted_hash_unset_mode(cp_sorted_hash *" table ", int " mode ");
+
+.SH DESCRIPTION
+The collection mode is a superposition of bit values affecting the behavior of
+the table. The values affecting cp_sorted_hash behavior are:
+
+.nf
+  COLLECTION_MODE_DEEP
+  COLLECTION_MODE_COPY
+  COLLECTION_MODE_NOSYNC
+  COLLECTION_MODE_MULTIPLE_VALUES
+.fi
+
+Setting COLLECTION_MODE_DEEP causes the table to perform destructor calls on
+keys and items when mappings are removed. Note that a mapping may be removed
+before destruction time if inserting a new mapping for an existing key.
+.sp
+Setting COLLECTION_MODE_COPY causes the table to insert copies of the given key
+and value when creating a new mapping.
+.sp
+Setting COLLECTION_MODE_NOSYNC disables locking on table operations.
+.sp
+If COLLECTION_MODE_MULTIPLE_VALUES is set, inserting a mapping for an existing
+key adds the new value to the list for that key. The lookup function returns
+a cp_vector containing mappings. This may only be set at creation time with
+.BR cp_sorted_hash_create_by_option (3)
+and may not be altered with cp_sorted_hash_set_mode or cp_sorted_hash_unset_mode.
+
+The mode is initially assigned at creation time. Creating the table with
+.BR cp_sorted_hash_create_by_option (3)
+allows setting key and value constructor and destructor functions.
+.sp
+.B cp_sorted_hash_get_mode
+returns the current mode indicator.
+.sp
+.B cp_sorted_hash_set_mode
+makes a logical OR of the bits on the given
+.I mode
+parameter and the current mode setting and stores this as the new mode setting.
+No bits are unset. This function may fail if attempting to set
+COLLECTION_MODE_NOSYNC while the current thread owns the collection lock.
+.sp
+.B cp_sorted_hash_unset mode
+unsets the bits given by the
+.I mode
+parameter.
+
+.SH RETURN VALUE
+.B cp_sorted_hash_get_mode
+returns the current mode settings.
+.br
+.B cp_sorted_hash_set_mode
+returns 0 on success, -1 if the table is synchronized and locking failed or
+EINVAL if attempting to set COLLECTION_MODE_NOSYNC while the current thread
+owns the table lock.
+.br
+.B cp_sorted_hash_unset_mode
+returns 0 on success or -1 if the table is synchronized and locking failed.
+
+.SH SEE ALSO
+.BR cp_hashtable (3), 
+.BR cp_sorted_hash_create (3), 
+.BR cp_sorted_hash_insert (3), 
+.BR cp_sorted_hash_callback (3), 
+.BR cp_sorted_hash_lock (3) 

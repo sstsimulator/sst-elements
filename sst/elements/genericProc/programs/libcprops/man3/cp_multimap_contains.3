@@ -1,0 +1,16 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_contains \- check whether an entry exists on any index
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "int cp_multimap_contains(cp_multimap *" tree ", void *" entry ");
+
+.SH DESCRIPTION
+.B cp_multimap_contains
+returns non-zero if the given entry could be found using any of the indices defined on the given \fItree\fP. 
+.br
+.SH SEE ALSO
+.BR cp_multimap_create_index (3), 
+.BR cp_multimap_get (3) 

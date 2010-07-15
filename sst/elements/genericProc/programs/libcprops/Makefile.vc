@@ -1,0 +1,63 @@
+##############################################################################
+#
+# Makefile.vc - cprops MSVC makefile. This file contains definitions for
+# building libcprops with MSVC. To generate the actual makefile run 
+# configure.bat.
+#
+#############################################################################
+
+RM=DEL
+
+OBJS =  util.obj log.obj collection.obj vector.obj str.obj heap.obj \
+	  linked_list.obj priority_list.obj hashtable.obj \
+	  hashlist.obj mtab.obj trie.obj avl.obj rb.obj splay.obj \
+	  mempool.obj sorted_hash.obj nary.obj \
+	  thread.obj socket.obj client.obj http.obj httpclient.obj \
+	  multimap.obj $(OPT_OBJS)
+
+HEADER =  config.h common.h collection.h util.h log.h vector.h str.h heap.h \
+	  linked_list.h priority_list.h hashtable.h hashlist.h trie.h \
+	  avl.h rb.h mtab.h splay.h mempool.h sorted_hash.h nary.h \
+	  thread.h socket.h client.h http.h \
+	  httpclient.h multimap.h $(OPT_OBJS:.o=.h)
+
+CFLAGS=$(CFLAGS) /nologo /O2 /G5 /D_WINDOWS /DWIN32
+LDFLAGS=$(LDFLAGS) /nologo /incremental:no
+LIBS=$(LIBS) WS2_32.lib
+
+all: $(TARGET) $(OPT_TARGETS) $(subdirs)
+
+.c.obj: 
+	$(CC) /c $(CFLAGS) $*.c
+
+libcprops.dll: $(OBJS)
+	$(LD) /dll $(LDFLAGS) /out:$(TARGET) $(OBJS) $(LIBS)
+
+libcprops.lib: $(OBJS)
+	$(RM) libcprops.lib
+	lib -out:libcprops.lib $(OBJS)
+
+libcp_dbms_postgres.dll: $(TARGET)
+	$(CC) /c $(CFLAGS) $(PGSQL_CFLAGS) db_postgres.c
+	$(LD) /dll $(LDFLAGS) $(PGSQL_LDFLAGS) /out:$@ db_postgres.obj \
+		libcprops.lib $(LIBS) $(PGSQL_LIBS)
+
+libcp_dbms_mysql.dll: $(TARGET)
+	$(CC) /c $(CFLAGS) $(MYSQL_CFLAGS) db_mysql.c
+	$(LD) /dll $(LDFLAGS) $(MYSQL_LDFLAGS) /out:$@ db_mysql.obj \
+		libcprops.lib $(LIBS) $(MYSQL_LIBS) advapi32.lib 
+
+$(subdirs): FORCE
+	cd $@
+	$(MAKE) $(ACTION)
+	cd $(top_builddir)
+
+FORCE: 
+
+clean-recursive: $(subdirs)
+
+clean: 
+	set ACTION=clean
+	$(MAKE) clean-recursive
+	set ACTION=
+	$(RM) $(OBJS) $(TARGET)

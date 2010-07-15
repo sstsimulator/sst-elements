@@ -1,0 +1,40 @@
+.TH cp_multimap 3 "OCT 2007" libcprops.0.1.7 "libcprops - cp_multimap"
+.SH NAME
+cp_multimap_set_mode, cp_multimap_unset_mode, cp_multimap_get_mode \- manage multimap mode setting
+
+.SH SYNOPSIS
+#include <cprops/multimap.h>
+.sp
+.BI "int cp_multimap_get_mode(cp_multimap *" tree ");
+.br
+.BI "int cp_multimap_set_mode(cp_multimap *" tree ", int " mode ");
+.br
+.BI "int cp_multimap_unset_mode(cp_multimap *" tree ", int " mode ");
+.sp
+.SH DESCRIPTION
+.B cp_multimap_get_mode
+returns the current map mode. 
+.sp
+.B cp_multimap_set_mode
+and 
+.B cp_multimap_unset_mode
+set or unset the requested mode bits respectively. Note that 
+.B CP_COLLECTION_MODE_MULTIPLE_VALUES
+determines whether the default index for the given mapping is unique and may
+only be set at creation time. 
+.sp
+.SH RETURN VALUE
+All functions return zero on success. 
+.B cp_multimap_set_mode
+returns
+.B EINVAL
+if attempting to set
+.B COLLECTION_MODE_MULTIPLE_VALUES
+or attempting to set 
+.B COLLECTION_MODE_NOSYNC
+during a transaction. 
+.br
+.B cp_multimap_unset_mode
+returns 
+.B EINVAL
+if attempting to unset \fBCOLLECTION_MODE_MULTIPLE_VALUES\fP.

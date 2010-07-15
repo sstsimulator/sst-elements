@@ -1,0 +1,61 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_create, cp_client_create_ssl \- create a tcp client
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "cp_client *cp_client_create(char *" host ", int " port ");
+.br
+.BI "cp_client *cp_client_create_ssl(char *host, int " port ", 
+.ti +32n
+.BI "char *" CA_file ",  char *" CA_directory ",
+.ti +32n
+.BI "int " verification_mode "); 
+.SH DESCRIPTION
+.B cp_client_create
+creates a cp_client structure to be used to connect to the given
+.I host
+on the given \fIport\fP. The call will fail if the requested host name could 
+not be resolved, or if internal allocations fail. 
+.sp
+.B cp_client_create_ssl
+does the same, but in addition attempts to initialize an SSL_CTX object based
+on the given
+.I CA_file 
+or \fICA_directory\fP - one of which must be specified. Certificates may be 
+read from a directory containing trusted certificate authority certificates in 
+PEM format using the \fICA_directory\fP, or from a file specified by 
+\fICA_file\fP. 
+See SSL_CTX_load_verify_locations (3) for more on certificate files. 
+.br
+.I verification_mode
+should be either 
+.B SSL_VERIFY_NONE
+if a connection should be established even if the server certificate cannot be
+verified, or
+.B SSL_VERIFY_PEER
+to fail the connection on verification failure.
+.sp
+Once a 
+.B cp_client
+structure has been successfully created, 
+.B cp_client_connect
+may be called to establish a connection. 
+.sp
+.B cp_client
+object created with 
+.B cp_client_create
+or 
+.B cp_client_create_ssl
+should be finalized by calling 
+.B cp_client_destroy.
+.SH RETURN VALUE
+the newly created 
+.B cp_client
+structure on success or 
+.B NULL
+on failure.
+.SH SEE ALSO
+.BR SSL_CTX_load_verify_locations (3),
+.BR cp_client_connect (3),
+.BR cp_client_destroy (3)

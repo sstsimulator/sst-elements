@@ -1,0 +1,129 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_http_response \- http response descriptor
+.SH SYNOPSIS
+#include <cprops/http.h>
+
+.BI "cp_http_status_code "
+.ti +5n
+.BI "cp_http_response_get_status(cp_http_response *" response ");
+.sp
+.BI "char *cp_http_response_get_content_type(cp_http_response *" response ");
+.sp
+.BI "char *cp_http_response_get_header(cp_http_response *" response ", 
+.ti +33n
+.BI "char *" name ");
+.sp
+.BI "cp_vector *
+.ti +5n 
+.BI "cp_http_response_get_header_names(cp_http_response *" response ");
+.sp
+.BI "cp_string *cp_http_response_get_content(cp_http_response *" response ");
+.sp
+.sp
+.BI "cp_http_status_code "
+.ti +5n
+.BI "cp_http_response_set_status(cp_http_response *" response ",
+.ti +33n
+.BI "cp_http_status_code " status ");
+.sp
+.BI "cp_http_content_type "
+.ti +5n
+.BI "cp_http_response_set_content_type(cp_http_response *" response ", 
+.ti +39n
+.BI "cp_http_content_type " type ");
+.sp
+.BI "void cp_http_response_set_content_type_string
+.ti +10n
+.BI "(cp_http_response *" response ", char *" content_type_lit ");
+.sp
+.BI "void *cp_http_response_set_header(cp_http_response *" response ",
+.ti +34n
+.BI "char *" name ", char *" value ");
+.sp
+.BI "char *cp_http_response_set_body(cp_http_response *" response ",
+.ti +32n
+.BI "char *" body ");
+.sp
+.BI "void cp_http_response_set_content(cp_http_response *" response ",
+.ti +34n
+.BI "cp_string *" content ");
+.sp
+.BI "void cp_http_response_set_connection_policy(cp_http_response *" response ",
+.ti +44n
+.BI "connection_policy " policy ");
+.sp
+.BI "int cp_http_response_set_cookie(cp_http_response *" response ", 
+.ti +32n
+.BI "char *" name ", char *" content ", char *" host ", 
+.ti +32n
+.BI "char *" path ", long " validity ", int " secure ");
+.SH DESCRIPTION
+the cp_http_response object represents an http server response and are used
+in the context of the cp_httpsocket api, to generate an HTTP response to a 
+client, and in the context of the cp_httpclient api to represent an HTTP 
+response read from a remote server. 
+
+Client oriented functions are:
+.br
+.B cp_http_response_get_status
+returns the server HTTP status code.
+.br
+.B cp_http_response_get_content_type
+returns a content type literal, if given by the server, or NULL none was given.
+.br
+.B cp_http_response_get_header
+returns the value for the header
+.I name
+or NULL if no such header was given.
+.br
+.B cp_http_response_get_header_names
+returns a cp_vector containing all header names or NULL if the server returned
+no headers or on internal memory allocation failure.
+.br
+.B cp_httpresponse_get_content
+returns a cp_string containing the content for this response.
+.sp
+The rest of this document addresses the usage of cp_http_response in the 
+server context.
+.sp
+Connections accepted by a cp_httpsocket are delegated to a cp_http_service
+handler with a pre-allocated 
+.B cp_http_response
+struct to wrap the request response. 
+.sp
+.B cp_http_response_set_status 
+sets the status code of the response. For a list of status codes and their 
+usage see RFC 2616.
+.sp
+.B cp_http_response_set_content_type
+sets the Content-Type header with the specified 
+.I cp_http_content_type
+code. 
+.B cp_http_response_set_content_type_string
+allows setting an arbitrary string to be written as "Content-Type". 
+.sp
+.B cp_response_set_header
+sets the header 
+.I name
+to the value \fIvalue\fP. 
+.sp
+.B cp_response_set_body
+sets the content of the response body to the null terminated string \fIbody\fP.
+.B cp_http_response_set_content
+accepts a 
+.BR cp_string (3)
+parameter allowing binary content, and overrides cp_response_set_body. 
+.sp
+.B cp_http_response_set_connection_policy
+sets the "Connection" header to "Close" or "Keep-Alive", or to the default for 
+the http version specified by the request. 
+.sp
+If configured with support for cookies, 
+.B cp_http_response_set_cookie
+adds a "Set-Cookie" header with the speicifed attributes. 
+.SH SEE ALSO
+.BR cp_http_service (3),
+.BR cp_http_request (3),
+.BR cp_httpsocket (3),
+.B RFC 2616

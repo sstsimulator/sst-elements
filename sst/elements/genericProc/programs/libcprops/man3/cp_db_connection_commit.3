@@ -1,0 +1,22 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_commit, cp_db_connection_rollback \- perform a COMMIT / 
+ROLLBACK on a database connection
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "int cp_db_connection_commit(cp_db_connection *" conn ");
+.br
+.BI "int cp_db_connection_rollback(cp_db_connection *" conn ");
+.SH DESCRIPTION
+.B cp_db_connection_commit
+performs a commit on a database connection.
+.sp
+.B cp_db_connection_rollback
+performs a rollback on a database connection.
+.SH RETURN VALUE
+.B cp_db_connection_commit
+and
+.B cp_db_connection_rollback
+return zero on success or non-zero on error. 

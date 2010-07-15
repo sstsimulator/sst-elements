@@ -1,0 +1,37 @@
+.TH cp_hashlist 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashlist"
+.SH NAME
+cp_hashlist_destroy, cp_hashlist_destroy_by_option,
+cp_hashlist_destroy_custom \- hashlist destructor functions
+.SH SYNOPSIS
+
+.B #include <cprops/hashlist.h>
+
+.BI "void cp_hashlist_destroy(cp_hashlist *" list ");
+.br
+.BI "void cp_hashlist_destroy_deep(cp_hashlist *" list ");
+.br
+.BI "void cp_hashlist_destroy_custom(cp_hashlist *" list ",
+.ti +32n
+.BI "cp_destructor_fn " key_destructor ",
+.ti +32n
+.BI "cp_destructor_fn " value_destructor ");
+
+.SH DESCRIPTION
+.B cp_hashlist_destroy
+iterates over all entries in a hashlist, invoking the destructor functions 
+specified for keys and values if not null and if the list mode has the 
+.B COLLECTION_MODE_DEEP
+bit set, and finally deallocates internal storage and the
+.B cp_hashlist
+structure itself. 
+.B cp_hashlist_destroy_by_option
+allows specifying a different 
+.I mode 
+than the list mode to perform finalization and 
+.B cp_hashlist_destroy_custom 
+allows specifying custom finalization functions for keys (\fIkey_destructor\fP)
+and values(\fIvalue_destructor\fP).
+
+.SH "SEE ALSO"
+.BR cp_hashlist (3),
+.BR cp_hashlist_create (3)

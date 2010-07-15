@@ -1,0 +1,18 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_set_min_size \- set the minimal internal table size on a 
+cp_hashtable
+
+.SH SYNOPSIS
+#include <cprops/hashtable.h>
+
+.BI "void cp_hashtable_set_min_size(cp_hashtable *" table ", int " min_size ");
+.SH DESCRIPTION
+.B cp_hashtable_set_min_size
+sets the minimal size of internal storage to \fImin_size\fP. On creation, this
+value is set to the size hint given to the constructor function. This is to 
+prevent tables from resizing upon entry removal shortly after creation if the 
+table contains few items.
+.SH SEE ALSO
+.BR cp_hashtable_create (3),
+.BR cp_hashtable_set_min_fill_factor (3)

@@ -1,0 +1,61 @@
+# cpsp - a server page compiler - Makefile
+#
+# This is the Makefile for cpsp on windows. It
+# requires MSVC 6.0 and NMAKE.
+#
+# Copyright (c) 2005-2007 by Ilan Aelion
+# iaelion@users.sourceforge.net
+# 
+# 2007-11-30 V 0.1.7 beta
+#
+###############################################
+
+
+CC=CL
+LD=LINK
+RM=DEL /Q
+CFLAGS = /I.. /DWIN32 /D_WINDOWS $(CFLAGS)
+LDFLAGS = /incremental:no /subsystem:console $(top_builddir)\libcprops.lib
+LIBS = WS2_32.lib
+
+INSTALL=copy
+# INSTALL_PROGRAM = @INSTALL_PROGRAM@
+# INSTALL_DATA = @INSTALL_DATA@
+
+!INCLUDE win.cpsp.mak
+
+# CPSPCFLAGS=$(shell grep 'CPSPCFLAGS=' $(CPSP_SRC) | sed 's/.*=//'|sed 's/%>//')
+# CPSPLDFLAGS=$(shell grep 'CPSPLDFLAGS=' $(CPSP_SRC)|sed 's/.*=//'|sed 's/%>//')
+# CPSPLIBS=$(shell grep 'CPSPLIBS=' $(CPSP_SRC) | sed 's/.*=//'|sed 's/%>//')
+
+all: linkdir cpsp.exe
+
+.PHONY: all linkdir clean install uninstall
+
+linkdir: 
+	@if not exist cprops mkdir cprops
+	@copy /y ..\..\*.h cprops > nul: 2>&1
+
+cpsp.exe: lex.yy.c y.tab.c
+	$(CC) /c /O2 $(CFLAGS) /DMSDOS lex.yy.c y.tab.c
+	$(LD) $(LDFLAGS) lex.yy.obj y.tab.obj /out:$@ $(LIBS)
+
+lex.yy.c: cpsp.l
+	$(LEX) cpsp.l
+
+y.tab.c: cpsp.y
+	$(YACC) -o y.tab.c -d cpsp.y
+
+clean:
+	$(RM) core* cpsp.obj cpsp.exe lex.yy.c y.tab.c y.tab.h *.obj *.dll _cpsp_*
+
+install: all
+	$(INSTALL) cpsp $(bindir)
+	$(INSTALL) cpsp-gen.bat $(bindir)
+	$(INSTALL) Makefile.cpsp $(bindir)
+
+uninstall:
+	$(RM) $(bindir)/cpsp
+	$(RM) $(bindir)/cpsp-gen.sh
+	$(RM) $(bindir)/Makefile.cpsp
+

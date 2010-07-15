@@ -1,0 +1,51 @@
+.TH "cp_socket" 3 "OCTOBER 2005" "libcprops" "cp_socket"
+.SH NAME
+cp_http_request \- http request descriptor
+.SH SYNOPSIS
+#include <cprops/http.h>
+
+.BI "char *cp_http_request_get_header(cp_http_request *" req ", char *" name ");
+.sp
+.BI "char *cp_http_request_get_parameter(cp_http_request *" req ", char *" name ");
+.sp
+.BI "cp_http_session *"
+.ti +5n
+.BI "cp_http_request_get_session(cp_http_request *" request ",
+.ti +33n
+.BI "int " create ");
+.sp
+.BI "void cp_http_request_dump(cp_http_request *" req ");
+.SH DESCRIPTION
+When a cp_httpsocket receives a request for a certain service, the request
+headers and GET or POST variables issued by the remote client are parsed into a 
+request descriptor that is passed to the service handler.
+.sp
+.B cp_http_request_get_header
+retrieves the value of an HTTP header from the request descriptor.
+.sp
+.B cp_http_request_get_parameter
+retrieves the value of a GET or POST CGI variable.
+.sp
+.B cp_http_request_get_session
+returns a cp_http_session object for the given request if one exists. If no 
+active session exists and the 
+.I create
+parameter is non-zero, a new session is created. See 
+.BR cp_http_session (3) 
+for details of session creation and initialization.
+.sp
+.B cp_http_request_dump 
+dumps the request content to the standard output stream.
+.SH RETURN VALUE
+.B cp_http_request_get_header
+and 
+.B cp_http_request_get_parameter
+return the value set for the 
+.I name
+parameter or header or NULL if no value is set.
+.SH SEE ALSO
+.BR cp_httpsocket (3),
+.BR cp_http_response (3),
+.BR cp_http_service (3),
+.BR cp_http_session (3)
+

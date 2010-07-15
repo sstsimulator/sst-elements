@@ -1,0 +1,24 @@
+.TH "cp_dbms" 3 "MARCH 2006" "libcprops" "cp_dbms"
+.SH NAME
+cp_db_connection_set_read_result_set_at_once \- set connection to fetch  
+complete query results upon execution.
+
+.SH SYNOPSIS
+#include <cprops/db.h>
+
+.BI "void cp_db_connection_set_fetch_metadata(cp_db_connection *" connection ",
+.ti +41n
+.BI "int " mode ");
+.SH DESCRIPTION
+calling
+.B cp_db_connection_set_read_result_set_at_once
+with a non-zero
+.I mode
+value causes subsequent queries returning result sets to retrieve the complete
+set of results at the time the query is executed. This would not be recommended
+if the size of the results is very large. If set not to retrieve results at 
+once, the number of rows retrieved at a time may be controlled with
+.BR cp_db_connection_set_fetch_size (3).
+.SH SEE ALSO
+.BR cp_db_connection_set_fetch_size (3),
+.BR cp_result_set_next (3)

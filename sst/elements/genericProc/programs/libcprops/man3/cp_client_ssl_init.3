@@ -1,0 +1,15 @@
+.TH "cp_socket" 3 "MARCH 2006" "libcprops" "cp_client"
+.SH NAME
+cp_client_ssl_init, cp_client_ssl_shutdown \- tcp client ssl initialization / shutdown functions
+.SH SYNOPSIS
+#include <cprops/client.h>
+
+.BI "void cp_client_ssl_init();
+.sp
+.BI "void cp_client_ssl_shutdown();
+.SH DESCRIPTION
+Programs using ssl client api functions must call 
+.B cp_client_ssl_init
+before creating a client structure and 
+.B cp_client_ssl_shutdown
+to perform cleanup. 

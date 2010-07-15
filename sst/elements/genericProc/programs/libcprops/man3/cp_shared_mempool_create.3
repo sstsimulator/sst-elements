@@ -1,0 +1,35 @@
+.TH cp_mempool 3 "SEPTEMBER 2006" libcprops.0.1.6 "libcprops - cp_mempool"
+.SH NAME
+cp_shared_mempool_create, cp_shared_mempool_create_by_option \- create a 
+shareable memory pool instance
+
+.SH SYNOPSIS
+#include <cprops/mempool.h>
+.sp
+.BI "cp_shared_mempool *cp_shared_mempool_create();
+.br
+.BI "cp_shared_mempool *
+.ti +5n
+.BI "cp_shared_mempool_create_by_option(int " mode ", 
+.ti +40n 
+.BI "int " size_hint ", 
+.ti +40n
+.BI "int " page_count ");
+
+.SH DESCRIPTION
+.B cp_shared_mempool_create
+instantiates a non-synchronized shared memory pool object. 
+.B cp_shared_mempool_create_by_option
+allows specifying a mode flag, a size hint for the number of pools to use 
+internally, and the number of pages to allocate at a time in the internal
+pools. 
+
+.SH RETURN VALUE
+a newly allocated cp_shared_mempool object on success, or NULL on failure.
+
+.SH SEE ALSO
+.BR cp_shared_mempool_destroy (3), 
+.BR cp_shared_mempool_register (3), 
+.BR cp_shared_mempool_alloc (3), 
+.BR cp_shared_mempool_free (3),
+.BR cp_mempool (3)

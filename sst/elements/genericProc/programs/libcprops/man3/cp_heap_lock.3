@@ -1,0 +1,24 @@
+.TH cp_heap 3 "JULY 2006" libcprops.0.1.5 "libcprops - cp_heap"
+.SH NAME
+cp_heap_lock, cp_heap_unlock \- lock / unlock  a heap for transaction like 
+access
+
+.SH SYNOPSIS
+#include <cprops/heap.h>
+
+.BI "int cp_heap_lock(cp_heap *" heap ", int " type ");
+.br
+.BI "int cp_heap_unlock(cp_heap *" heap ");
+
+.SH DESCRIPTION
+Unless the mode bit COLLECTION_MODE_NOSYNC is set, heap operation are 
+synchronized, i.e. prevent simultaneous access from multiple threads.
+cp_heap_lock is needed to perform a transaction-like operation consisting 
+multiple heap operations that must complete before other threads are allowed
+access. cp_heap_lock locks the heap so that only the current thread can perform
+heap operations, and cp_heap_unlock releases the lock.
+
+.SH RETURN VALUE
+cp_heap_lock and cp_heap_unlock return 0 on success or non-zero on failure.
+
+.SH SEE ALSO

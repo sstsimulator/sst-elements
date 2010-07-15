@@ -1,0 +1,27 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_set_min_fill_factor, cp_hashtable_set_max_fill_factor \- set
+minimal/maximal fill factors for table resizing 
+.SH SYNOPSIS
+#include <cprops/hashtable.h>
+
+.BI "int cp_hashtable_set_min_fill_factor(cp_hashtable *" table ", int " factor ");
+.br
+.BI "int cp_hashtable_set_max_fill_factor(cp_hashtable *" table ", int " factor ");
+.SH DESCRIPTION
+\fIfactor\fP is the fill factor in percent beyond which a table resize will be
+triggered upon entry removal (\fBcp_hashtable_set_min_fill_factor\fP) or 
+insertion (\fBcp_hashtable_set_max_fill_factor\fP). The default values are 5
+and 70 respectively. 
+.sp
+Resizing may be disabled completely by setting the 
+.B COLLECTION_MODE_NORESIZE
+bit on a table's mode.
+.SH RETURN VALUE
+.B cp_hashtable_set_max_fill_factor
+and
+.B cp_hashtable_set_min_fill_factor
+return 0 on success or -1 if a locking error occurs.
+.SH SEE ALSO
+.BR cp_hashtable_set_min_size (3),
+.BR cp_hashtable_set_mode (3)

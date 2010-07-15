@@ -1,0 +1,146 @@
+installation instructions
+=========================
+
+Copyright (C) 2005-2007 Ilan Aelion
+
+This library is distributed under the LGPL (see COPYING) and may in the future
+be alternatively distributed under the BSD license.
+
+==============================================================================
+
+If you are installing on win32, see INSTALL.WIN32.
+
+Depending on the configuration options you choose, the installation process 
+described here should result with
+
+(1) either libcprops.so or libcprops.a or both installed under the ``library''
+    directory - /usr/local/lib by default
+(2) include files installed under the ``include'' directory - 
+    /usr/local/include by default
+(3) man pages installed under the ``man'' directory - /usr/local/man by default
+(4) unless disabled, cpsvc installed under the ``binaries'' directory - 
+    /usr/local/bin by default. You might want to change this to /opt/cprops or
+	something.
+(5) unless disabled, cpsp installed under the ``binaries'' directory.
+
+For more on cpsvc and cpsp, see the README under ``svc''. 
+
+	
+If you checked out the sources from cvs, before running ``configure'', do
+
+      $ aclocal
+      $ autoconf
+
+  if autoconf complains about missing AC_PROG_LIBTOOL or other m4 macros, 
+  replace the first call with 
+
+      $ aclocal -I .
+
+  This might also help if shared objects build without the .so extension.
+
+
+The general procedure to build and install is
+
+      $ ./configure [options]
+      $ make
+      $ make install
+
+  See the next section for a list of options to ``configure''. 
+
+  To test the build, before calling ``make install'' you could 
+	
+      $ make test
+      $ LD_LIBRARY_PATH=.libs ./testhttpsrv
+
+  and test with your favorite browser, for instance
+	
+      $ lynx localhost:5000/test
+
+  Note that the testhttpsrv and cpsvc programs listen on port 5000 by default.
+
+
+options to ``configure''
+========================
+for a full list of options to the `configure' script, type 
+
+      $ ./configure --help
+
+The main options you might want to change are
+
+ * features:
+
+  --enable-hashtable-multiples   hashtables allow multiple values [disabled]
+  --enable-hashlist-multiples    hashlists allow multiple values [disabled]
+  --disable-server-cookies       server support for http cookies [enabled]
+  --disable-http-sessions        support for http sessions [enabled]
+  --enable-ssl                   enable ssl support [enabled]
+  --enable-cpsvc                 build cpsvc [yes]
+  --enable-cpsp                  build cpsp [yes]
+  --enable-cp-dbms               build dbms abstraction layer [enabled]
+  --enable-static-dbms           link dbms drivers statically [disabled]
+  --enable-cpsvc                 build cpsvc [yes]
+  --enable-cpsp                  build cpsp [yes]
+
+ * build: 
+
+  --with-cflags=FLAGS     use FLAGS for CFLAGS. adding some optimization flags
+                          like -O2 for instance is recommended.
+  --with-libs=LIBS        use LIBS for extra libraries
+  --with-ssl=DIR          path to OpenSSL installation [/usr/local/ssl]
+  --enable-shared[=PKGS]  build shared libraries [default=yes]
+  --enable-static[=PKGS]  build static libraries [default=yes]
+  --with-postgres[=DIR]          enable postgres support, assume postgres
+                                 installation in DIR [disabled]
+  --with-postgres-libs=DIR       use postgres libraries installed in DIR
+  --with-postgres-includes=DIR   use postgres header files installed in DIR
+  --with-mysql[=DIR]             enable mysql support, assume mysql
+                                 installation in DIR [disabled]
+  --with-mysql-libs=DIR          use mysql libraries installed in DIR
+  --with-mysql-includes=DIR      use mysql header files installed in DIR
+
+ * installation directories:
+
+  --prefix=PREFIX   - target directory for installation [/usr/local]
+  --libdir=DIR      - object code libraries [PREFIX/lib]
+  --includedir=DIR  - C header files [PREFIX/include]
+  --mandir=DIR      - man documentation [PREFIX/man]
+  --bindir=DIR      - target directory to install cpsvc and cpsp in. cpsvc is a
+                      simple web server supporting SSL, HTTP 1.1 pipelining, 
+					  CGI and cpsp, which is a c based SSI, ie a system for 
+					  page scripting with c. cpsp pages are compiled the first 
+					  time they are requested and this requires a Makefile. The
+					  cpsvc executable, cpsp parser and the Makefile for 
+					  compiling cpsp pages are installed in the directory 
+					  specified here. This option is only relevant if 
+					  installing cpsvc and cpsp.
+
+ * note: configuring --with-postgres or --with-mysql implies --enable-cp-dbms.
+   by default, cp_dbms drivers are not linked statically since this would 
+   require linking the database driver libraries regardless of whether they
+   are actually needed for specific programs. In installations where cprops 
+   will be used for a specific program with a specific database, it could make
+   sense to configure with --enable-static-dbms. By default, this is disabled.
+   
+ * examples:
+
+   (1) to build the library only, with some optimization flags:
+
+       $ ./configure --disable-cpsvc --disable-cpsp --with-cflags=-O2
+
+   (2) to install cpsvc under /opt/cpsvc:
+
+       $ ./configure --bindir=/opt/cpsvc
+
+   (3) to install the library and executables under /opt/cprops:
+
+       $ ./configure --prefix=/opt/cprops
+
+
+------------------------------------------------------------------------------
+
+Starting from version 0.0.7, the shared object version conforms to libtool's
+versioning paradigm, so release version numbers and library version numbers no
+longer correspond. On linux, The library version for release 0.1 is 1.3.0.
+
+please report problems to iaelion@users.sourceforge.net.
+

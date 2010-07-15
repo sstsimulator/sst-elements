@@ -1,0 +1,80 @@
+.TH cp_avltree 3 "MAY 2006" libcprops.0.1.2 "libcprops - cp_avltree"
+.SH NAME
+cp_avltree \- an AVL tree implementation
+
+.SH DESCRIPTION
+.B cp_avltree
+is a general purpose AVL tree implementation. AVL trees are height balanced 
+binary trees with a guaranteed lookup complexity of O(log n). Instances may 
+be created with a specifiable degree of internal or external synchronization 
+and entry memory management. 
+.sp
+A tree is created with cp_avltree_create(3) or cp_avltree_create_by_option(3) 
+and deallocated with cp_avltree_destroy(3). After creation behavior may be 
+changed by calling cp_avltree_set_mode(3) and cp_avltree_unset_mode(3) to set
+and unset mode bits. Mappings may be added with cp_avltree_insert(3), retrieved
+with cp_avltree_get(3) and removed with cp_avltree_delete(3). For more details
+see the documentation for specific functions.
+
+.SH INTERFACE
+the following is a summary of functions provided by \fI<cprops/avl.h>\fP.
+.sp
+.BI "cp_avltree *cp_avltree_create(cp_compare_fn " cmp "); 
+.br
+.B cp_avltree *
+.ti +5n
+.BI "cp_avltree_create_by_option(int " mode ", 
+.ti +33n
+.BI "cp_compare_fn " compare_fn ",
+.ti +33n
+.BI "cp_copy_fn " copy_key ", 
+.ti +33n 
+.BI "cp_destructor_fn " free_key ");    
+.ti +33n
+.BI "cp_copy_fn " copy_value "
+.ti +33n 
+.BI "cp_destructor_fn " free_value ");    
+.sp
+
+.BI "void cp_avltree_destroy(cp_avltree *" tree ");
+.br
+.BI "void cp_avltree_destroy_custom(cp_avltree *" tree ",
+.ti +31n
+.BI "cp_destructor_fn " dk ",
+.ti +31n
+.BI "cp_destructor_fn " dv ");
+.sp
+
+.BI "void *cp_avltree_insert(cp_avltree *" tree ", void *" key ", void *" value ");
+.br
+.BI "void *cp_avltree_get(cp_avltree *" tree ", void *" key ");
+.br
+.BI "void *cp_avltree_delete(cp_avltree *" tree ", void *" key ");
+.br
+.BI "int cp_avltree_contains(cp_avltree *" tree ", void *" key ");
+.br
+.BI "long cp_avltree_count(cp_avltree *" tree ");
+.sp
+
+.BI "int cp_avltree_get_mode(cp_avltree *" tree ");
+.br
+.BI "void cp_avltree_set_mode(cp_avltree *" tree ", int " mode ");
+.br
+.BI "void cp_avltree_unset_mode(cp_avltree *" tree ", int " mode ");
+
+.sp
+.BI "int cp_avltree_lock(cp_avltree *" tree ", int " type ");
+.br
+.BI "int cp_avltree_unlock(cp_avltree *" tree ");
+.br
+.BI "int cp_avltree_rdlock(cp_avltree *" tree ");
+.br
+.BI "int cp_avltree_wrlock(cp_avltree *" tree ");
+
+
+.SH SEE ALSO
+.BR cp_avltree_create (3),
+.BR cp_avltree_insert (3),
+.BR cp_avltree_lock (3), 
+.BR cp_avltree_set_mode (3),
+.BR cprops (3)

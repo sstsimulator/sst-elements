@@ -1,0 +1,29 @@
+.TH cp_hashtable 3 "OCTOBER 2005" libcprops.0.0.3 "libcprops - cp_hashtable"
+.SH NAME
+cp_hashtable_get_keys, cp_hashtable_get_values \- retrieve hashtable keys / 
+values
+.SH SYNOPSIS
+
+.B #include <cprops/hashtable.h>
+
+.BI "void **cp_hashtable_get_keys(cp_hashtable *" table ");
+.br
+.BI "void **cp_hashtable_get_values(cp_hashtable *" table ");
+.SH DESCRIPTION
+\fBcp_hashtable_get_keys\fP and \fBcp_hashtable_get_values\fP return an array 
+containing all keys and values in the table respectively. The newly allocated
+array's size may be determined by calling \fBcp_hashtable_count\fP.
+.SH RETURN VALUE
+An array of void pointers to the keys / values or NULL on failure.
+.SH ERRORS
+.TP
+.B EINVAL
+.I table
+is NULL.
+.br
+.TP
+.B ENOMEM
+the return array could not be allocated.
+.SH "SEE ALSO"
+.BR cp_hashtable (3),
+.BR cp_hashtable_count (3)
