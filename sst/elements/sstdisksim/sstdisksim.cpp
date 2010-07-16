@@ -148,11 +148,8 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 
   __now = 0;
   __next_event = -1;
-  
-  EventHandler_t* linkHandler = new EventHandler<sstdisksim,bool,Event*>
-    (this,&sstdisksim::handleEvent);
-  link = LinkAdd( "link", linkHandler );
 
+  link = configureLink( "link",  new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent) );
   registerTimeBase("1ns");
 
   printf("Starting disksim up\n");
@@ -264,7 +261,7 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 }
 
 /******************************************************************************/
-bool 
+void
 sstdisksim::handleEvent(Event* ev)
 {
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
@@ -279,15 +276,13 @@ sstdisksim::handleEvent(Event* ev)
       unregisterExit();
       print_statistics(&__st, "response time");
     }
-    return false;
+    return;
   }
 
   sstdisksim_process_event(event);
-  return false;
+  return;
 }
 
-//BOOST_CLASS_EXPORT(sstdisksim_event)
-//BOOST_CLASS_EXPORT(sstdisksim)
 /******************************************************************************/
 static Component*
 create_sstdisksim(SST::ComponentId_t id, 
