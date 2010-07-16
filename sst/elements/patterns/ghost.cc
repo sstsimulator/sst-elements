@@ -15,6 +15,7 @@
 
 #include <sst/core/cpunicEvent.h>
 #include "ghost.h"
+#include "common.h"
 
 int ghost_pattern_debug;
 
@@ -27,9 +28,28 @@ Ghost_pattern::handle_events(Event *sst_event)
 
 static state_t state= COMPUTE;
 pattern_event_t event;
+static int left, right, up, down;
+int myX, myY;
+int len;
+static bool first_time= true;
+static int rcv_cnt= 0;
 
 
     _GHOST_PATTERN_DBG(3, "Rank %d got an event\n", my_rank);
+
+    /* For now, our message size is always 128 bytes */
+    len= 128;
+
+    /* Who are my four neighbors? */
+    if (first_time)   {
+	myX= my_rank % x_dim;
+	myY= my_rank / y_dim;
+	right= ((myX + 1) % x_dim) + (myY * y_dim);
+	left= ((myX - 1 + x_dim) % x_dim) + (myY * y_dim);
+	down= myX + ((myY + 1) % y_dim) * y_dim;
+	up= myX + ((myY - 1 + y_dim) % y_dim) * y_dim;
+	first_time= false;
+    }
 
     /* Extract the pattern event type from the SST event */
     event= COMPUTE_DONE;
@@ -40,20 +60,52 @@ pattern_event_t event;
 	    switch (event)   {
 		case COMPUTE_DONE:
 		    /* Our time to compute is over */
+		    pattern_send(right, len);
+		    pattern_send(left, len);
+		    pattern_send(up, len);
+		    pattern_send(down, len);
+		    state= WAIT;
 		    break;
 		case RECEIVE:
 		    /* We got a message from another rank */
+		    rcv_cnt++;
+		    if (rcv_cnt == 4)   {
+			rcv_cnt= 0;
+			state= COMPUTE;
+		    }
 		    break;
 		case FAIL:
 		    /* We just failed. Deal with it! */
 		    break;
 		case RESEND_MSG:
-		    /* We have been ask to resend a previous msg to help another rank to recover */
+		    /* We have been asked to resend a previous msg to help another rank to recover */
 		    break;
 	    }
 	    break;
 
 	case WAIT:
+	    /*
+	    ** We are waiting for messages from our four neighbors */
+	    switch (event)   {
+		case COMPUTE_DONE:
+		    /* Doesn't make sense; we should not be getting this event */
+		    _abort(ghost_pattern, "Compute done event in wait\n");
+		    break;
+		case RECEIVE:
+		    /* YES! We got a message from another rank */
+		    rcv_cnt++;
+		    if (rcv_cnt == 4)   {
+			rcv_cnt= 0;
+			state= COMPUTE;
+		    }
+		    break;
+		case FAIL:
+		    /* We just failed. Deal with it! */
+		    break;
+		case RESEND_MSG:
+		    /* We have been asked to resend a previous msg to help another rank to recover */
+		    break;
+	    }
 	    break;
 
 	case DONE:
