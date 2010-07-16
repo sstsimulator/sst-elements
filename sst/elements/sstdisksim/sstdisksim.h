@@ -73,7 +73,7 @@ class sstdisksim : public Component {
 			     unsigned long count,
 			     int devno, 
 			     eventtype etype);
-  bool handleEvent(Event* ev);
+  void handleEvent(Event* ev);
 
   SST::Link* link;
   
@@ -93,9 +93,7 @@ class sstdisksim : public Component {
       ar & BOOST_SERIALIZATION_NVP(numsectors);
       ar & BOOST_SERIALIZATION_NVP(link);
       
-      SST::EventHandler_t* linkHandler = new SST::EventHandler<sstdisksim,bool,SST::Event*>
-	(this,&sstdisksim::handleEvent);
-      link->setFunctor(linkHandler);
+      link->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::handleEvent));
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    
