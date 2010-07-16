@@ -13,7 +13,7 @@
 #ifndef _XBAR_H
 #define _XBAR_H
 
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
@@ -36,34 +36,20 @@ class Xbar : public Component {
         { 
             _XBAR_DBG("new id=%lu\n",id);
 
-/*             Params_t::iterator it = params.begin(); */
-/*             while( it != params.end() ) { */
-/*                 _XBAR_DBG("key=%s value=%s\n", */
-/*                             it->first.c_str(),it->second.c_str()); */
-/*                 if ( ! it->first.compare("clock") ) { */
-/*                     sscanf( it->second.c_str(), "%f", &frequency ); */
-/*                 } */
-/*                 ++it; */
-/*             } */
 	    if ( params.find("clock") != params.end() ) {
-/* 		sscanf( params["clock"].c_str(), "%f", &frequency ); */
 		frequency = params["clock"];
 	    }
 
-/*             eventHandler = new EventHandler< Xbar, bool, Time_t, Event* > */
-/*                                                 ( this, &Xbar::processEvent ); */
+            cpu = configureLink( "port0" );
+//             eventHandler = new EventHandler< Xbar, bool, Event* >
+//                                                 ( this, &Xbar::processEvent );
 
-            eventHandler = new EventHandler< Xbar, bool, Event* >
-                                                ( this, &Xbar::processEvent );
-
-            cpu = LinkAdd( "port0" );
-            nic = LinkAdd( "port1", eventHandler );
-	    selfPush = selfLink("selfPush",new EventHandler<Xbar, bool, Event*>(this,&Xbar::selfEvent));
-	    selfPull = selfLink("selfPull");
+//             nic = LinkAdd( "port1", eventHandler );
+	    nic = configureLink( "port1", new Event::Handler<Xbar>(this,&Xbar::processEvent) );
+// 	    selfPush = selfLink("selfPush",new EventHandler<Xbar, bool, Event*>(this,&Xbar::selfEvent));
+	    selfPush = configureSelfLink("selfPush",new Event::Handler<Xbar>(this,&Xbar::selfEvent));
+	    selfPull = configureSelfLink("selfPull");
 	    
-/*             clockHandler = new EventHandler< Xbar, bool, Cycle_t, Time_t > */
-/*                                                 ( this, &Xbar::clock ); */
-
             clockHandler = new EventHandler< Xbar, bool, Cycle_t >
                                                 ( this, &Xbar::clock );
 
@@ -80,11 +66,9 @@ class Xbar : public Component {
 
         Xbar() : Component(-1) {} // for serialization only
         Xbar( const Xbar& c );
-/*         bool clock( Cycle_t, Time_t  ); */
         bool clock( Cycle_t );
-/*         bool processEvent( Time_t, Event*  ); */
-        bool processEvent( Event*  );
-	bool selfEvent( Event*);
+        void processEvent( Event*  );
+	void selfEvent( Event*);
 	
         ClockHandler_t* clockHandler;
         EventHandler_t* eventHandler;

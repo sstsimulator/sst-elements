@@ -114,22 +114,22 @@ private:
 
     // This is essentially the clock function, but it is fully event
     // driven
-    bool event_handler(Event* ev);
+    void event_handler(Event* ev);
 
     // Next handle messages from the NIC.  The first for nonportals
     // the second for portals
-    bool processEvent( Event* e );
-    bool processEventPortals( Event* e );
+    void processEvent( Event* e );
+    void processEventPortals( Event* e );
 
     // This is for the ptl_link, which will be going away
-    bool ptlNICHandler( Event* e );
+    void ptlNICHandler( Event* e );
 //     bool event_portals(Event* e);
 
     // Hooked to nic_timing_link.  This is used to throttle the
     // bandwidth and model contention on the link to the NIC
-    bool event_nic_timing(Event* e);
-    bool event_dma_return(Event *e);
-    bool event_pio_delay(Event* e);
+    void event_nic_timing(Event* e);
+    void event_dma_return(Event *e);
+    void event_pio_delay(Event* e);
     
     void wakeUp();
 

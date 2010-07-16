@@ -52,7 +52,7 @@ class EventChannel
     private: // functions
 
         EventChannel( const EventChannel< eventT >& );
-        bool handler( Event* );
+        void handler( Event* );
         bool clock( Cycle_t );
 
     private:
@@ -62,7 +62,7 @@ class EventChannel
                 VirtChan( int vc, Link& link, std::string& name, bool dbgFlag,
                         int startCredit = 1, int threshold = 0 );
                 bool clock( Cycle_t );
-                bool handler( event_t* );
+                void handler( event_t* );
                 bool ready( int credits );
                 bool send( eventT*, int credits );
                 bool recv( eventT** );

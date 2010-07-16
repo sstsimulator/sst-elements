@@ -123,8 +123,11 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     }
     chunk_size = strtol( params[ "chunk_size" ].c_str(), NULL, 0 );
 
-    TimeConverter* tc = registerTimeBase( frequency );
 
+
+//     TimeConverter* tc = registerTimeBase( frequency );
+    TimeConverter* tc = registerTimeBase( "1ns" );
+    
     if ( params.find("noiseRuns") == params.end() ) {
 	_abort(RtrIF,"couldn't find noiseRuns\n");
     }
@@ -211,44 +214,12 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     
     registerExit();
     
-    EventHandler_t*   handler = new EventHandler<
-        trig_cpu, bool, Event* >
-//         ( this, use_portals ? &trig_cpu::processEventPortals : &trig_cpu::processEvent );
-        ( this, &trig_cpu::processEventPortals );
-    nic = LinkAdd( "nic", handler );
-    nic->setDefaultTimeBase(defaultTimeBase);
+    nic = configureLink("nic",new Event::Handler<trig_cpu>(this,&trig_cpu::processEventPortals));
 
-    EventHandler_t* selfLinkHandler = new EventHandler<
-	trig_cpu, bool, Event* >
-	(this,&trig_cpu::event_handler );
-    self = selfLink("self", selfLinkHandler);
-    // For now, self links won't set themselves to the
-    // defaultTimeBase.  May not be able to fix that.
-    self->setDefaultTimeBase(defaultTimeBase);
-
-    EventHandler_t* nic_timing_handler = new EventHandler<
-	trig_cpu, bool, Event* >
-	(this,&trig_cpu::event_nic_timing );
-    nic_timing_link = selfLink("nic_timing_link", nic_timing_handler);
-    // For now, self links won't set themselves to the
-    // defaultTimeBase.  May not be able to fix that.
-    nic_timing_link->setDefaultTimeBase(registerTimeBase("1ns",false));
-
-    EventHandler_t* dma_return_handler = new EventHandler<
-	trig_cpu, bool, Event* >
-	(this,&trig_cpu::event_dma_return );
-    dma_return_link = selfLink("dma_return_link", dma_return_handler);
-    // For now, self links won't set themselves to the
-    // defaultTimeBase.  May not be able to fix that.
-    dma_return_link->setDefaultTimeBase(registerTimeBase("1ns",false));
-
-    EventHandler_t* pio_delay_handler = new EventHandler<
-	trig_cpu, bool, Event* >
-	(this,&trig_cpu::event_pio_delay );
-    pio_delay_link = selfLink("pio_delay_link", pio_delay_handler);
-    // For now, self links won't set themselves to the
-    // defaultTimeBase.  May not be able to fix that.
-    pio_delay_link->setDefaultTimeBase(registerTimeBase("1ns",false));
+    self = configureSelfLink("self", new Event::Handler<trig_cpu>(this,&trig_cpu::event_handler));
+    nic_timing_link = configureSelfLink("nic_timing_link", new Event::Handler<trig_cpu>(this,&trig_cpu::event_nic_timing) );
+    dma_return_link = configureSelfLink("dma_return_link", new Event::Handler<trig_cpu>(this,&trig_cpu::event_dma_return ) );
+    pio_delay_link = configureSelfLink("pio_delay_link", new Event::Handler<trig_cpu>(this,&trig_cpu::event_pio_delay) );
 
 
     outstanding_msg = 0;
@@ -378,7 +349,7 @@ trig_cpu::setTimingParams(int set) {
 //     printf("added_pio_latency = %d\n",added_pio_latency);
 }
 
-bool
+void
 trig_cpu::event_pio_delay(Event* e)
 {
   trig_nic_event* ev = static_cast<trig_nic_event*>(e);
@@ -392,7 +363,6 @@ trig_cpu::event_pio_delay(Event* e)
     nic_timing_link->Send(1,NULL);
     nic_timing_wakeup_scheduled = true;
   }
-  return false;
 }
 
 
@@ -444,7 +414,7 @@ trig_cpu::returnCredits(int num)
 }
 
 
-bool
+void
 trig_cpu::event_nic_timing(Event* e)
 {
   // Need to arbitrate between PIO and DMA traffic.  For now just give
@@ -472,12 +442,11 @@ trig_cpu::event_nic_timing(Event* e)
   else {
     nic_timing_wakeup_scheduled = false;
   }
-  return false;
 }
 
 // This is the main handler, and it will call the appropriate handler
 // underneath
-bool
+void
 trig_cpu::event_handler(Event* ev)
 {
 //     printf("trig_cpu::event_handler()\n");
@@ -512,13 +481,13 @@ trig_cpu::event_handler(Event* ev)
 	    if (done) {
 		top_state = 1;
 		barrier();
-		return false;
+		return;
 	    }
 	    break;
 	case 1:
 // 	  printf("Unregister exit 1\n");
 	    unregisterExit();
-	    return false;
+	    return;
 	case 2:
 	    // Noise runs, have to do the specified number
 	    if ( current_run < noise_runs ) {
@@ -528,7 +497,7 @@ trig_cpu::event_handler(Event* ev)
 		// Done with runs
 // 	  printf("Unregister exit 2\n");
 		unregisterExit();
-		return false;
+		return;
 	    }
 	case 3:
 	    done = (*app)(ev);
@@ -536,7 +505,7 @@ trig_cpu::event_handler(Event* ev)
 		current_run++;
 		top_state = 2;
 		barrier();
-		return false;
+		return;
 	    }
 	    break;
 	    
@@ -545,7 +514,7 @@ trig_cpu::event_handler(Event* ev)
   
     if (done) {
 // 	printf("NOT DONE\n");
-	return false;
+	return;
     }
     // Figure out how long to wait until the next time we do
     // something.  We do this by using a combination of busy and the
@@ -570,7 +539,7 @@ trig_cpu::event_handler(Event* ev)
 	// make sure the noise gets added in correctly.
 // 	if (my_id == 1024 && waiting ) printf("%5d: waiting, outstanding recvs = %d\n",my_id,posted_recv_q.size());
 	wait_start_time = getCurrentSimTime();
-	return false;  // Won't wake up until a new message arrives
+	return;  // Won't wake up until a new message arrives
     }
     else if ( busy == 0 ) {
         // We need to start again next cycle, so set busy to 1
@@ -581,26 +550,25 @@ trig_cpu::event_handler(Event* ev)
     busy = 0;
     if ( noise_interval != 0 ) noise_count = noise_rem;
     else noise_count = 0;
-    return false;
+    return;
 }
 
-bool
+void
 trig_cpu::processEventPortals(Event* event)
 {
 //     printf("trig_cpu::processEventPortals()\n");
     trig_nic_event* ev = static_cast<trig_nic_event*>(event);
     // For now just add the portals stuff here
     ptl->processMessage(ev);
-    return false;
 }
 
-bool
+void
 trig_cpu::ptlNICHandler(Event* event)
 {
 // //     printf("trig_cpu::ptlNICHandler()\n");
 //     ptl_nic_event* ev = static_cast<ptl_nic_event*>(event);
 //     ptl->processNICOp(ev->operation);
-    return false;
+    return;
 }
 
 void
@@ -654,7 +622,7 @@ trig_cpu::wakeUp()
 //     }
 }
 
-bool
+void
 trig_cpu::event_dma_return(Event *e)
 {
   trig_nic_event* ev = static_cast<trig_nic_event*>(e);
@@ -666,11 +634,10 @@ trig_cpu::event_dma_return(Event *e)
     nic_timing_link->Send(delay_bus_xfer,NULL);
     nic_timing_wakeup_scheduled = true;
   }
-  return false;
 }
 
 
-bool
+void
 trig_cpu::processEvent(Event* event)
 {
     trig_nic_event* ev = static_cast<trig_nic_event*>(event);
@@ -686,7 +653,6 @@ trig_cpu::processEvent(Event* event)
     if ( waiting ) {
         wakeUp();
     }
-    return false;
 }
 
 void

@@ -377,8 +377,8 @@ protected:
 
     vector<Link*> linkV;
 
-    bool handleNicParcel(Event*);
-    bool handleParcel(Event*,int dir);
+/*     void handleNicParcel(Event*); */
+    void handleParcel(Event*,int dir);
     bool route(rtrP*);
 
     void InLCB ( RtrEvent *e, int ilink, int ivc, int flits);

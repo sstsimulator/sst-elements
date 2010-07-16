@@ -54,7 +54,7 @@ public:
             ++it;
         } 
             
-        mem = LinkAdd( "MEM" );
+        mem = configureLink( "MEM" );
         /*             handler = new EventHandler< Cpu, bool, Cycle_t, Time_t > */
         /*                                                 ( this, &Cpu::clock ); */
         handler = new SST::EventHandler< Cpu, bool, Cycle_t >

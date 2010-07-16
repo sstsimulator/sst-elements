@@ -1,7 +1,7 @@
 #ifndef _NICMODEL_H
 #define _NICMODEL_H
 
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include "netsim_model.h"
@@ -189,10 +189,11 @@ class Nicmodel : public Component {
 
 
 	    // Create a link and a handler for the cpu
-	    cpuHandler= new EventHandler<Nicmodel, bool, Event *>
-		(this, &Nicmodel::handle_cpu_events);
+// 	    cpuHandler= new EventHandler<Nicmodel, bool, Event *>
+// 		(this, &Nicmodel::handle_cpu_events);
 
-	    cpu= LinkAdd("CPU", cpuHandler);
+// 	    cpu= LinkAdd("CPU", cpuHandler);
+ 	    cpu= configureLink("CPU", new Event::Handler<Nicmodel>(this,&Nicmodel::handle_cpu_events));
 	    if (cpu == NULL)   {
 		_NIC_MODEL_DBG(0, "The NIC model expects links to the CPU and the network "
 		    "named \"CPU\" and \"NETWORK\". CPU is missing!\n");
@@ -202,10 +203,11 @@ class Nicmodel : public Component {
 	    }
 
 	    // Create a link and a handler for the network
-	    netHandler= new EventHandler<Nicmodel, bool, Event *>
-		(this, &Nicmodel::handle_nic_events);
+// 	    netHandler= new EventHandler<Nicmodel, bool, Event *>
+// 		(this, &Nicmodel::handle_nic_events);
 
-	    net= LinkAdd("NETWORK", netHandler);
+// 	    net= LinkAdd("NETWORK", netHandler);
+ 	    net= configureLink("NETWORK", new Event::Handler<Nicmodel>(this,&Nicmodel::handle_nic_events));
 	    if (net == NULL)   {
 		_NIC_MODEL_DBG(0, "The NIC model expects links to the CPU and the network "
 		    "named \"CPU\" and \"NETWORK\". NETWORK is missing!\n");
@@ -259,8 +261,8 @@ class Nicmodel : public Component {
     private:
 
         Nicmodel(const Nicmodel &c);
- 	bool handle_nic_events(Event *);
-	bool handle_cpu_events(Event *);
+ 	void handle_nic_events(Event *);
+	void handle_cpu_events(Event *);
 	void hton_params(netsim_params_t *params);
 	void insert_graph_link(const char *from, const char *to);
 

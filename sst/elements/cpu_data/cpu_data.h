@@ -57,7 +57,7 @@ class Cpu_data : public Component {
                 ++it;
             } 
             
-            mem = LinkAdd( "MEM" );
+            mem = configureLink( "MEM" );
             handler = new EventHandler< Cpu_data, bool, Cycle_t >
                                                 ( this, &Cpu_data::clock );
 	    handlerPush = new EventHandler< Cpu_data, bool, Cycle_t >

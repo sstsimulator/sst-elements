@@ -23,7 +23,7 @@
 
 #include "user_includes/netsim/netsim_internal.h"
 
-bool
+void
 // Nicmodel::handle_nic_events(Time_t time, Event *event)
 Nicmodel::handle_nic_events(Event *event)
 {
@@ -54,11 +54,10 @@ bool rc;
 	_NIC_MODEL_DBG(2, "NIC %lu: Goes into unexpected queue\n", Id());
     }
 
-    return false;
 }
 
 
-bool
+void
 Nicmodel::handle_cpu_events(Event *event)
 {
 
@@ -181,7 +180,6 @@ int *route;
 	    break;
     }
 
-    return false;
 }
 
 

@@ -14,7 +14,7 @@
 #define _ROUTERMODEL_H
 
 #include <string.h>
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
@@ -117,9 +117,10 @@ class Routermodel : public Component {
     private:
 
         Routermodel(const Routermodel &c);
-	bool handle_port_events(Event *, int in_port);
+	void handle_port_events(Event *, int in_port);
 	Link *initPort(int port, char *link_name);
-	EventHandler_t *RouterPortHandler;
+	// KSH: Commented out, not used.  
+	//	EventHandler_t *RouterPortHandler;
 
         Params_t params;
 

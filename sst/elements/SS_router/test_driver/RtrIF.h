@@ -14,7 +14,7 @@
 
 #include <sstream>
 
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/log.h>
@@ -147,11 +147,7 @@ public:
 
         registerExit();
 
-        EventHandler_t*   handler = new EventHandler<
-                            RtrIF, bool, Event* >
-                       ( this, &RtrIF::processEvent );
-
-        m_rtrLink = LinkAdd( "rtr", handler );
+	m_rtrLink = configureLink( "rtr", new Event::Handler<RtrIF>(this, &RtrIF::processEvent));
 
         Params_t tmp_params;
         findParams( "dummy.", params, tmp_params );
@@ -229,7 +225,7 @@ private:
     }
 
 
-    bool processEvent( Event* e)
+    void processEvent( Event* e)
     {
         RtrEvent* event = static_cast<RtrEvent*>(e);
 
@@ -248,7 +244,6 @@ private:
         default:
             _abort(RtrIF,"unknown type %d\n",event->type);
         }
-        return false;
     }
 
     bool clock( Cycle_t cycle)

@@ -27,7 +27,6 @@
 
 #include "SS_router.h"
 #include <sst/elements/include/paramUtil.h>
-#include <sst/core/eventHandler1Arg.h>
 #include "SS_routerInternals.cpp"
 #include "SS_routerEvent.cpp"
 
@@ -307,12 +306,13 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
     for (int dir = 0; dir < ROUTER_NUM_LINKS + 1; dir++) {
         //set up this nodes router link to the neighbor router
 
-        EventHandler_t*   handler = new EventHandler1Arg< 
-                            SS_router, bool, Event*, int >
-                       ( this, &SS_router::handleParcel, dir );
+//         EventHandler_t*   handler = new EventHandler1Arg< 
+//                             SS_router, bool, Event*, int >
+//                        ( this, &SS_router::handleParcel, dir );
 
         DBprintf("adding link %s\n", LinkNames[dir] );
-        linkV[dir] = LinkAdd( LinkNames[dir], handler );
+	linkV[dir] = configureLink( LinkNames[dir],
+				    new Event::Handler1<SS_router,int>(this, &SS_router::handleParcel, dir));
 
         txlinkTo( linkV[dir], dir );
     }
@@ -683,7 +683,7 @@ void SS_router::setupRoutingTable( Params_t params, int nodes,
 }
 
 //: receive a parcel, which should carry a packet
-bool SS_router::handleParcel( Event* e, int dir )
+void SS_router::handleParcel( Event* e, int dir )
 {
     RtrEvent*  event = static_cast<RtrEvent*>(e);
 
@@ -694,7 +694,7 @@ bool SS_router::handleParcel( Event* e, int dir )
                  event->u.credit.vc, event->u.credit.num );
         updateToken_flits( dir, event->u.credit.vc, event->u.credit.num );
         delete event;
-        return false;
+        return;
     }
 
     int ilink, ivc, flits;
@@ -707,7 +707,7 @@ bool SS_router::handleParcel( Event* e, int dir )
 
     rxCount[ilink] += flits;
     InLCB( event, ilink, ivc, flits);
-    return false;
+    return;
 }
 
 //: route a packet

@@ -60,7 +60,7 @@ class Cpu_PowerAndData : public Component {
                 ++it;
             } 
             
-            mem = LinkAdd( "MEM" );
+            mem = configureLink( "MEM" );
             handler = new EventHandler< Cpu_PowerAndData, bool, Cycle_t >
                                                 ( this, &Cpu_PowerAndData::clock );
 	    handlerPush = new EventHandler< Cpu_PowerAndData, bool, Cycle_t >

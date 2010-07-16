@@ -100,9 +100,10 @@ private:
     RtrEvent* nextToRtr;
 
     bool clock_handler(Cycle_t cycle);
-    bool processCPUEvent( Event* e);
-    bool processPtlEvent( Event* e);
-    bool processDMAEvent( Event* e);
+    void processCPUEvent( Event* e);
+    void processPtlEvent( Event* e);
+    void processDMAEvent( Event* e);
+
     void setTimingParams(int set);
 
     inline bool PtlCTCheckThresh(ptl_handle_ct_t ct_handle, ptl_size_t test) {

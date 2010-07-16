@@ -29,7 +29,7 @@
 #include <deque>
 
 #include <sst/core/sst_types.h>
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/log.h>
@@ -102,16 +102,12 @@ public:
         m_log.write("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
         m_log.write("nic id=%d frequency=%s\n", m_id, frequency.c_str());
 
-        EventHandler_t*   handler = new EventHandler<
-                            RtrIF, bool, Event* >
-                       ( this, &RtrIF::processEvent );
-
-        m_rtrLink = LinkAdd( "rtr", handler );
+	m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<RtrIF>(this,&RtrIF::processEvent) );
 
         ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
                                                 ( this, &RtrIF::clock );
 
-        if ( ! registerClock( frequency, clockHandler ) ) {
+        if ( ! registerClock( frequency, clockHandler, false ) ) {
             _abort(XbarV2,"couldn't register clock handler");
         }
 
@@ -169,7 +165,7 @@ private:
         return toRtrMapP[vc]->willTake( numFlits );
     }
     
-    bool processEvent( Event* e)
+    void processEvent( Event* e)
     {
         RtrEvent* event = static_cast<RtrEvent*>(e);
 
@@ -188,7 +184,6 @@ private:
         default:
             _abort(RtrIF,"unknown type %d\n",event->type);
         }
-        return false;
     }
 
     bool clock( Cycle_t cycle)

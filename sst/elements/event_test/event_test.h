@@ -17,7 +17,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include <sst/core/eventFunctor.h>
+//#include <sst/core/eventFunctor.h>
 
 class event_test : public SST::Component {
 public:
@@ -31,7 +31,7 @@ private:
     event_test(const event_test&); // do not implement
     void operator=(const event_test&); // do not implement
 
-    bool handleEvent( SST::Event *ev );
+    void handleEvent( SST::Event *ev );
 
     int my_id;
     int count_to;
@@ -61,9 +61,10 @@ private:
         ar & BOOST_SERIALIZATION_NVP(done);
         ar & BOOST_SERIALIZATION_NVP(link);
 
-        SST::EventHandler_t* linkHandler = new SST::EventHandler<event_test,bool,SST::Event*>
-            (this,&event_test::handleEvent);
-        link->setFunctor(linkHandler);
+//         SST::EventHandler_t* linkHandler = new SST::EventHandler<event_test,bool,SST::Event*>
+//             (this,&event_test::handleEvent);
+//         link->setFunctor(linkHandler);
+	link->setFunctor(new SST::Event::Handler<event_test>(this,&event_test::handleEvent));
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()

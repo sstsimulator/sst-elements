@@ -11,6 +11,7 @@
 
 
 #include <sst/elements/include/paramUtil.h>
+#include "sst/core/event.h"
 
 #define _EC_DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
@@ -37,15 +38,15 @@ EVENTCHANNEL()::EventChannel( Component& comp,
         }
     }
 
-    EventHandler_t*   handler = new EventHandler< EventChannel, bool, Event* >
-                       ( this, &EventChannel::handler );
+//     EventHandler_t*   handler = new EventHandler< EventChannel, bool, Event* >
+//                        ( this, &EventChannel::handler );
 
-    if ( ! handler ) {
-        _abort( EventChannel, "new EventHandler failed\n" );
-    }
+//     if ( ! handler ) {
+//         _abort( EventChannel, "new EventHandler failed\n" );
+//     }
 
     m_log.write("creating link \"%s\"\n", name.c_str());
-    Link* link = comp.LinkAdd( name, handler );
+    Link* link = comp.configureLink( name, new Event::Handler<EventChannel>(this, &EventChannel::handler) );
     assert(link != NULL);
 
     m_vcV.resize( numVC );
@@ -86,7 +87,7 @@ EVENTCHANNEL(bool)::clock( Cycle_t cycle )
     return false;
 }
 
-EVENTCHANNEL( bool )::handler( Event* e )
+EVENTCHANNEL( void )::handler( Event* e )
 {
     event_t* event = static_cast< event_t* >( e );
     if ( size_t(event->virtChan) > m_vcV.size() ) {
@@ -159,7 +160,7 @@ EVENTCHANNEL( inline bool )::VirtChan::clock( Cycle_t cycle )
     return false;
 }
 
-EVENTCHANNEL( inline bool )::VirtChan::handler( event_t* event )
+EVENTCHANNEL( inline void )::VirtChan::handler( event_t* event )
 {
     if ( event->type == event_t::EVENT ) {
         //_EC_DBG("%s: got event\n", m_name.c_str() );
@@ -172,7 +173,7 @@ EVENTCHANNEL( inline bool )::VirtChan::handler( event_t* event )
     } else {
         _abort( WireLink, "bad event type %d\n", event->type );
     }
-    return false;
+    return;
 }
 
 EVENTCHANNEL( inline bool )::VirtChan::ready( int credit )

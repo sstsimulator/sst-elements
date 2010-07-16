@@ -44,7 +44,7 @@ class Cpu_power : public Component {
                 ++it;
             } 
             
-            mem = LinkAdd( "MEM" );
+            mem = configureLink( "MEM" );
             handler = new SST::EventHandler< Cpu_power, bool, Cycle_t >
                                                 ( this, &Cpu_power::clock );
             TimeConverter* tc = registerClock( frequency, handler );

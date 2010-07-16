@@ -15,11 +15,10 @@
 
 #include "routermodel.h"
 #include <sst/core/cpunicEvent.h>
-#include <sst/core/eventHandler1Arg.h>
 
 int router_model_debug;
 
-bool
+void
 Routermodel::handle_port_events(Event *event, int in_port)
 {
 
@@ -72,7 +71,6 @@ uint8_t out_port;
     }
 #endif
 
-    return false;
 
 }  /* end of handle_port_events() */
 
@@ -81,16 +79,17 @@ Link *
 Routermodel::initPort(int port, char *link_name)
 {
 
-EventHandler_t *tmpHandler;
+//     EventHandler_t *tmpHandler;
 
-    tmpHandler= new EventHandler1Arg< Routermodel, bool, Event *, int >
-	(this, &Routermodel::handle_port_events, port);
+//     tmpHandler= new EventHandler1Arg< Routermodel, bool, Event *, int >
+// 	(this, &Routermodel::handle_port_events, port);
 
-    if (!tmpHandler)   {
-        _abort(Routermodel,"Couldn't create eventHandler\n");
-    }
+//     if (!tmpHandler)   {
+//         _abort(Routermodel,"Couldn't create eventHandler\n");
+//     }
 
-    return LinkAdd(link_name, tmpHandler);
+//     return LinkAdd(link_name, tmpHandler);
+    return configureLink(link_name, new Event::Handler1<Routermodel,int>(this, &Routermodel::handle_port_events, port));
 
 }  /* end of initPort() */
 

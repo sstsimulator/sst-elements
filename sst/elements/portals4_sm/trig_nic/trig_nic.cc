@@ -36,7 +36,7 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     ClockHandler_t*  clockHandler = new EventHandler< trig_nic, bool, Cycle_t >
         ( this, &trig_nic::clock_handler );
 
-    if ( ! registerClock( frequency, clockHandler ) ) {
+    if ( ! registerClock( frequency, clockHandler, false  ) ) {
         _abort(trig_nic,"couldn't register clock handler");
     }
  
@@ -54,40 +54,20 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
 
     nextToRtr = NULL;
 
-    // Set up the link to the CPU
-    EventHandler_t* handler = new EventHandler<
-    trig_nic, bool, Event* >
-	( this, &trig_nic::processCPUEvent );
+    registerTimeBase("1ns");
     
-    cpu_link = LinkAdd( "cpu", handler );
-    // End link to CPU setup
+    cpu_link = configureLink( "cpu", new Event::Handler<trig_nic>(this,&trig_nic::processCPUEvent) );
 
-    // Setup a direct self link for messages headed to the router
-    self_link = selfLink( "self");
+//     // Setup a direct self link for messages headed to the router
+    self_link = configureSelfLink( "self" );
     
-    // Set up the portals link to delay incoming commands the
-    // appropriate time.
-    handler = new EventHandler<
-	trig_nic, bool, Event * >
-	(this, &trig_nic::processPtlEvent );
+//     // Set up the portals link to delay incoming commands the
+//     // appropriate time.
+    ptl_link = configureSelfLink("self_ptl", new Event::Handler<trig_nic>(this,&trig_nic::processPtlEvent) );
 
-    ptl_link = selfLink("self_ptl", handler);
-    // End portals link setup
-
-    // Set up the dma link
-    handler = new EventHandler<
-	trig_nic, bool, Event * >
-	(this, &trig_nic::processDMAEvent );
-
-    dma_link = selfLink("self_dma", handler);
-    // End dma link setup
+//     // Set up the dma link
+    dma_link = configureSelfLink("self_dma", new Event::Handler<trig_nic>(this,&trig_nic::processDMAEvent) );
     
-    // The links will use 1 ns as their timebase
-    cpu_link->setDefaultTimeBase(registerTimeBase("1ns",false));
-    self_link->setDefaultTimeBase(registerTimeBase("1ns",false));
-    ptl_link->setDefaultTimeBase(registerTimeBase("1ns",false));
-    dma_link->setDefaultTimeBase(registerTimeBase("1ns",false));
-
     // Initialize all the portals elements
 
     // Portals table entries
@@ -337,7 +317,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     return false;
 }
 
-bool trig_nic::processCPUEvent( Event *e) {
+void trig_nic::processCPUEvent( Event *e) {
 //     printf("processCPUEvent\n");
     trig_nic_event* ev = static_cast<trig_nic_event*>(e);
 
@@ -352,7 +332,6 @@ bool trig_nic::processCPUEvent( Event *e) {
 	pio_q.push(ev);
     }
     
-    return false;
 }
 
 void
@@ -377,7 +356,7 @@ trig_nic::setTimingParams(int set) {
     }
 }
 
-bool trig_nic::processPtlEvent( Event *e ) {
+void trig_nic::processPtlEvent( Event *e ) {
 //     printf("processPtlEvent\n");
     trig_nic_event* ev = static_cast<trig_nic_event*>(e);
 //     ptl_int_nic_op_t* operation;
@@ -432,7 +411,7 @@ bool trig_nic::processPtlEvent( Event *e ) {
 	      
 		streams[map_key] = ms;		  
 		delete ev;
-		return false;
+		return;
 	    }
 	    else {
 		me_list_t* list = ptl_table[header.pt_index]->priority_list;
@@ -786,14 +765,13 @@ bool trig_nic::processPtlEvent( Event *e ) {
       break;
 	
     }
-    return false;
 }
 
 // Self-timed event handler that processes the DMA request Q.
 
 // FIXME: Still need to add a credit based mechanism to limit
 // outstanding DMAs when the dma_q is "full".
-bool
+void
 trig_nic::processDMAEvent( Event* e)
 {
 //     printf("processDMAEvent()\n");
@@ -801,14 +779,14 @@ trig_nic::processDMAEvent( Event* e)
     if ( !dma_in_progress ) {
         // Need to start a new DMA
       dma_req = dma_req_q.front();
-      if ( dma_req_q.size() == 0 ) return false;
+      if ( dma_req_q.size() == 0 ) return;
       if ( dma_req == NULL ) {
 	  if ( dma_req_q.size() != 0 ) {
 	    printf("NULL got passed into dma_req_q, aborting...\n");
 	    abort();
 	  }
 	  // Don't actually have a new dma to start
-	  return false;
+	  return;
 	}
         dma_in_progress = true;
 
@@ -847,7 +825,6 @@ trig_nic::processDMAEvent( Event* e)
       // Need to wake up again to process more DMAs
       dma_link->Send(8,NULL);
     }
-    return false;
 }
 
 

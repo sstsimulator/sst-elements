@@ -41,10 +41,11 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
     
     registerExit();
 
-    EventHandler_t* linkHandler = new EventHandler<event_test,bool,Event*>
-	(this,&event_test::handleEvent);
+//     EventHandler_t* linkHandler = new EventHandler<event_test,bool,Event*>
+// 	(this,&event_test::handleEvent);
 
-    link = LinkAdd( "link", linkHandler );
+//     link = LinkAdd( "link", linkHandler );
+    link = configureLink( "link", new Event::Handler<event_test>(this,&event_test::handleEvent) );
     registerTimeBase("1ns");
 }
 
@@ -79,7 +80,7 @@ event_test::Finish()
 }
 
 
-bool
+void
 event_test::handleEvent(Event* ev)
 {
     MyEvent* event = static_cast<MyEvent*>(ev);
@@ -98,7 +99,6 @@ event_test::handleEvent(Event* ev)
 	event->count++;
 	link->Send(latency,event);
     }    
-    return false;
 }
 
 

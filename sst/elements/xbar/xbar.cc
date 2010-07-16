@@ -51,24 +51,16 @@ bool Xbar::clock( Cycle_t current ) {
 }
 
 // bool Xbar::processEvent( Time_t time, Event* event  )
-bool Xbar::processEvent( Event* event  )
+void Xbar::processEvent( Event* event  )
 {
-    // KSH FIXME
-//     _XBAR_DBG( "id=%lu time=%.9f cycle=%lu\n", Id(), 
-//                 CurrentTime(), CurrentCycle() );
     _XBAR_DBG("got an event from the xbar @ cycle %ld\n", getCurrentSimTime() );
     cpu->Send( 3, static_cast<CompEvent*>(event) );
-    return false;
 }
 
-bool Xbar::selfEvent( Event* event  )
+void Xbar::selfEvent( Event* event  )
 {
-    // KSH FIXME
-//     _XBAR_DBG( "id=%lu time=%.9f cycle=%lu\n", Id(), 
-//                 CurrentTime(), CurrentCycle() );
     _XBAR_DBG("got a pushed self event @ cycle %ld\n", getCurrentSimTime() );
     selfPush->Send( 50, static_cast<CompEvent*>(event) );
-    return false;
 }
 
 
