@@ -13,8 +13,8 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 
-#include "ghost.h"
 #include <sst/core/cpunicEvent.h>
+#include "ghost.h"
 
 int ghost_pattern_debug;
 
@@ -33,6 +33,7 @@ pattern_event_t event;
 
     /* Extract the pattern event type from the SST event */
     event= COMPUTE_DONE;
+    // event= sst_event->pattern_event;
 
     switch (state)   {
 	case COMPUTE:
@@ -69,7 +70,7 @@ pattern_event_t event;
 
 extern "C" {
 Ghost_pattern *
-ghost_patternmodelAllocComponent(SST::ComponentId_t id,
+ghost_patternAllocComponent(SST::ComponentId_t id,
                           SST::Component::Params_t& params)
 {
     return new Ghost_pattern(id, params);
