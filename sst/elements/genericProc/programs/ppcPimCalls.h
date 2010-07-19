@@ -11,6 +11,27 @@
    asm volatile("" : <output reg> : <input reg> : <clobbered reg> )
 */
 
+//: Send a matrix-vector operation to memory
+//
+// A failure (return 0) indicates a need to retry
+_INLINE_ int PIM_MatVec(int start, int end, const double *cur_vals, 
+			const double *x, const int *cur_inds, double *sum) {
+  int result;
+  asm volatile ("mr r3, %1\n" /* start */
+		"mr r4, %2\n" /* end */
+		"mr r5, %3\n" /* cur_vals */
+		"mr r6, %4\n" /* x */
+		"mr r7, %5\n" /* cur_inds */
+		"mr r8, %6\n" /* sum */
+		"li r0, "SS_PIM_MATVEC_STR"\n" /* set syscall */
+		"sc\n" /* make the "system call" */
+		"mr %0, r3, 0\n" /* Collect results*/
+		: "=r" (result)
+		: "r" (start), "r" (end), "r" (cur_vals), "r" (x), "r" (cur_inds), "r" (sum)
+		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "memory");
+  return result;
+} 
+
 //: Send an Atomic Memory Operations to memory
 //
 // A failure (return 0) probably indicates a need to retry
