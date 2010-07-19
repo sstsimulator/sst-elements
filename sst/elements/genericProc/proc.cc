@@ -450,11 +450,13 @@ bool proc::addThread(thread *t) {
       thread *pt = p->getThread();
       if (pt && pt->isDead()) {
 	_GPROC_DBG(2, "Removing Dead Thread from processor core\n");
+	printf("removing thread %p from proc %p\n", pt, p);
 	p->setThread(NULL);
 	delete pt;
       }
       // check if processor is available
       if (p->getThread() == NULL) {
+	printf("added thread %p to proc %p\n", t, p);
 	p->setThread(t);
 	return true;
       }
@@ -636,6 +638,14 @@ bool proc::sendMemoryReq( instType iType,
   //INFO("Issuing mem req for addr=%#lx (type=%d, tag=%p) %d\n", 
   //     (unsigned long) address, iType, i, memReqMap.size());
   return true;
+}
+
+void proc::resetCounters() {
+  for (unsigned int i = 0; i < mProcs.size(); ++i) {
+    for (unsigned int t = 0; t < LASTINST; ++t) {
+      mProcs[i]->iMix[t] = 0;
+    }
+  }
 }
 
 #if WANT_CHECKPOINT_SUPPORT

@@ -211,6 +211,7 @@ public:
   proc(ComponentId_t id, Params_t& params);
   proc(ComponentId_t id, Params_t& params, int dummy);
 
+  virtual void resetCounters();
   //: Return num of cores
   virtual int getNumCores() const {return mProcs.size();}
   virtual bool insertThread(thread*);
