@@ -132,7 +132,8 @@ int main(int argc, char *argv[])
 
 
   if (argc == 0) {
-      generate_matrix(75, 75, 128, &A, &x, &b, &xexact);
+    //generate_matrix(75, 75, 128, &A, &x, &b, &xexact);
+    generate_matrix(10, 10, 20, &A, &x, &b, &xexact);
   } else if(argc != 2 && argc!=4) {
     if (rank==0)
       fprintf(stderr, "Usage:\n"

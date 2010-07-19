@@ -211,9 +211,9 @@ void mt_write(T& target, const T2& towrite)
 template <typename T, typename T2>
 T mt_incr(T* target, T2 inc)
 {
-#ifdef __MTA__
+#if defined(__MTA__) && 0
   T res = int_fetch_add((int*)(target), inc);
-#elif USING_QTHREADS
+#elif USING_QTHREADS && 0
   T res = qthread_incr(target, inc);
 #else
   T res = *target;
@@ -226,9 +226,10 @@ T mt_incr(T* target, T2 inc)
 template <typename T, typename T2>
 T mt_incr(T& target, T2 inc)
 {
-#ifdef __MTA__
+#warning using serial version of mt_incr
+#if defined(__MTA__) && 0
   T res = int_fetch_add((int*) &(target), inc);
-#elif USING_QTHREADS
+#elif USING_QTHREADS && 0
   T res = qthread_incr(&(target), inc);
 #else
   T res = target;

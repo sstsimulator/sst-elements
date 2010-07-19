@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   {
       argc = 4;
       nargv[0] = argv[0]; /* executable */
-      nargv[1] = "5"; /* p */
+      nargv[1] = "8"; /* p */
       nargv[2] = "0.001"; /* delta */
       nargv[3] = "4"; /* # threads */
       nargv[4] = NULL;
@@ -137,8 +137,10 @@ int main(int argc, char* argv[])
   int size = num_edges(g);
   printf("ORDER: %d, SIZE: %d\n", order, size);
 
+  PIM_quickPrint(0,0,0);
   pagerank<Graph> pr(g);
   rank_info* rinfo = pr.run(atof(argv[2]));
+  exit(1);
 
   mt_timer timer;
   int issues, memrefs, concur, streams;

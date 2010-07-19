@@ -77,8 +77,8 @@ int main(int argc, char* argv[])
 #if 1
       argc = 3;
       nargv[0] = argv[0];
-      nargv[1] = "5"; /* p */
-      nargv[2] = "4"; /* threads */
+      nargv[1] = "8"; /* p */
+      nargv[2] = "3"; /* threads */
       nargv[3] = NULL;
       argv = nargv;
 #else
@@ -177,36 +177,37 @@ int main(int argc, char* argv[])
   init_identity_vert_array(ga, result);
   component_map components(result, get(_vertex_id_map, ga));
   connected_components_gcc_sv<Graph, component_map> s1(ga, components);
+  PIM_quickPrint(0,0,0);
   cc_time.start();
   s1.run();
   cc_time.stop();
-  printf("gcc_sv time: %f\n", cc_time.getElapsedSeconds());
+  //printf("gcc_sv time: %f\n", cc_time.getElapsedSeconds());
   count_connected_components<Graph, component_map> gcc(ga, components);
   nc = gcc.run();
-  printf("there are %d connected components\n", nc);
+  //printf("there are %d connected components\n", nc);
 
   init_identity_vert_array(ga, result);
   connected_components_sv<Graph, component_map> s2(ga, components);
   cc_time.start();
   s2.run();
   cc_time.stop();
-  printf("sv time (going through edges): %f\n", cc_time.getElapsedSeconds());
+  //printf("sv time (going through edges): %f\n", cc_time.getElapsedSeconds());
   count_connected_components<Graph, component_map> ccc(ga, components);
   nc = ccc.run();
-  printf("there are %d connected components\n", nc);
+  //printf("there are %d connected components\n", nc);
 
   init_identity_vert_array(ga, result);
   connected_components_foo_sv<Graph, component_map> s3(ga, components);
   cc_time.start();
   s3.run();
   cc_time.stop();
-  printf("sv time (going through adjs (non-qthread)): %f\n",
-         cc_time.getElapsedSeconds());
+  /*printf("sv time (going through adjs (non-qthread)): %f\n",
+    cc_time.getElapsedSeconds());*/
   count_connected_components<Graph, component_map> ccc2(ga, components);
   nc = ccc2.run();
-  printf("there are %d connected components\n", nc);
+  //printf("there are %d connected components\n", nc);
 
-#ifdef DEBUG
+#if defined(DEBUG) && 0
   find_biggest_connected_component<Graph, component_map> fbcc(ga, components);
   unsigned long cs_id = fbcc.run();
   printf("the biggest has leader %d\n", cs_id);

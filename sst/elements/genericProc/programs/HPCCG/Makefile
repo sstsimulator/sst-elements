@@ -58,6 +58,7 @@ USE_MPI = -DUSING_QTHREADS -DWALL
 
 #MPI_INC = -I/usr/MPICH/SDK.gcc/include
 #MPI_INC = -I$(HOME)/tileprefix/include
+MPI_INC = -I$(HOME)/Public/sst/sstenv/include
 
 
 # 3) Specify C++ compiler optimization flags (if any)
@@ -78,13 +79,13 @@ CPP_OPT_FLAGS = -O0 -g -Wall -Werror
 #    Then specify the path to your MPI library (include -L and -l directives)
 
 #MPI_LIB = -L/usr/MPICH/SDK.gcc/lib -lmpich
-TILE_LIB = $(HOME)/sstenv/lib
+TILE_LIB = $(HOME)/Public/sst/sstenv/lib
 MPI_LIB = $(TILE_LIB)/libqthread.a $(TILE_LIB)/libcprops.a
 
 #
 # 5) System libraries: (May need to add -lg2c before -lm)
 
-SYS_LIB = -L$(HOME)/sstenv/lib -L$(HOME)/sstlib -lm_ppc
+SYS_LIB = -L$(HOME)/Public/sst/sstenv/lib -L$(HOME)/Public/sst/trunk/sst/elements/genericProc/programs/allStatLibs -lm_ppc
 
 #
 # 6) Specify name if executable (optional):
@@ -98,14 +99,19 @@ CXXFLAGS= $(CPP_OPT_FLAGS) $(USE_MPI) $(MPI_INC)
 LIB_PATHS= $(MPI_LIB) $(SYS_LIB)
 
 TEST_CPP = main.cpp generate_matrix.cpp read_HPC_row.cpp compute_residual.cpp mytimer.cpp \
-          HPC_sparsemv.cpp HPCCG.cpp waxpby.cpp ddot.cpp \
+          HPCCG.cpp waxpby.cpp ddot.cpp \
           make_local_matrix.cpp exchange_externals.cpp
 
 TEST_OBJ          = $(TEST_CPP:.cpp=.o)
 
-$(TARGET): $(TEST_OBJ)
-	$(LINKER) $(CFLAGS) $(TEST_OBJ) $(LIB_PATHS) -o $(TARGET)
+$(TARGET): $(TEST_OBJ) HPC_sparsemv.o
+	$(LINKER) $(CFLAGS) $(TEST_OBJ) HPC_sparsemv.o $(LIB_PATHS) -o $(TARGET)
 
+HPC_sparsemv_pim.o: HPC_sparsemv.cpp
+	$(CC) -c $(CXXFLAGS) $(USE_MPI) $(MPI_INC) -DPIM_MATVEC=1 HPC_sparsemv.cpp -o HPC_sparsemv_pim.o
+
+test_HPCCG_pim: $(TEST_OBJ) HPC_sparsemv_pim.o
+	$(LINKER) $(CFLAGS) $(TEST_OBJ) HPC_sparsemv_pim.o $(LIB_PATHS) -o test_HPCCG_pim
 
 clean:
 	@rm -f *.o  *~ $(TARGET) $(TARGET).exe

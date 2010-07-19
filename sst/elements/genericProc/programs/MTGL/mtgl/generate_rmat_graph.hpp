@@ -112,6 +112,7 @@ public:
 
     for (size_t i = startat; i < stopat; i++)
     {
+      printf(" rl %d %d\n", i, stopat);
       double a = a0;
       double b = b0;
       double c = c0;
@@ -150,9 +151,9 @@ public:
     float alpha = 0.05;
     int tolerance = (int) ((1.0 - alpha) * m); // Lower bound on the tolerance.
 
-#ifdef DEBUG
-    fprintf(stderr, "n: %lu, m: %lu, tolerance: %d\n", n, m, tolerance);
-#endif
+    //#ifdef DEBUG
+    printf("n: %lu, m: %lu, tolerance: %d\n", n, m, tolerance);
+    //#endif
 
     /* First create a Hamiltonian cycle, so that we have a connected graph */
     srcs  = (size_type*) malloc(m * sizeof(size_type));

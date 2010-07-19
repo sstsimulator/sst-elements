@@ -22,6 +22,6 @@ AC_DEFUN([MTGL_CHECK_QTHREADS],[
          AS_IF([test "$with_qthreads" != "yes"],
                [CPPFLAGS="$CPPFLAGS -I$with_qthreads/include"
                 LDFLAGS="$LDFLAGS -L$with_qthreads/lib"])
-		 AC_CHECK_LIB([qthread], [qthread_init], [],
+		 AC_CHECK_LIB([qthread], [qthread_fork_to], [],
 			          [AC_MSG_ERROR([Qthreads could not be found])])])
 ])

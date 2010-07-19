@@ -72,14 +72,25 @@ static void HPC_sparsemv_outerloop(qthread_t *me, const size_t startat, const si
     const int * const nnz_in_row((((struct HPC_sparsemv_o_args*)arg)->A)->nnz_in_row);
     const double * const x(((struct HPC_sparsemv_o_args *)arg)->x);
 
+    printf("sparse mv outer\n");
+
     for (size_t i = startat; i < stopat; ++i) {
 	double sum = 0.0;
 	const unsigned int cur_nnz = nnz_in_row[i];
 	const double * const cur_vals = ptr_to_vals_in_row[i];
 	const int * const cur_inds = ptr_to_inds_in_row[i];
+#if defined(PIM_MATVEC) && PIM_MATVEC==1
+	printf("sparse mv inner\n");
+	int result = 0;
+	do {
+	  sum = 0.0;
+	  result = PIM_MatVec(0,cur_nnz,cur_vals,x,cur_inds, &sum);
+	} while (result == 0);
+#else
 	/* this inner-loop is too small to be worth parallelizing for now */
 	for (unsigned int j=0; j<cur_nnz; j++)
 	    sum += cur_vals[j] * x[cur_inds[j]];
+#endif
 	((struct HPC_sparsemv_o_args*)arg)->y[i] = sum;
     }
 }
@@ -108,9 +119,25 @@ int HPC_sparsemv( HPC_Sparse_Matrix *A,
      (const int    *) A->ptr_to_inds_in_row[i];
 
       const int cur_nnz = (int) A->nnz_in_row[i];
+#if defined(PIM_MATVEC) && PIM_MATVEC==1
+      sum = 0.0;
+      for (int j=0; j< cur_nnz; j++) {
+	/*printf(" j=%d  cur_inds[j] = %d\n", j, cur_inds[j]);
+	  printf(" %f * %f\n", cur_vals[j], x[cur_inds[j]]);*/
+	sum += cur_vals[j]*x[cur_inds[j]];
+      }
+      printf("sum should be %f\n", sum); sum = 0.0;
 
+      int result = 0;
+      do {
+	sum = 0.0;
+	//printf("MatVec: 0,%d,%p,%p,%p,%p\n", cur_nnz,cur_vals,x,cur_inds, &sum);
+	result = PIM_MatVec(0,cur_nnz,cur_vals,x,cur_inds, &sum);
+      } while (result == 0);
+#else
       for (int j=0; j< cur_nnz; j++)
           sum += cur_vals[j]*x[cur_inds[j]];
+#endif
       y[i] = sum;
     }
   return(0);

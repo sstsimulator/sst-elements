@@ -384,6 +384,7 @@ xmt_hash_table<K, T, HF, EQF>::xmt_hash_table(size_type size)
   size_type value = 16;
   if (size < 16)  size = 16;
   while (value < size)  { value *= 2; }
+  printf("xmt table size\n", value);
   table_size = value;
   mask = value - 1;
 

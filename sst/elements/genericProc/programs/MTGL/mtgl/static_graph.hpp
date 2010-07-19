@@ -67,17 +67,23 @@ struct static_graph {
 
   void init(size_type order, size_type size, size_type* srcs, size_type* dests)
   {
+    printf("X\n");
     n = order;
     m = size;
     size_type a_size = is_undirected() ? 2 * m : m;
 
     size_type* degree = (size_type*) calloc(order, sizeof(size_type));
     size_type* numEdges = (size_type*) malloc((order + 1) * sizeof(size_type));
+    PIM_quickPrint(0,0,(unsigned int)degree);
 
     // Count the out degree of each vertex.
     #pragma mta assert nodep
     #pragma mta block schedule
-    for (size_type i = 0; i < size; ++i) mt_incr(degree[srcs[i]], 1);
+    for (size_type i = 0; i < size; ++i) {
+      mt_incr(degree[srcs[i]], 1);
+    }
+
+    PIM_quickPrint(1,sizeof(size_type),(unsigned int)degree);
 
     if (is_undirected())
     {
@@ -87,7 +93,7 @@ struct static_graph {
     }
 
     // Find the starting index in the endpoints array for each vertex.
-    numEdges[0] = 0;
+    numEdges[0] = 0;    
 
     #pragma mta block schedule
     for (size_type i = 1; i <= order; ++i)
@@ -136,7 +142,7 @@ struct static_graph {
     end_points = endV;
     original_ids = loc_original_ids;
     internal_ids = loc_internal_ids;
-
+    printf("X2 %p\n", degree);
     free(degree);
   }
 

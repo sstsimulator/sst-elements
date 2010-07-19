@@ -40,8 +40,13 @@ typedef aligned_t(*qthread_f) (qthread_t * me, void *arg);
 /* While this function is *required* for UNIX, in a PIM environment, it serves
  * primarily to prove that qthreads are being used (thus the quickPrint call
  * with the "scalable" argument) */
+#if 1
 #define qthread_init(x) PIM_quickPrint(0x5ca1ab1e,x,PIM_readSpecial(PIM_CMD_LOC_COUNT))
 #define qthread_initialize() PIM_quickPrint(0x5ca1ab1e,0,PIM_readSpecial(PIM_CMD_LOC_COUNT))
+#else
+#define qthread_init(x) PIM_quickPrint(0x5ca1ab1e,x,PIM_readSpecial(PIM_CMD_GET_NUM_CORE))
+#define qthread_initialize() PIM_quickPrint(0x5ca1ab1e,0,PIM_readSpecial(PIM_CMD_GET_NUM_CORE))
+#endif
 
 /* XXX: not sure how to handle this in a truly multithreaded environment */
 #define qthread_finalize() PIM_quickPrint(0xaced,0,0)
@@ -116,7 +121,7 @@ unsigned qthread_id(const qthread_t * t)
 static inline
 qthread_shepherd_id_t qthread_shep(const qthread_t * t)
 {
-    return PIM_readSpecial(PIM_CMD_PROC_NUM);
+  return PIM_readSpecial(PIM_CMD_PROC_NUM);
 }
 static inline
 size_t qthread_stackleft(const qthread_t * t)
@@ -156,7 +161,11 @@ const qthread_shepherd_id_t *qthread_sorted_sheps_remote(const
     return NULL;
 }
 /* returns the number of shepherds (i.e. one more than the largest valid shepherd id) */
+#if 1
 #define qthread_num_shepherds() ((qthread_shepherd_id_t) PIM_readSpecial(PIM_CMD_LOC_COUNT))
+#else
+#define qthread_num_shepherds() ((qthread_shepherd_id_t) PIM_readSpecial(PIM_CMD_GET_NUM_CORE))
+#endif
 
 /****************************************************************************
  * functions to implement FEB locking/unlocking
