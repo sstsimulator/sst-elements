@@ -24,7 +24,7 @@
 #define INVALID_FD -1
 // Default FEB value
 uint8 base_memory::defaultFEB = 0;
-static uint32 FEBSplat = 0;
+static uint32 FEBSplat = 0x1;
 
 unsigned long MemAccess::counter = 0;
 

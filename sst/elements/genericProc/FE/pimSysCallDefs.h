@@ -159,5 +159,7 @@
 #define SS_PIM_CORE_NUM_GET_STR "3064"
 #define SS_PIM_AMO 3065
 #define SS_PIM_AMO_STR "3065"
+#define SS_PIM_MATVEC 3066
+#define SS_PIM_MATVEC_STR "3066"
 
 #endif

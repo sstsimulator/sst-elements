@@ -22,8 +22,7 @@
 
 // KSH FIXME
 // #define NOW parent->home->CurrentCycle()
-// #define NOW parent->home->simulation->getCurrentSimCycle()
-#define NOW 1
+#define NOW parent->home->getCurrentSimTime()
 
 #define IS_CMMT 0
 #define  IF_CMMT(xxx) do { } while (0)

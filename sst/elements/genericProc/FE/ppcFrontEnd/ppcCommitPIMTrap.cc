@@ -210,6 +210,8 @@ bool ppcInstruction::Perform_PIM_QUICK_PRINT(processor	*FromProcessor,
 	   (unsigned int)ntohl(regs_R[5]), (unsigned int)ntohl(regs_R[5]));
     fflush(stdout);
 
+    FromProcessor->resetCounters();
+
     // return values
     regs_R[3] = 0;
     return true;
@@ -628,7 +630,7 @@ bool ppcInstruction::Perform_PIM_WRITEEF(processor	*proc,
 
   if (proc->getFE(addr) == 0) {
     // its empty to write and fill
-    proc->WriteMemory32(addr, htonl(regs[4]), 0);
+    proc->WriteMemory32(addr, regs[4], 0);
     proc->setFE(addr, 1);
 
     regs[3] = 0;
@@ -829,5 +831,82 @@ bool ppcInstruction::Perform_PIM_AMO(processor *proc, simRegister *regs) {
   // the need to retry
   regs[3] = ntohl(ret);
 
+  return true;
+}
+
+//: Send a matrix-vector multiply Operation to memory
+//
+// PIM_MatVec(int start, int end, const double *cur_vals, 
+//            const double *x, const int *cur_inds, double *sum)
+//
+// becomes
+//
+// for (int j=0; j< end; j++)
+//    sum += cur_vals[j]*x[cur_inds[j]];
+// 
+// Note: we actually do the operaiton here, not in the memory
+// component, due to the execute-on-fetch problem.
+bool ppcInstruction::Perform_PIM_MATVEC(processor *proc, simRegister *regs) {
+  // collect arguments
+  int start = ntohl(regs[3]);
+  int end = ntohl(regs[4]);
+  simAddress cur_vals = ntohl(regs[5]);
+  simAddress x = ntohl(regs[6]);
+  simAddress cur_inds = ntohl(regs[7]);
+  simAddress sumAddr = ntohl(regs[8]);
+
+  /*printf("SST MatVec: %d,%d,%p,%p,%p,%p\n", start,end,(void*)cur_vals,
+    (void*)x,(void*)cur_inds,(void*)sumAddr);*/
+
+  // recording structures
+  // records 3 addresses: CV, I, and X
+  // CV and I can be fetched immediately, X depends on I
+  struct addrList {
+    vector<simAddress> CV, I, X;
+    simAddress sum;
+  };
+  addrList addresses;
+
+  // perform the operation, recording the addresses we needed
+  double sum = 0.0;
+  for (int j = start; j < end; ++j) {
+    // get cur_vals[j]
+    simAddress addr = cur_vals + sizeof(double) * j;
+    qword_t c_v_j = proc->ReadMemory64(addr,0);
+    c_v_j = endian_swap(c_v_j);
+    double cur_vals_j = *((double*)&c_v_j);
+    addresses.CV.push_back(addr);
+
+    // get cur_inds[j]
+    addr = cur_inds + sizeof(int) * j;
+    int cur_inds_j = ntohl(proc->ReadMemory32(addr,0));
+    addresses.I.push_back(addr);
+    //printf(" j=%d  cur_inds[j] = %d\n", j, cur_inds_j);
+
+    // get x[cur_inds[j]]
+    addr = x + sizeof(double) * cur_inds_j;
+    qword_t x_c_i_j = proc->ReadMemory64(addr,0);
+    x_c_i_j = endian_swap(x_c_i_j);
+    double x_cur_inds_j = *((double*)&x_c_i_j);
+    addresses.X.push_back(addr);
+
+    //printf(" %f * %f\n", cur_vals_j, x_cur_inds_j);
+
+    sum += cur_vals_j * x_cur_inds_j;
+  }
+  printf(" SST Sum is %f.\n", sum);
+
+  // save result
+  qword_t sumWord = *((qword_t*)&sum);
+  proc->WriteMemory64(sumAddr, endian_swap(sumWord), 0);
+  addresses.sum = sumAddr;
+
+  // send the parcel to memory
+  // set result. A failure of sendMemoryParcel() probably indicates
+  bool ret = 1;
+  // the need to retry
+  regs[3] = ntohl(ret);
+  
+  //exit(0);
   return true;
 }
