@@ -312,7 +312,7 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
 
         DBprintf("adding link %s\n", LinkNames[dir] );
 	linkV[dir] = configureLink( LinkNames[dir],
-				    new Event::Handler1<SS_router,int>(this, &SS_router::handleParcel, dir));
+				    new Event::Handler<SS_router,int>(this, &SS_router::handleParcel, dir));
 
         txlinkTo( linkV[dir], dir );
     }

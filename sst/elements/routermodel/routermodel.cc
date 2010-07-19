@@ -89,7 +89,7 @@ Routermodel::initPort(int port, char *link_name)
 //     }
 
 //     return LinkAdd(link_name, tmpHandler);
-    return configureLink(link_name, new Event::Handler1<Routermodel,int>(this, &Routermodel::handle_port_events, port));
+    return configureLink(link_name, new Event::Handler<Routermodel,int>(this, &Routermodel::handle_port_events, port));
 
 }  /* end of initPort() */
 
