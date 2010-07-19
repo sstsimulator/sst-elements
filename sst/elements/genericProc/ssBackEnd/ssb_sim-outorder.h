@@ -325,8 +325,10 @@ protected:
   struct stat_sdb_t *sim_sdb;
 
 #if GET_IMIX == 1
+public:
   //: instruction Mix counters
   unsigned long long iMix[LASTINST];
+protected:
 #endif
   //: Number of instructions executed
   counter_t sim_num_insn;
