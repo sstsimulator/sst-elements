@@ -688,7 +688,7 @@ bool ppcInstruction::Perform_SYS_kill(processor* proc, simRegister *regs,
 	parent->_isDead = 1;
 	WARN("*** Thread Committed Seppuku ***\n");
 	fflush(stdout); fflush(stderr);
-	//component::keepAlive() = 0;
+	proc->procExit();
 	return true;
     } else {
       WARN("Killing other threads is currently "
@@ -852,7 +852,7 @@ bool ppcInstruction::Perform_SYS_writev(processor   *proc,
 bool ppcInstruction::Perform_SYS_exit(processor* proc, simRegister *regs) 
 {
     parent->_isDead = 1;
-//     INFO("SysExit Called @ %f\n", proc->CurrentTime()*1000000.0);
+    INFO("SysExit Called\n");
     fflush(stdout);   
     fflush(stderr);
     proc->procExit();
