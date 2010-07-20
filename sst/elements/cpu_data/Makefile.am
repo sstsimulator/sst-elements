@@ -2,7 +2,7 @@
 #
 #
 
-CXX = $(MPICXX)
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcpu_data.la
 libcpu_data_la_SOURCES = \

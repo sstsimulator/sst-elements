@@ -4,7 +4,6 @@
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
-CXX = $(MPICXX)
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libnicmodel.la
 libnicmodel_la_SOURCES = nicmodel.h nicmodel.cc netsim_model.h netsim_model.cc routing.h routing.c
