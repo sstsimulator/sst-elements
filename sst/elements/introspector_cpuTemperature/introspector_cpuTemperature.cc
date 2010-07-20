@@ -17,7 +17,7 @@
 bool Introspector_cpuTemperature::pullData( Cycle_t current )
 {
     //_INTROSPECTOR_DBG("id=%lu currentCycle=%lu \n", Id(), current );
-	Component *c;
+    IntrospectedComponent *c;
 
         printf("introspector_cpuTemperature pulls data @ cycle %ld\n", 
                (long int) current ); //current here specifies it's the #th call

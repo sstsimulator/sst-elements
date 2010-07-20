@@ -13,6 +13,7 @@
 #define ED_RTRIF_H
 
 #include <sstream>
+#include <deque>
 
 #include <sst/core/event.h>
 #include <sst/core/component.h>

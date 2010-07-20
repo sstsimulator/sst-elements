@@ -13,6 +13,8 @@
 #ifndef _EVENT_CHANNEL_H
 #define _EVENT_CHANNEL_H
 
+#include <deque>
+
 #include <sst/core/component.h>
 #include <sst/core/compEvent.h>
 #include <sst/core/link.h>

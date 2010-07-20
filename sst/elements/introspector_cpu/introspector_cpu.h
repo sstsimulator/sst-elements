@@ -76,7 +76,7 @@ class Introspector_cpu : public Introspector {
 	    //get a list of relevant component. Must be done after all components are created 
 	    MyCompList = getModels(model); 
 	    //std::cout << " introspector_cpu has MyCompList size = " << MyCompList.size() << std::endl;
-	    for (std::list<Component*>::iterator i = MyCompList.begin();
+	    for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
 	        i != MyCompList.end(); ++i) {
      		    // state that we will monitor those components 
 		    // (pass introspector's info to the component)

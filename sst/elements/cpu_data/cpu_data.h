@@ -16,7 +16,7 @@
 #define _CPU_DATA_H
 
 #include <sst/core/eventFunctor.h>
-#include <sst/core/component.h>
+#include <sst/core/introspectedComponent.h>
 #include <sst/core/link.h>
 
 
@@ -29,12 +29,12 @@ using namespace SST;
 #define _CPU_DATA_DBG( fmt, args...)
 #endif
 
-class Cpu_data : public Component {
+class Cpu_data : public IntrospectedComponent {
         typedef enum { WAIT, SEND } state_t;
         typedef enum { WHO_NIC, WHO_MEM } who_t;
     public:
         Cpu_data( ComponentId_t id, Params_t& params ) :
-            Component( id ),
+            IntrospectedComponent( id ),
             state(SEND),
             who(WHO_MEM), 
             frequency( "2.2GHz" )
