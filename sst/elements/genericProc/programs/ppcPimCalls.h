@@ -10,6 +10,45 @@
    GCC assembly style:
    asm volatile("" : <output reg> : <input reg> : <clobbered reg> )
 */
+#define SYSCALL(call, result) __asm__ volatile ( \
+	"li r0, %1\n\t" /* Set to syscall */ \
+	"sc\n\t" /*make the sys call*/ \
+	"mr %0, r3\n" /*collect results*/ \
+	: "=r" (result) \
+	: "K" (call) \
+	: "r0", "r3");
+#define VOID_SYSCALL(call) __asm__ volatile ( \
+	"li r0, %0\n" /* set the syscall */ \
+	"sc" /* make the call */ \
+	::"K"(call) /* K means "unsigned 16-bit constant" */ \
+	:"r0");
+#define ONE_ARG_SYSCALL(call, arg, result) __asm__ volatile ("mr r3, %1\n" /* a */ \
+	"li r0, %2\n" /* set the syscall */ \
+	"sc\n" /* make the call */ \
+	"mr %0, r3" /* collect results */ \
+	: "=r" (result) \
+	:"r"(arg), "K"(call) /* K means "unsigned 16-bit constant" */ \
+	:"r0","r3","memory")
+#define ONE_ARG_VOID_SYSCALL(call, arg) __asm__ volatile ("mr r3, %0\n" /* a */ \
+	"li r0, %1\n" /* set the syscall */ \
+	"sc" /* make the call */ \
+	::"r"(arg), "K"(call) /* K means "unsigned 16-bit constant" */ \
+	:"r0","r3","memory")
+#define TWO_ARG_SYSCALL(call, arg1, arg2, result) __asm__ volatile ("mr r3, %1\n" /* arg1 */ \
+		"mr r4, %2\n" /* arg2 */ \
+		"li r0, %3\n"/*Set syscall*/ \
+		"sc\n" /* make the "system call" */ \
+		"mr %0, r3\n" /* Collect results*/ \
+		: "=r" (result) \
+		: "r" (arg1), "r" (arg2), "K"(call) \
+		: "r0", "r3", "r4", "memory");
+#define TWO_ARG_VOID_SYSCALL(call, arg1, arg2) __asm__ volatile ("mr r3, %0\n" /* arg1 */ \
+		"mr r4, %1\n" /* arg2 */ \
+		"li r0, %2\n"/*Set syscall*/ \
+		"sc" /* make the "system call" */ \
+		:: "r" (arg1), "r" (arg2), "K"(call) \
+		: "r0", "r3", "r4", "memory");
+
 
 //: Send a matrix-vector operation to memory
 //
@@ -23,11 +62,12 @@ _INLINE_ int PIM_MatVec(int start, int end, const double *cur_vals,
 		"mr r6, %4\n" /* x */
 		"mr r7, %5\n" /* cur_inds */
 		"mr r8, %6\n" /* sum */
-		"li r0, "SS_PIM_MATVEC_STR"\n" /* set syscall */
+		"li r0, %7\n" /* set syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3, 0\n" /* Collect results*/
 		: "=r" (result)
-		: "r" (start), "r" (end), "r" (cur_vals), "r" (x), "r" (cur_inds), "r" (sum)
+		: "r" (start), "r" (end), "r" (cur_vals), "r" (x), "r" (cur_inds), "r" (sum),
+		"K" (SS_PIM_MATVEC)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "memory");
   return result;
 } 
@@ -41,11 +81,11 @@ _INLINE_ int PIM_AMO(void *addr, PIM_amo_types op, int imm)
   asm volatile ("mr r3, %1\n" /* addr */
 		"mr r4, %2\n" /* operation */
 		"mr r5, %3\n" /* immediate value */
-		"li r0, "SS_PIM_AMO_STR"\n" /* Set to syscall */
+		"li r0, %4\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3, 0\n" /* Collect results*/
                 : "=r" (result)
-  	        : "r" (addr), "r" (op), "r" (imm)
+  	        : "r" (addr), "r" (op), "r" (imm), "K"(SS_PIM_AMO)
 		: "r0", "r3", "r4", "r5", "memory");
   return result;
 }
@@ -61,14 +101,7 @@ _INLINE_ int PIM_AMO(void *addr, PIM_amo_types op, int imm)
 _INLINE_ int PIM_threadCreate(void* start_routine, void* arg)
 {
   int result;
-  asm volatile ("mr r3, %1\n" /* Where execution begins */
-		"mr r4, %2\n" /* What arguments */
-		"li r0, "SS_PIM_FORK_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-		"mr %0, r3, 0\n" /* Collect results*/
-                : "=r" (result)
-	        : "r" (start_routine), "r" (arg)
-		: "r0", "r3", "r4");
+  TWO_ARG_SYSCALL(SS_PIM_FORK, start_routine, arg, result);
   return result;
 }
 
@@ -89,12 +122,12 @@ _INLINE_ int PIM_threadCreateWithStack(void* start_routine, void* arg, void* sta
 	    "mr r1, %3\n\t" /* replace the stack with the new one */
 	    "mr r3, %1\n\t" /* Where execution begins */
 	    "mr r4, %2\n\t" /* What arguments */
-	    "li r0, "SS_PIM_FORK_STR"\n\t" /* Set to syscall */
+	    "li r0, %4\n\t" /* Set to syscall */
 	    "sc\n\t" /* make the "system call" */
 	    "mr %0, r3, 0\n\t" /* Collect results*/
 	    "mr r1, r5\n" /* resurrect the stack */
 	    : "=r" (result)
-	    : "r" (start_routine), "r" (arg), "r" (stack)
+	    : "r" (start_routine), "r" (arg), "r" (stack), "K"(SS_PIM_FORK)
 	    : "r0", "r3", "r4", "r5");
     return result;
 }
@@ -114,11 +147,11 @@ _INLINE_ int PIM_spawnToCoProc(PIM_coProc coProc, void* start_routine,
   asm volatile ("mr r3, %1\n" /* coprocessor to handle thread */
 		"mr r4, %2\n" /* Where execution begins */
 		"mr r5, %3\n" /* What arguments */
-		"li r0, "SS_PIM_SPAWN_TO_COPROC_STR"\n" /* Set to syscall */
+		"li r0, %4\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
                 : "=r" (result)
-	        : "r" (coProc), "r" (start_routine), "r" (arg)
+	        : "r" (coProc), "r" (start_routine), "r" (arg), "K"(SS_PIM_SPAWN_TO_COPROC)
 		: "r0", "r3", "r4", "r5");
   return result;
 }
@@ -143,12 +176,12 @@ _INLINE_ int PIM_spawnToCoProcWithStack(PIM_coProc coProc,
 	    "mr r3, %1\n\t" /* coprocessor to handle thread */
 	    "mr r4, %2\n\t" /* Where execution begins */
 	    "mr r5, %3\n\t" /* What arguments */
-	    "li r0, "SS_PIM_SPAWN_TO_COPROC_STR"\n\t" /* Set to syscall */
+	    "li r0, %5\n\t" /* Set to syscall */
 	    "sc\n\t" /* make the "system call" */
 	    "mr %0, r3\n\t" /* Collect results*/
 	    "mr r1, r6\n" /* resurrect the old stack */
 	    : "=r" (result)
-	    : "r" (coProc), "r" (start_routine), "r" (arg), "r" (stack)
+	    : "r" (coProc), "r" (start_routine), "r" (arg), "r" (stack), "K"(SS_PIM_SPAWN_TO_COPROC)
 	    : "r0", "r3", "r4", "r5", "r6");
     return result;
 }
@@ -172,13 +205,13 @@ _INLINE_ int PIM_loadAndSpawnToCoProcWithStack(PIM_coProc coProc,
 	    "mr r7, %5\n\t" /* argument (ends up in r5) */
 	    "mr r8, %6\n\t" /* argument (ends up in r6) */
 	    "mr r9, %7\n\t" /* argument (ends up in r7) */
-	    "li r0, "SS_PIM_SPAWN_TO_COPROC_STR"\n\t" /* Set to syscall */
+	    "li r0, %9\n\t" /* Set to syscall */
 	    "sc\n\t" /* make the "system call" */
 	    "mr %0, r3\n\t" /* Collect results*/
 	    "mr r1, r10\n" /* resurrect the old stack */
 	    : "=r" (result)
 	    : "r" (coProc), "r" (start_routine), "r" (r3Arg), "r" (r6Arg),
-	    "r" (r7Arg), "r" (r8Arg), "r" (r9Arg), "r" (stack)
+	    "r" (r7Arg), "r" (r8Arg), "r" (r9Arg), "r" (stack), "K"(SS_PIM_SPAWN_TO_COPROC)
 	    : "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10");
     return result;
 }
@@ -197,12 +230,12 @@ _INLINE_ int PIM_loadAndSpawnToCoProc(PIM_coProc coProc, void* start_routine,
 		"mr r7, %5\n" /* argument (ends up in r5) */
 		"mr r8, %6\n" /* argument (ends up in r6) */
 		"mr r9, %7\n" /* argument (ends up in r7) */
-		"li r0, "SS_PIM_SPAWN_TO_COPROC_STR"\n" /* Set to syscall */
+		"li r0, %8\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
                 : "=r" (result)
 	        : "r" (coProc), "r" (start_routine), "r" (r3Arg), "r" (r6Arg),
-		  "r" (r7Arg), "r" (r8Arg), "r" (r9Arg)
+		  "r" (r7Arg), "r" (r8Arg), "r" (r9Arg), "K" (SS_PIM_SPAWN_TO_COPROC)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9");
   return result;
 }
@@ -236,12 +269,12 @@ _INLINE_ int PIM_loadAndSpawnToLocaleStack(int locale,
 		"mr r7, %5\n" /* argument (ends up in r5) */
 		"mr r8, %6\n" /* argument (ends up in r6) */
 		"mr r9, %7\n" /* argument (ends up in r7) */
-		"li r0, "SS_PIM_SPAWN_TO_LOCALE_STACK_STR"\n" /* Set to syscall */
+		"li r0, %8\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
                 : "=r" (result)			
   	        : "r" (locale), "r" (start_routine), "r" (r3Arg), "r" (r6Arg), 
-		  "r" (r7Arg), "r" (r8Arg), "r" (r9Arg)
+		  "r" (r7Arg), "r" (r8Arg), "r" (r9Arg), "K"(SS_PIM_SPAWN_TO_LOCALE_STACK)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9");
   return result;
 }
@@ -263,12 +296,12 @@ _INLINE_ int PIM_loadAndSpawnToLocaleStackStopped(int locale, void* start_routin
 	    "mr r7, %5\n" /* argument (ends up in r5) */
 	    "mr r8, %6\n" /* argument (ends up in r6) */
 	    "mr r9, %7\n" /* argument (ends up in r7) */
-	    "li r0, "SS_PIM_SPAWN_TO_LOCALE_STACK_STOPPED_STR"\n" /* Set to syscall */
+	    "li r0, %8\n" /* Set to syscall */
 	    "sc\n" /* make the "system call" */
 	    "mr %0, r3\n" /* Collect results */
 	    : "=r" (result)
 	    : "r" (locale), "r" (start_routine), "r" (r3Arg), "r" (r6Arg),
-	      "r" (r7Arg), "r" (r8Arg), "r" (r9Arg)
+	      "r" (r7Arg), "r" (r8Arg), "r" (r9Arg), "K"(SS_PIM_SPAWN_TO_LOCALE_STACK_STOPPED)
 	    : "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9");
     return result;
 }
@@ -277,29 +310,15 @@ _INLINE_ int PIM_loadAndSpawnToLocaleStackStopped(int locale, void* start_routin
 _INLINE_ int PIM_startStoppedThread(int tid, int shep)
 {
     int result;
-    asm volatile (
-	    "mr r3, %1\n" /* which thread to start */
-	    "mr r4, %2\n" /* which shepherd to use */
-	    "li r0, "SS_PIM_START_STOPPED_THREAD_STR"\n" /* set to syscall */
-	    "sc\n" /* make the "system call" */
-	    "mr %0, r3\n" /* collect results */
-	    : "=r" (result)
-	    : "r" (tid), "r" (shep)
-	    : "r0", "r3", "r4");
+    TWO_ARG_SYSCALL(SS_PIM_START_STOPPED_THREAD, tid, shep, result);
     return result;
 }
 
 _INLINE_ int PIM_switchAddrMode(PIM_addrMode mode)
 {
- int result;
-  asm volatile ("mr r3, %1\n" /* mode */
-		"li r0, "SS_PIM_SWITCH_ADDR_MODE_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-                : "=r" (result)			
-  	        : "r" (mode)
-		: "r0", "r3");
-  return result;
+    int result;
+    ONE_ARG_SYSCALL(SS_PIM_SWITCH_ADDR_MODE, mode, result);
+    return result;
 }
 
 //Fast buffer read
@@ -315,11 +334,11 @@ _INLINE_ unsigned int PIM_fastFileRead (char * filename_addr,
 		"mr r4, %2\n" /* store pointer to buffer */
 		"mr r5, %3\n" /* store max bytes to read */
 		"mr r6, %4\n" /* store offset in file to read from */
-		"li r0, "SS_PIM_FFILE_RD_STR"\n" /* Set to syscall */
+		"li r0, %5\n" /* Set to syscall */
 		"sc\n" /* make the call */
 		"mr %0, r3\n" /* Collect length of data read */
 		: "=r" (bytes)
-		: "r" (filename_addr), "r" (buf_addr), "r" (maxBytes), "r" (offset)
+		: "r" (filename_addr), "r" (buf_addr), "r" (maxBytes), "r" (offset), "K"(SS_PIM_FFILE_RD)
 		: "r0", "r3", "r4", "r5", "r6", "memory" );
   return bytes;
 }
@@ -339,11 +358,11 @@ _INLINE_ void* PIM_alloc(const unsigned int size, const unsigned int type, const
     asm volatile ("mr r3, %1\n" /* size */
 		  "mr r4, %2\n" /* allocate type */
 		  "mr r5, %3\n" /* send option */
-		  "li r0, "SS_PIM_MALLOC_STR"\n" /* Set to syscall */
+		  "li r0, %4\n" /* Set to syscall */
 		  "sc\n" /* make the syscall */
 		  "mr %0, r3\n" /* collect the results */
 		  : "=r" (result)
-		  : "r" (size), "r" (type), "r" (opt)
+		  : "r" (size), "r" (type), "r" (opt), "K"(SS_PIM_MALLOC)
 		  : "r0", "r3", "r4", "r5", "memory");
     return (void*)result;
 }
@@ -363,16 +382,16 @@ _INLINE_ void* PIM_localMallocAtID(const unsigned int size, const unsigned int I
     return PIM_alloc(size, ALLOC_LOCAL_ID, ID);
 }
 
-_INLINE_ void* PIM_fastMalloc(unsigned int size) 
+_INLINE_ void* PIM_fastMalloc(unsigned int size)
 {
   unsigned int result;
   asm volatile ("lwz r3, %1\n" /* size */
 		"li r4, 0\n" /*allocate in heap area*/
-		"li r0, "SS_PIM_MALLOC_STR"\n" /* Set to syscall */
+		"li r0, %2\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
-                : "=r" (result)			
-  	        : "m" (size)
+                : "=r" (result)
+		: "m" (size), "K"(SS_PIM_MALLOC)
 		: "r0", "r3", "r4", "memory");
   return (void*)result;
 }
@@ -383,16 +402,16 @@ _INLINE_ void* PIM_fastMalloc(unsigned int size)
 // where the memory was allocated - should only be used for thread
 // stack creation
 
-_INLINE_ void* PIM_fastStackMalloc(unsigned int size) 
+_INLINE_ void* PIM_fastStackMalloc(unsigned int size)
 {
   unsigned int result;
   asm volatile ("lwz r3, %1\n" /* size */
 		"li r4, 1\n" /*allocate in stack area*/
-		"li r0, "SS_PIM_MALLOC_STR"\n" /* Set to syscall */
+		"li r0, %2\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
-                : "=r" (result)			
-  	        : "m" (size)
+                : "=r" (result)
+		: "m" (size), "K"(SS_PIM_MALLOC)
 		: "r0", "r3", "r4", "memory");
   return (void*)result;
 }
@@ -402,17 +421,17 @@ _INLINE_ void* PIM_fastStackMalloc(unsigned int size)
 // Wrapper around the malloc system call which returns an address
 // where the memory was allocated
 
-_INLINE_ unsigned int PIM_fastFreeSize(void *ptr, unsigned int size) 
+_INLINE_ unsigned int PIM_fastFreeSize(void *ptr, unsigned int size)
 {
   unsigned int result;
   unsigned int addr = (unsigned int)ptr;
   asm volatile ("lwz r3, %1\n" /* ptr */
 		"lwz r4, %2\n" /* size */
-		"li r0, "SS_PIM_FREE_STR"\n" /* Set to syscall */
+		"li r0, %3\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
-                : "=r" (result)		
-  	        : "m" (addr), "m" (size)
+                : "=r" (result)
+		: "m" (addr), "m" (size), "K"(SS_PIM_FREE)
 		: "r0", "r3", "r4", "memory");
 
   return result;
@@ -422,13 +441,7 @@ _INLINE_ unsigned int PIM_fastFreeSize(void *ptr, unsigned int size)
 //
 // Bypasses cache and other mechanisms
 _INLINE_ void PIM_writeMem(unsigned int *addr, unsigned int data) {
-  asm volatile ("lwz r3, %0\n" /* addr */
-		"lwz r4, %1\n" /* data */
-		"li r0, "SS_PIM_WRITE_MEM_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-                : 
-  	        : "m" (addr), "m" (data)
-		: "r0", "r3", "r4", "memory");
+    TWO_ARG_VOID_SYSCALL(SS_PIM_WRITE_MEM, addr, data);
 }
 
 _INLINE_ unsigned int PIM_fastFree(void *ptr) 
@@ -440,12 +453,7 @@ _INLINE_ unsigned int PIM_fastFree(void *ptr)
 _INLINE_ unsigned int PIM_hwRand(void)
 {
   unsigned int result;
-  asm volatile ("li r0, "SS_PIM_RAND_STR"\n" /* Set to syscall */
-		"sc\n" /*make the sys call*/
-		"mr %0, r3\n" /*collect results*/
-		: "=r" (result)
-		:
-		: "r0", "r3");
+  SYSCALL(SS_PIM_RAND, result);
   return result;
 }
 
@@ -455,11 +463,11 @@ _INLINE_ int PIM_quickPrint(unsigned int a, unsigned int b, unsigned int c)
  asm volatile ("mr r3, %1\n" /* a */
 	       "mr r4, %2\n" /* b */
 	       "mr r5, %3\n" /* c */
-	       "li r0, "SS_PIM_QUICK_PRINT_STR"\n" /* Set to syscall */
+	       "li r0, %4\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
 	       "mr %0, r3\n" /* Collect results*/
-	       : "=r" (result)			
-	       : "r" (a), "r" (b), "r" (c)
+	       : "=r" (result)
+	       : "r" (a), "r" (b), "r" (c), "K"(SS_PIM_QUICK_PRINT)
 	       : "r0", "r3", "r4", "r5", "memory");
   return result;
 }
@@ -470,11 +478,11 @@ _INLINE_ int PIM_trace(unsigned int a, unsigned int b, unsigned int c)
  asm volatile ("mr r3, %1\n" /* a */
 	       "mr r4, %2\n" /* b */
 	       "mr r5, %3\n" /* c */
-	       "li r0, "SS_PIM_TRACE_STR"\n" /* Set to syscall */
+	       "li r0, %4\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
 	       "mr %0, r3\n" /* Collect results*/
-	       : "=r" (result)			
-	       : "r" (a), "r" (b), "r" (c)
+	       : "=r" (result)
+	       : "r" (a), "r" (b), "r" (c), "K"(SS_PIM_TRACE)
 	       : "r0", "r3", "r4", "r5");
   return result;
 }
@@ -496,11 +504,11 @@ _INLINE_ int PIM_mem_region_create(int region, void * vstart,
                "mr r5, %3\n" /* size */
                "mr r6, %4\n" /* kstart */
                "mr r7, %5\n" /* cached */
-               "li r0, "SS_PIM_MEM_REGION_CREATE_STR"\n" /* Set to syscall */
+               "li r0, %6\n" /* Set to syscall */
                "sc\n" /* make the "system call" */
                "mr %0, r3\n" /* Collect results*/
                : "=r" (result)
-                : "r" (region), "r" (vstart), "r" (size), "r" (kstart), "r" (cached)
+                : "r" (region), "r" (vstart), "r" (size), "r" (kstart), "r" (cached), "K"(SS_PIM_MEM_REGION_CREATE)
                 : "r0", "r3", "r4", "r5", "r6", "r7", "memory");
   return result;
 }
@@ -512,11 +520,11 @@ _INLINE_ int PIM_mem_region_get(int region, unsigned long *addr,
   asm volatile ("mr r3, %1\n" /* region */
                "mr r4, %2\n" /* addr */
                "mr r5, %3\n" /* size */
-               "li r0, "SS_PIM_MEM_REGION_GET_STR"\n" /* Set to syscall */
+               "li r0, %4" /* Set to syscall */
                "sc\n" /* make the "system call" */
                "mr %0, r3\n" /* Collect results*/
                : "=r" (result)
-                : "r" (region), "r" (addr), "r" (size)
+                : "r" (region), "r" (addr), "r" (size), "K"(SS_PIM_MEM_REGION_GET)
                 : "r0", "r3", "r4", "r5", "memory");
   return result;
 }
@@ -525,10 +533,10 @@ _INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1)
 {
   asm volatile ("mr r3, %0\n" /* c */
 	       "mr r4, %1\n" /* v1 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL_STR"\n" /* Set to syscall */
+	       "li r0, %2\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-	       : 
-	       : "r" (c), "r" (v1)
+	       :
+	       : "r" (c), "r" (v1), "K"(SS_PIM_WRITE_SPECIAL)
 	       : "r0", "r3", "r4");
 }
 
@@ -537,11 +545,11 @@ _INLINE_ void PIM_writeSpecial2(PIM_cmd c, unsigned int v1, unsigned int v2)
   asm volatile ("mr r3, %0\n" /* c */
 	       "mr r4, %1\n" /* v1 */
 	       "mr r5, %2\n" /* v2 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL2_STR"\n" /* Set to syscall */
+	       "li r0, %3\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-	       : 
-		: "r" (c), "r" (v1), "r" (v2)
-		: "r0", "r3", "r4", "r5");
+	       :
+	       : "r" (c), "r" (v1), "r" (v2), "K"(SS_PIM_WRITE_SPECIAL2)
+	       : "r0", "r3", "r4", "r5");
 }
 
 _INLINE_ void PIM_writeSpecial3(PIM_cmd c, unsigned int v1, unsigned int v2,
@@ -551,10 +559,10 @@ _INLINE_ void PIM_writeSpecial3(PIM_cmd c, unsigned int v1, unsigned int v2,
 	       "mr r4, %1\n" /* v1 */
 	       "mr r5, %2\n" /* v2 */
 	       "mr r6, %3\n" /* v3 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL3_STR"\n" /* Set to syscall */
+	       "li r0, %4\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-		: 
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3)
+		:
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "K"(SS_PIM_WRITE_SPECIAL3)
 		: "r0", "r3", "r4", "r5", "r6");
 }
 
@@ -566,15 +574,15 @@ _INLINE_ void PIM_writeSpecial4(PIM_cmd c, unsigned int v1, unsigned int v2,
 	       "mr r5, %2\n" /* v2 */
 	       "mr r6, %3\n" /* v3 */
 	       "mr r7, %4\n" /* v4 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL4_STR"\n" /* Set to syscall */
+	       "li r0, %5\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-		: 
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4)
+		:
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "K"(SS_PIM_WRITE_SPECIAL4)
 		: "r0", "r3", "r4", "r5", "r6", "r7");
 }
 
 _INLINE_ void PIM_writeSpecial5(PIM_cmd c, unsigned int v1, unsigned int v2,
-			      unsigned int v3, unsigned int v4, 
+			      unsigned int v3, unsigned int v4,
 			      unsigned int v5)
 {
   asm volatile ("mr r3, %0\n" /* c */
@@ -583,15 +591,15 @@ _INLINE_ void PIM_writeSpecial5(PIM_cmd c, unsigned int v1, unsigned int v2,
 	       "mr r6, %3\n" /* v3 */
 	       "mr r7, %4\n" /* v4 */
 	       "mr r8, %5\n" /* v5 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL5_STR"\n" /* Set to syscall */
+	       "li r0, %6\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-		: 
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "r" (v5)
+		:
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "r" (v5), "K"(SS_PIM_WRITE_SPECIAL5)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8");
 }
 
 _INLINE_ void PIM_writeSpecial6(PIM_cmd c, unsigned int v1, unsigned int v2,
-				unsigned int v3, unsigned int v4, 
+				unsigned int v3, unsigned int v4,
 				unsigned int v5, unsigned int v6)
 {
   asm volatile ("mr r3, %0\n" /* c */
@@ -601,10 +609,10 @@ _INLINE_ void PIM_writeSpecial6(PIM_cmd c, unsigned int v1, unsigned int v2,
 	       "mr r7, %4\n" /* v4 */
 	       "mr r8, %5\n" /* v5 */
 	       "mr r9, %6\n" /* v6 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL6_STR"\n" /* Set to syscall */
+	       "li r0, %7\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-		: 
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "r" (v5), "r" (v6)
+		:
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "r" (v5), "r" (v6), "K"(SS_PIM_WRITE_SPECIAL6)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9");
 }
 
@@ -621,10 +629,10 @@ _INLINE_ void PIM_writeSpecial7(PIM_cmd c, unsigned int v1, unsigned int v2,
 	       "mr r8, %5\n" /* v5 */
 	       "mr r9, %6\n" /* v6 */
 	       "mr r10, %7\n" /* v7 */
-	       "li r0, "SS_PIM_WRITE_SPECIAL7_STR"\n" /* Set to syscall */
+	       "li r0, %8\n" /* Set to syscall */
 	       "sc\n" /* make the "system call" */
-		: 
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "r" (v5), "r" (v6), "r" (v7)
+		:
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "r" (v5), "r" (v6), "r" (v7), "K"(SS_PIM_WRITE_SPECIAL7)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10");
 }
 
@@ -636,11 +644,11 @@ _INLINE_ int PIM_rwSpecial3(PIM_cmd c, unsigned int v1, unsigned int v2,
 		"mr r4, %2\n" /* v1 */
 		"mr r5, %3\n" /* v2 */
 		"mr r6, %4\n" /* v3 */
-		"li r0, "SS_PIM_WRITE_SPECIAL3_STR"\n" /* Set to syscall */
+		"li r0, %5\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		: "=r" (result)
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3)
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "K"(SS_PIM_WRITE_SPECIAL3)
 		: "r0", "r3", "r4", "r5", "r6", "memory");
   return result;
 }
@@ -648,27 +656,14 @@ _INLINE_ int PIM_rwSpecial3(PIM_cmd c, unsigned int v1, unsigned int v2,
 _INLINE_ int PIM_readSpecial(PIM_cmd c)
 {
   int result;
-  asm volatile ("mr r3, %1\n" /* c */
-		"li r0, "SS_PIM_READ_SPECIAL_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)
-		: "r" (c)
-		: "r0", "r3", "memory");
+  ONE_ARG_SYSCALL(SS_PIM_READ_SPECIAL, c, result);
   return result;
 }
 
 _INLINE_ int PIM_readSpecial1(PIM_cmd c, unsigned int v)
 {
   int result;
-  asm volatile ("mr r3, %1\n" /* c */
-		"mr r4, %2\n" /* v */
-		"li r0, "SS_PIM_READ_SPECIAL1_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)
-		: "r" (c), "r" (v)
-		: "r0", "r3", "r4", "memory");
+  TWO_ARG_SYSCALL(SS_PIM_READ_SPECIAL1, c, v, result);
   return result;
 }
 
@@ -678,11 +673,11 @@ _INLINE_ int PIM_readSpecial2(PIM_cmd c, unsigned int v1, unsigned int v2)
   asm volatile ("mr r3, %1\n" /* c */
 		"mr r4, %2\n" /* v1 */
 		"mr r5, %3\n" /* v2 */
-		"li r0, "SS_PIM_READ_SPECIAL2_STR"\n" /* Set to syscall */
+		"li r0, %4\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		: "=r" (result)
-		: "r" (c), "r" (v1), "r" (v2)
+		: "r" (c), "r" (v1), "r" (v2), "K"(SS_PIM_READ_SPECIAL2)
 		: "r0", "r3", "r4", "r5", "memory");
   return result;
 }
@@ -695,11 +690,11 @@ _INLINE_ int PIM_readSpecial3(PIM_cmd c, unsigned int v1, unsigned int v2,
 		"mr r4, %2\n" /* v1 */
 		"mr r5, %3\n" /* v2 */
 		"mr r6, %4\n" /* v3 */
-		"li r0, "SS_PIM_READ_SPECIAL3_STR"\n" /* Set to syscall */
+		"li r0, %5\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		: "=r" (result)
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3)
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "K"(SS_PIM_READ_SPECIAL3)
 		: "r0", "r3", "r4", "r5", "r6", "memory");
   return result;
 }
@@ -713,11 +708,11 @@ _INLINE_ int PIM_readSpecial4(PIM_cmd c, unsigned int v1, unsigned int v2,
 		"mr r5, %3\n" /* v2 */
 		"mr r6, %4\n" /* v3 */
 		"mr r7, %5\n" /* v3 */
-		"li r0, "SS_PIM_READ_SPECIAL4_STR"\n" /* Set to syscall */
+		"li r0, %6\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		: "=r" (result)
-		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4)
+		: "r" (c), "r" (v1), "r" (v2), "r" (v3), "r" (v4), "K"(SS_PIM_READ_SPECIAL4)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "memory");
   return result;
 }
@@ -728,12 +723,12 @@ _INLINE_ int PIM_readSpecial1_2(PIM_cmd c, unsigned int v, unsigned int *o2)
   int result2;
   asm volatile ("mr r3, %2\n" /* c */
 		"mr r4, %3\n" /* v */
-		"li r0, "SS_PIM_READ_SPECIAL1_2_STR"\n" /* Set to syscall */
+		"li r0, %4\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		"mr %1, r4\n" /* Collect results*/
 		: "=r" (result1), "=r" (result2)
-		: "r" (c), "r" (v)
+		: "r" (c), "r" (v), "K"(SS_PIM_READ_SPECIAL1_2)
 		: "r0", "r3", "r4", "memory");
   *o2 = result1;
   return result2;
@@ -744,12 +739,12 @@ _INLINE_ int PIM_readSpecial_2(PIM_cmd c, unsigned int *o2)
   int result1;
   int result2;
   asm volatile ("mr r3, %2\n" /* c */
-		"li r0, "SS_PIM_READ_SPECIAL_2_STR"\n" /* Set to syscall */
+		"li r0, %3\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		"mr %1, r4\n" /* Collect results*/
 		: "=r" (result1), "=r" (result2)
-		: "r" (c)
+		: "r" (c), "K"(SS_PIM_READ_SPECIAL_2)
 		: "r0", "r3", "r4", "memory");
   *o2 = result1;
   return result2;
@@ -762,7 +757,7 @@ _INLINE_ int PIM_readSpecial1_5(PIM_cmd c, unsigned int v, unsigned int *o2,
   int result1, result2, result3, result4, result5;
   asm volatile ("mr r3, %5\n" /* c */
 		"mr r4, %6\n" /* v */
-		"li r0, "SS_PIM_READ_SPECIAL1_5_STR"\n" /* Set to syscall */
+		"li r0, %7\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		"mr %1, r4\n" /* Collect results*/
@@ -770,7 +765,7 @@ _INLINE_ int PIM_readSpecial1_5(PIM_cmd c, unsigned int v, unsigned int *o2,
 		"mr %3, r6\n" /* Collect results*/
 		"mr %4, r7\n" /* Collect results*/
 		: "=r" (result1), "=r" (result2), "=r" (result3), "=r" (result4), "=r" (result5)
-		: "r" (c), "r" (v)
+		: "r" (c), "r" (v), "K"(SS_PIM_READ_SPECIAL1_5)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "memory");
   *o2 = result1;   *o3 = result2;  *o4 = result3;   *o5 = result4;
   return result5;
@@ -778,13 +773,13 @@ _INLINE_ int PIM_readSpecial1_5(PIM_cmd c, unsigned int v, unsigned int *o2,
 
 _INLINE_ void PIM_readSpecial1_6(PIM_cmd c, unsigned int v, unsigned int *o1,
 			      unsigned int *o2, unsigned int *o3,
-				unsigned int *o4, unsigned int *o5, 
+				unsigned int *o4, unsigned int *o5,
 				unsigned *o6)
 {
   int result1, result2, result3, result4, result5, result6;
   asm volatile ("mr r3, %6\n" /* c */
 		"mr r4, %7\n" /* v */
-		"li r0, "SS_PIM_READ_SPECIAL1_6_STR"\n" /* Set to syscall */
+		"li r0, %8\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		"mr %1, r4\n" /* Collect results*/
@@ -793,21 +788,21 @@ _INLINE_ void PIM_readSpecial1_6(PIM_cmd c, unsigned int v, unsigned int *o1,
 		"mr %4, r7\n" /* Collect results*/
 		"mr %5, r8\n" /* Collect results*/
 		: "=r" (result1), "=r" (result2), "=r" (result3), "=r" (result4), "=r" (result5), "=r" (result6)
-		: "r" (c), "r" (v)
+		: "r" (c), "r" (v), "K"(SS_PIM_READ_SPECIAL1_6)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "memory");
-  *o1 = result1;   *o2 = result2;  *o3 = result3;   *o4 = result4; 
+  *o1 = result1;   *o2 = result2;  *o3 = result3;   *o4 = result4;
   *o5 = result5;   *o6 = result6;
 }
 
 _INLINE_ void PIM_readSpecial1_7(PIM_cmd c, unsigned int v, unsigned int *o1,
 			      unsigned int *o2, unsigned int *o3,
-				unsigned int *o4, unsigned int *o5, 
+				unsigned int *o4, unsigned int *o5,
 				 unsigned int *o6, unsigned int *o7)
 {
   int result1, result2, result3, result4, result5, result6, result7;
   asm volatile ("mr r3, %7\n" /* c */
 		"mr r4, %8\n" /* v */
-		"li r0, "SS_PIM_READ_SPECIAL1_7_STR"\n" /* Set to syscall */
+		"li r0, %9\n" /* Set to syscall */
 		"sc\n" /* make the "system call" */
 		"mr %0, r3\n" /* Collect results*/
 		"mr %1, r4\n" /* Collect results*/
@@ -817,9 +812,9 @@ _INLINE_ void PIM_readSpecial1_7(PIM_cmd c, unsigned int v, unsigned int *o1,
 		"mr %5, r8\n" /* Collect results*/
 		"mr %6, r9\n" /* Collect results*/
 		: "=r" (result1), "=r" (result2), "=r" (result3), "=r" (result4), "=r" (result5), "=r" (result6), "=r" (result7)
-		: "r" (c), "r" (v)
+		: "r" (c), "r" (v), "K"(SS_PIM_READ_SPECIAL1_7)
 		: "r0", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "memory");
-  *o1 = result1;   *o2 = result2;  *o3 = result3;   *o4 = result4; 
+  *o1 = result1;   *o2 = result2;  *o3 = result3;   *o4 = result4;
   *o5 = result5;   *o6 = result6; *o7 = result7;
 }
 
@@ -827,16 +822,16 @@ _INLINE_ void PIM_readSpecial1_7(PIM_cmd c, unsigned int v, unsigned int *o1,
 _INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2) {
   PIM_writeSpecial2(c, v1, v2);
 }
-_INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2, 
+_INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2,
 			     unsigned int v3) {
   PIM_writeSpecial3(c, v1, v2, v3);
 }
-_INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2, 
+_INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2,
 			     unsigned int v3, unsigned int v4) {
   PIM_writeSpecial4(c, v1, v2, v3, v4);
 }
-_INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2, 
-			     unsigned int v3, unsigned int v4, 
+_INLINE_ void PIM_writeSpecial(PIM_cmd c, unsigned int v1, unsigned int v2,
+			     unsigned int v3, unsigned int v4,
 			     unsigned int v5) {
   PIM_writeSpecial5(c, v1, v2, v3, v4, v5);
 }
@@ -866,13 +861,7 @@ _INLINE_ int PIM_readSpecial(PIM_cmd c, unsigned int v1, unsigned int v2,
 _INLINE_ unsigned int PIM_feb_lock(unsigned int* a)
 {
     unsigned int result;
-    asm volatile ("mr r3, %1\n" /* a */
-	          "li r0, "SS_PIM_LOCK_STR"\n" /* Set syscall */
-		  "sc\n" /* make the "system call" */
-		  "mr %0, r3\n" /* Collect results */
-		  : "=r" (result)
-		  : "r" (a)
-		  : "r0", "r3", "memory");
+    ONE_ARG_SYSCALL(SS_PIM_LOCK, a, result);
     return result;
 }
 
@@ -886,13 +875,7 @@ _INLINE_ unsigned int PIM_feb_lock(unsigned int* a)
 _INLINE_ unsigned int PIM_feb_unlock(unsigned int* a)
 {
     unsigned int result;
-    asm volatile ("mr r3, %1\n" /* a */
-	          "li r0, "SS_PIM_UNLOCK_STR"\n" /* Set syscall */
-		  "sc\n" /* make the "system call" */
-		  "mr %0, r3\n" /* Collect results */
-		  : "=r" (result)
-		  : "r" (a)
-		  : "r0", "r3", "memory");
+    ONE_ARG_SYSCALL(SS_PIM_UNLOCK, a, result);
     return result;
 }
 
@@ -904,13 +887,7 @@ _INLINE_ unsigned int PIM_feb_unlock(unsigned int* a)
 _INLINE_ unsigned int PIM_feb_readff(volatile unsigned int* a)
 {
   unsigned int result;
-  asm volatile ("mr r3, %1\n" /* a */
-		"li r0, "SS_PIM_READFF_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)			
-		: "r" (a)
-		: "r0", "r3", "memory");
+  ONE_ARG_SYSCALL(SS_PIM_READFF, a, result);
   return result;
 }
 
@@ -922,13 +899,7 @@ _INLINE_ unsigned int PIM_feb_readff(volatile unsigned int* a)
 _INLINE_ unsigned int PIM_feb_readfe(volatile unsigned int* a)
 {
   unsigned int result;
-  asm volatile ("mr r3, %1\n" /* a */
-		"li r0, "SS_PIM_READFE_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)			
-		: "r" (a)
-		: "r0", "r3", "memory");
+  ONE_ARG_SYSCALL(SS_PIM_READFE, a, result);
   return result;
 }
 
@@ -939,14 +910,7 @@ _INLINE_ int PIM_atomicIncrement(volatile unsigned int* a, unsigned int i)
 {
   int result;
 
-  asm volatile ("mr r3, %1\n" /* a */
-		"mr r4, %2\n" /* i */
-		"li r0, "SS_PIM_ATOMIC_INCREMENT_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)			
-		: "r" (a), "r" (i)
-		: "r0", "r3", "r4", "memory");
+  TWO_ARG_SYSCALL(SS_PIM_ATOMIC_INCREMENT, a, i, result);
 
   return result;
 }
@@ -957,13 +921,7 @@ _INLINE_ int PIM_atomicIncrement(volatile unsigned int* a, unsigned int i)
 // that word is "empty," After the write, set the FEB to "full"
 _INLINE_ void PIM_feb_writeef(volatile unsigned int* a, unsigned int v)
 {
-  asm volatile ("mr r3, %0\n" /* a */
-		"mr r4, %1\n" /* v */
-		"li r0, "SS_PIM_WRITEEF_STR"\n"/* Set syscall */
-		"sc\n" /* make the "system call" */
-		:
-		: "r" (a), "r" (v)
-		: "r0", "r3", "r4", "memory");
+    TWO_ARG_VOID_SYSCALL(SS_PIM_WRITEEF, a, v);
 }
 
 
@@ -974,12 +932,7 @@ _INLINE_ void PIM_feb_writeef(volatile unsigned int* a, unsigned int v)
 // Set the FEB associated with the given address to "full" - do not
 // change the data contents of the associated address.
 _INLINE_ void PIM_feb_fill(unsigned int* a) {
-  asm volatile ("mr r3, %0\n" /* a */
-		"li r0, "SS_PIM_FILL_FE_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		: 
-		: "r" (a)
-		: "r0", "r3", "memory");
+    ONE_ARG_VOID_SYSCALL(SS_PIM_FILL_FE, a);
 }
 
 //: Set a Full/Empty bit to "empty"
@@ -987,12 +940,7 @@ _INLINE_ void PIM_feb_fill(unsigned int* a) {
 // Set the FEB associated with the given address to "empty" - do not
 // change the data contents of the associated address.
 _INLINE_ void PIM_feb_empty(unsigned int* a) {
-  asm volatile ("mr r3, %0\n" /* a */
-		"li r0, "SS_PIM_EMPTY_FE_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		: 
-		: "r" (a)
-		: "r0", "r3", "memory");
+    ONE_ARG_VOID_SYSCALL(SS_PIM_EMPTY_FE, a);
 }
 
 //: Set a Full/Empty bit to "empty"
@@ -1014,13 +962,7 @@ _INLINE_ void PIM_feb_purge(unsigned int* a)
 _INLINE_ int PIM_feb_is_full(unsigned int* a)
 {
   int result;
-  asm volatile ("mr r3, %1\n" /* a */
-		"li r0, "SS_PIM_IS_FE_FULL_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)			
-		: "r" (a)
-		: "r0", "r3");
+  ONE_ARG_SYSCALL(SS_PIM_IS_FE_FULL, a, result);
   return result;
 }
 
@@ -1031,13 +973,7 @@ _INLINE_ int PIM_feb_is_full(unsigned int* a)
 _INLINE_ int PIM_feb_tryef(unsigned int* a)
 {
   int result;
-  asm volatile ("mr r3, %1\n" /* a */
-		"li r0, "SS_PIM_TRYEF_STR"\n"/*Set syscall*/
-		"sc\n" /* make the "system call" */
-		"mr %0, r3\n" /* Collect results*/
-		: "=r" (result)			
-		: "r" (a)
-		: "r0", "r3", "memory");
+  ONE_ARG_SYSCALL(SS_PIM_TRYEF, a, result);
   return result;
 }
 
@@ -1130,11 +1066,7 @@ _INLINE_ int PIM_is_full(T* a) {
 // Resets counts of instructions, cycles, and migrations.
 _INLINE_ void PIM_resetCounters(void)
 {
-  asm volatile ("li r0, "SS_PIM_RESET_STR"\n"/* Set syscall */
-		"sc\n" /* make the "system call" */
-                : 
-  	        : 
-		: "r0");
+    VOID_SYSCALL(SS_PIM_RESET);
 }
 
 //:Terminate a PIM thread
@@ -1143,9 +1075,7 @@ _INLINE_ void PIM_resetCounters(void)
 _INLINE_ void PIM_threadExit(void) __attribute__((noreturn));
 _INLINE_ void PIM_threadExit(void)
 {
-  asm volatile ("li r0, "SS_PIM_EXIT_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-                : : : "r0");
+    VOID_SYSCALL(SS_PIM_EXIT);
 /* NOTE: this function is marked (noreturn), and the compiler ordinarily
  * complains that this function falls off the bottom. BUT, to suppress this
  * warning, we've added this infinite-loop to the end of the function. The
@@ -1159,9 +1089,7 @@ _INLINE_ void PIM_threadExit(void)
 _INLINE_ void PIM_threadExitFree(void) __attribute__((__noreturn__));
 _INLINE_ void PIM_threadExitFree(void)
 {
-  asm volatile ("li r0, "SS_PIM_EXIT_FREE_STR"\n" /* Set to syscall */
-		"sc\n" /* make the "system call" */
-                : : : "r0");
+    VOID_SYSCALL(SS_PIM_EXIT_FREE);
 /* NOTE: this function is marked (noreturn), and the compiler ordinarily
  * complains that this function falls off the bottom. BUT, to suppress this
  * warning, we've added this infinite-loop to the end of the function. The
