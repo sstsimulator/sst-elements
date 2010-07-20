@@ -75,10 +75,10 @@ bool Cpu::clock( Cycle_t current )
         foo->inst = STOP;
     }
 
-    DBG("id=%lu currentCycle=%lu inst=%d \n", Id(), current, foo->inst );
+    DBG("id=%lu currentCycle=%lu inst=%d \n", getId(), current, foo->inst );
 
     if ( ! m_memory->read( m_pc, foo ) ) {
-        DBG("id=%lu currentCycle=%lu failed\n", Id(), current);
+        DBG("id=%lu currentCycle=%lu failed\n", getId(), current);
         return false;
     }
     

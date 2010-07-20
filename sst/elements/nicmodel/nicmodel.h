@@ -323,7 +323,7 @@ class Nicmodel : public Component {
                                         const unsigned int file_version)
         {
             _AR_DBG(Nicmodel,"\n");
-            ComponentId_t     id     = t->_id;
+            ComponentId_t     id     = t->getId();
             Params_t          params = t->params;
             ar << BOOST_SERIALIZATION_NVP(id);
             ar << BOOST_SERIALIZATION_NVP(params);

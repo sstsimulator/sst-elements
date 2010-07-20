@@ -73,7 +73,7 @@ int Cpu::Finish()
 {
     char filename[128];
     DBG("\n");
-    sprintf(filename, "%s.%d", outputfile, (int)Id());
+    sprintf(filename, "%s.%d", outputfile, (int)getId());
     mcCpu->fini(filename);
     return 0;
 }
@@ -85,7 +85,7 @@ bool Cpu::clock( Cycle_t current )
     while ( ( m_memory->popCookie(recvCookie) ) ) {
        // nothing to do
     }
-    DBG("id=%lu currentCycle=%lu inst=%d \n", Id(), current, memCookie );
+    DBG("id=%lu currentCycle=%lu inst=%d \n", getId(), current, memCookie );
     m_pc += 8;
 
     for (i = cyclesAtLastClock; i < getCurrentSimTime(); i++)

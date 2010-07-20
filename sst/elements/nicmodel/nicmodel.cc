@@ -34,24 +34,24 @@ bool rc;
 
     e= static_cast<CPUNicEvent *>(event);
     _NIC_MODEL_DBG(2, "NIC %lu got an event from the NETWORK at time %lld\n",
-	Id(), (long long)getCurrentSimTime());
+	getId(), (long long)getCurrentSimTime());
 
     // Collect some stats
     rcv_router_delays += e->router_delay;
     rcv_msgs++;
     rcv_total_hops += e->hops;
     _NIC_MODEL_DBG(5, "NIC %lu: Router delay %15.9f, rcvs %lld, hops %lld\n",
-	Id(), (double)e->router_delay, rcv_msgs, rcv_total_hops);
+	getId(), (double)e->router_delay, rcv_msgs, rcv_total_hops);
 
     // Is there a matching receive?
     rc= pQ->match(e);
     if (rc)   {
 	// We're done. Completion event is already sent.
-	_NIC_MODEL_DBG(2, "NIC %lu: Matched posted receive!\n", Id());
+	_NIC_MODEL_DBG(2, "NIC %lu: Matched posted receive!\n", getId());
     } else   {
 	// No match, we have to put it into the unexpected queue
 	uQ->insert(e);
-	_NIC_MODEL_DBG(2, "NIC %lu: Goes into unexpected queue\n", Id());
+	_NIC_MODEL_DBG(2, "NIC %lu: Goes into unexpected queue\n", getId());
     }
 
 }
@@ -66,7 +66,7 @@ int *route;
 
 
     _NIC_MODEL_DBG(2, "NIC %lu got an event from the local CPU at time %lld\n",
-	Id(), (long long)getCurrentSimTime());
+	getId(), (long long)getCurrentSimTime());
 
     netsim_params_t params;
     CPUNicEvent *e;
@@ -77,12 +77,12 @@ int *route;
     e->DetachParams(static_cast<void *>(&params), &len);
     hton_params(&params);
     _NIC_MODEL_DBG(5, "NIC %lu: Routine \"%d\" with %d bytes of data\n",
-	Id(), e->GetRoutine(), len);
+	getId(), e->GetRoutine(), len);
 
     switch (e->GetRoutine())   {
 	case NETSIM_INIT:
 	    _NIC_MODEL_DBG(1, "NIC %lu: my_rank %d, nranks %d, debug %d\n",
-		Id(), my_rank, num_NICs, get_nic_model_debug());
+		getId(), my_rank, num_NICs, get_nic_model_debug());
 
 	    // Initialize stats
 	    rcv_router_delays= 0.0;
@@ -115,7 +115,7 @@ int *route;
 	    params.rc= 1; // Success
 	    params.type= SND_COMPLETION;
 	    _NIC_MODEL_DBG(2, "NIC %lu is going to send %d bytes to rank %d\n",
-		Id(), params.msgSize, params.dest);
+		getId(), params.msgSize, params.dest);
 
 	    // Attach the source route
 	    route= get_route(params.dest, vrinfo);
@@ -135,36 +135,36 @@ int *route;
 	case NETSIM_RX_START:
 	    _NIC_MODEL_DBG(2, "NIC %lu is Posting a receive for %d bytes, match 0x%016llx, "
 		"ignore 0x%016llx\n",
-		Id(), params.msgSize, (long long)params.match_bits, (long long)params.ignore_bits);
+		getId(), params.msgSize, (long long)params.match_bits, (long long)params.ignore_bits);
 
 	    // See if the message is already in the unexpected queue
 	    rc= uQ->find(params.match_bits, params.ignore_bits, params.user_data, params.msgSize, params.buf);
 	    if (rc)   {
 		// Yes. We're done
-		_NIC_MODEL_DBG(2, "NIC %lu: Found a matching send in unexpected Queue\n", Id());
+		_NIC_MODEL_DBG(2, "NIC %lu: Found a matching send in unexpected Queue\n", getId());
 		break;
 	    }
 
 	    // Msg is not here yet; post it.
-	    _NIC_MODEL_DBG(2, "NIC %lu: Posting message for later\n", Id());
+	    _NIC_MODEL_DBG(2, "NIC %lu: Posting message for later\n", getId());
 	    pQ->post(params.buf, params.msgSize, params.match_bits, params.ignore_bits, params.user_data);
 	    delete event;
 	    break;
 
 	case NETSIM_FINALIZE:
 	    // Print some stats
-	    printf("NIC %3lu received %lld messages total\n", Id(), rcv_msgs);
+	    printf("NIC %3lu received %lld messages total\n", getId(), rcv_msgs);
 	    if (rcv_msgs > 0)   {
-		printf("NIC %3lu total delay was %15.9f, avg %15.9f\n", Id(),
+		printf("NIC %3lu total delay was %15.9f, avg %15.9f\n", getId(),
 		    rcv_router_delays, rcv_router_delays / rcv_msgs);
 	    } else   {
-		printf("NIC %3lu total delay was %15.9f\n", Id(), rcv_router_delays);
+		printf("NIC %3lu total delay was %15.9f\n", getId(), rcv_router_delays);
 	    }
 	    if (rcv_msgs > 0)   {
-		printf("NIC %3lu total hops %9lld, avg %15.9f\n", Id(),
+		printf("NIC %3lu total hops %9lld, avg %15.9f\n", getId(),
 		    rcv_total_hops, (double)rcv_total_hops / rcv_msgs);
 	    } else   {
-		printf("NIC %3lu total hops %9lld\n", Id(), rcv_total_hops);
+		printf("NIC %3lu total hops %9lld\n", getId(), rcv_total_hops);
 	    }
 	    delete event;
 	    break;
@@ -215,20 +215,20 @@ Nicmodel::hton_params(netsim_params_t *params)
     params->type= htonl(params->type);
     params->status= htonl(params->status);
 
-    _NIC_MODEL_DBG(5, "NIC %lu converting parameter fields\n", Id());
-    _NIC_MODEL_DBG(5, "NIC %lu params->rc %d\n", Id(), params->rc);
-    _NIC_MODEL_DBG(5, "NIC %lu params->synchronous %d\n", Id(), params->synchronous);
-    _NIC_MODEL_DBG(5, "NIC %lu params->buf 0x%08llx (not converted)\n", Id(), (long long)params->buf);
-    _NIC_MODEL_DBG(5, "NIC %lu params->match_bits 0x%016llx\n", Id(), (long long)params->match_bits);
+    _NIC_MODEL_DBG(5, "NIC %lu converting parameter fields\n", getId());
+    _NIC_MODEL_DBG(5, "NIC %lu params->rc %d\n", getId(), params->rc);
+    _NIC_MODEL_DBG(5, "NIC %lu params->synchronous %d\n", getId(), params->synchronous);
+    _NIC_MODEL_DBG(5, "NIC %lu params->buf 0x%08llx (not converted)\n", getId(), (long long)params->buf);
+    _NIC_MODEL_DBG(5, "NIC %lu params->match_bits 0x%016llx\n", getId(), (long long)params->match_bits);
     _NIC_MODEL_DBG(5, "NIC %lu params->user_data 0x%016llx (not converted)\n",
-	Id(), (long long)params->user_data);
-    _NIC_MODEL_DBG(5, "NIC %lu params->ignore_bits 0x%016llx\n", Id(), (long long)params->ignore_bits);
-    _NIC_MODEL_DBG(5, "NIC %lu params->dest %d\n", Id(), params->dest);
-    _NIC_MODEL_DBG(5, "NIC %lu params->msgSize %d\n", Id(), params->msgSize);
-    _NIC_MODEL_DBG(5, "NIC %lu params->my_rank %d\n", Id(), params->my_rank);
-    _NIC_MODEL_DBG(5, "NIC %lu params->nranks %d\n", Id(), params->nranks);
-    _NIC_MODEL_DBG(5, "NIC %lu params->type %d\n", Id(), params->type);
-    _NIC_MODEL_DBG(5, "NIC %lu params->status %d\n", Id(), params->status);
+	getId(), (long long)params->user_data);
+    _NIC_MODEL_DBG(5, "NIC %lu params->ignore_bits 0x%016llx\n", getId(), (long long)params->ignore_bits);
+    _NIC_MODEL_DBG(5, "NIC %lu params->dest %d\n", getId(), params->dest);
+    _NIC_MODEL_DBG(5, "NIC %lu params->msgSize %d\n", getId(), params->msgSize);
+    _NIC_MODEL_DBG(5, "NIC %lu params->my_rank %d\n", getId(), params->my_rank);
+    _NIC_MODEL_DBG(5, "NIC %lu params->nranks %d\n", getId(), params->nranks);
+    _NIC_MODEL_DBG(5, "NIC %lu params->type %d\n", getId(), params->type);
+    _NIC_MODEL_DBG(5, "NIC %lu params->status %d\n", getId(), params->status);
 
 }  // end of hton_params()
 

@@ -46,6 +46,7 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
 
 //     link = LinkAdd( "link", linkHandler );
     link = configureLink( "link", new Event::Handler<event_test>(this,&event_test::handleEvent) );
+
     registerTimeBase("1ns");
 }
 

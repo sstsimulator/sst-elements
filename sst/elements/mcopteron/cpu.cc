@@ -80,7 +80,7 @@ Cpu::Cpu( ComponentId_t id, Params_t& params ) :
         appfile, distfile, outputfile, debugfile);
     char filename[128];
     if (outputfile) {
-       sprintf(filename, "%s.%d", outputfile, (int)Id());
+       sprintf(filename, "%s.%d", outputfile, (int)getId());
        outputfile = filename; // should delete old one first??
     }
     mcCpu->setOutputFiles(outputfile, debugfile);
@@ -104,7 +104,7 @@ bool Cpu::clock( Cycle_t current )
     while ( ( m_memory->popCookie(recvCookie) ) ) {
        // nothing to do
     }
-    DBG("id=%lu currentCycle=%lu inst=%d \n", Id(), current, memCookie );
+    DBG("id=%lu currentCycle=%lu inst=%d \n", getId(), current, memCookie );
     m_pc += 8;
 
     for (i = cyclesAtLastClock; i < getCurrentSimTime(); i++)

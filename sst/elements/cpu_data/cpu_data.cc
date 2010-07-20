@@ -23,7 +23,7 @@ bool Cpu_data::clock( Cycle_t current)
 
     MemEvent* event = NULL; 
 
-    if (Id() == 2)
+    if (getId() == 2)
         mycore_temperature = 360;
     else
 	mycore_temperature = 300;
@@ -54,7 +54,7 @@ bool Cpu_data::clock( Cycle_t current)
 
 
             state = SEND;
-	    if (Id() == 2){
+	    if (getId() == 2){
 	       counts++;
 	       num_il1_read++;
 	       num_branch_read = num_branch_read + 2;

@@ -14,7 +14,7 @@
 #define _GHOST_PATTERN_H
 
 #include <string.h>
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
@@ -68,10 +68,11 @@ class Ghost_pattern : public Component {
 
 
             // Create a handler for events
-            myHandler= new EventHandler<Ghost_pattern, bool, Event *>
-                (this, &Ghost_pattern::handle_events);
+//             Myhandler= New EventHandler<Ghost_pattern, bool, Event *>
+//                 (this, &Ghost_pattern::handle_events);
 
-	    net= LinkAdd("Network", myHandler);
+// 	    net= LinkAdd("Network", myHandler);
+ 	    net = configureLink("Network", new Event::Handler<Ghost_pattern>(this, &Ghost_pattern::handle_events) );
 	    if (net == NULL)   {
 		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link to the network "
 		    "named \"Network\" which is missing!\n");
@@ -85,7 +86,7 @@ class Ghost_pattern : public Component {
     private:
 
         Ghost_pattern(const Ghost_pattern &c);
-	bool handle_events(Event *);
+	void handle_events(Event *);
 	EventHandler_t *myHandler;
 
 	int my_rank;
@@ -115,7 +116,7 @@ class Ghost_pattern : public Component {
                                         const unsigned int file_version)
         {
             _AR_DBG(Ghost_pattern,"\n");
-            ComponentId_t     id     = t->_id;
+            ComponentId_t     id     = t->getId();
             Params_t          params = t->params;
             ar << BOOST_SERIALIZATION_NVP(id);
             ar << BOOST_SERIALIZATION_NVP(params);

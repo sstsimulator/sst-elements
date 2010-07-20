@@ -42,14 +42,14 @@ bool Cpu::clock( Cycle_t current )
         _CPU_DBG("xxx: send a MEM event address=%#lx @ cycle %ld\n", event->address, current );
 // 	mem->Send( 3 * epoch, event );
 	mem->Send( (Cycle_t)3, event );
- 	std::cout << "CPU " << Id() << "::clock -> setting state to WAIT at cycle "<< current <<std::endl;
+ 	std::cout << "CPU " << getId() << "::clock -> setting state to WAIT at cycle "<< current <<std::endl;
         state = WAIT;
     } else {
 // 	printf("Entering state WAIT\n");
         if ( ( event = static_cast< MyMemEvent* >( mem->Recv() ) ) ) {
 // 	    printf("Got a mem event\n");
 	  _CPU_DBG("xxx: got a MEM event address=%#lx @ cycle %ld\n", event->address, current );
-	std::cout << "CPU " << Id() << "::clock -> setting state to SEND at cycle "<< current <<std::endl;
+	std::cout << "CPU " << getId() << "::clock -> setting state to SEND at cycle "<< current <<std::endl;
             state = SEND;
         }
     }

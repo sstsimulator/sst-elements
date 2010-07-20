@@ -22,7 +22,7 @@ int ghost_pattern_debug;
 typedef enum {COMPUTE, WAIT, DONE} state_t;
 typedef enum {COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
 
-bool
+void
 Ghost_pattern::handle_events(Event *sst_event)
 {
 
@@ -110,11 +110,11 @@ static int rcv_cnt= 0;
 
 	case DONE:
 	    /* This rank has done all of its work */
-	    return true;
+	    return;
 	    break;
     }
 
-    return false;
+    return;
 
 }  /* end of handle_port_events() */
 

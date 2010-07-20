@@ -25,14 +25,14 @@ bool Introspector_cpu::pullData( Cycle_t current )
                             iter != DatabaseInt.end(); ++iter )
     	{
 	    c = iter->first;
-            std::cout << "Pull data of component ID " << c->Id() << " with dataID = " << iter->second << " and data value = " << c->getIntData(iter->second) << std::endl;
+            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->second << " and data value = " << c->getIntData(iter->second) << std::endl;
 	    intData = c->getIntData(iter->second);
 	}
 	for( Database_t::iterator iter = DatabaseDouble.begin();
                             iter != DatabaseDouble.end(); ++iter )
     	{
             c = iter->first;
-            std::cout << "Pull data of component ID " << c->Id() << " with dataID = " << iter->second << " and data value = " << c->getDoubleData(iter->second) << std::endl;
+            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->second << " and data value = " << c->getDoubleData(iter->second) << std::endl;
 	    
 	}
 
