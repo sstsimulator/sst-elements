@@ -476,7 +476,10 @@ bool ppcInstruction::Perform_SYS_gettimeofday(processor* proc,
     }
     timevalToTimeval32(&tp, &tp32);
 
-    INFO("gettimeofday: sec(%d,%d), usec(%d,%d) %llu\n", (int)tp.tv_sec, (int)tp32.tv_sec, (int)tp.tv_usec,(int)tp32.tv_usec, parent->home->getCurrentSimTimeMicro());
+    INFO("gettimeofday: sec(%d,%d), usec(%d,%d) %llu\n",
+	    (int)tp.tv_sec, (int)tp32.tv_sec,
+	    (int)tp.tv_usec,(int)tp32.tv_usec,
+	    (long long unsigned)parent->home->getCurrentSimTimeMicro());
 
     tp32.tv_sec  = htonl(tp32.tv_sec);
     tp32.tv_usec = htonl(tp32.tv_usec);

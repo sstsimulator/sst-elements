@@ -208,7 +208,7 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
 // user to pick up
 // bool proc::handle_nic_events( Time_t t, Event *event) {
 bool proc::handle_nic_events(Event *event) {
-  _GPROC_DBG(4, "CPU %lu got a NIC event at time FIXME\n", Id());
+  _GPROC_DBG(4, "CPU %lu got a NIC event at time FIXME\n", getId());
   this->addNICevent(static_cast<CPUNicEvent *>(event));
   return false;
 }
@@ -237,7 +237,7 @@ void proc::processMemDevResp( ) {
 	uint64_t lat = getCurrentSimTimeNano() - startTime;
 	memReqLat += lat;
 	static int c = 0; c++;
-	if ((c % 0xff) == 0) printf("lat %llu\n", lat);
+	if ((c % 0xff) == 0) printf("lat %llu\n", (long long unsigned)lat);
 #endif
         // hand it off
 	int owningProc = mi->second.first;
@@ -254,7 +254,7 @@ void proc::processMemDevResp( ) {
 	  uint64_t lat = getCurrentSimTimeNano() - startTime;
 	  memSpecialReqLat += lat;
 	  static int c = 0; c++;
-	  if ((c % 0xff) == 0) printf("slat %llu\n", lat);
+	  if ((c % 0xff) == 0) printf("slat %llu\n", (long long unsigned)lat);
 #endif
 	  // decrement outstanding request count
 	  int owningProc = mi2->second.first;
@@ -294,11 +294,14 @@ int proc::Finish() {
     }
   }
 #if TIME_MEM
-  printf("%llu Total Memory Requests\n", totalMemReq);
-  printf("%llu Timed Memory Requests, avg lat. %.2fns %llu stores\n", numMemReq, 
-	 double(memReqLat)/double(numMemReq), memStores);
+  printf("%llu Total Memory Requests\n", (long long unsigned)totalMemReq);
+  printf("%llu Timed Memory Requests, avg lat. %.2fns %llu stores\n",
+	  (long long unsigned)numMemReq,
+	  double(memReqLat)/double(numMemReq),
+	  (long long unsigned)memStores);
 #endif
-  printf("proc finished at %llu ns\n", getCurrentSimTimeNano());
+  printf("proc finished at %llu ns\n",
+	  (long long unsigned)getCurrentSimTimeNano());
   return false;
 }
 
@@ -547,12 +550,12 @@ bool proc::forwardToNetsimNIC(int call_num, char *params, const size_t params_le
 
 bool proc::pickupNetsimNIC(CPUNicEvent **event) {
   if (!this->getNICresponse())   {
-    _GPROC_DBG(5, "Nothing to pick-up from NIC %lu\n", Id());
+    _GPROC_DBG(5, "Nothing to pick-up from NIC %lu\n", getId());
     return false;
   }
 
   *event= this->getNICevent();
-  _GPROC_DBG(4, "NIC %lu has data for the user\n", Id());
+  _GPROC_DBG(4, "NIC %lu has data for the user\n", getId());
   return true;
 }
 
