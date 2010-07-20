@@ -75,7 +75,7 @@ public:
             ptl->PtlMEAppend(0, me, PTL_PRIORITY_LIST, NULL, me_handle);
 
 	    for ( int i = 0; i < 16; i++ ) {
-		printf("%5d: start -> send_buffer[%d] = %llu   recv_buffer[%d] = %llu\n",my_id,i,send_buffer[i],i,recv_buffer[i]);
+		printf("%5d: start -> send_buffer[%d] = %llu   recv_buffer[%d] = %llu\n",my_id,i,(long long unsigned)send_buffer[i],i,(long long unsigned)recv_buffer[i]);
 	    }
 
 	    
@@ -104,7 +104,7 @@ public:
 	case 6:
 	    if ( ptl->PtlCTWait(ct_handle,5) ) {
 		for ( int i = 0; i < 32; i++ ) {
-		    printf("%5d: end -> send_buffer[%d] = %llu   recv_buffer[%d] = %llu\n",my_id,i,send_buffer[i],i,recv_buffer[i]);
+		    printf("%5d: end -> send_buffer[%d] = %llu   recv_buffer[%d] = %llu\n",my_id,i,(long long unsigned)send_buffer[i],i,(long long unsigned)recv_buffer[i]);
 		}
 		uint64_t elapsed_time = cpu->getCurrentSimTimeNano()-start_time;
 		trig_cpu::addTimeToStats(elapsed_time);

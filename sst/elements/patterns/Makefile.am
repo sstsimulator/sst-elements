@@ -4,6 +4,7 @@
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
+CXX = $(MPICXX)
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libghost_pattern.la
 libghost_pattern_la_SOURCES = ghost.h ghost.cc common.h

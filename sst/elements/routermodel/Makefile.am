@@ -4,6 +4,7 @@
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
 
+CXX = $(MPICXX)
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libroutermodel.la
 libroutermodel_la_SOURCES = routermodel.h routermodel.cc

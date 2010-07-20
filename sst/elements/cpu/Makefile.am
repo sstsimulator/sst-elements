@@ -3,6 +3,7 @@
 #
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+CXX = $(MPICXX)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcpu.la
