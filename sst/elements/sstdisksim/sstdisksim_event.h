@@ -12,7 +12,8 @@ public:
   unsigned long count;
   unsigned long devno;
   bool done;
- sstdisksim_event() : SST::Event() { }
+
+  sstdisksim_event() : SST::Event() { }
 
 private:
   friend class boost::serialization::access;

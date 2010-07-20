@@ -74,8 +74,10 @@ class sstdisksim : public Component {
 			     int devno, 
 			     eventtype etype);
   void handleEvent(Event* ev);
+  void emptyEvent(Event* ev);
 
   SST::Link* link;
+  SST::Link* empty;
   
   friend class boost::serialization::access;
   template<class Archive>
@@ -94,6 +96,7 @@ class sstdisksim : public Component {
       ar & BOOST_SERIALIZATION_NVP(link);
       
       link->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::handleEvent));
+      empty->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::emptyEvent));
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    

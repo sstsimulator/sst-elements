@@ -150,6 +150,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __next_event = -1;
 
   link = configureLink( "link",  new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent) );
+  empty = configureSelfLink( "empty",  new Event::Handler<sstdisksim>(this,&sstdisksim::emptyEvent) );
   registerTimeBase("1ns");
 
   printf("Starting disksim up\n");
@@ -209,6 +210,7 @@ sstdisksim::processBlock(unsigned long blkno,
 			 int devno,
 			 eventtype etype)
 {
+  SysTime tmp = __now;
   struct disksim_request r;
   memset(&r, 0, sizeof(struct disksim_request));
 
@@ -239,6 +241,10 @@ sstdisksim::processBlock(unsigned long blkno,
     return -1;
   }
 
+  tmp = __now-tmp;
+  sstdisksim_event* event = new sstdisksim_event();
+  empty->Send((int)(tmp*1000000), event);
+
   return count;
 }
 
@@ -258,6 +264,13 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 		      nblks * SECTOR,
 		      ev->devno,
 		      ev->etype);
+}
+
+/******************************************************************************/
+void
+sstdisksim::emptyEvent(Event* ev)
+{
+  return;
 }
 
 /******************************************************************************/
@@ -306,7 +319,7 @@ extern "C"
 {
   ElementLibraryInfo sstdisksim_eli = {
     "sstdisksim",
-    "sstdisksim serilaization",
-    components
+    "sstdisksim serialization",
+    components,
   };
 }
