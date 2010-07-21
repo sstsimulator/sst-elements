@@ -890,7 +890,7 @@ _INLINE_ unsigned int PIM_feb_readff(volatile unsigned int* a)
   ONE_ARG_SYSCALL(SS_PIM_READFF, a, result);
   return result;
 }
-_INLINE_ unsigned int PIM_feb_try_readff(volatile unsigned int* dest, volatile unsigned int *src)
+_INLINE_ unsigned int PIM_feb_try_readff(volatile unsigned int* dest, const unsigned int *src)
 {
   unsigned int result;
   TWO_ARG_SYSCALL(SS_PIM_TRY_READFF, dest, src, result);
@@ -908,7 +908,7 @@ _INLINE_ unsigned int PIM_feb_readfe(volatile unsigned int* a)
   ONE_ARG_SYSCALL(SS_PIM_READFE, a, result);
   return result;
 }
-_INLINE_ unsigned int PIM_feb_try_readfe(volatile unsigned int* dest, volatile unsigned int* src)
+_INLINE_ unsigned int PIM_feb_try_readfe(volatile unsigned int* dest, const unsigned int* src)
 {
     unsigned int result;
     TWO_ARG_SYSCALL(SS_PIM_TRY_READFE, dest, src, result);
@@ -934,6 +934,12 @@ _INLINE_ int PIM_atomicIncrement(volatile unsigned int* a, unsigned int i)
 _INLINE_ void PIM_feb_writeef(volatile unsigned int* a, unsigned int v)
 {
     TWO_ARG_VOID_SYSCALL(SS_PIM_WRITEEF, a, v);
+}
+_INLINE_ unsigned int PIM_feb_try_writeef(volatile unsigned int* a, const unsigned int *v)
+{
+    unsigned int result;
+    TWO_ARG_SYSCALL(SS_PIM_WRITEEF, a, v, result);
+    return result;
 }
 
 
