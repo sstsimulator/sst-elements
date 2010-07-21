@@ -20,7 +20,7 @@
 
 bool Cpu_PowerAndData::clock( Cycle_t current)
 {
-    //_CPU_POWERANDDATA_DBG("id=%lu currentCycle=%lu \n", Id(), current );
+    //_CPU_POWERANDDATA_DBG("id=%lu currentCycle=%lu \n", getId(), current );
 
     MyMemEvent* event = NULL; 
     mycore_temperature = 360;
@@ -47,7 +47,7 @@ bool Cpu_PowerAndData::clock( Cycle_t current)
 
 	//p_int = getMonitorIntData("CPUcounts");
 	//if (p_int.first)
-	//    std::cout << "ID " << Id() << ": CPUcounts = " << *(p_int.second) << std::endl;
+	//    std::cout << "ID " << getId() << ": CPUcounts = " << *(p_int.second) << std::endl;
 
     } else {
         if ( ( event = static_cast< MyMemEvent* >( mem->Recv() ) ) ) {
@@ -55,7 +55,7 @@ bool Cpu_PowerAndData::clock( Cycle_t current)
 
 
             state = SEND;
-	    if (Id() == 1){
+	    if (getId() == 1){
 	       counts++;
 	       num_il1_read++;
 	       num_branch_read = num_branch_read + 2;
@@ -72,10 +72,10 @@ bool Cpu_PowerAndData::clock( Cycle_t current)
 
 bool Cpu_PowerAndData::pushData( Cycle_t current)
 {
-        //_CPU_POWERANDDATA_DBG("id=%lu currentCycle=%lu \n", Id(), current );
+        //_CPU_POWERANDDATA_DBG("id=%lu currentCycle=%lu \n", getId(), current );
     		
 
-	//printf("id = %lu: currentCoreTime = %lu and currentCompCycle = %lu\n", Id(), getCurrentCoreTime(current), current);
+	//printf("id = %lu: currentCoreTime = %lu and currentCompCycle = %lu\n", getId(), getCurrentCoreTime(current), current);
 	//if(current % pushFreq == 0){	  
 	  if(isTimeToPush(current, pushIntrospector.c_str())){
 	    
@@ -112,13 +112,13 @@ bool Cpu_PowerAndData::pushData( Cycle_t current)
 	    regPowerStats(pdata);
 	    std::pair<bool, Pdissipation_t> res = readPowerStats(this);
 	    if(res.first){ 
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": current total power = " << res.second.currentPower << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": leakage power = " << res.second.leakagePower << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": runtime power = " << res.second.runtimeDynamicPower << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": TDP = " << res.second.TDP << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": total energy = " << res.second.totalEnergy << " J" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": peak power = " << res.second.peak << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << Id() <<": current cycle = " << res.second.currentSimTime << " second" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << res.second.currentPower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << res.second.leakagePower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << res.second.runtimeDynamicPower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": TDP = " << res.second.TDP << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << res.second.totalEnergy << " J" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << res.second.peak << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": current cycle = " << res.second.currentSimTime << " second" << std::endl;
 	    }
 	}
 	return false;

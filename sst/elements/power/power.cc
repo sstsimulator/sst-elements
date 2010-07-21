@@ -5823,7 +5823,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 * It is component writer's responsibility to decide how often *
 * to generate usage counts and call getPower.                 *
 ***************************************************************/
-Pdissipation_t& Power::getPower(Component* c, ptype power_type, usagecounts_t counts/*char *user_parms*/)
+Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usagecounts_t counts/*char *user_parms*/)
 {
     I totalPowerUsage=0.0;
     I dynamicPower = 0.0;
@@ -7237,7 +7237,7 @@ Pdissipation_t& Power::getPower(Component* c, ptype power_type, usagecounts_t co
 /***************************************************************
 * Update component's currentPower, totalEnergy, and peak power *
 ****************************************************************/
-void Power::updatePowUsage(Component *c, ptype power_type, Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP)
+void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP)
 {
 	unsigned i=0;
 	I tempPr, tempPl, tempPc, tempPt = 0.0;
@@ -7709,7 +7709,7 @@ void Power::updatePowUsage(Component *c, ptype power_type, Pdissipation_t *comp_
 * the time when power was last analyzed (obtained from PDB)    *
 * Return time in second                                   *
 ****************************************************************/
-I Power::getExecutionTime(Component *c)
+I Power::getExecutionTime(IntrospectedComponent *c)
 {
         Time_t current, previous;
         Pdissipation_t pusage;

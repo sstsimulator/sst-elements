@@ -16,7 +16,7 @@
 #define _CPU_POWERANDDATA_H
 
 #include <sst/core/eventFunctor.h>
-#include <sst/core/component.h>
+#include <sst/core/introspectedComponent.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include "../power/power.h"
@@ -30,12 +30,12 @@ using namespace SST;
 #define _CPU_POWERANDDATA_DBG( fmt, args...)
 #endif
 
-class Cpu_PowerAndData : public Component {
+class Cpu_PowerAndData : public IntrospectedComponent {
         typedef enum { WAIT, SEND } state_t;
         typedef enum { WHO_NIC, WHO_MEM } who_t;
     public:
         Cpu_PowerAndData( ComponentId_t id, Params_t& params ) :
-            Component( id ),
+            IntrospectedComponent( id ),
             params( params ),
             state(SEND),            
 	    area(0.0),
@@ -91,34 +91,34 @@ class Cpu_PowerAndData : public Component {
         }
         int Setup() {
  	    
-	    power = new Power(Id());
-            power->setTech(Id(), params, CACHE_IL1, McPAT);
-	    //power->setTech(Id(), params, CACHE_IL2);
-	    /*power->setTech(Id(), params, CACHE_DL1);
-	    //power->setTech(Id(), params, CACHE_DL2);
-	    power->setTech(Id(), params, CACHE_ITLB);
-	    power->setTech(Id(), params, CACHE_DTLB);
-	    power->setTech(Id(), params, RF);
-	    power->setTech(Id(), params, IB);	    
-    	    power->setTech(Id(), params, ISSUE_Q);
-	    power->setTech(Id(), params, INST_DECODER);
-	    power->setTech(Id(), params, PIPELINE);
-	    power->setTech(Id(), params, BYPASS);	    	    	    	    
-	    power->setTech(Id(), params, LOGIC);
-	    power->setTech(Id(), params, ALU);
-	    power->setTech(Id(), params, FPU);
-	    power->setTech(Id(), params, EXEU);
-	    power->setTech(Id(), params, LSQ);
-	    power->setTech(Id(), params, BPRED);
-	    power->setTech(Id(), params, RAT);
-	    power->setTech(Id(), params, ROB);
-	    power->setTech(Id(), params, BTB);
-	    power->setTech(Id(), params, CACHE_L2);
-	    power->setTech(Id(), params, CLOCK);*/ //clock should be the last in McPAT
+	    power = new Power(getId());
+            power->setTech(getId(), params, CACHE_IL1, McPAT);
+	    //power->setTech(getId(), params, CACHE_IL2);
+	    /*power->setTech(getId(), params, CACHE_DL1);
+	    //power->setTech(getId(), params, CACHE_DL2);
+	    power->setTech(getId(), params, CACHE_ITLB);
+	    power->setTech(getId(), params, CACHE_DTLB);
+	    power->setTech(getId(), params, RF);
+	    power->setTech(getId(), params, IB);	    
+    	    power->setTech(getId(), params, ISSUE_Q);
+	    power->setTech(getId(), params, INST_DECODER);
+	    power->setTech(getId(), params, PIPELINE);
+	    power->setTech(getId(), params, BYPASS);	    	    	    	    
+	    power->setTech(getId(), params, LOGIC);
+	    power->setTech(getId(), params, ALU);
+	    power->setTech(getId(), params, FPU);
+	    power->setTech(getId(), params, EXEU);
+	    power->setTech(getId(), params, LSQ);
+	    power->setTech(getId(), params, BPRED);
+	    power->setTech(getId(), params, RAT);
+	    power->setTech(getId(), params, ROB);
+	    power->setTech(getId(), params, BTB);
+	    power->setTech(getId(), params, CACHE_L2);
+	    power->setTech(getId(), params, CLOCK);*/ //clock should be the last in McPAT
 	    area = power->estimateAreaMcPAT();    
 
 	    //query the (push)introspector on how often this should push data (power/energy)
-	    //Component *c;
+	    //IntrospectedComponent *c;
 	    //for (std::list<ComponentId_t>::iterator i = MyIntroList.begin();
 	    //    i != MyIntroList.end(); ++i) {
 	    	  //printf("ID %lu will monitor me\n",*i);
@@ -184,7 +184,7 @@ class Cpu_PowerAndData : public Component {
     private:
 
         Cpu_PowerAndData( const Cpu_PowerAndData& c );
-	Cpu_PowerAndData() :  Component(-1) {} // for serialization only
+	Cpu_PowerAndData() :  IntrospectedComponent(-1) {} // for serialization only
 
 
         bool clock( Cycle_t );

@@ -9,7 +9,7 @@
 
 bool Cpu_power::clock( Cycle_t current)
 {
-    //_CPU_POWER_DBG("id=%lu currentCycle=%lu \n", Id(), current );
+    //_CPU_POWER_DBG("id=%lu currentCycle=%lu \n", getId(), current );
 
     MyMemEvent* event = NULL; 
 
@@ -130,15 +130,15 @@ bool Cpu_power::clock( Cycle_t current)
 	pdata = power->getPower(current, IO, "0:0:1:1", 1);  
 	pdata = power->getPower(current, CLOCK, "1", 1);
 	*/ 
-        //_CPU_POWER_DBG("ID %lu : current power = %f pW\n", Id(), pdata.currentPower);
-       // _CPU_POWER_DBG("ID %lu : total power = %f pW\n", Id(), pdata.totalEnergy); 
-        //_CPU_POWER_DBG("ID %lu : peak power = %f pW\n", Id(), pdata.peak);
-	//_CPU_POWER_DBG("ID %lu : current cycle = %d \n", Id(), pdata.currentCycle);
+        //_CPU_POWER_DBG("ID %lu : current power = %f pW\n", getId(), pdata.currentPower);
+       // _CPU_POWER_DBG("ID %lu : total power = %f pW\n", getId(), pdata.totalEnergy); 
+        //_CPU_POWER_DBG("ID %lu : peak power = %f pW\n", getId(), pdata.peak);
+	//_CPU_POWER_DBG("ID %lu : current cycle = %d \n", getId(), pdata.currentCycle);
 	regPowerStats(pdata);
 
         mem->Send( (Cycle_t)3, event );
         state = WAIT;
-	std::cout << "CPU " << Id() << "::clock -> sending a MEM event at cycle "<< current <<std::endl;
+	std::cout << "CPU " << getId() << "::clock -> sending a MEM event at cycle "<< current <<std::endl;
 
 
     } else {
@@ -159,14 +159,14 @@ bool Cpu_power::clock( Cycle_t current)
 	    pdata = power->getPower(current, CACHE_ITLB, "1:0:1:1", 1);  
 	    pdata = power->getPower(current, CACHE_DTLB, "1:0:1:1", 1);  
 	    */
-            //_CPU_POWER_DBG("ID %lu : current power = %f pW\n", Id(), pdata.currentPower);
-            //_CPU_POWER_DBG("ID %lu : total power = %f pW\n", Id(), pdata.totalEnergy);
-	    //_CPU_POWER_DBG("ID %lu : peak power = %f pW\n", Id(), pdata.peak); 
-            //_CPU_POWER_DBG("ID %lu : current cycle = %d\n", Id(), pdata.currentCycle);
+            //_CPU_POWER_DBG("ID %lu : current power = %f pW\n", getId(), pdata.currentPower);
+            //_CPU_POWER_DBG("ID %lu : total power = %f pW\n", getId(), pdata.totalEnergy);
+	    //_CPU_POWER_DBG("ID %lu : peak power = %f pW\n", getId(), pdata.peak); 
+            //_CPU_POWER_DBG("ID %lu : current cycle = %d\n", getId(), pdata.currentCycle);
 	    //regPowerStats(pdata);
 
             state = SEND;
-	    std::cout << "CPU " << Id() << "::clock -> got a MEM event at cycle "<< current <<std::endl;
+	    std::cout << "CPU " << getId() << "::clock -> got a MEM event at cycle "<< current <<std::endl;
 	   
         }
     }
