@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/components/xbar
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) -I$(top_srcdir)/components/xbar
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libxbarShell.la

@@ -2,7 +2,7 @@
 #
 #
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
 
 introdir = $(pkglibdir)
 intro_LTLIBRARIES = libintrospector_cpuTemperature.la
