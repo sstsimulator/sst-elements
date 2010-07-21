@@ -74,7 +74,6 @@ struct static_graph {
 
     size_type* degree = (size_type*) calloc(order, sizeof(size_type));
     size_type* numEdges = (size_type*) malloc((order + 1) * sizeof(size_type));
-    PIM_quickPrint(0,0,(unsigned int)degree);
 
     // Count the out degree of each vertex.
     #pragma mta assert nodep
@@ -83,7 +82,6 @@ struct static_graph {
       mt_incr(degree[srcs[i]], 1);
     }
 
-    PIM_quickPrint(1,sizeof(size_type),(unsigned int)degree);
 
     if (is_undirected())
     {
