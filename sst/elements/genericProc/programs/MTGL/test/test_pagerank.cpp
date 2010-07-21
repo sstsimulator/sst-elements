@@ -47,12 +47,11 @@ int main(int argc, char* argv[])
 
   if (argc < 3)
   {
-      argc = 4;
+      argc = 3;
       nargv[0] = argv[0]; /* executable */
-      nargv[1] = "8"; /* p */
+      nargv[1] = "3"; /* p */
       nargv[2] = "0.001"; /* delta */
-      nargv[3] = "4"; /* # threads */
-      nargv[4] = NULL;
+      nargv[3] = NULL;
       argv = nargv;
       /*
     fprintf(stderr, "Usage: %s {<p>|<filename>} <delta>\n", argv[0]);
@@ -77,6 +76,7 @@ int main(int argc, char* argv[])
       int threads = atoi(argv[3]);
       qthread_init(threads);
   }
+  printf("%i shepherds\n", qthread_num_shepherds());
 
   typedef aligned_t uinttype;
 #else
@@ -137,10 +137,8 @@ int main(int argc, char* argv[])
   int size = num_edges(g);
   printf("ORDER: %d, SIZE: %d\n", order, size);
 
-  PIM_quickPrint(0,0,0);
   pagerank<Graph> pr(g);
   rank_info* rinfo = pr.run(atof(argv[2]));
-  exit(1);
 
   mt_timer timer;
   int issues, memrefs, concur, streams;
