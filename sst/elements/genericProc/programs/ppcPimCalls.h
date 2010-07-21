@@ -938,7 +938,7 @@ _INLINE_ void PIM_feb_writeef(volatile unsigned int* a, unsigned int v)
 _INLINE_ unsigned int PIM_feb_try_writeef(volatile unsigned int* a, const unsigned int *v)
 {
     unsigned int result;
-    TWO_ARG_SYSCALL(SS_PIM_WRITEEF, a, v, result);
+    TWO_ARG_SYSCALL(SS_PIM_TRY_WRITEEF, a, v, result);
     return result;
 }
 
