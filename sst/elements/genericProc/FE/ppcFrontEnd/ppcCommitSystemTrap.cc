@@ -205,6 +205,11 @@ bool ppcInstruction::commitSystemTrap(processor* proc,
       return Perform_SYS_issetugid(proc, registers, nextPC);
       break;
 
+    case SS_PIM_TRY_READFE:
+    case SS_PIM_TRY_READFF:
+      return Perform_PIM_TRY_READFX(proc, registers);
+    case SS_PIM_TRY_WRITEEF:
+      return Perform_PIM_TRY_WRITEEF(proc, registers);
 
     case SS_PIM_READFF:
     case SS_PIM_READFE:

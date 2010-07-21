@@ -97,4 +97,8 @@
 #define SS_PIM_AMO 3065
 #define SS_PIM_MATVEC 3066
 
+#define SS_PIM_TRY_READFF           3067
+#define SS_PIM_TRY_READFE           3068
+#define SS_PIM_TRY_WRITEEF          3069
+
 #endif

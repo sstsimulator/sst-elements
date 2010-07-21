@@ -494,6 +494,30 @@ bool ppcInstruction::Perform_PIM_READ_SPECIAL(processor *proc,
   }
 }
 
+// NOTE: returns 0 for success, just like mutex_trylock
+bool ppcInstruction::Perform_PIM_TRY_READFX(
+    processor * proc,
+    simRegister * regs)
+{
+    simAddress dest = ntohl(regs[3]);
+    simAddress src  = ntohl(regs[4]);
+
+    if (proc->getFE(src) == 1) {
+	// it is full, do the read, and set the bit as needed
+	if (regs[0] == (int32_t) htonl(SS_PIM_READFE)) {
+	    // if we need to, empty the FE bit
+	    proc->setFE(src, 0);
+	}
+	proc->WriteMemory32(dest, proc->ReadMemory32(src, false), false);	// false => "non-speculatively"
+	regs[3] = 0;		       // return 0 to indicate success
+    } else {
+	// the FEB is empty, so return 1 to indicate failure
+	regs[3] = htonl(1);
+    }
+
+    return true;
+}
+
 bool ppcInstruction::Perform_PIM_READFX(processor	*proc,
 					  simRegister	*regs) 
 {
@@ -623,25 +647,44 @@ bool ppcInstruction::Perform_PIM_LOCK(processor *proc, simRegister *regs)
     }
 }
 
-bool ppcInstruction::Perform_PIM_WRITEEF(processor	*proc,
-					 simRegister	*regs) {
-  simAddress addr = ntohl(regs[3]);
-  //printf ("writeef %x (%d)\n", addr, proc->ReadMemory32(addr,0)); fflush(stdout);
+bool ppcInstruction::Perform_PIM_TRY_WRITEEF(
+    processor * proc,
+    simRegister * regs)
+{
+    simAddress dest = ntohl(regs[3]);
+    simAddress src  = ntohl(regs[4]);
 
-  if (proc->getFE(addr) == 0) {
-    // its empty to write and fill
-    proc->WriteMemory32(addr, regs[4], 0);
-    proc->setFE(addr, 1);
-
-    regs[3] = 0;
+    if (proc->getFE(dest) == 0) {
+	// it is empty, so do the write, and set the bit
+	proc->WriteMemory32(dest, proc->ReadMemory32(src, false), false);
+	proc->setFE(dest, 1);
+	regs[3] = 0;
+    } else {
+	regs[3] = htonl(1);
+    }
     return true;
-  } else {
-    // fail, raise exception
-    _exception = FEB_EXCEPTION;
-    _febTarget  = addr;
+}
 
-    return false;  
-  }
+bool ppcInstruction::Perform_PIM_WRITEEF(
+    processor * proc,
+    simRegister * regs)
+{
+    simAddress addr = ntohl(regs[3]);
+
+    if (proc->getFE(addr) == 0) {
+	// its empty to write and fill
+	proc->WriteMemory32(addr, htonl(regs[4]), 0);
+	proc->setFE(addr, 1);
+
+	regs[3] = 0;
+	return true;
+    } else {
+	// fail, raise exception
+	_exception = FEB_EXCEPTION;
+	_febTarget = addr;
+
+	return false;
+    }
 }
 
 bool ppcInstruction::Perform_PIM_IS_FE_FULL(processor	*proc,

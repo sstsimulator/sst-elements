@@ -112,6 +112,9 @@ void ppcInstruction::issueSystemTrap(processor* proc,
       break;
     case SS_PIM_EST_STATE_SIZE:
       break;
+    case SS_PIM_TRY_READFF:
+    case SS_PIM_TRY_READFE:
+    case SS_PIM_TRY_WRITEEF:
     case SS_PIM_WRITE_MEM:
     case SS_PIM_WRITEEF:
     case SS_PIM_FILL_FE:

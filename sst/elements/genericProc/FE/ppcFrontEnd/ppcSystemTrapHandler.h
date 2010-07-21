@@ -88,6 +88,8 @@ ppcThread* createThreadWithStack(processor* proc, simRegister *regs);
   bool  Perform_PIM_ATOMIC_INCREMENT(processor* thread, simRegister *);
   bool  Perform_PIM_ATOMIC_DECREMENT(processor* thread, simRegister *);
   bool  Perform_PIM_EST_STATE_SIZE(processor* thread, simRegister *);
+  bool  Perform_PIM_TRY_READFX(processor* thread, simRegister *);
+  bool  Perform_PIM_TRY_WRITEEF(processor* thread, simRegister *);
   bool  Perform_PIM_READFX(processor* thread, simRegister *);
   bool  Perform_PIM_WRITEEF(processor* thread, simRegister *);
   bool  Perform_PIM_CHANGE_FE(processor* thread, simRegister *);

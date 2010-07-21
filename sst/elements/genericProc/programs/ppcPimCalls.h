@@ -890,6 +890,12 @@ _INLINE_ unsigned int PIM_feb_readff(volatile unsigned int* a)
   ONE_ARG_SYSCALL(SS_PIM_READFF, a, result);
   return result;
 }
+_INLINE_ unsigned int PIM_feb_try_readff(volatile unsigned int* dest, volatile unsigned int *src)
+{
+  unsigned int result;
+  TWO_ARG_SYSCALL(SS_PIM_TRY_READFF, dest, src, result);
+  return result;
+}
 
 //: Read if FEB is full, set FEB to "empty"
 //
@@ -901,6 +907,12 @@ _INLINE_ unsigned int PIM_feb_readfe(volatile unsigned int* a)
   unsigned int result;
   ONE_ARG_SYSCALL(SS_PIM_READFE, a, result);
   return result;
+}
+_INLINE_ unsigned int PIM_feb_try_readfe(volatile unsigned int* dest, volatile unsigned int* src)
+{
+    unsigned int result;
+    TWO_ARG_SYSCALL(SS_PIM_TRY_READFE, dest, src, result);
+    return result;
 }
 
 //: Atomically Increment integer at a given address
