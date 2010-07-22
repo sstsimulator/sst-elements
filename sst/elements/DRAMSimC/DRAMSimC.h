@@ -14,7 +14,7 @@
 #define _DRAMSIMC_H
 
 #include <sst/core/log.h>
-#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <memoryChannel.h>
 #include <MemorySystem.h>

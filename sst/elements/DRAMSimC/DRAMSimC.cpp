@@ -74,12 +74,13 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     m_log.write("device ini %s\n",deviceIniFilename.c_str());
     m_log.write("system ini %s\n",systemIniFilename.c_str());
 
-    ClockHandler_t* handler;
-    handler = new EventHandler< DRAMSimC, bool, Cycle_t >
-                                        ( this, &DRAMSimC::clock );
-
     m_log.write("freq %s\n",frequency.c_str());
-    TimeConverter* tc = registerClock( frequency, handler );
+//     ClockHandler_t* handler;
+//     handler = new EventHandler< DRAMSimC, bool, Cycle_t >
+//                                         ( this, &DRAMSimC::clock );
+
+//     TimeConverter* tc = registerClock( frequency, handler );
+    TimeConverter* tc = registerClock( frequency, new Clock::Handler<DRAMSimC>(this, &DRAMSimC::clock) );
     m_log.write("period %ld\n",tc->getFactor());
 
 
