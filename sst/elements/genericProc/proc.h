@@ -18,10 +18,14 @@
 #include <sst/core/cpunicEvent.h>
 #include <memory.h>
 #include "fe_memory.h"
-
+#include <sst_config.h>
 #include "ssBackEnd/ssb_mainProc.h"
 #include "FE/thread.h"
 #include "FE/processor.h"
+
+#if HAVE_PHXSIM_H
+#include <../PHXSimC/PHXEvent.h>
+#endif
 
 using namespace SST;
 
@@ -139,6 +143,10 @@ private:
   std::vector< memory_t* > memory;
   // links to other processors
   std::vector<Link*> netLinks;
+  // link to advanced memory
+  //
+  // optional link for advanced memory
+  Link *advMem;
   // thread source
   threadSource tSource;
   // thread of execution
@@ -167,10 +175,11 @@ private:
   //
   // maps instructions to cores
   memReqMap_t memReqMap;
-  // map of special memory requests
+  // map of AMO memory requests
   //
-  // e.g. AMOs
+  // AMOs, advanced memory, etc..
   memReqMap_t memSpecReqMap;
+
   instruction* onDeckInst;
 
 #if TIME_MEM
@@ -228,8 +237,12 @@ public:
   virtual bool externalMemoryModel();
   virtual bool sendMemoryReq( instType, uint64_t address, 
 			       instruction*, int mProcID);
+  virtual int getOutstandingAdvancedMemReqs(int mProcID);
+#if HAVE_PHXSIM_H
   virtual bool sendMemoryParcel(uint64_t address, instruction *inst, 
-				int mProcID);
+				PHXEvent *pe, int mProcID);
+
+#endif
 };
 
 #endif

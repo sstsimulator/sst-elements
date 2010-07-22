@@ -131,6 +131,9 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
 #endif
   memory.push_back( tmp );
 
+  // add extra link to advanced memory
+  advMem = configureLink("advMem0", "1 Ghz");
+
   // add links
   NICeventHandler = new EventHandler<proc, bool, Event *>
     (this, &proc::handle_nic_events);
@@ -215,6 +218,46 @@ bool proc::handle_nic_events(Event *event) {
 }
 
 void proc::processMemDevResp( ) {
+#if HAVE_PHXSIM_H
+  // check for returns from advanced memory link
+  if (advMem) {
+    Event *e = 0;
+    do {
+      Event *e = advMem->Recv();
+      if (e) {
+	PHXEvent *pe = dynamic_cast<PHXEvent*>(e);
+	if (pe) {
+	  // lookup
+	  memReqMap_t::iterator i = 
+	    memSpecReqMap.find((instruction*)pe->eventID);
+	  if (i != memSpecReqMap.end()) {
+	    memReqRec_t &mReq = i->second;
+	    // decrement the counter
+	    outstandingSpecReq[mReq.first]--;
+
+#if TIME_MEM
+	    uint64_t startTime = mReq.second;
+	    uint64_t lat = getCurrentSimTimeNano() - startTime;
+	    memSpecialReqLat += lat;
+	    static int c = 0; c++;
+	    if ((c % 0xff) == 0) printf("adv mem lat %llu\n", (long long unsigned)lat);
+#endif
+
+	    // clean up
+	    memSpecReqMap.erase(i);
+	    delete e;
+	  } else {
+	    ERROR("genericProc got unknown Advanced Memory Event\n");
+	  }
+	} else {
+	  ERROR("genericProc Advanced Memory Link got back wrong type of event\n");
+	}
+      }
+    } while (e);
+  }
+#endif
+
+  // recieve from regular memory channel
   instruction* inst;
   while ( memory[0]->popCookie( inst ) ) {
 
@@ -564,14 +607,13 @@ bool proc::externalMemoryModel() {
   return externalMem;
 }
 
+#if HAVE_PHXSIM_H
 bool proc::sendMemoryParcel(uint64_t address, instruction *inst, 
+			    PHXEvent *pe,
 			    int mProcID) {
   // check and see if we can make another special request
   if (outstandingSpecReq[mProcID] < maxOutstandingSpecReq) {
     outstandingSpecReq[mProcID]++;
-    
-    // normally, we'd need a switch statement of some sort to figure out
-    // what sort of request we are sending. For now, we just assume AMO
     
     // get UID
     static int count = 0; 
@@ -580,35 +622,69 @@ bool proc::sendMemoryParcel(uint64_t address, instruction *inst,
     // to get multiple copies of the same poitner in the map
     int uid = (++count); if (uid == 0) uid = (++count);
     
-    
-    // send the memory request
-    //bool ret = memory[0]->send(address, inst, memory_t::dev_t::event_t::RMW);
-    // for now we can just pretend its a READ
-    bool ret = memory[0]->read(address, (instruction*)uid);
-    if (!ret) {
-      INFO("Memory send parcel failed to Write");
-    }
-    // Register the instruction
-    memReqMap_t::iterator mi = memSpecReqMap.find((instruction*)uid);
-    if (mi != memSpecReqMap.end()) {
-      WARN("UID already in use!\n");
-    }
+    if (pe) {
+      // if we have an event type, handle that. 
+      bool ret = true;
+
+      // assign UID
+      pe->eventID = count;
+      
+      // record the event
 #if TIME_MEM
-    memSpecReqMap[(instruction*)uid] = memReqRec_t(mProcID,getCurrentSimTimeNano());
+      memSpecReqMap[(instruction*)uid] =
+	memReqRec_t(mProcID,getCurrentSimTimeNano());
 #else
-    memSpecReqMap[(instruction*)uid] = memReqRec_t(mProcID,0);
+      memSpecReqMap[(instruction*)uid] = 
+	memReqRec_t(mProcID,0);
+#endif
+
+      // send it
+      if (advMem) {
+	advMem->Send(1,pe);
+      } else {
+	ERROR("No Advanced Memory Link attached to generic proc");
+	exit(-1);
+      }
+
+      return ret;
+    } else {
+      // if there is no event specified we must be doing a simple AMO
+    
+      // send the memory request
+      //bool ret = memory[0]->send(address,inst, memory_t::dev_t::event_t::RMW);
+      // for now we can just pretend its a READ
+      bool ret = memory[0]->read(address, (instruction*)uid);
+      if (!ret) {
+	INFO("Memory send parcel failed to Write\n");
+      }
+      // Register the instruction
+      memReqMap_t::iterator mi = memSpecReqMap.find((instruction*)uid);
+      if (mi != memSpecReqMap.end()) {
+	WARN("UID already in use!\n");
+      }
+#if TIME_MEM
+      memSpecReqMap[(instruction*)uid] = memReqRec_t(mProcID,getCurrentSimTimeNano());
+#else
+      memSpecReqMap[(instruction*)uid] = memReqRec_t(mProcID,0);
+#endif
+      
+#if 0
+      static int c = 0; if ((c++ & 0xff) == 0) {
+	printf("%d AMOs %ld\n", c, memSpecReqMap.size());    
+      }
 #endif
     
-    static int c = 0; if ((c++ & 0xff) == 0) {
-      printf("%d AMOs %ld\n", c, memSpecReqMap.size());    
+      return ret;
     }
-    
-    return ret;
-  } else {
+  } else { /* can issue? */
     return false;
   }
 }
+#endif
 
+int proc::getOutstandingAdvancedMemReqs(int mProcID) {
+  return outstandingSpecReq[mProcID];
+}
 
 bool proc::sendMemoryReq( instType iType,
             uint64_t address, instruction *i, int mProcID) {
@@ -621,12 +697,12 @@ bool proc::sendMemoryReq( instType iType,
   _GPROC_DBG(1,"instruction type %d\n", iType );
   if ( iType == STORE ) {
     if ( ! memory[0]->write(address, i ) ) {
-      INFO("Memory Failed to Write");
+      INFO("Memory Failed to Write\n");
       return false;
     }
   } else {
     if ( ! memory[0]->read(address, i ) ) {
-      INFO("Memory Failed to Read");
+      INFO("Memory Failed to Read\n");
       return false;
     }
   }
