@@ -90,6 +90,7 @@ int HPCCG(HPC_Sparse_Matrix * A,
   int print_freq = max_iter/10; 
   if (print_freq>50) print_freq=50;
   if (print_freq<1)  print_freq=1;
+  print_freq = 1;
 
   // p is of length ncols, copy x to p for sparse MV operation
   TICK(); waxpby(nrow, 1.0, x, 0.0, x, p); TOCK(t2);

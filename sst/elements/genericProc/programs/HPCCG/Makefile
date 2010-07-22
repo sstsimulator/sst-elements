@@ -108,7 +108,7 @@ $(TARGET): $(TEST_OBJ) HPC_sparsemv.o
 	$(LINKER) $(CFLAGS) $(TEST_OBJ) HPC_sparsemv.o $(LIB_PATHS) -o $(TARGET)
 
 HPC_sparsemv_pim.o: HPC_sparsemv.cpp
-	$(CC) -c $(CXXFLAGS) $(USE_MPI) $(MPI_INC) -DPIM_MATVEC=1 HPC_sparsemv.cpp -o HPC_sparsemv_pim.o
+	$(CXX) -c $(CXXFLAGS) $(USE_MPI) $(MPI_INC) -DPIM_MATVEC=1 HPC_sparsemv.cpp -o HPC_sparsemv_pim.o
 
 test_HPCCG_pim: $(TEST_OBJ) HPC_sparsemv_pim.o
 	$(LINKER) $(CFLAGS) $(TEST_OBJ) HPC_sparsemv_pim.o $(LIB_PATHS) -o test_HPCCG_pim

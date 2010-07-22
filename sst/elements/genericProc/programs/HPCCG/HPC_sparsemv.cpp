@@ -56,6 +56,10 @@ using std::endl;
 #define MT_LOOP_CHUNK_OUTER 20000
 #define MT_LOOP_CHUNK_INNER 100
 
+#if defined(PIM_MATVEC) && PIM_MATVEC==1
+#include <ppcPimCalls.h>
+#endif
+
 struct HPC_sparsemv_o_args
 {
     HPC_Sparse_Matrix * const A;
@@ -72,27 +76,32 @@ static void HPC_sparsemv_outerloop(qthread_t *me, const size_t startat, const si
     const int * const nnz_in_row((((struct HPC_sparsemv_o_args*)arg)->A)->nnz_in_row);
     const double * const x(((struct HPC_sparsemv_o_args *)arg)->x);
 
-    printf("sparse mv outer\n");
-
     for (size_t i = startat; i < stopat; ++i) {
 	double sum = 0.0;
 	const unsigned int cur_nnz = nnz_in_row[i];
 	const double * const cur_vals = ptr_to_vals_in_row[i];
 	const int * const cur_inds = ptr_to_inds_in_row[i];
 #if defined(PIM_MATVEC) && PIM_MATVEC==1
-	printf("sparse mv inner\n");
 	int result = 0;
 	do {
 	  sum = 0.0;
 	  result = PIM_MatVec(0,cur_nnz,cur_vals,x,cur_inds, &sum);
 	} while (result == 0);
+	// throttle (currently hard coded to 7)
+	while (PIM_OutstandingMR() > 7) {;}
 #else
 	/* this inner-loop is too small to be worth parallelizing for now */
+	sum = 0.0;
 	for (unsigned int j=0; j<cur_nnz; j++)
-	    sum += cur_vals[j] * x[cur_inds[j]];
+	  sum += cur_vals[j] * x[cur_inds[j]];
+	//printf(" sum should be %f\n", sum);
 #endif
 	((struct HPC_sparsemv_o_args*)arg)->y[i] = sum;
     }
+#if defined(PIM_MATVEC) && PIM_MATVEC==1
+    // make sure everything is done before we move on
+    while (PIM_OutstandingMR() > 0) {;}
+#endif
 }
 #endif
 
@@ -131,7 +140,7 @@ int HPC_sparsemv( HPC_Sparse_Matrix *A,
       int result = 0;
       do {
 	sum = 0.0;
-	//printf("MatVec: 0,%d,%p,%p,%p,%p\n", cur_nnz,cur_vals,x,cur_inds, &sum);
+	//printf("MatVec: 0,%d,%p,%p,%p,%p\n",cur_nnz,cur_vals,x,cur_inds,&sum);
 	result = PIM_MatVec(0,cur_nnz,cur_vals,x,cur_inds, &sum);
       } while (result == 0);
 #else

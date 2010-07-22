@@ -76,7 +76,7 @@
 #include "HPC_Sparse_Matrix.hpp"
 #ifdef USING_QTHREADS
 #include <qthread/qthread.h>
-int tcount = 0;
+int tcount = 2;
 #endif
 
 #undef DEBUG
@@ -136,7 +136,9 @@ int main(int argc, char *argv[])
 
   if (argc == 0) {
     //generate_matrix(75, 75, 128, &A, &x, &b, &xexact);
-    generate_matrix(10, 10, 20, &A, &x, &b, &xexact);
+    printf("Generating Matrix\n");
+    generate_matrix(8, 8, 10, &A, &x, &b, &xexact);
+    printf("Matrix Generated\n");
   } else if(argc != 2 && argc!=4) {
     if (rank==0)
       fprintf(stderr, "Usage:\n"
@@ -168,7 +170,7 @@ int main(int argc, char *argv[])
   //double t1 = mytimer();   // Initialize it (if needed)
   int niters = 0;
   double normr = 0.0;
-  int max_iter = 150;
+  int max_iter = 6; //150;
   double tolerance = 0.0; // Set tolerance to zero to make all runs do max_iter iterations
   ierr = HPCCG( A, b, x, max_iter, tolerance, niters, normr, times);
 
