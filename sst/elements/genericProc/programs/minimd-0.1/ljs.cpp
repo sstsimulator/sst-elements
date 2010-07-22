@@ -131,12 +131,16 @@ int prompt()
   MPI_Comm_rank(MPI_COMM_WORLD,&me);
 
   int flag;
+#ifdef SST
+  flag = 1;
+#else
   if (me == 0) {
     printf("(0) Stop, (1) Continue\n");
     char line[MAXLINE];
     fgets(line,MAXLINE,stdin);
     sscanf(line,"%d",&flag);
   }
+#endif
 #ifdef USING_MPI
   MPI_Bcast(&flag,1,MPI_INT,0,MPI_COMM_WORLD);
 #endif
