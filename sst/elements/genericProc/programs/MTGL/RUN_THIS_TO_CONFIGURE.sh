@@ -31,6 +31,7 @@ if [ -z "$cprops" -o -z "$qthreads" ] ; then
 	echo '   ./RUN_THIS_TO_CONFIGURE.sh --sstenv=$HOME/sstenv'
 	exit
 fi
+unset CC CXX
 ./configure \
 	--host=powerpc-sst-darwin8.11.0 \
 	$cprops \

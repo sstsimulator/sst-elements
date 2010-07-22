@@ -41,6 +41,7 @@ if [ -z "$cprops" -o -z "$prefix" -o -z "$includes" ] ; then
 	echo '   ./RUN_THIS_TO_CONFIGURE.sh --sstenv=$HOME/sstenv --gproc=$HOME/sst.svn/sst/elements/genericProc'
 	exit
 fi
+unset CC CXX
 ./configure \
 	--host=powerpc-sst-darwin8.11.0 \
 	--disable-shared \
