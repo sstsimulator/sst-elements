@@ -101,4 +101,6 @@
 #define SS_PIM_TRY_READFE           3068
 #define SS_PIM_TRY_WRITEEF          3069
 
+#define SS_PIM_ADV_OUT          3070
+
 #endif

@@ -133,6 +133,10 @@ void ppcInstruction::issueSystemTrap(processor* proc,
       _op = LOAD;
       _fu = RdPort;
       break;
+    case SS_PIM_ADV_OUT:
+      _memEA = registers[3];
+      _fu = RdPort;
+      break;
     case SS_PIM_IS_PRIVATE:
     case SS_PIM_TID:
     case SS_PIM_REMAP_TO_POLY:

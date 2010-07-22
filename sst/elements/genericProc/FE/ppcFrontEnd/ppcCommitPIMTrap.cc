@@ -17,7 +17,12 @@
 #include "regs.h"
 #include "fe_debug.h"
 #include <sim_trace.h>
+#include <sst_config.h>
 #include <sst/core/simulation.h> // for current cycle count (i.e. Simulation)
+
+#if HAVE_PHXSIM_H
+#include <sst/elements/PHXSimC/PHXEvent.h>
+#endif
 
 ppcThread* ppcInstruction::createThreadWithStack(processor* proc,
 						 simRegister *regs)
@@ -210,7 +215,7 @@ bool ppcInstruction::Perform_PIM_QUICK_PRINT(processor	*FromProcessor,
 	   (unsigned int)ntohl(regs_R[5]), (unsigned int)ntohl(regs_R[5]));
     fflush(stdout);
 
-    FromProcessor->resetCounters();
+    ppcThread::verbose = 6;
 
     // return values
     regs_R[3] = 0;
@@ -878,7 +883,12 @@ bool ppcInstruction::Perform_PIM_AMO(processor *proc, simRegister *regs) {
   }
 
   // send the parcel to memory
-  bool ret = proc->sendMemoryParcel(addr, this, proc->getCurrentRunningCore());
+#if HAVE_PHXSIM_H
+  bool ret = proc->sendMemoryParcel(addr, this, 0, 
+				    proc->getCurrentRunningCore());
+#else
+  bool ret = false;
+#endif
   // set result. A failure of sendMemoryParcel() probably indicates
   // the need to retry
   regs[3] = ntohl(ret);
@@ -899,6 +909,7 @@ bool ppcInstruction::Perform_PIM_AMO(processor *proc, simRegister *regs) {
 // Note: we actually do the operaiton here, not in the memory
 // component, due to the execute-on-fetch problem.
 bool ppcInstruction::Perform_PIM_MATVEC(processor *proc, simRegister *regs) {
+#if HAVE_PHXSIM_H
   // collect arguments
   int start = ntohl(regs[3]);
   int end = ntohl(regs[4]);
@@ -910,14 +921,8 @@ bool ppcInstruction::Perform_PIM_MATVEC(processor *proc, simRegister *regs) {
   /*printf("SST MatVec: %d,%d,%p,%p,%p,%p\n", start,end,(void*)cur_vals,
     (void*)x,(void*)cur_inds,(void*)sumAddr);*/
 
-  // recording structures
-  // records 3 addresses: CV, I, and X
-  // CV and I can be fetched immediately, X depends on I
-  struct addrList {
-    vector<simAddress> CV, I, X;
-    simAddress sum;
-  };
-  addrList addresses;
+  PHXEvent *pe = new PHXEvent();
+  pe->eventType = MATVEC;
 
   // perform the operation, recording the addresses we needed
   double sum = 0.0;
@@ -927,12 +932,12 @@ bool ppcInstruction::Perform_PIM_MATVEC(processor *proc, simRegister *regs) {
     qword_t c_v_j = proc->ReadMemory64(addr,0);
     c_v_j = endian_swap(c_v_j);
     double cur_vals_j = *((double*)&c_v_j);
-    addresses.CV.push_back(addr);
+    pe->mvAddrs.CV.push_back(addr);
 
     // get cur_inds[j]
     addr = cur_inds + sizeof(int) * j;
     int cur_inds_j = ntohl(proc->ReadMemory32(addr,0));
-    addresses.I.push_back(addr);
+    pe->mvAddrs.I.push_back(addr);
     //printf(" j=%d  cur_inds[j] = %d\n", j, cur_inds_j);
 
     // get x[cur_inds[j]]
@@ -940,25 +945,39 @@ bool ppcInstruction::Perform_PIM_MATVEC(processor *proc, simRegister *regs) {
     qword_t x_c_i_j = proc->ReadMemory64(addr,0);
     x_c_i_j = endian_swap(x_c_i_j);
     double x_cur_inds_j = *((double*)&x_c_i_j);
-    addresses.X.push_back(addr);
+    pe->mvAddrs.X.push_back(addr);
 
     //printf(" %f * %f\n", cur_vals_j, x_cur_inds_j);
 
     sum += cur_vals_j * x_cur_inds_j;
   }
-  printf(" SST Sum is %f.\n", sum);
-
-  // save result
-  qword_t sumWord = *((qword_t*)&sum);
-  proc->WriteMemory64(sumAddr, endian_swap(sumWord), 0);
-  addresses.sum = sumAddr;
 
   // send the parcel to memory
   // set result. A failure of sendMemoryParcel() probably indicates
-  bool ret = 1;
+  bool ret = proc->sendMemoryParcel(0, this, pe, 
+				    proc->getCurrentRunningCore());
+
+  if (ret) {
+    //printf(" SST Sum is %f.\n", sum);
+    // save result
+    qword_t sumWord = *((qword_t*)&sum);
+    proc->WriteMemory64(sumAddr, endian_swap(sumWord), 0);
+    pe->mvAddrs.sum = sumAddr;
+  } else {
+    printf("redo\n");
+  }
+
   // the need to retry
   regs[3] = ntohl(ret);
   
   //exit(0);
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool ppcInstruction::Perform_PIM_ADV_OUT(processor *proc, simRegister *regs) {
+  regs[3] = ntohl(proc->getOutstandingAdvancedMemReqs(proc->getCurrentRunningCore()));
   return true;
 }

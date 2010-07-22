@@ -24,9 +24,13 @@
 #include "pimSysCallTypes.h"
 #include <vector>
 #include <utility>
+#include <sst_config.h>
 #include <boost/serialization/list.hpp>
-//#include <writeCombining.h>
-//#include <configuration.h>
+
+
+#if HAVE_PHXSIM_H
+#include <../PHXSimC/PHXEvent.h>
+#endif
 
 using namespace std;
 using namespace SST;
@@ -230,12 +234,16 @@ public:
   //:send a (load/store) request to memory
   virtual bool sendMemoryReq( instType, uint64_t address,
 			       instruction *inst, int mProcID) = 0;
+  virtual int getOutstandingAdvancedMemReqs(int mProcID) = 0;
+#if HAVE_PHXSIM_H
   //: send a non-load/store request to memory (e.g. AMO)
   //
   // Note: this function will have to change format at some point to
   // accomodate other L2 in-mem ops
   virtual bool sendMemoryParcel(uint64_t address, instruction *inst, 
+				PHXEvent *pe,
 				int mProcID) = 0;
+#endif
     
   void addNICevent(CPUNicEvent *e) {
     staging_area.push_back(e);

@@ -358,6 +358,8 @@ bool ppcInstruction::commitSystemTrap(processor* proc,
       return Perform_PIM_AMO(proc, registers);
     case SS_PIM_MATVEC:
       return Perform_PIM_MATVEC(proc, registers);
+    case SS_PIM_ADV_OUT:
+      return Perform_PIM_ADV_OUT(proc,registers);
     default:
       {
 	WARN("unrecognized/unsupported systemCall %d pc=%p\n", 
