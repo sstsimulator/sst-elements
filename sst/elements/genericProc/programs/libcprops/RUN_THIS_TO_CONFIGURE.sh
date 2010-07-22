@@ -7,6 +7,7 @@ case "$1" in
 	exit
 	;;
 esac
+unset CC CXX
 ./configure \
 	--host=powerpc-sst-darwin8.11.0 \
 	--disable-cpsp \
