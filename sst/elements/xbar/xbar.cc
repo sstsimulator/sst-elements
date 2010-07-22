@@ -54,13 +54,13 @@ bool Xbar::clock( Cycle_t current ) {
 void Xbar::processEvent( Event* event  )
 {
     _XBAR_DBG("got an event from the xbar @ cycle %ld\n", getCurrentSimTime() );
-    cpu->Send( 3, static_cast<CompEvent*>(event) );
+    cpu->Send( 3, static_cast<Event*>(event) );
 }
 
 void Xbar::selfEvent( Event* event  )
 {
     _XBAR_DBG("got a pushed self event @ cycle %ld\n", getCurrentSimTime() );
-    selfPush->Send( 50, static_cast<CompEvent*>(event) );
+    selfPush->Send( 50, static_cast<Event*>(event) );
 }
 
 

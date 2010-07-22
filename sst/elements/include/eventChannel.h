@@ -16,7 +16,7 @@
 #include <deque>
 
 #include <sst/core/component.h>
-#include <sst/core/compEvent.h>
+#include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/log.h>
 
@@ -27,7 +27,7 @@
 using namespace SST;
 
 template < typename eventT >
-class ChannelEvent : public CompEvent {
+class ChannelEvent : public Event {
     public:
         typedef enum { CREDIT, EVENT } type_t;
         type_t      type;

@@ -2,15 +2,15 @@
 #ifndef _TRIG_NIC_EVENT_H
 #define _TRIG_NIC_EVENT_H
 
-#include <sst/core/compEvent.h>
+#include <sst/core/event.h>
 #include "sst/elements/portals4_sm/trig_cpu/portals_types.h"
 
 namespace SST {
     
     
-    class trig_nic_event : public CompEvent {
+    class trig_nic_event : public Event {
     public:
-	trig_nic_event() : CompEvent() {
+	trig_nic_event() : Event() {
 	    portals = false;
 	}
 
@@ -44,8 +44,8 @@ namespace SST {
         /*         BOOST_SERIALIZE { */
         /* 	  printf("Serializing MyMemEvent\n"); */
         /* 	  _AR_DBG(MemEvent,"\n"); */
-        /*             BOOST_VOID_CAST_REGISTER( MyMemEvent*, CompEvent* ); */
-        /*             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( CompEvent ); */
+        /*             BOOST_VOID_CAST_REGISTER( MyMemEvent*, Event* ); */
+        /*             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Event ); */
         /*             ar & BOOST_SERIALIZATION_NVP( address ); */
         /*             ar & BOOST_SERIALIZATION_NVP( type ); */
         /*             ar & BOOST_SERIALIZATION_NVP( tag ); */

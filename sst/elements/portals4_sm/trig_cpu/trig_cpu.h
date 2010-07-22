@@ -23,7 +23,7 @@
 
 #include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
-#include <sst/core/compEvent.h>
+#include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
@@ -59,12 +59,12 @@ struct unex_msg {
     }
 };
 
-class ptl_nic_event : public CompEvent {
+class ptl_nic_event : public Event {
 public:
-    ptl_nic_event(ptl_int_nic_op_t* op) : CompEvent() {
+    ptl_nic_event(ptl_int_nic_op_t* op) : Event() {
 	operation = op;
     }
-    ptl_nic_event() : CompEvent() {}
+    ptl_nic_event() : Event() {}
 
     ptl_int_nic_op_t* operation;
 };
