@@ -97,7 +97,10 @@ int main(int argc, char *argv[])
   }
   if (tcount > 0) {
       qthread_init(tcount);
+  } else {
+      qthread_initialize();
   }
+  printf("Using %i shepherds\n", qthread_num_shepherds());
 #endif
 
 #ifdef USING_MPI
