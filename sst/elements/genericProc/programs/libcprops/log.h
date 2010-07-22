@@ -63,10 +63,10 @@ CPROPS_DLL
 int cp_log_init(char *filename, int verbosity);
 
 CPROPS_DLL
-int cp_log_reopen();
+int cp_log_reopen(void);
 
 CPROPS_DLL
-int cp_log_close();
+int cp_log_close(void);
 
 CPROPS_DLL
 void die(int code, const char *msg, ...);
