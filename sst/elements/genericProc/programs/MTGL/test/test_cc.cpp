@@ -177,7 +177,6 @@ int main(int argc, char* argv[])
   init_identity_vert_array(ga, result);
   component_map components(result, get(_vertex_id_map, ga));
   connected_components_gcc_sv<Graph, component_map> s1(ga, components);
-  PIM_quickPrint(0,0,0);
   cc_time.start();
   s1.run();
   cc_time.stop();
