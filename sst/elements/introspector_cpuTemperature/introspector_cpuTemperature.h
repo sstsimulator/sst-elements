@@ -12,7 +12,6 @@
 #ifndef _INTROSPECTOR_CPUTEMPERATURE_H
 #define _INTROSPECTOR_CPUTEMPERATURE_H
 
-#include <sst/core/eventFunctor.h>
 //#include <sst/core/component.h>
 #include <sst/core/introspector.h>
 
@@ -54,10 +53,12 @@ class Introspector_cpuTemperature : public Introspector {
             } 
             
            
-            handler = new EventHandler< Introspector_cpuTemperature, bool, Cycle_t >
-                                                ( this, &Introspector_cpuTemperature::pullData );
             _INTROSPECTOR_CPUTEMPERATURE_DBG("-->frequency=%s\n",frequency.c_str());
-            TimeConverter* tc = registerClock( frequency, handler );
+//             Handler = new EventHandler< Introspector_cpuTemperature, bool, Cycle_t >
+//                                                 ( this, &Introspector_cpuTemperature::pullData );
+//             TimeConverter* tc = registerClock( frequency, handler );
+	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpuTemperature>( this, &Introspector_cpuTemperature::pullData ) );
+
 	    printf("INTROSPECTOR_CPUTEMPERATURE period: %ld\n",
                    (long int) tc->getFactor());
             _INTROSPECTOR_CPUTEMPERATURE_DBG("Done registering clock\n");
@@ -118,7 +119,6 @@ class Introspector_cpuTemperature : public Introspector {
         bool pullData( Cycle_t );
 	
 
-        ClockHandler_t* handler;
         Component::Params_t    params;        
 	std::string frequency;
 	std::string model;
@@ -131,8 +131,6 @@ class Introspector_cpuTemperature : public Introspector {
             BOOST_VOID_CAST_REGISTER( Introspector_cpuTemperature*, Introspector* );
 	    printf("  base serializing: introspector\n");
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Introspector );
-	    printf("  serializing: handler\n");
-            ar & BOOST_SERIALIZATION_NVP( handler );
             _AR_DBG( Introspector_cpuTemperature, "done\n" );
         }
 #endif

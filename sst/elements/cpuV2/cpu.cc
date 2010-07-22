@@ -30,16 +30,17 @@ Cpu::Cpu( ComponentId_t id, Params_t& params ) :
 
     m_memory = new memDev_t( *this, params, "MEM" );
 
-    m_clockHandler = new EventHandler< Cpu, bool, Cycle_t >
-                                                ( this, &Cpu::clock );
+//     m_clockHandler = new EventHandler< Cpu, bool, Cycle_t >
+//                                                 ( this, &Cpu::clock );
 
-    if ( params.find("clock") != params.end() ) {
-        m_frequency = params["clock"];
-    }
+//     if ( params.find("clock") != params.end() ) {
+//         m_frequency = params["clock"];
+//     }
 
     m_log.write("-->frequency=%s\n",m_frequency.c_str());
 
-    TimeConverter* tc = registerClock( m_frequency, m_clockHandler );
+//     TimeConverter* tc = registerClock( m_frequency, m_clockHandler );
+    TimeConverter* tc = registerClock( m_frequency, new Clock::Handler<Cpu>(this, &Cpu::clock) );
     if ( ! tc ) {
         _abort(XbarV2,"couldn't register clock handler");
     }

@@ -62,9 +62,9 @@ EVENTCHANNEL()::EventChannel( Component& comp,
                                             startCredit, threshold );
     }
     
-    ClockHandler_t*     clockHandler;
-    clockHandler = new EventHandler< EventChannel, bool, Cycle_t >
-                                                ( this, &EventChannel::clock );
+//     ClockHandler_t*     clockHandler;
+//     clockHandler = new EventHandler< EventChannel, bool, Cycle_t >
+//                                                 ( this, &EventChannel::clock );
 
     std::string frequency = "1GHz";
     if ( params.find("clock") != params.end() ) {
@@ -73,7 +73,10 @@ EVENTCHANNEL()::EventChannel( Component& comp,
 
     m_log.write("frequency=%s startCredit=%d\n",frequency.c_str(),startCredit );
 
-    TimeConverter* tc = comp.registerClock( frequency, clockHandler );
+//     TimeConverter* tc = comp.registerClock( frequency, clockHandler );
+    TimeConverter* tc =
+	comp.registerClock( frequency, new Clock::Handler<EventChannel>(this, &EventChannel::clock) );
+
     if ( ! tc ) {
         _abort(XbarV2,"couldn't register clock handler");
     }

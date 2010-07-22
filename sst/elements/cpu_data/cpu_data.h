@@ -15,7 +15,6 @@
 #ifndef _CPU_DATA_H
 #define _CPU_DATA_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/link.h>
 
@@ -58,13 +57,16 @@ class Cpu_data : public IntrospectedComponent {
             } 
             
             mem = configureLink( "MEM" );
-            handler = new EventHandler< Cpu_data, bool, Cycle_t >
-                                                ( this, &Cpu_data::clock );
-	    handlerPush = new EventHandler< Cpu_data, bool, Cycle_t >
-                                                ( this, &Cpu_data::pushData );
+//             handler = new EventHandler< Cpu_data, bool, Cycle_t >
+//                                                 ( this, &Cpu_data::clock );
+// 	    handlerPush = new EventHandler< Cpu_data, bool, Cycle_t >
+//                                                 ( this, &Cpu_data::pushData );
 
-            TimeConverter* tc = registerClock( frequency, handler );
-	    registerClock( frequency, handlerPush );
+//             TimeConverter* tc = registerClock( frequency, handler );
+// 	    registerClock( frequency, handlerPush );
+
+	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Cpu_data>(this, &Cpu_data::clock) );
+ 	    registerClock( frequency, new Clock::Handler<Cpu_data>( this, &Cpu_data::pushData) );
 
 	    printf("CPU_DATA period: %ld\n", (long int)tc->getFactor());
             _CPU_DATA_DBG("Done registering clock\n");
@@ -143,8 +145,6 @@ class Cpu_data : public IntrospectedComponent {
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
-        ClockHandler_t *handler, *handlerPush;
-        bool handler1( Time_t time, Event *e );
 
         Link*       mem;
         state_t     state;

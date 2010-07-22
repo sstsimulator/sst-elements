@@ -45,14 +45,15 @@ class tester : public Component {
 	tester(ComponentId_t id, Params_t &params) :
 	    Component(id)
 	{
-	    ClockHandler_t *handler = new EventHandler<tester,bool,Cycle_t>(this, &tester::clock);
 	    std::string frequency = params["clock"];
 	    if (frequency.length() == 0) {
 		INFO("Using default frequency for tester (1.0 GHz)");
 		frequency = "1.0 GHz";
 	    }
 	    printf("generating tester with freq '%s' (len:%i)\n", frequency.c_str(), (int)frequency.length());
-	    registerClock(frequency, handler);
+// 	    Clockhandler_t *handler = new EventHandler<tester,bool,Cycle_t>(this, &tester::clock);
+// 	    registerClock(frequency, handler);
+ 	    registerClock(frequency, new Clock::Handler<tester>(this, &tester::clock) );
 	}
 	bool clock(Cycle_t thisCycle)
 	{
@@ -70,13 +71,14 @@ class mem : public Component {
 	    Component(id)
 	{
 	    memchan = new MemoryChannel<uint64_t>(*this, params, "bus");
-	    ClockHandler_t *handler = new EventHandler<mem,bool,Cycle_t>(this, &mem::clock);
 	    std::string frequency = params["clock"];
 	    if (frequency.length() == 0) {
 		INFO("Using default frequency for genericMem (2.0 GHz)");
 		frequency = "2.0 GHz";
 	    }
-	    registerClock(frequency, handler);
+// 	    ClockHandler_t *handler = new EventHandler<mem,bool,Cycle_t>(this, &mem::clock);
+// 	    registerClock(frequency, handler);
+ 	    registerClock(frequency, new Clock::Handler<mem>(this, &mem::clock) );
 	}
 	bool clock(Cycle_t thisCycle)
 	{
@@ -180,7 +182,6 @@ private:
   uint64_t memStores;
 #endif
 
-  ClockHandler_t* clockHandler;
   EventHandler_t *NICeventHandler;
 
   ComponentId_t id;

@@ -140,9 +140,6 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   if (nl) netLinks.push_back(nl);*/
 
 
-  clockHandler = new EventHandler< proc, bool, Cycle_t>
-    ( this, &proc::preTic );
-
   // find config parameters
   std::string clockSpeed = "1GHz";
   string ssConfig;
@@ -198,10 +195,14 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
     mProcs.clear();
   }
 
-  _GPROC_DBG(1, " Registering clockHandler %p @ %s\n", clockHandler, 
-	     clockSpeed.c_str());
-  //   ClockRegister( clockSpeed, clockHandler );
-  registerClock( clockSpeed, clockHandler );
+//   clockHandler = new EventHandler< proc, bool, Cycle_t>
+//     ( this, &proc::preTic );
+
+//   _GPROC_DBG(1, " Registering clockHandler %p @ %s\n", clockHandler, 
+// 	     clockSpeed.c_str());
+//   //   ClockRegister( clockSpeed, clockHandler );
+//   registerClock( clockSpeed, clockHandler );
+  registerClock( clockSpeed, new Clock::Handler<proc>(this, &proc::preTic ) );
 }
 
 // handle incoming NIC events. Just put them on the list for the

@@ -13,7 +13,6 @@
 #ifndef _XBAR_H
 #define _XBAR_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/log.h>
 #include <sst/elements/include/memoryChannel.h>

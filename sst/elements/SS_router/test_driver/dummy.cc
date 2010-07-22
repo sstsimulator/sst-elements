@@ -24,12 +24,14 @@
 void RtrIF::dummyInit( Params_t params, std::string frequency )
 {
     registerExit();
-    ClockHandler_t*  clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
-                                                ( this, &RtrIF::dummyLoad );
 
-    if ( ! registerClock( frequency, clockHandler ) ) {
-        _abort(XbarV2,"couldn't register clock handler");
-    }
+//     ClockHandler_t*  clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
+//                                                 ( this, &RtrIF::dummyLoad );
+
+//     if ( ! registerClock( frequency, clockHandler ) ) {
+//         _abort(XbarV2,"couldn't register clock handler");
+//     }
+    registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::dummyLoad) );
  
     if ( params.find("nodes") == params.end() ) {
 	_abort(RtrIF,"couldn't find number of nodes\n");

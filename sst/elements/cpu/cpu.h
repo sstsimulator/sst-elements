@@ -13,7 +13,6 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -55,12 +54,14 @@ public:
         } 
             
         mem = configureLink( "MEM" );
-        /*             handler = new EventHandler< Cpu, bool, Cycle_t, Time_t > */
-        /*                                                 ( this, &Cpu::clock ); */
-        handler = new SST::EventHandler< Cpu, bool, Cycle_t >
-            ( this, &Cpu::clock );
         _CPU_DBG("-->frequency=%s\n",frequency.c_str());
-        TimeConverter* tc = registerClock( frequency, handler );
+
+//         handler = new SST::EventHandler< Cpu, bool, Cycle_t >
+//             ( this, &Cpu::clock );
+
+//         TimeConverter* tc = registerClock( frequency, handler );
+	TimeConverter* tc = registerClock( frequency, new Clock::Handler<Cpu>(this,&Cpu::clock) );
+
 	mem->setDefaultTimeBase(tc);
         printf("CPU period: %ld\n",(long int) tc->getFactor());
         _CPU_DBG("Done registering clock\n");
@@ -82,9 +83,8 @@ private:
     Cpu() :  Component(-1) {} // for serialization only
 
     bool clock( Cycle_t );
-    bool handler1( Time_t time, Event *e );
+//     bool handler1( Time_t time, Event *e );
 
-    ClockHandler_t* handler;
     Params_t    params;
     Link*       mem;
     state_t     state;
@@ -96,7 +96,6 @@ private:
     void serialize(Archive & ar, const unsigned int version )
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(handler);
         ar & BOOST_SERIALIZATION_NVP(params);
         ar & BOOST_SERIALIZATION_NVP(mem);
         ar & BOOST_SERIALIZATION_NVP(state);

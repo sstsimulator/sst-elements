@@ -154,12 +154,13 @@ public:
         findParams( "dummy.", params, tmp_params );
         dummyInit( tmp_params, frequency );
 
-        ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
-                                                ( this, &RtrIF::clock );
+//         ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
+//                                                 ( this, &RtrIF::clock );
 
-        if ( ! registerClock( frequency, clockHandler ) ) {
-            _abort(XbarV2,"couldn't register clock handler");
-        }
+//         if ( ! registerClock( frequency, clockHandler ) ) {
+//             _abort(XbarV2,"couldn't register clock handler");
+//         }
+	registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock) );
 
         db_RtrIF("Done registering clock\n");
 

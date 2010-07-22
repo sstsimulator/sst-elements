@@ -13,7 +13,6 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/elements/include/memoryDev.h>
 
@@ -43,7 +42,6 @@ class Cpu : public Component {
         bool processEvent( Event *e );
 
     private:
-        ClockHandler_t*    m_clockHandler;
         std::string        m_frequency;
 
         typedef MemoryDev< uint64_t, Foo* > memDev_t;

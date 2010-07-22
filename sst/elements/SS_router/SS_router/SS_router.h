@@ -32,7 +32,6 @@
 #include <vector>
 
 #include <queue>
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/log.h>
 #include <sst/core/link.h>

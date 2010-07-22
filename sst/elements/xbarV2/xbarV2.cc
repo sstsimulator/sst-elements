@@ -59,13 +59,6 @@ XbarV2::XbarV2( ComponentId_t id, Params_t& params ) :
         initPort( port, params );
     }
 
-    ClockHandler_t* clockHandler = new EventHandler< XbarV2, bool, Cycle_t >
-                                                ( this, &XbarV2::clock );
-
-    if ( ! clockHandler ) {
-        _abort(XbarV2,"couldn't create clock handler");
-    }
-
     std::string             frequency;
     if ( params.find("clock") != params.end() ) {
         frequency = params["clock"];
@@ -73,7 +66,15 @@ XbarV2::XbarV2( ComponentId_t id, Params_t& params ) :
 
     m_log.write("numPorts=%d frequency=%s\n", m_numPorts, frequency.c_str());
 
-    TimeConverter* tc = registerClock( frequency, clockHandler );
+//     ClockHandler_t* clockHandler = new EventHandler< XbarV2, bool, Cycle_t >
+//                                                 ( this, &XbarV2::clock );
+
+//     if ( ! clockHandler ) {
+//         _abort(XbarV2,"couldn't create clock handler");
+//     }
+
+//     TimeConverter* tc = registerClock( frequency, clockHandler );
+    TimeConverter* tc = registerClock( frequency, new Clock::Handler<XbarV2>(this, &XbarV2::clock) );
     if ( ! tc ) {
         _abort(XbarV2,"couldn't register clock handler");
     }

@@ -33,12 +33,13 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     new_dma(true)
 {
 
-    ClockHandler_t*  clockHandler = new EventHandler< trig_nic, bool, Cycle_t >
-        ( this, &trig_nic::clock_handler );
+//     ClockHandler_t*  clockHandler = new EventHandler< trig_nic, bool, Cycle_t >
+//         ( this, &trig_nic::clock_handler );
 
-    if ( ! registerClock( frequency, clockHandler, false  ) ) {
-        _abort(trig_nic,"couldn't register clock handler");
-    }
+//     if ( ! registerClock( frequency, clockHandler, false  ) ) {
+//         _abort(trig_nic,"couldn't register clock handler");
+//     }
+    registerClock( frequency, new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler), false  );
  
     if ( params.find("latency") == params.end() ) {
 	_abort(trig_nic,"couldn't find NIC latency\n");

@@ -1,7 +1,6 @@
 #ifndef _CPU_H
 #define _CPU_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/elements/include/memoryDev.h>
 #include <OffCpuIF.h>
@@ -42,7 +41,6 @@ class Cpu : public Component, OffCpuIF {
     private:
         typedef MemoryDev< uint64_t, unsigned int > memDev_t;
 
-        ClockHandler_t*         m_clockHandler;
         std::string             m_frequency;
 
         McOpteron *mcCpu;

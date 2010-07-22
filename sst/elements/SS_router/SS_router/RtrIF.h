@@ -104,12 +104,13 @@ public:
 
 	m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<RtrIF>(this,&RtrIF::processEvent) );
 
-        ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
-                                                ( this, &RtrIF::clock );
+//         ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
+//                                                 ( this, &RtrIF::clock );
 
-        if ( ! registerClock( frequency, clockHandler, false ) ) {
-            _abort(XbarV2,"couldn't register clock handler");
-        }
+//         if ( ! registerClock( frequency, clockHandler, false ) ) {
+//             _abort(XbarV2,"couldn't register clock handler");
+//         }
+	registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock), false );
 
         db_RtrIF("Done registering clock\n");
 

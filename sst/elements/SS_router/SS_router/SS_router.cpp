@@ -317,9 +317,6 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         txlinkTo( linkV[dir], dir );
     }
 
-    ClockHandler_t*     clockHandler;
-    clockHandler = new EventHandler< SS_router, bool, Cycle_t >
-                                                ( this, &SS_router::clock );
 
     std::string frequency = "1GHz";
     if ( params.find("clock") != params.end() ) {
@@ -328,7 +325,11 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
 
     m_log.write("frequency=%s\n", frequency.c_str() );
 
-    TimeConverter* tc = registerClock( frequency, clockHandler );
+//     ClockHandler_t*     clockHandler;
+//     clockHandler = new EventHandler< SS_router, bool, Cycle_t >
+//                                                 ( this, &SS_router::clock );
+//     TimeConverter* tc = registerClock( frequency, clockHandler );
+    TimeConverter* tc = registerClock( frequency, new Clock::Handler<SS_router>(this, &SS_router::clock) );
     if ( ! tc ) {
         _abort(XbarV2,"couldn't register clock handler");
     }

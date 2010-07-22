@@ -49,14 +49,16 @@ Bus::Bus( ComponentId_t id, Params_t& params ) :
 
     m_log.write("frequency=%s\n", frequency.c_str() );
 
-    ClockHandler_t* clockHandler = new EventHandler< Bus, bool, Cycle_t >
-                                                ( this, &Bus::clock );
+//     ClockHandler_t* clockHandler = new EventHandler< Bus, bool, Cycle_t >
+//                                                 ( this, &Bus::clock );
 
-    if ( ! clockHandler ) {
-        _abort(Bus,"couldn't create clock handler");
-    }
+//     if ( ! clockHandler ) {
+//         _abort(Bus,"couldn't create clock handler");
+//     }
 
-    TimeConverter* tc = registerClock( frequency, clockHandler );
+//     TimeConverter* tc = registerClock( frequency, clockHandler );
+
+    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Bus>(this, &Bus::clock) );
     if ( ! tc ) {
         _abort(Bus,"couldn't register clock handler");
     }

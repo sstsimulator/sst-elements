@@ -53,14 +53,16 @@ class Introspector_cpu : public Introspector {
             } 
             
             intData = 0;
-            handler = new EventHandler< Introspector_cpu, bool, Cycle_t >
-                                                ( this, &Introspector_cpu::pullData );
             _INTROSPECTOR_CPU_DBG("-->frequency=%s\n",frequency.c_str());
-            TimeConverter* tc = registerClock( frequency, handler );
+//             handler = new EventHandler< Introspector_cpu, bool, Cycle_t >
+//                                                 ( this, &Introspector_cpu::pullData );
+//             TimeConverter* tc = registerClock( frequency, handler );
+	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::pullData) );
 
-	     mpihandler = new EventHandler< Introspector_cpu, bool, Cycle_t >
-	                                        ( this, &Introspector_cpu::mpiCollectInt );
-	     registerClock( frequency, mpihandler );
+// 	     mpihandler = new EventHandler< Introspector_cpu, bool, Cycle_t >
+// 	                                        ( this, &Introspector_cpu::mpiCollectInt );
+// 	     registerClock( frequency, mpihandler );
+	    registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );
 
 	     mpionetimehandler = new EventHandler< Introspector_cpu, bool, Event* >
 	                                        ( this, &Introspector_cpu::mpiOneTimeCollect );
@@ -124,7 +126,6 @@ class Introspector_cpu : public Introspector {
 	bool mpiCollectInt( Cycle_t );
 	bool mpiOneTimeCollect(Event* e);
 
-        ClockHandler_t *handler, *mpihandler;
 	EventHandler< Introspector_cpu, bool, Event* > *mpionetimehandler;
         Component::Params_t    params;        
 	std::string frequency;
