@@ -45,6 +45,7 @@ unset CC CXX
 ./configure \
 	--host=powerpc-sst-darwin8.11.0 \
 	--disable-shared \
+	--with-forward-bitfields \
 	"$prefix" \
 	"$cprops" \
 	"$@"
