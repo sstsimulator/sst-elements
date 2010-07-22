@@ -23,7 +23,7 @@
 
 #define INVALID_FD -1
 // Default FEB value
-uint8 base_memory::defaultFEB = 0;
+memory_interface::mState base_memory::defaultFEB = memory_interface::FULL;
 static uint32 FEBSplat = 0;
 
 unsigned long MemAccess::counter = 0;
@@ -49,6 +49,13 @@ static const uint32 FEShift=2; /* per word */
 base_memory::base_memory(ulong size, uint pageSize, uint ident) :
   specMem(this), sizeP(size), identP(ident), fdP(INVALID_FD), gupsP(false)
 {
+#if 1
+    defaultFEB = memory_interface::FULL;
+    FEBSplat = defaultFEB + (defaultFEB<<8) + (defaultFEB<<16) + (defaultFEB << 24);
+#else
+    defaultFEB = memory_interface::EMPTY;
+    FEBSplat = 0;
+#endif
   /*int in = configuration::getValue(cfgstr + ":defaultFEB");
   if (in > 0) {
     defaultFEB = in;
@@ -56,7 +63,7 @@ base_memory::base_memory(ulong size, uint pageSize, uint ident) :
       + (defaultFEB<<24);
     printf("Default FEB set to %d (splot=%x)\n", in, FEBSplat);
     }*/
-  defaultFEB = 0;
+  //defaultFEB = 0;
 
   numPagesP = sizeP/pageSize; 
   const uint32 inPageSize = pageSize;
@@ -309,14 +316,14 @@ inline uint8 *base_memory::GetFEPage(const simAddress a)
 }
 
 //: Get the FE bits for a given address
-uint8 base_memory::getFE(const simAddress a)
+memory_interface::mState base_memory::getFE(const simAddress a)
 {
   uint8 *Page = GetFEPage(a);
-  return(Page[(a&PageMask)>>FEShift]);
+  return(mState)(Page[(a&PageMask)>>FEShift]);
 }
 
 //: Set the FE bits for a given address
-void base_memory::setFE(const simAddress a, const uint8 FEValue)
+void base_memory::setFE(const simAddress a, const memory_interface::mState FEValue)
 {
   uint8 *Page = GetFEPage(a);
   Page[(a&PageMask)>>FEShift] = FEValue;

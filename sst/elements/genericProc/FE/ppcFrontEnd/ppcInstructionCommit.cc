@@ -53,14 +53,14 @@
 // something.
 
 #define CHECK_FULL(xxx)	\
-  if(loadsAlwaysCheckFEB && (isSpec==0) && proc->getFE(xxx)==0) {	\
+  if(loadsAlwaysCheckFEB && (isSpec==0) && proc->getFE(xxx)==memory_interface::EMPTY) {	\
     didCommit = 0;							\
     _exception=FEB_EXCEPTION;						\
     _febTarget=xxx;							\
     break;								\
   }
 
-#define SET_FULL(xxx) if (storesAlwaysSetFEB && (isSpec==0)) {proc->setFE(xxx,1);}
+#define SET_FULL(xxx) if (storesAlwaysSetFEB && (isSpec==0)) {proc->setFE(xxx,memory_interface::FULL);}
 
 #define IS_TEXT(xxx) 0
 //ppcThread::isText(xxx)
@@ -481,7 +481,7 @@ bool ppcInstruction::commit(processor *proc, const bool isSpec)
       char XERstr[11] = {0};
       snprintf(XERstr, 11, "0x%08x", XER);
       strswap(XERstr+2, '0', '_');
-      printf("%p: Commit %6s %#-7x %33s %-47s CR:%8s XER:%8s FPSCR:%8s %s%lu\n", 
+      printf("%p: Commit %6s %#-7x %33s %-47s CR:%8s XER:%8s FPSCR:%8s %s%llu\n", 
 	     parent, /* %p */
 	     MD_OP_NAME(simOp),  /* %6s */
 	     CPC, /* %#x */
@@ -491,7 +491,7 @@ bool ppcInstruction::commit(processor *proc, const bool isSpec)
 	     XERstr, /* %8s */
 	     FPSCRstr, /* %8s */
 	     isSpec ? "(spec)" : "", /* %s */
-	     (unsigned long) NOW /* %lu */
+	     (unsigned long long) NOW /* %lu */
 	    );
       printf(" -1096: %x\n", ntohl(proc->ReadMemory32(0xfffffbb8, false)));
       fflush(stdout);       

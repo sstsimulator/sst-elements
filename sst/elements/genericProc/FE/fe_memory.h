@@ -32,6 +32,7 @@ class memory_interface {
   }
 #endif
 public:
+    typedef enum {FULL=1, EMPTY=0} mState;
   virtual ~memory_interface() {;}
   //: Read a byte
   virtual uint8 ReadMemory8(const simAddress, const bool)=0;
@@ -50,9 +51,9 @@ public:
   //: Write a double word (64-bits)
   virtual bool WriteMemory64(const simAddress, const uint64, const bool)=0;
   //: Get Full/Empty bits for an address
-  virtual uint8 getFE(const simAddress)=0;
+  virtual mState getFE(const simAddress)=0;
   //: Set Full/Empty bits for an address
-  virtual void setFE(const simAddress, const uint8 FEValue)=0;
+  virtual void setFE(const simAddress, const mState FEValue)=0;
   //: Squash speculative state
   virtual void squashSpec()=0;
 };
@@ -158,7 +159,7 @@ class base_memory : public memory_interface
     ar & BOOST_SERIALIZATION_NVP(memMapByAddr);
   }
 #endif
-  static uint8 defaultFEB;
+  static mState defaultFEB;
   //: Array of Pages
   //
   // We store data by allocating page-sized chunks. These are stored
@@ -217,8 +218,8 @@ public:
   bool _WriteMemory16(const simAddress, const uint16, const bool);
   bool _WriteMemory32(const simAddress, const uint32, const bool);
   bool _WriteMemory64(const simAddress, const uint64, const bool);
-  virtual uint8 getFE(const simAddress);
-  virtual void setFE(const simAddress, const uint8 FEValue);
+  virtual mState getFE(const simAddress);
+  virtual void setFE(const simAddress, const mState FEValue);
   virtual void squashSpec() {specMem.squashSpec();}
   void clearMemory();
   bool hasPage(const simAddress);
@@ -345,8 +346,8 @@ public:
 
   static memoryAccType getAccType(simAddress sa);
 
-  virtual uint8 getFE(const simAddress sa) {return myMem->getFE(sa);}
-  virtual void setFE(const simAddress sa, const uint8 FEValue) {
+  virtual mState getFE(const simAddress sa) {return myMem->getFE(sa);}
+  virtual void setFE(const simAddress sa, const mState FEValue) {
     myMem->setFE(sa, FEValue);
   }
   virtual void squashSpec() {myMem->squashSpec();}

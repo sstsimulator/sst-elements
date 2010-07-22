@@ -501,12 +501,13 @@ bool ppcInstruction::Perform_PIM_TRY_READFX(
 {
     simAddress dest = ntohl(regs[3]);
     simAddress src  = ntohl(regs[4]);
+    //printf ("try readfx %x\n", src); fflush(stdout);
 
-    if (proc->getFE(src) == 1) {
+    if (proc->getFE(src) == memory_interface::FULL) {
 	// it is full, do the read, and set the bit as needed
-	if (regs[0] == (int32_t) htonl(SS_PIM_READFE)) {
+	if (regs[0] == (int32_t) htonl(SS_PIM_TRY_READFE)) {
 	    // if we need to, empty the FE bit
-	    proc->setFE(src, 0);
+	    proc->setFE(src, memory_interface::EMPTY);
 	}
 	proc->WriteMemory32(dest, proc->ReadMemory32(src, false), false);	// false => "non-speculatively"
 	regs[3] = 0;		       // return 0 to indicate success
@@ -524,11 +525,11 @@ bool ppcInstruction::Perform_PIM_READFX(processor	*proc,
   simAddress addr = ntohl(regs[3]);
   //printf ("readfx %x\n", addr); fflush(stdout);
 
-  if (proc->getFE(addr) == 1) {
+  if (proc->getFE(addr) == memory_interface::FULL) {
     // it is full, do the read, and set the bit as needed
       if (regs[0] == (int32_t) ntohl(SS_PIM_READFE)) {
       // if we need to, empty the FE bit
-      proc->setFE(addr, 0);
+      proc->setFE(addr, memory_interface::EMPTY);
     } 
     regs[3] = ntohl(proc->ReadMemory32(addr,0));
 
@@ -585,8 +586,14 @@ bool ppcInstruction::Perform_PIM_BULK_set_FE(processor	*proc,
   simAddress addr = ntohl(regs[3]);
   simRegister len = ntohl(regs[4]);
 
-  for (int i = 0; i < len; ++i) {
-    proc->setFE(addr+i, val);
+  if (val == 0) {
+      for (int i = 0; i < len; ++i) {
+	  proc->setFE(addr+i, memory_interface::EMPTY);
+      }
+  } else {
+      for (int i = 0; i < len; ++i) {
+	  proc->setFE(addr+i, memory_interface::FULL);
+      }
   }
 
   regs[3] = 0;
@@ -601,10 +608,10 @@ bool ppcInstruction::Perform_PIM_CHANGE_FE(processor	*proc,
 
   switch (ntohl(regs[0])) {
   case SS_PIM_FILL_FE:
-    proc->setFE(addr, 1);
+    proc->setFE(addr, memory_interface::FULL);
     break;
   case SS_PIM_EMPTY_FE:
-    proc->setFE(addr, 0);
+    proc->setFE(addr, memory_interface::EMPTY);
     break;
   default:
     WARN("unknown: %x %d\n", ntohl(regs[0]), ntohl(regs[3]));
@@ -619,8 +626,8 @@ bool ppcInstruction::Perform_PIM_CHANGE_FE(processor	*proc,
 
 bool ppcInstruction::Perform_PIM_UNLOCK(processor *proc, simRegister *regs)
 {
-  int current_state = proc->getFE(ntohl(regs[3]));
-  if (base_memory::getDefaultFEB() == 1) {
+  int current_state = proc->getFE(ntohl(regs[3])) == memory_interface::FULL;
+  if (base_memory::getDefaultFEB() == memory_interface::FULL) {
     regs[0] = ntohl(SS_PIM_FILL_FE);
     if (ppcThread::verbose > 5 && current_state != 0) {
       INFO("unlocking a currently unlocked address: %p\n", 
@@ -638,7 +645,7 @@ bool ppcInstruction::Perform_PIM_UNLOCK(processor *proc, simRegister *regs)
 
 bool ppcInstruction::Perform_PIM_LOCK(processor *proc, simRegister *regs)
 {
-    if (base_memory::getDefaultFEB() == 1) {
+    if (base_memory::getDefaultFEB() == memory_interface::FULL) {
       regs[0] = ntohl(SS_PIM_READFE);
       return Perform_PIM_READFX(proc, regs);
     } else {
@@ -654,10 +661,11 @@ bool ppcInstruction::Perform_PIM_TRY_WRITEEF(
     simAddress dest = ntohl(regs[3]);
     simAddress src  = ntohl(regs[4]);
 
-    if (proc->getFE(dest) == 0) {
+    //printf("try writeef 0x%x 0x%x\n", dest, src);
+    if (proc->getFE(dest) == memory_interface::EMPTY) {
 	// it is empty, so do the write, and set the bit
 	proc->WriteMemory32(dest, proc->ReadMemory32(src, false), false);
-	proc->setFE(dest, 1);
+	proc->setFE(dest, memory_interface::FULL);
 	regs[3] = 0;
     } else {
 	regs[3] = htonl(1);
@@ -671,10 +679,11 @@ bool ppcInstruction::Perform_PIM_WRITEEF(
 {
     simAddress addr = ntohl(regs[3]);
 
-    if (proc->getFE(addr) == 0) {
+    //printf("writeef 0x%x\n", addr);
+    if (proc->getFE(addr) == memory_interface::EMPTY) {
 	// its empty to write and fill
 	proc->WriteMemory32(addr, htonl(regs[4]), 0);
-	proc->setFE(addr, 1);
+	proc->setFE(addr, memory_interface::FULL);
 
 	regs[3] = 0;
 	return true;
@@ -692,7 +701,7 @@ bool ppcInstruction::Perform_PIM_IS_FE_FULL(processor	*proc,
   simAddress addr = ntohl(regs[3]);
   //printf ("isfull %x\n", addr); fflush(stdout);
 
-  regs[3] = ntohl(proc->getFE(addr));
+  regs[3] = ntohl(proc->getFE(addr)==memory_interface::FULL);
 
   return true;
 }
@@ -703,9 +712,9 @@ bool ppcInstruction::Perform_PIM_TRYEF(processor	*proc,
   simAddress addr = ntohl(regs[3]);
   //printf ("tryef %x\n", addr); fflush(stdout);
 
-  if (proc->getFE(addr) == 0) {
+  if (proc->getFE(addr) == memory_interface::EMPTY) {
     // its empty, so we can fill it
-    proc->setFE(addr, 1);
+    proc->setFE(addr, memory_interface::FULL);
     regs[3] = 0;
   } else {
     // the FEB is already full, so return 1
