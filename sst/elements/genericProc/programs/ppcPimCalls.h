@@ -50,6 +50,18 @@
 		: "r0", "r3", "r4", "memory");
 
 
+//: Check the number of outstanding advanced memory requests
+_INLINE_ int PIM_OutstandingMR() {
+  int result;
+  asm volatile ("li r0, %1\n" /* set syscall */
+		"sc\n" /* make the "system call" */
+		"mr %0, r3, 0\n" /* Collect results*/
+		: "=r" (result)
+		: "K"  (SS_PIM_ADV_OUT)
+		: "r0", "r3", "memory" );
+  return result;
+}
+
 //: Send a matrix-vector operation to memory
 //
 // A failure (return 0) indicates a need to retry
