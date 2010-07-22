@@ -1,0 +1,11 @@
+Lennard-Jones input file for MD benchmark
+
+10 10 10        size of problem
+100             timesteps
+10 10 10        neighbor bins in each direction
+0.00462         timestep size (reduced units)
+1.444           initial temperature (reduced units)
+0.8442          density (reduced units)
+20              reneighboring every this many steps
+2.5 2.8         inner and outer cutoff (reduced units)
+0               thermo calculation every this many steps (0 = start,end)
