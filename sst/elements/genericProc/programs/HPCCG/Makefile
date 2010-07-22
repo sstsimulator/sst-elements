@@ -58,7 +58,7 @@ USE_MPI = -DUSING_QTHREADS -DWALL
 
 #MPI_INC = -I/usr/MPICH/SDK.gcc/include
 #MPI_INC = -I$(HOME)/tileprefix/include
-MPI_INC = -I$(HOME)/Public/sst/sstenv/include
+MPI_INC = -I$(HOME)/sstenv/include
 
 
 # 3) Specify C++ compiler optimization flags (if any)
@@ -79,13 +79,13 @@ CPP_OPT_FLAGS = -O0 -g -Wall -Werror
 #    Then specify the path to your MPI library (include -L and -l directives)
 
 #MPI_LIB = -L/usr/MPICH/SDK.gcc/lib -lmpich
-TILE_LIB = $(HOME)/Public/sst/sstenv/lib
+TILE_LIB = $(HOME)/sstenv/lib
 MPI_LIB = $(TILE_LIB)/libqthread.a $(TILE_LIB)/libcprops.a
 
 #
 # 5) System libraries: (May need to add -lg2c before -lm)
 
-SYS_LIB = -L$(HOME)/Public/sst/sstenv/lib -L$(HOME)/Public/sst/trunk/sst/elements/genericProc/programs/allStatLibs -lm_ppc
+SYS_LIB = -L$(HOME)/sstenv/lib -L../allStatLibs -lm_ppc
 
 #
 # 6) Specify name if executable (optional):
