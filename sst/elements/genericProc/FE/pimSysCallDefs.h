@@ -102,5 +102,6 @@
 #define SS_PIM_TRY_WRITEEF          3069
 
 #define SS_PIM_ADV_OUT          3070
+#define SS_PIM_FORCE_CALC          3071
 
 #endif

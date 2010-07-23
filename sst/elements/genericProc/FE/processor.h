@@ -234,7 +234,7 @@ public:
   //:send a (load/store) request to memory
   virtual bool sendMemoryReq( instType, uint64_t address,
 			       instruction *inst, int mProcID) = 0;
-  virtual int getOutstandingAdvancedMemReqs(int mProcID) = 0;
+  virtual int getOutstandingAdvancedMemReqs(int mProcID, int *max) = 0;
 #if HAVE_PHXSIM_H
   //: send a non-load/store request to memory (e.g. AMO)
   //

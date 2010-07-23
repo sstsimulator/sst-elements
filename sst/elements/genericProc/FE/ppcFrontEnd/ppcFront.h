@@ -152,6 +152,20 @@ class ppcInstruction : public instruction {
   //: Current Instruction
   uint32_t aCurrentInstruction;
 
+  // convenience function to read a double
+  double ReadMemoryDouble(simAddress addr, processor *proc) {
+    qword_t qw = proc->ReadMemory64(addr,0);
+    qw = endian_swap(qw);
+    double out = *((double*)&qw);
+    return out;
+  }
+
+  // convenience function to write a double
+  void WriteMemoryDouble(simAddress addr, processor *proc, double val) {
+    qword_t valWord = *((qword_t*)&val);
+    proc->WriteMemory64(addr, endian_swap(valWord), 0);
+  }
+
   ppcInstruction(ppcThread*);
   static bool isStack(const simAddress s) {
     //if (magicStack) return (s > ppcSimStackBase && s < 0xd0000000);

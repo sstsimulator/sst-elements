@@ -978,6 +978,102 @@ bool ppcInstruction::Perform_PIM_MATVEC(processor *proc, simRegister *regs) {
 }
 
 bool ppcInstruction::Perform_PIM_ADV_OUT(processor *proc, simRegister *regs) {
-  regs[3] = ntohl(proc->getOutstandingAdvancedMemReqs(proc->getCurrentRunningCore()));
+  regs[3] = ntohl(proc->getOutstandingAdvancedMemReqs(proc->getCurrentRunningCore(), 0));
   return true;
+}
+
+bool ppcInstruction::Perform_PIM_FORCE_CALC(processor *proc, simRegister *regs) {
+#if HAVE_PHXSIM_H
+  // collect arguments
+  const int j = ntohl(regs[3]);
+  const int i = ntohl(regs[4]);
+  const simAddress af = ntohl(regs[5]);
+  const simAddress ax = ntohl(regs[6]);
+  const simAddress cutforceAddr = ntohl(regs[7]);
+  const int numneigh = ntohl(regs[8]);
+
+  // check if we can send to memory
+  bool ret;
+  int max = 0;
+  int haveOut = 
+    proc->getOutstandingAdvancedMemReqs(proc->getCurrentRunningCore(), &max);
+  if (haveOut < max) {
+    ret = true;
+  } else {
+    ret = false;
+    printf("redo-no room");
+  }
+
+  // perform the operation and record addresses
+  if (ret) {
+    double cutforcesq = ReadMemoryDouble(cutforceAddr,proc);
+    printf("sst cutforce %f\n", cutforcesq);
+    
+    //const double xtmp = a.x[i][0];
+    const double xtmp = ReadMemoryDouble(ax+((i*3+0)*8),proc);
+    //const double ytmp = a.x[i][1];
+    const double ytmp = ReadMemoryDouble(ax+((i*3+1)*8),proc);
+    //const double ztmp = a.x[i][2];
+    const double ztmp = ReadMemoryDouble(ax+((i*3+2)*8),proc);
+    
+    for (int k = 0; k < numneigh; k++) {
+      //const double delx = xtmp - a.x[j][0];
+      const double delx = xtmp - ReadMemoryDouble(ax+((j*3+0)*8),proc);
+      //const double dely = ytmp - a.x[j][1];
+      const double dely = ytmp - ReadMemoryDouble(ax+((j*3+1)*8),proc);
+      //const double delz = ztmp - a.x[j][2];
+      const double delz = ztmp - ReadMemoryDouble(ax+((j*3+2)*8),proc);
+      //const double rsq = delx*delx + dely*dely + delz*delz;
+      const double rsq = delx*delx + dely*dely + delz*delz;
+      if (rsq < cutforcesq) {
+	const double sr2 = 1.0/rsq;
+	const double sr6 = sr2*sr2*sr2;
+	const double force = sr6*(sr6-0.5)*sr2;
+	//a.f[i][0] += delx*force;
+	simAddress addr = af+((i*3+0)*8);
+	double answer = ReadMemoryDouble(addr,proc) + delx*force;
+	WriteMemoryDouble(addr, proc, answer);
+	//a.f[i][1] += dely*force;
+	addr = af+((i*3+1)*8);
+	answer = ReadMemoryDouble(addr,proc) + dely*force;
+	WriteMemoryDouble(addr, proc, answer);
+	//a.f[i][2] += delz*force;
+	addr = af+((i*3+2)*8);
+	answer = ReadMemoryDouble(addr,proc) + delz*force;
+	WriteMemoryDouble(addr, proc, answer);
+
+	//a.f[j][0] -= delx*force;
+	addr = af+((j*3+0)*8);
+	answer = ReadMemoryDouble(addr,proc) - delx*force;
+	WriteMemoryDouble(addr, proc, answer);
+	//a.f[j][1] -= dely*force;
+	addr = af+((j*3+1)*8);
+	answer = ReadMemoryDouble(addr,proc) - dely*force;
+	WriteMemoryDouble(addr, proc, answer);
+	//a.f[j][2] -= delz*force;
+	addr = af+((j*3+2)*8);
+	answer = ReadMemoryDouble(addr,proc) - delz*force;
+	WriteMemoryDouble(addr, proc, answer);
+	printf("sst af_j_2 %d,%d,%d %f\n", i,j,k,answer);
+      }
+    }
+
+    //send parcel to memory
+    bool ret = true;
+    
+    // save results
+    if (ret) {
+    } else {
+      // this should really never happen if we pass the check up tom
+      printf("redo - odd\n");
+    }
+  }
+
+  // return the need to retry
+  regs[3] = ntohl(ret);
+
+  return true;
+#else
+  return false;
+#endif
 }
