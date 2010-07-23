@@ -35,21 +35,21 @@ public:
     typedef enum {FULL=1, EMPTY=0} mState;
   virtual ~memory_interface() {;}
   //: Read a byte
-  virtual uint8 ReadMemory8(const simAddress, const bool)=0;
+  virtual uint8_t ReadMemory8(const simAddress, const bool)=0;
   //: Read a halfword
-  virtual uint16 ReadMemory16(const simAddress, const bool)=0;
+  virtual uint16_t ReadMemory16(const simAddress, const bool)=0;
   //: Read a word (32-bits)
-  virtual uint32 ReadMemory32(const simAddress, const bool)=0;
+  virtual uint32_t ReadMemory32(const simAddress, const bool)=0;
   //: Read a double word (64-bits)
-  virtual uint64 ReadMemory64(const simAddress, const bool)=0;
+  virtual uint64_t ReadMemory64(const simAddress, const bool)=0;
   //: Write a byte
-  virtual bool WriteMemory8(const simAddress, const uint8, const bool)=0;
+  virtual bool WriteMemory8(const simAddress, const uint8_t, const bool)=0;
   //: Write a halfword
-  virtual bool WriteMemory16(const simAddress, const uint16, const bool)=0;
+  virtual bool WriteMemory16(const simAddress, const uint16_t, const bool)=0;
   //: Write a word (32-bits)
-  virtual bool WriteMemory32(const simAddress, const uint32, const bool)=0;
+  virtual bool WriteMemory32(const simAddress, const uint32_t, const bool)=0;
   //: Write a double word (64-bits)
-  virtual bool WriteMemory64(const simAddress, const uint64, const bool)=0;
+  virtual bool WriteMemory64(const simAddress, const uint64_t, const bool)=0;
   //: Get Full/Empty bits for an address
   virtual mState getFE(const simAddress)=0;
   //: Set Full/Empty bits for an address
@@ -95,14 +95,14 @@ class MemAccess {
   unsigned long long when;
   unsigned long number;
   simAddress         addr;
-  uint32             value;
+  uint32_t             value;
   bool               spec;
   int                size;
   MemMapEntry        *foo;
 
     MemAccess( unsigned long long _when,
                 simAddress _addr,
-                uint32 _value,
+                uint32_t _value,
                 bool _spec,
                 int _size,
                 MemMapEntry *_foo ) {
@@ -164,32 +164,32 @@ class base_memory : public memory_interface
   //
   // We store data by allocating page-sized chunks. These are stored
   // in the page array.
-  //uint8  **PageArray;
-  vector<vector<uint8>* > PageArray;
+  //uint8_t  **PageArray;
+  vector<vector<uint8_t>* > PageArray;
   //: Array of pages for full/empty bits
   // A seperate storage area is set up for Full/empty bits.
-  //uint8  **FEArray;
-  vector<vector<uint8>* > FEArray;
+  //uint8_t  **FEArray;
+  vector<vector<uint8_t>* > FEArray;
   //: Size of a page (in bytes)
-  uint32 PageSize;
+  uint32_t PageSize;
   //: Bits to shift an address to get page
-  uint32 PageShift;
+  uint32_t PageShift;
   //: Page address mask.
-  uint32 PageMask;
-  inline uint8 *GetPage (const simAddress sa);
-  inline uint8  *GetFEPage(const simAddress);
+  uint32_t PageMask;
+  inline uint8_t *GetPage (const simAddress sa);
+  inline uint8_t  *GetFEPage(const simAddress);
   specMemory specMem;
  
-  inline void readFileBackPage( const simAddress pageAddr, uint8 *bufAddr, int size ); 
-  inline void writeFileBackPage( const simAddress pageAddr, uint8 *bufAddr, int size ); 
+  inline void readFileBackPage( const simAddress pageAddr, uint8_t *bufAddr, int size ); 
+  inline void writeFileBackPage( const simAddress pageAddr, uint8_t *bufAddr, int size ); 
 
   ulong sizeP;
   uint  numPagesP;
   uint  identP;
   int   fdP;
   char  backingFileNameP[FILENAME_MAX];
-  uint32 *backingBitsP;
-  uint8 *filePageBufP;
+  uint32_t *backingBitsP;
+  uint8_t *filePageBufP;
   simAddress filePageAddrP;
   bool gupsP;
 
@@ -205,19 +205,22 @@ class base_memory : public memory_interface
 public:  
   base_memory(ulong size = 0x80000000 ,
 	      uint pageSize = 0x4000 , uint ident = 0);
-  static uint8 getDefaultFEB() { return defaultFEB; }
+  static uint8_t getDefaultFEB() { return defaultFEB; }
   //: Empty Deconstructor
   //
   //!NOTE: What was I thinking? We need to free up memory here.
+  //!NOTE: KBW: it would appear that destructors are not called anymore... but
+  //		component->finish() is called, which has the potential for
+  //		calling the finish functions of things it inherits from
   virtual ~base_memory() {;}
-  uint8 _ReadMemory8(const simAddress, const bool);
-  uint16 _ReadMemory16(const simAddress, const bool);
-  uint32 _ReadMemory32(const simAddress, const bool);
-  uint64 _ReadMemory64(const simAddress, const bool);
-  bool _WriteMemory8(const simAddress, const uint8, const bool);
-  bool _WriteMemory16(const simAddress, const uint16, const bool);
-  bool _WriteMemory32(const simAddress, const uint32, const bool);
-  bool _WriteMemory64(const simAddress, const uint64, const bool);
+  uint8_t _ReadMemory8(const simAddress, const bool);
+  uint16_t _ReadMemory16(const simAddress, const bool);
+  uint32_t _ReadMemory32(const simAddress, const bool);
+  uint64_t _ReadMemory64(const simAddress, const bool);
+  bool _WriteMemory8(const simAddress, const uint8_t, const bool);
+  bool _WriteMemory16(const simAddress, const uint16_t, const bool);
+  bool _WriteMemory32(const simAddress, const uint32_t, const bool);
+  bool _WriteMemory64(const simAddress, const uint64_t, const bool);
   virtual mState getFE(const simAddress);
   virtual void setFE(const simAddress, const mState FEValue);
   virtual void squashSpec() {specMem.squashSpec();}
@@ -343,6 +346,10 @@ public:
       delete myMem;
     }
   }
+  virtual int finish() {
+      myMem->finish();
+      return 0;
+  }
 
   static memoryAccType getAccType(simAddress sa);
 
@@ -352,14 +359,14 @@ public:
   }
   virtual void squashSpec() {myMem->squashSpec();}
 
-  virtual uint8 ReadMemory8(const simAddress sa, const bool s);
-  virtual bool WriteMemory8(const simAddress sa, const uint8 d, const bool s);
-  virtual uint16 ReadMemory16(const simAddress sa, const bool s);
-  virtual bool WriteMemory16(const simAddress sa, const uint16 d, const bool s);
-  virtual uint32 ReadMemory32(const simAddress sa, const bool s);
-  virtual bool WriteMemory32(const simAddress sa, const uint32 d, const bool s);
-  virtual uint64 ReadMemory64(const simAddress sa, const bool s);
-  virtual bool WriteMemory64(const simAddress sa, const uint64 d, const bool s);
+  virtual uint8_t ReadMemory8(const simAddress sa, const bool s);
+  virtual bool WriteMemory8(const simAddress sa, const uint8_t d, const bool s);
+  virtual uint16_t ReadMemory16(const simAddress sa, const bool s);
+  virtual bool WriteMemory16(const simAddress sa, const uint16_t d, const bool s);
+  virtual uint32_t ReadMemory32(const simAddress sa, const bool s);
+  virtual bool WriteMemory32(const simAddress sa, const uint32_t d, const bool s);
+  virtual uint64_t ReadMemory64(const simAddress sa, const bool s);
+  virtual bool WriteMemory64(const simAddress sa, const uint64_t d, const bool s);
 
   static simAddress globalAllocate (unsigned int size);
   static simAddress localAllocateNearAddr (unsigned int size, simAddress addr);
