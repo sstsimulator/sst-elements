@@ -50,6 +50,30 @@
 		: "r0", "r3", "r4", "memory");
 
 
+//: Send a force computation to memory
+//
+// A failure (return 0) indicates a need to retry
+_INLINE_ int PIM_ForceCalc(const int j, const int i, double *af, 
+			   const double *ax,
+			   const double *cutforce,
+			   const int numneigh) {
+  int result;
+  asm volatile ("mr r3, %1\n" /* j */
+		"mr r4, %2\n" /* i */
+		"mr r5, %3\n" /* af */
+		"mr r6, %4\n" /* ax */
+		"mr r7, %5\n" /* cutforce */
+		"mr r8, %6\n" /* numneigh */
+		"li r0, %7\n" /* set syscall */
+		"sc\n" /* make the "system call" */
+		"mr %0, r3, 0\n" /* Collect results*/
+		: "=r" (result)
+		: "r" (j), "r" (i), "r" (af), "r" (ax), "r" (cutforce), 
+		  "r" (numneigh), "K" (SS_PIM_FORCE_CALC)
+		: "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "memory");
+  return result;
+}
+
 //: Check the number of outstanding advanced memory requests
 _INLINE_ int PIM_OutstandingMR() {
   int result;
