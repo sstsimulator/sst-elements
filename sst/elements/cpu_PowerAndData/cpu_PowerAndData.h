@@ -61,13 +61,15 @@ class Cpu_PowerAndData : public IntrospectedComponent {
             } 
             
             mem = configureLink( "MEM" );
-            handler = new EventHandler< Cpu_PowerAndData, bool, Cycle_t >
-                                                ( this, &Cpu_PowerAndData::clock );
-	    handlerPush = new EventHandler< Cpu_PowerAndData, bool, Cycle_t >
-                                                ( this, &Cpu_PowerAndData::pushData );
+ //           handler = new EventHandler< Cpu_PowerAndData, bool, Cycle_t >
+ //                                               ( this, &Cpu_PowerAndData::clock );
+ //	    handlerPush = new EventHandler< Cpu_PowerAndData, bool, Cycle_t >
+ //                                               ( this, &Cpu_PowerAndData::pushData );
 
-            TimeConverter* tc = registerClock( frequency, handler );
-	    TimeConverter* tcPush = registerClock( frequency, handlerPush );
+            TimeConverter* tc = registerClock( frequency, new Clock::Handler< Cpu_PowerAndData >
+                                                ( this, &Cpu_PowerAndData::clock ) );
+	    TimeConverter* tcPush = registerClock( frequency, new Clock::Handler< Cpu_PowerAndData >
+                                                ( this, &Cpu_PowerAndData::pushData) );
 
 	    mem->setDefaultTimeBase(tc);
 	    printf("CPU_POWERANDDATA period: %ld\n",tc->getFactor());
@@ -189,8 +191,7 @@ class Cpu_PowerAndData : public IntrospectedComponent {
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
-        ClockHandler_t *handler, *handlerPush;
-        bool handler1( Time_t time, Event *e );
+        //bool handler1( Time_t time, Event *e );
 
         Params_t    params;
         Link*       mem;
@@ -211,7 +212,6 @@ class Cpu_PowerAndData : public IntrospectedComponent {
     void serialize(Archive & ar, const unsigned int version )
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(handler);
         ar & BOOST_SERIALIZATION_NVP(params);
         ar & BOOST_SERIALIZATION_NVP(mem);
         ar & BOOST_SERIALIZATION_NVP(state);

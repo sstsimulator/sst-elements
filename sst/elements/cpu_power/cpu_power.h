@@ -45,9 +45,10 @@ class Cpu_power : public IntrospectedComponent {
             } 
             
             mem = configureLink( "MEM" );
-            handler = new SST::EventHandler< Cpu_power, bool, Cycle_t >
-                                                ( this, &Cpu_power::clock );
-            TimeConverter* tc = registerClock( frequency, handler );
+ //           handler = new SST::EventHandler< Cpu_power, bool, Cycle_t >
+ //                                               ( this, &Cpu_power::clock );
+ //           TimeConverter* tc = registerClock( frequency, handler );
+       TimeConverter* tc = registerClock( frequency, new Clock::Handler<Cpu_power>(this,&Cpu_power::clock) );
 	  
 	    mem->setDefaultTimeBase(tc);
 	    printf("CPU_POWER period: %ld\n",tc->getFactor());
@@ -117,8 +118,7 @@ class Cpu_power : public IntrospectedComponent {
 	Cpu_power() :  IntrospectedComponent(-1) {} // for serialization only
 
         bool clock( Cycle_t );
-        ClockHandler_t* handler;
-        bool handler1( Time_t time, Event *e );
+        //bool handler1( Time_t time, Event *e );
 
         Params_t    params;
         Link*       mem;
@@ -137,7 +137,6 @@ class Cpu_power : public IntrospectedComponent {
     void serialize(Archive & ar, const unsigned int version )
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(handler);
         ar & BOOST_SERIALIZATION_NVP(params);
         ar & BOOST_SERIALIZATION_NVP(mem);
         ar & BOOST_SERIALIZATION_NVP(state);
