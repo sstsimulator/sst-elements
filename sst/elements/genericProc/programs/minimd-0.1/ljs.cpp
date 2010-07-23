@@ -132,7 +132,7 @@ int prompt()
 
   int flag;
 #ifdef SST
-  flag = 1;
+  flag = 0;
 #else
   if (me == 0) {
     printf("(0) Stop, (1) Continue\n");
