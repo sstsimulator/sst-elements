@@ -20,6 +20,7 @@
 #include <sst/core/simulation.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <sst/core/timeConverter.h>
 
 #include "syssim_driver.h"
 #include <disksim_interface.h>
@@ -76,6 +77,9 @@ class sstdisksim : public Component {
   void handleEvent(Event* ev);
   void emptyEvent(Event* ev);
 
+  bool clock(Cycle_t current);
+
+
   SST::Link* link;
   SST::Link* empty;
   
@@ -94,6 +98,8 @@ class sstdisksim : public Component {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(numsectors);
       ar & BOOST_SERIALIZATION_NVP(link);
+      ar & BOOST_SERIALIZATION_NVP(empty);
+
       
       link->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::handleEvent));
       empty->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::emptyEvent));

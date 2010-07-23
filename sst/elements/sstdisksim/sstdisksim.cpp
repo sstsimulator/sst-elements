@@ -17,6 +17,7 @@
 
 #include "sstdisksim.h"
 #include "sst/core/element.h"
+#include <sst/core/timeConverter.h>
 
 #define	BLOCK	4096
 #define	SECTOR	512
@@ -151,7 +152,9 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 
   link = configureLink( "link",  new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent) );
   empty = configureSelfLink( "empty",  new Event::Handler<sstdisksim>(this,&sstdisksim::emptyEvent) );
-  registerTimeBase("1ns");
+  registerTimeBase("1ps");
+
+  //  registerClock("1GHz", new Clock::Handler<sstdisksim>(this, &sstdisksim::clock));
 
   printf("Starting disksim up\n");
 
@@ -270,7 +273,6 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 void
 sstdisksim::emptyEvent(Event* ev)
 {
-  return;
 }
 
 /******************************************************************************/
@@ -288,12 +290,21 @@ sstdisksim::handleEvent(Event* ev)
       __done = true;
       unregisterExit();
       print_statistics(&__st, "response time");
+      printf("time: %f\n", __now);
     }
     return;
   }
 
   sstdisksim_process_event(event);
   return;
+}
+
+/******************************************************************************/
+bool
+sstdisksim::clock(Cycle_t current)
+{
+  printf("cycle(s) %d\n", (int)current);
+  return false;
 }
 
 /******************************************************************************/
