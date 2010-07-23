@@ -84,7 +84,7 @@ private:
   //WCUnit *_wcUnit;
 public:
    virtual int Setup( ) { return 0; }
-   virtual int Finish( ) { return 0; }
+   virtual int finish( ) { return memory::finish(); }
 
   //: request a memory be fully loaded
   //
