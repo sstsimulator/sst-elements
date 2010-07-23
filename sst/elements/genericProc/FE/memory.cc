@@ -120,19 +120,37 @@ base_memory::base_memory(ulong size, uint pageSize, uint ident) :
     }*/
 }
 
+static const char *human_readable_bytes(size_t bytes)
+{
+    static char readable_string[100] = { 0 };
+    const double GB = 1024 * 1024 * 1024;
+    const double MB = 1024 * 1024;
+    const double kB = 1024;
+
+    if (bytes > GB) {
+	snprintf(readable_string, 100, "%.1f GB", bytes / GB);
+    } else if (bytes > MB) {
+	snprintf(readable_string, 100, "%.1f MB", bytes / MB);
+    } else if (bytes > kB) {
+	snprintf(readable_string, 100, "%.1f kB", bytes / kB);
+    } else {
+	snprintf(readable_string, 100, "%lu bytes", (unsigned long) bytes);
+    }
+    return readable_string;
+}
+
 void base_memory::setup() {;}
 void base_memory::finish()
 {
     unsigned int non_null = 0;
     unsigned int total_size = 0;
     for (size_t i=0; i<PageArray.size(); ++i) {
-	non_null += (PageArray[i] != NULL);
 	if (PageArray[i] != NULL) {
+	    non_null ++;
 	    total_size += PageArray[i]->size();
 	}
     }
-    printf("%u memory pages allocated\n", non_null);
-    printf("%u memory bytes allocated\n", total_size);
+    printf("%u memory pages allocated (%s)\n", non_null, human_readable_bytes(total_size));
     if ( fdP != INVALID_FD ) {
 	INFO("removing backing file %s\n",backingFileNameP);
 	close(fdP);
