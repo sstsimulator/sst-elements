@@ -39,6 +39,10 @@
 # include <qthread/qloop.h>
 #endif
 
+#ifdef PIM_EXTENSIONS
+#include <ppcPimCalls.h>
+#endif
+
 Force::Force() {}
 Force::~Force() {}
 
@@ -68,35 +72,51 @@ static void Fcompute_innerloop(qthread_t *me, const size_t startat, const size_t
 	const double ytmp = a.x[i][1];
 	const double ztmp = a.x[i][2];
 	for (int k = 0; k < numneigh; k++) {
-	    const int j = neighs[k];
-	    const double delx = xtmp - a.x[j][0];
-	    const double dely = ytmp - a.x[j][1];
-	    const double delz = ztmp - a.x[j][2];
-	    const double rsq = delx*delx + dely*dely + delz*delz;
-	    if (rsq < a.cutforcesq) {
-		const double sr2 = 1.0/rsq;
-		const double sr6 = sr2*sr2*sr2;
-		const double force = sr6*(sr6-0.5)*sr2;
-#ifdef SST
-		qthread_readFE(NULL, NULL, (const aligned_t*)&(a.f[i][0]));
-		a.f[i][0] += delx*force;
-		a.f[i][1] += dely*force;
-		a.f[i][2] += delz*force;
-		qthread_fill((const aligned_t*)&(a.f[i][0]));
-		qthread_readFE(NULL, NULL, (const aligned_t*)&(a.f[j][0]));
-		a.f[j][0] -= delx*force;
-		a.f[j][1] -= dely*force;
-		a.f[j][2] -= delz*force;
-		qthread_fill((const aligned_t*)&(a.f[j][0]));
+#ifdef PIM_EXTENSIONS
+	  const int j = neighs[k];
+	  int result = 0;
+	  do {
+	    result = PIM_ForceCalc(j, i, &a.f[0][0], &a.x[0][0], &a.cutforcesq, numneigh);
+	  } while (result == 0);
+	  while (PIM_OutstandingMR() > 7) {;}
 #else
-		qthread_dincr(&(a.f[i][0]), delx*force); // must be atomic because i may be someone else's j
-		qthread_dincr(&(a.f[i][1]), dely*force);
-		qthread_dincr(&(a.f[i][2]), delz*force);
-		qthread_dincr(&(a.f[j][0]), -1*(delx*force));
-		qthread_dincr(&(a.f[j][1]), -1*(dely*force));
-		qthread_dincr(&(a.f[j][2]), -1*(delz*force));
+	  const int j = neighs[k];
+	  printf("cutfrocesq %f\n", a.cutforcesq);
+	  printf("a.x[0][0] %p %p\n", a.x, &a.x[0][0]);
+	  printf("a.x[i] %p %d: %p %p %p\n", a.x, i, &a.x[i][0],&a.x[i][1],&a.x[i][2]);
+	  printf("a.x[j] %p %d: %p %p %p\n", a.x, j, &a.x[j][0],&a.x[j][1],&a.x[j][2]);
+	  printf("a.f[j] %p %d: %p %p %p\n", a.f, j, &a.f[j][0],&a.f[j][1],&a.f[j][2]);
+	  const double delx = xtmp - a.x[j][0];
+	  const double dely = ytmp - a.x[j][1];
+	  const double delz = ztmp - a.x[j][2];
+	  const double rsq = delx*delx + dely*dely + delz*delz;
+	  if (rsq < a.cutforcesq) {
+	    const double sr2 = 1.0/rsq;
+	    const double sr6 = sr2*sr2*sr2;
+	    const double force = sr6*(sr6-0.5)*sr2;
+#ifdef SST
+	    qthread_readFE(NULL, NULL, (const aligned_t*)&(a.f[i][0]));
+	    a.f[i][0] += delx*force;
+	    a.f[i][1] += dely*force;
+	    a.f[i][2] += delz*force;
+	    qthread_fill((const aligned_t*)&(a.f[i][0]));
+	    qthread_readFE(NULL, NULL, (const aligned_t*)&(a.f[j][0]));
+	    a.f[j][0] -= delx*force;
+	    a.f[j][1] -= dely*force;
+	    a.f[j][2] -= delz*force;
+	    printf("af_j_2 %d,%d,%d %f\n", i,j,k,a.f[j][2]);
+	    qthread_fill((const aligned_t*)&(a.f[j][0]));
+#else
+	    // must be atomic because i may be someone else's j
+	    qthread_dincr(&(a.f[i][0]), delx*force);
+	    qthread_dincr(&(a.f[i][1]), dely*force);
+	    qthread_dincr(&(a.f[i][2]), delz*force);
+	    qthread_dincr(&(a.f[j][0]), -1*(delx*force));
+	    qthread_dincr(&(a.f[j][1]), -1*(dely*force));
+	    qthread_dincr(&(a.f[j][2]), -1*(delz*force));
 #endif
-	    }
+	  }
+#endif // pim extensions
 	}
     }
 }

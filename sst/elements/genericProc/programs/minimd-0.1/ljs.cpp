@@ -95,22 +95,32 @@ int main(int argc, char **argv)
     if (me == 0) printf("Setting up ...\n");
 
     create_box(atom,in.nx,in.ny,in.nz,in.rho);
+    if (me == 0) printf("Created box ...\n");
     flag = comm.setup(neighbor.cutneigh,atom);
     if (flag && prompt()) continue;
+    if (me == 0) printf("Neighbor Setup ...\n");
     flag = neighbor.setup(atom);
     if (flag && prompt()) continue;
 
+    if (me == 0) printf("Integrate Setup ...\n");
     integrate.setup();
+    if (me == 0) printf("Force Setup ...\n");
     force.setup();
+    if (me == 0) printf("Thermo Setup ...\n");
     thermo.setup(in.rho,integrate.ntimes);
 
+    if (me == 0) printf("Create Atoms ...\n");
     flag = create_atoms(atom,in.nx,in.ny,in.nz,in.rho);
     if (flag && prompt()) continue;
+    if (me == 0) printf("Create Velocity ...\n");
     create_velocity(in.t_request,atom,thermo);
+    if (me == 0) printf("Created Velocity ...\n");
 
     comm.exchange(atom);
     comm.borders(atom);
+    if (me == 0) printf("Neigh build ...\n");
     neighbor.build(atom);
+    if (me == 0) printf("Thermo compute ...\n");
     thermo.compute(0,atom,neighbor,force);
 
     if (me == 0) printf("Starting dynamics ...\n");

@@ -94,6 +94,7 @@ void Neighbor::build(Atom &atom)
 
   /* bin local & ghost atoms */
 
+  printf(" binning...\n");
   binatoms(atom);
 
   /* loop over each atom, storing neighbors */
@@ -103,6 +104,7 @@ void Neighbor::build(Atom &atom)
   npnt = 0;
   npage = 0;
 
+  printf(" looping %d...\n", nlocal);
   for (i = 0; i < nlocal; i++) {
 
     /* if necessary, goto next page and add pages */

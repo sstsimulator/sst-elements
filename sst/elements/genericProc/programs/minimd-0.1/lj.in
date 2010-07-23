@@ -1,8 +1,8 @@
 Lennard-Jones input file for MD benchmark
 
-10 10 10        size of problem
+5 5 5        size of problem
 100             timesteps
-10 10 10        neighbor bins in each direction
+5 5 5        neighbor bins in each direction
 0.00462         timestep size (reduced units)
 1.444           initial temperature (reduced units)
 0.8442          density (reduced units)
