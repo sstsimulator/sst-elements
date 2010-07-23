@@ -24,14 +24,14 @@
 #define INVALID_FD -1
 // Default FEB value
 memory_interface::mState base_memory::defaultFEB = memory_interface::FULL;
-static uint32 FEBSplat = 0;
+static uint32_t FEBSplat = 0;
 
 unsigned long MemAccess::counter = 0;
 
 //: FEB granularity
 // Bits to shift an address to get the FEB address. Currently set to
 // 2, so we get a FEB per word.
-static const uint32 FEShift=2; /* per word */
+static const uint32_t FEShift=2; /* per word */
 
 //: Initialize a memory object
 //
@@ -66,13 +66,13 @@ base_memory::base_memory(ulong size, uint pageSize, uint ident) :
   //defaultFEB = 0;
 
   numPagesP = sizeP/pageSize; 
-  const uint32 inPageSize = pageSize;
+  const uint32_t inPageSize = pageSize;
 
   DPRINT(0,"numPages=%x pageSize=%x size=%lx ident=%d\n",
 	 numPagesP,pageSize,sizeP,(int)identP);
-  uint32 Index = inPageSize>>1;
-  uint32 Index2 = 1;   
-  uint32 Index3 = 1;
+  uint32_t Index = inPageSize>>1;
+  uint32_t Index2 = 1;   
+  uint32_t Index3 = 1;
   while(Index) {
     ++Index2;
     Index3 = (Index3 << 1)|1;
@@ -94,17 +94,17 @@ base_memory::base_memory(ulong size, uint pageSize, uint ident) :
       perror(tmp2);
       exit(0);
     }
-    backingBitsP = new uint32[numPagesP/sizeof(uint32)*8];
-    bzero( backingBitsP, numPagesP/sizeof(uint32)*8 );
+    backingBitsP = new uint32_t[numPagesP/sizeof(uint32_t)*8];
+    bzero( backingBitsP, numPagesP/sizeof(uint32_t)*8 );
     
-    filePageBufP = new uint8[pageSize];
+    filePageBufP = new uint8_t[pageSize];
     filePageAddrP = 0;
 
     } else {*/
     
-  //PageArray = new uint8 *[numPagesP];
-  PageArray = vector<vector<uint8>* >(numPagesP);
-  FEArray  = vector<vector<uint8>* >(numPagesP);
+  //PageArray = new uint8_t *[numPagesP];
+  PageArray = vector<vector<uint8_t>* >(numPagesP);
+  FEArray  = vector<vector<uint8_t>* >(numPagesP);
   Index = 0;
   for(Index=0;Index<numPagesP;Index++) {
     PageArray[Index] = NULL;
@@ -121,12 +121,23 @@ base_memory::base_memory(ulong size, uint pageSize, uint ident) :
 }
 
 void base_memory::setup() {;}
-void base_memory::finish(){
-  if ( fdP != INVALID_FD ) {
-    INFO("removing backing file %s\n",backingFileNameP);
-    close(fdP);
-    unlink(backingFileNameP);
-  }
+void base_memory::finish()
+{
+    unsigned int non_null = 0;
+    unsigned int total_size = 0;
+    for (size_t i=0; i<PageArray.size(); ++i) {
+	non_null += (PageArray[i] != NULL);
+	if (PageArray[i] != NULL) {
+	    total_size += PageArray[i]->size();
+	}
+    }
+    printf("%u memory pages allocated\n", non_null);
+    printf("%u memory bytes allocated\n", total_size);
+    if ( fdP != INVALID_FD ) {
+	INFO("removing backing file %s\n",backingFileNameP);
+	close(fdP);
+	unlink(backingFileNameP);
+    }
 }
 
 void base_memory::preTic()
@@ -137,24 +148,24 @@ void base_memory::preTic()
 #if 0
     PRINTF("time=%lld addr=%#lx value=%#lx size=%d\n", TimeStamp(),
                              (memWrite.top())->addr,
-                             (uint32)(memWrite.top())->value,
+                             (uint32_t)(memWrite.top())->value,
                              (memWrite.top())->size);
 #endif
 
     if (  (memWrite.top())->size == Size8 ) {
       delayWriteMemory8(      (memWrite.top())->foo,
                              (memWrite.top())->addr,
-                             (uint8)(memWrite.top())->value,
+                             (uint8_t)(memWrite.top())->value,
                              (memWrite.top())->spec);
     } else if ( (memWrite.top())->size == Size16 ) {
       delayWriteMemory16( (memWrite.top())->foo,
                              (memWrite.top())->addr,
-                             (uint16)(memWrite.top())->value,
+                             (uint16_t)(memWrite.top())->value,
                              (memWrite.top())->spec);
     } else if ( (memWrite.top())->size == Size32 ) {
       delayWriteMemory32( (memWrite.top())->foo,
                              (memWrite.top())->addr,
-                             (uint32)(memWrite.top())->value,
+                             (uint32_t)(memWrite.top())->value,
                              (memWrite.top())->spec);
     } else {
       ERROR("Bad size %#x\n", (memWrite.top())->size);
@@ -166,7 +177,7 @@ void base_memory::preTic()
 
 void base_memory::clearMemory() {
  if ( fdP == INVALID_FD ) {
-  for(uint32 index=0; index<numPagesP;++index) {
+  for(uint32_t index=0; index<numPagesP;++index) {
     if(PageArray[index]) {
       delete PageArray[index];
       PageArray[index]=0;
@@ -187,7 +198,7 @@ void base_memory::clearMemory() {
 bool base_memory::hasPage(const simAddress sa) {
  if ( fdP == INVALID_FD ) {
   simAddress saCp = sa & 0x7fffffff;
-  uint32 Index = (saCp >> PageShift);
+  uint32_t Index = (saCp >> PageShift);
   if(PageArray[Index]) {
     return 1;
   } else {
@@ -203,69 +214,69 @@ bool base_memory::hasPage(const simAddress sa) {
 // Returns a host pointer to the simulation page containting the
 // requested address. If the page has not been accessed, it will be
 // allocated and zeroed
-uint8 *base_memory::GetPage (const simAddress sa)
+uint8_t *base_memory::GetPage (const simAddress sa)
 {
-  uint8 *page = NULL;
-  bool  initFlag = false;
-  simAddress saCp = sa & 0x7fffffff;
-  uint32        Index = (saCp >> PageShift);
+    uint8_t *page = NULL;
+    bool  initFlag = false;
+    simAddress saCp = sa & 0x7fffffff;
+    uint32_t        Index = (saCp >> PageShift);
 
-  if ( fdP == INVALID_FD ) {
-    if(!PageArray[Index]) {
-      //PageArray[Index] = new uint8[PageSize];
-      PageArray[Index] = new vector<uint8>(PageSize);
-      initFlag = true;
-    }
-    //page = PageArray[Index];
-    page = &((PageArray[Index])->operator[](0));
-  } else {
-    simAddress pageAddr = sa & ~(PageSize - 1);
-    int wordPos = Index/32;
-    int bitPos = Index%32;
-
-    DPRINT(1,"ident=%d pageAddr %#x sa=%#x Index=%d wordPos=%d bitPos=%d\n",
-                      identP-1,pageAddr,sa,Index,wordPos,bitPos);
-
-    if ( ! (backingBitsP[wordPos] & ( 1 << bitPos ))  ) {
-      DPRINT(0,"page fault %#lx wordPos=%d bitPos=%d\n",
-						(unsigned long) pageAddr,wordPos,bitPos);
-      backingBitsP[wordPos] |=  1 << bitPos;
-      initFlag = true;
-    }
-
-    if ( pageAddr != filePageAddrP ) {
-      DPRINT(0,"page evict old %#lx new %#lx\n",
-            (unsigned long) filePageAddrP, (unsigned long) pageAddr);
-      writeFileBackPage( filePageAddrP, filePageBufP, PageSize );
-      filePageAddrP = pageAddr;
-      if ( ! initFlag ) {
-        readFileBackPage( filePageAddrP, filePageBufP, PageSize );
-      } 
-    }
-
-    page = filePageBufP;
-  }
-  if ( initFlag == true ) {
-    if ( ! gupsP ) {
-      memset(page, 0x00, PageSize);
+    if ( fdP == INVALID_FD ) {
+	if(!PageArray[Index]) {
+	    //PageArray[Index] = new uint8_t[PageSize];
+	    PageArray[Index] = new vector<uint8_t>(PageSize);
+	    initFlag = true;
+	}
+	//page = PageArray[Index];
+	page = &((PageArray[Index])->operator[](0));
     } else {
-      
-      int tmp = (identP - 1) * sizeP/sizeof(int) + sa / sizeof(int);
+	simAddress pageAddr = sa & ~(PageSize - 1);
+	int wordPos = Index/32;
+	int bitPos = Index%32;
 
-      DPRINT(0,"sa=%#lx %#lx %#lx\n",(unsigned long) sa,
-            (unsigned long) sizeP, (unsigned long) tmp);
+	DPRINT(1,"ident=%d pageAddr %#x sa=%#x Index=%d wordPos=%d bitPos=%d\n",
+		identP-1,pageAddr,sa,Index,wordPos,bitPos);
 
-      for (unsigned int i = 0; i < PageSize/sizeof(int); i++ ) {
-       ((int*)page)[i] = tmp + i; 
-      }
+	if ( ! (backingBitsP[wordPos] & ( 1 << bitPos ))  ) {
+	    DPRINT(0,"page fault %#lx wordPos=%d bitPos=%d\n",
+		    (unsigned long) pageAddr,wordPos,bitPos);
+	    backingBitsP[wordPos] |=  1 << bitPos;
+	    initFlag = true;
+	}
+
+	if ( pageAddr != filePageAddrP ) {
+	    DPRINT(0,"page evict old %#lx new %#lx\n",
+		    (unsigned long) filePageAddrP, (unsigned long) pageAddr);
+	    writeFileBackPage( filePageAddrP, filePageBufP, PageSize );
+	    filePageAddrP = pageAddr;
+	    if ( ! initFlag ) {
+		readFileBackPage( filePageAddrP, filePageBufP, PageSize );
+	    }
+	}
+
+	page = filePageBufP;
     }
-  }
-  return(page);
+    if ( initFlag == true ) {
+	if ( ! gupsP ) {
+	    memset(page, 0x00, PageSize);
+	} else {
+
+	    int tmp = (identP - 1) * sizeP/sizeof(int) + sa / sizeof(int);
+
+	    DPRINT(0,"sa=%#lx %#lx %#lx\n",(unsigned long) sa,
+		    (unsigned long) sizeP, (unsigned long) tmp);
+
+	    for (unsigned int i = 0; i < PageSize/sizeof(int); i++ ) {
+		((int*)page)[i] = tmp + i;
+	    }
+	}
+    }
+    return(page);
 }
 
 
 void base_memory::writeFileBackPage( const simAddress pageAddr, 
-		uint8 *bufAddr, int size )
+		uint8_t *bufAddr, int size )
 {
   DPRINT(1,"pageAddr=%#lx bufAddr=%p size=%d\n",
         (unsigned long) pageAddr,bufAddr,size);
@@ -282,7 +293,7 @@ void base_memory::writeFileBackPage( const simAddress pageAddr,
 }
 
 void base_memory::readFileBackPage( const simAddress pageAddr,
-		uint8 *bufAddr, int size )
+		uint8_t *bufAddr, int size )
 {
   DPRINT(1,"pageAddr=%#lx bufAddr=%p size=%d\n",
                     (unsigned long) pageAddr,bufAddr,size);
@@ -301,41 +312,41 @@ void base_memory::readFileBackPage( const simAddress pageAddr,
 //: Return pointer to a page of Full/Empty bits
 //
 // Operation similar to that of base_memory::GetPage()
-inline uint8 *base_memory::GetFEPage(const simAddress a)
+inline uint8_t *base_memory::GetFEPage(const simAddress a)
 {
   simAddress saCp = a & 0x7fffffff;
-  uint32        Index = (saCp >> PageShift);
+  uint32_t        Index = (saCp >> PageShift);
   if (!FEArray[Index]) {
     // get a new FEBPage and initialize it. 
-    FEArray[Index] = new vector<uint8>(PageSize>>FEShift);
+    FEArray[Index] = new vector<uint8_t>(PageSize>>FEShift);
     memset(&((FEArray[Index])->operator[](0)), FEBSplat, PageSize>>FEShift);
   }
-  vector<uint8> *page = FEArray[Index];
-  uint8 *pageStart = &(page->operator[](0));
+  vector<uint8_t> *page = FEArray[Index];
+  uint8_t *pageStart = &(page->operator[](0));
   return pageStart;
 }
 
 //: Get the FE bits for a given address
 memory_interface::mState base_memory::getFE(const simAddress a)
 {
-  uint8 *Page = GetFEPage(a);
+  uint8_t *Page = GetFEPage(a);
   return(mState)(Page[(a&PageMask)>>FEShift]);
 }
 
 //: Set the FE bits for a given address
 void base_memory::setFE(const simAddress a, const memory_interface::mState FEValue)
 {
-  uint8 *Page = GetFEPage(a);
+  uint8_t *Page = GetFEPage(a);
   Page[(a&PageMask)>>FEShift] = FEValue;
 }
 
 //:Read a byte
-uint8 base_memory::_ReadMemory8(const simAddress sa, const bool spec)
+uint8_t base_memory::_ReadMemory8(const simAddress sa, const bool spec)
 {
   if (spec) {
     return specMem.readSpec8(sa);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page)     return(0xff);
     
     return(Page[sa&PageMask]);
@@ -343,96 +354,96 @@ uint8 base_memory::_ReadMemory8(const simAddress sa, const bool spec)
 }
 
 //:Read 2 bytes
-uint16 base_memory::_ReadMemory16(const simAddress sa, const bool spec)
+uint16_t base_memory::_ReadMemory16(const simAddress sa, const bool spec)
 {
   if (spec) {
     return specMem.readSpec16(sa);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page)     return(0xffff);
 
     unsigned int index = sa&PageMask;
     if (index + 2 > PageSize) {
-	uint8 *Page2 = GetPage(sa+2);
-	uint16 Temp;
+	uint8_t *Page2 = GetPage(sa+2);
+	uint16_t Temp;
 	memcpy(&Temp, &Page[index], 1);
 	memcpy(((unsigned char *)(&Temp))+1, Page2, 1);
 	return Temp;
     } else {
 	Page = &Page[index];
-	uint16 *TempPtr = (uint16*)Page;
-        uint16 Temp;
-        memcpy(&Temp, TempPtr, sizeof(uint16));
+	uint16_t *TempPtr = (uint16_t*)Page;
+        uint16_t Temp;
+        memcpy(&Temp, TempPtr, sizeof(uint16_t));
 	return(Temp);
     }
   }
 }
 
 //:Read 4 bytes
-uint32 base_memory::_ReadMemory32(const simAddress sa, const bool spec)
+uint32_t base_memory::_ReadMemory32(const simAddress sa, const bool spec)
 {
   if (spec) {
     return specMem.readSpec32(sa);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page) {
 	return(0xffffffff);
     }
 
     unsigned int index = sa&PageMask;
     if (index + 4 > PageSize) {
-	uint8 *Page2 = GetPage(sa+4);
-	uint32 Temp;
+	uint8_t *Page2 = GetPage(sa+4);
+	uint32_t Temp;
 	memcpy(&Temp, &Page[index], PageSize-index);
 	memcpy(((unsigned char*)(&Temp))+(PageSize-index), 
 		Page2, 4-(PageSize-index));
 	return(Temp);
     } else {
 	Page = &Page[index];
-	uint32 *TempPtr = (uint32*)Page;
-        uint32 Temp;
-        memcpy(&Temp, TempPtr, sizeof(uint32));
+	uint32_t *TempPtr = (uint32_t*)Page;
+        uint32_t Temp;
+        memcpy(&Temp, TempPtr, sizeof(uint32_t));
         return Temp;
     }
   }
 }
 
-uint64 base_memory::_ReadMemory64(const simAddress sa, const bool spec)
+uint64_t base_memory::_ReadMemory64(const simAddress sa, const bool spec)
 {
   if (spec) {
     return specMem.readSpec32(sa);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page) {
 	return(0xffffffff);
     }
 
     unsigned int index = sa&PageMask;
     if (index + 8 > PageSize) {
-	uint8 *Page2 = GetPage(sa+8);
-	uint64 Temp;
+	uint8_t *Page2 = GetPage(sa+8);
+	uint64_t Temp;
 	memcpy(&Temp, &Page[index], PageSize-index);
 	memcpy(((unsigned char*)(&Temp))+(PageSize-index), 
 		Page2, 8-(PageSize-index));
 	return(Temp);
     } else {
 	Page = &Page[index];
-	uint64 *TempPtr = (uint64*)Page;
-        uint64 Temp;
-        memcpy(&Temp, TempPtr, sizeof(uint64));
+	uint64_t *TempPtr = (uint64_t*)Page;
+        uint64_t Temp;
+        memcpy(&Temp, TempPtr, sizeof(uint64_t));
         return Temp;
     }
   }
 }
 
 //:Write a byte
-bool base_memory::_WriteMemory8(const simAddress sa, const uint8 Data, 
+bool base_memory::_WriteMemory8(const simAddress sa, const uint8_t Data, 
 			  const bool spec)
 {
   if (spec) {
     return specMem.writeSpec8(sa, Data);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page)     return(0);
     
     Page[sa&PageMask] = Data;
@@ -441,73 +452,73 @@ bool base_memory::_WriteMemory8(const simAddress sa, const uint8 Data,
 } 
 
 //:Write 2 bytes
-bool base_memory::_WriteMemory16(const simAddress sa, const uint16 Data,
+bool base_memory::_WriteMemory16(const simAddress sa, const uint16_t Data,
 			   const bool spec)
 {
   if (spec) {
     return specMem.writeSpec16(sa, Data);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page)     return(0);
 
     unsigned int index = sa&PageMask;
     if (index + 2 > PageSize) {
-	uint8 *Page2 = GetPage(sa+2);
+	uint8_t *Page2 = GetPage(sa+2);
 	memcpy(&(Page[index]), &Data, 1);
-	memcpy(Page2, ((uint8*)&Data)+1, 1);
+	memcpy(Page2, ((uint8_t*)&Data)+1, 1);
     } else {
 	Page = &Page[index];
-	uint16        *Temp = (uint16*)Page;
-        memcpy(Temp, &Data, sizeof(uint16));
+	uint16_t        *Temp = (uint16_t*)Page;
+        memcpy(Temp, &Data, sizeof(uint16_t));
     }
     return ( true );
   }
 }
 
 //:Write 4 bytes
-bool base_memory::_WriteMemory32(const simAddress sa, const uint32 Data,
+bool base_memory::_WriteMemory32(const simAddress sa, const uint32_t Data,
 			   const bool spec)
 {
   if (spec) {
     return specMem.writeSpec32(sa, Data);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page)     return(0);
 
     unsigned int index = sa&PageMask;
     if (index + 4 > PageSize) {
-	uint8 *Page2 = GetPage(sa+4);
+	uint8_t *Page2 = GetPage(sa+4);
 	memcpy(&(Page[index]), &Data, PageSize-index);
-	memcpy(Page2, ((uint8*)&Data)+PageSize-index, 4-(PageSize-index));
+	memcpy(Page2, ((uint8_t*)&Data)+PageSize-index, 4-(PageSize-index));
     } else {
 	Page = &Page[index];
-	uint32 *Temp = (uint32*)Page;
-        memcpy(Temp, &Data, sizeof(uint32));
+	uint32_t *Temp = (uint32_t*)Page;
+        memcpy(Temp, &Data, sizeof(uint32_t));
     }
     return ( true );
   }
 }
 
 //:Write 8 bytes
-bool base_memory::_WriteMemory64(const simAddress sa, const uint64 Data,
+bool base_memory::_WriteMemory64(const simAddress sa, const uint64_t Data,
 			   const bool spec)
 {
   if (spec) {
     ERROR("speculative WriteMemory64 is broken (only have writeSpec32). Consult Arun.\n");
     return specMem.writeSpec32(sa, Data);
   } else {
-    uint8 *Page = GetPage(sa);
+    uint8_t *Page = GetPage(sa);
     if(!Page)     return(0);
 
     unsigned int index = sa&PageMask;
     if (index + 8 > PageSize) {
-	uint8 *Page2 = GetPage(sa+8);
+	uint8_t *Page2 = GetPage(sa+8);
 	memcpy(&(Page[index]), &Data, PageSize-index);
-	memcpy(Page2, ((uint8*)&Data)+PageSize-index, 8-(PageSize-index));
+	memcpy(Page2, ((uint8_t*)&Data)+PageSize-index, 8-(PageSize-index));
     } else {
 	Page = &Page[index];
-	uint64 *Temp = (uint64*)Page;
-        memcpy(Temp, &Data, sizeof(uint64));
+	uint64_t *Temp = (uint64_t*)Page;
+        memcpy(Temp, &Data, sizeof(uint64_t));
     }
     return ( true );
   }
@@ -588,7 +599,7 @@ MemMapEntry* base_memory::FindMemByAddr( simAddress addr)
     MemMapEntry entry = (*iter).second;
 
     if ( addr >= entry.addr &&
-                        (uint64) addr < (uint64) entry.addr + entry.len) {
+                        (uint64_t) addr < (uint64_t) entry.addr + entry.len) {
         DPRINT(1,"found device for addr=%#x\n",addr);
         return &(*iter).second;
     }
@@ -610,28 +621,28 @@ void base_memory::WriteNotify( component *comp, simAddress addr, int size )
     sendParcel( p, comp, TimeStamp() );
     }*/
 
-uint8 memory::ReadMemory8(const simAddress sa, const bool s) {
+uint8_t memory::ReadMemory8(const simAddress sa, const bool s) {
     return myMem->ReadMemory8(sa, s);
 }
-bool memory::WriteMemory8(const simAddress sa, const uint8 d, const bool s) {
+bool memory::WriteMemory8(const simAddress sa, const uint8_t d, const bool s) {
     return myMem->WriteMemory8(sa, d, s);
 }
-uint16 memory::ReadMemory16(const simAddress sa, const bool s) {
+uint16_t memory::ReadMemory16(const simAddress sa, const bool s) {
     return myMem->ReadMemory16(sa, s);
 }
-bool memory::WriteMemory16(const simAddress sa, const uint16 d, const bool s) {
+bool memory::WriteMemory16(const simAddress sa, const uint16_t d, const bool s) {
     return myMem->WriteMemory16(sa, d, s);
 }
-uint32 memory::ReadMemory32(const simAddress sa, const bool s) {
+uint32_t memory::ReadMemory32(const simAddress sa, const bool s) {
     return myMem->ReadMemory32(sa, s);
 }
-bool memory::WriteMemory32(const simAddress sa, const uint32 d, const bool s) {
+bool memory::WriteMemory32(const simAddress sa, const uint32_t d, const bool s) {
     return myMem->WriteMemory32(sa, d, s);
 }
-uint64 memory::ReadMemory64(const simAddress sa, const bool s) {
+uint64_t memory::ReadMemory64(const simAddress sa, const bool s) {
     return myMem->ReadMemory64(sa, s);
 }
-bool memory::WriteMemory64(const simAddress sa, const uint64 d, const bool s) {
+bool memory::WriteMemory64(const simAddress sa, const uint64_t d, const bool s) {
     return myMem->WriteMemory64(sa, d, s);
 }
 
