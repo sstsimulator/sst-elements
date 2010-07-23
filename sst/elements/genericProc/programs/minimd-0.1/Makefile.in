@@ -33,7 +33,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = md$(EXEEXT)
+bin_PROGRAMS = md$(EXEEXT) md_pim$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(noinst_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -53,16 +53,29 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_md_OBJECTS = atom.$(OBJEXT) comm.$(OBJEXT) force.$(OBJEXT) \
+am__objects_1 = atom.$(OBJEXT) comm.$(OBJEXT) force.$(OBJEXT) \
 	input.$(OBJEXT) integrate.$(OBJEXT) ljs.$(OBJEXT) \
 	neighbor.$(OBJEXT) output.$(OBJEXT) setup.$(OBJEXT) \
 	thermo.$(OBJEXT) timer.$(OBJEXT)
+am_md_OBJECTS = $(am__objects_1)
 md_OBJECTS = $(am_md_OBJECTS)
 md_LDADD = $(LDADD)
+am__objects_2 = md_pim-atom.$(OBJEXT) md_pim-comm.$(OBJEXT) \
+	md_pim-force.$(OBJEXT) md_pim-input.$(OBJEXT) \
+	md_pim-integrate.$(OBJEXT) md_pim-ljs.$(OBJEXT) \
+	md_pim-neighbor.$(OBJEXT) md_pim-output.$(OBJEXT) \
+	md_pim-setup.$(OBJEXT) md_pim-thermo.$(OBJEXT) \
+	md_pim-timer.$(OBJEXT)
+am_md_pim_OBJECTS = $(am__objects_2)
+md_pim_OBJECTS = $(am_md_pim_OBJECTS)
+md_pim_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 AM_V_CXX = $(am__v_CXX_$(V))
@@ -80,8 +93,8 @@ am__v_CXXLD_0 = @echo "  CXXLD " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(md_SOURCES)
-DIST_SOURCES = $(md_SOURCES)
+SOURCES = $(md_SOURCES) $(md_pim_SOURCES)
+DIST_SOURCES = $(md_SOURCES) $(md_pim_SOURCES)
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -189,19 +202,22 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-md_SOURCES = \
-			 atom.cpp \
-			 comm.cpp \
-			 force.cpp \
-			 input.cpp \
-			 integrate.cpp \
-			 ljs.cpp \
-			 neighbor.cpp \
-			 output.cpp \
-			 setup.cpp \
-			 thermo.cpp \
-			 timer.cpp
+CPPFILES = \
+		   atom.cpp \
+		   comm.cpp \
+		   force.cpp \
+		   input.cpp \
+		   integrate.cpp \
+		   ljs.cpp \
+		   neighbor.cpp \
+		   output.cpp \
+		   setup.cpp \
+		   thermo.cpp \
+		   timer.cpp
 
+md_SOURCES = $(CPPFILES)
+md_pim_SOURCES = $(CPPFILES)
+md_pim_CPPFLAGS = -DPIM_EXTENSIONS
 noinst_HEADERS = \
 			 atom.h \
 			 comm.h \
@@ -309,6 +325,9 @@ clean-binPROGRAMS:
 md$(EXEEXT): $(md_OBJECTS) $(md_DEPENDENCIES) 
 	@rm -f md$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(md_OBJECTS) $(md_LDADD) $(LIBS)
+md_pim$(EXEEXT): $(md_pim_OBJECTS) $(md_pim_DEPENDENCIES) 
+	@rm -f md_pim$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(md_pim_OBJECTS) $(md_pim_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -322,6 +341,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/integrate.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ljs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-atom.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-comm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-force.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-input.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-integrate.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-ljs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-neighbor.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-output.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-setup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-thermo.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md_pim-timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/output.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/setup.Po@am__quote@
@@ -343,6 +373,182 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+md_pim-atom.o: atom.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-atom.o -MD -MP -MF $(DEPDIR)/md_pim-atom.Tpo -c -o md_pim-atom.o `test -f 'atom.cpp' || echo '$(srcdir)/'`atom.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-atom.Tpo $(DEPDIR)/md_pim-atom.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='atom.cpp' object='md_pim-atom.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-atom.o `test -f 'atom.cpp' || echo '$(srcdir)/'`atom.cpp
+
+md_pim-atom.obj: atom.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-atom.obj -MD -MP -MF $(DEPDIR)/md_pim-atom.Tpo -c -o md_pim-atom.obj `if test -f 'atom.cpp'; then $(CYGPATH_W) 'atom.cpp'; else $(CYGPATH_W) '$(srcdir)/atom.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-atom.Tpo $(DEPDIR)/md_pim-atom.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='atom.cpp' object='md_pim-atom.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-atom.obj `if test -f 'atom.cpp'; then $(CYGPATH_W) 'atom.cpp'; else $(CYGPATH_W) '$(srcdir)/atom.cpp'; fi`
+
+md_pim-comm.o: comm.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-comm.o -MD -MP -MF $(DEPDIR)/md_pim-comm.Tpo -c -o md_pim-comm.o `test -f 'comm.cpp' || echo '$(srcdir)/'`comm.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-comm.Tpo $(DEPDIR)/md_pim-comm.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='comm.cpp' object='md_pim-comm.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-comm.o `test -f 'comm.cpp' || echo '$(srcdir)/'`comm.cpp
+
+md_pim-comm.obj: comm.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-comm.obj -MD -MP -MF $(DEPDIR)/md_pim-comm.Tpo -c -o md_pim-comm.obj `if test -f 'comm.cpp'; then $(CYGPATH_W) 'comm.cpp'; else $(CYGPATH_W) '$(srcdir)/comm.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-comm.Tpo $(DEPDIR)/md_pim-comm.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='comm.cpp' object='md_pim-comm.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-comm.obj `if test -f 'comm.cpp'; then $(CYGPATH_W) 'comm.cpp'; else $(CYGPATH_W) '$(srcdir)/comm.cpp'; fi`
+
+md_pim-force.o: force.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-force.o -MD -MP -MF $(DEPDIR)/md_pim-force.Tpo -c -o md_pim-force.o `test -f 'force.cpp' || echo '$(srcdir)/'`force.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-force.Tpo $(DEPDIR)/md_pim-force.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='force.cpp' object='md_pim-force.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-force.o `test -f 'force.cpp' || echo '$(srcdir)/'`force.cpp
+
+md_pim-force.obj: force.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-force.obj -MD -MP -MF $(DEPDIR)/md_pim-force.Tpo -c -o md_pim-force.obj `if test -f 'force.cpp'; then $(CYGPATH_W) 'force.cpp'; else $(CYGPATH_W) '$(srcdir)/force.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-force.Tpo $(DEPDIR)/md_pim-force.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='force.cpp' object='md_pim-force.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-force.obj `if test -f 'force.cpp'; then $(CYGPATH_W) 'force.cpp'; else $(CYGPATH_W) '$(srcdir)/force.cpp'; fi`
+
+md_pim-input.o: input.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-input.o -MD -MP -MF $(DEPDIR)/md_pim-input.Tpo -c -o md_pim-input.o `test -f 'input.cpp' || echo '$(srcdir)/'`input.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-input.Tpo $(DEPDIR)/md_pim-input.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='input.cpp' object='md_pim-input.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-input.o `test -f 'input.cpp' || echo '$(srcdir)/'`input.cpp
+
+md_pim-input.obj: input.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-input.obj -MD -MP -MF $(DEPDIR)/md_pim-input.Tpo -c -o md_pim-input.obj `if test -f 'input.cpp'; then $(CYGPATH_W) 'input.cpp'; else $(CYGPATH_W) '$(srcdir)/input.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-input.Tpo $(DEPDIR)/md_pim-input.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='input.cpp' object='md_pim-input.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-input.obj `if test -f 'input.cpp'; then $(CYGPATH_W) 'input.cpp'; else $(CYGPATH_W) '$(srcdir)/input.cpp'; fi`
+
+md_pim-integrate.o: integrate.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-integrate.o -MD -MP -MF $(DEPDIR)/md_pim-integrate.Tpo -c -o md_pim-integrate.o `test -f 'integrate.cpp' || echo '$(srcdir)/'`integrate.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-integrate.Tpo $(DEPDIR)/md_pim-integrate.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='integrate.cpp' object='md_pim-integrate.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-integrate.o `test -f 'integrate.cpp' || echo '$(srcdir)/'`integrate.cpp
+
+md_pim-integrate.obj: integrate.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-integrate.obj -MD -MP -MF $(DEPDIR)/md_pim-integrate.Tpo -c -o md_pim-integrate.obj `if test -f 'integrate.cpp'; then $(CYGPATH_W) 'integrate.cpp'; else $(CYGPATH_W) '$(srcdir)/integrate.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-integrate.Tpo $(DEPDIR)/md_pim-integrate.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='integrate.cpp' object='md_pim-integrate.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-integrate.obj `if test -f 'integrate.cpp'; then $(CYGPATH_W) 'integrate.cpp'; else $(CYGPATH_W) '$(srcdir)/integrate.cpp'; fi`
+
+md_pim-ljs.o: ljs.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-ljs.o -MD -MP -MF $(DEPDIR)/md_pim-ljs.Tpo -c -o md_pim-ljs.o `test -f 'ljs.cpp' || echo '$(srcdir)/'`ljs.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-ljs.Tpo $(DEPDIR)/md_pim-ljs.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ljs.cpp' object='md_pim-ljs.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-ljs.o `test -f 'ljs.cpp' || echo '$(srcdir)/'`ljs.cpp
+
+md_pim-ljs.obj: ljs.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-ljs.obj -MD -MP -MF $(DEPDIR)/md_pim-ljs.Tpo -c -o md_pim-ljs.obj `if test -f 'ljs.cpp'; then $(CYGPATH_W) 'ljs.cpp'; else $(CYGPATH_W) '$(srcdir)/ljs.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-ljs.Tpo $(DEPDIR)/md_pim-ljs.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ljs.cpp' object='md_pim-ljs.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-ljs.obj `if test -f 'ljs.cpp'; then $(CYGPATH_W) 'ljs.cpp'; else $(CYGPATH_W) '$(srcdir)/ljs.cpp'; fi`
+
+md_pim-neighbor.o: neighbor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-neighbor.o -MD -MP -MF $(DEPDIR)/md_pim-neighbor.Tpo -c -o md_pim-neighbor.o `test -f 'neighbor.cpp' || echo '$(srcdir)/'`neighbor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-neighbor.Tpo $(DEPDIR)/md_pim-neighbor.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='neighbor.cpp' object='md_pim-neighbor.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-neighbor.o `test -f 'neighbor.cpp' || echo '$(srcdir)/'`neighbor.cpp
+
+md_pim-neighbor.obj: neighbor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-neighbor.obj -MD -MP -MF $(DEPDIR)/md_pim-neighbor.Tpo -c -o md_pim-neighbor.obj `if test -f 'neighbor.cpp'; then $(CYGPATH_W) 'neighbor.cpp'; else $(CYGPATH_W) '$(srcdir)/neighbor.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-neighbor.Tpo $(DEPDIR)/md_pim-neighbor.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='neighbor.cpp' object='md_pim-neighbor.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-neighbor.obj `if test -f 'neighbor.cpp'; then $(CYGPATH_W) 'neighbor.cpp'; else $(CYGPATH_W) '$(srcdir)/neighbor.cpp'; fi`
+
+md_pim-output.o: output.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-output.o -MD -MP -MF $(DEPDIR)/md_pim-output.Tpo -c -o md_pim-output.o `test -f 'output.cpp' || echo '$(srcdir)/'`output.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-output.Tpo $(DEPDIR)/md_pim-output.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='output.cpp' object='md_pim-output.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-output.o `test -f 'output.cpp' || echo '$(srcdir)/'`output.cpp
+
+md_pim-output.obj: output.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-output.obj -MD -MP -MF $(DEPDIR)/md_pim-output.Tpo -c -o md_pim-output.obj `if test -f 'output.cpp'; then $(CYGPATH_W) 'output.cpp'; else $(CYGPATH_W) '$(srcdir)/output.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-output.Tpo $(DEPDIR)/md_pim-output.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='output.cpp' object='md_pim-output.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-output.obj `if test -f 'output.cpp'; then $(CYGPATH_W) 'output.cpp'; else $(CYGPATH_W) '$(srcdir)/output.cpp'; fi`
+
+md_pim-setup.o: setup.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-setup.o -MD -MP -MF $(DEPDIR)/md_pim-setup.Tpo -c -o md_pim-setup.o `test -f 'setup.cpp' || echo '$(srcdir)/'`setup.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-setup.Tpo $(DEPDIR)/md_pim-setup.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='setup.cpp' object='md_pim-setup.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-setup.o `test -f 'setup.cpp' || echo '$(srcdir)/'`setup.cpp
+
+md_pim-setup.obj: setup.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-setup.obj -MD -MP -MF $(DEPDIR)/md_pim-setup.Tpo -c -o md_pim-setup.obj `if test -f 'setup.cpp'; then $(CYGPATH_W) 'setup.cpp'; else $(CYGPATH_W) '$(srcdir)/setup.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-setup.Tpo $(DEPDIR)/md_pim-setup.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='setup.cpp' object='md_pim-setup.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-setup.obj `if test -f 'setup.cpp'; then $(CYGPATH_W) 'setup.cpp'; else $(CYGPATH_W) '$(srcdir)/setup.cpp'; fi`
+
+md_pim-thermo.o: thermo.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-thermo.o -MD -MP -MF $(DEPDIR)/md_pim-thermo.Tpo -c -o md_pim-thermo.o `test -f 'thermo.cpp' || echo '$(srcdir)/'`thermo.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-thermo.Tpo $(DEPDIR)/md_pim-thermo.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='thermo.cpp' object='md_pim-thermo.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-thermo.o `test -f 'thermo.cpp' || echo '$(srcdir)/'`thermo.cpp
+
+md_pim-thermo.obj: thermo.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-thermo.obj -MD -MP -MF $(DEPDIR)/md_pim-thermo.Tpo -c -o md_pim-thermo.obj `if test -f 'thermo.cpp'; then $(CYGPATH_W) 'thermo.cpp'; else $(CYGPATH_W) '$(srcdir)/thermo.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-thermo.Tpo $(DEPDIR)/md_pim-thermo.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='thermo.cpp' object='md_pim-thermo.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-thermo.obj `if test -f 'thermo.cpp'; then $(CYGPATH_W) 'thermo.cpp'; else $(CYGPATH_W) '$(srcdir)/thermo.cpp'; fi`
+
+md_pim-timer.o: timer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-timer.o -MD -MP -MF $(DEPDIR)/md_pim-timer.Tpo -c -o md_pim-timer.o `test -f 'timer.cpp' || echo '$(srcdir)/'`timer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-timer.Tpo $(DEPDIR)/md_pim-timer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='timer.cpp' object='md_pim-timer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-timer.o `test -f 'timer.cpp' || echo '$(srcdir)/'`timer.cpp
+
+md_pim-timer.obj: timer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT md_pim-timer.obj -MD -MP -MF $(DEPDIR)/md_pim-timer.Tpo -c -o md_pim-timer.obj `if test -f 'timer.cpp'; then $(CYGPATH_W) 'timer.cpp'; else $(CYGPATH_W) '$(srcdir)/timer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/md_pim-timer.Tpo $(DEPDIR)/md_pim-timer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='timer.cpp' object='md_pim-timer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(md_pim_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o md_pim-timer.obj `if test -f 'timer.cpp'; then $(CYGPATH_W) 'timer.cpp'; else $(CYGPATH_W) '$(srcdir)/timer.cpp'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
