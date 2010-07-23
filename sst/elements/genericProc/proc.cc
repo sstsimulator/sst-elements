@@ -240,7 +240,7 @@ void proc::processMemDevResp( ) {
 	    uint64_t lat = getCurrentSimTimeNano() - startTime;
 	    memSpecialReqLat += lat;
 	    static int c = 0; c++;
-	    if ((c % 0xff) == 0) printf("adv mem lat %llu\n", (long long unsigned)lat);
+	    if ((c % 0x3ff) == 0) printf("adv mem lat %llu\n", (long long unsigned)lat);
 #endif
 
 	    // clean up
@@ -683,7 +683,8 @@ bool proc::sendMemoryParcel(uint64_t address, instruction *inst,
 }
 #endif
 
-int proc::getOutstandingAdvancedMemReqs(int mProcID) {
+int proc::getOutstandingAdvancedMemReqs(int mProcID, int *max) {
+  if (max) *max = maxOutstandingSpecReq;
   return outstandingSpecReq[mProcID];
 }
 

@@ -237,7 +237,7 @@ public:
   virtual bool externalMemoryModel();
   virtual bool sendMemoryReq( instType, uint64_t address, 
 			       instruction*, int mProcID);
-  virtual int getOutstandingAdvancedMemReqs(int mProcID);
+  virtual int getOutstandingAdvancedMemReqs(int mProcID, int *max);
 #if HAVE_PHXSIM_H
   virtual bool sendMemoryParcel(uint64_t address, instruction *inst, 
 				PHXEvent *pe, int mProcID);
