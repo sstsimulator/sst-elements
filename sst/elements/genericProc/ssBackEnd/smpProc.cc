@@ -27,6 +27,8 @@ simAddress smpProc::getBAddr(simAddress a) {
     baddr = cache_get_blkAddr(myMainProc->cache_dl2, a);
   else if (myMainProc->cache_dl1) 
     baddr = cache_get_blkAddr(myMainProc->cache_dl1, a);
+  else
+      abort();
   return baddr;
 }
 

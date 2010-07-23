@@ -156,13 +156,15 @@ class ppcInstruction : public instruction {
   double ReadMemoryDouble(simAddress addr, processor *proc) {
     qword_t qw = proc->ReadMemory64(addr,0);
     qw = endian_swap(qw);
-    double out = *((double*)&qw);
+    double out;
+    memcpy(&out, &qw, sizeof(double));
     return out;
   }
 
   // convenience function to write a double
   void WriteMemoryDouble(simAddress addr, processor *proc, double val) {
-    qword_t valWord = *((qword_t*)&val);
+    qword_t valWord;
+    memcpy(&valWord, &val, sizeof(qword_t));
     proc->WriteMemory64(addr, endian_swap(valWord), 0);
   }
 

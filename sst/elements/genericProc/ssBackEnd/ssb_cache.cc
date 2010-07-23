@@ -172,6 +172,7 @@ typedef uint (convProc::*cp_fn)(enum mem_cmd, md_addr_t,
 #define CACHE_WORD(data, bofs)	  __CACHE_ACCESS(unsigned int, data, bofs)
 #define CACHE_HALF(data, bofs)	  __CACHE_ACCESS(unsigned short, data, bofs)
 #define CACHE_BYTE(data, bofs)	  __CACHE_ACCESS(unsigned char, data, bofs)
+#define CACHE_OFFSET(data, bofs)  (((char *)data) + (bofs))
 
 /* cache block hashing macros, this macro is used to index into a cache
    set hash table (to find the correct block on N in an N-way cache), the
@@ -183,44 +184,12 @@ typedef uint (convProc::*cp_fn)(enum mem_cmd, md_addr_t,
 #define CACHE_BCOPY(cmd, blk, bofs, p, nbytes)	\
   if (cmd == Read)							\
     {									\
-      switch (nbytes) {							\
-      case 1:								\
-	*((byte_t *)p) = CACHE_BYTE(&blk->data[0], bofs); break;	\
-      case 2:								\
-	*((half_t *)p) = CACHE_HALF(&blk->data[0], bofs); break;	\
-      case 4:								\
-	*((word_t *)p) = CACHE_WORD(&blk->data[0], bofs); break;	\
-      default:								\
-	{ /* >= 8, power of two, fits in block */			\
-	  int words = nbytes >> 2;					\
-	  while (words-- > 0)						\
-	    {								\
-	      *((word_t *)p) = CACHE_WORD(&blk->data[0], bofs);	\
-	      p += 4; bofs += 4;					\
-	    }\
-	}\
-      }\
-    }\
+	memcpy(p, CACHE_OFFSET(&blk->data[0], bofs), nbytes);		\
+    }									\
   else if (cmd == Write)						\
     {									\
-      switch (nbytes) {							\
-      case 1:								\
-	CACHE_BYTE(&blk->data[0], bofs) = *((byte_t *)p); break;	\
-      case 2:								\
-        CACHE_HALF(&blk->data[0], bofs) = *((half_t *)p); break;	\
-      case 4:								\
-	CACHE_WORD(&blk->data[0], bofs) = *((word_t *)p); break;	\
-      default:								\
-	{ /* >= 8, power of two, fits in block */			\
-	  int words = nbytes >> 2;					\
-	  while (words-- > 0)						\
-	    {								\
-	      CACHE_WORD(&blk->data[0], bofs) = *((word_t *)p);		\
-	      p += 4; bofs += 4;					\
-	    }\
-	}\
-    }\
-  }
+	memcpy(CACHE_OFFSET(&blk->data[0], bofs), p, nbytes);		\
+    }
 
 /* bound sqword_t/dfloat_t to positive int */
 #define BOUND_POS(N)		((int)(MIN(MAX(0, (N)), 2147483647)))
