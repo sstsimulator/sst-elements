@@ -337,6 +337,7 @@ int proc::Finish() {
       mProcs[c]->finish();
     }
   }
+  processor::finish();
 #if TIME_MEM
   printf("%llu Total Memory Requests\n", (long long unsigned)totalMemReq);
   printf("%llu Timed Memory Requests, avg lat. %.2fns %llu stores\n",
