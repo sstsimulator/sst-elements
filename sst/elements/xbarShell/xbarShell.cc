@@ -23,7 +23,3 @@ xbarShellAllocComponent( SST::ComponentId_t id,
     return new XbarShell( id, params );
 }
 }
-
-#if WANT_CHECKPOINT_SUPPORT
-BOOST_CLASS_EXPORT(XbarShell)
-#endif

@@ -61,7 +61,7 @@ typedef procStartVec (*getFirstThreadsHomeFunc)(string cfgstr);
 //!SEC:Framework
 class processor : public SST::Component, public memory,  public ptoVmapper
 {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     BOOST_VOID_CAST_REGISTER(processor*,Component*);
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );

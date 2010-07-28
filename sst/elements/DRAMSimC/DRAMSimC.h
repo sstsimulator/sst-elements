@@ -55,34 +55,6 @@ class DRAMSimC : public Component {
         Log< DRAMSIMC_DBG >&    m_dbg;
         Log<>&                  m_log;
 
-#if WANT_CHECKPOINT_SUPPORT
-        BOOST_SERIALIZE {
-            _AR_DBG(DRAMSimC,"start\n");
-            BOOST_VOID_CAST_REGISTER( DRAMSimC*, Component* );
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Component );
-            ar & BOOST_SERIALIZATION_NVP( bus );
-            _AR_DBG(DRAMSimC,"done\n");
-        }
-        SAVE_CONSTRUCT_DATA( DRAMSimC ) {
-            _AR_DBG(DRAMSimC,"\n");
-            ComponentId_t     id     = t->_id;
-            Clock*            clock  = t->_clock;
-            Params_t          params = t->params;
-            ar << BOOST_SERIALIZATION_NVP( id );
-            ar << BOOST_SERIALIZATION_NVP( clock );
-            ar << BOOST_SERIALIZATION_NVP( params );
-        } 
-        LOAD_CONSTRUCT_DATA( DRAMSimC ) {
-            _AR_DBG(DRAMSimC,"\n");
-            ComponentId_t     id;
-            Clock*            clock;
-            Params_t          params;
-            ar >> BOOST_SERIALIZATION_NVP( id );
-            ar >> BOOST_SERIALIZATION_NVP( clock );
-            ar >> BOOST_SERIALIZATION_NVP( params );
-            ::new(t)DRAMSimC( id, clock, params );
-        } 
-#endif
 };
 
 inline DRAMSim::TransactionType 

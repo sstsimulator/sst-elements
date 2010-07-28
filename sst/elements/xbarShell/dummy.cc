@@ -34,20 +34,3 @@ bool Dummy::processEvent( Event* event  )
     cpu->Send( static_cast<CompEvent*>(event) );
     return false;
 }
-
-#if WANT_CHECKPOINT_SUPPORT
-
-BOOST_CLASS_EXPORT(Dummy)
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Dummy, bool, SST::Cycle_t, SST::Time_t )
-
-// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-//                                 Dummy, bool, SST::Time_t, SST::Event* )
-
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Dummy, bool, SST::Cycle_t )
-
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Dummy, bool, SST::Event* )
-
-#endif

@@ -730,7 +730,7 @@ void proc::resetCounters() {
   }
 }
 
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
 BOOST_CLASS_EXPORT(proc)
 
 // // register event handler

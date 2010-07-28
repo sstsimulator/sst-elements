@@ -26,9 +26,8 @@
 //: Interface for memory objects
 //!SEC:Framework
 class memory_interface {
-#if WANT_CHECKPOINT_SUPPORT
-    BOOST_SERIALIZE {
-    ;
+#if 0 // WANT_CHECKPOINT_SUPPORT
+  BOOST_SERIALIZE {
   }
 #endif
 public:
@@ -60,7 +59,7 @@ public:
 class base_memory;
 
 struct  MemMapEntry {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_NVP(mem);
     ar & BOOST_SERIALIZATION_NVP(addr);
@@ -138,7 +137,7 @@ class MemAccess_compare {
 //!SEC:Framework
 class base_memory : public memory_interface
 {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 //WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( memory_interface );
     ar & BOOST_SERIALIZATION_NVP(defaultFEB);
@@ -307,7 +306,7 @@ typedef enum {
 //
 //!SEC:Framework
 class memory : public memory_interface {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( memory_interface );
     ar & BOOST_SERIALIZATION_NVP(myMem);

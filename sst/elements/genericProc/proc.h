@@ -100,7 +100,7 @@ class mem : public Component {
 // "processor" class
 class proc : public processor {
 
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
 BOOST_SERIALIZE {
     _GPROC_DBG(1, "begin\n");
     BOOST_VOID_CAST_REGISTER(proc*,processor*);

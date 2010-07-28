@@ -74,7 +74,7 @@ which describes the registers that are seen in the user mode*/
 //: PPC Special Registers
 //!SEC:ppcFront
 struct ppc_regs_t {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_NVP(regs_C);
     ar & BOOST_SERIALIZATION_NVP(regs_L);

@@ -119,18 +119,6 @@ class Introspector_cpuTemperature : public Introspector {
         Component::Params_t    params;        
 	std::string frequency;
 	std::string model;
-
-#if WANT_CHECKPOINT_SUPPORT2	
-        BOOST_SERIALIZE {
-	    printf("introspector_cpuTemperature::serialize()\n");
-            _AR_DBG( Introspector_cpuTemperature, "start\n" );
-	    printf("  doing void cast\n");
-            BOOST_VOID_CAST_REGISTER( Introspector_cpuTemperature*, Introspector* );
-	    printf("  base serializing: introspector\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Introspector );
-            _AR_DBG( Introspector_cpuTemperature, "done\n" );
-        }
-#endif
 };
 
 #endif

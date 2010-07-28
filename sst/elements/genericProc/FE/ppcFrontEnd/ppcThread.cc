@@ -793,7 +793,7 @@ bool ppcThread::isConstSection(const simAddress addr,
   
 // export pool class
 typedef pool<ppcInstruction> iPool_t;
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
 BOOST_CLASS_EXPORT_GUID(iPool_t, "pool<ppcInstruction>")
 
 BOOST_CLASS_EXPORT(ppcThread)

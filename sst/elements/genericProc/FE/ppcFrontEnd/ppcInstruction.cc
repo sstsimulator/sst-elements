@@ -184,6 +184,6 @@ simPID ppcInstruction::pid() const {
   return parent->pid();
 }
 
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
 BOOST_CLASS_EXPORT(ppcInstruction)
 #endif

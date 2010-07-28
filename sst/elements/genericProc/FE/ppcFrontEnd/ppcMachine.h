@@ -427,7 +427,7 @@ typedef struct {
 
 /* control register file contents */
 typedef struct {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_NVP(cr);
     ar & BOOST_SERIALIZATION_NVP(xer);

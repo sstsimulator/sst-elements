@@ -170,9 +170,3 @@ DRAMSimC* DRAMSimCAllocComponent( SST::ComponentId_t id,
 }
 }
 
-#if WANT_CHECKPOINT_SUPPORT
-BOOST_CLASS_EXPORT(DRAMSimC)
-
-BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
-                                DRAMSimC, bool, SST::Cycle_t, SST::Time_t )
-#endif

@@ -19,7 +19,7 @@
 typedef enum { CACHED, UNCACHED, WC } memType_t;
 
 struct ptoVMapEntry {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_NVP(region);
     ar & BOOST_SERIALIZATION_NVP(len);
@@ -37,7 +37,7 @@ typedef std::map<simAddress,ptoVMapEntry> ptoVMemMap;
 
 class ptoVmapper
 {
-#if WANT_CHECKPOINT_SUPPORT
+#if 0 // WANT_CHECKPOINT_SUPPORT
   BOOST_SERIALIZE {
     ar & BOOST_SERIALIZATION_NVP(memMap);    
   }
