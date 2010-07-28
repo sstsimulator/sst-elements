@@ -30,14 +30,12 @@ using namespace SST;
 class Introspector_cpuTemperature : public Introspector {
        
     public:
-	Introspector_cpuTemperature( ComponentId_t id, Component::Params_t& params ) :
-            Introspector( id),
+	Introspector_cpuTemperature(Component::Params_t& params) :
+            Introspector(),
             params( params ),
             frequency( "1ns" )
         {
             _INTROSPECTOR_CPUTEMPERATURE_DBG( "new id=%lu\n", id );
-
-            registerExit();
 
             Component::Params_t::iterator it = params.begin(); 
             while( it != params.end() ) { 
@@ -106,7 +104,6 @@ class Introspector_cpuTemperature : public Introspector {
         }
         int Finish() {
             _INTROSPECTOR_CPUTEMPERATURE_DBG("\n");
-	    unregisterExit();
             return 0;
         }
 

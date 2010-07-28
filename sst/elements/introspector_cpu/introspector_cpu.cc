@@ -11,8 +11,10 @@
 
 #include <sst_config.h>
 
-#include "introspector_cpu.h"
 #include <boost/mpi.hpp>
+
+#include "introspector_cpu.h"
+#include "sst/core/element.h"
 
 
 bool Introspector_cpu::pullData( Cycle_t current )
@@ -104,18 +106,27 @@ bool Introspector_cpu::mpiOneTimeCollect( Event* e)
 }
 
 
+static Introspector*
+create_introspector_cpu(SST::Component::Params_t &params)
+{
+    return new Introspector_cpu(params);
+}
+
+static const ElementInfoIntrospector introspectors[] = {
+    { "introspector_cpu",
+      "CPU Introspector",
+      NULL,
+      create_introspector_cpu,
+    },
+    { NULL, NULL, NULL, NULL }
+};
 
 extern "C" {
-Introspector_cpu* introspector_cpuAllocComponent( SST::ComponentId_t id,
-                                    SST::Component::Params_t& params )
-{
-    return new Introspector_cpu( id, params );
+    ElementLibraryInfo introspector_cpu_eli =  {
+        "introspector_cpu",
+        "CPU Introspector",
+        NULL,
+        NULL,
+        introspectors
+    };
 }
-}
-
-#if WANT_CHECKPOINT_SUPPORT2
-BOOST_CLASS_EXPORT(Introspector_cpu)
-
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Introspector_cpu, bool, SST::Cycle_t)
-#endif

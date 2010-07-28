@@ -30,14 +30,12 @@ using namespace SST;
 class Introspector_cpu : public Introspector {
        
     public:
-	Introspector_cpu( ComponentId_t id, Component::Params_t& params ) :
-            Introspector( id),
+	Introspector_cpu(Component::Params_t& params ) :
+            Introspector(),
             params( params ),
             frequency( "1ns" )
         {
             _INTROSPECTOR_CPU_DBG( "new id=%lu\n", id );
-
-            registerExit();
 
             Component::Params_t::iterator it = params.begin(); 
             while( it != params.end() ) { 
@@ -112,15 +110,12 @@ class Introspector_cpu : public Introspector {
         }
         int Finish() {
             _INTROSPECTOR_CPU_DBG("\n");
-	    unregisterExit();
             return 0;
         }
 
 
     private:
-
         Introspector_cpu( const Introspector_cpu& c );
-	Introspector_cpu() {}
 
         bool pullData( Cycle_t );
 	bool mpiCollectInt( Cycle_t );
@@ -131,20 +126,6 @@ class Introspector_cpu : public Introspector {
 	std::string frequency;
 	std::string model;
 	uint64_t intData;
-
-#if WANT_CHECKPOINT_SUPPORT2	
-        BOOST_SERIALIZE {
-	    printf("introspector_cpu::serialize()\n");
-            _AR_DBG( Introspector_cpu, "start\n" );
-	    printf("  doing void cast\n");
-            BOOST_VOID_CAST_REGISTER( Introspector_cpu*, Introspector* );
-	    printf("  base serializing: introspector\n");
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Introspector );
-	    printf("  serializing: handler\n");
-            ar & BOOST_SERIALIZATION_NVP( handler );
-            _AR_DBG( Introspector_cpu, "done\n" );
-        }
-#endif
 };
 
 #endif

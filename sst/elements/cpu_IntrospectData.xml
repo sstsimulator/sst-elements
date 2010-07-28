@@ -3,7 +3,6 @@
 <!-- general sim configuration -->
 <!-- overridden by the command line -->
 <config>
-    lib-path=/home/myhsieh/local/sst/lib/sst
     stopAtCycle=100000
 </config>
 

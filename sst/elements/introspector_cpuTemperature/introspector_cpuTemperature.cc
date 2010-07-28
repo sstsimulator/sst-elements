@@ -12,7 +12,7 @@
 #include <sst_config.h>
 
 #include "introspector_cpuTemperature.h"
-
+#include "sst/core/element.h"
 
 bool Introspector_cpuTemperature::pullData( Cycle_t current )
 {
@@ -40,17 +40,27 @@ bool Introspector_cpuTemperature::pullData( Cycle_t current )
 
 
 
-extern "C" {
-Introspector_cpuTemperature* introspector_cpuTemperatureAllocComponent( SST::ComponentId_t id,
-                                    SST::Component::Params_t& params )
+static Introspector*
+create_introspector_cpuTemperature(SST::Component::Params_t &params)
 {
-    return new Introspector_cpuTemperature( id, params );
-}
+    return new Introspector_cpuTemperature(params);
 }
 
-#if WANT_CHECKPOINT_SUPPORT2
-BOOST_CLASS_EXPORT(Introspector_cpuTemperature)
+static const ElementInfoIntrospector introspectors[] = {
+    { "introspector_cpuTemperature",
+      "CPU Introspector",
+      NULL,
+      create_introspector_cpuTemperature,
+    },
+    { NULL, NULL, NULL, NULL }
+};
 
-BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
-                                Introspector_cpuTemperature, bool, SST::Cycle_t)
-#endif
+extern "C" {
+    ElementLibraryInfo introspector_cpuTemperature_eli =  {
+        "introspector_cpuTemperature",
+        "CPU Introspector",
+        NULL,
+        NULL,
+        introspectors
+    };
+}
