@@ -21,7 +21,6 @@
 #include <cstdlib>
 #include <stdlib.h>
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

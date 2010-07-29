@@ -12,7 +12,6 @@
 #ifndef PROC_H_
 #define PROC_H_
 
-#include "sst/core/eventFunctor.h"
 #include "sst/core/component.h"
 #include <sst/core/link.h>
 #include <sst/core/cpunicEvent.h>
@@ -191,7 +190,7 @@ private:
   uint64_t memStores;
 #endif
 
-  EventHandler_t *NICeventHandler;
+  Event::Handler<proc> *NICeventHandler;
 
   ComponentId_t id;
   Params_t& params;
@@ -217,7 +216,7 @@ public:
   virtual int Finish();
   virtual bool preTic( Cycle_t );
   void processMemDevResp( );
-  virtual bool handle_nic_events( Event* );
+  virtual void handle_nic_events( Event* );
   proc(ComponentId_t id, Params_t& params);
   proc(ComponentId_t id, Params_t& params, int dummy);
 

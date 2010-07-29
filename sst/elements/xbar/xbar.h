@@ -41,19 +41,11 @@ class Xbar : public Component {
 	    }
 
             cpu = configureLink( "port0" );
-//             eventHandler = new EventHandler< Xbar, bool, Event* >
-//                                                 ( this, &Xbar::processEvent );
 
-//             nic = LinkAdd( "port1", eventHandler );
 	    nic = configureLink( "port1", new Event::Handler<Xbar>(this,&Xbar::processEvent) );
-// 	    selfPush = selfLink("selfPush",new EventHandler<Xbar, bool, Event*>(this,&Xbar::selfEvent));
 	    selfPush = configureSelfLink("selfPush",new Event::Handler<Xbar>(this,&Xbar::selfEvent));
 	    selfPull = configureSelfLink("selfPull");
 	    
-//             clockHandler = new EventHandler< Xbar, bool, Cycle_t >
-//                                                 ( this, &Xbar::clock );
-
-//             TimeConverter* tc = registerClock( frequency, clockHandler );
 	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Xbar>(this, &Xbar::clock) );
 	    cpu->setDefaultTimeBase(tc);
 	    nic->setDefaultTimeBase(tc);
@@ -71,8 +63,6 @@ class Xbar : public Component {
         void processEvent( Event*  );
 	void selfEvent( Event*);
 	
-        EventHandler_t* eventHandler;
-
         Params_t    params;
         Link*       cpu;
         Link*       nic;
@@ -92,8 +82,6 @@ class Xbar : public Component {
             ar & BOOST_SERIALIZATION_NVP( cpu );
 	    printf("  serializing: nic\n");
             ar & BOOST_SERIALIZATION_NVP( nic );
-	    printf("  serializing: eventHandler\n");
-            ar & BOOST_SERIALIZATION_NVP( eventHandler );
             _AR_DBG(Xbar,"done\n");
         }
 };

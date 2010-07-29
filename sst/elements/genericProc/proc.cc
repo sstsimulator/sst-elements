@@ -135,8 +135,8 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   advMem = configureLink("advMem0", "1 Ghz");
 
   // add links
-  NICeventHandler = new EventHandler<proc, bool, Event *>
-    (this, &proc::handle_nic_events);
+//   NICeventHandler = new Event::Handler<proc>
+//     (this, &proc::handle_nic_events);
 
   // turned off network until we can check for it
   /*Link *nl = LinkAdd("net0", NICeventHandler);
@@ -211,10 +211,10 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
 // handle incoming NIC events. Just put them on the list for the
 // user to pick up
 // bool proc::handle_nic_events( Time_t t, Event *event) {
-bool proc::handle_nic_events(Event *event) {
+void proc::handle_nic_events(Event *event) {
   _GPROC_DBG(4, "CPU %lu got a NIC event at time FIXME\n", getId());
   this->addNICevent(static_cast<CPUNicEvent *>(event));
-  return false;
+  return;
 }
 
 void proc::processMemDevResp( ) {

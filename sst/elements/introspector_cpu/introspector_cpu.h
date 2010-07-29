@@ -12,7 +12,6 @@
 #ifndef _INTROSPECTOR_CPU_H
 #define _INTROSPECTOR_CPU_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/introspector.h>
 
 
@@ -62,7 +61,7 @@ class Introspector_cpu : public Introspector {
 // 	     registerClock( frequency, mpihandler );
 	    registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );
 
-	     mpionetimehandler = new EventHandler< Introspector_cpu, bool, Event* >
+	    mpionetimehandler = new Event::Handler< Introspector_cpu >
 	                                        ( this, &Introspector_cpu::mpiOneTimeCollect );
 
 	    printf("INTROSPECTOR_CPU period: %ld\n",(long int)tc->getFactor());
@@ -119,9 +118,9 @@ class Introspector_cpu : public Introspector {
 
         bool pullData( Cycle_t );
 	bool mpiCollectInt( Cycle_t );
-	bool mpiOneTimeCollect(Event* e);
+	void mpiOneTimeCollect(Event* e);
 
-	EventHandler< Introspector_cpu, bool, Event* > *mpionetimehandler;
+	Event::Handler< Introspector_cpu > *mpionetimehandler;
         Component::Params_t    params;        
 	std::string frequency;
 	std::string model;

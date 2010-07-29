@@ -80,7 +80,7 @@ bool Introspector_cpu::mpiCollectInt( Cycle_t current )
 //An example MPI collect functor that is put into the queue.
 //Introspector-writer implements their own MPI functor and pass that
 //to Introspector::oneTimeCollect().
-bool Introspector_cpu::mpiOneTimeCollect( Event* e)
+void Introspector_cpu::mpiOneTimeCollect( Event* e)
 {
 //option 1: utilize the built-in basic collective communication calls
 /*	boost::mpi::communicator world;
@@ -102,7 +102,7 @@ bool Introspector_cpu::mpiOneTimeCollect( Event* e)
   	} else {
     	    reduce(world, intData, boost::mpi::maximum<int>(), 0);
   	} 
-	return (false);
+	return;
 }
 
 

@@ -13,7 +13,6 @@
 #ifndef _BUS_H
 #define _BUS_H
 
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/log.h>
 #include <sst/elements/include/memoryChannel.h>

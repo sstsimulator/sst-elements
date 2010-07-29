@@ -68,10 +68,6 @@ class Ghost_pattern : public Component {
 
 
             // Create a handler for events
-//             Myhandler= New EventHandler<Ghost_pattern, bool, Event *>
-//                 (this, &Ghost_pattern::handle_events);
-
-// 	    net= LinkAdd("Network", myHandler);
  	    net = configureLink("Network", new Event::Handler<Ghost_pattern>(this, &Ghost_pattern::handle_events) );
 	    if (net == NULL)   {
 		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link to the network "
@@ -87,7 +83,6 @@ class Ghost_pattern : public Component {
 
         Ghost_pattern(const Ghost_pattern &c);
 	void handle_events(Event *);
-	EventHandler_t *myHandler;
 
 	int my_rank;
 	int x_dim;
@@ -102,7 +97,6 @@ class Ghost_pattern : public Component {
         void serialize(Archive & ar, const unsigned int version )
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-	    ar & BOOST_SERIALIZATION_NVP(myHandler);
 	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);

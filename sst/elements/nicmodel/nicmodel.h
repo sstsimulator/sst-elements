@@ -266,8 +266,8 @@ class Nicmodel : public Component {
 	void hton_params(netsim_params_t *params);
 	void insert_graph_link(const char *from, const char *to);
 
-	EventHandler_t *cpuHandler;
-	EventHandler_t *netHandler;
+// 	EventHandler_t *cpuHandler;
+// 	EventHandler_t *netHandler;
 
         Params_t params;
         Link *cpu;
@@ -295,8 +295,8 @@ class Nicmodel : public Component {
         void serialize(Archive & ar, const unsigned int version )
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-	    ar & BOOST_SERIALIZATION_NVP(cpuHandler);
-	    ar & BOOST_SERIALIZATION_NVP(netHandler);
+// 	    ar & BOOST_SERIALIZATION_NVP(cpuHandler);
+// 	    ar & BOOST_SERIALIZATION_NVP(netHandler);
 	    ar & BOOST_SERIALIZATION_NVP(cpu);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
