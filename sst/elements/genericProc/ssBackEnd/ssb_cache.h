@@ -260,6 +260,13 @@ struct cache_t
   counter_t replacements;	/* total number of replacements at misses */
   counter_t writebacks;		/* total number of writebacks at misses */
   counter_t invalidations;	/* total number of external invalidations */
+  void resetStats() {
+    hits = 0;	
+    misses = 0;
+    replacements = 0;	
+    writebacks = 0;	
+    invalidations = 0;
+  }
 
   /* last block to hit, used to optimize cache hit processing */
   md_addr_t last_tagset;	/* tag of last line accessed */
