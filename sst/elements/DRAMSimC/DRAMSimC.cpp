@@ -103,10 +103,20 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
 
 int DRAMSimC::Finish() 
 {
-    if ( ! m_printStats.compare("yes" ) ) {
-        m_memorySystem->printStats();
-    }
-    return 0;
+  vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
+  for (int i = 0; i < v.size(); ++i) {
+    printf("DRAM: Background Energy %llu\n", 
+	   m_memorySystem->memoryController->backgroundEnergy[i]);
+    printf("DRAM: Burst Energy %llu\n", 
+	   m_memorySystem->memoryController->burstEnergy[i]);
+    printf("DRAM: ACT/PRE Energy %llu\n", 
+	   m_memorySystem->memoryController->actpreEnergy[i]);
+    printf("DRAM: Refresh Energy %llu\n", 
+	   m_memorySystem->memoryController->refreshEnergy[i]);
+  }
+  
+  m_memorySystem->printStats();
+  return 0;
 }
 
 void DRAMSimC::readData(uint id, uint64_t addr, uint64_t clockcycle)
@@ -133,8 +143,43 @@ void DRAMSimC::writeData(uint id, uint64_t addr, uint64_t clockcycle)
     }
 }
 
+extern int badCheat;
+
 bool DRAMSimC::clock( Cycle_t current )
 {
+  // simplest way to reset for now
+  if (badCheat) {
+    {
+      vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
+      for (vector< uint64_t >::iterator i = v.begin(); i != v.end(); ++i) {
+	*i = 0;
+      }
+    }
+
+    {
+      vector< uint64_t > &v = m_memorySystem->memoryController->burstEnergy;
+      for (vector< uint64_t >::iterator i = v.begin(); i != v.end(); ++i) {
+	*i = 0;
+      }
+    }
+
+    {
+      vector< uint64_t > &v = m_memorySystem->memoryController->actpreEnergy;
+      for (vector< uint64_t >::iterator i = v.begin(); i != v.end(); ++i) {
+	*i = 0;
+      }
+    }
+
+    {
+      vector< uint64_t > &v = m_memorySystem->memoryController->refreshEnergy;
+      for (vector< uint64_t >::iterator i = v.begin(); i != v.end(); ++i) {
+	*i = 0;
+      }
+    }
+    badCheat = 0;
+    printf("DRAMSim reset stats\n");
+  }
+
     m_memorySystem->update();
 
     memChan_t::event_t* event;
