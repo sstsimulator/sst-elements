@@ -123,5 +123,7 @@ bool Perform_PIM_AMO(processor *, simRegister*);
 bool Perform_PIM_MATVEC(processor *, simRegister*);
 bool Perform_PIM_ADV_OUT(processor *, simRegister*);
 bool Perform_PIM_FORCE_CALC(processor *, simRegister*);
+bool Perform_PIM_PAGERANK(processor *, simRegister*);
+
 
 #endif

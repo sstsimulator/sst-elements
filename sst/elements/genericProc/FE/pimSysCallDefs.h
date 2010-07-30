@@ -103,5 +103,6 @@
 
 #define SS_PIM_ADV_OUT          3070
 #define SS_PIM_FORCE_CALC          3071
+#define SS_PIM_PAGERANK          3072
 
 #endif

@@ -209,17 +209,21 @@ bool ppcInstruction::Perform_PIM_SWITCH_ADDR_MODE(processor* proc,
 bool ppcInstruction::Perform_PIM_QUICK_PRINT(processor	*FromProcessor,
 					     simRegister	*regs_R)
 {
-    printf("OUTPUT: %x(%d) %x(%d) %x(%d)\n",
-	   (unsigned int)ntohl(regs_R[3]), (unsigned int)ntohl(regs_R[3]),
-	   (unsigned int)ntohl(regs_R[4]), (unsigned int)ntohl(regs_R[4]),
-	   (unsigned int)ntohl(regs_R[5]), (unsigned int)ntohl(regs_R[5]));
-    fflush(stdout);
-
-    ppcThread::verbose = 6;
-
-    // return values
-    regs_R[3] = 0;
-    return true;
+  /* cheap time counting mechanism. feel free to discard */
+  static unsigned long long t = 0;
+  unsigned long long elap = FromProcessor->getCurrentSimTimeNano() - t;
+  t = FromProcessor->getCurrentSimTimeNano();
+  
+  printf("OUTPUT: %x(%d) %x(%d) %x(%d) @ %llu\n",
+	 (unsigned int)ntohl(regs_R[3]), (unsigned int)ntohl(regs_R[3]),
+	 (unsigned int)ntohl(regs_R[4]), (unsigned int)ntohl(regs_R[4]),
+	 (unsigned int)ntohl(regs_R[5]), (unsigned int)ntohl(regs_R[5]),
+	 elap);
+  fflush(stdout);
+  
+  // return values
+  regs_R[3] = 0;
+  return true;
 }
 
 bool ppcInstruction::Perform_PIM_TRACE(processor	*FromProcessor,
@@ -878,6 +882,16 @@ bool ppcInstruction::Perform_PIM_AMO(processor *proc, simRegister *regs) {
       proc->WriteMemory16(addr, ntohl(data16), 0); 
     }
     break;
+  case PIM_AMO_XOR64:
+    {
+      //printf("AMO XOR64 to addr %x\n", addr);
+      qword_t data64 = proc->ReadMemory64(addr,0);
+      data64 = endian_swap(data64);
+      data64 ^= (qword_t)immediate;
+      data64 = endian_swap(data64);
+      //proc->WriteMemory64(addr,data64,0);
+    }
+    break;
   default:
     ERROR("Unrecognized PIM_AMO_type %d.\n", op);
   }
@@ -990,7 +1004,7 @@ bool ppcInstruction::Perform_PIM_FORCE_CALC(processor *proc, simRegister *regs) 
   const simAddress af = ntohl(regs[5]);
   const simAddress ax = ntohl(regs[6]);
   const simAddress cutforceAddr = ntohl(regs[7]);
-  const int numneigh = ntohl(regs[8]);
+  //const int numneigh = ntohl(regs[8]);
 
   // check if we can send to memory
   bool ret;
@@ -1004,62 +1018,200 @@ bool ppcInstruction::Perform_PIM_FORCE_CALC(processor *proc, simRegister *regs) 
     printf("redo-no room");
   }
 
+  // create new event
+  PHXEvent *pe = new PHXEvent();
+  pe->eventType = FORCE_CALC;
+
   // perform the operation and record addresses
   if (ret) {
     double cutforcesq = ReadMemoryDouble(cutforceAddr,proc);
-    printf("sst cutforce %f\n", cutforcesq);
-    
+    //pe->fAddrs.inits.push_back(cutforceAddr);
+
     //const double xtmp = a.x[i][0];
     const double xtmp = ReadMemoryDouble(ax+((i*3+0)*8),proc);
+    //pe->fAddrs.inits.push_back(ax+((i*3+0)*8));
     //const double ytmp = a.x[i][1];
     const double ytmp = ReadMemoryDouble(ax+((i*3+1)*8),proc);
+    //pe->fAddrs.inits.push_back(ax+((i*3+1)*8));
     //const double ztmp = a.x[i][2];
     const double ztmp = ReadMemoryDouble(ax+((i*3+2)*8),proc);
+    //pe->fAddrs.inits.push_back(ax+((i*3+2)*8));    
+    /* assume these were already loaded*/
     
-    for (int k = 0; k < numneigh; k++) {
-      //const double delx = xtmp - a.x[j][0];
-      const double delx = xtmp - ReadMemoryDouble(ax+((j*3+0)*8),proc);
-      //const double dely = ytmp - a.x[j][1];
-      const double dely = ytmp - ReadMemoryDouble(ax+((j*3+1)*8),proc);
-      //const double delz = ztmp - a.x[j][2];
-      const double delz = ztmp - ReadMemoryDouble(ax+((j*3+2)*8),proc);
-      //const double rsq = delx*delx + dely*dely + delz*delz;
-      const double rsq = delx*delx + dely*dely + delz*delz;
-      if (rsq < cutforcesq) {
-	const double sr2 = 1.0/rsq;
-	const double sr6 = sr2*sr2*sr2;
-	const double force = sr6*(sr6-0.5)*sr2;
-	//a.f[i][0] += delx*force;
-	simAddress addr = af+((i*3+0)*8);
-	double answer = ReadMemoryDouble(addr,proc) + delx*force;
-	WriteMemoryDouble(addr, proc, answer);
-	//a.f[i][1] += dely*force;
-	addr = af+((i*3+1)*8);
-	answer = ReadMemoryDouble(addr,proc) + dely*force;
-	WriteMemoryDouble(addr, proc, answer);
-	//a.f[i][2] += delz*force;
-	addr = af+((i*3+2)*8);
-	answer = ReadMemoryDouble(addr,proc) + delz*force;
-	WriteMemoryDouble(addr, proc, answer);
+    //const double delx = xtmp - a.x[j][0];
+    const double delx = xtmp - ReadMemoryDouble(ax+((j*3+0)*8),proc);
+    pe->fAddrs.inits.push_back(ax+((j*3+0)*8));    
+    //const double dely = ytmp - a.x[j][1];
+    const double dely = ytmp - ReadMemoryDouble(ax+((j*3+1)*8),proc);
+    pe->fAddrs.inits.push_back(ax+((j*3+1)*8));    
+    //const double delz = ztmp - a.x[j][2];
+    const double delz = ztmp - ReadMemoryDouble(ax+((j*3+2)*8),proc);
+    pe->fAddrs.inits.push_back(ax+((j*3+2)*8));    
+    //const double rsq = delx*delx + dely*dely + delz*delz;
+    const double rsq = delx*delx + dely*dely + delz*delz;
+    if (rsq < cutforcesq) {
+      pe->tookBranch = true;
 
-	//a.f[j][0] -= delx*force;
-	addr = af+((j*3+0)*8);
-	answer = ReadMemoryDouble(addr,proc) - delx*force;
-	WriteMemoryDouble(addr, proc, answer);
-	//a.f[j][1] -= dely*force;
-	addr = af+((j*3+1)*8);
-	answer = ReadMemoryDouble(addr,proc) - dely*force;
-	WriteMemoryDouble(addr, proc, answer);
-	//a.f[j][2] -= delz*force;
-	addr = af+((j*3+2)*8);
-	answer = ReadMemoryDouble(addr,proc) - delz*force;
-	WriteMemoryDouble(addr, proc, answer);
-	printf("sst af_j_2 %d,%d,%d %f\n", i,j,k,answer);
+      const double sr2 = 1.0/rsq;
+      const double sr6 = sr2*sr2*sr2;
+      const double force = sr6*(sr6-0.5)*sr2;
+      //a.f[i][0] += delx*force;
+      simAddress addr = af+((i*3+0)*8);
+      double answer = ReadMemoryDouble(addr,proc) + delx*force;
+      WriteMemoryDouble(addr, proc, answer);
+      pe->fAddrs.a_fs.push_back(addr);    
+      //a.f[i][1] += dely*force;
+      addr = af+((i*3+1)*8);
+      answer = ReadMemoryDouble(addr,proc) + dely*force;
+      WriteMemoryDouble(addr, proc, answer);
+      pe->fAddrs.a_fs.push_back(addr);    
+      //a.f[i][2] += delz*force;
+      addr = af+((i*3+2)*8);
+      answer = ReadMemoryDouble(addr,proc) + delz*force;
+      WriteMemoryDouble(addr, proc, answer);
+      pe->fAddrs.a_fs.push_back(addr);    
+
+      //a.f[j][0] -= delx*force;
+      addr = af+((j*3+0)*8);
+      answer = ReadMemoryDouble(addr,proc) - delx*force;
+      WriteMemoryDouble(addr, proc, answer);
+      pe->fAddrs.a_fs.push_back(addr);    
+      //a.f[j][1] -= dely*force;
+      addr = af+((j*3+1)*8);
+      answer = ReadMemoryDouble(addr,proc) - dely*force;
+      WriteMemoryDouble(addr, proc, answer);
+      pe->fAddrs.a_fs.push_back(addr);    
+      //a.f[j][2] -= delz*force;
+      addr = af+((j*3+2)*8);
+      answer = ReadMemoryDouble(addr,proc) - delz*force;
+      WriteMemoryDouble(addr, proc, answer);
+      pe->fAddrs.a_fs.push_back(addr);    
+      //printf("sst af_j_2 %d,%d,%d %f\n", i,j,k,answer);
+    } else {
+      pe->tookBranch = false;
+    }
+    
+    //send parcel to memory
+    bool ret = proc->sendMemoryParcel(0, this, pe, 
+				      proc->getCurrentRunningCore());
+    
+    // save results
+    if (ret) {
+      // we should save results here, but we do up above instead.
+    } else {
+      // this should really never happen if we pass the check up tom
+      printf("redo - odd\n");
+    }
+  } else {
+    delete pe;
+  }
+  
+  // return the need to retry
+  regs[3] = ntohl(ret);
+  
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool ppcInstruction::Perform_PIM_PAGERANK(processor *proc, simRegister *regs)
+{
+#if HAVE_PHXSIM_H
+  // collect arguments
+  const int begin = ntohl(regs[3]);
+  const int end = ntohl(regs[4]);
+  const int i = ntohl(regs[5]);
+  const simAddress types = ntohl(regs[6]);
+  const simAddress fh = ntohl(regs[7]);
+  const simAddress rev_end_points = ntohl(regs[8]);
+  const simAddress rinfo = ntohl(regs[9]);
+
+#if 0
+  static int c = 0;
+  c++;
+  if (c & 0x3f) {
+    printf("pagerank: %d %d %d %p %p %p %p\n", begin, end, i, (void*)types,
+	   (void*)fh, (void*)rev_end_points, (void*)rinfo);
+  }
+#endif
+
+  // check if we can send to memory
+  bool ret;
+  int max = 0;
+  int haveOut = 
+    proc->getOutstandingAdvancedMemReqs(proc->getCurrentRunningCore(), &max);
+  if (haveOut < max) {
+    ret = true;
+  } else {
+    ret = false;
+    printf("redo-no room");
+  }
+
+  // create new event
+  PHXEvent *pe = new PHXEvent();
+  pe->eventType = PAGERANK;
+
+  static int care = 0;
+  static int dcare = 0;
+
+  // perform the operation and record addresses
+  if (ret) {
+    simAddress addr;
+    double total = 0.0;
+    //if (types[i] != 1 || fh[i] < 10) { continue; }
+    addr = types + i * 4;
+    unsigned int types_i = ntohl(proc->ReadMemory32(addr,0));
+    pe->pAddrs.inits.push_back(addr);
+    addr = fh + i * 4;
+    unsigned int fh_i = ntohl(proc->ReadMemory32(addr,0));
+    pe->pAddrs.inits.push_back(addr);
+    bool dontCareAboutNode = (types_i == 0 || fh_i < 10);
+    if (dontCareAboutNode) dcare++;
+    else care++;   
+    if (!dontCareAboutNode) {
+      pe->tookBranch = 1;
+      // do care about node
+      //for (int j  = begin ; j < end ; ++j) {
+      for (int j = begin; j < end; ++j) {
+	//  vertex_descriptor_t src = rev_end_points[j];
+	addr = rev_end_points + j * 4;
+	unsigned int src = ntohl(proc->ReadMemory32(addr,0));
+	pe->pAddrs.neigh.push_back(addr);
+	//  if (types[src] != 1 || fh[src] < 10) {continue;}
+	addr = types + src * 4;
+	unsigned int types_src = ntohl(proc->ReadMemory32(addr,0));
+	pe->pAddrs.neigh.push_back(addr);
+	addr = fh + src * 4;
+	unsigned int fh_src = ntohl(proc->ReadMemory32(addr,0));
+	pe->pAddrs.neigh.push_back(addr);
+	bool dontCareAboutNeighbor = (types_src == 0 || fh_src < 10);
+	if (!dontCareAboutNeighbor) {
+	  //  double r = qt_rinfo->rinfo[src].rank;
+	  addr = rinfo + (src * 20) + 12;
+	  double r = ReadMemoryDouble(addr,proc);
+	  pe->pAddrs.care_neigh.push_back(addr);
+	  //  double incr = (r / qt_rinfo->rinfo[src].degree);
+	  addr = rinfo + (src * 20);	  
+	  int degree = ntohl(proc->ReadMemory32(addr,0));
+	  pe->pAddrs.care_neigh.push_back(addr);
+	  double incr = r / double(degree);
+	  //  total += incr;
+	  total += incr;
+	}
+	//}   
       }
+      //qt_rinfo->rinfo[i].acc = total;
+      addr = rinfo + (i * 20) + 4;
+      WriteMemoryDouble(addr, proc, total);
+      pe->pAddrs.total = addr;
+    } else {
+      pe->tookBranch = 0;
     }
 
-    //send parcel to memory
-    bool ret = true;
+    // send parcel to memory
+    bool ret = proc->sendMemoryParcel(0, this, pe, 
+				      proc->getCurrentRunningCore());
     
     // save results
     if (ret) {
@@ -1067,6 +1219,8 @@ bool ppcInstruction::Perform_PIM_FORCE_CALC(processor *proc, simRegister *regs) 
       // this should really never happen if we pass the check up tom
       printf("redo - odd\n");
     }
+  } else {
+    delete pe;
   }
 
   // return the need to retry

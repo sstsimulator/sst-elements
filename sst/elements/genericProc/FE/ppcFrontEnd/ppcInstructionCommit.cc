@@ -493,7 +493,6 @@ bool ppcInstruction::commit(processor *proc, const bool isSpec)
 	     isSpec ? "(spec)" : "", /* %s */
 	     (unsigned long long) NOW /* %lu */
 	    );
-      printf(" -1096: %x\n", ntohl(proc->ReadMemory32(0xfffffbb8, false)));
       fflush(stdout);       
     }  
   }

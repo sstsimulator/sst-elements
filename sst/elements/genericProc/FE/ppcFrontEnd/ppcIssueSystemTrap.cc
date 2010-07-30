@@ -154,6 +154,7 @@ void ppcInstruction::issueSystemTrap(processor* proc,
     case SS_PIM_AMO:
     case SS_PIM_MATVEC:
     case SS_PIM_FORCE_CALC:
+    case SS_PIM_PAGERANK:
       _fu = WrPort;
       break;
     case SS_PIM_RW_SPECIAL3:

@@ -114,6 +114,7 @@ typedef enum {PIM_REGION_CACHED,
              } PIM_region_types;
 
 typedef enum {PIM_AMO_XOR, 
-	      PIM_AMO_ADD16} PIM_amo_types;
+	      PIM_AMO_ADD16,
+	      PIM_AMO_XOR64} PIM_amo_types;
 
 #endif
