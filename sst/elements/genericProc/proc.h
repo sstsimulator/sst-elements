@@ -156,6 +156,8 @@ private:
   int externalMem;
   // maximum main memory references outstanding
   int maxMMOut;
+  // run in "fast" mode until a rest
+  int fastTillReset;
   // number of cores
   int cores; 
   // coherency
@@ -188,7 +190,10 @@ private:
   uint64_t memReqLat;
   uint64_t memSpecialReqLat;
   uint64_t memStores;
+  uint64_t memStartNS;
 #endif
+  uint64_t MCReads;
+  uint64_t MCWrites;
 
   Event::Handler<proc> *NICeventHandler;
 

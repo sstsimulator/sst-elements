@@ -20,6 +20,8 @@
 #include <sst/core/cpunicEvent.h>
 #include <algorithm>
 
+int badCheat = 0;
+
 int gproc_debug;
 
 static Component*
@@ -95,7 +97,9 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   memReqLat = 0;
   memSpecialReqLat = 0;
   memStores = 0;
+  memStartNS = 0;
 #endif
+  MCReads = MCWrites = 0;
 
   /* memory_t is an interface to a (set of) memory device(s), which will, given
    * an address, identify which device owns the address and use the link to
@@ -145,6 +149,7 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
 
   // find config parameters
   std::string clockSpeed = "1GHz";
+  fastTillReset = 0;
   string ssConfig;
   Params_t::iterator it = params.begin();  
   while( it != params.end() ) {
@@ -174,6 +179,9 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
     }
     if (!it->first.compare("coherent"))   {
       sscanf(it->second.c_str(), "%d", &coherent);
+    }
+    if (!it->first.compare("fastTillReset"))   {
+      sscanf(it->second.c_str(), "%d", &fastTillReset);
     }
     if (!it->first.compare("maxSpecReq"))   {
       sscanf(it->second.c_str(), "%d", &maxOutstandingSpecReq);
@@ -239,6 +247,7 @@ void proc::processMemDevResp( ) {
 	    uint64_t startTime = mReq.second;
 	    uint64_t lat = getCurrentSimTimeNano() - startTime;
 	    memSpecialReqLat += lat;
+	    totalSpecialMemReq++;
 	    static int c = 0; c++;
 	    if ((c % 0x3ff) == 0) printf("adv mem lat %llu\n", (long long unsigned)lat);
 #endif
@@ -296,6 +305,7 @@ void proc::processMemDevResp( ) {
 #if TIME_MEM
 	  uint64_t startTime = mi2->second.second;
 	  uint64_t lat = getCurrentSimTimeNano() - startTime;
+	  totalSpecialMemReq++;
 	  memSpecialReqLat += lat;
 	  static int c = 0; c++;
 	  if ((c % 0xff) == 0) printf("slat %llu\n", (long long unsigned)lat);
@@ -340,13 +350,20 @@ int proc::Finish() {
   processor::finish();
 #if TIME_MEM
   printf("%llu Total Memory Requests\n", (long long unsigned)totalMemReq);
+  printf(" over %llu nano seconds\n", getCurrentSimTimeNano() - memStartNS);
   printf("%llu Timed Memory Requests, avg lat. %.2fns %llu stores\n",
 	  (long long unsigned)numMemReq,
 	  double(memReqLat)/double(numMemReq),
 	  (long long unsigned)memStores);
+  printf("%llu Timed Special Memory Requests, avg lat. %.2fns\n", 
+	 totalSpecialMemReq, 
+	 double(memSpecialReqLat)/double(totalSpecialMemReq));
 #endif
   printf("proc finished at %llu ns\n",
 	  (long long unsigned)getCurrentSimTimeNano());
+  printf("MC Reads: %llu\n", MCReads);
+  printf("MC Writes: %llu\n", MCWrites);
+
   return false;
 }
 
@@ -434,7 +451,7 @@ bool proc::preTic(Cycle_t c) {
       // sigh... we use this so we know which core is currently
       // running. 
       currentRunningCore = c;
-      mProcs[c]->preTic();
+      mProcs[c]->preTic(fastTillReset);
       currentRunningCore = -1;
     }
   } else {
@@ -652,8 +669,6 @@ bool proc::sendMemoryParcel(uint64_t address, instruction *inst,
       // if there is no event specified we must be doing a simple AMO
     
       // send the memory request
-      //bool ret = memory[0]->send(address,inst, memory_t::dev_t::event_t::RMW);
-      // for now we can just pretend its a READ
       bool ret = memory[0]->read(address, (instruction*)uid);
       if (!ret) {
 	INFO("Memory send parcel failed to Write\n");
@@ -698,11 +713,13 @@ bool proc::sendMemoryReq( instType iType,
 
   _GPROC_DBG(1,"instruction type %d\n", iType );
   if ( iType == STORE ) {
+    MCWrites++; memStores++;
     if ( ! memory[0]->write(address, i ) ) {
       INFO("Memory Failed to Write\n");
       return false;
     }
   } else {
+    MCReads++;
     if ( ! memory[0]->read(address, i ) ) {
       INFO("Memory Failed to Read\n");
       return false;
@@ -723,10 +740,36 @@ bool proc::sendMemoryReq( instType iType,
 }
 
 void proc::resetCounters() {
+  badCheat = 1;
+#if TIME_MEM
+  totalMemReq = 0;
+  numMemReq = 0;
+  memReqLat = 0;
+  numMemReq = 0;
+  memStores = 0;
+  memSpecialReqLat = 0;
+  totalSpecialMemReq = 0;
+  memStartNS = getCurrentSimTimeNano();
+#endif
+  if (fastTillReset) {
+    printf("proc switching away from fast mode\n");
+  }
+  fastTillReset = 0;
+  MCReads = MCWrites = 0;
   for (unsigned int i = 0; i < mProcs.size(); ++i) {
+    mProcs[i]->resetStats();
     for (unsigned int t = 0; t < LASTINST; ++t) {
       mProcs[i]->iMix[t] = 0;
     }
+  }
+  
+  // tell the PHX mem
+  if (advMem) {
+#if HAVE_PHXSIM_H
+    PHXEvent *pe = new PHXEvent();
+    pe->eventType = RESET;
+    advMem->Send(1,pe);
+#endif
   }
 }
 
