@@ -1887,9 +1887,50 @@ void convProc::ruu_fetch(void)
     }
 }
 
+//: Simulate a cycle quickly, with out architectural detail
+void convProc::fast_sim_loop() {
+  if (clearPipe == 1 || thr == NULL || thr->isDead()) {
+    // check if we are syncing 
+    if (isSyncing && pipeDispatchClear()) {
+      // done syncing
+      isSyncing = 0;
+      clearPipe = 0;
+    } else {
+      return;
+    }
+  }
+  
+  // rush rush rush
+  fetch_regs_PC = fetch_pred_PC;
+  instruction *inst = thr->getNextInstruction(fetch_regs_PC);
+  inst->fetch(myProc);
+  inst->issue(myProc);
+  if (inst->commit(myProc)) {
+    fetch_pred_PC = inst->NPC();
+    thr->retire(inst);
+  } else {
+    if ((inst->exception() == YIELD_EXCEPTION) 
+	|| (inst->exception() == FEB_EXCEPTION)) {
+      // try again
+      thr->retire(inst);
+    } else {
+      // we don't know what to do here
+      printf("ERROR: Instruction commit failed in fast mode\n!");
+      printf("PC %p\n", (void*)ntohl(fetch_regs_PC));
+      exit(-1);
+    }
+  }
+}
+
 //: Simulate a cycle
 // was sim_main 
-void convProc::sim_loop(void) {
+void convProc::sim_loop(bool fastMode) {
+  // shortcut for fast mode
+  if (fastMode) {
+    fast_sim_loop();
+    return;
+  }
+
   /* main simulator loop, NOTE: the pipe stages are traverse in reverse order
      to eliminate this/next state synchronization and relaxation problems */
   tickCount++;

@@ -75,7 +75,7 @@ public:
   virtual void setup();
   virtual void finish();
   //virtual void handleParcel(parcel *p);
-  virtual void preTic();
+  virtual void preTic(bool fast);
   virtual void postTic(){;} 
 
   virtual bool spawnToCoProc(const PIM_coProc, thread* t, simRegister);
@@ -85,7 +85,7 @@ public:
   virtual exceptType readSpecial(const PIM_cmd, const int nInArgs, 
 				 const int nOutArgs, const simRegister *args,
 				 simRegister *rets);
-
+  void resetStats();
   /* coherency protocol stuff */
   friend class smpProc;
   smpProc coher;

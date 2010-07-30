@@ -63,12 +63,48 @@ void mainProc::finish(){
 }
 
 
+void mainProc::resetStats() {
+  printf("reset Processor\n");
+  if (cache_il1) {
+    cache_il1->resetStats();
+  }
+  if (cache_il2) {
+    cache_il2->resetStats();
+  }
+  if (cache_dl1) {
+    cache_dl1->resetStats();
+    cache_flush(cache_dl1,0);
+  }
+  if (cache_dl2) {
+    cache_dl2->resetStats();
+    cache_flush(cache_dl2,0);
+  }
+#if WANT_LSQ_HIST == 1
+  LSQ_hist.clear();
+#endif
+  sim_num_insn = 0;
+  sim_total_insn = 0;
+  sim_num_refs = 0;
+  sim_total_refs = 0;
+  sim_num_loads = 0;
+  sim_total_loads = 0;
+  sim_num_branches = 0;
+  sim_total_branches = 0;
+  IFQ_count = 0;
+  IFQ_fcount = 0;
+  RUU_count = 0;
+  RUU_fcount = 0;
+  LSQ_count = 0;
+  LSQ_fcount = 0;
+  sim_invalid_addrs = 0;
+}
+
 #if 0
 void mainProc::handleParcel(parcel *p){convProc::handleParcel(p);}
 #endif
 
-void mainProc::preTic() {
-  sim_loop();
+void mainProc::preTic(bool fast) {
+  sim_loop(fast);
 }
 
 bool mainProc::spawnToCoProc(const PIM_coProc where, thread* t, simRegister hint) {

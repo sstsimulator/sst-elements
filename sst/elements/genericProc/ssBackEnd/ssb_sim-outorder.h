@@ -549,7 +549,8 @@ protected:
   /* 
    *  "main loop" simulation functions
    */
-  void sim_loop(void);
+  void fast_sim_loop();
+  void sim_loop(bool);
   void ruu_release_fu(void);
   void ruu_commit(void);
   void ruu_writeback(void);
@@ -581,7 +582,6 @@ protected:
 public:
   virtual void handleMemEvent(instruction* inst );
 protected:
-  virtual void preTic()=0;
   virtual void postTic()=0;
   void handleReturningStore(instruction *inst);
 
