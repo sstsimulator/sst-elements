@@ -15,7 +15,6 @@
 #include "sstdisksim_event.h"
 
 #include <sst/core/log.h>
-#include <sst/core/eventFunctor.h>
 #include <sst/core/component.h>
 #include <sst/core/simulation.h>
 #include <stdlib.h>
