@@ -9,7 +9,7 @@ VLIBS=-lm
 #CC=cc
 #CFLAGS=-O
 #LIBS=-lm
-CFLAGS=-O -D__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1030 -U__LDBL_MANT_DIG__
+CFLAGS=-O3 -D__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1030 -U__LDBL_MANT_DIG__
 INC = -I../../FE -I../
 CC = gcc-3.3  $(CFLAGS) $(INC) $(LIB) -static -arch ppc
 LIB = -L../allStatLibs
@@ -59,10 +59,10 @@ gups_notserial_amo: gups_notserial_amo.o
 	$(CC) -o $@ $(LIB) $< $(LIBS)
 
 gups_notserial.o: gups_notserial.c gups_sysheaders.h gups_types.h
-	$(CC) $(CFLAGS) -funroll-loops -O3 -UDO_RANDOMS_BEFOREHAND -DRANDOM_IS_LFSR -o $@ -c $<
+	$(CC) $(CFLAGS) -funroll-loops -O3  -DRANDOM_IS_LFSR -o $@ -c $<
 
 gups_notserial_amo.o: gups_notserial.c gups_sysheaders.h gups_types.h
-	$(CC) $(CFLAGS) -DUSE_AMO -funroll-loops -O3 -UDO_RANDOMS_BEFOREHAND -DRANDOM_IS_LFSR -o $@ -c $<
+	$(CC) $(CFLAGS) -DUSE_AMO -funroll-loops -O3  -DRANDOM_IS_LFSR -o $@ -c $<
 
 gups_serial: gups_serial.o 
 	$(CC) -o $@ $(LIB) $< $(LIBS)

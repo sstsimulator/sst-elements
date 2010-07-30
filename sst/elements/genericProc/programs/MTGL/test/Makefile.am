@@ -16,7 +16,8 @@ endif
 noinst_PROGRAMS = \
 	test_bfs \
 	test_cc \
-	test_pagerank
+	test_pagerank \
+	test_pagerank_pim
 
 if !RELEASABLE_CODE_ONLY
 noinst_PROGRAMS += \
@@ -60,6 +61,10 @@ if ON_MTA
 test_cc_CFLAGS = -pl test_cc.pl
 test_cc_CXXFLAGS = -pl test_cc.pl
 endif
+
+test_pagerank_pim_SOURCES = test_pagerank.cpp mtgl_test.hpp
+test_pagerank_pim_CFLAGS = -DPIM_EXTENSIONS=1
+test_pagerank_pim_CXXFLAGS = -DPIM_EXTENSIONS=1
 
 test_pagerank_SOURCES = test_pagerank.cpp mtgl_test.hpp
 if ON_MTA

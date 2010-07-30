@@ -35,7 +35,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = test_bfs$(EXEEXT) test_cc$(EXEEXT) \
-	test_pagerank$(EXEEXT) $(am__EXEEXT_1)
+	test_pagerank$(EXEEXT) test_pagerank_pim$(EXEEXT) \
+	$(am__EXEEXT_1)
 @RELEASABLE_CODE_ONLY_FALSE@am__append_1 = \
 @RELEASABLE_CODE_ONLY_FALSE@	test_static_graph1 \
 @RELEASABLE_CODE_ONLY_FALSE@	test_static_graph2 \
@@ -108,6 +109,12 @@ test_pagerank_OBJECTS = $(am_test_pagerank_OBJECTS)
 test_pagerank_LDADD = $(LDADD)
 test_pagerank_LINK = $(CXXLD) $(test_pagerank_CXXFLAGS) $(CXXFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_test_pagerank_pim_OBJECTS =  \
+	test_pagerank_pim-test_pagerank.$(OBJEXT)
+test_pagerank_pim_OBJECTS = $(am_test_pagerank_pim_OBJECTS)
+test_pagerank_pim_LDADD = $(LDADD)
+test_pagerank_pim_LINK = $(CXXLD) $(test_pagerank_pim_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 nodist_test_snapshot_OBJECTS = test_snapshot-test_snapshot.$(OBJEXT)
 test_snapshot_OBJECTS = $(nodist_test_snapshot_OBJECTS)
 test_snapshot_LDADD = $(LDADD)
@@ -159,14 +166,15 @@ LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(nodist_csg_test_SOURCES) $(nodist_custom2file_SOURCES) \
 	$(nodist_rmat2file_SOURCES) $(test_bfs_SOURCES) \
 	$(test_cc_SOURCES) $(nodist_test_indset_SOURCES) \
-	$(test_pagerank_SOURCES) $(nodist_test_snapshot_SOURCES) \
+	$(test_pagerank_SOURCES) $(test_pagerank_pim_SOURCES) \
+	$(nodist_test_snapshot_SOURCES) \
 	$(nodist_test_sssp_deltastepping_SOURCES) \
 	$(nodist_test_static_graph1_SOURCES) \
 	$(nodist_test_static_graph2_SOURCES) \
 	$(nodist_test_static_graph3_SOURCES) \
 	$(nodist_test_tri_SOURCES)
 DIST_SOURCES = $(test_bfs_SOURCES) $(test_cc_SOURCES) \
-	$(test_pagerank_SOURCES)
+	$(test_pagerank_SOURCES) $(test_pagerank_pim_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -300,6 +308,9 @@ test_bfs_SOURCES = mtgl_test.hpp test_bfs.cpp
 test_cc_SOURCES = mtgl_test.hpp test_cc.cpp
 @ON_MTA_TRUE@test_cc_CFLAGS = -pl test_cc.pl
 @ON_MTA_TRUE@test_cc_CXXFLAGS = -pl test_cc.pl
+test_pagerank_pim_SOURCES = test_pagerank.cpp mtgl_test.hpp
+test_pagerank_pim_CFLAGS = -DPIM_EXTENSIONS=1
+test_pagerank_pim_CXXFLAGS = -DPIM_EXTENSIONS=1
 test_pagerank_SOURCES = test_pagerank.cpp mtgl_test.hpp
 @ON_MTA_TRUE@test_pagerank_CFLAGS = -pl test_pagerank.pl
 @ON_MTA_TRUE@test_pagerank_CXXFLAGS = -pl test_pagerank.pl
@@ -426,6 +437,9 @@ test_indset$(EXEEXT): $(test_indset_OBJECTS) $(test_indset_DEPENDENCIES)
 test_pagerank$(EXEEXT): $(test_pagerank_OBJECTS) $(test_pagerank_DEPENDENCIES) 
 	@rm -f test_pagerank$(EXEEXT)
 	$(test_pagerank_LINK) $(test_pagerank_OBJECTS) $(test_pagerank_LDADD) $(LIBS)
+test_pagerank_pim$(EXEEXT): $(test_pagerank_pim_OBJECTS) $(test_pagerank_pim_DEPENDENCIES) 
+	@rm -f test_pagerank_pim$(EXEEXT)
+	$(test_pagerank_pim_LINK) $(test_pagerank_pim_OBJECTS) $(test_pagerank_pim_LDADD) $(LIBS)
 test_snapshot$(EXEEXT): $(test_snapshot_OBJECTS) $(test_snapshot_DEPENDENCIES) 
 	@rm -f test_snapshot$(EXEEXT)
 	$(test_snapshot_LINK) $(test_snapshot_OBJECTS) $(test_snapshot_LDADD) $(LIBS)
@@ -458,6 +472,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_cc-test_cc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_indset-test_indset.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_pagerank-test_pagerank.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_pagerank_pim-test_pagerank.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_snapshot-test_snapshot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_sssp_deltastepping-test_sssp_deltastepping.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_static_graph1-test_static_graph1.Po@am__quote@
@@ -576,6 +591,20 @@ test_pagerank-test_pagerank.obj: test_pagerank.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='test_pagerank.cpp' object='test_pagerank-test_pagerank.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_pagerank_CXXFLAGS) $(CXXFLAGS) -c -o test_pagerank-test_pagerank.obj `if test -f 'test_pagerank.cpp'; then $(CYGPATH_W) 'test_pagerank.cpp'; else $(CYGPATH_W) '$(srcdir)/test_pagerank.cpp'; fi`
+
+test_pagerank_pim-test_pagerank.o: test_pagerank.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_pagerank_pim_CXXFLAGS) $(CXXFLAGS) -MT test_pagerank_pim-test_pagerank.o -MD -MP -MF $(DEPDIR)/test_pagerank_pim-test_pagerank.Tpo -c -o test_pagerank_pim-test_pagerank.o `test -f 'test_pagerank.cpp' || echo '$(srcdir)/'`test_pagerank.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/test_pagerank_pim-test_pagerank.Tpo $(DEPDIR)/test_pagerank_pim-test_pagerank.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='test_pagerank.cpp' object='test_pagerank_pim-test_pagerank.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_pagerank_pim_CXXFLAGS) $(CXXFLAGS) -c -o test_pagerank_pim-test_pagerank.o `test -f 'test_pagerank.cpp' || echo '$(srcdir)/'`test_pagerank.cpp
+
+test_pagerank_pim-test_pagerank.obj: test_pagerank.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_pagerank_pim_CXXFLAGS) $(CXXFLAGS) -MT test_pagerank_pim-test_pagerank.obj -MD -MP -MF $(DEPDIR)/test_pagerank_pim-test_pagerank.Tpo -c -o test_pagerank_pim-test_pagerank.obj `if test -f 'test_pagerank.cpp'; then $(CYGPATH_W) 'test_pagerank.cpp'; else $(CYGPATH_W) '$(srcdir)/test_pagerank.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/test_pagerank_pim-test_pagerank.Tpo $(DEPDIR)/test_pagerank_pim-test_pagerank.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='test_pagerank.cpp' object='test_pagerank_pim-test_pagerank.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_pagerank_pim_CXXFLAGS) $(CXXFLAGS) -c -o test_pagerank_pim-test_pagerank.obj `if test -f 'test_pagerank.cpp'; then $(CYGPATH_W) 'test_pagerank.cpp'; else $(CYGPATH_W) '$(srcdir)/test_pagerank.cpp'; fi`
 
 test_snapshot-test_snapshot.o: test_snapshot.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_snapshot_CXXFLAGS) $(CXXFLAGS) -MT test_snapshot-test_snapshot.o -MD -MP -MF $(DEPDIR)/test_snapshot-test_snapshot.Tpo -c -o test_snapshot-test_snapshot.o `test -f 'test_snapshot.cpp' || echo '$(srcdir)/'`test_snapshot.cpp

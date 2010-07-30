@@ -57,6 +57,10 @@
 # include <qthread.h>
 #endif
 
+#if SST
+#include <ppcPimCalls.h>
+#endif
+
 #define MAXLINE 256
 
 int input(In &, Atom &, Force &, Neighbor &, Integrate &, Thermo &);
@@ -125,6 +129,9 @@ int main(int argc, char **argv)
 
     if (me == 0) printf("Starting dynamics ...\n");
           
+#if SST
+    PIM_resetCounters();
+#endif
     timer.barrier_start(TIME_TOTAL);
     integrate.run(atom,force,neighbor,comm,thermo,timer);
     timer.barrier_stop(TIME_TOTAL);

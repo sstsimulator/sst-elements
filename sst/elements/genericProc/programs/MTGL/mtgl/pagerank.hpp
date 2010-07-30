@@ -30,6 +30,8 @@
 #include <mtgl/visit_adj.hpp>
 #include <mtgl/metrics.hpp>
 
+#include "ppcPimCalls.h"
+
 namespace mtgl {
 
 typedef struct {
@@ -43,10 +45,13 @@ typedef struct {
 template <typename graph_adapter>
 class qt_rank_info {
 public:
-  qt_rank_info(graph_adapter& gg, rank_info* const ri) : g(gg), rinfo(ri) {}
+    qt_rank_info(graph_adapter& gg, rank_info* const ri, unsigned int *types, unsigned int *fh) : 
+        g(gg), rinfo(ri), types(types), fh(fh) {}
 
   graph_adapter& g;
   rank_info* const rinfo;
+    unsigned int *types;
+    unsigned int *fh;
 };
 
 template <class graph_adapter>
@@ -132,25 +137,46 @@ void compute_acc_outer<static_graph_adapter<bidirectionalS> >(
   qt_rank_info<Graph>* qt_rinfo = (qt_rank_info<Graph>*)arg;
 
   vertex_id_map<Graph> vid_map = get(_vertex_id_map, qt_rinfo->g);
+  unsigned int *types = qt_rinfo->types;
+  unsigned int *fh = qt_rinfo->fh;
 
   vertex_descriptor_t* rev_end_points = qt_rinfo->g.get_rev_end_points();
 
   for (size_t i = startat ; i < stopat ; ++i)
   {
-    double total = 0.0;
     int begin = qt_rinfo->g[i];
     int end = qt_rinfo->g[i + 1];
+
+#if defined(PIM_EXTENSIONS)
+    // note: we really should include the begin and end lookups in the
+    // PIM portion of the algorithm. future work.
+    int result = 0;
+    do {
+      result = PIM_PageRank(begin, end, i, types, fh, (unsigned int*)rev_end_points, qt_rinfo->rinfo);
+    } while (result == 0);
+    while (PIM_OutstandingMR() > 31) {;}
+#else
+    double total = 0.0;
+    // ARUN - FILTER IS HERE
+    if (types[get(vid_map, i)] == 0 || fh[get(vid_map, i)] < 10) { continue; }
 
     for (int j  = begin ; j < end ; ++j)
     {
       vertex_descriptor_t src = rev_end_points[j];
+      // ARUN - FILTER IS HERE
+      if (types[get(vid_map, src)] == 0 || fh[get(vid_map, src)] < 10) { continue; }
       double r = qt_rinfo->rinfo[src].rank;
       double incr = (r / qt_rinfo->rinfo[src].degree);
       total += incr;
     }
 
     qt_rinfo->rinfo[i].acc = total;
+#endif
   }
+#if defined(PIM_EXTENSIONS)
+  // make sure everyone is done
+  while (PIM_OutstandingMR() > 0) {;}
+#endif
 }
 
 template <typename graph_adapter>
@@ -256,7 +282,7 @@ void compute_diff_vec(qthread_t* me, const size_t startat,
 #endif
 
 template <class graph_adapter>
-void compute_acc(graph_adapter& g, rank_info* rinfo)
+void compute_acc(graph_adapter& g, rank_info* rinfo, unsigned int *types, unsigned int *fh)
 {
   typedef graph_adapter Graph;
   typedef typename graph_traits<Graph>::vertex_descriptor vertex_descriptor_t;
@@ -264,9 +290,8 @@ void compute_acc(graph_adapter& g, rank_info* rinfo)
   typedef typename graph_traits<Graph>::vertex_iterator vert_iter_t;
 
   unsigned int n = num_vertices(g);
-
 #ifdef USING_QTHREADS
-  qt_rank_info<Graph> ri(g, rinfo);
+  qt_rank_info<Graph> ri(g, rinfo, types, fh);
   qt_loop_balance(0, n, compute_acc_outer<Graph>, &ri);
 #else
   int i, j;
@@ -309,7 +334,8 @@ void compute_acc(graph_adapter& g, rank_info* rinfo)
 */
 template <>
 void compute_acc<static_graph_adapter<bidirectionalS> >(
-    static_graph_adapter<bidirectionalS>& g, rank_info* rinfo)
+                                                        static_graph_adapter<bidirectionalS>& g, 
+                                                        rank_info* rinfo, unsigned int *types, unsigned int *fh)
 {
   typedef static_graph_adapter<bidirectionalS> Graph;
   typedef graph_traits<Graph>::vertex_descriptor vertex_descriptor_t;
@@ -317,8 +343,11 @@ void compute_acc<static_graph_adapter<bidirectionalS> >(
   unsigned int n = num_vertices(g);
 
 #ifdef USING_QTHREADS
-  qt_rank_info<Graph> ri(g, rinfo);
+  //AFR
+  qt_rank_info<Graph> ri(g, rinfo, types, fh);
+  PIM_quickPrint(0,0,0);
   qt_loop_balance(0, n, compute_acc_outer<Graph>, &ri);
+  PIM_quickPrint(0,0,1);
 #else
   int i, j;
   vertex_id_map<Graph> vid_map = get(_vertex_id_map, g);
@@ -380,7 +409,7 @@ void compute_acc_over_edges(graph_adapter& g, rank_info* rinfo)
 
 template <>
 void compute_acc<static_graph_adapter<undirectedS> >(
-    static_graph_adapter<undirectedS>& g, rank_info* rinfo)
+                                                     static_graph_adapter<undirectedS>& g, rank_info* rinfo, unsigned int *types, unsigned int *fh)
 {
   typedef static_graph_adapter<undirectedS> Graph;
   typedef graph_traits<Graph>::vertex_descriptor vertex_descriptor_t;
@@ -391,7 +420,7 @@ void compute_acc<static_graph_adapter<undirectedS> >(
   vertex_id_map<Graph> vid_map = get(_vertex_id_map, g);
 
 #ifdef USING_QTHREADS
-  qt_rank_info<Graph> qt_rinfo(g, rinfo);
+  qt_rank_info<Graph> qt_rinfo(g, rinfo, types, fh);
   qt_loop_balance(0, n, compute_acc_outer<Graph>, &qt_rinfo);
 #else
   vert_iter_t verts = vertices(g);
@@ -420,7 +449,7 @@ void compute_acc<static_graph_adapter<undirectedS> >(
 
 template <>
 void compute_acc<static_graph_adapter<directedS> >(
-    static_graph_adapter<directedS>& g, rank_info* rinfo)
+                                                   static_graph_adapter<directedS>& g, rank_info* rinfo, unsigned int *types, unsigned int *fh)
 {
   typedef static_graph_adapter<directedS> Graph;
   typedef graph_traits<Graph>::vertex_descriptor vertex_descriptor_t;
@@ -431,7 +460,7 @@ void compute_acc<static_graph_adapter<directedS> >(
   vertex_id_map<Graph> vid_map = get(_vertex_id_map, g);
 
 #ifdef USING_QTHREADS
-  qt_rank_info<Graph> qt_rinfo(g, rinfo);
+  qt_rank_info<Graph> qt_rinfo(g, rinfo, types, fh);
   qt_loop_balance(0, n, compute_acc_outer<Graph>, &qt_rinfo);
 #else
   vert_iter_t verts = vertices(g);
@@ -564,7 +593,7 @@ class pagerank {
 public:
   typedef typename graph_traits<graph_adapter>::vertex_iterator vert_iter_t;
 
-  pagerank(graph_adapter& gg) : g(gg) {}
+    pagerank(graph_adapter& gg, unsigned int* types, unsigned int *fh) : g(gg), types(types), fh(fh) {}
 
   rank_info* run(double delta)
   {
@@ -584,10 +613,8 @@ public:
     struct timeval start, stop;
 #endif
 
-    printf("before zerodegcnt\n");
-
 #ifdef USING_QTHREADS
-    qt_rank_info<graph_adapter> zerodegcnt_rinfo(g, rinfo);
+    qt_rank_info<graph_adapter> zerodegcnt_rinfo(g, rinfo, types, fh);
     qt_loopaccum_balance(0, order, sizeof(zerodegcnt), &zerodegcnt,
                          compute_zerodegcnt<graph_adapter>, &zerodegcnt_rinfo,
                          qt_uint_add_acc);
@@ -603,8 +630,6 @@ public:
       if (rinfo[i].degree == 0) zerodegcnt++;
     }
 #endif
-
-    printf("after zerodegcnt %lu\n", zerodegcnt);
 
     int* zerodegvtx = NULL;   // Indices of vertices with out-degree = 0.
 
@@ -634,7 +659,7 @@ public:
 
 #ifdef USING_QTHREADS
       {
-        qt_rank_info<graph_adapter> qt_ri_sum(g, rinfo);
+          qt_rank_info<graph_adapter> qt_ri_sum(g, rinfo, types, fh);
         qt_loopaccum_balance(0, order, sizeof(sum), &sum,
                              prepare_compute_acc<graph_adapter>,
                              &qt_ri_sum, qt_dbl_add_acc);
@@ -655,7 +680,7 @@ public:
       gettimeofday(&start, NULL);
 #endif
 
-      compute_acc<graph_adapter>(g, rinfo);
+      compute_acc<graph_adapter>(g, rinfo, types, fh);
       double adjustment = (1. - dampen) / order * sum;
 
 #ifdef WANT_TIMING
@@ -754,7 +779,6 @@ public:
 #endif
 
     } while (maxdiff > delta);
-
     printf("iterations: %d\n", iter_cnt);
 
 #ifdef WANT_TIMING
@@ -767,6 +791,8 @@ public:
 
 private:
   graph_adapter& g;
+    unsigned int *types;
+    unsigned int *fh;
 };
 
 } // namespace

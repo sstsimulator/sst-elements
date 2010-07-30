@@ -11,6 +11,7 @@ pthread_t thr[THR];
 pthread_attr_t attr;
 uint64 updates;
 uint16 *field16;
+uint64 *field64;
 uint64 nelems;
 
 unsigned long *indices;
@@ -60,6 +61,7 @@ lfsr (unsigned int *lfsr_state)
 
 #ifdef DO_RANDOMS_BEFOREHAND
 # define GET_NEXT_INDEX(i,size) indices[i]
+#error shouldnt calc before
 #else
 # define GET_NEXT_INDEX(i,size,state) random (state) % size
 #endif /* DO_RANDOMS_BEFOREHAND */
@@ -88,7 +90,7 @@ gups16 (uint16 *field, unsigned long iters, unsigned long size, int myT)
 {
   uint16 data;
   unsigned long i;
-  unsigned int state = myT+1;
+  unsigned int state = myT*2+1;
   unsigned long long index;
   unsigned long long offset = iters*myT;
   for (i = 0; i < iters; i++)
@@ -138,20 +140,34 @@ gups32 (uint32 *field, unsigned long iters, unsigned long size)
 
 /* GUPS for 64-bit wide data, serial */
 void
-gups64 (uint64 *field, unsigned long iters, unsigned long size)
+gups64 (uint64 *field, unsigned long iters, unsigned long size, int myT)
 {
   uint64 data;
+  unsigned int state = myT*2+1;
   unsigned long i;
   unsigned long long index;
-  unsigned int state=1;
 
   for (i = 0; i < iters; i++)
     {
       index = GET_NEXT_INDEX(i,size,&state);
+#if USE_AMO
+      int status = 0;
+      do {
+	status = PIM_AMO(&field[index], PIM_AMO_XOR64, index);
+      } while (status == 0);
+#else
       data = field[index];
-      data = data + ((uint64) iters);
+      data = data ^ ((uint64) iters);
       field[index] = data;
+#endif
     }
+}
+
+void* gups64t(void *t) {
+  int myT = (int)t;
+  PIM_quickPrint(myT,0,55);
+  gups64 (field64, updates/THR, nelems, myT);
+  return 0;
 }
 
 void
@@ -222,7 +238,6 @@ main (int argc, char **argv)
   void *field;
   uint8 *field8;
   uint32 *field32;
-  uint64 *field64;
   struct timeval starttime, stoptime;
   double secs, gups, randtime = 0;
 
@@ -258,9 +273,9 @@ main (int argc, char **argv)
 #if USE_INPUT
   scanf ("%llu %f %llu", &updates, &expt, &width);
 #else
-  updates = 25600*16;
-  expt = 26.0; //25.0;
-  width = 16;
+  updates = 25600*16*8;
+  expt = 28.0; //26.0; //25.0;  //if change, change below
+  width = 64;
   PIM_quickPrint(updates,expt,(int)size);
 #endif
   assert (width == 8 || width == 16 || width == 32 || width == 64);
@@ -269,7 +284,7 @@ main (int argc, char **argv)
 #if USE_INPUT
   size = (uint64) exp (expt * ln2);
 #else
-  size = (uint64) 67108864; //33554432;
+  size = (uint64) 268435456; //67108864; //33554432;
 #endif
   size -= (size % 256);
   assert (size > 0 && (size % 256 == 0));
@@ -364,7 +379,16 @@ main (int argc, char **argv)
       break;
     case 64:
       gettimeofday (&starttime, NULL);
-      gups64 (field64, updates, nelems);
+      {
+	void *ret;
+	int i;
+	for (i = 0; i < THR; ++i) {
+	  pthread_create(&thr[i], 0, gups64t, (void*)i);
+	}
+	for (i = 0; i < THR; ++i) {
+	  pthread_join(thr[i], &ret);
+	}
+      }
       gettimeofday (&stoptime, NULL);
       break;
     }

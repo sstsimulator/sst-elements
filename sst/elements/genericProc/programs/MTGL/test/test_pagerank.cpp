@@ -32,6 +32,8 @@
 #include <mtgl/read_dimacs.hpp>
 #include <mtgl/mtgl_io.hpp>
 
+#include "ppcPimCalls.h"
+
 using namespace std;
 using namespace mtgl;
 
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
   {
       argc = 3;
       nargv[0] = argv[0]; /* executable */
-      nargv[1] = "3"; /* p */
+      nargv[1] = "16"; /* p */
       nargv[2] = "0.001"; /* delta */
       nargv[3] = NULL;
       argv = nargv;
@@ -96,12 +98,12 @@ int main(int argc, char* argv[])
       use_rmat = 0;
       break;
     }
-
   Graph g;
 
   if (use_rmat)
   {
     generate_rmat_graph(g, atoi(argv[1]), 8);
+    printf("RMAT Generated\n");
   }
   else if (argv[1][llen - 1] == 'x')
   {
@@ -137,20 +139,37 @@ int main(int argc, char* argv[])
   int size = num_edges(g);
   printf("ORDER: %d, SIZE: %d\n", order, size);
 
-  pagerank<Graph> pr(g);
-  rank_info* rinfo = pr.run(atof(argv[2]));
+  unsigned int *vtype = new unsigned int[order];
+  rand_fill::generate(order, vtype);
+  for (int i = 0 ; i < order ; ++i) {
+      vtype[i] = vtype[i] % 5;
+  }
+
+  unsigned int *fh = new unsigned int[order];
+  rand_fill::generate(order, fh);
+  for (int i = 0 ; i < order ; ++i) {
+      fh[i] = fh[i] % 100;
+  }
+
+  pagerank<Graph> pr(g, vtype, fh);
+  rank_info* rinfo;
+  //rank_info* rinfo = pr.run(atof(argv[2]));
 
   mt_timer timer;
   int issues, memrefs, concur, streams;
+
   init_mta_counters(timer, issues, memrefs, concur, streams);
 
-  rinfo = pr.run(atof(argv[2]));
+  PIM_resetCounters();
+  // timed run
+  for (int i = 0; i < 4; ++i) {
+    rinfo = pr.run(atof(argv[2]));
+  }
 
+#if 0
   sample_mta_counters(timer, issues, memrefs, concur, streams);
   printf("Page rank performance stats: \n");
-  printf("---------------------------------------------\n");
   print_mta_counters(timer, num_edges(g), issues, memrefs, concur, streams);
-
   // Print at most 20 top page ranks.
   //printf("Number of Iterations %d\n", iter_cnt);
   int maxprint = (order > 20 ? 20 : order);
@@ -195,6 +214,8 @@ int main(int argc, char* argv[])
 #ifdef USING_QTHREADS
   qthread_finalize();
 #endif
+#endif
+
 
   return 0;
 }

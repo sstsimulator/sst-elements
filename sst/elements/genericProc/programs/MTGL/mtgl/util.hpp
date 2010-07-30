@@ -211,9 +211,9 @@ void mt_write(T& target, const T2& towrite)
 template <typename T, typename T2>
 T mt_incr(T* target, T2 inc)
 {
-#if defined(__MTA__) && 0
+#if defined(__MTA__) 
   T res = int_fetch_add((int*)(target), inc);
-#elif USING_QTHREADS && 0
+#elif USING_QTHREADS 
   T res = qthread_incr(target, inc);
 #else
   T res = *target;
@@ -226,12 +226,12 @@ T mt_incr(T* target, T2 inc)
 template <typename T, typename T2>
 T mt_incr(T& target, T2 inc)
 {
-#warning using serial version of mt_incr
-#if defined(__MTA__) && 0
+#if defined(__MTA__) 
   T res = int_fetch_add((int*) &(target), inc);
-#elif USING_QTHREADS && 0
+#elif USING_QTHREADS 
   T res = qthread_incr(&(target), inc);
 #else
+#warning using serial version of mt_incr
   T res = target;
   target = (target) + inc;
 #endif
@@ -242,10 +242,10 @@ T mt_incr(T& target, T2 inc)
 template <>
 inline double mt_incr<double,double>(double& target, double inc)
 {
-#ifdef __MTA__
+#ifdef __MTA__ 
   double res = mt_readfe(target);
   mt_write(target, res+inc);
-#elif USING_QTHREADS
+#elif USING_QTHREADS 
   double res = qthread_dincr(&(target), inc);
 #else
   double res = target;
@@ -258,7 +258,7 @@ inline double mt_incr<double,double>(double& target, double inc)
 template <typename T, typename T2>
 T mt_incr(T& target, T2 inc, bool synch)
 {
-#ifdef __MTA__
+#ifdef __MTA__ 
   T res;
   if (synch)
   {
@@ -268,7 +268,7 @@ T mt_incr(T& target, T2 inc, bool synch)
   {
     res = int_fetch_add((int*) &(target), inc);
   }
-#elif USING_QTHREADS
+#elif USING_QTHREADS 
   T res;
   if (synch)
   {

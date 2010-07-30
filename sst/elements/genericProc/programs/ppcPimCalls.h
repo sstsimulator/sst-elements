@@ -49,6 +49,30 @@
 		:: "r" (arg1), "r" (arg2), "K"(call) \
 		: "r0", "r3", "r4", "memory");
 
+//: Send a pagerank iteration to memory
+//
+// A failure (return 0) indicates a need to retry
+_INLINE_ int PIM_PageRank(const int begin, const int end, const int i,
+			  unsigned int *types, unsigned int *fh, 
+			  unsigned int *rev_end_points, void *rinfo) {
+  int result;
+  asm volatile ("mr r3, %1\n" /* begin */
+		"mr r4, %2\n" /* end */
+		"mr r5, %3\n" /* i */
+		"mr r6, %4\n" /* types */
+		"mr r7, %5\n" /* fh */
+		"mr r8, %6\n" /* rev_end_points */
+		"mr r9, %7\n" /* rinfo */
+		"li r0, %8\n" /* set syscall */
+		"sc\n" /* make syscall */
+		"mr %0, r3, 0\n" /* Collect results */
+		: "=r" (result)
+		: "r" (begin), "r" (end), "r" (i), "r" (types), "r" (fh),
+		  "r" (rev_end_points), "r" (rinfo), "K" (SS_PIM_PAGERANK)
+		: "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", 
+		"memory");
+  return result;
+}
 
 //: Send a force computation to memory
 //

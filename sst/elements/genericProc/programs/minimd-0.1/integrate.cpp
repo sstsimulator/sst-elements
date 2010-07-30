@@ -91,5 +91,6 @@ void Integrate::run(Atom &atom, Force &force, Neighbor &neighbor,
     }
 
     if (thermo.nstat) thermo.compute(n+1,atom,neighbor,force);
+    if (n == 6) break;
   }
 }

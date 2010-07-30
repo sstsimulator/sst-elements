@@ -112,7 +112,7 @@ public:
 
     for (size_t i = startat; i < stopat; i++)
     {
-      printf(" rl %d %d\n", i, stopat);
+      if (i & 0x7 == 0) printf(" rl %d %d\n", i, stopat);
       double a = a0;
       double b = b0;
       double c = c0;

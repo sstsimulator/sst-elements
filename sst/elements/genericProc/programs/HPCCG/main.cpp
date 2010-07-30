@@ -75,8 +75,9 @@
 #include "HPCCG.hpp"
 #include "HPC_Sparse_Matrix.hpp"
 #ifdef USING_QTHREADS
+#include <ppcPimCalls.h>
 #include <qthread/qthread.h>
-int tcount = 2;
+int tcount = 4;
 #endif
 
 #undef DEBUG
@@ -96,7 +97,7 @@ int main(int argc, char *argv[])
       argc = 4;
   }
   if (tcount > 0) {
-      qthread_init(tcount);
+      qthread_init(0);
   } else {
       qthread_initialize();
   }
@@ -137,7 +138,10 @@ int main(int argc, char *argv[])
   if (argc == 0) {
     //generate_matrix(75, 75, 128, &A, &x, &b, &xexact);
     printf("Generating Matrix\n");
-    generate_matrix(8, 8, 10, &A, &x, &b, &xexact);
+    //generate_matrix(15, 15, 32, &A, &x, &b, &xexact);
+    //generate_matrix(8, 8, 16, &A, &x, &b, &xexact);
+    //generate_matrix(25, 25, 32, &A, &x, &b, &xexact);  1st run
+    generate_matrix(30, 30, 48, &A, &x, &b, &xexact);   // large run
     printf("Matrix Generated\n");
   } else if(argc != 2 && argc!=4) {
     if (rank==0)
@@ -172,6 +176,8 @@ int main(int argc, char *argv[])
   double normr = 0.0;
   int max_iter = 6; //150;
   double tolerance = 0.0; // Set tolerance to zero to make all runs do max_iter iterations
+  
+  PIM_resetCounters();
   ierr = HPCCG( A, b, x, max_iter, tolerance, niters, normr, times);
 
 	if (ierr) fprintf(stderr, "Error in call to CG: %i.\n", ierr);

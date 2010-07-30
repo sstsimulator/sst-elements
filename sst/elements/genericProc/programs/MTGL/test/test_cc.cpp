@@ -75,11 +75,10 @@ int main(int argc, char* argv[])
   if (argc < 2)
   {
 #if 1
-      argc = 3;
+      argc = 2;
       nargv[0] = argv[0];
       nargv[1] = "8"; /* p */
-      nargv[2] = "3"; /* threads */
-      nargv[3] = NULL;
+      nargv[2] = NULL;
       argv = nargv;
 #else
     fprintf(stderr, "Usage: %s {<p>|<filename>}", argv[0]);
