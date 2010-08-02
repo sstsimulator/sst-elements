@@ -15,7 +15,7 @@
 #ifndef _CPU_POWERANDDATA_H
 #define _CPU_POWERANDDATA_H
 
-#include <sst/core/eventFunctor.h>
+//#include <sst/core/eventFunctor.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
