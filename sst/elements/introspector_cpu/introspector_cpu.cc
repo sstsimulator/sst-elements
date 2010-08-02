@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
 
 #include <boost/mpi.hpp>
 
@@ -130,3 +131,17 @@ extern "C" {
         introspectors
     };
 }
+
+/*template<class Archive>
+void 
+Introspector_cpu::serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+        ar & BOOST_SERIALIZATION_NVP(params);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+	ar & BOOST_SERIALIZATION_NVP(model);
+    }
+
+SST_BOOST_SERIALIZATION_INSTANTIATE(SST::Introspector_cpu::serialize)*/
+BOOST_CLASS_EXPORT(Introspector_cpu)
+

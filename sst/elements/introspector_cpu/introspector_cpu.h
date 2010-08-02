@@ -59,10 +59,11 @@ class Introspector_cpu : public Introspector {
 // 	     mpihandler = new EventHandler< Introspector_cpu, bool, Cycle_t >
 // 	                                        ( this, &Introspector_cpu::mpiCollectInt );
 // 	     registerClock( frequency, mpihandler );
-	    registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );
-
-	    mpionetimehandler = new Event::Handler< Introspector_cpu >
-	                                        ( this, &Introspector_cpu::mpiOneTimeCollect );
+	    //FIXME: GH
+	    /*registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );*/
+	    //FIXME: GH
+	    /*mpionetimehandler = new Event::Handler< Introspector_cpu >
+	                                        ( this, &Introspector_cpu::mpiOneTimeCollect );*/
 
 	    printf("INTROSPECTOR_CPU period: %ld\n",(long int)tc->getFactor());
             _INTROSPECTOR_CPU_DBG("Done registering clock\n");
@@ -115,6 +116,8 @@ class Introspector_cpu : public Introspector {
 
     private:
         Introspector_cpu( const Introspector_cpu& c );
+	//~Introspector_cpu();
+	Introspector_cpu() :  Introspector() {} // for serialization only
 
         bool pullData( Cycle_t );
 	bool mpiCollectInt( Cycle_t );
@@ -125,6 +128,19 @@ class Introspector_cpu : public Introspector {
 	std::string frequency;
 	std::string model;
 	uint64_t intData;
+
+	friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Introspector);
+        ar & BOOST_SERIALIZATION_NVP(params);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+	ar & BOOST_SERIALIZATION_NVP(model);
+    }
+/*	friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version);*/
 };
 
 #endif
