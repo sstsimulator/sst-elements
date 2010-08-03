@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
 
 #include "introspector_cpuTemperature.h"
 #include "sst/core/element.h"
@@ -64,3 +65,5 @@ extern "C" {
         introspectors
     };
 }
+
+BOOST_CLASS_EXPORT(Introspector_cpuTemperature)

@@ -111,7 +111,8 @@ class Introspector_cpuTemperature : public Introspector {
     private:
 
         Introspector_cpuTemperature( const Introspector_cpuTemperature& c );
-	Introspector_cpuTemperature() {}
+	//Introspector_cpuTemperature() {}
+	Introspector_cpuTemperature() :  Introspector() {} // for serialization only
 
         bool pullData( Cycle_t );
 	
@@ -119,6 +120,16 @@ class Introspector_cpuTemperature : public Introspector {
         Component::Params_t    params;        
 	std::string frequency;
 	std::string model;
+
+	friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Introspector);
+        ar & BOOST_SERIALIZATION_NVP(params);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+	ar & BOOST_SERIALIZATION_NVP(model);
+    }
 };
 
 #endif
