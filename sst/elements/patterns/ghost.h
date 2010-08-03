@@ -13,7 +13,6 @@
 #ifndef _GHOST_PATTERN_H
 #define _GHOST_PATTERN_H
 
-#include <string.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -73,11 +72,14 @@ class Ghost_pattern : public Component {
 	    }
 
             // Create a handler for events
- 	    net = configureLink("Network", new Event::Handler<Ghost_pattern>(this, &Ghost_pattern::handle_events) );
+	    net= configureLink("NETWORK", new Event::Handler<Ghost_pattern>
+		    (this, &Ghost_pattern::handle_events));
 	    if (net == NULL)   {
 		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link to the network "
 		    "named \"Network\" which is missing!\n");
 		_ABORT(Ghost_pattern, "Check the input XML file!\n");
+	    } else   {
+		_GHOST_PATTERN_DBG(1, "Added a link and a handler for the network\n");
 	    }
 
 	    // Create a time converter
@@ -87,7 +89,7 @@ class Ghost_pattern : public Component {
     private:
 
         Ghost_pattern(const Ghost_pattern &c);
-	void handle_events(Event *);
+	bool handle_events(Event *);
 
 	int my_rank;
 	int x_dim;
@@ -106,6 +108,7 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);
 	    ar & BOOST_SERIALIZATION_NVP(y_dim);
+	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(tc);
         }
 
@@ -135,4 +138,4 @@ class Ghost_pattern : public Component {
         } 
 };
 
-#endif
+#endif // _GHOST_PATTERN_H
