@@ -76,6 +76,7 @@ sst_gen_param_end(FILE *sstfile)
 
     fprintf(sstfile, "<gen_net_link>\n");
     fprintf(sstfile, "    <name> NETWORK </name>\n");
+    fprintf(sstfile, "    <lat> 1ns </lat>\n");
     fprintf(sstfile, "</gen_net_link>\n");
     fprintf(sstfile, "\n");
 
