@@ -10,11 +10,9 @@
 #include <getopt.h>
 #include <errno.h>
 
+#include "main.h"
 #include "sst_gen.h"
 #include "topo_mesh2D.h"
-
-#define FALSE           (0)
-#define TRUE            (1)
 
 
 
@@ -22,6 +20,7 @@
 ** Local functions
 */
 static void usage(char *argv[]);
+static int is_pow2(int num);
 
 
 
@@ -110,9 +109,20 @@ char *pattern_name;
 	fprintf(stderr, "Need a pattern name!\n");
     }
 
+    if (strcmp(pattern_name, "ghost_pattern") != 0)   {
+	error= TRUE;
+	fprintf(stderr, "Unknown pattern name!\n");
+	fprintf(stderr, "Must be one of \"ghost_pattern\", or \"\"\n");
+    }
+
     if ((x_dim < 0) || (y_dim < 0))   {
 	error= TRUE;
 	fprintf(stderr, "-x and -y must be specified!\n");
+    }
+
+    if (!is_pow2(x_dim * y_dim))   {
+	error= TRUE;
+	fprintf(stderr, "x * y must be power of two!\n");
     }
 
     /* Open the SST xml file for output */
@@ -181,3 +191,20 @@ usage(char *argv[])
     fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost_pattern\n");
 
 }  /* end of usage() */
+
+
+
+static int
+is_pow2(int num)
+{
+    if (num < 1)   {
+	return FALSE;
+    }
+    
+    if ((num & (num - 1)) == 0)   {
+	return TRUE;
+    }
+
+    return FALSE;
+
+}  /* end of is_pow2() */
