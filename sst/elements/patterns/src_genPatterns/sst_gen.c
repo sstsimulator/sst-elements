@@ -49,85 +49,15 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_param_entry(FILE *sstfile, char *key, char *value)
+sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim)
 {
-    fprintf(sstfile, "    <%s> %s </%s>\n", key, value, key);
-}  /* end of sst_param_entry() */
-
-
-void
-sst_gen_param_entries(FILE *sstfile)
-{
-
-int i;
-int n, r, p;
-int r1, r2, p1, p2;
-char *label;
-char str1[MAX_ID_LEN];
-char str2[MAX_ID_LEN];
-
 
     if (sstfile == NULL)   {
 	return;
     }
 
-    /* How many NICs, routers, ports per router, and links? */
-    snprintf(str1, MAX_ID_LEN, "%d", get_num_nics());
-    sst_param_entry(sstfile, "num_ranks", str1);
-    snprintf(str1, MAX_ID_LEN, "%d", get_num_ports());
-    sst_param_entry(sstfile, "num_ports", str1);
-    snprintf(str1, MAX_ID_LEN, "%d", get_num_links());
-    sst_param_entry(sstfile, "num_links", str1);
-
-
-    /* For each NIC we list the router and what port it is attached to */
-    fprintf(sstfile, "\n");
-    reset_nic_list();
-    i= 0;
-    while (next_nic(&n, &r, &p, &label))   {
-	snprintf(str1, MAX_ID_LEN, "NIC%drouter", i);
-	snprintf(str2, MAX_ID_LEN, "%d", r);
-	sst_param_entry(sstfile, str1, str2);
-
-	snprintf(str1, MAX_ID_LEN, "NIC%dport", i);
-	snprintf(str2, MAX_ID_LEN, "%d", p);
-	sst_param_entry(sstfile, str1, str2);
-	i++;
-    }
-
-    if (i != get_num_nics())   {
-	fprintf(stderr, "Something is wrong with the number of NICs! %d != %d\n", i, get_num_nics());
-	exit(10);
-    }
-
-    /* List all links */
-    fprintf(sstfile, "\n");
-    reset_link_list();
-    i= 0;
-    while (next_link(&r1, &p1, &r2, &p2, &label))   {
-
-	snprintf(str1, MAX_ID_LEN, "Link%dLeftRouter", i);
-	snprintf(str2, MAX_ID_LEN, "%d", r1);
-	sst_param_entry(sstfile, str1, str2);
-
-	snprintf(str1, MAX_ID_LEN, "Link%dLeftPort", i);
-	snprintf(str2, MAX_ID_LEN, "%d", p1);
-	sst_param_entry(sstfile, str1, str2);
-
-	snprintf(str1, MAX_ID_LEN, "Link%dRightRouter", i);
-	snprintf(str2, MAX_ID_LEN, "%d", r2);
-	sst_param_entry(sstfile, str1, str2);
-
-	snprintf(str1, MAX_ID_LEN, "Link%dRightPort", i);
-	snprintf(str2, MAX_ID_LEN, "%d", p2);
-	sst_param_entry(sstfile, str1, str2);
-	i++;
-    }
-
-    if (i != get_num_links())   {
-	fprintf(stderr, "Something is wrong with the number of links! %d != %d\n", i, get_num_nics());
-	exit(10);
-    }
+    fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
+    fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
 
 }  /* end of sst_gen_param_entries() */
 

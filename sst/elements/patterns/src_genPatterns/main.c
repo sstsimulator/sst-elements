@@ -31,6 +31,7 @@ static struct option long_options[]=   {
     /* name, has arg, flag, val */
     {"help", 0, NULL, 'h'},
     {"sstfilename", 1, NULL, 's'},
+    {"pattern", 1, NULL, 'p'},
 };
 
 
@@ -156,7 +157,7 @@ char *pattern_name;
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst);
+    sst_gen_param_entries(fp_sst, x_dim, y_dim);
     sst_gen_param_end(fp_sst);
 
     sst_router_param_start(fp_sst, num_ports);
