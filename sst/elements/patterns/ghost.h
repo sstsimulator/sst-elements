@@ -17,6 +17,7 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include "common.h"
 
 
 using namespace SST;
@@ -66,6 +67,10 @@ class Ghost_pattern : public Component {
                 ++it;
             }
 
+
+	    if (!pattern_init(x_dim, y_dim, my_rank))   {
+		_ABORT(Ghost_pattern, "pattern_init() failed!\n");
+	    }
 
             // Create a handler for events
  	    net = configureLink("Network", new Event::Handler<Ghost_pattern>(this, &Ghost_pattern::handle_events) );
