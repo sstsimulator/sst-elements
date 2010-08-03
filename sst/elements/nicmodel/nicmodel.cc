@@ -24,7 +24,6 @@
 #include "user_includes/netsim/netsim_internal.h"
 
 void
-// Nicmodel::handle_nic_events(Time_t time, Event *event)
 Nicmodel::handle_nic_events(Event *event)
 {
 
@@ -235,7 +234,7 @@ Nicmodel::hton_params(netsim_params_t *params)
 
 
 extern "C" {
-Nicmodel*
+Nicmodel *
 nicmodelAllocComponent(SST::ComponentId_t id,
                        SST::Component::Params_t& params)
 {

@@ -189,10 +189,6 @@ class Nicmodel : public Component {
 
 
 	    // Create a link and a handler for the cpu
-// 	    cpuHandler= new EventHandler<Nicmodel, bool, Event *>
-// 		(this, &Nicmodel::handle_cpu_events);
-
-// 	    cpu= LinkAdd("CPU", cpuHandler);
  	    cpu= configureLink("CPU", new Event::Handler<Nicmodel>(this,&Nicmodel::handle_cpu_events));
 	    if (cpu == NULL)   {
 		_NIC_MODEL_DBG(0, "The NIC model expects links to the CPU and the network "
@@ -203,10 +199,6 @@ class Nicmodel : public Component {
 	    }
 
 	    // Create a link and a handler for the network
-// 	    netHandler= new EventHandler<Nicmodel, bool, Event *>
-// 		(this, &Nicmodel::handle_nic_events);
-
-// 	    net= LinkAdd("NETWORK", netHandler);
  	    net= configureLink("NETWORK", new Event::Handler<Nicmodel>(this,&Nicmodel::handle_nic_events));
 	    if (net == NULL)   {
 		_NIC_MODEL_DBG(0, "The NIC model expects links to the CPU and the network "
@@ -266,9 +258,6 @@ class Nicmodel : public Component {
 	void hton_params(netsim_params_t *params);
 	void insert_graph_link(const char *from, const char *to);
 
-// 	EventHandler_t *cpuHandler;
-// 	EventHandler_t *netHandler;
-
         Params_t params;
         Link *cpu;
         Link *net;
@@ -295,8 +284,6 @@ class Nicmodel : public Component {
         void serialize(Archive & ar, const unsigned int version )
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-// 	    ar & BOOST_SERIALIZATION_NVP(cpuHandler);
-// 	    ar & BOOST_SERIALIZATION_NVP(netHandler);
 	    ar & BOOST_SERIALIZATION_NVP(cpu);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
