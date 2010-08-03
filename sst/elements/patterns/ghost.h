@@ -89,7 +89,7 @@ class Ghost_pattern : public Component {
     private:
 
         Ghost_pattern(const Ghost_pattern &c);
-	bool handle_events(Event *);
+	void handle_events(Event *);
 
 	int my_rank;
 	int x_dim;
