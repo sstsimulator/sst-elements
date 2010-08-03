@@ -13,7 +13,6 @@
 #ifndef _ROUTERMODEL_H
 #define _ROUTERMODEL_H
 
-#include <string.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -89,7 +88,8 @@ class Routermodel : public Component {
 
 		if (it != params.end())   {
 		    strcpy(new_port.link_name, it->second.c_str());
-		    new_port.link= Routermodel::initPort(i, new_port.link_name);
+		    new_port.link= configureLink(new_port.link_name, new Event::Handler<Routermodel,int>
+					(this, &Routermodel::handle_port_events, i));
 		    new_port.cnt_in= 0;
 		    new_port.cnt_out= 0;
 		    port.push_back(new_port);
@@ -119,8 +119,6 @@ class Routermodel : public Component {
         Routermodel(const Routermodel &c);
 	void handle_port_events(Event *, int in_port);
 	Link *initPort(int port, char *link_name);
-	// KSH: Commented out, not used.  
-	//	EventHandler_t *RouterPortHandler;
 
         Params_t params;
 

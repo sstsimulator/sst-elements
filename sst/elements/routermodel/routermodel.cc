@@ -75,25 +75,6 @@ uint8_t out_port;
 }  /* end of handle_port_events() */
 
 
-Link *
-Routermodel::initPort(int port, char *link_name)
-{
-
-//     EventHandler_t *tmpHandler;
-
-//     tmpHandler= new EventHandler1Arg< Routermodel, bool, Event *, int >
-// 	(this, &Routermodel::handle_port_events, port);
-
-//     if (!tmpHandler)   {
-//         _abort(Routermodel,"Couldn't create eventHandler\n");
-//     }
-
-//     return LinkAdd(link_name, tmpHandler);
-    return configureLink(link_name, new Event::Handler<Routermodel,int>(this, &Routermodel::handle_port_events, port));
-
-}  /* end of initPort() */
-
-
 
 extern "C" {
 Routermodel *
