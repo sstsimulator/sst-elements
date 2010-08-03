@@ -23,12 +23,5 @@ int next_router_link(int router, int *link_id, int *port);
 
 void reset_nic_list(void);
 int next_nic(int *id, int *router, int *port, char **label);
-void reset_link_list(void);
-int next_link(int *Arouter, int *Aport, int *Brouter, int *Bport, char **label);
-
-int get_num_nics(void);
-int get_num_routers(void);
-int get_num_ports(void);
-int get_num_links(void);
 
 #endif /* _GEN_H_ */

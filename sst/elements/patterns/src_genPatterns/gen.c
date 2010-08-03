@@ -57,14 +57,8 @@ static nic_t *nic_list= NULL;
 static nic_t *nic_list_end= NULL;
 
 static int next_link_id= 0;
-static link_t *link_current= NULL;
 static link_t *link_list= NULL;
 static link_t *link_list_end= NULL;
-
-static int g_num_routers= 0;
-static int g_num_ports= 0;
-static int g_num_nics= 0;
-static int g_num_links= 0;
 
 
 
@@ -82,21 +76,6 @@ int i;
     if (num_ports < 1)   {
 	fprintf(stderr, "Routers without ports are useless!\n");
 	exit(9);
-    }
-
-    if (g_num_ports < 1)   {
-	/* First time setting this */
-	g_num_ports= num_ports;
-    } else   {
-	if (num_ports != g_num_ports)   {
-	    /*
-	    ** In the SST xml file we only say once how many ports each router has.
-	    ** We could change it to make it an individual setting per router, but
-	    ** it seems of little value.
-	    */
-	    fprintf(stderr, "For now, all routers must have the same number of ports!\n");
-	    exit(9);
-	}
     }
 
     current= (router_t *)malloc(sizeof(router_t));
@@ -133,8 +112,6 @@ int i;
 	router_list= current;
 	router_list_end= current;
     }
-
-    g_num_routers++;
 
 }  /* end of gen_router() */
 
@@ -344,8 +321,6 @@ int i;
 	nic_list_end= current;
     }
 
-    g_num_nics++;
-
 }  /* end of gen_nic() */
 
 
@@ -427,8 +402,6 @@ router_t *A, *B;
 	link_list_end= current;
     }
 
-    g_num_links++;
-
 }  /* end of gen_link() */
 
 
@@ -479,62 +452,3 @@ next_nic(int *id, int *router, int *port, char **label)
     return 1;
 
 }  /* end of next_nic() */
-
-
-
-void
-reset_link_list(void)
-{
-    link_current= link_list;
-}  /* end of reset_link_list() */
-
-
-
-int
-next_link(int *Arouter, int *Aport, int *Brouter, int *Bport, char **label)
-{
-
-    if (!link_current)   {
-	return 0;
-    }
-    *Arouter= link_current->left_router;
-    *Aport= link_current->left_router_port;
-    *Brouter= link_current->right_router;
-    *Bport= link_current->right_router_port;
-    *label= link_current->label;
-    link_current= link_current->next;
-    return 1;
-
-}  /* end of next_link() */
-
-
-
-int
-get_num_nics(void)
-{
-    return g_num_nics;
-}  /* end of get_num_nics() */
-
-
-
-int
-get_num_routers(void)
-{
-    return g_num_routers;
-}  /* end of get_num_routers() */
-
-
-
-int
-get_num_ports(void)
-{
-    return g_num_ports;
-}  /* end of get_num_ports() */
-
-
-
-int
-get_num_links(void)
-{
-    return g_num_links;
-}  /* end of get_num_links() */
