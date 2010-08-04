@@ -1,11 +1,21 @@
+// Copyright 2009-2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #include "power.h"
+#include "interface.h"
+#include "HotSpot-interface.h"
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
  
-
-
-
 
 namespace SST {
 
@@ -34,16 +44,15 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
     chtmp1[0]='\0';
     unsigned int i, n;
 
-    
 
+
+  // read values from xml
   if(p_ifReadEntireXML == false){
     //Save computational time for calls to McPAT. For McPAT's case, XML is read in once and all the params
     // are set up during the 1st setTech call. So there is no need to read the XML again if it has done so.
 
-    //First, set up device parameter values
-    setTech(params);
-
-    //Then, set up architecture parameter values
+ 
+    //set up architecture parameter values
     Component::Params_t::iterator it= params.begin();
 
     while (it != params.end()){
@@ -891,7 +900,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_dtlb_number_entries")){  //Mc
 				sscanf(it->second.c_str(), "%d", &cache_dtlb_tech.number_entries);
 			} 
-			//bpred				    		
+			//bpred			    		
 			else if (!it->first.compare("bpred_iC")){
 			    sscanf(it->second.c_str(), "%lf", &bpred_tech.unit_icap);
 			}
@@ -2089,6 +2098,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_il1_tech.num_banks.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			}  
+			else if(!it->first.compare("cache_il1_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_il1_tech.area);
+			}
+			else if(!it->first.compare("cache_il1_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_il1_tech.num_transistors);
+			}
 			else if (!it->first.compare("cache_l1dir_sC")){  //Mc
 			        i=0;
 				for(n=0; n < it->second.length(); n++)
@@ -2288,6 +2303,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_l1dir_directory_type")){  //Mc
 				sscanf(it->second.c_str(), "%d", &cache_l1dir_tech.directory_type);
 			}
+			else if(!it->first.compare("cache_l1dir_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l1dir_tech.area);
+			}
+			else if(!it->first.compare("cache_l1dir_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l1dir_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_temperature")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_temperature);
 			} 
@@ -2338,6 +2359,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_il2_associativity")){
 				cache_il2_tech.assoc.at(0) = atoi(it->second.c_str());
 			} 
+			else if(!it->first.compare("cache_il2_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_il2_tech.area);
+			}
+			else if(!it->first.compare("cache_il2_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_il2_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_temperature")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_temperature);
 			} 
@@ -2572,6 +2599,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_dl1_tech.wbb_buf_size.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			}  
+			else if(!it->first.compare("cache_dl1_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_dl1_tech.area);
+			}
+			else if(!it->first.compare("cache_dl1_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_dl1_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_temperature")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_temperature);
 			} 
@@ -2622,6 +2655,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_dl2_associativity")){
 				cache_dl2_tech.assoc.at(0) = atoi(it->second.c_str());
 			}  	
+			else if(!it->first.compare("cache_dl2_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_dl2_tech.area);
+			}
+			else if(!it->first.compare("cache_dl2_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_dl2_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_temperature")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_temperature);
 			} 
@@ -2719,6 +2758,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				}
 				cache_itlb_tech.assoc.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
+			}
+			else if(!it->first.compare("cache_itlb_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_itlb_tech.area);
+			}
+			else if(!it->first.compare("cache_itlb_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_itlb_tech.num_transistors);
 			}
 			else if(!it->first.compare("core_virtual_address_width")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_virtual_address_width);
@@ -2836,6 +2881,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_dtlb_tech.assoc.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 
+			else if(!it->first.compare("cache_dtlb_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_dtlb_tech.area);
+			}
+			else if(!it->first.compare("cache_dtlb_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_dtlb_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_virtual_address_width")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_virtual_address_width);
 			}
@@ -2886,6 +2937,14 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			    else if (!it->second.compare("BALANCED_H"))
 				clock_tech.clk_style = BALANCED_H;				
 			}
+			else if(!it->first.compare("clock_option")) {  //intsim
+			    if (!it->second.compare("GLOBAL_CLOCK"))
+				clock_tech.clock_option = GLOBAL_CLOCK;
+			    else if (!it->second.compare("LOCAL_CLOCK"))
+				clock_tech.clock_option = LOCAL_CLOCK;
+			    else if (!it->second.compare("TOTAL_CLOCK"))
+				clock_tech.clock_option = TOTAL_CLOCK;				
+			}
 			else if(!it->first.compare("clock_skew")){ //lv2
 				sscanf(it->second.c_str(), "%lf", &clock_tech.skew);
 			}
@@ -2894,6 +2953,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			}
 			else if(!it->first.compare("clock_node_cap")){
 				sscanf(it->second.c_str(), "%lf", &clock_tech.node_cap);
+			}
+			else if(!it->first.compare("clock_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &clock_tech.area);
+			}
+			else if(!it->first.compare("clock_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &clock_tech.num_transistors);
 			}
 			else if(!it->first.compare("opt_clock_buffer_num")){  //lv2
 				sscanf(it->second.c_str(), "%d", &clock_tech.opt_clock_buffer_num);
@@ -2961,6 +3026,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if (!it->first.compare("bpred_chooser_predictor_entries")){  //Mc
 			    sscanf(it->second.c_str(), "%d", &bpred_tech.chooser_predictor_entries);
 			}
+			else if(!it->first.compare("bpred_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &bpred_tech.area);
+			}
+			else if(!it->first.compare("bpred_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &bpred_tech.num_transistors);
+			}
 			else if(!it->first.compare("archi_Regs_FRF_size")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.archi_Regs_FRF_size);
 			} 
@@ -3013,6 +3084,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			}
 			else if(!it->first.compare("rf_number_readwrite_ports")){  //lv2
 				sscanf(it->second.c_str(), "%d", &rf_tech.num_rwports);
+			}
+			else if(!it->first.compare("rf_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &rf_tech.area);
+			}
+			else if(!it->first.compare("rf_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &rf_tech.num_transistors);
 			}
 			else if(!it->first.compare("machine_bits")){  //Mc   
 				sscanf(it->second.c_str(), "%d", &core_tech.machine_bits);
@@ -3105,7 +3182,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("io_cycle_time")){  //lv2
 				sscanf(it->second.c_str(), "%d", &io_tech.io_cycle_time);
 			}
-
+			else if(!it->first.compare("io_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &io_tech.area);
+			}
+			else if(!it->first.compare("io_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &io_tech.num_transistors);
+			}
 			break;	
 		case 10:  //logic
 			if (!it->first.compare("logic_sC")){
@@ -3143,6 +3225,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			}
 			else if(!it->first.compare("logic_num_fan_out")){  //lv2
 				sscanf(it->second.c_str(), "%d", &logic_tech.num_fan_out);
+			}
+			else if(!it->first.compare("logic_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &logic_tech.area);
+			}
+			else if(!it->first.compare("logic_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &logic_tech.num_transistors);
 			}
 			else if(!it->first.compare("core_instruction_window_size")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_instruction_window_size);
@@ -3191,6 +3279,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if (!it->first.compare("alu_freq")){  //lv2
 			    sscanf(it->second.c_str(), "%lf", &alu_tech.op_freq);
 			}
+			else if(!it->first.compare("alu_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &alu_tech.area);
+			}
+			else if(!it->first.compare("alu_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &alu_tech.num_transistors);
+			}
 			break;
 			
 		case 12:  //FPU
@@ -3212,6 +3306,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if (!it->first.compare("fpu_freq")){  //lv2
 			    sscanf(it->second.c_str(), "%lf", &fpu_tech.op_freq);
 			}
+			else if(!it->first.compare("fpu_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &fpu_tech.area);
+			}
+			else if(!it->first.compare("fpu_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &fpu_tech.num_transistors);
+			}
 			break;
 		case 13:  //MULT	
 			if (!it->first.compare("mult_sC")){
@@ -3231,6 +3331,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			}
 			else if (!it->first.compare("mult_freq")){  //lv2
 			    sscanf(it->second.c_str(), "%lf", &mult_tech.op_freq);
+			}
+			else if(!it->first.compare("mult_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &mult_tech.area);
+			}
+			else if(!it->first.compare("mult_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &mult_tech.num_transistors);
 			}
 			break;
 		case 14:  //IB	
@@ -3266,6 +3372,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			} 
 			else if (!it->first.compare("core_clock_rate")){  //Mc
 			    sscanf(it->second.c_str(), "%f", &device_tech.clockRate);
+			}
+			else if(!it->first.compare("ib_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &ib_tech.area);
+			}
+			else if(!it->first.compare("ib_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &ib_tech.num_transistors);
 			}
 			break;
 		case 15:  //ISSUE_Q
@@ -3305,6 +3417,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if (!it->first.compare("machine_bits")){
 			    sscanf(it->second.c_str(), "%d", &core_tech.machine_bits);
 			}
+			else if(!it->first.compare("irs_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &irs_tech.area);
+			}
+			else if(!it->first.compare("irs_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &irs_tech.num_transistors);
+			}
 			break;
 		case 16:  //INST DECODER	
 			if (!it->first.compare("core_opcode_width")){
@@ -3318,6 +3436,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			} 
 			else if (!it->first.compare("core_clock_rate")){  //Mc
 			    sscanf(it->second.c_str(), "%f", &device_tech.clockRate);
+			}
+			else if(!it->first.compare("decoder_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &decoder_tech.area);
+			}
+			else if(!it->first.compare("decoder_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &decoder_tech.num_transistors);
 			}
 			break;
 		case 17:  //BYPASS	
@@ -3362,6 +3486,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			}
 			else if (!it->first.compare("core_phy_Regs_FRF_size")){  //Mc  
 			    sscanf(it->second.c_str(), "%d", &core_tech.core_phy_Regs_FRF_size);
+			}
+			else if(!it->first.compare("bypass_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &bypass_tech.area);
+			}
+			else if(!it->first.compare("bypass_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &bypass_tech.num_transistors);
 			}
 			break;
 		case 18:  //EXEU	
@@ -3411,6 +3541,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			} 
 			else if (!it->first.compare("core_clock_rate")){  //Mc
 			    sscanf(it->second.c_str(), "%f", &device_tech.clockRate);
+			}
+			else if(!it->first.compare("pipeline_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &pipeline_tech.area);
+			}
+			else if(!it->first.compare("pipeline_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &pipeline_tech.num_transistors);
 			}
 			break;
 		case 20: case 27: //LSQ & LOAD_Q
@@ -3557,6 +3693,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			} 
 			else if (!it->first.compare("core_clock_rate")){  //Mc
 			    sscanf(it->second.c_str(), "%f", &device_tech.clockRate);
+			}
+			else if(!it->first.compare("btb_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &btb_tech.area);
+			}
+			else if(!it->first.compare("btb_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &btb_tech.num_transistors);
 			}
 			break;
 		case 24:  //cache_l2 & l2dir		                        
@@ -3765,6 +3907,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_l2_device_type")){  //Mc
 				sscanf(it->second.c_str(), "%d", &cache_l2_tech.device_type);
 			}
+			else if(!it->first.compare("cache_l2_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l2_tech.area);
+			}
+			else if(!it->first.compare("cache_l2_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l2_tech.num_transistors);
+			}
 			if (!it->first.compare("cache_l2dir_sC")){  //Mc
 			        i=0;
 				for(n=0; n < it->second.length(); n++)
@@ -3964,6 +4112,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_l2dir_directory_type")){  //Mc
 				sscanf(it->second.c_str(), "%d", &cache_l2dir_tech.directory_type);
 			}
+			else if(!it->first.compare("cache_l2dir_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l2dir_tech.area);
+			}
+			else if(!it->first.compare("cache_l2dir_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l2dir_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_physical_address_width")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_physical_address_width);
 			} 
@@ -4005,6 +4159,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("mainmemory_number_ranks")){  //Mc
 				sscanf(it->second.c_str(), "%d", &mc_tech.memory_number_ranks);
 			} 
+			else if(!it->first.compare("mc_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &mc_tech.area);
+			}
+			else if(!it->first.compare("mc_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &mc_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_physical_address_width")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_physical_address_width);
 			} 
@@ -4062,6 +4222,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				router_tech.topology = RING;
 			    else if (!it->second.compare("CROSSBAR"))
 				router_tech.topology = CROSSBAR;
+			}
+			else if(!it->first.compare("router_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &router_tech.area);
+			}
+			else if(!it->first.compare("router_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &router_tech.num_transistors);
 			}
 			else if(!it->first.compare("core_number_of_NoCs")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_number_of_NoCs);
@@ -4379,6 +4545,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if(!it->first.compare("cache_l3_device_type")){  //Mc
 				sscanf(it->second.c_str(), "%d", &cache_l3_tech.device_type);
 			}
+			else if(!it->first.compare("cache_l3_area")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l3_tech.area);
+			}
+			else if(!it->first.compare("cache_l3_num_transistors")){  //intsim
+				sscanf(it->second.c_str(), "%lf", &cache_l3_tech.num_transistors);
+			}
 			else if(!it->first.compare("core_temperature")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_temperature);
 			} 
@@ -4403,6 +4575,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
   if(power_model == McPAT || power_model == McPAT05)
 	p_ifReadEntireXML = true;
 
+  std::map<int,floorplan_t>::iterator fit;
 
   if (p_powerMonitor == true){
       //initialize tech params in the selected power model
@@ -4686,7 +4859,172 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	  #endif /*McPAT05_H*/                 
 	break;
 	case 3:
-	/*MySimpleModel*/
+	/*IntSim*/
+	   switch(power_type)
+      	   {
+	      #ifdef INTSIM_H
+	      case CACHE_IL1:
+		fit = p_chip.floorplan.find(floorplan_id.il1);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	        intsim_il1 = new IntSim_library((*fit).second.device_tech,cache_il1_tech.area, cache_il1_tech.num_transistors);
+	      break;	
+	      case CACHE_DL1:
+		fit = p_chip.floorplan.find(floorplan_id.dl1);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	    	intsim_dl1 = new IntSim_library((*fit).second.device_tech,cache_dl1_tech.area, cache_dl1_tech.num_transistors);
+	      break;
+	      case CACHE_ITLB:
+		fit = p_chip.floorplan.find(floorplan_id.itlb);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	    	intsim_itlb = new IntSim_library((*fit).second.device_tech,cache_itlb_tech.area, cache_itlb_tech.num_transistors);
+	      break;
+	      case CACHE_DTLB:
+		fit = p_chip.floorplan.find(floorplan_id.dtlb);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	    	intsim_dtlb = new IntSim_library((*fit).second.device_tech,cache_dtlb_tech.area, cache_dtlb_tech.num_transistors);
+	      break;
+	      case CLOCK:
+		fit = p_chip.floorplan.find(floorplan_id.clock);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_clock = new IntSim_library((*fit).second.device_tech,(*fit).second.feature.area, 0.25*(*fit).second.feature.area/pow((*fit).second.device_tech.feature_size*1e-9,2)*1e-2);
+	      break;
+	      case BPRED:
+		fit = p_chip.floorplan.find(floorplan_id.bpred);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	    	intsim_bpred = new IntSim_library((*fit).second.device_tech,bpred_tech.area, bpred_tech.num_transistors);
+	      break;
+	      case RF:
+		fit = p_chip.floorplan.find(floorplan_id.rf);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	    	intsim_rf = new IntSim_library((*fit).second.device_tech,rf_tech.area, rf_tech.num_transistors);
+	      break;
+	      case IO:
+		fit = p_chip.floorplan.find(floorplan_id.io);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_io = new IntSim_library((*fit).second.device_tech,io_tech.area, io_tech.num_transistors);
+	      break;
+	      case LOGIC:
+		fit = p_chip.floorplan.find(floorplan_id.logic);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_logic = new IntSim_library((*fit).second.device_tech,logic_tech.area, logic_tech.num_transistors);
+	      break;
+	      case EXEU_ALU:	    
+		fit = p_chip.floorplan.find(floorplan_id.alu);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_alu = new IntSim_library((*fit).second.device_tech,alu_tech.area, alu_tech.num_transistors);
+	      break;
+	      case EXEU_FPU:
+		fit = p_chip.floorplan.find(floorplan_id.fpu);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_fpu = new IntSim_library((*fit).second.device_tech,fpu_tech.area, fpu_tech.num_transistors);
+	      break;
+	      case MULT:
+		fit = p_chip.floorplan.find(floorplan_id.mult);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_mult = new IntSim_library((*fit).second.device_tech,mult_tech.area, mult_tech.num_transistors);
+	      break;
+	      case 14: //IB
+		fit = p_chip.floorplan.find(floorplan_id.ib);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+	    	intsim_ib = new IntSim_library((*fit).second.device_tech,ib_tech.area, ib_tech.num_transistors);
+	      break;
+	      case ISSUE_Q:
+		fit = p_chip.floorplan.find(floorplan_id.issueQ);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_issueQ = new IntSim_library((*fit).second.device_tech,irs_tech.area, irs_tech.num_transistors);
+	      break;
+	      case INST_DECODER:
+		fit = p_chip.floorplan.find(floorplan_id.decoder);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_decoder = new IntSim_library((*fit).second.device_tech,decoder_tech.area, decoder_tech.num_transistors);
+	      break;
+	      case BYPASS:
+		fit = p_chip.floorplan.find(floorplan_id.bypass);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_bypass = new IntSim_library((*fit).second.device_tech,bypass_tech.area, bypass_tech.num_transistors);
+	      break;
+	      //case EXEU:
+	      //break;
+	      case PIPELINE:
+		fit = p_chip.floorplan.find(floorplan_id.pipeline);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_pipeline = new IntSim_library((*fit).second.device_tech,pipeline_tech.area, pipeline_tech.num_transistors);
+	      break;
+	      //case 20:  //LSQ
+	      //break;
+	      //case RAT:
+	      //break;
+	      //case 22: //ROB	   
+	      //break;
+	      case 23:  //BTB
+		fit = p_chip.floorplan.find(floorplan_id.btb);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_btb = new IntSim_library((*fit).second.device_tech,btb_tech.area, btb_tech.num_transistors);
+	      break;
+	      case CACHE_L2:
+		fit = p_chip.floorplan.find(floorplan_id.L2);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_L2 = new IntSim_library((*fit).second.device_tech,cache_l2_tech.area, cache_l2_tech.num_transistors);
+	      break;
+	      case MEM_CTRL:
+		fit = p_chip.floorplan.find(floorplan_id.mc);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_mc = new IntSim_library((*fit).second.device_tech,mc_tech.area, mc_tech.num_transistors);
+	      break;
+	      case ROUTER:
+		fit = p_chip.floorplan.find(floorplan_id.router);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_router = new IntSim_library((*fit).second.device_tech,router_tech.area, router_tech.num_transistors);
+	      break;
+	      //case LOAD_Q:
+	      //break;
+	      //case RENAME_U:
+	      //break;
+	      //case SCHEDULER_U:
+	      //break;
+	      case CACHE_L3:
+		fit = p_chip.floorplan.find(floorplan_id.L3);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_L3 = new IntSim_library((*fit).second.device_tech,cache_l3_tech.area, cache_l3_tech.num_transistors);
+	      break;
+	      case CACHE_L1DIR:
+		fit = p_chip.floorplan.find(floorplan_id.L1dir);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_L1dir = new IntSim_library((*fit).second.device_tech,cache_l1dir_tech.area, cache_l1dir_tech.num_transistors);
+	      break;
+	      case CACHE_L2DIR:
+		fit = p_chip.floorplan.find(floorplan_id.L2dir);
+        	if(fit == p_chip.floorplan.end())
+            	    cout << "ERROR: No matching floorplan is found" << endl;
+		intsim_L2dir = new IntSim_library((*fit).second.device_tech,cache_l2dir_tech.area, cache_l2dir_tech.num_transistors);
+	      break;
+	      default: break;
+	      #endif //intsim_H
+          } // end switch ptype
+	  getUnitPower(power_type, 0, power_model); 
 	break;
       } // end switch p_model
     }	//end model power = yes
@@ -4712,6 +5050,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			icache = ifu->SSTreturnIcache();
 			p_areaMcPAT = p_areaMcPAT + icache.area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.il1, icache.area.get_area());
 		    #endif                    
 		    break;
 		    case 1:
@@ -4738,11 +5077,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif                        
 		    break;
 	            case 3:
-		    /*MySimpleModel*/ 
-                      p_unitPower.il1_read = 0.5*cache_il1_tech.unit_icap*cache_il1_tech.vss*cache_il1_tech.vss*cache_il1_tech.op_freq;
-		      p_unitPower.il1_write = p_unitPower.il1_read;
-		    //p_usage.switchingPower = 0.5*cache_il1_tech.unit_scap*cache_il1_tech.vss*cache_il1_tech.vss*cache_il1_tech.op_freq;
-                    //p_usage.leakagePower = 0.5*cache_il1_tech.unit_lcap*cache_il1_tech.vss*cache_il1_tech.vss*cache_il1_tech.op_freq;		    
+		    /*IntSim*/ 
+                      p_unitPower.il1_read = intsim_il1->chip->dyn_power_logic_gates+intsim_il1->chip->dyn_power_repeaters+intsim_il1->chip->power_wires;
+		      p_unitPower.il1_write = p_unitPower.il1_read;	    
                     break;
 		}
 		p_powerModel.il1 = power_model;
@@ -4770,10 +5107,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                     // catogorized in cache_L2 instead
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    p_unitPower.il2_read = 0.5*cache_il2_tech.unit_icap*cache_il2_tech.vss*cache_il2_tech.vss*cache_il2_tech.op_freq;
-    		    p_unitPower.il2_write = p_unitPower.il2_read;
-		   		    
+		    /*IntSim*/
+                        p_unitPower.il2_read = intsim_il2->chip->dyn_power_logic_gates+intsim_il2->chip->dyn_power_repeaters+intsim_il2->chip->power_wires;
+		      p_unitPower.il2_write = p_unitPower.il2_read;		   		
                     break;
 		}
 		p_powerModel.il2 = power_model;
@@ -4787,6 +5123,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			dcache = lsu->SSTreturnDcache();
 			p_areaMcPAT = p_areaMcPAT + dcache.area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.dl1, dcache.area.get_area());
 		    #endif  
 		    break;
 		    case 1:
@@ -4813,10 +5150,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.dl1_read = 0.5*cache_dl1_tech.unit_icap*cache_dl1_tech.vss*cache_dl1_tech.vss*cache_dl1_tech.op_freq;
+		    /*IntSim*/
+                        p_unitPower.dl1_read = intsim_dl1->chip->dyn_power_logic_gates+intsim_dl1->chip->dyn_power_repeaters+intsim_dl1->chip->power_wires;
 		      p_unitPower.dl1_write = p_unitPower.dl1_read;
-		    		    
                     break;
 		}
 		p_powerModel.dl1 = power_model;
@@ -4844,10 +5180,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                     // catogorized in cache_L2 instead
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    p_unitPower.dl2_read = 0.5*cache_dl2_tech.unit_icap*cache_dl2_tech.vss*cache_dl2_tech.vss*cache_dl2_tech.op_freq;
-		    p_unitPower.dl2_write = p_unitPower.dl2_read;
-		    		    
+		    /*IntSim*/
+                         p_unitPower.dl2_read = intsim_dl2->chip->dyn_power_logic_gates+intsim_dl2->chip->dyn_power_repeaters+intsim_dl2->chip->power_wires;
+		      p_unitPower.dl2_write = p_unitPower.dl2_read;		    		    
                     break;
 		}
 		p_powerModel.dl2 = power_model;
@@ -4861,6 +5196,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			itlb = mmu->SSTreturnITLB();
 			p_areaMcPAT = p_areaMcPAT + itlb->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.itlb, itlb->area.get_area());
 		    #endif  
 		    break;
 		    case 1:
@@ -4884,9 +5220,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
   		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.itlb_read = 0.5*cache_itlb_tech.unit_icap*cache_itlb_tech.vss*cache_itlb_tech.vss*cache_itlb_tech.op_freq;
-		      p_unitPower.itlb_write = p_unitPower.itlb_read;		    		    
+		    /*IntSim*/
+                    	p_unitPower.itlb_read = intsim_itlb->chip->dyn_power_logic_gates+intsim_itlb->chip->dyn_power_repeaters+intsim_itlb->chip->power_wires;
+		      p_unitPower.itlb_write = p_unitPower.itlb_read;	    		    
                     break;
 		}
 		p_powerModel.itlb = power_model;
@@ -4900,6 +5236,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			dtlb = mmu->SSTreturnDTLB();
 			p_areaMcPAT = p_areaMcPAT + dtlb->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.dtlb, dtlb->area.get_area());
 		    #endif 
 		    break;
 		    case 1:
@@ -4923,10 +5260,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
   		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.dtlb_read = 0.5*cache_dtlb_tech.unit_icap*cache_dtlb_tech.vss*cache_dtlb_tech.vss*cache_dtlb_tech.op_freq;
+		    /*IntSim*/
+                        p_unitPower.dtlb_read = intsim_dtlb->chip->dyn_power_logic_gates+intsim_dtlb->chip->dyn_power_repeaters+intsim_dtlb->chip->power_wires;
 		      p_unitPower.dtlb_write = p_unitPower.dtlb_read;
-		   		    
                     break;
 		}
 		p_powerModel.dtlb = power_model;
@@ -4951,9 +5287,14 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    //go to GetPower directly	
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.clock = 0.5*clock_tech.unit_icap*clock_tech.vss*clock_tech.vss*clock_tech.op_freq;
-		   
+		    /*IntSim*/
+                     	if(clock_tech.clock_option == GLOBAL_CLOCK)
+        		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic*(1-intsim_clock->param->clock_gating_factor);
+      			else if(clock_tech.clock_option == LOCAL_CLOCK)
+        		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic*(intsim_clock->param->clock_gating_factor);
+      			else
+        		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic;	   
+			std::cout << "unit clock power = " << p_unitPower.clock << std::endl;
                     break;
 		}
 		p_powerModel.clock = power_model;
@@ -4968,6 +5309,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    if (bpred_tech.prediction_width > 0){
 			BPT = ifu->SSTreturnBPT();
 			p_areaMcPAT = p_areaMcPAT + BPT->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.bpred, BPT->area.get_area());
 		    }
 		    #endif 
 		    break;
@@ -4991,8 +5333,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.bpred = 0.5*bpred_tech.unit_icap*bpred_tech.vss*bpred_tech.vss*bpred_tech.op_freq;
+		    /*IntSim*/
+                        p_unitPower.bpred = intsim_bpred->chip->dyn_power_logic_gates+intsim_bpred->chip->dyn_power_repeaters+intsim_bpred->chip->power_wires;
                     break;
 		}
 		p_powerModel.bpred = power_model;
@@ -5006,6 +5348,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			rfu = exu->SSTreturnRFU();
 			p_areaMcPAT = p_areaMcPAT + rfu->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.rf, rfu->area.get_area());
 		    #endif 
 		    break;
 		    case 1:
@@ -5039,8 +5382,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.rf = 0.5*rf_tech.unit_icap*rf_tech.vss*rf_tech.vss*rf_tech.op_freq;
+		    /*IntSim*/
+                        p_unitPower.rf = intsim_rf->chip->dyn_power_logic_gates+intsim_rf->chip->dyn_power_repeaters+intsim_rf->chip->power_wires;
 		    break;
 		}
 		p_powerModel.rf = power_model;
@@ -5062,10 +5405,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                     
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    p_unitPower.aio = 0.5*io_tech.unit_icap*io_tech.vss*io_tech.vss*io_tech.op_freq;
-		    p_unitPower.dio = p_unitPower.aio;
-		    	    
+		    /*IntSim*/
+                         p_unitPower.aio = intsim_io->chip->dyn_power_logic_gates+intsim_io->chip->dyn_power_repeaters+intsim_io->chip->power_wires;
+			p_unitPower.dio = intsim_io->chip->dyn_power_logic_gates+intsim_io->chip->dyn_power_repeaters+intsim_io->chip->power_wires;
                     break;
 		}
 		p_powerModel.io = power_model;
@@ -5102,9 +5444,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			#endif                      
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    p_unitPower.logic = 0.5*logic_tech.unit_icap*logic_tech.vss*logic_tech.vss*logic_tech.op_freq;
-		    
+		    /*IntSim*/
+                        p_unitPower.logic = intsim_logic->chip->dyn_power_logic_gates+intsim_logic->chip->dyn_power_repeaters+intsim_logic->chip->power_wires;
                     break;
 		}
 		p_powerModel.logic = power_model;
@@ -5118,6 +5459,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			exeu = exu->SSTreturnEXEU();
 			p_areaMcPAT = p_areaMcPAT + exeu->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.exeu, exeu->area.get_area());
 		    #endif 
 		    break;
 		    case 1:
@@ -5136,9 +5478,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.alu = 0.5*alu_tech.unit_icap*alu_tech.vss*alu_tech.vss*alu_tech.op_freq;
-		       
+		    /*IntSim*/
+                         p_unitPower.alu = intsim_alu->chip->dyn_power_logic_gates+intsim_alu->chip->dyn_power_repeaters+intsim_alu->chip->power_wires;
                     break;
 		}
 		p_powerModel.alu = power_model;
@@ -5152,6 +5493,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			fp_u = exu->SSTreturnFPU();
 			p_areaMcPAT = p_areaMcPAT + fp_u->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.fpu, fp_u->area.get_area());
 		    #endif
 		    break;
 		    case 1:
@@ -5170,9 +5512,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.fpu = 0.5*fpu_tech.unit_icap*fpu_tech.vss*fpu_tech.vss*fpu_tech.op_freq;
-
+		    /*IntSim*/
+                        p_unitPower.fpu = intsim_fpu->chip->dyn_power_logic_gates+intsim_fpu->chip->dyn_power_repeaters+intsim_fpu->chip->power_wires;
                     break;
 		}
 		p_powerModel.fpu = power_model;
@@ -5197,9 +5538,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                     
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                      p_unitPower.mult = 0.5*mult_tech.unit_icap*mult_tech.vss*mult_tech.vss*mult_tech.op_freq;
-
+		    /*IntSim*/
+                        p_unitPower.mult = intsim_mult->chip->dyn_power_logic_gates+intsim_mult->chip->dyn_power_repeaters+intsim_mult->chip->power_wires;
                     break;
 		}
 		p_powerModel.mult = power_model;
@@ -5213,6 +5553,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			IB = ifu->SSTreturnIB();
 			p_areaMcPAT = p_areaMcPAT + IB->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.ib, IB->area.get_area());
 		    #endif   
 		    break;
 		    case 1:
@@ -5229,7 +5570,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
   		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.ib = intsim_ib->chip->dyn_power_logic_gates+intsim_ib->chip->dyn_power_repeaters+intsim_ib->chip->power_wires;
                     break;
 		}	
 		p_powerModel.ib = power_model;
@@ -5261,7 +5603,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 	  	      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.issueQ = intsim_issueQ->chip->dyn_power_logic_gates+intsim_issueQ->chip->dyn_power_repeaters+intsim_issueQ->chip->power_wires;
                     break;
 		}	
 		p_powerModel.issueQ = power_model;
@@ -5279,6 +5622,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			p_areaMcPAT = p_areaMcPAT + (ID_inst->area.get_area() +
 				ID_operand->area.get_area() +
 				ID_misc->area.get_area())*core_tech.core_decode_width; //*10-6mm^2
+			updateFloorplanAreaInfo(floorplan_id.decoder, (ID_inst->area.get_area() +
+				ID_operand->area.get_area() +
+				ID_misc->area.get_area())*core_tech.core_decode_width);
 		    #endif 
 		    break;
 		    case 1:
@@ -5294,7 +5640,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			#endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.decoder = intsim_decoder->chip->dyn_power_logic_gates+intsim_decoder->chip->dyn_power_repeaters+intsim_decoder->chip->power_wires;	   
+			std::cout << "unit decoder power = " << p_unitPower.decoder << std::endl;
                     break;
 		}	
 		p_powerModel.decoder = power_model;
@@ -5308,6 +5656,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			bypass = exu->SSTreturnBy();
 			p_areaMcPAT = p_areaMcPAT + bypass.area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.bypass, bypass.area.get_area());
 		    #endif 
 		    break;
 		    case 1:
@@ -5338,7 +5687,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			#endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.bypass = intsim_bpred->chip->dyn_power_logic_gates+intsim_bpred->chip->dyn_power_repeaters+intsim_bpred->chip->power_wires;
                     break;
 		}	
 		p_powerModel.bypass = power_model;
@@ -5361,7 +5711,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif		   
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.exeu = intsim_exeu->chip->dyn_power_logic_gates+intsim_exeu->chip->dyn_power_repeaters+intsim_exeu->chip->power_wires;
                     break;
 		}	
 		p_powerModel.exeu = power_model;
@@ -5374,6 +5725,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT*/
 		    corepipe = p_Mcore->SSTreturnPIPE();	
                     p_areaMcPAT = p_areaMcPAT + corepipe->area.get_area();
+		    updateFloorplanAreaInfo(floorplan_id.pipeline, corepipe->area.get_area());
 		    break;
 		    case 1:
 		    /*SimPanalyzer*/
@@ -5392,7 +5744,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.pipeline = intsim_pipeline->chip->dyn_power_logic_gates+intsim_pipeline->chip->dyn_power_repeaters+intsim_pipeline->chip->power_wires;
                     break;
 		}	
 		p_powerModel.pipeline = power_model;
@@ -5406,6 +5759,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			LSQ = lsu->SSTreturnLSQ();
 			p_areaMcPAT = p_areaMcPAT + LSQ->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.lsq, LSQ->area.get_area());
 		    #endif  
 		    break;
 		    case 1:
@@ -5425,7 +5779,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.lsq = intsim_lsq->chip->dyn_power_logic_gates+intsim_lsq->chip->dyn_power_repeaters+intsim_lsq->chip->power_wires;
                     break;
 		}	
 		p_powerModel.lsq = power_model;
@@ -5456,7 +5811,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.rat = intsim_rat->chip->dyn_power_logic_gates+intsim_rat->chip->dyn_power_repeaters+intsim_rat->chip->power_wires;
                     break;
 		}	
 		p_powerModel.rat = power_model;
@@ -5482,7 +5838,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.rob = intsim_rob->chip->dyn_power_logic_gates+intsim_rob->chip->dyn_power_repeaters+intsim_rob->chip->power_wires;
                     break;
 		}	
 		p_powerModel.rob = power_model;
@@ -5497,6 +5854,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			if (bpred_tech.prediction_width > 0){
 			    BTB = ifu->SSTreturnBTB();
 			    p_areaMcPAT = p_areaMcPAT + BTB->area.get_area();
+			    updateFloorplanAreaInfo(floorplan_id.btb, BTB->area.get_area());
 			}
 		    #endif  
 		    break;
@@ -5513,7 +5871,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.btb = intsim_btb->chip->dyn_power_logic_gates+intsim_btb->chip->dyn_power_repeaters+intsim_btb->chip->power_wires;
                     break;
 		}	
 		p_powerModel.btb = power_model;
@@ -5528,6 +5887,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			for(i = 0; i < device_tech.number_L2; i++){
 			    l2array = p_Mproc.SSTreturnL2(i);
 			    p_areaMcPAT = p_areaMcPAT + l2array->area.get_area();
+			    updateFloorplanAreaInfo(floorplan_id.L2, l2array->area.get_area());
 			}
 		    #endif                        
 		    break;
@@ -5549,7 +5909,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      #endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.l2 = intsim_L2->chip->dyn_power_logic_gates+intsim_L2->chip->dyn_power_repeaters+intsim_L2->chip->power_wires;
                     break;
 		}	
 		p_powerModel.L2 = power_model;
@@ -5563,6 +5924,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			mc = p_Mproc.SSTreturnMC();
 			p_areaMcPAT = p_areaMcPAT + mc->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.mc, mc->area.get_area());
 		    #endif                    
 		    break;
 		    case 1:
@@ -5583,7 +5945,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			#endif
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.mc = intsim_mc->chip->dyn_power_logic_gates+intsim_mc->chip->dyn_power_repeaters+intsim_mc->chip->power_wires;
                     break;
 		}	
 		p_powerModel.mc = power_model;
@@ -5597,6 +5960,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			nocs = p_Mproc.SSTreturnNOC();
 			p_areaMcPAT = p_areaMcPAT + nocs->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.router, nocs->area.get_area());
 		    #endif                      
 		    break;
 		    case 1:
@@ -5637,7 +6001,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			#endif	      
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.router = intsim_router->chip->dyn_power_logic_gates+intsim_router->chip->dyn_power_repeaters+intsim_router->chip->power_wires;
                     break;
 		}	
 		p_powerModel.router = power_model;
@@ -5651,6 +6016,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			LoadQ = lsu->SSTreturnLoadQ();
 			p_areaMcPAT = p_areaMcPAT + LoadQ->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.loadQ, LoadQ->area.get_area());
 		    #endif  
 		    break;
 		    case 1:
@@ -5660,7 +6026,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05*/
 		    break;
 	            case 3:
-		    /*MySimpleModel*/                    
+		    /*IntSim*/   
+			p_unitPower.loadQ = intsim_loadQ->chip->dyn_power_logic_gates+intsim_loadQ->chip->dyn_power_repeaters+intsim_loadQ->chip->power_wires;                 
                     break;
 		}
 		p_powerModel.loadQ = power_model;
@@ -5673,6 +6040,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /* McPAT*/
 		    #ifdef McPAT07_H
 			p_areaMcPAT = p_areaMcPAT + rnu->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.rename, rnu->area.get_area());
 		    #endif
 		    break;
 		    case 1:
@@ -5682,8 +6050,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05*/
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    
+		    /*IntSim*/
+                        p_unitPower.rename = intsim_rename->chip->dyn_power_logic_gates+intsim_rename->chip->dyn_power_repeaters+intsim_rename->chip->power_wires;
                     break;
 		}
 	   p_powerModel.rename = power_model;
@@ -5697,6 +6065,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    #ifdef McPAT07_H
 			scheu = exu->SSTreturnSCHEU();
 			p_areaMcPAT = p_areaMcPAT + scheu->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.scheduler, scheu->area.get_area());
 		    #endif 
 		    break;
 		    case 1:
@@ -5706,7 +6075,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05*/
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.scheduler = intsim_scheduler->chip->dyn_power_logic_gates+intsim_scheduler->chip->dyn_power_repeaters+intsim_scheduler->chip->power_wires;
                     break;
 		}
 		p_powerModel.scheduler = power_model;
@@ -5721,6 +6091,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      for(i = 0; i < device_tech.number_L3; i++){
 			l3array = p_Mproc.SSTreturnL3(i);
 			p_areaMcPAT = p_areaMcPAT + l3array->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.L3, l3array->area.get_area());
 		      }
 		    #endif  
 		    break;
@@ -5731,7 +6102,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05*/
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
+			p_unitPower.l3 = intsim_L3->chip->dyn_power_logic_gates+intsim_L3->chip->dyn_power_repeaters+intsim_L3->chip->power_wires;
                     break;
 		}
 		p_powerModel.L3 = power_model;
@@ -5746,6 +6118,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      for(i = 0; i < device_tech.number_L1dir; i++){
 			l1dirarray = p_Mproc.SSTreturnL1dir(i);
 			p_areaMcPAT = p_areaMcPAT + l1dirarray->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.L1dir, l1dirarray->area.get_area());
 		      }
 		    #endif                      
 		    break;
@@ -5756,8 +6129,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05--not modelled*/                   
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    p_unitPower.uarch = 9.99;
+		    /*IntSim*/
+                        p_unitPower.l1dir = intsim_L1dir->chip->dyn_power_logic_gates+intsim_L1dir->chip->dyn_power_repeaters+intsim_L1dir->chip->power_wires;
                     break;
 		}
 		p_powerModel.L1dir = power_model;
@@ -5772,6 +6145,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      for(i = 0; i < device_tech.number_L2dir; i++){	
 			l2dirarray = p_Mproc.SSTreturnL2dir(i);
 			p_areaMcPAT = p_areaMcPAT + l2dirarray->area.get_area();
+			updateFloorplanAreaInfo(floorplan_id.L2dir, l2dirarray->area.get_area());
 		      }
 		    #endif 
 		    break;
@@ -5782,8 +6156,8 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05--see case l2*/                   
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
-                    p_unitPower.uarch = 9.99;
+		    /*IntSim*/
+                        p_unitPower.l2dir = intsim_L2dir->chip->dyn_power_logic_gates+intsim_L2dir->chip->dyn_power_repeaters+intsim_L2dir->chip->power_wires;
                     break;
 		}
 		p_powerModel.L2dir = power_model;
@@ -5807,7 +6181,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*TODO McPAT05*/                   
 		    break;
 	            case 3:
-		    /*MySimpleModel*/
+		    /*IntSim*/
                     p_unitPower.uarch = 9.99;
                     break;
 		}
@@ -5823,7 +6197,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 * It is component writer's responsibility to decide how often *
 * to generate usage counts and call getPower.                 *
 ***************************************************************/
-Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usagecounts_t counts/*char *user_parms*/)
+Pdissipation_t& Power::getPower(introspectedComponent* c, ptype power_type, usagecounts_t counts/*char *user_parms*/)
 {
     I totalPowerUsage=0.0;
     I dynamicPower = 0.0;
@@ -5870,6 +6244,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		ifu->SSTcomputeEnergy(false, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
 		leakage = (I)icache.power.readOp.leakage + (I)icache.power.readOp.gate_leakage;
+		//using namespace io_interval;  std::cout << "CompID " << c->Id() << ", il1 leakage = " << leakage << std::endl;
 		dynamicPower = (I)icache.rt_power.readOp.dynamic / executionTime;
 		totalPowerUsage = leakage + dynamicPower;
 		ifu->SSTcomputeEnergy(true, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
@@ -5913,12 +6288,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.il1_access * (I)p_unitPower.il1_read;
+		leakage = (I)intsim_il1->chip->leakage_power_logic_gates + intsim_il1->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	   
-	    updatePowUsage(c, power_type, &p_usage_cache_il1, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.il1, &p_usage_cache_il1, totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;
 
@@ -5953,11 +6330,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.il2_access * (I)p_unitPower.il2_read;
+		leakage = (I)intsim_il2->chip->leakage_power_logic_gates + intsim_il2->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_cache_il2, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.il2, &p_usage_cache_il2, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	   
 	  case 2:
@@ -6016,12 +6395,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.dl1_access * (I)p_unitPower.dl1_read;
+		leakage = (I)intsim_dl1->chip->leakage_power_logic_gates + intsim_dl1->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	   
-	    updatePowUsage(c, power_type, &p_usage_cache_dl1, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.dl1, &p_usage_cache_dl1, totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;		
 	   
@@ -6056,11 +6437,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.dl2_access * (I)p_unitPower.dl2_read;
+		leakage = (I)intsim_dl2->chip->leakage_power_logic_gates + intsim_dl2->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_cache_dl2, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.dl2, &p_usage_cache_dl2, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;	
 	  
 	  case 4:
@@ -6115,12 +6498,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.itlb_access * (I)p_unitPower.itlb_read;
+		leakage = (I)intsim_itlb->chip->leakage_power_logic_gates + intsim_itlb->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_cache_itlb, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.itlb, &p_usage_cache_itlb, totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;		
 	   
@@ -6175,12 +6560,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.dtlb_access * (I)p_unitPower.dtlb_read;
+		leakage = (I)intsim_dtlb->chip->leakage_power_logic_gates + intsim_dtlb->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_cache_dtlb, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.dtlb, &p_usage_cache_dtlb, totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;		
 
@@ -6213,12 +6600,19 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.clock_access * (I)p_unitPower.clock;
+		if(clock_tech.clock_option == GLOBAL_CLOCK)
+        	    leakage = (I)intsim_clock->chip->clock_power_leakage*(1-intsim_clock->param->clock_gating_factor);     
+      		else if(clock_tech.clock_option == LOCAL_CLOCK)     
+        	    leakage = (I)intsim_clock->chip->clock_power_leakage*(intsim_clock->param->clock_gating_factor);      
+      		else     
+        	    leakage = (I)intsim_clock->chip->clock_power_leakage;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_clock, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.clock, &p_usage_clock, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 7:
 	  //bpred
@@ -6265,12 +6659,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.bpred_access * (I)p_unitPower.bpred;
+		leakage = (I)intsim_bpred->chip->leakage_power_logic_gates + intsim_bpred->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_bpred, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.bpred, &p_usage_bpred, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 8:
 	  //rf
@@ -6286,6 +6682,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		totalPowerUsage = leakage + dynamicPower;
 		rfu->SSTcomputeEnergy(true, counts.int_regfile_reads, counts.int_regfile_writes, counts.float_regfile_reads, counts.float_regfile_writes, counts.RFWIN_read, counts.RFWIN_write);
 		TDP = (I)rfu->power.readOp.dynamic * (I)device_tech.clockRate;
+		//using namespace io_interval;  std::cout << "CompID " << c->Id() << ", rf leakage = " << leakage << std::endl;
 		#endif   
 	      break;
 	      case 1:
@@ -6323,12 +6720,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.rf_access * (I)p_unitPower.rf;
+		leakage = (I)intsim_rf->chip->leakage_power_logic_gates + intsim_rf->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_rf, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.rf, &p_usage_rf, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 9:
 	  //io
@@ -6358,11 +6757,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
                     
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.io_access * (I)p_unitPower.aio;
+		leakage = (I)intsim_io->chip->leakage_power_logic_gates + intsim_io->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_io, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.io, &p_usage_io, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 10:
 	  //logic
@@ -6397,12 +6798,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.logic_access * (I)p_unitPower.logic;
+		leakage = (I)intsim_logic->chip->leakage_power_logic_gates + intsim_logic->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_logic, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.logic, &p_usage_logic, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 11:
 	  //alu
@@ -6442,12 +6845,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.alu_access * (I)p_unitPower.alu;
+		leakage = (I)intsim_alu->chip->leakage_power_logic_gates + intsim_alu->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_alu, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.alu, &p_usage_alu, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 12:
 	  //fpu
@@ -6486,12 +6891,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.fpu_access * (I)p_unitPower.fpu;
+		leakage = (I)intsim_fpu->chip->leakage_power_logic_gates + intsim_fpu->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
 	    
-	    updatePowUsage(c, power_type, &p_usage_fpu, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.fpu, &p_usage_fpu, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 13:
 	  //mult
@@ -6517,11 +6924,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
                     
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.mult_access * (I)p_unitPower.mult;
+		leakage = (I)intsim_mult->chip->leakage_power_logic_gates + intsim_mult->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_mult, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.mult, &p_usage_mult, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 14:  
 	  //ib	
@@ -6557,11 +6966,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
                 #endif    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.ib_access * (I)p_unitPower.ib;
+		leakage = (I)intsim_ib->chip->leakage_power_logic_gates + intsim_ib->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	    
-	    updatePowUsage(c, power_type, &p_usage_ib, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.ib, &p_usage_ib, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;				
 	  case 15:  
 	  //issue_q	
@@ -6597,11 +7009,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.issueQ_access * (I)p_unitPower.issueQ;
+		leakage = (I)intsim_issueQ->chip->leakage_power_logic_gates + intsim_issueQ->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	   
-	    updatePowUsage(c, power_type, &p_usage_rs, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.issueQ, &p_usage_rs, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;					
 	  case 16:  
 	  //decoder	
@@ -6647,11 +7062,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
                 #endif    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.decoder_access * (I)p_unitPower.decoder;
+		leakage = (I)intsim_decoder->chip->leakage_power_logic_gates+intsim_decoder->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	    
-	    updatePowUsage(c, power_type, &p_usage_decoder, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.decoder, &p_usage_decoder, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;					
 	  case 17:  
 	  //bypass	
@@ -6689,11 +7107,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif	    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.bypass_access * (I)p_unitPower.bypass;
+		leakage = (I)intsim_bypass->chip->leakage_power_logic_gates + intsim_bypass->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	   
-	    updatePowUsage(c, power_type, &p_usage_bypass, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.bypass, &p_usage_bypass, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;		
 	  case 18:  
 	  //exeu	
@@ -6718,11 +7139,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.exeu_access * (I)p_unitPower.exeu;
+		leakage = (I)intsim_exeu->chip->leakage_power_logic_gates + intsim_exeu->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	    
-	    updatePowUsage(c, power_type, &p_usage_exeu, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.exeu, &p_usage_exeu, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 19:  
 	  //pipeline	
@@ -6747,11 +7171,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.pipeline_access * (I)p_unitPower.pipeline;
+		leakage = (I)intsim_pipeline->chip->leakage_power_logic_gates + intsim_pipeline->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	
-	    updatePowUsage(c, power_type, &p_usage_pipeline, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.pipeline, &p_usage_pipeline, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;	
 	  case 20:  
 	  //lsq	
@@ -6799,11 +7226,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.lsq_access * (I)p_unitPower.lsq;
+		leakage = (I)intsim_lsq->chip->leakage_power_logic_gates + intsim_lsq->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	   
-	    updatePowUsage(c, power_type, &p_usage_lsq, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.lsq, &p_usage_lsq, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 21:  
 	  //rat
@@ -6838,11 +7268,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.rat_access * (I)p_unitPower.rat;
+		leakage = (I)intsim_rat->chip->leakage_power_logic_gates + intsim_rat->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	   
-	    updatePowUsage(c, power_type, &p_usage_rat, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.rat, &p_usage_rat, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;	
 	  case 22:  
 	  //rob
@@ -6867,11 +7300,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.rob_access * (I)p_unitPower.rob;
+		leakage = (I)intsim_rob->chip->leakage_power_logic_gates + intsim_rob->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	    
-	    updatePowUsage(c, power_type, &p_usage_rob, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.rob, &p_usage_rob, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;	
 	  case 23:  
 	  //btb	
@@ -6906,11 +7342,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.btb_access * (I)p_unitPower.btb;
+		leakage = (I)intsim_btb->chip->leakage_power_logic_gates + intsim_btb->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	   
-	    updatePowUsage(c, power_type, &p_usage_btb, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.btb, &p_usage_btb, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 24:  
 	  //L2	
@@ -6947,10 +7386,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.l2_access * (I)p_unitPower.l2;
+		leakage = (I)intsim_L2->chip->leakage_power_logic_gates + intsim_L2->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
-	    updatePowUsage(c, power_type, &p_usage_cache_l2[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.L2, &p_usage_cache_l2[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;
 	  case 25:  
@@ -6984,11 +7426,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.mc_access * (I)p_unitPower.mc;
+		leakage = (I)intsim_mc->chip->leakage_power_logic_gates + intsim_mc->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	    
-	    updatePowUsage(c, power_type, &p_usage_mc, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.mc, &p_usage_mc, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 26:  
 	  //router	
@@ -7026,11 +7471,14 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		#endif
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
+	      /*IntSim*/
+		dynamicPower = (I)counts.router_access * (I)p_unitPower.router;
+		leakage = (I)intsim_router->chip->leakage_power_logic_gates + intsim_router->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    }	
 	   
-	    updatePowUsage(c, power_type, &p_usage_router, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.router, &p_usage_router, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 27:
 	  //load_Q
@@ -7055,11 +7503,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.loadQ_access * (I)p_unitPower.loadQ;
+		leakage = (I)intsim_loadQ->chip->leakage_power_logic_gates + intsim_loadQ->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_loadQ, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.loadQ, &p_usage_loadQ, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 28:
 	  //rename_U
@@ -7085,11 +7535,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.rename_access * (I)p_unitPower.rename;
+		leakage = (I)intsim_rename->chip->leakage_power_logic_gates + intsim_rename->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_renameU, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.rename, &p_usage_renameU, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 29:
 	  //scheduler_U
@@ -7115,11 +7567,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.scheduler_access * (I)p_unitPower.scheduler;
+		leakage = (I)intsim_scheduler->chip->leakage_power_logic_gates + intsim_scheduler->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_schedulerU, totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.scheduler, &p_usage_schedulerU, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 30:
 	  //cache_l3
@@ -7148,11 +7602,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.l3_access * (I)p_unitPower.l3;
+		leakage = (I)intsim_L3->chip->leakage_power_logic_gates + intsim_L3->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_cache_l3[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.L3, &p_usage_cache_l3[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;	
 	  case 31:
@@ -7182,11 +7638,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.l1dir_access * (I)p_unitPower.l1dir;
+		leakage = (I)intsim_L1dir->chip->leakage_power_logic_gates + intsim_L1dir->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_cache_l1dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.L1dir, &p_usage_cache_l1dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;	
 	  case 32:
@@ -7216,17 +7674,19 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*McPAT05*/                    
 	      break;
 	      case 3:
-	      /*MySimpleModel*/
-                totalPowerUsage = 9.99;
+	      /*IntSim*/
+                dynamicPower = (I)counts.l2dir_access * (I)p_unitPower.l2dir;
+		leakage = (I)intsim_L2dir->chip->leakage_power_logic_gates + intsim_L2dir->chip->leakage_power_repeaters;    
+		totalPowerUsage = dynamicPower+leakage;
               break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, &p_usage_cache_l2dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    updatePowUsage(c, power_type, floorplan_id.L2dir, &p_usage_cache_l2dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
 	  break;										
 	  case 33:
 	  //uarch
 	        totalPowerUsage = 1*p_unitPower.uarch; //usage_count*p_unitPower.uarch;
-                updatePowUsage(c, power_type, &p_usage_uarch, totalPowerUsage, dynamicPower, leakage, TDP);
+                updatePowUsage(c, power_type, 0, &p_usage_uarch, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	} // end switch power_type
 	return p_usage_uarch;
@@ -7237,7 +7697,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 /***************************************************************
 * Update component's currentPower, totalEnergy, and peak power *
 ****************************************************************/
-void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP)
+void Power::updatePowUsage(introspectedComponent *c, ptype power_type, int fid, Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP)
 {
 	unsigned i=0;
 	I tempPr, tempPl, tempPc, tempPt = 0.0;
@@ -7257,6 +7717,7 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, Pdissipat
 	//comp_pusage->currentSimTime = Simulation::getSimulation()->getCurrentSimCycle() / Simulation::getSimulation()->getFreq(); //convert ps to s
 	  comp_pusage->currentSimTime = Simulation::getSimulation()->getCurrentSimCycle() * Simulation::getSimulation()->getTimeLord()->getSecFactor() / 1000000000000000000.0; //convert sim time base to s
 	//std::cout << "sim time base is in " << Simulation::getSimulation()->getTimeLord()->getSecFactor() / 1000000000000000000.0 << " sec." << std::endl;
+
 
 	switch(power_type)
 	{
@@ -7553,6 +8014,28 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, Pdissipat
 	  break;
 	}
 
+	//update floorplan power information
+	map<int,floorplan_t>::iterator fit = p_chip.floorplan.find(fid);
+        if(fit == p_chip.floorplan.end())
+            cout << "ERROR: No matching floorplan is found" << endl;
+	if((*fit).second.p_usage_floorplan.currentSimTime != comp_pusage->currentSimTime){
+	    //reset the power except totalEnergy & peak
+	    (*fit).second.p_usage_floorplan.currentPower = 0.0;
+	    (*fit).second.p_usage_floorplan.leakagePower = 0.0;
+	    (*fit).second.p_usage_floorplan.runtimeDynamicPower = 0.0;
+	    (*fit).second.p_usage_floorplan.TDP = 0.0;
+	    (*fit).second.p_usage_floorplan.currentSimTime = comp_pusage->currentSimTime;
+	}
+	(*fit).second.p_usage_floorplan.totalEnergy += totalPowerUsage;
+	(*fit).second.p_usage_floorplan.currentPower += totalPowerUsage;
+	(*fit).second.p_usage_floorplan.leakagePower += leakage;
+	(*fit).second.p_usage_floorplan.runtimeDynamicPower += dynamicPower;
+	(*fit).second.p_usage_floorplan.TDP += TDP;
+	if ( median((*fit).second.p_usage_floorplan.peak) < median(totalPowerUsage) ){
+             (*fit).second.p_usage_floorplan.peak = totalPowerUsage * I(0.95,1.05);  //manual error bar (5%)
+	}
+
+
 	// update component overall (ALL) power
 	p_usage_uarch.totalEnergy = p_usage_uarch.totalEnergy + totalPowerUsage;
 	p_usage_uarch.currentPower = p_usage_cache_il1.currentPower + 
@@ -7709,7 +8192,7 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, Pdissipat
 * the time when power was last analyzed (obtained from PDB)    *
 * Return time in second                                   *
 ****************************************************************/
-I Power::getExecutionTime(IntrospectedComponent *c)
+I Power::getExecutionTime(introspectedComponent *c)
 {
         Time_t current, previous;
         Pdissipation_t pusage;
@@ -7776,6 +8259,146 @@ void Power::setTech(Component::Params_t deviceParams)
 	}
 	else if (!it->first.compare("core_clock_rate")){  //Mc
 	        sscanf(it->second.c_str(), "%f", &device_tech.clockRate);
+	}
+	else if(!it->first.compare("core_temperature")){  //Mc
+		sscanf(it->second.c_str(), "%d", &core_tech.core_temperature);
+	} 
+	else if(!it->first.compare("core_tech_node")){  //Mc
+		sscanf(it->second.c_str(), "%d", &core_tech.core_tech_node);
+	} 
+	else if (!it->first.compare("cache_il1_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.il1);
+		// Insert cubcomponents type of component's interest into a list
+		// Used for compute_temperature
+		subcompList.insert(std::pair<ptype,int>(CACHE_IL1,floorplan_id.il1)); 
+	}
+	else if (!it->first.compare("cache_il2_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.il2);
+		subcompList.insert(std::pair<ptype,int>(CACHE_IL2,floorplan_id.il2));  
+	}
+	else if (!it->first.compare("cache_dl1_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.dl1);
+		subcompList.insert(std::pair<ptype,int>(CACHE_DL1,floorplan_id.dl1));  
+	}
+	else if (!it->first.compare("cache_dl2_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.dl2);
+		subcompList.insert(std::pair<ptype,int>(CACHE_DL2,floorplan_id.dl2));  
+	}
+	else if (!it->first.compare("cache_itlb_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.itlb);
+		subcompList.insert(std::pair<ptype,int>(CACHE_ITLB,floorplan_id.itlb));  
+	}
+	else if (!it->first.compare("cache_dtlb_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.dtlb);
+		subcompList.insert(std::pair<ptype,int>(CACHE_DTLB,floorplan_id.dtlb));  
+	}
+	else if (!it->first.compare("clock_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.clock);
+		subcompList.insert(std::pair<ptype,int>(CLOCK,floorplan_id.clock));  
+	}
+	else if (!it->first.compare("bpred_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.bpred);
+		subcompList.insert(std::pair<ptype,int>(BPRED,floorplan_id.bpred));  
+	}
+	else if (!it->first.compare("rf_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.rf);
+		subcompList.insert(std::pair<ptype,int>(RF,floorplan_id.rf));  
+	}
+	else if (!it->first.compare("io_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.io);
+		subcompList.insert(std::pair<ptype,int>(IO,floorplan_id.io));  
+	}
+	else if (!it->first.compare("logic_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.logic);
+		subcompList.insert(std::pair<ptype,int>(LOGIC,floorplan_id.logic));  
+	}
+	else if (!it->first.compare("alu_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.alu);
+		subcompList.insert(std::pair<ptype,int>(EXEU_ALU,floorplan_id.alu));  
+	}
+	else if (!it->first.compare("fpu_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.fpu);
+		subcompList.insert(std::pair<ptype,int>(EXEU_FPU,floorplan_id.fpu));  
+	}
+	else if (!it->first.compare("mult_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.mult);
+		subcompList.insert(std::pair<ptype,int>(MULT,floorplan_id.mult));  
+	}
+	else if (!it->first.compare("ib_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.ib);
+		subcompList.insert(std::pair<ptype,int>((ptype)14,floorplan_id.ib));  
+	}
+	else if (!it->first.compare("issueQ_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.issueQ);
+		subcompList.insert(std::pair<ptype,int>(ISSUE_Q,floorplan_id.issueQ));  
+	}
+	else if (!it->first.compare("decoder_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.decoder);
+		subcompList.insert(std::pair<ptype,int>(INST_DECODER,floorplan_id.decoder));  
+	}
+	else if (!it->first.compare("bypass_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.bypass);
+		subcompList.insert(std::pair<ptype,int>(BYPASS,floorplan_id.bypass));  
+	}
+	else if (!it->first.compare("exeu_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.exeu);
+		subcompList.insert(std::pair<ptype,int>(EXEU,floorplan_id.exeu));  
+	}
+	else if (!it->first.compare("pipeline_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.pipeline);
+		subcompList.insert(std::pair<ptype,int>(PIPELINE,floorplan_id.pipeline));  
+	}
+	else if (!it->first.compare("lsq_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.lsq);
+		subcompList.insert(std::pair<ptype,int>((ptype)20,floorplan_id.lsq));  
+	}
+	else if (!it->first.compare("rat_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.rat);
+		subcompList.insert(std::pair<ptype,int>(RAT,floorplan_id.rat));  
+	}
+	else if (!it->first.compare("rob_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.rob);
+		subcompList.insert(std::pair<ptype,int>((ptype)22,floorplan_id.rob));  
+	}
+	else if (!it->first.compare("btb_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.btb);
+		subcompList.insert(std::pair<ptype,int>((ptype)23,floorplan_id.btb));  
+	}
+	else if (!it->first.compare("cache_l2_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.L2);
+		subcompList.insert(std::pair<ptype,int>(CACHE_L2,floorplan_id.L2));  
+	}
+	else if (!it->first.compare("router_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.router);
+		subcompList.insert(std::pair<ptype,int>(ROUTER,floorplan_id.router));  
+	}
+	else if (!it->first.compare("mc_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.mc);
+		subcompList.insert(std::pair<ptype,int>(MEM_CTRL,floorplan_id.mc));  
+	}
+	else if (!it->first.compare("loadQ_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.loadQ);
+		subcompList.insert(std::pair<ptype,int>(LOAD_Q,floorplan_id.loadQ));  
+	}
+	else if (!it->first.compare("rename_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.rename);
+		subcompList.insert(std::pair<ptype,int>(RENAME_U,floorplan_id.rename));  
+	}
+	else if (!it->first.compare("scheduler_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.scheduler);
+		subcompList.insert(std::pair<ptype,int>(SCHEDULER_U,floorplan_id.scheduler));  
+	}
+	else if (!it->first.compare("cache_l3_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.L3);
+		subcompList.insert(std::pair<ptype,int>(CACHE_L3,floorplan_id.L3));  
+	}
+	else if (!it->first.compare("cache_l1dir_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.L1dir);
+		subcompList.insert(std::pair<ptype,int>(CACHE_L1DIR,floorplan_id.L1dir));  
+	}
+	else if (!it->first.compare("cache_l2dir_floorplan_id")){  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.L2dir);
+		subcompList.insert(std::pair<ptype,int>(CACHE_L2DIR,floorplan_id.L2dir));  
 	}
         it++;
     }
@@ -9156,603 +9779,1568 @@ void Power::McPAT05Setup()
 		p_Mp1->sys.NoC[0].xbar0.crossbar_accesses=521;
 
 }
-
-/* The following is no longer used*/
-/***************************************************************
-* Initialize basic tech params to prevent errors	       *
-* They will be overwritten when individual components are init *
-* McPAT05 interface				               * 
-****************************************************************/
-void Power::McPAT05initBasic()
-{
-  
-  /**Basic parameters*/
-  interface_ip.data_arr_ram_cell_tech_type    = 0; //device_type (HPC)
-  interface_ip.data_arr_peri_global_tech_type = 0;
-  interface_ip.tag_arr_ram_cell_tech_type     = 0;
-  interface_ip.tag_arr_peri_global_tech_type  = 0;
-
-  interface_ip.ic_proj_type     = 0; //interconnect_projection_type (aggresive)
-  interface_ip.wire_is_mat_type = 2;
-  interface_ip.wire_os_mat_type = 2;
-  interface_ip.max_area_t_constraint_perc = 90;
-  interface_ip.max_acc_t_constraint_perc = 50;
-  interface_ip.max_perc_diff_in_delay_fr_best_delay_rptr_sol = 40;
-  interface_ip.burst_len      = 1;
-  interface_ip.int_prefetch_w = 1;
-  interface_ip.page_sz_bits   = 0;
-  interface_ip.temp = 360;
-  interface_ip.F_sz_nm = 65; //core_tech_node
-  interface_ip.F_sz_um = interface_ip.F_sz_nm / 1000;
-
-  //***********This section of code does not have real meaning, they are just to ensure all data will have initial value to prevent errors.
-  //They will be overridden  during each components initialization
-  interface_ip.cache_sz            =64;
-  interface_ip.line_sz             = 1;
-  interface_ip.assoc               = 1;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = 64;
-  interface_ip.access_mode         = 2;
-
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-
-  interface_ip.is_main_mem     = false;
-  interface_ip.rpters_in_htree = true ;
-  interface_ip.ver_htree_wires_over_array = 0;
-  interface_ip.broadcast_addr_din_over_ver_htrees = 0;
-
-  interface_ip.num_rw_ports        = 1;
-  interface_ip.num_rd_ports        = 0;
-  interface_ip.num_wr_ports        = 0;
-  interface_ip.num_se_rd_ports     = 0;
-}
-
-/*************************************************
-* Re-initialize Icache tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitIcache()
-{
-  
-  int size, line, assoc, banks, idx, tag, data;
-  
-
-  /*-----cache-----*/
-  size                             = (int)cache_il1_tech.unit_scap; //capacity
-  line                             = (int)cache_il1_tech.line_size; //block width
-  assoc                            = (int)cache_il1_tech.assoc; //assoc
-  banks                            = (int)cache_il1_tech.num_banks; //banks
-  idx    			   = int(ceil(log2(size/line/assoc)));
-  tag				   = cache_il1_tech.core_physical_address_width-idx-int(ceil(log2(line))) + EXTRA_TAG_BITS;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = (unsigned int)tag;
-  interface_ip.cache_sz            = (unsigned int)size;
-  interface_ip.line_sz             = (unsigned int)line;
-  interface_ip.assoc               = (unsigned int)assoc;
-  interface_ip.nbanks              = (unsigned int)banks;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 0;
-  interface_ip.throughput          = cache_il1_tech.throughput/device_tech.clockRate; // cycle time
-  interface_ip.latency             = cache_il1_tech.latency/device_tech.clockRate;  //access time
-  interface_ip.is_cache		   = true;
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = cache_il1_tech.num_rwports; //number_instruction_fetch_ports
-  interface_ip.num_rd_ports    = 0;
-  interface_ip.num_wr_ports    = 0;
-  interface_ip.num_se_rd_ports = 0;
-  icache.caches.init_cache(&interface_ip); //re-set params values from SST xml
-  
-  /*-----miss buffer-----*/
-  tag				   = (int)cache_il1_tech.core_physical_address_width + EXTRA_TAG_BITS;
-  data				   = (int)cache_il1_tech.core_physical_address_width + int(ceil(log2(size/line))) + icache.caches.l_ip.line_sz;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.line_sz             = int(ceil(data/8.0));
-  interface_ip.cache_sz            = cache_il1_tech.miss_buf_size*interface_ip.line_sz;
-  interface_ip.assoc               = 0;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 2;
-  //...the rest are the same as the ones in cache
-  icache.missb.init_cache(&interface_ip);  //re-set params values from SST xml
-	
-  /*-----fill buffer-----*/  
-  data				   = icache.caches.l_ip.line_sz;  
-  interface_ip.line_sz             = data;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.cache_sz            = cache_il1_tech.fill_buf_size*data;
-  //...the rest are the same as the ones in miss_buf
-  icache.ifb.init_cache(&interface_ip);  //re-set params values from SST xml
-
-  /*-----prefetch-----*/ 
-  interface_ip.cache_sz            = cache_il1_tech.prefetch_buf_size*interface_ip.line_sz;
-  //...the rest are the same as the ones in fill_buf
-  icache.prefetchb.init_cache(&interface_ip);
-
-  //icache does not have wbb
-}
-
-/*************************************************
-* Re-initialize Dcache tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitDcache()
-{
-  int size, line, assoc, banks, idx, tag, data;
- 
-  /*-----cache-----*/
-  size                             = (int)cache_dl1_tech.unit_scap; //capacity
-  line                             = (int)cache_dl1_tech.line_size; //block width
-  assoc                            = (int)cache_dl1_tech.assoc; //assoc
-  banks                            = (int)cache_dl1_tech.num_banks; //banks
-  idx    			   = int(ceil(log2(size/line/assoc)));
-  tag				   = (int)cache_dl1_tech.core_physical_address_width - idx - int(ceil(log2(line))) + EXTRA_TAG_BITS;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = (unsigned int)tag;
-  interface_ip.cache_sz            = (unsigned int)size;
-  interface_ip.line_sz             = (unsigned int)line;
-  interface_ip.assoc               = (unsigned int)assoc;
-  interface_ip.nbanks              = (unsigned int)banks;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 0;
-  interface_ip.throughput          = cache_dl1_tech.throughput/device_tech.clockRate; // cycle time
-  interface_ip.latency             = cache_dl1_tech.latency/device_tech.clockRate;  //access time
-  interface_ip.is_cache		   = true;
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = cache_dl1_tech.num_rwports; //memory_ports; usually In-order has 1 and OOO has 2 at least.
-  interface_ip.num_rd_ports    = 0;
-  interface_ip.num_wr_ports    = 0;
-  interface_ip.num_se_rd_ports = 0;
-
-  strcpy(dcache.caches.name,"dcache");
-  dcache.caches.init_cache(&interface_ip);
-
-  /*-----miss buf-----*/
-  tag				   = (int)cache_dl1_tech.core_physical_address_width + EXTRA_TAG_BITS;
-  data				   = (int)cache_dl1_tech.core_physical_address_width + int(ceil(log2(size/line))) + dcache.caches.l_ip.line_sz;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.line_sz             = int(ceil(data/8.0));//int(ceil(pow(2.0,ceil(log2(data)))/8.0));
-  interface_ip.cache_sz            = cache_dl1_tech.miss_buf_size*interface_ip.line_sz;
-  interface_ip.assoc               = 0;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 2;
-  //...the rest are unchanged
-  strcpy(dcache.missb.name,"dcacheMissB");
-  dcache.missb.init_cache(&interface_ip);
-
-  /*-----fill buf-----*/
-  data				   = dcache.caches.l_ip.line_sz;  
-  interface_ip.line_sz             = data;
-  interface_ip.cache_sz            = cache_dl1_tech.fill_buf_size*data; 
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  //...the rest are unchanged
-  strcpy(dcache.ifb.name,"dcacheFillB");
-  dcache.ifb.init_cache(&interface_ip);
-
-  /*-----prefetch buf-----*/  
-  interface_ip.cache_sz            = cache_dl1_tech.prefetch_buf_size*interface_ip.line_sz;
-  //...the rest are unchanged
-  strcpy(dcache.prefetchb.name,"dcacheprefetchB");
-  dcache.prefetchb.init_cache(&interface_ip); 
-
-  /*-----write back buf-----*/  
-  interface_ip.cache_sz            = cache_dl1_tech.wbb_buf_size*interface_ip.line_sz;
-  //...the rest are unchanged
-  strcpy(dcache.wbb.name,"WBB");
-  dcache.wbb.init_cache(&interface_ip);
-}
-
-/*************************************************
-* Re-initialize ITLB tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitItlb()
-{
-  int tag, data;
- 
-
-  tag				   = cache_itlb_tech.core_virtual_address_width- int(floor(log2(cache_itlb_tech.core_virtual_memory_page_size))) 
-				   + int(ceil(log2(cache_itlb_tech.core_number_hardware_threads)))+ EXTRA_TAG_BITS;
-  data				   = cache_itlb_tech.core_physical_address_width- int(floor(log2(cache_itlb_tech.core_virtual_memory_page_size)));
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.line_sz             = int(ceil(data/8.0));
-  interface_ip.cache_sz            = cache_itlb_tech.number_entries*interface_ip.line_sz*cache_itlb_tech.core_number_hardware_threads;
-  interface_ip.assoc               = 0;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 2;
-  interface_ip.throughput          = cache_il1_tech.throughput/device_tech.clockRate; // cycle time
-  interface_ip.latency             = cache_il1_tech.latency/device_tech.clockRate;  //access time
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = cache_itlb_tech.num_rwports; //number_instruction_fetch_ports
-  interface_ip.num_rd_ports    = 0;
-  interface_ip.num_wr_ports    = 0;
-  interface_ip.num_se_rd_ports = 0;
-  interface_ip.is_cache        = true;
-  strcpy(itlb.tlb.name,"ITLB");
-  itlb.tlb.init_cache(&interface_ip);
-}
-
-/*************************************************
-* Re-initialize DTLB tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitDtlb()
-{
-  int tag, data;
- 
-  tag				   = cache_dtlb_tech.core_virtual_address_width- int(floor(log2(cache_dtlb_tech.core_virtual_memory_page_size))) 
-				   + int(ceil(log2(cache_dtlb_tech.core_number_hardware_threads)))+ EXTRA_TAG_BITS;
-  data				   = cache_dtlb_tech.core_physical_address_width- int(floor(log2(cache_dtlb_tech.core_virtual_memory_page_size)));
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.line_sz             = int(ceil(data/8.0));
-  interface_ip.cache_sz            = cache_dtlb_tech.number_entries*interface_ip.line_sz*cache_dtlb_tech.core_number_hardware_threads;
-  interface_ip.assoc               = 0;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 2;
-  interface_ip.throughput          = cache_dl1_tech.throughput/device_tech.clockRate; // cycle time
-  interface_ip.latency             = cache_dl1_tech.latency/device_tech.clockRate;  //access time
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = cache_dtlb_tech.num_rwports; //memory_ports
-  interface_ip.num_rd_ports    = 0;
-  interface_ip.num_wr_ports    = 0;
-  interface_ip.num_se_rd_ports = 0;
-  interface_ip.is_cache        = true;
-  strcpy(dtlb.tlb.name,"DTLB");
-  dtlb.tlb.init_cache(&interface_ip);
-}
-
-/*************************************************
-* Re-initialize IB tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitIB()
-{
-  int data, tag;
- 
-
-  tag				   = ib_tech.core_virtual_address_width- int(floor(log2(ib_tech.core_virtual_memory_page_size))) 
-				   + int(ceil(log2(ib_tech.core_number_hardware_threads)))+ EXTRA_TAG_BITS;
-  data				   = ib_tech.core_instruction_length*ib_tech.core_issue_width; //multiple threads timing sharing the instruction buffer.
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.is_cache		   = false;
-  interface_ip.line_sz             = int(ceil(data/8.0));
-  interface_ip.cache_sz            = ib_tech.core_number_hardware_threads*ib_tech.core_instruction_buffer_size*interface_ip.line_sz>64?
-		                             ib_tech.core_number_hardware_threads*ib_tech.core_instruction_buffer_size*interface_ip.line_sz:64;
-  interface_ip.assoc               = 1;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 0;
-  interface_ip.throughput          = 1.0/device_tech.clockRate;
-  interface_ip.latency             = 1.0/device_tech.clockRate;
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  //NOTE: Assuming IB is time slice shared among threads, every fetch op will at least fetch "fetch width" instructions.
-  interface_ip.num_rw_ports    = ib_tech.num_rwports; //intr_fetch_ports
-  interface_ip.num_rd_ports    = 0;
-  interface_ip.num_wr_ports    = 0;
-  interface_ip.num_se_rd_ports = 0;
-
-  strcpy(IB.IB.name,"InstBuffer");
-  IB.IB.init_cache(&interface_ip);
-
-}
-
-/*************************************************
-* Re-initialize IRS tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitIRS()
-{
-  int tag, data;
-
-  tag				   = int(log2(irs_tech.core_number_hardware_threads)*perThreadState);//This is the normal thread state bits based on Niagara Design
-  data				   = irs_tech.core_instruction_length;//NOTE: x86 inst can be very lengthy, up to 15B
-  interface_ip.is_cache		   = true;
-  interface_ip.line_sz             = int(ceil(data/8.0));
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.cache_sz            = irs_tech.core_instruction_window_size*interface_ip.line_sz>64?irs_tech.core_instruction_window_size*interface_ip.line_sz:64;
-  interface_ip.assoc               = 0;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 1;
-  interface_ip.throughput          = 1.0/device_tech.clockRate;
-  interface_ip.latency             = 1.0/device_tech.clockRate;
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = 0;
-  interface_ip.num_rd_ports    = irs_tech.core_issue_width;
-  interface_ip.num_wr_ports    = irs_tech.core_issue_width;
-  interface_ip.num_se_rd_ports = 0;
-  strcpy(iRS.RS.name,"InstQueue");
-  iRS.RS.init_cache(&interface_ip);
-}
-
-/*************************************************
-* Re-initialize Reg file tech params from SST xml  *
-* McPAT interface				 *  
-*************************************************/
-void Power::McPATinitRF()
-{
-  int data, tag;
-  bool regWindowing;
- 
-
-  /*-----iRF-----*/
-  tag				   = rf_tech.core_opcode_width + rf_tech.core_virtual_address_width 
-					+int(ceil(log2(rf_tech.core_number_hardware_threads))) + EXTRA_TAG_BITS;
-  data				   = rf_tech.machine_bits;
-  interface_ip.is_cache		   = false;
-  interface_ip.line_sz             = int(ceil(data/32.0))*4;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.cache_sz            = rf_tech.archi_Regs_IRF_size*interface_ip.line_sz;
-  interface_ip.assoc               = 1;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 1;
-  interface_ip.throughput          = 1.0/device_tech.clockRate;
-  interface_ip.latency             = 1.0/device_tech.clockRate;
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = 1;//this is the transfer port for saving/restoring states when exceptions happen.
-  interface_ip.num_rd_ports    = 2*rf_tech.core_issue_width;
-  interface_ip.num_wr_ports    = rf_tech.core_issue_width;
-  interface_ip.num_se_rd_ports = 0;
-  strcpy(IRF.RF.name,"ArchIntReg");
-  IRF.RF.init_cache(&interface_ip);
-
-  /*-----fRF-----*/
-  data				   = int(ceil(ceil(rf_tech.machine_bits/32.0)*4*1.5/8.0));
-  interface_ip.is_cache		   = false;
-  interface_ip.line_sz             = data;//int(ceil(data/32.0))*4;
-  interface_ip.cache_sz            = rf_tech.archi_Regs_FRF_size*interface_ip.line_sz;
-  // the rest are unchanged
-  strcpy(FRF.RF.name,"ArchFPReg");
-  FRF.RF.init_cache(&interface_ip);
-
-  /*-----RF WIN-----*/
-  regWindowing= (int)rf_tech.core_register_windows_size>0?true:false;
-  if (regWindowing == true)
-  {
-	  data				   = (rf_tech.machine_bits/8 + rf_tech.machine_bits)*2; 
-	  interface_ip.is_cache		   = false;
-	  interface_ip.line_sz             = int(ceil(data/8.0));
-	  interface_ip.cache_sz            = rf_tech.core_register_windows_size*rf_tech.core_number_hardware_threads*interface_ip.line_sz;
-	  interface_ip.assoc               = 1;
-	  interface_ip.nbanks              = 1;
-	  interface_ip.out_w               = interface_ip.line_sz*8;
-	  interface_ip.access_mode         = 1;
-	  interface_ip.throughput          = 4.0/device_tech.clockRate;
-	  interface_ip.latency             = 4.0/device_tech.clockRate;
-	  interface_ip.obj_func_dyn_energy = 0;
-	  interface_ip.obj_func_dyn_power  = 0;
-	  interface_ip.obj_func_leak_power = 0;
-	  interface_ip.obj_func_cycle_t    = 1;
-	  interface_ip.num_rw_ports    = 1;//this is the transfer port for saving/restoring states when exceptions happen.
-	  interface_ip.num_rd_ports    = 0;
-	  interface_ip.num_wr_ports    = 0;
-	  interface_ip.num_se_rd_ports = 0;
-	  strcpy(RFWIN.RF.name,"RegWindow");
-	  RFWIN.RF.init_cache(&interface_ip);
-  }
-
-}
-
-/***************************************************************
-* Re-initialize interconnect (bypass) tech params from SST xml *
-* McPAT interface				               * 
-****************************************************************/
-void Power::McPATinitBypass()
-{
-  int tag, data;
-  bool is_default = true;
-
-
-  //initialize LSQ here
-  tag				   = bypass_tech.core_opcode_width+bypass_tech.core_virtual_address_width 
-					+int(ceil(log2(bypass_tech.core_number_hardware_threads))) + EXTRA_TAG_BITS;
-  data				   = bypass_tech.machine_bits;//64 is the data width
-  interface_ip.is_cache		   = true;
-  interface_ip.line_sz             = int(ceil(data/32.0))*4;
-  interface_ip.specific_tag        = 1;
-  interface_ip.tag_w               = tag;
-  interface_ip.cache_sz            = bypass_tech.core_store_buffer_size*interface_ip.line_sz*bypass_tech.core_number_hardware_threads;
-  interface_ip.assoc               = 0;
-  interface_ip.nbanks              = 1;
-  interface_ip.out_w               = interface_ip.line_sz*8;
-  interface_ip.access_mode         = 1;
-  interface_ip.throughput          = 1.0/device_tech.clockRate;
-  interface_ip.latency             = 1.0/device_tech.clockRate;
-  interface_ip.obj_func_dyn_energy = 0;
-  interface_ip.obj_func_dyn_power  = 0;
-  interface_ip.obj_func_leak_power = 0;
-  interface_ip.obj_func_cycle_t    = 1;
-  interface_ip.num_rw_ports    = 0;
-  interface_ip.num_rd_ports    = bypass_tech.core_memory_ports;
-  interface_ip.num_wr_ports    = bypass_tech.core_memory_ports;
-  interface_ip.num_se_rd_ports = 0;
-  strcpy(LSQ.LSQ.name,"LSQueue");
-  LSQ.LSQ.init_cache(&interface_ip);
-
-  //bypass interface_ip is inherented from rf
-  McPATinitRF();
-
-  //******************intra-core interconnects
-  //Current McPAT only models intra-core interconnects inside integer/floating point unit.
-  interface_ip.wire_is_mat_type = 1;//start from semi-global since local wires are already used
-  interface_ip.wire_os_mat_type = 1;
-  interface_ip.throughput       = 1.0/device_tech.clockRate;
-  interface_ip.latency          = 1.0/device_tech.clockRate;
-
-  //int-broadcast
-  int_bypass.wires.init_wire_external(is_default, &interface_ip);
-  
-  //int_tag-broadcast
-  intTagBypass.wires.init_wire_external(is_default, &interface_ip);  
-
-  //fp-broadcast
-  fp_bypass.wires.init_wire_external(is_default, &interface_ip);
-
-  
-}
-
-/***************************************************************
-* Re-initialize logic tech params from SST xml		       *
-* McPAT interface				               * 
-****************************************************************/
-void Power::McPATinitLogic()
-{
-
-  int arch_ireg_width, arch_freg_width;
-  bool is_default = true;
-
-  arch_ireg_width =int(ceil(log2(logic_tech.archi_Regs_IRF_size)));
-  arch_freg_width =int(ceil(log2(logic_tech.archi_Regs_FRF_size)));
- 
-
-  //logic interface_ip is inherented from bypass
-  McPATinitBypass(); 
-
-  //selection logic
-  instruction_selection.win_entries	= logic_tech.core_instruction_window_size;
-  instruction_selection.issue_width	= logic_tech.core_issue_width*logic_tech.core_number_hardware_threads;
-  instruction_selection.init_selection_logic(is_default, &interface_ip);
-  
-
-  //integer dcl
-  idcl.decode_width = logic_tech.core_decode_width;
-  idcl.compare_bits = arch_ireg_width;
-  idcl.init_dep_resource_conflict_check(is_default, &interface_ip);
- 
-
-  //fp dcl
-  fdcl.decode_width = logic_tech.core_decode_width;
-  fdcl.compare_bits = arch_freg_width;
-  fdcl.init_dep_resource_conflict_check(is_default, &interface_ip);
-
-  
-}
-
-/***************************************************************
-* Re-initialize decoder tech params from SST xml	       *
-* McPAT interface				               * 
-****************************************************************/
-void Power::McPATinitDecoder()
-{
-
-  bool is_default = true;
-
-  //decoder interface_ip is inherented from bypass
-  McPATinitBypass(); 
-
-  inst_decoder.opcode_length = decoder_tech.core_opcode_width;
-  inst_decoder.init_decoder(is_default, &interface_ip);
-  
-}
-
-
-/***************************************************************
-* Re-initialize pipeline tech params from SST xml	       *
-* McPAT interface				               * 
-****************************************************************/
-void Power::McPATinitPipeline()
-{
-
-  int arch_ireg_width;
-  bool is_default = true;
-
-  //pipeline interface_ip is inherented from bypass
-  McPATinitBypass(); 
-
-  arch_ireg_width =int(ceil(log2(pipeline_tech.archi_Regs_IRF_size)));
-
-  corepipe.num_thread	  = pipeline_tech.core_number_hardware_threads;
-  corepipe.fetchWidth	  = pipeline_tech.core_fetch_width;
-  corepipe.decodeWidth    = pipeline_tech.core_decode_width;
-  corepipe.issueWidth     = pipeline_tech.core_issue_width;
-  corepipe.commitWidth    = pipeline_tech.core_commit_width;
-  corepipe.instruction_length  = pipeline_tech.core_instruction_length;
-  corepipe.PC_width       = pipeline_tech.core_virtual_address_width;
-  corepipe.opcode_length  = pipeline_tech.core_opcode_width;
-  corepipe.pipeline_stages= pipeline_tech.core_int_pipeline_depth;
-  corepipe.num_arch_reg_tag    = arch_ireg_width;
-  corepipe.num_phsical_reg_tag = arch_ireg_width;
-  corepipe.data_width  = int(ceil(pipeline_tech.machine_bits/32.0))*32;
-  corepipe.address_width = pipeline_tech.core_virtual_address_width;
-  corepipe.thread_clock_gated = true;
-  corepipe.in_order    = true;
-  corepipe.multithreaded = bool(corepipe.num_thread-1);
-  corepipe.init_pipeline(is_default, &interface_ip);
-
-  //undifferentiated core follows pipeline
-  undifferentiatedCore.inOrder = true;
-  undifferentiatedCore.opt_performance = true;
-  undifferentiatedCore.embedded = false;
-  undifferentiatedCore.pipeline_stage = pipeline_tech.core_int_pipeline_depth;
-  undifferentiatedCore.num_hthreads = pipeline_tech.core_number_hardware_threads;
-  undifferentiatedCore.issue_width = pipeline_tech.core_issue_width;
-  undifferentiatedCore.initializeUndifferentiatedCore(is_default, &interface_ip);
-}
-
-/***************************************************************
-* Re-initialize clock tech params from SST xml		       *
-* McPAT interface				               * 
-****************************************************************/
-void Power::McPATinitClock()
-{
-  bool is_default = true;
-
-  //clock interface_ip is inherented from bypass
-  McPATinitBypass(); 
-  
-  interface_ip.temp = clock_tech.core_temperature;
-  interface_ip.F_sz_nm = clock_tech.core_tech_node;
-  interface_ip.F_sz_um = interface_ip.F_sz_nm / 1000;
-
-  if ((int)rf_tech.core_register_windows_size>0){	
-      interface_ip.throughput          = 4.0/device_tech.clockRate;  //RFWIN
-      interface_ip.latency             = 4.0/device_tech.clockRate;  //RFWIN
-  }else{
-      interface_ip.throughput          = 1.0/device_tech.clockRate;  //FRF
-      interface_ip.latency             = 1.0/device_tech.clockRate;  //FRF
-  }	
-
-  
-  clockNetwork.init_wire_external(is_default, &interface_ip);
-}
-
 #endif //McPAT05_H
 
+
+/* The following is adopted from W Song's power interface */
+/************************************************************************
+* Creates floorplans and thermal tiles based on the user inputs in xml  *
+* (currently hard coded in power.h. Floorplans include sizing and      *
+* coordinate information (feature_t) and device parameters. Thermal     *
+* tiles are created for silicon, interface, spreader, and heatsink      *
+* layers. Codes are from W Song's power interface.			*
+************************************************************************/
+void Power::setChip(Component::Params_t deviceParams)
+{
+  //First, set up device parameter values
+  setTech(deviceParams);
+
+  //initialize floorplan param
+  floorParamInitialize();
+
+  #ifdef ENERGY_INTERFACE_DEBUG
+    cout << "setting floorplans ... " << endl;
+  #endif 
+
+  // floorplan setup
+  int num_floorplans = 0; // counting the number of floorplans
+  floorplan_t floorplan;
+  for(map<int,parameters_floorplan_t>::iterator fit = chip.floorplan.begin(); fit != chip.floorplan.end(); fit++)
+  {
+    #ifdef ENERGY_INTERFACE_DEBUG
+      cout << "ENERGY_INTERFACE_DEBUG: setting floorplan #" << (*fit).first << " (" << (*fit).second.name << ")" << endl;
+    #endif
+    floorplan.id = (*fit).second.id;
+    floorplan.name = (*fit).second.name;
+    floorplan.feature = (feature_t)(*fit).second.feature;
+    floorplan.device_tech = (parameters_tech_t)(*fit).second.device_tech;
+    floorplan.device_tech.temperature = (*chip.thermal_tile.find(pair<int,int>(SILICON,(*fit).first))).second.temperature;
+    p_chip.floorplan.insert(pair<int,floorplan_t>((*fit).first,floorplan));
+    ++num_floorplans;
+  }
+
+  // number of floorplans used for chip-level thermal modeling
+  chip.num_floorplans = num_floorplans;
+
+  // link the chip to thermal library
+  switch(chip.thermal_library)
+  {
+    case HOTSPOT: p_chip.thermal_library = new HotSpot_library(chip); break;
+    default: cout << "ERROR: invalid thermal library" << endl; break;
+  }
+}
+
+
+/********************************************************
+* Floorplan/thermal tiles parameter are temporarily	*
+* initialized and hard coded here			*
+* Eventually, these should be read in from xml		*
+********************************************************/
+void Power::floorParamInitialize()
+{
+   cout << "Initializing the floorplan/thermal tiles parameters ... " << endl;
+
+  parameters_thermal_tile_t tile_input;		// thermal tile setup
+  parameters_floorplan_t floorplan_input;	// floorplan setup
+
+  // chip setup
+  chip.thermal_library = HOTSPOT;
+  chip.thermal_threshold = 350.0;//81.8 + 273.15;
+  chip.chip_thickness = 0.15e-3;
+  chip.chip_thermal_conduct = 100.0;
+  chip.chip_heat = 1.75e6;
+  chip.heatsink_convection_cap = 140.4;
+  chip.heatsink_convection_res = 0.1;
+  chip.heatsink_side = 60e-3;
+  chip.heatsink_thickness = 6.9e-3;
+  chip.heatsink_thermal_conduct = 400.0;
+  chip.heatsink_heat = 3.55e6;
+  chip.spreader_side = 30e-3;
+  chip.spreader_thickness = 1e-3;
+  chip.spreader_thermal_conduct = 400.0;
+  chip.spreader_heat = 3.55e6;
+  chip.interface_thickness = 20e-6;
+  chip.interface_thermal_conduct = 4.0;
+  chip.interface_heat = 4.0e6;
+  chip.secondary_model = false;
+  chip.secondary_convection_res = 1.0;
+  chip.secondary_convection_cap = 140.4; //FIXME! need updated value.
+  chip.metal_layers = 8;
+  chip.metal_thickness = 10.0e-6;
+  chip.c4_thickness = 0.0001;
+  chip.c4_side = 20.0e-6;
+  chip.c4_pads = 400;
+  chip.substrate_side = 0.021;
+  chip.substrate_thickness = 0.001;
+  chip.solder_side = 0.021;
+  chip.solder_thickness = 0.00094;
+  chip.pcb_side = 0.1;
+  chip.pcb_thickness = 0.002;
+  chip.ambient = 315.0;
+  chip.sampling_interval = 1e-3;
+  chip.clock_frequency = 10.0/3.0*1e9;
+  chip.leakage_used = 0;
+  chip.leakage_mode = 0;
+  chip.package_model_used = 0;
+  chip.block_omit_lateral = false;
+  chip.num_grid_rows = 64;
+  chip.num_grid_cols = 64;
+
+
+  // floorplan & thermal tiles
+  tile_input.layer = SILICON;
+  tile_input.id = 0;
+  tile_input.name = "silicon:core0:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 0;
+  tile_input.name = "interface:core0:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 0;
+  tile_input.name = "spreader:core0:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 0;
+  tile_input.name = "heatsink:core0:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 0;
+  floorplan_input.name = "core0:pipeline";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 1.535e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 4.0706e-3;
+//  floorplan_input.feature.area = 19.59e-6;
+  floorplan_input.feature.x_position = 0.0;
+  floorplan_input.feature.y_position = 3.6446025e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 3.34441e-3;
+  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/1,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 0... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 1;
+  tile_input.name = "silicon:core0:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 1;
+  tile_input.name = "interface:core0:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 1;
+  tile_input.name = "spreader:core0:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 1;
+  tile_input.name = "heatsink:core0:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 1;
+  floorplan_input.name = "core0:cache";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 4.8125e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 2.267e-3;
+//  floorplan_input.feature.area = 10.91e-6;
+  floorplan_input.feature.x_position = 0.0;
+  floorplan_input.feature.y_position = 2.5145875e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 1.130015e-3;
+  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/0,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 1... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 2;
+  tile_input.name = "silicon:core1:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 2;
+  tile_input.name = "interface:core1:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 2;
+  tile_input.name = "spreader:core1:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 2;
+  tile_input.name = "heatsink:core1:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 2;
+  floorplan_input.name = "core1:pipeline";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 1.535e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 4.0706e-3;
+//  floorplan_input.feature.area = 19.59e-6;
+  floorplan_input.feature.x_position = 2e-3;
+  floorplan_input.feature.y_position = 3.6446025e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 3.34441e-3;
+  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/3,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 2... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 3;
+  tile_input.name = "silicon:core1:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 3;
+  tile_input.name = "interface:core1:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 3;
+  tile_input.name = "spreader:core1:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 3;
+  tile_input.name = "heatsink:core1:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 3;
+  floorplan_input.name = "core1:cache";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 4.8125e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 2.267e-3;
+//  floorplan_input.feature.area = 10.91e-6;
+  floorplan_input.feature.x_position = 2e-3;
+  floorplan_input.feature.y_position = 2.5145875e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 1.130015e-3;
+  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/2,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 3... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 4;
+  tile_input.name = "silicon:core2:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 4;
+  tile_input.name = "interface:core2:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 4;
+  tile_input.name = "spreader:core2:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 4;
+  tile_input.name = "heatsink:core2:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 4;
+  floorplan_input.name = "core2:pipeline";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 1.535e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 4.0706e-3;
+//  floorplan_input.feature.area = 19.59e-6;
+  floorplan_input.feature.x_position = 4e-3;
+  floorplan_input.feature.y_position = 3.6446025e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 3.34441e-3;
+  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/5,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 4... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 5;
+  tile_input.name = "silicon:core2:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 5;
+  tile_input.name = "interface:core2:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 5;
+  tile_input.name = "spreader:core2:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 5;
+  tile_input.name = "heatsink:core2:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 5;
+  floorplan_input.name = "core2:cache";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 4.8125e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 2.267e-3;
+//  floorplan_input.feature.area = 10.91e-6;
+  floorplan_input.feature.x_position = 4e-3;
+  floorplan_input.feature.y_position = 2.5145875e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 1.130015e-3;
+  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/4,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 5... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 6;
+  tile_input.name = "silicon:core3:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 6;
+  tile_input.name = "interface:core3:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 6;
+  tile_input.name = "spreader:core3:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 6;
+  tile_input.name = "heatsink:core3:pipeline";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 6;
+  floorplan_input.name = "core3:pipeline";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 1.535e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 4.0706e-3;
+//  floorplan_input.feature.area = 19.59e-6;
+  floorplan_input.feature.x_position = 6e-3;
+  floorplan_input.feature.y_position = 3.6446025e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 3.34441e-3;
+  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/5,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 6... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 7;
+  tile_input.name = "silicon:core3:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 7;
+  tile_input.name = "interface:core3:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 7;
+  tile_input.name = "spreader:core3:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 7;
+  tile_input.name = "heatsink:core3:cache";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 7;
+  floorplan_input.name = "core3:cache";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 4.8125e-3;
+//  floorplan_input.feature.width = 4.8125e-3;
+//  floorplan_input.feature.length = 2.267e-3;
+//  floorplan_input.feature.area = 10.91e-6;
+  floorplan_input.feature.x_position = 6e-3;
+  floorplan_input.feature.y_position = 2.5145875e-3;
+  floorplan_input.feature.width = 2e-3;
+  floorplan_input.feature.length = 1.130015e-3;
+  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/4,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 7... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 100;
+  tile_input.name = "silicon:uncore:L3";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 100;
+  tile_input.name = "interface:uncore:L3";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 100;
+  tile_input.name = "spreader:uncore:L3";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 100;
+  tile_input.name = "heatsink:uncore:L3";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 100;
+  floorplan_input.name = "uncore:L3";
+//  floorplan_input.feature.x_position = 0.0;
+//  floorplan_input.feature.y_position = 0.0;
+//  floorplan_input.feature.width = 16e-3;
+//  floorplan_input.feature.length = 4.8125e-3;
+//  floorplan_input.feature.area = 77e-6;
+  floorplan_input.feature.x_position = 0.0;
+  floorplan_input.feature.y_position = 0.0;
+  floorplan_input.feature.width = 8e-3;
+  floorplan_input.feature.length = 2.5145875e-3;
+  floorplan_input.feature.area = 20.1167e-6;
+  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = 0.8*10.0/3.0*1e9;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/1,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/3,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/5,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/7,/*wire density*/1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 100... " << endl;
+
+  // rest of thermal tiles (sides of spreader and heatsink)
+  tile_input.layer = SPREADER;
+  tile_input.id = -1;
+  tile_input.name = "spreader:side:west";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -1;
+  tile_input.name = "heatsink:inner:west";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = -2;
+  tile_input.name = "spreader:side:east";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -2;
+  tile_input.name = "heatsink:inner:east";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = -3;
+  tile_input.name = "spreader:side:north";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -3;
+  tile_input.name = "heatsink:inner:north";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = -4;
+  tile_input.name = "spreader:side:south";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -4;
+  tile_input.name = "heatsink:inner:south";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -5;
+  tile_input.name = "heatsink:outer:west";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -6;
+  tile_input.name = "heatsink:outer:east";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -7;
+  tile_input.name = "heatsink:outer:north";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = -8;
+  tile_input.name = "heatsink:outer:south";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+
+}
+
+/*****************************************
+* Initialize device params		 *
+******************************************/
+void parameters_tech_t::set_default(double size, int RAM_tech_type)
+{
+  memset(this,0,sizeof(parameters_tech_t));
+
+  set = true;
+
+  RAM_tech = RAM_tech_type;
+
+  // Constants
+  bulk_copper_resistivity = 1.8e-8;
+  copper_resistivity = 2.2e-8;
+  copper_reflectivity = 0.5;
+  Rents_const_k = 4.0;
+  Rents_const_p = 0.6;
+  MOSFET_alpha = 1.3;
+  subvtslope = 100e-3;
+
+  // IntSim parameters
+  critical_path_depth = 10;
+  via_design_rule = 3;
+  avg_fanouts = 3;
+  avg_latches_per_buffer = 20;
+  activity_factor = 0.1;
+  wiring_aspect_ratio = 2.0;
+  specularity_parameter = 0.5;
+  power_pad_distance = 300e-6;
+  power_pad_length = 50e-6;
+  IR_drop_limit = 0.02;
+  router_efficiency = 0.5;
+  repeater_efficiency = 0.5;
+  clock_lost_ratio = 0.2;
+  max_H_tree_span = 3e-3;
+  clock_factor = 1.0;
+  clock_gating_factor = 0.4;
+  power_signal_wire_ratio = 2.0;
+  clock_signal_wire_ratio = 4.0;
+  max_clock_skew = 0.25;
+
+/* ----- 16nm ----- */
+  if((size>14.0)&&(size<18.0)) // 16nm
+  {
+    feature_size = 16.0;
+  }
+
+/* ----- 22nm ----- */
+  else if((size>20.0)&&(size<24.0))
+  {
+    feature_size = 22.0;
+
+    fringe_cap[0][0] = 0.115e-15;
+    miller_value[0][0] = 1.5;
+    ild_thickness[0][0] = 0.15;
+    horiz_dielectric_constant[0][0] = 1.414;
+    vert_dielectric_constant[0][0] = 3.9;
+    aspect_ratio[0][0] = 3.0;
+    wire_pitch[0][0] = 2.5 * feature_size*1e-3;
+//    cout << "parameters.cc: debug = " << 1.0*bulk_copper_resistivity*1e6/((0.5*aspect_ratio[0][0]*wire_pitch[0][0]-0-0)*(0.5*wire_pitch[0][0]-2.0*0)) << endl;
+//  resistance = alpha_scatter * resistivity /((wire_thickness - barrier_thickness - dishing_thickness)*(wire_width - 2 * barrier_thickness));
+    wire_r_per_micron[0][0] = wire_resistance(/*BULK_CU_RESISTIVITY*/bulk_copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[0][0],/*wire_thickness*/0.5*aspect_ratio[0][0]*wire_pitch[0][0],/*barrier_thickness*/0,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[0][0] = wire_capacitance(/*wire_width*/0.5*wire_pitch[0][0],/*wire_thickness*/0.5*aspect_ratio[0][0]*wire_pitch[0][0],/*wire_spacing*/0.5*wire_pitch[0][0],/*ild_thickness*/ild_thickness[0][0],miller_value[0][0],horiz_dielectric_constant[0][0],vert_dielectric_constant[0][0],/*fringe_cap*/fringe_cap[0][0]);
+
+    fringe_cap[0][1] = 0.115e-15;
+    miller_value[0][1] = 1.5;
+    ild_thickness[0][1] = 0.15;
+    horiz_dielectric_constant[0][1] = 1.414;
+    vert_dielectric_constant[0][1] = 3.9;
+    aspect_ratio[0][1] = 3.0;
+    wire_pitch[0][1] = 4.0 * feature_size*1e-3;
+    wire_r_per_micron[0][1] = wire_resistance(/*BULK_CU_RESISTIVITY*/bulk_copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[0][1],/*wire_thickness*/0.5*aspect_ratio[0][1]*wire_pitch[0][1],/*barrier_thickness*/0,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[0][1] = wire_capacitance(/*wire_width*/0.5*wire_pitch[0][1],/*wire_thickness*/0.5*aspect_ratio[0][1]*wire_pitch[0][1],/*wire_spacing*/0.5*wire_pitch[0][1],/*ild_thickness*/ild_thickness[0][1],miller_value[0][1],horiz_dielectric_constant[0][1],vert_dielectric_constant[0][1],/*fringe_cap*/fringe_cap[0][1]);
+
+    fringe_cap[0][2] = 0.115e-15;
+    miller_value[0][2] = 1.5;
+    ild_thickness[0][2] = 0.3;
+    horiz_dielectric_constant[0][2] = 1.414;
+    vert_dielectric_constant[0][2] = 3.9;
+    aspect_ratio[0][2] = 3.0;
+    wire_pitch[0][2] = 8.0 * feature_size*1e-3;
+    wire_r_per_micron[0][2] = wire_resistance(/*BULK_CU_RESISTIVITY*/bulk_copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[0][2],/*wire_thickness*/0.5*aspect_ratio[0][2]*wire_pitch[0][2],/*barrier_thickness*/0,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[0][2] = wire_capacitance(/*wire_width*/0.5*wire_pitch[0][2],/*wire_thickness*/0.5*aspect_ratio[0][2]*wire_pitch[0][2],/*wire_spacing*/0.5*wire_pitch[0][2],/*ild_thickness*/ild_thickness[0][2],miller_value[0][2],horiz_dielectric_constant[0][2],vert_dielectric_constant[0][2],/*fringe_cap*/fringe_cap[0][2]);
+
+    fringe_cap[1][0] = 0.115e-15;
+    miller_value[1][0] = 1.5;
+    ild_thickness[1][0] = 0.15;
+    horiz_dielectric_constant[1][0] = 2.104;
+    vert_dielectric_constant[1][0] = 3.9;
+    aspect_ratio[1][0] = 2.0;
+    wire_pitch[1][0] = 2.5 * feature_size*1e-3;
+    wire_r_per_micron[1][0] = wire_resistance(/*CU_RESISTIVITY*/copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[1][0],/*wire_thickness*/0.5*aspect_ratio[1][0]*wire_pitch[1][0],/*barrier_thickness*/0.003,/*dishing_thickness*/0,/*alpha_scatter*/1.05);
+    wire_c_per_micron[1][0] = wire_capacitance(/*wire_width*/0.5*wire_pitch[1][0],/*wire_thickness*/0.5*aspect_ratio[1][0]*wire_pitch[1][0],/*wire_spacing*/0.5*wire_pitch[1][0],/*ild_thickness*/ild_thickness[1][0],miller_value[1][0],horiz_dielectric_constant[1][0],vert_dielectric_constant[1][0],/*fringe_cap*/fringe_cap[1][0]);
+
+    fringe_cap[1][1] = 0.115e-15;
+    miller_value[1][1] = 1.5;
+    ild_thickness[1][1] = 0.15;
+    horiz_dielectric_constant[1][1] = 2.104;
+    vert_dielectric_constant[1][1] = 3.9;
+    aspect_ratio[1][1] = 2.0;
+    wire_pitch[1][1] = 4.0 * feature_size*1e-3;
+    wire_r_per_micron[1][1] = wire_resistance(/*CU_RESISTIVITY*/copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[1][1],/*wire_thickness*/0.5*aspect_ratio[1][1]*wire_pitch[1][1],/*barrier_thickness*/0.003,/*dishing_thickness*/0,/*alpha_scatter*/1.05);
+    wire_c_per_micron[1][1] = wire_capacitance(/*wire_width*/0.5*wire_pitch[1][1],/*wire_thickness*/0.5*aspect_ratio[1][1]*wire_pitch[1][1],/*wire_spacing*/0.5*wire_pitch[1][1],/*ild_thickness*/ild_thickness[1][1],miller_value[1][1],horiz_dielectric_constant[1][1],vert_dielectric_constant[1][1],/*fringe_cap*/fringe_cap[1][1]);
+
+    fringe_cap[1][2] = 0.115e-15;
+    miller_value[1][2] = 1.5;
+    ild_thickness[1][2] = 0.275;
+    horiz_dielectric_constant[1][2] = 2.104;
+    vert_dielectric_constant[1][2] = 3.9;
+    aspect_ratio[1][2] = 2.2;
+    wire_pitch[1][2] = 8.0 * feature_size*1e-3;
+    wire_r_per_micron[1][2] = wire_resistance(/*CU_RESISTIVITY*/copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[1][2],/*wire_thickness*/0.5*aspect_ratio[1][2]*wire_pitch[1][2],/*barrier_thickness*/0.003,/*dishing_thickness*/0.05*aspect_ratio[1][2]*wire_pitch[1][2],/*alpha_scatter*/1.05);
+    wire_c_per_micron[1][2] = wire_capacitance(/*wire_width*/0.5*wire_pitch[1][2],/*wire_thickness*/0.5*aspect_ratio[1][2]*wire_pitch[1][2],/*wire_spacing*/0.5*wire_pitch[1][2],/*ild_thickness*/ild_thickness[1][2],miller_value[1][2],horiz_dielectric_constant[1][2],vert_dielectric_constant[1][2],/*fringe_cap*/fringe_cap[1][2]);
+
+    fringe_cap[1][3] = 0.115e-15;
+    wire_pitch[1][3] = 2.0 * feature_size*1e-3;
+    wire_r_per_micron[1][3] = 12.0/(0.5*wire_pitch[1][3]);
+    wire_c_per_micron[1][3] = 37.5e-15/(256.0*wire_pitch[1][3]);//F/micron
+
+    switch(RAM_tech)
+    {
+      case HP:
+        Vdd = 0.8;
+        Vdsat = 0.0233;
+        Vth = 0.1395;
+        L_phy = 0.009;
+        L_elec = 0.00468;
+        t_ox = 0.55e-9;
+        c_ox = 3.63e-14;
+        mobility_eff = 426.07e8;
+        C_g_ideal = 3.27e-16;
+        C_fringe = 0.06e-15;
+        C_junc = 0;
+        C_junc_sidewall = 0.25e-15;
+        I_on_n = 2626.4e-6;
+        I_on_p = I_on_n/2.0;
+        np_ratio = 2.0;
+        Rn_channel_on = 1.45*Vdd/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 1.38;
+        long_channel_leakage_reduction = 1.0/3.274;
+        I_g_on_n[0] = 1.81e-9; 
+        I_g_on_n[1] = 1.81e-9; I_g_on_n[2] = 1.81e-9; I_g_on_n[3] = 1.81e-9; I_g_on_n[4] = 1.81e-9; I_g_on_n[5] = 1.81e-9; 
+        I_g_on_n[6] = 1.81e-9; I_g_on_n[7] = 1.81e-9; I_g_on_n[8] = 1.81e-9; I_g_on_n[9] = 1.81e-9; I_g_on_n[10] = 1.81e-9;
+        I_g_on_n[11] = 1.81e-9; I_g_on_n[12] = 1.81e-9; I_g_on_n[13] = 1.81e-9; I_g_on_n[14] = 1.81e-9; I_g_on_n[15] = 1.81e-9; 
+        I_g_on_n[16] = 1.81e-9; I_g_on_n[17] = 1.81e-9; I_g_on_n[18] = 1.81e-9; I_g_on_n[19] = 1.81e-9; I_g_on_n[20] = 1.81e-9;
+        I_g_on_n[21] = 1.81e-9; I_g_on_n[22] = 1.81e-9; I_g_on_n[23] = 1.81e-9; I_g_on_n[24] = 1.81e-9; I_g_on_n[25] = 1.81e-9; 
+        I_g_on_n[26] = 1.81e-9; I_g_on_n[27] = 1.81e-9; I_g_on_n[28] = 1.81e-9; I_g_on_n[29] = 1.81e-9; I_g_on_n[30] = 1.81e-9;
+        I_g_on_n[31] = 1.81e-9; I_g_on_n[32] = 1.81e-9; I_g_on_n[33] = 1.81e-9; I_g_on_n[34] = 1.81e-9; I_g_on_n[35] = 1.81e-9; 
+        I_g_on_n[36] = 1.81e-9; I_g_on_n[37] = 1.81e-9; I_g_on_n[38] = 1.81e-9; I_g_on_n[39] = 1.81e-9; I_g_on_n[40] = 1.81e-9;
+        I_g_on_n[41] = 1.81e-9; I_g_on_n[42] = 1.81e-9; I_g_on_n[43] = 1.81e-9; I_g_on_n[44] = 1.81e-9; I_g_on_n[45] = 1.81e-9; 
+        I_g_on_n[46] = 1.81e-9; I_g_on_n[47] = 1.81e-9; I_g_on_n[48] = 1.81e-9; I_g_on_n[49] = 1.81e-9; I_g_on_n[50] = 1.81e-9;
+        I_g_on_n[51] = 1.81e-9; I_g_on_n[52] = 1.81e-9; I_g_on_n[53] = 1.81e-9; I_g_on_n[54] = 1.81e-9; I_g_on_n[55] = 1.81e-9; 
+        I_g_on_n[56] = 1.81e-9; I_g_on_n[57] = 1.81e-9; I_g_on_n[58] = 1.81e-9; I_g_on_n[59] = 1.81e-9; I_g_on_n[60] = 1.81e-9;
+        I_g_on_n[61] = 1.81e-9; I_g_on_n[62] = 1.81e-9; I_g_on_n[63] = 1.81e-9; I_g_on_n[64] = 1.81e-9; I_g_on_n[65] = 1.81e-9; 
+        I_g_on_n[66] = 1.81e-9; I_g_on_n[67] = 1.81e-9; I_g_on_n[68] = 1.81e-9; I_g_on_n[69] = 1.81e-9; I_g_on_n[70] = 1.81e-9;
+        I_g_on_n[71] = 1.81e-9; I_g_on_n[72] = 1.81e-9; I_g_on_n[73] = 1.81e-9; I_g_on_n[74] = 1.81e-9; I_g_on_n[75] = 1.81e-9; 
+        I_g_on_n[76] = 1.81e-9; I_g_on_n[77] = 1.81e-9; I_g_on_n[78] = 1.81e-9; I_g_on_n[79] = 1.81e-9; I_g_on_n[80] = 1.81e-9;
+        I_g_on_n[81] = 1.81e-9; I_g_on_n[82] = 1.81e-9; I_g_on_n[83] = 1.81e-9; I_g_on_n[84] = 1.81e-9; I_g_on_n[85] = 1.81e-9; 
+        I_g_on_n[86] = 1.81e-9; I_g_on_n[87] = 1.81e-9; I_g_on_n[88] = 1.81e-9; I_g_on_n[89] = 1.81e-9; I_g_on_n[90] = 1.81e-9;
+        I_g_on_n[91] = 1.81e-9; I_g_on_n[92] = 1.81e-9; I_g_on_n[93] = 1.81e-9; I_g_on_n[94] = 1.81e-9; I_g_on_n[95] = 1.81e-9; 
+        I_g_on_n[96] = 1.81e-9; I_g_on_n[97] = 1.81e-9; I_g_on_n[98] = 1.81e-9; I_g_on_n[99] = 1.81e-9; I_g_on_n[100] = 1.81e-9;
+        I_off_n[0] = 1.22e-7; 
+        I_off_n[1] = 1.22e-7; I_off_n[2] = 1.22e-7; I_off_n[3] = 1.22e-7; I_off_n[4] = 1.22e-7; I_off_n[5] = 1.23e-7; 
+        I_off_n[6] = 1.23e-7; I_off_n[7] = 1.23e-7; I_off_n[8] = 1.23e-7; I_off_n[9] = 1.24e-7; I_off_n[10] = 1.24e-7;
+        I_off_n[11] = 1.24e-7; I_off_n[12] = 1.25e-7; I_off_n[13] = 1.25e-7; I_off_n[14] = 1.25e-7; I_off_n[15] = 1.25e-7; 
+        I_off_n[16] = 1.26e-7; I_off_n[17] = 1.26e-7; I_off_n[18] = 1.26e-7; I_off_n[19] = 1.27e-7; I_off_n[20] = 1.27e-7;
+        I_off_n[21] = 1.28e-7; I_off_n[22] = 1.28e-7; I_off_n[23] = 1.29e-7; I_off_n[24] = 1.29e-7; I_off_n[25] = 1.30e-7; 
+        I_off_n[26] = 1.31e-7; I_off_n[27] = 1.32e-7; I_off_n[28] = 1.32e-7; I_off_n[29] = 1.33e-7; I_off_n[30] = 1.34e-7;
+        I_off_n[31] = 1.35e-7; I_off_n[32] = 1.37e-7; I_off_n[33] = 1.38e-7; I_off_n[34] = 1.39e-7; I_off_n[35] = 1.41e-7; 
+        I_off_n[36] = 1.43e-7; I_off_n[37] = 1.45e-7; I_off_n[38] = 1.47e-7; I_off_n[39] = 1.49e-7; I_off_n[40] = 1.52e-7;
+        I_off_n[41] = 1.55e-7; I_off_n[42] = 1.59e-7; I_off_n[43] = 1.64e-7; I_off_n[44] = 1.69e-7; I_off_n[45] = 1.75e-7; 
+        I_off_n[46] = 1.82e-7; I_off_n[47] = 1.89e-7; I_off_n[48] = 1.97e-7; I_off_n[49] = 2.06e-7; I_off_n[50] = 2.15e-7;
+        I_off_n[51] = 2.27e-7; I_off_n[52] = 2.41e-7; I_off_n[53] = 2.58e-7; I_off_n[54] = 2.77e-7; I_off_n[55] = 2.98e-7; 
+        I_off_n[56] = 3.21e-7; I_off_n[57] = 3.46e-7; I_off_n[58] = 3.72e-7; I_off_n[59] = 3.98e-7; I_off_n[60] = 4.26e-7;
+        I_off_n[61] = 4.55e-7; I_off_n[62] = 4.87e-7; I_off_n[63] = 5.23e-7; I_off_n[64] = 5.61e-7; I_off_n[65] = 6.01e-7; 
+        I_off_n[66] = 6.43e-7; I_off_n[67] = 6.86e-7; I_off_n[68] = 7.29e-7; I_off_n[69] = 7.73e-7; I_off_n[70] = 8.16e-7;
+        I_off_n[71] = 8.59e-7; I_off_n[72] = 9.01e-7; I_off_n[73] = 9.44e-7; I_off_n[74] = 9.87e-7; I_off_n[75] = 1.03e-6; 
+        I_off_n[76] = 1.08e-6; I_off_n[77] = 1.13e-6; I_off_n[78] = 1.18e-6; I_off_n[79] = 1.24e-6; I_off_n[80] = 1.30e-6;
+        I_off_n[81] = 1.36e-6; I_off_n[82] = 1.43e-6; I_off_n[83] = 1.50e-6; I_off_n[84] = 1.57e-6; I_off_n[85] = 1.65e-6; 
+        I_off_n[86] = 1.74e-6; I_off_n[87] = 1.84e-6; I_off_n[88] = 1.94e-6; I_off_n[89] = 2.06e-6; I_off_n[90] = 2.18e-6;
+        I_off_n[91] = 2.34e-6; I_off_n[92] = 2.52e-6; I_off_n[93] = 2.74e-6; I_off_n[94] = 2.98e-6; I_off_n[95] = 3.25e-6; 
+        I_off_n[96] = 3.54e-6; I_off_n[97] = 3.85e-6; I_off_n[98] = 4.18e-6; I_off_n[99] = 4.52e-6; I_off_n[100] = 4.88e-6;
+        break;
+      case LSTP:
+        Vdd = 0.8;
+        Vdsat = 0.0664;
+        Vth = 0.40126;
+        L_phy = 0.014;
+        L_elec = 0.008;
+        t_ox = 1.1e-9;
+        c_ox = 2.30e-14;
+        mobility_eff = 738.09e8;
+        C_g_ideal = 3.22e-16;
+        C_fringe = 0.08e-15;
+        C_junc = 0;
+        C_junc_sidewall = 0.25e-15;
+        I_on_n = 727.6e-6;
+        I_on_p = I_on_n/2.0;
+        np_ratio = 2.0;
+        Rn_channel_on = 1.99*Vdd/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 0.99;
+        long_channel_leakage_reduction = 1.0/1.89;
+        break;
+      case LOP:
+        Vdd = 0.6;
+        Vdsat = 0.0181;
+        Vth = 0.2315;
+        L_phy = 0.011;
+        L_elec = 0.00604;
+        t_ox = 0.8e-9;
+        c_ox = 2.87e-14;
+        mobility_eff = 698.37e8;
+        C_g_ideal = 3.16e-16;
+        C_fringe = 0.08e-15;
+        C_junc = 0;
+        C_junc_sidewall = 0.25e-15;
+        I_on_n = 916.1e-6;
+        I_on_p = I_on_n/2.0;
+        np_ratio = 2.0;
+        Rn_channel_on = 1.73*Vdd/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 1.11;
+        long_channel_leakage_reduction = 1.0/2.38;
+        I_g_on_n[0] = 2.74e-9; 
+        I_g_on_n[1] = 2.74e-9; I_g_on_n[2] = 2.74e-9; I_g_on_n[3] = 2.74e-9; I_g_on_n[4] = 2.74e-9; I_g_on_n[5] = 2.74e-9; 
+        I_g_on_n[6] = 2.74e-9; I_g_on_n[7] = 2.74e-9; I_g_on_n[8] = 2.74e-9; I_g_on_n[9] = 2.74e-9; I_g_on_n[10] = 2.74e-9;
+        I_g_on_n[11] = 2.74e-9; I_g_on_n[12] = 2.74e-9; I_g_on_n[13] = 2.74e-9; I_g_on_n[14] = 2.74e-9; I_g_on_n[15] = 2.74e-9; 
+        I_g_on_n[16] = 2.74e-9; I_g_on_n[17] = 2.74e-9; I_g_on_n[18] = 2.74e-9; I_g_on_n[19] = 2.74e-9; I_g_on_n[20] = 2.74e-9;
+        I_g_on_n[21] = 2.74e-9; I_g_on_n[22] = 2.74e-9; I_g_on_n[23] = 2.74e-9; I_g_on_n[24] = 2.74e-9; I_g_on_n[25] = 2.74e-9; 
+        I_g_on_n[26] = 2.74e-9; I_g_on_n[27] = 2.74e-9; I_g_on_n[28] = 2.74e-9; I_g_on_n[29] = 2.74e-9; I_g_on_n[30] = 2.74e-9;
+        I_g_on_n[31] = 2.74e-9; I_g_on_n[32] = 2.74e-9; I_g_on_n[33] = 2.74e-9; I_g_on_n[34] = 2.74e-9; I_g_on_n[35] = 2.74e-9; 
+        I_g_on_n[36] = 2.74e-9; I_g_on_n[37] = 2.74e-9; I_g_on_n[38] = 2.74e-9; I_g_on_n[39] = 2.74e-9; I_g_on_n[40] = 2.74e-9;
+        I_g_on_n[41] = 2.74e-9; I_g_on_n[42] = 2.74e-9; I_g_on_n[43] = 2.74e-9; I_g_on_n[44] = 2.74e-9; I_g_on_n[45] = 2.74e-9; 
+        I_g_on_n[46] = 2.74e-9; I_g_on_n[47] = 2.74e-9; I_g_on_n[48] = 2.74e-9; I_g_on_n[49] = 2.74e-9; I_g_on_n[50] = 2.74e-9;
+        I_g_on_n[51] = 2.74e-9; I_g_on_n[52] = 2.74e-9; I_g_on_n[53] = 2.74e-9; I_g_on_n[54] = 2.74e-9; I_g_on_n[55] = 2.74e-9; 
+        I_g_on_n[56] = 2.74e-9; I_g_on_n[57] = 2.74e-9; I_g_on_n[58] = 2.74e-9; I_g_on_n[59] = 2.74e-9; I_g_on_n[60] = 2.74e-9;
+        I_g_on_n[61] = 2.74e-9; I_g_on_n[62] = 2.74e-9; I_g_on_n[63] = 2.74e-9; I_g_on_n[64] = 2.74e-9; I_g_on_n[65] = 2.74e-9; 
+        I_g_on_n[66] = 2.74e-9; I_g_on_n[67] = 2.74e-9; I_g_on_n[68] = 2.74e-9; I_g_on_n[69] = 2.74e-9; I_g_on_n[70] = 2.74e-9;
+        I_g_on_n[71] = 2.74e-9; I_g_on_n[72] = 2.74e-9; I_g_on_n[73] = 2.74e-9; I_g_on_n[74] = 2.74e-9; I_g_on_n[75] = 2.74e-9; 
+        I_g_on_n[76] = 2.74e-9; I_g_on_n[77] = 2.74e-9; I_g_on_n[78] = 2.74e-9; I_g_on_n[79] = 2.74e-9; I_g_on_n[80] = 2.74e-9;
+        I_g_on_n[81] = 2.74e-9; I_g_on_n[82] = 2.74e-9; I_g_on_n[83] = 2.74e-9; I_g_on_n[84] = 2.74e-9; I_g_on_n[85] = 2.74e-9; 
+        I_g_on_n[86] = 2.74e-9; I_g_on_n[87] = 2.74e-9; I_g_on_n[88] = 2.74e-9; I_g_on_n[89] = 2.74e-9; I_g_on_n[90] = 2.74e-9;
+        I_g_on_n[91] = 2.74e-9; I_g_on_n[92] = 2.74e-9; I_g_on_n[93] = 2.74e-9; I_g_on_n[94] = 2.74e-9; I_g_on_n[95] = 2.74e-9; 
+        I_g_on_n[96] = 2.74e-9; I_g_on_n[97] = 2.74e-9; I_g_on_n[98] = 2.74e-9; I_g_on_n[99] = 2.74e-9; I_g_on_n[100] = 2.74e-9;
+        I_off_n[0] = 1.31e-8; 
+        I_off_n[1] = 1.38e-8; I_off_n[2] = 1.47e-8; I_off_n[3] = 1.58e-8; I_off_n[4] = 1.70e-8; I_off_n[5] = 1.82e-8; 
+        I_off_n[6] = 1.96e-8; I_off_n[7] = 2.11e-8; I_off_n[8] = 2.27e-8; I_off_n[9] = 2.43e-8; I_off_n[10] = 2.60e-8;
+        I_off_n[11] = 2.27e-8; I_off_n[12] = 2.97e-8; I_off_n[13] = 3.19e-8; I_off_n[14] = 3.42e-8; I_off_n[15] = 3.66e-8; 
+        I_off_n[16] = 3.92e-8; I_off_n[17] = 4.20e-8; I_off_n[18] = 4.50e-8; I_off_n[19] = 4.81e-8; I_off_n[20] = 5.14e-8;
+        I_off_n[21] = 5.50e-8; I_off_n[22] = 5.88e-8; I_off_n[23] = 6.31e-8; I_off_n[24] = 6.76e-8; I_off_n[25] = 7.25e-8; 
+        I_off_n[26] = 7.78e-8; I_off_n[27] = 8.33e-8; I_off_n[28] = 8.92e-8; I_off_n[29] = 9.54e-8; I_off_n[30] = 1.02e-7;
+        I_off_n[31] = 1.09e-7; I_off_n[32] = 1.17e-7; I_off_n[33] = 1.25e-7; I_off_n[34] = 1.34e-7; I_off_n[35] = 1.44e-7; 
+        I_off_n[36] = 1.54e-7; I_off_n[37] = 1.65e-7; I_off_n[38] = 1.77e-7; I_off_n[39] = 1.89e-7; I_off_n[40] = 2.02e-7;
+        I_off_n[41] = 2.16e-7; I_off_n[42] = 2.31e-7; I_off_n[43] = 2.48e-7; I_off_n[44] = 2.65e-7; I_off_n[45] = 2.84e-7; 
+        I_off_n[46] = 3.05e-7; I_off_n[47] = 3.26e-7; I_off_n[48] = 3.49e-7; I_off_n[49] = 3.73e-7; I_off_n[50] = 3.99e-7;
+        I_off_n[51] = 4.28e-7; I_off_n[52] = 4.62e-7; I_off_n[53] = 5.01e-7; I_off_n[54] = 5.42e-7; I_off_n[55] = 5.85e-7; 
+        I_off_n[56] = 6.29e-7; I_off_n[57] = 6.73e-7; I_off_n[58] = 7.15e-7; I_off_n[59] = 7.55e-7; I_off_n[60] = 7.91e-7;
+        I_off_n[61] = 8.23e-7; I_off_n[62] = 8.51e-7; I_off_n[63] = 8.76e-7; I_off_n[64] = 9.01e-7; I_off_n[65] = 9.25e-7; 
+        I_off_n[66] = 9.51e-7; I_off_n[67] = 9.79e-7; I_off_n[68] = 1.01e-6; I_off_n[69] = 1.05e-6; I_off_n[70] = 1.09e-6;
+        I_off_n[71] = 1.14e-6; I_off_n[72] = 1.21e-6; I_off_n[73] = 1.29e-6; I_off_n[74] = 1.38e-6; I_off_n[75] = 1.48e-6; 
+        I_off_n[76] = 1.59e-6; I_off_n[77] = 1.71e-6; I_off_n[78] = 1.83e-6; I_off_n[79] = 1.96e-6; I_off_n[80] = 2.09e-6;
+        I_off_n[81] = 2.25e-6; I_off_n[82] = 2.44e-6; I_off_n[83] = 2.66e-6; I_off_n[84] = 2.90e-6; I_off_n[85] = 3.14e-6; 
+        I_off_n[86] = 3.38e-6; I_off_n[87] = 3.60e-6; I_off_n[88] = 3.79e-6; I_off_n[89] = 3.94e-6; I_off_n[90] = 4.04e-6;
+        I_off_n[91] = 4.11e-6; I_off_n[92] = 4.18e-6; I_off_n[93] = 4.24e-6; I_off_n[94] = 4.30e-6; I_off_n[95] = 4.35e-6; 
+        I_off_n[96] = 4.39e-6; I_off_n[97] = 4.43e-6; I_off_n[98] = 4.46e-6; I_off_n[99] = 4.47e-6; I_off_n[100] = 4.48e-6;
+        break;
+      case LP_DRAM:
+        cout << "ERROR: LP_DRAM for 22nm is undefined" << endl;
+        set = false;
+        break;
+      case COMM_DRAM:
+        Vpp = 2.3;
+        Vdd = 0.9;
+        Vdsat = 0.0972;
+        Vth = 1.0;    
+        Vth_dram = 1.0;
+        L_phy = 0.022;
+        L_elec = 0.0181;
+        W_dram = 0.022;
+        t_ox = 3.5e-9;
+        c_ox = 9.06e-15;
+        mobility_eff = 367.29e8;
+        C_g_ideal = 1.99e-16;
+        C_fringe = 0.053e-15;
+        C_junc = 1e-15;
+        C_junc_sidewall = 0.25e-15;
+        C_dram_cell = 30e-15;
+        I_on_n = 910.5e-6;
+        I_on_p = I_on_n/2.0;
+        I_on_dram_cell = 20e-6;
+        I_off_dram_cell = 1e-15;
+        np_ratio = 1.95;
+        Rn_channel_on = 1.69*Vpp/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 0.90;
+        long_channel_leakage_reduction = 1.0;
+        I_off_n[0] = 1.10e-13; 
+        I_off_n[1] = 1.17e-13; I_off_n[2] = 1.24e-13; I_off_n[3] = 1.33e-13; I_off_n[4] = 1.42e-13; I_off_n[5] = 1.52e-13; 
+        I_off_n[6] = 1.63e-13; I_off_n[7] = 1.74e-13; I_off_n[8] = 1.86e-13; I_off_n[9] = 1.98e-13; I_off_n[10] = 2.11e-13;
+        I_off_n[11] = 2.24e-13; I_off_n[12] = 2.39e-13; I_off_n[13] = 2.54e-13; I_off_n[14] = 2.70e-13; I_off_n[15] = 2.88e-13; 
+        I_off_n[16] = 3.06e-13; I_off_n[17] = 3.25e-13; I_off_n[18] = 3.45e-13; I_off_n[19] = 3.66e-13; I_off_n[20] = 3.88e-13;
+        I_off_n[21] = 4.11e-13; I_off_n[22] = 4.36e-13; I_off_n[23] = 4.62e-13; I_off_n[24] = 4.90e-13; I_off_n[25] = 5.20e-13; 
+        I_off_n[26] = 5.51e-13; I_off_n[27] = 5.83e-13; I_off_n[28] = 6.18e-13; I_off_n[29] = 6.53e-13; I_off_n[30] = 6.90e-13;
+        I_off_n[31] = 7.29e-13; I_off_n[32] = 7.71e-13; I_off_n[33] = 8.15e-13; I_off_n[34] = 8.61e-13; I_off_n[35] = 9.11e-13; 
+        I_off_n[36] = 9.62e-13; I_off_n[37] = 1.02e-12; I_off_n[38] = 1.07e-12; I_off_n[39] = 1.13e-12; I_off_n[40] = 1.19e-12;
+        I_off_n[41] = 1.25e-12; I_off_n[42] = 1.32e-12; I_off_n[43] = 1.39e-12; I_off_n[44] = 1.46e-12; I_off_n[45] = 1.54e-12; 
+        I_off_n[46] = 1.62e-12; I_off_n[47] = 1.71e-12; I_off_n[48] = 1.79e-12; I_off_n[49] = 1.89e-12; I_off_n[50] = 1.98e-12;
+        I_off_n[51] = 2.08e-12; I_off_n[52] = 2.18e-12; I_off_n[53] = 2.30e-12; I_off_n[54] = 2.41e-12; I_off_n[55] = 2.53e-12; 
+        I_off_n[56] = 2.66e-12; I_off_n[57] = 2.79e-12; I_off_n[58] = 2.93e-12; I_off_n[59] = 3.07e-12; I_off_n[60] = 3.22e-12;
+        I_off_n[61] = 3.37e-12; I_off_n[62] = 3.53e-12; I_off_n[63] = 3.70e-12; I_off_n[64] = 3.88e-12; I_off_n[65] = 4.06e-12; 
+        I_off_n[66] = 4.25e-12; I_off_n[67] = 4.45e-12; I_off_n[68] = 4.66e-12; I_off_n[69] = 4.87e-12; I_off_n[70] = 5.09e-12;
+        I_off_n[71] = 5.32e-12; I_off_n[72] = 5.56e-12; I_off_n[73] = 5.81e-12; I_off_n[74] = 6.07e-12; I_off_n[75] = 6.34e-12; 
+        I_off_n[76] = 6.62e-12; I_off_n[77] = 6.92e-12; I_off_n[78] = 7.22e-12; I_off_n[79] = 7.53e-12; I_off_n[80] = 7.85e-12;
+        I_off_n[81] = 8.18e-12; I_off_n[82] = 8.53e-12; I_off_n[83] = 8.89e-12; I_off_n[84] = 9.27e-12; I_off_n[85] = 9.66e-12; 
+        I_off_n[86] = 1.01e-11; I_off_n[87] = 1.05e-11; I_off_n[88] = 1.09e-11; I_off_n[89] = 1.13e-11; I_off_n[90] = 1.18e-11;
+        I_off_n[91] = 1.23e-11; I_off_n[92] = 1.27e-11; I_off_n[93] = 1.33e-11; I_off_n[94] = 1.38e-11; I_off_n[95] = 1.43e-11; 
+        I_off_n[96] = 1.49e-11; I_off_n[97] = 1.54e-11; I_off_n[98] = 1.60e-11; I_off_n[99] = 1.66e-11; I_off_n[100] = 1.72e-11;
+        Wmemcella_dram = W_dram;
+        Wmemcellpmos_dram = 0.0;
+        Wmemcellnmos_dram = 0.0;
+        area_cell_dram = 6*0.022*0.022;
+        asp_ratio_cell_dram = 0.667;
+        break;
+      default: 
+        cout << "ERROR: Unknown RAM type" << endl; 
+        set = false; 
+        break;
+    }
+    sense_amp_delay = 0.03e-9;
+    sense_amp_power = 2.16e-15;
+    Wmemcella_sram = 1.31 * feature_size*1e-3;
+    Wmemcellpmos_sram = 1.23 * feature_size*1e-3;
+    Wmemcellnmos_sram = 2.08 * feature_size*1e-3;
+    area_cell_sram = 146 * feature_size*1e-3*feature_size*1e-3;
+    asp_ratio_cell_sram = 1.46;
+    Wmemcella_cam = 1.31 * feature_size*1e-3;
+    Wmemcellpmos_cam = 1.23 * feature_size*1e-3;
+    Wmemcellnmos_cam = 2.08 * feature_size*1e-3;
+    area_cell_cam = 292 * feature_size*1e-3*feature_size*1e-3;
+    asp_ratio_cell_cam = 2.92;
+    logic_scaling_co_eff = 0.7*0.7*0.7*0.7;
+    core_tx_density = 1.25/0.7/0.7;
+    sckt_co_eff = 1.1296;
+    chip_layout_overhead = 1.2;
+    macro_layout_overhead = 1.1;
+  }
+/* ----- 32nm ----- */
+  else if((size>30.0)&&(size<34.0)) // 32nm
+  {
+    feature_size = 32.0;
+  }
+/* ----- 45nm ----- */
+  else if((size>43.0)&&(size<47.0))
+  {
+    feature_size = 45.0;
+
+    fringe_cap[0][0] = 0.115e-15;
+    miller_value[0][0] = 1.5;
+    ild_thickness[0][0] = 0.315;
+    horiz_dielectric_constant[0][0] = 1.958;
+    vert_dielectric_constant[0][0] = 3.9;
+    aspect_ratio[0][0] = 3.0;
+    wire_pitch[0][0] = 2.5 * feature_size*1e-3;
+    wire_r_per_micron[0][0] = wire_resistance(/*BULK_CU_RESISTIVITY*/bulk_copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[0][0],/*wire_thickness*/0.5*aspect_ratio[0][0]*wire_pitch[0][0],/*barrier_thickness*/0,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[0][0] = wire_capacitance(/*wire_width*/0.5*wire_pitch[0][0],/*wire_thickness*/0.5*aspect_ratio[0][0]*wire_pitch[0][0],/*wire_spacing*/0.5*wire_pitch[0][0],/*ild_thickness*/ild_thickness[0][0],miller_value[0][0],horiz_dielectric_constant[0][0],vert_dielectric_constant[0][0],/*fringe_cap*/fringe_cap[0][0]);
+
+    fringe_cap[0][1] = 0.115e-15;
+    miller_value[0][1] = 1.5;
+    ild_thickness[0][1] = 0.315;
+    horiz_dielectric_constant[0][1] = 1.958;
+    vert_dielectric_constant[0][1] = 3.9;
+    aspect_ratio[0][1] = 3.0;
+    wire_pitch[0][1] = 4.0 * feature_size*1e-3;
+    wire_r_per_micron[0][1] = wire_resistance(/*BULK_CU_RESISTIVITY*/bulk_copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[0][1],/*wire_thickness*/0.5*aspect_ratio[0][1]*wire_pitch[0][1],/*barrier_thickness*/0,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[0][1] = wire_capacitance(/*wire_width*/0.5*wire_pitch[0][1],/*wire_thickness*/0.5*aspect_ratio[0][1]*wire_pitch[0][1],/*wire_spacing*/0.5*wire_pitch[0][1],/*ild_thickness*/ild_thickness[0][1],miller_value[0][1],horiz_dielectric_constant[0][1],vert_dielectric_constant[0][1],/*fringe_cap*/fringe_cap[0][1]);
+
+    fringe_cap[0][2] = 0.115e-15;
+    miller_value[0][2] = 1.5;
+    ild_thickness[0][2] = 0.63;
+    horiz_dielectric_constant[0][2] = 1.958;
+    vert_dielectric_constant[0][2] = 3.9;
+    aspect_ratio[0][2] = 3.0;
+    wire_pitch[0][2] = 8.0 * feature_size*1e-3;
+    wire_r_per_micron[0][2] = wire_resistance(/*BULK_CU_RESISTIVITY*/bulk_copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[0][2],/*wire_thickness*/0.5*aspect_ratio[0][2]*wire_pitch[0][2],/*barrier_thickness*/0,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[0][2] = wire_capacitance(/*wire_width*/0.5*wire_pitch[0][2],/*wire_thickness*/0.5*aspect_ratio[0][2]*wire_pitch[0][2],/*wire_spacing*/0.5*wire_pitch[0][2],/*ild_thickness*/ild_thickness[0][2],miller_value[0][2],horiz_dielectric_constant[0][2],vert_dielectric_constant[0][2],/*fringe_cap*/fringe_cap[0][2]);
+
+    fringe_cap[1][0] = 0.115e-15;
+    miller_value[1][0] = 1.5;
+    ild_thickness[1][0] = 0.315;
+    horiz_dielectric_constant[1][0] = 2.46;
+    vert_dielectric_constant[1][0] = 3.9;
+    aspect_ratio[1][0] = 2.0;
+    wire_pitch[1][0] = 2.5 * feature_size*1e-3;
+    wire_r_per_micron[1][0] = wire_resistance(/*CU_RESISTIVITY*/copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[1][0],/*wire_thickness*/0.5*aspect_ratio[1][0]*wire_pitch[1][0],/*barrier_thickness*/0.004,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[1][0] = wire_capacitance(/*wire_width*/0.5*wire_pitch[1][0],/*wire_thickness*/0.5*aspect_ratio[1][0]*wire_pitch[1][0],/*wire_spacing*/0.5*wire_pitch[1][0],/*ild_thickness*/ild_thickness[1][0],miller_value[1][0],horiz_dielectric_constant[1][0],vert_dielectric_constant[1][0],/*fringe_cap*/fringe_cap[1][0]);
+
+    fringe_cap[1][1] = 0.115e-15;
+    miller_value[1][1] = 1.5;
+    ild_thickness[1][1] = 0.315;
+    horiz_dielectric_constant[1][1] = 2.46;
+    vert_dielectric_constant[1][1] = 3.9;
+    aspect_ratio[1][1] = 2.0;
+    wire_pitch[1][1] = 4.0 * feature_size*1e-3;
+    wire_r_per_micron[1][1] = wire_resistance(/*CU_RESISTIVITY*/copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[1][1],/*wire_thickness*/0.5*aspect_ratio[1][1]*wire_pitch[1][1],/*barrier_thickness*/0.004,/*dishing_thickness*/0,/*alpha_scatter*/1.0);
+    wire_c_per_micron[1][1] = wire_capacitance(/*wire_width*/0.5*wire_pitch[1][1],/*wire_thickness*/0.5*aspect_ratio[1][1]*wire_pitch[1][1],/*wire_spacing*/0.5*wire_pitch[1][1],/*ild_thickness*/ild_thickness[1][1],miller_value[1][1],horiz_dielectric_constant[1][1],vert_dielectric_constant[1][1],/*fringe_cap*/fringe_cap[1][1]);
+
+    fringe_cap[1][2] = 0.115e-15;
+    miller_value[1][2] = 1.5;
+    ild_thickness[1][2] = 0.55;
+    horiz_dielectric_constant[1][2] = 2.104;
+    vert_dielectric_constant[1][2] = 3.9;
+    aspect_ratio[1][2] = 2.2;
+    wire_pitch[1][2] = 8.0 * feature_size*1e-3;
+    wire_r_per_micron[1][2] = wire_resistance(/*CU_RESISTIVITY*/copper_resistivity*1e6,/*wire_width*/0.5*wire_pitch[1][2],/*wire_thickness*/0.5*aspect_ratio[1][2]*wire_pitch[1][2],/*barrier_thickness*/0.004,/*dishing_thickness*/0.05*aspect_ratio[1][2]*wire_pitch[1][2],/*alpha_scatter*/1.0);
+    wire_c_per_micron[1][2] = wire_capacitance(/*wire_width*/0.5*wire_pitch[1][2],/*wire_thickness*/0.5*aspect_ratio[1][2]*wire_pitch[1][2],/*wire_spacing*/0.5*wire_pitch[1][2],/*ild_thickness*/ild_thickness[1][2],miller_value[1][2],horiz_dielectric_constant[1][2],vert_dielectric_constant[1][2],/*fringe_cap*/fringe_cap[1][2]);
+
+    fringe_cap[1][3] = 0.115e-15;
+    wire_pitch[1][3] = 2.0 * feature_size*1e-3;
+    wire_r_per_micron[1][3] = 12.0/(0.5*wire_pitch[1][3]);
+    wire_c_per_micron[1][3] = 37.5e-15/(256.0*wire_pitch[1][3]);//F/micron
+
+    switch(RAM_tech)
+    {
+      case HP:
+        Vdd = 1.0;
+        Vdsat = 0.0938;
+        Vth = 0.18035;
+        L_phy = 0.018;
+        L_elec = 0.01345;
+        t_ox = 0.65e-9;    
+        c_ox = 3.77e-14;
+        mobility_eff = 266.68e8;
+        C_g_ideal = 6.78e-16;
+        C_fringe = 0.05e-15;
+        C_junc = 1e-15;
+        C_junc_sidewall = 0.25e-15;
+        I_on_n = 2046.6e-6;
+        I_on_p = I_on_n/2.0;
+        np_ratio = 2.41;
+        Rn_channel_on = 1.51*Vdd/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 1.38;
+        long_channel_leakage_reduction = 1.0/3.546;
+        // Leakage curve fitting
+        for(int i = 0; i < TEMP_DEGREE_STEPS; i++)
+        {
+          double z = (double)(i-50.0)/33.0;
+          I_g_on_n[i] = 3.59e-8;
+          // 10th-order polynomial interpolation for leakage curve fitting
+          I_off_n[i] = 5.6e-9*pow(z,10)-9.4e-10*pow(z,9)-2.8e-8*pow(z,8)+4.7e-9*pow(z,7)+4.7e-8*pow(z,6)-8.2e-9*pow(z,5)-3.2e-8*pow(z,4)+6e-9*pow(z,3)+3.6e-8*pow(z,2)+2.3e-7*z+5.7e-7;
+        }
+        break;
+      case LSTP:
+        Vdd = 1.1;
+        Vdsat = 0.0912;
+        Vth = 0.50245;
+        L_phy = 0.0212;
+        L_elec = 0.008;
+        t_ox = 1.4e-9;
+        c_ox = 2.01e-14;
+        mobility_eff = 363.96e8;
+        C_g_ideal = 5.18e-16;
+        C_fringe = 0.08e-15;
+        C_junc = 1e-15;
+        C_junc_sidewall = 0.25e-15;
+        I_on_n = 666.2e-6;
+        I_on_p = I_on_n/2.0;
+        np_ratio = 2.23;
+        Rn_channel_on = 1.99*Vdd/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 0.99;
+        long_channel_leakage_reduction = 1.0/2.08;
+        // Leakage curve fitting
+        for(int i = 0; i < TEMP_DEGREE_STEPS; i++)
+        {
+          double z = (double)(i-50.0)/33.0;
+          I_g_on_n[i] = 9.47e-12;
+          // 10th-order polynomial interpolation for leakage curve fitting
+          I_off_n[i] = 1.3e-12*pow(z,10)+1.6e-12*pow(z,9)-5.1e-12*pow(z,8)-6.9e-12*pow(z,7)+4.2e-12*pow(z,6)+5.6e-12*pow(z,5)-1.1e-12*pow(z,4)+1.3e-11*pow(z,3)+5.9e-11*pow(z,2)+1.1e-10*z+9e-11;
+        }
+        break;
+      case LOP:
+        Vdd = 0.7;
+        Vdsat = 0.0571;
+        Vth = 0.22599;
+        L_phy = 0.022;
+        L_elec = 0.016;
+        t_ox = 0.9e-9;
+        c_ox = 2.82e-14;
+        mobility_eff = 508.9e8;
+        C_g_ideal = 6.2e-16;
+        C_fringe = 0.073e-15;
+        C_junc = 1e-15;
+        C_junc_sidewall = 0.25e-15;
+        I_on_n = 748.9e-6;
+        I_on_p = I_on_n/2.0;
+        np_ratio = 2.28;
+        Rn_channel_on = 1.76*Vdd/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 1.11;
+        long_channel_leakage_reduction = 1.0/1.92;
+        // Leakage curve fitting
+        for(int i = 0; i < TEMP_DEGREE_STEPS; i++)
+        {
+          double z = (double)(i-50.0)/33.0;
+          I_g_on_n[i] = -2.1e-9*pow(z,10)-1.4e-9*pow(z,9)+9.5e-9*pow(z,8)+6.7e-9*pow(z,7)-1.4e-8*pow(z,6)-1.1e-8*pow(z,5)+4.7e-9*pow(z,4)+3.7e-9*pow(z,3)+7.4e-9*pow(z,2)+4.5e-8*z+8.4e-8;
+          // 10th-order polynomial interpolation for leakage curve fitting
+          I_off_n[i] = -2.7e-10*pow(z,10)-5.6e-11*pow(z,9)+1.3e-9*pow(z,8)+2.7e-10*pow(z,7)-2.1e-9*pow(z,6)-3.5e-10*pow(z,5)+9.8e-10*pow(z,4)-2.8e-10*pow(z,3)+7e-10*pow(z,2)+6.1e-9*z+1.1e-8;
+        }
+        break;
+      case LP_DRAM:
+        Vpp = 1.5;
+        Vdd = 1.1;
+        Vdsat = 0.181;
+        Vth = 0.44559;
+        Vth_dram = 0.44559;
+        L_phy = 0.078;
+        L_elec = 0.0504;
+        W_dram = 0.079;
+        t_ox = 2.1e-9;
+        c_ox = 1.41e-14;
+        mobility_eff = 426.30e8;
+        C_g_ideal = 1.10e-15;
+        C_fringe = 0.08e-15;
+        C_junc = 1e-15;
+        C_junc_sidewall = 0.25e-15;
+        C_dram_cell = 20e-15;
+        I_on_n = 456e-6;    
+        I_on_p = I_on_n/2.0;
+        I_on_dram_cell = 36e-6;
+        I_off_dram_cell = 19.5e-12;
+        np_ratio = 2.05;
+        Rn_channel_on = 1.65*Vpp/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 0.90;
+        long_channel_leakage_reduction = 1.0;
+        // Leakage curve fitting
+        for(int i = 0; i < TEMP_DEGREE_STEPS; i++)
+        {
+          double z = (double)(i-50.0)/33.0;
+          //I_off_n[i] = ;
+        }
+        Wmemcella_dram = W_dram;
+        Wmemcellpmos_dram = 0.0;
+        Wmemcellnmos_dram = 0.0;
+        area_cell_dram = W_dram*L_phy*10.0;        
+        asp_ratio_cell_dram = 1.46;
+        break;
+      case COMM_DRAM:
+        Vpp = 2.7;
+        Vdd = 1.1;
+        Vdsat = 0.147;
+        Vth = 1.0;
+        Vth_dram = 1.0;
+        L_phy = 0.045;
+        L_elec = 0.0298;    
+        W_dram = 0.045;
+        t_ox = 4e-9;
+        c_ox = 7.98e-15;
+        mobility_eff = 368.58e8;
+        C_g_ideal = 3.59e-16;
+        C_fringe = 0.08e-15;
+        C_junc = 1e-15;
+        C_junc_sidewall = 0.25e-15;
+        C_dram_cell = 30e-15;
+        I_on_n = 999.4e-6;
+        I_on_p = I_on_n/2.0;
+        I_on_dram_cell = 20e-6;
+        I_off_dram_cell = 1e-15;
+        np_ratio = 1.95;
+        Rn_channel_on = 1.69*Vpp/I_on_n;
+        Rp_channel_on = np_ratio*Rn_channel_on;
+        gmp_to_gmn_multiplier = 0.90;
+        long_channel_leakage_reduction = 1.0;
+        // Leakage curve fitting
+        for(int i = 0; i < TEMP_DEGREE_STEPS; i++)
+        {
+          double z = (double)(i-50.0)/33.0;
+          //I_off_n[i] = ;
+        }
+        Wmemcella_dram = W_dram;
+        Wmemcellpmos_dram = 0.0;
+        Wmemcellnmos_dram = 0.0;
+        area_cell_dram = 6*0.022*0.022;
+        asp_ratio_cell_dram = 1.5;
+        break;
+      default:
+        cout << "ERROR: Unknown RAM type" << endl;
+        set = false;
+        break;
+    }
+    sense_amp_delay = 0.04e-9;
+    sense_amp_power = 2.7e-15;
+    Wmemcella_sram = 1.31 * feature_size*1e-3;
+    Wmemcellpmos_sram = 1.23 * feature_size*1e-3;
+    Wmemcellnmos_sram = 2.08 * feature_size*1e-3;
+    area_cell_sram = 146 * feature_size*1e-3*feature_size*1e-3;
+    asp_ratio_cell_sram = 1.46;
+    Wmemcella_cam = 1.31 * feature_size*1e-3;
+    Wmemcellpmos_cam = 1.23 * feature_size*1e-3;
+    Wmemcellnmos_cam = 2.08 * feature_size*1e-3;
+    area_cell_cam = 292 * feature_size*1e-3*feature_size*1e-3;
+    asp_ratio_cell_cam = 2.92;
+    logic_scaling_co_eff = 0.7*0.7;
+    core_tx_density = 1.25;
+    sckt_co_eff = 1.1387;
+    chip_layout_overhead = 1.2;
+    macro_layout_overhead = 1.1;
+  }
+  else if((size>63.0)&&(size<68.0))
+  {
+    feature_size = 65.0;
+  }
+  else if((size>88.0)&&(size<92.0))
+  {
+    feature_size = 90.0;
+  }
+  else
+  {
+    cout << "ERROR: invalid technology size" << endl;
+    set = false;
+  }
+}
+
+
+/************************************************
+* Update floorplan area information by the area *
+* estimation from power libraries		*
+************************************************/
+void Power::updateFloorplanAreaInfo(int fid, double area)
+{
+  // find the underlying floorplan
+  map<int,floorplan_t>::iterator fit = p_chip.floorplan.find(fid);
+
+  // Floorplanning error - heuristic floorplanning is not supported
+  if(fit == p_chip.floorplan.end())
+    std::cout << "ERROR: No matching floorplan is found" << std::endl;
+
+  // update the floorplan area information - should be used for error checking (user input vs estimation)
+  (*fit).second.area_estimate += area;
+
+}
+
+/*****************************************************
+* compute temperature based on floorplan information *
+******************************************************/
+void Power::compute_temperature(ComponentId_t compID)
+{
+
+  //compute temperature
+  p_chip.thermal_library->compute(&p_chip.floorplan);
+ 
+  //map<pseudo_unit_id_t,pseudo_unit_t>::iterator uit;
+  map<int,floorplan_t>::iterator fit;
+  map<ptype,int>::iterator it;
+
+  for (it=subcompList.begin(); it!=subcompList.end(); it++)
+  { 
+    I updatedLeakagePower=0.0;
+    fit = p_chip.floorplan.find((*it).second);
+    if((*fit).second.leakage_feedback)
+    {
+      //#ifdef ENERGY_INTERFACE_DEBUG
+      //  cout << "ENERGY_INTERFACE_DEBUG: updating component ID " << compID << " with leakage feedback" << endl;
+      //#endif
+      switch((*it).first)
+      {
+	case CACHE_IL1:
+	    leakage_feedback(p_powerModel.il1, (*fit).second.device_tech, (*it).first);
+	    // get the updated unit energy after leakage feedback
+      	    updatedLeakagePower = (I)icache.power.readOp.leakage + (I)icache.power.readOp.gate_leakage;
+	    //using namespace io_interval;  std::cout << "ENERGY_INTERFACE_DEBUG: CompID " << compID << ", subcomp type " << (*it).first << ", leakage after feedback = " << updatedLeakagePower << " W on fp_id " << (*it).second << std::endl;
+	break;	
+	case CACHE_DL1:
+	    leakage_feedback(p_powerModel.dl1, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)dcache.power.readOp.leakage + (I)dcache.power.readOp.gate_leakage;
+	break;
+	case CACHE_ITLB:
+	    leakage_feedback(p_powerModel.itlb, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)itlb->power.readOp.leakage + (I)itlb->power.readOp.gate_leakage;
+	break;
+	case CACHE_DTLB:
+	    leakage_feedback(p_powerModel.dtlb, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)dtlb->power.readOp.leakage + (I)dtlb->power.readOp.gate_leakage;
+	break;
+	case CLOCK:
+	break;
+	case BPRED:
+	    if (bpred_tech.prediction_width > 0){
+	       leakage_feedback(p_powerModel.bpred, (*fit).second.device_tech, (*it).first); 
+      	       updatedLeakagePower = (I)BPT->power.readOp.leakage + (I)BPT->power.readOp.gate_leakage;	   
+	    }
+	break;
+	case RF:
+	    leakage_feedback(p_powerModel.rf, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)rfu->power.readOp.leakage + (I)rfu->power.readOp.gate_leakage;
+	//using namespace io_interval;  std::cout << "ENERGY_INTERFACE_DEBUG: CompID " << compID << ", subcomp type " << (*it).first << ", leakage after feedback = " << updatedLeakagePower << " W on fp_id " << (*it).second << std::endl;
+	break;
+	case IO:
+	break;
+	case LOGIC:
+	break;
+	case EXEU_ALU:
+	    leakage_feedback(p_powerModel.alu, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)exeu->power.readOp.leakage + (I)exeu->power.readOp.gate_leakage;
+	break;
+	case EXEU_FPU:
+	    leakage_feedback(p_powerModel.fpu, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)fp_u->power.readOp.leakage + (I)fp_u->power.readOp.gate_leakage;
+	break;
+	case MULT:
+	break;
+	case 14: //IB
+	    leakage_feedback(p_powerModel.ib, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)IB->power.readOp.leakage + (I)IB->power.readOp.gate_leakage;
+	break;
+	case ISSUE_Q:
+	break;
+	case INST_DECODER:
+	    leakage_feedback(p_powerModel.decoder, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I) ((bool)core_tech.core_long_channel? 
+				(ID_inst->power.readOp.longer_channel_leakage +
+				  ID_operand->power.readOp.longer_channel_leakage +
+				  ID_misc->power.readOp.longer_channel_leakage):
+				(ID_inst->power.readOp.leakage +
+				  ID_operand->power.readOp.leakage +
+				  ID_misc->power.readOp.leakage))  + 
+			   	  (I)(ID_inst->power.readOp.gate_leakage +
+				ID_operand->power.readOp.gate_leakage +
+				ID_misc->power.readOp.gate_leakage) ;
+
+	break;
+	case BYPASS:
+	    leakage_feedback(p_powerModel.bypass, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)bypass.power.readOp.leakage + (I)bypass.power.readOp.gate_leakage;
+	break;
+	case EXEU:
+	break;
+	case PIPELINE:
+	    leakage_feedback(p_powerModel.pipeline, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)corepipe->power.readOp.leakage + (I)corepipe->power.readOp.gate_leakage;
+	break;
+	case 20: //LSQ
+	    leakage_feedback(p_powerModel.lsq, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)LSQ->power.readOp.leakage + (I)LSQ->power.readOp.gate_leakage;
+	break;
+	case RAT:
+	break;
+	case 22:  //ROB
+	break;
+	case 23:  //BTB
+	    if (bpred_tech.prediction_width > 0){
+	        leakage_feedback(p_powerModel.btb, (*fit).second.device_tech, (*it).first);
+      	        updatedLeakagePower = (I)BTB->power.readOp.leakage + (I)BTB->power.readOp.gate_leakage;
+	    }
+	break;
+	case CACHE_L2:
+	    leakage_feedback(p_powerModel.L2, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)l2array->power.readOp.leakage + (I)l2array->power.readOp.gate_leakage;
+	break;
+	case MEM_CTRL:
+	    leakage_feedback(p_powerModel.mc, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)mc->power.readOp.leakage + (I)mc->power.readOp.gate_leakage;
+	break;
+	case ROUTER:
+	    leakage_feedback(p_powerModel.router, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)nocs->power.readOp.leakage + (I)nocs->power.readOp.gate_leakage;
+	break;
+	case LOAD_Q:
+	    leakage_feedback(p_powerModel.loadQ, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)LoadQ->power.readOp.leakage + (I)LoadQ->power.readOp.gate_leakage;
+	break;
+	case RENAME_U:
+	    leakage_feedback(p_powerModel.rename, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)rnu->power.readOp.leakage + (I)rnu->power.readOp.gate_leakage;
+	break;
+	case SCHEDULER_U:
+	    leakage_feedback(p_powerModel.scheduler, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)scheu->power.readOp.leakage + (I)scheu->power.readOp.gate_leakage;
+	break;
+	case CACHE_L3:
+	    leakage_feedback(p_powerModel.L3, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)l3array->power.readOp.leakage + (I)l3array->power.readOp.gate_leakage;
+	break;
+	case CACHE_L1DIR:
+	    leakage_feedback(p_powerModel.L1dir, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)l1dirarray->power.readOp.leakage + (I)l1dirarray->power.readOp.gate_leakage;
+	break;
+	case CACHE_L2DIR:
+	    leakage_feedback(p_powerModel.L2dir, (*fit).second.device_tech, (*it).first);
+      	    updatedLeakagePower = (I)l2dirarray->power.readOp.leakage + (I)l2dirarray->power.readOp.gate_leakage;
+	break;
+	default: break;
+      }
+
+      #ifdef ENERGY_INTERFACE_DEBUG // display the updated unit energy
+        //using namespace io_interval;  std::cout << "ENERGY_INTERFACE_DEBUG: CompID " << compID << ", subcomp type " << (*it).first << ", leakage after feedback = " << updatedLeakagePower << " W on fp_id " << (*it).second << std::endl;
+      #endif
+
+      // update the floorplan leakage
+      //(*fit).second.power.second = (*fit).second.power.second + (*uit).second.power;
+      (*fit).second.p_usage_floorplan.currentPower += updatedLeakagePower;
+      (*fit).second.p_usage_floorplan.leakagePower += updatedLeakagePower;
+      (*fit).second.p_usage_floorplan.totalEnergy += updatedLeakagePower;
+      // Important! the overall comp total energy should be updated as well
+      p_usage_uarch.totalEnergy += updatedLeakagePower;
+    } // end if leakage feedback   
+  } // end for each subcomp
+}
+
+/*****************************************************************
+* leakage_feedback
+* pass the new I_xx resulted from leakage feedback to the power
+* library to get the new unit power 
+******************************************************************/
+void Power::leakage_feedback(pmodel power_model, parameters_tech_t device_tech, ptype power_type)
+{
+  switch(power_model)
+  {
+     case McPAT:
+      switch(power_type)
+      {
+	  case CACHE_IL1:
+	    icache.SSTleakage_feedback(device_tech.temperature);
+	  break;	
+	  case CACHE_DL1:
+	    dcache.SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case CACHE_ITLB:
+	    itlb->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case CACHE_DTLB:
+	    dtlb->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case CLOCK:
+	  break;
+	  case BPRED:
+	    BPT->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case RF:
+	    rfu->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case IO:
+	  break;
+	  case LOGIC:
+	  break;
+	  case EXEU_ALU:	    
+	  break;
+	  case EXEU_FPU:
+	  break;
+	  case MULT:
+	  break;
+	  case 14: //IB
+	    IB->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case ISSUE_Q:
+	  break;
+	  case INST_DECODER:
+	  break;
+	  case BYPASS:
+	  break;
+	  case EXEU:
+	  break;
+	  case PIPELINE:
+	  break;
+	  case 20:  //LSQ
+	    LSQ->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case RAT:
+	    //RAT->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case 22: //ROB
+	    //ROB->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case 23:  //BTB
+	    BTB->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case CACHE_L2:
+	  break;
+	  case MEM_CTRL:
+	  break;
+	  case ROUTER:
+	  break;
+	  case LOAD_Q:
+	    LoadQ->SSTleakage_feedback(device_tech.temperature);
+	  break;
+	  case RENAME_U:
+	  break;
+	  case SCHEDULER_U:
+	  break;
+	  case CACHE_L3:
+	  break;
+	  case CACHE_L1DIR:
+	  break;
+	  case CACHE_L2DIR:
+	  break;
+	  default: break;
+      } // end switch ptype
+      break;
+      case IntSim:
+	switch(power_type)
+        {
+	  case CACHE_IL1:
+	    intsim_il1->leakage_feedback(device_tech);
+	  break;	
+	  case CACHE_DL1:
+	    intsim_dl1->leakage_feedback(device_tech);
+	  break;
+	  case CACHE_ITLB:
+	    intsim_itlb->leakage_feedback(device_tech);
+	  break;
+	  case CACHE_DTLB:
+	    intsim_dtlb->leakage_feedback(device_tech);
+	  break;
+	  case CLOCK:
+	    intsim_clock->leakage_feedback(device_tech);
+	  break;
+	  case BPRED:
+	    intsim_bpred->leakage_feedback(device_tech);
+	  break;
+	  case RF:
+	    intsim_rf->leakage_feedback(device_tech);
+	  break;
+	  case IO:
+	    intsim_io->leakage_feedback(device_tech);
+	  break;
+	  case LOGIC:
+	    intsim_logic->leakage_feedback(device_tech);
+	  break;
+	  case EXEU_ALU:
+	    intsim_alu->leakage_feedback(device_tech);	    
+	  break;
+	  case EXEU_FPU:
+	    intsim_fpu->leakage_feedback(device_tech);
+	  break;
+	  case MULT:
+	    intsim_mult->leakage_feedback(device_tech);
+	  break;
+	  case 14: //IB
+	    intsim_ib->leakage_feedback(device_tech);
+	  break;
+	  case ISSUE_Q:
+	    intsim_issueQ->leakage_feedback(device_tech);
+	  break;
+	  case INST_DECODER:
+	    intsim_decoder->leakage_feedback(device_tech);
+	  break;
+	  case BYPASS:
+	    intsim_bypass->leakage_feedback(device_tech);
+	  break;
+	  case EXEU:
+	    intsim_exeu->leakage_feedback(device_tech);
+	  break;
+	  case PIPELINE:
+	    intsim_pipeline->leakage_feedback(device_tech);
+	  break;
+	  case 20:  //LSQ
+	    intsim_lsq->leakage_feedback(device_tech);
+	  break;
+	  case RAT:
+	    intsim_rat->leakage_feedback(device_tech);
+	  break;
+	  case 22: //ROB
+	    intsim_rob->leakage_feedback(device_tech);
+	  break;
+	  case 23:  //BTB
+	    intsim_btb->leakage_feedback(device_tech);
+	  break;
+	  case CACHE_L2:
+	    intsim_L2->leakage_feedback(device_tech);
+	  break;
+	  case MEM_CTRL:
+	    intsim_mc->leakage_feedback(device_tech);
+	  break;
+	  case ROUTER:
+	    intsim_router->leakage_feedback(device_tech);
+	  break;
+	  case LOAD_Q:
+	    intsim_loadQ->leakage_feedback(device_tech);
+	  break;
+	  case RENAME_U:
+	    intsim_rename->leakage_feedback(device_tech);
+	  break;
+	  case SCHEDULER_U:
+	    intsim_scheduler->leakage_feedback(device_tech);
+	  break;
+	  case CACHE_L3:
+	    intsim_L3->leakage_feedback(device_tech);
+	  break;
+	  case CACHE_L1DIR:
+	    intsim_L1dir->leakage_feedback(device_tech);
+	  break;
+	  case CACHE_L2DIR:
+	    intsim_L2dir->leakage_feedback(device_tech);
+	  break;
+	  default: break;
+      } // end switch ptype
+      break;
+      default:
+      break;
+  }//end switch pmodel
+}
+
+
+
+void Power::printFloorplanAreaInfo()
+{
+  map<int,floorplan_t>::iterator fit;
+
+  for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+  {
+	std::cout<<"floorplan id " <<(*fit).second.id<<" has estimated area " <<(*fit).second.area_estimate*1e-6<< " mm^2" << std::endl; 
+  }
+}
+
+void Power::printFloorplanPowerInfo()
+{
+  map<int,floorplan_t>::iterator fit;
+
+  for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+  {
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has current total power = " << (*fit).second.p_usage_floorplan.currentPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has leakage power = " << (*fit).second.p_usage_floorplan.leakagePower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has TDP = " << (*fit).second.p_usage_floorplan.TDP << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has total energy = " << (*fit).second.p_usage_floorplan.totalEnergy << " J" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has peak power = " << (*fit).second.p_usage_floorplan.peak << " J" << std::endl;
+  }
+}
+
+void Power::printFloorplanThermalInfo()
+{
+    map<int,floorplan_t>::iterator fit;
+
+    for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+    {
+        std::cout <<"floorplan id " <<(*fit).second.id<<" has temperature = " << (*fit).second.device_tech.temperature << " K" << std::endl;
+    }
+}
 
 }  // namespace SST
