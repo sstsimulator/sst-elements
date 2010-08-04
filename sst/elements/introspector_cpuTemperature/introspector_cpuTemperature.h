@@ -64,8 +64,7 @@ class Introspector_cpuTemperature : public Introspector {
             
         }
         int Setup() {
-	    std::pair<bool, int> pint;
-	    std::pair<bool, double*> pdouble;
+	    std::pair<bool, int> pdouble;
 
 	    //get a list of relevant component. Must be done after all components are created 
 	    MyCompList = getModels(model); 
@@ -77,24 +76,12 @@ class Introspector_cpuTemperature : public Introspector {
      		    monitorComponent(*i);
 
 		    //check if the component counts the specified int/double data
-		    pint = (*i)->ifMonitorIntData("core_temperature");
-		    //pint = (*i)->ifMonitorIntData("branch_read");
-		    //pint = (*i)->ifMonitorIntData("branch_write");
-		    //pint = (*i)->ifMonitorIntData("RAS_read");
-		    //pint = (*i)->ifMonitorIntData("RAS_write");
-		    //pint = (*i)->ifMonitorIntData("il1_read");
-		    //pdouble = (*i)->getMonitorDoubleData("CPUarea");
+		    pdouble = (*i)->ifMonitorDoubleData("core_temperature");
 
-		    if(pint.first){
-			//store pointer to component and the dataID of the data of interest
-			//std::cout << "introspector_cpuTemperature is calling addToIntDatabase." << std::endl;
-			addToIntDatabase(*i, pint.second);
-			//std::cout << " introspector_cpuTemperature now has intdatabase size = " << DatabaseInt.size() << std::endl;
-		    }
-		    //if(pdouble.first){
+		    if(pdouble.first){
 		        //store pointer to component and the dataID of the data of interest
-			//addToDoubleDatabase(*i, pdouble.second);
-		    //}
+			addToDoubleDatabase(*i, pdouble.second);
+		    }
 
 
 	     }
