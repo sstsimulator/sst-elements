@@ -69,8 +69,7 @@ class Introspector_cpu : public Introspector {
         }
         int Setup() {
 	    std::pair<bool, int> pint;
-	    std::pair<bool, double*> pdouble;
-
+	    
 	    //get a list of relevant component. Must be done after all components are created 
 	    MyCompList = getModels(model); 
 	    //std::cout << " introspector_cpu has MyCompList size = " << MyCompList.size() << std::endl;
@@ -81,7 +80,6 @@ class Introspector_cpu : public Introspector {
      		    monitorComponent(*i);
 
 		    //check if the component counts the specified int/double data
-		    //pint = (*i)->ifMonitorIntData("core_temperature");
 		    //pint = (*i)->ifMonitorIntData("branch_read");
 		    //pint = (*i)->ifMonitorIntData("branch_write");
 		    //pint = (*i)->ifMonitorIntData("RAS_read");
