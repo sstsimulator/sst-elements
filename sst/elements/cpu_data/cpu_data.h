@@ -19,6 +19,7 @@
 #include <sst/core/link.h>
 
 
+
 using namespace SST;
 
 #if DBG_CPU_DATA
@@ -67,6 +68,7 @@ class Cpu_data : public IntrospectedComponent {
 
 	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Cpu_data>(this, &Cpu_data::clock) );
  	    registerClock( frequency, new Clock::Handler<Cpu_data>( this, &Cpu_data::pushData) );
+	    mem->setDefaultTimeBase(tc);
 
 	    printf("CPU_DATA period: %ld\n", (long int)tc->getFactor());
             _CPU_DATA_DBG("Done registering clock\n");
@@ -91,7 +93,7 @@ class Cpu_data : public IntrospectedComponent {
         }
         int Finish() {
             _CPU_DATA_DBG("\n");
-	    unregisterExit();
+	    //unregisterExit();
             return 0;
         }
 	
@@ -140,8 +142,8 @@ class Cpu_data : public IntrospectedComponent {
 	uint64_t num_RAS_write;
 
     private:
-        Cpu_data();
         Cpu_data( const Cpu_data& c );
+        Cpu_data() :  IntrospectedComponent(-1) {}// for serialization only
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
@@ -151,6 +153,17 @@ class Cpu_data : public IntrospectedComponent {
         who_t       who;
 	std::string frequency;
 	std::string pushIntrospector;
+
+	friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+        ar & BOOST_SERIALIZATION_NVP(mem);
+        ar & BOOST_SERIALIZATION_NVP(state);
+        ar & BOOST_SERIALIZATION_NVP(who);
+        ar & BOOST_SERIALIZATION_NVP(frequency);
+    }
 };
 
 #endif

@@ -14,14 +14,16 @@
 #include "sst/core/serialization/element.h"
 
 #include "cpu_data.h"
-#include <sst/core/memEvent.h>
+#include "myMemEvent.h"
 
 
 bool Cpu_data::clock( Cycle_t current)
 {
     //_CPU_DATA_DBG("id=%lu currentCycle=%lu \n", Id(), current );
 
-    MemEvent* event = NULL; 
+    MyMemEvent* event = NULL; 
+
+    if (current == 5000 ) unregisterExit();
 
     if (getId() == 2)
         mycore_temperature = 360;
@@ -29,7 +31,7 @@ bool Cpu_data::clock( Cycle_t current)
 	mycore_temperature = 300;
 
     if ( state == SEND ) { 
-        if ( ! event ) event = new MemEvent();
+        if ( ! event ) event = new MyMemEvent();
 
         if ( who == WHO_MEM ) { 
             event->address = 0x1000; 
@@ -48,7 +50,7 @@ bool Cpu_data::clock( Cycle_t current)
 
 
     } else {
-        if ( ( event = static_cast< MemEvent* >( mem->Recv() ) ) ) {
+        if ( ( event = static_cast< MyMemEvent* >( mem->Recv() ) ) ) {
             _CPU_DATA_DBG("got a MEM event address=%#lx\n", event->address);
 	    //printf("got a MEM event address=%#lx at cycle=%lu\n", event->address, current );
 
@@ -95,3 +97,5 @@ Cpu_data* cpu_dataAllocComponent( SST::ComponentId_t id,
 }
 }
 
+BOOST_CLASS_EXPORT(Cpu_data)
+BOOST_CLASS_EXPORT(SST::MyMemEvent)
