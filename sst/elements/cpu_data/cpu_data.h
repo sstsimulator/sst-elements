@@ -81,10 +81,10 @@ class Cpu_data : public IntrospectedComponent {
 	    num_RAS_write = 0;
 
 	    registerMonitorInt("il1_read");
-	    registerMonitorInt("core_temperature");
 	    registerMonitorInt("branch_read");
 	    registerMonitorInt("RAS_read");
 	    registerMonitorInt("RAS_write");
+	    registerMonitorDouble("core_temperature");
 	    
 
         }
@@ -101,10 +101,6 @@ class Cpu_data : public IntrospectedComponent {
 	{ 
 	  switch(dataID)
 	  {
-	    case 0:
-	    //core_temperature
-		return (mycore_temperature);
-		break;
 	    case 1:
 	    //branch_read
 		return (num_branch_read);
@@ -131,11 +127,25 @@ class Cpu_data : public IntrospectedComponent {
 	  }
 	}
 	
+	double getDoubleData(int dataID, int index=0)
+	{ 
+	  switch(dataID)
+	  {
+	    case 0:
+	    //core_temperature
+		return (mycore_temperature);
+		break;
+	    default:
+		return (0);
+		break;	
+	  }
+	}
+	
 
     public:
 	int counts;
+	double mycore_temperature;
 	uint64_t num_il1_read;
-	uint64_t mycore_temperature;
 	uint64_t num_branch_read;
 	uint64_t num_branch_write;
 	uint64_t num_RAS_read;

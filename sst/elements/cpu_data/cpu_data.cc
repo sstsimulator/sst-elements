@@ -26,9 +26,9 @@ bool Cpu_data::clock( Cycle_t current)
     if (current == 5000 ) unregisterExit();
 
     if (getId() == 2)
-        mycore_temperature = 360;
+        mycore_temperature = 360.5;
     else
-	mycore_temperature = 300;
+	mycore_temperature = 300.1;
 
     if ( state == SEND ) { 
         if ( ! event ) event = new MyMemEvent();
