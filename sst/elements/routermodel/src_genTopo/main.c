@@ -92,7 +92,6 @@ FILE *fp_dot;
 char *sstFname;
 FILE *fp_sst;
 char *execFname;
-char cpu_id[MAX_ID_LEN];
 char nic_link_id[MAX_ID_LEN];
 int num_ports;
 
@@ -487,9 +486,8 @@ int num_ports;
 
     /* One generic proc per NIC */
     for (i= 0; i < num_nodes; i++)   {
-	snprintf(cpu_id, MAX_ID_LEN, "cpu%d", i);
 	snprintf(nic_link_id, MAX_ID_LEN, "cpu%dnicmodel", i);
-	sst_cpu_component(cpu_id, nic_link_id, 1.0, fp_sst);
+	sst_cpu_component(i, nic_link_id, 1.0, fp_sst);
     }
 
     sst_nics(fp_sst);

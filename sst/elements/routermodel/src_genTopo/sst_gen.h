@@ -28,7 +28,7 @@ void sst_nic_param_end(FILE *sstfile, char *nic_cpu_lat, char *nic_net_lat);
 void sst_body_end(FILE *sstfile);
 void sst_body_start(FILE *sstfile);
 
-void sst_cpu_component(char *cpu_id, char *link_id, float weight, FILE *sstfile);
+void sst_cpu_component(int cpu_id, char *link_id, float weight, FILE *sstfile);
 void sst_nic_component(char *nic_id, char *cpu_link_id, char *net_link_id, float weight,
 	int nic_rank, FILE *sstfile);
 void sst_router_component_start(char *id, float weight, char *cname, FILE *sstfile);

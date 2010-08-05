@@ -44,15 +44,15 @@ sst_cpu_param(FILE *sstfile, char *freq, char *exec, int cpu_verbose, int cpu_de
     }
 
     fprintf(sstfile, "<cpu_params>\n");
-    fprintf(sstfile, "    <clock> %s </clock>\n", freq);
-    fprintf(sstfile, "    <execFile> %s </execFile>\n", exec);
+    sst_param_entry(sstfile, "clock", freq);
+    sst_param_entry(sstfile, "execFile", exec);
     fprintf(sstfile, "    <verbose> %d </verbose>\n", cpu_verbose);
     fprintf(sstfile, "    <debug> %d </debug>\n", cpu_debug);
     fprintf(sstfile, "</cpu_params>\n");
     fprintf(sstfile, "\n");
     fprintf(sstfile, "<cpu_link_params>\n");
-    fprintf(sstfile, "    <lat> %s </lat>\n", cpu_nic_lat);
-    fprintf(sstfile, "    <name> net0 </name>\n");
+    sst_param_entry(sstfile, "lat", cpu_nic_lat);
+    sst_param_entry(sstfile, "name", "net0");
     fprintf(sstfile, "</cpu_link_params>\n");
     fprintf(sstfile, "\n");
 
@@ -174,13 +174,13 @@ sst_nic_param_end(FILE *sstfile, char *nic_cpu_lat, char *nic_net_lat)
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<nic_cpu_link>\n");
-    fprintf(sstfile, "    <lat> %s </lat>\n", nic_cpu_lat);
-    fprintf(sstfile, "    <name> CPU </name>\n");
+    sst_param_entry(sstfile, "lat", nic_cpu_lat);
+    sst_param_entry(sstfile, "name", "CPU");
     fprintf(sstfile, "</nic_cpu_link>\n");
     fprintf(sstfile, "\n");
     fprintf(sstfile, "<nic_net_link>\n");
-    fprintf(sstfile, "    <lat> %s </lat>\n", nic_net_lat);
-    fprintf(sstfile, "    <name> NETWORK </name>\n");
+    sst_param_entry(sstfile, "lat", nic_net_lat);
+    sst_param_entry(sstfile, "name", "NETWORK");
     fprintf(sstfile, "</nic_net_link>\n");
     fprintf(sstfile, "\n");
 
@@ -198,8 +198,8 @@ sst_router_param_start(FILE *sstfile, int num_ports)
     }
 
     fprintf(sstfile, "<router_params>\n");
-    fprintf(sstfile, "    <hop_delay> 2us </hop_delay>\n");
-    fprintf(sstfile, "    <debug> 0 </debug>\n");
+    sst_param_entry(sstfile, "hop_delay", "2us");
+    sst_param_entry(sstfile, "debug", "0");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
 
 }  /* end of sst_router_param_start() */
@@ -247,7 +247,7 @@ sst_body_end(FILE *sstfile)
 
 
 void
-sst_cpu_component(char *cpu_id, char *link_id, float weight, FILE *sstfile)
+sst_cpu_component(int cpu_id, char *link_id, float weight, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -255,15 +255,37 @@ sst_cpu_component(char *cpu_id, char *link_id, float weight, FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "    <component id=\"%s\" weight=%f>\n", cpu_id, weight);
-    fprintf(sstfile, "        <genericProc>\n");
+    fprintf(sstfile, "    <component id=\"cpu%d\" weight=%f>\n", cpu_id, weight);
+    fprintf(sstfile, "        <genericProc.genericProc>\n");
     fprintf(sstfile, "            <params reference=cpu_params> </params>\n");
     fprintf(sstfile, "            <links>\n");
     fprintf(sstfile, "                <link id=\"%s\">\n", link_id);
     fprintf(sstfile, "                    <params reference=cpu_link_params> </params>\n");
     fprintf(sstfile, "                </link>\n");
+    fprintf(sstfile, "                <link id=\"cpu%dmem\">\n", cpu_id);
+    fprintf(sstfile, "                    <params>\n");
+    fprintf(sstfile, "                        <name>mem%d</name>\n", cpu_id);
+    fprintf(sstfile, "                        <lat>1ns</lat>\n");
+    fprintf(sstfile, "                    </params>\n");
+    fprintf(sstfile, "                </link>\n");
     fprintf(sstfile, "            </links>\n");
-    fprintf(sstfile, "        </genericProc>\n");
+    fprintf(sstfile, "        </genericProc.genericProc>\n");
+    fprintf(sstfile, "    </component>\n");
+    fprintf(sstfile, "\n");
+    fprintf(sstfile, "    <component id=\"mem%d\" weight=%f>\n", cpu_id, weight);
+    fprintf(sstfile, "        <genericProc.genericMem>\n");
+    fprintf(sstfile, "            <params>\n");
+    fprintf(sstfile, "                <clock>2.0Ghz</clock>\n");
+    fprintf(sstfile, "            </params>\n");
+    fprintf(sstfile, "            <links>\n");
+    fprintf(sstfile, "                <link id=\"cpu%dmem\">\n", cpu_id);
+    fprintf(sstfile, "                    <params>\n");
+    fprintf(sstfile, "                        <name>bus</name>\n");
+    fprintf(sstfile, "                        <lat>1ns</lat>\n");
+    fprintf(sstfile, "                    </params>\n");
+    fprintf(sstfile, "                </link>\n");
+    fprintf(sstfile, "            </links>\n");
+    fprintf(sstfile, "        </genericProc.genericMem>\n");
     fprintf(sstfile, "    </component>\n");
     fprintf(sstfile, "\n");
 
@@ -331,8 +353,8 @@ sst_router_component_link(char *id, char *link_lat, char *link_name, FILE *sstfi
 
     fprintf(sstfile, "            <link id=\"%s\">\n", id);
     fprintf(sstfile, "                <params>\n");
-    fprintf(sstfile, "                    <lat>%s</lat>\n", link_lat);
-    fprintf(sstfile, "                    <name>%s</name>\n", link_name);
+    sst_param_entry(sstfile, "lat", link_lat);
+    sst_param_entry(sstfile, "name", link_name);
     fprintf(sstfile, "                </params>\n");
     fprintf(sstfile, "            </link>\n");
 
