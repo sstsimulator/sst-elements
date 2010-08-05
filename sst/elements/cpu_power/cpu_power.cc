@@ -1,3 +1,14 @@
+// Copyright 2009-2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 
@@ -13,7 +24,7 @@ bool Cpu_power::clock( Cycle_t current)
 
     MyMemEvent* event = NULL; 
 
-    if (current == 100000 ) unregisterExit();
+    if (current == 1000 ) unregisterExit();
 
     if ( state == SEND ) { 
         if ( ! event ) event = new MyMemEvent();
@@ -56,7 +67,11 @@ bool Cpu_power::clock( Cycle_t current)
 	mycounts.memctrl_read=1; mycounts.memctrl_write=1;
 	mycounts.il1_ReadorWrite=0;  mycounts.il1_access=1;
 	mycounts.il1_accessaddress=198643; mycounts.il1_latency=1;
-	
+	mycounts.rf_access=1; mycounts.alu_access=1; mycounts.fpu_access=1; mycounts.mult_access=1; 			mycounts.exeu_access=1; mycounts.logic_access=1; 
+	mycounts.io_access=1; mycounts.clock_access=2; mycounts.decoder_access=2;
+	mycounts.ib_access=1; mycounts.issueQ_access=1; mycounts.pipeline_access=1; 
+	mycounts.lsq_access=1; mycounts.rat_access=1; mycounts.rob_access=1; mycounts.btb_access=1; 			mycounts.l2_access=1; mycounts.mc_access=1; 
+	mycounts.loadQ_access=1; mycounts.rename_access=1; mycounts.scheduler_access=1; mycounts.l3_access=1; 		mycounts.l1dir_access=1; mycounts.l2dir_access=1;
 
 	/* McPAT beta */
 	pdata = power->getPower(this, CACHE_IL1, mycounts);
@@ -81,7 +96,7 @@ bool Cpu_power::clock( Cycle_t current)
 	pdata = power->getPower(this, CACHE_L3, mycounts);
 	//pdata = power->getPower(this, MEM_CTRL, mycounts); This contribute to large power dissipation due to 2.2GH
 	pdata = power->getPower(this, ROUTER, mycounts); 
-
+	power->compute_temperature(getId());
 
 	/* McPAT alpha 
 	pdata = power->getPower(current, CACHE_IL1, "1:1:1:1:1:0", 1);  //<read hits>:<read misses>:<miss buf access>:<fill buf access>:<prefetch buf access>:<wbb buf access>	
@@ -138,7 +153,7 @@ bool Cpu_power::clock( Cycle_t current)
 
         mem->Send( (Cycle_t)3, event );
         state = WAIT;
-	std::cout << "CPU " << getId() << "::clock -> sending a MEM event at cycle "<< current <<std::endl;
+	//std::cout << "CPU " << getId() << "::clock -> sending a MEM event at cycle "<< current <<std::endl;
 
 
     } else {
@@ -166,7 +181,7 @@ bool Cpu_power::clock( Cycle_t current)
 	    //regPowerStats(pdata);
 
             state = SEND;
-	    std::cout << "CPU " << getId() << "::clock -> got a MEM event at cycle "<< current <<std::endl;
+	    //std::cout << "CPU " << getId() << "::clock -> got a MEM event at cycle "<< current <<std::endl;
 	   
         }
     }
