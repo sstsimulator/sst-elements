@@ -3,6 +3,7 @@
 <!-- general sim configuration -->
 <!-- overridden by the command line -->
 <config>
+    lib-path=/home/myhsieh/local/sst/lib/sst
     stopAtCycle=100000
 </config>
 
@@ -148,9 +149,9 @@
     <power_level>2</power_level>    
     <supply_voltage>1.5</supply_voltage>
     <McPAT_XMLfile>/home/myhsieh/Desktop/trunk/sst/core/techModels/libMcPATbeta/Niagara1.xml</McPAT_XMLfile>
-    <core_temperature>360</core_temperature>
+    <core_temperature>350</core_temperature>
     <core_tech_node>32</core_tech_node>
-    <core_clock_rate>2200000000</core_clock_rate>
+    <core_clock_rate>3000000000</core_clock_rate>
     <core_physical_address_width>52</core_physical_address_width>
     <core_virtual_address_width>64</core_virtual_address_width>
     <core_virtual_memory_page_size>4096</core_virtual_memory_page_size>
@@ -200,6 +201,7 @@
     <cache_il1_miss_buffer_size>16</cache_il1_miss_buffer_size>
     <cache_il1_fill_buffer_size>16</cache_il1_fill_buffer_size>
     <cache_il1_prefetch_buffer_size>16</cache_il1_prefetch_buffer_size>
+    <cache_il1_floorplan_id>1</cache_il1_floorplan_id>
     <cache_l1dir_sC>1048576,1048576,1048576</cache_l1dir_sC>
     <cache_l1dir_clock_rate>3500000000</cache_l1dir_clock_rate>
     <cache_l1dir_line_size>16,16,16</cache_l1dir_line_size>
@@ -213,6 +215,7 @@
     <cache_l1dir_wbb_buffer_size>8,8,8</cache_l1dir_wbb_buffer_size> 
     <cache_l1dir_device_type>0</cache_l1dir_device_type>
     <cache_l1dir_directory_type>1</cache_l1dir_directory_type>
+    <cache_l1dir_floorplan_id>1</cache_l1dir_floorplan_id>
     <cache_dl1_sC>16384</cache_dl1_sC>
     <cache_dl1_line_size>32</cache_dl1_line_size>
     <cache_dl1_associativity>8</cache_dl1_associativity>
@@ -222,9 +225,12 @@
     <cache_dl1_miss_buffer_size>16</cache_dl1_miss_buffer_size>
     <cache_dl1_fill_buffer_size>16</cache_dl1_fill_buffer_size>
     <cache_dl1_prefetch_buffer_size>16</cache_dl1_prefetch_buffer_size>
-    <cache_dl1_wbb_buffer_size>16</cache_dl1_wbb_buffer_size>    
+    <cache_dl1_wbb_buffer_size>16</cache_dl1_wbb_buffer_size> 
+    <cache_dl1_floorplan_id>1</cache_dl1_floorplan_id>   
     <cache_itlb_number_entries>128</cache_itlb_number_entries> 
+    <cache_itlb_floorplan_id>1</cache_itlb_floorplan_id>
     <cache_dtlb_number_entries>128</cache_dtlb_number_entries>
+    <cache_dtlb_floorplan_id>1</cache_dtlb_floorplan_id>
     <bpred_prediction_width>0</bpred_prediction_width>
     <bpred_global_predictor_bits>2</bpred_global_predictor_bits>
     <bpred_global_predictor_entries>4096</bpred_global_predictor_entries>
@@ -232,6 +238,7 @@
     <bpred_local_predictor_entries>1024</bpred_local_predictor_entries>
     <bpred_chooser_predictor_bits>2</bpred_chooser_predictor_bits>
     <bpred_chooser_predictor_entries>4096</bpred_chooser_predictor_entries>
+    <bpred_floorplan_id>0</bpred_floorplan_id>
     <core_RAS_size>32</core_RAS_size>
     <core_ROB_size>80</core_ROB_size>
     <btb_sC>8192</btb_sC>
@@ -240,6 +247,7 @@
     <btb_latency>3</btb_latency>
     <btb_number_banks>1</btb_number_banks>
     <btb_line_size>4</btb_line_size>
+    <btb_floorplan_id>0</btb_floorplan_id>
     <alu_sC>50</alu_sC>
     <fpu_sC>350</fpu_sC>
     <cache_l2_clock_rate>3500000000</cache_l2_clock_rate>
@@ -254,6 +262,7 @@
     <cache_l2_prefetch_buffer_size>8,8,8</cache_l2_prefetch_buffer_size>
     <cache_l2_wbb_buffer_size>8,8,8</cache_l2_wbb_buffer_size>
     <cache_l2_device_type>1</cache_l2_device_type>
+    <cache_l2_floorplan_id>1</cache_l2_floorplan_id>
     <cache_l2dir_sC>1048576</cache_l2dir_sC>
     <cache_l2dir_clock_rate>3500000000</cache_l2dir_clock_rate>
     <cache_l2dir_line_size>16</cache_l2dir_line_size>
@@ -267,6 +276,7 @@
     <cache_l2dir_wbb_buffer_size>8</cache_l2dir_wbb_buffer_size> 
     <cache_l2dir_device_type>0</cache_l2dir_device_type>
     <cache_l2dir_directory_type>1</cache_l2dir_directory_type>
+    <cache_l2dir_floorplan_id>1</cache_l2dir_floorplan_id>
     <cache_l3_clock_rate>3500000000</cache_l3_clock_rate>
     <cache_l3_sC>1048576,1048576</cache_l3_sC>
     <cache_l3_line_size>64,64</cache_l3_line_size>
@@ -279,7 +289,9 @@
     <cache_l3_prefetch_buffer_size>16,16</cache_l3_prefetch_buffer_size>
     <cache_l3_wbb_buffer_size>16,16</cache_l3_wbb_buffer_size>
     <cache_l3_device_type>0</cache_l3_device_type>
+    <cache_l3_floorplan_id>1</cache_l3_floorplan_id>
     <exeu_sC>100.0</exeu_sC>
+    <exeu_floorplan_id>0</exeu_floorplan_id>
     <mc_clock_rate>400000000</mc_clock_rate>
     <mc_llc_line_length>64</mc_llc_line_length>
     <mc_databus_width>128</mc_databus_width>
@@ -301,7 +313,16 @@
     <router_horizontal_nodes>8</router_horizontal_nodes> 
     <router_vertical_nodes>4</router_vertical_nodes>
     <router_topology>RING</router_topology>
-    <core_number_of_NoCs>1</core_number_of_NoCs>   	    		   
+    <router_floorplan_id>1</router_floorplan_id>
+    <core_number_of_NoCs>1</core_number_of_NoCs> 
+    <rf_floorplan_id>0</rf_floorplan_id>
+    <ib_floorplan_id>0</ib_floorplan_id>
+    <pipeline_floorplan_id>0</pipeline_floorplan_id>
+    <lsq_floorplan_id>0</lsq_floorplan_id>
+    <scheduler_floorplan_id>0</scheduler_floorplan_id>
+    <rename_floorplan_id>0</rename_floorplan_id>
+    <loadQ_floorplan_id>0</loadQ_floorplan_id>	
+    <clock_option>GLOBAL_CLOCK</clock_option>    		   
 </cpu1_params>
 
 
