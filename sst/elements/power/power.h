@@ -1062,14 +1062,14 @@ class Power{
 	void getUnitPower(ptype power_type, int user_data, pmodel power_model);
 	//Pdissipation_t& getPower(Cycle_t current, ptype power_type, char *user_parms, int total_cycles);
 	//Pdissipation_t& getPower(Cycle_t current, ptype power_type, usagecounts_t counts, int total_cycles);
-	Pdissipation_t& getPower(introspectedComponent* c, ptype power_type, usagecounts_t counts);  //execution time = total cycles/clock rate
+	Pdissipation_t& getPower(IntrospectedComponent* c, ptype power_type, usagecounts_t counts);  //execution time = total cycles/clock rate
 	//void updatePowUsage(Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP, Cycle_t current);
-	void updatePowUsage(introspectedComponent *c, ptype power_type, int fid, Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP);
+	void updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, Pdissipation_t *comp_pusage, const I& totalPowerUsage, const I& dynamicPower, const I& leakage, const I& TDP);
 	double estimateClockDieAreaSimPan();
 	double estimateClockNodeCapSimPan();
 	double estimateAreaMcPAT(){return p_areaMcPAT*1e-6;};
 	void resetCounts(usagecounts_t *counts);
-  	I getExecutionTime(introspectedComponent *c);
+  	I getExecutionTime(IntrospectedComponent *c);
 	void setTech(Component::Params_t deviceParams); // called by setTech to set up device params values and store subcomp floorplan id information
 	void setChip(Component::Params_t deviceParams);
 	void floorParamInitialize();
