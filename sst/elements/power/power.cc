@@ -8190,7 +8190,12 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 * Get execution time (= total cycles / clockrate)              *
 * Here execution time equals current sim time minus            *
 * the time when power was last analyzed (obtained from PDB)    *
-* Return time in second                                   *
+* Return time in second                                   
+* NOTE, Power = Energy/time = Energy_per_access * Access_counts/Time.
+* Here "time is core's view of time, and in SST this is related 
+* to component's current cycle & component's default timebase and 
+* can be obtained by Simulation::getCurrentSimCycle() (sim cycle
+* actually is sim "time"					*
 ****************************************************************/
 I Power::getExecutionTime(IntrospectedComponent *c)
 {
