@@ -264,7 +264,7 @@ sst_cpu_component(int cpu_id, char *link_id, float weight, FILE *sstfile)
     fprintf(sstfile, "                </link>\n");
     fprintf(sstfile, "                <link id=\"cpu%dmem\">\n", cpu_id);
     fprintf(sstfile, "                    <params>\n");
-    fprintf(sstfile, "                        <name>mem%d</name>\n", cpu_id);
+    fprintf(sstfile, "                        <name>mem0</name>\n");
     fprintf(sstfile, "                        <lat>1ns</lat>\n");
     fprintf(sstfile, "                    </params>\n");
     fprintf(sstfile, "                </link>\n");
