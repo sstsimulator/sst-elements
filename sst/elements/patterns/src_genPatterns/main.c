@@ -110,7 +110,7 @@ char *pattern_name;
 	fprintf(stderr, "Need a pattern name!\n");
     }
 
-    if (strcmp(pattern_name, "ghost_pattern") != 0)   {
+    if (pattern_name && strcmp(pattern_name, "ghost_pattern") != 0)   {
 	error= TRUE;
 	fprintf(stderr, "Unknown pattern name!\n");
 	fprintf(stderr, "Must be one of \"ghost_pattern\", or \"\"\n");
