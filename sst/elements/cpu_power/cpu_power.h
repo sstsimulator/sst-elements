@@ -1,3 +1,14 @@
+// Copyright 2009-2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 // A cpu component that can report unit power 
 // Built for testing the power model.
 
@@ -59,6 +70,7 @@ class Cpu_power : public IntrospectedComponent {
         int Setup() {
             // report/register power dissipation	    
 	    power = new Power(getId());
+	    power->setChip(params);
             power->setTech(getId(), params, CACHE_IL1, McPAT);
 	    power->setTech(getId(), params, CACHE_DL1, McPAT);
 	    power->setTech(getId(), params, CACHE_ITLB, McPAT);
@@ -105,6 +117,10 @@ class Cpu_power : public IntrospectedComponent {
 		using namespace io_interval; std::cout <<"ID " << getId() <<": L2dir leakage power = " << res.second.itemizedLeakagePower.L2dir << " W" << std::endl;
 		using namespace io_interval; std::cout <<"ID " << getId() <<": L2dir runtime power = " << res.second.itemizedRuntimeDynamicPower.L2dir << " W" << std::endl;
 	        using namespace io_interval; std::cout <<"ID " << getId() <<": current sime time = " << res.second.currentSimTime << " second" << std::endl;
+		power->printFloorplanAreaInfo();
+		std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
+		power->printFloorplanPowerInfo();
+		power->printFloorplanThermalInfo();
 	    }
             _CPU_POWER_DBG("\n");
 	    //unregisterExit();

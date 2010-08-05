@@ -65,4 +65,71 @@ AC_DEFUN([SST_cpu_power_CONFIG], [
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 
 
+
+
+  AC_ARG_WITH([hotspot],
+    [AS_HELP_STRING([--with-hotspot@<:@=DIR@:>@],
+      [Use hotspot package installed in optionally specified DIR])])
+
+  AS_IF([test "$with_hotspot" = "no"], [happy="no"])
+
+  CPPFLAGS_saved="$CPPFLAGS"
+  LDFLAGS_saved="$LDFLAGS"
+
+  AS_IF([test ! -z "$with_hotspot" -a "$with_hotspot" != "yes"],
+    [HOTSPOT_CPPFLAGS="-I$with_hotspot/include"
+     CPPFLAGS="$HOTSPOT_CPPFLAGS $CPPFLAGS"
+     HOTSPOT_LDFLAGS="-L$with_hotspot"
+     LDFLAGS="$HOTSPOT_LDFLAGS $LDFLAGS"],
+    [HOTSPOT_CPPFLAGS=
+     HOTSPOT_LDFLAGS=])
+
+  AC_LANG_PUSH(C++)  
+  AC_CHECK_LIB([hotspot], [main], 
+    [HOTSPOT_LIB="-lhotspot"], [happy="no"])
+  AC_LANG_POP(C++)
+
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+
+  AC_SUBST([HOTSPOT_CPPFLAGS])
+  AC_SUBST([HOTSPOT_LDFLAGS])
+  AC_SUBST([HOTSPOT_LIB])
+
+  AS_IF([test "$happy" = "yes"], [$1], [$2])
+
+
+
+
+  AC_ARG_WITH([IntSim],
+    [AS_HELP_STRING([--with-IntSim@<:@=DIR@:>@],
+      [Use IntSim package installed in optionally specified DIR])])
+
+  AS_IF([test "$with_IntSim" = "no"], [happy="no"])
+
+  CPPFLAGS_saved="$CPPFLAGS"
+  LDFLAGS_saved="$LDFLAGS"
+
+  AS_IF([test ! -z "$with_IntSim" -a "$with_IntSim" != "yes"],
+    [INTSIM_CPPFLAGS="-I$with_IntSim/include"
+     CPPFLAGS="$INTSIM_CPPFLAGS $CPPFLAGS"
+     INTSIM_LDFLAGS="-L$with_IntSim"
+     LDFLAGS="$INTSIM_LDFLAGS $LDFLAGS"],
+    [INTSIM_CPPFLAGS=
+     INTSIM_LDFLAGS=])
+
+  AC_LANG_PUSH(C++)  
+  AC_CHECK_LIB([IntSim], [main], 
+    [INTSIM_LIB="-lIntSim"], [happy="no"])
+  AC_LANG_POP(C++)
+
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+
+  AC_SUBST([INTSIM_CPPFLAGS])
+  AC_SUBST([INTSIM_LDFLAGS])
+  AC_SUBST([INTSIM_LIB])
+
+  AS_IF([test "$happy" = "yes"], [$1], [$2])
+
 ])
