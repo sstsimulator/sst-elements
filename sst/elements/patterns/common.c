@@ -73,13 +73,13 @@ static int
 is_pow2(int num)
 {
     if (num < 1)   {
-	return -1;
+	return 0;
     }
     
     if ((num & (num - 1)) == 0)   {
-	return 0;
+	return -1;
     }
 
-    return -1;
+    return 0;
 
 }  /* end of is_pow2() */
