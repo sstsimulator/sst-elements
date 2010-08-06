@@ -36,15 +36,15 @@ pattern_init(int x, int y, int my_rank)
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
 	fprintf(stderr, "x = %d * y = %d is not a power of 2!\n", x, y);
-	return -1;
+	return FALSE;
     }
 
     if ((my_rank < 0) || (my_rank >= x * y))   {
 	fprintf(stderr, "My rank not 0 <= %d < %d * %d\n", my_rank, x, y);
-	return -1;
+	return FALSE;
     }
 
-    return 0; /* success */
+    return TRUE; /* success */
 
 }  /* end of pattern_init() */
 
@@ -73,13 +73,13 @@ static int
 is_pow2(int num)
 {
     if (num < 1)   {
-	return 0;
+	return FALSE;
     }
     
     if ((num & (num - 1)) == 0)   {
-	return -1;
+	return TRUE;
     }
 
-    return 0;
+    return FALSE;
 
 }  /* end of is_pow2() */

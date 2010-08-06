@@ -21,6 +21,13 @@ extern "C" {
 int pattern_init(int x, int y, int my_rank);
 void pattern_send(int dest, int len);
 
+#ifndef FALSE
+#define FALSE (0)
+#endif
+#ifndef TRUE
+#define TRUE (1)
+#endif
+
 #ifdef __cplusplus
 }
 #endif
