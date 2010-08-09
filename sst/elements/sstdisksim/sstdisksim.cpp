@@ -154,7 +154,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   empty = configureSelfLink( "empty",  new Event::Handler<sstdisksim>(this,&sstdisksim::emptyEvent) );
   registerTimeBase("1ps");
 
-  //  registerClock("1GHz", new Clock::Handler<sstdisksim>(this, &sstdisksim::clock));
+  registerClock("1GHz", new Clock::Handler<sstdisksim>(this, &sstdisksim::clock));
 
   printf("Starting disksim up\n");
 
@@ -170,6 +170,8 @@ sstdisksim::~sstdisksim()
 int
 sstdisksim::Setup()
 {
+  return 0;
+
   if ( __id == 0 )
   {
     for ( int i = 0; i < 400; i++ )
@@ -246,7 +248,7 @@ sstdisksim::processBlock(unsigned long blkno,
 
   tmp = __now-tmp;
   sstdisksim_event* event = new sstdisksim_event();
-  empty->Send((int)(tmp*1000000), event);
+  //  empty->Send((int)(tmp*1000000), event);
 
   return count;
 }
