@@ -1618,6 +1618,9 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if (!it->first.compare("router_has_global_link")){
 			    sscanf(it->second.c_str(), "%d", &router_tech.has_global_link);
 			}
+			else if (!it->first.compare("router_link_length")){
+			    sscanf(it->second.c_str(), "%lf", &router_tech.link_length);
+			}
 			else if (!it->first.compare("router_flit_bits")){
 			    sscanf(it->second.c_str(), "%d", &router_tech.flit_bits);
 			}
@@ -4188,6 +4191,9 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			else if (!it->first.compare("router_has_global_link")){
 			    sscanf(it->second.c_str(), "%d", &router_tech.has_global_link);
 			}
+			else if (!it->first.compare("router_link_length")){
+			    sscanf(it->second.c_str(), "%lf", &router_tech.link_length);
+			}
 			else if (!it->first.compare("router_flit_bits")){
 			    sscanf(it->second.c_str(), "%d", &router_tech.flit_bits);
 			}
@@ -4598,7 +4604,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	     exu = p_Mcore->SSTreturnEXU();
 	     rnu = p_Mcore->SSTreturnRNU();
 	  }
-	  getUnitPower(power_type, 0, McPAT); //read
+	  getUnitPower(power_type, -1, McPAT); //read
 	  #endif /*McPAT07_H*/   
                     
 	break;
@@ -8999,6 +9005,7 @@ void Power::McPATSetup()
 	p_Mp1->sys.NoC[0].type=true;  	/*1 NoC, O bus*/
 	p_Mp1->sys.NoC[0].chip_coverage=1;
 	p_Mp1->sys.NoC[0].has_global_link = (bool)router_tech.has_global_link;
+	p_Mp1->sys.NoC[0].link_length = router_tech.link_length;
 	p_Mp1->sys.NoC[0].horizontal_nodes=router_tech.horizontal_nodes;
 	p_Mp1->sys.NoC[0].vertical_nodes=router_tech.vertical_nodes;
 	p_Mp1->sys.NoC[0].input_ports=router_tech.input_ports;

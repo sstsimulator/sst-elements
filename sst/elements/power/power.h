@@ -350,6 +350,7 @@ typedef struct
 	unsigned output_ports, link_throughput, link_latency, horizontal_nodes, vertical_nodes;
 	topology_style topology;
 	double area, num_transistors;
+	double link_length;
 } router_params_t;
 
 
@@ -1041,6 +1042,7 @@ class Power{
 	    router_tech.clockrate=3500000000.0; router_tech.has_global_link=0; router_tech.flit_bits=128; router_tech.input_buffer_entries_per_vc=16;
 	    router_tech.virtual_channel_per_port=2; router_tech.input_ports=5; router_tech.horizontal_nodes=8; router_tech.vertical_nodes=4;
 	    router_tech.output_ports=8; router_tech.link_throughput=1; router_tech.link_latency=1; router_tech.topology = RING; router_tech.area = 0.41391e-6; router_tech.num_transistors = 0.584e6;
+	    router_tech.link_length = 15500; //unit is micron
 
 	    #ifdef LV2_PANALYZER_H
 	    il1_pspec = NULL; il2_pspec = NULL; dl1_pspec = NULL; dl2_pspec = NULL;  itlb_pspec = NULL;
