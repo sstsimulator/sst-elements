@@ -113,9 +113,9 @@ class Cpu_power : public IntrospectedComponent {
 		using namespace io_interval; std::cout <<"ID " << getId() <<": L1dir current total power = " << res.second.itemizedCurrentPower.L1dir << " W" << std::endl;
 		using namespace io_interval; std::cout <<"ID " << getId() <<": L1dir leakage power = " << res.second.itemizedLeakagePower.L1dir << " W" << std::endl;
 		using namespace io_interval; std::cout <<"ID " << getId() <<": L1dir runtime power = " << res.second.itemizedRuntimeDynamicPower.L1dir << " W" << std::endl;
-		using namespace io_interval; std::cout <<"ID " << getId() <<": L2dir current total power = " << res.second.itemizedCurrentPower.L2dir << " W" << std::endl;
-		using namespace io_interval; std::cout <<"ID " << getId() <<": L2dir leakage power = " << res.second.itemizedLeakagePower.L2dir << " W" << std::endl;
-		using namespace io_interval; std::cout <<"ID " << getId() <<": L2dir runtime power = " << res.second.itemizedRuntimeDynamicPower.L2dir << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << getId() <<": router current total power = " << res.second.itemizedCurrentPower.router << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << getId() <<": router leakage power = " << res.second.itemizedLeakagePower.router << " W" << std::endl;
+		using namespace io_interval; std::cout <<"ID " << getId() <<": router runtime power = " << res.second.itemizedRuntimeDynamicPower.router << " W" << std::endl;
 	        using namespace io_interval; std::cout <<"ID " << getId() <<": current sime time = " << res.second.currentSimTime << " second" << std::endl;
 		power->printFloorplanAreaInfo();
 		std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
