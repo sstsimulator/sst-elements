@@ -14,6 +14,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <iostream>
+#include <stdarg.h>
+#include <string.h>
 
 #include "sstdisksim_tracereader.h"
 #include "sst/core/element.h"
@@ -27,13 +30,93 @@
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
+void 
+luaRetrieveValues(lua_State* L, 
+		  char* format,
+		  ...)
+{
+  va_list ap;
+  void* ptr;
+  int i;
+
+  va_start(ap, format);
+
+  i = 0;
+  while ( format[i] != 0 )
+  {
+    ptr = va_arg(ap, void*);
+    switch (format[i])
+    {
+    case L_INT:
+    case L_DOUBLE:
+    case L_LONG:
+      *((int*)ptr) = lua_tonumber(L,i+1);
+      break;
+    case L_STRING:
+      strcpy(*((char**)ptr), lua_tostring(L,i+1));
+      break;
+    case L_BOOLEAN:
+      *((bool*)ptr) = lua_toboolean(L,i+1);
+      break;
+    default:
+      printf("Invalid or unsupported type passed into luaRetrieveValues\n");
+      exit(1);
+    }
+    i++;
+  }
+
+  va_end(ap);
+}
+
+/******************************************************************************/
+int
+luaReturnValues(lua_State* L,
+		char* format, 
+		...)
+{
+  va_list ap;
+  void *ptr;
+  int i;
+
+  va_start(ap, format);
+  i = 0;
+  while ( format[i] != 0 )
+  {
+    ptr = va_arg(ap, void*);
+    switch ( format[i] )
+    {
+    case L_INT:
+      lua_pushnumber(L, *((int*)ptr));
+      break;
+    case L_DOUBLE:
+      lua_pushnumber(L, *((double*)ptr));
+      break;
+    case L_LONG:
+      lua_pushnumber(L, *((long*)ptr));
+      break;
+    case L_STRING:
+      lua_pushstring(L, *((char**)ptr));
+      break;
+    case L_BOOLEAN:
+      lua_pushboolean(L, *((bool*)ptr));
+      break;
+    default:
+      printf("Invalid or unsupported type passed into luaReturnValues()\n");
+    }
+    i++;
+  }
+  
+  return i;
+}
+
+/******************************************************************************/
 sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& params ) :
   Component( id ),
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
-  std::string traceFile = "";
   __id = id;
   __done = 0;
+  traceFile = "";
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -62,6 +145,9 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
 
   printf("Starting sstdisksim_tracereader up\n");
 
+  __L = lua_open();
+  luaL_openlibs(__L);
+
   registerExit();
  
   return;
@@ -76,20 +162,7 @@ sstdisksim_tracereader::~sstdisksim_tracereader()
 int
 sstdisksim_tracereader::Setup()
 {
-  for ( int i = 0; i < 400; i++ )
-  {
-    sstdisksim_event* event = new sstdisksim_event();
-    event->count = 512*33+15;
-    event->pos = 0;
-    event->devno = 0;
-    event->done = 0;
-    if ( i%2 == 0 )
-      event->etype = READ;
-    else
-      event->etype = WRITE;
-    
-    link->Send(0, event);
-  }
+  luaL_dofile(__L, traceFile.c_str());
 
   sstdisksim_event* event = new sstdisksim_event();
   event->done = 1;
@@ -105,6 +178,8 @@ int
 sstdisksim_tracereader::Finish()
 {
   printf("Shutting sstdisksim_tracereader down\n");
+
+  lua_close(__L);
 
   return 0;
 }

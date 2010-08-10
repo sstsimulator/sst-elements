@@ -22,8 +22,8 @@ libsstdisksim_la_LIBADD = $(SSTDISKSIM_LIB)
 libsstdisksim_tracereader_la_SOURCES = \
 	sstdisksim_tracereader.cpp \
 	sstdisksim_tracereader.h \
-	sstdisksim.cpp \ 
-	sstdisksim.h
+	sstdisksim.cpp \
+	sstdisksim.h	
 
 libsstdisksim_tracereader_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SSTDISKSIM_CPPFLAGS) \
 	-I$(top_srcdir)/elements/include

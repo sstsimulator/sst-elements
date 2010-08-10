@@ -13,6 +13,3 @@ enum lua_value_types
   L_STRING,
   L_BOOLEAN
 };
-
-/* Assuming memory is allocated in the functions,
-   with the exception of strings. */

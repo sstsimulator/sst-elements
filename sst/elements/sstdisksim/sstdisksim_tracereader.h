@@ -27,6 +27,22 @@
 #include <sstdisksim.h>
 #include <sstdisksim_event.h>
 
+extern "C"
+{
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
+enum lua_value_types
+{
+  L_INT=1,
+  L_DOUBLE,
+  L_LONG,
+  L_STRING,
+  L_BOOLEAN
+};
+
 using namespace std;
 using namespace SST;
 
@@ -44,6 +60,9 @@ class sstdisksim_tracereader : public Component {
   int Finish();
 
  private:
+
+  lua_State* __L;
+  std::string traceFile;
 
   bool __done;
   Params_t __params;
