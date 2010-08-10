@@ -16,7 +16,7 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include "common.h"
+#include "pattern_common.h"
 
 using namespace SST;
 
@@ -66,7 +66,9 @@ class Ghost_pattern : public Component {
             }
 
 
-	    if (!Patterns::init(x_dim, y_dim, my_rank))   {
+	    common= new Patterns();
+
+	    if (!common->init(x_dim, y_dim, my_rank))   {
 		_ABORT(Ghost_pattern, "pattern_init() failed!\n");
 	    }
 
@@ -85,13 +87,14 @@ class Ghost_pattern : public Component {
 	    tc= registerTimeBase("1ns", true);
 
 	    // Send a start event to ourselves without a delay
-	    event_send(my_rank, START, 0.0);
+	    // common->event_send(my_rank, START, 0.0);
         }
 
     private:
 
         Ghost_pattern(const Ghost_pattern &c);
 	void handle_events(Event *);
+	Patterns *common;
 
 	int my_rank;
 	int x_dim;

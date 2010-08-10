@@ -11,8 +11,8 @@
 ** distribution.
 */
 
-#ifndef _COMMON_H
-#define _COMMON_H
+#ifndef _PATTERN_COMMON_H
+#define _PATTERN_COMMON_H
 
 #ifndef FALSE
 #define FALSE (0)
@@ -22,7 +22,6 @@
 #endif
 
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
 
 
 // Events among pattern generators
@@ -30,20 +29,18 @@ typedef enum {START, COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
 
 class Patterns   {
     public:
+	Patterns()   {
+	    // Nothing to do for now
+	}
+
 	int init(int x, int y, int my_rank);
 	void send(int dest, int len);
-	void event_send(int dest, pattern_event_t event, double delay);
+	// void event_send(int dest, pattern_event_t event, double delay);
+
 
     private:
-	friend class boost::serialization::access;
-	template<class Archive>
-	void
-	serialize(Archive &ar, const unsigned int version)   {
-	    _AR_DBG(Patterns, "\n");
-	    _AR_DBG(Patterns, "\n");
-	}
 
 } ;  // end of class Patterns
 
 
-#endif  /* _COMMON_H */
+#endif  /* _PATTERN_COMMON_H */

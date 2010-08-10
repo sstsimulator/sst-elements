@@ -14,8 +14,8 @@
 #include "sst/core/serialization/element.h"
 
 #include <sst/core/cpunicEvent.h>
-#include "ghost.h"
-#include "common.h"
+#include "ghost_pattern.h"
+#include "pattern_common.h"
 
 int ghost_pattern_debug;
 
@@ -60,7 +60,7 @@ static int rcv_cnt= 0;
 	    switch (event)   {
 		case START:
 		    // Send outselves a COMPUTE_DONE event
-		    event_send(my_rank, COMPUTE_DONE, compute_time);
+		    // common->event_send(my_rank, COMPUTE_DONE, compute_time);
 		    state= COMPUTE;
 		    break;
 		case COMPUTE_DONE:
@@ -85,10 +85,10 @@ static int rcv_cnt= 0;
 		    break;
 		case COMPUTE_DONE:
 		    /* Our time to compute is over */
-		    pattern_send(right, len);
-		    pattern_send(left, len);
-		    pattern_send(up, len);
-		    pattern_send(down, len);
+		    common->send(right, len);
+		    common->send(left, len);
+		    common->send(up, len);
+		    common->send(down, len);
 		    state= WAIT;
 		    break;
 		case RECEIVE:

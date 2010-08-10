@@ -16,7 +16,7 @@
 ** This file contains common routines used by all pattern generators.
 */
 #include <stdio.h>
-#include "common.h"
+#include "pattern_common.h"
 
 
 
@@ -31,7 +31,7 @@ static int is_pow2(int num);
 ** SST xml file.
 */
 int
-pattern_init(int x, int y, int my_rank)
+init(int x, int y, int my_rank)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -46,7 +46,7 @@ pattern_init(int x, int y, int my_rank)
 
     return TRUE; /* success */
 
-}  /* end of pattern_init() */
+}  /* end of init() */
 
 
 
@@ -57,9 +57,9 @@ pattern_init(int x, int y, int my_rank)
 ** that route. No actual data is sent.
 */
 void
-pattern_send(int dest, int len)
+send(int dest, int len)
 {
-}  /* end of pattern_send() */
+}  /* end of send() */
 
 
 
