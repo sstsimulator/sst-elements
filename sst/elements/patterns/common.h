@@ -14,13 +14,6 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int pattern_init(int x, int y, int my_rank);
-void pattern_send(int dest, int len);
-
 #ifndef FALSE
 #define FALSE (0)
 #endif
@@ -28,8 +21,28 @@ void pattern_send(int dest, int len);
 #define TRUE (1)
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+#include <sst/core/cpunicEvent.h>
+#include <sst/core/link.h>
+
+// Events among pattern generators
+typedef enum {START, COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
+
+class Patterns   {
+    public;
+	int init(int x, int y, int my_rank);
+	void send(int dest, int len);
+	void event_send(int dest, pattern_event_t event, double delay);
+
+    private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive &ar, const unsigned int version)   {
+	    _AR_DBG(Patterns, "\n");
+	    _AR_DBG(Patterns, "\n");
+	}
+
+}  // end of class Patterns
+
 
 #endif  /* _COMMON_H */

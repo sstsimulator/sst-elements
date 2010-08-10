@@ -84,6 +84,9 @@ class Ghost_pattern : public Component {
 
 	    // Create a time converter
 	    tc= registerTimeBase("1ns", true);
+
+	    // Send a start event to ourselves without a delay
+	    event_send(my_rank, START, 0.0);
         }
 
     private:

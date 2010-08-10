@@ -19,14 +19,13 @@
 
 int ghost_pattern_debug;
 
-typedef enum {COMPUTE, WAIT, DONE} state_t;
-typedef enum {COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
+typedef enum {INIT, COMPUTE, WAIT, DONE} state_t;
 
 void
 Ghost_pattern::handle_events(Event *sst_event)
 {
 
-static state_t state= COMPUTE;
+static state_t state= INIT;
 pattern_event_t event;
 static int left, right, up, down;
 int myX, myY;
@@ -56,8 +55,34 @@ static int rcv_cnt= 0;
     // event= sst_event->pattern_event;
 
     switch (state)   {
+	case INIT:
+	    /* Wait for the start signal */
+	    switch (event)   {
+		case START:
+		    // Send outselves a COMPUTE_DONE event
+		    event_send(my_rank, COMPUTE_DONE, compute_time);
+		    state= COMPUTE;
+		    break;
+		case COMPUTE_DONE:
+		    // Should not happen
+		    break;
+		case RECEIVE:
+		    // Should not happen
+		    break;
+		case FAIL:
+		    // Should not happen
+		    break;
+		case RESEND_MSG:
+		    // Should not happen
+		    break;
+	    }
+	    break;
+
 	case COMPUTE:
 	    switch (event)   {
+		case START:
+		    // Should not happen
+		    break;
 		case COMPUTE_DONE:
 		    /* Our time to compute is over */
 		    pattern_send(right, len);
@@ -84,9 +109,11 @@ static int rcv_cnt= 0;
 	    break;
 
 	case WAIT:
-	    /*
-	    ** We are waiting for messages from our four neighbors */
+	    /* We are waiting for messages from our four neighbors */
 	    switch (event)   {
+		case START:
+		    // Should not happen
+		    break;
 		case COMPUTE_DONE:
 		    /* Doesn't make sense; we should not be getting this event */
 		    _abort(ghost_pattern, "Compute done event in wait\n");
@@ -110,10 +137,12 @@ static int rcv_cnt= 0;
 
 	case DONE:
 	    /* This rank has done all of its work */
+	    /* FIXME: How do I exit from SST? Send a StopEvent? */
 	    return;
 	    break;
     }
 
+    delete(sst_event);
     return;
 
 }  /* end of handle_port_events() */
