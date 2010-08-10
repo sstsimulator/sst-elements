@@ -18,7 +18,6 @@
 #include <sst/core/link.h>
 #include "common.h"
 
-
 using namespace SST;
 
 #define DBG_GHOST_PATTERN 1
@@ -67,7 +66,7 @@ class Ghost_pattern : public Component {
             }
 
 
-	    if (!pattern_init(x_dim, y_dim, my_rank))   {
+	    if (!Patterns::init(x_dim, y_dim, my_rank))   {
 		_ABORT(Ghost_pattern, "pattern_init() failed!\n");
 	    }
 

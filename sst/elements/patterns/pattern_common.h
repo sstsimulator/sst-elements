@@ -21,14 +21,15 @@
 #define TRUE (1)
 #endif
 
-#include <sst/core/cpunicEvent.h>
-#include <sst/core/link.h>
+#include <sst_config.h>
+#include "sst/core/serialization/element.h"
+
 
 // Events among pattern generators
 typedef enum {START, COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
 
 class Patterns   {
-    public;
+    public:
 	int init(int x, int y, int my_rank);
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, double delay);
@@ -42,7 +43,7 @@ class Patterns   {
 	    _AR_DBG(Patterns, "\n");
 	}
 
-}  // end of class Patterns
+} ;  // end of class Patterns
 
 
 #endif  /* _COMMON_H */
