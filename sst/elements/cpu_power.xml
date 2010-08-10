@@ -143,7 +143,7 @@
 
 <!-- McPAT--> 
 <cpu1_params>
-    <clock>2.2GHz</clock>
+    <clock>3.0GHz</clock>
     <rev>1.5</rev>
     <power_monitor>YES</power_monitor>
     <power_level>2</power_level>    
@@ -302,7 +302,8 @@
     <mainmemory_peak_transfer_rate>6400</mainmemory_peak_transfer_rate>
     <mainmemory_number_ranks>2</mainmemory_number_ranks>
     <router_clock_rate>3500000000</router_clock_rate>
-    <router_has_global_link>0</router_has_global_link>
+    <router_has_global_link>1</router_has_global_link>
+    <router_link_length>15500</router_link_length>
     <router_flit_bits>128</router_flit_bits>
     <router_input_buffer_entries_per_vc>16</router_input_buffer_entries_per_vc>
     <router_virtual_channel_per_port>2</router_virtual_channel_per_port>
