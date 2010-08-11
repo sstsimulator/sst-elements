@@ -51,6 +51,10 @@ int num_ports;
 char *sstFname;
 FILE *fp_sst;
 char *pattern_name;
+double lat;
+double bw;
+double compute;
+int exchange_msg_len;
 
 
 
@@ -60,6 +64,10 @@ char *pattern_name;
     sstFname= "";
     x_dim= -1;
     y_dim= -1;
+    lat= 0.000002;
+    bw= 1200000000.0;
+    compute= 0.000150;
+    exchange_msg_len= 1024 * 1024;
     pattern_name= NULL;
 
 
@@ -157,7 +165,7 @@ char *pattern_name;
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst, x_dim, y_dim);
+    sst_gen_param_entries(fp_sst, x_dim, y_dim, lat, bw, compute, exchange_msg_len);
     sst_gen_param_end(fp_sst);
 
     sst_router_param_start(fp_sst, num_ports);

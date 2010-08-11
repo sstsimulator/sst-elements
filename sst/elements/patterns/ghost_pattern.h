@@ -42,6 +42,11 @@ class Ghost_pattern : public Component {
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    ghost_pattern_debug= 0;
+	    latency= -1.0;
+	    bandwidth= -1.0;
+	    compute_time= -1.0;
+	    exchange_msg_len= 1024 * 1024;
+	    rcv_cnt= 0;
 	    state= INIT;
 
             while (it != params.end())   {
@@ -61,6 +66,22 @@ class Ghost_pattern : public Component {
 
 		if (!it->first.compare("y_dim"))   {
 		    sscanf(it->second.c_str(), "%d", &y_dim);
+		}
+
+		if (!it->first.compare("latency"))   {
+		    sscanf(it->second.c_str(), "%lf", &latency);
+		}
+
+		if (!it->first.compare("bandwidth"))   {
+		    sscanf(it->second.c_str(), "%lf", &bandwidth);
+		}
+
+		if (!it->first.compare("compute_time"))   {
+		    sscanf(it->second.c_str(), "%lf", &compute_time);
+		}
+
+		if (!it->first.compare("exchange_msg_len"))   {
+		    sscanf(it->second.c_str(), "%d", &exchange_msg_len);
 		}
 
                 ++it;
@@ -84,12 +105,20 @@ class Ghost_pattern : public Component {
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, my_rank, net))   {
+	    if (!common->init(x_dim, y_dim, my_rank, net, latency, bandwidth))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
+	    /* Who are my four neighbors? */
+	    int myX= my_rank % x_dim;
+	    int myY= my_rank / y_dim;
+	    right= ((myX + 1) % x_dim) + (myY * y_dim);
+	    left= ((myX - 1 + x_dim) % x_dim) + (myY * y_dim);
+	    down= myX + ((myY + 1) % y_dim) * y_dim;
+	    up= myX + ((myY - 1 + y_dim) % y_dim) * y_dim;
+
 	    // Send a start event to ourselves without a delay
-	    common->event_send(my_rank, START, 0.0);
+	    common->event_send(my_rank, START);
         }
 
     private:
@@ -101,7 +130,13 @@ class Ghost_pattern : public Component {
 	int my_rank;
 	int x_dim;
 	int y_dim;
+	double latency;
+	double bandwidth;
+	double compute_time;
+	int exchange_msg_len;
 	state_t state;
+	int left, right, up, down;
+	int rcv_cnt;
 	int ghost_pattern_debug;
 
         Params_t params;
@@ -117,7 +152,16 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);
 	    ar & BOOST_SERIALIZATION_NVP(y_dim);
+	    ar & BOOST_SERIALIZATION_NVP(latency);
+	    ar & BOOST_SERIALIZATION_NVP(bandwidth);
+	    ar & BOOST_SERIALIZATION_NVP(compute_time);
+	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
 	    ar & BOOST_SERIALIZATION_NVP(state);
+	    ar & BOOST_SERIALIZATION_NVP(left);
+	    ar & BOOST_SERIALIZATION_NVP(right);
+	    ar & BOOST_SERIALIZATION_NVP(up);
+	    ar & BOOST_SERIALIZATION_NVP(down);
+	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(ghost_pattern_debug);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

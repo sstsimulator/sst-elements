@@ -49,7 +49,8 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim)
+sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, double lat,
+	double bw, double compute_time, int msg_len)
 {
 
     if (sstfile == NULL)   {
@@ -58,6 +59,10 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim)
 
     fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
     fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
+    fprintf(sstfile, "    <latency> %0.9f </latency>\n", lat);
+    fprintf(sstfile, "    <bandwidth> %0.0f </bandwidth>\n", bw);
+    fprintf(sstfile, "    <compute_time> %0.9f </compute_time>\n", compute_time);
+    fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
 
 }  /* end of sst_gen_param_entries() */
 

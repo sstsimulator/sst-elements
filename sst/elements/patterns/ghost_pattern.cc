@@ -25,12 +25,6 @@ Ghost_pattern::handle_events(Event *sst_event)
 
 CPUNicEvent *e;
 pattern_event_t event;
-double compute_time= 100.0;
-static int left, right, up, down;
-int myX, myY;
-int len;
-static bool first_time= true;
-static int rcv_cnt= 0;
 
 
     // Extract the pattern event type from the SST event
@@ -39,17 +33,6 @@ static int rcv_cnt= 0;
     event= (pattern_event_t)e->GetRoutine();
 
     _GHOST_PATTERN_DBG(3, "Rank %d got event %d\n", my_rank, event);
-
-    /* Who are my four neighbors? */
-    if (first_time)   {
-	myX= my_rank % x_dim;
-	myY= my_rank / y_dim;
-	right= ((myX + 1) % x_dim) + (myY * y_dim);
-	left= ((myX - 1 + x_dim) % x_dim) + (myY * y_dim);
-	down= myX + ((myY + 1) % y_dim) * y_dim;
-	up= myX + ((myY - 1 + y_dim) % y_dim) * y_dim;
-	first_time= false;
-    }
 
     switch (state)   {
 	case INIT:
@@ -75,15 +58,12 @@ static int rcv_cnt= 0;
 	case COMPUTE:
 	    switch (event)   {
 		case COMPUTE_DONE:
-		    /* For now, our message size is always 128 bytes */
-		    len= 128;
-
 		    _GHOST_PATTERN_DBG(4, "[%2d] Done computing, entering wait state\n", my_rank);
 		    /* Our time to compute is over */
-		    common->send(right, len);
-		    common->send(left, len);
-		    common->send(up, len);
-		    common->send(down, len);
+		    common->send(right, exchange_msg_len);
+		    common->send(left, exchange_msg_len);
+		    common->send(up, exchange_msg_len);
+		    common->send(down, exchange_msg_len);
 		    if (rcv_cnt == 4)   {
 			// We already have our for neighbor messages; no need to wait
 			rcv_cnt= 0;

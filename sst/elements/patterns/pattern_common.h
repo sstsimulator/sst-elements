@@ -35,17 +35,21 @@ class Patterns   {
 	    my_net_link= NULL;
 	    mesh_width= -1;
 	    my_rank= -1;
+	    net_latency= 0.0;
+	    net_bandwidth= 0.0;
 	}
 
-	int init(int x, int y, int my_rank, SST::Link *net_link);
+	int init(int x, int y, int my_rank, SST::Link *net_link, double lat, double bw);
 	void send(int dest, int len);
-	void event_send(int dest, pattern_event_t event, double delay);
+	void event_send(int dest, pattern_event_t event, double delay= 0.0, uint32_t msg_len= 0);
 
 
     private:
 	SST::Link *my_net_link;
 	int mesh_width;
 	int my_rank;
+	double net_latency;	// in seconds
+	double net_bandwidth;	// In bytes per second
 
 } ;  // end of class Patterns
 

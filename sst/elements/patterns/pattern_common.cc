@@ -36,7 +36,7 @@ static int is_pow2(int num);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int rank, SST::Link *net_link)
+Patterns::init(int x, int y, int rank, SST::Link *net_link, double lat, double bw)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -49,9 +49,21 @@ Patterns::init(int x, int y, int rank, SST::Link *net_link)
 	return FALSE;
     }
 
+    if (lat < 0.0)   {
+	fprintf(stderr, "Latency in xml file must be specified\n");
+	return FALSE;
+    }
+
+    if (bw < 0.0)   {
+	fprintf(stderr, "Bandwidth in xml file must be specified\n");
+	return FALSE;
+    }
+
     my_net_link= net_link;
     mesh_width= x;
     my_rank= rank;
+    net_latency= lat;
+    net_bandwidth= bw;
 
     return TRUE; /* success */
 
@@ -68,6 +80,19 @@ Patterns::init(int x, int y, int rank, SST::Link *net_link)
 void
 Patterns::send(int dest, int len)
 {
+
+double delay;
+
+
+    // This is a crude approximation of how long this message would
+    // take to transmit, if there were no routers in between. (Each
+    // router adds its own delays as the event passes through.)
+    delay= net_latency + len / net_bandwidth;
+    fprintf(stderr, "This %d byte message from %d to %d will need %.9f seconds\n", len,
+	my_rank, dest, delay);
+
+    event_send(dest, RECEIVE, delay, len);
+
 }  /* end of send() */
 
 
@@ -79,7 +104,7 @@ Patterns::send(int dest, int len)
 #define NORTH_PORT	(4)
 
 void
-Patterns::event_send(int dest, pattern_event_t event, double delay)
+Patterns::event_send(int dest, pattern_event_t event, double delay, uint32_t msg_len)
 {
 
 CPUNicEvent *e;
@@ -93,7 +118,7 @@ int x_delta, y_delta;
     // Fill in event info and attach a route to it
     e->router_delay= (SST::SimTime_t)0.0;
     e->hops= 0;
-    e->msg_len= 0;
+    e->msg_len= msg_len;
     e->SetRoutine((int)event);
 
     // We are hardcoded for a x * y torus!
