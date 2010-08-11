@@ -10,6 +10,9 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+
+#include "sst_config.h"
+
 #include "ppcFront.h"
 #include <mach/mach.h>
 /*

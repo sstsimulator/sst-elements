@@ -1,3 +1,5 @@
+#include "sst_config.h"
+
 #include "cpu.h"
 
 #define DBG( fmt, args... ) \

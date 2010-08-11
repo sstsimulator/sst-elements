@@ -1,3 +1,5 @@
+#include "sst_config.h"
+
 #include <arpa/inet.h>		// For endian conversion
 #include <sst/core/cpunicEvent.h>
 #include "netsim_model.h"
