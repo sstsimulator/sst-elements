@@ -21,24 +21,31 @@
 #define TRUE (1)
 #endif
 
-#include <sst_config.h>
+#include <sst/core/link.h>
 
 
-// Events among pattern generators
+
+// Event types sent among pattern generators
 typedef enum {START, COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
 
 class Patterns   {
     public:
 	Patterns()   {
 	    // Nothing to do for now
+	    my_net_link= NULL;
+	    mesh_width= -1;
+	    my_rank= -1;
 	}
 
-	int init(int x, int y, int my_rank);
+	int init(int x, int y, int my_rank, SST::Link *net_link);
 	void send(int dest, int len);
-	// void event_send(int dest, pattern_event_t event, double delay);
+	void event_send(int dest, pattern_event_t event, double delay);
 
 
     private:
+	SST::Link *my_net_link;
+	int mesh_width;
+	int my_rank;
 
 } ;  // end of class Patterns
 

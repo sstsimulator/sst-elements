@@ -30,7 +30,7 @@ using namespace SST;
 #define _GHOST_PATTERN_DBG(lvl, fmt, args...)
 #endif
 
-extern int ghost_pattern_debug;
+typedef enum {INIT, COMPUTE, WAIT, DONE} state_t;
 
 class Ghost_pattern : public Component {
     public:
@@ -42,6 +42,7 @@ class Ghost_pattern : public Component {
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    ghost_pattern_debug= 0;
+	    state= INIT;
 
             while (it != params.end())   {
                 _GHOST_PATTERN_DBG(1, "Ghost: key=%s value=%s\n", it->first.c_str(), it->second.c_str());
@@ -66,12 +67,6 @@ class Ghost_pattern : public Component {
             }
 
 
-	    common= new Patterns();
-
-	    if (!common->init(x_dim, y_dim, my_rank))   {
-		_ABORT(Ghost_pattern, "pattern_init() failed!\n");
-	    }
-
             // Create a handler for events
 	    net= configureLink("NETWORK", new Event::Handler<Ghost_pattern>
 		    (this, &Ghost_pattern::handle_events));
@@ -86,8 +81,15 @@ class Ghost_pattern : public Component {
 	    // Create a time converter
 	    tc= registerTimeBase("1ns", true);
 
+
+	    // Initialize the common functions we need
+	    common= new Patterns();
+	    if (!common->init(x_dim, y_dim, my_rank, net))   {
+		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
+	    }
+
 	    // Send a start event to ourselves without a delay
-	    // common->event_send(my_rank, START, 0.0);
+	    common->event_send(my_rank, START, 0.0);
         }
 
     private:
@@ -99,6 +101,8 @@ class Ghost_pattern : public Component {
 	int my_rank;
 	int x_dim;
 	int y_dim;
+	state_t state;
+	int ghost_pattern_debug;
 
         Params_t params;
 	Link *net;
@@ -113,6 +117,8 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);
 	    ar & BOOST_SERIALIZATION_NVP(y_dim);
+	    ar & BOOST_SERIALIZATION_NVP(state);
+	    ar & BOOST_SERIALIZATION_NVP(ghost_pattern_debug);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(tc);
         }

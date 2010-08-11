@@ -17,16 +17,15 @@
 #include "ghost_pattern.h"
 #include "pattern_common.h"
 
-int ghost_pattern_debug;
 
-typedef enum {INIT, COMPUTE, WAIT, DONE} state_t;
 
 void
 Ghost_pattern::handle_events(Event *sst_event)
 {
 
-static state_t state= INIT;
+CPUNicEvent *e;
 pattern_event_t event;
+double compute_time= 100.0;
 static int left, right, up, down;
 int myX, myY;
 int len;
@@ -34,10 +33,12 @@ static bool first_time= true;
 static int rcv_cnt= 0;
 
 
-    _GHOST_PATTERN_DBG(3, "Rank %d got an event\n", my_rank);
+    // Extract the pattern event type from the SST event
+    // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
+    e= static_cast<CPUNicEvent *>(sst_event);
+    event= (pattern_event_t)e->GetRoutine();
 
-    /* For now, our message size is always 128 bytes */
-    len= 128;
+    _GHOST_PATTERN_DBG(3, "Rank %d got event %d\n", my_rank, event);
 
     /* Who are my four neighbors? */
     if (first_time)   {
@@ -50,60 +51,58 @@ static int rcv_cnt= 0;
 	first_time= false;
     }
 
-    /* Extract the pattern event type from the SST event */
-    event= COMPUTE_DONE;
-    // event= sst_event->pattern_event;
-
     switch (state)   {
 	case INIT:
 	    /* Wait for the start signal */
 	    switch (event)   {
 		case START:
-		    // Send outselves a COMPUTE_DONE event
-		    // common->event_send(my_rank, COMPUTE_DONE, compute_time);
+		    // Send ourselves a COMPUTE_DONE event
+		    _GHOST_PATTERN_DBG(4, "[%2d] Starting, entering compute state\n", my_rank);
+		    common->event_send(my_rank, COMPUTE_DONE, compute_time);
 		    state= COMPUTE;
 		    break;
+
 		case COMPUTE_DONE:
-		    // Should not happen
-		    break;
 		case RECEIVE:
-		    // Should not happen
-		    break;
 		case FAIL:
-		    // Should not happen
-		    break;
 		case RESEND_MSG:
 		    // Should not happen
+		    _abort(ghost_pattern, "Invalid event in INIT\n");
 		    break;
 	    }
 	    break;
 
 	case COMPUTE:
 	    switch (event)   {
-		case START:
-		    // Should not happen
-		    break;
 		case COMPUTE_DONE:
+		    /* For now, our message size is always 128 bytes */
+		    len= 128;
+
+		    _GHOST_PATTERN_DBG(4, "[%2d] Done computing, entering wait state\n", my_rank);
 		    /* Our time to compute is over */
 		    common->send(right, len);
 		    common->send(left, len);
 		    common->send(up, len);
 		    common->send(down, len);
-		    state= WAIT;
+		    if (rcv_cnt == 4)   {
+			// We already have our for neighbor messages; no need to wait
+			rcv_cnt= 0;
+			state= COMPUTE;
+			_GHOST_PATTERN_DBG(4, "[%2d] No need to wait, back to compute state\n", my_rank);
+		    } else   {
+			state= WAIT;
+		    }
 		    break;
 		case RECEIVE:
 		    /* We got a message from another rank */
 		    rcv_cnt++;
-		    if (rcv_cnt == 4)   {
-			rcv_cnt= 0;
-			state= COMPUTE;
-		    }
+		    _GHOST_PATTERN_DBG(4, "[%2d] Got msg #%d from neighbor\n", my_rank, rcv_cnt);
 		    break;
+		case START:
 		case FAIL:
-		    /* We just failed. Deal with it! */
-		    break;
 		case RESEND_MSG:
-		    /* We have been asked to resend a previous msg to help another rank to recover */
+		    // Should not happen
+		    _abort(ghost_pattern, "Invalid event in COMPUTE\n");
 		    break;
 	    }
 	    break;
@@ -112,18 +111,18 @@ static int rcv_cnt= 0;
 	    /* We are waiting for messages from our four neighbors */
 	    switch (event)   {
 		case START:
-		    // Should not happen
-		    break;
 		case COMPUTE_DONE:
-		    /* Doesn't make sense; we should not be getting this event */
-		    _abort(ghost_pattern, "Compute done event in wait\n");
+		    // Doesn't make sense; we should not be getting these events
+		    _abort(ghost_pattern, "Invalid event in WAIT\n");
 		    break;
 		case RECEIVE:
 		    /* YES! We got a message from another rank */
 		    rcv_cnt++;
+		    _GHOST_PATTERN_DBG(4, "[%2d] Got msg #%d from neighbor\n", my_rank, rcv_cnt);
 		    if (rcv_cnt == 4)   {
 			rcv_cnt= 0;
 			state= COMPUTE;
+			_GHOST_PATTERN_DBG(4, "[%2d] Done waiting, entering compute state\n", my_rank);
 		    }
 		    break;
 		case FAIL:
