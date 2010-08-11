@@ -45,7 +45,7 @@ class Ghost_pattern : public Component {
 	    latency= -1.0;
 	    bandwidth= -1.0;
 	    compute_time= -1.0;
-	    exchange_msg_len= 1024 * 1024;
+	    exchange_msg_len= 128;
 	    rcv_cnt= 0;
 	    state= INIT;
 

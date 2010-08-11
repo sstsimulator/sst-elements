@@ -67,7 +67,11 @@ int exchange_msg_len;
     lat= 0.000002;
     bw= 1200000000.0;
     compute= 0.000150;
-    exchange_msg_len= 1024 * 1024;
+
+    // Assume 2GB of memory per MPI rank. The aquare root of that is
+    // the amount of data each node sends to each neighbor per ghost
+    // cell (halo) exchange.
+    exchange_msg_len= 46340;
     pattern_name= NULL;
 
 
