@@ -45,6 +45,7 @@ class Routermodel : public Component {
 	    // Defaults
 	    router_model_debug= 0;
 	    num_ports= -1;
+	    hop_delay= 0.000000002;
 
             while (it != params.end())   {
                 _ROUTER_MODEL_DBG(1, "Router %s: key=%s value=%s\n", component_name.c_str(),
