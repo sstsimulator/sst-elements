@@ -19,9 +19,9 @@
 
 
 /*********Sim-Panalyzer************/
-#define PANALYZER_H
+//#define PANALYZER_H
 ////#define LV1_PANALYZER_H
-#define LV2_PANALYZER_H
+//#define LV2_PANALYZER_H
 
 /* added for sim-panalyzer power analysis */
 extern "C"{
@@ -82,7 +82,17 @@ extern "C"{
 #include "../sst/core/techModels/libMcPATbeta/processor.h"
 #endif //mcpat07_h
 
+/*********ORION******************/
+#define ORION_H
 
+/*added for ORION power analysis */
+extern "C"{
+#ifdef ORION_H
+#include "../sst/core/techModels/libORION/SIM_parameter.h"
+#include "../sst/core/techModels/libORION/SIM_router.h"
+#include "../sst/core/techModels/libORION/SIM_link.h"
+#endif //orion_h
+}
 
 
 
@@ -101,7 +111,7 @@ namespace SST {
 
 	//TODO consider to add "ALL" to ptype, so users don't have to list/decouple power params one by one.
 	enum ptype {CACHE_IL1, CACHE_IL2, CACHE_DL1, CACHE_DL2, CACHE_ITLB, CACHE_DTLB, CLOCK, BPRED, RF, IO, LOGIC, EXEU_ALU, EXEU_FPU, MULT, IB, ISSUE_Q, INST_DECODER, BYPASS, EXEU, PIPELINE, LSQ, RAT, ROB, BTB, CACHE_L2, MEM_CTRL, ROUTER, LOAD_Q, RENAME_U, SCHEDULER_U, CACHE_L3, CACHE_L1DIR, CACHE_L2DIR, UARCH}; //RS is renamed by ISSUE_Q because of name collision	in s-p
-	enum pmodel{McPAT, SimPanalyzer, McPAT05, IntSim}; //McPAT05 is an older version
+	enum pmodel{McPAT, SimPanalyzer, McPAT05, IntSim, ORION}; //McPAT05 is an older version
 	enum tmodel {HOTSPOT};
 	enum tlayer{SILICON, INTERFACE, SPREADER, HEATSINK, NUM_THERMAL_LAYERS};
 	
@@ -345,7 +355,7 @@ typedef struct
 
 typedef struct
 {
-	double clockrate;
+	double clockrate, vdd;
 	unsigned has_global_link, flit_bits, input_buffer_entries_per_vc, virtual_channel_per_port, input_ports;
 	unsigned output_ports, link_throughput, link_latency, horizontal_nodes, vertical_nodes;
 	topology_style topology;
@@ -1039,7 +1049,7 @@ class Power{
 	    mc_tech.memory_number_ranks=2; mc_tech.memory_peak_transfer_rate=6400;
 	    mc_tech.area = 0.41391e-6; mc_tech.num_transistors = 0.584e6;
 	    /*router*/
-	    router_tech.clockrate=3500000000.0; router_tech.has_global_link=0; router_tech.flit_bits=128; router_tech.input_buffer_entries_per_vc=16;
+	    router_tech.clockrate=3500000000.0; router_tech.vdd=1.5; router_tech.has_global_link=0; router_tech.flit_bits=128; router_tech.input_buffer_entries_per_vc=16;
 	    router_tech.virtual_channel_per_port=2; router_tech.input_ports=5; router_tech.horizontal_nodes=8; router_tech.vertical_nodes=4;
 	    router_tech.output_ports=8; router_tech.link_throughput=1; router_tech.link_latency=1; router_tech.topology = RING; router_tech.area = 0.41391e-6; router_tech.num_transistors = 0.584e6;
 	    router_tech.link_length = 15500; //unit is micron

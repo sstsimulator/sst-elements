@@ -1,13 +1,22 @@
-Two power/area models (Sim-Panalyser and McPAT) have been integrated with SST and support power/area analysis of 5 component types (core, clock, IO, meory controller and NoC/router). A component type may be broken into several sub-component types for power/area analysis. For example, a core component is broken into iL1 cache, dL1 cache, L2 cache, iTLB cache, dTLB cache, branch predictor, register file, logic, ALU, FPU, MULT, EXEU, instruction buffer, instruction decoder, issue queue, LSQ, bypass, pipeline, RAT, ROB, BTB, etc. A component can decide which sub-components it wants power analyzed during component setup (see step 4 below).
+Two power/area models (Sim-Panalyzer and McPAT) have been integrated with SST and support
+power/area analysis of 5 component types (core, clock, IO, meory controller and NoC/router). A
+third model (ORION) has also been integrated with support for NoC power/area analysis. A component
+type may be broken into several sub-component types for power/area analysis. For example, a
+core component is broken into iL1 cache, dL1 cache, L2 cache, iTLB cache, dTLB cache, branch
+predictor, register file, logic, ALU, FPU, MULT, EXEU, instruction buffer, instruction decoder,
+issue queue, LSQ, bypass, pipeline, RAT, ROB, BTB, etc. A component can decide which sub-components
+it wants power analyzed during component setup (see step 4 below).
 
 What follows are steps for components to get power analysis:
-1. Build and install Sim-Panalyzer and McPAT (available under the
+1. Build and install Sim-Panalyzer, McPAT, and ORION (available under the
 "trunk/sst/techModels/" directory in the SST repository. Currently, 
 the Sim-Panalyzer and the McPAT libraries should be installed at the SAME
  path where zoltan is installed until the problem in using configure.m4 is fixed.
 
 2. Build SST with
---with-sim-panalyzer=PathToTheZoltanLibrary --with-McPAT=PathToTheZoltanLibrary
+--with-sim-panalyzer=PathToTheZoltanLibrary
+--with-McPAT=PathToTheZoltanLibrary
+--with-orion=PathToOrionsLibrary
 
 3. In the configuration file (.xml), include
 
@@ -15,7 +24,7 @@ the Sim-Panalyzer and the McPAT libraries should be installed at the SAME
 <!-- YES if the component wants power analysis; NO if not -->
 
 <power_model>SimPanalyzer</power_model>
-<!-- Which power model to use. Options are SimPanalyzer or McPAT-->
+<!-- Which power model to use. Options are SimPanalyzer, McPAT, or ORION-->
 
 <power_level>1</power_level> 
 <!-- If SimPanalyzer is chosen, 1 is high level power model; 2 is low level power model-->
@@ -34,22 +43,24 @@ power = new Power(Id());
 power->setTech(Id(), params, CACHE_IL1); // this line indicates power of iL1 cache will be analyzed   
 power->setTech(Id(), params, ALU); // this line indicates power of ALU will be analyzed   
  
-See the attached file, SSTrequiredPowerParams.pdf for the available sub-component types(power_type or ptype)  
-that you can use and the corresponding parameters required for power analysis. 
+See the attached file, SSTrequiredPowerParams.pdf for the available sub-component types
+(power_type or ptype) that you can use and the corresponding parameters required for power analysis. 
 
-Power = usage_count*power_per_usage. power_per_usage is estimated in this step by setTech. In step 5, you will
-need to provide the usage counts (statistics) of the subcomponents.
+Power = usage_count*power_per_usage. power_per_usage is estimated in this step by setTech.
+In step 5, you will need to provide the usage counts (statistics) of the subcomponents.
 
-4.3 Create two objects of the Pdissipation_t structure to store power dissipation data (current power, total energy, peak power, etc)
+4.3 Create two objects of the Pdissipation_t structure to store power dissipation data 
+(current power, total energy, peak power, etc)
 Pdissipation_t pdata, pstats;
 
 
-5. In your component .cc file, include the following to get power dissipation of a subcomponent during 
+5. In your component.cc file, include the following to get power dissipation of a subcomponent during 
 a time interval based on the statistics (user_params) you entered.
 
 5.1 //First, call getPower(Cycle_t current, ptype power_type, char *user_parms, int total_cycles)
-//where current is current cycle, power_type is the subcomponent type, user_parms is a string that contains statistics, 
-//and total_cycles is the time interval. 
+//where current is current cycle, power_type is the subcomponent type, user_parms is a string that
+contains statistics, and total_cycles is the time interval. 
+
 pdata = power->getPower(current, CACHE_IL1, "1:1:1:1:1:0", 3);
 
 The line above tells McPAT that the iL1 cache has
@@ -63,8 +74,8 @@ during the past 3 cycles.
 
 The getPower function returns power dissipation (pdata) estimated by McPAT based on these inputs.
 
-See the attached file, SSTrequiredStatistics.pdf for the available subcomponent types (power_type) and 
-the corresponding statistics required for power analysis.
+See the attached file, SSTrequiredStatistics.pdf for the available subcomponent types (power_type)
+and the corresponding statistics required for power analysis.
 
 5.2 //Then, store this power data in the central power database by calling
 regPowerStats(pdata);
@@ -91,8 +102,8 @@ pstats = readPowerStats(id);
 where id is the ID of the component whose power you want to query from the central database. 
 
 
-cpu_power.cc and cpu_power.h under the "components/cpu_power" directory are good examples of how to estimate power of a component.
+cpu_power.cc and cpu_power.h under the "components/cpu_power" directory are good examples of how to
+estimate power of a component.
 cpu_power.xml is a good example of how to set up power-related parameters in the configuration file.
 
 Please let me know if you need any further explanations or find any bugs.
-

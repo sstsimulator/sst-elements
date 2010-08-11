@@ -4188,6 +4188,9 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 			if (!it->first.compare("router_clock_rate")){  //Mc  
 			    sscanf(it->second.c_str(), "%lf", &router_tech.clockrate);
 			}
+			if (!it->first.compare("router_voltage")){  //Mc  
+			    sscanf(it->second.c_str(), "%lf", &router_tech.vdd);
+			}
 			else if (!it->first.compare("router_has_global_link")){
 			    sscanf(it->second.c_str(), "%d", &router_tech.has_global_link);
 			}
@@ -4865,7 +4868,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	  #endif /*McPAT05_H*/                 
 	break;
 	case 3:
-	/*IntSim*/
+	IntSim
 	   switch(power_type)
       	   {
 	      #ifdef INTSIM_H
@@ -5032,6 +5035,16 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
           } // end switch ptype
 	  getUnitPower(power_type, 0, power_model); 
 	break;
+
+   case 4:
+   /*ORION*/
+      SST_SIM_router_init(&GLOB(router_info), &GLOB(router_power), NULL,
+                          router_tech.input_ports,
+                          router_tech.output_ports,
+                          router_tech.flit_bits,
+                          router_tech.virtual_channel_per_port);
+      getUnitPower(power_type, 0, power_model);
+   break;
       } // end switch p_model
     }	//end model power = yes
 
@@ -5087,6 +5100,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                       p_unitPower.il1_read = intsim_il1->chip->dyn_power_logic_gates+intsim_il1->chip->dyn_power_repeaters+intsim_il1->chip->power_wires;
 		      p_unitPower.il1_write = p_unitPower.il1_read;	    
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.il1 = power_model;
 	   break;
@@ -5117,6 +5134,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                         p_unitPower.il2_read = intsim_il2->chip->dyn_power_logic_gates+intsim_il2->chip->dyn_power_repeaters+intsim_il2->chip->power_wires;
 		      p_unitPower.il2_write = p_unitPower.il2_read;		   		
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.il2 = power_model;
 	   break;
@@ -5160,6 +5181,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                         p_unitPower.dl1_read = intsim_dl1->chip->dyn_power_logic_gates+intsim_dl1->chip->dyn_power_repeaters+intsim_dl1->chip->power_wires;
 		      p_unitPower.dl1_write = p_unitPower.dl1_read;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.dl1 = power_model;
 	   break;
@@ -5190,6 +5215,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                          p_unitPower.dl2_read = intsim_dl2->chip->dyn_power_logic_gates+intsim_dl2->chip->dyn_power_repeaters+intsim_dl2->chip->power_wires;
 		      p_unitPower.dl2_write = p_unitPower.dl2_read;		    		    
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.dl2 = power_model;
 	   break;
@@ -5230,6 +5259,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                     	p_unitPower.itlb_read = intsim_itlb->chip->dyn_power_logic_gates+intsim_itlb->chip->dyn_power_repeaters+intsim_itlb->chip->power_wires;
 		      p_unitPower.itlb_write = p_unitPower.itlb_read;	    		    
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.itlb = power_model;
 	   break;
@@ -5270,6 +5303,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                         p_unitPower.dtlb_read = intsim_dtlb->chip->dyn_power_logic_gates+intsim_dtlb->chip->dyn_power_repeaters+intsim_dtlb->chip->power_wires;
 		      p_unitPower.dtlb_write = p_unitPower.dtlb_read;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.dtlb = power_model;
 	   break;
@@ -5302,6 +5339,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
         		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic;	   
 			std::cout << "unit clock power = " << p_unitPower.clock << std::endl;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.clock = power_model;
 	   break;
@@ -5342,6 +5383,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.bpred = intsim_bpred->chip->dyn_power_logic_gates+intsim_bpred->chip->dyn_power_repeaters+intsim_bpred->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.bpred = power_model;
 	   break;
@@ -5391,6 +5436,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.rf = intsim_rf->chip->dyn_power_logic_gates+intsim_rf->chip->dyn_power_repeaters+intsim_rf->chip->power_wires;
 		    break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.rf = power_model;
 	   break;
@@ -5415,6 +5464,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
                          p_unitPower.aio = intsim_io->chip->dyn_power_logic_gates+intsim_io->chip->dyn_power_repeaters+intsim_io->chip->power_wires;
 			p_unitPower.dio = intsim_io->chip->dyn_power_logic_gates+intsim_io->chip->dyn_power_repeaters+intsim_io->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.io = power_model;
 	   break;
@@ -5453,6 +5506,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.logic = intsim_logic->chip->dyn_power_logic_gates+intsim_logic->chip->dyn_power_repeaters+intsim_logic->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.logic = power_model;
 	   break;
@@ -5487,6 +5544,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                          p_unitPower.alu = intsim_alu->chip->dyn_power_logic_gates+intsim_alu->chip->dyn_power_repeaters+intsim_alu->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.alu = power_model;
 	   break;
@@ -5521,6 +5582,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.fpu = intsim_fpu->chip->dyn_power_logic_gates+intsim_fpu->chip->dyn_power_repeaters+intsim_fpu->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.fpu = power_model;
 	   break;
@@ -5547,6 +5612,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.mult = intsim_mult->chip->dyn_power_logic_gates+intsim_mult->chip->dyn_power_repeaters+intsim_mult->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.mult = power_model;
 	   break;
@@ -5579,6 +5648,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.ib = intsim_ib->chip->dyn_power_logic_gates+intsim_ib->chip->dyn_power_repeaters+intsim_ib->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.ib = power_model;
 		break;
@@ -5612,6 +5685,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.issueQ = intsim_issueQ->chip->dyn_power_logic_gates+intsim_issueQ->chip->dyn_power_repeaters+intsim_issueQ->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.issueQ = power_model;
 		break;	
@@ -5650,6 +5727,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			p_unitPower.decoder = intsim_decoder->chip->dyn_power_logic_gates+intsim_decoder->chip->dyn_power_repeaters+intsim_decoder->chip->power_wires;	   
 			std::cout << "unit decoder power = " << p_unitPower.decoder << std::endl;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.decoder = power_model;
 		break;	
@@ -5696,6 +5777,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.bypass = intsim_bpred->chip->dyn_power_logic_gates+intsim_bpred->chip->dyn_power_repeaters+intsim_bpred->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.bypass = power_model;
 		break;	
@@ -5720,6 +5805,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.exeu = intsim_exeu->chip->dyn_power_logic_gates+intsim_exeu->chip->dyn_power_repeaters+intsim_exeu->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.exeu = power_model;
 		break;
@@ -5753,6 +5842,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.pipeline = intsim_pipeline->chip->dyn_power_logic_gates+intsim_pipeline->chip->dyn_power_repeaters+intsim_pipeline->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.pipeline = power_model;
 		break;
@@ -5788,6 +5881,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.lsq = intsim_lsq->chip->dyn_power_logic_gates+intsim_lsq->chip->dyn_power_repeaters+intsim_lsq->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.lsq = power_model;
 		break;	
@@ -5820,6 +5917,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.rat = intsim_rat->chip->dyn_power_logic_gates+intsim_rat->chip->dyn_power_repeaters+intsim_rat->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.rat = power_model;
 		break;
@@ -5847,6 +5948,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.rob = intsim_rob->chip->dyn_power_logic_gates+intsim_rob->chip->dyn_power_repeaters+intsim_rob->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.rob = power_model;
 		break;
@@ -5880,6 +5985,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.btb = intsim_btb->chip->dyn_power_logic_gates+intsim_btb->chip->dyn_power_repeaters+intsim_btb->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.btb = power_model;
 		break;
@@ -5918,6 +6027,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.l2 = intsim_L2->chip->dyn_power_logic_gates+intsim_L2->chip->dyn_power_repeaters+intsim_L2->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.L2 = power_model;
 		break;
@@ -5954,6 +6067,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.mc = intsim_mc->chip->dyn_power_logic_gates+intsim_mc->chip->dyn_power_repeaters+intsim_mc->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.mc = power_model;
 		break;
@@ -6010,6 +6127,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.router = intsim_router->chip->dyn_power_logic_gates+intsim_router->chip->dyn_power_repeaters+intsim_router->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}	
 		p_powerModel.router = power_model;
 		break;
@@ -6035,6 +6156,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/   
 			p_unitPower.loadQ = intsim_loadQ->chip->dyn_power_logic_gates+intsim_loadQ->chip->dyn_power_repeaters+intsim_loadQ->chip->power_wires;                 
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.loadQ = power_model;
 	   break;
@@ -6059,6 +6184,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.rename = intsim_rename->chip->dyn_power_logic_gates+intsim_rename->chip->dyn_power_repeaters+intsim_rename->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 	   p_powerModel.rename = power_model;
 	   break;
@@ -6084,6 +6213,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.scheduler = intsim_scheduler->chip->dyn_power_logic_gates+intsim_scheduler->chip->dyn_power_repeaters+intsim_scheduler->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.scheduler = power_model;
 	   break;	
@@ -6111,6 +6244,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
 			p_unitPower.l3 = intsim_L3->chip->dyn_power_logic_gates+intsim_L3->chip->dyn_power_repeaters+intsim_L3->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.L3 = power_model;
 	   break;								
@@ -6138,6 +6275,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.l1dir = intsim_L1dir->chip->dyn_power_logic_gates+intsim_L1dir->chip->dyn_power_repeaters+intsim_L1dir->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.L1dir = power_model;
 	   break;
@@ -6165,6 +6306,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                         p_unitPower.l2dir = intsim_L2dir->chip->dyn_power_logic_gates+intsim_L2dir->chip->dyn_power_repeaters+intsim_L2dir->chip->power_wires;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 		p_powerModel.L2dir = power_model;
 	   break;
@@ -6190,6 +6335,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*IntSim*/
                     p_unitPower.uarch = 9.99;
                     break;
+
+          case 4:
+          /*ORION*/
+          break;
 		}
 	   break;
 	} // end switch ptype
@@ -6209,6 +6358,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
     I dynamicPower = 0.0;
     I leakage = 0.0;
     I TDP = 0.0;
+
+    #ifdef ORION_H
+    char name[64] = "ORION";
+    char *nameptr = name;
+    #endif /*ORION*/
 
     #ifdef McPAT05_H
     unsigned read_hits, read_misses, miss_buffer_access, fill_buffer_access, prefetch_buffer_access, wbb_buffer_access, write_access, total_hits, total_misses; //McPAT05 user_params
@@ -6299,6 +6453,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_il1->chip->leakage_power_logic_gates + intsim_il1->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	   
 	    updatePowUsage(c, power_type, floorplan_id.il1, &p_usage_cache_il1, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6341,6 +6499,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_il2->chip->leakage_power_logic_gates + intsim_il2->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.il2, &p_usage_cache_il2, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
@@ -6406,6 +6568,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_dl1->chip->leakage_power_logic_gates + intsim_dl1->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	   
 	    updatePowUsage(c, power_type, floorplan_id.dl1, &p_usage_cache_dl1, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6448,6 +6614,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_dl2->chip->leakage_power_logic_gates + intsim_dl2->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.dl2, &p_usage_cache_dl2, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;	
@@ -6509,6 +6679,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_itlb->chip->leakage_power_logic_gates + intsim_itlb->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.itlb, &p_usage_cache_itlb, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6571,6 +6745,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_dtlb->chip->leakage_power_logic_gates + intsim_dtlb->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.dtlb, &p_usage_cache_dtlb, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6616,6 +6794,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
         	    leakage = (I)intsim_clock->chip->clock_power_leakage;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.clock, &p_usage_clock, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6670,6 +6852,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_bpred->chip->leakage_power_logic_gates + intsim_bpred->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.bpred, &p_usage_bpred, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6731,6 +6917,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_rf->chip->leakage_power_logic_gates + intsim_rf->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.rf, &p_usage_rf, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6768,6 +6958,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_io->chip->leakage_power_logic_gates + intsim_io->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.io, &p_usage_io, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
@@ -6809,6 +7003,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_logic->chip->leakage_power_logic_gates + intsim_logic->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.logic, &p_usage_logic, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6856,6 +7054,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_alu->chip->leakage_power_logic_gates + intsim_alu->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.alu, &p_usage_alu, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6902,6 +7104,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_fpu->chip->leakage_power_logic_gates + intsim_fpu->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    
 	    updatePowUsage(c, power_type, floorplan_id.fpu, &p_usage_fpu, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -6935,6 +7141,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_mult->chip->leakage_power_logic_gates + intsim_mult->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.mult, &p_usage_mult, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
@@ -6977,6 +7187,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_ib->chip->leakage_power_logic_gates + intsim_ib->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	    
 	    updatePowUsage(c, power_type, floorplan_id.ib, &p_usage_ib, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7020,6 +7234,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_issueQ->chip->leakage_power_logic_gates + intsim_issueQ->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	   
 	    updatePowUsage(c, power_type, floorplan_id.issueQ, &p_usage_rs, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7073,6 +7291,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_decoder->chip->leakage_power_logic_gates+intsim_decoder->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	    
 	    updatePowUsage(c, power_type, floorplan_id.decoder, &p_usage_decoder, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7118,6 +7340,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_bypass->chip->leakage_power_logic_gates + intsim_bypass->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	   
 	    updatePowUsage(c, power_type, floorplan_id.bypass, &p_usage_bypass, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7150,6 +7376,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_exeu->chip->leakage_power_logic_gates + intsim_exeu->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	    
 	    updatePowUsage(c, power_type, floorplan_id.exeu, &p_usage_exeu, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7182,6 +7412,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_pipeline->chip->leakage_power_logic_gates + intsim_pipeline->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	
 	    updatePowUsage(c, power_type, floorplan_id.pipeline, &p_usage_pipeline, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7237,6 +7471,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_lsq->chip->leakage_power_logic_gates + intsim_lsq->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	   
 	    updatePowUsage(c, power_type, floorplan_id.lsq, &p_usage_lsq, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7279,6 +7517,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_rat->chip->leakage_power_logic_gates + intsim_rat->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	   
 	    updatePowUsage(c, power_type, floorplan_id.rat, &p_usage_rat, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7311,6 +7553,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_rob->chip->leakage_power_logic_gates + intsim_rob->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	    
 	    updatePowUsage(c, power_type, floorplan_id.rob, &p_usage_rob, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7353,6 +7599,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_btb->chip->leakage_power_logic_gates + intsim_btb->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	   
 	    updatePowUsage(c, power_type, floorplan_id.btb, &p_usage_btb, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7397,6 +7647,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_L2->chip->leakage_power_logic_gates + intsim_L2->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	    updatePowUsage(c, power_type, floorplan_id.L2, &p_usage_cache_l2[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
@@ -7437,6 +7691,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_mc->chip->leakage_power_logic_gates + intsim_mc->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    }	
 	    
 	    updatePowUsage(c, power_type, floorplan_id.mc, &p_usage_mc, totalPowerUsage, dynamicPower, leakage, TDP);
@@ -7482,10 +7740,23 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_router->chip->leakage_power_logic_gates + intsim_router->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+         case 4:
+         /*ORION*/
+         #ifdef ORION_H
+         totalPowerUsage = (I)SST_SIM_router_stat_power(&GLOB(router_info), &GLOB(router_power), 0, nameptr, 0, 1, 1/*if 1, print subcomponent results*/,
+                                                         router_tech.clockrate, router_tech.vdd);
+         dynamicPower = 0.25 * (I)LinkDynamicEnergyPerBitPerMeter(router_tech.link_length*1e-6, router_tech.vdd) * (I)router_tech.clockrate * (I)router_tech.link_length*1e-6 * (I)router_tech.flit_bits * (I)router_tech.input_ports;
+         leakage = (I)LinkLeakagePowerPerMeter(router_tech.link_length*1e-6, router_tech.vdd) * (I)router_tech.link_length*1e-6 * (I)router_tech.flit_bits * (I)router_tech.input_ports;
+         totalPowerUsage = dynamicPower + leakage + totalPowerUsage;
+         #endif
+         break;
+
 	    }	
 	   
 	    updatePowUsage(c, power_type, floorplan_id.router, &p_usage_router, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
+         
 	  case 27:
 	  //load_Q
 	    switch(p_powerModel.loadQ)
@@ -7514,6 +7785,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_loadQ->chip->leakage_power_logic_gates + intsim_loadQ->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.loadQ, &p_usage_loadQ, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
@@ -7546,6 +7821,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_rename->chip->leakage_power_logic_gates + intsim_rename->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.rename, &p_usage_renameU, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
@@ -7578,6 +7857,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_scheduler->chip->leakage_power_logic_gates + intsim_scheduler->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.scheduler, &p_usage_schedulerU, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
@@ -7613,6 +7896,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_L3->chip->leakage_power_logic_gates + intsim_L3->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.L3, &p_usage_cache_l3[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
@@ -7649,6 +7936,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_L1dir->chip->leakage_power_logic_gates + intsim_L1dir->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.L1dir, &p_usage_cache_l1dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }
@@ -7685,6 +7976,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		leakage = (I)intsim_L2dir->chip->leakage_power_logic_gates + intsim_L2dir->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
               break;
+
+          case 4:
+          /*ORION*/
+          break;
 	    } // end switch power model
 	    updatePowUsage(c, power_type, floorplan_id.L2dir, &p_usage_cache_l2dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
 	    }

@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+
+<!-- general sim configuration -->
+<!-- overridden by the command line -->
+<config>
+    lib-path=/home/kthomp/local/newsst/lib/sst
+    stopAtCycle=100000
+</config>
+
+<!-- reference definition for cpu1 component -->
+<!-- ORION--> 
+<cpu1_params>
+    <clock>2.2GHz</clock>
+    <rev>1.5</rev>
+    <power_monitor>YES</power_monitor>
+    <power_model>ORION</power_model>
+    <router_voltage>1.5</router_voltage>
+    <router_clock_rate>2000000000</router_clock_rate>
+    <router_flit_bits>64</router_flit_bits>
+    <router_virtual_channel_per_port>2</router_virtual_channel_per_port>
+    <router_input_ports>4</router_input_ports>
+    <router_output_ports>4</router_output_ports>
+</cpu1_params>
+
+<!-- McPAT-->
+<cpu2_params>
+    <clock>2.2GHz</clock>
+    <rev>1.5</rev>
+    <power_monitor>NO</power_monitor>
+    <power_model>McPAT</power_model>
+    <power_level>2</power_level>    
+    <supply_voltage>1.5</supply_voltage>
+    <core_temperature>360</core_temperature>
+    <core_tech_node>65</core_tech_node>
+    <cache_freq>2200000000</cache_freq>
+    <cache_il1_sC>8192</cache_il1_sC>
+    <cache_il1_line_size>32</cache_il1_line_size>
+    <cache_il1_associativity>8</cache_il1_associativity>
+    <cache_il1_number_banks>1</cache_il1_number_banks>
+    <core_physical_address_width>52</core_physical_address_width>
+    <cache_il1_throughput>1</cache_il1_throughput>
+    <cache_il1_latency>3</cache_il1_latency>
+    <cache_il1_number_readwrite_ports>1</cache_il1_number_readwrite_ports>
+    <cache_il1_miss_buffer_size>16</cache_il1_miss_buffer_size>
+    <cache_il1_fill_buffer_size>16</cache_il1_fill_buffer_size>
+    <cache_il1_prefetch_buffer_size>16</cache_il1_prefetch_buffer_size>
+</cpu2_params>
+
+
+
+<!-- reference definition for cpu component link -->
+<cpu_link_params>
+    <lat>1ns</lat>
+    <name>MEM</name>
+</cpu_link_params>
+
+<|-- reference definition -->
+<xbar_clock>1GHz</xbar_clock>
+
+<|-- reference definition -->
+<xbar_link_params>
+	<lat>2ns</lat>
+    <name>port1</name>
+</xbar_link_params>
+
+
+
+<sst>
+	<component id="cpu1" weight=1.0 >	
+		<cpu_router_power>
+            <params>
+                <cpuId>0xdeadbeef</cpuId>
+                <params reference=cpu1_params />
+            </params> 
+			<links>
+				<link id="cpu1xbar">
+                    <params reference=cpu_link_params/>
+				</link>
+			</links>
+		</cpu_router_power>
+	</component>
+	<component id="cpu1.xbar">	
+		<xbar>
+            <params>
+                <clock reference=xbar_clock />
+                <rev> 1.4 </rev>
+            </params>
+			<links>
+				<link id="cpu1xbar">
+					<params>
+                        <lat>2ns</lat>
+                        <name>port0</name>
+                    </params>
+				</link>
+				<link id="xbar2xbar">
+					 <params lat="100" name="port1" />
+                    <params reference=xbar_link_params />
+				</link>
+			</links>
+		</xbar>
+	</component>
+
+	<component id="cpu2.xbar">	
+		<xbar>
+            <params>
+                <clock reference=xbar_clock />
+                <rev> 1.4 </rev>
+            </params>
+			<links>
+				<link id="xbar2xbar">
+					<params>
+                         <lat>2ns</lat>
+                        <name>port1</name>
+                    </params>
+				</link>
+				<link id="cpu2xbar">
+					 <params>
+                        <lat>2ns</lat>
+                        <name>port0</name>
+					 </params>
+				</link>
+			</links>
+		</xbar>
+	</component>
+
+	<component id="cpu2">	
+		<cpu_router_power>
+            <params>
+                <cpuId>0xdeadbeee</cpuId>
+                <params reference=cpu2_params />
+		<rev>1.5</rev>
+            </params>
+			<links>
+				<link id="cpu2xbar">
+                    <params reference=cpu_link_params/>
+				</link>
+			</links>
+		</cpu_router_power>
+	</component>
+</sst>
