@@ -5,14 +5,27 @@
     run-mode=both
 </config>
 
+<!-- reference definition for introspector-->
+<intro_params>
+    <period>137595ns</period>
+    <model>DRAMSimC</model>
+</intro_params>
 
 <sst>
+	<introspector id="DRAMEnergyIntrospector">	
+		<introspector_dram>
+            <params>
+                <params reference=intro_params />
+            </params>
+		</introspector_dram>
+	</introspector>
+
 	<component id="genericProc" >	
 		<genericProc>
 			<params>
               <debug>0</debug>
 			  <clock>2.0Ghz</clock>
-			  <execFile>sst/trunk/sst/elements/genericProc/programs/fooPrint</execFile>
+			  <execFile>/home/myhsieh/Desktop/latest/trunk/sst/elements/genericProc/programs/fooPrint2</execFile>
 			  <verbose>0</verbose>
 			  <externalMem>1</externalMem>
 			 </params>

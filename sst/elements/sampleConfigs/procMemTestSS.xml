@@ -5,25 +5,37 @@
     run-mode=both
 </config>
 
+<!-- reference definition for introspector-->
+<intro_params>
+    <period>137595ns</period>
+    <model>DRAMSimC</model>
+</intro_params>
 
 <sst>
+	<introspector id="DRAMEnergyIntrospector">	
+		<introspector_dram>
+            <params>
+                <params reference=intro_params />
+            </params>
+		</introspector_dram>
+	</introspector>
+
 	<component id="genericProc" >	
 		<genericProc>
 			<params>
 			  <clock>2.0 GHz</clock>
-			  <execFile>sst/trunk/components/genericProc/programs/fooPrint</execFile>
-			  <execFile>sst/trunk/components/genericProc/programs/gups_distro/gups_serial</execFile>
-			  <execFile>sst/trunk/components/genericProc/programs/pthreadTest</execFile>
-			  <execFile>sst/trunk/components/genericProc/programs/memBludge</execFile>
-			  <execFile>sst/trunk/sst/elements/genericProc/programs/gups_distro/gups_notserial</execFile>
-			  <execFile>sst/trunk/sst/elements/genericProc/programs/HPCCG/test_HPCCG</execFile>
+			  <execFile>/home/myhsieh/Desktop/latest/trunk/sst/elements/genericProc/programs/fooPrint2</execFile>
+			  <execFile>/home/myhsieh/Desktop/latest/trunk/sst/elements/genericProc/programs/gups_distro/gups_serial</execFile>
+			  <execFile>/home/myhsieh/Desktop/latest/trunk/sst/elements/genericProc/programs/pthreadTest</execFile>
+			  <execFile>/home/myhsieh/Desktop/latest/trunk/sst/elements/genericProc/programs/memBludge</execFile>
+			  <execFile>/home/myhsieh/Desktop/latest/trunk/sst/elements/genericProc/programs/gups_distro/gups_notserial</execFile>
 			  <externalMem>1</externalMem>
 			  <maxMMOut>64</maxMMOut>
 			  <verbose>5</verbose>
 			  <ssBackEnd>1</ssBackEnd>
 			  <cores>33</cores>
 			  <coherent>1</coherent>
-			  <ssConfig>sst/trunk/sst/elements/sampleConfigs/rs2.conf</ssConfig>
+			  <ssConfig>/home/myhsieh/Desktop/latest/trunk/sst/elements/sampleConfigs/rs2.conf</ssConfig>
 			  <mem.initialCredit>   8 </mem.initialCredit>
 			  <mem.readRespCredit>  1 </mem.readRespCredit>
 			  <mem.writeRespCredit> 1 </mem.writeRespCredit>
