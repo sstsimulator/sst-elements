@@ -16,7 +16,7 @@
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
-    Component( id ),
+    IntrospectedComponent( id ),
     m_printStats("no"),
     m_dbg( *new Log< DRAMSIMC_DBG >( "DRAMSimC::", false ) ),
     m_log( *new Log< >( "INFO DRAMSimC: ", false ) )
@@ -99,6 +99,12 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     writeDataCB = new Callback< DRAMSimC, void, uint, uint64_t,uint64_t >
       (this, &DRAMSimC::writeData);
     m_memorySystem->RegisterCallbacks( readDataCB,writeDataCB, NULL);
+
+    //make the following energy information monitored by introspector
+    registerMonitorInt("dram_backgroundEnergy");
+    registerMonitorInt("dram_burstEnergy");
+    registerMonitorInt("dram_actpreEnergy");
+    registerMonitorInt("dram_refreshEnergy");
 }
 
 int DRAMSimC::Finish() 
@@ -178,7 +184,7 @@ bool DRAMSimC::clock( Cycle_t current )
     }
     badCheat = 0;
     printf("DRAMSim reset stats\n");
-  }
+  }   
 
     m_memorySystem->update();
 
@@ -205,6 +211,31 @@ bool DRAMSimC::clock( Cycle_t current )
         }
     }
     return false;
+}
+
+uint64_t DRAMSimC::getIntData(int dataID, int index)
+{ 
+	vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
+  	assert( index <= v.size());
+
+	switch(dataID)
+	{ 
+	    case dram_backgroundEnergy:	    
+		return (m_memorySystem->memoryController->backgroundEnergy[index]);
+		break;
+	    case dram_burstEnergy: 	   
+		return (m_memorySystem->memoryController->burstEnergy[index]);
+		break;
+	    case dram_actpreEnergy: 	    
+		return (m_memorySystem->memoryController->actpreEnergy[index]);
+		break;
+	    case dram_refreshEnergy:
+		return (m_memorySystem->memoryController->refreshEnergy[index]);
+		break;
+	    default:
+		return (0);
+		break;	
+	}
 }
 
 extern "C" {

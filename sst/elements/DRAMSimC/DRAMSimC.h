@@ -15,9 +15,10 @@
 
 #include <sst/core/log.h>
 #include <sst/core/event.h>
-#include <sst/core/component.h>
+#include <sst/core/introspectedComponent.h>
 #include <memoryChannel.h>
 #include <MemorySystem.h>
+
 
 using namespace std;
 using namespace SST;
@@ -26,7 +27,7 @@ using namespace SST;
 #define DRAMSIMC_DBG 0
 #endif
 
-class DRAMSimC : public Component {
+class DRAMSimC : public IntrospectedComponent {
 
     public: // functions
 
@@ -47,6 +48,7 @@ class DRAMSimC : public Component {
 
         void readData(uint id, uint64_t addr, uint64_t clockcycle);
         void writeData(uint id, uint64_t addr, uint64_t clockcycle);
+	uint64_t getIntData(int dataID, int index);
 
         std::deque<Transaction> m_transQ;
         MemorySystem*           m_memorySystem;
