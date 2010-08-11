@@ -153,7 +153,7 @@ class parameters_tech_t
   double vert_dielectric_constant[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
 
   double Vpp;
-  double Vdd;
+  double vdd;
   double Vdsat;
   double Vth;
   double Vth_dram;

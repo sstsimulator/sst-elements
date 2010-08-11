@@ -22,7 +22,7 @@ IntSim_library::IntSim_library(parameters_tech_t device_tech, double area, doubl
   param = new intsim_param_t();
 
   // IntSim parameters setup
-  param->Vdd = device_tech.Vdd;
+  param->Vdd = device_tech.vdd;
   param->Vt = device_tech.Vth;
   param->tox = device_tech.t_ox;
   param->drive_p_div_n = 1.0/device_tech.np_ratio;

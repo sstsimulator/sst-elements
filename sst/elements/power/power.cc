@@ -4868,7 +4868,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	  #endif /*McPAT05_H*/                 
 	break;
 	case 3:
-	IntSim
+	/*IntSim*/
 	   switch(power_type)
       	   {
 	      #ifdef INTSIM_H
@@ -10730,7 +10730,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
     switch(RAM_tech)
     {
       case HP:
-        Vdd = 0.8;
+        vdd = 0.8;
         Vdsat = 0.0233;
         Vth = 0.1395;
         L_phy = 0.009;
@@ -10745,7 +10745,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_on_n = 2626.4e-6;
         I_on_p = I_on_n/2.0;
         np_ratio = 2.0;
-        Rn_channel_on = 1.45*Vdd/I_on_n;
+        Rn_channel_on = 1.45*vdd/I_on_n;
         Rp_channel_on = np_ratio*Rn_channel_on;
         gmp_to_gmn_multiplier = 1.38;
         long_channel_leakage_reduction = 1.0/3.274;
@@ -10793,7 +10793,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_off_n[96] = 3.54e-6; I_off_n[97] = 3.85e-6; I_off_n[98] = 4.18e-6; I_off_n[99] = 4.52e-6; I_off_n[100] = 4.88e-6;
         break;
       case LSTP:
-        Vdd = 0.8;
+        vdd = 0.8;
         Vdsat = 0.0664;
         Vth = 0.40126;
         L_phy = 0.014;
@@ -10808,13 +10808,13 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_on_n = 727.6e-6;
         I_on_p = I_on_n/2.0;
         np_ratio = 2.0;
-        Rn_channel_on = 1.99*Vdd/I_on_n;
+        Rn_channel_on = 1.99*vdd/I_on_n;
         Rp_channel_on = np_ratio*Rn_channel_on;
         gmp_to_gmn_multiplier = 0.99;
         long_channel_leakage_reduction = 1.0/1.89;
         break;
       case LOP:
-        Vdd = 0.6;
+        vdd = 0.6;
         Vdsat = 0.0181;
         Vth = 0.2315;
         L_phy = 0.011;
@@ -10829,7 +10829,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_on_n = 916.1e-6;
         I_on_p = I_on_n/2.0;
         np_ratio = 2.0;
-        Rn_channel_on = 1.73*Vdd/I_on_n;
+        Rn_channel_on = 1.73*vdd/I_on_n;
         Rp_channel_on = np_ratio*Rn_channel_on;
         gmp_to_gmn_multiplier = 1.11;
         long_channel_leakage_reduction = 1.0/2.38;
@@ -10882,7 +10882,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         break;
       case COMM_DRAM:
         Vpp = 2.3;
-        Vdd = 0.9;
+        vdd = 0.9;
         Vdsat = 0.0972;
         Vth = 1.0;    
         Vth_dram = 1.0;
@@ -11034,7 +11034,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
     switch(RAM_tech)
     {
       case HP:
-        Vdd = 1.0;
+        vdd = 1.0;
         Vdsat = 0.0938;
         Vth = 0.18035;
         L_phy = 0.018;
@@ -11049,7 +11049,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_on_n = 2046.6e-6;
         I_on_p = I_on_n/2.0;
         np_ratio = 2.41;
-        Rn_channel_on = 1.51*Vdd/I_on_n;
+        Rn_channel_on = 1.51*vdd/I_on_n;
         Rp_channel_on = np_ratio*Rn_channel_on;
         gmp_to_gmn_multiplier = 1.38;
         long_channel_leakage_reduction = 1.0/3.546;
@@ -11063,7 +11063,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         }
         break;
       case LSTP:
-        Vdd = 1.1;
+        vdd = 1.1;
         Vdsat = 0.0912;
         Vth = 0.50245;
         L_phy = 0.0212;
@@ -11078,7 +11078,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_on_n = 666.2e-6;
         I_on_p = I_on_n/2.0;
         np_ratio = 2.23;
-        Rn_channel_on = 1.99*Vdd/I_on_n;
+        Rn_channel_on = 1.99*vdd/I_on_n;
         Rp_channel_on = np_ratio*Rn_channel_on;
         gmp_to_gmn_multiplier = 0.99;
         long_channel_leakage_reduction = 1.0/2.08;
@@ -11092,7 +11092,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         }
         break;
       case LOP:
-        Vdd = 0.7;
+        vdd = 0.7;
         Vdsat = 0.0571;
         Vth = 0.22599;
         L_phy = 0.022;
@@ -11107,7 +11107,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         I_on_n = 748.9e-6;
         I_on_p = I_on_n/2.0;
         np_ratio = 2.28;
-        Rn_channel_on = 1.76*Vdd/I_on_n;
+        Rn_channel_on = 1.76*vdd/I_on_n;
         Rp_channel_on = np_ratio*Rn_channel_on;
         gmp_to_gmn_multiplier = 1.11;
         long_channel_leakage_reduction = 1.0/1.92;
@@ -11122,7 +11122,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         break;
       case LP_DRAM:
         Vpp = 1.5;
-        Vdd = 1.1;
+        vdd = 1.1;
         Vdsat = 0.181;
         Vth = 0.44559;
         Vth_dram = 0.44559;
@@ -11160,7 +11160,7 @@ void parameters_tech_t::set_default(double size, int RAM_tech_type)
         break;
       case COMM_DRAM:
         Vpp = 2.7;
-        Vdd = 1.1;
+        vdd = 1.1;
         Vdsat = 0.147;
         Vth = 1.0;
         Vth_dram = 1.0;
