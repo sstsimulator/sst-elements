@@ -51,14 +51,9 @@ class Introspector_cpu : public Introspector {
             
             intData = 0;
             _INTROSPECTOR_CPU_DBG("-->frequency=%s\n",frequency.c_str());
-//             handler = new EventHandler< Introspector_cpu, bool, Cycle_t >
-//                                                 ( this, &Introspector_cpu::pullData );
-//             TimeConverter* tc = registerClock( frequency, handler );
+
 	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::pullData) );
 
-// 	     mpihandler = new EventHandler< Introspector_cpu, bool, Cycle_t >
-// 	                                        ( this, &Introspector_cpu::mpiCollectInt );
-// 	     registerClock( frequency, mpihandler );
 	    registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );
 	    mpionetimehandler = new Event::Handler< Introspector_cpu >
 	                                        ( this, &Introspector_cpu::mpiOneTimeCollect );
@@ -93,6 +88,26 @@ class Introspector_cpu : public Introspector {
 			addToIntDatabase(*i, pint.second);
 			//std::cout << " introspector_cpu now has intdatabase size = " << DatabaseInt.size() << std::endl;
 		    }
+		    pint = (*i)->ifMonitorIntData("dram_backgroundEnergy");
+		    if(pint.first){			
+			addToIntDatabase(*i, pint.second); 
+		    }
+		
+		    pint = (*i)->ifMonitorIntData("dram_burstEnergy");
+		    if(pint.first){			
+			addToIntDatabase(*i, pint.second);  
+		    }
+		
+		    pint = (*i)->ifMonitorIntData("dram_actpreEnergy");
+		    if(pint.first){			
+			addToIntDatabase(*i, pint.second); 
+		    }
+		
+		    pint = (*i)->ifMonitorIntData("dram_refreshEnergy");
+		    if(pint.first){			
+			addToIntDatabase(*i, pint.second); 
+		    }
+		
 		    //if(pdouble.first){
 		        //store pointer to component and the dataID of the data of interest
 			//addToDoubleDatabase(*i, pdouble.second);
