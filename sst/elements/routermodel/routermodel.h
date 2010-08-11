@@ -45,7 +45,7 @@ class Routermodel : public Component {
 	    // Defaults
 	    router_model_debug= 0;
 	    num_ports= -1;
-	    hop_delay= 0.000000002;
+	    hop_delay= 20;
 
             while (it != params.end())   {
                 _ROUTER_MODEL_DBG(1, "Router %s: key=%s value=%s\n", component_name.c_str(),
@@ -56,7 +56,7 @@ class Routermodel : public Component {
 		}
 
 		if (!it->first.compare("hop_delay"))   {
-		    sscanf(it->second.c_str(), "%ld", (long int*) &hop_delay);
+		    sscanf(it->second.c_str(), "%lud", (uint64_t *) &hop_delay);
 		}
 
 		if (!it->first.compare("component_name"))   {

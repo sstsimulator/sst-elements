@@ -198,7 +198,7 @@ sst_router_param_start(FILE *sstfile, int num_ports)
     }
 
     fprintf(sstfile, "<router_params>\n");
-    sst_param_entry(sstfile, "hop_delay", "0.000000002");
+    sst_param_entry(sstfile, "hop_delay", "20");
     sst_param_entry(sstfile, "debug", "0");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
 

@@ -29,8 +29,8 @@ uint8_t out_port;
 
 
     current_time= getCurrentSimTime();
-    _ROUTER_MODEL_DBG(3, "Router %s got an event from port %d at time %lld\n", component_name.c_str(),
-	in_port, (long long int)current_time);
+    _ROUTER_MODEL_DBG(3, "Router %s got an event from port %d at time %lud\n", component_name.c_str(),
+	in_port, (uint64_t)current_time);
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
     port[in_port].cnt_in++;
 
@@ -45,9 +45,8 @@ uint8_t out_port;
     e->hops++;
     delay= hop_delay;
 
-    _ROUTER_MODEL_DBG(3, "Sending message out on port %d\n", out_port);
+    _ROUTER_MODEL_DBG(3, "Sending message out on port %d at time %lud with delay %lud\n", out_port, (uint64_t)current_time, (uint64_t)delay);
     port[out_port].link->Send(delay, e);
-    _ROUTER_MODEL_DBG(3, "Returning from handle_port_events\n");
 
 
 #ifdef rrr
