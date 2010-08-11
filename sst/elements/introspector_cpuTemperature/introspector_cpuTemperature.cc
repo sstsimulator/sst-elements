@@ -25,15 +25,15 @@ bool Introspector_cpuTemperature::pullData( Cycle_t current )
 	for( Database_t::iterator iter = DatabaseInt.begin();
                             iter != DatabaseInt.end(); ++iter )
     	{
-	    c = iter->first;
-            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->second << " and data value = " << c->getIntData(iter->second) << std::endl;
+	    c = iter->second;
+            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getIntData(iter->first) << std::endl;
 	    
 	}
 	for( Database_t::iterator iter = DatabaseDouble.begin();
                             iter != DatabaseDouble.end(); ++iter )
     	{
-            c = iter->first;
-            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->second << " and data value = " << c->getDoubleData(iter->second) << std::endl;	    
+            c = iter->second;
+            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getDoubleData(iter->first) << std::endl;	    
 	}
 
 	return false;
