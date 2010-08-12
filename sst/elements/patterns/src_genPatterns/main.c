@@ -54,6 +54,7 @@ char *pattern_name;
 uint64_t lat;		// In ns
 uint64_t bw;		// In bytes
 uint64_t compute;	// In ns
+uint64_t app_time;	// Application compute time per node in ns
 int exchange_msg_len;
 
 
@@ -67,6 +68,7 @@ int exchange_msg_len;
     lat= 20;
     bw= 1200000000;
     compute= 150000;
+    app_time= 10 * compute;
 
     // Assume 2GB of memory per MPI rank. The aquare root of that is
     // the amount of data each node sends to each neighbor per ghost
@@ -169,7 +171,7 @@ int exchange_msg_len;
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst, x_dim, y_dim, lat, bw, compute, exchange_msg_len);
+    sst_gen_param_entries(fp_sst, x_dim, y_dim, lat, bw, compute, app_time, exchange_msg_len);
     sst_gen_param_end(fp_sst);
 
     sst_router_param_start(fp_sst, num_ports);

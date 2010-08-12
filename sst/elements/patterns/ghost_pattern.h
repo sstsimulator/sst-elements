@@ -45,12 +45,19 @@ class Ghost_pattern : public Component {
 	    latency= 0;
 	    bandwidth= 0;
 	    compute_time= 0;
+	    application_end_time= 0;
+	    application_time_so_far= 0;
 	    exchange_msg_len= 128;
 	    rcv_cnt= 0;
 	    state= INIT;
+	    application_done= FALSE;
+	    timestep_cnt= 0;
+
+	    registerExit();
 
             while (it != params.end())   {
-                _GHOST_PATTERN_DBG(1, "Ghost: key=%s value=%s\n", it->first.c_str(), it->second.c_str());
+                _GHOST_PATTERN_DBG(2, "Ghost: key=%s value=%s\n", it->first.c_str(),
+		    it->second.c_str());
 
 		if (!it->first.compare("debug"))   {
 		    sscanf(it->second.c_str(), "%d", &ghost_pattern_debug);
@@ -80,6 +87,10 @@ class Ghost_pattern : public Component {
 		    sscanf(it->second.c_str(), "%lu", &compute_time);
 		}
 
+		if (!it->first.compare("application_end_time"))   {
+		    sscanf(it->second.c_str(), "%lu", &application_end_time);
+		}
+
 		if (!it->first.compare("exchange_msg_len"))   {
 		    sscanf(it->second.c_str(), "%d", &exchange_msg_len);
 		}
@@ -96,16 +107,27 @@ class Ghost_pattern : public Component {
 		    "named \"Network\" which is missing!\n");
 		_ABORT(Ghost_pattern, "Check the input XML file!\n");
 	    } else   {
-		_GHOST_PATTERN_DBG(1, "Added a link and a handler for the network\n");
+		_GHOST_PATTERN_DBG(2, "Added a link and a handler for the network\n");
+	    }
+
+            // Create a channel for "out of band" events sent to ourselves
+	    self_link= configureSelfLink("Me", new Event::Handler<Ghost_pattern>
+		    (this, &Ghost_pattern::handle_self_events));
+	    if (self_link == NULL)   {
+		_ABORT(Ghost_pattern, "That was no good!\n");
+	    } else   {
+		_GHOST_PATTERN_DBG(2, "Added a self link and a handler\n");
 	    }
 
 	    // Create a time converter
 	    tc= registerTimeBase("1ns", true);
+	    net->setDefaultTimeBase(tc);
+	    self_link->setDefaultTimeBase(tc);
 
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, my_rank, net, latency, bandwidth))   {
+	    if (!common->init(x_dim, y_dim, my_rank, net, self_link, latency, bandwidth))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
@@ -119,12 +141,14 @@ class Ghost_pattern : public Component {
 
 	    // Send a start event to ourselves without a delay
 	    common->event_send(my_rank, START);
+
         }
 
     private:
 
         Ghost_pattern(const Ghost_pattern &c);
 	void handle_events(Event *);
+	void handle_self_events(Event *);
 	Patterns *common;
 
 	int my_rank;
@@ -133,14 +157,20 @@ class Ghost_pattern : public Component {
 	SimTime_t latency;
 	SimTime_t bandwidth;
 	SimTime_t compute_time;
+	SimTime_t compute_segment_start;
+	SimTime_t application_end_time;
+	SimTime_t application_time_so_far;
 	int exchange_msg_len;
 	state_t state;
 	int left, right, up, down;
 	int rcv_cnt;
 	int ghost_pattern_debug;
+	bool application_done;
+	int timestep_cnt;
 
         Params_t params;
 	Link *net;
+	Link *self_link;
 	TimeConverter *tc;
 
         friend class boost::serialization::access;
@@ -155,6 +185,9 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(latency);
 	    ar & BOOST_SERIALIZATION_NVP(bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(compute_time);
+	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
+	    ar & BOOST_SERIALIZATION_NVP(application_end_time);
+	    ar & BOOST_SERIALIZATION_NVP(application_time_so_far);
 	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(left);
@@ -163,7 +196,10 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(down);
 	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(ghost_pattern_debug);
+	    ar & BOOST_SERIALIZATION_NVP(application_done);
+	    ar & BOOST_SERIALIZATION_NVP(timestep_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(net);
+	    ar & BOOST_SERIALIZATION_NVP(self_link);
 	    ar & BOOST_SERIALIZATION_NVP(tc);
         }
 

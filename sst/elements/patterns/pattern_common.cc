@@ -36,7 +36,7 @@ static int is_pow2(int num);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int rank, Link *net_link, SimTime_t lat, SimTime_t bw)
+Patterns::init(int x, int y, int rank, Link *net_link, Link *self_link, SimTime_t lat, SimTime_t bw)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -60,6 +60,7 @@ Patterns::init(int x, int y, int rank, Link *net_link, SimTime_t lat, SimTime_t 
     }
 
     my_net_link= net_link;
+    my_self_link= self_link;
     mesh_width= x;
     my_rank= rank;
     net_latency= lat;
@@ -87,10 +88,9 @@ SimTime_t delay;
     // This is a crude approximation of how long this message would
     // take to transmit, if there were no routers in between. (Each
     // router adds its own delays as the event passes through.)
-    delay= net_latency + len / net_bandwidth;
-    fprintf(stderr, "This %d byte message from %d to %d will need %lu nano seconds\n", len,
-	my_rank, dest, delay);
-
+    //
+    // net_latency is in nano seconds and net_bandwidth is in bytes per second
+    delay= net_latency + ((SimTime_t)len * 1000000000) / net_bandwidth;
     event_send(dest, RECEIVE, delay, len);
 
 }  /* end of send() */
@@ -113,13 +113,20 @@ int dest_X, dest_Y;
 int x_delta, y_delta;
 
 
+    // Create an event and fill in the event info
     e= new CPUNicEvent();
+    e->SetRoutine((int)event);
 
-    // Fill in event info and attach a route to it
+    if (dest == my_rank)   {
+	// No need to go through the network for this
+	my_self_link->Send(delay, e);
+	return;
+    }
+
+    // If this event goes to another node, attach a route to it
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= msg_len;
-    e->SetRoutine((int)event);
 
     // We are hardcoded for a x * y torus!
     // the program genPatterns generates XML files with routers that have
@@ -170,8 +177,8 @@ int x_delta, y_delta;
     e->route.push_back(LOCAL_PORT);
 
     // Send it
-    fprintf(stderr, "--> Sending event %d from %d to %d with a delay of %lu\n", event,
-	my_rank, dest, (uint64_t)delay);
+    // fprintf(stderr, "--> Sending event %d from %d to %d with a delay of %lu\n", event,
+    //     my_rank, dest, (uint64_t)delay);
     my_net_link->Send(delay, e);
 
 }  /* end of event_send() */

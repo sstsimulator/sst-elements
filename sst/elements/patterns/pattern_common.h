@@ -41,7 +41,7 @@ class Patterns   {
 	    net_bandwidth= 0;
 	}
 
-	int init(int x, int y, int my_rank, SST::Link *net_link,
+	int init(int x, int y, int my_rank, SST::Link *net_link, SST::Link *self_link,
 		SST::SimTime_t lat, SST::SimTime_t bw);
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
@@ -50,6 +50,7 @@ class Patterns   {
 
     private:
 	SST::Link *my_net_link;
+	SST::Link *my_self_link;
 	int mesh_width;
 	int my_rank;
 	SST::SimTime_t net_latency;	// in nano seconds

@@ -20,7 +20,7 @@ void sst_router_param_end(FILE *sstfile);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
 void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
-        uint64_t bw, uint64_t compute_time, int msg_len);
+        uint64_t bw, uint64_t compute_time, uint64_t app_time, int msg_len);
 void sst_gen_param_end(FILE *sstfile);
 
 void sst_body_end(FILE *sstfile);

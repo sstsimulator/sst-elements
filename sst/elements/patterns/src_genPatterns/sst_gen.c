@@ -50,7 +50,7 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 void
 sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
-        uint64_t bw, uint64_t compute_time, int msg_len)
+        uint64_t bw, uint64_t compute_time, uint64_t app_time, int msg_len)
 {
 
     if (sstfile == NULL)   {
@@ -62,6 +62,7 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
     fprintf(sstfile, "    <latency> %lu </latency>\n", lat);
     fprintf(sstfile, "    <bandwidth> %lu </bandwidth>\n", bw);
     fprintf(sstfile, "    <compute_time> %lu </compute_time>\n", compute_time);
+    fprintf(sstfile, "    <application_end_time> %lu </application_end_time>\n", app_time);
     fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
 
 }  /* end of sst_gen_param_entries() */
