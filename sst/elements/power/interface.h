@@ -12,6 +12,7 @@
 #ifndef _SST_INTERFACE_H
 #define _SST_INTERFACE_H
 
+
 #include <stdlib.h>
 #include <stdio.h>			
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #define TEMP_DEGREE_STEPS 101 // 300~400K
 
 
+
 namespace SST {
 enum interconnect_type_t 
 { 
@@ -34,7 +36,7 @@ enum interconnect_type_t
 
 enum wiring_type_t
 {
-  LOCAL, SEMI_GLOBAL, GLOBAL, MEMORY_DRAM, NUM_WIRING_TYPES
+  Local, Semi_Global, Global, Memory_DRAM, Num_Wiring_Types
 };
 
 enum ITRS_device_type_t 
@@ -142,15 +144,15 @@ class parameters_tech_t
   double sckt_co_eff;
   double chip_layout_overhead;
   double macro_layout_overhead;
-  double fringe_cap[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double miller_value[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double ild_thickness[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double aspect_ratio[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double wire_pitch[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double wire_r_per_micron[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double wire_c_per_micron[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double horiz_dielectric_constant[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
-  double vert_dielectric_constant[NUM_INTERCONNECT_TYPES][NUM_WIRING_TYPES];
+  double fringe_cap[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double miller_value[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double ild_thickness[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double aspect_ratio[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double wire_pitch[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double wire_r_per_micron[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double wire_c_per_micron[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double horiz_dielectric_constant[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
+  double vert_dielectric_constant[NUM_INTERCONNECT_TYPES][Num_Wiring_Types];
 
   double Vpp;
   double vdd;

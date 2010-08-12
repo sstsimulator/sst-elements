@@ -506,7 +506,8 @@ class Power{
 	
 	ComponentId_t p_compID;
 	int p_powerLevel; //level 1: v, f, sC, iC, lC; level 2: v, f, sC, and other params
-	bool p_powerMonitor; // if a component want to have power monitored
+	bool p_powerMonitor; // if a component want to have power modeled
+	bool p_tempMonitor; // if a component want to have temperature modeled
 	powerModel_t p_powerModel;
 	Punit_t p_unitPower; // stores unit power per sub-component access
 	I p_meanPeak, p_meanPeakAll; // for manual error bar on mean peak power
@@ -776,7 +777,7 @@ class Power{
             PowerInit(compID);}
         void PowerInit(ComponentId_t compID) {
             p_compID = compID;
-	    p_powerLevel = 1; p_powerMonitor = false; //p_powerModel = McPAT;  // This setting is important since params are not read in order as they apprears
+	    p_powerLevel = 1; p_powerMonitor = false; p_tempMonitor = false; //p_powerModel = McPAT;  // This setting is important since params are not read in order as they apprears
 	    p_meanPeak = p_meanPeakAll = 0.0;
 	    p_areaMcPAT = 0.0; p_maxNumSubComp = 0;
 	    p_ifReadEntireXML = p_ifGetMcPATUnitP = false;

@@ -57,13 +57,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 
     while (it != params.end()){
 	//NOTE: params are NOT read in order as they apprears in XML
-        if (!it->first.compare("power_monitor")){
-	    if (!it->second.compare("NO"))
-		p_powerMonitor = false;
-	    else
-		p_powerMonitor = true;
-	}
-	else if (!it->first.compare("power_level")){ //lv2
+        if (!it->first.compare("power_level")){ //lv2
 	        sscanf(it->second.c_str(), "%d", &p_powerLevel);
 	}
 	else if (!it->first.compare("McPAT_XMLfile")){ //Mc
@@ -5038,12 +5032,14 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 
    case 4:
    /*ORION*/
+      #ifdef ORION_H
       SST_SIM_router_init(&GLOB(router_info), &GLOB(router_power), NULL,
                           router_tech.input_ports,
                           router_tech.output_ports,
                           router_tech.flit_bits,
                           router_tech.virtual_channel_per_port);
       getUnitPower(power_type, 0, power_model);
+      #endif //ORION_H
    break;
       } // end switch p_model
     }	//end model power = yes
@@ -8706,6 +8702,18 @@ void Power::setTech(Component::Params_t deviceParams)
 	        sscanf(it->second.c_str(), "%d", &floorplan_id.L2dir);
 		subcompList.insert(std::pair<ptype,int>(CACHE_L2DIR,floorplan_id.L2dir));  
 	}
+	else if (!it->first.compare("power_monitor")){
+	    if (!it->second.compare("NO"))
+		p_powerMonitor = false;
+	    else
+		p_powerMonitor = true;
+	}
+	else if (!it->first.compare("temperature_monitor")){
+	    if (!it->second.compare("NO"))
+		p_tempMonitor = false;
+	    else
+		p_tempMonitor = true;
+	}
         it++;
     }
     
@@ -10129,11 +10137,13 @@ void Power::setChip(Component::Params_t deviceParams)
   // number of floorplans used for chip-level thermal modeling
   chip.num_floorplans = num_floorplans;
 
-  // link the chip to thermal library
-  switch(chip.thermal_library)
-  {
-    case HOTSPOT: p_chip.thermal_library = new HotSpot_library(chip); break;
-    default: cout << "ERROR: invalid thermal library" << endl; break;
+  // link the chip to thermal library if want thermal modeling
+  if (p_tempMonitor == true){
+    switch(chip.thermal_library)
+    {
+      case HOTSPOT: p_chip.thermal_library = new HotSpot_library(chip); break;
+      default: cout << "ERROR: invalid thermal library" << endl; break;
+    }
   }
 }
 
@@ -11258,7 +11268,8 @@ void Power::updateFloorplanAreaInfo(int fid, double area)
 ******************************************************/
 void Power::compute_temperature(ComponentId_t compID)
 {
-
+  if (p_tempMonitor == true)
+  {
   //compute temperature
   p_chip.thermal_library->compute(&p_chip.floorplan);
  
@@ -11418,6 +11429,7 @@ void Power::compute_temperature(ComponentId_t compID)
       p_usage_uarch.totalEnergy += updatedLeakagePower;
     } // end if leakage feedback   
   } // end for each subcomp
+  } //end if model temperature
 }
 
 /*****************************************************************
