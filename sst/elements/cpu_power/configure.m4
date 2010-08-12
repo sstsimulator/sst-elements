@@ -132,4 +132,39 @@ AC_DEFUN([SST_cpu_power_CONFIG], [
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 
+
+
+
+  AC_ARG_WITH([orion],
+    [AS_HELP_STRING([--with-orion@<:@=DIR@:>@],
+      [Use orion package installed in optionally specified DIR])])
+
+  AS_IF([test "$with_orion" = "no"], [happy="no"])
+
+  CPPFLAGS_saved="$CPPFLAGS"
+  LDFLAGS_saved="$LDFLAGS"
+
+  AS_IF([test ! -z "$with_orion" -a "$with_orion" != "yes"],
+    [ORION_CPPFLAGS="-I$with_orion/include"
+     CPPFLAGS="$ORION_CPPFLAGS $CPPFLAGS"
+     ORION_LDFLAGS="-L$with_orion"
+     LDFLAGS="$ORION_LDFLAGS $LDFLAGS"],
+    [ORION_CPPFLAGS=
+     ORION_LDFLAGS=])
+
+  AC_LANG_PUSH(C++)  
+  AC_CHECK_LIB([orion], [main], 
+    [ORION_LIB="-lorion"], [happy="no"])
+  AC_LANG_POP(C++)
+
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+
+  AC_SUBST([ORION_CPPFLAGS])
+  AC_SUBST([ORION_LDFLAGS])
+  AC_SUBST([ORION_LIB])
+
+  AS_IF([test "$happy" = "yes"], [$1], [$2])
+
+
 ])

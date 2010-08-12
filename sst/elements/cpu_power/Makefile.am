@@ -10,14 +10,16 @@ libcpu_power_la_SOURCES = \
 	cpu_power.cc \
 	../power/power.cc \
 	../power/power.h \
+	../power/interface.h \
 	../power/HotSpot-interface.cc \
 	../power/HotSpot-interface.h \
 	../power/IntSim-interface.cc \
-	../power/IntSim-interface.h \
-	../power/interface.h
+	../power/IntSim-interface.h 
 
 
-libcpu_power_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SIMPANALYZER_CPPFLAGS) $(MCPAT_CPPFLAGS) $(HOTSPOT_CPPFLAGS) $(INTSIM_CPPFLAGS)
-libcpu_power_la_LDFLAGS = -module -avoid-version $(SIMPANALYZER_LDFLAGS) $(MCPAT_LDFLAGS) $(HOTSPOT_LDFLAGS) $(INTSIM_LDFLAGS)
-libcpu_power_la_LIBADD = $(SIMPANALYZER_LIB) $(MCPAT_LIB) $(HOTSPOT_LIB) $(INTSIM_LIB)
+libcpu_power_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SIMPANALYZER_CPPFLAGS) $(MCPAT_CPPFLAGS) $(HOTSPOT_CPPFLAGS) $(INTSIM_CPPFLAGS) $(ORION_CPPFLAGS) 
+libcpu_power_la_LDFLAGS = -module -avoid-version $(SIMPANALYZER_LDFLAGS) $(MCPAT_LDFLAGS) $(HOTSPOT_LDFLAGS) $(INTSIM_LDFLAGS) $(ORION_LDFLAGS)   
+libcpu_power_la_LIBADD = $(SIMPANALYZER_LIB) $(MCPAT_LIB) $(HOTSPOT_LIB) $(INTSIM_LIB) $(ORION_LIB)
+
+
 
