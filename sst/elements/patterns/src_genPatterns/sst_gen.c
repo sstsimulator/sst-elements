@@ -49,8 +49,8 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, double lat,
-	double bw, double compute_time, int msg_len)
+sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
+        uint64_t bw, uint64_t compute_time, int msg_len)
 {
 
     if (sstfile == NULL)   {
@@ -59,9 +59,9 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, double lat,
 
     fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
     fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
-    fprintf(sstfile, "    <latency> %0.9f </latency>\n", lat);
-    fprintf(sstfile, "    <bandwidth> %0.0f </bandwidth>\n", bw);
-    fprintf(sstfile, "    <compute_time> %0.9f </compute_time>\n", compute_time);
+    fprintf(sstfile, "    <latency> %lu </latency>\n", lat);
+    fprintf(sstfile, "    <bandwidth> %lu </bandwidth>\n", bw);
+    fprintf(sstfile, "    <compute_time> %lu </compute_time>\n", compute_time);
     fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
 
 }  /* end of sst_gen_param_entries() */
@@ -99,7 +99,7 @@ sst_router_param_start(FILE *sstfile, int num_ports)
     }
 
     fprintf(sstfile, "<router_params>\n");
-    fprintf(sstfile, "    <hop_delay> 2us </hop_delay>\n");
+    fprintf(sstfile, "    <hop_delay> 25 </hop_delay>\n");
     fprintf(sstfile, "    <debug> 0 </debug>\n");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
 

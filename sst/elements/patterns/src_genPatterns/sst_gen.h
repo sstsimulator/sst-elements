@@ -8,6 +8,7 @@
 #define _SST_GEN_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 
 
@@ -18,8 +19,8 @@ void sst_router_param_start(FILE *sstfile, int num_ports);
 void sst_router_param_end(FILE *sstfile);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
-void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, double lat,
-        double bw, double compute_time, int msg_len);
+void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
+        uint64_t bw, uint64_t compute_time, int msg_len);
 void sst_gen_param_end(FILE *sstfile);
 
 void sst_body_end(FILE *sstfile);

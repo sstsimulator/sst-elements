@@ -51,9 +51,9 @@ int num_ports;
 char *sstFname;
 FILE *fp_sst;
 char *pattern_name;
-double lat;
-double bw;
-double compute;
+uint64_t lat;		// In ns
+uint64_t bw;		// In bytes
+uint64_t compute;	// In ns
 int exchange_msg_len;
 
 
@@ -64,9 +64,9 @@ int exchange_msg_len;
     sstFname= "";
     x_dim= -1;
     y_dim= -1;
-    lat= 0.000002;
-    bw= 1200000000.0;
-    compute= 0.000150;
+    lat= 20;
+    bw= 1200000000;
+    compute= 150000;
 
     // Assume 2GB of memory per MPI rank. The aquare root of that is
     // the amount of data each node sends to each neighbor per ghost

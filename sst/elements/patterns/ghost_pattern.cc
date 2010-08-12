@@ -12,7 +12,6 @@
 
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
-
 #include <sst/core/cpunicEvent.h>
 #include "ghost_pattern.h"
 #include "pattern_common.h"
@@ -32,7 +31,7 @@ pattern_event_t event;
     e= static_cast<CPUNicEvent *>(sst_event);
     event= (pattern_event_t)e->GetRoutine();
 
-    _GHOST_PATTERN_DBG(3, "Rank %d got event %d\n", my_rank, event);
+    _GHOST_PATTERN_DBG(3, "[%2d] got event %d\n", my_rank, event);
 
     switch (state)   {
 	case INIT:
@@ -50,7 +49,7 @@ pattern_event_t event;
 		case FAIL:
 		case RESEND_MSG:
 		    // Should not happen
-		    _abort(ghost_pattern, "Invalid event in INIT\n");
+		    _abort(ghost_pattern, "[%2d] Invalid event in INIT\n", my_rank);
 		    break;
 	    }
 	    break;
@@ -82,7 +81,7 @@ pattern_event_t event;
 		case FAIL:
 		case RESEND_MSG:
 		    // Should not happen
-		    _abort(ghost_pattern, "Invalid event in COMPUTE\n");
+		    _abort(ghost_pattern, "[%2d] Invalid event in COMPUTE\n", my_rank);
 		    break;
 	    }
 	    break;
@@ -93,7 +92,7 @@ pattern_event_t event;
 		case START:
 		case COMPUTE_DONE:
 		    // Doesn't make sense; we should not be getting these events
-		    _abort(ghost_pattern, "Invalid event in WAIT\n");
+		    _abort(ghost_pattern, "[%2d] Invalid event in WAIT\n", my_rank);
 		    break;
 		case RECEIVE:
 		    /* YES! We got a message from another rank */
@@ -101,6 +100,7 @@ pattern_event_t event;
 		    _GHOST_PATTERN_DBG(4, "[%2d] Got msg #%d from neighbor\n", my_rank, rcv_cnt);
 		    if (rcv_cnt == 4)   {
 			rcv_cnt= 0;
+			common->event_send(my_rank, COMPUTE_DONE, compute_time);
 			state= COMPUTE;
 			_GHOST_PATTERN_DBG(4, "[%2d] Done waiting, entering compute state\n", my_rank);
 		    }

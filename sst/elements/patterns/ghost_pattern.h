@@ -42,9 +42,9 @@ class Ghost_pattern : public Component {
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    ghost_pattern_debug= 0;
-	    latency= -1.0;
-	    bandwidth= -1.0;
-	    compute_time= -1.0;
+	    latency= 0;
+	    bandwidth= 0;
+	    compute_time= 0;
 	    exchange_msg_len= 128;
 	    rcv_cnt= 0;
 	    state= INIT;
@@ -69,15 +69,15 @@ class Ghost_pattern : public Component {
 		}
 
 		if (!it->first.compare("latency"))   {
-		    sscanf(it->second.c_str(), "%lf", &latency);
+		    sscanf(it->second.c_str(), "%lu", &latency);
 		}
 
 		if (!it->first.compare("bandwidth"))   {
-		    sscanf(it->second.c_str(), "%lf", &bandwidth);
+		    sscanf(it->second.c_str(), "%lu", &bandwidth);
 		}
 
 		if (!it->first.compare("compute_time"))   {
-		    sscanf(it->second.c_str(), "%lf", &compute_time);
+		    sscanf(it->second.c_str(), "%lu", &compute_time);
 		}
 
 		if (!it->first.compare("exchange_msg_len"))   {
@@ -130,9 +130,9 @@ class Ghost_pattern : public Component {
 	int my_rank;
 	int x_dim;
 	int y_dim;
-	double latency;
-	double bandwidth;
-	double compute_time;
+	SimTime_t latency;
+	SimTime_t bandwidth;
+	SimTime_t compute_time;
 	int exchange_msg_len;
 	state_t state;
 	int left, right, up, down;

@@ -36,7 +36,7 @@ static int is_pow2(int num);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int rank, SST::Link *net_link, double lat, double bw)
+Patterns::init(int x, int y, int rank, Link *net_link, SimTime_t lat, SimTime_t bw)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -49,12 +49,12 @@ Patterns::init(int x, int y, int rank, SST::Link *net_link, double lat, double b
 	return FALSE;
     }
 
-    if (lat < 0.0)   {
+    if (lat == 0)   {
 	fprintf(stderr, "Latency in xml file must be specified\n");
 	return FALSE;
     }
 
-    if (bw < 0.0)   {
+    if (bw == 0)   {
 	fprintf(stderr, "Bandwidth in xml file must be specified\n");
 	return FALSE;
     }
@@ -81,14 +81,14 @@ void
 Patterns::send(int dest, int len)
 {
 
-double delay;
+SimTime_t delay;
 
 
     // This is a crude approximation of how long this message would
     // take to transmit, if there were no routers in between. (Each
     // router adds its own delays as the event passes through.)
     delay= net_latency + len / net_bandwidth;
-    fprintf(stderr, "This %d byte message from %d to %d will need %.9f seconds\n", len,
+    fprintf(stderr, "This %d byte message from %d to %d will need %lu nano seconds\n", len,
 	my_rank, dest, delay);
 
     event_send(dest, RECEIVE, delay, len);
@@ -104,7 +104,7 @@ double delay;
 #define NORTH_PORT	(4)
 
 void
-Patterns::event_send(int dest, pattern_event_t event, double delay, uint32_t msg_len)
+Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t msg_len)
 {
 
 CPUNicEvent *e;
@@ -116,7 +116,7 @@ int x_delta, y_delta;
     e= new CPUNicEvent();
 
     // Fill in event info and attach a route to it
-    e->router_delay= (SST::SimTime_t)0.0;
+    e->router_delay= 0;
     e->hops= 0;
     e->msg_len= msg_len;
     e->SetRoutine((int)event);
@@ -142,14 +142,12 @@ int x_delta, y_delta;
 	// Go East first
 	while (x_delta > 0)   {
 	    e->route.push_back(EAST_PORT);
-	    fprintf(stderr, "Adding EAST port %d\n", EAST_PORT);
 	    x_delta--;
 	}
     } else if (x_delta < 0)   {
 	// Go West first
 	while (x_delta < 0)   {
 	    e->route.push_back(WEST_PORT);
-	    fprintf(stderr, "Adding WEST port %d\n", WEST_PORT);
 	    x_delta++;
 	}
     }
@@ -158,24 +156,23 @@ int x_delta, y_delta;
 	// Go SOUTH first
 	while (y_delta > 0)   {
 	    e->route.push_back(SOUTH_PORT);
-	    fprintf(stderr, "Adding SOUTH port %d\n", SOUTH_PORT);
 	    y_delta--;
 	}
     } else if (y_delta < 0)   {
 	// Go NORTH first
 	while (y_delta < 0)   {
 	    e->route.push_back(NORTH_PORT);
-	    fprintf(stderr, "Adding NORTH port %d\n", NORTH_PORT);
 	    y_delta++;
 	}
     }
 
     // Exit to the local (NIC) pattern generator
     e->route.push_back(LOCAL_PORT);
-    fprintf(stderr, "Adding LOCAL port %d\n", LOCAL_PORT);
 
     // Send it
-    my_net_link->Send((SimTime_t)delay, e);
+    fprintf(stderr, "--> Sending event %d from %d to %d with a delay of %lu\n", event,
+	my_rank, dest, (uint64_t)delay);
+    my_net_link->Send(delay, e);
 
 }  /* end of event_send() */
 
