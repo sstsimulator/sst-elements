@@ -13,13 +13,15 @@
     <clock>2.2GHz</clock>
     <rev>1.5</rev>
     <power_monitor>YES</power_monitor>
-    <power_model>ORION</power_model>
+    <temperature_monitor>NO</temperature_monitor>
     <router_voltage>1.5</router_voltage>
     <router_clock_rate>2000000000</router_clock_rate>
     <router_flit_bits>64</router_flit_bits>
     <router_virtual_channel_per_port>2</router_virtual_channel_per_port>
     <router_input_ports>4</router_input_ports>
     <router_output_ports>4</router_output_ports>
+    <router_linl_length>15500</router_linl_length>
+    <router_floorplan_id>0</router_floorplan_id>
 </cpu1_params>
 
 <!-- McPAT-->

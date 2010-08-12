@@ -3,7 +3,7 @@
 #ifndef _CPU_ROUTER_POWER_H
 #define _CPU_ROUTER_POWER_H
 
-#include <sst/core/eventFunctor.h>
+//#include <sst/core/eventFunctor.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -51,6 +51,7 @@ class Cpu_router_power : public IntrospectedComponent {
          int Setup() {
             // report/register power dissipation	    
     	      power = new Power(getId());
+	    power->setChip(params);
             power->setTech(getId(), params, ROUTER, ORION);
             return 0;
          }
