@@ -39,8 +39,8 @@ bool rc;
     rcv_router_delays += e->router_delay;
     rcv_msgs++;
     rcv_total_hops += e->hops;
-    _NIC_MODEL_DBG(5, "NIC %lu: Router delay %15.9f, rcvs %lld, hops %lld\n",
-	getId(), (double)e->router_delay, rcv_msgs, rcv_total_hops);
+    _NIC_MODEL_DBG(5, "NIC %lu: Router delay %lu, rcvs %lld, hops %lld\n",
+	getId(), e->router_delay, rcv_msgs, rcv_total_hops);
 
     // Is there a matching receive?
     rc= pQ->match(e);
@@ -84,7 +84,7 @@ int *route;
 		getId(), my_rank, num_NICs, get_nic_model_debug());
 
 	    // Initialize stats
-	    rcv_router_delays= 0.0;
+	    rcv_router_delays= 0;
 	    rcv_msgs= 0;;
 	    rcv_total_hops= 0;;
 
@@ -101,7 +101,7 @@ int *route;
 
 	case NETSIM_TX_START:
 	    // Set up routing
-	    e->router_delay= 0.0; // No delay so far
+	    e->router_delay= 0; // No delay so far
 	    e->hops= 0; // No hops so far
 
 	    // add it to the completion queue on our CPU
@@ -154,10 +154,10 @@ int *route;
 	    // Print some stats
 	    printf("NIC %3lu received %lld messages total\n", getId(), rcv_msgs);
 	    if (rcv_msgs > 0)   {
-		printf("NIC %3lu total delay was %15.9f, avg %15.9f\n", getId(),
-		    rcv_router_delays, rcv_router_delays / rcv_msgs);
+		printf("NIC %3lu total delay was %lu, avg %15.9f\n", getId(),
+		    rcv_router_delays, (float)rcv_router_delays / rcv_msgs);
 	    } else   {
-		printf("NIC %3lu total delay was %15.9f\n", getId(), rcv_router_delays);
+		printf("NIC %3lu total delay was %lu\n", getId(), rcv_router_delays);
 	    }
 	    if (rcv_msgs > 0)   {
 		printf("NIC %3lu total hops %9lld, avg %15.9f\n", getId(),

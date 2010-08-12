@@ -41,7 +41,7 @@ class Nicmodel : public Component {
 	    num_routers= -1;
 	    num_ports= -1;
 	    num_links= -1;
-	    rcv_router_delays= 0.0;
+	    rcv_router_delays= 0;
 	    rcv_msgs= 0;;
 	    rcv_total_hops= 0;;
 
@@ -272,7 +272,7 @@ class Nicmodel : public Component {
 	int nic_model_debug;
 	PostedQ *pQ;
 	UnexpectedQ *uQ;
-	double rcv_router_delays;
+	SimTime_t rcv_router_delays;
 	long long rcv_msgs;
 	long long rcv_total_hops;
 	void *vrinfo;
