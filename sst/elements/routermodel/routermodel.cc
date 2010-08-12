@@ -11,12 +11,11 @@
 
 
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
-
-#include "routermodel.h"
+#include <sst/core/serialization/element.h>
 #include <sst/core/cpunicEvent.h>
+#include "routermodel.h"
 
-int router_model_debug;
+
 
 void
 Routermodel::handle_port_events(Event *event, int in_port)
@@ -34,12 +33,28 @@ uint8_t out_port;
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
     port[in_port].cnt_in++;
 
+#if DBG_ROUTER_MODEL
     /* Diagnostic: print the route this event is taking */
-    printf("Event route (currently at %d): ", e->hops);
-    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	printf("%d, ", *itNum);
+    if (router_model_debug >= 4)   {
+	char str[32];
+	int i= 0;
+
+	sprintf(str, "Event route: ");
+	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	    if (i == e->hops)   {
+		sprintf(str, "%s%c", str, '[');
+	    }
+	    // str= str + boost::lexical_cast<std::string>(*itNum);
+	    sprintf(str, "%s%d", str, *itNum);
+	    if (i == e->hops)   {
+		sprintf(str, "%s%c", str, ']');
+	    }
+	    sprintf(str, "%s%c", str, ' ');
+	    i++;
+	}
+	_ROUTER_MODEL_DBG(4, "%s\n", str);
     }
-    printf(" destination\n");
+#endif  // DBG_ROUTER_MODEL
 
     out_port= e->route[e->hops];
     e->hops++;

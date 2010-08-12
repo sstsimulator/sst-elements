@@ -29,7 +29,7 @@ using namespace SST;
 #define _ROUTER_MODEL_DBG(lvl, fmt, args...)
 #endif
 
-extern int router_model_debug;
+
 
 #define MAX_LINK_NAME		(16)
 
@@ -139,6 +139,7 @@ class Routermodel : public Component {
 	std::vector<port_t>::iterator portNum;
 	port_t new_port;
 	int num_ports;
+	int router_model_debug;
 
 	typedef struct router_t   {
 	    int Id;
