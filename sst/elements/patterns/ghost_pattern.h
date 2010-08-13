@@ -133,11 +133,13 @@ class Ghost_pattern : public Component {
 
 	    /* Who are my four neighbors? */
 	    int myX= my_rank % x_dim;
-	    int myY= my_rank / y_dim;
-	    right= ((myX + 1) % x_dim) + (myY * y_dim);
-	    left= ((myX - 1 + x_dim) % x_dim) + (myY * y_dim);
-	    down= myX + ((myY + 1) % y_dim) * y_dim;
-	    up= myX + ((myY - 1 + y_dim) % y_dim) * y_dim;
+	    int myY= my_rank / x_dim;
+	    right= ((myX + 1) % x_dim) + (myY * x_dim);
+	    left= ((myX - 1 + x_dim) % x_dim) + (myY * x_dim);
+	    down= myX + ((myY + 1) % y_dim) * x_dim;
+	    up= myX + ((myY - 1 + y_dim) % y_dim) * x_dim;
+	    fprintf(stderr, "{%2d:%d,%d} right %d, left %d, up %d, down %d\n",
+		my_rank, myX, myY, right, left, up, down);
 
 	    // Send a start event to ourselves without a delay
 	    common->event_send(my_rank, START);
