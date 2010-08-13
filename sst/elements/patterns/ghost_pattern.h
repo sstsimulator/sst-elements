@@ -24,7 +24,7 @@ using namespace SST;
 #if DBG_GHOST_PATTERN
 #define _GHOST_PATTERN_DBG(lvl, fmt, args...)\
     if (ghost_pattern_debug >= lvl)   { \
-	printf("%d:Ghost_pattern::%s():%d: " fmt, _debug_rank, __FUNCTION__, __LINE__, ## args); \
+	printf("%d:Ghost_pattern::%s():%4d: " fmt, _debug_rank, __FUNCTION__, __LINE__, ## args); \
     }
 #else
 #define _GHOST_PATTERN_DBG(lvl, fmt, args...)
@@ -42,6 +42,7 @@ class Ghost_pattern : public Component {
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    ghost_pattern_debug= 0;
+	    my_rank= -1;
 	    latency= 0;
 	    bandwidth= 0;
 	    compute_time= 0;
@@ -56,8 +57,8 @@ class Ghost_pattern : public Component {
 	    registerExit();
 
             while (it != params.end())   {
-                _GHOST_PATTERN_DBG(2, "Ghost: key=%s value=%s\n", it->first.c_str(),
-		    it->second.c_str());
+                _GHOST_PATTERN_DBG(2, "[%3d] key \"%s\", value \"%s\"\n", my_rank,
+		    it->first.c_str(), it->second.c_str());
 
 		if (!it->first.compare("debug"))   {
 		    sscanf(it->second.c_str(), "%d", &ghost_pattern_debug);
@@ -107,7 +108,7 @@ class Ghost_pattern : public Component {
 		    "named \"Network\" which is missing!\n");
 		_ABORT(Ghost_pattern, "Check the input XML file!\n");
 	    } else   {
-		_GHOST_PATTERN_DBG(2, "Added a link and a handler for the network\n");
+		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the network\n", my_rank);
 	    }
 
             // Create a channel for "out of band" events sent to ourselves
@@ -116,7 +117,7 @@ class Ghost_pattern : public Component {
 	    if (self_link == NULL)   {
 		_ABORT(Ghost_pattern, "That was no good!\n");
 	    } else   {
-		_GHOST_PATTERN_DBG(2, "Added a self link and a handler\n");
+		_GHOST_PATTERN_DBG(2, "[%3d] Added a self link and a handler\n", my_rank);
 	    }
 
 	    // Create a time converter
@@ -138,8 +139,8 @@ class Ghost_pattern : public Component {
 	    left= ((myX - 1 + x_dim) % x_dim) + (myY * x_dim);
 	    down= myX + ((myY + 1) % y_dim) * x_dim;
 	    up= myX + ((myY - 1 + y_dim) % y_dim) * x_dim;
-	    fprintf(stderr, "{%2d:%d,%d} right %d, left %d, up %d, down %d\n",
-		my_rank, myX, myY, right, left, up, down);
+	    // fprintf(stderr, "{%2d:%d,%d} right %d, left %d, up %d, down %d\n",
+	    // 	my_rank, myX, myY, right, left, up, down);
 
 	    // Send a start event to ourselves without a delay
 	    common->event_send(my_rank, START);

@@ -31,12 +31,18 @@ SimTime_t delay;
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     e= static_cast<CPUNicEvent *>(sst_event);
     if (e->hops > 2)   {
-	_abort(ghost_pattern, "[%2d] No message should travel through more than two routers!\n",
+	_abort(ghost_pattern, "[%3d] No message should travel through more than two routers!\n",
 	    my_rank);
     }
     event= (pattern_event_t)e->GetRoutine();
 
-    _GHOST_PATTERN_DBG(2, "[%2d] got event %d at time %lu\n", my_rank, event, getCurrentSimTime());
+    if (application_done)   {
+	_GHOST_PATTERN_DBG(0, "[%3d] There should be no more events! (%d)\n",
+	    my_rank, event);
+	return;
+    }
+
+    _GHOST_PATTERN_DBG(2, "[%3d] got event %d at time %lu\n", my_rank, event, getCurrentSimTime());
 
     switch (state)   {
 	case INIT:
@@ -44,7 +50,7 @@ SimTime_t delay;
 	    switch (event)   {
 		case START:
 		    // Send ourselves a COMPUTE_DONE event
-		    _GHOST_PATTERN_DBG(4, "[%2d] Starting, entering compute state\n",
+		    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n",
 			my_rank);
 		    if (application_end_time - application_time_so_far > compute_time)   {
 			// Do a full time step
@@ -64,7 +70,7 @@ SimTime_t delay;
 		case FAIL:
 		case RESEND_MSG:
 		    // Should not happen
-		    _abort(ghost_pattern, "[%2d] Invalid event in INIT\n", my_rank);
+		    _abort(ghost_pattern, "[%3d] Invalid event in INIT\n", my_rank);
 		    break;
 	    }
 	    break;
@@ -72,49 +78,56 @@ SimTime_t delay;
 	case COMPUTE:
 	    switch (event)   {
 		case COMPUTE_DONE:
-		    _GHOST_PATTERN_DBG(4, "[%2d] Done computing, entering wait state\n", my_rank);
+		    _GHOST_PATTERN_DBG(4, "[%3d] Done computing, entering wait state\n", my_rank);
 		    application_time_so_far += getCurrentSimTime() - compute_segment_start;
 		    if (application_time_so_far >= application_end_time)   {
 			application_done= TRUE;
-		    }
-		    /* Our time to compute is over */
-		    common->send(right, exchange_msg_len);
-		    common->send(left, exchange_msg_len);
-		    common->send(up, exchange_msg_len);
-		    common->send(down, exchange_msg_len);
-		    if (rcv_cnt == 4)   {
-			// We already have our for neighbor messages; no need to wait
-			rcv_cnt= 0;
-			if (application_end_time - application_time_so_far > compute_time)   {
-			    // Do a full time step
-			    delay= compute_time;
-			} else   {
-			    // Do the remaining work
-			    delay= application_end_time - application_time_so_far;
-			}
-			compute_segment_start= getCurrentSimTime();
-			common->event_send(my_rank, COMPUTE_DONE, delay);
-			state= COMPUTE;
-			timestep_cnt++;
-			_GHOST_PATTERN_DBG(4, "[%2d] No need to wait, back to compute state\n", my_rank);
+			// There is no ghost cell exchange after the last computation
+
 		    } else   {
-			state= WAIT;
+
+			// Tell our neighbors what we have computed
+			common->send(right, exchange_msg_len);
+			common->send(left, exchange_msg_len);
+			common->send(up, exchange_msg_len);
+			common->send(down, exchange_msg_len);
+
+			if (rcv_cnt == 4)   {
+			    // We already have our for neighbor messages; no need to wait
+			    rcv_cnt= 0;
+			    if (application_end_time - application_time_so_far > compute_time)   {
+				// Do a full time step
+				delay= compute_time;
+			    } else   {
+				// Do the remaining work
+				delay= application_end_time - application_time_so_far;
+			    }
+			    compute_segment_start= getCurrentSimTime();
+			    common->event_send(my_rank, COMPUTE_DONE, delay);
+			    state= COMPUTE;
+			    timestep_cnt++;
+			    _GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
+				my_rank);
+			} else   {
+			    state= WAIT;
+			}
 		    }
 		    break;
 		case RECEIVE:
 		    /* We got a message from another rank */
 		    rcv_cnt++;
 		    if (rcv_cnt > 4)   {
-			_abort(ghost_pattern, "[%2d] COMPUTE: We should never get more than 4 messages!\n",
+			_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
 			    my_rank);
 		    }
-		    _GHOST_PATTERN_DBG(0, "[%2d] Got msg #%d from neighbor with %d hops\n", my_rank, rcv_cnt, e->hops);
+		    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n", my_rank,
+			rcv_cnt, e->hops);
 		    break;
 		case START:
 		case FAIL:
 		case RESEND_MSG:
 		    // Should not happen
-		    _abort(ghost_pattern, "[%2d] Invalid event in COMPUTE\n", my_rank);
+		    _abort(ghost_pattern, "[%3d] Invalid event in COMPUTE\n", my_rank);
 		    break;
 	    }
 	    break;
@@ -125,16 +138,17 @@ SimTime_t delay;
 		case START:
 		case COMPUTE_DONE:
 		    // Doesn't make sense; we should not be getting these events
-		    _abort(ghost_pattern, "[%2d] Invalid event in WAIT\n", my_rank);
+		    _abort(ghost_pattern, "[%3d] Invalid event in WAIT\n", my_rank);
 		    break;
 		case RECEIVE:
 		    /* YES! We got a message from another rank */
 		    rcv_cnt++;
 		    if (rcv_cnt > 4)   {
-			_abort(ghost_pattern, "[%2d] WAIT: We should never get more than 4 messages!\n",
+			_abort(ghost_pattern, "[%3d] WAIT: We should never get more than 4 messages!\n",
 			    my_rank);
 		    }
-		    _GHOST_PATTERN_DBG(0, "[%2d] Got msg #%d from neighbor with %d hops\n", my_rank, rcv_cnt, e->hops);
+		    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n",
+			my_rank, rcv_cnt, e->hops);
 		    if (rcv_cnt == 4)   {
 			rcv_cnt= 0;
 			if (application_end_time - application_time_so_far > compute_time)   {
@@ -148,7 +162,8 @@ SimTime_t delay;
 			common->event_send(my_rank, COMPUTE_DONE, delay);
 			state= COMPUTE;
 			timestep_cnt++;
-			_GHOST_PATTERN_DBG(4, "[%2d] Done waiting, entering compute state\n", my_rank);
+			_GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
+			    my_rank);
 		    }
 		    break;
 		case FAIL:
@@ -169,7 +184,7 @@ SimTime_t delay;
     delete(sst_event);
 
     if (application_done)   {
-	_GHOST_PATTERN_DBG(1, "[%2d] Application has done %.9fs of work in %d time steps\n",
+	_GHOST_PATTERN_DBG(0, "[%3d] Application has done %.9fs of work in %d time steps\n",
 	    my_rank, (double)application_time_so_far /  1000000000.0, timestep_cnt);
 	unregisterExit();
     }
