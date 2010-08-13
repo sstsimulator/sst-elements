@@ -36,6 +36,7 @@ class Patterns   {
 	    // Nothing to do for now
 	    my_net_link= NULL;
 	    mesh_width= -1;
+	    mesh_height= -1;
 	    my_rank= -1;
 	    net_latency= 0;
 	    net_bandwidth= 0;
@@ -52,6 +53,7 @@ class Patterns   {
 	SST::Link *my_net_link;
 	SST::Link *my_self_link;
 	int mesh_width;
+	int mesh_height;
 	int my_rank;
 	SST::SimTime_t net_latency;	// in nano seconds
 	SST::SimTime_t net_bandwidth;	// In bytes per second

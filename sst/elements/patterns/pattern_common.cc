@@ -62,6 +62,7 @@ Patterns::init(int x, int y, int rank, Link *net_link, Link *self_link, SimTime_
     my_net_link= net_link;
     my_self_link= self_link;
     mesh_width= x;
+    mesh_height= y;
     my_rank= rank;
     net_latency= lat;
     net_bandwidth= bw;
@@ -111,6 +112,7 @@ CPUNicEvent *e;
 int my_X, my_Y;
 int dest_X, dest_Y;
 int x_delta, y_delta;
+int c1, c2;
 
 
     // Create an event and fill in the event info
@@ -139,11 +141,51 @@ int x_delta, y_delta;
 
     // First we need to calculate the X and Y delta from us to dest
     my_Y= my_rank / mesh_width;
-    my_X= my_rank - my_Y * mesh_width;
+    my_X= my_rank % mesh_width;
     dest_Y= dest / mesh_width;
-    dest_X= dest - dest_Y * mesh_width;
-    x_delta= dest_X - my_X;
-    y_delta= dest_Y - my_Y;
+    dest_X= dest % mesh_width;
+
+    // Use the shortest distance to reach the destination
+    if (my_X > dest_X)   {
+	// How much does it cost to go left?
+	c1= my_X - dest_X;
+	// How much does it cost to go right?
+	c2= (dest_X + mesh_width) - my_X;
+    } else   {
+	// How much does it cost to go left?
+	c1= (my_X + mesh_width) - dest_X;
+	// How much does it cost to go right?
+	c2= dest_X - my_X;
+    }
+    if (c1 > c2)   {
+	// go right
+	x_delta= c2;
+    } else   {
+	// go left
+	x_delta= -c1;
+    }
+
+    if (my_Y > dest_Y)   {
+	// How much does it cost to go up?
+	c1= my_Y - dest_Y;
+	// How much does it cost to go down?
+	c2= (dest_Y + mesh_height) - my_Y;
+    } else   {
+	// How much does it cost to go up?
+	c1= (my_Y + mesh_height) - dest_Y;
+	// How much does it cost to go down?
+	c2= dest_Y - my_Y;
+    }
+    if (c1 > c2)   {
+	// go down
+	y_delta= c2;
+    } else   {
+	// go up
+	y_delta= -c1;
+    }
+
+    fprintf(stderr, "[%2d] my X %d, Y %d, dest [%2d] X %d, dest Y %d, offset %d,%d\n",
+	my_rank, my_X, my_Y, dest, dest_X, dest_Y, x_delta, y_delta);
 
     if (x_delta > 0)   {
 	// Go East first
@@ -179,6 +221,20 @@ int x_delta, y_delta;
     // Send it
     // fprintf(stderr, "--> Sending event %d from %d to %d with a delay of %lu\n", event,
     //     my_rank, dest, (uint64_t)delay);
+    {
+    char route[128];
+    std::vector<uint8_t>::iterator itNum;
+    int i= 0;
+
+    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	route[i++]= '0' + *itNum;
+    }
+    route[i++]= 0;
+
+    fprintf(stderr, "Event %d from %d --> %d, delay %lu, route %s\n", event,
+         my_rank, dest, (uint64_t)delay, route);
+    }
+
     my_net_link->Send(delay, e);
 
 }  /* end of event_send() */
