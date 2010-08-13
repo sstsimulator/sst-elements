@@ -30,6 +30,10 @@ SimTime_t delay;
     // Extract the pattern event type from the SST event
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     e= static_cast<CPUNicEvent *>(sst_event);
+    if (e->hops > 2)   {
+	_abort(ghost_pattern, "[%2d] No message should travel through more than two routers!\n",
+	    my_rank);
+    }
     event= (pattern_event_t)e->GetRoutine();
 
     _GHOST_PATTERN_DBG(2, "[%2d] got event %d at time %lu\n", my_rank, event, getCurrentSimTime());
@@ -100,7 +104,11 @@ SimTime_t delay;
 		case RECEIVE:
 		    /* We got a message from another rank */
 		    rcv_cnt++;
-		    _GHOST_PATTERN_DBG(3, "[%2d] Got msg #%d from neighbor\n", my_rank, rcv_cnt);
+		    if (rcv_cnt > 4)   {
+			_abort(ghost_pattern, "[%2d] COMPUTE: We should never get more than 4 messages!\n",
+			    my_rank);
+		    }
+		    _GHOST_PATTERN_DBG(0, "[%2d] Got msg #%d from neighbor with %d hops\n", my_rank, rcv_cnt, e->hops);
 		    break;
 		case START:
 		case FAIL:
@@ -122,7 +130,11 @@ SimTime_t delay;
 		case RECEIVE:
 		    /* YES! We got a message from another rank */
 		    rcv_cnt++;
-		    _GHOST_PATTERN_DBG(3, "[%2d] Got msg #%d from neighbor\n", my_rank, rcv_cnt);
+		    if (rcv_cnt > 4)   {
+			_abort(ghost_pattern, "[%2d] WAIT: We should never get more than 4 messages!\n",
+			    my_rank);
+		    }
+		    _GHOST_PATTERN_DBG(0, "[%2d] Got msg #%d from neighbor with %d hops\n", my_rank, rcv_cnt, e->hops);
 		    if (rcv_cnt == 4)   {
 			rcv_cnt= 0;
 			if (application_end_time - application_time_so_far > compute_time)   {
