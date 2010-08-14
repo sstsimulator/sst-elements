@@ -1,2 +1,31 @@
-- Should we use configureSelfLink instead of configureLink for
-    channel to send events to ourselves?
+- Multiple generators per router
+    - Will messages between "cores" still go through router?
+	For now, yes, but we make the links between routers
+	and pattern generators much faster to emulate intra-node
+	speeds....
+
+- Make ghost_pattern.cc code more modular to make it easier to expand
+
+- Play with component weight
+
+- Implement checkpointing
+    - Coordinated
+    - Uncoordinated with pessimistic msg logging
+    - RAID
+
+- More patterns
+    - FFT
+    - Master/Slave
+    - Integer Sort (IS)
+
+- Metrics
+    - Decide on what metrics to collect
+	- Power and temp for routers
+	- Application run time
+	- Storage size for logs and checkpoints
+
+    - Collect metrics at end of simulation and print
+
+- Router model needs to implement a getPower method
+    Basically number of port accesses since last power query
+    Introspector will call this periodically
