@@ -30,6 +30,7 @@ static int is_pow2(int num);
 static struct option long_options[]=   {
     /* name, has arg, flag, val */
     {"help", 0, NULL, 'h'},
+    {"cores", 1, NULL, 'c'},
     {"sstfilename", 1, NULL, 's'},
     {"pattern", 1, NULL, 'p'},
 };
@@ -51,11 +52,14 @@ int num_ports;
 char *sstFname;
 FILE *fp_sst;
 char *pattern_name;
-uint64_t lat;		// In ns
-uint64_t bw;		// In bytes
-uint64_t compute;	// In ns
-uint64_t app_time;	// Application compute time per node in ns
+uint64_t net_lat;	/* In ns */
+uint64_t net_bw;	/* In bytes */
+uint64_t node_lat;	/* In ns */
+uint64_t node_bw;	/* In bytes */
+uint64_t compute;	/* In ns */
+uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
+int num_cores;		/* How many pattern generators per router */
 
 
 
@@ -65,21 +69,25 @@ int exchange_msg_len;
     sstFname= "";
     x_dim= -1;
     y_dim= -1;
-    lat= 20;
-    bw= 1200000000;
+    net_lat= 1200;
+    net_bw= 1200000000;
+    node_lat= 250;
+    node_bw= 5 * net_bw;
     compute= 150000;
     app_time= 10 * compute;
+    num_cores= 1;
 
-    // Assume 2GB of memory per MPI rank. The aquare root of that is
-    // the amount of data each node sends to each neighbor per ghost
-    // cell (halo) exchange.
+
+    /* Assume 2GB of memory per MPI rank. The aquare root of that is */
+    /* the amount of data each node sends to each neighbor per ghost */
+    /* cell (halo) exchange. */
     exchange_msg_len= 46340;
     pattern_name= NULL;
 
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "s:hx:y:p:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "c:s:hx:y:p:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -96,6 +104,13 @@ int exchange_msg_len;
 		y_dim= strtol(optarg, (char **)NULL, 0);
 		if (y_dim < 1)   {
 		    fprintf(stderr, "Y dimension must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 'c':
+		num_cores= strtol(optarg, (char **)NULL, 0);
+		if (num_cores < 1)   {
+		    fprintf(stderr, "Number of cores per router must be > 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -162,8 +177,8 @@ int exchange_msg_len;
     }
 
 
-    num_ports= 5;
-    GenMesh2D(x_dim, y_dim, TRUE, TRUE);
+    num_ports= 4 + num_cores;
+    GenMesh2D(x_dim, y_dim, TRUE, TRUE, num_cores);
 
 
     /*
@@ -171,7 +186,8 @@ int exchange_msg_len;
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst, x_dim, y_dim, lat, bw, compute, app_time, exchange_msg_len);
+    sst_gen_param_entries(fp_sst, x_dim, y_dim, num_cores, net_lat, net_bw, node_lat, node_bw,
+	compute, app_time, exchange_msg_len);
     sst_gen_param_end(fp_sst);
 
     sst_router_param_start(fp_sst, num_ports);
@@ -198,8 +214,9 @@ static void
 usage(char *argv[])
 {
 
-    fprintf(stderr, "Usage: %s -x dimX -y dimY -s sname -p pname [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -x dimX -y dimY -s sname -p pname [-c num_cores] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -s     Name of the SST xml output file\n");
+    fprintf(stderr, "   --cores, -c           Number of cores per router\n");
     fprintf(stderr, "   dimX                  X dimesnion of 2-D tours\n");
     fprintf(stderr, "   dimY                  Y dimesnion of 2-D tours\n");
     fprintf(stderr, "   --help, -h            Print this message\n");

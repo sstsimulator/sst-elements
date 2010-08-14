@@ -49,8 +49,9 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
-        uint64_t bw, uint64_t compute_time, uint64_t app_time, int msg_len)
+sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t net_lat,
+        uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
+	uint64_t app_time, int msg_len)
 {
 
     if (sstfile == NULL)   {
@@ -59,8 +60,11 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, uint64_t lat,
 
     fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
     fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
-    fprintf(sstfile, "    <latency> %lu </latency>\n", lat);
-    fprintf(sstfile, "    <bandwidth> %lu </bandwidth>\n", bw);
+    fprintf(sstfile, "    <cores> %d </cores>\n", cores);
+    fprintf(sstfile, "    <net_latency> %lu </net_latency>\n", net_lat);
+    fprintf(sstfile, "    <net_bandwidth> %lu </net_bandwidth>\n", net_bw);
+    fprintf(sstfile, "    <node_latency> %lu </node_latency>\n", node_lat);
+    fprintf(sstfile, "    <node_bandwidth> %lu </node_bandwidth>\n", node_bw);
     fprintf(sstfile, "    <compute_time> %lu </compute_time>\n", compute_time);
     fprintf(sstfile, "    <application_end_time> %lu </application_end_time>\n", app_time);
     fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
@@ -292,7 +296,7 @@ char cname[MAX_ID_LEN];
     while (next_router(&r))   {
 	snprintf(router_id, MAX_ID_LEN, "router%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
-	sst_router_component_start(router_id, 0.3, cname, sstfile);
+	sst_router_component_start(router_id, 1.0, cname, sstfile);
 	/*
 	** We have to list the links in order in the params section, so the router
 	** componentn can get the names and create the appropriate links.

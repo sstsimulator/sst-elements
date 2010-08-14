@@ -43,8 +43,10 @@ class Ghost_pattern : public Component {
 	    // Defaults
 	    ghost_pattern_debug= 0;
 	    my_rank= -1;
-	    latency= 0;
-	    bandwidth= 0;
+	    net_latency= 0;
+	    net_bandwidth= 0;
+	    node_latency= 0;
+	    node_bandwidth= 0;
 	    compute_time= 0;
 	    application_end_time= 0;
 	    application_time_so_far= 0;
@@ -53,6 +55,7 @@ class Ghost_pattern : public Component {
 	    state= INIT;
 	    application_done= FALSE;
 	    timestep_cnt= 0;
+	    cores= -1;
 
 	    registerExit();
 
@@ -76,12 +79,24 @@ class Ghost_pattern : public Component {
 		    sscanf(it->second.c_str(), "%d", &y_dim);
 		}
 
-		if (!it->first.compare("latency"))   {
-		    sscanf(it->second.c_str(), "%lu", &latency);
+		if (!it->first.compare("cores"))   {
+		    sscanf(it->second.c_str(), "%d", &cores);
 		}
 
-		if (!it->first.compare("bandwidth"))   {
-		    sscanf(it->second.c_str(), "%lu", &bandwidth);
+		if (!it->first.compare("net_latency"))   {
+		    sscanf(it->second.c_str(), "%lu", &net_latency);
+		}
+
+		if (!it->first.compare("net_bandwidth"))   {
+		    sscanf(it->second.c_str(), "%lu", &net_bandwidth);
+		}
+
+		if (!it->first.compare("node_latency"))   {
+		    sscanf(it->second.c_str(), "%lu", &node_latency);
+		}
+
+		if (!it->first.compare("node_bandwidth"))   {
+		    sscanf(it->second.c_str(), "%lu", &node_bandwidth);
 		}
 
 		if (!it->first.compare("compute_time"))   {
@@ -128,17 +143,20 @@ class Ghost_pattern : public Component {
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, my_rank, net, self_link, latency, bandwidth))   {
+	    if (!common->init(x_dim, y_dim, my_rank, cores, net, self_link,
+		    net_latency, net_bandwidth, node_latency, node_bandwidth))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
-	    /* Who are my four neighbors? */
-	    int myX= my_rank % x_dim;
-	    int myY= my_rank / x_dim;
-	    right= ((myX + 1) % x_dim) + (myY * x_dim);
-	    left= ((myX - 1 + x_dim) % x_dim) + (myY * x_dim);
-	    down= myX + ((myY + 1) % y_dim) * x_dim;
-	    up= myX + ((myY - 1 + y_dim) % y_dim) * x_dim;
+	    // Who are my four neighbors?
+	    // The network is x_dim * y_dim
+	    // The virtual network of the cores is (x_dim * cores) * ( y_dim * cores)
+	    int myX= my_rank % (x_dim * cores);
+	    int myY= my_rank / (x_dim * cores);
+	    right= ((myX + 1) % (x_dim * cores)) + (myY * (x_dim * cores));
+	    left= ((myX - 1 + (x_dim * cores)) % (x_dim * cores)) + (myY * (x_dim * cores));
+	    down= myX + ((myY + 1) % y_dim) * (x_dim * cores);
+	    up= myX + ((myY - 1 + y_dim) % y_dim) * (x_dim * cores);
 	    // fprintf(stderr, "{%2d:%d,%d} right %d, left %d, up %d, down %d\n",
 	    // 	my_rank, myX, myY, right, left, up, down);
 
@@ -155,10 +173,13 @@ class Ghost_pattern : public Component {
 	Patterns *common;
 
 	int my_rank;
+	int cores;
 	int x_dim;
 	int y_dim;
-	SimTime_t latency;
-	SimTime_t bandwidth;
+	SimTime_t net_latency;
+	SimTime_t net_bandwidth;
+	SimTime_t node_latency;
+	SimTime_t node_bandwidth;
 	SimTime_t compute_time;
 	SimTime_t compute_segment_start;
 	SimTime_t application_end_time;
@@ -188,10 +209,13 @@ class Ghost_pattern : public Component {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
+	    ar & BOOST_SERIALIZATION_NVP(cores);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);
 	    ar & BOOST_SERIALIZATION_NVP(y_dim);
-	    ar & BOOST_SERIALIZATION_NVP(latency);
-	    ar & BOOST_SERIALIZATION_NVP(bandwidth);
+	    ar & BOOST_SERIALIZATION_NVP(net_latency);
+	    ar & BOOST_SERIALIZATION_NVP(net_bandwidth);
+	    ar & BOOST_SERIALIZATION_NVP(node_latency);
+	    ar & BOOST_SERIALIZATION_NVP(node_bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(compute_time);
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(application_end_time);

@@ -36,7 +36,8 @@ static int is_pow2(int num);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int rank, Link *net_link, Link *self_link, SimTime_t lat, SimTime_t bw)
+Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_link,
+	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -44,18 +45,29 @@ Patterns::init(int x, int y, int rank, Link *net_link, Link *self_link, SimTime_
 	return FALSE;
     }
 
-    if ((rank < 0) || (rank >= x * y))   {
-	fprintf(stderr, "My rank not 0 <= %d < %d * %d\n", rank, x, y);
+    if ((rank < 0) || (rank >= x * y * cores))   {
+	fprintf(stderr, "My rank not 0 <= %d < %d (x) * %d (y) * %d (cores)\n",
+	    rank, x, y, cores);
 	return FALSE;
     }
 
-    if (lat == 0)   {
-	fprintf(stderr, "Latency in xml file must be specified\n");
+    if (net_lat == 0)   {
+	fprintf(stderr, "Network latency in xml file must be specified\n");
 	return FALSE;
     }
 
-    if (bw == 0)   {
-	fprintf(stderr, "Bandwidth in xml file must be specified\n");
+    if (net_bw == 0)   {
+	fprintf(stderr, "Network bandwidth in xml file must be specified\n");
+	return FALSE;
+    }
+
+    if (node_lat == 0)   {
+	fprintf(stderr, "Node latency in xml file must be specified\n");
+	return FALSE;
+    }
+
+    if (node_bw == 0)   {
+	fprintf(stderr, "Node bandwidth in xml file must be specified\n");
 	return FALSE;
     }
 
@@ -64,8 +76,19 @@ Patterns::init(int x, int y, int rank, Link *net_link, Link *self_link, SimTime_
     mesh_width= x;
     mesh_height= y;
     my_rank= rank;
-    net_latency= lat;
-    net_bandwidth= bw;
+    net_latency= net_lat;
+    net_bandwidth= net_bw;
+    node_latency= node_lat;
+    node_bandwidth= node_bw;
+    num_cores= cores;
+
+    if (my_rank == 0)   {
+	printf("||| mesh x %d, y %d, cores %d\n", mesh_width, mesh_height, num_cores);
+	printf("||| Network bandwidth %.3f GB/s, latency %.9f s\n",
+	    (double)net_bandwidth / 1000000000.0, (double)net_latency / 1000000000.0);
+	printf("||| Node bandwidth    %.3f GB/s, latency %.9f s\n",
+	    (double)node_bandwidth / 1000000000.0, (double)node_latency / 1000000000.0);
+    }
 
     return TRUE; /* success */
 
@@ -91,18 +114,25 @@ SimTime_t delay;
     // router adds its own delays as the event passes through.)
     //
     // net_latency is in nano seconds and net_bandwidth is in bytes per second
-    delay= net_latency + ((SimTime_t)len * 1000000000) / net_bandwidth;
+
+    if ((my_rank / num_cores) != (dest / num_cores))   {
+	// This message goes off node
+	delay= net_latency + ((SimTime_t)len * 1000000000) / net_bandwidth;
+    } else   {
+	// This is an intra-node message
+	delay= node_latency + ((SimTime_t)len * 1000000000) / node_bandwidth;
+    }
     event_send(dest, RECEIVE, delay, len);
 
 }  /* end of send() */
 
 
 
-#define LOCAL_PORT	(0)
-#define EAST_PORT	(1)
-#define SOUTH_PORT	(2)
-#define WEST_PORT	(3)
-#define NORTH_PORT	(4)
+#define EAST_PORT		(0)
+#define SOUTH_PORT		(1)
+#define WEST_PORT		(2)
+#define NORTH_PORT		(3)
+#define FIRST_LOCAL_PORT	(4)
 
 void
 Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t msg_len)
@@ -113,6 +143,7 @@ int my_X, my_Y;
 int dest_X, dest_Y;
 int x_delta, y_delta;
 int c1, c2;
+int my_router, dest_router;
 
 
     // Create an event and fill in the event info
@@ -133,17 +164,18 @@ int c1, c2;
     // We are hardcoded for a x * y torus!
     // the program genPatterns generates XML files with routers that have
     // the following port connections:
-    // Port 0: to local NIC (pattern generator)
-    // Port 1: East/Left
-    // Port 2: South/Down
-    // Port 3: West/Right
-    // Port 4: North/Up
+    // Port 0: East/Left
+    // Port 1: South/Down
+    // Port 2: West/Right
+    // Port 3: North/Up
 
     // First we need to calculate the X and Y delta from us to dest
-    my_Y= my_rank / mesh_width;
-    my_X= my_rank % mesh_width;
-    dest_Y= dest / mesh_width;
-    dest_X= dest % mesh_width;
+    my_router= my_rank / num_cores;
+    dest_router= dest / num_cores;
+    my_Y= my_router / mesh_width;
+    my_X= my_router % mesh_width;
+    dest_Y= dest_router / mesh_width;
+    dest_X= dest_router % mesh_width;
 
     // Use the shortest distance to reach the destination
     if (my_X > dest_X)   {
@@ -185,7 +217,7 @@ int c1, c2;
     }
 
     // fprintf(stderr, "[%2d] my X %d, Y %d, dest [%2d] X %d, dest Y %d, offset %d,%d\n",
-    // 	my_rank, my_X, my_Y, dest, dest_X, dest_Y, x_delta, y_delta);
+	// my_rank, my_X, my_Y, dest, dest_X, dest_Y, x_delta, y_delta);
 
     if (x_delta > 0)   {
 	// Go East first
@@ -216,7 +248,7 @@ int c1, c2;
     }
 
     // Exit to the local (NIC) pattern generator
-    e->route.push_back(LOCAL_PORT);
+    e->route.push_back(FIRST_LOCAL_PORT + (dest % num_cores));
 
 #if ROUTE_DEBUG
     {

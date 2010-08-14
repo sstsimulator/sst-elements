@@ -11,7 +11,7 @@
 
 /* How many NICs per router max? */
 /* FIXME: Some day I should make this dynamic */
-#define MAX_NICS	(16)
+#define MAX_NICS	(1024)
 
 /* Max length of link label */
 #define MAX_LABEL	(32)
@@ -153,7 +153,7 @@ router_t *r;
 
     r= find_router(router);
     if (!r)   {
-	fprintf(stderr, "Cannot find router %d! Routers must be defined before NICs.\n", router);
+	fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", router);
 	exit(8);
     }
     r->next_nic= 0;
@@ -175,7 +175,7 @@ nic_t *n;
 
     r= find_router(router);
     if (!r)   {
-	fprintf(stderr, "Cannot find router %d! Routers must be defined before NICs.\n", router);
+	fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", router);
 	exit(8);
     }
 
@@ -294,7 +294,7 @@ int i;
 
     r= find_router(router);
     if (!r)   {
-	fprintf(stderr, "Cannot find router %d! Routers must be defined before NICs.\n", router);
+	fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", router);
 	exit(8);
     }
 
@@ -307,7 +307,7 @@ int i;
     }
 
     if (i >= MAX_NICS)   {
-	fprintf(stderr, "Out of NIC port slots! Cannot handle more than %d NICs per router.\n", MAX_NICS);
+	fprintf(stderr, "Out of NIC port slots! Cannot handle more than %d pattern generators per router.\n", MAX_NICS);
 	exit(8);
     }
 
@@ -354,13 +354,13 @@ router_t *A, *B;
 
     A= find_router(Arouter);
     if (!A)   {
-	fprintf(stderr, "Cannot find router %d! Routers must be defined before NICs.\n", Arouter);
+	fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", Arouter);
 	exit(8);
     }
 
     B= find_router(Brouter);
     if (!B)   {
-	fprintf(stderr, "Cannot find router %d! Routers must be defined before NICs.\n", Brouter);
+	fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", Brouter);
 	exit(8);
     }
 

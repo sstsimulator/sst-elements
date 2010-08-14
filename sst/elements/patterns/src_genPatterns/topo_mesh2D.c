@@ -9,13 +9,21 @@
 #include "topo_mesh2D.h"
 
 
+#define EAST_PORT		(0)
+#define SOUTH_PORT		(1)
+#define WEST_PORT		(2)
+#define NORTH_PORT		(3)
+#define FIRST_LOCAL_PORT	(4)
+
+
 void
-GenMesh2D(int dimX, int dimY, int doXwrap, int doYwrap)
+GenMesh2D(int dimX, int dimY, int doXwrap, int doYwrap, int num_cores)
 {
 
 int x, y;
 int r;
 int me;
+int gen;
 
 
     /* List the routers */
@@ -23,9 +31,11 @@ int me;
 	gen_router(r, 5);
     }
 
-    /* Generate NICs and links between NICs and routers */
+    /* Generate pattern generators and links between pattern generators and routers */
     for (r= 0; r < dimX * dimY; r++)   {
-	gen_nic(r, r, 0);
+	for (gen= 0; gen < num_cores; gen++)   {
+	    gen_nic(r * num_cores + gen, r, FIRST_LOCAL_PORT + gen);
+	}
     }
 
 
@@ -35,21 +45,21 @@ int me;
 	    me= y * dimX + x;
 	    /* Go East */
 	    if ((me + 1) < (dimX * (y + 1)))   {
-		gen_link(me, 1, me + 1, 3);
+		gen_link(me, EAST_PORT, me + 1, WEST_PORT);
 	    } else   {
 		/* Wrap around if specified */
 		if (doXwrap)   {
-		    gen_link(me, 1, y * dimX, 3);
+		    gen_link(me, EAST_PORT, y * dimX, WEST_PORT);
 		}
 	    }
 
 	    /* Go South */
 	    if ((me + dimX) < (dimX * dimY))   {
-		gen_link(me, 2, me + dimX, 4);
+		gen_link(me, SOUTH_PORT, me + dimX, NORTH_PORT);
 	    } else   {
 		/* Wrap around if specified */
 		if (doYwrap)   {
-		    gen_link(me, 2, x, 4);
+		    gen_link(me, SOUTH_PORT, x, NORTH_PORT);
 		}
 	    }
 	}

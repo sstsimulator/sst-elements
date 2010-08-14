@@ -38,12 +38,14 @@ class Patterns   {
 	    mesh_width= -1;
 	    mesh_height= -1;
 	    my_rank= -1;
+	    my_rank= 1;
 	    net_latency= 0;
 	    net_bandwidth= 0;
 	}
 
-	int init(int x, int y, int my_rank, SST::Link *net_link, SST::Link *self_link,
-		SST::SimTime_t lat, SST::SimTime_t bw);
+	int init(int x, int y, int rank, int cores, SST::Link *net_link, SST::Link *self_link,
+		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat, SST::SimTime_t node_bw);
+
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
 		uint32_t msg_len= 0);
@@ -55,8 +57,11 @@ class Patterns   {
 	int mesh_width;
 	int mesh_height;
 	int my_rank;
+	int num_cores;
 	SST::SimTime_t net_latency;	// in nano seconds
 	SST::SimTime_t net_bandwidth;	// In bytes per second
+	SST::SimTime_t node_latency;	// in nano seconds
+	SST::SimTime_t node_bandwidth;	// In bytes per second
 
 } ;  // end of class Patterns
 

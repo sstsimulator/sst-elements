@@ -30,9 +30,22 @@ pattern_event_t event;
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     e= static_cast<CPUNicEvent *>(sst_event);
     if (e->hops > 2)   {
-	_abort(ghost_pattern, "[%3d] No message should travel through more than two routers!\n",
-	    my_rank);
+{
+    char route[128];
+    std::vector<uint8_t>::iterator itNum;
+    int i= 0;
+
+    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	route[i++]= '0' + *itNum;
     }
+    route[i++]= 0;
+
+    fprintf(stderr, "Offending route %s\n", route);
+}
+	_abort(ghost_pattern, "[%3d] No message should travel through more than two routers! %d\n",
+	    my_rank, e->hops);
+    }
+
     event= (pattern_event_t)e->GetRoutine();
 
     if (application_done)   {
