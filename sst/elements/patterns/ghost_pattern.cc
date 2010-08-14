@@ -47,32 +47,7 @@ SimTime_t delay;
     switch (state)   {
 	case INIT:
 	    /* Wait for the start signal */
-	    switch (event)   {
-		case START:
-		    // Send ourselves a COMPUTE_DONE event
-		    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n",
-			my_rank);
-		    if (application_end_time - application_time_so_far > compute_time)   {
-			// Do a full time step
-			delay= compute_time;
-		    } else   {
-			// Do the remaining work
-			delay= application_end_time - application_time_so_far;
-		    }
-		    compute_segment_start= getCurrentSimTime();
-		    common->event_send(my_rank, COMPUTE_DONE, delay);
-		    state= COMPUTE;
-		    timestep_cnt++;
-		    break;
-
-		case COMPUTE_DONE:
-		case RECEIVE:
-		case FAIL:
-		case RESEND_MSG:
-		    // Should not happen
-		    _abort(ghost_pattern, "[%3d] Invalid event in INIT\n", my_rank);
-		    break;
-	    }
+	    state= init_state(state, event);
 	    break;
 
 	case COMPUTE:
@@ -192,6 +167,49 @@ SimTime_t delay;
     return;
 
 }  /* end of handle_events() */
+
+
+
+//
+// Transition from INIT state to new state state
+//
+state_t
+Ghost_pattern::init_state(state_t state, pattern_event_t event)
+{
+
+SimTime_t delay;
+
+
+    switch (event)   {
+	case START:
+	    // Send ourselves a COMPUTE_DONE event
+	    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n",
+		my_rank);
+	    if (application_end_time - application_time_so_far > compute_time)   {
+		// Do a full time step
+		delay= compute_time;
+	    } else   {
+		// Do the remaining work
+		delay= application_end_time - application_time_so_far;
+	    }
+	    compute_segment_start= getCurrentSimTime();
+	    common->event_send(my_rank, COMPUTE_DONE, delay);
+	    state= COMPUTE;
+	    timestep_cnt++;
+	    break;
+
+	case COMPUTE_DONE:
+	case RECEIVE:
+	case FAIL:
+	case RESEND_MSG:
+	    // Should not happen
+	    _abort(ghost_pattern, "[%3d] Invalid event in INIT\n", my_rank);
+	    break;
+    }
+
+    return state;
+
+}  // end of init_state
 
 
 

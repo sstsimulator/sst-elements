@@ -176,6 +176,9 @@ class Ghost_pattern : public Component {
 	Link *self_link;
 	TimeConverter *tc;
 
+	// Some local functions we need
+	state_t init_state(state_t state, pattern_event_t event);
+
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
