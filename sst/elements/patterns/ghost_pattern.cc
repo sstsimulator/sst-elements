@@ -30,18 +30,6 @@ pattern_event_t event;
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     e= static_cast<CPUNicEvent *>(sst_event);
     if (e->hops > 2)   {
-{
-    char route[128];
-    std::vector<uint8_t>::iterator itNum;
-    int i= 0;
-
-    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	route[i++]= '0' + *itNum;
-    }
-    route[i++]= 0;
-
-    fprintf(stderr, "Offending route %s\n", route);
-}
 	_abort(ghost_pattern, "[%3d] No message should travel through more than two routers! %d\n",
 	    my_rank, e->hops);
     }
@@ -80,10 +68,9 @@ pattern_event_t event;
     delete(sst_event);
 
     if (application_done)   {
-	_GHOST_PATTERN_DBG(0, "[%3d] Application has done %.9fs of work in %d time steps\n",
+	_GHOST_PATTERN_DBG(0, "||| [%3d] Application has done %.9fs of work in %d time steps\n",
 	    my_rank, (double)application_time_so_far /  1000000000.0, timestep_cnt);
-	execution_time= getCurrentSimTime() - execution_time;
-	_GHOST_PATTERN_DBG(0, "[%3d] execution time %.9fs\n",
+	_GHOST_PATTERN_DBG(0, "||| [%3d] execution time %.9fs\n",
 	    my_rank, (double)execution_time /  1000000000.0);
 	unregisterExit();
     }
@@ -155,6 +142,7 @@ SimTime_t delay;
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
 	    if (application_time_so_far >= application_end_time)   {
 		application_done= TRUE;
+		execution_time= getCurrentSimTime() - execution_time;
 		// There is no ghost cell exchange after the last computation
 
 	    } else   {
