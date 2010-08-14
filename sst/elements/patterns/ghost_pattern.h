@@ -50,6 +50,7 @@ class Ghost_pattern : public Component {
 	    compute_time= 0;
 	    application_end_time= 0;
 	    application_time_so_far= 0;
+	    execution_time= 0;
 	    exchange_msg_len= 128;
 	    rcv_cnt= 0;
 	    state= INIT;
@@ -184,6 +185,7 @@ class Ghost_pattern : public Component {
 	SimTime_t compute_segment_start;
 	SimTime_t application_end_time;
 	SimTime_t application_time_so_far;
+	SimTime_t execution_time;
 	int exchange_msg_len;
 	state_t state;
 	int left, right, up, down;
@@ -220,6 +222,7 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(application_end_time);
 	    ar & BOOST_SERIALIZATION_NVP(application_time_so_far);
+	    ar & BOOST_SERIALIZATION_NVP(execution_time);
 	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(left);

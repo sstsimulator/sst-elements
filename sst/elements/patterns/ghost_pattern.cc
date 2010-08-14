@@ -82,6 +82,9 @@ pattern_event_t event;
     if (application_done)   {
 	_GHOST_PATTERN_DBG(0, "[%3d] Application has done %.9fs of work in %d time steps\n",
 	    my_rank, (double)application_time_so_far /  1000000000.0, timestep_cnt);
+	execution_time= getCurrentSimTime() - execution_time;
+	_GHOST_PATTERN_DBG(0, "[%3d] execution time %.9fs\n",
+	    my_rank, (double)execution_time /  1000000000.0);
 	unregisterExit();
     }
 
@@ -106,6 +109,8 @@ SimTime_t delay;
 	    // Send ourselves a COMPUTE_DONE event
 	    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n",
 		my_rank);
+
+	    execution_time= getCurrentSimTime();
 	    if (application_end_time - application_time_so_far > compute_time)   {
 		// Do a full time step
 		delay= compute_time;
