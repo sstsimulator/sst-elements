@@ -24,7 +24,6 @@ Ghost_pattern::handle_events(Event *sst_event)
 
 CPUNicEvent *e;
 pattern_event_t event;
-SimTime_t delay;
 
 
     // Extract the pattern event type from the SST event
@@ -47,107 +46,16 @@ SimTime_t delay;
     switch (state)   {
 	case INIT:
 	    /* Wait for the start signal */
-	    state= init_state(state, event);
+	    state= init_state(event);
 	    break;
 
 	case COMPUTE:
-	    switch (event)   {
-		case COMPUTE_DONE:
-		    _GHOST_PATTERN_DBG(4, "[%3d] Done computing, entering wait state\n", my_rank);
-		    application_time_so_far += getCurrentSimTime() - compute_segment_start;
-		    if (application_time_so_far >= application_end_time)   {
-			application_done= TRUE;
-			// There is no ghost cell exchange after the last computation
-
-		    } else   {
-
-			// Tell our neighbors what we have computed
-			common->send(right, exchange_msg_len);
-			common->send(left, exchange_msg_len);
-			common->send(up, exchange_msg_len);
-			common->send(down, exchange_msg_len);
-
-			if (rcv_cnt == 4)   {
-			    // We already have our for neighbor messages; no need to wait
-			    rcv_cnt= 0;
-			    if (application_end_time - application_time_so_far > compute_time)   {
-				// Do a full time step
-				delay= compute_time;
-			    } else   {
-				// Do the remaining work
-				delay= application_end_time - application_time_so_far;
-			    }
-			    compute_segment_start= getCurrentSimTime();
-			    common->event_send(my_rank, COMPUTE_DONE, delay);
-			    state= COMPUTE;
-			    timestep_cnt++;
-			    _GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
-				my_rank);
-			} else   {
-			    state= WAIT;
-			}
-		    }
-		    break;
-		case RECEIVE:
-		    /* We got a message from another rank */
-		    rcv_cnt++;
-		    if (rcv_cnt > 4)   {
-			_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
-			    my_rank);
-		    }
-		    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n", my_rank,
-			rcv_cnt, e->hops);
-		    break;
-		case START:
-		case FAIL:
-		case RESEND_MSG:
-		    // Should not happen
-		    _abort(ghost_pattern, "[%3d] Invalid event in COMPUTE\n", my_rank);
-		    break;
-	    }
+	    state= compute_state(event, e);
 	    break;
 
 	case WAIT:
 	    /* We are waiting for messages from our four neighbors */
-	    switch (event)   {
-		case START:
-		case COMPUTE_DONE:
-		    // Doesn't make sense; we should not be getting these events
-		    _abort(ghost_pattern, "[%3d] Invalid event in WAIT\n", my_rank);
-		    break;
-		case RECEIVE:
-		    /* YES! We got a message from another rank */
-		    rcv_cnt++;
-		    if (rcv_cnt > 4)   {
-			_abort(ghost_pattern, "[%3d] WAIT: We should never get more than 4 messages!\n",
-			    my_rank);
-		    }
-		    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n",
-			my_rank, rcv_cnt, e->hops);
-		    if (rcv_cnt == 4)   {
-			rcv_cnt= 0;
-			if (application_end_time - application_time_so_far > compute_time)   {
-			    // Do a full time step
-			    delay= compute_time;
-			} else   {
-			    // Do the remaining work
-			    delay= application_end_time - application_time_so_far;
-			}
-			compute_segment_start= getCurrentSimTime();
-			common->event_send(my_rank, COMPUTE_DONE, delay);
-			state= COMPUTE;
-			timestep_cnt++;
-			_GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
-			    my_rank);
-		    }
-		    break;
-		case FAIL:
-		    /* We just failed. Deal with it! */
-		    break;
-		case RESEND_MSG:
-		    /* We have been asked to resend a previous msg to help another rank to recover */
-		    break;
-	    }
+	    state= wait_state(event, e);
 	    break;
 
 	case DONE:
@@ -174,7 +82,7 @@ SimTime_t delay;
 // Transition from INIT state to new state state
 //
 state_t
-Ghost_pattern::init_state(state_t state, pattern_event_t event)
+Ghost_pattern::init_state(pattern_event_t event)
 {
 
 SimTime_t delay;
@@ -210,6 +118,133 @@ SimTime_t delay;
     return state;
 
 }  // end of init_state
+
+
+
+//
+// Transition from COMPUTE state to new state state
+//
+state_t
+Ghost_pattern::compute_state(pattern_event_t event, CPUNicEvent *e)
+{
+
+SimTime_t delay;
+
+
+    switch (event)   {
+	case COMPUTE_DONE:
+	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing, entering wait state\n", my_rank);
+	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
+	    if (application_time_so_far >= application_end_time)   {
+		application_done= TRUE;
+		// There is no ghost cell exchange after the last computation
+
+	    } else   {
+
+		// Tell our neighbors what we have computed
+		common->send(right, exchange_msg_len);
+		common->send(left, exchange_msg_len);
+		common->send(up, exchange_msg_len);
+		common->send(down, exchange_msg_len);
+
+		if (rcv_cnt == 4)   {
+		    // We already have our for neighbor messages; no need to wait
+		    rcv_cnt= 0;
+		    if (application_end_time - application_time_so_far > compute_time)   {
+			// Do a full time step
+			delay= compute_time;
+		    } else   {
+			// Do the remaining work
+			delay= application_end_time - application_time_so_far;
+		    }
+		    compute_segment_start= getCurrentSimTime();
+		    common->event_send(my_rank, COMPUTE_DONE, delay);
+		    state= COMPUTE;
+		    timestep_cnt++;
+		    _GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
+			my_rank);
+		} else   {
+		    state= WAIT;
+		}
+	    }
+	    break;
+	case RECEIVE:
+	    /* We got a message from another rank */
+	    rcv_cnt++;
+	    if (rcv_cnt > 4)   {
+		_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
+		    my_rank);
+	    }
+	    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n", my_rank,
+		rcv_cnt, e->hops);
+	    break;
+	case START:
+	case FAIL:
+	case RESEND_MSG:
+	    // Should not happen
+	    _abort(ghost_pattern, "[%3d] Invalid event in COMPUTE\n", my_rank);
+	    break;
+    }
+
+    return state;
+
+}  // end of compute_state
+
+
+
+//
+// Transition from WAIT state to new state state
+//
+state_t
+Ghost_pattern::wait_state(pattern_event_t event, CPUNicEvent *e)
+{
+
+SimTime_t delay;
+
+
+    switch (event)   {
+	case START:
+	case COMPUTE_DONE:
+	    // Doesn't make sense; we should not be getting these events
+	    _abort(ghost_pattern, "[%3d] Invalid event in WAIT\n", my_rank);
+	    break;
+	case RECEIVE:
+	    /* YES! We got a message from another rank */
+	    rcv_cnt++;
+	    if (rcv_cnt > 4)   {
+		_abort(ghost_pattern, "[%3d] WAIT: We should never get more than 4 messages!\n",
+		    my_rank);
+	    }
+	    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n",
+		my_rank, rcv_cnt, e->hops);
+	    if (rcv_cnt == 4)   {
+		rcv_cnt= 0;
+		if (application_end_time - application_time_so_far > compute_time)   {
+		    // Do a full time step
+		    delay= compute_time;
+		} else   {
+		    // Do the remaining work
+		    delay= application_end_time - application_time_so_far;
+		}
+		compute_segment_start= getCurrentSimTime();
+		common->event_send(my_rank, COMPUTE_DONE, delay);
+		state= COMPUTE;
+		timestep_cnt++;
+		_GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
+		    my_rank);
+	    }
+	    break;
+	case FAIL:
+	    /* We just failed. Deal with it! */
+	    break;
+	case RESEND_MSG:
+	    /* We have been asked to resend a previous msg to help another rank to recover */
+	    break;
+    }
+
+    return state;
+
+}  // end of wait_state()
 
 
 

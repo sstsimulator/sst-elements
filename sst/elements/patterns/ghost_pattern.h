@@ -177,7 +177,9 @@ class Ghost_pattern : public Component {
 	TimeConverter *tc;
 
 	// Some local functions we need
-	state_t init_state(state_t state, pattern_event_t event);
+	state_t init_state(pattern_event_t event);
+	state_t compute_state(pattern_event_t event, CPUNicEvent *e);
+	state_t wait_state(pattern_event_t event, CPUNicEvent *e);
 
         friend class boost::serialization::access;
         template<class Archive>
