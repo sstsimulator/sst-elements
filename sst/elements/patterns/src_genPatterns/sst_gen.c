@@ -42,7 +42,7 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 	return;
     }
 
-    fprintf(sstfile, "<gen_params>\n");
+    fprintf(sstfile, "<Gp>\n");
     fprintf(sstfile, "    <debug> %d </debug>\n", gen_debug);
 
 }  /* end of sst_gen_param_start() */
@@ -81,13 +81,13 @@ sst_gen_param_end(FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "</gen_params>\n");
+    fprintf(sstfile, "</Gp>\n");
     fprintf(sstfile, "\n");
 
-    fprintf(sstfile, "<gen_net_link>\n");
+    fprintf(sstfile, "<Gnet>\n");
     fprintf(sstfile, "    <name> NETWORK </name>\n");
     fprintf(sstfile, "    <lat> 1ns </lat>\n");
-    fprintf(sstfile, "</gen_net_link>\n");
+    fprintf(sstfile, "</Gnet>\n");
     fprintf(sstfile, "\n");
 
 }  /* end of sst_gen_param_end() */
@@ -103,7 +103,7 @@ sst_router_param_start(FILE *sstfile, int num_ports)
 	return;
     }
 
-    fprintf(sstfile, "<router_params>\n");
+    fprintf(sstfile, "<Rp>\n");
     fprintf(sstfile, "    <hop_delay> 25 </hop_delay>\n");
     fprintf(sstfile, "    <debug> 0 </debug>\n");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
@@ -121,7 +121,7 @@ sst_router_param_end(FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "</router_params>\n");
+    fprintf(sstfile, "</Rp>\n");
     fprintf(sstfile, "\n");
 
 }  /* end of sst_router_param_end() */
@@ -163,12 +163,12 @@ sst_gen_component(char *id, char *net_link_id, float weight, int rank, char *pat
 
     fprintf(sstfile, "    <component id=\"%s\" weight=%f>\n", id, weight);
     fprintf(sstfile, "        <%s>\n", pattern_name);
-    fprintf(sstfile, "            <params include=gen_params>\n");
+    fprintf(sstfile, "            <params include=Gp>\n");
     fprintf(sstfile, "               <rank> %d </rank>\n", rank);
     fprintf(sstfile, "            </params>\n");
     fprintf(sstfile, "            <links>\n");
     fprintf(sstfile, "                <link id=\"%s\">\n", net_link_id);
-    fprintf(sstfile, "                    <params reference=gen_net_link> </params>\n");
+    fprintf(sstfile, "                    <params reference=Gnet> </params>\n");
     fprintf(sstfile, "                </link>\n");
     fprintf(sstfile, "            </links>\n");
     fprintf(sstfile, "        </%s>\n", pattern_name);
@@ -188,9 +188,9 @@ sst_router_component_start(char *id, float weight, char *cname, FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "    <component id=\"%s\" weight=%f>\n", id, weight);
+    fprintf(sstfile, "    <component id=\"%s\" weight=%.2f>\n", id, weight);
     fprintf(sstfile, "        <routermodel>\n");
-    fprintf(sstfile, "            <params include=router_params>\n");
+    fprintf(sstfile, "            <params include=Rp>\n");
     fprintf(sstfile, "                <component_name> %s </component_name>\n", cname);
 
 }  /* end of sst_router_component_start() */
@@ -266,8 +266,8 @@ char *label;
 
     reset_nic_list();
     while (next_nic(&n, &r, &p, &label))   {
-	snprintf(id, MAX_ID_LEN, "gen%d", n);
-	snprintf(net_link_id, MAX_ID_LEN, "Router%dPort%d", r, p);
+	snprintf(id, MAX_ID_LEN, "G%d", n);
+	snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	sst_gen_component(id, net_link_id, 1.0, n, pattern_name, sstfile);
     }
 
@@ -294,7 +294,7 @@ char cname[MAX_ID_LEN];
 
     reset_router_list();
     while (next_router(&r))   {
-	snprintf(router_id, MAX_ID_LEN, "router%d", r);
+	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	sst_router_component_start(router_id, 1.0, cname, sstfile);
 	/*
@@ -305,7 +305,7 @@ char cname[MAX_ID_LEN];
 	/* Link to local NIC(s) */
 	reset_router_nics(r);
 	while (next_router_nic(r, &p))   {
-	    snprintf(net_link_id, MAX_ID_LEN, "Router%dPort%d", r, p);
+	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
 	    fprintf(sstfile, "                <%s> %s </%s>\n", cname, net_link_id, cname);
 	}
@@ -327,7 +327,7 @@ char cname[MAX_ID_LEN];
 	/* Link to local NIC(s) */
 	reset_router_nics(r);
 	while (next_router_nic(r, &p))   {
-	    snprintf(net_link_id, MAX_ID_LEN, "Router%dPort%d", r, p);
+	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	    sst_router_component_link(net_link_id, "1ns", net_link_id, sstfile);
 	}
 
