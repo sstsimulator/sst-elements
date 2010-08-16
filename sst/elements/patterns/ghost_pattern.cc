@@ -68,10 +68,12 @@ pattern_event_t event;
     delete(sst_event);
 
     if (application_done)   {
-	_GHOST_PATTERN_DBG(0, "||| [%3d] Application has done %.9fs of work in %d time steps\n",
-	    my_rank, (double)application_time_so_far /  1000000000.0, timestep_cnt);
-	_GHOST_PATTERN_DBG(0, "||| [%3d] execution time %.9fs\n",
-	    my_rank, (double)execution_time /  1000000000.0);
+	if (my_rank == 0)   {
+	    printf("||| Application has done %.9fs of work in %d time steps\n",
+		(double)application_time_so_far /  1000000000.0, timestep_cnt);
+	    printf("||| Execution time %.9fs\n",
+		(double)execution_time /  1000000000.0);
+	}
 	unregisterExit();
     }
 

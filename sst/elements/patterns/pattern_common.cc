@@ -83,7 +83,8 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
     num_cores= cores;
 
     if (my_rank == 0)   {
-	printf("||| mesh x %d, y %d, cores %d\n", mesh_width, mesh_height, num_cores);
+	printf("||| mesh x %d, y %d, cores per router %d = %d total cores\n",
+	    mesh_width, mesh_height, num_cores, mesh_width * mesh_height * num_cores);
 	printf("||| Network bandwidth %.3f GB/s, latency %.9f s\n",
 	    (double)net_bandwidth / 1000000000.0, (double)net_latency / 1000000000.0);
 	printf("||| Node bandwidth    %.3f GB/s, latency %.9f s\n",
