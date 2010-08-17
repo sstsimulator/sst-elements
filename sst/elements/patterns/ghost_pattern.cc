@@ -44,24 +44,24 @@ pattern_event_t event;
 
     _GHOST_PATTERN_DBG(2, "[%3d] got event %d at time %lu\n", my_rank, event, getCurrentSimTime());
 
-    switch (state)   {
-	case INIT:
-	    /* Wait for the start signal */
-	    state= init_state(event);
+    switch (event)   {
+	case START:
+	    handle_start();
 	    break;
-
-	case COMPUTE:
-	    state= compute_state(event, e);
+	case COMPUTE_DONE:
+	    handle_compute_done();
 	    break;
-
-	case WAIT:
-	    /* We are waiting for messages from our four neighbors */
-	    state= wait_state(event, e);
+	case RECEIVE:
+	    handle_receive(e->hops);
 	    break;
-
-	case DONE:
-	    // We're done, and just waiting for the program to exit.
-	    // This state is not really needed
+	case WRITE_CHCKPT:
+	    handle_write_chckpt();
+	    break;
+	case FAIL:
+	    handle_fail();
+	    break;
+	case RESEND_MSG:
+	    handle_resend_msg();
 	    break;
     }
 
@@ -83,18 +83,16 @@ pattern_event_t event;
 
 
 
-//
-// Transition from INIT state to new state state
-//
-state_t
-Ghost_pattern::init_state(pattern_event_t event)
+void
+Ghost_pattern::handle_start(void)
 {
 
 SimTime_t delay;
 
 
-    switch (event)   {
-	case START:
+    switch (state)   {
+	case INIT:
+	    // Transition from INIT state to compute state
 	    // Send ourselves a COMPUTE_DONE event
 	    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n",
 		my_rank);
@@ -111,35 +109,38 @@ SimTime_t delay;
 	    common->event_send(my_rank, COMPUTE_DONE, delay);
 	    state= COMPUTE;
 	    timestep_cnt++;
+
+	    // Schedule the first coordinated checkpoint
+	    if (chckpt_method == CHCKPT_COORD)   {
+		// For ghost we want to schedule checkpoints at timestep
+		// intervals.
+		// FIXME: Continue working here
+		// common->event_send(my_rank, WRITE_CHCKPT, delay);
+	    }
 	    break;
 
-	case COMPUTE_DONE:
-	case RECEIVE:
-	case FAIL:
-	case RESEND_MSG:
+	case COMPUTE:
+	case WAIT:
+	case DONE:
+	case COORDINATED_CHCKPT:
 	    // Should not happen
-	    _abort(ghost_pattern, "[%3d] Invalid event in INIT\n", my_rank);
+	    _abort(ghost_pattern, "[%3d] Invalid start event\n", my_rank);
 	    break;
     }
 
-    return state;
-
-}  // end of init_state
+}  // end of handle_start
 
 
 
-//
-// Transition from COMPUTE state to new state state
-//
-state_t
-Ghost_pattern::compute_state(pattern_event_t event, CPUNicEvent *e)
+void
+Ghost_pattern::handle_compute_done(void)
 {
 
 SimTime_t delay;
 
 
-    switch (event)   {
-	case COMPUTE_DONE:
+    switch (state)   {
+	case COMPUTE:
 	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing, entering wait state\n", my_rank);
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
 	    if (application_time_so_far >= application_end_time)   {
@@ -176,55 +177,51 @@ SimTime_t delay;
 		}
 	    }
 	    break;
-	case RECEIVE:
-	    /* We got a message from another rank */
+
+	case INIT:
+	case WAIT:
+	case DONE:
+	case COORDINATED_CHCKPT:
+	    // Should not happen
+	    _abort(ghost_pattern, "[%3d] Invalid compute done event\n", my_rank);
+	    break;
+    }
+
+}  // end of handle_compute_done
+
+
+
+// We got a message from another rank
+void
+Ghost_pattern::handle_receive(int hops)
+{
+
+SimTime_t delay;
+
+
+    switch (state)   {
+	case COMPUTE:
+	    // Simply count the receives and continue computing
 	    rcv_cnt++;
 	    if (rcv_cnt > 4)   {
 		_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
 		    my_rank);
 	    }
 	    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n", my_rank,
-		rcv_cnt, e->hops);
+		rcv_cnt, hops);
+
+	    state= COMPUTE;
 	    break;
-	case START:
-	case FAIL:
-	case RESEND_MSG:
-	    // Should not happen
-	    _abort(ghost_pattern, "[%3d] Invalid event in COMPUTE\n", my_rank);
-	    break;
-    }
 
-    return state;
-
-}  // end of compute_state
-
-
-
-//
-// Transition from WAIT state to new state state
-//
-state_t
-Ghost_pattern::wait_state(pattern_event_t event, CPUNicEvent *e)
-{
-
-SimTime_t delay;
-
-
-    switch (event)   {
-	case START:
-	case COMPUTE_DONE:
-	    // Doesn't make sense; we should not be getting these events
-	    _abort(ghost_pattern, "[%3d] Invalid event in WAIT\n", my_rank);
-	    break;
-	case RECEIVE:
-	    /* YES! We got a message from another rank */
+	case WAIT:
+	    // Count the receives. When we have all four, transition back to compute
 	    rcv_cnt++;
 	    if (rcv_cnt > 4)   {
 		_abort(ghost_pattern, "[%3d] WAIT: We should never get more than 4 messages!\n",
 		    my_rank);
 	    }
 	    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n",
-		my_rank, rcv_cnt, e->hops);
+		my_rank, rcv_cnt, hops);
 	    if (rcv_cnt == 4)   {
 		rcv_cnt= 0;
 		if (application_end_time - application_time_so_far > compute_time)   {
@@ -242,17 +239,79 @@ SimTime_t delay;
 		    my_rank);
 	    }
 	    break;
-	case FAIL:
-	    /* We just failed. Deal with it! */
-	    break;
-	case RESEND_MSG:
-	    /* We have been asked to resend a previous msg to help another rank to recover */
+
+	case INIT:
+	case DONE:
+	case COORDINATED_CHCKPT:
+	    // Should not happen
+	    _abort(ghost_pattern, "[%3d] Invalid receive event\n", my_rank);
 	    break;
     }
 
-    return state;
+}  // end of handle_receive
 
-}  // end of wait_state()
+
+
+void
+Ghost_pattern::handle_write_chckpt(void)
+{
+
+    switch (state)   {
+	case INIT:
+	    break;
+	case COMPUTE:
+	    break;
+	case WAIT:
+	    break;
+	case DONE:
+	    break;
+	case COORDINATED_CHCKPT:
+	    break;
+    }
+
+}  // end of handle_write_chckpt
+
+
+
+void
+Ghost_pattern::handle_fail(void)
+{
+
+    switch (state)   {
+	case INIT:
+	    break;
+	case COMPUTE:
+	    break;
+	case WAIT:
+	    break;
+	case DONE:
+	    break;
+	case COORDINATED_CHCKPT:
+	    break;
+    }
+
+}  // end of handle_fail
+
+
+
+void
+Ghost_pattern::handle_resend_msg(void)
+{
+
+    switch (state)   {
+	case INIT:
+	    break;
+	case COMPUTE:
+	    break;
+	case WAIT:
+	    break;
+	case DONE:
+	    break;
+	case COORDINATED_CHCKPT:
+	    break;
+    }
+
+}  // end of handle_resend_msg
 
 
 

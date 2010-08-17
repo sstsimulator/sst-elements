@@ -30,7 +30,7 @@ using namespace SST;
 #define _GHOST_PATTERN_DBG(lvl, fmt, args...)
 #endif
 
-typedef enum {INIT, COMPUTE, WAIT, DONE} state_t;
+typedef enum {INIT, COMPUTE, WAIT, DONE, COORDINATED_CHCKPT} state_t;
 
 class Ghost_pattern : public Component {
     public:
@@ -57,6 +57,7 @@ class Ghost_pattern : public Component {
 	    application_done= FALSE;
 	    timestep_cnt= 0;
 	    cores= -1;
+	    chckpt_method= CHCKPT_NONE;
 
 	    registerExit();
 
@@ -112,6 +113,18 @@ class Ghost_pattern : public Component {
 		    sscanf(it->second.c_str(), "%d", &exchange_msg_len);
 		}
 
+		if (!it->first.compare("chckpt_method"))   {
+		    if (!it->second.compare("none"))   {
+			chckpt_method= CHCKPT_NONE;
+		    } else if (!it->second.compare("coordinated"))   {
+			chckpt_method= CHCKPT_COORD;
+		    } else if (!it->second.compare("uncoordinated"))   {
+			chckpt_method= CHCKPT_UNCOORD;
+		    } else if (!it->second.compare("distributed"))   {
+			chckpt_method= CHCKPT_RAID;
+		    }
+		}
+
                 ++it;
             }
 
@@ -145,7 +158,8 @@ class Ghost_pattern : public Component {
 	    // Initialize the common functions we need
 	    common= new Patterns();
 	    if (!common->init(x_dim, y_dim, my_rank, cores, net, self_link,
-		    net_latency, net_bandwidth, node_latency, node_bandwidth))   {
+		    net_latency, net_bandwidth, node_latency, node_bandwidth,
+		    chckpt_method))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
@@ -193,6 +207,7 @@ class Ghost_pattern : public Component {
 	int ghost_pattern_debug;
 	bool application_done;
 	int timestep_cnt;
+	chckpt_t chckpt_method;
 
         Params_t params;
 	Link *net;
@@ -200,9 +215,12 @@ class Ghost_pattern : public Component {
 	TimeConverter *tc;
 
 	// Some local functions we need
-	state_t init_state(pattern_event_t event);
-	state_t compute_state(pattern_event_t event, CPUNicEvent *e);
-	state_t wait_state(pattern_event_t event, CPUNicEvent *e);
+	void handle_start(void);
+	void handle_compute_done(void);
+	void handle_receive(int hops);
+	void handle_write_chckpt(void);
+	void handle_fail(void);
+	void handle_resend_msg(void);
 
         friend class boost::serialization::access;
         template<class Archive>
@@ -233,6 +251,7 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(ghost_pattern_debug);
 	    ar & BOOST_SERIALIZATION_NVP(application_done);
 	    ar & BOOST_SERIALIZATION_NVP(timestep_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_method);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(self_link);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

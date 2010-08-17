@@ -37,7 +37,8 @@ static int is_pow2(int num);
 */
 int
 Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_link,
-	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw)
+	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
+	chckpt_t method)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -81,6 +82,7 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
     node_latency= node_lat;
     node_bandwidth= node_bw;
     num_cores= cores;
+    chckpt_method= method;
 
     if (my_rank == 0)   {
 	printf("||| mesh x %d, y %d, cores per router %d = %d total cores\n",
@@ -89,6 +91,21 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
 	    (double)net_bandwidth / 1000000000.0, (double)net_latency / 1000000000.0);
 	printf("||| Node bandwidth    %.3f GB/s, latency %.9f s\n",
 	    (double)node_bandwidth / 1000000000.0, (double)node_latency / 1000000000.0);
+	printf("||| Checkpoint method is ");
+	switch (chckpt_method)   {
+	    case CHCKPT_NONE:
+		printf("none\n");
+		break;
+	    case CHCKPT_COORD:
+		printf("coordinated\n");
+		break;
+	    case CHCKPT_UNCOORD:
+		printf("uncoordinated with message logging\n");
+		break;
+	    case CHCKPT_RAID:
+		printf("distributed\n");
+		break;
+	}
     }
 
     return TRUE; /* success */

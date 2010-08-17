@@ -28,7 +28,10 @@
 
 
 // Event types sent among pattern generators
-typedef enum {START, COMPUTE_DONE, RECEIVE, FAIL, RESEND_MSG} pattern_event_t;
+typedef enum {START, COMPUTE_DONE, RECEIVE, WRITE_CHCKPT, FAIL, RESEND_MSG} pattern_event_t;
+
+// The checkpoint methods we support
+typedef enum {CHCKPT_NONE, CHCKPT_COORD, CHCKPT_UNCOORD, CHCKPT_RAID} chckpt_t;
 
 class Patterns   {
     public:
@@ -41,10 +44,12 @@ class Patterns   {
 	    my_rank= 1;
 	    net_latency= 0;
 	    net_bandwidth= 0;
+	    chckpt_method= CHCKPT_NONE;
 	}
 
 	int init(int x, int y, int rank, int cores, SST::Link *net_link, SST::Link *self_link,
-		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat, SST::SimTime_t node_bw);
+		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat,
+		SST::SimTime_t node_bw, chckpt_t method);
 
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
@@ -62,6 +67,7 @@ class Patterns   {
 	SST::SimTime_t net_bandwidth;	// In bytes per second
 	SST::SimTime_t node_latency;	// in nano seconds
 	SST::SimTime_t node_bandwidth;	// In bytes per second
+	chckpt_t chckpt_method;
 
 } ;  // end of class Patterns
 
