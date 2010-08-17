@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include "sst/core/serialization/element.h"
 
 #include "bus.h"
 #include <sst/elements/include/paramUtil.h>

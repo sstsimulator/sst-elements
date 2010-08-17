@@ -1,3 +1,5 @@
+#include "sst_config.h"
+#include "sst/core/serialization/element.h"
 
 #include "ssb_cv_link.h"
 #include "ssb_sim-outorder.h"

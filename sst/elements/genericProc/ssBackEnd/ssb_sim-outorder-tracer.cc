@@ -8,6 +8,8 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+#include "sst_config.h"
+#include "sst/core/serialization/element.h"
 
 #include "ssb_sim-outorder.h"
 #include "ssb_fetch_rec.h"

@@ -11,12 +11,13 @@
 ** distribution.
 */
 
+#include <sst_config.h>
+#include "sst/core/serialization/element.h"
 
 /*
 ** This file contains common routines used by all pattern generators.
 */
 #include <stdio.h>
-#include <sst_config.h>
 #include <sst/core/cpunicEvent.h>
 
 #include "pattern_common.h"

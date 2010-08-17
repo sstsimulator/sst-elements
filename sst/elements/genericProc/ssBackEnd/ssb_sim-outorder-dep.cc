@@ -1,3 +1,6 @@
+#include "sst_config.h"
+#include "sst/core/serialization/element.h"
+
 #include "ssb_sim-outorder.h"
 #include "ssb_rs_link.h"
 

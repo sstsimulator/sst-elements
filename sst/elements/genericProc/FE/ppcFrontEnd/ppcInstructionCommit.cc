@@ -12,6 +12,7 @@
 // distribution.
 
 #include "sst_config.h"
+#include "sst/core/serialization/element.h"
 
 #include "ppcMachine.h"
 #include "regs.h"

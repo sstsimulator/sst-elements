@@ -12,6 +12,7 @@
 // distribution.
 
 #include "sst_config.h"
+#include "sst/core/serialization/element.h"
 
 #include <stdio.h>
 #include <stdlib.h>

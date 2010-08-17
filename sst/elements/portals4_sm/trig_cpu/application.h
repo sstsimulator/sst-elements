@@ -55,7 +55,7 @@ protected:
     buildBinomialTree(int radix)
     {
         std::vector<int> my_children;
-        int my_root;
+        int my_root = -1;
 
         for (int i = 1 ; i <= num_nodes ; i *= radix) {
             int tmp_radix = (num_nodes / i < radix) ? (num_nodes / i) : radix;

@@ -11,9 +11,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifdef HAVE_CONFIG_H
 #include "sst_config.h"
-#endif
+#include "sst/core/serialization/element.h"
 
 #include "sst/core/component.h"
 #include "processor.h"
