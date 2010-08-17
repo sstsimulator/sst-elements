@@ -40,7 +40,8 @@ class Ghost_pattern : public Component {
         { 
 
             Params_t::iterator it= params.begin();
-	    // Defaults
+
+	    // Defaults for paramters
 	    ghost_pattern_debug= 0;
 	    my_rank= -1;
 	    net_latency= 0;
@@ -49,15 +50,23 @@ class Ghost_pattern : public Component {
 	    node_bandwidth= 0;
 	    compute_time= 0;
 	    application_end_time= 0;
-	    application_time_so_far= 0;
-	    execution_time= 0;
 	    exchange_msg_len= 128;
-	    rcv_cnt= 0;
-	    state= INIT;
-	    application_done= FALSE;
-	    timestep_cnt= 0;
 	    cores= -1;
 	    chckpt_method= CHCKPT_NONE;
+	    chckpt_delay= 0;
+	    chckpt_interval= 0;
+
+	    // Counters and computed values
+	    execution_time= 0;
+	    msg_wait_time= 0;
+	    chckpt_time= 0;
+	    timestep_cnt= 0;
+	    state= INIT;
+	    rcv_cnt= 0;
+	    application_time_so_far= 0;
+	    num_chckpts= 0;
+	    chckpt_steps= 1;
+	    application_done= FALSE;
 
 	    registerExit();
 
@@ -125,6 +134,14 @@ class Ghost_pattern : public Component {
 		    }
 		}
 
+		if (!it->first.compare("chckpt_delay"))   {
+		    sscanf(it->second.c_str(), "%lu", &chckpt_delay);
+		}
+
+		if (!it->first.compare("chckpt_interval"))   {
+		    sscanf(it->second.c_str(), "%lu", &chckpt_interval);
+		}
+
                 ++it;
             }
 
@@ -159,7 +176,7 @@ class Ghost_pattern : public Component {
 	    common= new Patterns();
 	    if (!common->init(x_dim, y_dim, my_rank, cores, net, self_link,
 		    net_latency, net_bandwidth, node_latency, node_bandwidth,
-		    chckpt_method))   {
+		    chckpt_method, chckpt_delay, chckpt_interval))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
@@ -174,6 +191,41 @@ class Ghost_pattern : public Component {
 	    up= myX + ((myY - 1 + y_dim) % y_dim) * (x_dim * cores);
 	    // fprintf(stderr, "{%2d:%d,%d} right %d, left %d, up %d, down %d\n",
 	    // 	my_rank, myX, myY, right, left, up, down);
+
+	    // If we are doing coordinated checkpointing, we will do that
+	    // every time x timesteps have been computed.
+	    // This is OK as long as the checkpoint interval is larger than a time
+	    // step. In the other case we would need to quiesce, lets do that later
+	    switch (chckpt_method)   {
+		case CHCKPT_NONE:
+		    break;
+		case CHCKPT_COORD:
+		    if (chckpt_interval >= compute_time)   {
+			chckpt_steps= chckpt_interval / compute_time;
+			if (my_rank == 0)   {
+			    printf("||| Will checkpoint every %d timesteps = %.9f s\n",
+				chckpt_steps,
+				(double)chckpt_steps * (double)compute_time / 1000000000.0);
+			}
+		    } else   {
+			_ABORT(Ghost_pattern, "Can't handle checkpoint interval %lu < timestep %lu\n",
+			    chckpt_interval, compute_time);
+		    }
+		    break;
+		case CHCKPT_UNCOORD:
+		case CHCKPT_RAID:
+		    _ABORT(Ghost_pattern, "Can't handle checkpoint methods other than coord and none\n");
+		    break;
+	    }
+
+	    // Ghost pattern specific info
+	    if (my_rank == 0)   {
+		printf("||| Each timestep will take %.9f s\n", (double)compute_time / 1000000000.0);
+		printf("||| Total application time is %.9f s = %.2f timesteps\n",
+		    (double)application_end_time / 1000000000.0,
+		    (double)application_end_time / (double)compute_time);
+		printf("||| Ghost cell exchange message size is %d bytes\n", exchange_msg_len);
+	    }
 
 	    // Send a start event to ourselves without a delay
 	    common->event_send(my_rank, START);
@@ -208,6 +260,14 @@ class Ghost_pattern : public Component {
 	bool application_done;
 	int timestep_cnt;
 	chckpt_t chckpt_method;
+	SimTime_t chckpt_delay;
+	int chckpt_steps;
+	SimTime_t chckpt_interval;
+	int num_chckpts;
+	SimTime_t msg_wait_time_start;
+	SimTime_t msg_wait_time;
+	SimTime_t chckpt_time;
+	SimTime_t chckpt_segment_start;
 
         Params_t params;
 	Link *net;
@@ -218,9 +278,8 @@ class Ghost_pattern : public Component {
 	void handle_start(void);
 	void handle_compute_done(void);
 	void handle_receive(int hops);
-	void handle_write_chckpt(void);
+	void handle_chckpt_done(void);
 	void handle_fail(void);
-	void handle_resend_msg(void);
 
         friend class boost::serialization::access;
         template<class Archive>
@@ -252,6 +311,14 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(application_done);
 	    ar & BOOST_SERIALIZATION_NVP(timestep_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_method);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_delay);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_steps);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_interval);
+	    ar & BOOST_SERIALIZATION_NVP(num_chckpts);
+	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_time);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(self_link);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

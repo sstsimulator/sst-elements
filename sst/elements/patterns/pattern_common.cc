@@ -39,7 +39,7 @@ static int is_pow2(int num);
 int
 Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_link,
 	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
-	chckpt_t method)
+	chckpt_t method, SimTime_t chckpt_delay, SimTime_t chckpt_interval)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -83,7 +83,6 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
     node_latency= node_lat;
     node_bandwidth= node_bw;
     num_cores= cores;
-    chckpt_method= method;
 
     if (my_rank == 0)   {
 	printf("||| mesh x %d, y %d, cores per router %d = %d total cores\n",
@@ -93,18 +92,22 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
 	printf("||| Node bandwidth    %.3f GB/s, latency %.9f s\n",
 	    (double)node_bandwidth / 1000000000.0, (double)node_latency / 1000000000.0);
 	printf("||| Checkpoint method is ");
-	switch (chckpt_method)   {
+	switch (method)   {
 	    case CHCKPT_NONE:
 		printf("none\n");
 		break;
 	    case CHCKPT_COORD:
 		printf("coordinated\n");
+		printf("||| Checkpoint time is %.9f s, every %.9f s\n",
+		    (double)chckpt_delay / 1000000000.0, (double)chckpt_interval / 1000000000.0);
 		break;
 	    case CHCKPT_UNCOORD:
 		printf("uncoordinated with message logging\n");
+		printf("||| Local checkpoint time is %.9f s\n", (double)chckpt_delay / 1000000000.0);
 		break;
 	    case CHCKPT_RAID:
 		printf("distributed\n");
+		printf("||| Remote checkpoint time is %.9f s\n", (double)chckpt_delay / 1000000000.0);
 		break;
 	}
     }
@@ -129,17 +132,17 @@ SimTime_t delay;
 
 
     // This is a crude approximation of how long this message would
-    // take to transmit, if there were no routers in between. (Each
-    // router adds its own delays as the event passes through.)
+    // take to transmit. We let SST handle latency by specyfing it
+    // on the links in the xml file
     //
-    // net_latency is in nano seconds and net_bandwidth is in bytes per second
+    // net_bandwidth is in bytes per second
 
     if ((my_rank / num_cores) != (dest / num_cores))   {
 	// This message goes off node
-	delay= net_latency + ((SimTime_t)len * 1000000000) / net_bandwidth;
+	delay= ((SimTime_t)len * 1000000000) / net_bandwidth;
     } else   {
 	// This is an intra-node message
-	delay= node_latency + ((SimTime_t)len * 1000000000) / node_bandwidth;
+	delay= ((SimTime_t)len * 1000000000) / node_bandwidth;
     }
     event_send(dest, RECEIVE, delay, len);
 

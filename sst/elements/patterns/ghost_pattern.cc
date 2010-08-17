@@ -54,25 +54,44 @@ pattern_event_t event;
 	case RECEIVE:
 	    handle_receive(e->hops);
 	    break;
-	case WRITE_CHCKPT:
-	    handle_write_chckpt();
+	case CHCKPT_DONE:
+	    handle_chckpt_done();
 	    break;
 	case FAIL:
 	    handle_fail();
-	    break;
-	case RESEND_MSG:
-	    handle_resend_msg();
 	    break;
     }
 
     delete(sst_event);
 
     if (application_done)   {
+	// Subtract the checkpoint time from the overall time to get
+	// execution time
+	execution_time= execution_time - chckpt_time;
+
 	if (my_rank == 0)   {
-	    printf("||| Application has done %.9fs of work in %d time steps\n",
+	    printf(">>> Application has done %.9f s of work in %d time steps\n",
 		(double)application_time_so_far /  1000000000.0, timestep_cnt);
-	    printf("||| Execution time %.9fs\n",
+	    printf(">>> Rank 0 execution time %.9f s\n",
 		(double)execution_time /  1000000000.0);
+	    printf(">>> Rank 0 checkpoint time %.9f s\n",
+		(double)chckpt_time /  1000000000.0);
+	    printf(">>> Rank 0 message wait time %.9f s, %.2f%% of ececution time\n",
+		(double)msg_wait_time /  1000000000.0,
+		100.0 / (double)execution_time * (double)msg_wait_time);
+
+	    switch (chckpt_method)   {
+		case CHCKPT_NONE:
+		    printf(">>> Checkpointing not enabled\n");
+		    break;
+		case CHCKPT_COORD:
+		    printf(">>> Wrote %d coordinated checkpoints\n", num_chckpts);
+		    break;
+		case CHCKPT_UNCOORD:
+		case CHCKPT_RAID:
+		    printf(">>> These checkpoints are not supported yet\n");
+		    break;
+	    }
 	}
 	unregisterExit();
     }
@@ -110,13 +129,6 @@ SimTime_t delay;
 	    state= COMPUTE;
 	    timestep_cnt++;
 
-	    // Schedule the first coordinated checkpoint
-	    if (chckpt_method == CHCKPT_COORD)   {
-		// For ghost we want to schedule checkpoints at timestep
-		// intervals.
-		// FIXME: Continue working here
-		// common->event_send(my_rank, WRITE_CHCKPT, delay);
-	    }
 	    break;
 
 	case COMPUTE:
@@ -133,6 +145,48 @@ SimTime_t delay;
 
 
 void
+Ghost_pattern::handle_chckpt_done(void)
+{
+
+SimTime_t delay;
+
+
+    if (chckpt_method == CHCKPT_NONE)   {
+	_abort(ghost_pattern, "[%3d] That's a bug!\n", my_rank);
+    }
+
+    switch (state)   {
+	case COORDINATED_CHCKPT:
+	    num_chckpts++;
+
+	    // Back to computing
+	    if (application_end_time - application_time_so_far > compute_time)   {
+		// Do a full time step
+		delay= compute_time;
+	    } else   {
+		// Do the remaining work
+		delay= application_end_time - application_time_so_far;
+	    }
+	    common->event_send(my_rank, COMPUTE_DONE, delay);
+	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
+	    state= COMPUTE;
+	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint done, back to compute state\n", my_rank);
+	    break;
+
+	case INIT:
+	case COMPUTE:
+	case WAIT:
+	case DONE:
+	    // Should not happen
+	    _abort(ghost_pattern, "[%3d] Invalid checkpoint done event\n", my_rank);
+	    break;
+    }
+
+}  // end of handle_chckpt_done
+
+
+
+void
 Ghost_pattern::handle_compute_done(void)
 {
 
@@ -143,6 +197,8 @@ SimTime_t delay;
 	case COMPUTE:
 	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing, entering wait state\n", my_rank);
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
+	    msg_wait_time_start= getCurrentSimTime();
+
 	    if (application_time_so_far >= application_end_time)   {
 		application_done= TRUE;
 		execution_time= getCurrentSimTime() - execution_time;
@@ -157,21 +213,36 @@ SimTime_t delay;
 		common->send(down, exchange_msg_len);
 
 		if (rcv_cnt == 4)   {
-		    // We already have our for neighbor messages; no need to wait
 		    rcv_cnt= 0;
-		    if (application_end_time - application_time_so_far > compute_time)   {
-			// Do a full time step
-			delay= compute_time;
-		    } else   {
-			// Do the remaining work
-			delay= application_end_time - application_time_so_far;
-		    }
-		    compute_segment_start= getCurrentSimTime();
-		    common->event_send(my_rank, COMPUTE_DONE, delay);
-		    state= COMPUTE;
 		    timestep_cnt++;
-		    _GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
-			my_rank);
+		    msg_wait_time= msg_wait_time + getCurrentSimTime() - msg_wait_time_start;
+
+		    // Is it time to write a checkpoint?
+		    if ((chckpt_method == CHCKPT_COORD) && (timestep_cnt % chckpt_steps == 0))   {
+			// Enter the checkpointing state
+			state= COORDINATED_CHCKPT;
+			chckpt_segment_start= getCurrentSimTime();
+			common->event_send(my_rank, CHCKPT_DONE, chckpt_delay);
+			_GHOST_PATTERN_DBG(4, "[%3d] Writing a checkpoint, back in %lu\n", my_rank,
+			    chckpt_delay);
+
+		    } else   {
+
+			// Proceed to the next compute cycle
+			if (application_end_time - application_time_so_far > compute_time)   {
+			    // Do a full time step
+			    delay= compute_time;
+			} else   {
+			    // Do the remaining work
+			    delay= application_end_time - application_time_so_far;
+			}
+			compute_segment_start= getCurrentSimTime();
+			common->event_send(my_rank, COMPUTE_DONE, delay);
+			state= COMPUTE;
+			_GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
+			    my_rank);
+		    }
+
 		} else   {
 		    state= WAIT;
 		}
@@ -224,52 +295,59 @@ SimTime_t delay;
 		my_rank, rcv_cnt, hops);
 	    if (rcv_cnt == 4)   {
 		rcv_cnt= 0;
-		if (application_end_time - application_time_so_far > compute_time)   {
-		    // Do a full time step
-		    delay= compute_time;
-		} else   {
-		    // Do the remaining work
-		    delay= application_end_time - application_time_so_far;
-		}
-		compute_segment_start= getCurrentSimTime();
-		common->event_send(my_rank, COMPUTE_DONE, delay);
-		state= COMPUTE;
 		timestep_cnt++;
-		_GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
-		    my_rank);
+		msg_wait_time= msg_wait_time + getCurrentSimTime() - msg_wait_time_start;
+
+		// Is it time to write a checkpoint?
+		if ((chckpt_method == CHCKPT_COORD) && (timestep_cnt % chckpt_steps == 0))   {
+		    // Enter the checkpointing state
+		    state= COORDINATED_CHCKPT;
+		    chckpt_segment_start= getCurrentSimTime();
+		    common->event_send(my_rank, CHCKPT_DONE, chckpt_delay);
+		    _GHOST_PATTERN_DBG(4, "[%3d] Writing a checkpoint, we'll be back in %lu\n",
+			my_rank, chckpt_delay);
+
+		} else   {
+
+		    if (application_end_time - application_time_so_far > compute_time)   {
+			// Do a full time step
+			delay= compute_time;
+		    } else   {
+			// Do the remaining work
+			delay= application_end_time - application_time_so_far;
+		    }
+		    compute_segment_start= getCurrentSimTime();
+		    common->event_send(my_rank, COMPUTE_DONE, delay);
+		    state= COMPUTE;
+		    _GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
+			my_rank);
+		}
 	    }
+	    break;
+
+	case COORDINATED_CHCKPT:
+	    // Another rank is way ahead of us and already sent us the next msg
+	    // That's OK, we're not checkpointing the ghost cells, but can this
+	    // really happen?
+	    rcv_cnt++;
+	    if (rcv_cnt > 4)   {
+		_abort(ghost_pattern, "[%3d] COORDINATED_CHCKPT: We should never get more than "
+		    "4 messages!\n", my_rank);
+	    }
+	    _GHOST_PATTERN_DBG(0, "[%3d] Got msg #%d from neighbor with %d hops while checkpointing\n", my_rank,
+		rcv_cnt, hops);
+
+	    state= COORDINATED_CHCKPT; //  Doesn't change
 	    break;
 
 	case INIT:
 	case DONE:
-	case COORDINATED_CHCKPT:
 	    // Should not happen
 	    _abort(ghost_pattern, "[%3d] Invalid receive event\n", my_rank);
 	    break;
     }
 
 }  // end of handle_receive
-
-
-
-void
-Ghost_pattern::handle_write_chckpt(void)
-{
-
-    switch (state)   {
-	case INIT:
-	    break;
-	case COMPUTE:
-	    break;
-	case WAIT:
-	    break;
-	case DONE:
-	    break;
-	case COORDINATED_CHCKPT:
-	    break;
-    }
-
-}  // end of handle_write_chckpt
 
 
 
@@ -291,27 +369,6 @@ Ghost_pattern::handle_fail(void)
     }
 
 }  // end of handle_fail
-
-
-
-void
-Ghost_pattern::handle_resend_msg(void)
-{
-
-    switch (state)   {
-	case INIT:
-	    break;
-	case COMPUTE:
-	    break;
-	case WAIT:
-	    break;
-	case DONE:
-	    break;
-	case COORDINATED_CHCKPT:
-	    break;
-    }
-
-}  // end of handle_resend_msg
 
 
 

@@ -33,6 +33,10 @@ static struct option long_options[]=   {
     {"cores", 1, NULL, 'c'},
     {"sstfilename", 1, NULL, 's'},
     {"pattern", 1, NULL, 'p'},
+    {"method", 1, NULL, 'm'},
+    {"chckpt_delay", 1, NULL, 1000},
+    {"chckpt_interval", 1, NULL, 1001},
+    {NULL, 0, NULL, 0}
 };
 
 
@@ -60,6 +64,9 @@ uint64_t compute;	/* In ns */
 uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
 int num_cores;		/* How many pattern generators per router */
+char *method;		/* Checkpointing method to use */
+uint64_t chckpt_delay;	/* How long to write a checkpoint in ns */
+uint64_t chckpt_interval;	/* How long between checkpoints in ns */
 
 
 
@@ -69,13 +76,16 @@ int num_cores;		/* How many pattern generators per router */
     sstFname= "";
     x_dim= -1;
     y_dim= -1;
-    net_lat= 1200;
-    net_bw= 1200000000;
-    node_lat= 250;
-    node_bw= 5 * net_bw;
+    net_lat= 4900;
+    net_bw= 1900000000;
+    node_lat= 150;
+    node_bw= 12600000000;
     compute= 150000;
-    app_time= 10 * compute;
+    app_time= 1000 * compute; /* 1000 time steps */
     num_cores= 1;
+    method= "none";
+    chckpt_delay= compute / 2;	/* This number is completly aritrary */
+    chckpt_interval= compute * 100; /* Every 100 time steps */
 
 
     /* Assume 2GB of memory per MPI rank. The aquare root of that is */
@@ -87,7 +97,7 @@ int num_cores;		/* How many pattern generators per router */
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "c:s:hx:y:p:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "c:s:hx:y:p:m:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -120,8 +130,25 @@ int num_cores;		/* How many pattern generators per router */
 	    case 'p':
 		pattern_name= optarg;
 		break;
+	    case 'm':
+		method= optarg;
+		break;
 	    case 'h':
 		error= TRUE;
+		break;
+	    case 1000:
+		chckpt_delay= strtol(optarg, (char **)NULL, 0);
+		if (chckpt_delay < 1)   {
+		    fprintf(stderr, "chckpt_delay must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 1001:
+		chckpt_interval= strtol(optarg, (char **)NULL, 0);
+		if (chckpt_interval < 1)   {
+		    fprintf(stderr, "chckpt_interval must be > 0\n");
+		    error= TRUE;
+		}
 		break;
 	    default:
 		error= TRUE;
@@ -145,6 +172,16 @@ int num_cores;		/* How many pattern generators per router */
 	fprintf(stderr, "Must be one of \"ghost_pattern\", or \"\"\n");
     }
 
+    if ((strstr("none", method) != method) &&
+        (strstr("coordinated", method) != method) &&
+        (strstr("uncoordinated", method) != method) &&
+        (strstr("distributed", method) != method))   {
+	error= TRUE;
+	fprintf(stderr, "Unknown checkpointing method!\n");
+	fprintf(stderr, "Must be one of \"none\", \"coordinated\", \"uncoordinated\", "
+	    "or \"distributed\"\n");
+    }
+
     if ((x_dim < 0) || (y_dim < 0))   {
 	error= TRUE;
 	fprintf(stderr, "-x and -y must be specified!\n");
@@ -153,6 +190,11 @@ int num_cores;		/* How many pattern generators per router */
     if (!is_pow2(x_dim * y_dim))   {
 	error= TRUE;
 	fprintf(stderr, "x * y must be power of two!\n");
+    }
+
+    if (!is_pow2(num_cores))   {
+	error= TRUE;
+	fprintf(stderr, "Number of cores must be power of two!\n");
     }
 
     /* Open the SST xml file for output */
@@ -166,7 +208,8 @@ int num_cores;		/* How many pattern generators per router */
     } else   {
 	fp_sst= fopen(sstFname, "w");
 	if (fp_sst == NULL)   {
-	    fprintf(stderr, "Could not open the SST xml output file \"%s\": %s\n", sstFname, strerror(errno));
+	    fprintf(stderr, "Could not open the SST xml output file \"%s\": %s\n",
+		sstFname, strerror(errno));
 	    exit(2);
 	}
     }
@@ -187,8 +230,8 @@ int num_cores;		/* How many pattern generators per router */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst, x_dim, y_dim, num_cores, net_lat, net_bw, node_lat, node_bw,
-	compute, app_time, exchange_msg_len);
-    sst_gen_param_end(fp_sst);
+	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval);
+    sst_gen_param_end(fp_sst, node_lat);
 
     sst_router_param_start(fp_sst, num_ports);
     sst_router_param_end(fp_sst);
@@ -196,7 +239,7 @@ int num_cores;		/* How many pattern generators per router */
 
 
     sst_pattern_generators(pattern_name, fp_sst);
-    sst_routers(fp_sst);
+    sst_routers(fp_sst, node_lat, net_lat);
     sst_body_end(fp_sst);
     sst_footer(fp_sst);
 
@@ -221,6 +264,10 @@ usage(char *argv[])
     fprintf(stderr, "   dimY                  Y dimesnion of 2-D tours\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
     fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost_pattern\n");
+    fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");
+    fprintf(stderr, "                         uncoordinated, distributed\n");
+    fprintf(stderr, "   --chckpt_delay        Time to write a checkpoint (in nano seconds)\n");
+    fprintf(stderr, "   --chckpt_interval     How often to write a (coordinated) checkpoint (in nano seconds)\n");
 
 }  /* end of usage() */
 

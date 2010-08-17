@@ -51,7 +51,8 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 void
 sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
-	uint64_t app_time, int msg_len)
+	uint64_t app_time, int msg_len, char *method, uint64_t chckpt_delay,
+	uint64_t chckpt_interval)
 {
 
     if (sstfile == NULL)   {
@@ -68,12 +69,15 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t n
     fprintf(sstfile, "    <compute_time> %lu </compute_time>\n", compute_time);
     fprintf(sstfile, "    <application_end_time> %lu </application_end_time>\n", app_time);
     fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
+    fprintf(sstfile, "    <chckpt_method> %s </chckpt_method>\n", method);
+    fprintf(sstfile, "    <chckpt_delay> %lu </chckpt_delay>\n", chckpt_delay);
+    fprintf(sstfile, "    <chckpt_interval> %lu </chckpt_interval>\n", chckpt_interval);
 
 }  /* end of sst_gen_param_entries() */
 
 
 void
-sst_gen_param_end(FILE *sstfile)
+sst_gen_param_end(FILE *sstfile, uint64_t node_latency)
 {
 
     if (sstfile == NULL)   {
@@ -86,7 +90,7 @@ sst_gen_param_end(FILE *sstfile)
 
     fprintf(sstfile, "<Gnet>\n");
     fprintf(sstfile, "    <name> NETWORK </name>\n");
-    fprintf(sstfile, "    <lat> 1ns </lat>\n");
+    fprintf(sstfile, "    <lat> %luns </lat>\n", node_latency);
     fprintf(sstfile, "</Gnet>\n");
     fprintf(sstfile, "\n");
 
@@ -198,7 +202,7 @@ sst_router_component_start(char *id, float weight, char *cname, FILE *sstfile)
 
 
 void
-sst_router_component_link(char *id, char *link_lat, char *link_name, FILE *sstfile)
+sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -208,7 +212,7 @@ sst_router_component_link(char *id, char *link_lat, char *link_name, FILE *sstfi
 
     fprintf(sstfile, "            <link id=\"%s\">\n", id);
     fprintf(sstfile, "                <params>\n");
-    fprintf(sstfile, "                    <lat>%s</lat>\n", link_lat);
+    fprintf(sstfile, "                    <lat>%luns</lat>\n", link_lat);
     fprintf(sstfile, "                    <name>%s</name>\n", link_name);
     fprintf(sstfile, "                </params>\n");
     fprintf(sstfile, "            </link>\n");
@@ -279,7 +283,7 @@ char *label;
 ** Generate the router components
 */
 void
-sst_routers(FILE *sstfile)
+sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
 {
 
 int l, r, p;
@@ -328,14 +332,14 @@ char cname[MAX_ID_LEN];
 	reset_router_nics(r);
 	while (next_router_nic(r, &p))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
-	    sst_router_component_link(net_link_id, "1ns", net_link_id, sstfile);
+	    sst_router_component_link(net_link_id, node_latency, net_link_id, sstfile);
 	}
 
 	/* Links to other routers */
 	reset_router_links(r);
 	while (next_router_link(r, &l, &p))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
-	    sst_router_component_link(net_link_id, "1ns", net_link_id, sstfile);
+	    sst_router_component_link(net_link_id, net_latency, net_link_id, sstfile);
 	}
 
 	sst_router_component_end(sstfile);
