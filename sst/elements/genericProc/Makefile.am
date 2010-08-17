@@ -4,7 +4,8 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-    -I$(top_srcdir)/sst/elements/include \
+	$(MPI_CPPFLAGS) \
+	-I$(top_srcdir)/sst/elements/include \
 	-I$(srcdir)/FE \
 	-I$(srcdir)/FE/ppcFrontEnd \
 	-I$(srcdir)/FE/ppcFrontEnd/osx_headers \
