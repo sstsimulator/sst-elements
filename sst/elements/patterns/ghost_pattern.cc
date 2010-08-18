@@ -42,23 +42,27 @@ pattern_event_t event;
 	return;
     }
 
-    _GHOST_PATTERN_DBG(2, "[%3d] got event %d at time %lu\n", my_rank, event, getCurrentSimTime());
+    _GHOST_PATTERN_DBG(2, "[%3d] In state %d and got event %d at time %lu\n", my_rank,
+	state, event, getCurrentSimTime());
 
-    switch (event)   {
-	case START:
-	    handle_start();
+    switch (state)   {
+	case INIT:
+	    state_INIT(event);
 	    break;
-	case COMPUTE_DONE:
-	    handle_compute_done();
+	case COMPUTE:
+	    state_COMPUTE(event);
 	    break;
-	case RECEIVE:
-	    handle_receive(e->hops);
+	case WAIT:
+	    state_WAIT(event);
 	    break;
-	case CHCKPT_DONE:
-	    handle_chckpt_done();
+	case DONE:
+	    state_DONE(event);
 	    break;
-	case FAIL:
-	    handle_fail();
+	case COORDINATED_CHCKPT:
+	    state_COORDINATED_CHCKPT(event);
+	    break;
+	case SAVING_ENVELOPE:
+	    state_SAVING_ENVELOPE(event);
 	    break;
     }
 
@@ -102,100 +106,67 @@ pattern_event_t event;
 
 
 
+// When we send to ourselves, we come here.
+// Just pass it on to the main handler above
 void
-Ghost_pattern::handle_start(void)
+Ghost_pattern::handle_self_events(Event *e)
+{
+    handle_events(e);
+}  /* end of handle_self_events() */
+
+
+
+extern "C" {
+Ghost_pattern *
+ghost_patternAllocComponent(SST::ComponentId_t id,
+                          SST::Component::Params_t& params)
+{
+    return new Ghost_pattern(id, params);
+}
+}
+
+BOOST_CLASS_EXPORT(Ghost_pattern)
+
+
+
+//
+// -----------------------------------------------------------------------------
+// For each state in the state machine we have a method to deal with incoming
+// events.
+//
+void
+Ghost_pattern::state_INIT(pattern_event_t event)
 {
 
-SimTime_t delay;
-
-
-    switch (state)   {
-	case INIT:
-	    // Transition from INIT state to compute state
-	    // Send ourselves a COMPUTE_DONE event
-	    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n",
-		my_rank);
-
+    switch (event)   {
+	case START:
+	    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n", my_rank);
 	    execution_time= getCurrentSimTime();
-	    if (application_end_time - application_time_so_far > compute_time)   {
-		// Do a full time step
-		delay= compute_time;
-	    } else   {
-		// Do the remaining work
-		delay= application_end_time - application_time_so_far;
-	    }
-	    compute_segment_start= getCurrentSimTime();
-	    common->event_send(my_rank, COMPUTE_DONE, delay);
-	    state= COMPUTE;
-	    timestep_cnt++;
-
+	    transition_to_COMPUTE();
 	    break;
 
-	case COMPUTE:
-	case WAIT:
-	case DONE:
-	case COORDINATED_CHCKPT:
-	    // Should not happen
-	    _abort(ghost_pattern, "[%3d] Invalid start event\n", my_rank);
+	case FAIL:
+	    break;
+
+	case ENVELOPE_DONE:
+	case COMPUTE_DONE:
+	case RECEIVE:
+	case CHCKPT_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
 
-}  // end of handle_start
+}  // end of state_INIT()
 
 
 
 void
-Ghost_pattern::handle_chckpt_done(void)
+Ghost_pattern::state_COMPUTE(pattern_event_t event)
 {
 
-SimTime_t delay;
-
-
-    if (chckpt_method == CHCKPT_NONE)   {
-	_abort(ghost_pattern, "[%3d] That's a bug!\n", my_rank);
-    }
-
-    switch (state)   {
-	case COORDINATED_CHCKPT:
-	    num_chckpts++;
-
-	    // Back to computing
-	    if (application_end_time - application_time_so_far > compute_time)   {
-		// Do a full time step
-		delay= compute_time;
-	    } else   {
-		// Do the remaining work
-		delay= application_end_time - application_time_so_far;
-	    }
-	    common->event_send(my_rank, COMPUTE_DONE, delay);
-	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
-	    state= COMPUTE;
-	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint done, back to compute state\n", my_rank);
-	    break;
-
-	case INIT:
-	case COMPUTE:
-	case WAIT:
-	case DONE:
-	    // Should not happen
-	    _abort(ghost_pattern, "[%3d] Invalid checkpoint done event\n", my_rank);
-	    break;
-    }
-
-}  // end of handle_chckpt_done
-
-
-
-void
-Ghost_pattern::handle_compute_done(void)
-{
-
-SimTime_t delay;
-
-
-    switch (state)   {
-	case COMPUTE:
-	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing, entering wait state\n", my_rank);
+    switch (event)   {
+	case COMPUTE_DONE:
+	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing\n", my_rank);
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
 	    msg_wait_time_start= getCurrentSimTime();
 
@@ -203,6 +174,8 @@ SimTime_t delay;
 		application_done= TRUE;
 		execution_time= getCurrentSimTime() - execution_time;
 		// There is no ghost cell exchange after the last computation
+		state= DONE;
+		timestep_cnt++;
 
 	    } else   {
 
@@ -228,71 +201,45 @@ SimTime_t delay;
 
 		    } else   {
 
-			// Proceed to the next compute cycle
-			if (application_end_time - application_time_so_far > compute_time)   {
-			    // Do a full time step
-			    delay= compute_time;
-			} else   {
-			    // Do the remaining work
-			    delay= application_end_time - application_time_so_far;
-			}
-			compute_segment_start= getCurrentSimTime();
-			common->event_send(my_rank, COMPUTE_DONE, delay);
-			state= COMPUTE;
+			transition_to_COMPUTE();
 			_GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
 			    my_rank);
 		    }
 
 		} else   {
+		    // We don't have all four messages yet. Go into wait state
 		    state= WAIT;
 		}
 	    }
 	    break;
 
-	case INIT:
-	case WAIT:
-	case DONE:
-	case COORDINATED_CHCKPT:
-	    // Should not happen
-	    _abort(ghost_pattern, "[%3d] Invalid compute done event\n", my_rank);
+	case RECEIVE:
+	    count_receives();
+	    break;
+
+	case FAIL:
+	    break;
+
+	case START:
+	case CHCKPT_DONE:
+	case ENVELOPE_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
+ 
+}  // end of state_COMPUTE()
 
-}  // end of handle_compute_done
 
 
-
-// We got a message from another rank
 void
-Ghost_pattern::handle_receive(int hops)
+Ghost_pattern::state_WAIT(pattern_event_t event)
 {
 
-SimTime_t delay;
-
-
-    switch (state)   {
-	case COMPUTE:
-	    // Simply count the receives and continue computing
-	    rcv_cnt++;
-	    if (rcv_cnt > 4)   {
-		_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
-		    my_rank);
-	    }
-	    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n", my_rank,
-		rcv_cnt, hops);
-
-	    state= COMPUTE;
-	    break;
-
-	case WAIT:
+    switch (event)   {
+	case RECEIVE:
 	    // Count the receives. When we have all four, transition back to compute
-	    rcv_cnt++;
-	    if (rcv_cnt > 4)   {
-		_abort(ghost_pattern, "[%3d] WAIT: We should never get more than 4 messages!\n",
-		    my_rank);
-	    }
-	    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from neighbor with %d hops\n",
-		my_rank, rcv_cnt, hops);
+	    count_receives();
+
 	    if (rcv_cnt == 4)   {
 		rcv_cnt= 0;
 		timestep_cnt++;
@@ -309,86 +256,153 @@ SimTime_t delay;
 
 		} else   {
 
-		    if (application_end_time - application_time_so_far > compute_time)   {
-			// Do a full time step
-			delay= compute_time;
-		    } else   {
-			// Do the remaining work
-			delay= application_end_time - application_time_so_far;
-		    }
-		    compute_segment_start= getCurrentSimTime();
-		    common->event_send(my_rank, COMPUTE_DONE, delay);
-		    state= COMPUTE;
+		    transition_to_COMPUTE();
 		    _GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
 			my_rank);
 		}
 	    }
 	    break;
 
-	case COORDINATED_CHCKPT:
+	case FAIL:
+	    break;
+
+	case START:
+	case COMPUTE_DONE:
+	case CHCKPT_DONE:
+	case ENVELOPE_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+ 
+}  // end of state_WAIT()
+
+
+
+void
+Ghost_pattern::state_DONE(pattern_event_t event)
+{
+
+    _abort(ghost_pattern, "[%3d] Should not get anymore events after we are in DONE state\n",
+	my_rank);
+ 
+}  // end of state_DONE()
+
+
+
+void
+Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
+{
+
+SimTime_t delay;
+
+
+    if (chckpt_method == CHCKPT_NONE)   {
+	_abort(ghost_pattern, "[%3d] That's a bug!\n", my_rank);
+    }
+
+    switch (event)   {
+	case RECEIVE:
 	    // Another rank is way ahead of us and already sent us the next msg
-	    // That's OK, we're not checkpointing the ghost cells, but can this
-	    // really happen?
-	    rcv_cnt++;
-	    if (rcv_cnt > 4)   {
-		_abort(ghost_pattern, "[%3d] COORDINATED_CHCKPT: We should never get more than "
-		    "4 messages!\n", my_rank);
+	    // That's OK, we're not checkpointing the ghost cells.
+	    count_receives();
+	    break;
+
+	case CHCKPT_DONE:
+	    num_chckpts++;
+
+	    // Back to computing
+	    if (application_end_time - application_time_so_far > compute_time)   {
+		// Do a full time step
+		delay= compute_time;
+	    } else   {
+		// Do the remaining work
+		delay= application_end_time - application_time_so_far;
 	    }
-	    _GHOST_PATTERN_DBG(0, "[%3d] Got msg #%d from neighbor with %d hops while checkpointing\n", my_rank,
-		rcv_cnt, hops);
-
-	    state= COORDINATED_CHCKPT; //  Doesn't change
+	    common->event_send(my_rank, COMPUTE_DONE, delay);
+	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
+	    state= COMPUTE;
+	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint done, back to compute state\n", my_rank);
 	    break;
 
-	case INIT:
-	case DONE:
-	    // Should not happen
-	    _abort(ghost_pattern, "[%3d] Invalid receive event\n", my_rank);
+	case FAIL:
+	    break;
+
+	case COMPUTE_DONE:
+	case START:
+	case ENVELOPE_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
-
-}  // end of handle_receive
+ 
+}  // end of state_COORDINATED_CHCKPT()
 
 
 
 void
-Ghost_pattern::handle_fail(void)
+Ghost_pattern::state_SAVING_ENVELOPE(pattern_event_t event)
 {
 
-    switch (state)   {
-	case INIT:
+    switch (event)   {
+	case START:
 	    break;
-	case COMPUTE:
+	case COMPUTE_DONE:
 	    break;
-	case WAIT:
+	case RECEIVE:
 	    break;
-	case DONE:
+	case CHCKPT_DONE:
 	    break;
-	case COORDINATED_CHCKPT:
+	case FAIL:
+	    break;
+	case ENVELOPE_DONE:
 	    break;
     }
+ 
+}  // end of state_SAVING_ENVELOPE()
 
-}  // end of handle_fail
 
 
-
-// When we send to ourselves, we come here.
-// Just pass it on to the main handler above
+//
+// -----------------------------------------------------------------------------
+// Functions that help us transitions from one state to the next
+//
 void
-Ghost_pattern::handle_self_events(Event *e)
+Ghost_pattern::transition_to_COMPUTE(void)
 {
-    handle_events(e);
-}  /* end of handle_self_events() */
+
+SimTime_t delay;
+
+
+    compute_segment_start= getCurrentSimTime();
+
+    if (application_end_time - application_time_so_far > compute_time)   {
+	// Do a full time step
+	delay= compute_time;
+    } else   {
+	// Do the remaining work
+	delay= application_end_time - application_time_so_far;
+    }
+
+    // Send ourselves a COMPUTE_DONE event
+    common->event_send(my_rank, COMPUTE_DONE, delay);
+    state= COMPUTE;
+
+}  // end of transition_to_COMPUTE()
 
 
 
-extern "C" {
-Ghost_pattern *
-ghost_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
+//
+// -----------------------------------------------------------------------------
+// Other utility functions
+//
+void
+Ghost_pattern::count_receives(void)
 {
-    return new Ghost_pattern(id, params);
-}
-}
 
-BOOST_CLASS_EXPORT(Ghost_pattern)
+    rcv_cnt++;
+    if (rcv_cnt > 4)   {
+	_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
+	    my_rank);
+    }
+    _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from a neighbor\n", my_rank, rcv_cnt);
+
+}  // end of count_receives()

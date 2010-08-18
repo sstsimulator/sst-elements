@@ -28,7 +28,14 @@
 
 
 // Event types sent among pattern generators
-typedef enum {START, COMPUTE_DONE, RECEIVE, CHCKPT_DONE, FAIL} pattern_event_t;
+typedef enum {START,		// Enter first state of state machine
+              COMPUTE_DONE,	// Finished a compute step
+	      RECEIVE,		// Received a message
+	      CHCKPT_DONE,	// A checkpoint has been written
+	      FAIL,		// A failure occured on this rank
+	      ENVELOPE_DONE	// Envelope information has been written
+} pattern_event_t;
+
 
 // The checkpoint methods we support
 typedef enum {CHCKPT_NONE, CHCKPT_COORD, CHCKPT_UNCOORD, CHCKPT_RAID} chckpt_t;

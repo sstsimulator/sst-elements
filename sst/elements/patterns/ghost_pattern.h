@@ -30,7 +30,15 @@ using namespace SST;
 #define _GHOST_PATTERN_DBG(lvl, fmt, args...)
 #endif
 
-typedef enum {INIT, COMPUTE, WAIT, DONE, COORDINATED_CHCKPT} state_t;
+typedef enum {INIT,			// First state in state machine
+              COMPUTE,			// We are currently computing
+	      WAIT,			// Waiting for one or more messages
+	      DONE,			// Work is all done
+	      COORDINATED_CHCKPT,	// Writing a checkpoint
+	      SAVING_ENVELOPE		// Saving envelope info
+} state_t;
+
+
 
 class Ghost_pattern : public Component {
     public:
@@ -239,6 +247,7 @@ class Ghost_pattern : public Component {
 	void handle_self_events(Event *);
 	Patterns *common;
 
+	// Input paramters for simulation
 	int my_rank;
 	int cores;
 	int x_dim;
@@ -248,26 +257,34 @@ class Ghost_pattern : public Component {
 	SimTime_t node_latency;
 	SimTime_t node_bandwidth;
 	SimTime_t compute_time;
-	SimTime_t compute_segment_start;
 	SimTime_t application_end_time;
-	SimTime_t application_time_so_far;
-	SimTime_t execution_time;
 	int exchange_msg_len;
-	state_t state;
-	int left, right, up, down;
-	int rcv_cnt;
 	int ghost_pattern_debug;
-	bool application_done;
-	int timestep_cnt;
 	chckpt_t chckpt_method;
 	SimTime_t chckpt_delay;
-	int chckpt_steps;
 	SimTime_t chckpt_interval;
+
+	// Precomputed values
+	int left, right, up, down;
+	int chckpt_steps;
+
+	// Keeping track of the simulation
+	state_t state;
+	int rcv_cnt;
+	bool application_done;
+	int timestep_cnt;
 	int num_chckpts;
-	SimTime_t msg_wait_time_start;
-	SimTime_t msg_wait_time;
-	SimTime_t chckpt_time;
-	SimTime_t chckpt_segment_start;
+
+	// Keeping track of time
+	SimTime_t compute_segment_start;	// Time when we last entered compute
+	SimTime_t msg_wait_time_start;		// Time when we last entered wait
+	SimTime_t chckpt_segment_start;		// Time when we last entered coord chckpt
+
+	SimTime_t execution_time;		// Total time of simulation
+	SimTime_t application_time_so_far;	// Total time in compute so far
+	SimTime_t msg_wait_time;		// Total time in eait so far
+	SimTime_t chckpt_time;			// Total checkpoint time so far
+
 
         Params_t params;
 	Link *net;
@@ -275,11 +292,16 @@ class Ghost_pattern : public Component {
 	TimeConverter *tc;
 
 	// Some local functions we need
-	void handle_start(void);
-	void handle_compute_done(void);
-	void handle_receive(int hops);
-	void handle_chckpt_done(void);
-	void handle_fail(void);
+	void state_INIT(pattern_event_t event);
+	void state_COMPUTE(pattern_event_t event);
+	void state_WAIT(pattern_event_t event);
+	void state_DONE(pattern_event_t event);
+	void state_COORDINATED_CHCKPT(pattern_event_t event);
+	void state_SAVING_ENVELOPE(pattern_event_t event);
+
+	void transition_to_COMPUTE(void);
+	void count_receives(void);
+
 
         friend class boost::serialization::access;
         template<class Archive>
