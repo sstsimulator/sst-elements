@@ -36,6 +36,7 @@ static struct option long_options[]=   {
     {"method", 1, NULL, 'm'},
     {"chckpt_delay", 1, NULL, 1000},
     {"chckpt_interval", 1, NULL, 1001},
+    {"envelope_write_time", 1, NULL, 1002},
     {NULL, 0, NULL, 0}
 };
 
@@ -67,6 +68,7 @@ int num_cores;		/* How many pattern generators per router */
 char *method;		/* Checkpointing method to use */
 uint64_t chckpt_delay;	/* How long to write a checkpoint in ns */
 uint64_t chckpt_interval;	/* How long between checkpoints in ns */
+uint64_t envelope_write_time;	/* How long to write receive envelope info */
 
 
 
@@ -86,6 +88,7 @@ uint64_t chckpt_interval;	/* How long between checkpoints in ns */
     method= "none";
     chckpt_delay= compute / 2;	/* This number is completly aritrary */
     chckpt_interval= compute * 100; /* Every 100 time steps */
+    envelope_write_time= 250;	/* Assume we have very fast stable storage */
 
 
     /* Assume 2GB of memory per MPI rank. The aquare root of that is */
@@ -147,6 +150,13 @@ uint64_t chckpt_interval;	/* How long between checkpoints in ns */
 		chckpt_interval= strtol(optarg, (char **)NULL, 0);
 		if (chckpt_interval < 1)   {
 		    fprintf(stderr, "chckpt_interval must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 1002:
+		envelope_write_time= strtol(optarg, (char **)NULL, 0);
+		if (envelope_write_time < 1)   {
+		    fprintf(stderr, "envelope_write_time must be > 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -230,7 +240,8 @@ uint64_t chckpt_interval;	/* How long between checkpoints in ns */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst, x_dim, y_dim, num_cores, net_lat, net_bw, node_lat, node_bw,
-	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval);
+	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval,
+	envelope_write_time);
     sst_gen_param_end(fp_sst, node_lat);
 
     sst_router_param_start(fp_sst, num_ports);
@@ -268,6 +279,7 @@ usage(char *argv[])
     fprintf(stderr, "                         uncoordinated, distributed\n");
     fprintf(stderr, "   --chckpt_delay        Time to write a checkpoint (in nano seconds)\n");
     fprintf(stderr, "   --chckpt_interval     How often to write a (coordinated) checkpoint (in nano seconds)\n");
+    fprintf(stderr, "   --envelope_write_time Time needed to write receive envelope info (in nano seconds)\n");
 
 }  /* end of usage() */
 

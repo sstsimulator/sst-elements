@@ -35,7 +35,9 @@ typedef enum {INIT,			// First state in state machine
 	      WAIT,			// Waiting for one or more messages
 	      DONE,			// Work is all done
 	      COORDINATED_CHCKPT,	// Writing a checkpoint
-	      SAVING_ENVELOPE		// Saving envelope info
+	      SAVING_ENVELOPE_1,	// Saving envelope info during a compute
+	      SAVING_ENVELOPE_2,	// Saving envelope info during a wait
+	      SAVING_ENVELOPE_3		// Saving envelope info during a checkpoint write
 } state_t;
 
 
@@ -63,6 +65,7 @@ class Ghost_pattern : public Component {
 	    chckpt_method= CHCKPT_NONE;
 	    chckpt_delay= 0;
 	    chckpt_interval= 0;
+	    envelope_write_time= 0;
 
 	    // Counters and computed values
 	    execution_time= 0;
@@ -75,6 +78,7 @@ class Ghost_pattern : public Component {
 	    num_chckpts= 0;
 	    chckpt_steps= 1;
 	    application_done= FALSE;
+	    chckpt_done_interrupted= 0;
 
 	    registerExit();
 
@@ -150,6 +154,10 @@ class Ghost_pattern : public Component {
 		    sscanf(it->second.c_str(), "%lu", &chckpt_interval);
 		}
 
+		if (!it->first.compare("envelope_write_time"))   {
+		    sscanf(it->second.c_str(), "%lu", &envelope_write_time);
+		}
+
                 ++it;
             }
 
@@ -184,7 +192,7 @@ class Ghost_pattern : public Component {
 	    common= new Patterns();
 	    if (!common->init(x_dim, y_dim, my_rank, cores, net, self_link,
 		    net_latency, net_bandwidth, node_latency, node_bandwidth,
-		    chckpt_method, chckpt_delay, chckpt_interval))   {
+		    chckpt_method, chckpt_delay, chckpt_interval, envelope_write_time))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
@@ -220,7 +228,13 @@ class Ghost_pattern : public Component {
 			    chckpt_interval, compute_time);
 		    }
 		    break;
+
 		case CHCKPT_UNCOORD:
+		    if (my_rank == 0)   {
+			printf("||| Don't know yet what'll have to set for uncoordinated...\n");
+		    }
+		    break;
+
 		case CHCKPT_RAID:
 		    _ABORT(Ghost_pattern, "Can't handle checkpoint methods other than coord and none\n");
 		    break;
@@ -263,6 +277,7 @@ class Ghost_pattern : public Component {
 	chckpt_t chckpt_method;
 	SimTime_t chckpt_delay;
 	SimTime_t chckpt_interval;
+	SimTime_t envelope_write_time;
 
 	// Precomputed values
 	int left, right, up, down;
@@ -274,6 +289,7 @@ class Ghost_pattern : public Component {
 	bool application_done;
 	int timestep_cnt;
 	int num_chckpts;
+	int chckpt_done_interrupted;
 
 	// Keeping track of time
 	SimTime_t compute_segment_start;	// Time when we last entered compute
@@ -297,9 +313,12 @@ class Ghost_pattern : public Component {
 	void state_WAIT(pattern_event_t event);
 	void state_DONE(pattern_event_t event);
 	void state_COORDINATED_CHCKPT(pattern_event_t event);
-	void state_SAVING_ENVELOPE(pattern_event_t event);
+	void state_SAVING_ENVELOPE_1(pattern_event_t event);
+	void state_SAVING_ENVELOPE_2(pattern_event_t event);
+	void state_SAVING_ENVELOPE_3(pattern_event_t event);
 
 	void transition_to_COMPUTE(void);
+	void transition_to_COORDINATED_CHCKPT(void);
 	void count_receives(void);
 
 
@@ -318,6 +337,7 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(node_latency);
 	    ar & BOOST_SERIALIZATION_NVP(node_bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(compute_time);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_done_interrupted);
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(application_end_time);
 	    ar & BOOST_SERIALIZATION_NVP(application_time_so_far);

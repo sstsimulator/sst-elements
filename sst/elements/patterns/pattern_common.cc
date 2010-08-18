@@ -39,7 +39,7 @@ static int is_pow2(int num);
 int
 Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_link,
 	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
-	chckpt_t method, SimTime_t chckpt_delay, SimTime_t chckpt_interval)
+	chckpt_t method, SimTime_t chckpt_delay, SimTime_t chckpt_interval, SimTime_t envelope_write_time)
 {
     /* Make sure x * y is a power of 2, and my_rank is within range */
     if (!is_pow2(x * y))   {
@@ -104,6 +104,8 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
 	    case CHCKPT_UNCOORD:
 		printf("uncoordinated with message logging\n");
 		printf("||| Local checkpoint time is %.9f s\n", (double)chckpt_delay / 1000000000.0);
+		printf("||| Time to write receive envelope info is %.9f s\n",
+		    (double)envelope_write_time / 1000000000.0);
 		break;
 	    case CHCKPT_RAID:
 		printf("distributed\n");

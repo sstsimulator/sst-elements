@@ -22,7 +22,7 @@ void sst_gen_param_start(FILE *sstfile, int gen_debug);
 void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method, uint64_t chckpt_delay,
-	uint64_t chckpt_interval);
+	uint64_t chckpt_interval, uint64_t envelope_write_time);
 void sst_gen_param_end(FILE *sstfile, uint64_t node_latency);
 
 void sst_body_end(FILE *sstfile);

@@ -33,7 +33,7 @@ typedef enum {START,		// Enter first state of state machine
 	      RECEIVE,		// Received a message
 	      CHCKPT_DONE,	// A checkpoint has been written
 	      FAIL,		// A failure occured on this rank
-	      ENVELOPE_DONE	// Envelope information has been written
+	      WRITE_ENVELOPE_DONE	// Envelope information has been written
 } pattern_event_t;
 
 
@@ -57,7 +57,7 @@ class Patterns   {
 	int init(int x, int y, int rank, int cores, SST::Link *net_link, SST::Link *self_link,
 		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat,
 		SST::SimTime_t node_bw, chckpt_t method, SST::SimTime_t chckpt_delay,
-		SST::SimTime_t chckpt_interval);
+		SST::SimTime_t chckpt_interval, SST::SimTime_t envelope_write_time);
 
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
