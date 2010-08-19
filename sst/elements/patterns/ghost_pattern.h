@@ -75,10 +75,16 @@ class Ghost_pattern : public Component {
 	    state= INIT;
 	    rcv_cnt= 0;
 	    application_time_so_far= 0;
-	    num_chckpts= 0;
 	    chckpt_steps= 1;
 	    application_done= FALSE;
-	    chckpt_done_interrupted= 0;
+	    chckpt_interrupted= 0;
+	    compute_interrupted= 0;
+	    SAVING_ENVELOPE_1_interrupted= 0;
+	    SAVING_ENVELOPE_2_interrupted= 0;
+	    SAVING_ENVELOPE_3_interrupted= 0;
+	    num_chckpts= 0;
+	    num_rcv_envelopes= 0;
+	    total_rcvs= 0;
 
 	    registerExit();
 
@@ -243,9 +249,9 @@ class Ghost_pattern : public Component {
 	    // Ghost pattern specific info
 	    if (my_rank == 0)   {
 		printf("||| Each timestep will take %.9f s\n", (double)compute_time / 1000000000.0);
-		printf("||| Total application time is %.9f s = %.2f timesteps\n",
+		printf("||| Total application time is %.9f s = %.0f timesteps\n",
 		    (double)application_end_time / 1000000000.0,
-		    (double)application_end_time / (double)compute_time);
+		    ceil((double)application_end_time / (double)compute_time));
 		printf("||| Ghost cell exchange message size is %d bytes\n", exchange_msg_len);
 	    }
 
@@ -288,8 +294,18 @@ class Ghost_pattern : public Component {
 	int rcv_cnt;
 	bool application_done;
 	int timestep_cnt;
+	int timestep_needed;
+	int chckpt_interrupted;
+	int compute_interrupted;
+	int SAVING_ENVELOPE_1_interrupted;
+	int SAVING_ENVELOPE_2_interrupted;
+	int SAVING_ENVELOPE_3_interrupted;
+	bool done_waiting;
+
+	// Statistics; some of these may move to pattern_common
 	int num_chckpts;
-	int chckpt_done_interrupted;
+	int num_rcv_envelopes;
+	int total_rcvs;
 
 	// Keeping track of time
 	SimTime_t compute_segment_start;	// Time when we last entered compute
@@ -337,11 +353,14 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(node_latency);
 	    ar & BOOST_SERIALIZATION_NVP(node_bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(compute_time);
-	    ar & BOOST_SERIALIZATION_NVP(chckpt_done_interrupted);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_interrupted);
+	    ar & BOOST_SERIALIZATION_NVP(compute_interrupted);
+	    ar & BOOST_SERIALIZATION_NVP(SAVING_ENVELOPE_1_interrupted);
+	    ar & BOOST_SERIALIZATION_NVP(SAVING_ENVELOPE_2_interrupted);
+	    ar & BOOST_SERIALIZATION_NVP(SAVING_ENVELOPE_3_interrupted);
+	    ar & BOOST_SERIALIZATION_NVP(done_waiting);
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(application_end_time);
-	    ar & BOOST_SERIALIZATION_NVP(application_time_so_far);
-	    ar & BOOST_SERIALIZATION_NVP(execution_time);
 	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(left);
@@ -352,15 +371,22 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(ghost_pattern_debug);
 	    ar & BOOST_SERIALIZATION_NVP(application_done);
 	    ar & BOOST_SERIALIZATION_NVP(timestep_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(timestep_needed);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_method);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_delay);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_steps);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_interval);
-	    ar & BOOST_SERIALIZATION_NVP(num_chckpts);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(num_chckpts);
+	    ar & BOOST_SERIALIZATION_NVP(num_rcv_envelopes);
+	    ar & BOOST_SERIALIZATION_NVP(total_rcvs);
+	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
+	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_segment_start);
+	    ar & BOOST_SERIALIZATION_NVP(execution_time);
+	    ar & BOOST_SERIALIZATION_NVP(application_time_so_far);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_time);
-	    ar & BOOST_SERIALIZATION_NVP(chckpt_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(self_link);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

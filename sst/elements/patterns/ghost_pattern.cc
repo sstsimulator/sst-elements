@@ -13,6 +13,7 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <sst/core/cpunicEvent.h>
+#include <assert.h>
 #include "ghost_pattern.h"
 #include "pattern_common.h"
 
@@ -85,6 +86,7 @@ pattern_event_t event;
 	    printf(">>> Rank 0 message wait time %.9f s, %.2f%% of ececution time\n",
 		(double)msg_wait_time /  1000000000.0,
 		100.0 / (double)execution_time * (double)msg_wait_time);
+	    printf(">>> Rank 0 total receives %d\n", total_rcvs);
 
 	    switch (chckpt_method)   {
 		case CHCKPT_NONE:
@@ -94,6 +96,7 @@ pattern_event_t event;
 		    printf(">>> Wrote %d coordinated checkpoints\n", num_chckpts);
 		    break;
 		case CHCKPT_UNCOORD:
+		    printf(">>> Rank 0 wrote %d rcv-side log entries\n", num_rcv_envelopes);
 		    printf(">>> Number of log writes, message log size needed\n");
 		    break;
 		case CHCKPT_RAID:
@@ -101,6 +104,7 @@ pattern_event_t event;
 		    break;
 	    }
 	}
+
 	unregisterExit();
     }
 
@@ -145,6 +149,13 @@ Ghost_pattern::state_INIT(pattern_event_t event)
     switch (event)   {
 	case START:
 	    _GHOST_PATTERN_DBG(4, "[%3d] Starting, entering compute state\n", my_rank);
+	    done_waiting= false;
+	    timestep_needed= application_end_time / compute_time;
+	    if (timestep_needed * compute_time < application_end_time)   {
+		// Need a partial one at the end
+		timestep_needed++;
+	    }
+
 	    execution_time= getCurrentSimTime();
 	    transition_to_COMPUTE();
 	    break;
@@ -156,6 +167,7 @@ Ghost_pattern::state_INIT(pattern_event_t event)
 	case COMPUTE_DONE:
 	case RECEIVE:
 	case CHCKPT_DONE:
+	case ENTER_WAIT:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -170,10 +182,19 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 
     switch (event)   {
 	case COMPUTE_DONE:
+	    // I may not be completly done yet
+	    assert(compute_interrupted >= 0);
+	    if (compute_interrupted > 0)   {
+		// Ignore this event. There is another in the pipeline that was
+		// sent by state_SAVING_ENVELOPE_1() when they interrupted us
+		compute_interrupted--;
+		break;
+	    }
+
 	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing\n", my_rank);
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
 
-	    if (application_time_so_far >= application_end_time)   {
+	    if (timestep_cnt + 1 >= timestep_needed)   {
 		application_done= TRUE;
 		execution_time= getCurrentSimTime() - execution_time;
 		// There is no ghost cell exchange after the last computation
@@ -188,39 +209,23 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 		common->send(up, exchange_msg_len);
 		common->send(down, exchange_msg_len);
 
-		if (rcv_cnt == 4)   {
-		    rcv_cnt= 0;
-		    timestep_cnt++;
-		    msg_wait_time= msg_wait_time + getCurrentSimTime() - msg_wait_time_start;
-
-		    // Is it time to write a checkpoint?
-		    if ((chckpt_method == CHCKPT_COORD) && (timestep_cnt % chckpt_steps == 0))   {
-			// Enter the checkpointing state
-			transition_to_COORDINATED_CHCKPT();
-		    } else   {
-			transition_to_COMPUTE();
-			_GHOST_PATTERN_DBG(4, "[%3d] No need to wait, back to compute state\n",
-			    my_rank);
-		    }
-
-		} else   {
-		    // We don't have all four messages yet. Go into wait state
-		    msg_wait_time_start= getCurrentSimTime();
-		    state= WAIT;
-		}
+		// Go into WAIT. We'll determine there whether we have received all four
+		// messages and whether it is time to checkpoint
+		msg_wait_time_start= getCurrentSimTime();
+		state= WAIT;
+		state_WAIT(ENTER_WAIT);
 	    }
 	    break;
 
 	case RECEIVE:
 	    count_receives();
-
 	    if (chckpt_method == CHCKPT_UNCOORD)   {
 		// We'll have to log this message and return to compute
 		application_time_so_far += getCurrentSimTime() - compute_segment_start;
 		state= SAVING_ENVELOPE_1;
+		compute_interrupted++;
 		common->event_send(my_rank, WRITE_ENVELOPE_DONE, envelope_write_time);
 	    }
-
 	    break;
 
 	case FAIL:
@@ -229,6 +234,7 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	case START:
 	case CHCKPT_DONE:
 	case WRITE_ENVELOPE_DONE:
+	case ENTER_WAIT:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -248,13 +254,18 @@ Ghost_pattern::state_WAIT(pattern_event_t event)
 
 	    if (chckpt_method == CHCKPT_UNCOORD)   {
 		// We'll have to log this message and return to here
+		// There is not need to extend the wait, but we have to come back here
+		// to check for messages
 		state= SAVING_ENVELOPE_2;
 		common->event_send(my_rank, WRITE_ENVELOPE_DONE, envelope_write_time);
+		break;
 	    }
 
-	    if (rcv_cnt == 4)   {
-		rcv_cnt= 0;
-		timestep_cnt++;
+	    // Fall trhough to check whether we are done waiting
+
+	case ENTER_WAIT:
+	    if (done_waiting)   {
+		done_waiting= false;
 		msg_wait_time= msg_wait_time + getCurrentSimTime() - msg_wait_time_start;
 
 		// Is it time to write a checkpoint?
@@ -299,9 +310,7 @@ void
 Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 {
 
-    if (chckpt_method == CHCKPT_NONE)   {
-	_abort(ghost_pattern, "[%3d] That's a bug!\n", my_rank);
-    }
+    assert(chckpt_method != CHCKPT_NONE);
 
     switch (event)   {
 	case RECEIVE:
@@ -310,21 +319,22 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	    count_receives();
 
 	    if (chckpt_method == CHCKPT_UNCOORD)   {
-		// We'll have to log this message and return to here and finish checkpoitning
 		// FIXME: Are we going to use this method to write local checkpoints as well?
+		// We'll have to log this message and return to here and finish checkpoitning
 		state= SAVING_ENVELOPE_3;
 		chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
-		chckpt_done_interrupted++;
+		chckpt_interrupted++;
 		common->event_send(my_rank, WRITE_ENVELOPE_DONE, envelope_write_time);
 	    }
 	    break;
 
 	case CHCKPT_DONE:
 	    // I may not be completly done:
-	    if (chckpt_done_interrupted > 0)   {
+	    assert(chckpt_interrupted >= 0);
+	    if (chckpt_interrupted > 0)   {
 		// Ignore this event. There is another in the pipeline that was
 		// sent by state_SAVING_ENVELOPE_3() when they interrupted us
-		chckpt_done_interrupted--;
+		chckpt_interrupted--;
 	    } else   {
 		num_chckpts++;
 		chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
@@ -340,6 +350,7 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	case COMPUTE_DONE:
 	case START:
 	case WRITE_ENVELOPE_DONE:
+	case ENTER_WAIT:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -348,23 +359,43 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 
 
 
+// We come here from the COMPUTE state if necessary
 void
 Ghost_pattern::state_SAVING_ENVELOPE_1(pattern_event_t event)
 {
 
     switch (event)   {
 	case START:
-	case COMPUTE_DONE:
-	case RECEIVE:
 	case CHCKPT_DONE:
+	case ENTER_WAIT:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+
+	case COMPUTE_DONE:
+	    // We're absorbing an earlier COMPUTE_DONE event. It was sent before
+	    // we knew we would spend time in this state
+	    assert(compute_interrupted > 0);
+	    compute_interrupted--;
+	    break;
+
+	case RECEIVE:
+	    // A receive while I'm logging an earlier one
+	    count_receives();
+	    SAVING_ENVELOPE_1_interrupted++;
 	    break;
 
 	case FAIL:
 	    break;
 
 	case WRITE_ENVELOPE_DONE:
-	    // Go back to COMPUTE
+	    num_rcv_envelopes++;
+	    assert(SAVING_ENVELOPE_1_interrupted >= 0);
+	    if (SAVING_ENVELOPE_1_interrupted > 0)   {
+		SAVING_ENVELOPE_1_interrupted--;
+		common->event_send(my_rank, WRITE_ENVELOPE_DONE, envelope_write_time);
+	    } else   {
+		transition_to_COMPUTE();
+	    }
 	    break;
     }
  
@@ -372,6 +403,7 @@ Ghost_pattern::state_SAVING_ENVELOPE_1(pattern_event_t event)
 
 
 
+// We come here from the WAIT state if necessary
 void
 Ghost_pattern::state_SAVING_ENVELOPE_2(pattern_event_t event)
 {
@@ -379,16 +411,31 @@ Ghost_pattern::state_SAVING_ENVELOPE_2(pattern_event_t event)
     switch (event)   {
 	case START:
 	case COMPUTE_DONE:
-	case RECEIVE:
 	case CHCKPT_DONE:
+	case ENTER_WAIT:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
 	case FAIL:
 	    break;
 
+	case RECEIVE:
+	    // A receive while I'm logging an earlier one
+	    count_receives();
+	    SAVING_ENVELOPE_2_interrupted++;
+	    break;
+
 	case WRITE_ENVELOPE_DONE:
-	    // Go back to WAIT
+	    num_rcv_envelopes++;
+	    assert(SAVING_ENVELOPE_2_interrupted >= 0);
+	    if (SAVING_ENVELOPE_2_interrupted > 0)   {
+		SAVING_ENVELOPE_2_interrupted--;
+		common->event_send(my_rank, WRITE_ENVELOPE_DONE, envelope_write_time);
+	    } else   {
+		// Go back to WAIT
+		state= WAIT;
+		state_WAIT(ENTER_WAIT);
+	    }
 	    break;
     }
  
@@ -396,6 +443,7 @@ Ghost_pattern::state_SAVING_ENVELOPE_2(pattern_event_t event)
 
 
 
+// We come here from the COORDINATED_CHCKPT state if necessary
 void
 Ghost_pattern::state_SAVING_ENVELOPE_3(pattern_event_t event)
 {
@@ -406,29 +454,40 @@ SimTime_t chckpt_delay_remainder;
     switch (event)   {
 	case START:
 	case COMPUTE_DONE:
+	case ENTER_WAIT:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
 	case RECEIVE:
-	    _abort(ghost_pattern, "[%3d] I need to handle this case too!\n", my_rank);
+	    // A receive while I'm logging an earlier one
+	    count_receives();
+	    SAVING_ENVELOPE_3_interrupted++;
 	    break;
 
 	case CHCKPT_DONE:
 	    // We're absorbing an earlier CHCKPT_DONE event. It was sent before
 	    // we knew we would spend time in this state
-	    chckpt_done_interrupted--;
+	    assert(chckpt_interrupted > 0);
+	    chckpt_interrupted--;
 	    break;
 
 	case FAIL:
 	    break;
 
 	case WRITE_ENVELOPE_DONE:
-	    // Go back to writing checkpoint
-	    chckpt_segment_start= getCurrentSimTime();
-	    state= COORDINATED_CHCKPT;
-	    chckpt_delay_remainder= chckpt_delay -
-		(getCurrentSimTime() - envelope_write_time - chckpt_segment_start);
-	    common->event_send(my_rank, CHCKPT_DONE, chckpt_delay_remainder);
+	    num_rcv_envelopes++;
+	    assert(SAVING_ENVELOPE_3_interrupted >= 0);
+	    if (SAVING_ENVELOPE_3_interrupted > 0)   {
+		SAVING_ENVELOPE_3_interrupted--;
+		common->event_send(my_rank, WRITE_ENVELOPE_DONE, envelope_write_time);
+	    } else   {
+		// Go back to writing checkpoint
+		chckpt_segment_start= getCurrentSimTime();
+		state= COORDINATED_CHCKPT;
+		chckpt_delay_remainder= chckpt_delay -
+		    (getCurrentSimTime() - envelope_write_time - chckpt_segment_start);
+		common->event_send(my_rank, CHCKPT_DONE, chckpt_delay_remainder);
+	    }
 	    break;
     }
  
@@ -488,10 +547,12 @@ void
 Ghost_pattern::count_receives(void)
 {
 
+    total_rcvs++;
     rcv_cnt++;
-    if (rcv_cnt > 4)   {
-	_abort(ghost_pattern, "[%3d] COMPUTE: We should never get more than 4 messages!\n",
-	    my_rank);
+    if (rcv_cnt == 4)   {
+	timestep_cnt++;
+	rcv_cnt= 0;
+	done_waiting= true;
     }
     _GHOST_PATTERN_DBG(3, "[%3d] Got msg #%d from a neighbor\n", my_rank, rcv_cnt);
 

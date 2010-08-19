@@ -33,7 +33,8 @@ typedef enum {START,		// Enter first state of state machine
 	      RECEIVE,		// Received a message
 	      CHCKPT_DONE,	// A checkpoint has been written
 	      FAIL,		// A failure occured on this rank
-	      WRITE_ENVELOPE_DONE	// Envelope information has been written
+	      WRITE_ENVELOPE_DONE,	// Envelope information has been written
+	      ENTER_WAIT	// Move directly to wait state without an additional event
 } pattern_event_t;
 
 
