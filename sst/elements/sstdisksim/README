@@ -14,3 +14,9 @@ libdiskmodel.a
 When running this, make certain that _all_ related disk parameter
 files are in the location you are running from.  Otherwise, errors will 
 result.
+
+Lua notes:
+Yielding isn't working yet.
+When writing scripts, in addition to the regular list of taken words, 
+there is now also sst_thread_id.  Don't make any variables with this
+name, or whatever happens can be unpredictable.

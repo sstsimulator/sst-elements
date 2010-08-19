@@ -1,0 +1,14 @@
+print("lua_script rank:", sst_thread_id);
+
+i = 0
+
+while i < 4 do
+      luaRead(1024*i+1, i*512, 0);
+      luaWrite(1024*i+1, i*512, 0);
+      luaRead(1024*i+1, i*512, 0);
+      luaWrite(1024*i+1, i*512, 0);
+      luaRead(1024*i+1, i*512, 0);
+      luaWrite(1024*i+1, i*512, 0);
+      i = i+1;
+      print(i);
+end

@@ -171,30 +171,6 @@ int
 sstdisksim::Setup()
 {
   return 0;
-
-  if ( __id == 0 )
-  {
-    for ( int i = 0; i < 400; i++ )
-    {
-      sstdisksim_event* event = new sstdisksim_event();
-      event->count = 512*33+15;
-      event->pos = 0;
-      event->devno = 0;
-      event->done = 0;
-      if ( i%2 == 0 )
-	event->etype = READ;
-      else
-	event->etype = WRITE;
-
-      link->Send(0, event);
-    }
-  }
-
-  sstdisksim_event* event = new sstdisksim_event();
-  event->done = 1;
-  link->Send(0, event);
-
-  return 0;
 }
 
 /******************************************************************************/
@@ -247,7 +223,7 @@ sstdisksim::processBlock(unsigned long blkno,
   }
 
   tmp = __now-tmp;
-  sstdisksim_event* event = new sstdisksim_event();
+  //  sstdisksim_event* event = new sstdisksim_event();
   //  empty->Send((int)(tmp*1000000), event);
 
   return count;
