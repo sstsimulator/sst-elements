@@ -6,7 +6,7 @@
   <component id="1.sstdisksim_tracereader" >	
     <sstdisksim_tracereader>
       <params> 
-	<trace_file>tracefile</trace_file>
+	<trace_file>/Users/miwesto/trunk/sst/elements/sstdisksim/tracefile</trace_file>
       </params>
       <links>
 	<link id="0">

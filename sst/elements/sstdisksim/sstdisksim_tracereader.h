@@ -68,6 +68,11 @@ class sstdisksim_tracereader : public Component {
   Params_t __params;
   ComponentId_t __id;
 
+  int luaReadCall(lua_State* L);
+  int luaRead(int count, int pos, int devno);
+  int luaWriteCall(lua_State* L);
+  int luaWrite(int count, int pos, int devno);
+
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */
 
