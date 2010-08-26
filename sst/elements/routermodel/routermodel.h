@@ -86,6 +86,9 @@ class Routermodel : public Component {
 		_abort(Routermodel, "Need to define the num_ports parameter!\n");
 	    }
 
+	    // Create a time converter
+	    tc= registerTimeBase("1ns", true);
+
 	    /* Attach the handler to each port */
 	    for (int i= 0; i < num_ports; i++)   {
 		sprintf(link_name, "Link%dname", i);
@@ -101,6 +104,7 @@ class Routermodel : public Component {
 		    strcpy(new_port.link_name, it->second.c_str());
 		    new_port.link= configureLink(new_port.link_name, new Event::Handler<Routermodel,int>
 					(this, &Routermodel::handle_port_events, i));
+		    new_port.link->setDefaultTimeBase(tc);
 		    new_port.cnt_in= 0;
 		    new_port.cnt_out= 0;
 		    port.push_back(new_port);
@@ -123,15 +127,24 @@ class Routermodel : public Component {
 	    _ROUTER_MODEL_DBG(1, "Router model component \"%s\" is on rank %d\n",
 		component_name.c_str(), _debug_rank);
 
-	    // Create a time converter for the NIC simulator.
-	    tc= registerTimeBase("1ns", true);
+            // Create a channel for "out of band" events sent to ourselves
+	    self_link= configureSelfLink("Me", new Event::Handler<Routermodel>
+		    (this, &Routermodel::handle_self_events));
+	    if (self_link == NULL)   {
+		_ABORT(Ghost_pattern, "That was no good!\n");
+	    } else   {
+		_ROUTER_MODEL_DBG(2, "Added a self link and a handler on router %s\n",
+		    component_name.c_str());
+	    }
+
+	    self_link->setDefaultTimeBase(tc);
         }
 
 	~Routermodel()   {
-	    _ROUTER_MODEL_DBG(2, "%s out congestion cnt %ld, average time %.9fs\n",
+	    _ROUTER_MODEL_DBG(2, "%s out congestion cnt %lld, average time %.9fs\n",
 		component_name.c_str(), congestion_out_cnt,
 		(double)congestion_out / 1000000000.0 / congestion_out_cnt);
-	    _ROUTER_MODEL_DBG(2, "%s in  congestion cnt %ld, average time %.9fs\n",
+	    _ROUTER_MODEL_DBG(2, "%s in  congestion cnt %lld, average time %.9fs\n",
 		component_name.c_str(), congestion_in_cnt,
 		(double)congestion_in / 1000000000.0 / congestion_in_cnt);
 	}
@@ -141,6 +154,7 @@ class Routermodel : public Component {
 
         Routermodel(const Routermodel &c);
 	void handle_port_events(Event *, int in_port);
+	void handle_self_events(Event *);
 	Link *initPort(int port, char *link_name);
 
         Params_t params;
@@ -162,6 +176,7 @@ class Routermodel : public Component {
 	std::vector<port_t> port;
 	std::vector<port_t>::iterator portNum;
 	port_t new_port;
+	Link *self_link;
 	int num_ports;
 	int router_model_debug;
 	uint64_t router_bw;

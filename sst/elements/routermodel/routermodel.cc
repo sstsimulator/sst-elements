@@ -23,9 +23,7 @@ Routermodel::handle_port_events(Event *event, int in_port)
 
 SimTime_t current_time;
 SimTime_t delay;
-SimTime_t arrival;
 SimTime_t link_time;
-std::vector<uint8_t>::iterator itNum;
 uint8_t out_port;
 
 
@@ -35,9 +33,10 @@ uint8_t out_port;
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
     port[in_port].cnt_in++;
 
-#if DBG_ROUTER_MODEL
+#if DBG_ROUTER_MODEL > 1
     /* Diagnostic: print the route this event is taking */
     if (router_model_debug >= 4)   {
+	std::vector<uint8_t>::iterator itNum;
 	char str[32];
 	int i= 0;
 
@@ -65,24 +64,30 @@ uint8_t out_port;
     // FIXME: The constant 1000000000.0 should be replaced with our time base
     link_time= (e->msg_len / router_bw) * 1000000000.0;
 
-    // If the input port is in use right now, then this message actually
-    // wont come in until later
-    if (port[in_port].next_in <= current_time)   {
-	arrival= 0;
-    } else   {
-	// Busy right now
-	arrival= port[in_port].next_in - current_time;
+    if (port[in_port].next_in > current_time)   {
+	SimTime_t arrival_delay;
+
+	// If the input port is in use right now, then this message actually
+	// wont come in until later
+	arrival_delay= port[in_port].next_in - current_time;
+
+	// FIXME: I am not sure these are meaningful statistics
 	congestion_in_cnt++;
-	congestion_in += arrival;
+	congestion_in += arrival_delay;
 	e->congestion_cnt++;
-	e->congestion_delay += arrival;
+	e->congestion_delay += arrival_delay;
+
+	e->entry_port= in_port;
+	self_link->Send(arrival_delay, e);
+
+	return;
     }
+
 
     // What is the current delay to send on this output port?
     if (port[out_port].next_out <= current_time)   {
 	// No output port delays.  We can send as soon as the message arrives;
 	delay= 0;
-	port[in_port].next_in= current_time + arrival + link_time;
 
     } else   {
 	// Busy right now
@@ -91,19 +96,12 @@ uint8_t out_port;
 	congestion_out += delay;
 	e->congestion_cnt++;
 	e->congestion_delay += delay;
-
-	if (delay > arrival)   {
-	    // The output port is the bottleneck
-	    port[in_port].next_in= current_time + delay + link_time;
-	} else   {
-	    // We can send as soon as the message arrives;
-	    delay= arrival;
-	    port[in_port].next_in= current_time + arrival + link_time;
-	}
     }
 
     // Add in the generic router delay
     delay += hop_delay;
+
+    port[in_port].next_in= current_time + delay + link_time;
 
     // Once this message is going out, the port will be busy for that
     // much longer
@@ -117,6 +115,24 @@ uint8_t out_port;
     port[out_port].link->Send(delay, e);
 
 }  /* end of handle_port_events() */
+
+
+
+// When we send to ourselves, we come here.
+// Just pass it on to the main handler above
+void
+Routermodel::handle_self_events(Event *event)
+{
+
+    CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
+
+    if (e->entry_port < 0)   {
+	_abort(Routermodel, "Internal error: entry port not defined!\n");
+    }
+
+    handle_port_events(e, e->entry_port);
+
+}  /* end of handle_self_events() */
 
 
 
