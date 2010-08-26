@@ -176,20 +176,42 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
 	fprintf(stderr, "Need a pattern name!\n");
     }
 
-    if (pattern_name && strcmp(pattern_name, "ghost_pattern") != 0)   {
+    if (pattern_name && strstr("ghost_pattern", pattern_name) == NULL)   {
 	error= TRUE;
 	fprintf(stderr, "Unknown pattern name!\n");
 	fprintf(stderr, "Must be one of \"ghost_pattern\", or \"\"\n");
+    } else   {
+	pattern_name= "ghost_pattern";
+	if (!error)   {
+	    printf("*** Communication pattern is \"%s\"\n", pattern_name);
+	}
     }
 
-    if ((strstr("none", method) != method) &&
-        (strstr("coordinated", method) != method) &&
-        (strstr("uncoordinated", method) != method) &&
-        (strstr("distributed", method) != method))   {
+    if ((strstr("none", method) == NULL) &&
+        (strstr("coordinated", method) == NULL) &&
+        (strstr("uncoordinated", method) == NULL) &&
+        (strstr("distributed", method) == NULL))   {
 	error= TRUE;
 	fprintf(stderr, "Unknown checkpointing method!\n");
 	fprintf(stderr, "Must be one of \"none\", \"coordinated\", \"uncoordinated\", "
 	    "or \"distributed\"\n");
+    } else   {
+
+	if (strstr("none", method) != NULL)   {
+	    method= "none";
+	} else if (strstr("coordinated", method) != NULL)   {
+	    method= "coordinated";
+	} else if (strstr("uncoordinated", method) != NULL)   {
+	    method= "uncoordinated";
+	} else if (strstr("distributed", method) != NULL)   {
+	    method= "distributed";
+	} else   {
+	    error= TRUE;
+	    fprintf(stderr, "Internal error!\n");
+	}
+	if (!error)   {
+	    printf("*** Checkpoint method is \"%s\"\n", method);
+	}
     }
 
     if ((x_dim < 0) || (y_dim < 0))   {
@@ -205,6 +227,11 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
     if (!is_pow2(num_cores))   {
 	error= TRUE;
 	fprintf(stderr, "Number of cores must be power of two!\n");
+    }
+
+    if (!error)   {
+	printf("*** Torus is x * y = %d * %d, with %d core(s) per router\n",
+	    x_dim, y_dim, num_cores);
     }
 
     /* Open the SST xml file for output */
@@ -228,6 +255,8 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
 	usage(argv);
 	exit(1);
     }
+
+    printf("*** Writing output to \"%s\"\n", sstFname);
 
 
     num_ports= 4 + num_cores;
