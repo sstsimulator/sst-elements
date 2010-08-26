@@ -15,7 +15,7 @@
 void sst_header(FILE *sstfile);
 void sst_footer(FILE *dotfile);
 
-void sst_router_param_start(FILE *sstfile, int num_ports);
+void sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw);
 void sst_router_param_end(FILE *sstfile);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);

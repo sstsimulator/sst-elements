@@ -58,9 +58,9 @@ char *sstFname;
 FILE *fp_sst;
 char *pattern_name;
 uint64_t net_lat;	/* In ns */
-uint64_t net_bw;	/* In bytes */
+uint64_t net_bw;	/* In bytes per second */
 uint64_t node_lat;	/* In ns */
-uint64_t node_bw;	/* In bytes */
+uint64_t node_bw;	/* In bytes per second */
 uint64_t compute;	/* In ns */
 uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
@@ -244,7 +244,8 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
 	envelope_write_time);
     sst_gen_param_end(fp_sst, node_lat);
 
-    sst_router_param_start(fp_sst, num_ports);
+    /* We assume the router bandwidth is the same as the link bandwidth */
+    sst_router_param_start(fp_sst, num_ports, net_bw);
     sst_router_param_end(fp_sst);
     sst_body_start(fp_sst);
 

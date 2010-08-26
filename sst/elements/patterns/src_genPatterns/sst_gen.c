@@ -100,7 +100,7 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency)
 
 
 void
-sst_router_param_start(FILE *sstfile, int num_ports)
+sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw)
 {
 
     if (sstfile == NULL)   {
@@ -112,6 +112,7 @@ sst_router_param_start(FILE *sstfile, int num_ports)
     fprintf(sstfile, "    <hop_delay> 25 </hop_delay>\n");
     fprintf(sstfile, "    <debug> 0 </debug>\n");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
+    fprintf(sstfile, "    <bw> %d </bw>\n", router_bw);
 
 }  /* end of sst_router_param_start() */
 
