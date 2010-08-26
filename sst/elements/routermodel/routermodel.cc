@@ -1,10 +1,10 @@
 // Copyright 2009-2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2010, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -23,13 +23,15 @@ Routermodel::handle_port_events(Event *event, int in_port)
 
 SimTime_t current_time;
 SimTime_t delay;
+SimTime_t arrival;
+SimTime_t link_time;
 std::vector<uint8_t>::iterator itNum;
 uint8_t out_port;
 
 
     current_time= getCurrentSimTime();
-    _ROUTER_MODEL_DBG(3, "Router %s got an event from port %d at time %lu\n", component_name.c_str(),
-	in_port, (uint64_t)current_time);
+    _ROUTER_MODEL_DBG(3, "Router %s got an event from port %d at time %lu\n",
+	component_name.c_str(), in_port, (uint64_t)current_time);
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
     port[in_port].cnt_in++;
 
@@ -56,35 +58,63 @@ uint8_t out_port;
     }
 #endif  // DBG_ROUTER_MODEL
 
+    // Where are we going?
     out_port= e->route[e->hops];
-    e->hops++;
-    delay= hop_delay;
 
-    _ROUTER_MODEL_DBG(3, "Sending message out on port %d at time %lu with delay %lu\n", out_port, (uint64_t)current_time, (uint64_t)delay);
-    port[out_port].link->Send(delay, e);
+    // How long will this message occupy the input and output port?
+    // FIXME: The constant 1000000000.0 should be replaced with our time base
+    link_time= (e->msg_len / router_bw) * 1000000000.0;
 
-
-#ifdef rrr
-    if (e->routeX > 0)   {
-	// Keep going East
-	e->routeX--;
-	e->hops++;
-	if (current_time > next_East_slot)   {
-	    // Output channel is clear; send now
-	    next_East_slot= current_time;
-	}
-	// Cumulative delay on output ports of routers
-	delay= next_East_slot - current_time;
-	e->router_delay += delay;
-	// How long will this message occupy the output channel?
-	link_time= (e->msg_len / link_bw) * 1000000000.0;
-	_ROUTER_MODEL_DBG(3, "Router %s: Sending message East. x %d, y %d, hops %d, delay %12d\n",
-	    component_name.c_str(), e->routeX, e->routeY, e->hops, (int)delay);
-	east_port->Send(delay, e);
-	next_East_slot += link_time;
+    // If the input port is in use right now, then this message actually
+    // wont come in until later
+    if (port[in_port].next_in <= current_time)   {
+	arrival= 0;
+    } else   {
+	// Busy right now
+	arrival= port[in_port].next_in - current_time;
+	congestion_in_cnt++;
+	congestion_in += arrival;
+	e->congestion_cnt++;
+	e->congestion_delay += arrival;
     }
-#endif
 
+    // What is the current delay to send on this output port?
+    if (port[out_port].next_out <= current_time)   {
+	// No output port delays.  We can send as soon as the message arrives;
+	delay= 0;
+	port[in_port].next_in= current_time + arrival + link_time;
+
+    } else   {
+	// Busy right now
+	delay= port[out_port].next_out - current_time;
+	congestion_out_cnt++;
+	congestion_out += delay;
+	e->congestion_cnt++;
+	e->congestion_delay += delay;
+
+	if (delay > arrival)   {
+	    // The output port is the bottleneck
+	    port[in_port].next_in= current_time + delay + link_time;
+	} else   {
+	    // We can send as soon as the message arrives;
+	    delay= arrival;
+	    port[in_port].next_in= current_time + arrival + link_time;
+	}
+    }
+
+    // Add in the generic router delay
+    delay += hop_delay;
+
+    // Once this message is going out, the port will be busy for that
+    // much longer
+    port[out_port].next_out= current_time + delay + link_time;
+
+    e->hops++;
+
+    _ROUTER_MODEL_DBG(3, "Sending message out on port %d at time %lu with delay %lu\n",
+	out_port, (uint64_t)current_time, (uint64_t)delay);
+
+    port[out_port].link->Send(delay, e);
 
 }  /* end of handle_port_events() */
 

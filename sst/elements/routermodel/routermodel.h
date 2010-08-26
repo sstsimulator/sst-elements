@@ -1,10 +1,10 @@
 // Copyright 2009-2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2010, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -39,13 +39,19 @@ class Routermodel : public Component {
         Routermodel(ComponentId_t id, Params_t& params) :
             Component(id),
             params(params)
-        { 
+        {
 
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    router_model_debug= 0;
 	    num_ports= -1;
 	    hop_delay= 20;
+	    router_bw= 1200000000; // Bytes per second
+	    congestion_out_cnt= 0;
+	    congestion_out= 0;
+	    congestion_in_cnt= 0;
+	    congestion_in= 0;
+
 
             while (it != params.end())   {
                 _ROUTER_MODEL_DBG(1, "Router %s: key=%s value=%s\n", component_name.c_str(),
@@ -56,7 +62,11 @@ class Routermodel : public Component {
 		}
 
 		if (!it->first.compare("hop_delay"))   {
-		    sscanf(it->second.c_str(), "%lud", (uint64_t *) &hop_delay);
+		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&hop_delay);
+		}
+
+		if (!it->first.compare("bw"))   {
+		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&router_bw);
 		}
 
 		if (!it->first.compare("component_name"))   {
@@ -102,6 +112,8 @@ class Routermodel : public Component {
 		    new_port.link= NULL;
 		    new_port.cnt_in= 0;
 		    new_port.cnt_out= 0;
+		    new_port.next_out= 0;
+		    new_port.next_in= 0;
 		    port.push_back(new_port);
 		    _ROUTER_MODEL_DBG(2, "Recorded unused port %d, link \"%s\", on router %s\n",
 			i, new_port.link_name, component_name.c_str());
@@ -114,6 +126,16 @@ class Routermodel : public Component {
 	    // Create a time converter for the NIC simulator.
 	    tc= registerTimeBase("1ns", true);
         }
+
+	~Routermodel()   {
+	    _ROUTER_MODEL_DBG(2, "%s out congestion cnt %ld, average time %.9fs\n",
+		component_name.c_str(), congestion_out_cnt,
+		(double)congestion_out / 1000000000.0 / congestion_out_cnt);
+	    _ROUTER_MODEL_DBG(2, "%s in  congestion cnt %ld, average time %.9fs\n",
+		component_name.c_str(), congestion_in_cnt,
+		(double)congestion_in / 1000000000.0 / congestion_in_cnt);
+	}
+
 
     private:
 
@@ -134,12 +156,19 @@ class Routermodel : public Component {
 	    Link *link;
 	    long long int cnt_in;
 	    long long int cnt_out;
+	    SimTime_t next_out;
+	    SimTime_t next_in;
 	} port_t;
 	std::vector<port_t> port;
 	std::vector<port_t>::iterator portNum;
 	port_t new_port;
 	int num_ports;
 	int router_model_debug;
+	uint64_t router_bw;
+	SimTime_t congestion_out;
+	long long int congestion_out_cnt;
+	SimTime_t congestion_in;
+	long long int congestion_in_cnt;
 
 	typedef struct router_t   {
 	    int Id;
@@ -158,7 +187,7 @@ class Routermodel : public Component {
         }
 
         template<class Archive>
-        friend void save_construct_data(Archive & ar, 
+        friend void save_construct_data(Archive & ar,
                                         const Routermodel * t,
                                         const unsigned int file_version)
         {
@@ -167,11 +196,11 @@ class Routermodel : public Component {
             Params_t          params = t->params;
             ar << BOOST_SERIALIZATION_NVP(id);
             ar << BOOST_SERIALIZATION_NVP(params);
-        } 
+        }
 
         template<class Archive>
-        friend void load_construct_data(Archive & ar, 
-                                        Routermodel * t, 
+        friend void load_construct_data(Archive & ar,
+                                        Routermodel * t,
                                         const unsigned int file_version)
         {
             _AR_DBG(Routermodel,"\n");
@@ -180,7 +209,7 @@ class Routermodel : public Component {
             ar >> BOOST_SERIALIZATION_NVP(id);
             ar >> BOOST_SERIALIZATION_NVP(params);
             ::new(t)Routermodel(id, params);
-        } 
+        }
 };
 
 #endif
