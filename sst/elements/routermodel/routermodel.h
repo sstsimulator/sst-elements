@@ -87,10 +87,13 @@ class Routermodel : public Component {
 	    }
 
 	    // Create a time converter
-	    tc= registerTimeBase("1ns", true);
+	    TimeConverter *tc= registerTimeBase("1ns", true);
 
 	    /* Attach the handler to each port */
 	    for (int i= 0; i < num_ports; i++)   {
+		port_t new_port;
+		char link_name[MAX_LINK_NAME];
+
 		sprintf(link_name, "Link%dname", i);
 		it= params.begin();
 		while (it != params.end())   {
@@ -101,27 +104,25 @@ class Routermodel : public Component {
 		}
 
 		if (it != params.end())   {
-		    strcpy(new_port.link_name, it->second.c_str());
-		    new_port.link= configureLink(new_port.link_name, new Event::Handler<Routermodel,int>
+		    strcpy(link_name, it->second.c_str());
+		    new_port.link= configureLink(link_name, new Event::Handler<Routermodel,int>
 					(this, &Routermodel::handle_port_events, i));
 		    new_port.link->setDefaultTimeBase(tc);
-		    new_port.cnt_in= 0;
-		    new_port.cnt_out= 0;
-		    port.push_back(new_port);
 		    _ROUTER_MODEL_DBG(2, "Added handler for port %d, link \"%s\", on router %s\n",
-			i, new_port.link_name, component_name.c_str());
+			i, link_name, component_name.c_str());
 		} else   {
 		    /* Push a dummy port, so port numbering and order in list match */
-		    strcpy(new_port.link_name, "Unused_port");
+		    strcpy(link_name, "Unused_port");
 		    new_port.link= NULL;
-		    new_port.cnt_in= 0;
-		    new_port.cnt_out= 0;
-		    new_port.next_out= 0;
-		    new_port.next_in= 0;
-		    port.push_back(new_port);
 		    _ROUTER_MODEL_DBG(2, "Recorded unused port %d, link \"%s\", on router %s\n",
-			i, new_port.link_name, component_name.c_str());
+			i, link_name, component_name.c_str());
 		}
+
+		new_port.cnt_in= 0;
+		new_port.cnt_out= 0;
+		new_port.next_out= 0;
+		new_port.next_in= 0;
+		port.push_back(new_port);
 	    }
 
 	    _ROUTER_MODEL_DBG(1, "Router model component \"%s\" is on rank %d\n",
@@ -138,16 +139,8 @@ class Routermodel : public Component {
 	    }
 
 	    self_link->setDefaultTimeBase(tc);
-        }
 
-	~Routermodel()   {
-	    _ROUTER_MODEL_DBG(2, "%s out congestion cnt %lld, average time %.9fs\n",
-		component_name.c_str(), congestion_out_cnt,
-		(double)congestion_out / 1000000000.0 / congestion_out_cnt);
-	    _ROUTER_MODEL_DBG(2, "%s in  congestion cnt %lld, average time %.9fs\n",
-		component_name.c_str(), congestion_in_cnt,
-		(double)congestion_in / 1000000000.0 / congestion_in_cnt);
-	}
+        }
 
 
     private:
@@ -159,14 +152,10 @@ class Routermodel : public Component {
 
         Params_t params;
 
-	TimeConverter *tc;
 	SimTime_t hop_delay;
 	std::string component_name;
 
-	char link_name[MAX_LINK_NAME];
-
 	typedef struct port_t   {
-	    char link_name[MAX_LINK_NAME];
 	    Link *link;
 	    long long int cnt_in;
 	    long long int cnt_out;
@@ -174,8 +163,7 @@ class Routermodel : public Component {
 	    SimTime_t next_in;
 	} port_t;
 	std::vector<port_t> port;
-	std::vector<port_t>::iterator portNum;
-	port_t new_port;
+
 	Link *self_link;
 	int num_ports;
 	int router_model_debug;
@@ -185,11 +173,6 @@ class Routermodel : public Component {
 	SimTime_t congestion_in;
 	long long int congestion_in_cnt;
 
-	typedef struct router_t   {
-	    int Id;
-	    // Record how each port links to another router/port
-	} router_t;
-	std::vector<router_t> routers;
 
         friend class boost::serialization::access;
         template<class Archive>
@@ -197,8 +180,7 @@ class Routermodel : public Component {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
-            //	    ar & BOOST_SERIALIZATION_NVP(port);
-	    ar & BOOST_SERIALIZATION_NVP(tc);
+	    // FIXME: Do we need this? ar & BOOST_SERIALIZATION_NVP(tc);
         }
 
         template<class Archive>
