@@ -13,6 +13,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/cpunicEvent.h>
+#include <assert.h>
 #include "routermodel.h"
 
 
@@ -26,6 +27,9 @@ SimTime_t delay;
 SimTime_t link_time;
 uint8_t out_port;
 
+
+    // Check for routing algorithm problems
+    assert((in_port >= 0) && (in_port < num_ports));
 
     current_time= getCurrentSimTime();
     _ROUTER_MODEL_DBG(3, "Router %s got an event from port %d at time %lu\n",
@@ -59,10 +63,12 @@ uint8_t out_port;
 
     // Where are we going?
     out_port= e->route[e->hops];
+    assert((out_port >= 0) && (out_port < num_ports));
+
 
     // How long will this message occupy the input and output port?
-    // FIXME: The constant 1000000000.0 should be replaced with our time base
-    link_time= (e->msg_len / router_bw) * 1000000000.0;
+    // FIXME: The constant 1000000000 should be replaced with our time base
+    link_time= ((uint64_t)e->msg_len * 1000000000) / router_bw;
 
     if (port[in_port].next_in > current_time)   {
 	SimTime_t arrival_delay;
