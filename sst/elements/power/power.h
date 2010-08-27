@@ -518,8 +518,8 @@ class Power{
 	std::map<ptype,int> subcompList; //stores subcomp types and the floorplan they reside on
 	
 	// floorplan and thermal tiles parameters
-	parameters_chip_t chip;
-	chip_t p_chip; 
+	static parameters_chip_t chip;
+	static chip_t p_chip; 
 
 	// sim-panalyzer parameters
 	#ifdef LV2_PANALYZER_H

@@ -19,6 +19,9 @@
 
 namespace SST {
 
+parameters_chip_t Power::chip;
+chip_t Power::p_chip;
+
 /*********************
 * Power:: constructor*
 **********************/
@@ -50,7 +53,6 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
   if(p_ifReadEntireXML == false){
     //Save computational time for calls to McPAT. For McPAT's case, XML is read in once and all the params
     // are set up during the 1st setTech call. So there is no need to read the XML again if it has done so.
-
  
     //set up architecture parameter values
     Component::Params_t::iterator it= params.begin();
@@ -5054,6 +5056,11 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 	
 	unsigned int i=0;
 
+	#ifdef ORION_H
+	    char name[64] = "ORION";
+    	    char *nameptr = name;
+    	#endif /*ORION*/
+
 	switch(power_type)
 	{
 	    case 0:
@@ -6124,9 +6131,11 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			p_unitPower.router = intsim_router->chip->dyn_power_logic_gates+intsim_router->chip->dyn_power_repeaters+intsim_router->chip->power_wires;
                     break;
 
-          case 4:
-          /*ORION*/
-          break;
+          	    case 4:
+          	    /*ORION*/
+			//p_unitPower.router = SST_SIM_router_stat_power(&GLOB(router_info), &GLOB(router_power), 0, nameptr, 0/*max_avg*/, 0.5/*avg # flits per port per cycle*/, 1/*if 1, print subcomponent results*/, router_tech.clockrate, router_tech.vdd);
+	 		p_unitPower.router = SST_SIM_router_stat_energy(&GLOB(router_info), &GLOB(router_power), 0, nameptr, 0/*max_avg*/, 0.5/*avg # flits per port per cycle*/, 1/*if 1, print subcomponent results*/, router_tech.clockrate, router_tech.vdd);  //here unit power is actually unit energy
+          	    break;
 		}	
 		p_powerModel.router = power_model;
 		break;
@@ -6355,10 +6364,6 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
     I leakage = 0.0;
     I TDP = 0.0;
 
-    #ifdef ORION_H
-    char name[64] = "ORION";
-    char *nameptr = name;
-    #endif /*ORION*/
 
     #ifdef McPAT05_H
     unsigned read_hits, read_misses, miss_buffer_access, fill_buffer_access, prefetch_buffer_access, wbb_buffer_access, write_access, total_hits, total_misses; //McPAT05 user_params
@@ -7705,6 +7710,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		//executionTime = 1.0 / (I)device_tech.clockRate * (I)total_cycles;
 		nocs->SSTcomputeEnergy(false, counts.router_access);
 		leakage = (I)nocs->power.readOp.leakage + (I)nocs->power.readOp.gate_leakage;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", noc leakage = " << leakage << std::endl;
 		dynamicPower = (I)nocs->rt_power.readOp.dynamic / executionTime;
 		totalPowerUsage = leakage + dynamicPower;
 		TDP = (I)nocs->power.readOp.dynamic * (I)router_tech.clockrate; 
@@ -7740,9 +7746,10 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
          case 4:
          /*ORION*/
          #ifdef ORION_H
-         totalPowerUsage = (I)SST_SIM_router_stat_power(&GLOB(router_info), &GLOB(router_power), 0, nameptr, 0, 1, 1/*if 1, print subcomponent results*/,
-                                                         router_tech.clockrate, router_tech.vdd);
-         dynamicPower = 0.25 * (I)LinkDynamicEnergyPerBitPerMeter(router_tech.link_length*1e-6, router_tech.vdd) * (I)router_tech.clockrate * (I)router_tech.link_length*1e-6 * (I)router_tech.flit_bits * (I)router_tech.input_ports;
+         //totalPowerUsage = (I)p_unitPower.router * (I)counts.router_access;
+	 totalPowerUsage = (I)p_unitPower.router / executionTime * (I)counts.router_access;  //here unit power is actuall unit energy
+         //dynamicPower = 0.25 * (I)LinkDynamicEnergyPerBitPerMeter(router_tech.link_length*1e-6, router_tech.vdd) * (I)router_tech.clockrate * (I)router_tech.link_length*1e-6 * (I)router_tech.flit_bits * (I)router_tech.input_ports * (I)counts.router_access;
+	 dynamicPower = 0.25 * (I)LinkDynamicEnergyPerBitPerMeter(router_tech.link_length*1e-6, router_tech.vdd) * (I)router_tech.link_length*1e-6 * (I)router_tech.flit_bits * (I)router_tech.input_ports * (I)counts.router_access / executionTime;
          leakage = (I)LinkLeakagePowerPerMeter(router_tech.link_length*1e-6, router_tech.vdd) * (I)router_tech.link_length*1e-6 * (I)router_tech.flit_bits * (I)router_tech.input_ports;
          totalPowerUsage = dynamicPower + leakage + totalPowerUsage;
          #endif
@@ -8328,6 +8335,7 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 	(*fit).second.p_usage_floorplan.leakagePower += leakage;
 	(*fit).second.p_usage_floorplan.runtimeDynamicPower += dynamicPower;
 	(*fit).second.p_usage_floorplan.TDP += TDP;
+	//using namespace io_interval; std::cout << "comp ID " << c->getId() << " reside on FID " << fid << " has new fp currentPower= " << (*fit).second.p_usage_floorplan.currentPower << std::endl;
 	if ( median((*fit).second.p_usage_floorplan.peak) < median(totalPowerUsage) ){
              (*fit).second.p_usage_floorplan.peak = totalPowerUsage * I(0.95,1.05);  //manual error bar (5%)
 	}
@@ -10107,44 +10115,48 @@ void Power::McPAT05Setup()
 ************************************************************************/
 void Power::setChip(Component::Params_t deviceParams)
 {
-  //First, set up device parameter values
-  setTech(deviceParams);
+    //First, set up device parameter values
+    setTech(deviceParams);
 
-  //initialize floorplan param
-  floorParamInitialize();
+    //floorplan only needs to be setup once; eventually, floorplan setup should be done by xml input
+    if(chip.is_set == false){
+  	//initialize floorplan param
+  	floorParamInitialize();
 
-  #ifdef ENERGY_INTERFACE_DEBUG
-    cout << "setting floorplans ... " << endl;
-  #endif 
+  	#ifdef ENERGY_INTERFACE_DEBUG
+  	  cout << "setting floorplans ... " << endl;
+  	#endif 
 
-  // floorplan setup
-  int num_floorplans = 0; // counting the number of floorplans
-  floorplan_t floorplan;
-  for(map<int,parameters_floorplan_t>::iterator fit = chip.floorplan.begin(); fit != chip.floorplan.end(); fit++)
-  {
-    #ifdef ENERGY_INTERFACE_DEBUG
-      cout << "ENERGY_INTERFACE_DEBUG: setting floorplan #" << (*fit).first << " (" << (*fit).second.name << ")" << endl;
-    #endif
-    floorplan.id = (*fit).second.id;
-    floorplan.name = (*fit).second.name;
-    floorplan.feature = (feature_t)(*fit).second.feature;
-    floorplan.device_tech = (parameters_tech_t)(*fit).second.device_tech;
-    floorplan.device_tech.temperature = (*chip.thermal_tile.find(pair<int,int>(SILICON,(*fit).first))).second.temperature;
-    p_chip.floorplan.insert(pair<int,floorplan_t>((*fit).first,floorplan));
-    ++num_floorplans;
-  }
+  	// floorplan setup
+  	int num_floorplans = 0; // counting the number of floorplans
+  	floorplan_t floorplan;
+  	for(map<int,parameters_floorplan_t>::iterator fit = chip.floorplan.begin(); fit != chip.floorplan.end(); fit++)
+  	{
+    	  #ifdef ENERGY_INTERFACE_DEBUG
+    	    cout << "ENERGY_INTERFACE_DEBUG: setting floorplan #" << (*fit).first << " (" << (*fit).second.name << ")" << endl;
+    	  #endif
+    	  floorplan.id = (*fit).second.id;
+    	  floorplan.name = (*fit).second.name;
+    	  floorplan.feature = (feature_t)(*fit).second.feature;
+    	  floorplan.device_tech = (parameters_tech_t)(*fit).second.device_tech;
+    	  floorplan.device_tech.temperature = (*chip.thermal_tile.find(pair<int,int>(SILICON,(*fit).first))).second.temperature;
+    	  p_chip.floorplan.insert(pair<int,floorplan_t>((*fit).first,floorplan));
+    	  ++num_floorplans;
+  	}
 
-  // number of floorplans used for chip-level thermal modeling
-  chip.num_floorplans = num_floorplans;
+  	// number of floorplans used for chip-level thermal modeling
+  	chip.num_floorplans = num_floorplans;
 
-  // link the chip to thermal library if want thermal modeling
-  if (p_tempMonitor == true){
-    switch(chip.thermal_library)
-    {
-      case HOTSPOT: p_chip.thermal_library = new HotSpot_library(chip); break;
-      default: cout << "ERROR: invalid thermal library" << endl; break;
+  	// link the chip to thermal library if want thermal modeling
+  	if (p_tempMonitor == true){
+   	   switch(chip.thermal_library)
+    	  {
+      		case HOTSPOT: p_chip.thermal_library = new HotSpot_library(chip); break;
+      		default: cout << "ERROR: invalid thermal library" << endl; break;
+    	  }
+  	}
+	chip.is_set = true;
     }
-  }
 }
 
 
@@ -11272,6 +11284,7 @@ void Power::compute_temperature(ComponentId_t compID)
   {
   //compute temperature
   p_chip.thermal_library->compute(&p_chip.floorplan);
+  
  
   //map<pseudo_unit_id_t,pseudo_unit_t>::iterator uit;
   map<int,floorplan_t>::iterator fit;
@@ -11281,6 +11294,11 @@ void Power::compute_temperature(ComponentId_t compID)
   { 
     I updatedLeakagePower=0.0;
     fit = p_chip.floorplan.find((*it).second);
+
+    //#ifdef ENERGY_INTERFACE_DEBUG
+    //    cout << "ENERGY_INTERFACE_DEBUG: component ID " << compID << " subcompList size =" << subcompList.size() << ", feedback = " << (*fit).second.leakage_feedback <<endl;
+    //#endif
+
     if((*fit).second.leakage_feedback)
     {
       //#ifdef ENERGY_INTERFACE_DEBUG
@@ -11388,6 +11406,7 @@ void Power::compute_temperature(ComponentId_t compID)
 	case ROUTER:
 	    leakage_feedback(p_powerModel.router, (*fit).second.device_tech, (*it).first);
       	    updatedLeakagePower = (I)nocs->power.readOp.leakage + (I)nocs->power.readOp.gate_leakage;
+	    //using namespace io_interval;  std::cout << "ENERGY_INTERFACE_DEBUG: CompID " << compID << ", subcomp type " << (*it).first << ", leakage after feedback = " << updatedLeakagePower << " W on fp_id " << (*it).second << std::endl;
 	break;
 	case LOAD_Q:
 	    leakage_feedback(p_powerModel.loadQ, (*fit).second.device_tech, (*it).first);
@@ -11468,9 +11487,11 @@ void Power::leakage_feedback(pmodel power_model, parameters_tech_t device_tech, 
 	  break;
 	  case LOGIC:
 	  break;
-	  case EXEU_ALU:	    
+	  case EXEU_ALU:
+	    exeu->SSTleakage_feedback(device_tech.temperature);	    
 	  break;
 	  case EXEU_FPU:
+	    fp_u->SSTleakage_feedback(device_tech.temperature);
 	  break;
 	  case MULT:
 	  break;
@@ -11480,12 +11501,17 @@ void Power::leakage_feedback(pmodel power_model, parameters_tech_t device_tech, 
 	  case ISSUE_Q:
 	  break;
 	  case INST_DECODER:
+	    ID_inst->SSTleakage_feedback(device_tech.temperature);
+	    ID_operand->SSTleakage_feedback(device_tech.temperature);
+	    ID_misc->SSTleakage_feedback(device_tech.temperature);
 	  break;
 	  case BYPASS:
+	    //exu->SSTleakage_feedback(device_tech.temperature); not implement yet
 	  break;
 	  case EXEU:
 	  break;
 	  case PIPELINE:
+	    //corepipe->SSTleakage_feedback(device_tech.temperature); not implement yet
 	  break;
 	  case 20:  //LSQ
 	    LSQ->SSTleakage_feedback(device_tech.temperature);
@@ -11500,23 +11526,30 @@ void Power::leakage_feedback(pmodel power_model, parameters_tech_t device_tech, 
 	    BTB->SSTleakage_feedback(device_tech.temperature);
 	  break;
 	  case CACHE_L2:
+	    //TODO: multiple l2 
 	  break;
 	  case MEM_CTRL:
 	  break;
 	  case ROUTER:
+	    nocs->SSTleakage_feedback(device_tech.temperature);
 	  break;
 	  case LOAD_Q:
 	    LoadQ->SSTleakage_feedback(device_tech.temperature);
 	  break;
 	  case RENAME_U:
+	    //rnu->SSTleakage_feedback(device_tech.temperature); not implement yet
 	  break;
 	  case SCHEDULER_U:
+	    //scheu->SSTleakage_feedback(device_tech.temperature); not implement yet
 	  break;
 	  case CACHE_L3:
+	    //TODO: multiple l3
 	  break;
 	  case CACHE_L1DIR:
+	    //TODO: multiple l1dir
 	  break;
 	  case CACHE_L2DIR:
+	    //TODO: multiple l2dir
 	  break;
 	  default: break;
       } // end switch ptype

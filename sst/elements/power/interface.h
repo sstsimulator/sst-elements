@@ -24,6 +24,7 @@
 #include <sst/core/sst_types.h>
 
 #define ENERGY_INTERFACE_DEBUG
+//#define TEMPERATURE_DEBUG
 #define TEMP_DEGREE_STEPS 101 // 300~400K
 
 
@@ -223,7 +224,7 @@ class parameters_floorplan_t
 class parameters_chip_t
 {
   public:
-  parameters_chip_t() {}
+  parameters_chip_t() : is_set(false) {}
   ~parameters_chip_t() { floorplan.clear(); }
 
    void insert(parameters_floorplan_t *input) {
@@ -238,6 +239,7 @@ class parameters_chip_t
 
 
   int thermal_library;
+  bool is_set;
 
    // HotSpot parameters
   double thermal_threshold;		// temperature threshold for DTM (Kelvin)
