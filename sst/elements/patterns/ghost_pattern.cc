@@ -31,7 +31,7 @@ pattern_event_t event;
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     e= static_cast<CPUNicEvent *>(sst_event);
     if (e->hops > 2)   {
-	_abort(ghost_pattern, "[%3d] No message should travel through more than two routers! %d\n",
+	_abort(ghost_pattern, "[%3d] For Ghost, no message should travel through more than two routers! %d\n",
 	    my_rank, e->hops);
     }
 
@@ -70,6 +70,18 @@ pattern_event_t event;
 	    break;
 	case SAVING_ENVELOPE_3:
 	    state_SAVING_ENVELOPE_3(event);
+	    break;
+	case LOG_MSG1:
+	    state_LOG_MSG1(event);
+	    break;
+	case LOG_MSG2:
+	    state_LOG_MSG2(event);
+	    break;
+	case LOG_MSG3:
+	    state_LOG_MSG3(event);
+	    break;
+	case LOG_MSG4:
+	    state_LOG_MSG4(event);
 	    break;
     }
 
@@ -168,6 +180,10 @@ Ghost_pattern::state_INIT(pattern_event_t event)
 	case RECEIVE:
 	case CHCKPT_DONE:
 	case ENTER_WAIT:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -204,16 +220,22 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	    } else   {
 
 		// Tell our neighbors what we have computed
-		common->send(right, exchange_msg_len);
-		common->send(left, exchange_msg_len);
-		common->send(up, exchange_msg_len);
-		common->send(down, exchange_msg_len);
+		if (chckpt_method == CHCKPT_UNCOORD)   {
+		    // We need to log these messages before we send them
+		    state= LOG_MSG1;
+		    common->event_send(my_rank, LOG_MSG1_DONE, msg_write_time);
+		} else   {
+		    common->send(right, exchange_msg_len);
+		    common->send(left, exchange_msg_len);
+		    common->send(up, exchange_msg_len);
+		    common->send(down, exchange_msg_len);
 
-		// Go into WAIT. We'll determine there whether we have received all four
-		// messages and whether it is time to checkpoint
-		msg_wait_time_start= getCurrentSimTime();
-		state= WAIT;
-		state_WAIT(ENTER_WAIT);
+		    // Go into WAIT. We'll determine there whether we have received all four
+		    // messages and whether it is time to checkpoint
+		    msg_wait_time_start= getCurrentSimTime();
+		    state= WAIT;
+		    state_WAIT(ENTER_WAIT);
+		}
 	    }
 	    break;
 
@@ -235,6 +257,10 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	case CHCKPT_DONE:
 	case WRITE_ENVELOPE_DONE:
 	case ENTER_WAIT:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -287,6 +313,10 @@ Ghost_pattern::state_WAIT(pattern_event_t event)
 	case COMPUTE_DONE:
 	case CHCKPT_DONE:
 	case WRITE_ENVELOPE_DONE:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -351,6 +381,10 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	case START:
 	case WRITE_ENVELOPE_DONE:
 	case ENTER_WAIT:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -368,6 +402,10 @@ Ghost_pattern::state_SAVING_ENVELOPE_1(pattern_event_t event)
 	case START:
 	case CHCKPT_DONE:
 	case ENTER_WAIT:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -413,6 +451,10 @@ Ghost_pattern::state_SAVING_ENVELOPE_2(pattern_event_t event)
 	case COMPUTE_DONE:
 	case CHCKPT_DONE:
 	case ENTER_WAIT:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -455,6 +497,10 @@ SimTime_t chckpt_delay_remainder;
 	case START:
 	case COMPUTE_DONE:
 	case ENTER_WAIT:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -492,6 +538,150 @@ SimTime_t chckpt_delay_remainder;
     }
  
 }  // end of state_SAVING_ENVELOPE_3()
+
+
+
+// We come here from COMPUTE, if uncoordinated checkpointing is enabled
+void
+Ghost_pattern::state_LOG_MSG1(pattern_event_t event)
+{
+
+    switch (event)   {
+	case START:
+	case COMPUTE_DONE:
+	case ENTER_WAIT:
+	case CHCKPT_DONE:
+	case FAIL:
+	case WRITE_ENVELOPE_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+
+	case RECEIVE:
+	    count_receives();
+	    break;
+
+	case LOG_MSG1_DONE:
+	    // Send the first message
+	    common->send(right, exchange_msg_len);
+
+	    // Write the second message to stable storage
+	    state= LOG_MSG2;
+	    common->event_send(my_rank, LOG_MSG2_DONE, msg_write_time);
+	    break;
+    }
+ 
+}  // end of state_LOG_MSG1()
+
+
+
+// We come here from LOG_MSG1, if uncoordinated checkpointing is enabled
+void
+Ghost_pattern::state_LOG_MSG2(pattern_event_t event)
+{
+
+    switch (event)   {
+	case START:
+	case COMPUTE_DONE:
+	case ENTER_WAIT:
+	case CHCKPT_DONE:
+	case FAIL:
+	case WRITE_ENVELOPE_DONE:
+	case LOG_MSG1_DONE:
+	case LOG_MSG3_DONE:
+	case LOG_MSG4_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+
+	case RECEIVE:
+	    count_receives();
+	    break;
+
+	case LOG_MSG2_DONE:
+	    // Send the second message
+	    common->send(left, exchange_msg_len);
+
+	    // Write the third message to stable storage
+	    state= LOG_MSG3;
+	    common->event_send(my_rank, LOG_MSG3_DONE, msg_write_time);
+	    break;
+    }
+ 
+}  // end of state_LOG_MSG2()
+
+
+
+// We come here from LOG_MSG2, if uncoordinated checkpointing is enabled
+void
+Ghost_pattern::state_LOG_MSG3(pattern_event_t event)
+{
+
+    switch (event)   {
+	case START:
+	case COMPUTE_DONE:
+	case ENTER_WAIT:
+	case CHCKPT_DONE:
+	case FAIL:
+	case WRITE_ENVELOPE_DONE:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG4_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+
+	case RECEIVE:
+	    count_receives();
+	    break;
+
+	case LOG_MSG3_DONE:
+	    // Send the third message
+	    common->send(up, exchange_msg_len);
+
+	    // Write the fourth message to stable storage
+	    state= LOG_MSG4;
+	    common->event_send(my_rank, LOG_MSG4_DONE, msg_write_time);
+	    break;
+    }
+ 
+}  // end of state_LOG_MSG3()
+
+
+
+// We come here from LOG_MSG3, if uncoordinated checkpointing is enabled
+void
+Ghost_pattern::state_LOG_MSG4(pattern_event_t event)
+{
+
+    switch (event)   {
+	case START:
+	case COMPUTE_DONE:
+	case ENTER_WAIT:
+	case CHCKPT_DONE:
+	case FAIL:
+	case WRITE_ENVELOPE_DONE:
+	case LOG_MSG1_DONE:
+	case LOG_MSG2_DONE:
+	case LOG_MSG3_DONE:
+	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+
+	case RECEIVE:
+	    count_receives();
+	    break;
+
+	case LOG_MSG4_DONE:
+	    // Send the fourth message
+	    common->send(right, exchange_msg_len);
+
+	    // Write the second message to stable storage
+	    state= WAIT;
+	    state_WAIT(ENTER_WAIT);
+	    break;
+    }
+ 
+}  // end of state_LOG_MSG4()
 
 
 

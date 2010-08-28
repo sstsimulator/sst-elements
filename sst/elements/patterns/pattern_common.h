@@ -34,7 +34,11 @@ typedef enum {START,		// Enter first state of state machine
 	      CHCKPT_DONE,	// A checkpoint has been written
 	      FAIL,		// A failure occured on this rank
 	      WRITE_ENVELOPE_DONE,	// Envelope information has been written
-	      ENTER_WAIT	// Move directly to wait state without an additional event
+	      ENTER_WAIT,	// Move directly to wait state without an additional event
+	      LOG_MSG1_DONE,	// Done logging the first message to stable (local) storage
+	      LOG_MSG2_DONE,	// Done logging the second message to stable (local) storage
+	      LOG_MSG3_DONE,	// Done logging the third message to stable (local) storage
+	      LOG_MSG4_DONE	// Done logging the fourth message to stable (local) storage
 } pattern_event_t;
 
 

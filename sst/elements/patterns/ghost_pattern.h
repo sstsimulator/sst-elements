@@ -37,7 +37,11 @@ typedef enum {INIT,			// First state in state machine
 	      COORDINATED_CHCKPT,	// Writing a checkpoint
 	      SAVING_ENVELOPE_1,	// Saving envelope info during a compute
 	      SAVING_ENVELOPE_2,	// Saving envelope info during a wait
-	      SAVING_ENVELOPE_3		// Saving envelope info during a checkpoint write
+	      SAVING_ENVELOPE_3,	// Saving envelope info during a checkpoint write
+	      LOG_MSG1,			// Log the first message to stable (local) storage
+	      LOG_MSG2,			// Log the second message to stable (local) storage
+	      LOG_MSG3,			// Log the third message to stable (local) storage
+	      LOG_MSG4			// Log the fourth message to stable (local) storage
 } state_t;
 
 
@@ -66,6 +70,7 @@ class Ghost_pattern : public Component {
 	    chckpt_delay= 0;
 	    chckpt_interval= 0;
 	    envelope_write_time= 0;
+	    msg_write_time= 0;
 
 	    // Counters and computed values
 	    execution_time= 0;
@@ -162,6 +167,10 @@ class Ghost_pattern : public Component {
 
 		if (!it->first.compare("envelope_write_time"))   {
 		    sscanf(it->second.c_str(), "%lu", &envelope_write_time);
+		}
+
+		if (!it->first.compare("msg_write_time"))   {
+		    sscanf(it->second.c_str(), "%lu", &msg_write_time);
 		}
 
                 ++it;
@@ -284,6 +293,7 @@ class Ghost_pattern : public Component {
 	SimTime_t chckpt_delay;
 	SimTime_t chckpt_interval;
 	SimTime_t envelope_write_time;
+	SimTime_t msg_write_time;
 
 	// Precomputed values
 	int left, right, up, down;
@@ -332,6 +342,10 @@ class Ghost_pattern : public Component {
 	void state_SAVING_ENVELOPE_1(pattern_event_t event);
 	void state_SAVING_ENVELOPE_2(pattern_event_t event);
 	void state_SAVING_ENVELOPE_3(pattern_event_t event);
+	void state_LOG_MSG1(pattern_event_t event);
+	void state_LOG_MSG2(pattern_event_t event);
+	void state_LOG_MSG3(pattern_event_t event);
+	void state_LOG_MSG4(pattern_event_t event);
 
 	void transition_to_COMPUTE(void);
 	void transition_to_COORDINATED_CHCKPT(void);
