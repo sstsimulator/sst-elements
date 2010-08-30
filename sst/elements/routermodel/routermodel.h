@@ -14,8 +14,13 @@
 #define _ROUTERMODEL_H
 
 #include <sst/core/event.h>
-#include <sst/core/component.h>
+//#include <sst/core/component.h>
 #include <sst/core/link.h>
+/***SoM***/
+#include <sst/core/introspectedComponent.h>
+#include "../power/power.h"
+/***EoM***/
+
 
 using namespace SST;
 
@@ -34,13 +39,15 @@ using namespace SST;
 #define MAX_LINK_NAME		(16)
 
 
-class Routermodel : public Component {
+/***SoM***/
+class Routermodel : public IntrospectedComponent {
     public:
         Routermodel(ComponentId_t id, Params_t& params) :
-            Component(id),
-            params(params)
-        {
-
+            IntrospectedComponent(id),
+            params(params),
+            frequency( "1ns" )
+        { 
+/***EoM***/
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    router_model_debug= 0;
@@ -51,6 +58,11 @@ class Routermodel : public Component {
 	    congestion_out= 0;
 	    congestion_in_cnt= 0;
 	    congestion_in= 0;
+	     /***SoM***/
+	    router_totaldelay = 0;
+	    ifModelPower = false;
+	    /***EoM***/
+
 
 
             while (it != params.end())   {
@@ -61,22 +73,37 @@ class Routermodel : public Component {
 		    sscanf(it->second.c_str(), "%d", &router_model_debug);
 		}
 
-		if (!it->first.compare("hop_delay"))   {
+		else if (!it->first.compare("hop_delay"))   {
 		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&hop_delay);
 		}
 
-		if (!it->first.compare("bw"))   {
+		else if (!it->first.compare("bw"))   {
 		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&router_bw);
 		}
 
-		if (!it->first.compare("component_name"))   {
+		else if (!it->first.compare("component_name"))   {
 		    component_name= it->second;
 		    _ROUTER_MODEL_DBG(1, "Component name for ID %lu is \"%s\"\n", id, component_name.c_str());
 		}
 
-		if (!it->first.compare("num_ports"))   {
+		else if (!it->first.compare("num_ports"))   {
 		    sscanf(it->second.c_str(), "%d", &num_ports);
 		}
+		/***SoM***/
+		//for power
+    		else if ( ! it->first.compare("frequency") ) {
+        	    frequency = it->second;
+    		}
+    		else if ( ! it->first.compare("push_introspector") ) {
+        	    pushIntrospector = it->second;
+    		}
+		else if ( ! it->first.compare("router_power_model") ) {
+        	     if (!it->second.compare("McPAT"))
+		     {     powerModel = McPAT; ifModelPower = true; }
+		     else if (!it->second.compare("ORION"))
+		     {	  powerModel = ORION;  ifModelPower = true; }
+    		}
+		/***EoM***/
 
                 ++it;
             }
@@ -86,8 +113,21 @@ class Routermodel : public Component {
 		_abort(Routermodel, "Need to define the num_ports parameter!\n");
 	    }
 
-	    // Create a time converter
-	    TimeConverter *tc= registerTimeBase("1ns", true);
+	     /***SoM***/
+	    // Create a time converter for the NIC simulator.
+	    //tc= registerTimeBase("1ns", true);
+      	    TimeConverter *tc= registerTimeBase(frequency, true);  //for power
+      	    // for power introspection
+      	    if (ifModelPower) registerClock( frequency, new Clock::Handler<Routermodel>( this, &Routermodel::pushData) ); 
+      	    registerMonitorDouble("current_power");
+	    registerMonitorDouble("leakage_power");
+	    registerMonitorDouble("runtime_power");
+	    registerMonitorDouble("total_power");
+	    registerMonitorDouble("peak_power");
+      	    //for introspection (router delay)
+      	    registerMonitorInt("router_delay");
+	    /***EoM***/
+
 
 	    /* Attach the handler to each port */
 	    for (int i= 0; i < num_ports; i++)   {
@@ -141,6 +181,66 @@ class Routermodel : public Component {
 	    self_link->setDefaultTimeBase(tc);
 
         }
+    /***SoM***/    
+    int Setup() {
+	if (ifModelPower){
+    	    power = new Power(getId());
+	    //set up floorplan and thermal tiles
+	    power->setChip(params);
+	    //set up architecture parameters
+            power->setTech(getId(), params, ROUTER, powerModel);
+            //reset all counts to zero
+            power->resetCounts(&mycounts);
+	}
+            return 0;
+    }
+
+    int Finish(){
+	//power->printFloorplanAreaInfo();
+	//std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
+	//power->printFloorplanPowerInfo();
+	//power->printFloorplanThermalInfo();
+	return 0;
+    }
+    
+    uint64_t getIntData(int dataID, int index=0)
+    {
+	  switch(dataID)
+	  {
+	    case router_delay:
+		return ( (uint64_t)router_totaldelay);
+	    break;
+	    default:
+		return (0);
+	    break;
+	  }
+    }
+
+    double getDoubleData(int dataID, int index=0)
+    {
+	  switch(dataID)
+	  {
+	    case current_power:
+		return ( (double)median(pdata.currentPower));
+	    break;
+	    case leakage_power:
+		return ( (double)median(pdata.leakagePower));
+	    break;
+	    case runtime_power:
+		return ( (double)median(pdata.runtimeDynamicPower));
+	    break;
+	    case total_power:
+		return ( (double)median(pdata.totalEnergy));
+	    break;
+	    case peak_power:
+		return ( (double)median(pdata.peak));
+	    break;
+	    default:
+		return (0);
+	    break;
+	  }
+    }
+    /***EoM***/
 
 
     private:
@@ -154,6 +254,17 @@ class Routermodel : public Component {
 
 	SimTime_t hop_delay;
 	std::string component_name;
+	/*SoM -for power & introspection*/
+	std::string frequency;
+	std::string pushIntrospector;
+  	Pdissipation_t pdata, pstats;
+  	Power *power;
+  	usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
+  	SimTime_t router_totaldelay;
+	pmodel powerModel;
+	bool ifModelPower;
+	bool pushData( Cycle_t);
+  	/*EoM*/
 
 	typedef struct port_t   {
 	    Link *link;

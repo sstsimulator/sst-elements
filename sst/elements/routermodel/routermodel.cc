@@ -37,6 +37,12 @@ uint8_t out_port;
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
     port[in_port].cnt_in++;
 
+    /***SoM***/
+    //update total usage counts of all ports for power
+    mycounts.router_access+=1;
+    /***EoM***/
+
+
 #if DBG_ROUTER_MODEL > 1
     /* Diagnostic: print the route this event is taking */
     if (router_model_debug >= 4)   {
@@ -107,6 +113,11 @@ uint8_t out_port;
     // Add in the generic router delay
     delay += hop_delay;
 
+    /***SoM***/
+    //for introspection (router_delay)
+    router_totaldelay = router_totaldelay + e->congestion_delay + delay;
+    /***EoM***/
+
     port[in_port].next_in= current_time + delay + link_time;
 
     // Once this message is going out, the port will be busy for that
@@ -140,6 +151,35 @@ Routermodel::handle_self_events(Event *event)
 
 }  /* end of handle_self_events() */
 
+
+/***SoM***/
+//get and push power at a frequency determinedby the push_introspector
+bool Routermodel::pushData( Cycle_t current)
+{
+    if(isTimeToPush(current, pushIntrospector.c_str())){
+       //Here you can push power statistics by 1) set up values in the mycounts structure
+       //and 2) call the gerPower function. See cpu_PowerAndData for example
+	    
+       /* set up counts */
+       //set up router-related counts (in this case, this is done in handle_port_event)
+       //mycounts.router_access=1;
+       //std::cout << " It is time (" <<current << ") to push power, router_delay = " << router_totaldelay << " and router_access = " << mycounts.router_access << std::endl;
+       pdata = power->getPower(this, ROUTER, mycounts);
+       power->compute_temperature(getId());
+       regPowerStats(pdata);
+       //reset all counts to zero for next power query
+       power->resetCounts(&mycounts); 
+	
+	        /*using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << pdata.totalEnergy << " J" << std::endl;
+	        using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;*/
+		
+    }
+	return false;
+}
+/***EoM***/
 
 
 extern "C" {
