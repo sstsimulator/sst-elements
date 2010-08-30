@@ -1069,7 +1069,7 @@ class Power{
         }
 
 	//Destructor
-		//virtual ~Power();
+	virtual ~Power() {}
 
 	void setTech(ComponentId_t compID, Component::Params_t params, ptype power_type, pmodel power_model);
 	void getUnitPower(ptype power_type, int user_data, pmodel power_model);
@@ -1119,6 +1119,9 @@ class Power{
 	void McPATSetup();
 	#endif
 
+	friend class boost::serialization::access;
+	template<class Archive>
+    	void serialize(Archive & ar, const unsigned int version );
 
 	/*
 	BOOST_SERIALIZE {
