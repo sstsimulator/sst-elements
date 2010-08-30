@@ -29,7 +29,7 @@ class IntSim_library
   public:
    IntSim_library(parameters_tech_t device_tech, double area, double num_transistors);
 
-  ~IntSim_library() {}
+  virtual ~IntSim_library() {}
 
   //virtual double get_area(void);
   // virtual double get_length(void);
@@ -44,6 +44,11 @@ class IntSim_library
 
   // IntSim main algorithm
   void IntSim(intsim_chip_t *chip, intsim_param_t *param);
+
+  friend class boost::serialization::access;
+	template<class Archive>
+    	void serialize(Archive & ar, const unsigned int version );
+
 };
 
 }

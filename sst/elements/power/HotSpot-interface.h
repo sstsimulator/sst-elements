@@ -36,7 +36,7 @@ class HotSpot_library : public thermal_library_t
 {
  public:
   HotSpot_library(parameters_chip_t p_chip);
-  ~HotSpot_library() {}
+  virtual ~HotSpot_library() {}
 
   private:
   thermal_config_t thermal_config;	// thermal configuration
@@ -45,6 +45,11 @@ class HotSpot_library : public thermal_library_t
   double *temperature, *power;//*steady_temperature, *overall_power;
 
   virtual void compute(std::map<int,floorplan_t> *floorplan);
+
+  friend class boost::serialization::access;
+	template<class Archive>
+    	void serialize(Archive & ar, const unsigned int version );
+
 };
 
 }
