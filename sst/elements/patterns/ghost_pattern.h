@@ -1,10 +1,10 @@
 // Copyright 2009-2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2010, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -51,7 +51,7 @@ class Ghost_pattern : public Component {
         Ghost_pattern(ComponentId_t id, Params_t& params) :
             Component(id),
             params(params)
-        { 
+        {
 
             Params_t::iterator it= params.begin();
 
@@ -407,7 +407,7 @@ class Ghost_pattern : public Component {
         }
 
         template<class Archive>
-        friend void save_construct_data(Archive & ar, 
+        friend void save_construct_data(Archive & ar,
                                         const Ghost_pattern * t,
                                         const unsigned int file_version)
         {
@@ -416,11 +416,11 @@ class Ghost_pattern : public Component {
             Params_t          params = t->params;
             ar << BOOST_SERIALIZATION_NVP(id);
             ar << BOOST_SERIALIZATION_NVP(params);
-        } 
+        }
 
         template<class Archive>
-        friend void load_construct_data(Archive & ar, 
-                                        Ghost_pattern * t, 
+        friend void load_construct_data(Archive & ar,
+                                        Ghost_pattern * t,
                                         const unsigned int file_version)
         {
             _AR_DBG(Ghost_pattern,"\n");
@@ -429,7 +429,7 @@ class Ghost_pattern : public Component {
             ar >> BOOST_SERIALIZATION_NVP(id);
             ar >> BOOST_SERIALIZATION_NVP(params);
             ::new(t)Ghost_pattern(id, params);
-        } 
+        }
 };
 
 #endif // _GHOST_PATTERN_H

@@ -98,9 +98,38 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency)
 }  /* end of sst_gen_param_end() */
 
 
+void
+sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method)
+{
+    if (sstfile == NULL)   {
+	return;
+    }
+
+    if (power_method == pwrNone)   {
+	/* Nothing to do */
+	return;
+    } else if (power_method == pwrMcPAT)   {
+	fprintf(sstfile, "<intro1_params>\n");
+	fprintf(sstfile, "    <period>15000000ns</period>\n");
+	fprintf(sstfile, "    <model>routermodel</model>\n");
+	fprintf(sstfile, "</intro1_params>\n");
+	fprintf(sstfile, "\n");
+    } else if (power_method == pwrORION)   {
+	fprintf(sstfile, "<intro1_params>\n");
+	fprintf(sstfile, "    <period>15000000ns</period>\n");
+	fprintf(sstfile, "    <model>routermodel</model>\n");
+	fprintf(sstfile, "</intro1_params>\n");
+	fprintf(sstfile, "\n");
+    } else   {
+	/* error */
+    }
+
+}  /* end of sst_pwr_param_entries() */
+
 
 void
-sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw)
+sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw, int num_cores,
+    pwr_method_t power_method)
 {
 
     if (sstfile == NULL)   {
@@ -112,7 +141,63 @@ sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw)
     fprintf(sstfile, "    <hop_delay> 25 </hop_delay>\n");
     fprintf(sstfile, "    <debug> 0 </debug>\n");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
-    fprintf(sstfile, "    <bw> %d </bw>\n", router_bw);
+    fprintf(sstfile, "    <bw> %lu </bw>\n", router_bw);
+
+    if (power_method == pwrNone)   {
+	/* Nothing to do */
+    } else if (power_method == pwrMcPAT)   {
+	fprintf(sstfile, "    <McPAT_XMLfile>../../core/techModels/libMcPATbeta/Niagara1.xml</McPAT_XMLfile>\n");
+	fprintf(sstfile, "    <core_temperature>350</core_temperature>\n");
+	fprintf(sstfile, "    <core_tech_node>65</core_tech_node>\n");
+	fprintf(sstfile, "    <frequency>1ns</frequency>\n");
+	fprintf(sstfile, "    <power_monitor>YES</power_monitor>\n");
+	fprintf(sstfile, "    <temperature_monitor>NO</temperature_monitor>\n");
+	fprintf(sstfile, "    <router_voltage>1.1</router_voltage>\n");
+	fprintf(sstfile, "    <router_clock_rate>1000000000</router_clock_rate>\n");
+	fprintf(sstfile, "    <router_flit_bits>64</router_flit_bits>\n");
+	fprintf(sstfile, "    <router_virtual_channel_per_port>2</router_virtual_channel_per_port>\n");
+	fprintf(sstfile, "    <router_input_ports>%d</router_input_ports>\n", num_ports);
+	fprintf(sstfile, "    <router_output_ports>%d</router_output_ports>\n", num_ports);
+	fprintf(sstfile, "    <router_link_length>16691</router_link_length>\n");
+	fprintf(sstfile, "    <router_power_model>McPAT</router_power_model>\n");
+	fprintf(sstfile, "    <router_has_global_link>1</router_has_global_link>\n");
+	fprintf(sstfile, "    <router_input_buffer_entries_per_vc>16</router_input_buffer_entries_per_vc>\n");
+	fprintf(sstfile, "    <router_link_throughput>1</router_link_throughput>\n");
+	fprintf(sstfile, "    <router_link_latency>1</router_link_latency>\n");
+	fprintf(sstfile, "    <router_horizontal_nodes>1</router_horizontal_nodes>\n");
+	fprintf(sstfile, "    <router_vertical_nodes>1</router_vertical_nodes>\n");
+	fprintf(sstfile, "    <router_topology>RING</router_topology>\n");
+	fprintf(sstfile, "    <core_number_of_NoCs>%d</core_number_of_NoCs>\n", num_cores);
+	fprintf(sstfile, "    <push_introspector>routerIntrospector</push_introspector>\n");
+
+    } else if (power_method == pwrORION)   {
+	fprintf(sstfile, "    <ORION_XMLfile>../../core/techModels/libORION/something.xml</ORION_XMLfile>\n");
+	fprintf(sstfile, "    <core_temperature>350</core_temperature>\n");
+	fprintf(sstfile, "    <core_tech_node>65</core_tech_node>\n");
+	fprintf(sstfile, "    <frequency>1ns</frequency>\n");
+	fprintf(sstfile, "    <power_monitor>YES</power_monitor>\n");
+	fprintf(sstfile, "    <temperature_monitor>NO</temperature_monitor>\n");
+	fprintf(sstfile, "    <router_voltage>1.1</router_voltage>\n");
+	fprintf(sstfile, "    <router_clock_rate>1000000000</router_clock_rate>\n");
+	fprintf(sstfile, "    <router_flit_bits>64</router_flit_bits>\n");
+	fprintf(sstfile, "    <router_virtual_channel_per_port>2</router_virtual_channel_per_port>\n");
+	fprintf(sstfile, "    <router_input_ports>%d</router_input_ports>\n", num_ports);
+	fprintf(sstfile, "    <router_output_ports>%d</router_output_ports>\n", num_ports);
+	fprintf(sstfile, "    <router_link_length>16691</router_link_length>\n");
+	fprintf(sstfile, "    <router_power_model>ORION</router_power_model>\n");
+	fprintf(sstfile, "    <router_has_global_link>1</router_has_global_link>\n");
+	fprintf(sstfile, "    <router_input_buffer_entries_per_vc>16</router_input_buffer_entries_per_vc>\n");
+	fprintf(sstfile, "    <router_link_throughput>1</router_link_throughput>\n");
+	fprintf(sstfile, "    <router_link_latency>1</router_link_latency>\n");
+	fprintf(sstfile, "    <router_horizontal_nodes>1</router_horizontal_nodes>\n");
+	fprintf(sstfile, "    <router_vertical_nodes>1</router_vertical_nodes>\n");
+	fprintf(sstfile, "    <router_topology>RING</router_topology>\n");
+	fprintf(sstfile, "    <core_number_of_NoCs>%d</core_number_of_NoCs>\n", num_cores);
+	fprintf(sstfile, "    <push_introspector>routerIntrospector</push_introspector>\n");
+
+    } else   {
+	/* error */
+    }
 
 }  /* end of sst_router_param_start() */
 
@@ -155,6 +240,32 @@ sst_body_end(FILE *sstfile)
     }
 
 }  /* end of sst_body_end() */
+
+
+
+void
+sst_pwr_component(FILE *sstfile, pwr_method_t power_method)
+{
+
+    if (sstfile == NULL)   {
+	/* Nothing to output */
+	return;
+    }
+
+    if (power_method == pwrNone)   {
+	/* Nothing to do */
+    } else if ((power_method == pwrMcPAT) || (power_method == pwrORION))   {
+	fprintf(sstfile, "    <introspector id=\"routerIntrospector\">\n");
+	fprintf(sstfile, "        <introspector_router>\n");
+	fprintf(sstfile, "            <params>\n");
+	fprintf(sstfile, "                <params reference=intro1_params />\n");
+	fprintf(sstfile, "            </params>\n");
+	fprintf(sstfile, "        </introspector_router>\n");
+	fprintf(sstfile, "    </introspector>\n");
+	fprintf(sstfile, "\n");
+    }
+
+}  /* end of sst_pwr_component() */
 
 
 
@@ -285,7 +396,7 @@ char *label;
 ** Generate the router components
 */
 void
-sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
+sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, pwr_method_t power_method)
 {
 
 int l, r, p;
@@ -323,6 +434,12 @@ char cname[MAX_ID_LEN];
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
 	    fprintf(sstfile, "                <%s> %s </%s>\n", cname, net_link_id, cname);
 	}
+
+	
+	if ((power_method == pwrMcPAT) || (power_method == pwrORION))   {
+	    fprintf(sstfile, "                <router_floorplan_id> %d </router_floorplan_id>\n", r);
+	}
+
 	fprintf(sstfile, "            </params>\n");
 	fprintf(sstfile, "            <links>\n");
 

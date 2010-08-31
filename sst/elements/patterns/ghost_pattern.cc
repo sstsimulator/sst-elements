@@ -1,10 +1,10 @@
 // Copyright 2009-2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2010, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -264,7 +264,7 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
- 
+
 }  // end of state_COMPUTE()
 
 
@@ -320,7 +320,7 @@ Ghost_pattern::state_WAIT(pattern_event_t event)
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
- 
+
 }  // end of state_WAIT()
 
 
@@ -331,7 +331,7 @@ Ghost_pattern::state_DONE(pattern_event_t event)
 
     _abort(ghost_pattern, "[%3d] Should not get anymore events after we are in DONE state\n",
 	my_rank);
- 
+
 }  // end of state_DONE()
 
 
@@ -388,7 +388,7 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
- 
+
 }  // end of state_COORDINATED_CHCKPT()
 
 
@@ -436,7 +436,7 @@ Ghost_pattern::state_SAVING_ENVELOPE_1(pattern_event_t event)
 	    }
 	    break;
     }
- 
+
 }  // end of state_SAVING_ENVELOPE_1()
 
 
@@ -480,7 +480,7 @@ Ghost_pattern::state_SAVING_ENVELOPE_2(pattern_event_t event)
 	    }
 	    break;
     }
- 
+
 }  // end of state_SAVING_ENVELOPE_2()
 
 
@@ -536,7 +536,7 @@ SimTime_t chckpt_delay_remainder;
 	    }
 	    break;
     }
- 
+
 }  // end of state_SAVING_ENVELOPE_3()
 
 
@@ -572,7 +572,7 @@ Ghost_pattern::state_LOG_MSG1(pattern_event_t event)
 	    common->event_send(my_rank, LOG_MSG2_DONE, msg_write_time);
 	    break;
     }
- 
+
 }  // end of state_LOG_MSG1()
 
 
@@ -608,7 +608,7 @@ Ghost_pattern::state_LOG_MSG2(pattern_event_t event)
 	    common->event_send(my_rank, LOG_MSG3_DONE, msg_write_time);
 	    break;
     }
- 
+
 }  // end of state_LOG_MSG2()
 
 
@@ -644,7 +644,7 @@ Ghost_pattern::state_LOG_MSG3(pattern_event_t event)
 	    common->event_send(my_rank, LOG_MSG4_DONE, msg_write_time);
 	    break;
     }
- 
+
 }  // end of state_LOG_MSG3()
 
 
@@ -680,7 +680,7 @@ Ghost_pattern::state_LOG_MSG4(pattern_event_t event)
 	    state_WAIT(ENTER_WAIT);
 	    break;
     }
- 
+
 }  // end of state_LOG_MSG4()
 
 

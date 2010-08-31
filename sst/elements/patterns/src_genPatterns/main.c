@@ -37,6 +37,7 @@ static struct option long_options[]=   {
     {"chckpt_delay", 1, NULL, 1000},
     {"chckpt_interval", 1, NULL, 1001},
     {"envelope_write_time", 1, NULL, 1002},
+    {"power", 1, NULL, 1003},
     {NULL, 0, NULL, 0}
 };
 
@@ -69,6 +70,8 @@ char *method;		/* Checkpointing method to use */
 uint64_t chckpt_delay;	/* How long to write a checkpoint in ns */
 uint64_t chckpt_interval;	/* How long between checkpoints in ns */
 uint64_t envelope_write_time;	/* How long to write receive envelope info */
+char *power_model;	/* Which, if any, power model to use */
+pwr_method_t power_method;
 
 
 
@@ -96,6 +99,9 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
     /* cell (halo) exchange. */
     exchange_msg_len= 46340;
     pattern_name= NULL;
+
+    power_model= "none";
+    power_method= pwrNone;
 
 
     /* check command line args */
@@ -160,6 +166,9 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
 		    error= TRUE;
 		}
 		break;
+	    case 1003:
+		power_model= optarg;
+		break;
 	    default:
 		error= TRUE;
 		break;
@@ -212,6 +221,26 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
 	if (!error)   {
 	    printf("*** Checkpoint method is \"%s\"\n", method);
 	}
+    }
+
+    if ((strstr("none", power_model) == NULL) &&
+	(strstr("McPAT", power_model) == NULL) &&
+        (strstr("ORION", power_model) == NULL))   {
+	error= TRUE;
+	fprintf(stderr, "Unknown power model!\n");
+	fprintf(stderr, "Must be one of \"McPAT\" or \"ORION\"\n");
+    } else   {
+	if (strstr("none", power_model) != NULL)   {
+	    printf("*** Power model is \"none\"\n");
+	    power_method= pwrNone;
+	} else if (strstr("McPAT", power_model) != NULL)   {
+	    printf("*** Power model is \"McPAT\"\n");
+	    power_method= pwrMcPAT;
+	} else if (strstr("ORION", power_model) != NULL)   {
+	    printf("*** Power model is \"ORION\"\n");
+	    power_method= pwrORION;
+	}
+
     }
 
     if ((x_dim < 0) || (y_dim < 0))   {
@@ -272,15 +301,16 @@ uint64_t envelope_write_time;	/* How long to write receive envelope info */
 	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval,
 	envelope_write_time);
     sst_gen_param_end(fp_sst, node_lat);
+    sst_pwr_param_entries(fp_sst, power_method);
 
     /* We assume the router bandwidth is the same as the link bandwidth */
-    sst_router_param_start(fp_sst, num_ports, net_bw);
+    sst_router_param_start(fp_sst, num_ports, net_bw, num_cores, power_method);
     sst_router_param_end(fp_sst);
     sst_body_start(fp_sst);
 
-
+    sst_pwr_component(fp_sst, power_method);
     sst_pattern_generators(pattern_name, fp_sst);
-    sst_routers(fp_sst, node_lat, net_lat);
+    sst_routers(fp_sst, node_lat, net_lat, power_method);
     sst_body_end(fp_sst);
     sst_footer(fp_sst);
 
@@ -298,7 +328,8 @@ static void
 usage(char *argv[])
 {
 
-    fprintf(stderr, "Usage: %s -x dimX -y dimY -s sname -p pname [-c num_cores] [-h]\n", argv[0]);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Usage: %s -x dimX -y dimY -s sname -p pname [-c num_cores] [--power model] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -s     Name of the SST xml output file\n");
     fprintf(stderr, "   --cores, -c           Number of cores per router\n");
     fprintf(stderr, "   dimX                  X dimesnion of 2-D tours\n");
@@ -310,6 +341,7 @@ usage(char *argv[])
     fprintf(stderr, "   --chckpt_delay        Time to write a checkpoint (in nano seconds)\n");
     fprintf(stderr, "   --chckpt_interval     How often to write a (coordinated) checkpoint (in nano seconds)\n");
     fprintf(stderr, "   --envelope_write_time Time needed to write receive envelope info (in nano seconds)\n");
+    fprintf(stderr, "   --power <model>       Enable power modeling using McPAT or ORION\n");
 
 }  /* end of usage() */
 
@@ -321,7 +353,7 @@ is_pow2(int num)
     if (num < 1)   {
 	return FALSE;
     }
-    
+
     if ((num & (num - 1)) == 0)   {
 	return TRUE;
     }
