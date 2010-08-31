@@ -37,11 +37,6 @@ uint8_t out_port;
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
     port[in_port].cnt_in++;
 
-    /***SoM***/
-    //update total usage counts of all ports for power
-    mycounts.router_access+=1;
-    /***EoM***/
-
 
 #if DBG_ROUTER_MODEL > 1
     /* Diagnostic: print the route this event is taking */
@@ -94,6 +89,14 @@ uint8_t out_port;
 
 	return;
     }
+
+
+    /***SoM***/
+    //update total usage counts of all ports for power
+    if (!e->local_traffic)   {
+	mycounts.router_access+=1;
+    }
+    /***EoM***/
 
 
     // What is the current delay to send on this output port?

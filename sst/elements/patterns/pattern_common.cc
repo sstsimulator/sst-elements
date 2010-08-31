@@ -185,6 +185,14 @@ int my_router, dest_router;
     e->hops= 0;
     e->msg_len= msg_len;
 
+    if ((my_rank / num_cores) != (dest / num_cores))   {
+	// This message goes off node
+	e->local_traffic= false;
+    } else   {
+	// This is an intra-node message
+	e->local_traffic= true;
+    }
+
     // We are hardcoded for a x * y torus!
     // the program genPatterns generates XML files with routers that have
     // the following port connections:
