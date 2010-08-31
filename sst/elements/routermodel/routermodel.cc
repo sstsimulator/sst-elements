@@ -96,6 +96,8 @@ uint8_t out_port;
     if (!e->local_traffic)   {
 	mycounts.router_access+=1;
     }
+    else
+	num_local_message+=1;
     /***EoM***/
 
 

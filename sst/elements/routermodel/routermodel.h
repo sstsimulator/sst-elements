@@ -61,6 +61,7 @@ class Routermodel : public IntrospectedComponent {
 	     /***SoM***/
 	    router_totaldelay = 0;
 	    ifModelPower = false;
+	    num_local_message = 0;
 	    /***EoM***/
 
 
@@ -124,8 +125,9 @@ class Routermodel : public IntrospectedComponent {
 	    registerMonitorDouble("runtime_power");
 	    registerMonitorDouble("total_power");
 	    registerMonitorDouble("peak_power");
-      	    //for introspection (router delay)
+      	    //for introspection 
       	    registerMonitorInt("router_delay");
+       	    registerMonitorInt("local_message");
 	    /***EoM***/
 
 
@@ -210,6 +212,9 @@ class Routermodel : public IntrospectedComponent {
 	    case router_delay:
 		return ( (uint64_t)router_totaldelay);
 	    break;
+	    case local_message:
+		return ( num_local_message);
+	    break;
 	    default:
 		return (0);
 	    break;
@@ -260,7 +265,8 @@ class Routermodel : public IntrospectedComponent {
   	Pdissipation_t pdata, pstats;
   	Power *power;
   	usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
-  	SimTime_t router_totaldelay;
+  	SimTime_t router_totaldelay; //totaldelay = congestion delay + generic router delay
+	uint64_t num_local_message; //number of intra-core messages
 	pmodel powerModel;
 	bool ifModelPower;
 	bool pushData( Cycle_t);
