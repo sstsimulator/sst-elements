@@ -10293,7 +10293,7 @@ void Power::floorParamInitialize()
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
   floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/0,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  //floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 1... " << endl;
 
@@ -10370,7 +10370,7 @@ void Power::floorParamInitialize()
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
   floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/2,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  //floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 3... " << endl;
 
@@ -10447,7 +10447,7 @@ void Power::floorParamInitialize()
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
   floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/4,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  //floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 5... " << endl;
 
@@ -10485,7 +10485,7 @@ void Power::floorParamInitialize()
   floorplan_input.feature.area = 6.68882e-6;
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/5,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/7,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 6... " << endl;
 
@@ -10523,12 +10523,12 @@ void Power::floorParamInitialize()
   floorplan_input.feature.area = 2.26003e-6;
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/4,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/6,/*wire density*/1.0));
+  //floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 7... " << endl;
 
-  tile_input.layer = SILICON;
+  /*tile_input.layer = SILICON;
   tile_input.id = 100;
   tile_input.name = "silicon:uncore:L3";
   tile_input.temperature = 350.0;
@@ -10560,14 +10560,14 @@ void Power::floorParamInitialize()
   floorplan_input.feature.width = 8e-3;
   floorplan_input.feature.length = 2.5145875e-3;
   floorplan_input.feature.area = 20.1167e-6;
-  floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.set_default(/*feature size* /core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = 0.8*10.0/3.0*1e9;
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/1,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/3,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/5,/*wire density*/1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/7,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan* /1,/*wire density* /1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan* /3,/*wire density* /1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan* /5,/*wire density* /1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan* /7,/*wire density* /1.0));
   chip.insert(&floorplan_input);
-  cout << "Initializing the parameters tile 100... " << endl;
+  cout << "Initializing the parameters tile 100... " << endl;*/
 
   // rest of thermal tiles (sides of spreader and heatsink)
   tile_input.layer = SPREADER;
@@ -11447,8 +11447,8 @@ void Power::compute_temperature(ComponentId_t compID)
       (*fit).second.p_usage_floorplan.currentPower += updatedLeakagePower;
       (*fit).second.p_usage_floorplan.leakagePower += updatedLeakagePower;
       (*fit).second.p_usage_floorplan.totalEnergy += updatedLeakagePower;
-      // Important! the overall comp total energy should be updated as well
-      p_usage_uarch.totalEnergy += updatedLeakagePower;
+      // Important! the overall comp total energy should be updated as well--->this fix seems buggy
+      //p_usage_uarch.totalEnergy += updatedLeakagePower;
     } // end if leakage feedback   
   } // end for each subcomp
   } //end if model temperature
