@@ -35,8 +35,14 @@ bool Introspector_router::pullData( Cycle_t current )
                 //std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getIntData(iter->first) << std::endl;
 	        totalRouterDelay += c->getIntData(iter->first);
 	    }
+	    else if (iter->first == IntrospectedComponent::local_message)
+	    {
+                //std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getIntData(iter->first) << std::endl;
+	        numLocalMessage += c->getIntData(iter->first);
+	    }
 	}
 	std::cout << "introspector_router: @ cycle " << current << ", TOTAL router delay = " << totalRouterDelay << std::endl; 
+	std::cout << "introspector_router: @ cycle " << current << ", # intra-core messages = " << numLocalMessage << std::endl;
 	
 	for( Database_t::iterator iter = DatabaseDouble.begin();
                             iter != DatabaseDouble.end(); ++iter )
@@ -47,19 +53,19 @@ bool Introspector_router::pullData( Cycle_t current )
                 //std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getDoubleData(iter->first) << std::endl;
 		currentPower += c->getDoubleData(iter->first);
 	    }
-	    if (iter->first == IntrospectedComponent::leakage_power)
+	    else if (iter->first == IntrospectedComponent::leakage_power)
 	    {
 		leakagePower += c->getDoubleData(iter->first);
 	    }
-	    if (iter->first == IntrospectedComponent::runtime_power)
+	    else if (iter->first == IntrospectedComponent::runtime_power)
 	    {
 		runtimePower += c->getDoubleData(iter->first);
 	    }
-	    if (iter->first == IntrospectedComponent::total_power)
+	    else if (iter->first == IntrospectedComponent::total_power)
 	    {
 		totalPower += c->getDoubleData(iter->first);
 	    }
-	    if (iter->first == IntrospectedComponent::peak_power)
+	    else if (iter->first == IntrospectedComponent::peak_power)
 	    {
 		if (peakPower < c->getDoubleData(iter->first))  
 		    peakPower = c->getDoubleData(iter->first);

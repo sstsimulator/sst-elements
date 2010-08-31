@@ -50,6 +50,7 @@ class Introspector_router : public Introspector {
             } 
             
             totalRouterDelay = 0;
+	    numLocalMessage = 0;
 	    currentPower = leakagePower = runtimePower = totalPower = peakPower = 0;
 
             _INTROSPECTOR_ROUTER_DBG("-->frequency=%s\n",frequency.c_str());
@@ -80,6 +81,10 @@ class Introspector_router : public Introspector {
 		    pint = (*i)->ifMonitorIntData("router_delay");
 		    if(pint.first){		
 			//store pointer to component and the dataID of the data of interest	
+			addToIntDatabase(*i, pint.second); 
+		    }
+		    pint = (*i)->ifMonitorIntData("local_message");
+		    if(pint.first){		
 			addToIntDatabase(*i, pint.second); 
 		    }
 		
@@ -128,7 +133,7 @@ class Introspector_router : public Introspector {
         Component::Params_t    params;        
 	std::string frequency;
 	std::string model;
-	uint64_t totalRouterDelay, intData;
+	uint64_t totalRouterDelay, numLocalMessage, intData;
 	double currentPower, leakagePower, runtimePower, totalPower, peakPower;
 
 	friend class boost::serialization::access;
