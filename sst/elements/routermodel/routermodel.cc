@@ -91,14 +91,12 @@ uint8_t out_port;
     }
 
 
-    /***SoM***/
-    //update total usage counts of all ports for power
+    // Update total usage counts of all ports for power
     if (!e->local_traffic)   {
-	mycounts.router_access+=1;
+	mycounts.router_access++;
+    } else   {
+	num_local_message++;
     }
-    else
-	num_local_message+=1;
-    /***EoM***/
 
 
     // What is the current delay to send on this output port?
@@ -118,10 +116,8 @@ uint8_t out_port;
     // Add in the generic router delay
     delay += hop_delay;
 
-    /***SoM***/
-    //for introspection (router_delay)
-    router_totaldelay = router_totaldelay + e->congestion_delay + delay;
-    /***EoM***/
+    // For introspection (router_delay)
+    router_totaldelay= router_totaldelay + e->congestion_delay + delay;
 
     port[in_port].next_in= current_time + delay + link_time;
 
@@ -136,7 +132,7 @@ uint8_t out_port;
 
     port[out_port].link->Send(delay, e);
 
-}  /* end of handle_port_events() */
+}  // end of handle_port_events()
 
 
 
@@ -157,34 +153,39 @@ Routermodel::handle_self_events(Event *event)
 }  /* end of handle_self_events() */
 
 
-/***SoM***/
-//get and push power at a frequency determinedby the push_introspector
-bool Routermodel::pushData( Cycle_t current)
+// Get and push power at a frequency determinedby the push_introspector
+bool
+Routermodel::pushData(Cycle_t current)
 {
-    if(isTimeToPush(current, pushIntrospector.c_str())){
-       //Here you can push power statistics by 1) set up values in the mycounts structure
-       //and 2) call the gerPower function. See cpu_PowerAndData for example
-	    
-       /* set up counts */
-       //set up router-related counts (in this case, this is done in handle_port_event)
-       //mycounts.router_access=1;
-       //std::cout << " It is time (" <<current << ") to push power, router_delay = " << router_totaldelay << " and router_access = " << mycounts.router_access << std::endl;
-       pdata = power->getPower(this, ROUTER, mycounts);
+    if (isTimeToPush(current, pushIntrospector.c_str()))   {
+       // Here you can push power statistics by 1) set up values in the mycounts structure
+       // and 2) call the gerPower function. See cpu_PowerAndData for example
+	
+       // set up counts
+       // set up router-related counts (in this case, this is done in handle_port_event)
+       // mycounts.router_access=1;
+       // std::cout << " It is time (" <<current << ") to push power, router_delay = " << router_totaldelay << " and router_access = " << mycounts.router_access << std::endl;
+       pdata= power->getPower(this, ROUTER, mycounts);
        power->compute_temperature(getId());
        regPowerStats(pdata);
+
        //reset all counts to zero for next power query
-       power->resetCounts(&mycounts); 
+       power->resetCounts(&mycounts);
 	
-	        /*using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << pdata.totalEnergy << " J" << std::endl;
-	        using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;*/
+#if 0
+	using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << pdata.totalEnergy << " J" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;
+#endif
 		
     }
-	return false;
-}
-/***EoM***/
+
+    return false;
+
+} // end of pushData()
+
 
 
 extern "C" {

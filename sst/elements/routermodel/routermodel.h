@@ -14,12 +14,9 @@
 #define _ROUTERMODEL_H
 
 #include <sst/core/event.h>
-//#include <sst/core/component.h>
 #include <sst/core/link.h>
-/***SoM***/
 #include <sst/core/introspectedComponent.h>
 #include "../power/power.h"
-/***EoM***/
 
 
 using namespace SST;
@@ -39,15 +36,13 @@ using namespace SST;
 #define MAX_LINK_NAME		(16)
 
 
-/***SoM***/
 class Routermodel : public IntrospectedComponent {
     public:
         Routermodel(ComponentId_t id, Params_t& params) :
             IntrospectedComponent(id),
             params(params),
-            frequency( "1ns" )
-        { 
-/***EoM***/
+            frequency("1ns")
+        {
             Params_t::iterator it= params.begin();
 	    // Defaults
 	    router_model_debug= 0;
@@ -58,11 +53,11 @@ class Routermodel : public IntrospectedComponent {
 	    congestion_out= 0;
 	    congestion_in_cnt= 0;
 	    congestion_in= 0;
-	     /***SoM***/
-	    router_totaldelay = 0;
-	    ifModelPower = false;
-	    num_local_message = 0;
-	    /***EoM***/
+
+	    // Power modeling
+	    router_totaldelay= 0;
+	    ifModelPower= false;
+	    num_local_message= 0;
 
 
 
@@ -84,27 +79,38 @@ class Routermodel : public IntrospectedComponent {
 
 		else if (!it->first.compare("component_name"))   {
 		    component_name= it->second;
-		    _ROUTER_MODEL_DBG(1, "Component name for ID %lu is \"%s\"\n", id, component_name.c_str());
+		    _ROUTER_MODEL_DBG(1, "Component name for ID %lu is \"%s\"\n", id,
+			component_name.c_str());
 		}
 
 		else if (!it->first.compare("num_ports"))   {
 		    sscanf(it->second.c_str(), "%d", &num_ports);
 		}
-		/***SoM***/
-		//for power
-    		else if ( ! it->first.compare("frequency") ) {
-        	    frequency = it->second;
+
+		// Power modeling paramters
+    		else if (!it->first.compare("frequency"))   {
+        	    frequency= it->second;
     		}
-    		else if ( ! it->first.compare("push_introspector") ) {
-        	    pushIntrospector = it->second;
+
+    		else if (!it->first.compare("push_introspector"))   {
+        	    pushIntrospector= it->second;
     		}
-		else if ( ! it->first.compare("router_power_model") ) {
-        	     if (!it->second.compare("McPAT"))
-		     {     powerModel = McPAT; ifModelPower = true; }
-		     else if (!it->second.compare("ORION"))
-		     {	  powerModel = ORION;  ifModelPower = true; }
+
+		else if (!it->first.compare("router_power_model"))   {
+		    if (!it->second.compare("McPAT"))   {
+			powerModel= McPAT;
+			ifModelPower= true;
+			_ROUTER_MODEL_DBG(1, "Router %s: Power modeling enabled, using McPAT\n",
+			    component_name.c_str());
+		    } else if (!it->second.compare("ORION"))   {
+			powerModel= ORION;
+			ifModelPower= true;
+			_ROUTER_MODEL_DBG(1, "Router %s: Power modeling enabled, using ORION\n",
+			    component_name.c_str());
+		    } else   {
+			_abort(Routermodel, "Unknown power model!\n");
+		    }
     		}
-		/***EoM***/
 
                 ++it;
             }
@@ -114,21 +120,29 @@ class Routermodel : public IntrospectedComponent {
 		_abort(Routermodel, "Need to define the num_ports parameter!\n");
 	    }
 
-	     /***SoM***/
 	    // Create a time converter for the NIC simulator.
-	    //tc= registerTimeBase("1ns", true);
-      	    TimeConverter *tc= registerTimeBase(frequency, true);  //for power
+	    // TimeConverter *tc= registerTimeBase("1ns", true);
+	    // FIXME: I'm not sure this is the right way to do it. The router assumes that
+	    // the time base is 1ns....
+
+	    // for power
+      	    TimeConverter *tc= registerTimeBase(frequency, true);
+
       	    // for power introspection
-      	    if (ifModelPower) registerClock( frequency, new Clock::Handler<Routermodel>( this, &Routermodel::pushData) ); 
-      	    registerMonitorDouble("current_power");
-	    registerMonitorDouble("leakage_power");
-	    registerMonitorDouble("runtime_power");
-	    registerMonitorDouble("total_power");
-	    registerMonitorDouble("peak_power");
-      	    //for introspection 
-      	    registerMonitorInt("router_delay");
-       	    registerMonitorInt("local_message");
-	    /***EoM***/
+      	    if (ifModelPower)   {
+		registerClock(frequency, new Clock::Handler<Routermodel>
+		    (this, &Routermodel::pushData));
+	    }
+
+		registerMonitorDouble("current_power");
+		registerMonitorDouble("leakage_power");
+		registerMonitorDouble("runtime_power");
+		registerMonitorDouble("total_power");
+		registerMonitorDouble("peak_power");
+
+		//for introspection
+		registerMonitorInt("router_delay");
+		registerMonitorInt("local_message");
 
 
 	    /* Attach the handler to each port */
@@ -183,69 +197,87 @@ class Routermodel : public IntrospectedComponent {
 	    self_link->setDefaultTimeBase(tc);
 
         }
-    /***SoM***/    
-    int Setup() {
-	if (ifModelPower){
-    	    power = new Power(getId());
-	    //set up floorplan and thermal tiles
-	    power->setChip(params);
-	    //set up architecture parameters
-            power->setTech(getId(), params, ROUTER, powerModel);
-            //reset all counts to zero
-            power->resetCounts(&mycounts);
+
+
+	int
+	Setup()
+	{
+	    if (ifModelPower)   {
+		power = new Power(getId());
+
+		//set up floorplan and thermal tiles
+		power->setChip(params);
+
+		//set up architecture parameters
+		power->setTech(getId(), params, ROUTER, powerModel);
+
+		//reset all counts to zero
+		power->resetCounts(&mycounts);
+	    }
+	    return 0;
 	}
-            return 0;
-    }
 
-    int Finish(){
-	//power->printFloorplanAreaInfo();
-	//std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
-	//power->printFloorplanPowerInfo();
-	//power->printFloorplanThermalInfo();
-	return 0;
-    }
-    
-    uint64_t getIntData(int dataID, int index=0)
-    {
-	  switch(dataID)
-	  {
-	    case router_delay:
-		return ( (uint64_t)router_totaldelay);
-	    break;
-	    case local_message:
-		return ( num_local_message);
-	    break;
-	    default:
-		return (0);
-	    break;
-	  }
-    }
 
-    double getDoubleData(int dataID, int index=0)
-    {
-	  switch(dataID)
-	  {
-	    case current_power:
-		return ( (double)median(pdata.currentPower));
-	    break;
-	    case leakage_power:
-		return ( (double)median(pdata.leakagePower));
-	    break;
-	    case runtime_power:
-		return ( (double)median(pdata.runtimeDynamicPower));
-	    break;
-	    case total_power:
-		return ( (double)median(pdata.totalEnergy));
-	    break;
-	    case peak_power:
-		return ( (double)median(pdata.peak));
-	    break;
-	    default:
-		return (0);
-	    break;
-	  }
-    }
-    /***EoM***/
+	int
+	Finish()
+	{
+	    //power->printFloorplanAreaInfo();
+	    //std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
+	    //power->printFloorplanPowerInfo();
+	    //power->printFloorplanThermalInfo();
+	    return 0;
+	}
+
+
+	uint64_t
+	getIntData(int dataID, int index=0)
+	{
+	    switch(dataID)   {
+		case router_delay:
+		    return ((uint64_t)router_totaldelay);
+		    break;
+
+		case local_message:
+		    return ( num_local_message);
+		    break;
+
+		default:
+		    return 0;
+		    break;
+	      }
+	}
+
+
+	double
+	getDoubleData(int dataID, int index=0)
+	{
+	    switch(dataID)   {
+		case current_power:
+		    return ((double)median(pdata.currentPower));
+		    break;
+
+		case leakage_power:
+		    return ((double)median(pdata.leakagePower));
+		    break;
+
+		case runtime_power:
+		    return ((double)median(pdata.runtimeDynamicPower));
+		    break;
+
+		case total_power:
+		    return ((double)median(pdata.totalEnergy));
+		    break;
+
+		case peak_power:
+		    return ((double)median(pdata.peak));
+		    break;
+
+		default:
+		    return 0;
+		    break;
+	      }
+	}
+
 
 
     private:
@@ -259,18 +291,25 @@ class Routermodel : public IntrospectedComponent {
 
 	SimTime_t hop_delay;
 	std::string component_name;
-	/*SoM -for power & introspection*/
+
+	// For power & introspection
 	std::string frequency;
 	std::string pushIntrospector;
   	Pdissipation_t pdata, pstats;
   	Power *power;
-  	usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
-  	SimTime_t router_totaldelay; //totaldelay = congestion delay + generic router delay
-	uint64_t num_local_message; //number of intra-core messages
+	// Over-specified struct that holds usage counts of its sub-components
+  	usagecounts_t mycounts;
+
+	// totaldelay = congestion delay + generic router delay
+  	SimTime_t router_totaldelay;
+
+	//number of intra-core messages
+	uint64_t num_local_message;
+
 	pmodel powerModel;
 	bool ifModelPower;
-	bool pushData( Cycle_t);
-  	/*EoM*/
+	bool pushData(Cycle_t);
+
 
 	typedef struct port_t   {
 	    Link *link;
