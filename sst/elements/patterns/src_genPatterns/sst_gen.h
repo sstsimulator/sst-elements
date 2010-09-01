@@ -38,9 +38,14 @@ void sst_router_component_start(char *id, float weight, char *cname, FILE *sstfi
 void sst_router_component_end(FILE *sstfile);
 void sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *sstfile);
 
-void sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id, float weight,
-    int rank, char *pattern_name, FILE *sstfile);
+void sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
+	char *nvram_aggregator_id, char *ss_aggregator_id, float weight,
+	int rank, char *pattern_name, FILE *sstfile);
 void sst_pattern_generators(char *pattern_name, FILE *sstfile);
-void sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, pwr_method_t power_method);
+void sst_nvram_component(char *id, char *link_id, float weight, FILE *sstfile);
+void sst_nvram_param_entries(FILE *sstfile);
+void sst_nvram(FILE *sstfile);
+void sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
+	uint64_t nvram_latency, pwr_method_t power_method);
 
 #endif /* _SST_GEN_H_ */

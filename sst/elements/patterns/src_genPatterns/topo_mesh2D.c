@@ -30,8 +30,12 @@ int all_cores;
 int NoC_router;
 int src, dest;
 int rank;
-int aggregator;
-int aggregator_port;
+int net_aggregator;
+int net_aggregator_port;
+int nvram_aggregator;
+int nvram_aggregator_port;
+int ss_aggregator;
+int ss_aggregator_port;
 
 
     /* List the Net routers first; they each have 5 ports */
@@ -64,12 +68,28 @@ int aggregator_port;
     /* Generate an aggregator to route Net traffic to each core */
     if (net_x_dim * net_y_dim > 1)   {
 	/* Only generate a network aggregator, if there are more than one node */
-	aggregator= num_routers;
+	net_aggregator= num_routers;
 	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	    fprintf(stderr, "gen_router(%3d, %2d);\n", aggregator, num_cores + 1);
-	    gen_router(aggregator, num_cores + 1);
-	    aggregator++;
+	    fprintf(stderr, "gen_router(%3d, %2d); for net\n", net_aggregator, num_cores + 1);
+	    gen_router(net_aggregator, num_cores + 1);
+	    net_aggregator++;
 	}
+    }
+
+    /* Generate an aggregator to route data to a local NVRAM to and from each core */
+    nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	fprintf(stderr, "gen_router(%3d, %2d); for nvram\n", nvram_aggregator, num_cores + 1);
+	gen_router(nvram_aggregator, num_cores + 1);
+	nvram_aggregator++;
+    }
+
+    /* Generate an aggregator to route data to stabe storage to and from each core */
+    ss_aggregator= num_routers + 2 * (net_x_dim * net_y_dim);
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	fprintf(stderr, "gen_router(%3d, %2d); for stable storage\n", ss_aggregator, num_cores + 1);
+	gen_router(ss_aggregator, num_cores + 1);
+	ss_aggregator++;
     }
 
 
@@ -77,11 +97,16 @@ int aggregator_port;
     all_cores= num_routers * num_cores;
     fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC_y_dim,
 	net_x_dim, net_y_dim, num_routers, all_cores);
-    aggregator= num_routers;
-    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	/* For each network router */
+    net_aggregator= num_routers;
+    nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
+    ss_aggregator= num_routers + 2 * (net_x_dim * net_y_dim);
 
-	aggregator_port= 1;
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+
+	/* For each network router */
+	net_aggregator_port= 1;
+	nvram_aggregator_port= 1;
+	ss_aggregator_port= 1;
 	if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
 	    for (r= 0; r < NoC_x_dim * NoC_y_dim; r++)   {
 		/* For each NoC router */
@@ -92,17 +117,27 @@ int aggregator_port;
 			    (r * num_cores) + gen;
 		    NoC_router= first_NoC_router + r + (R * NoC_x_dim * NoC_y_dim);
 		    if (net_x_dim * net_y_dim > 1)   {
-			/* Connect each core to its Net aggregator */
+			/* Connect each core to its Net, NVRAM, and SS aggregator */
 			fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, "
-			    "agg port %2d);\n", rank, NoC_router,
-			    FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
-			gen_nic(rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
-			aggregator_port++;
+			    "agg port %2d); net\n", rank, NoC_router,
+			    FIRST_LOCAL_PORT + gen, net_aggregator, net_aggregator_port);
+			gen_nic(rank,
+			    NoC_router, FIRST_LOCAL_PORT + gen,
+			    net_aggregator, net_aggregator_port,
+			    nvram_aggregator, nvram_aggregator_port,
+			    ss_aggregator, ss_aggregator_port);
+			net_aggregator_port++;
+			nvram_aggregator_port++;
+			ss_aggregator_port++;
 		    } else   {
-			/* Single node, no connection ot a network */
+			/* Single node, no connection to a network */
 			fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, "
 			    "agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
-			gen_nic(rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
+			gen_nic(rank,
+			    NoC_router, FIRST_LOCAL_PORT + gen,
+			    -1, -1,
+			    nvram_aggregator, nvram_aggregator_port,
+			    ss_aggregator, ss_aggregator_port);
 		    }
 		}
 	    }
@@ -116,10 +151,16 @@ int aggregator_port;
 		NoC_router= (net_x_dim * net_y_dim) + (R * NoC_x_dim * NoC_y_dim);
 		if (net_x_dim * net_y_dim > 1)   {
 		    /* Connect each core to its Net aggregator */
-		    gen_nic(rank, -1, -1, aggregator, aggregator_port);
+		    gen_nic(rank,
+			-1, -1,
+			net_aggregator, net_aggregator_port,
+			nvram_aggregator, nvram_aggregator_port,
+			ss_aggregator, ss_aggregator_port);
 		    fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port "
-			"%2d);\n", rank, -1, -1, aggregator, aggregator_port);
-		    aggregator_port++;
+			"%2d);\n", rank, -1, -1, net_aggregator, net_aggregator_port);
+		    net_aggregator_port++;
+		    nvram_aggregator_port++;
+		    ss_aggregator_port++;
 		} else   {
 		    /* No network and no NoC? */
 		    fprintf(stderr, "ERROR: Nothing to simulate with a single core!\n");
@@ -127,7 +168,9 @@ int aggregator_port;
 		}
 	    }
 	}
-	aggregator++;
+	net_aggregator++;
+	nvram_aggregator++;
+	ss_aggregator++;
     }
 
 
@@ -223,15 +266,29 @@ int aggregator_port;
 	}
     }
 
-    /* Generate the links between aggregators and the network routers */
+
+
+    /* Generate the links between Network aggregators and the network routers */
     if (net_x_dim * net_y_dim > 1)   {
 	/* Only generate a network aggregator, if there are more than one node */
-	aggregator= num_routers;
+	net_aggregator= num_routers;
 	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	    fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d);\n", aggregator, 0, R, FIRST_LOCAL_PORT);
-	    gen_link(aggregator, 0, R, FIRST_LOCAL_PORT);
-	    aggregator++;
+	    fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d);\n", net_aggregator, 0, R, FIRST_LOCAL_PORT);
+	    gen_link(net_aggregator, 0, R, FIRST_LOCAL_PORT);
+	    net_aggregator++;
 	}
+    }
+
+
+
+    /*
+    ** Generate one NVRAM component (a bit bucket) per node and connect the
+    ** NVRAM aggregator to it.
+    */
+    nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	nvram_aggregator_port= 0;
+	gen_nvram(R, nvram_aggregator++, nvram_aggregator_port);
     }
 
 }  /* end of GenMesh2D() */

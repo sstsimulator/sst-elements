@@ -64,6 +64,8 @@ uint64_t net_bw;	/* In bytes per second */
 uint64_t node_lat;	/* In ns */
 uint64_t node_bw;	/* In bytes per second */
 uint64_t compute;	/* In ns */
+uint64_t nvram_lat;	/* In ns */
+
 uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
 int num_cores;		/* How many pattern generators per router */
@@ -88,6 +90,7 @@ pwr_method_t power_method;
     net_bw= 1900000000;
     node_lat= 150;
     node_bw= 12600000000;
+    nvram_lat= 150;
     compute= 150000;
     app_time= 1000 * compute; /* 1000 time steps */
     num_cores= 1;
@@ -341,6 +344,7 @@ pwr_method_t power_method;
 	envelope_write_time);
     sst_gen_param_end(fp_sst, node_lat, net_lat);
     sst_pwr_param_entries(fp_sst, power_method);
+    sst_nvram_param_entries(fp_sst);
 
     /* We assume the router bandwidth is the same as the link bandwidth */
     sst_router_param_start(fp_sst, num_ports, net_bw, num_cores, power_method);
@@ -349,7 +353,8 @@ pwr_method_t power_method;
 
     sst_pwr_component(fp_sst, power_method);
     sst_pattern_generators(pattern_name, fp_sst);
-    sst_routers(fp_sst, node_lat, net_lat, power_method);
+    sst_nvram(fp_sst);
+    sst_routers(fp_sst, node_lat, net_lat, nvram_lat, power_method);
     sst_body_end(fp_sst);
     sst_footer(fp_sst);
 

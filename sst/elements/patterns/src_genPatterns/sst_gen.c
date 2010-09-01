@@ -89,16 +89,28 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
     fprintf(sstfile, "</Gp>\n");
     fprintf(sstfile, "\n");
 
-    fprintf(sstfile, "<Gnet>\n");
+    fprintf(sstfile, "<LocalNet>\n");
     fprintf(sstfile, "    <name> NoC </name>\n");
     fprintf(sstfile, "    <lat> %luns </lat>\n", node_latency);
-    fprintf(sstfile, "</Gnet>\n");
+    fprintf(sstfile, "</LocalNet>\n");
     fprintf(sstfile, "\n");
 
-    fprintf(sstfile, "<Anet>\n");
+    fprintf(sstfile, "<GlobalNet>\n");
     fprintf(sstfile, "    <name> NETWORK </name>\n");
     fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
-    fprintf(sstfile, "</Anet>\n");
+    fprintf(sstfile, "</GlobalNet>\n");
+    fprintf(sstfile, "\n");
+
+    fprintf(sstfile, "<LocalNVRAMaccess>\n");
+    fprintf(sstfile, "    <name> NVRAM </name>\n");
+    fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
+    fprintf(sstfile, "</LocalNVRAMaccess>\n");
+    fprintf(sstfile, "\n");
+
+    fprintf(sstfile, "<StableStorageAccess>\n");
+    fprintf(sstfile, "    <name> STORAGE </name>\n");
+    fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
+    fprintf(sstfile, "</StableStorageAccess>\n");
     fprintf(sstfile, "\n");
 
 }  /* end of sst_gen_param_end() */
@@ -131,6 +143,21 @@ sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method)
     }
 
 }  /* end of sst_pwr_param_entries() */
+
+
+void
+sst_nvram_param_entries(FILE *sstfile)
+{
+    if (sstfile == NULL)   {
+	return;
+    }
+
+    fprintf(sstfile, "<NVRAMparams>\n");
+    fprintf(sstfile, "    <debug> 0 </debug>\n");
+    fprintf(sstfile, "</NVRAMparams>\n");
+    fprintf(sstfile, "\n");
+
+}  /* end of sst_nvram_param_entries() */
 
 
 void
@@ -276,7 +303,8 @@ sst_pwr_component(FILE *sstfile, pwr_method_t power_method)
 
 
 void
-sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id, float weight,
+sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
+	char *nvram_aggregator_id, char *ss_aggregator_id, float weight,
 	int rank, char *pattern_name, FILE *sstfile)
 {
 
@@ -293,12 +321,22 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id, float we
     fprintf(sstfile, "            <links>\n");
     if (net_link_id)   {
 	fprintf(sstfile, "                <link id=\"%s\">\n", net_link_id);
-	fprintf(sstfile, "                    <params reference=Gnet> </params>\n");
+	fprintf(sstfile, "                    <params reference=LocalNet> </params>\n");
 	fprintf(sstfile, "                </link>\n");
     }
     if (net_aggregator_id)   {
 	fprintf(sstfile, "                <link id=\"%s\">\n", net_aggregator_id);
-	fprintf(sstfile, "                    <params reference=Anet> </params>\n");
+	fprintf(sstfile, "                    <params reference=GlobalNet> </params>\n");
+	fprintf(sstfile, "                </link>\n");
+    }
+    if (nvram_aggregator_id)   {
+	fprintf(sstfile, "                <link id=\"%s\">\n", nvram_aggregator_id);
+	fprintf(sstfile, "                    <params reference=LocalNVRAMaccess> </params>\n");
+	fprintf(sstfile, "                </link>\n");
+    }
+    if (ss_aggregator_id)   {
+	fprintf(sstfile, "                <link id=\"%s\">\n", ss_aggregator_id);
+	fprintf(sstfile, "                    <params reference=StableStorageAccess> </params>\n");
 	fprintf(sstfile, "                </link>\n");
     }
     fprintf(sstfile, "            </links>\n");
@@ -307,6 +345,32 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id, float we
     fprintf(sstfile, "\n");
 
 }  /* end of sst_gen_component() */
+
+
+
+void
+sst_nvram_component(char *id, char *link_id, float weight, FILE *sstfile)
+{
+
+    if (sstfile == NULL)   {
+	/* Nothing to output */
+	return;
+    }
+
+    fprintf(sstfile, "    <component id=\"%s\" weight=%f>\n", id, weight);
+    fprintf(sstfile, "        <bit_bucket>\n");
+    fprintf(sstfile, "            <params include=NVRAMparams>\n");
+    fprintf(sstfile, "            </params>\n");
+    fprintf(sstfile, "            <links>\n");
+    fprintf(sstfile, "                <link id=\"%s\">\n", link_id);
+    fprintf(sstfile, "                    <params reference=LocalNVRAMaccess> </params>\n");
+    fprintf(sstfile, "                </link>\n");
+    fprintf(sstfile, "            </links>\n");
+    fprintf(sstfile, "        </bit_bucket>\n");
+    fprintf(sstfile, "    </component>\n");
+    fprintf(sstfile, "\n");
+
+}  /* end of sst_nvram_component() */
 
 
 
@@ -387,9 +451,15 @@ sst_pattern_generators(char *pattern_name, FILE *sstfile)
 
 int n, r, p;
 int aggregator, aggregator_port;
+int nvram, nvram_port;
+int ss, ss_port;
 char id[MAX_ID_LEN];
 char net_link_id[MAX_ID_LEN];
 char net_aggregator_id[MAX_ID_LEN];
+char nvram_link_id[MAX_ID_LEN];
+char nvram_aggregator_id[MAX_ID_LEN];
+char ss_link_id[MAX_ID_LEN];
+char ss_aggregator_id[MAX_ID_LEN];
 char *label;
 
 
@@ -398,24 +468,36 @@ char *label;
     }
 
     reset_nic_list();
-    while (next_nic(&n, &r, &p, &aggregator, &aggregator_port, &label))   {
+    while (next_nic(&n, &r, &p,
+	    &aggregator, &aggregator_port,
+	    &nvram, &nvram_port,
+	    &ss, &ss_port,
+	    &label))   {
 	snprintf(id, MAX_ID_LEN, "G%d", n);
+
 	snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	snprintf(net_aggregator_id, MAX_ID_LEN, "R%dP%d", aggregator, aggregator_port);
+
+	snprintf(nvram_link_id, MAX_ID_LEN, "R%dP%d", r, p);
+	snprintf(nvram_aggregator_id, MAX_ID_LEN, "R%dP%d", nvram, nvram_port);
+
+	snprintf(ss_link_id, MAX_ID_LEN, "R%dP%d", r, p);
+	snprintf(ss_aggregator_id, MAX_ID_LEN, "R%dP%d", ss, ss_port);
+
 	if (r >= 0)   {
 	    if (aggregator >= 0)   {
-		sst_gen_component(id, net_link_id, net_aggregator_id, 1.0, n, pattern_name, sstfile);
+		sst_gen_component(id, net_link_id, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, 1.0, n, pattern_name, sstfile);
 	    } else   {
 		/* No network aggregator in this configuration */
-		sst_gen_component(id, net_link_id, NULL, 1.0, n, pattern_name, sstfile);
+		sst_gen_component(id, net_link_id, NULL, nvram_aggregator_id, ss_aggregator_id, 1.0, n, pattern_name, sstfile);
 	    }
 	} else   {
 	    /* Single node, no network */
 	    if (aggregator >= 0)   {
-		sst_gen_component(id, NULL, net_aggregator_id, 1.0, n, pattern_name, sstfile);
+		sst_gen_component(id, NULL, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, 1.0, n, pattern_name, sstfile);
 	    } else   {
 		/* No network aggregator nor NoC in this configuration */
-		sst_gen_component(id, NULL, NULL, 1.0, n, pattern_name, sstfile);
+		sst_gen_component(id, NULL, NULL, nvram_aggregator_id, ss_aggregator_id, 1.0, n, pattern_name, sstfile);
 	    }
 	}
     }
@@ -425,14 +507,46 @@ char *label;
 
 
 /*
+** Generate the NVRAM components
+*/
+void
+sst_nvram(FILE *sstfile)
+{
+
+int n, r, p;
+char id[MAX_ID_LEN];
+char link_id[MAX_ID_LEN];
+
+
+    if (sstfile == NULL)   {
+	return;
+    }
+
+    reset_nvram_list();
+    while (next_nvram(&n, &r, &p))   {
+	snprintf(id, MAX_ID_LEN, "LocalNVRAM%d", n);
+	snprintf(link_id, MAX_ID_LEN, "R%dP%d", r, p);
+
+	if (r >= 0)   {
+	    sst_nvram_component(id, link_id, 1.0, sstfile);
+	}
+    }
+
+}  /* end of sst_nvram() */
+
+
+
+/*
 ** Generate the router components
 */
 void
-sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, pwr_method_t power_method)
+sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
+	uint64_t nvram_latency, pwr_method_t power_method)
 {
 
 int l, r, p;
 char net_link_id[MAX_ID_LEN];
+char nvram_link_id[MAX_ID_LEN];
 char router_id[MAX_ID_LEN];
 char cname[MAX_ID_LEN];
 
@@ -451,7 +565,7 @@ char cname[MAX_ID_LEN];
 	** componentn can get the names and create the appropriate links.
 	*/
 
-	/* Link to local NIC(s) */
+	/* Links to local NIC(s) */
 	reset_router_nics(r);
 	while (next_router_nic(r, &p))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
@@ -465,6 +579,14 @@ char cname[MAX_ID_LEN];
 	    snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
 	    fprintf(sstfile, "                <%s> %s </%s>\n", cname, net_link_id, cname);
+	}
+
+	/* Links to NVRAM(s) */
+	reset_router_nvram(r);
+	while (next_router_nvram(r, &p))   {
+	    snprintf(nvram_link_id, MAX_ID_LEN, "R%dP%d", r, p);
+	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
+	    fprintf(sstfile, "                <%s> %s </%s>\n", cname, nvram_link_id, cname);
 	}
 
 	
@@ -479,7 +601,7 @@ char cname[MAX_ID_LEN];
 
 	/* Now do it again for the links section */
 
-	/* Link to local NIC(s) */
+	/* Links to local NIC(s) */
 	reset_router_nics(r);
 	while (next_router_nic(r, &p))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
@@ -491,6 +613,13 @@ char cname[MAX_ID_LEN];
 	while (next_router_link(r, &l, &p))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
 	    sst_router_component_link(net_link_id, net_latency, net_link_id, sstfile);
+	}
+
+	/* Link to local NVRAMS(s) */
+	reset_router_nvram(r);
+	while (next_router_nvram(r, &p))   {
+	    snprintf(nvram_link_id, MAX_ID_LEN, "R%dP%d", r, p);
+	    sst_router_component_link(nvram_link_id, nvram_latency, nvram_link_id, sstfile);
 	}
 
 	sst_router_component_end(sstfile);

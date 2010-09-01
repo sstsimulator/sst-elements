@@ -16,6 +16,9 @@
 /* Max length of link label */
 #define MAX_LABEL	(32)
 
+/* No plans right now to attach more than one NVRAM to an aggregator */
+#define MAX_NVRAM	(2)
+
 
 typedef struct nic_t   {
     int rank;
@@ -23,9 +26,21 @@ typedef struct nic_t   {
     int router_port;
     int net_aggregator_id;
     int net_aggregator_port;
+    int nvram_aggregator_id;
+    int nvram_aggregator_port;
+    int ss_aggregator_id;
+    int ss_aggregator_port;
     char label[MAX_LABEL];
     struct nic_t *next;
 } nic_t;
+
+
+typedef struct nvram_t   {
+    int id;
+    int router_id;
+    int router_port;
+    struct nvram_t *next;
+} nvram_t;
 
 
 typedef struct link_t   {
@@ -44,7 +59,9 @@ typedef struct router_t   {
     int num_ports;
     int next_nic;
     int next_link;
+    int next_nvram;
     nic_t *nics[MAX_NICS];
+    nvram_t *nvram[MAX_NVRAM];
     link_t **links;
     struct router_t *next;
 } router_t;
@@ -61,6 +78,10 @@ static nic_t *nic_list_end= NULL;
 static int next_link_id= 0;
 static link_t *link_list= NULL;
 static link_t *link_list_end= NULL;
+
+static nvram_t *nvram_current= NULL;
+static nvram_t *nvram_list= NULL;
+static nvram_t *nvram_list_end= NULL;
 
 
 
@@ -98,6 +119,11 @@ int i;
     current->next_nic= 0;
     for (i= 0; i < MAX_NICS; i++)   {
 	current->nics[i]= NULL;
+    }
+
+    current->next_nvram= 0;
+    for (i= 0; i < MAX_NVRAM; i++)   {
+	current->nvram[i]= NULL;
     }
 
     current->next_link= 0;
@@ -190,18 +216,22 @@ nic_t *n;
 	return 0;
     }
 
-    if (n->router_id != router)   {
-	if (n->net_aggregator_id != router)   {
-	    fprintf(stderr, "Inconsistency: Router/aggregator link to a NIC with a link "
-		"to another router!\n");
-	    exit(10);
-	} else   {
-	    /* This is an aggregator */
-	    *port= n->net_aggregator_port;
-	}
-    } else   {
+    if (n->router_id == router)   {
 	/* This is a NoC router */
 	*port= n->router_port;
+    } else if (n->net_aggregator_id == router)   {
+	/* This is an Network aggregator */
+	*port= n->net_aggregator_port;
+    } else if (n->nvram_aggregator_id == router)   {
+	/* This is an NVRAM aggregator */
+	*port= n->net_aggregator_port;
+    } else if (n->ss_aggregator_id == router)   {
+	/* This is an Stable Stoage aggregator */
+	*port= n->net_aggregator_port;
+    } else   {
+	fprintf(stderr, "Inconsistency: Router/aggregator link to a NIC with a link "
+	    "to another router!\n");
+	exit(10);
     }
 
     r->next_nic++;
@@ -282,7 +312,8 @@ link_t *l;
 ** Add a NIC and the link to its router
 */
 void
-gen_nic(int rank, int router, int port, int aggregator, int aggregator_port)
+gen_nic(int rank, int router, int port, int aggregator, int aggregator_port,
+    int nvram, int nvram_port, int ss, int ss_port)
 {
 
 nic_t *current;
@@ -302,13 +333,18 @@ int i;
     current->router_port= port;
     current->net_aggregator_id= aggregator;
     current->net_aggregator_port= aggregator_port;
+    current->nvram_aggregator_id= nvram;
+    current->nvram_aggregator_port= nvram_port;
+    current->ss_aggregator_id= ss;
+    current->ss_aggregator_port= ss_port;
     snprintf(current->label, MAX_LABEL, "-- R%d/p%d", router, port);
 
     /* It could be a simulation of a single node w/o a network */
     if (router >= 0)   {
 	r= find_router(router);
 	if (!r)   {
-	    fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", router);
+	    fprintf(stderr, "Cannot find router %d! Routers must be defined before "
+		"pattern generators.\n", router);
 	    exit(8);
 	}
 
@@ -322,18 +358,20 @@ int i;
 	}
 
 	if (i >= MAX_NICS)   {
-	    fprintf(stderr, "Out of NIC port slots! Cannot handle more than %d pattern generators per router.\n", MAX_NICS);
+	    fprintf(stderr, "Out of NIC port slots! Cannot handle more than %d pattern "
+		"generators per router.\n", MAX_NICS);
 	    exit(8);
 	}
     }
 
 
 
-    /* Find and attach the aggregator, if there is one */
+    /* Find and attach the Network aggregator, if there is one */
     if (aggregator >= 0)   {
 	r= find_router(aggregator);
 	if (!r)   {
-	    fprintf(stderr, "Cannot find aggregator %d! Routers must be defined before pattern generators.\n", router);
+	    fprintf(stderr, "Cannot find Network aggregator %d! Routers must be defined before "
+		"pattern generators.\n", router);
 	    exit(8);
 	}
 
@@ -347,7 +385,62 @@ int i;
 	}
 
 	if (i >= MAX_NICS)   {
-	    fprintf(stderr, "Out of NIC port slots on aggregator! Cannot handle more than %d pattern generators per router.\n", MAX_NICS);
+	    fprintf(stderr, "Out of NIC port slots on Network aggregator! Cannot handle more than "
+		"%d pattern generators per router.\n", MAX_NICS);
+	    exit(8);
+	}
+    }
+
+
+
+    /* Find and attach the NVRAM aggregator, if there is one */
+    if (nvram >= 0)   {
+	r= find_router(nvram);
+	if (!r)   {
+	    fprintf(stderr, "Cannot find NVRAM aggregator %d! Routers must be defined before "
+		"pattern generators.\n", router);
+	    exit(8);
+	}
+
+	/* Point the aggregator at this NIC */
+	for (i= 0; i < MAX_NICS; i++)   {
+	    if (r->nics[i] == NULL)   {
+		/* Unused slot */
+		r->nics[i]= current;
+		break;
+	    }
+	}
+
+	if (i >= MAX_NICS)   {
+	    fprintf(stderr, "Out of NIC port slots on NVRAM aggregator! Cannot handle more than "
+		"%d pattern generators per router.\n", MAX_NICS);
+	    exit(8);
+	}
+    }
+
+
+
+    /* Find and attach the Stable Storage aggregator, if there is one */
+    if (ss >= 0)   {
+	r= find_router(ss);
+	if (!r)   {
+	    fprintf(stderr, "Cannot find Stable Storage aggregator %d! Routers must be defined "
+		"before pattern generators.\n", router);
+	    exit(8);
+	}
+
+	/* Point the aggregator at this NIC */
+	for (i= 0; i < MAX_NICS; i++)   {
+	    if (r->nics[i] == NULL)   {
+		/* Unused slot */
+		r->nics[i]= current;
+		break;
+	    }
+	}
+
+	if (i >= MAX_NICS)   {
+	    fprintf(stderr, "Out of NIC port slots on Stable Storage aggregator! Cannot handle "
+		"more than %d pattern generators per router.\n", MAX_NICS);
 	    exit(8);
 	}
     }
@@ -366,6 +459,67 @@ int i;
     }
 
 }  /* end of gen_nic() */
+
+
+
+/*
+** Add an NVRAM component to a node
+*/
+void
+gen_nvram(int id, int router, int port)
+{
+
+nvram_t *current;
+router_t *r;
+int i;
+
+
+    current= (nvram_t *)malloc(sizeof(nvram_t));
+    if (current == NULL)   {
+	fprintf(stderr, "Out of memory!\n");
+	exit(9);
+    }
+
+    current->id= id;
+    current->next= NULL;
+    current->router_id= router;
+    current->router_port= port;
+
+    r= find_router(router);
+    if (!r)   {
+	fprintf(stderr, "Cannot find router %d! Routers must be defined before "
+	    "pattern generators.\n", router);
+	exit(8);
+    }
+
+    /* Point the NVRAM aggregator at this bit bucket */
+    for (i= 0; i < MAX_NVRAM; i++)   {
+	if (r->nvram[i] == NULL)   {
+	    /* Unused slot */
+	    r->nvram[i]= current;
+	    break;
+	}
+    }
+
+    if (i >= MAX_NVRAM)   {
+	fprintf(stderr, "Out of NVRAM port slots! Cannot handle more than %d NVRAM "
+	    "per router.\n", MAX_NVRAM);
+	exit(8);
+    }
+
+
+    /* Attach this NIC to our list of NICs */
+    if (nvram_list_end)   {
+	/* Append */
+	nvram_list_end->next= current;
+	nvram_list_end= current;
+    } else   {
+	/* First entry */
+	nvram_list= current;
+	nvram_list_end= current;
+    }
+
+}  /* end of gen_nvram() */
 
 
 
@@ -482,19 +636,112 @@ reset_nic_list(void)
 
 
 int
-next_nic(int *id, int *router, int *port, int *aggregator, int *aggregator_port, char **label)
+next_nic(int *id, int *router, int *port, int *aggregator, int *aggregator_port,
+	int *nvram, int *nvram_port, int *ss, int *ss_port, char **label)
 {
 
     if (!nic_current)   {
 	return 0;
     }
+
     *id= nic_current->rank;
     *router= nic_current->router_id;
     *port= nic_current->router_port;
     *aggregator= nic_current->net_aggregator_id;
     *aggregator_port= nic_current->net_aggregator_port;
+    *nvram= nic_current->nvram_aggregator_id;
+    *nvram_port= nic_current->nvram_aggregator_port;
+    *ss= nic_current->ss_aggregator_id;
+    *ss_port= nic_current->ss_aggregator_port;
     *label= nic_current->label;
     nic_current= nic_current->next;
     return 1;
 
 }  /* end of next_nic() */
+
+
+
+/* Reset the nvram port pointer inside a router */
+void
+reset_router_nvram(int router)
+{
+
+router_t *r;
+
+
+    r= find_router(router);
+    if (!r)   {
+	fprintf(stderr, "Cannot find router %d!\n", router);
+	exit(8);
+    }
+    r->next_nvram= 0;
+
+}   /* end of reset_router_nvram() */
+
+
+
+void
+reset_nvram_list(void)
+{
+    nvram_current= nvram_list;
+}  /* end of reset_nvram_list() */
+
+
+
+int
+next_nvram(int *id, int *router, int *port)
+{
+
+    if (!nvram_current)   {
+	return 0;
+    }
+
+    *id= nvram_current->id;
+    *router= nvram_current->router_id;
+    *port= nvram_current->router_port;
+    nvram_current= nvram_current->next;
+    return 1;
+
+}  /* end of next_nvram() */
+
+
+
+/* Traverse the list of ports connected to NICs inside a router */
+int
+next_router_nvram(int router, int *port)
+{
+
+router_t *r;
+nvram_t *n;
+
+
+    r= find_router(router);
+    if (!r)   {
+	fprintf(stderr, "Cannot find router %d for NVRAM access\n", router);
+	exit(8);
+    }
+
+    if (r->next_nvram >= MAX_NVRAM)   {
+	return 0;
+    }
+
+    n= r->nvram[r->next_nvram];
+    if (n == NULL)   {
+	return 0;
+    }
+
+    if (n->router_id == router)   {
+	/* Found router */
+	*port= n->router_port;
+    } else   {
+	fprintf(stderr, "Inconsistency: aggregator link to NVRAM!\n");
+	exit(10);
+    }
+
+    r->next_nvram++;
+    return 1;
+
+}   /* end of next_router_nvram() */
+
+
+
