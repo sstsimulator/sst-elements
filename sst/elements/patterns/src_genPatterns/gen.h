@@ -10,6 +10,8 @@
 #define FALSE		(0)
 #define TRUE		(1)
 
+typedef enum {LOCAL_NVRAM, SSD} nvram_type_t;
+
 void gen_nic(int rank, int router, int port, int aggregator, int aggregator_port,
 	int nvram, int nvram_port, int ss, int ss_port);
 void gen_router(int id, int num_ports);
@@ -28,8 +30,8 @@ int next_nic(int *id, int *router, int *port, int *aggregator, int *aggregator_p
 
 void reset_router_nvram(int router);
 void reset_nvram_list(void);
-int next_nvram(int *id, int *router, int *port);
-void gen_nvram(int id, int router, int port);
+int next_nvram(int *id, int *router, int *port, nvram_type_t *type);
+void gen_nvram(int id, int router, int port, nvram_type_t type);
 int next_router_nvram(int router, int *port);
 
 #endif /* _GEN_H_ */

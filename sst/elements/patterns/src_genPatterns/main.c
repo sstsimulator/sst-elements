@@ -34,6 +34,7 @@ static struct option long_options[]=   {
     {"sstfilename", 1, NULL, 's'},
     {"pattern", 1, NULL, 'p'},
     {"method", 1, NULL, 'm'},
+    {"IO_nodes", 1, NULL, 'i'},
     {"chckpt_delay", 1, NULL, 1000},
     {"chckpt_interval", 1, NULL, 1001},
     {"envelope_write_time", 1, NULL, 1002},
@@ -69,6 +70,8 @@ uint64_t nvram_lat;	/* In ns */
 uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
 int num_cores;		/* How many pattern generators per router */
+int num_nodes;
+int IO_nodes;		/* Should be divisible by the number of nodes */
 char *method;		/* Checkpointing method to use */
 uint64_t chckpt_delay;	/* How long to write a checkpoint in ns */
 uint64_t chckpt_interval;	/* How long between checkpoints in ns */
@@ -94,6 +97,7 @@ pwr_method_t power_method;
     compute= 150000;
     app_time= 1000 * compute; /* 1000 time steps */
     num_cores= 1;
+    IO_nodes= 1;
     method= "none";
     chckpt_delay= compute / 2;	/* This number is completly aritrary */
     chckpt_interval= compute * 100; /* Every 100 time steps */
@@ -112,7 +116,7 @@ pwr_method_t power_method;
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "c:s:hX:Y:x:y:p:m:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "c:s:hX:Y:x:y:p:m:i:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -150,6 +154,13 @@ pwr_method_t power_method;
 		num_cores= strtol(optarg, (char **)NULL, 0);
 		if (num_cores < 1)   {
 		    fprintf(stderr, "Number of cores per router must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 'i':
+		IO_nodes= strtol(optarg, (char **)NULL, 0);
+		if (IO_nodes < 1)   {
+		    fprintf(stderr, "Need at least one I/O node\n");
 		    error= TRUE;
 		}
 		break;
@@ -322,6 +333,17 @@ pwr_method_t power_method;
 	}
     }
 
+    /* A node is the endpoint of a network router */
+    num_nodes= net_x_dim * net_y_dim;
+    if (num_nodes % IO_nodes)   {
+	fprintf(stderr, "Number of nodes (%d) should be evenly divisible by number "
+	    "of I/O nodes (%d)!\n", num_nodes, IO_nodes);
+	error= TRUE;
+    } else   {
+	printf("*** Number of I/O nodes is %d, one per %d compute nodes\n", IO_nodes,
+	    num_nodes / IO_nodes);
+    }
+
     if (error)   {
 	usage(argv);
 	exit(1);
@@ -331,7 +353,7 @@ pwr_method_t power_method;
 
 
     num_ports= 4 + num_cores;
-    GenMesh2D(net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores);
+    GenMesh2D(net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores, IO_nodes);
 
 
     /*
@@ -373,13 +395,14 @@ usage(char *argv[])
 {
 
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -s sname -p pname [-c num_cores] [--power model] [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -s sname -p pname [-c num_cores] [--power model] [-i IO] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -s     Name of the SST xml output file\n");
     fprintf(stderr, "   --cores, -c           Number of cores per NoC router (Default 1)\n");
     fprintf(stderr, "   -X dimX               X dimension of tours network\n");
     fprintf(stderr, "   -Y dimY               Y dimension of tours network\n");
     fprintf(stderr, "   -x dimX               X dimension of NoC tours\n");
     fprintf(stderr, "   -y dimY               Y dimension of NoC tours\n");
+    fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
     fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost_pattern\n");
     fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");

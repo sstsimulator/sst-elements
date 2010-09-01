@@ -39,6 +39,7 @@ typedef struct nvram_t   {
     int id;
     int router_id;
     int router_port;
+    nvram_type_t type;
     struct nvram_t *next;
 } nvram_t;
 
@@ -463,10 +464,10 @@ int i;
 
 
 /*
-** Add an NVRAM component to a node
+** Add an NVRAM component
 */
 void
-gen_nvram(int id, int router, int port)
+gen_nvram(int id, int router, int port, nvram_type_t type)
 {
 
 nvram_t *current;
@@ -484,6 +485,7 @@ int i;
     current->next= NULL;
     current->router_id= router;
     current->router_port= port;
+    current->type= type;
 
     r= find_router(router);
     if (!r)   {
@@ -689,7 +691,7 @@ reset_nvram_list(void)
 
 
 int
-next_nvram(int *id, int *router, int *port)
+next_nvram(int *id, int *router, int *port, nvram_type_t *type)
 {
 
     if (!nvram_current)   {
@@ -699,6 +701,7 @@ next_nvram(int *id, int *router, int *port)
     *id= nvram_current->id;
     *router= nvram_current->router_id;
     *port= nvram_current->router_port;
+    *type= nvram_current->type;
     nvram_current= nvram_current->next;
     return 1;
 
@@ -742,6 +745,3 @@ nvram_t *n;
     return 1;
 
 }   /* end of next_router_nvram() */
-
-
-

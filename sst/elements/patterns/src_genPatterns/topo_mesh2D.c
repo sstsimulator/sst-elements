@@ -17,7 +17,7 @@
 
 
 void
-GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim, int num_cores)
+GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim, int num_cores, int IO_nodes)
 {
 
 int x, y;
@@ -36,6 +36,7 @@ int nvram_aggregator;
 int nvram_aggregator_port;
 int ss_aggregator;
 int ss_aggregator_port;
+int IO_aggregator;
 
 
     /* List the Net routers first; they each have 5 ports */
@@ -288,7 +289,33 @@ int ss_aggregator_port;
     nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	nvram_aggregator_port= 0;
-	gen_nvram(R, nvram_aggregator++, nvram_aggregator_port);
+	gen_nvram(R, nvram_aggregator++, nvram_aggregator_port, LOCAL_NVRAM);
     }
+
+
+
+    /*
+    ** Generate Stable Storage
+    ** So far we have given each node an SS aggregator and connected all
+    ** cores to it. Now we need to create a number of stable storage units
+    ** (bit buckets) and connect the SS aggregators from a bunch of nodes
+    ** to it.
+    */
+
+    /* Create N bit buckets attached to a router */
+    IO_aggregator= num_routers + 3 * (net_x_dim * net_y_dim);
+    for (R= 0; R < IO_nodes; R++)   {
+	fprintf(stderr, "gen_router(%3d, %2d); for I/O nodes\n", IO_aggregator,
+	    (net_x_dim * net_y_dim / IO_nodes) + 1);
+	gen_router(IO_aggregator, (net_x_dim * net_y_dim / IO_nodes) + 1);
+	gen_nvram(R, IO_aggregator, 0, SSD); /* On port 0 */
+
+	IO_aggregator++;
+    }
+
+    /*
+    ** Attach (net_x_dim * net_y_dim / N) ss_aggregators to each of the N
+    ** bit bucket routers
+    */
 
 }  /* end of GenMesh2D() */

@@ -157,6 +157,11 @@ sst_nvram_param_entries(FILE *sstfile)
     fprintf(sstfile, "</NVRAMparams>\n");
     fprintf(sstfile, "\n");
 
+    fprintf(sstfile, "<SSDparams>\n");
+    fprintf(sstfile, "    <debug> 0 </debug>\n");
+    fprintf(sstfile, "</SSDparams>\n");
+    fprintf(sstfile, "\n");
+
 }  /* end of sst_nvram_param_entries() */
 
 
@@ -349,7 +354,7 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 
 
 void
-sst_nvram_component(char *id, char *link_id, float weight, FILE *sstfile)
+sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -359,8 +364,12 @@ sst_nvram_component(char *id, char *link_id, float weight, FILE *sstfile)
 
     fprintf(sstfile, "    <component id=\"%s\" weight=%f>\n", id, weight);
     fprintf(sstfile, "        <bit_bucket>\n");
-    fprintf(sstfile, "            <params include=NVRAMparams>\n");
-    fprintf(sstfile, "            </params>\n");
+    if (type == LOCAL_NVRAM)   {
+	fprintf(sstfile, "            <params include=NVRAMparams></params>\n");
+    }
+    if (type == SSD)   {
+	fprintf(sstfile, "            <params include=SSDparams></params>\n");
+    }
     fprintf(sstfile, "            <links>\n");
     fprintf(sstfile, "                <link id=\"%s\">\n", link_id);
     fprintf(sstfile, "                    <params reference=LocalNVRAMaccess> </params>\n");
@@ -514,6 +523,7 @@ sst_nvram(FILE *sstfile)
 {
 
 int n, r, p;
+nvram_type_t t;
 char id[MAX_ID_LEN];
 char link_id[MAX_ID_LEN];
 
@@ -523,12 +533,17 @@ char link_id[MAX_ID_LEN];
     }
 
     reset_nvram_list();
-    while (next_nvram(&n, &r, &p))   {
-	snprintf(id, MAX_ID_LEN, "LocalNVRAM%d", n);
+    while (next_nvram(&n, &r, &p, &t))   {
+	if (t == LOCAL_NVRAM)   {
+	    snprintf(id, MAX_ID_LEN, "LocalNVRAM%d", n);
+	}
+	if (t == SSD)   {
+	    snprintf(id, MAX_ID_LEN, "SSD%d", n);
+	}
 	snprintf(link_id, MAX_ID_LEN, "R%dP%d", r, p);
 
 	if (r >= 0)   {
-	    sst_nvram_component(id, link_id, 1.0, sstfile);
+	    sst_nvram_component(id, link_id, 1.0, t, sstfile);
 	}
     }
 
