@@ -304,7 +304,7 @@ int i;
     current->net_aggregator_port= aggregator_port;
     snprintf(current->label, MAX_LABEL, "-- R%d/p%d", router, port);
 
-    /* It could be a simulation of a single node w/o a netwokr */
+    /* It could be a simulation of a single node w/o a network */
     if (router >= 0)   {
 	r= find_router(router);
 	if (!r)   {

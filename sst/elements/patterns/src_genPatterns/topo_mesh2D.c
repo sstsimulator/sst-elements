@@ -90,13 +90,14 @@ fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC
 		    rank= (R * NoC_x_dim * NoC_y_dim * num_cores) +
 			    (r * num_cores) + gen;
 		    NoC_router= first_NoC_router + r + (R * NoC_x_dim * NoC_y_dim);
-    fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
 		    if (net_x_dim * net_y_dim > 1)   {
 			/* Connect each core to its Net aggregator */
+fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
 			gen_nic(rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
 			aggregator_port++;
 		    } else   {
 			/* Single node, no connection ot a network */
+fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
 			gen_nic(rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
 		    }
 		}
@@ -109,10 +110,10 @@ fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC
 		/* For each core on a NoC router */
 		rank= (R * NoC_x_dim * NoC_y_dim * num_cores) + gen;
 		NoC_router= (net_x_dim * net_y_dim) + (R * NoC_x_dim * NoC_y_dim);
-fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
 		if (net_x_dim * net_y_dim > 1)   {
 		    /* Connect each core to its Net aggregator */
 		    gen_nic(rank, -1, -1, aggregator, aggregator_port);
+fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, -1, -1, aggregator, aggregator_port);
 		    aggregator_port++;
 		} else   {
 		    /* No network and no NoC? */
@@ -123,6 +124,7 @@ fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);
 	}
 	aggregator++;
     }
+fprintf(stderr, "Done with pattern generators\n");
 
 
 
@@ -150,17 +152,50 @@ fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);
 	    }
 	}
     }
+fprintf(stderr, "Done with network\n");
 
 
     /* Generate links between NoC routers */
     if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
-	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	    /* For each network router */
+	if (net_x_dim * net_y_dim > 1)   {
+	    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+		/* For each network router */
 
+		for (y= 0; y < NoC_y_dim; y++)   {
+		    for (x= 0; x < NoC_x_dim; x++)   {
+			me= y * NoC_x_dim + x;
+			src= (net_x_dim * net_y_dim) + me + (R * NoC_x_dim * NoC_y_dim);
+
+			/* Go East */
+			if ((me + 1) < (NoC_x_dim * (y + 1)))   {
+			    dest= src + 1;
+			    gen_link(src, EAST_PORT, dest, WEST_PORT);
+			} else   {
+			    /* Wrap around */
+			    dest= (net_x_dim * net_y_dim) + (y * NoC_x_dim) + (R * NoC_x_dim * NoC_y_dim);
+			    gen_link(src, EAST_PORT, dest, WEST_PORT);
+			}
+
+			/* Go South */
+			if ((me + NoC_x_dim) < (NoC_x_dim * NoC_y_dim))   {
+			    dest= src + NoC_x_dim;
+			    gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
+			} else   {
+			    /* Wrap around */
+			    dest= (net_x_dim * net_y_dim) + x + (R * NoC_x_dim * NoC_y_dim);
+			    gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
+			}
+		    }
+		}
+	    }
+
+	} else   {
+
+	    /* No network, just a NoC */
 	    for (y= 0; y < NoC_y_dim; y++)   {
 		for (x= 0; x < NoC_x_dim; x++)   {
 		    me= y * NoC_x_dim + x;
-		    src= (net_x_dim * net_y_dim) + me + (R * NoC_x_dim * NoC_y_dim);
+		    src= me;
 
 		    /* Go East */
 		    if ((me + 1) < (NoC_x_dim * (y + 1)))   {
@@ -168,7 +203,7 @@ fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);
 			gen_link(src, EAST_PORT, dest, WEST_PORT);
 		    } else   {
 			/* Wrap around */
-			dest= (net_x_dim * net_y_dim) + (y * NoC_x_dim) + (R * NoC_x_dim * NoC_y_dim);
+			dest= y * NoC_x_dim;
 			gen_link(src, EAST_PORT, dest, WEST_PORT);
 		    }
 
@@ -178,13 +213,14 @@ fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);
 			gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
 		    } else   {
 			/* Wrap around */
-			dest= (net_x_dim * net_y_dim) + x + (R * NoC_x_dim * NoC_y_dim);
+			dest= x;
 			gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
 		    }
 		}
 	    }
 	}
     }
+fprintf(stderr, "Done with GenMesh2D()\n");
 
 
 }  /* end of GenMesh2D() */

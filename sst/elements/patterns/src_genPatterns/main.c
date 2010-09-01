@@ -265,6 +265,18 @@ pwr_method_t power_method;
 	fprintf(stderr, "-x and -y must be specified!\n");
     }
 
+    if (((net_x_dim  == 1) && (net_y_dim > 1)) ||
+	((net_x_dim  > 1) && (net_y_dim == 1)))   {
+	error= TRUE;
+	fprintf(stderr, "Can't handle network rings yet! Increase x or y dimension.\n");
+    }
+
+    if (((NoC_x_dim  == 1) && (NoC_y_dim > 1)) ||
+	((NoC_x_dim  > 1) && (NoC_y_dim == 1)))   {
+	error= TRUE;
+	fprintf(stderr, "Can't handle NoC rings yet! Increase x or y dimension.\n");
+    }
+
     if (!is_pow2(num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim))   {
 	error= TRUE;
 	fprintf(stderr, "Total number of cores must be power of two!\n");
@@ -276,8 +288,16 @@ pwr_method_t power_method;
 	} else   {
 	    printf("*** Single node, no network\n");
 	}
-	printf("*** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
-	    NoC_x_dim, NoC_y_dim, num_cores);
+	if (NoC_x_dim * NoC_y_dim > 1)   {
+	    printf("*** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
+		NoC_x_dim, NoC_y_dim, num_cores);
+	} else   {
+	    if (num_cores > 1)   {
+		printf("*** Each node has a router with %d core(s)\n", num_cores);
+	    } else   {
+		printf("*** Each node consists of a single core\n");
+	    }
+	}
 	printf("*** Total number of cores is %d\n",
 	    num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim);
     }
