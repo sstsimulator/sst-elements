@@ -53,7 +53,8 @@ main(int argc, char *argv[])
 int option_index= 0;
 int ch, error;
 int verbose;
-int x_dim, y_dim;
+int net_x_dim, net_y_dim;
+int NoC_x_dim, NoC_y_dim;
 int num_ports;
 char *sstFname;
 FILE *fp_sst;
@@ -79,8 +80,10 @@ pwr_method_t power_method;
     error= FALSE;
     verbose= 0;
     sstFname= "";
-    x_dim= -1;
-    y_dim= -1;
+    net_x_dim= 1;
+    net_y_dim= 1;
+    NoC_x_dim= -1;
+    NoC_y_dim= -1;
     net_lat= 4900;
     net_bw= 1900000000;
     node_lat= 150;
@@ -106,23 +109,37 @@ pwr_method_t power_method;
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "c:s:hx:y:p:m:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "c:s:hX:Y:x:y:p:m:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
 
 	switch (ch)   {
-	    case 'x':
-		x_dim= strtol(optarg, (char **)NULL, 0);
-		if (x_dim < 1)   {
+	    case 'X':
+		net_x_dim= strtol(optarg, (char **)NULL, 0);
+		if (net_x_dim < 1)   {
 		    fprintf(stderr, "X dimension must be > 0\n");
 		    error= TRUE;
 		}
 		break;
-	    case 'y':
-		y_dim= strtol(optarg, (char **)NULL, 0);
-		if (y_dim < 1)   {
+	    case 'Y':
+		net_y_dim= strtol(optarg, (char **)NULL, 0);
+		if (net_y_dim < 1)   {
 		    fprintf(stderr, "Y dimension must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 'x':
+		NoC_x_dim= strtol(optarg, (char **)NULL, 0);
+		if (NoC_x_dim < 1)   {
+		    fprintf(stderr, "x dimension must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 'y':
+		NoC_y_dim= strtol(optarg, (char **)NULL, 0);
+		if (NoC_y_dim < 1)   {
+		    fprintf(stderr, "y dimension must be > 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -185,7 +202,7 @@ pwr_method_t power_method;
 	fprintf(stderr, "Need a pattern name!\n");
     }
 
-    if (pattern_name && strstr("ghost_pattern", pattern_name) == NULL)   {
+    if (pattern_name && strcasestr("ghost_pattern", pattern_name) == NULL)   {
 	error= TRUE;
 	fprintf(stderr, "Unknown pattern name!\n");
 	fprintf(stderr, "Must be one of \"ghost_pattern\", or \"\"\n");
@@ -196,23 +213,23 @@ pwr_method_t power_method;
 	}
     }
 
-    if ((strstr("none", method) == NULL) &&
-        (strstr("coordinated", method) == NULL) &&
-        (strstr("uncoordinated", method) == NULL) &&
-        (strstr("distributed", method) == NULL))   {
+    if ((strcasestr("none", method) == NULL) &&
+        (strcasestr("coordinated", method) == NULL) &&
+        (strcasestr("uncoordinated", method) == NULL) &&
+        (strcasestr("distributed", method) == NULL))   {
 	error= TRUE;
 	fprintf(stderr, "Unknown checkpointing method!\n");
 	fprintf(stderr, "Must be one of \"none\", \"coordinated\", \"uncoordinated\", "
 	    "or \"distributed\"\n");
     } else   {
 
-	if (strstr("none", method) != NULL)   {
+	if (strcasestr("none", method) != NULL)   {
 	    method= "none";
-	} else if (strstr("coordinated", method) != NULL)   {
+	} else if (strcasestr("coordinated", method) != NULL)   {
 	    method= "coordinated";
-	} else if (strstr("uncoordinated", method) != NULL)   {
+	} else if (strcasestr("uncoordinated", method) != NULL)   {
 	    method= "uncoordinated";
-	} else if (strstr("distributed", method) != NULL)   {
+	} else if (strcasestr("distributed", method) != NULL)   {
 	    method= "distributed";
 	} else   {
 	    error= TRUE;
@@ -223,44 +240,46 @@ pwr_method_t power_method;
 	}
     }
 
-    if ((strstr("none", power_model) == NULL) &&
-	(strstr("McPAT", power_model) == NULL) &&
-        (strstr("ORION", power_model) == NULL))   {
+    if ((strcasestr("none", power_model) == NULL) &&
+	(strcasestr("McPAT", power_model) == NULL) &&
+        (strcasestr("ORION", power_model) == NULL))   {
 	error= TRUE;
 	fprintf(stderr, "Unknown power model!\n");
 	fprintf(stderr, "Must be one of \"McPAT\" or \"ORION\"\n");
     } else   {
-	if (strstr("none", power_model) != NULL)   {
+	if (strcasestr("none", power_model) != NULL)   {
 	    printf("*** Power model is \"none\"\n");
 	    power_method= pwrNone;
-	} else if (strstr("McPAT", power_model) != NULL)   {
+	} else if (strcasestr("McPAT", power_model) != NULL)   {
 	    printf("*** Power model is \"McPAT\"\n");
 	    power_method= pwrMcPAT;
-	} else if (strstr("ORION", power_model) != NULL)   {
+	} else if (strcasestr("ORION", power_model) != NULL)   {
 	    printf("*** Power model is \"ORION\"\n");
 	    power_method= pwrORION;
 	}
 
     }
 
-    if ((x_dim < 0) || (y_dim < 0))   {
+    if ((NoC_x_dim < 0) || (NoC_y_dim < 0))   {
 	error= TRUE;
 	fprintf(stderr, "-x and -y must be specified!\n");
     }
 
-    if (!is_pow2(x_dim * y_dim))   {
+    if (!is_pow2(num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim))   {
 	error= TRUE;
-	fprintf(stderr, "x * y must be power of two!\n");
-    }
-
-    if (!is_pow2(num_cores))   {
-	error= TRUE;
-	fprintf(stderr, "Number of cores must be power of two!\n");
+	fprintf(stderr, "Total number of cores must be power of two!\n");
     }
 
     if (!error)   {
-	printf("*** Torus is x * y = %d * %d, with %d core(s) per router\n",
-	    x_dim, y_dim, num_cores);
+	if (net_x_dim * net_y_dim > 1)   {
+	    printf("*** Network torus is X * Y = %d * %d\n", net_x_dim, net_y_dim);
+	} else   {
+	    printf("*** Single node, no network\n");
+	}
+	printf("*** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
+	    NoC_x_dim, NoC_y_dim, num_cores);
+	printf("*** Total number of cores is %d\n",
+	    num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim);
     }
 
     /* Open the SST xml file for output */
@@ -289,7 +308,7 @@ pwr_method_t power_method;
 
 
     num_ports= 4 + num_cores;
-    GenMesh2D(x_dim, y_dim, TRUE, TRUE, num_cores);
+    GenMesh2D(net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores);
 
 
     /*
@@ -297,10 +316,10 @@ pwr_method_t power_method;
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst, x_dim, y_dim, num_cores, net_lat, net_bw, node_lat, node_bw,
+    sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, num_cores, net_lat, net_bw, node_lat, node_bw,
 	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval,
 	envelope_write_time);
-    sst_gen_param_end(fp_sst, node_lat);
+    sst_gen_param_end(fp_sst, node_lat, net_lat);
     sst_pwr_param_entries(fp_sst, power_method);
 
     /* We assume the router bandwidth is the same as the link bandwidth */
@@ -329,11 +348,13 @@ usage(char *argv[])
 {
 
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: %s -x dimX -y dimY -s sname -p pname [-c num_cores] [--power model] [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -s sname -p pname [-c num_cores] [--power model] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -s     Name of the SST xml output file\n");
-    fprintf(stderr, "   --cores, -c           Number of cores per router\n");
-    fprintf(stderr, "   dimX                  X dimesnion of 2-D tours\n");
-    fprintf(stderr, "   dimY                  Y dimesnion of 2-D tours\n");
+    fprintf(stderr, "   --cores, -c           Number of cores per NoC router (Default 1)\n");
+    fprintf(stderr, "   -X dimX               X dimension of tours network\n");
+    fprintf(stderr, "   -Y dimY               Y dimension of tours network\n");
+    fprintf(stderr, "   -x dimX               X dimension of NoC tours\n");
+    fprintf(stderr, "   -y dimY               Y dimension of NoC tours\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
     fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost_pattern\n");
     fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");

@@ -21,6 +21,8 @@ typedef struct nic_t   {
     int rank;
     int router_id;
     int router_port;
+    int net_aggregator_id;
+    int net_aggregator_port;
     char label[MAX_LABEL];
     struct nic_t *next;
 } nic_t;
@@ -189,11 +191,19 @@ nic_t *n;
     }
 
     if (n->router_id != router)   {
-	fprintf(stderr, "Inconsistency: Router link to a NIC with a link to another router!\n");
-	exit(10);
+	if (n->net_aggregator_id != router)   {
+	    fprintf(stderr, "Inconsistency: Router/aggregator link to a NIC with a link "
+		"to another router!\n");
+	    exit(10);
+	} else   {
+	    /* This is an aggregator */
+	    *port= n->net_aggregator_port;
+	}
+    } else   {
+	/* This is a NoC router */
+	*port= n->router_port;
     }
 
-    *port= n->router_port;
     r->next_nic++;
     return 1;
 
@@ -272,7 +282,7 @@ link_t *l;
 ** Add a NIC and the link to its router
 */
 void
-gen_nic(int rank, int router, int port)
+gen_nic(int rank, int router, int port, int aggregator, int aggregator_port)
 {
 
 nic_t *current;
@@ -290,27 +300,61 @@ int i;
     current->next= NULL;
     current->router_id= router;
     current->router_port= port;
+    current->net_aggregator_id= aggregator;
+    current->net_aggregator_port= aggregator_port;
     snprintf(current->label, MAX_LABEL, "-- R%d/p%d", router, port);
 
-    r= find_router(router);
-    if (!r)   {
-	fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", router);
-	exit(8);
-    }
+    /* It could be a simulation of a single node w/o a netwokr */
+    if (router >= 0)   {
+	r= find_router(router);
+	if (!r)   {
+	    fprintf(stderr, "Cannot find router %d! Routers must be defined before pattern generators.\n", router);
+	    exit(8);
+	}
 
-    for (i= 0; i < MAX_NICS; i++)   {
-	if (r->nics[i] == NULL)   {
-	    /* Unused slot */
-	    r->nics[i]= current;
-	    break;
+	/* Point the NoC router at this NIC */
+	for (i= 0; i < MAX_NICS; i++)   {
+	    if (r->nics[i] == NULL)   {
+		/* Unused slot */
+		r->nics[i]= current;
+		break;
+	    }
+	}
+
+	if (i >= MAX_NICS)   {
+	    fprintf(stderr, "Out of NIC port slots! Cannot handle more than %d pattern generators per router.\n", MAX_NICS);
+	    exit(8);
 	}
     }
 
-    if (i >= MAX_NICS)   {
-	fprintf(stderr, "Out of NIC port slots! Cannot handle more than %d pattern generators per router.\n", MAX_NICS);
-	exit(8);
+
+
+    /* Find and attach the aggregator, if there is one */
+    if (aggregator >= 0)   {
+	r= find_router(aggregator);
+	if (!r)   {
+	    fprintf(stderr, "Cannot find aggregator %d! Routers must be defined before pattern generators.\n", router);
+	    exit(8);
+	}
+
+	/* Point the aggregator at this NIC */
+	for (i= 0; i < MAX_NICS; i++)   {
+	    if (r->nics[i] == NULL)   {
+		/* Unused slot */
+		r->nics[i]= current;
+		break;
+	    }
+	}
+
+	if (i >= MAX_NICS)   {
+	    fprintf(stderr, "Out of NIC port slots on aggregator! Cannot handle more than %d pattern generators per router.\n", MAX_NICS);
+	    exit(8);
+	}
     }
 
+
+
+    /* Attach this NIC to our list of NICs */
     if (nic_list_end)   {
 	/* Append */
 	nic_list_end->next= current;
@@ -438,7 +482,7 @@ reset_nic_list(void)
 
 
 int
-next_nic(int *id, int *router, int *port, char **label)
+next_nic(int *id, int *router, int *port, int *aggregator, int *aggregator_port, char **label)
 {
 
     if (!nic_current)   {
@@ -447,6 +491,8 @@ next_nic(int *id, int *router, int *port, char **label)
     *id= nic_current->rank;
     *router= nic_current->router_id;
     *port= nic_current->router_port;
+    *aggregator= nic_current->net_aggregator_id;
+    *aggregator_port= nic_current->net_aggregator_port;
     *label= nic_current->label;
     nic_current= nic_current->next;
     return 1;

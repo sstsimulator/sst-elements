@@ -7,6 +7,6 @@
 #ifndef _MESH2D_H_
 #define _MESH2D_H_
 
-void GenMesh2D(int dimX, int dimY, int doXwrap, int doYwrap, int num_cores);
+void GenMesh2D(int dimX, int dimY, int NoC_x_dim, int NoC_y_dim, int num_cores);
 
 #endif /* _MESH2D_H_ */

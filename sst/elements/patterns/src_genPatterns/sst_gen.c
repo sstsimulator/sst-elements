@@ -78,7 +78,7 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t n
 
 
 void
-sst_gen_param_end(FILE *sstfile, uint64_t node_latency)
+sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
 {
 
     if (sstfile == NULL)   {
@@ -90,9 +90,15 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency)
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<Gnet>\n");
-    fprintf(sstfile, "    <name> NETWORK </name>\n");
+    fprintf(sstfile, "    <name> NoC </name>\n");
     fprintf(sstfile, "    <lat> %luns </lat>\n", node_latency);
     fprintf(sstfile, "</Gnet>\n");
+    fprintf(sstfile, "\n");
+
+    fprintf(sstfile, "<Anet>\n");
+    fprintf(sstfile, "    <name> NETWORK </name>\n");
+    fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
+    fprintf(sstfile, "</Anet>\n");
     fprintf(sstfile, "\n");
 
 }  /* end of sst_gen_param_end() */
@@ -270,7 +276,8 @@ sst_pwr_component(FILE *sstfile, pwr_method_t power_method)
 
 
 void
-sst_gen_component(char *id, char *net_link_id, float weight, int rank, char *pattern_name, FILE *sstfile)
+sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id, float weight,
+	int rank, char *pattern_name, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -284,9 +291,16 @@ sst_gen_component(char *id, char *net_link_id, float weight, int rank, char *pat
     fprintf(sstfile, "               <rank> %d </rank>\n", rank);
     fprintf(sstfile, "            </params>\n");
     fprintf(sstfile, "            <links>\n");
-    fprintf(sstfile, "                <link id=\"%s\">\n", net_link_id);
-    fprintf(sstfile, "                    <params reference=Gnet> </params>\n");
-    fprintf(sstfile, "                </link>\n");
+    if (net_link_id)   {
+	fprintf(sstfile, "                <link id=\"%s\">\n", net_link_id);
+	fprintf(sstfile, "                    <params reference=Gnet> </params>\n");
+	fprintf(sstfile, "                </link>\n");
+    }
+    if (net_aggregator_id)   {
+	fprintf(sstfile, "                <link id=\"%s\">\n", net_aggregator_id);
+	fprintf(sstfile, "                    <params reference=Anet> </params>\n");
+	fprintf(sstfile, "                </link>\n");
+    }
     fprintf(sstfile, "            </links>\n");
     fprintf(sstfile, "        </%s>\n", pattern_name);
     fprintf(sstfile, "    </component>\n");
@@ -372,8 +386,10 @@ sst_pattern_generators(char *pattern_name, FILE *sstfile)
 {
 
 int n, r, p;
+int aggregator, aggregator_port;
 char id[MAX_ID_LEN];
 char net_link_id[MAX_ID_LEN];
+char net_aggregator_id[MAX_ID_LEN];
 char *label;
 
 
@@ -382,10 +398,26 @@ char *label;
     }
 
     reset_nic_list();
-    while (next_nic(&n, &r, &p, &label))   {
+    while (next_nic(&n, &r, &p, &aggregator, &aggregator_port, &label))   {
 	snprintf(id, MAX_ID_LEN, "G%d", n);
 	snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
-	sst_gen_component(id, net_link_id, 1.0, n, pattern_name, sstfile);
+	snprintf(net_aggregator_id, MAX_ID_LEN, "R%dP%d", aggregator, aggregator_port);
+	if (r >= 0)   {
+	    if (aggregator >= 0)   {
+		sst_gen_component(id, net_link_id, net_aggregator_id, 1.0, n, pattern_name, sstfile);
+	    } else   {
+		/* No network aggregator in this configuration */
+		sst_gen_component(id, net_link_id, NULL, 1.0, n, pattern_name, sstfile);
+	    }
+	} else   {
+	    /* Single node, no network */
+	    if (aggregator >= 0)   {
+		sst_gen_component(id, NULL, net_aggregator_id, 1.0, n, pattern_name, sstfile);
+	    } else   {
+		/* No network aggregator nor NoC in this configuration */
+		sst_gen_component(id, NULL, NULL, 1.0, n, pattern_name, sstfile);
+	    }
+	}
     }
 
 }  /* end of sst_pattern_generators() */
