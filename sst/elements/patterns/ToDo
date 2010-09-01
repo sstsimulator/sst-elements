@@ -1,3 +1,37 @@
+- ghost_pattern
+    Create handlers for NETWORK, NoC, (and NVRAMlocal, StableStorage)
+    Update routing algorithm
+
+- Flits in router
+
+- genPatterns
+    DONE If X * Y = 1, don't generate aggregator and links to it
+    DONE if x * y = 1, don't generate NoC
+    Link between net aggregator and net router
+    Aggregators for NVRAMlocal and StableStorage
+
+Arch model
+    Torus network
+    A node is an endpoint of the torus network
+        One or more cores per chip (with NoC), possibly multiple chips (No for now)
+    NoC is also a torus but flit based; i.e., more like a memory crossbar
+    Cores have local memory that can be accessed remotely through the NoC
+    Each core has a connection independent of the NoC to network router which is part of the Torus
+        Should we allow more than one router per chip? (Probably not.)
+        Should multiple chips be able to share a router? (No for now)
+    Each core has a seperate connection to shared (among cores) local NVRAM
+        Need a bitbucket component. How to handle completion of writes?
+    Each core has a connection to stable storage (SSD or parallel FS)
+        How to handle completion of writes?
+        How many cores share a channel to this storage?
+
+- Default paramaters
+    Net BW 2.0 GB/s
+    Net latency 4 us
+
+    Node BW 10 GB/s
+    Node latency 200 ns
+
 - Make ghost_pattern.cc code more modular to make it easier to expand
 
 - Play with component weight
@@ -27,6 +61,7 @@
 
 DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE
 
+- Power parameters in genPattern
 - Multiple generators per router
     - Will messages between "cores" still go through router?
 	For now, yes, but we make the links between routers
