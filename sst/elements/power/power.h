@@ -520,6 +520,7 @@ class Power{
 	// floorplan and thermal tiles parameters
 	static parameters_chip_t chip;
 	static chip_t p_chip; 
+	static int p_NumCompNeedPower;
 
 	// sim-panalyzer parameters
 	#ifdef LV2_PANALYZER_H
