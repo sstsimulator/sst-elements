@@ -38,7 +38,7 @@ int aggregator_port;
     if (net_x_dim * net_y_dim > 1)   {
 	/* Only generate a network, if there are more than one node */
 	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-fprintf(stderr, "gen_router(%3d, 5);\n", R);
+	    fprintf(stderr, "gen_router(%3d, 5);\n", R);
 	    gen_router(R, 5);
 	}
 	if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
@@ -56,7 +56,7 @@ fprintf(stderr, "gen_router(%3d, 5);\n", R);
     /* Now list the NoC routers; they have 4 + num_cores ports each */
     if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
 	for (r= first_NoC_router; r < num_routers; r++)   {
-fprintf(stderr, "gen_router(%3d, %d);\n", r, 4 + num_cores);
+	    fprintf(stderr, "gen_router(%3d, %d);\n", r, 4 + num_cores);
 	    gen_router(r, 4 + num_cores);
 	}
     }
@@ -66,7 +66,7 @@ fprintf(stderr, "gen_router(%3d, %d);\n", r, 4 + num_cores);
 	/* Only generate a network aggregator, if there are more than one node */
 	aggregator= num_routers;
 	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-fprintf(stderr, "gen_router(%3d, %2d);\n", aggregator, num_cores + 1);
+	    fprintf(stderr, "gen_router(%3d, %2d);\n", aggregator, num_cores + 1);
 	    gen_router(aggregator, num_cores + 1);
 	    aggregator++;
 	}
@@ -75,7 +75,8 @@ fprintf(stderr, "gen_router(%3d, %2d);\n", aggregator, num_cores + 1);
 
     /* Generate pattern generators and links between pattern generators and NoC routers */
     all_cores= num_routers * num_cores;
-fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC_y_dim, net_x_dim, net_y_dim, num_routers, all_cores);
+    fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC_y_dim,
+	net_x_dim, net_y_dim, num_routers, all_cores);
     aggregator= num_routers;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	/* For each network router */
@@ -92,12 +93,15 @@ fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC
 		    NoC_router= first_NoC_router + r + (R * NoC_x_dim * NoC_y_dim);
 		    if (net_x_dim * net_y_dim > 1)   {
 			/* Connect each core to its Net aggregator */
-fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
+			fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, "
+			    "agg port %2d);\n", rank, NoC_router,
+			    FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
 			gen_nic(rank, NoC_router, FIRST_LOCAL_PORT + gen, aggregator, aggregator_port);
 			aggregator_port++;
 		    } else   {
 			/* Single node, no connection ot a network */
-fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
+			fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, "
+			    "agg port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
 			gen_nic(rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
 		    }
 		}
@@ -113,7 +117,8 @@ fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);
 		if (net_x_dim * net_y_dim > 1)   {
 		    /* Connect each core to its Net aggregator */
 		    gen_nic(rank, -1, -1, aggregator, aggregator_port);
-fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);\n", rank, -1, -1, aggregator, aggregator_port);
+		    fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port "
+			"%2d);\n", rank, -1, -1, aggregator, aggregator_port);
 		    aggregator_port++;
 		} else   {
 		    /* No network and no NoC? */
@@ -124,8 +129,6 @@ fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port %2d);
 	}
 	aggregator++;
     }
-fprintf(stderr, "Done with pattern generators\n");
-
 
 
 
@@ -152,7 +155,6 @@ fprintf(stderr, "Done with pattern generators\n");
 	    }
 	}
     }
-fprintf(stderr, "Done with network\n");
 
 
     /* Generate links between NoC routers */
@@ -220,7 +222,16 @@ fprintf(stderr, "Done with network\n");
 	    }
 	}
     }
-fprintf(stderr, "Done with GenMesh2D()\n");
 
+    /* Generate the links between aggregators and the network routers */
+    if (net_x_dim * net_y_dim > 1)   {
+	/* Only generate a network aggregator, if there are more than one node */
+	aggregator= num_routers;
+	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	    fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d);\n", aggregator, 0, R, FIRST_LOCAL_PORT);
+	    gen_link(aggregator, 0, R, FIRST_LOCAL_PORT);
+	    aggregator++;
+	}
+    }
 
 }  /* end of GenMesh2D() */
