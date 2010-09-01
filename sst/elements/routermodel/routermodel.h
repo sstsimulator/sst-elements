@@ -132,7 +132,6 @@ class Routermodel : public IntrospectedComponent {
       	    if (ifModelPower)   {
 		registerClock(frequency, new Clock::Handler<Routermodel>
 		    (this, &Routermodel::pushData));
-	    }
 
 		registerMonitorDouble("current_power");
 		registerMonitorDouble("leakage_power");
@@ -143,6 +142,7 @@ class Routermodel : public IntrospectedComponent {
 		//for introspection
 		registerMonitorInt("router_delay");
 		registerMonitorInt("local_message");
+	    }
 
 
 	    /* Attach the handler to each port */
