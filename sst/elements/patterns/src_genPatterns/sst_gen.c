@@ -102,7 +102,7 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<LocalNVRAMaccess>\n");
-    fprintf(sstfile, "    <name> NVRAM </name>\n");
+    fprintf(sstfile, "    <name> STORAGE </name>\n");
     fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
     fprintf(sstfile, "</LocalNVRAMaccess>\n");
     fprintf(sstfile, "\n");
