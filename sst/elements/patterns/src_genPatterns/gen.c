@@ -61,6 +61,7 @@ typedef struct router_t   {
     int next_nic;
     int next_link;
     int next_nvram;
+    int wormhole;
     nic_t *nics[MAX_NICS];
     nvram_t *nvram[MAX_NVRAM];
     link_t **links;
@@ -90,7 +91,7 @@ static nvram_t *nvram_list_end= NULL;
 ** Add a Router
 */
 void
-gen_router(int id, int num_ports)
+gen_router(int id, int num_ports, int wormhole)
 {
 
 router_t *current;
@@ -116,6 +117,7 @@ int i;
 
     current->id= id;
     current->num_ports= num_ports;
+    current->wormhole= wormhole;
 
     current->next_nic= 0;
     for (i= 0; i < MAX_NICS; i++)   {
@@ -615,13 +617,14 @@ reset_router_list(void)
 
 
 int
-next_router(int *id)
+next_router(int *id, int *wormhole)
 {
 
     if (!router_current)   {
 	return 0;
     }
     *id= router_current->id;
+    *wormhole= router_current->wormhole;
     router_current= router_current->next;
     return 1;
 

@@ -384,7 +384,7 @@ sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FI
 
 
 void
-sst_router_component_start(char *id, float weight, char *cname, FILE *sstfile)
+sst_router_component_start(char *id, float weight, char *cname, int wormhole, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -396,6 +396,7 @@ sst_router_component_start(char *id, float weight, char *cname, FILE *sstfile)
     fprintf(sstfile, "        <routermodel>\n");
     fprintf(sstfile, "            <params include=Rp>\n");
     fprintf(sstfile, "                <component_name> %s </component_name>\n", cname);
+    fprintf(sstfile, "                <wormhole> %d </wormhole>\n", wormhole);
 
 }  /* end of sst_router_component_start() */
 
@@ -564,6 +565,7 @@ char net_link_id[MAX_ID_LEN];
 char nvram_link_id[MAX_ID_LEN];
 char router_id[MAX_ID_LEN];
 char cname[MAX_ID_LEN];
+int wormhole;
 
 
     if (sstfile == NULL)   {
@@ -571,10 +573,10 @@ char cname[MAX_ID_LEN];
     }
 
     reset_router_list();
-    while (next_router(&r))   {
+    while (next_router(&r, &wormhole))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
-	sst_router_component_start(router_id, 1.0, cname, sstfile);
+	sst_router_component_start(router_id, 1.0, cname, wormhole, sstfile);
 	/*
 	** We have to list the links in order in the params section, so the router
 	** componentn can get the names and create the appropriate links.

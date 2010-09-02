@@ -14,11 +14,11 @@ typedef enum {LOCAL_NVRAM, SSD} nvram_type_t;
 
 void gen_nic(int rank, int router, int port, int aggregator, int aggregator_port,
 	int nvram, int nvram_port, int ss, int ss_port);
-void gen_router(int id, int num_ports);
+void gen_router(int id, int num_ports, int wormhole);
 void gen_link(int Arouter, int Aport, int Brouter, int Bport);
 
 void reset_router_list(void);
-int next_router(int *id);
+int next_router(int *id, int *wormhole);
 void reset_router_nics(int router);
 int next_router_nic(int router, int *port);
 void reset_router_links(int router);

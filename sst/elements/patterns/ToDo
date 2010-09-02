@@ -1,14 +1,12 @@
+- Create bit_bucket component
+    Initially, just a component to consume events
+    Then acto on reads, do the proper delays, and route acks back
+
 - ghost_pattern
     Create handlers for NETWORK, NoC, (and NVRAMlocal, StableStorage)
     Update routing algorithm
 
 - Flits in router
-
-- genPatterns
-    DONE If X * Y = 1, don't generate aggregator and links to it
-    DONE if x * y = 1, don't generate NoC
-    Link between net aggregator and net router
-    Aggregators for NVRAMlocal and StableStorage
 
 Arch model
     Torus network
@@ -61,7 +59,15 @@ Arch model
 
 DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE
 
+- genPatterns
+    DONE If X * Y = 1, don't generate aggregator and links to it
+    DONE if x * y = 1, don't generate NoC
+    DONE Link between net aggregator and net router
+    DONE Aggregators for NVRAMlocal and StableStorage
+    DONE Select wormhole or flit-based for each router
+
 - Power parameters in genPattern
+
 - Multiple generators per router
     - Will messages between "cores" still go through router?
 	For now, yes, but we make the links between routers
