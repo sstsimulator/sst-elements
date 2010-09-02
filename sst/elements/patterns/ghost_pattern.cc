@@ -126,6 +126,22 @@ pattern_event_t event;
 
 
 
+// Messages from the global network
+void
+Ghost_pattern::handle_net_events(Event *e)
+{
+    handle_events(e);
+}  /* end of handle_net_events() */
+
+
+// Messages from the local chip network
+void
+Ghost_pattern::handle_NoC_events(Event *e)
+{
+    handle_events(e);
+}  /* end of handle_NoC_events() */
+
+
 // When we send to ourselves, we come here.
 // Just pass it on to the main handler above
 void
@@ -133,6 +149,20 @@ Ghost_pattern::handle_self_events(Event *e)
 {
     handle_events(e);
 }  /* end of handle_self_events() */
+
+
+// Events from the local NVRAM
+void
+Ghost_pattern::handle_nvram_events(Event *e)
+{
+}  /* end of handle_nvram_events() */
+
+
+// Events from stable storage
+void
+Ghost_pattern::handle_storage_events(Event *e)
+{
+}  /* end of handle_storage_events() */
 
 
 

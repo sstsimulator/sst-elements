@@ -23,7 +23,8 @@ void sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw,
 void sst_router_param_end(FILE *sstfile);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
-void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t net_lat,
+void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
+	int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method, uint64_t chckpt_delay,
 	uint64_t chckpt_interval, uint64_t envelope_write_time);

@@ -113,6 +113,14 @@ class Ghost_pattern : public Component {
 		    sscanf(it->second.c_str(), "%d", &y_dim);
 		}
 
+		if (!it->first.compare("NoC_x_dim"))   {
+		    sscanf(it->second.c_str(), "%d", &NoC_x_dim);
+		}
+
+		if (!it->first.compare("NoC_y_dim"))   {
+		    sscanf(it->second.c_str(), "%d", &NoC_y_dim);
+		}
+
 		if (!it->first.compare("cores"))   {
 		    sscanf(it->second.c_str(), "%d", &cores);
 		}
@@ -177,15 +185,25 @@ class Ghost_pattern : public Component {
             }
 
 
-            // Create a handler for events
+            // Create a handler for events from the Network
 	    net= configureLink("NETWORK", new Event::Handler<Ghost_pattern>
-		    (this, &Ghost_pattern::handle_events));
+		    (this, &Ghost_pattern::handle_net_events));
 	    if (net == NULL)   {
 		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link to the network "
 		    "named \"Network\" which is missing!\n");
 		_ABORT(Ghost_pattern, "Check the input XML file!\n");
 	    } else   {
-		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the network\n", my_rank);
+		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the Network\n", my_rank);
+	    }
+
+            // Create a handler for events from the network on chip (NoC)
+	    NoC= configureLink("NoC", new Event::Handler<Ghost_pattern>
+		    (this, &Ghost_pattern::handle_NoC_events));
+	    if (NoC == NULL)   {
+		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link named \"NoC\"\n");
+		_ABORT(Ghost_pattern, "Check the input XML file!\n");
+	    } else   {
+		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the NoC\n", my_rank);
 	    }
 
             // Create a channel for "out of band" events sent to ourselves
@@ -197,31 +215,60 @@ class Ghost_pattern : public Component {
 		_GHOST_PATTERN_DBG(2, "[%3d] Added a self link and a handler\n", my_rank);
 	    }
 
+            // Create a handler for events from local NVRAM
+	    nvram= configureLink("NVRAM", new Event::Handler<Ghost_pattern>
+		    (this, &Ghost_pattern::handle_nvram_events));
+	    if (nvram == NULL)   {
+		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link named \"NVRAM\"\n");
+		_ABORT(Ghost_pattern, "Check the input XML file!\n");
+	    } else   {
+		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the NVRAM\n", my_rank);
+	    }
+
+            // Create a handler for events from the storage network
+	    storage= configureLink("NETWORK", new Event::Handler<Ghost_pattern>
+		    (this, &Ghost_pattern::handle_storage_events));
+	    if (storage == NULL)   {
+		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link named \"STORAGE\"\n");
+		_ABORT(Ghost_pattern, "Check the input XML file!\n");
+	    } else   {
+		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the storage\n", my_rank);
+	    }
+
 	    // Create a time converter
 	    tc= registerTimeBase("1ns", true);
 	    net->setDefaultTimeBase(tc);
 	    self_link->setDefaultTimeBase(tc);
+	    NoC->setDefaultTimeBase(tc);
+	    nvram->setDefaultTimeBase(tc);
+	    storage->setDefaultTimeBase(tc);
 
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, my_rank, cores, net, self_link,
+	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, net, self_link,
+		    NoC, nvram, storage,
 		    net_latency, net_bandwidth, node_latency, node_bandwidth,
 		    chckpt_method, chckpt_delay, chckpt_interval, envelope_write_time))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
 	    // Who are my four neighbors?
-	    // The network is x_dim * y_dim
-	    // The virtual network of the cores is (x_dim * cores) * ( y_dim * cores)
-	    int myX= my_rank % (x_dim * cores);
-	    int myY= my_rank / (x_dim * cores);
-	    right= ((myX + 1) % (x_dim * cores)) + (myY * (x_dim * cores));
-	    left= ((myX - 1 + (x_dim * cores)) % (x_dim * cores)) + (myY * (x_dim * cores));
-	    down= myX + ((myY + 1) % y_dim) * (x_dim * cores);
-	    up= myX + ((myY - 1 + y_dim) % y_dim) * (x_dim * cores);
-	    // fprintf(stderr, "{%2d:%d,%d} right %d, left %d, up %d, down %d\n",
-	    // 	my_rank, myX, myY, right, left, up, down);
+	    // The network is x_dim * NoC_x_dim by y_dim * NoC_y_dim
+	    // The virtual network of the cores is
+	    // (x_dim * NoC_x_dim * cores) * (y_dim * NoC_y_dim)
+	    int logical_width= x_dim * NoC_x_dim * cores;
+	    int logical_height= y_dim * NoC_y_dim;
+	    int myX= my_rank % logical_width;
+	    int myY= my_rank / logical_width;
+
+	    right= ((myX + 1) % (logical_width)) + (myY * (logical_width));
+	    left= ((myX - 1 + (logical_width)) % (logical_width)) + (myY * (logical_width));
+	    down= myX + ((myY + 1) % logical_height) * (logical_width);
+	    up= myX + ((myY - 1 + logical_height) % logical_height) * (logical_width);
+
+	    //fprintf(stderr, "{%2d:%2d,%2d, node %2d} right %2d, left %2d, up %2d, down %2d\n",
+	    //my_rank, myX, myY, my_rank / (NoC_x_dim * NoC_y_dim * cores), right, left, up, down);
 
 	    // If we are doing coordinated checkpointing, we will do that
 	    // every time x timesteps have been computed.
@@ -273,7 +320,11 @@ class Ghost_pattern : public Component {
 
         Ghost_pattern(const Ghost_pattern &c);
 	void handle_events(Event *);
+	void handle_net_events(Event *);
+	void handle_NoC_events(Event *);
 	void handle_self_events(Event *);
+	void handle_nvram_events(Event *);
+	void handle_storage_events(Event *);
 	Patterns *common;
 
 	// Input paramters for simulation
@@ -281,6 +332,8 @@ class Ghost_pattern : public Component {
 	int cores;
 	int x_dim;
 	int y_dim;
+	int NoC_x_dim;
+	int NoC_y_dim;
 	SimTime_t net_latency;
 	SimTime_t net_bandwidth;
 	SimTime_t node_latency;
@@ -331,6 +384,9 @@ class Ghost_pattern : public Component {
         Params_t params;
 	Link *net;
 	Link *self_link;
+	Link *NoC;
+	Link *nvram;
+	Link *storage;
 	TimeConverter *tc;
 
 	// Some local functions we need
@@ -362,6 +418,8 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(cores);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);
 	    ar & BOOST_SERIALIZATION_NVP(y_dim);
+	    ar & BOOST_SERIALIZATION_NVP(NoC_x_dim);
+	    ar & BOOST_SERIALIZATION_NVP(NoC_y_dim);
 	    ar & BOOST_SERIALIZATION_NVP(net_latency);
 	    ar & BOOST_SERIALIZATION_NVP(net_bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(node_latency);

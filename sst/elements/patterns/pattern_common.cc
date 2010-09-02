@@ -28,6 +28,7 @@ using namespace SST;
 
 /* Local functions */
 static int is_pow2(int num);
+static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height);
 
 
 
@@ -37,19 +38,22 @@ static int is_pow2(int num);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_link,
+Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, Link *net_link,
+	Link *self_link, SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
 	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
-	chckpt_t method, SimTime_t chckpt_delay, SimTime_t chckpt_interval, SimTime_t envelope_write_time)
+	chckpt_t method, SimTime_t chckpt_delay, SimTime_t chckpt_interval,
+	SimTime_t envelope_write_time)
 {
-    /* Make sure x * y is a power of 2, and my_rank is within range */
-    if (!is_pow2(x * y))   {
-	fprintf(stderr, "x = %d * y = %d is not a power of 2!\n", x, y);
+
+    /* Make sure number of ranks is a power of 2, and my_rank is within range */
+    total_cores= x * y * NoC_x_dim * NoC_y_dim * cores;
+    if (!is_pow2(total_cores))   {
+	fprintf(stderr, "Total number of ranks (cores) %d is not a power of 2!\n", total_cores);
 	return FALSE;
     }
 
-    if ((rank < 0) || (rank >= x * y * cores))   {
-	fprintf(stderr, "My rank not 0 <= %d < %d (x) * %d (y) * %d (cores)\n",
-	    rank, x, y, cores);
+    if ((rank < 0) || (rank >= total_cores))   {
+	fprintf(stderr, "My rank not 0 <= %d < %d (cores)\n", rank, total_cores);
 	return FALSE;
     }
 
@@ -75,18 +79,28 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
 
     my_net_link= net_link;
     my_self_link= self_link;
+    my_NoC_link= NoC_link;
+    my_nvram_link= nvram_link;
+    my_storage_link= storage_link;
+
     mesh_width= x;
     mesh_height= y;
+    NoC_width= NoC_x_dim;
+    NoC_height= NoC_y_dim;
     my_rank= rank;
     net_latency= net_lat;
     net_bandwidth= net_bw;
     node_latency= node_lat;
     node_bandwidth= node_bw;
-    num_cores= cores;
+    cores_per_router= cores;
+    cores_per_node= NoC_width * NoC_height * cores;
 
     if (my_rank == 0)   {
-	printf("||| mesh x %d, y %d, cores per router %d = %d total cores\n",
-	    mesh_width, mesh_height, num_cores, mesh_width * mesh_height * num_cores);
+	printf("||| mesh x %d, y %d, = %d nodes\n",
+	    mesh_width, mesh_height, mesh_width * mesh_height);
+	printf("||| NoC x %d, y %d, with %d cores each\n",
+	    NoC_x_dim, NoC_y_dim, cores_per_router);
+	printf("||| Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
 	printf("||| Network bandwidth %.3f GB/s, latency %.9f s\n",
 	    (double)net_bandwidth / 1000000000.0, (double)net_latency / 1000000000.0);
 	printf("||| Node bandwidth    %.3f GB/s, latency %.9f s\n",
@@ -122,9 +136,6 @@ Patterns::init(int x, int y, int rank, int cores, Link *net_link, Link *self_lin
 
 /*
 ** Send "len" bytes to rank "dest"
-** This function computes a route, based on the assumtopn that we
-** are on a power of 2 x * y 2-D torus, and sends and event along
-** that route. No actual data is sent.
 */
 void
 Patterns::send(int dest, int len)
@@ -139,7 +150,7 @@ SimTime_t delay;
     //
     // net_bandwidth is in bytes per second
 
-    if ((my_rank / num_cores) != (dest / num_cores))   {
+    if ((my_rank / total_cores) != (dest / total_cores))   {
 	// This message goes off node
 	delay= ((SimTime_t)len * 1000000000) / net_bandwidth;
     } else   {
@@ -152,27 +163,42 @@ SimTime_t delay;
 
 
 
+// There is a lot of hardcoded information about how the network is wired.
+// the program genPatterns generates XML files with routers that have
+// the following port connections:
+// Port 0: East/Left
+// Port 1: South/Down
+// Port 2: West/Right
+// Port 3: North/Up
+// Port 4...: local links to cores or nodes
+
 #define EAST_PORT		(0)
 #define SOUTH_PORT		(1)
 #define WEST_PORT		(2)
 #define NORTH_PORT		(3)
 #define FIRST_LOCAL_PORT	(4)
 
+/*
+** This function computes a route, based on the assumption that we
+** are on a x * y torus for our NoC, and a x * y mesh for the network.
+** This function then sends an event along that route.
+** No actual data is sent.
+*/
 void
 Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t msg_len)
 {
 
 CPUNicEvent *e;
-int my_X, my_Y;
-int dest_X, dest_Y;
-int x_delta, y_delta;
-int c1, c2;
+int my_node, dest_node;
 int my_router, dest_router;
 
 
     // Create an event and fill in the event info
     e= new CPUNicEvent();
     e->SetRoutine((int)event);
+    e->router_delay= 0;
+    e->hops= 0;
+    e->msg_len= msg_len;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
@@ -180,107 +206,78 @@ int my_router, dest_router;
 	return;
     }
 
-    // If this event goes to another node, attach a route to it
-    e->router_delay= 0;
-    e->hops= 0;
-    e->msg_len= msg_len;
+    /* Is dest within our NoC? */
+    my_node= my_rank / (NoC_width * NoC_height * cores_per_router);
+    dest_node= dest / (NoC_width * NoC_height * cores_per_router);
 
-    if ((my_rank / num_cores) != (dest / num_cores))   {
-	// This message goes off node
+    if (my_node == dest_node)   {
+	/* Route locally */
+
+	/*
+	** For cores that share a router we'll assume that they
+	** can communicate with each other much faster; e.g., through
+	** a shared L2 cache. We mark that traffic so the router can
+	** deal with it seperatly.
+	*/
+	my_router= my_rank / cores_per_router;
+	dest_router= dest / cores_per_router;
+	if (my_router != dest_router)   {
+	    // This message travels through the NoC
+	    e->local_traffic= false;
+	} else   {
+	    // This is a message among cores of the same router
+	    e->local_traffic= true;
+	}
+
+	gen_route(e, my_router, dest_router, NoC_width, NoC_height);
+
+	// Exit to the local (NIC) pattern generator
+	e->route.push_back(FIRST_LOCAL_PORT + (dest % cores_per_router));
+
+#define ROUTE_DEBUG 1
+#if ROUTE_DEBUG
+    {
+	char route[128];
+	std::vector<uint8_t>::iterator itNum;
+	int i= 0;
+
+	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	    route[i++]= '0' + *itNum;
+	    route[i++]= '.';
+	}
+	route[i++]= 0;
+
+	fprintf(stderr, "NoC Event %d from %d --> %d, delay %lu, route %s\n", event,
+	     my_rank, dest, (uint64_t)delay, route);
+    }
+#endif  // ROUTE_DEBUG
+
+	// Send it
+	my_NoC_link->Send(delay, e);
+
+    } else   {
+	/* Route off chip */
 	e->local_traffic= false;
-    } else   {
-	// This is an intra-node message
-	e->local_traffic= true;
-    }
 
-    // We are hardcoded for a x * y torus!
-    // the program genPatterns generates XML files with routers that have
-    // the following port connections:
-    // Port 0: East/Left
-    // Port 1: South/Down
-    // Port 2: West/Right
-    // Port 3: North/Up
+	/* On the network aggregator we'll have to go out port 0 to reach the mesh */
+	e->route.push_back(0);
 
-    // First we need to calculate the X and Y delta from us to dest
-    my_router= my_rank / num_cores;
-    dest_router= dest / num_cores;
-    my_Y= my_router / mesh_width;
-    my_X= my_router % mesh_width;
-    dest_Y= dest_router / mesh_width;
-    dest_X= dest_router % mesh_width;
+	// We assume one node per mesh router
+	my_router= my_node;
+	dest_router= dest_node;
+	fprintf(stderr, "Going from R%d to R%d on a %d * %d mesh\n", my_router, dest_router, mesh_width, mesh_height);
+	gen_route(e, my_router, dest_router, mesh_width, mesh_height);
 
-    // Use the shortest distance to reach the destination
-    if (my_X > dest_X)   {
-	// How much does it cost to go left?
-	c1= my_X - dest_X;
-	// How much does it cost to go right?
-	c2= (dest_X + mesh_width) - my_X;
-    } else   {
-	// How much does it cost to go left?
-	c1= (my_X + mesh_width) - dest_X;
-	// How much does it cost to go right?
-	c2= dest_X - my_X;
-    }
-    if (c1 > c2)   {
-	// go right
-	x_delta= c2;
-    } else   {
-	// go left
-	x_delta= -c1;
-    }
 
-    if (my_Y > dest_Y)   {
-	// How much does it cost to go up?
-	c1= my_Y - dest_Y;
-	// How much does it cost to go down?
-	c2= (dest_Y + mesh_height) - my_Y;
-    } else   {
-	// How much does it cost to go up?
-	c1= (my_Y + mesh_height) - dest_Y;
-	// How much does it cost to go down?
-	c2= dest_Y - my_Y;
-    }
-    if (c1 > c2)   {
-	// go down
-	y_delta= c2;
-    } else   {
-	// go up
-	y_delta= -c1;
-    }
+	// Exit to the local node (aggregator on that node
+	e->route.push_back(FIRST_LOCAL_PORT);
 
-    // fprintf(stderr, "[%2d] my X %d, Y %d, dest [%2d] X %d, dest Y %d, offset %d,%d\n",
-	// my_rank, my_X, my_Y, dest, dest_X, dest_Y, x_delta, y_delta);
-
-    if (x_delta > 0)   {
-	// Go East first
-	while (x_delta > 0)   {
-	    e->route.push_back(EAST_PORT);
-	    x_delta--;
-	}
-    } else if (x_delta < 0)   {
-	// Go West first
-	while (x_delta < 0)   {
-	    e->route.push_back(WEST_PORT);
-	    x_delta++;
-	}
-    }
-
-    if (y_delta > 0)   {
-	// Go SOUTH first
-	while (y_delta > 0)   {
-	    e->route.push_back(SOUTH_PORT);
-	    y_delta--;
-	}
-    } else if (y_delta < 0)   {
-	// Go NORTH first
-	while (y_delta < 0)   {
-	    e->route.push_back(NORTH_PORT);
-	    y_delta++;
-	}
-    }
-
-    // Exit to the local (NIC) pattern generator
-    e->route.push_back(FIRST_LOCAL_PORT + (dest % num_cores));
+	/*
+	** We come out at the aggregator on the destination node.
+	** Figure out which port to go out to reach the destination core
+	** Port 0 is where we came in
+	*/
+	e->route.push_back(1 + (dest % cores_per_node));
 
 #if ROUTE_DEBUG
     {
@@ -290,16 +287,17 @@ int my_router, dest_router;
 
 	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
 	    route[i++]= '0' + *itNum;
+	    route[i++]= '-';
 	}
 	route[i++]= 0;
 
-	fprintf(stderr, "Event %d from %d --> %d, delay %lu, route %s\n", event,
+	fprintf(stderr, "Net Event %d from %d --> %d, delay %lu, route %s\n", event,
 	     my_rank, dest, (uint64_t)delay, route);
     }
 #endif  // ROUTE_DEBUG
 
-    // Send it
-    my_net_link->Send(delay, e);
+	my_net_link->Send(delay, e);
+    }
 
 }  /* end of event_send() */
 
@@ -325,3 +323,94 @@ is_pow2(int num)
     return FALSE;
 
 }  /* end of is_pow2() */
+
+
+
+/*
+** Generate a route through a X 8 Y torus
+** We use it to traverse the mesh as well as the NoC
+*/
+static void
+gen_route(CPUNicEvent *e, int src, int dest, int width, int height)
+{
+
+int c1, c2;
+int my_X, my_Y;
+int dest_X, dest_Y;
+int x_delta, y_delta;
+
+
+    // Calculate x and y coordinates within the Network
+    my_Y= src / width;
+    my_X= src % width;
+    dest_Y= dest / width;
+    dest_X= dest % width;
+
+    // Use the shortest distance to reach the destination
+    if (my_X > dest_X)   {
+	// How much does it cost to go left?
+	c1= my_X - dest_X;
+	// How much does it cost to go right?
+	c2= (dest_X + width) - my_X;
+    } else   {
+	// How much does it cost to go left?
+	c1= (my_X + width) - dest_X;
+	// How much does it cost to go right?
+	c2= dest_X - my_X;
+    }
+    if (c1 > c2)   {
+	// go right
+	x_delta= c2;
+    } else   {
+	// go left
+	x_delta= -c1;
+    }
+
+    if (my_Y > dest_Y)   {
+	// How much does it cost to go up?
+	c1= my_Y - dest_Y;
+	// How much does it cost to go down?
+	c2= (dest_Y + height) - my_Y;
+    } else   {
+	// How much does it cost to go up?
+	c1= (my_Y + height) - dest_Y;
+	// How much does it cost to go down?
+	c2= dest_Y - my_Y;
+    }
+    if (c1 > c2)   {
+	// go down
+	y_delta= c2;
+    } else   {
+	// go up
+	y_delta= -c1;
+    }
+
+    if (x_delta > 0)   {
+	// Go East
+	while (x_delta > 0)   {
+	    e->route.push_back(EAST_PORT);
+	    x_delta--;
+	}
+    } else if (x_delta < 0)   {
+	// Go West
+	while (x_delta < 0)   {
+	    e->route.push_back(WEST_PORT);
+	    x_delta++;
+	}
+    }
+
+    if (y_delta > 0)   {
+	// Go SOUTH
+	while (y_delta > 0)   {
+	    e->route.push_back(SOUTH_PORT);
+	    y_delta--;
+	}
+    } else if (y_delta < 0)   {
+	// Go NORTH
+	while (y_delta < 0)   {
+	    e->route.push_back(NORTH_PORT);
+	    y_delta++;
+	}
+    }
+
+}  /* end of gen_route() */

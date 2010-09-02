@@ -361,7 +361,8 @@ pwr_method_t power_method;
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, num_cores, net_lat, net_bw, node_lat, node_bw,
+    sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores,
+	net_lat, net_bw, node_lat, node_bw,
 	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval,
 	envelope_write_time);
     sst_gen_param_end(fp_sst, node_lat, net_lat);

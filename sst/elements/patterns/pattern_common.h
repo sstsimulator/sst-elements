@@ -53,13 +53,17 @@ class Patterns   {
 	    my_self_link= NULL;
 	    mesh_width= -1;
 	    mesh_height= -1;
-	    num_cores= 1;
+	    NoC_width= -1;
+	    NoC_height= -1;
+	    total_cores= 1;
 	    my_rank= -1;
 	    net_latency= 0;
 	    net_bandwidth= 0;
 	}
 
-	int init(int x, int y, int rank, int cores, SST::Link *net_link, SST::Link *self_link,
+	int init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores,
+		SST::Link *net_link, SST::Link *self_link,
+		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
 		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat,
 		SST::SimTime_t node_bw, chckpt_t method, SST::SimTime_t chckpt_delay,
 		SST::SimTime_t chckpt_interval, SST::SimTime_t envelope_write_time);
@@ -72,10 +76,17 @@ class Patterns   {
     private:
 	SST::Link *my_net_link;
 	SST::Link *my_self_link;
+	SST::Link *my_NoC_link;
+	SST::Link *my_nvram_link;
+	SST::Link *my_storage_link;
 	int mesh_width;
 	int mesh_height;
+	int NoC_width;
+	int NoC_height;
 	int my_rank;
-	int num_cores;
+	int total_cores;
+	int cores_per_router;
+	int cores_per_node;
 	SST::SimTime_t net_bandwidth;	// In bytes per second
 	SST::SimTime_t node_bandwidth;	// In bytes per second
 	SST::SimTime_t net_latency;	// in nano seconds FIXME: Variable not needed

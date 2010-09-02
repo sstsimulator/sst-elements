@@ -15,7 +15,7 @@
 #define NORTH_PORT		(3)
 #define FIRST_LOCAL_PORT	(4)
 
-
+#define GEN_DEBUG		1
 void
 GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim, int num_cores, int IO_nodes)
 {
@@ -159,6 +159,8 @@ int wormhole= 1;
 			    -1, -1,
 			    nvram_aggregator, nvram_aggregator_port,
 			    ss_aggregator, ss_aggregator_port);
+			nvram_aggregator_port++;
+			ss_aggregator_port++;
 		    }
 		}
 	    }

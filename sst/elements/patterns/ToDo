@@ -1,9 +1,14 @@
+
+- Figure out where delays need to be computed
+    e.g., where do latencies occur? Calculations? XML file?
+    where does bandwidth come into play?
+
 - Create bit_bucket component
-    Initially, just a component to consume events
-    Then acto on reads, do the proper delays, and route acks back
+    DONE Initially, just a component to consume events
+    Then act on reads, do the proper delays, and route acks back
 
 - ghost_pattern
-    Create handlers for NETWORK, NoC, (and NVRAMlocal, StableStorage)
+    DONE Create handlers for NETWORK, NoC, (and NVRAM, STORAGE)
     Update routing algorithm
 
 - Flits in router

@@ -49,7 +49,8 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t net_lat,
+sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
+	int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method, uint64_t chckpt_delay,
 	uint64_t chckpt_interval, uint64_t envelope_write_time)
@@ -61,6 +62,8 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int cores, uint64_t n
 
     fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
     fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
+    fprintf(sstfile, "    <NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim);
+    fprintf(sstfile, "    <NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim);
     fprintf(sstfile, "    <cores> %d </cores>\n", cores);
     fprintf(sstfile, "    <net_latency> %lu </net_latency>\n", net_lat);
     fprintf(sstfile, "    <net_bandwidth> %lu </net_bandwidth>\n", net_bw);
@@ -102,7 +105,7 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<LocalNVRAMaccess>\n");
-    fprintf(sstfile, "    <name> STORAGE </name>\n");
+    fprintf(sstfile, "    <name> NVRAM </name>\n");
     fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
     fprintf(sstfile, "</LocalNVRAMaccess>\n");
     fprintf(sstfile, "\n");
@@ -111,6 +114,18 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
     fprintf(sstfile, "    <name> STORAGE </name>\n");
     fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
     fprintf(sstfile, "</StableStorageAccess>\n");
+    fprintf(sstfile, "\n");
+
+    fprintf(sstfile, "<SSD_IO_port>\n");
+    fprintf(sstfile, "    <name> STORAGE </name>\n");
+    fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
+    fprintf(sstfile, "</SSD_IO_port>\n");
+    fprintf(sstfile, "\n");
+
+    fprintf(sstfile, "<NVRAM_IO_port>\n");
+    fprintf(sstfile, "    <name> STORAGE </name>\n");
+    fprintf(sstfile, "    <lat> %luns </lat>\n", node_latency);
+    fprintf(sstfile, "</NVRAM_IO_port>\n");
     fprintf(sstfile, "\n");
 
 }  /* end of sst_gen_param_end() */
@@ -324,6 +339,7 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
     fprintf(sstfile, "               <rank> %d </rank>\n", rank);
     fprintf(sstfile, "            </params>\n");
     fprintf(sstfile, "            <links>\n");
+
     if (net_link_id)   {
 	fprintf(sstfile, "                <link id=\"%s\">\n", net_link_id);
 	fprintf(sstfile, "                    <params reference=LocalNet> </params>\n");
@@ -372,7 +388,12 @@ sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FI
     }
     fprintf(sstfile, "            <links>\n");
     fprintf(sstfile, "                <link id=\"%s\">\n", link_id);
-    fprintf(sstfile, "                    <params reference=LocalNVRAMaccess> </params>\n");
+    if (type == LOCAL_NVRAM)   {
+	fprintf(sstfile, "                    <params reference=NVRAM_IO_port> </params>\n");
+    }
+    if (type == SSD)   {
+	fprintf(sstfile, "                    <params reference=SSD_IO_port> </params>\n");
+    }
     fprintf(sstfile, "                </link>\n");
     fprintf(sstfile, "            </links>\n");
     fprintf(sstfile, "        </bit_bucket>\n");
