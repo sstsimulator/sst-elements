@@ -9,7 +9,7 @@
 
 - ghost_pattern
     DONE Create handlers for NETWORK, NoC, (and NVRAM, STORAGE)
-    Update routing algorithm
+    DONE Update routing algorithm
 
 - Flits in router
 
