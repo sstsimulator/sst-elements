@@ -109,6 +109,7 @@ int i;
 	exit(9);
     }
 
+    /* FIXME: Why the + 1? */
     current->links= (link_t **)malloc(sizeof(link_t) * (num_ports + 1));
     if (current->links == NULL)   {
 	fprintf(stderr, "Out of memory!\n");
@@ -130,7 +131,7 @@ int i;
     }
 
     current->next_link= 0;
-    for (i= 0; i < num_ports; i++)   {
+    for (i= 0; i <= num_ports; i++)   {
 	current->links[i]= NULL;
     }
 
@@ -227,10 +228,10 @@ nic_t *n;
 	*port= n->net_aggregator_port;
     } else if (n->nvram_aggregator_id == router)   {
 	/* This is an NVRAM aggregator */
-	*port= n->net_aggregator_port;
+	*port= n->nvram_aggregator_port;
     } else if (n->ss_aggregator_id == router)   {
 	/* This is an Stable Stoage aggregator */
-	*port= n->net_aggregator_port;
+	*port= n->ss_aggregator_port;
     } else   {
 	fprintf(stderr, "Inconsistency: Router/aggregator link to a NIC with a link "
 	    "to another router!\n");
@@ -342,7 +343,7 @@ int i;
     current->ss_aggregator_port= ss_port;
     snprintf(current->label, MAX_LABEL, "-- R%d/p%d", router, port);
 
-    /* It could be a simulation of a single node w/o a network */
+    /* It could be a simulation of a single core w/o a NoC */
     if (router >= 0)   {
 	r= find_router(router);
 	if (!r)   {
@@ -405,7 +406,7 @@ int i;
 	    exit(8);
 	}
 
-	/* Point the aggregator at this NIC */
+	/* Point this NVRAM aggregator at this NIC */
 	for (i= 0; i < MAX_NICS; i++)   {
 	    if (r->nics[i] == NULL)   {
 		/* Unused slot */
@@ -415,8 +416,7 @@ int i;
 	}
 
 	if (i >= MAX_NICS)   {
-	    fprintf(stderr, "Out of NIC port slots on NVRAM aggregator! Cannot handle more than "
-		"%d pattern generators per router.\n", MAX_NICS);
+	    fprintf(stderr, "Out of NVRAM port slots on aggregator! Max is %d\n", MAX_NICS);
 	    exit(8);
 	}
     }
@@ -442,8 +442,7 @@ int i;
 	}
 
 	if (i >= MAX_NICS)   {
-	    fprintf(stderr, "Out of NIC port slots on Stable Storage aggregator! Cannot handle "
-		"more than %d pattern generators per router.\n", MAX_NICS);
+	    fprintf(stderr, "Out of NVRAM port slots on SS aggregator! Max is %d\n", MAX_NICS);
 	    exit(8);
 	}
     }
@@ -512,7 +511,7 @@ int i;
     }
 
 
-    /* Attach this NIC to our list of NICs */
+    /* Attach this NVRAM to our list of NVRAMs */
     if (nvram_list_end)   {
 	/* Append */
 	nvram_list_end->next= current;

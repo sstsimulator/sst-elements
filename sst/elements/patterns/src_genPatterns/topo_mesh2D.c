@@ -16,6 +16,7 @@
 #define FIRST_LOCAL_PORT	(4)
 
 #define GEN_DEBUG		1
+#undef GEN_DEBUG
 void
 GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim, int num_cores, int IO_nodes)
 {
@@ -152,7 +153,9 @@ int wormhole= 1;
 			/* Single node, no connection to a network */
 			#if defined GEN_DEBUG
 			    fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg "
-				"port %2d);\n", rank, NoC_router, FIRST_LOCAL_PORT + gen, -1, -1);
+				"port %2d, nvram %d/%d, ss %d/%d);\n", rank, NoC_router,
+				FIRST_LOCAL_PORT + gen, -1, -1, nvram_aggregator,
+				nvram_aggregator_port, ss_aggregator, ss_aggregator_port);
 			#endif /* GEN_DEBUG */
 			gen_nic(rank,
 			    NoC_router, FIRST_LOCAL_PORT + gen,
@@ -318,6 +321,10 @@ int wormhole= 1;
     nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	nvram_aggregator_port= 0;
+	#if defined GEN_DEBUG
+	    fprintf(stderr, "gen_nvram(R %d, nvram %d,%d, local %d);\n",
+		R, nvram_aggregator, nvram_aggregator_port, LOCAL_NVRAM);
+	#endif /* GEN_DEBUG */
 	gen_nvram(R, nvram_aggregator++, nvram_aggregator_port, LOCAL_NVRAM);
     }
 

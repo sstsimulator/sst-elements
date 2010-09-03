@@ -20,21 +20,14 @@
 
 
 void
-Ghost_pattern::handle_events(Event *sst_event)
+Ghost_pattern::handle_events(CPUNicEvent *e)
 {
 
-CPUNicEvent *e;
 pattern_event_t event;
 
 
     // Extract the pattern event type from the SST event
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
-    e= static_cast<CPUNicEvent *>(sst_event);
-    if (e->hops > 2)   {
-	_abort(ghost_pattern, "[%3d] For Ghost, no message should travel through more than two routers! %d\n",
-	    my_rank, e->hops);
-    }
-
     event= (pattern_event_t)e->GetRoutine();
 
     if (application_done)   {
@@ -85,7 +78,7 @@ pattern_event_t event;
 	    break;
     }
 
-    delete(sst_event);
+    delete(e);
 
     if (application_done)   {
 	if (my_rank == 0)   {
@@ -128,16 +121,37 @@ pattern_event_t event;
 
 // Messages from the global network
 void
-Ghost_pattern::handle_net_events(Event *e)
+Ghost_pattern::handle_net_events(Event *sst_event)
 {
+
+CPUNicEvent *e;
+
+
+    e= static_cast<CPUNicEvent *>(sst_event);
+    // FIXME: I'm guessing at four. Need to revisit this when I am more awake
+    if (e->hops > 4)   {
+	_abort(ghost_pattern, "[%3d] For Ghost, no message should travel through more than four network routers! %d\n",
+	    my_rank, e->hops);
+    }
+
     handle_events(e);
 }  /* end of handle_net_events() */
 
 
 // Messages from the local chip network
 void
-Ghost_pattern::handle_NoC_events(Event *e)
+Ghost_pattern::handle_NoC_events(Event *sst_event)
 {
+
+CPUNicEvent *e;
+
+
+    e= static_cast<CPUNicEvent *>(sst_event);
+    if (e->hops > 2)   {
+	_abort(ghost_pattern, "[%3d] For Ghost, no message should travel through more than two NoC routers! %d\n",
+	    my_rank, e->hops);
+    }
+
     handle_events(e);
 }  /* end of handle_NoC_events() */
 
@@ -145,8 +159,13 @@ Ghost_pattern::handle_NoC_events(Event *e)
 // When we send to ourselves, we come here.
 // Just pass it on to the main handler above
 void
-Ghost_pattern::handle_self_events(Event *e)
+Ghost_pattern::handle_self_events(Event *sst_event)
 {
+
+CPUNicEvent *e;
+
+
+    e= static_cast<CPUNicEvent *>(sst_event);
     handle_events(e);
 }  /* end of handle_self_events() */
 

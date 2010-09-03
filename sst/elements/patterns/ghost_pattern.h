@@ -185,14 +185,16 @@ class Ghost_pattern : public Component {
             }
 
 
+	    // Create a time converter
+	    tc= registerTimeBase("1ns", true);
+
             // Create a handler for events from the Network
 	    net= configureLink("NETWORK", new Event::Handler<Ghost_pattern>
 		    (this, &Ghost_pattern::handle_net_events));
 	    if (net == NULL)   {
-		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link to the network "
-		    "named \"Network\" which is missing!\n");
-		_ABORT(Ghost_pattern, "Check the input XML file!\n");
+		_GHOST_PATTERN_DBG(1, "There is no network...\n");
 	    } else   {
+		net->setDefaultTimeBase(tc);
 		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the Network\n", my_rank);
 	    }
 
@@ -200,9 +202,9 @@ class Ghost_pattern : public Component {
 	    NoC= configureLink("NoC", new Event::Handler<Ghost_pattern>
 		    (this, &Ghost_pattern::handle_NoC_events));
 	    if (NoC == NULL)   {
-		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link named \"NoC\"\n");
-		_ABORT(Ghost_pattern, "Check the input XML file!\n");
+		_GHOST_PATTERN_DBG(1, "There is no NoC...\n");
 	    } else   {
+		NoC->setDefaultTimeBase(tc);
 		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the NoC\n", my_rank);
 	    }
 
@@ -226,7 +228,7 @@ class Ghost_pattern : public Component {
 	    }
 
             // Create a handler for events from the storage network
-	    storage= configureLink("NETWORK", new Event::Handler<Ghost_pattern>
+	    storage= configureLink("STORAGE", new Event::Handler<Ghost_pattern>
 		    (this, &Ghost_pattern::handle_storage_events));
 	    if (storage == NULL)   {
 		_GHOST_PATTERN_DBG(0, "The ghost pattern generator expects a link named \"STORAGE\"\n");
@@ -235,11 +237,7 @@ class Ghost_pattern : public Component {
 		_GHOST_PATTERN_DBG(2, "[%3d] Added a link and a handler for the storage\n", my_rank);
 	    }
 
-	    // Create a time converter
-	    tc= registerTimeBase("1ns", true);
-	    net->setDefaultTimeBase(tc);
 	    self_link->setDefaultTimeBase(tc);
-	    NoC->setDefaultTimeBase(tc);
 	    nvram->setDefaultTimeBase(tc);
 	    storage->setDefaultTimeBase(tc);
 
@@ -319,12 +317,12 @@ class Ghost_pattern : public Component {
     private:
 
         Ghost_pattern(const Ghost_pattern &c);
-	void handle_events(Event *);
-	void handle_net_events(Event *);
-	void handle_NoC_events(Event *);
-	void handle_self_events(Event *);
-	void handle_nvram_events(Event *);
-	void handle_storage_events(Event *);
+	void handle_events(CPUNicEvent *e);
+	void handle_net_events(Event *sst_event);
+	void handle_NoC_events(Event *sst_event);
+	void handle_self_events(Event *sst_event);
+	void handle_nvram_events(Event *sst_event);
+	void handle_storage_events(Event *sst_event);
 	Patterns *common;
 
 	// Input paramters for simulation

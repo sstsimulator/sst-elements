@@ -234,7 +234,6 @@ int my_router, dest_router;
 	// Exit to the local (NIC) pattern generator
 	e->route.push_back(FIRST_LOCAL_PORT + (dest % cores_per_router));
 
-#define ROUTE_DEBUG 1
 #if ROUTE_DEBUG
     {
 	char route[128];
