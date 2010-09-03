@@ -199,6 +199,7 @@ int my_router, dest_router;
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= msg_len;
+    e->dest= dest;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
@@ -234,6 +235,8 @@ int my_router, dest_router;
 	// Exit to the local (NIC) pattern generator
 	e->route.push_back(FIRST_LOCAL_PORT + (dest % cores_per_router));
 
+#define ROUTE_DEBUG 1
+#undef ROUTE_DEBUG
 #if ROUTE_DEBUG
     {
 	char route[128];
@@ -264,7 +267,6 @@ int my_router, dest_router;
 	// We assume one node per mesh router
 	my_router= my_node;
 	dest_router= dest_node;
-	fprintf(stderr, "Going from R%d to R%d on a %d * %d mesh\n", my_router, dest_router, mesh_width, mesh_height);
 	gen_route(e, my_router, dest_router, mesh_width, mesh_height);
 
 

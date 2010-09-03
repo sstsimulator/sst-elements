@@ -181,8 +181,8 @@ sst_nvram_param_entries(FILE *sstfile)
 
 
 void
-sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw, int num_cores,
-    pwr_method_t power_method)
+sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t router_bw, int num_cores,
+    int hop_delay, pwr_method_t power_method)
 {
 
     if (sstfile == NULL)   {
@@ -190,8 +190,8 @@ sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw, int num
 	return;
     }
 
-    fprintf(sstfile, "<Rp>\n");
-    fprintf(sstfile, "    <hop_delay> 25 </hop_delay>\n");
+    fprintf(sstfile, "<%s>\n", Rname);
+    fprintf(sstfile, "    <hop_delay> %d </hop_delay>\n", hop_delay);
     fprintf(sstfile, "    <debug> 0 </debug>\n");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
     fprintf(sstfile, "    <bw> %lu </bw>\n", router_bw);
@@ -257,7 +257,7 @@ sst_router_param_start(FILE *sstfile, int num_ports, uint64_t router_bw, int num
 
 
 void
-sst_router_param_end(FILE *sstfile)
+sst_router_param_end(FILE *sstfile, char *Rname)
 {
 
     if (sstfile == NULL)   {
@@ -265,7 +265,7 @@ sst_router_param_end(FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "</Rp>\n");
+    fprintf(sstfile, "</%s>\n", Rname);
     fprintf(sstfile, "\n");
 
 }  /* end of sst_router_param_end() */
@@ -405,7 +405,8 @@ sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FI
 
 
 void
-sst_router_component_start(char *id, float weight, char *cname, int wormhole, FILE *sstfile)
+sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
+	int wormhole, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -415,7 +416,26 @@ sst_router_component_start(char *id, float weight, char *cname, int wormhole, FI
 
     fprintf(sstfile, "    <component id=\"%s\" weight=%.2f>\n", id, weight);
     fprintf(sstfile, "        <routermodel>\n");
-    fprintf(sstfile, "            <params include=Rp>\n");
+    switch (role)   {
+	case Rnet:
+	    fprintf(sstfile, "            <params include=%s>\n", RNAME_NETWORK);
+	    break;
+	case RNoC:
+	    fprintf(sstfile, "            <params include=%s>\n", RNAME_NoC);
+	    break;
+	case RnetPort:
+	    fprintf(sstfile, "            <params include=%s>\n", RNAME_NET_ACCESS);
+	    break;
+	case Rnvram:
+	    fprintf(sstfile, "            <params include=%s>\n", RNAME_NVRAM);
+	    break;
+	case Rstorage:
+	    fprintf(sstfile, "            <params include=%s>\n", RNAME_STORAGE);
+	    break;
+	case RstoreIO:
+	    fprintf(sstfile, "            <params include=%s>\n", RNAME_IO);
+	    break;
+    }
     fprintf(sstfile, "                <component_name> %s </component_name>\n", cname);
     fprintf(sstfile, "                <wormhole> %d </wormhole>\n", wormhole);
 
@@ -586,6 +606,7 @@ char net_link_id[MAX_ID_LEN];
 char nvram_link_id[MAX_ID_LEN];
 char router_id[MAX_ID_LEN];
 char cname[MAX_ID_LEN];
+router_function_t role;
 int wormhole;
 
 
@@ -594,10 +615,10 @@ int wormhole;
     }
 
     reset_router_list();
-    while (next_router(&r, &wormhole))   {
+    while (next_router(&r, &role, &wormhole))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
-	sst_router_component_start(router_id, 1.0, cname, wormhole, sstfile);
+	sst_router_component_start(router_id, 1.0, cname, role, wormhole, sstfile);
 	/*
 	** We have to list the links in order in the params section, so the router
 	** componentn can get the names and create the appropriate links.

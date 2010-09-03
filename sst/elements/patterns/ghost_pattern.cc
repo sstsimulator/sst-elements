@@ -128,13 +128,36 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    // FIXME: I'm guessing at four. Need to revisit this when I am more awake
-    if (e->hops > 4)   {
-	_abort(ghost_pattern, "[%3d] For Ghost, no message should travel through more than four network routers! %d\n",
+    if (e->hops > 5)   {
+	std::vector<uint8_t>::iterator itNum;
+	char str[32];
+	int i= 0;
+
+	sprintf(str, "NETWORK Event route: ");
+	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	    if (i == e->hops)   {
+		sprintf(str, "%s%c", str, '[');
+	    }
+	    // str= str + boost::lexical_cast<std::string>(*itNum);
+	    sprintf(str, "%s%d", str, *itNum);
+	    if (i == e->hops)   {
+		sprintf(str, "%s%c", str, ']');
+	    }
+	    sprintf(str, "%s%c", str, ' ');
+	    i++;
+	}
+	fprintf(stderr, "%s\n", str);
+
+	_abort(ghost_pattern, "[%3d] No message should travel through more than five network routers! %d\n",
 	    my_rank, e->hops);
     }
 
+    if (e->dest != my_rank)   {
+	_abort(ghost_pattern, "NETWORK dest %d != my rank %d\n", e->dest, my_rank);
+    }
+
     handle_events(e);
+
 }  /* end of handle_net_events() */
 
 
@@ -147,12 +170,36 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    if (e->hops > 2)   {
-	_abort(ghost_pattern, "[%3d] For Ghost, no message should travel through more than two NoC routers! %d\n",
+    if (e->hops > 3)   {
+	std::vector<uint8_t>::iterator itNum;
+	char str[32];
+	int i= 0;
+
+	sprintf(str, "NoC Event route: ");
+	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	    if (i == e->hops)   {
+		sprintf(str, "%s%c", str, '[');
+	    }
+	    // str= str + boost::lexical_cast<std::string>(*itNum);
+	    sprintf(str, "%s%d", str, *itNum);
+	    if (i == e->hops)   {
+		sprintf(str, "%s%c", str, ']');
+	    }
+	    sprintf(str, "%s%c", str, ' ');
+	    i++;
+	}
+	fprintf(stderr, "%s\n", str);
+
+	_abort(ghost_pattern, "[%3d] No message should travel through more than three NoC routers! %d\n",
 	    my_rank, e->hops);
     }
 
+    if (e->dest != my_rank)   {
+	_abort(ghost_pattern, "NoC dest %d != my rank %d\n", e->dest, my_rank);
+    }
+
     handle_events(e);
+
 }  /* end of handle_NoC_events() */
 
 
@@ -167,6 +214,7 @@ CPUNicEvent *e;
 
     e= static_cast<CPUNicEvent *>(sst_event);
     handle_events(e);
+
 }  /* end of handle_self_events() */
 
 

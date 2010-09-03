@@ -50,7 +50,7 @@ int wormhole= 1;
 	    #if defined GEN_DEBUG
 		fprintf(stderr, "gen_router(%3d, 5);\n", R);
 	    #endif /* GEN_DEBUG */
-	    gen_router(R, 5, wormhole);
+	    gen_router(R, 5, Rnet, wormhole);
 	}
 	if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
 	    num_routers= net_x_dim * net_y_dim * NoC_x_dim * NoC_y_dim + (net_x_dim * net_y_dim);
@@ -70,7 +70,7 @@ int wormhole= 1;
 	    #if defined GEN_DEBUG
 		fprintf(stderr, "gen_router(%3d, %d);\n", r, 4 + num_cores);
 	    #endif /* GEN_DEBUG */
-	    gen_router(r, 4 + num_cores, flit_based);
+	    gen_router(r, 4 + num_cores, RNoC, flit_based);
 	}
     }
 
@@ -82,7 +82,7 @@ int wormhole= 1;
 	    #if defined GEN_DEBUG
 		fprintf(stderr, "gen_router(%3d, %2d); for net\n", net_aggregator, num_cores + 1);
 	    #endif /* GEN_DEBUG */
-	    gen_router(net_aggregator, num_cores + 1, wormhole);
+	    gen_router(net_aggregator, num_cores + 1, RnetPort, wormhole);
 	    net_aggregator++;
 	}
     }
@@ -93,7 +93,7 @@ int wormhole= 1;
 	#if defined GEN_DEBUG
 	    fprintf(stderr, "gen_router(%3d, %2d); for nvram\n", nvram_aggregator, num_cores + 1);
 	#endif /* GEN_DEBUG */
-	gen_router(nvram_aggregator, num_cores + 1, flit_based);
+	gen_router(nvram_aggregator, num_cores + 1, Rnvram, flit_based);
 	nvram_aggregator++;
     }
 
@@ -104,7 +104,7 @@ int wormhole= 1;
 	    fprintf(stderr, "gen_router(%3d, %2d); for stable storage\n", ss_aggregator,
 		num_cores + 1);
 	#endif /* GEN_DEBUG */
-	gen_router(ss_aggregator, num_cores + 1, wormhole);
+	gen_router(ss_aggregator, num_cores + 1, Rstorage, wormhole);
 	ss_aggregator++;
     }
 
@@ -345,7 +345,7 @@ int wormhole= 1;
 	    fprintf(stderr, "gen_router(%3d, %2d); for I/O nodes\n", IO_aggregator,
 		(net_x_dim * net_y_dim / IO_nodes) + 1);
 	#endif /* GEN_DEBUG */
-	gen_router(IO_aggregator, (net_x_dim * net_y_dim / IO_nodes) + 1, wormhole);
+	gen_router(IO_aggregator, (net_x_dim * net_y_dim / IO_nodes) + 1, RstoreIO, wormhole);
 	gen_nvram(R, IO_aggregator, 0, SSD); /* On port 0 */
 
 	IO_aggregator++;

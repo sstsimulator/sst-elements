@@ -56,7 +56,6 @@ int ch, error;
 int verbose;
 int net_x_dim, net_y_dim;
 int NoC_x_dim, NoC_y_dim;
-int num_ports;
 char *sstFname;
 FILE *fp_sst;
 char *pattern_name;
@@ -352,7 +351,6 @@ pwr_method_t power_method;
     printf("*** Writing output to \"%s\"\n", sstFname);
 
 
-    num_ports= 4 + num_cores;
     GenMesh2D(net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores, IO_nodes);
 
 
@@ -369,11 +367,40 @@ pwr_method_t power_method;
     sst_pwr_param_entries(fp_sst, power_method);
     sst_nvram_param_entries(fp_sst);
 
-    /* We assume the router bandwidth is the same as the link bandwidth */
-    sst_router_param_start(fp_sst, num_ports, net_bw, num_cores, power_method);
-    sst_router_param_end(fp_sst);
-    sst_body_start(fp_sst);
+    /*
+    ** We have several types of routers:
+    ** - Network routers always have five ports, hop_delay 25
+    ** - NoC routers have four + num_cores ports, hop_delay 25
+    ** - Network aggregators have one + (num_cores * NoC_x_dim * NoC_y_dim) ports, hop_delay 25
+    ** - NVRAM aggregators have one + (num_cores * NoC_x_dim * NoC_y_dim) ports, hop_delay 25
+    ** - Storage aggregators have have one + (num_cores * NoC_x_dim * NoC_y_dim) ports, hop_delay 25
+    ** - Stable storage (I/O) aggregators have one + num_nodes / I/O nodes, hop_delay 25
+    */
 
+    /* We assume the router bandwidth is the same as the link bandwidth */
+    sst_router_param_start(fp_sst, RNAME_NETWORK, 5, net_bw, num_cores, 25, power_method);
+    sst_router_param_end(fp_sst, RNAME_NETWORK);
+
+    sst_router_param_start(fp_sst, RNAME_NoC, 4 + num_cores, node_bw, num_cores, 25, power_method);
+    sst_router_param_end(fp_sst, RNAME_NoC);
+
+    sst_router_param_start(fp_sst, RNAME_NET_ACCESS, 1 + (num_cores * NoC_x_dim * NoC_y_dim),
+	node_bw, num_cores, 25, pwrNone);
+    sst_router_param_end(fp_sst, RNAME_NET_ACCESS);
+
+    sst_router_param_start(fp_sst, RNAME_NVRAM, 1 + (num_cores * NoC_x_dim * NoC_y_dim), node_bw,
+	num_cores, 25, pwrNone);
+    sst_router_param_end(fp_sst, RNAME_NVRAM);
+
+    sst_router_param_start(fp_sst, RNAME_STORAGE, 1 + (num_cores * NoC_x_dim * NoC_y_dim), node_bw,
+	num_cores, 25, pwrNone);
+    sst_router_param_end(fp_sst, RNAME_STORAGE);
+
+    sst_router_param_start(fp_sst, RNAME_IO, 1 + num_nodes / IO_nodes, net_bw, num_cores, 25,
+	pwrNone);
+    sst_router_param_end(fp_sst, RNAME_IO);
+
+    sst_body_start(fp_sst);
     sst_pwr_component(fp_sst, power_method);
     sst_pattern_generators(pattern_name, fp_sst);
     sst_nvram(fp_sst);
