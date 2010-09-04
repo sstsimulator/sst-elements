@@ -79,6 +79,7 @@ uint8_t out_port;
 	arrival_delay= port[in_port].next_in - current_time;
 
 	// FIXME: I am not sure these are meaningful statistics
+	port[in_port].next_in= current_time + arrival_delay;
 	congestion_in_cnt++;
 	congestion_in += arrival_delay;
 	e->congestion_cnt++;
