@@ -76,6 +76,7 @@ uint64_t chckpt_delay;	/* How long to write a checkpoint in ns */
 uint64_t chckpt_interval;	/* How long between checkpoints in ns */
 uint64_t envelope_write_time;	/* How long to write receive envelope info */
 char *power_model;	/* Which, if any, power model to use */
+int wormhole;
 pwr_method_t power_method;
 
 
@@ -378,26 +379,33 @@ pwr_method_t power_method;
     */
 
     /* We assume the router bandwidth is the same as the link bandwidth */
-    sst_router_param_start(fp_sst, RNAME_NETWORK, 5, net_bw, num_cores, 25, power_method);
+    wormhole= TRUE;
+    sst_router_param_start(fp_sst, RNAME_NETWORK, 5, net_bw, num_cores, 25, wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NETWORK);
 
-    sst_router_param_start(fp_sst, RNAME_NoC, 4 + num_cores, node_bw, num_cores, 25, power_method);
+    wormhole= FALSE;
+    sst_router_param_start(fp_sst, RNAME_NoC, 4 + num_cores, node_bw, num_cores, 25, wormhole,
+	power_method);
     sst_router_param_end(fp_sst, RNAME_NoC);
 
+    wormhole= TRUE;
     sst_router_param_start(fp_sst, RNAME_NET_ACCESS, 1 + (num_cores * NoC_x_dim * NoC_y_dim),
-	node_bw, num_cores, 25, pwrNone);
+	node_bw, num_cores, 25, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NET_ACCESS);
 
+    wormhole= FALSE;
     sst_router_param_start(fp_sst, RNAME_NVRAM, 1 + (num_cores * NoC_x_dim * NoC_y_dim), node_bw,
-	num_cores, 25, pwrNone);
+	num_cores, 25, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NVRAM);
 
+    wormhole= TRUE;
     sst_router_param_start(fp_sst, RNAME_STORAGE, 1 + (num_cores * NoC_x_dim * NoC_y_dim), node_bw,
-	num_cores, 25, pwrNone);
+	num_cores, 25, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_STORAGE);
 
+    wormhole= FALSE;
     sst_router_param_start(fp_sst, RNAME_IO, 1 + num_nodes / IO_nodes, net_bw, num_cores, 25,
-	pwrNone);
+	wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_IO);
 
     sst_body_start(fp_sst);

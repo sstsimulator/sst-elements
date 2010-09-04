@@ -106,7 +106,7 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
 
     fprintf(sstfile, "<LocalNVRAMaccess>\n");
     fprintf(sstfile, "    <name> NVRAM </name>\n");
-    fprintf(sstfile, "    <lat> %luns </lat>\n", net_latency);
+    fprintf(sstfile, "    <lat> %luns </lat>\n", node_latency);
     fprintf(sstfile, "</LocalNVRAMaccess>\n");
     fprintf(sstfile, "\n");
 
@@ -182,7 +182,7 @@ sst_nvram_param_entries(FILE *sstfile)
 
 void
 sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t router_bw, int num_cores,
-    int hop_delay, pwr_method_t power_method)
+    int hop_delay, int wormhole, pwr_method_t power_method)
 {
 
     if (sstfile == NULL)   {
@@ -195,6 +195,7 @@ sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t route
     fprintf(sstfile, "    <debug> 0 </debug>\n");
     fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
     fprintf(sstfile, "    <bw> %lu </bw>\n", router_bw);
+    fprintf(sstfile, "    <wormhole> %d </wormhole>\n", wormhole);
 
     if (power_method == pwrNone)   {
 	/* Nothing to do */
@@ -406,7 +407,7 @@ sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FI
 
 void
 sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
-	int wormhole, FILE *sstfile)
+	FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -437,7 +438,6 @@ sst_router_component_start(char *id, float weight, char *cname, router_function_
 	    break;
     }
     fprintf(sstfile, "                <component_name> %s </component_name>\n", cname);
-    fprintf(sstfile, "                <wormhole> %d </wormhole>\n", wormhole);
 
 }  /* end of sst_router_component_start() */
 
@@ -618,7 +618,7 @@ int wormhole;
     while (next_router(&r, &role, &wormhole))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
-	sst_router_component_start(router_id, 1.0, cname, role, wormhole, sstfile);
+	sst_router_component_start(router_id, 1.0, cname, role, sstfile);
 	/*
 	** We have to list the links in order in the params section, so the router
 	** componentn can get the names and create the appropriate links.

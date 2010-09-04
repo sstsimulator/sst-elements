@@ -26,7 +26,7 @@ void sst_header(FILE *sstfile);
 void sst_footer(FILE *dotfile);
 
 void sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t router_bw,
-	int num_cores, int hop_delay, pwr_method_t power_method);
+	int num_cores, int hop_delay, int wormhole, pwr_method_t power_method);
 void sst_router_param_end(FILE *sstfile, char *Rname);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
@@ -44,7 +44,7 @@ void sst_body_end(FILE *sstfile);
 void sst_body_start(FILE *sstfile);
 
 void sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
-	int wormhole, FILE *sstfile);
+	FILE *sstfile);
 void sst_router_component_end(FILE *sstfile);
 void sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *sstfile);
 
