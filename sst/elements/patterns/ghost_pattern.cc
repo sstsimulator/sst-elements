@@ -128,9 +128,9 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    if (e->hops > 5)   {
+    if (e->hops > 6)   {
 	std::vector<uint8_t>::iterator itNum;
-	char str[32];
+	char str[132];
 	int i= 0;
 
 	sprintf(str, "NETWORK Event route: ");
@@ -148,8 +148,8 @@ CPUNicEvent *e;
 	}
 	fprintf(stderr, "%s\n", str);
 
-	_abort(ghost_pattern, "[%3d] No message should travel through more than five network routers! %d\n",
-	    my_rank, e->hops);
+	_abort(ghost_pattern, "[%3d] No message should travel through more than five network "
+	    "routers! %d\n", my_rank, e->hops);
     }
 
     if (e->dest != my_rank)   {
@@ -172,7 +172,7 @@ CPUNicEvent *e;
     e= static_cast<CPUNicEvent *>(sst_event);
     if (e->hops > 3)   {
 	std::vector<uint8_t>::iterator itNum;
-	char str[32];
+	char str[132];
 	int i= 0;
 
 	sprintf(str, "NoC Event route: ");
@@ -190,8 +190,8 @@ CPUNicEvent *e;
 	}
 	fprintf(stderr, "%s\n", str);
 
-	_abort(ghost_pattern, "[%3d] No message should travel through more than three NoC routers! %d\n",
-	    my_rank, e->hops);
+	_abort(ghost_pattern, "[%3d] No message should travel through more than three NoC "
+	    "routers! %d\n", my_rank, e->hops);
     }
 
     if (e->dest != my_rank)   {

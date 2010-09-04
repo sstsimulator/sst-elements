@@ -255,6 +255,10 @@ int my_router, dest_router;
 #endif  // ROUTE_DEBUG
 
 	// Send it
+	// FIXME: Multile sends during processing of a single events should be
+	// delayed, since they don't really ocur all at exactly the same nano second.
+	// However, since they go out on the same link, the router at the other end
+	// will delay them according to their length and link bandwidth.
 	my_NoC_link->Send(delay, e);
 
     } else   {

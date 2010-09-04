@@ -32,19 +32,43 @@ function runP ()
     mpiexec -n 1 $PREFIX/bin/sst.x --sdl-file $f
 }
 
-genP 1 1 2 2 1 "ghost"
-genP 2 2 2 2 1 "ghost"
-genP 4 2 2 2 2 "ghost"
-genP 4 2 2 2 8 "ghost"
-genP 4 2 1 1 4 "ghost"
-genP 16 4 1 1 1 "ghost"
-genP 16 4 8 8 16 "ghost"
+
+
+if [[ $# > 0 ]] ; then
+    echo
+    echo
+    echo
+    echo "*****************************************************************************************"
+    echo "Skipping XML file generation. Hoping they already exist..."
+    echo "*****************************************************************************************"
+    echo
+    echo
+    echo
+else
+    genP 1 1 2 2 1 "ghost"
+    genP 2 2 2 2 1 "ghost"
+    genP 4 2 2 2 2 "ghost"
+    genP 4 2 2 2 8 "ghost"
+    genP 4 2 1 1 4 "ghost"
+    genP 16 4 1 1 1 "ghost"
+    genP 16 4 8 8 16 "ghost"
+fi
 
 runP 1 1 2 2 1 "ghost"
 runP 2 2 2 2 1 "ghost"
-runP 4 2 2 2 2 "ghost"		# fails with a huge seg fault in Ghost_pattern::handle_net_events()
-runP 4 2 2 2 8 "ghost"		# fails with a huge seg fault in Ghost_pattern::handle_net_events()
+runP 4 2 2 2 2 "ghost"
+runP 4 2 2 2 8 "ghost"
 runP 4 2 1 1 4 "ghost"		# fails with a huge seg fault in Ghost_pattern::handle_net_events()
-runP 16 4 1 1 1 "ghost"		# works
+runP 16 4 1 1 1 "ghost"
+
+echo
+echo
+echo
+echo "*****************************************************************************************"
+echo " The next test will need more than 2 GB of memory!!!!!!"
+echo "*****************************************************************************************"
+echo
+echo
+echo
 runP 16 4 8 8 16 "ghost"	# Needs more than 2 GB RAM!
 
