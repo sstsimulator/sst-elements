@@ -128,29 +128,6 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    if (e->hops > 6)   {
-	std::vector<uint8_t>::iterator itNum;
-	char str[132];
-	int i= 0;
-
-	sprintf(str, "NETWORK Event route: ");
-	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    if (i == e->hops)   {
-		sprintf(str, "%s%c", str, '[');
-	    }
-	    // str= str + boost::lexical_cast<std::string>(*itNum);
-	    sprintf(str, "%s%d", str, *itNum);
-	    if (i == e->hops)   {
-		sprintf(str, "%s%c", str, ']');
-	    }
-	    sprintf(str, "%s%c", str, ' ');
-	    i++;
-	}
-	fprintf(stderr, "%s\n", str);
-
-	_abort(ghost_pattern, "[%3d] No message should travel through more than five network "
-	    "routers! %d\n", my_rank, e->hops);
-    }
 
     if (e->dest != my_rank)   {
 	_abort(ghost_pattern, "NETWORK dest %d != my rank %d\n", e->dest, my_rank);
@@ -170,29 +147,6 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    if (e->hops > 3)   {
-	std::vector<uint8_t>::iterator itNum;
-	char str[132];
-	int i= 0;
-
-	sprintf(str, "NoC Event route: ");
-	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    if (i == e->hops)   {
-		sprintf(str, "%s%c", str, '[');
-	    }
-	    // str= str + boost::lexical_cast<std::string>(*itNum);
-	    sprintf(str, "%s%d", str, *itNum);
-	    if (i == e->hops)   {
-		sprintf(str, "%s%c", str, ']');
-	    }
-	    sprintf(str, "%s%c", str, ' ');
-	    i++;
-	}
-	fprintf(stderr, "%s\n", str);
-
-	_abort(ghost_pattern, "[%3d] No message should travel through more than three NoC "
-	    "routers! %d\n", my_rank, e->hops);
-    }
 
     if (e->dest != my_rank)   {
 	_abort(ghost_pattern, "NoC dest %d != my rank %d\n", e->dest, my_rank);

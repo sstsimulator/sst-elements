@@ -291,6 +291,11 @@ pwr_method_t power_method;
 	fprintf(stderr, "Can't handle NoC rings yet! Increase x or y dimension.\n");
     }
 
+    if ((NoC_x_dim * NoC_y_dim == 1) && (num_cores > 1))   {
+	error= TRUE;
+	fprintf(stderr, "Can't handle single router NoC (1x1) with more than one core each!\n");
+    }
+
     if (!is_pow2(num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim))   {
 	error= TRUE;
 	fprintf(stderr, "Total number of cores must be power of two!\n");

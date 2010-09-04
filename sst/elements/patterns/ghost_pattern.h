@@ -259,6 +259,10 @@ class Ghost_pattern : public Component {
 	    int logical_height= y_dim * NoC_y_dim;
 	    int myX= my_rank % logical_width;
 	    int myY= my_rank / logical_width;
+	    if (my_rank == 0)   {
+		printf("||| Arranging ranks as a %d * %d logical mesh\n",
+		    logical_width, logical_height);
+	    }
 
 	    right= ((myX + 1) % (logical_width)) + (myY * (logical_width));
 	    left= ((myX - 1 + (logical_width)) % (logical_width)) + (myY * (logical_width));

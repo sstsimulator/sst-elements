@@ -47,18 +47,20 @@ if [[ $# > 0 ]] ; then
 else
     genP 1 1 2 2 1 "ghost"
     genP 2 2 2 2 1 "ghost"
+    genP 2 2 4 4 16 "ghost"
     genP 4 2 2 2 2 "ghost"
     genP 4 2 2 2 8 "ghost"
-    genP 4 2 1 1 4 "ghost"
+    genP 4 4 1 1 1 "ghost"
     genP 16 4 1 1 1 "ghost"
     genP 16 4 8 8 16 "ghost"
 fi
 
 runP 1 1 2 2 1 "ghost"
 runP 2 2 2 2 1 "ghost"
+runP 2 2 4 4 16 "ghost"		# Fails
 runP 4 2 2 2 2 "ghost"
 runP 4 2 2 2 8 "ghost"
-runP 4 2 1 1 4 "ghost"		# fails with a huge seg fault in Ghost_pattern::handle_net_events()
+runP 4 4 1 1 1 "ghost"
 runP 16 4 1 1 1 "ghost"
 
 echo
