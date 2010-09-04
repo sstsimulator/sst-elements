@@ -163,6 +163,10 @@ SimTime_t delay;
 
 
 
+// Save the lower 27 bits of the event ID for the rank number
+#define RANK_FIELD		(27)
+
+
 // There is a lot of hardcoded information about how the network is wired.
 // the program genPatterns generates XML files with routers that have
 // the following port connections:
@@ -191,6 +195,7 @@ Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t 
 CPUNicEvent *e;
 int my_node, dest_node;
 int my_router, dest_router;
+static uint64_t seq= 1;
 
 
     // Create an event and fill in the event info
@@ -200,6 +205,7 @@ int my_router, dest_router;
     e->hops= 0;
     e->msg_len= msg_len;
     e->dest= dest;
+    e->msg_id= (seq++ << RANK_FIELD) | my_rank;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
@@ -235,19 +241,19 @@ int my_router, dest_router;
 	// Exit to the local (NIC) pattern generator
 	e->route.push_back(FIRST_LOCAL_PORT + (dest % cores_per_router));
 
-#define ROUTE_DEBUG 1
 #undef ROUTE_DEBUG
 #if ROUTE_DEBUG
     {
 	char route[128];
-	std::vector<uint8_t>::iterator itNum;
-	int i= 0;
+	char tmp[128];
+	route[0]= 0;
+	tmp[0]= 0;
+	std::vector<int>::iterator itNum;
 
 	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    route[i++]= '0' + *itNum;
-	    route[i++]= '.';
+	    sprintf(tmp, "%s.%d", route, *itNum);
+	    strcpy(route, tmp);
 	}
-	route[i++]= 0;
 
 	fprintf(stderr, "NoC Event %d from %d --> %d, delay %lu, route %s\n", event,
 	     my_rank, dest, (uint64_t)delay, route);
@@ -287,14 +293,15 @@ int my_router, dest_router;
 #if ROUTE_DEBUG
     {
 	char route[128];
-	std::vector<uint8_t>::iterator itNum;
-	int i= 0;
+	char tmp[128];
+	route[0]= 0;
+	tmp[0]= 0;
+	std::vector<int>::iterator itNum;
 
 	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    route[i++]= '0' + *itNum;
-	    route[i++]= '-';
+	    sprintf(tmp, "%s.%d", route, *itNum);
+	    strcpy(route, tmp);
 	}
-	route[i++]= 0;
 
 	fprintf(stderr, "Net Event %d from %d --> %d, delay %lu, route %s\n", event,
 	     my_rank, dest, (uint64_t)delay, route);

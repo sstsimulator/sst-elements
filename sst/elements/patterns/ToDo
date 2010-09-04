@@ -7,10 +7,6 @@
     DONE Initially, just a component to consume events
     Then act on reads, do the proper delays, and route acks back
 
-- ghost_pattern
-    DONE Create handlers for NETWORK, NoC, (and NVRAM, STORAGE)
-    DONE Update routing algorithm
-
 - Flits in router
 
 Arch model
@@ -57,12 +53,12 @@ Arch model
 
     - Collect metrics at end of simulation and print
 
-- Router model needs to implement a getPower method
-    Basically number of port accesses since last power query
-    Introspector will call this periodically
-
 
 DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE
+
+- ghost_pattern
+    DONE Create handlers for NETWORK, NoC, (and NVRAM, STORAGE)
+    DONE Update routing algorithm
 
 - genPatterns
     DONE If X * Y = 1, don't generate aggregator and links to it
@@ -70,6 +66,10 @@ DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE
     DONE Link between net aggregator and net router
     DONE Aggregators for NVRAMlocal and StableStorage
     DONE Select wormhole or flit-based for each router
+
+- Router model needs to implement a getPower method
+    Basically number of port accesses since last power query
+    Introspector will call this periodically
 
 - Power parameters in genPattern
 

@@ -45,6 +45,9 @@ if [[ $# > 0 ]] ; then
     echo
     echo
 else
+    # We can't do 1x1 NoC with more than 1 core per router at the moment.
+    # It creates an illegal XML file because the NoC router would have
+    # two ports with the same link on it.
     genP 1 1 2 2 1 "ghost"
     genP 2 2 2 2 1 "ghost"
     genP 2 2 4 4 16 "ghost"
@@ -57,7 +60,7 @@ fi
 
 runP 1 1 2 2 1 "ghost"
 runP 2 2 2 2 1 "ghost"
-runP 2 2 4 4 16 "ghost"		# Fails
+runP 2 2 4 4 16 "ghost"
 runP 4 2 2 2 2 "ghost"
 runP 4 2 2 2 8 "ghost"
 runP 4 4 1 1 1 "ghost"
