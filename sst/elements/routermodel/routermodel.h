@@ -100,12 +100,12 @@ class Routermodel : public IntrospectedComponent {
 		    if (!it->second.compare("McPAT"))   {
 			powerModel= McPAT;
 			ifModelPower= true;
-			_ROUTER_MODEL_DBG(1, "Router %s: Power modeling enabled, using McPAT\n",
+			_ROUTER_MODEL_DBG(1, "%s: Power modeling enabled, using McPAT\n",
 			    component_name.c_str());
 		    } else if (!it->second.compare("ORION"))   {
 			powerModel= ORION;
 			ifModelPower= true;
-			_ROUTER_MODEL_DBG(1, "Router %s: Power modeling enabled, using ORION\n",
+			_ROUTER_MODEL_DBG(1, "%s: Power modeling enabled, using ORION\n",
 			    component_name.c_str());
 		    } else   {
 			_abort(Routermodel, "Unknown power model!\n");

@@ -17,6 +17,10 @@
 #include "routermodel.h"
 
 
+// The lower 27 bits of the event ID are the rank number, high order bits are sequence
+#define RANK_FIELD              (27)
+
+
 
 void
 Routermodel::handle_port_events(Event *event, int in_port)
@@ -25,37 +29,45 @@ Routermodel::handle_port_events(Event *event, int in_port)
 SimTime_t current_time;
 SimTime_t delay;
 SimTime_t link_time;
-uint8_t out_port;
+int out_port;
 
 
     // Check for routing algorithm problems
     assert((in_port >= 0) && (in_port < num_ports));
 
     current_time= getCurrentSimTime();
-    _ROUTER_MODEL_DBG(3, "Router %s got an event from port %d at time %lu\n",
-	component_name.c_str(), in_port, (uint64_t)current_time);
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
+
+    _ROUTER_MODEL_DBG(3, "%s in port %d, time %lu, src %lu, seq %lu\n",
+	component_name.c_str(), in_port, (uint64_t)current_time,
+	e->msg_id & ((1 << RANK_FIELD) - 1),
+	e->msg_id >> RANK_FIELD);
     port[in_port].cnt_in++;
 
 
 #if DBG_ROUTER_MODEL > 1
     /* Diagnostic: print the route this event is taking */
     if (router_model_debug >= 4)   {
-	std::vector<uint8_t>::iterator itNum;
-	char str[32];
+	std::vector<int>::iterator itNum;
+	char str[132];
+	char tmp[132];
 	int i= 0;
 
-	sprintf(str, "Event route: ");
+	sprintf(str, "%s event route: ", component_name.c_str());
 	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
 	    if (i == e->hops)   {
-		sprintf(str, "%s%c", str, '[');
+		sprintf(tmp, "%s%c", str, '[');
+		strcpy(str, tmp);
 	    }
 	    // str= str + boost::lexical_cast<std::string>(*itNum);
-	    sprintf(str, "%s%d", str, *itNum);
+	    sprintf(tmp, "%s%d", str, *itNum);
+	    strcpy(str, tmp);
 	    if (i == e->hops)   {
-		sprintf(str, "%s%c", str, ']');
+		sprintf(tmp, "%s%c", str, ']');
+		strcpy(str, tmp);
 	    }
-	    sprintf(str, "%s%c", str, ' ');
+	    sprintf(tmp, "%s%c", str, ' ');
+	    strcpy(str, tmp);
 	    i++;
 	}
 	_ROUTER_MODEL_DBG(4, "%s\n", str);
@@ -127,9 +139,6 @@ uint8_t out_port;
     port[out_port].next_out= current_time + delay + link_time;
 
     e->hops++;
-
-    _ROUTER_MODEL_DBG(3, "Sending message out on port %d at time %lu with delay %lu\n",
-	out_port, (uint64_t)current_time, (uint64_t)delay);
 
     port[out_port].link->Send(delay, e);
 
