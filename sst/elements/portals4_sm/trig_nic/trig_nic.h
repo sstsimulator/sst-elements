@@ -74,8 +74,14 @@ private:
     // here.
     int dma_q_max_size;
 
+    typedef union {
+	int64_t int_val;
+	double dbl_val;
+    } atomic_cache_entry;
+    
     std::map<int,MessageStream*> streams;
-
+    std::map<unsigned long,atomic_cache_entry*> atomic_cache;
+    
     ptl_int_dma_t* dma_req;
     bool dma_in_progress;
 
@@ -119,7 +125,10 @@ private:
     }
 
     void scheduleUpdateHostCT(ptl_handle_ct_t ct_handle);
-    void scheduleCTInc(ptl_handle_ct_t ct_handle);
+    void scheduleCTInc(ptl_handle_ct_t ct_handle, SimTime_t delay);
+
+    double computeDoubleAtomic(unsigned long addr, double value, ptl_op_t op);
+    int64_t computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op);
     
 };
 

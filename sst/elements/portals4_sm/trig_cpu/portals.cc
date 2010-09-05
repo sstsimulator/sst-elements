@@ -261,18 +261,6 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 			void *user_ptr, ptl_hdr_data_t hdr_data,
 			ptl_op_t operation, ptl_datatype_t datatype) {
     
-    //   if ( cpu->my_id == 0 ) {
-    //     printf("%5d:  PtlAtomic @ %lu to %d\n",cpu->my_id,cpu->getCurrentSimTimeNano()-cpu->start_time,target_id);
-    //   }
-    // Ignoring most of the parameters.  No actual data movement and
-    // only faking 8-byte moves.
-
-    // For now, only doing persistent all-wildcard me, so don't need
-    // to send much of the information.  Do need to send the
-    // following:
-    // target_id, pt_index
-
-    
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
     event->dest = target_id;
@@ -280,16 +268,45 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 
     event->portals = true;
     event->latency = cpu->latency/2;
+    event->head_packet = true;
 
-    event->ptl_data[0] = pt_index;
-    event->ptl_data[1] = PTL_OP_ATOMIC;
-    //     event->ptl_data[2] = match_bits;
-    event->ptl_data[2] = match_bits & 0xffffffff;
-    event->ptl_data[3] = (match_bits >> 32) & 0xffffffff;
+    ptl_header_t header;
+    header.pt_index = pt_index;
+    header.op = PTL_OP_ATOMIC;
+    header.length = length;
+    header.match_bits = match_bits;
+    header.remote_offset = remote_offset;
+    header.atomic_op = operation;
+//     header.atomic_datatype = datatype;
+    
+    // Copy the header into the first half of the packet payload
+    memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
 
-//     cpu->nic->Send(cpu->busy,event);
-    cpu->writeToNIC(event);
-    cpu->busy += cpu->msg_rate_delay;
+    // Currently only support up to 8-bytes
+    if ( length <= 8 ) { // Single packet
+	event->stream = PTL_HDR_STREAM_PIO;
+	memcpy(&event->ptl_data[8],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
+      	cpu->writeToNIC(event);
+	cpu->busy += cpu->delay_host_pio_write;
+
+	// Need to send a CTInc if there is a ct_handle specified
+	if ( md_handle->ct_handle != PTL_CT_NONE ) {
+	    // Treat it like a PIO, but set the length the 0 and all
+	    // that will happen is the CTInc will be sent
+  	    cpu->pio_in_progress = true;
+	    pio_length_rem = 0;
+	    pio_ct_handle = md_handle->ct_handle;
+	}
+    }
+    else {
+	printf("Attempting to initiate an atomic greater than 8-bytes\n");
+	abort();
+    }
+    
+
+
+    //     cpu->writeToNIC(event);
+//     cpu->busy += cpu->msg_rate_delay;
 }
 
 
@@ -409,23 +426,12 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
     event->ptl_op = PTL_NIC_TRIG;
-//     event->operation = new ptl_int_nic_op_t;
-//     event->operation->op_type = PTL_NIC_TRIG;
-//     event->operation->data.trig = trig_op;
     event->ptl_op = PTL_NIC_TRIG;
     event->data.trig = trig_op;
-    //     cpu->nic->Send(event);
     cpu->writeToNIC(event);
     
-    // The processor is tied up for 1/msgrate
-    //     if (cpu->my_id == 0 ) {
-    // 	printf("%5d: msg_rate_delay = %d, busy = %d\n",cpu->my_id,cpu->msg_rate_delay,cpu->busy);
-    //     }
     cpu->busy += cpu->delay_host_pio_write;
 
-    //     printf("%d:  posting triggered put\n",cpu->my_id);
-    //     ptl_ct_events[trig_ct_handle].trig_op_list.push_back(trig_op);
-    
 }
 
 void
@@ -437,42 +443,51 @@ portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 			    ptl_op_t operation, ptl_datatype_t datatype,
 			    ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold) {
 
-    //   if ( cpu->my_id == 0 )
-    //     printf("%5d:  PtlTriggeredAtomic @ %lu to %d\n",cpu->my_id,cpu->getCurrentSimTimeNano()-cpu->start_time,target_id);
-    //     if ( cpu->my_id == 0 ) {
-    // 	printf("%5d:  PostingTriggeredAtomic(%d,%d,%d,%d) @ %lu\n",cpu->my_id,target_id,pt_index,trig_ct_handle,threshold,
-    // 	       cpu->getCurrentSimTimeNano());
-    //     }
     // Create an op structure
     ptl_int_op_t* op = new ptl_int_op_t;
     op->op_type = PTL_OP_ATOMIC;
     op->target_id = target_id;
     op->pt_index = pt_index;
     op->match_bits = match_bits;
+    op->atomic_op = operation;
+//     op->atomic_datatype = datatype;
 
+    // Add the dma request that is used when triggered
+    op->dma = new ptl_int_dma_t;
+    op->dma->start = md_handle->start;
+    op->dma->length = length;
+    op->dma->offset = local_offset;
+    op->dma->target_id = target_id;
+    op->dma->stream = PTL_HDR_STREAM_TRIG;
+    op->dma->ct_handle = md_handle->ct_handle;
+    
+    // Add the header which will be sent when triggered
+    op->ptl_header = new ptl_header_t;
+    op->ptl_header->pt_index = pt_index;
+    op->ptl_header->op = PTL_OP_ATOMIC;
+    op->ptl_header->length = length;
+    op->ptl_header->match_bits = match_bits;
+    op->ptl_header->remote_offset = remote_offset;
+    op->ptl_header->atomic_op = operation;
+//     op->ptl_header->atomic_datatype = datatype;
+
+    
     // Create a triggered op structure
     ptl_int_trig_op_t* trig_op = new ptl_int_trig_op_t;
     trig_op->op = op;
     trig_op->trig_ct_handle = trig_ct_handle;
     trig_op->threshold = threshold;
 
-    
     // Need to send this object to the NIC with latency = 30% latency
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
     event->ptl_op = PTL_NIC_TRIG;
-//     event->operation = new ptl_int_nic_op_t;
-//     event->operation->op_type = PTL_NIC_TRIG;
-//     event->operation->data.trig = trig_op;
     event->ptl_op = PTL_NIC_TRIG;
     event->data.trig = trig_op;
-    cpu->nic->Send(event);
+    cpu->writeToNIC(event);
     
-    // The processor is tied up for 1/msgrate
     cpu->busy += cpu->delay_host_pio_write;
 
-    //     printf("%d:  posting triggered atomic\n",cpu->my_id);
-    //     ptl_ct_events[trig_ct_handle].trig_op_list.push_back(trig_op);
 }
 
 void

@@ -19,9 +19,9 @@
 
 typedef uint32_t ptl_size_t;
 
-typedef int32_t ptl_handle_ct_t;
+typedef int16_t ptl_handle_ct_t;
 typedef int32_t ptl_handle_eq_t;
-typedef int16_t ptl_pt_index_t;
+typedef int8_t ptl_pt_index_t;
 typedef uint32_t ptl_ack_req_t;
 
 typedef uint64_t ptl_process_id_t;
@@ -121,13 +121,15 @@ typedef struct {
 } ptl_int_dma_t;
 
 typedef struct {
-  ptl_pt_index_t   pt_index;
-  uint16_t         op;
-  uint32_t         length;
-  ptl_match_bits_t match_bits;
-  ptl_size_t       remote_offset;
-  ptl_handle_ct_t  get_ct_handle;
-  void *           get_start;
+    ptl_pt_index_t   pt_index;       // 1 bytes
+    uint8_t          op;             // 1 bytes
+    ptl_handle_ct_t  get_ct_handle;  // 2 bytes
+    uint32_t         length;         // 4 bytes
+    ptl_match_bits_t match_bits;     // 8 bytes
+    ptl_size_t       remote_offset;  // 4 bytes
+    ptl_op_t         atomic_op;      // 4 bytes
+/*     ptl_datatype_t   atomic_datatype;// 4 bytes */
+    void *           get_start;      // 8 bytes
 } ptl_header_t;
 
 typedef struct {
@@ -137,6 +139,8 @@ typedef struct {
     ptl_match_bits_t match_bits;
     ptl_handle_ct_t ct_handle;
     ptl_size_t increment;
+    int8_t           atomic_op;
+    int8_t           atomic_datatype;
     ptl_int_dma_t* dma;
     ptl_header_t* ptl_header;
 } ptl_int_op_t;
@@ -193,11 +197,13 @@ typedef struct {
 
 
 // defines to put flags in the header flit of the packet
-#define PTL_HDR_PORTALS     0x1
-#define PTL_HDR_HEAD_PACKET 0x2
-#define PTL_HDR_STREAM_PIO  0x10000000
-#define PTL_HDR_STREAM_DMA  0x20000000
-#define PTL_HDR_STREAM_TRIG 0x30000000
-#define PTL_HDR_STREAM_GET  0x40000000
+#define PTL_HDR_PORTALS             0x1
+#define PTL_HDR_HEAD_PACKET         0x2
+#define PTL_HDR_STREAM_PIO          0x10000000
+#define PTL_HDR_STREAM_DMA          0x20000000
+#define PTL_HDR_STREAM_TRIG         0x30000000
+#define PTL_HDR_STREAM_GET          0x40000000
+#define PTL_HDR_STREAM_TRIG_ATOMIC  0x50000000
+
 
 #endif // COMPONENTS_TRIG_CPU_PORTALS_TYPES_H

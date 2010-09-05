@@ -34,12 +34,6 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     new_dma(true)
 {
 
-//     ClockHandler_t*  clockHandler = new EventHandler< trig_nic, bool, Cycle_t >
-//         ( this, &trig_nic::clock_handler );
-
-//     if ( ! registerClock( frequency, clockHandler, false  ) ) {
-//         _abort(trig_nic,"couldn't register clock handler");
-//     }
     registerClock( frequency, new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler), false  );
  
     if ( params.find("latency") == params.end() ) {
@@ -60,14 +54,14 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     
     cpu_link = configureLink( "cpu", new Event::Handler<trig_nic>(this,&trig_nic::processCPUEvent) );
 
-//     // Setup a direct self link for messages headed to the router
+    // Setup a direct self link for messages headed to the router
     self_link = configureSelfLink( "self" );
     
-//     // Set up the portals link to delay incoming commands the
-//     // appropriate time.
+    // Set up the portals link to delay incoming commands the
+    // appropriate time.
     ptl_link = configureSelfLink("self_ptl", new Event::Handler<trig_nic>(this,&trig_nic::processPtlEvent) );
 
-//     // Set up the dma link
+    // Set up the dma link
     dma_link = configureSelfLink("self_dma", new Event::Handler<trig_nic>(this,&trig_nic::processDMAEvent) );
     
     // Initialize all the portals elements
@@ -226,38 +220,52 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     
     // Check to see if we have anything in the dma_q to send out
     if ( adv_dma ) {
-      // See if there is room in the output q
-      if (rtr_q_size < rtr_q_max_size) {
+	// See if there is room in the output q
+	if (rtr_q_size < rtr_q_max_size) {
 	rtr_q_size++;
 
 	trig_nic_event* ev;
 	// If new_dma is true, then we need to send the header first
 	if ( new_dma ) {
-	  if ( dma_hdr_q.empty() ) {
-	    printf("There should be a dma header, but there isn't\n");
-	    abort();
-	  }
-	  ev = dma_hdr_q.front();
+	    if ( dma_hdr_q.empty() ) {
+		printf("There should be a dma header, but there isn't\n");
+		abort();
+	    }
+	    // Need to add special case for Atomic (will really just
+	    // be for TriggeredAtomic).  Need to copy payload into
+	    // single packet instead of multiple packets.
+	    ev = dma_hdr_q.front();
 	    dma_hdr_q.pop();
-            ev->ptl_op = PTL_NO_OP;
-	    self_link->Send(ptl_msg_latency,ev);
-	    new_dma = false;
+	    ev->ptl_op = PTL_NO_OP;
+	    if ( ev->stream == PTL_HDR_STREAM_TRIG_ATOMIC ) {
+		// Also need to get the data from the other event and
+		// pop it from the dma_q.
+		trig_nic_event* ev2 = dma_q.front();
+		dma_q.pop();
+		memcpy(&ev->ptl_data[8],ev2->ptl_data,8);
+		self_link->Send(ptl_msg_latency,ev);
+		delete ev2;
+	    }
+	    else {
+		self_link->Send(ptl_msg_latency,ev);
+		new_dma = false;
+	    }
 	}
 	else {
 	    ev = dma_q.front();
 	    dma_q.pop();
             ev->ptl_op = PTL_NO_OP;
-
-// 	    if ( ev->operation->data.dma->end ) {
+	    
+	    // 	    if ( ev->operation->data.dma->end ) {
 	    if ( ev->data.dma->end ) {
 	        // Since this is the end, the next one through will
 	        // need to send it's header first
 	        new_dma = true;
 // 	        if ( ev->operation->data.dma->ct_handle != PTL_CT_NONE ) {
-// 		  scheduleCTInc(ev->operation->data.dma->ct_handle);
+// 		  scheduleCTInc(ev->operation->data.dma->ct_handle,latency_ct_post);
 // 		}
 	        if ( ev->data.dma->ct_handle != PTL_CT_NONE ) {
-		  scheduleCTInc(ev->data.dma->ct_handle);
+		    scheduleCTInc(ev->data.dma->ct_handle,latency_ct_post);
 		}
 	    }
 	    // Don't need the dma data structure any more
@@ -361,14 +369,6 @@ trig_nic::setTimingParams(int set) {
 void trig_nic::processPtlEvent( Event *e ) {
 //     printf("processPtlEvent\n");
     trig_nic_event* ev = static_cast<trig_nic_event*>(e);
-//     ptl_int_nic_op_t* operation;
-//     if ( ev->operation == NULL ) {
-// 	operation = new ptl_int_nic_op_t;
-// // 	printf("%5d: NULL operation in trig_nic_event, aborting!\n",m_id);
-// // 	abort();
-//     }
-//     printf("Process event: %d\n",ev->ptl_op);
-//     if (ev->ptl_op == PTL_NIC_ME_APPEND) printf("   ME Append\n");
     
     // See what portals command was sent
     switch (ev->ptl_op) {
@@ -381,7 +381,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 	printf("accessing ptl_table[%d]\n",ev->data.me->pt_index);
 // 	printf("%p\n",ev->data.me);
 // 	ptl_table[operation->data.me->pt_index]->priority_list->push_back(operation->data.me);
-      ptl_table[ev->data.me->pt_index]->priority_list->push_back(ev->data.me);
+	ptl_table[ev->data.me->pt_index]->priority_list->push_back(ev->data.me);
 	delete ev;
 	break;
 
@@ -484,6 +484,49 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    delete ev;
 
 		}
+ 		else if ( header.op == PTL_OP_ATOMIC ) {
+		    // Figure out what the address is so we can look
+		    // in the cache
+		    unsigned long addr = ((unsigned long)match_me->me.start) + (unsigned long)header.remote_offset;
+// 		    switch ( header.atomic_datatype ) {
+// 		    case PTL_DOUBLE:
+// 			{
+// 			    double value;
+// 			    memcpy(&value,&ev->ptl_data[8],8);
+// 			    double result = computeDoubleAtomic(addr, value, header.atomic_op);
+// 			    // Copy result back to payload to send to
+// 			    // host memory.  It actually needs to go
+// 			    // back to the front of ptl_data.
+// 			    memcpy(ev->ptl_data,&result,8);
+// 			}
+// 			break;
+		      
+// 		    case PTL_INT:
+			{
+			    int64_t value;
+			    memcpy(&value,&ev->ptl_data[8],8);
+			    int64_t result = computeIntAtomic(addr, value, header.atomic_op);
+			    // Copy result back to payload to send to
+			    // host memory.  It actually needs to go
+			    // back to the front of ptl_data.
+			    memcpy(ev->ptl_data,&result,8);
+			}
+// 			break;
+// 		    default:
+// 			printf("Unsupported datatype for atomic operation, aborting...\n");
+// 			exit(1);
+// 		    }
+		    // Send on to host memory
+		    ev->data_length = 8;
+		    ev->start = (void *)addr;
+		    // Need to add more latency, ask keith how much
+		    SimTime_t add_lat = 0;
+		    cpu_link->Send(ptl_msg_latency+add_lat,ev);
+
+		    SimTime_t extra_delay = 0;
+		    scheduleCTInc( match_me->me.ct_handle, latency_ct_post + extra_delay );
+
+		}
 		else {
 	      
 		    // Need to send the data to the cpu
@@ -525,7 +568,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 			printf("Single packet message, scheduling CT Inc\n");
 			// If this is not multi-packet, then we need to
 			// update a CT if one is attached.
-			scheduleCTInc( match_me->me.ct_handle );
+			scheduleCTInc( match_me->me.ct_handle, latency_ct_post );
 		    }
 	      
 		}
@@ -564,7 +607,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    if ( ms->remaining_length == 0 ) {
 		// Message is done, get rid of it.
 		streams.erase(map_key);
-		scheduleCTInc( ms->ct_handle );
+		scheduleCTInc( ms->ct_handle, latency_ct_post );
 		delete ms;
 	    }
 	  
@@ -612,7 +655,8 @@ void trig_nic::processPtlEvent( Event *e ) {
                 trig_nic_event* event = new trig_nic_event;
                 event->src = ev->src;
                 event->dest = op->op->target_id;
-		event->stream = PTL_HDR_STREAM_TRIG;
+		if ( op->op->op_type == PTL_OP_PUT ) event->stream = PTL_HDR_STREAM_TRIG;
+		else event->stream = PTL_HDR_STREAM_TRIG_ATOMIC;
 	    
                 event->portals = true;
 		event->head_packet = true;
@@ -636,7 +680,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		  // If there's a CT attached to the MD, then we need
 		  // to update the CT.
 // 		  printf("%d\n",op->op->dma->ct_handle);
-		  scheduleCTInc(op->op->dma->ct_handle);
+		  scheduleCTInc(op->op->dma->ct_handle, latency_ct_post);
 		  delete op->op->dma;
 		}
 		
@@ -669,7 +713,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    }
             else if ( op->op->op_type == PTL_OP_CT_INC ) {
 		// FIXME
-		scheduleCTInc(op->op->ct_handle);
+		scheduleCTInc(op->op->ct_handle, latency_ct_post);
                 delete op->op;
                 delete op;
             }
@@ -831,7 +875,7 @@ trig_nic::processDMAEvent( Event* e)
 
 
 void
-trig_nic::scheduleCTInc(ptl_handle_ct_t ct_handle) {
+trig_nic::scheduleCTInc(ptl_handle_ct_t ct_handle, SimTime_t delay) {
     if ( ct_handle != (ptl_handle_ct_t) PTL_CT_NONE ) {
 //       printf("scheduleCTInc(%d)\n",ct_handle);
       trig_nic_event* event = new trig_nic_event;
@@ -841,7 +885,8 @@ trig_nic::scheduleCTInc(ptl_handle_ct_t ct_handle) {
 // 	event->operation->data.ct_handle = ct_handle;
 	event->ptl_op = PTL_NIC_CT_INC;
 	event->data.ct_handle = ct_handle;
-	ptl_link->Send(latency_ct_post,event);
+// 	ptl_link->Send(latency_ct_post,event);
+	ptl_link->Send(delay,event);
     }
 }
 
@@ -862,4 +907,74 @@ trig_nic::scheduleUpdateHostCT(ptl_handle_ct_t ct_handle) {
     event->data.ct = ct_update;
 
     cpu_link->Send(latency_ct_host_update,event);    
+}
+
+double
+trig_nic::computeDoubleAtomic(unsigned long addr, double value, ptl_op_t op)
+{
+    atomic_cache_entry* entry;
+    if ( atomic_cache.find(addr) != atomic_cache.end() ) {
+	entry = atomic_cache[addr];
+    }
+    else {
+	entry = atomic_cache[addr] = new atomic_cache_entry;
+	entry->dbl_val = 0.0;
+    }
+
+    switch (op) {
+    case PTL_MIN:
+	if ( entry->dbl_val > value ) entry->dbl_val = value;
+	break;
+    case PTL_MAX:
+	if ( entry->dbl_val < value ) entry->dbl_val = value;
+	break;
+    case PTL_SUM:
+	entry->dbl_val += value;
+	break;
+    case PTL_PROD:
+	entry->dbl_val *= value;
+	// For now, product not supported, let if fall through to
+	// abort
+	//	break;
+    default:
+	printf("Unsupported atomic, aborting...");
+	exit(1);
+	break;
+    }
+    return entry->dbl_val;
+}
+
+int64_t
+trig_nic::computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op)
+{
+    atomic_cache_entry* entry;
+    if ( atomic_cache.find(addr) != atomic_cache.end() ) {
+	entry = atomic_cache[addr];
+    }
+    else {
+	entry = atomic_cache[addr] = new atomic_cache_entry;
+	entry->int_val = 0;
+    }
+
+    switch (op) {
+    case PTL_MIN:
+	if ( entry->int_val > value ) entry->int_val = value;
+	break;
+    case PTL_MAX:
+	if ( entry->int_val < value ) entry->int_val = value;
+	break;
+    case PTL_SUM:
+	entry->int_val += value;
+	break;
+    case PTL_PROD:
+	entry->int_val *= value;
+	// For now, product not supported, let if fall through to
+	// abort
+	//	break;
+    default:
+	printf("Unsupported atomic, aborting...");
+	exit(1);
+	break;
+    }
+    return entry->int_val;
 }

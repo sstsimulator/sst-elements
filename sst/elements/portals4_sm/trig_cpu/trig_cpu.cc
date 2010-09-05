@@ -36,6 +36,7 @@
 #include "apps/test_mpi.h"
 #include "apps/ping_pong.h"
 #include "apps/bandwidth.h"
+#include "apps/test_atomics.h"
 
 SimTime_t trig_cpu::min = 10000000;
 SimTime_t trig_cpu::max = 0;
@@ -209,6 +210,8 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
         app = new ping_pong(this);
     } else if (application == "bandwidth" ) {
         app = new bandwidth(this);
+    } else if (application == "test_atomics" ) {
+        app = new test_atomics(this);
     } else {
         _abort(RtrIF, "Invalid application: %s\n", application.c_str());
     }
@@ -281,8 +284,9 @@ trig_cpu::Setup()
 
     
     if ( sizeof(ptl_header_t) > 32 ) {
-	printf("Portals header (ptl_header_t) is bigger than 32 bytes, aborting...\n");
-	abort();
+	printf("Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n",sizeof(ptl_header_t));
+	printf("sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n",sizeof(ptl_op_t),sizeof(ptl_datatype_t));
+	exit(1);
     }
 
     if ( !use_portals ) {
