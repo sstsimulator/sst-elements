@@ -195,7 +195,6 @@ Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t 
 CPUNicEvent *e;
 int my_node, dest_node;
 int my_router, dest_router;
-static uint64_t seq= 1;
 
 
     // Create an event and fill in the event info
@@ -205,7 +204,7 @@ static uint64_t seq= 1;
     e->hops= 0;
     e->msg_len= msg_len;
     e->dest= dest;
-    e->msg_id= (seq++ << RANK_FIELD) | my_rank;
+    e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
@@ -312,6 +311,54 @@ static uint64_t seq= 1;
     }
 
 }  /* end of event_send() */
+
+
+
+
+/*
+** Send a chunk of data to our stable storage device.
+*/
+void
+Patterns::storage_write(int data_size)
+{
+
+CPUNicEvent *e;
+int my_node;
+int my_core;
+uint64_t delay;
+
+
+    // Create an event and fill in the event info
+    e= new CPUNicEvent();
+    e->SetRoutine(BIT_BUCKET_WRITE_START);
+    e->router_delay= 0;
+    e->hops= 0;
+    e->msg_len= data_size;
+    e->dest= -1;
+    e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
+
+    // Storage request go out on port 0 of the aggregator
+    e->route.push_back(0);
+
+    // And then again on port 0 at the node aggregator
+    e->route.push_back(0);
+
+    // Coming back: First hop is to the right node
+    my_node= my_rank / (NoC_width * NoC_height * cores_per_router);
+    e->reverse_route.push_back(my_node + 1);	// Port 0 is for the SSD
+
+    // From the aggregator, pick the right core
+    my_core= my_rank % cores_per_node;
+    e->reverse_route.push_back(my_core + 1);	// Port 0 goes off node
+
+    // Send the write request
+    delay= 0; // FIXME; Need to figure this out
+    my_storage_link->Send(delay, e);
+
+}  /* end of storage_write() */
+
+
+
 
 
 

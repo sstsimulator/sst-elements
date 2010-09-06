@@ -34,7 +34,7 @@ void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, i
 	int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method, uint64_t chckpt_delay,
-	uint64_t chckpt_interval, uint64_t envelope_write_time);
+	uint64_t chckpt_interval, uint64_t envelope_write_time, int chckpt_size);
 void sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency);
 
 void sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method);
@@ -53,7 +53,8 @@ void sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	int rank, char *pattern_name, FILE *sstfile);
 void sst_pattern_generators(char *pattern_name, FILE *sstfile);
 void sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FILE *sstfile);
-void sst_nvram_param_entries(FILE *sstfile);
+void sst_nvram_param_entries(FILE *sstfile, int nvram_read_bw, int nvram_write_bw,
+	int ssd_read_bw, int ssd_write_bw);
 void sst_nvram(FILE *sstfile);
 void sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
 	uint64_t nvram_latency, pwr_method_t power_method);

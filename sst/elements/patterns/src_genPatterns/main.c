@@ -64,20 +64,27 @@ uint64_t net_bw;	/* In bytes per second */
 uint64_t node_lat;	/* In ns */
 uint64_t node_bw;	/* In bytes per second */
 uint64_t compute;	/* In ns */
-uint64_t nvram_lat;	/* In ns */
 
 uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
 int num_cores;		/* How many pattern generators per router */
+uint64_t core_memory;	/* How much memory per core in bytes */
 int num_nodes;
 int IO_nodes;		/* Should be divisible by the number of nodes */
 char *method;		/* Checkpointing method to use */
-uint64_t chckpt_delay;	/* How long to write a checkpoint in ns */
-uint64_t chckpt_interval;	/* How long between checkpoints in ns */
-uint64_t envelope_write_time;	/* How long to write receive envelope info */
+int chckpt_delay;	/* How long to write a checkpoint in ns */
+int chckpt_interval;	/* How long between checkpoints in ns */
+int chckpt_size;	/* How many bytes for a full checkpoint of a core */
+int envelope_write_time;	/* How long to write receive envelope info */
 char *power_model;	/* Which, if any, power model to use */
 int wormhole;
 pwr_method_t power_method;
+
+int nvram_lat;		/* In ns */
+int nvram_read_bw;	/* In bytes per second */
+int nvram_write_bw;	/* In bytes per second */
+int ssd_read_bw;	/* In bytes per second */
+int ssd_write_bw;	/* In bytes per second */
 
 
 
@@ -93,14 +100,25 @@ pwr_method_t power_method;
     net_bw= 1900000000;
     node_lat= 150;
     node_bw= 12600000000;
-    nvram_lat= 150;
+
+    /* Assume a SATA3 drive (Crucial C200) "somehow" connected to an I/O network */
+    ssd_read_bw= 200000000;
+    ssd_write_bw= 350000000;
+
+    /* Let's say we have a Fusion-io PCIe card on each node */
+    nvram_read_bw= 490000000;
+    nvram_write_bw= 700000000;
+    nvram_lat= 50000;
+
     compute= 150000;
-    app_time= 1000 * compute; /* 1000 time steps */
+    app_time= 20 * compute; /* 20 time steps */
+    core_memory= (uint64_t)2 * 1024 * 1024 * 1024;
     num_cores= 1;
     IO_nodes= 1;
     method= "none";
     chckpt_delay= compute / 2;	/* This number is completly aritrary */
     chckpt_interval= compute * 100; /* Every 100 time steps */
+    chckpt_size= core_memory / 5; /* 20% of core memory to checkpoint */
     envelope_write_time= 250;	/* Assume we have very fast stable storage */
 
 
@@ -368,10 +386,10 @@ pwr_method_t power_method;
     sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores,
 	net_lat, net_bw, node_lat, node_bw,
 	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval,
-	envelope_write_time);
+	envelope_write_time, chckpt_size);
     sst_gen_param_end(fp_sst, node_lat, net_lat);
     sst_pwr_param_entries(fp_sst, power_method);
-    sst_nvram_param_entries(fp_sst);
+    sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
 
     /*
     ** We have several types of routers:

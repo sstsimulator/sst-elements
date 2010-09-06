@@ -70,6 +70,7 @@ class Ghost_pattern : public Component {
 	    chckpt_delay= 0;
 	    chckpt_interval= 0;
 	    envelope_write_time= 0;
+	    chckpt_size= 0;
 	    msg_write_time= 0;
 
 	    // Counters and computed values
@@ -181,6 +182,10 @@ class Ghost_pattern : public Component {
 		    sscanf(it->second.c_str(), "%lu", &msg_write_time);
 		}
 
+		if (!it->first.compare("chckpt_size"))   {
+		    sscanf(it->second.c_str(), "%d", &chckpt_size);
+		}
+
                 ++it;
             }
 
@@ -283,9 +288,10 @@ class Ghost_pattern : public Component {
 		    if (chckpt_interval >= compute_time)   {
 			chckpt_steps= chckpt_interval / compute_time;
 			if (my_rank == 0)   {
-			    printf("||| Will checkpoint every %d timesteps = %.9f s\n",
+			    printf("||| Will checkpoint every %d timesteps = %.9f s, %d bytes\n",
 				chckpt_steps,
-				(double)chckpt_steps * (double)compute_time / 1000000000.0);
+				(double)chckpt_steps * (double)compute_time / 1000000000.0,
+				chckpt_size);
 			}
 		    } else   {
 			_ABORT(Ghost_pattern, "Can't handle checkpoint interval %lu < timestep %lu\n",
@@ -347,6 +353,7 @@ class Ghost_pattern : public Component {
 	chckpt_t chckpt_method;
 	SimTime_t chckpt_delay;
 	SimTime_t chckpt_interval;
+	int chckpt_size;
 	SimTime_t envelope_write_time;
 	SimTime_t msg_write_time;
 

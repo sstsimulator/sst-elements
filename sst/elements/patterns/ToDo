@@ -2,6 +2,8 @@
 - Figure out where delays need to be computed
     e.g., where do latencies occur? Calculations? XML file?
     where does bandwidth come into play?
+    Does 150ns in xml file translate to 150?
+    Access to storage: incur latency only once, or split it
 
 - Create bit_bucket component
     DONE Initially, just a component to consume events

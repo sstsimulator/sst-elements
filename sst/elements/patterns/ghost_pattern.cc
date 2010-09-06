@@ -133,6 +133,8 @@ CPUNicEvent *e;
 	_abort(ghost_pattern, "NETWORK dest %d != my rank %d\n", e->dest, my_rank);
     }
 
+    // FIXME: could/should check whether the src (in msg_id) is one of our 4 neighbors
+
     handle_events(e);
 
 }  /* end of handle_net_events() */
@@ -151,6 +153,8 @@ CPUNicEvent *e;
     if (e->dest != my_rank)   {
 	_abort(ghost_pattern, "NoC dest %d != my rank %d\n", e->dest, my_rank);
     }
+
+    // FIXME: could/should check whether the src (in msg_id) is one of our 4 neighbors
 
     handle_events(e);
 
@@ -235,6 +239,10 @@ Ghost_pattern::state_INIT(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -312,6 +320,10 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -368,6 +380,10 @@ Ghost_pattern::state_WAIT(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -409,6 +425,14 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	    }
 	    break;
 
+	case BIT_BUCKET_WRITE_DONE:
+	    num_chckpts++;
+	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
+
+	    transition_to_COMPUTE();
+	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint write done, back to compute\n", my_rank);
+	    break;
+
 	case CHCKPT_DONE:
 	    // I may not be completly done:
 	    assert(chckpt_interrupted >= 0);
@@ -436,6 +460,9 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
     }
@@ -457,6 +484,10 @@ Ghost_pattern::state_SAVING_ENVELOPE_1(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -506,6 +537,10 @@ Ghost_pattern::state_SAVING_ENVELOPE_2(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -552,6 +587,10 @@ SimTime_t chckpt_delay_remainder;
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -607,6 +646,10 @@ Ghost_pattern::state_LOG_MSG1(pattern_event_t event)
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -643,6 +686,10 @@ Ghost_pattern::state_LOG_MSG2(pattern_event_t event)
 	case LOG_MSG1_DONE:
 	case LOG_MSG3_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -679,6 +726,10 @@ Ghost_pattern::state_LOG_MSG3(pattern_event_t event)
 	case LOG_MSG1_DONE:
 	case LOG_MSG2_DONE:
 	case LOG_MSG4_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -715,6 +766,10 @@ Ghost_pattern::state_LOG_MSG4(pattern_event_t event)
 	case LOG_MSG1_DONE:
 	case LOG_MSG2_DONE:
 	case LOG_MSG3_DONE:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
 	    _abort(ghost_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
 	    break;
 
@@ -772,11 +827,11 @@ Ghost_pattern::transition_to_COORDINATED_CHCKPT(void)
     // Start checkpointing
     chckpt_segment_start= getCurrentSimTime();
     state= COORDINATED_CHCKPT;
-    common->event_send(my_rank, CHCKPT_DONE, chckpt_delay);
-    _GHOST_PATTERN_DBG(4, "[%3d] Writing a checkpoint, we'll be back in %lu\n",
-	my_rank, chckpt_delay);
+    common->storage_write(chckpt_size);
+    _GHOST_PATTERN_DBG(4, "[%3d] Writing a checkpoint of size %d bytes\n",
+	my_rank, chckpt_size);
 
-}  // end of Ghost_pattern::transition_to_COORDINATED_CHCKPT()
+}  // end of transition_to_COORDINATED_CHCKPT()
 
 
 

@@ -38,7 +38,13 @@ typedef enum {START,		// Enter first state of state machine
 	      LOG_MSG1_DONE,	// Done logging the first message to stable (local) storage
 	      LOG_MSG2_DONE,	// Done logging the second message to stable (local) storage
 	      LOG_MSG3_DONE,	// Done logging the third message to stable (local) storage
-	      LOG_MSG4_DONE	// Done logging the fourth message to stable (local) storage
+	      LOG_MSG4_DONE,	// Done logging the fourth message to stable (local) storage
+
+	      // Make sure you set this at 2000 so we can talk to the bit_bucket component
+	      BIT_BUCKET_WRITE_START= 2000,
+	      BIT_BUCKET_WRITE_DONE,
+	      BIT_BUCKET_READ_START,
+	      BIT_BUCKET_READ_DONE
 } pattern_event_t;
 
 
@@ -59,6 +65,7 @@ class Patterns   {
 	    my_rank= -1;
 	    net_latency= 0;
 	    net_bandwidth= 0;
+	    msg_seq= 1;
 	}
 
 	int init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores,
@@ -71,6 +78,7 @@ class Patterns   {
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
 		uint32_t msg_len= 0);
+	void storage_write(int data_size);
 
 
     private:
@@ -91,6 +99,7 @@ class Patterns   {
 	SST::SimTime_t node_bandwidth;	// In bytes per second
 	SST::SimTime_t net_latency;	// in nano seconds FIXME: Variable not needed
 	SST::SimTime_t node_latency;	// in nano seconds FIXME: Variable not needed
+	uint64_t msg_seq;		// Each message event gets a unique number for debugging
 
 } ;  // end of class Patterns
 
