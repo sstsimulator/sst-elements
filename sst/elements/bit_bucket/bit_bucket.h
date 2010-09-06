@@ -37,6 +37,12 @@ using namespace SST;
 
 
 
+// Set this to start at 2000 and use this fixed order
+// That way we can "merge" enums with the pattern generator event enums
+typedef enum {BIT_BUCKET_WRITE_START= 2000, BIT_BUCKET_WRITE_DONE, BIT_BUCKET_READ_START,
+    BIT_BUCKET_READ_DONE} bit_bucket_op_t;
+
+
 class Bit_bucket : public Component {
     public:
         Bit_bucket(ComponentId_t id, Params_t& params) :
@@ -45,21 +51,43 @@ class Bit_bucket : public Component {
         {
             Params_t::iterator it= params.begin();
 	    bit_bucket_debug= 0;
+	    read_pipe= 0;
+	    write_pipe= 0;
+	    write_bw= 0;
+	    read_bw= 0;
+	    bytes_written= 0;
+	    bytes_read= 0;
+	    total_read_delay= 0;
+	    total_write_delay= 0;
+	    total_reads= 0;
+	    total_writes= 0;
 
 
             while (it != params.end())   {
 		if (!it->first.compare("debug"))   {
 		    sscanf(it->second.c_str(), "%d", &bit_bucket_debug);
+		
+		} else if (!it->first.compare("write_bw"))   {
+		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&write_bw);
+		
+		} else if (!it->first.compare("read_bw"))   {
+		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&read_bw);
 		}
-
+						                                                                                                        
                 ++it;
             }
+
+	    // Check the parameters
+	    if ((write_bw == 0) || (read_bw == 0))   {
+		_BIT_BUCKET_DBG(0, "You need to supply a write_bw and read_bw in the configuration!\n");
+		_ABORT(Bit_bucket, "Check the input XML file!\n");
+	    }
 
 
 	    // Create a time converter for this bit bucket
 	    TimeConverter *tc= registerTimeBase("1ns", true);
 
-
+	    // Create our link to the network
 	    net= configureLink("STORAGE", new Event::Handler<Bit_bucket>
 		    (this, &Bit_bucket::handle_events));
 	    if (net == NULL)   {
@@ -67,7 +95,15 @@ class Bit_bucket : public Component {
 		_ABORT(Bit_bucket, "Check the input XML file!\n");
 	    }
 
+            // Create a channel for "out of band" events sent to ourselves
+	    self_link= configureSelfLink("Me", new Event::Handler<Bit_bucket>
+		    (this, &Bit_bucket::handle_events));
+	    if (self_link == NULL)   {
+		_ABORT(Ghost_pattern, "That was no good!\n");
+	    }
+
 	    net->setDefaultTimeBase(tc);
+	    self_link->setDefaultTimeBase(tc);
         }
 
 
@@ -79,7 +115,18 @@ class Bit_bucket : public Component {
 
         Params_t params;
 	Link *net;
+	Link *self_link;
 	int bit_bucket_debug;
+	SimTime_t read_pipe;
+	SimTime_t write_pipe;
+	uint64_t write_bw;
+	uint64_t read_bw;
+	uint64_t bytes_written;
+	uint64_t bytes_read;
+	uint64_t total_read_delay;
+	uint64_t total_write_delay;
+	uint64_t total_reads;
+	uint64_t total_writes;
 
 
         friend class boost::serialization::access;

@@ -10,6 +10,21 @@
 // distribution.
 
 
+// This is a simple component that we use to simulate a disk or NVRAM
+// used in a streaming mode. It basically pretends to have a pipe of
+// a given bandwidth to which it streams write data. After a block of
+// "data" has been written, and ACK is sent back. For reads, it enques
+// the read request and sends the data when it has been able to pull the
+// data out of the pipe. This is delayed by previous reads and limited
+// by the read bandwidth.
+//
+// The read and write pipes are completly independent. We assume writers
+// wait for ACK to come back before data is read, but there is no
+// mechanism to veryfy this for independent readers. In fact, since no
+// actual data is written or read, a read that in a real application is
+// dependent on a write, can happen here without problems.
+
+
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/cpunicEvent.h>
@@ -21,8 +36,80 @@ void
 Bit_bucket::handle_events(Event *event)
 {
 
+bit_bucket_op_t op;
+SimTime_t current_time;
+SimTime_t delay;
+SimTime_t write_time;
+SimTime_t read_time;
+
+
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
-    delete(e);
+    op= (bit_bucket_op_t)e->GetRoutine();
+    current_time= getCurrentSimTime();
+
+    switch (op)   {
+	case BIT_BUCKET_WRITE_START:
+	    // How long until this write can start?
+	    if (write_pipe > current_time)   {
+		delay= write_pipe - current_time;
+	    } else   {
+		delay= 0;
+	    }
+
+	    // How long until it will finish?
+	    // len & bw are in bytes; we want time in ns
+	    write_time= ((uint64_t)e->msg_len * 1000000000) / write_bw;
+	    delay += write_time;
+	    total_write_delay += delay;
+	    bytes_written += e->msg_len;
+	    total_writes++;
+
+	    write_pipe += delay;
+	    e->SetRoutine(BIT_BUCKET_WRITE_DONE);
+	    self_link->Send(delay, e);
+	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting write of %d bytes, delay %.9fs\n",
+		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
+	    break;
+
+	case BIT_BUCKET_WRITE_DONE:
+	    // OK, send the ACK back
+	    e->route= e->reverse_route;
+	    net->Send(e);
+	    _BIT_BUCKET_DBG(3, "%15.9fs Bit bucket: Write of %d bytes done.\n",
+		(double)current_time / 1000000000.0, e->msg_len);
+	    break;
+
+	case BIT_BUCKET_READ_START:
+	    // How long until this read can start?
+	    if (read_pipe > current_time)   {
+		delay= read_pipe - current_time;
+	    } else   {
+		delay= 0;
+	    }
+
+	    // How long until it will finish?
+	    // len & bw are in bytes; we want time in ns
+	    read_time= ((uint64_t)e->msg_len * 1000000000) / read_bw;
+	    delay += read_time;
+	    total_read_delay += delay;
+
+	    read_pipe += delay;
+	    e->SetRoutine(BIT_BUCKET_READ_DONE);
+	    self_link->Send(delay, e);
+	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting read of %d bytes, delay %.9fs\n",
+		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
+	    break;
+
+	case BIT_BUCKET_READ_DONE:
+	    // OK, send the "data" back
+	    e->route= e->reverse_route;
+	    bytes_read += e->msg_len;
+	    total_reads++;
+	    net->Send(e);
+	    _BIT_BUCKET_DBG(3, "%15.9fs Bit bucket: Read of %d bytes done.\n",
+		(double)current_time / 1000000000.0, e->msg_len);
+	    break;
+    }
 
 }  // end of handle_events()
 
