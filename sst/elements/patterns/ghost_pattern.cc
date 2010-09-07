@@ -176,17 +176,33 @@ CPUNicEvent *e;
 }  /* end of handle_self_events() */
 
 
+
 // Events from the local NVRAM
 void
-Ghost_pattern::handle_nvram_events(Event *e)
+Ghost_pattern::handle_nvram_events(Event *sst_event)
 {
+
+CPUNicEvent *e;
+
+
+    e= static_cast<CPUNicEvent *>(sst_event);
+    handle_events(e);
+
 }  /* end of handle_nvram_events() */
+
 
 
 // Events from stable storage
 void
-Ghost_pattern::handle_storage_events(Event *e)
+Ghost_pattern::handle_storage_events(Event *sst_event)
 {
+
+CPUNicEvent *e;
+
+
+    e= static_cast<CPUNicEvent *>(sst_event);
+    handle_events(e);
+
 }  /* end of handle_storage_events() */
 
 
@@ -428,6 +444,7 @@ Ghost_pattern::state_COORDINATED_CHCKPT(pattern_event_t event)
 	case BIT_BUCKET_WRITE_DONE:
 	    num_chckpts++;
 	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
+	    fprintf(stderr, "=== %d got an answer back from my storage node\n", my_rank);
 
 	    transition_to_COMPUTE();
 	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint write done, back to compute\n", my_rank);
