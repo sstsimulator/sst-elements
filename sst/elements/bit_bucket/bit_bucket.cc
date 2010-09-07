@@ -64,19 +64,25 @@ SimTime_t read_time;
 	    bytes_written += e->msg_len;
 	    total_writes++;
 
-	    write_pipe += delay;
-	    e->SetRoutine(BIT_BUCKET_WRITE_DONE);
-	    self_link->Send(delay, e);
+	    write_pipe= delay + current_time;
+	    // e->dest= -1;
 	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting write of %d bytes, delay %.9fs\n",
 		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
+
+	    e->SetRoutine(BIT_BUCKET_WRITE_DONE);
+	    e->hops= 0;
+	    self_link->Send(delay, e);
 	    break;
 
 	case BIT_BUCKET_WRITE_DONE:
 	    // OK, send the ACK back
-	    e->route= e->reverse_route;
-	    net->Send(e);
 	    _BIT_BUCKET_DBG(3, "%15.9fs Bit bucket: Write of %d bytes done.\n",
 		(double)current_time / 1000000000.0, e->msg_len);
+	    e->route= e->reverse_route;
+	    e->hops= 0;
+	    e->msg_len= 0;
+	    // e->dest= -1;
+	    net->Send(e);
 	    break;
 
 	case BIT_BUCKET_READ_START:
@@ -94,10 +100,12 @@ SimTime_t read_time;
 	    total_read_delay += delay;
 
 	    read_pipe += delay;
-	    e->SetRoutine(BIT_BUCKET_READ_DONE);
-	    self_link->Send(delay, e);
 	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting read of %d bytes, delay %.9fs\n",
 		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
+	    e->SetRoutine(BIT_BUCKET_READ_DONE);
+	    e->hops= 0;
+	    // e->dest= -1;
+	    self_link->Send(delay, e);
 	    break;
 
 	case BIT_BUCKET_READ_DONE:
@@ -105,9 +113,12 @@ SimTime_t read_time;
 	    e->route= e->reverse_route;
 	    bytes_read += e->msg_len;
 	    total_reads++;
-	    net->Send(e);
 	    _BIT_BUCKET_DBG(3, "%15.9fs Bit bucket: Read of %d bytes done.\n",
 		(double)current_time / 1000000000.0, e->msg_len);
+	    // e->SetRoutine(BIT_BUCKET_READ_DONE); // Already set
+	    e->hops= 0;
+	    // e->dest= -1;
+	    net->Send(e);
 	    break;
     }
 
