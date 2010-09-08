@@ -269,13 +269,13 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	case COMPUTE_DONE:
 	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing\n", my_rank);
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
+	    timestep_cnt++;
 
-	    if (timestep_cnt + 1 >= timestep_needed)   {
+	    if (timestep_cnt >= timestep_needed)   {
 		application_done= TRUE;
 		execution_time= getCurrentSimTime() - execution_time;
 		// There is no ghost cell exchange after the last computation
 		state= DONE;
-		timestep_cnt++;
 
 	    } else   {
 
@@ -603,8 +603,6 @@ Ghost_pattern::state_CHCKPT(pattern_event_t event)
 	case CHCKPT_DONE:
 	    num_chckpts++;
 	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
-	    fprintf(stderr, "=== %d got an answer back from my storage node\n", my_rank);
-
 	    transition_to_COMPUTE();
 	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint write done, back to compute\n", my_rank);
 	    break;
@@ -696,7 +694,6 @@ Ghost_pattern::count_receives(void)
     total_rcvs++;
     rcv_cnt++;
     if (rcv_cnt == 4)   {
-	timestep_cnt++;
 	rcv_cnt= 0;
 	done_waiting= true;
     }
