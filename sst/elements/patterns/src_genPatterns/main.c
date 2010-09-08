@@ -35,9 +35,9 @@ static struct option long_options[]=   {
     {"pattern", 1, NULL, 'p'},
     {"method", 1, NULL, 'm'},
     {"IO_nodes", 1, NULL, 'i'},
-    {"chckpt_delay", 1, NULL, 1000},
+    {"chckpt_size", 1, NULL, 1000},
     {"chckpt_interval", 1, NULL, 1001},
-    {"envelope_write_time", 1, NULL, 1002},
+    {"envelope_size", 1, NULL, 1002},
     {"power", 1, NULL, 1003},
     {NULL, 0, NULL, 0}
 };
@@ -72,10 +72,9 @@ uint64_t core_memory;	/* How much memory per core in bytes */
 int num_nodes;
 int IO_nodes;		/* Should be divisible by the number of nodes */
 char *method;		/* Checkpointing method to use */
-int chckpt_delay;	/* How long to write a checkpoint in ns */
 int chckpt_interval;	/* How long between checkpoints in ns */
 int chckpt_size;	/* How many bytes for a full checkpoint of a core */
-int envelope_write_time;	/* How long to write receive envelope info */
+int envelope_size;	/* How many bytes is the message envelope? */
 char *power_model;	/* Which, if any, power model to use */
 int wormhole;
 pwr_method_t power_method;
@@ -112,14 +111,14 @@ int ssd_write_bw;	/* In bytes per second */
 
     compute= 150000;
     app_time= 20 * compute; /* 20 time steps */
-    core_memory= (uint64_t)2 * 1024 * 1024 * 1024;
+    core_memory= (uint64_t)512 * 1024 * 1024;
     num_cores= 1;
     IO_nodes= 1;
     method= "none";
-    chckpt_delay= compute / 2;	/* This number is completly aritrary */
+    chckpt_size= core_memory / 5;
     chckpt_interval= compute * 100; /* Every 100 time steps */
     chckpt_size= core_memory / 5; /* 20% of core memory to checkpoint */
-    envelope_write_time= 250;	/* Assume we have very fast stable storage */
+    envelope_size= 64;
 
 
     /* Assume 2GB of memory per MPI rank. The aquare root of that is */
@@ -195,9 +194,9 @@ int ssd_write_bw;	/* In bytes per second */
 		error= TRUE;
 		break;
 	    case 1000:
-		chckpt_delay= strtol(optarg, (char **)NULL, 0);
-		if (chckpt_delay < 1)   {
-		    fprintf(stderr, "chckpt_delay must be > 0\n");
+		chckpt_size= strtol(optarg, (char **)NULL, 0);
+		if (chckpt_size < 1)   {
+		    fprintf(stderr, "chckpt_size must be > 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -209,9 +208,9 @@ int ssd_write_bw;	/* In bytes per second */
 		}
 		break;
 	    case 1002:
-		envelope_write_time= strtol(optarg, (char **)NULL, 0);
-		if (envelope_write_time < 1)   {
-		    fprintf(stderr, "envelope_write_time must be > 0\n");
+		envelope_size= strtol(optarg, (char **)NULL, 0);
+		if (envelope_size < 1)   {
+		    fprintf(stderr, "envelope_size must be > 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -385,8 +384,8 @@ int ssd_write_bw;	/* In bytes per second */
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores,
 	net_lat, net_bw, node_lat, node_bw,
-	compute, app_time, exchange_msg_len, method, chckpt_delay, chckpt_interval,
-	envelope_write_time, chckpt_size);
+	compute, app_time, exchange_msg_len, method, chckpt_interval,
+	envelope_size, chckpt_size);
     sst_gen_param_end(fp_sst, node_lat, net_lat);
     sst_pwr_param_entries(fp_sst, power_method);
     sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
@@ -466,9 +465,9 @@ usage(char *argv[])
     fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost_pattern\n");
     fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");
     fprintf(stderr, "                         uncoordinated, distributed\n");
-    fprintf(stderr, "   --chckpt_delay        Time to write a checkpoint (in nano seconds)\n");
+    fprintf(stderr, "   --chckpt_size         Size of a full checkpoint (in bytes)\n");
     fprintf(stderr, "   --chckpt_interval     How often to write a (coordinated) checkpoint (in nano seconds)\n");
-    fprintf(stderr, "   --envelope_write_time Time needed to write receive envelope info (in nano seconds)\n");
+    fprintf(stderr, "   --envelope_size       Size of message envelope in bytes\n");
     fprintf(stderr, "   --power <model>       Enable power modeling using McPAT or ORION\n");
 
 }  /* end of usage() */

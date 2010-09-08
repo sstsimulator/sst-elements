@@ -34,10 +34,8 @@ typedef enum {INIT,			// First state in state machine
               COMPUTE,			// We are currently computing
 	      WAIT,			// Waiting for one or more messages
 	      DONE,			// Work is all done
-	      COORDINATED_CHCKPT,	// Writing a checkpoint
-	      SAVING_ENVELOPE_1,	// Saving envelope info during a compute
-	      SAVING_ENVELOPE_2,	// Saving envelope info during a wait
-	      SAVING_ENVELOPE_3,	// Saving envelope info during a checkpoint write
+	      CHCKPT,			// Writing a checkpoint
+	      SAVE_ENVELOPE,		// Save receive msg envelope
 	      LOG_MSG1,			// Log the first message to stable (local) storage
 	      LOG_MSG2,			// Log the second message to stable (local) storage
 	      LOG_MSG3,			// Log the third message to stable (local) storage
@@ -67,30 +65,26 @@ class Ghost_pattern : public Component {
 	    exchange_msg_len= 128;
 	    cores= -1;
 	    chckpt_method= CHCKPT_NONE;
-	    chckpt_delay= 0;
 	    chckpt_interval= 0;
-	    envelope_write_time= 0;
+	    envelope_size= 0;
 	    chckpt_size= 0;
 	    msg_write_time= 0;
 
-	    // Counters and computed values
+	    // Counters, computed values, and internal state
 	    execution_time= 0;
 	    msg_wait_time= 0;
 	    chckpt_time= 0;
 	    timestep_cnt= 0;
 	    state= INIT;
 	    rcv_cnt= 0;
+	    save_ENVELOPE_cnt= 0;
 	    application_time_so_far= 0;
 	    chckpt_steps= 1;
 	    application_done= FALSE;
-	    chckpt_interrupted= 0;
-	    compute_interrupted= 0;
-	    SAVING_ENVELOPE_1_interrupted= 0;
-	    SAVING_ENVELOPE_2_interrupted= 0;
-	    SAVING_ENVELOPE_3_interrupted= 0;
 	    num_chckpts= 0;
-	    num_rcv_envelopes= 0;
 	    total_rcvs= 0;
+
+
 
 	    registerExit();
 
@@ -166,16 +160,12 @@ class Ghost_pattern : public Component {
 		    }
 		}
 
-		if (!it->first.compare("chckpt_delay"))   {
-		    sscanf(it->second.c_str(), "%lu", &chckpt_delay);
-		}
-
 		if (!it->first.compare("chckpt_interval"))   {
 		    sscanf(it->second.c_str(), "%lu", &chckpt_interval);
 		}
 
-		if (!it->first.compare("envelope_write_time"))   {
-		    sscanf(it->second.c_str(), "%lu", &envelope_write_time);
+		if (!it->first.compare("envelope_size"))   {
+		    sscanf(it->second.c_str(), "%d", &envelope_size);
 		}
 
 		if (!it->first.compare("msg_write_time"))   {
@@ -252,7 +242,7 @@ class Ghost_pattern : public Component {
 	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, net, self_link,
 		    NoC, nvram, storage,
 		    net_latency, net_bandwidth, node_latency, node_bandwidth,
-		    chckpt_method, chckpt_delay, chckpt_interval, envelope_write_time))   {
+		    chckpt_method, chckpt_size, chckpt_interval, envelope_size))   {
 		_ABORT(Ghost_pattern, "Patterns->init() failed!\n");
 	    }
 
@@ -351,10 +341,9 @@ class Ghost_pattern : public Component {
 	int exchange_msg_len;
 	int ghost_pattern_debug;
 	chckpt_t chckpt_method;
-	SimTime_t chckpt_delay;
 	SimTime_t chckpt_interval;
 	int chckpt_size;
-	SimTime_t envelope_write_time;
+	int envelope_size;
 	SimTime_t msg_write_time;
 
 	// Precomputed values
@@ -364,19 +353,14 @@ class Ghost_pattern : public Component {
 	// Keeping track of the simulation
 	state_t state;
 	int rcv_cnt;
+	int save_ENVELOPE_cnt;
 	bool application_done;
 	int timestep_cnt;
 	int timestep_needed;
-	int chckpt_interrupted;
-	int compute_interrupted;
-	int SAVING_ENVELOPE_1_interrupted;
-	int SAVING_ENVELOPE_2_interrupted;
-	int SAVING_ENVELOPE_3_interrupted;
 	bool done_waiting;
 
 	// Statistics; some of these may move to pattern_common
 	int num_chckpts;
-	int num_rcv_envelopes;
 	int total_rcvs;
 
 	// Keeping track of time
@@ -403,17 +387,15 @@ class Ghost_pattern : public Component {
 	void state_COMPUTE(pattern_event_t event);
 	void state_WAIT(pattern_event_t event);
 	void state_DONE(pattern_event_t event);
-	void state_COORDINATED_CHCKPT(pattern_event_t event);
-	void state_SAVING_ENVELOPE_1(pattern_event_t event);
-	void state_SAVING_ENVELOPE_2(pattern_event_t event);
-	void state_SAVING_ENVELOPE_3(pattern_event_t event);
+	void state_CHCKPT(pattern_event_t event);
+	void state_SAVE_ENVELOPE(pattern_event_t event);
 	void state_LOG_MSG1(pattern_event_t event);
 	void state_LOG_MSG2(pattern_event_t event);
 	void state_LOG_MSG3(pattern_event_t event);
 	void state_LOG_MSG4(pattern_event_t event);
 
 	void transition_to_COMPUTE(void);
-	void transition_to_COORDINATED_CHCKPT(void);
+	void transition_to_CHCKPT(void);
 	void count_receives(void);
 
 
@@ -434,11 +416,6 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(node_latency);
 	    ar & BOOST_SERIALIZATION_NVP(node_bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(compute_time);
-	    ar & BOOST_SERIALIZATION_NVP(chckpt_interrupted);
-	    ar & BOOST_SERIALIZATION_NVP(compute_interrupted);
-	    ar & BOOST_SERIALIZATION_NVP(SAVING_ENVELOPE_1_interrupted);
-	    ar & BOOST_SERIALIZATION_NVP(SAVING_ENVELOPE_2_interrupted);
-	    ar & BOOST_SERIALIZATION_NVP(SAVING_ENVELOPE_3_interrupted);
 	    ar & BOOST_SERIALIZATION_NVP(done_waiting);
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(application_end_time);
@@ -454,12 +431,12 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(timestep_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(timestep_needed);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_method);
-	    ar & BOOST_SERIALIZATION_NVP(chckpt_delay);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_steps);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_interval);
+	    ar & BOOST_SERIALIZATION_NVP(chckpt_size);
+	    ar & BOOST_SERIALIZATION_NVP(envelope_size);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
 	    ar & BOOST_SERIALIZATION_NVP(num_chckpts);
-	    ar & BOOST_SERIALIZATION_NVP(num_rcv_envelopes);
 	    ar & BOOST_SERIALIZATION_NVP(total_rcvs);
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);

@@ -33,15 +33,12 @@ typedef enum {START,		// Enter first state of state machine
 	      RECEIVE,		// Received a message
 	      CHCKPT_DONE,	// A checkpoint has been written
 	      FAIL,		// A failure occured on this rank
-	      WRITE_ENVELOPE_DONE,	// Envelope information has been written
-	      ENTER_WAIT,	// Move directly to wait state without an additional event
-	      LOG_MSG1_DONE,	// Done logging the first message to stable (local) storage
-	      LOG_MSG2_DONE,	// Done logging the second message to stable (local) storage
-	      LOG_MSG3_DONE,	// Done logging the third message to stable (local) storage
-	      LOG_MSG4_DONE,	// Done logging the fourth message to stable (local) storage
+	      LOG_MSG_DONE,	// Done logging a message to stable (local) storage
+	      ENV_LOG_DONE,	// Envelope write to log is done
+	      ENTER_WAIT,	// Wait for four receives from neighbors
 
-	      // Make sure you set this at 2000 so we can talk to the bit_bucket component
-	      BIT_BUCKET_WRITE_START= 2000,
+	      // Make sure you set this at 200 so we can talk to the bit_bucket component
+	      BIT_BUCKET_WRITE_START= 200,
 	      BIT_BUCKET_WRITE_DONE,
 	      BIT_BUCKET_READ_START,
 	      BIT_BUCKET_READ_DONE
@@ -72,13 +69,14 @@ class Patterns   {
 		SST::Link *net_link, SST::Link *self_link,
 		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
 		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat,
-		SST::SimTime_t node_bw, chckpt_t method, SST::SimTime_t chckpt_delay,
-		SST::SimTime_t chckpt_interval, SST::SimTime_t envelope_write_time);
+		SST::SimTime_t node_bw, chckpt_t method, int chckpt_size,
+		SST::SimTime_t chckpt_interval, int envelope_size);
 
 	void send(int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
 		uint32_t msg_len= 0);
-	void storage_write(int data_size);
+	void storage_write(int data_size, pattern_event_t return_event);
+	void nvram_write(int data_size, pattern_event_t return_event);
 
 
     private:

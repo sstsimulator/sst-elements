@@ -41,8 +41,8 @@ int
 Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, Link *net_link,
 	Link *self_link, SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
 	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
-	chckpt_t method, SimTime_t chckpt_delay, SimTime_t chckpt_interval,
-	SimTime_t envelope_write_time)
+	chckpt_t method, int chckpt_size, SimTime_t chckpt_interval,
+	int envelope_size)
 {
 
     /* Make sure number of ranks is a power of 2, and my_rank is within range */
@@ -112,18 +112,13 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
 		break;
 	    case CHCKPT_COORD:
 		printf("coordinated\n");
-		printf("||| Checkpoint time is %.9f s, every %.9f s\n",
-		    (double)chckpt_delay / 1000000000.0, (double)chckpt_interval / 1000000000.0);
+		printf("||| Checkpoint every %.9f s\n", (double)chckpt_interval / 1000000000.0);
 		break;
 	    case CHCKPT_UNCOORD:
 		printf("uncoordinated with message logging\n");
-		printf("||| Local checkpoint time is %.9f s\n", (double)chckpt_delay / 1000000000.0);
-		printf("||| Time to write receive envelope info is %.9f s\n",
-		    (double)envelope_write_time / 1000000000.0);
 		break;
 	    case CHCKPT_RAID:
 		printf("distributed\n");
-		printf("||| Remote checkpoint time is %.9f s\n", (double)chckpt_delay / 1000000000.0);
 		break;
 	}
     }
@@ -208,6 +203,9 @@ int my_router, dest_router;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
+if (delay > 10000000000)   {
+    fprintf(stderr, "Huge delay of %lu in event_send self\n", delay);
+}
 	my_self_link->Send(delay, e);
 	return;
     }
@@ -264,6 +262,9 @@ int my_router, dest_router;
 	// delayed, since they don't really ocur all at exactly the same nano second.
 	// However, since they go out on the same link, the router at the other end
 	// will delay them according to their length and link bandwidth.
+if (delay > 10000000000)   {
+    fprintf(stderr, "Huge delay of %lu in event_send NoC\n", delay);
+}
 	my_NoC_link->Send(delay, e);
 
     } else   {
@@ -307,6 +308,9 @@ int my_router, dest_router;
     }
 #endif  // ROUTE_DEBUG
 
+if (delay > 10000000000)   {
+    fprintf(stderr, "Huge delay of %lu in event_send Net\n", delay);
+}
 	my_net_link->Send(delay, e);
     }
 
@@ -319,7 +323,7 @@ int my_router, dest_router;
 ** Send a chunk of data to our stable storage device.
 */
 void
-Patterns::storage_write(int data_size)
+Patterns::storage_write(int data_size, pattern_event_t return_event)
 {
 
 CPUNicEvent *e;
@@ -336,6 +340,7 @@ uint64_t delay;
     e->msg_len= data_size;
     e->dest= -1;
     e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
+    e->return_event= return_event;
 
     // Storage request go out on port 0 of the aggregator
     e->route.push_back(0);
@@ -356,6 +361,43 @@ uint64_t delay;
     my_storage_link->Send(delay, e);
 
 }  /* end of storage_write() */
+
+
+
+/*
+** Send a chunk of data to our local NVRAM
+*/
+void
+Patterns::nvram_write(int data_size, pattern_event_t return_event)
+{
+
+CPUNicEvent *e;
+int my_core;
+uint64_t delay;
+
+
+    // Create an event and fill in the event info
+    e= new CPUNicEvent();
+    e->SetRoutine(BIT_BUCKET_WRITE_START);
+    e->router_delay= 0;
+    e->hops= 0;
+    e->msg_len= data_size;
+    e->dest= -1;
+    e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
+    e->return_event= return_event;
+
+    // NVRAM requests go out on port 0 of the aggregator
+    e->route.push_back(0);
+
+    // Coming back: Only one hop back to us
+    my_core= my_rank % cores_per_node;
+    e->reverse_route.push_back(my_core + 1);	// Port 0 goes off node
+
+    // Send the write request
+    delay= 0; // FIXME; Need to figure this out
+    my_nvram_link->Send(delay, e);
+
+}  /* end of nvram_write() */
 
 
 

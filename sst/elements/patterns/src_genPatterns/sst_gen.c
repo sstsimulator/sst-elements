@@ -52,8 +52,8 @@ void
 sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
 	int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
-	uint64_t app_time, int msg_len, char *method, uint64_t chckpt_delay,
-	uint64_t chckpt_interval, uint64_t envelope_write_time, int chckpt_size)
+	uint64_t app_time, int msg_len, char *method,
+	uint64_t chckpt_interval, int envelope_size, int chckpt_size)
 {
 
     if (sstfile == NULL)   {
@@ -73,9 +73,8 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int No
     fprintf(sstfile, "    <application_end_time> %lu </application_end_time>\n", app_time);
     fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
     fprintf(sstfile, "    <chckpt_method> %s </chckpt_method>\n", method);
-    fprintf(sstfile, "    <chckpt_delay> %lu </chckpt_delay>\n", chckpt_delay);
     fprintf(sstfile, "    <chckpt_interval> %lu </chckpt_interval>\n", chckpt_interval);
-    fprintf(sstfile, "    <envelope_write_time> %lu </envelope_write_time>\n", envelope_write_time);
+    fprintf(sstfile, "    <envelope_size> %d </envelope_size>\n", envelope_size);
     fprintf(sstfile, "    <chckpt_size> %d </chckpt_size>\n", chckpt_size);
 
 }  /* end of sst_gen_param_entries() */
