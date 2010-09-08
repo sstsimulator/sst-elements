@@ -65,12 +65,10 @@ SimTime_t read_time;
 	    total_writes++;
 
 	    write_pipe= delay + current_time;
-	    // e->dest= -1;
 	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting write of %d bytes, delay %.9fs\n",
 		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
 
 	    e->SetRoutine(BIT_BUCKET_WRITE_DONE);
-	    e->hops= 0;
 	    self_link->Send(delay, e);
 	    break;
 
@@ -82,6 +80,7 @@ SimTime_t read_time;
 	    e->hops= 0;
 	    e->msg_len= 0;
 	    // e->dest= -1;
+	    e->SetRoutine(e->return_event);
 	    net->Send(e);
 	    break;
 
@@ -103,8 +102,6 @@ SimTime_t read_time;
 	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting read of %d bytes, delay %.9fs\n",
 		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
 	    e->SetRoutine(BIT_BUCKET_READ_DONE);
-	    e->hops= 0;
-	    // e->dest= -1;
 	    self_link->Send(delay, e);
 	    break;
 
@@ -115,9 +112,9 @@ SimTime_t read_time;
 	    total_reads++;
 	    _BIT_BUCKET_DBG(3, "%15.9fs Bit bucket: Read of %d bytes done.\n",
 		(double)current_time / 1000000000.0, e->msg_len);
-	    // e->SetRoutine(BIT_BUCKET_READ_DONE); // Already set
 	    e->hops= 0;
 	    // e->dest= -1;
+	    e->SetRoutine(e->return_event);
 	    net->Send(e);
 	    break;
     }

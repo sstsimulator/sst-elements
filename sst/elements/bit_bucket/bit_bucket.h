@@ -37,9 +37,9 @@ using namespace SST;
 
 
 
-// Set this to start at 2000 and use this fixed order
+// Set this to start at 200 and use this fixed order
 // That way we can "merge" enums with the pattern generator event enums
-typedef enum {BIT_BUCKET_WRITE_START= 2000, BIT_BUCKET_WRITE_DONE, BIT_BUCKET_READ_START,
+typedef enum {BIT_BUCKET_WRITE_START= 200, BIT_BUCKET_WRITE_DONE, BIT_BUCKET_READ_START,
     BIT_BUCKET_READ_DONE} bit_bucket_op_t;
 
 
