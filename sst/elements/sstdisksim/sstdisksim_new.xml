@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config>
-    stopAtCycle=1000000
+    stopAtCycle=1000000s
 </config>
 <sst>
   <component id="1.sstdisksim_tracereader" >	
