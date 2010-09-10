@@ -61,10 +61,11 @@ class sstdisksim_tracereader : public Component {
 
   int luaRead(int count, int pos, int devno);
   int luaWrite(int count, int pos, int devno);
+  lua_State* __L;
+  lua_State* __otherthread;
 
  private:
 
-  lua_State* __L;
   std::string traceFile;
 
   bool __done;

@@ -144,7 +144,9 @@ luaReadCall(lua_State* L)
 
   luaRetrieveValues(L, formatRetrieve, &a, &b, &c);
   res = __ptrs[id]->luaRead(a, b, c);
-  return luaReturnValues(L, formatReturn, &res);
+  luaReturnValues(L, formatReturn, &res);
+
+  return 0;
 }
 
 /******************************************************************************/
@@ -176,9 +178,13 @@ luaWriteCall(lua_State* L)
   int a, b, c;
   int res;
 
+  lua_resume(L, 0);
+
   luaRetrieveValues(L, formatRetrieve, &a, &b, &c);
   res = __ptrs[id]->luaWrite(a, b, c);
-  return luaReturnValues(L, formatReturn, &res);
+  luaReturnValues(L, formatReturn, &res);
+
+  return res;
 }
 
 /******************************************************************************/
@@ -190,6 +196,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
   __done = 0;
   traceFile = "";
   __ptrs[id] = this;
+  __otherthread = NULL;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -218,9 +225,8 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
 
   printf("Starting sstdisksim_tracereader up\n");
 
-  __L = lua_open();
+  __L = luaL_newstate();
   luaL_openlibs(__L);
-
   lua_newtable(__L);
 
   lua_register(__L, "luaRead", luaReadCall);
@@ -230,8 +236,6 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
   lua_setglobal(__L, "sst_thread_id");
 
   registerExit();
- 
-  return;
 }
 
 /******************************************************************************/
