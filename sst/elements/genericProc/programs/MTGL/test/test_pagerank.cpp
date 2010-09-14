@@ -161,8 +161,9 @@ int main(int argc, char* argv[])
   init_mta_counters(timer, issues, memrefs, concur, streams);
 
   PIM_resetCounters();
-  // timed run
-  for (int i = 0; i < 4; ++i) {
+  // timed run note: ran all 16k and non-pim 65K with 4 iterations of
+  // pagerank. Rank 65k pim with 1 iteration due to memory leak
+  for (int i = 0; i < 1; ++i) {
     rinfo = pr.run(atof(argv[2]));
   }
 
