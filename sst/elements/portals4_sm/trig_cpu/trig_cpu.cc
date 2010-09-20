@@ -490,7 +490,7 @@ trig_cpu::event_handler(Event* ev)
 	    }
 	    break;
 	case 1:
-// 	  printf("Unregister exit 1\n");
+ 	  // printf("Unregister exit 1\n");
 	    unregisterExit();
 	    return;
 	case 2:
