@@ -58,11 +58,13 @@ protected:
         int my_root = -1;
 
         for (int i = 1 ; i <= num_nodes ; i *= radix) {
-            int tmp_radix = (num_nodes / i < radix) ? (num_nodes / i) : radix;
+            int tmp_radix = (num_nodes / i < radix) ? (num_nodes / i) + 1 : radix;
             my_root = (my_id / (tmp_radix * i)) * (tmp_radix * i);
             if (my_root != my_id) break;
             for (int j = 1 ; j < tmp_radix ; ++j) {
-                my_children.push_back(my_id + i * j);
+                if (my_id + i * j < num_nodes) {
+                    my_children.push_back(my_id + i * j);
+                }
             }
         }
         std::reverse(my_children.begin(), my_children.end());
@@ -75,7 +77,7 @@ protected:
     {
         std::vector<int> my_children;
         int my_root = (my_id - 1) / radix;
-        for (int i = 1 ; i < radix + 1 ; ++i) {
+        for (int i = 1 ; i <= radix ; ++i) {
             int tmp = radix * my_id + i;
             if (tmp < num_nodes) my_children.push_back(tmp);
         }

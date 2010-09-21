@@ -35,7 +35,6 @@ public:
         crReturn();
 
         shiftval = floorLog2(radix);
-        if (my_id == 0) printf("radix: %d, shiftval: %d\n", radix, shiftval);
 
         for (level = 0x1 ; level < num_nodes ; level <<= shiftval) {
             for (i = 0 ; i < (radix - 1) ; i++) {

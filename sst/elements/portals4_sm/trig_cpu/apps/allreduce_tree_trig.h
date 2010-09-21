@@ -19,7 +19,7 @@
 
 class allreduce_tree_triggered :  public application {
 public:
-    allreduce_tree_triggered(trig_cpu *cpu, bool nary) : application(cpu)
+    allreduce_tree_triggered(trig_cpu *cpu, bool nary) : application(cpu), init(false)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();

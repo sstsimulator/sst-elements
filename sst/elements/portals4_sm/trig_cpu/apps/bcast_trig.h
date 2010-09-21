@@ -32,11 +32,16 @@ public:
         boost::tie(my_root, my_children) = buildBinomialTree(radix);
         num_children = my_children.size();
 
-        in_buf = (char*) malloc(msg_size);
-        for (i = 0 ; i < msg_size ; ++i) {
-            in_buf[i] = i % 255;
+        if (my_id == my_root) {
+            in_buf = (char*) malloc(msg_size);
+            for (i = 0 ; i < msg_size ; ++i) {
+                in_buf[i] = i % 255;
+            }
+        } else {
+            in_buf = NULL;
         }
         out_buf = (char*) malloc(msg_size);
+        memset(out_buf, 0, msg_size);
         bounce_buf = (char*) malloc(chunk_size);
     }
 
@@ -116,14 +121,14 @@ public:
                     chunk_size : msg_size - j;
                 ptl->PtlTriggeredGet(out_md_h, j, comm_size, my_root,
                                      PT_OUT, 0x0, NULL, j, bounce_ct_h,
-                                     j / chunk_size);
+                                     j / chunk_size  + 1);
                 crReturn();
 
                 /* then when the get is completed, send ready acks to children */
                 for (i = 0 ; i < num_children ; ++i) {
                     ptl->PtlTriggeredPut(bounce_md_h, 0, 0, 0, my_children[i],
                                          PT_BOUNCE, 0x0, 0, NULL, 0, out_md_ct_h,
-                                         j / chunk_size);
+                                         j / chunk_size  + 1);
                     crReturn();
                 }
             }

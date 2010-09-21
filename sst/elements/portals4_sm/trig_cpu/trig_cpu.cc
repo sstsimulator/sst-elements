@@ -282,8 +282,8 @@ trig_cpu::Setup()
 
     
     if ( sizeof(ptl_header_t) > 32 ) {
-	printf("Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n", (int) sizeof(ptl_header_t));
-	printf("sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n", (int) sizeof(ptl_op_t), (int) sizeof(ptl_datatype_t));
+	fprintf(stderr, "Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n", (int) sizeof(ptl_header_t));
+	fprintf(stderr, "sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n", (int) sizeof(ptl_op_t), (int) sizeof(ptl_datatype_t));
 	exit(1);
     }
 
@@ -675,7 +675,7 @@ trig_cpu::send(int dest, uint64_t data)
 void
 trig_cpu::isend(int dest, void* data, int length)
 {
-    if ( my_id == 1024 )printf("%5d: isend(%d, %p, %d)\n",my_id,dest,data,length);
+    //    if ( my_id == 1024 )printf("%5d: isend(%d, %p, %d)\n",my_id,dest,data,length);
   // Need to create an MD
   ptl_md_t md;
   md.start = data;
@@ -808,7 +808,7 @@ void foobar(void);
 bool
 trig_cpu::irecv(int src, void* buf, int& handle)
 {
-    if ( my_id == 1024 ) printf("%5d: irecv(%d, %p)\n",my_id,src,buf);
+    //    if ( my_id == 1024 ) printf("%5d: irecv(%d, %p)\n",my_id,src,buf);
   bool ret = process_pending_msg();
     // If we found something in the pending messages that match, we need
     // to return false to let the sim go busy.
