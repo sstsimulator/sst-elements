@@ -18,8 +18,6 @@
 #include "trig_cpu.h"
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
-#include "apps/allreduce_narytree.h"
-#include "apps/allreduce_narytree_trig.h"
 #include "apps/allreduce_recdbl.h"
 #include "apps/allreduce_recdbl_trig.h"
 #include "apps/allreduce_tree.h"
@@ -165,19 +163,19 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
 
     if (application == "allreduce.tree") {
         use_portals = false;
-        app = new allreduce_tree(this);
+        app = new allreduce_tree(this, false);
     } else if (application == "allreduce.narytree") {
         use_portals = false;
-        app = new allreduce_narytree(this);
+        app = new allreduce_tree(this, true);
     } else if (application == "allreduce.recursive_doubling") {
         use_portals = false;
         app = new allreduce_recdbl(this);
     } else if (application == "allreduce.tree_triggered") {
         use_portals = true;
-        app = new allreduce_tree_triggered(this);
+        app = new allreduce_tree_triggered(this, false);
     } else if (application == "allreduce.narytree_triggered") {
         use_portals = true;
-        app = new allreduce_narytree_triggered(this);
+        app = new allreduce_tree_triggered(this, true);
     } else if (application == "allreduce.recursive_doubling_triggered") {
         use_portals = true;
         app = new allreduce_recdbl_triggered(this);
@@ -284,8 +282,8 @@ trig_cpu::Setup()
 
     
     if ( sizeof(ptl_header_t) > 32 ) {
-	printf("Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n",sizeof(ptl_header_t));
-	printf("sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n",sizeof(ptl_op_t),sizeof(ptl_datatype_t));
+	printf("Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n", (int) sizeof(ptl_header_t));
+	printf("sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n", (int) sizeof(ptl_op_t), (int) sizeof(ptl_datatype_t));
 	exit(1);
     }
 

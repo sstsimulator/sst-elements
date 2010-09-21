@@ -15,8 +15,6 @@ libportals4_sm_la_SOURCES = \
 	trig_cpu/portals_types.h \
 	trig_cpu/trig_cpu.cc \
 	trig_cpu/trig_cpu.h \
-	trig_cpu/apps/allreduce_narytree.h \
-	trig_cpu/apps/allreduce_narytree_trig.h \
 	trig_cpu/apps/allreduce_recdbl.h \
 	trig_cpu/apps/allreduce_recdbl_trig.h \
 	trig_cpu/apps/allreduce_tree.h \

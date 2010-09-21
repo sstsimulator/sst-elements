@@ -38,8 +38,6 @@ public:
     bool
     operator()(Event *ev)
     {
-        int bad = 0;
-
         crBegin();
 
         start_time = cpu->getCurrentSimTimeNano();
@@ -64,10 +62,13 @@ public:
         crReturn();
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
-        for (i = 0 ; i < msg_size ; ++i) {
-            if ((out_buf[i] & 0xff) != i % 255) bad++;
+        {
+            int bad = 0;
+            for (i = 0 ; i < msg_size ; ++i) {
+                if ((out_buf[i] & 0xff) != i % 255) bad++;
+            }
+            if (bad) printf("%5d: bad results: %d\n",my_id,bad);
         }
-        if (bad) printf("%5d: bad results: %d\n",my_id,bad);
 
         crFinish();
         return true;

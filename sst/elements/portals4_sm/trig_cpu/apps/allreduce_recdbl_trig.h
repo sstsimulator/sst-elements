@@ -19,23 +19,24 @@
 
 class allreduce_recdbl_triggered :  public application {
 public:
-    allreduce_recdbl_triggered(trig_cpu *cpu) : application(cpu)
+    allreduce_recdbl_triggered(trig_cpu *cpu) : application(cpu), init(false)
     {
         ptl = cpu->getPortalsHandle();
+
+        in_buf = 1;
+        out_buf = 0;
+        zero_buf = 0;
     }
 
     bool
     operator()(Event *ev)
     {
-        int adj;
         ptl_md_t md;
         ptl_me_t me;
-        int next_level;
-        int remote;
 
-        switch (state) {
-        case 0:
-            /* Initialization case */
+        crBegin();
+
+        if (!init) {
             my_levels = -1;
             for (adj = 0x1; adj <= num_nodes ; adj  <<= 1) { my_levels++; } adj = adj >> 1;
             if (adj != num_nodes) {
@@ -67,111 +68,86 @@ public:
                 md.ct_handle = PTL_CT_NONE;
                 ptl->PtlMDBind(md, &my_level_md_hs[i]);
             }
-            state = 1;
-            break;
 
-        case 1:
-            // 200ns startup time
-            start_time = cpu->getCurrentSimTimeNano();
-            cpu->addBusyTime("200ns");
-
-            // Create description of user buffer.  We can't possibly have
-            // a result to need this information before we add our portion
-            // to the result, so this doesn't need to be persistent.
-            ptl->PtlCTAlloc(PTL_CT_OPERATION, user_ct_h);
-            me.start = NULL;
-            me.length = 8;
-            me.ignore_bits = ~0x0;
-            me.ct_handle = user_ct_h;
-            ptl->PtlMEAppend(1, me, PTL_PRIORITY_LIST, NULL, user_me_h);
-
-            md.start = NULL;
+            md.start = &zero_buf;
             md.length = 8;
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
-            ptl->PtlMDBind(md, &user_md_h);
+            ptl->PtlMDBind(md, &zero_md_h);
 
-            state = 2;
-            break;
-
-        case 2:
-            // start the trip
-            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
-            state = 3;
-            break;
-
-        case 3:
-            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id ^ 0x1, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
-
-            loop_var = 1;
-            state = (loop_var < my_levels) ? 4 : 8;
-            break;
-
-        case 4:
-            next_level = 0x1 << loop_var;
-            remote = my_id ^ next_level;
-            ptl->PtlTriggeredAtomic(my_level_md_hs[loop_var - 1], 0, 8, 0, my_id, 0,
-                                    loop_var, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
-                                    my_level_ct_hs[loop_var - 1], 2);
-            state = 5;
-            break;
-
-        case 5:
-            next_level = 0x1 << loop_var;
-            remote = my_id ^ next_level;
-            ptl->PtlTriggeredAtomic(my_level_md_hs[loop_var - 1], 0, 8, 0, remote, 0,
-                                    loop_var, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
-                                    my_level_ct_hs[loop_var - 1], 2);
-            state = 6;
-            break;
-
-        case 6:
-            next_level = 0x1 << loop_var;
-            remote = my_id ^ next_level;
-            ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
-                                 loop_var - 1, 0, NULL, 0, my_level_ct_hs[loop_var - 1], 2);
-            state = 7;
-            break;
-	
-        case 7:
-            ptl->PtlTriggeredCTInc(my_level_ct_hs[loop_var - 1], -3, 
-                                   my_level_ct_hs[loop_var - 1], 3);
-            loop_var++;
-            state = (loop_var < my_levels) ? 4 : 8;
-            break;
-
-        case 8:
-            // copy into user buffer
-            ptl->PtlTriggeredPut(my_level_md_hs[my_levels - 1], 0, 8, 0, my_id, 1,
-                                 0, 0, NULL, 0, my_level_ct_hs[my_levels - 1], 2);
-            state = 9;
-            break;
-
-        case 9:
-            ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
-                                 my_levels - 1, 0, NULL, 0, my_level_ct_hs[my_levels - 1], 2);
-            ptl->PtlTriggeredCTInc(my_level_ct_hs[my_levels - 1], -3, 
-                                   my_level_ct_hs[my_levels - 1], 3);
-            state = 10;
-            break;
-
-        case 10:
-            if (ptl->PtlCTWait(user_ct_h, 1)) state = 11;
-            break;
-        
-        case 11:
-            ptl->PtlMEUnlink(user_me_h);
-            trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
-            ptl->PtlMEUnlink(user_me_h);
-            state = 1;
-            return true;
-
-        default:
-            printf("triggered recursive doubling: unhandled state: %d\n", state);
-            exit(1);
+            init = true;
         }
 
-        return false;
+        // 200ns startup time
+        start_time = cpu->getCurrentSimTimeNano();
+        cpu->addBusyTime("200ns");
+        crReturn();
+
+        out_buf = in_buf;
+
+        // Create description of user buffer.  We can't possibly have
+        // a result to need this information before we add our portion
+        // to the result, so this doesn't need to be persistent.
+        ptl->PtlCTAlloc(PTL_CT_OPERATION, user_ct_h);
+        me.start = &out_buf;
+        me.length = 8;
+        me.ignore_bits = ~0x0;
+        me.ct_handle = user_ct_h;
+        ptl->PtlMEAppend(1, me, PTL_PRIORITY_LIST, NULL, user_me_h);
+
+        md.start = &out_buf;
+        md.length = 8;
+        md.eq_handle = PTL_EQ_NONE;
+        md.ct_handle = PTL_CT_NONE;
+        ptl->PtlMDBind(md, &user_md_h);
+
+        // start the trip
+        ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
+        crReturn();
+        ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id ^ 0x1, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
+        crReturn();
+
+        for (i = 1 ; i < my_levels ; ++i) {
+            next_level = 0x1 << i;
+            remote = my_id ^ next_level;
+            ptl->PtlTriggeredAtomic(my_level_md_hs[i - 1], 0, 8, 0, my_id, 0,
+                                    i, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
+                                    my_level_ct_hs[i - 1], 2);
+            crReturn();
+            ptl->PtlTriggeredAtomic(my_level_md_hs[i - 1], 0, 8, 0, remote, 0,
+                                    i, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
+                                    my_level_ct_hs[i - 1], 2);
+            crReturn();
+            ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
+                                 i - 1, 0, NULL, 0, my_level_ct_hs[i - 1], 2);
+            crReturn();
+            ptl->PtlTriggeredCTInc(my_level_ct_hs[i - 1], -3, 
+                                   my_level_ct_hs[i - 1], 3);
+        }
+
+        // copy into user buffer
+        ptl->PtlTriggeredPut(my_level_md_hs[my_levels - 1], 0, 8, 0, my_id, 1,
+                             0, 0, NULL, 0, my_level_ct_hs[my_levels - 1], 2);
+        crReturn();
+        ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
+                             my_levels - 1, 0, NULL, 0, my_level_ct_hs[my_levels - 1], 2);
+        crReturn();
+        ptl->PtlTriggeredCTInc(my_level_ct_hs[my_levels - 1], -3, 
+                               my_level_ct_hs[my_levels - 1], 3);
+        crReturn();
+
+        while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
+
+        ptl->PtlMEUnlink(user_me_h);
+        crReturn();
+        ptl->PtlCTFree(user_ct_h);
+        crReturn();
+        trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
+
+        assert(out_buf == (uint64_t) cpu->getNumNodes());
+
+        crFinish();
+        return true;
     }
 
 private:
@@ -181,8 +157,9 @@ private:
 
     portals *ptl;
     SimTime_t start_time;
-    int loop_var;
+    int i;
     int my_levels;
+    bool init;
 
     std::vector<double> my_level_steps;
     std::vector<ptl_handle_ct_t> my_level_ct_hs;
@@ -194,6 +171,12 @@ private:
     ptl_handle_md_t user_md_h;
 
     ptl_handle_md_t zero_md_h;
+
+    int adj;
+    int next_level;
+    int remote;
+
+    uint64_t in_buf, out_buf, tmp_buf, zero_buf;
 };
 
 #endif // COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_TRIGGERED_H

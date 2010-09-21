@@ -69,6 +69,19 @@ protected:
 
         return std::make_pair(my_root, my_children);
     }
+
+    std::pair<int, std::vector<int> >
+    buildNaryTree(int radix)
+    {
+        std::vector<int> my_children;
+        int my_root = (my_id - 1) / radix;
+        for (int i = 1 ; i < radix + 1 ; ++i) {
+            int tmp = radix * my_id + i;
+            if (tmp < num_nodes) my_children.push_back(tmp);
+        }
+
+        return std::make_pair(my_root, my_children);
+    }
     
     trig_cpu *cpu;
     int state;
