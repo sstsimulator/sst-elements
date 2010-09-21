@@ -144,6 +144,7 @@ public:
         crReturn();
 
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
+        while (!ptl->PtlCTWait(up_tree_ct_h, 0)) { crReturn(); }
 
         ptl->PtlMEUnlink(user_me_h);
         crReturn();
@@ -151,10 +152,12 @@ public:
         crReturn();
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
+#if 0
         if (out_buf != (uint64_t) num_nodes) {
             printf("%05d: got %lu, expected %lu\n",
                    my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
         }
+#endif
 
         crFinish();
         return true;

@@ -50,9 +50,10 @@ public:
             my_level_me_hs.resize(my_levels);
             my_level_md_hs.resize(my_levels);
 
-            for (int i = 0 ; i < my_levels ; ++i) {
+            for (i = 0 ; i < my_levels ; ++i) {
                 my_level_steps[i] = 0;
                 ptl->PtlCTAlloc(PTL_CT_OPERATION, my_level_ct_hs[i]);
+                crReturn();
 
                 me.start = &my_level_steps[i];
                 me.length = 8;
@@ -61,12 +62,14 @@ public:
                 me.ct_handle = my_level_ct_hs[i];
                 ptl->PtlMEAppend(0, me, PTL_PRIORITY_LIST, NULL, 
                                  my_level_me_hs[i]);
+                crReturn();
 
                 md.start = &my_level_steps[i];
                 me.length = 8;
                 md.eq_handle = PTL_EQ_NONE;
                 md.ct_handle = PTL_CT_NONE;
                 ptl->PtlMDBind(md, &my_level_md_hs[i]);
+                crReturn();
             }
 
             md.start = &zero_buf;
@@ -74,6 +77,7 @@ public:
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &zero_md_h);
+            crReturn();
 
             init = true;
         }
@@ -138,6 +142,7 @@ public:
         crReturn();
 
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
+        while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], algo_count * 3 + 3)) { crReturn(); }
 
         ptl->PtlMEUnlink(user_me_h);
         crReturn();
@@ -146,10 +151,12 @@ public:
         algo_count++;
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
+#if 0
         if (out_buf != (uint64_t) num_nodes) {
             if (my_id == 1) printf("%05d: got %lu, expected %lu\n",
                    my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
         }
+#endif
 
         crFinish();
         return true;
