@@ -99,6 +99,9 @@ public:
 
         out_buf = in_buf;
 
+        ptl->PtlEnableCoalesce();
+        crReturn();
+
         if (num_children == 0) {
             // leaf node - push directly to the upper level's up tree
             ptl->PtlAtomic(user_md_h, 0, 8, 0, my_root, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
@@ -137,6 +140,9 @@ public:
             }
         }
 
+        ptl->PtlDisableCoalesce();
+        crReturn();
+
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
 
         ptl->PtlMEUnlink(user_me_h);
@@ -145,7 +151,10 @@ public:
         crReturn();
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
-        assert(out_buf == (uint64_t) cpu->getNumNodes());
+        if (out_buf != (uint64_t) num_nodes) {
+            printf("%05d: got %lu, expected %lu\n",
+                   my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
+        }
 
         crFinish();
         return true;

@@ -75,6 +75,9 @@ public:
         cpu->addBusyTime("200ns");
         crReturn();
 
+        ptl->PtlEnableCoalesce();
+        crReturn();
+
         // start the trip
         ptl->PtlPut(my_md_h, 0, 0, 0, my_id, 0, 0, 0, NULL, 0);
         crReturn();
@@ -93,6 +96,9 @@ public:
             crReturn();
         }
 
+        ptl->PtlDisableCoalesce();
+        crReturn();
+
         while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], 2)) {
             crReturn(); 
         }
@@ -100,6 +106,7 @@ public:
         ptl->PtlTriggeredCTInc(my_level_ct_hs[my_levels - 1], -2, 
                                my_level_ct_hs[my_levels - 1], 2);
         crReturn(); 
+
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 

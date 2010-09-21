@@ -101,6 +101,9 @@ public:
         ptl->PtlMDBind(md, &out_md_h);
         crReturn();
 
+        ptl->PtlEnableCoalesce();
+        crReturn();
+
         /* long protocol only for now */
         if (my_id == my_root) {
             /* copy to self */
@@ -138,6 +141,9 @@ public:
             ptl->PtlTriggeredCTInc(bounce_ct_h, -count, bounce_ct_h, count);
             crReturn();
         }
+
+        ptl->PtlDisableCoalesce();
+        crReturn();
 
         if (num_children > 0) {
             /* wait for completion */

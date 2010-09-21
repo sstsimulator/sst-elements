@@ -69,6 +69,9 @@ public:
         cpu->addBusyTime("200ns");
         crReturn();
 
+        ptl->PtlEnableCoalesce();
+        crReturn();
+
         for (j = 1 ; j < radix ; ++j) {
             ptl->PtlPut(my_md_h, 0, 0, 0, (my_id + j) % num_nodes, 0, 0, 0, NULL, 0);
             crReturn();
@@ -86,6 +89,9 @@ public:
                                    my_level_ct_hs[i - 1], (radix - 1));
             crReturn();
         }
+
+        ptl->PtlDisableCoalesce();
+        crReturn();
 
         // wait for completion
         while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], (radix - 1))) {

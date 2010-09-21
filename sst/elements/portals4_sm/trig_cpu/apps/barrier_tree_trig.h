@@ -74,6 +74,9 @@ public:
         cpu->addBusyTime("200ns");
         crReturn();
 
+        ptl->PtlEnableCoalesce();
+        crReturn();
+
         if (num_children == 0) {
             ptl->PtlPut(my_md_h, 0, 0, 0, my_root, PT_UP, 0, 0, NULL, 0);
             crReturn();
@@ -96,6 +99,9 @@ public:
                 crReturn();
             }
         }
+
+        ptl->PtlDisableCoalesce();
+        crReturn();
 
         while (!ptl->PtlCTWait(down_tree_ct_h, 1)) { crReturn(); }
         crReturn(); 

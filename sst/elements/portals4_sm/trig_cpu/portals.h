@@ -88,6 +88,9 @@ public:
 			   ptl_handle_ct_t ct_handle, ptl_size_t threshold);
 
 
+    void PtlEnableCoalesce(void) { }
+    void PtlDisableCoalesce(void) { }
+
     portals(trig_cpu* my_cpu);
 
     void scheduleUpdateHostCT(ptl_handle_ct_t ct_handle);

@@ -19,7 +19,7 @@
 
 class allreduce_recdbl_triggered :  public application {
 public:
-    allreduce_recdbl_triggered(trig_cpu *cpu) : application(cpu), init(false)
+    allreduce_recdbl_triggered(trig_cpu *cpu) : application(cpu), init(false), algo_count(0)
     {
         ptl = cpu->getPortalsHandle();
 
@@ -101,6 +101,9 @@ public:
         md.ct_handle = PTL_CT_NONE;
         ptl->PtlMDBind(md, &user_md_h);
 
+        ptl->PtlEnableCoalesce();
+        crReturn();
+
         // start the trip
         ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
         crReturn();
@@ -112,28 +115,26 @@ public:
             remote = my_id ^ next_level;
             ptl->PtlTriggeredAtomic(my_level_md_hs[i - 1], 0, 8, 0, my_id, 0,
                                     i, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
-                                    my_level_ct_hs[i - 1], 2);
+                                    my_level_ct_hs[i - 1], algo_count * 3 + 2);
             crReturn();
             ptl->PtlTriggeredAtomic(my_level_md_hs[i - 1], 0, 8, 0, remote, 0,
                                     i, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
-                                    my_level_ct_hs[i - 1], 2);
+                                    my_level_ct_hs[i - 1], algo_count * 3 + 2);
             crReturn();
             ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
-                                 i - 1, 0, NULL, 0, my_level_ct_hs[i - 1], 2);
+                                 i - 1, 0, NULL, 0, my_level_ct_hs[i - 1], algo_count * 3 + 2);
             crReturn();
-            ptl->PtlTriggeredCTInc(my_level_ct_hs[i - 1], -3, 
-                                   my_level_ct_hs[i - 1], 3);
         }
 
         // copy into user buffer
         ptl->PtlTriggeredPut(my_level_md_hs[my_levels - 1], 0, 8, 0, my_id, 1,
-                             0, 0, NULL, 0, my_level_ct_hs[my_levels - 1], 2);
+                             0, 0, NULL, 0, my_level_ct_hs[my_levels - 1], algo_count * 3 + 2);
         crReturn();
         ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
-                             my_levels - 1, 0, NULL, 0, my_level_ct_hs[my_levels - 1], 2);
+                             my_levels - 1, 0, NULL, 0, my_level_ct_hs[my_levels - 1], algo_count * 3 + 2);
         crReturn();
-        ptl->PtlTriggeredCTInc(my_level_ct_hs[my_levels - 1], -3, 
-                               my_level_ct_hs[my_levels - 1], 3);
+
+        ptl->PtlDisableCoalesce();
         crReturn();
 
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
@@ -142,9 +143,13 @@ public:
         crReturn();
         ptl->PtlCTFree(user_ct_h);
         crReturn();
+        algo_count++;
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
-        assert(out_buf == (uint64_t) cpu->getNumNodes());
+        if (out_buf != (uint64_t) num_nodes) {
+            if (my_id == 1) printf("%05d: got %lu, expected %lu\n",
+                   my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
+        }
 
         crFinish();
         return true;
@@ -161,7 +166,7 @@ private:
     int my_levels;
     bool init;
 
-    std::vector<double> my_level_steps;
+    std::vector<uint64_t> my_level_steps;
     std::vector<ptl_handle_ct_t> my_level_ct_hs;
     std::vector<ptl_handle_me_t> my_level_me_hs;
     std::vector<ptl_handle_md_t> my_level_md_hs;
@@ -177,6 +182,8 @@ private:
     int remote;
 
     uint64_t in_buf, out_buf, tmp_buf, zero_buf;
+
+    uint64_t algo_count;
 };
 
 #endif // COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_TRIGGERED_H
