@@ -19,7 +19,7 @@
 
 class barrier_dissemination_triggered :  public application {
 public:
-    barrier_dissemination_triggered(trig_cpu *cpu) : application(cpu), init(false)
+    barrier_dissemination_triggered(trig_cpu *cpu) : application(cpu), init(false), algo_count(0)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();
@@ -69,6 +69,8 @@ public:
         cpu->addBusyTime("200ns");
         crReturn();
 
+        algo_count++;
+
         ptl->PtlEnableCoalesce();
         crReturn();
 
@@ -81,25 +83,18 @@ public:
             for (j = 0 ; j < (radix - 1) ;++j) {
                 remote = (my_id + level + i) % num_nodes;
                 ptl->PtlTriggeredPut(my_md_h, 0, 0, 0, remote, 0, i, 0, NULL, 
-                                     0, my_level_ct_hs[i - 1], radix - 1);
+                                     0, my_level_ct_hs[i - 1], algo_count * (radix - 1));
                 crReturn();
             }
-
-            ptl->PtlTriggeredCTInc(my_level_ct_hs[i - 1], -(radix - 1), 
-                                   my_level_ct_hs[i - 1], (radix - 1));
-            crReturn();
         }
 
         ptl->PtlDisableCoalesce();
         crReturn();
 
         // wait for completion
-        while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], (radix - 1))) {
+        while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], algo_count * (radix - 1))) {
             crReturn(); 
         }
-        crReturn();
-        ptl->PtlTriggeredCTInc(my_level_ct_hs[my_levels - 1], -(radix - 1), 
-                               my_level_ct_hs[my_levels - 1], (radix - 1));
         crReturn();
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
@@ -127,6 +122,8 @@ private:
     std::vector<ptl_handle_ct_t> my_level_ct_hs;
     std::vector<ptl_handle_me_t> my_level_me_hs;
     ptl_handle_md_t my_md_h;
+
+    uint64_t algo_count;
 };
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_DISSEMINATION_TRIGGERED_H
