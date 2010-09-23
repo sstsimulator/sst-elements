@@ -104,12 +104,12 @@ public:
 
         if (num_children == 0) {
             // leaf node - push directly to the upper level's up tree
-            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_root, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
+            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_root, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
             crReturn();
         } else {
             // add our portion to the mix
             ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
-                           0, PTL_SUM, PTL_DOUBLE);
+                           0, PTL_SUM, PTL_LONG);
             crReturn();
             if (my_root == my_id) {
                 // setup trigger to move data to right place, then send
@@ -120,7 +120,7 @@ public:
             } else {
                 // setup trigger to move data up the tree when we get enough updates
                 ptl->PtlTriggeredAtomic(up_tree_md_h, 0, 8, 0, my_root, PT_UP,
-                                        0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
+                                        0, 0, NULL, 0, PTL_SUM, PTL_LONG,
                                         up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
                 crReturn();
             }
@@ -153,12 +153,10 @@ public:
         algo_count++;
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
-#if 0
         if (out_buf != (uint64_t) num_nodes) {
             printf("%05d: got %lu, expected %lu\n",
                    my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
         }
-#endif
 
         crFinish();
         return true;

@@ -19,7 +19,7 @@
 
 class barrier_recdbl_triggered :  public application {
 public:
-    barrier_recdbl_triggered(trig_cpu *cpu) : application(cpu), init(false)
+    barrier_recdbl_triggered(trig_cpu *cpu) : application(cpu), init(false), algo_count(0)
     {
         int adj;
 
@@ -75,6 +75,8 @@ public:
         cpu->addBusyTime("200ns");
         crReturn();
 
+        algo_count++;
+
         ptl->PtlEnableCoalesce();
         crReturn();
 
@@ -86,27 +88,20 @@ public:
 
         for (i = 1  ; i < my_levels ; ++i) {
             ptl->PtlTriggeredPut(my_md_h, 0, 0, 0, my_id, 0,
-                                 i, 0, NULL, 0, my_level_ct_hs[i - 1], 2);
+                                 i, 0, NULL, 0, my_level_ct_hs[i - 1], algo_count * 2);
             crReturn();
             ptl->PtlTriggeredPut(my_md_h, 0, 0, 0, my_id ^ (0x1 << i) , 0,
-                                 i, 0, NULL, 0, my_level_ct_hs[i - 1], 2);
-            crReturn();
-            ptl->PtlTriggeredCTInc(my_level_ct_hs[i - 1], -2, 
-                                   my_level_ct_hs[i - 1], 2);
+                                 i, 0, NULL, 0, my_level_ct_hs[i - 1], algo_count * 2);
             crReturn();
         }
 
         ptl->PtlDisableCoalesce();
         crReturn();
 
-        while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], 2)) {
+        while (!ptl->PtlCTWait(my_level_ct_hs[my_levels - 1], algo_count * 2)) {
             crReturn(); 
         }
         crReturn(); 
-        ptl->PtlTriggeredCTInc(my_level_ct_hs[my_levels - 1], -2, 
-                               my_level_ct_hs[my_levels - 1], 2);
-        crReturn(); 
-
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
@@ -128,6 +123,8 @@ private:
     std::vector<ptl_handle_ct_t> my_level_ct_hs;
     std::vector<ptl_handle_me_t> my_level_me_hs;
     ptl_handle_md_t my_md_h;
+
+    uint64_t algo_count;
 };
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_RECDBL_TRIGGERED_H

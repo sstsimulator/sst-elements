@@ -151,12 +151,10 @@ public:
         algo_count++;
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
-#if 0
         if (out_buf != (uint64_t) num_nodes) {
             if (my_id == 1) printf("%05d: got %lu, expected %lu\n",
                    my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
         }
-#endif
 
         crFinish();
         return true;

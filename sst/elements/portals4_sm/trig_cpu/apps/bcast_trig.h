@@ -20,7 +20,7 @@
 
 class bcast_tree_triggered :  public application {
 public:
-    bcast_tree_triggered(trig_cpu *cpu) : application(cpu), init(false)
+    bcast_tree_triggered(trig_cpu *cpu) : application(cpu), init(false), algo_count(0)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();
@@ -124,7 +124,7 @@ public:
                     chunk_size : msg_size - j;
                 ptl->PtlTriggeredGet(out_md_h, j, comm_size, my_root,
                                      PT_OUT, 0x0, NULL, j, bounce_ct_h,
-                                     j / chunk_size  + 1);
+                                     algo_count + j / chunk_size  + 1);
                 crReturn();
 
                 /* then when the get is completed, send ready acks to children */
@@ -138,8 +138,7 @@ public:
 
             /* reset 0-byte put received counter */
             count = (msg_size + chunk_size - 1) / chunk_size;
-            ptl->PtlTriggeredCTInc(bounce_ct_h, -count, bounce_ct_h, count);
-            crReturn();
+            algo_count += count;
         }
 
         ptl->PtlDisableCoalesce();
@@ -220,6 +219,8 @@ private:
     static const int PT_BOUNCE = 0;
     static const int PT_ACK    = 1;
     static const int PT_OUT    = 2;
+
+    uint64_t algo_count;
 };
 
 #endif // COMPONENTS_TRIG_CPU_BCAST_TREE_TRIGGERED_H

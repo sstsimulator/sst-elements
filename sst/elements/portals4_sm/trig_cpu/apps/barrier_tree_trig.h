@@ -19,7 +19,7 @@
 
 class barrier_tree_triggered :  public application {
 public:
-    barrier_tree_triggered(trig_cpu *cpu) : application(cpu), init(false)
+    barrier_tree_triggered(trig_cpu *cpu) : application(cpu), init(false), algo_count(0)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();
@@ -74,6 +74,8 @@ public:
         cpu->addBusyTime("200ns");
         crReturn();
 
+        algo_count++;
+
         ptl->PtlEnableCoalesce();
         crReturn();
 
@@ -83,19 +85,16 @@ public:
         } else {
             if (my_id != my_root) {
                 ptl->PtlTriggeredPut(my_md_h, 0, 0, 0, my_root, PT_UP, 0, 0, NULL, 0, 
-                                     up_tree_ct_h, num_children);
+                                     up_tree_ct_h, algo_count * num_children);
                 crReturn();
             } else {
-                ptl->PtlTriggeredCTInc(down_tree_ct_h, 1, up_tree_ct_h, num_children);
+                ptl->PtlTriggeredCTInc(down_tree_ct_h, 1, up_tree_ct_h, algo_count * num_children);
                 crReturn();
             }
-            ptl->PtlTriggeredCTInc(up_tree_ct_h, -num_children, 
-                                   up_tree_ct_h, num_children);
-            crReturn();
 
             for (i = 0 ; i < num_children ; ++i) {
                 ptl->PtlTriggeredPut(my_md_h, 0, 0, 0, my_children[i], PT_DOWN, 
-                                     0, 0, NULL, 0, down_tree_ct_h, 1);
+                                     0, 0, NULL, 0, down_tree_ct_h, algo_count);
                 crReturn();
             }
         }
@@ -103,9 +102,7 @@ public:
         ptl->PtlDisableCoalesce();
         crReturn();
 
-        while (!ptl->PtlCTWait(down_tree_ct_h, 1)) { crReturn(); }
-        crReturn(); 
-        ptl->PtlTriggeredCTInc(down_tree_ct_h, -1, down_tree_ct_h, 1);
+        while (!ptl->PtlCTWait(down_tree_ct_h, algo_count)) { crReturn(); }
         crReturn(); 
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
@@ -140,6 +137,8 @@ private:
 
     static const int PT_UP = 0;
     static const int PT_DOWN = 1;
+
+    uint64_t algo_count;
 };
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_TREE_TRIGGERED_H
