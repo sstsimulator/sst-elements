@@ -109,24 +109,25 @@ public:
         crReturn();
 
         // start the trip
-        ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
+        ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, 0, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
         crReturn();
-        ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id ^ 0x1, 0, 0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE);
+        ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id ^ 0x1, 0, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
         crReturn();
 
         for (i = 1 ; i < my_levels ; ++i) {
             next_level = 0x1 << i;
             remote = my_id ^ next_level;
             ptl->PtlTriggeredAtomic(my_level_md_hs[i - 1], 0, 8, 0, my_id, 0,
-                                    i, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
+                                    i, 0, NULL, 0, PTL_SUM, PTL_LONG,
                                     my_level_ct_hs[i - 1], algo_count * 3 + 2);
             crReturn();
             ptl->PtlTriggeredAtomic(my_level_md_hs[i - 1], 0, 8, 0, remote, 0,
-                                    i, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
+                                    i, 0, NULL, 0, PTL_SUM, PTL_LONG,
                                     my_level_ct_hs[i - 1], algo_count * 3 + 2);
             crReturn();
-            ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
-                                 i - 1, 0, NULL, 0, my_level_ct_hs[i - 1], algo_count * 3 + 2);
+            ptl->PtlTriggeredAtomic(zero_md_h, 0, 8, 0, my_id, 0, 
+                                    i - 1, 0, NULL, 0, PTL_LAND, PTL_LONG,
+                                    my_level_ct_hs[i - 1], algo_count * 3 + 2);
             crReturn();
         }
 
@@ -134,8 +135,9 @@ public:
         ptl->PtlTriggeredPut(my_level_md_hs[my_levels - 1], 0, 8, 0, my_id, 1,
                              0, 0, NULL, 0, my_level_ct_hs[my_levels - 1], algo_count * 3 + 2);
         crReturn();
-        ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, 0, 
-                             my_levels - 1, 0, NULL, 0, my_level_ct_hs[my_levels - 1], algo_count * 3 + 2);
+        ptl->PtlTriggeredAtomic(zero_md_h, 0, 8, 0, my_id, 0, 
+                                my_levels - 1, 0, NULL, 0, PTL_LAND, PTL_LONG,
+                                my_level_ct_hs[my_levels - 1], algo_count * 3 + 2);
         crReturn();
 
         ptl->PtlDisableCoalesce();
@@ -152,7 +154,7 @@ public:
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
         if (out_buf != (uint64_t) num_nodes) {
-            if (my_id == 1) printf("%05d: got %lu, expected %lu\n",
+            printf("%05d: got %lu, expected %lu\n",
                    my_id, (unsigned long) out_buf, (unsigned long) num_nodes);
         }
 

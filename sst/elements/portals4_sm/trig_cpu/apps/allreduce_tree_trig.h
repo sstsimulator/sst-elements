@@ -90,25 +90,32 @@ public:
         ptl->PtlMEAppend(PT_DOWN, me, PTL_PRIORITY_LIST, NULL, user_me_h);
         crReturn();
 
-        md.start = &out_buf;
+        if (num_children > 0) {
+            md.start = &out_buf;
+            md.length = 8;
+            md.eq_handle = PTL_EQ_NONE;
+            md.ct_handle = PTL_CT_NONE;
+            ptl->PtlMDBind(md, &user_md_h);
+            crReturn();
+        }
+
+        md.start = &in_buf;
         md.length = 8;
         md.eq_handle = PTL_EQ_NONE;
         md.ct_handle = PTL_CT_NONE;
-        ptl->PtlMDBind(md, &user_md_h);
+        ptl->PtlMDBind(md, &user_in_md_h);
         crReturn();
-
-        out_buf = in_buf;
 
         ptl->PtlEnableCoalesce();
         crReturn();
 
         if (num_children == 0) {
             // leaf node - push directly to the upper level's up tree
-            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_root, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
+            ptl->PtlAtomic(user_in_md_h, 0, 8, 0, my_root, PT_UP, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
             crReturn();
         } else {
             // add our portion to the mix
-            ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
+            ptl->PtlAtomic(user_in_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
                            0, PTL_SUM, PTL_LONG);
             crReturn();
             if (my_root == my_id) {
@@ -126,8 +133,9 @@ public:
             }
 
             // and to clean up after ourselves
-            ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
-                                 0, up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
+            ptl->PtlTriggeredAtomic(zero_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
+                                    0, PTL_LAND, PTL_LONG, 
+                                    up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
             crReturn();
 
             // push down the tree
@@ -188,6 +196,7 @@ private:
     ptl_handle_ct_t user_ct_h;
     ptl_handle_me_t user_me_h;
     ptl_handle_md_t user_md_h;
+    ptl_handle_md_t user_in_md_h;
 
     ptl_handle_md_t zero_md_h;
 
