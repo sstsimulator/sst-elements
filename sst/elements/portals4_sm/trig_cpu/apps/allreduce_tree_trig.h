@@ -19,7 +19,7 @@
 
 class allreduce_tree_triggered :  public application {
 public:
-    allreduce_tree_triggered(trig_cpu *cpu, bool nary) : application(cpu), init(false)
+    allreduce_tree_triggered(trig_cpu *cpu, bool nary) : application(cpu), init(false), algo_count(0)
     {
         radix = cpu->getRadix();
         ptl = cpu->getPortalsHandle();
@@ -115,21 +115,19 @@ public:
                 // setup trigger to move data to right place, then send
                 // data out of there down the tree
                 ptl->PtlTriggeredPut(up_tree_md_h, 0, 8, 0, my_id, PT_DOWN, 0, 0, NULL, 
-                                     0, up_tree_ct_h, num_children + 1);
+                                     0, up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
                 crReturn();
             } else {
                 // setup trigger to move data up the tree when we get enough updates
                 ptl->PtlTriggeredAtomic(up_tree_md_h, 0, 8, 0, my_root, PT_UP,
                                         0, 0, NULL, 0, PTL_SUM, PTL_DOUBLE,
-                                        up_tree_ct_h, num_children + 1);
+                                        up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
                 crReturn();
             }
 
             // and to clean up after ourselves
             ptl->PtlTriggeredPut(zero_md_h, 0, 8, 0, my_id, PT_UP, 0, 0, NULL, 
-                                 0, up_tree_ct_h, num_children + 1);
-            crReturn();
-            ptl->PtlTriggeredCTInc(up_tree_ct_h, -(num_children + 2), up_tree_ct_h, num_children + 2);
+                                 0, up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
             crReturn();
 
             // push down the tree
@@ -144,12 +142,15 @@ public:
         crReturn();
 
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
-        while (!ptl->PtlCTWait(up_tree_ct_h, 0)) { crReturn(); }
+        if (num_children > 0) {
+            while (!ptl->PtlCTWait(up_tree_ct_h, ((algo_count + 1) * (num_children + 2)))) { crReturn(); }
+        }
 
         ptl->PtlMEUnlink(user_me_h);
         crReturn();
         ptl->PtlCTFree(user_ct_h);
         crReturn();
+        algo_count++;
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
 #if 0
@@ -194,6 +195,8 @@ private:
 
     static const int PT_UP = 0;
     static const int PT_DOWN = 1;
+
+    uint64_t algo_count;
 };
 
 #endif // COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_TRIGGERED_H
