@@ -39,7 +39,6 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     if ( params.find("latency") == params.end() ) {
 	_abort(trig_nic,"couldn't find NIC latency\n");
     }
-//     msg_latency = str2long( params[ "latency" ] ) / 2;
 
     if ( params.find("timing_set") == params.end() ) {
 	_abort(trig_nic,"couldn't find timing set\n");
@@ -965,6 +964,9 @@ trig_nic::computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op)
 	break;
     case PTL_SUM:
 	entry->int_val += value;
+	break;
+    case PTL_LAND:
+	entry->int_val = entry->int_val && value;
 	break;
     case PTL_PROD:
 	entry->int_val *= value;
