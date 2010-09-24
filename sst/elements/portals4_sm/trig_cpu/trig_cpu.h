@@ -153,7 +153,8 @@ private:
     int radix;
     int msg_size;
     int chunk_size;
-	
+    bool enable_coalescing;
+    
     // State needed by send/recv/wait
     uint64_t msg_rate_delay;
     uint64_t busy;
@@ -177,6 +178,7 @@ private:
 
     int timing_set;
     int delay_host_pio_write;
+    int delay_sfence;
     int delay_bus_xfer;
     int latency_dma_mem_access;
     int added_pio_latency;

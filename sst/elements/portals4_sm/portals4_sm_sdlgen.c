@@ -38,6 +38,7 @@ print_usage(char *argv0)
     fprintf(stderr, "      --message_size=SIZE Size in bytes of message\n");
     fprintf(stderr, "      --chunk_size=SIZE Size in bytes of pipeline chunk\n");
     fprintf(stderr, "      --application=STRING Application to run (required)\n");
+    fprintf(stderr, "      --coalesce=0/1 Enable/Disable coalescing of portals commands (default: 1/true)\n");
     fprintf(stderr, "      --output=FILENAME  Output should be sent to FILENAME (default: stdout)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "NOTE: If noise_runs is non-zero, noise_interval and noise_duration\n");
@@ -46,22 +47,23 @@ print_usage(char *argv0)
 
 
 static struct option longopts[] = {
-    { "xdim",           required_argument, NULL, 'x' },
-    { "ydim",           required_argument, NULL, 'y' },
-    { "zdim",           required_argument, NULL, 'z' },
-    { "radix",          required_argument, NULL, 'r' },
-    { "timing_set",     required_argument, NULL, 't' },
-    { "noise_runs",     required_argument, NULL, 'n' },
-    { "noise_interval", required_argument, NULL, 'i' },
-    { "noise_duration", required_argument, NULL, 'd' },
-    { "msg_rate",       required_argument, NULL, 'm' },
-    { "latency",        required_argument, NULL, 'l' },
-    { "message_size",   required_argument, NULL, 'q' },
-    { "chunk_size",     required_argument, NULL, 'w' },
-    { "output",         required_argument, NULL, 'o' },
-    { "help",           no_argument,       NULL, 'h' },
-    { "application",    required_argument, NULL, 'a' },
-    { NULL,             0,                 NULL, 0   }
+    { "xdim",              required_argument, NULL, 'x' },
+    { "ydim",              required_argument, NULL, 'y' },
+    { "zdim",              required_argument, NULL, 'z' },
+    { "radix",             required_argument, NULL, 'r' },
+    { "timing_set",        required_argument, NULL, 't' },
+    { "noise_runs",        required_argument, NULL, 'n' },
+    { "noise_interval",    required_argument, NULL, 'i' },
+    { "noise_duration",    required_argument, NULL, 'd' },
+    { "msg_rate",          required_argument, NULL, 'm' },
+    { "latency",           required_argument, NULL, 'l' },
+    { "message_size",      required_argument, NULL, 'q' },
+    { "chunk_size",        required_argument, NULL, 'w' },
+    { "output",            required_argument, NULL, 'o' },
+    { "help",              no_argument,       NULL, 'h' },
+    { "application",       required_argument, NULL, 'a' },
+    { "coalesce",          required_argument, NULL, 'c' },
+    { NULL,                0,                 NULL, 0   }
 };
 
 
@@ -71,6 +73,7 @@ main(int argc, char **argv)
     int i, ch, size;
     int x_count = 8, y_count = 8, z_count = 8;
     int radix = 4, timing_set = 2, noise_runs = 0;
+    int coalesce = 1;
     char *noise_interval = NULL, *noise_duration = NULL;
     char *msg_rate = "5MHz";
     int latency = 500;
@@ -126,6 +129,9 @@ main(int argc, char **argv)
             exit(0);
         case 'a':
             application = optarg;
+            break;
+        case 'c':
+            coalesce = atoi(optarg);
             break;
         default:
             print_usage(argv[0]);
@@ -207,6 +213,7 @@ main(int argc, char **argv)
     fprintf(output, "    <latency> %d </latency>\n", latency);    
     fprintf(output, "    <msg_size> %d </msg_size>\n", msg_size);    
     fprintf(output, "    <chunk_size> %d </chunk_size>\n", chunk_size);    
+    fprintf(output, "    <coalesce> %d </coalesce>\n", coalesce);
     fprintf(output, "</cpu_params>\n");
     fprintf(output, "\n");
     fprintf(output, "<nic_params1>\n");

@@ -123,6 +123,10 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     }
     chunk_size = strtol( params[ "chunk_size" ].c_str(), NULL, 0 );
 
+    if ( params.find("coalesce") == params.end() ) {
+	_abort(RtrIF,"couldn't find coalesce\n");
+    }
+    enable_coalescing = 0 != (strtol( params[ "coalesce" ].c_str(), NULL, 0 ));
 
 
 //     TimeConverter* tc = registerTimeBase( frequency );
@@ -333,17 +337,23 @@ trig_cpu::calcNodeID(int x, int y, int z)
 void
 trig_cpu::setTimingParams(int set) {
     if ( set == 1 ) {
-	delay_host_pio_write = 75;
+//  	delay_host_pio_write = 75;
+	delay_host_pio_write = 25;
+	delay_sfence = 50;
 	added_pio_latency = 0;
 	recv_overhead = 100;
     }
     if ( set == 2 ) {
-	delay_host_pio_write = 100;
+// 	delay_host_pio_write = 100;
+	delay_host_pio_write = 50;
+	delay_sfence = 50;
 	added_pio_latency = 0;
 	recv_overhead = 175;
     }
     if ( set == 3 ) {
-	delay_host_pio_write = 200;
+// 	delay_host_pio_write = 200;
+	delay_host_pio_write = 100;
+	delay_sfence = 100;
 	added_pio_latency = 100;
 	recv_overhead = 300;
     }
@@ -378,8 +388,9 @@ trig_cpu::writeToNIC(trig_nic_event* ev)
 //     printf("trig_cpu::writeToNIC()\n");
     // Need to see if we have any credits to use
     if ( nic_credits != 0 ) {
-        // Put this through the delay link
-        pio_delay_link->Send(delay_host_pio_write,ev);
+        // Put this through the delay link.  Only do host delay time,
+        // not sfence time in delay.
+        pio_delay_link->Send(delay_host_pio_write+delay_bus_xfer,ev);
 // 	// Put the event into the write combining buffers
 // 	wc_buffers.push(ev);
 	nic_credits--;

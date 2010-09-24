@@ -29,10 +29,11 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     rtr_q_max_size(4),
     latency_ct_post(10),
     latency_ct_host_update(20),
+    additional_atomic_latency(10),
     dma_in_progress(false),
     rr_dma(false),
-    new_dma(true)
-{
+    new_dma(true),
+    send_atomic_from_cache(true) {
 
     registerClock( frequency, new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler), false  );
  
@@ -519,11 +520,9 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    ev->data_length = 8;
 		    ev->start = (void *)addr;
 		    // Need to add more latency, ask keith how much
-		    SimTime_t add_lat = 0;
-		    cpu_link->Send(ptl_msg_latency+add_lat,ev);
+		    cpu_link->Send(ptl_msg_latency+additional_atomic_latency,ev);
 
-		    SimTime_t extra_delay = 0;
-		    scheduleCTInc( match_me->me.ct_handle, latency_ct_post + extra_delay );
+		    scheduleCTInc( match_me->me.ct_handle, latency_ct_post + additional_atomic_latency );
 
 		}
 		else {
@@ -662,26 +661,75 @@ void trig_nic::processPtlEvent( Event *e ) {
 //                 event->latency = cpu->latency*30/100;
 	    
 		memcpy(event->ptl_data,op->op->ptl_header,sizeof(ptl_header_t));
-		if ( op->op->ptl_header->length != 0 ) {
-		  dma_hdr_q.push(event);
+
+		bool from_host = true;
+
+		// Check to see if we want to send direct from NIC.
+		// We send from NIC if size is 0 bytes, or if size is
+		// 8-bytes and it is in the atomics cache.
+		if ( op->op->ptl_header->length == 0 ) from_host = false;
+		else if ( op->op->ptl_header->length <= 8 && send_atomic_from_cache && op->op->op_type == PTL_OP_ATOMIC ) {
+		    // Get the address for the word
+		    unsigned long addr = (unsigned long)op->op->dma->start + op->op->dma->offset;
+		    if ( atomic_cache.find(addr) != atomic_cache.end() ) {
+			from_host = false;
+			// Copy data to event
+			int64_t value = atomic_cache[addr]->int_val;
+ 			memcpy(&event->ptl_data[8],&value,8);
+// 			printf("%d:  in cache: %lld\n",m_id,value);
+		    }		    
+		}
 		
-		  // Also need to send the dma data to the dma engine
-		  bool empty = dma_req_q.empty();
-		  dma_req_q.push(op->op->dma);
-		  if ( empty ) {
-		    dma_link->Send(1,NULL);
-		  }
+		if ( from_host ) {
+		    dma_hdr_q.push(event);
+		
+		    // Also need to send the dma data to the dma engine
+		    bool empty = dma_req_q.empty();
+		    dma_req_q.push(op->op->dma);
+		    if ( empty ) {
+			dma_link->Send(1,NULL);
+		    }
 		}
 		else {
-		  rtr_q_size++;
-		  self_link->Send(ptl_msg_latency,event);
-
-		  // If there's a CT attached to the MD, then we need
-		  // to update the CT.
-// 		  printf("%d\n",op->op->dma->ct_handle);
-		  scheduleCTInc(op->op->dma->ct_handle, latency_ct_post);
-		  delete op->op->dma;
+		    rtr_q_size++;
+		    self_link->Send(ptl_msg_latency,event);
+		    
+		    // If there's a CT attached to the MD, then we need
+		    // to update the CT.
+		    scheduleCTInc(op->op->dma->ct_handle, latency_ct_post);
+		    delete op->op->dma;
 		}
+
+// 		if ( op->op->op_type == PTL_OP_ATOMIC && send_atomic_from_cache ) {
+// 		    atomic_cache_entry* entry;
+// 		    if ( atomic_cache.find(addr) != atomic_cache.end() ) {
+// 			entry = atomic_cache[addr];
+// 		    }
+// 		    else {
+// 			entry = atomic_cache[addr] = new atomic_cache_entry;
+// 			entry->dbl_val = 0.0;
+// 		    }
+// 		}
+// 		else if ( op->op->ptl_header->length != 0 ) {
+// 		    dma_hdr_q.push(event);
+		
+// 		    // Also need to send the dma data to the dma engine
+// 		    bool empty = dma_req_q.empty();
+// 		    dma_req_q.push(op->op->dma);
+// 		    if ( empty ) {
+// 			dma_link->Send(1,NULL);
+// 		    }
+// 		}
+// 		else {
+// 		  rtr_q_size++;
+// 		  self_link->Send(ptl_msg_latency,event);
+
+// 		  // If there's a CT attached to the MD, then we need
+// 		  // to update the CT.
+// // 		  printf("%d\n",op->op->dma->ct_handle);
+// 		  scheduleCTInc(op->op->dma->ct_handle, latency_ct_post);
+// 		  delete op->op->dma;
+// 		}
 		
                 delete op->op;
                 delete op;

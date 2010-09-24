@@ -149,7 +149,9 @@ public:
         ptl->PtlDisableCoalesce();
         crReturn();
 
+/* 	printf("waiting\n"); */
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
+/* 	printf("done waiting\n"); */
         if (num_children > 0) {
             while (!ptl->PtlCTWait(up_tree_ct_h, ((algo_count + 1) * (num_children + 2)))) { crReturn(); }
         }

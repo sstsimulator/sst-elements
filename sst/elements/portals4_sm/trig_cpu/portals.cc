@@ -85,8 +85,8 @@ portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list,
     cpu->writeToNIC(event);
     // The processor is tied up for 1/msgrate
 //     cpu->busy += cpu->msg_rate_delay;
-    cpu->busy += cpu->delay_host_pio_write;
-    
+//     cpu->busy += cpu->delay_host_pio_write;
+    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
     
     me_handle = int_me;
     return;
@@ -144,7 +144,8 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 // 	if ( cpu->my_id == 0) printf("Writing packet to BUS @ %llu\n",cpu->getCurrentSimTimeNano());
       	cpu->writeToNIC(event);
 // 	cpu->busy += cpu->msg_rate_delay;
-	cpu->busy += cpu->delay_host_pio_write;
+// 	cpu->busy += cpu->delay_host_pio_write;
+	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 	// Need to send a CTInc if there is a ct_handle specified
 	if ( md_handle->ct_handle != PTL_CT_NONE ) {
@@ -170,7 +171,8 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 // 	printf("%5d: Writing PIO <= 64 bytes to NIC\n",cpu->my_id);
 	cpu->writeToNIC(event);
 	// FIXME.  Needs to match rate of interface (serialization delay)
-	cpu->busy += cpu->delay_host_pio_write;
+// 	cpu->busy += cpu->delay_host_pio_write;
+	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
     }
     else {  // DMA
 // 	if ( cpu->my_id == 0 ) printf("Starting DMA\n");
@@ -198,7 +200,8 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 	event->data.dma = dma_req;
 
 	cpu->writeToNIC(event);
-	cpu->busy += cpu->delay_host_pio_write;
+// 	cpu->busy += cpu->delay_host_pio_write;
+	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 	
     }
   
@@ -220,7 +223,8 @@ portals::progressPIO(void)
 	event->data.ct_handle = pio_ct_handle;
 	event->ptl_op = PTL_NIC_CT_INC;
 	cpu->writeToNIC(event);
- 	cpu->busy += cpu->delay_host_pio_write;
+//  	cpu->busy += cpu->delay_host_pio_write;
+	cpu->busy += cpu->delay_sfence;
 	cpu->pio_in_progress = false;
 	return true;
     }
@@ -239,7 +243,7 @@ portals::progressPIO(void)
     cpu->writeToNIC(event);
 
     // Delay is just serialization delay at this point
-    cpu->busy += 16;
+    cpu->busy += cpu->delay_bus_xfer;
     //     cpu->busy += cpu->delay_host_pio_write;
     
     pio_length_rem -= copy_length;
@@ -287,7 +291,8 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 	event->stream = PTL_HDR_STREAM_PIO;
 	memcpy(&event->ptl_data[8],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
       	cpu->writeToNIC(event);
-	cpu->busy += cpu->delay_host_pio_write;
+// 	cpu->busy += cpu->delay_host_pio_write;
+	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 	// Need to send a CTInc if there is a ct_handle specified
 	if ( md_handle->ct_handle != PTL_CT_NONE ) {
@@ -334,7 +339,8 @@ portals::PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle) {
 	    event->ptl_data[3] = true;  // Clear op_list
 // 	    printf("sending message to nic\n");
 	    cpu->writeToNIC(event);
-	    cpu->busy += cpu->delay_host_pio_write;
+// 	    cpu->busy += cpu->delay_host_pio_write;
+	    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 	    
             break;
         }
@@ -430,7 +436,8 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->data.trig = trig_op;
     cpu->writeToNIC(event);
     
-    cpu->busy += cpu->delay_host_pio_write;
+//     cpu->busy += cpu->delay_host_pio_write;
+    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 }
 
@@ -486,7 +493,8 @@ portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->data.trig = trig_op;
     cpu->writeToNIC(event);
     
-    cpu->busy += cpu->delay_host_pio_write;
+//     cpu->busy += cpu->delay_host_pio_write;
+    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 }
 
@@ -527,7 +535,8 @@ portals::PtlTriggeredCTInc(ptl_handle_ct_t ct_handle, ptl_size_t increment,
     cpu->nic->Send(event);
     
     // The processor is tied up for 1/msgrate
-    cpu->busy += cpu->delay_host_pio_write;
+//     cpu->busy += cpu->delay_host_pio_write;
+    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 }
 
 void
@@ -694,3 +703,15 @@ portals::processMessage(trig_nic_event* ev) {
     
 }
 
+void
+portals::PtlEnableCoalesce(void) {
+    if ( cpu->enable_coalescing ) currently_coalescing = true;
+}
+
+void
+portals::PtlDisableCoalesce(void) {
+    if ( cpu->enable_coalescing ) {
+	currently_coalescing = false;
+	cpu->busy += cpu->delay_sfence;
+    }
+}

@@ -88,8 +88,8 @@ public:
 			   ptl_handle_ct_t ct_handle, ptl_size_t threshold);
 
 
-    void PtlEnableCoalesce(void) { }
-    void PtlDisableCoalesce(void) { }
+    void PtlEnableCoalesce(void);
+    void PtlDisableCoalesce(void);
 
     portals(trig_cpu* my_cpu);
 
@@ -126,6 +126,8 @@ private:
     int pio_length_rem;
     int pio_dest;
     ptl_handle_ct_t pio_ct_handle;
+
+    bool currently_coalescing;
     
 };
 

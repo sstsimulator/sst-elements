@@ -52,6 +52,8 @@ private:
     int                     latency_ct_host_update;
     int                     ptl_unit_latency;
     
+    int                     additional_atomic_latency;
+
     // Data structures to support portals on NIC
     #define MAX_PORTAL_TABLE_ENTRY 32
     ptl_entry_t* ptl_table[MAX_PORTAL_TABLE_ENTRY];
@@ -88,6 +90,8 @@ private:
     bool rr_dma;
     bool new_dma;
     bool send_recv;
+
+    bool send_atomic_from_cache;
     
 public:
     trig_nic( ComponentId_t id, Params_t& params );
