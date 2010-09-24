@@ -17,11 +17,13 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
+#define MAX_LINKS 10
 
 using namespace SST;
 
 enum comp_type {LEAF,SCHEDULER,REL_COMP,INFREQ};
 enum fail_dist {GAUSS,EXP};
+enum link_type {DISCON,INCOME,OUTGO};
 
 
 
@@ -32,7 +34,8 @@ class resil : public Component {
 
   bool clock       ( Cycle_t cycle                      );
   void processEvent( Event* event                       );
-  void processfailEvent( Event* event                       );
+  void processfailEvent( Event* event                   );
+  int my_id;
 
 	/*	void set_values(comp_type type, fail_dist f_dist, float fail_duration);
   	void set_gauss_params(float gauss_mean, float gauss_std_dev);
@@ -75,15 +78,23 @@ class resil : public Component {
   Link* linkToSelf;
   Link* link0;
 	Link* link1;
+  Link* link2;
+	Link* link3;
+  Link* link4;
 	Link* sched_link;
-	Link* link_array[2];
+	Link* link_array[MAX_LINKS];
+	Link* uplink;
 	
 	int counter;
+	link_type link_state[MAX_LINKS];    //DISCON,INCOME,OUTGO
 	int count_to;
 	bool fail_assigned;
+	bool failknow;  //If true I already know someone above me failed.
 
   Params_t    params   ;
   std::string frequency;
+	std::string links[MAX_LINKS];
+	std::string id_str;
 };
 
 float genexp(float lambda);

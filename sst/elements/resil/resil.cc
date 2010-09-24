@@ -12,6 +12,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <math.h>
+#include <ctime>
+#include <sstream>
+#include <string>
 
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
@@ -24,57 +27,161 @@
 
 
 resil::resil( ComponentId_t id, Params_t& params ) :
-  Component(id), params(params), frequency("1.0GHz")
+  Component(id), params(params), frequency("1000.0GHz")
 {
+		int dur_scale=1;
+		int linki=0, num_links=0;
+
+		std::ostringstream os;
+
+	for(linki=0; linki<MAX_LINKS; linki++)
+	{ 
+		link_array[linki]=0;
+		link_state[linki]=DISCON; 
+	}
+
+	linki=0;	
   std::cout << "resil constructor!\n";
   if ( params.find("clock") != params.end() ) {
     frequency = params["clock"];
   }
+	if(params.find("id") != params.end()) {
+		id_str = params["id"];
+	}
 	if (params.find("lambda") != params.end() ) {
 		lambda = strtod(params["lambda"].c_str(), NULL);
 	}
+	os<<"port"<<linki;
+	while (params.find(os.str()) != params.end() ){
+		links[linki] = params[os.str()];
+		os.str("");
+		linki++;
+		os<<"port"<<linki;
+		std::cout<<"The string was: "<<os.str()<<std::endl;
+	}
 
+	for(int i=0; i < MAX_LINKS; i++)
+	{
+		std::cout<<links[i]<<"\n";
+	}
+
+	my_id=id;
+	
   //for (Params_t::iterator i = params.begin(); i != params.end(); i++)
-  //  std::cout << id << ": " << i->first << "->" << i->second << '\n';
+  //	std::cout << id << ": " << i->first << "->" << i->second << '\n';
 
   /*if ( params.find("count_to") == params.end() ) {
         _abort(event_test,"couldn't find count_to\n");
   }
   count_to = strtol( params[ "count_to" ].c_str(), NULL, 0 );*/
 
-  std::cout<<lambda;
+	srand(time(0));  // Initialize random number generator.
+
+ 
+  //std::cout<<lambda;
 
   TimeConverter *tc = registerClock(frequency,
                                     new Clock::Handler<resil>
       																(this, &resil::clock)
    																	);
 
-  //linkToSelf = configureSelfLink("linkToSelf",
+  linkToSelf = configureSelfLink("linkToSelf",
 																		new Event::Handler<resil>
    																		(this, &resil::processfailEvent)
                                	 );
 
-	link0 = configureLink("link0", new Event::Handler<resil>(this, &resil::processEvent));
+
+	//Dont need this yet
+	//link0 = configureLink("link0", new Event::Handler<resil>(this, &resil::processEvent));
+
 	//link_array[0]=configureLink("link0", new Event::Handler<resil>(this, &resil::processEvent));
-	link1 = configureLink("link1", new Event::Handler<resil>(this, &resil::processEvent));
+	
+	//Dont need this yet
+	//link1 = configureLink("link1", new Event::Handler<resil>(this, &resil::processEvent));
+
+	//link2 = configureLink("link2", new Event::Handler<resil>(this, &resil::processEvent));
+	//link3 = configureLink("link3", new Event::Handler<resil>(this, &resil::processEvent));
+	//link4 = configureLink("link4", new Event::Handler<resil>(this, &resil::processEvent));
+
+	for(linki = 0; linki<MAX_LINKS; linki++)
+	{
+		os.str("");
+		os<<"link"<<linki;
+		link_array[linki]=configureLink(os.str(), new Event::Handler<resil>(this, &resil::processEvent));
+		//std::cout<< links[linki]<<" Comapre to " << id_str<<"\n";
+		if (link_array[linki]==0)
+		{
+			link_state[linki]=DISCON;	
+			 break;
+		}
+		else if(links[linki].compare(0,3,id_str)==0)
+		{
+			link_state[linki]=INCOME;
+		}
+		else
+		{
+			link_state[linki]=OUTGO;
+		}
+	}
+	num_links=linki;
+
+	for(linki=0; linki<MAX_LINKS; linki++)
+	{
+    std::cout<<"Link "<< linki<< " has value "<< link_state[linki] << "\n";
+	}
+
+	
 	//link_array[1]=configureLink("link1", new Event::Handler<resil>(this, &resil::processEvent));
+	//uplink = configureLink("uplink", new Event::Handler<resil>(this, &resil::processEvent));
 
 	//sched_link=configureLink();
 
-  if (link0 == 0) { std::cerr << "link0 NULL\n"; }
-	//if(link_array[0] == 0) {std::cerr << "link0 NULL\n"; }
+  /*if (link0 == 0) { std::cerr << "link0 NULL\n"; }
+	else { link0->setDefaultTimeBase(tc); }
   if (link1 == 0) { std::cerr << "link1 NULL!\n"; }
-	//if(link_array[1] == 0) {std::cerr << "link1 NULL\n"; }
+	else { link1->setDefaultTimeBase(tc); }
+	if (link2 == 0) { std::cerr << "link2 NULL!\n"; }
+	else { link2->setDefaultTimeBase(tc); }
+	if (link3 == 0) { std::cerr << "link3 NULL!\n"; }
+	else { link3->setDefaultTimeBase(tc); }
+	if (link4 == 0) { std::cerr << "link4 NULL!\n"; }
+	else { link4->setDefaultTimeBase(tc); }
+	if (uplink==0) { std::cerr<<"uplink NULL\n"; }\
+	else { uplink->setDefaultTimeBase(tc); }*/
+
+	for(linki=0; linki<MAX_LINKS; linki++) {
+		if(link_array[linki]==0)  {std::cout << "link_array "<< linki << "NULL \n";}
+		else {
+      link_array[linki]->setDefaultTimeBase(tc); 
+    }
+	}
   
-	if (sched_link == 0) { std::cerr << "link1 NULL!\n"; }
+	if (sched_link == 0) { std::cout << "sched_link NULL!\n"; }
 
   linkToSelf->setDefaultTimeBase(tc);
-	link0->setDefaultTimeBase(tc);
-	link1->setDefaultTimeBase(tc);
+	
+	
 	//link_array[0]->setDefaultTimeBase(tc);
 	//link_array[1]->setDefaultTimeBase(tc);
-	sched_link->setDefaultTimeBase(tc);
+	//sched_link->setDefaultTimeBase(tc);
   registerTimeBase("1ps");
+	
+
+
+	if(id==8)
+	{
+		fail_assigned=0;
+		float fail_time=dur_scale*genexp(lambda);
+
+		if(fail_assigned==0){
+			linkToSelf->Send(50,new CompEvent());
+			std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<floor(fail_time)<<"\n";
+			fail_assigned=1;
+		}
+
+	}
+	
+	//registerExit();
 
 }
 
@@ -89,7 +196,7 @@ bool resil::clock( Cycle_t current )
   std::cout << "resil: it's cycle " << current << "!\n";
   
   //link_array[0]->Send(10, new CompEvent());
-	link1->Send(10, new CompEvent());
+	//link1->Send(10, new CompEvent());
 
   return true;
 }
@@ -97,7 +204,7 @@ bool resil::clock( Cycle_t current )
 void resil::processEvent( Event* event )
 {
 	//double threshold =  RAND_MAX*(1-exp(-lambda*getCurrentSimTime()));
-	double my_num=rand();
+	/*double my_num=rand();
 	counter=0;
 	count_to=1;
 	int dur_scale=1;
@@ -108,7 +215,30 @@ void resil::processEvent( Event* event )
 		linkToSelf->Send(fail_time,new CompEvent());
 		std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<fail_time<<"\n";
 		fail_assigned=1;
+	}*/
+
+
+//Add a portion to only end event if we don't already know of a fail. 
+	std::cout<<my_id<<": Someone above me failed and it is cycle " << getCurrentSimTime()<<"\n";
+	
+
+	for(int i=0; i < MAX_LINKS; i ++)
+	{
+		if((link_array[i]!=NULL)&&(link_state[i]==OUTGO))
+		{
+			link_array[i]->Send(0,new CompEvent());
+		}
 	}
+	/*if(link0!=0)
+		link0->Send(0,new CompEvent());
+	if(link1!=0)
+		link1->Send(0,new CompEvent());
+	if(link2!=0)
+		link0->Send(0,new CompEvent());
+	if(link3!=0)
+		link1->Send(0,new CompEvent());
+	if(link4!=0)
+		link0->Send(0,new CompEvent());*/
 
   delete event;
 	/*counter=0;
@@ -124,7 +254,29 @@ void resil::processEvent( Event* event )
 
 void resil::processfailEvent( Event* event )
 {
-	std::cout << "resil:failed at " <<getCurrentSimTime()<<"!\n";
+	std::cout << my_id << ": resil:failed at " <<getCurrentSimTime()<<"!\n";
+	
+	//Send out notice of fail on lower links
+	/*if(link0!=0)
+		link0->Send(0, new CompEvent());
+	if(link1!=0)
+		link1->Send(0, new CompEvent());
+	if(link2!=0)
+		link0->Send(0, new CompEvent());
+	if(link3!=0)
+		link1->Send(0, new CompEvent());
+	if(link4!=0)
+		link0->Send(0, new CompEvent());*/
+
+	for(int i=0; i < MAX_LINKS; i ++)
+	{
+		if((link_array[i]!=NULL)&&(link_state[i]==OUTGO))
+		{
+			link_array[i]->Send(0,new CompEvent());
+		}
+	}
+	//
+
   delete event; // I'm responsible for it.
   return;
 }
