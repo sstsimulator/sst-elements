@@ -48,29 +48,26 @@ public:
         if (!init) {
             // setup md handles
             ptl->PtlCTAlloc(PTL_CT_OPERATION, up_tree_ct_h);
-            crReturn();
             me.start = &tmp_buf;
             me.length = 8;
             me.ignore_bits = ~0x0;
             me.ct_handle = up_tree_ct_h;
             ptl->PtlMEAppend(PT_UP, me, PTL_PRIORITY_LIST, NULL, up_tree_me_h);
-            crReturn();
 
             md.start = &tmp_buf;
             md.length = 8;
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &up_tree_md_h);
-            crReturn();
 
             md.start = &zero_buf;
             md.length = 8;
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &zero_md_h);
-            crReturn();
 
             init = true;
+            crReturn();
         }
 
         // 200ns startup time

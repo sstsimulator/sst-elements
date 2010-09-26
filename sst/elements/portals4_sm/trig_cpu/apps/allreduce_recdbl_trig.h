@@ -53,7 +53,6 @@ public:
             for (i = 0 ; i < my_levels ; ++i) {
                 my_level_steps[i] = 0;
                 ptl->PtlCTAlloc(PTL_CT_OPERATION, my_level_ct_hs[i]);
-                crReturn();
 
                 me.start = &my_level_steps[i];
                 me.length = 8;
@@ -62,14 +61,12 @@ public:
                 me.ct_handle = my_level_ct_hs[i];
                 ptl->PtlMEAppend(0, me, PTL_PRIORITY_LIST, NULL, 
                                  my_level_me_hs[i]);
-                crReturn();
 
                 md.start = &my_level_steps[i];
                 me.length = 8;
                 md.eq_handle = PTL_EQ_NONE;
                 md.ct_handle = PTL_CT_NONE;
                 ptl->PtlMDBind(md, &my_level_md_hs[i]);
-                crReturn();
             }
 
             md.start = &zero_buf;
@@ -77,9 +74,9 @@ public:
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &zero_md_h);
-            crReturn();
 
             init = true;
+            crReturn();
         }
 
         // 200ns startup time

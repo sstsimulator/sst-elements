@@ -46,11 +46,9 @@ public:
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &my_md_h);
-            crReturn();
 
             for (i = 0 ; i <= my_levels ; ++i) {
                 ptl->PtlCTAlloc(PTL_CT_OPERATION, my_level_ct_hs[i]);
-                crReturn();
                 me.start = NULL;
                 me.length = 0;
                 me.match_bits = i;
@@ -58,10 +56,10 @@ public:
                 me.ct_handle = my_level_ct_hs[i];
                 ptl->PtlMEAppend(0, me, PTL_PRIORITY_LIST, NULL, 
                                  my_level_me_hs[i]);
-                crReturn();
             }
 
             init = true;
+            crReturn();
         }
         
         // 200ns startup time

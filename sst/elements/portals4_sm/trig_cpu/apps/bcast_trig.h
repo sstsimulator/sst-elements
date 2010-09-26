@@ -56,23 +56,21 @@ public:
         if (!init) {
             /* Setup persistent ME/MD/CT to hold bounce data */
             ptl->PtlCTAlloc(PTL_CT_OPERATION, bounce_ct_h);
-            crReturn();
             me.start = bounce_buf;
             me.length = chunk_size;
             me.match_bits = 0x0;
             me.ignore_bits = 0x0;
             me.ct_handle = bounce_ct_h;
             ptl->PtlMEAppend(PT_BOUNCE, me, PTL_PRIORITY_LIST, NULL, bounce_me_h);
-            crReturn();
 
             md.start = bounce_buf;
             md.length = chunk_size;
             md.eq_handle = PTL_EQ_NONE;
             md.ct_handle = PTL_CT_NONE;
             ptl->PtlMDBind(md, &bounce_md_h);
-            crReturn();
 
             init = true;
+            crReturn();
         }
 
         /* Initialization case */
