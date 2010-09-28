@@ -65,6 +65,18 @@ public:
                          void *user_ptr, ptl_hdr_data_t hdr_data,
                          ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold);
 
+    // This version not used.  Use Start and End TriggeredPutV with a
+    // for loop that calls TriggeredPut's
+    void PtlTriggeredPutV(ptl_handle_md_t md_handle, ptl_size_t local_offset, 
+			  ptl_size_t length, ptl_ack_req_t ack_req, 
+			  ptl_process_id_t* target_ids, ptl_size_t id_length, ptl_pt_index_t pt_index,
+			  ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
+			  void *user_ptr, ptl_hdr_data_t hdr_data,
+			  ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold);
+    
+    void PtlStartTriggeredPutV(ptl_size_t id_length);
+    void PtlEndTriggeredPutV();
+    
     void PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
                             ptl_size_t length, ptl_ack_req_t ack_req,
                             ptl_process_id_t target_id, ptl_pt_index_t pt_index,
@@ -128,6 +140,11 @@ private:
     ptl_handle_ct_t pio_ct_handle;
 
     bool currently_coalescing;
+
+    // Pointer to a trig_nic_event used for TriggeredPutV
+    bool putv_active;
+    SST::trig_nic_event* putv_event;
+    int putv_curr;
     
 };
 

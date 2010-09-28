@@ -76,9 +76,11 @@ public:
             ptl->PtlMDBind(md, &zero_md_h);
 
             init = true;
+	    start_noise_section();
             crReturn();
         }
 
+	crReturn();
         // 200ns startup time
         start_time = cpu->getCurrentSimTimeNano();
         cpu->addBusyTime("200ns");
@@ -148,6 +150,7 @@ public:
         ptl->PtlCTFree(user_ct_h);
         crReturn();
         algo_count++;
+/* 	printf("%5d: %lld ns\n",my_id,cpu->getCurrentSimTimeNano()-start_time); */
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
         if (out_buf != (uint64_t) num_nodes) {

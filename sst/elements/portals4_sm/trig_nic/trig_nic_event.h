@@ -32,6 +32,7 @@ namespace SST {
 	union {
 	    ptl_int_me_t* me;
 	    ptl_int_trig_op_t* trig;
+	    ptl_int_trig_op_t** trigV;
 	    ptl_update_ct_event_t* ct;
 	    ptl_handle_ct_t ct_handle;
 	    ptl_int_dma_t* dma;

@@ -128,6 +128,11 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     }
     enable_coalescing = 0 != (strtol( params[ "coalesce" ].c_str(), NULL, 0 ));
 
+    if ( params.find("enable_putv") == params.end() ) {
+	_abort(RtrIF,"couldn't find coalesce\n");
+    }
+    enable_putv = 0 != (strtol( params[ "enable_putv" ].c_str(), NULL, 0 ));
+
 
 //     TimeConverter* tc = registerTimeBase( frequency );
     TimeConverter* tc = registerTimeBase( "1ns" );
@@ -156,7 +161,8 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
 	    defaultTimeBase->convertFromCoreTime(registerTimeBase(params["noiseDuration"],
                                                                   false)->getFactor());
     }
-
+    do_noise = false;
+    
     if (params.find("application") == params.end()) {
         _abort(RtrIF, "couldn't find application\n");
     }
@@ -537,9 +543,11 @@ trig_cpu::event_handler(Event* ev)
     // Normally, we will just return after the busy period, but if
     // noise is supposed to start during that time, we will also need
     // to add the noise duration.
-    int noise_rem = noise_count - busy;
+    int noise_rem = noise_count;
+//     if ( do_noise ) noise_rem -= busy;
+    noise_rem -= busy;
     
-    if ( noise_rem <= 0 && noise_interval != 0) {
+    if ( noise_rem <= 0 && noise_interval != 0 ) {
         // Noise should start before we return, so add noise to busy and
         // reset the noise_count
         busy += noise_duration;
@@ -594,6 +602,7 @@ trig_cpu::wakeUp()
 	waiting = false;
 	busy = 0;
 
+//         if ( noise_interval == 0 || !do_noise ) {
         if ( noise_interval == 0 ) {
             self->Send(1,NULL);
             return;

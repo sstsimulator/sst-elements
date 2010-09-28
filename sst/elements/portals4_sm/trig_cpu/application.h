@@ -84,6 +84,14 @@ protected:
 
         return std::make_pair(my_root, my_children);
     }
+
+    void start_noise_section() {
+	cpu->start_noise_section();
+    }
+    
+    void end_noise_section() {
+	cpu->start_noise_section();
+    }
     
     trig_cpu *cpu;
     int state;

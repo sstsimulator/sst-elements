@@ -154,6 +154,7 @@ private:
     int msg_size;
     int chunk_size;
     bool enable_coalescing;
+    bool enable_putv;
     
     // State needed by send/recv/wait
     uint64_t msg_rate_delay;
@@ -190,7 +191,8 @@ private:
     SimTime_t noise_count;
     int noise_runs;
     int current_run;
-
+    bool do_noise;
+    
     Params_t    params;
     Link*       nic;
     Link*       self;
@@ -306,6 +308,13 @@ public:
         }
     }
 
+    void start_noise_section() {
+	do_noise = true;
+    }
+    
+    void end_noise_section() {
+	do_noise = false;
+    }
 private:
     static SimTime_t min;
     static SimTime_t max;

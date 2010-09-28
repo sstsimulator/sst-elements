@@ -39,6 +39,7 @@ print_usage(char *argv0)
     fprintf(stderr, "      --chunk_size=SIZE Size in bytes of pipeline chunk\n");
     fprintf(stderr, "      --application=STRING Application to run (required)\n");
     fprintf(stderr, "      --coalesce=0/1 Enable/Disable coalescing of portals commands (default: 1/true)\n");
+    fprintf(stderr, "      --enable_putv=0/1 Enable/Disable coalescing of portals commands (default: 0/false)\n");
     fprintf(stderr, "      --output=FILENAME  Output should be sent to FILENAME (default: stdout)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "NOTE: If noise_runs is non-zero, noise_interval and noise_duration\n");
@@ -63,6 +64,7 @@ static struct option longopts[] = {
     { "help",              no_argument,       NULL, 'h' },
     { "application",       required_argument, NULL, 'a' },
     { "coalesce",          required_argument, NULL, 'c' },
+    { "enable_putv",       required_argument, NULL, 'p' },
     { NULL,                0,                 NULL, 0   }
 };
 
@@ -73,7 +75,7 @@ main(int argc, char **argv)
     int i, ch, size;
     int x_count = 8, y_count = 8, z_count = 8;
     int radix = 4, timing_set = 2, noise_runs = 0;
-    int coalesce = 1;
+    int coalesce = 1, enable_putv = 0;
     char *noise_interval = NULL, *noise_duration = NULL;
     char *msg_rate = "5MHz";
     int latency = 500;
@@ -132,6 +134,9 @@ main(int argc, char **argv)
             break;
         case 'c':
             coalesce = atoi(optarg);
+            break;
+        case 'p':
+            enable_putv = atoi(optarg);
             break;
         default:
             print_usage(argv[0]);
@@ -214,6 +219,7 @@ main(int argc, char **argv)
     fprintf(output, "    <msg_size> %d </msg_size>\n", msg_size);    
     fprintf(output, "    <chunk_size> %d </chunk_size>\n", chunk_size);    
     fprintf(output, "    <coalesce> %d </coalesce>\n", coalesce);
+    fprintf(output, "    <enable_putv> %d </enable_putv>\n", enable_putv);
     fprintf(output, "</cpu_params>\n");
     fprintf(output, "\n");
     fprintf(output, "<nic_params1>\n");

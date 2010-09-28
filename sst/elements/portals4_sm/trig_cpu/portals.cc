@@ -48,6 +48,7 @@ portals::portals(trig_cpu* my_cpu) {
     next_handle_me = 0;
 
     cpu = my_cpu;
+    putv_active = false;
 }
 
 
@@ -432,13 +433,42 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
     event->ptl_op = PTL_NIC_TRIG;
-    event->ptl_op = PTL_NIC_TRIG;
     event->data.trig = trig_op;
-    cpu->writeToNIC(event);
-    
-//     cpu->busy += cpu->delay_host_pio_write;
-    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
+    if ( !putv_active ) {
+	cpu->writeToNIC(event);
+	
+	//     cpu->busy += cpu->delay_host_pio_write;
+	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
+    }
+    else {
+    }
+}
+
+void
+portals::PtlTriggeredPutV(ptl_handle_md_t md_handle, ptl_size_t local_offset, 
+			  ptl_size_t length, ptl_ack_req_t ack_req, 
+			  ptl_process_id_t* target_ids, ptl_size_t id_length, ptl_pt_index_t pt_index,
+			  ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
+			  void *user_ptr, ptl_hdr_data_t hdr_data,
+			  ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold) {    
+}
+
+void
+portals::PtlStartTriggeredPutV(ptl_size_t id_length) {
+    if ( !cpu->enable_putv ) return;
+    
+    putv_event = new trig_nic_event;
+    putv_event->data.trigV = new ptl_int_trig_op_t*[id_length];
+    putv_event->data_length = id_length;
+    putv_event->ptl_op = PTL_NIC_TRIG_PUTV;
+    putv_curr = 0;
+    putv_active = true;
+}
+
+void
+portals::PtlEndTriggeredPutV() {
+    if ( !cpu->enable_putv ) return;    
 }
 
 void
@@ -488,7 +518,6 @@ portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     // Need to send this object to the NIC with latency = 30% latency
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
-    event->ptl_op = PTL_NIC_TRIG;
     event->ptl_op = PTL_NIC_TRIG;
     event->data.trig = trig_op;
     cpu->writeToNIC(event);
