@@ -18,6 +18,9 @@
 #include "pattern_common.h"
 
 
+#define RANK_MASK	(0x7ffffffUL)
+
+
 
 void
 Ghost_pattern::handle_events(CPUNicEvent *e)
@@ -38,6 +41,10 @@ pattern_event_t event;
 
     _GHOST_PATTERN_DBG(2, "[%3d] In state %d and got event %d at time %lu\n", my_rank,
 	state, event, getCurrentSimTime());
+
+    if (event == RECEIVE)   {
+	printf("[%3d] receive %d from %3lu\n", my_rank, total_rcvs, (unsigned long int)e->msg_id & RANK_MASK);
+    }
 
     switch (state)   {
 	case INIT:
@@ -102,6 +109,8 @@ pattern_event_t event;
 		    break;
 	    }
 	}
+
+	_GHOST_PATTERN_DBG(0, "Rank %3d done\n", my_rank);
 
 	unregisterExit();
     }
@@ -237,8 +246,6 @@ Ghost_pattern::state_INIT(pattern_event_t event)
 	    break;
 
 	case FAIL:
-	    break;
-
 	case COMPUTE_DONE:
 	case RECEIVE:
 	case CHCKPT_DONE:
@@ -270,6 +277,14 @@ Ghost_pattern::state_COMPUTE(pattern_event_t event)
 	    _GHOST_PATTERN_DBG(4, "[%3d] Done computing\n", my_rank);
 	    application_time_so_far += getCurrentSimTime() - compute_segment_start;
 	    timestep_cnt++;
+	    if (my_rank == 0)    {
+		if ((timestep_needed <= 20) || (timestep_cnt % (timestep_needed / 20) == 0))   {
+		    printf("Timestep %3d/%-3d at time %15.9f, exec time %15.9f, this segment %15.9f\n",
+			timestep_cnt, timestep_needed, (double)getCurrentSimTime() / 1000000000.0,
+			((double)getCurrentSimTime() - (double)execution_time) / 1000000000.0,
+			((double)getCurrentSimTime() - (double)compute_segment_start) / 1000000000.0);
+		}
+	    }
 
 	    if (timestep_cnt >= timestep_needed)   {
 		application_done= TRUE;
@@ -506,12 +521,26 @@ Ghost_pattern::state_WAIT(pattern_event_t event)
 		done_waiting= false;
 		msg_wait_time= msg_wait_time + getCurrentSimTime() - msg_wait_time_start;
 
-		// Write the envlopes of the four messages we received to stable storage
-		common->storage_write(envelope_size, ENV_LOG_DONE);
-		common->storage_write(envelope_size, ENV_LOG_DONE);
-		common->storage_write(envelope_size, ENV_LOG_DONE);
-		common->storage_write(envelope_size, ENV_LOG_DONE);
-		state= SAVE_ENVELOPE;
+		if (chckpt_method == CHCKPT_UNCOORD)   {
+		    // Write the envlopes of the four messages we received to stable storage
+		    common->storage_write(envelope_size, ENV_LOG_DONE);
+		    common->storage_write(envelope_size, ENV_LOG_DONE);
+		    common->storage_write(envelope_size, ENV_LOG_DONE);
+		    common->storage_write(envelope_size, ENV_LOG_DONE);
+		    state= SAVE_ENVELOPE;
+		} else   {
+		    // Is it time to write a checkpoint?
+		    if ((chckpt_method == CHCKPT_COORD) && (timestep_cnt % chckpt_steps == 0))   {
+			// Enter the checkpointing state
+			_GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering chckpt state\n",
+			    my_rank);
+			transition_to_CHCKPT();
+		    } else   {
+			_GHOST_PATTERN_DBG(4, "[%3d] Done waiting, entering compute state\n",
+			    my_rank);
+			transition_to_COMPUTE();
+		    }
+		}
 	    }
 	    break;
 
@@ -553,7 +582,8 @@ Ghost_pattern::state_SAVE_ENVELOPE(pattern_event_t event)
 		save_ENVELOPE_cnt= 0;
 
 		// Is it time to write a checkpoint?
-		if ((chckpt_method == CHCKPT_COORD) && (timestep_cnt % chckpt_steps == 0))   {
+		// Do we do that with uncoord?
+		if (timestep_cnt % chckpt_steps == 0)   {
 		    // Enter the checkpointing state
 		    _GHOST_PATTERN_DBG(4, "[%3d] Wrote MSG envelopes, entering chckpt state\n",
 			my_rank);
@@ -604,7 +634,7 @@ Ghost_pattern::state_CHCKPT(pattern_event_t event)
 	    num_chckpts++;
 	    chckpt_time= chckpt_time + getCurrentSimTime() - chckpt_segment_start;
 	    transition_to_COMPUTE();
-	    _GHOST_PATTERN_DBG(4, "[%3d] Checkpoint write done, back to compute\n", my_rank);
+	    _GHOST_PATTERN_DBG(0, "[%3d] Checkpoint %d write done, back to compute\n", my_rank, num_chckpts);
 	    break;
 
 	case FAIL:
