@@ -76,8 +76,8 @@ public:
             ptl->PtlMDBind(md, &zero_md_h);
 
             init = true;
-	    start_noise_section();
             crReturn();
+	    start_noise_section();
         }
 
 	crReturn();
@@ -104,13 +104,16 @@ public:
         md.ct_handle = PTL_CT_NONE;
         ptl->PtlMDBind(md, &user_md_h);
 
-        ptl->PtlEnableCoalesce();
-        crReturn();
+/*         ptl->PtlEnableCoalesce(); */
+/*         crReturn(); */
 
         // start the trip
         ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id, 0, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
         crReturn();
         ptl->PtlAtomic(user_md_h, 0, 8, 0, my_id ^ 0x1, 0, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
+        crReturn();
+
+        ptl->PtlEnableCoalesce();
         crReturn();
 
         for (i = 1 ; i < my_levels ; ++i) {

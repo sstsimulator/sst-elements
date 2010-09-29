@@ -429,19 +429,27 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_op->trig_ct_handle = trig_ct_handle;
     trig_op->threshold = threshold;
 
-    // Need to send this object to the NIC with latency = 30% latency
-    trig_nic_event* event = new trig_nic_event;
-    event->src = cpu->my_id;
-    event->ptl_op = PTL_NIC_TRIG;
-    event->data.trig = trig_op;
-
     if ( !putv_active ) {
+	// Need to send this object to the NIC with latency = 30% latency
+	trig_nic_event* event = new trig_nic_event;
+	event->src = cpu->my_id;
+	event->ptl_op = PTL_NIC_TRIG;
+	event->data.trig = trig_op;
+
 	cpu->writeToNIC(event);
 	
 	//     cpu->busy += cpu->delay_host_pio_write;
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
     }
     else {
+	// Just add this to the list to send to nic when
+	// PtlEndTriggeredPutV is called.
+	if ( putv_event->data_length == putv_curr ) {
+	    printf("%d: Too many TriggeredPuts to vectored call.\n",cpu->my_id);
+	    exit(1);
+	}
+	putv_event->data.trigV[putv_curr++] = trig_op;
+	cpu->busy += 2;
     }
 }
 
@@ -459,6 +467,7 @@ portals::PtlStartTriggeredPutV(ptl_size_t id_length) {
     if ( !cpu->enable_putv ) return;
     
     putv_event = new trig_nic_event;
+    putv_event->src = cpu->my_id;
     putv_event->data.trigV = new ptl_int_trig_op_t*[id_length];
     putv_event->data_length = id_length;
     putv_event->ptl_op = PTL_NIC_TRIG_PUTV;
@@ -468,7 +477,15 @@ portals::PtlStartTriggeredPutV(ptl_size_t id_length) {
 
 void
 portals::PtlEndTriggeredPutV() {
-    if ( !cpu->enable_putv ) return;    
+    if ( !cpu->enable_putv ) return;
+    if ( putv_event->data_length != putv_curr ) {
+	printf("%d:  Called PtlEndTriggeredPutV before all puts were posted.  Got %d, expected %d\n",cpu->my_id,putv_curr,putv_event->data_length);
+	exit(1);
+    }
+    cpu->writeToNIC(putv_event);
+    putv_curr = 0;
+    putv_active = false;
+    cpu->busy += cpu->delay_host_pio_write + cpu->delay_sfence;
 }
 
 void

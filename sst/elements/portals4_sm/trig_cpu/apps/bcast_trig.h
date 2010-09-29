@@ -71,6 +71,7 @@ public:
 
             init = true;
             crReturn();
+	    start_noise_section();
         }
 
         /* Initialization case */

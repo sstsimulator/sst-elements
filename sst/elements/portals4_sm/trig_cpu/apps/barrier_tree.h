@@ -33,6 +33,7 @@ public:
         int handle;
 
         crBegin();
+	start_noise_section();
 
         // 200ns startup time
         start_time = cpu->getCurrentSimTimeNano();

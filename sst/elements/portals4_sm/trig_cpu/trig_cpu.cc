@@ -126,7 +126,7 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     if ( params.find("coalesce") == params.end() ) {
 	_abort(RtrIF,"couldn't find coalesce\n");
     }
-    enable_coalescing = 0 != (strtol( params[ "coalesce" ].c_str(), NULL, 0 ));
+    enable_coalescing = (0 != (strtol( params[ "coalesce" ].c_str(), NULL, 0 )));
 
     if ( params.find("enable_putv") == params.end() ) {
 	_abort(RtrIF,"couldn't find coalesce\n");
@@ -602,8 +602,7 @@ trig_cpu::wakeUp()
 	waiting = false;
 	busy = 0;
 
-//         if ( noise_interval == 0 || !do_noise ) {
-        if ( noise_interval == 0 ) {
+	if ( noise_interval == 0 || !do_noise ) {
             self->Send(1,NULL);
             return;
         }

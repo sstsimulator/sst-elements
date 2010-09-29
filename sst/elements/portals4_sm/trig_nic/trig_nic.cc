@@ -643,6 +643,38 @@ void trig_nic::processPtlEvent( Event *e ) {
 	}
 	break;
 
+    // Attach a vector of triggered operations
+    case PTL_NIC_TRIG_PUTV:
+	{
+	bool wakeup_for_trig = false;
+	for ( int i = 0; i < ev->data_length; i++ ) {
+	    // Need to see if event should fire immediately
+	    if ( PtlCTCheckThresh(ev->data.trigV[i]->trig_ct_handle,ev->data.trigV[i]->threshold) ) {
+		// Put the operation in the already_triggered_q.  If it
+		// was empty, we also need to send an event to wake it up.
+		bool empty = already_triggered_q.empty();
+		wakeup_for_trig = wakeup_for_trig || empty;
+		already_triggered_q.push(ev->data.trigV[i]);
+	    }
+	    // Doesn't fire immediately, just add to counter
+	    else {
+		ptl_ct_events[ev->data.trigV[i]->trig_ct_handle].trig_op_list.push_back(ev->data.trigV[i]);
+	    }
+	}
+	delete[] ev->data.trigV;
+	if (wakeup_for_trig) {
+	    // Repurpose the event we got.  Just need to wake up
+	    // again to process event
+	    ev->ptl_op = PTL_NIC_PROCESS_TRIG;
+	    ptl_link->Send(1,ev);
+	}
+	else {
+	    // Done with the op passed into the function, so delete it
+	    delete ev;
+	}
+	}
+	break;
+
     case PTL_NIC_PROCESS_TRIG:
 	{ // Need because we declare a variable here
             // Get the head of the queue and do whatever it says to

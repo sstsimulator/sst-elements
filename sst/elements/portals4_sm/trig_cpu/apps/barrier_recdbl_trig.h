@@ -66,6 +66,7 @@ public:
 
             init = true;
             crReturn();
+	    start_noise_section();
         }
 
         // 200ns startup time
