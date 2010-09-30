@@ -183,7 +183,7 @@ void SS_router::InQtoOutQ_readyNext (rtrP *rp) {
     DBprintf("\n");
     inputQ[rp->ilink].head_busy = false;
 
-    returnToken_flits( rp->ilink, rp->flits, rp->event->u.packet.vc() );
+    returnToken_flits( rp->ilink, rp->flits, rp->event->packet.vc() );
 
     //if (inputQ[rp->ilink].ready_vcQs > 0) {
     if (inputQ[rp->ilink].ready()) {
@@ -331,7 +331,7 @@ void SS_router::LCBxfer_start (int dir) {
     }
 
     rtrP *rp = oLCB->dataQ.front();
-    networkPacket *np = &rp->event->u.packet;
+    networkPacket *np = &rp->event->packet;
 
     np->vc() = rp->ovc;
     np->link() = dest_ilink;

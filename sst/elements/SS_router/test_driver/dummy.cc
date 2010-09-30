@@ -98,12 +98,12 @@ bool::RtrIF::dummyLoad ( Cycle_t cycle ) {
 	}
 	RtrEvent* event = new RtrEvent();
 	event->type = RtrEvent::Packet;
-	event->u.packet.vc() = 0;
-	event->u.packet.srcNum() = m_id;
-	event->u.packet.destNum() = m_current_send_node;
-	event->u.packet.sizeInFlits() = 8;
-// 	event->u.packet.payload[0] = m_id;
- 	event->u.packet.payload[0] = getCurrentSimTimeNano();
+	event->packet.vc() = 0;
+	event->packet.srcNum() = m_id;
+	event->packet.destNum() = m_current_send_node;
+	event->packet.sizeInFlits() = 8;
+// 	event->packet.payload[0] = m_id;
+ 	event->packet.payload[0] = getCurrentSimTimeNano();
 
 	if ( !send2Rtr(event) ) {
 	    delete event;

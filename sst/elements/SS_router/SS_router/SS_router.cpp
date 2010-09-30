@@ -76,8 +76,8 @@ void SS_router::returnToken_flits (int dir, int flits, int vc) {
         vc = RTR_2_NIC_VC( vc );
     }
 
-    event->u.credit.num = flits;
-    event->u.credit.vc = vc;
+    event->credit.num = flits;
+    event->credit.vc = vc;
 
     linkV[dir]->Send( event );
 }
@@ -693,14 +693,14 @@ void SS_router::handleParcel( Event* e, int dir )
 
     if ( event->type == RtrEvent::Credit ) {
         DBprintf("%s returned tokens vc=%d num=%ld\n", LinkNames[dir],
-                 event->u.credit.vc, event->u.credit.num );
-        updateToken_flits( dir, event->u.credit.vc, event->u.credit.num );
+                 event->credit.vc, event->credit.num );
+        updateToken_flits( dir, event->credit.vc, event->credit.num );
         delete event;
         return;
     }
 
     int ilink, ivc, flits;
-    networkPacket *np = &event->u.packet;
+    networkPacket *np = &event->packet;
     flits = np->sizeInFlits();
     ivc = NIC_2_RTR_VC(np->vc());
     np->vc() = ivc;
@@ -716,7 +716,7 @@ void SS_router::handleParcel( Event* e, int dir )
 bool SS_router::route(rtrP* rp)
 {
     DBprintf("\n");
-    networkPacket *packet =  &rp->event->u.packet;
+    networkPacket *packet =  &rp->event->packet;
 
     return findRoute( packet->destNum(), 
             rp->ivc, rp->ilink, rp->ovc, rp->olink );

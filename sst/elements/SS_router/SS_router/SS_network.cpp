@@ -52,3 +52,4 @@ Network::Network( SST::Component::Params_t params )
            _size,_xDimSize,_yDimSize,_zDimSize);
 #endif
 }
+BOOST_CLASS_EXPORT(RtrEvent)

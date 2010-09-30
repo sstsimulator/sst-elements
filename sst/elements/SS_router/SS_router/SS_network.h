@@ -195,13 +195,20 @@ public:
     typedef enum { Credit, Packet } msgType_t;
 
     int             type;
-    union {
-        networkPacket   packet;
-        struct {
-            uint32_t        num;
-            int             vc;
-        } credit;
-    } u;
+    networkPacket   packet;
+    struct Credit {
+        uint32_t        num;
+        int             vc;
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void
+        serialize(Archive & ar, const unsigned int version )
+        {
+            ar & BOOST_SERIALIZATION_NVP(num);
+            ar & BOOST_SERIALIZATION_NVP(vc);
+	}
+    } credit;
 
 private:
     friend class boost::serialization::access;
@@ -211,7 +218,8 @@ private:
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(type);
-        ar & BOOST_SERIALIZATION_NVP(u);
+        ar & BOOST_SERIALIZATION_NVP(credit);
+        ar & BOOST_SERIALIZATION_NVP(packet);
     }
 };
 

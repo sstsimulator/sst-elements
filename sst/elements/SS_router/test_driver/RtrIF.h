@@ -48,7 +48,7 @@ private:
                 tokensP(num_tokens), eventQP(eventQ) {}
 
         bool push( RtrEvent* event) {
-            networkPacket* pkt = &event->u.packet;
+            networkPacket* pkt = &event->packet;
             if ( pkt->sizeInFlits() > tokensP ) return false;
             tokensP -= pkt->sizeInFlits();
             eventQP.push_back(event);
@@ -191,13 +191,13 @@ public:
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         db_RtrIF("vc=%d\n",vc);
-        returnTokens2Rtr( vc, toNicMapP[vc]->front()->u.packet.sizeInFlits() );
+        returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits() );
         toNicMapP[vc]->pop_front();
     }
 
     bool send2Rtr( RtrEvent *event)
     {
-        networkPacket* pkt = &event->u.packet;
+        networkPacket* pkt = &event->packet;
         if ( pkt->vc() >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
         bool retval = toRtrMapP[pkt->vc()]->push( event );
         if ( retval )
@@ -235,7 +235,7 @@ private:
 
         switch ( event->type ) {
         case RtrEvent::Credit:
-            returnTokens2Nic( event->u.credit.vc, event->u.credit.num );
+            returnTokens2Nic( event->credit.vc, event->credit.num );
             delete event;
             break;
 
@@ -261,7 +261,7 @@ private:
 
     void send2Nic( RtrEvent* event )
     {
-        networkPacket *pkt = &event->u.packet; 
+        networkPacket *pkt = &event->packet; 
 
         pkt->vc() = RTR_2_NIC_VC(pkt->vc());
 
@@ -288,20 +288,20 @@ private:
         db_RtrIF("vc=%d numFlits=%d\n", vc, numFlits );
 
         event->type = RtrEvent::Credit;
-        event->u.credit.num = numFlits;
-        event->u.credit.vc = vc;
+        event->credit.num = numFlits;
+        event->credit.vc = vc;
         m_rtrLink->Send( event );
     }
 
     void sendPktToRtr( RtrEvent* event ) 
     {
-        networkPacket* pkt = &event->u.packet;
+        networkPacket* pkt = &event->packet;
 
         db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
                  pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
 
         event->type = RtrEvent::Packet;
-        event->u.packet = *pkt;
+        event->packet = *pkt;
         int lat = reserveRtrLine(pkt->sizeInFlits());
         m_rtrLink->Send( lat, event );
     }
