@@ -41,6 +41,7 @@ print_usage(char *argv0)
     fprintf(stderr, "      --coalesce=0/1 Enable/Disable coalescing of portals commands (default: 1/true)\n");
     fprintf(stderr, "      --enable_putv=0/1 Enable/Disable coalescing of portals commands (default: 0/false)\n");
     fprintf(stderr, "      --output=FILENAME  Output should be sent to FILENAME (default: stdout)\n");
+    fprintf(stderr, "      --ranks=COUNT If >1, will pre-partition for COUNT ranks (default: 1)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "NOTE: If noise_runs is non-zero, noise_interval and noise_duration\n");
     fprintf(stderr, "must be specified\n");
@@ -65,6 +66,7 @@ static struct option longopts[] = {
     { "application",       required_argument, NULL, 'a' },
     { "coalesce",          required_argument, NULL, 'c' },
     { "enable_putv",       required_argument, NULL, 'p' },
+    { "ranks",             required_argument, NULL, 'k' },
     { NULL,                0,                 NULL, 0   }
 };
 
@@ -84,6 +86,11 @@ main(int argc, char **argv)
     char *application = NULL;
     char * nic_link_latency = "150ns";
     FILE *output = stdout;
+
+    int argc_org = argc;
+    char **argv_org = argv;
+    int ranks = 1;
+    
     
     while ((ch = getopt_long(argc, argv, "hx:y:z:r:", longopts, NULL)) != -1) {
         switch (ch) {
@@ -138,6 +145,9 @@ main(int argc, char **argv)
         case 'p':
             enable_putv = atoi(optarg);
             break;
+        case 'k':
+            ranks = atoi(optarg);
+            break;
         default:
             print_usage(argv[0]);
             exit(1);
@@ -176,8 +186,24 @@ main(int argc, char **argv)
 
     fprintf(output, "<?xml version=\"1.0\"?>\n");
     fprintf(output, "\n");
+
+    fprintf(output,"<|-- Command Line: -->\n ");
+    fprintf(output,"<|-- ");
+    for (i= 0; i < argc_org; i++)   {
+        fprintf(output,"%s", argv_org[i]);
+        if (i < (argc_org - 1))   {
+            fprintf(output," ");
+        }
+    }
+
+    fprintf(output," -->\n\n");
+    
+
+
+
     fprintf(output, "<config>\n");
     fprintf(output, "    run-mode=both\n");
+    if ( ranks > 1 ) fprintf(output, "    partitioner=self\n");
     fprintf(output, "</config>\n");
     fprintf(output, "\n");
     fprintf(output, "<rtr_params>\n");
@@ -252,7 +278,15 @@ main(int argc, char **argv)
 	y = (i / x_count) % y_count;
 	x = i % x_count;
 
-	fprintf(output, "    <component id=\"%d.cpu\" >\n",i);
+	// Need to put real partition logic in at some point
+	int rank = i % ranks;
+
+	if ( ranks > 1 ) {
+	    fprintf(output, "    <component id=\"%d.cpu\" rank=%d >\n",i,rank);
+	}
+	else {
+	    fprintf(output, "    <component id=\"%d.cpu\" >\n",i);
+	}
 	fprintf(output, "        <portals4_sm.trig_cpu>\n");
 	fprintf(output, "            <params include1=cpu_params>\n");
 	fprintf(output, "                <id> %d </id>\n",i);
@@ -267,7 +301,7 @@ main(int argc, char **argv)
 	fprintf(output, "        </portals4_sm.trig_cpu>\n");
 	fprintf(output, "    </component>\n");
 	fprintf(output, "\n");
-	fprintf(output, "    <component id=\"%d.nic\" >\n",i);
+	fprintf(output, "    <component id=\"%d.nic\" rank=%d >\n",i,rank);
 	fprintf(output, "        <portals4_sm.trig_nic>\n");
 	fprintf(output, "            <params include1=nic_params1 include2=nic_params2>\n");
 	fprintf(output, "                <id> %d </id>\n",i);
@@ -287,7 +321,7 @@ main(int argc, char **argv)
 	fprintf(output, "        </portals4_sm.trig_nic>\n");
 	fprintf(output, "    </component>\n");
 	fprintf(output, "\n");
-	fprintf(output, "    <component id=\"%d.rtr\">\n",i);
+	fprintf(output, "    <component id=\"%d.rtr\" rank=%d >\n",i,rank);
 	fprintf(output, "        <SS_router.SS_router>\n");
 	fprintf(output, "            <params include=rtr_params>\n");
 	fprintf(output, "                <id> %d </id>\n",i);
