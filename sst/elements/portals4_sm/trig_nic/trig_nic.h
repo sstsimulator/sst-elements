@@ -117,6 +117,9 @@ private:
     void setTimingParams(int set);
 
     inline bool PtlCTCheckThresh(ptl_handle_ct_t ct_handle, ptl_size_t test) {
+	// If threshold is 0, then automatically trigger
+	if ( test == 0 ) return true;
+	
 	if ( (ptl_ct_events[ct_handle].ct_event.success +
 	      ptl_ct_events[ct_handle].ct_event.failure ) >= test ) {
 // 	    printf("%5d: PtlCTCheckThresh(): success = %d failure = %d ct_handle = %d\n",
