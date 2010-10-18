@@ -109,11 +109,16 @@ public:
             memcpy(out_buf, in_buf, msg_size);
             /* send to children */
             for (j = 0 ; j < msg_size ; j += chunk_size) {
+/* 		ptl->PtlStartTriggeredPutV(num_children); */
                 for (i = 0 ; i < num_children ; ++i) {
                     ptl->PtlPut(bounce_md_h, 0, 0, 0, my_children[i],
                                 PT_BOUNCE, 0x0, 0, NULL, 0);
+/*                     ptl->PtlTriggeredPut(bounce_md_h, 0, 0, 0, my_children[i], */
+/* 					 PT_BOUNCE, 0x0, 0, NULL, 0, 0, 0); */
                     crReturn();
                 }
+/* 		ptl->PtlEndTriggeredPutV(); */
+/* 		crReturn(); */
             }
             
         } else {
@@ -127,12 +132,15 @@ public:
                 crReturn();
 
                 /* then when the get is completed, send ready acks to children */
+		ptl->PtlStartTriggeredPutV(num_children);
                 for (i = 0 ; i < num_children ; ++i) {
                     ptl->PtlTriggeredPut(bounce_md_h, 0, 0, 0, my_children[i],
                                          PT_BOUNCE, 0x0, 0, NULL, 0, out_md_ct_h,
                                          j / chunk_size  + 1);
                     crReturn();
                 }
+		ptl->PtlEndTriggeredPutV();
+		crReturn();
             }
 
             /* reset 0-byte put received counter */

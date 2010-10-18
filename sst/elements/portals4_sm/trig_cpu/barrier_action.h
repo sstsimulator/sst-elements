@@ -18,6 +18,8 @@
 
 #include <sst/core/action.h>
 #include <sst/core/link.h>
+#include <sst/core/simulation.h>
+#include <sst/core/timeLord.h>
 
 class barrier_action : public Action {
 public:
@@ -33,10 +35,80 @@ public:
 	overall_total_num = 0;
 	
 	rand_init = false;
+	max_init_rank = -1;
+
+	job_size = Simulation::getSimulation()->getNumRanks();
+
+// 	if ( job_size > 1 ) {
+	    Simulation::getSimulation()->insertActivity(Simulation::getSimulation()->getTimeLord()->getTimeConverter("1us")->getFactor(),this);
+// 	}
+
     }
 
-    void execute() {}
+    void execute() {
+	// Check to see if everybody has entered the barrier
+	Simulation *sim = Simulation::getSimulation();
+	
+	boost::mpi::communicator world;
+
+	// Figure out how many still need to report
+	int value = wake_up.size() - num_reporting;
+	int out;
+	
+	all_reduce( world, &value, 1, &out, std::plus<int>() );  
+	
+	if ( 0 == out ) {
+	    // Barrier is done, exchange data
+	    SimTime_t total_num = wake_up.size();
+	    SimTime_t total_num_a;
+	    SimTime_t min_a;
+	    SimTime_t max_a;
+	    SimTime_t total_time_a;
+	    all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
+	    all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
+	    all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
+	    all_reduce( world, &total_time, 1, &total_time_a, std::plus<SimTime_t>() );
+
+	    if ( world.rank() == 0 ) {
+		printf("Max time: %lu ns\n", (unsigned long) max_a);
+		printf("Min time: %lu ns\n", (unsigned long) min_a);
+		printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
+		printf("Total num: %d\n", total_num_a);
+		fflush(NULL);
+	    }
+	    resetBarrier();
+            addTimeToOverallStats(max_a);
+	    resetStats();
+            for ( int i = 0; i < wake_up.size(); i++ ) {
+                wake_up[i]->Send(10,NULL);
+            }
+	    
+	}
+	SimTime_t next = sim->getCurrentSimCycle() + 
+	    sim->getTimeLord()->getTimeConverter("1us")->getFactor();
+	sim->insertActivity( next, this );
+	
+	
+    }
     
+    void
+    barrier()
+    {
+        num_reporting++;
+// 	if ( job_size > 1 ) return;
+//         if ( num_reporting == wake_up.size() ) {
+//             // Everyone has entered barrier, wake everyone up to start
+//             // over
+//             for ( int i = 0; i < wake_up.size(); i++ ) {
+//                 wake_up[i]->Send(10,NULL);
+//             }
+//             resetBarrier();
+//             printStats();
+//             addTimeToOverallStats(max);
+//             resetStats();
+//         }
+    }
+
     void
     addTimeToStats(SimTime_t time)
     {
@@ -83,14 +155,21 @@ public:
     }
 
     int
-    getRand(int max)
+    getRand(int rank, int max)
     {
         if (!rand_init) {
-            srand(0);
+            srand(1);
             rand_init = true;
         }
         if ( max == 0 ) return 0;
-        return rand() % max;
+	if ( max_init_rank < rank ) {
+	    for ( int i = max_init_rank + 1; i <= rank; i++ ) {
+		rand_nums.push_back(rand());
+	    }
+	    
+	}
+	
+        return rand_nums[rank] % max;
     }
 
     void
@@ -112,23 +191,6 @@ public:
         num_reporting = 0;
     }
 
-    void
-    barrier()
-    {
-        num_reporting++;
-// 	printf("  num_reporting = %d\n",num_reporting);
-        if ( num_reporting == wake_up.size() ) {
-            // Everyone has entered barrier, wake everyone up to start
-            // over
-            for ( int i = 0; i < wake_up.size(); i++ ) {
-                wake_up[i]->Send(10,NULL);
-            }
-            resetBarrier();
-            printStats();
-            addTimeToOverallStats(max);
-            resetStats();
-        }
-    }
 
 private:
     SimTime_t min;
@@ -142,8 +204,13 @@ private:
     int overall_total_num;
 
     bool rand_init;
-
+    int max_init_rank;
+    std::vector<int> rand_nums; 
+    
     std::vector<Link*> wake_up;
+
+    int job_size;
+
     
 };
 

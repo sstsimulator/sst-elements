@@ -145,6 +145,7 @@ public:
     {
         networkPacket* pkt = &event->packet;
         if ( pkt->vc() >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
+/* 	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum(),getCurrentSimTimeNano()); */
         bool retval = toRtrMapP[pkt->vc()]->push( event );
         if ( retval )
             db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
@@ -169,7 +170,8 @@ private:
     void processEvent( Event* e)
     {
         RtrEvent* event = static_cast<RtrEvent*>(e);
-
+/* 	printf("%5d:  got an event from %d @ %lu\n",m_id,event->packet.srcNum(),getCurrentSimTimeNano()); */
+	
         db_RtrIF("type=%ld\n",event->type);
 
         switch ( event->type ) {

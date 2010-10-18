@@ -287,7 +287,8 @@ trig_cpu::Setup()
 	barrier_act->resetBarrier();
     }
     
-    noise_count = getRand(noise_interval);
+    noise_count = barrier_act->getRand(my_id,noise_interval);
+//     printf("%5d: %lu\n",my_id,noise_count);
     waiting = false;
     self->Send(1,NULL);
     count = 0;

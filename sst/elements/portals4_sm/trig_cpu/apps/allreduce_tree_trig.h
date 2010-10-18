@@ -117,36 +117,17 @@ public:
                            0, PTL_SUM, PTL_LONG);
             crReturn();
             if (my_root == my_id) {
-                // setup trigger to move data to right place.  Send
-		// data to children out of atomics cache.  Works only
-                // for the final root.
-		ptl->PtlStartTriggeredPutV(num_children+1);
+                // setup trigger to move data to right place, then send
+                // data out of there down the tree
                 ptl->PtlTriggeredPut(up_tree_md_h, 0, 8, 0, my_id, PT_DOWN, 0, 0, NULL, 
                                      0, up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
                 crReturn();
-		// push down the tree
-		for (i = 0 ; i < num_children ; ++i) {
-		    ptl->PtlTriggeredPut(up_tree_md_h, 0, 8, 0, my_children[i], PT_DOWN,
-					 0, 0, NULL, 0, up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
-		    crReturn();
-		}
-		ptl->PtlEndTriggeredPutV();
-		crReturn();
             } else {
                 // setup trigger to move data up the tree when we get enough updates
                 ptl->PtlTriggeredAtomic(up_tree_md_h, 0, 8, 0, my_root, PT_UP,
                                         0, 0, NULL, 0, PTL_SUM, PTL_LONG,
                                         up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
                 crReturn();
-		// push down the tree
-		ptl->PtlStartTriggeredPutV(num_children);
-		for (i = 0 ; i < num_children ; ++i) {
-		    ptl->PtlTriggeredPut(user_md_h, 0, 8, 0, my_children[i], PT_DOWN,
-					 0, 0, NULL, 0, user_ct_h, 1);
-		    crReturn();
-		}
-		ptl->PtlEndTriggeredPutV();
-		crReturn();
             }
 
             // and to clean up after ourselves
@@ -155,11 +136,17 @@ public:
                                     up_tree_ct_h, (algo_count * (num_children + 2)) + num_children + 1);
             crReturn();
 
+            // push down the tree
+            for (i = 0 ; i < num_children ; ++i) {
+                ptl->PtlTriggeredPut(user_md_h, 0, 8, 0, my_children[i], PT_DOWN,
+                                     0, 0, NULL, 0, user_ct_h, 1);
+                crReturn();
+            }
         }
 
         ptl->PtlDisableCoalesce();
         crReturn();
-	
+
 /* 	printf("waiting\n"); */
         while (!ptl->PtlCTWait(user_ct_h, 1)) { crReturn(); }
 /* 	printf("done waiting\n"); */

@@ -266,7 +266,7 @@ main(int argc, char **argv)
     fprintf(output, "</nicLink>\n");
     fprintf(output, "\n");
     fprintf(output, "<rtrLink>\n");
-    fprintf(output, "    <lat>1ns</lat>\n");
+    fprintf(output, "    <lat>10ns</lat>\n");
     fprintf(output, "</rtrLink>\n");
     fprintf(output, "\n");
     fprintf(output, "<sst>\n");
@@ -280,7 +280,17 @@ main(int argc, char **argv)
 
 	// Need to put real partition logic in at some point
 	int rank = i % ranks;
-
+	if ( ranks == 2 ) {
+	    if ( x < x_count/2 ) rank = 0;
+	    else rank = 1;
+	}
+	if ( ranks == 4 ) {
+	    if ( x < x_count/2 && y < y_count/2 ) rank = 0;
+	    else if ( x < x_count/2 && y >= y_count/2 ) rank = 1;
+	    else if ( x >= x_count/2 && y < y_count/2 ) rank = 2;
+	    else rank = 3;
+	}
+	
 	if ( ranks > 1 ) {
 	    fprintf(output, "    <component id=\"%d.cpu\" rank=%d >\n",i,rank);
 	}
