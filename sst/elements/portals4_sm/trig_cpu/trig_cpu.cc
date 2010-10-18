@@ -35,25 +35,28 @@
 #include "apps/ping_pong.h"
 #include "apps/bandwidth.h"
 #include "apps/test_atomics.h"
+#include "barrier_action.h"
 
-SimTime_t trig_cpu::min = 10000000;
-SimTime_t trig_cpu::max = 0;
-SimTime_t trig_cpu::total_time = 0;
-int trig_cpu::total_num = 0;
+// SimTime_t trig_cpu::min = 10000000;
+// SimTime_t trig_cpu::max = 0;
+// SimTime_t trig_cpu::total_time = 0;
+// int trig_cpu::total_num = 0;
 
-SimTime_t trig_cpu::overall_min = 1000000;
-SimTime_t trig_cpu::overall_max = 0;
-SimTime_t trig_cpu::overall_total_time = 0;
-int trig_cpu::overall_total_num = 0;
+// SimTime_t trig_cpu::overall_min = 1000000;
+// SimTime_t trig_cpu::overall_max = 0;
+// SimTime_t trig_cpu::overall_total_time = 0;
+// int trig_cpu::overall_total_num = 0;
 
 bool trig_cpu::rand_init = false;
 
+barrier_action* trig_cpu::barrier_act = NULL;
+
 // Infrastructure for doing more than one allreduce in a single
 // simulation
-Link** trig_cpu::wake_up = NULL;
-int trig_cpu::current_link = 0;
-int trig_cpu::total_nodes;
-int trig_cpu::num_remaining;
+// Link** trig_cpu::wake_up = NULL;
+// int trig_cpu::current_link = 0;
+// int trig_cpu::total_nodes;
+// int trig_cpu::num_remaining;
 
 trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     Component( id ),
@@ -274,16 +277,21 @@ trig_cpu::Setup()
     busy = 0;
     recv_handle = 0;
 
-    if (my_id == 0 ) {
-	setTotalNodes(num_nodes);
-	resetBarrier();
+//     if (my_id == 0 ) {
+// 	setTotalNodes(num_nodes);
+// 	resetBarrier();
+//     }
+
+    if ( barrier_act == NULL ) {
+	barrier_act = new barrier_action();
+	barrier_act->resetBarrier();
     }
     
     noise_count = getRand(noise_interval);
     waiting = false;
     self->Send(1,NULL);
     count = 0;
-    addWakeUp(self);
+    barrier_act->addWakeUp(self);
 
     nic_credits = 128;
     blocking = false;
@@ -312,7 +320,7 @@ trig_cpu::Setup()
 int
 trig_cpu::Finish()
 {
-    if (my_id == 0 ) printOverallStats();
+    if (my_id == 0 ) barrier_act->printOverallStats();
     return 0;    
 }
 
@@ -500,7 +508,7 @@ trig_cpu::event_handler(Event* ev)
 // 	    printf("done = %d\n",done);
 	    if (done) {
 		top_state = 1;
-		barrier();
+		barrier_act->barrier();
 		return;
 	    }
 	    break;
@@ -524,7 +532,7 @@ trig_cpu::event_handler(Event* ev)
 	    if (done) {
 		current_run++;
 		top_state = 2;
-		barrier();
+		barrier_act->barrier();
 		return;
 	    }
 	    break;
@@ -880,4 +888,16 @@ trig_cpu::waitall()
 //     printf("Waiting...\n");
     waiting = true;
     return false;
+}
+
+void
+trig_cpu::addTimeToStats(SimTime_t time)
+{
+    barrier_act->addTimeToStats(time);
+}
+
+void
+trig_cpu::barrier()
+{
+    barrier_act->barrier();
 }

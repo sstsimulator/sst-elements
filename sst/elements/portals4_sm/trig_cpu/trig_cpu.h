@@ -33,6 +33,7 @@ using namespace SST;
 
 class portals;
 class application;
+class barrier_action;
 
 struct posted_recv {
     int handle;
@@ -214,52 +215,55 @@ private:
     std::queue<trig_nic_event*> dma_buffers;
     
 public:
+    static barrier_action* barrier_act;
+    
     static void
-    addTimeToStats(SimTime_t time)
-    {
-        if ( time < min ) min = time;
-        if ( time > max ) max = time;
-        total_time += time;
-        total_num++;
-    }
+	addTimeToStats(SimTime_t time);
+//     { 
+//         barrier_act->addTimeToStats(time); 
+//  	if ( time < min ) min = time;
+// 	if ( time > max ) max = time;
+// 	total_time += time; 
+// 	total_num++;
+//     }
 
-    static void
-    addTimeToOverallStats(SimTime_t time)
-    {
-        if ( time < overall_min ) overall_min = time;
-        if ( time > overall_max ) overall_max = time;
-        overall_total_time += time;
-        overall_total_num++;
-    }
+//     static void
+//     addTimeToOverallStats(SimTime_t time)
+//     {
+//         if ( time < overall_min ) overall_min = time;
+//         if ( time > overall_max ) overall_max = time;
+//         overall_total_time += time;
+//         overall_total_num++;
+//     }
 
-    static void
-    resetStats()
-    {
-        min = 1000000;
-        max = 0;
-        total_time = 0;
-        total_num = 0;
-    }
+//     static void
+//     resetStats()
+//     {
+//         min = 0xffffffff;
+//         max = 0;
+//         total_time = 0;
+//         total_num = 0;
+//     }
 
-    static void
-    printStats()
-    {
-        printf("Max time: %lu ns\n", (unsigned long) max);
-        printf("Min time: %lu ns\n", (unsigned long) min);
-        printf("Avg time: %lu ns\n", (unsigned long) (total_time/total_num));
-        printf("Total num: %d\n", total_num);
-        fflush(NULL);
-    }
+//     static void
+//     printStats()
+//     {
+//         printf("Max time: %lu ns\n", (unsigned long) max);
+//         printf("Min time: %lu ns\n", (unsigned long) min);
+//         printf("Avg time: %lu ns\n", (unsigned long) (total_time/total_num));
+//         printf("Total num: %d\n", total_num);
+//         fflush(NULL);
+//     }
 
-    static void
-    printOverallStats()
-    {
-        printf("Overall Max time: %lu ns\n", (unsigned long) overall_max);
-        printf("Overall Min time: %lu ns\n", (unsigned long) overall_min);
-        printf("Overall Avg time: %lu ns\n", (unsigned long) (overall_total_time/overall_total_num));
-        printf("Overall Total num: %d\n", overall_total_num);
-        fflush(NULL);
-    }
+//     static void
+//     printOverallStats()
+//     {
+//         printf("Overall Max time: %lu ns\n", (unsigned long) overall_max);
+//         printf("Overall Min time: %lu ns\n", (unsigned long) overall_min);
+//         printf("Overall Avg time: %lu ns\n", (unsigned long) (overall_total_time/overall_total_num));
+//         printf("Overall Total num: %d\n", overall_total_num);
+//         fflush(NULL);
+//     }
 
     static int
     getRand(int max)
@@ -272,41 +276,41 @@ public:
         return rand() % max;
     }
 
-    static void
-    addWakeUp(Link* link)
-    {
-        wake_up[current_link++] = link;
-    }
+//     static void
+//     addWakeUp(Link* link)
+//     {
+//         wake_up[current_link++] = link;
+//     }
+
+//     static void
+//     setTotalNodes(int total)
+//     {
+//         if ( wake_up == NULL ) wake_up = new Link*[total];
+//         total_nodes = total;
+//     }
+
+//     static void
+//     resetBarrier()
+//     {
+//         num_remaining = total_nodes;
+//     }
 
     static void
-    setTotalNodes(int total)
-    {
-        if ( wake_up == NULL ) wake_up = new Link*[total];
-        total_nodes = total;
-    }
-
-    static void
-    resetBarrier()
-    {
-        num_remaining = total_nodes;
-    }
-
-    static void
-    barrier()
-    {
-        num_remaining--;
-        if ( num_remaining == 0 ) {
-            // Everyone has entered barrier, wake everyone up to start
-            // over
-            for ( int i = 0; i < total_nodes; i++ ) {
-                wake_up[i]->Send(10,NULL);
-            }
-            resetBarrier();
-            printStats();
-            addTimeToOverallStats(max);
-            resetStats();
-        }
-    }
+    barrier();
+//     {
+//         num_remaining--;
+//         if ( num_remaining == 0 ) {
+//             // Everyone has entered barrier, wake everyone up to start
+//             // over
+//             for ( int i = 0; i < total_nodes; i++ ) {
+//                 wake_up[i]->Send(10,NULL);
+//             }
+//             resetBarrier();
+//             printStats();
+//             addTimeToOverallStats(max);
+//             resetStats();
+//         }
+//     }
 
     void start_noise_section() {
 	do_noise = true;
@@ -316,24 +320,24 @@ public:
 	do_noise = false;
     }
 private:
-    static SimTime_t min;
-    static SimTime_t max;
-    static SimTime_t total_time;
-    static int total_num;
+//     static SimTime_t min;
+//     static SimTime_t max;
+//     static SimTime_t total_time;
+//     static int total_num;
 
-    static SimTime_t overall_min;
-    static SimTime_t overall_max;
-    static SimTime_t overall_total_time;
-    static int overall_total_num;
+//     static SimTime_t overall_min;
+//     static SimTime_t overall_max;
+//     static SimTime_t overall_total_time;
+//     static int overall_total_num;
 
     static bool rand_init;
 
     // Infrastructure for doing more than one allreduce in a single
     // simulation
-    static Link** wake_up;
-    static int current_link;
-    static int total_nodes;
-    static int num_remaining;
+//     static Link** wake_up;
+//     static int current_link;
+//     static int total_nodes;
+//     static int num_remaining;
 };
 
 #endif // COMPONENTS_TRIG_CPU_TRIG_CPU_H
