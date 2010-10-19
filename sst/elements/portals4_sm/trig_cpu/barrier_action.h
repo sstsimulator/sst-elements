@@ -25,6 +25,8 @@ class barrier_action : public Action {
 public:
 
     barrier_action() {
+	setPriority(75);
+	
 	min = 0xffffffff;
 	max = 0;
 	total_time = 0;
@@ -48,6 +50,8 @@ public:
     void execute() {
 	// Check to see if everybody has entered the barrier
 	Simulation *sim = Simulation::getSimulation();
+
+// 	printf("Current time: %lu\n", sim->getTimeLord()->getNano()->convertFromCoreTime(sim->getCurrentSimCycle()));
 	
 	boost::mpi::communicator world;
 
@@ -87,7 +91,6 @@ public:
 	SimTime_t next = sim->getCurrentSimCycle() + 
 	    sim->getTimeLord()->getTimeConverter("1us")->getFactor();
 	sim->insertActivity( next, this );
-	
 	
     }
     
