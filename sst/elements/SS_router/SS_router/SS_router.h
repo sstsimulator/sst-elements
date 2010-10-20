@@ -401,7 +401,7 @@ protected:
 
     void setup();
     void dumpStats(FILE *fp);
-    void finish();
+    int Finish();
 
     void setupRoutingTable ( Params_t, int nodes, int xDim, int yDim, int zDim);
     void setVCRoutes ( int node, int dir, bool *crossDateline );
@@ -423,27 +423,46 @@ private:
         ;
     }
 
+    // Keeps track of when router is on the clock list
+    bool currently_clocking;
+    std::string frequency;
+    Clock::Handler<SS_router>* clock_handler;
+
     //: simulate one pretic
     // advance the event queue, try to move data from in LCBs to input queues,
     // try to move data from input queues to output queues, and
     // try to move data from output queues to out LCBs
     bool clock( Cycle_t cycle )
     {
+// 	clock_count++;
+	bool work_done = false;
         //DBprintf("cycle=%ld\n",cycle);
         m_cycle = cycle;
         //if (!(cycle()%1000) && routerID == 0) printf ("cycle %lld\n", cycle());
-        if (!rtrEventQ.empty())
+        if (!rtrEventQ.empty()) {
             advanceEventQ();
+	    work_done = true;
+	}
         //if (ready_oLCB_count > 0)
         //if (ready_oLCBsleepchk())
-        if (ready_oLCB)
+        if (ready_oLCB) {
             arbitrateOutToLCB ();
+	    work_done = true;
+	}
         //if (ready_inQs_count > 0)
-        if (ready_inQ)
+        if (ready_inQ) {
             arbitrateInToOut ();
+	    work_done = true;
+	}
         //if (ready_iLCB_count > 0)
-        if (ready_iLCB)
+        if (ready_iLCB) {
             iLCBtoIn();
+	    work_done = true;
+	}
+// 	if ( !work_done ) {
+// 	    unregisterClock(defaultTimeBase,clock_handler);
+// 	    currently_clocking = false;
+// 	}
 	return true; // KBW: hopefully, this is essentially meaningless
     }
 
@@ -454,6 +473,8 @@ private:
         return routerID;
     }
 
+    int clock_count;
+    
     void dumpTable( FILE* fp);
     void dumpState();
 

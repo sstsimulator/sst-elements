@@ -85,6 +85,7 @@ void SS_router::returnToken_flits (int dir, int flits, int vc) {
 //: Constructor
 SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         Component( id ),
+	clock_count(0),
         overheadMultP(1.5),
         oLCB_maxSize_flits(512),
         dumpTables(false),
@@ -319,7 +320,7 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
     }
 
 
-    std::string frequency = "1GHz";
+    frequency = "1GHz";
     if ( params.find("clock") != params.end() ) {
         frequency = params["clock"];
     }
@@ -330,22 +331,27 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
 //     clockHandler = new EventHandler< SS_router, bool, Cycle_t >
 //                                                 ( this, &SS_router::clock );
 //     TimeConverter* tc = registerClock( frequency, clockHandler );
-    TimeConverter* tc = registerClock( frequency, new Clock::Handler<SS_router>(this, &SS_router::clock) );
+    clock_handler = new Clock::Handler<SS_router>(this, &SS_router::clock);
+    TimeConverter* tc = registerClock( frequency, clock_handler );
     if ( ! tc ) {
         _abort(XbarV2,"couldn't register clock handler");
     }
+    currently_clocking = true;
 }
 
 void SS_router::setup() {
 }
 
+
 //: Output statistics
-void SS_router::finish () {
+int SS_router::Finish () {
+//     printf("%5d: count = %d\n",routerID,clock_count);
+
+#if 0 // finish() dumpTables
     DBprintf("\n");
     if ( m_print_info )
         dumpStats(stdout);
 
-#if 0 // finish() dumpTables
     if ( m_print_info && dumpTables ) {
         string filename = configuration::getStrValue (":ed:datadir");
         char buf[256];
@@ -355,6 +361,7 @@ void SS_router::finish () {
         fclose(fp);
     }
 #endif
+    return 0;
 }
 
 void SS_router::dumpStats (FILE* fp) {
@@ -709,6 +716,12 @@ void SS_router::handleParcel( Event* e, int dir )
 
     rxCount[ilink] += flits;
     InLCB( event, ilink, ivc, flits);
+
+//     if ( !currently_clocking ) {
+// 	registerClock(frequency,clock_handler);
+// 	currently_clocking = true;
+//     }
+    
     return;
 }
 
