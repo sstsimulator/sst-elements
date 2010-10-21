@@ -717,10 +717,10 @@ void SS_router::handleParcel( Event* e, int dir )
     rxCount[ilink] += flits;
     InLCB( event, ilink, ivc, flits);
 
-//     if ( !currently_clocking ) {
-// 	registerClock(frequency,clock_handler);
-// 	currently_clocking = true;
-//     }
+    if ( !currently_clocking ) {
+	registerClock(frequency,clock_handler);
+	currently_clocking = true;
+    }
     
     return;
 }

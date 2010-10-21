@@ -436,9 +436,7 @@ private:
     {
 // 	clock_count++;
 	bool work_done = false;
-        //DBprintf("cycle=%ld\n",cycle);
         m_cycle = cycle;
-        //if (!(cycle()%1000) && routerID == 0) printf ("cycle %lld\n", cycle());
         if (!rtrEventQ.empty()) {
             advanceEventQ();
 	    work_done = true;
@@ -459,10 +457,10 @@ private:
             iLCBtoIn();
 	    work_done = true;
 	}
-// 	if ( !work_done ) {
-// 	    unregisterClock(defaultTimeBase,clock_handler);
-// 	    currently_clocking = false;
-// 	}
+	if ( !work_done ) {
+	    unregisterClock(defaultTimeBase,clock_handler);
+	    currently_clocking = false;
+	}
 	return true; // KBW: hopefully, this is essentially meaningless
     }
 
