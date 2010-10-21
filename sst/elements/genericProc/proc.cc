@@ -604,9 +604,7 @@ bool proc::forwardToNetsimNIC(int call_num, char *params, const size_t params_le
 
   // Send the event to the NIC
   //CompEvent *e= static_cast<CompEvent *>(event);
-  abort();
-  //netLinks[0]->Send(e);
-
+  netLinks[0]->Send(event);
   return false;
 }
 
