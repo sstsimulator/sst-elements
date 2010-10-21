@@ -47,7 +47,9 @@ EVENTCHANNEL()::EventChannel( Component& comp,
 
     m_log.write("creating link \"%s\"\n", name.c_str());
     Link* link = comp.configureLink( name, new Event::Handler<EventChannel>(this, &EventChannel::handler) );
-    assert(link != NULL);
+    if (link == NULL) {
+      printf("Unable to bring up memory Link!\n");
+    }
 
     m_vcV.resize( numVC );
 
