@@ -434,7 +434,7 @@ private:
     // try to move data from output queues to out LCBs
     bool clock( Cycle_t cycle )
     {
-// 	clock_count++;
+ 	clock_count++;
 	bool work_done = false;
         m_cycle = cycle;
         if (!rtrEventQ.empty()) {
@@ -458,10 +458,11 @@ private:
 	    work_done = true;
 	}
 	if ( !work_done ) {
-	    unregisterClock(defaultTimeBase,clock_handler);
+// 	    unregisterClock(defaultTimeBase,clock_handler);
 	    currently_clocking = false;
+	    return true;
 	}
-	return true; // KBW: hopefully, this is essentially meaningless
+	return false; 
     }
 
     //: string values for link direction, only used for debugging and outputting link traffic data

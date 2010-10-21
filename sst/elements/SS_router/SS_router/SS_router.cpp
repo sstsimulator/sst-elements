@@ -345,7 +345,7 @@ void SS_router::setup() {
 
 //: Output statistics
 int SS_router::Finish () {
-//     printf("%5d: count = %d\n",routerID,clock_count);
+    if ( routerID == 5 ) printf("%5d: count = %d\n",routerID,clock_count);
 
 #if 0 // finish() dumpTables
     DBprintf("\n");
@@ -696,6 +696,7 @@ void SS_router::handleParcel( Event* e, int dir )
 {
     RtrEvent*  event = static_cast<RtrEvent*>(e);
 
+    m_cycle = getCurrentSimTime();
     DBprintf("got event type %#ld on link %s\n", event->type, LinkNames[dir] );
 
     if ( event->type == RtrEvent::Credit ) {
