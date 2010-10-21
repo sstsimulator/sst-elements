@@ -14,7 +14,7 @@ res_desc fu_config[] = {
     4,
     0,
     {
-      { IntALU, 1, 1 }
+      { IntALU, 8, 1 }
     }
   },
   {
@@ -22,7 +22,7 @@ res_desc fu_config[] = {
     1,
     0,
     {
-      { IntMULT, 3, 1 },
+      { IntMULT, 8, 1 },
       { IntDIV, 20, 19 }
     }
   },
@@ -40,9 +40,9 @@ res_desc fu_config[] = {
     4,
     0,
     {
-      { FloatADD, 2, 1 },
-      { FloatCMP, 2, 1 },
-      { FloatCVT, 2, 1 }
+      { FloatADD, 16, 1 },
+      { FloatCMP, 16, 1 },
+      { FloatCVT, 16, 1 }
     }
   },
   {
@@ -50,8 +50,8 @@ res_desc fu_config[] = {
     1,
     0,
     {
-      { FloatMULT, 4, 1 },
-      { FloatDIV, 12, 12 },
+      { FloatMULT, 16, 2 },
+      { FloatDIV, 16, 16 },
       { FloatSQRT, 24, 24 }
     }
   },

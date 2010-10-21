@@ -9,7 +9,7 @@ comp_LTLIBRARIES = libportals4_sm.la
 
 libportals4_sm_la_SOURCES = \
 	portals4_sm.cc \
-	trig_cpu/algorithm.h \
+	trig_cpu/application.h \
 	trig_cpu/portals.h \
 	trig_cpu/portals.cc \
 	trig_cpu/portals_types.h \
@@ -29,6 +29,8 @@ libportals4_sm_la_SOURCES = \
 	trig_cpu/apps/barrier_dissem_trig.h \
 	trig_cpu/apps/test_portals.h \
 	trig_cpu/apps/test_mpi.h \
+	trig_cpu/apps/test_atomics.h \
+	trig_cpu/barrier_action.h \
 	trig_cpu/apps/ping_pong.h \
 	trig_cpu/apps/bandwidth.h \
 	trig_nic/trig_nic.cc \

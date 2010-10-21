@@ -9,6 +9,7 @@ comp_LTLIBRARIES = libcpu_router_power.la
 libcpu_router_power_la_SOURCES = \
 	cpu_router_power.h \
 	cpu_router_power.cc \
+	myMemEvent.h \
 	../power/power.cc \
 	../power/power.h
 libcpu_router_power_la_LDFLAGS = -module -avoid-version $(SIMPANALYZER_LDFLAGS) $(MCPAT_LDFLAGS) $(ORION_LDFLAGS)

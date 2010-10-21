@@ -2,10 +2,14 @@
 #include "gups_types.h"
 #include "malloc/malloc.h"
 #include <pthread.h>
+#if USE_AMO
 #include "ppcPimCalls.h"
+#else
+#define PIM_quickPrint(a,b,c) ;
+#endif
 
 #define ln2 0.69314718055994530942
-#define THR 32
+#define THR 1
 
 pthread_t thr[THR];
 pthread_attr_t attr;
@@ -275,7 +279,7 @@ main (int argc, char **argv)
 #else
   updates = 25600*16*8;
   expt = 28.0; //26.0; //25.0;  //if change, change below
-  width = 64;
+  width = 16;
   PIM_quickPrint(updates,expt,(int)size);
 #endif
   assert (width == 8 || width == 16 || width == 32 || width == 64);

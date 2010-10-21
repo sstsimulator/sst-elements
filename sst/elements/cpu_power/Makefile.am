@@ -8,6 +8,7 @@ comp_LTLIBRARIES = libcpu_power.la
 libcpu_power_la_SOURCES = \
 	cpu_power.h \
 	cpu_power.cc \
+	myMemEvent.h \
 	../power/power.cc \
 	../power/power.h \
 	../power/interface.h \

@@ -9,6 +9,7 @@ comp_LTLIBRARIES = libcpu_data.la
 
 libcpu_data_la_SOURCES = \
 	cpu_data.h \
+	myMemEvent.h \
 	cpu_data.cc 
 libcpu_data_la_LDFLAGS = -module -avoid-version
 
