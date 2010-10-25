@@ -54,6 +54,9 @@ private:
     
     int                     additional_atomic_latency;
 
+    bool currently_clocking;
+    Clock::Handler<trig_nic>* clock_handler_ptr;
+
     // Data structures to support portals on NIC
     #define MAX_PORTAL_TABLE_ENTRY 32
     ptl_entry_t* ptl_table[MAX_PORTAL_TABLE_ENTRY];

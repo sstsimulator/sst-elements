@@ -33,9 +33,12 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     dma_in_progress(false),
     rr_dma(false),
     new_dma(true),
-    send_atomic_from_cache(true) {
+    send_atomic_from_cache(true),
+    currently_clocking(true)
+{
 
-    registerClock( frequency, new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler), false  );
+    clock_handler_ptr = new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler);
+    registerClock( frequency, clock_handler_ptr, false  );
  
     if ( params.find("latency") == params.end() ) {
 	_abort(trig_nic,"couldn't find NIC latency\n");
@@ -94,7 +97,9 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
 bool trig_nic::clock_handler ( Cycle_t cycle ) {
 //     printf("clock_handler()\n");
     // All we do is look at the two queues and copy stuff across
+    bool work_done = false;
     if ( !toNicQ_empty( 0 ) ) {
+	work_done = true;
         RtrEvent* event = toNicQ_front( 0 );
         toNicQ_pop( 0 );
 
@@ -147,6 +152,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 
 
     if ( adv_pio ) {
+	work_done = true;
         trig_nic_event* ev = pio_q.front();
 	if ( ev->ptl_op == PTL_NO_OP ) {
 	    // This is a message destined for the router
@@ -220,6 +226,8 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     
     // Check to see if we have anything in the dma_q to send out
     if ( adv_dma ) {
+	work_done = true;
+	    
 	// See if there is room in the output q
 	if (rtr_q_size < rtr_q_max_size) {
 	rtr_q_size++;
@@ -314,16 +322,21 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
         }
     }
     if ( nextToRtr != NULL ) {
-// 	printf("OK, really sending an event to router\n");
+	work_done = true;
+
+	// 	printf("OK, really sending an event to router\n");
         if ( send2Rtr(nextToRtr) ) {
             // Successfully sent, so set nextToRtr to null so it will look
             // for new ones (otherwise, it will try to send the same one
             // again next time)
-//  	  printf("Sent packet to router @ %llu\n",getCurrentSimTimeNano());
-	  nextToRtr = NULL;
+	    nextToRtr = NULL;
 	    rtr_q_size--;
         }
     }
+//     if ( !work_done) {
+// 	currently_clocking = false;
+// 	return true;
+//     }
     return false;
 }
 
@@ -340,6 +353,11 @@ void trig_nic::processCPUEvent( Event *e) {
     }
     else {
 	pio_q.push(ev);
+    }
+
+    if ( !currently_clocking ) {
+	registerClock( frequency, clock_handler_ptr, false  );
+	currently_clocking = true;
     }
     
 }
@@ -369,6 +387,11 @@ trig_nic::setTimingParams(int set) {
 void trig_nic::processPtlEvent( Event *e ) {
 //     printf("processPtlEvent\n");
     trig_nic_event* ev = static_cast<trig_nic_event*>(e);
+
+    if ( !currently_clocking ) {
+	registerClock( frequency, clock_handler_ptr, false  );
+	currently_clocking = true;
+    }    
     
     // See what portals command was sent
     switch (ev->ptl_op) {
@@ -900,6 +923,10 @@ void
 trig_nic::processDMAEvent( Event* e)
 {
 //     printf("processDMAEvent()\n");
+    if ( !currently_clocking ) {
+	registerClock( frequency, clock_handler_ptr, false  );
+	currently_clocking = true;
+    }
     // Look at the incoming queues from the host to see what to do.
     if ( !dma_in_progress ) {
         // Need to start a new DMA
