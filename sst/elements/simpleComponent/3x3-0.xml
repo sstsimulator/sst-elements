@@ -1,0 +1,357 @@
+<?xml version="1.0"?>
+<config>
+ stopAtCycle=1ms
+</config>
+<sst>
+  <component id="c0.0">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="0.3">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="0.6">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="0.1">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="0.2">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c1.0">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="1.4">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="1.7">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="1.2">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="0.1">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c2.0">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="2.5">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="2.8">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="0.2">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="1.2">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c0.1">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="3.6">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="0.3">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="3.4">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="3.5">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c1.1">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="4.7">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="1.4">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="4.5">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="3.4">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c2.1">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="5.8">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="2.5">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="3.5">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="4.5">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c0.2">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="0.6">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="3.6">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="6.7">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="6.8">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c1.2">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="1.7">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="4.7">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="7.8">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="6.7">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+  <component id="c2.2">
+    <simpleComponent.simpleComponent>
+      <params>
+	<workPerCycle>100</workPerCycle>
+	<commFreq>100000</commFreq>
+	<commSize>100</commSize>
+      </params>
+      <links>
+	<link id="2.8">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="5.8">
+	  <params>
+	    <name>Slink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="6.8">
+	  <params>
+	    <name>Elink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+
+	<link id="7.8">
+	  <params>
+	    <name>Wlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </simpleComponent.simpleComponent>
+  </component>
+
+</sst>
