@@ -11,10 +11,13 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 #include <ctime>
 #include <sstream>
 #include <string>
+#include <fstream>
+
+using std::ofstream;
 
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
@@ -22,9 +25,15 @@
 #include "resil.h"
 //#include "myEvent.h"
 #include "sst/core/compEvent.h"
+#include "sst/elements/schedule/schedEvent.h"
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
+
+bool resil::file_open=false;
+
+/**/
+ofstream myfile;
 
 resil::resil( ComponentId_t id, Params_t& params ) :
   Component(id), params(params), frequency("1000.0GHz")
@@ -51,12 +60,12 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	if (params.find("lambda") != params.end() ) {
 		lambda = strtod(params["lambda"].c_str(), NULL);
 	}
-	os<<"port"<<linki;
+	os<<"link"<<linki;
 	while (params.find(os.str()) != params.end() ){
 		links[linki] = params[os.str()];
 		os.str("");
 		linki++;
-		os<<"port"<<linki;
+		os<<"link"<<linki;
 		std::cout<<"The string was: "<<os.str()<<std::endl;
 	}
 
@@ -75,10 +84,10 @@ resil::resil( ComponentId_t id, Params_t& params ) :
   }
   count_to = strtol( params[ "count_to" ].c_str(), NULL, 0 );*/
 
-	srand(time(0));  // Initialize random number generator.
+	//srand(time(0));  // Initialize random number generator.
 
  
-  //std::cout<<lambda;
+  std::cout<<"\nLambda: "<<lambda<<"\n";
 
   TimeConverter *tc = registerClock(frequency,
                                     new Clock::Handler<resil>
@@ -134,7 +143,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	//link_array[1]=configureLink("link1", new Event::Handler<resil>(this, &resil::processEvent));
 	//uplink = configureLink("uplink", new Event::Handler<resil>(this, &resil::processEvent));
 
-	//sched_link=configureLink();
+	sched_link=configureLink("schedlink0", new Event::Handler<resil>(this, &resil::schedEventHandle));
 
   /*if (link0 == 0) { std::cerr << "link0 NULL\n"; }
 	else { link0->setDefaultTimeBase(tc); }
@@ -157,6 +166,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	}
   
 	if (sched_link == 0) { std::cout << "sched_link NULL!\n"; }
+	else {sched_link->setDefaultTimeBase(tc);}
 
   linkToSelf->setDefaultTimeBase(tc);
 	
@@ -168,19 +178,16 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	
 
 
-	if(id==8)
+	if(id==11)
 	{
-		fail_assigned=0;
-		float fail_time=dur_scale*genexp(lambda);
+		float fail_time=dur_scale*genexp(lambda*1e-12);
 
-		if(fail_assigned==0){
-			linkToSelf->Send(50,new CompEvent());
+			linkToSelf->Send(50/*fail_time*/,new CompEvent());
 			std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<floor(fail_time)<<"\n";
-			fail_assigned=1;
-		}
-
+		
 	}
 	
+	//sched_link->send(25, new endEvent());
 	//registerExit();
 
 }
@@ -194,11 +201,12 @@ resil::~resil()
 bool resil::clock( Cycle_t current ) 
 {
   std::cout << "resil: it's cycle " << current << "!\n";
-  
+
+
   //link_array[0]->Send(10, new CompEvent());
 	//link1->Send(10, new CompEvent());
 
-  return true;
+  return false;
 }
 
 void resil::processEvent( Event* event )
@@ -221,6 +229,7 @@ void resil::processEvent( Event* event )
 //Add a portion to only end event if we don't already know of a fail. 
 	std::cout<<my_id<<": Someone above me failed and it is cycle " << getCurrentSimTime()<<"\n";
 	
+	if(sched_link!=0)  sched_link->Send(0, new failEvent(id_str, getCurrentSimTime()));
 
 	for(int i=0; i < MAX_LINKS; i ++)
 	{
@@ -243,7 +252,7 @@ void resil::processEvent( Event* event )
   delete event;
 	/*counter=0;
 	count_to=10;
-	/*while(counter<count_to)
+	while(counter<count_to)
 	{
 		std::cout<<counter;
 		counter++;
@@ -275,15 +284,48 @@ void resil::processfailEvent( Event* event )
 			link_array[i]->Send(0,new CompEvent());
 		}
 	}
-	//
 
+	if(sched_link!=0)  sched_link->Send(0, new failEvent(id_str, getCurrentSimTime()));
+
+	myfile << id_str << "," << getCurrentSimTime()<<"\n";  
+
+	//
+	float fail_time=genexp(lambda*1e-12);
+	linkToSelf->Send(50/*fail_time*/,new CompEvent());
   delete event; // I'm responsible for it.
   return;
 }
 
+void resil::schedEventHandle( Event* event )
+{
+
+	delete event;  //I'm responsible for it.
+	return;
+}
+
+int resil::Setup()
+{
+		if(file_open==0)
+		{
+			myfile.open("node_failures.txt");
+			file_open=1;
+		}
+		return 0;
+}
+
+int resil::Finish()
+{
+	if(file_open==1)
+	{
+		myfile.close();
+		file_open=0;
+	}
+	return 0;
+}
+
 float urand()
 {
-	return((float) rand()/RAND_MAX);
+	return((float)rand()+1.0)/(RAND_MAX+1.0);
 }
 
 float genexp(float lambda)

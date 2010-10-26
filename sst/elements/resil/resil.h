@@ -13,6 +13,8 @@
 #ifndef _RESIL_H
 #define _RESIL_H
 
+#include <fstream>
+
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -20,6 +22,8 @@
 #define MAX_LINKS 10
 
 using namespace SST;
+
+extern std::ofstream myfile;
 
 enum comp_type {LEAF,SCHEDULER,REL_COMP,INFREQ};
 enum fail_dist {GAUSS,EXP};
@@ -35,7 +39,14 @@ class resil : public Component {
   bool clock       ( Cycle_t cycle                      );
   void processEvent( Event* event                       );
   void processfailEvent( Event* event                   );
+	void schedEventHandle(Event* event                    );
+	int Setup();
+	int Finish();
+
   int my_id;
+	std::string id_str;
+
+  static bool file_open;
 
 	/*	void set_values(comp_type type, fail_dist f_dist, float fail_duration);
   	void set_gauss_params(float gauss_mean, float gauss_std_dev);
@@ -94,7 +105,6 @@ class resil : public Component {
   Params_t    params   ;
   std::string frequency;
 	std::string links[MAX_LINKS];
-	std::string id_str;
 };
 
 float genexp(float lambda);
