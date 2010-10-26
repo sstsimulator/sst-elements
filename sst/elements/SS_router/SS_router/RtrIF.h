@@ -32,7 +32,6 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/log.h>
 #include <sst/elements/include/paramUtil.h>
 #include "SS_network.h"
 
@@ -51,30 +50,10 @@ public:
     RtrIF( ComponentId_t id, Params_t& params ) :
         Component(id),
         rtrCountP(0),
-        num_vcP(2),
-        m_dbg( *new Log< RTRIF_DBG >( "RtrIF::", false ) ),
-        m_dummyDbg( *new Log< RTRIF_DBG >( "Dummy::RtrIF::", false ) ),
-        m_log( *new Log<>( "INFO RtrIF: ", false ) )
+        num_vcP(2)
     {
         int num_tokens = 512;
 
-        if ( params.find( "info" ) != params.end() ) {
-            if ( params[ "info" ].compare( "yes" ) == 0 ) {
-                m_log.enable();
-            }
-        }
-
-        if ( params.find( "debug" ) != params.end() ) {
-            if ( params[ "debug" ].compare( "yes" ) == 0 ) {
-                m_dbg.enable();
-            }
-        }
-
-        if ( params.find( "dummyDebug" ) != params.end() ) {
-            if ( params[ "dummyDebug" ].compare( "yes" ) == 0 ) {
-                m_dummyDbg.enable();
-            }
-        }
 
         if ( params.find( "id" ) == params.end() ) {
             _abort(RtrIF,"couldn't find routerID\n" );
@@ -93,20 +72,10 @@ public:
             num_tokens = str2long( params["Node2RouterQSize_flits"] );
         }
 
-        std::ostringstream idStr;
-        idStr << m_id << ":";
-        m_dbg.prepend( idStr.str() );
-        m_dummyDbg.prepend( idStr.str() );
-        m_log.prepend( idStr.str() );
-
-        m_log.write("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
-        m_log.write("nic id=%d frequency=%s\n", m_id, frequency.c_str());
-
 	m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<RtrIF>(this,&RtrIF::processEvent) );
 
 	registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock), false );
 
-        db_RtrIF("Done registering clock\n");
 
         for ( unsigned int i=0; i < num_vcP; i++ ) {
             toNicMapP[i] = new ToNic();
@@ -123,14 +92,12 @@ public:
     RtrEvent *toNicQ_front(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
-        db_RtrIF("vc=%d\n",vc);
         return toNicMapP[vc]->front();
     }
 
     void toNicQ_pop(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
-        db_RtrIF("vc=%d\n",vc);
         returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits() );
         toNicMapP[vc]->pop_front();
     }
@@ -139,11 +106,14 @@ public:
     {
         networkPacket* pkt = &event->packet;
         if ( pkt->vc() >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
-/* 	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum(),getCurrentSimTimeNano()); */
-        bool retval = toRtrMapP[pkt->vc()]->push( event );
-        if ( retval )
-            db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
-                     pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
+//  	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum(),getCurrentSimTimeNano()); 
+
+// 	// Translate destination into x,y,z
+// 	event->mesh_loc[0] = pkt->destNum() % x;
+// 	event->mesh_loc[0] = ( pkt->destNum() / x ) % y;
+// 	event->mesh_loc[0] = nodeNumber / ( x * y );
+
+	bool retval = toRtrMapP[pkt->vc()]->push( event );
         if ( retval ) {
             sendPktToRtr( toRtrQP.front() );
             toRtrQP.pop_front();
@@ -157,16 +127,14 @@ private:
     bool rtrWillTake( int vc, int numFlits )
     {
         if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
-        db_RtrIF("vc=%d numFlits=%d\n",vc,numFlits);
         return toRtrMapP[vc]->willTake( numFlits );
     }
     
     void processEvent( Event* e)
     {
         RtrEvent* event = static_cast<RtrEvent*>(e);
-/* 	printf("%5d:  got an event from %d @ %lu\n",m_id,event->packet.srcNum(),getCurrentSimTimeNano()); */
+// 	printf("%5d:  got an event from %d @ %lu\n",m_id,event->packet.srcNum(),getCurrentSimTimeNano());
 	
-        db_RtrIF("type=%ld\n",event->type);
 
         switch ( event->type ) {
         case RtrEvent::Credit:
@@ -208,23 +176,18 @@ private:
             _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc(),pkt);
         }
 
-        db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
-                 pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
         toNicMapP[pkt->vc()]->push_back( event );
     }
 
     void returnTokens2Nic( int vc, uint32_t num )
     {
         if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
-        db_RtrIF("vc=%d numFlits=%d\n", vc, num );
         toRtrMapP[vc]->returnTokens( num );
     }
 
     void returnTokens2Rtr( int vc, uint numFlits ) 
     {
         RtrEvent* event = new RtrEvent;
-
-        db_RtrIF("vc=%d numFlits=%d\n", vc, numFlits );
 
         event->type = RtrEvent::Credit;
         event->credit.num = numFlits;
@@ -236,8 +199,6 @@ private:
     {
         networkPacket* pkt = &event->packet;
 
-        db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
-                 pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
 
         event->type = RtrEvent::Packet;
         event->packet = *pkt;
@@ -247,7 +208,6 @@ private:
 
     int reserveRtrLine (int cyc)
     {
-        db_RtrIF("cyc=%d\n",cyc);
         int ret = (rtrCountP <= 0) ? -rtrCountP : 0;
         rtrCountP -= cyc;
         return ret;
@@ -294,9 +254,6 @@ private:
     deque<RtrEvent*>        toRtrQP;
 
     Link*                   m_rtrLink;
-    Log< RTRIF_DBG >&       m_dbg;
-    Log< RTRIF_DBG >&       m_dummyDbg;
-    Log<>&                  m_log;
 
 protected:
     int                     m_id;

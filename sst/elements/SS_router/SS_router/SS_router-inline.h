@@ -164,21 +164,46 @@ inline bool SS_router::findRoute( int destNid, int inVC, int inDir,
 
     outDir = findOutputDir( destNid );
     outVC = findOutputVC( inVC, inDir, outDir );
-    DBprintf("XXX destNid=%d inVC=%d inDir=%d outVC=%d outDir=%d\n",
-             destNid, inVC, inDir, outVC, outDir);
-//    exit(0);
-//    if ( inDir != ROUTER_HOST_PORT && inDir == outDir ) printf("Ping pong routing\n");
-//    if ( inDir != ROUTER_HOST_PORT && dimension(inDir) == dimension(outDir) && inVC != outVC ) printf("Crossing dateline\n");
-//    if ( inVC != outVC ) printf("Input/output VCs different\n");
-//    printf("oVC: %d\n",outVC);
     return true;
 }
 
 
 inline int SS_router::findOutputDir( int destNid )
 {
-//    DBprintf( "XXX destNid=%d dir=%d\n", destNid, m_routingTableV[destNid] );
-    return m_routingTableV[destNid];
+//      return m_routingTableV[destNid];
+    // Figure out the direction we should go, we no longer have a
+    // table, though we'll use the same logic to compute the route as
+    // the routing table used.
+    int dst_xPos = calcXPosition( destNid, xDim, yDim, zDim );
+    int dst_yPos = calcYPosition( destNid, xDim, yDim, zDim );
+    int dst_zPos = calcZPosition( destNid, xDim, yDim, zDim );
+    
+    if ( my_xPos != dst_xPos ) {
+	int dir = calcDirection( my_xPos, dst_xPos, xDim );
+	if ( dir > 0 ) {
+	    return LINK_POS_X; 
+	} else {
+	    return LINK_NEG_X; 
+	} 
+    } else if ( my_yPos != dst_yPos ) {
+	int dir = calcDirection( my_yPos, dst_yPos, yDim );
+	if ( dir > 0 ) {
+	    return LINK_POS_Y; 
+	} else {
+	    return LINK_NEG_Y;
+	}
+    } else if ( my_zPos != dst_zPos ) {
+	int dir = calcDirection( my_zPos, dst_zPos, zDim );
+	if ( dir > 0 ) {
+	    return LINK_POS_Z; 
+	} else {
+	    return LINK_NEG_Z; 
+	} 
+    } else {
+	return ROUTER_HOST_PORT;
+    }
+    
+    
 }
 
 inline int SS_router::dimension( int dir )
@@ -206,20 +231,12 @@ inline int SS_router::findOutputVC( int inVC, int inDir, int outDir )
     int inDim = dimension( inDir );
     int outDim = dimension( outDir );
 
-/*     printf("---> %d %d %d %d\n",inDir,dimension(inDir),outDir,dimension(outDir)); */
-    
     if ( inDir == ROUTER_HOST_PORT || outDir == ROUTER_HOST_PORT ) return 0;
 
-/*     if ( inDim == outDim ) printf("same dimension: %d %d %d\n",inDir,outDir,inDim); */
-    
-/*     printf("-----> %d: %d %d %d\n",routerID,inDim,outDim,iAmDateline( inDim )); */
     if ( ( inDim == outDim ) && iAmDateline( inDim ) )
     {
         outVC = changeVC( inVC );
-/* 	printf("--> %d %d %d %d\n",inDim,outDim,inVC,outVC); */
     }
- //   DBprintf( "XXX inVC=%d inDir=%d outDir=%d outVC=%d\n", 
-  //                                          inVC, inDir, outDir, outVC );
     return outVC;
 }
 

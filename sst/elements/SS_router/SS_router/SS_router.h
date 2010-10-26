@@ -1,3 +1,4 @@
+// -*- c++ -*-
 // Copyright 2009-2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
@@ -187,38 +188,9 @@ class SS_router : public Component
     vector<bool> m_datelineV;
 
 
-    int neighbor[ROUTER_NUM_LINKS];
-    int neighborID (int dir) {
-        return neighbor[dir];
-    }
 
     inline int NODE_ID(int x, int y, int z,Network *net) {
         return z * net->xDimSize() * net->yDimSize() + y * net->xDimSize() + x;
-    }
-
-    void find_neighbors(Network *net, int x, int y, int z) {
-
-        DBprintf("located at (%d, %d, %d)\n", x, y, z);
-
-        int posx,posy,posz,negx,negy,negz;
-        posx = (x + 1) % net->xDimSize();
-        posy = (y + 1) % net->yDimSize();
-        posz = (z + 1) % net->zDimSize();
-        negx = (x == 0) ? net->xDimSize() - 1 : (x - 1);
-        negy = (y == 0) ? net->yDimSize() - 1 : (y - 1);
-        negz = (z == 0) ? net->zDimSize() - 1 : (z - 1);
-
-        neighbor[LINK_NEG_X] = NODE_ID(negx,y,z, net);
-        neighbor[LINK_POS_X] = NODE_ID(posx,y,z, net);
-
-        neighbor[LINK_NEG_Y] = NODE_ID(x,negy,z, net);
-        neighbor[LINK_POS_Y] = NODE_ID(x,posy,z, net);
-
-        neighbor[LINK_NEG_Z] = NODE_ID(x,y,negz, net);
-        neighbor[LINK_POS_Z] = NODE_ID(x,y,posz, net);
-        DBprintf("X %d %d\n", neighbor[LINK_NEG_X], neighbor[LINK_POS_X]);
-        DBprintf("Y %d %d\n", neighbor[LINK_NEG_Y], neighbor[LINK_POS_Y]);
-        DBprintf("Z %d %d\n", neighbor[LINK_NEG_Z], neighbor[LINK_POS_Z]);
     }
 
     friend class oLCB_t;
@@ -250,6 +222,13 @@ protected:
     //: number of flits which can fit into an LCB
     int oLCB_maxSize_flits;
 
+    int my_xPos;
+    int my_yPos;
+    int my_zPos;
+
+    int xDim;
+    int yDim;
+    int zDim;
 
     //: Routing table
     // It maps a destination node ID and incoming virtual channel
@@ -404,7 +383,6 @@ protected:
     int Finish();
 
     void setupRoutingTable ( Params_t, int nodes, int xDim, int yDim, int zDim);
-    void setVCRoutes ( int node, int dir, bool *crossDateline );
 
     void advanceEventQ();
     void DebugEvent ();

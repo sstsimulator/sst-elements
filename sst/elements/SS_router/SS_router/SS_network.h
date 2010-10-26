@@ -195,6 +195,7 @@ public:
     typedef enum { Credit, Packet } msgType_t;
 
     int             type;
+    char            mesh_loc[3];
     networkPacket   packet;
     struct Credit {
         uint32_t        num;

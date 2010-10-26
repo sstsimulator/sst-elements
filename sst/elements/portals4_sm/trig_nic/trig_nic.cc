@@ -137,6 +137,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 	    cpu_link->Send(portals ? 0 : msg_latency,nic_event);
 	}
     }  
+
     // Need to send out any packets that need to go to the network.
     // We'll round robin the dma and pio to the network.
     bool adv_pio = false;
@@ -269,26 +270,20 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 	        // Since this is the end, the next one through will
 	        // need to send it's header first
 	        new_dma = true;
-// 	        if ( ev->operation->data.dma->ct_handle != PTL_CT_NONE ) {
-// 		  scheduleCTInc(ev->operation->data.dma->ct_handle,latency_ct_post);
-// 		}
 	        if ( ev->data.dma->ct_handle != PTL_CT_NONE ) {
 		    scheduleCTInc(ev->data.dma->ct_handle,latency_ct_post);
 		}
 	    }
 	    // Don't need the dma data structure any more
-// 	    delete ev->operation->data.dma;
-// 	    delete ev->operation;
  	    delete ev->data.dma;
 
 	    self_link->Send(ptl_msg_latency,ev);
 	}
 	
-
-	// If this is the end of the dma and there's a CT attached, we
-	// need to increment the CT
-	if ( !ev->head_packet ) {
-	}
+// 	// If this is the end of the dma and there's a CT attached, we
+// 	// need to increment the CT
+// 	if ( !ev->head_packet ) {
+// 	}
 	
 
       }

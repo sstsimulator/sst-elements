@@ -301,9 +301,6 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
     y = (routerID / network->xDimSize()) % network->yDimSize();
     x = routerID % network->xDimSize();
 
-    find_neighbors(network,x,y,z);
-
-
     linkV.resize( ROUTER_NUM_LINKS + 1 );
     for (int dir = 0; dir < ROUTER_NUM_LINKS + 1; dir++) {
         //set up this nodes router link to the neighbor router
@@ -446,70 +443,11 @@ void SS_router::dumpTable (FILE *fp) {
 }
 
 
-//: add a routing entry for each virtual channel
-//
-// Inputs are
-// the node being routed to
-// the direction which the route should take for the next hop
-// the remote node's coordinate in this dimension
-// the router's coordinate in this dimention
-void SS_router::setVCRoutes ( int nd, int dir, bool crossDateline[ROUTER_NUM_LINKS] ) {
-    printf("%d:  crossDateline[%d] = %d\n",nd,dir,crossDateline[dir]);
-    printf("  crossDateline = %d %d %d %d %d %d\n",crossDateline[0],crossDateline[1],crossDateline[2],crossDateline[3],crossDateline[4],crossDateline[5]);
-    DBprintf("nd=%d dir=%d\n",nd,dir);
-    pair <int, int> key, localDest;
-    int vc;
-
-    //set up an error routing entry
-    if (dir < 0) {
-        for (vc = 0; vc < ROUTER_NUM_VCS; vc++) {
-            key.first = nd;
-            key.second = vc;
-            localDest.first = dir;
-            localDest.second = -1;
-        }
-        return;
-    }
-
-    for (vc = 0; vc < ROUTER_NUM_VCS; vc++) {
-        key.first = nd;
-        key.second = vc;
-        localDest.first = dir;
-
-        if ( dir == ROUTER_HOST_PORT ) {
-            if ( vc < 2 ) {
-                localDest.second = NIC_VC_0;
-            } else {
-                localDest.second = NIC_VC_1;
-            }
-        } else {
-            if ( crossDateline[dir] ) {
-                //crossing dateline, vc0->vc1, vc1->vc1, vc2->vc3, vc3->vc3
-                //Changed to cross up on 01-06-2006 -KDU
-                if ((vc == LINK_VC0) || (vc == LINK_VC1))
-                    localDest.second = LINK_VC1;
-                else
-                    localDest.second = LINK_VC3;
-            }
-
-            else
-                localDest.second = vc;
-        }
-
-        DBprintf("dir=%d vc=%d\n",dir,localDest.second);
-        routingTable[key] = localDest;
-    }
-}
-
 //: Build the routing table
 void SS_router::setupRoutingTable( Params_t params, int nodes,
                                    int xDim, int yDim, int zDim) {
 
     DBprintf("\n");
-#if 0
-    int dateline[ROUTER_NUM_LINKS];
-    bool crossDateline[ROUTER_NUM_LINKS];
-#endif
 
     if ( params.find( "xDateline" ) == params.end() ) {
         _abort(SS_router,"couldn't find xDateline\n" );
@@ -517,10 +455,6 @@ void SS_router::setupRoutingTable( Params_t params, int nodes,
     if ( str2long( params["xDateline"] ) == calcXPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_X)] = true; 
     }
-#if 0
-    dateline[LINK_POS_X] = str2long( params["xDateline"] );
-    dateline[LINK_NEG_X] = dateline[LINK_POS_X];
-#endif
 
     if ( params.find( "yDateline" ) == params.end() ) {
         _abort(SS_router,"couldn't find yDateline\n" );
@@ -528,10 +462,6 @@ void SS_router::setupRoutingTable( Params_t params, int nodes,
     if ( str2long( params["yDateline"] ) == calcYPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_Y)] = true; 
     }
-#if 0
-    dateline[LINK_POS_Y] = str2long( params["yDateline"] );
-    dateline[LINK_NEG_Y] = dateline[LINK_POS_Y];
-#endif
 
     if ( params.find( "zDateline" ) == params.end() ) {
         _abort(SS_router,"couldn't find zDateline\n" );
@@ -540,155 +470,49 @@ void SS_router::setupRoutingTable( Params_t params, int nodes,
     if ( str2long( params["xDateline"] ) == calcZPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_Z)] = true; 
     }
-#if 0
-    dateline[LINK_POS_Z] = str2long( params["zDateline"] );
-    dateline[LINK_NEG_Z] = dateline[LINK_POS_Z];
-#endif
-    DBprintf("datelineX=%d datelineY=%d datelineZ=%d\n",
-                    iAmDateline(dimension(LINK_POS_X)),
-                    iAmDateline(dimension(LINK_POS_Y)),
-                    iAmDateline(dimension(LINK_POS_Z)) );
 
+    my_xPos = calcXPosition( routerID, xDim, yDim, zDim );
+    my_yPos = calcYPosition( routerID, xDim, yDim, zDim );
+    my_zPos = calcZPosition( routerID, xDim, yDim, zDim );
 
-    int my_xPos = calcXPosition( routerID, xDim, yDim, zDim );
-    int my_yPos = calcYPosition( routerID, xDim, yDim, zDim );
-    int my_zPos = calcZPosition( routerID, xDim, yDim, zDim );
+    this->xDim = xDim;
+    this->yDim = yDim;
+    this->zDim = zDim;
+    
+//     m_routingTableV.resize(network->size());
+//     for ( int i = 0; i < network->size(); i++ ) {
+//         int dst_xPos = calcXPosition( i, xDim, yDim, zDim );
+//         int dst_yPos = calcYPosition( i, xDim, yDim, zDim );
+//         int dst_zPos = calcZPosition( i, xDim, yDim, zDim );
 
-//     printf("%d (%d,%d,%d): datelineX=%d datelineY=%d datelineZ=%d\n",routerID,
-// 	   my_xPos,my_yPos,my_zPos,
-// 	   iAmDateline(dimension(LINK_POS_X)),
-//                     iAmDateline(dimension(LINK_POS_Y)),
-//                     iAmDateline(dimension(LINK_POS_Z)) );
-
-    m_routingTableV.resize(network->size());
-    for ( int i = 0; i < network->size(); i++ ) {
-        int dst_xPos = calcXPosition( i, xDim, yDim, zDim );
-        int dst_yPos = calcYPosition( i, xDim, yDim, zDim );
-        int dst_zPos = calcZPosition( i, xDim, yDim, zDim );
-
-        if ( my_xPos != dst_xPos ) {
-            int dir = calcDirection( my_xPos, dst_xPos, xDim );
-            if ( dir > 0 ) {
-                m_routingTableV[ i ] = LINK_POS_X; 
-            } else {
-                m_routingTableV[ i ] = LINK_NEG_X; 
-            } 
-        } else if ( my_yPos != dst_yPos ) {
-            int dir = calcDirection( my_yPos, dst_yPos, yDim );
-            if ( dir > 0 ) {
-                m_routingTableV[ i ] = LINK_POS_Y; 
-            } else {
-                m_routingTableV[ i ] = LINK_NEG_Y;
-            }
-        } else if ( my_zPos != dst_zPos ) {
-            int dir = calcDirection( my_zPos, dst_zPos, zDim );
-            if ( dir > 0 ) {
-                m_routingTableV[ i ] = LINK_POS_Z; 
-            } else {
-                m_routingTableV[ i ] = LINK_NEG_Z; 
-            } 
-        } else {
-            m_routingTableV[ i ] = ROUTER_HOST_PORT;
-        }
-        DBprintf("dir=%d\n",m_routingTableV[i]);
-// 	printf("(%d,%d,%d) to (%d,%d,%d) -> %d\n",my_xPos,my_yPos,my_zPos,dst_xPos,dst_yPos,dst_zPos,m_routingTableV[i]);
-    } 
+//         if ( my_xPos != dst_xPos ) {
+//             int dir = calcDirection( my_xPos, dst_xPos, xDim );
+//             if ( dir > 0 ) {
+//                 m_routingTableV[ i ] = LINK_POS_X; 
+//             } else {
+//                 m_routingTableV[ i ] = LINK_NEG_X; 
+//             } 
+//         } else if ( my_yPos != dst_yPos ) {
+//             int dir = calcDirection( my_yPos, dst_yPos, yDim );
+//             if ( dir > 0 ) {
+//                 m_routingTableV[ i ] = LINK_POS_Y; 
+//             } else {
+//                 m_routingTableV[ i ] = LINK_NEG_Y;
+//             }
+//         } else if ( my_zPos != dst_zPos ) {
+//             int dir = calcDirection( my_zPos, dst_zPos, zDim );
+//             if ( dir > 0 ) {
+//                 m_routingTableV[ i ] = LINK_POS_Z; 
+//             } else {
+//                 m_routingTableV[ i ] = LINK_NEG_Z; 
+//             } 
+//         } else {
+//             m_routingTableV[ i ] = ROUTER_HOST_PORT;
+//         }
+//     } 
 
     return;
 
-#if 0
-    int my_yLoc = (routerID / xDim) % yDim;
-    int my_xLoc = routerID % xDim;
-    int my_zLoc = routerID / (xDim * yDim);
-
-    int nd_xDim, nd_yDim, nd_zDim, nd, nd_Dim, my_Dim, max_Dim;
-    my_Dim = -1;
-    nd_Dim = -1;
-    max_Dim = -1;
-
-    for (int ln = 0; ln < ROUTER_NUM_LINKS; ln++) {
-        nd = neighborID(ln);
-        switch (ln) {
-        case LINK_POS_X:
-        case LINK_NEG_X:
-            nd_Dim = nd % xDim;
-            my_Dim = my_xDim;
-            max_Dim = xDim;
-            break;
-        case LINK_POS_Y:
-        case LINK_NEG_Y:
-            nd_Dim = (nd / xDim) % yDim;
-            my_Dim = my_yDim;
-            max_Dim = yDim;
-            break;
-        case LINK_POS_Z:
-        case LINK_NEG_Z:
-            nd_Dim = nd / (xDim * yDim);
-            my_Dim = my_zDim;
-            max_Dim = zDim;
-            break;
-        }
-
-        if ( (my_Dim == (dateline[ln])) &&
-                ( (nd_Dim == ( (dateline[ln]+1) % max_Dim) ) ||
-                  (nd_Dim == ( (dateline[ln] > 0) ? (dateline[ln] - 1) : max_Dim ) ) ) )
-            crossDateline[ln] = true;
-        else
-            crossDateline[ln] = false;
-    }
-
-    for (nd = 0; nd < nodes ; nd++) {
-        if (nd != routerID) {
-            nd_xDim = nd % xDim;
-            // two nodes lie in same x dimension
-            if ( nd_xDim == my_xDim ) {
-                nd_yDim = (nd / xDim) % yDim;
-                // two nodes lie in same y dimension
-                if ( nd_yDim == my_yDim ) {
-                    // route along z axis
-                    nd_zDim = nd / (xDim * yDim);
-                    // node lies in negative Z direction
-                    if ((DIST_NEG(my_zDim,nd_zDim,zDim)) < (DIST_POS(my_zDim,nd_zDim,zDim)))
-                        setVCRoutes ( nd, LINK_NEG_Z, crossDateline);
-                    // node lies in positive Z direction
-                    else if ((DIST_NEG(my_zDim,nd_zDim,zDim)) > (DIST_POS(my_zDim,nd_zDim,zDim)))
-                        setVCRoutes ( nd, LINK_POS_Z, crossDateline);
-                    else if ((routerID % 2) == 1)
-                        setVCRoutes ( nd, LINK_NEG_Z, crossDateline);
-                    else
-                        setVCRoutes ( nd, LINK_POS_Z, crossDateline);
-                }
-                // ( nd_yDim != my_yDim ) route along Y axis
-                else {
-                    if ((DIST_NEG(my_yDim,nd_yDim,yDim)) < (DIST_POS(my_yDim,nd_yDim,yDim)))
-                        setVCRoutes ( nd, LINK_NEG_Y, crossDateline );
-                    // node lies in pos Y dir
-                    else if ((DIST_NEG(my_yDim,nd_yDim,yDim)) > (DIST_POS(my_yDim,nd_yDim,yDim)))
-                        setVCRoutes ( nd, LINK_POS_Y, crossDateline );
-                    else if ((routerID % 2) == 1)
-                        setVCRoutes ( nd, LINK_NEG_Y, crossDateline);
-                    else
-                        setVCRoutes ( nd, LINK_POS_Y, crossDateline);
-                }
-            }
-            // (nd_xDim != my_xDim) route along X axis
-            else {
-                if ((DIST_NEG(my_xDim,nd_xDim,xDim)) < (DIST_POS(my_xDim,nd_xDim,xDim)))
-                    setVCRoutes ( nd, LINK_NEG_X, crossDateline );
-                // node lies in pos x dir
-                else if ((DIST_NEG(my_xDim,nd_xDim,xDim)) > (DIST_POS(my_xDim,nd_xDim,xDim)))
-                    setVCRoutes ( nd, LINK_POS_X, crossDateline );
-                else if ((routerID % 2) == 1)
-                    setVCRoutes ( nd, LINK_NEG_X, crossDateline);
-                else
-                    setVCRoutes ( nd, LINK_POS_X, crossDateline);
-            }
-        }
-        // routing entry for me is to the host port
-        else
-            setVCRoutes ( nd, ROUTER_HOST_PORT, crossDateline);
-    }
-#endif
 }
 
 //: receive a parcel, which should carry a packet
