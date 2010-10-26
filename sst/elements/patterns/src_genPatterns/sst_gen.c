@@ -24,10 +24,11 @@ sst_header(FILE *sstfile)
 
     fprintf(sstfile, "<?xml version=\"1.0\"?>\n");
     fprintf(sstfile, "\n");
-    fprintf(sstfile, "<config>\n");
-    fprintf(sstfile, "    stopAtCycle=100s\n");
-    fprintf(sstfile, "</config>\n");
-    fprintf(sstfile, "\n");
+    // Since we register an exit, we don't need this anymore
+    // fprintf(sstfile, "<config>\n");
+    // fprintf(sstfile, "    stopAtCycle=100s\n");
+    // fprintf(sstfile, "</config>\n");
+    // fprintf(sstfile, "\n");
 
 }  /* end of sst_header() */
 
