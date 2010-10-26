@@ -25,7 +25,7 @@ sst_header(FILE *sstfile)
     fprintf(sstfile, "<?xml version=\"1.0\"?>\n");
     fprintf(sstfile, "\n");
     fprintf(sstfile, "<config>\n");
-    fprintf(sstfile, "    stopAtCycle=100000000000\n");
+    fprintf(sstfile, "    stopAtCycle=100s\n");
     fprintf(sstfile, "</config>\n");
     fprintf(sstfile, "\n");
 
