@@ -494,7 +494,8 @@ bool proc::preTic(Cycle_t c) {
         if (onDeckInst->commit(this)) {
 	      myThread->retire(onDeckInst);
         } else {
-	      WARN("instruction exception!!!");
+	  WARN("instruction exception!!! Exception %d\n", 
+	       onDeckInst->exception());
         }
         onDeckInst = NULL;
       }
