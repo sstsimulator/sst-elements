@@ -27,20 +27,20 @@ int gproc_debug;
 
 static Component*
 create_genericProc_cpu(SST::ComponentId_t id,
-		       SST::Component::Params_t& params)
+		       Params& params)
 {
     return new proc(id, params);
 }
 
 static Component*
 create_genericProc_mem(SST::ComponentId_t id,
-			  SST::Component::Params_t& params)
+                       Params& params)
 {
     return new mem(id, params);
 }
 
 static Component*
-create_testClock(SST::ComponentId_t id, SST::Component::Params_t& params)
+create_testClock(SST::ComponentId_t id, Params& params)
 {
     return new tester(id, params);
 }
@@ -73,12 +73,12 @@ extern "C" {
 }
 
 // dummy constructor, called in deserialization. 
-proc::proc(ComponentId_t idC, Params_t& paramsC, int dummy) :
+proc::proc(ComponentId_t idC, Params& paramsC, int dummy) :
   processor(idC, paramsC), id(idC), params(paramsC) {
   _GPROC_DBG(1, "Dummy Constructor\n");
 }
 
-proc::proc(ComponentId_t idC, Params_t& paramsC) : 
+proc::proc(ComponentId_t idC, Params& paramsC) : 
   processor(idC, paramsC), myThread(0), ssBackEnd(0),
     externalMem(0), maxMMOut(-1), cores(1), 
   onDeckInst(NULL),
@@ -112,16 +112,9 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   // construct the params for the memory device (specifically, the memoryDev,
   // which is a memoryChannel, which is an eventChannel);
   // NOTE: a memoryDevice is ***NOT*** a component
-  Params_t memParams, prefInit;
-  for (Params_t::iterator pi = paramsC.begin(); pi != paramsC.end(); ++pi) {
-    if (pi->first.find("mem.") == 0) {
-      string memS(pi->first, 4);
-      memParams[memS] = pi->second;
-    }
-    if (pi->first.find("pref.") == 0) {
-      prefInit[pi->first] = pi->second;
-    }
-  }
+  Params memParams = paramsC.find_prefix_params("mem.");
+  Params prefInit = paramsC.find_prefix_params("pref.");
+
   /* This will connect to whatever device happens to be on the other side of
    * the "mem0" link in the SDL. The "mem0" link MUST exist, and MUST be a
    * memory device (if all else fails, use genericProc.genericMem) */
@@ -200,7 +193,7 @@ proc::proc(ComponentId_t idC, Params_t& paramsC) :
   if (ssBackEnd) {
     for (int c = 0; c < cores; ++c) {
       mProcs.push_back(new mainProc(ssConfig, tSource, maxMMOut, this, c, 
-				    prefInit, this));
+				    prefInit.get_map(), this));
       outstandingSpecReq.push_back(0);
     }
   } else {
