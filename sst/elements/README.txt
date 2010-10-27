@@ -29,8 +29,3 @@ Unclaimed
 ---------
 
 bus
-cpu
-cpuV2
-xbar
-xbarShell
-xbarV2
