@@ -13,4 +13,6 @@ libsimpleComponent_la_SOURCES = \
 	simpleComponent.cc \
 	simpleEvent.h 
 
+EXTRA_DIST = makeSDL.pl
+
 libsimpleComponent_la_LDFLAGS = -module -avoid-version

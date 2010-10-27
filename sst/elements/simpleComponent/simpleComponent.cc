@@ -40,8 +40,8 @@ simpleComponent::simpleComponent(ComponentId_t id, Params_t& params) :
   commSize = strtol( params[ "commSize" ].c_str(), NULL, 0 );
   
   // init randomness
-  srandomdev();
-  neighbor = random() % 4;
+  srand(1);
+  neighbor = rand() % 4;
 
   // tell the simulator not to end without us
   registerExit();
@@ -108,7 +108,7 @@ bool simpleComponent::clockTic( Cycle_t ) {
   }
 
   // communicate?
-  if ((random() % commFreq) == 0) {
+  if ((rand() % commFreq) == 0) {
     // yes, communicate
     // create event
     simpleEvent *e = new simpleEvent();
