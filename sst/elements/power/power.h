@@ -80,6 +80,7 @@ extern "C"{
 #include "../sst/core/techModels/libMcPATbeta/logic.h"
 #include "../sst/core/techModels/libMcPATbeta/basic_circuit.h"
 #include "../sst/core/techModels/libMcPATbeta/processor.h"
+#include "../sst/core/techModels/libMcPATbeta/globalvar.h"
 #endif //mcpat07_h
 
 /*********ORION******************/
@@ -174,6 +175,8 @@ typedef struct
 	std::vector<unsigned> num_banks;
 	std::vector<double> throughput;
 	std::vector<double> latency;
+	std::vector<double> output_width;
+	std::vector<int> cache_policy;
 	std::vector<unsigned> miss_buf_size, fill_buf_size, prefetch_buf_size, wbb_buf_size;
 	unsigned number_entries;
 	unsigned device_type, directory_type;
@@ -378,6 +381,7 @@ typedef struct
 	double bypass_access;
 	double router_access;
 	double L2_read[MAX_NUM_SUBCOMP], L2_readmiss[MAX_NUM_SUBCOMP], L2_write[MAX_NUM_SUBCOMP], L2_writemiss[MAX_NUM_SUBCOMP], L3_read[MAX_NUM_SUBCOMP], L3_readmiss[MAX_NUM_SUBCOMP], L3_write[MAX_NUM_SUBCOMP], L3_writemiss[MAX_NUM_SUBCOMP];
+	double homeL2_read[MAX_NUM_SUBCOMP], homeL2_readmiss[MAX_NUM_SUBCOMP], homeL2_write[MAX_NUM_SUBCOMP], homeL2_writemiss[MAX_NUM_SUBCOMP], homeL3_read[MAX_NUM_SUBCOMP], homeL3_readmiss[MAX_NUM_SUBCOMP], homeL3_write[MAX_NUM_SUBCOMP], homeL3_writemiss[MAX_NUM_SUBCOMP];
 	double L1Dir_read[MAX_NUM_SUBCOMP], L1Dir_readmiss[MAX_NUM_SUBCOMP], L1Dir_write[MAX_NUM_SUBCOMP], L1Dir_writemiss[MAX_NUM_SUBCOMP], L2Dir_read[MAX_NUM_SUBCOMP], L2Dir_readmiss[MAX_NUM_SUBCOMP], L2Dir_write[MAX_NUM_SUBCOMP], L2Dir_writemiss[MAX_NUM_SUBCOMP];
 	double memctrl_read, memctrl_write;
 	/*S-P*/
@@ -515,12 +519,16 @@ class Power{
 	char *p_McPATxmlpath;
 	unsigned p_maxNumSubComp;  //max number of sub-comp of the same type
 	bool p_ifReadEntireXML, p_ifGetMcPATUnitP;
-	std::map<ptype,int> subcompList; //stores subcomp types and the floorplan they reside on
+	static std::multimap<ptype,int> subcompList; //stores subcomp types and the floorplan they reside on
 	
 	// floorplan and thermal tiles parameters
 	static parameters_chip_t chip;
 	static chip_t p_chip; 
-	static int p_NumCompNeedPower;
+	static int p_NumCompNeedPower;  //number of subcomp of the same chip per rank that needs power 
+	static int p_SumNumCompNeedPower; //number of subcomp per chip that needs power 
+	static int p_TempSumNumCompNeedPower;
+	static bool p_hasUpdatedTemp;
+	//double value, maxvalue;
 
 	// sim-panalyzer parameters
 	#ifdef LV2_PANALYZER_H
@@ -704,7 +712,8 @@ class Power{
 	EXECU      * exu;
 	RENAMINGU  * rnu;
         Pipeline   * corepipe;
-        UndiffCore * undiffCore;
+        UndiffCore * undiffCore;	
+	SharedCache * l2cache;//mcpat08
         CoreDynParam  coredynp;
 	
 	ArrayST * globalBPT;
@@ -735,6 +744,8 @@ class Power{
 	ArrayST * ffreeL;
 	dep_resource_conflict_check * idcl;
 	dep_resource_conflict_check * fdcl;
+	ArrayST * RAHT;//mcpat08, register alias history table Used to store GC
+
 
 	DataCache dcache;
 	ArrayST * LSQ;//it is actually the store queue but for inorder processors it serves as both loadQ and StoreQ
@@ -782,6 +793,7 @@ class Power{
 	    p_meanPeak = p_meanPeakAll = 0.0;
 	    p_areaMcPAT = 0.0; p_maxNumSubComp = 0;
 	    p_ifReadEntireXML = p_ifGetMcPATUnitP = false;
+	    p_hasUpdatedTemp = false;
 	    //p_McPATonPipe = p_McPATonIRS = p_McPATonRF = false;  //if xxx has power estimated by McPAT already
 	    #ifdef McPAT05_H
 	    McPAT05initBasic(); //initialize basic InputParameter interface_ip
@@ -825,79 +837,87 @@ class Power{
 	    memset(&p_unitPower,0,sizeof(Punit_t));
 	    memset(&floorplan_id,0,sizeof(floorplan_id_t));
 	    // device params initilaization
-	    device_tech.clockRate = 2200000000.0; device_tech.machineType = 0; 
+	    device_tech.clockRate = 1200000000.0; device_tech.machineType = 1; 
 	    device_tech.number_L1dir=1; device_tech.number_L2dir=1;
 	    device_tech.number_L2=1; device_tech.number_L3=1;
 	    device_tech.number_il1=1; device_tech.number_dl1=1;
 	    device_tech.number_itlb=1; device_tech.number_dtlb=1;
             // cache params initilaization
             /* cache_il1 */
-            cache_il1_tech.unit_scap.push_back(32768.0); cache_il1_tech.vss = 0.0; cache_il1_tech.op_freq = 0; cache_il1_tech.num_sets = 0;	    
-            cache_il1_tech.line_size.push_back(32); cache_il1_tech.num_bitlines = 0; cache_il1_tech.num_wordlines = 0; cache_il1_tech.assoc.push_back(8);
+            cache_il1_tech.unit_scap.push_back(16384.0); cache_il1_tech.vss = 0.0; cache_il1_tech.op_freq = 0; cache_il1_tech.num_sets = 0;	    
+            cache_il1_tech.line_size.push_back(32); cache_il1_tech.num_bitlines = 0; cache_il1_tech.num_wordlines = 0; cache_il1_tech.assoc.push_back(4);
 	    cache_il1_tech.unit_icap = 0.0; cache_il1_tech.unit_lcap = 0.0; cache_il1_tech.unit_ecap = 0;
 	    cache_il1_tech.num_rwports = cache_il1_tech.num_rports = cache_il1_tech.num_wports = 0; cache_il1_tech.num_banks.push_back(1);
-	    cache_il1_tech.throughput.push_back(3.0); cache_il1_tech.latency.push_back(3.0); cache_il1_tech.core_physical_address_width = 52;
+	    cache_il1_tech.throughput.push_back(1.0); cache_il1_tech.latency.push_back(3.0);
+cache_il1_tech.output_width.push_back(8.0); cache_il1_tech.cache_policy.push_back(0);
+ cache_il1_tech.core_physical_address_width = 52;
 	    cache_il1_tech.miss_buf_size.push_back(16); cache_il1_tech.fill_buf_size.push_back(16); cache_il1_tech.prefetch_buf_size.push_back(16); cache_il1_tech.wbb_buf_size.push_back(0);
-	    cache_il1_tech.core_virtual_address_width = 64; cache_il1_tech.core_virtual_memory_page_size = 4096; cache_il1_tech.core_number_hardware_threads = 2;	
-	    cache_il1_tech.number_entries = 0; cache_il1_tech.core_temperature=360; cache_il1_tech.core_tech_node=32;  cache_il1_tech.device_type = 0; cache_il1_tech.area = 0.41391e-6; cache_il1_tech.num_transistors = 0.584e6;
+	    cache_il1_tech.core_virtual_address_width = 64; cache_il1_tech.core_virtual_memory_page_size = 4096; cache_il1_tech.core_number_hardware_threads = 4;	
+	    cache_il1_tech.number_entries = 0; cache_il1_tech.core_temperature=380; cache_il1_tech.core_tech_node=90;  cache_il1_tech.device_type = 0; cache_il1_tech.area = 0.41391e-6; cache_il1_tech.num_transistors = 0.584e6;
 	    cache_il1_tech.directory_type = 1;  
             /* cache_il2 */
             cache_il2_tech.unit_scap.push_back(0.0); cache_il2_tech.vss = 0.0; cache_il2_tech.op_freq = 0; cache_il2_tech.num_sets = 0;
             cache_il2_tech.line_size.push_back(0); cache_il2_tech.num_bitlines = 0; cache_il2_tech.num_wordlines = 0; cache_il2_tech.assoc.push_back(0);
 	    cache_il2_tech.unit_icap = 0.0; cache_il2_tech.unit_lcap = 0.0; cache_il2_tech.unit_ecap = 0;
 	    cache_il2_tech.num_rwports = cache_il2_tech.num_rports = cache_il2_tech.num_wports = 0; cache_il2_tech.num_banks.push_back(0);
-	    cache_il2_tech.throughput.push_back(0.0); cache_il2_tech.latency.push_back(0.0); cache_il2_tech.core_physical_address_width = 0;
+	    cache_il2_tech.throughput.push_back(0.0); cache_il2_tech.latency.push_back(0.0);
+cache_il2_tech.output_width.push_back(0); cache_il2_tech.cache_policy.push_back(0);
+cache_il2_tech.core_physical_address_width = 0;
 	    cache_il2_tech.miss_buf_size.push_back(0); cache_il2_tech.fill_buf_size.push_back(0); cache_il2_tech.prefetch_buf_size.push_back(0); cache_il2_tech.wbb_buf_size.push_back(0);
 	    cache_il2_tech.core_virtual_address_width = cache_il2_tech.core_virtual_memory_page_size = cache_il2_tech.core_number_hardware_threads = 0;	
-	    cache_il2_tech.number_entries = 0; cache_il2_tech.core_temperature=360; cache_il2_tech.core_tech_node=65; cache_il2_tech.device_type = 0;  	  
+	    cache_il2_tech.number_entries = 0; cache_il2_tech.core_temperature=380; cache_il2_tech.core_tech_node=90; cache_il2_tech.device_type = 0;  	  
 	    cache_il2_tech.directory_type = 1;  cache_il2_tech.area = 0.41391e-6; cache_il2_tech.num_transistors = 0.584e6;
             /* cache_dl1 */
-            cache_dl1_tech.unit_scap.push_back(16384.0); cache_dl1_tech.vss = 0.0; cache_dl1_tech.op_freq = 0; cache_dl1_tech.num_sets = 0;
-            cache_dl1_tech.line_size.push_back(32); cache_dl1_tech.num_bitlines = 0; cache_dl1_tech.num_wordlines = 0; cache_dl1_tech.assoc.push_back(8);
+            cache_dl1_tech.unit_scap.push_back(8192.0); cache_dl1_tech.vss = 0.0; cache_dl1_tech.op_freq = 0; cache_dl1_tech.num_sets = 0;
+            cache_dl1_tech.line_size.push_back(16); cache_dl1_tech.num_bitlines = 0; cache_dl1_tech.num_wordlines = 0; cache_dl1_tech.assoc.push_back(4);
 	    cache_dl1_tech.unit_icap = 0.0; cache_dl1_tech.unit_lcap = 0.0; cache_dl1_tech.unit_ecap = 0;
 	    cache_dl1_tech.num_rwports = cache_dl1_tech.num_rports = cache_dl1_tech.num_wports = 1; cache_dl1_tech.num_banks.push_back(1);
-	    cache_dl1_tech.throughput.push_back(3.0); cache_dl1_tech.latency.push_back(3.0); cache_dl1_tech.core_physical_address_width = 52;
+	    cache_dl1_tech.throughput.push_back(1.0); cache_dl1_tech.latency.push_back(3.0);
+cache_dl1_tech.output_width.push_back(16.0); cache_dl1_tech.cache_policy.push_back(0); cache_dl1_tech.core_physical_address_width = 52;
 	    cache_dl1_tech.miss_buf_size.push_back(16); cache_dl1_tech.fill_buf_size.push_back(16); cache_dl1_tech.prefetch_buf_size.push_back(16); cache_dl1_tech.wbb_buf_size.push_back(16);
-	    cache_dl1_tech.core_virtual_address_width = cache_dl1_tech.core_virtual_memory_page_size = cache_dl1_tech.core_number_hardware_threads = 0;	
-	    cache_dl1_tech.number_entries = 0; cache_dl1_tech.core_temperature=360; cache_dl1_tech.core_tech_node=32; cache_dl1_tech.device_type = 0;
+	    cache_dl1_tech.core_virtual_address_width = cache_dl1_tech.core_virtual_memory_page_size = cache_dl1_tech.core_number_hardware_threads = 4;	
+	    cache_dl1_tech.number_entries = 0; cache_dl1_tech.core_temperature=380; cache_dl1_tech.core_tech_node=90; cache_dl1_tech.device_type = 0;
 	    cache_dl1_tech.directory_type = 1; cache_dl1_tech.area = 0.41391e-6; cache_dl1_tech.num_transistors = 0.584e6;	    
             /* cache_dl2 */
             cache_dl2_tech.unit_scap.push_back(0.0); cache_dl2_tech.vss = 0.0; cache_dl2_tech.op_freq = 0; cache_dl2_tech.num_sets = 0;
             cache_dl2_tech.line_size.push_back(0); cache_dl2_tech.num_bitlines = 0; cache_dl2_tech.num_wordlines = 0; cache_dl2_tech.assoc.push_back(0);
 	    cache_dl2_tech.unit_icap = 0.0; cache_dl2_tech.unit_lcap = 0.0; cache_dl2_tech.unit_ecap = 0;
 	    cache_dl2_tech.num_rwports = cache_dl2_tech.num_rports = cache_dl2_tech.num_wports = 0; cache_dl2_tech.num_banks.push_back(0);
-	    cache_dl2_tech.throughput.push_back(0.0); cache_dl2_tech.latency.push_back(0.0); cache_dl2_tech.core_physical_address_width = 0;
+	    cache_dl2_tech.throughput.push_back(0.0); cache_dl2_tech.latency.push_back(0.0);
+cache_dl2_tech.output_width.push_back(0); cache_dl2_tech.cache_policy.push_back(0); cache_dl2_tech.core_physical_address_width = 0;
 	    cache_dl2_tech.miss_buf_size.push_back(0); cache_dl2_tech.fill_buf_size.push_back(0); cache_dl2_tech.prefetch_buf_size.push_back(0); cache_dl2_tech.wbb_buf_size.push_back(0);
 	    cache_dl2_tech.core_virtual_address_width = cache_dl2_tech.core_virtual_memory_page_size = cache_dl2_tech.core_number_hardware_threads = 0;	
-	    cache_dl2_tech.number_entries = 0; cache_dl2_tech.core_temperature=360; cache_dl2_tech.core_tech_node=65; cache_dl2_tech.device_type = 0;
+	    cache_dl2_tech.number_entries = 0; cache_dl2_tech.core_temperature=380; cache_dl2_tech.core_tech_node=90; cache_dl2_tech.device_type = 0;
 	    cache_dl2_tech.directory_type = 1; cache_dl2_tech.area = 0.41391e-6; cache_dl2_tech.num_transistors = 0.584e6; 	    
             /* cache_itlb */
             cache_itlb_tech.unit_scap.push_back(0.0); cache_itlb_tech.vss = 0.0; cache_itlb_tech.op_freq = 0; cache_itlb_tech.num_sets = 0;
             cache_itlb_tech.line_size.push_back(0); cache_itlb_tech.num_bitlines = 0; cache_itlb_tech.num_wordlines = 0; cache_itlb_tech.assoc.push_back(0);
 	    cache_itlb_tech.unit_icap = 0.0; cache_itlb_tech.unit_lcap = 0.0; cache_itlb_tech.unit_ecap = 0;
 	    cache_itlb_tech.num_rwports = cache_itlb_tech.num_rports = cache_itlb_tech.num_wports = 0; cache_itlb_tech.num_banks.push_back(0);
-	    cache_itlb_tech.throughput.push_back(0); cache_itlb_tech.latency.push_back(0.0); cache_itlb_tech.core_physical_address_width = 0;
+	    cache_itlb_tech.throughput.push_back(0); cache_itlb_tech.latency.push_back(0.0);
+cache_itlb_tech.output_width.push_back(0); cache_itlb_tech.cache_policy.push_back(0); cache_itlb_tech.core_physical_address_width = 0;
 	    cache_itlb_tech.miss_buf_size.push_back(0); cache_itlb_tech.fill_buf_size.push_back(0); cache_itlb_tech.prefetch_buf_size.push_back(0); cache_itlb_tech.wbb_buf_size.push_back(0);	
 	    cache_itlb_tech.core_virtual_address_width = 64; cache_itlb_tech.core_virtual_memory_page_size = 4096; 
-	    cache_itlb_tech.core_number_hardware_threads = 2; cache_itlb_tech.core_physical_address_width = 52; cache_itlb_tech.number_entries = 128;   
-	    cache_itlb_tech.core_temperature=360; cache_itlb_tech.core_tech_node=32;  cache_itlb_tech.device_type = 0;
+	    cache_itlb_tech.core_number_hardware_threads = 4; cache_itlb_tech.core_physical_address_width = 52; cache_itlb_tech.number_entries = 64;   
+	    cache_itlb_tech.core_temperature=380; cache_itlb_tech.core_tech_node=90;  cache_itlb_tech.device_type = 0;
 	    cache_itlb_tech.directory_type = 1; cache_itlb_tech.area = 0.41391e-6; cache_itlb_tech.num_transistors = 0.584e6;
             /* cache_dtlb */
             cache_dtlb_tech.unit_scap.push_back(0.0); cache_dtlb_tech.vss = 0.0; cache_dtlb_tech.op_freq = 0; cache_dtlb_tech.num_sets = 0;
             cache_dtlb_tech.line_size.push_back(0); cache_dtlb_tech.num_bitlines = 0; cache_dtlb_tech.num_wordlines = 0; cache_dtlb_tech.assoc.push_back(0);
 	    cache_dtlb_tech.unit_icap = 0.0; cache_dtlb_tech.unit_lcap = 0.0; cache_dtlb_tech.unit_ecap = 0;
 	    cache_dtlb_tech.num_rwports = cache_dtlb_tech.num_rports = cache_dtlb_tech.num_wports = 0; cache_dtlb_tech.num_banks.push_back(0);
-	    cache_dtlb_tech.throughput.push_back(0.0); cache_dtlb_tech.latency.push_back(0.0); cache_dtlb_tech.core_physical_address_width = 0;
+	    cache_dtlb_tech.throughput.push_back(0.0); cache_dtlb_tech.latency.push_back(0.0);
+cache_dtlb_tech.output_width.push_back(0); cache_dtlb_tech.cache_policy.push_back(0); cache_dtlb_tech.core_physical_address_width = 0;
 	    cache_dtlb_tech.miss_buf_size.push_back(0); cache_dtlb_tech.fill_buf_size.push_back(0); cache_dtlb_tech.prefetch_buf_size.push_back(0); cache_dtlb_tech.wbb_buf_size.push_back(0);	  
 	    cache_dtlb_tech.core_virtual_address_width = 64; cache_dtlb_tech.core_virtual_memory_page_size = 4096; 
-	    cache_dtlb_tech.core_number_hardware_threads = 2; cache_dtlb_tech.core_physical_address_width = 52; cache_dtlb_tech.number_entries = 128; 
-	    cache_dtlb_tech.core_temperature=360; cache_dtlb_tech.core_tech_node=32; cache_dtlb_tech.device_type = 0; 
+	    cache_dtlb_tech.core_number_hardware_threads = 4; cache_dtlb_tech.core_physical_address_width = 52; cache_dtlb_tech.number_entries = 64; 
+	    cache_dtlb_tech.core_temperature=380; cache_dtlb_tech.core_tech_node=90; cache_dtlb_tech.device_type = 0; 
 	    cache_dtlb_tech.directory_type = 1; cache_dtlb_tech.area = 0.41391e-6; cache_dtlb_tech.num_transistors = 0.584e6;
             /*clock*/
 	    clock_tech.unit_scap=0.0; clock_tech.unit_icap=0.0; clock_tech.unit_lcap=0.0; clock_tech.vss=0.0; 
 	    clock_tech.op_freq=0; clock_tech.clk_style=NORM_H; clock_tech.skew=0.0; clock_tech.chip_area=0; 
 	    clock_tech.node_cap=0.0; clock_tech.opt_clock_buffer_num=0; clock_tech.unit_ecap=0.0;
-	    clock_tech.core_temperature=360; clock_tech.core_tech_node=65; clock_tech.area = 0.41391e-6; clock_tech.num_transistors = 0.584e6; clock_tech.clock_option = GLOBAL_CLOCK;
+	    clock_tech.core_temperature=380; clock_tech.core_tech_node=90; clock_tech.area = 0.41391e-6; clock_tech.num_transistors = 0.584e6; clock_tech.clock_option = GLOBAL_CLOCK;
 	    /*bpred*/
 	    bpred_tech.unit_icap=0.0; bpred_tech.unit_ecap=0.0; bpred_tech.vss=0.0;
 	    bpred_tech.op_freq=0; bpred_tech.unit_scap=0.0; bpred_tech.bpred_access=0; bpred_tech.nrows=0; bpred_tech.ncols=0;
@@ -910,7 +930,7 @@ class Power{
 	    rf_tech.num_rwports = rf_tech.num_rports = rf_tech.num_wports = 0;	
 	    rf_tech.machine_bits = 64; rf_tech.archi_Regs_IRF_size = 32; rf_tech.archi_Regs_FRF_size = 32; rf_tech.core_issue_width = 1;  
 	    rf_tech.core_register_windows_size = 8;  rf_tech.core_number_hardware_threads = 4;	    
-	    rf_tech.core_temperature=360; rf_tech.core_tech_node=65; rf_tech.core_opcode_width =8;  rf_tech.core_virtual_address_width = 64; rf_tech.area = 0.41391e-6; rf_tech.num_transistors = 0.584e6;
+	    rf_tech.core_temperature=380; rf_tech.core_tech_node=90; rf_tech.core_opcode_width =8;  rf_tech.core_virtual_address_width = 64; rf_tech.area = 0.41391e-6; rf_tech.num_transistors = 0.584e6;
  	    /*io*/
 	    io_tech.unit_scap=0.0; io_tech.unit_icap=0.0; io_tech.unit_lcap=0.0; io_tech.vss=0.0; io_tech.op_freq=0;
 	    io_tech.i_o_style=OUT; io_tech.opt_io_buffer_num=0; io_tech.ustrip_len=0.0; io_tech.bus_width=0;	
@@ -922,7 +942,7 @@ class Power{
 	    logic_tech.num_fan_in=0; logic_tech.num_fan_out=0; logic_tech.unit_ecap=0.0;
 	    logic_tech.core_instruction_window_size = 64; logic_tech.core_issue_width = 1; logic_tech.core_number_hardware_threads = 4;
 	    logic_tech.core_decode_width = 1;  logic_tech.archi_Regs_IRF_size = 32; logic_tech.archi_Regs_FRF_size = 32;	
-	    logic_tech.core_temperature=360; logic_tech.core_tech_node=65;   
+	    logic_tech.core_temperature=380; logic_tech.core_tech_node=90;   
 	    logic_tech.area = 0.41391e-6; logic_tech.num_transistors = 0.584e6; 
             /*alu*/
 	    alu_tech.unit_scap=50.0; alu_tech.unit_icap=0.0; alu_tech.unit_lcap=0.0; alu_tech.vss=0.0;
@@ -935,22 +955,22 @@ class Power{
 	    mult_tech.op_freq=0; mult_tech.unit_ecap=0.0; mult_tech.area = 0.41391e-6; mult_tech.num_transistors = 0.584e6;
 	    /*IB*/
 	    ib_tech.core_instruction_length = 32; ib_tech.core_issue_width = 1; ib_tech.core_number_hardware_threads = 4;
-	    ib_tech.core_instruction_buffer_size = 20; ib_tech.num_rwports = 1; ib_tech.core_temperature=360; ib_tech.core_tech_node=65;
+	    ib_tech.core_instruction_buffer_size = 20; ib_tech.num_rwports = 1; ib_tech.core_temperature=380; ib_tech.core_tech_node=90;
 	    ib_tech.core_virtual_address_width = 64; ib_tech.core_virtual_memory_page_size = 4096; ib_tech.area = 0.41391e-6; ib_tech.num_transistors = 0.584e6;
 	    /*IRS*/
 	    irs_tech.core_number_hardware_threads = 4;  irs_tech.core_instruction_length = 32;  irs_tech.core_instruction_window_size = 64;
 	    irs_tech.core_issue_width = 1;   
-	    irs_tech.core_temperature=360; irs_tech.core_tech_node=65; irs_tech.area = 0.41391e-6; irs_tech.num_transistors = 0.584e6;
+	    irs_tech.core_temperature=380; irs_tech.core_tech_node=90; irs_tech.area = 0.41391e-6; irs_tech.num_transistors = 0.584e6;
 	    #ifdef McPAT05_H 
 		perThreadState = 4; //from McPAT
 	    #endif
 	    /*INST_DECODER*/
-	    decoder_tech.core_opcode_width = 8; decoder_tech.core_temperature=360; decoder_tech.core_tech_node=65;
+	    decoder_tech.core_opcode_width = 8; decoder_tech.core_temperature=380; decoder_tech.core_tech_node=90;
 	    decoder_tech.area = 0.41391e-6; decoder_tech.num_transistors = 0.584e6;
 	    /*BYPASS*/
 	    bypass_tech.core_number_hardware_threads = 4;  bypass_tech.ALU_per_core = 3;   bypass_tech.machine_bits = 64; 
 	    bypass_tech.FPU_per_core = 1; bypass_tech.core_opcode_width = 8; bypass_tech.core_virtual_address_width =64; bypass_tech.machine_bits = 64;
-	    bypass_tech.core_store_buffer_size =32; bypass_tech.core_memory_ports = 1; bypass_tech.core_temperature=360; bypass_tech.core_tech_node=65; bypass_tech.area = 0.41391e-6; bypass_tech.num_transistors = 0.584e6;
+	    bypass_tech.core_store_buffer_size =32; bypass_tech.core_memory_ports = 1; bypass_tech.core_temperature=380; bypass_tech.core_tech_node=90; bypass_tech.area = 0.41391e-6; bypass_tech.num_transistors = 0.584e6;
 	    /*EXEU*/
 	    #ifdef McPAT05_H
 	    C_EXEU = 100.0; //pF
@@ -959,7 +979,7 @@ class Power{
 	    pipeline_tech.core_number_hardware_threads = 4;  pipeline_tech.core_fetch_width = 1; pipeline_tech.core_decode_width = 1;
 	    pipeline_tech.core_issue_width = 1; pipeline_tech.core_commit_width = 1; pipeline_tech.core_instruction_length = 32;
 	    pipeline_tech.core_virtual_address_width = 64;  pipeline_tech.core_opcode_width = 8; pipeline_tech.core_int_pipeline_depth = 12;
-	    pipeline_tech.machine_bits = 64;  pipeline_tech.archi_Regs_IRF_size = 32; 	pipeline_tech.core_temperature=360; pipeline_tech.core_tech_node=65; pipeline_tech.area = 0.41391e-6; pipeline_tech.num_transistors = 0.584e6;
+	    pipeline_tech.machine_bits = 64;  pipeline_tech.archi_Regs_IRF_size = 32; 	pipeline_tech.core_temperature=380; pipeline_tech.core_tech_node=90; pipeline_tech.area = 0.41391e-6; pipeline_tech.num_transistors = 0.584e6;
 	    /*schedulerU*/
 	    #ifdef McPAT06_H 
 		perThreadState = 8; //from McPAT
@@ -975,15 +995,15 @@ class Power{
             btb_tech.line_size = 4; btb_tech.assoc = 2; btb_tech.num_banks = 1;
 	    btb_tech.throughput =1.0; btb_tech.latency = 3.0; btb_tech.area = 0.41391e-6; btb_tech.num_transistors = 0.584e6;
 	    /*core--McPAT07*/
-	    core_tech.core_physical_address_width=52; core_tech.core_temperature=360; core_tech.core_tech_node=32;
-	    core_tech.core_virtual_address_width =64; core_tech.core_virtual_memory_page_size=4096; core_tech.core_number_hardware_threads=2;		
+	    core_tech.core_physical_address_width=52; core_tech.core_temperature=380; core_tech.core_tech_node=90;
+	    core_tech.core_virtual_address_width =64; core_tech.core_virtual_memory_page_size=4096; core_tech.core_number_hardware_threads=4;		
 	    core_tech.machine_bits=64; core_tech.archi_Regs_IRF_size=32; core_tech.archi_Regs_FRF_size=32;
-	    core_tech.core_issue_width=4; core_tech.core_register_windows_size=8; core_tech.core_opcode_width=11;	
-	    core_tech.core_instruction_window_size=64; core_tech.core_decode_width=4; core_tech.core_instruction_length=32;
-   	    core_tech.core_instruction_buffer_size=20; core_tech.ALU_per_core=1; core_tech.FPU_per_core=1; core_tech.MUL_per_core=1; core_tech.core_ROB_size = 80;	
-	    core_tech.core_store_buffer_size=8; core_tech.core_load_buffer_size=32; core_tech.core_memory_ports=1; core_tech.core_fetch_width=4;
-	    core_tech.core_commit_width=4; core_tech.core_int_pipeline_depth=12; core_tech.core_phy_Regs_IRF_size=80; core_tech.core_phy_Regs_FRF_size=80; core_tech.core_RAS_size=32;	
-	    core_tech.core_number_of_NoCs = 1; 	core_tech.core_number_instruction_fetch_ports = 1; core_tech.core_fp_issue_width = 1; core_tech.core_fp_instruction_window_size =64;
+	    core_tech.core_issue_width=1; core_tech.core_register_windows_size=8; core_tech.core_opcode_width=9;	
+	    core_tech.core_instruction_window_size=16; core_tech.core_decode_width=1; core_tech.core_instruction_length=32;
+   	    core_tech.core_instruction_buffer_size=16; core_tech.ALU_per_core=1; core_tech.FPU_per_core=1; core_tech.MUL_per_core=1; core_tech.core_ROB_size = 80;	
+	    core_tech.core_store_buffer_size=32; core_tech.core_load_buffer_size=32; core_tech.core_memory_ports=1; core_tech.core_fetch_width=1;
+	    core_tech.core_commit_width=1; core_tech.core_int_pipeline_depth=6; core_tech.core_phy_Regs_IRF_size=80; core_tech.core_phy_Regs_FRF_size=80; core_tech.core_RAS_size=32;	
+	    core_tech.core_number_of_NoCs = 1; 	core_tech.core_number_instruction_fetch_ports = 1; core_tech.core_fp_issue_width = 1; core_tech.core_fp_instruction_window_size =16;
 	    core_tech.core_long_channel = 1; core_tech.core_peak_issue_width=4; core_tech.core_micro_opcode_width=11;
 	    /*core--McPAT06*/
 	    /*core_tech.core_physical_address_width=52; core_tech.core_temperature=360; core_tech.core_tech_node=32;
@@ -1006,54 +1026,58 @@ class Power{
 	    core_tech.core_commit_width=1; core_tech.core_int_pipeline_depth=12; core_tech.core_phy_Regs_IRF_size=80; core_tech.core_phy_Regs_FRF_size=80; core_tech.core_RAS_size=32;	
 	    core_tech.core_number_of_NoCs = 1;*/
 	    /*cache_l2*/
-	    cache_l2_tech.unit_scap.push_back(262144.0); cache_l2_tech.vss = 0.0; cache_l2_tech.op_freq = 3500000000.0; cache_l2_tech.num_sets = 0;	    
+	    cache_l2_tech.unit_scap.push_back(786432.0); cache_l2_tech.vss = 0.0; cache_l2_tech.op_freq = 3500000000.0; cache_l2_tech.num_sets = 0;	    
             cache_l2_tech.line_size.push_back(64); cache_l2_tech.num_bitlines = 0; cache_l2_tech.num_wordlines = 0; cache_l2_tech.assoc.push_back(16);
 	    cache_l2_tech.unit_icap = 0.0; cache_l2_tech.unit_lcap = 0.0; cache_l2_tech.unit_ecap = 0;
 	    cache_l2_tech.num_rwports = cache_l2_tech.num_rports = cache_l2_tech.num_wports = 1; cache_l2_tech.num_banks.push_back(1);
-	    cache_l2_tech.throughput.push_back(100.0); cache_l2_tech.latency.push_back(100.0); cache_l2_tech.core_physical_address_width = 52;
-	    cache_l2_tech.miss_buf_size.push_back(8); cache_l2_tech.fill_buf_size.push_back(8); cache_l2_tech.prefetch_buf_size.push_back(8); cache_l2_tech.wbb_buf_size.push_back(8);
-	    cache_l2_tech.core_virtual_address_width = cache_l2_tech.core_virtual_memory_page_size = cache_l2_tech.core_number_hardware_threads = 0;	
-	    cache_l2_tech.number_entries = 0; cache_l2_tech.core_temperature=360; cache_l2_tech.core_tech_node=65; cache_l2_tech.device_type = 1; 
+	    cache_l2_tech.throughput.push_back(4.0); cache_l2_tech.latency.push_back(23.0);
+cache_l2_tech.output_width.push_back(64.0); cache_l2_tech.cache_policy.push_back(1); cache_l2_tech.core_physical_address_width = 52;
+	    cache_l2_tech.miss_buf_size.push_back(16); cache_l2_tech.fill_buf_size.push_back(16); cache_l2_tech.prefetch_buf_size.push_back(16); cache_l2_tech.wbb_buf_size.push_back(16);
+	    cache_l2_tech.core_virtual_address_width = cache_l2_tech.core_virtual_memory_page_size = cache_l2_tech.core_number_hardware_threads = 4;	
+	    cache_l2_tech.number_entries = 0; cache_l2_tech.core_temperature=380; cache_l2_tech.core_tech_node=90; cache_l2_tech.device_type = 1; 
 	    cache_l2_tech.directory_type = 1; cache_l2_tech.area = 0.41391e-6; cache_l2_tech.num_transistors = 0.584e6;
 	    /*cache_l3*/
 	    cache_l3_tech.unit_scap.push_back(1048576.0); cache_l3_tech.vss = 0.0; cache_l3_tech.op_freq = 3500000000.0; cache_l3_tech.num_sets = 0;	    
             cache_l3_tech.line_size.push_back(64); cache_l3_tech.num_bitlines = 0; cache_l3_tech.num_wordlines = 0; cache_l3_tech.assoc.push_back(16);
 	    cache_l3_tech.unit_icap = 0.0; cache_l3_tech.unit_lcap = 0.0; cache_l3_tech.unit_ecap = 0;
 	    cache_l3_tech.num_rwports = cache_l3_tech.num_rports = cache_l3_tech.num_wports = 1; cache_l3_tech.num_banks.push_back(1);
-	    cache_l3_tech.throughput.push_back(2.0); cache_l3_tech.latency.push_back(100.0); cache_l3_tech.core_physical_address_width = 52;
+	    cache_l3_tech.throughput.push_back(2.0); cache_l3_tech.latency.push_back(100.0);
+cache_l3_tech.output_width.push_back(64.0); cache_l3_tech.cache_policy.push_back(1); cache_l3_tech.core_physical_address_width = 52;
 	    cache_l3_tech.miss_buf_size.push_back(16); cache_l3_tech.fill_buf_size.push_back(16); cache_l3_tech.prefetch_buf_size.push_back(16); cache_l3_tech.wbb_buf_size.push_back(16);
-	    cache_l3_tech.core_virtual_address_width = cache_l3_tech.core_virtual_memory_page_size = cache_l3_tech.core_number_hardware_threads = 0;	
-	    cache_l3_tech.number_entries = 0; cache_l3_tech.core_temperature=360; cache_l3_tech.core_tech_node=65; cache_l3_tech.device_type = 0;
+	    cache_l3_tech.core_virtual_address_width = cache_l3_tech.core_virtual_memory_page_size = cache_l3_tech.core_number_hardware_threads = 4;	
+	    cache_l3_tech.number_entries = 0; cache_l3_tech.core_temperature=380; cache_l3_tech.core_tech_node=90; cache_l3_tech.device_type = 0;
 	    cache_l3_tech.directory_type = 1; cache_l3_tech.area = 0.41391e-6; cache_l3_tech.num_transistors = 0.584e6;
 	    /*cache_l1dir*/
-	    cache_l1dir_tech.unit_scap.push_back(1048576.0); cache_l1dir_tech.vss = 0.0; cache_l1dir_tech.op_freq = 3500000000.0; cache_l1dir_tech.num_sets = 0;	    
-            cache_l1dir_tech.line_size.push_back(16); cache_l1dir_tech.num_bitlines = 0; cache_l1dir_tech.num_wordlines = 0; cache_l1dir_tech.assoc.push_back(16);
+	    cache_l1dir_tech.unit_scap.push_back(2048.0); cache_l1dir_tech.vss = 0.0; cache_l1dir_tech.op_freq = 3500000000.0; cache_l1dir_tech.num_sets = 0;	    
+            cache_l1dir_tech.line_size.push_back(1); cache_l1dir_tech.num_bitlines = 0; cache_l1dir_tech.num_wordlines = 0; cache_l1dir_tech.assoc.push_back(0);
 	    cache_l1dir_tech.unit_icap = 0.0; cache_l1dir_tech.unit_lcap = 0.0; cache_l1dir_tech.unit_ecap = 0;
 	    cache_l1dir_tech.num_rwports = cache_l1dir_tech.num_rports = cache_l1dir_tech.num_wports =1; cache_l1dir_tech.num_banks.push_back(1);
-	    cache_l1dir_tech.throughput.push_back(2.0); cache_l1dir_tech.latency.push_back(100.0); cache_l1dir_tech.core_physical_address_width = 52;
+	    cache_l1dir_tech.throughput.push_back(4.0); cache_l1dir_tech.latency.push_back(4.0);
+cache_l1dir_tech.output_width.push_back(1.0); cache_l1dir_tech.cache_policy.push_back(1); cache_l1dir_tech.core_physical_address_width = 52;
 	    cache_l1dir_tech.miss_buf_size.push_back(8); cache_l1dir_tech.fill_buf_size.push_back(8); cache_l1dir_tech.prefetch_buf_size.push_back(8); cache_l1dir_tech.wbb_buf_size.push_back(8);
-	    cache_l1dir_tech.core_virtual_address_width = cache_l1dir_tech.core_virtual_memory_page_size = cache_l1dir_tech.core_number_hardware_threads = 0;	
-	    cache_l1dir_tech.number_entries = 0; cache_l1dir_tech.core_temperature=360; cache_l1dir_tech.core_tech_node=65; cache_l1dir_tech.device_type = 0; 
-	    cache_l1dir_tech.directory_type = 1; cache_l1dir_tech.area = 0.41391e-6; cache_l1dir_tech.num_transistors = 0.584e6;
+	    cache_l1dir_tech.core_virtual_address_width = cache_l1dir_tech.core_virtual_memory_page_size = cache_l1dir_tech.core_number_hardware_threads = 4;	
+	    cache_l1dir_tech.number_entries = 0; cache_l1dir_tech.core_temperature=380; cache_l1dir_tech.core_tech_node=90; cache_l1dir_tech.device_type = 0; 
+	    cache_l1dir_tech.directory_type = 0; cache_l1dir_tech.area = 0.41391e-6; cache_l1dir_tech.num_transistors = 0.584e6;
 	    /*cache_l2dir*/
 	    cache_l2dir_tech.unit_scap.push_back(1048576.0); cache_l2dir_tech.vss = 0.0; cache_l2dir_tech.op_freq = 3500000000.0; cache_l2dir_tech.num_sets = 0;	    
             cache_l2dir_tech.line_size.push_back(16); cache_l2dir_tech.num_bitlines = 0; cache_l2dir_tech.num_wordlines = 0; cache_l2dir_tech.assoc.push_back(16);
 	    cache_l2dir_tech.unit_icap = 0.0; cache_l2dir_tech.unit_lcap = 0.0; cache_l2dir_tech.unit_ecap = 0;
 	    cache_l2dir_tech.num_rwports = cache_l2dir_tech.num_rports = cache_l2dir_tech.num_wports = 1; cache_l2dir_tech.num_banks.push_back(1);
-	    cache_l2dir_tech.throughput.push_back(2.0); cache_l2dir_tech.latency.push_back(100.0); cache_l2dir_tech.core_physical_address_width = 52;
+	    cache_l2dir_tech.throughput.push_back(2.0); cache_l2dir_tech.latency.push_back(100.0);
+cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push_back(0); cache_l2dir_tech.core_physical_address_width = 52;
 	    cache_l2dir_tech.miss_buf_size.push_back(8); cache_l2dir_tech.fill_buf_size.push_back(8); cache_l2dir_tech.prefetch_buf_size.push_back(8); cache_l2dir_tech.wbb_buf_size.push_back(8);
-	    cache_l2dir_tech.core_virtual_address_width = cache_l2dir_tech.core_virtual_memory_page_size = cache_l2dir_tech.core_number_hardware_threads = 0;	
-	    cache_l2dir_tech.number_entries = 0; cache_l2dir_tech.core_temperature=360; cache_l2dir_tech.core_tech_node=65; cache_l2dir_tech.device_type = 0;
+	    cache_l2dir_tech.core_virtual_address_width = cache_l2dir_tech.core_virtual_memory_page_size = cache_l2dir_tech.core_number_hardware_threads = 4;	
+	    cache_l2dir_tech.number_entries = 0; cache_l2dir_tech.core_temperature=380; cache_l2dir_tech.core_tech_node=90; cache_l2dir_tech.device_type = 0;
 	    cache_l2dir_tech.directory_type = 1; cache_l2dir_tech.area = 0.41391e-6; cache_l2dir_tech.num_transistors = 0.584e6;
 	    /*mc*/
-	    mc_tech.mc_clock=400000000.0; mc_tech.llc_line_length=64; mc_tech.databus_width=128; mc_tech.addressbus_width=51; mc_tech.req_window_size_per_channel=32;
-	    mc_tech.memory_channels_per_mc=2; mc_tech.IO_buffer_size_per_channel=32; 
-	    mc_tech.memory_number_ranks=2; mc_tech.memory_peak_transfer_rate=6400;
+	    mc_tech.mc_clock=200000000.0; mc_tech.llc_line_length=64; mc_tech.databus_width=128; mc_tech.addressbus_width=51; mc_tech.req_window_size_per_channel=32;
+	    mc_tech.memory_channels_per_mc=1; mc_tech.IO_buffer_size_per_channel=32; 
+	    mc_tech.memory_number_ranks=2; mc_tech.memory_peak_transfer_rate=3200;
 	    mc_tech.area = 0.41391e-6; mc_tech.num_transistors = 0.584e6;
 	    /*router*/
-	    router_tech.clockrate=3500000000.0; router_tech.vdd=1.5; router_tech.has_global_link=0; router_tech.flit_bits=128; router_tech.input_buffer_entries_per_vc=16;
-	    router_tech.virtual_channel_per_port=2; router_tech.input_ports=5; router_tech.horizontal_nodes=8; router_tech.vertical_nodes=4;
-	    router_tech.output_ports=8; router_tech.link_throughput=1; router_tech.link_latency=1; router_tech.topology = RING; router_tech.area = 0.41391e-6; router_tech.num_transistors = 0.584e6;
+	    router_tech.clockrate=1200000000.0; router_tech.vdd=1.5; router_tech.has_global_link=1; router_tech.flit_bits=128; router_tech.input_buffer_entries_per_vc=2;
+	    router_tech.virtual_channel_per_port=1; router_tech.input_ports=8; router_tech.horizontal_nodes=2; router_tech.vertical_nodes=1;
+	    router_tech.output_ports=5; router_tech.link_throughput=1; router_tech.link_latency=1; router_tech.topology = RING; router_tech.area = 0.41391e-6; router_tech.num_transistors = 0.584e6;
 	    router_tech.link_length = 15500; //unit is micron
 
 	    #ifdef LV2_PANALYZER_H
@@ -1093,6 +1117,7 @@ class Power{
 	void printFloorplanAreaInfo();
 	void printFloorplanPowerInfo();
 	void printFloorplanThermalInfo();
+	void test();
 
 	// McPAT interface
 	#ifdef McPAT05_H

@@ -40,15 +40,19 @@ class HotSpot_library : public thermal_library_t
 
   private:
   thermal_config_t thermal_config;	// thermal configuration
-  RC_model_t *model;			// RC model
+  static RC_model_t *model;			// RC model
+  static flp_t *floorplan;
 
-  double *temperature, *power;//*steady_temperature, *overall_power;
+  static double *temperature, *power, *powerSum;//*steady_temperature, *overall_power;
+ 
 
   virtual void compute(std::map<int,floorplan_t> *floorplan);
 
   friend class boost::serialization::access;
-	template<class Archive>
-    	void serialize(Archive & ar, const unsigned int version );
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version);
+
 
 };
 

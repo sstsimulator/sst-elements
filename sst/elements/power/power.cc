@@ -18,13 +18,17 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
- 
+#include <boost/mpi.hpp> 
 
 namespace SST {
 
+std::multimap<ptype,int> Power::subcompList;
 parameters_chip_t Power::chip;
 chip_t Power::p_chip;
 int Power::p_NumCompNeedPower;
+int Power::p_SumNumCompNeedPower;
+int Power::p_TempSumNumCompNeedPower;
+bool Power::p_hasUpdatedTemp;
 
 /*********************
 * Power:: constructor*
@@ -33,6 +37,21 @@ Power::Power()
 {
 }
 
+
+void Power::test()
+{
+	     opt_for_clk	=true;
+	     p_Mp1->parse("/home/myhsieh/Desktop/latest/trunk/sst/core/techModels/libMcPATbeta/Niagara1.xml");
+	     ////McPATSetup();	    
+	     p_Mproc.initialize(p_Mp1); //unit energy is computed by McPAT in this step
+	    
+	     p_Mcore = p_Mproc.SSTreturnCore(); //return core
+	     ifu = p_Mcore->SSTreturnIFU();
+	     lsu = p_Mcore->SSTreturnLSU();
+	     mmu = p_Mcore->SSTreturnMMU();
+	     exu = p_Mcore->SSTreturnEXU();
+	     rnu = p_Mcore->SSTreturnRNU();
+}
 
 /************************************************************************
 * Decouple the power-related parameters from Component::Params_t params *
@@ -50,14 +69,23 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
     char chtmp1[60];
     chtmp1[0]='\0';
     unsigned int i, n;
+    boost::mpi::communicator world;
 
 
-  //number of (sub)components on the chip
-  if (p_powerMonitor == true){
+  //number of (sub)components on the chip per rank; we only care about this when thermal modeling is needed
+  if (p_powerMonitor == true && p_tempMonitor == true){
       chip.num_comps +=1;
-      p_NumCompNeedPower = chip.num_comps;
+      //p_NumCompNeedPower = chip.num_comps;
   }
-  //std:: cout <<"num_comps = " << chip.num_comps << std::endl;
+  if (world.size() == 1)
+      p_NumCompNeedPower = chip.num_comps; 
+  else {
+      // get total number of (sub)components on the chip over ranks
+      all_reduce(world, chip.num_comps, chip.sumnum_comps, std::plus<int>());
+      p_TempSumNumCompNeedPower = chip.sumnum_comps;    
+      //std::cout << "chip.sumnum_comps = " << chip.sumnum_comps << std::endl;
+  }
+
 
   // read values from xml
   if(p_ifReadEntireXML == false){
@@ -206,7 +234,45 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				}
 				cache_il1_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
-			} 			
+			} 	
+			else if(!it->first.compare("cache_il1_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_il1_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_il1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_il1_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_il1_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_il1_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_il1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_il1_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
 			else if(!it->first.compare("core_physical_address_width")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_physical_address_width);
 			} 
@@ -403,6 +469,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_l1dir_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
+			else if(!it->first.compare("cache_l1dir_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l1dir_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L1dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l1dir_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l1dir_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l1dir_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L1dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l1dir_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
 			else if(!it->first.compare("cache_l1dir_miss_buffer_size")){  //Mc
 				i=0;
 				for(n=0; n < it->second.length(); n++)
@@ -615,6 +719,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				    }
 				}
 				cache_dl1_tech.latency.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_dl1_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_dl1_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_dl1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_dl1_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_dl1_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_dl1_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_dl1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_dl1_tech.cache_policy.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		 
 			else if(!it->first.compare("cache_dl1_miss_buffer_size")){  //Mc
@@ -1301,7 +1443,45 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				}
 				cache_l2_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
-			} 		
+			} 
+			else if(!it->first.compare("cache_l2_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l2_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			}		
                         else if (!it->first.compare("cache_l2_number_read_ports")){ 
 				sscanf(it->second.c_str(), "%d", &cache_l2_tech.num_rports);
 			}
@@ -1507,6 +1687,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_l2dir_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
+			else if(!it->first.compare("cache_l2dir_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2dir_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2dir_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l2dir_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2dir_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2dir_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
 			else if(!it->first.compare("cache_l2dir_miss_buffer_size")){  //Mc
 				i=0;
 				for(n=0; n < it->second.length(); n++)
@@ -1798,6 +2016,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				}
 				cache_l3_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l3_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l3_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L3);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l3_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l3_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l3_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L3);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l3_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
 			} 		
 			else if(!it->first.compare("cache_l3_miss_buffer_size")){  //Mc
 				i=0;
@@ -2028,6 +2284,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_il1_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
+			else if(!it->first.compare("cache_il1_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_il1_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_il1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_il1_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_il1_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_il1_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_il1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_il1_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
 			else if(!it->first.compare("core_physical_address_width")){  //Mc
 				sscanf(it->second.c_str(), "%d", &core_tech.core_physical_address_width);
 			} 
@@ -2230,6 +2524,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				cache_l1dir_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
+			else if(!it->first.compare("cache_l1dir_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l1dir_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L1dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l1dir_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l1dir_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l1dir_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L1dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l1dir_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
 			else if(!it->first.compare("cache_l1dir_miss_buffer_size")){  //Mc
 				i=0;
 				for(n=0; n < it->second.length(); n++)
@@ -2508,6 +2840,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				    }
 				}
 				cache_dl1_tech.latency.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_dl1_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_dl1_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_dl1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_dl1_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_dl1_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_dl1_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_dl1);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_dl1_tech.cache_policy.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
 			else if(!it->first.compare("core_physical_address_width")){  //Mc
@@ -3827,6 +4197,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				}
 				cache_l2_tech.latency.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l2_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l2_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2_tech.cache_policy.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
 			} 		
                         else if (!it->first.compare("cache_l2_number_read_ports")){ 
 				sscanf(it->second.c_str(), "%d", &cache_l2_tech.num_rports);
@@ -4037,6 +4445,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				    }
 				}
 				cache_l2dir_tech.latency.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l2dir_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2dir_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2dir_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l2dir_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l2dir_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L2dir);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l2dir_tech.cache_policy.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
 			else if(!it->first.compare("cache_l2dir_miss_buffer_size")){  //Mc
@@ -4457,6 +4903,44 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 				    }
 				}
 				cache_l3_tech.latency.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l3_output_width")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l3_tech.output_width.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L3);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l3_tech.output_width.at(i) = atoi(chtmp1);
+				chtmp1[0]='\0';
+			} 	
+			else if(!it->first.compare("cache_l3_cache_policy")){   //Mc
+				i=0;
+				for(n=0; n < it->second.length(); n++)
+				{
+				    if (it->second[n]!=',')
+				    {
+					sprintf(chtmp,"%c",it->second[n]);
+					strcat(chtmp1,chtmp);
+				    }
+				    else{
+					cache_l3_tech.cache_policy.at(i) = atoi(chtmp1);
+					assert((i+1) < device_tech.number_L3);
+					i = i + 1;
+					chtmp1[0]='\0';
+				    }
+				}
+				cache_l3_tech.cache_policy.at(i) = atoi(chtmp1);
 				chtmp1[0]='\0';
 			} 		
 			else if(!it->first.compare("core_physical_address_width")){  //Mc
@@ -6389,13 +6873,40 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
     I executionTime = 1.0;
     SimTime_t current;
     unsigned int i=0;
-    
+    boost::mpi::communicator world;
+    map<int,floorplan_t>::iterator fit;
+ 
+
+
+  /*if (world.rank() == 0) {
+    value = 1000.01;
+  }
+  else {
+    value = 123.05;
+  }
+  if (world.rank() == 0){
+	    reduce( world, value, maxvalue, std::plus<double>(), 0); 
+    	    std::cout << "Power::The sum value is " << maxvalue << std::endl;
+  } else {
+    	    reduce(world, value, std::plus<double>(), 0);
+  } */
+
+   
     //decrement number of components need to getpower
-    if (p_powerMonitor ==true){
-        p_NumCompNeedPower -= 1;
-        assert (p_NumCompNeedPower >=0 );
+    if (p_powerMonitor ==true && p_tempMonitor == true){
+        if (world.size() == 1){
+            p_NumCompNeedPower -= 1;
+            assert (p_NumCompNeedPower >=0 );
+	    //std::cout <<"My rank " << world.rank() << ", NumCompNeedPower = " << p_NumCompNeedPower << std::endl;
+	}
+	else { 
+	    all_reduce( world, &p_TempSumNumCompNeedPower, 1, &p_SumNumCompNeedPower, std::minus<int>() ); 
+            assert (p_SumNumCompNeedPower >=0 );
+	    p_TempSumNumCompNeedPower = p_SumNumCompNeedPower;
+	    //std::cout <<"My rank " << world.rank() << ", SumNumCompNeedPower = " << p_SumNumCompNeedPower << std::endl;
+	}
     }
-    //std::cout <<"numCompNeedPower = " << p_NumCompNeedPower << std::endl;
+
 
     if(p_powerMonitor == false){
 	memset(&p_usage_uarch,0,sizeof(Pdissipation_t));
@@ -6421,8 +6932,9 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		ifu->SSTcomputeEnergy(false, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
 		leakage = (I)icache.power.readOp.leakage + (I)icache.power.readOp.gate_leakage;
-		//using namespace io_interval;  std::cout << "CompID " << c->Id() << ", il1 leakage = " << leakage << std::endl;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", il1 leakage = " << leakage << "readOP = " << icache.power.readOp.leakage << " gate = " << icache.power.readOp.gate_leakage << std::endl;
 		dynamicPower = (I)icache.rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", icache.rt_power = " << icache.rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		ifu->SSTcomputeEnergy(true, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
@@ -6537,6 +7049,8 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		dcache = lsu->SSTreturnDcache();
 		leakage = (I)dcache.power.readOp.leakage + (I)dcache.power.readOp.gate_leakage;
 		dynamicPower = (I)dcache.rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", dl1 leakage = " << leakage << "readOP = " << dcache.power.readOp.leakage << " gate = " << dcache.power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", dcache.rt_power = " << dcache.rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		lsu->SSTcomputeEnergy(true, counts.dl1_read[i], counts.dl1_readmiss[i], counts.dl1_write[i], counts.dl1_writemiss[i], counts.LSQ_read[i], counts.LSQ_write[i], counts.loadQ_read[i], counts.loadQ_write[i]);
 		dcache = lsu->SSTreturnDcache();
@@ -6652,6 +7166,8 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		itlb = mmu->SSTreturnITLB();
 		leakage = (I)itlb->power.readOp.leakage + (I)itlb->power.readOp.gate_leakage;
 		dynamicPower = (I)itlb->rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", itlb leakage = " << leakage << "readOP = " << itlb->power.readOp.leakage << " gate = " << itlb->power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", itlb->rt_power = " << itlb->rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		mmu->SSTcomputeEnergy(true, counts.itlb_read[i], counts.itlb_readmiss[i], counts.dtlb_read[i], counts.dtlb_readmiss[i]);
 		itlb = mmu->SSTreturnITLB();
@@ -6718,6 +7234,8 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		dtlb = mmu->SSTreturnDTLB();
 		leakage = (I)dtlb->power.readOp.leakage + (I)dtlb->power.readOp.gate_leakage;
 		dynamicPower = (I)dtlb->rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", dtlb leakage = " << leakage << "readOP = " << dtlb->power.readOp.leakage << " gate = " << dtlb->power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", dtlb->rt_power = " << dtlb->rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		mmu->SSTcomputeEnergy(true, counts.itlb_read[i], counts.itlb_readmiss[i], counts.dtlb_read[i], counts.dtlb_readmiss[i]);
 		dtlb = mmu->SSTreturnDTLB();
@@ -7636,9 +8154,12 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		l2array = p_Mproc.SSTreturnL2(i);
 		l2array->SSTcomputeEnergy(false, counts.L2_read[i], counts.L2_readmiss[i], counts.L2_write[i], counts.L2_writemiss[i], counts.L3_read[i], counts.L3_readmiss[i], 
 			counts.L3_write[i], counts.L3_writemiss[i], counts.L1Dir_read[i], counts.L1Dir_readmiss[i], counts.L1Dir_write[i], counts.L1Dir_writemiss[i], 
-			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i]);
+			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i], counts.homeL2_read[i], counts.homeL2_readmiss[i], counts.homeL2_write[i], counts.homeL2_writemiss[i], counts.homeL3_read[i], counts.homeL3_readmiss[i], 
+			counts.homeL3_write[i], counts.homeL3_writemiss[i]);
 		leakage = (I)l2array->power.readOp.leakage + (I)l2array->power.readOp.gate_leakage;
 		dynamicPower = (I)l2array->rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", l2 leakage = " << leakage << "readOP = " << l2array->power.readOp.leakage << " gate = " << l2array->power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", l2array->rt_power = " << l2array->rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		TDP = (I)l2array->power.readOp.dynamic * (I)cache_l2_tech.op_freq; //(cache_clockrate)
 		#endif                        
@@ -7725,8 +8246,12 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	        #ifdef McPAT07_H
 		//executionTime = 1.0 / (I)device_tech.clockRate * (I)total_cycles;
 		nocs->SSTcomputeEnergy(false, counts.router_access);
+		if (p_hasUpdatedTemp == true){
+		    fit = p_chip.floorplan.find(floorplan_id.router);
+		    leakage_feedback(p_powerModel.router, (*fit).second.device_tech, power_type);
+		}
 		leakage = (I)nocs->power.readOp.leakage + (I)nocs->power.readOp.gate_leakage;
-		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", noc leakage = " << leakage << std::endl;
+		//using namespace io_interval;  std::cout << "CompID " << c->getId() << ", noc leakage = " << leakage << " fid =  " << floorplan_id.router << std::endl;
 		dynamicPower = (I)nocs->rt_power.readOp.dynamic / executionTime;
 		//using namespace io_interval;  std::cout << "getPower::CompID " << c->getId() << ", noc unit energy = " << nocs->rt_power.readOp.dynamic << " and exe time = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
@@ -7896,9 +8421,12 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		l3array = p_Mproc.SSTreturnL3(i);
 		l3array->SSTcomputeEnergy(false, counts.L2_read[i], counts.L2_readmiss[i], counts.L2_write[i], counts.L2_writemiss[i], counts.L3_read[i], counts.L3_readmiss[i], 
 			counts.L3_write[i], counts.L3_writemiss[i], counts.L1Dir_read[i], counts.L1Dir_readmiss[i], counts.L1Dir_write[i], counts.L1Dir_writemiss[i], 
-			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i]);
+			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i], counts.homeL2_read[i], counts.homeL2_readmiss[i], counts.homeL2_write[i], counts.homeL2_writemiss[i], counts.homeL3_read[i], counts.homeL3_readmiss[i], 
+			counts.homeL3_write[i], counts.homeL3_writemiss[i]);
 		leakage = (I)l3array->power.readOp.leakage + (I)l3array->power.readOp.gate_leakage;
 		dynamicPower = (I)l3array->rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", l3 leakage = " << leakage << "readOP = " << l3array->power.readOp.leakage << " gate = " << l3array->power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", l3array->rt_power = " << l3array->rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		TDP = (I)l3array->power.readOp.dynamic * (I)cache_l3_tech.op_freq; //(cache_clockrate)
 		#endif     
@@ -7936,9 +8464,12 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		l1dirarray = p_Mproc.SSTreturnL1dir(i);
 		l1dirarray->SSTcomputeEnergy(false, counts.L2_read[i], counts.L2_readmiss[i], counts.L2_write[i], counts.L2_writemiss[i], counts.L3_read[i], counts.L3_readmiss[i], 
 			counts.L3_write[i], counts.L3_writemiss[i], counts.L1Dir_read[i], counts.L1Dir_readmiss[i], counts.L1Dir_write[i], counts.L1Dir_writemiss[i], 
-			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i]);
+			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i], counts.homeL2_read[i], counts.homeL2_readmiss[i], counts.homeL2_write[i], counts.homeL2_writemiss[i], counts.homeL3_read[i], counts.homeL3_readmiss[i], 
+			counts.homeL3_write[i], counts.homeL3_writemiss[i]);
 		leakage = (I)l1dirarray->power.readOp.leakage + (I)l1dirarray->power.readOp.gate_leakage;
 		dynamicPower = (I)l1dirarray->rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", l1dir leakage = " << leakage << "readOP = " << l1dirarray->power.readOp.leakage << " gate = " << l1dirarray->power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", l1dirarray->rt_power = " << l1dirarray->rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		TDP = (I)l1dirarray->power.readOp.dynamic * (I)cache_l1dir_tech.op_freq; //(cache_clockrate)
 		#endif  
@@ -7976,9 +8507,12 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		l2dirarray = p_Mproc.SSTreturnL2dir(i);
 		l2dirarray->SSTcomputeEnergy(false, counts.L2_read[i], counts.L2_readmiss[i], counts.L2_write[i], counts.L2_writemiss[i], counts.L3_read[i], counts.L3_readmiss[i], 
 			counts.L3_write[i], counts.L3_writemiss[i], counts.L1Dir_read[i], counts.L1Dir_readmiss[i], counts.L1Dir_write[i], counts.L1Dir_writemiss[i], 
-			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i]);
+			counts.L2Dir_read[i], counts.L2Dir_readmiss[i], counts.L2Dir_write[i], counts.L2Dir_writemiss[i], counts.homeL2_read[i], counts.homeL2_readmiss[i], counts.homeL2_write[i], counts.homeL2_writemiss[i], counts.homeL3_read[i], counts.homeL3_readmiss[i], 
+			counts.homeL3_write[i], counts.homeL3_writemiss[i]);
 		leakage = (I)l2dirarray->power.readOp.leakage + (I)l2dirarray->power.readOp.gate_leakage;
 		dynamicPower = (I)l2dirarray->rt_power.readOp.dynamic / executionTime;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", l2dir leakage = " << leakage << "readOP = " << l2dirarray->power.readOp.leakage << " gate = " << l2dirarray->power.readOp.gate_leakage << std::endl;
+		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", l2dirarray->rt_power = " << l2dirarray->rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		TDP = (I)l2dirarray->power.readOp.dynamic * (I)cache_l2dir_tech.op_freq; //(cache_clockrate)
 		#endif     
@@ -8356,7 +8890,7 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 	if ( median((*fit).second.p_usage_floorplan.peak) < median(totalPowerUsage) ){
              (*fit).second.p_usage_floorplan.peak = totalPowerUsage * I(0.95,1.05);  //manual error bar (5%)
 	}
-
+	
 
 	// update component overall (ALL) power
 	p_usage_uarch.totalEnergy = p_usage_uarch.totalEnergy + totalPowerUsage;
@@ -8739,6 +9273,12 @@ void Power::setTech(Component::Params_t deviceParams)
 	    else
 		p_tempMonitor = true;
 	}
+	else if (!it->first.compare("opt_for_clk")){  //this is important!!! true or false will give different power values
+	    if (!it->second.compare("YES"))
+		opt_for_clk = true;
+	    else
+		opt_for_clk = false;
+	}
         it++;
     }
     
@@ -8975,6 +9515,8 @@ void Power::McPATSetup()
 	p_Mp1->sys.Max_power_deviation=50;
 	p_Mp1->sys.device_type=0;
 	p_Mp1->sys.longer_channel_device =(bool)core_tech.core_long_channel;
+	p_Mp1->sys.Embedded =false;
+
 	p_Mp1->sys.opt_dynamic_power=1;
 	p_Mp1->sys.opt_lakage_power=0;
 	p_Mp1->sys.opt_clockrate=0;
@@ -9077,6 +9619,7 @@ void Power::McPATSetup()
 		p_Mp1->sys.core[0].main_memory_read=3;
 		p_Mp1->sys.core[0].main_memory_write=3;
 		p_Mp1->sys.core[0].IFU_duty_cycle = 1;
+		p_Mp1->sys.core[0].BR_duty_cycle = 1;		
 		p_Mp1->sys.core[0].LSU_duty_cycle = 1;
 		p_Mp1->sys.core[0].MemManU_I_duty_cycle =1;
 		p_Mp1->sys.core[0].MemManU_D_duty_cycle =1;
@@ -9111,6 +9654,8 @@ void Power::McPATSetup()
 		p_Mp1->sys.core[0].icache.icache_config[3]=cache_il1_tech.num_banks.at(i);
 		p_Mp1->sys.core[0].icache.icache_config[4]=(int)cache_il1_tech.throughput.at(i);
 		p_Mp1->sys.core[0].icache.icache_config[5]=(int)cache_il1_tech.latency.at(i);
+		p_Mp1->sys.core[0].icache.icache_config[6]=(int)cache_il1_tech.output_width.at(i);
+		p_Mp1->sys.core[0].icache.icache_config[7]=(int)cache_il1_tech.cache_policy.at(i);
 		p_Mp1->sys.core[0].icache.buffer_sizes[0]=cache_il1_tech.miss_buf_size.at(i);
 		p_Mp1->sys.core[0].icache.buffer_sizes[1]=cache_il1_tech.fill_buf_size.at(i);
 		p_Mp1->sys.core[0].icache.buffer_sizes[2]=cache_il1_tech.prefetch_buf_size.at(i);
@@ -9150,6 +9695,8 @@ void Power::McPATSetup()
 		p_Mp1->sys.core[0].dcache.dcache_config[3]=cache_dl1_tech.num_banks.at(i);
 		p_Mp1->sys.core[0].dcache.dcache_config[4]=(int)cache_dl1_tech.throughput.at(i);
 		p_Mp1->sys.core[0].dcache.dcache_config[5]=(int)cache_dl1_tech.latency.at(i);
+		p_Mp1->sys.core[0].dcache.dcache_config[6]=(int)cache_dl1_tech.output_width.at(i);
+		p_Mp1->sys.core[0].dcache.dcache_config[7]=(int)cache_dl1_tech.cache_policy.at(i);
 		p_Mp1->sys.core[0].dcache.buffer_sizes[0]=cache_dl1_tech.miss_buf_size.at(i);
 		p_Mp1->sys.core[0].dcache.buffer_sizes[1]=cache_dl1_tech.fill_buf_size.at(i);
 		p_Mp1->sys.core[0].dcache.buffer_sizes[2]=cache_dl1_tech.prefetch_buf_size.at(i);
@@ -9199,6 +9746,8 @@ void Power::McPATSetup()
 	p_Mp1->sys.L1Directory[i].Dir_config[3]=cache_l1dir_tech.num_banks.at(i);
 	p_Mp1->sys.L1Directory[i].Dir_config[4]=(int)cache_l1dir_tech.throughput.at(i);
 	p_Mp1->sys.L1Directory[i].Dir_config[5]=(int)cache_l1dir_tech.latency.at(i);
+	//p_Mp1->sys.L1Directory[i].Dir_config[6]=(int)cache_l1dir_tech.output_width.at(i);
+	//p_Mp1->sys.L1Directory[i].Dir_config[7]=(int)cache_l1dir_tech.cache_policy.at(i);
 	p_Mp1->sys.L1Directory[i].buffer_sizes[0]=cache_l1dir_tech.miss_buf_size.at(i);
 	p_Mp1->sys.L1Directory[i].buffer_sizes[1]=cache_l1dir_tech.fill_buf_size.at(i);
 	p_Mp1->sys.L1Directory[i].buffer_sizes[2]=cache_l1dir_tech.prefetch_buf_size.at(i);
@@ -9222,6 +9771,8 @@ void Power::McPATSetup()
 	p_Mp1->sys.L2Directory[i].Dir_config[3]=cache_l2dir_tech.num_banks.at(i);
 	p_Mp1->sys.L2Directory[i].Dir_config[4]=(int)cache_l2dir_tech.throughput.at(i);
 	p_Mp1->sys.L2Directory[i].Dir_config[5]=(int)cache_l2dir_tech.latency.at(i);
+	//p_Mp1->sys.L2Directory[i].Dir_config[6]=(int)cache_l2dir_tech.output_width.at(i);
+	//p_Mp1->sys.L2Directory[i].Dir_config[7]=(int)cache_l2dir_tech.cache_policy.at(i);
 	p_Mp1->sys.L2Directory[i].buffer_sizes[0]=cache_l2dir_tech.miss_buf_size.at(i);
 	p_Mp1->sys.L2Directory[i].buffer_sizes[1]=cache_l2dir_tech.fill_buf_size.at(i);
 	p_Mp1->sys.L2Directory[i].buffer_sizes[2]=cache_l2dir_tech.prefetch_buf_size.at(i);
@@ -9250,6 +9801,8 @@ void Power::McPATSetup()
 		//std::cout << "l2 throughput["<<i<<"] = " << cache_l2_tech.throughput.at(i) << std::endl;
 		p_Mp1->sys.L2[i].L2_config[5]=(int)cache_l2_tech.latency.at(i);
 		//std::cout << "l2 latency["<<i<<"] = " << cache_l2_tech.latency.at(i) << std::endl;
+		p_Mp1->sys.L2[i].L2_config[6]=(int)cache_l2_tech.output_width.at(i);
+		p_Mp1->sys.L2[i].L2_config[7]=(int)cache_l2_tech.cache_policy.at(i);
 		p_Mp1->sys.L2[i].clockrate=(int)(cache_l2_tech.op_freq/1000000); // Mc unit is MHz;;
 		p_Mp1->sys.L2[i].ports[20]=1;
 		p_Mp1->sys.L2[i].device_type=cache_l2_tech.device_type;
@@ -9282,7 +9835,14 @@ void Power::McPATSetup()
 		p_Mp1->sys.L2[i].wbb_writes=1;
 		p_Mp1->sys.L2[i].wbb_reads=1;
 		p_Mp1->sys.L2[i].duty_cycle =1;
-
+		p_Mp1->sys.L2[i].merged_dir=false;
+		p_Mp1->sys.L2[i].homenode_read_accesses =1;
+		p_Mp1->sys.L2[i].homenode_write_accesses=1;
+		p_Mp1->sys.L2[i].homenode_read_hits=1;
+		p_Mp1->sys.L2[i].homenode_write_hits=1;
+		p_Mp1->sys.L2[i].homenode_read_misses=1;
+		p_Mp1->sys.L2[i].homenode_write_misses=1;
+		p_Mp1->sys.L2[i].dir_duty_cycle=1;
 	    }
 		//system_L3
 	    for(i=0; i < device_tech.number_L3; i++){	
@@ -9292,6 +9852,8 @@ void Power::McPATSetup()
 		p_Mp1->sys.L3[i].L3_config[3]=cache_l3_tech.num_banks.at(i);
 		p_Mp1->sys.L3[i].L3_config[4]=(int)cache_l3_tech.throughput.at(i);
 		p_Mp1->sys.L3[i].L3_config[5]=(int)cache_l3_tech.latency.at(i);
+		p_Mp1->sys.L3[i].L3_config[6]=(int)cache_l3_tech.output_width.at(i);
+		p_Mp1->sys.L3[i].L3_config[7]=(int)cache_l3_tech.cache_policy.at(i);
 		p_Mp1->sys.L3[i].clockrate=(int)(cache_l3_tech.op_freq/1000000); // Mc unit is MHz;;
 		p_Mp1->sys.L3[i].ports[20]=1;
 		p_Mp1->sys.L3[i].device_type=cache_l3_tech.device_type;
@@ -9320,7 +9882,14 @@ void Power::McPATSetup()
 		p_Mp1->sys.L3[i].wbb_writes=1;
 		p_Mp1->sys.L3[i].wbb_reads=1;
 		p_Mp1->sys.L3[i].duty_cycle =1;
-
+		p_Mp1->sys.L3[i].merged_dir=false;
+		p_Mp1->sys.L3[i].homenode_read_accesses =1;
+		p_Mp1->sys.L3[i].homenode_write_accesses=1;
+		p_Mp1->sys.L3[i].homenode_read_hits=1;
+		p_Mp1->sys.L3[i].homenode_write_hits=1;
+		p_Mp1->sys.L3[i].homenode_read_misses=1;
+		p_Mp1->sys.L3[i].homenode_write_misses=1;
+		p_Mp1->sys.L3[i].dir_duty_cycle=1;
 	    }
 	//system_NoC
 	p_Mp1->sys.NoC[0].clockrate=(int)(router_tech.clockrate/1000000);  // Mc unit is MHz;
@@ -9342,7 +9911,7 @@ void Power::McPATSetup()
 	p_Mp1->sys.NoC[0].flit_bits=router_tech.flit_bits;
 	p_Mp1->sys.NoC[0].input_buffer_entries_per_vc=router_tech.input_buffer_entries_per_vc;
 	p_Mp1->sys.NoC[0].total_accesses=1;
-	p_Mp1->sys.NoC[0].duty_cycle=1;
+	p_Mp1->sys.NoC[0].duty_cycle=0.6;
 	p_Mp1->sys.NoC[0].route_over_perc = 0.5;
 	p_Mp1->sys.NoC[0].ports_of_input_buffer[0]=1;
 	p_Mp1->sys.NoC[0].ports_of_input_buffer[1]=1;
@@ -9387,8 +9956,40 @@ void Power::McPATSetup()
 	p_Mp1->sys.mc.memory_accesses=2;
 	p_Mp1->sys.mc.memory_reads=1;
 	p_Mp1->sys.mc.memory_writes=1;
-	
-
+	p_Mp1->sys.mc.LVDS=true;
+	p_Mp1->sys.mc.type=1;
+	//system_niu
+	p_Mp1->sys.niu.clockrate =1;
+	p_Mp1->sys.niu.number_units=1;
+	p_Mp1->sys.niu.type = 1;
+	p_Mp1->sys.niu.duty_cycle =1;
+	p_Mp1->sys.niu.total_load_perc=1;
+	//system_pcie
+	p_Mp1->sys.pcie.clockrate =1;
+	p_Mp1->sys.pcie.number_units=1;
+	p_Mp1->sys.pcie.num_channels=1;
+	p_Mp1->sys.pcie.type = 1;
+	p_Mp1->sys.pcie.withPHY = false;
+	p_Mp1->sys.pcie.duty_cycle =1;
+	p_Mp1->sys.pcie.total_load_perc=1;
+	//system_flash_controller
+	p_Mp1->sys.flashc.mc_clock =1;
+	p_Mp1->sys.flashc.number_mcs=1;
+	p_Mp1->sys.flashc.peak_transfer_rate =1;
+	p_Mp1->sys.flashc.memory_channels_per_mc=1;
+	p_Mp1->sys.flashc.number_ranks=1;
+	p_Mp1->sys.flashc.req_window_size_per_channel=1;
+	p_Mp1->sys.flashc.IO_buffer_size_per_channel=1;
+	p_Mp1->sys.flashc.databus_width=1;
+	p_Mp1->sys.flashc.addressbus_width=1;
+	p_Mp1->sys.flashc.memory_accesses=1;
+	p_Mp1->sys.flashc.memory_reads=1;
+	p_Mp1->sys.flashc.memory_writes=1;
+	p_Mp1->sys.flashc.LVDS=true;
+	p_Mp1->sys.flashc.withPHY = false;
+	p_Mp1->sys.flashc.type =1;
+	p_Mp1->sys.flashc.duty_cycle =1;
+	p_Mp1->sys.flashc.total_load_perc=1;
 }
 #endif //McPAT07_H
 
@@ -9421,7 +10022,7 @@ void Power::McPAT06Setup()
 	p_Mp1->sys.target_core_clockrate=2200;
 	p_Mp1->sys.target_chip_area=200;
 	p_Mp1->sys.temperature = core_tech.core_temperature;
-	p_Mp1->sys.number_cache_levels=3;
+	p_Mp1->sys.number_cache_levels=2;
 	p_Mp1->sys.L1_property=0; 
 	p_Mp1->sys.L2_property=3;
 	p_Mp1->sys.homogeneous_L2s=0;  //always set hetero so we can create multiple copies in McPAT
@@ -9457,7 +10058,7 @@ void Power::McPAT06Setup()
 		p_Mp1->sys.core[0].ALU_per_core = core_tech.ALU_per_core;
 		p_Mp1->sys.core[0].FPU_per_core = core_tech.FPU_per_core;
 		p_Mp1->sys.core[0].instruction_buffer_size = core_tech.core_instruction_buffer_size;
-		p_Mp1->sys.core[0].decoded_stream_buffer_size=20;		
+		p_Mp1->sys.core[0].decoded_stream_buffer_size=16;		
 		//strcpy(sys.core[i].instruction_window_scheme,"default");
 		p_Mp1->sys.core[0].instruction_window_scheme=0;
 		p_Mp1->sys.core[0].instruction_window_size = core_tech.core_instruction_window_size;
@@ -9762,7 +10363,8 @@ void Power::McPAT06Setup()
 	//system_mc
 	p_Mp1->sys.mc.mc_clock = (int)(mc_tech.mc_clock/1000000);  // Mc unit is MHz;
 	p_Mp1->sys.mc.llc_line_length = mc_tech.llc_line_length;
-	p_Mp1->sys.mc.number_mcs=2;
+	p_Mp1->sys.mc.number_mcs=4;
+	p_Mp1->sys.mc.type=0;
 	p_Mp1->sys.mc.memory_channels_per_mc = mc_tech.memory_channels_per_mc;
 	p_Mp1->sys.mc.req_window_size_per_channel = mc_tech.req_window_size_per_channel;
 	p_Mp1->sys.mc.IO_buffer_size_per_channel = mc_tech.IO_buffer_size_per_channel;
@@ -10237,22 +10839,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 0;
   tile_input.name = "silicon:core0:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 320;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 0;
   tile_input.name = "interface:core0:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 320.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 0;
   tile_input.name = "spreader:core0:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 320.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 0;
   tile_input.name = "heatsink:core0:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 320.0;
   chip.insert(&tile_input);
   floorplan_input.id = 0;
   floorplan_input.name = "core0:pipeline";
@@ -10275,22 +10877,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 1;
   tile_input.name = "silicon:core0:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 325.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 1;
   tile_input.name = "interface:core0:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 325.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 1;
   tile_input.name = "spreader:core0:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 325.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 1;
   tile_input.name = "heatsink:core0:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 325.0;
   chip.insert(&tile_input);
   floorplan_input.id = 1;
   floorplan_input.name = "core0:cache";
@@ -10314,22 +10916,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 2;
   tile_input.name = "silicon:core1:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 385.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 2;
   tile_input.name = "interface:core1:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 385.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 2;
   tile_input.name = "spreader:core1:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 385.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 2;
   tile_input.name = "heatsink:core1:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 385.0;
   chip.insert(&tile_input);
   floorplan_input.id = 2;
   floorplan_input.name = "core1:pipeline";
@@ -10352,22 +10954,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 3;
   tile_input.name = "silicon:core1:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 380.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 3;
   tile_input.name = "interface:core1:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 380.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 3;
   tile_input.name = "spreader:core1:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 380.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 3;
   tile_input.name = "heatsink:core1:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 380.0;
   chip.insert(&tile_input);
   floorplan_input.id = 3;
   floorplan_input.name = "core1:cache";
@@ -10391,22 +10993,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 4;
   tile_input.name = "silicon:core2:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 375.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 4;
   tile_input.name = "interface:core2:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 375.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 4;
   tile_input.name = "spreader:core2:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 375.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 4;
   tile_input.name = "heatsink:core2:pipeline";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 375.0;
   chip.insert(&tile_input);
   floorplan_input.id = 4;
   floorplan_input.name = "core2:pipeline";
@@ -10429,22 +11031,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 5;
   tile_input.name = "silicon:core2:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 370.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 5;
   tile_input.name = "interface:core2:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 370.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 5;
   tile_input.name = "spreader:core2:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 370.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 5;
   tile_input.name = "heatsink:core2:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 370.0;
   chip.insert(&tile_input);
   floorplan_input.id = 5;
   floorplan_input.name = "core2:cache";
@@ -10506,22 +11108,22 @@ void Power::floorParamInitialize()
   tile_input.layer = SILICON;
   tile_input.id = 7;
   tile_input.name = "silicon:core3:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 355.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 7;
   tile_input.name = "interface:core3:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 355.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 7;
   tile_input.name = "spreader:core3:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 355.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 7;
   tile_input.name = "heatsink:core3:cache";
-  tile_input.temperature = 350.0;
+  tile_input.temperature = 355.0;
   chip.insert(&tile_input);
   floorplan_input.id = 7;
   floorplan_input.name = "core3:cache";
@@ -11297,18 +11899,23 @@ void Power::updateFloorplanAreaInfo(int fid, double area)
 ******************************************************/
 void Power::compute_temperature(ComponentId_t compID)
 {
-  if (p_tempMonitor == true && p_NumCompNeedPower == 0)
+  boost::mpi::communicator world;
+
+  if (p_tempMonitor == true && ((world.size() > 1 && p_SumNumCompNeedPower == 0) || (world.size() == 1 && p_NumCompNeedPower == 0)))
   {
   //first resume numCompNeedPower for next power updates
   p_NumCompNeedPower = chip.num_comps;
+  p_TempSumNumCompNeedPower = chip.sumnum_comps;
+  p_hasUpdatedTemp = true;
 
+  
   //compute temperature
   p_chip.thermal_library->compute(&p_chip.floorplan);
   
  
   //map<pseudo_unit_id_t,pseudo_unit_t>::iterator uit;
   map<int,floorplan_t>::iterator fit;
-  map<ptype,int>::iterator it;
+  multimap<ptype,int>::iterator it;
 
   for (it=subcompList.begin(); it!=subcompList.end(); it++)
   { 
@@ -11316,13 +11923,13 @@ void Power::compute_temperature(ComponentId_t compID)
     fit = p_chip.floorplan.find((*it).second);
 
     //#ifdef ENERGY_INTERFACE_DEBUG
-    //    cout << "ENERGY_INTERFACE_DEBUG: component ID " << compID << " subcompList size =" << subcompList.size() << ", feedback = " << (*fit).second.leakage_feedback <<endl;
+        //cout << "ENERGY_INTERFACE_DEBUG: component ID " << compID << " subcompList size =" << subcompList.size() << ", feedback = " << (*fit).second.leakage_feedback <<endl;
     //#endif
 
-    if((*fit).second.leakage_feedback)
+    if( fit != p_chip.floorplan.end() && (*fit).second.leakage_feedback)
     {
       //#ifdef ENERGY_INTERFACE_DEBUG
-      //  cout << "ENERGY_INTERFACE_DEBUG: updating component ID " << compID << " with leakage feedback" << endl;
+        //cout << "ENERGY_INTERFACE_DEBUG: updating component ID " << compID << " with leakage feedback" << endl;
       //#endif
       switch((*it).first)
       {
@@ -11462,8 +12069,11 @@ void Power::compute_temperature(ComponentId_t compID)
       // update the floorplan leakage
       //(*fit).second.power.second = (*fit).second.power.second + (*uit).second.power;
       (*fit).second.p_usage_floorplan.currentPower += updatedLeakagePower;
+	//using namespace io_interval;  std::cout << "Before: CompID " << compID << ", subcomp type " << (*it).first << ", leakage = " << (*fit).second.p_usage_floorplan.leakagePower << " W on fp_id " << (*fit).first << std::endl;
       (*fit).second.p_usage_floorplan.leakagePower += updatedLeakagePower;
+	//using namespace io_interval;  std::cout << "After: CompID " << compID << ", subcomp type " << (*it).first << ", leakage = " << (*fit).second.p_usage_floorplan.leakagePower << " W on fp_id " << (*fit).first << std::endl;
       (*fit).second.p_usage_floorplan.totalEnergy += updatedLeakagePower;
+	
       // Important! the overall comp total energy should be updated as well--->this fix seems buggy
       //p_usage_uarch.totalEnergy += updatedLeakagePower;
     } // end if leakage feedback   

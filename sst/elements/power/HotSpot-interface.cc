@@ -11,11 +11,18 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 
+#include <boost/foreach.hpp>
+#include <boost/mpi.hpp>
+
 #include "HotSpot-interface.h"
 
-
-
 namespace SST {
+
+RC_model_t *HotSpot_library::model;
+flp_t *HotSpot_library::floorplan;
+double *HotSpot_library::temperature;
+double *HotSpot_library::power;
+double *HotSpot_library::powerSum;
 
 HotSpot_library::HotSpot_library(parameters_chip_t p_chip)
 {
@@ -66,7 +73,8 @@ HotSpot_library::HotSpot_library(parameters_chip_t p_chip)
 
   /* The followings are part of HotSpot algorithms */
   // create floorplan  
-  flp_t *floorplan = flp_alloc_init_mem(p_chip.num_floorplans);
+  //flp_t *floorplan = flp_alloc_init_mem(p_chip.num_floorplans);
+  floorplan = flp_alloc_init_mem(p_chip.num_floorplans);
 
   // update floorplan information
   std::map<int,parameters_floorplan_t>::iterator fit = p_chip.floorplan.begin();
@@ -97,6 +105,9 @@ HotSpot_library::HotSpot_library(parameters_chip_t p_chip)
   
   temperature = hotspot_vector(model);
   power = hotspot_vector(model);
+  powerSum = (double *)calloc(floorplan->n_units, sizeof(double)); //Added by Genie H for parallelism
+  if (!powerSum) exit(-1);
+
 
   // set initial temperature
   std::map<std::pair<int,int>,parameters_thermal_tile_t>::iterator tit;
@@ -122,22 +133,40 @@ HotSpot_library::HotSpot_library(parameters_chip_t p_chip)
 void HotSpot_library::compute(std::map<int,floorplan_t> *floorplan)
 {
   std::map<int,floorplan_t>::iterator fit;
+  boost::mpi::communicator world;
+
 
 
   for(int i = 0; i < model->block->flp->n_units; i++)
   {
     fit = floorplan->find(model->block->flp->units[i].id);
     power[i] = (double)median((*fit).second.p_usage_floorplan.currentPower);
-    #ifdef TEMPERATURE_DEBUG
-      using namespace io_interval; std::cout << "TEMPERATURE_DEBUG: " << (*fit).second.p_usage_floorplan.currentSimTime << " sec; floorplan ID = " << (*fit).first << "     dynamic power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W     leakage power = " << (*fit).second.p_usage_floorplan.leakagePower << " W     median total power = " << median((*fit).second.p_usage_floorplan.currentPower) << " W     area = " << (*fit).second.feature.area << " m^2 (estimate = " << (*fit).second.area_estimate << " m^2)" <<  std::endl;
-    #endif
+
+    //#ifdef TEMPERATURE_DEBUG
+      //using namespace io_interval; std::cout << "TEMPERATURE_DEBUG: my rank = " << world.rank() << ": " << (*fit).second.p_usage_floorplan.currentSimTime << " sec; floorplan ID = " << (*fit).first << "     power[" << i << "] = " << power[i] << ",  dynamic power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W     leakage power = " << (*fit).second.p_usage_floorplan.leakagePower << " W     median total power = " << median((*fit).second.p_usage_floorplan.currentPower) << " W     area = " << (*fit).second.feature.area << " m^2 (estimate = " << (*fit).second.area_estimate << " m^2)" <<  std::endl;
+    //#endif
   }
 
-  compute_temp(model,power,temperature,model->config->sampling_intvl);
+  // get sum of power of each tiles among all ranks
+  // use all_reduce because every chip needs to know the overall information to determine which tiles have leakage feedback
+  for(int i = 0; i < model->block->flp->n_units; i++)
+  {
+	if (world.size() == 1){
+	    powerSum[i] = power[i];
+	}
+	else {
+	    all_reduce(world, power[i], powerSum[i], std::plus<double>());
+	}
+	//std::cout << "Rank: " << world.rank() << ", HotSpot_Library::The sum value of power[" << i << "] is " << powerSum[i] << std::endl;
+  }
+
+  // compute updated temperature based on the summarized power of each tile of all ranks
+  compute_temp(model,powerSum,temperature,model->config->sampling_intvl);
 
   for(int i = 0; i < model->block->flp->n_units; i++)
   {
     fit = floorplan->find(model->block->flp->units[i].id);
+    //std::cout << " my rank = " << world.rank() << ": current temp = " << (int)(*fit).second.device_tech.temperature << ", updated temp = " << (int)temperature[i] << std::endl;
     if((int)(*fit).second.device_tech.temperature != (int)temperature[i])
     {
         (*fit).second.device_tech.temperature = temperature[i];
@@ -154,7 +183,7 @@ void HotSpot_library::compute(std::map<int,floorplan_t> *floorplan)
       (*fit).second.device_tech.temperature = temperature[i];
     }
     #ifdef TEMPERATURE_DEBUG
-      std::cout << "TEMPERATURE_DEBUG: floorplan ID = " << model->block->flp->units[i].id << "     temperature = " << (*fit).second.device_tech.temperature << " K" << std::endl;
+      //std::cout << "TEMPERATURE_DEBUG: floorplan ID = " << model->block->flp->units[i].id << "     temperature = " << (*fit).second.device_tech.temperature << " K" << std::endl;
     #endif
   }
 }

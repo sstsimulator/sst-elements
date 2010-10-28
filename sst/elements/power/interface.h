@@ -224,7 +224,7 @@ class parameters_floorplan_t
 class parameters_chip_t
 {
   public:
-  parameters_chip_t() : is_set(false), num_comps(0) {}
+  parameters_chip_t() : is_set(false), num_comps(0), sumnum_comps(0) {}
   ~parameters_chip_t() { floorplan.clear(); }
 
    void insert(parameters_floorplan_t *input) {
@@ -240,7 +240,7 @@ class parameters_chip_t
 
   int thermal_library;
   bool is_set;
-  int num_comps;
+  int num_comps, sumnum_comps;
 
    // HotSpot parameters
   double thermal_threshold;		// temperature threshold for DTM (Kelvin)
