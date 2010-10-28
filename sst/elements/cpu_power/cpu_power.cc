@@ -24,7 +24,7 @@ bool Cpu_power::clock( Cycle_t current)
 
     MyMemEvent* event = NULL; 
 
-    if (current == 1000 ) unregisterExit();
+    if (current == 100 ) unregisterExit();
 
     if ( state == SEND ) { 
         if ( ! event ) event = new MyMemEvent();
@@ -62,6 +62,7 @@ bool Cpu_power::clock( Cycle_t current)
 	mycounts.L1Dir_read[1]=1; mycounts.L1Dir_readmiss[1]=0; mycounts.L1Dir_write[1]=1; mycounts.L1Dir_writemiss[1]=0; mycounts.L2Dir_read[1]=1; mycounts.L2Dir_readmiss[1]=0; mycounts.L2Dir_write[1]=1;
         mycounts.L2Dir_writemiss[1]=0;
 	mycounts.L2_read[2]=1; mycounts.L2_readmiss[2]=0; mycounts.L2_write[2]=1; mycounts.L2_writemiss[2]=0; mycounts.L3_read[2]=1; mycounts.L3_readmiss[2]=0; mycounts.L3_write[2]=1; mycounts.L3_writemiss[2]=0;
+	mycounts.homeL2_read[2]=1; mycounts.homeL2_readmiss[2]=0; mycounts.homeL2_write[2]=1; mycounts.homeL2_writemiss[2]=0; mycounts.homeL3_read[2]=1; mycounts.homeL3_readmiss[2]=0; mycounts.homeL3_write[2]=1; mycounts.homeL3_writemiss[2]=0;
 	mycounts.L1Dir_read[2]=1; mycounts.L1Dir_readmiss[2]=0; mycounts.L1Dir_write[2]=1; mycounts.L1Dir_writemiss[2]=0; mycounts.L2Dir_read[2]=1; mycounts.L2Dir_readmiss[2]=0; mycounts.L2Dir_write[2]=1;
         mycounts.L2Dir_writemiss[2]=0;
 	mycounts.memctrl_read=1; mycounts.memctrl_write=1;
@@ -87,9 +88,9 @@ bool Cpu_power::clock( Cycle_t current)
 	pdata = power->getPower(this, LSQ, mycounts);
 	pdata = power->getPower(this, BPRED, mycounts);
 	pdata = power->getPower(this, SCHEDULER_U, mycounts);
-	pdata = power->getPower(this, RENAME_U, mycounts);
+	///pdata = power->getPower(this, RENAME_U, mycounts);
 	//pdata = power->getPower(this, BTB, mycounts); inorder doesn't have BTB or BPT
-	pdata = power->getPower(this, LOAD_Q, mycounts);
+	///pdata = power->getPower(this, LOAD_Q, mycounts);
 	pdata = power->getPower(this, CACHE_L1DIR, mycounts);
 	pdata = power->getPower(this, CACHE_L2DIR, mycounts);
 	pdata = power->getPower(this, CACHE_L2, mycounts);
@@ -149,6 +150,12 @@ bool Cpu_power::clock( Cycle_t current)
        // _CPU_POWER_DBG("ID %lu : total power = %f pW\n", getId(), pdata.totalEnergy); 
         //_CPU_POWER_DBG("ID %lu : peak power = %f pW\n", getId(), pdata.peak);
 	//_CPU_POWER_DBG("ID %lu : current cycle = %d \n", getId(), pdata.currentCycle);
+	//using namespace io_interval; std::cout <<"ID " << getId() <<": current power = " << pdata.currentPower << " W" << std::endl;
+	        //using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
+	        //using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
+	        //using namespace io_interval; std::cout <<"ID " << getId() <<": total power = " << pdata.totalEnergy << " W" << std::endl;
+	        //using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;
+
 	regPowerStats(pdata);
 
         mem->Send( (Cycle_t)3, event );

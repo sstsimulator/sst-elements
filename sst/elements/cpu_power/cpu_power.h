@@ -84,9 +84,9 @@ class Cpu_power : public IntrospectedComponent {
 	    power->setTech(getId(), params, LSQ, McPAT);
 	    power->setTech(getId(), params, BPRED, McPAT);
 	    power->setTech(getId(), params, SCHEDULER_U, McPAT);
-	    power->setTech(getId(), params, RENAME_U, McPAT);
+	    ///power->setTech(getId(), params, RENAME_U, McPAT);
 	    //power->setTech(getId(), params, BTB, McPAT);
-	    power->setTech(getId(), params,  LOAD_Q, McPAT);
+	    ///power->setTech(getId(), params,  LOAD_Q, McPAT);
 	    power->setTech(getId(), params, CACHE_L1DIR, McPAT);
 	    power->setTech(getId(), params, CACHE_L2DIR, McPAT);
 	    power->setTech(getId(), params, CACHE_L2, McPAT);
