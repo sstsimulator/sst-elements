@@ -278,19 +278,23 @@ main(int argc, char **argv)
 	y = (i / x_count) % y_count;
 	x = i % x_count;
 
-	/* Need to put real partition logic in at some point */
-	int rank = i % ranks;
-
-	if ( ranks == 2 ) {
-	    if ( x < x_count/2 ) rank = 0;
-	    else rank = 1;
-	}
-	if ( ranks == 4 ) {
-	    if ( x < x_count/2 && y < y_count/2 ) rank = 0;
-	    else if ( x < x_count/2 && y >= y_count/2 ) rank = 1;
-	    else if ( x >= x_count/2 && y < y_count/2 ) rank = 2;
-	    else rank = 3;
-	}
+	/* Partition logic */
+        int rank = i % ranks;
+        if ( ranks == 2 ) {
+            if ( x < x_count/2 ) rank = 0;
+            else rank = 1;
+        }
+        if ( ranks == 4 ) {
+            rank = 0;
+            if ( x >= x_count/2 ) rank = rank | 1;
+            if ( y >= y_count/2 ) rank = rank | (1 << 1);
+        }
+        if ( ranks == 8 ) {
+            rank = 0;
+            if ( x >= x_count/2 ) rank = rank | 1;
+            if ( y >= y_count/2 ) rank = rank | (1 << 1);
+            if ( z >= z_count/2 ) rank = rank | (1 << 2);
+        }
 
 	if ( ranks > 1 ) {
 	    fprintf(output, "    <component id=\"%d.cpu\" rank=%d >\n",i,rank);
