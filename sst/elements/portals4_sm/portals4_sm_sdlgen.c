@@ -280,7 +280,7 @@ main(int argc, char **argv)
 
 	/* Need to put real partition logic in at some point */
 	int rank = i % ranks;
-#if 0
+
 	if ( ranks == 2 ) {
 	    if ( x < x_count/2 ) rank = 0;
 	    else rank = 1;
@@ -291,7 +291,7 @@ main(int argc, char **argv)
 	    else if ( x >= x_count/2 && y < y_count/2 ) rank = 2;
 	    else rank = 3;
 	}
-#endif	
+
 	if ( ranks > 1 ) {
 	    fprintf(output, "    <component id=\"%d.cpu\" rank=%d >\n",i,rank);
 	}
