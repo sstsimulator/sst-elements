@@ -24,7 +24,13 @@ public:
   simpleComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   int Setup() {return 0;}
   int Finish() {
-    printf("Simple Component Finished\n");
+    static int n = 0;
+    n++;
+    if (n > 10) {
+      printf("Several Simple Components Finished\n");
+    } else {
+      printf("Simple Component Finished\n");
+    }
     return 0;
   }
 

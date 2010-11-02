@@ -27,20 +27,20 @@ int gproc_debug;
 
 static Component*
 create_genericProc_cpu(SST::ComponentId_t id,
-		       Params& params)
+		       SST::Params& params)
 {
     return new proc(id, params);
 }
 
 static Component*
 create_genericProc_mem(SST::ComponentId_t id,
-                       Params& params)
+                       SST::Params& params)
 {
     return new mem(id, params);
 }
 
 static Component*
-create_testClock(SST::ComponentId_t id, Params& params)
+create_testClock(SST::ComponentId_t id, SST::Params& params)
 {
     return new tester(id, params);
 }

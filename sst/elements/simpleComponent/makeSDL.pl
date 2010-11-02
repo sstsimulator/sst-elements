@@ -18,18 +18,19 @@ sub getCNum($$) {
     return ($x * $inY) + $inX;
 }
 
-$x = $ARGV[0];
-$y = $ARGV[1];
-$set = $ARGV[2];
+$x = $ARGV[0];  #x dim
+$y = $ARGV[1];  #y dim
+$set = $ARGV[2]; #set
+$ranks = $ARGV[3]; #ranks
 
 if ($set == 1) { # NOC
     $workPerCycle = 1000;
-    $commFreq = ;
+    $commFreq = 1000;
     $commSize = 100;
     $commLat = "10 ns";
 } elsif ($set == 2) {
     $workPerCycle = 20;
-    $commFreq = ;
+    $commFreq = 1000;
     $commSize = 100;
     $commLat = "10 ns";
 } elsif ($set == 3) { #smp
@@ -62,14 +63,15 @@ if ($set == 1) { # NOC
     exit(-1);
 }
 
-printf("making ${x}x${y}, setup $set\n", $x, $y);
+printf("making ${x}x${y}, setup $set, $ranks ranks\n", $x, $y);
 
-$fileN = "${x}x${y}-$set";
+$fileN = "${x}x${y}-$set-$ranks";
 open(OUT, ">$fileN.xml");
 
 printf(OUT "<?xml version=\"1.0\"?>\n".
        "<config>\n".
        " stopAtCycle=25us\n".
+       " partitioner=self".
        "</config>\n".
        "<sst>\n");
 
@@ -78,14 +80,14 @@ for ($yi = 0; $yi < $y; ++$yi) {
 
 	#compute link names
 	$cn = getCNum($xi, $yi);
-	printf("Component %d,%d=%d\n", $xi, $yi, $cn);
+	#printf("Component %d,%d=%d\n", $xi, $yi, $cn);
 	# North
 	$nx = $xi;
 	$ny = $yi + 1;
 	if ($ny >= $y) {$ny = 0;}
 	$nn = getCNum($nx, $ny);
 	$NLink = getLink($nn,$cn);
-	printf(" N: %d %s\n", $nn, $NLink);
+	#printf(" N: %d %s\n", $nn, $NLink);
 
 	# South
 	$nx = $xi;
@@ -93,7 +95,7 @@ for ($yi = 0; $yi < $y; ++$yi) {
 	if ($ny < 0) {$ny = $y-1;}
 	$nn = getCNum($nx, $ny);
 	$SLink = getLink($nn,$cn);
-	printf(" S: %d %s\n", $nn, $SLink);
+	#printf(" S: %d %s\n", $nn, $SLink);
 
 	# East
 	$nx = $xi + 1;
@@ -101,7 +103,7 @@ for ($yi = 0; $yi < $y; ++$yi) {
 	$ny = $yi;
 	$nn = getCNum($nx, $ny);
 	$ELink = getLink($nn,$cn);
-	printf(" E: %d %s\n", $nn, $ELink);
+	#printf(" E: %d %s\n", $nn, $ELink);
 
 	# West
 	$nx = $xi - 1;
@@ -109,11 +111,14 @@ for ($yi = 0; $yi < $y; ++$yi) {
 	$ny = $yi;
 	$nn = getCNum($nx, $ny);
 	$WLink = getLink($nn,$cn);
-	printf(" W: %d %s\n", $nn, $WLink);
+	#printf(" W: %d %s\n", $nn, $WLink);
 	
+	#figure out rank
+	$sz = $x / $ranks;
+	$rank = int($xi/$sz);
 
 	print OUT<<EOT
-  <component id="c$xi.$yi">
+  <component id="c$xi.$yi" rank=$rank>
     <simpleComponent.simpleComponent>
       <params>
 	<workPerCycle>$workPerCycle</workPerCycle>
