@@ -23,7 +23,10 @@ public:
 
   simpleComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   int Setup() {return 0;}
-  int Finish() {return 0;}
+  int Finish() {
+    printf("Simple Component Finished\n");
+    return 0;
+  }
 
 private:
   simpleComponent();  // for serialization only

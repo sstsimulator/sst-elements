@@ -22,17 +22,44 @@ $x = $ARGV[0];
 $y = $ARGV[1];
 $set = $ARGV[2];
 
-if ($set == 1) {
-    $workPerCycle = 200;
-    $commFreq = 100000;
-    $commSize = 100;
-    $commLat = "100 ns";
-} else {
-    $set = 0;
-    $workPerCycle = 100;
-    $commFreq = 100000;
+if ($set == 1) { # NOC
+    $workPerCycle = 1000;
+    $commFreq = ;
     $commSize = 100;
     $commLat = "10 ns";
+} elsif ($set == 2) {
+    $workPerCycle = 20;
+    $commFreq = ;
+    $commSize = 100;
+    $commLat = "10 ns";
+} elsif ($set == 3) { #smp
+    $workPerCycle = 4000;
+    $commFreq = 25;
+    $commSize = 100;
+    $commLat = "50 ns";
+} elsif ($set == 4) {
+    $workPerCycle = 80;
+    $commFreq = 25;
+    $commSize = 100;
+    $commLat = "50 ns";
+} elsif ($set == 5) { #system
+    $workPerCycle = 10000;
+    $commFreq = 50;
+    $commSize = 100;
+    $commLat = "100 ns";
+} elsif ($set == 6) {
+    $workPerCycle = 100;
+    $commFreq = 50;
+    $commSize = 100;
+    $commLat = "100 ns";
+} elsif ($set == 7) {
+    $workPerCycle = 0;
+    $commFreq = 1;
+    $commSize = 0;
+    $commLat = "1 ns";
+} else {
+    printf("Bad Set\n");
+    exit(-1);
 }
 
 printf("making ${x}x${y}, setup $set\n", $x, $y);

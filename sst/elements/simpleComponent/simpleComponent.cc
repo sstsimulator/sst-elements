@@ -102,6 +102,17 @@ void simpleComponent::handleEvent(Event *ev) {
 // one of our neighbors.
 bool simpleComponent::clockTic( Cycle_t ) {
   // do work
+  // loop becomes:
+  /*  00001ab5        movl    0xe0(%ebp),%eax
+      00001ab8        incl    %eax
+      00001ab9        movl    %eax,0xe0(%ebp)
+      00001abc        incl    %edx
+      00001abd        cmpl    %ecx,%edx
+      00001abf        jne     0x00001ab5
+
+      6 instructions. 
+  */
+
   volatile int v = 0;
   for (int i = 0; i < workPerCycle; ++i) {
     v++;
