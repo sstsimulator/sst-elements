@@ -477,6 +477,7 @@ bool proc::preTic(Cycle_t c) {
 	        myThread->retire(onDeckInst);
           } else {
 	        WARN("instruction exception!!!");
+		myThread->squash(onDeckInst);		
           }
           onDeckInst = NULL;
         } else {
@@ -489,6 +490,7 @@ bool proc::preTic(Cycle_t c) {
         } else {
 	  WARN("instruction exception!!! Exception %d\n", 
 	       onDeckInst->exception());
+	  myThread->squash(onDeckInst);		
         }
         onDeckInst = NULL;
       }

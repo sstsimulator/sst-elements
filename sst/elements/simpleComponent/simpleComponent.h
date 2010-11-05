@@ -26,8 +26,10 @@ public:
   int Finish() {
     static int n = 0;
     n++;
-    if (n > 10) {
+    if (n == 10) {
       printf("Several Simple Components Finished\n");
+    } else if (n > 10) {
+      ;
     } else {
       printf("Simple Component Finished\n");
     }
