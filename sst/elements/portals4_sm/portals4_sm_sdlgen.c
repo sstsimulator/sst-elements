@@ -67,7 +67,7 @@ static struct option longopts[] = {
     { "coalesce",          required_argument, NULL, 'c' },
     { "enable_putv",       required_argument, NULL, 'p' },
     { "ranks",             required_argument, NULL, 'k' },
-    { "new-format",        no_argument,       NULL, 'f' },
+    { "new_format",        no_argument,       NULL, 'f' },
     { NULL,                0,                 NULL, 0   }
 };
 
@@ -324,15 +324,15 @@ main(int argc, char **argv)
         }
 
 	if ( new_format ) {
-	    fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu> rank=%d >\n",i,rank);
-	    fprintf(output, "        <params include1=cpu_params>\n");
+	    fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu rank=%d >\n",i,rank);
+	    fprintf(output, "        <params include=cpu_params>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "        </params>\n");
 	    fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$nic_link_lat/>\n",i);
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
 	    fprintf(output, "    <component name=%d.nic type=portals4_sm.trig_nic rank=%d >\n",i,rank);
-	    fprintf(output, "        <params include1=nic_params1 include2=nic_params2>\n");
+	    fprintf(output, "        <params include=nic_params1,nic_params2>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "        </params>\n");
 	    fprintf(output, "        <link name=%d.cpu2nic port=cpu latency=$nic_link_lat/>\n",i);
