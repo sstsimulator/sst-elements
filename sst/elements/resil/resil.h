@@ -14,6 +14,7 @@
 #define _RESIL_H
 
 #include <fstream>
+#include <sstream>
 
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -107,8 +108,19 @@ class resil : public Component {
 	std::string links[MAX_LINKS];
 };
 
-float genexp(float lambda);
+struct node_id_t{
+	node_id_t(std::string &s) {
+		std::istringstream iss(s);
+		char dot;
+		iss>>major>>dot>>minor;
+	}
+	unsigned major, minor;
+};
 
-float urand();
+
+bool operator<(const node_id_t &l, const node_id_t &r) {return (l.major<r.major) || ((l.major==r.major) && (l.minor<r.minor));  }
+bool operator==(const node_id_t &l, const node_id_t &r) {return (l.major==r.major) && (l.minor==r.minor);  }
+
+unsigned genexp(double lambda);
 
 #endif

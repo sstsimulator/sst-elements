@@ -18,7 +18,7 @@
 using namespace std;
 using namespace SST;
 
-extern std::ofstream myfile;
+extern std::ofstream myfile2;
 
 //enum link_type_t {DISCON,OUTGO};
 
@@ -35,6 +35,7 @@ class schedule : public Component {
 	int Finish       (                                    );
 	
 	void issuejobs   (                                    );
+	void start_sched (     Event* event                   );
 	
 	void node_state();
 	bool nodetablehasroom(int nodes);
@@ -47,8 +48,10 @@ class schedule : public Component {
   schedule() : Component(-1) {} // Serialization requires a default constructor.
   friend class boost::serialization::access;
 
+	bool rand_init;
 
   Link* linkToSelf;
+	Link* schedule_trig;
 	std::vector <Link*> link_array;
 
   Params_t    params   ;
