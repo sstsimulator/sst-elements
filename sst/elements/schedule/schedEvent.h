@@ -1,11 +1,12 @@
 #ifndef _SCHEDEVENT_H
 #define _SCHEDEVENT_H
 
-#include <sst/core/compEvent.h>
+//#include <sst/core/compEvent.h>
 #include <string>
 
-class ComppEvent : public SST::CompEvent {
-  public: ComppEvent() : CompEvent() { std::cout << "New compevent " << this << '\n'; }
+class ComppEvent : public SST::Event {
+  public: ComppEvent() : Event() { std::cout << "New compevent " << this << '\n'; }
+          ~ComppEvent() {}
 };
 
 class failEvent : public SST::Event {
@@ -21,7 +22,7 @@ private:
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        boost::serialization::base_object<CompEvent>(*this);
+        boost::serialization::base_object<Event>(*this);
         ar & BOOST_SERIALIZATION_NVP(comp);
 				ar & BOOST_SERIALIZATION_NVP(tick);
     }
@@ -41,7 +42,7 @@ private:
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        boost::serialization::base_object<CompEvent>(*this);
+        boost::serialization::base_object<Event>(*this);
         ar & BOOST_SERIALIZATION_NVP(jobid);
     }
 };
