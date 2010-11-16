@@ -21,7 +21,7 @@
 #include "schedule.h"
 #include "schedEvent.h"
 #include "../resil/resil.h"
-#include "sst/core/compEvent.h"
+//#include "sst/core/compEvent.h"
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
@@ -48,7 +48,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
     rand_init = true;
   }
 
-	tasks.open("/home/aswilli/trunk/sst-simulator/sst/elements/job_list.txt");
+	tasks.open("joblist.csv");
 	std::cout << "schedule constructor!\n";
   if ( params.find("clock") != params.end() ) {
     frequency = params["clock"];
@@ -122,7 +122,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
     for(;;) {
       int tmp_jobid, tmp_dur, tmp_nodes;
       char sep;
-    	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes >> sep;
+    	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes ;
       if (!tasks) break;
 			std::cout<<"Job_ID: "<<tmp_jobid<<" Dur: "<<tmp_dur<<" nodes: "<<tmp_nodes<<"\n";		
 			job_list.push(job_t(tmp_jobid, tmp_dur, tmp_nodes));
@@ -150,12 +150,9 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
 schedule::~schedule()
 {
 	tasks.close();
-	/*delete [] job_id;
-	delete [] dur;
-	delete [] num_nodes;*/
 }
 
-bool schedule::clock( Cycle_t current ) 
+/*bool schedule::clock( Cycle_t current ) 
 {
   std::cout << "schedule: it's cycle " << current << "!\n";
   
@@ -163,7 +160,7 @@ bool schedule::clock( Cycle_t current )
   //linkToSelf->Send(10, new CompEvent());
 
   return false;
-}
+}*/
 
 /*void schedule::processEvent( Event* event )
 {
@@ -201,7 +198,7 @@ void schedule::failEventHandle( Event* event )
 				if(fail_job_list.find(job_t(comp_map[string(temp_e->comp)].jobid))==fail_job_list.end())
 				{
 					//TO ADD:   Write the job failure record
-					myfile2 << comp_map[string(temp_e->comp)].jobid << ";" << running_job_list.find(temp_jid)->start_t <<","<< getCurrentSimTime() << ";" << 1 << ";";
+					myfile2 << comp_map[string(temp_e->comp)].jobid << "," << running_job_list.find(temp_jid)->start_t <<","<< getCurrentSimTime() << "," << 1 << ",";
 
 					fail_job_list.insert(*running_job_list.find(job_t(comp_map[string(temp_e->comp)].jobid)));
 					running_job_list.erase(job_t(job_t(comp_map[string(temp_e->comp)].jobid)));

@@ -158,14 +158,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	
 
 
-	//if(id==1)
-	//{
-		float fail_time=dur_scale*genexp(lambda);
 
-			linkToSelf->Send(/*50*/floor(fail_time),new ComppEvent());
-			std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<floor(fail_time)<<"\n";
-		
-	//}
 	
 	//sched_link->send(25, new endEvent());
 	//registerExit();
@@ -269,7 +262,7 @@ void resil::processfailEvent( Event* event )
 	myfile << id_str << "," << getCurrentSimTime()<<"\n";  
 
 	//
-	unsigned fail_time=genexp(lambda);
+	unsigned fail_time=genexp((1/31556926)*lambda);  //number of seconds in a year
   std::cout << "Next failure in " << fail_time << " cycles. (lambda=" << lambda << "\n";
 	linkToSelf->Send(/*50*/fail_time,new ComppEvent());
   delete event; // I'm responsible for it.
@@ -287,11 +280,19 @@ int resil::Setup()
 {
 		if(file_open==0)
 		{
-			myfile.open("node_failures.txt");
+			myfile.open("failures.log");
 			file_open=1;
 		 myfile<<"NODE TIME\n";
 		}
 
+	//if(id==1)
+	//{
+		float fail_time=genexp((1/31556926)*lambda);  //number of seconds in a year
+
+			linkToSelf->Send(/*50*/floor(fail_time),new ComppEvent());
+			std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<floor(fail_time)<<"\n";
+		
+	//}
 
 		return 0;
 }
@@ -315,7 +316,7 @@ unsigned genexp(double lambda)
 {
 	double u,x;
 	u=urand();
-	x=(-lambda)*log(u);
+	x=(-1/lambda)*log(u);
 	return(x);
 }
 
