@@ -36,7 +36,7 @@ bool resil::file_open=false;
 ofstream myfile;
 
 resil::resil( ComponentId_t id, Params_t& params ) :
-  Component(id), params(params), frequency("0.001kHz")
+  Component(id), params(params), frequency("1000GHz")
 {
 		int dur_scale=1;
 		int linki=0, num_links=0;
@@ -78,7 +78,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	
   std::cout<<"\nLambda: "<<lambda<<"\n";
 
-	TimeConverter *tc=registerTimeBase("0.001kHz");
+	TimeConverter *tc=registerTimeBase(frequency);
 
   linkToSelf = configureSelfLink("linkToSelf",
 																		new Event::Handler<resil>
@@ -282,7 +282,7 @@ int resil::Setup()
 		{
 			myfile.open("failures.log");
 			file_open=1;
-		 myfile<<"TIME NODE\n";
+		 myfile<<"TIME, NODE\n";
 		}
 
 	//if(id==1)

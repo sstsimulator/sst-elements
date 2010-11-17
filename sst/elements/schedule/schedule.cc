@@ -32,7 +32,7 @@ using namespace std;
 ofstream myfile2;
 
 schedule::schedule( ComponentId_t id, Params_t& params ) : 
-  Component(id), params(params), frequency("0.001kHz")
+  Component(id), params(params), frequency("1000GHz")
 {
 
 	int linki=0, num_links=0;
@@ -65,7 +65,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
 	}
 		std::cout<< "In loop\n";
 
-	TimeConverter *tc = registerTimeBase("0.001kHz");
+	TimeConverter *tc = registerTimeBase(frequency);
 
   linkToSelf = configureSelfLink("linkToSelf",
 																		new Event::Handler<schedule>
@@ -122,7 +122,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
     for(;;) {
       int tmp_jobid, tmp_dur, tmp_nodes;
       char sep;
-    	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes >> sep ;
+    	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes;
       if (!tasks) break;
 			std::cout<<"Job_ID: "<<tmp_jobid<<" Dur: "<<tmp_dur<<" nodes: "<<tmp_nodes<<"\n";		
 			job_list.push(job_t(tmp_jobid, tmp_dur, tmp_nodes));
