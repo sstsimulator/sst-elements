@@ -50,9 +50,6 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
 
 	tasks.open("joblist.csv");
 	std::cout << "schedule constructor!\n";
-  if ( params.find("clock") != params.end() ) {
-    frequency = params["clock"];
-  }
 	os<<"link"<<linki;
 	while (params.find(os.str()) != params.end() ){
 
@@ -81,7 +78,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
 
 	setDefaultTimeBase(tc);
 
-	for(linki = 0; linki<MAX_RESIL_LINKS; linki++)
+	for(linki = 0; ; linki++)
 	{
 		os.str("");
 		os<<"link"<<linki;

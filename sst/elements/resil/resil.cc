@@ -43,17 +43,15 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 
 		std::ostringstream os;
 
-	for(linki=0; linki<MAX_LINKS; linki++)
+	/*for(linki=0; linki<MAX_LINKS; linki++)
 	{ 
 		link_array[linki]=0;
 		link_state[linki]=DISCON; 
-	}
+	}*/
 
 	linki=0;	
   std::cout << "resil constructor!\n";
-  if ( params.find("clock") != params.end() ) {
-    frequency = params["clock"];
-  }
+
 	if(params.find("id") != params.end()) {
 		id_str = params["id"];
 	}
@@ -62,14 +60,14 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	}
 	os<<"link"<<linki;
 	while (params.find(os.str()) != params.end() ){
-		links[linki] = params[os.str()];
+		links.push_back(params[os.str()]);
 		os.str("");
 		linki++;
 		os<<"link"<<linki;
 		std::cout<<"The string was: "<<os.str()<<std::endl;
 	}
 
-	for(int i=0; i < MAX_LINKS; i++)
+	for(int i=0; i < links.size(); i++)
 	{
 		std::cout<<links[i]<<"\n";
 	}
@@ -87,11 +85,11 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 
 	setDefaultTimeBase(tc);
 
-	for(linki = 0; linki<MAX_LINKS; linki++)
+	for(linki = 0;linki<links.size(); linki++)
 	{
 		os.str("");
 		os<<"link"<<linki;
-		link_array[linki]=configureLink(os.str(), new Event::Handler<resil>(this, &resil::processEvent));
+		link_array.push_back(configureLink(os.str(), new Event::Handler<resil>(this, &resil::processEvent)));
 		std::cout<< links[linki]<<" Comapre to " << id_str<< " returns " << links[linki].compare(0, 3, id_str, 0, 3) << "\n";
 		node_id_t id_nums(id_str);
 		node_id_t link_id_nums(links[linki]);
@@ -113,22 +111,22 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 
 		if (link_array[linki]==0)
 		{
-			link_state[linki]=DISCON;	
+			link_state.push_back(DISCON);	
 			 break;
 		}
 		else if(id_nums==link_id_nums)
 		{
-			link_state[linki]=INCOME;
+			link_state.push_back(INCOME);
 		}
 		else
 		{
-			link_state[linki]=OUTGO;
+			link_state.push_back(OUTGO);
 		}
 
 	}
 	num_links=linki;
 
-	for(linki=0; linki<MAX_LINKS; linki++)
+	for(linki=0;linki<link_state.size(); linki++)
 	{
     std::cout<<"Link "<< linki<< " has value "<< link_state[linki] << "\n";
 	}
@@ -139,7 +137,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 
 	sched_link=configureLink("schedlink0", new Event::Handler<resil>(this, &resil::schedEventHandle));
 
-	for(linki=0; linki<MAX_LINKS; linki++) {
+	for(linki=0; linki<link_array.size(); linki++) {
 		if(link_array[linki]==0)  {std::cout << "link_array "<< linki << "NULL \n";}
 		else {
       link_array[linki]->setDefaultTimeBase(tc); 
@@ -171,16 +169,6 @@ resil::~resil()
 
 }
 
-bool resil::clock( Cycle_t current ) 
-{
-  std::cout << "resil: it's cycle " << current << "!\n";
-
-
-  //link_array[0]->Send(10, new ComppEvent());
-	//link1->Send(10, new ComppEvent());
-
-  return false;
-}
 
 void resil::processEvent( Event* event )
 {
@@ -204,7 +192,7 @@ void resil::processEvent( Event* event )
 	
 	if(sched_link!=0)  sched_link->Send(0, new failEvent(id_str, getCurrentSimTime()));
 
-	for(int i=0; i < MAX_LINKS; i ++)
+	for(int i=0; i < link_array.size(); i ++)
 	{
 		if((link_array[i]!=NULL)&&(link_state[i]==OUTGO))
 		{
@@ -249,7 +237,7 @@ void resil::processfailEvent( Event* event )
 	if(link4!=0)
 		link0->Send(0, new ComppEvent());*/
 
-	for(int i=0; i < MAX_LINKS; i ++)
+	for(int i=0; i < link_array.size(); i ++)
 	{
 		if((link_array[i]!=NULL)&&(link_state[i]==OUTGO))
 		{

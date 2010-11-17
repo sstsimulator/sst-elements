@@ -20,7 +20,6 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
-#define MAX_LINKS 10
 
 using namespace SST;
 
@@ -37,7 +36,6 @@ class resil : public Component {
   resil              ( ComponentId_t id, Params_t& params );
   ~resil             ()                                    ;
 
-  bool clock       ( Cycle_t cycle                      );
   void processEvent( Event* event                       );
   void processfailEvent( Event* event                   );
 	void schedEventHandle(Event* event                    );
@@ -94,18 +92,18 @@ class resil : public Component {
 	Link* link3;
   Link* link4;
 	Link* sched_link;
-	Link* link_array[MAX_LINKS];
+	std::vector<Link*> link_array;
 	Link* uplink;
 	
 	int counter;
-	link_type link_state[MAX_LINKS];    //DISCON,INCOME,OUTGO
+	std::vector<link_type> link_state;    //DISCON,INCOME,OUTGO
 	int count_to;
 	bool fail_assigned;
 	bool failknow;  //If true I already know someone above me failed.
 
   Params_t    params   ;
   std::string frequency;
-	std::string links[MAX_LINKS];
+	std::vector<std::string> links;
 };
 
 struct node_id_t{

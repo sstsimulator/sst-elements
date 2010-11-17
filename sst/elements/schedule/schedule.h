@@ -14,7 +14,7 @@
 
 #include "../resil/resil.h"
 
-#define MAX_RESIL_LINKS 50
+//#define MAX_RESIL_LINKS 50
 using namespace std;
 using namespace SST;
 
@@ -27,7 +27,7 @@ class schedule : public Component {
   schedule              ( ComponentId_t id, Params_t& params );
   ~schedule             ()                                    ;
 
-  bool clock       ( Cycle_t cycle                      );
+
   void processEvent( Event* event                       );
 	void failEventHandle( Event* event                   );
 	void finishEventHandle( Event* event                  );
