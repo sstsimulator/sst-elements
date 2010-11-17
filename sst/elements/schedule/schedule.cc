@@ -122,7 +122,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
     for(;;) {
       int tmp_jobid, tmp_dur, tmp_nodes;
       char sep;
-    	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes ;
+    	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes >> sep ;
       if (!tasks) break;
 			std::cout<<"Job_ID: "<<tmp_jobid<<" Dur: "<<tmp_dur<<" nodes: "<<tmp_nodes<<"\n";		
 			job_list.push(job_t(tmp_jobid, tmp_dur, tmp_nodes));
@@ -295,7 +295,7 @@ int schedule::Setup()
 
 		CompMap_t::const_iterator i;
 
-  	myfile2.open("job_failures.txt");
+  	myfile2.open("joblog.csv");
 
 		myfile2<<"JOB_ID,START,STOP,P/F,NODES\n";
 

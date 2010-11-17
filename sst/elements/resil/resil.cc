@@ -259,10 +259,10 @@ void resil::processfailEvent( Event* event )
 
 	if(sched_link!=0)  sched_link->Send(0, new failEvent(id_str, getCurrentSimTime()));
 
-	myfile << id_str << "," << getCurrentSimTime()<<"\n";  
+	myfile << getCurrentSimTime()<< "," << id_str << "\n";  
 
 	//
-	unsigned fail_time=genexp((1/31556926)*lambda);  //number of seconds in a year
+	unsigned fail_time=genexp((1.0/31556926.0)*lambda);  //number of seconds in a year
   std::cout << "Next failure in " << fail_time << " cycles. (lambda=" << lambda << "\n";
 	linkToSelf->Send(/*50*/fail_time,new ComppEvent());
   delete event; // I'm responsible for it.
@@ -282,12 +282,12 @@ int resil::Setup()
 		{
 			myfile.open("failures.log");
 			file_open=1;
-		 myfile<<"NODE TIME\n";
+		 myfile<<"TIME NODE\n";
 		}
 
 	//if(id==1)
 	//{
-		float fail_time=genexp((1/31556926)*lambda);  //number of seconds in a year
+		double fail_time=genexp((1.0/31556926.0)*lambda);  //number of seconds in a year
 
 			linkToSelf->Send(/*50*/floor(fail_time),new ComppEvent());
 			std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<floor(fail_time)<<"\n";
