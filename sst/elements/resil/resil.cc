@@ -50,6 +50,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 	}*/
 
 	linki=0;	
+	std::cout << "------------------------------------------------------\n";
   std::cout << "resil constructor!\n";
 
 	if(params.find("id") != params.end()) {
@@ -90,7 +91,7 @@ resil::resil( ComponentId_t id, Params_t& params ) :
 		os.str("");
 		os<<"link"<<linki;
 		link_array.push_back(configureLink(os.str(), new Event::Handler<resil>(this, &resil::processEvent)));
-		std::cout<< links[linki]<<" Comapre to " << id_str<< " returns " << links[linki].compare(0, 3, id_str, 0, 3) << "\n";
+		//std::cout<< links[linki]<<" Comapre to " << id_str<< " returns " << links[linki].compare(0, 3, id_str, 0, 3) << "\n";
 		node_id_t id_nums(id_str);
 		node_id_t link_id_nums(links[linki]);
 
@@ -247,12 +248,12 @@ void resil::processfailEvent( Event* event )
 
 	if(sched_link!=0)  sched_link->Send(0, new failEvent(id_str, getCurrentSimTime()));
 
-	myfile << getCurrentSimTime()<< "," << id_str << "\n";  
+	myfile << floor(getCurrentSimTime()/100)<< "," << id_str << "\n";  
 
 	//
 	unsigned fail_time=genexp((1.0/31556926.0)*lambda);  //number of seconds in a year
   std::cout << "Next failure in " << fail_time << " cycles. (lambda=" << lambda << "\n";
-	linkToSelf->Send(/*50*/fail_time,new ComppEvent());
+	linkToSelf->Send(fail_time*100,new ComppEvent());
   delete event; // I'm responsible for it.
   return;
 }
@@ -275,9 +276,9 @@ int resil::Setup()
 
 	//if(id==1)
 	//{
-		double fail_time=genexp((1.0/31556926.0)*lambda);  //number of seconds in a year
+		unsigned fail_time=genexp((1.0/31556926.0)*lambda);  //number of seconds in a year
 
-			linkToSelf->Send(/*50*/floor(fail_time),new ComppEvent());
+			linkToSelf->Send(fail_time*100,new ComppEvent());
 			std::cout<<"Issue time:"<<getCurrentSimTime()<<" Fail cycle:"<<floor(fail_time)<<"\n";
 		
 	//}

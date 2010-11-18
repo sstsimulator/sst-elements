@@ -49,6 +49,7 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
   }
 
 	tasks.open("joblist.csv");
+	std::cout << "------------------------------------------------------\n";
 	std::cout << "schedule constructor!\n";
 	os<<"link"<<linki;
 	while (params.find(os.str()) != params.end() ){
@@ -60,7 +61,6 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
 		os<<"link"<<linki;
 		std::cout<<"The string was: "<<os.str()<<std::endl;
 	}
-		std::cout<< "In loop\n";
 
 	TimeConverter *tc = registerTimeBase(frequency);
 
@@ -86,7 +86,8 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
 
 		if (link_array[linki]==0)
 		{
-			link_state.push_back(DISCON);	
+			link_array.pop_back();
+			//link_state.push_back(DISCON);	
 			 break;
 		}
 		else
@@ -122,8 +123,14 @@ schedule::schedule( ComponentId_t id, Params_t& params ) :
     	tasks >> tmp_jobid >> sep >> tmp_dur >> sep >> tmp_nodes;
       if (!tasks) break;
 			std::cout<<"Job_ID: "<<tmp_jobid<<" Dur: "<<tmp_dur<<" nodes: "<<tmp_nodes<<"\n";		
-			job_list.push(job_t(tmp_jobid, tmp_dur, tmp_nodes));
-			std:cout<<"JOB_ID "<<job_list.back().job_id<<" DUR: "<<job_list.back().dur<<" NODES:"<<job_list.back().num_nodes<<"\n";
+			if(tmp_nodes<=link_array.size())
+			{
+				job_list.push(job_t(tmp_jobid, tmp_dur, tmp_nodes));
+				std::cout<<"JOB_ID "<<job_list.back().job_id<<" DUR: "<<job_list.back().dur<<" NODES:"<<job_list.back().num_nodes<<"\n";
+			}	
+			else
+				std::cout<<"Job "<<tmp_jobid<< " of size " <<tmp_nodes << " was deleted because it requires more than "<< link_array.size() <<" nodes.\n";
+
 		}
 	}
 	else
@@ -195,7 +202,7 @@ void schedule::failEventHandle( Event* event )
 				if(fail_job_list.find(job_t(comp_map[string(temp_e->comp)].jobid))==fail_job_list.end())
 				{
 					//TO ADD:   Write the job failure record
-					myfile2 << comp_map[string(temp_e->comp)].jobid << "," << running_job_list.find(temp_jid)->start_t <<","<< getCurrentSimTime() << "," << 1 << ",";
+					myfile2 << comp_map[string(temp_e->comp)].jobid << "," << floor(running_job_list.find(temp_jid)->start_t/100) <<","<< floor(getCurrentSimTime()/100) << "," << 1 << ",";
 
 					fail_job_list.insert(*running_job_list.find(job_t(comp_map[string(temp_e->comp)].jobid)));
 					running_job_list.erase(job_t(job_t(comp_map[string(temp_e->comp)].jobid)));
@@ -218,7 +225,7 @@ void schedule::failEventHandle( Event* event )
 
 			//}
 		//}
-			schedule_trig->Send(1,new ComppEvent());
+			schedule_trig->Send(100-(getCurrentSimTime()%100),new ComppEvent());
 
 
 	if(running_job_list.empty() && job_list.empty())
@@ -244,7 +251,7 @@ void schedule::finishEventHandle( Event* event )
 	{
 		std::cout<<"Job "<< temp_e->jobid << " finished\n"; 
 		//Write a job sucess record
-		myfile2 << temp_e->jobid << "," << running_job_list.find(temp_e->jobid)->start_t <<","<< getCurrentSimTime() << "," << 0 << ",";
+		myfile2 << temp_e->jobid << "," << floor(running_job_list.find(temp_e->jobid)->start_t/100) <<","<< floor(getCurrentSimTime()/100) << "," << 0 << ",";
 		//remove job from the job list
 		running_job_list.erase(job_t(temp_e->jobid));
 		//mark the nodes as available for new jobs
@@ -277,7 +284,7 @@ void schedule::finishEventHandle( Event* event )
 	}
 
 	//issue new jobs to slots that have opened up
-	schedule_trig->Send(1,new ComppEvent());
+	schedule_trig->Send(100-(getCurrentSimTime()%100),new ComppEvent());
 
 	if(running_job_list.empty() && job_list.empty())
 	{
@@ -369,7 +376,7 @@ void schedule::issuejobs()
 		std::cout<<"Job "<< job_list.front().job_id<<" was scheduled on "<< job_list.front().num_nodes <<" nodes "; 
 
 		//send self event to scheduler for finish
-		linkToSelf->Send(job_list.front().dur, new finishEvent(job_list.front().job_id));
+		linkToSelf->Send(job_list.front().dur*100, new finishEvent(job_list.front().job_id));
 
 		for(int i=0; i<job_list.front().num_nodes; i++)
 		{
