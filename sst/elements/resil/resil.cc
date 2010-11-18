@@ -248,7 +248,7 @@ void resil::processfailEvent( Event* event )
 
 	if(sched_link!=0)  sched_link->Send(0, new failEvent(id_str, getCurrentSimTime()));
 
-	myfile << floor(getCurrentSimTime()/PROPDEPTH)<< "," << id_str << "\n";  
+	myfile << getCurrentSimTime()/PROPDEPTH<< "," << id_str << "\n";  
 
 	//
 	unsigned fail_time=genexp((1.0/31556926.0)*lambda);  //number of seconds in a year
