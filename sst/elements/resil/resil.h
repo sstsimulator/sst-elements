@@ -20,6 +20,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
+#define PROPDEPTH 100
+
 
 using namespace SST;
 

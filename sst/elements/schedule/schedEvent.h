@@ -5,7 +5,7 @@
 #include <string>
 
 class ComppEvent : public SST::Event {
-  public: ComppEvent() : Event() { std::cout << "New compevent " << this << '\n'; }
+  public: ComppEvent() : Event() { /*std::cout << "New compevent " << this << '\n'; */}
           ~ComppEvent() {}
 };
 

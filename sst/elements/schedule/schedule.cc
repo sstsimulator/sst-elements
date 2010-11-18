@@ -202,7 +202,7 @@ void schedule::failEventHandle( Event* event )
 				if(fail_job_list.find(job_t(comp_map[string(temp_e->comp)].jobid))==fail_job_list.end())
 				{
 					//TO ADD:   Write the job failure record
-					myfile2 << comp_map[string(temp_e->comp)].jobid << "," << floor(running_job_list.find(temp_jid)->start_t/100) <<","<< floor(getCurrentSimTime()/100) << "," << 1 << ",";
+					myfile2 << comp_map[string(temp_e->comp)].jobid << "," << running_job_list.find(temp_jid)->start_t/PROPDEPTH <<","<< getCurrentSimTime()/PROPDEPTH << "," << 1 << ",";
 
 					fail_job_list.insert(*running_job_list.find(job_t(comp_map[string(temp_e->comp)].jobid)));
 					running_job_list.erase(job_t(job_t(comp_map[string(temp_e->comp)].jobid)));
@@ -225,7 +225,7 @@ void schedule::failEventHandle( Event* event )
 
 			//}
 		//}
-			schedule_trig->Send(100-(getCurrentSimTime()%100),new ComppEvent());
+			schedule_trig->Send(PROPDEPTH-(getCurrentSimTime()%PROPDEPTH),new ComppEvent());
 
 
 	if(running_job_list.empty() && job_list.empty())
@@ -251,7 +251,7 @@ void schedule::finishEventHandle( Event* event )
 	{
 		std::cout<<"Job "<< temp_e->jobid << " finished\n"; 
 		//Write a job sucess record
-		myfile2 << temp_e->jobid << "," << floor(running_job_list.find(temp_e->jobid)->start_t/100) <<","<< floor(getCurrentSimTime()/100) << "," << 0 << ",";
+		myfile2 << temp_e->jobid << "," << running_job_list.find(temp_e->jobid)->start_t/PROPDEPTH <<","<< getCurrentSimTime()/PROPDEPTH << "," << 0 << ",";
 		//remove job from the job list
 		running_job_list.erase(job_t(temp_e->jobid));
 		//mark the nodes as available for new jobs
@@ -284,7 +284,7 @@ void schedule::finishEventHandle( Event* event )
 	}
 
 	//issue new jobs to slots that have opened up
-	schedule_trig->Send(100-(getCurrentSimTime()%100),new ComppEvent());
+	schedule_trig->Send(PROPDEPTH-(getCurrentSimTime()%PROPDEPTH),new ComppEvent());
 
 	if(running_job_list.empty() && job_list.empty())
 	{
@@ -376,7 +376,7 @@ void schedule::issuejobs()
 		std::cout<<"Job "<< job_list.front().job_id<<" was scheduled on "<< job_list.front().num_nodes <<" nodes "; 
 
 		//send self event to scheduler for finish
-		linkToSelf->Send(job_list.front().dur*100, new finishEvent(job_list.front().job_id));
+		linkToSelf->Send(job_list.front().dur*PROPDEPTH, new finishEvent(job_list.front().job_id));
 
 		for(int i=0; i<job_list.front().num_nodes; i++)
 		{
