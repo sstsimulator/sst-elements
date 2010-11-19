@@ -69,7 +69,7 @@ class schedule : public Component {
 		int job_id;
 		int dur;
 		int num_nodes;
-		int start_t;
+		uint64_t start_t;
 	};
 
 	std::queue<job_t> job_list;
