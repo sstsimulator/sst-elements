@@ -24,11 +24,6 @@ sst_header(FILE *sstfile)
 
     fprintf(sstfile, "<?xml version=\"1.0\"?>\n");
     fprintf(sstfile, "\n");
-    // Since we register an exit, we don't need this anymore
-    // fprintf(sstfile, "<config>\n");
-    // fprintf(sstfile, "    stopAtCycle=100s\n");
-    // fprintf(sstfile, "</config>\n");
-    // fprintf(sstfile, "\n");
 
 }  /* end of sst_header() */
 
@@ -145,13 +140,13 @@ sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method)
     } else if (power_method == pwrMcPAT)   {
 	fprintf(sstfile, "<intro1_params>\n");
 	fprintf(sstfile, "    <period>15000000ns</period>\n");
-	fprintf(sstfile, "    <model>routermodel</model>\n");
+	fprintf(sstfile, "    <model>routermodel_power</model>\n");
 	fprintf(sstfile, "</intro1_params>\n");
 	fprintf(sstfile, "\n");
     } else if (power_method == pwrORION)   {
 	fprintf(sstfile, "<intro1_params>\n");
 	fprintf(sstfile, "    <period>15000000ns</period>\n");
-	fprintf(sstfile, "    <model>routermodel</model>\n");
+	fprintf(sstfile, "    <model>routermodel_power</model>\n");
 	fprintf(sstfile, "</intro1_params>\n");
 	fprintf(sstfile, "\n");
     } else   {
@@ -413,7 +408,7 @@ sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FI
 
 void
 sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
-	FILE *sstfile)
+	pwr_method_t power_method, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -422,7 +417,11 @@ sst_router_component_start(char *id, float weight, char *cname, router_function_
     }
 
     fprintf(sstfile, "    <component id=\"%s\" weight=%.2f>\n", id, weight);
-    fprintf(sstfile, "        <routermodel>\n");
+    if (power_method == pwrNone)   {
+	fprintf(sstfile, "        <routermodel>\n");
+    } else   {
+	fprintf(sstfile, "        <routermodel_power>\n");
+    }
     switch (role)   {
 	case Rnet:
 	    fprintf(sstfile, "            <params include=%s>\n", RNAME_NETWORK);
@@ -470,7 +469,7 @@ sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *ss
 
 
 void
-sst_router_component_end(FILE *sstfile)
+sst_router_component_end(pwr_method_t power_method, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -479,7 +478,11 @@ sst_router_component_end(FILE *sstfile)
     }
 
     fprintf(sstfile, "            </links>\n");
-    fprintf(sstfile, "        </routermodel>\n");
+    if (power_method == pwrNone)   {
+	fprintf(sstfile, "        </routermodel>\n");
+    } else   {
+	fprintf(sstfile, "        </routermodel_power>\n");
+    }
     fprintf(sstfile, "    </component>\n");
     fprintf(sstfile, "\n");
 
@@ -624,7 +627,7 @@ int wormhole;
     while (next_router(&r, &role, &wormhole))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
-	sst_router_component_start(router_id, 1.0, cname, role, sstfile);
+	sst_router_component_start(router_id, 1.0, cname, role, power_method, sstfile);
 	/*
 	** We have to list the links in order in the params section, so the router
 	** componentn can get the names and create the appropriate links.
@@ -687,7 +690,7 @@ int wormhole;
 	    sst_router_component_link(nvram_link_id, nvram_latency, nvram_link_id, sstfile);
 	}
 
-	sst_router_component_end(sstfile);
+	sst_router_component_end(power_method, sstfile);
     }
 
 }  /* end of sst_routers() */

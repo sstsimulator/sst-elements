@@ -44,8 +44,8 @@ void sst_body_end(FILE *sstfile);
 void sst_body_start(FILE *sstfile);
 
 void sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
-	FILE *sstfile);
-void sst_router_component_end(FILE *sstfile);
+	pwr_method_t power_method, FILE *sstfile);
+void sst_router_component_end(pwr_method_t power_method, FILE *sstfile);
 void sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *sstfile);
 
 void sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
