@@ -36,6 +36,9 @@ using namespace SST;
 #define MAX_LINK_NAME		(16)
 
 
+bool Power::p_hasUpdatedTemp __attribute__((weak));
+
+
 class Routermodel : public IntrospectedComponent {
     public:
         Routermodel(ComponentId_t id, Params_t& params) :
@@ -125,8 +128,7 @@ class Routermodel : public IntrospectedComponent {
 	    // FIXME: I'm not sure this is the right way to do it. The router assumes that
 	    // the time base is 1ns....
 
-	    // for power
-      	    TimeConverter *tc= registerTimeBase(frequency, true);
+      	    tc= registerTimeBase(frequency, true);
 
       	    // for power introspection
       	    if (ifModelPower)   {
@@ -282,18 +284,19 @@ class Routermodel : public IntrospectedComponent {
 
     private:
 
+        Params_t params;
+
         Routermodel(const Routermodel &c);
 	void handle_port_events(Event *, int in_port);
 	void handle_self_events(Event *);
 	Link *initPort(int port, char *link_name);
-
-        Params_t params;
+	std::string frequency;
+	TimeConverter *tc;
 
 	SimTime_t hop_delay;
 	std::string component_name;
 
 	// For power & introspection
-	std::string frequency;
 	std::string pushIntrospector;
   	Pdissipation_t pdata, pstats;
   	Power *power;
