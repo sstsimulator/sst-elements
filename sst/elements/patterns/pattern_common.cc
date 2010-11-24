@@ -135,6 +135,13 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
 void
 Patterns::send(int dest, int len)
 {
+    send(dest, len, 0);
+}  /* end of send() */
+
+
+void
+Patterns::send(SST::SimTime_t start_delay, int dest, int len)
+{
 
 SimTime_t delay;
 
@@ -147,10 +154,10 @@ SimTime_t delay;
 
     if ((my_rank / total_cores) != (dest / total_cores))   {
 	// This message goes off node
-	delay= ((SimTime_t)len * 1000000000) / net_bandwidth;
+	delay= ((SimTime_t)len * 1000000000) / net_bandwidth + start_delay;
     } else   {
 	// This is an intra-node message
-	delay= ((SimTime_t)len * 1000000000) / node_bandwidth;
+	delay= ((SimTime_t)len * 1000000000) / node_bandwidth + start_delay;
     }
     event_send(dest, RECEIVE, delay, len);
 
@@ -203,9 +210,6 @@ int my_router, dest_router;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
-if (delay > 10000000000)   {
-    fprintf(stderr, "Huge delay of %lu in event_send self\n", delay);
-}
 	my_self_link->Send(delay, e);
 	return;
     }
@@ -262,9 +266,6 @@ if (delay > 10000000000)   {
 	// delayed, since they don't really ocur all at exactly the same nano second.
 	// However, since they go out on the same link, the router at the other end
 	// will delay them according to their length and link bandwidth.
-if (delay > 10000000000)   {
-    fprintf(stderr, "Huge delay of %lu in event_send NoC\n", delay);
-}
 	my_NoC_link->Send(delay, e);
 
     } else   {
@@ -308,9 +309,6 @@ if (delay > 10000000000)   {
     }
 #endif  // ROUTE_DEBUG
 
-if (delay > 10000000000)   {
-    fprintf(stderr, "Huge delay of %lu in event_send Net\n", delay);
-}
 	my_net_link->Send(delay, e);
     }
 

@@ -73,6 +73,7 @@ class Patterns   {
 		SST::SimTime_t chckpt_interval, int envelope_size);
 
 	void send(int dest, int len);
+	void send(SST::SimTime_t start_delay, int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
 		uint32_t msg_len= 0);
 	void storage_write(int data_size, pattern_event_t return_event);
