@@ -91,6 +91,8 @@ proc::proc(ComponentId_t idC, Params& paramsC) :
   coherent = 1;
   maxOutstandingSpecReq = 8;
 
+  bool with_nicmodel= false;
+
 #if TIME_MEM
   totalMemReq = 0;
   totalSpecialMemReq = 0;
@@ -132,15 +134,6 @@ proc::proc(ComponentId_t idC, Params& paramsC) :
   // add extra link to advanced memory
   advMem = configureLink("advMem0", "1 Ghz");
 
-  // add links
-//   NICeventHandler = new Event::Handler<proc>
-//     (this, &proc::handle_nic_events);
-
-  // turned off network until we can check for it
-  /*Link *nl = LinkAdd("net0", NICeventHandler);
-  if (nl) netLinks.push_back(nl);*/
-
-
   // find config parameters
   std::string clockSpeed = "1GHz";
   fastTillReset = 0;
@@ -180,6 +173,9 @@ proc::proc(ComponentId_t idC, Params& paramsC) :
     if (!it->first.compare("maxSpecReq"))   {
       sscanf(it->second.c_str(), "%d", &maxOutstandingSpecReq);
     }
+    if (!it->first.compare("with_nicmodel"))   {
+      with_nicmodel= true;
+    }
     ++it;
   }
 
@@ -188,6 +184,18 @@ proc::proc(ComponentId_t idC, Params& paramsC) :
 	   "backend\n");
     exit(-1);
   }
+
+  // add link to network (nicmodel)
+  if (with_nicmodel)   {
+      Link *net;
+      net= configureLink("net0", new Event::Handler<proc> (this, &proc::handle_nic_events));
+      if (net)   {
+	netLinks.push_back(net);
+      } else   {
+	fprintf(stderr, "Can't attach net0!\n");
+      }
+  }
+
 
   // if we are using the simple scalar backend, initialize it
   if (ssBackEnd) {
@@ -599,8 +607,12 @@ bool proc::forwardToNetsimNIC(int call_num, char *params, const size_t params_le
   }
 
   // Send the event to the NIC
-  //CompEvent *e= static_cast<CompEvent *>(event);
-  netLinks[0]->Send(event);
+  if (netLinks.empty())   {
+    fprintf(stderr, "You need to attach a nicmodel and set with_nicmodel in cpu_params in the xml file!\n");
+  } else   {
+    netLinks[0]->Send(event);
+  }
+
   return false;
 }
 
