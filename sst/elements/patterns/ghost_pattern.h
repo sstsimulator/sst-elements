@@ -66,7 +66,7 @@ class Ghost_pattern : public Component {
 	    cores= -1;
 	    chckpt_method= CHCKPT_NONE;
 	    chckpt_interval= 0;
-	    envelope_size= 0;
+	    envelope_size= 64;
 	    chckpt_size= 0;
 	    msg_write_time= 0;
 
@@ -417,7 +417,6 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(node_bandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(compute_time);
 	    ar & BOOST_SERIALIZATION_NVP(done_waiting);
-	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);
 	    ar & BOOST_SERIALIZATION_NVP(application_end_time);
 	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
 	    ar & BOOST_SERIALIZATION_NVP(state);
@@ -435,7 +434,7 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_interval);
 	    ar & BOOST_SERIALIZATION_NVP(chckpt_size);
 	    ar & BOOST_SERIALIZATION_NVP(envelope_size);
-	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(msg_write_time);
 	    ar & BOOST_SERIALIZATION_NVP(num_chckpts);
 	    ar & BOOST_SERIALIZATION_NVP(total_rcvs);
 	    ar & BOOST_SERIALIZATION_NVP(compute_segment_start);

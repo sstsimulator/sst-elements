@@ -39,6 +39,7 @@ static struct option long_options[]=   {
     {"chckpt_interval", 1, NULL, 1001},
     {"envelope_size", 1, NULL, 1002},
     {"power", 1, NULL, 1003},
+    {"msg_len", 1, NULL, 1004},
     {NULL, 0, NULL, 0}
 };
 
@@ -120,11 +121,7 @@ int ssd_write_bw;	/* In bytes per second */
     chckpt_size= core_memory / 5; /* 20% of core memory to checkpoint */
     envelope_size= 64;
 
-
-    /* Assume 2GB of memory per MPI rank. The aquare root of that is */
-    /* the amount of data each node sends to each neighbor per ghost */
-    /* cell (halo) exchange. */
-    exchange_msg_len= 46340;
+    exchange_msg_len= -1;
     pattern_name= NULL;
 
     power_model= "none";
@@ -217,6 +214,13 @@ int ssd_write_bw;	/* In bytes per second */
 	    case 1003:
 		power_model= optarg;
 		break;
+	    case 1004:
+		exchange_msg_len= strtol(optarg, (char **)NULL, 0);
+		if (exchange_msg_len < 1)   {
+		    fprintf(stderr, "--msg_len must be > 0\n");
+		    error= TRUE;
+		}
+		break;
 	    default:
 		error= TRUE;
 		break;
@@ -231,16 +235,39 @@ int ssd_write_bw;	/* In bytes per second */
     if (pattern_name == NULL)   {
 	error= TRUE;
 	fprintf(stderr, "Need a pattern name!\n");
-    }
-
-    if (pattern_name && strcasestr("ghost_pattern", pattern_name) == NULL)   {
-	error= TRUE;
-	fprintf(stderr, "Unknown pattern name!\n");
-	fprintf(stderr, "Must be one of \"ghost_pattern\", or \"\"\n");
     } else   {
-	pattern_name= "ghost_pattern";
-	if (!error)   {
-	    printf("*** Communication pattern is \"%s\"\n", pattern_name);
+	if ((strcasestr("ghost_pattern", pattern_name) == NULL)   &&
+	    (strcasestr("msgrate_pattern", pattern_name) == NULL))   {
+	    error= TRUE;
+	    fprintf(stderr, "Unknown pattern name!\n");
+	    fprintf(stderr, "Must be one of \"ghost_pattern\", or \"msgrate_pattern\"\n");
+
+	} else   {
+
+	    if (strcasestr("ghost_pattern", pattern_name) != NULL)   {
+		pattern_name= "ghost_pattern";
+		/* Assume 2GB of memory per MPI rank. The square root of that is */
+		/* the amount of data each node sends to each neighbor per ghost */
+		/* cell (halo) exchange. */
+		if (exchange_msg_len < 0)   {
+		    /* Use the default */
+		    exchange_msg_len= 46340;
+		}
+
+	    } else if (strcasestr("msgrate_pattern", pattern_name) != NULL)   {
+		pattern_name= "msgrate_pattern";
+		if (exchange_msg_len < 0)   {
+		    /* Use the default */
+		    exchange_msg_len= 0;
+		}
+
+	    } else   {
+		error= TRUE;
+	    }
+
+	    if (!error)   {
+		printf("*** Communication pattern is \"%s\"\n", pattern_name);
+	    }
 	}
     }
 
@@ -385,7 +412,7 @@ int ssd_write_bw;	/* In bytes per second */
     sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores,
 	net_lat, net_bw, node_lat, node_bw,
 	compute, app_time, exchange_msg_len, method, chckpt_interval,
-	envelope_size, chckpt_size);
+	envelope_size, chckpt_size, pattern_name);
     sst_gen_param_end(fp_sst, node_lat, net_lat);
     sst_pwr_param_entries(fp_sst, power_method);
     sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
@@ -462,7 +489,8 @@ usage(char *argv[])
     fprintf(stderr, "   -y dimY               Y dimension of NoC tours\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
-    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost_pattern\n");
+    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate\n");
+    fprintf(stderr, "   --msg_len             Message size. Default is pattern dependent.\n");
     fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");
     fprintf(stderr, "                         uncoordinated, distributed\n");
     fprintf(stderr, "   --chckpt_size         Size of a full checkpoint (in bytes)\n");

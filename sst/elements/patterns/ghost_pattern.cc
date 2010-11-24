@@ -514,7 +514,7 @@ Ghost_pattern::state_WAIT(pattern_event_t event)
 	case RECEIVE:
 	    count_receives();
 
-	    // Fall trhough to check whether we have all four messages and are done waiting
+	    // Fall through to check whether we have all four messages and are done waiting
 
 	case ENTER_WAIT:
 	    if (done_waiting)   {

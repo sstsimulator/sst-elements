@@ -1,4 +1,7 @@
 
+- Is chckpt_size, envelope_size needed in Patterns::init?
+    Maybe add envelope_size automatically to sends?
+
 - Figure out where delays need to be computed
     e.g., where do latencies occur? Calculations? XML file?
     where does bandwidth come into play?

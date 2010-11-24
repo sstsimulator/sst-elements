@@ -6,10 +6,15 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "sst_gen.h"
 #include "gen.h"
 
 #define MAX_ID_LEN		(256)
+
+
+/* Number of messages in the message rate pattern */
+#define MSGRATE_NUM_MSGS	(200)
 
 
 
@@ -49,13 +54,15 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int No
 	int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method,
-	uint64_t chckpt_interval, int envelope_size, int chckpt_size)
+	uint64_t chckpt_interval, int envelope_size, int chckpt_size,
+	char *pattern_name)
 {
 
     if (sstfile == NULL)   {
 	return;
     }
 
+    /* Common parameters */
     fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
     fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
     fprintf(sstfile, "    <NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim);
@@ -65,13 +72,23 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int No
     fprintf(sstfile, "    <net_bandwidth> %lu </net_bandwidth>\n", net_bw);
     fprintf(sstfile, "    <node_latency> %lu </node_latency>\n", node_lat);
     fprintf(sstfile, "    <node_bandwidth> %lu </node_bandwidth>\n", node_bw);
-    fprintf(sstfile, "    <compute_time> %lu </compute_time>\n", compute_time);
-    fprintf(sstfile, "    <application_end_time> %lu </application_end_time>\n", app_time);
+
     fprintf(sstfile, "    <exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
-    fprintf(sstfile, "    <chckpt_method> %s </chckpt_method>\n", method);
-    fprintf(sstfile, "    <chckpt_interval> %lu </chckpt_interval>\n", chckpt_interval);
     fprintf(sstfile, "    <envelope_size> %d </envelope_size>\n", envelope_size);
-    fprintf(sstfile, "    <chckpt_size> %d </chckpt_size>\n", chckpt_size);
+
+
+    /* Pattern specific parameters */
+    if (strcmp("ghost_pattern", pattern_name) == 0)   {
+	fprintf(sstfile, "    <compute_time> %lu </compute_time>\n", compute_time);
+	fprintf(sstfile, "    <application_end_time> %lu </application_end_time>\n", app_time);
+	fprintf(sstfile, "    <chckpt_method> %s </chckpt_method>\n", method);
+	fprintf(sstfile, "    <chckpt_interval> %lu </chckpt_interval>\n", chckpt_interval);
+	fprintf(sstfile, "    <chckpt_size> %d </chckpt_size>\n", chckpt_size);
+    }
+
+    if (strcmp("msgrate_pattern", pattern_name) == 0)   {
+	fprintf(sstfile, "    <num_msgs> %d </num_msgs>\n", MSGRATE_NUM_MSGS);
+    }
 
 }  /* end of sst_gen_param_entries() */
 

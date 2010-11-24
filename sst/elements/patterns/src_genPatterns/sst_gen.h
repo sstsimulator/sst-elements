@@ -34,7 +34,8 @@ void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, i
 	int cores, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method,
-	uint64_t chckpt_interval, int envelope_size, int chckpt_size);
+	uint64_t chckpt_interval, int envelope_size, int chckpt_size,
+	char *pattern_name);
 void sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency);
 
 void sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method);
