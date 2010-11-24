@@ -12,6 +12,7 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
+#include "sst/core/element.h"
 #include <sst/core/cpunicEvent.h>
 #include <assert.h>
 #include "routermodel.h"
@@ -198,13 +199,65 @@ Routermodel::pushData(Cycle_t current)
 
 
 
-extern "C" {
+/*extern "C" {
 Routermodel *
 routermodelAllocComponent(SST::ComponentId_t id,
                           SST::Component::Params_t& params)
 {
     return new Routermodel(id, params);
 }
+}*/
+
+static Component*
+create_routermodel(SST::ComponentId_t id, 
+                  SST::Component::Params_t& params)
+{
+    return new Routermodel( id, params );
 }
+
+static const ElementInfoComponent components1[] = {
+    { "routermodel",
+      "router model without power",
+      NULL,
+      create_routermodel
+    },
+    { NULL, NULL, NULL, NULL }
+};
+
+extern "C" {
+    ElementLibraryInfo routermodel_eli = {
+        "routermodel",
+        "router model without power",
+        components1,
+    };
+}
+
+
+
+static Component*
+create_routermodel_power(SST::ComponentId_t id, 
+                  SST::Component::Params_t& params)
+{
+    return new Routermodel( id, params );
+}
+
+static const ElementInfoComponent components2[] = {
+    { "routermodel_power",
+      "router model with power",
+      NULL,
+      create_routermodel_power
+    },
+    { NULL, NULL, NULL, NULL }
+};
+
+extern "C" {
+    ElementLibraryInfo routermodel_power_eli = {
+        "routermodel_power",
+        "router model with power",
+        components2,
+    };
+}
+
+
 
 BOOST_CLASS_EXPORT(Routermodel)
