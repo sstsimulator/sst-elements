@@ -1855,6 +1855,8 @@ void print_usage(const char* command) {
 }
 
 Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
+  std::string clock_pd;
+
   // The parameters:
   //   log2_row_size:        log_2 of N for an NxN mehs
   //   threads:              number of threads per tile
@@ -1886,12 +1888,13 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
   read_param(params, "net_latency",          net_latency,          5);
   read_param(params, "net_cpp",              net_cpp,              1);
   read_param(params, "kernel_img",        kernel_img,"linux/bzImage");
+  read_param(params, "clock_pd",             clock_pd,       "500ps");
 
   // The simulation won't end until we unregisterExit().
   registerExit();
 
   // Initialize the discrete event simulator.
-  Slide::des_init(this);
+  Slide::des_init(this, clock_pd);
 
   // Initialize our CDomain
   cd = new Qsim::CDomain((1<<log2_row_size)*(1<<log2_row_size)*threads, 

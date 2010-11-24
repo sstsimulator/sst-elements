@@ -98,9 +98,9 @@ namespace Slide {
   } _handleEvent;
 
   // The timebase should be changeable.
-  void des_init(SST::Component *c) {
+  void des_init(SST::Component *c, std::string clock_pd) {
     _sstComponent = c;
-    SST::TimeConverter *tc = c->registerTimeBase("500ps");
+    SST::TimeConverter *tc = c->registerTimeBase(clock_pd);
     _selfLink = c->configureSelfLink("slide_des_link", 
 				     new SST::Event::Handler<_HandleEvent>
 				     (&_handleEvent, &_HandleEvent::handle)
