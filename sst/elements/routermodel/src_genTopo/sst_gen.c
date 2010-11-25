@@ -44,7 +44,7 @@ sst_cpu_param(FILE *sstfile, char *freq, char *exec, int cpu_verbose, int cpu_de
     sst_param_entry(sstfile, "execFile", exec);
     fprintf(sstfile, "    <verbose> %d </verbose>\n", cpu_verbose);
     fprintf(sstfile, "    <debug> %d </debug>\n", cpu_debug);
-    // This tells generic_proc that it has a nic_model attached to it
+    /* This tells generic_proc that it has a nic_model attached to it */
     fprintf(sstfile, "    <with_nicmodel> 1 </with_nicmodel>\n");
     fprintf(sstfile, "</cpu_params>\n");
     fprintf(sstfile, "\n");
