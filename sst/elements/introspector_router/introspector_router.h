@@ -60,7 +60,7 @@ class Introspector_router : public Introspector {
 	    ///registerClock( frequency, new Clock::Handler<Introspector_router>(this, &Introspector_router::mpiCollectInt) );
 	    ///mpionetimehandler = new Event::Handler< Introspector_router >
 	    ///                                    ( this, &Introspector_router::mpiOneTimeCollect );
-
+	    
 	    printf("INTROSPECTOR_ROUTER period: %ld\n",(long int)tc->getFactor());
             _INTROSPECTOR_ROUTER_DBG("Done registering clock\n");
             
@@ -69,52 +69,21 @@ class Introspector_router : public Introspector {
 	    std::pair<bool, int> pint, pdouble;
 	    
 	    //get a list of relevant component. Must be done after all components are created 
-	    MyCompList = getModels(model); 
-	    //std::cout << " introspector_router has MyCompList size = " << MyCompList.size() << std::endl;
-	    for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
-	        i != MyCompList.end(); ++i) {
-     		    // state that we will monitor those components 
-		    // (pass introspector's info to the component)
-     		    monitorComponent(*i);
+	    MyCompList = getModelsByType(model);
 
-		    //check if the component counts the specified int/double data
-		    pint = (*i)->ifMonitorIntData("router_delay");
-		    if(pint.first){		
-			//store pointer to component and the dataID of the data of interest	
-			addToIntDatabase(*i, pint.second); 
-		    }
-		    pint = (*i)->ifMonitorIntData("local_message");
-		    if(pint.first){		
-			addToIntDatabase(*i, pint.second); 
-		    }
-		
-		    pdouble = (*i)->ifMonitorDoubleData("current_power");
-		    if(pdouble.first){		
-			addToDoubleDatabase(*i, pdouble.second); 
-		    }
-		    pdouble = (*i)->ifMonitorDoubleData("leakage_power");
-		    if(pdouble.first){		
-			addToDoubleDatabase(*i, pdouble.second); 
-		    }
-		    pdouble = (*i)->ifMonitorDoubleData("runtime_power");
-		    if(pdouble.first){		
-			addToDoubleDatabase(*i, pdouble.second); 
-		    }
-		    pdouble = (*i)->ifMonitorDoubleData("total_power");
-		    if(pdouble.first){		
-			addToDoubleDatabase(*i, pdouble.second); 
-		    }
-		    pdouble = (*i)->ifMonitorDoubleData("peak_power");
-		    if(pdouble.first){		
-			addToDoubleDatabase(*i, pdouble.second); 
-		    }
-		
-	     }
 	    ///oneTimeCollect(2000000, mpionetimehandler);
             _INTROSPECTOR_ROUTER_DBG("\n");
             return 0;
         }
         int Finish() {
+	    triggeredUpdate();
+	    std::cout << "introspector_router: TOTAL router delay = " << totalRouterDelay << std::endl; 
+	    std::cout << "introspector_router: # intra-core messages = " << numLocalMessage << std::endl;
+	    std::cout << "introspector_router: TOTAL current power = " << currentPower << std::endl; 
+	    std::cout << "introspector_router: TOTAL leakage power = " << leakagePower << std::endl;
+	    std::cout << "introspector_router: TOTAL runtime power = " << runtimePower << std::endl;
+	    std::cout << "introspector_router: TOTAL total power = " << totalPower << std::endl;
+	    std::cout << "introspector_router: peak power = " << peakPower << std::endl;
             _INTROSPECTOR_ROUTER_DBG("\n");
             return 0;
         }
@@ -128,6 +97,7 @@ class Introspector_router : public Introspector {
         bool pullData( Cycle_t );
 	bool mpiCollectInt( Cycle_t );
 	void mpiOneTimeCollect(Event* e);
+	bool triggeredUpdate();
 
 	Event::Handler< Introspector_router > *mpionetimehandler;
         Component::Params_t    params;        

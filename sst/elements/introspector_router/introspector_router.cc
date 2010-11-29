@@ -21,7 +21,7 @@
 bool Introspector_router::pullData( Cycle_t current )
 {
     //_INTROSPECTOR_DBG("id=%lu currentCycle=%lu \n", Id(), current );
-	IntrospectedComponent *c;
+	/*IntrospectedComponent *c;
   	totalRouterDelay = 0;
 	currentPower = leakagePower = runtimePower = totalPower = peakPower = 0;
 
@@ -75,9 +75,35 @@ bool Introspector_router::pullData( Cycle_t current )
 	std::cout << "introspector_router: @ cycle " << current << ", TOTAL leakage power = " << leakagePower << std::endl;
 	std::cout << "introspector_router: @ cycle " << current << ", TOTAL runtime power = " << runtimePower << std::endl;
 	std::cout << "introspector_router: @ cycle " << current << ", TOTAL total power = " << totalPower << std::endl;
-	std::cout << "introspector_router: @ cycle " << current << ", peak power = " << peakPower << std::endl;
+	std::cout << "introspector_router: @ cycle " << current << ", peak power = " << peakPower << std::endl;*/
 
 	return false;
+}
+
+
+bool Introspector_router::triggeredUpdate()
+{
+	for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
+	     i != MyCompList.end(); ++i) {
+		std::cout << "Pull data from component ID " << (*i)->getId() << " and router delay = " << getData<SimTime_t>(*i, "router_delay") << std::endl;
+		totalRouterDelay += getData<SimTime_t>(*i, "router_delay");
+		std::cout << "Pull data from component ID " << (*i)->getId() << " and # local message = " << getData<uint64_t>(*i, "local_message") << std::endl;
+		numLocalMessage += getData<uint64_t>(*i, "local_message");
+		std::cout << "Pull data of component ID " << (*i)->getId() << " and current power = " << (double)median(getData<I>(*i, "current_power") ) << std::endl;
+		currentPower += (double)median(getData<I>(*i, "current_power") );
+		std::cout << "Pull data of component ID " << (*i)->getId() << " and leakage power = " << (double)median(getData<I>(*i, "leakage_power") ) << std::endl;
+		leakagePower += (double)median(getData<I>(*i, "leakage_power") );
+		std::cout << "Pull data of component ID " << (*i)->getId() << " and runtime power = " << (double)median(getData<I>(*i, "runtime_power") ) << std::endl;
+		runtimePower += (double)median(getData<I>(*i, "runtime_power") );
+		std::cout << "Pull data of component ID " << (*i)->getId() << " and total power = " << (double)median(getData<I>(*i, "total_power") ) << std::endl;
+		totalPower += (double)median(getData<I>(*i, "total_power") );
+
+		if (peakPower < (double)median(getData<I>(*i, "peak_power") ))  
+		    peakPower = (double)median(getData<I>(*i, "peak_power") );
+		std::cout << "Pull data of component ID " << (*i)->getId() << " and peak power = " << peakPower << std::endl;
+		
+	    }
+
 }
 
 
