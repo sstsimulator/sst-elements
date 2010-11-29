@@ -58,16 +58,10 @@ class Cpu_data : public IntrospectedComponent {
             } 
             
             mem = configureLink( "MEM" );
-//             handler = new EventHandler< Cpu_data, bool, Cycle_t >
-//                                                 ( this, &Cpu_data::clock );
-// 	    handlerPush = new EventHandler< Cpu_data, bool, Cycle_t >
-//                                                 ( this, &Cpu_data::pushData );
 
-//             TimeConverter* tc = registerClock( frequency, handler );
-// 	    registerClock( frequency, handlerPush );
 
 	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Cpu_data>(this, &Cpu_data::clock) );
- 	    registerClock( frequency, new Clock::Handler<Cpu_data>( this, &Cpu_data::pushData) );
+ 	    ///registerClock( frequency, new Clock::Handler<Cpu_data>( this, &Cpu_data::pushData) );
 	    mem->setDefaultTimeBase(tc);
 
 	    printf("CPU_DATA period: %ld\n", (long int)tc->getFactor());
@@ -79,16 +73,18 @@ class Cpu_data : public IntrospectedComponent {
 	    num_branch_write = 0;
 	    num_RAS_read = 0;
 	    num_RAS_write = 0;
-
-	    registerMonitorInt("il1_read");
-	    registerMonitorInt("branch_read");
-	    registerMonitorInt("RAS_read");
-	    registerMonitorInt("RAS_write");
-	    registerMonitorDouble("core_temperature");
+	    if (getId() == 3)
+        	mycore_temperature = 360.5;
+    	    else
+		mycore_temperature = 300.1;
 	    
 
         }
         int Setup() {   
+	   registerIntrospector(pushIntrospector);
+	   registerMonitor("totalCounts", new MonitorFunction<Cpu_data, uint64_t>(this, &Cpu_data::someCalculation));
+	   registerMonitor("temperature", new MonitorFunction<Cpu_data, double>(this, &Cpu_data::updateTemperature));
+	   registerMonitor("generalCounts", new MonitorPointer<int>(&counts));
            return 0;
         }
         int Finish() {
@@ -97,51 +93,7 @@ class Cpu_data : public IntrospectedComponent {
             return 0;
         }
 	
-	uint64_t getIntData(int dataID, int index=0)
-	{ 
-	  switch(dataID)
-	  {
-	    case 1:
-	    //branch_read
-		return (num_branch_read);
-		break;
-	    case 2: 
-	    //branch_write
-		return (num_branch_write);
-		break;
-	    case 3: 
-	    //RAS_read 
-		return (num_RAS_read);
-		break;
-	    case 4:
-	    //RAS_write
-		return (num_RAS_write);
-		break;
-	    case 5:
-	    //il1_read
-		return (num_il1_read);
-		break;
-	    default:
-		return (0);
-		break;	
-	  }
-	}
 	
-	double getDoubleData(int dataID, int index=0)
-	{ 
-	  switch(dataID)
-	  {
-	    case 0:
-	    //core_temperature
-		return (mycore_temperature);
-		break;
-	    default:
-		return (0);
-		break;	
-	  }
-	}
-	
-
     public:
 	int counts;
 	double mycore_temperature;
@@ -157,6 +109,8 @@ class Cpu_data : public IntrospectedComponent {
 
         bool clock( Cycle_t );
 	bool pushData( Cycle_t);
+	uint64_t someCalculation();
+	double updateTemperature();
 
         Link*       mem;
         state_t     state;

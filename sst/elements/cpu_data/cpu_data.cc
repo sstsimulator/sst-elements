@@ -25,10 +25,6 @@ bool Cpu_data::clock( Cycle_t current)
 
     if (current == 5000 ) unregisterExit();
 
-    if (getId() == 2)
-        mycore_temperature = 360.5;
-    else
-	mycore_temperature = 300.1;
 
     if ( state == SEND ) { 
         if ( ! event ) event = new MyMemEvent();
@@ -56,7 +52,7 @@ bool Cpu_data::clock( Cycle_t current)
 
 
             state = SEND;
-	    if (getId() == 2){
+	    if (getId() == 3){
 	       counts++;
 	       num_il1_read++;
 	       num_branch_read = num_branch_read + 2;
@@ -82,12 +78,19 @@ bool Cpu_data::pushData( Cycle_t current)
 	return false;
 }
 
+uint64_t Cpu_data::someCalculation()
+{
+	return (num_il1_read + num_branch_read + num_RAS_read);
+}
 
-
-
-
-
-
+double Cpu_data::updateTemperature()
+{
+	if (getId() == 3)
+            mycore_temperature += 1.5;
+        else
+	    mycore_temperature += 1.0;
+	return (mycore_temperature);
+}
 
 extern "C" {
 Cpu_data* cpu_dataAllocComponent( SST::ComponentId_t id,
