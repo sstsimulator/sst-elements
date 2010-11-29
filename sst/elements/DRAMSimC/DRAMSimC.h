@@ -48,7 +48,7 @@ class DRAMSimC : public IntrospectedComponent {
 
         void readData(uint id, uint64_t addr, uint64_t clockcycle);
         void writeData(uint id, uint64_t addr, uint64_t clockcycle);
-	uint64_t getIntData(int dataID, int index);
+	///uint64_t getIntData(int dataID, int index);
 
         std::deque<Transaction> m_transQ;
         MemorySystem*           m_memorySystem;

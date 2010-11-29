@@ -46,11 +46,6 @@
     <model>cpu_data</model>
 </intro1_params>
 
-<!-- reference definition for introspector 2-->
-<intro2_params>
-    <period>50ns</period>
-    <model>cpu_data</model>
-</intro2_params>
 
 
 
@@ -63,13 +58,6 @@
 		</introspector_cpu>
 	</introspector>
 
-	<introspector id="TempIntrospector">	
-		<introspector_cpuTemperature>
-            <params>
-                <params reference=intro2_params />
-            </params>
-		</introspector_cpuTemperature>
-	</introspector>
 	
 	<component id="cpu1" weight=1.0 >	
 		<cpu_data>

@@ -102,10 +102,10 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     m_memorySystem->RegisterCallbacks( readDataCB,writeDataCB, NULL);
 
     //make the following energy information monitored by introspector
-    registerMonitorInt("dram_backgroundEnergy");
+    /*registerMonitorInt("dram_backgroundEnergy");
     registerMonitorInt("dram_burstEnergy");
     registerMonitorInt("dram_actpreEnergy");
-    registerMonitorInt("dram_refreshEnergy");
+    registerMonitorInt("dram_refreshEnergy");*/
 }
 
 int DRAMSimC::Finish() 
@@ -214,7 +214,7 @@ bool DRAMSimC::clock( Cycle_t current )
     return false;
 }
 
-uint64_t DRAMSimC::getIntData(int dataID, int index)
+/*uint64_t DRAMSimC::getIntData(int dataID, int index)
 { 
 	vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
   	assert( index <= v.size());
@@ -237,7 +237,7 @@ uint64_t DRAMSimC::getIntData(int dataID, int index)
 		return (0);
 		break;	
 	}
-}
+}*/
 
 extern "C" {
 DRAMSimC* DRAMSimCAllocComponent( SST::ComponentId_t id,  
