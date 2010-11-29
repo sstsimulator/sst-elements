@@ -18,30 +18,6 @@
 #include "sst/core/element.h"
 
 
-bool Introspector_cpu::pullData( Cycle_t current )
-{
-    //_INTROSPECTOR_DBG("id=%lu currentCycle=%lu \n", Id(), current );
-	IntrospectedComponent *c;
-
-        printf("introspector_cpu pulls data @ cycle %ld\n", (long int)current ); //current here specifies it's the #th call
-	for( Database_t::iterator iter = DatabaseInt.begin();
-                            iter != DatabaseInt.end(); ++iter )
-    	{
-	        c = iter->second;
-                std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getIntData(iter->first) << std::endl;
-	        intData = c->getIntData(iter->first);
-	}
-	for( Database_t::iterator iter = DatabaseDouble.begin();
-                            iter != DatabaseDouble.end(); ++iter )
-    	{
-            c = iter->second;
-            std::cout << "Pull data of component ID " << c->getId() << " with dataID = " << iter->first << " and data value = " << c->getDoubleData(iter->first) << std::endl;
-	    
-	}
-
-	return false;
-}
-
 
 bool Introspector_cpu::mpiCollectInt( Cycle_t current )
 {
@@ -106,6 +82,17 @@ void Introspector_cpu::mpiOneTimeCollect( Event* e)
 	return;
 }
 
+bool Introspector_cpu::triggeredUpdate()
+{
+	for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
+	     i != MyCompList.end(); ++i) {
+		std::cout << "Pull data from component ID " << (*i)->getId() << " and total counts = " << getData<uint64_t>(*i, "totalCounts") << std::endl;
+		std::cout << "Pull data from component ID " << (*i)->getId() << " and temperature = " << getData<double>(*i, "temperature") << std::endl;
+		std::cout << "Pull data from component ID " << (*i)->getId() << " and general counts = " << getData<int>(*i, "generalCounts") << std::endl;
+	        ////intData = getData(*i, "totalCounts");
+	    }
+
+}
 
 static Introspector*
 create_introspector_cpu(SST::Component::Params_t &params)

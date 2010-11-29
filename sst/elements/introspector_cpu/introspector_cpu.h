@@ -52,13 +52,13 @@ class Introspector_cpu : public Introspector {
             intData = 0;
             _INTROSPECTOR_CPU_DBG("-->frequency=%s\n",frequency.c_str());
 
-	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::pullData) );
+	    ///TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::pullData) );
 
-	    registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );
-	    mpionetimehandler = new Event::Handler< Introspector_cpu >
-	                                        ( this, &Introspector_cpu::mpiOneTimeCollect );
+	    ///registerClock( frequency, new Clock::Handler<Introspector_cpu>(this, &Introspector_cpu::mpiCollectInt) );
+	    ///mpionetimehandler = new Event::Handler< Introspector_cpu >
+	                                       /// ( this, &Introspector_cpu::mpiOneTimeCollect );
 
-	    printf("INTROSPECTOR_CPU period: %ld\n",(long int)tc->getFactor());
+	    ///printf("INTROSPECTOR_CPU period: %ld\n",(long int)tc->getFactor());
             _INTROSPECTOR_CPU_DBG("Done registering clock\n");
             
         }
@@ -66,60 +66,16 @@ class Introspector_cpu : public Introspector {
 	    std::pair<bool, int> pint;
 	    
 	    //get a list of relevant component. Must be done after all components are created 
-	    MyCompList = getModels(model); 
+	    MyCompList = getModelsByType(model); 
 	    //std::cout << " introspector_cpu has MyCompList size = " << MyCompList.size() << std::endl;
-	    for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
-	        i != MyCompList.end(); ++i) {
-     		    // state that we will monitor those components 
-		    // (pass introspector's info to the component)
-     		    monitorComponent(*i);
-
-		    //check if the component counts the specified int/double data
-		    //pint = (*i)->ifMonitorIntData("branch_read");
-		    //pint = (*i)->ifMonitorIntData("branch_write");
-		    //pint = (*i)->ifMonitorIntData("RAS_read");
-		    //pint = (*i)->ifMonitorIntData("RAS_write");
-		    pint = (*i)->ifMonitorIntData("il1_read");
-		    //pdouble = (*i)->ifMonitorDoubleData("CPUarea");
-
-		    if(pint.first){
-			//store pointer to component and the dataID of the data of interest
-			//std::cout << "introspector_cpu is calling addToIntDatabase." << std::endl;
-			addToIntDatabase(*i, pint.second);
-			//std::cout << " introspector_cpu now has intdatabase size = " << DatabaseInt.size() << std::endl;
-		    }
-		    pint = (*i)->ifMonitorIntData("dram_backgroundEnergy");
-		    if(pint.first){			
-			addToIntDatabase(*i, pint.second); 
-		    }
-		
-		    pint = (*i)->ifMonitorIntData("dram_burstEnergy");
-		    if(pint.first){			
-			addToIntDatabase(*i, pint.second);  
-		    }
-		
-		    pint = (*i)->ifMonitorIntData("dram_actpreEnergy");
-		    if(pint.first){			
-			addToIntDatabase(*i, pint.second); 
-		    }
-		
-		    pint = (*i)->ifMonitorIntData("dram_refreshEnergy");
-		    if(pint.first){			
-			addToIntDatabase(*i, pint.second); 
-		    }
-		
-		    //if(pdouble.first){
-		        //store pointer to component and the dataID of the data of interest
-			//addToDoubleDatabase(*i, pdouble.second);
-		    //}
-
-
-	     }
-	    oneTimeCollect(2000000, mpionetimehandler);
+	   
+	    ///oneTimeCollect(2000000, mpionetimehandler);
+	     
             _INTROSPECTOR_CPU_DBG("\n");
             return 0;
         }
         int Finish() {
+	    triggeredUpdate();
             _INTROSPECTOR_CPU_DBG("\n");
             return 0;
         }
@@ -133,6 +89,7 @@ class Introspector_cpu : public Introspector {
         bool pullData( Cycle_t );
 	bool mpiCollectInt( Cycle_t );
 	void mpiOneTimeCollect(Event* e);
+	bool triggeredUpdate();
 
 	Event::Handler< Introspector_cpu > *mpionetimehandler;
         Component::Params_t    params;        
