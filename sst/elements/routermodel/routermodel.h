@@ -134,16 +134,6 @@ class Routermodel : public IntrospectedComponent {
       	    if (ifModelPower)   {
 		registerClock(frequency, new Clock::Handler<Routermodel>
 		    (this, &Routermodel::pushData));
-
-		registerMonitorDouble("current_power");
-		registerMonitorDouble("leakage_power");
-		registerMonitorDouble("runtime_power");
-		registerMonitorDouble("total_power");
-		registerMonitorDouble("peak_power");
-
-		//for introspection
-		registerMonitorInt("router_delay");
-		registerMonitorInt("local_message");
 	    }
 
 
@@ -215,6 +205,15 @@ class Routermodel : public IntrospectedComponent {
 
 		//reset all counts to zero
 		power->resetCounts(&mycounts);
+
+		registerIntrospector(pushIntrospector);
+	   	registerMonitor("router_delay", new MonitorPointer<SimTime_t>(&router_totaldelay));
+	   	registerMonitor("local_message", new MonitorPointer<uint64_t>(&num_local_message));
+		registerMonitor("current_power", new MonitorPointer<I>(&pdata.currentPower));
+		registerMonitor("leakage_power", new MonitorPointer<I>(&pdata.leakagePower));
+		registerMonitor("runtime_power", new MonitorPointer<I>(&pdata.runtimeDynamicPower));
+		registerMonitor("total_power", new MonitorPointer<I>(&pdata.totalEnergy));
+		registerMonitor("peak_power", new MonitorPointer<I>(&pdata.peak));
 	    }
 	    return 0;
 	}
@@ -231,56 +230,7 @@ class Routermodel : public IntrospectedComponent {
 	}
 
 
-	uint64_t
-	getIntData(int dataID, int index=0)
-	{
-	    switch(dataID)   {
-		case router_delay:
-		    return ((uint64_t)router_totaldelay);
-		    break;
-
-		case local_message:
-		    return ( num_local_message);
-		    break;
-
-		default:
-		    return 0;
-		    break;
-	      }
-	}
-
-
-	double
-	getDoubleData(int dataID, int index=0)
-	{
-	    switch(dataID)   {
-		case current_power:
-		    return ((double)median(pdata.currentPower));
-		    break;
-
-		case leakage_power:
-		    return ((double)median(pdata.leakagePower));
-		    break;
-
-		case runtime_power:
-		    return ((double)median(pdata.runtimeDynamicPower));
-		    break;
-
-		case total_power:
-		    return ((double)median(pdata.totalEnergy));
-		    break;
-
-		case peak_power:
-		    return ((double)median(pdata.peak));
-		    break;
-
-		default:
-		    return 0;
-		    break;
-	      }
-	}
-
-
+	
 
     private:
 
