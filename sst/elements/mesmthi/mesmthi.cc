@@ -255,7 +255,8 @@ public:
     l1i(this, BPB_LOG2, I_WAYS, I_SETS_LOG2), 
     l1d(this, BPB_LOG2, D_WAYS, D_SETS_LOG2), 
     l2u(this, BPB_LOG2, L2_WAYS, L2_SETS_LOG2),
-    bus_transfers(0), bus_requests(0), whohas()
+    instructions(0), bus_transfers(0), bus_requests(0), 
+    dir_reads(0), dir_writes(0), whohas()
   {
     DBG << "Constructing Tile.\n";
 
@@ -264,6 +265,8 @@ public:
     setname << "T(" << here_x << ", " << here_y << ")";
     register_counter(setname.str(), "Bus Transfers", bus_transfers);
     register_counter(setname.str(), "Instructions",  instructions);
+    register_counter(setname.str(), "Directory Reads", dir_reads);
+    register_counter(setname.str(), "Directory Writes", dir_writes);
 
     register_counter(setname.str(), "L1I Reads",  l1i.reads);
     register_counter(setname.str(), "L1I Writes", l1i.writes);
@@ -309,6 +312,9 @@ public:
   uint64_t instructions;  // # Instructions executed.
   uint64_t bus_transfers; // # Lines transferred over the bus.
   uint64_t bus_requests;  // # requests (just address and req. type)
+
+  uint64_t dir_reads;
+  uint64_t dir_writes;
 
   uint64_t packets_sent;
   uint64_t packets_total;
@@ -720,8 +726,8 @@ public:
 
    Tile *tile_n, *tile_e, *tile_s, *tile_w;
 
-   // Circumvent the inherent bias from using the modulo operator. Only use this
-   // for numbers reasonably smaller than RAND_MAX.
+   // Circumvent the inherent bias from using the modulo operator. Only use 
+   // thisfor numbers much smaller than RAND_MAX.
    unsigned unbiased_rand (unsigned max) {
      int r = rand();
      double u = r/((double)RAND_MAX+1);
@@ -790,6 +796,7 @@ public:
 		 << p.x_src << ", " << p.y_src << ")\n";
 	   // If we're getting a WRITE_S from a now invalid source, send a
 	   // FAIL_RESP.
+           tile->dir_reads++;
 	   if (tile->directory[p.addr].present.find(
 		 pair<unsigned, unsigned>(p.x_src, p.y_src)
 	       ) == tile->directory[p.addr].present.end()) {
@@ -808,11 +815,13 @@ public:
 	   } else {
 	     // Make a copy of the present bitmap.
 	     inv_set = tile->directory[p.addr].present;
+             tile->dir_reads++;
 
 	     // Make the present bitmap contain only the requestor.
 	     tile->directory[p.addr].present.clear();
 	     tile->directory[p.addr].present.insert(pair<unsigned, unsigned>
 						      (p.x_src, p.y_src));
+             tile->dir_writes++;
 
 	     // Broadcast invalidate to other owners.
 	     inv_set.erase(pair<unsigned, unsigned>(p.x_src, p.y_src));
@@ -836,6 +845,8 @@ public:
 	   }
 	 } else if (p.type == WRITE_I) {
 	   DBGTR << "WRITE_I(0x" << hex << p.addr << ")\n";
+           tile->dir_reads++;
+           tile->dir_writes++;
 	   if (tile->directory.find(p.addr) == tile->directory.end()) {
 	     tile->directory[p.addr];
 	     tile->directory[p.addr].present.insert(pair<unsigned, unsigned>
@@ -882,7 +893,8 @@ public:
 
 	 } else if (p.type == READ_I) {
 	   DBGTR << "READ_I(0x" << hex << p.addr << ")\n";
-
+           tile->dir_reads++;
+           tile->dir_writes++;
 	   // If we can, send a C_REQ to a random tile that has this line.
 	   if (tile->directory.find(p.addr) != tile->directory.end()) {
 	     // Send a C_REQ to a random other tile that has this line.
@@ -982,6 +994,8 @@ public:
 
 	 } else if (p.type == CLEAR_P) {
 	   DBGTR << "CLEAR_P(0x" << hex << p.addr << ")\n";
+           tile->dir_reads++;
+	   tile->dir_writes++;
 	   // Erase the line from the bitmap.
 	   if (tile->directory.find(p.addr) != tile->directory.end()) {
 	     tile->directory[p.addr].present.erase(pair<unsigned, unsigned>(
@@ -1856,7 +1870,6 @@ void print_usage(const char* command) {
 
 Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
   std::string clock_pd;
-
   // The parameters:
   //   log2_row_size:        log_2 of N for an NxN mehs
   //   threads:              number of threads per tile
@@ -1887,8 +1900,8 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
   read_param(params, "paddr_bits",           paddr_bits,          32);
   read_param(params, "net_latency",          net_latency,          5);
   read_param(params, "net_cpp",              net_cpp,              1);
-  read_param(params, "kernel_img",        kernel_img,"linux/bzImage");
   read_param(params, "clock_pd",             clock_pd,       "500ps");
+  read_param(params, "kernel_img",        kernel_img,"linux/bzImage");
 
   // The simulation won't end until we unregisterExit().
   registerExit();
