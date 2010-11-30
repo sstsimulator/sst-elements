@@ -49,6 +49,7 @@ portals::portals(trig_cpu* my_cpu) {
 
     cpu = my_cpu;
     putv_active = false;
+    currently_coalescing = false;
 }
 
 
