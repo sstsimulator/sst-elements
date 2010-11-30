@@ -13,6 +13,7 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <sst/core/cpunicEvent.h>
+#include <queue>
 #include <assert.h>
 #include "msgrate_pattern.h"
 #include "pattern_common.h"
@@ -32,7 +33,7 @@ pattern_event_t event;
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     event= (pattern_event_t)e->GetRoutine();
 
-    if (application_done)   {
+    if (application_done && (state == DONE))   {
 	_MSGRATE_PATTERN_DBG(0, "[%3d] There should be no more events! (%d)\n",
 	    my_rank, event);
 	return;
@@ -43,13 +44,19 @@ pattern_event_t event;
 
     switch (state)   {
 	case INIT:
-	    state_INIT(event);
+	    state_INIT(event, e);
 	    break;
 	case SENDING:
 	    state_SENDING(event);
 	    break;
 	case WAITING:
-	    state_WAITING(event);
+	    state_WAITING(event, e);
+	    break;
+	case BCAST:
+	    state_BCAST(event, e);
+	    break;
+	case REDUCE:
+	    state_REDUCE(event, e);
 	    break;
 	case DONE:
 	    state_DONE(event);
@@ -58,7 +65,7 @@ pattern_event_t event;
 
     delete(e);
 
-    if (application_done)   {
+    if (application_done && (state == DONE))   {
 	if (my_rank >= nranks / 2)   {
 	    if (rcv_cnt != num_msgs)   {
 		printf("ERROR: Rank %d received %d messages instead of %d\n",
@@ -185,7 +192,7 @@ BOOST_CLASS_EXPORT(Msgrate_pattern)
 // events.
 // INIT --> COMPUTE on START event
 void
-Msgrate_pattern::state_INIT(pattern_event_t event)
+Msgrate_pattern::state_INIT(pattern_event_t event, CPUNicEvent *e)
 {
 
     switch (event)   {
@@ -199,7 +206,7 @@ Msgrate_pattern::state_INIT(pattern_event_t event)
 		state_SENDING(event);
 	    } else   {
 		state= WAITING;
-		state_WAITING(event);
+		state_WAITING(event, e);
 	    }
 	    break;
 
@@ -210,6 +217,8 @@ Msgrate_pattern::state_INIT(pattern_event_t event)
 	case LOG_MSG_DONE:
 	case ENV_LOG_DONE:
 	case ENTER_WAIT:
+	case BCAST_DATA:
+	case REDUCE_DATA:
 	case BIT_BUCKET_WRITE_START:
 	case BIT_BUCKET_WRITE_DONE:
 	case BIT_BUCKET_READ_START:
@@ -227,6 +236,7 @@ Msgrate_pattern::state_SENDING(pattern_event_t event)
 {
 
 SimTime_t delay;
+int value;
 
 
     switch (event)   {
@@ -237,6 +247,22 @@ SimTime_t delay;
 		delay += SEND_DELAY;
 	    }
 	    application_done= true;
+
+	    // Start the reduce
+	    state= REDUCE;
+	    value= 44;
+	    if (my_rank >= nranks / 2)   {
+		// If I'm a leaf, send my data
+		if (parent >= 0)   {
+		    common->sendOB(parent, REDUCE_DATA, value);
+		    fprintf(stderr, "[%2d} Start leaf reduce, value %d to parent %d\n", my_rank, value, parent);
+		}
+		state= BCAST;
+	    } else   {
+		// Otherwise save it for later
+		reduce_queue.push(value);
+		fprintf(stderr, "[%2d} Push reduce, value %d\n", my_rank, value);
+	    }
 	    break;
 
 	case COMPUTE_DONE:
@@ -246,6 +272,8 @@ SimTime_t delay;
 	case LOG_MSG_DONE:
 	case ENV_LOG_DONE:
 	case ENTER_WAIT:
+	case BCAST_DATA:
+	case REDUCE_DATA:
 	case BIT_BUCKET_WRITE_START:
 	case BIT_BUCKET_WRITE_DONE:
 	case BIT_BUCKET_READ_START:
@@ -259,8 +287,15 @@ SimTime_t delay;
 
 
 void
-Msgrate_pattern::state_WAITING(pattern_event_t event)
+Msgrate_pattern::state_WAITING(pattern_event_t event, CPUNicEvent *e)
 {
+
+int value;
+int value_len;
+unsigned int leaves;
+
+
+
 
     switch (event)   {
 	case START:
@@ -273,10 +308,149 @@ Msgrate_pattern::state_WAITING(pattern_event_t event)
 	    if (done_waiting)   {
 		msg_wait_time= getCurrentSimTime() - msg_wait_time_start;
 		application_done= true;
-		state= DONE;
+
+		// Start the reduce
+		state= REDUCE;
+		value= 33;
+		if (my_rank >= nranks / 2)   {
+		    // If I'm a leaf, send my data
+		    if (parent >= 0)   {
+			common->sendOB(parent, REDUCE_DATA, value);
+			fprintf(stderr, "[%2d} Start leaf reduce, value %d to parent %d\n", my_rank, value, parent);
+		    }
+		    state= BCAST;
+		} else   {
+		    // Otherwise save it for later
+		    fprintf(stderr, "[%2d} Push reduce, value %d\n", my_rank, value);
+		    reduce_queue.push(value);
+		}
 	    }
 	    break;
 
+	case REDUCE_DATA:
+	    // Extract the reduce data and push it onto our queue
+	    value_len= sizeof(value);
+	    e->DetachPayload(&value, &value_len);
+	    reduce_queue.push(value);
+	    fprintf(stderr, "[%2d} Got reduce value %d in wait\n", my_rank, value);
+
+	    // Do I have one or two children?
+	    if (nranks >= ((my_rank + 1) * 2))    {
+		leaves= 2;
+	    } else   {
+		// I wouldn't be here, if I had no children
+		leaves= 1;
+	    }
+
+	    if (reduce_queue.size() >= (leaves + 1))   {
+		// We got it all. Add it up and send it to the parent
+		value= reduce_queue.front();
+		reduce_queue.pop();
+		value= value + reduce_queue.front();
+		reduce_queue.pop();
+		if (!reduce_queue.empty())   {
+		    value= value + reduce_queue.front();
+		    reduce_queue.pop();
+		}
+
+		// Queue should be empty now
+		assert(reduce_queue.empty());
+
+		// Send result up
+		if (parent >= 0)   {
+		    fprintf(stderr, "[%2d} Send reduce value %d to parent %d\n", my_rank, value, parent);
+		    common->sendOB(parent, REDUCE_DATA, value);
+		}
+	    }
+	    break;
+
+	case COMPUTE_DONE:
+	case CHCKPT_DONE:
+	case FAIL:
+	case LOG_MSG_DONE:
+	case ENV_LOG_DONE:
+	case ENTER_WAIT:
+	case BCAST_DATA:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_WAITING()
+
+
+
+void
+Msgrate_pattern::state_REDUCE(pattern_event_t event, CPUNicEvent *e)
+{
+
+int value;
+int value_len;
+unsigned int leaves;
+
+
+    switch (event)   {
+	case REDUCE_DATA:
+	    // Extract the reduce data and push it onto our queue
+	    value_len= sizeof(value);
+	    e->DetachPayload(&value, &value_len);
+	    reduce_queue.push(value);
+	    fprintf(stderr, "[%2d} Got reduce value %d in reduce\n", my_rank, value);
+
+	    // Do I have one or two children?
+	    if (nranks > ((my_rank + 1) * 2))    {
+		leaves= 2;
+	    } else   {
+		// I wouldn't be here, if I had no children
+		leaves= 1;
+	    }
+	    fprintf(stderr, "[%2d} state_REDUCE() %d leaves, size %d\n", my_rank, leaves, reduce_queue.size());
+
+	    if (reduce_queue.size() >= (leaves + 1))   {
+		// We got it all. Add it up and send it to the parent
+		value= reduce_queue.front();
+		reduce_queue.pop();
+		value= value + reduce_queue.front();
+		reduce_queue.pop();
+		if (!reduce_queue.empty())   {
+		    value= value + reduce_queue.front();
+		    reduce_queue.pop();
+		}
+
+		// Queue should be empty now
+		assert(reduce_queue.empty());
+
+		// Send result up
+		fprintf(stderr, "[%2d} Send reduce value %d to parent %d\n", my_rank, value, parent);
+		if (parent >= 0)   {
+		    common->sendOB(parent, REDUCE_DATA, value);
+		}
+
+		// Then enter the broadcast
+		state= BCAST;
+
+		// If I'm the root, initiate the broadcast
+		if (my_rank == 0)   {
+		    fprintf(stderr, "[%2d} Doing bcast (root) of value %d\n", my_rank, value);
+		    if (left >= 0)   {
+			common->sendOB(left, BCAST_DATA, value);
+		    }
+		    if (right >= 0)   {
+			common->sendOB(right, BCAST_DATA, value);
+		    }
+		    bcast_done= true;
+		    state= DONE;
+		}
+	    }
+	    fprintf(stderr, "[%2d} state_REDUCE() done with this REDUCE_DATA\n", my_rank);
+	    break;
+
+	case BCAST_DATA:
+	case RECEIVE:
+	case START:
 	case COMPUTE_DONE:
 	case CHCKPT_DONE:
 	case FAIL:
@@ -291,7 +465,56 @@ Msgrate_pattern::state_WAITING(pattern_event_t event)
 	    break;
     }
 
-}  // end of state_WAITING()
+}  // end of state_REDUCE()
+
+
+
+void
+Msgrate_pattern::state_BCAST(pattern_event_t event, CPUNicEvent *e)
+{
+
+int value;
+int value_len;
+
+
+    switch (event)   {
+	case BCAST_DATA:
+	    // Extract data for our use
+	    value_len= sizeof(value);
+	    e->DetachPayload(&value, &value_len);
+	    fprintf(stderr, "[%2d} Doing bcast of value %d\n", my_rank, value);
+
+	    if (left >= 0)   {
+		common->sendOB(left, BCAST_DATA, value);
+	    }
+	    if (right >= 0)   {
+		common->sendOB(right, BCAST_DATA, value);
+	    }
+	    state= DONE;
+	    bcast_done= true;
+	    break;
+
+	case REDUCE_DATA:
+	    fprintf(stderr, "[%2d} REDUCE_DATA in BCAST\n", my_rank);
+	    break;
+
+	case RECEIVE:
+	case START:
+	case COMPUTE_DONE:
+	case CHCKPT_DONE:
+	case FAIL:
+	case LOG_MSG_DONE:
+	case ENV_LOG_DONE:
+	case ENTER_WAIT:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_BCAST()
 
 
 

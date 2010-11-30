@@ -135,7 +135,7 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
 void
 Patterns::send(int dest, int len)
 {
-    send(dest, len, 0);
+    send(0, dest, len);
 }  /* end of send() */
 
 
@@ -191,7 +191,8 @@ SimTime_t delay;
 ** No actual data is sent.
 */
 void
-Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t msg_len)
+Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t msg_len,
+	const char *payload, int payload_len)
 {
 
 CPUNicEvent *e;
@@ -207,6 +208,11 @@ int my_router, dest_router;
     e->msg_len= msg_len;
     e->dest= dest;
     e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
+
+    // If there is a payload, attach it
+    if (payload)   {
+	e->AttachPayload(payload, payload_len);
+    }
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
@@ -314,6 +320,24 @@ int my_router, dest_router;
 
 }  /* end of event_send() */
 
+
+
+/*
+** Send an out-of-band message
+*/
+void
+Patterns::sendOB(int dest, pattern_event_t event, int value)
+{
+
+char *payload;
+int payload_len;
+
+
+    payload= (char *)&value;
+    payload_len= sizeof(value);
+    event_send(dest, event, 0, 0, payload, payload_len);
+
+} /* end of sendOB() */
 
 
 

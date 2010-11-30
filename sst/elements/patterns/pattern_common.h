@@ -36,6 +36,8 @@ typedef enum {START,		// Enter first state of state machine
 	      LOG_MSG_DONE,	// Done logging a message to stable (local) storage
 	      ENV_LOG_DONE,	// Envelope write to log is done
 	      ENTER_WAIT,	// Wait for four receives from neighbors
+	      BCAST_DATA,	// Deal with a broadcast
+	      REDUCE_DATA,	// Deal with a reduce
 
 	      // Make sure you set this at 200 so we can talk to the bit_bucket component
 	      BIT_BUCKET_WRITE_START= 200,
@@ -75,7 +77,8 @@ class Patterns   {
 	void send(int dest, int len);
 	void send(SST::SimTime_t start_delay, int dest, int len);
 	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
-		uint32_t msg_len= 0);
+		uint32_t msg_len= 0, const char *payload= NULL, int payload_len= 0);
+	void sendOB(int dest, pattern_event_t event, int value);
 	void storage_write(int data_size, pattern_event_t return_event);
 	void nvram_write(int data_size, pattern_event_t return_event);
 

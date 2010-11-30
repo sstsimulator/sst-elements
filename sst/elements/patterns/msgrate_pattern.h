@@ -33,6 +33,8 @@ using namespace SST;
 typedef enum {INIT,			// First state in state machine
               SENDING,			// We are currently sedning messages
 	      WAITING,			// Waiting for one or more messages
+	      BCAST,			// Performing a broadcast
+	      REDUCE,			// Performing a reduce to rank 0
 	      DONE,			// Work is all done
 } state_t;
 
@@ -63,7 +65,8 @@ class Msgrate_pattern : public Component {
 	    msg_wait_time= 0;
 	    state= INIT;
 	    rcv_cnt= 0;
-	    application_done= FALSE;
+	    application_done= false;
+	    bcast_done= false;
 
 
 
@@ -137,6 +140,24 @@ class Msgrate_pattern : public Component {
 	    nranks= x_dim * y_dim * NoC_x_dim * NoC_y_dim * cores;
 	    if (nranks % 2 != 0)   {
 		_ABORT(Msgrate_pattern, "Need an even number of ranks (cores)!\n");
+	    }
+
+	    // For collectives, who are my children?
+	    left= my_rank * 2 + 1;
+	    right= my_rank * 2 + 2;
+	    if (left >= nranks)   {
+		// No child
+		left= -1;
+	    }
+	    if (right >= nranks)   {
+		// No child
+		right= -1;
+	    }
+
+	    if (my_rank == 0)   {
+		parent= -1;
+	    } else   {
+		parent= (my_rank - 1) / 2;
 	    }
 
 	    // Create a time converter
@@ -227,7 +248,7 @@ class Msgrate_pattern : public Component {
 	void handle_storage_events(Event *sst_event);
 	Patterns *common;
 
-	// Input paramters for simulation
+	// Input parameters for simulation
 	int my_rank;
 	int cores;
 	int num_msgs;
@@ -248,6 +269,7 @@ class Msgrate_pattern : public Component {
 	state_t state;
 	int rcv_cnt;
 	bool application_done;
+	bool bcast_done;
 	int timestep_needed;
 	bool done_waiting;
 
@@ -264,10 +286,18 @@ class Msgrate_pattern : public Component {
 	Link *storage;
 	TimeConverter *tc;
 
+	// Information and data we need for the collectives
+	int left;
+	int right;
+	int parent;
+	std::queue<int>reduce_queue;
+
 	// Some local functions we need
-	void state_INIT(pattern_event_t event);
+	void state_INIT(pattern_event_t event, CPUNicEvent *e);
 	void state_SENDING(pattern_event_t event);
-	void state_WAITING(pattern_event_t event);
+	void state_WAITING(pattern_event_t event, CPUNicEvent *e);
+	void state_BCAST(pattern_event_t event, CPUNicEvent *e);
+	void state_REDUCE(pattern_event_t event, CPUNicEvent *e);
 	void state_DONE(pattern_event_t event);
 
 	void count_receives(void);
@@ -298,6 +328,7 @@ class Msgrate_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(msgrate_pattern_debug);
 	    ar & BOOST_SERIALIZATION_NVP(application_done);
+	    ar & BOOST_SERIALIZATION_NVP(bcast_done);
 	    ar & BOOST_SERIALIZATION_NVP(timestep_needed);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time);
