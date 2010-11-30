@@ -62,7 +62,6 @@ class Msgrate_pattern : public Component {
 	    num_msgs= 20;
 
 	    // Counters, computed values, and internal state
-	    msg_wait_time= 0;
 	    state= INIT;
 	    rcv_cnt= 0;
 	    application_done= false;
@@ -275,7 +274,6 @@ class Msgrate_pattern : public Component {
 
 	// Keeping track of time
 	SimTime_t msg_wait_time_start;		// Time when we last entered wait
-	SimTime_t msg_wait_time;		// Total time in eait so far
 
 	// Our connections to SST
         Params_t params;
@@ -290,7 +288,7 @@ class Msgrate_pattern : public Component {
 	int left;
 	int right;
 	int parent;
-	std::queue<int>reduce_queue;
+	std::queue<SimTime_t>reduce_queue;
 
 	// Some local functions we need
 	void state_INIT(pattern_event_t event, CPUNicEvent *e);
@@ -331,7 +329,6 @@ class Msgrate_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(bcast_done);
 	    ar & BOOST_SERIALIZATION_NVP(timestep_needed);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
-	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time);
 	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(self_link);
 	    ar & BOOST_SERIALIZATION_NVP(tc);

@@ -323,25 +323,6 @@ int my_router, dest_router;
 
 
 /*
-** Send an out-of-band message
-*/
-void
-Patterns::sendOB(int dest, pattern_event_t event, int value)
-{
-
-char *payload;
-int payload_len;
-
-
-    payload= (char *)&value;
-    payload_len= sizeof(value);
-    event_send(dest, event, 0, 0, payload, payload_len);
-
-} /* end of sendOB() */
-
-
-
-/*
 ** Send a chunk of data to our stable storage device.
 */
 void

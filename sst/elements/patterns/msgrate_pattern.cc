@@ -71,9 +71,6 @@ pattern_event_t event;
 		printf("ERROR: Rank %d received %d messages instead of %d\n",
 		    my_rank, rcv_cnt, num_msgs);
 	    }
-	    printf(">>> Rank %3d to %3d, %d messages, rate %.3f msgs/s\n",
-		my_rank - nranks / 2, my_rank, rcv_cnt,
-		1000000000.0 / ((double)msg_wait_time / rcv_cnt));
 	}
 
 	unregisterExit();
@@ -236,7 +233,7 @@ Msgrate_pattern::state_SENDING(pattern_event_t event)
 {
 
 SimTime_t delay;
-int value;
+SimTime_t value;
 
 
     switch (event)   {
@@ -250,18 +247,16 @@ int value;
 
 	    // Start the reduce
 	    state= REDUCE;
-	    value= 44;
+	    value= 0;
 	    if (my_rank >= nranks / 2)   {
 		// If I'm a leaf, send my data
 		if (parent >= 0)   {
-		    common->sendOB(parent, REDUCE_DATA, value);
-		    fprintf(stderr, "[%2d} Start leaf reduce, value %d to parent %d\n", my_rank, value, parent);
+		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
 		state= BCAST;
 	    } else   {
 		// Otherwise save it for later
 		reduce_queue.push(value);
-		fprintf(stderr, "[%2d} Push reduce, value %d\n", my_rank, value);
 	    }
 	    break;
 
@@ -290,7 +285,8 @@ void
 Msgrate_pattern::state_WAITING(pattern_event_t event, CPUNicEvent *e)
 {
 
-int value;
+SimTime_t value;
+SimTime_t msg_wait_time;
 int value_len;
 unsigned int leaves;
 
@@ -311,18 +307,15 @@ unsigned int leaves;
 
 		// Start the reduce
 		state= REDUCE;
-		value= 33;
 		if (my_rank >= nranks / 2)   {
 		    // If I'm a leaf, send my data
 		    if (parent >= 0)   {
-			common->sendOB(parent, REDUCE_DATA, value);
-			fprintf(stderr, "[%2d} Start leaf reduce, value %d to parent %d\n", my_rank, value, parent);
+			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
 		    }
 		    state= BCAST;
 		} else   {
 		    // Otherwise save it for later
-		    fprintf(stderr, "[%2d} Push reduce, value %d\n", my_rank, value);
-		    reduce_queue.push(value);
+		    reduce_queue.push(msg_wait_time);
 		}
 	    }
 	    break;
@@ -332,7 +325,6 @@ unsigned int leaves;
 	    value_len= sizeof(value);
 	    e->DetachPayload(&value, &value_len);
 	    reduce_queue.push(value);
-	    fprintf(stderr, "[%2d} Got reduce value %d in wait\n", my_rank, value);
 
 	    // Do I have one or two children?
 	    if (nranks >= ((my_rank + 1) * 2))    {
@@ -358,8 +350,7 @@ unsigned int leaves;
 
 		// Send result up
 		if (parent >= 0)   {
-		    fprintf(stderr, "[%2d} Send reduce value %d to parent %d\n", my_rank, value, parent);
-		    common->sendOB(parent, REDUCE_DATA, value);
+		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
 	    }
 	    break;
@@ -387,7 +378,7 @@ void
 Msgrate_pattern::state_REDUCE(pattern_event_t event, CPUNicEvent *e)
 {
 
-int value;
+SimTime_t value;
 int value_len;
 unsigned int leaves;
 
@@ -398,7 +389,6 @@ unsigned int leaves;
 	    value_len= sizeof(value);
 	    e->DetachPayload(&value, &value_len);
 	    reduce_queue.push(value);
-	    fprintf(stderr, "[%2d} Got reduce value %d in reduce\n", my_rank, value);
 
 	    // Do I have one or two children?
 	    if (nranks > ((my_rank + 1) * 2))    {
@@ -407,7 +397,6 @@ unsigned int leaves;
 		// I wouldn't be here, if I had no children
 		leaves= 1;
 	    }
-	    fprintf(stderr, "[%2d} state_REDUCE() %d leaves, size %d\n", my_rank, leaves, reduce_queue.size());
 
 	    if (reduce_queue.size() >= (leaves + 1))   {
 		// We got it all. Add it up and send it to the parent
@@ -424,9 +413,8 @@ unsigned int leaves;
 		assert(reduce_queue.empty());
 
 		// Send result up
-		fprintf(stderr, "[%2d} Send reduce value %d to parent %d\n", my_rank, value, parent);
 		if (parent >= 0)   {
-		    common->sendOB(parent, REDUCE_DATA, value);
+		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
 
 		// Then enter the broadcast
@@ -434,18 +422,20 @@ unsigned int leaves;
 
 		// If I'm the root, initiate the broadcast
 		if (my_rank == 0)   {
-		    fprintf(stderr, "[%2d} Doing bcast (root) of value %d\n", my_rank, value);
+		    printf(">>> Average rate for %d messages of length %d (+ %dB header): %.3f msgs/s\n",
+			num_msgs, exchange_msg_len, envelope_size,
+			1000000000.0 / ((double)value / (num_msgs * nranks / 2)));
+
 		    if (left >= 0)   {
-			common->sendOB(left, BCAST_DATA, value);
+			common->event_send(left, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    if (right >= 0)   {
-			common->sendOB(right, BCAST_DATA, value);
+			common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    bcast_done= true;
 		    state= DONE;
 		}
 	    }
-	    fprintf(stderr, "[%2d} state_REDUCE() done with this REDUCE_DATA\n", my_rank);
 	    break;
 
 	case BCAST_DATA:
@@ -473,7 +463,7 @@ void
 Msgrate_pattern::state_BCAST(pattern_event_t event, CPUNicEvent *e)
 {
 
-int value;
+SimTime_t value;
 int value_len;
 
 
@@ -482,20 +472,18 @@ int value_len;
 	    // Extract data for our use
 	    value_len= sizeof(value);
 	    e->DetachPayload(&value, &value_len);
-	    fprintf(stderr, "[%2d} Doing bcast of value %d\n", my_rank, value);
 
 	    if (left >= 0)   {
-		common->sendOB(left, BCAST_DATA, value);
+		common->event_send(left, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 	    }
 	    if (right >= 0)   {
-		common->sendOB(right, BCAST_DATA, value);
+		common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 	    }
 	    state= DONE;
 	    bcast_done= true;
 	    break;
 
 	case REDUCE_DATA:
-	    fprintf(stderr, "[%2d} REDUCE_DATA in BCAST\n", my_rank);
 	    break;
 
 	case RECEIVE:
