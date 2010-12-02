@@ -49,8 +49,8 @@ private:
 
         bool push( RtrEvent* event) {
             networkPacket* pkt = &event->packet;
-            if ( pkt->sizeInFlits() > tokensP ) return false;
-            tokensP -= pkt->sizeInFlits();
+            if ( pkt->sizeInFlits > tokensP ) return false;
+            tokensP -= pkt->sizeInFlits;
             eventQP.push_back(event);
             return true;
         }
@@ -191,18 +191,18 @@ public:
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
         db_RtrIF("vc=%d\n",vc);
-        returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits() );
+        returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits );
         toNicMapP[vc]->pop_front();
     }
 
     bool send2Rtr( RtrEvent *event)
     {
         networkPacket* pkt = &event->packet;
-        if ( pkt->vc() >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc());
-        bool retval = toRtrMapP[pkt->vc()]->push( event );
+        if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
+        bool retval = toRtrMapP[pkt->vc]->push( event );
         if ( retval )
             db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
-                     pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
+                     pkt->vc,pkt->srcNum,pkt->destNum,pkt);
         if ( retval ) {
             sendPktToRtr( toRtrQP.front() );
             toRtrQP.pop_front();
@@ -263,15 +263,15 @@ private:
     {
         networkPacket *pkt = &event->packet; 
 
-        pkt->vc() = RTR_2_NIC_VC(pkt->vc());
+        pkt->vc = RTR_2_NIC_VC(pkt->vc);
 
-        if ( pkt->vc() >= (int) num_vcP ) {
-            _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc(),pkt);
+        if ( pkt->vc >= (int) num_vcP ) {
+            _abort(RtrIF,"vc=%d pkt=%p\n",pkt->vc,pkt);
         }
 
         db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
-                 pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
-        toNicMapP[pkt->vc()]->push_back( event );
+                 pkt->vc,pkt->srcNum,pkt->destNum,pkt);
+        toNicMapP[pkt->vc]->push_back( event );
     }
 
     void returnTokens2Nic( unsigned int vc, uint32_t num )
@@ -298,11 +298,11 @@ private:
         networkPacket* pkt = &event->packet;
 
         db_RtrIF("vc=%d src=%d dest=%d pkt=%p\n",
-                 pkt->vc(),pkt->srcNum(),pkt->destNum(),pkt);
+                 pkt->vc,pkt->srcNum,pkt->destNum,pkt);
 
         event->type = RtrEvent::Packet;
         event->packet = *pkt;
-        int lat = reserveRtrLine(pkt->sizeInFlits());
+        int lat = reserveRtrLine(pkt->sizeInFlits);
         m_rtrLink->Send( lat, event );
     }
 

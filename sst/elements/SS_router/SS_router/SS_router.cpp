@@ -533,9 +533,9 @@ void SS_router::handleParcel( Event* e, int dir )
 
     int ilink, ivc, flits;
     networkPacket *np = &event->packet;
-    flits = np->sizeInFlits();
-    ivc = NIC_2_RTR_VC(np->vc());
-    np->vc() = ivc;
+    flits = np->sizeInFlits;
+    ivc = NIC_2_RTR_VC(np->vc);
+    np->vc = ivc;
 
     ilink = dir;
 
@@ -556,7 +556,7 @@ bool SS_router::route(rtrP* rp)
     DBprintf("\n");
     networkPacket *packet =  &rp->event->packet;
 
-    return findRoute( packet->destNum(), 
+    return findRoute( packet->destNum, 
             rp->ivc, rp->ilink, rp->ovc, rp->olink );
 }
 

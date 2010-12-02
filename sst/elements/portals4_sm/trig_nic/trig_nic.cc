@@ -117,8 +117,8 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 	// Either way we have to create a trig_nic_event, so do that
 	// now.
 	trig_nic_event* nic_event = new trig_nic_event();
-	nic_event->src = event->packet.srcNum();
-	nic_event->dest = event->packet.destNum();
+	nic_event->src = event->packet.srcNum;
+	nic_event->dest = event->packet.destNum;
 	nic_event->ptl_op = PTL_NIC_PROCESS_MSG;
 	nic_event->portals = portals;
 	nic_event->head_packet = head_packet;
@@ -298,10 +298,10 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 // 	    printf("%5d:  Got something on my self link\n",m_id);
             nextToRtr = new RtrEvent();
             nextToRtr->type = RtrEvent::Packet;
-            nextToRtr->packet.vc() = 0;
-            nextToRtr->packet.srcNum() = m_id;
-            nextToRtr->packet.destNum() = to_rtr->dest;
-            nextToRtr->packet.sizeInFlits() = 8;
+            nextToRtr->packet.vc = 0;
+            nextToRtr->packet.srcNum = m_id;
+            nextToRtr->packet.destNum = to_rtr->dest;
+            nextToRtr->packet.sizeInFlits = 8;
 
 	    
 	    nextToRtr->packet.payload[0] = 0;

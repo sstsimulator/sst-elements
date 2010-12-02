@@ -183,7 +183,7 @@ void SS_router::InQtoOutQ_readyNext (rtrP *rp) {
     DBprintf("\n");
     inputQ[rp->ilink].head_busy = false;
 
-    returnToken_flits( rp->ilink, rp->flits, rp->event->packet.vc() );
+    returnToken_flits( rp->ilink, rp->flits, rp->event->packet.vc );
 
     //if (inputQ[rp->ilink].ready_vcQs > 0) {
     if (inputQ[rp->ilink].ready()) {
@@ -333,8 +333,8 @@ void SS_router::LCBxfer_start (int dir) {
     rtrP *rp = oLCB->dataQ.front();
     networkPacket *np = &rp->event->packet;
 
-    np->vc() = rp->ovc;
-    np->link() = dest_ilink;
+    np->vc = rp->ovc;
+    np->link = dest_ilink;
 
     DBprintf("dest_ilink=%d ovc=%d link %s\n",
                             dest_ilink, rp->ovc, LinkNames[dir] );
@@ -343,7 +343,7 @@ void SS_router::LCBxfer_start (int dir) {
     dest->Send( iLCBLat, rp->event );    
 
     DBprintf ("%lld: router %d start xfer parcel (from %d to %d), oLCB %d size %d, %d datum, %d vc_rr, %d tokens\n",
-              cycle(), routerID, np->srcNum(), np->destNum(), rp->olink, oLCB->size_flits,
+              cycle(), routerID, np->srcNum, np->destNum, rp->olink, oLCB->size_flits,
               (int)oLCB->dataQ.size(), (int)oLCB->ready_vc_count, oLCB->vcTokens[rp->ovc]);
 
     //make an event for xfer complete

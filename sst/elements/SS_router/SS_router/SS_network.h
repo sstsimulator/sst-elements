@@ -138,42 +138,14 @@ class networkFlit {
 //!SEC:EDSim
 class networkPacket {
 
-    int _destNum;
-    int _sourceNum;
-    uint _sizeInFlits;
-    int _vc;
-    int _link;
-
-
 public:
-    int &vc () {
-        return _vc;
-    }
-    int &link () {
-        return _link;
-    }
+    int destNum;
+    int srcNum;
+    uint sizeInFlits;
+    int vc;
+    int link;
 
-    int &srcNum() {
-        return _sourceNum;
-    }
-    int srcNum() const {
-        return _sourceNum;
-    }
-    int &destNum() {
-        return _destNum;
-    }
-    int destNum() const {
-        return _destNum;
-    }
-
-    uint &sizeInFlits() {
-        return _sizeInFlits;
-    }
-    uint sizeInFlits() const {
-        return _sizeInFlits;
-    }
-
-    uint32 payload[HDR_SIZE+PKT_SIZE];
+/*     uint32 payload[HDR_SIZE+PKT_SIZE]; */
 
 private:
     friend class boost::serialization::access;
@@ -181,11 +153,11 @@ private:
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        ar & BOOST_SERIALIZATION_NVP(_destNum);
-        ar & BOOST_SERIALIZATION_NVP(_sourceNum);
-        ar & BOOST_SERIALIZATION_NVP(_sizeInFlits);
-        ar & BOOST_SERIALIZATION_NVP(_vc);
-        ar & BOOST_SERIALIZATION_NVP(_link);
+        ar & BOOST_SERIALIZATION_NVP(destNum);
+        ar & BOOST_SERIALIZATION_NVP(srcNum);
+        ar & BOOST_SERIALIZATION_NVP(sizeInFlits);
+        ar & BOOST_SERIALIZATION_NVP(vc);
+        ar & BOOST_SERIALIZATION_NVP(link);
         ar & BOOST_SERIALIZATION_NVP(payload);
     }
 };
