@@ -1,5 +1,20 @@
 <?xml version="1.0"?>
+
+<!-- reference definition for introspector 1-->
+<intro1_params>
+    <period>50ns</period>
+    <model>mesmthi</model>
+</intro1_params>
+
 <sst>
+    <introspector id="CountIntrospector">	
+		<introspector_mesmthi>
+            <params>
+                <params reference=intro1_params />
+            </params>
+		</introspector_mesmthi>
+    </introspector>
+
     <component id="mesmthi">
       <mesmthi>
       <params>
@@ -9,6 +24,7 @@
         <kernel_img>benchmarks/bzImage.null</kernel_img>
         <cyc_per_tick>1000000</cyc_per_tick>
         <samp_per_tick>100</samp_per_tick>
+	<push_introspector>CountIntrospector</push_introspector>
       </params>
       <links>
         <link id="bus"><params><name>bus</name><lat>1ns</lat></params></link>

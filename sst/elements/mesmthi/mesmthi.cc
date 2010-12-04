@@ -164,6 +164,7 @@ struct MemoryController {
     register_counter("Memory Controller", "Reads",  reads);
     register_counter("Memory Controller", "Writes", writes);
 
+
     // Hardcoding these things for now. Don't do this in the rewrite.
     Params memParams;
     memParams["mem.initialCredit"]   = "8";
@@ -217,6 +218,7 @@ struct MemoryController {
       CONT_BEGIN();
       DBG << (write?"W_REQ(0x":"R_REQ(0x") << hex << addr << ")\n";
       (write?mc->writes:mc->reads)++;
+	
 
       c = new cont_cond_t(false);
       DBG << "Created cookie c=" << c << '\n';
@@ -1868,7 +1870,7 @@ void print_usage(const char* command) {
   cout << "Usage:\n  " << command << " [image file]\n";
 }
 
-Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
+Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : IntrospectedComponent(id) {
   std::string clock_pd;
   // The parameters:
   //   log2_row_size:        log_2 of N for an NxN mehs
@@ -1902,6 +1904,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
   read_param(params, "net_cpp",              net_cpp,              1);
   read_param(params, "clock_pd",             clock_pd,       "500ps");
   read_param(params, "kernel_img",        kernel_img,"linux/bzImage");
+  read_param(params, "push_introspector", pushIntrospector,"CountIntrospector");
 
   // The simulation won't end until we unregisterExit().
   registerExit();
@@ -1968,6 +1971,52 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : Component(id) {
 
   clear_counters();
 
+  //Introspection: register monitors (counters)
+  ostringstream setname;
+  registerMonitor("MCreads", new MonitorPointer<uint64_t>(&mc->reads));
+  registerMonitor("MCwrites", new MonitorPointer<uint64_t>(&mc->writes));
+  for (unsigned i = 0; i < (1u<<(2*log2_row_size)); i++){
+        setname << "Tile[" << i << "]DIRreads";
+        registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->dir_reads));
+        setname << "Tile[" << i << "]DIRwrites";
+        registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->dir_writes));
+
+	setname << "Tile[" << i << "]L1Ireads";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1i.reads));
+	setname << "Tile[" << i << "]L1Iwrites";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1i.writes));
+	setname << "Tile[" << i << "]L1Ireadhits";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1i.read_hits));
+	setname << "Tile[" << i << "]L1Iwritehits";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1i.write_hits));
+
+	setname << "Tile[" << i << "]L1Dreads";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1d.reads));
+	setname << "Tile[" << i << "]L1Dwrites";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1d.writes));
+	setname << "Tile[" << i << "]L1Dreadhits";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1d.read_hits));
+	setname << "Tile[" << i << "]L1Dwritehits";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l1d.write_hits));
+
+	setname << "Tile[" << i << "]L2reads";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l2u.reads));
+	setname << "Tile[" << i << "]L2writes";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l2u.writes));
+	setname << "Tile[" << i << "]L2readhits";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l2u.read_hits));
+	setname << "Tile[" << i << "]L2writehits";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->l2u.write_hits));
+
+	setname << "Tile[" << i << "]Instructions";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->instructions));
+	setname << "Tile[" << i << "]BusTransfers";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->bus_transfers));
+	setname << "Tile[" << i << "]NetworkTransactions";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->packets_sent));
+	setname << "Tile[" << i << "]TotalPackets";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->packets_total));
+  }
   // TODO: Initialize links to/handlers for DRAMSim
 }
 

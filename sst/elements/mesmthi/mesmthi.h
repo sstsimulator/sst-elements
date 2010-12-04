@@ -72,8 +72,9 @@ class timer_cp : public Slide::cont_proc_t {public:
     while (simulation_running) {
       CONT_CALL(&d);
       std::cout << "===T/" << std::dec << samp_per_tick << "===\n";
-      print_counters();
-      clear_counters();
+      //below is substituted by introspection
+      //print_counters();
+      //clear_counters();
       show_oldest_reqs();
       if (++i == samp_per_tick) {
         cd->timer_interrupt();
@@ -105,7 +106,7 @@ template <typename P, typename T, typename U>
   std::cout << "Got parameter '" << s << "' = " << val << ".\n"; 
 }
 
-class Mesmthi : public SST::Component {
+class Mesmthi : public SST::IntrospectedComponent {
  public:
   Mesmthi(ComponentId_t id, Params_t& params);
 
@@ -115,19 +116,30 @@ class Mesmthi : public SST::Component {
 
     Slide::run_ready_procs();
 
+    //introspection
+    registerIntrospector(pushIntrospector);
     return 0;
   }
 
   int Finish() {  
+    //std::cout << "below is from mesmthi finish" << std::endl;
+    //print_counters();
+    //std::cout << "below is from mesmthi triggerUpdate" << std::endl;
+    //Introspection: ask introspector to pull and print counter values 
+    triggerUpdate();
     return 0;
   }
 
+
  private:
-  Mesmthi(const Mesmthi &c) {}
-  Mesmthi() {}
+//  Mesmthi(const Mesmthi &c) {}
+    Mesmthi(const Mesmthi &c);
+    Mesmthi() :  IntrospectedComponent(-1) {}
+ 
 
   std::string kernel_img;
-
+  std::string pushIntrospector;
+  
 
 
   // Note: This won't work. This simulator is not serializable.
