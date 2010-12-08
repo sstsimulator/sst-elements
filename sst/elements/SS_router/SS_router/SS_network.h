@@ -145,7 +145,7 @@ public:
     int vc;
     int link;
 
-/*     uint32 payload[HDR_SIZE+PKT_SIZE]; */
+    uint32 payload[HDR_SIZE+PKT_SIZE];
 
 private:
     friend class boost::serialization::access;
