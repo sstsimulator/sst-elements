@@ -103,7 +103,7 @@ bool Introspector_mesmthi::triggeredUpdate()
 	std::cout << "introspector_mesmthi: TOTAL L1Ireads = " << std::dec << totalL1Ireads << std::endl; 
 	std::cout << "introspector_mesmthi: TOTAL L1Iwrites = " << std::dec << totalL1Iwrites << std::endl; 
 	std::cout << "introspector_mesmthi: TOTAL L1Ireadhits = " << std::dec << totalL1Ireadhits << std::endl; 
-	std::cout << "introspector_mesmthi: TOTAL L1Iwritehits = " << vtotalL1Iwritehits << std::endl; 
+	std::cout << "introspector_mesmthi: TOTAL L1Iwritehits = " << totalL1Iwritehits << std::endl; 
 
 	std::cout << "introspector_mesmthi: TOTAL L1Dreads = " << std::dec << totalL1Dreads << std::endl; 
 	std::cout << "introspector_mesmthi: TOTAL L1Dwrites = " << std::dec << totalL1Dwrites << std::endl; 
