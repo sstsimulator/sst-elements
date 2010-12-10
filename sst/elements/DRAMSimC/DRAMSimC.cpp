@@ -150,10 +150,13 @@ void DRAMSimC::writeData(uint id, uint64_t addr, uint64_t clockcycle)
     }
 }
 
+#if 0
 extern int badCheat;
+#endif
 
 bool DRAMSimC::clock( Cycle_t current )
 {
+#if 0
   // simplest way to reset for now
   if (badCheat) {
     {
@@ -186,6 +189,7 @@ bool DRAMSimC::clock( Cycle_t current )
     badCheat = 0;
     printf("DRAMSim reset stats\n");
   }   
+#endif
 
     m_memorySystem->update();
 

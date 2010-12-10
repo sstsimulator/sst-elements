@@ -1,0 +1,19 @@
+<?xml version="2.0"?>
+
+<config>
+    run-mode=both
+    partitioner=self
+</config>
+
+<sst>
+  <component name="s" type="scheduler.schedComponent" rank=0>
+    <link name="l0" port="nodeLink0" latency="1 ns"/>
+  </component>
+
+  <component name="n0" type="scheduler.nodeComponent" rank=0>
+    <params>
+      <nodeNum>0</nodeNum>
+    </params>
+    <link name="l0" port="Scheduler" latency="1 ns"/>
+  </component>
+</sst>
