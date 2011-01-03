@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+
+<config>
+    stopAtCycle=1000000000s
+</config>
+
+<nicLink>
+    <lat>1ns</lat>
+</nicLink>
+
+
+<sst>
+    <component id="m5" >
+        <m5C.M5>
+            <params>
+                <configFile>/Users/mjleven/sstSVN/sandbox1/sst/elements/M5/xml/bounce-m5.xml</configFile>
+                <debug>0</debug>
+                <info>yes</info>
+                <registerExit>yes</registerExit>
+            </params>
+            <links>
+                <link id="mem">
+                    <params include=nicLink>
+                        <name>port2link-mem</name>
+                    </params>
+                </link>
+                <link id="bus">
+                    <params include=nicLink>
+                        <name>port2link-bus</name>
+                    </params>
+                </link>
+            </links>
+        </m5C.M5>
+    </component>
+
+    <component id="bounce" >
+        <m5C.Bounce>
+            <params>
+                <debug>no</debug>
+            </params>
+            <links>
+                <link id="mem">
+                    <params include=nicLink>
+                        <name>port0</name>
+                    </params>
+                </link>
+                <link id="bus">
+                    <params include=nicLink>
+                        <name>port1</name>
+                    </params>
+                </link>
+            </links>
+        </m5C.Bounce>
+    </component>
+
+</sst>

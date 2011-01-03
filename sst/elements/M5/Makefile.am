@@ -1,0 +1,40 @@
+# -*- Makefile -*-
+#
+#
+
+EXTRA_DIST = m5.xml
+
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libm5C.la
+libm5C_la_SOURCES = \
+    DRAMSimWrap.cpp \
+    DRAMSimWrap.h \
+    O3Cpu.cpp \
+    baseCache.cpp \
+    bounce.h \
+    bus.cpp \
+    debug.cpp \
+    dummyPhysicalMemory.h \
+    dummySystem.h \
+    dummyThreadContext.h \
+    exeBackingMem.h \
+    factory.h \
+    loadMemory.cpp \
+    loadMemory.h \
+	m5.cpp \
+	m5.h \
+	m5lib.cpp \
+    memEvent.h \
+    physicalMemory.cpp \
+    port2link.cpp \
+    port2link.h \
+    process.h \
+    system.h \
+    util.cpp \
+    util.h
+
+libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
+            $(DRAMSIM_CPPFLAGS) \
+            -I$(top_srcdir)/sst/elements/include
+libm5C_la_LDFLAGS = -module -avoid-version $(M5_LDFLAGS) $(DRAMSIM_LDFLAGS)
+libm5C_la_LIBADD = $(M5_LIB) $(DRAMSIM_LIB)

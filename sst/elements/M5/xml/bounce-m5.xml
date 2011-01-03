@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+
+<cpuParams>
+    <clock>1000</clock>
+</cpuParams>
+
+<cacheParams>
+</cacheParams>
+
+<sst>
+    <component id="cpu0" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <exe>/Users/mjleven/test/hello</exe>
+                <physicalMemory.start> 0x100000 </physicalMemory.start>
+                <physicalMemory.end>   0x1fffff </physicalMemory.end>
+                <id>0</id>
+            </params>
+            <links>
+                <link id="cpu0.cpu2dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu0.cpu2icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu0.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>65536</size>
+            </params>
+            <links>
+                <link id="cpu0.cpu2dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu0.dcache2bus">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu0.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+            </params>
+            <links>
+                <link id="cpu0.cpu2icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu0.icache2bus">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu1" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <exe>/Users/mjleven/test/hello2</exe>
+                <physicalMemory.start> 0x200000 </physicalMemory.start>
+                <physicalMemory.end>   0x2fffff </physicalMemory.end>
+                <id>0</id>
+            </params>
+            <links>
+                <link id="cpu1.cpu2dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu1.cpu2icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu1.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>65536</size>
+            </params>
+            <links>
+                <link id="cpu1.cpu2dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu1.dcache2bus">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu1.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+            </params>
+            <links>
+                <link id="cpu1.cpu2icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu1.icache2bus">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="bus" >
+        <Bus>
+            <links>
+                <link id="bus2port2link">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+
+                <link id="cpu0.dcache2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 2 </num>
+                    </params>
+                </link>
+                <link id="cpu0.icache2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 1 </num>
+                    </params>
+                </link>
+
+                <link id="cpu1.dcache2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 2 </num>
+                    </params>
+                </link>
+                <link id="cpu1.icache2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 1 </num>
+                    </params>
+                </link>
+
+            </links>
+        </Bus>
+    </component>
+
+    <component id="port2link-bus" >
+        <Port2Link>
+            <params>
+                <linkName> port2link-bus </linkName>
+            </params>
+            <links>
+                <link id="bus2port2link">
+                    <params>
+                        <name> memObj </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Port2Link>
+    </component>
+
+    <component id="port2link-mem" >
+        <Port2Link>
+            <params>
+                <linkName> port2link-mem </linkName>
+            </params>
+            <links>
+                <link id="memory2port2link">
+                    <params>
+                        <name> memObj </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Port2Link>
+    </component>
+
+    <component id="physmem" >
+        <PhysicalMemory>
+            <params>
+                <range.start> 0 </range.start>
+                <range.end> 0x1fffffff </range.end>
+                <latency> 26000 </latency>
+                <exe.0>/Users/mjleven/test/hello</exe.0>
+                <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
+                <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
+                <exe.1>/Users/mjleven/test/hello2</exe.1>
+                <exe.1.physicalMemory.start> 0x200000 </exe.1.physicalMemory.start>
+                <exe.1.physicalMemory.end>   0x2fffff </exe.1.physicalMemory.end>
+            </params>
+            <links>
+                <link id="memory2port2link">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </PhysicalMemory>
+    </component>
+</sst>

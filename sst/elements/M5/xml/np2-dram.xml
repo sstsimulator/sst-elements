@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<p2lParams>
+    <clock> 1000 </clock>
+    <block_size> 64 </block_size>
+    <header_cycles> 1 </header_cycles>
+    <width> 64 </width>
+</p2lParams>
+
+<sst>
+
+    <component id="port2link-mem" >
+        <Port2Link>
+            <params include=p2lParams>
+                <linkName> mem2bus </linkName>
+            </params>
+            <links>
+                <link id="memory2port2link">
+                    <params>
+                        <name> memObj </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Port2Link>
+    </component>
+
+    <component id="physmem" >
+        <DRAMSimWrap>
+            <params>
+                <range.start> 0 </range.start>
+                <range.end> 0x1fffffff </range.end>
+                <info> yes </info>
+                <debug> yes </debug>
+                <frequency> 1.0 Ghz </frequency>
+                <systemIniFilename> system.ini </systemIniFilename>
+                <deviceIniFilename> ini/DDR3_micron_32M_8B_x8_sg15.ini </deviceIniFilename>
+                <pwd> /Users/mjleven/local/DRAMSim.1 </pwd>
+                <printstats> no </printstats>
+
+                <exe.0.process.executable> /Users/mjleven/test/hello </exe.0.process.executable>
+                <exe.0.process.input> cin </exe.0.process.input>
+                <exe.0.process.output> cout </exe.0.process.output>
+                <exe.0.process.errout> cerr </exe.0.process.errout>
+                <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
+                <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
+
+            </params>
+            <links>
+                <link id="memory2port2link">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </DRAMSimWrap>
+    </component>
+</sst>

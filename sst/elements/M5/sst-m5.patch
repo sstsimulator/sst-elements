@@ -1,0 +1,67 @@
+diff -c -r m5/src/mem/physical.hh /Users/mjleven/m5-sandbox/src/mem/physical.hh
+*** m5/src/mem/physical.hh	2010-10-20 13:51:49.000000000 -0600
+--- /Users/mjleven/m5-sandbox/src/mem/physical.hh	2010-12-22 12:04:30.000000000 -0700
+***************
+*** 173,182 ****
+      virtual Port *getPort(const std::string &if_name, int idx = -1);
+      void virtual init();
+      unsigned int drain(Event *de);
+  
+    protected:
+      Tick doAtomicAccess(PacketPtr pkt);
+-     void doFunctionalAccess(PacketPtr pkt);
+      virtual Tick calculateLatency(PacketPtr pkt);
+      void recvStatusChange(Port::Status status);
+  
+--- 173,183 ----
+      virtual Port *getPort(const std::string &if_name, int idx = -1);
+      void virtual init();
+      unsigned int drain(Event *de);
++     virtual void doFunctionalAccess(PacketPtr pkt);
++     virtual void recvRetry() {}; 
+  
+    protected:
+      Tick doAtomicAccess(PacketPtr pkt);
+      virtual Tick calculateLatency(PacketPtr pkt);
+      void recvStatusChange(Port::Status status);
+  
+diff -c -r m5/src/sim/system.cc /Users/mjleven/m5-sandbox/src/sim/system.cc
+*** m5/src/sim/system.cc	2010-10-20 13:51:49.000000000 -0600
+--- /Users/mjleven/m5-sandbox/src/sim/system.cc	2010-12-15 14:35:31.000000000 -0700
+***************
+*** 253,259 ****
+      ++page_ptr;
+      if (return_addr >= physmem->size())
+          fatal("Out of memory, please increase size of physical memory.");
+!     return return_addr;
+  }
+  
+  Addr
+--- 253,259 ----
+      ++page_ptr;
+      if (return_addr >= physmem->size())
+          fatal("Out of memory, please increase size of physical memory.");
+!     return physmem->start() + return_addr;
+  }
+  
+  Addr
+diff -c -r m5/src/sim/system.hh /Users/mjleven/m5-sandbox/src/sim/system.hh
+*** m5/src/sim/system.hh	2010-10-20 13:51:49.000000000 -0600
+--- /Users/mjleven/m5-sandbox/src/sim/system.hh	2010-12-15 14:16:26.000000000 -0700
+***************
+*** 89,95 ****
+      std::vector<ThreadContext *> threadContexts;
+      int _numContexts;
+  
+!     ThreadContext *getThreadContext(ThreadID tid)
+      {
+          return threadContexts[tid];
+      }
+--- 89,95 ----
+      std::vector<ThreadContext *> threadContexts;
+      int _numContexts;
+  
+!     virtual ThreadContext *getThreadContext(ThreadID tid)
+      {
+          return threadContexts[tid];
+      }
