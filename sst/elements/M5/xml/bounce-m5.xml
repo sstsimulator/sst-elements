@@ -372,16 +372,9 @@
                 <zero> false </zero>
 
                 <exe.0.process.executable> /Users/mjleven/test/hello </exe.0.process.executable>
-                <exe.0.process.input> cin </exe.0.process.input>
-                <exe.0.process.output> cout </exe.0.process.output>
-                <exe.0.process.errout> cerr </exe.0.process.errout>
-
                 <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
                 <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
                 <exe.1.process.executable> /Users/mjleven/test/hello2 </exe.1.process.executable>
-                <exe.1.process.input> cin </exe.1.process.input>
-                <exe.1.process.output> cout </exe.1.process.output>
-                <exe.1.process.errout> cerr </exe.1.process.errout>
                 <exe.1.physicalMemory.start> 0x200000 </exe.1.physicalMemory.start>
                 <exe.1.physicalMemory.end>   0x2fffff </exe.1.physicalMemory.end>
             </params>

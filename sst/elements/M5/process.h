@@ -17,8 +17,18 @@ static inline Process* newProcess( const std::string name,
     // ProcessParams
     process.system = system;
     INIT_STR( process, params, errout );
+    if ( process.errout.empty() ) {
+        process.errout = "cerr";
+    }
     INIT_STR( process, params, input );
+    if ( process.input.empty() ) {
+        process.input = "cin";
+    }
     INIT_STR( process, params, output );
+    if ( process.output.empty() ) {
+        process.output = "cout";
+    }
+
     INIT_HEX( process, params, max_stack_size );
 
     // LiveProcessParams

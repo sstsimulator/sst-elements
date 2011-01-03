@@ -110,6 +110,7 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
 
 int DRAMSimC::Finish() 
 {
+#if 0
   vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
   for (int i = 0; i < v.size(); ++i) {
     printf("DRAM: Background Energy %llu\n", 
@@ -121,6 +122,7 @@ int DRAMSimC::Finish()
     printf("DRAM: Refresh Energy %llu\n", 
 	   m_memorySystem->memoryController->refreshEnergy[i]);
   }
+#endif
   
   m_memorySystem->printStats();
   return 0;

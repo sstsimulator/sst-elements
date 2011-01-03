@@ -13,7 +13,7 @@
     <component id="cpu" >
         <m5C.M5>
             <params>
-                <configFile>/Users/mjleven/sstSVN/sandbox1/sst/elements/M5/xml/np2-cpu.xml</configFile>
+                <configFile>/Users/mjleven/sstSVN/sandbox3/sst/elements/M5/xml/np2-cpu.xml</configFile>
                 <debug>0</debug>
                 <M5debug>no</M5debug>
                 <info>yes</info>
@@ -32,8 +32,8 @@
     <component id="mem" >
         <m5C.M5>
             <params>
-                <configFile>/Users/mjleven/sstSVN/sandbox1/sst/elements/M5/xml/np2-mem.xml</configFile>
-                <debug>0</debug>
+                <configFile>/Users/mjleven/sstSVN/sandbox3/sst/elements/M5/xml/np2-mem.xml</configFile>
+                <debug>1</debug>
                 <M5debug>no</M5debug>
                 <info>yes</info>
             </params>

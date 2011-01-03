@@ -39,9 +39,6 @@
                 <printstats> no </printstats>
 
                 <exe.0.process.executable> /Users/mjleven/test/hello </exe.0.process.executable>
-                <exe.0.process.input> cin </exe.0.process.input>
-                <exe.0.process.output> cout </exe.0.process.output>
-                <exe.0.process.errout> cerr </exe.0.process.errout>
                 <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
                 <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
 
