@@ -13,7 +13,7 @@
     <component id="m5" >
         <m5C.M5>
             <params>
-                <configFile>/Users/mjleven/sstSVN/sandbox1/sst/elements/M5/xml/bounce-m5.xml</configFile>
+                <configFile>/Users/mjleven/sstSVN/sandbox3/sst/elements/M5/xml/bounce-m5.xml</configFile>
                 <debug>0</debug>
                 <info>yes</info>
                 <registerExit>yes</registerExit>
