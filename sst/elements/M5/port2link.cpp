@@ -35,14 +35,6 @@ SimObject* create_Port2Link( void* comp, std::string name, Params& params )
     INIT_INT( tmp, params, header_cycles );
     INIT_INT( tmp, params, width );
 
-#if 0
-    tmp->linkName = params["linkName"]; 
-    tmp->clock = 1000;
-    tmp->block_size = 64;
-    tmp->header_cycles = 1;
-    tmp->width = 64;
-#endif
-
     return new Port2Link( static_cast<M5*>(comp), &tmp);
 }
 
