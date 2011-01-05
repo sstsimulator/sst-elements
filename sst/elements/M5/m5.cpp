@@ -40,7 +40,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
         } 
     }
 
-    ostringstream tmp;
+    std::ostringstream tmp;
 
     tmp << world.rank();
 
