@@ -41,7 +41,7 @@ inline Factory::~Factory()
 inline SimObject* Factory::createObject( std::string name, 
                 SST::SDL_Component& sdl )
 {
-    std:string tmp = "create_";
+    std::string tmp = "create_";
     tmp += sdl.type().c_str();
     DBGX(2,"type `%s`\n", tmp.c_str());
     createObjFunc_t ptr = (createObjFunc_t)(dlsym( m_dl, tmp.c_str() ));
