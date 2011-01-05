@@ -62,6 +62,6 @@ int main()
   test = lua_tonumber(t, -1);
   lua_pop(t, 1);
   
-  lua_close(L);
-  lua_close(t);
+  lua_close(L); /* Only need to close the top thread-
+		   all threads underneath get closed */
 }
