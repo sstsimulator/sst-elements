@@ -136,10 +136,7 @@ void M5::selfEvent( SST::Event* )
 
     SimLoopExitEvent* exitEvent = simulate( m_event.cycles );
 
-    DBGX( 3, "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
-                exitEvent->getCause().c_str(), exitEvent->getCode() );
-
-    if ( exitEvent->getCode() == 0 ) {
+    if ( ! exitEvent ) {
         arm( m_event.time );
     } else {
         unregisterExit();
