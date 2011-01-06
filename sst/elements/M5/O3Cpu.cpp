@@ -22,6 +22,16 @@ using namespace std;
 
 class Component;
 
+#if THE_ISA == SPARC_ISA
+    #define ISA SparcISA
+    #define TLBParams SparcTLBParams
+#elif THE_ISA == ALPHA_ISA
+    #define ISA AlphaISA
+    #define TLBParams AlphaTLBParams
+#else
+    #error What ISA
+#endif
+
 static void initDerivO3CPUParams( DerivO3CPUParams&, const Params&, System* );
 static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params&, System* );
 static FUDesc* newFUDesc( vector<OpDesc*> opV, int count, string name ); 
@@ -30,7 +40,7 @@ static OpDesc* newOpDesc( Enums::OpClass opClass, int opLat,
 static BaseCPU* newO3CPU( string name, int id, int clock,
                                     string exe, System* system );
 static FUPool* newFUPool( string );
-static AlphaISA::TLB* newTLB( string name, const Params& );
+template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
 
 extern "C" {
@@ -71,9 +81,9 @@ static Trace::InstTracer* newTracer( string name )
 static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
                                                     System* system )
 {
-    cpu.dtb                   = newTLB( cpu.name + ".dtb", 
+    cpu.dtb                   = newTLB<ISA::TLB>( cpu.name + ".dtb", 
                                     sstParams.find_prefix_params("dtb.") );
-    cpu.itb                   = newTLB( cpu.name + ".itb", 
+    cpu.itb                   = newTLB<ISA::TLB>( cpu.name + ".itb", 
                                     sstParams.find_prefix_params("itb.") );
 
     cpu.checker               = NULL;
@@ -278,9 +288,9 @@ static FUPool* newFUPool( string prefix )
 	return fuPool->create();
 }
 
-static AlphaISA::TLB* newTLB( string name, const Params& params )
+template<class type> static type* newTLB( string name, const Params& params )
 {
-	AlphaTLBParams& tlb			= *new AlphaTLBParams;
+	TLBParams& tlb			= *new TLBParams;
 
 	tlb.name = name;
 

@@ -5,7 +5,12 @@ AC_DEFUN([SST_M5_CONFIG], [
     [AS_HELP_STRING([--with-m5@<:@=DIR@:>@],
       [Use M5 package installed in optionally specified DIR])])
 
+  AC_ARG_ENABLE([m5-isa],
+    [AS_HELP_STRING([--enable-m5-isa=ISA],
+      [ALPHA_ISA, SPARC_ISA])])
+
   AS_IF([test "$with_m5" = "no"], [happy="no"])
+  AS_IF([test "$enable_m5_isa" = "no"], [happy="no"])
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
@@ -13,7 +18,7 @@ AC_DEFUN([SST_M5_CONFIG], [
   AS_IF([test ! -z "$with_m5" -a "$with_m5" != "yes"],
     [M5_CPPFLAGS="-I$with_m5 \
         -I/usr/include/python2.6 \
-        -DTHE_ISA=ALPHA_ISA \
+        -DTHE_ISA=$enable_m5_isa \
         -DTRACING_ON=1 \
         -DDEBUG"
      CPPFLAGS="$M5_CPPFLAGS $CPPFLAGS"
