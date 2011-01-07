@@ -69,10 +69,6 @@ class sstdisksim : public Component {
   sstdisksim( const sstdisksim& c );
   
   unsigned long sstdisksim_process_event(sstdisksim_event* ev);
-  unsigned long processBlock(unsigned long blkno,
-			     unsigned long count,
-			     int devno, 
-			     eventtype etype);
   void handleEvent(Event* ev);
   void emptyEvent(Event* ev);
 
