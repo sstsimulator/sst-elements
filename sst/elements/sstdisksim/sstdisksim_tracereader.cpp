@@ -33,90 +33,19 @@ static sstdisksim_tracereader* __ptrs[128];
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
-void 
-luaRetrieveValues(lua_State* L, 
-		  char* format,
-		  ...)
+bool
+sstdisksim_tracereader::clock(Cycle_t current)
 {
-  va_list ap;
-  void* ptr;
-  int i;
+  /* debugging here */
+  if ( current % 1000 == 0 )
+    printf("cycle(s) %d\n", (int)current);
 
-  va_start(ap, format);
-
-  i = 0;
-  while ( format[i] != 0 )
-  {
-    ptr = va_arg(ap, void*);
-    switch (format[i])
-    {
-    case L_INT:
-    case L_DOUBLE:
-    case L_LONG:
-      *((int*)ptr) = lua_tonumber(L,i+1);
-      break;
-    case L_STRING:
-      strcpy(*((char**)ptr), lua_tostring(L,i+1));
-      break;
-    case L_BOOLEAN:
-      *((bool*)ptr) = lua_toboolean(L,i+1);
-      break;
-    default:
-      printf("Invalid or unsupported type passed into luaRetrieveValues\n");
-      exit(1);
-    }
-    i++;
-  }
-
-  va_end(ap);
+  return false;
 }
 
 /******************************************************************************/
 int
-luaReturnValues(lua_State* L,
-		char* format, 
-		...)
-{
-  va_list ap;
-  void *ptr;
-  int i;
-
-  va_start(ap, format);
-  i = 0;
-  while ( format[i] != 0 )
-  {
-    ptr = va_arg(ap, void*);
-    switch ( format[i] )
-    {
-    case L_INT:
-      lua_pushnumber(L, *((int*)ptr));
-      break;
-    case L_DOUBLE:
-      lua_pushnumber(L, *((double*)ptr));
-      break;
-    case L_LONG:
-      lua_pushnumber(L, *((long*)ptr));
-      break;
-    case L_STRING:
-      lua_pushstring(L, *((char**)ptr));
-      break;
-    case L_BOOLEAN:
-      lua_pushboolean(L, *((bool*)ptr));
-      break;
-    default:
-      printf("Invalid or unsupported type passed into luaReturnValues()\n");
-    }
-    i++;
-  }
-  
-  return i;
-}
-
-/******************************************************************************/
-/*************LUA FUNCTIONS GO HERE********************************************/
-/******************************************************************************/
-int
-sstdisksim_tracereader::luaRead(int count, int pos, int devno)
+sstdisksim_tracereader::traceRead(int count, int pos, int devno)
 {
   sstdisksim_event* event = new sstdisksim_event();
   event->count = count;
@@ -131,29 +60,8 @@ sstdisksim_tracereader::luaRead(int count, int pos, int devno)
 }
 
 /******************************************************************************/
-static int
-luaReadCall(lua_State* L)
-{
-  lua_getglobal(L, "sst_thread_id");
-  int id = (int)lua_tointeger(L, -1);
-  lua_pop(L,1);
-
-  char formatRetrieve[] = {L_INT, L_INT, L_INT, 0};
-  char formatReturn[] = {L_INT, 0};
-  
-  int a, b, c;
-  int res;
-
-  luaRetrieveValues(L, formatRetrieve, &a, &b, &c);
-  res = __ptrs[id]->luaRead(a, b, c);
-  luaReturnValues(L, formatReturn, &res);
-
-  return 0;
-}
-
-/******************************************************************************/
 int
-sstdisksim_tracereader::luaWrite(int count, int pos, int devno)
+sstdisksim_tracereader::traceWrite(int count, int pos, int devno)
 {
   sstdisksim_event* event = new sstdisksim_event();
   event->count = count;
@@ -168,29 +76,6 @@ sstdisksim_tracereader::luaWrite(int count, int pos, int devno)
 }
 
 /******************************************************************************/
-static int
-luaWriteCall(lua_State* L)
-{
-  lua_getglobal(L, "sst_thread_id");
-  int id = (int)lua_tointeger(L, -1);
-  lua_pop(L,1);
-
-  char formatRetrieve[] = {L_INT, L_INT, L_INT, 0};
-  char formatReturn[] = {L_INT, 0};
-  
-  int a, b, c;
-  int res;
-
-  lua_resume(L, 0);
-
-  luaRetrieveValues(L, formatRetrieve, &a, &b, &c);
-  res = __ptrs[id]->luaWrite(a, b, c);
-  luaReturnValues(L, formatReturn, &res);
-
-  return res;
-}
-
-/******************************************************************************/
 sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& params ) :
   Component( id ),
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
@@ -199,7 +84,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
   __done = 0;
   traceFile = "";
   __ptrs[id] = this;
-  __otherthread = NULL;
+  disksimTracereaderClockCycle = 0;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -226,17 +111,10 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
   registerTimeBase("1ps");
   link = configureLink( "link" );
 
+  registerClock("1GHz", new Clock::Handler<sstdisksim_tracereader>(this, 
+								   &sstdisksim_tracereader::clock));
+
   printf("Starting sstdisksim_tracereader up\n");
-
-  __L = luaL_newstate();
-  luaL_openlibs(__L);
-  lua_newtable(__L);
-
-  lua_register(__L, "luaRead", luaReadCall);
-  lua_register(__L, "luaWrite", luaWriteCall);
-
-  lua_pushinteger(__L, id);
-  lua_setglobal(__L, "sst_thread_id");
 
   registerExit();
 }
@@ -250,7 +128,6 @@ sstdisksim_tracereader::~sstdisksim_tracereader()
 int
 sstdisksim_tracereader::Setup()
 {
-  luaL_dofile(__L, traceFile.c_str());
 
   sstdisksim_event* event = new sstdisksim_event();
   event->done = 1;
@@ -266,8 +143,6 @@ int
 sstdisksim_tracereader::Finish()
 {
   printf("Shutting sstdisksim_tracereader down\n");
-
-  lua_close(__L);
 
   return 0;
 }
@@ -295,7 +170,7 @@ extern "C"
 {
   ElementLibraryInfo sstdisksim_tracereader_eli = {
     "sstdisksim_tracereader",
-    "sstdisksim_tracereader serilaization",
+    "sstdisksim_tracereader serialization",
     components
   };
 }

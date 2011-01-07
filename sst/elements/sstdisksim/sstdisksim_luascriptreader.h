@@ -50,12 +50,12 @@ using namespace SST;
 #define DISKSIM_DBG 0
 #endif
 
-class sstdisksim_tracereader : public Component {
+class sstdisksim_luascriptreader : public Component {
 
  public:
 
-  sstdisksim_tracereader( ComponentId_t id, Params_t& params );
-  ~sstdisksim_tracereader();
+  sstdisksim_luascriptreader( ComponentId_t id, Params_t& params );
+  ~sstdisksim_luascriptreader();
   int Setup();
   int Finish();
 
@@ -77,7 +77,7 @@ class sstdisksim_tracereader : public Component {
 
   Log< DISKSIM_DBG >&  m_dbg;
   
-  sstdisksim_tracereader( const sstdisksim_tracereader& c );
+  sstdisksim_luascriptreader( const sstdisksim_luascriptreader& c );
   
   SST::Link* link;
   

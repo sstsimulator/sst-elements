@@ -4,7 +4,7 @@
 </config>
 <sst>
   <component id="1.sstdisksim_luascriptreader" >	
-    <sstdisksim_tracereader>
+    <sstdisksim_luascriptreader>
       <params> 
 	<trace_file>/Users/miwesto/sst_google/sst-simulator/sst/elements/sstdisksim/tracefile</trace_file>
       </params>
@@ -16,7 +16,7 @@
 	  </params>
 	</link>
       </links>
-    </sstdisksim_tracereader>
+    </sstdisksim_luascriptreader>
   </component>
 
   <component id="0.sstdisksim">

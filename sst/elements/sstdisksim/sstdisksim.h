@@ -72,9 +72,6 @@ class sstdisksim : public Component {
   void handleEvent(Event* ev);
   void emptyEvent(Event* ev);
 
-  bool clock(Cycle_t current);
-
-
   SST::Link* link;
   SST::Link* empty;
   

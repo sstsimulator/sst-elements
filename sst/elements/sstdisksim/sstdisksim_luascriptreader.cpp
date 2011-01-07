@@ -18,12 +18,12 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "sstdisksim_tracereader.h"
+#include "sstdisksim_luascriptreader.h"
 #include "sst/core/element.h"
 #include "sstdisksim.h"
 
 #define max_num_tracreaders 128
-static sstdisksim_tracereader* __ptrs[128];
+static sstdisksim_luascriptreader* __ptrs[128];
 
 #define	BLOCK	4096
 #define	SECTOR	512
@@ -116,7 +116,7 @@ luaReturnValues(lua_State* L,
 /*************LUA FUNCTIONS GO HERE********************************************/
 /******************************************************************************/
 int
-sstdisksim_tracereader::luaRead(int count, int pos, int devno)
+sstdisksim_luascriptreader::luaRead(int count, int pos, int devno)
 {
   sstdisksim_event* event = new sstdisksim_event();
   event->count = count;
@@ -153,7 +153,7 @@ luaReadCall(lua_State* L)
 
 /******************************************************************************/
 int
-sstdisksim_tracereader::luaWrite(int count, int pos, int devno)
+sstdisksim_luascriptreader::luaWrite(int count, int pos, int devno)
 {
   sstdisksim_event* event = new sstdisksim_event();
   event->count = count;
@@ -191,7 +191,7 @@ luaWriteCall(lua_State* L)
 }
 
 /******************************************************************************/
-sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& params ) :
+sstdisksim_luascriptreader::sstdisksim_luascriptreader( ComponentId_t id,  Params_t& params ) :
   Component( id ),
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
@@ -226,7 +226,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
   registerTimeBase("1ps");
   link = configureLink( "link" );
 
-  printf("Starting sstdisksim_tracereader up\n");
+  printf("Starting sstdisksim_luascriptreader up\n");
 
   __L = luaL_newstate();
   luaL_openlibs(__L);
@@ -242,13 +242,13 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& par
 }
 
 /******************************************************************************/
-sstdisksim_tracereader::~sstdisksim_tracereader()
+sstdisksim_luascriptreader::~sstdisksim_luascriptreader()
 {
 }
 
 /******************************************************************************/
 int
-sstdisksim_tracereader::Setup()
+sstdisksim_luascriptreader::Setup()
 {
   luaL_dofile(__L, traceFile.c_str());
 
@@ -263,9 +263,9 @@ sstdisksim_tracereader::Setup()
 
 /******************************************************************************/
 int 
-sstdisksim_tracereader::Finish()
+sstdisksim_luascriptreader::Finish()
 {
-  printf("Shutting sstdisksim_tracereader down\n");
+  printf("Shutting sstdisksim_luascriptreader down\n");
 
   lua_close(__L);
 
@@ -274,18 +274,18 @@ sstdisksim_tracereader::Finish()
 
 /******************************************************************************/
 static Component*
-create_sstdisksim_tracereader(SST::ComponentId_t id, 
+create_sstdisksim_luascriptreader(SST::ComponentId_t id, 
                   SST::Component::Params_t& params)
 {
-    return new sstdisksim_tracereader( id, params );
+    return new sstdisksim_luascriptreader( id, params );
 }
 
 /******************************************************************************/
 static const ElementInfoComponent components[] = {
-    { "sstdisksim_tracereader",
-      "sstdisksim_tracereader driver",
+    { "sstdisksim_luascriptreader",
+      "sstdisksim_luascriptreader driver",
       NULL,
-      create_sstdisksim_tracereader
+      create_sstdisksim_luascriptreader
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -293,9 +293,9 @@ static const ElementInfoComponent components[] = {
 /******************************************************************************/
 extern "C" 
 {
-  ElementLibraryInfo sstdisksim_tracereader_eli = {
-    "sstdisksim_tracereader",
-    "sstdisksim_tracereader serilaization",
+  ElementLibraryInfo sstdisksim_luascriptreader_eli = {
+    "sstdisksim_luascriptreader",
+    "sstdisksim_luascriptreader serialization",
     components
   };
 }
