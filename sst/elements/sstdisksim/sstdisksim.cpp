@@ -186,24 +186,29 @@ sstdisksim::Finish()
 
 /******************************************************************************/
 unsigned long
-sstdisksim::processBlock(unsigned long blkno,
-			 unsigned long count,
-			 int devno,
-			 eventtype etype)
+sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 {
   SysTime tmp = __now;
   struct disksim_request r;
   memset(&r, 0, sizeof(struct disksim_request));
 
-  if ( etype == READ )
+  unsigned long sector;
+  unsigned long nblks;
+  unsigned long nbytes;
+
+  sector = ev->pos/SECTOR;
+  nbytes = (ev->pos % SECTOR) + ev->count;
+  nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
+
+  if ( ev->etype == READ )
     r.flags = DISKSIM_READ;
   else
     r.flags = DISKSIM_WRITE;
 
   r.start = __now;
-  r.devno = devno;
-  r.bytecount = count;
-  r.blkno = blkno;
+  r.devno = ev->devno;
+  r.bytecount = nblks*SECTOR;
+  r.blkno = sector;
 
   r.completed = 0;
   disksim_interface_request_arrive(__disksim, __now, &r);
@@ -226,25 +231,7 @@ sstdisksim::processBlock(unsigned long blkno,
   //  sstdisksim_event* event = new sstdisksim_event();
   //  empty->Send((int)(tmp*1000000), event);
 
-  return count;
-}
-
-/******************************************************************************/
-unsigned long
-sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
-{
-  unsigned long sector;
-  unsigned long nblks;
-  unsigned long nbytes;
-
-  sector = ev->pos/SECTOR;
-  nbytes = (ev->pos % SECTOR) + ev->count;
-  nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
-
-  return processBlock(sector,
-		      nblks * SECTOR,
-		      ev->devno,
-		      ev->etype);
+  return nblks*SECTOR;
 }
 
 /******************************************************************************/
