@@ -3,10 +3,10 @@
     stopAtCycle=1000000s
 </config>
 <sst>
-  <component id="1.sstdisksim_tracereader" >	
+  <component id="1.sstdisksim_luascriptreader" >	
     <sstdisksim_tracereader>
       <params> 
-	<trace_file>/Users/miwesto/trunk/sst/elements/sstdisksim/tracefile</trace_file>
+	<trace_file>/Users/miwesto/sst_google/sst-simulator/sst/elements/sstdisksim/tracefile</trace_file>
       </params>
       <links>
 	<link id="0">
@@ -22,7 +22,7 @@
   <component id="0.sstdisksim">
     <sstdisksim>
       <params>
-        <param_file>/Users/miwesto/trunk/sst/elements/sstdisksim/disksim-src/seagate/testdir.parv</param_file>
+        <param_file>/Users/miwesto/sst_google/sst-simulator/sst/elements/sstdisksim/disksim-src/seagate/testdir.parv</param_file>
         <output_file>out.disksim</output_file>
         <num_sectors>10000</num_sectors>
       </params>
