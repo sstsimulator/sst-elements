@@ -21,6 +21,7 @@
 #include "sstdisksim_tracereader.h"
 #include "sst/core/element.h"
 #include "sstdisksim.h"
+#include "sstdisksim_otf_parser.h"
 
 #define max_num_tracreaders 128
 static sstdisksim_tracereader* __ptrs[128];
@@ -76,7 +77,8 @@ sstdisksim_tracereader::traceWrite(int count, int pos, int devno)
 }
 
 /******************************************************************************/
-sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  Params_t& params ) :
+sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  
+						Params_t& params ) :
   Component( id ),
   m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
