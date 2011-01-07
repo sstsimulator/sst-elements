@@ -34,7 +34,7 @@ class sstdisksim_otf_parser {
   sstdisksim_event* getNextEvent();
 
  private:
-  ofstream filestream;
+  ifstream filestream;
 };
 
 #endif /* _SSTDISKSIM_OTF_PARSER_H */

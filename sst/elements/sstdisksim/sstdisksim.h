@@ -47,7 +47,7 @@ class sstdisksim : public Component {
   int Setup();
   int Finish();
 
-  SysTime __now;		/* current time */
+  SysTime __now;	/* current time */
   SysTime __next_event;	/* next event */
   sstdisksim_stat __st;
   
@@ -68,7 +68,7 @@ class sstdisksim : public Component {
   
   sstdisksim( const sstdisksim& c );
   
-  unsigned long sstdisksim_process_event(sstdisksim_event* ev);
+  long sstdisksim_process_event(sstdisksim_event* ev);
   void handleEvent(Event* ev);
   void emptyEvent(Event* ev);
 

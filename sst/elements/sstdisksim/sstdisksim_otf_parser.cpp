@@ -27,6 +27,13 @@ sstdisksim_otf_parser::~sstdisksim_otf_parser()
 sstdisksim_event*
 sstdisksim_otf_parser::getNextEvent()
 {
+  static int tmpCount = 0;
+
+  if ( tmpCount > 100 )
+    return NULL;
+
+  tmpCount++;
+  
   sstdisksim_event* ev = new sstdisksim_event();
 
   ev->done = 0;

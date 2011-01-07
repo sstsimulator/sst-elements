@@ -21,7 +21,6 @@
 #include "sstdisksim_tracereader.h"
 #include "sst/core/element.h"
 #include "sstdisksim.h"
-#include "sstdisksim_otf_parser.h"
 
 #define max_num_tracreaders 128
 static sstdisksim_tracereader* __ptrs[128];
@@ -40,6 +39,16 @@ sstdisksim_tracereader::clock(Cycle_t current)
   /* debugging here */
   if ( current % 1000 == 0 )
     printf("cycle(s) %d\n", (int)current);
+
+
+  sstdisksim_event* event = __parser->getNextEvent();
+  /* At the end of our input */
+  if ( event == NULL )
+  {
+    event = new sstdisksim_event();
+    event->done = 1;
+    link->Send(0, event);
+  }
 
   return false;
 }
@@ -110,6 +119,8 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
     ++it;
   }
 
+  __parser = new sstdisksim_otf_parser(traceFile);
+
   registerTimeBase("1ps");
   link = configureLink( "link" );
 
@@ -124,16 +135,20 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
 /******************************************************************************/
 sstdisksim_tracereader::~sstdisksim_tracereader()
 {
+  delete(__parser);
 }
 
 /******************************************************************************/
 int
 sstdisksim_tracereader::Setup()
 {
+  
 
+  /*  // send ending event
   sstdisksim_event* event = new sstdisksim_event();
   event->done = 1;
   link->Send(0, event);
+  */
 
   unregisterExit();
 

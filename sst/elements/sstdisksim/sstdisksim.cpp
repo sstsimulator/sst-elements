@@ -183,7 +183,7 @@ sstdisksim::Finish()
 }
 
 /******************************************************************************/
-unsigned long
+long
 sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 {
   SysTime tmp = __now;
@@ -216,6 +216,7 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
     __now = __next_event;
     __next_event = -1;
     disksim_interface_internal_event(__disksim, __now, 0);
+    // Should sync here somehow eventually 
   }
   
   if ( ! r.completed ) 
@@ -229,7 +230,7 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   //  sstdisksim_event* event = new sstdisksim_event();
   //  empty->Send((int)(tmp*1000000), event);
 
-  return nblks*SECTOR;
+  return tmp;
 }
 
 /******************************************************************************/
