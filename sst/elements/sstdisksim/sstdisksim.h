@@ -61,6 +61,7 @@ class sstdisksim : public Component {
   ComponentId_t __id;
   TimeConverter* __tc;
   unsigned long __event_total;
+  Cycle_t __cycle;
 
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */
