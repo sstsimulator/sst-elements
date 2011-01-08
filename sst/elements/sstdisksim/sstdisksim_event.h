@@ -15,7 +15,7 @@
 #include "sst/core/serialization/element.h"
 #include <sst/core/event.h>
 
-enum eventtype {READ, WRITE};
+enum eventtype {DISKSIMREAD, DISKSIMWRITE, DISKSIMEND};
 
 class sstdisksim_event : public SST::Event {
 public:
@@ -23,7 +23,9 @@ public:
   unsigned long pos;
   unsigned long count;
   unsigned long devno;
-  bool done;
+  unsigned long time;
+
+  bool completed;
 
   sstdisksim_event() : SST::Event() { }
 
@@ -38,7 +40,8 @@ private:
       ar & BOOST_SERIALIZATION_NVP(pos);
       ar & BOOST_SERIALIZATION_NVP(count);
       ar & BOOST_SERIALIZATION_NVP(devno);
-      ar & BOOST_SERIALIZATION_NVP(done);      
+      ar & BOOST_SERIALIZATION_NVP(time);
+      ar & BOOST_SERIALIZATION_NVP(completed);      
     }
 }; 
     

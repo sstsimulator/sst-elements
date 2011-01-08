@@ -122,8 +122,8 @@ sstdisksim_luascriptreader::luaRead(int count, int pos, int devno)
   event->count = count;
   event->pos = pos;
   event->devno = devno;
-  event->etype = READ;
-  event->done = false;
+  event->etype = DISKSIMREAD;
+  event->completed = false;
 
   link->Send(0, event);
 
@@ -159,8 +159,8 @@ sstdisksim_luascriptreader::luaWrite(int count, int pos, int devno)
   event->count = count;
   event->pos = pos;
   event->devno = devno;
-  event->etype = WRITE;
-  event->done = false;
+  event->etype = DISKSIMWRITE;
+  event->completed = false;
 
   link->Send(0, event);
 
@@ -253,7 +253,7 @@ sstdisksim_luascriptreader::Setup()
   luaL_dofile(__L, traceFile.c_str());
 
   sstdisksim_event* event = new sstdisksim_event();
-  event->done = 1;
+  event->etype = DISKSIMEND;
   link->Send(0, event);
 
   unregisterExit();

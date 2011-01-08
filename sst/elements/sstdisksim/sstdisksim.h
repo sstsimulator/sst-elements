@@ -59,6 +59,8 @@ class sstdisksim : public Component {
   Simulation* __sim;
   Params_t __params;
   ComponentId_t __id;
+  TimeConverter* __tc;
+  unsigned long __event_total;
 
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */
@@ -70,10 +72,10 @@ class sstdisksim : public Component {
   
   long sstdisksim_process_event(sstdisksim_event* ev);
   void handleEvent(Event* ev);
-  void emptyEvent(Event* ev);
+  void lockstepEvent(Event* ev);
 
   SST::Link* link;
-  SST::Link* empty;
+  SST::Link* lockstep;
   
   friend class boost::serialization::access;
   template<class Archive>
@@ -90,11 +92,11 @@ class sstdisksim : public Component {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(numsectors);
       ar & BOOST_SERIALIZATION_NVP(link);
-      ar & BOOST_SERIALIZATION_NVP(empty);
+      ar & BOOST_SERIALIZATION_NVP(lockstep);
 
       
       link->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::handleEvent));
-      empty->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::emptyEvent));
+      lockstep->setFunctor(new SST::Event::Handler<sstdisksim>(this, &sstdisksim::lockstepEvent));
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    

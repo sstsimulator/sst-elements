@@ -24,6 +24,7 @@ libsstdisksim_tracereader_la_SOURCES = \
 	sstdisksim_otf_parser.h \
 	sstdisksim_tracereader.cpp \
 	sstdisksim_tracereader.h \
+	sstdisksimevent.h \
 	sstdisksim.cpp \
 	sstdisksim.h	
 
@@ -36,6 +37,7 @@ libsstdisksim_tracereader_la_LIBADD = $(SSTDISKSIM_LIB)
 libsstdisksim_luascriptreader_la_SOURCES = \
 	sstdisksim_luascriptreader.cpp \
 	sstdisksim_luascriptreader.h \
+	sstdisksimevent.h \
 	sstdisksim.cpp \
 	sstdisksim.h	
 

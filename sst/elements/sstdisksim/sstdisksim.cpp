@@ -1,8 +1,8 @@
-// Copyright 2009-2010 Sandia Corporation. Under the terms
+// Copyright 2009-2011 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2010, Sandia Corporation
+// Copyright (c) 2011, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -105,6 +105,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __st.n = 0;
   __st.sum = 0;
   __st.sqr = 0;
+  __event_total = 1;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -150,9 +151,12 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __now = 0;
   __next_event = -1;
 
-  link = configureLink( "link",  new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent) );
-  empty = configureSelfLink( "empty",  new Event::Handler<sstdisksim>(this,&sstdisksim::emptyEvent) );
-  registerTimeBase("1ps");
+  __tc = registerTimeBase("1ps");
+  link = configureLink("link",  
+		       new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent));
+  lockstep = configureSelfLink("lockstep",
+			       __tc,
+			       new Event::Handler<sstdisksim>(this,&sstdisksim::lockstepEvent));
 
   printf("Starting disksim up\n");
 
@@ -198,10 +202,12 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   nbytes = (ev->pos % SECTOR) + ev->count;
   nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
 
-  if ( ev->etype == READ )
+  if ( ev->etype == DISKSIMREAD )
     r.flags = DISKSIM_READ;
-  else
+  else if ( ev->etype == DISKSIMWRITE)
     r.flags = DISKSIM_WRITE;
+  else
+    abort();
 
   r.start = __now;
   r.devno = ev->devno;
@@ -227,6 +233,11 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   }
 
   tmp = __now-tmp;
+  
+  Cycle_t now = __tc->convertToCoreTime( getCurrentSimTime(__tc) );
+  lockstep->Send((int)(tmp*1000000), ev);
+
+
   //  sstdisksim_event* event = new sstdisksim_event();
   //  empty->Send((int)(tmp*1000000), event);
 
@@ -235,19 +246,21 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 
 /******************************************************************************/
 void
-sstdisksim::emptyEvent(Event* ev)
-{
-}
-
-/******************************************************************************/
-void
-sstdisksim::handleEvent(Event* ev)
+sstdisksim::lockstepEvent(Event* ev)
 {
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
+  event->completed = true;
+  __event_total--;
 
-  /* This sstdisksim process has been shutdown; 
-     behave accordingly */
-  if ( event->done || __done )
+  /* temporary debugging */
+  if ( event->etype == DISKSIMEND )
+    printf ( "lockstepEvent called on end event.\n" );
+  if ( event->etype == DISKSIMWRITE )
+    printf ( "lockstepEvent called on write event.\n" );
+  if ( event->etype == DISKSIMREAD )
+    printf ( "lockstepEvent called on read event.\n" );
+
+  if ( __event_total == 0 )
   {
     if ( !__done )
     {
@@ -258,8 +271,26 @@ sstdisksim::handleEvent(Event* ev)
     }
     return;
   }
+}
 
-  sstdisksim_process_event(event);
+/******************************************************************************/
+void
+sstdisksim::handleEvent(Event* ev)
+{
+  sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
+
+  /* This sstdisksim process has been shutdown; 
+     behave accordingly */
+  if (event->etype == DISKSIMEND )
+  {
+    lockstep->Send(0, ev);
+  }
+  else
+  {
+    __event_total++;
+    sstdisksim_process_event(event);
+  }
+
   return;
 }
 

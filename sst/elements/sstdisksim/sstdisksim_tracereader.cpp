@@ -7,7 +7,7 @@
 // 
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
-// distribution.
+// distribution.x
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,13 +40,15 @@ sstdisksim_tracereader::clock(Cycle_t current)
   if ( current % 1000 == 0 )
     printf("cycle(s) %d\n", (int)current);
 
-
   sstdisksim_event* event = __parser->getNextEvent();
   /* At the end of our input */
   if ( event == NULL )
   {
-    event = new sstdisksim_event();
-    event->done = 1;
+    abort();
+  }
+
+  if ( event->etype == DISKSIMEND )
+  {
     link->Send(0, event);
   }
 
@@ -61,8 +63,8 @@ sstdisksim_tracereader::traceRead(int count, int pos, int devno)
   event->count = count;
   event->pos = pos;
   event->devno = devno;
-  event->etype = READ;
-  event->done = false;
+  event->etype = DISKSIMREAD;
+  event->completed = false;
 
   link->Send(0, event);
 
@@ -77,8 +79,8 @@ sstdisksim_tracereader::traceWrite(int count, int pos, int devno)
   event->count = count;
   event->pos = pos;
   event->devno = devno;
-  event->etype = WRITE;
-  event->done = false;
+  event->etype = DISKSIMWRITE;
+  event->completed = false;
 
   link->Send(0, event);
 
@@ -124,8 +126,9 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   registerTimeBase("1ps");
   link = configureLink( "link" );
 
-  registerClock("1GHz", new Clock::Handler<sstdisksim_tracereader>(this, 
-								   &sstdisksim_tracereader::clock));
+  registerClock("1GHz", 
+		new Clock::Handler<sstdisksim_tracereader>(this, 
+							   &sstdisksim_tracereader::clock));
 
   printf("Starting sstdisksim_tracereader up\n");
 
@@ -142,14 +145,6 @@ sstdisksim_tracereader::~sstdisksim_tracereader()
 int
 sstdisksim_tracereader::Setup()
 {
-  
-
-  /*  // send ending event
-  sstdisksim_event* event = new sstdisksim_event();
-  event->done = 1;
-  link->Send(0, event);
-  */
-
   unregisterExit();
 
   return 0;
