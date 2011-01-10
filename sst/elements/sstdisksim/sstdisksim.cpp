@@ -99,13 +99,13 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   std::string parameterFile = "";
   std::string outputFile = "";
   long long numSectors = 0;
-  std::string frequency = "";
   __id = id;
   __done = 0;
   __st.n = 0;
   __st.sum = 0;
   __st.sqr = 0;
   __event_total = 1;
+  __cycle = 0;
   
   if ( params.find( "debug" ) != params.end() ) 
   {
@@ -232,9 +232,11 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
     return -1;
   }
 
-  tmp = __now-tmp;
+  tmp = __now-tmp; /* milliseconds */
+  long cyclespermillisec = 1000000;
+
   
-  __cycle += (int)(tmp*10000000);
+  __cycle += (long)(tmp*cyclespermillisec);
   lockstep->Send(__cycle, ev);
 
 
@@ -256,11 +258,11 @@ sstdisksim::lockstepEvent(Event* ev)
 
   /* temporary debugging */
   if ( event->etype == DISKSIMEND )
-    printf ( "lockstepEvent called on end event. %d\n", now );
+    printf ( "lockstepEvent called on end event. %lu\n", now );
   if ( event->etype == DISKSIMWRITE )
-    printf ( "lockstepEvent called on write event.  %d\n", now );
+    printf ( "lockstepEvent called on write event.  %lu\n", now );
   if ( event->etype == DISKSIMREAD )
-    printf ( "lockstepEvent called on read event.  %d\n", now );
+    printf ( "lockstepEvent called on read event.  %lu\n", now );
 
   if ( __event_total == 0 )
   {
@@ -269,7 +271,7 @@ sstdisksim::lockstepEvent(Event* ev)
       __done = true;
       unregisterExit();
       print_statistics(&__st, "response time");
-      printf("time: %f\n", __now);
+      printf("time: %f milliseconds\n", __now);
     }
     return;
   }

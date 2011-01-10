@@ -126,10 +126,11 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   registerTimeBase("1ps");
   link = configureLink( "link" );
 
+  // Clock speed really doesn't matter much here-it is used to sync up the simulations.
   registerClock("1GHz", 
 		new Clock::Handler<sstdisksim_tracereader>(this, 
 							   &sstdisksim_tracereader::clock));
-
+ 
   printf("Starting sstdisksim_tracereader up\n");
 
   registerExit();
