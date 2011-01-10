@@ -28,18 +28,21 @@ sstdisksim_event*
 sstdisksim_otf_parser::getNextEvent()
 {
   static int tmpCount = 0;
+  tmpCount++;
+
+  if ( tmpCount > 100 )
+    return NULL;
+
   sstdisksim_event* ev = new sstdisksim_event();
   ev->completed = 0;
 
-  if ( tmpCount > 100 )
+  if ( tmpCount == 100 )
   {
     ev->etype = DISKSIMEND;
     return ev;
   }
 
-  tmpCount++;
   
-
   // Todo:  Add reading of events from a file here.
   // Erase this after starting to read from the file
   if ( tmpCount % 3 == 0 )

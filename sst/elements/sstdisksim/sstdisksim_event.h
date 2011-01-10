@@ -26,8 +26,11 @@ public:
   unsigned long time;
 
   bool completed;
+  void* bossClass;
 
-  sstdisksim_event() : SST::Event() { }
+  void (*finishedCall)(void);
+
+  sstdisksim_event();
 
 private:
   friend class boost::serialization::access;

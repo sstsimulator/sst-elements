@@ -36,22 +36,14 @@ static sstdisksim_tracereader* __ptrs[128];
 bool
 sstdisksim_tracereader::clock(Cycle_t current)
 {
-  /* debugging here */
-  if ( current % 1000 == 0 )
-    printf("cycle(s) %d\n", (int)current);
-
   sstdisksim_event* event = __parser->getNextEvent();
   /* At the end of our input */
   if ( event == NULL )
   {
-    abort();
+    return false;
   }
 
-  if ( event->etype == DISKSIMEND )
-  {
-    link->Send(0, event);
-  }
-
+  link->Send(0, event);
   return false;
 }
 
@@ -128,8 +120,8 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
 
   // Clock speed really doesn't matter much here-it is used to sync up the simulations.
   registerClock("1GHz", 
-		new Clock::Handler<sstdisksim_tracereader>(this, 
-							   &sstdisksim_tracereader::clock));
+  		new Clock::Handler<sstdisksim_tracereader>(this, 
+  							   &sstdisksim_tracereader::clock));
  
   printf("Starting sstdisksim_tracereader up\n");
 

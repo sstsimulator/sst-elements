@@ -239,10 +239,6 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   __cycle += (long)(tmp*cyclespermillisec);
   lockstep->Send(__cycle, ev);
 
-
-  //  sstdisksim_event* event = new sstdisksim_event();
-  //  empty->Send((int)(tmp*1000000), event);
-
   return tmp;
 }
 
@@ -252,7 +248,6 @@ sstdisksim::lockstepEvent(Event* ev)
 {
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
   event->completed = true;
-  __event_total--;
 
   Cycle_t now = __tc->convertToCoreTime( getCurrentSimTime(__tc) );
 
@@ -263,6 +258,8 @@ sstdisksim::lockstepEvent(Event* ev)
     printf ( "lockstepEvent called on write event.  %lu\n", now );
   if ( event->etype == DISKSIMREAD )
     printf ( "lockstepEvent called on read event.  %lu\n", now );
+
+  __event_total--;
 
   if ( __event_total == 0 )
   {
@@ -275,6 +272,9 @@ sstdisksim::lockstepEvent(Event* ev)
     }
     return;
   }
+
+  event->finishedCall();
+  delete(event);
 }
 
 /******************************************************************************/
