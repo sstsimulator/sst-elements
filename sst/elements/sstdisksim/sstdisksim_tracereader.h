@@ -62,7 +62,7 @@ class sstdisksim_tracereader : public Component {
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */
 
-  Log< DISKSIM_DBG >&  m_dbg;
+  Log< DISKSIM_DBG >&  __dbg;
   
   sstdisksim_tracereader( const sstdisksim_tracereader& c );
   

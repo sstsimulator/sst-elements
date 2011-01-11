@@ -24,7 +24,7 @@
 #define	BLOCK2SECTOR	(BLOCK/SECTOR)
 
 #define DBG( fmt, args... ) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
+    __dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
 void
@@ -94,7 +94,7 @@ syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
 /******************************************************************************/
 sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   Component( id ),
-  m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
+  __dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
   std::string parameterFile = "";
   std::string outputFile = "";
@@ -111,7 +111,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   {
     if ( params[ "debug" ].compare( "yes" ) == 0 ) 
     {
-      m_dbg.enable();
+      __dbg.enable();
     }
   } 
 
@@ -158,7 +158,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
 			       __tc,
 			       new Event::Handler<sstdisksim>(this,&sstdisksim::lockstepEvent));
 
-  printf("Starting disksim up\n");
+  DBG("Starting disksim up\n");
 
   return;
 }
@@ -181,7 +181,7 @@ sstdisksim::Finish()
 {
   disksim_interface_shutdown(__disksim, __now);
 
-  printf("Shutting sstdisksim down\n");
+  DBG("Shutting sstdisksim down\n");
 
   return 0;
 }
@@ -222,13 +222,13 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
     __now = __next_event;
     __next_event = -1;
     disksim_interface_internal_event(__disksim, __now, 0);
-    // Should sync here somehow eventually 
   }
   
   if ( ! r.completed ) 
   {
     fprintf(stderr,
-	    "disksim sim: internal error. Last event not completed\n");
+	"disksim sim: internal error. Last event not completed\n");
+    abort();
     return -1;
   }
 
@@ -251,13 +251,14 @@ sstdisksim::lockstepEvent(Event* ev)
 
   Cycle_t now = __tc->convertToCoreTime( getCurrentSimTime(__tc) );
 
-  /* temporary debugging */
+#ifdef DISKSIM_DBG
   if ( event->etype == DISKSIMEND )
-    printf ( "lockstepEvent called on end event. %lu\n", now );
+    DBG( "lockstepEvent called on end event. %lu\n", now );
   if ( event->etype == DISKSIMWRITE )
-    printf ( "lockstepEvent called on write event.  %lu\n", now );
+    DBG( "lockstepEvent called on write event.  %lu\n", now );
   if ( event->etype == DISKSIMREAD )
-    printf ( "lockstepEvent called on read event.  %lu\n", now );
+    DBG( "lockstepEvent called on read event.  %lu\n", now );
+#endif
 
   __event_total--;
 
@@ -268,7 +269,7 @@ sstdisksim::lockstepEvent(Event* ev)
       __done = true;
       unregisterExit();
       print_statistics(&__st, "response time");
-      printf("time: %f milliseconds\n", __now);
+      DBG("time: %f milliseconds\n", __now);
     }
     return;
   }

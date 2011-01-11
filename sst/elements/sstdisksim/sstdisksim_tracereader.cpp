@@ -30,7 +30,7 @@ static sstdisksim_tracereader* __ptrs[128];
 #define	BLOCK2SECTOR	(BLOCK/SECTOR)
 
 #define DBG( fmt, args... ) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
+    __dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
 bool
@@ -83,7 +83,7 @@ sstdisksim_tracereader::traceWrite(int count, int pos, int devno)
 sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  
 						Params_t& params ) :
   Component( id ),
-  m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
+  __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
 {
   __id = id;
   __done = 0;
@@ -95,7 +95,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   {
     if ( params[ "debug" ].compare( "yes" ) == 0 ) 
     {
-      m_dbg.enable();
+      __dbg.enable();
     }
   } 
 
@@ -123,7 +123,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   		new Clock::Handler<sstdisksim_tracereader>(this, 
   							   &sstdisksim_tracereader::clock));
  
-  printf("Starting sstdisksim_tracereader up\n");
+  DBG("Starting sstdisksim_tracereader up\n");
 
   registerExit();
 }
@@ -147,7 +147,7 @@ sstdisksim_tracereader::Setup()
 int 
 sstdisksim_tracereader::Finish()
 {
-  printf("Shutting sstdisksim_tracereader down\n");
+  DBG("Shutting sstdisksim_tracereader down\n");
 
   return 0;
 }

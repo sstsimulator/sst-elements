@@ -72,10 +72,7 @@ class sstdisksim_luascriptreader : public Component {
   Params_t __params;
   ComponentId_t __id;
 
-  /* To be removed later-this is just to test the component
-     before we start having trace-reading functionality. */
-
-  Log< DISKSIM_DBG >&  m_dbg;
+  Log< DISKSIM_DBG >&  __dbg;
   
   sstdisksim_luascriptreader( const sstdisksim_luascriptreader& c );
   

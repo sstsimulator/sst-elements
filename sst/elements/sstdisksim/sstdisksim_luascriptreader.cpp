@@ -30,7 +30,7 @@ static sstdisksim_luascriptreader* __ptrs[128];
 #define	BLOCK2SECTOR	(BLOCK/SECTOR)
 
 #define DBG( fmt, args... ) \
-    m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
+    __dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
 void 
@@ -62,7 +62,7 @@ luaRetrieveValues(lua_State* L,
       *((bool*)ptr) = lua_toboolean(L,i+1);
       break;
     default:
-      printf("Invalid or unsupported type passed into luaRetrieveValues\n");
+      fprintf(stderr, "Invalid or unsupported type passed into luaRetrieveValues\n");
       exit(1);
     }
     i++;
@@ -104,7 +104,11 @@ luaReturnValues(lua_State* L,
       lua_pushboolean(L, *((bool*)ptr));
       break;
     default:
-      printf("Invalid or unsupported type passed into luaReturnValues()\n");
+      {
+	fprintf(stderr, 
+		"Invalid or unsupported type passed into luaReturnValues()\n");
+	abort();
+      }
     }
     i++;
   }
@@ -193,7 +197,7 @@ luaWriteCall(lua_State* L)
 /******************************************************************************/
 sstdisksim_luascriptreader::sstdisksim_luascriptreader( ComponentId_t id,  Params_t& params ) :
   Component( id ),
-  m_dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
+  __dbg( *new Log< DISKSIM_DBG >( "DisksimLuascriptreader::", false ) )
 {
   __id = id;
   __done = 0;
@@ -205,7 +209,7 @@ sstdisksim_luascriptreader::sstdisksim_luascriptreader( ComponentId_t id,  Param
   {
     if ( params[ "debug" ].compare( "yes" ) == 0 ) 
     {
-      m_dbg.enable();
+      __dbg.enable();
     }
   } 
 
@@ -226,7 +230,7 @@ sstdisksim_luascriptreader::sstdisksim_luascriptreader( ComponentId_t id,  Param
   registerTimeBase("1ps");
   link = configureLink( "link" );
 
-  printf("Starting sstdisksim_luascriptreader up\n");
+  DBG("Starting sstdisksim_luascriptreader up\n");
 
   __L = luaL_newstate();
   luaL_openlibs(__L);
@@ -265,7 +269,7 @@ sstdisksim_luascriptreader::Setup()
 int 
 sstdisksim_luascriptreader::Finish()
 {
-  printf("Shutting sstdisksim_luascriptreader down\n");
+  DBG("Shutting sstdisksim_luascriptreader down\n");
 
   lua_close(__L);
 
