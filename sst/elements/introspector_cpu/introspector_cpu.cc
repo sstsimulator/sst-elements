@@ -89,6 +89,7 @@ bool Introspector_cpu::triggeredUpdate()
 		std::cout << "Pull data from component ID " << (*i)->getId() << " and total counts = " << getData<uint64_t>(*i, "totalCounts") << std::endl;
 		std::cout << "Pull data from component ID " << (*i)->getId() << " and temperature = " << getData<double>(*i, "temperature") << std::endl;
 		std::cout << "Pull data from component ID " << (*i)->getId() << " and general counts = " << getData<int>(*i, "generalCounts") << std::endl;
+		std::cout << "Pull data from component ID " << (*i)->getId() << " and some data = " << getData<int>(*i, "some data") << std::endl;
 	        ////intData = getData(*i, "totalCounts");
 	    }
 
