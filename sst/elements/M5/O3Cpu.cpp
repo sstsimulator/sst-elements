@@ -2,15 +2,9 @@
 #include <sst/core/serialization/element.h>
 #include <sst/core/params.h>
 
-#include <params/OpDesc.hh>
-#include <params/FUDesc.hh>
-#include <params/FUPool.hh>
-#include <params/DerivO3CPU.hh>
-#include <params/ExeTracer.hh>
-#include <cpu/base.hh>
-#include <cpu/func_unit.hh>
-#include <cpu/o3/impl.hh>
 #include <cpu/o3/cpu.hh>
+#include <cpu/func_unit.hh>
+#include <params/FUPool.hh>
 
 #include <system.h>
 #include <dummyPhysicalMemory.h>
@@ -37,8 +31,6 @@ static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params&, System* );
 static FUDesc* newFUDesc( vector<OpDesc*> opV, int count, string name ); 
 static OpDesc* newOpDesc( Enums::OpClass opClass, int opLat, 
                                     int issueLat, string name );
-static BaseCPU* newO3CPU( string name, int id, int clock,
-                                    string exe, System* system );
 static FUPool* newFUPool( string );
 template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
