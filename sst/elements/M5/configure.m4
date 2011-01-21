@@ -27,6 +27,14 @@ AC_DEFUN([SST_M5_CONFIG], [
     [M5_CPPFLAGS=
      M5_LDFLAGS=])
 
+  use_m5_o3=false 
+  AS_IF([test "$enable_m5_isa" != "no"], 
+    [case "$enable_m5_isa" in
+      ALPHA_ISA | SPARC_ISA) use_m5_o3=true ;;
+     esac])
+
+  AM_CONDITIONAL([USE_M5_O3], [test x$use_m5_o3 = xtrue])
+
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
   AC_CHECK_LIB([m5], [initm5],
