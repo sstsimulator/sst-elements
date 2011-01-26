@@ -26,9 +26,9 @@
 #include <sst/elements/include/memMap.h>
 
 #define SLIDE_SST
-#include "aux/des.h"
+#include "include/des.h"
 #undef SLIDE_SST
-#include "aux/cont_proc.h"
+#include "include/cont_proc.h"
 
 using namespace SST;
 

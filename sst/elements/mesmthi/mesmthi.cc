@@ -19,8 +19,8 @@
 #include <sst/elements/include/memMap.h>
 
 #include "mesmthi.h"
-#include "aux/des.h"
-#include "aux/cont_proc.h"
+#include "include/des.h"
+#include "include/cont_proc.h"
 
 using namespace std;
 using namespace Slide;
