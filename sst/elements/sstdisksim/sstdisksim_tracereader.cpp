@@ -113,7 +113,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
     ++it;
   }
 
-  __parser = new sstdisksim_otf_parser(traceFile);
+  __parser = new sstdisksim_tau_parser(traceFile);
 
   registerTimeBase("1ps");
   link = configureLink( "link" );

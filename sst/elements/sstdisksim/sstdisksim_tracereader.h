@@ -26,7 +26,7 @@
 
 #include <sstdisksim.h>
 #include <sstdisksim_event.h>
-#include "sstdisksim_otf_parser.h"
+#include "sstdisksim_tau_parser.h"
 
 using namespace std;
 using namespace SST;
@@ -57,7 +57,7 @@ class sstdisksim_tracereader : public Component {
   bool __done;
   Params_t __params;
   ComponentId_t __id;
-  sstdisksim_otf_parser* __parser;
+  sstdisksim_tau_parser* __parser;
 
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */

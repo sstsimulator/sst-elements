@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SSTDISKSIM_OTF_PARSER_H
-#define _SSTDISKSIM_OTF_PARSER_H
+#ifndef _SSTDISKSIM_TAU_PARSER_H
+#define _SSTDISKSIM_TAU_PARSER_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,15 +26,15 @@
 
 using namespace std;
 
-class sstdisksim_otf_parser {
+class sstdisksim_tau_parser {
 
  public:
-  sstdisksim_otf_parser(string filename);
-  ~sstdisksim_otf_parser();
+  sstdisksim_tau_parser(string filename);
+  ~sstdisksim_tau_parser();
   sstdisksim_event* getNextEvent();
 
  private:
   ifstream filestream;
 };
 
-#endif /* _SSTDISKSIM_OTF_PARSER_H */
+#endif /* _SSTDISKSIM_TAU_PARSER_H */

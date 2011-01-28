@@ -9,23 +9,23 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sstdisksim_otf_parser.h"
+#include "sstdisksim_tau_parser.h"
 
 /******************************************************************************/
-sstdisksim_otf_parser::sstdisksim_otf_parser(string filename)
+sstdisksim_tau_parser::sstdisksim_tau_parser(string filename)
 {
   filestream.open(filename.c_str());
 }
 
 /******************************************************************************/
-sstdisksim_otf_parser::~sstdisksim_otf_parser()
+sstdisksim_tau_parser::~sstdisksim_tau_parser()
 {
   filestream.close();
 }
 
 /******************************************************************************/
 sstdisksim_event*
-sstdisksim_otf_parser::getNextEvent()
+sstdisksim_tau_parser::getNextEvent()
 {
   static int tmpCount = 0;
   tmpCount++;
