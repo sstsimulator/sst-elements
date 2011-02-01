@@ -51,7 +51,7 @@ namespace Slide {
     bool          stalled;
     unsigned      cache_ports;
 
-    Qsim::CDomain cd;
+    Qsim::OSDomain cd;
     
     class process : public cont_proc_t { public:
       qsimcpu_t *p; unsigned i; delay_cpt delay;

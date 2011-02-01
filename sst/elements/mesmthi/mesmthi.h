@@ -52,7 +52,7 @@ unsigned net_cpp;
 class Tile;
 std::vector <Tile*> tiles;
 
-Qsim::CDomain *cd;
+Qsim::OSDomain *cd;
 
 bool benchmark_running  = false; // can be used to fast-forward past bootstrap
 bool simulation_running = true;  // lets us know when simulation is done

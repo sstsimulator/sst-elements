@@ -1912,8 +1912,8 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : IntrospectedComponent(id)
   // Initialize the discrete event simulator.
   Slide::des_init(this, clock_pd);
 
-  // Initialize our CDomain
-  cd = new Qsim::CDomain((1<<log2_row_size)*(1<<log2_row_size)*threads, 
+  // Initialize our OSDomain
+  cd = new Qsim::OSDomain((1<<log2_row_size)*(1<<log2_row_size)*threads, 
                          kernel_img,
                          (1<<(paddr_bits - 20)) - 512);
   cd->connect_console(std::cout);
