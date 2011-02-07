@@ -130,7 +130,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "c:s:hX:Y:x:y:p:m:i:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "c:o:hX:Y:x:y:p:m:i:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -178,7 +178,7 @@ int ssd_write_bw;	/* In bytes per second */
 		    error= TRUE;
 		}
 		break;
-	    case 's':
+	    case 'o':
 		sstFname= optarg;
 		break;
 	    case 'p':
@@ -480,13 +480,14 @@ usage(char *argv[])
 {
 
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -s sname -p pname [-c num_cores] [--power model] [-i IO] [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -o out -p pname [-c num_cores] [--power model] [-i IO] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -s     Name of the SST xml output file\n");
     fprintf(stderr, "   --cores, -c           Number of cores per NoC router (Default 1)\n");
     fprintf(stderr, "   -X dimX               X dimension of tours network\n");
     fprintf(stderr, "   -Y dimY               Y dimension of tours network\n");
     fprintf(stderr, "   -x dimX               X dimension of NoC tours\n");
     fprintf(stderr, "   -y dimY               Y dimension of NoC tours\n");
+    fprintf(stderr, "   -o out                Name of output file\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
     fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate\n");
