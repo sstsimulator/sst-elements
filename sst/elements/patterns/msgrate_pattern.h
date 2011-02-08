@@ -31,10 +31,13 @@ using namespace SST;
 #endif
 
 typedef enum {INIT,			// First state in state machine
-              SENDING,			// We are currently sedning messages
-	      WAITING,			// Waiting for one or more messages
-	      BCAST,			// Performing a broadcast
-	      REDUCE,			// Performing a reduce to rank 0
+              SENDING1,			// Sending messages from ranks 0..n/2-1 to n/2..n-1
+              SENDING2,			// Rank 0 sends messages to 1..n-1 round robin
+	      WAITING1,			// Waiting for messages in the 0..n/2-1 to n/2..n-1 case
+	      WAITING2,			// Waiting for messages from rank 0
+	      BCAST1,			// Performing broadcast after first test
+	      REDUCE1,			// Performing a reduce to rank 0 after first test
+	      REDUCE2,			// Performing a reduce to rank 0 after second test
 	      DONE,			// Work is all done
 } state_t;
 
@@ -292,13 +295,17 @@ class Msgrate_pattern : public Component {
 
 	// Some local functions we need
 	void state_INIT(pattern_event_t event, CPUNicEvent *e);
-	void state_SENDING(pattern_event_t event);
-	void state_WAITING(pattern_event_t event, CPUNicEvent *e);
-	void state_BCAST(pattern_event_t event, CPUNicEvent *e);
-	void state_REDUCE(pattern_event_t event, CPUNicEvent *e);
+	void state_SENDING1(pattern_event_t event);
+	void state_WAITING1(pattern_event_t event, CPUNicEvent *e);
+	void state_SENDING2(pattern_event_t event);
+	void state_WAITING2(pattern_event_t event, CPUNicEvent *e);
+	void state_BCAST1(pattern_event_t event, CPUNicEvent *e);
+	void state_REDUCE1(pattern_event_t event, CPUNicEvent *e);
+	void state_REDUCE2(pattern_event_t event, CPUNicEvent *e);
 	void state_DONE(pattern_event_t event);
 
-	void count_receives(void);
+	void count_receives1(void);
+	void count_receives2(void);
 
 
         friend class boost::serialization::access;

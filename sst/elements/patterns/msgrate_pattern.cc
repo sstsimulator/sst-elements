@@ -10,6 +10,29 @@
 // distribution.
 
 
+/*
+    One of these pattern generators runs on each core of the
+    simulated system. For the first test, the generators on the
+    first half of cores (0...n/2-1) send a fixed number (num_msgs)
+    of messages to one of the cores in the second half of the set
+    (n/2...n-1).
+
+    The number of cores is set by the mesh of meshes generated
+    by genPatterns.  The number of messages sent by each sender
+    (num_msgs) can be set in the SDL file using the num_msgs
+    parameter in the Gp section. The message length can also be
+    set there using the exchange_msg_len parameter, or using the
+    command line option --msg_len for genPatterns.
+
+    The senders do their sends and then enter into a reduce followed
+    by a broadcast among all ranks. The receivers wait for the
+    specified number of messages and measure how long it takes to
+    receive them (from time 0 simulation time). That time value
+    is used in the reduce operation that follows.  The total time
+    is broadcast to everybody and rank zero calculates the average
+    number of messages per second per sender from that.
+
+*/
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <sst/core/cpunicEvent.h>
@@ -46,17 +69,26 @@ pattern_event_t event;
 	case INIT:
 	    state_INIT(event, e);
 	    break;
-	case SENDING:
-	    state_SENDING(event);
+	case SENDING1:
+	    state_SENDING1(event);
 	    break;
-	case WAITING:
-	    state_WAITING(event, e);
+	case WAITING1:
+	    state_WAITING1(event, e);
 	    break;
-	case BCAST:
-	    state_BCAST(event, e);
+	case SENDING2:
+	    state_SENDING2(event);
 	    break;
-	case REDUCE:
-	    state_REDUCE(event, e);
+	case WAITING2:
+	    state_WAITING2(event, e);
+	    break;
+	case BCAST1:
+	    state_BCAST1(event, e);
+	    break;
+	case REDUCE1:
+	    state_REDUCE1(event, e);
+	    break;
+	case REDUCE2:
+	    state_REDUCE2(event, e);
 	    break;
 	case DONE:
 	    state_DONE(event);
@@ -66,13 +98,6 @@ pattern_event_t event;
     delete(e);
 
     if (application_done && (state == DONE))   {
-	if (my_rank >= nranks / 2)   {
-	    if (rcv_cnt != num_msgs)   {
-		printf("ERROR: Rank %d received %d messages instead of %d\n",
-		    my_rank, rcv_cnt, num_msgs);
-	    }
-	}
-
 	unregisterExit();
     }
 
@@ -199,11 +224,11 @@ Msgrate_pattern::state_INIT(pattern_event_t event, CPUNicEvent *e)
 	    rcv_cnt= 0;
 	    msg_wait_time_start= getCurrentSimTime();
 	    if (my_rank < nranks / 2)   {
-		state= SENDING;
-		state_SENDING(event);
+		state= SENDING1;
+		state_SENDING1(event);
 	    } else   {
-		state= WAITING;
-		state_WAITING(event, e);
+		state= WAITING1;
+		state_WAITING1(event, e);
 	    }
 	    break;
 
@@ -229,7 +254,7 @@ Msgrate_pattern::state_INIT(pattern_event_t event, CPUNicEvent *e)
 
 
 void
-Msgrate_pattern::state_SENDING(pattern_event_t event)
+Msgrate_pattern::state_SENDING1(pattern_event_t event)
 {
 
 SimTime_t delay;
@@ -243,17 +268,16 @@ SimTime_t value;
 		common->send(delay, my_rank + nranks / 2, exchange_msg_len + envelope_size);
 		delay += SEND_DELAY;
 	    }
-	    application_done= true;
 
 	    // Start the reduce
-	    state= REDUCE;
+	    state= REDUCE1;
 	    value= 0;
 	    if (my_rank >= nranks / 2)   {
 		// If I'm a leaf, send my data
 		if (parent >= 0)   {
 		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
-		state= BCAST;
+		state= BCAST1;
 	    } else   {
 		// Otherwise save it for later
 		reduce_queue.push(value);
@@ -277,12 +301,12 @@ SimTime_t value;
 	    break;
     }
 
-}  // end of state_SENDING()
+}  // end of state_SENDING1()
 
 
 
 void
-Msgrate_pattern::state_WAITING(pattern_event_t event, CPUNicEvent *e)
+Msgrate_pattern::state_WAITING1(pattern_event_t event, CPUNicEvent *e)
 {
 
 SimTime_t value;
@@ -299,20 +323,173 @@ unsigned int leaves;
 	    break;
 
 	case RECEIVE:
-	    count_receives();
+	    count_receives1();
+
+	    if (done_waiting)   {
+		msg_wait_time= getCurrentSimTime() - msg_wait_time_start;
+
+		// Start the reduce
+		state= REDUCE1;
+		if (my_rank >= nranks / 2)   {
+		    // If I'm a leaf, send my data
+		    if (parent >= 0)   {
+			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
+		    }
+		    state= BCAST1;
+		} else   {
+		    // Otherwise save it for later
+		    reduce_queue.push(msg_wait_time);
+		}
+		done_waiting= false;
+	    }
+	    break;
+
+	case REDUCE_DATA:
+	    // Extract the reduce data and push it onto our queue
+	    value_len= sizeof(value);
+	    e->DetachPayload(&value, &value_len);
+	    reduce_queue.push(value);
+
+	    // Do I have one or two children?
+	    if (nranks >= ((my_rank + 1) * 2))    {
+		leaves= 2;
+	    } else   {
+		// I wouldn't be here, if I had no children
+		leaves= 1;
+	    }
+
+	    if (reduce_queue.size() >= (leaves + 1))   {
+		// We got it all. Add it up and send it to the parent
+		value= reduce_queue.front();
+		reduce_queue.pop();
+		value= value + reduce_queue.front();
+		reduce_queue.pop();
+		if (!reduce_queue.empty())   {
+		    value= value + reduce_queue.front();
+		    reduce_queue.pop();
+		}
+
+		// Queue should be empty now
+		assert(reduce_queue.empty());
+
+		// Send result up
+		if (parent >= 0)   {
+		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		}
+	    }
+	    break;
+
+	case COMPUTE_DONE:
+	case CHCKPT_DONE:
+	case FAIL:
+	case LOG_MSG_DONE:
+	case ENV_LOG_DONE:
+	case ENTER_WAIT:
+	case BCAST_DATA:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_WAITING1()
+
+
+
+void
+Msgrate_pattern::state_SENDING2(pattern_event_t event)
+{
+
+SimTime_t delay;
+SimTime_t value;
+int dest;
+
+
+    switch (event)   {
+	case START:
+	    delay= 0;
+	    dest= 1;
+	    // Rank 0 sends num_msgs round robin to ranks 1..n-1
+	    for (int k= 0; k < num_msgs; k++)   {
+		common->send(delay, dest, exchange_msg_len + envelope_size);
+		delay += SEND_DELAY;
+		dest++;
+		if (dest % nranks == 0)   {
+		    dest= 1;
+		}
+	    }
+	    application_done= true;
+
+	    // Start the second reduce
+	    state= REDUCE2;
+	    value= 0;
+	    if (my_rank >= nranks / 2)   {
+		// If I'm a leaf, send my data
+		if (parent >= 0)   {
+		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		}
+		state= DONE;
+	    } else   {
+		// Otherwise save it for later
+		reduce_queue.push(value);
+	    }
+	    break;
+
+	case COMPUTE_DONE:
+	case RECEIVE:
+	case CHCKPT_DONE:
+	case FAIL:
+	case LOG_MSG_DONE:
+	case ENV_LOG_DONE:
+	case ENTER_WAIT:
+	case BCAST_DATA:
+	case REDUCE_DATA:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_SENDING2()
+
+
+
+void
+Msgrate_pattern::state_WAITING2(pattern_event_t event, CPUNicEvent *e)
+{
+
+SimTime_t value;
+SimTime_t msg_wait_time;
+int value_len;
+unsigned int leaves;
+
+
+
+
+    switch (event)   {
+	case START:
+	    // Nothing to do yet
+	    break;
+
+	case RECEIVE:
+	    count_receives2();
 
 	    if (done_waiting)   {
 		msg_wait_time= getCurrentSimTime() - msg_wait_time_start;
 		application_done= true;
 
 		// Start the reduce
-		state= REDUCE;
+		state= REDUCE2;
 		if (my_rank >= nranks / 2)   {
 		    // If I'm a leaf, send my data
 		    if (parent >= 0)   {
 			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
 		    }
-		    state= BCAST;
+		    state= DONE;
 		} else   {
 		    // Otherwise save it for later
 		    reduce_queue.push(msg_wait_time);
@@ -370,12 +547,12 @@ unsigned int leaves;
 	    break;
     }
 
-}  // end of state_WAITING()
+}  // end of state_WAITING2()
 
 
 
 void
-Msgrate_pattern::state_REDUCE(pattern_event_t event, CPUNicEvent *e)
+Msgrate_pattern::state_REDUCE1(pattern_event_t event, CPUNicEvent *e)
 {
 
 SimTime_t value;
@@ -418,11 +595,11 @@ unsigned int leaves;
 		}
 
 		// Then enter the broadcast
-		state= BCAST;
+		state= BCAST1;
 
 		// If I'm the root, initiate the broadcast
 		if (my_rank == 0)   {
-		    printf(">>> Average rate for %d messages of length %d (+ %dB header): %.3f msgs/s\n",
+		    printf(">>> Average rate for %d messages of length %d (+ %d B header): %.3f msgs/s\n",
 			num_msgs, exchange_msg_len, envelope_size,
 			1000000000.0 / ((double)value / (num_msgs * nranks / 2)));
 
@@ -433,7 +610,7 @@ unsigned int leaves;
 			common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    bcast_done= true;
-		    state= DONE;
+		    state= SENDING2;
 		}
 	    }
 	    break;
@@ -455,12 +632,87 @@ unsigned int leaves;
 	    break;
     }
 
-}  // end of state_REDUCE()
+}  // end of state_REDUCE1()
 
 
 
 void
-Msgrate_pattern::state_BCAST(pattern_event_t event, CPUNicEvent *e)
+Msgrate_pattern::state_REDUCE2(pattern_event_t event, CPUNicEvent *e)
+{
+
+SimTime_t value;
+int value_len;
+unsigned int leaves;
+
+
+    switch (event)   {
+	case REDUCE_DATA:
+	    // Extract the reduce data and push it onto our queue
+	    value_len= sizeof(value);
+	    e->DetachPayload(&value, &value_len);
+	    reduce_queue.push(value);
+
+	    // Do I have one or two children?
+	    if (nranks > ((my_rank + 1) * 2))    {
+		leaves= 2;
+	    } else   {
+		// I wouldn't be here, if I had no children
+		leaves= 1;
+	    }
+
+	    if (reduce_queue.size() >= (leaves + 1))   {
+		// We got it all. Add it up and send it to the parent
+		value= reduce_queue.front();
+		reduce_queue.pop();
+		value= value + reduce_queue.front();
+		reduce_queue.pop();
+		if (!reduce_queue.empty())   {
+		    value= value + reduce_queue.front();
+		    reduce_queue.pop();
+		}
+
+		// Queue should be empty now
+		assert(reduce_queue.empty());
+
+		// Send result up
+		if (parent >= 0)   {
+		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		}
+
+		state= DONE;
+
+		// If I'm the root, print the result
+		if (my_rank == 0)   {
+		    printf(">>> Average rate for %d messages of length %d (+ %d B header): %.3f msgs/s\n",
+			num_msgs, exchange_msg_len, envelope_size,
+			1000000000.0 / ((double)value / (num_msgs * nranks / 2)));
+		}
+	    }
+	    break;
+
+	case BCAST_DATA:
+	case RECEIVE:
+	case START:
+	case COMPUTE_DONE:
+	case CHCKPT_DONE:
+	case FAIL:
+	case LOG_MSG_DONE:
+	case ENV_LOG_DONE:
+	case ENTER_WAIT:
+	case BIT_BUCKET_WRITE_START:
+	case BIT_BUCKET_WRITE_DONE:
+	case BIT_BUCKET_READ_START:
+	case BIT_BUCKET_READ_DONE:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_REDUCE2()
+
+
+
+void
+Msgrate_pattern::state_BCAST1(pattern_event_t event, CPUNicEvent *e)
 {
 
 SimTime_t value;
@@ -479,7 +731,8 @@ int value_len;
 	    if (right >= 0)   {
 		common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 	    }
-	    state= DONE;
+	    state= WAITING2;
+	    msg_wait_time_start= getCurrentSimTime();
 	    bcast_done= true;
 	    break;
 
@@ -502,7 +755,7 @@ int value_len;
 	    break;
     }
 
-}  // end of state_BCAST()
+}  // end of state_BCAST1()
 
 
 
@@ -520,14 +773,47 @@ Msgrate_pattern::state_DONE(pattern_event_t event)
 // -----------------------------------------------------------------------------
 // Utility functions
 //
+
+
+
+// Count the receives for the first test
 void
-Msgrate_pattern::count_receives(void)
+Msgrate_pattern::count_receives1(void)
 {
 
     rcv_cnt++;
+    _MSGRATE_PATTERN_DBG(3, "[%3d] Got msg #%d/%d for test 1\n", my_rank, rcv_cnt, num_msgs);
+
     if (rcv_cnt == num_msgs)   {
 	done_waiting= true;
+	rcv_cnt= 0;
     }
-    _MSGRATE_PATTERN_DBG(3, "[%3d] Got msg #%d/%d\n", my_rank, rcv_cnt, num_msgs);
 
-}  // end of count_receives()
+}  // end of count_receives1()
+
+
+
+// Count the receives for the second test
+void
+Msgrate_pattern::count_receives2(void)
+{
+
+int num_rcvs;
+
+
+    // Every receiver gets this many messages
+    num_rcvs= num_msgs / (nranks - 1);
+
+    // Some may get one more
+    if (my_rank <= (num_msgs - (num_rcvs * (nranks - 1))))   {
+	num_rcvs++;
+    }
+
+    rcv_cnt++;
+    _MSGRATE_PATTERN_DBG(3, "[%3d] Got msg #%d/%d for test 2\n", my_rank, rcv_cnt, num_rcvs);
+
+    if (rcv_cnt == num_rcvs)   {
+	done_waiting= true;
+    }
+
+}  // end of count_receives2()
