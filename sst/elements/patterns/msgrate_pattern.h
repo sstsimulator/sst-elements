@@ -37,7 +37,8 @@ typedef enum {INIT,			// First state in state machine
 	      WAITING2,			// Waiting for messages from rank 0
 	      BCAST1,			// Performing broadcast after first test
 	      REDUCE1,			// Performing a reduce to rank 0 after first test
-	      REDUCE2,			// Performing a reduce to rank 0 after second test
+	      REDUCE2,			// Performing a reduce to rank 0 before second test
+	      REDUCE3,			// Performing a reduce to rank 0 after second test
 	      DONE,			// Work is all done
 } state_t;
 
@@ -302,6 +303,7 @@ class Msgrate_pattern : public Component {
 	void state_BCAST1(pattern_event_t event, CPUNicEvent *e);
 	void state_REDUCE1(pattern_event_t event, CPUNicEvent *e);
 	void state_REDUCE2(pattern_event_t event, CPUNicEvent *e);
+	void state_REDUCE3(pattern_event_t event, CPUNicEvent *e);
 	void state_DONE(pattern_event_t event);
 
 	void count_receives1(void);
