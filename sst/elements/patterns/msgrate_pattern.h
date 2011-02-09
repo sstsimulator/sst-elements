@@ -33,9 +33,12 @@ using namespace SST;
 typedef enum {INIT,			// First state in state machine
               SENDING1,			// Sending messages from ranks 0..n/2-1 to n/2..n-1
               SENDING2,			// Rank 0 sends messages to 1..n-1 round robin
+              SENDING3,			// Ranks 1..n-1 send messages to 0
 	      WAITING1,			// Waiting for messages in the 0..n/2-1 to n/2..n-1 case
 	      WAITING2,			// Waiting for messages from rank 0
+	      WAITING3,			// Waiting for messages from ranks 1..n-1
 	      BCAST1,			// Performing broadcast after first test
+	      BCAST2,			// Performing broadcast after second test
 	      REDUCE1,			// Performing a reduce to rank 0 after first test
 	      REDUCE2,			// Performing a reduce to rank 0 before second test
 	      REDUCE3,			// Performing a reduce to rank 0 after second test
@@ -180,7 +183,7 @@ class Msgrate_pattern : public Component {
 	    NoC= configureLink("NoC", new Event::Handler<Msgrate_pattern>
 		    (this, &Msgrate_pattern::handle_NoC_events));
 	    if (NoC == NULL)   {
-		_MSGRATE_PATTERN_DBG(1, "There is no NoC...\n");
+		_MSGRATE_PATTERN_DBG(2, "There is no NoC...\n");
 	    } else   {
 		NoC->setDefaultTimeBase(tc);
 		_MSGRATE_PATTERN_DBG(2, "[%3d] Added a link and a handler for the NoC\n", my_rank);
@@ -300,7 +303,10 @@ class Msgrate_pattern : public Component {
 	void state_WAITING1(pattern_event_t event, CPUNicEvent *e);
 	void state_SENDING2(pattern_event_t event);
 	void state_WAITING2(pattern_event_t event, CPUNicEvent *e);
+	void state_SENDING3(pattern_event_t event);
+	void state_WAITING3(pattern_event_t event, CPUNicEvent *e);
 	void state_BCAST1(pattern_event_t event, CPUNicEvent *e);
+	void state_BCAST2(pattern_event_t event, CPUNicEvent *e);
 	void state_REDUCE1(pattern_event_t event, CPUNicEvent *e);
 	void state_REDUCE2(pattern_event_t event, CPUNicEvent *e);
 	void state_REDUCE3(pattern_event_t event, CPUNicEvent *e);
@@ -308,6 +314,7 @@ class Msgrate_pattern : public Component {
 
 	void count_receives1(void);
 	void count_receives2(void);
+	void count_receives3(void);
 
 
         friend class boost::serialization::access;
