@@ -47,6 +47,11 @@
 #define SEND_DELAY	(1000)	// 1 usec
 
 
+#define STATE_DBG(from, to) \
+    _MSGRATE_PATTERN_DBG(1, "[%3d] state transition from %s to %s\n", my_rank, from, to);
+
+
+
 void
 Msgrate_pattern::handle_events(CPUNicEvent *e)
 {
@@ -229,11 +234,11 @@ Msgrate_pattern::state_INIT(pattern_event_t event, CPUNicEvent *e)
 	    rcv_cnt= 0;
 	    msg_wait_time_start= getCurrentSimTime();
 	    if (my_rank < nranks / 2)   {
-		printf("[%3d] state transition from INIT to SENDING1\n", my_rank);
+		STATE_DBG("INIT", "SENDING1");
 		state= SENDING1;
 		state_SENDING1(event);
 	    } else   {
-		printf("[%3d] state transition from INIT to WAITING1\n", my_rank);
+		STATE_DBG("INIT", "WAITING");
 		state= WAITING1;
 		state_WAITING1(event, e);
 	    }
@@ -277,7 +282,7 @@ SimTime_t value;
 	    }
 
 	    // Start the reduce
-	    printf("[%3d] state transition from SENDING1 to REDUCE1\n", my_rank);
+	    STATE_DBG("SENDING1", "REDUCE1");
 	    state= REDUCE1;
 	    value= 0;
 	    if (my_rank >= nranks / 2)   {
@@ -285,7 +290,7 @@ SimTime_t value;
 		if (parent >= 0)   {
 		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
-		printf("[%3d] state transition from SENDING1 to BCAST1\n", my_rank);
+		STATE_DBG("SENDING1", "BCAST1");
 		state= BCAST1;
 	    } else   {
 		// Otherwise save it for later
@@ -338,14 +343,14 @@ unsigned int leaves;
 		msg_wait_time= getCurrentSimTime() - msg_wait_time_start;
 
 		// Start the reduce
-		printf("[%3d] state transition from WAITING1 to REDUCE1\n", my_rank);
+		STATE_DBG("WAITING1", "REDUCE1");
 		state= REDUCE1;
 		if (my_rank >= nranks / 2)   {
 		    // If I'm a leaf, send my data
 		    if (parent >= 0)   {
 			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
 		    }
-		    printf("[%3d] state transition from REDUCE1 to BCAST1\n", my_rank);
+		    STATE_DBG("REDUCE1", "BCAST1");
 		    state= BCAST1;
 		} else   {
 		    // Otherwise save it for later
@@ -420,10 +425,10 @@ int dest;
 
     switch (event)   {
 	case START:
-	    printf("[%3d] Entering send state 2\n", my_rank);
 	    delay= 0;
 	    dest= 1;
 	    // Rank 0 sends num_msgs round robin to ranks 1..n-1
+	    msg_wait_time_start= getCurrentSimTime();
 	    for (int k= 0; k < num_msgs; k++)   {
 		common->send(delay, dest, exchange_msg_len + envelope_size);
 		delay += SEND_DELAY;
@@ -435,7 +440,7 @@ int dest;
 	    application_done= true;
 
 	    // Start the second reduce
-	    printf("[%3d] state transition from SENDING2 to REDUCE3\n", my_rank);
+	    STATE_DBG("SENDING2", "REDUCE3");
 	    state= REDUCE3;
 	    value= 0;
 	    if (my_rank >= nranks / 2)   {
@@ -443,7 +448,7 @@ int dest;
 		if (parent >= 0)   {
 		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
-		printf("[%3d] state transition from SENDING2 to DONE\n", my_rank);
+		STATE_DBG("SENDING2", "DONE");
 		state= DONE;
 	    } else   {
 		// Otherwise save it for later
@@ -493,19 +498,18 @@ unsigned int leaves;
 	    count_receives2();
 
 	    if (done_waiting)   {
-		printf("[%3d] Done waiting the 2nd around\n", my_rank);
 		msg_wait_time= getCurrentSimTime() - msg_wait_time_start;
 		application_done= true;
 
 		// Start the reduce
 		state= REDUCE3;
-		printf("[%3d] state transition from WAITING2 to REDUCE3\n", my_rank);
+		STATE_DBG("WAITING2", "REDUCE3");
 		if (my_rank >= nranks / 2)   {
 		    // If I'm a leaf, send my data
 		    if (parent >= 0)   {
 			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
 		    }
-		    printf("[%3d] state transition from WAITING2 to DONE\n", my_rank);
+		    STATE_DBG("WAITING2", "DONE");
 		    state= DONE;
 		} else   {
 		    // Otherwise save it for later
@@ -612,7 +616,7 @@ unsigned int leaves;
 		}
 
 		// Then enter the broadcast
-		printf("[%3d] state transition from REDUCE1 to BCAST1\n", my_rank);
+		STATE_DBG("REDUCE1", "BCAST1");
 		state= BCAST1;
 
 		// If I'm the root, initiate the broadcast
@@ -628,7 +632,7 @@ unsigned int leaves;
 			common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    bcast_done= true;
-		    printf("[%3d] state transition from BCAST1 to REDUCE2\n", my_rank);
+		    STATE_DBG("BCAST1", "REDUCE2");
 		    state= REDUCE2;
 		    value= 0;
 		    common->event_send(my_rank, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
@@ -671,7 +675,6 @@ unsigned int leaves;
 	    // Extract the reduce data and push it onto our queue
 	    value_len= sizeof(value);
 	    e->DetachPayload(&value, &value_len);
-	    printf("[%3d] REDUCE2 got data: %ld\n", my_rank, value);
 	    reduce_queue.push(value);
 
 	    // Do I have one or two children?
@@ -692,7 +695,6 @@ unsigned int leaves;
 		    value= value + reduce_queue.front();
 		    reduce_queue.pop();
 		}
-		printf("[%3d] REDUCE2 done, value %ld\n", my_rank, value);
 
 		// Queue should be empty now
 		assert(reduce_queue.empty());
@@ -703,21 +705,13 @@ unsigned int leaves;
 		}
 
 		if (my_rank == 0)   {
-		    printf("[%3d] state transition from REDUCE2 to SENDING2\n", my_rank);
+		    STATE_DBG("REDUCE2", "SENDING2");
 		    state= SENDING2;
 		    common->event_send(my_rank, START, 0, 0, NULL, 0);
-
-		    printf(">>> (2) Average rate for %d messages of length %d (+ %d B header): %.3f msgs/s\n",
-			num_msgs, exchange_msg_len, envelope_size,
-			1000000000.0 / ((double)value / (num_msgs * nranks / 2)));
-
 		} else   {
-
-		    printf("[%3d] state transition from REDUCE2 to WAITING2\n", my_rank);
+		    STATE_DBG("REDUCE2", "WAITING2");
 		    state= WAITING2;
 		}
-	    } else   {
-		printf("[%3d] REDUCE2 waiting for more data\n", my_rank);
 	    }
 	    break;
 
@@ -747,6 +741,7 @@ Msgrate_pattern::state_REDUCE3(pattern_event_t event, CPUNicEvent *e)
 {
 
 SimTime_t value;
+SimTime_t msg_wait_time;
 int value_len;
 unsigned int leaves;
 
@@ -785,14 +780,15 @@ unsigned int leaves;
 		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
 
-		printf("[%3d] state transition from REDUCE3 to DONE\n", my_rank);
+		STATE_DBG("REDUCE3", "DONE");
 		state= DONE;
 
 		// If I'm the root, print the result
 		if (my_rank == 0)   {
-		    printf(">>> (2) Average rate for %d messages of length %d (+ %d B header): %.3f msgs/s\n",
-			num_msgs, exchange_msg_len, envelope_size,
-			1000000000.0 / ((double)value / (num_msgs * nranks / 2)));
+		    msg_wait_time= getCurrentSimTime() - msg_wait_time_start;
+		    printf(">>> Average rate for %d messages from rank 0 to 1...%d of length %d (+ %d B header): %.3f msgs/s\n",
+			num_msgs, nranks - 1, exchange_msg_len, envelope_size,
+			1000000000.0 / ((double)msg_wait_time / num_msgs));
 		}
 	    }
 	    break;
@@ -838,18 +834,16 @@ int value_len;
 	    if (right >= 0)   {
 		common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, value_len);
 	    }
-	    printf("[%3d] state transition from BCAST1 to REDUCE2\n", my_rank);
+	    STATE_DBG("BCAST1", "REDUCE2");
 	    state= REDUCE2;
-	    msg_wait_time_start= getCurrentSimTime();
 	    bcast_done= true;
-	    printf("[%3d] Done with test 1\n", my_rank);
 	    value= 3;
 	    if (my_rank >= nranks / 2)   {
 		// If I'm a leaf, send my data
 		if (parent >= 0)   {
 		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
 		}
-		printf("[%3d] state transition from SENDING1 to BCAST1\n", my_rank);
+		STATE_DBG("SENDING1", "BCAST1");
 		state= WAITING2;
 	    } else   {
 		// Otherwise save it for later
