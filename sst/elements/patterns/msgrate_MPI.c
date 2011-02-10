@@ -1,0 +1,294 @@
+/*
+** $Id:$
+**
+** Rolf Riesen, Sandia National Laboratories, February 2011
+**
+** A communication benchmark that mimics the behavior of the
+** msgrate_pattern module for SST using MPI.
+**
+**
+** Copyright 2009-2011 Sandia Corporation. Under the terms
+** of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+** Government retains certain rights in this software.
+**
+** Copyright (c) 2009-2011, Sandia Corporation
+** All rights reserved.
+**
+** This file is part of the SST software package. For license
+** information, see the LICENSE file in the top level directory of the
+** distribution.
+*/
+
+#include <stdio.h>
+#include <stdlib.h>	/* For strtol(), exit() */
+#include <unistd.h>	/* For getopt() */
+#include <mpi.h>
+
+
+/* Constants */
+#define FALSE			(0)
+#define TRUE			(1)
+#define DEFAULT_MSG_LEN		(0)
+#define DEFAULT_NUM_MSGS	(200)
+
+
+/* Local functions */
+static void usage(char *pname);
+static double Test1(int my_rank, int num_ranks, int num_msgs, int msg_len);
+static double Test2(int my_rank, int num_ranks, int num_msgs, int msg_len);
+static double Test3(int my_rank, int num_ranks, int num_msgs, int msg_len);
+
+
+
+int
+main(int argc, char *argv[])
+{
+
+int ch, error;
+int verbose;
+int my_rank, num_ranks;
+int msg_len;
+int num_msgs;
+int i;
+double duration;
+double total_time;
+int num_rcvs;
+
+
+
+    MPI_Init(&argc, &argv);
+ 
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+
+    if (num_ranks < 2)   {
+	if (my_rank == 0)   {
+	    fprintf(stderr, "Need to run on at least two ranks; more would be better\n");
+	}
+	MPI_Finalize();
+	exit(-1);
+    }
+
+
+    /* Set the defaults */
+    opterr= 0;		/* Disable getopt error printing */
+    error= FALSE;
+    num_msgs= DEFAULT_NUM_MSGS;
+    msg_len= DEFAULT_MSG_LEN;
+
+
+    /* Check command line args */
+    while ((ch= getopt(argc, argv, ":l:n:")) != EOF)   {
+        switch (ch)   {
+            case 'l':
+		msg_len= strtol(optarg, (char **)NULL, 0);
+		if (msg_len < 0)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "message length (-l) must be >= 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
+            case 'n':
+		num_msgs= strtol(optarg, (char **)NULL, 0);
+		if (num_msgs < 1)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Number of messages (-n) must be > 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
+
+	    /* Command line error checking */
+            case '?':
+		if (my_rank == 0)   {
+		    fprintf(stderr, "Unknown option \"%s\"\n", argv[optind - 1]);
+		}
+		error= TRUE;
+		break;
+            case ':':
+		if (my_rank == 0)   {
+		    fprintf(stderr, "Missing option argument to \"%s\"\n", argv[optind - 1]);
+		}
+		error= TRUE;
+		break;
+            default:
+		error= TRUE;
+		break;
+        }
+    }
+ 
+    if (error)   {
+        if (my_rank == 0)   {
+            usage(argv[0]);
+        }
+	MPI_Finalize();
+        exit (-1);
+    }
+
+    if (my_rank == 0)   {
+	printf("Message Rate Pattern\n");
+	printf("--------------------\n");
+	printf("Command line \"");
+	for (i= 0; i < argc; i++)   {
+	    printf("%s", argv[i]);
+	    if (i < (argc - 1))   {
+		printf(" ");
+	    }
+	}
+	printf("\"\n");
+    }
+
+    duration= Test1(my_rank, num_ranks, num_msgs, msg_len);
+    MPI_Reduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (my_rank == 0)   {
+	printf(">>> Average rate for %d messages of length %d: %.3f msgs/s\n",
+	    num_msgs, msg_len, 1.0 / (total_time / (num_msgs * num_ranks / 2)));
+    }
+    MPI_Bcast(&duration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+
+    duration= Test2(my_rank, num_ranks, num_msgs, msg_len);
+    MPI_Reduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (my_rank == 0)   {
+	printf(">>> Average rate for %d messages from rank 0 to 1...%d of length %d: %.3f msgs/s\n",
+	    num_msgs, num_ranks - 1, msg_len, 1.0 / ((double)duration / num_msgs));
+    }
+    MPI_Bcast(&duration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+
+    duration= Test3(my_rank, num_ranks, num_msgs, msg_len);
+    if (my_rank == 0)   {
+	num_rcvs= num_msgs / (num_ranks - 1);
+	num_rcvs= num_rcvs * (num_ranks - 1);
+	printf(">>> Average rate for %d messages from ranks 1...%d to 0 of length %d: %.3f msgs/s\n",
+	    num_msgs, num_ranks - 1, msg_len, 1.0 / ((double)duration / num_rcvs));
+    }
+
+    MPI_Finalize();
+
+    return 0;
+
+}  /* end of main() */
+
+
+
+static double
+Test1(int my_rank, int num_ranks, int num_msgs, int msg_len)
+{
+
+double t;
+int i;
+char buf[msg_len];
+
+
+    if (my_rank < num_ranks / 2)   {
+	/* I'm a sender */
+	for (i= 0; i < num_msgs; i++)   {
+	    MPI_Send(buf, msg_len, MPI_CHAR, my_rank + num_ranks / 2, 12, MPI_COMM_WORLD);
+	}
+	return 0.0;
+
+    } else   {
+
+	/* I'm a receiver */
+	t= MPI_Wtime();
+	for (i= 0; i < num_msgs; i++)   {
+	    MPI_Recv(buf, msg_len, MPI_CHAR, my_rank - num_ranks / 2, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+
+	return MPI_Wtime() - t;
+    }
+
+}  /* end of Test1() */
+
+
+
+static double
+Test2(int my_rank, int num_ranks, int num_msgs, int msg_len)
+{
+
+double t;
+int num_rcvs;
+int i;
+int dest;
+char buf[msg_len];
+
+
+    if (my_rank == 0)   {
+	/* I'm the sender */
+	t= MPI_Wtime();
+	dest= 1;
+	for (i= 0; i < num_msgs; i++)   {
+	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 13, MPI_COMM_WORLD);
+	    dest++;
+	    if (dest % num_ranks == 0)   {
+		dest= 1;
+	    }
+	}
+	return MPI_Wtime() - t;
+
+    } else   {
+	/* I'm a receiver */
+
+	// Every receiver gets this many messages
+	num_rcvs= num_msgs / (num_ranks - 1);
+
+	// Some may get one more
+	if (my_rank <= (num_msgs - (num_rcvs * (num_ranks - 1))))   {
+	    num_rcvs++;
+	}
+
+	for (i= 0; i < num_rcvs; i++)   {
+	    MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+
+	return 0.0;
+    }
+
+}  /* end of Test2() */
+
+
+
+static double
+Test3(int my_rank, int num_ranks, int num_msgs, int msg_len)
+{
+
+double t;
+int num_rcvs;
+int i;
+int dest;
+char buf[msg_len];
+
+
+    if (my_rank == 0)   {
+	/* I'm the receiver */
+	num_rcvs= num_msgs / (num_ranks - 1);
+	num_rcvs= num_rcvs * (num_ranks - 1);
+	t= MPI_Wtime();
+	for (i= 0; i < num_rcvs; i++)   {
+	    MPI_Recv(buf, msg_len, MPI_CHAR, MPI_ANY_SOURCE, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+	return MPI_Wtime() - t;
+    } else   {
+	/* I'm a sender */
+	for (i= 0; i < num_msgs / (num_ranks - 1); i++)   {
+	    MPI_Send(buf, msg_len, MPI_CHAR, 0, 14, MPI_COMM_WORLD);
+	}
+	return 0.0;
+    }
+
+}  /* end of Test3() */
+
+
+
+static void
+usage(char *pname)
+{
+
+    fprintf(stderr, "Usage: %s [-l len] [-n num]\n", pname);
+    fprintf(stderr, "    -l len      Message length. Default %d\n", DEFAULT_MSG_LEN);
+    fprintf(stderr, "    -n num      Number of messages per test. Default %d\n", DEFAULT_NUM_MSGS);
+
+}  /* end of usage() */
