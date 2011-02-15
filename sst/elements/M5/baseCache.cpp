@@ -44,6 +44,7 @@ SimObject* create_BaseCache( Component*, string name, Params& params )
 
     INIT_INT( cache, params, addr_range.start );
     INIT_INT( cache, params, addr_range.end );
+    cache.repl = NULL;
     INIT_INT( cache, params, latency);
     INIT_INT( cache, params, prefetch_latency);
     INIT_BOOL( cache, params, forward_snoops );
