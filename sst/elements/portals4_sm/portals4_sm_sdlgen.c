@@ -323,6 +323,15 @@ main(int argc, char **argv)
             if ( z >= z_count/2 ) rank = rank | (1 << 2);
         }
 
+        if ( ranks == 16 ) {
+            rank = 0;
+	    if ( x >= 3*(x_count/4) ) rank = rank | 3;
+	    else if ( x >= x_count/2 && x < 3*(x_count/4) ) rank = rank | 2;
+	    else if ( x >= x_count/4 && x < x_count/2 ) rank = rank | 1;
+            if ( y >= y_count/2 ) rank = rank | (1 << 2);
+            if ( z >= z_count/2 ) rank = rank | (1 << 3);
+        }
+
 	if ( new_format ) {
 	    fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu rank=%d >\n",i,rank);
 	    fprintf(output, "        <params include=cpu_params>\n");
