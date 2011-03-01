@@ -267,6 +267,7 @@ public:
     setname << "T(" << here_x << ", " << here_y << ")";
     register_counter(setname.str(), "Bus Transfers", bus_transfers);
     register_counter(setname.str(), "Instructions",  instructions);
+    register_counter(setname.str(), "Idle Instructions", idle_instructions);
     register_counter(setname.str(), "Directory Reads", dir_reads);
     register_counter(setname.str(), "Directory Writes", dir_writes);
 
@@ -311,9 +312,10 @@ public:
   }
 
   // Counters
-  uint64_t instructions;  // # Instructions executed.
-  uint64_t bus_transfers; // # Lines transferred over the bus.
-  uint64_t bus_requests;  // # requests (just address and req. type)
+  uint64_t instructions;      // # Instructions executed.
+  uint64_t idle_instructions; // # Instructions executed w/ no task scheduled.
+  uint64_t bus_transfers;     // # Lines transferred over the bus.
+  uint64_t bus_requests;      // # requests (just address and req. type)
 
   uint64_t dir_reads;
   uint64_t dir_writes;
@@ -387,6 +389,7 @@ public:
 	  // Run this CPU 1 instruction.
 	  tile->cur_thread = this;
 	  cd->run(qsim_cpu, 1);
+          if (cd->idle(qsim_cpu)) tile->idle_instructions++;
 	  tile->instructions++; insts__++;
 
 	  // Perform instruction fetch in L1 i-cache.
@@ -1065,7 +1068,7 @@ public:
 	       //mshr_wait.addr = p.addr; mshr_wait.tile = tile;
 	       //CONT_CALL(&mshr_wait); // FIX?
 
-               // I don't want to arbitrarily put a (possibly recently or 
+               // I don't want to arbitrarily put a (possibly recently
                // modified) line in the shared state.
                // TODO: add a "most recent write" to a line so I can know 
                // whether the line being made shared should really be shared or
@@ -1520,10 +1523,12 @@ public:
        // Don't let the same access cause multiple thread-swaps.
        if (swapped_thread == true) return;
        swapped_thread = true;
+       hw_thread_cp *hwt = tile->thread_q.front();
        if (!tile->thread_q.empty()) tile->thread_q.pop();
        if (!tile->thread_q.empty()) {
 	 tile->thread_q.front()->my_turn = true;
        }
+       tile->thread_q.push(hwt);
      }
 
      void thread_putback() {
@@ -1549,7 +1554,7 @@ public:
        // here. Or we may hit in the MSHR.
        if (tile->whohas.find(addr)!=tile->whohas.end() && !tile->whohas[addr]){
 	 //DBGTR << "Allowing other threads to run.\n";
-	 //thread_swap();
+	 thread_swap();
 	 DBGTR << "Waiting for 0x" << hex << addr << " in MSHR.\n";
 	 mshr_wait.tile = tile; mshr_wait.addr = addr;
 	 CONT_CALL(&mshr_wait);
@@ -1574,7 +1579,7 @@ public:
 	   tile->whohas[addr]->reads++; tile->whohas[addr]->read_hits++;
 
 	   // Give other threads a chance to run.
-	   //thread_swap();
+	   thread_swap();
 
 	   if (tile->whohas[addr]->get(addr)->get_state() == 'i') {
 	     DBGTR << "DANGER: 0x" << hex << addr << " actually invalid.\n";
@@ -1628,7 +1633,7 @@ public:
             CONT_RET();
           }
           // Give other threads a chance to run.
-          //thread_swap();
+          thread_swap();
 
           // For writes we must first try a WRITE_S, but that can fail and then
           // we must perform a WRITE_I.
@@ -1658,7 +1663,7 @@ public:
       // Perform appropriate action in the network.
       dir_req.addr = addr; dir_req.req_type = write?WRITE_I:READ_I;
       //DBGTR << "Allowing other threads to run.\n";
-      //thread_swap();
+      thread_swap();
       CONT_CALL(&dir_req);
 
       if (write) {
@@ -1680,7 +1685,7 @@ public:
              << tile->mshrs[addr].state << ")\n";
         evict.tile = tile; evict.this_c = this_c; evict.addr = addr;
 	evict.rid = rid;
-        //thread_swap();
+        thread_swap();
         CONT_CALL(&evict);
       }
 
@@ -2010,6 +2015,8 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : IntrospectedComponent(id)
 
 	setname << "Tile[" << i << "]Instructions";
       registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->instructions));
+        setname << "Tile[" << i << "]IdleInstructions";
+      registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->idle_instructions));
 	setname << "Tile[" << i << "]BusTransfers";
       registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->bus_transfers));
 	setname << "Tile[" << i << "]NetworkTransactions";
@@ -2017,7 +2024,6 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : IntrospectedComponent(id)
 	setname << "Tile[" << i << "]TotalPackets";
       registerMonitor(setname.str(), new MonitorPointer<uint64_t>(&tiles[i]->packets_total));
   }
-  // TODO: Initialize links to/handlers for DRAMSim
 }
 
 extern "C" {
