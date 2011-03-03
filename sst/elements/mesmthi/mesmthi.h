@@ -34,7 +34,7 @@ using namespace SST;
 
 // The parameters set these global variables.
 unsigned log2_row_size;
-unsigned threads;
+unsigned num_threads;
 unsigned fetch_bytes;
 unsigned log2_bytes_per_block;
 unsigned log2_sets;
@@ -60,8 +60,6 @@ bool simulation_running = true;  // lets us know when simulation is done
 void print_counters();
 void clear_counters();
 
-void show_oldest_reqs();
-
 class timer_cp : public Slide::cont_proc_t {public:
   Slide::delay_cpt d;
   unsigned i;
@@ -71,14 +69,13 @@ class timer_cp : public Slide::cont_proc_t {public:
     d.t = cyc_per_tick/samp_per_tick;
     while (simulation_running) {
       CONT_CALL(&d);
-      std::cout << "===T/" << std::dec << samp_per_tick << "===\n";
+      //std::cout << "===T/" << std::dec << samp_per_tick << "===\n";
       //below is substituted by introspection
       //print_counters();
       //clear_counters();
-      show_oldest_reqs();
       if (++i == samp_per_tick) {
         cd->timer_interrupt();
-        std::cout << "===Timer Interrupt===\n";
+        //std::cout << "===Timer Interrupt===\n";
 	i = 0;
       }
     }
@@ -112,7 +109,6 @@ class Mesmthi : public SST::IntrospectedComponent {
 
   int Setup() {
     // This is called after wire-up.
-    // TODO: Initialize communication with DRAMSim
 
     Slide::run_ready_procs();
 
@@ -132,16 +128,13 @@ class Mesmthi : public SST::IntrospectedComponent {
 
 
  private:
-//  Mesmthi(const Mesmthi &c) {}
-    Mesmthi(const Mesmthi &c);
-    Mesmthi() :  IntrospectedComponent(-1) {}
+  Mesmthi(const Mesmthi &c);
+  Mesmthi() :  IntrospectedComponent(-1) {}
  
 
   std::string kernel_img;
   std::string pushIntrospector;
   
-
-
   // Note: This won't work. This simulator is not serializable.
   friend class boost::serialization::access;
   template<class Archive> void serialize(Archive &ar, const unsigned int ver) {

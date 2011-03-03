@@ -19,11 +19,11 @@
       <mesmthi>
       <params>
         <clock_pd>500ps</clock_pd>
-        <log2_row_size>2</log2_row_size>
-        <threads>2</threads>
-        <kernel_img>benchmarks/bzImage.null</kernel_img>
+        <log2_row_size>1</log2_row_size>
+        <threads>4</threads>
+        <kernel_img>bzImage</kernel_img>
         <cyc_per_tick>1000000</cyc_per_tick>
-        <samp_per_tick>100</samp_per_tick>
+        <samp_per_tick>10</samp_per_tick>
 	<push_introspector>CountIntrospector</push_introspector>
       </params>
       <links>
