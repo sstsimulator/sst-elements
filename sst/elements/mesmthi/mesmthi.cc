@@ -917,7 +917,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
     registerMonitor(setname.str(), new mpc_t(&mm->network_transactions[i]));
     setname << "Tile[" << i << "]TotalPackets";
     registerMonitor(setname.str(), new mpc_t(&mm->total_packets[i]));
-  }
+ }
 }
 
 extern "C" {

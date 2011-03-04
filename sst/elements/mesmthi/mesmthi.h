@@ -71,8 +71,8 @@ class timer_cp : public Slide::cont_proc_t {public:
       CONT_CALL(&d);
       //std::cout << "===T/" << std::dec << samp_per_tick << "===\n";
       //below is substituted by introspection
-      //print_counters();
-      //clear_counters();
+      print_counters();
+      clear_counters();
       if (++i == samp_per_tick) {
         cd->timer_interrupt();
         //std::cout << "===Timer Interrupt===\n";

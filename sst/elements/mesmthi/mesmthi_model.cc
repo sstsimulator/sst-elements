@@ -40,6 +40,7 @@ unsigned net_dist(unsigned t0, unsigned t1) {
 
 unsigned max_net_dist(unsigned src, set<unsigned> &dests) {
   set<unsigned>::iterator i = dests.begin();
+  if (dests.size() == 0) return 0;
   unsigned max = net_dist(src, *i); i++;
   while (i != dests.end()) {
     unsigned dist = net_dist(src, *i);
@@ -273,6 +274,16 @@ void MesmthiModel::do_access(unsigned tile, uint64_t addr,
       if (evict) { 
         evict_mem_access = true;
         evict_mem_addr = evict_addr;
+        // All copies in L1 caches must be invalidated.
+        set<unsigned>::iterator i = directory[evict_addr].begin();
+        while (i != directory[evict_addr].end()) {
+          do_net(home_tile, *i, 2);
+          l1_icaches[*i]->invalidate(evict_addr);
+          l1_dcaches[*i]->invalidate(evict_addr);
+          i++;
+        }
+        post_evict_delay += max_net_dist(home_tile, directory[evict_addr]) 
+                            * net_delay;
         directory.erase(evict_addr);
         do_net_mc(home_tile, 1);
       }
@@ -294,8 +305,8 @@ void MesmthiModel::do_access(unsigned tile, uint64_t addr,
       else       l2_read_hits [home_tile]++;
     }
 
-    // The line is now in L2.
-  
+    // The line is now in L2
+
     pre_evict_delay += l2_delay;
 
     if (write && directory[addr].size() > 0) {
@@ -321,7 +332,11 @@ void MesmthiModel::do_access(unsigned tile, uint64_t addr,
     cache->replace_victim(addr, evict, evict_addr);
     if (evict) {
       // Line is evicted back to L2. Remove it from the directory.
-      directory[evict_addr].erase(tile);
+      if (directory.find(evict_addr) == directory.end()) {
+        cout << "Line evicted from L1 is not really in L2.\n";
+      } else {
+        directory[evict_addr].erase(tile);
+      }
     }
 
     // Place this tile in the directory.
@@ -334,36 +349,30 @@ void MesmthiModel::do_access(unsigned tile, uint64_t addr,
     else                                  state = 's';
     cache->set_state(addr, state);
   } else if (write) {
-    // If the line was in other L1 caches, invalidate it in each.
-    // Find the max round trip time for an invalidation and add this to the
-    // pre-evict delay. Treat this like an MSHR wait.
-    mshr_wait = true;
-    if (directory[addr].size() > 0) {
-      set<unsigned> &dirent = directory[addr];
-      unsigned invalidate_dist = max_net_dist(tile, dirent);
-      pre_evict_delay += invalidate_dist * net_delay;
-      for (set<unsigned>::iterator i = dirent.begin(); i != dirent.end(); i++)
-      {
-        if (*i != tile) {
-          l1_icaches[*i]->invalidate(addr);
-          l1_dcaches[*i]->invalidate(addr);
+    if (directory.find(addr) == directory.end()) {
+      // TODO: Occasionally we get lines in L1 that should not be here. Figure
+      // out why and put a stop to it.
+    } else {
+      // If the line was in other L1 caches, invalidate it in each.
+      // Find the max round trip time for an invalidation and add this to the
+      // pre-evict delay. Treat this like an MSHR wait.
+      mshr_wait = true;
+      if (directory[addr].size() > 0) {
+        set<unsigned> &dirent = directory[addr];
+        unsigned invalidate_dist = max_net_dist(tile, dirent);
+        pre_evict_delay += invalidate_dist * net_delay;
+        set<unsigned>::iterator i;
+        for (i = dirent.begin(); i != dirent.end(); i++) {
+          if (*i != tile) {
+            l1_icaches[*i]->invalidate(addr);
+            l1_dcaches[*i]->invalidate(addr);
+          }
         }
       }
+      if (inst) l1_icaches[tile]->set_state(addr, 'm');
+      else      l1_dcaches[tile]->set_state(addr, 'm');
     }
-    if (inst) l1_icaches[tile]->set_state(addr, 'm');
-    else      l1_dcaches[tile]->set_state(addr, 'm');
   }
-
-  if (0 && directory.find(addr) != directory.end()) {
-    cout << "Tile " << tile << ": 0x" << std::hex << addr << ": directory = {";
-    set<unsigned>::iterator i = directory[addr].begin();
-    while (i != directory[addr].end()) { std::cout << ' ' << *i; i++; }
-    cout << "} ";
-    if (inst) cout << "I ";
-    if (write) cout << "W";
-    cout << '\n';
-  }
-
 }
 
 void MesmthiModel::get_results(unsigned &pre_e_d, unsigned &post_e_d,
