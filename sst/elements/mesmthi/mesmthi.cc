@@ -110,6 +110,7 @@ or_it start_req(uint64_t addr, unsigned x, unsigned y,
 
 void end_req(or_it i) {
   outstanding_reqs.erase(i);
+  if (outstanding_reqs.size() > 100) cout << "OR is now " << outstanding_reqs.size() << '\n';
 }
 
 void show_oldest_reqs() {
@@ -564,6 +565,7 @@ public:
 
      void thread_putback() {
        if (swapped_thread) {
+         swapped_thread = false;
 	 my_thread->my_turn = false;
 	 tile->thread_q.push(my_thread);
 	 tile->thread_q.front()->my_turn = true;
@@ -606,6 +608,7 @@ public:
          delay.t = pre_evict_delay; CONT_CALL(&delay);
          thread_putback(); CONT_WAIT(my_thread->my_turn, true);
        }
+
        CONT_END();
     }
   };
