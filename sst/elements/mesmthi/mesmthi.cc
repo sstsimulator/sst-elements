@@ -811,6 +811,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
   read_param(params, "net_cpp",              net_cpp,              1);
   read_param(params, "clock_pd",             clock_pd,       "500ps");
   read_param(params, "kernel_img",        kernel_img,"linux/bzImage");
+  read_param(params, "stop_ticks",           stop_ticks,           0);
   read_param(params, "push_introspector", pushIntrospector,"CountIntrospector");
   
   // Initialize the MesmthiModel.

@@ -145,14 +145,6 @@ private:
 };
 
 map<uint64_t, set<unsigned> > directory;
-size_t total_dir_size() {
-  size_t count = 0;
-  map<uint64_t, set<unsigned> >::iterator i;
-  for (i = directory.begin(); i != directory.end(); i++) {
-    count += i->second.size();
-  }
-  return count;
-}
 
 vector<cache_t*> l1_icaches;
 vector<cache_t*> l1_dcaches;
@@ -242,12 +234,6 @@ void MesmthiModel::do_net_mc(unsigned src, unsigned n) {
 void MesmthiModel::do_access(unsigned tile, uint64_t addr, 
                              bool inst, bool write)
 {
-  static unsigned millionth = 0;
-  if (++millionth == 1000000) {
-    cout << "Total dir size: " << total_dir_size() << '\n';
-    millionth = 0;
-  }
-
   // Initialize all of the results to not taken/zero delay (represents a hit).
   miss = mshr_wait = false;
   pre_evict_delay = post_evict_delay = post_main_delay = 0;
