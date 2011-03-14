@@ -18,7 +18,7 @@ AC_DEFUN([SST_sstdisksim_CONFIG], [
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test ! -z "$with_disksim" -a "$with_disksim" != "yes"],
-    [SSTDISKSIM_CPPFLAGS="-I$with_disksim -I/Applications/TAU/tau/lib/Makefile.tau-mpi-pdt-profile-trace"
+    [SSTDISKSIM_CPPFLAGS="-I$with_disksim"
      CPPFLAGS="$SSTDISKSIM_CPPFLAGS $CPPFLAGS"
      SSTDISKSIM_LDFLAGS="-L$with_disksim"     
      LDFLAGS="$SSTDISKSIM_LDFLAGS $LDFLAGS"],
@@ -38,7 +38,7 @@ AC_DEFUN([SST_sstdisksim_CONFIG], [
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([disksim_interface.h], 
     [AC_CHECK_HEADERS([Tau.h],		  
-                     [SSTDISKSIM_LIB="-ldisksim -lddbg -lparam -ldiskmodel -lmems_internals -lmemsmodel -llua"], 
+                     [SSTDISKSIM_LIB="-ldisksim -lddbg -lparam -ldiskmodel -lmems_internals -lmemsmodel -llua -ltau-pdt-profile-trace"], 
 		     [happy="no"])],
     [happy="no"])
 
