@@ -18,6 +18,10 @@
 #include "trig_nic.h"
 #include <string.h>		       // for memcpy()
 
+// Need to find a better place to put this (this duplicates what is in
+// portals_types.h).
+#define HEADER_SIZE 64
+
 using namespace SST;
 
 trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
@@ -177,7 +181,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 	else if ( ev->ptl_op == PTL_DMA ) {
 	    // Start a DMA operation
 
-	    // The header (and first 32 bytes of data) comes with the
+	    // The header (and first few bytes of data) comes with the
 	    // PIO packet.  I'm going to cheat a bit and just send
 	    // this to the dma_q at let it be sent when it hits the
 	    // front.  This maintains ordering, but makes the logic
@@ -251,7 +255,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 		// pop it from the dma_q.
 		trig_nic_event* ev2 = dma_q.front();
 		dma_q.pop();
-		memcpy(&ev->ptl_data[8],ev2->ptl_data,8);
+		memcpy(&ev->ptl_data[sizeof(ptl_header_t)],ev2->ptl_data,8);
 		self_link->Send(ptl_msg_latency,ev);
 		delete ev2;
 	    }
@@ -522,7 +526,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 		    case PTL_INT:
 			{
 			    int64_t value;
-			    memcpy(&value,&ev->ptl_data[8],8);
+			    memcpy(&value,&ev->ptl_data[sizeof(ptl_header_t)],8);
 			    int64_t result = computeIntAtomic(addr, value, header.atomic_op);
 			    // Copy result back to payload to send to
 			    // host memory.  It actually needs to go
@@ -546,13 +550,14 @@ void trig_nic::processPtlEvent( Event *e ) {
 		else {
 	      
 		    // Need to send the data to the cpu
-		    int copy_length = header.length <= 32 ? header.length : 32;
+		    int copy_length = header.length <= (HEADER_SIZE - sizeof(ptl_header_t)) ?
+			header.length : (HEADER_SIZE - sizeof(ptl_header_t));
 		    ptl_size_t remote_offset = header.remote_offset;
 		  
 		    ev->data_length = copy_length;
 		    ev->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
 		    // Fix up the data, i.e. move actual data to top
-		    if ( !send_recv ) memcpy(ev->ptl_data,&ev->ptl_data[8],copy_length);
+		    if ( !send_recv ) memcpy(ev->ptl_data,&ev->ptl_data[sizeof(ptl_header_t)],copy_length);
 		    cpu_link->Send(ptl_msg_latency,ev);
 		  
 		    // Handle mulit-packet messages
@@ -569,7 +574,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			streams[map_key]= ms;
 		      
 		    }
-		    else if ( header.length > 32 ) {
+		    else if ( header.length > (HEADER_SIZE - sizeof(ptl_header_t)) ) {
 			MessageStream* ms = new MessageStream();
 			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
 			ms->current_offset = copy_length;
@@ -725,7 +730,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			from_host = false;
 			// Copy data to event
 			int64_t value = atomic_cache[addr]->int_val;
- 			memcpy(&event->ptl_data[8],&value,8);
+ 			memcpy(&event->ptl_data[sizeof(ptl_header_t)],&value,8);
 // 			printf("%d:  in cache: %lld\n",m_id,value);
 		    }		    
 		}
@@ -871,14 +876,21 @@ void trig_nic::processPtlEvent( Event *e ) {
 	
     case PTL_NIC_CT_SET:
 	{
-	    int ct_handle = ev->ptl_data[0];
-	    ptl_ct_events[ct_handle].ct_event.success = ev->ptl_data[1];
-	    ptl_ct_events[ct_handle].ct_event.failure = ev->ptl_data[2];
+	    ptl_int_ct_alloc_t ct_alloc;
+	    memcpy(&ct_alloc,ev->ptl_data,sizeof(ptl_int_ct_alloc_t));
+// 	    int ct_handle = ev->ptl_data[0];
+// 	    ptl_ct_events[ct_handle].ct_event.success = ev->ptl_data[1];
+// 	    ptl_ct_events[ct_handle].ct_event.failure = ev->ptl_data[2];
+// 	    if ( ev->ptl_data[3] ) { // Clear op_list
+// 		ptl_ct_events[ev->ptl_data[0]].trig_op_list.clear();
+// 	    }
 	    
-	    
-	    if ( ev->ptl_data[3] ) { // Clear op_list
+	    int ct_handle = ct_alloc.ct_handle;
+	    ptl_ct_events[ct_handle].ct_event.success = ct_alloc.success;
+	    ptl_ct_events[ct_handle].ct_event.failure = ct_alloc.failure;
+	    if ( ct_alloc.clear_op_list ) { // Clear op_list
 		ptl_ct_events[ev->ptl_data[0]].trig_op_list.clear();
-	    }
+	    }	    
 	    
 	    scheduleUpdateHostCT(ev->ptl_data[0]);
 	}

@@ -38,7 +38,8 @@ namespace SST {
 	    ptl_int_dma_t* dma;
 	} data;
 
-        uint32_t ptl_data[16];
+/*         uint32_t ptl_data[16]; */
+        uint8_t ptl_data[64];
 
     private:
 	

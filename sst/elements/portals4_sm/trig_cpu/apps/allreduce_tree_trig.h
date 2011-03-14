@@ -46,6 +46,10 @@ public:
         crBegin();
 
         if (!init) {
+	    // Get the PT entries
+	    ptl->PtlPTAlloc(0,PTL_EQ_NONE,0,&PT_UP);
+	    ptl->PtlPTAlloc(0,PTL_EQ_NONE,1,&PT_DOWN);
+	    
             // setup md handles
             ptl->PtlCTAlloc(PTL_CT_OPERATION, up_tree_ct_h);
             me.start = &tmp_buf;
@@ -200,9 +204,12 @@ private:
 
     ptl_handle_md_t zero_md_h;
 
-    static const int PT_UP = 0;
-    static const int PT_DOWN = 1;
+//     static const int PT_UP = 0;
+//     static const int PT_DOWN = 1;
 
+    ptl_pt_index_t PT_UP;
+    ptl_pt_index_t PT_DOWN;
+    
     uint64_t algo_count;
 };
 

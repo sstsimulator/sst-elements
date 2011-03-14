@@ -53,6 +53,21 @@ portals::portals(trig_cpu* my_cpu) {
 }
 
 
+void
+portals::PtlPTAlloc(unsigned int options, ptl_handle_eq_t eq_handle,
+		    ptl_pt_index_t pt_index_req, ptl_pt_index_t *pt_index )
+{
+    if ( pt_entries.count(pt_index_req) == 0 ) {
+	pt_entries[pt_index_req] = eq_handle;
+	*pt_index = pt_index_req;
+    }
+    else {
+	printf("PTAlloc failed:  PTE %d already allocated\n",pt_index_req);
+	exit(1);
+    }
+}
+
+
 // Seems to work
 void
 portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list, 
@@ -77,17 +92,11 @@ portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list,
     trig_nic_event *event = new trig_nic_event;
     event->src = cpu->my_id;
     event->ptl_op = PTL_NIC_ME_APPEND;
-//     event->operation = new ptl_int_nic_op_t;
-//     event->operation->op_type = PTL_NIC_ME_APPEND;
-//     event->operation->data.me = int_me;
     event->ptl_op = PTL_NIC_ME_APPEND;
     event->data.me = int_me;
 
-//     cpu->nic->Send(event);
     cpu->writeToNIC(event);
     // The processor is tied up for 1/msgrate
-//     cpu->busy += cpu->msg_rate_delay;
-//     cpu->busy += cpu->delay_host_pio_write;
     cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
     
     me_handle = int_me;
@@ -136,17 +145,13 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
 
     // If this is a single packet message, just send it.  Otherwise,
-    // we need to set up a multi-packet PIO or DMA (for now just PIO.
-    if ( length <= 32 ) { // Single packet
-	// Copy over the payload, we'll reserve 32-bytes for the
-	// ptl_header.  If it grows too big, the sim will abort to warn
-	// us.
+    // we need to set up a multi-packet PIO or DMA.
+    if ( length <= (PACKET_SIZE - sizeof(ptl_header_t)) ) { // Single packet
+//     if ( length <= 32 ) { // Single packet
+	// Copy over the payload.
 	event->stream = PTL_HDR_STREAM_PIO;
-	memcpy(&event->ptl_data[8],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
-// 	if ( cpu->my_id == 0) printf("Writing packet to BUS @ %llu\n",cpu->getCurrentSimTimeNano());
+	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
       	cpu->writeToNIC(event);
-// 	cpu->busy += cpu->msg_rate_delay;
-// 	cpu->busy += cpu->delay_host_pio_write;
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 	// Need to send a CTInc if there is a ct_handle specified
@@ -160,20 +165,18 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     }
     else if ( length <= 2048 /*100000000*/ ) {  // PIO
 // 	if ( cpu->my_id == 0 ) printf("Starting PIO\n");
-	memcpy(&event->ptl_data[8],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),32);
+	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),sizeof(ptl_header_t));
 	cpu->pio_in_progress = true;
 
 	pio_start = md_handle->start;
-	pio_current_offset = 32;
-	pio_length_rem = length - 32;
+	pio_current_offset = sizeof(ptl_header_t);
+	pio_length_rem = length - sizeof(ptl_header_t);
 	pio_dest = target_id;
 	pio_ct_handle = md_handle->ct_handle;
 	
 	event->stream = PTL_HDR_STREAM_PIO;
-// 	printf("%5d: Writing PIO <= 64 bytes to NIC\n",cpu->my_id);
 	cpu->writeToNIC(event);
 	// FIXME.  Needs to match rate of interface (serialization delay)
-// 	cpu->busy += cpu->delay_host_pio_write;
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
     }
     else {  // DMA
@@ -183,7 +186,7 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 	// FIXME: Cheat for now, push header, data and DMA request all
 	// at once.  This should really take two transfers.  Should
 	// fix this.
-	memcpy(&event->ptl_data[8],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),32);
+	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),sizeof(ptl_header_t));
 
 	// Change event type to DMA
 	event->ptl_op = PTL_DMA;
@@ -191,18 +194,15 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 
 	// Fill in dma structure
 	dma_req->start = md_handle->start;
-	dma_req->length = length - 32;
-	dma_req->offset = local_offset + 32;
+	dma_req->length = length - sizeof(ptl_header_t);
+	dma_req->offset = local_offset + sizeof(ptl_header_t);
 	dma_req->target_id = target_id;
 	dma_req->ct_handle = md_handle->ct_handle;
 	dma_req->stream = PTL_HDR_STREAM_DMA;
 	
-// 	event->operation = new ptl_int_nic_op_t;
-// 	event->operation->data.dma = dma_req;
 	event->data.dma = dma_req;
 
 	cpu->writeToNIC(event);
-// 	cpu->busy += cpu->delay_host_pio_write;
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 	
     }
@@ -246,7 +246,6 @@ portals::progressPIO(void)
 
     // Delay is just serialization delay at this point
     cpu->busy += cpu->delay_bus_xfer;
-    //     cpu->busy += cpu->delay_host_pio_write;
     
     pio_length_rem -= copy_length;
     pio_current_offset += copy_length;
@@ -258,7 +257,6 @@ portals::progressPIO(void)
     return false;
 }
 
-// FIXME:  Not working with NIC offload yet
 void
 portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 			ptl_size_t length, ptl_ack_req_t ack_req,
@@ -291,9 +289,8 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     // Currently only support up to 8-bytes
     if ( length <= 8 ) { // Single packet
 	event->stream = PTL_HDR_STREAM_PIO;
-	memcpy(&event->ptl_data[8],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
+	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
       	cpu->writeToNIC(event);
-// 	cpu->busy += cpu->delay_host_pio_write;
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 	// Need to send a CTInc if there is a ct_handle specified
@@ -309,11 +306,6 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 	printf("Attempting to initiate an atomic greater than 8-bytes\n");
 	abort();
     }
-    
-
-
-    //     cpu->writeToNIC(event);
-//     cpu->busy += cpu->msg_rate_delay;
 }
 
 
@@ -325,7 +317,6 @@ portals::PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle) {
     // Find the first counter that is free
     for (int i = 0; i < MAX_CT_EVENTS; i++ ) {
         if ( !ptl_ct_cpu_events[i].allocated ) {
-// 	  printf("found a free ct\n");
 	  ct_handle = i;
             ptl_ct_cpu_events[i].allocated = true;
             ptl_ct_cpu_events[i].ct_type = ct_type;
@@ -335,13 +326,17 @@ portals::PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle) {
 	    // Need to send a message to the NIC to clear the counter
 	    trig_nic_event* event = new trig_nic_event;
 	    event->ptl_op = PTL_NIC_CT_SET;
-	    event->ptl_data[0] = i;  // ct_handle
-	    event->ptl_data[1] = 0;  // success value
-	    event->ptl_data[2] = 0;  // failure value
-	    event->ptl_data[3] = true;  // Clear op_list
-// 	    printf("sending message to nic\n");
+	    ptl_int_ct_alloc_t ct_alloc;
+	    ct_alloc.ct_handle = i;
+	    ct_alloc.success = 0;
+	    ct_alloc.failure = 0;
+	    ct_alloc.clear_op_list = true;
+	    memcpy(event->ptl_data,&ct_alloc,sizeof(ptl_int_ct_alloc_t));
+// 	    event->ptl_data[0] = i;  // ct_handle
+// 	    event->ptl_data[1] = 0;  // success value
+// 	    event->ptl_data[2] = 0;  // failure value
+// 	    event->ptl_data[3] = true;  // Clear op_list
 	    cpu->writeToNIC(event);
-// 	    cpu->busy += cpu->delay_host_pio_write;
 	    cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 	    
             break;

@@ -17,10 +17,12 @@
 
 #include "sst/sst_stdint.h"
 
+#define PACKET_SIZE 64
+
 typedef uint32_t ptl_size_t;
 
 typedef int16_t ptl_handle_ct_t;
-typedef int32_t ptl_handle_eq_t;
+typedef int16_t ptl_handle_eq_t;
 typedef int8_t ptl_pt_index_t;
 typedef uint32_t ptl_ack_req_t;
 
@@ -53,22 +55,51 @@ typedef enum {
     PTL_PRIORITY_LIST, PTL_OVERFLOW, PTL_PROBE_ONLY 
 } ptl_list_t;
 
-typedef enum {
-    PTL_MIN, PTL_MAX,
-    PTL_SUM, PTL_PROD,
-    PTL_LOR, PTL_LAND,
-    PLT_BOR, PTL_BAND,
-    PTL_LXOR, PTL_BXOR,
-    PTL_SWAP, PTL_CSWAP, PTL_MSWAP
-} ptl_op_t;
+// typedef enum {
+//     PTL_MIN, PTL_MAX,
+//     PTL_SUM, PTL_PROD,
+//     PTL_LOR, PTL_LAND,
+//     PLT_BOR, PTL_BAND,
+//     PTL_LXOR, PTL_BXOR,
+//     PTL_SWAP, PTL_CSWAP, PTL_MSWAP
+// } ptl_op_t;
 
-typedef enum {
-    PTL_CHAR, PTL_UCHAR,
-    PTL_SHORT, PTL_USHORT,
-    PTL_INT, PTL_UINT,
-    PTL_LONG, PTL_ULONG,
-    PTL_FLOAT, PTL_DOUBLE
-} ptl_datatype_t;
+#define PTL_MIN    0
+#define PTL_MAX    1
+#define PTL_SUM    2
+#define PTL_PROD   3
+#define PTL_LOR    4
+#define PTL_LAND   5
+#define PLT_BOR    6
+#define PTL_BAND   7
+#define PTL_LXOR   8
+#define PTL_BXOR   9
+#define PTL_SWAP  10
+#define PTL_CSWAP 11
+#define PTL_MSWAP 12
+
+typedef uint8_t ptl_op_t;
+
+// typedef enum {
+//     PTL_CHAR, PTL_UCHAR,
+//     PTL_SHORT, PTL_USHORT,
+//     PTL_INT, PTL_UINT,
+//     PTL_LONG, PTL_ULONG,
+//     PTL_FLOAT, PTL_DOUBLE
+// } ptl_datatype_t;
+
+#define PTL_CHAR     0
+#define PTL_UCHAR    1
+#define PTL_SHORT    2
+#define PTL_USHORT   3
+#define PTL_INT      4
+#define PTL_UINT     5
+#define PTL_LONG     6
+#define PTL_ULONG    7
+#define PTL_FLOAT    8
+#define PTL_DOUBLE   9
+
+typedef uint8_t ptl_datatype_t;
 
 // Here's the MD
 typedef struct { 
@@ -123,13 +154,15 @@ typedef struct {
 typedef struct {
     ptl_pt_index_t   pt_index;       // 1 bytes
     uint8_t          op;             // 1 bytes
+    ptl_op_t         atomic_op;      // 1 bytes
+    ptl_datatype_t   atomic_datatype;// 1 bytes
     ptl_handle_ct_t  get_ct_handle;  // 2 bytes
-    uint32_t         length;         // 4 bytes
+    uint16_t         options;        // 2 bytes
     ptl_match_bits_t match_bits;     // 8 bytes
+    uint32_t         length;         // 4 bytes
     ptl_size_t       remote_offset;  // 4 bytes
-    ptl_op_t         atomic_op;      // 4 bytes
-/*     ptl_datatype_t   atomic_datatype;// 4 bytes */
     void *           get_start;      // 8 bytes
+    uint64_t         header_data;    // 8 bytes
 } ptl_header_t;
 
 typedef struct {
@@ -195,6 +228,12 @@ typedef struct {
     } data;
 } ptl_int_nic_op_t;
 
+typedef struct {
+    ptl_handle_ct_t ct_handle;
+    ptl_size_t success;
+    ptl_size_t failure;
+    bool clear_op_list;
+} ptl_int_ct_alloc_t;
 
 // defines to put flags in the header flit of the packet
 #define PTL_HDR_PORTALS             0x1

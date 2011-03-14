@@ -28,6 +28,9 @@ class trig_cpu;
 class portals {
 
 public:
+    void PtlPTAlloc(unsigned int options, ptl_handle_eq_t eq_handle,
+		   ptl_pt_index_t pt_index_req, ptl_pt_index_t *pt_index );
+
     void PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle); 
     void PtlCTFree(ptl_handle_ct_t ct_handle);
     void PtlCTSet(ptl_handle_ct_t ct_handle, ptl_ct_event_t new_ct);
@@ -119,7 +122,12 @@ private:
 #define MAX_CT_EVENTS 32
 //     ptl_int_ct_t ptl_ct_events[MAX_CT_EVENTS];
     ptl_int_ct_t ptl_ct_cpu_events[MAX_CT_EVENTS];
-  
+
+    // Portal Table Entries are held here.  For now, the only data
+    // that matters is the event queue, so just point directly to that
+    // for now.
+    std::map<ptl_pt_index_t,ptl_handle_eq_t> pt_entries;
+    
     trig_cpu* cpu;
 
     // Need a queue to store triggered operations that have already

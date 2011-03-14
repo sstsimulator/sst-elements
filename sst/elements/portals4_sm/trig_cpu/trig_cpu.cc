@@ -35,6 +35,7 @@
 #include "apps/ping_pong.h"
 #include "apps/bandwidth.h"
 #include "apps/test_atomics.h"
+#include "apps/eq_test.h"
 #include "barrier_action.h"
 
 // SimTime_t trig_cpu::min = 10000000;
@@ -223,6 +224,8 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
         app = new bandwidth(this);
     } else if (application == "test_atomics" ) {
         app = new test_atomics(this);
+    } else if (application == "eq_test" ) {
+        app = new eq_test(this);
     } else {
         _abort(RtrIF, "Invalid application: %s\n", application.c_str());
     }
@@ -300,9 +303,16 @@ trig_cpu::Setup()
     pio_in_progress = false;
 
     
-    if ( sizeof(ptl_header_t) > 32 ) {
-	fprintf(stderr, "Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n", (int) sizeof(ptl_header_t));
-	fprintf(stderr, "sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n", (int) sizeof(ptl_op_t), (int) sizeof(ptl_datatype_t));
+//     if ( sizeof(ptl_header_t) > 32 ) {
+// 	fprintf(stderr, "Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n", (int) sizeof(ptl_header_t));
+// 	fprintf(stderr, "sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n", (int) sizeof(ptl_op_t), (int) sizeof(ptl_datatype_t));
+// 	exit(1);
+//     }
+
+    if ( sizeof(ptl_header_t) & 8 != 0 ) {
+	fprintf(stderr,
+		"Portals header (ptl_header_t) must be a multiple of 8-bytes (actual = %d), aborting...\n",
+		(int) sizeof(ptl_header_t));
 	exit(1);
     }
 
@@ -747,7 +757,7 @@ trig_cpu::process_pending_msg()
 	// Already have the first packet
 	uint8_t* msg = new uint8_t[header.length];
 	int copy_length = header.length <= 32 ? header.length : 32;
-	memcpy(msg,&event->ptl_data[8],copy_length);
+	memcpy(msg,&event->ptl_data[32],copy_length);
 	int rem_length = header.length - copy_length;
 	int curr_offset = copy_length;
 
