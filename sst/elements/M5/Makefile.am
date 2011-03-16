@@ -18,14 +18,15 @@ libm5C_la_SOURCES = \
     factory.h \
     loadMemory.cpp \
     loadMemory.h \
-	m5.cpp \
-	m5.h \
-	m5lib.cpp \
+    m5.cpp \
+    m5.h \
+    m5lib.cpp \
     memEvent.h \
     physicalMemory.cpp \
     port2link.cpp \
     port2link.h \
     process.h \
+    simpleCpu.cpp \
     system.h \
     util.cpp \
     util.h
