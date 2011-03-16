@@ -6,7 +6,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
 EXTRA_DIST = sstdisksim.xml
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libsstdisksim.la libsstdisksim_tracereader.la libsstdisksim_luascriptreader.la
+comp_LTLIBRARIES = libsstdisksim.la libsstdisksim_luascriptreader.la libsstdisksim_tracereader.la
 
 #libsstdisksim
 libsstdisksim_la_SOURCES = \

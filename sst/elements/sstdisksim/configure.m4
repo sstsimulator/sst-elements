@@ -38,7 +38,7 @@ AC_DEFUN([SST_sstdisksim_CONFIG], [
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([disksim_interface.h], 
     [AC_CHECK_HEADERS([Tau.h],		  
-                     [SSTDISKSIM_LIB="-ldisksim -lddbg -lparam -ldiskmodel -lmems_internals -lmemsmodel -llua -ltau-pdt-profile-trace"], 
+                     [SSTDISKSIM_LIB="-ldisksim -lddbg -lparam -ldiskmodel -lmems_internals -lmemsmodel -llua -ltau-pdt-profile-trace -lTAU_tf"], 
 		     [happy="no"])],
     [happy="no"])
 

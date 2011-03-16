@@ -110,10 +110,15 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
       traceFile = it->second;
     }
 
+    if ( ! it->first.compare("edf_file") ) 
+    {
+      edfFile = it->second;
+    }
+
     ++it;
   }
 
-  __parser = new sstdisksim_tau_parser(traceFile);
+  __parser = new sstdisksim_tau_parser(traceFile.c_str(), edfFile.c_str());
 
   registerTimeBase("1ps");
   link = configureLink( "link" );
@@ -138,6 +143,7 @@ sstdisksim_tracereader::~sstdisksim_tracereader()
 int
 sstdisksim_tracereader::Setup()
 {
+  // Should be the last thing added 
   unregisterExit();
 
   return 0;

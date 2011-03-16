@@ -52,6 +52,7 @@ class sstdisksim_tracereader : public Component {
  private:
 
   std::string traceFile;
+  std::string edfFile;
 
   unsigned long disksimTracereaderClockCycle;
   bool __done;

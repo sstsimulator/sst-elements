@@ -29,7 +29,7 @@ using namespace std;
 class sstdisksim_tau_parser {
 
  public:
-  sstdisksim_tau_parser(string filename);
+  sstdisksim_tau_parser(const char* trc_file, const char* edf_file);
   ~sstdisksim_tau_parser();
   sstdisksim_event* getNextEvent();
 
