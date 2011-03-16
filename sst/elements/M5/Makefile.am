@@ -7,8 +7,6 @@ EXTRA_DIST = m5.xml
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libm5C.la
 libm5C_la_SOURCES = \
-    DRAMSimWrap.cpp \
-    DRAMSimWrap.h \
     baseCache.cpp \
     bounce.h \
     bus.cpp \
@@ -28,14 +26,16 @@ libm5C_la_SOURCES = \
     port2link.cpp \
     port2link.h \
     process.h \
-    simpleCpu.cpp \
     system.h \
     util.cpp \
     util.h
 
 if USE_M5_O3
-libm5C_la_SOURCES += \
-    O3Cpu.cpp
+libm5C_la_SOURCES += O3Cpu.cpp
+endif
+
+if HAVE_DRAMSIM 
+libm5C_la_SOURCES += DRAMSimWrap.cpp DRAMSimWrap.h
 endif
 
 libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \

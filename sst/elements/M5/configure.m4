@@ -17,7 +17,6 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   AS_IF([test ! -z "$with_m5" -a "$with_m5" != "yes"],
     [M5_CPPFLAGS="-I$with_m5 \
-        -I/usr/include/python2.6 \
         -DTHE_ISA=$enable_m5_isa \
         -DTRACING_ON=1 \
         -DDEBUG"
@@ -58,6 +57,9 @@ AC_DEFUN([SST_M5_CONFIG], [
      LDFLAGS="$DRAMSIM_LDFLAGS $LDFLAGS"],
     [DRAMSIM_CPPFLAGS=
      DRAMSIM_LDFLAGS=])
+
+  AM_CONDITIONAL([HAVE_DRAMSIM], 
+		[test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"])
 
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([MemorySystem.h], [], [happy="no"])
