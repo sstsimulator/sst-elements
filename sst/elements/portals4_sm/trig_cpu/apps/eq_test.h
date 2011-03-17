@@ -37,13 +37,16 @@ public:
 
         if (!init) {
 	    // Get the PT entries
-	    ptl->PtlPTAlloc(0,PTL_EQ_NONE,0,&pte);
+	    ptl->PtlEQAlloc(1,&eq_h);
+	    
+	    ptl->PtlPTAlloc(0,eq_h,0,&pte);
 	    
             // setup md handles
             ptl->PtlCTAlloc(PTL_CT_OPERATION, ct_h);
             me.start = &in_buf;
             me.length = 8;
             me.ignore_bits = ~0x0;
+	    me.options = PTL_ME_USE_ONCE;
             me.ct_handle = ct_h;
             ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, me_h);
 
@@ -120,8 +123,10 @@ private:
     ptl_handle_ct_t ct_h;
     ptl_handle_me_t me_h;
     ptl_handle_md_t md_h;
-
+    ptl_handle_eq_t eq_h;
+    
     ptl_pt_index_t pte;
+
     
     uint64_t algo_count;
 };

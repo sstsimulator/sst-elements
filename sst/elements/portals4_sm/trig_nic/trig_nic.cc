@@ -313,9 +313,6 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
             if (to_rtr->head_packet) nextToRtr->packet.payload[0] |= PTL_HDR_HEAD_PACKET;
 	    nextToRtr->packet.payload[1] = to_rtr->stream;
 
-// 	    printf("qqq: %5d:  Sending message to %d; head_packet = %d * %llu\n",
-// 		   m_id,nextToRtr->packet.destNum(),to_rtr->head_packet,
-// 		   getCurrentSimTimeNano());
 	    memcpy(&nextToRtr->packet.payload[2],to_rtr->ptl_data,16*sizeof(uint32_t));
  	    delete to_rtr;
         }
@@ -453,10 +450,14 @@ void trig_nic::processPtlEvent( Event *e ) {
 			continue;
 		    }
 		    // Not implementing all the matching semantics.  For now, just
-		    // check the match bits.  Oh, and everything is currently persistent
+		    // check the match bits.
 		    if ( (( header.match_bits ^ me->me.match_bits ) & ~me->me.ignore_bits ) == 0 ) {
 			found = true;
 			match_me = me;
+			// If USE_ONCE is set, delete
+			if ( me->me.options & PTL_ME_USE_ONCE ) {
+			    list->erase(curr);
+			}
 			break;
 		    }
 		}
@@ -902,7 +903,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 	// it just goes into a queue object for the host to process.
 	ptl_int_me_t* int_me = new ptl_int_me_t;
 	int_me->active = true;
-	int_me->handle_ct = PTL_CT_NONE;
 	int_me->pt_index = 0;
 	int_me->ptl_list = PTL_PRIORITY_LIST;
 	

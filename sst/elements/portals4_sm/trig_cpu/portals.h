@@ -31,6 +31,12 @@ public:
     void PtlPTAlloc(unsigned int options, ptl_handle_eq_t eq_handle,
 		   ptl_pt_index_t pt_index_req, ptl_pt_index_t *pt_index );
 
+    void PtlEQAlloc(ptl_size_t count, ptl_handle_eq_t *eq_handle);
+    void PtlEQFree(ptl_handle_eq_t eq_handle);
+    void PtlEQGet(ptl_handle_eq_t eq_handle, ptl_event_t *event);
+    bool PtlEQWait(ptl_handle_eq_t eq_handle, ptl_event_t *event);
+    
+    
     void PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle); 
     void PtlCTFree(ptl_handle_ct_t ct_handle);
     void PtlCTSet(ptl_handle_ct_t ct_handle, ptl_ct_event_t new_ct);
@@ -50,20 +56,20 @@ public:
 
     void PtlPut(ptl_handle_md_t md_handle, ptl_size_t local_offset, 
                 ptl_size_t length, ptl_ack_req_t ack_req, 
-                ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+                ptl_process_t target_id, ptl_pt_index_t pt_index,
                 ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
                 void *user_ptr, ptl_hdr_data_t hdr_data); 
 
     void PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
                    ptl_size_t length, ptl_ack_req_t ack_req,
-                   ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+                   ptl_process_t target_id, ptl_pt_index_t pt_index,
                    ptl_match_bits_t match_bits, ptl_size_t remote_offset,
                    void *user_ptr, ptl_hdr_data_t hdr_data,
                    ptl_op_t operation, ptl_datatype_t datatype);
 
     void PtlTriggeredPut(ptl_handle_md_t md_handle, ptl_size_t local_offset, 
                          ptl_size_t length, ptl_ack_req_t ack_req, 
-                         ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+                         ptl_process_t target_id, ptl_pt_index_t pt_index,
                          ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
                          void *user_ptr, ptl_hdr_data_t hdr_data,
                          ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold);
@@ -72,7 +78,7 @@ public:
     // for loop that calls TriggeredPut's
     void PtlTriggeredPutV(ptl_handle_md_t md_handle, ptl_size_t local_offset, 
 			  ptl_size_t length, ptl_ack_req_t ack_req, 
-			  ptl_process_id_t* target_ids, ptl_size_t id_length, ptl_pt_index_t pt_index,
+			  ptl_process_t* target_ids, ptl_size_t id_length, ptl_pt_index_t pt_index,
 			  ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
 			  void *user_ptr, ptl_hdr_data_t hdr_data,
 			  ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold);
@@ -82,7 +88,7 @@ public:
     
     void PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
                             ptl_size_t length, ptl_ack_req_t ack_req,
-                            ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+                            ptl_process_t target_id, ptl_pt_index_t pt_index,
                             ptl_match_bits_t match_bits, ptl_size_t remote_offset,
                             void *user_ptr, ptl_hdr_data_t hdr_data,
                             ptl_op_t operation, ptl_datatype_t datatype,
@@ -92,12 +98,12 @@ public:
                            ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold);
   
     void PtlGet ( ptl_handle_md_t md_handlde, ptl_size_t local_offset, 
-		  ptl_size_t length, ptl_process_id_t target_id, 
+		  ptl_size_t length, ptl_process_t target_id, 
 		  ptl_pt_index_t pt_index, ptl_match_bits_t match_bits, 
 		  void *user_ptr, ptl_size_t remote_offset ); 
 
     void PtlTriggeredGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset, 
-			   ptl_size_t length, ptl_process_id_t target_id, 
+			   ptl_size_t length, ptl_process_t target_id, 
 			   ptl_pt_index_t pt_index, ptl_match_bits_t match_bits, 
 			   void *user_ptr, ptl_size_t remote_offset,
 			   ptl_handle_ct_t ct_handle, ptl_size_t threshold);
@@ -127,6 +133,10 @@ private:
     // that matters is the event queue, so just point directly to that
     // for now.
     std::map<ptl_pt_index_t,ptl_handle_eq_t> pt_entries;
+
+    // Event Queues
+    typedef std::queue<ptl_event_t*> event_queue_t;
+    std::vector< event_queue_t* > event_queues;
     
     trig_cpu* cpu;
 

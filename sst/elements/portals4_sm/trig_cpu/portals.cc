@@ -67,6 +67,17 @@ portals::PtlPTAlloc(unsigned int options, ptl_handle_eq_t eq_handle,
     }
 }
 
+void
+portals::PtlEQAlloc(ptl_size_t count, ptl_handle_eq_t* eq_handle)
+{
+    event_queues.push_back(new event_queue_t());
+    *eq_handle = event_queues.size() - 1;
+}
+
+void
+portals::PtlEQFree(ptl_handle_eq_t eq_handle)
+{
+}
 
 // Seems to work
 void
@@ -84,10 +95,15 @@ portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list,
     int_me->me = me;
     int_me->active = true;
     int_me->user_ptr = user_ptr;
-    int_me->handle_ct = PTL_CT_NONE;
     int_me->pt_index = pt_index;
     int_me->ptl_list = ptl_list;
 
+    if ( pt_entries.count(pt_index) == 0 ) {
+	printf("Tried to MEAppend to non-allocated pt_index %d\n",pt_index);
+	abort();
+    }
+    int_me->eq_handle = pt_entries[pt_index];
+    
     // Send this to the NIC
     trig_nic_event *event = new trig_nic_event;
     event->src = cpu->my_id;
@@ -120,7 +136,7 @@ portals::PtlMEUnlink(ptl_handle_me_t me_handle) {
 void
 portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset, 
 		       ptl_size_t length, ptl_ack_req_t ack_req, 
-		       ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+		       ptl_process_t target_id, ptl_pt_index_t pt_index,
 		       ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
 		       void *user_ptr, ptl_hdr_data_t hdr_data)
 {
@@ -260,7 +276,7 @@ portals::progressPIO(void)
 void
 portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 			ptl_size_t length, ptl_ack_req_t ack_req,
-			ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+			ptl_process_t target_id, ptl_pt_index_t pt_index,
 			ptl_match_bits_t match_bits, ptl_size_t remote_offset,
 			void *user_ptr, ptl_hdr_data_t hdr_data,
 			ptl_op_t operation, ptl_datatype_t datatype) {
@@ -389,7 +405,7 @@ portals::PtlCTCheckThresh(ptl_handle_ct_t ct_handle, ptl_size_t test) {
 void
 portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset, 
 			  ptl_size_t length, ptl_ack_req_t ack_req, 
-			  ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+			  ptl_process_t target_id, ptl_pt_index_t pt_index,
 			  ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
 			  void *user_ptr, ptl_hdr_data_t hdr_data,
 			  ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold) {
@@ -452,7 +468,7 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 void
 portals::PtlTriggeredPutV(ptl_handle_md_t md_handle, ptl_size_t local_offset, 
 			  ptl_size_t length, ptl_ack_req_t ack_req, 
-			  ptl_process_id_t* target_ids, ptl_size_t id_length, ptl_pt_index_t pt_index,
+			  ptl_process_t* target_ids, ptl_size_t id_length, ptl_pt_index_t pt_index,
 			  ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
 			  void *user_ptr, ptl_hdr_data_t hdr_data,
 			  ptl_handle_ct_t trig_ct_handle, ptl_size_t threshold) {    
@@ -487,7 +503,7 @@ portals::PtlEndTriggeredPutV() {
 void
 portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 			    ptl_size_t length, ptl_ack_req_t ack_req,
-			    ptl_process_id_t target_id, ptl_pt_index_t pt_index,
+			    ptl_process_t target_id, ptl_pt_index_t pt_index,
 			    ptl_match_bits_t match_bits, ptl_size_t remote_offset,
 			    void *user_ptr, ptl_hdr_data_t hdr_data,
 			    ptl_op_t operation, ptl_datatype_t datatype,
@@ -600,7 +616,7 @@ portals::PtlMDRelease(ptl_handle_md_t md_handle)
 
 void
 portals::PtlGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset, 
-		  ptl_size_t length, ptl_process_id_t target_id, 
+		  ptl_size_t length, ptl_process_t target_id, 
 		  ptl_pt_index_t pt_index, ptl_match_bits_t match_bits, 
 		  void *user_ptr, ptl_size_t remote_offset ) {
 
@@ -630,7 +646,7 @@ portals::PtlGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 
 void
 portals::PtlTriggeredGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset, 
-			   ptl_size_t length, ptl_process_id_t target_id, 
+			   ptl_size_t length, ptl_process_t target_id, 
 			   ptl_pt_index_t pt_index, ptl_match_bits_t match_bits, 
 			   void *user_ptr, ptl_size_t remote_offset,
 			   ptl_handle_ct_t ct_handle, ptl_size_t threshold) {

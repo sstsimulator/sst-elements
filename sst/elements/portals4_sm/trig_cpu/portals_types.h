@@ -19,18 +19,21 @@
 
 #define PACKET_SIZE 64
 
-typedef uint32_t ptl_size_t;
+typedef uint32_t  ptl_size_t;
 
-typedef int16_t ptl_handle_ct_t;
-typedef int16_t ptl_handle_eq_t;
-typedef int8_t ptl_pt_index_t;
-typedef uint32_t ptl_ack_req_t;
+typedef int16_t   ptl_handle_ct_t;
+typedef int16_t   ptl_handle_eq_t;
+typedef int8_t    ptl_pt_index_t;
+typedef uint32_t  ptl_ack_req_t;
 
-typedef uint64_t ptl_process_id_t;
+typedef uint64_t  ptl_process_t;
+typedef uint64_t  ptl_hdr_data_t;
+typedef uint64_t  ptl_match_bits_t;
 
-typedef uint64_t ptl_hdr_data_t;
+typedef uint32_t  ptl_uid_t;
+typedef uint32_t  ptl_jid_t;
+typedef uint8_t   ptl_ni_fail_t;
 
-typedef uint64_t ptl_match_bits_t;
 
 typedef struct {
     ptl_size_t success;
@@ -40,20 +43,6 @@ typedef struct {
 typedef enum {
     PTL_CT_OPERATION, PTL_CT_BYTE
 } ptl_ct_type_t;
-
-// Operation types
-#define PTL_OP_PUT      0
-#define PTL_OP_GET      1
-#define PTL_OP_GET_RESP 2
-#define PTL_OP_ATOMIC   3
-#define PTL_OP_CT_INC   4
-
-#define PTL_EQ_NONE (-1)
-#define PTL_CT_NONE (-1)
-
-typedef enum { 
-    PTL_PRIORITY_LIST, PTL_OVERFLOW, PTL_PROBE_ONLY 
-} ptl_list_t;
 
 // typedef enum {
 //     PTL_MIN, PTL_MAX,
@@ -101,6 +90,55 @@ typedef uint8_t ptl_op_t;
 
 typedef uint8_t ptl_datatype_t;
 
+typedef enum {
+    PTL_EVENT_GET,
+    PTL_EVENT_PUT,
+    PTL_EVENT_PUT_OVERFLOW,
+    PTL_EVENT_ATOMIC,
+    PTL_EVENT_ATOMIC_OVERFLOW,
+    PTL_EVENT_REPLY,
+    PTL_EVENT_SEND,
+    PTL_EVENT_ACK,
+    PTL_EVENT_PT_DISABLED,
+    PTL_EVENT_AUTO_UNLINK,
+    PTL_EVENT_AUTO_FREE,
+    PTL_EVENT_PROBE
+} ptl_event_kind_t;
+
+typedef struct {
+    ptl_event_kind_t       type;
+    ptl_process_t          initiator;
+    ptl_pt_index_t         pt_index;
+    ptl_uid_t              uid;
+    ptl_jid_t              jid;
+    ptl_match_bits_t       match_bits;
+    ptl_size_t             rlength;
+    ptl_size_t             mlength;
+    ptl_size_t             remote_offset;
+    void*                  start;
+    void*                  user_ptr;
+    ptl_hdr_data_t         hdr_data;
+    ptl_ni_fail_t          ni_fail_type;
+    ptl_op_t               atomic_operation;
+    ptl_datatype_t         atomic_type;
+} ptl_event_t;
+    
+
+// Operation types
+#define PTL_OP_PUT      0
+#define PTL_OP_GET      1
+#define PTL_OP_GET_RESP 2
+#define PTL_OP_ATOMIC   3
+#define PTL_OP_CT_INC   4
+
+#define PTL_EQ_NONE (-1)
+#define PTL_CT_NONE (-1)
+
+typedef enum { 
+    PTL_PRIORITY_LIST, PTL_OVERFLOW, PTL_PROBE_ONLY 
+} ptl_list_t;
+
+
 // Here's the MD
 typedef struct { 
     void *start;
@@ -121,11 +159,29 @@ typedef struct {
     ptl_size_t min_free;
     //  ptl_ac_id_t ac_id;
     unsigned int options; 
-    //  ptl_process_id_t match_id; 
+    //  ptl_process_t match_id; 
     ptl_match_bits_t match_bits; 
     ptl_match_bits_t ignore_bits; 
 } ptl_me_t;
 
+// Options for the ME
+#define PTL_ME_OP_PUT                     0x1
+#define PTL_ME_OP_GET                     0x2
+#define PTL_ME_MANAGE_LOCAL               0x4
+#define PTL_ME_NO_TRUNCATE                0x8
+#define PTL_ME_USE_ONCE                  0x10
+#define PTL_ME_MAY_ALIGN                 0x20
+#define PTL_ME_ACK_DISABLE               0x40
+#define PTL_IOVEC                        0x80
+#define PTL_ME_EVENT_COMM_DISABLE       0x100
+#define PTL_ME_EVENT_FLOWCTRL_DISABLE   0x200
+#define PTL_ME_EVENT_SUCCESS_DISABLE    0x400
+#define PTL_ME_EVENT_OVER_DISABLE       0x800
+#define PTL_ME_EVENT_UNLINK_DISABLE    0x1000
+#define PTL_ME_EVENT_CT_COMM           0x2000
+#define PTL_ME_EVENT_CT_OVERFLOW       0x4000
+#define PTL_ME_EVENT_CT_BYTES          0x8000
+#define PTL_ME_EVENT_CT_USE_JID       0x10000
 
 // Internal data structures
 typedef uint32_t ptl_op_type_t;
@@ -134,7 +190,7 @@ typedef struct {
     ptl_me_t me;
     bool active;
     void *user_ptr;
-    ptl_handle_ct_t handle_ct;
+    ptl_handle_eq_t eq_handle;
     ptl_pt_index_t pt_index;
     ptl_list_t ptl_list;
 } ptl_int_me_t;
@@ -145,7 +201,7 @@ typedef struct {
     void* start;
     ptl_size_t length;
     ptl_size_t offset;
-    ptl_process_id_t target_id;
+    ptl_process_t target_id;
     ptl_handle_ct_t ct_handle;
     bool end;
     int stream;
@@ -167,7 +223,7 @@ typedef struct {
 
 typedef struct {
     ptl_op_type_t op_type;
-    ptl_process_id_t target_id;
+    ptl_process_t target_id;
     ptl_pt_index_t pt_index;
     ptl_match_bits_t match_bits;
     ptl_handle_ct_t ct_handle;
