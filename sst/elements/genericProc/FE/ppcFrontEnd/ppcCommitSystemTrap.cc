@@ -540,8 +540,12 @@ htonl_stat32_t(struct stat *ss_sbuf, void *target)
     ss_sbuf32->st_size = hton64(ss_sbuf->st_size);
     ss_sbuf32->st_blocks = hton64(ss_sbuf->st_blocks);
     ss_sbuf32->st_blksize = htonl(ss_sbuf->st_blksize);
+#ifdef HAVE_STAT_ST_FLAGS
     ss_sbuf32->st_flags = 0;
+#endif
+#ifdef HAVE_STAT_ST_GEN
     ss_sbuf32->st_gen = 0;
+#endif
 #ifdef HAVE_STAT_ST_ATIMESPEC
     ss_sbuf32->st_atimespec.tv_sec = htonl(ss_sbuf->st_atime);
     ss_sbuf32->st_atimespec.tv_nsec = 0;
