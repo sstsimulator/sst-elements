@@ -12,7 +12,7 @@
     <base.process.uid> 1 </base.process.uid>
     <base.process.cwd> / </base.process.cwd>
     <base.process.cmd> hello arg1 arg2 </base.process.cmd>
-    <base.process.executable> /Users/mjleven/test/hello </base.process.executable>
+    <base.process.executable> test/hello </base.process.executable>
     <base.process.env> USER=mjleven </base.process.env>
     <base.process.simpoint> 0 </base.process.simpoint>
     <base.process.errout> cerr </base.process.errout>

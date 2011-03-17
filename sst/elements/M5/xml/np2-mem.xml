@@ -36,7 +36,7 @@
                 <null> false </null>
                 <zero> false </zero>
 
-                <exe.0.process.executable> /Users/mjleven/test/hello </exe.0.process.executable>
+                <exe.0.process.executable> test/hello </exe.0.process.executable>
                 <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
                 <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
 
