@@ -10,7 +10,7 @@ class M5 : public SST::Component
     class Event : public SST::Event {
       public:
         Event() { 
-            setPriority(99);
+            setPriority(98);
         }
         SST::Cycle_t time;
         SST::Cycle_t cycles;
@@ -28,7 +28,7 @@ class M5 : public SST::Component
 
     SST::Link*          m_self;
     bool                m_armed;
-    Event               m_event;
+    Event&              m_event;
     SST::TimeConverter *m_tc;
 };
 

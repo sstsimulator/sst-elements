@@ -18,7 +18,8 @@ static void enableDebug( std::string name );
 
 M5::M5( ComponentId_t id, Params_t& params ) :
     Component( id),
-    m_armed( false )
+    m_armed( false ),
+    m_event( * new Event() )
 {
     // M5 variable
     want_info = false;
@@ -93,6 +94,9 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 M5::~M5()
 {
     // do we really need to cleanup?
+    if ( ! m_armed ) {
+	delete &m_event;
+    }
 }
 
 int M5::Setup()
