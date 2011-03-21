@@ -29,8 +29,8 @@
     <component id="physmem" >
         <PhysicalMemory>
             <params>
-                <range.start> 0 </range.start>
-                <range.end> 0x1fffffff </range.end>
+                <range.start> 0x00100000 </range.start>
+                <range.end>   0x1fffffff </range.end>
                 <latency> 28000 </latency>
                 <latency_var> 0 </latency_var>
                 <null> false </null>
