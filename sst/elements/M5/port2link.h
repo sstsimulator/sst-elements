@@ -10,13 +10,9 @@
 
 using namespace SST;
 
-#define _dbg( fmt, args...)\
-   if ( Trace::enabled ) \
-      fprintf(stderr,"%7lu: %s: " fmt, (unsigned long)curTick, name().c_str(), ## args )
-
 #define _error(name, fmt, args...) \
 {\
-printf("%s::%s():%i:FAILED: " fmt, #name, __FUNCTION__, __LINE__, ## args);\
+fprintf(stderr,"%s::%s():%i:FAILED: " fmt, #name, __FUNCTION__, __LINE__, ## args);\
 exit(-1); \
 }
 
@@ -61,7 +57,7 @@ class Port2Link : public MemObject
         { m_object.recvFunctional( pkt ); }
 
         virtual void recvStatusChange(Status status) 
-        { _dbg("Port2Link::MemObjPort::recvStatusChange()\n"); }
+        { DPRINTFN("Port2Link::MemObjPort::recvStatusChange()\n"); }
 
         virtual void recvRetry( ) 
         { m_object.recvRetry( 0 ); }

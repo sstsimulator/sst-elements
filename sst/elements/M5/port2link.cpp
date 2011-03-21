@@ -75,7 +75,7 @@ void Port2Link::eventHandler( SST::Event* e )
     DBGX( 3,"SST-time=%lu `%s` %#lx\n", now,  
         pkt->cmdString().c_str(), (long) pkt->getAddr() );
 
-    _dbg("eventHandler: `%s` %#lx\n", pkt->cmdString().c_str(), 
+    DPRINTFN("eventHandler: `%s` %#lx\n", pkt->cmdString().c_str(), 
                     (long) pkt->getAddr() );
 
     m_comp->catchup( now );
@@ -87,12 +87,23 @@ void Port2Link::eventHandler( SST::Event* e )
             break;
 
         case MemEvent::Timing:
-            if ( ! m_deferred.empty() ) {
-                DBGX(3,"defer\n");
-                m_deferred.push_back( pkt );
-            } else if ( m_memObjPort->sendTiming( pkt ) == false ) {
-                DBGX(3,"defer\n");
-                m_deferred.push_back( pkt );
+
+            if ( pkt->memInhibitAsserted() ) {
+               DPRINTFN( "`%s` %#lx memInhibitAsserted()\n",
+                    pkt->cmdString().c_str(), (long) pkt->getAddr() );
+                if ( pkt->isRead() )  {
+                DPRINTFN( "`%s` %#lx memInhibitAsserted()\n",
+                    pkt->cmdString().c_str(), (long) pkt->getAddr() );
+                    //delete pkt;
+                }
+            } else {
+                if ( ! m_deferred.empty() ) {
+                    DBGX(3,"defer\n");
+                    m_deferred.push_back( pkt );
+                } else if ( m_memObjPort->sendTiming( pkt ) == false ) {
+                    DBGX(3,"defer\n");
+                    m_deferred.push_back( pkt );
+                }
             }
             break;
     }
@@ -109,7 +120,7 @@ void Port2Link::init() {
 Port *Port2Link::getPort(const std::string &if_name, int idx )
 {
     DBGX( 2, " getPort %s %d\n", if_name.c_str(), idx );
-    _dbg(" getPort %s %d\n", if_name.c_str(), idx );
+    DPRINTFN(" getPort %s %d\n", if_name.c_str(), idx );
 
     if ( if_name.compare( "memObj" ) == 0 ) {
         if ( m_memObjPort ) {
@@ -126,7 +137,7 @@ bool Port2Link::recvTiming(PacketPtr pkt)
     if ( tickNextIdle > curTick || ( ! inRetry && ! m_deferredPkt.empty() ) ) 
     {
         m_deferredPkt.push_back(pkt);
-        _dbg("recvTiming: %s %#lx BUSY\n", pkt->cmdString().c_str(),
+        DPRINTFN("recvTiming: %s %#lx BUSY\n", pkt->cmdString().c_str(),
                     (long)pkt->getAddr());
         DBGX(3,"%s %#lx BUSY\n", pkt->cmdString().c_str(),
                     (long)pkt->getAddr());
@@ -137,12 +148,8 @@ bool Port2Link::recvTiming(PacketPtr pkt)
         m_tc->convertToCoreTime( m_comp->getCurrentSimTime(m_tc) ), 
         pkt->cmdString().c_str(), (long) pkt->getAddr() );
 
-    _dbg("recvTiming: %s %#lx\n", pkt->cmdString().c_str(), 
+    DPRINTFN("recvTiming: %s %#lx\n", pkt->cmdString().c_str(), 
                                         (long)pkt->getAddr());
-
-    MemEvent* event = new MemEvent( pkt );
-
-    m_link->Send( event );
 
     calcPacketTiming(pkt);
     occupyLink( pkt->finishTime );
@@ -150,10 +157,12 @@ bool Port2Link::recvTiming(PacketPtr pkt)
     // Packet was successfully sent.
     // Also take care of retries
     if (inRetry) {
-        _dbg("Remove retry from list\n");
+        DPRINTFN("Remove retry from list\n");
         m_deferredPkt.pop_front();
         inRetry = false;
     }
+
+    m_link->Send( new MemEvent( pkt ) );
 
     return true;
 }
@@ -162,7 +171,7 @@ void Port2Link::recvFunctional(PacketPtr pkt )
 {
     if (!pkt->isPrint()) {
         // don't do DPRINTFs on PrintReq as it clutters up the output
-        _dbg( "recvFunctional: addr %#lx cmd %s\n",
+        DPRINTFN( "recvFunctional: addr %#lx cmd %s\n",
                 (long) pkt->getAddr(), pkt->cmdString().c_str());
     }
 
@@ -184,7 +193,7 @@ void Port2Link::recvRetry( int id )
             inRetry = true;
             PacketPtr pkt = m_deferredPkt.front();
 
-            _dbg("Sending a retry to %s\n",
+            DPRINTFN("Sending a retry to %s\n",
                         m_memObjPort->getPeer()->name().c_str());
 
             m_memObjPort->sendRetry();
@@ -209,10 +218,12 @@ void Port2Link::recvRetry( int id )
 }
 
 void Port2Link::getAddressRanges(AddrRangeList &resp, bool &snoop ) {
-    _dbg("getAddressRanges:\n");
+    DPRINTFN("getAddressRanges:\n");
     snoop = false;
     resp.clear();
-    resp.push_back( RangeSize(0, 0x20000000));
+    int start = 0x100000;
+    int end = 0x20000000 - start; 
+    resp.push_back( RangeSize(start, end));
 }
 
 Tick Port2Link::calcPacketTiming(PacketPtr pkt)
@@ -262,6 +273,6 @@ void Port2Link::occupyLink(Tick until)
     tickNextIdle = until;
     reschedule(linkIdleEvent, tickNextIdle, true);
 
-    _dbg("The link is now occupied from tick %lu to %lu\n",
+    DPRINTFN("The link is now occupied from tick %lu to %lu\n",
                                         (long)curTick, (long)tickNextIdle);
 }

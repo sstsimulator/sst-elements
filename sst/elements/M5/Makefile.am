@@ -27,6 +27,8 @@ libm5C_la_SOURCES = \
     port2link.h \
     process.h \
     simpleCpu.cpp \
+    syscall.cpp \
+    syscall.h \
     system.h \
     util.cpp \
     util.h
