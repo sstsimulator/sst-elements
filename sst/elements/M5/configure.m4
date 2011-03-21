@@ -35,9 +35,15 @@ AC_DEFUN([SST_M5_CONFIG], [
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
 
-  AS_IF([test "$with_m5_build" == "debug" ],
-	[cpp_extra="-DTRACING_ON=1 -DDEBUG"],
-        [cpp_extra=])
+  cpp_extra=
+
+  case "${with_m5_build}" in
+    debug) cpp_extra="-DDEBUG -DTRACING_ON=1" ;;
+    opt)   cpp_extra="-DTRACING_ON=1" ;;
+    prof)  cpp_extra="-DNDEBUG -DTRACING_ON=0" ;;
+    fast)  cpp_extra="-DNDEBUG -DTRACING_ON=0" ;;
+    *) happy="no" ;;
+  esac
 
   M5_CPPFLAGS="-I$with_m5 -DTHE_ISA=${isa}_ISA ${cpp_extra}"
   M5_LDFLAGS="-L$with_m5"
