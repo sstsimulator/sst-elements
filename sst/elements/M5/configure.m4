@@ -11,7 +11,7 @@ AC_DEFUN([SST_M5_CONFIG], [
     [AS_HELP_STRING([--with-m5-build=TYPE],
       [Specify the type of library, Options: opt, debug (default: opt)])],
     [],
-    [with_m5_build=opt])
+    [with_m5_build=fast])
 
   isa=
 
