@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <cpuParams>
-    <physicalMemory.start> 0x100000 </physicalMemory.start>
-    <physicalMemory.end>   0x1fffff </physicalMemory.end>
+    <physicalMemory.start> 0x00100000 </physicalMemory.start>
+    <physicalMemory.end>   0x001fffff </physicalMemory.end>
 
     <base.process.egid> 1 </base.process.egid>
     <base.process.euid> 1 </base.process.euid>
@@ -241,9 +241,45 @@
                         <num> 1 </num>
                     </params>
                 </link>
+                <link id="bus2syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 3 </num>
+                    </params>
+                </link>
+                <link id="bus2syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 4 </num>
+                    </params>
+                </link>
             </links>
         </Bus>
     </component>
+
+    <component id="syscall" >
+        <Syscall>
+            <params>
+                <physicalMemory.start> 0x00000000 </physicalMemory.start>
+                <physicalMemory.end>   0x00002000 </physicalMemory.end>
+            </params>
+            <links>
+                <link id="bus2syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus2syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
 
     <component id="port2link-bus" >
         <Port2Link>
