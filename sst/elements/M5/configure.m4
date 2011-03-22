@@ -29,7 +29,7 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
   AC_CHECK_HEADERS([params/X86TLB.hh], [isa=X86], [])
   AC_CHECK_HEADERS([params/DerivO3CPU.hh], [use_m5_o3=true], [use_m5_o3=false])
-  AC_CHECK_LIB([m5_$with_m5_build], [initm5], [], [happy="no"])
+  AC_CHECK_LIB([m5_$with_m5_build], [initm5], [M5_LIB="-lm5_$with_m5_build"], [happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
@@ -52,6 +52,7 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   AC_SUBST([M5_CPPFLAGS])
   AC_SUBST([M5_LDFLAGS])
+  AC_SUBST([M5_LIB])
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
