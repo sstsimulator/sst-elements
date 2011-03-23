@@ -55,7 +55,7 @@ class Syscall : public DmaDevice
 
     void process( void );
 
-    int64_t startOpen( Addr, int oflag, mode_t );
+    int64_t startOpen( Addr path );
     int64_t finishOpen( int oflag, mode_t );
 
     int64_t close( int );
@@ -71,6 +71,8 @@ class Syscall : public DmaDevice
 
     DmaEvent      m_dmaEvent;
     SyscallEvent  m_syscallEvent;
+    uint64_t      m_startAddr;
+    uint64_t      m_endAddr;
 
     void foo( int64_t retval ) {
         DBGX(2,"retval %d\n",retval);

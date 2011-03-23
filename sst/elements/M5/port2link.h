@@ -3,7 +3,7 @@
 
 #include <sst_config.h>
 #include <sst/core/component.h>
-//#include <sst/core/params.h>
+#include <base/trace.hh>
 
 // M5 includes
 #include <mem/mem_object.hh>
@@ -15,6 +15,12 @@ using namespace SST;
 fprintf(stderr,"%s::%s():%i:FAILED: " fmt, #name, __FUNCTION__, __LINE__, ## args);\
 exit(-1); \
 }
+
+#undef DPRINTFN
+#define DPRINTFN(...) do {                                      \
+    if ( Trace::enabled )                                       \
+        Trace::dprintf(curTick, name(), __VA_ARGS__);           \
+} while (0)
 
 struct Port2LinkParams;
 class M5;
@@ -73,8 +79,6 @@ class Port2Link : public MemObject
     Port2Link( M5* comp, const Port2LinkParams *p );
 
   private:
-//    virtual ~Port2Link();
-//    const Port2Link &operator=(const Params& p);
 
   public:
     // SST function

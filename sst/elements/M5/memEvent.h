@@ -83,7 +83,6 @@ class MemEvent : public SST::Event {
                                         m_pc, m_contextId, m_threadId );
             } else {
                 DBGX(4,"new Request paddr=%#lx\n",m_paddr);
-                //return  new ::Request( m_paddr, m_size, m_flags, m_time );
                 return  new ::Request( m_paddr, m_size, m_flags );
             }
         }
@@ -181,11 +180,10 @@ class MemEvent : public SST::Event {
             DBGX(4,"isResponse\n");
             m_isResponse = true;
             m_senderState =  (uint64_t) pkt->senderState;
-            //delete pkt;
-        } else if ( ! pkt->needsResponse() || type == Functional ) {
-            DBGX(4,"! needsResponse() || type==Functional\n");
-            //delete pkt;
+            delete pkt;
         }
+	// should we delete the packet if this is a request but we
+	// don't expect a response
     }
 
     Type        type() { return m_type; }
@@ -195,7 +193,9 @@ class MemEvent : public SST::Event {
 
         if (  m_isResponse ) {
             pkt = (PacketPtr) m_senderState;
-            pkt->makeResponse();
+            if ( ! pkt->memInhibitAsserted() ) {
+            	pkt->makeResponse();
+            }
             DBGX(4,"isResponse pkt=%p\n",m_senderState);
         } else {
             ::Request* req = m_req.M5_Request(); 
@@ -211,7 +211,7 @@ class MemEvent : public SST::Event {
             DBGX(4,"! isResponse\n");
         }
 
-        if ( pkt->hasData() ) {
+        if ( ! pkt->memInhibitAsserted() && pkt->hasData() ) {
             assert( m_data.size() == pkt->getSize() );
             DBGX(4,"hasData\n");
             pkt->setData( &m_data[0] );
@@ -249,7 +249,6 @@ class MemEvent : public SST::Event {
     void
     serialize(Archive & ar, const unsigned int version )
     {
-//DBGX(4,"type=%d cmd=%d size=%d pkt=%#lx isResponse=%d\n",m_type,m_cmd,m_size, (unsigned long) m_senderState,m_isResponse);
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
 
         ar & BOOST_SERIALIZATION_NVP(m_type);
@@ -264,7 +263,6 @@ class MemEvent : public SST::Event {
         ar & BOOST_SERIALIZATION_NVP(m_dest);
         ar & BOOST_SERIALIZATION_NVP(m_addr);
         ar & BOOST_SERIALIZATION_NVP(m_senderState);
-//DBGX(4,"type=%d cmd=%d size=%d pkt=%#lx isResponse=%d\n",m_type,m_cmd,m_size, (unsigned long) m_senderState,m_isResponse);
     }
 };
 

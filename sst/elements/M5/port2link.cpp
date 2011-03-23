@@ -84,18 +84,15 @@ void Port2Link::eventHandler( SST::Event* e )
         case MemEvent::Functional:
             // TODO: need to check deferred pkt queue
             m_memObjPort->sendFunctional( pkt );
+            delete pkt;
             break;
 
         case MemEvent::Timing:
 
             if ( pkt->memInhibitAsserted() ) {
-               DPRINTFN( "`%s` %#lx memInhibitAsserted()\n",
-                    pkt->cmdString().c_str(), (long) pkt->getAddr() );
-                if ( pkt->isRead() )  {
                 DPRINTFN( "`%s` %#lx memInhibitAsserted()\n",
                     pkt->cmdString().c_str(), (long) pkt->getAddr() );
-                    //delete pkt;
-                }
+                delete pkt;
             } else {
                 if ( ! m_deferred.empty() ) {
                     DBGX(3,"defer\n");
@@ -110,7 +107,7 @@ void Port2Link::eventHandler( SST::Event* e )
 
     m_comp->arm( now );
 
-    delete e;
+    delete event;
 }
 
 void Port2Link::init() {
@@ -154,8 +151,6 @@ bool Port2Link::recvTiming(PacketPtr pkt)
     calcPacketTiming(pkt);
     occupyLink( pkt->finishTime );
 
-    // Packet was successfully sent.
-    // Also take care of retries
     if (inRetry) {
         DPRINTFN("Remove retry from list\n");
         m_deferredPkt.pop_front();
@@ -181,8 +176,7 @@ void Port2Link::recvFunctional(PacketPtr pkt )
         _error( Port2Link, "read is not supported\n" );
     }
 
-    MemEvent* event = new MemEvent( pkt, MemEvent::Functional );
-    m_link->Send(event);
+    m_link->Send( new MemEvent( pkt, MemEvent::Functional ) );
 }
 
 void Port2Link::recvRetry( int id ) 

@@ -151,12 +151,9 @@ void M5::selfEvent( SST::Event* )
 
 static void enableDebug( std::string name )
 {
-
     if ( name.compare("all" ) ) return;
     Trace::enabled = true;
     for ( int i = 0; i < Trace::flags.size(); i++ ) {
-//            printf("%s\n",Trace::flagStrings[i]);
-        //    if ( ! strcmp( Trace::flagStrings[i], "Commit" ) ) 
             Trace::flags[i] = true;
     }
 }
