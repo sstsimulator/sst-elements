@@ -10,6 +10,8 @@ libm5C_la_SOURCES = \
     baseCache.cpp \
     bounce.h \
     bus.cpp \
+    busPlus.cpp \
+    busPlus.h \
     debug.cpp \
     dummyPhysicalMemory.h \
     dummySystem.h \

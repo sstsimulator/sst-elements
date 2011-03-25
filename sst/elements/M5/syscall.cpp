@@ -6,6 +6,8 @@
 using namespace SST;
 class Component;
 
+#include <system.h>
+
 #include <fcntl.h>
 #include <syscall.h>
 #include <debug.h>
@@ -26,6 +28,7 @@ SimObject* create_Syscall( Component*, string name, Params& sstParams )
     Syscall::Params* memP   = new Syscall::Params;
 
     memP->name = name;
+    memP->system = create_System( "", NULL, Enums::timing ); 
 #if 0
     memP->range.start = sstParams.find_integer( "physicalMemory.start" );;
     memP->range.end = sstParams.find_integer( "physicalMemory.end", 0 ); 

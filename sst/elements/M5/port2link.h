@@ -10,18 +10,6 @@
 
 using namespace SST;
 
-#define _error(name, fmt, args...) \
-{\
-fprintf(stderr,"%s::%s():%i:FAILED: " fmt, #name, __FUNCTION__, __LINE__, ## args);\
-exit(-1); \
-}
-
-#undef DPRINTFN
-#define DPRINTFN(...) do {                                      \
-    if ( Trace::enabled )                                       \
-        Trace::dprintf(curTick, name(), __VA_ARGS__);           \
-} while (0)
-
 struct Port2LinkParams;
 class M5;
 
