@@ -29,6 +29,15 @@ struct MessageStream {
     ptl_handle_ct_t ct_handle;
 };
 
+struct OutstandingMessage {
+    void*            user_ptr;       // 8 bytes
+    void*            get_start;      // 8 bytes
+    ptl_handle_ct_t  get_ct_handle;  // 2 bytes
+    ptl_handle_ct_t  get_eq_handle;  // 2 bytes
+    uint8_t          op;             // 1 byte
+    
+};
+
 class trig_nic : public RtrIF {
 
 private:
@@ -95,6 +104,8 @@ private:
     bool send_recv;
 
     bool send_atomic_from_cache;
+
+    std::map<uint16_t,OutstandingMessage*> out_msg_q;
     
 public:
     trig_nic( ComponentId_t id, Params_t& params );
