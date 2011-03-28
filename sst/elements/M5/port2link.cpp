@@ -68,9 +68,14 @@ Port2Link::Port2Link( M5* comp, const Port2LinkParams *p ) :
 
 void Port2Link::eventHandler( SST::Event* e )
 {
+    Cycle_t now = m_tc->convertToCoreTime( m_comp->getCurrentSimTime(m_tc) );
+    if ( m_comp->catchup( now ) ) {
+	DBGX(3,"catchup() says we're exiting\n");
+        return;
+    }
+
     MemEvent* event = static_cast<MemEvent*>(e);
     PacketPtr pkt = event->M5_Packet();
-    Cycle_t now = m_tc->convertToCoreTime( m_comp->getCurrentSimTime(m_tc) );
 
     DBGX( 3,"SST-time=%lu `%s` %#lx\n", now,  
         pkt->cmdString().c_str(), (long) pkt->getAddr() );
@@ -78,7 +83,6 @@ void Port2Link::eventHandler( SST::Event* e )
     DPRINTFN("eventHandler: `%s` %#lx\n", pkt->cmdString().c_str(), 
                     (long) pkt->getAddr() );
 
-    m_comp->catchup( now );
 
     switch ( event->type() ) {
         case MemEvent::Functional:

@@ -84,18 +84,21 @@ bool BusPlus::send( MemEvent* event )
 
 void BusPlus::eventHandler( SST::Event* e )
 {
+    Cycle_t now = m_tc->convertToCoreTime( m_comp->getCurrentSimTime(m_tc) );
+    if ( m_comp->catchup( now ) ) { 
+	DBGX(3,"catchup() says we're exiting\n");
+        return; 
+    }
+
     MemEvent* event = static_cast<MemEvent*>(e);
     PacketPtr pkt = event->M5_Packet();
-    Cycle_t now = m_tc->convertToCoreTime( m_comp->getCurrentSimTime(m_tc) );
 
     DBGX( 3,"SST-time=%lu `%s` %#lx\n", now,
         pkt->cmdString().c_str(), (long) pkt->getAddr() );
 
     DPRINTFN("eventHandler: `%s` %#lx\n", pkt->cmdString().c_str(),
                     (long) pkt->getAddr() );
-
-    m_comp->catchup( now );
-
+ 
     switch ( event->type() ) {
         case MemEvent::Functional:
             m_port[0].linkPort->sendFunctional( pkt );
@@ -106,6 +109,7 @@ void BusPlus::eventHandler( SST::Event* e )
 	    break;
     }
 
+    DBGX(3,"call arm\n");
     m_comp->arm( now );
 
     delete event;

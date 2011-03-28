@@ -5,6 +5,7 @@
 #include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
 
+class SimLoopExitEvent;
 class M5 : public SST::Component
 {
     class Event : public SST::Event {
@@ -20,7 +21,7 @@ class M5 : public SST::Component
     M5( SST::ComponentId_t id, Params_t& params );
     ~M5();
     int Setup();
-    void catchup( SST::Cycle_t );
+    bool catchup( SST::Cycle_t );
     void arm( SST::Cycle_t );
 
   private:
@@ -30,6 +31,7 @@ class M5 : public SST::Component
     bool                m_armed;
     Event&              m_event;
     SST::TimeConverter *m_tc;
+    SimLoopExitEvent   *m_exitEvent;
 };
 
 #endif

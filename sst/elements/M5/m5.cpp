@@ -19,7 +19,8 @@ static void enableDebug( std::string name );
 M5::M5( ComponentId_t id, Params_t& params ) :
     Component( id),
     m_armed( false ),
-    m_event( * new Event() )
+    m_event( * new Event() ),
+    m_exitEvent( NULL )
 {
     // M5 variable
     want_info = false;
@@ -104,14 +105,16 @@ int M5::Setup()
     return 0;
 }
 
-void M5::catchup( SST::Cycle_t time ) 
+bool M5::catchup( SST::Cycle_t time ) 
 {
     DBGX( 3, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
                                     time, curTick, time - curTick ); 
 
-    simulate( time - curTick );
+    m_exitEvent = simulate( time - curTick );
 
     m_event.cycles = m_event.time - time;
+
+    return ( m_exitEvent );
 }
 
 void M5::arm( SST::Cycle_t now )
@@ -121,7 +124,7 @@ void M5::arm( SST::Cycle_t now )
         m_event.time = mainEventQueue.nextTick();
 
         DBGX( 3, "nextTick=%lu cycles=%lu\n", m_event.time, m_event.cycles );
-        if ( now != 0 && m_event.cycles == 0 ) exit(1);
+        assert( ! ( now != 0 && m_event.cycles == 0 ) );
 
         DBGX( 3, "send %lu\n", now + m_event.cycles );
         m_self->Send( m_event.cycles, &m_event );
@@ -138,14 +141,16 @@ void M5::selfEvent( SST::Event* )
 
     DBGX( 3, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
 
-    SimLoopExitEvent* exitEvent = simulate( m_event.cycles );
+    if ( ! m_exitEvent ) {
+        m_exitEvent = simulate( m_event.cycles );
+    }
 
-    if ( ! exitEvent ) {
+    if ( ! m_exitEvent ) {
         arm( m_event.time );
     } else {
         unregisterExit();
         INFO( "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
-                exitEvent->getCause().c_str(), exitEvent->getCode() );
+                m_exitEvent->getCause().c_str(), m_exitEvent->getCode() );
     }
 }
 

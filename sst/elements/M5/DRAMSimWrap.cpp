@@ -171,11 +171,21 @@ void DRAMSimWrap::doFunctionalAccess(PacketPtr pkt)
 
 bool DRAMSimWrap::recvTiming(PacketPtr pkt)
 {
-    DBGX( 3, "%s %#lx\n", pkt->cmdString().c_str(),
-                                        (long)pkt->getAddr());
+    DBGX( 3, "%s inval=%d resp=%d %#lx\n", pkt->cmdString().c_str(),
+		pkt->isInvalidate(), pkt->needsResponse(), (long)pkt->getAddr());
     _dbg("recvTiming: %s %#lx\n", pkt->cmdString().c_str(),
                                         (long)pkt->getAddr());
-    m_recvQ.push_back( make_pair( pkt, 0 ) );
+
+    if ( pkt->isRead()  || pkt->isWrite()) {
+        m_recvQ.push_back( make_pair( pkt, 0 ) );
+    } else {
+	if ( pkt->needsResponse() ) {
+	    pkt->makeTimingResponse();
+	    m_readyQ.push_back( pkt );
+	} else {
+	    delete pkt;
+	}
+    }
     return true;
 }
 
@@ -188,11 +198,13 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 {
     DBGX(3,"id=%d addr=%#lx clock=%lu\n",id,addr,clockcycle);
 
+    assert( ! m_readQ.empty() );
+
     m_readQ.front().second += JEDEC_DATA_BUS_WIDTH; 
 
     PacketPtr pkt = m_readQ.front().first;
 
-    if ( m_readQ.front().second == pkt->getSize() ) {
+    if ( m_readQ.front().second >= pkt->getSize() ) {
         doFunctionalAccess(pkt);
         m_readyQ.push_back(pkt);
         m_readQ.pop_front();
@@ -203,11 +215,13 @@ void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
 {
     DBGX(3,"id=%d addr=%#lx clock=%lu\n",id,addr,clockcycle);
 
-    m_readQ.front().second += JEDEC_DATA_BUS_WIDTH; 
+    assert( ! m_writeQ.empty() );
+
+    m_writeQ.front().second += JEDEC_DATA_BUS_WIDTH; 
 
     PacketPtr pkt = m_writeQ.front().first;
 
-    if ( m_writeQ.front().second == pkt->getSize() ) {
+    if ( m_writeQ.front().second >= pkt->getSize() ) {
         doFunctionalAccess(pkt);
         m_readyQ.push_back(pkt);
         m_writeQ.pop_front();
@@ -217,11 +231,15 @@ void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
 bool DRAMSimWrap::clock( SST::Cycle_t cycle )
 {
     Cycle_t now = m_tc->convertToCoreTime( cycle );
+    if ( m_comp->catchup( now ) ) {
+	DBGX(3,"catchup() says we're exiting\n");
+        return false;
+    }
+
     MS_CAST( m_memorySystem )->update();
 
     // calling sendTiming can change the state of the M5 queue, 
     // we need to bring it up to the current time and then arm it 
-    m_comp->catchup( now ); 
 
     while ( ! m_waitRetry && ! m_readyQ.empty() ) {
         if ( ! m_ports[0]->sendTiming( m_readyQ.front() )  ) {
@@ -233,24 +251,29 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
         m_readyQ.pop_front();
     }
 
+    DBGX(3,"call arm\n");
     m_comp->arm( now );
 
     while ( ! m_recvQ.empty() ) {
         PacketPtr pkt = m_recvQ.front().first;
         int ret;
         uint64_t addr = pkt->getAddr() + m_recvQ.front().second;
+	addr &= ~( JEDEC_DATA_BUS_WIDTH - 1 );
 
         if ( ! MS_CAST( m_memorySystem )->addTransaction( 
-                        pkt->isWrite(), addr ) ) 
+                        pkt->isWrite(), addr) ) 
         {
             break;
         }
 
         DBGX(3,"added trans, cycle=%lu addr=%#lx\n", cycle, addr );
 
-        m_recvQ.front().second += 8;
+        m_recvQ.front().second += JEDEC_DATA_BUS_WIDTH;
 
-        if ( m_recvQ.front().second == pkt->getSize() ) {
+        DBGX(3,"getAddr()=%#lx getSize()=%#lx %#lx\n",
+			pkt->getAddr(), pkt->getSize(), m_recvQ.front().second );
+
+        if ( m_recvQ.front().second >= pkt->getSize() ) {
             if ( pkt->isRead() ) {
                 m_readQ.push_back( make_pair( pkt, 0 ) );
             } else {
