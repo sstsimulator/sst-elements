@@ -213,7 +213,7 @@
     <component id="cpu0.busPlus" >
         <BusPlus>
             <params include=busParams>
-		<linkName> mem2bus </linkName>
+                <linkName> mem2bus </linkName>
                 <range.start> 0x00100000 </range.start>
                 <range.end>   0x1fffffff </range.end>
             </params>
