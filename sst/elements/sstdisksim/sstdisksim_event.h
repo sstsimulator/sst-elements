@@ -25,6 +25,8 @@ public:
   unsigned long devno;
   unsigned long time;
 
+  sstdisksim_event* next_event;
+
   bool completed;
   void* bossClass;
 

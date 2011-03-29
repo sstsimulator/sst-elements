@@ -20,6 +20,8 @@ libsstdisksim_la_LIBADD = $(SSTDISKSIM_LIB)
 
 #libsstdisksim_tracereader
 libsstdisksim_tracereader_la_SOURCES = \
+	sstdisksim_trace_entries.cpp \
+	sstdisksim_trace_entries.h \
 	sstdisksim_tau_parser.cpp \
 	sstdisksim_tau_parser.h \
 	sstdisksim_tracereader.cpp \

@@ -1,4 +1,4 @@
-// Copyright 2009-2011 Sandia Corporation. Under the terms
+// Copyright 2011 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
@@ -15,17 +15,23 @@
 #include <stdio.h>
 using namespace std;
 
+map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
+bool EndOfTrace = false; 
+
 // implementation of callback routines 
 int EnterState(void *userData, double time, 
-	       unsigned int nodeid, unsigned int tid, unsigned int stateid)
+	       unsigned int nid, unsigned int tid, unsigned int stateid)
 {
-  //  printf("Entered state %d time %g nid %d tid %d\n", 
-  //	 stateid, time, nodeid, tid);
+  printf("Entered state %d time %g nid %d tid %d\n", 
+  	 stateid, time, nid, tid);
   return 0;
 }
 
 int LeaveState(void *userData, double time, unsigned int nid, unsigned int tid, unsigned int stateid)
 {
+  printf("Exited state %d time %g nid %d tid %d\n", 
+  	 stateid, time, nid, tid);
+
   return 0;
 }
 
@@ -35,41 +41,53 @@ int ClockPeriod( void*  userData, double clkPeriod )
   return 0;
 }
 
-int DefThread(void *userData, unsigned int nodeid, unsigned int threadToken,
+int DefThread(void *userData, unsigned int nid, unsigned int threadToken,
 	      const char *threadName )
 {
-  //  printf("DefThread nid %d tid %d, thread name %s\n", 
-  //	 nodeid, threadToken, threadName);
+  printf("DefThread nid %d tid %d, thread name %s\n", 
+  	 nid, threadToken, threadName);
   return 0;
 }
 
-int EndTrace( void *userData, unsigned int nodeid, unsigned int threadid)
+int EndTrace( void *userData, unsigned int nid, unsigned int threadid)
 {
-  //  printf("EndTrace nid %d tid %d\n", nodeid, threadid);
+  printf("EndTrace nid %d tid %d\n", nid, threadid);
+  //  EOF_Trace[pair<int,int> (nid,threadid) ] = 1; /* flag it as over */
+  /* yes, it is over */
+  map < pair<int, int>, int, less< pair<int,int> > >::iterator it;
+  EndOfTrace = true; /* Lets assume that it is over */
+  for (it = EOF_Trace.begin(); it != EOF_Trace.end(); it++)
+  { /* cycle through all <nid,tid> pairs to see if it really over */
+    if ((*it).second == 0)
+      {
+	EndOfTrace = false; /* not over! */
+      /* If there's any processor that is not over, then the trace is not over */
+      }
+  }
   return 0;
 }
 
 int DefStateGroup( void *userData, unsigned int stateGroupToken, 
 		   const char *stateGroupName )
 {
-  //  printf("StateGroup groupid %d, group name %s\n", stateGroupToken, 
-  //		  stateGroupName);
+  printf("StateGroup groupid %d, group name %s\n", stateGroupToken, 
+	 stateGroupName);
   return 0;
 }
 
 int DefState( void *userData, unsigned int stateToken, const char *stateName, 
 	      unsigned int stateGroupToken )
 {
-  //  printf("DefState stateid %d stateName %s stategroup id %d\n",
-  //		  stateToken, stateName, stateGroupToken);
+  printf("DefState stateid %d stateName %s stategroup id %d\n",
+	 stateToken, stateName, stateGroupToken);
   return 0;
 }
 
 int DefUserEvent( void *userData, unsigned int userEventToken,
 		  const char *userEventName, int monotonicallyIncreasing )
 {
-  //  printf("DefUserEvent event id %d user event name %s, monotonically increasing = %d\n", userEventToken,
-  //	 userEventName, monotonicallyIncreasing);
+  printf("DefUserEvent event id %d user event name %s, monotonically increasing = %d\n", userEventToken,
+  	 userEventName, monotonicallyIncreasing);
   return 0;
 }
 
@@ -79,7 +97,14 @@ int EventTrigger( void *userData, double time,
 		  unsigned int userEventToken,
 		  long long userEventValue)
 {
-  //  printf("EventTrigger: time %g, nid %d tid %d event id %d triggered value %lld \n", time, nodeToken, threadToken, userEventToken, userEventValue);
+  static int i = 0;
+
+  //  if ( i == 1 || userEventToken < 4 )
+  printf("EventTrigger: time %g, nid %d tid %d event id %d triggered value %lld \n", time, nodeToken, threadToken, userEventToken, userEventValue);
+
+  if ( userEventToken > 3 )
+    i++;
+
   return 0;
 }
 
@@ -94,9 +119,9 @@ int SendMessage ( void*  userData,
 		  unsigned int messageComm
 		  )
 {
-  //  printf("Message Send: time %g, nid %d, tid %d dest nid %d dest tid %d messageSize %d messageComm %d messageTag %lld \n", time, sourceNodeToken,
-  //	 sourceThreadToken, destinationNodeToken,
-  //	 destinationThreadToken, messageSize, messageComm, messageTag);
+  printf("Message Send: time %g, nid %d, tid %d dest nid %d dest tid %d messageSize %d messageComm %d messageTag %ud \n", time, sourceNodeToken,
+  	 sourceThreadToken, destinationNodeToken,
+  	 destinationThreadToken, messageSize, messageComm, messageTag);
   return 0;
 }
 
@@ -111,9 +136,9 @@ int RecvMessage ( void*  userData,
 		  unsigned int messageComm
 		  )
 {
-  //  printf("Message Recv: time %g, nid %d, tid %d dest nid %d dest tid %d messageSize %d messageComm %d messageTag %lld \n", time, sourceNodeToken,
-  //	 sourceThreadToken, destinationNodeToken,
-  //	 destinationThreadToken, messageSize, messageComm, messageTag);
+  printf("Message Recv: time %g, nid %d, tid %d dest nid %d dest tid %d messageSize %d messageComm %d messageTag %ud \n", time, sourceNodeToken,
+  	 sourceThreadToken, destinationNodeToken,
+  	 destinationThreadToken, messageSize, messageComm, messageTag);
   return 0;
 }
 
@@ -148,13 +173,13 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
 
   pos = Ttf_RelSeek(fh,2);
 
-  printf("Position returned %d\n", pos);
-
-  recs_read = Ttf_ReadNumEvents(fh, cb, 4);
-  printf("Read %d records\n", recs_read);
-
-  recs_read = Ttf_ReadNumEvents(fh, cb, 100);
-  printf("Read %d records\n", recs_read);
+  /* Go through each record until the end of the trace file */
+  do {
+    recs_read = Ttf_ReadNumEvents(fh,cb, 1024);
+    if (recs_read != 0)
+      cout <<"Read "<<recs_read<<" records"<<endl;
+  }
+  while ((recs_read >=0) && (!EndOfTrace));
 
   Ttf_CloseFile(fh);
 }
