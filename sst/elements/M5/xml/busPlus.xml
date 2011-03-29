@@ -33,7 +33,7 @@
     <component id="mem" >
         <m5C.M5>
             <params>
-                <configFile>xml/np2-mem.xml</configFile>
+                <configFile>xml/np2-dram.xml</configFile>
                 <debug>0</debug>
                 <M5debug>none</M5debug>
                 <info>yes</info>

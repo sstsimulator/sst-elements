@@ -13,7 +13,7 @@
     <component id="cpu" >
         <m5C.M5>
             <params>
-                <configFile>xml/np2-simpleCpu.xml</configFile>
+                <configFile>xml/np2-cpu.xml</configFile>
                 <debug>0</debug>
                 <M5debug>none</M5debug>
                 <info>yes</info>
