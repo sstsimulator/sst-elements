@@ -1,6 +1,9 @@
 #ifndef _memEvent_h
 #define _memEvent_h
 
+#include <sst_config.h>
+#include <sst/core/component.h>
+
 #include <debug.h>
 
 class MemEvent : public SST::Event {

@@ -1,30 +1,22 @@
-
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 
 #include <busPlus.h>
 #include <paramHelp.h>
-#include <m5.h>
-#include <memEvent.h>
-
-struct BusPlusParams : public BusParams
-{
-    std::string linkName;
-    Range< Addr > range;
-};
+#include <memLink.h>
 
 extern "C" {
-    SimObject* create_BusPlus( void*, std::string name, Params& params );
+    SimObject* create_BusPlus( SST::Component*, std::string name, 
+                                                    SST::Params& params );
 }
 
-SimObject* create_BusPlus( void* comp, std::string name, Params& params )
+SimObject* create_BusPlus( SST::Component* comp, std::string name,
+                                                    SST::Params& params )
 {
     BusPlusParams& busP = *new BusPlusParams;
+
     busP.name = name;
 
-    INIT_HEX( busP, params, range.start );
-    INIT_HEX( busP, params, range.end );
-    INIT_STR( busP, params, linkName );
     INIT_INT( busP, params, clock);
     INIT_BOOL( busP, params, responder_set );
     INIT_INT( busP, params, block_size);
@@ -32,86 +24,46 @@ SimObject* create_BusPlus( void* comp, std::string name, Params& params )
     INIT_INT( busP, params, header_cycles);
     INIT_INT( busP, params, width);
 
-    return new BusPlus( static_cast<M5*>(comp), &busP );
+    busP.m5Comp = static_cast<M5*>(static_cast<void*>(comp));
+
+    busP.params["linkName"] = "mem2bus"; 
+    busP.params["range.start"] = "0x00100000"; 
+//    busP.params["range.end"] = "0x1fffffff"; 
+    busP.params["range.end"] =   "0x20000000"; 
+
+    return new BusPlus( &busP );
 }
 
-BusPlus::BusPlus( M5* comp, const BusPlusParams *p )  : 
-    Bus( p ),
-    m_comp( comp ),
-    m_startAddr( p->range.start), 
-    m_endAddr( p->range.end) 
+BusPlus::BusPlus( const BusPlusParams *p ) : 
+    Bus( p )
 {
-    DBGX(2,"linkname `%s`\n", p->linkName.c_str() );
-
-    m_link = comp->configureLink( p->linkName, "1ns",
-        new SST::Event::Handler<BusPlus>( this, &BusPlus::eventHandler ) );
-
-    if ( ! m_link ) {
-        _error( BusPlus, "configureLink()\n");
-    }
-
-    m_tc = comp->registerTimeBase("1ns");
-    if ( ! m_tc ) {
-        _error( BusPlus, "registerTimeBase()\n");
-    }
-    m_link->setDefaultTimeBase(m_tc);
-
-    m_port.resize(1);
-    m_port[0].busPort = getPort( "port", 5 ); 
-    m_port[0].linkPort = new LinkPort( p->name + ".linkPort", this );
-
-    m_port[0].busPort->setPeer( m_port[0].linkPort ); 
-    m_port[0].linkPort->setPeer( m_port[0].busPort ); 
+    DBGX(2,"name=`%s`\n",name().c_str());
+    m_links.push_back( addMemLink( p->m5Comp, p->params ) );
 }
 
-void BusPlus::init() {
-    m_port[0].linkPort->sendStatusChange( Port::RangeChange );
-}  
-
-void BusPlus::getAddressRanges(AddrRangeList &resp, bool &snoop ) {
-    DPRINTFN("getAddressRanges:\n");
-    snoop = false;
-    resp.clear();
-    resp.push_back( RangeSize(m_startAddr, m_endAddr));
-}
-
-bool BusPlus::send( MemEvent* event )
+BusPlus::linkInfo* BusPlus::addMemLink( M5* comp, const SST::Params& params )
 {
-    // Note that we are not throttling data on this link
-    m_link->Send( event );
-    return true;
+    MemLinkParams& memLinkParams = *new MemLinkParams;
+
+    memLinkParams.name = name() + ".link-" + params.find_string("linkName");
+    memLinkParams.m5Comp = comp;
+
+    INIT_STR( memLinkParams, params, linkName );
+    INIT_HEX( memLinkParams, params, range.start );
+    INIT_HEX( memLinkParams, params, range.end );
+
+    linkInfo* info = new linkInfo;
+
+    info->memLink = new MemLink( &memLinkParams );
+
+    info->busPort = getPort( "port" ); 
+    assert( info->busPort );
+
+    Port* port = info->memLink->getPort( "" );
+    assert( port );
+
+    port->setPeer( info->busPort ); 
+    info->busPort->setPeer( port );
+
+    return info;
 }
-
-void BusPlus::eventHandler( SST::Event* e )
-{
-    Cycle_t now = m_tc->convertToCoreTime( m_comp->getCurrentSimTime(m_tc) );
-    if ( m_comp->catchup( now ) ) { 
-	DBGX(3,"catchup() says we're exiting\n");
-        return; 
-    }
-
-    MemEvent* event = static_cast<MemEvent*>(e);
-    PacketPtr pkt = event->M5_Packet();
-
-    DBGX( 3,"SST-time=%lu `%s` %#lx\n", now,
-        pkt->cmdString().c_str(), (long) pkt->getAddr() );
-
-    DPRINTFN("eventHandler: `%s` %#lx\n", pkt->cmdString().c_str(),
-                    (long) pkt->getAddr() );
- 
-    switch ( event->type() ) {
-        case MemEvent::Functional:
-            m_port[0].linkPort->sendFunctional( pkt );
-            break;
-
-        case MemEvent::Timing:
-            m_port[0].linkPort->sendTiming( pkt );
-	    break;
-    }
-
-    DBGX(3,"call arm\n");
-    m_comp->arm( now );
-
-    delete event;
-}
-

@@ -24,6 +24,8 @@ libm5C_la_SOURCES = \
     m5.h \
     m5lib.cpp \
     memEvent.h \
+    memLink.cpp \
+    memLink.h \
     physicalMemory.cpp \
     port2link.cpp \
     port2link.h \
