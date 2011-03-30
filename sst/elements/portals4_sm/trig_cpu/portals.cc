@@ -135,10 +135,10 @@ portals::PtlMEUnlink(ptl_handle_me_t me_handle) {
 // Works for all message sizes
 void
 portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset, 
-		       ptl_size_t length, ptl_ack_req_t ack_req, 
-		       ptl_process_t target_id, ptl_pt_index_t pt_index,
-		       ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
-		       void *user_ptr, ptl_hdr_data_t hdr_data)
+		  ptl_size_t length, ptl_ack_req_t ack_req, 
+		  ptl_process_t target_id, ptl_pt_index_t pt_index,
+		  ptl_match_bits_t match_bits, ptl_size_t remote_offset, 
+		  void *user_ptr, ptl_hdr_data_t hdr_data)
 {
     
     trig_nic_event* event = new trig_nic_event;
@@ -156,14 +156,24 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     header.length = length;
     header.match_bits = match_bits;
     header.remote_offset = remote_offset;
+    header.header_data = hdr_data;
     
     // Copy the header into the first half of the packet payload
     memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
 
+    // Put in the outstanding message info
+    event->msg_info = new ptl_int_msg_info_t;
+    event->msg_info->user_ptr  = user_ptr;
+    event->msg_info->get_start = NULL;
+    event->msg_info->ct_handle = md_handle->ct_handle;
+    event->msg_info->eq_handle = md_handle->eq_handle;
+
+    
     // If this is a single packet message, just send it.  Otherwise,
     // we need to set up a multi-packet PIO or DMA.
-    if ( length <= (PACKET_SIZE - sizeof(ptl_header_t)) ) { // Single packet
-//     if ( length <= 32 ) { // Single packet
+    unsigned int hdr_data_size = PACKET_SIZE - sizeof(ptl_header_t);
+//     if ( length <= (PACKET_SIZE - sizeof(ptl_header_t)) ) { // Single packet
+    if ( length <= hdr_data_size ) { // Single packet
 	// Copy over the payload.
 	event->stream = PTL_HDR_STREAM_PIO;
 	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
@@ -171,22 +181,23 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
 	// Need to send a CTInc if there is a ct_handle specified
-	if ( md_handle->ct_handle != PTL_CT_NONE ) {
-	    // Treat it like a PIO, but set the length the 0 and all
-	    // that will happen is the CTInc will be sent
-  	    cpu->pio_in_progress = true;
-	    pio_length_rem = 0;
-	    pio_ct_handle = md_handle->ct_handle;
-	}
+// 	if ( md_handle->ct_handle != PTL_CT_NONE ) {
+// 	    // Treat it like a PIO, but set the length the 0 and all
+// 	    // that will happen is the CTInc will be sent
+//   	    cpu->pio_in_progress = true;
+// 	    pio_length_rem = 0;
+// 	    pio_ct_handle = md_handle->ct_handle;
+// 	}
     }
     else if ( length <= 2048 /*100000000*/ ) {  // PIO
-// 	if ( cpu->my_id == 0 ) printf("Starting PIO\n");
-	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),sizeof(ptl_header_t));
+	printf("Mulit-packet PIO\n");
+	// 	if ( cpu->my_id == 0 ) printf("Starting PIO\n");
+	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),hdr_data_size);
 	cpu->pio_in_progress = true;
 
 	pio_start = md_handle->start;
-	pio_current_offset = sizeof(ptl_header_t);
-	pio_length_rem = length - sizeof(ptl_header_t);
+	pio_current_offset = hdr_data_size;
+	pio_length_rem = length - hdr_data_size;
 	pio_dest = target_id;
 	pio_ct_handle = md_handle->ct_handle;
 	
@@ -202,7 +213,7 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 	// FIXME: Cheat for now, push header, data and DMA request all
 	// at once.  This should really take two transfers.  Should
 	// fix this.
-	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),sizeof(ptl_header_t));
+	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),hdr_data_size);
 
 	// Change event type to DMA
 	event->ptl_op = PTL_DMA;
@@ -210,10 +221,10 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 
 	// Fill in dma structure
 	dma_req->start = md_handle->start;
-	dma_req->length = length - sizeof(ptl_header_t);
-	dma_req->offset = local_offset + sizeof(ptl_header_t);
+	dma_req->length = length - hdr_data_size;
+	dma_req->offset = local_offset + hdr_data_size;
 	dma_req->target_id = target_id;
-	dma_req->ct_handle = md_handle->ct_handle;
+// 	dma_req->ct_handle = md_handle->ct_handle;
 	dma_req->stream = PTL_HDR_STREAM_DMA;
 	
 	event->data.dma = dma_req;
@@ -228,24 +239,18 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 bool
 portals::progressPIO(void)
 {
-//   printf("portals::progressPIO\n");
-  if ( pio_length_rem == 0 && pio_ct_handle != PTL_CT_NONE) {
-//     printf("%5d: Sending a CTInc to %d at end of PIO\n",cpu->my_id,pio_ct_handle);
-	// Need to send an increment to the CT attached to the MD
-	trig_nic_event* event = new trig_nic_event;
-	event->src = cpu->my_id;
-	event->ptl_op = PTL_NIC_CT_INC;
-// 	event->operation = new ptl_int_nic_op_t;
-// 	event->operation->data.ct_handle = pio_ct_handle;
-// 	event->operation->op_type = PTL_NIC_CT_INC;
-	event->data.ct_handle = pio_ct_handle;
-	event->ptl_op = PTL_NIC_CT_INC;
-	cpu->writeToNIC(event);
-//  	cpu->busy += cpu->delay_host_pio_write;
-	cpu->busy += cpu->delay_sfence;
-	cpu->pio_in_progress = false;
-	return true;
-    }
+//   if ( pio_length_rem == 0 && pio_ct_handle != PTL_CT_NONE) {
+// 	// Need to send an increment to the CT attached to the MD
+// 	trig_nic_event* event = new trig_nic_event;
+// 	event->src = cpu->my_id;
+// 	event->ptl_op = PTL_NIC_CT_INC;
+// 	event->data.ct_handle = pio_ct_handle;
+// 	event->ptl_op = PTL_NIC_CT_INC;
+// 	cpu->writeToNIC(event);
+// 	cpu->busy += cpu->delay_sfence;
+// 	cpu->pio_in_progress = false;
+// 	return true;
+//     }
     
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
@@ -266,7 +271,11 @@ portals::progressPIO(void)
     pio_length_rem -= copy_length;
     pio_current_offset += copy_length;
 
-    if ( pio_length_rem == 0 && pio_ct_handle == PTL_CT_NONE ) {
+//     if ( pio_length_rem == 0 && pio_ct_handle == PTL_CT_NONE ) {
+//       cpu->pio_in_progress = false;
+//       return true;
+//     }
+    if ( pio_length_rem == 0 ) {
       cpu->pio_in_progress = false;
       return true;
     }
@@ -302,6 +311,13 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     // Copy the header into the first half of the packet payload
     memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
 
+    // Put in the outstanding message info
+    event->msg_info = new ptl_int_msg_info_t;
+    event->msg_info->user_ptr  = user_ptr;
+    event->msg_info->get_start = NULL;
+    event->msg_info->ct_handle = md_handle->ct_handle;
+    event->msg_info->eq_handle = md_handle->eq_handle;
+
     // Currently only support up to 8-bytes
     if ( length <= 8 ) { // Single packet
 	event->stream = PTL_HDR_STREAM_PIO;
@@ -309,14 +325,14 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
       	cpu->writeToNIC(event);
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
 
-	// Need to send a CTInc if there is a ct_handle specified
-	if ( md_handle->ct_handle != PTL_CT_NONE ) {
-	    // Treat it like a PIO, but set the length the 0 and all
-	    // that will happen is the CTInc will be sent
-  	    cpu->pio_in_progress = true;
-	    pio_length_rem = 0;
-	    pio_ct_handle = md_handle->ct_handle;
-	}
+// 	// Need to send a CTInc if there is a ct_handle specified
+// 	if ( md_handle->ct_handle != PTL_CT_NONE ) {
+// 	    // Treat it like a PIO, but set the length the 0 and all
+// 	    // that will happen is the CTInc will be sent
+//   	    cpu->pio_in_progress = true;
+// 	    pio_length_rem = 0;
+// 	    pio_ct_handle = md_handle->ct_handle;
+// 	}
     }
     else {
 	printf("Attempting to initiate an atomic greater than 8-bytes\n");
@@ -333,7 +349,7 @@ portals::PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle) {
     // Find the first counter that is free
     for (int i = 0; i < MAX_CT_EVENTS; i++ ) {
         if ( !ptl_ct_cpu_events[i].allocated ) {
-	  ct_handle = i;
+	    ct_handle = i;
             ptl_ct_cpu_events[i].allocated = true;
             ptl_ct_cpu_events[i].ct_type = ct_type;
             ptl_ct_cpu_events[i].ct_event.success = 0;
@@ -400,6 +416,19 @@ portals::PtlCTCheckThresh(ptl_handle_ct_t ct_handle, ptl_size_t test) {
     return false;
 }
 
+bool
+portals::PtlEQWait(ptl_handle_eq_t eq_handle, ptl_event_t* event) {
+    if ( event_queues[eq_handle]->size() >= 1 ) {
+	ptl_event_t* ev = event_queues[eq_handle]->front();
+	event_queues[eq_handle]->pop();
+	*event = *ev;
+	delete ev;
+        cpu->waiting = false;
+	return true;
+    }
+    cpu->waiting = true;
+    return false;
+}
 
 // Seems to work
 void
@@ -424,7 +453,7 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     op->dma->offset = local_offset;
     op->dma->target_id = target_id;
     op->dma->stream = PTL_HDR_STREAM_TRIG;
-    op->dma->ct_handle = md_handle->ct_handle;
+//     op->dma->ct_handle = md_handle->ct_handle;
     
     // Add the header which will be sent when triggered
     op->ptl_header = new ptl_header_t;
@@ -433,14 +462,23 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     op->ptl_header->length = length;
     op->ptl_header->match_bits = match_bits;
     op->ptl_header->remote_offset = remote_offset;
+    op->ptl_header->header_data = hdr_data;
 
     
     // Create a triggered op structure
     ptl_int_trig_op_t* trig_op = new ptl_int_trig_op_t;
-    trig_op->op = op;
+    trig_op->op = op; 
     trig_op->trig_ct_handle = trig_ct_handle;
     trig_op->threshold = threshold;
-
+    
+     // Put in the outstanding message info
+    trig_op->msg_info = new ptl_int_msg_info_t;
+    trig_op->msg_info->user_ptr  = user_ptr;
+    trig_op->msg_info->get_start = NULL;
+    trig_op->msg_info->ct_handle = md_handle->ct_handle;
+    trig_op->msg_info->eq_handle = md_handle->eq_handle;
+    
+    
     if ( !putv_active ) {
 	// Need to send this object to the NIC with latency = 30% latency
 	trig_nic_event* event = new trig_nic_event;
@@ -544,6 +582,14 @@ portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_op->trig_ct_handle = trig_ct_handle;
     trig_op->threshold = threshold;
 
+     // Put in the outstanding message info
+    trig_op->msg_info = new ptl_int_msg_info_t;
+    trig_op->msg_info->user_ptr  = user_ptr;
+    trig_op->msg_info->get_start = NULL;
+    trig_op->msg_info->ct_handle = md_handle->ct_handle;
+    trig_op->msg_info->eq_handle = md_handle->eq_handle;
+
+    
     // Need to send this object to the NIC with latency = 30% latency
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
@@ -635,11 +681,18 @@ portals::PtlGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     header.length = length;
     header.match_bits = match_bits;
     header.remote_offset = remote_offset;
-    header.get_ct_handle = md_handle->ct_handle;
-    header.get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);
+//     header.get_ct_handle = md_handle->ct_handle;
+//     header.get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);
     
     // Copy the header into the first half of the packet payload
     memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
+
+    // Put in the outstanding message info
+    event->msg_info = new ptl_int_msg_info_t;
+    event->msg_info->user_ptr  = user_ptr;
+    event->msg_info->get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);
+    event->msg_info->ct_handle = md_handle->ct_handle;
+    event->msg_info->eq_handle = md_handle->eq_handle;
 
     cpu->writeToNIC(event);
 }
@@ -650,12 +703,12 @@ portals::PtlTriggeredGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 			   ptl_pt_index_t pt_index, ptl_match_bits_t match_bits, 
 			   void *user_ptr, ptl_size_t remote_offset,
 			   ptl_handle_ct_t ct_handle, ptl_size_t threshold) {
-  if ( length >0x80000000 ) {
-    printf("%5d: Bad length passed into PtlTriggeredGet(): %d\n",cpu->my_id,length);
-    abort();
-  }
-
-  // Create an op structure
+    if ( length >0x80000000 ) {
+	printf("%5d: Bad length passed into PtlTriggeredGet(): %d\n",cpu->my_id,length);
+	abort();
+    }
+    
+    // Create an op structure
     ptl_int_op_t* op = new ptl_int_op_t;
     op->op_type = PTL_OP_GET;
     op->target_id = target_id;
@@ -670,8 +723,8 @@ portals::PtlTriggeredGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 //     printf("ptltriggeredget: return header length = %d\n",length);
     op->ptl_header->match_bits = match_bits;
     op->ptl_header->remote_offset = remote_offset;    
-    op->ptl_header->get_ct_handle = md_handle->ct_handle;
-    op->ptl_header->get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);
+//     op->ptl_header->get_ct_handle = md_handle->ct_handle;
+//     op->ptl_header->get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);
 
     // Create a triggered op structure
     ptl_int_trig_op_t* trig_op = new ptl_int_trig_op_t;
@@ -679,6 +732,13 @@ portals::PtlTriggeredGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_op->trig_ct_handle = ct_handle;
     trig_op->threshold = threshold;
     
+     // Put in the outstanding message info
+    trig_op->msg_info = new ptl_int_msg_info_t;
+    trig_op->msg_info->user_ptr  = user_ptr;
+    trig_op->msg_info->get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);;
+    trig_op->msg_info->ct_handle = md_handle->ct_handle;
+    trig_op->msg_info->eq_handle = md_handle->eq_handle;
+
     // Need to send the objectto the NIC
     trig_nic_event* event = new trig_nic_event;
     event->portals = true;
@@ -706,7 +766,6 @@ portals::scheduleUpdateHostCT(ptl_handle_ct_t ct_handle) {
 bool
 portals::processMessage(trig_nic_event* ev) {
 //      printf("portals::processMessage()\n");
-
     // May be returning credits
     if ( ev->ptl_op == PTL_CREDIT_RETURN ) {
       cpu->returnCredits(ev->data_length);
@@ -724,6 +783,16 @@ portals::processMessage(trig_nic_event* ev) {
 	    // Need to wakeup the CPU;
 	    cpu->wakeUp();
 	}
+    }
+    else if ( ev->ptl_op == PTL_NIC_EQ ) {
+	printf("received a portal event\n");
+	event_queues[ev->eq_handle]->push(ev->data.event);
+	delete ev;
+	if ( cpu->waiting ) {
+	    // Need to wakeup the CPU;
+	    cpu->wakeUp();
+	}
+	
     }
     else if ( ev->ptl_op == PTL_DMA_RESPONSE ) {
       // Fill data into the request and send it back

@@ -105,7 +105,7 @@ typedef enum {
     PTL_EVENT_PROBE
 } ptl_event_kind_t;
 
-typedef struct {
+struct ptl_event_t {
     ptl_event_kind_t       type;
     ptl_process_t          initiator;
     ptl_pt_index_t         pt_index;
@@ -121,7 +121,24 @@ typedef struct {
     ptl_ni_fail_t          ni_fail_type;
     ptl_op_t               atomic_operation;
     ptl_datatype_t         atomic_type;
-} ptl_event_t;
+
+    void print() {
+	printf("  type: %d\n",type);
+	printf("  initiator: %d\n",initiator);
+	printf("  pt_index: %d\n",pt_index);
+// 	printf("  uid: %d\n",uid);
+// 	printf("  jid: %d\n",jid);
+	printf("  match_bits: %lx\n",match_bits);
+	printf("  rlength: %d\n",rlength);
+	printf("  mlength: %d\n",mlength);
+	printf("  remote_offset: %d\n",remote_offset);
+	printf("  start: %p\n",start);
+	printf("  user_ptr: %p\n",user_ptr);
+	printf("  hdr_data: %lu\n",hdr_data);
+	printf("  atomic_operation: %d\n",atomic_operation);
+	printf("  atomic_type: %d\n",atomic_type);	
+    }
+};
     
 
 // Operation types
@@ -130,6 +147,7 @@ typedef struct {
 #define PTL_OP_GET_RESP 2
 #define PTL_OP_ATOMIC   3
 #define PTL_OP_CT_INC   4
+#define PTL_OP_ACK      5
 
 #define PTL_EQ_NONE (-1)
 #define PTL_CT_NONE (-1)
@@ -183,6 +201,8 @@ typedef struct {
 #define PTL_ME_EVENT_CT_BYTES          0x8000
 #define PTL_ME_EVENT_CT_USE_JID       0x10000
 
+#define PTL_OK 0
+
 // Internal data structures
 typedef uint32_t ptl_op_type_t;
 
@@ -203,21 +223,38 @@ typedef struct {
     ptl_size_t offset;
     ptl_process_t target_id;
     ptl_handle_ct_t ct_handle;
+    ptl_handle_eq_t eq_handle;
+    ptl_event_t* event;
     bool end;
     int stream;
 } ptl_int_dma_t;
+
+// typedef struct {
+//     ptl_pt_index_t   pt_index;       // 1 bytes
+//     uint8_t          op;             // 1 bytes
+//     ptl_op_t         atomic_op;      // 1 bytes
+//     ptl_datatype_t   atomic_datatype;// 1 bytes
+//     ptl_handle_ct_t  get_ct_handle;  // 2 bytes
+//     uint16_t         options;        // 2 bytes
+//     ptl_match_bits_t match_bits;     // 8 bytes
+//     uint32_t         length;         // 4 bytes
+//     ptl_size_t       remote_offset;  // 4 bytes
+//     void *           get_start;      // 8 bytes
+//     uint64_t         header_data;    // 8 bytes
+// } ptl_header_t;
 
 typedef struct {
     ptl_pt_index_t   pt_index;       // 1 bytes
     uint8_t          op;             // 1 bytes
     ptl_op_t         atomic_op;      // 1 bytes
     ptl_datatype_t   atomic_datatype;// 1 bytes
-    ptl_handle_ct_t  get_ct_handle;  // 2 bytes
+    uint16_t         out_msg_index;  // 2 bytes
+//     ptl_handle_ct_t  get_ct_handle;  // 2 bytes
     uint16_t         options;        // 2 bytes
     ptl_match_bits_t match_bits;     // 8 bytes
     uint32_t         length;         // 4 bytes
     ptl_size_t       remote_offset;  // 4 bytes
-    void *           get_start;      // 8 bytes
+//     void *           get_start;      // 8 bytes
     uint64_t         header_data;    // 8 bytes
 } ptl_header_t;
 
@@ -235,9 +272,19 @@ typedef struct {
 } ptl_int_op_t;
 
 typedef struct {
+    void*            user_ptr;       // 8 bytes
+    void*            get_start;      // 8 bytes
+    ptl_handle_ct_t  ct_handle;      // 2 bytes
+    ptl_handle_ct_t  eq_handle;      // 2 bytes
+    uint8_t          op;             // 1 byte
+    
+} ptl_int_msg_info_t;
+
+typedef struct {
     ptl_size_t threshold;
     ptl_handle_ct_t trig_ct_handle;
     ptl_int_op_t* op;
+    ptl_int_msg_info_t* msg_info;
 } ptl_int_trig_op_t;
 
 // Structs, etc needed by internals
@@ -268,8 +315,9 @@ typedef enum {
     PTL_NIC_PROCESS_MSG,
     PTL_NIC_ME_APPEND, PTL_NIC_TRIG, PTL_NIC_TRIG_PUTV,
     PTL_NIC_PROCESS_TRIG, PTL_NIC_POST_CT,
-    PTL_NIC_CT_SET, PTL_NIC_CT_INC,
-    PTL_NIC_UPDATE_CPU_CT, PTL_NIC_INIT_FOR_SEND_RECV
+    PTL_NIC_CT_SET, PTL_NIC_CT_INC, PTL_NIC_EQ,
+    PTL_NIC_UPDATE_CPU_CT, PTL_NIC_INIT_FOR_SEND_RECV,
+    PTL_ACK
 } ptl_int_nic_op_type_t;
 
 
@@ -290,6 +338,7 @@ typedef struct {
     ptl_size_t failure;
     bool clear_op_list;
 } ptl_int_ct_alloc_t;
+
 
 // defines to put flags in the header flit of the packet
 #define PTL_HDR_PORTALS             0x1

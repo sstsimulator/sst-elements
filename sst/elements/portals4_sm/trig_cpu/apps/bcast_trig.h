@@ -54,11 +54,15 @@ public:
         crBegin();
 
         if (!init) {
+	    ptl->PtlPTAlloc(0,PTL_EQ_NONE,0,&PT_BOUNCE);
+	    ptl->PtlPTAlloc(0,PTL_EQ_NONE,2,&PT_OUT);
+
             /* Setup persistent ME/MD/CT to hold bounce data */
             ptl->PtlCTAlloc(PTL_CT_OPERATION, bounce_ct_h);
             me.start = bounce_buf;
             me.length = chunk_size;
             me.match_bits = 0x0;
+	    me.options = 0;
             me.ignore_bits = 0x0;
             me.ct_handle = bounce_ct_h;
             ptl->PtlMEAppend(PT_BOUNCE, me, PTL_PRIORITY_LIST, NULL, bounce_me_h);
@@ -87,6 +91,7 @@ public:
         me.length = msg_size;
         me.match_bits = 0x0;
         me.ignore_bits = 0x0;
+	me.options = 0;
         me.ct_handle = out_me_ct_h;
         ptl->PtlMEAppend(PT_OUT, me, PTL_PRIORITY_LIST, NULL, out_me_h);
         crReturn();
@@ -174,6 +179,7 @@ public:
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
 
         {
+	    printf("Checking results\n");
             int bad = 0;
             for (i = 0 ; i < msg_size ; ++i) {
                 if ((out_buf[i] & 0xff) != i % 255) bad++;
@@ -223,9 +229,12 @@ private:
     std::vector<int> my_children;
     int num_children;
 
-    static const int PT_BOUNCE = 0;
-    static const int PT_ACK    = 1;
-    static const int PT_OUT    = 2;
+//     static const int PT_BOUNCE = 0;
+//     static const int PT_ACK    = 1;
+//     static const int PT_OUT    = 2;
+
+    ptl_pt_index_t PT_BOUNCE;
+    ptl_pt_index_t PT_OUT;
 
     uint64_t algo_count;
 };
