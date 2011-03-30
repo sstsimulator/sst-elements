@@ -1,34 +1,10 @@
 <?xml version="1.0"?>
 
-<p2lParams>
-    <clock> 1000 </clock>
-    <block_size> 64 </block_size>
-    <header_cycles> 1 </header_cycles>
-    <width> 64 </width>
-</p2lParams>
-
-
 <sst>
-
-    <component id="port2link-mem" >
-        <Port2Link>
-            <params include=p2lParams>
-                <linkName> mem2bus </linkName>
-            </params>
-            <links>
-                <link id="memory2port2link">
-                    <params>
-                        <name> memObj </name>
-                        <num> -1 </num>
-                    </params>
-                </link>
-            </links>
-        </Port2Link>
-    </component>
-
     <component id="physmem" >
-        <PhysicalMemory>
+        <PhysicalPlus>
             <params>
+                <link.name> mem2bus </link.name>
                 <range.start> 0x00100000 </range.start>
                 <range.end>   0x1fffffff </range.end>
                 <latency> 28000 </latency>
@@ -39,16 +15,7 @@
                 <exe.0.process.executable> test/hello </exe.0.process.executable>
                 <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
                 <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
-
             </params>
-            <links>
-                <link id="memory2port2link">
-                    <params>
-                        <name> port </name>
-                        <num> 0 </num>
-                    </params>
-                </link>
-            </links>
-        </PhysicalMemory>
+        </PhysicalPlus>
     </component>
 </sst>
