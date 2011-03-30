@@ -15,7 +15,7 @@ void loadMemory( string name, PhysicalMemory* realMemory,
         Addr start,end;
         std::stringstream tmp;
 
-        tmp << "exe." << num; 
+        tmp << num; 
 
         std::string exe = 
                     params.find_string( tmp.str() + ".process.executable");

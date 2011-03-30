@@ -26,14 +26,12 @@ SimObject* create_PhysicalPlus( SST::Component* comp, std::string name,
     INIT_BOOL( params, _params, zero );
     INIT_STR( params, _params, file );
 
+    params.linkName = _params.find_string( "link.name" );
     params.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
-    params.params["name"]        = _params.find_string( "link.name" );
-    params.params["range.start"] = _params.find_string("range.start");
-    params.params["range.end"]   = _params.find_string("range.end");
 
     PhysicalMemory* physmem = new PhysicalMemoryPlus( &params );
 
-    loadMemory( name, physmem, _params );
+    loadMemory( name, physmem, _params.find_prefix_params("exe.") );
 
     return physmem;
 }
@@ -45,5 +43,10 @@ PhysicalMemoryPlus::PhysicalMemoryPlus( const PhysicalMemoryPlusParams *p ) :
     Port* port = getPort( "port", 0 );
     assert( port );
 
-    m_link =  MemLink::create( name(), p->m5Comp, port, p->params );
+    SST::Params params; 
+    params["name"]        = p->linkName;
+    params["range.start"] = p->range.start;
+    params["range.end"]   = p->range.end;
+
+    m_link =  MemLink::create( name(), p->m5Comp, port, params );
 }

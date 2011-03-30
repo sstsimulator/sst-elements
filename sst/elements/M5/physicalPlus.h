@@ -11,7 +11,7 @@ class MemLink;
 struct PhysicalMemoryPlusParams : public PhysicalMemoryParams
 {
     M5*         m5Comp;
-    SST::Params params;
+    std::string linkName;
 };
 
 class MemLink;
