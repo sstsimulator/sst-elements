@@ -94,6 +94,7 @@ class MemLink : public MemObject
   public:
     MemLink( const MemLinkParams * );
     virtual Port *getPort(const std::string &if_name, int idx = -1);
+    static MemLink* create( std::string name, M5*, Port*, const SST::Params& ); 
 
   private:
     void init( void );

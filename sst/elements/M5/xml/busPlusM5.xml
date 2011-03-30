@@ -213,9 +213,9 @@
     <component id="cpu0.busPlus" >
         <BusPlus>
             <params include=busParams>
-                <linkName> mem2bus </linkName>
-                <range.start> 0x00100000 </range.start>
-                <range.end>   0x1fffffff </range.end>
+                <link.0.name> mem2bus </link.0.name>
+                <link.0.range.start> 0x00100000 </link.0.range.start>
+                <link.0.range.end>   0x1fffffff </link.0.range.end>
             </params>
             <links>
                 <link id="dcache2bus">

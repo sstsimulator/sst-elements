@@ -6,6 +6,8 @@
 #include <mem/bus.hh>
 
 class M5;
+class MemLink;
+
 struct BusPlusParams : public BusParams
 {
     M5*         m5Comp;
@@ -20,14 +22,7 @@ class BusPlus : public Bus
     BusPlus( const BusPlusParams* p );
 
   private:
-    struct linkInfo {
-        MemLink* memLink;
-        Port*    busPort;
-    };
-
-    linkInfo* addMemLink( M5*, const SST::Params& );
-
-    std::deque<linkInfo*> m_links;
+    std::deque<MemLink*> m_links;
 };
 
 #endif

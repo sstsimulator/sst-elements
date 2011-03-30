@@ -5,6 +5,7 @@
 #include <debug.h>
 #include <m5.h>
 #include <memEvent.h>
+#include <paramHelp.h>
 
 MemLink::MemLink( const MemLinkParams *p ) :
     MemObject( p ),
@@ -12,9 +13,9 @@ MemLink::MemLink( const MemLinkParams *p ) :
     m_port( NULL ),
     m_range( p->range )
 {
-    DBGX(2,"name=`%s` linkName=`%s`\n", name().c_str(), p->linkName.c_str() );
+    DBGX(2,"name=`%s` linkName=`%s`\n", name().c_str(), p->name.c_str() );
 
-    m_link = p->m5Comp->configureLink( p->linkName, "1ns",
+    m_link = p->m5Comp->configureLink( p->name, "1ns",
         new SST::Event::Handler<MemLink>( this, &MemLink::eventHandler ) );
 
     assert( m_link );
@@ -37,6 +38,28 @@ void MemLink::init( void )
 {
     DBGX(2,"\n" );
     m_port->sendStatusChange( Port::RangeChange );
+}
+
+MemLink* MemLink::create( std::string name, M5* comp, Port* port, const SST::Params& params )
+{
+    MemLinkParams& memLinkParams = *new MemLinkParams;
+
+    memLinkParams.name = name + ".link-" + params.find_string("name");
+    memLinkParams.m5Comp = comp;
+
+    INIT_STR( memLinkParams, params, name );
+    INIT_HEX( memLinkParams, params, range.start );
+    INIT_HEX( memLinkParams, params, range.end );
+
+    MemLink* memLink = new MemLink( &memLinkParams );
+
+    Port* linkPort = memLink->getPort( "" );
+    assert( linkPort );
+
+    linkPort->setPeer( port ); 
+    port->setPeer( linkPort );
+
+    return memLink;
 }
 
 void MemLink::getAddressRanges(AddrRangeList &resp, bool &snoop ) {
