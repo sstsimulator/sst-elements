@@ -29,8 +29,6 @@ libm5C_la_SOURCES = \
     physicalPlus.cpp \
     physicalPlus.h \
     physicalMemory.cpp \
-    port2link.cpp \
-    port2link.h \
     process.h \
     simpleCpu.cpp \
     syscall.cpp \
