@@ -38,7 +38,8 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     rr_dma(false),
     new_dma(true),
     send_atomic_from_cache(true),
-    currently_clocking(true)
+    currently_clocking(true),
+    next_out_msg_handle(0)
 {
 
     clock_handler_ptr = new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler);
@@ -159,13 +160,24 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     if ( adv_pio ) {
 	work_done = true;
         trig_nic_event* ev = pio_q.front();
+	if ( ev->ptl_op == PTL_NO_OP || ev->ptl_op == PTL_DMA ) {
+	    if ( ev->head_packet ) {
+		uint16_t handle = get_next_out_msg_handle();
+		ev->updateMsgHandle(handle);
+		out_msg_q[handle] = ev->msg_info;
+		ev->msg_info = NULL;
+// 		printf("%5d: handle = %d\n",m_id,handle);
+	    }
+	}
+	    
 	if ( ev->ptl_op == PTL_NO_OP ) {
+	    
 	    // This is a message destined for the router
 	    // See if there is room in the output q
  	    if (rtr_q_size < rtr_q_max_size) {
 		rtr_q_size++;
 		pio_q.pop();
-
+		
 		self_link->Send(ptl_msg_latency,ev);
 
 		// Need to return credits to the host
@@ -274,8 +286,9 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 	        // Since this is the end, the next one through will
 	        // need to send it's header first
 	        new_dma = true;
-	        if ( ev->data.dma->ct_handle != PTL_CT_NONE ) {
+ 	        if ( ev->data.dma->ct_handle != PTL_CT_NONE && ev->stream == PTL_HDR_STREAM_GET ) {
 		    scheduleCTInc(ev->data.dma->ct_handle,latency_ct_post);
+		    scheduleEQ(ev->data.dma->eq_handle,ev->data.dma->event);		    
 		}
 	    }
 	    // Don't need the dma data structure any more
@@ -388,7 +401,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 	registerClock( frequency, clock_handler_ptr, false  );
 	currently_clocking = true;
     }    
-    
+
     // See what portals command was sent
     switch (ev->ptl_op) {
 	
@@ -407,7 +420,6 @@ void trig_nic::processPtlEvent( Event *e ) {
     // TESTED
     case PTL_NIC_PROCESS_MSG:
     {
-// 	printf("%5d: Got a message\n",m_id);
 	if ( ev->head_packet ) {
 
 	    // Need to walk the list and look for a match
@@ -420,17 +432,77 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    bool found = false;
 	    ptl_int_me_t* match_me;
 	    if ( header.op == PTL_OP_GET_RESP ) {
+		printf("Processing GET_RESP\n");
 		// There won't be any data in the head packet, so
 		// just set up the stream entry
+		// Get the outstanding msg info
+		ptl_int_msg_info_t* msg_info = out_msg_q[header.out_msg_index];
+		out_msg_q.erase(header.out_msg_index);
+
 		MessageStream* ms = new MessageStream();
-		ms->start = header.get_start;
+		ms->start = msg_info->get_start;
 		ms->current_offset = 0;
 		ms->remaining_length = header.length;
-		ms->ct_handle = header.get_ct_handle;
+		ms->ct_handle = msg_info->ct_handle;
+		printf("ct_handle: %d\n",msg_info->ct_handle);
+		printf("eq_handle: %d\n",msg_info->eq_handle);
 	      
+		
+		// Prepare the event to be delivered when this is done
+		ptl_event_t* ptl_event = NULL;
+		if ( msg_info->eq_handle != PTL_EQ_NONE ) {
+		    ptl_event = new ptl_event_t;
+		    ptl_event->type = PTL_EVENT_REPLY;
+		    ptl_event->initiator = ev->src;
+// 		    ptl_event->pt_index = header.pt_index;
+// 		    ptl_event->uid = ;
+// 		    ptl_event->jid = ;
+// 		    ptl_event->match_bits = header.match_bits;
+// 		    ptl_event->rlength = header.length;
+ 		    ptl_event->mlength = header.length;
+// 		    ptl_event->remote_offset = header.remote_offset;
+// 		    ptl_event->start = match_me->me.start;
+		    ptl_event->user_ptr = msg_info->user_ptr;
+// 		    ptl_event->hdr_data = header.header_data;
+		    ptl_event->ni_fail_type = PTL_OK;
+		}
+
+		ms->eq_handle = msg_info->eq_handle;
+		ms->event = ptl_event;
+
 		int map_key = ev->src | ev->stream;
-	      
+		
 		streams[map_key] = ms;		  
+		printf("Done processing GET_RESP\n");
+		delete msg_info;
+		delete ev;
+		return;
+	    }
+	    else if (header.op == PTL_OP_ACK) {
+		ptl_int_msg_info_t* msg_info = out_msg_q[header.out_msg_index];
+		out_msg_q.erase(header.out_msg_index);
+
+		// Generate the ACK event
+		if ( msg_info->eq_handle != PTL_EQ_NONE ) {   
+		    ptl_event_t* ptl_event = new ptl_event_t;
+		    ptl_event->type = PTL_EVENT_ACK;
+// 		    ptl_event->initiator = ev->src;
+// 		    ptl_event->pt_index = header.pt_index;
+// 		    ptl_event->uid = ;
+// 		    ptl_event->jid = ;
+// 		    ptl_event->match_bits = header.match_bits;
+// 		    ptl_event->rlength = header.length;
+		    ptl_event->mlength = header.length;
+ 		    ptl_event->remote_offset = header.remote_offset;
+// 		    ptl_event->start = match_me->me.start;
+		    ptl_event->user_ptr = msg_info->user_ptr;
+// 		    ptl_event->hdr_data = header.header_data;
+		    ptl_event->ni_fail_type = PTL_OK;
+		    scheduleEQ(msg_info->eq_handle,ptl_event);
+		}
+		
+		scheduleCTInc( msg_info->ct_handle, latency_ct_post );
+		delete msg_info;
 		delete ev;
 		return;
 	    }
@@ -466,17 +538,14 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    if ( found ) {
 
 		if ( header.op == PTL_OP_GET ) {
-// 		    printf("received a get operation length = %d\n",header.length);
 		    // Need to create a return header and a dma_req
 		    ptl_header_t ret_header;
 
 		    ret_header.pt_index = header.pt_index;
 		    ret_header.op = PTL_OP_GET_RESP;
-// 		    printf("Assign return header.length = %d\n",header.length);
 		    ret_header.length = header.length;
-		    ret_header.get_ct_handle = header.get_ct_handle;
-		    ret_header.get_start = header.get_start;
-		  
+		    ret_header.out_msg_index = header.out_msg_index;
+		    
 		    trig_nic_event* event = new trig_nic_event;
 		    event->src = m_id;
 		    event->dest = ev->src;
@@ -494,7 +563,29 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    dma->target_id = ev->src;
 		    dma->ct_handle = match_me->me.ct_handle;
 		    dma->stream = PTL_HDR_STREAM_GET;
-		  
+
+		    // Prepare the event to be delivered when this is done
+		    ptl_event_t* ptl_event = NULL;
+		    if ( match_me->eq_handle != PTL_EQ_NONE ) {
+			ptl_event = new ptl_event_t;
+			ptl_event->type = PTL_EVENT_GET;
+			ptl_event->initiator = ev->src;
+			ptl_event->pt_index = header.pt_index;
+// 			ptl_event->uid = ;
+// 			ptl_event->jid = ;
+			ptl_event->match_bits = header.match_bits;
+			ptl_event->rlength = header.length;
+			ptl_event->mlength = header.length;
+			ptl_event->remote_offset = header.remote_offset;
+			ptl_event->start = match_me->me.start;
+			ptl_event->user_ptr = match_me->user_ptr;
+			ptl_event->hdr_data = header.header_data;
+			ptl_event->ni_fail_type = PTL_OK;
+		    }
+
+		    dma->eq_handle = match_me->eq_handle;
+		    dma->event = ptl_event;
+		    
 		    // Now put both of these in the correct queues
 		    dma_hdr_q.push(event);
 
@@ -547,6 +638,21 @@ void trig_nic::processPtlEvent( Event *e ) {
 
 		    scheduleCTInc( match_me->me.ct_handle, latency_ct_post + additional_atomic_latency );
 
+		    // Need to prepare an internal ack message back to src
+		    trig_nic_event* ack_ev = new trig_nic_event;
+		    ack_ev->src = m_id;
+		    ack_ev->dest = ev->src;
+		    ack_ev->ptl_op = PTL_NO_OP;
+		    ack_ev->portals = true;
+		    ack_ev->head_packet = true;
+		    // Send back the out_msg_index
+		    ptl_header_t* hdr = (ptl_header_t*)ack_ev->ptl_data;
+		    hdr->op = PTL_OP_ACK;
+		    hdr->out_msg_index = header.out_msg_index;
+		    hdr->length = header.length;
+		    
+		    // Send ack back
+		    self_link->Send(ptl_msg_latency,ack_ev);
 		}
 		else {
 	      
@@ -560,7 +666,41 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    // Fix up the data, i.e. move actual data to top
 		    if ( !send_recv ) memcpy(ev->ptl_data,&ev->ptl_data[sizeof(ptl_header_t)],copy_length);
 		    cpu_link->Send(ptl_msg_latency,ev);
-		  
+
+		    // Need to prepare an internal ack message back to src
+		    trig_nic_event* ack_ev = new trig_nic_event;
+		    ack_ev->src = m_id;
+		    ack_ev->dest = ev->src;
+		    ack_ev->ptl_op = PTL_NO_OP;
+		    ack_ev->portals = true;
+		    ack_ev->head_packet = true;
+
+		    // Send back the out_msg_index
+		    ptl_header_t* hdr = (ptl_header_t*)ack_ev->ptl_data;
+		    hdr->op = PTL_OP_ACK;
+// 		    hdr->out_msg_index = ((ptl_header_t*)ev->ptl_data)->out_msg_index;
+ 		    hdr->out_msg_index = header.out_msg_index;
+		    hdr->length = header.length;
+
+		    // Prepare the event to be delivered when this is done
+		    ptl_event_t* ptl_event = NULL;
+		    if ( match_me->eq_handle != PTL_EQ_NONE ) {
+			ptl_event = new ptl_event_t;
+			ptl_event->type = PTL_EVENT_PUT;
+			ptl_event->initiator = ev->src;
+			ptl_event->pt_index = header.pt_index;
+// 			ptl_event->uid = ;
+// 			ptl_event->jid = ;
+			ptl_event->match_bits = header.match_bits;
+			ptl_event->rlength = header.length;
+			ptl_event->mlength = header.length;
+			ptl_event->remote_offset = header.remote_offset;
+			ptl_event->start = match_me->me.start;
+			ptl_event->user_ptr = match_me->user_ptr;
+			ptl_event->hdr_data = header.header_data;
+			ptl_event->ni_fail_type = PTL_OK;
+		    }
+		    
 		    // Handle mulit-packet messages
 		    if ( (ev->stream == PTL_HDR_STREAM_TRIG || ev->stream == PTL_HDR_STREAM_GET) && copy_length != 0) {
 			// No data in head packet for triggered
@@ -569,7 +709,10 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ms->current_offset = 0;
 			ms->remaining_length = header.length;
 			ms->ct_handle = match_me->me.ct_handle;
-		      
+			ms->ack_msg = ack_ev;
+			ms->event = ptl_event;
+			ms->eq_handle = match_me->eq_handle;
+			
 			int map_key = ev->src | ev->stream;
 		      
 			streams[map_key]= ms;
@@ -581,16 +724,22 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ms->current_offset = copy_length;
 			ms->remaining_length = header.length - copy_length;
 			ms->ct_handle = match_me->me.ct_handle;
+			ms->ack_msg = ack_ev;
+			ms->event = ptl_event;
+			ms->eq_handle = match_me->eq_handle;
 		      
 			int map_key = ev->src | ev->stream;
 		      
 			streams[map_key]= ms;
 		    }
-		    else {
-// 			printf("Single packet message, scheduling CT Inc\n");
+		    else {  // Single packet message
+                        // Send ack back
+			self_link->Send(ptl_msg_latency,ack_ev);
+
 			// If this is not multi-packet, then we need to
-			// update a CT if one is attached.
+			// update a CT if one is attached.			
 			scheduleCTInc( match_me->me.ct_handle, latency_ct_post );
+			scheduleEQ( match_me->eq_handle, ptl_event );
 		    }
 	      
 		}
@@ -608,7 +757,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    MessageStream* ms;
 	    int map_key = ev->src | ev->stream;
 	    if ( streams.find(map_key) == streams.end() ) {
-		printf("%5d:  Received a packet for muiti-packet message but didn't get a corresponding head packet first: %x\n",
+		printf("%5d:  Received a packet for multi-packet message but didn't get a corresponding head packet first: %x\n",
 		       m_id,map_key);
 		abort();
 	    }
@@ -629,7 +778,10 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    if ( ms->remaining_length == 0 ) {
 		// Message is done, get rid of it.
 		streams.erase(map_key);
+		// Send ack back to src if this isn't a get
+		if ( ev->stream != PTL_HDR_STREAM_GET) self_link->Send(ptl_msg_latency,ms->ack_msg);
 		scheduleCTInc( ms->ct_handle, latency_ct_post );
+		scheduleEQ( ms->eq_handle, ms->event );
 		delete ms;
 	    }
 	  
@@ -704,7 +856,17 @@ void trig_nic::processPtlEvent( Event *e ) {
             // Get the head of the queue and do whatever it says to
             ptl_int_trig_op_t* op = already_triggered_q.front();
             already_triggered_q.pop();
-	
+
+	    // For all by CTInc, we need to put an entry in the
+	    // outstanding messages queue.
+	    if ( op->op->op_type != PTL_OP_CT_INC ) {
+		uint16_t handle = get_next_out_msg_handle();
+		op->op->ptl_header->out_msg_index = handle;
+		out_msg_q[handle] = op->msg_info;
+// 		op->msg_info = NULL;
+// 		printf("%5d: trig handle = %d\n",m_id,handle);		
+	    }
+	    
             if ( op->op->op_type == PTL_OP_PUT || op->op->op_type == PTL_OP_ATOMIC ) {
                 trig_nic_event* event = new trig_nic_event;
                 event->src = ev->src;
@@ -714,7 +876,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    
                 event->portals = true;
 		event->head_packet = true;
-//                 event->latency = cpu->latency*30/100;
 	    
 		memcpy(event->ptl_data,op->op->ptl_header,sizeof(ptl_header_t));
 
@@ -754,39 +915,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    // to update the CT.
 		    scheduleCTInc(op->op->dma->ct_handle, latency_ct_post);
 		    delete op->op->dma;
-		}
-
-// 		if ( op->op->op_type == PTL_OP_ATOMIC && send_atomic_from_cache ) {
-// 		    atomic_cache_entry* entry;
-// 		    if ( atomic_cache.find(addr) != atomic_cache.end() ) {
-// 			entry = atomic_cache[addr];
-// 		    }
-// 		    else {
-// 			entry = atomic_cache[addr] = new atomic_cache_entry;
-// 			entry->dbl_val = 0.0;
-// 		    }
-// 		}
-// 		else if ( op->op->ptl_header->length != 0 ) {
-// 		    dma_hdr_q.push(event);
-		
-// 		    // Also need to send the dma data to the dma engine
-// 		    bool empty = dma_req_q.empty();
-// 		    dma_req_q.push(op->op->dma);
-// 		    if ( empty ) {
-// 			dma_link->Send(1,NULL);
-// 		    }
-// 		}
-// 		else {
-// 		  rtr_q_size++;
-// 		  self_link->Send(ptl_msg_latency,event);
-
-// 		  // If there's a CT attached to the MD, then we need
-// 		  // to update the CT.
-// // 		  printf("%d\n",op->op->dma->ct_handle);
-// 		  scheduleCTInc(op->op->dma->ct_handle, latency_ct_post);
-// 		  delete op->op->dma;
-// 		}
-		
+		}		
                 delete op->op;
                 delete op;
             }
@@ -964,6 +1093,8 @@ trig_nic::processDMAEvent( Event* e)
     request->data.dma->target_id = dma_req->target_id;
     request->data.dma->end = end;
     request->data.dma->ct_handle = dma_req->ct_handle;
+    request->data.dma->eq_handle = dma_req->eq_handle;
+    request->data.dma->event = dma_req->event;
     
     request->stream = dma_req->stream;
 
@@ -993,12 +1124,8 @@ trig_nic::scheduleCTInc(ptl_handle_ct_t ct_handle, SimTime_t delay) {
 //       printf("scheduleCTInc(%d)\n",ct_handle);
       trig_nic_event* event = new trig_nic_event;
 	event->ptl_op = PTL_NIC_CT_INC;
-// 	event->operation = new ptl_int_nic_op_t;
-// 	event->operation->op_type = PTL_NIC_CT_INC;
-// 	event->operation->data.ct_handle = ct_handle;
 	event->ptl_op = PTL_NIC_CT_INC;
 	event->data.ct_handle = ct_handle;
-// 	ptl_link->Send(latency_ct_post,event);
 	ptl_link->Send(delay,event);
     }
 }
@@ -1021,6 +1148,18 @@ trig_nic::scheduleUpdateHostCT(ptl_handle_ct_t ct_handle) {
 
     cpu_link->Send(latency_ct_host_update,event);    
 }
+
+void
+trig_nic::scheduleEQ(ptl_handle_eq_t eq_handle, ptl_event_t* ptl_event) {
+    if ( eq_handle == PTL_EQ_NONE ) return;
+    trig_nic_event* event = new trig_nic_event;
+    event->ptl_op = PTL_NIC_EQ;
+    event->data.event = ptl_event;
+    event->eq_handle = eq_handle;
+    cpu_link->Send(latency_ct_post + latency_ct_host_update + 2, event);
+}
+
+
 
 double
 trig_nic::computeDoubleAtomic(unsigned long addr, double value, ptl_op_t op)

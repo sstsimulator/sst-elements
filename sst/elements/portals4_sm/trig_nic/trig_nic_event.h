@@ -27,7 +27,9 @@ namespace SST {
         void *start;
       
 	ptl_int_nic_op_type_t ptl_op;
-
+	ptl_int_msg_info_t* msg_info;
+	ptl_handle_eq_t eq_handle;
+	
 	//         ptl_int_nic_op_t* operation;
 	union {
 	    ptl_int_me_t* me;
@@ -36,10 +38,19 @@ namespace SST {
 	    ptl_update_ct_event_t* ct;
 	    ptl_handle_ct_t ct_handle;
 	    ptl_int_dma_t* dma;
+	    ptl_event_t* event;
 	} data;
 
 /*         uint32_t ptl_data[16]; */
         uint8_t ptl_data[64];
+
+	void updateMsgHandle(uint16_t handle) {
+	    if (!head_packet) return;
+	    if ( ptl_op == PTL_NO_OP || ptl_op == PTL_DMA ) {
+		// PIO or DMA from host.  Field is in ptl_data
+		((ptl_header_t*)ptl_data)->out_msg_index = handle;
+	    }
+	}
 
     private:
 	

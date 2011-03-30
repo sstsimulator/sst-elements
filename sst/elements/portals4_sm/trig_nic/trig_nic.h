@@ -27,16 +27,11 @@ struct MessageStream {
     int current_offset;
     int remaining_length;
     ptl_handle_ct_t ct_handle;
+    trig_nic_event* ack_msg;
+    ptl_event_t* event;
+    ptl_handle_eq_t eq_handle;
 };
 
-struct OutstandingMessage {
-    void*            user_ptr;       // 8 bytes
-    void*            get_start;      // 8 bytes
-    ptl_handle_ct_t  get_ct_handle;  // 2 bytes
-    ptl_handle_ct_t  get_eq_handle;  // 2 bytes
-    uint8_t          op;             // 1 byte
-    
-};
 
 class trig_nic : public RtrIF {
 
@@ -102,10 +97,22 @@ private:
     bool rr_dma;
     bool new_dma;
     bool send_recv;
-
     bool send_atomic_from_cache;
 
-    std::map<uint16_t,OutstandingMessage*> out_msg_q;
+    std::map<uint16_t,ptl_int_msg_info_t*> out_msg_q;
+    uint16_t next_out_msg_handle;
+
+    // This is a bit goofy, but it handles the case of roll-over
+    inline uint16_t get_next_out_msg_handle() {
+/* 	if ( out_msg_q.size() == 0x10000 ) { */
+/* 	    printf("All outstanding message buffers used, aborting...\n"); */
+/* 	    abort(); */
+/* 	} */
+/* 	while ( out_msg_q.count(next_out_msg_handle) == 1 ) { */
+/* 	    ++next_out_msg_handle; */
+/* 	} */
+	return next_out_msg_handle++;
+    }
     
 public:
     trig_nic( ComponentId_t id, Params_t& params );
@@ -147,6 +154,7 @@ private:
 
     void scheduleUpdateHostCT(ptl_handle_ct_t ct_handle);
     void scheduleCTInc(ptl_handle_ct_t ct_handle, SimTime_t delay);
+    void scheduleEQ(ptl_handle_eq_t eq_handle, ptl_event_t* ptl_event);
 
     double computeDoubleAtomic(unsigned long addr, double value, ptl_op_t op);
     int64_t computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op);
