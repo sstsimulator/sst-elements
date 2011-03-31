@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SSTDISKSIM_TRACE_ENTRIES_H
-#define _SSTDISKSIM_TRACE_ENTRIES_H
+#ifndef _SSTDISKSIM_TRACE_ENTRIES_H_
+#define _SSTDISKSIM_TRACE_ENTRIES_H_
 
 #include <stdlib.h>
 
@@ -32,11 +32,20 @@ enum __call
   FSYNC,
   CLOSE,
   OPEN,
-  END
+  END_CALLS
+};
+
+enum __arg
+{
+  FD = 0,
+  COUNT,
+  //  RET,
+  END_ARGS
 };
 
 struct sstdisksim_trace_call
 {
+  __call call;
   char name[16];
   char fmt[16];
 };
@@ -55,11 +64,10 @@ public:
   void print_entries();
   void add_entry(__call call, __argument args[__ARG_MAX]);
   sstdisksim_trace_type* pop_entry();
-  
-private:
-  sstdisksim_trace_call __calls[END];
+
   sstdisksim_trace_type* head;
   sstdisksim_trace_type* tail;  
+  sstdisksim_trace_call __calls[END_CALLS];
 };
 
-#endif // _SSTDISKSIM_TRACE_ENTRIES_H
+#endif // _SSTDISKSIM_TRACE_ENTRIES_H_

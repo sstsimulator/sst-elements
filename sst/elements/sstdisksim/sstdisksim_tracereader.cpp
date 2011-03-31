@@ -40,7 +40,8 @@ sstdisksim_tracereader::clock(Cycle_t current)
   /* At the end of our input */
   if ( event == NULL )
   {
-    return false;
+    event = new sstdisksim_event;
+    event->etype = DISKSIMEND;
   }
 
   link->Send(0, event);
@@ -86,7 +87,6 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
 {
   __id = id;
-  __done = 0;
   traceFile = "";
   __ptrs[id] = this;
   disksimTracereaderClockCycle = 0;

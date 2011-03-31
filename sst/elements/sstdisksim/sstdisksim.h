@@ -54,13 +54,13 @@ class sstdisksim : public Component {
  private:
 
   bool __done;
+  unsigned long __event_total;
   sstdisksim_stat __disksim_stat;
   struct disksim_interface* __disksim;
   Simulation* __sim;
   Params_t __params;
   ComponentId_t __id;
   TimeConverter* __tc;
-  unsigned long __event_total;
   Cycle_t __cycle;
 
   /* To be removed later-this is just to test the component

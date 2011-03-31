@@ -23,6 +23,7 @@
 #include <fstream>
 #include <string>
 #include "sstdisksim_event.h"
+#include "sstdisksim_trace_entries.h"
 
 using namespace std;
 
@@ -34,7 +35,10 @@ class sstdisksim_tau_parser {
   sstdisksim_event* getNextEvent();
 
  private:
-  ifstream filestream;
+  sstdisksim_trace_entries __list;
+
+  int types[END_CALLS][END_ARGS];
+  char* argnames[END_ARGS];
 };
 
 #endif // _SSTDISKSIM_TAU_PARSER_H 

@@ -18,6 +18,8 @@ using namespace std;
 map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
 bool EndOfTrace = false; 
 
+int __types[END_CALLS][END_ARGS];
+
 // implementation of callback routines 
 int EnterState(void *userData, double time, 
 	       unsigned int nid, unsigned int tid, unsigned int stateid)
@@ -83,11 +85,33 @@ int DefState( void *userData, unsigned int stateToken, const char *stateName,
   return 0;
 }
 
+// This is where to add new events for tau
 int DefUserEvent( void *userData, unsigned int userEventToken,
 		  const char *userEventName, int monotonicallyIncreasing )
 {
-  printf("DefUserEvent event id %d user event name %s, monotonically increasing = %d\n", userEventToken,
-  	 userEventName, monotonicallyIncreasing);
+  if ( strstr(userEventName, "READ") )
+  {
+    if ( strstr(userEventName, "fd" ) )
+    {
+      __types[READ][FD] = userEventToken;
+    }
+    else if ( strstr(userEventName, "Bytes" ) )
+    {
+      __types[READ][COUNT] = userEventToken;
+    }
+  }
+  else if ( strstr(userEventName, "WRITE") )
+  {
+    if ( strstr(userEventName, "fd" ) )
+    {
+      __types[WRITE][FD] = userEventToken;
+    }
+    else if ( strstr(userEventName, "Bytes" ) )
+    {
+      __types[WRITE][COUNT] = userEventToken;
+    }    
+  }
+
   return 0;
 }
 
@@ -187,31 +211,65 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
 /******************************************************************************/
 sstdisksim_tau_parser::~sstdisksim_tau_parser()
 {
-  filestream.close();
+  printf("READ fd: %d bytes: %d WRITE fd: %d bytes: %d\n", __types[READ][FD],
+	 __types[READ][COUNT], __types[WRITE][FD], __types[WRITE][COUNT]);
+  
 }
 
 /******************************************************************************/
 sstdisksim_event*
 sstdisksim_tau_parser::getNextEvent()
 {
+  sstdisksim_event* ev = new sstdisksim_event();
+  ev->completed = 0;
+  ev->devno = 0;  // TODO: figure out device used
+  ev->pos = 0;  // TODO: figure out position
+
+  
+  sstdisksim_trace_type* cur_event = __list.pop_entry();
+ 
+  if ( cur_event == NULL )
+    return NULL;
+
+  bool looping = true;
+  while ( looping == true )
+  {
+    switch(cur_event->call->call)
+    {
+    case READ:
+      ev->etype = DISKSIMREAD;
+      ev->count = cur_event->args[2].t;
+      looping = false;
+      break;
+    case WRITE:
+      ev->etype = DISKSIMWRITE;
+      ev->count = cur_event->args[2].t;
+      looping = false;
+      break;
+    default:
+      free(cur_event);
+      cur_event = __list.pop_entry();
+      break;
+    }
+  }
+
+  free(cur_event);
+  
+  /*
+  //test code
   static int tmpCount = 0;
   tmpCount++;
 
   if ( tmpCount > 100 )
     return NULL;
-
-  sstdisksim_event* ev = new sstdisksim_event();
-  ev->completed = 0;
-
+  
+  
   if ( tmpCount == 100 )
   {
     ev->etype = DISKSIMEND;
     return ev;
   }
 
-  
-  // Todo:  Add reading of events from a file here.
-  // Erase this after starting to read from the file
   if ( tmpCount % 3 == 0 )
     ev->etype = DISKSIMREAD;
   else
@@ -219,7 +277,8 @@ sstdisksim_tau_parser::getNextEvent()
   ev->pos = 0;
   ev->count = 1000;
   ev->devno = 0;
-  // End erase
+  // end test code
+  */
 
   return ev;
 }

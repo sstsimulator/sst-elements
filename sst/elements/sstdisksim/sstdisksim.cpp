@@ -246,6 +246,8 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 void
 sstdisksim::lockstepEvent(Event* ev)
 {
+  static int event_count=0;
+
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
   event->completed = true;
 
@@ -260,20 +262,29 @@ sstdisksim::lockstepEvent(Event* ev)
     DBG( "lockstepEvent called on read event.  %lu\n", now );
 #endif
 
-  __event_total--;
+  if ( (event->etype == DISKSIMEND && !__done) ||
+       event->etype != DISKSIMEND )
+  {
+    __event_total--;
+  }
 
   if ( __event_total == 0 )
   {
-    if ( !__done )
+    if ( ! __done )
     {
       __done = true;
       unregisterExit();
       print_statistics(&__st, "response time");
       DBG("time: %f milliseconds\n", __now);
+
+      printf("events processed: %d\n", event_count);
     }
+
+    delete(event);
     return;
   }
 
+  event_count++;
   event->finishedCall();
   delete(event);
 }

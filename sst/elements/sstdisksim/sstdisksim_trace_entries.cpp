@@ -1,3 +1,14 @@
+// Copyright 2011 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2011, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,18 +63,23 @@ sstdisksim_trace_entries::sstdisksim_trace_entries()
 {
   strcpy(__calls[READ].name, "READ");
   strcpy(__calls[READ].fmt, "ipt");
+  __calls[READ].call = READ;
 
   strcpy(__calls[WRITE].name, "WRITE");
   strcpy(__calls[WRITE].fmt, "ipt");
+  __calls[WRITE].call = WRITE;
 
   strcpy(__calls[FSYNC].name, "FSYNC");
   strcpy(__calls[FSYNC].fmt, "ipt");
+  __calls[FSYNC].call = FSYNC;
 
   strcpy(__calls[OPEN].name, "OPEN");
   strcpy(__calls[OPEN].fmt, "si");
+  __calls[OPEN].call = OPEN;
 
   strcpy(__calls[CLOSE].name, "CLOSE");
   strcpy(__calls[CLOSE].fmt, "i");
+  __calls[CLOSE].call = CLOSE;
 
   head=tail=NULL;
 }
@@ -71,7 +87,7 @@ sstdisksim_trace_entries::sstdisksim_trace_entries()
 void
 sstdisksim_trace_entries::add_entry(__call call, __argument args[__ARG_MAX])
 {
-  if ( call > END )
+  if ( call > END_CALLS )
   {
     exit(1);
     return;
