@@ -70,15 +70,13 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     setClockFrequency(1000000000000);
 
-
     m_tc = registerTimeBase("1ps");
-    if ( ! m_tc ) {
-     //   _error( Port2Link, "registerTimeBase()\n");
-    }
+    assert( m_tc );
+
     m_self = configureSelfLink("self", m_tc,
             new SST::Event::Handler<M5>(this,&M5::selfEvent));
-//    m_link->setDefaultTimeBase(m_tc);
 
+    assert( m_self );
 
     arm( 0 );
 
@@ -96,7 +94,7 @@ M5::~M5()
 {
     // do we really need to cleanup?
     if ( ! m_armed ) {
-	delete &m_event;
+        delete &m_event;
     }
 }
 
@@ -156,15 +154,19 @@ void M5::selfEvent( SST::Event* )
 
 static void enableDebug( std::string name )
 {
-    
-    if ( name.find( "SST") != string::npos) {
+    bool all = false;
+    if ( name.find( "all") != string::npos) { 
+        all = true;
+    }
+       
+    if ( all || name.find( "SST") != string::npos) {
         SST_M5_debug = true;
     }
     Trace::enabled = true;
     for ( int i = 0; i < Trace::flags.size(); i++ ) {
 //            printf("%s\n",Trace::flagStrings[i]);
 
-            if ( name.find( Trace::flagStrings[i] ) != string::npos) {
+            if ( all || name.find( Trace::flagStrings[i] ) != string::npos) {
                 printf("enable %s\n",Trace::flagStrings[i]);
                 Trace::flags[i] = true;
             }

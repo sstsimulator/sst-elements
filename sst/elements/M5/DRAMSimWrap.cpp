@@ -201,7 +201,7 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
     // we need to bring it up to the current time and then arm it 
     if ( m_comp->catchup( now ) ) {
 	    DBGX(3,"catchup() says we're exiting\n");
-        return false;
+        return true;
     }
 
     MS_CAST( m_memorySystem )->update();
