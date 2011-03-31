@@ -35,7 +35,6 @@ SimObject* create_DRAMSimWrap( SST::Component* comp, string name,
     INIT_STR( params, sstParams, deviceIniFilename );
     INIT_STR( params, sstParams, systemIniFilename );
 
-    params.linkName = sstParams.find_string( "link.name" );
     params.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
     params.exeParams = sstParams.find_prefix_params("exe.");
 
@@ -43,8 +42,9 @@ SimObject* create_DRAMSimWrap( SST::Component* comp, string name,
 }
 
 DRAMSimWrap::DRAMSimWrap( const Params* p ) :
-    MemObject( p ),
+    PhysicalMemory( p ),
     m_waitRetry( false ),
+    m_port( NULL ),
     m_comp( p->m5Comp ),
     m_dbg( *new Log< DRAMSIMC_DBG >( cerr, "DRAMSimC::", false ) ),
     m_log( *new Log< >( cout, "INFO DRAMSimC: ", false ) )
@@ -59,8 +59,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
         m_dbg.enable();
     }
 
-    setupMemLink( p );
-    setupPhysicalMemory( p );
+    loadMemory( name(), this, p->exeParams );
 
     string deviceIniFilename = p->pwd + "/" + p->deviceIniFilename;
     string systemIniFilename = p->pwd + "/" + p->systemIniFilename;
@@ -99,20 +98,30 @@ DRAMSimWrap::~DRAMSimWrap()
     delete &m_dbg;
 }
 
-
-void DRAMSimWrap::doFunctionalAccess(PacketPtr pkt)
+Port * DRAMSimWrap::getPort(const std::string &if_name, int idx )
 {
-    DPRINTFN("doFunctionalAccess: %s addr=%#lx size=%i\n",
-                    pkt->cmdString().c_str(), pkt->getAddr(), pkt->getSize() );
+    DPRINTFN("%s: if_name=`%s` idx=%d\n", __func__, if_name.c_str(), idx );
+    assert( ! m_port );
 
-    m_memPort->sendFunctional(pkt);
+    if (if_name != "port") {
+        panic("DRAMSimWrap::getPort: unknown port %s requested", if_name);
+    }
+
+    return m_port = new MemPort( name() + "." + if_name, this );
+}
+
+void DRAMSimWrap::init()
+{
+    if ( ! m_port ) {
+        fatal("DRAMSimWrap object %s is unconnected!", name());
+    }
+
+    m_port->sendStatusChange(Port::RangeChange);
 }
 
 bool DRAMSimWrap::recvTiming(PacketPtr pkt)
 {
-    DBGX( 3, "%s inval=%d resp=%d %#lx\n", pkt->cmdString().c_str(),
-        pkt->isInvalidate(), pkt->needsResponse(), (long)pkt->getAddr());
-    DPRINTFN("recvTiming: %s %#lx\n", pkt->cmdString().c_str(),
+    DPRINTFN("%s: %s %#lx\n", __func__, pkt->cmdString().c_str(),
                                         (long)pkt->getAddr());
 
     if ( pkt->isRead() || pkt->isWrite() ) {
@@ -130,12 +139,29 @@ bool DRAMSimWrap::recvTiming(PacketPtr pkt)
 
 void DRAMSimWrap::recvRetry()
 {
+    DPRINTFN("%s:\n",__func__);
+    assert( ! m_readyQ.empty() );
+
     m_waitRetry = false;
+    sendTry();
+}
+
+void DRAMSimWrap::sendTry()
+{
+    while ( ! m_waitRetry && ! m_readyQ.empty() ) {
+        if ( ! m_port->sendTiming( m_readyQ.front() )  ) {
+            DPRINTFN("%s: sendTiming failed\n",__func__);
+            m_waitRetry = true;
+        } else {
+            DPRINTFN("%s: sendTiming succeeded\n",__func__);
+            m_readyQ.pop_front();
+        }
+    }
 }
 
 void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 {
-    DBGX(3,"id=%d addr=%#lx clock=%lu\n",id,addr,clockcycle);
+    DPRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
     assert( ! m_readQ.empty() );
 
@@ -144,7 +170,7 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
     PacketPtr pkt = m_readQ.front().first;
 
     if ( m_readQ.front().second >= pkt->getSize() ) {
-        m_memPort->sendFunctional( pkt );
+        PhysicalMemory::doFunctionalAccess( pkt );
         m_readyQ.push_back(pkt);
         m_readQ.pop_front();
     } 
@@ -152,7 +178,7 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 
 void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
 {
-    DBGX(3,"id=%d addr=%#lx clock=%lu\n",id,addr,clockcycle);
+    DPRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
     assert( ! m_writeQ.empty() );
 
@@ -161,7 +187,7 @@ void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
     PacketPtr pkt = m_writeQ.front().first;
 
     if ( m_writeQ.front().second >= pkt->getSize() ) {
-        m_memPort->sendFunctional( pkt );
+        PhysicalMemory::doFunctionalAccess( pkt );
         m_readyQ.push_back(pkt);
         m_writeQ.pop_front();
     } 
@@ -180,17 +206,8 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
 
     MS_CAST( m_memorySystem )->update();
 
-    while ( ! m_waitRetry && ! m_readyQ.empty() ) {
-        if ( ! m_linkPort->sendTiming( m_readyQ.front() )  ) {
-            DBGX(3,"sendTiming failed, clock=%lu\n",cycle);
-            m_waitRetry = true;
-            break;
-        }
-        DBGX(3,"sendTiming succeeded, clock=%lu\n",cycle);
-        m_readyQ.pop_front();
-    }
+    sendTry();
 
-    DBGX(3,"call arm\n");
     m_comp->arm( now );
 
     while ( ! m_recvQ.empty() ) {
@@ -205,12 +222,10 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
             break;
         }
 
-        DBGX(3,"added trans, cycle=%lu addr=%#lx\n", cycle, addr );
+        DPRINTFN("%s: added trans, cycle=%lu addr=%#lx\n", 
+                                                __func__,cycle, addr );
 
         m_recvQ.front().second += JEDEC_DATA_BUS_WIDTH;
-
-        DBGX(3,"getAddr()=%#lx getSize()=%#lx %#lx\n",
-			pkt->getAddr(), pkt->getSize(), m_recvQ.front().second );
 
         if ( m_recvQ.front().second >= pkt->getSize() ) {
             if ( pkt->isRead() ) {
@@ -224,38 +239,3 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
 
     return false;
 }
-
-void DRAMSimWrap::setupMemLink( const Params* p )
-{
-    m_linkPort = new LinkPort( "link", this );
-
-    SST::Params params;
-    params["name"]        = p->linkName;
-    params["range.start"] = p->range.start;
-    params["range.end"]   = p->range.end;
-
-    m_link =  MemLink::create( name(), p->m5Comp, m_linkPort, params );
-}
-
-void DRAMSimWrap::setupPhysicalMemory( const Params* p )
-{
-    PhysicalMemoryParams& params  = *new PhysicalMemoryParams;
-
-    params.range.start = p->range.start;
-    params.range.end = p->range.end;
-    params.latency = 0;
-    params.latency_var = 0;
-    params.null = false;
-    params.zero = false;
-   
-    m_physmem = new PhysicalMemory( &params );
-
-    m_memPort = new MemPort( "mem", this );
-    Port* port = m_physmem->getPort( "port", 0 );
-
-    port->setPeer( m_memPort );
-    m_memPort->setPeer( port );
-
-    loadMemory( name(), m_physmem, p->exeParams );
-}
-

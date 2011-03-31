@@ -107,7 +107,7 @@ int M5::Setup()
 
 bool M5::catchup( SST::Cycle_t time ) 
 {
-    DBGX( 3, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
+    DBGX( 4, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
                                     time, curTick, time - curTick ); 
 
     m_exitEvent = simulate( time - curTick );
@@ -123,10 +123,10 @@ void M5::arm( SST::Cycle_t now )
         m_event.cycles = mainEventQueue.nextTick() - now;
         m_event.time = mainEventQueue.nextTick();
 
-        DBGX( 3, "nextTick=%lu cycles=%lu\n", m_event.time, m_event.cycles );
+        DBGX( 4, "nextTick=%lu cycles=%lu\n", m_event.time, m_event.cycles );
         assert( ! ( now != 0 && m_event.cycles == 0 ) );
 
-        DBGX( 3, "send %lu\n", now + m_event.cycles );
+        DBGX( 4, "send %lu\n", now + m_event.cycles );
         m_self->Send( m_event.cycles, &m_event );
 
         m_armed = true;
@@ -139,7 +139,7 @@ void M5::selfEvent( SST::Event* )
 
     Cycle_t now = m_tc->convertToCoreTime( getCurrentSimTime(m_tc) );
 
-    DBGX( 3, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
+    DBGX( 4, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
 
     if ( ! m_exitEvent ) {
         m_exitEvent = simulate( m_event.cycles );
@@ -156,9 +156,17 @@ void M5::selfEvent( SST::Event* )
 
 static void enableDebug( std::string name )
 {
-    if ( name.compare("all" ) ) return;
+    
+    if ( name.find( "SST") != string::npos) {
+        SST_M5_debug = true;
+    }
     Trace::enabled = true;
     for ( int i = 0; i < Trace::flags.size(); i++ ) {
-            Trace::flags[i] = true;
+//            printf("%s\n",Trace::flagStrings[i]);
+
+            if ( name.find( Trace::flagStrings[i] ) != string::npos) {
+                printf("enable %s\n",Trace::flagStrings[i]);
+                Trace::flags[i] = true;
+            }
     }
 }

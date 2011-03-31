@@ -34,6 +34,11 @@ BusPlus::BusPlus( const BusPlusParams *p ) :
     Bus( p )
 {
     DBGX( 2, "name=`%s`\n", name().c_str() );
+
+    if ( p->params.empty() ) {
+        return;
+    }
+
     Port* port = getPort( "port" );
     assert( port );
 
