@@ -76,22 +76,14 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
 
     // Portals table entries
     // For now initialize four portal table entries
-    ptl_entry_t* entry = new ptl_entry_t();
-    ptl_table[0] = entry;
-    entry->priority_list = new me_list_t;
-
-    entry = new ptl_entry_t();
-    ptl_table[1] = entry;
-    entry->priority_list = new me_list_t;
-
-    entry = new ptl_entry_t();
-    ptl_table[2] = entry;
-    entry->priority_list = new me_list_t;
-
-    entry = new ptl_entry_t();
-    ptl_table[3] = entry;  
-    entry->priority_list = new me_list_t;
-
+    for ( int i = 0; i < MAX_PT_ENTRIES; i++ ) {
+	ptl_entry_t* entry = new ptl_entry_t();
+	ptl_table[i] = entry;
+	entry->priority_list = new me_list_t;
+	entry->overflow = new me_list_t;
+	entry->overflow_headers = new overflow_header_list_t;
+    }
+	
     for (int i = 0; i < MAX_CT_EVENTS; i++ ) {
 	ptl_ct_events[i].allocated = false;
     }  
@@ -407,13 +399,23 @@ void trig_nic::processPtlEvent( Event *e ) {
 	
     // Append an ME
     // TESTED
-    case PTL_NIC_ME_APPEND:
+    case PTL_NIC_ME_APPEND_PRIORITY:
 	// Add the int_me structure to the priority list for the
 	// portal table entry
 // 	printf("accessing ptl_table[%d]\n",ev->data.me->pt_index);
 // 	printf("%p\n",ev->data.me);
 // 	ptl_table[operation->data.me->pt_index]->priority_list->push_back(operation->data.me);
 	ptl_table[ev->data.me->pt_index]->priority_list->push_back(ev->data.me);
+	delete ev;
+	break;
+
+    case PTL_NIC_ME_APPEND_OVERFLOW:
+	// Add the int_me structure to the priority list for the
+	// portal table entry
+// 	printf("accessing ptl_table[%d]\n",ev->data.me->pt_index);
+// 	printf("%p\n",ev->data.me);
+// 	ptl_table[operation->data.me->pt_index]->priority_list->push_back(operation->data.me);
+	ptl_table[ev->data.me->pt_index]->overflow->push_back(ev->data.me);
 	delete ev;
 	break;
 
@@ -430,7 +432,10 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    // need to see if this is a get response, in which case it
 	    // is not matched
 	    bool found = false;
+	    bool overflow = false;
 	    ptl_int_me_t* match_me;
+	    ptl_size_t mlength;
+	    ptl_size_t moffset;
 	    if ( header.op == PTL_OP_GET_RESP ) {
 		printf("Processing GET_RESP\n");
 		// There won't be any data in the head packet, so
@@ -506,7 +511,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		delete ev;
 		return;
 	    }
-	    else {
+	    else {  // Actually need to look for a match
 		me_list_t* list = ptl_table[header.pt_index]->priority_list;
 	      
 		me_list_t::iterator iter, curr;
@@ -526,6 +531,8 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    if ( (( header.match_bits ^ me->me.match_bits ) & ~me->me.ignore_bits ) == 0 ) {
 			found = true;
 			match_me = me;
+			mlength = header.length;
+			moffset = 0;
 			// If USE_ONCE is set, delete
 			if ( me->me.options & PTL_ME_USE_ONCE ) {
 			    list->erase(curr);
@@ -535,6 +542,86 @@ void trig_nic::processPtlEvent( Event *e ) {
 		}
 	    }
 
+
+	    if ( !found ) {
+		printf("***Checking overflow list\n");
+		// Need to look on overflow list
+		me_list_t* list = ptl_table[header.pt_index]->overflow;
+	      
+		me_list_t::iterator iter, curr;
+		// Compute the match bits
+		for ( iter = list->begin(); iter != list->end(); ) {
+		    curr = iter++;
+		    ptl_int_me_t* me = *curr;
+		    // Check to see if me is still active, if not remove it
+		    if ( !me->active ) {
+			// delete the ME
+			delete me;
+			list->erase(curr);
+			continue;
+		    }
+		    printf("Checking match_bits\n");
+		    if ( (( header.match_bits ^ me->me.match_bits ) & ~me->me.ignore_bits ) == 0 ) {
+			found = true;
+			overflow = true;
+			match_me = me;
+			// Need to figure out the mlength
+			ptl_size_t len_rem = match_me->me.length - match_me->managed_offset;
+			if ( len_rem < header.length ) {
+			    if ( match_me->me.options & PTL_ME_NO_TRUNCATE ) {
+				printf("Received a message too long for buffer with truncate off\n");
+				abort();
+			    }
+			    else {
+				mlength = len_rem;
+			    }
+			}
+			else {
+			    mlength = header.length;
+			}
+
+			if ( match_me->me.options & PTL_ME_MANAGE_LOCAL ) {
+			    moffset = match_me->managed_offset;
+			    match_me->managed_offset += mlength;
+			}
+			else {
+			    moffset = 0;
+			}
+
+			// If USE_ONCE is set, delete
+			if ( me->me.options & PTL_ME_USE_ONCE ) {
+			    list->erase(curr);
+			}
+			else if ( match_me->me.min_free != 0 ) {
+			    // Make sure there's enough room left
+			    if ( len_rem - mlength < match_me->me.min_free ) {
+				list->erase(curr);
+				printf("Auto-unlinking\n");
+				// Need to send AUTO_UNLINK event
+				if ( match_me->eq_handle != PTL_EQ_NONE ) {
+				    ptl_event_t* ptl_event = NULL;
+				    ptl_event = new ptl_event_t;
+				    ptl_event->type = PTL_EVENT_AUTO_UNLINK;
+				    ptl_event->pt_index = header.pt_index;
+				    ptl_event->user_ptr = match_me->user_ptr;
+				    ptl_event->ni_fail_type = PTL_OK;
+				    scheduleEQ(match_me->eq_handle,ptl_event);
+				}
+			    }
+			}
+			// Need to put the header in the hidden header
+			// queue which MEAppends to the priority_list
+			// will look through before posting
+			match_me->header_count++;
+			ptl_int_header_t* ov_hdr = new ptl_int_header_t;
+			ov_hdr->header = header;
+			ov_hdr->me = match_me;
+			ptl_table[header.pt_index]->overflow_headers->push_back(ov_hdr);
+			break;
+		    }
+		}
+	    }
+	    
 	    if ( found ) {
 
 		if ( header.op == PTL_OP_GET ) {
@@ -654,7 +741,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    // Send ack back
 		    self_link->Send(ptl_msg_latency,ack_ev);
 		}
-		else {
+		else { // PUTs
 	      
 		    // Need to send the data to the cpu
 		    int copy_length = header.length <= (HEADER_SIZE - sizeof(ptl_header_t)) ?
@@ -680,11 +767,11 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    hdr->op = PTL_OP_ACK;
 // 		    hdr->out_msg_index = ((ptl_header_t*)ev->ptl_data)->out_msg_index;
  		    hdr->out_msg_index = header.out_msg_index;
-		    hdr->length = header.length;
+		    hdr->length = mlength;
 
 		    // Prepare the event to be delivered when this is done
 		    ptl_event_t* ptl_event = NULL;
-		    if ( match_me->eq_handle != PTL_EQ_NONE ) {
+		    if ( match_me->eq_handle != PTL_EQ_NONE && !overflow ) {
 			ptl_event = new ptl_event_t;
 			ptl_event->type = PTL_EVENT_PUT;
 			ptl_event->initiator = ev->src;
@@ -711,7 +798,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ms->ct_handle = match_me->me.ct_handle;
 			ms->ack_msg = ack_ev;
 			ms->event = ptl_event;
-			ms->eq_handle = match_me->eq_handle;
+			ms->eq_handle = overflow ? PTL_EQ_NONE : match_me->eq_handle;
 			
 			int map_key = ev->src | ev->stream;
 		      
@@ -726,7 +813,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ms->ct_handle = match_me->me.ct_handle;
 			ms->ack_msg = ack_ev;
 			ms->event = ptl_event;
-			ms->eq_handle = match_me->eq_handle;
+			ms->eq_handle = overflow ? PTL_EQ_NONE : match_me->eq_handle;
 		      
 			int map_key = ev->src | ev->stream;
 		      
@@ -739,7 +826,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			// If this is not multi-packet, then we need to
 			// update a CT if one is attached.			
 			scheduleCTInc( match_me->me.ct_handle, latency_ct_post );
-			scheduleEQ( match_me->eq_handle, ptl_event );
+			if ( !overflow ) scheduleEQ( match_me->eq_handle, ptl_event );
 		    }
 	      
 		}

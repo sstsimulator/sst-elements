@@ -24,12 +24,20 @@ public:
         ptl = cpu->getPortalsHandle();
 
         msg_size = cpu->getMessageSize();
-
+	if (msg_size < 8 ) {
+	    printf("msg_size must be >= 8\n");
+	    abort();
+	}
+	
 	in_buf = (char*) malloc(msg_size);
 	out_buf = (char*) malloc(msg_size);
 	for ( int i = 0; i < msg_size; ++i ) {
 	    out_buf[i] = i % 255;
 	    in_buf[i] = 0;
+	}
+	if ( my_id == 1 ) {
+	    overflow_buf1 = (char*)malloc(2*msg_size+4);
+	    overflow_buf2 = (char*)malloc(2*msg_size+4);
 	}
     }
 
@@ -135,6 +143,24 @@ public:
 		md.eq_handle = PTL_EQ_NONE;
 		md.ct_handle = PTL_CT_NONE;
 		ptl->PtlMDBind(md, &out_md_h);
+
+		// Overflow MEs
+		me.start = overflow_buf1;
+		me.length = 2*msg_size+4;
+		me.ignore_bits = ~0x0;
+		me.options = PTL_ME_MANAGE_LOCAL;
+		me.ct_handle = PTL_CT_NONE;
+		me.min_free = msg_size;
+		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
+
+		me.start = overflow_buf2;
+		me.length = 2*msg_size+4;
+		me.ignore_bits = ~0x0;
+		me.options = PTL_ME_MANAGE_LOCAL;
+		me.ct_handle = PTL_CT_NONE;
+		me.min_free = msg_size;
+		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
+
 	    }
 	    
             init = true;
@@ -227,6 +253,19 @@ public:
 	    }
 	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
 
+	    // Do a series of puts that will hit the overflow list and
+	    // see if auto_unlink works
+	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+	    crReturn();
+
+	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+	    crReturn();
+
+	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+	    crReturn();
+
+	    // Ignore all the events for now
+	    
 	}
 	else {
 	    // Wait for a put from 0
@@ -286,6 +325,13 @@ public:
 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
 	    printf("Event on 1:\n");
 	    ptl_event.print();
+
+	    // Puts into overflow don't create events.  Should get one
+	    // AUTO_UNLINK event
+	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+	    printf("Event on 1:\n");
+	    ptl_event.print();
+
 	}
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
@@ -311,6 +357,9 @@ private:
 
     char *in_buf;
     char *out_buf;
+
+    char *overflow_buf1;
+    char *overflow_buf2;
     
     ptl_handle_ct_t ct_handle;
 

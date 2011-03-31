@@ -97,7 +97,10 @@ portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list,
     int_me->user_ptr = user_ptr;
     int_me->pt_index = pt_index;
     int_me->ptl_list = ptl_list;
+    int_me->managed_offset = 0;
+    int_me->header_count = 0;
 
+    
     if ( pt_entries.count(pt_index) == 0 ) {
 	printf("Tried to MEAppend to non-allocated pt_index %d\n",pt_index);
 	abort();
@@ -107,8 +110,9 @@ portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list,
     // Send this to the NIC
     trig_nic_event *event = new trig_nic_event;
     event->src = cpu->my_id;
-    event->ptl_op = PTL_NIC_ME_APPEND;
-    event->ptl_op = PTL_NIC_ME_APPEND;
+    if ( ptl_list == PTL_PRIORITY_LIST ) event->ptl_op = PTL_NIC_ME_APPEND_PRIORITY;
+    else event->ptl_op = PTL_NIC_ME_APPEND_OVERFLOW;
+	
     event->data.me = int_me;
 
     cpu->writeToNIC(event);
@@ -120,7 +124,8 @@ portals::PtlMEAppend(ptl_pt_index_t pt_index, ptl_me_t me, ptl_list_t ptl_list,
 }
 
 // FIXME: Need to fix this, can't do it this way anymore since the ME
-// is on the NIC
+// is on the NIC (at least not if the NIC and CPU are on different
+// ranks).  This will work, but does not incur any timing overhead.
 void
 portals::PtlMEUnlink(ptl_handle_me_t me_handle) {
     //   ptl_int_me_t* int_me = me_map[me_handle];

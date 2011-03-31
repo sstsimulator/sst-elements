@@ -16,6 +16,7 @@
 #include <list>
 
 #include "sst/sst_stdint.h"
+#include <stdio.h>
 
 #define PACKET_SIZE 64
 
@@ -104,6 +105,8 @@ typedef enum {
     PTL_EVENT_AUTO_FREE,
     PTL_EVENT_PROBE
 } ptl_event_kind_t;
+
+
 
 struct ptl_event_t {
     ptl_event_kind_t       type;
@@ -213,6 +216,8 @@ typedef struct {
     ptl_handle_eq_t eq_handle;
     ptl_pt_index_t pt_index;
     ptl_list_t ptl_list;
+    ptl_size_t managed_offset;
+    ptl_size_t header_count;
 } ptl_int_me_t;
 
 typedef ptl_int_me_t* ptl_handle_me_t;
@@ -259,6 +264,11 @@ typedef struct {
 } ptl_header_t;
 
 typedef struct {
+    ptl_header_t header;
+    ptl_int_me_t* me;
+} ptl_int_header_t;
+
+typedef struct {
     ptl_op_type_t op_type;
     ptl_process_t target_id;
     ptl_pt_index_t pt_index;
@@ -290,6 +300,7 @@ typedef struct {
 // Structs, etc needed by internals
 typedef std::list<ptl_int_me_t*> me_list_t;
 typedef std::list<ptl_int_trig_op_t*> trig_op_list_t;
+typedef std::list<ptl_int_header_t*> overflow_header_list_t;
 
 typedef struct {
     bool allocated;
@@ -306,6 +317,8 @@ typedef struct {
 typedef struct {
     me_list_t* priority_list;
     me_list_t* overflow;
+    overflow_header_list_t* overflow_headers;
+    
 } ptl_entry_t;
 
 // Data structure to pass stuff to the NIC
@@ -313,7 +326,8 @@ typedef enum {
     PTL_NO_OP, PTL_DMA, PTL_DMA_RESPONSE,
     PTL_CREDIT_RETURN,
     PTL_NIC_PROCESS_MSG,
-    PTL_NIC_ME_APPEND, PTL_NIC_TRIG, PTL_NIC_TRIG_PUTV,
+    PTL_NIC_ME_APPEND_PRIORITY, PTL_NIC_ME_APPEND_OVERFLOW,
+    PTL_NIC_TRIG, PTL_NIC_TRIG_PUTV,
     PTL_NIC_PROCESS_TRIG, PTL_NIC_POST_CT,
     PTL_NIC_CT_SET, PTL_NIC_CT_INC, PTL_NIC_EQ,
     PTL_NIC_UPDATE_CPU_CT, PTL_NIC_INIT_FOR_SEND_RECV,

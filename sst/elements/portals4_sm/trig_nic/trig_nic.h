@@ -68,6 +68,8 @@ private:
     #define MAX_CT_EVENTS 32
     ptl_int_ct_t ptl_ct_events[MAX_CT_EVENTS];
 
+    #define MAX_PT_ENTRIES 16
+
     std::queue<ptl_int_trig_op_t*> already_triggered_q;
 
     // Two queues to handle events coming from the CPU.  On is for
