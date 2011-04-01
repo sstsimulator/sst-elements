@@ -7,7 +7,7 @@
 #include <params/FUPool.hh>
 
 #include <system.h>
-#include <dummyPhysicalMemory.h>
+#include <physical2.h>
 #include <process.h>
 #include <debug.h>
 
@@ -51,10 +51,13 @@ SimObject* create_O3Cpu( Component*, string name, Params& sstParams )
     DBGC( 1, "%s.physicalMemory.start %#lx\n",name.c_str(),start);
     DBGC( 1, "%s.physicalMemory.end %#lx\n",name.c_str(),end);
      
-    PhysicalMemory* physmem = 
-            create_DummyPhysicalMemory( name + ".dummyPhysical", start, end );
+    PhysicalMemoryParams& PMparams   = *new PhysicalMemoryParams;
+    PMparams.range.start = start;
+    PMparams.range.end = end;
+    PMparams.name = name + ".physmem";
 
-    System* system = create_System( name + ".system", physmem, Enums::timing );
+    System* system = create_System( name + ".system", 
+            new PhysicalMemory2( & PMparams ), Enums::timing );
 
     // system and physmem are not needed after startup how do free them
 

@@ -2,12 +2,11 @@
 
 #include <mem/physical.hh>
 #include <dummySystem.h>
-#include <dummyPhysicalMemory.h>
 
 #include <debug.h>
 #include <process.h>
 
-void loadMemory( string name, PhysicalMemory* realMemory, 
+void loadMemory( string name, PhysicalMemory* memory, 
                                     const SST::Params& params )
 {
     int num = 0;
@@ -33,20 +32,15 @@ void loadMemory( string name, PhysicalMemory* realMemory,
         DBGC(1,"%s.%s.physicalMemory.end %#lx\n",name.c_str(),
                                 tmp.str().c_str(),end);
 
-        DummyPhysicalMemory* dummyMem =
-                create_DummyPhysicalMemory( name + "." + tmp.str() + 
-                            ".dummyPhysical", start, end );
-
-        dummyMem->m_realPhysmem = realMemory;
         DummySystem* system = create_DummySystem( name + "." + tmp.str() +  
-                            ".dummySystem", dummyMem, Enums::timing);
+                            ".dummySystem", memory, Enums::timing);
 
         Process* process = newProcess( name + "." + tmp.str(), 
             params.find_prefix_params( tmp.str() + ".process."),
                                        system );
         process->assignThreadContext(num);
 
-        // NOTE: dummyMem, system and process are not needed after
+        // NOTE: system and process are not needed after
         // startup, how do we free them? 
 
         ++num;
