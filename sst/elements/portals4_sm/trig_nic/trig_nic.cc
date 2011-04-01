@@ -465,7 +465,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 
 		    // Need to check for AUTO_FREE events
 		    hdr->me->header_count--;
-		    if ( hdr->me->header_count == 0 ) {
+		    if ( hdr->me->header_count == 0 && !hdr->me->active ) {
 			printf("AUTO_FREE\n");
 			// Generate AUTO_FREE event
 			
