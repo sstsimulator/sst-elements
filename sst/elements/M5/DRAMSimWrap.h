@@ -77,13 +77,13 @@ class DRAMSimWrap : public PhysicalMemory
   public:
     typedef DRAMSimWrapParams Params;
     DRAMSimWrap( const Params* p );
+    virtual ~DRAMSimWrap( );
 
     virtual Port * getPort(const std::string &if_name, int idx = -1);
 
     void init();
 
   private:
-    virtual ~DRAMSimWrap( );
     const DRAMSimWrap &operator=( const Params& p );
 
     bool recvTiming(PacketPtr pkt);
