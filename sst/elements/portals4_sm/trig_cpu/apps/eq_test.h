@@ -68,11 +68,11 @@ public:
 		md.ct_handle = ct_h;
 		ptl->PtlMDBind(md, &out_md_h);
 
-		md.start = out_buf;
-		md.length = msg_size;
-		md.eq_handle = PTL_EQ_NONE;
-		md.ct_handle = PTL_CT_NONE;
-		ptl->PtlMDBind(md, &trig_md_h);
+// 		md.start = out_buf;
+// 		md.length = msg_size;
+// 		md.eq_handle = PTL_EQ_NONE;
+// 		md.ct_handle = PTL_CT_NONE;
+// 		ptl->PtlMDBind(md, &trig_md_h);
 
 		md.start = in_buf;
 		md.length = msg_size;
@@ -80,21 +80,22 @@ public:
 		md.ct_handle = ct_h;
 		ptl->PtlMDBind(md, &in_md_h);
 
-		atomic_buf = 10;
+// 		atomic_buf = 10;
 		
-		md.start = &atomic_buf;
-		md.length = 8;
-		md.eq_handle = PTL_EQ_NONE;
-		md.ct_handle = ct_h;
-		ptl->PtlMDBind(md, &atomic_md_h);
+// 		md.start = &atomic_buf;
+// 		md.length = 8;
+// 		md.eq_handle = PTL_EQ_NONE;
+// 		md.ct_handle = ct_h;
+// 		ptl->PtlMDBind(md, &atomic_md_h);
 
-		// ME to be used to test the triggered ops
-		me.start = in_buf;
-		me.length = msg_size;
-		me.ignore_bits = ~0x0;
-		me.options = 0;
-		me.ct_handle = ct2_h;
-		ptl->PtlMEAppend(pte2, me, PTL_PRIORITY_LIST, NULL, trig_me_h);
+// 		// ME to be used to test the triggered ops
+// 		me.start = in_buf;
+// 		me.length = msg_size;
+// 		me.ignore_bits = ~0x0;
+// 		me.options = 0;
+// 		me.ct_handle = ct2_h;
+// 		me.min_free = 0;
+// 		ptl->PtlMEAppend(pte2, me, PTL_PRIORITY_LIST, NULL, trig_me_h);
 
 	    }
 	    else {
@@ -104,62 +105,70 @@ public:
 		me.ignore_bits = ~0x0;
 		me.options = PTL_ME_USE_ONCE;
 		me.ct_handle = ct_h;
+		me.min_free = 0;
 		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
 
 		// For get
 		me.start = out_buf;
 		me.length = msg_size;
-		me.ignore_bits = ~0x0;
+// 		me.ignore_bits = ~0x0;
+		me.ignore_bits = 0;
+		me.match_bits = 1;
 		me.options = PTL_ME_USE_ONCE;
 		me.ct_handle = ct_h;
+		me.min_free = 0;
 		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, out_me_h);
 
-		// For atomic
-		me.start = &atomic_buf;
-		me.length = 8;
-		me.ignore_bits = ~0x0;
-		me.options = PTL_ME_USE_ONCE;
-		me.ct_handle = ct_h;
-		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, atomic_me_h);
+// 		// For atomic
+// 		me.start = &atomic_buf;
+// 		me.length = 8;
+// 		me.ignore_bits = ~0x0;
+// 		me.options = PTL_ME_USE_ONCE;
+// 		me.ct_handle = ct_h;
+// 		me.min_free = 0;
+// 		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, atomic_me_h);
 
-		// For triggered put
-		me.start = in_buf;
-		me.length = msg_size;
-		me.ignore_bits = ~0x0;
-		me.options = PTL_ME_USE_ONCE;
-		me.ct_handle = ct_h;
-		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
+// 		// For triggered put, but we'll make it short to check truncation
+// 		me.start = in_buf;
+// 		me.length = msg_size/2;
+// 		me.ignore_bits = ~0x0;
+// 		me.options = PTL_ME_USE_ONCE;
+// 		me.ct_handle = ct_h;
+// 		me.min_free = 0;
+// 		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
 
-		// For triggered get
-		me.start = out_buf;
-		me.length = msg_size;
-		me.ignore_bits = ~0x0;
-		me.options = PTL_ME_USE_ONCE;
-		me.ct_handle = ct_h;
-		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, out_me_h);
+// 		// For triggered get
+// 		me.start = out_buf;
+// 		me.length = msg_size;
+// 		me.ignore_bits = ~0x0;
+// 		me.options = PTL_ME_USE_ONCE;
+// 		me.ct_handle = ct_h;
+// 		me.min_free = 0;
+// 		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, out_me_h);
 
-		md.start = out_buf;
-		md.length = msg_size;
-		md.eq_handle = PTL_EQ_NONE;
-		md.ct_handle = PTL_CT_NONE;
-		ptl->PtlMDBind(md, &out_md_h);
+// 		md.start = out_buf;
+// 		md.length = msg_size;
+// 		md.eq_handle = PTL_EQ_NONE;
+// 		md.ct_handle = PTL_CT_NONE;
+// 		ptl->PtlMDBind(md, &out_md_h);
 
-		// Overflow MEs
-		me.start = overflow_buf1;
-		me.length = 2*msg_size+4;
-		me.ignore_bits = ~0x0;
-		me.options = PTL_ME_MANAGE_LOCAL;
-		me.ct_handle = PTL_CT_NONE;
-		me.min_free = msg_size;
-		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
+// 		// Overflow MEs
+// 		me.start = overflow_buf1;
+// 		me.length = 2*msg_size+4;
+// 		me.ignore_bits = ~0x0;
+// 		me.options = PTL_ME_MANAGE_LOCAL;
+// 		me.ct_handle = PTL_CT_NONE;
+// 		me.min_free = msg_size;
+// 		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
 
-		me.start = overflow_buf2;
-		me.length = 2*msg_size+4;
-		me.ignore_bits = ~0x0;
-		me.options = PTL_ME_MANAGE_LOCAL;
-		me.ct_handle = PTL_CT_NONE;
-		me.min_free = msg_size;
-		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
+// 		me.start = overflow_buf2;
+// 		me.length = 2*msg_size+4;
+// 		me.ignore_bits = ~0x0;
+// 		me.options = PTL_ME_MANAGE_LOCAL;
+// 		me.ct_handle = PTL_CT_NONE;
+// 		me.min_free = msg_size;
+// 		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
+
 
 	    }
 	    
@@ -176,7 +185,7 @@ public:
 	int bad;
 	if ( my_id == 0 ) {
 	    // Do a put to 1
-	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 1, 0, NULL, 0);
 	    crReturn();
 	    
 // 	    // Now I simply wait for the send event to increment.
@@ -188,7 +197,7 @@ public:
 	    ptl_event.print();
 
 	    // Now do a get
-	    ptl->PtlGet(in_md_h, 0, msg_size, 1, pte, 0, NULL, 0);
+	    ptl->PtlGet(in_md_h, 0, msg_size, 1, pte, 1, NULL, 0);
 	    crReturn();
 
 // 	    // Wait for the get to complete
@@ -199,70 +208,71 @@ public:
 	    printf("Event on 0:\n");
 	    ptl_event.print();
 	    
-	    // Now test an atomic operation
-	    ptl->PtlAtomic(atomic_md_h, 0, 8, 0, 1, pte, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
-	    
-	    // Wait for the atomic to complete
-	    while (!ptl->PtlCTWait(ct_h, 3)) { crReturn(); }
-
 	    // Check results so far
 	    bad = 0;
 	    for (i = 0 ; i < msg_size ; ++i) {
 		if ((in_buf[i] & 0xff) != i % 255) bad++;
 	    }
-	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
+	    if (bad) printf("**** %5d: bad results: %d\n",my_id,bad);
+
+// 	    // Now test an atomic operation
+// 	    ptl->PtlAtomic(atomic_md_h, 0, 8, 0, 1, pte, 0, 0, NULL, 0, PTL_SUM, PTL_LONG);
 	    
-	    // Now test some triggered ops
-	    // First clear in_buf
-	    for (i = 0; i < msg_size; ++i ) {
-		in_buf[i] = 0;
-	    }
+// 	    // Wait for the atomic to complete
+// 	    while (!ptl->PtlCTWait(ct_h, 3)) { crReturn(); }
 
-	    // Post triggereds.  We'll wait for both a notification
-	    // locally and from the other rank.
-	    ptl->PtlTriggeredPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0, ct2_h, 2);
-	    crReturn();
 	    
-	    ptl->PtlTriggeredGet(in_md_h, 0, msg_size, 1, pte, 0, NULL, 0, ct2_h, 4);
-	    crReturn();
+// 	    // Now test some triggered ops
+// 	    // First clear in_buf
+// 	    for (i = 0; i < msg_size; ++i ) {
+// 		in_buf[i] = 0;
+// 	    }
+
+// 	    // Post triggereds.  We'll wait for both a notification
+// 	    // locally and from the other rank.
+// 	    ptl->PtlTriggeredPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0, ct2_h, 2);
+// 	    crReturn();
 	    
-	    // Now put to myself to trigger put
-	    ptl->PtlPut(trig_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
-	    crReturn();
+// 	    ptl->PtlTriggeredGet(in_md_h, 0, msg_size, 1, pte, 0, NULL, 0, ct2_h, 4);
+// 	    crReturn();
+	    
+// 	    // Now put to myself to trigger put
+// 	    ptl->PtlPut(trig_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
+// 	    crReturn();
 
-// 	    while (!ptl->PtlCTWait(ct_h, 5)) { crReturn(); }
-	    // Wait for the get to complete
-	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 0:\n");
-	    ptl_event.print();
+// // 	    while (!ptl->PtlCTWait(ct_h, 5)) { crReturn(); }
+// 	    // Wait for the get to complete
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 0:\n");
+// 	    ptl_event.print();
 
-	    // Now put to myself to trigger get
-	    ptl->PtlPut(trig_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
-	    crReturn();
+// 	    // Now put to myself to trigger get
+// 	    ptl->PtlPut(trig_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
+// 	    crReturn();
 
-// 	    while (!ptl->PtlCTWait(ct_h, 7)) { crReturn(); }
-	    // Wait for the get to complete
-	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 0:\n");
-	    ptl_event.print();
+// // 	    while (!ptl->PtlCTWait(ct_h, 7)) { crReturn(); }
+// 	    // Wait for the get to complete
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 0:\n");
+// 	    ptl_event.print();
 
-	    // Check results so far
-	    bad = 0;
-	    for (i = 0 ; i < msg_size ; ++i) {
-		if ((in_buf[i] & 0xff) != i % 255) bad++;
-	    }
-	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
+// 	    // Check results so far
+// 	    bad = 0;
+// 	    for (i = 0 ; i < msg_size ; ++i) {
+// 		if ((in_buf[i] & 0xff) != i % 255) bad++;
+// 	    }
+// 	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
 
-	    // Do a series of puts that will hit the overflow list and
-	    // see if auto_unlink works
-	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
-	    crReturn();
+// 	    // Do a series of puts that will hit the overflow list and
+// 	    // see if auto_unlink works
+// 	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+// 	    crReturn();
 
-	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
-	    crReturn();
+// 	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+// 	    crReturn();
 
-	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
-	    crReturn();
+// 	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 0, 0, NULL, 0);
+// 	    crReturn();
 
 	    // Ignore all the events for now
 	    
@@ -274,7 +284,7 @@ public:
 
 	    // Check event queue for PUT event
 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 1:\n");
+	    printf("Event (PUT) on 1:\n");
 	    ptl_event.print();
 	    
 	    bad = 0;
@@ -286,52 +296,89 @@ public:
 // 	    // Wait for get to complete 
 // 	    while (!ptl->PtlCTWait(ct_h, 2)) { crReturn(); }
 
-	    // Check event queue for PUT event
+	    // Check event queue for GET event
 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 1:\n");
+	    printf("Event (GET) on 1:\n");
 	    ptl_event.print();
 	    
-	    // Wait for get to complete 
-	    while (!ptl->PtlCTWait(ct_h, 3)) { crReturn(); }
- 	    if (atomic_buf != 10) printf("Bad atomic result: %ld\n",atomic_buf);
+// 	    // Wait for get to complete 
+// 	    while (!ptl->PtlCTWait(ct_h, 3)) { crReturn(); }
+//  	    if (atomic_buf != 10) printf("Bad atomic result: %ld\n",atomic_buf);
 
-	    // Clear in_buf
-	    for (i = 0; i < msg_size; ++i ) {
-		in_buf[i] = 0;
-	    }
+// 	    // Clear in_buf
+// 	    for (i = 0; i < msg_size; ++i ) {
+// 		in_buf[i] = 0;
+// 	    }
 
-	    // Now put to 0 to trigger put
-	    ptl->PtlPut(out_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
-	    crReturn();
+// 	    // Now put to 0 to trigger put
+// 	    ptl->PtlPut(out_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
+// 	    crReturn();
 	    
-	    // Wait for triggered put to complete, then check to see
-	    // if is is correct.
-// 	    while (!ptl->PtlCTWait(ct_h, 4)) { crReturn(); }
-	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 1:\n");
-	    ptl_event.print();
-	    bad = 0;
-	    for (i = 0 ; i < msg_size ; ++i) {
-		if ((in_buf[i] & 0xff) != i % 255) bad++;
-	    }
-	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
+// 	    // Wait for triggered put to complete, then check to see
+// 	    // if is is correct.
+// // 	    while (!ptl->PtlCTWait(ct_h, 4)) { crReturn(); }
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 1:\n");
+// 	    ptl_event.print();
+// 	    bad = 0;
+// 	    // We only reported half the length to the ME, so we
+// 	    // should truncate.
+// 	    for (i = 0 ; i < msg_size/2 ; ++i) {
+// 		if ((in_buf[i] & 0xff) != i % 255) bad++;
+// 	    }
+// 	    // From here on should be zeros
+// 	    for (i = msg_size/2 ; i < msg_size ; ++i) {
+// 		if ((in_buf[i] & 0xff) != 0) bad++;
+// 	    }
+// 	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
 	    
-	    // Now put to 0 to trigger get
-	    ptl->PtlPut(out_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
-	    crReturn();
+// 	    // Now put to 0 to trigger get
+// 	    ptl->PtlPut(out_md_h, 0, 0, 0, 0, pte2, 0, 0, NULL, 0);
+// 	    crReturn();
 	    
-	    // Wait for triggered get to complete
-// 	    while (!ptl->PtlCTWait(ct_h, 5)) { crReturn(); }
-	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 1:\n");
-	    ptl_event.print();
+// 	    // Wait for triggered get to complete
+// // 	    while (!ptl->PtlCTWait(ct_h, 5)) { crReturn(); }
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 1:\n");
+// 	    ptl_event.print();
 
-	    // Puts into overflow don't create events.  Should get one
-	    // AUTO_UNLINK event
-	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
-	    printf("Event on 1:\n");
-	    ptl_event.print();
+// 	    // Puts into overflow don't create events.  Should get one
+// 	    // AUTO_UNLINK event
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 1:\n");
+// 	    ptl_event.print();
 
+// 	    // There should be data in overflow, check the PUT_OVERFLOW event
+// 	    me.start = in_buf;
+// 	    me.length = msg_size;
+// 	    me.ignore_bits = ~0x0;
+// 	    me.options = PTL_ME_USE_ONCE;
+// 	    me.ct_handle = ct_h;
+// 	    me.min_free = 0;
+// 	    ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
+
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 1:\n");
+// 	    ptl_event.print();
+	    
+// 	    // And again.  There should be data in overflow, check the PUT_OVERFLOW event
+// 	    me.start = in_buf;
+// 	    me.length = msg_size;
+// 	    me.ignore_bits = ~0x0;
+// 	    me.options = PTL_ME_USE_ONCE;
+// 	    me.ct_handle = ct_h;
+// 	    me.min_free = 0;
+// 	    ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
+
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 1:\n");
+// 	    ptl_event.print();
+
+// 	    // See if we get an AUTO_FREE
+// 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+// 	    printf("Event on 1:\n");
+// 	    ptl_event.print();
+	    
 	}
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);

@@ -30,6 +30,7 @@ struct MessageStream {
     trig_nic_event* ack_msg;
     ptl_event_t* event;
     ptl_handle_eq_t eq_handle;
+    int remaining_mlength;
 };
 
 
@@ -160,6 +161,8 @@ private:
 
     double computeDoubleAtomic(unsigned long addr, double value, ptl_op_t op);
     int64_t computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op);
+
+    ptl_int_me_t* match_header(me_list_t* list, ptl_header_t* header, ptl_size_t* offset, ptl_size_t* length);
     
 };
 

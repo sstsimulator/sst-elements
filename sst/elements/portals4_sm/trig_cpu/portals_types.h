@@ -126,20 +126,69 @@ struct ptl_event_t {
     ptl_datatype_t         atomic_type;
 
     void print() {
-	printf("  type: %d\n",type);
-	printf("  initiator: %d\n",initiator);
-	printf("  pt_index: %d\n",pt_index);
+	switch ( type ) {
+	case PTL_EVENT_GET: printf("  type: PTL_EVENT_GET\n"); break;
+	case PTL_EVENT_PUT: printf("  type: PTL_EVENT_PUT\n"); break;
+	case PTL_EVENT_PUT_OVERFLOW: printf("  type: PTL_EVENT_PUT_OVERFLOW\n"); break;
+	case PTL_EVENT_ATOMIC: printf("  type: PTL_EVENT_ATOMIC\n"); break;
+	case PTL_EVENT_ATOMIC_OVERFLOW: printf("  type: PTL_EVENT_ATOMIC_OVERFLOW\n"); break;
+	case PTL_EVENT_REPLY: printf("  type: PTL_EVENT_REPLY\n"); break;
+	case PTL_EVENT_SEND: printf("  type: PTL_EVENT_SEND\n"); break;
+	case PTL_EVENT_ACK: printf("  type: PTL_EVENT_ACK\n"); break;
+	case PTL_EVENT_PT_DISABLED: printf("  type: PTL_EVENT_PT_DISABLED\n"); break;
+	case PTL_EVENT_AUTO_UNLINK: printf("  type: PTL_EVENT_AUTO_UNLINK\n"); break;
+	case PTL_EVENT_AUTO_FREE: printf("  type: PTL_EVENT_AUTO_FREE\n"); break;
+	case PTL_EVENT_PROBE: printf("  type: PTL_EVENT_PROBE\n"); break;
+	}
+	
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
+	     type == PTL_EVENT_AUTO_FREE ) printf("  initiator: N/A\n");
+	else printf("  initiator: %d\n",initiator);
+
+	
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_ACK ) printf("  pt_index: N/A\n");
+	else printf("  pt_index: %d\n",pt_index);
+
 // 	printf("  uid: %d\n",uid);
 // 	printf("  jid: %d\n",jid);
-	printf("  match_bits: %lx\n",match_bits);
-	printf("  rlength: %d\n",rlength);
-	printf("  mlength: %d\n",mlength);
-	printf("  remote_offset: %d\n",remote_offset);
-	printf("  start: %p\n",start);
+
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
+	     type == PTL_EVENT_AUTO_FREE ) printf("  match_bits: N/A\n");
+	else printf("  match_bits: %lx\n",match_bits);
+
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
+	     type == PTL_EVENT_AUTO_FREE ) printf("  rlength: N/A\n");
+	else printf("  rlength: %d\n",rlength);
+
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_AUTO_UNLINK || type == PTL_EVENT_AUTO_FREE) printf("  mlength: N/A\n");
+	else printf("  mlength: %d\n",mlength);
+
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_AUTO_UNLINK || type == PTL_EVENT_AUTO_FREE) printf("  remote_offset: N/A\n");
+	else printf("  remote_offset: %d\n",remote_offset);
+
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
+	     type == PTL_EVENT_AUTO_FREE ) printf("  start: N/A\n");
+	else printf("  start: %p\n",start);
+
 	printf("  user_ptr: %p\n",user_ptr);
-	printf("  hdr_data: %lu\n",hdr_data);
-	printf("  atomic_operation: %d\n",atomic_operation);
-	printf("  atomic_type: %d\n",atomic_type);	
+
+	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
+	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
+	     type == PTL_EVENT_AUTO_FREE || type == PTL_EVENT_GET ) printf("  hdr_data: N/A\n");	
+	else printf("  hdr_data: %lu\n",hdr_data);
+
+	if ( type != PTL_EVENT_ATOMIC && type != PTL_EVENT_ATOMIC_OVERFLOW ) printf("  atomic_operation: N/A\n");
+	else printf("  atomic_operation: %d\n",atomic_operation);
+
+	if ( type != PTL_EVENT_ATOMIC && type != PTL_EVENT_ATOMIC_OVERFLOW ) printf("  atomic_type: N/A\n");
+	else printf("  atomic_type: %d\n",atomic_type);	
     }
 };
     
@@ -266,6 +315,9 @@ typedef struct {
 typedef struct {
     ptl_header_t header;
     ptl_int_me_t* me;
+    ptl_size_t offset;
+    ptl_size_t mlength;
+    ptl_process_t src;
 } ptl_int_header_t;
 
 typedef struct {

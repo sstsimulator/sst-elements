@@ -57,6 +57,7 @@ public:
             me.ignore_bits = ~0x0;
 	    me.options = 0;
             me.ct_handle = up_tree_ct_h;
+	    me.min_free = 0;
             ptl->PtlMEAppend(PT_UP, me, PTL_PRIORITY_LIST, NULL, up_tree_me_h);
 
             md.start = &tmp_buf;
@@ -91,6 +92,7 @@ public:
         me.ignore_bits = ~0x0;
 	me.options = 0;
         me.ct_handle = user_ct_h;
+	me.min_free = 0;
         ptl->PtlMEAppend(PT_DOWN, me, PTL_PRIORITY_LIST, NULL, user_me_h);
         crReturn();
 

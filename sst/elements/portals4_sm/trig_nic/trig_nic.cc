@@ -400,13 +400,97 @@ void trig_nic::processPtlEvent( Event *e ) {
     // Append an ME
     // TESTED
     case PTL_NIC_ME_APPEND_PRIORITY:
-	// Add the int_me structure to the priority list for the
-	// portal table entry
-// 	printf("accessing ptl_table[%d]\n",ev->data.me->pt_index);
-// 	printf("%p\n",ev->data.me);
-// 	ptl_table[operation->data.me->pt_index]->priority_list->push_back(operation->data.me);
-	ptl_table[ev->data.me->pt_index]->priority_list->push_back(ev->data.me);
-	delete ev;
+	{
+	    // Add the int_me structure to the priority list for the
+	    // portal table entry
+// 	    printf("accessing ptl_table[%d]\n",ev->data.me->pt_index);
+// 	    printf("%p\n",ev->data.me);
+// 	    ptl_table[operation->data.me->pt_index]->priority_list->push_back(operation->data.me);
+
+	    if ( ev->data.me->me.options & PTL_ME_MANAGE_LOCAL ) {
+		printf("Locallaly managed offsets not supported for MEs on priority list\n");
+		abort();
+	    }
+
+	    // Need to see if a header has already arrived for this ME
+	    overflow_header_list_t* list = ptl_table[ev->data.me->pt_index]->overflow_headers;
+	    overflow_header_list_t::iterator iter, curr;
+	    bool found = false;
+	    for ( iter = list->begin(); iter != list->end(); ) {
+		printf("Checking an ME against header\n");
+		curr = iter++;
+		ptl_int_header_t* hdr = *curr;
+		if ( (( hdr->header.match_bits ^ ev->data.me->me.match_bits ) & ~ev->data.me->me.ignore_bits ) == 0 ) {
+		    found = true;
+		    list->erase(curr);
+		    // Found a match
+		    // NOTE: for now, only USE_ONCE MEs are allowed to match
+		    // in the overflow headers.
+		    if ( !(ev->data.me->me.options & PTL_ME_USE_ONCE) ) {
+			printf("Persistant ME matched an overflow header.  This is currently unsupported.\n");
+			abort();
+		    }
+
+		    ptl_size_t len_rem = ev->data.me->me.length - hdr->header.remote_offset;
+		    if ( len_rem < hdr->header.length ) {
+			printf("Unsupported case in MEAppend:  ME matched overflow header, ");
+			printf("but there's not enough room in ME buffer\n");
+			abort();
+		    }
+
+		    // Generatate PUT_OVERFLOW event and sent to host
+		    // Prepare the event to be delivered when this is done
+		    ptl_event_t* ptl_event = NULL;
+		    if ( ev->data.me->eq_handle != PTL_EQ_NONE ) {
+			ptl_event = new ptl_event_t;
+			ptl_event->type = PTL_EVENT_PUT_OVERFLOW;
+			ptl_event->initiator = hdr->src;
+			ptl_event->pt_index = hdr->header.pt_index;
+// 			ptl_event->uid = ;
+// 			ptl_event->jid = ;
+			ptl_event->match_bits = hdr->header.match_bits;
+			ptl_event->rlength = hdr->header.length;
+			ptl_event->mlength = hdr->header.length;
+ 			ptl_event->remote_offset = hdr->header.remote_offset;
+			ptl_event->start = (uint8_t*)ev->data.me->me.start + hdr->offset;
+			ptl_event->user_ptr = ev->data.me->user_ptr;
+			ptl_event->hdr_data = hdr->header.header_data;
+			ptl_event->ni_fail_type = PTL_OK;
+
+			scheduleEQ(ev->data.me->eq_handle,ptl_event);
+		    }
+		    // Done with event and ME structures
+		    delete ev->data.me;
+// 		    delete ev;
+
+		    // Need to check for AUTO_FREE events
+		    hdr->me->header_count--;
+		    if ( hdr->me->header_count == 0 ) {
+			printf("AUTO_FREE\n");
+			// Generate AUTO_FREE event
+			
+			if ( hdr->me->eq_handle != PTL_EQ_NONE ) {
+			    ptl_event = new ptl_event_t;
+			    ptl_event->type = PTL_EVENT_AUTO_FREE;
+			    ptl_event->pt_index = hdr->header.pt_index;
+			    ptl_event->user_ptr = hdr->me->user_ptr;
+			    ptl_event->ni_fail_type = PTL_OK;
+			    
+			    scheduleEQ(ev->data.me->eq_handle,ptl_event);
+			}
+			// Done with the ME, delete it
+			delete hdr->me;
+		    }
+		    // Done with hdr
+		    delete hdr;
+		    break;
+		}
+		
+	    }	
+	    
+	    if ( !found ) ptl_table[ev->data.me->pt_index]->priority_list->push_back(ev->data.me);
+	    delete ev;
+	}
 	break;
 
     case PTL_NIC_ME_APPEND_OVERFLOW:
@@ -415,6 +499,10 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 	printf("accessing ptl_table[%d]\n",ev->data.me->pt_index);
 // 	printf("%p\n",ev->data.me);
 // 	ptl_table[operation->data.me->pt_index]->priority_list->push_back(operation->data.me);
+	if ( ev->data.me->me.options & PTL_ME_USE_ONCE ) {
+	    printf("Use Once MEs not supported on overflow list\n");
+	    abort();
+	}
 	ptl_table[ev->data.me->pt_index]->overflow->push_back(ev->data.me);
 	delete ev;
 	break;
@@ -449,6 +537,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		ms->current_offset = 0;
 		ms->remaining_length = header.length;
 		ms->ct_handle = msg_info->ct_handle;
+		ms->remaining_mlength = header.length;
 		printf("ct_handle: %d\n",msg_info->ct_handle);
 		printf("eq_handle: %d\n",msg_info->eq_handle);
 	      
@@ -512,103 +601,22 @@ void trig_nic::processPtlEvent( Event *e ) {
 		return;
 	    }
 	    else {  // Actually need to look for a match
-		me_list_t* list = ptl_table[header.pt_index]->priority_list;
-	      
-		me_list_t::iterator iter, curr;
-		// Compute the match bits
-		for ( iter = list->begin(); iter != list->end(); ) {
-		    curr = iter++;
-		    ptl_int_me_t* me = *curr;
-		    // Check to see if me is still active, if not remove it
-		    if ( !me->active ) {
-			// delete the ME
-			delete me;
-			list->erase(curr);
-			continue;
-		    }
-		    // Not implementing all the matching semantics.  For now, just
-		    // check the match bits.
-		    if ( (( header.match_bits ^ me->me.match_bits ) & ~me->me.ignore_bits ) == 0 ) {
-			found = true;
-			match_me = me;
-			mlength = header.length;
-			moffset = 0;
-			// If USE_ONCE is set, delete
-			if ( me->me.options & PTL_ME_USE_ONCE ) {
-			    list->erase(curr);
-			}
-			break;
-		    }
+
+		// Search priority list
+		match_me = match_header(ptl_table[header.pt_index]->priority_list,&header,&moffset,&mlength);
+		if (match_me != NULL ) {
+		    found = true;
+		    overflow = false;
 		}
-	    }
-
-
-	    if ( !found ) {
-		printf("***Checking overflow list\n");
-		// Need to look on overflow list
-		me_list_t* list = ptl_table[header.pt_index]->overflow;
-	      
-		me_list_t::iterator iter, curr;
-		// Compute the match bits
-		for ( iter = list->begin(); iter != list->end(); ) {
-		    curr = iter++;
-		    ptl_int_me_t* me = *curr;
-		    // Check to see if me is still active, if not remove it
-		    if ( !me->active ) {
-			// delete the ME
-			delete me;
-			list->erase(curr);
-			continue;
-		    }
-		    printf("Checking match_bits\n");
-		    if ( (( header.match_bits ^ me->me.match_bits ) & ~me->me.ignore_bits ) == 0 ) {
+		else {
+		    // Need to look on the overflow list
+		    printf("***Checking overflow list\n");
+		    // Need to look on overflow list
+		    match_me = match_header(ptl_table[header.pt_index]->overflow,&header,&moffset,&mlength);
+		    if (match_me != NULL ) {
 			found = true;
 			overflow = true;
-			match_me = me;
-			// Need to figure out the mlength
-			ptl_size_t len_rem = match_me->me.length - match_me->managed_offset;
-			if ( len_rem < header.length ) {
-			    if ( match_me->me.options & PTL_ME_NO_TRUNCATE ) {
-				printf("Received a message too long for buffer with truncate off\n");
-				abort();
-			    }
-			    else {
-				mlength = len_rem;
-			    }
-			}
-			else {
-			    mlength = header.length;
-			}
 
-			if ( match_me->me.options & PTL_ME_MANAGE_LOCAL ) {
-			    moffset = match_me->managed_offset;
-			    match_me->managed_offset += mlength;
-			}
-			else {
-			    moffset = 0;
-			}
-
-			// If USE_ONCE is set, delete
-			if ( me->me.options & PTL_ME_USE_ONCE ) {
-			    list->erase(curr);
-			}
-			else if ( match_me->me.min_free != 0 ) {
-			    // Make sure there's enough room left
-			    if ( len_rem - mlength < match_me->me.min_free ) {
-				list->erase(curr);
-				printf("Auto-unlinking\n");
-				// Need to send AUTO_UNLINK event
-				if ( match_me->eq_handle != PTL_EQ_NONE ) {
-				    ptl_event_t* ptl_event = NULL;
-				    ptl_event = new ptl_event_t;
-				    ptl_event->type = PTL_EVENT_AUTO_UNLINK;
-				    ptl_event->pt_index = header.pt_index;
-				    ptl_event->user_ptr = match_me->user_ptr;
-				    ptl_event->ni_fail_type = PTL_OK;
-				    scheduleEQ(match_me->eq_handle,ptl_event);
-				}
-			    }
-			}
 			// Need to put the header in the hidden header
 			// queue which MEAppends to the priority_list
 			// will look through before posting
@@ -616,12 +624,15 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ptl_int_header_t* ov_hdr = new ptl_int_header_t;
 			ov_hdr->header = header;
 			ov_hdr->me = match_me;
-			ptl_table[header.pt_index]->overflow_headers->push_back(ov_hdr);
-			break;
+			printf("moffset: %d\n",moffset);
+			ov_hdr->offset = moffset;
+			ov_hdr->mlength = mlength;
+			ov_hdr->src = ev->src;
+			ptl_table[header.pt_index]->overflow_headers->push_back(ov_hdr);			
 		    }
 		}
 	    }
-	    
+
 	    if ( found ) {
 
 		if ( header.op == PTL_OP_GET ) {
@@ -646,7 +657,8 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    ptl_int_dma_t* dma = new ptl_int_dma_t;
 		    dma->start = match_me->me.start;
 		    dma->length = header.length;
-		    dma->offset = header.remote_offset;
+// 		    dma->offset = header.remote_offset;
+		    dma->offset = moffset;
 		    dma->target_id = ev->src;
 		    dma->ct_handle = match_me->me.ct_handle;
 		    dma->stream = PTL_HDR_STREAM_GET;
@@ -663,7 +675,8 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ptl_event->match_bits = header.match_bits;
 			ptl_event->rlength = header.length;
 			ptl_event->mlength = header.length;
-			ptl_event->remote_offset = header.remote_offset;
+// 			ptl_event->remote_offset = header.offset;
+			ptl_event->remote_offset = moffset;
 			ptl_event->start = match_me->me.start;
 			ptl_event->user_ptr = match_me->user_ptr;
 			ptl_event->hdr_data = header.header_data;
@@ -744,12 +757,16 @@ void trig_nic::processPtlEvent( Event *e ) {
 		else { // PUTs
 	      
 		    // Need to send the data to the cpu
-		    int copy_length = header.length <= (HEADER_SIZE - sizeof(ptl_header_t)) ?
+		    ptl_size_t copy_length = header.length <= (HEADER_SIZE - sizeof(ptl_header_t)) ?
 			header.length : (HEADER_SIZE - sizeof(ptl_header_t));
-		    ptl_size_t remote_offset = header.remote_offset;
-		  
+// 		    ptl_size_t remote_offset = header.remote_offset;
+		    ptl_size_t remote_offset = moffset;
+
+		    if ( mlength < copy_length ) copy_length = mlength;
+		    
 		    ev->data_length = copy_length;
-		    ev->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
+// 		    ev->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
+		    ev->start = (void*)((unsigned long)match_me->me.start+(unsigned long)moffset);
 		    // Fix up the data, i.e. move actual data to top
 		    if ( !send_recv ) memcpy(ev->ptl_data,&ev->ptl_data[sizeof(ptl_header_t)],copy_length);
 		    cpu_link->Send(ptl_msg_latency,ev);
@@ -768,6 +785,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 		    hdr->out_msg_index = ((ptl_header_t*)ev->ptl_data)->out_msg_index;
  		    hdr->out_msg_index = header.out_msg_index;
 		    hdr->length = mlength;
+		    hdr->remote_offset = moffset;
 
 		    // Prepare the event to be delivered when this is done
 		    ptl_event_t* ptl_event = NULL;
@@ -780,8 +798,9 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 			ptl_event->jid = ;
 			ptl_event->match_bits = header.match_bits;
 			ptl_event->rlength = header.length;
-			ptl_event->mlength = header.length;
-			ptl_event->remote_offset = header.remote_offset;
+			ptl_event->mlength = mlength;
+// 			ptl_event->remote_offset = header.remote_offset;
+			ptl_event->remote_offset = moffset;
 			ptl_event->start = match_me->me.start;
 			ptl_event->user_ptr = match_me->user_ptr;
 			ptl_event->hdr_data = header.header_data;
@@ -789,16 +808,19 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    }
 		    
 		    // Handle mulit-packet messages
-		    if ( (ev->stream == PTL_HDR_STREAM_TRIG || ev->stream == PTL_HDR_STREAM_GET) && copy_length != 0) {
+// 		    if ( (ev->stream == PTL_HDR_STREAM_TRIG || ev->stream == PTL_HDR_STREAM_GET) && copy_length != 0) {
+		    if ( ev->stream == PTL_HDR_STREAM_TRIG && header.length != 0) {
 			// No data in head packet for triggered
 			MessageStream* ms = new MessageStream();
-			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
+// 			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
+			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)moffset);
 			ms->current_offset = 0;
 			ms->remaining_length = header.length;
 			ms->ct_handle = match_me->me.ct_handle;
 			ms->ack_msg = ack_ev;
 			ms->event = ptl_event;
 			ms->eq_handle = overflow ? PTL_EQ_NONE : match_me->eq_handle;
+			ms->remaining_mlength = mlength;
 			
 			int map_key = ev->src | ev->stream;
 		      
@@ -807,14 +829,16 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    }
 		    else if ( header.length > (HEADER_SIZE - sizeof(ptl_header_t)) ) {
 			MessageStream* ms = new MessageStream();
-			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
+// 			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)remote_offset);
+			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)moffset);
 			ms->current_offset = copy_length;
 			ms->remaining_length = header.length - copy_length;
 			ms->ct_handle = match_me->me.ct_handle;
 			ms->ack_msg = ack_ev;
 			ms->event = ptl_event;
 			ms->eq_handle = overflow ? PTL_EQ_NONE : match_me->eq_handle;
-		      
+			ms->remaining_mlength = mlength - copy_length;
+			
 			int map_key = ev->src | ev->stream;
 		      
 			streams[map_key]= ms;
@@ -855,12 +879,29 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    // Reuse the same event, just forward in with the extra
 	    // information
 	    int copy_length = ms->remaining_length < 64 ? ms->remaining_length : 64;
-	    ev->data_length = copy_length;
+	    ev->data_length = ms->remaining_mlength < copy_length ? ms->remaining_mlength : copy_length;
 	    ev->start = (void*)((unsigned long)ms->start+(unsigned long)ms->current_offset);
-	    cpu_link->Send(ptl_msg_latency,ev);
+
+	    if ( ms->remaining_mlength == 0 ) {
+		// Drop packet
+		delete ev;
+	    }
+	    else {
+		cpu_link->Send(ptl_msg_latency,ev);
+
+		// Compute remaining mlength
+		if ( ms->remaining_mlength < copy_length ) {
+		    ms->remaining_mlength = 0;
+		}
+		else {
+		    ms->remaining_mlength -= copy_length;
+		}
+	    }
+
 
 	    ms->current_offset += copy_length;
 	    ms->remaining_length -= copy_length;
+
 
 	    if ( ms->remaining_length == 0 ) {
 		// Message is done, get rid of it.
@@ -1319,4 +1360,90 @@ trig_nic::computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op)
 	break;
     }
     return entry->int_val;
+}
+
+ptl_int_me_t*
+trig_nic::match_header(me_list_t* list, ptl_header_t* header, ptl_size_t* offset, ptl_size_t* length)
+{
+    ptl_int_me_t* match_me;
+    bool found = false;
+    ptl_size_t moffset, mlength;
+    
+    me_list_t::iterator iter, curr;
+    for ( iter = list->begin(); iter != list->end(); ) {
+	curr = iter++;
+	ptl_int_me_t* me = *curr;
+	// Check to see if me is still active, if not remove it
+	if ( !me->active ) {
+	    // delete the ME
+	    delete me;
+	    list->erase(curr);
+	    continue;
+	}
+	if ( (( header->match_bits ^ me->me.match_bits ) & ~me->me.ignore_bits ) == 0 ) {
+	    found = true;
+	    match_me = me;
+	    // Need to figure out the mlength
+	    ptl_size_t len_rem = match_me->me.length - match_me->managed_offset;
+	    if ( len_rem < header->length ) {
+		if ( match_me->me.options & PTL_ME_NO_TRUNCATE ) {
+		    printf("Received a message too long for buffer with truncate off\n");
+		    abort();
+		}
+		else {
+		    mlength = len_rem;
+		}
+	    }
+	    else {
+		mlength = header->length;
+	    }
+	    
+	    if ( match_me->me.options & PTL_ME_MANAGE_LOCAL ) {
+		moffset = match_me->managed_offset;
+		match_me->managed_offset += mlength;
+	    }
+	    else {
+		moffset = header->remote_offset;
+	    }
+	    
+	    // If USE_ONCE is set, delete
+	    if ( me->me.options & PTL_ME_USE_ONCE ) {
+// 		delete me;
+// 		list->erase(curr);
+		// Need to delete, but can't do it now because the
+		// data is still needed.  Just set inactive and it will
+		// delete the next time around.
+		me->active=false;
+	    }
+	    else if ( match_me->me.min_free != 0 ) {
+		// Make sure there's enough room left
+		if ( len_rem - mlength < match_me->me.min_free ) {
+		    // Set inactive and remove from list.  ME will not
+		    // get deleted, and the header object that matched
+		    // will point to it for later use.
+		    list->erase(curr);
+		    me->active = false;
+		    printf("Auto-unlinking\n");
+		    // Need to send AUTO_UNLINK event
+		    if ( match_me->eq_handle != PTL_EQ_NONE ) {
+			ptl_event_t* ptl_event = NULL;
+			ptl_event = new ptl_event_t;
+			ptl_event->type = PTL_EVENT_AUTO_UNLINK;
+			ptl_event->pt_index = header->pt_index;
+			ptl_event->user_ptr = match_me->user_ptr;
+			ptl_event->ni_fail_type = PTL_OK;
+			scheduleEQ(match_me->eq_handle,ptl_event);
+		    }
+		}
+	    }
+	    break;
+	}
+    }
+    
+    if (found) {
+	*length = mlength;
+	*offset = moffset;
+	return match_me;
+    }
+    return NULL;
 }
