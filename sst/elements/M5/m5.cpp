@@ -42,6 +42,9 @@ M5::M5( ComponentId_t id, Params_t& params ) :
         } 
     }
 
+    extern int rgdb_enable;
+    rgdb_enable = false;
+
     std::ostringstream tmp;
 
     tmp << world.rank();
@@ -87,8 +90,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
         }
     }
 
-    extern int rgdb_enable;
-    rgdb_enable = false;
     DBGX( 2, "returning\n" );
 }
 
