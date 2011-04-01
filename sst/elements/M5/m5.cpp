@@ -170,7 +170,7 @@ static void enableDebug( std::string name )
 //            printf("%s\n",Trace::flagStrings[i]);
 
             if ( all || name.find( Trace::flagStrings[i] ) != string::npos) {
-                printf("enable %s\n",Trace::flagStrings[i]);
+//                printf("enable %s\n",Trace::flagStrings[i]);
                 Trace::flags[i] = true;
             }
     }
