@@ -42,7 +42,8 @@ libm5C_la_SOURCES += O3Cpu.cpp
 endif
 
 if HAVE_DRAMSIM 
-libm5C_la_SOURCES += DRAMSimWrap.cpp DRAMSimWrap.h
+libm5C_la_SOURCES += DRAMSimWrap.cpp DRAMSimWrap.h \
+            DRAMSimWrapPlus.cpp DRAMSimWrapPlus.h
 endif
 
 libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
