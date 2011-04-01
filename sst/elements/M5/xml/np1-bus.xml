@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<config>
+    stopAtCycle=1000000000s
+</config>
+
+<sst>
+    <component id="system" >
+        <m5C.M5>
+            <params>
+                <configFile>xml/dramBusM5.xml</configFile>
+                <debug>0</debug>
+                <M5debug> none </M5debug>
+                <info>yes</info>
+                <registerExit>yes</registerExit>
+            </params>
+        </m5C.M5>
+    </component>
+</sst>
