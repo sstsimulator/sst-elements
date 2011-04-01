@@ -101,6 +101,11 @@ DRAMSimWrap::~DRAMSimWrap()
 Port * DRAMSimWrap::getPort(const std::string &if_name, int idx )
 {
     DPRINTFN("%s: if_name=`%s` idx=%d\n", __func__, if_name.c_str(), idx );
+
+    if (if_name == "functional") {
+        return new MemoryPort(csprintf("%s-functional", name()), this);
+    }
+
     assert( ! m_port );
 
     if (if_name != "port") {
