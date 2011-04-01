@@ -110,3 +110,4 @@ void MemLink::eventHandler( SST::Event* e )
 
     delete event;
 }
+BOOST_CLASS_EXPORT(MemEvent);
