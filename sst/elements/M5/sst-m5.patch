@@ -1,81 +1,266 @@
-diff -c -r m5/src/mem/physical.hh /Users/mjleven/m5-sandbox/src/mem/physical.hh
-*** m5/src/mem/physical.hh	2010-10-20 13:51:49.000000000 -0600
---- /Users/mjleven/m5-sandbox/src/mem/physical.hh	2010-12-22 12:04:30.000000000 -0700
-***************
-*** 173,182 ****
-      virtual Port *getPort(const std::string &if_name, int idx = -1);
-      void virtual init();
-      unsigned int drain(Event *de);
-  
-    protected:
-      Tick doAtomicAccess(PacketPtr pkt);
--     void doFunctionalAccess(PacketPtr pkt);
-      virtual Tick calculateLatency(PacketPtr pkt);
-      void recvStatusChange(Port::Status status);
-  
---- 173,183 ----
-      virtual Port *getPort(const std::string &if_name, int idx = -1);
-      void virtual init();
-      unsigned int drain(Event *de);
-+     virtual void doFunctionalAccess(PacketPtr pkt);
-+     virtual void recvRetry() {}; 
-  
-    protected:
-      Tick doAtomicAccess(PacketPtr pkt);
-      virtual Tick calculateLatency(PacketPtr pkt);
-      void recvStatusChange(Port::Status status);
-  
-diff -c -r m5/src/sim/simulate.cc /Users/mjleven/m5-sandbox/src/sim/simulate.cc
-*** m5/src/sim/simulate.cc	2010-10-20 13:51:49.000000000 -0600
---- /Users/mjleven/m5-sandbox/src/sim/simulate.cc	2011-01-06 09:33:22.000000000 -0700
-***************
-*** 85,90 ****
---- 85,92 ----
-                  assert(limit_event->scheduled());
-                  limit_event->squash();
-                  hack_once("be nice to actually delete the event here");
-+             } else { 
-+                 se_event = NULL;
-              }
-  
-              return se_event;
-diff -c -r m5/src/sim/system.cc /Users/mjleven/m5-sandbox/src/sim/system.cc
-*** m5/src/sim/system.cc	2010-10-20 13:51:49.000000000 -0600
---- /Users/mjleven/m5-sandbox/src/sim/system.cc	2010-12-15 14:35:31.000000000 -0700
-***************
-*** 253,259 ****
-      ++page_ptr;
-      if (return_addr >= physmem->size())
-          fatal("Out of memory, please increase size of physical memory.");
-!     return return_addr;
-  }
-  
-  Addr
---- 253,259 ----
-      ++page_ptr;
-      if (return_addr >= physmem->size())
-          fatal("Out of memory, please increase size of physical memory.");
-!     return physmem->start() + return_addr;
-  }
-  
-  Addr
-diff -c -r m5/src/sim/system.hh /Users/mjleven/m5-sandbox/src/sim/system.hh
-*** m5/src/sim/system.hh	2010-10-20 13:51:49.000000000 -0600
---- /Users/mjleven/m5-sandbox/src/sim/system.hh	2010-12-15 14:16:26.000000000 -0700
-***************
-*** 89,95 ****
-      std::vector<ThreadContext *> threadContexts;
-      int _numContexts;
-  
-!     ThreadContext *getThreadContext(ThreadID tid)
-      {
-          return threadContexts[tid];
-      }
---- 89,95 ----
-      std::vector<ThreadContext *> threadContexts;
-      int _numContexts;
-  
-!     virtual ThreadContext *getThreadContext(ThreadID tid)
-      {
-          return threadContexts[tid];
-      }
+diff -u -x '*.pyc' -r m5-orig/src/arch/alpha/linux/process.cc m5/src/arch/alpha/linux/process.cc
+--- m5-orig/src/arch/alpha/linux/process.cc	2010-10-20 13:51:48.000000000 -0600
++++ m5/src/arch/alpha/linux/process.cc	2011-04-01 09:56:48.000000000 -0600
+@@ -563,7 +563,9 @@
+     /* 438 */ SyscallDesc("waitid", unimplementedFunc),
+     /* 439 */ SyscallDesc("add_key", unimplementedFunc),
+     /* 440 */ SyscallDesc("request_key", unimplementedFunc),
+-    /* 441 */ SyscallDesc("keyctl", unimplementedFunc)
++    /* 441 */ SyscallDesc("keyctl", unimplementedFunc),
++    /* 442 */ SyscallDesc("virt2phys", virt2physFunc),
++    /* 443 */ SyscallDesc("mmap_dev", mmap_devFunc)
+ };
+ 
+ AlphaLinuxProcess::AlphaLinuxProcess(LiveProcessParams * params,
+diff -u -x '*.pyc' -r m5-orig/src/arch/alpha/tlb.cc m5/src/arch/alpha/tlb.cc
+--- m5-orig/src/arch/alpha/tlb.cc	2010-10-20 13:51:48.000000000 -0600
++++ m5/src/arch/alpha/tlb.cc	2011-04-01 15:04:49.000000000 -0600
+@@ -233,6 +233,13 @@
+             return new UnimpFault("CPU trying to fetch from uncached I/O");
+ 
+     }
++#if 1 
++    if ( req->getPaddr() < 0x2000 ) {
++	    //DPRINTFN("TLB::%s() don't cache %#lx\n",__func__,req->getPaddr());
++        req->setFlags(Request::UNCACHEABLE);
++    }
++#endif
++
+     return NoFault;
+ }
+ 
+diff -u -x '*.pyc' -r m5-orig/src/base/trace.cc m5/src/base/trace.cc
+--- m5-orig/src/base/trace.cc	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/base/trace.cc	2011-04-01 13:47:50.000000000 -0600
+@@ -92,6 +92,17 @@
+         args.push_front(when);
+     }
+ 
++#if 1 
++    static int _rank = -1;
++    if ( _rank == - 1) {
++        char* tmp = getenv("RANK");
++        if ( tmp ) sscanf( tmp, "%d", &_rank );
++    }
++ 
++    fmt = "%d:" + fmt;
++    args.push_front(_rank);
++#endif
++
+     fmt += format;
+ 
+     ccprintf(os, fmt.c_str(), args);
+diff -u -x '*.pyc' -r m5-orig/src/cpu/intr_control.cc m5/src/cpu/intr_control.cc
+--- m5-orig/src/cpu/intr_control.cc	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/cpu/intr_control.cc	2011-03-24 08:32:20.000000000 -0600
+@@ -50,7 +50,7 @@
+     DPRINTF(IntrControl, "post  %d:%d (cpu %d)\n", int_num, index, cpu_id);
+     std::vector<ThreadContext *> &tcvec = sys->threadContexts;
+     BaseCPU *cpu = tcvec[cpu_id]->getCpuPtr();
+-    cpu->postInterrupt(int_num, index);
++    //cpu->postInterrupt(int_num, index);
+ }
+ 
+ void
+@@ -59,7 +59,7 @@
+     DPRINTF(IntrControl, "clear %d:%d (cpu %d)\n", int_num, index, cpu_id);
+     std::vector<ThreadContext *> &tcvec = sys->threadContexts;
+     BaseCPU *cpu = tcvec[cpu_id]->getCpuPtr();
+-    cpu->clearInterrupt(int_num, index);
++    //cpu->clearInterrupt(int_num, index);
+ }
+ 
+ IntrControl *
+diff -u -x '*.pyc' -r m5-orig/src/cpu/SConscript m5/src/cpu/SConscript
+--- m5-orig/src/cpu/SConscript	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/cpu/SConscript	2011-03-21 09:04:00.000000000 -0600
+@@ -136,6 +136,10 @@
+         SimObject('LegionTrace.py')
+         Source('legiontrace.cc')
+ 
++if env['FULL_SYSTEM'] == 0:
++    SimObject('IntrControl.py')
++    Source('intr_control.cc')
++
+ if env['TARGET_ISA'] == 'x86':
+     SimObject('NativeTrace.py')
+     Source('nativetrace.cc')
+diff -u -x '*.pyc' -r m5-orig/src/dev/SConscript m5/src/dev/SConscript
+--- m5-orig/src/dev/SConscript	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/dev/SConscript	2011-03-21 09:02:11.000000000 -0600
+@@ -106,3 +106,10 @@
+         'EthernetIntr', 'EthernetSM', 'EthernetCksum' ])
+     CompoundFlag('IdeAll', [ 'IdeCtrl', 'IdeDisk' ])
+ 
++if env['FULL_SYSTEM'] == 0:
++    SimObject('Device.py')
++    SimObject('Platform.py')
++    TraceFlag('DMA')
++    TraceFlag('IsaFake')
++    Source('io_device.cc')
++    Source('isa_fake.cc')
+diff -u -x '*.pyc' -r m5-orig/src/mem/cache/cache_impl.hh m5/src/mem/cache/cache_impl.hh
+--- m5-orig/src/mem/cache/cache_impl.hh	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/mem/cache/cache_impl.hh	2011-04-01 09:18:21.000000000 -0600
+@@ -1031,6 +1031,9 @@
+     pkt->makeTimingResponse();
+     if (pkt->isRead()) {
+         pkt->setDataFromBlock(blk_data, blkSize);
++    } else if (pkt->isWrite()) {
++	    DPRINTF( Cache, "%s()\n",req_pkt->getAddr() );
++        req_pkt->writeDataToBlock(blk_data, blkSize);
+     }
+     if (pkt->cmd == MemCmd::ReadResp && pending_inval) {
+         // Assume we defer a response to a read from a far-away cache
+diff -u -x '*.pyc' -r m5-orig/src/mem/packet.hh m5/src/mem/packet.hh
+--- m5-orig/src/mem/packet.hh	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/mem/packet.hh	2011-03-24 08:22:29.000000000 -0600
+@@ -384,6 +384,8 @@
+      */
+     SenderState *senderState;
+ 
++    FlagsType getFlags() const { return flags; } 
++
+     /// Return the string name of the cmd field (for debugging and
+     /// tracing).
+     const std::string &cmdString() const { return cmd.toString(); }
+diff -u -x '*.pyc' -r m5-orig/src/mem/page_table.cc m5/src/mem/page_table.cc
+--- m5-orig/src/mem/page_table.cc	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/mem/page_table.cc	2011-04-01 10:38:48.000000000 -0600
+@@ -65,6 +65,30 @@
+ }
+ 
+ void
++PageTable::map(Addr vaddr, Addr paddr, int64_t size)
++{
++    // starting address must be page aligned
++    assert(pageOffset(vaddr) == 0);
++
++    DPRINTF(MMU, "Mapping Page: %#x-%#x -> %#x-%#x\n", 
++		vaddr, vaddr+ size, paddr, paddr+ size);
++
++    for (; size > 0; size -= pageSize, vaddr += pageSize, paddr += pageSize) {
++        PTableItr iter = pTable.find(vaddr);
++
++        if (iter != pTable.end()) {
++            // already mapped
++            fatal("PageTable::allocate: address 0x%x already mapped",
++                    vaddr);
++        }
++
++        pTable[vaddr] = TheISA::TlbEntry(process->M5_pid, vaddr, paddr );
++        DPRINTF(MMU,"Mapping %#lx %#lx\n", vaddr, paddr);
++        updateCache(vaddr, pTable[vaddr]);
++    }
++}
++
++void
+ PageTable::allocate(Addr vaddr, int64_t size)
+ {
+     // starting address must be page aligned
+diff -u -x '*.pyc' -r m5-orig/src/mem/page_table.hh m5/src/mem/page_table.hh
+--- m5-orig/src/mem/page_table.hh	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/mem/page_table.hh	2011-03-21 13:01:39.000000000 -0600
+@@ -79,6 +79,7 @@
+     Addr pageAlign(Addr a)  { return (a & ~offsetMask); }
+     Addr pageOffset(Addr a) { return (a &  offsetMask); }
+ 
++    void map(Addr vaddr, Addr paddr, int64_t size);
+     void allocate(Addr vaddr, int64_t size);
+     void remap(Addr vaddr, int64_t size, Addr new_vaddr);
+     void deallocate(Addr vaddr, int64_t size);
+diff -u -x '*.pyc' -r m5-orig/src/sim/simulate.cc m5/src/sim/simulate.cc
+--- m5-orig/src/sim/simulate.cc	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/sim/simulate.cc	2011-03-28 14:05:59.000000000 -0600
+@@ -85,6 +85,11 @@
+                 assert(limit_event->scheduled());
+                 limit_event->squash();
+                 hack_once("be nice to actually delete the event here");
++fprintf(stderr,"%s %s %d\n",se_event->getCause().c_str(),
++                    se_event->description(),
++                    se_event->getCode());
++            } else { 
++                se_event = NULL;
+             }
+ 
+             return se_event;
+diff -u -x '*.pyc' -r m5-orig/src/sim/syscall_emul.cc m5/src/sim/syscall_emul.cc
+--- m5-orig/src/sim/syscall_emul.cc	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/sim/syscall_emul.cc	2011-04-01 09:56:56.000000000 -0600
+@@ -67,6 +67,37 @@
+         process->setSyscallReturn(tc, retval);
+ }
+ 
++SyscallReturn
++mmap_devFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
++                  ThreadContext *tc)
++{
++    uint64_t  paddr = process->getSyscallArg(tc, 0);
++    uint64_t  length = process->getSyscallArg(tc, 1);
++
++    Addr start = process->mmap_end;
++
++    DPRINTF(SyscallVerbose, "syscall %s (#%d) vaddr=%#lx paddr=%#lx"
++		" length=%#lx\n", desc->name, callnum, start, paddr, length);
++
++    process->pTable->map(start, paddr, length );
++    process->mmap_end += length;
++
++    return start;
++}
++
++
++SyscallReturn
++virt2physFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
++                  ThreadContext *tc)
++{
++    uint64_t  addr = process->getSyscallArg(tc, 0);
++    DPRINTF(SyscallVerbose, "syscall %s (#%d) addr=%#lx\n",
++                                 desc->name, callnum, addr);
++
++    Addr paddr;
++    process->pTable->translate( process->getSyscallArg(tc, 0), paddr );
++    return paddr;
++}
+ 
+ SyscallReturn
+ unimplementedFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
+diff -u -x '*.pyc' -r m5-orig/src/sim/syscall_emul.hh m5/src/sim/syscall_emul.hh
+--- m5-orig/src/sim/syscall_emul.hh	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/sim/syscall_emul.hh	2011-04-01 09:57:37.000000000 -0600
+@@ -176,6 +176,11 @@
+ SyscallReturn unimplementedFunc(SyscallDesc *desc, int num,
+                                 LiveProcess *p, ThreadContext *tc);
+ 
++SyscallReturn virt2physFunc(SyscallDesc *desc, int num,
++                                LiveProcess *p, ThreadContext *tc);
++SyscallReturn mmap_devFunc(SyscallDesc *desc, int num,
++                                LiveProcess *p, ThreadContext *tc);
++
+ /// Handler for unimplemented syscalls that we never intend to
+ /// implement (signal handling, etc.) and should not affect the correct
+ /// behavior of the program.  Print a warning only if the appropriate
+diff -u -x '*.pyc' -r m5-orig/src/sim/system.cc m5/src/sim/system.cc
+--- m5-orig/src/sim/system.cc	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/sim/system.cc	2011-04-01 12:19:57.000000000 -0600
+@@ -253,7 +253,7 @@
+     ++page_ptr;
+     if (return_addr >= physmem->size())
+         fatal("Out of memory, please increase size of physical memory.");
+-    return return_addr;
++    return physmem->start() + return_addr;
+ }
+ 
+ Addr
+diff -u -x '*.pyc' -r m5-orig/src/sim/system.hh m5/src/sim/system.hh
+--- m5-orig/src/sim/system.hh	2010-10-20 13:51:49.000000000 -0600
++++ m5/src/sim/system.hh	2010-12-15 14:16:26.000000000 -0700
+@@ -89,7 +89,7 @@
+     std::vector<ThreadContext *> threadContexts;
+     int _numContexts;
+ 
+-    ThreadContext *getThreadContext(ThreadID tid)
++    virtual ThreadContext *getThreadContext(ThreadID tid)
+     {
+         return threadContexts[tid];
+     }
