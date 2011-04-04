@@ -18,22 +18,24 @@ using namespace std;
 map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
 bool EndOfTrace = false; 
 
-int __types[END_CALLS][END_ARGS];
+sstdisksim_trace_entries __list;
+unsigned __types[END_CALLS][END_ARGS];
+__argWithState __tmp_vals[END_CALLS][END_ARGS];
+
+// This variable is used to hack our way around a TAU "feature" to allow spikes for viz
+// tools.
+unsigned __vizhack[END_CALLS][END_ARGS];
+
 
 // implementation of callback routines 
 int EnterState(void *userData, double time, 
 	       unsigned int nid, unsigned int tid, unsigned int stateid)
 {
-  printf("Entered state %d time %g nid %d tid %d\n", 
-  	 stateid, time, nid, tid);
   return 0;
 }
 
 int LeaveState(void *userData, double time, unsigned int nid, unsigned int tid, unsigned int stateid)
 {
-  printf("Exited state %d time %g nid %d tid %d\n", 
-  	 stateid, time, nid, tid);
-
   return 0;
 }
 
@@ -46,14 +48,11 @@ int ClockPeriod( void*  userData, double clkPeriod )
 int DefThread(void *userData, unsigned int nid, unsigned int threadToken,
 	      const char *threadName )
 {
-  printf("DefThread nid %d tid %d, thread name %s\n", 
-  	 nid, threadToken, threadName);
   return 0;
 }
 
 int EndTrace( void *userData, unsigned int nid, unsigned int threadid)
 {
-  printf("EndTrace nid %d tid %d\n", nid, threadid);
   //  EOF_Trace[pair<int,int> (nid,threadid) ] = 1; /* flag it as over */
   /* yes, it is over */
   map < pair<int, int>, int, less< pair<int,int> > >::iterator it;
@@ -72,16 +71,12 @@ int EndTrace( void *userData, unsigned int nid, unsigned int threadid)
 int DefStateGroup( void *userData, unsigned int stateGroupToken, 
 		   const char *stateGroupName )
 {
-  printf("StateGroup groupid %d, group name %s\n", stateGroupToken, 
-	 stateGroupName);
   return 0;
 }
 
 int DefState( void *userData, unsigned int stateToken, const char *stateName, 
 	      unsigned int stateGroupToken )
 {
-  printf("DefState stateid %d stateName %s stategroup id %d\n",
-	 stateToken, stateName, stateGroupToken);
   return 0;
 }
 
@@ -94,10 +89,12 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
     if ( strstr(userEventName, "fd" ) )
     {
       __types[READ][FD] = userEventToken;
+      printf ( "RF %d %d\n", userEventToken, __types[READ][FD] );
     }
     else if ( strstr(userEventName, "Bytes" ) )
     {
       __types[READ][COUNT] = userEventToken;
+      printf ( "RC %d %d\n", userEventToken, __types[READ][COUNT] );
     }
   }
   else if ( strstr(userEventName, "WRITE") )
@@ -105,10 +102,12 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
     if ( strstr(userEventName, "fd" ) )
     {
       __types[WRITE][FD] = userEventToken;
+      printf ( "WF %d %d\n", userEventToken, __types[WRITE][FD] );
     }
     else if ( strstr(userEventName, "Bytes" ) )
     {
       __types[WRITE][COUNT] = userEventToken;
+      printf ( "WC %d %d\n", userEventToken, __types[WRITE][COUNT] );
     }    
   }
 
@@ -121,13 +120,46 @@ int EventTrigger( void *userData, double time,
 		  unsigned int userEventToken,
 		  long long userEventValue)
 {
-  static int i = 0;
+  for ( int i = 0; i < END_CALLS; i++ )
+  {
+    for ( int j = 0; j < END_ARGS; j++ )
+    {
+      if ( userEventToken == __types[i][j] )
+      {
+	printf("Cur Token: %zd\n", userEventValue);
+	if ( __vizhack[i][j] == 1 )
+	{
+	  // A real value.  
+	  __tmp_vals[i][j].arg.l = userEventValue;
+	   __tmp_vals[i][j].set = true;
+	  for ( int k = 0; k < END_ARGS; k++ )
+	  {
+	    if ( __tmp_vals[i][k].set == false )
+	      break;
+	    else if ( k == END_ARGS-1 )
+	    {
+	      __argument tmp[END_ARGS];
+	      for ( int a = 0; a < END_ARGS; a++ )
+	      {
+		tmp[a].l = __tmp_vals[i][a].arg.l;
+		printf("Value: %zd\n", tmp[a].t);
+	      }
+	      __list.add_entry((__call)i, tmp);
+	      for ( int a = 0; a < END_ARGS; a++ )
+		__tmp_vals[i][a].set = false;
+	    }
+	  }
+	}
+	else
+	{
+	  // A throwout value because of viz hacks in the trace files.
+	}
 
-  //  if ( i == 1 || userEventToken < 4 )
-  printf("EventTrigger: time %g, nid %d tid %d event id %d triggered value %lld \n", time, nodeToken, threadToken, userEventToken, userEventValue);
-
-  if ( userEventToken > 3 )
-    i++;
+	__vizhack[i][j]++;
+	__vizhack[i][j] = __vizhack[i][j] % 3;
+      }
+    }
+  }
 
   return 0;
 }
@@ -143,9 +175,6 @@ int SendMessage ( void*  userData,
 		  unsigned int messageComm
 		  )
 {
-  printf("Message Send: time %g, nid %d, tid %d dest nid %d dest tid %d messageSize %d messageComm %d messageTag %ud \n", time, sourceNodeToken,
-  	 sourceThreadToken, destinationNodeToken,
-  	 destinationThreadToken, messageSize, messageComm, messageTag);
   return 0;
 }
 
@@ -160,9 +189,6 @@ int RecvMessage ( void*  userData,
 		  unsigned int messageComm
 		  )
 {
-  printf("Message Recv: time %g, nid %d, tid %d dest nid %d dest tid %d messageSize %d messageComm %d messageTag %ud \n", time, sourceNodeToken,
-  	 sourceThreadToken, destinationNodeToken,
-  	 destinationThreadToken, messageSize, messageComm, messageTag);
   return 0;
 }
 
@@ -172,6 +198,13 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
 
   int recs_read, pos;
   Ttf_CallbacksT cb;
+
+  for ( int i = 0; i < END_CALLS; i++ )
+    for ( int j = 0; j < END_ARGS; j++ )
+    {
+      __tmp_vals[i][j].set = false;
+      __vizhack[i][j] = 0;
+    }
 
   // open trace file 
   fh = Ttf_OpenFileForInput(trc_file, edf_file);
@@ -232,7 +265,7 @@ sstdisksim_tau_parser::getNextEvent()
     return NULL;
 
   bool looping = true;
-  while ( looping == true )
+  while ( looping == true && cur_event != NULL )
   {
     switch(cur_event->call->call)
     {
@@ -240,11 +273,13 @@ sstdisksim_tau_parser::getNextEvent()
       ev->etype = DISKSIMREAD;
       ev->count = cur_event->args[2].t;
       looping = false;
+      printf("Sending read event with count %zd\n", ev->count);
       break;
     case WRITE:
       ev->etype = DISKSIMWRITE;
       ev->count = cur_event->args[2].t;
       looping = false;
+      printf("Sending write event with count %zd\n", ev->count);
       break;
     default:
       free(cur_event);

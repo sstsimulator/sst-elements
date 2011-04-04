@@ -33,12 +33,6 @@ class sstdisksim_tau_parser {
   sstdisksim_tau_parser(const char* trc_file, const char* edf_file);
   ~sstdisksim_tau_parser();
   sstdisksim_event* getNextEvent();
-
- private:
-  sstdisksim_trace_entries __list;
-
-  int types[END_CALLS][END_ARGS];
-  char* argnames[END_ARGS];
 };
 
 #endif // _SSTDISKSIM_TAU_PARSER_H 

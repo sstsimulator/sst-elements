@@ -16,13 +16,20 @@
 
 #define __ARG_MAX 8
 
-union __argument {
+union __argument 
+{
   char* s;
-  long l;
+  long long l;
   int i;
   unsigned int u;
   size_t t;
   void* p;
+};
+
+struct __argWithState
+{
+  __argument arg;
+  bool set;
 };
 
 enum __call
