@@ -175,7 +175,7 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
     PacketPtr pkt = m_readQ.front().first;
 
     if ( m_readQ.front().second >= pkt->getSize() ) {
-        PhysicalMemory::doFunctionalAccess( pkt );
+        PhysicalMemory::doAtomicAccess( pkt );
         m_readyQ.push_back(pkt);
         m_readQ.pop_front();
     } 
@@ -192,8 +192,12 @@ void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
     PacketPtr pkt = m_writeQ.front().first;
 
     if ( m_writeQ.front().second >= pkt->getSize() ) {
-        PhysicalMemory::doFunctionalAccess( pkt );
-        m_readyQ.push_back(pkt);
+        PhysicalMemory::doAtomicAccess( pkt );
+        if ( pkt->needsResponse() ) {
+            m_readyQ.push_back(pkt);
+        } else {
+            delete pkt;
+        }
         m_writeQ.pop_front();
     } 
 }
