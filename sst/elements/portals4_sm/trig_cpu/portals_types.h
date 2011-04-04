@@ -228,7 +228,7 @@ typedef struct {
     ptl_handle_ct_t ct_handle; 
     ptl_size_t min_free;
     //  ptl_ac_id_t ac_id;
-    unsigned int options; 
+    uint32_t options; 
     //  ptl_process_t match_id; 
     ptl_match_bits_t match_bits; 
     ptl_match_bits_t ignore_bits; 

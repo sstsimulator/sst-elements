@@ -438,8 +438,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			abort();
 		    }
 
-		    // Generatate PUT_OVERFLOW event and sent to host
-		    // Prepare the event to be delivered when this is done
+		    // Generatate PUT_OVERFLOW event and send to host
 		    ptl_event_t* ptl_event = NULL;
 		    if ( ev->data.me->eq_handle != PTL_EQ_NONE ) {
 			ptl_event = new ptl_event_t;
@@ -576,8 +575,10 @@ void trig_nic::processPtlEvent( Event *e ) {
 		ptl_int_msg_info_t* msg_info = out_msg_q[header.out_msg_index];
 		out_msg_q.erase(header.out_msg_index);
 
+		bool ack_disabled = (header.header_data & PTL_ME_ACK_DISABLE);
+		
 		// Generate the ACK event
-		if ( msg_info->eq_handle != PTL_EQ_NONE ) {   
+		if ( msg_info->eq_handle != PTL_EQ_NONE && !ack_disabled ) {   
 		    ptl_event_t* ptl_event = new ptl_event_t;
 		    ptl_event->type = PTL_EVENT_ACK;
 // 		    ptl_event->initiator = ev->src;
@@ -677,7 +678,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ptl_event->mlength = header.length;
 // 			ptl_event->remote_offset = header.offset;
 			ptl_event->remote_offset = moffset;
-			ptl_event->start = match_me->me.start;
+			ptl_event->start = ((uint8_t*)match_me->me.start) + moffset;
 			ptl_event->user_ptr = match_me->user_ptr;
 			ptl_event->hdr_data = header.header_data;
 			ptl_event->ni_fail_type = PTL_OK;
@@ -786,6 +787,7 @@ void trig_nic::processPtlEvent( Event *e ) {
  		    hdr->out_msg_index = header.out_msg_index;
 		    hdr->length = mlength;
 		    hdr->remote_offset = moffset;
+		    hdr->header_data = match_me->me.options;
 
 		    // Prepare the event to be delivered when this is done
 		    ptl_event_t* ptl_event = NULL;
