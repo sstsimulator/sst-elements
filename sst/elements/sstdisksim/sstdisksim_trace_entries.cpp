@@ -25,7 +25,7 @@ sstdisksim_trace_entries::print_entries()
     printf("%s ", cur->call->name);
 
     int i = 0;
-    while ( i < __ARG_MAX && (cur->call->fmt)[i] != '\0' )
+    while ( i < _END_ARGS && (cur->call->fmt)[i] != '\0' )
     {
       switch (cur->call->fmt[i])
       {
@@ -61,33 +61,33 @@ sstdisksim_trace_entries::print_entries()
 
 sstdisksim_trace_entries::sstdisksim_trace_entries()
 {
-  strcpy(__calls[READ].name, "READ");
-  strcpy(__calls[READ].fmt, "ipt");
-  __calls[READ].call = READ;
+  strcpy(__calls[_CALL_READ].name, "READ");
+  strcpy(__calls[_CALL_READ].fmt, "ipt");
+  __calls[_CALL_READ].call = _CALL_READ;
 
-  strcpy(__calls[WRITE].name, "WRITE");
-  strcpy(__calls[WRITE].fmt, "ipt");
-  __calls[WRITE].call = WRITE;
+  strcpy(__calls[_CALL_WRITE].name, "WRITE");
+  strcpy(__calls[_CALL_WRITE].fmt, "ipt");
+  __calls[_CALL_WRITE].call = _CALL_WRITE;
 
-  strcpy(__calls[FSYNC].name, "FSYNC");
-  strcpy(__calls[FSYNC].fmt, "ipt");
-  __calls[FSYNC].call = FSYNC;
+  strcpy(__calls[_CALL_FSYNC].name, "FSYNC");
+  strcpy(__calls[_CALL_FSYNC].fmt, "ipt");
+  __calls[_CALL_FSYNC].call = _CALL_FSYNC;
 
-  strcpy(__calls[OPEN].name, "OPEN");
-  strcpy(__calls[OPEN].fmt, "si");
-  __calls[OPEN].call = OPEN;
+  strcpy(__calls[_CALL_OPEN].name, "OPEN");
+  strcpy(__calls[_CALL_OPEN].fmt, "si");
+  __calls[_CALL_OPEN].call = _CALL_OPEN;
 
-  strcpy(__calls[CLOSE].name, "CLOSE");
-  strcpy(__calls[CLOSE].fmt, "i");
-  __calls[CLOSE].call = CLOSE;
+  strcpy(__calls[_CALL_CLOSE].name, "CLOSE");
+  strcpy(__calls[_CALL_CLOSE].fmt, "i");
+  __calls[_CALL_CLOSE].call = _CALL_CLOSE;
 
   head=tail=NULL;
 }
 
 void
-sstdisksim_trace_entries::add_entry(__call call, __argument args[__ARG_MAX])
+sstdisksim_trace_entries::add_entry(__call call, __argument args[_END_ARGS])
 {
-  if ( call > END_CALLS )
+  if ( call > _END_CALLS )
   {
     exit(1);
     return;
@@ -97,8 +97,10 @@ sstdisksim_trace_entries::add_entry(__call call, __argument args[__ARG_MAX])
   cur->call = &(__calls[call]);
   cur->next = NULL;
 
-  for ( int i = 0; i < __ARG_MAX; i++ )
+  for ( int i = 0; i < _END_ARGS; i++ )
+  {
     cur->args[i] = args[i];
+  }
 
   if ( head == NULL )
     head = tail = cur;

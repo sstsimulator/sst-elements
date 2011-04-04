@@ -19,12 +19,12 @@ map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
 bool EndOfTrace = false; 
 
 sstdisksim_trace_entries __list;
-unsigned __types[END_CALLS][END_ARGS];
-__argWithState __tmp_vals[END_CALLS][END_ARGS];
+unsigned __types[_END_CALLS][_END_ARGS];
+__argWithState __tmp_vals[_END_CALLS][_END_ARGS];
 
 // This variable is used to hack our way around a TAU "feature" to allow spikes for viz
 // tools.
-unsigned __vizhack[END_CALLS][END_ARGS];
+unsigned __vizhack[_END_CALLS][_END_ARGS];
 
 
 // implementation of callback routines 
@@ -88,26 +88,22 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
   {
     if ( strstr(userEventName, "fd" ) )
     {
-      __types[READ][FD] = userEventToken;
-      printf ( "RF %d %d\n", userEventToken, __types[READ][FD] );
+      __types[_CALL_READ][_ARG_FD] = userEventToken;
     }
     else if ( strstr(userEventName, "Bytes" ) )
     {
-      __types[READ][COUNT] = userEventToken;
-      printf ( "RC %d %d\n", userEventToken, __types[READ][COUNT] );
+      __types[_CALL_READ][_ARG_COUNT] = userEventToken;
     }
   }
   else if ( strstr(userEventName, "WRITE") )
   {
     if ( strstr(userEventName, "fd" ) )
     {
-      __types[WRITE][FD] = userEventToken;
-      printf ( "WF %d %d\n", userEventToken, __types[WRITE][FD] );
+      __types[_CALL_WRITE][_ARG_FD] = userEventToken;
     }
     else if ( strstr(userEventName, "Bytes" ) )
     {
-      __types[WRITE][COUNT] = userEventToken;
-      printf ( "WC %d %d\n", userEventToken, __types[WRITE][COUNT] );
+      __types[_CALL_WRITE][_ARG_COUNT] = userEventToken;
     }    
   }
 
@@ -120,32 +116,28 @@ int EventTrigger( void *userData, double time,
 		  unsigned int userEventToken,
 		  long long userEventValue)
 {
-  for ( int i = 0; i < END_CALLS; i++ )
+  for ( int i = 0; i < _END_CALLS; i++ )
   {
-    for ( int j = 0; j < END_ARGS; j++ )
+    for ( int j = 0; j < _END_ARGS; j++ )
     {
       if ( userEventToken == __types[i][j] )
       {
-	printf("Cur Token: %zd\n", userEventValue);
 	if ( __vizhack[i][j] == 1 )
 	{
 	  // A real value.  
 	  __tmp_vals[i][j].arg.l = userEventValue;
 	   __tmp_vals[i][j].set = true;
-	  for ( int k = 0; k < END_ARGS; k++ )
+	  for ( int k = 0; k < _END_ARGS; k++ )
 	  {
 	    if ( __tmp_vals[i][k].set == false )
 	      break;
-	    else if ( k == END_ARGS-1 )
+	    else if ( k == _END_ARGS-1 )
 	    {
-	      __argument tmp[END_ARGS];
-	      for ( int a = 0; a < END_ARGS; a++ )
-	      {
+	      __argument tmp[_END_ARGS];
+	      for ( int a = 0; a < _END_ARGS; a++ )
 		tmp[a].l = __tmp_vals[i][a].arg.l;
-		printf("Value: %zd\n", tmp[a].t);
-	      }
 	      __list.add_entry((__call)i, tmp);
-	      for ( int a = 0; a < END_ARGS; a++ )
+	      for ( int a = 0; a < _END_ARGS; a++ )
 		__tmp_vals[i][a].set = false;
 	    }
 	  }
@@ -199,8 +191,8 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
   int recs_read, pos;
   Ttf_CallbacksT cb;
 
-  for ( int i = 0; i < END_CALLS; i++ )
-    for ( int j = 0; j < END_ARGS; j++ )
+  for ( int i = 0; i < _END_CALLS; i++ )
+    for ( int j = 0; j < _END_ARGS; j++ )
     {
       __tmp_vals[i][j].set = false;
       __vizhack[i][j] = 0;
@@ -233,8 +225,6 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
   /* Go through each record until the end of the trace file */
   do {
     recs_read = Ttf_ReadNumEvents(fh,cb, 1024);
-    if (recs_read != 0)
-      cout <<"Read "<<recs_read<<" records"<<endl;
   }
   while ((recs_read >=0) && (!EndOfTrace));
 
@@ -244,9 +234,6 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
 /******************************************************************************/
 sstdisksim_tau_parser::~sstdisksim_tau_parser()
 {
-  printf("READ fd: %d bytes: %d WRITE fd: %d bytes: %d\n", __types[READ][FD],
-	 __types[READ][COUNT], __types[WRITE][FD], __types[WRITE][COUNT]);
-  
 }
 
 /******************************************************************************/
@@ -269,17 +256,15 @@ sstdisksim_tau_parser::getNextEvent()
   {
     switch(cur_event->call->call)
     {
-    case READ:
+    case _CALL_READ:
       ev->etype = DISKSIMREAD;
-      ev->count = cur_event->args[2].t;
+      ev->count = cur_event->args[_ARG_COUNT].t;
       looping = false;
-      printf("Sending read event with count %zd\n", ev->count);
       break;
-    case WRITE:
+    case _CALL_WRITE:
       ev->etype = DISKSIMWRITE;
-      ev->count = cur_event->args[2].t;
+      ev->count = cur_event->args[_ARG_COUNT].t;
       looping = false;
-      printf("Sending write event with count %zd\n", ev->count);
       break;
     default:
       free(cur_event);
@@ -290,30 +275,5 @@ sstdisksim_tau_parser::getNextEvent()
 
   free(cur_event);
   
-  /*
-  //test code
-  static int tmpCount = 0;
-  tmpCount++;
-
-  if ( tmpCount > 100 )
-    return NULL;
-  
-  
-  if ( tmpCount == 100 )
-  {
-    ev->etype = DISKSIMEND;
-    return ev;
-  }
-
-  if ( tmpCount % 3 == 0 )
-    ev->etype = DISKSIMREAD;
-  else
-    ev->etype = DISKSIMWRITE;
-  ev->pos = 0;
-  ev->count = 1000;
-  ev->devno = 0;
-  // end test code
-  */
-
   return ev;
 }

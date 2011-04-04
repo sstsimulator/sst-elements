@@ -14,8 +14,6 @@
 
 #include <stdlib.h>
 
-#define __ARG_MAX 8
-
 union __argument 
 {
   char* s;
@@ -34,20 +32,20 @@ struct __argWithState
 
 enum __call
 {
-  READ = 0,
-  WRITE,
-  FSYNC,
-  CLOSE,
-  OPEN,
-  END_CALLS
+  _CALL_READ = 0,
+  _CALL_WRITE,
+  _CALL_FSYNC,
+  _CALL_CLOSE,
+  _CALL_OPEN,
+  _END_CALLS
 };
 
 enum __arg
 {
-  FD = 0,
-  COUNT,
-  //  RET,
-  END_ARGS
+  _ARG_FD = 0,
+  _ARG_COUNT,
+  //  _ARG_RET,
+  _END_ARGS
 };
 
 struct sstdisksim_trace_call
@@ -60,7 +58,7 @@ struct sstdisksim_trace_call
 struct sstdisksim_trace_type
 {
   sstdisksim_trace_call* call;
-  __argument args[__ARG_MAX];
+  __argument args[_END_ARGS];
   sstdisksim_trace_type* next;
 };
 
@@ -69,12 +67,12 @@ class sstdisksim_trace_entries
 public:
   sstdisksim_trace_entries();
   void print_entries();
-  void add_entry(__call call, __argument args[__ARG_MAX]);
+  void add_entry(__call call, __argument args[_END_ARGS]);
   sstdisksim_trace_type* pop_entry();
 
   sstdisksim_trace_type* head;
   sstdisksim_trace_type* tail;  
-  sstdisksim_trace_call __calls[END_CALLS];
+  sstdisksim_trace_call __calls[_END_CALLS];
 };
 
 #endif // _SSTDISKSIM_TRACE_ENTRIES_H_
