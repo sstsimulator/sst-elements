@@ -108,7 +108,7 @@ int M5::Setup()
 
 bool M5::catchup( SST::Cycle_t time ) 
 {
-    DBGX( 4, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
+    DBGX( 5, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
                                     time, curTick, time - curTick ); 
 
     m_exitEvent = simulate( time - curTick );
@@ -124,10 +124,10 @@ void M5::arm( SST::Cycle_t now )
         m_event.cycles = mainEventQueue.nextTick() - now;
         m_event.time = mainEventQueue.nextTick();
 
-        DBGX( 4, "nextTick=%lu cycles=%lu\n", m_event.time, m_event.cycles );
+        DBGX( 5, "nextTick=%lu cycles=%lu\n", m_event.time, m_event.cycles );
         assert( ! ( now != 0 && m_event.cycles == 0 ) );
 
-        DBGX( 4, "send %lu\n", now + m_event.cycles );
+        DBGX( 5, "send %lu\n", now + m_event.cycles );
         m_self->Send( m_event.cycles, &m_event );
 
         m_armed = true;
@@ -140,7 +140,7 @@ void M5::selfEvent( SST::Event* )
 
     Cycle_t now = m_tc->convertToCoreTime( getCurrentSimTime(m_tc) );
 
-    DBGX( 4, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
+    DBGX( 5, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
 
     if ( ! m_exitEvent ) {
         m_exitEvent = simulate( m_event.cycles );
