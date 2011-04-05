@@ -13,7 +13,11 @@
 #include <TAU_tf.h>
 #include <iostream>
 #include <stdio.h>
+#include <map>
 using namespace std;
+
+typedef std::map<size_t, size_t> arg_map;
+arg_map fd_map;
 
 map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
 bool EndOfTrace = false; 
@@ -106,6 +110,13 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
       __types[_CALL_WRITE][_ARG_COUNT] = userEventToken;
     }    
   }
+  else if ( strstr(userEventName, "CLOSE") )
+  {
+    if ( strstr(userEventName, "fd" ) )
+    {
+      __types[_CALL_CLOSE][_ARG_FD] = userEventToken;
+    }
+  }
 
   return 0;
 }
@@ -129,9 +140,9 @@ int EventTrigger( void *userData, double time,
 	   __tmp_vals[i][j].set = true;
 	  for ( int k = 0; k < _END_ARGS; k++ )
 	  {
-	    if ( __tmp_vals[i][k].set == false )
+	    if ( __tmp_vals[i][k].set == false && i != _CALL_CLOSE )
 	      break;
-	    else if ( k == _END_ARGS-1 )
+	    else if ( k == _END_ARGS-1 || i == _CALL_CLOSE )
 	    {
 	      __argument tmp[_END_ARGS];
 	      for ( int a = 0; a < _END_ARGS; a++ )
@@ -192,11 +203,14 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
   Ttf_CallbacksT cb;
 
   for ( int i = 0; i < _END_CALLS; i++ )
+  {
     for ( int j = 0; j < _END_ARGS; j++ )
     {
       __tmp_vals[i][j].set = false;
       __vizhack[i][j] = 0;
+      __types[i][j]=0;
     }
+  }
 
   // open trace file 
   fh = Ttf_OpenFileForInput(trc_file, edf_file);
@@ -243,14 +257,11 @@ sstdisksim_tau_parser::getNextEvent()
   sstdisksim_event* ev = new sstdisksim_event();
   ev->completed = 0;
   ev->devno = 0;  // TODO: figure out device used
-  ev->pos = 0;  // TODO: figure out position
 
+  arg_map::iterator iter;
   
   sstdisksim_trace_type* cur_event = __list.pop_entry();
  
-  if ( cur_event == NULL )
-    return NULL;
-
   bool looping = true;
   while ( looping == true && cur_event != NULL )
   {
@@ -259,18 +270,58 @@ sstdisksim_tau_parser::getNextEvent()
     case _CALL_READ:
       ev->etype = DISKSIMREAD;
       ev->count = cur_event->args[_ARG_COUNT].t;
+      ev->pos = 0;  
+
+      iter = fd_map.find(cur_event->args[_ARG_FD].t);
+
+      if ( iter != fd_map.end() )
+      {
+	ev->pos =  iter->second;
+	fd_map.erase(cur_event->args[_ARG_FD].t);
+      }
+      else
+      {
+	ev->pos = 0;
+      }
+
+      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
       break;
     case _CALL_WRITE:
       ev->etype = DISKSIMWRITE;
       ev->count = cur_event->args[_ARG_COUNT].t;
+      iter = fd_map.find(cur_event->args[_ARG_FD].t);
+
+      if ( iter != fd_map.end() )
+      {
+	ev->pos =  iter->second;
+	fd_map.erase(cur_event->args[_ARG_FD].t);
+      }
+      else
+      {
+	ev->pos = 0;  
+      }
+      
+      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
       break;
+    case _CALL_CLOSE:
+      fd_map.erase(cur_event->args[_ARG_FD].t);
+    case _CALL_FSYNC:
+    case _CALL_OPEN:
     default:
       free(cur_event);
       cur_event = __list.pop_entry();
       break;
     }
+  }
+
+  if ( cur_event == NULL )
+  {
+    free(ev);
+    return NULL;
   }
 
   free(cur_event);
