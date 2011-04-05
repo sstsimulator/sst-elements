@@ -13,9 +13,9 @@ MemLink::MemLink( const MemLinkParams *p ) :
     m_port( NULL ),
     m_range( p->range )
 {
-    DBGX(2,"name=`%s` linkName=`%s`\n", name().c_str(), p->name.c_str() );
+    DBGX(2,"name=`%s` linkName=`%s`\n", name().c_str(), p->linkName.c_str());
 
-    m_link = p->m5Comp->configureLink( p->name, "1ns",
+    m_link = p->m5Comp->configureLink( p->linkName, "1ns",
         new SST::Event::Handler<MemLink>( this, &MemLink::eventHandler ) );
 
     assert( m_link );
@@ -44,10 +44,13 @@ MemLink* MemLink::create( std::string name, M5* comp, Port* port, const SST::Par
 {
     MemLinkParams& memLinkParams = *new MemLinkParams;
 
+    DBGC(2,"object name `%s` link name `%s`\n",
+                name.c_str(), params.find_string("name").c_str());
+
     memLinkParams.name = name + ".link-" + params.find_string("name");
     memLinkParams.m5Comp = comp;
+    memLinkParams.linkName = params.find_string("name");
 
-    INIT_STR( memLinkParams, params, name );
     INIT_HEX( memLinkParams, params, range.start );
     INIT_HEX( memLinkParams, params, range.end );
 
@@ -72,6 +75,7 @@ void MemLink::getAddressRanges(AddrRangeList &resp, bool &snoop ) {
 bool MemLink::send( SST::Event* event )
 {
     // Note that we are not throttling data on this link
+    DPRINTFN("%s() \n",__func__);
     m_link->Send( event );
     return true;
 }
