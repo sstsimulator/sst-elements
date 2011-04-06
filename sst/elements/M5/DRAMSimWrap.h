@@ -33,6 +33,7 @@ struct DRAMSimWrapParams : public PhysicalMemoryParams
 
 class DRAMSimWrap : public PhysicalMemory 
 {
+  protected:
     class MemPort : public Port {
       public:
         MemPort( const std::string &name, DRAMSimWrap* obj ) :
@@ -83,10 +84,13 @@ class DRAMSimWrap : public PhysicalMemory
 
     void init();
 
+   protected:
+    virtual bool recvTiming(PacketPtr pkt);
+    MemPort*        m_port;
+
   private:
     const DRAMSimWrap &operator=( const Params& p );
 
-    bool recvTiming(PacketPtr pkt);
     void recvRetry();
     void sendTry();
 
@@ -103,7 +107,6 @@ class DRAMSimWrap : public PhysicalMemory
     void*           m_memorySystem;
     bool            m_waitRetry;
     M5*             m_comp;
-    MemPort*        m_port;
 
     SST::TimeConverter*     m_tc;
 

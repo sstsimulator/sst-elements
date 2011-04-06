@@ -43,7 +43,9 @@ endif
 
 if HAVE_DRAMSIM 
 libm5C_la_SOURCES += DRAMSimWrap.cpp DRAMSimWrap.h \
-            DRAMSimWrapPlus.cpp DRAMSimWrapPlus.h
+            DRAMSimWrap2.cpp DRAMSimWrap2.h \
+            DRAMSimWrapPlus.cpp DRAMSimWrapPlus.h \
+            DRAMSimWrap2Plus.cpp DRAMSimWrap2Plus.h
 endif
 
 libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
