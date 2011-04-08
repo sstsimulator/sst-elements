@@ -1,18 +1,33 @@
+
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/params.h>
 #include <errno.h>
-
-using namespace SST;
-class Component;
 
 #include <system.h>
 
 #include <fcntl.h>
 #include <syscall.h>
 #include <debug.h>
+#include <arch/isa_specific.hh>
 
-#include <arch/alpha/linux/linux.hh>
+
+#if THE_ISA == SPARC_ISA
+    #define ISA_OS SparcLinux
+    #include <arch/sparc/linux/linux.hh>
+#elif THE_ISA == ALPHA_ISA
+    #define ISA_OS AlphaLinux
+    #include <arch/alpha/linux/linux.hh>
+#elif THE_ISA == X86_ISA
+    #define ISA_OS X86Linux64
+    #include <arch/x86/linux/linux.hh>
+#else
+    #error What ISA
+#endif
+
+using namespace SST;
+class Component;
+
 
 #define __NR_open                                45 
 #define __NR_close                               6 
@@ -116,10 +131,10 @@ int64_t Syscall::finishOpen( int oflag, mode_t mode )
     int hostFlags = 0;
 
     // translate open flags
-    for (int i = 0; i < AlphaLinux::NUM_OPEN_FLAGS; i++) {
-        if (oflag & AlphaLinux::openFlagTable[i].tgtFlag) {
-            oflag &= ~AlphaLinux::openFlagTable[i].tgtFlag;
-            hostFlags |= AlphaLinux::openFlagTable[i].hostFlag;
+    for (int i = 0; i < ISA_OS::NUM_OPEN_FLAGS; i++) {
+        if (oflag & ISA_OS::openFlagTable[i].tgtFlag) {
+            oflag &= ~ISA_OS::openFlagTable[i].tgtFlag;
+            hostFlags |= ISA_OS::openFlagTable[i].hostFlag;
         }
     }
 

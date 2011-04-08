@@ -158,18 +158,19 @@ void M5::selfEvent( SST::Event* )
 static void enableDebug( std::string name )
 {
     bool all = false;
-    if ( name.find( "all") != string::npos) { 
+    if ( name.find( "all") != std::string::npos) { 
         all = true;
     }
        
-    if ( all || name.find( "SST") != string::npos) {
+    if ( all || name.find( "SST") != std::string::npos) {
         SST_M5_debug = true;
     }
     Trace::enabled = true;
     for ( int i = 0; i < Trace::flags.size(); i++ ) {
 //            printf("%s\n",Trace::flagStrings[i]);
 
-            if ( all || name.find( Trace::flagStrings[i] ) != string::npos) {
+            if ( all || name.find( Trace::flagStrings[i] ) != std::string::npos)
+            {
 //                printf("enable %s\n",Trace::flagStrings[i]);
                 Trace::flags[i] = true;
             }
