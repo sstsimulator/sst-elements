@@ -13,7 +13,7 @@ function genP ()
     echo "*****************************************************************************************"
     echo "* Generating $p"_"$X"x"$Y"x"$x"x"$y"_"$c.xml"
     echo "*"
-    ./genPatterns -s $p"_"$X"x"$Y"x"$x"x"$y"_"$c.xml -X $X -Y $Y -x $x -y $y -c $c -p $p
+    ./genPatterns -o $p"_"$X"x"$Y"x"$x"x"$y"_"$c.xml -X $X -Y $Y -x $x -y $y -c $c -p $p
 
 }
 
