@@ -4,6 +4,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
+#include <barrier.h>
 
 class SimLoopExitEvent;
 class M5 : public SST::Component
@@ -23,6 +24,8 @@ class M5 : public SST::Component
     int Setup();
     bool catchup( SST::Cycle_t );
     void arm( SST::Cycle_t );
+
+    Barrier barrier;
 
   private:
     void selfEvent( SST::Event* );

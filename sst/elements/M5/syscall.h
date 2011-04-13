@@ -74,6 +74,10 @@ class Syscall : public DmaDevice
     int64_t startWrite( int, Addr, size_t );
     int64_t finishWrite( int, size_t );
 
+    SST::Event::Handler<Syscall> m_barrierHandler;
+
+    void barrierReturn( SST::Event* );
+
     unsigned long m_offset;
     uint64_t      m_mailbox[0x10];
 
@@ -81,6 +85,8 @@ class Syscall : public DmaDevice
     SyscallEvent  m_syscallEvent;
     uint64_t      m_startAddr;
     uint64_t      m_endAddr;
+
+    M5*           m_comp;
 
     void foo( int64_t retval ) {
         DBGX(2,"retval %d\n",retval);

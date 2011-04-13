@@ -11,6 +11,7 @@
 #include <debug.h>
 #include <arch/isa_specific.hh>
 #include <paramHelp.h>
+#include <m5.h>
 
 #if THE_ISA == SPARC_ISA
     #define ISA_OS SparcLinux
@@ -29,6 +30,8 @@
 #define __NR_close                               6 
 #define __NR_read                                3 
 #define __NR_write                               4 
+
+#define __NR_barrier                             500
 
 extern "C" {
 SimObject* create_Syscall( SST::Component*, string name,
@@ -56,11 +59,16 @@ Syscall::Syscall( const Params* p ) :
     m_offset( 0 ),
     m_dmaEvent( this ),
     m_syscallEvent( this ),
-    m_startAddr( p->startAddr )
+    m_startAddr( p->startAddr ),
+    m_barrierHandler( SST::Event::Handler<Syscall>(this,
+                                        &Syscall::barrierReturn) ),
+    m_comp( p->m5Comp )
 {
     m_endAddr = m_startAddr + sizeof(m_mailbox);
     DBGX(2,"startAddr=%#lx endAddr%#lx\n", m_startAddr, m_endAddr);
     memset( m_mailbox, 0, sizeof(m_mailbox) );
+
+    m_comp->barrier.add( &m_barrierHandler );
 }    
 
 Syscall::~Syscall()
@@ -222,6 +230,12 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
     return retval; 
 }
 
+void Syscall::barrierReturn( SST::Event* )
+{
+    DBGX(2,"\n");
+    foo( 0 );
+}
+
 void Syscall::startSyscall(void)
 {
     DBGX(2,"%d\n", m_mailbox[0xf] - 1 );
@@ -242,6 +256,10 @@ void Syscall::startSyscall(void)
 
         case __NR_close:
             foo( close( m_mailbox[0] ) );
+            break; 
+
+        case __NR_barrier:
+            m_comp->barrier.enter();
             break; 
 
          default:

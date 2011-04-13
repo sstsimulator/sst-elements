@@ -149,6 +149,7 @@ void M5::selfEvent( SST::Event* )
     if ( ! m_exitEvent ) {
         arm( m_event.time );
     } else {
+        // bug what if we didn't call registerExit() 
         unregisterExit();
         INFO( "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
                 m_exitEvent->getCause().c_str(), m_exitEvent->getCode() );
