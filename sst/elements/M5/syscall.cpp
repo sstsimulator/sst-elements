@@ -1,7 +1,7 @@
-
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/params.h>
+#include <sst/core/simulation.h>
 #include <errno.h>
 
 #include <system.h>
@@ -10,7 +10,7 @@
 #include <syscall.h>
 #include <debug.h>
 #include <arch/isa_specific.hh>
-
+#include <paramHelp.h>
 
 #if THE_ISA == SPARC_ISA
     #define ISA_OS SparcLinux
@@ -25,43 +25,39 @@
     #error What ISA
 #endif
 
-using namespace SST;
-class Component;
-
-
 #define __NR_open                                45 
 #define __NR_close                               6 
 #define __NR_read                                3 
 #define __NR_write                               4 
 
 extern "C" {
-SimObject* create_Syscall( Component*, string name, Params& sstParams );
+SimObject* create_Syscall( SST::Component*, string name,
+                                                SST::Params& sstParams );
 }
 
-SimObject* create_Syscall( Component*, string name, Params& sstParams )
+SimObject* create_Syscall( SST::Component* comp, string name, 
+                                                SST::Params& sstParams )
 {
-    Syscall::Params* memP   = new Syscall::Params;
+    Syscall::Params& memP   = *new Syscall::Params;
 
-    memP->name = name;
-    memP->system = create_System( "", NULL, Enums::timing ); 
-#if 0
-    memP->range.start = sstParams.find_integer( "physicalMemory.start" );;
-    memP->range.end = sstParams.find_integer( "physicalMemory.end", 0 ); 
+    memP.name = name;
 
-    DBGC( 1, "%s.physicalMemory.start %#lx\n",name.c_str(), memP->range.start);
-    DBGC( 1, "%s.physicalMemory.end %#lx\n",name.c_str(),memP->range.end);
-#endif
+    INIT_HEX( memP, sstParams, startAddr );
 
-    return new Syscall( memP );
+    memP.system = create_System( "", NULL, Enums::timing ); 
+
+    memP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
+
+    return new Syscall( &memP );
 }
 
 Syscall::Syscall( const Params* p ) :
     DmaDevice( p ),
     m_offset( 0 ),
     m_dmaEvent( this ),
-    m_syscallEvent( this )
+    m_syscallEvent( this ),
+    m_startAddr( p->startAddr )
 {
-    m_startAddr = 0x0;
     m_endAddr = m_startAddr + sizeof(m_mailbox);
     DBGX(2,"startAddr=%#lx endAddr%#lx\n", m_startAddr, m_endAddr);
     memset( m_mailbox, 0, sizeof(m_mailbox) );
@@ -247,7 +243,7 @@ void Syscall::startSyscall(void)
         case __NR_close:
             foo( close( m_mailbox[0] ) );
             break; 
-    
+
          default:
             for ( int i = 0; i < 0x10; i++ ) {
                 fprintf(stderr,"Syscall::do_syscall arg%d %#lx\n", 

@@ -1,10 +1,18 @@
 #ifndef _Syscall_h
 #define _Syscall_h
+
 #include <dev/io_device.hh>
 
 #include <debug.h>
 
 using namespace std;
+class M5;
+
+struct SyscallParams : public DmaDeviceParams
+{
+    M5*  m5Comp; 
+    Addr startAddr;
+};
 
 class Syscall : public DmaDevice 
 {
@@ -41,7 +49,7 @@ class Syscall : public DmaDevice
     };
   
   public:
-    typedef DmaDeviceParams Params;
+    typedef SyscallParams Params;
     Syscall( const Params* p );
     virtual ~Syscall();
 
