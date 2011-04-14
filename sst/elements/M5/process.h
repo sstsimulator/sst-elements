@@ -41,13 +41,32 @@ static inline Process* newProcess( const std::string name,
     INIT_STR( process, params, cwd );
     INIT_STR( process, params, executable );
 
-    process.cmd.resize( 1 );
-    process.cmd[0] = params.find_string( "cmd" );
-    F_STR( process, cmd[0] );
+    process.cmd.resize(1);
+    process.env.resize(1);
+    process.cmd[0] = "";
+    process.env[0] = "";
 
-    process.env.resize( 1 );
-    process.env[0] = params.find_string( "env" );
-    F_STR( process, env[0] );
+    SST::Params tmp = params.find_prefix_params( "cmd." ); 
+    if ( tmp.size() ) {
+        process.cmd.resize( tmp.size() );
+        SST::Params::iterator iter = tmp.begin();
+        for ( int i = 0; i < process.cmd.size(); i++ ) { 
+            process.cmd[i] = (*iter).second;
+            ++iter;
+            F_STR( process, cmd[i] );
+        }
+    }
+
+    tmp = params.find_prefix_params( "env." ); 
+    if ( tmp.size() ) {
+        process.env.resize( tmp.size() );
+        SST::Params::iterator iter = tmp.begin();
+        for ( int i = 0; i < process.env.size(); i++ ) { 
+            process.env[i] = (*iter).second;
+            ++iter;
+            F_STR( process, env[i] );
+        }
+    }
 
     INIT_INT( process, params, simpoint );
 
