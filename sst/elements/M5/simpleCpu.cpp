@@ -29,15 +29,15 @@ class Component;
 #endif
 
 static void initBaseCPUParams( TimingSimpleCPUParams& cpu,
-                                        const Params&, System* );
+                             const Params&, System*, SST::Component* );
 template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
 
 extern "C" {
-SimObject* create_SimpleCpu( Component*, string name, Params& sstParams );
+SimObject* create_SimpleCpu( SST::Component*, string name, Params& sstParams );
 }
 
-SimObject* create_SimpleCpu( Component*, string name, Params& sstParams )
+SimObject* create_SimpleCpu( SST::Component* comp, string name, Params& sstParams )
 {
     TimingSimpleCPUParams*  params     = new TimingSimpleCPUParams;
 
@@ -59,7 +59,7 @@ SimObject* create_SimpleCpu( Component*, string name, Params& sstParams )
 
     // system and physmem are not needed after startup how do free them
 
-    initBaseCPUParams( *params, sstParams.find_prefix_params("base."), system );
+    initBaseCPUParams( *params, sstParams.find_prefix_params("base."), system, comp );
 
     return static_cast<SimObject*>(static_cast<void*>(params->create()));
 }
@@ -72,7 +72,7 @@ static Trace::InstTracer* newTracer( string name )
 }
 
 static void initBaseCPUParams( TimingSimpleCPUParams& cpu,
-                            const Params& sstParams, System* system )
+            const Params& sstParams, System* system, SST::Component* comp )
 {
     cpu.dtb                   = newTLB<ISA::TLB>( cpu.name + ".dtb", 
                                     sstParams.find_prefix_params("dtb.") );
@@ -104,7 +104,7 @@ static void initBaseCPUParams( TimingSimpleCPUParams& cpu,
     cpu.workload.resize(1);
     cpu.workload[0]           = newProcess( cpu.name + ".workload", 
                                     sstParams.find_prefix_params( "process." ),
-                                    system );
+                                    system, comp );
 
     cpu.numThreads            = 1;
 

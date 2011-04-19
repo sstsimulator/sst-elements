@@ -26,8 +26,10 @@ class Component;
     #error What ISA
 #endif
 
-static void initDerivO3CPUParams( DerivO3CPUParams&, const Params&, System* );
-static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params&, System* );
+static void initDerivO3CPUParams( DerivO3CPUParams&, const Params&, System*, 
+            SST::Component* );
+static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params&, System*,
+            SST::Component* );
 static FUDesc* newFUDesc( vector<OpDesc*> opV, int count, string name ); 
 static OpDesc* newOpDesc( Enums::OpClass opClass, int opLat, 
                                     int issueLat, string name );
@@ -36,10 +38,10 @@ template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
 
 extern "C" {
-SimObject* create_O3Cpu( Component*, string name, Params& sstParams );
+SimObject* create_O3Cpu( SST::Component*, string name, Params& sstParams );
 }
 
-SimObject* create_O3Cpu( Component*, string name, Params& sstParams )
+SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
 {
     DerivO3CPUParams*  params     = new DerivO3CPUParams;
 
@@ -61,7 +63,7 @@ SimObject* create_O3Cpu( Component*, string name, Params& sstParams )
 
     // system and physmem are not needed after startup how do free them
 
-    initDerivO3CPUParams( *params, sstParams, system );
+    initDerivO3CPUParams( *params, sstParams, system, comp );
 
     return static_cast<BaseCPU*>(static_cast<void*>(params->create()));
 }
@@ -74,7 +76,7 @@ static Trace::InstTracer* newTracer( string name )
 }
 
 static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
-                                                    System* system )
+                                    System* system, SST::Component *comp )
 {
     cpu.dtb                   = newTLB<ISA::TLB>( cpu.name + ".dtb", 
                                     sstParams.find_prefix_params("dtb.") );
@@ -106,16 +108,17 @@ static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
     cpu.workload.resize(1);
     cpu.workload[0]           = newProcess( cpu.name + ".workload", 
                                     sstParams.find_prefix_params( "process." ),
-                                    system );
+                                    system, comp );
 
     cpu.numThreads            = 1;
 
 }
 
 static void initDerivO3CPUParams( DerivO3CPUParams& cpu, 
-                    const Params& sstParams, System* system)
+          const Params& sstParams, System* system, SST::Component* comp )
 {
-    initBaseCPUParams( cpu, sstParams.find_prefix_params("base."), system );
+    initBaseCPUParams( cpu, sstParams.find_prefix_params("base."),
+                    system, comp );
 
     cpu.fuPool = newFUPool( cpu.name + ".fuPool" );
 

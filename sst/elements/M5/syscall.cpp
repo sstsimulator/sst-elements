@@ -30,6 +30,7 @@
 #define __NR_close                               6 
 #define __NR_read                                3 
 #define __NR_write                               4 
+#define __NR_exit                                1
 
 #define __NR_barrier                             500
 
@@ -47,7 +48,7 @@ SimObject* create_Syscall( SST::Component* comp, string name,
 
     INIT_HEX( memP, sstParams, startAddr );
 
-    memP.system = create_System( "", NULL, Enums::timing ); 
+    memP.system = create_System( "syscall", NULL, Enums::timing ); 
 
     memP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
 
@@ -242,6 +243,10 @@ void Syscall::startSyscall(void)
     int64_t retval = 0;
     switch ( m_mailbox[0xf] - 1 ) 
     {
+        case __NR_exit:
+            m_comp->exit( m_mailbox[0] );
+            break; 
+
         case __NR_write:
             retval = startWrite( m_mailbox[0], m_mailbox[1], m_mailbox[2] );
             break; 

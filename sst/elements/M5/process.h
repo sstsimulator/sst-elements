@@ -1,14 +1,15 @@
 #include <sim/system.hh>
 #include <sim/process.hh>
 #include <sst/core/params.h>
+#include <sst/core/component.h>
 #include <params/LiveProcess.hh>
+#include <m5.h>
 
 #include <debug.h>
 #include <paramHelp.h>
 
 static inline Process* newProcess( const std::string name, 
-                                    const SST::Params& params,
-                                    System* system  )
+     const SST::Params& params, System* system, SST::Component* comp = NULL )
 {
     LiveProcessParams& process  = * new LiveProcessParams;
 
@@ -40,6 +41,13 @@ static inline Process* newProcess( const std::string name,
     INIT_INT( process, params, uid );
     INIT_STR( process, params, cwd );
     INIT_STR( process, params, executable );
+
+    string str = params.find_string( "registerExit" );
+    
+    if( comp && ! str.compare("yes") ) {
+        INFO("registering exit `%s`\n",name.c_str());
+        static_cast< M5* >( static_cast< void* >( comp ) )->registerExit();
+    }
 
     process.cmd.resize(1);
     process.env.resize(1);

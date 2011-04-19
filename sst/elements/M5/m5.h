@@ -25,6 +25,9 @@ class M5 : public SST::Component
     bool catchup( SST::Cycle_t );
     void arm( SST::Cycle_t );
 
+    void registerExit();
+    void exit( int status );
+
     Barrier barrier;
 
   private:
@@ -35,6 +38,7 @@ class M5 : public SST::Component
     Event&              m_event;
     SST::TimeConverter *m_tc;
     SimLoopExitEvent   *m_exitEvent;
+    int                 m_numRegisterExits;
 };
 
 #endif

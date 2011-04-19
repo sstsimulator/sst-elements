@@ -20,7 +20,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     Component( id),
     m_armed( false ),
     m_event( * new Event() ),
-    m_exitEvent( NULL )
+    m_exitEvent( NULL ),
+    m_numRegisterExits(0)
 {
     // M5 variable
     want_info = false;
@@ -86,7 +87,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     if ( params.find( "registerExit" ) != params.end() ) {
         if( ! params["registerExit"].compare("yes") ) {
             INFO("registering exit\n");
-            registerExit();
+            Component::registerExit();
         }
     }
 
@@ -104,6 +105,25 @@ M5::~M5()
 int M5::Setup()
 {
     return 0;
+}
+
+void M5::registerExit(void)
+{
+    DBGX(2,"m_numRegisterExits %d\n",m_numRegisterExits);
+    if ( m_numRegisterExits == 0) {
+        Component::registerExit();
+    } 
+    ++m_numRegisterExits;
+}
+
+void M5::exit( int status )
+{
+    DBGX(2,"M5::exit() status=%d\n",status);
+    --m_numRegisterExits;
+    if ( m_numRegisterExits == 0) {
+        ::Event *event = new SimLoopExitEvent("Exit M5", 0);
+        mainEventQueue.schedule(event, curTick);
+    } 
 }
 
 bool M5::catchup( SST::Cycle_t time ) 
@@ -149,7 +169,7 @@ void M5::selfEvent( SST::Event* )
     if ( ! m_exitEvent ) {
         arm( m_event.time );
     } else {
-        // bug what if we didn't call registerExit() 
+        // bug what if we didn't call registerExit()
         unregisterExit();
         INFO( "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
                 m_exitEvent->getCause().c_str(), m_exitEvent->getCode() );
