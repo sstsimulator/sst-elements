@@ -7,6 +7,7 @@
 #include <sim/simulate.hh>
 #include <util.h>
 #include <debug.h>
+#include <barrier.h>
 
 #include "m5.h"
 
@@ -42,6 +43,9 @@ M5::M5( ComponentId_t id, Params_t& params ) :
             _info.enable();
         } 
     }
+
+    m_barrier = new Barrier( static_cast<Component*>(this),
+                            params.find_prefix_params("barrier.") );  
 
     extern int rgdb_enable;
     rgdb_enable = false;
@@ -197,3 +201,4 @@ static void enableDebug( std::string name )
             }
     }
 }
+

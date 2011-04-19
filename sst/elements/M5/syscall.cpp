@@ -6,6 +6,8 @@
 
 #include <system.h>
 
+#include <barrier.h>
+
 #include <fcntl.h>
 #include <syscall.h>
 #include <debug.h>
@@ -69,7 +71,7 @@ Syscall::Syscall( const Params* p ) :
     DBGX(2,"startAddr=%#lx endAddr%#lx\n", m_startAddr, m_endAddr);
     memset( m_mailbox, 0, sizeof(m_mailbox) );
 
-    m_comp->barrier.add( &m_barrierHandler );
+    m_comp->barrier().add( &m_barrierHandler );
 }    
 
 Syscall::~Syscall()
@@ -264,7 +266,7 @@ void Syscall::startSyscall(void)
             break; 
 
         case __NR_barrier:
-            m_comp->barrier.enter();
+            m_comp->barrier().enter();
             break; 
 
          default:
