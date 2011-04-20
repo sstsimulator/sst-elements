@@ -37,7 +37,7 @@ enum interconnect_type_t
 
 enum wiring_type_t
 {
-  Local, Semi_Global, Global, Memory_DRAM, Num_Wiring_Types
+  Local, Semi_Global, GLOBAL, Memory_DRAM, Num_Wiring_Types
 };
 
 enum ITRS_device_type_t 

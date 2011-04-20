@@ -15,6 +15,7 @@
 #include "power.h"
 #include "interface.h"
 #include "HotSpot-interface.h"
+#include "reliability.h"
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
@@ -29,6 +30,8 @@ int Power::p_NumCompNeedPower;
 int Power::p_SumNumCompNeedPower;
 int Power::p_TempSumNumCompNeedPower;
 bool Power::p_hasUpdatedTemp;
+double Power::p_TotalFailureRate;
+unsigned int Power::p_NumSamples; 
 
 /*********************
 * Power:: constructor*
@@ -5565,8 +5568,14 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /* McPAT*/
 		    #ifdef McPAT07_H
 			icache = ifu->SSTreturnIcache();
-			p_areaMcPAT = p_areaMcPAT + icache.area.get_area();
-			updateFloorplanAreaInfo(floorplan_id.il1, icache.area.get_area());
+			for(i = 0; i < device_tech.number_il1; i++){
+			    p_areaMcPAT = p_areaMcPAT + icache.area.get_area();
+			    #ifdef MESMTHI_H 
+			        updateFloorplanAreaInfo(i /*floorplan id*/, icache.area.get_area());
+			    #else
+				updateFloorplanAreaInfo(floorplan_id.il1, icache.area.get_area());
+			    #endif
+			}
 		    #endif                    
 		    break;
 		    case 1:
@@ -5646,8 +5655,14 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /* McPAT*/
 		    #ifdef McPAT07_H
 			dcache = lsu->SSTreturnDcache();
-			p_areaMcPAT = p_areaMcPAT + dcache.area.get_area();
-			updateFloorplanAreaInfo(floorplan_id.dl1, dcache.area.get_area());
+			for(i = 0; i < device_tech.number_dl1; i++){
+			    p_areaMcPAT = p_areaMcPAT + dcache.area.get_area();
+			    #ifdef MESMTHI_H 
+			        updateFloorplanAreaInfo(i /*floorplan id*/, dcache.area.get_area());
+			    #else
+				updateFloorplanAreaInfo(floorplan_id.dl1, dcache.area.get_area());
+			    #endif
+			}
 		    #endif  
 		    break;
 		    case 1:
@@ -6499,7 +6514,11 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 			for(i = 0; i < device_tech.number_L2; i++){
 			    l2array = p_Mproc.SSTreturnL2(i);
 			    p_areaMcPAT = p_areaMcPAT + l2array->area.get_area();
-			    updateFloorplanAreaInfo(floorplan_id.L2, l2array->area.get_area());
+			    #ifdef MESMTHI_H 
+			        updateFloorplanAreaInfo(i /*floorplan id*/, l2array->area.get_area());
+			    #else
+				updateFloorplanAreaInfo(floorplan_id.L2, l2array->area.get_area());
+			    #endif
 			}
 		    #endif                        
 		    break;
@@ -6760,7 +6779,11 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		      for(i = 0; i < device_tech.number_L1dir; i++){
 			l1dirarray = p_Mproc.SSTreturnL1dir(i);
 			p_areaMcPAT = p_areaMcPAT + l1dirarray->area.get_area();
-			updateFloorplanAreaInfo(floorplan_id.L1dir, l1dirarray->area.get_area());
+			#ifdef MESMTHI_H 
+			        updateFloorplanAreaInfo(i /*floorplan id*/, l1dirarray->area.get_area());
+			#else
+				updateFloorplanAreaInfo(floorplan_id.L1dir, l1dirarray->area.get_area());
+			#endif
 		      }
 		    #endif                      
 		    break;
@@ -6987,9 +7010,12 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
           /*ORION*/
           break;
 	    } // end switch power model
-	   
-	    updatePowUsage(c, power_type, floorplan_id.il1, &p_usage_cache_il1, totalPowerUsage, dynamicPower, leakage, TDP);
-	    }
+	    #ifdef MESMTHI_H
+		    updatePowUsage(c, power_type, i /*floorplan id*/, &p_usage_cache_il1[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #else
+	    	    updatePowUsage(c, power_type, floorplan_id.il1, &p_usage_cache_il1[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #endif
+	  }
 	  break;
 
 	  case 1:
@@ -7105,7 +7131,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
           break;
 	    } // end switch power model
 	   
-	    updatePowUsage(c, power_type, floorplan_id.dl1, &p_usage_cache_dl1, totalPowerUsage, dynamicPower, leakage, TDP);
+	    #ifdef MESMTHI_H
+		    updatePowUsage(c, power_type, i /*floorplan id*/, &p_usage_cache_dl1[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #else
+	    	    updatePowUsage(c, power_type, floorplan_id.dl1, &p_usage_cache_dl1[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #endif
 	    }
 	  break;		
 	   
@@ -8190,7 +8220,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
           /*ORION*/
           break;
 	    }	
-	    updatePowUsage(c, power_type, floorplan_id.L2, &p_usage_cache_l2[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #ifdef MESMTHI_H
+		    updatePowUsage(c, power_type, i /*floorplan id*/, &p_usage_cache_l2[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #else
+	    	    updatePowUsage(c, power_type, floorplan_id.L2, &p_usage_cache_l2[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #endif
 	    }
 	  break;
 	  case 25:  
@@ -8233,8 +8267,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
           case 4:
           /*ORION*/
           break;
-	    }	
-	    
+	    }		    
 	    updatePowUsage(c, power_type, floorplan_id.mc, &p_usage_mc, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	  case 26:  
@@ -8492,7 +8525,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
           /*ORION*/
           break;
 	    } // end switch power model
-	    updatePowUsage(c, power_type, floorplan_id.L1dir, &p_usage_cache_l1dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #ifdef MESMTHI_H
+		    updatePowUsage(c, power_type, i /*floorplan id*/, &p_usage_cache_l1dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #else
+	    	    updatePowUsage(c, power_type, floorplan_id.L1dir, &p_usage_cache_l1dir[i], totalPowerUsage, dynamicPower, leakage, TDP);
+	    #endif
 	    }
 	  break;	
 	  case 32:
@@ -8540,8 +8577,8 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	  break;										
 	  case 33:
 	  //uarch
-	        totalPowerUsage = 1*p_unitPower.uarch; //usage_count*p_unitPower.uarch;
-                updatePowUsage(c, power_type, 0, &p_usage_uarch, totalPowerUsage, dynamicPower, leakage, TDP);
+	        ////totalPowerUsage = 1*p_unitPower.uarch; //usage_count*p_unitPower.uarch;
+                ////updatePowUsage(c, power_type, 0, &p_usage_uarch, totalPowerUsage, dynamicPower, leakage, TDP);
 	  break;
 	} // end switch power_type
 	return p_usage_uarch;
@@ -8577,11 +8614,17 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 	switch(power_type)
 	{
 	  case CACHE_IL1:
-		p_usage_uarch.itemizedRuntimeDynamicPower.il1 = dynamicPower;
-		p_usage_uarch.itemizedLeakagePower.il1 = leakage;
-		p_usage_uarch.itemizedCurrentPower.il1 = totalPowerUsage;
-		p_usage_uarch.itemizedTDP.il1 = TDP;
-		p_usage_uarch.itemizedTotalPower.il1 = comp_pusage->totalEnergy;
+		for(i = 0; i < device_tech.number_il1; i++){
+		    tempPr += p_usage_cache_il1[i].runtimeDynamicPower;
+		    tempPl += p_usage_cache_il1[i].leakagePower;
+		    tempPc += p_usage_cache_il1[i].currentPower;
+		    tempPt += p_usage_cache_il1[i].TDP;		    
+		}
+		p_usage_uarch.itemizedRuntimeDynamicPower.il1 = tempPr;
+		p_usage_uarch.itemizedLeakagePower.il1 = tempPl;
+		p_usage_uarch.itemizedCurrentPower.il1 = tempPc;
+		p_usage_uarch.itemizedTDP.il1 = tempPt;
+		p_usage_uarch.itemizedTotalPower.il1 += comp_pusage->totalEnergy;
 		p_usage_uarch.itemizedPeak.il1 = comp_pusage->peak;
 	  break;
 	  case CACHE_IL2:
@@ -8593,11 +8636,17 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 		p_usage_uarch.itemizedPeak.il2 = comp_pusage->peak;
 	  break;
 	  case CACHE_DL1:
-		p_usage_uarch.itemizedRuntimeDynamicPower.dl1 = dynamicPower;
-		p_usage_uarch.itemizedLeakagePower.dl1 = leakage;
-		p_usage_uarch.itemizedCurrentPower.dl1 = totalPowerUsage;
-		p_usage_uarch.itemizedTDP.dl1 = TDP;
-		p_usage_uarch.itemizedTotalPower.dl1 = comp_pusage->totalEnergy;
+		for(i = 0; i < device_tech.number_dl1; i++){
+		    tempPr += p_usage_cache_dl1[i].runtimeDynamicPower;
+		    tempPl += p_usage_cache_dl1[i].leakagePower;
+		    tempPc += p_usage_cache_dl1[i].currentPower;
+		    tempPt += p_usage_cache_dl1[i].TDP;		    
+		}
+		p_usage_uarch.itemizedRuntimeDynamicPower.dl1 = tempPr;
+		p_usage_uarch.itemizedLeakagePower.dl1 = tempPl;
+		p_usage_uarch.itemizedCurrentPower.dl1 = tempPc;
+		p_usage_uarch.itemizedTDP.dl1 = tempPt;
+		p_usage_uarch.itemizedTotalPower.dl1 += comp_pusage->totalEnergy;
 		p_usage_uarch.itemizedPeak.dl1 = comp_pusage->peak;
 	  break;
 	  case CACHE_DL2:
@@ -8894,9 +8943,9 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 
 	// update component overall (ALL) power
 	p_usage_uarch.totalEnergy = p_usage_uarch.totalEnergy + totalPowerUsage;
-	p_usage_uarch.currentPower = p_usage_cache_il1.currentPower + 
+	p_usage_uarch.currentPower = p_usage_uarch.itemizedCurrentPower.il1 + 
 					p_usage_cache_il2.currentPower +
-					p_usage_cache_dl1.currentPower +
+					p_usage_uarch.itemizedCurrentPower.dl1 +
 					p_usage_cache_dl2.currentPower +
 					p_usage_cache_itlb.currentPower +
 					p_usage_cache_dtlb.currentPower +
@@ -8927,9 +8976,9 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 					p_usage_uarch.itemizedCurrentPower.L1dir +
 					p_usage_uarch.itemizedCurrentPower.L2dir +
 					p_usage_router.currentPower;
-	p_usage_uarch.leakagePower = p_usage_cache_il1.leakagePower + 
+	p_usage_uarch.leakagePower = p_usage_uarch.itemizedLeakagePower.il1 + 
 					p_usage_cache_il2.leakagePower +
-					p_usage_cache_dl1.leakagePower +
+					p_usage_uarch.itemizedLeakagePower.dl1 +
 					p_usage_cache_dl2.leakagePower +
 					p_usage_cache_itlb.leakagePower +
 					p_usage_cache_dtlb.leakagePower +
@@ -8967,9 +9016,9 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 	<< p_usage_bpred.leakagePower << " " << p_usage_ib.leakagePower << " "
 	<< p_usage_bypass.leakagePower << " " << p_usage_lsq.leakagePower << " "
 	<< p_usage_schedulerU.leakagePower << std::endl; */
-	p_usage_uarch.runtimeDynamicPower = p_usage_cache_il1.runtimeDynamicPower + 
+	p_usage_uarch.runtimeDynamicPower = p_usage_uarch.itemizedRuntimeDynamicPower.il1 + 
 					p_usage_cache_il2.runtimeDynamicPower +
-					p_usage_cache_dl1.runtimeDynamicPower +
+					p_usage_uarch.itemizedRuntimeDynamicPower.dl1 +
 					p_usage_cache_dl2.runtimeDynamicPower +
 					p_usage_cache_itlb.runtimeDynamicPower +
 					p_usage_cache_dtlb.runtimeDynamicPower +
@@ -9000,9 +9049,9 @@ void Power::updatePowUsage(IntrospectedComponent *c, ptype power_type, int fid, 
 					p_usage_uarch.itemizedRuntimeDynamicPower.L1dir +
 					p_usage_uarch.itemizedRuntimeDynamicPower.L2dir +
 					p_usage_router.runtimeDynamicPower;
-	p_usage_uarch.TDP = p_usage_cache_il1.TDP + 
+	p_usage_uarch.TDP = p_usage_uarch.itemizedTDP.il1 + 
 					p_usage_cache_il2.TDP +
-					p_usage_cache_dl1.TDP +
+					p_usage_uarch.itemizedTDP.dl1 +
 					p_usage_cache_dl2.TDP +
 					p_usage_cache_itlb.TDP +
 					p_usage_cache_dtlb.TDP +
@@ -9088,6 +9137,10 @@ I Power::getExecutionTime(IntrospectedComponent *c)
 void Power::setTech(Component::Params_t deviceParams)
 {
     Component::Params_t::iterator it= deviceParams.begin();
+    unsigned int i, n;
+    char chtmp[60];
+    char chtmp1[60];
+    chtmp1[0]='\0';
 
    
     while (it != deviceParams.end()){
@@ -9128,18 +9181,54 @@ void Power::setTech(Component::Params_t deviceParams)
 		sscanf(it->second.c_str(), "%d", &core_tech.core_tech_node);
 	} 
 	else if (!it->first.compare("cache_il1_floorplan_id")){  
-	        sscanf(it->second.c_str(), "%d", &floorplan_id.il1);
-		// Insert cubcomponents type of component's interest into a list
+		sscanf(it->second.c_str(), "%d", &floorplan_id.il1); //keep for the non-mesmthi case
+		// Insert subcomponents type of component's interest into a list
 		// Used for compute_temperature
-		subcompList.insert(std::pair<ptype,int>(CACHE_IL1,floorplan_id.il1)); 
+	    	i=0;
+		for(n=0; n < it->second.length(); n++)
+		{
+			if (it->second[n]!=',')
+			{
+				sprintf(chtmp,"%c",it->second[n]);
+				strcat(chtmp1,chtmp);
+			}
+			else{
+				subcompList.insert(std::pair<ptype,int>(CACHE_IL1,atoi(chtmp1)));
+				////assert((i+1) < device_tech.number_il1);
+				i = i + 1;
+				chtmp1[0]='\0';
+			}
+		}
+		subcompList.insert(std::pair<ptype,int>(CACHE_IL1,atoi(chtmp1)));
+		chtmp1[0]='\0';
+	      
 	}
 	else if (!it->first.compare("cache_il2_floorplan_id")){  
 	        sscanf(it->second.c_str(), "%d", &floorplan_id.il2);
 		subcompList.insert(std::pair<ptype,int>(CACHE_IL2,floorplan_id.il2));  
 	}
 	else if (!it->first.compare("cache_dl1_floorplan_id")){  
-	        sscanf(it->second.c_str(), "%d", &floorplan_id.dl1);
-		subcompList.insert(std::pair<ptype,int>(CACHE_DL1,floorplan_id.dl1));  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.dl1); 
+		// Insert subcomponents type of component's interest into a list
+		// Used for compute_temperature
+	    	i=0;
+		for(n=0; n < it->second.length(); n++)
+		{
+			if (it->second[n]!=',')
+			{
+				sprintf(chtmp,"%c",it->second[n]);
+				strcat(chtmp1,chtmp);
+			}
+			else{
+				subcompList.insert(std::pair<ptype,int>(CACHE_DL1,atoi(chtmp1)));
+				////assert((i+1) < device_tech.number_dl1);
+				i = i + 1;
+				chtmp1[0]='\0';
+			}
+		}
+		subcompList.insert(std::pair<ptype,int>(CACHE_DL1,atoi(chtmp1)));
+		chtmp1[0]='\0';
+	      
 	}
 	else if (!it->first.compare("cache_dl2_floorplan_id")){  
 	        sscanf(it->second.c_str(), "%d", &floorplan_id.dl2);
@@ -9226,16 +9315,38 @@ void Power::setTech(Component::Params_t deviceParams)
 		subcompList.insert(std::pair<ptype,int>((ptype)23,floorplan_id.btb));  
 	}
 	else if (!it->first.compare("cache_l2_floorplan_id")){  
-	        sscanf(it->second.c_str(), "%d", &floorplan_id.L2);
-		subcompList.insert(std::pair<ptype,int>(CACHE_L2,floorplan_id.L2));  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.L2); 
+		// Insert subcomponents type of component's interest into a list
+		// Used for compute_temperature
+	    	i=0;
+		for(n=0; n < it->second.length(); n++)
+		{
+			if (it->second[n]!=',')
+			{
+				sprintf(chtmp,"%c",it->second[n]);
+				strcat(chtmp1,chtmp);
+			}
+			else{
+				subcompList.insert(std::pair<ptype,int>(CACHE_L2,atoi(chtmp1)));
+				////assert((i+1) < device_tech.number_L2);
+				i = i + 1;
+				chtmp1[0]='\0';
+			}
+		}
+		subcompList.insert(std::pair<ptype,int>(CACHE_L2,atoi(chtmp1)));
+		chtmp1[0]='\0';
+	        
 	}
 	else if (!it->first.compare("router_floorplan_id")){  
 	        sscanf(it->second.c_str(), "%d", &floorplan_id.router);
 		subcompList.insert(std::pair<ptype,int>(ROUTER,floorplan_id.router));  
 	}
 	else if (!it->first.compare("mc_floorplan_id")){  
-	        sscanf(it->second.c_str(), "%d", &floorplan_id.mc);
-		subcompList.insert(std::pair<ptype,int>(MEM_CTRL,floorplan_id.mc));  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.mc); 
+		// Insert subcomponents type of component's interest into a list
+		// Used for compute_temperature
+		subcompList.insert(std::pair<ptype,int>(MEM_CTRL,floorplan_id.mc));
+	      
 	}
 	else if (!it->first.compare("loadQ_floorplan_id")){  
 	        sscanf(it->second.c_str(), "%d", &floorplan_id.loadQ);
@@ -9254,8 +9365,26 @@ void Power::setTech(Component::Params_t deviceParams)
 		subcompList.insert(std::pair<ptype,int>(CACHE_L3,floorplan_id.L3));  
 	}
 	else if (!it->first.compare("cache_l1dir_floorplan_id")){  
-	        sscanf(it->second.c_str(), "%d", &floorplan_id.L1dir);
-		subcompList.insert(std::pair<ptype,int>(CACHE_L1DIR,floorplan_id.L1dir));  
+	        sscanf(it->second.c_str(), "%d", &floorplan_id.L1dir); //keep for the non-mesmthi case
+		// Insert subcomponents type of component's interest into a list
+		// Used for compute_temperature
+	    	i=0;
+		for(n=0; n < it->second.length(); n++)
+		{
+			if (it->second[n]!=',')
+			{
+				sprintf(chtmp,"%c",it->second[n]);
+				strcat(chtmp1,chtmp);
+			}
+			else{
+				subcompList.insert(std::pair<ptype,int>(CACHE_L1DIR,atoi(chtmp1)));
+				////assert((i+1) < device_tech.number_L1dir);
+				i = i + 1;
+				chtmp1[0]='\0';
+			}
+		}
+		subcompList.insert(std::pair<ptype,int>(CACHE_L1DIR,atoi(chtmp1)));
+		chtmp1[0]='\0';    
 	}
 	else if (!it->first.compare("cache_l2dir_floorplan_id")){  
 	        sscanf(it->second.c_str(), "%d", &floorplan_id.L2dir);
@@ -9293,6 +9422,9 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_il1_tech.fill_buf_size.resize(device_tech.number_il1);
     cache_il1_tech.prefetch_buf_size.resize(device_tech.number_il1);
     cache_il1_tech.wbb_buf_size.resize(device_tech.number_il1);
+    cache_il1_tech.output_width.resize(device_tech.number_il1);
+    cache_il1_tech.cache_policy.resize(device_tech.number_il1);
+    p_usage_cache_il1.resize(device_tech.number_il1);
     //resize dl1 para vector
     cache_dl1_tech.unit_scap.resize(device_tech.number_dl1);
     cache_dl1_tech.line_size.resize(device_tech.number_dl1);
@@ -9304,6 +9436,9 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_dl1_tech.fill_buf_size.resize(device_tech.number_dl1);
     cache_dl1_tech.prefetch_buf_size.resize(device_tech.number_dl1);
     cache_dl1_tech.wbb_buf_size.resize(device_tech.number_dl1);
+    cache_dl1_tech.output_width.resize(device_tech.number_dl1);
+    cache_dl1_tech.cache_policy.resize(device_tech.number_dl1);
+    p_usage_cache_dl1.resize(device_tech.number_dl1);
     //resize itlb para vector
     cache_itlb_tech.unit_scap.resize(device_tech.number_itlb);
     cache_itlb_tech.line_size.resize(device_tech.number_itlb);
@@ -9314,7 +9449,9 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_itlb_tech.miss_buf_size.resize(device_tech.number_itlb);    
     cache_itlb_tech.fill_buf_size.resize(device_tech.number_itlb);    
     cache_itlb_tech.prefetch_buf_size.resize(device_tech.number_itlb);    
-    cache_itlb_tech.wbb_buf_size.resize(device_tech.number_itlb);        
+    cache_itlb_tech.wbb_buf_size.resize(device_tech.number_itlb); 
+    cache_itlb_tech.output_width.resize(device_tech.number_itlb);
+    cache_itlb_tech.cache_policy.resize(device_tech.number_itlb);       
     //resize dtlb para vector
     cache_dtlb_tech.unit_scap.resize(device_tech.number_dtlb);
     cache_dtlb_tech.line_size.resize(device_tech.number_dtlb);
@@ -9326,6 +9463,8 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_dtlb_tech.fill_buf_size.resize(device_tech.number_dtlb);
     cache_dtlb_tech.prefetch_buf_size.resize(device_tech.number_dtlb);
     cache_dtlb_tech.wbb_buf_size.resize(device_tech.number_dtlb);
+    cache_dtlb_tech.output_width.resize(device_tech.number_dtlb);
+    cache_dtlb_tech.cache_policy.resize(device_tech.number_dtlb);
     //resize l2 para vector
     cache_l2_tech.unit_scap.resize(device_tech.number_L2);
     cache_l2_tech.line_size.resize(device_tech.number_L2);
@@ -9336,7 +9475,9 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_l2_tech.miss_buf_size.resize(device_tech.number_L2);             
     cache_l2_tech.fill_buf_size.resize(device_tech.number_L2);                                                               
     cache_l2_tech.prefetch_buf_size.resize(device_tech.number_L2);                                                 
-    cache_l2_tech.wbb_buf_size.resize(device_tech.number_L2);                                                               
+    cache_l2_tech.wbb_buf_size.resize(device_tech.number_L2);
+    cache_l2_tech.output_width.resize(device_tech.number_L2);
+    cache_l2_tech.cache_policy.resize(device_tech.number_L2);                                                               
     p_usage_cache_l2.resize(device_tech.number_L2);
     //resize l3 para vector
     cache_l3_tech.unit_scap.resize(device_tech.number_L3);
@@ -9349,6 +9490,8 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_l3_tech.fill_buf_size.resize(device_tech.number_L3);
     cache_l3_tech.prefetch_buf_size.resize(device_tech.number_L3);
     cache_l3_tech.wbb_buf_size.resize(device_tech.number_L3);
+    cache_l3_tech.output_width.resize(device_tech.number_L3);
+    cache_l3_tech.cache_policy.resize(device_tech.number_L3);
     p_usage_cache_l3.resize(device_tech.number_L3);
     //resize l1dir para vector
     cache_l1dir_tech.unit_scap.resize(device_tech.number_L1dir);
@@ -9361,6 +9504,8 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_l1dir_tech.fill_buf_size.resize(device_tech.number_L1dir);
     cache_l1dir_tech.prefetch_buf_size.resize(device_tech.number_L1dir);
     cache_l1dir_tech.wbb_buf_size.resize(device_tech.number_L1dir);
+    cache_l1dir_tech.output_width.resize(device_tech.number_L1dir);
+    cache_l1dir_tech.cache_policy.resize(device_tech.number_L1dir);
     p_usage_cache_l1dir.resize(device_tech.number_L1dir);
     //resize l2dir para vector
     cache_l2dir_tech.unit_scap.resize(device_tech.number_L2dir);
@@ -9373,6 +9518,8 @@ void Power::setTech(Component::Params_t deviceParams)
     cache_l2dir_tech.fill_buf_size.resize(device_tech.number_L2dir);
     cache_l2dir_tech.prefetch_buf_size.resize(device_tech.number_L2dir);
     cache_l2dir_tech.wbb_buf_size.resize(device_tech.number_L2dir);
+    cache_l2dir_tech.output_width.resize(device_tech.number_L2dir);
+    cache_l2dir_tech.cache_policy.resize(device_tech.number_L2dir);
     p_usage_cache_l2dir.resize(device_tech.number_L2dir);
 }
 
@@ -10838,352 +10985,563 @@ void Power::floorParamInitialize()
   // floorplan & thermal tiles
   tile_input.layer = SILICON;
   tile_input.id = 0;
-  tile_input.name = "silicon:core0:pipeline";
-  tile_input.temperature = 320;
+  tile_input.name = "silicon:core0";
+  tile_input.temperature = 350;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 0;
-  tile_input.name = "interface:core0:pipeline";
-  tile_input.temperature = 320.0;
+  tile_input.name = "interface:core0";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 0;
-  tile_input.name = "spreader:core0:pipeline";
-  tile_input.temperature = 320.0;
+  tile_input.name = "spreader:core0";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 0;
-  tile_input.name = "heatsink:core0:pipeline";
-  tile_input.temperature = 320.0;
+  tile_input.name = "heatsink:core0";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 0;
-  floorplan_input.name = "core0:pipeline";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 1.535e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 4.0706e-3;
-//  floorplan_input.feature.area = 19.59e-6;
+  floorplan_input.name = "core0";
   floorplan_input.feature.x_position = 0.0;
-  floorplan_input.feature.y_position = 3.6446025e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 3.34441e-3;
-  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.feature.y_position = 0.0;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
   floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/1,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/4,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 0... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 1;
-  tile_input.name = "silicon:core0:cache";
-  tile_input.temperature = 325.0;
+  tile_input.name = "silicon:core1";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 1;
-  tile_input.name = "interface:core0:cache";
-  tile_input.temperature = 325.0;
+  tile_input.name = "interface:core1";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 1;
-  tile_input.name = "spreader:core0:cache";
-  tile_input.temperature = 325.0;
+  tile_input.name = "spreader:core1";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 1;
-  tile_input.name = "heatsink:core0:cache";
-  tile_input.temperature = 325.0;
+  tile_input.name = "heatsink:core1";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 1;
-  floorplan_input.name = "core0:cache";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 4.8125e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 2.267e-3;
-//  floorplan_input.feature.area = 10.91e-6;
-  floorplan_input.feature.x_position = 0.0;
-  floorplan_input.feature.y_position = 2.5145875e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 1.130015e-3;
-  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.name = "core1";
+  floorplan_input.feature.x_position = 4.81534e-3;
+  floorplan_input.feature.y_position = 0.0;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(/*feature size*/core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
   floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/0,/*wire density*/1.0));
-  //floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/100,/*wire density*/1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/2,/*wire density*/1.0));
+    floorplan_input.thermal_correlation.insert(pair<int,double>(/*connecting floorplan*/5,/*wire density*/1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 1... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 2;
-  tile_input.name = "silicon:core1:pipeline";
-  tile_input.temperature = 385.0;
+  tile_input.name = "silicon:core2";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 2;
-  tile_input.name = "interface:core1:pipeline";
-  tile_input.temperature = 385.0;
+  tile_input.name = "interface:core2";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 2;
-  tile_input.name = "spreader:core1:pipeline";
-  tile_input.temperature = 385.0;
+  tile_input.name = "spreader:core2";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 2;
-  tile_input.name = "heatsink:core1:pipeline";
-  tile_input.temperature = 385.0;
+  tile_input.name = "heatsink:core2";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 2;
-  floorplan_input.name = "core1:pipeline";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 1.535e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 4.0706e-3;
-//  floorplan_input.feature.area = 19.59e-6;
-  floorplan_input.feature.x_position = 2e-3;
-  floorplan_input.feature.y_position = 3.6446025e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 3.34441e-3;
-  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.name = "core2";
+  floorplan_input.feature.x_position = 9.63068e-3;
+  floorplan_input.feature.y_position = 0.0;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(1,1.0));
   floorplan_input.thermal_correlation.insert(pair<int,double>(3,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(6,1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 2... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 3;
-  tile_input.name = "silicon:core1:cache";
-  tile_input.temperature = 380.0;
+  tile_input.name = "silicon:core3";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 3;
-  tile_input.name = "interface:core1:cache";
-  tile_input.temperature = 380.0;
+  tile_input.name = "interface:core3";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 3;
-  tile_input.name = "spreader:core1:cache";
-  tile_input.temperature = 380.0;
+  tile_input.name = "spreader:core3";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 3;
-  tile_input.name = "heatsink:core1:cache";
-  tile_input.temperature = 380.0;
+  tile_input.name = "heatsink:core3";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 3;
-  floorplan_input.name = "core1:cache";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 4.8125e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 2.267e-3;
-//  floorplan_input.feature.area = 10.91e-6;
-  floorplan_input.feature.x_position = 2e-3;
-  floorplan_input.feature.y_position = 2.5145875e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 1.130015e-3;
-  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.name = "core3";
+  floorplan_input.feature.x_position = 14.44602e-3;
+  floorplan_input.feature.y_position = 0.0;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
   floorplan_input.thermal_correlation.insert(pair<int,double>(2,1.0));
-  //floorplan_input.thermal_correlation.insert(pair<int,double>(100,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(7,1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 3... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 4;
-  tile_input.name = "silicon:core2:pipeline";
-  tile_input.temperature = 375.0;
+  tile_input.name = "silicon:core4";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 4;
-  tile_input.name = "interface:core2:pipeline";
-  tile_input.temperature = 375.0;
+  tile_input.name = "interface:core4";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 4;
-  tile_input.name = "spreader:core2:pipeline";
-  tile_input.temperature = 375.0;
+  tile_input.name = "spreader:core4";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 4;
-  tile_input.name = "heatsink:core2:pipeline";
-  tile_input.temperature = 375.0;
+  tile_input.name = "heatsink:core4";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 4;
-  floorplan_input.name = "core2:pipeline";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 1.535e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 4.0706e-3;
-//  floorplan_input.feature.area = 19.59e-6;
-  floorplan_input.feature.x_position = 4e-3;
-  floorplan_input.feature.y_position = 3.6446025e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 3.34441e-3;
-  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.name = "core4";
+  floorplan_input.feature.x_position = 0.0;
+  floorplan_input.feature.y_position = 4.81534e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(0,1.0));
   floorplan_input.thermal_correlation.insert(pair<int,double>(5,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(8,1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 4... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 5;
-  tile_input.name = "silicon:core2:cache";
-  tile_input.temperature = 370.0;
+  tile_input.name = "silicon:core5";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 5;
-  tile_input.name = "interface:core2:cache";
-  tile_input.temperature = 370.0;
+  tile_input.name = "interface:core5";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 5;
-  tile_input.name = "spreader:core2:cache";
-  tile_input.temperature = 370.0;
+  tile_input.name = "spreader:core5";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 5;
-  tile_input.name = "heatsink:core2:cache";
-  tile_input.temperature = 370.0;
+  tile_input.name = "heatsink:core5";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 5;
-  floorplan_input.name = "core2:cache";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 4.8125e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 2.267e-3;
-//  floorplan_input.feature.area = 10.91e-6;
-  floorplan_input.feature.x_position = 4e-3;
-  floorplan_input.feature.y_position = 2.5145875e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 1.130015e-3;
-  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.name = "core5";
+  floorplan_input.feature.x_position = 4.81534e-3;
+  floorplan_input.feature.y_position = 4.81534e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(1,1.0));
   floorplan_input.thermal_correlation.insert(pair<int,double>(4,1.0));
-  //floorplan_input.thermal_correlation.insert(pair<int,double>(100,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(6,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(9,1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 5... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 6;
-  tile_input.name = "silicon:core3:pipeline";
+  tile_input.name = "silicon:core6";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 6;
-  tile_input.name = "interface:core3:pipeline";
+  tile_input.name = "interface:core6";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 6;
-  tile_input.name = "spreader:core3:pipeline";
+  tile_input.name = "spreader:core6";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 6;
-  tile_input.name = "heatsink:core3:pipeline";
+  tile_input.name = "heatsink:core6";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 6;
-  floorplan_input.name = "core3:pipeline";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 1.535e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 4.0706e-3;
-//  floorplan_input.feature.area = 19.59e-6;
-  floorplan_input.feature.x_position = 6e-3;
-  floorplan_input.feature.y_position = 3.6446025e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 3.34441e-3;
-  floorplan_input.feature.area = 6.68882e-6;
+  floorplan_input.name = "core6";
+  floorplan_input.feature.x_position = 9.63068e-3;
+  floorplan_input.feature.y_position = 4.81534e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(2,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(5,1.0));
   floorplan_input.thermal_correlation.insert(pair<int,double>(7,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(10,1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 6... " << endl;
 
   tile_input.layer = SILICON;
   tile_input.id = 7;
-  tile_input.name = "silicon:core3:cache";
-  tile_input.temperature = 355.0;
+  tile_input.name = "silicon:core7";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
   tile_input.id = 7;
-  tile_input.name = "interface:core3:cache";
-  tile_input.temperature = 355.0;
+  tile_input.name = "interface:core7";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
   tile_input.id = 7;
-  tile_input.name = "spreader:core3:cache";
-  tile_input.temperature = 355.0;
+  tile_input.name = "spreader:core7";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
   tile_input.id = 7;
-  tile_input.name = "heatsink:core3:cache";
-  tile_input.temperature = 355.0;
+  tile_input.name = "heatsink:core7";
+  tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   floorplan_input.id = 7;
-  floorplan_input.name = "core3:cache";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 4.8125e-3;
-//  floorplan_input.feature.width = 4.8125e-3;
-//  floorplan_input.feature.length = 2.267e-3;
-//  floorplan_input.feature.area = 10.91e-6;
-  floorplan_input.feature.x_position = 6e-3;
-  floorplan_input.feature.y_position = 2.5145875e-3;
-  floorplan_input.feature.width = 2e-3;
-  floorplan_input.feature.length = 1.130015e-3;
-  floorplan_input.feature.area = 2.26003e-6;
+  floorplan_input.name = "core7";
+  floorplan_input.feature.x_position = 14.44602e-3;
+  floorplan_input.feature.y_position = 4.81534e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
   floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(3,1.0));
   floorplan_input.thermal_correlation.insert(pair<int,double>(6,1.0));
-  //floorplan_input.thermal_correlation.insert(pair<int,double>(100,1.0));
+    floorplan_input.thermal_correlation.insert(pair<int,double>(11,1.0));
   chip.insert(&floorplan_input);
   cout << "Initializing the parameters tile 7... " << endl;
 
-  /*tile_input.layer = SILICON;
-  tile_input.id = 100;
-  tile_input.name = "silicon:uncore:L3";
+  tile_input.layer = SILICON;
+  tile_input.id = 8;
+  tile_input.name = "silicon:core8";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = INTERFACE;
-  tile_input.id = 100;
-  tile_input.name = "interface:uncore:L3";
+  tile_input.id = 8;
+  tile_input.name = "interface:core8";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = SPREADER;
-  tile_input.id = 100;
-  tile_input.name = "spreader:uncore:L3";
+  tile_input.id = 8;
+  tile_input.name = "spreader:core8";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
   tile_input.layer = HEATSINK;
-  tile_input.id = 100;
-  tile_input.name = "heatsink:uncore:L3";
+  tile_input.id = 8;
+  tile_input.name = "heatsink:core8";
   tile_input.temperature = 350.0;
   chip.insert(&tile_input);
-  floorplan_input.id = 100;
-  floorplan_input.name = "uncore:L3";
-//  floorplan_input.feature.x_position = 0.0;
-//  floorplan_input.feature.y_position = 0.0;
-//  floorplan_input.feature.width = 16e-3;
-//  floorplan_input.feature.length = 4.8125e-3;
-//  floorplan_input.feature.area = 77e-6;
+  floorplan_input.id = 8;
+  floorplan_input.name = "core8";
   floorplan_input.feature.x_position = 0.0;
-  floorplan_input.feature.y_position = 0.0;
-  floorplan_input.feature.width = 8e-3;
-  floorplan_input.feature.length = 2.5145875e-3;
-  floorplan_input.feature.area = 20.1167e-6;
+  floorplan_input.feature.y_position = 9.63068e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
   floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
-  floorplan_input.device_tech.clock_frequency = 0.8*10.0/3.0*1e9;
-  floorplan_input.thermal_correlation.insert(pair<int,double>(1,1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(3,1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(5,1.0));
-  floorplan_input.thermal_correlation.insert(pair<int,double>(7,1.0));
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(4,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(9,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(12,1.0));
   chip.insert(&floorplan_input);
-  cout << "Initializing the parameters tile 100... " << endl;*/
+  cout << "Initializing the parameters tile 8... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 9;
+  tile_input.name = "silicon:core9";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 9;
+  tile_input.name = "interface:core9";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 9;
+  tile_input.name = "spreader:core9";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 9;
+  tile_input.name = "heatsink:core9";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 9;
+  floorplan_input.name = "core9";
+  floorplan_input.feature.x_position = 4.81534e-3;
+  floorplan_input.feature.y_position = 9.63068e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(5,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(8,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(10,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(13,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 9... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 10;
+  tile_input.name = "silicon:core10";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 10;
+  tile_input.name = "interface:core10";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 10;
+  tile_input.name = "spreader:core10";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 10;
+  tile_input.name = "heatsink:core10";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 10;
+  floorplan_input.name = "core10";
+  floorplan_input.feature.x_position = 9.63068e-3;
+  floorplan_input.feature.y_position = 9.63068e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(6,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(9,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(11,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(14,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 10... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 11;
+  tile_input.name = "silicon:core11";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 11;
+  tile_input.name = "interface:core11";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 11;
+  tile_input.name = "spreader:core11";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 11;
+  tile_input.name = "heatsink:core11";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 11;
+  floorplan_input.name = "core11";
+  floorplan_input.feature.x_position = 14.44602e-3;
+  floorplan_input.feature.y_position = 9.63068e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(7,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(10,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(15,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 11... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 12;
+  tile_input.name = "silicon:core12";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 12;
+  tile_input.name = "interface:core12";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 12;
+  tile_input.name = "spreader:core12";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 12;
+  tile_input.name = "heatsink:core12";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 12;
+  floorplan_input.name = "core12";
+  floorplan_input.feature.x_position = 0.0;
+  floorplan_input.feature.y_position = 14.44602e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(8,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(13,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 12... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 13;
+  tile_input.name = "silicon:core13";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 13;
+  tile_input.name = "interface:core13";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 13;
+  tile_input.name = "spreader:core13";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 13;
+  tile_input.name = "heatsink:core13";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 13;
+  floorplan_input.name = "core13";
+  floorplan_input.feature.x_position = 4.81534e-3;
+  floorplan_input.feature.y_position = 14.44602e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(9,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(12,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(14,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 13... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 14;
+  tile_input.name = "silicon:core14";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 14;
+  tile_input.name = "interface:core14";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 14;
+  tile_input.name = "spreader:core14";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 14;
+  tile_input.name = "heatsink:core14";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 14;
+  floorplan_input.name = "core14";
+  floorplan_input.feature.x_position = 9.63068e-3;
+  floorplan_input.feature.y_position = 14.44602e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(10,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(13,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(15,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 14... " << endl;
+
+  tile_input.layer = SILICON;
+  tile_input.id = 15;
+  tile_input.name = "silicon:core15";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = INTERFACE;
+  tile_input.id = 15;
+  tile_input.name = "interface:core15";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = SPREADER;
+  tile_input.id = 15;
+  tile_input.name = "spreader:core15";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  tile_input.layer = HEATSINK;
+  tile_input.id = 15;
+  tile_input.name = "heatsink:core15";
+  tile_input.temperature = 350.0;
+  chip.insert(&tile_input);
+  floorplan_input.id = 15;
+  floorplan_input.name = "core15";
+  floorplan_input.feature.x_position = 14.44602e-3;
+  floorplan_input.feature.y_position = 14.44602e-3;
+  floorplan_input.feature.width = 4.81534e-3;
+  floorplan_input.feature.length = 4.81534e-3;
+  floorplan_input.feature.area = 23.1875e-6;
+  floorplan_input.device_tech.set_default(core_tech.core_tech_node, HP);
+  floorplan_input.device_tech.clock_frequency = device_tech.clockRate;
+  floorplan_input.thermal_correlation.insert(pair<int,double>(11,1.0));
+  floorplan_input.thermal_correlation.insert(pair<int,double>(14,1.0));
+  chip.insert(&floorplan_input);
+  cout << "Initializing the parameters tile 15... " << endl;
 
   // rest of thermal tiles (sides of spreader and heatsink)
   tile_input.layer = SPREADER;
@@ -11900,7 +12258,7 @@ void Power::updateFloorplanAreaInfo(int fid, double area)
 void Power::compute_temperature(ComponentId_t compID)
 {
   boost::mpi::communicator world;
-
+  
   if (p_tempMonitor == true && ((world.size() > 1 && p_SumNumCompNeedPower == 0) || (world.size() == 1 && p_NumCompNeedPower == 0)))
   {
   //first resume numCompNeedPower for next power updates
@@ -11922,9 +12280,9 @@ void Power::compute_temperature(ComponentId_t compID)
     I updatedLeakagePower=0.0;
     fit = p_chip.floorplan.find((*it).second);
 
-    //#ifdef ENERGY_INTERFACE_DEBUG
-        //cout << "ENERGY_INTERFACE_DEBUG: component ID " << compID << " subcompList size =" << subcompList.size() << ", feedback = " << (*fit).second.leakage_feedback <<endl;
-    //#endif
+    /*#ifdef ENERGY_INTERFACE_DEBUG
+        cout << "ENERGY_INTERFACE_DEBUG: component ID " << compID << " subcompList size =" << subcompList.size() << ", comp type = " << (*it).first << " on fp_id " << (*it).second << ", feedback = " << (*fit).second.leakage_feedback <<endl;
+    #endif*/
 
     if( fit != p_chip.floorplan.end() && (*fit).second.leakage_feedback)
     {
@@ -12078,6 +12436,14 @@ void Power::compute_temperature(ComponentId_t compID)
       //p_usage_uarch.totalEnergy += updatedLeakagePower;
     } // end if leakage feedback   
   } // end for each subcomp
+
+    
+    //compute failaure rate of each thermal block
+    for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+    {
+	getFailureRate((*fit).second.device_tech.temperature);
+	std::cout << " total failure rate = " << p_TotalFailureRate << std::endl;
+    }
   } //end if model temperature
 }
 
@@ -12323,6 +12689,26 @@ void Power::printFloorplanThermalInfo()
     {
         std::cout <<"floorplan id " <<(*fit).second.id<<" has temperature = " << (*fit).second.device_tech.temperature << " K" << std::endl;
     }
+}
+
+void Power::getFailureRate(double temp)
+{
+	Reliability *r;
+	double t_min, t_max, t_avg, freq;
+
+	t_min=t_max=t_avg=freq=0;
+	r = new Reliability();
+	
+	p_TotalFailureRate += r->compute_failurerate(temp, t_min, t_max, t_avg, freq, false);
+	p_NumSamples += 1;
+
+	delete r;
+
+}
+void Power::compute_MTTF()
+{
+	std::cout << "MTTF = " << p_TotalFailureRate/p_NumSamples << std::endl;
+
 }
 
 }  // namespace SST

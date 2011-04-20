@@ -37,7 +37,7 @@ IntSim_library::IntSim_library(parameters_tech_t device_tech, double area, doubl
   param->Ileak_spec = device_tech.I_off_n[(int)device_tech.temperature-300]*device_tech.L_elec;
   param->Idsat_spec = device_tech.I_on_n*device_tech.L_elec;
   param->ncp = (double)device_tech.critical_path_depth;
-  param->er = device_tech.horiz_dielectric_constant[AGGRESSIVE][Global];
+  param->er = device_tech.horiz_dielectric_constant[AGGRESSIVE][GLOBAL];
   param->k = device_tech.Rents_const_k;
   param->p = device_tech.Rents_const_p;
   param->a = device_tech.activity_factor;

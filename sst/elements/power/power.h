@@ -98,6 +98,8 @@ extern "C"{
 
 
 #define MAX_NUM_SUBCOMP 20
+#define MESMTHI_H  //mesmthi is a 4x4 multicore system model and need special mapping of power 
+		   //to corresponding floorplan blocks 
 
 
 namespace SST {
@@ -115,6 +117,7 @@ namespace SST {
 	enum pmodel{McPAT, SimPanalyzer, McPAT05, IntSim, ORION}; //McPAT05 is an older version
 	enum tmodel {HOTSPOT};
 	enum tlayer{SILICON, INTERFACE, SPREADER, HEATSINK, NUM_THERMAL_LAYERS};
+	
 	
 
 typedef struct 
@@ -437,13 +440,13 @@ struct floorplan_id_t
 	int rename, scheduler, L3, L1dir, L2dir;
 };
 
-
+class Reliability;
 
 class Power{
    public:
- 	Pdissipation_t p_usage_cache_il1;
+ 	std::vector<Pdissipation_t> p_usage_cache_il1;
 	Pdissipation_t p_usage_cache_il2;
-	Pdissipation_t p_usage_cache_dl1;
+	std::vector<Pdissipation_t> p_usage_cache_dl1;
 	Pdissipation_t p_usage_cache_dl2;
 	Pdissipation_t p_usage_cache_itlb;
 	Pdissipation_t p_usage_cache_dtlb;
@@ -528,6 +531,9 @@ class Power{
 	static int p_SumNumCompNeedPower; //number of subcomp per chip that needs power 
 	static int p_TempSumNumCompNeedPower;
 	static bool p_hasUpdatedTemp;
+	static double p_TotalFailureRate;
+	static unsigned int p_NumSamples;  // average failure rate = total failure rate / number of samples
+
 	//double value, maxvalue;
 
 	// sim-panalyzer parameters
@@ -794,6 +800,8 @@ class Power{
 	    p_areaMcPAT = 0.0; p_maxNumSubComp = 0;
 	    p_ifReadEntireXML = p_ifGetMcPATUnitP = false;
 	    p_hasUpdatedTemp = false;
+	    p_TotalFailureRate = 0;
+	    p_NumSamples = 0;
 	    //p_McPATonPipe = p_McPATonIRS = p_McPATonRF = false;  //if xxx has power estimated by McPAT already
 	    #ifdef McPAT05_H
 	    McPAT05initBasic(); //initialize basic InputParameter interface_ip
@@ -1117,6 +1125,8 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	void printFloorplanAreaInfo();
 	void printFloorplanPowerInfo();
 	void printFloorplanThermalInfo();
+	void getFailureRate(double temp); //this is called in compute_temp
+	void compute_MTTF();
 	void test();
 
 	// McPAT interface
