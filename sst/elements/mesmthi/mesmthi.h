@@ -24,6 +24,7 @@
 
 #include <sst/elements/include/memoryDev.h>
 #include <sst/elements/include/memMap.h>
+#include "../power/power.h"
 
 #define SLIDE_SST
 #include "include/des.h"
@@ -31,6 +32,10 @@
 #include "include/cont_proc.h"
 
 using namespace SST;
+
+bool Power::p_hasUpdatedTemp __attribute__((weak));
+double Power::p_TotalFailureRate __attribute__((weak));
+unsigned int Power::p_NumSamples __attribute__((weak));
 
 // The parameters set these global variables.
 unsigned log2_row_size;
@@ -71,8 +76,8 @@ class timer_cp : public Slide::cont_proc_t {public:
       CONT_CALL(&d);
       //std::cout << "===T/" << std::dec << samp_per_tick << "===\n";
       //below is substituted by introspection
-      print_counters();
-      clear_counters();
+      //print_counters();
+      //clear_counters();
       if (++i == samp_per_tick) {
         cd->timer_interrupt();
         //std::cout << "===Timer Interrupt===\n";
@@ -114,6 +119,26 @@ class Mesmthi : public SST::IntrospectedComponent {
 
     //introspection
     registerIntrospector(pushIntrospector);
+
+    //power modeling
+    if (ifModelPower)   {
+		power = new Power(getId());
+
+		//set up floorplan and thermal tiles
+		power->setChip(params);
+
+		//set up architecture parameters
+		power->setTech(getId(), params, CACHE_IL1, McPAT);
+		power->setTech(getId(), params, CACHE_DL1, McPAT);
+		power->setTech(getId(), params, CACHE_L1DIR, McPAT);
+		power->setTech(getId(), params, CACHE_L2, McPAT);
+		power->setTech(getId(), params, MEM_CTRL, McPAT);
+
+		//reset all counts to zero
+		power->resetCounts(&mycounts);
+
+    }
+
     return 0;
   }
 
@@ -123,18 +148,31 @@ class Mesmthi : public SST::IntrospectedComponent {
     //std::cout << "below is from mesmthi triggerUpdate" << std::endl;
     //Introspection: ask introspector to pull and print counter values 
     triggerUpdate();
+    if (ifModelPower)  
+	power->compute_MTTF();
     return 0;
   }
 
 
  private:
+  Params_t params;
   Mesmthi(const Mesmthi &c);
   Mesmthi() :  IntrospectedComponent(-1) {}
  
 
   std::string kernel_img;
+  // For power & introspection
   std::string pushIntrospector;
+  Pdissipation_t pdata, pstats;
+  Power *power;
+  TimeConverter *tc;
+  // Over-specified struct that holds usage counts of its sub-components
+  usagecounts_t mycounts;
   
+  bool ifModelPower;
+  bool pushData(Cycle_t);  
+
+
   // Note: This won't work. This simulator is not serializable.
   friend class boost::serialization::access;
   template<class Archive> void serialize(Archive &ar, const unsigned int ver) {

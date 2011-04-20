@@ -23,6 +23,9 @@
 #include "include/des.h"
 #include "include/cont_proc.h"
 
+//below is needed for multiple libraries
+#include <sst/core/element.h> 
+
 using namespace std;
 using namespace Slide;
 using namespace Qsim;
@@ -162,13 +165,13 @@ struct memop_t {
   memop_t(uint64_t a, int t) : addr(a), type(t) {}
 };
 
-struct MemoryController;
-MemoryController *mc;
+struct HPMemoryController;
+HPMemoryController *mc;
 
-struct MemoryController {
+struct HPMemoryController {
   MemoryDev <uint64_t, cont_cond_t*> *mem_dev;
 
-  MemoryController() {
+  HPMemoryController() {
     register_counter("Memory Controller", "Reads",  reads);
     register_counter("Memory Controller", "Writes", writes);
 
@@ -186,7 +189,7 @@ struct MemoryController {
     spawn_cont_proc(new cookie_poll_cp());
   }
 
-  ~MemoryController() {
+  ~HPMemoryController() {
     delete mem_dev;
   }
 
@@ -543,7 +546,7 @@ public:
 
      // Local variables
      delay_cpt delay;
-     MemoryController::mem_req_cp mem_req;
+     HPMemoryController::mem_req_cp mem_req;
 
      bool miss, mshr_wait, evict_mem_access, main_mem_access;
      uint64_t evict_mem_addr, main_mem_addr;
@@ -776,9 +779,10 @@ void end_cb(int)   { simulation_running = false;
                      _sstComponent->unregisterExit(); }
 
 Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) : 
-  IntrospectedComponent(id) 
+  IntrospectedComponent(id),
+  params(params) 
 {
-  std::string clock_pd;
+  std::string clock_pd, if_model_power, sample_freq;
   // The parameters:
   //   log2_row_size:        log_2 of N for an NxN mesh
   //   threads:              number of threads per tile
@@ -811,7 +815,9 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
   read_param(params, "net_cpp",              net_cpp,              1);
   read_param(params, "clock_pd",             clock_pd,       "500ps");
   read_param(params, "kernel_img",        kernel_img,"linux/bzImage");
-  read_param(params, "stop_ticks",           stop_ticks,           0);
+  //read_param(params, "stop_ticks",           stop_ticks,           0);
+  read_param(params, "power_monitor",        if_model_power,"NO");
+  read_param(params, "sampling_frequency",   sample_freq,	"1ms");
   read_param(params, "push_introspector", pushIntrospector,"CountIntrospector");
   
   // Initialize the MesmthiModel.
@@ -857,7 +863,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
   cd->set_int_cb(feb_support, &feb_support_t::int_cb);
 
   // Instantiate the memory controller.
-  mc = new MemoryController();
+  mc = new HPMemoryController();
 
   // Instantiate the tiles.
   tiles.resize((1<<(log2_row_size*2)));
@@ -921,8 +927,78 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
     registerMonitor(setname.str(), new mpc_t(&mm->network_transactions[i]));
     setname << "Tile[" << i << "]TotalPackets";
     registerMonitor(setname.str(), new mpc_t(&mm->total_packets[i]));
- }
+   }
+     // Set up power modeling related parameters
+     if (!if_model_power.compare("YES"))
+	ifModelPower= true;
+     else
+	ifModelPower= false;
+
+     tc= registerTimeBase(clock_pd, true);
+
+      // for power introspection
+     if (ifModelPower)   {
+     ////registerClock(clock_pd, new Clock::Handler<Mesmthi>
+		    ////(this, &Mesmthi::pushData));
+	registerClock(sample_freq, new Clock::Handler<Mesmthi>
+		    (this, &Mesmthi::pushData));
+      } 
 }
+
+/******************************************************************************
+* Added for power modeling                                                    *
+* compute power/temperature at a frequency determinedby the push_introspector *
+*******************************************************************************/
+bool
+Mesmthi::pushData(Cycle_t current)
+{
+    ////if (isTimeToPush(current, pushIntrospector.c_str()))   {
+      
+       // set up counts
+	mycounts.memctrl_read = (double)mc->reads; 
+	 mycounts.memctrl_write = (double)mc->writes;
+	for (unsigned i = 0; i < (1u<<(2*log2_row_size)); i++){
+ 	  mycounts.il1_read[i] = (double)mm->l1i_hits[i] + (double)mm->l1i_misses[i]; 
+	  mycounts.il1_readmiss[i] = (double)mm->l1i_misses[i];
+	  mycounts.dl1_read[i] = (double)mm->l1d_read_misses[i] + (double)mm->l1d_read_hits[i];
+	  mycounts.dl1_readmiss[i] = (double)mm->l1d_read_misses[i];
+	  mycounts.dl1_write[i] = (double)mm->l1d_write_misses[i] + (double)mm->l1d_write_hits[i];
+	  mycounts.dl1_writemiss[i] = (double)mm->l1d_write_misses[i];
+	  mycounts.L2_read[i] = (double)mm->l2_read_misses[i] + (double)mm->l2_read_hits[i];
+	  mycounts.L2_readmiss[i] = (double)mm->l2_read_misses[i];
+	  mycounts.L2_write[i] = (double)mm->l2_write_misses[i]; 
+	  mycounts.L2_writemiss[i] = (double)mm->l2_write_misses[i] + (double)mm->l2_write_hits[i];
+	  mycounts.L1Dir_read[i] = (double)mm->l1d_read_misses[i] + (double)mm->l1d_read_hits[i]; 
+	  mycounts.L1Dir_readmiss[i] = (double)mm->l1d_read_misses[i]; 
+	  mycounts.L1Dir_write[i] = (double)mm->l2_write_misses[i] + (double)mm->l2_write_hits[i]; 
+	  mycounts.L1Dir_writemiss[i] = (double)mm->l2_write_misses[i];
+	}
+
+       pdata= power->getPower(this, CACHE_IL1, mycounts);
+	pdata= power->getPower(this, CACHE_DL1, mycounts);
+	pdata= power->getPower(this, CACHE_L1DIR, mycounts);
+	pdata= power->getPower(this, CACHE_L2, mycounts);
+	pdata= power->getPower(this, MEM_CTRL, mycounts);
+	
+       power->compute_temperature(getId());
+       regPowerStats(pdata);
+
+       //reset all counts to zero for next power query
+       power->resetCounts(&mycounts);
+	
+#if 1
+	using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << pdata.totalEnergy << " J" << std::endl;
+	using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;
+	power->printFloorplanThermalInfo();
+#endif
+		
+    ////}
+    return false;
+} 
+
 
 extern "C" {
   Mesmthi *mesmthiAllocComponent(SST::ComponentId_t        id,
@@ -930,5 +1006,33 @@ extern "C" {
     return new Mesmthi(id, params);
   }
 };
+
+//Interestingly, mesmthi needs to be created as above instead of the way routermodel is created
+
+
+
+static Component*
+create_mesmthi_power(SST::ComponentId_t id, 
+                  SST::Component::Params_t& params)
+{
+    return new Mesmthi( id, params );
+}
+
+static const ElementInfoComponent components2[] = {
+    { "mesmthi_power",
+      "mesmthi model with power",
+      NULL,
+      create_mesmthi_power
+    },
+    { NULL, NULL, NULL, NULL }
+};
+
+extern "C" {
+    ElementLibraryInfo mesmthi_power_eli = {
+        "mesmthi_power",
+        "mesmthi model with power",
+        components2,
+    };
+}
 
 BOOST_CLASS_EXPORT(Mesmthi)
