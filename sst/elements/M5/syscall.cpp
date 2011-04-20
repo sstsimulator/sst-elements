@@ -59,7 +59,6 @@ SimObject* create_Syscall( SST::Component* comp, string name,
 
 Syscall::Syscall( const Params* p ) :
     DmaDevice( p ),
-    m_offset( 0 ),
     m_dmaEvent( this ),
     m_syscallEvent( this ),
     m_startAddr( p->startAddr ),
@@ -98,10 +97,10 @@ Tick Syscall::write(Packet* pkt)
 
     assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );
 
-    pkt->writeData( (uint8_t*) m_mailbox + pkt->getAddr() - m_offset  );
+    pkt->writeData( (uint8_t*) m_mailbox + pkt->getAddr() - m_startAddr  );
     pkt->makeTimingResponse();
 
-    if ( pkt->getAddr() - m_offset == 0xf * sizeof( uint64_t ) ) {
+    if ( pkt->getAddr() - m_startAddr == 0xf * sizeof( uint64_t ) ) {
         schedule( m_syscallEvent, curTick + 0 );
     }
 
@@ -115,7 +114,7 @@ Tick Syscall::read(Packet* pkt)
 
     assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );
 
-    pkt->setData( ( uint8_t*) m_mailbox + pkt->getAddr() - m_offset );
+    pkt->setData( ( uint8_t*) m_mailbox + pkt->getAddr() - m_startAddr );
     pkt->makeTimingResponse();
     return 1;
 }

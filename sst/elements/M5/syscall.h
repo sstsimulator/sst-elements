@@ -78,7 +78,6 @@ class Syscall : public DmaDevice
 
     void barrierReturn( SST::Event* );
 
-    unsigned long m_offset;
     uint64_t      m_mailbox[0x10];
 
     DmaEvent      m_dmaEvent;
