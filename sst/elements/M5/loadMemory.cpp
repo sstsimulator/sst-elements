@@ -33,7 +33,7 @@ void loadMemory( string name, PhysicalMemory* memory,
                                 tmp.str().c_str(),end);
 
         DummySystem* system = create_DummySystem( name + "." + tmp.str() +  
-                            ".dummySystem", memory, Enums::timing);
+                            ".dummySystem", memory, Enums::timing, start, end);
 
         Process* process = newProcess( name + "." + tmp.str(), 
             params.find_prefix_params( tmp.str() + ".process."),

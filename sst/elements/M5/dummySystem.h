@@ -3,16 +3,28 @@
 
 #include <sim/system.hh>
 #include <dummyThreadContext.h>
+#include <arch/isa_traits.hh>
 
 #include <debug.h>
 
 using namespace std;
+using namespace TheISA;
+
+struct DummySystemParams : public SystemParams {
+    Addr start;
+    Addr end;
+};
 
 class DummySystem : public System {
 
   public:
-    typedef SystemParams Params;
-    DummySystem( Params *p ) : System(p) {}
+    typedef DummySystemParams Params;
+    DummySystem( Params *p ) :  
+        System(p),
+        m_start(p->start),
+        m_end(p->end) 
+    {}
+
     ~DummySystem() {}
 
     ThreadContext *getThreadContext(ThreadID tid) { 
@@ -21,13 +33,26 @@ class DummySystem : public System {
         return& m_threadContext; 
     }
 
+    Addr new_page() {
+        Addr return_addr = page_ptr << LogVMPageSize;
+        ++page_ptr;
+
+        if (return_addr >= m_end - m_start)
+            fatal("Out of memory, please increase size of physical memory.");
+        //printf("%s %#lx\n",__func__,m_start + return_addr);
+        return m_start + return_addr;
+    }
+
   private:
     DummyThreadContext m_threadContext;
+    Addr m_start;
+    Addr m_end;
 };
 
 static inline DummySystem* create_DummySystem( string name, 
                     PhysicalMemory* physmem,
-                    Enums::MemoryMode mem_mode) 
+                    Enums::MemoryMode mem_mode,
+                    Addr start, Addr end) 
 {
     
     DummySystem::Params& params = *new DummySystem::Params;
@@ -37,6 +62,8 @@ static inline DummySystem* create_DummySystem( string name,
     params.name = name;
     params.physmem = physmem;
     params.mem_mode = mem_mode;
+    params.start = start;
+    params.end = end;
 
     return new DummySystem( &params );
 }

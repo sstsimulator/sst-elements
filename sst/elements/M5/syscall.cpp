@@ -68,7 +68,7 @@ Syscall::Syscall( const Params* p ) :
     m_comp( p->m5Comp )
 {
     m_endAddr = m_startAddr + sizeof(m_mailbox);
-    DBGX(2,"startAddr=%#lx endAddr%#lx\n", m_startAddr, m_endAddr);
+    DBGX(2,"startAddr=%#lx endAddr=%#lx\n", m_startAddr, m_endAddr);
     memset( m_mailbox, 0, sizeof(m_mailbox) );
 
     m_comp->barrier().add( &m_barrierHandler );
