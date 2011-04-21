@@ -44,9 +44,6 @@ class sstdisksim_tracereader : public Component {
   int Setup();
   int Finish();
 
-  int traceRead(int count, int pos, int devno);
-  int traceWrite(int count, int pos, int devno);
-
   bool clock(Cycle_t current);
 
  private:

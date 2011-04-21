@@ -30,6 +30,41 @@ __argWithState __tmp_vals[_END_CALLS][_END_ARGS];
 // tools.
 unsigned __vizhack[_END_CALLS][_END_ARGS];
 
+void __setargs( int i )
+{
+  // true only for those args that are not used in the call
+  switch(i)
+  {
+  case _CALL_READ:
+  case _CALL_WRITE:
+    __tmp_vals[i][_ARG_FD].set = false;
+    __tmp_vals[i][_ARG_COUNT].set = false;
+
+    __tmp_vals[i][_ARG_OFFSET].set = true;
+    __tmp_vals[i][_ARG_WHENCE].set = true;
+    break;
+
+  case _CALL_FSYNC:
+  case _CALL_OPEN:
+  case _CALL_CLOSE:
+    __tmp_vals[i][_ARG_FD].set = false;
+
+    __tmp_vals[i][_ARG_COUNT].set = true;
+    __tmp_vals[i][_ARG_OFFSET].set = true;
+    __tmp_vals[i][_ARG_WHENCE].set = true;
+    break;
+
+  case _CALL_LSEEK:
+    __tmp_vals[i][_ARG_FD].set = false;
+    __tmp_vals[i][_ARG_OFFSET].set = false;
+    __tmp_vals[i][_ARG_WHENCE].set = false;
+
+    __tmp_vals[i][_ARG_COUNT].set = true;
+    break;
+  default:
+    exit(-1);
+  }
+}
 
 // implementation of callback routines 
 int EnterState(void *userData, double time, 
@@ -117,7 +152,21 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
       __types[_CALL_CLOSE][_ARG_FD] = userEventToken;
     }
   }
-
+  else if ( strstr(userEventName, "LSEEK") )
+  {
+    if ( strstr(userEventName, "fd" ) )
+    {
+      __types[_CALL_LSEEK][_ARG_FD] = userEventToken;
+    }
+    if ( strstr(userEventName, "offset" ) )
+    {
+      __types[_CALL_LSEEK][_ARG_OFFSET] = userEventToken;
+    }
+    if ( strstr(userEventName, "whence" ) )
+    {
+      __types[_CALL_LSEEK][_ARG_WHENCE] = userEventToken;
+    }
+  }
   return 0;
 }
 
@@ -140,22 +189,22 @@ int EventTrigger( void *userData, double time,
 	   __tmp_vals[i][j].set = true;
 	  for ( int k = 0; k < _END_ARGS; k++ )
 	  {
-	    if ( __tmp_vals[i][k].set == false && i != _CALL_CLOSE )
+	    if ( __tmp_vals[i][k].set == false )
 	      break;
-	    else if ( k == _END_ARGS-1 || i == _CALL_CLOSE )
+	    else if ( k == _END_ARGS-1 )
 	    {
 	      __argument tmp[_END_ARGS];
-	      for ( int a = 0; a < _END_ARGS; a++ )
-		tmp[a].l = __tmp_vals[i][a].arg.l;
+	      for ( int l = 0; l < _END_ARGS; l++ )
+	      {
+		tmp[l].l = __tmp_vals[i][l].arg.l;
+	      }
+
 	      __list.add_entry((__call)i, tmp);
-	      for ( int a = 0; a < _END_ARGS; a++ )
-		__tmp_vals[i][a].set = false;
+
+	      __setargs(i);
+	      
 	    }
 	  }
-	}
-	else
-	{
-	  // A throwout value because of viz hacks in the trace files.
 	}
 
 	__vizhack[i][j]++;
@@ -206,10 +255,10 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
   {
     for ( int j = 0; j < _END_ARGS; j++ )
     {
-      __tmp_vals[i][j].set = false;
       __vizhack[i][j] = 0;
       __types[i][j]=0;
     }
+    __setargs(i);
   }
 
   // open trace file 
@@ -258,6 +307,7 @@ sstdisksim_tau_parser::getNextEvent()
   ev->completed = 0;
   ev->devno = 0;  // TODO: figure out device used
 
+  long long cur_pos;
   arg_map::iterator iter;
   
   sstdisksim_trace_type* cur_event = __list.pop_entry();
@@ -279,36 +329,60 @@ sstdisksim_tau_parser::getNextEvent()
 	ev->pos =  iter->second;
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
-      else
-      {
-	ev->pos = 0;
-      }
 
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
       break;
+
     case _CALL_WRITE:
       ev->etype = DISKSIMWRITE;
       ev->count = cur_event->args[_ARG_COUNT].t;
       iter = fd_map.find(cur_event->args[_ARG_FD].t);
+      ev->pos = 0;  
 
       if ( iter != fd_map.end() )
       {
 	ev->pos =  iter->second;
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
-      else
-      {
-	ev->pos = 0;  
-      }
       
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
       break;
+
     case _CALL_CLOSE:
       fd_map.erase(cur_event->args[_ARG_FD].t);
+      free(cur_event);
+      cur_event = __list.pop_entry();
+      break;
+
+    case _CALL_LSEEK:
+      switch ( cur_event->args[_ARG_WHENCE].i )
+      {
+      case 0: //seek_set
+	cur_pos = cur_event->args[_ARG_OFFSET].l;
+	break;
+      case 1: //seek_cur
+	iter = fd_map.find(cur_event->args[_ARG_FD].t);
+	cur_pos = cur_event->args[_ARG_OFFSET].l + iter->second;
+	break;
+
+      case 2: //seek_end - unsupported because we don't know file sizes
+      default:
+	cur_pos = 0;
+	break;
+      }
+
+      iter = fd_map.find(cur_event->args[_ARG_FD].t);
+      fd_map.erase(cur_event->args[_ARG_FD].t);
+      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+					    cur_pos));
+      free(cur_event);
+      cur_event = __list.pop_entry();
+      break;    
+
     case _CALL_FSYNC:
     case _CALL_OPEN:
     default:

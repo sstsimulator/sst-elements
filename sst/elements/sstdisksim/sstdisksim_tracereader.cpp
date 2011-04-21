@@ -44,40 +44,10 @@ sstdisksim_tracereader::clock(Cycle_t current)
     event->etype = DISKSIMEND;
   }
 
+  printf("Event %d count %lld pos %lld time %lld\n", event->etype, event->count, event->pos, current);
+
   link->Send(0, event);
   return false;
-}
-
-/******************************************************************************/
-int
-sstdisksim_tracereader::traceRead(int count, int pos, int devno)
-{
-  sstdisksim_event* event = new sstdisksim_event();
-  event->count = count;
-  event->pos = pos;
-  event->devno = devno;
-  event->etype = DISKSIMREAD;
-  event->completed = false;
-
-  link->Send(0, event);
-
-  return 0;
-}
-
-/******************************************************************************/
-int
-sstdisksim_tracereader::traceWrite(int count, int pos, int devno)
-{
-  sstdisksim_event* event = new sstdisksim_event();
-  event->count = count;
-  event->pos = pos;
-  event->devno = devno;
-  event->etype = DISKSIMWRITE;
-  event->completed = false;
-
-  link->Send(0, event);
-
-  return 0;
 }
 
 /******************************************************************************/

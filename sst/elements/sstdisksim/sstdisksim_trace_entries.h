@@ -37,6 +37,7 @@ enum __call
   _CALL_FSYNC,
   _CALL_CLOSE,
   _CALL_OPEN,
+  _CALL_LSEEK,
   _END_CALLS
 };
 
@@ -44,6 +45,9 @@ enum __arg
 {
   _ARG_FD = 0,
   _ARG_COUNT,
+  _ARG_OFFSET,
+  _ARG_WHENCE,
+  //  _ARG_FLAGS,
   //  _ARG_RET,
   _END_ARGS
 };
@@ -52,7 +56,6 @@ struct sstdisksim_trace_call
 {
   __call call;
   char name[16];
-  char fmt[16];
 };
 
 struct sstdisksim_trace_type
@@ -66,7 +69,6 @@ class sstdisksim_trace_entries
 {
 public:
   sstdisksim_trace_entries();
-  void print_entries();
   void add_entry(__call call, __argument args[_END_ARGS]);
   sstdisksim_trace_type* pop_entry();
 

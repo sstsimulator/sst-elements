@@ -15,71 +15,25 @@
 
 #include "sstdisksim_trace_entries.h"
 
-void 
-sstdisksim_trace_entries::print_entries()
-{
-  struct sstdisksim_trace_type* cur = head;
-
-  while ( cur != NULL )
-  {  
-    printf("%s ", cur->call->name);
-
-    int i = 0;
-    while ( i < _END_ARGS && (cur->call->fmt)[i] != '\0' )
-    {
-      switch (cur->call->fmt[i])
-      {
-      case 's':
-	printf("string: %s ", cur->args[i].s);
-	break;
-      case 'l':
-	printf("long: %ld ", cur->args[i].l);
-	break;
-      case 'i':
-	printf("int: %d ", cur->args[i].i);
-	break;
-      case 'u':
-	printf("uint: %u ", cur->args[i].u);
-	break;
-      case 't':
-	printf("sizet: %Zd ", cur->args[i].t);
-	break;
-      case 'p':
-	printf("pointer: %p ", cur->args[i].p);
-	break;
-      default:
-	exit(-1);
-      }
-      i++;
-    }
-
-    printf("\n");
-
-    cur = cur->next;
-  }
-}
-
 sstdisksim_trace_entries::sstdisksim_trace_entries()
 {
   strcpy(__calls[_CALL_READ].name, "READ");
-  strcpy(__calls[_CALL_READ].fmt, "ipt");
   __calls[_CALL_READ].call = _CALL_READ;
 
   strcpy(__calls[_CALL_WRITE].name, "WRITE");
-  strcpy(__calls[_CALL_WRITE].fmt, "ipt");
   __calls[_CALL_WRITE].call = _CALL_WRITE;
 
   strcpy(__calls[_CALL_FSYNC].name, "FSYNC");
-  strcpy(__calls[_CALL_FSYNC].fmt, "ipt");
   __calls[_CALL_FSYNC].call = _CALL_FSYNC;
 
+  strcpy(__calls[_CALL_CLOSE].name, "CLOSE");
+  __calls[_CALL_CLOSE].call = _CALL_CLOSE;
+
   strcpy(__calls[_CALL_OPEN].name, "OPEN");
-  strcpy(__calls[_CALL_OPEN].fmt, "si");
   __calls[_CALL_OPEN].call = _CALL_OPEN;
 
-  strcpy(__calls[_CALL_CLOSE].name, "CLOSE");
-  strcpy(__calls[_CALL_CLOSE].fmt, "i");
-  __calls[_CALL_CLOSE].call = _CALL_CLOSE;
+  strcpy(__calls[_CALL_LSEEK].name, "LSEEK");
+  __calls[_CALL_LSEEK].call = _CALL_LSEEK;
 
   head=tail=NULL;
 }
@@ -97,9 +51,10 @@ sstdisksim_trace_entries::add_entry(__call call, __argument args[_END_ARGS])
   cur->call = &(__calls[call]);
   cur->next = NULL;
 
+
   for ( int i = 0; i < _END_ARGS; i++ )
   {
-    cur->args[i] = args[i];
+    cur->args[i].l = args[i].l;
   }
 
   if ( head == NULL )
@@ -116,7 +71,9 @@ sstdisksim_trace_entries::pop_entry()
 {
   sstdisksim_trace_type* retval = head;
   if ( head != NULL )
+  {    
     head = head->next;
+  }
 
   return retval;
 }

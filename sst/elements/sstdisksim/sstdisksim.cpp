@@ -233,7 +233,7 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   }
 
   tmp = __now-tmp; /* milliseconds */
-  long cyclespermillisec = 1000000;
+  double cyclespermillisec = 1000000;
 
   
   __cycle += (long)(tmp*cyclespermillisec);
@@ -252,6 +252,14 @@ sstdisksim::lockstepEvent(Event* ev)
   event->completed = true;
 
   Cycle_t now = __tc->convertToCoreTime( getCurrentSimTime(__tc) );
+
+  unsigned long sector;
+  unsigned long nblks;
+  unsigned long nbytes;
+
+  sector = event->pos/SECTOR;
+  nbytes = (event->pos % SECTOR) + event->count;
+  nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
 
 #ifdef DISKSIM_DBG
   if ( event->etype == DISKSIMEND )
@@ -285,7 +293,7 @@ sstdisksim::lockstepEvent(Event* ev)
   }
 
   event_count++;
-  event->finishedCall();
+  event->finishedCall(event, (long long)now);
   delete(event);
 }
 

@@ -20,8 +20,8 @@ enum eventtype {DISKSIMREAD, DISKSIMWRITE, DISKSIMEND};
 class sstdisksim_event : public SST::Event {
 public:
   eventtype etype;
-  unsigned long pos;
-  unsigned long count;
+  long long pos;
+  long long count;
   unsigned long devno;
   unsigned long time;
 
@@ -30,7 +30,7 @@ public:
   bool completed;
   void* bossClass;
 
-  void (*finishedCall)(void);
+  void (*finishedCall)(sstdisksim_event*, long long time);
 
   sstdisksim_event();
 
@@ -46,7 +46,7 @@ private:
       ar & BOOST_SERIALIZATION_NVP(count);
       ar & BOOST_SERIALIZATION_NVP(devno);
       ar & BOOST_SERIALIZATION_NVP(time);
-      ar & BOOST_SERIALIZATION_NVP(completed);      
+      ar & BOOST_SERIALIZATION_NVP(completed);
     }
 }; 
     
