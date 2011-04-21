@@ -27,6 +27,7 @@ libportals4_sm_la_SOURCES = \
 	trig_cpu/apps/barrier_recdbl_trig.h \
 	trig_cpu/apps/barrier_dissem.h \
 	trig_cpu/apps/barrier_dissem_trig.h \
+	trig_cpu/apps/pingpong-bw-eager.h \
 	trig_cpu/apps/test_portals.h \
 	trig_cpu/apps/test_mpi.h \
 	trig_cpu/apps/test_atomics.h \

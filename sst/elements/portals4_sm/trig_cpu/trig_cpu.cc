@@ -30,6 +30,7 @@
 #include "apps/barrier_recdbl_trig.h"
 #include "apps/barrier_dissem.h"
 #include "apps/barrier_dissem_trig.h"
+#include "apps/pingpong-bw-eager.h"
 #include "apps/test_portals.h"
 #include "apps/test_mpi.h"
 #include "apps/ping_pong.h"
@@ -220,6 +221,8 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
         app = new test_mpi(this);
     } else if (application == "ping_pong" ) {
         app = new ping_pong(this);
+    } else if (application == "bw.eager") {
+        app = new pingpong_bw_eager(this);
     } else if (application == "bandwidth" ) {
         app = new bandwidth(this);
     } else if (application == "test_atomics" ) {

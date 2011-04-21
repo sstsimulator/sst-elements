@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <utility>
+#include <stack>
 #include <boost/tuple/tuple.hpp>
 
 #include <sst/core/event.h>
@@ -97,6 +98,7 @@ protected:
     int state;
     int my_id;
     int num_nodes;
+    std::stack<int> callstack;
 
 private:
     application(const application& a);
@@ -107,5 +109,12 @@ private:
 #define crBegin() switch(state) { case 0:
 #define crReturn() do { state=__LINE__; return false; case __LINE__:; } while (0)
 #define crFinish() state = 0 ;  }
+
+#define crInit() switch (state) {
+#define crStart() case 0:
+#define crFuncStart(name) name: do { state=__LINE__; return false; case __LINE__:; } while (0)
+#define crFuncEnd() do { state=callstack.top(); callstack.pop(); return false; } while (0)
+#define crFuncCall(name) do { callstack.push(__LINE__); goto name; case __LINE__:; } while (0)
+
 
 #endif // COMPONENTS_TRIG_CPU_APPLICATION_H

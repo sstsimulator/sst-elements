@@ -30,6 +30,7 @@ public:
 	min = 0xffffffff;
 	max = 0;
 	total_time = 0;
+        add_count = 0;
 	
 	overall_min = 0xffffffff;
 	overall_max = 0;
@@ -62,31 +63,33 @@ public:
 	all_reduce( world, &value, 1, &out, std::plus<int>() );  
 	
 	if ( 0 == out ) {
-	    // Barrier is done, exchange data
-	    SimTime_t total_num = wake_up.size();
-	    SimTime_t total_num_a;
-	    SimTime_t min_a;
-	    SimTime_t max_a;
-	    SimTime_t total_time_a;
-	    all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
-	    all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
-	    all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
-	    all_reduce( world, &total_time, 1, &total_time_a, std::plus<SimTime_t>() );
+            all_reduce(world, &add_count, 1, &out, std::plus<int>() );
+            if (0 != out) {
+                // Barrier is done, exchange data
+                SimTime_t total_num = wake_up.size();
+                SimTime_t total_num_a;
+                SimTime_t min_a;
+                SimTime_t max_a;
+                SimTime_t total_time_a;
+                all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
+                all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
+                all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
+                all_reduce( world, &total_time, 1, &total_time_a, std::plus<SimTime_t>() );
 
-	    if ( world.rank() == 0 ) {
-		printf("Max time: %lu ns\n", (unsigned long) max_a);
-		printf("Min time: %lu ns\n", (unsigned long) min_a);
-		printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
-		printf("Total num: %d\n", total_num_a);
-		fflush(NULL);
-	    }
-	    resetBarrier();
-            addTimeToOverallStats(max_a);
+                if ( world.rank() == 0 ) {
+                    printf("Max time: %lu ns\n", (unsigned long) max_a);
+                    printf("Min time: %lu ns\n", (unsigned long) min_a);
+                    printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
+                    printf("Total num: %d\n", total_num_a);
+                    fflush(NULL);
+                }
+                resetBarrier();
+                addTimeToOverallStats(max_a);
+            }
 	    resetStats();
             for ( int i = 0; i < wake_up.size(); i++ ) {
                 wake_up[i]->Send(10,NULL);
             }
-	    
 	}
 	SimTime_t next = sim->getCurrentSimCycle() + 
 	    sim->getTimeLord()->getTimeConverter("1us")->getFactor();
@@ -118,6 +121,7 @@ public:
         if ( time < min ) min = time;
         if ( time > max ) max = time;
         total_time += time;
+        add_count++;
     }
 
     void
@@ -135,6 +139,7 @@ public:
         min = 0xffffffff;
         max = 0;
         total_time = 0;
+        add_count = 0;
     }
 
     void
@@ -150,11 +155,13 @@ public:
     void
     printOverallStats()
     {
-        printf("Overall Max time: %lu ns\n", (unsigned long) overall_max);
-        printf("Overall Min time: %lu ns\n", (unsigned long) overall_min);
-        printf("Overall Avg time: %lu ns\n", (unsigned long) (overall_total_time/overall_total_num));
-        printf("Overall Total num: %d\n", overall_total_num);
-        fflush(NULL);
+        if (overall_total_num != 0) {
+            printf("Overall Max time: %lu ns\n", (unsigned long) overall_max);
+            printf("Overall Min time: %lu ns\n", (unsigned long) overall_min);
+            printf("Overall Avg time: %lu ns\n", (unsigned long) (overall_total_time/overall_total_num));
+            printf("Overall Total num: %d\n", overall_total_num);
+            fflush(NULL);
+        }
     }
 
     int
@@ -200,6 +207,7 @@ private:
     SimTime_t max;
     SimTime_t total_time;
     int num_reporting;
+    int add_count;
 
     SimTime_t overall_min;
     SimTime_t overall_max;
@@ -213,8 +221,6 @@ private:
     std::vector<Link*> wake_up;
 
     int job_size;
-
-    
 };
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_ACTION_H
