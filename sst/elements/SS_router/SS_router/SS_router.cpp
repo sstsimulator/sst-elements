@@ -342,8 +342,6 @@ void SS_router::setup() {
 
 //: Output statistics
 int SS_router::Finish () {
-    if ( routerID == 5 ) printf("%5d: count = %d\n",routerID,clock_count);
-
 #if 0 // finish() dumpTables
     DBprintf("\n");
     if ( m_print_info )
