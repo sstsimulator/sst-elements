@@ -36,15 +36,22 @@ static sstdisksim_tracereader* __ptrs[128];
 bool
 sstdisksim_tracereader::clock(Cycle_t current)
 {
+  static int end_sent = 0;
   sstdisksim_event* event = __parser->getNextEvent();
   /* At the end of our input */
   if ( event == NULL )
   {
-    event = new sstdisksim_event;
-    event->etype = DISKSIMEND;
+    if ( end_sent < 10 )
+    {
+      event = new sstdisksim_event;
+      event->etype = DISKSIMEND;
+      end_sent++;
+    }
+    else 
+      return false;
   }
 
-  printf("Event %d count %lld pos %lld time %lld\n", event->etype, event->count, event->pos, current);
+  //  printf("Event %d count %lld pos %lld time %lld\n", event->etype, event->count, event->pos, current);
 
   link->Send(0, event);
   return false;

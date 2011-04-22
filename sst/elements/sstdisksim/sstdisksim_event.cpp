@@ -23,28 +23,28 @@
 void 
 opFinishedCallback(sstdisksim_event* event, long long now)
 {
-   unsigned long sector;
-   unsigned long nblks;
-   unsigned long nbytes;
-
-   sector = event->pos/512;
-   nbytes = (event->pos % 512) + event->count;
-   nblks = (unsigned long)ceill((double)nbytes/(double)512);
-   
-   static int ___lockStepEventPrint__ = 0;
-   
-   if ( !___lockStepEventPrint__ )
-   {
-     ___lockStepEventPrint__ = 1;
-     printf("time\t\t pos\t\t sector\t\t nbytes\t\t nblks\n");
-   }   
-   
-   printf("%ld\t\t%lu\t\t%lu\t\t%lu%\t\t%lu\n", 
-	  (long)now,
-	  event->pos, 
-	  sector,
-	  nbytes, 
-	  nblks);
+  static int ___lockStepEventPrint__ = 0;
+  
+  unsigned long sector;
+  unsigned long nblks;
+  unsigned long nbytes;
+  
+  sector = event->pos/512;
+  nbytes = (event->pos % 512) + event->count;
+  nblks = (unsigned long)ceill((double)nbytes/(double)512);
+  
+  if ( !___lockStepEventPrint__ )
+  {
+    ___lockStepEventPrint__ = 1;
+    printf("time\t\t pos\t\t sector\t\t nbytes\t\t nblks\n");
+  }   
+  
+  printf("%ld\t\t%lu\t\t%lu\t\t%lu%\t\t%lu\n", 
+	 (long)now,
+	 event->pos, 
+	 sector,
+	 nbytes, 
+	 nblks);
 }
 
 /******************************************************************************/
