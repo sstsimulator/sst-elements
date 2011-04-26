@@ -53,6 +53,7 @@ unsigned samp_per_tick;
 unsigned paddr_bits;
 unsigned net_latency;
 unsigned net_cpp;
+unsigned fast_forward_cyc;
 
 class Tile;
 std::vector <Tile*> tiles;

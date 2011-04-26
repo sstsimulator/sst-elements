@@ -381,7 +381,7 @@ public:
 	// If the thread has not been started yet, don't do anything.
 	if (cd->booted(qsim_cpu)) {
 
-	  //DBG << "It's thread " << qsim_cpu << "'s turn.\n";
+	  DBG << "It's thread " << qsim_cpu << "'s turn.\n";
 	  // Run this CPU 1 instruction.
 	  tile->cur_thread = this;
 	  cd->run(qsim_cpu, 1);
@@ -798,6 +798,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
   //   paddr_bits:           log_2 of physical address space size
   //   net_latency:          # of cycles to move by one tile on the network
   //   net_cpp:              cycles per packet, 1/throughput
+  //   fast_forward_cycle:    # cycles to be fast forwarded
   read_param(params, "log2_row_size",        log2_row_size,        2);
   read_param(params, "threads",              num_threads,          2);
   read_param(params, "fetch_bytes",          fetch_bytes,          8);
@@ -819,6 +820,8 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
   read_param(params, "power_monitor",        if_model_power,"NO");
   read_param(params, "sampling_frequency",   sample_freq,	"1ms");
   read_param(params, "push_introspector", pushIntrospector,"CountIntrospector");
+  read_param(params, "fast_forward_cycle", fast_forward_cyc,1000000000);
+
   
   // Initialize the MesmthiModel.
   mm = new MesmthiModel(log2_row_size, net_latency, l2_l1_swap_t,
@@ -850,6 +853,16 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
     }
     cd->timer_interrupt();
   }
+
+  // benchmark is running now; fast forward # instructions to the beginning of parallel execution
+  for (unsigned j = 0; 
+           j < (1<<log2_row_size)*(1<<log2_row_size)*num_threads; 
+           j++) 
+  {
+        cd->run(j, fast_forward_cyc);
+  }
+  cd->timer_interrupt();
+
 
   // Set up full-empty bit support
   feb_support = new feb_support_t(num_threads*(1<<(log2_row_size*2)));
@@ -993,6 +1006,9 @@ Mesmthi::pushData(Cycle_t current)
 	using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << pdata.totalEnergy << " J" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;
 	power->printFloorplanThermalInfo();
+
+	print_counters();
+	clear_counters();
 #endif
 		
     ////}
