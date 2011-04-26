@@ -229,6 +229,12 @@ typedef struct {
     ptl_handle_ct_t ct_handle; 
 } ptl_md_t;
 
+// Options for ME
+#define PTL_MD_EVENT_CT_SEND   0x1
+#define PTL_MD_EVENT_CT_REPLY  0x2
+#define PTL_MD_EVENT_CT_ACK    0x4
+#define PTL_MD_EVENT_CT_BYTES  0x8
+
 typedef ptl_md_t* ptl_handle_md_t;
 
 
@@ -288,6 +294,7 @@ typedef struct {
     ptl_size_t offset;
     ptl_process_t target_id;
     ptl_handle_ct_t ct_handle;
+    ptl_size_t ct_increment;
     ptl_handle_eq_t eq_handle;
     ptl_event_t* event;
     bool end;

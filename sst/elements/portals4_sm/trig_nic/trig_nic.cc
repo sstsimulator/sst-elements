@@ -280,6 +280,8 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
 	        new_dma = true;
  	        if ( ev->data.dma->ct_handle != PTL_CT_NONE && ev->stream == PTL_HDR_STREAM_GET ) {
 		    scheduleCTInc(ev->data.dma->ct_handle,1,latency_ct_post);
+		}
+ 	        if ( ev->data.dma->eq_handle != PTL_EQ_NONE && ev->stream == PTL_HDR_STREAM_GET ) {
 		    scheduleEQ(ev->data.dma->eq_handle,ev->data.dma->event);		    
 		}
 	    }
