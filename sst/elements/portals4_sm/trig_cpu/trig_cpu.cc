@@ -725,7 +725,7 @@ trig_cpu::isend(int dest, void* data, int length)
   md.ct_handle = PTL_CT_NONE; 
 
   // Now send it
-  ptl->PtlPut(&md,0,length,0,dest,0,0,0,NULL,0);
+  ptl->PtlPut(&md,0,length,PTL_NO_ACK_REQ,dest,0,0,0,NULL,0);
 }
 
 bool

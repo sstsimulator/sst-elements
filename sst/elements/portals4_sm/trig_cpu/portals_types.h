@@ -27,6 +27,19 @@ typedef int16_t   ptl_handle_eq_t;
 typedef int8_t    ptl_pt_index_t;
 typedef uint32_t  ptl_ack_req_t;
 
+#define PTL_ACK_REQ     0
+#define PTL_NO_ACK_REQ  1
+#define PTL_CT_ACK_REQ  2
+#define PTL_OC_ACK_REQ  3
+
+// typedef enum {PTL_ACK_REQ,
+// 	      PTL_NO_ACK_REQ,
+// 	      PTL_CT_ACK_REQ,
+// 	      PTL_OC_ACK_REQ
+// } ptl_ack_req_t;
+
+
+
 typedef uint64_t  ptl_process_t;
 typedef uint64_t  ptl_hdr_data_t;
 typedef uint64_t  ptl_match_bits_t;
@@ -105,8 +118,6 @@ typedef enum {
     PTL_EVENT_AUTO_FREE,
     PTL_EVENT_PROBE
 } ptl_event_kind_t;
-
-
 
 struct ptl_event_t {
     ptl_event_kind_t       type;
@@ -339,7 +350,7 @@ typedef struct {
     ptl_handle_ct_t  ct_handle;      // 2 bytes
     ptl_handle_ct_t  eq_handle;      // 2 bytes
     uint8_t          op;             // 1 byte
-    
+    ptl_ack_req_t    ack_req;         // 4 bytes
 } ptl_int_msg_info_t;
 
 typedef struct {

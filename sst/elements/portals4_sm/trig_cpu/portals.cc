@@ -172,6 +172,7 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->msg_info->get_start = NULL;
     event->msg_info->ct_handle = md_handle->ct_handle;
     event->msg_info->eq_handle = md_handle->eq_handle;
+    event->msg_info->ack_req = ack_req;
 
     
     // If this is a single packet message, just send it.  Otherwise,
@@ -322,6 +323,7 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->msg_info->get_start = NULL;
     event->msg_info->ct_handle = md_handle->ct_handle;
     event->msg_info->eq_handle = md_handle->eq_handle;
+    event->msg_info->ack_req = ack_req;
 
     // Currently only support up to 8-bytes
     if ( length <= 8 ) { // Single packet
@@ -482,6 +484,7 @@ portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_op->msg_info->get_start = NULL;
     trig_op->msg_info->ct_handle = md_handle->ct_handle;
     trig_op->msg_info->eq_handle = md_handle->eq_handle;
+    trig_op->msg_info->ack_req = ack_req;
     
     
     if ( !putv_active ) {
@@ -593,6 +596,7 @@ portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_op->msg_info->get_start = NULL;
     trig_op->msg_info->ct_handle = md_handle->ct_handle;
     trig_op->msg_info->eq_handle = md_handle->eq_handle;
+    trig_op->msg_info->ack_req = ack_req;
 
     
     // Need to send this object to the NIC with latency = 30% latency
@@ -610,9 +614,16 @@ portals::PtlTriggeredAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
 void
 portals::PtlCTInc(ptl_handle_ct_t ct_handle, /*ptl_ct_event_t*/ ptl_size_t increment) {
     // Need to send an increment to the CT attached to the MD
+    ptl_update_ct_event_t* ct_update = new ptl_update_ct_event_t;
+    ct_update->ct_event.success = increment;
+    ct_update->ct_event.failure = 0;
+    ct_update->ct_handle = ct_handle;
+
     trig_nic_event* event = new trig_nic_event;
     event->src = cpu->my_id;
     event->ptl_op = PTL_NIC_CT_INC;
+    event->data.ct = ct_update;
+    
     cpu->writeToNIC(event);
 }
 

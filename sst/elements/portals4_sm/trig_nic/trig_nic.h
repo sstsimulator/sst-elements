@@ -156,7 +156,7 @@ private:
     }
 
     void scheduleUpdateHostCT(ptl_handle_ct_t ct_handle);
-    void scheduleCTInc(ptl_handle_ct_t ct_handle, SimTime_t delay);
+    void scheduleCTInc(ptl_handle_ct_t ct_handle, ptl_size_t increment, SimTime_t delay);
     void scheduleEQ(ptl_handle_eq_t eq_handle, ptl_event_t* ptl_event);
 
     double computeDoubleAtomic(unsigned long addr, double value, ptl_op_t op);
