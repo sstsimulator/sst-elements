@@ -119,15 +119,13 @@ Tick Syscall::read(Packet* pkt)
     return 1;
 }
 
-int64_t Syscall::startOpen( Addr path )
+void Syscall::startOpen( Addr path )
 {
     DBGX(2, "path=%#lx\n", path ); 
 
     m_dmaEvent.buf = (uint8_t*) malloc( FILENAME_MAX );
     assert( m_dmaEvent.buf );
     dmaRead( path, FILENAME_MAX, &m_dmaEvent, m_dmaEvent.buf, 0 );
-
-    return 0; 
 }
 
 int64_t Syscall::finishOpen( int oflag, mode_t mode )
@@ -174,11 +172,17 @@ int64_t Syscall::startRead( int fildes, Addr addr, size_t nbytes )
 {
     DBGX(2, "fd=%d buf=%#lx nbytes=%lu\n", fildes, addr, nbytes );
 
+    if ( nbytes == 0 ) return  0;
+
     m_dmaEvent.buf = (uint8_t*) malloc( nbytes );
+
+    memset(m_dmaEvent.buf,0,nbytes);
 
     assert( m_dmaEvent.buf );
 
     m_dmaEvent.retval = ::read( fildes, m_dmaEvent.buf, nbytes );
+
+    //printf("%s\n",m_dmaEvent.buf);
 
     DBGX(2, "retval=%lu\n", m_dmaEvent.retval );
 
@@ -186,9 +190,11 @@ int64_t Syscall::startRead( int fildes, Addr addr, size_t nbytes )
         free( m_dmaEvent.buf );
         return -errno;
     } else {
-        dmaWrite( addr, m_dmaEvent.retval, &m_dmaEvent, m_dmaEvent.buf, 0 );
+        if ( m_dmaEvent.retval > 0 ) {
+            dmaWrite( addr, m_dmaEvent.retval, &m_dmaEvent, m_dmaEvent.buf, 0 );
+        }
     }
-    return 0;
+    return m_dmaEvent.retval;
 }
 
 int64_t Syscall::finishRead( int fildes, size_t nbytes )
@@ -204,24 +210,26 @@ int64_t Syscall::startWrite( int fildes, Addr addr, size_t nbytes )
 {
     DBGX(2, "fd=%d buf=%#lx nbytes=%lu\n", fildes, addr, nbytes );
 
+    if ( nbytes == 0 ) return 0;
+
     m_dmaEvent.buf = (uint8_t*) malloc( nbytes );
 
     assert( m_dmaEvent.buf );
 
     dmaRead( addr, nbytes, &m_dmaEvent, m_dmaEvent.buf, 0 );
 
-    return 0;
+    return nbytes;
 }
 
 int64_t Syscall::finishWrite( int fildes, size_t nbytes )
 {
     const void* buf = (const void*) m_dmaEvent.buf;
 
-    DBGX(2, "fd=%d nbytes=%lu\n", fildes, nbytes );
+    DBGX( 2, "fd=%d nbytes=%lu\n", fildes, nbytes );
     
     int64_t retval = ::write( fildes, buf, nbytes ); 
 
-    DBGX(2,"retval=%d\n",retval);
+    DBGX( 2, "retval=%d\n", retval );
 
     if ( retval == -1 ) {
         retval = -errno; 
@@ -250,14 +258,16 @@ void Syscall::startSyscall(void)
 
         case __NR_write:
             retval = startWrite( m_mailbox[0], m_mailbox[1], m_mailbox[2] );
+            if ( retval <= 0 ) foo( retval ); 
             break; 
     
         case __NR_read:
             retval = startRead( m_mailbox[0], m_mailbox[1], m_mailbox[2] );
+            if ( retval <= 0 ) foo( retval ); 
             break; 
     
         case __NR_open:
-            retval = startOpen( m_mailbox[0] );
+            startOpen( m_mailbox[0] );
             break; 
 
         case __NR_close:
@@ -274,9 +284,6 @@ void Syscall::startSyscall(void)
                             i, (unsigned long) m_mailbox[i]);
             }
             abort();
-    }
-    if ( retval < 0 ) {
-        foo( retval );
     }
 }
 

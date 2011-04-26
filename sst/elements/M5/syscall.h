@@ -63,7 +63,7 @@ class Syscall : public DmaDevice
 
     void process( void );
 
-    int64_t startOpen( Addr path );
+    void startOpen( Addr path );
     int64_t finishOpen( int oflag, mode_t );
 
     int64_t close( int );
