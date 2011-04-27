@@ -15,7 +15,7 @@
 
 #include "interface.h"
 #include "HotSpot-interface.h"
-#include "IntSim-interface.h"
+////#include "IntSim-interface.h"
 
 
 /*********Sim-Panalyzer************/

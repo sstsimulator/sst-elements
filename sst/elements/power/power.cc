@@ -5362,9 +5362,9 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	break;
 	case 3:
 	/*IntSim*/
+	   #ifdef INTSIM_H
 	   switch(power_type)
       	   {
-	      #ifdef INTSIM_H
 	      case CACHE_IL1:
 		fit = p_chip.floorplan.find(floorplan_id.il1);
         	if(fit == p_chip.floorplan.end())
@@ -5524,8 +5524,9 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 		intsim_L2dir = new IntSim_library((*fit).second.device_tech,cache_l2dir_tech.area, cache_l2dir_tech.num_transistors);
 	      break;
 	      default: break;
-	      #endif //intsim_H
+	      
           } // end switch ptype
+	  #endif //intsim_H
 	  getUnitPower(power_type, 0, power_model); 
 	break;
 
@@ -5603,8 +5604,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/ 
+			#ifdef INTSIM_H
                       p_unitPower.il1_read = intsim_il1->chip->dyn_power_logic_gates+intsim_il1->chip->dyn_power_repeaters+intsim_il1->chip->power_wires;
 		      p_unitPower.il1_write = p_unitPower.il1_read;	    
+			#endif
                     break;
 
           case 4:
@@ -5637,8 +5640,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.il2_read = intsim_il2->chip->dyn_power_logic_gates+intsim_il2->chip->dyn_power_repeaters+intsim_il2->chip->power_wires;
 		      p_unitPower.il2_write = p_unitPower.il2_read;		   		
+			#endif
                     break;
 
           case 4:
@@ -5690,8 +5695,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.dl1_read = intsim_dl1->chip->dyn_power_logic_gates+intsim_dl1->chip->dyn_power_repeaters+intsim_dl1->chip->power_wires;
 		      p_unitPower.dl1_write = p_unitPower.dl1_read;
+			#endif
                     break;
 
           case 4:
@@ -5724,8 +5731,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+		 	#ifdef INTSIM_H
                          p_unitPower.dl2_read = intsim_dl2->chip->dyn_power_logic_gates+intsim_dl2->chip->dyn_power_repeaters+intsim_dl2->chip->power_wires;
 		      p_unitPower.dl2_write = p_unitPower.dl2_read;		    		    
+			#endif
                     break;
 
           case 4:
@@ -5768,8 +5777,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                     	p_unitPower.itlb_read = intsim_itlb->chip->dyn_power_logic_gates+intsim_itlb->chip->dyn_power_repeaters+intsim_itlb->chip->power_wires;
 		      p_unitPower.itlb_write = p_unitPower.itlb_read;	    		    
+			#endif
                     break;
 
           case 4:
@@ -5812,8 +5823,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.dtlb_read = intsim_dtlb->chip->dyn_power_logic_gates+intsim_dtlb->chip->dyn_power_repeaters+intsim_dtlb->chip->power_wires;
 		      p_unitPower.dtlb_write = p_unitPower.dtlb_read;
+			#endif
                     break;
 
           case 4:
@@ -5843,6 +5856,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                      	if(clock_tech.clock_option == GLOBAL_CLOCK)
         		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic*(1-intsim_clock->param->clock_gating_factor);
       			else if(clock_tech.clock_option == LOCAL_CLOCK)
@@ -5850,6 +5864,7 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
       			else
         		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic;	   
 			std::cout << "unit clock power = " << p_unitPower.clock << std::endl;
+			#endif
                     break;
 
           case 4:
@@ -5893,7 +5908,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.bpred = intsim_bpred->chip->dyn_power_logic_gates+intsim_bpred->chip->dyn_power_repeaters+intsim_bpred->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -5946,7 +5963,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.rf = intsim_rf->chip->dyn_power_logic_gates+intsim_rf->chip->dyn_power_repeaters+intsim_rf->chip->power_wires;
+			#endif
 		    break;
 
           case 4:
@@ -5973,8 +5992,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                          p_unitPower.aio = intsim_io->chip->dyn_power_logic_gates+intsim_io->chip->dyn_power_repeaters+intsim_io->chip->power_wires;
 			p_unitPower.dio = intsim_io->chip->dyn_power_logic_gates+intsim_io->chip->dyn_power_repeaters+intsim_io->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6016,7 +6037,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.logic = intsim_logic->chip->dyn_power_logic_gates+intsim_logic->chip->dyn_power_repeaters+intsim_logic->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6054,7 +6077,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                          p_unitPower.alu = intsim_alu->chip->dyn_power_logic_gates+intsim_alu->chip->dyn_power_repeaters+intsim_alu->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6092,7 +6117,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.fpu = intsim_fpu->chip->dyn_power_logic_gates+intsim_fpu->chip->dyn_power_repeaters+intsim_fpu->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6122,7 +6149,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.mult = intsim_mult->chip->dyn_power_logic_gates+intsim_mult->chip->dyn_power_repeaters+intsim_mult->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6158,7 +6187,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.ib = intsim_ib->chip->dyn_power_logic_gates+intsim_ib->chip->dyn_power_repeaters+intsim_ib->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6195,7 +6226,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.issueQ = intsim_issueQ->chip->dyn_power_logic_gates+intsim_issueQ->chip->dyn_power_repeaters+intsim_issueQ->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6236,8 +6269,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.decoder = intsim_decoder->chip->dyn_power_logic_gates+intsim_decoder->chip->dyn_power_repeaters+intsim_decoder->chip->power_wires;	   
 			std::cout << "unit decoder power = " << p_unitPower.decoder << std::endl;
+			#endif
                     break;
 
           case 4:
@@ -6287,7 +6322,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.bypass = intsim_bpred->chip->dyn_power_logic_gates+intsim_bpred->chip->dyn_power_repeaters+intsim_bpred->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6315,7 +6352,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.exeu = intsim_exeu->chip->dyn_power_logic_gates+intsim_exeu->chip->dyn_power_repeaters+intsim_exeu->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6352,7 +6391,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.pipeline = intsim_pipeline->chip->dyn_power_logic_gates+intsim_pipeline->chip->dyn_power_repeaters+intsim_pipeline->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6391,7 +6432,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.lsq = intsim_lsq->chip->dyn_power_logic_gates+intsim_lsq->chip->dyn_power_repeaters+intsim_lsq->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6427,7 +6470,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.rat = intsim_rat->chip->dyn_power_logic_gates+intsim_rat->chip->dyn_power_repeaters+intsim_rat->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6458,7 +6503,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.rob = intsim_rob->chip->dyn_power_logic_gates+intsim_rob->chip->dyn_power_repeaters+intsim_rob->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6495,7 +6542,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.btb = intsim_btb->chip->dyn_power_logic_gates+intsim_btb->chip->dyn_power_repeaters+intsim_btb->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6541,7 +6590,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.l2 = intsim_L2->chip->dyn_power_logic_gates+intsim_L2->chip->dyn_power_repeaters+intsim_L2->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6581,7 +6632,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.mc = intsim_mc->chip->dyn_power_logic_gates+intsim_mc->chip->dyn_power_repeaters+intsim_mc->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6641,7 +6694,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.router = intsim_router->chip->dyn_power_logic_gates+intsim_router->chip->dyn_power_repeaters+intsim_router->chip->power_wires;
+			#endif
                     break;
 
           	    case 4:
@@ -6671,8 +6726,10 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    /*McPAT05*/
 		    break;
 	            case 3:
-		    /*IntSim*/   
+		    /*IntSim*/  
+			#ifdef INTSIM_H 
 			p_unitPower.loadQ = intsim_loadQ->chip->dyn_power_logic_gates+intsim_loadQ->chip->dyn_power_repeaters+intsim_loadQ->chip->power_wires;                 
+			#endif
                     break;
 
           case 4:
@@ -6700,7 +6757,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.rename = intsim_rename->chip->dyn_power_logic_gates+intsim_rename->chip->dyn_power_repeaters+intsim_rename->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6729,7 +6788,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.scheduler = intsim_scheduler->chip->dyn_power_logic_gates+intsim_scheduler->chip->dyn_power_repeaters+intsim_scheduler->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6760,7 +6821,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
 			p_unitPower.l3 = intsim_L3->chip->dyn_power_logic_gates+intsim_L3->chip->dyn_power_repeaters+intsim_L3->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6795,7 +6858,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.l1dir = intsim_L1dir->chip->dyn_power_logic_gates+intsim_L1dir->chip->dyn_power_repeaters+intsim_L1dir->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6826,7 +6891,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                         p_unitPower.l2dir = intsim_L2dir->chip->dyn_power_logic_gates+intsim_L2dir->chip->dyn_power_repeaters+intsim_L2dir->chip->power_wires;
+			#endif
                     break;
 
           case 4:
@@ -6855,7 +6922,9 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 		    break;
 	            case 3:
 		    /*IntSim*/
+			#ifdef INTSIM_H
                     p_unitPower.uarch = 9.99;
+			#endif
                     break;
 
           case 4:
@@ -7001,9 +7070,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.il1_access * (I)p_unitPower.il1_read;
 		leakage = (I)intsim_il1->chip->leakage_power_logic_gates + intsim_il1->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7050,9 +7121,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.il2_access * (I)p_unitPower.il2_read;
 		leakage = (I)intsim_il2->chip->leakage_power_logic_gates + intsim_il2->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7121,9 +7194,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.dl1_access * (I)p_unitPower.dl1_read;
 		leakage = (I)intsim_dl1->chip->leakage_power_logic_gates + intsim_dl1->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7171,9 +7246,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.dl2_access * (I)p_unitPower.dl2_read;
 		leakage = (I)intsim_dl2->chip->leakage_power_logic_gates + intsim_dl2->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7238,9 +7315,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.itlb_access * (I)p_unitPower.itlb_read;
 		leakage = (I)intsim_itlb->chip->leakage_power_logic_gates + intsim_itlb->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7306,9 +7385,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.dtlb_access * (I)p_unitPower.dtlb_read;
 		leakage = (I)intsim_dtlb->chip->leakage_power_logic_gates + intsim_dtlb->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7350,6 +7431,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.clock_access * (I)p_unitPower.clock;
 		if(clock_tech.clock_option == GLOBAL_CLOCK)
         	    leakage = (I)intsim_clock->chip->clock_power_leakage*(1-intsim_clock->param->clock_gating_factor);     
@@ -7358,6 +7440,7 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
       		else     
         	    leakage = (I)intsim_clock->chip->clock_power_leakage;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7413,9 +7496,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.bpred_access * (I)p_unitPower.bpred;
 		leakage = (I)intsim_bpred->chip->leakage_power_logic_gates + intsim_bpred->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7478,9 +7563,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.rf_access * (I)p_unitPower.rf;
 		leakage = (I)intsim_rf->chip->leakage_power_logic_gates + intsim_rf->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7519,9 +7606,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.io_access * (I)p_unitPower.aio;
 		leakage = (I)intsim_io->chip->leakage_power_logic_gates + intsim_io->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7564,9 +7653,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.logic_access * (I)p_unitPower.logic;
 		leakage = (I)intsim_logic->chip->leakage_power_logic_gates + intsim_logic->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7615,9 +7706,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.alu_access * (I)p_unitPower.alu;
 		leakage = (I)intsim_alu->chip->leakage_power_logic_gates + intsim_alu->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7665,9 +7758,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.fpu_access * (I)p_unitPower.fpu;
 		leakage = (I)intsim_fpu->chip->leakage_power_logic_gates + intsim_fpu->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7702,9 +7797,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.mult_access * (I)p_unitPower.mult;
 		leakage = (I)intsim_mult->chip->leakage_power_logic_gates + intsim_mult->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7748,9 +7845,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.ib_access * (I)p_unitPower.ib;
 		leakage = (I)intsim_ib->chip->leakage_power_logic_gates + intsim_ib->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7795,9 +7894,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.issueQ_access * (I)p_unitPower.issueQ;
 		leakage = (I)intsim_issueQ->chip->leakage_power_logic_gates + intsim_issueQ->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7852,9 +7953,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.decoder_access * (I)p_unitPower.decoder;
 		leakage = (I)intsim_decoder->chip->leakage_power_logic_gates+intsim_decoder->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7901,9 +8004,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.bypass_access * (I)p_unitPower.bypass;
 		leakage = (I)intsim_bypass->chip->leakage_power_logic_gates + intsim_bypass->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7937,9 +8042,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.exeu_access * (I)p_unitPower.exeu;
 		leakage = (I)intsim_exeu->chip->leakage_power_logic_gates + intsim_exeu->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -7973,9 +8080,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.pipeline_access * (I)p_unitPower.pipeline;
 		leakage = (I)intsim_pipeline->chip->leakage_power_logic_gates + intsim_pipeline->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8032,9 +8141,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.lsq_access * (I)p_unitPower.lsq;
 		leakage = (I)intsim_lsq->chip->leakage_power_logic_gates + intsim_lsq->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8078,9 +8189,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.rat_access * (I)p_unitPower.rat;
 		leakage = (I)intsim_rat->chip->leakage_power_logic_gates + intsim_rat->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8114,9 +8227,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.rob_access * (I)p_unitPower.rob;
 		leakage = (I)intsim_rob->chip->leakage_power_logic_gates + intsim_rob->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8160,9 +8275,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.btb_access * (I)p_unitPower.btb;
 		leakage = (I)intsim_btb->chip->leakage_power_logic_gates + intsim_btb->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8211,9 +8328,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.l2_access * (I)p_unitPower.l2;
 		leakage = (I)intsim_L2->chip->leakage_power_logic_gates + intsim_L2->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8259,9 +8378,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.mc_access * (I)p_unitPower.mc;
 		leakage = (I)intsim_mc->chip->leakage_power_logic_gates + intsim_mc->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8313,9 +8434,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
 		dynamicPower = (I)counts.router_access * (I)p_unitPower.router;
 		leakage = (I)intsim_router->chip->leakage_power_logic_gates + intsim_router->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
          case 4:
@@ -8359,9 +8482,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.loadQ_access * (I)p_unitPower.loadQ;
 		leakage = (I)intsim_loadQ->chip->leakage_power_logic_gates + intsim_loadQ->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8395,9 +8520,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.rename_access * (I)p_unitPower.rename;
 		leakage = (I)intsim_rename->chip->leakage_power_logic_gates + intsim_rename->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8431,9 +8558,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.scheduler_access * (I)p_unitPower.scheduler;
 		leakage = (I)intsim_scheduler->chip->leakage_power_logic_gates + intsim_scheduler->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8473,9 +8602,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.l3_access * (I)p_unitPower.l3;
 		leakage = (I)intsim_L3->chip->leakage_power_logic_gates + intsim_L3->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8516,9 +8647,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.l1dir_access * (I)p_unitPower.l1dir;
 		leakage = (I)intsim_L1dir->chip->leakage_power_logic_gates + intsim_L1dir->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -8563,9 +8696,11 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      break;
 	      case 3:
 	      /*IntSim*/
+		#ifdef INTSIM_H
                 dynamicPower = (I)counts.l2dir_access * (I)p_unitPower.l2dir;
 		leakage = (I)intsim_L2dir->chip->leakage_power_logic_gates + intsim_L2dir->chip->leakage_power_repeaters;    
 		totalPowerUsage = dynamicPower+leakage;
+		#endif
               break;
 
           case 4:
@@ -12551,6 +12686,7 @@ void Power::leakage_feedback(pmodel power_model, parameters_tech_t device_tech, 
       } // end switch ptype
       break;
       case IntSim:
+	#ifdef INTSIM_H
 	switch(power_type)
         {
 	  case CACHE_IL1:
@@ -12648,6 +12784,7 @@ void Power::leakage_feedback(pmodel power_model, parameters_tech_t device_tech, 
 	  break;
 	  default: break;
       } // end switch ptype
+	#endif
       break;
       default:
       break;
