@@ -361,7 +361,7 @@ public:
 	    
 	    // Wait for atomic to complete 
 	    while (!ptl->PtlCTWait(ct_h, 3)) { crReturn(); }
- 	    if (atomic_buf != 10) printf("Bad atomic result: %ld\n",atomic_buf);
+ 	    if (atomic_buf != 10) printf("Bad atomic result: %ld\n", (long) atomic_buf);
 
 	    // Clear in_buf
 	    for (i = 0; i < msg_size; ++i ) {

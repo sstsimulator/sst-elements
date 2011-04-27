@@ -196,7 +196,6 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
 // 	}
     }
     else if ( length <= 2048 /*100000000*/ ) {  // PIO
-	printf("Mulit-packet PIO\n");
 	// 	if ( cpu->my_id == 0 ) printf("Starting PIO\n");
 	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),hdr_data_size);
 	cpu->pio_in_progress = true;
@@ -801,7 +800,6 @@ portals::processMessage(trig_nic_event* ev) {
 	}
     }
     else if ( ev->ptl_op == PTL_NIC_EQ ) {
-	printf("received a portal event\n");
 	event_queues[ev->eq_handle]->push(ev->data.event);
 	delete ev;
 	if ( cpu->waiting ) {

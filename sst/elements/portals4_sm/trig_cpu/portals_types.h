@@ -155,7 +155,7 @@ struct ptl_event_t {
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
 	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
 	     type == PTL_EVENT_AUTO_FREE ) printf("  initiator: N/A\n");
-	else printf("  initiator: %lu\n",initiator);
+	else printf("  initiator: %lu\n", (long unsigned) initiator);
 
 	
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
@@ -168,7 +168,7 @@ struct ptl_event_t {
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
 	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
 	     type == PTL_EVENT_AUTO_FREE ) printf("  match_bits: N/A\n");
-	else printf("  match_bits: %lx\n",match_bits);
+	else printf("  match_bits: %lx\n", (long) match_bits);
 
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
 	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
@@ -193,7 +193,7 @@ struct ptl_event_t {
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
 	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
 	     type == PTL_EVENT_AUTO_FREE || type == PTL_EVENT_GET ) printf("  hdr_data: N/A\n");	
-	else printf("  hdr_data: %lu\n",hdr_data);
+	else printf("  hdr_data: %lu\n", (unsigned long) hdr_data);
 
 	if ( type != PTL_EVENT_ATOMIC && type != PTL_EVENT_ATOMIC_OVERFLOW ) printf("  atomic_operation: N/A\n");
 	else printf("  atomic_operation: %d\n",atomic_operation);

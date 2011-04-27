@@ -80,14 +80,14 @@ public:
                     printf("Max time: %lu ns\n", (unsigned long) max_a);
                     printf("Min time: %lu ns\n", (unsigned long) min_a);
                     printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
-                    printf("Total num: %d\n", total_num_a);
+                    printf("Total num: %d\n", (int) total_num_a);
                     fflush(NULL);
                 }
                 resetBarrier();
                 addTimeToOverallStats(max_a);
             }
 	    resetStats();
-            for ( int i = 0; i < wake_up.size(); i++ ) {
+            for ( unsigned int i = 0; i < wake_up.size(); i++ ) {
                 wake_up[i]->Send(10,NULL);
             }
 	}
@@ -148,7 +148,7 @@ public:
         printf("Max time: %lu ns\n", (unsigned long) max);
         printf("Min time: %lu ns\n", (unsigned long) min);
         printf("Avg time: %lu ns\n", (unsigned long) (total_time/wake_up.size()));
-        printf("Total num: %d\n", wake_up.size());
+        printf("Total num: %d\n", (int) wake_up.size());
         fflush(NULL);
     }
 
@@ -159,7 +159,7 @@ public:
             printf("Overall Max time: %lu ns\n", (unsigned long) overall_max);
             printf("Overall Min time: %lu ns\n", (unsigned long) overall_min);
             printf("Overall Avg time: %lu ns\n", (unsigned long) (overall_total_time/overall_total_num));
-            printf("Overall Total num: %d\n", overall_total_num);
+            printf("Overall Total num: %d\n", (int) overall_total_num);
             fflush(NULL);
         }
     }

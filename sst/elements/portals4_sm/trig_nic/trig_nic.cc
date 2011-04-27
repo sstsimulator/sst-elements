@@ -34,11 +34,11 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     latency_ct_post(10),
     latency_ct_host_update(20),
     additional_atomic_latency(10),
+    currently_clocking(true),
     dma_in_progress(false),
     rr_dma(false),
     new_dma(true),
     send_atomic_from_cache(true),
-    currently_clocking(true),
     next_out_msg_handle(0)
 {
 
@@ -419,7 +419,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    overflow_header_list_t::iterator iter, curr;
 	    bool found = false;
 	    for ( iter = list->begin(); iter != list->end(); ) {
-		printf("Checking an ME against header\n");
 		curr = iter++;
 		ptl_int_header_t* hdr = *curr;
 		if ( (( hdr->header.match_bits ^ ev->data.me->me.match_bits ) & ~ev->data.me->me.ignore_bits ) == 0 ) {
@@ -436,7 +435,8 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    ptl_size_t len_rem = ev->data.me->me.length - hdr->header.remote_offset;
 		    if ( len_rem < hdr->header.length ) {
 			printf("Unsupported case in MEAppend:  ME matched overflow header, ");
-			printf("but there's not enough room in ME buffer\n");
+			printf("but there's not enough room in ME buffer (offset: %ld, %ld, %ld)\n", 
+                               (long) hdr->header.remote_offset, (long) len_rem, (long)hdr->header.length );
 			abort();
 		    }
 
@@ -531,7 +531,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 	    ptl_size_t mlength;
 	    ptl_size_t moffset;
 	    if ( header.op == PTL_OP_GET_RESP ) {
-		printf("Processing GET_RESP\n");
 		// There won't be any data in the head packet, so
 		// just set up the stream entry
 		// Get the outstanding msg info
@@ -545,10 +544,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		ms->ct_handle = msg_info->ct_handle;
 		ms->ct_increment = 1;  // FIXME
 		ms->remaining_mlength = header.length;
-		printf("ct_handle: %d\n",msg_info->ct_handle);
-		printf("eq_handle: %d\n",msg_info->eq_handle);
-	      
-		
+
 		// Prepare the event to be delivered when this is done
 		ptl_event_t* ptl_event = NULL;
 		if ( msg_info->eq_handle != PTL_EQ_NONE ) {
@@ -574,7 +570,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 		int map_key = ev->src | ev->stream;
 		
 		streams[map_key] = ms;		  
-		printf("Done processing GET_RESP\n");
 		delete msg_info;
 		delete ev;
 		return;
@@ -621,7 +616,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 		}
 		else {
 		    // Need to look on the overflow list
-		    printf("***Checking overflow list\n");
 		    // Need to look on overflow list
 		    match_me = match_header(ptl_table[header.pt_index]->overflow,&header,&moffset,&mlength);
 		    if (match_me != NULL ) {
@@ -635,7 +629,6 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ptl_int_header_t* ov_hdr = new ptl_int_header_t;
 			ov_hdr->header = header;
 			ov_hdr->me = match_me;
-			printf("moffset: %d\n",moffset);
 			ov_hdr->offset = moffset;
 			ov_hdr->mlength = mlength;
 			ov_hdr->src = ev->src;
@@ -771,7 +764,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    ptl_size_t copy_length = header.length <= (HEADER_SIZE - sizeof(ptl_header_t)) ?
 			header.length : (HEADER_SIZE - sizeof(ptl_header_t));
 // 		    ptl_size_t remote_offset = header.remote_offset;
-		    ptl_size_t remote_offset = moffset;
+//		    ptl_size_t remote_offset = moffset;
 
 		    if ( mlength < copy_length ) copy_length = mlength;
 		    
@@ -924,7 +917,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		// Message is done, get rid of it.
 		streams.erase(map_key);
 		// Send ack back to src if this isn't a get
-		if ( ev->stream != PTL_HDR_STREAM_GET) self_link->Send(ptl_msg_latency,ms->ack_msg);
+		if ( ev->stream != PTL_HDR_STREAM_GET) self_link->Send(ptl_msg_latency, ms->ack_msg);
 		scheduleCTInc( ms->ct_handle, ms->ct_increment, latency_ct_post );
 		scheduleEQ( ms->eq_handle, ms->event );
 		delete ms;
