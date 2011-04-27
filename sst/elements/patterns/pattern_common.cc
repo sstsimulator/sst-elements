@@ -431,7 +431,7 @@ is_pow2(int num)
 
 
 /*
-** Generate a route through a X 8 Y torus
+** Generate a route through a X * Y torus
 ** We use it to traverse the mesh as well as the NoC
 */
 static void
