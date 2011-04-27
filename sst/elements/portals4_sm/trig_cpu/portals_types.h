@@ -155,7 +155,7 @@ struct ptl_event_t {
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||
 	     type == PTL_EVENT_ACK || type == PTL_EVENT_AUTO_UNLINK ||
 	     type == PTL_EVENT_AUTO_FREE ) printf("  initiator: N/A\n");
-	else printf("  initiator: %d\n",initiator);
+	else printf("  initiator: %lu\n",initiator);
 
 	
 	if ( type == PTL_EVENT_REPLY || type == PTL_EVENT_SEND ||

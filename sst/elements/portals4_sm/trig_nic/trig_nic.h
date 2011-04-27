@@ -27,6 +27,7 @@ struct MessageStream {
     int current_offset;
     int remaining_length;
     ptl_handle_ct_t ct_handle;
+    ptl_size_t ct_increment;
     trig_nic_event* ack_msg;
     ptl_event_t* event;
     ptl_handle_eq_t eq_handle;

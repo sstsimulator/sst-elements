@@ -451,7 +451,8 @@ void trig_nic::processPtlEvent( Event *e ) {
 // 			ptl_event->jid = ;
 			ptl_event->match_bits = hdr->header.match_bits;
 			ptl_event->rlength = hdr->header.length;
-			ptl_event->mlength = hdr->header.length;
+//                      ptl_event->mlength = hdr->header.length;
+			ptl_event->mlength = hdr->mlength;
  			ptl_event->remote_offset = hdr->header.remote_offset;
 			ptl_event->start = (uint8_t*)ev->data.me->me.start + hdr->offset;
 			ptl_event->user_ptr = ev->data.me->user_ptr;
@@ -460,6 +461,10 @@ void trig_nic::processPtlEvent( Event *e ) {
 
 			scheduleEQ(ev->data.me->eq_handle,ptl_event);
 		    }
+
+		    // Need to increment the CT
+		    ptl_size_t increment = (ev->data.me->me.options & PTL_ME_EVENT_CT_BYTES) ? hdr->mlength : 1;
+		    scheduleCTInc( ev->data.me->me.ct_handle, increment, latency_ct_post );
 		    // Done with event and ME structures
 		    delete ev->data.me;
 // 		    delete ev;
@@ -538,6 +543,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		ms->current_offset = 0;
 		ms->remaining_length = header.length;
 		ms->ct_handle = msg_info->ct_handle;
+		ms->ct_increment = 1;  // FIXME
 		ms->remaining_mlength = header.length;
 		printf("ct_handle: %d\n",msg_info->ct_handle);
 		printf("eq_handle: %d\n",msg_info->eq_handle);
@@ -793,6 +799,9 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    hdr->remote_offset = moffset;
 		    hdr->header_data = match_me->me.options;
 
+		    // Need to figure out how much to increment a counting event if there is one
+		    ptl_size_t increment = (match_me->me.options & PTL_ME_EVENT_CT_BYTES) ? mlength : 1;
+		    
 		    // Prepare the event to be delivered when this is done
 		    ptl_event_t* ptl_event = NULL;
 		    if ( match_me->eq_handle != PTL_EQ_NONE && !overflow ) {
@@ -823,6 +832,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ms->current_offset = 0;
 			ms->remaining_length = header.length;
 			ms->ct_handle = match_me->me.ct_handle;
+			ms->ct_increment = increment;
 			ms->ack_msg = ack_ev;
 			ms->event = ptl_event;
 			ms->eq_handle = overflow ? PTL_EQ_NONE : match_me->eq_handle;
@@ -839,7 +849,8 @@ void trig_nic::processPtlEvent( Event *e ) {
 			ms->start = (void*)((unsigned long)match_me->me.start+(unsigned long)moffset);
 			ms->current_offset = copy_length;
 			ms->remaining_length = header.length - copy_length;
-			ms->ct_handle = match_me->me.ct_handle;
+ 			ms->ct_handle = match_me->me.ct_handle;
+			ms->ct_increment = increment;
 			ms->ack_msg = ack_ev;
 			ms->event = ptl_event;
 			ms->eq_handle = overflow ? PTL_EQ_NONE : match_me->eq_handle;
@@ -855,7 +866,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 
 			// If this is not multi-packet, then we need to
 			// update a CT if one is attached.			
-			scheduleCTInc( match_me->me.ct_handle, 1, latency_ct_post );
+			scheduleCTInc( match_me->me.ct_handle, increment, latency_ct_post );
 			if ( !overflow ) scheduleEQ( match_me->eq_handle, ptl_event );
 		    }
 	      
@@ -914,7 +925,7 @@ void trig_nic::processPtlEvent( Event *e ) {
 		streams.erase(map_key);
 		// Send ack back to src if this isn't a get
 		if ( ev->stream != PTL_HDR_STREAM_GET) self_link->Send(ptl_msg_latency,ms->ack_msg);
-		scheduleCTInc( ms->ct_handle, 1, latency_ct_post );
+		scheduleCTInc( ms->ct_handle, ms->ct_increment, latency_ct_post );
 		scheduleEQ( ms->eq_handle, ms->event );
 		delete ms;
 	    }

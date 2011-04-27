@@ -59,6 +59,7 @@ public:
             // setup md handles
             ptl->PtlCTAlloc(PTL_CT_OPERATION, ct_h);
             ptl->PtlCTAlloc(PTL_CT_OPERATION, ct2_h);
+
 	    // Rank 0 will be initiator
 	    if ( my_id == 0 ) {
 		md.start = out_buf;
@@ -67,6 +68,7 @@ public:
 		md.ct_handle = ct_h;
 		ptl->PtlMDBind(md, &out_md_h);
 
+#if 0
 		md.start = out_buf;
 		md.length = msg_size;
 		md.eq_handle = PTL_EQ_NONE;
@@ -95,18 +97,29 @@ public:
 		me.ct_handle = ct2_h;
 		me.min_free = 0;
 		ptl->PtlMEAppend(pte2, me, PTL_PRIORITY_LIST, NULL, trig_me_h);
-
+#endif
 	    }
 	    else {
 		// For put
 		me.start = in_buf;
 		me.length = msg_size;
 		me.ignore_bits = ~0x0;
-		me.options = PTL_ME_USE_ONCE;
+		me.options = PTL_ME_USE_ONCE | PTL_ME_EVENT_CT_BYTES;
 		me.ct_handle = ct_h;
 		me.min_free = 0;
 		ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
 
+		// Overflow MEs
+		me.start = overflow_buf1;
+		me.length = 2*msg_size+4;
+		me.ignore_bits = ~0x0;
+		me.options = PTL_ME_MANAGE_LOCAL;
+		me.ct_handle = PTL_CT_NONE;
+		me.min_free = msg_size;
+		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
+
+
+#if 0
 		// For get
 		me.start = out_buf;
 		me.length = msg_size;
@@ -168,12 +181,12 @@ public:
 // 		me.min_free = msg_size;
 // 		ptl->PtlMEAppend(pte, me, PTL_OVERFLOW, NULL, out_me_h);		
 
-
+#endif
 	    }
 	    
             init = true;
             crReturn();
-	    start_noise_section();
+//          start_noise_section();
         }
 
         // 200ns startup time
@@ -184,17 +197,30 @@ public:
 	int bad;
 	if ( my_id == 0 ) {
 	    // Do a put to 1
-	    ptl->PtlPut(out_md_h, 0, msg_size, 0, 1, pte, 1, 0, NULL, 0);
+	    ptl->PtlPut(out_md_h, 0, msg_size, PTL_ACK_REQ, 1, pte, 1, 0, NULL, 0);
 	    crReturn();
 	    
-// 	    // Now I simply wait for the send event to increment.
-// 	    while (!ptl->PtlCTWait(ct_h, 1)) { crReturn(); }
+	    // Now I simply wait for the send event to increment.
+	    while (!ptl->PtlCTWait(ct_h, 1)) { crReturn(); }
 
-	    // Wait for the get to complete
+	    // Wait for the put to complete
 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
 	    printf("Event on 0:\n");
 	    ptl_event.print();
 
+	    // Do another put, this one will be unexpected
+	    ptl->PtlPut(out_md_h, 0, msg_size, PTL_ACK_REQ, 1, pte, 1, 0, NULL, 0);
+	    crReturn();
+	    
+	    // Now I simply wait for the send event to increment.
+	    while (!ptl->PtlCTWait(ct_h, 1)) { crReturn(); }
+
+	    // Wait for the put to complete
+	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+	    printf("Event on 0:\n");
+	    ptl_event.print();
+
+#if 0
 	    // Now do a get
 	    ptl->PtlGet(in_md_h, 0, msg_size, 1, pte, 1, NULL, 0);
 	    crReturn();
@@ -274,12 +300,12 @@ public:
 // 	    crReturn();
 
 	    // Ignore all the events for now
-	    
+#endif	    
 	}
 	else {
 	    // Wait for a put from 0
-// 	    while (!ptl->PtlCTWait(ct_h, 1)) { crReturn(); }
-// 	    printf("Received put from 0\n");
+	    while (!ptl->PtlCTWait(ct_h, msg_size)) { crReturn(); }
+	    printf("Received put from 0\n");
 
 	    // Check event queue for PUT event
 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
@@ -292,6 +318,39 @@ public:
 	    }
 	    if (bad) printf("%5d: bad results: %d\n",my_id,bad);
 
+	    cpu->addBusyTime("10us");
+	    crReturn();
+	    
+	    // For unexpected put
+	    me.start = in_buf;
+	    me.length = msg_size;
+	    me.ignore_bits = ~0x0;
+	    me.options = PTL_ME_USE_ONCE | PTL_ME_EVENT_CT_BYTES;
+	    me.ct_handle = ct_h;
+	    me.min_free = 0;
+	    ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
+	    crReturn();
+
+	    // Check event queue for PUT event
+	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
+	    printf("Event (PUT_OVERFLOW) on 1:\n");
+	    ptl_event.print();
+
+	    cpu->addBusyTime("10us");
+	    crReturn();
+
+	    ptl_ct_event_t ct;
+	    ptl->PtlCTGet(ct_h,&ct);
+
+	    printf("%d\n",ct.success);
+	    
+	    // Wait for a put from 0
+	    while (!ptl->PtlCTWait(ct_h, 2*msg_size)) { crReturn(); }
+	    printf("Received put from 0\n");
+
+	    
+
+#if 0
 // 	    // Wait for get to complete 
 // 	    while (!ptl->PtlCTWait(ct_h, 2)) { crReturn(); }
 
@@ -377,7 +436,7 @@ public:
 // 	    while (!ptl->PtlEQWait(eq_h, &ptl_event)) { crReturn(); }
 // 	    printf("Event on 1:\n");
 // 	    ptl_event.print();
-	    
+#endif	    
 	}
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);
