@@ -325,6 +325,8 @@ public:
   uint64_t dir_reads;
   uint64_t dir_writes;
 
+  unsigned idle_times;         // # times the core is idle when pushData() is called
+
   // Prevent copies and assignment of this simulation component.
   Tile(Tile &t) : e_busy(false), n_busy(false), w_busy(false), s_busy(false) {}
   Tile &operator=(Tile &t) {}
@@ -821,6 +823,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
   read_param(params, "sampling_frequency",   sample_freq,	"1ms");
   read_param(params, "push_introspector", pushIntrospector,"CountIntrospector");
   read_param(params, "fast_forward_cycle", fast_forward_cyc,1000000000);
+  read_param(params, "num_idle_samples_to_sleep", times_to_sleep,  20);
 
   
   // Initialize the MesmthiModel.
@@ -893,6 +896,9 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
       tiles[i]->connect_s(*tiles[i+(1<<log2_row_size)]);
     if (i%(1<<log2_row_size) != 0)
       tiles[i]->connect_w(*tiles[i-1]);
+
+    // initialize this counter here
+    tiles[i]->idle_times = 0;
   }
 
   // Do post wire-up initialization.
@@ -965,6 +971,7 @@ Mesmthi::Mesmthi(ComponentId_t id, Params_t& params) :
 bool
 Mesmthi::pushData(Cycle_t current)
 {
+	unsigned numIdleCores = 0;
     ////if (isTimeToPush(current, pushIntrospector.c_str()))   {
       
        // set up counts
@@ -1000,6 +1007,7 @@ Mesmthi::pushData(Cycle_t current)
        power->resetCounts(&mycounts);
 	
 #if 1
+	std::cout << "==========current cycle = " << current << "======\n";
 	using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
@@ -1008,8 +1016,34 @@ Mesmthi::pushData(Cycle_t current)
 	power->printFloorplanThermalInfo();
 
 	print_counters();
+
+	// calculate # idle cores & perform DPM
+	for (unsigned i = 0; i < 16; i++){
+	    if (tiles[i]->instructions == tiles[i]->idle_instructions)
+	    { // core is idle
+		numIdleCores += 1;
+		tiles[i]->idle_times += 1;
+		if (tiles[i]->idle_times > times_to_sleep) //idle cores call DPM to go to sleep
+			power->setupDPM(i, P_SLEEPING);
+		else if (tiles[i]->idle_times == times_to_sleep)
+			power->setupDPM(i, P_GOTOSLEEP);
+		else
+			power->setupDPM(i, P_ACTIVE);
+	    }
+	    else
+	    { // core is active
+	        if (tiles[i]->idle_times >= times_to_sleep)
+	        	power->setupDPM(i, P_WAKEUP);
+		else
+			power->setupDPM(i, P_ACTIVE);
+		tiles[i]->idle_times = 0; // active core; reset # idle times 
+	    }
+	}
+	std::cout << "========number of idle cores = " << numIdleCores << "======\n";
+
 	clear_counters();
 #endif
+	power->compute_MTTF();
 		
     ////}
     return false;

@@ -54,6 +54,7 @@ unsigned paddr_bits;
 unsigned net_latency;
 unsigned net_cpp;
 unsigned fast_forward_cyc;
+unsigned times_to_sleep;
 
 class Tile;
 std::vector <Tile*> tiles;
@@ -149,8 +150,8 @@ class Mesmthi : public SST::IntrospectedComponent {
     //std::cout << "below is from mesmthi triggerUpdate" << std::endl;
     //Introspection: ask introspector to pull and print counter values 
     triggerUpdate();
-    if (ifModelPower)  
-	power->compute_MTTF();
+    //if (ifModelPower)  
+//	power->compute_MTTF();
     return 0;
   }
 
