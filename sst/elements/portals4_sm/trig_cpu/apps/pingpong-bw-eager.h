@@ -19,7 +19,7 @@
 #define MAX(a, b)  (a < b) ? b : a
 
 //#define DEBUG(a) printf a
- #define DEBUG(a)
+#define DEBUG(a)
 
 /* match/ignore bit manipulation
  *
@@ -99,7 +99,7 @@ public:
         tag = 2;
         send_count = recv_count = 0;
 
-        protocol = triggered;
+        protocol = probe;
         if (protocol == standard) {
             printf("Protocol: standard\n");
         } else if (protocol == rndv) {
@@ -287,7 +287,6 @@ public:
                 ptl->PtlMDBind(md, &send_md_h);
                 crReturn();
 
-                printf("%02d: send me with send count %lu\n", my_id, send_count);
                 me.start = send_buf;
                 me.length = cur_len;
                 me.ct_handle = PTL_CT_NONE;
@@ -296,6 +295,7 @@ public:
                 me.match_bits = send_count;
                 me.ignore_bits = 0;
 
+                DEBUG(("%02d: send: posting me with send count %lu\n", my_id, send_count));
                 ptl->PtlMEAppend(read_pt,
                                  me,
                                  PTL_PRIORITY_LIST,
@@ -306,7 +306,7 @@ public:
                 ptl->PtlPut(send_md_h,
                             0,
                             eager_len + 8,
-                            PTL_ACK_REQ,
+                            PTL_NO_ACK_REQ,
                             peer,
                             send_pt,
                             match_bits,
@@ -346,7 +346,8 @@ public:
                                  send_me_h);
                 crReturn();
 
-                DEBUG(("%02d: send: posting put of %d bytes, match bits %lx\n", my_id, (int) cur_len, (unsigned long) match_bits));
+                DEBUG(("%02d: send: posting put of %d bytes, match bits %lx\n", 
+                       my_id, (int) cur_len, (unsigned long) match_bits));
                 ptl->PtlPut(send_md_h,
                             0,
                             cur_len,
@@ -396,6 +397,34 @@ public:
                 crReturn();
             }
 
+            if (protocol == triggered && cur_len >= eager_len) {
+                ptl_md_t md;
+
+                md.start = recv_buf + eager_len;
+                md.length = cur_len - eager_len;
+                md.options = 0;
+                md.eq_handle = recv_eq_h;
+                md.ct_handle = PTL_CT_NONE;
+
+                ptl->PtlMDBind(md, &recv_md_h);
+                crReturn();
+
+                DEBUG(("%02d: recv: posting triggered with match %lu\n", 
+                        my_id, (unsigned long) recv_count));
+                ptl->PtlTriggeredGet(recv_md_h, 
+                                     0, 
+                                     cur_len - eager_len, 
+                                     peer,
+                                     read_pt,
+                                     recv_count,
+                                     NULL,
+                                     eager_len,
+                                     ct_h,
+                                     eager_len + 8);
+                crReturn();
+
+            }
+
             me.start = recv_buf;
             if (protocol == probe && cur_len >= eager_len) {
                 me.length = 1;
@@ -414,40 +443,13 @@ public:
             me.match_bits = match_bits;
             me.ignore_bits = ignore_bits;
 
-            DEBUG(("%02d: recv: posting ME of size %d (%d), match bits %lx\n", my_id, (int) me.length, (int) cur_len, (unsigned long) match_bits));
+            DEBUG(("%02d: recv: posting ME of size %d (%d), match bits %lx\n", 
+                   my_id, (int) me.length, (int) cur_len, (unsigned long) match_bits));
             ptl->PtlMEAppend(send_pt,
                              me,
                              PTL_PRIORITY_LIST,
                              NULL,
                              recv_me_h);
-
-            if (protocol == triggered && cur_len >= eager_len) {
-                ptl_md_t md;
-
-                md.start = recv_buf + eager_len;
-                md.length = cur_len - eager_len;
-                md.options = 0;
-                md.eq_handle = recv_eq_h;
-                md.ct_handle = PTL_CT_NONE;
-
-                ptl->PtlMDBind(md, &recv_md_h);
-                crReturn();
-
-                printf("%02d: expecting triggered with match %lu\n", my_id, (unsigned long) recv_count);
-                ptl->PtlTriggeredGet(recv_md_h, 
-                                     0, 
-                                     cur_len - eager_len, 
-                                     peer,
-                                     read_pt,
-                                     recv_count,
-                                     NULL,
-                                     eager_len,
-                                     ct_h,
-                                     eager_len + 8);
-                crReturn();
-
-            }
-
             crReturn();
             
             while (true) {
@@ -464,6 +466,7 @@ public:
                         ptl->PtlMDBind(md, &recv_md_h);
                         crReturn();
 
+                        DEBUG(("%02d: recv: posting probe long expected get\n", my_id));
                         ptl->PtlGet(recv_md_h,
                                     0,
                                     cur_len,
@@ -484,6 +487,7 @@ public:
                         ptl->PtlMDBind(md, &recv_md_h);
                         crReturn();
 
+                        DEBUG(("%02d: recv: posting rndv long expected get\n", my_id));
                         ptl->PtlGet(recv_md_h,
                                     eager_len,
                                     (ev.hdr_data & 0xFFFFFFFFULL) - eager_len,
@@ -502,6 +506,7 @@ public:
                 } else if (ev.type == PTL_EVENT_PUT_OVERFLOW) {
                     if (PTL_IS_SHORT_MSG(ev.match_bits)) {
                         /* don't actually copy, just assume it's there.  Add some copy time */
+                        DEBUG(("%02d: recv: copying short unexpected\n", my_id));
                         long latency;
                         char timetmp[100];
                         latency = 60 + (cur_len * 1000000000 / 20000000000);
@@ -527,6 +532,7 @@ public:
                         ptl->PtlMDBind(md, &recv_md_h);
                         crReturn();
 
+                        DEBUG(("%02d: recv: posting long unexpected get\n", my_id));
                         ptl->PtlGet(recv_md_h,
                                     0,
                                     (send_len > (unsigned) cur_len) ? cur_len : send_len,
@@ -538,6 +544,7 @@ public:
                         crReturn();
                     }
                 } else if (ev.type == PTL_EVENT_REPLY) {
+                    DEBUG(("%02d: recv: processing reply event\n", my_id));
                     ptl->PtlMDRelease(recv_md_h);
                     crReturn();
                     if (protocol == triggered) {
@@ -548,11 +555,11 @@ public:
                 } else if (ev.type == PTL_EVENT_AUTO_UNLINK) {
                     /* nothing to do */
                 } else if (ev.type == PTL_EVENT_AUTO_FREE) {
-                    printf("reposting short buffer\n");
+                    DEBUG(("%02d: recv: reposting short buffer\n", my_id));
                     need_repost = ev.user_ptr;
                     crFuncCall(short_msg_repost);
                 } else {
-                    printf("Unexpected event type in recv protocol: %d\n", (int) ev.type);
+                    printf("%02d: recv: Unexpected event type in recv protocol: %d\n", my_id, (int) ev.type);
                 }
             }
     long_recv_done:
@@ -622,16 +629,16 @@ public:
                     if (my_id == 0) {
                         peer = 1;
                         tag = 1;
-                        DEBUG(("0 send 1\n"));
+                        DEBUG(("00: send: start to 01\n"));
                         crFuncCall(send);
-                        DEBUG(("0 recv 1\n"));
+                        DEBUG(("00: recv: start from 01\n"));
                         crFuncCall(recv);
                     } else if (my_id == 1) {
                         peer = 0;
                         tag = 1;
-                        DEBUG(("1 recv 0\n"));
+                        DEBUG(("01: recv: start from 00\n"));
                         crFuncCall(recv);
-                        DEBUG(("1 send 0\n"));
+                        DEBUG(("01: send: start to 00\n"));
                         crFuncCall(send);
                     }
                 }
