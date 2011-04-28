@@ -92,7 +92,7 @@ public:
         start_len = 1;
         stop_len = 8 * 1024 * 1024;
         perturbation = 3;
-        nrepeat = 10; /* BWB: dynamically guess at this */
+        nrepeat = 10;
         send_buf = big_send_buf = (char*) malloc(stop_len * 2);
         recv_buf = big_recv_buf = (char*) malloc(stop_len * 2);
 
@@ -124,6 +124,7 @@ public:
         }
     }
 
+
     bool
     operator()(Event *event)
     {
@@ -139,12 +140,12 @@ public:
             me.min_free = eager_len + 8;
             me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL | PTL_ME_NO_TRUNCATE | 
                 PTL_ME_MAY_ALIGN | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;
+            me.match_bits = PTL_SHORT_MSG;
             if (protocol == triggered) {
-                me.match_bits = 0;
+                me.ignore_bits = ~0ULL;
             } else {
-                me.match_bits = PTL_SHORT_MSG;
+                me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
             }
-            me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
 
             ptl->PtlMEAppend(send_pt,
                              me,
@@ -181,6 +182,7 @@ public:
             ptl->PtlMDBind(md, &send_md_h);
             crReturn();
 
+            DEBUG(("%02d: send: posting short send\n", my_id)); 
             ptl->PtlPut(send_md_h,
                         0,
                         cur_len,
@@ -193,11 +195,6 @@ public:
                         0);
             crReturn();
 
-#if 0
-            while (!ptl->PtlEQWait(send_eq_h, &ev)) { crReturn(); }
-            if (ev.type != PTL_EVENT_SEND) { printf("short send received unknown event type %d\n", (int) ev.type); abort(); }
-#endif
-            ptl->PtlMDRelease(send_md_h);
         } else {
             if (protocol == eager) {
                 ptl_md_t md;
@@ -370,7 +367,17 @@ public:
                             send_count);
                 crReturn();
             }
+        }
+        crFuncEnd();
 
+        crFuncStart(send_wait);
+        if (cur_len < eager_len) {
+#if 0
+            while (!ptl->PtlEQWait(send_eq_h, &ev)) { crReturn(); }
+            if (ev.type != PTL_EVENT_SEND) { printf("short send received unknown event type %d\n", (int) ev.type); abort(); }
+#endif
+            ptl->PtlMDRelease(send_md_h);
+        } else {
             while (true) {
                 while (!ptl->PtlEQWait(send_eq_h, &ev)) { crReturn(); }
                 DEBUG(("%02d: send: event %d\n", my_id, ev.type));
@@ -437,7 +444,7 @@ public:
 
             me.start = recv_buf;
             if (protocol == probe && cur_len >= eager_len) {
-                me.length = 1;
+                me.length = 8;
             } else if (protocol == triggered) {
                 me.length = cur_len + 8;
             } else {
@@ -461,7 +468,9 @@ public:
                              NULL,
                              recv_me_h);
             crReturn();
-            
+            crFuncEnd();
+
+            crFuncStart(recv_wait);
             while (true) {
                 while (!ptl->PtlEQWait(recv_eq_h, &ev)) { crReturn(); }
                 if (ev.type == PTL_EVENT_PUT) {
@@ -576,6 +585,27 @@ public:
     long_recv_done:
         crFuncEnd();
 
+        crFuncStart(barrier);
+        DEBUG(("%02d: barrier start\n", my_id));
+        cur_len = 0;
+        if (my_id == 0) {
+            peer = 1;
+            tag = 2;
+            crFuncCall(recv);
+            crFuncCall(recv_wait);
+            crFuncCall(send);
+            crFuncCall(send_wait);
+        } else if (my_id == 1) {
+            peer = 0;
+            tag = 2;
+            crFuncCall(send);
+            crFuncCall(send_wait);
+            crFuncCall(recv);
+            crFuncCall(recv_wait);
+        }
+        DEBUG(("%02d: barrier end\n", my_id));
+        crFuncEnd();
+
         crStart();
         
         ptl->PtlEQAlloc(1024, &send_eq_h);
@@ -588,6 +618,7 @@ public:
         ptl->PtlPTAlloc(0, send_eq_h, 1, &read_pt);
         crReturn();
 
+        /* register long truncate */
         if (protocol != triggered) {
             ptl_me_t me;
             me.start = 0;
@@ -607,42 +638,10 @@ public:
 
         crFuncCall(short_msg_init);
 
-        /* do a simple 1 byte ping pong to get a tlast */
-        /* barrier */
-        cur_len = 1;
-        if (my_id == 0) {
-            peer = 1;
-            tag = 2;
-            crFuncCall(recv);
-            crFuncCall(send);
-        } else if (my_id == 1) {
-            peer = 0;
-            tag = 2;
-            crFuncCall(send);
-            crFuncCall(recv);
-        }
-        /* test */
-        cur_len = 1;
-        start_time = cpu->getCurrentSimTimeNano();
-        for (i = 0 ; i < 200 ; ++i) {
-            if (my_id == 0) {
-                peer = 1;
-                tag = 1;
-                DEBUG(("00: send: start to 01\n"));
-                crFuncCall(send);
-                DEBUG(("00: recv: start from 01\n"));
-                crFuncCall(recv);
-            } else if (my_id == 1) {
-                peer = 0;
-                tag = 1;
-                DEBUG(("01: recv: start from 00\n"));
-                crFuncCall(recv);
-                DEBUG(("01: send: start to 00\n"));
-                crFuncCall(send);
-            }
-        }
-        stop_time = cpu->getCurrentSimTimeNano();
-        tlast = ((double) (stop_time - start_time)) / 1000000000.0 / 200 / 2;
+        /* set tlast to ~1.5us, which is about what our 1 byte latency
+           will be.  Gives a good starting point for nrepeat without
+           actually doing the test */
+        tlast = 1.5 / 1000000.0;
 
         /* the real loop */
         inc = (start_len > 1) ? start_len / 2 : 1;
@@ -654,45 +653,48 @@ public:
                  pert <= perturbation; 
                  n++, pert += ((perturbation > 0) && (inc > perturbation+1)) ? perturbation : perturbation+1) {
 
+                /* tlast will be different on different ranks, so
+                   compute nrepeat and have rank 0 send it to everyone
+                   else */
                 nrepeat = MAX((.001 / (((double) cur_len / (cur_len - inc + 1.0)) * tlast)), 5);
-
-                /* barrier */
                 cur_len = sizeof(nrepeat);
                 if (my_id == 0) {
                     peer = 1;
-                    tag = 2;
-                    crFuncCall(recv);
                     send_buf = (char*) &nrepeat;
                     crFuncCall(send);
+                    crFuncCall(send_wait);
                     send_buf = big_send_buf;
                 } else if (my_id == 1) {
                     peer = 0;
-                    tag = 2;
-                    crFuncCall(send);
                     recv_buf = (char*) &nrepeat;
                     crFuncCall(recv);
+                    crFuncCall(recv_wait);
                     recv_buf = big_recv_buf;
                 }
 
+                crFuncCall(barrier);
+
                 cur_len = len + pert;
-
                 start_time = cpu->getCurrentSimTimeNano();
-
                 for (i = 0 ; i < nrepeat ; ++i) {
                     if (my_id == 0) {
                         peer = 1;
                         tag = 1;
                         DEBUG(("00: send: start to 01\n"));
                         crFuncCall(send);
+                        crFuncCall(send_wait);
                         DEBUG(("00: recv: start from 01\n"));
                         crFuncCall(recv);
+                        crFuncCall(recv_wait);
                     } else if (my_id == 1) {
                         peer = 0;
                         tag = 1;
                         DEBUG(("01: recv: start from 00\n"));
                         crFuncCall(recv);
+                        crFuncCall(recv_wait);
                         DEBUG(("01: send: start to 00\n"));
                         crFuncCall(send);
+                        crFuncCall(send_wait);
                     }
                 }
                 stop_time = cpu->getCurrentSimTimeNano();
