@@ -1127,6 +1127,8 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	void printFloorplanThermalInfo();
 	void getFailureRate(double temp); //this is called in compute_temp
 	void compute_MTTF();
+	void setupDPM(int block_id, power_state pstate);
+	void dynamic_power_management();
 	void test();
 
 	// McPAT interface

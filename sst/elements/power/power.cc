@@ -11041,6 +11041,8 @@ void Power::setChip(Component::Params_t deviceParams)
     	  floorplan.feature = (feature_t)(*fit).second.feature;
     	  floorplan.device_tech = (parameters_tech_t)(*fit).second.device_tech;
     	  floorplan.device_tech.temperature = (*chip.thermal_tile.find(pair<int,int>(SILICON,(*fit).first))).second.temperature;
+	  memset(&floorplan.p_usage_floorplan,0,sizeof(Pdissipation_t));
+	  floorplan.power_state = PACTIVE;
     	  p_chip.floorplan.insert(pair<int,floorplan_t>((*fit).first,floorplan));
     	  ++num_floorplans;
   	}
@@ -12847,6 +12849,33 @@ void Power::compute_MTTF()
 	std::cout << "MTTF = " << p_TotalFailureRate/p_NumSamples << std::endl;
 
 }
+
+// DPM
+void Power::setupDPM(int block_id, power_state pstate)
+{
+    map<int,floorplan_t>::iterator fit;
+
+    fit = p_chip.floorplan.find(block_id);
+
+    if( fit != p_chip.floorplan.end())
+        (*fit).second.pstate = pstate;
+
+}
+
+void Power::dynamic_power_management()
+{
+    map<int,floorplan_t>::iterator fit;
+
+  for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+  {
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has current total power = " << (*fit).second.p_usage_floorplan.currentPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has total energy = " << (*fit).second.p_usage_floorplan.totalEnergy << " J" << std::endl;
+	
+  }
+
+}
+
 
 }  // namespace SST
 

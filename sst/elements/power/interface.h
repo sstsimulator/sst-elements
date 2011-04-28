@@ -50,6 +50,12 @@ enum clock_option_type_t
   GLOBAL_CLOCK, LOCAL_CLOCK, TOTAL_CLOCK
 };
 
+//DPM
+enum power_state 
+{
+   P_ACTIVE, P_SLEEPING, P_GOTOSLEEP, P_WAKEUP
+};
+
 /* The following is adopted from W Song's power interface */
 class feature_t
 {
@@ -307,6 +313,7 @@ class floorplan_t
   bool leakage_feedback;
 
   Pdissipation_t p_usage_floorplan;	// instant power dissipation
+  power_state pstate;                   // DPM
 };
 
 class thermal_library_t
