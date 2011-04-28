@@ -10,11 +10,14 @@
 // distribution.
 
 
-#ifndef COMPONENTS_TRIG_CPU_PINGPONG_BW_EAGER_H
-#define COMPONENTS_TRIG_CPU_PINGPONG_BW_EAGER_H
+#ifndef COMPONENTS_TRIG_CPU_PINGPONG_BW_H
+#define COMPONENTS_TRIG_CPU_PINGPONG_BW_H
+
+#include <string>
 
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include <string.h>		       // for memcpy()
+#include <stdio.h>
 
 #define MAX(a, b)  (a < b) ? b : a
 
@@ -80,36 +83,43 @@
 #define PTL_GET_SOURCE(match_bits) ((int)((match_bits & PTL_SOURCE_MASK) >> 32))
 
 
-class pingpong_bw_eager :  public application {
+class pingpong_bw :  public application {
 public:
-    pingpong_bw_eager(trig_cpu *cpu) : application(cpu)
+    pingpong_bw(trig_cpu *cpu, const std::string &proto) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
 
         start_len = 1;
         stop_len = 8 * 1024 * 1024;
-        perturbation = 1; /* BWB: make this 3 */
+        perturbation = 3;
         nrepeat = 10; /* BWB: dynamically guess at this */
-        send_buf = (char*) malloc(stop_len * 2);
-        recv_buf = (char*) malloc(stop_len * 2);
+        send_buf = big_send_buf = (char*) malloc(stop_len * 2);
+        recv_buf = big_recv_buf = (char*) malloc(stop_len * 2);
 
-        eager_len = 4096;
+        eager_len = 32 * 1024;
 
         contextid = 1;
         tag = 2;
         send_count = recv_count = 0;
 
-        protocol = probe;
-        if (protocol == standard) {
-            printf("Protocol: standard\n");
-        } else if (protocol == rndv) {
+        if (!proto.compare("eager")) {
+            protocol = eager;
+            printf("Protocol: eager\n");
+            fp = fopen("eager-nodelay.out", "w");
+        } else if (!proto.compare("rndv")) {
+            protocol = rndv;
             printf("Protocol: rendezvous\n");
-        } else if (protocol == probe) {
-            printf("Protocol: probe\n"); 
-        } else if (protocol == triggered) {
+            fp = fopen("rndv-nodelay.out", "w");
+        } else if (!proto.compare("triggered")) {
+            protocol = triggered;
             printf("Protocol: triggered\n");
+            fp = fopen("triggered-nodelay.out", "w");
+        } else if (!proto.compare("probe")) {
+            protocol = probe;
+            printf("Protocol: probe\n");
+            fp = fopen("probe-nodelay.out", "w");
         } else {
-            printf("Unimplemented protocol\n");
+            printf("Unknown protocol: %s\n", proto.c_str());
             abort();
         }
     }
@@ -189,7 +199,7 @@ public:
 #endif
             ptl->PtlMDRelease(send_md_h);
         } else {
-            if (protocol == standard) {
+            if (protocol == eager) {
                 ptl_md_t md;
                 ptl_me_t me;
 
@@ -512,12 +522,13 @@ public:
                         latency = 60 + (cur_len * 1000000000 / 20000000000);
                         snprintf(timetmp, 100, "%ldns", latency);
                         cpu->addBusyTime(timetmp);
+                        memcpy(recv_buf, ev.start, cur_len);
                         crReturn();
                         goto long_recv_done;
                     } else if (protocol != triggered) {
                         ptl_md_t md;
                         
-                        if (protocol == standard || protocol == probe) {
+                        if (protocol == eager || protocol == probe) {
                             send_len = ev.rlength;
                         } else if (protocol == rndv) {
                             send_len = ev.hdr_data & 0xFFFFFFFFULL;
@@ -596,6 +607,44 @@ public:
 
         crFuncCall(short_msg_init);
 
+        /* do a simple 1 byte ping pong to get a tlast */
+        /* barrier */
+        cur_len = 1;
+        if (my_id == 0) {
+            peer = 1;
+            tag = 2;
+            crFuncCall(recv);
+            crFuncCall(send);
+        } else if (my_id == 1) {
+            peer = 0;
+            tag = 2;
+            crFuncCall(send);
+            crFuncCall(recv);
+        }
+        /* test */
+        cur_len = 1;
+        start_time = cpu->getCurrentSimTimeNano();
+        for (i = 0 ; i < 200 ; ++i) {
+            if (my_id == 0) {
+                peer = 1;
+                tag = 1;
+                DEBUG(("00: send: start to 01\n"));
+                crFuncCall(send);
+                DEBUG(("00: recv: start from 01\n"));
+                crFuncCall(recv);
+            } else if (my_id == 1) {
+                peer = 0;
+                tag = 1;
+                DEBUG(("01: recv: start from 00\n"));
+                crFuncCall(recv);
+                DEBUG(("01: send: start to 00\n"));
+                crFuncCall(send);
+            }
+        }
+        stop_time = cpu->getCurrentSimTimeNano();
+        tlast = ((double) (stop_time - start_time)) / 1000000000.0 / 200 / 2;
+
+        /* the real loop */
         inc = (start_len > 1) ? start_len / 2 : 1;
         nq = (start_len > 1) ? 1 : 0;
 
@@ -605,21 +654,25 @@ public:
                  pert <= perturbation; 
                  n++, pert += ((perturbation > 0) && (inc > perturbation+1)) ? perturbation : perturbation+1) {
 
-#if 0
+                nrepeat = MAX((.001 / (((double) cur_len / (cur_len - inc + 1.0)) * tlast)), 5);
+
                 /* barrier */
-                cur_len = 0;
+                cur_len = sizeof(nrepeat);
                 if (my_id == 0) {
                     peer = 1;
                     tag = 2;
                     crFuncCall(recv);
+                    send_buf = (char*) &nrepeat;
                     crFuncCall(send);
+                    send_buf = big_send_buf;
                 } else if (my_id == 1) {
                     peer = 0;
                     tag = 2;
                     crFuncCall(send);
+                    recv_buf = (char*) &nrepeat;
                     crFuncCall(recv);
+                    recv_buf = big_recv_buf;
                 }
-#endif
 
                 cur_len = len + pert;
 
@@ -647,7 +700,11 @@ public:
                 tlast = ((double) (stop_time - start_time)) / 1000000000.0 / nrepeat / 2;
 
                 if (my_id == 0) {
-                    printf("%8d\t%lf\t%12.8lf\n", (int) cur_len, cur_len / tlast / 1024 / 1024, tlast);
+                    printf("%3d: %7d bytes %6d times --> %8.2lf MBps in %10.2lf usec\n", 
+                           n, (int) cur_len, nrepeat, cur_len / tlast / 1024 / 1024, 
+                           tlast * 1000000);
+                    fprintf(fp, "%8d\t%lf\t%12.8lf\n", (int) cur_len, cur_len / tlast / 1024 / 1024, tlast);
+                    fflush(NULL);
                 }
             }
         }
@@ -658,15 +715,16 @@ public:
     }
 
 private:
-    pingpong_bw_eager();
-    pingpong_bw_eager(const application& a);
-    void operator=(pingpong_bw_eager const&);
+    pingpong_bw();
+    pingpong_bw(const application& a);
+    void operator=(pingpong_bw const&);
 
     portals *ptl;
 
     SimTime_t start_time, stop_time;
     int i, n, len, start_len, stop_len, inc, nq, pert, perturbation, nrepeat, peer, handle;
     char *send_buf, *recv_buf;
+    char *big_send_buf, *big_recv_buf;
     double tlast;
     unsigned long cur_len, send_count, recv_count, eager_len;
     unsigned long send_len;
@@ -681,7 +739,9 @@ private:
     ptl_event_t ev;
     ptl_handle_ct_t ct_h;
 
-    enum { standard, rndv, triggered, probe } protocol;
+    FILE *fp;
+
+    enum { eager, rndv, triggered, probe } protocol;
 };
 
-#endif // COMPONENTS_TRIG_CPU_PINGPONG_BW_EAGER_H
+#endif // COMPONENTS_TRIG_CPU_PINGPONG_BW_H

@@ -222,7 +222,13 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     } else if (application == "ping_pong" ) {
         app = new ping_pong(this);
     } else if (application == "bw.eager") {
-        app = new pingpong_bw_eager(this);
+        app = new pingpong_bw(this, "eager");
+    } else if (application == "bw.probe") {
+        app = new pingpong_bw(this, "probe");
+    } else if (application == "bw.rndv") {
+        app = new pingpong_bw(this, "rndv");
+    } else if (application == "bw.triggered") {
+        app = new pingpong_bw(this, "triggered");
     } else if (application == "bandwidth" ) {
         app = new bandwidth(this);
     } else if (application == "test_atomics" ) {
