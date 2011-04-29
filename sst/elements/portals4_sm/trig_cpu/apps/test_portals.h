@@ -23,6 +23,27 @@ public:
     test_portals(trig_cpu *cpu) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
+
+	barrier_count = 0;
+
+        msg_size = cpu->getMessageSize();
+	if (msg_size < 8 ) {
+	    printf("msg_size must be >= 8\n");
+	    abort();
+	}
+	
+	in_buf = (char*) malloc(msg_size);
+	out_buf = (char*) malloc(msg_size);
+	for ( int i = 0; i < msg_size; ++i ) {
+	    out_buf[i] = i % 255;
+	    in_buf[i] = 0;
+	}
+	if ( my_id == 1 ) {
+	    overflow_buf1 = (char*)malloc(2*msg_size+4);
+	    overflow_buf2 = (char*)malloc(2*msg_size+4);
+	}
+
+	peer_id = (my_id==0) ? 1 : 0;
     }
 
     bool
@@ -31,110 +52,80 @@ public:
 	ptl_md_t md;
 	ptl_me_t me;
 
-	ptl_handle_me_t me_handle;
+	crInit();
 
-	printf("state = %d\n",state);
-        switch (state) {
-        case 0:
-	    printf("%5d: Inializing...\n",my_id);
 
-	    ptl->PtlCTAlloc(PTL_CT_OPERATION,ct_handle);
-	    state = 1;
-	    break;
-
-	case 1:
-	    recv_buffer = new uint64_t[BUF_SIZE];
-	    send_buffer = new uint64_t[BUF_SIZE];
-
-	    {
-		int temp = my_id;
-		for ( int i = 0; i < BUF_SIZE; i++ ) {
-		    recv_buffer[i] = temp;
-		    send_buffer[i] = temp++;
-		}
-	    }
-
-            md.start = send_buffer;
-            md.length = 8*BUF_SIZE;
-            md.eq_handle = PTL_EQ_NONE;
-	    md.ct_handle = PTL_CT_NONE;
-	    md.ct_handle = ct_handle;
-            ptl->PtlMDBind(md, &md_handle);
-
-	    state = 2;
-	    break;
+	crFuncStart(barrier);
+	{
+	    barrier_count++;
+	    ptl->PtlPut(barrier_md_h, 0, 0, PTL_NO_ACK_REQ, peer_id, barrier_pte, 0, 0, NULL, 0);
+	    crReturn();
 	    
-	case 2:
-	    
-            // initialize things
-            me.start = recv_buffer;
-            me.length = 8*BUF_SIZE;
-            me.ignore_bits = ~0x0;
-            me.ct_handle = ct_handle;
-            start_time = cpu->getCurrentSimTimeNano();
-            ptl->PtlMEAppend(0, me, PTL_PRIORITY_LIST, NULL, me_handle);
-
-	    for ( int i = 0; i < 16; i++ ) {
-		printf("%5d: start -> send_buffer[%d] = %llu   recv_buffer[%d] = %llu\n",my_id,i,(long long unsigned)send_buffer[i],i,(long long unsigned)recv_buffer[i]);
-	    }
-
-	    
-	    state = 3;
-	    break;
-
-	case 3:
-  	    ptl->PtlTriggeredCTInc(ct_handle,1,ct_handle,1);
-	    state = 4;
-	    break;
-
-	case 4:
-	    
-//  	    ptl->PtlTriggeredGet(md_handle,0,32,(my_id + 1) % num_nodes,0,0,NULL,128,ct_handle,2);
- 	  ptl->PtlTriggeredPut(md_handle,0,0,0,(my_id + 1) % num_nodes,0,0,0,NULL,0,ct_handle,3);
-	    state = 5;
-	    break;
-	    
-        case 5:
-	    // Send to my neighbor one bigger
-// 	    ptl->PtlPut(md_handle,0,128,0,( my_id + 1 ) % num_nodes,0,0,0,NULL,0);
-	    ptl->PtlPut(md_handle,0,128,0,( my_id + 1 ) % num_nodes,0,0,0,NULL,0);
-	    state = 6;
-	    break;
-
-	case 6:
-	    if ( ptl->PtlCTWait(ct_handle,5) ) {
-		for ( int i = 0; i < 32; i++ ) {
-		    printf("%5d: end -> send_buffer[%d] = %llu   recv_buffer[%d] = %llu\n",my_id,i,(long long unsigned)send_buffer[i],i,(long long unsigned)recv_buffer[i]);
-		}
-		uint64_t elapsed_time = cpu->getCurrentSimTimeNano()-start_time;
-		trig_cpu::addTimeToStats(elapsed_time);
-// 		if (my_id == 0) {
-// 		    double bw = ((double)(BUF_SIZE * 8)) / ((double)(elapsed_time));
-// 		    printf("Approximate BW = %3.2lf GB/s\n",my_id,bw);
-// 		}
-		return true;
-	    }
-	    return false;
-//             // Now send a message to the guy just bigger than me
-//             ptl->PtlTriggeredCTInc(ct_handle,4,ct_handle,3);
-//             ptl->PtlTriggeredPut(1,1,1,0,(my_id + 2) % num_nodes,0,0xdeadbeafabcdefabLL,0,NULL,0,ct_handle,1);
-//             ptl->PtlTriggeredAtomic(1,1,1,0,(my_id + 3) % num_nodes,0,0,0,NULL,0,PTL_MIN,PTL_LONG,ct_handle,2);
-//             ptl->PtlPut(1,1,1,0,(my_id + 1) % num_nodes,0,0,0,NULL,0);
-//             state = 3;
-            break;
-//         case 3:
-//             if ( ptl->PtlCTWait(ct_handle,7) ) {
-//                 trig_cpu::addTimeToStats(1);
-//                 state = 4;
-//                 return true;
-//             }
-//             cpu->addBusyTime("100ns");
-//             break;
-//         default:
-//             cpu->addBusyTime("100ns");
-//             break;
+	    while (!ptl->PtlCTWait(barrier_ct_h, barrier_count)) { crReturn(); }
 	}
-	return false;
+	crFuncEnd();
+
+
+	// crFuncStart(fill_out_buf);
+	// {
+	//     for (int z = 0; z < msg_size; z++) {
+		
+	//     }
+	// }
+	// crFuncEnd();
+
+	crFuncStart(test_truc_put);
+	{
+	    crFuncCall(barrier);
+	    if ( my_id == 0 ) {
+
+		
+		
+	    }
+	    else {
+	    }
+	    
+	}
+	crFuncEnd();
+
+	crStart();
+	
+	if ( !init ) {
+	    // Set up barrier MDs and MEs
+	    ptl->PtlPTAlloc(0,PTL_EQ_NONE,1,&barrier_pte);
+	    ptl->PtlCTAlloc(PTL_CT_OPERATION, barrier_ct_h);
+
+	    md.start = out_buf;
+	    md.length = 0;
+	    md.eq_handle = PTL_EQ_NONE;
+	    md.ct_handle = PTL_CT_NONE;
+	    ptl->PtlMDBind(md, &barrier_md_h);
+	    crReturn();
+	    
+	    me.start = in_buf;
+	    me.length = 0;
+	    me.ignore_bits = ~0x0;
+	    me.options = 0;
+	    me.ct_handle = barrier_ct_h;
+	    me.min_free = 0;
+	    ptl->PtlMEAppend(barrier_pte, me, PTL_PRIORITY_LIST, NULL, barrier_me_h);
+	    crReturn();
+
+	    init = true;
+	}
+	
+	printf("%d, %lu\n",my_id,cpu->getCurrentSimTimeNano());
+	crFuncCall(barrier);
+
+	
+	printf("%d, %lu\n",my_id,cpu->getCurrentSimTimeNano());
+	crFuncCall(barrier);
+
+	printf("%d, %lu\n",my_id,cpu->getCurrentSimTimeNano());
+
+	crFinish();
+
+	return true;
     }
 
 private:
@@ -142,20 +133,36 @@ private:
     test_portals(const application& a);
     void operator=(test_portals const&);
 
-    trig_cpu *cpu;
+    bool init;
     portals *ptl;
-    ptl_handle_ct_t ct_handle;
-    int state;
-    int my_id;
-    int num_nodes;
-    
-    ptl_handle_md_t md_handle;
-
-    uint64_t* send_buffer;
-    uint64_t* recv_buffer;
 
     SimTime_t start_time;
+    int radix;
+    int i;
+
+    int msg_size;
+
+    char *in_buf;
+    char *out_buf;
+
+    char *overflow_buf1;
+    char *overflow_buf2;
     
+    ptl_handle_ct_t ct_handle;
+
+    int barrier_count;
+    
+    ptl_handle_ct_t ct_h, ct2_h, barrier_ct_h;
+    ptl_handle_me_t in_me_h, out_me_h, atomic_me_h, trig_me_h, barrier_me_h;
+    ptl_handle_md_t in_md_h, out_md_h, atomic_md_h, trig_md_h, barrier_md_h;;
+    ptl_handle_eq_t eq_h;
+
+    int64_t atomic_buf;
+    
+    ptl_pt_index_t barrier_pte, pte, pte2;
+    ptl_event_t ptl_event;
+
+    ptl_process_t peer_id;
 };
 
 #endif // COMPONENTS_TRIG_CPU_TEST_PORTALS_H

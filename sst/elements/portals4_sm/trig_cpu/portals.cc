@@ -154,6 +154,7 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->portals = true;
     event->latency = cpu->latency/2;
     event->head_packet = true;
+    event->tail_packet = false;
     
     ptl_header_t header;
     header.pt_index = pt_index;
@@ -182,6 +183,7 @@ portals::PtlPut ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     if ( length <= hdr_data_size ) { // Single packet
 	// Copy over the payload.
 	event->stream = PTL_HDR_STREAM_PIO;
+	event->tail_packet = true;
 	memcpy(&event->ptl_data[sizeof(ptl_header_t)],(void*)((unsigned long)md_handle->start+(unsigned long)local_offset),length);
       	cpu->writeToNIC(event);
 	cpu->busy += (cpu->delay_host_pio_write + (currently_coalescing ? 0 : cpu->delay_sfence));
@@ -264,6 +266,7 @@ portals::progressPIO(void)
 
     event->portals = true;
     event->head_packet = false;
+    event->tail_packet = (pio_length_rem < 64);
     event->stream = PTL_HDR_STREAM_PIO;
 
     int copy_length = pio_length_rem < 64 ? pio_length_rem : 64; 
@@ -303,6 +306,7 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->portals = true;
     event->latency = cpu->latency/2;
     event->head_packet = true;
+    event->tail_packet = false;
 
     ptl_header_t header;
     header.pt_index = pt_index;
@@ -689,6 +693,7 @@ portals::PtlGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     event->portals = true;
     event->latency = cpu->latency/2;
     event->head_packet = true;
+    event->tail_packet = false;
     
     ptl_header_t header;
     header.pt_index = pt_index;
@@ -754,10 +759,11 @@ portals::PtlTriggeredGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     trig_op->msg_info->ct_handle = md_handle->ct_handle;
     trig_op->msg_info->eq_handle = md_handle->eq_handle;
 
-    // Need to send the objectto the NIC
+    // Need to send the object to the NIC
     trig_nic_event* event = new trig_nic_event;
     event->portals = true;
     event->head_packet = true;
+    event->tail_packet = false;
     event->src = cpu->my_id;
     event->dest = target_id;
     event->ptl_op = PTL_NIC_TRIG;

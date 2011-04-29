@@ -355,7 +355,8 @@ typedef struct {
     void*            user_ptr;       // 8 bytes
     void*            get_start;      // 8 bytes
     ptl_handle_ct_t  ct_handle;      // 2 bytes
-    ptl_handle_ct_t  eq_handle;      // 2 bytes
+    ptl_handle_eq_t  eq_handle;      // 2 bytes
+    ptl_size_t       send_ct_inc;   // 4 bytes
     uint8_t          op;             // 1 byte
     ptl_ack_req_t    ack_req;         // 4 bytes
 } ptl_int_msg_info_t;
