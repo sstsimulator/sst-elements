@@ -21,7 +21,6 @@ namespace SST {
 
         bool portals;
 	bool head_packet;
-	bool tail_packet;
 	int stream;
         int latency; // Latency through NIC in ns
         int data_length;

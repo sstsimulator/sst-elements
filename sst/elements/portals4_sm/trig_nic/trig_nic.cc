@@ -152,34 +152,16 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     if ( adv_pio ) {
 	work_done = true;
         trig_nic_event* ev = pio_q.front();
-	// If this is a DMA or PIO and is the head packet, we need to
-	// set up the outstanding message info
 	if ( ev->ptl_op == PTL_NO_OP || ev->ptl_op == PTL_DMA ) {
 	    if ( ev->head_packet ) {
-		pio_handle = get_next_out_msg_handle();
-		ev->updateMsgHandle(pio_handle);
-		out_msg_q[pio_handle] = ev->msg_info;
+		uint16_t handle = get_next_out_msg_handle();
+		ev->updateMsgHandle(handle);
+		out_msg_q[handle] = ev->msg_info;
 		ev->msg_info = NULL;
 // 		printf("%5d: handle = %d\n",m_id,handle);
 	    }
 	}
-
-	if ( ev->ptl_op == PTL_NO_OP && ev->tail_packet ) {
-	    // May need to post a send event
-	    if ( out_msg_q[pio_handle]->eq_handle != PTL_EQ_NONE ) {
-		ptl_event_t* ptl_event = new ptl_event_t;
-		ptl_event->type = PTL_EVENT_SEND;
-		ptl_event->user_ptr = out_msg_q[pio_handle]->user_ptr;
-		ptl_event->ni_fail_type = PTL_OK;
-
-		scheduleEQ(out_msg_q[pio_handle]->eq_handle,ptl_event);
-	    }
-	    if ( out_msg_q[pio_handle]->ct_handle != PTL_CT_NONE ) {
-		scheduleCTInc(out_msg_q[pio_handle]->ct_handle,out_msg_q[pio_handle]->send_ct_inc,latency_ct_post);
-	    }
-	}
-
-	// This is a PIO destined for the router
+	    
 	if ( ev->ptl_op == PTL_NO_OP ) {
 	    
 	    // This is a message destined for the router
@@ -302,8 +284,6 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
  	        if ( ev->data.dma->eq_handle != PTL_EQ_NONE && ev->stream == PTL_HDR_STREAM_GET ) {
 		    scheduleEQ(ev->data.dma->eq_handle,ev->data.dma->event);		    
 		}
-
-		
 	    }
 	    // Don't need the dma data structure any more
  	    delete ev->data.dma;

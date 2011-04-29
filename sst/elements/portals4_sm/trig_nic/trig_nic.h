@@ -94,8 +94,6 @@ private:
     
     std::map<int,MessageStream*> streams;
     std::map<unsigned long,atomic_cache_entry*> atomic_cache;
-
-    uint16_t pio_handle;
     
     ptl_int_dma_t* dma_req;
     bool dma_in_progress;
