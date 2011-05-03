@@ -11042,7 +11042,7 @@ void Power::setChip(Component::Params_t deviceParams)
     	  floorplan.device_tech = (parameters_tech_t)(*fit).second.device_tech;
     	  floorplan.device_tech.temperature = (*chip.thermal_tile.find(pair<int,int>(SILICON,(*fit).first))).second.temperature;
 	  memset(&floorplan.p_usage_floorplan,0,sizeof(Pdissipation_t));
-	  floorplan.power_state = PACTIVE;
+	  floorplan.pstate = P_ACTIVE;
     	  p_chip.floorplan.insert(pair<int,floorplan_t>((*fit).first,floorplan));
     	  ++num_floorplans;
   	}
@@ -12403,7 +12403,9 @@ void Power::compute_temperature(ComponentId_t compID)
   p_TempSumNumCompNeedPower = chip.sumnum_comps;
   p_hasUpdatedTemp = true;
 
-  
+  //Perform DPM
+  dynamic_power_management();
+
   //compute temperature
   p_chip.thermal_library->compute(&p_chip.floorplan);
   
@@ -12868,10 +12870,24 @@ void Power::dynamic_power_management()
 
   for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
   {
-	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has current total power = " << (*fit).second.p_usage_floorplan.currentPower << " W" << std::endl;
-	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;
-	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has total energy = " << (*fit).second.p_usage_floorplan.totalEnergy << " J" << std::endl;
-	
+	//reset the original value of total energy at the previous step
+	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
+							- (*fit).second.p_usage_floorplan.runtimeDynamicPower
+							- (*fit).second.p_usage_floorplan.leakagePower;
+
+	if ((*fit).second.pstate == P_SLEEPING)
+	    (*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)0.05;
+	else if ((*fit).second.pstate == P_GOTOSLEEP)
+	    (*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)10.0;
+	else if ((*fit).second.pstate == P_WAKEUP)
+	    (*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)10.0;
+	//the new current power/total power after DPM
+	(*fit).second.p_usage_floorplan.currentPower = (*fit).second.p_usage_floorplan.runtimeDynamicPower
+							+ (*fit).second.p_usage_floorplan.leakagePower;
+	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
+							+ (*fit).second.p_usage_floorplan.currentPower;
+
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;	
   }
 
 }
