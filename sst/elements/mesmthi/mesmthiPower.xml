@@ -124,7 +124,7 @@
     <mc_floorplan_id>0</mc_floorplan_id>
     <clock_option>GLOBAL_CLOCK</clock_option>  
     <sampling_frequency>10ms</sampling_frequency>
-    <num_idle_samples_to_sleep>20</num_idle_samples_to_sleep>
+    <num_idle_samples_to_sleep>5</num_idle_samples_to_sleep>
 </mesmthi_params>
 
 <sst>
@@ -142,11 +142,11 @@
         <clock_pd>1ns</clock_pd>
         <log2_row_size>2</log2_row_size>
         <threads>4</threads>
-        <kernel_img>benchmark_bzimages64/bzImage-parsec-facesim-64</kernel_img>
+        <kernel_img>benchmark_bzimages64/bzImage-parsec-swaptions-64</kernel_img>
         <cyc_per_tick>1000000</cyc_per_tick>
         <samp_per_tick>100</samp_per_tick>
 	<push_introspector>CountIntrospector</push_introspector>
-	<fast_forward_cycle>7737588649</fast_forward_cycle>
+	<fast_forward_cycle>192000</fast_forward_cycle>
 	<params reference=mesmthi_params />
       </params>
       <links>

@@ -1000,12 +1000,6 @@ Mesmthi::pushData(Cycle_t current)
 	pdata= power->getPower(this, CACHE_L2, mycounts);
 	pdata= power->getPower(this, MEM_CTRL, mycounts);
 	
-       power->compute_temperature(getId());
-       regPowerStats(pdata);
-
-       //reset all counts to zero for next power query
-       power->resetCounts(&mycounts);
-	
 #if 1
 	std::cout << "==========current cycle = " << current << "======\n";
 	using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
@@ -1013,7 +1007,6 @@ Mesmthi::pushData(Cycle_t current)
 	using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": total energy = " << pdata.totalEnergy << " J" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": peak power = " << pdata.peak << " W" << std::endl;
-	power->printFloorplanThermalInfo();
 
 	print_counters();
 
@@ -1043,6 +1036,14 @@ Mesmthi::pushData(Cycle_t current)
 
 	clear_counters();
 #endif
+
+       power->compute_temperature(getId());
+	power->printFloorplanThermalInfo();
+       regPowerStats(pdata);
+       //reset all counts to zero for next power query
+       power->resetCounts(&mycounts);
+	
+
 	power->compute_MTTF();
 		
     ////}
