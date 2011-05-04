@@ -8,9 +8,9 @@
     <component id="system" >
         <m5C.M5>
             <params>
-                <configFile>xml/dramBusM5.xml</configFile>
-                <debug>0</debug>
-                <M5debug> none </M5debug>
+                <configFile>xml/memBusM5.xml</configFile>
+                <debug> 2 </debug>
+                <M5debug> ExecEffAddr ExecEnable ExeccMacro ExecMicro ExecOpClass ExecRegDelta ExecResult ExecSpeculative  ExecThread ExecSymbol ExecTicks  </M5debug>
                 <info>yes</info>
                 <registerExit>yes</registerExit>
             </params>

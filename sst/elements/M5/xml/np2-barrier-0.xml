@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 
 <cpuParams>
+    <physicalMemory.start> 0x00100000 </physicalMemory.start>
+    <physicalMemory.end>   0x001fffff </physicalMemory.end>
 
+    <base.process.registerExit> yes </base.process.registerExit>
     <base.process.egid> 1 </base.process.egid>
     <base.process.euid> 1 </base.process.euid>
     <base.process.gid> 1 </base.process.gid>
@@ -10,7 +13,6 @@
     <base.process.uid> 1 </base.process.uid>
     <base.process.cwd> / </base.process.cwd>
     <base.process.executable> test/hello </base.process.executable>
-    <base.process.registerExit> yes </base.process.registerExit>
     <base.process.simpoint> 0 </base.process.simpoint>
     <base.process.errout> cerr </base.process.errout>
     <base.process.input> cin </base.process.input>
@@ -142,20 +144,18 @@
 </busParams>
 
 <sst>
-    <component id="cpu0" >
+    <component id="node0.cpu0" >
         <O3Cpu>
             <params include=cpuParams>
-                <physicalMemory.start> 0x00100000 </physicalMemory.start>
-                <physicalMemory.end>   0x1fffffff </physicalMemory.end>
             </params>
             <links>
-                <link id="cpu2dcache">
+                <link id="node0.cpu0.cpu2dcache">
                     <params>
                         <name> dcache_port </name>
                         <num> -1 </num>
                     </params>
                 </link>
-                <link id="cpu2icache">
+                <link id="node0.cpu0.cpu2icache">
                     <params>
                         <name> icache_port </name>
                         <num> -1 </num>
@@ -165,19 +165,19 @@
         </O3Cpu>
     </component>
 
-    <component id="cpu0.dcache" >
+    <component id="node0.cpu0.dcache" >
         <BaseCache>
             <params include=cacheParams>
                 <size>65536</size>
             </params>
             <links>
-                <link id="cpu2dcache">
+                <link id="node0.cpu0.cpu2dcache">
                     <params>
                         <name> cpu_side </name>
                         <num> -1 </num>
                     </params>
                 </link>
-                <link id="dcache2bus">
+                <link id="node0.cpu0.dcache2bus">
                     <params>
                         <name> mem_side </name>
                         <num> -1 </num>
@@ -187,19 +187,19 @@
         </BaseCache>
     </component>
 
-    <component id="cpu0.icache" >
+    <component id="node0.cpu0.icache" >
         <BaseCache>
             <params include=cacheParams>
                 <size>32768</size>
             </params>
             <links>
-                <link id="cpu2icache">
+                <link id="node0.cpu0.cpu2icache">
                     <params>
                         <name> cpu_side </name>
                         <num> -1 </num>
                     </params>
                 </link>
-                <link id="icache2bus">
+                <link id="node0.cpu0.icache2bus">
                     <params>
                         <name> mem_side </name>
                         <num> -1 </num>
@@ -209,37 +209,37 @@
         </BaseCache>
     </component>
 
-    <component id="cpu0.busPlus" >
+    <component id="node0.cpu0.busPlus" >
         <BusPlus>
             <params include=busParams>
             </params>
 
             <links>
-                <link id="mem2bus">
+                <link id="node0.mem2bus">
                     <params>
                         <name> port </name>
                         <num> 0 </num>
                     </params>
                 </link>
-                <link id="dcache2bus">
+                <link id="node0.cpu0.dcache2bus">
                     <params>
                         <name> port </name>
                         <num> 2 </num>
                     </params>
                 </link>
-                <link id="icache2bus">
+                <link id="node0.cpu0.icache2bus">
                     <params>
                         <name> port </name>
                         <num> 1 </num>
                     </params>
                 </link>
-                <link id="bus2syscallDMA">
+                <link id="node0.cpu0.bus2syscallDMA">
                     <params>
                         <name> port </name>
                         <num> 3 </num>
                     </params>
                 </link>
-                <link id="bus2syscallPIO">
+                <link id="node0.cpu0.bus2syscallPIO">
                     <params>
                         <name> port </name>
                         <num> 4 </num>
@@ -249,7 +249,7 @@
         </BusPlus>
     </component>
 
-    <component id="physmem" >
+    <component id="node0.physmem" >
         <PhysicalMemory>
             <params>
                 <range.start> 0x00100000 </range.start>
@@ -261,19 +261,17 @@
                 <zero> false </zero>
 
                 <exe.0.process.executable> test/hello </exe.0.process.executable>
-                <exe.0.process.cmd.0> hello  </exe.0.process.cmd.0>
-                <exe.0.process.cmd.1> arg1   </exe.0.process.cmd.1>
-                <exe.0.process.cmd.2> arg2=2 </exe.0.process.cmd.2>
-                <exe.0.process.env.0> RANK=0 </exe.0.process.env.0>
-                <exe.0.process.env.1> SIZE=1 </exe.0.process.env.1>
-                <exe.0.process.env.2> HOME=/home/mjleven </exe.0.process.env.2>
-
                 <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
-                <exe.0.physicalMemory.end>   0x1fffffff </exe.0.physicalMemory.end>
+                <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
+                <exe.0.process.cmd.0> hello   </exe.0.process.cmd.0>
+                <exe.0.process.cmd.1> arg1     </exe.0.process.cmd.1>
+                <exe.0.process.cmd.2> arg2=120 </exe.0.process.cmd.2>
+                <exe.0.process.env.0> RANK=0   </exe.0.process.env.0>
+                <exe.0.process.env.1> SIZE=4   </exe.0.process.env.1>
 
             </params>
             <links>
-                <link id="mem2bus">
+                <link id="node0.mem2bus">
                     <params>
                         <name> port </name>
                         <num> 0 </num>
@@ -283,19 +281,177 @@
         </PhysicalMemory>
     </component>
 
-    <component id="cpu0.syscall" >
+    <component id="node0.cpu0.syscall" >
         <Syscall>
             <params>
                 <startAddr> 0x00000000 </startAddr>
             </params>
             <links>
-                <link id="bus2syscallDMA">
+                <link id="node0.cpu0.bus2syscallDMA">
                     <params>
                         <name> dma </name>
                         <num> -1 </num>
                     </params>
                 </link>
-                <link id="bus2syscallPIO">
+                <link id="node0.cpu0.bus2syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="node1.cpu0" >
+        <O3Cpu>
+            <params include=cpuParams>
+            </params>
+            <links>
+                <link id="node1.cpu0.cpu2dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.cpu2icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="node1.cpu0.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>65536</size>
+            </params>
+            <links>
+                <link id="node1.cpu0.cpu2dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.dcache2bus">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="node1.cpu0.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+            </params>
+            <links>
+                <link id="node1.cpu0.cpu2icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.icache2bus">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="node1.cpu0.busPlus" >
+        <BusPlus>
+            <params include=busParams>
+            </params>
+
+            <links>
+                <link id="node1.mem2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.dcache2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 2 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.icache2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 1 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.bus2syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 3 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.bus2syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 4 </num>
+                    </params>
+                </link>
+            </links>
+        </BusPlus>
+    </component>
+
+    <component id="node1.physmem" >
+        <PhysicalMemory>
+            <params>
+                <range.start> 0x00100000 </range.start>
+                <range.end>   0x1fffffff </range.end>
+
+                <latency> 28000 </latency>
+                <latency_var> 0 </latency_var>
+                <null> false </null>
+                <zero> false </zero>
+
+                <exe.0.process.executable> test/hello </exe.0.process.executable>
+                <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
+                <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
+                <exe.0.process.cmd.0> hello  </exe.0.process.cmd.0>
+                <exe.0.process.env.0> RANK=1 </exe.0.process.env.0>
+                <exe.0.process.env.1> SIZE=4 </exe.0.process.env.1>
+
+
+            </params>
+            <links>
+                <link id="node1.mem2bus">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </PhysicalMemory>
+    </component>
+
+    <component id="node1.cpu0.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x00000000 </startAddr>
+            </params>
+            <links>
+                <link id="node1.cpu0.bus2syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="node1.cpu0.bus2syscallPIO">
                     <params>
                         <name> pio </name>
                         <num> -1 </num>

@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 
 <cpuParams>
+    <physicalMemory.start> 0x00100000 </physicalMemory.start>
+    <physicalMemory.end>   0x001fffff </physicalMemory.end>
 
     <base.process.egid> 1 </base.process.egid>
     <base.process.euid> 1 </base.process.euid>
@@ -9,8 +11,9 @@
     <base.process.ppid> 1 </base.process.ppid>
     <base.process.uid> 1 </base.process.uid>
     <base.process.cwd> / </base.process.cwd>
+    <base.process.cmd> hello arg1 arg2 </base.process.cmd>
     <base.process.executable> test/hello </base.process.executable>
-    <base.process.registerExit> yes </base.process.registerExit>
+    <base.process.env> USER=mjleven </base.process.env>
     <base.process.simpoint> 0 </base.process.simpoint>
     <base.process.errout> cerr </base.process.errout>
     <base.process.input> cin </base.process.input>
@@ -145,8 +148,6 @@
     <component id="cpu0" >
         <O3Cpu>
             <params include=cpuParams>
-                <physicalMemory.start> 0x00100000 </physicalMemory.start>
-                <physicalMemory.end>   0x1fffffff </physicalMemory.end>
             </params>
             <links>
                 <link id="cpu2dcache">
@@ -261,15 +262,11 @@
                 <zero> false </zero>
 
                 <exe.0.process.executable> test/hello </exe.0.process.executable>
-                <exe.0.process.cmd.0> hello  </exe.0.process.cmd.0>
-                <exe.0.process.cmd.1> arg1   </exe.0.process.cmd.1>
-                <exe.0.process.cmd.2> arg2=2 </exe.0.process.cmd.2>
-                <exe.0.process.env.0> RANK=0 </exe.0.process.env.0>
-                <exe.0.process.env.1> SIZE=1 </exe.0.process.env.1>
-                <exe.0.process.env.2> HOME=/home/mjleven </exe.0.process.env.2>
+                <exe.0.process.cmd> "hello" arg1 arg2 </exe.0.process.cmd>
+                <exe.0.process.env> RANK=0 </exe.0.process.env>
 
                 <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>
-                <exe.0.physicalMemory.end>   0x1fffffff </exe.0.physicalMemory.end>
+                <exe.0.physicalMemory.end>   0x1fffff </exe.0.physicalMemory.end>
 
             </params>
             <links>
@@ -286,7 +283,8 @@
     <component id="cpu0.syscall" >
         <Syscall>
             <params>
-                <startAddr> 0x00000000 </startAddr>
+                <physicalMemory.start> 0x00000000 </physicalMemory.start>
+                <physicalMemory.end>   0x00002000 </physicalMemory.end>
             </params>
             <links>
                 <link id="bus2syscallDMA">
