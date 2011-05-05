@@ -136,19 +136,57 @@ public:
 	    }
 	    else {
 		// MEs will be set up by the tests
+		ptl->PtlEQAlloc(32,&eq_h);
+		ptl->PtlPTAlloc(0,eq_h,PT_XFER,&pte);
 	    }
 	    
 	    init = true;
 	}
 	
-	printf("%d, %lu\n",my_id,cpu->getCurrentSimTimeNano());
-	crFuncCall(barrier);
 
-	
-	printf("%d, %lu\n",my_id,cpu->getCurrentSimTimeNano());
-	crFuncCall(barrier);
+	if ( my_id == 0 ) {
+	    crFuncCall(barrier);
+	    ptl->PtlPut(out_md_h, 0, 8, PTL_NO_ACK_REQ, peer_id, pte, 0, 0, NULL, 10);
+	    crReturn();
 
-	printf("%d, %lu\n",my_id,cpu->getCurrentSimTimeNano());
+	    crFuncCall(barrier);
+	    ptl->PtlPut(out_md_h, 0, 8, PTL_NO_ACK_REQ, peer_id, pte, 0, 0, NULL, 15);
+	    crReturn();
+	    
+	}
+	else {
+	    me.start = in_buf;
+	    me.length = 1024;
+	    me.ignore_bits = ~0x0;
+	    me.options = 0;
+	    //me.options = PTL_ME_USE_ONCE;
+	    me.ct_handle = PTL_CT_NONE;
+	    me.min_free = 0;
+	    ptl->PtlMEAppend(pte, me, PTL_PRIORITY_LIST, NULL, in_me_h);
+	    crReturn();
+
+	    crFuncCall(barrier);
+
+	    while (!ptl->PtlEQPoll(&return_value,eq_h,10000,&ptl_event)) { crReturn(); }
+	    if ( return_value == PTL_OK ) {
+		printf("Event on 1:\n");
+		ptl_event.print();
+	    }
+	    
+	    crFuncCall(barrier);
+	    
+	    while (!ptl->PtlEQPoll(&return_value,eq_h,PTL_TIME_FOREVER,&ptl_event)) { crReturn(); }
+	    if ( return_value == PTL_OK ) {
+		printf("Event on 1:\n");
+		ptl_event.print();
+	    }
+
+	    while (!ptl->PtlEQPoll(&return_value,eq_h,5000,&ptl_event)) { crReturn(); }
+	    if ( return_value == PTL_OK ) {
+		printf("Event on 1:\n");
+		ptl_event.print();
+	    }
+	}
 
 	crFinish();
 
@@ -166,7 +204,8 @@ private:
     SimTime_t start_time;
     int radix;
     int i;
-
+    int return_value;
+    
     int msg_size;
 
     char *in_buf;

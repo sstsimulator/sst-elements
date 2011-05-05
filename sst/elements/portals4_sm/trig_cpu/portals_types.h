@@ -41,6 +41,7 @@ typedef uint32_t  ptl_ack_req_t;
 
 
 typedef uint64_t  ptl_process_t;
+typedef uint64_t  ptl_time_t;
 typedef uint64_t  ptl_hdr_data_t;
 typedef uint64_t  ptl_match_bits_t;
 
@@ -271,6 +272,8 @@ typedef struct {
 #define PTL_ME_EVENT_CT_USE_JID       0x10000
 
 #define PTL_OK 0
+#define PTL_EQ_EMPTY 1
+#define PTL_TIME_FOREVER (-1)
 
 // Internal data structures
 typedef uint32_t ptl_op_type_t;

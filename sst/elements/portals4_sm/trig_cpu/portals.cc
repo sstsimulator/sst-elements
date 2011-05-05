@@ -436,6 +436,51 @@ portals::PtlEQWait(ptl_handle_eq_t eq_handle, ptl_event_t* event) {
     return false;
 }
 
+bool
+portals::PtlEQPoll(int* return_value, ptl_handle_eq_t eq_handle, ptl_time_t timeout,
+		   ptl_event_t* event) {
+    // See if we ended because of a timeout
+    if ( cpu->timed_out ) {
+	cpu->poll_ev = NULL;
+	cpu->timed_out = false;
+	*return_value = PTL_EQ_EMPTY;
+	return true;
+    }
+
+    if ( event_queues[eq_handle]->size() >= 1 ) {
+	ptl_event_t* ev = event_queues[eq_handle]->front();
+	event_queues[eq_handle]->pop();
+	*event = *ev;
+	delete ev;
+        cpu->waiting = false;
+	if ( cpu->poll_ev != NULL ) {
+	    cpu->poll_ev->cancel();
+	    cpu->poll_ev = NULL;
+	}
+	cpu->timed_out = false;
+	*return_value = PTL_OK;
+	return true;
+    }
+
+    // First, see if this is the first entry into this particular call
+    if ( !cpu->waiting ) {
+	cpu->waiting = true;
+	cpu->timed_out = false;
+	if ( timeout != PTL_TIME_FOREVER ) {
+	    // First time in and didn't find a match.  Need to set up
+	    // the timeout event
+	    cpu->poll_ev = new trig_cpu_event(true);
+	    cpu->self->Send(timeout, cpu->poll_ev);
+	    return false;
+	}
+    }
+    
+    // This means we re-entered because a new event arrived, but it
+    // wasn't to the right eq
+    cpu->waiting = true;
+    return false;
+}
+
 // Seems to work
 void
 portals::PtlTriggeredPut( ptl_handle_md_t md_handle, ptl_size_t local_offset, 

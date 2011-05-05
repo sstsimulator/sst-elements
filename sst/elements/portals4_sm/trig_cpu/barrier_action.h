@@ -88,7 +88,7 @@ public:
             }
 	    resetStats();
             for ( unsigned int i = 0; i < wake_up.size(); i++ ) {
-                wake_up[i]->Send(10,NULL);
+                wake_up[i]->Send(10,new trig_cpu_event);
             }
 	}
 	SimTime_t next = sim->getCurrentSimCycle() + 

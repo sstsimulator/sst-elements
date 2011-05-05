@@ -17,6 +17,7 @@
 
 #include "trig_cpu.h"
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu_event.h"
 
 #include "apps/allreduce_recdbl.h"
 #include "apps/allreduce_recdbl_trig.h"
@@ -269,6 +270,10 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     msg_rate_delay =
         tc->convertFromCoreTime(registerTimeBase(msg_rate,false)->getFactor());
 
+    timing_ev = new trig_cpu_event;
+    poll_ev = NULL;
+    timed_out = false;
+    
 //     if ( use_portals ) {
 //         ptl = new portals(this);
       
@@ -310,7 +315,7 @@ trig_cpu::Setup()
     noise_count = barrier_act->getRand(my_id,noise_interval);
 //     printf("%5d: %lu\n",my_id,noise_count);
     waiting = false;
-    self->Send(1,NULL);
+    self->Send(1,timing_ev);
     count = 0;
     barrier_act->addWakeUp(self);
 
@@ -320,12 +325,6 @@ trig_cpu::Setup()
     pio_in_progress = false;
 
     
-//     if ( sizeof(ptl_header_t) > 32 ) {
-// 	fprintf(stderr, "Portals header (ptl_header_t) is bigger than 32 bytes (%d), aborting...\n", (int) sizeof(ptl_header_t));
-// 	fprintf(stderr, "sizeof(ptl_op_t) = %d, sizeof(ptl_datatype_t) = %d\n", (int) sizeof(ptl_op_t), (int) sizeof(ptl_datatype_t));
-// 	exit(1);
-//     }
-
     if ( sizeof(ptl_header_t) & 8 != 0 ) {
 	fprintf(stderr,
 		"Portals header (ptl_header_t) must be a multiple of 8-bytes (actual = %d), aborting...\n",
@@ -505,8 +504,19 @@ trig_cpu::event_nic_timing(Event* e)
 void
 trig_cpu::event_handler(Event* ev)
 {
-//     printf("trig_cpu::event_handler()\n");
-    
+    // printf("trig_cpu::event_handler()\n");
+
+    if ( static_cast<trig_cpu_event*>(ev)->isTimeout() ) {
+	if ( !(static_cast<trig_cpu_event*>(ev)->isCanceled()) ) {
+	    // A call to a polling function timed out.  Set timeout
+	    // flag and call wake-up
+	    timed_out = true;
+	    wakeUp();
+	}
+	delete ev;
+	return;
+    }
+
     bool done = false;
 
     // Need to see if there is any left over work to do
@@ -604,7 +614,7 @@ trig_cpu::event_handler(Event* ev)
         busy = 1;
     }
 //     printf("Busy for %d\n",busy);
-    self->Send(busy,NULL);
+    self->Send(busy,timing_ev);
     busy = 0;
     if ( noise_interval != 0 ) noise_count = noise_rem;
     else noise_count = 0;
@@ -639,7 +649,7 @@ trig_cpu::wakeUp()
 	busy = 0;
 
 	if ( noise_interval == 0 || !do_noise ) {
-            self->Send(1,NULL);
+            self->Send(1,timing_ev);
             return;
         }
         // See if we need to add any noise before we wake up the main
@@ -647,19 +657,19 @@ trig_cpu::wakeUp()
         SimTime_t elapsed_time = getCurrentSimTime() - wait_start_time;
         if ( elapsed_time < noise_count ) {
             noise_count -= elapsed_time;
-            self->Send(1,NULL);
+            self->Send(1,timing_ev);
         }
         else if ( elapsed_time < (noise_count + noise_duration) ) {
             // This means we are in the middle of noise, figure out how much
             // is left
             SimTime_t noise_left = noise_count + noise_duration - elapsed_time;
             noise_count = noise_interval - noise_duration;
-            self->Send(noise_left,NULL);
+            self->Send(noise_left,timing_ev);
         }
         else if ( elapsed_time < (noise_count + noise_interval) ) {
             // Noise happened, but is done
             noise_count = noise_count + noise_interval - elapsed_time;
-            self->Send(1,NULL);
+            self->Send(1,timing_ev);
         }
         else {
             // Need to determin if we are in noise or not.  Figure out how
@@ -673,7 +683,7 @@ trig_cpu::wakeUp()
             }
             else {
                 // Not in noise
-                self->Send(1,NULL);
+                self->Send(1,timing_ev);
                 noise_count = noise_interval - from_interval_start;
             }
         }

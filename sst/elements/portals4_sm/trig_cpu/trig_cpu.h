@@ -27,6 +27,7 @@
 #include <sst/core/timeConverter.h>
 
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
+#include "sst/elements/portals4_sm/trig_cpu/trig_cpu_event.h"
 #include "portals.h"
 
 using namespace SST;
@@ -170,6 +171,8 @@ private:
     bool waiting;
     SimTime_t wait_start_time;
 
+    bool timed_out;
+    
     bool blocking;
     int nic_credits;
     trig_nic_event* blocked_event;
@@ -204,7 +207,10 @@ private:
     Link*       pio_delay_link;
     int         dma_return_count;
 
-  std::string frequency;
+    trig_cpu_event* timing_ev;
+    trig_cpu_event* poll_ev;
+    
+    std::string frequency;
 
     application *app;
 

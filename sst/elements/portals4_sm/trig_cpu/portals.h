@@ -35,6 +35,10 @@ public:
     void PtlEQFree(ptl_handle_eq_t eq_handle);
     void PtlEQGet(ptl_handle_eq_t eq_handle, ptl_event_t *event);
     bool PtlEQWait(ptl_handle_eq_t eq_handle, ptl_event_t *event);
+    bool PtlEQPoll(int* return_value, ptl_handle_eq_t* eq_handles, unsigned int size, ptl_time_t timeout,
+		   ptl_event_t* event, unsigned int* which);
+    bool PtlEQPoll(int* return_value, ptl_handle_eq_t eq_handle, ptl_time_t timeout,
+		   ptl_event_t* event);
     
     
     void PtlCTAlloc(ptl_ct_type_t ct_type, ptl_handle_ct_t& ct_handle); 
