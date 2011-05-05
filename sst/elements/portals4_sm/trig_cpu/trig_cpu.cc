@@ -222,13 +222,21 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
     } else if (application == "ping_pong" ) {
         app = new ping_pong(this);
     } else if (application == "bw.eager") {
-        app = new pingpong_bw(this, "eager");
+        app = new pingpong_bw(this, "eager", false);
     } else if (application == "bw.probe") {
-        app = new pingpong_bw(this, "probe");
+        app = new pingpong_bw(this, "probe", false);
     } else if (application == "bw.rndv") {
-        app = new pingpong_bw(this, "rndv");
+        app = new pingpong_bw(this, "rndv", false);
     } else if (application == "bw.triggered") {
-        app = new pingpong_bw(this, "triggered");
+        app = new pingpong_bw(this, "triggered", false);
+    } else if (application == "bw.eager.delay") {
+        app = new pingpong_bw(this, "eager", true);
+    } else if (application == "bw.probe.delay") {
+        app = new pingpong_bw(this, "probe", true);
+    } else if (application == "bw.rndv.delay") {
+        app = new pingpong_bw(this, "rndv", true);
+    } else if (application == "bw.triggered.delay") {
+        app = new pingpong_bw(this, "triggered", true);
     } else if (application == "bandwidth" ) {
         app = new bandwidth(this);
     } else if (application == "test_atomics" ) {

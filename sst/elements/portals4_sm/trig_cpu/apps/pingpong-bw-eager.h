@@ -14,6 +14,8 @@
 #define COMPONENTS_TRIG_CPU_PINGPONG_BW_H
 
 #include <string>
+#include <map>
+#include <vector>
 
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include <string.h>		       // for memcpy()
@@ -85,7 +87,7 @@
 
 class pingpong_bw :  public application {
 public:
-    pingpong_bw(trig_cpu *cpu, const std::string &proto) : application(cpu)
+    pingpong_bw(trig_cpu *cpu, const std::string &proto, bool delay) : application(cpu)
     {
         ptl = cpu->getPortalsHandle();
 
@@ -105,22 +107,32 @@ public:
         if (!proto.compare("eager")) {
             protocol = eager;
             printf("Protocol: eager\n");
-            fp = fopen("eager-nodelay.out", "w");
+            strcpy(base_filename, "eager");
         } else if (!proto.compare("rndv")) {
             protocol = rndv;
             printf("Protocol: rendezvous\n");
-            fp = fopen("rndv-nodelay.out", "w");
+            strcpy(base_filename, "rndv");
         } else if (!proto.compare("triggered")) {
             protocol = triggered;
             printf("Protocol: triggered\n");
-            fp = fopen("triggered-nodelay.out", "w");
+            strcpy(base_filename, "triggered");
         } else if (!proto.compare("probe")) {
             protocol = probe;
             printf("Protocol: probe\n");
-            fp = fopen("probe-nodelay.out", "w");
+            strcpy(base_filename, "probe");
         } else {
             printf("Unknown protocol: %s\n", proto.c_str());
             abort();
+        }
+
+        if (delay) {
+            delays.push_back(0.05);
+            delays.push_back(0.10);
+            delays.push_back(0.15);
+            delays.push_back(0.25);
+            delays.push_back(0.50);
+            delays.push_back(0.75);
+            delays.push_back(1.00);
         }
     }
 
@@ -402,11 +414,6 @@ public:
 
             recv_count++;
 
-#if 0
-            cpu->addBusyTime("150ns");
-            crReturn();
-#endif
-
             PTL_SET_RECV_BITS(match_bits, ignore_bits, contextid, peer, tag);
 
             if (protocol == triggered && cur_len >= eager_len) {
@@ -606,6 +613,107 @@ public:
         DEBUG(("%02d: barrier end\n", my_id));
         crFuncEnd();
 
+        crFuncStart(send_delay);
+        {
+            long latency;
+            char timetmp[100];
+            latency = send_delay * run_times[cur_len] * 1000000000;
+            snprintf(timetmp, 100, "%ldns", latency);
+            cpu->addBusyTime(timetmp);
+        }
+        crFuncEnd();
+
+        crFuncStart(recv_delay);
+        {
+            long latency;
+            char timetmp[100];
+            latency = recv_delay * run_times[cur_len] * 1000000000;
+            snprintf(timetmp, 100, "%ldns", latency);
+            cpu->addBusyTime(timetmp);
+        }
+        crFuncEnd();
+
+        crFuncStart(bw_test);
+        /* set tlast to ~1.5us, which is about what our 1 byte latency
+           will be.  Gives a good starting point for nrepeat without
+           actually doing the test */
+        tlast = 1.5 / 1000000.0;
+
+        /* the real loop */
+        inc = (start_len > 1) ? start_len / 2 : 1;
+        nq = (start_len > 1) ? 1 : 0;
+
+        for (n = 0, len = start_len ; len <= stop_len ; len += inc, nq++) {
+            if (nq > 2) inc = ((nq % 2))? inc + inc: inc;
+            for (pert = ((perturbation > 0) && (inc > perturbation+1)) ? -perturbation : 0;
+                 pert <= perturbation; 
+                 n++, pert += ((perturbation > 0) && (inc > perturbation+1)) ? perturbation : perturbation+1) {
+
+                /* tlast is shared at the bottom, so is always the same on both nodes */
+                nrepeat = MAX((.001 / (((double) cur_len / MAX(1, (cur_len - inc + 1.0))) * tlast)), 5);
+
+                crFuncCall(barrier);
+
+                cur_len = len + pert;
+                start_time = cpu->getCurrentSimTimeNano();
+                for (i = 0 ; i < nrepeat ; ++i) {
+                    if (my_id == 0) {
+                        peer = 1;
+                        tag = 1;
+                        DEBUG(("00: send: start to 01\n"));
+                        crFuncCall(send);
+                        crFuncCall(send_delay);
+                        crFuncCall(send_wait);
+                        DEBUG(("00: recv: start from 01\n"));
+                        crFuncCall(recv);
+                        crFuncCall(recv_delay);
+                        crFuncCall(recv_wait);
+                    } else if (my_id == 1) {
+                        peer = 0;
+                        tag = 1;
+                        DEBUG(("01: recv: start from 00\n"));
+                        crFuncCall(recv);
+                        crFuncCall(recv_delay);
+                        crFuncCall(recv_wait);
+                        DEBUG(("01: send: start to 00\n"));
+                        crFuncCall(send);
+                        crFuncCall(send_delay);
+                        crFuncCall(send_wait);
+                    }
+                }
+                stop_time = cpu->getCurrentSimTimeNano();
+                
+                tlast = ((double) (stop_time - start_time)) / 1000000000.0 / nrepeat / 2;
+                cur_len = sizeof(tlast);
+                if (my_id == 0) {
+                    peer = 1;
+                    send_buf = (char*) &tlast;
+                    crFuncCall(send);
+                    crFuncCall(send_wait);
+                    send_buf = big_send_buf;
+                } else if (my_id == 1) {
+                    peer = 0;
+                    recv_buf = (char*) &tlast;
+                    crFuncCall(recv);
+                    crFuncCall(recv_wait);
+                    recv_buf = big_recv_buf;
+                }
+                cur_len = len + pert;
+                if (0.0 == cur_delay) { 
+                    run_times[cur_len] = tlast;
+                }
+
+                if (my_id == 0) {
+                    printf("%3d: %7d bytes %6d times --> %8.2lf MBps in %10.2lf usec\n", 
+                           n, (int) cur_len, nrepeat, cur_len / tlast / 1024 / 1024, 
+                           tlast * 1000000);
+                    fprintf(fp, "%8d\t%lf\t%12.8lf\n", (int) cur_len, cur_len / tlast / 1024 / 1024, tlast);
+                    fflush(NULL);
+                }
+            }
+        }
+        crFuncEnd();
+
         crStart();
         
         ptl->PtlEQAlloc(1024, &send_eq_h);
@@ -638,79 +746,24 @@ public:
 
         crFuncCall(short_msg_init);
 
-        /* set tlast to ~1.5us, which is about what our 1 byte latency
-           will be.  Gives a good starting point for nrepeat without
-           actually doing the test */
-        tlast = 1.5 / 1000000.0;
+        cur_delay = send_delay = recv_delay = 0.0;
+        sprintf(cur_filename, "%s-nodelay.out", base_filename);
+        fp = fopen(cur_filename, "w");
+        crFuncCall(bw_test);
 
-        /* the real loop */
-        inc = (start_len > 1) ? start_len / 2 : 1;
-        nq = (start_len > 1) ? 1 : 0;
+        for (delays_iter = delays.begin() ; delays_iter != delays.end() ; ++delays_iter) {
+            cur_delay = *delays_iter;
 
-        for (n = 0, len = start_len ; len <= stop_len ; len += inc, nq++) {
-            if (nq > 2) inc = ((nq % 2))? inc + inc: inc;
-            for (pert = ((perturbation > 0) && (inc > perturbation+1)) ? -perturbation : 0;
-                 pert <= perturbation; 
-                 n++, pert += ((perturbation > 0) && (inc > perturbation+1)) ? perturbation : perturbation+1) {
+            send_delay = 0.0; recv_delay = cur_delay;
+            sprintf(cur_filename, "%s-recv-%1.2lf.out", base_filename, recv_delay);
+            fclose(fp); fp = fopen(cur_filename, "w");
+            crFuncCall(bw_test);
 
-                /* tlast will be different on different ranks, so
-                   compute nrepeat and have rank 0 send it to everyone
-                   else */
-                nrepeat = MAX((.001 / (((double) cur_len / (cur_len - inc + 1.0)) * tlast)), 5);
-                cur_len = sizeof(nrepeat);
-                if (my_id == 0) {
-                    peer = 1;
-                    send_buf = (char*) &nrepeat;
-                    crFuncCall(send);
-                    crFuncCall(send_wait);
-                    send_buf = big_send_buf;
-                } else if (my_id == 1) {
-                    peer = 0;
-                    recv_buf = (char*) &nrepeat;
-                    crFuncCall(recv);
-                    crFuncCall(recv_wait);
-                    recv_buf = big_recv_buf;
-                }
-
-                crFuncCall(barrier);
-
-                cur_len = len + pert;
-                start_time = cpu->getCurrentSimTimeNano();
-                for (i = 0 ; i < nrepeat ; ++i) {
-                    if (my_id == 0) {
-                        peer = 1;
-                        tag = 1;
-                        DEBUG(("00: send: start to 01\n"));
-                        crFuncCall(send);
-                        crFuncCall(send_wait);
-                        DEBUG(("00: recv: start from 01\n"));
-                        crFuncCall(recv);
-                        crFuncCall(recv_wait);
-                    } else if (my_id == 1) {
-                        peer = 0;
-                        tag = 1;
-                        DEBUG(("01: recv: start from 00\n"));
-                        crFuncCall(recv);
-                        crFuncCall(recv_wait);
-                        DEBUG(("01: send: start to 00\n"));
-                        crFuncCall(send);
-                        crFuncCall(send_wait);
-                    }
-                }
-                stop_time = cpu->getCurrentSimTimeNano();
-                
-                tlast = ((double) (stop_time - start_time)) / 1000000000.0 / nrepeat / 2;
-
-                if (my_id == 0) {
-                    printf("%3d: %7d bytes %6d times --> %8.2lf MBps in %10.2lf usec\n", 
-                           n, (int) cur_len, nrepeat, cur_len / tlast / 1024 / 1024, 
-                           tlast * 1000000);
-                    fprintf(fp, "%8d\t%lf\t%12.8lf\n", (int) cur_len, cur_len / tlast / 1024 / 1024, tlast);
-                    fflush(NULL);
-                }
-            }
+            send_delay = cur_delay; recv_delay = 0.0;
+            sprintf(cur_filename, "%s-send-%1.2lf.out", base_filename, send_delay);
+            fclose(fp); fp = fopen(cur_filename, "w");
+            crFuncCall(bw_test);
         }
-        crReturn();
 
         crFinish();
         return true;
@@ -744,6 +797,12 @@ private:
     FILE *fp;
 
     enum { eager, rndv, triggered, probe } protocol;
+
+    std::vector<double> delays;
+    std::vector<double>::iterator delays_iter;
+    std::map<long, double> run_times;
+    double send_delay, recv_delay, cur_delay;
+    char base_filename[100], cur_filename[100];
 };
 
 #endif // COMPONENTS_TRIG_CPU_PINGPONG_BW_H
