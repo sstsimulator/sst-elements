@@ -92,7 +92,7 @@ public:
         ptl = cpu->getPortalsHandle();
 
         start_len = 1;
-        stop_len = 8 * 1024 * 1024;
+        stop_len = 1 * 1024 * 1024;
         perturbation = 3;
         nrepeat = 10;
         send_buf = big_send_buf = (char*) malloc(stop_len * 2);
@@ -143,6 +143,12 @@ public:
             delays.push_back(0.75);
             delays.push_back(1.00);
         }
+
+        probe_freqs.push_back(1);
+        probe_freqs.push_back(2);
+        probe_freqs.push_back(4);
+        probe_freqs.push_back(8);
+        probe_freqs.push_back(16);
     }
 
 
@@ -464,6 +470,8 @@ public:
 
             recv_count++;
 
+            probe_this_iter = (0 == recv_count % probe_freq) ? 1 : 0;
+
             PTL_SET_RECV_BITS(match_bits, ignore_bits, contextid, peer, tag);
 
             if (protocol == triggered && cur_len >= eager_len) {
@@ -500,14 +508,17 @@ public:
             }
 
             me.start = recv_buf;
-            if (protocol == probe && cur_len >= eager_len) {
-                me.length = 8;
-            } else if (protocol == triggered) {
+            if (protocol == triggered) {
                 me.length = cur_len + 8;
-            } else if (protocol == two_probe && (cur_len >= eager_len && cur_len < long_len)) {
-                me.length = 8;
             } else {
                 me.length = cur_len;
+            }
+            if (probe_this_iter) {
+                if (protocol == probe && cur_len >= eager_len) {
+                    me.length = 8;
+                } else if (protocol == two_probe && (cur_len >= eager_len && cur_len < long_len)) {
+                    me.length = 8;
+                }
             }
             if (protocol == triggered && cur_len >= eager_len) {
                 me.ct_handle = ct_h;
@@ -516,7 +527,7 @@ public:
             }
             me.min_free = 0;
             me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_EVENT_CT_BYTES;
-            if (protocol == probe || protocol == two_probe) {
+            if (probe_this_iter && (protocol == probe || protocol == two_probe)) {
                 me.options |= PTL_ME_ACK_DISABLE;
             }
             me.match_bits = match_bits;
@@ -536,7 +547,7 @@ public:
             while (true) {
                 while (!ptl->PtlEQWait(recv_eq_h, &ev)) { crReturn(); }
                 if (ev.type == PTL_EVENT_PUT) {
-                    if (!PTL_IS_SHORT_MSG(ev.match_bits) && (protocol == probe)) {
+                    if (!PTL_IS_SHORT_MSG(ev.match_bits) && (protocol == probe) && probe_this_iter) {
                         ptl_md_t md;
                         md.start = recv_buf;
                         md.length = cur_len;
@@ -557,6 +568,7 @@ public:
                                     0,
                                     NULL);
                         crReturn();
+
                     } else if (!PTL_IS_SHORT_MSG(ev.match_bits) && (protocol == rndv)) {
                         ptl_md_t md;
                         md.start = recv_buf + eager_len;
@@ -582,7 +594,7 @@ public:
                     } else if (!PTL_IS_SHORT_MSG(ev.match_bits) && 
                                (protocol == two || protocol == two_probe)) {
                         if (PTL_IS_MID_MSG(ev.match_bits)) {
-                            if (protocol == two_probe) {
+                            if (protocol == two_probe && probe_this_iter) {
                                 /* treat as unexpected */
                                 ptl_md_t md;
                                 md.start = recv_buf;
@@ -767,7 +779,7 @@ public:
 
                 cur_len = len + pert;
                 /* tlast is shared at the bottom, so is always the same on both nodes */
-                nrepeat = MAX((.001 / (((double) cur_len / MAX(1, (cur_len - inc + 1.0))) * tlast)), 5);
+                nrepeat = MAX((.005 / (((double) cur_len / MAX(1, (cur_len - inc + 1.0))) * tlast)), 8);
 
                 crFuncCall(barrier);
 
@@ -883,23 +895,52 @@ public:
 
         crFuncCall(short_msg_init);
 
-        cur_delay = send_delay = recv_delay = 0.0;
-        sprintf(cur_filename, "%s-nodelay.out", base_filename);
-        fp = fopen(cur_filename, "w");
-        crFuncCall(bw_test);
+        if (protocol == probe || protocol == two_probe) {
+            for (probe_freqs_iter = probe_freqs.begin() ; 
+                 probe_freqs_iter != probe_freqs.end() ; 
+                 ++probe_freqs_iter) {
+                probe_freq = *probe_freqs_iter;
+                cur_delay = send_delay = recv_delay = 0.0;
 
-        for (delays_iter = delays.begin() ; delays_iter != delays.end() ; ++delays_iter) {
-            cur_delay = *delays_iter;
+                sprintf(cur_filename, "%s-%d-nodelay.out", base_filename, probe_freq);
+                fp = fopen(cur_filename, "w");
+                crFuncCall(bw_test);
 
-            send_delay = 0.0; recv_delay = cur_delay;
-            sprintf(cur_filename, "%s-recv-%1.2lf.out", base_filename, recv_delay);
-            fclose(fp); fp = fopen(cur_filename, "w");
+                for (delays_iter = delays.begin() ; delays_iter != delays.end() ; ++delays_iter) {
+                    cur_delay = *delays_iter;
+
+                    send_delay = 0.0; recv_delay = cur_delay;
+                    sprintf(cur_filename, "%s-%d-recv-%1.2lf.out", base_filename, probe_freq, recv_delay);
+                    fclose(fp); fp = fopen(cur_filename, "w");
+                    crFuncCall(bw_test);
+
+                    send_delay = cur_delay; recv_delay = 0.0;
+                    sprintf(cur_filename, "%s-%d-send-%1.2lf.out", base_filename, probe_freq, send_delay);
+                    fclose(fp); fp = fopen(cur_filename, "w");
+                    crFuncCall(bw_test);
+                }
+
+            }
+
+        } else {
+            cur_delay = send_delay = recv_delay = 0.0;
+            sprintf(cur_filename, "%s-nodelay.out", base_filename);
+            fp = fopen(cur_filename, "w");
             crFuncCall(bw_test);
 
-            send_delay = cur_delay; recv_delay = 0.0;
-            sprintf(cur_filename, "%s-send-%1.2lf.out", base_filename, send_delay);
-            fclose(fp); fp = fopen(cur_filename, "w");
-            crFuncCall(bw_test);
+            for (delays_iter = delays.begin() ; delays_iter != delays.end() ; ++delays_iter) {
+                cur_delay = *delays_iter;
+
+                send_delay = 0.0; recv_delay = cur_delay;
+                sprintf(cur_filename, "%s-recv-%1.2lf.out", base_filename, recv_delay);
+                fclose(fp); fp = fopen(cur_filename, "w");
+                crFuncCall(bw_test);
+
+                send_delay = cur_delay; recv_delay = 0.0;
+                sprintf(cur_filename, "%s-send-%1.2lf.out", base_filename, send_delay);
+                fclose(fp); fp = fopen(cur_filename, "w");
+                crFuncCall(bw_test);
+            }
         }
 
         crFinish();
@@ -930,6 +971,10 @@ private:
     ptl_match_bits_t match_bits, ignore_bits;
     ptl_event_t ev;
     ptl_handle_ct_t ct_h;
+    int probe_freq;
+    std::vector<int> probe_freqs;
+    std::vector<int>::iterator probe_freqs_iter;
+    int probe_this_iter;
 
     FILE *fp;
 
