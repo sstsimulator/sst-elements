@@ -99,7 +99,7 @@ public:
         recv_buf = big_recv_buf = (char*) malloc(stop_len * 2);
 
         eager_len = 32 * 1024;
-        long_len = 32 * 1024; /* only used in two protocol, see below */
+        long_len = 128 * 1024; /* only used in two protocol, see below */
 
         contextid = 1;
         tag = 2;
@@ -125,14 +125,10 @@ public:
             protocol = two;
             printf("Protocol: two\n");
             strcpy(base_filename, "two");
-
-            eager_len = 8 * 1024;
         } else if (!proto.compare("two-probe")) {
             protocol = two_probe;
             printf("Protocol: two-probe\n");
             strcpy(base_filename, "two");
-
-            eager_len = 8 * 1024;
         } else {
             printf("Unknown protocol: %s\n", proto.c_str());
             abort();
