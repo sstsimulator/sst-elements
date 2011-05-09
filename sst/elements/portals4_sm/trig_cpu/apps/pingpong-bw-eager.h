@@ -47,7 +47,7 @@
 
 #define PTL_SHORT_MSG     0x1000000000000000ULL
 #define PTL_LONG_MSG      0x2000000000000000ULL
-#define PTL_READY_MSG     0x4000000000000000ULL
+#define PTL_MID_MSG     0x4000000000000000ULL
 
 /* send posting */
 #define PTL_SET_SEND_BITS(match_bits, contextid, source, tag, type)     \
@@ -76,8 +76,8 @@
     (0 != (PTL_SHORT_MSG & match_bits))
 #define PTL_IS_LONG_MSG(match_bits)             \
     (0 != (PTL_LONG_MSG & match_bits))
-#define PTL_IS_READY_MSG(match_bits)            \
-    (0 != (PTL_READY_MSG & match_bits))
+#define PTL_IS_MID_MSG(match_bits)            \
+    (0 != (PTL_MID_MSG & match_bits))
 #define PTL_IS_SYNC_MSG(ev)                  \
     (0 != ev->hdr_data)
 
@@ -99,6 +99,7 @@ public:
         recv_buf = big_recv_buf = (char*) malloc(stop_len * 2);
 
         eager_len = 32 * 1024;
+        long_len = 32 * 1024; /* only used in two protocol, see below */
 
         contextid = 1;
         tag = 2;
@@ -120,6 +121,18 @@ public:
             protocol = probe;
             printf("Protocol: probe\n");
             strcpy(base_filename, "probe");
+        } else if (!proto.compare("two")) {
+            protocol = two;
+            printf("Protocol: two\n");
+            strcpy(base_filename, "two");
+
+            eager_len = 8 * 1024;
+        } else if (!proto.compare("two-probe")) {
+            protocol = two_probe;
+            printf("Protocol: two-probe\n");
+            strcpy(base_filename, "two");
+
+            eager_len = 8 * 1024;
         } else {
             printf("Unknown protocol: %s\n", proto.c_str());
             abort();
@@ -291,6 +304,7 @@ public:
                             NULL,
                             (send_count << 32) | cur_len);
                 crReturn();
+
             } else if (protocol == triggered) {
                 ptl_md_t md;
                 ptl_me_t me;
@@ -378,6 +392,90 @@ public:
                             NULL,
                             send_count);
                 crReturn();
+            } else  if (protocol == two || protocol == two_probe) {
+                if (cur_len < long_len) {
+                    ptl_md_t md;
+                    ptl_me_t me;
+
+                    PTL_SET_SEND_BITS(match_bits, contextid, my_id, tag, PTL_MID_MSG);
+
+                    md.start = send_buf;
+                    md.length = cur_len;
+                    md.options = 0;
+                    md.eq_handle = send_eq_h;
+                    md.ct_handle = PTL_CT_NONE;
+
+                    ptl->PtlMDBind(md, &send_md_h);
+                    crReturn();
+
+                    me.start = send_buf;
+                    me.length = cur_len;
+                    me.ct_handle = PTL_CT_NONE;
+                    me.min_free = 0;
+                    me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE;
+                    me.match_bits = send_count;
+                    me.ignore_bits = 0;
+
+                    ptl->PtlMEAppend(read_pt,
+                                     me,
+                                     PTL_PRIORITY_LIST,
+                                     NULL,
+                                     send_me_h);
+                    crReturn();
+
+                    ptl->PtlPut(send_md_h,
+                                0,
+                                cur_len,
+                                (protocol == two) ? PTL_ACK_REQ : PTL_NO_ACK_REQ,
+                                peer,
+                                send_pt,
+                                match_bits,
+                                0,
+                                NULL,
+                                send_count);
+                    crReturn();
+                } else {
+                    ptl_md_t md;
+                    ptl_me_t me;
+
+                    PTL_SET_SEND_BITS(match_bits, contextid, my_id, tag, PTL_LONG_MSG);
+
+                    md.start = send_buf;
+                    md.length = eager_len;
+                    md.options = 0;
+                    md.eq_handle = send_eq_h;
+                    md.ct_handle = PTL_CT_NONE;
+
+                    ptl->PtlMDBind(md, &send_md_h);
+                    crReturn();
+
+                    me.start = send_buf;
+                    me.length = cur_len;
+                    me.ct_handle = PTL_CT_NONE;
+                    me.min_free = 0;
+                    me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE;
+                    me.match_bits = (send_count << 32) | cur_len;
+                    me.ignore_bits = 0;
+
+                    ptl->PtlMEAppend(read_pt,
+                                     me,
+                                     PTL_PRIORITY_LIST,
+                                     NULL,
+                                     send_me_h);
+                    crReturn();
+
+                    ptl->PtlPut(send_md_h,
+                                0,
+                                eager_len,
+                                PTL_NO_ACK_REQ,
+                                peer,
+                                send_pt,
+                                match_bits,
+                                0,
+                                NULL,
+                                (send_count << 32) | cur_len);
+                    crReturn();
+                }
             }
         }
         crFuncEnd();
@@ -454,6 +552,8 @@ public:
                 me.length = 8;
             } else if (protocol == triggered) {
                 me.length = cur_len + 8;
+            } else if (protocol == two_probe && (cur_len >= eager_len && cur_len < long_len)) {
+                me.length = 8;
             } else {
                 me.length = cur_len;
             }
@@ -523,6 +623,61 @@ public:
                                     0,
                                     NULL);
                         crReturn();
+
+                    } else if (!PTL_IS_SHORT_MSG(ev.match_bits) && 
+                               (protocol == two || protocol == two_probe)) {
+                        if (PTL_IS_MID_MSG(ev.match_bits)) {
+                            if (protocol == two_probe) {
+                                /* treat as unexpected */
+                                ptl_md_t md;
+                                md.start = recv_buf;
+                                md.length = cur_len;
+                                md.options = 0;
+                                md.eq_handle = recv_eq_h;
+                                md.ct_handle = PTL_CT_NONE;
+
+                                ptl->PtlMDBind(md, &recv_md_h);
+                                crReturn();
+
+                                DEBUG(("%02d: recv: posting two_probe long expected get\n", my_id));
+                                ptl->PtlGet(recv_md_h,
+                                            0,
+                                            cur_len,
+                                            ev.initiator,
+                                            read_pt,
+                                            ev.hdr_data,
+                                            0,
+                                            NULL);
+                                crReturn();
+                                
+                            } else {
+                                /* mid-sized message with a put means totally delivered */
+                                goto long_recv_done;
+                            }
+                        } else {
+                            /* long message, rndv */
+                            ptl_md_t md;
+                            md.start = recv_buf + eager_len;
+                            md.length = (ev.hdr_data & 0xFFFFFFFFULL) - eager_len;
+                            md.options = 0;
+                            md.eq_handle = recv_eq_h;
+                            md.ct_handle = PTL_CT_NONE;
+
+                            ptl->PtlMDBind(md, &recv_md_h);
+                            crReturn();
+
+                            DEBUG(("%02d: recv: posting two long expected get\n", my_id));
+                            ptl->PtlGet(recv_md_h,
+                                        eager_len,
+                                        (ev.hdr_data & 0xFFFFFFFFULL) - eager_len,
+                                        ev.initiator,
+                                        read_pt,
+                                        ev.hdr_data,
+                                        0,
+                                        NULL);
+                            crReturn();
+                        }
+
                     } else if (!PTL_IS_SHORT_MSG(ev.match_bits) && (protocol == triggered)) {
                         /* nothing to do here */
                     } else {
@@ -548,6 +703,12 @@ public:
                             send_len = ev.rlength;
                         } else if (protocol == rndv) {
                             send_len = ev.hdr_data & 0xFFFFFFFFULL;
+                        } else if (protocol == two) {
+                            if (PTL_IS_MID_MSG(ev.match_bits)) {
+                                send_len = ev.rlength;                                
+                            } else {
+                                send_len = ev.hdr_data & 0xFFFFFFFFULL;
+                            }
                         }
 
                         md.start = recv_buf;
@@ -649,11 +810,13 @@ public:
                  pert <= perturbation; 
                  n++, pert += ((perturbation > 0) && (inc > perturbation+1)) ? perturbation : perturbation+1) {
 
+                cur_len = len + pert;
                 /* tlast is shared at the bottom, so is always the same on both nodes */
                 nrepeat = MAX((.001 / (((double) cur_len / MAX(1, (cur_len - inc + 1.0))) * tlast)), 5);
 
                 crFuncCall(barrier);
 
+                /* fix me; barrier resets curr len */
                 cur_len = len + pert;
                 start_time = cpu->getCurrentSimTimeNano();
                 for (i = 0 ; i < nrepeat ; ++i) {
@@ -681,6 +844,7 @@ public:
                         crFuncCall(send_wait);
                     }
                 }
+                crReturn();
                 stop_time = cpu->getCurrentSimTimeNano();
                 
                 tlast = ((double) (stop_time - start_time)) / 1000000000.0 / nrepeat / 2;
@@ -742,6 +906,24 @@ public:
                              0,
                              overflow_me_h);
             crReturn();
+
+            if (protocol == two || protocol == two_probe) {
+                printf("registering mid sized\n");
+                ptl_me_t me;
+                me.start = 0;
+                me.length = 0;
+                me.ct_handle = PTL_CT_NONE;
+                me.min_free = 0;
+                me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE;
+                me.match_bits = PTL_MID_MSG;
+                me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
+                ptl->PtlMEAppend(send_pt,
+                                 me,
+                                 PTL_OVERFLOW,
+                                 0,
+                                 overflow_mid_me_h);
+                crReturn();
+            }
         }
 
         crFuncCall(short_msg_init);
@@ -781,13 +963,13 @@ private:
     char *send_buf, *recv_buf;
     char *big_send_buf, *big_recv_buf;
     double tlast;
-    unsigned long cur_len, send_count, recv_count, eager_len;
+    unsigned long cur_len, send_count, recv_count, eager_len, long_len;
     unsigned long send_len;
 
     ptl_pt_index_t send_pt, read_pt;
     ptl_handle_eq_t send_eq_h, recv_eq_h;
     ptl_handle_md_t send_md_h, recv_md_h;
-    ptl_handle_me_t send_me_h, recv_me_h, overflow_me_h;
+    ptl_handle_me_t send_me_h, recv_me_h, overflow_me_h, overflow_mid_me_h;
     int contextid, tag;
     void *need_repost;
     ptl_match_bits_t match_bits, ignore_bits;
@@ -796,7 +978,7 @@ private:
 
     FILE *fp;
 
-    enum { eager, rndv, triggered, probe } protocol;
+    enum { eager, rndv, triggered, probe, two, two_probe } protocol;
 
     std::vector<double> delays;
     std::vector<double>::iterator delays_iter;

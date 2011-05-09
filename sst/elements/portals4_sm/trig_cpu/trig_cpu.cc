@@ -230,6 +230,10 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
         app = new pingpong_bw(this, "rndv", false);
     } else if (application == "bw.triggered") {
         app = new pingpong_bw(this, "triggered", false);
+    } else if (application == "bw.two") {
+        app = new pingpong_bw(this, "two", false);
+    } else if (application == "bw.two-probe") {
+        app = new pingpong_bw(this, "two-probe", false);
     } else if (application == "bw.eager.delay") {
         app = new pingpong_bw(this, "eager", true);
     } else if (application == "bw.probe.delay") {
@@ -238,6 +242,10 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
         app = new pingpong_bw(this, "rndv", true);
     } else if (application == "bw.triggered.delay") {
         app = new pingpong_bw(this, "triggered", true);
+    } else if (application == "bw.two.delay") {
+        app = new pingpong_bw(this, "two", true);
+    } else if (application == "bw.two-probe.delay") {
+        app = new pingpong_bw(this, "two-probe", true);
     } else if (application == "bandwidth" ) {
         app = new bandwidth(this);
     } else if (application == "test_atomics" ) {
