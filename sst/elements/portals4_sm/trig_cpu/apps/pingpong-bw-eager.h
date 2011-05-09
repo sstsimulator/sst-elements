@@ -128,7 +128,7 @@ public:
         } else if (!proto.compare("two-probe")) {
             protocol = two_probe;
             printf("Protocol: two-probe\n");
-            strcpy(base_filename, "two");
+            strcpy(base_filename, "two-probe");
         } else {
             printf("Unknown protocol: %s\n", proto.c_str());
             abort();
@@ -149,6 +149,8 @@ public:
         probe_freqs.push_back(4);
         probe_freqs.push_back(8);
         probe_freqs.push_back(16);
+
+        probe_freq = 1;
     }
 
 
