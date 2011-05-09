@@ -217,7 +217,7 @@ public:
             crReturn();
 
         } else {
-            if (protocol == eager) {
+            if (protocol == eager || protocol == probe) {
                 ptl_md_t md;
                 ptl_me_t me;
 
@@ -344,50 +344,6 @@ public:
                             send_count);
                 crReturn();
 
-            } else if (protocol == probe) {
-                ptl_md_t md;
-                ptl_me_t me;
-
-                PTL_SET_SEND_BITS(match_bits, contextid, my_id, tag, PTL_LONG_MSG);
-
-                md.start = send_buf;
-                md.length = cur_len;
-                md.options = 0;
-                md.eq_handle = send_eq_h;
-                md.ct_handle = PTL_CT_NONE;
-
-                ptl->PtlMDBind(md, &send_md_h);
-                crReturn();
-
-                me.start = send_buf;
-                me.length = cur_len;
-                me.ct_handle = PTL_CT_NONE;
-                me.min_free = 0;
-                me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE;
-                me.match_bits = send_count;
-                me.ignore_bits = 0;
-
-                DEBUG(("%02d: send: posting read me\n", my_id));
-                ptl->PtlMEAppend(read_pt,
-                                 me,
-                                 PTL_PRIORITY_LIST,
-                                 NULL,
-                                 send_me_h);
-                crReturn();
-
-                DEBUG(("%02d: send: posting put of %d bytes, match bits %lx\n", 
-                       my_id, (int) cur_len, (unsigned long) match_bits));
-                ptl->PtlPut(send_md_h,
-                            0,
-                            cur_len,
-                            PTL_NO_ACK_REQ,
-                            peer,
-                            send_pt,
-                            match_bits,
-                            0,
-                            NULL,
-                            send_count);
-                crReturn();
             } else  if (protocol == two || protocol == two_probe) {
                 if (cur_len < long_len) {
                     ptl_md_t md;
@@ -560,6 +516,9 @@ public:
             }
             me.min_free = 0;
             me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_EVENT_CT_BYTES;
+            if (protocol == probe || protocol == two_probe) {
+                me.options |= PTL_ME_ACK_DISABLE;
+            }
             me.match_bits = match_bits;
             me.ignore_bits = ignore_bits;
 
