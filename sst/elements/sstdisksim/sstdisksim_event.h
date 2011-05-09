@@ -21,7 +21,7 @@ class sstdisksim_event : public SST::Event {
 public:
   eventtype etype;
   long long pos;
-  long long count;
+  int count;
   unsigned long devno;
   unsigned long time;
 

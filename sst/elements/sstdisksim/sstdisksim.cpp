@@ -195,12 +195,10 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   memset(&r, 0, sizeof(struct disksim_request));
 
   unsigned long sector;
-  unsigned long nblks;
   unsigned long nbytes;
 
   sector = ev->pos/SECTOR;
   nbytes = (ev->pos % SECTOR) + ev->count;
-  nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
 
   if ( ev->etype == DISKSIMREAD )
     r.flags = DISKSIM_READ;
@@ -209,9 +207,12 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   else
     abort();
 
+  if ( ev->count == 0 )
+    return 0;
+
   r.start = __now;
   r.devno = ev->devno;
-  r.bytecount = nblks*SECTOR;
+  r.bytecount = ev->count;
   r.blkno = sector;
 
   r.completed = 0;
@@ -232,11 +233,9 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
     return -1;
   }
 
-  tmp = __now-tmp; /* milliseconds */
   double cyclespermillisec = 1000000;
 
-  
-  __cycle += (long)(tmp*cyclespermillisec);
+  __cycle += (long)((__now-tmp)*cyclespermillisec);
   lockstep->Send(__cycle, ev);
 
   return tmp;
@@ -254,12 +253,10 @@ sstdisksim::lockstepEvent(Event* ev)
   Cycle_t now = __tc->convertToCoreTime( getCurrentSimTime(__tc) );
 
   unsigned long sector;
-  unsigned long nblks;
   unsigned long nbytes;
 
   sector = event->pos/SECTOR;
   nbytes = (event->pos % SECTOR) + event->count;
-  nblks = (unsigned long)ceill((double)nbytes/(double)SECTOR);
 
 #ifdef DISKSIM_DBG
   if ( event->etype == DISKSIMEND )

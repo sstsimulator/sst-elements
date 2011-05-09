@@ -51,8 +51,6 @@ sstdisksim_tracereader::clock(Cycle_t current)
       return false;
   }
 
-  //  printf("Event %d count %lld pos %lld time %lld\n", event->etype, event->count, event->pos, current);
-
   link->Send(0, event);
   return false;
 }

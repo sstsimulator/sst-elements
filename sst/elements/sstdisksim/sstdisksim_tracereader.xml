@@ -6,8 +6,8 @@
   <component id="1.sstdisksim_tracereader" >	
     <sstdisksim_tracereader>
       <params> 
-	<trace_file>/Users/miwesto/TAU_TRACES/taurun_04212011/tautrace.0.0.0.trc</trace_file>
-	<edf_file>/Users/miwesto/TAU_TRACES/taurun_04212011/events.0.edf</edf_file>
+	<trace_file>/Users/miwesto/TAU_TRACES/taurun_04212011/tau.trc</trace_file>
+	<edf_file>/Users/miwesto/TAU_TRACES/taurun_04212011/tau.edf</edf_file>
 	<debug>yes</debug>
       </params>
       <links>

@@ -125,7 +125,7 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
 {
   if ( strstr(userEventName, "READ") )
   {
-    if ( strstr(userEventName, "fd" ) )
+    if ( strstr(userEventName, "fd" ) ) 
     {
       __types[_CALL_READ][_ARG_FD] = userEventToken;
     }
@@ -167,6 +167,19 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
       __types[_CALL_LSEEK][_ARG_WHENCE] = userEventToken;
     }
   }
+  else if ( strcmp(userEventName, "\"Bytes Read\"")==0 )
+  {
+      __types[_CALL_READ][_ARG_COUNT] = userEventToken;    
+  }
+  else if ( strcmp(userEventName, "\"Bytes Written\"")==0 )
+  {
+      __types[_CALL_WRITE][_ARG_COUNT] = userEventToken;
+  }
+  else
+  {
+  }
+
+
   return 0;
 }
 
@@ -307,11 +320,11 @@ sstdisksim_tau_parser::getNextEvent()
   ev->completed = 0;
   ev->devno = 0;  // TODO: figure out device used
 
-  long long cur_pos;
+  long long cur_pos = 0;
   arg_map::iterator iter;
   
   sstdisksim_trace_type* cur_event = __list.pop_entry();
- 
+  
   bool looping = true;
   while ( looping == true && cur_event != NULL )
   {
@@ -330,9 +343,12 @@ sstdisksim_tau_parser::getNextEvent()
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
 
+      //      printf("READ pos %lld \n", ev->pos);
+
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
+
       break;
 
     case _CALL_WRITE:
@@ -347,6 +363,8 @@ sstdisksim_tau_parser::getNextEvent()
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
       
+      //      printf("WRITE pos %lld \n", ev->pos);
+
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
@@ -360,27 +378,29 @@ sstdisksim_tau_parser::getNextEvent()
 
     case _CALL_LSEEK:
       switch ( cur_event->args[_ARG_WHENCE].i )
-      {
-      case 0: //seek_set
-	cur_pos = cur_event->args[_ARG_OFFSET].l;
-	break;
-      case 1: //seek_cur
-	iter = fd_map.find(cur_event->args[_ARG_FD].t);
-	cur_pos = cur_event->args[_ARG_OFFSET].l + iter->second;
-	break;
-
-      case 2: //seek_end - unsupported because we don't know file sizes
-      default:
-	cur_pos = 0;
-	break;
-      }
-
+	{
+	case 0: //seek_set
+	  cur_pos = cur_event->args[_ARG_OFFSET].l;
+	  break;
+	case 1: //seek_cur
+	  iter = fd_map.find(cur_event->args[_ARG_FD].t);
+	  cur_pos = cur_event->args[_ARG_OFFSET].l + iter->second;
+	  break;
+	  
+	case 2: //seek_end - unsupported because we don't know file sizes
+	default:
+	  cur_pos = 0;
+	  break;
+	}
+      
       iter = fd_map.find(cur_event->args[_ARG_FD].t);
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_pos));
+      //      printf("LSEEK pos %lld \n", cur_pos);
       free(cur_event);
       cur_event = __list.pop_entry();
+
       break;    
 
     case _CALL_FSYNC:
@@ -400,5 +420,22 @@ sstdisksim_tau_parser::getNextEvent()
 
   free(cur_event);
   
+  
+  /*
+  //skippy test override
+  static int __i = 0;
+  static int __pos = 0;
+  if ( __i < 1000 )
+  {
+    __pos += __i*512;
+    ev->etype = DISKSIMWRITE;
+    ev->pos = 512 + __pos;
+    ev->count = 512;  
+    __i++;
+  }
+  else 
+    return NULL;
+  */
+
   return ev;
 }
