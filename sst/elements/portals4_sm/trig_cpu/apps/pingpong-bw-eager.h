@@ -386,7 +386,7 @@ public:
                     ptl->PtlPut(send_md_h,
                                 0,
                                 cur_len,
-                                (protocol == two) ? PTL_ACK_REQ : PTL_NO_ACK_REQ,
+                                PTL_ACK_REQ,
                                 peer,
                                 send_pt,
                                 match_bits,
@@ -877,7 +877,6 @@ public:
             crReturn();
 
             if (protocol == two || protocol == two_probe) {
-                printf("registering mid sized\n");
                 ptl_me_t me;
                 me.start = 0;
                 me.length = 0;
