@@ -11,6 +11,8 @@ libm5C_la_SOURCES = \
     barrier.cpp \
     baseCache.cpp \
     bounce.h \
+    bridge.cpp \
+    bridge.h \
     bus.cpp \
     busPlus.cpp \
     busPlus.h \
