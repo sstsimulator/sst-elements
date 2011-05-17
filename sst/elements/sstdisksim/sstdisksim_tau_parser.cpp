@@ -35,8 +35,12 @@ void __setargs( int i )
   // true only for those args that are not used in the call
   switch(i)
   {
+  case _CALL_FREAD:
+  case _CALL_READV:
   case _CALL_READ:
   case _CALL_WRITE:
+  case _CALL_WRITEV:
+  case _CALL_FWRITE:
     __tmp_vals[i][_ARG_FD].set = false;
     __tmp_vals[i][_ARG_COUNT].set = false;
 
@@ -45,8 +49,14 @@ void __setargs( int i )
     break;
 
   case _CALL_FSYNC:
+  case _CALL_CREAT:
+  case _CALL_CREAT64:
+  case _CALL_FOPEN:
+  case _CALL_FOPEN64:
   case _CALL_OPEN:
+  case _CALL_OPEN64:
   case _CALL_CLOSE:
+  case _CALL_FCLOSE:
     __tmp_vals[i][_ARG_FD].set = false;
 
     __tmp_vals[i][_ARG_COUNT].set = true;
@@ -54,16 +64,30 @@ void __setargs( int i )
     __tmp_vals[i][_ARG_WHENCE].set = true;
     break;
 
+  case _CALL_FSEEK:
   case _CALL_LSEEK:
+  case _CALL_LSEEK64:
     __tmp_vals[i][_ARG_FD].set = false;
     __tmp_vals[i][_ARG_OFFSET].set = false;
     __tmp_vals[i][_ARG_WHENCE].set = false;
 
     __tmp_vals[i][_ARG_COUNT].set = true;
     break;
+
+  case _CALL_PREAD:
+  case _CALL_PREAD64:
+  case _CALL_PWRITE:
+  case _CALL_PWRITE64:
+    __tmp_vals[i][_ARG_FD].set = false;
+    __tmp_vals[i][_ARG_OFFSET].set = false;
+    __tmp_vals[i][_ARG_COUNT].set = false;
+
+    __tmp_vals[i][_ARG_WHENCE].set = true;
+    break;
+
   default:
-    //    printf("Arg %d invalid \n", i);
-    //    exit(-1);
+    printf("Arg %d invalid \n", i);
+    exit(-1);
     break;
   }
 }
@@ -125,63 +149,77 @@ int DefState( void *userData, unsigned int stateToken, const char *stateName,
 int DefUserEvent( void *userData, unsigned int userEventToken,
 		  const char *userEventName, int monotonicallyIncreasing )
 {
-  if ( strstr(userEventName, "READ") )
+  int call = -1;
+  // get call
+  if ( strstr ( userEventName, "READ") )
+    call = _CALL_READ;
+  else if ( strstr ( userEventName, "FREAD") )
+    call = _CALL_FREAD;
+  else if ( strstr ( userEventName, "READV") )
+    call = _CALL_READV;
+  else if ( strstr ( userEventName, "WRITE") )
+    call = _CALL_WRITE;
+  else if ( strstr ( userEventName, "FWRITE") )
+    call = _CALL_FWRITE;
+  else if ( strstr ( userEventName, "WRITEV") )
+    call = _CALL_WRITEV;
+
+  else if ( strstr ( userEventName, "FSYNC") )
+    call = _CALL_FSYNC;
+  else if ( strstr ( userEventName, "CREAT") )
+    call = _CALL_CREAT;
+  else if ( strstr ( userEventName, "CREAT64") )
+    call = _CALL_CREAT64;
+  else if ( strstr ( userEventName, "FOPEN") )
+    call = _CALL_FOPEN;
+  else if ( strstr ( userEventName, "FOPEN64") )
+    call = _CALL_FOPEN64;
+  else if ( strstr ( userEventName, "OPEN") )
+    call = _CALL_OPEN;
+  else if ( strstr ( userEventName, "OPEN64") )
+    call = _CALL_OPEN64;
+  else if ( strstr ( userEventName, "FCLOSE") )
+    call = _CALL_FCLOSE;
+  else if ( strstr ( userEventName, "CLOSE") )
+    call = _CALL_CLOSE;
+ 
+  else if ( strstr ( userEventName, "LSEEK") )
+    call = _CALL_LSEEK;
+  else if ( strstr ( userEventName, "LSEEK64") )
+    call = _CALL_LSEEK64;
+  else if ( strstr ( userEventName, "FSEEK") )
+    call = _CALL_FSEEK;
+
+  else if ( strstr ( userEventName, "PREAD") )
+    call = _CALL_PREAD;
+  else if ( strstr ( userEventName, "PREAD64") )
+    call = _CALL_PREAD64;
+  else if ( strstr ( userEventName, "PWRITE") )
+    call = _CALL_PWRITE;
+  else if ( strstr ( userEventName, "PWRITE64") )
+    call = _CALL_PWRITE64;
+  
+
+  if ( call < 0 )
+    return 0;
+
+  // get arg
+
+  if ( strstr(userEventName, "fd" ) ) 
   {
-    if ( strstr(userEventName, "fd" ) ) 
-    {
-      __types[_CALL_READ][_ARG_FD] = userEventToken;
-    }
-    else if ( strstr(userEventName, "ret" ) )
-    {
-      __types[_CALL_READ][_ARG_COUNT] = userEventToken;
-    }
+      __types[call][_ARG_FD] = userEventToken;
   }
-  else if ( strstr(userEventName, "FREAD") )
+  else if ( strstr(userEventName, "ret" ) )
   {
-    if ( strstr(userEventName, "fd" ) ) 
-    {
-      __types[_CALL_FREAD][_ARG_FD] = userEventToken;
-    }
-    else if ( strstr(userEventName, "ret" ) )
-    {
-      __types[_CALL_FREAD][_ARG_COUNT] = userEventToken;
-    }
+    __types[call][_ARG_COUNT] = userEventToken;
   }
-  else if ( strstr(userEventName, "WRITE") )
+  else if ( strstr(userEventName, "offset" ) )
   {
-    if ( strstr(userEventName, "fd" ) )
-    {
-      __types[_CALL_WRITE][_ARG_FD] = userEventToken;
-    }
-    else if ( strstr(userEventName, "ret" ) )
-    {
-      __types[_CALL_WRITE][_ARG_COUNT] = userEventToken;
-    }    
+    __types[call][_ARG_OFFSET] = userEventToken;
   }
-  else if ( strstr(userEventName, "CLOSE") )
+  else if ( strstr(userEventName, "whence" ) )
   {
-    if ( strstr(userEventName, "fd" ) )
-    {
-      __types[_CALL_CLOSE][_ARG_FD] = userEventToken;
-    }
-  }
-  else if ( strstr(userEventName, "LSEEK") )
-  {
-    if ( strstr(userEventName, "fd" ) )
-    {
-      __types[_CALL_LSEEK][_ARG_FD] = userEventToken;
-    }
-    if ( strstr(userEventName, "offset" ) )
-    {
-      __types[_CALL_LSEEK][_ARG_OFFSET] = userEventToken;
-    }
-    if ( strstr(userEventName, "whence" ) )
-    {
-      __types[_CALL_LSEEK][_ARG_WHENCE] = userEventToken;
-    }
-  }
-  else
-  {
+    __types[call][_ARG_WHENCE] = userEventToken;
   }
 
 
