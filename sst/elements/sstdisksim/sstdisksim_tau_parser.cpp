@@ -374,7 +374,37 @@ sstdisksim_tau_parser::getNextEvent()
   {
     switch(cur_event->call->call)
     {
+    case _CALL_PREAD:
+    case _CALL_PREAD64:
+      ev->etype = DISKSIMREAD;
+      ev->count = cur_event->args[_ARG_COUNT].t;
+      ev->pos = cur_event->args[_ARG_OFFSET].t;  
+
+      fd_map.erase(cur_event->args[_ARG_FD].t);
+      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+					    cur_event->args[_ARG_COUNT].t + ev->pos));
+      //      printf("PREAD pos %lld \n", ev->pos);
+
+      looping = false;
+      break;
+
+    case _CALL_PWRITE:
+    case _CALL_PWRITE64:
+      ev->etype = DISKSIMWRITE;
+      ev->count = cur_event->args[_ARG_COUNT].t;
+      ev->pos = cur_event->args[_ARG_OFFSET].t;  
+
+      fd_map.erase(cur_event->args[_ARG_FD].t);
+      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+					    cur_event->args[_ARG_COUNT].t + ev->pos));
+      //      printf("PWRITE pos %lld \n", ev->pos);
+
+      looping = false;
+      break;
+
     case _CALL_READ:
+    case _CALL_READV:
+    case _CALL_FREAD:
       ev->etype = DISKSIMREAD;
       ev->count = cur_event->args[_ARG_COUNT].t;
       ev->pos = 0;  
@@ -396,6 +426,8 @@ sstdisksim_tau_parser::getNextEvent()
       break;
 
     case _CALL_WRITE:
+    case _CALL_WRITEV:
+    case _CALL_FWRITE:
       ev->etype = DISKSIMWRITE;
       ev->count = cur_event->args[_ARG_COUNT].t;
       iter = fd_map.find(cur_event->args[_ARG_FD].t);
@@ -415,12 +447,15 @@ sstdisksim_tau_parser::getNextEvent()
       break;
 
     case _CALL_CLOSE:
+    case _CALL_FCLOSE:
       fd_map.erase(cur_event->args[_ARG_FD].t);
       free(cur_event);
       cur_event = __list.pop_entry();
       break;
 
     case _CALL_LSEEK:
+    case _CALL_LSEEK64:
+    case _CALL_FSEEK:
       switch ( cur_event->args[_ARG_WHENCE].i )
 	{
 	case 0: //seek_set
@@ -437,7 +472,6 @@ sstdisksim_tau_parser::getNextEvent()
 	  break;
 	}
       
-      iter = fd_map.find(cur_event->args[_ARG_FD].t);
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_pos));
@@ -447,8 +481,13 @@ sstdisksim_tau_parser::getNextEvent()
 
       break;    
 
+    case _CALL_CREAT:
+    case _CALL_CREAT64:
     case _CALL_FSYNC:
+    case _CALL_FOPEN:
+    case _CALL_FOPEN64:
     case _CALL_OPEN:
+    case _CALL_OPEN64:
     default:
       free(cur_event);
       cur_event = __list.pop_entry();
