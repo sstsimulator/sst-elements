@@ -33,11 +33,27 @@ struct __argWithState
 enum __call
 {
   _CALL_READ = 0,
+  _CALL_FREAD,
+  _CALL_PREAD,
+  _CALL_PREAD64,
+  _CALL_READV,
+  _CALL_FWRITE,
   _CALL_WRITE,
+  _CALL_WRITEV,
+  _CALL_PWRITE,
+  _CALL_PWRITE64,
   _CALL_FSYNC,
   _CALL_CLOSE,
+  _CALL_FCLOSE,
   _CALL_OPEN,
+  _CALL_OPEN64,
+  _CALL_CREAT,
+  _CALL_CREAT64,
+  _CALL_FOPEN,
+  _CALL_FOPEN64,
   _CALL_LSEEK,
+  _CALL_LSEEK64,
+  _CALL_FSEEK,
   _END_CALLS
 };
 
@@ -47,8 +63,6 @@ enum __arg
   _ARG_COUNT,
   _ARG_OFFSET,
   _ARG_WHENCE,
-  //  _ARG_FLAGS,
-  //  _ARG_RET,
   _END_ARGS
 };
 

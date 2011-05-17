@@ -20,8 +20,32 @@ sstdisksim_trace_entries::sstdisksim_trace_entries()
   strcpy(__calls[_CALL_READ].name, "READ");
   __calls[_CALL_READ].call = _CALL_READ;
 
+  strcpy(__calls[_CALL_PREAD].name, "PREAD");
+  __calls[_CALL_PREAD].call = _CALL_PREAD;
+
+  strcpy(__calls[_CALL_PREAD64].name, "PREAD64");
+  __calls[_CALL_PREAD64].call = _CALL_PREAD64;
+
+  strcpy(__calls[_CALL_FREAD].name, "FREAD");
+  __calls[_CALL_FREAD].call = _CALL_FREAD;
+
+  strcpy(__calls[_CALL_READV].name, "READV");
+  __calls[_CALL_READV].call = _CALL_READV;
+
   strcpy(__calls[_CALL_WRITE].name, "WRITE");
   __calls[_CALL_WRITE].call = _CALL_WRITE;
+
+  strcpy(__calls[_CALL_PWRITE].name, "PWRITE");
+  __calls[_CALL_PWRITE].call = _CALL_PWRITE;
+
+  strcpy(__calls[_CALL_PWRITE64].name, "PWRITE64");
+  __calls[_CALL_PWRITE64].call = _CALL_PWRITE64;
+
+  strcpy(__calls[_CALL_WRITEV].name, "WRITEV");
+  __calls[_CALL_WRITEV].call = _CALL_WRITEV;
+
+  strcpy(__calls[_CALL_FWRITE].name, "FWRITE");
+  __calls[_CALL_FWRITE].call = _CALL_FWRITE;
 
   strcpy(__calls[_CALL_FSYNC].name, "FSYNC");
   __calls[_CALL_FSYNC].call = _CALL_FSYNC;
@@ -29,11 +53,36 @@ sstdisksim_trace_entries::sstdisksim_trace_entries()
   strcpy(__calls[_CALL_CLOSE].name, "CLOSE");
   __calls[_CALL_CLOSE].call = _CALL_CLOSE;
 
+  strcpy(__calls[_CALL_FCLOSE].name, "FCLOSE");
+  __calls[_CALL_FCLOSE].call = _CALL_FCLOSE;
+
   strcpy(__calls[_CALL_OPEN].name, "OPEN");
   __calls[_CALL_OPEN].call = _CALL_OPEN;
 
+  strcpy(__calls[_CALL_OPEN64].name, "OPEN64");
+  __calls[_CALL_OPEN64].call = _CALL_OPEN64;
+
+  strcpy(__calls[_CALL_CREAT].name, "CREAT");
+  __calls[_CALL_CREAT].call = _CALL_CREAT;
+
+  strcpy(__calls[_CALL_CREAT64].name, "CREAT64");
+  __calls[_CALL_CREAT64].call = _CALL_CREAT64;
+
+  strcpy(__calls[_CALL_OPEN64].name, "FOPEN64");
+  __calls[_CALL_OPEN64].call = _CALL_OPEN64;
+
+  strcpy(__calls[_CALL_FOPEN].name, "FOPEN");
+  __calls[_CALL_FOPEN].call = _CALL_FOPEN;
+
   strcpy(__calls[_CALL_LSEEK].name, "LSEEK");
   __calls[_CALL_LSEEK].call = _CALL_LSEEK;
+
+  strcpy(__calls[_CALL_LSEEK64].name, "LSEEK64");
+  __calls[_CALL_LSEEK64].call = _CALL_LSEEK64;
+
+  strcpy(__calls[_CALL_FSEEK].name, "FSEEK");
+  __calls[_CALL_FSEEK].call = _CALL_FSEEK;
+
 
   head=tail=NULL;
 }

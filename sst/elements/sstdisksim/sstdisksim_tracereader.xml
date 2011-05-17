@@ -6,8 +6,8 @@
   <component id="1.sstdisksim_tracereader" >	
     <sstdisksim_tracereader>
       <params> 
-	<trace_file>/Users/miwesto/TAU_TRACES/taurun_04212011/tau.trc</trace_file>
-	<edf_file>/Users/miwesto/TAU_TRACES/taurun_04212011/tau.edf</edf_file>
+	<trace_file>/Users/miwesto/TAU_TRACES/IOR_TRACE_051611/tau.trc</trace_file>
+	<edf_file>/Users/miwesto/TAU_TRACES/IOR_TRACE_051611/tau.edf</edf_file>
 	<debug>yes</debug>
       </params>
       <links>
@@ -26,7 +26,7 @@
       <params>
         <param_file>/Users/miwesto/sst_google/sst-simulator/sst/elements/sstdisksim/disksim-src/seagate/testdir.parv</param_file>
         <output_file>out.disksim</output_file>
-        <num_sectors>10000</num_sectors>
+        <num_sectors>30000</num_sectors>
 	<debug>yes</debug>
       </params>
       <links>

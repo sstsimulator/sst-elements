@@ -62,7 +62,9 @@ void __setargs( int i )
     __tmp_vals[i][_ARG_COUNT].set = true;
     break;
   default:
-    exit(-1);
+    //    printf("Arg %d invalid \n", i);
+    //    exit(-1);
+    break;
   }
 }
 
@@ -129,9 +131,20 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
     {
       __types[_CALL_READ][_ARG_FD] = userEventToken;
     }
-    else if ( strstr(userEventName, "Bytes" ) )
+    else if ( strstr(userEventName, "ret" ) )
     {
       __types[_CALL_READ][_ARG_COUNT] = userEventToken;
+    }
+  }
+  else if ( strstr(userEventName, "FREAD") )
+  {
+    if ( strstr(userEventName, "fd" ) ) 
+    {
+      __types[_CALL_FREAD][_ARG_FD] = userEventToken;
+    }
+    else if ( strstr(userEventName, "ret" ) )
+    {
+      __types[_CALL_FREAD][_ARG_COUNT] = userEventToken;
     }
   }
   else if ( strstr(userEventName, "WRITE") )
@@ -140,7 +153,7 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
     {
       __types[_CALL_WRITE][_ARG_FD] = userEventToken;
     }
-    else if ( strstr(userEventName, "Bytes" ) )
+    else if ( strstr(userEventName, "ret" ) )
     {
       __types[_CALL_WRITE][_ARG_COUNT] = userEventToken;
     }    
@@ -167,14 +180,6 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
       __types[_CALL_LSEEK][_ARG_WHENCE] = userEventToken;
     }
   }
-  else if ( strcmp(userEventName, "\"Bytes Read\"")==0 )
-  {
-      __types[_CALL_READ][_ARG_COUNT] = userEventToken;    
-  }
-  else if ( strcmp(userEventName, "\"Bytes Written\"")==0 )
-  {
-      __types[_CALL_WRITE][_ARG_COUNT] = userEventToken;
-  }
   else
   {
   }
@@ -200,6 +205,7 @@ int EventTrigger( void *userData, double time,
 	  // A real value.  
 	  __tmp_vals[i][j].arg.l = userEventValue;
 	   __tmp_vals[i][j].set = true;
+	   //	   printf("event %u value %lld\n", userEventToken, userEventValue);
 	  for ( int k = 0; k < _END_ARGS; k++ )
 	  {
 	    if ( __tmp_vals[i][k].set == false )

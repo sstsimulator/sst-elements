@@ -210,12 +210,12 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   if ( ev->count == 0 )
     return 0;
 
+  r.completed = 0;
   r.start = __now;
   r.devno = ev->devno;
-  r.bytecount = ev->count;
+  r.bytecount = ceil((double)ev->count/(double)SECTOR)*SECTOR;
   r.blkno = sector;
 
-  r.completed = 0;
   disksim_interface_request_arrive(__disksim, __now, &r);
 
   while( __next_event >= 0 ) 
@@ -237,7 +237,7 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
 
   __cycle += (long)((__now-tmp)*cyclespermillisec);
   lockstep->Send(__cycle, ev);
-
+  
   return tmp;
 }
 
