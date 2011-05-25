@@ -340,10 +340,12 @@ int ssd_write_bw;	/* In bytes per second */
 	fprintf(stderr, "Can't handle single router NoC (1x1) with more than one core each!\n");
     }
 
+#ifdef _NO_LONGER_TRUE_
     if (!is_pow2(num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim))   {
 	error= TRUE;
 	fprintf(stderr, "Total number of cores must be power of two!\n");
     }
+#endif /* _NO_LONGER_TRUE_ */
 
     if (!error)   {
 	if (net_x_dim * net_y_dim > 1)   {

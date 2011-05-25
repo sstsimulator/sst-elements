@@ -186,7 +186,7 @@ SimTime_t delay;
 
 /*
 ** This function computes a route, based on the assumption that we
-** are on a x * y torus for our NoC, and a x * y mesh for the network.
+** are on a x * y torus for our NoC, and a x * y torus for the network.
 ** This function then sends an event along that route.
 ** No actual data is sent.
 */
