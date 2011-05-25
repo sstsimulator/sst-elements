@@ -150,55 +150,63 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
 		  const char *userEventName, int monotonicallyIncreasing )
 {
   int call = -1;
-  // get call
-  if ( strstr ( userEventName, "READ") )
-    call = _CALL_READ;
-  else if ( strstr ( userEventName, "FREAD") )
+  // get call - note that read should follow fread, et cetera
+  // as they are different calls
+
+  if ( strstr ( userEventName, "FREAD") )
     call = _CALL_FREAD;
   else if ( strstr ( userEventName, "READV") )
     call = _CALL_READV;
-  else if ( strstr ( userEventName, "WRITE") )
-    call = _CALL_WRITE;
+  else if ( strstr ( userEventName, "READ") )
+    call = _CALL_READ;
+
   else if ( strstr ( userEventName, "FWRITE") )
     call = _CALL_FWRITE;
   else if ( strstr ( userEventName, "WRITEV") )
     call = _CALL_WRITEV;
+  else if ( strstr ( userEventName, "WRITE") )
+    call = _CALL_WRITE;
 
   else if ( strstr ( userEventName, "FSYNC") )
     call = _CALL_FSYNC;
-  else if ( strstr ( userEventName, "CREAT") )
-    call = _CALL_CREAT;
+
   else if ( strstr ( userEventName, "CREAT64") )
     call = _CALL_CREAT64;
-  else if ( strstr ( userEventName, "FOPEN") )
-    call = _CALL_FOPEN;
+  else if ( strstr ( userEventName, "CREAT") )
+    call = _CALL_CREAT;
+
   else if ( strstr ( userEventName, "FOPEN64") )
     call = _CALL_FOPEN64;
-  else if ( strstr ( userEventName, "OPEN") )
-    call = _CALL_OPEN;
+  else if ( strstr ( userEventName, "FOPEN") )
+    call = _CALL_FOPEN;
+
   else if ( strstr ( userEventName, "OPEN64") )
     call = _CALL_OPEN64;
+  else if ( strstr ( userEventName, "OPEN") )
+    call = _CALL_OPEN;
+
   else if ( strstr ( userEventName, "FCLOSE") )
     call = _CALL_FCLOSE;
   else if ( strstr ( userEventName, "CLOSE") )
     call = _CALL_CLOSE;
  
-  else if ( strstr ( userEventName, "LSEEK") )
-    call = _CALL_LSEEK;
   else if ( strstr ( userEventName, "LSEEK64") )
     call = _CALL_LSEEK64;
+  else if ( strstr ( userEventName, "LSEEK") )
+    call = _CALL_LSEEK;
+
   else if ( strstr ( userEventName, "FSEEK") )
     call = _CALL_FSEEK;
 
-  else if ( strstr ( userEventName, "PREAD") )
-    call = _CALL_PREAD;
   else if ( strstr ( userEventName, "PREAD64") )
     call = _CALL_PREAD64;
-  else if ( strstr ( userEventName, "PWRITE") )
-    call = _CALL_PWRITE;
+  else if ( strstr ( userEventName, "PREAD") )
+    call = _CALL_PREAD;
+
   else if ( strstr ( userEventName, "PWRITE64") )
     call = _CALL_PWRITE64;
-  
+  else if ( strstr ( userEventName, "PWRITE") )
+    call = _CALL_PWRITE;
 
   if ( call < 0 )
     return 0;
@@ -208,18 +216,22 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
   if ( strstr(userEventName, "fd" ) ) 
   {
       __types[call][_ARG_FD] = userEventToken;
+      //      printf("call %d arg %d event %d\n", call, _ARG_FD, userEventToken);
   }
   else if ( strstr(userEventName, "ret" ) )
   {
     __types[call][_ARG_COUNT] = userEventToken;
+    //    printf("call %d arg %d event %d\n", call, _ARG_COUNT, userEventToken);
   }
   else if ( strstr(userEventName, "offset" ) )
   {
     __types[call][_ARG_OFFSET] = userEventToken;
+    //    printf("call %d arg %d event %d\n", call, _ARG_OFFSET, userEventToken);
   }
   else if ( strstr(userEventName, "whence" ) )
   {
     __types[call][_ARG_WHENCE] = userEventToken;
+    //    printf("call %d arg %d event %d\n", call, _ARG_WHENCE, userEventToken);
   }
 
 
@@ -380,10 +392,17 @@ sstdisksim_tau_parser::getNextEvent()
       ev->count = cur_event->args[_ARG_COUNT].t;
       ev->pos = cur_event->args[_ARG_OFFSET].t;  
 
+      if ( ev->count < 0 )
+      {
+	free(cur_event);
+	cur_event = __list.pop_entry();
+	break;
+      }
+
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
-      //      printf("PREAD pos %lld \n", ev->pos);
+      //      printf("PREAD pos %lld count %lld \n", ev->pos, ev->count);
 
       looping = false;
       break;
@@ -394,10 +413,17 @@ sstdisksim_tau_parser::getNextEvent()
       ev->count = cur_event->args[_ARG_COUNT].t;
       ev->pos = cur_event->args[_ARG_OFFSET].t;  
 
+      if ( ev->count < 0 )
+      {
+	free(cur_event);
+	cur_event = __list.pop_entry();
+	break;
+      }
+
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
-      //      printf("PWRITE pos %lld \n", ev->pos);
+      //      printf("PWRITE pos %lld count %lld \n", ev->pos, ev->count);
 
       looping = false;
       break;
@@ -409,6 +435,13 @@ sstdisksim_tau_parser::getNextEvent()
       ev->count = cur_event->args[_ARG_COUNT].t;
       ev->pos = 0;  
 
+      if ( ev->count < 0 )
+      {
+	free(cur_event);
+	cur_event = __list.pop_entry();
+	break;
+      }
+
       iter = fd_map.find(cur_event->args[_ARG_FD].t);
 
       if ( iter != fd_map.end() )
@@ -417,7 +450,12 @@ sstdisksim_tau_parser::getNextEvent()
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
 
-      //      printf("READ pos %lld \n", ev->pos);
+      //      if ( cur_event->call->call == _CALL_READV )
+      //	printf("V");
+      //      else if ( cur_event->call->call == _CALL_FREAD )
+      //	printf ("F");
+
+      //      printf("READ pos %lld count %lld\n", ev->pos, ev->count);
 
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
@@ -433,16 +471,30 @@ sstdisksim_tau_parser::getNextEvent()
       iter = fd_map.find(cur_event->args[_ARG_FD].t);
       ev->pos = 0;  
 
+      if ( ev->count < 0 )
+      {
+	free(cur_event);
+	cur_event = __list.pop_entry();
+	break;
+      }
+
       if ( iter != fd_map.end() )
       {
 	ev->pos =  iter->second;
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
       
-      //      printf("WRITE pos %lld \n", ev->pos);
-
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
+
+
+      //      if ( cur_event->call->call == _CALL_WRITEV )
+      //	printf("V");
+      //      else if ( cur_event->call->call == _CALL_FWRITE )
+      //	printf ("F");
+	   
+      //      printf("WRITE pos %lld count %lld\n", ev->pos, ev->count);
+
       looping = false;
       break;
 
@@ -475,7 +527,13 @@ sstdisksim_tau_parser::getNextEvent()
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_pos));
-      //      printf("LSEEK pos %lld \n", cur_pos);
+
+      //      if ( cur_event->call->call == _CALL_FSEEK )
+      //	printf("F");
+      //      else if ( cur_event->call->call == _CALL_LSEEK64 )
+      //	printf ("64");
+
+      //      printf("LSEEK pos %lld\n", cur_pos);
       free(cur_event);
       cur_event = __list.pop_entry();
 

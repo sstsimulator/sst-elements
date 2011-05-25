@@ -207,7 +207,7 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   else
     abort();
 
-  if ( ev->count == 0 )
+  if ( ev->count <= 0 )
     return 0;
 
   r.completed = 0;
