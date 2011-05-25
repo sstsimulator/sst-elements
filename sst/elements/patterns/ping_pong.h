@@ -9,6 +9,7 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include "gate_keeper.h"
 #include "pattern_common.h"
 
 using namespace SST;
@@ -36,19 +37,44 @@ class Pingpong_pattern : public Component {
 	    params(params)
 	{
 
-	    // Defaults for paramters
+	    // Create a gate keeper and initalize it
+	    gate= new Gate_keeper(id, params);
+
+	    // Defaults for pattern-specific paramters
 	    pingpong_pattern_debug= 0;
+	    num_msgs= 20;
+	    exchange_msg_len= 0;
+
+	    // Process pattern specific parameters
+	    Params_t::iterator it= params.begin();
+            while (it != params.end())   {
+                _PINGPONG_PATTERN_DBG(2, "[%3d] key \"%s\", value \"%s\"\n", gate->my_rank,
+		    it->first.c_str(), it->second.c_str());
+
+		if (!it->first.compare("num_msgs"))   {
+		    sscanf(it->second.c_str(), "%d", &num_msgs);
+		}
+
+		if (!it->first.compare("exchange_msg_len"))   {
+		    sscanf(it->second.c_str(), "%d", &exchange_msg_len);
+		}
+
+                ++it;
+            }
+
 
         }
 
 	void handle_events(pattern_event_t event);
 
     private:
-	Params_t params;
-
         Pingpong_pattern(const Pingpong_pattern &c);
+	Params_t params;
+	Gate_keeper *gate;
 
 	int pingpong_pattern_debug;
+	int num_msgs;
+	int exchange_msg_len;
 
 
 
@@ -59,7 +85,10 @@ class Pingpong_pattern : public Component {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
+	    ar & BOOST_SERIALIZATION_NVP(gate);
 	    ar & BOOST_SERIALIZATION_NVP(pingpong_pattern_debug);
+	    ar & BOOST_SERIALIZATION_NVP(num_msgs);
+	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
         }
 
         template<class Archive>

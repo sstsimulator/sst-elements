@@ -15,6 +15,7 @@ libmsgrate_pattern_la_SOURCES = pattern_common.h pattern_common.cc \
 libmsgrate_pattern_la_LDFLAGS = -module -avoid-version
 
 libpingpong_pattern_la_SOURCES = pattern_common.h pattern_common.cc \
+				 gate_keeper.h gate_keeper.cc \
                               ping_pong.h ping_pong.cc
 libpingpong_pattern_la_LDFLAGS = -module -avoid-version
 
