@@ -38,7 +38,8 @@ class Pingpong_pattern : public Component {
 	{
 
 	    // Create a gate keeper and initalize it
-	    gate= new Gate_keeper(id, params);
+	    gate= new Gate_keeper();
+	    gate->init(id, params);
 
 	    // Defaults for pattern-specific paramters
 	    pingpong_pattern_debug= 0;

@@ -29,7 +29,7 @@ using namespace SST;
 
 class Gate_keeper {
     public:
-        Gate_keeper(ComponentId_t id, Params& params)   {
+        Gate_keeper()   {
 	    // Defaults for paramters
 	    gate_keeper_debug= 0;
 	    my_rank= -1;
@@ -41,7 +41,7 @@ class Gate_keeper {
 	    cores= -1;
 	}
 
-	int init(void);
+	int init(ComponentId_t id, Params& params);
 
 	int my_rank;
 

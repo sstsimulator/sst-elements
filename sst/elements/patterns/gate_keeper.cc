@@ -20,10 +20,8 @@
 
 
 void
-Gate_keeper::init()
+Gate_keeper::init(ComponentId_t id, Params& params)
 {
-    registerExit();
-
     Params_t::iterator it= params.begin();
 
     // Process parameters common to all patterns
