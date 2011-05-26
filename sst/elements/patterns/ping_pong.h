@@ -86,10 +86,6 @@ class Pingpong_pattern : public Component {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(gate);
-	    ar & BOOST_SERIALIZATION_NVP(pingpong_pattern_debug);
-	    ar & BOOST_SERIALIZATION_NVP(num_msgs);
-	    ar & BOOST_SERIALIZATION_NVP(exchange_msg_len);
         }
 
         template<class Archive>
