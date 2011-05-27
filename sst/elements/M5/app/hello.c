@@ -6,7 +6,7 @@ extern char **environ;
 
 int main( int argc, char* argv[] )
 {
-    printf("Hello mike\n");
+    printf("Hello\n");
 
     int i;
     for ( i = 0; i< argc; i++ ) {
