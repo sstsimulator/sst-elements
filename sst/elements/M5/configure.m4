@@ -66,9 +66,9 @@ AC_DEFUN([SST_M5_CONFIG], [
      DRAMSIM_LDFLAGS=])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([MemorySystem.h], [], [happy="no"])
+  AC_CHECK_HEADERS([MemorySystem.h], [], [happy="yes"])
   AC_CHECK_LIB([dramsim], [libdramsim_is_present],
-    [DRAMSIM_LIB="-ldramsim"], [happy="no"])
+    [DRAMSIM_LIB="-ldramsim"], [happy="yes"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
