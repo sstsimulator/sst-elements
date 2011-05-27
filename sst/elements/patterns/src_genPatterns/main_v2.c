@@ -20,7 +20,9 @@
 ** Local functions
 */
 static void usage(char *argv[]);
+#ifdef _NO_LONGER_TRUE_
 static int is_pow2(int num);
+#endif /* _NO_LONGER_TRUE_ */
 
 
 
@@ -237,10 +239,11 @@ int ssd_write_bw;	/* In bytes per second */
 	fprintf(stderr, "Need a pattern name!\n");
     } else   {
 	if ((strcasestr("ghost_pattern", pattern_name) == NULL)   &&
+	    (strcasestr("pingpong_pattern", pattern_name) == NULL)   &&
 	    (strcasestr("msgrate_pattern", pattern_name) == NULL))   {
 	    error= TRUE;
 	    fprintf(stderr, "Unknown pattern name!\n");
-	    fprintf(stderr, "Must be one of \"ghost_pattern\", or \"msgrate_pattern\"\n");
+	    fprintf(stderr, "Must be one of \"ghost_pattern\", \"msgrate_pattern\", or \"pingpong_pattern\n");
 
 	} else   {
 
@@ -256,6 +259,13 @@ int ssd_write_bw;	/* In bytes per second */
 
 	    } else if (strcasestr("msgrate_pattern", pattern_name) != NULL)   {
 		pattern_name= "msgrate_pattern";
+		if (exchange_msg_len < 0)   {
+		    /* Use the default */
+		    exchange_msg_len= 0;
+		}
+
+	    } else if (strcasestr("pingpong_pattern", pattern_name) != NULL)   {
+		pattern_name= "pingpong_pattern";
 		if (exchange_msg_len < 0)   {
 		    /* Use the default */
 		    exchange_msg_len= 0;
@@ -340,10 +350,12 @@ int ssd_write_bw;	/* In bytes per second */
 	fprintf(stderr, "Can't handle single router NoC (1x1) with more than one core each!\n");
     }
 
+#ifdef _NO_LONGER_TRUE_
     if (!is_pow2(num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim))   {
 	error= TRUE;
 	fprintf(stderr, "Total number of cores must be power of two!\n");
     }
+#endif /* _NO_LONGER_TRUE_ */
 
     if (!error)   {
 	if (net_x_dim * net_y_dim > 1)   {
@@ -493,7 +505,7 @@ usage(char *argv[])
     fprintf(stderr, "   -o out                Name of output file\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
-    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate\n");
+    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate, pingpong\n");
     fprintf(stderr, "   --msg_len             Message size. Default is pattern dependent.\n");
     fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");
     fprintf(stderr, "                         uncoordinated, distributed\n");
@@ -506,6 +518,7 @@ usage(char *argv[])
 
 
 
+#ifdef _NO_LONGER_TRUE_
 static int
 is_pow2(int num)
 {
@@ -520,3 +533,4 @@ is_pow2(int num)
     return FALSE;
 
 }  /* end of is_pow2() */
+#endif /* _NO_LONGER_TRUE_ */

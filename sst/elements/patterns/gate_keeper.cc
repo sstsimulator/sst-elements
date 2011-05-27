@@ -17,9 +17,9 @@
 
 
 void
-Gate_keeper::init(SST::ComponentId_t id, SST::Params& params)
+Gate_keeper::init(Component *me, ComponentId_t id, Params& params)
 {
-    SST::Params::iterator it= params.begin();
+    Params::iterator it= params.begin();
 
     // Process parameters common to all patterns
     while (it != params.end())   {
@@ -81,21 +81,20 @@ Gate_keeper::init(SST::ComponentId_t id, SST::Params& params)
 	_ABORT(Gate_keeper, "Need an even number of ranks (cores)!\n");
     }
 
-#if rrr
     // Create a time converter
-    tc= registerTimeBase("1ns", true);
+    tc= me->registerTimeBase("1ns", true);
 
     // Create a handler for events from the Network
-    net= configureLink("NETWORK", new SST::Event::Handler<Gate_keeper>
+    net= me->configureLink("NETWORK", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_net_events));
     if (net == NULL)   {
-	fpritnf(stderr, "There is no network...\n");
+	fprintf(stderr, "There is no network...\n");
     } else   {
 	net->setDefaultTimeBase(tc);
     }
 
     // Create a handler for events from the network on chip (NoC)
-    NoC= configureLink("NoC", new Event::Handler<Gate_keeper>
+    NoC= me->configureLink("NoC", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_NoC_events));
     if (NoC == NULL)   {
 	fprintf(stderr, "There is no NoC...\n");
@@ -104,14 +103,14 @@ Gate_keeper::init(SST::ComponentId_t id, SST::Params& params)
     }
 
     // Create a channel for "out of band" events sent to ourselves
-    self_link= configureSelfLink("Me", new Event::Handler<Gate_keeper>
+    self_link= me->configureSelfLink("Me", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_self_events));
     if (self_link == NULL)   {
 	_ABORT(Gate_keeper, "That was no good!\n");
     }
 
     // Create a handler for events from local NVRAM
-    nvram= configureLink("NVRAM", new Event::Handler<Gate_keeper>
+    nvram= me->configureLink("NVRAM", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_nvram_events));
     if (nvram == NULL)   {
 	fprintf(stderr, "The msgrate pattern generator expects a link named \"NVRAM\"\n");
@@ -119,7 +118,7 @@ Gate_keeper::init(SST::ComponentId_t id, SST::Params& params)
     }
 
     // Create a handler for events from the storage network
-    storage= configureLink("STORAGE", new Event::Handler<Gate_keeper>
+    storage= me->configureLink("STORAGE", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_storage_events));
     if (storage == NULL)   {
 	fprintf(stderr, "The msgrate pattern generator expects a link named \"STORAGE\"\n");
@@ -130,7 +129,6 @@ Gate_keeper::init(SST::ComponentId_t id, SST::Params& params)
     nvram->setDefaultTimeBase(tc);
     storage->setDefaultTimeBase(tc);
 
-#endif
     // Initialize the common functions we need
     common= new Patterns();
     if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, net, self_link,
@@ -140,15 +138,24 @@ Gate_keeper::init(SST::ComponentId_t id, SST::Params& params)
 	_ABORT(Gate_keeper, "Patterns->init() failed!\n");
     }
 
-    // Send a start event to ourselves without a delay
-    common->event_send(my_rank, START);
 
-}
+}  /* end of init() */
 
 
 
 void
-Gate_keeper::handle_events(SST::CPUNicEvent *e)
+Gate_keeper::start(void)
+{
+
+    // Send a start event to ourselves without a delay
+    common->event_send(my_rank, START);
+
+}  /* end of start() */
+
+
+
+void
+Gate_keeper::handle_events(CPUNicEvent *e)
 {
 
 pattern_event_t event;
@@ -174,13 +181,13 @@ pattern_event_t event;
 
 // Messages from the global network
 void
-Gate_keeper::handle_net_events(SST::Event *sst_event)
+Gate_keeper::handle_net_events(Event *sst_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 
 
-    e= static_cast<SST::CPUNicEvent *>(sst_event);
+    e= static_cast<CPUNicEvent *>(sst_event);
 
     if (e->dest != my_rank)   {
 	_abort(gate_keeper, "NETWORK dest %d != my rank %d\n", e->dest, my_rank);
@@ -194,13 +201,13 @@ SST::CPUNicEvent *e;
 
 // Messages from the local chip network
 void
-Gate_keeper::handle_NoC_events(SST::Event *sst_event)
+Gate_keeper::handle_NoC_events(Event *sst_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 
 
-    e= static_cast<SST::CPUNicEvent *>(sst_event);
+    e= static_cast<CPUNicEvent *>(sst_event);
 
     if (e->dest != my_rank)   {
 	_abort(gate_keeper, "NoC dest %d != my rank %d\n", e->dest, my_rank);
@@ -215,13 +222,13 @@ SST::CPUNicEvent *e;
 // When we send to ourselves, we come here.
 // Just pass it on to the main handler above
 void
-Gate_keeper::handle_self_events(SST::Event *sst_event)
+Gate_keeper::handle_self_events(Event *sst_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 
 
-    e= static_cast<SST::CPUNicEvent *>(sst_event);
+    e= static_cast<CPUNicEvent *>(sst_event);
     handle_events(e);
 
 }  /* end of handle_self_events() */
@@ -230,14 +237,14 @@ SST::CPUNicEvent *e;
 
 // Events from the local NVRAM
 void
-Gate_keeper::handle_nvram_events(SST::Event *sst_event)
+Gate_keeper::handle_nvram_events(Event *sst_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 
 
     // _abort(gate_keeper, "We should not get NVRAM events in this pattern!\n");
-    e= static_cast<SST::CPUNicEvent *>(sst_event);
+    e= static_cast<CPUNicEvent *>(sst_event);
     handle_events(e);
 
 }  /* end of handle_nvram_events() */
@@ -246,14 +253,14 @@ SST::CPUNicEvent *e;
 
 // Events from stable storage
 void
-Gate_keeper::handle_storage_events(SST::Event *sst_event)
+Gate_keeper::handle_storage_events(Event *sst_event)
 {
 
-SST::CPUNicEvent *e;
+CPUNicEvent *e;
 
 
     // _abort(gate_keeper, "We should not get stable storage events in this pattern!\n");
-    e= static_cast<SST::CPUNicEvent *>(sst_event);
+    e= static_cast<CPUNicEvent *>(sst_event);
     handle_events(e);
 
 }  /* end of handle_storage_events() */

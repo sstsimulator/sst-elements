@@ -39,7 +39,7 @@ class Pingpong_pattern : public Component {
 
 	    // Create a gate keeper and initalize it
 	    gate= new Gate_keeper();
-	    gate->init(id, params);
+	    gate->init(this, id, params);
 
 	    // Defaults for pattern-specific paramters
 	    pingpong_pattern_debug= 0;
@@ -63,6 +63,7 @@ class Pingpong_pattern : public Component {
                 ++it;
             }
 
+	    gate->start();
 
         }
 

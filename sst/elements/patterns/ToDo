@@ -1,3 +1,4 @@
+- Serialization is broken big time...
 
 - Is chckpt_size, envelope_size needed in Patterns::init?
     Maybe add envelope_size automatically to sends?

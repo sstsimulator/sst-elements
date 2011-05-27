@@ -13,6 +13,8 @@
 #include <sst/core/link.h>
 #include "pattern_common.h"
 
+using namespace SST;
+
 
 
 class Gate_keeper {
@@ -29,18 +31,19 @@ class Gate_keeper {
 	    cores= -1;
 	}
 
-	void init(SST::ComponentId_t id, SST::Params& params);
+	void init(Component *me, ComponentId_t id, Params& params);
+	void start(void);
 
 	int my_rank;
 
     private:
 
-	void handle_events(SST::CPUNicEvent *e);
-	void handle_net_events(SST::Event *sst_event);
-	void handle_NoC_events(SST::Event *sst_event);
-	void handle_self_events(SST::Event *sst_event);
-	void handle_nvram_events(SST::Event *sst_event);
-	void handle_storage_events(SST::Event *sst_event);
+	void handle_events(CPUNicEvent *e);
+	void handle_net_events(Event *sst_event);
+	void handle_NoC_events(Event *sst_event);
+	void handle_self_events(Event *sst_event);
+	void handle_nvram_events(Event *sst_event);
+	void handle_storage_events(Event *sst_event);
 	Patterns *common;
 
 	// Input parameters for simulation
@@ -51,21 +54,21 @@ class Gate_keeper {
 	int y_dim;
 	int NoC_x_dim;
 	int NoC_y_dim;
-	SST::SimTime_t net_latency;
-	SST::SimTime_t net_bandwidth;
-	SST::SimTime_t node_latency;
-	SST::SimTime_t node_bandwidth;
+	SimTime_t net_latency;
+	SimTime_t net_bandwidth;
+	SimTime_t node_latency;
+	SimTime_t node_bandwidth;
 	int exchange_msg_len;
 	int envelope_size;
 	int gate_keeper_debug;
 
 	// Our connections to SST
-	SST::Link *net;
-	SST::Link *self_link;
-	SST::Link *NoC;
-	SST::Link *nvram;
-	SST::Link *storage;
-	SST::TimeConverter *tc;
+	Link *net;
+	Link *self_link;
+	Link *NoC;
+	Link *nvram;
+	Link *storage;
+	TimeConverter *tc;
 };
 
 #endif // _GATE_KEEPER_H

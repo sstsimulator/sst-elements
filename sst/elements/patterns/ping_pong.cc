@@ -31,8 +31,12 @@ void
 Pingpong_pattern::handle_events(pattern_event_t event)
 {
 
-    // _PINGPONG_PATTERN_DBG(2, "[%3d] In state %d and got event %d at time %lu\n", my_rank,
-// 	state, event, getCurrentSimTime());
+    _PINGPONG_PATTERN_DBG(2, "[%3d] Got event %d at time %lu\n", gate->my_rank,
+ 	event, getCurrentSimTime());
+#if rrr
+    _PINGPONG_PATTERN_DBG(2, "[%3d] In state %d and got event %d at time %lu\n", gate->my_rank,
+ 	state, event, getCurrentSimTime());
+#endif
 
     // An event causes a transition depending on which event we are in
     //switch (state)   {
