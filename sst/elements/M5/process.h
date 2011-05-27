@@ -42,7 +42,7 @@ static inline Process* newProcess( const std::string name,
     INIT_STR( process, params, cwd );
     INIT_STR( process, params, executable );
 
-    string str = params.find_string( "registerExit" );
+    std::string str = params.find_string( "registerExit" );
     
     if( comp && ! str.compare("yes") ) {
         INFO("registering exit `%s`\n",name.c_str());
