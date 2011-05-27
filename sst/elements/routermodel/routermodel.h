@@ -16,7 +16,9 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/introspectedComponent.h>
+#ifdef WITH_POWER
 #include "../power/power.h"
+#endif
 
 
 using namespace SST;
@@ -36,7 +38,9 @@ using namespace SST;
 #define MAX_LINK_NAME		(16)
 
 
+#ifdef WITH_POWER
 bool Power::p_hasUpdatedTemp __attribute__((weak));
+#endif
 
 
 class Routermodel : public IntrospectedComponent {
@@ -57,10 +61,12 @@ class Routermodel : public IntrospectedComponent {
 	    congestion_in_cnt= 0;
 	    congestion_in= 0;
 
+#ifdef WITH_POWER
 	    // Power modeling
 	    router_totaldelay= 0;
 	    ifModelPower= false;
 	    num_local_message= 0;
+#endif
 
 
 
@@ -96,10 +102,13 @@ class Routermodel : public IntrospectedComponent {
     		}
 
     		else if (!it->first.compare("push_introspector"))   {
+#ifdef WITH_POWER
         	    pushIntrospector= it->second;
+#endif
     		}
 
 		else if (!it->first.compare("router_power_model"))   {
+#ifdef WITH_POWER
 		    if (!it->second.compare("McPAT"))   {
 			powerModel= McPAT;
 			ifModelPower= true;
@@ -113,6 +122,9 @@ class Routermodel : public IntrospectedComponent {
 		    } else   {
 			_abort(Routermodel, "Unknown power model!\n");
 		    }
+#else
+		    _abort(Routermodel, "You can't specify a power model, if you have selected the plain router!");
+#endif
     		}
 
                 ++it;
@@ -130,11 +142,13 @@ class Routermodel : public IntrospectedComponent {
 
       	    tc= registerTimeBase(frequency, true);
 
+#ifdef WITH_POWER
       	    // for power introspection
       	    if (ifModelPower)   {
 		registerClock(frequency, new Clock::Handler<Routermodel>
 		    (this, &Routermodel::pushData));
 	    }
+#endif
 
 
 	    /* Attach the handler to each port */
@@ -194,6 +208,7 @@ class Routermodel : public IntrospectedComponent {
 	int
 	Setup()
 	{
+#ifdef WITH_POWER
 	    if (ifModelPower)   {
 		power = new Power(getId());
 
@@ -215,6 +230,7 @@ class Routermodel : public IntrospectedComponent {
 		registerMonitor("total_power", new MonitorPointer<I>(&pdata.totalEnergy));
 		registerMonitor("peak_power", new MonitorPointer<I>(&pdata.peak));
 	    }
+#endif
 	    return 0;
 	}
 
@@ -222,10 +238,12 @@ class Routermodel : public IntrospectedComponent {
 	int
 	Finish()
 	{
+#ifdef WITH_POWER
 	    //power->printFloorplanAreaInfo();
 	    //std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
 	    //power->printFloorplanPowerInfo();
 	    //power->printFloorplanThermalInfo();
+#endif
 	    return 0;
 	}
 
@@ -246,6 +264,7 @@ class Routermodel : public IntrospectedComponent {
 	SimTime_t hop_delay;
 	std::string component_name;
 
+#ifdef WITH_POWER
 	// For power & introspection
 	std::string pushIntrospector;
   	Pdissipation_t pdata, pstats;
@@ -253,15 +272,16 @@ class Routermodel : public IntrospectedComponent {
 	// Over-specified struct that holds usage counts of its sub-components
   	usagecounts_t mycounts;
 
+	pmodel powerModel;
+	bool ifModelPower;
+	bool pushData(Cycle_t);
+#endif
+
 	// totaldelay = congestion delay + generic router delay
   	SimTime_t router_totaldelay;
 
 	//number of intra-core messages
 	uint64_t num_local_message;
-
-	pmodel powerModel;
-	bool ifModelPower;
-	bool pushData(Cycle_t);
 
 
 	typedef struct port_t   {

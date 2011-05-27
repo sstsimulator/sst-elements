@@ -107,7 +107,9 @@ int out_port;
 
     // Update total usage counts of all ports for power
     if (!e->local_traffic)   {
+#ifdef WITH_POWER
 	mycounts.router_access++;
+#endif
     } else   {
 	num_local_message++;
     }
@@ -164,6 +166,7 @@ Routermodel::handle_self_events(Event *event)
 }  /* end of handle_self_events() */
 
 
+#ifdef WITH_POWER
 // Get and push power at a frequency determinedby the push_introspector
 bool
 Routermodel::pushData(Cycle_t current)
@@ -196,6 +199,7 @@ Routermodel::pushData(Cycle_t current)
     return false;
 
 } // end of pushData()
+#endif
 
 
 
