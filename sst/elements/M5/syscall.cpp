@@ -21,18 +21,27 @@
 #elif THE_ISA == ALPHA_ISA
     #define ISA_OS AlphaLinux
     #include <arch/alpha/linux/linux.hh>
+
+    #define __NR_open                                45 
+    #define __NR_close                               6 
+    #define __NR_read                                3 
+    #define __NR_write                               4 
+    #define __NR_exit                                1
+
 #elif THE_ISA == X86_ISA
     #define ISA_OS X86Linux64
     #include <arch/x86/linux/linux.hh>
+
+    #define __NR_open                                2 
+    #define __NR_close                               3 
+    #define __NR_read                                0 
+    #define __NR_write                               1 
+    #define __NR_exit                                60 
+
 #else
     #error What ISA
 #endif
 
-#define __NR_open                                45 
-#define __NR_close                               6 
-#define __NR_read                                3 
-#define __NR_write                               4 
-#define __NR_exit                                1
 
 #define __NR_barrier                             500
 
@@ -226,6 +235,12 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
     const void* buf = (const void*) m_dmaEvent.buf;
 
     DBGX( 2, "fd=%d nbytes=%lu\n", fildes, nbytes );
+
+    if ( fildes == 1 ) {
+        ::write( fildes, "<cout> ", 7 );
+    } else if ( fildes == 2 ) {
+        ::write( fildes, "<cerr> ", 7 );
+    }
     
     int64_t retval = ::write( fildes, buf, nbytes ); 
 
