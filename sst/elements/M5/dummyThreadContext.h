@@ -48,10 +48,16 @@ class DummyThreadContext : public ThreadContext {
     { DBGX(2,"\n"); }
 #else
     virtual TranslatingPort *getMemPort()
-    { DBGX(2,"\n"); }
+    { 
+        DBGX(2,"\n");
+        return NULL; 
+    }
 
     virtual Process *getProcessPtr()
-    { DBGX(2,"\n"); }
+    { 
+        DBGX(2,"\n");
+        return NULL;
+    }
 #endif
 
     virtual Status status() const
