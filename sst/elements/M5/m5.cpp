@@ -66,16 +66,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     buildConfig( this, "m5", configFile );
 
-    DBGX( 2, "call initAll\n" );
-    initAll();
-
-    DBGX( 2, "call regAllStats\n" );
-    regAllStats();
-
-    DBGX( 2, "call SimStartup\n" );
-    SimStartup();
-    DBGX( 2, "SimStartup done\n" );
-
     setClockFrequency(1000000000000);
 
     m_tc = registerTimeBase("1ps");
@@ -85,8 +75,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
             new SST::Event::Handler<M5>(this,&M5::selfEvent));
 
     assert( m_self );
-
-    arm( 0 );
 
     if ( params.find( "registerExit" ) != params.end() ) {
         if( ! params["registerExit"].compare("yes") ) {
@@ -108,6 +96,17 @@ M5::~M5()
 
 int M5::Setup()
 {
+    DBGX( 2, "call initAll\n" );
+    initAll();
+
+    DBGX( 2, "call regAllStats\n" );
+    regAllStats();
+
+    DBGX( 2, "call SimStartup\n" );
+    SimStartup();
+    DBGX( 2, "SimStartup done\n" );
+
+    arm( 0 );
     return 0;
 }
 
