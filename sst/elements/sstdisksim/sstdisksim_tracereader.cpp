@@ -41,7 +41,7 @@ sstdisksim_tracereader::clock(Cycle_t current)
   /* At the end of our input */
   if ( event == NULL )
   {
-    if ( end_sent < 10 )
+    if ( end_sent < 1 )
     {
       event = new sstdisksim_event;
       event->etype = DISKSIMEND;

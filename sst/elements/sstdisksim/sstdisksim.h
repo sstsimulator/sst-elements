@@ -71,7 +71,6 @@ class sstdisksim : public Component {
   
   sstdisksim( const sstdisksim& c );
   
-  long sstdisksim_process_event(sstdisksim_event* ev);
   void handleEvent(Event* ev);
   void lockstepEvent(Event* ev);
 

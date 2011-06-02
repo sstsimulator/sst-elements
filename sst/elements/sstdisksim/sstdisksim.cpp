@@ -187,11 +187,13 @@ sstdisksim::Finish()
 }
 
 /******************************************************************************/
-long
-sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
+void
+sstdisksim::handleEvent(Event* event)
 {
   SysTime tmp = __now;
   struct disksim_request r;
+  sstdisksim_event* ev = static_cast<sstdisksim_event*>(event);
+
   memset(&r, 0, sizeof(struct disksim_request));
 
   unsigned long sector;
@@ -201,14 +203,19 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
   nbytes = (ev->pos % SECTOR) + ev->count;
 
   if ( ev->etype == DISKSIMREAD )
-    r.flags = DISKSIM_READ;
+      r.flags = DISKSIM_READ;
   else if ( ev->etype == DISKSIMWRITE)
     r.flags = DISKSIM_WRITE;
+  else if ( ev->etype == DISKSIMEND)
+  {
+    lockstep->Send(__cycle+100, ev);
+    return;
+  }
   else
     abort();
 
   if ( ev->count <= 0 )
-    return 0;
+    return;
 
   r.completed = 0;
   r.start = __now;
@@ -230,15 +237,17 @@ sstdisksim::sstdisksim_process_event(sstdisksim_event* ev)
     fprintf(stderr,
 	"disksim sim: internal error. Last event not completed\n");
     abort();
-    return -1;
+    return;
   }
 
   double cyclespermillisec = 1000000;
+  
+  __event_total++;
 
   __cycle += (long)((__now-tmp)*cyclespermillisec);
   lockstep->Send(__cycle, ev);
   
-  return tmp;
+  return;
 }
 
 /******************************************************************************/
@@ -266,12 +275,14 @@ sstdisksim::lockstepEvent(Event* ev)
   if ( event->etype == DISKSIMREAD )
     DBG( "lockstepEvent called on read event.  %lu\n", now );
 #endif
-
-  if ( (event->etype == DISKSIMEND && !__done) ||
-       event->etype != DISKSIMEND )
+  
+  if ( event->etype != DISKSIMEND )
   {
-    __event_total--;
+    event_count++;
+    event->finishedCall(event, (long long)now);
   }
+
+  __event_total--;
 
   if ( __event_total == 0 )
   {
@@ -284,34 +295,9 @@ sstdisksim::lockstepEvent(Event* ev)
 
       printf("events processed: %d\n", event_count);
     }
-
-    delete(event);
-    return;
   }
 
-  event_count++;
-  event->finishedCall(event, (long long)now);
   delete(event);
-}
-
-/******************************************************************************/
-void
-sstdisksim::handleEvent(Event* ev)
-{
-  sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
-
-  /* This sstdisksim process has been shutdown; 
-     behave accordingly */
-  if (event->etype == DISKSIMEND )
-  {
-    lockstep->Send(0, ev);
-  }
-  else
-  {
-    __event_total++;
-    sstdisksim_process_event(event);
-  }
-
   return;
 }
 

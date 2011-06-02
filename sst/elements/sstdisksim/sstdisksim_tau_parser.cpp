@@ -150,9 +150,9 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
 		  const char *userEventName, int monotonicallyIncreasing )
 {
   int call = -1;
-  // get call - note that read should follow fread, et cetera
-  // as they are different calls
 
+  // get call - note that read should follow fread, et cetera
+  // as they are different calls.
   if ( strstr ( userEventName, "FREAD") )
     call = _CALL_FREAD;
   else if ( strstr ( userEventName, "READV") )
@@ -212,7 +212,6 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
     return 0;
 
   // get arg
-
   if ( strstr(userEventName, "fd" ) ) 
   {
       __types[call][_ARG_FD] = userEventToken;
@@ -244,6 +243,8 @@ int EventTrigger( void *userData, double time,
 		  unsigned int userEventToken,
 		  long long userEventValue)
 {
+  static int ___k = 0;
+
   for ( int i = 0; i < _END_CALLS; i++ )
   {
     for ( int j = 0; j < _END_ARGS; j++ )
@@ -378,6 +379,8 @@ sstdisksim_tau_parser::getNextEvent()
 
   long long cur_pos = 0;
   arg_map::iterator iter;
+
+  //  static int ___j = 0;
   
   sstdisksim_trace_type* cur_event = __list.pop_entry();
   
@@ -402,7 +405,7 @@ sstdisksim_tau_parser::getNextEvent()
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
-      //      printf("PREAD pos %lld count %lld \n", ev->pos, ev->count);
+      //      printf("%d PREAD pos %lld count %lld \n", ___j++, ev->pos, ev->count);
 
       looping = false;
       break;
@@ -423,7 +426,7 @@ sstdisksim_tau_parser::getNextEvent()
       fd_map.erase(cur_event->args[_ARG_FD].t);
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
-      //      printf("PWRITE pos %lld count %lld \n", ev->pos, ev->count);
+      //      printf("%d PWRITE pos %lld count %lld \n", ___j++, ev->pos, ev->count);
 
       looping = false;
       break;
@@ -450,17 +453,16 @@ sstdisksim_tau_parser::getNextEvent()
 	fd_map.erase(cur_event->args[_ARG_FD].t);
       }
 
-      //      if ( cur_event->call->call == _CALL_READV )
-      //	printf("V");
-      //      else if ( cur_event->call->call == _CALL_FREAD )
-      //	printf ("F");
+      /*      if ( cur_event->call->call == _CALL_READV )
+      	printf("V");
+      else if ( cur_event->call->call == _CALL_FREAD )
+      	printf ("F");
 
-      //      printf("READ pos %lld count %lld\n", ev->pos, ev->count);
+	printf("%d READ pos %lld count %lld %d\n", ___j++, ev->pos, ev->count);*/
 
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
-
       break;
 
     case _CALL_WRITE:
@@ -488,12 +490,12 @@ sstdisksim_tau_parser::getNextEvent()
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
 
 
-      //      if ( cur_event->call->call == _CALL_WRITEV )
-      //	printf("V");
-      //      else if ( cur_event->call->call == _CALL_FWRITE )
-      //	printf ("F");
-	   
-      //      printf("WRITE pos %lld count %lld\n", ev->pos, ev->count);
+      /*      if ( cur_event->call->call == _CALL_WRITEV )
+	printf("V");
+      else if ( cur_event->call->call == _CALL_FWRITE )
+	printf ("F");
+   
+	printf("%d WRITE pos %lld count %lld %d\n", ___j++, ev->pos, ev->count);*/
 
       looping = false;
       break;
@@ -528,12 +530,12 @@ sstdisksim_tau_parser::getNextEvent()
       fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_pos));
 
-      //      if ( cur_event->call->call == _CALL_FSEEK )
-      //	printf("F");
-      //      else if ( cur_event->call->call == _CALL_LSEEK64 )
-      //	printf ("64");
+      /*      if ( cur_event->call->call == _CALL_FSEEK )
+	printf("F");
+      else if ( cur_event->call->call == _CALL_LSEEK64 )
+        printf ("64");
 
-      //      printf("LSEEK pos %lld\n", cur_pos);
+	printf("LSEEK pos %lld\n", cur_pos);*/
       free(cur_event);
       cur_event = __list.pop_entry();
 
@@ -560,7 +562,6 @@ sstdisksim_tau_parser::getNextEvent()
   }
 
   free(cur_event);
-  
   
   /*
   //skippy test override
