@@ -21,6 +21,9 @@ Gate_keeper::init(Component *me, ComponentId_t id, Params& params)
 {
     Params::iterator it= params.begin();
 
+    my_component= me;
+    my_component->registerExit();
+
     // Process parameters common to all patterns
     while (it != params.end())   {
 	if (!it->first.compare("debug"))   {
@@ -82,10 +85,10 @@ Gate_keeper::init(Component *me, ComponentId_t id, Params& params)
     }
 
     // Create a time converter
-    tc= me->registerTimeBase("1ns", true);
+    tc= my_component->registerTimeBase("1ns", true);
 
     // Create a handler for events from the Network
-    net= me->configureLink("NETWORK", new Event::Handler<Gate_keeper>
+    net= my_component->configureLink("NETWORK", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_net_events));
     if (net == NULL)   {
 	fprintf(stderr, "There is no network...\n");
@@ -94,7 +97,7 @@ Gate_keeper::init(Component *me, ComponentId_t id, Params& params)
     }
 
     // Create a handler for events from the network on chip (NoC)
-    NoC= me->configureLink("NoC", new Event::Handler<Gate_keeper>
+    NoC= my_component->configureLink("NoC", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_NoC_events));
     if (NoC == NULL)   {
 	fprintf(stderr, "There is no NoC...\n");
@@ -103,14 +106,14 @@ Gate_keeper::init(Component *me, ComponentId_t id, Params& params)
     }
 
     // Create a channel for "out of band" events sent to ourselves
-    self_link= me->configureSelfLink("Me", new Event::Handler<Gate_keeper>
+    self_link= my_component->configureSelfLink("Me", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_self_events));
     if (self_link == NULL)   {
 	_ABORT(Gate_keeper, "That was no good!\n");
     }
 
     // Create a handler for events from local NVRAM
-    nvram= me->configureLink("NVRAM", new Event::Handler<Gate_keeper>
+    nvram= my_component->configureLink("NVRAM", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_nvram_events));
     if (nvram == NULL)   {
 	fprintf(stderr, "The msgrate pattern generator expects a link named \"NVRAM\"\n");
@@ -118,7 +121,7 @@ Gate_keeper::init(Component *me, ComponentId_t id, Params& params)
     }
 
     // Create a handler for events from the storage network
-    storage= me->configureLink("STORAGE", new Event::Handler<Gate_keeper>
+    storage= my_component->configureLink("STORAGE", new Event::Handler<Gate_keeper>
 	    (this, &Gate_keeper::handle_storage_events));
     if (storage == NULL)   {
 	fprintf(stderr, "The msgrate pattern generator expects a link named \"STORAGE\"\n");
@@ -149,6 +152,7 @@ Gate_keeper::start(void)
 
     // Send a start event to ourselves without a delay
     common->event_send(my_rank, START);
+    fprintf(stderr, "Gatekeeper[%2d]: %s event sent\n", my_rank, __FUNCTION__);
 
 }  /* end of start() */
 
@@ -163,7 +167,9 @@ pattern_event_t event;
 
     // Extract the pattern event type from the SST event
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
+    fprintf(stderr, "Gatekeeper[%2d]: %s got an event\n", my_rank, __FUNCTION__);
     event= (pattern_event_t)e->GetRoutine();
+    fprintf(stderr, "Gatekeeper[%2d]: %s event is %d\n", my_rank, __FUNCTION__, (int)event);
 
     // We need to figure out which of the state machines is currently active
     // If this even is of the active machine, we send it down. Otherwise we
@@ -173,6 +179,8 @@ pattern_event_t event;
     // We're done
     delete(e);
 
+    my_component->unregisterExit();
+    fprintf(stderr, "Gatekeeper[%2d]: %s returning\n", my_rank, __FUNCTION__);
     return;
 
 }  /* end of handle_events() */

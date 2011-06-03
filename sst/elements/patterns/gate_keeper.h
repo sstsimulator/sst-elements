@@ -45,6 +45,7 @@ class Gate_keeper {
 	void handle_nvram_events(Event *sst_event);
 	void handle_storage_events(Event *sst_event);
 	Patterns *common;
+	Component *my_component;
 
 	// Input parameters for simulation
 	int cores;
