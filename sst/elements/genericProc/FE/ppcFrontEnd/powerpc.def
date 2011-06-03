@@ -7865,6 +7865,7 @@ DEFINST(MFFSD,                  0x48F,
     _a = PPC_FPR_DW(FB);                                    \
     ptempf = (word_t *) (&double_a);                        \
     memcpy(&double_a, &_a, sizeof(_a));			    \
+    register double fpscrin;				    \
     switch(ppcInstruction::fpu_mode) {			    \
 	case CPLUSPLUS:					    \
         double_dest = sqrt(double_a);                       \
@@ -7885,7 +7886,8 @@ DEFINST(MFFSD,                  0x48F,
 	} break;                                            \
 	case ASM_PPC:					    \
 	double fpscrout;				    \
-	ONLY_PPC(register double fpscrin = 0.0; \
+	fpscrin = 0.0;						     \
+	ONLY_PPC(						     \
 	asm volatile ("mtfsf 0xFF,%2\nfsqrt %0,%3\nmffs %1"          \
              : "=f" (double_dest),                          \
                "=f" (fpscrout)                              \
