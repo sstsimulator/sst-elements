@@ -34,6 +34,8 @@ class Pingpong_pattern : public Comm_pattern {
 
 	int cnt;
 	int done;
+	int len;
+	SimTime_t start_time;
 
         template<class Archive>
         friend void save_construct_data(Archive & ar,

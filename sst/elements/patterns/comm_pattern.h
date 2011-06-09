@@ -62,12 +62,10 @@ class Comm_pattern : public Component {
 	    while (it != params.end())   {
 		if (!it->first.compare("debug"))   {
 		    sscanf(it->second.c_str(), "%d", &comm_pattern_debug);
-		    printf("Config:   Setting comm_pattern_debug to %d\n", comm_pattern_debug);
 		}
 
 		if (!it->first.compare("rank"))   {
 		    sscanf(it->second.c_str(), "%d", &my_rank);
-		    printf("Config:   Initialized my_rank to %d\n", my_rank);
 		}
 
 		if (!it->first.compare("x_dim"))   {

@@ -22,7 +22,6 @@
 void
 Comm_pattern::register_app_pattern(Event::HandlerBase* handler)
 {
-    printf("%s on line %d of file %s got called\n", __FUNCTION__, __LINE__, __FILE__);
     pingpong_handler= handler;
 }  // end of register_app_pattern
 
