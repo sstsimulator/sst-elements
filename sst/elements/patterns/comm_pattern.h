@@ -224,9 +224,11 @@ class Comm_pattern : public Component {
 	    int logical_height= y_dim * NoC_y_dim;
 	    int myX= my_rank % logical_width;
 	    int myY= my_rank / logical_width;
+	    num_ranks= x_dim * y_dim * NoC_x_dim * NoC_y_dim * cores;
+
 	    if (my_rank == 0)   {
-		printf("||| Arranging ranks as a %d * %d logical mesh\n",
-		    logical_width, logical_height);
+		printf("||| Arranging %d ranks as a %d * %d logical mesh\n",
+		    num_ranks, logical_width, logical_height);
 	    }
 
 	    right= ((myX + 1) % (logical_width)) + (myY * (logical_width));
@@ -235,6 +237,7 @@ class Comm_pattern : public Component {
 	    up= myX + ((myY - 1 + logical_height) % logical_height) * (logical_width);
 
 	    common->event_send(my_rank, START);
+
         }  // Done with initialization
 
         ~Comm_pattern()
@@ -242,8 +245,14 @@ class Comm_pattern : public Component {
 	    // unregisterExit();
 	}
 
-	void register_app_pattern(void);
+	int my_rank;
+	int num_ranks;
+
+	void register_app_pattern(Event::HandlerBase* handler);
 	void SM_transition(int machineID);
+
+	// FIXME: This needs to be more generic as well
+	void data_send(int dest, int len);
 
     private:
 
@@ -255,9 +264,11 @@ class Comm_pattern : public Component {
 	void handle_nvram_events(Event *sst_event);
 	void handle_storage_events(Event *sst_event);
 
+	// FIXME: This needs to become generic and more than one
+	Event::HandlerBase* pingpong_handler;
+
 	// Input paramters for simulation
 	Patterns *common;
-	int my_rank;
 	int comm_pattern_debug;
 
 	int cores;

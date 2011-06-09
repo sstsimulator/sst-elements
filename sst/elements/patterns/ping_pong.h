@@ -19,7 +19,8 @@ class Pingpong_pattern : public Comm_pattern {
 	    // constructor initializer list                                                                   
 	    Comm_pattern(id, params)
 	{
-	    register_app_pattern();
+	    register_app_pattern(new Event::Handler<Pingpong_pattern>
+		(this, &Pingpong_pattern::handle_events));
         }
 
         ~Pingpong_pattern()
@@ -28,7 +29,11 @@ class Pingpong_pattern : public Comm_pattern {
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);
+	void handle_events(Event *sst_event);
 	Params_t params;
+
+	int cnt;
+	int done;
 
         template<class Archive>
         friend void save_construct_data(Archive & ar,
