@@ -28,7 +28,6 @@ pattern_event_t event;
 CPUNicEvent *e;
 double execution_time;
 double latency;
-int cores_per_node;
 
 
     // Extract the pattern event type from the SST event                                                      
