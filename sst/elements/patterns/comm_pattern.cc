@@ -37,8 +37,81 @@ Comm_pattern::SM_transition(int machineID)
 void
 Comm_pattern::data_send(int dest, int len)
 {
-    common->send(dest, exchange_msg_len + len);
+    common->send(2440, dest, envelope_size + len);
 }  // end of data_send
+
+
+
+int
+Comm_pattern::myNetX(void)
+{
+    return (my_rank % (x_dim * NoC_x_dim * cores)) / (NoC_x_dim * NoC_y_dim * cores);
+}  // end of myNetX()
+
+
+
+int
+Comm_pattern::myNetY(void)
+{
+    return my_rank / (x_dim * NoC_x_dim * NoC_y_dim * cores);
+}  // end of myNetY()
+
+
+
+int
+Comm_pattern::myNoCX(void)
+{
+    return (my_rank % (NoC_x_dim * NoC_y_dim * cores)) % NoC_x_dim;
+}  // end of myNoCX()
+
+
+
+int
+Comm_pattern::myNoCY(void)
+{
+    return (my_rank % (NoC_x_dim * NoC_y_dim * cores)) / (NoC_x_dim * cores);
+}  // end of myNoCY()
+
+
+
+int
+Comm_pattern::NetWidth(void)
+{
+    return x_dim;
+}  // end of NetWidth()
+
+
+
+int
+Comm_pattern::NetHeight(void)
+{
+    return y_dim;
+}  // end of NetHeight()
+
+
+
+int
+Comm_pattern::NoCWidth(void)
+{
+    return NoC_x_dim;
+}  // end of NoCWidth()
+
+
+
+int
+Comm_pattern::NoCHeight(void)
+{
+    return NoC_y_dim;
+}  // end of NoCHeight()
+
+
+
+// Cores per router
+int
+Comm_pattern::NumCores(void)
+{
+    return cores;
+}  // end of NumCores()
 
 
 

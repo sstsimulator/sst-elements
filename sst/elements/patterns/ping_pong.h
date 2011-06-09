@@ -19,6 +19,19 @@ class Pingpong_pattern : public Comm_pattern {
 	    // constructor initializer list                                                                   
 	    Comm_pattern(id, params)
 	{
+	    // Place the target as far away as possible in a torus
+	    dest= NetWidth() * NetHeight() * NoCWidth() * NoCHeight() * NumCores() / 2;
+
+	    // Process the ping/pong pattern specific parameters
+	    Params_t::iterator it= params.begin();
+
+	    while (it != params.end())   {
+		if (!it->first.compare("destination"))   {
+		    sscanf(it->second.c_str(), "%d", &dest);
+		}
+		it++;
+	    }
+
 	    register_app_pattern(new Event::Handler<Pingpong_pattern>
 		(this, &Pingpong_pattern::handle_events));
         }
@@ -36,6 +49,8 @@ class Pingpong_pattern : public Comm_pattern {
 	int done;
 	int len;
 	SimTime_t start_time;
+	int first_receive;
+	int dest;
 
         template<class Archive>
         friend void save_construct_data(Archive & ar,

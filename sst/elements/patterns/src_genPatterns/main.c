@@ -98,9 +98,9 @@ int ssd_write_bw;	/* In bytes per second */
     net_y_dim= 1;
     NoC_x_dim= -1;
     NoC_y_dim= -1;
-    net_lat= 4900;
+    net_lat= 30;
     net_bw= 1900000000;
-    node_lat= 150;
+    node_lat= 30;
     node_bw= 12600000000;
 
     /* Assume a SATA3 drive (Crucial C200) "somehow" connected to an I/O network */

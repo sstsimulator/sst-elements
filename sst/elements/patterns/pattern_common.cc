@@ -27,7 +27,6 @@ using namespace SST;
 
 
 /* Local functions */
-static int is_pow2(int num);
 static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height);
 
 
@@ -153,7 +152,6 @@ SimTime_t delay;
     // on the links in the xml file
     //
     // net_bandwidth is in bytes per second
-
     if ((my_rank / total_cores) != (dest / total_cores))   {
 	// This message goes off node
 	delay= ((SimTime_t)len * 1000000000) / net_bandwidth + start_delay;
@@ -212,6 +210,7 @@ int my_router, dest_router;
     e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
 
     // If there is a payload, attach it
+    // FIXME: We don't need this for patterns, right?
     if (payload)   {
 	e->AttachPayload(payload, payload_len);
     }
@@ -406,29 +405,11 @@ uint64_t delay;
 
 
 
-
-
-
 /*
 ** -----------------------------------------------------------------------------
 ** Some local functions
 ** -----------------------------------------------------------------------------
 */
-
-static int
-is_pow2(int num)
-{
-    if (num < 1)   {
-	return FALSE;
-    }
-
-    if ((num & (num - 1)) == 0)   {
-	return TRUE;
-    }
-
-    return FALSE;
-
-}  /* end of is_pow2() */
 
 
 
@@ -520,3 +501,22 @@ int x_delta, y_delta;
     }
 
 }  /* end of gen_route() */
+
+
+
+#if NOT_NEEDED_ANYMORE
+static int
+is_pow2(int num)
+{
+    if (num < 1)   {
+	return FALSE;
+    }
+
+    if ((num & (num - 1)) == 0)   {
+	return TRUE;
+    }
+
+    return FALSE;
+
+}  /* end of is_pow2() */
+#endif

@@ -249,6 +249,16 @@ class Comm_pattern : public Component {
 	void register_app_pattern(Event::HandlerBase* handler);
 	void SM_transition(int machineID);
 
+	int myNetX(void);
+	int myNetY(void);
+	int NetWidth(void);
+	int NetHeight(void);
+	int NoCWidth(void);
+	int NoCHeight(void);
+	int NumCores(void);
+	int myNoCX(void);
+	int myNoCY(void);
+
 	// FIXME: This needs to be more generic as well
 	void data_send(int dest, int len);
 
