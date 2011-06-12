@@ -246,7 +246,34 @@ class Comm_pattern : public Component {
 	int my_rank;
 	int num_ranks;
 
-	void register_app_pattern(Event::HandlerBase* handler);
+
+	// Functor classes for Event handling
+	class PatternHandlerBase {
+	public:
+	    virtual void operator()(int) = 0;
+	    virtual ~PatternHandlerBase() {}
+	};
+
+
+	template <typename classT>
+	class PatternHandler : public PatternHandlerBase {
+	private:
+	    typedef void (classT::*PtrMember)(int);
+	    classT* object;
+	    const PtrMember member;
+	    
+	public:
+	    PatternHandler( classT* const object, PtrMember member) :
+		object(object),
+		member(member)
+	    {}
+
+		void operator()(int event) {
+		    (object->*member)(event);
+		}
+	};
+    
+	void register_app_pattern(Comm_pattern::PatternHandlerBase* handler);
 	void SM_transition(int machineID);
 
 	int myNetX(void);
@@ -273,7 +300,7 @@ class Comm_pattern : public Component {
 	void handle_storage_events(Event *sst_event);
 
 	// FIXME: This needs to become generic and more than one
-	Event::HandlerBase* pingpong_handler;
+	Comm_pattern::PatternHandlerBase* pingpong_handler;
 
 	// Input paramters for simulation
 	Patterns *common;

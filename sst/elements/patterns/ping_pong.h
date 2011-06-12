@@ -57,7 +57,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    }
 
 	    // Let Comm_pattern know which handler we want to have called
-	    register_app_pattern(new Event::Handler<Pingpong_pattern>
+	    register_app_pattern(new Comm_pattern::PatternHandler<Pingpong_pattern>
 		(this, &Pingpong_pattern::handle_events));
         }
 
@@ -67,7 +67,7 @@ class Pingpong_pattern : public Comm_pattern {
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);
-	void handle_events(Event *sst_event);
+	void handle_events(int sst_event);
 	Params_t params;
 
 	int cnt;

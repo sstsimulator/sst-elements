@@ -20,19 +20,17 @@
 
 
 void
-Pingpong_pattern::handle_events(Event *sst_event)
+Pingpong_pattern::handle_events(int sst_event)
 {
 
 pattern_event_t event;
-CPUNicEvent *e;
 double execution_time;
 double latency;
 
 
     // Extract the pattern event type from the SST event                                                      
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
-    e= static_cast<CPUNicEvent *>(sst_event);
-    event= (pattern_event_t)e->GetRoutine();
+    event= (pattern_event_t)sst_event;
 
     switch (event)   {
 	case START:
@@ -63,7 +61,7 @@ double latency;
 	    // Send it back, unless we're done
 	    cnt--;
 	    if (first_receive)   {
-		printf("# [%3d] Number of hops (routers) along path: %d\n", my_rank, e->hops);
+		// printf("# [%3d] Number of hops (routers) along path: %d\n", my_rank, e->hops);
 		if (my_rank == 0)   {
 		    printf("#\n");
 		    printf("# Msg size (bytes)   Latency (seconds)\n");

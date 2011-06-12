@@ -20,7 +20,7 @@
 
 // Register a state machine and a handler for events
 void
-Comm_pattern::register_app_pattern(Event::HandlerBase* handler)
+Comm_pattern::register_app_pattern(Comm_pattern::PatternHandlerBase* handler)
 {
     pingpong_handler= handler;
 }  // end of register_app_pattern
@@ -122,12 +122,14 @@ void
 Comm_pattern::handle_events(CPUNicEvent *e)
 {
 
+int event;
+
+
     // FIXME: For now. Later we need to find the currently running state machine
     // and call the appropriate handler
-    (*pingpong_handler)(e);
-
+    event= (int)e->GetRoutine();
+    (*pingpong_handler)(event);
     delete(e);
-    // unregisterExit();
 
     return;
 
