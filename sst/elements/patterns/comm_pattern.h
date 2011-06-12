@@ -225,7 +225,7 @@ class Comm_pattern : public Component {
 	    num_ranks= x_dim * y_dim * NoC_x_dim * NoC_y_dim * cores;
 
 	    if (my_rank == 0)   {
-		printf("||| Arranging %d ranks as a %d * %d logical mesh\n",
+		printf("#  |||  Arranging %d ranks as a %d * %d logical mesh\n",
 		    num_ranks, logical_width, logical_height);
 	    }
 

@@ -97,23 +97,23 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
     cores_per_node= NoC_width * NoC_height * cores;
 
     if (my_rank == 0)   {
-	printf("||| mesh x %d, y %d, = %d nodes\n",
+	printf("#  |||  mesh x %d, y %d, = %d nodes\n",
 	    mesh_width, mesh_height, mesh_width * mesh_height);
-	printf("||| NoC x %d, y %d, with %d cores each\n",
+	printf("#  |||  NoC x %d, y %d, with %d cores each\n",
 	    NoC_x_dim, NoC_y_dim, cores_per_router);
-	printf("||| Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
-	printf("||| Network bandwidth %.3f GB/s, latency %.9f s\n",
+	printf("#  |||  Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
+	printf("#  |||  Network bandwidth %.3f GB/s, latency %.9f s\n",
 	    (double)net_bandwidth / 1000000000.0, (double)net_latency / 1000000000.0);
-	printf("||| Node bandwidth    %.3f GB/s, latency %.9f s\n",
+	printf("#  |||  Node bandwidth    %.3f GB/s, latency %.9f s\n",
 	    (double)node_bandwidth / 1000000000.0, (double)node_latency / 1000000000.0);
-	printf("||| Checkpoint method is ");
+	printf("#  |||  Checkpoint method is ");
 	switch (method)   {
 	    case CHCKPT_NONE:
 		printf("none\n");
 		break;
 	    case CHCKPT_COORD:
 		printf("coordinated\n");
-		printf("||| Checkpoint every %.9f s\n", (double)chckpt_interval / 1000000000.0);
+		printf("#  |||  Checkpoint every %.9f s\n", (double)chckpt_interval / 1000000000.0);
 		break;
 	    case CHCKPT_UNCOORD:
 		printf("uncoordinated with message logging\n");

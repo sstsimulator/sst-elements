@@ -17,8 +17,7 @@
 #include <sst/core/cpunicEvent.h>
 #include "ping_pong.h"
 
-const int num_msg= 10;
-const int end_len= 1024; // 1024 * 1024;
+
 
 void
 Pingpong_pattern::handle_events(Event *sst_event)
@@ -37,66 +36,70 @@ double latency;
 
     switch (event)   {
 	case START:
-	    // If I'm rank 0 send, otherwise wait
 	    cnt= num_msg;
 	    done= false;
 	    first_receive= true;
-	    len= 0;
+	    len= 0; // Starting length
 
 
 	    if (my_rank == 0)   {
-		printf("[%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
+		printf("# [%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
 			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
-		printf("[%3d] Num msg per msg size: %d\n", my_rank, num_msg);
+		printf("# [%3d] Num msg per msg size: %d\n", my_rank, num_msg);
 		start_time= getCurrentSimTime();
+
+		// If I'm rank 0 send, otherwise wait
 		data_send(dest, len);
 	    } else if (my_rank != dest)   {
 		done= true;
 	    } else   {
-		printf("[%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
+		printf("# [%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
 			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
 	    }
 	    break;
+
 	case RECEIVE:
 	    // We're either rank 0 or dest. Others don't receive.
 	    // Send it back, unless we're done
 	    cnt--;
 	    if (first_receive)   {
-		printf("[%3d] Number of hops (routers) along path: %d\n", my_rank, e->hops);
+		printf("# [%3d] Number of hops (routers) along path: %d\n", my_rank, e->hops);
+		if (my_rank == 0)   {
+		    printf("#\n");
+		    printf("# Msg size (bytes)   Latency (seconds)\n");
+		}
 		first_receive= false;
 	    }
 
 	    if (my_rank != 0)   {
 		// We always send back (to 0)
 		data_send(0, len);
-		// printf("[%3d] sending to %d\n", my_rank, 0);
+
 		if (cnt < 1)   {
 		    if (len > 0)   {
-			len= len * 2;
+			len= len + len_inc;
 		    } else   {
-			len= 1;
+			len= len_inc;
 		    }
 		    cnt= num_msg;
 		    if (len > end_len)   {
 			done= true;
 		    }
 		}
-	    } else   { // I'm rank 0
+
+	    } else   {
+		// I'm rank 0
 		if (cnt > 0)   {
 		    data_send(dest, len);
-		    // printf("[%3d] sending to %d\n", my_rank, dest);
 		} else   {
 		    execution_time= (double)(getCurrentSimTime() - start_time) / 1000000000.0;
 		    latency= execution_time / num_msg / 2.0;
-		    printf("[%3d] %9d Bytes %.9f s. RTT: %.9f s/msg, BW %9.3f MB/s\n",
-			my_rank, len, execution_time, latency * 2.0,
-			(double)len / latency / 1000000.0);
-
+		    printf("%9d %.9f\n", len, latency);
 		    // Start next message size, if we haven't reached 0
 		    if (len > 0)   {
-			len= len * 2;
+			len= len + len_inc;
 		    } else   {
-			len= 1;
+			len= len_inc;
 		    }
 		    if (len > end_len)   {
 			done= true;
@@ -113,7 +116,6 @@ double latency;
     }
 
     if (done)   {
-	// printf("[%3d] Done\n", my_rank);
 	unregisterExit();
     }
 
