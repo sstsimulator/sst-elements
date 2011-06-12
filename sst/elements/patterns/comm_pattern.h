@@ -273,8 +273,8 @@ class Comm_pattern : public Component {
 		}
 	};
     
-	void register_app_pattern(Comm_pattern::PatternHandlerBase* handler);
-	void SM_transition(int machineID);
+	uint32_t register_app_pattern(Comm_pattern::PatternHandlerBase* handler);
+	void SM_transition(uint32_t machineID);
 
 	int myNetX(void);
 	int myNetY(void);
@@ -287,7 +287,7 @@ class Comm_pattern : public Component {
 	int myNoCY(void);
 
 	// FIXME: This needs to be more generic as well
-	void data_send(int dest, int len);
+	void data_send(int dest, int len, int event_type);
 
     private:
 
@@ -299,8 +299,21 @@ class Comm_pattern : public Component {
 	void handle_nvram_events(Event *sst_event);
 	void handle_storage_events(Event *sst_event);
 
-	// FIXME: This needs to become generic and more than one
-	Comm_pattern::PatternHandlerBase* pingpong_handler;
+	typedef struct SM_t   {
+	    Comm_pattern::PatternHandlerBase* handler;
+	    uint32_t tag;
+	} SM_t;
+	std::vector <SM_t>SM;
+
+	int currentSM;
+
+	void set_currentSM(int SMnum)   {
+	    currentSM= SMnum;
+	}
+
+	int get_currentSM(void)   {
+	    return currentSM;
+	}
 
 	// Input paramters for simulation
 	Patterns *common;

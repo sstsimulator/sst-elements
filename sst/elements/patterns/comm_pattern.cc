@@ -19,25 +19,45 @@
 //
 
 // Register a state machine and a handler for events
-void
+// Assign a SM number
+uint32_t
 Comm_pattern::register_app_pattern(Comm_pattern::PatternHandlerBase* handler)
 {
-    pingpong_handler= handler;
+    SM_t sm;
+
+    sm.handler= handler;
+    // Assign a unique tag. Position in list should do...
+    sm.tag= SM.size();
+
+    // Store it
+    SM.push_back(sm);
+
+    // Whichever this SM is, it is currently running ;-)
+    set_currentSM(SM.size() - 1);
+
+    return SM.size() - 1;
+
 }  // end of register_app_pattern
 
 
 
 // Transition to another state machine
 void
-Comm_pattern::SM_transition(int machineID)
+Comm_pattern::SM_transition(uint32_t machineID)
 {
 }  // end of SM_transition
 
 
 void
-Comm_pattern::data_send(int dest, int len)
+Comm_pattern::data_send(int dest, int len, int event_type)
 {
-    common->send(2440, dest, envelope_size + len);
+
+uint32_t tag= 0;
+
+
+    tag= SM[get_currentSM()].tag;
+    common->send(2440, dest, envelope_size + len, event_type, tag);
+
 }  // end of data_send
 
 
@@ -123,12 +143,22 @@ Comm_pattern::handle_events(CPUNicEvent *e)
 {
 
 int event;
+uint32_t tag;
 
 
-    // FIXME: For now. Later we need to find the currently running state machine
-    // and call the appropriate handler
+    // FIXME: For now. Later we need to figure out whether this event (tag) is
+    // for the currently running state machine. if not, queue it, if yes, call
+    // call the appropriate handler>
     event= (int)e->GetRoutine();
-    (*pingpong_handler)(event);
+    tag= e->tag;
+
+    if (tag == SM[get_currentSM()].tag)   {
+	// Currently running SM. Call it.
+	(*SM[get_currentSM()].handler)(event);
+    } else   {
+	fprintf(stderr, "ERROR: Not implemented yet: tag for SM other than current!\n");
+    }
+
     delete(e);
 
     return;

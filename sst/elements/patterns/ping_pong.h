@@ -57,7 +57,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    }
 
 	    // Let Comm_pattern know which handler we want to have called
-	    register_app_pattern(new Comm_pattern::PatternHandler<Pingpong_pattern>
+	    pingpong= register_app_pattern(new Comm_pattern::PatternHandler<Pingpong_pattern>
 		(this, &Pingpong_pattern::handle_events));
         }
 
@@ -70,6 +70,7 @@ class Pingpong_pattern : public Comm_pattern {
 	void handle_events(int sst_event);
 	Params_t params;
 
+	uint32_t pingpong;
 	int cnt;
 	int done;
 	int len;
@@ -86,6 +87,7 @@ class Pingpong_pattern : public Comm_pattern {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
+	    ar & BOOST_SERIALIZATION_NVP(pingpong);
 	    ar & BOOST_SERIALIZATION_NVP(cnt);
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(len);

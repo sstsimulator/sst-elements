@@ -297,7 +297,7 @@ SimTime_t value;
 	    if (my_rank >= nranks / 2)   {
 		// If I'm a leaf, send my data
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 		STATE_DBG("BCAST1"); // This is really to REDUCE1 to BCAST1
 		state= BCAST1;
@@ -357,7 +357,7 @@ unsigned int leaves;
 		if (my_rank >= nranks / 2)   {
 		    // If I'm a leaf, send my data
 		    if (parent >= 0)   {
-			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
+			common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
 		    }
 		    STATE_DBG("BCAST1");
 		    state= BCAST1;
@@ -399,7 +399,7 @@ unsigned int leaves;
 
 		// Send result up
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 	    }
 	    break;
@@ -454,7 +454,7 @@ int dest;
 	    if (my_rank >= nranks / 2)   {
 		// If I'm a leaf, send my data
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 		STATE_DBG("BCAST2");
 		state= BCAST2;
@@ -515,7 +515,7 @@ unsigned int leaves;
 		if (my_rank >= nranks / 2)   {
 		    // If I'm a leaf, send my data
 		    if (parent >= 0)   {
-			common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
+			common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&msg_wait_time, sizeof(msg_wait_time));
 		    }
 		    STATE_DBG("BCAST2");
 		    state= BCAST2;
@@ -556,7 +556,7 @@ unsigned int leaves;
 
 		// Send result up
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 	    }
 	    break;
@@ -718,7 +718,7 @@ unsigned int leaves;
 
 		// Send result up
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 
 		// Then enter the broadcast
@@ -732,16 +732,16 @@ unsigned int leaves;
 			1000000000.0 / ((double)value / (num_msgs * nranks / 2)));
 
 		    if (left >= 0)   {
-			common->event_send(left, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
+			common->event_send(left, BCAST_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    if (right >= 0)   {
-			common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
+			common->event_send(right, BCAST_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    bcast_done= true;
 		    STATE_DBG("REDUCE2");
 		    state= REDUCE2;
 		    value= 0;
-		    common->event_send(my_rank, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(my_rank, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 	    }
 	    break;
@@ -807,13 +807,13 @@ unsigned int leaves;
 
 		// Send result up
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 
 		if (my_rank == 0)   {
 		    STATE_DBG("SENDING2");
 		    state= SENDING2;
-		    common->event_send(my_rank, START, 0, 0, NULL, 0);
+		    common->event_send(my_rank, START, 0, 0, 0, NULL, 0);
 		} else   {
 		    STATE_DBG("WAITING2");
 		    state= WAITING2;
@@ -883,7 +883,7 @@ unsigned int leaves;
 
 		// Send result up
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 
 		STATE_DBG("BCAST2");
@@ -897,10 +897,10 @@ unsigned int leaves;
 			1000000000.0 / ((double)msg_wait_time / num_msgs));
 
 		    if (left >= 0)   {
-			common->event_send(left, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
+			common->event_send(left, BCAST_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    if (right >= 0)   {
-			common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, sizeof(value));
+			common->event_send(right, BCAST_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		    }
 		    bcast_done= true;
 		    STATE_DBG("WAITING3");
@@ -945,10 +945,10 @@ int value_len;
 	    e->DetachPayload(&value, &value_len);
 
 	    if (left >= 0)   {
-		common->event_send(left, BCAST_DATA, 0, 0, (char *)&value, value_len);
+		common->event_send(left, BCAST_DATA, 0, 0, 0, (char *)&value, value_len);
 	    }
 	    if (right >= 0)   {
-		common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, value_len);
+		common->event_send(right, BCAST_DATA, 0, 0, 0, (char *)&value, value_len);
 	    }
 	    STATE_DBG("REDUCE2");
 	    state= REDUCE2;
@@ -957,7 +957,7 @@ int value_len;
 	    if (my_rank >= nranks / 2)   {
 		// If I'm a leaf, send my data
 		if (parent >= 0)   {
-		    common->event_send(parent, REDUCE_DATA, 0, 0, (char *)&value, sizeof(value));
+		    common->event_send(parent, REDUCE_DATA, 0, 0, 0, (char *)&value, sizeof(value));
 		}
 		STATE_DBG("BCAST1");
 		state= WAITING2;
@@ -1006,10 +1006,10 @@ int value_len;
 	    e->DetachPayload(&value, &value_len);
 
 	    if (left >= 0)   {
-		common->event_send(left, BCAST_DATA, 0, 0, (char *)&value, value_len);
+		common->event_send(left, BCAST_DATA, 0, 0, 0, (char *)&value, value_len);
 	    }
 	    if (right >= 0)   {
-		common->event_send(right, BCAST_DATA, 0, 0, (char *)&value, value_len);
+		common->event_send(right, BCAST_DATA, 0, 0, 0, (char *)&value, value_len);
 	    }
 	    bcast_done= true;
 
@@ -1021,7 +1021,7 @@ int value_len;
 	    } else   {
 		STATE_DBG("SENDING3");
 		state= SENDING3;
-		common->event_send(my_rank, START, 0, 0, NULL, 0);
+		common->event_send(my_rank, START, 0, 0, 0, NULL, 0);
 	    }
 	    break;
 

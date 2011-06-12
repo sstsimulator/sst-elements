@@ -19,21 +19,23 @@
 
 
 
+typedef enum {PP_START, PP_RECEIVE} pingpong_events_t;
+
 void
 Pingpong_pattern::handle_events(int sst_event)
 {
 
-pattern_event_t event;
+pingpong_events_t event;
 double execution_time;
 double latency;
 
 
     // Extract the pattern event type from the SST event                                                      
     // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
-    event= (pattern_event_t)sst_event;
+    event= (pingpong_events_t)sst_event;
 
     switch (event)   {
-	case START:
+	case PP_START:
 	    cnt= num_msg;
 	    done= false;
 	    first_receive= true;
@@ -47,7 +49,7 @@ double latency;
 		start_time= getCurrentSimTime();
 
 		// If I'm rank 0 send, otherwise wait
-		data_send(dest, len);
+		data_send(dest, len, PP_RECEIVE);
 	    } else if (my_rank != dest)   {
 		done= true;
 	    } else   {
@@ -56,7 +58,7 @@ double latency;
 	    }
 	    break;
 
-	case RECEIVE:
+	case PP_RECEIVE:
 	    // We're either rank 0 or dest. Others don't receive.
 	    // Send it back, unless we're done
 	    cnt--;
@@ -71,7 +73,7 @@ double latency;
 
 	    if (my_rank != 0)   {
 		// We always send back (to 0)
-		data_send(0, len);
+		data_send(0, len, PP_RECEIVE);
 
 		if (cnt < 1)   {
 		    if (len > 0)   {
@@ -88,7 +90,7 @@ double latency;
 	    } else   {
 		// I'm rank 0
 		if (cnt > 0)   {
-		    data_send(dest, len);
+		    data_send(dest, len, PP_RECEIVE);
 		} else   {
 		    execution_time= (double)(getCurrentSimTime() - start_time) / 1000000000.0;
 		    latency= execution_time / num_msg / 2.0;
@@ -104,7 +106,7 @@ double latency;
 		    } else   {
 			cnt= num_msg;
 			start_time= getCurrentSimTime();
-			data_send(dest, len);
+			data_send(dest, len, PP_RECEIVE);
 		    }
 		}
 	    }

@@ -141,6 +141,13 @@ Patterns::send(int dest, int len)
 
 
 void
+Patterns::send(SST::SimTime_t start_delay, int dest, int len, int event_type, uint32_t tag)
+{
+    event_send(dest, (pattern_event_t)event_type, tag, start_delay, len);
+}  /* end of send() */
+
+
+void
 Patterns::send(SST::SimTime_t start_delay, int dest, int len)
 {
 
@@ -159,7 +166,7 @@ SimTime_t delay;
 	// This is an intra-node message
 	delay= ((SimTime_t)len * 1000000000) / node_bandwidth + start_delay;
     }
-    event_send(dest, RECEIVE, delay, len);
+    event_send(dest, RECEIVE, 0, delay, len);
 
 }  /* end of send() */
 
@@ -191,7 +198,7 @@ SimTime_t delay;
 ** No actual data is sent.
 */
 void
-Patterns::event_send(int dest, pattern_event_t event, SimTime_t delay, uint32_t msg_len,
+Patterns::event_send(int dest, pattern_event_t event, uint32_t tag, SimTime_t delay, uint32_t msg_len,
 	const char *payload, int payload_len)
 {
 
@@ -206,6 +213,7 @@ int my_router, dest_router;
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= msg_len;
+    e->tag= tag;
     e->dest= dest;
     e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
 

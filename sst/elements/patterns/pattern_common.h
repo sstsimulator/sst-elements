@@ -76,7 +76,8 @@ class Patterns   {
 
 	void send(int dest, int len);
 	void send(SST::SimTime_t start_delay, int dest, int len);
-	void event_send(int dest, pattern_event_t event, SST::SimTime_t delay= 0,
+	void send(SST::SimTime_t start_delay, int dest, int len, int event_type, uint32_t tag);
+	void event_send(int dest, pattern_event_t event, uint32_t tag= 0, SST::SimTime_t delay= 0,
 		uint32_t msg_len= 0, const char *payload= NULL, int payload_len= 0);
 	void storage_write(int data_size, pattern_event_t return_event);
 	void nvram_write(int data_size, pattern_event_t return_event);
