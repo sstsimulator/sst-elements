@@ -241,12 +241,6 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
     } else if ( fildes == 2 ) {
         ::write( fildes, "<cerr> ", 7 );
     }
-    
-    if ( fildes == 1 ) {
-        ::write( fildes, "<cout> ", 7 );
-    } else if ( fildes == 2 ) {
-        ::write( fildes, "<cerr> ", 7 );
-    }
     int64_t retval = ::write( fildes, buf, nbytes ); 
 
 
