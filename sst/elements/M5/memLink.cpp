@@ -20,11 +20,12 @@ MemLink::MemLink( const MemLinkParams *p ) :
 
     assert( m_link );
 
-    m_tc = p->m5Comp->registerTimeBase("1ns");
-
-    assert( m_tc );
-
-    m_link->setDefaultTimeBase(m_tc);
+    printf("FIXME MemLink::MemLink()\n");
+    abort();
+    // Fix me! We can't reset the M5 componets time base
+    //m_tc = p->m5Comp->registerTimeBase("1ns");
+    //assert( m_tc );
+    //m_link->setDefaultTimeBase(m_tc);
 }
 
 Port *MemLink::getPort(const std::string &if_name, int idx )
