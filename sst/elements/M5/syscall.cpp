@@ -76,7 +76,7 @@ Syscall::Syscall( const Params* p ) :
     m_comp( p->m5Comp )
 {
     m_endAddr = m_startAddr + sizeof(m_mailbox);
-    DBGX(2,"startAddr=%#lx endAddr=%#lx\n", m_startAddr, m_endAddr);
+    DBGX(3,"startAddr=%#lx endAddr=%#lx\n", m_startAddr, m_endAddr);
     memset( m_mailbox, 0, sizeof(m_mailbox) );
 
     m_comp->barrier().add( &m_barrierHandler );
@@ -88,13 +88,13 @@ Syscall::~Syscall()
 
 void Syscall::process(void)
 {
-    DBGX(2,"\n");
+    DBGX(3,"\n");
     finishSyscall();
 }
 
 void Syscall::addressRanges(AddrRangeList& resp)
 {
-    DBGX(2,"\n");
+    DBGX(3,"\n");
     resp.clear();
     resp.push_back( RangeSize( m_startAddr, m_endAddr ));
 }
@@ -130,7 +130,7 @@ Tick Syscall::read(Packet* pkt)
 
 void Syscall::startOpen( Addr path )
 {
-    DBGX(2, "path=%#lx\n", path ); 
+    DBGX(3, "path=%#lx\n", path ); 
 
     m_dmaEvent.buf = (uint8_t*) malloc( FILENAME_MAX );
     assert( m_dmaEvent.buf );
@@ -153,10 +153,10 @@ int64_t Syscall::finishOpen( int oflag, mode_t mode )
 
     int64_t  retval;
     if ( hostFlags & O_CREAT ) {
-        DBGX(2, "path=`%s` flags=%#x mode=%#x\n", path, hostFlags, mode );
+        DBGX(3, "path=`%s` flags=%#x mode=%#x\n", path, hostFlags, mode );
         retval = ::open( path, hostFlags, mode );
     } else {
-        DBGX(2, "path=`%s` flags=%#x\n", path, hostFlags );
+        DBGX(3, "path=`%s` flags=%#x\n", path, hostFlags );
         retval = ::open( path, hostFlags );
     }
 
@@ -166,20 +166,20 @@ int64_t Syscall::finishOpen( int oflag, mode_t mode )
         retval = -errno;
     } 
 
-    DBGX(2,"retval=%d\n",retval);
+    DBGX(3,"retval=%d\n",retval);
 
     return retval;
 }
 
 int64_t Syscall::close( int fd )
 {
-    DBGX(2, "fd=%d\n", fd );
+    DBGX(3, "fd=%d\n", fd );
     return ::close( fd );
 }
 
 int64_t Syscall::startRead( int fildes, Addr addr, size_t nbytes )
 {
-    DBGX(2, "fd=%d buf=%#lx nbytes=%lu\n", fildes, addr, nbytes );
+    DBGX(3, "fd=%d buf=%#lx nbytes=%lu\n", fildes, addr, nbytes );
 
     if ( nbytes == 0 ) return  0;
 
@@ -193,7 +193,7 @@ int64_t Syscall::startRead( int fildes, Addr addr, size_t nbytes )
 
     //printf("%s\n",m_dmaEvent.buf);
 
-    DBGX(2, "retval=%lu\n", m_dmaEvent.retval );
+    DBGX(3, "retval=%lu\n", m_dmaEvent.retval );
 
     if ( m_dmaEvent.retval == -1 ) {
         free( m_dmaEvent.buf );
@@ -208,7 +208,7 @@ int64_t Syscall::startRead( int fildes, Addr addr, size_t nbytes )
 
 int64_t Syscall::finishRead( int fildes, size_t nbytes )
 {
-    DBGX(2, "fd=%d nbytes=%lu\n", fildes, nbytes );
+    DBGX(3, "fd=%d nbytes=%lu\n", fildes, nbytes );
     
     free( m_dmaEvent.buf );
 
@@ -217,7 +217,7 @@ int64_t Syscall::finishRead( int fildes, size_t nbytes )
 
 int64_t Syscall::startWrite( int fildes, Addr addr, size_t nbytes )
 {
-    DBGX(2, "fd=%d buf=%#lx nbytes=%lu\n", fildes, addr, nbytes );
+    DBGX(3, "fd=%d buf=%#lx nbytes=%lu\n", fildes, addr, nbytes );
 
     if ( nbytes == 0 ) return 0;
 
@@ -234,7 +234,7 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
 {
     const void* buf = (const void*) m_dmaEvent.buf;
 
-    DBGX( 2, "fd=%d nbytes=%lu\n", fildes, nbytes );
+    DBGX( 3, "fd=%d nbytes=%lu\n", fildes, nbytes );
 
     if ( fildes == 1 ) {
         ::write( fildes, "<cout> ", 7 );
@@ -242,9 +242,15 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
         ::write( fildes, "<cerr> ", 7 );
     }
     
+    if ( fildes == 1 ) {
+        ::write( fildes, "<cout> ", 7 );
+    } else if ( fildes == 2 ) {
+        ::write( fildes, "<cerr> ", 7 );
+    }
     int64_t retval = ::write( fildes, buf, nbytes ); 
 
-    DBGX( 2, "retval=%d\n", retval );
+
+    DBGX( 3, "retval=%d\n", retval );
 
     if ( retval == -1 ) {
         retval = -errno; 
@@ -257,13 +263,13 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
 
 void Syscall::barrierReturn( SST::Event* )
 {
-    DBGX(2,"\n");
+    DBGX(3,"\n");
     foo( 0 );
 }
 
 void Syscall::startSyscall(void)
 {
-    DBGX(2,"%d\n", m_mailbox[0xf] - 1 );
+    DBGX(3,"%d\n", m_mailbox[0xf] - 1 );
     int64_t retval = 0;
     switch ( m_mailbox[0xf] - 1 ) 
     {
@@ -304,7 +310,7 @@ void Syscall::startSyscall(void)
 
 void Syscall::finishSyscall(void)
 {
-    DBGX(2,"%d\n", m_mailbox[0xf] - 1 );
+    DBGX(3,"%d\n", m_mailbox[0xf] - 1 );
     int64_t retval;
     switch ( m_mailbox[0xf] - 1 ) 
     {
