@@ -88,7 +88,7 @@ class Syscall : public DmaDevice
     M5*           m_comp;
 
     void foo( int64_t retval ) {
-        DBGX(2,"retval %d\n",retval);
+        DBGX(3,"retval %d\n",retval);
         m_mailbox[0] = retval;
         memset( m_mailbox + 1, 0, sizeof(m_mailbox) - sizeof(m_mailbox[0]));
     }
