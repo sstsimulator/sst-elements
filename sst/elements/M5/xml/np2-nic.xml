@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+
+<config>
+    stopAtCycle=1000000000s
+</config>
+
+<nicLink>
+    <lat> 200ns </lat>
+</nicLink>
+
+<rtrLink>       
+    <lat>10ns</lat>
+</rtrLink>              
+                    
+<rtr_params>    
+    <clock>         500Mhz </clock>
+    <debug>         no     </debug>
+    <info>          no     </info>
+
+    <iLCBLat>       13     </iLCBLat>
+    <oLCBLat>       7      </oLCBLat>
+    <routingLat>    3      </routingLat>
+    <iQLat>         2      </iQLat>
+            
+    <OutputQSize_flits>       16  </OutputQSize_flits>
+    <InputQSize_flits>        96  </InputQSize_flits>
+    <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
+                        
+    <network.xDimSize> 2 </network.xDimSize>
+    <network.yDimSize> 1 </network.yDimSize>
+    <network.zDimSize> 1 </network.zDimSize>
+                
+    <routing.xDateline> 0 </routing.xDateline>
+    <routing.yDateline> 0 </routing.yDateline>
+    <routing.zDateline> 0 </routing.zDateline>
+</rtr_params>
+
+
+<sst>
+    <component id="0.system" >
+        <m5C.M5>
+            <params>
+                <configFile>xml/nic-0-M5.xml</configFile>
+                <debug>0</debug>
+                <M5debug> none </M5debug>
+                <info>yes</info>
+                <registerExit>yes</registerExit>
+            </params>
+            <links>
+                <link id="0.ptlNicLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>nic</name>
+                    </params>
+                </link>
+                <link id="0.dmaLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>dma</name>
+                    </params>
+                </link>
+            </links>
+        </m5C.M5>
+    </component>
+
+    <component id="0.ptlNic" rank=0 >
+        <m5C.PtlNic>
+            <params>
+                <nid>0</nid>
+                <id>0</id>
+                <clock>500Mhz</clock>
+                <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
+            </params>
+            <links>
+                <link id="0.ptlNicLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>mmif</name>
+                    </params>
+                </link>
+                <link id="0.dmaLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>dma</name>
+                    </params>
+                </link>
+                <link id="0.nic2rtr">
+                    <params include=nicLink>
+                        <name>rtr</name>
+                    </params>
+                </link>
+            </links>
+        </m5C.PtlNic>
+    </component>
+
+    <component id="0.rtr" rank=0 >
+        <SS_router.SS_router>
+            <params include=rtr_params>
+                <id> 0 </id>
+            </params>
+            <links>
+                <link id="0.nic2rtr">
+                    <params include=nicLink>
+                        <name> nic </name>
+                    </params>
+                </link>
+                <link id="xr2r.0.0.1">
+                    <params include=rtrLink>
+                        <name> xPos </name>
+                    </params>
+                </link>
+                <link id="xr2r.0.0.0">
+                    <params include=rtrLink>
+                        <name> xNeg </name>
+                    </params>
+                </link>
+            </links>
+        </SS_router.SS_router>
+    </component>
+
+
+    <component id="1.system" >
+        <m5C.M5>
+            <params>
+                <configFile>xml/nic-1-M5.xml</configFile>
+                <debug>0</debug>
+                <M5debug> none </M5debug>
+                <info>yes</info>
+                <registerExit>yes</registerExit>
+            </params>
+            <links>
+                <link id="1.ptlNicLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>nic</name>
+                    </params>
+                </link>
+                <link id="1.dmaLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>dma</name>
+                    </params>
+                </link>
+            </links>
+        </m5C.M5>
+    </component>
+
+    <component id="1.ptlNic" rank=0 >
+        <m5C.PtlNic>
+            <params>
+                <nid>1</nid>
+                <id>1</id>
+                <clock>500Mhz</clock>
+                <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
+            </params>
+            <links>
+                <link id="1.ptlNicLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>mmif</name>
+                    </params>
+                </link>
+                <link id="1.dmaLink">
+                    <params>
+                        <lat>1ns</lat>
+                        <name>dma</name>
+                    </params>
+                </link>
+                <link id="1.nic2rtr">
+                    <params include=nicLink>
+                        <name>rtr</name>
+                    </params>
+                </link>
+            </links>
+        </m5C.PtlNic>
+    </component>
+
+    <component id="1.rtr" rank=0 >
+        <SS_router.SS_router>
+            <params include=rtr_params>
+                <id> 1 </id>
+            </params>
+            <links>
+                <link id="1.nic2rtr">
+                    <params include=nicLink>
+                        <name> nic </name>
+                    </params>
+                </link>
+                <link id="xr2r.0.0.0">
+                    <params include=rtrLink>
+                        <name> xPos </name>
+                    </params>
+                </link>
+                <link id="xr2r.0.0.1">
+                    <params include=rtrLink>
+                        <name> xNeg </name>
+                    </params>
+                </link>
+            </links>
+        </SS_router.SS_router>
+    </component>
+
+
+</sst>
