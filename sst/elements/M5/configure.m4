@@ -20,7 +20,7 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   AS_IF([test ! -z "$with_m5" -a "$with_m5" != "yes"],
     [ CPPFLAGS="-I$with_m5 $CPPFLAGS"
-      LDFLAGS="-L$with_m5 $LDFLAGS"],
+      LDFLAGS="-L$with_m5 $LDFLAGS -lrt"],
     [])
 
   AC_LANG_PUSH(C++)
