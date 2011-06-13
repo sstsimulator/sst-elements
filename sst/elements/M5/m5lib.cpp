@@ -6,6 +6,7 @@
 #include <sst/core/element.h>
 
 #include <bounce.h>
+#include <ptlNic/ptlNic.h>
 #include <m5.h>
 
 using namespace SST;
@@ -22,6 +23,13 @@ create_Bounce(ComponentId_t id, Component::Params_t& params)
     return new Bounce( id, params );
 }
 
+static Component*
+create_PtlNic(ComponentId_t id, Component::Params_t& params)
+{
+    return new PtlNic( id, params );
+}
+
+
 static const ElementInfoComponent components[] = {
     { "M5",
       "M5",
@@ -32,6 +40,11 @@ static const ElementInfoComponent components[] = {
       "Bounce, test component",
       NULL,
       create_Bounce
+    },
+    { "PtlNic",
+      "PtlNic, Portals4 memory mapped nic",
+      NULL,
+      create_PtlNic
     },
     { NULL, NULL, NULL, NULL }
 };

@@ -9,7 +9,20 @@ typedef enum {
     PtlNIInit = 1,   
     PtlNIFini,
     PtlPTAlloc,
-    PtlPTFree
+    PtlPTFree,
+    PtlMDBind,
+    PtlMDRelease,
+    PtlMEAppend,
+    PtlMEUnlink,
+    PtlGetId,
+    PtlCTAlloc,
+    PtlCTFree,
+    PtlCTWait,
+    PtlPut,
+    PtlEQAlloc,
+    PtlEQFree,
+    ContextInit,
+    ContextFini,
 } cmd_t;
 
 #define CMD_NAMES {\
@@ -17,14 +30,28 @@ typedef enum {
     "PtlNIInit",\
     "PtlNIFini",\
     "PtlPTAlloc",\
-    "PtlPTFree" \
+    "PtlPTFree",\
+    "PtlMDBind",\
+    "PtlMDRelease",\
+    "PtlMEAppend",\
+    "PtlMEUnlink",\
+    "PtlGetId",\
+    "PtlCTAlloc",\
+    "PtlCTFree",\
+    "PtlCTWait",\
+    "PtlPut",\
+    "PtlEQAlloc",\
+    "PtlEQFree",\
+    "ContextInit",\
+    "ContextFini"\
 }
 
-    #define NUM_ARGS 15
 typedef struct {
+    #define NUM_ARGS 15
     volatile unsigned int retval;
     volatile int cmd;
-    unsigned long arg[ NUM_ARGS ];
+    int context;
+    unsigned long args[ NUM_ARGS ];
 } cmdQueueEntry_t;
 
 #endif

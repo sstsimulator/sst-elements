@@ -1,108 +1,255 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
-#include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
+#include "dmaEvent.h"
+#include "dmaEngine.h"
+
+#include "recvEntry.h"
 #include "ptlNic.h"
-#include <debug.h>
-#include <paramHelp.h>
-#include <m5.h>
-#include <system.h>
+#include "ptlNicEvent.h"
+#include "ptlNI.h"
+#include "ptlPT.h"
+#include "ptlMD.h"
+#include "ptlME.h"
+#include "ptlCT.h"
+#include "ptlEQ.h"
+#include "ptlProcess.h"
+#include "ptlPut.h"
 
-extern "C" {
-SimObject* create_PtlNic( SST::Component*, string name,
-                                                SST::Params& sstParams );
-}
+#include "trace.h"
 
-SimObject* create_PtlNic( SST::Component* comp, string name, 
-                                                SST::Params& sstParams )
+const char * PtlNic::Cmd::m_cmdNames[] = CMD_NAMES;
+
+PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
+    RtrIF( id, params ),
+    m_dmaEngine( *this, params.find_integer( "nid") ),
+    m_nid( params.find_integer("nid") ),
+    m_vcInfoV( 2, *this ),
+    m_contextV( 1, NULL )
 {
-    PtlNic::Params& memP   = *new PtlNic::Params;
+    TRACE_ADD( PtlNic );
+    TRACE_ADD( PtlCmd );
+    PRINT_AT(PtlNic,"n");
 
-    memP.name = name;
-    INIT_HEX( memP, sstParams, startAddr );
-    memP.system = create_System( "syscall", NULL, Enums::timing ); 
-    memP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
-
-    return new PtlNic( &memP );
-}
-
-PtlNic::PtlNic( const Params* p ) :
-    DmaDevice( p ),
-    m_startAddr( p->startAddr ),
-    m_comp( p->m5Comp )
-{
-    m_endAddr = m_startAddr + sizeof(cmdQueue_t);
-    DBGX(2,"startAddr=%#lx endAddr=%#lx\n", m_startAddr, m_endAddr);
-    m_cmdQueue.head = m_cmdQueue.tail = 0;
-}    
-
-PtlNic::~PtlNic()
-{
-}
-
-void PtlNic::process(void)
-{
-    DBGX(2,"\n");
-//    finishPtlNic();
-}
-
-void PtlNic::addressRanges(AddrRangeList& resp)
-{
-    DBGX(2,"\n");
-    resp.clear();
-    resp.push_back( RangeSize( m_startAddr, m_endAddr ));
-}
-
-Tick PtlNic::write(Packet* pkt)
-{
-    DBGX(2,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
-                                        pkt->getSize());
-
-    assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );
-
-    pkt->writeData((uint8_t*) &m_cmdQueue + ( pkt->getAddr() - m_startAddr ));
-    pkt->makeTimingResponse();
-
-    if ( ( pkt->getAddr() - m_startAddr ) == offsetof( cmdQueue_t, tail ) ) {
-        foo( m_cmdQueue.tail );
+    for ( int i=0; i < m_vcInfoV.size(); i++ ) {
+        m_vcInfoV[ i ].setVC( i );
     }
 
-    return 1;
+    registerTimeBase( "1ns" );
+    registerClock( "500Mhz",
+            new SST::Clock::Handler< PtlNic >( this, &PtlNic::clock ) );
+
+    m_mmifLink = configureLink( "mmif",
+           new SST::Event::Handler< PtlNic >( this, &PtlNic::mmifHandler ) );
+
+    assert( m_mmifLink );
 }
 
-Tick PtlNic::read(Packet* pkt)
+int PtlNic::Setup()
 {
-    DBGX(2,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
-                                        pkt->getSize());
-
-    assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );
-
-    pkt->setData( ( uint8_t*) &m_cmdQueue + ( pkt->getAddr() - m_startAddr ) );
-    pkt->makeTimingResponse();
-    return 1;
+    return 0;
 }
 
-
-void PtlNic::foo( int queuePos )
+bool PtlNic::clock( SST::Cycle_t cycle )
 {
-    DBGX(2,"tail moved to %d\n", queuePos );
-    cmdQueueEntry_t *entry = &m_cmdQueue.queue[ m_cmdQueue.head ];
-    DBGX(2,"cmd %s\n", m_cmdNames[entry->cmd] ); 
-    switch( m_cmdQueue.queue[ m_cmdQueue.head ].cmd ) {
-      case PtlNIInit:
-        for ( int i = 0; i < 7; i++ ) {
-            DBGX(2,"arg%d %#lx\n",i,entry->arg[i]);
+    processPtlCmdQ();
+    processVCs();
+    processFromRtr();
+    return false;
+}
+
+void PtlNic::processFromRtr()
+{
+    if ( ! toNicQ_empty( MsgVC ) ) {
+        PRINT_AT(PtlNic,"\n");
+        RtrEvent* event = toNicQ_front( MsgVC );
+        toNicQ_pop( MsgVC );
+        CtrlFlit* cFlit = (CtrlFlit*) event->packet.payload; 
+
+        if ( cFlit->s.head ) {
+            PRINT_AT(PtlNic,"got head Packet for nid %d\n",cFlit->s.nid);
+            PtlHdr* hdr = (PtlHdr*) (cFlit + 1);
+            assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
+                                        m_nidRecvEntryM.end() );
+            Context* ctx = findContext( hdr->dest_pid );
+            assert(ctx);
+            RecvEntry* entry = ctx->processHdrPkt( event->packet.payload );
+            if ( entry ) {
+                m_nidRecvEntryM[ cFlit->s.nid ] = entry;
+            }
+        } else {
+
+            assert( m_nidRecvEntryM[ cFlit->s.nid ] );
+
+            if ( m_nidRecvEntryM[ cFlit->s.nid ]->pushPkt(
+                                (unsigned char*) ( cFlit + 1 ), 64 ) ) {
+            
+                PRINT_AT(PtlNic,"erase send entry for nid %d\n", cFlit->s.nid );
+                m_nidRecvEntryM.erase( cFlit->s.nid );
+            }
         }
-        break;
-      case PtlNIFini:
-        break;
-      case PtlPTAlloc:
-        break;
-      case PtlPTFree:
-        break;
+
+        if ( cFlit->s.tail ) {
+            PRINT_AT(PtlNic,"got tailPacket for nid %d\n",cFlit->s.nid);
+            assert( ! m_nidRecvEntryM[ cFlit->s.nid ] );
+        }
+
+        delete event;
     }
-    m_cmdQueue.queue[ m_cmdQueue.head ].retval = 0;
-    m_cmdQueue.queue[ m_cmdQueue.head ].cmd = 0;
-    m_cmdQueue.head = ( m_cmdQueue.head + 1 ) % CMD_QUEUE_SIZE;
 }
+
+Context* PtlNic::findContext( ptl_pid_t pid )
+{
+    PRINT_AT(PtlNic,"targetPid=%d\n", pid );
+
+    for ( int i = 0; i < m_contextV.size(); i++ ) {
+        if ( m_contextV[i] ) {
+            if ( m_contextV[i]->pid() == pid ) {
+                return m_contextV[i];
+            }
+        }
+    }
+}
+
+void PtlNic::mmifHandler( SST::Event* e )
+{
+    PtlNicEvent* event = static_cast<PtlNicEvent*>(e);
+    switch( event->cmd ) {
+      case ContextInit:
+        contextInit( event );
+        break;
+
+      case ContextFini:
+        contextFini( event );
+        break;
+
+      default:
+        ptlCmd( event );
+    }
+}
+
+void PtlNic::ptlCmd( PtlNicEvent* event )
+{
+    Context* ctx = getContext( event->context );
+    assert( ctx );
+    m_ptlCmdQ.push_back( Cmd::create( *this, *ctx, event ) );
+}
+
+void PtlNic::contextInit( PtlNicEvent* event )
+{
+    int retval = allocContext();
+    m_mmifLink->Send( new PtlNicRespEvent( retval ) );
+    delete event;
+}
+
+void PtlNic::contextFini( PtlNicEvent* event )
+{
+    int retval = freeContext( event->context );
+    m_mmifLink->Send( new PtlNicRespEvent( retval ) );
+    delete event;
+}
+
+ptl_pid_t PtlNic::allocPid( ptl_pid_t req_pid )
+{
+    if ( req_pid == PTL_PID_ANY ) {
+        req_pid = 1;
+    }
+    return req_pid;
+}
+
+void PtlNic::processPtlCmdQ( )
+{
+    if ( !m_ptlCmdQ.empty() ) {
+        Cmd* cmd = m_ptlCmdQ.front();
+
+        if ( cmd->work() ) {
+            PRINT_AT(PtlNic,"%s done\n", cmd->name().c_str());
+            m_mmifLink->Send( new PtlNicRespEvent( cmd->retval() ) );
+            delete cmd;
+            m_ptlCmdQ.pop_front();
+        }
+    }
+}
+
+int PtlNic::allocContext()
+{
+    for ( int i = 0; i < m_contextV.size(); i++ ) {
+        if ( ! m_contextV[i] ) {
+            m_contextV[i] = new Context( this );
+            return i;
+        }
+    }
+    return -1;
+}
+
+int PtlNic::freeContext( int i )
+{
+    assert( i < m_contextV.size() );
+    delete m_contextV[i];
+    m_contextV[i] = 0;
+    return 0;
+}
+
+Context* PtlNic::getContext( int i )
+{
+    assert( i < m_contextV.size() );
+    return m_contextV[i];
+}
+
+PtlNic::Cmd* PtlNic::Cmd::create( PtlNic& nic, 
+                    Context& ctx, PtlNicEvent* e ) 
+{
+    switch( e->cmd ) {
+        case PtlNIInit:
+            return new NIInitCmd(nic,ctx,e);
+        case PtlNIFini:
+            return new NIFiniCmd(nic,ctx,e);
+        case PtlPTAlloc:
+            return new PTAllocCmd(nic,ctx,e);
+        case PtlPTFree:
+            return new PTFreeCmd(nic,ctx,e);
+        case PtlMDBind:
+            return new MDBindCmd(nic,ctx,e);
+        case PtlMDRelease:
+            return new MDReleaseCmd(nic,ctx,e);
+        case PtlMEAppend:
+            return new MEAppendCmd(nic,ctx,e);
+        case PtlMEUnlink:
+            return new MEUnlinkCmd(nic,ctx,e);
+        case PtlGetId:
+            return new GetIdCmd(nic,ctx,e);
+        case PtlCTAlloc:
+            return new CTAllocCmd(nic,ctx,e);
+        case PtlCTFree:
+            return new CTFreeCmd(nic,ctx,e);
+        case PtlEQAlloc:
+            return new EQAllocCmd(nic,ctx,e);
+        case PtlEQFree:
+            return new EQFreeCmd(nic,ctx,e);
+        case PtlPut:
+            return new PutCmd(nic,ctx,e);
+        default:
+            abort();
+    }
+}
+
+void PtlNic::processVCs()
+{
+    for ( int i = 0; i < m_vcInfoV.size(); i++ ) {
+        m_vcInfoV[i].process();
+    } 
+}
+
+bool PtlNic::sendMsg( ptl_nid_t nid, PtlHdr* hdr, Addr vaddr, ptl_size_t nbytes,
+                                            CallbackBase* callback )
+{
+    PRINT_AT(PtlNic,"destNid=%d vaddr=%#lx nbytes=%lu\n", nid, vaddr, nbytes );
+    SendEntry* entry = new SendEntry( nid, hdr, vaddr, nbytes, callback );
+
+    assert( entry );
+
+    m_vcInfoV[MsgVC].addMsg( entry );
+    return false;
+}
+
+BOOST_CLASS_EXPORT( RtrEvent );

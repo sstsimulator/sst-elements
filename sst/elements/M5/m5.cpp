@@ -27,6 +27,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     // M5 variable
     want_info = false;
     
+
     if ( params.find( "debug" ) != params.end() ) {
         int level = strtol( params["debug"].c_str(), NULL, 0 );
        
@@ -56,6 +57,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     _dbg.prepend(  tmp.str() + ":");
     _info.prepend(  tmp.str() + ":");
+
+//    TRACE_SET_PREFIX( tmp.str() + ":" );
 
     std::string configFile = "";
     if ( params.find( "configFile" ) != params.end() ) {
