@@ -4,9 +4,9 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
+#include "barrier.h"
 
 class SimLoopExitEvent;
-class Barrier;
 class M5 : public SST::Component
 {
     class Event : public SST::Event {
@@ -28,7 +28,7 @@ class M5 : public SST::Component
     void registerExit();
     void exit( int status );
 
-    Barrier&  barrier() { return *m_barrier; }
+    BarrierAction&  barrier() { return m_barrier; }
 
   private:
     void selfEvent( SST::Event* );
@@ -39,7 +39,7 @@ class M5 : public SST::Component
     SST::TimeConverter *m_tc;
     SimLoopExitEvent   *m_exitEvent;
     int                 m_numRegisterExits;
-    Barrier*            m_barrier;
+    BarrierAction       m_barrier;
 };
 
 #endif

@@ -45,9 +45,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
         } 
     }
 
-    m_barrier = new Barrier( static_cast<Component*>(this),
-                            params.find_prefix_params("barrier.") );  
-
     extern int rgdb_enable;
     rgdb_enable = false;
 
@@ -176,6 +173,7 @@ void M5::selfEvent( SST::Event* )
         arm( m_event.time );
     } else {
         // bug what if we didn't call registerExit()
+        m_barrier.disable();
         unregisterExit();
         INFO( "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
                 m_exitEvent->getCause().c_str(), m_exitEvent->getCode() );

@@ -8,7 +8,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libm5C.la
 libm5C_la_SOURCES = \
     barrier.h \
-    barrier.cpp \
     baseCache.cpp \
     bounce.h \
     bridge.cpp \

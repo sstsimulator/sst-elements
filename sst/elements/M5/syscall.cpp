@@ -71,7 +71,7 @@ Syscall::Syscall( const Params* p ) :
     m_dmaEvent( this ),
     m_syscallEvent( this ),
     m_startAddr( p->startAddr ),
-    m_barrierHandler( SST::Event::Handler<Syscall>(this,
+    m_barrierHandler( BarrierAction::Handler<Syscall>(this,
                                         &Syscall::barrierReturn) ),
     m_comp( p->m5Comp )
 {
@@ -255,7 +255,7 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
     return retval; 
 }
 
-void Syscall::barrierReturn( SST::Event* )
+void Syscall::barrierReturn()
 {
     DBGX(3,"\n");
     foo( 0 );

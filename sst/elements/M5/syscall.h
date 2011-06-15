@@ -74,9 +74,9 @@ class Syscall : public DmaDevice
     int64_t startWrite( int, Addr, size_t );
     int64_t finishWrite( int, size_t );
 
-    SST::Event::Handler<Syscall> m_barrierHandler;
+    BarrierAction::Handler<Syscall> m_barrierHandler;
 
-    void barrierReturn( SST::Event* );
+    void barrierReturn();
 
     uint64_t      m_mailbox[0x10];
 

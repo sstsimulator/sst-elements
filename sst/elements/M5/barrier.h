@@ -1,141 +1,101 @@
 #ifndef _barrier_h
 #define _barrier_h
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include <sst/core/component.h>
-#include <debug.h>
+#include <sst/core/action.h>
+#include <sst/core/simulation.h>
+#include <sst/core/timeLord.h>
 
-class Barrier {
+
+#define BA_DBG(fmt,args...) \
+  fprintf(stderr,"%d:BarrierAction::%s() "fmt, world.rank(), __func__, ##args)
+
+class BarrierAction : public SST::Action 
+{
+     boost::mpi::communicator world; 
 
   public:
-    class BarrierEvent : public SST::Event {
+
+    class HandlerBase {
       public:
-         BarrierEvent() {}
-      private: 
-        friend class boost::serialization::access;
-        template<class Archive>
-        void
-        serialize(Archive & ar, const unsigned int version )
-        {   
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        virtual void operator()() = 0;
+        virtual ~HandlerBase() {}
+    };
+
+    template <typename classT>
+    class Handler : public HandlerBase {
+      private:
+        typedef void (classT::*PtrMember)();
+        const PtrMember member;
+        classT* object;
+
+      public:
+        Handler( classT* const object, PtrMember member ) :
+          member(member),
+          object(object)
+        {}
+
+        void operator()() {
+            (object->*member)();
         }
     };
 
-    typedef std::deque< SST::Event::HandlerBase* > queue_t;
 
-  public:
-    Barrier( SST::Component* comp, SST::Params params ) :
-        m_count( 0 ),
-        m_parent( NULL ),
-        m_phase( Arrival )
+    BarrierAction() :
+        m_numReporting(0),
+        m_enable( true )
     {
-        DBGX(1,"\n");
+        BA_DBG("\n");
+        setPriority(75);
+        m_nRanks = SST::Simulation::getSimulation()->getNumRanks();
 
-        params.print_all_params(std::cout);
+        SST::Simulation::getSimulation()->insertActivity(
+            SST::Simulation::getSimulation()->getTimeLord()->
+                getTimeConverter("1us")->getFactor(),this);
+    }
+
+    void execute() {
+        if ( ! m_enable ) return;
+        SST::Simulation *sim = SST::Simulation::getSimulation();
+
+        int value = m_localQ.size() - m_numReporting ? 0 : 1 ;
+        int out;
         
-        std::string linkName = params.find_string("parent");
+        all_reduce( world, &value, 1, &out, std::plus<int>() );
+        if ( out == m_nRanks ) {
+            BA_DBG("everyone is here\n");  
+            std::deque<HandlerBase*>::iterator it = m_localQ.begin();
 
-        if ( ! linkName.empty() ) {
-            DBGX(1,"configure parent link `%s`\n",linkName.c_str());
-            m_parent = comp->configureLink( linkName, "1ns",
-                            new SST::Event::Handler<Barrier>(
-                                        this, &Barrier::barrierEvent ) );
-
-            assert( m_parent );
-        }
-
-        int num = 0;
-        while ( 1 ) {
-
-            std::stringstream tmp;
-            tmp << "child." << num;
-            std::string linkName = params.find_string( tmp.str() );
-            if ( linkName.empty() ) {
-                break;
+            while( it != m_localQ.end() ) {
+                (**it)();
+                ++it;
             }
 
-            ++num;
+            m_numReporting = 0;
+        }  
 
-            DBGX(1,"configure %s link `%s`\n", tmp.str().c_str(), 
-                                                    linkName.c_str());
-            m_children.push_back( comp->configureLink( linkName, "1ns",
-                    new SST::Event::Handler<Barrier>(
-                                this, &Barrier::barrierEvent ) ) );
-
-            assert( m_children.back() );
-        } 
+        SST::SimTime_t next = sim->getCurrentSimCycle() +
+            sim->getTimeLord()->getTimeConverter("1us")->getFactor();
+        sim->insertActivity( next, this );
     }
 
-    void add( SST::Event::HandlerBase* handler ) {
-        DBGX(1,"\n");
-        m_queue.push_back( handler );
+    void add(HandlerBase* handler) {
+        m_localQ.push_back( handler );
+        BA_DBG("local=%d\n",m_localQ.size());
     }
 
-    void barrierEvent( SST::Event* e )
-    {
-        delete e;
-        DBGX(1,"%s\n", m_phase == Arrival ? "Arrival" : "Departure");
-        if ( m_phase == Arrival )  {
-            arrival();
-        }
-        if ( m_phase == Departure ) {
-            departure();
-        }
+    void enter() {
+        BA_DBG("numReporting=%d\n",m_numReporting);
+        ++m_numReporting;
     }
-
-    void arrival( ) {
-        ++m_count;
-        DBGX(1,"m_count=%d need=%d\n",m_count, 
-                            m_queue.size() + m_children.size());
-        if ( m_count == m_queue.size() + m_children.size() ) {
-            DBGX(1,"set to Departure\n");
-            m_phase = Departure;
-            if ( m_parent ) {
-                DBGX(1,"send to parent\n");
-                m_parent->Send( new BarrierEvent );
-            }  else {
-                departure();
-            }
-        } 
-    }
-
-    void enter( ) {
-        arrival();
-    }
-
-    void departure( ) {
-        queue_t::iterator it = m_queue.begin(); 
-
-        while( it != m_queue.end() ) {
-            (**it)(NULL);
-            ++it;
-        }
-
-        sendChildren();
-
-        m_phase = Arrival;
-        m_count = 0;
-    }
-
-    void sendChildren() {
-        std::deque<SST::Link*>::iterator it = m_children.begin(); 
-        while( it != m_children.end() ) {
-            DBGX(1,"send to child\n");
-            (*it)->Send( new BarrierEvent );
-            ++it;
-        }
+    void disable() {
+        m_enable = false;
     }
 
   private:
-
-    enum Phase { Arrival, Departure };
-
-    int         m_count;
-    queue_t     m_queue; 
-    SST::Link*  m_parent;
-    Phase       m_phase;
-    std::deque<SST::Link*>  m_children;
+    bool m_enable;
+    int m_nRanks;
+    int m_numReporting;
+    std::deque< HandlerBase* > m_localQ;
 };
 
 #endif
