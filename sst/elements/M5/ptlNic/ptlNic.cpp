@@ -15,6 +15,7 @@
 #include "ptlEQ.h"
 #include "ptlProcess.h"
 #include "ptlPut.h"
+#include "ptlGet.h"
 
 #include "trace.h"
 
@@ -113,7 +114,7 @@ Context* PtlNic::findContext( ptl_pid_t pid )
 
 void PtlNic::mmifHandler( SST::Event* e )
 {
-    PtlNicEvent* event = static_cast<PtlNicEvent*>(e);
+    PtlNicEvent* event = static_cast< PtlNicEvent* >( e );
     switch( event->cmd ) {
       case ContextInit:
         contextInit( event );
@@ -137,7 +138,8 @@ void PtlNic::ptlCmd( PtlNicEvent* event )
 
 void PtlNic::contextInit( PtlNicEvent* event )
 {
-    int retval = allocContext();
+    PRINT_AT(PtlNic,"uid=%d jid=%d\n",event->args[0], event->args[1]);
+    int retval = allocContext( event->args[0], event->args[1] );
     m_mmifLink->Send( new PtlNicRespEvent( retval ) );
     delete event;
 }
@@ -171,11 +173,11 @@ void PtlNic::processPtlCmdQ( )
     }
 }
 
-int PtlNic::allocContext()
+int PtlNic::allocContext(ptl_uid_t uid, ptl_jid_t jid )
 {
     for ( int i = 0; i < m_contextV.size(); i++ ) {
         if ( ! m_contextV[i] ) {
-            m_contextV[i] = new Context( this );
+            m_contextV[i] = new Context( this, uid, jid );
             return i;
         }
     }
@@ -228,6 +230,8 @@ PtlNic::Cmd* PtlNic::Cmd::create( PtlNic& nic,
             return new EQFreeCmd(nic,ctx,e);
         case PtlPut:
             return new PutCmd(nic,ctx,e);
+        case PtlGet:
+            return new GetCmd(nic,ctx,e);
         default:
             abort();
     }

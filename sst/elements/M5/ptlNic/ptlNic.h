@@ -127,7 +127,7 @@ class PtlNic : public RtrIF
     bool sendMsg( ptl_nid_t, PtlHdr*, Addr, ptl_size_t, CallbackBase* );
 
   private:
-    int allocContext();
+    int allocContext(ptl_uid_t, ptl_jid_t);
     int freeContext( int );
     Context* getContext( int ctx );
     Context* findContext( ptl_pid_t pid );

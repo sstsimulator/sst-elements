@@ -35,7 +35,7 @@ class Context {
     };
     struct ME {
         ptl_me_t                me;
-        void*                   userPtr;
+        void*                   user_ptr;
         bool                    avail;
     };
 
@@ -45,7 +45,7 @@ class Context {
     };
 
   public:
-    Context( PtlNic* nic );
+    Context( PtlNic* nic, ptl_uid_t, ptl_jid_t );
     ~Context();
     void initPid( ptl_pid_t pid );
     ptl_pid_t pid() { return m_pid; }
@@ -60,7 +60,7 @@ class Context {
     int freeMD( int handle );
     ptl_md_t* findMD( int handle );
 
-    int allocME( ptl_pt_index_t portal, ptl_list_t list, void* userPtr );
+    int allocME( ptl_pt_index_t portal, ptl_list_t list, void* user_ptr );
     ptl_me_t* findME( int handle );
     int freeME( int handle );
 
@@ -97,23 +97,66 @@ class Context {
            void *           user_ptr,
            ptl_hdr_data_t   hdr_data);
 
+    int get( int  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr );
+
   private:
 
     RecvEntry* processHdrPkt( ptl_nid_t nid, PtlHdr* hdr );
     RecvEntry* processMatch( ptl_nid_t, PtlHdr*, int me_handle );
+    RecvEntry* processPut( ptl_nid_t, PtlHdr*, int me_handle );
+    RecvEntry* processGet( ptl_nid_t, PtlHdr*, int me_handle );
+    void processAck( PtlHdr * );
+    RecvEntry* processReply( PtlHdr * );
     void recvFini( ptl_nid_t nid, PtlHdr* hdr, int me_handle );
 
-    //*************
-    struct PutEntry {
+    struct YYY {
         PtlHdr      hdr;
         void       *user_ptr;
         int         md_handle; 
-        enum { WaitPut, WaitCtEvent, WaitEvent, Done }   state;
-        Callback<Context,PutEntry>* callback;
+        CallbackBase* callback;
     };
-    typedef Callback<Context,PutEntry>  PutCallback;
-    void writeCtEvent( int, PutCallback* );
-    bool putCallback( PutEntry* );
+
+    //*************
+    struct PutSendEntry : YYY {
+        enum { WaitPut, WaitAck, WaitCtEvent, WaitEvent, Done } state;
+    };
+    typedef Callback< Context, PutSendEntry >  PutCallback;
+    bool putCallback( PutSendEntry* );
+
+    //*************
+    struct GetSendEntry : YYY {
+        ptl_size_t  local_offset;
+        enum { WaitPut, WaitReply,  WaitCtEvent, WaitEvent, Done } state;
+    };
+    typedef Callback< Context, GetSendEntry >  GetCallback;
+    bool getCallback( GetSendEntry* );
+
+    struct XXX {
+        PtlHdr        hdr;
+        ptl_nid_t     nid;
+        int           me_handle;
+        CallbackBase* callback;
+    };
+
+    struct PutRecvEntry : XXX {
+        enum { WaitRecvComp, WaitAckSent } state;
+    };
+
+    typedef Callback<Context,PutRecvEntry>  PutRecvCallback;
+    bool putRecvCallback( PutRecvEntry* );
+
+    //*************
+    struct GetRecvEntry : XXX {
+    };
+    typedef Callback< Context, GetRecvEntry >  GetRecvCallback;
+    bool getRecvCallback( GetRecvEntry* );
 
     //*************
     struct EventEntry {
@@ -123,21 +166,15 @@ class Context {
     void writeEvent( int, EventCallback* );
     bool eventCallback( EventEntry* );
 
-    //*************
-    struct RecvCBEntry {
-        ptl_nid_t nid;
-        PtlHdr    hdr;
-        int       me_handle;
-        Callback<Context,RecvCBEntry>* callback;
-    };
-    typedef Callback<Context,RecvCBEntry>  RecvCallback;
-    bool recvCallback( RecvCBEntry* );
+    void writeCtEvent( int, CallbackBase* );
 
     bool                    m_logicalIF;
     bool                    m_matching; 
 
     ptl_process_t           m_id;
     ptl_pid_t               m_pid;
+    ptl_uid_t               m_uid;
+    ptl_jid_t               m_jid;
 
     std::vector<PT>         m_ptV;
     std::vector<CT>         m_ctV;
@@ -146,6 +183,8 @@ class Context {
     std::vector<ME>         m_meV;
     ptl_ni_limits_t         m_limits;
     PtlNic*                 m_nic;
+    std::map< int, PutSendEntry* >   m_putM;
+    std::map< int, GetSendEntry* >   m_getM;
  };
 
 #endif

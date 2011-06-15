@@ -19,6 +19,7 @@ typedef enum {
     PtlCTFree,
     PtlCTWait,
     PtlPut,
+    PtlGet,
     PtlEQAlloc,
     PtlEQFree,
     ContextInit,
@@ -40,6 +41,7 @@ typedef enum {
     "PtlCTFree",\
     "PtlCTWait",\
     "PtlPut",\
+    "PtlGet",\
     "PtlEQAlloc",\
     "PtlEQFree",\
     "ContextInit",\

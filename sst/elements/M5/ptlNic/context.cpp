@@ -7,11 +7,14 @@
 #include "ptlHdr.h"
 #include "recvEntry.h"
 
-Context::Context( PtlNic* nic ) :
-        m_nic( nic ) 
+Context::Context( PtlNic* nic, ptl_uid_t uid, ptl_jid_t jid ) :
+        m_nic( nic ),
+        m_uid( uid ),
+        m_jid( jid ) 
 {
     TRACE_ADD( Context );
     PRINT_AT(Context,"\n");
+    PRINT_AT(Context,"sizeof(PtlHdr) %d\n",sizeof(PtlHdr));
     m_limits.max_pt_index = 63;
     m_limits.max_cts = 63;
     m_limits.max_mds = 63;
@@ -95,7 +98,7 @@ int Context::appendPT( ptl_pt_index_t pt_index, ptl_list_t list, int me_handle )
     return PTL_OK;
 }
 
-int Context::allocME( ptl_pt_index_t pt_index, ptl_list_t list, void* userPtr )
+int Context::allocME( ptl_pt_index_t pt_index, ptl_list_t list, void* user_ptr )
 {
     if ( ! isvalidPT( pt_index ) ) return -PTL_ARG_INVALID; 
 
@@ -106,7 +109,7 @@ int Context::allocME( ptl_pt_index_t pt_index, ptl_list_t list, void* userPtr )
                 return retval;
             } 
             m_meV[i].avail = false;
-            m_meV[i].userPtr = userPtr; 
+            m_meV[i].user_ptr = user_ptr; 
             return i;
         }       
     }
@@ -251,8 +254,9 @@ int Context::put( int md_handle,
            void *           user_ptr,
            ptl_hdr_data_t   hdr_data)
 {
-    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx remote_offset=%#lx\n",
-                            md_handle, length, local_offset, remote_offset );
+    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
+    "remote_offset=%#lx\n", md_handle, length, local_offset, remote_offset );
+
     if ( m_logicalIF ) {
         PRINT_AT(Context,"target rank=%d\n",target_id.rank);
     } else {
@@ -265,11 +269,11 @@ int Context::put( int md_handle,
         return -PTL_ARG_INVALID;
     }
 
-    PutEntry* entry = new PutEntry;
+    PutSendEntry* entry = new PutSendEntry;
     assert(entry);
 
     entry->user_ptr = user_ptr;
-    entry->state = PutEntry::WaitPut;
+    entry->state = PutSendEntry::WaitPut;
     entry->callback = 
          new PutCallback(this, &Context::putCallback, entry );
 
@@ -282,6 +286,16 @@ int Context::put( int md_handle,
     entry->hdr.offset = remote_offset;
     entry->hdr.match_bits = match_bits;
     entry->hdr.hdr_data = hdr_data;
+    entry->hdr.uid = m_uid;
+    entry->hdr.jid = m_jid;
+    
+    entry->hdr.op = Put;
+
+    // need some data structure that contains a map of used keys and deque of 
+    // free keys
+    int key = 5;
+    entry->hdr.key = key; 
+    m_putM[ key ] = entry;
 
     m_nic->sendMsg( target_id.phys.nid, &entry->hdr, 
                     (Addr) m_mdV[md_handle].md.start + local_offset, 
@@ -289,26 +303,120 @@ int Context::put( int md_handle,
     return PTL_OK;
 }
 
-bool Context::putCallback( PutEntry* entry )
+int Context::get( int md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr )
 {
+    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
+    "remote_offset=%#lx\n", md_handle, length, local_offset, remote_offset );
+
+    if ( m_logicalIF ) {
+        PRINT_AT(Context,"target rank=%d\n",target_id.rank);
+    } else {
+        PRINT_AT(Context,"target nid=%d pid=%d\n",
+                    target_id.phys.nid,target_id.phys.pid);
+    }
+    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",pt_index,match_bits); 
+
+    if ( pt_index > m_limits.max_pt_index ) {
+        return -PTL_ARG_INVALID;
+    }
+
+    GetSendEntry* entry = new GetSendEntry;
+    assert(entry);
+
+    entry->user_ptr = user_ptr;
+    entry->state = GetSendEntry::WaitPut;
+    entry->callback = 
+         new GetCallback(this, &Context::getCallback, entry );
+
+    entry->local_offset = local_offset;
+    entry->md_handle = md_handle;
+    entry->hdr.length = length;
+    entry->hdr.pt_index = pt_index;
+    entry->hdr.dest_pid = target_id.phys.pid;
+    entry->hdr.src_pid  = m_pid;
+    entry->hdr.offset = remote_offset;
+    entry->hdr.match_bits = match_bits;
+    entry->hdr.op = Get;
+
+    int key = 5;
+    entry->hdr.key = key; 
+    m_getM[ key ] = entry;
+
+    m_nic->sendMsg( target_id.phys.nid, &entry->hdr, 
+                    (Addr) 0, 0, entry->callback );  
+    return PTL_OK;
+}
+
+
+bool Context::getCallback( GetSendEntry* entry )
+{
+    PRINT_AT(Context,"state %d\n",entry->state);
     switch ( entry->state ) {
-      case  PutEntry::WaitPut:
-        PRINT_AT(Context,"put Done\n");
+      case GetSendEntry::WaitPut:
+        PRINT_AT(Context,"put done");
+        entry->state = GetSendEntry::WaitReply;
+        break;  
+      case GetSendEntry::WaitReply:
         if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
             PRINT_AT(Context,"write CT\n");
             addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
             writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
                                                     entry->callback );
-            entry->state = PutEntry::WaitCtEvent;
+            entry->state = GetSendEntry::WaitCtEvent;
             break;
         }
 
-      case PutEntry::WaitCtEvent:
+      case GetSendEntry::WaitCtEvent:
             PRINT_AT(Context,"CT Done\n");
-            entry->state = PutEntry::Done;
+            entry->state = GetSendEntry::Done;
+    }
+    if ( entry->state == GetSendEntry::Done ) {
+        PRINT_AT(Context,"complete\n");
+        delete entry;
+        return true;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool Context::putCallback( PutSendEntry* entry )
+{
+    PRINT_AT(Context,"state %d\n",entry->state);
+    switch ( entry->state ) {
+      case  PutSendEntry::WaitPut:
+
+        PRINT_AT(Context,"put Done\n");
+        if ( entry->hdr.ack_req == PTL_ACK_REQ )  {
+            PRINT_AT(Context,"got ack\n");
+            entry->state = PutSendEntry::WaitAck;
+            break;
+        }
+
+      case PutSendEntry::WaitAck:
+
+        if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
+            PRINT_AT(Context,"write CT\n");
+            addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
+            writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
+                                                    entry->callback );
+            entry->state = PutSendEntry::WaitCtEvent;
+            break;
+        }
+
+      case PutSendEntry::WaitCtEvent:
+            PRINT_AT(Context,"CT Done\n");
+            entry->state = PutSendEntry::Done;
     }
 
-    if ( entry->state == PutEntry::Done ) {
+    if ( entry->state == PutSendEntry::Done ) {
         PRINT_AT(Context,"complete\n");
         delete entry;
         return true;
@@ -317,7 +425,7 @@ bool Context::putCallback( PutEntry* entry )
     }
 }
 
-void Context::writeCtEvent( int ct_handle, PutCallback* callback ) 
+void Context::writeCtEvent( int ct_handle, CallbackBase* callback ) 
 {
         ptl_ct_event_t* event = findCTEvent( ct_handle );
         m_nic->dmaEngine().write(findCTAddr( ct_handle ),
@@ -349,12 +457,44 @@ RecvEntry* Context::processHdrPkt( void* pkt )
     RecvEntry* entry = processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
 }
 
+void Context::processAck( PtlHdr* hdr )
+{
+    PRINT_AT(Context,"key=%d\n",hdr->key);
+    if ( (*m_putM[hdr->key]->callback)() ) {
+        delete m_putM[hdr->key]->callback;
+    }
+    m_putM.erase( hdr->key );
+}
+
+RecvEntry* Context::processReply( PtlHdr* hdr )
+{
+    PRINT_AT(Context,"key=%d\n",hdr->key);
+    GetSendEntry* entry = m_getM[ hdr->key ];
+    m_getM.erase( hdr->key );
+
+    ptl_md_t* md = &m_mdV[ entry->md_handle ].md;
+
+    // what if the requested length does not match the returned length ?
+    return new RecvEntry( m_nic->dmaEngine(), 
+                                    (Addr) md->start + entry->local_offset, 
+                                    hdr->length, entry->callback );
+}
+
 RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
 {
     PRINT_AT(Context,"srcNid=%d srcPid=%d targetPid=%d\n",
                             nid, hdr->src_pid, hdr->dest_pid );
     PRINT_AT(Context,"length=%lu offset=%#lx\n",hdr->length, hdr->offset);
     PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",hdr->pt_index, hdr->match_bits );
+
+    if ( hdr->op == Ack ) {
+        processAck( hdr );
+        return NULL;
+    }
+
+    if ( hdr->op == Reply ) {
+        return processReply( hdr );
+    }
 
     if ( ! m_ptV[hdr->pt_index].used ) {
         printf("Drop\n");
@@ -371,9 +511,15 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
         ptl_match_bits_t dont_ignore_bits = ~(me->ignore_bits);
         PRINT_AT(Context, "me->match_bits %#lx dont_ignore %#lx\n", 
                         me->match_bits, dont_ignore_bits  );
+        /* check the match_bits */
         if ( ( (hdr->match_bits ^ me->match_bits) & dont_ignore_bits ) != 0 ) {
              continue;
         }    
+        /* check for forbidden truncation */
+        if (((me->options & PTL_ME_NO_TRUNCATE) != 0) &&
+                 ((hdr->offset + hdr->length) > me->length)) {
+            continue; 
+        }
 
         if (( me->match_id.phys.nid != PTL_NID_ANY ) &&
             ( me->match_id.phys.nid != 0 ) ) {
@@ -395,17 +541,53 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
 
 RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
 {
+    if ( hdr->op == Get ) {
+        processGet( nid, hdr, me_handle );
+    } else {
+        processPut( nid, hdr, me_handle );
+    }
+}
+
+RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
+{
+    PRINT_AT(Context,"\n");
+
+    GetRecvEntry* entry = new GetRecvEntry; 
+    entry->hdr = *hdr;
+    entry->nid = nid;
+    entry->me_handle = me_handle;
+    entry->callback = 
+                new GetRecvCallback( this, &Context::getRecvCallback,entry );
+    entry->hdr.op = Reply;
+    
+    m_nic->sendMsg( nid, &entry->hdr, 
+                    (Addr) m_meV[me_handle].me.start + entry->hdr.offset, 
+                    entry->hdr.length, entry->callback );  
+    return NULL;
+}
+
+bool Context::getRecvCallback( GetRecvEntry* entry )
+{
+    PRINT_AT(Context,"\n");
+    recvFini( entry->nid, &entry->hdr, entry->me_handle );
+    delete entry;
+    return true;
+}
+
+RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
+{
     PRINT_AT(Context,"\n");
     if ( hdr->length == 0 ) {
         recvFini( nid, hdr, me_handle );
         return NULL;
     } else {
-        RecvCBEntry* entry = new RecvCBEntry; 
+        PutRecvEntry* entry = new PutRecvEntry; 
         entry->nid = nid;
         entry->hdr = *hdr;
         entry->me_handle = me_handle;
+        entry->state = PutRecvEntry::WaitRecvComp;
         entry->callback = 
-                new RecvCallback( this, &Context::recvCallback,entry );
+                new PutRecvCallback( this, &Context::putRecvCallback,entry );
         ptl_me_t* me = &m_meV[me_handle].me;
  
         return new RecvEntry( m_nic->dmaEngine(), 
@@ -414,30 +596,62 @@ RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
     }
 }
 
-bool Context::recvCallback( RecvCBEntry* entry )
+bool Context::putRecvCallback( PutRecvEntry* entry )
 {
     PRINT_AT(Context,"\n");
-    recvFini( entry->nid, &entry->hdr, entry->me_handle );
+
+    if ( entry->state == PutRecvEntry::WaitRecvComp ) {
+        recvFini( entry->nid, &entry->hdr, entry->me_handle );
+
+        if ( entry->hdr.ack_req == PTL_ACK_REQ ) {
+            entry->hdr.op = Ack;
+            entry->hdr.dest_pid = entry->hdr.src_pid;
+            entry->hdr.src_pid = m_pid;
+            PRINT_AT(Context,"send ack\n");
+            m_nic->sendMsg( entry->nid, &entry->hdr, 0, 0, entry->callback );  
+            entry->state = PutRecvEntry::WaitAckSent;
+            return false;
+        }
+    }
+
     delete entry;
     return true;
 }
 void Context::recvFini( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
 {
-    PRINT_AT(Context,"pt_index=%d\n",hdr->pt_index);
-    int eq_handle = m_ptV[hdr->pt_index].eq_handle;
+    PRINT_AT( Context, "pt_index=%d\n", hdr->pt_index );
+    int eq_handle = m_ptV[ hdr->pt_index ].eq_handle;
+
     if ( eq_handle != -1 ) {
+        ME& me = m_meV[ me_handle ];
         EventEntry* entry = new EventEntry;
-        assert(entry);
-        PRINT_AT(Context,"eq_handle=%#x\n",eq_handle);
+        assert( entry );
+        PRINT_AT( Context, "eq_handle=%#x\n", eq_handle );
 
         entry->callback = 
-            new EventCallback(this, &Context::eventCallback, entry );
+            new EventCallback( this, &Context::eventCallback, entry );
 
         struct EQ& eq = findEQ( eq_handle ); 
-        ptl_size_t count = (eq.count + 1) % eq.size;
+        ptl_size_t count = ( eq.count + 1 ) % eq.size;
 
-        PRINT_AT(Context,"eq.count=%d\n",count);
+        PRINT_AT( Context, "eq.count=%d\n", count );
         eq.event.count1 = count; 
+        eq.event.event.type          = PTL_EVENT_PUT;
+        eq.event.event.initiator.phys.nid = nid; 
+        eq.event.event.initiator.phys.pid = hdr->src_pid;
+        eq.event.event.pt_index      = hdr->pt_index;
+        eq.event.event.uid           = hdr->uid;
+        eq.event.event.jid           = hdr->jid;
+        eq.event.event.match_bits    = hdr->match_bits;
+        eq.event.event.rlength       = hdr->length;
+        eq.event.event.mlength       = hdr->length; // FIXME
+        eq.event.event.remote_offset = hdr->offset; 
+        eq.event.event.start         = me.me.start; // FIXME
+        eq.event.event.user_ptr      = me.user_ptr;
+        eq.event.event.hdr_data      = hdr->hdr_data;
+        eq.event.event.ni_fail_type  = PTL_NI_OK;
+        //eq.event.event.atomic_operation =
+        //eq.event.event.atomic_type =
         eq.event.count2 = count; 
         
         writeEvent( eq_handle, entry->callback );

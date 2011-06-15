@@ -12,14 +12,23 @@ union CtrlFlit {
     unsigned long all;
 };
 
+typedef enum {
+    Put, Get, Atomic, FetchAtomic, Swap, Ack, Reply  
+} op_t;
+
 struct PtlHdr {
-    ptl_size_t          length;
-    ptl_ack_req_t       ack_req;
-    ptl_pt_index_t      pt_index;
     ptl_match_bits_t    match_bits;
-    ptl_size_t          offset;
     ptl_hdr_data_t      hdr_data;
-    ptl_pid_t           dest_pid;
-    ptl_pid_t           src_pid;
+    ptl_size_t          length;
+    ptl_size_t          offset;
+    uint16_t            dest_pid;
+    uint16_t            src_pid;
+    uint16_t            jid;
+    uint16_t            uid;
+    uint8_t             key;
+    uint8_t             ni       : 2;
+    ptl_ack_req_t       ack_req  : 2;
+    op_t                op       : 5;
+    ptl_pt_index_t      pt_index : 6;
 };
 #endif
