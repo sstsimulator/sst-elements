@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <portals4.h>
+#include <m5rt.h>
 
 static void nid0( ptl_handle_ni_t, ptl_process_t* );
 static void nid1( ptl_handle_ni_t, ptl_process_t* );
@@ -73,29 +74,11 @@ int main( int argc, char* argv[] )
     PtlFini();
 
     printf("goodbye\n");
+    m5_barrier();
     return 0;
 }
 
 
-static inline u_int realcc (void) {
-  u_long cc;
-  /* read the 64 bit process cycle counter into variable cc: */
-  asm volatile("rpcc %0" : "=r"(cc) : : "memory");
-  return cc;                    /* return the lower 32 bits */
-}
-
-static inline unsigned int virtcc (void) {
-  u_long cc;
-  asm volatile("rpcc %0" : "=r"(cc) : : "memory");
-  return (cc + (cc<<32)) >> 32; /* add process offset and count */
-}
-
-void spin_sleep( int count )
-{
-    int stop = realcc() + count;
-    
-    while( (int) realcc() < stop ) {};
-}
 static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
 {
     ptl_handle_md_t md_handle;
@@ -122,7 +105,11 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     } 
     target_id.phys.nid = 1;
     
-    spin_sleep(100000000);
+
+    printf("%d:%d: calling barrier\n",id->phys.nid,id->phys.pid);
+    m5_barrier(); 
+    printf("%d:%d: barrier returning\n",id->phys.nid,id->phys.pid);
+
     //ptl_ack_req_t ack_req = PTL_NO_ACK_REQ;
     ptl_hdr_data_t hdr_data = 0xdeadbeef01234567;
     ptl_ack_req_t ack_req = PTL_ACK_REQ;
@@ -190,6 +177,10 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
                         &me_handle) ) != PTL_OK ) {
         printf("PtlMEAppend() failed %d\n",retval); abort();
     }
+
+    printf("%d:%d: calling barrier\n",id->phys.nid,id->phys.pid);
+    m5_barrier(); 
+    printf("%d:%d: barrier returning\n",id->phys.nid,id->phys.pid);
 
     if ( ( retval = PtlEQWait( eq_handle, &event ) ) != PTL_OK ) {
         printf("PtlEQWait() failed %d\n",retval); abort();
