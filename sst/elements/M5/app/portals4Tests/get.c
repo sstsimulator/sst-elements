@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <portals4.h>
+#include <m5rt.h>
 
 static void nid0( ptl_handle_ni_t, ptl_process_t* );
 static void nid1( ptl_handle_ni_t, ptl_process_t* );
@@ -74,32 +75,12 @@ int main( int argc, char* argv[] )
     return 0;
 }
 
-
-static inline u_int realcc (void) {
-  u_long cc;
-  /* read the 64 bit process cycle counter into variable cc: */
-  asm volatile("rpcc %0" : "=r"(cc) : : "memory");
-  return cc;                    /* return the lower 32 bits */
-}
-
-static inline unsigned int virtcc (void) {
-  u_long cc;
-  asm volatile("rpcc %0" : "=r"(cc) : : "memory");
-  return (cc + (cc<<32)) >> 32; /* add process offset and count */
-}
-
-void spin_sleep( int count )
-{
-    int stop = realcc() + count;
-    
-    while( (int) realcc() < stop ) {};
-}
 static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
 {
     ptl_handle_md_t md_handle;
     ptl_md_t md;
     ptl_process_t   target_id = *id;
-    printf("%s():%d ni_handle=%#lx\n",__func__,__LINE__,ni_handle);
+    printf("%s():%d ni_handle=%#lx\n",__func__,__LINE__,(unsigned long)ni_handle);
 
     md.start = malloc(MSG_SIZE);
     md.length = MSG_SIZE;
@@ -117,7 +98,8 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     target_id.phys.nid = 1;
 
     
-    spin_sleep(100000000);
+    m5_barrier();
+
     if ( PtlGet( md_handle, 0, MSG_SIZE, target_id, PTL_INDEX,
                         match_bits, 0, NULL ) ) { 
         printf("PtlGet() failed\n"); abort();
@@ -136,7 +118,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     }
 
     printf("ct_event sucess %d failure %d\n",
-                        ct_event.success, ct_event.failure);
+                        (int)ct_event.success, (int)ct_event.failure);
     if ( PtlMDRelease( md_handle ) != PTL_OK ) {
         printf("PtlMDRelease() failed\n"); abort();
     } 
@@ -193,6 +175,8 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
                         &me_handle) ) != PTL_OK ) {
         printf("PtlMEAppend() failed %d\n",retval); abort();
     }
+
+    m5_barrier();
 
     if ( ( retval = PtlEQWait( eq_handle, &event ) ) != PTL_OK ) {
         printf("PtlEQWait() failed %d\n",retval); abort();
