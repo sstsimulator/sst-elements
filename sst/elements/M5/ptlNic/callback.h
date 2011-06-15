@@ -4,6 +4,7 @@
 class CallbackBase {
   public:
     virtual bool operator()() = 0;
+    virtual ~CallbackBase() {}
 };
 
 template <class X, class Y = void > class Callback : public CallbackBase
