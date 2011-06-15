@@ -61,6 +61,17 @@ struct PtlAPI {
             void *           user_ptr,
             ptl_hdr_data_t   hdr_data);
 
+    int (*PtlGet)( struct PtlAPI*,
+           ptl_handle_md_t  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr);
+
+
     int (*PtlEQAlloc)( struct PtlAPI*, ptl_size_t );
     int (*PtlEQFree)( struct PtlAPI*, ptl_handle_eq_t ); 
     int (*PtlEQWait)( struct PtlAPI*, ptl_handle_eq_t eq_handle,

@@ -25,7 +25,8 @@ class PtlIF {
         m_cmdQueue = (cmdQueue_t*)syscall( SYS_foo, addr, sizeof( cmdQueue_t) );
 
         assert( m_cmdQueue );
-        m_context = push_cmd( ContextInit, 0 );
+        ptl_jid_t jid = 1;
+        m_context = push_cmd( ContextInit, 2, getuid(), jid );
         if ( m_context == -1 ) {
             abort();
         }

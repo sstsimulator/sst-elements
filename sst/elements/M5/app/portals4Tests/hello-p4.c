@@ -13,8 +13,10 @@ static inline unsigned long virt2phys( void* addr ) {
     return (unsigned long) syscall( SYS_virt2phys, addr );
 }    
 
-#define MSG_SIZE 0x2000 
-//#define MSG_SIZE  1000
+static void printEvent( ptl_event_t *event );
+
+//#define MSG_SIZE 0x2000 
+#define MSG_SIZE  10
 #define PTL_INDEX 10
 ptl_match_bits_t match_bits = 0xdeadbeef;
 
@@ -103,7 +105,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
 
     md.start = malloc(MSG_SIZE);
     md.length = MSG_SIZE;
-    md.options = PTL_MD_EVENT_CT_SEND; 
+    md.options = PTL_MD_EVENT_CT_SEND;
     md.eq_handle = PTL_EQ_NONE;
 
     int i;
@@ -119,11 +121,13 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
         printf("PtlMDBind() failed\n"); abort();
     } 
     target_id.phys.nid = 1;
-
     
     spin_sleep(100000000);
-    if ( PtlPut( md_handle, 0, MSG_SIZE, PTL_NO_ACK_REQ, target_id, PTL_INDEX,
-                        match_bits, 0, NULL, 0 ) ) { 
+    //ptl_ack_req_t ack_req = PTL_NO_ACK_REQ;
+    ptl_hdr_data_t hdr_data = 0xdeadbeef01234567;
+    ptl_ack_req_t ack_req = PTL_ACK_REQ;
+    if ( PtlPut( md_handle, 0, MSG_SIZE, ack_req, target_id, PTL_INDEX,
+                        match_bits, 0, NULL, hdr_data ) ) { 
         printf("PtlPtl() failed\n"); abort();
     } 
 
@@ -177,11 +181,12 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     me.match_bits = match_bits;
     me.ignore_bits = 0;
 
+    printf("user_ptr=%p\n",&me);
     if ( ( retval = PtlMEAppend( ni_handle,  
                         pt_index,
                         &me,
                         PTL_PRIORITY_LIST,
-                        NULL,
+                        &me, // user_ptr
                         &me_handle) ) != PTL_OK ) {
         printf("PtlMEAppend() failed %d\n",retval); abort();
     }
@@ -189,6 +194,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     if ( ( retval = PtlEQWait( eq_handle, &event ) ) != PTL_OK ) {
         printf("PtlEQWait() failed %d\n",retval); abort();
     }
+    printEvent( &event );
 
     int i;
     for ( i = 0; i < me.length; i++ ) {
@@ -210,3 +216,23 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
         printf("PtlEQFree() failed %d\n",retval); abort();
     }
 }    
+
+static void printEvent( ptl_event_t *event )
+{
+    printf("type=%d\n",event->type);
+    printf("initiator.phys=%d:%d\n",event->initiator.phys.nid,
+                                event->initiator.phys.pid);
+    printf("pt_index=%d\n",event->pt_index);
+    printf("uid=%d\n",event->uid);
+    printf("jid=%d\n",event->jid);
+    printf("match_bits=%#lx\n",event->match_bits);
+    printf("rlength=%lu\n",event->rlength);
+    printf("mlength=%lu\n",event->mlength);
+    printf("remote_offset=%lu\n",event->remote_offset);
+    printf("start=%p\n",event->start);
+    printf("user_ptr=%p\n",event->user_ptr);
+    printf("hdr_data=%#lx\n",event->hdr_data); 
+    printf("ni_fail_type=%d\n",event->ni_fail_type);
+    printf("atomic_operation=%d\n",event->atomic_operation);
+    printf("atomic_type=%d\n",event->atomic_type);
+}

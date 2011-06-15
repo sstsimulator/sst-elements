@@ -119,6 +119,27 @@ static int ptlPut( struct ::PtlAPI* obj,
                                 hdr_data );
 }
 
+static int ptlGet( struct ::PtlAPI* obj,
+            ptl_handle_md_t  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr )
+{
+    return ((PtlAPI*) obj->data)->ptlGet( md_handle,
+                                local_offset,
+                                length,
+                                target_id,
+                                pt_index,
+                                match_bits,
+                                remote_offset,
+                                user_ptr );
+}
+
+
 static int ptlEQAlloc( struct ::PtlAPI* obj, ptl_size_t count )
 {
     return ((PtlAPI*) obj->data)->ptlEQAlloc( count ); 
@@ -152,6 +173,7 @@ static struct ::PtlAPI* initPtlIF( struct ::PtlIF* obj )
     ptlAPI->PtlCTFree   = ptlCTFree;
     ptlAPI->PtlCTWait   = ptlCTWait;
     ptlAPI->PtlPut      = ptlPut;
+    ptlAPI->PtlGet      = ptlGet;
     ptlAPI->PtlEQAlloc  = ptlEQAlloc;
     ptlAPI->PtlEQFree   = ptlEQFree;
     ptlAPI->PtlEQWait   = ptlEQWait;

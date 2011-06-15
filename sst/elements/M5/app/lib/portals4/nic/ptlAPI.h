@@ -12,8 +12,7 @@ class PtlAPI {
 
     struct EventQ {
         ptl_size_t count; 
-      //  std::vector< struct PtlEventInternal > eventV;     
-        struct PtlEventInternal* eventV;     
+        std::vector< struct PtlEventInternal > eventV;     
     };
 
   public:
@@ -145,8 +144,7 @@ class PtlAPI {
         if ( !eventQ ) return -PTL_NO_SPACE;
 
         eventQ->count = 0; 
-//        eventQ->eventV.resize( count );
-        eventQ->eventV = new PtlEventInternal[count];
+        eventQ->eventV.resize( count );
 
         for ( int i = 0; i < (int) count; i++ ) {
             eventQ->eventV[i].count1 = eventQ->eventV[i].count2 = 0;
@@ -224,6 +222,26 @@ class PtlAPI {
                     hdr_data ); 
     }
 
+    int ptlGet(ptl_handle_md_t  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr)
+    {
+        PTL_DBG2("\n");
+        return m_ptlIF.push_cmd( PtlGet, 8, 
+                    md_handle,
+                    local_offset,
+                    length,
+                    target_id,
+                    pt_index,
+                    match_bits,
+                    remote_offset,
+                    user_ptr);
+    }
 
   private:
     PtlIF& m_ptlIF;
