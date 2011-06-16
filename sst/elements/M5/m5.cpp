@@ -22,7 +22,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     m_armed( false ),
     m_event( * new Event() ),
     m_exitEvent( NULL ),
-    m_numRegisterExits(0)
+    m_numRegisterExits(0),
+    m_barrier( new BarrierAction )
 {
     // M5 variable
     want_info = false;
@@ -173,7 +174,6 @@ void M5::selfEvent( SST::Event* )
         arm( m_event.time );
     } else {
         // bug what if we didn't call registerExit()
-        m_barrier.disable();
         unregisterExit();
         INFO( "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
                 m_exitEvent->getCause().c_str(), m_exitEvent->getCode() );

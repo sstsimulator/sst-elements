@@ -41,8 +41,7 @@ class BarrierAction : public SST::Action
 
 
     BarrierAction() :
-        m_numReporting(0),
-        m_enable( true )
+        m_numReporting(0)
     {
         BA_DBG("\n");
         setPriority(75);
@@ -54,7 +53,6 @@ class BarrierAction : public SST::Action
     }
 
     void execute() {
-        if ( ! m_enable ) return;
         SST::Simulation *sim = SST::Simulation::getSimulation();
 
         int value = m_localQ.size() - m_numReporting ? 0 : 1 ;
@@ -87,12 +85,8 @@ class BarrierAction : public SST::Action
         BA_DBG("numReporting=%d\n",m_numReporting);
         ++m_numReporting;
     }
-    void disable() {
-        m_enable = false;
-    }
 
   private:
-    bool m_enable;
     int m_nRanks;
     int m_numReporting;
     std::deque< HandlerBase* > m_localQ;
