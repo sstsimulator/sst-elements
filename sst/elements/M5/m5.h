@@ -28,7 +28,7 @@ class M5 : public SST::Component
     void registerExit();
     void exit( int status );
 
-    BarrierAction&  barrier() { return m_barrier; }
+    BarrierAction&  barrier() { return *m_barrier; }
 
   private:
     void selfEvent( SST::Event* );
@@ -39,7 +39,7 @@ class M5 : public SST::Component
     SST::TimeConverter *m_tc;
     SimLoopExitEvent   *m_exitEvent;
     int                 m_numRegisterExits;
-    BarrierAction       m_barrier;
+    BarrierAction*       m_barrier;
 };
 
 #endif
