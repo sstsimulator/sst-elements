@@ -14,25 +14,44 @@
 */
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
-#include <sst/core/cpunicEvent.h>
 #include "ping_pong.h"
 
 
-
-typedef enum {PP_START, PP_RECEIVE} pingpong_events_t;
 
 void
 Pingpong_pattern::handle_events(int sst_event)
 {
 
 pingpong_events_t event;
-double execution_time;
-double latency;
 
 
-    // Extract the pattern event type from the SST event                                                      
-    // (We are "misusing" the routine filed in CPUNicEvent to xmit the event type
     event= (pingpong_events_t)sst_event;
+
+    switch (state)   {
+	case PP_STATE_INIT:
+	    state_INIT(event);
+	    break;
+	case PP_STATE_RECEIVING:
+	    state_RECEIVING(event);
+	    break;
+	case PP_STATE_BARRIER:
+	    state_BARRIER(event);
+	    break;
+    }
+
+    if (done)   {
+	unregisterExit();
+    }
+
+}  /* end of handle_events() */
+
+
+//
+// Code for each possible state of the pingpong pattern
+//
+void
+Pingpong_pattern::state_INIT(pingpong_events_t event)
+{
 
     switch (event)   {
 	case PP_START:
@@ -50,19 +69,46 @@ double latency;
 
 		// If I'm rank 0 send, otherwise wait
 		data_send(dest, len, PP_RECEIVE);
+		state= PP_STATE_RECEIVING;
+
 	    } else if (my_rank != dest)   {
-		done= true;
+		// I'm not participating in pingpong. Go straight to barrier
+		state= PP_STATE_BARRIER;
+		handle_events(PP_BARRIER_ENTRY);
+
 	    } else   {
 		printf("# [%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
 			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
+		state= PP_STATE_RECEIVING;
 	    }
 	    break;
 
+	case PP_RECEIVE:
+	case PP_BARRIER_ENTRY:
+	case PP_BARRIER_EXIT:
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_INIT()
+
+
+
+void
+Pingpong_pattern::state_RECEIVING(pingpong_events_t event)
+{
+
+double execution_time;
+double latency;
+
+
+    switch (event)   {
 	case PP_RECEIVE:
 	    // We're either rank 0 or dest. Others don't receive.
 	    // Send it back, unless we're done
 	    cnt--;
 	    if (first_receive)   {
+		// FIXME: I'd like to print how many hops the first message took
 		// printf("# [%3d] Number of hops (routers) along path: %d\n", my_rank, e->hops);
 		if (my_rank == 0)   {
 		    printf("#\n");
@@ -83,7 +129,8 @@ double latency;
 		    }
 		    cnt= num_msg;
 		    if (len > end_len)   {
-			done= true;
+			state= PP_STATE_BARRIER;
+			handle_events(PP_BARRIER_ENTRY);
 		    }
 		}
 
@@ -102,7 +149,9 @@ double latency;
 			len= len_inc;
 		    }
 		    if (len > end_len)   {
-			done= true;
+			// We've done all sizes num_msg times
+			state= PP_STATE_BARRIER;
+			handle_events(PP_BARRIER_ENTRY);
 		    } else   {
 			cnt= num_msg;
 			start_time= getCurrentSimTime();
@@ -111,15 +160,42 @@ double latency;
 		}
 	    }
 	    break;
-	default:
-	    printf("[%3d] Didn't really expect that (%d)\n", my_rank, event);
+
+	case PP_START:
+	case PP_BARRIER_ENTRY:
+	case PP_BARRIER_EXIT:
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
     }
 
-    if (done)   {
-	unregisterExit();
+}  // end of state_RECEIVING()
+
+
+
+void
+Pingpong_pattern::state_BARRIER(pingpong_events_t event)
+{
+
+    switch (event)   {
+	case PP_BARRIER_ENTRY:
+	    // This will be delivered to us after barrier switches back to us
+	    self_event_send(PP_BARRIER_EXIT);
+	    // Switch the state machine to the start of the barrier SM
+	    SM_transition(SMbarrier, BARRIER_DONE);
+	    break;
+
+	case PP_BARRIER_EXIT:
+	    // We just came back from the barrier SM. We're done
+	    done= true;
+	    break;
+
+	case PP_START:
+	case PP_RECEIVE:
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
     }
 
-}  /* end of handle_events() */
+}  // end of state_BARRIER()
 
 
 

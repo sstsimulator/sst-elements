@@ -198,7 +198,7 @@ SimTime_t delay;
 ** No actual data is sent.
 */
 void
-Patterns::event_send(int dest, pattern_event_t event, uint32_t tag, SimTime_t delay, uint32_t msg_len,
+Patterns::event_send(int dest, pattern_event_t event, int32_t tag, SimTime_t delay, uint32_t msg_len,
 	const char *payload, int payload_len)
 {
 

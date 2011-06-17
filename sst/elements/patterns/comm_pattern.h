@@ -10,9 +10,9 @@
 #ifndef _COMM_PATTERN_H
 #define _COMM_PATTERN_H
 
-#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/cpunicEvent.h>
 #include "pattern_common.h"
 
 using namespace SST;
@@ -234,47 +234,17 @@ class Comm_pattern : public Component {
 	    down= myX + ((myY + 1) % logical_height) * (logical_width);
 	    up= myX + ((myY - 1 + logical_height) % logical_height) * (logical_width);
 
-	    common->event_send(my_rank, START);
-
         }  // Done with initialization
 
         ~Comm_pattern()
-	{
-	    // unregisterExit();
-	}
+	{ }
 
 	int my_rank;
 	int num_ranks;
 
-
-	// Functor classes for Event handling
-	class PatternHandlerBase {
-	public:
-	    virtual void operator()(int) = 0;
-	    virtual ~PatternHandlerBase() {}
-	};
-
-
-	template <typename classT>
-	class PatternHandler : public PatternHandlerBase {
-	private:
-	    typedef void (classT::*PtrMember)(int);
-	    classT* object;
-	    const PtrMember member;
-	    
-	public:
-	    PatternHandler( classT* const object, PtrMember member) :
-		object(object),
-		member(member)
-	    {}
-
-		void operator()(int event) {
-		    (object->*member)(event);
-		}
-	};
-    
-	uint32_t register_app_pattern(Comm_pattern::PatternHandlerBase* handler);
-	void SM_transition(uint32_t machineID);
+	uint32_t SM_create(void *obj, void (*handler)(void *obj, int event));
+	void SM_transition(uint32_t machineID, int start_event);
+	void SM_return(void);
 
 	int myNetX(void);
 	int myNetY(void);
@@ -286,6 +256,7 @@ class Comm_pattern : public Component {
 	int myNoCX(void);
 	int myNoCY(void);
 
+	void self_event_send(int event_type);
 	// FIXME: This needs to be more generic as well
 	void data_send(int dest, int len, int event_type);
 
@@ -300,20 +271,16 @@ class Comm_pattern : public Component {
 	void handle_storage_events(Event *sst_event);
 
 	typedef struct SM_t   {
-	    Comm_pattern::PatternHandlerBase* handler;
+	    void (*handler)(void *obj, int event);
+	    void *obj;
 	    uint32_t tag;
+	    std::vector <CPUNicEvent *>missed_events;
 	} SM_t;
 	std::vector <SM_t>SM;
+	std::vector <uint32_t>SMstack;
 
 	int currentSM;
-
-	void set_currentSM(int SMnum)   {
-	    currentSM= SMnum;
-	}
-
-	int get_currentSM(void)   {
-	    return currentSM;
-	}
+	uint32_t maxSM;
 
 	// Input paramters for simulation
 	Patterns *common;

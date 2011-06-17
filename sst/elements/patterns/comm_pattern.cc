@@ -9,7 +9,6 @@
 
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
-#include <sst/core/cpunicEvent.h>
 #include <assert.h>
 #include "comm_pattern.h"
 
@@ -19,33 +18,79 @@
 //
 
 // Register a state machine and a handler for events
-// Assign a SM number
+// Assign a SM number. Make the last created SM the current one.
 uint32_t
-Comm_pattern::register_app_pattern(Comm_pattern::PatternHandlerBase* handler)
+Comm_pattern::SM_create(void *obj, void (*handler)(void *obj, int event))
 {
-    SM_t sm;
 
+SM_t sm;
+int ID;
+
+
+    // Store it and use it's position in the list as ID
+    ID= SM.size();
     sm.handler= handler;
-    // Assign a unique tag. Position in list should do...
-    sm.tag= SM.size();
-
-    // Store it
+    sm.obj= obj;
+    sm.tag= ID;
     SM.push_back(sm);
+    maxSM= ID;
+    currentSM= ID;
 
-    // Whichever this SM is, it is currently running ;-)
-    set_currentSM(SM.size() - 1);
+    return ID;
 
-    return SM.size() - 1;
-
-}  // end of register_app_pattern
+}  // end of SM_create()
 
 
 
 // Transition to another state machine
+// The next arriving event will be delivered to state machine machineID
 void
-Comm_pattern::SM_transition(uint32_t machineID)
+Comm_pattern::SM_transition(uint32_t machineID, int start_event)
 {
-}  // end of SM_transition
+    if (machineID > maxSM)   {
+	_abort(Comm_pattern, "[%3d] illegal machine ID %d in %s, %s:%d\n",
+	    my_rank, machineID, __FILE__, __FUNCTION__, __LINE__);
+    }
+
+    SMstack.push_back(currentSM);
+    currentSM= machineID;
+
+    self_event_send(start_event);
+
+    // If we just switched to an SM that has pending events, deliever them now
+    while (!SM[currentSM].missed_events.empty())   {
+	int missed_event;
+	missed_event= (int)(SM[currentSM].missed_events.back()->GetRoutine());
+	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
+	delete(SM[currentSM].missed_events.back());
+	SM[currentSM].missed_events.pop_back();
+    }
+
+}  // end of SM_transition()
+
+
+
+void
+Comm_pattern::SM_return(void)
+{
+
+    if (SMstack.empty())   {
+	_abort(Comm_pattern, "[%3d] SM stack is empty!\n", my_rank);
+    }
+    currentSM= SMstack.back();
+    SMstack.pop_back();
+
+    // If we just popped back to an SM that has pending events, deliever them now
+    while (!SM[currentSM].missed_events.empty())   {
+	int missed_event;
+	missed_event= (int)(SM[currentSM].missed_events.back()->GetRoutine());
+	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
+	delete(SM[currentSM].missed_events.back());
+	SM[currentSM].missed_events.pop_back();
+    }
+
+}  // end of SM_return()
+
 
 
 void
@@ -55,10 +100,26 @@ Comm_pattern::data_send(int dest, int len, int event_type)
 uint32_t tag= 0;
 
 
-    tag= SM[get_currentSM()].tag;
+    tag= SM[currentSM].tag;
+    // FIXME: We need a better model than 2440 for node latency!
     common->send(2440, dest, envelope_size + len, event_type, tag);
 
-}  // end of data_send
+}  // end of data_send()
+
+
+
+void
+Comm_pattern::self_event_send(int event_type)
+{
+
+uint32_t tag= 0;
+
+
+    tag= SM[currentSM].tag;
+    // FIXME: We need a more generic event send so the cast can go away
+    common->event_send(my_rank, (pattern_event_t)event_type, tag, 0.0);
+
+}  // end of self_event_send()
 
 
 
@@ -142,24 +203,30 @@ void
 Comm_pattern::handle_events(CPUNicEvent *e)
 {
 
-int event;
 uint32_t tag;
 
 
-    // FIXME: For now. Later we need to figure out whether this event (tag) is
-    // for the currently running state machine. if not, queue it, if yes, call
-    // call the appropriate handler>
-    event= (int)e->GetRoutine();
     tag= e->tag;
 
-    if (tag == SM[get_currentSM()].tag)   {
-	// Currently running SM. Call it.
-	(*SM[get_currentSM()].handler)(event);
-    } else   {
-	fprintf(stderr, "ERROR: Not implemented yet: tag for SM other than current!\n");
-    }
+    if (tag == SM[currentSM].tag)   {
+	// If there are pending events for this SM we have not handled yet, do it now
+	while (!SM[currentSM].missed_events.empty())   {
+	    int missed_event;
+	    missed_event= (int)(SM[currentSM].missed_events.back()->GetRoutine());
+	    (*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
+	    delete(SM[currentSM].missed_events.back());
+	    SM[currentSM].missed_events.pop_back();
+	}
 
-    delete(e);
+	// Currently running SM. Call it.
+	int event= (int)e->GetRoutine();
+	(*SM[currentSM].handler)(SM[currentSM].obj, event);
+	delete(e);
+
+    } else   {
+	// Event for a non-running SM. Queue it.
+	SM[tag].missed_events.push_back(e);
+    }
 
     return;
 

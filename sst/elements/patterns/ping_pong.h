@@ -11,6 +11,14 @@
 #define _PINGPONG_PATTERN_H
 
 #include "comm_pattern.h"
+#include "barrier.h"
+
+
+
+// The Pingpong pattern generator can be in these states and deals
+// with these events.
+typedef enum {PP_STATE_INIT, PP_STATE_RECEIVING, PP_STATE_BARRIER} pingpong_state_t;
+typedef enum {PP_START, PP_RECEIVE, PP_BARRIER_ENTRY, PP_BARRIER_EXIT} pingpong_events_t;
 
 
 
@@ -20,6 +28,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    // constructor initializer list                                                                   
 	    Comm_pattern(id, params)
 	{
+
 	    // Messages are exchanged between rank 0 and "dest"
 	    // The default for "dest" is to place it as far away
 	    // as possible in the (logical) torus created by the
@@ -30,6 +39,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    num_msg= 10;
 	    end_len= 1024;
 	    len_inc= 8;
+	    state= PP_STATE_INIT;
 
 
 
@@ -56,21 +66,36 @@ class Pingpong_pattern : public Comm_pattern {
 		it++;
 	    }
 
+	    Barrier_pattern *b= new Barrier_pattern(this);
+	    SMbarrier= b->install_handler();
+
 	    // Let Comm_pattern know which handler we want to have called
-	    pingpong= register_app_pattern(new Comm_pattern::PatternHandler<Pingpong_pattern>
-		(this, &Pingpong_pattern::handle_events));
+	    // Make sure to call SM_create() last in the main pattern
+	    // This is the SM that will run first
+	    SMpingpong= SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
+
+	    // Kickstart ourselves
+	    self_event_send(PP_START);
         }
 
         ~Pingpong_pattern()
-	{
-	}
+	{}
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);
 	void handle_events(int sst_event);
+	static void wrapper_handle_events(void *obj, int sst_event)
+	{
+	    Pingpong_pattern* mySelf = (Pingpong_pattern*) obj;
+	    mySelf->handle_events(sst_event);
+	}
+	void state_INIT(pingpong_events_t event);
+	void state_RECEIVING(pingpong_events_t event);
+	void state_BARRIER(pingpong_events_t event);
 	Params_t params;
 
-	uint32_t pingpong;
+	uint32_t SMpingpong;
+	uint32_t SMbarrier;
 	int cnt;
 	int done;
 	int len;
@@ -80,6 +105,7 @@ class Pingpong_pattern : public Comm_pattern {
 	SimTime_t start_time;
 	int first_receive;
 	int dest;
+	pingpong_state_t state;
 
         friend class boost::serialization::access;
         template<class Archive>
@@ -87,7 +113,8 @@ class Pingpong_pattern : public Comm_pattern {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(pingpong);
+	    ar & BOOST_SERIALIZATION_NVP(SMpingpong);
+	    ar & BOOST_SERIALIZATION_NVP(SMbarrier);
 	    ar & BOOST_SERIALIZATION_NVP(cnt);
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(len);
@@ -97,6 +124,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    ar & BOOST_SERIALIZATION_NVP(start_time);
 	    ar & BOOST_SERIALIZATION_NVP(first_receive);
 	    ar & BOOST_SERIALIZATION_NVP(dest);
+	    ar & BOOST_SERIALIZATION_NVP(state);
 	}
 
         template<class Archive>
