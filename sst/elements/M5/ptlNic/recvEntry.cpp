@@ -16,7 +16,6 @@ RecvEntry::RecvEntry( DmaEngine const& dma, Addr vaddr,
     m_offset( 0 ),
     m_dmaed( 0 )
 {
-    TRACE_ADD( RecvEntry );
 }
 
 bool RecvEntry::pushPkt( unsigned char const* data, int pktSize ) 

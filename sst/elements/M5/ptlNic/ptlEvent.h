@@ -4,9 +4,9 @@
 #include "portals4_types.h"
 
 struct PtlEventInternal  {
-    ptl_size_t  count1;
-    ptl_event_t event;
-    ptl_size_t  count2;
+    volatile long  count1;
+    ptl_event_t user;
+    volatile long  count2;
 };
 
 #endif

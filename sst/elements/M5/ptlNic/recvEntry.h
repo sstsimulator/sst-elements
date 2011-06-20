@@ -56,7 +56,6 @@ inline RecvEntry::DmaBuf::DmaBuf( Addr vaddr, size_t size, RecvEntry* obj ) :
     m_buf( size ),
     m_callback( new DmaCallback( obj, &RecvEntry::dmaCallback, this) )
 {
-    TRACE_ADD( DmaBuf );
     PRINT_AT(DmaBuf,"vaddr=%#lx size=%lu\n", vaddr, size );
 }
 

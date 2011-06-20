@@ -110,6 +110,7 @@ int Context::allocME( ptl_pt_index_t pt_index, ptl_list_t list, void* user_ptr )
             } 
             m_meV[i].avail = false;
             m_meV[i].user_ptr = user_ptr; 
+            m_meV[i].offset = 0;
             return i;
         }       
     }
@@ -138,7 +139,7 @@ int Context::allocCT( Addr eventAddr ) {
     }
 }
 
-int Context::addCT( int handle, ptl_size_t value ) {
+void Context::addCT( int handle, ptl_size_t value ) {
     m_ctV[handle].event.success += value;
 }
 
@@ -178,15 +179,10 @@ struct Context::EQ& Context::findEQ( int handle )
     return m_eqV[handle];
 }
 
-PtlEventInternal* Context::findEvent( int handle )
-{
-    return &m_eqV[handle].event;
-}
-
-Addr Context::findEventAddr( int handle ) 
+Addr Context::findEventAddr( int handle, int pos ) 
 {
     struct EQ& eq = m_eqV[handle]; 
-    return eq.vaddr + ( eq.count * sizeof( eq.event ) ); 
+    return eq.vaddr + ( pos * sizeof( PtlEventInternal ) ); 
 }
 
 int Context::allocPT( unsigned int options, int eq_handle, 
@@ -254,8 +250,8 @@ int Context::put( int md_handle,
            void *           user_ptr,
            ptl_hdr_data_t   hdr_data)
 {
-    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
-    "remote_offset=%#lx\n", md_handle, length, local_offset, remote_offset );
+    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%lu "
+    "remote_offset=%lu\n", md_handle, length, local_offset, remote_offset );
 
     if ( m_logicalIF ) {
         PRINT_AT(Context,"target rank=%d\n",target_id.rank);
@@ -273,9 +269,8 @@ int Context::put( int md_handle,
     assert(entry);
 
     entry->user_ptr = user_ptr;
-    entry->state = PutSendEntry::WaitPut;
-    entry->callback = 
-         new PutCallback(this, &Context::putCallback, entry );
+    entry->state = PutSendEntry::WaitSend;
+    entry->callback = new PutCallback(this, &Context::putCallback, entry );
 
     entry->md_handle = md_handle;
     entry->hdr.length = length;
@@ -331,9 +326,7 @@ int Context::get( int md_handle,
     assert(entry);
 
     entry->user_ptr = user_ptr;
-    entry->state = GetSendEntry::WaitPut;
-    entry->callback = 
-         new GetCallback(this, &Context::getCallback, entry );
+    entry->callback = new GetCallback(this, &Context::getCallback, entry );
 
     entry->local_offset = local_offset;
     entry->md_handle = md_handle;
@@ -349,90 +342,81 @@ int Context::get( int md_handle,
     entry->hdr.key = key; 
     m_getM[ key ] = entry;
 
-    m_nic->sendMsg( target_id.phys.nid, &entry->hdr, 
-                    (Addr) 0, 0, entry->callback );  
+    m_nic->sendMsg( target_id.phys.nid, &entry->hdr, (Addr) 0, 0,  NULL );
     return PTL_OK;
 }
 
 
 bool Context::getCallback( GetSendEntry* entry )
 {
-    PRINT_AT(Context,"state %d\n",entry->state);
-    switch ( entry->state ) {
-      case GetSendEntry::WaitPut:
-        PRINT_AT(Context,"put done");
-        entry->state = GetSendEntry::WaitReply;
-        break;  
-      case GetSendEntry::WaitReply:
-        if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
-            PRINT_AT(Context,"write CT\n");
-            addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
-            writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
-                                                    entry->callback );
-            entry->state = GetSendEntry::WaitCtEvent;
-            break;
-        }
+    PRINT_AT(Context,"\n");
+    if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
+        addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
+        writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
+                    *findCTEvent( m_mdV[entry->md_handle].md.ct_handle) );
+    }
 
-      case GetSendEntry::WaitCtEvent:
-            PRINT_AT(Context,"CT Done\n");
-            entry->state = GetSendEntry::Done;
+    if ( m_mdV[entry->md_handle].md.eq_handle != -1  ) {
+        writeReplyEvent( m_mdV[entry->md_handle].md.eq_handle,
+                        entry->hdr.length,
+                        entry->hdr.offset,
+                        entry->user_ptr,
+                        PTL_NI_OK
+        );
     }
-    if ( entry->state == GetSendEntry::Done ) {
-        PRINT_AT(Context,"complete\n");
-        delete entry;
-        return true;
-    } else {
-        return false;
-    }
+
+    delete entry;
     return true;
 }
 
 bool Context::putCallback( PutSendEntry* entry )
 {
     PRINT_AT(Context,"state %d\n",entry->state);
-    switch ( entry->state ) {
-      case  PutSendEntry::WaitPut:
+    if ( entry->state == PutSendEntry::WaitSend ) {
 
-        PRINT_AT(Context,"put Done\n");
-        if ( entry->hdr.ack_req == PTL_ACK_REQ )  {
-            PRINT_AT(Context,"got ack\n");
-            entry->state = PutSendEntry::WaitAck;
-            break;
+        PRINT_AT(Context,"Send complete\n");
+        if ( m_mdV[entry->md_handle].md.eq_handle != -1  ) {
+            writeSendEvent( m_mdV[entry->md_handle].md.eq_handle,
+                        entry->user_ptr,
+                        PTL_NI_OK
+            );
         }
-
-      case PutSendEntry::WaitAck:
 
         if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
-            PRINT_AT(Context,"write CT\n");
             addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
             writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
-                                                    entry->callback );
-            entry->state = PutSendEntry::WaitCtEvent;
-            break;
+                    *findCTEvent( m_mdV[entry->md_handle].md.ct_handle) );
         }
 
-      case PutSendEntry::WaitCtEvent:
-            PRINT_AT(Context,"CT Done\n");
-            entry->state = PutSendEntry::Done;
-    }
-
-    if ( entry->state == PutSendEntry::Done ) {
-        PRINT_AT(Context,"complete\n");
-        delete entry;
-        return true;
+        if ( entry->hdr.ack_req == PTL_ACK_REQ )  {
+            PRINT_AT(Context,"need ack\n");
+            entry->state = PutSendEntry::WaitAck;
+            return false;
+        }
     } else {
-        return false;
+
+        PRINT_AT(Context,"Got Ack\n");
+        if ( m_mdV[entry->md_handle].md.eq_handle != -1  ) {
+            writeAckEvent( m_mdV[entry->md_handle].md.eq_handle,
+                        entry->hdr.length,
+                        entry->hdr.offset,
+                        entry->user_ptr,
+                        PTL_NI_OK
+            );
+        }
+
+        if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
+            addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
+            writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
+                    *findCTEvent( m_mdV[entry->md_handle].md.ct_handle) );
+        }
     }
+
+    PRINT_AT(Context,"complete\n");
+    delete entry;
+    return true;
 }
 
-void Context::writeCtEvent( int ct_handle, CallbackBase* callback ) 
-{
-        ptl_ct_event_t* event = findCTEvent( ct_handle );
-        m_nic->dmaEngine().write(findCTAddr( ct_handle ),
-                                (uint8_t*) event,
-                                sizeof( *event ),
-                                callback );
-}
 
 bool Context::eventCallback( EventEntry* entry )
 {
@@ -441,14 +425,35 @@ bool Context::eventCallback( EventEntry* entry )
     return true;
 }
 
-void Context::writeEvent( int eq_handle, EventCallback* callback ) 
+void Context::writeCtEvent( EventEntry* entry )
 {
-    PRINT_AT(Context,"eq_handle=%#x\n",eq_handle);
-    PtlEventInternal* event = findEvent( eq_handle );
-    m_nic->dmaEngine().write( findEventAddr( eq_handle ),
-                                (uint8_t*) event,
-                                sizeof( *event ),
-                                callback );
+    PRINT_AT(Context,"ct_handle=%#x\n", entry->handle );
+
+    m_nic->dmaEngine().write( findCTAddr( entry->handle ),
+                                (uint8_t*) &entry->ctEvent,
+                                sizeof( entry->ctEvent ),
+                                entry->callback );
+}
+
+void Context::writeEvent( EventEntry* entry ) 
+{
+    struct EQ& eq = findEQ( entry->handle ); 
+
+    PRINT_AT(Context,"eq_handle=%d eq.count=%d vaddr=%#lx\n", 
+            entry->handle, eq.count, 
+            findEventAddr( entry->handle, eq.count % eq.size ) );
+
+    entry->event.count1 = entry->event.count2 = eq.count; 
+//    entry->event.count1 = eq.count; 
+//    entry->event.count2 = -1; 
+
+    m_nic->dmaEngine().write( 
+                            findEventAddr( entry->handle, eq.count % eq.size ),
+                            (uint8_t*) &entry->event,
+                            sizeof( entry->event ),
+                            entry->callback );
+
+    ++eq.count;
 }
 
 RecvEntry* Context::processHdrPkt( void* pkt )
@@ -460,6 +465,10 @@ RecvEntry* Context::processHdrPkt( void* pkt )
 void Context::processAck( PtlHdr* hdr )
 {
     PRINT_AT(Context,"key=%d\n",hdr->key);
+    
+    m_putM[hdr->key]->hdr = *hdr;
+
+    PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset );
     if ( (*m_putM[hdr->key]->callback)() ) {
         delete m_putM[hdr->key]->callback;
     }
@@ -471,6 +480,9 @@ RecvEntry* Context::processReply( PtlHdr* hdr )
     PRINT_AT(Context,"key=%d\n",hdr->key);
     GetSendEntry* entry = m_getM[ hdr->key ];
     m_getM.erase( hdr->key );
+
+    // note we are writing over the PtlGet hdr
+    entry->hdr = *hdr;
 
     ptl_md_t* md = &m_mdV[ entry->md_handle ].md;
 
@@ -484,7 +496,7 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
 {
     PRINT_AT(Context,"srcNid=%d srcPid=%d targetPid=%d\n",
                             nid, hdr->src_pid, hdr->dest_pid );
-    PRINT_AT(Context,"length=%lu offset=%#lx\n",hdr->length, hdr->offset);
+    PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset);
     PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",hdr->pt_index, hdr->match_bits );
 
     if ( hdr->op == Ack ) {
@@ -588,11 +600,25 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
         entry->state = PutRecvEntry::WaitRecvComp;
         entry->callback = 
                 new PutRecvCallback( this, &Context::putRecvCallback,entry );
-        ptl_me_t* me = &m_meV[me_handle].me;
- 
+        ME& me = m_meV[me_handle];
+
+        ptl_size_t length = hdr->length;
+        ptl_size_t offset;
+        Addr start = (Addr) me.me.start;
+
+        if ( me.me.options & PTL_ME_MANAGE_LOCAL ) {
+            offset = me.offset;
+            me.offset += length;
+        } else {
+            offset = hdr->offset;
+        }
+        entry->hdr.offset = offset;
+        entry->hdr.length = length;
+
+        start += offset;
+
         return new RecvEntry( m_nic->dmaEngine(), 
-                                    (Addr) me->start + hdr->offset, 
-                                    me->length, entry->callback );
+                                    start, length, entry->callback );
     }
 }
 
@@ -608,6 +634,8 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
             entry->hdr.dest_pid = entry->hdr.src_pid;
             entry->hdr.src_pid = m_pid;
             PRINT_AT(Context,"send ack\n");
+            PRINT_AT(Context,"mlength=%lu remote_offset=%lu\n",
+                                    entry->hdr.length,entry->hdr.offset);
             m_nic->sendMsg( entry->nid, &entry->hdr, 0, 0, entry->callback );  
             entry->state = PutRecvEntry::WaitAckSent;
             return false;
@@ -622,40 +650,36 @@ void Context::recvFini( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
     PRINT_AT( Context, "pt_index=%d\n", hdr->pt_index );
     int eq_handle = m_ptV[ hdr->pt_index ].eq_handle;
 
+    ME& me = m_meV[ me_handle ];
+    ptl_size_t mlength = hdr->length;
+    void* start = (unsigned char*)me.me.start + hdr->offset;
+    ptl_size_t offset = hdr->offset;
+
+    int ct_handle = findME(me_handle)->ct_handle;
+    if ( ct_handle != -1 ) {
+        addCT( ct_handle, 1 );
+        writeCtEvent( ct_handle, *findCTEvent( ct_handle) );
+    }
+
     if ( eq_handle != -1 ) {
-        ME& me = m_meV[ me_handle ];
-        EventEntry* entry = new EventEntry;
-        assert( entry );
-        PRINT_AT( Context, "eq_handle=%#x\n", eq_handle );
+        ptl_process_t initiator;
+        initiator.phys.nid = nid; 
+        initiator.phys.pid = hdr->src_pid;
 
-        entry->callback = 
-            new EventCallback( this, &Context::eventCallback, entry );
-
-        struct EQ& eq = findEQ( eq_handle ); 
-        ptl_size_t count = ( eq.count + 1 ) % eq.size;
-
-        PRINT_AT( Context, "eq.count=%d\n", count );
-        eq.event.count1 = count; 
-        eq.event.event.type          = PTL_EVENT_PUT;
-        eq.event.event.initiator.phys.nid = nid; 
-        eq.event.event.initiator.phys.pid = hdr->src_pid;
-        eq.event.event.pt_index      = hdr->pt_index;
-        eq.event.event.uid           = hdr->uid;
-        eq.event.event.jid           = hdr->jid;
-        eq.event.event.match_bits    = hdr->match_bits;
-        eq.event.event.rlength       = hdr->length;
-        eq.event.event.mlength       = hdr->length; // FIXME
-        eq.event.event.remote_offset = hdr->offset; 
-        eq.event.event.start         = me.me.start; // FIXME
-        eq.event.event.user_ptr      = me.user_ptr;
-        eq.event.event.hdr_data      = hdr->hdr_data;
-        eq.event.event.ni_fail_type  = PTL_NI_OK;
-        //eq.event.event.atomic_operation =
-        //eq.event.event.atomic_type =
-        eq.event.count2 = count; 
-        
-        writeEvent( eq_handle, entry->callback );
-
-        eq.count = count;
+        writeEvent( eq_handle,
+            hdr->op == Reply ? PTL_EVENT_GET : PTL_EVENT_PUT,
+            initiator,
+            hdr->pt_index,
+            hdr->uid,
+            hdr->jid,
+            hdr->match_bits,
+            hdr->length,
+            mlength,
+            offset,
+            start,
+            me.user_ptr,
+            hdr->hdr_data,
+            PTL_NI_OK
+        );
     }
 }

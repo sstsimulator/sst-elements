@@ -30,6 +30,9 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
 {
     TRACE_ADD( PtlNic );
     TRACE_ADD( PtlCmd );
+    TRACE_ADD( RecvEntry);
+    TRACE_ADD( DmaBuf );
+
     PRINT_AT(PtlNic,"n");
 
     for ( int i=0; i < m_vcInfoV.size(); i++ ) {
@@ -68,7 +71,7 @@ void PtlNic::processFromRtr()
         CtrlFlit* cFlit = (CtrlFlit*) event->packet.payload; 
 
         if ( cFlit->s.head ) {
-            PRINT_AT(PtlNic,"got head Packet for nid %d\n",cFlit->s.nid);
+            PRINT_AT(PtlNic,"got head Packet from nid %d\n",cFlit->s.nid);
             PtlHdr* hdr = (PtlHdr*) (cFlit + 1);
             assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
                                         m_nidRecvEntryM.end() );
@@ -92,7 +95,8 @@ void PtlNic::processFromRtr()
 
         if ( cFlit->s.tail ) {
             PRINT_AT(PtlNic,"got tailPacket for nid %d\n",cFlit->s.nid);
-            assert( ! m_nidRecvEntryM[ cFlit->s.nid ] );
+            assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
+                                        m_nidRecvEntryM.end() );
         }
 
         delete event;

@@ -66,7 +66,7 @@ void PtlNic::VCInfo::processSendQ()
     }    
 
     if ( entry->dmaDone() ) {
-        if ( (*entry->callback())() )  {
+        if ( entry->callback() && (*entry->callback())() )  {
             PRINT_AT(VCInfo,"delete callback\n");
             delete entry->callback();
         }
