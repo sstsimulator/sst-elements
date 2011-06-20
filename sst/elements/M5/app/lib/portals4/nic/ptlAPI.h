@@ -11,8 +11,9 @@ namespace PtlNic {
 class PtlAPI {
 
     struct EventQ {
-        ptl_size_t count; 
-        std::vector< struct PtlEventInternal > eventV;     
+        long count; 
+        long size; 
+        struct PtlEventInternal* eventV;     
     };
 
   public:
@@ -20,8 +21,9 @@ class PtlAPI {
         m_ptlIF( ptlIF ) 
     {
         PTL_DBG2("\n");
-        
+        assert( sizeof(ptl_size_t) == sizeof(long ) );
     }
+
     ~PtlAPI() {
         PTL_DBG2("\n");
     } 
@@ -138,20 +140,26 @@ class PtlAPI {
         }
     }
 
-    int ptlEQAlloc( ptl_size_t count )
+    int ptlEQAlloc( ptl_size_t size )
     {
         EventQ* eventQ = new EventQ;
         if ( !eventQ ) return -PTL_NO_SPACE;
 
+        eventQ->size = size; 
         eventQ->count = 0; 
-        eventQ->eventV.resize( count );
+        eventQ->eventV = new PtlEventInternal[ size ];
 
-        for ( int i = 0; i < (int) count; i++ ) {
-            eventQ->eventV[i].count1 = eventQ->eventV[i].count2 = 0;
+        for ( int i = 0; i < (int) size; i++ ) {
+            eventQ->eventV[i].count1 = eventQ->eventV[i].count2 = -1;
+            // we don't write the user part of the event and it's never marked
+            // dirty by the M5 Cache, when a write comes from the dma engine
+            // it doesn't make it into the cache, is this correct behaviour?
+            // touch the event makes things work
+            memset( &eventQ->eventV[i].user,0,sizeof(eventQ->eventV[i].user));
         }
 
         PTL_DBG2("%p\n",&eventQ->eventV[0]);
-        int handle =  m_ptlIF.push_cmd( PtlEQAlloc, 2, count,
+        int handle =  m_ptlIF.push_cmd( PtlEQAlloc, 2, size,
                                         &eventQ->eventV[0] ); 
         if ( handle < 0 ) {
             delete eventQ;
@@ -173,28 +181,25 @@ class PtlAPI {
         return retval;
     }
 
-    int ptlEQWait(ptl_handle_ct_t   eq_handle,
-                    ptl_event_t *  event)
+    int ptlEQWait(ptl_handle_ct_t eq_handle, ptl_event_t* event )
     {
-        EventQ* foo = m_eqM[eq_handle];
+        EventQ*    foo = m_eqM[ eq_handle ];
+        ptl_size_t pos = foo->count % foo->size;
 
-        PTL_DBG2("eq_handle=%d count=%lu\n",eq_handle,foo->count);
+        PTL_DBG2( "eq_handle=%d count=%lu\n", eq_handle, foo->count );
 
-        while ( 1 ) {
-            
-            ptl_size_t count = foo->eventV[foo->count].count1;
-            *event = foo->eventV[foo->count].event;
+        while ( foo->eventV[ pos ].count1 < foo->count );
+        while ( foo->eventV[ pos ].count2 < foo->count );
 
-            if ( count != foo->count ) {
-                if ( count != foo->eventV[foo->count].count2 ) {
-                    // can we recover from this?
-                    foo->count = count;
-                    return -PTL_EQ_DROPPED;
-                }
-                ++foo->count;
-                return PTL_OK;
-            }
+        *event = foo->eventV[ pos ].user;
+        
+        if ( foo->eventV[ pos ].count2 != foo->count ) {
+            return -PTL_EQ_DROPPED;
         }
+
+        ++foo->count;
+
+        return PTL_OK;
     }
 
     int ptlPut(ptl_handle_md_t  md_handle,

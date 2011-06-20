@@ -22,8 +22,8 @@ int PtlMDBind(ptl_handle_ni_t   ni_handle,
     mdh.s.selector = HANDLE_MD_CODE;
 
     ptl_md_t tmp_md = *md;
-    tmp_md.ct_handle = ct.s.code;
-    tmp_md.eq_handle = eq.s.code;
+    tmp_md.ct_handle = md->ct_handle == PTL_CT_NONE ? -1 : ct.s.code;
+    tmp_md.eq_handle = md->eq_handle == PTL_EQ_NONE ? -1 : eq.s.code;
 
     int retval = api->PtlMDBind( api, &tmp_md );
     if ( retval < 0 )  return -retval;

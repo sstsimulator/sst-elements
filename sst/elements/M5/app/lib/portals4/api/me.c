@@ -23,7 +23,7 @@ int PtlMEAppend(ptl_handle_ni_t     ni_handle,
     meh.s.selector = HANDLE_MD_CODE;
 
     ptl_me_t tmp_me = *me;
-    tmp_me.ct_handle = ct.s.code;
+    tmp_me.ct_handle = me->ct_handle == PTL_CT_NONE ? -1 : ct.s.code;
 
     int retval = api->PtlMEAppend( api, pt_index, &tmp_me, ptl_list, user_ptr );
     if ( retval < 0 )  return -retval;
