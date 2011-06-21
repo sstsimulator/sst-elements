@@ -7,6 +7,6 @@ class M5;
 
 typedef std::map< std::string, SimObject* > objectMap_t;
 
-extern objectMap_t buildConfig( M5*, std::string, std::string );
+extern objectMap_t buildConfig( M5*, std::string, std::string, SST::Params& );
 
 #endif

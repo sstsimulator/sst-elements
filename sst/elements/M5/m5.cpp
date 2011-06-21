@@ -27,7 +27,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 {
     // M5 variable
     want_info = false;
-    
 
     if ( params.find( "debug" ) != params.end() ) {
         int level = strtol( params["debug"].c_str(), NULL, 0 );
@@ -52,6 +51,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     std::ostringstream tmp;
 
     tmp << world.rank();
+    // libm5 src/base/trace.cc references "RANK"
+    setenv("RANK", tmp.str().c_str(), 1 );
 
     _dbg.prepend(  tmp.str() + ":");
     _info.prepend(  tmp.str() + ":");
@@ -65,7 +66,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     INFO( "configFile `%s`\n", configFile.c_str() );
 
-    buildConfig( this, "m5", configFile );
+    buildConfig( this, "m5", configFile, params );
 
     setClockFrequency(1000000000000);
 

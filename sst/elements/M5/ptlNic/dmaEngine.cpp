@@ -13,7 +13,8 @@ DmaEngine::DmaEngine( SST::Component& comp, int nid ) :
     m_nid( nid )
 {
     TRACE_ADD( DmaEngine );
-    PRINT_AT(DmaEngine,"\n");
+    PRINT_AT(DmaEngine,"nid=%d\n",nid);
+    assert( nid != -1 );
 
     m_link = comp.configureLink( "dma", "1ps",
            new SST::Event::Handler<DmaEngine>(this, &DmaEngine::eventHandler));

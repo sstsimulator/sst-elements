@@ -59,8 +59,10 @@ int main( int argc, char* argv[] )
     rank = id.phys.nid;
     if ( id.phys.nid == 0 ) {
         nid0(ni_handle,&id);
-    } else {
+    } else if ( id.phys.nid == 1 ) {
         nid1(ni_handle,&id);
+    }else {
+        m5_barrier();
     }
 
     if ( ( retval = PtlNIFini( ni_handle ) ) != PTL_OK ) { 

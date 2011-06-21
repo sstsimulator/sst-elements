@@ -21,7 +21,7 @@ static void printLinkMap( linkMap_t& );
 static void connectAll( objectMap_t&, linkMap_t& );
 static void createCompLinks( linkMap_t&, std::string, SST::SDL_links_t& );
 
-objectMap_t buildConfig( M5* comp, std::string name, std::string configFile )
+objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST::Params& params )
 {
     objectMap_t     objectMap;
     linkMap_t       linkMap;
@@ -37,6 +37,9 @@ objectMap_t buildConfig( M5* comp, std::string name, std::string configFile )
 
     SST::SDL_CompMap_t::iterator iter;
     for ( iter = sdlMap.begin(); iter != sdlMap.end(); ++iter ) {
+
+        SST::Params tmp = params.find_prefix_params( iter->first + "." );
+        (*iter->second).params.insert( tmp.begin(), tmp.end() );
 
         objectMap[ iter->first ]  = factory.createObject( 
                         name + "." + iter->first, *iter->second );

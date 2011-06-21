@@ -64,7 +64,7 @@ void PtlNicMMIF::dmaHandler( SST::Event* e )
 //  FIX ME!! this is a memory leak because no one delete the allocate DmaEvent
 //
     ::DmaEvent* event = static_cast< ::DmaEvent* >(e);
-    DBGX( 2, "addr=%#lx size=%lu type=\n", event->addr, event->size,
+    DBGX( 2, "addr=%#lx size=%lu type=%s\n", event->addr, event->size,
                 event->type == ::DmaEvent::Write ? "Write" : "Read" );
     if ( event->type == ::DmaEvent::Write ) {
         dmaWrite( event->addr, 

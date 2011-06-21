@@ -6,8 +6,12 @@
 #include <sst/core/timeLord.h>
 
 
+#if 0
 #define BA_DBG(fmt,args...) \
   fprintf(stderr,"%d:BarrierAction::%s() "fmt, world.rank(), __func__, ##args)
+#else
+#define BA_DBG(fmt,args...)
+#endif
 
 class BarrierAction : public SST::Action 
 {
