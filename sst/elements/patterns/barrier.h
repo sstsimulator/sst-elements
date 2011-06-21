@@ -11,32 +11,33 @@
 #define _BARRIER_PATTERN_H
 
 #include "comm_pattern.h"
-
-
-
-// The Barrier pattern generator can be in these states and deals
-// with these events.
-typedef enum {BARRIER_STATE_START} barrier_state_t;
-typedef enum {BARRIER_DONE} barrier_events_t;
+#include "collective_topology.h"
 
 
 
 class Barrier_pattern   {
     public:
-	Barrier_pattern(Comm_pattern * const& current_pattern)   {
-	    cp= current_pattern;
-	    state= BARRIER_STATE_START;
+	Barrier_pattern(Comm_pattern * const& current_pattern) :
+	    cp(current_pattern)
+	{
+	    state= START;
+	    epoch= 0;
+	    receives[0]= 0;
+	    receives[1]= 0;
+	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
 	}
 
         ~Barrier_pattern() {}
 
 	uint32_t install_handler(void)
 	{
-	    uint32_t SMbarrier;
-
-	    SMbarrier= cp->SM_create((void *)this, Barrier_pattern::wrapper_handle_events);
-	    return SMbarrier;
+	    return cp->SM_create((void *)this, Barrier_pattern::wrapper_handle_events);
 	}
+
+	// The Barrier pattern generator can be in these states and deals
+	// with these events.
+	typedef enum {START, WAIT_CHILDREN, WAIT_PARENT} barrier_state_t;
+	typedef enum {E_START, E_FROM_CHILD, E_FROM_PARENT} barrier_events_t;
 
 
     private:
@@ -53,6 +54,14 @@ class Barrier_pattern   {
 	Comm_pattern *cp;
 
 	barrier_state_t state;
+	int done;
+	int epoch; // Each barrier happens in a different time cycle
+	int receives[2];	// Receives in each epoch
+	Collective_topology *ctopo;
+
+	void state_INIT(barrier_events_t event);
+	void state_WAIT_CHILDREN(barrier_events_t event);
+	void state_WAIT_PARENT(barrier_events_t event);
 
 };
 

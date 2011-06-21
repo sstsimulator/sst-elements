@@ -15,13 +15,6 @@
 
 
 
-// The Pingpong pattern generator can be in these states and deals
-// with these events.
-typedef enum {PP_STATE_INIT, PP_STATE_RECEIVING, PP_STATE_BARRIER} pingpong_state_t;
-typedef enum {PP_START, PP_RECEIVE, PP_BARRIER_ENTRY, PP_BARRIER_EXIT} pingpong_events_t;
-
-
-
 class Pingpong_pattern : public Comm_pattern {
     public:
         Pingpong_pattern(ComponentId_t id, Params_t& params) :
@@ -39,7 +32,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    num_msg= 10;
 	    end_len= 1024;
 	    len_inc= 8;
-	    state= PP_STATE_INIT;
+	    state= PP_INIT;
 
 
 
@@ -75,11 +68,19 @@ class Pingpong_pattern : public Comm_pattern {
 	    SMpingpong= SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
 
 	    // Kickstart ourselves
-	    self_event_send(PP_START);
+	    self_event_send(E_START);
         }
 
         ~Pingpong_pattern()
 	{}
+
+
+	// The Pingpong pattern generator can be in these states and deals
+	// with these events.
+	typedef enum {PP_INIT, PP_RECEIVING, PP_BARRIER} pingpong_state_t;
+	typedef enum {E_START, E_RECEIVE, E_BARRIER_ENTRY, E_BARRIER_EXIT} pingpong_events_t;
+
+
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);

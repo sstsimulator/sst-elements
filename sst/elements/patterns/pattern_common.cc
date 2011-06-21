@@ -44,9 +44,9 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
 	int envelope_size)
 {
 
-    /* Make sure number of ranks is a power of 2, and my_rank is within range */
     total_cores= x * y * NoC_x_dim * NoC_y_dim * cores;
 #if NOT_NEEDED_I_THINK
+    /* Make sure number of ranks is a power of 2, and my_rank is within range */
     if (!is_pow2(total_cores))   {
 	fprintf(stderr, "Total number of ranks (cores) %d is not a power of 2!\n", total_cores);
 	return FALSE;
