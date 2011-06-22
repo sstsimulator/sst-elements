@@ -15,6 +15,8 @@ static inline Process* newProcess( const std::string name,
 
     process.name = name;
 
+    //params.print_all_params(std::cout);
+
     // ProcessParams
     process.system = system;
     INIT_STR( process, params, errout );
@@ -81,3 +83,27 @@ static inline Process* newProcess( const std::string name,
 
     return process.create();
 }
+
+static inline SST::Params mergeParams( std::string name, SST::Params p1, SST::Params p2 )
+{
+    SST::Params tmp = p2.find_prefix_params(name);
+    int num = p1.find_prefix_params(name).size();
+
+    SST::Params::iterator iter;
+    iter = tmp.begin(); 
+    while ( iter != tmp.end() ) {
+        std::stringstream numStr;
+        numStr << num; 
+        p1[ name + numStr.str() ] = (*iter).second;
+        ++iter;
+        ++num;
+    }
+    return p1;
+}
+
+static inline SST::Params mergeParams( SST::Params p1, SST::Params p2 )
+{
+    SST:: Params params = mergeParams( "cmd.", p1, p2 ); 
+    return mergeParams( "env.", params, p2 ); 
+}
+

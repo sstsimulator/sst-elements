@@ -35,9 +35,12 @@ void loadMemory( string name, PhysicalMemory* memory,
         DummySystem* system = create_DummySystem( name + "." + tmp.str() +  
                             ".dummySystem", memory, Enums::timing, start, end);
 
+        SST::Params mergedParams = mergeParams(  
+                params.find_prefix_params( tmp.str() + ".process."),
+                params.find_prefix_params( "process." ) );
+
         Process* process = newProcess( name + "." + tmp.str(), 
-            params.find_prefix_params( tmp.str() + ".process."),
-                                       system );
+                                            mergedParams, system );
         process->assignThreadContext(num);
 
         // NOTE: system and process are not needed after
