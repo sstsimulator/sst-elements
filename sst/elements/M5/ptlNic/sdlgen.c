@@ -48,7 +48,7 @@ static struct option longopts[] = {
     { "latency",           required_argument, NULL, 'l' },
     { "output",            required_argument, NULL, 'o' },
     { "help",              no_argument,       NULL, 'h' },
-    { "ranks",             required_argument, NULL, 'k' },
+//    { "ranks",             required_argument, NULL, 'k' },
     { "new_format",        no_argument,       NULL, 'f' },
     { NULL,                0,                 NULL, 0   }
 };
@@ -87,9 +87,11 @@ main(int argc, char **argv)
         case 'h':
             print_usage(argv[0]);
             exit(0);
+#if 0
         case 'k':
             ranks = atoi(optarg);
             break;
+#endif
         case 'f':
             new_format = 1;
             break;
@@ -107,6 +109,8 @@ main(int argc, char **argv)
         y_count = atoi(argv[1]);
         z_count = atoi(argv[2]);
     }
+
+    ranks = x_count * y_count * z_count;
 
     /* clean up so SDL file looks nice */
 
@@ -231,6 +235,8 @@ main(int argc, char **argv)
 	    fprintf(output, "    <component name=%d.cpu type=m5C.M5 rank=%d >\n",i,rank);
 	    fprintf(output, "        <params include=cpu_params>\n");
 	    fprintf(output, "            <cpu0.base.process.nid> %d </cpu0.base.process.nid>\n",i);
+	    fprintf(output, "            <physmem0.exe.process.env.0> RT_RANK=%d </physmem0.exe.process.env.0>\n",i);
+	    fprintf(output, "            <physmem0.exe.process.env.1> RT_SIZE=%d </physmem0.exe.process.env.1>\n",ranks);
 	    fprintf(output, "        </params>\n");
 	    fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$foo_link_lat/>\n",i);
 	    fprintf(output, "        <link name=%d.dmaLink port=dma latency=$foo_link_lat/>\n",i);
