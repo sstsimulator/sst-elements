@@ -4,7 +4,7 @@
 
 int m5_get_rank( void )
 {
-    char* tmp = getenv("RANK");
+    char* tmp = getenv("RT_RANK");
     int rank = -1;
     if ( tmp ) {
          rank = atoi(tmp);
@@ -15,7 +15,7 @@ int m5_get_rank( void )
 
 int m5_get_size( void )
 {
-    char* tmp = getenv("SIZE");
+    char* tmp = getenv("RT_SIZE");
     int rank = 0;
     if ( tmp ) {
          rank = atoi(tmp);
