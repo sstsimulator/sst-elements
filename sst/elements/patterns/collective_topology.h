@@ -32,6 +32,7 @@ class Collective_topology   {
 	bool is_root(void);
 	bool is_leaf(void);
 	int parent_rank(void);
+	int num_children(void);
 
 	const int root;
 	std::list <int>children;

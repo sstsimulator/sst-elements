@@ -270,11 +270,13 @@ class Comm_pattern : public Component {
 	void handle_nvram_events(Event *sst_event);
 	void handle_storage_events(Event *sst_event);
 
+	void SM_deliver_missed_events(void);
+
 	typedef struct SM_t   {
 	    void (*handler)(void *obj, int event);
 	    void *obj;
 	    uint32_t tag;
-	    std::vector <CPUNicEvent *>missed_events;
+	    std::list <CPUNicEvent *>missed_events;
 	} SM_t;
 	std::vector <SM_t>SM;
 	std::vector <uint32_t>SMstack;

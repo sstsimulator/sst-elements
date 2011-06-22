@@ -176,6 +176,7 @@ Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 	case E_BARRIER_ENTRY:
 	    // This will be delivered to us after barrier switches back to us
 	    self_event_send(E_BARRIER_EXIT);
+
 	    // Switch the state machine to the start of the barrier SM
 	    SM_transition(SMbarrier, Barrier_pattern::E_START);
 	    break;

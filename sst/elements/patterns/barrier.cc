@@ -14,7 +14,6 @@
 */
 #include "sst/core/serialization/element.h"
 #include "barrier.h"
-const int no_data= 0;
 
 
 
@@ -68,6 +67,22 @@ Barrier_pattern::state_INIT(barrier_events_t event)
 	    }
 	    break;
 
+	case E_FROM_CHILD:
+	    // It's possible that other ranks have already entered the barrier and
+	    // sent us events before we entered the state machine for barrier.
+	    if (ctopo->is_root())   {
+		state= WAIT_CHILDREN;
+		state_WAIT_CHILDREN(event);
+	    } else if (ctopo->is_leaf())   {
+		// This cannot happen
+		_abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, event, state);
+	    } else   {
+		// I must be an interior node
+		state= WAIT_CHILDREN;
+		state_WAIT_CHILDREN(event);
+	    }
+	    break;
+
 	default:
 	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, event, state);
     }
@@ -80,8 +95,13 @@ Barrier_pattern::state_WAIT_CHILDREN(barrier_events_t event)
 {
     switch (event)   {
 	case E_FROM_CHILD:
-	    // Count receives from this epoch. When I have them all, send to parent
-	    // and switch epoch
+	    // Count receives from my children. When I have them all, send to parent.
+	    receives++;
+	    if (receives == ctopo->num_children())   {
+		cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		receives= 0;
+		state= WAIT_PARENT;
+	    }
 	    break;
 
 	default:
@@ -94,11 +114,16 @@ Barrier_pattern::state_WAIT_CHILDREN(barrier_events_t event)
 void
 Barrier_pattern::state_WAIT_PARENT(barrier_events_t event)
 {
+
+std::list<int>::iterator it;
+
+
     switch (event)   {
 	case E_FROM_PARENT:
 	    // Send to my children and get out of here
-	    receives[epoch % 2]= 0;
-	    epoch++;
+	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+		cp->data_send(*it, no_data, E_FROM_PARENT);
+	    }
 	    done= true;
 	    break;
 

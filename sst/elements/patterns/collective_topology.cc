@@ -76,6 +76,17 @@ Collective_topology::parent_rank(void)
 
 
 
+// How many chidlren do I have?
+int
+Collective_topology::num_children(void)
+{
+
+    return children.size();
+
+}  // end of num_children()
+
+
+
 // Generate my children
 void
 Collective_topology::gen_children(void)

@@ -18,12 +18,11 @@
 class Barrier_pattern   {
     public:
 	Barrier_pattern(Comm_pattern * const& current_pattern) :
-	    cp(current_pattern)
+	    cp(current_pattern),
+	    no_data(0)
 	{
 	    state= START;
-	    epoch= 0;
-	    receives[0]= 0;
-	    receives[1]= 0;
+	    receives= 0;
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
 	}
 
@@ -53,10 +52,10 @@ class Barrier_pattern   {
 	// We need to remember how to upcall into our parent object
 	Comm_pattern *cp;
 
+	const int no_data;
 	barrier_state_t state;
 	int done;
-	int epoch; // Each barrier happens in a different time cycle
-	int receives[2];	// Receives in each epoch
+	int receives;
 	Collective_topology *ctopo;
 
 	void state_INIT(barrier_events_t event);

@@ -58,15 +58,34 @@ Comm_pattern::SM_transition(uint32_t machineID, int start_event)
     self_event_send(start_event);
 
     // If we just switched to an SM that has pending events, deliever them now
-    while (!SM[currentSM].missed_events.empty())   {
-	int missed_event;
-	missed_event= (int)(SM[currentSM].missed_events.back()->GetRoutine());
-	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
-	delete(SM[currentSM].missed_events.back());
-	SM[currentSM].missed_events.pop_back();
-    }
+    SM_deliver_missed_events();
 
 }  // end of SM_transition()
+
+
+
+void
+Comm_pattern::SM_deliver_missed_events(void)
+{
+
+int missed_event;
+int lastSM;
+
+
+    // If we just popped back to an SM that has pending events, deliever them now
+    lastSM= currentSM;
+    while (!SM[currentSM].missed_events.empty())   {
+	missed_event= (int)(SM[currentSM].missed_events.front()->GetRoutine());
+	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
+	// delete(SM[currentSM].missed_events.front());
+	SM[lastSM].missed_events.pop_front();
+	if (lastSM != currentSM)   {
+	    // Handler switched us from lastSM to currentSM!
+	    break;
+	}
+    }
+
+}  // end of SM_deliver_missed_events
 
 
 
@@ -79,15 +98,7 @@ Comm_pattern::SM_return(void)
     }
     currentSM= SMstack.back();
     SMstack.pop_back();
-
-    // If we just popped back to an SM that has pending events, deliever them now
-    while (!SM[currentSM].missed_events.empty())   {
-	int missed_event;
-	missed_event= (int)(SM[currentSM].missed_events.back()->GetRoutine());
-	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
-	delete(SM[currentSM].missed_events.back());
-	SM[currentSM].missed_events.pop_back();
-    }
+    SM_deliver_missed_events();
 
 }  // end of SM_return()
 
@@ -210,15 +221,9 @@ uint32_t tag;
 
     if (tag == SM[currentSM].tag)   {
 	// If there are pending events for this SM we have not handled yet, do it now
-	while (!SM[currentSM].missed_events.empty())   {
-	    int missed_event;
-	    missed_event= (int)(SM[currentSM].missed_events.back()->GetRoutine());
-	    (*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
-	    delete(SM[currentSM].missed_events.back());
-	    SM[currentSM].missed_events.pop_back();
-	}
+	SM_deliver_missed_events();
 
-	// Currently running SM. Call it.
+	// Then call the current SM with the event that just arrived
 	int event= (int)e->GetRoutine();
 	(*SM[currentSM].handler)(SM[currentSM].obj, event);
 	delete(e);
