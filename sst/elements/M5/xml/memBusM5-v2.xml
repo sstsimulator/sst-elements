@@ -103,7 +103,7 @@
     <base.function_trace_start> 0 </base.function_trace_start>
     <base.phase> 0 </base.phase>
     <base.progress_interval> 0 </base.progress_interval>
-    <base.defer_registration> 0 </base.defer_registration>  
+    <base.defer_registration> 0 </base.defer_registration>
     <base.do_checkpoint_insts> 1 </base.do_checkpoint_insts>
     <base.do_statistics_insts> 1 </base.do_statistics_insts>
     <base.function_trace> 0 </base.function_trace>
@@ -145,7 +145,7 @@
     <clock> 1000 </clock>
     <responder_set> false </responder_set>
     <block_size> 64 </block_size>
-    <bus_id> 0 </bus_id> 
+    <bus_id> 0 </bus_id>
     <header_cycles> 1 </header_cycles>
     <width> 64 </width>
 </busParams>
@@ -153,7 +153,6 @@
 </param_include>
 
 <sst>
-
 
     <component name=cpu0 type=O3Cpu >
         <params include=cpuParams>
@@ -176,7 +175,7 @@
         <params include=cacheParams>
             <size>32768</size>
         </params>
-        <link name=cpu2icache port=cpu_side latency=$lat /> 
+        <link name=cpu2icache port=cpu_side latency=$lat />
         <link name=icache2bus port=mem_side latency=$lat />
     </component>
 
