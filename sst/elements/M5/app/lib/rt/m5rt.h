@@ -4,11 +4,11 @@
 typedef struct {
     int nid;
     int pid;
-} m5_nidpid_map_t;
+} cnos_nidpid_map_t;
 
-extern int m5_get_rank( void );
-extern int m5_get_size( void );
-extern int m5_barrier( void );
-extern int m5_get_nidpid_map( m5_nidpid_map_t** map );
+extern int cnos_get_rank( void );
+extern int cnos_get_size( void );
+extern int cnos_barrier( void );
+extern int cnos_get_nidpid_map( cnos_nidpid_map_t** map );
  
 #endif

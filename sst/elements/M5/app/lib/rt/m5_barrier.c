@@ -49,7 +49,7 @@ static inline long my_syscall( long number, long arg0, long arg1, long arg2 )
     return retval;
 }
 
-int m5_barrier( void )
+int cnos_barrier( void )
 {
     return my_syscall(500,0,0,0);
 }
