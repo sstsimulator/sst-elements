@@ -2,6 +2,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
+#include <sst/core/configGraph.h>
 
 #include <util.h>
 #include <python/swig/pyobject.hh>
@@ -21,7 +22,8 @@ static void printLinkMap( linkMap_t& );
 static void connectAll( objectMap_t&, linkMap_t& );
 static void createCompLinks( linkMap_t&, std::string, SST::SDL_links_t& );
 
-objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST::Params& params )
+
+objectMap_t buildConfigV1( M5* comp, std::string name, std::string configFile, SST::Params& params )
 {
     objectMap_t     objectMap;
     linkMap_t       linkMap;
@@ -48,6 +50,76 @@ objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST
     //printLinkMap( linkMap );
     connectAll( objectMap, linkMap );
     return objectMap;
+}
+
+objectMap_t buildConfigV2( M5* comp, std::string name, std::string configFile, SST::Params& params )
+{
+    objectMap_t     objectMap;
+    linkMap_t       linkMap;
+    SST::ConfigGraph graph;
+
+    DBGC( 2, "name=`%s` file=`%s`\n", name.c_str(), configFile.c_str() );
+
+    xml_parse( configFile.c_str(), graph );
+    //graph.print_graph(std::cout);
+
+    SST::ConfigLinkMap_t::iterator lmIter;
+
+    for ( lmIter = graph.links.begin(); lmIter != graph.links.end(); ++lmIter ) {
+        SST::ConfigLink& tmp = *(*lmIter).second;
+        DBGC(2,"key=%s name=%s\n",(*lmIter).first.c_str(), tmp.name.c_str());
+
+        LinkInfo l0,l1;
+        l0.compName = tmp.component[0]->name.c_str();
+        l1.compName = tmp.component[1]->name.c_str();
+
+        l0.portName = tmp.port[0];
+        l1.portName = tmp.port[1];
+
+        l0.portNum= -1;
+        l1.portNum = -1;
+
+        linkMap[ tmp.name  ] =  make_pair( l0, l1 ); 
+    } 
+    //printLinkMap( linkMap );
+
+    Factory factory( comp );
+
+    SST::ConfigComponentMap_t::iterator iter; 
+
+    for ( iter = graph.comps.begin(); iter != graph.comps.end(); ++iter ) {
+        SST::ConfigComponent& tmp = *(*iter).second;
+        DBGC(2,"id=%d %s %s\n",(*iter).first, tmp.name.c_str(), tmp.type.c_str());
+        SST::SDL_Component sdl( tmp.type) ;
+        sdl.params = tmp.params;
+        objectMap[ tmp.name.c_str() ]  = factory.createObject( 
+                        name + "." + tmp.name, sdl );
+    }
+
+    connectAll( objectMap, linkMap );
+
+    return objectMap;
+}
+
+objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST::Params& params )
+{
+    ifstream file( configFile.c_str() );
+
+    assert( file.is_open() );
+
+    string line;
+    getline(file,line);
+
+    size_t pos1 = line.find_first_of( '"' ) + 1;
+    size_t pos2 = line.find_last_of( '"' );
+    
+    if( line.compare( pos1, pos2-pos1, "1.0" ) == 0 ) {
+        return buildConfigV1( comp, name, configFile, params );
+    } else if( line.compare( pos1, pos2-pos1, "2.0" ) == 0 ) {
+        return buildConfigV2( comp, name, configFile, params );
+    } else {
+        assert( false );
+    }
 }
 
 void createLinkMap( linkMap_t& linkMap, SST::SDL_CompMap_t& map )
