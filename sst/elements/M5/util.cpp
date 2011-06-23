@@ -92,6 +92,10 @@ objectMap_t buildConfigV2( M5* comp, std::string name, std::string configFile, S
         DBGC(2,"id=%d %s %s\n",(*iter).first, tmp.name.c_str(), tmp.type.c_str());
         SST::SDL_Component sdl( tmp.type) ;
         sdl.params = tmp.params;
+
+        SST::Params tmpParams = params.find_prefix_params( tmp.name + "." );
+        sdl.params.insert( tmpParams.begin(), tmpParams.end() );
+
         objectMap[ tmp.name.c_str() ]  = factory.createObject( 
                         name + "." + tmp.name, sdl );
     }
