@@ -17,6 +17,9 @@
 #include <assert.h>
 #include "routermodel.h"
 
+// FIXME:
+// Add virtual lanes
+
 
 // The lower 27 bits of the event ID are the rank number, high order bits are sequence
 #define RANK_FIELD              (27)
