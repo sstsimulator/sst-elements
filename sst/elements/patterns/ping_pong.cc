@@ -9,7 +9,18 @@
 
 /*
 
+A simple ping-pong test between rank 0 and rank n/2 (the assumption
+is that n/2 is fardest from rank 0 in the underlying network
+topology). Each message length is done num_msg times. Rank 0
+calculates the one-way latency and bandwidth. The message size is
+then incremented by len_inc bytes and another round of num_msg trials
+starts.  The test ends when the message size end_len is reached.
 
+The following are configuration file input parameters: destination,
+num_msg, end_len, and len_inc.
+
+The barrier at the end is there only for testing of the barrier
+iteself and the gate keeper mechanism in comm_pattern.cc
 
 */
 #include <sst_config.h>
@@ -19,13 +30,13 @@
 
 
 void
-Pingpong_pattern::handle_events(int sst_event)
+Pingpong_pattern::handle_events(State_machine::state_event_t sst_event)
 {
 
 pingpong_events_t event;
 
 
-    event= (pingpong_events_t)sst_event;
+    event= (pingpong_events_t)sst_event.event;
 
     switch (state)   {
 	case PP_INIT:
@@ -37,10 +48,14 @@ pingpong_events_t event;
 	case PP_BARRIER:
 	    state_BARRIER(event);
 	    break;
+	case PP_DONE:
+	    // Not really a state we need
+	    break;
     }
 
     if (done)   {
 	unregisterExit();
+	done= false;
     }
 
 }  /* end of handle_events() */
@@ -62,9 +77,10 @@ Pingpong_pattern::state_INIT(pingpong_events_t event)
 
 
 	    if (my_rank == 0)   {
-		printf("# [%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
+		printf("#  |||  Ping pong between ranks 0 and %d\n", dest);
+		printf("#  |||  Number of messages per each size: %d\n", num_msg);
+		printf("# [%3d] PING I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
 			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
-		printf("# [%3d] Num msg per msg size: %d\n", my_rank, num_msg);
 		start_time= getCurrentSimTime();
 
 		// If I'm rank 0 send, otherwise wait
@@ -74,10 +90,10 @@ Pingpong_pattern::state_INIT(pingpong_events_t event)
 	    } else if (my_rank != dest)   {
 		// I'm not participating in pingpong. Go straight to barrier
 		state= PP_BARRIER;
-		handle_events(E_BARRIER_ENTRY);
+		self_event_send(E_BARRIER_ENTRY);
 
 	    } else   {
-		printf("# [%3d] I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
+		printf("# [%3d] PONG I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
 			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
 		state= PP_RECEIVING;
 	    }
@@ -128,7 +144,7 @@ double latency;
 		    cnt= num_msg;
 		    if (len > end_len)   {
 			state= PP_BARRIER;
-			handle_events(E_BARRIER_ENTRY);
+			self_event_send(E_BARRIER_ENTRY);
 		    }
 		}
 
@@ -140,7 +156,7 @@ double latency;
 		    execution_time= (double)(getCurrentSimTime() - start_time) / 1000000000.0;
 		    latency= execution_time / num_msg / 2.0;
 		    printf("%9d %.9f\n", len, latency);
-		    // Start next message size, if we haven't reached 0
+		    // Start next message size, if we haven't reached the end yet
 		    if (len > 0)   {
 			len= len + len_inc;
 		    } else   {
@@ -149,7 +165,7 @@ double latency;
 		    if (len > end_len)   {
 			// We've done all sizes num_msg times
 			state= PP_BARRIER;
-			handle_events(E_BARRIER_ENTRY);
+			self_event_send(E_BARRIER_ENTRY);
 		    } else   {
 			cnt= num_msg;
 			start_time= getCurrentSimTime();
@@ -174,15 +190,12 @@ Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 
     switch (event)   {
 	case E_BARRIER_ENTRY:
-	    // This will be delivered to us after barrier switches back to us
-	    self_event_send(E_BARRIER_EXIT);
-
-	    // Switch the state machine to the start of the barrier SM
-	    SM_transition(SMbarrier, Barrier_pattern::E_START);
+	    SM->SM_call(SMbarrier, E_BARRIER_EXIT);
 	    break;
 
 	case E_BARRIER_EXIT:
 	    // We just came back from the barrier SM. We're done
+	    state= PP_DONE;
 	    done= true;
 	    break;
 

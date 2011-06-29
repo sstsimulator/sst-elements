@@ -30,20 +30,22 @@ class Barrier_pattern   {
 
 	uint32_t install_handler(void)
 	{
-	    return cp->SM_create((void *)this, Barrier_pattern::wrapper_handle_events);
+	    return cp->SM->SM_create((void *)this, Barrier_pattern::wrapper_handle_events);
 	}
 
 	// The Barrier pattern generator can be in these states and deals
 	// with these events.
 	typedef enum {START, WAIT_CHILDREN, WAIT_PARENT} barrier_state_t;
-	typedef enum {E_START, E_FROM_CHILD, E_FROM_PARENT} barrier_events_t;
+
+	// The start event should always be START_START_EVENT
+	typedef enum {E_START= START_START_EVENT, E_FROM_CHILD, E_FROM_PARENT} barrier_events_t;
 
 
     private:
 	// Wrapping a pointer to a non-static member function like this is from
 	// http://www.newty.de/fpt/callback.html
-	void handle_events(int sst_event);
-	static void wrapper_handle_events(void *obj, int sst_event)
+	void handle_events(State_machine::state_event_t sst_event);
+	static void wrapper_handle_events(void *obj, State_machine::state_event_t sst_event)
 	{
 	    Barrier_pattern* mySelf = (Barrier_pattern*) obj;
 	    mySelf->handle_events(sst_event);

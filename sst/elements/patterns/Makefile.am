@@ -17,6 +17,7 @@ libmsgrate_pattern_la_LDFLAGS = -module -avoid-version
 
 libpingpong_pattern_la_SOURCES = ping_pong.h ping_pong.cc \
 			    comm_pattern.h comm_pattern.cc \
+			    state_machine.h state_machine.cc \
 			    pattern_common.h pattern_common.cc \
 			    barrier.h barrier.cc \
 			    collective_topology.h collective_topology.cc

@@ -13,6 +13,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/cpunicEvent.h>
+#include "state_machine.h"
 #include "pattern_common.h"
 
 using namespace SST;
@@ -234,6 +235,8 @@ class Comm_pattern : public Component {
 	    down= myX + ((myY + 1) % logical_height) * (logical_width);
 	    up= myX + ((myY - 1 + logical_height) % logical_height) * (logical_width);
 
+	    SM= new State_machine(my_rank);
+
         }  // Done with initialization
 
         ~Comm_pattern()
@@ -241,10 +244,6 @@ class Comm_pattern : public Component {
 
 	int my_rank;
 	int num_ranks;
-
-	uint32_t SM_create(void *obj, void (*handler)(void *obj, int event));
-	void SM_transition(uint32_t machineID, int start_event);
-	void SM_return(void);
 
 	int myNetX(void);
 	int myNetY(void);
@@ -260,29 +259,17 @@ class Comm_pattern : public Component {
 	// FIXME: This needs to be more generic as well
 	void data_send(int dest, int len, int event_type);
 
+	State_machine *SM;
+
     private:
 
         Comm_pattern(const Comm_pattern &c);
-	void handle_events(CPUNicEvent *e);
 	void handle_net_events(Event *sst_event);
 	void handle_NoC_events(Event *sst_event);
 	void handle_self_events(Event *sst_event);
 	void handle_nvram_events(Event *sst_event);
 	void handle_storage_events(Event *sst_event);
 
-	void SM_deliver_missed_events(void);
-
-	typedef struct SM_t   {
-	    void (*handler)(void *obj, int event);
-	    void *obj;
-	    uint32_t tag;
-	    std::list <CPUNicEvent *>missed_events;
-	} SM_t;
-	std::vector <SM_t>SM;
-	std::vector <uint32_t>SMstack;
-
-	int currentSM;
-	uint32_t maxSM;
 
 	// Input paramters for simulation
 	Patterns *common;

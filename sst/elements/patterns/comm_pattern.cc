@@ -17,93 +17,6 @@
 // Public functions
 //
 
-// Register a state machine and a handler for events
-// Assign a SM number. Make the last created SM the current one.
-uint32_t
-Comm_pattern::SM_create(void *obj, void (*handler)(void *obj, int event))
-{
-
-SM_t sm;
-int ID;
-
-
-    // Store it and use it's position in the list as ID
-    ID= SM.size();
-    sm.handler= handler;
-    sm.obj= obj;
-    sm.tag= ID;
-    SM.push_back(sm);
-    maxSM= ID;
-    currentSM= ID;
-
-    return ID;
-
-}  // end of SM_create()
-
-
-
-// Transition to another state machine
-// The next arriving event will be delivered to state machine machineID
-void
-Comm_pattern::SM_transition(uint32_t machineID, int start_event)
-{
-    if (machineID > maxSM)   {
-	_abort(Comm_pattern, "[%3d] illegal machine ID %d in %s, %s:%d\n",
-	    my_rank, machineID, __FILE__, __FUNCTION__, __LINE__);
-    }
-
-    SMstack.push_back(currentSM);
-    currentSM= machineID;
-
-    self_event_send(start_event);
-
-    // If we just switched to an SM that has pending events, deliever them now
-    SM_deliver_missed_events();
-
-}  // end of SM_transition()
-
-
-
-void
-Comm_pattern::SM_deliver_missed_events(void)
-{
-
-int missed_event;
-int lastSM;
-
-
-    // If we just popped back to an SM that has pending events, deliever them now
-    lastSM= currentSM;
-    while (!SM[currentSM].missed_events.empty())   {
-	missed_event= (int)(SM[currentSM].missed_events.front()->GetRoutine());
-	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
-	// delete(SM[currentSM].missed_events.front());
-	SM[lastSM].missed_events.pop_front();
-	if (lastSM != currentSM)   {
-	    // Handler switched us from lastSM to currentSM!
-	    break;
-	}
-    }
-
-}  // end of SM_deliver_missed_events
-
-
-
-void
-Comm_pattern::SM_return(void)
-{
-
-    if (SMstack.empty())   {
-	_abort(Comm_pattern, "[%3d] SM stack is empty!\n", my_rank);
-    }
-    currentSM= SMstack.back();
-    SMstack.pop_back();
-    SM_deliver_missed_events();
-
-}  // end of SM_return()
-
-
-
 void
 Comm_pattern::data_send(int dest, int len, int event_type)
 {
@@ -111,7 +24,7 @@ Comm_pattern::data_send(int dest, int len, int event_type)
 uint32_t tag= 0;
 
 
-    tag= SM[currentSM].tag;
+    tag= SM->SM_current_tag();
     // FIXME: We need a better model than 2440 for node latency!
     common->send(2440, dest, envelope_size + len, event_type, tag);
 
@@ -126,7 +39,7 @@ Comm_pattern::self_event_send(int event_type)
 uint32_t tag= 0;
 
 
-    tag= SM[currentSM].tag;
+    tag= SM->SM_current_tag();
     // FIXME: We need a more generic event send so the cast can go away
     common->event_send(my_rank, (pattern_event_t)event_type, tag, 0.0);
 
@@ -210,35 +123,6 @@ Comm_pattern::NumCores(void)
 //
 // Private functions
 //
-void
-Comm_pattern::handle_events(CPUNicEvent *e)
-{
-
-uint32_t tag;
-
-
-    tag= e->tag;
-
-    if (tag == SM[currentSM].tag)   {
-	// If there are pending events for this SM we have not handled yet, do it now
-	SM_deliver_missed_events();
-
-	// Then call the current SM with the event that just arrived
-	int event= (int)e->GetRoutine();
-	(*SM[currentSM].handler)(SM[currentSM].obj, event);
-	delete(e);
-
-    } else   {
-	// Event for a non-running SM. Queue it.
-	SM[tag].missed_events.push_back(e);
-    }
-
-    return;
-
-}  /* end of handle_events() */
-
-
-
 // Messages from the global network
 void
 Comm_pattern::handle_net_events(Event *sst_event)
@@ -253,7 +137,8 @@ CPUNicEvent *e;
 	_abort(comm_pattern, "NETWORK dest %d != my rank %d\n", e->dest, my_rank);
     }
 
-    handle_events(e);
+    SM->handle_state_events(e->tag, e->GetRoutine());
+    delete(e);
 
 }  /* end of handle_net_events() */
 
@@ -273,7 +158,8 @@ CPUNicEvent *e;
 	_abort(comm_pattern, "NoC dest %d != my rank %d\n", e->dest, my_rank);
     }
 
-    handle_events(e);
+    SM->handle_state_events(e->tag, e->GetRoutine());
+    delete(e);
 
 }  /* end of handle_NoC_events() */
 
@@ -289,7 +175,8 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    handle_events(e);
+    SM->handle_state_events(e->tag, e->GetRoutine());
+    delete(e);
 
 }  /* end of handle_self_events() */
 
@@ -304,7 +191,8 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    handle_events(e);
+    SM->handle_state_events(e->tag, e->GetRoutine());
+    delete(e);
 
 }  /* end of handle_nvram_events() */
 
@@ -319,7 +207,8 @@ CPUNicEvent *e;
 
 
     e= static_cast<CPUNicEvent *>(sst_event);
-    handle_events(e);
+    SM->handle_state_events(e->tag, e->GetRoutine());
+    delete(e);
 
 }  /* end of handle_storage_events() */
 

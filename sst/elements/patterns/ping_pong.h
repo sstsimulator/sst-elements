@@ -65,7 +65,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    // Let Comm_pattern know which handler we want to have called
 	    // Make sure to call SM_create() last in the main pattern
 	    // This is the SM that will run first
-	    SMpingpong= SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
+	    SMpingpong= SM->SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
 
 	    // Kickstart ourselves
 	    self_event_send(E_START);
@@ -77,15 +77,18 @@ class Pingpong_pattern : public Comm_pattern {
 
 	// The Pingpong pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {PP_INIT, PP_RECEIVING, PP_BARRIER} pingpong_state_t;
-	typedef enum {E_START, E_RECEIVE, E_BARRIER_ENTRY, E_BARRIER_EXIT} pingpong_events_t;
+	typedef enum {PP_INIT, PP_RECEIVING, PP_BARRIER, PP_DONE} pingpong_state_t;
+
+	// The start event should always be START_START_EVENT
+	typedef enum {E_START= START_START_EVENT, E_RECEIVE, E_BARRIER_ENTRY,
+	    E_BARRIER_EXIT} pingpong_events_t;
 
 
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);
-	void handle_events(int sst_event);
-	static void wrapper_handle_events(void *obj, int sst_event)
+	void handle_events(State_machine::state_event_t sst_event);
+	static void wrapper_handle_events(void *obj, State_machine::state_event_t sst_event)
 	{
 	    Pingpong_pattern* mySelf = (Pingpong_pattern*) obj;
 	    mySelf->handle_events(sst_event);

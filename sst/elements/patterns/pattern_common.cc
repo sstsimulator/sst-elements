@@ -218,7 +218,6 @@ int my_router, dest_router;
     e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
 
     // If there is a payload, attach it
-    // FIXME: We don't need this for patterns, right?
     if (payload)   {
 	e->AttachPayload(payload, payload_len);
     }
