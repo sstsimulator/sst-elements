@@ -150,8 +150,8 @@ class Mesmthi : public SST::IntrospectedComponent {
     //std::cout << "below is from mesmthi triggerUpdate" << std::endl;
     //Introspection: ask introspector to pull and print counter values 
     triggerUpdate();
-    //if (ifModelPower)  
-//	power->compute_MTTF();
+    if (ifModelPower)  
+	power->compute_MTTF();
     return 0;
   }
 
