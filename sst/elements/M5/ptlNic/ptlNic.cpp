@@ -33,7 +33,7 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     TRACE_ADD( RecvEntry);
     TRACE_ADD( DmaBuf );
 
-    PRINT_AT(PtlNic,"n");
+    PRINT_AT(PtlNic,"\n");
 
     for ( int i=0; i < m_vcInfoV.size(); i++ ) {
         m_vcInfoV[ i ].setVC( i );
