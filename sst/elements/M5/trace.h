@@ -112,8 +112,10 @@ class Trace {
 
     void add( std::string const name, bool enable = true ) {
         //::printf("Trace::add() %s\n",name.c_str());
-        assert ( m_nameM.find( name ) == m_nameM.end() ); 
-        m_nameM[name] = enable;
+        //assert ( m_nameM.find( name ) == m_nameM.end() ); 
+        if ( m_nameM.find( name ) == m_nameM.end() ) {
+            m_nameM[name] = enable;
+        }
     }
 
     void disable( std::string const name ) {
