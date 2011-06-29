@@ -50,11 +50,13 @@ enum clock_option_type_t
   GLOBAL_CLOCK, LOCAL_CLOCK, TOTAL_CLOCK
 };
 
+
 //DPM
 enum power_state 
 {
    P_ACTIVE, P_SLEEPING, P_GOTOSLEEP, P_WAKEUP
 };
+
 
 /* The following is adopted from W Song's power interface */
 class feature_t
@@ -311,6 +313,7 @@ class floorplan_t
   parameters_tech_t device_tech;	// technology parameters per floorplan
   double area_estimate;
   bool leakage_feedback;
+  std::vector<double> TDB;		//thermal database that holds thermal traces of the floorplan
 
   Pdissipation_t p_usage_floorplan;	// instant power dissipation
   power_state pstate;                   // DPM

@@ -533,6 +533,9 @@ class Power{
 	static bool p_hasUpdatedTemp;
 	static double p_TotalFailureRate;
 	static unsigned int p_NumSamples;  // average failure rate = total failure rate / number of samples
+	static std::vector<double> p_minTemperature;
+	static std::vector<double> p_maxTemperature;
+	static std::vector<std::vector<double> > p_thermalFreq; //i: block id; j: time instance
 
 	//double value, maxvalue;
 
@@ -1125,8 +1128,8 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	void printFloorplanAreaInfo();
 	void printFloorplanPowerInfo();
 	void printFloorplanThermalInfo();
-	void getFailureRate(double temp); //this is called in compute_temp
-	void compute_MTTF();
+	void compute_MTTF(); //this is done offline at the end of simulation?!
+	void getTemperatureStatistics();
 	void setupDPM(int block_id, power_state pstate);
 	void dynamic_power_management();
 	void test();

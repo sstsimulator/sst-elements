@@ -16,6 +16,7 @@
 #include <stdio.h>			
 #include <math.h>
 #include <string>
+#include <time.h>
 #include <sst/core/debug.h>
 #include <sst/core/sst_types.h>
 
@@ -27,6 +28,7 @@ namespace SST {
     static double Co= 1.52e-5;
     static double A_EM=7.39125e-10;
     static double A_TDDB=1.36334e-10;
+    static double A_NBTI=1.36334e-10;
     //enum power_state{ACTIVE, IDLE, SLEEP};
 
      class Reliability {
@@ -37,7 +39,9 @@ namespace SST {
         double calc_EM(double t_in); 
 	double calc_TDDB(double t_in);
 	double calc_TC(double t_max, double t_min, double t_avg, double freq);  
-	double compute_failurerate(double temp, double t_min, double t_max, double t_avg, double freq, bool ifSleep);
+	double calc_NBTI(double t_in);
+	double generate_TTF(double mttf);
+	double compute_localMinTTF(double temp, double t_min, double t_max, double t_avg, double freq, bool ifSleep);
        
     private:
         std::string type;

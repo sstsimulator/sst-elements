@@ -31,7 +31,10 @@ int Power::p_SumNumCompNeedPower;
 int Power::p_TempSumNumCompNeedPower;
 bool Power::p_hasUpdatedTemp;
 double Power::p_TotalFailureRate;
-unsigned int Power::p_NumSamples; 
+unsigned int Power::p_NumSamples;
+std::vector<double> Power::p_minTemperature;
+std::vector<double> Power::p_maxTemperature;
+std::vector<std::vector<double> > Power::p_thermalFreq; 
 
 /*********************
 * Power:: constructor*
@@ -12396,8 +12399,10 @@ void Power::compute_temperature(ComponentId_t compID)
 {
   boost::mpi::communicator world;
   
+  std::cout << " I entered compute_temperature " << std::endl;
+
   if (p_tempMonitor == true && ((world.size() > 1 && p_SumNumCompNeedPower == 0) || (world.size() == 1 && p_NumCompNeedPower == 0)))
-  {
+  {   std::cout << " world.size = " << world.size() << ", numCompNeedPower = " << p_NumCompNeedPower << std::endl;
   //first resume numCompNeedPower for next power updates
   p_NumCompNeedPower = chip.num_comps;
   p_TempSumNumCompNeedPower = chip.sumnum_comps;
@@ -12577,11 +12582,14 @@ void Power::compute_temperature(ComponentId_t compID)
   } // end for each subcomp
 
     
-    //compute failaure rate of each thermal block
+    //compute failure rate of each thermal block is now done offline at the end of simulation
+    //here we store each floorplan temperature into a database. TODO: mpi reduce to get the min MTTF of the system.
     for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
     {
-	getFailureRate((*fit).second.device_tech.temperature);
-	std::cout << " total failure rate = " << p_TotalFailureRate << std::endl;
+	//getFailureRate((*fit).second.device_tech.temperature);
+	//std::cout << " total failure rate = " << p_TotalFailureRate << std::endl;
+	(*fit).second.TDB.push_back( (*fit).second.device_tech.temperature );
+	std::cout << "fit.TDB.size() = " << (*fit).second.TDB.size() << ", temp = " << (*fit).second.device_tech.temperature <<std::endl;
     }
   } //end if model temperature
 }
@@ -12832,25 +12840,130 @@ void Power::printFloorplanThermalInfo()
     }
 }
 
-void Power::getFailureRate(double temp)
+void Power::compute_MTTF()
 {
 	Reliability *r;
 	double t_min, t_max, t_avg, freq;
+	double temp_TTF, total_TTF = 0;
+	double minTTF = 99999;
+	int i, j, k, TDBsize = 0;
+	int iterations = 1000;
+	map<int,floorplan_t>::iterator fit;
+	
 
-	t_min=t_max=t_avg=freq=0;
 	r = new Reliability();
 	
-	p_TotalFailureRate += r->compute_failurerate(temp, t_min, t_max, t_avg, freq, false);
-	p_NumSamples += 1;
+	//p_TotalFailureRate += r->compute_failurerate(temp, t_min, t_max, t_avg, freq, false);
+	//p_NumSamples += 1;
 
+	fit = p_chip.floorplan.begin();
+	TDBsize = (*fit).second.TDB.size();
+	std::vector<double> MTTF(TDBsize);
+	std::cout << "TDB.size = " << TDBsize << ", floorplan id = " << (*fit).second.id << std::endl;
+	getTemperatureStatistics();
+
+	// for each time instance
+	for (j=0; j < TDBsize; j++){
+            std::cout << "j = " << j << ", TDB.size = " << TDBsize << std::endl;
+	    //Monte-Carlo
+	    for (i=0; i<iterations; i++){
+		k = 0; //block id
+
+	        //search global(system-wide) minimum TTF 
+	        for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+	        {
+	           temp_TTF = r->compute_localMinTTF((*fit).second.TDB.at(j) , p_minTemperature.at(k), p_maxTemperature.at(k), p_maxTemperature.at(k) - p_minTemperature.at(k), p_thermalFreq[k][j], false);
+		    k++;
+
+	           if (minTTF > temp_TTF)
+		        minTTF = temp_TTF;
+    	        }
+	
+	        total_TTF = total_TTF + minTTF;
+		minTTF = 99999; //reset
+	    }
+
+	    MTTF.at(j) = (total_TTF/iterations);
+            std::cout << "total_TTF = " << total_TTF << std::endl;
+	    total_TTF = 0; //reset
+
+	    std::cout << "At time step " << j << ", MTTF = " << MTTF.at(j) << std::endl;
+	}
 	delete r;
 
 }
-void Power::compute_MTTF()
+
+void Power::getTemperatureStatistics()
+{
+    map<int,floorplan_t>::iterator fit;
+    int i = 0; //block id
+    int j; // time instance
+    int freq, TDBsize = 0, numFloorplan = 0;
+    double minTemp = 99999, maxTemp = 0;
+    double upperband = 0, lowerband = 0;
+    int upcycle, downcycle, cyclesdown, cyclesup;
+
+    fit = p_chip.floorplan.begin();
+    TDBsize = (*fit).second.TDB.size();
+    numFloorplan = p_chip.floorplan.size();
+
+    p_minTemperature.resize( numFloorplan );
+    p_maxTemperature.resize( numFloorplan );
+    p_thermalFreq.resize( numFloorplan , vector<double>( TDBsize , 0 ) );
+
+    for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+    {
+	// go over each time instance to get min/max temperature
+	for (j=0; j < TDBsize; j++){
+	   if (minTemp > (*fit).second.TDB.at(j))
+	        minTemp = (*fit).second.TDB.at(j);
+	   if (maxTemp < (*fit).second.TDB.at(j))
+	        maxTemp = (*fit).second.TDB.at(j);
+	}
+	p_minTemperature.at(i) = minTemp;
+	p_maxTemperature.at(i) = maxTemp;
+	std::cout << "min temp at block " << i << " is " << p_minTemperature.at(i) << std::endl;
+	std::cout << "max temp at block " << i << " is " << p_maxTemperature.at(i) << std::endl;
+	
+
+	//compute thermal cycles for the block
+        upperband=minTemp + ((maxTemp - minTemp)*0.80);
+        lowerband=minTemp + ((maxTemp - minTemp)*0.20);
+        upcycle=0; downcycle=0; //0-1 variables
+        cyclesdown=0; cyclesup=0; //variables to compute number of cycles
+	minTemp = 99999; maxTemp = 0; //re-set the values for the next block
+        for (j=0; j < TDBsize; j++) {
+            if ((*fit).second.TDB.at(j) == 0) break;  
+            if ((*fit).second.TDB.at(j) >= upperband && upcycle==0) {
+                  upcycle=1;
+                  downcycle=0;
+                  cyclesup++;
+            }
+            else if ((*fit).second.TDB.at(j) <= lowerband && downcycle==0) {
+                  upcycle=0;
+                  downcycle=1;
+                  cyclesdown++;
+            }
+        
+            if (cyclesdown < cyclesup)
+                p_thermalFreq[i][j] = (double)cyclesdown/((j+1)*0.00000005);  //assume temperature is gathered every 50ns
+            else
+                p_thermalFreq[i][j] = (double)cyclesup/((j+1)*0.00000005);
+	}
+	std::cout << "cycling freq at block " << i << " and time " << j << " is " << p_thermalFreq[i][j] << std::endl;
+	i++;
+
+    }
+                 
+}
+
+
+/*void Power::compute_MTTF()
 {
 	std::cout << "MTTF = " << p_TotalFailureRate/p_NumSamples << std::endl;
 
-}
+}*/
+
 
 // DPM
 void Power::setupDPM(int block_id, power_state pstate)
