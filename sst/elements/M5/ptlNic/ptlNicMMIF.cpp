@@ -23,6 +23,7 @@ SimObject* create_PtlNicMMIF( SST::Component* comp, string name,
 
     memP.name = name;
     INIT_HEX( memP, sstParams, startAddr );
+    INIT_INT( memP, sstParams, id );
     memP.system = create_System( "syscall", NULL, Enums::timing ); 
     memP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
 
@@ -39,14 +40,16 @@ PtlNicMMIF::PtlNicMMIF( const Params* p ) :
     DBGX(2,"startAddr=%#lx endAddr=%#lx\n", m_startAddr, m_endAddr);
     m_cmdQueue.head = m_cmdQueue.tail = 0;
 
-    m_cmdLink = m_comp->configureLink( "nic", "1ps",
+    std::stringstream numStr;
+    numStr << p->id;
+    m_cmdLink = m_comp->configureLink( "nic" + numStr.str(), "1ps",
         new SST::Event::Handler<PtlNicMMIF>( this, &PtlNicMMIF::ptlCmdRespHandler ) );
     
     assert( m_cmdLink );
 
-    m_dmaLink = m_comp->configureLink( "dma", "1ps",
+    m_dmaLink = m_comp->configureLink( "dma" + numStr.str(), "1ps",
         new SST::Event::Handler<PtlNicMMIF>( this, &PtlNicMMIF::dmaHandler ) );
-    
+
     assert( m_dmaLink );
     
     //m_tc = p->m5Comp->registerTimeBase("1ns");

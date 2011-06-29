@@ -13,6 +13,7 @@ struct PtlNicMMIFParams : public DmaDeviceParams
 {
     M5*  m5Comp; 
     Addr startAddr;
+    int  id;
 };
 
 class PtlNicMMIF : public DmaDevice 
