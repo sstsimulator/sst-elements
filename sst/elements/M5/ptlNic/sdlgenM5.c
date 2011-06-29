@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <assert.h>
 
-void sdlgenM5( const char* file )
+static foo( FILE* output, int nid, char* exe );
+
+void sdlgenM5( const char* file, int numM5Nids )
 {
     FILE* output = fopen( file, "w" );
     char* indent="";
 
+    char* exe = "app/portals4Tests/nic";
     assert( output );
 
     fprintf(output,"<?xml version=\"2.0\"?>\n");
@@ -20,7 +23,6 @@ void sdlgenM5( const char* file )
     fprintf(output,"%s<cpuParams>\n",indent);
     fprintf(output,"%s    <physicalMemory.start> 0x00100000 </physicalMemory.start>\n",indent);
     fprintf(output,"%s    <physicalMemory.end>   0x1fffffff </physicalMemory.end>\n",indent);
-    fprintf(output,"%s    <base.process.nid> -1 </base.process.nid>\n",indent);
     fprintf(output,"%s    <base.process.registerExit> yes </base.process.registerExit>\n",indent);
     fprintf(output,"%s\n",indent);
 
@@ -31,8 +33,7 @@ void sdlgenM5( const char* file )
     fprintf(output,"%s    <base.process.ppid> 1 </base.process.ppid>\n",indent);
     fprintf(output,"%s    <base.process.uid> 1 </base.process.uid>\n",indent); 
     fprintf(output,"%s    <base.process.cwd> / </base.process.cwd>\n",indent);
-    fprintf(output,"%s    <base.process.executable> app/hello </base.process.executable>\n",indent);
-    fprintf(output,"%s    <base.process.registerExit> yes </base.process.registerExit>\n",indent);
+    fprintf(output,"%s    <base.process.executable> %s </base.process.executable>\n",indent,exe);
     fprintf(output,"%s    <base.process.simpoint> 0 </base.process.simpoint>\n",indent);
     fprintf(output,"%s    <base.process.errout> cerr </base.process.errout>\n",indent);
     fprintf(output,"%s    <base.process.input> cin </base.process.input>\n",indent);
@@ -179,51 +180,63 @@ void sdlgenM5( const char* file )
     fprintf(output,"<sst>\n");
     fprintf(output,"%s\n",indent);
 
-    indent = "    ";
-    fprintf(output,"%s<component name=cpu0 type=O3Cpu >\n",indent);
+    int i;
+    for ( i = 0; i < numM5Nids; i++ ) {
+        foo( output, i, exe ); 
+        fprintf(output,"\n");
+    }
+
+    fprintf(output,"\n");
+    fprintf(output,"</sst>\n");
+}
+
+static foo( FILE* output, int nid, char* exe )
+{
+    char* indent = "    ";
+    fprintf(output,"%s<component name=nid%d.cpu0 type=O3Cpu >\n",indent,nid);
     fprintf(output,"%s    <params include=cpuParams>\n",indent);
-    fprintf(output,"%s        <physicalMemory.start> 0x00100000 </physicalMemory.start>\n",indent);
-    fprintf(output,"%s        <physicalMemory.end>   0x1fffffff </physicalMemory.end>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
-    fprintf(output,"%s    <link name=cpu2dcache port=dcache_port latency=$lat/>\n",indent);
-    fprintf(output,"%s    <link name=cpu2icache port=icache_port latency=$lat/>\n",indent);
+    fprintf(output,"%s    <link name=nid%d.cpu2dcache port=dcache_port latency=$lat/>\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.cpu2icache port=icache_port latency=$lat/>\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);
 
     fprintf(output,"\n");
 
-    fprintf(output,"%s<component name=cpu0.dcache type=BaseCache >\n",indent);
+    fprintf(output,"%s<component name=nid%d.cpu0.dcache type=BaseCache >\n",indent,nid);
     fprintf(output,"%s    <params include=cacheParams>\n",indent);
     fprintf(output,"%s        <size>65536</size>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
-    fprintf(output,"%s    <link name=cpu2dcache port=cpu_side latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=dcache2bus port=mem_side latency=$lat />\n",indent);
+    fprintf(output,"%s    <link name=nid%d.cpu2dcache port=cpu_side latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.dcache2bus port=mem_side latency=$lat />\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);
 
     fprintf(output,"\n");
 
-    fprintf(output,"%s<component name=cpu0.icache type=BaseCache >\n",indent);
+    fprintf(output,"%s<component name=nid%d.cpu0.icache type=BaseCache >\n",indent,nid);
     fprintf(output,"%s    <params include=cacheParams>\n",indent);
     fprintf(output,"%s        <size>32768</size>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
-    fprintf(output,"%s    <link name=cpu2icache port=cpu_side latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=icache2bus port=mem_side latency=$lat />\n",indent);
+    fprintf(output,"%s    <link name=nid%d.cpu2icache port=cpu_side latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.icache2bus port=mem_side latency=$lat />\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);
 
     fprintf(output,"\n");
 
-    fprintf(output,"%s<component name=cpu0.busPlus type=BusPlus >\n",indent);
+    fprintf(output,"%s<component name=nid%d.cpu0.busPlus type=BusPlus >\n",indent,nid);
     fprintf(output,"%s    <params include=busParams>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
-    fprintf(output,"%s    <link name=mem2bus port=port latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=dcache2bus port=port latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=icache2bus port=port latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=bus2syscallDMA port=port latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=bus2syscallPIO port=port latency=$lat />\n",indent);
+    fprintf(output,"%s    <link name=nid%d.mem2bus port=port latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.dcache2bus port=port latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.icache2bus port=port latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.bus2syscallDMA port=port latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.bus2syscallPIO port=port latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.bus2nicDMA port=port latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.bus2nicPIO port=port latency=$lat />\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);
 
     fprintf(output,"\n");
 
-    fprintf(output,"%s<component name=physmem type=PhysicalMemory >\n",indent);
+    fprintf(output,"%s<component name=nid%d.physmem type=PhysicalMemory >\n",indent,nid);
     fprintf(output,"%s    <params>\n",indent);
     fprintf(output,"%s        <range.start> 0x00100000 </range.start>\n",indent);
     fprintf(output,"%s        <range.end>   0xffffffff </range.end>\n",indent);
@@ -233,26 +246,34 @@ void sdlgenM5( const char* file )
     fprintf(output,"%s        <null> false </null>\n",indent);
     fprintf(output,"%s        <zero> false </zero>\n",indent);
 
-    fprintf(output,"%s        <exe.0.process.executable> app/hello </exe.0.process.executable>\n",indent);
+    fprintf(output,"%s        <exe.0.process.executable> %s </exe.0.process.executable>\n",indent,exe);
     fprintf(output,"%s        <exe.0.process.cmd.0> hello  </exe.0.process.cmd.0>\n",indent);
+    fprintf(output,"%s        <exe.0.process.env.0> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe.0.process.env.0>\n",indent);
 
     fprintf(output,"%s        <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>\n",indent);
     fprintf(output,"%s        <exe.0.physicalMemory.end>   0x1fffffff </exe.0.physicalMemory.end>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
-    fprintf(output,"%s    <link name=mem2bus port=port latency=$lat />\n",indent);
+    fprintf(output,"%s    <link name=nid%d.mem2bus port=port latency=$lat />\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);
 
     fprintf(output,"\n");
 
-    fprintf(output,"%s<component name=cpu0.syscall type=Syscall >\n",indent);
+    fprintf(output,"%s<component name=nid%d.cpu0.syscall type=Syscall >\n",indent,nid);
     fprintf(output,"%s    <params>\n",indent);
     fprintf(output,"%s        <startAddr> 0x00000000 </startAddr>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
-    fprintf(output,"%s    <link name=bus2syscallDMA port=dma latency=$lat />\n",indent);
-    fprintf(output,"%s    <link name=bus2syscallPIO port=pio latency=$lat />\n",indent);
+    fprintf(output,"%s    <link name=nid%d.bus2syscallDMA port=dma latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.bus2syscallPIO port=pio latency=$lat />\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);
 
     fprintf(output,"\n");
 
-    fprintf(output,"</sst>\n");
+    fprintf(output,"%s<component name=nid%d.cpu0.PtlNic type=PtlNicMMIF >\n",indent,nid);
+    fprintf(output,"%s    <params>\n",indent);
+    fprintf(output,"%s        <startAddr> 0x00002000 </startAddr>\n",indent);
+    fprintf(output,"%s        <id> %d </id>\n",indent, nid);
+    fprintf(output,"%s    </params>\n",indent);
+    fprintf(output,"%s    <link name=nid%d.bus2nicDMA port=dma latency=$lat />\n",indent,nid);
+    fprintf(output,"%s    <link name=nid%d.bus2nicPIO port=pio latency=$lat />\n",indent,nid);
+    fprintf(output,"%s</component>\n",indent);
 }

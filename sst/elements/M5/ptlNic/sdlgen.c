@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 #include <libgen.h>
 
@@ -48,7 +49,7 @@ static struct option longopts[] = {
     { "latency",           required_argument, NULL, 'l' },
     { "output",            required_argument, NULL, 'o' },
     { "help",              no_argument,       NULL, 'h' },
-//    { "ranks",             required_argument, NULL, 'k' },
+    { "ranks",             required_argument, NULL, 'k' },
     { "new_format",        no_argument,       NULL, 'f' },
     { NULL,                0,                 NULL, 0   }
 };
@@ -67,6 +68,8 @@ main(int argc, char **argv)
     char **argv_org = argv;
     int ranks = 1;
     int new_format = 0;
+
+    char* M5sdlFile = "/tmp/M5.xml";
     
     while ((ch = getopt_long(argc, argv, "hx:y:z:r:", longopts, NULL)) != -1) {
         switch (ch) {
@@ -87,11 +90,9 @@ main(int argc, char **argv)
         case 'h':
             print_usage(argv[0]);
             exit(0);
-#if 0
         case 'k':
             ranks = atoi(optarg);
             break;
-#endif
         case 'f':
             new_format = 1;
             break;
@@ -100,21 +101,11 @@ main(int argc, char **argv)
             exit(1);
         }
     }
-    argc -= optind;
-    argv += optind;
-
-    /* backward compatibility */
-    if (argc == 3 || argc == 4) {
-        x_count = atoi(argv[0]);
-        y_count = atoi(argv[1]);
-        z_count = atoi(argv[2]);
-    }
-
-    ranks = x_count * y_count * z_count;
-
-    /* clean up so SDL file looks nice */
-
     size = x_count * y_count * z_count;
+
+    extern void sdlgenM5( const char* file, int numM5Nids );
+
+    sdlgenM5( "/tmp/M5.xml",  size / ranks ); 
 
     fprintf(output, "<?xml version=\"2.0\"?>\n");
     fprintf(output, "\n");
@@ -188,7 +179,7 @@ main(int argc, char **argv)
     fprintf(output, "%s    <M5debug> none </M5debug>\n",indent);
     fprintf(output, "%s    <info> yes </info>\n",indent);
     fprintf(output, "%s    <registerExit> yes </registerExit>\n",indent);
-    fprintf(output, "%s    <configFile> xml/nic-M5.xml </configFile>\n",indent);
+    fprintf(output, "%s    <configFile> %s </configFile>\n",indent,M5sdlFile);
     fprintf(output, "%s</cpu_params>\n",indent);
     fprintf(output, "\n");
 
@@ -198,6 +189,7 @@ main(int argc, char **argv)
     
     fprintf(output, "<sst>\n");
 
+    int* nidMap = malloc( sizeof(int) * size ); 
     for ( i = 0; i < size; ++i) {
         int x, y, z;
 
@@ -232,16 +224,8 @@ main(int argc, char **argv)
             if ( z >= z_count/2 ) rank = rank | (1 << 3);
         }
 
-	    fprintf(output, "    <component name=%d.cpu type=m5C.M5 rank=%d >\n",i,rank);
-	    fprintf(output, "        <params include=cpu_params>\n");
-	    fprintf(output, "            <cpu0.base.process.nid> %d </cpu0.base.process.nid>\n",i);
-	    fprintf(output, "            <physmem0.exe.process.env.0> RT_RANK=%d </physmem0.exe.process.env.0>\n",i);
-	    fprintf(output, "            <physmem0.exe.process.env.1> RT_SIZE=%d </physmem0.exe.process.env.1>\n",ranks);
-	    fprintf(output, "        </params>\n");
-	    fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$foo_link_lat/>\n",i);
-	    fprintf(output, "        <link name=%d.dmaLink port=dma latency=$foo_link_lat/>\n",i);
-	    fprintf(output, "    </component>\n");
-	    fprintf(output, "\n");
+        nidMap[i] = rank; 
+        //printf("nidMap[%d]=%d\n",i,rank);
 	    fprintf(output, "    <component name=%d.nic type=m5C.PtlNic rank=%d >\n",i,rank);
 	    fprintf(output, "        <params include=nic_params1,nic_params2>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
@@ -275,6 +259,42 @@ main(int argc, char **argv)
 	
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
+	    fprintf(output, "\n");
+    }
+
+    // this is really brain dead but...
+    int rank;
+    int* foo = malloc( sizeof( int ) * rank );
+
+
+    for ( rank = 0; rank < ranks; rank++) {
+
+	    fprintf(output, "    <component name=%d.cpu type=m5C.M5 rank=%d >\n", rank, rank );
+	    fprintf(output, "        <params include=cpu_params>\n");
+
+        memset( foo, 0, sizeof(int)*ranks); 
+        int j;
+        for ( j = 0; j < size; j++ ) {
+
+            if ( nidMap[j] == rank ) {
+    	        fprintf(output, "            <nid%d.cpu0.base.process.nid> %d </nid%d.cpu0.base.process.nid>\n",foo[rank],j,foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe.process.env.0> RT_RANK=%d </nid%d.physmem.exe.process.env.0>\n",foo[rank],j,foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe.process.env.1> RT_SIZE=%d </nid%d.physmem.exe.process.env.1>\n",foo[rank],size,foo[rank]);
+                ++foo[rank];
+            }
+        }
+
+	    fprintf(output, "        </params>\n");
+
+        memset( foo, 0, sizeof(int)*ranks); 
+        for ( j = 0; j < size; j++ ) {
+            if ( nidMap[j] == rank ) {
+	            fprintf(output, "        <link name=%d.cpu2nic port=nic%d latency=$foo_link_lat/>\n",j,foo[rank]);
+	            fprintf(output, "        <link name=%d.dmaLink port=dma%d latency=$foo_link_lat/>\n",j,foo[rank]);
+                ++foo[rank];
+            }
+        }
+	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
     }
     fprintf(output, "</sst>\n");
