@@ -11,7 +11,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.cc ./arch/
  #endif
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc ./arch/alpha/linux/process.cc
 --- /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc	2010-10-20 13:51:48.000000000 -0600
-+++ ./arch/alpha/linux/process.cc	2011-05-23 14:39:56.000000000 -0600
++++ ./arch/alpha/linux/process.cc	2011-07-05 10:39:17.000000000 -0600
 @@ -563,7 +563,9 @@
      /* 438 */ SyscallDesc("waitid", unimplementedFunc),
      /* 439 */ SyscallDesc("add_key", unimplementedFunc),
@@ -95,6 +95,19 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/dev/SConscript ./dev/SConscript
 +    TraceFlag('IsaFake')
 +    Source('io_device.cc')
 +    Source('isa_fake.cc')
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh ./mem/cache/cache_impl.hh
+--- /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh	2010-10-20 13:51:49.000000000 -0600
++++ ./mem/cache/cache_impl.hh	2011-07-05 10:44:09.000000000 -0600
+@@ -1031,6 +1031,9 @@
+     pkt->makeTimingResponse();
+     if (pkt->isRead()) {
+         pkt->setDataFromBlock(blk_data, blkSize);
++    } else if (pkt->isWrite()) {
++	    DPRINTF( Cache, "%s()\n",req_pkt->getAddr() );
++        req_pkt->writeDataToBlock(blk_data, blkSize);
+     }
+     if (pkt->cmd == MemCmd::ReadResp && pending_inval) {
+         // Assume we defer a response to a read from a far-away cache
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/packet.hh ./mem/packet.hh
 --- /home/mjleven/tmp/m5/src/mem/packet.hh	2010-10-20 13:51:49.000000000 -0600
 +++ ./mem/packet.hh	2011-03-24 08:22:29.000000000 -0600
@@ -109,7 +122,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/packet.hh ./mem/packet.hh
      const std::string &cmdString() const { return cmd.toString(); }
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/page_table.cc ./mem/page_table.cc
 --- /home/mjleven/tmp/m5/src/mem/page_table.cc	2010-10-20 13:51:49.000000000 -0600
-+++ ./mem/page_table.cc	2011-06-01 08:09:32.000000000 -0600
++++ ./mem/page_table.cc	2011-07-01 10:33:53.000000000 -0600
 @@ -65,6 +65,31 @@
  }
  
@@ -166,6 +179,40 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/page_table.hh ./mem/page_tabl
      void allocate(Addr vaddr, int64_t size);
      void remap(Addr vaddr, int64_t size, Addr new_vaddr);
      void deallocate(Addr vaddr, int64_t size);
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/physical.cc ./mem/physical.cc
+--- /home/mjleven/tmp/m5/src/mem/physical.cc	2010-10-20 13:51:49.000000000 -0600
++++ ./mem/physical.cc	2011-06-23 12:42:35.000000000 -0600
+@@ -54,7 +54,8 @@
+ PhysicalMemory::PhysicalMemory(const Params *p)
+     : MemObject(p), pmemAddr(NULL), pagePtr(0),
+       lat(p->latency), lat_var(p->latency_var),
+-      cachedSize(params()->range.size()), cachedStart(params()->range.start)
++      cachedSize(params()->range.size()), cachedStart(params()->range.start),
++    m_idx(0)
+ {
+     if (params()->range.size() % TheISA::PageBytes != 0)
+         panic("Memory Size not divisible by page size\n");
+@@ -360,6 +361,8 @@
+         panic("PhysicalMemory::getPort: unknown port %s requested", if_name);
+     }
+ 
++    if ( idx == -1 ) idx = m_idx++;
++
+     if (idx >= (int)ports.size()) {
+         ports.resize(idx + 1);
+     }
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/physical.hh ./mem/physical.hh
+--- /home/mjleven/tmp/m5/src/mem/physical.hh	2010-10-20 13:51:49.000000000 -0600
++++ ./mem/physical.hh	2011-06-23 12:40:20.000000000 -0600
+@@ -151,6 +151,8 @@
+ 
+     uint64_t cachedSize;
+     uint64_t cachedStart;
++
++    int m_idx;
+   public:
+     Addr new_page();
+     uint64_t size() { return cachedSize; }
 Only in .: patch
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript ./SConscript
 --- /home/mjleven/tmp/m5/src/SConscript	2010-10-20 13:51:48.000000000 -0600
@@ -287,8 +334,8 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/simulate.cc ./sim/simulate.cc
              return se_event;
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc ./sim/syscall_emul.cc
 --- /home/mjleven/tmp/m5/src/sim/syscall_emul.cc	2010-10-20 13:51:49.000000000 -0600
-+++ ./sim/syscall_emul.cc	2011-04-26 10:59:27.000000000 -0600
-@@ -67,6 +67,37 @@
++++ ./sim/syscall_emul.cc	2011-07-05 10:36:48.000000000 -0600
+@@ -67,6 +67,38 @@
          process->setSyscallReturn(tc, retval);
  }
  
@@ -304,6 +351,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc ./sim/syscall
 +    DPRINTF(SyscallVerbose, "syscall %s (#%d) vaddr=%#lx paddr=%#lx"
 +		" length=%#lx\n", desc->name, callnum, start, paddr, length);
 +
++    length = roundUp(length, TheISA::VMPageSize);
 +    process->pTable->map(start, paddr, length );
 +    process->mmap_end += length;
 +
@@ -328,7 +376,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc ./sim/syscall
  unimplementedFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh ./sim/syscall_emul.hh
 --- /home/mjleven/tmp/m5/src/sim/syscall_emul.hh	2010-10-20 13:51:49.000000000 -0600
-+++ ./sim/syscall_emul.hh	2011-04-26 11:05:42.000000000 -0600
++++ ./sim/syscall_emul.hh	2011-07-05 10:37:05.000000000 -0600
 @@ -61,6 +61,8 @@
  #include "mem/page_table.hh"
  #include "sim/process.hh"
