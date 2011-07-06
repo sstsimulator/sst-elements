@@ -9,7 +9,7 @@
     <base.process.ppid> 1 </base.process.ppid>
     <base.process.uid> 1 </base.process.uid>
     <base.process.cwd> / </base.process.cwd>
-    <base.process.executable> test/hello </base.process.executable>
+    <base.process.executable> app/hello </base.process.executable>
     <base.process.registerExit> yes </base.process.registerExit>
     <base.process.simpoint> 0 </base.process.simpoint>
     <base.process.errout> cerr </base.process.errout>
@@ -352,7 +352,7 @@
                 <null> false </null>
                 <zero> false </zero>
 
-                <exe.0.process.executable> test/hello </exe.0.process.executable>
+                <exe.0.process.executable> app/hello </exe.0.process.executable>
                 <exe.0.process.cmd.0> hello   </exe.0.process.cmd.0>
                 <exe.0.process.cmd.1> arg1     </exe.0.process.cmd.1>
                 <exe.0.process.cmd.2> arg2=200 </exe.0.process.cmd.2>
@@ -363,7 +363,7 @@
                 <exe.0.physicalMemory.start> 0x00100000 </exe.0.physicalMemory.start>
                 <exe.0.physicalMemory.end>   0x011fffff </exe.0.physicalMemory.end>
 
-                <exe.1.process.executable> test/hello </exe.1.process.executable>
+                <exe.1.process.executable> app/hello </exe.1.process.executable>
                 <exe.1.process.cmd.0> hello   </exe.1.process.cmd.0>
                 <exe.1.process.cmd.1> arg1     </exe.1.process.cmd.1>
                 <exe.1.process.cmd.2> arg2=120 </exe.1.process.cmd.2>
