@@ -14,15 +14,16 @@
 
 #include <stdio.h>
 #include "sstdisksim_event.h"
+#include "sstdisksim_posix_call.h"
 
 using namespace std;
 
-class sstdisksim_diskmodel {
+class sstdisksim_diskmodel : public Component {
 public:
-  virtual void read;
-  virtual void write;
+  virtual void read();
+  virtual void write();
   virtual sstdisksim_event* getNextEvent();
-  virtual void sstdisksim_event* addEvent(sstdisksim_event* ev);
+  virtual void sstdisksim_event* addEvent(sstdisksim_posix_call call);
   
  protected:
   sstdisksim_event_entries __list;

@@ -15,7 +15,7 @@
 
 #include "sstdisksim_posix_call.h"
 
-sstdisksim_posix_call::sstdisksim_posix_call()
+sstdisksim_posix_calls::sstdisksim_posix_calls()
 {
   strcpy(__calls[_CALL_READ].name, "READ");
   __calls[_CALL_READ].call = _CALL_READ;
@@ -88,7 +88,7 @@ sstdisksim_posix_call::sstdisksim_posix_call()
 }
 
 void
-sstdisksim_posix_call::add_entry(__call call, __argument args[_END_ARGS])
+sstdisksim_posix_calls::add_entry(__call call, __argument args[_END_ARGS])
 {
   if ( call > _END_CALLS )
   {
@@ -96,7 +96,7 @@ sstdisksim_posix_call::add_entry(__call call, __argument args[_END_ARGS])
     return;
   }
 
-  struct sstdisksim_posix_type* cur = new sstdisksim_posix_type;
+  struct sstdisksim_posix_call* cur = new sstdisksim_posix_call;
   cur->call = &(__calls[call]);
   cur->next = NULL;
 
@@ -115,10 +115,10 @@ sstdisksim_posix_call::add_entry(__call call, __argument args[_END_ARGS])
   }
 }
 
-sstdisksim_posix_type*
-sstdisksim_posix_call::pop_entry()
+sstdisksim_posix_call*
+sstdisksim_posix_calls::pop_entry()
 {
-  sstdisksim_posix_type* retval = head;
+  sstdisksim_posix_call* retval = head;
   if ( head != NULL )
   {    
     head = head->next;

@@ -22,7 +22,7 @@ arg_map fd_map;
 map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
 bool EndOfTrace = false; 
 
-sstdisksim_posix_call __list;
+sstdisksim_posix_calls __list;
 unsigned __types[_END_CALLS][_END_ARGS];
 __argWithState __tmp_vals[_END_CALLS][_END_ARGS];
 
@@ -382,7 +382,7 @@ sstdisksim_tau_parser::getNextEvent()
 
   //  static int ___j = 0;
   
-  sstdisksim_posix_type* cur_event = __list.pop_entry();
+  sstdisksim_posix_call* cur_event = __list.pop_entry();
   
   bool looping = true;
   while ( looping == true && cur_event != NULL )

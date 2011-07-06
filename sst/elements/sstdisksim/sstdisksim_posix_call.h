@@ -72,22 +72,22 @@ struct sstdisksim_posix_name
   char name[16];
 };
 
-struct sstdisksim_posix_type
+struct sstdisksim_posix_call
 {
   sstdisksim_posix_name* call;
   __argument args[_END_ARGS];
-  sstdisksim_posix_type* next;
+  sstdisksim_posix_call* next;
 };
 
-class sstdisksim_posix_call
+class sstdisksim_posix_calls
 {
 public:
-  sstdisksim_posix_call();
+  sstdisksim_posix_calls();
   void add_entry(__call call, __argument args[_END_ARGS]);
-  sstdisksim_posix_type* pop_entry();
+  sstdisksim_posix_call* pop_entry();
 
-  sstdisksim_posix_type* head;
-  sstdisksim_posix_type* tail;  
+  sstdisksim_posix_call* head;
+  sstdisksim_posix_call* tail;  
   sstdisksim_posix_name __calls[_END_CALLS];
 };
 
