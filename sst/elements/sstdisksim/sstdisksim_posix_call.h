@@ -66,17 +66,17 @@ enum __arg
   _END_ARGS
 };
 
-struct sstdisksim_trace_call
+struct sstdisksim_posix_name
 {
   __call call;
   char name[16];
 };
 
-struct sstdisksim_trace_type
+struct sstdisksim_posix_type
 {
-  sstdisksim_trace_call* call;
+  sstdisksim_posix_name* call;
   __argument args[_END_ARGS];
-  sstdisksim_trace_type* next;
+  sstdisksim_posix_type* next;
 };
 
 class sstdisksim_posix_call
@@ -84,11 +84,11 @@ class sstdisksim_posix_call
 public:
   sstdisksim_posix_call();
   void add_entry(__call call, __argument args[_END_ARGS]);
-  sstdisksim_trace_type* pop_entry();
+  sstdisksim_posix_type* pop_entry();
 
-  sstdisksim_trace_type* head;
-  sstdisksim_trace_type* tail;  
-  sstdisksim_trace_call __calls[_END_CALLS];
+  sstdisksim_posix_type* head;
+  sstdisksim_posix_type* tail;  
+  sstdisksim_posix_name __calls[_END_CALLS];
 };
 
 #endif // _SSTDISKSIM_POSIX_CALL_H_

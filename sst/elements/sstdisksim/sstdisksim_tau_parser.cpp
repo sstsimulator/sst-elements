@@ -382,7 +382,7 @@ sstdisksim_tau_parser::getNextEvent()
 
   //  static int ___j = 0;
   
-  sstdisksim_trace_type* cur_event = __list.pop_entry();
+  sstdisksim_posix_type* cur_event = __list.pop_entry();
   
   bool looping = true;
   while ( looping == true && cur_event != NULL )

@@ -96,7 +96,7 @@ sstdisksim_posix_call::add_entry(__call call, __argument args[_END_ARGS])
     return;
   }
 
-  struct sstdisksim_trace_type* cur = new sstdisksim_trace_type;
+  struct sstdisksim_posix_type* cur = new sstdisksim_posix_type;
   cur->call = &(__calls[call]);
   cur->next = NULL;
 
@@ -115,10 +115,10 @@ sstdisksim_posix_call::add_entry(__call call, __argument args[_END_ARGS])
   }
 }
 
-sstdisksim_trace_type*
+sstdisksim_posix_type*
 sstdisksim_posix_call::pop_entry()
 {
-  sstdisksim_trace_type* retval = head;
+  sstdisksim_posix_type* retval = head;
   if ( head != NULL )
   {    
     head = head->next;

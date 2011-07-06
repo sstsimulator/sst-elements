@@ -9,16 +9,23 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#ifndef _SSTDISKSIM_DISKMODEL_H
+#define _SSTDISKSIM_DISKMODEL_H
+
 #include <stdio.h>
 #include "sstdisksim_event.h"
 
-class SST_DiskModel {
+using namespace std;
+
+class sstdisksim_diskmodel {
 public:
   virtual void read;
   virtual void write;
   virtual sstdisksim_event* getNextEvent();
   virtual void sstdisksim_event* addEvent(sstdisksim_event* ev);
   
- private:
+ protected:
   sstdisksim_event_entries __list;
 }
+
+#endif // _SSTDISKSIM_DISKMODEL_H
