@@ -125,11 +125,11 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     {
       parameterFile = it->second;
     }
-    if ( ! it->first.compare("output_file") ) 
+    else if ( ! it->first.compare("output_file") ) 
     {
       outputFile = it->second;
     }
-    if ( ! it->first.compare("num_sectors") ) 
+    else if ( ! it->first.compare("num_sectors") ) 
     {
       numSectors = atol((it->second).c_str());
     }

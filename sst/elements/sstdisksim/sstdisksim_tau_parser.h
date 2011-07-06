@@ -23,7 +23,7 @@
 #include <fstream>
 #include <string>
 #include "sstdisksim_event.h"
-#include "sstdisksim_trace_entries.h"
+#include "sstdisksim_posix_call.h"
 
 using namespace std;
 

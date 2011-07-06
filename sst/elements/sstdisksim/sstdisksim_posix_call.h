@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SSTDISKSIM_TRACE_ENTRIES_H_
-#define _SSTDISKSIM_TRACE_ENTRIES_H_
+#ifndef _SSTDISKSIM_POSIX_CALL_H_
+#define _SSTDISKSIM_POSIX_CALL_H_
 
 #include <stdlib.h>
 
@@ -79,10 +79,10 @@ struct sstdisksim_trace_type
   sstdisksim_trace_type* next;
 };
 
-class sstdisksim_trace_entries
+class sstdisksim_posix_call
 {
 public:
-  sstdisksim_trace_entries();
+  sstdisksim_posix_call();
   void add_entry(__call call, __argument args[_END_ARGS]);
   sstdisksim_trace_type* pop_entry();
 
@@ -91,4 +91,4 @@ public:
   sstdisksim_trace_call __calls[_END_CALLS];
 };
 
-#endif // _SSTDISKSIM_TRACE_ENTRIES_H_
+#endif // _SSTDISKSIM_POSIX_CALL_H_

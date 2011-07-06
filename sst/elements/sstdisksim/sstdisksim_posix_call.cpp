@@ -13,9 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sstdisksim_trace_entries.h"
+#include "sstdisksim_posix_call.h"
 
-sstdisksim_trace_entries::sstdisksim_trace_entries()
+sstdisksim_posix_call::sstdisksim_posix_call()
 {
   strcpy(__calls[_CALL_READ].name, "READ");
   __calls[_CALL_READ].call = _CALL_READ;
@@ -88,7 +88,7 @@ sstdisksim_trace_entries::sstdisksim_trace_entries()
 }
 
 void
-sstdisksim_trace_entries::add_entry(__call call, __argument args[_END_ARGS])
+sstdisksim_posix_call::add_entry(__call call, __argument args[_END_ARGS])
 {
   if ( call > _END_CALLS )
   {
@@ -116,7 +116,7 @@ sstdisksim_trace_entries::add_entry(__call call, __argument args[_END_ARGS])
 }
 
 sstdisksim_trace_type*
-sstdisksim_trace_entries::pop_entry()
+sstdisksim_posix_call::pop_entry()
 {
   sstdisksim_trace_type* retval = head;
   if ( head != NULL )

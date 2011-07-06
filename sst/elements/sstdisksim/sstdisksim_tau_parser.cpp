@@ -22,7 +22,7 @@ arg_map fd_map;
 map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
 bool EndOfTrace = false; 
 
-sstdisksim_trace_entries __list;
+sstdisksim_posix_call __list;
 unsigned __types[_END_CALLS][_END_ARGS];
 __argWithState __tmp_vals[_END_CALLS][_END_ARGS];
 
