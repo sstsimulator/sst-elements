@@ -16,8 +16,6 @@ static void printEvent( ptl_event_t *event );
 #define OFFSET_DIV 4 
 ptl_match_bits_t match_bits = 0xdeadbeef;
 
-static int rank;
-
 extern char **environ;
 int main( int argc, char* argv[] )
 {
@@ -56,13 +54,12 @@ int main( int argc, char* argv[] )
 
     printf("id.phys.nid=%#x id.phys.pid=%d\n",id.phys.nid,id.phys.pid);
 
-    rank = id.phys.nid;
     if ( id.phys.nid == 0 ) {
         nid0(ni_handle,&id);
     } else if ( id.phys.nid == 1 ) {
         nid1(ni_handle,&id);
     }else {
-        m5_barrier();
+        cnos_barrier();
     }
 
     if ( ( retval = PtlNIFini( ni_handle ) ) != PTL_OK ) { 
@@ -71,7 +68,7 @@ int main( int argc, char* argv[] )
     PtlFini();
 
     printf("goodbye\n");
-    m5_barrier();
+    cnos_barrier();
     return 0;
 }
 
@@ -99,7 +96,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     } 
     target_id.phys.nid = 1;
     
-    m5_barrier();
+    cnos_barrier();
 
     ptl_size_t offset = md.length - ( md.length / OFFSET_DIV);
     ptl_size_t length = md.length - offset;
@@ -169,7 +166,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     me.options = PTL_ME_OP_GET | PTL_ME_MANAGE_LOCAL;
 //    me.options = PTL_ME_OP_GET;
     me.match_id.phys.nid = 0;
-    me.match_id.phys.pid = 1;
+    me.match_id.phys.pid = id->phys.pid;
     me.match_bits = match_bits;
     me.ignore_bits = 0;
 
@@ -187,7 +184,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
         printf("PtlMEAppend() failed %d\n",retval); abort();
     }
 
-    m5_barrier();
+    cnos_barrier();
 
     if ( ( retval = PtlEQWait( eq_handle, &event ) ) != PTL_OK ) {
         printf("PtlEQWait() failed %d\n",retval); abort();
@@ -196,7 +193,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     //printEvent(&event);
     assert( event.type == PTL_EVENT_GET );
     assert( event.initiator.phys.nid == 0 );
-    assert( event.initiator.phys.pid == 1 );
+    assert( event.initiator.phys.pid == id->phys.pid );
     assert( event.pt_index == pt_index );
     assert( event.start == me.start + event.remote_offset );
     assert( event.user_ptr == &me );

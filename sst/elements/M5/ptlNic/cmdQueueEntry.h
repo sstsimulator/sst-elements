@@ -4,6 +4,8 @@
 
 #ifndef _cmdQueueEntry_h
 #define _cmdQueueEntry_h
+#include "portals4_types.h"
+#include "ptlEvent.h"
 
 typedef enum {
     PtlNIInit = 1,   
@@ -48,12 +50,127 @@ typedef enum {
     "ContextFini"\
 }
 
+typedef int cmdHandle_t;
+typedef unsigned long cmdAddr_t;
+
 typedef struct {
-    #define NUM_ARGS 15
-    volatile unsigned int retval;
-    volatile int cmd;
-    int context;
-    unsigned long args[ NUM_ARGS ];
+    int uid;
+    int jid;
+    cmdAddr_t nidPtr; 
+    cmdAddr_t limitsPtr; 
+} cmdContextInit_t;
+
+typedef struct {
+} cmdContextFini_t;
+
+typedef struct {
+    ptl_pid_t pid; 
+    unsigned int options;
+} cmdPtlNIInit_t;
+
+typedef struct {
+} cmdPtlNIFini_t;
+
+typedef struct {
+    cmdHandle_t handle; 
+    ptl_ct_event_t*   addr;
+} cmdPtlCTAlloc_t;
+
+typedef struct {
+    cmdHandle_t handle; 
+} cmdPtlCTFree_t;
+
+typedef struct {
+    cmdHandle_t handle; 
+    PtlEventInternal*   addr;
+    ptl_size_t          size;
+} cmdPtlEQAlloc_t;
+
+typedef struct {
+    cmdHandle_t handle; 
+} cmdPtlEQFree_t;
+
+typedef struct {
+    cmdHandle_t handle; 
+    ptl_md_t md;
+} cmdPtlMDBind_t;
+
+typedef struct {
+    cmdHandle_t handle; 
+} cmdPtlMDRelease_t;
+
+typedef struct {
+    unsigned int options;
+    cmdHandle_t eq_handle;
+    ptl_pt_index_t pt_index;
+} cmdPtlPTAlloc_t;
+
+typedef struct {
+    ptl_pt_index_t pt_index;
+} cmdPtlPTFree_t;
+
+
+typedef struct {
+    cmdHandle_t md_handle;    
+    ptl_size_t   local_offset;
+    ptl_size_t   length;
+    ptl_ack_req_t         ack_req;
+    ptl_process_t    target_id;
+    ptl_pt_index_t         pt_index;
+    ptl_match_bits_t match_bits; 
+    ptl_size_t       remote_offset;
+    void*           user_ptr;
+    ptl_hdr_data_t  hdr_data;
+} cmdPtlPut_t;
+
+typedef struct {
+    cmdHandle_t md_handle;    
+    ptl_size_t   local_offset;
+    ptl_size_t   length;
+    ptl_process_t    target_id;
+    ptl_pt_index_t         pt_index;
+    ptl_match_bits_t match_bits; 
+    ptl_size_t       remote_offset;
+    void*           user_ptr;
+    ptl_hdr_data_t  hdr_data;
+} cmdPtlGet_t;
+
+
+typedef struct {
+    cmdHandle_t handle;
+    ptl_pt_index_t pt_index;
+    ptl_me_t    me;
+    ptl_list_t  list;
+    void* user_ptr;
+} cmdPtlMEAppend_t ;
+
+typedef struct {
+    cmdHandle_t handle;
+} cmdPtlMEUnlink_t ;
+
+typedef union {
+    cmdContextInit_t    ctxInit;
+    cmdContextFini_t    ctxFini;
+    cmdPtlNIInit_t      niInit;
+    cmdPtlNIFini_t      niFini;
+    cmdPtlCTAlloc_t     ctAlloc;
+    cmdPtlCTFree_t      ctFree;
+    cmdPtlEQAlloc_t     eqAlloc;
+    cmdPtlEQFree_t      eqFree;
+    cmdPtlMDBind_t      mdBind;
+    cmdPtlMDRelease_t   mdRelease;
+    cmdPtlPut_t         ptlPut;
+    cmdPtlGet_t         ptlGet;
+    cmdPtlPTAlloc_t     ptAlloc;
+    cmdPtlPTFree_t      ptFree;
+    cmdPtlMEAppend_t    meAppend;
+    cmdPtlMEUnlink_t    meUnlink;
+} cmdUnion_t;
+
+typedef struct {
+    int type; 
+    int ctx_id;
+    cmdUnion_t u;
 } cmdQueueEntry_t;
 
 #endif

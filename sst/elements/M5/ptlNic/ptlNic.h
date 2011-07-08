@@ -83,53 +83,25 @@ class PtlNic : public RtrIF
   public: 
     static const int MsgVC = 0;
 
-    class Cmd {
-      public:
-        Cmd( PtlNic& nic, Context& ctx, PtlNicEvent* e ) :
-            m_event( e ),
-            m_retval( -PTL_FAIL ),
-            m_done( false ),
-            m_nic( nic ),
-            m_ctx( ctx )
-        {
-        }
-
-        ~Cmd() {
-            delete m_event;
-        }
-
-        static Cmd* create( PtlNic&, Context&, PtlNicEvent* );
-        virtual bool work() = 0;
-        int retval() { return m_retval; }
-        std::string name() { return m_cmdNames[m_event->cmd]; }
-
-      protected:
-        enum State { Finished, NotFinished };
-        PtlNicEvent*        m_event;
-        int                 m_retval;
-        bool                m_done;
-        PtlNic&             m_nic;
-        Context&            m_ctx;
-        static const char*  m_cmdNames[];
-    };
-
     struct RtrXfer {
         int             dest;
         void*           buf;
         size_t          nbytes;
     };
 
+    typedef int ctx_id_t; 
+
   public:
     PtlNic( SST::ComponentId_t id, Params_t& params );
     ptl_pid_t allocPid( ptl_pid_t );
     DmaEngine& dmaEngine() { return m_dmaEngine; }
-    int nid() { return m_nid; }
+    int& nid() { return m_nid; }
     bool sendMsg( ptl_nid_t, PtlHdr*, Addr, ptl_size_t, CallbackBase* );
 
   private:
-    int allocContext(ptl_uid_t, ptl_jid_t);
-    int freeContext( int );
-    Context* getContext( int ctx );
+    void allocContext( ctx_id_t, cmdContextInit_t& );
+    void freeContext( ctx_id_t, cmdContextFini_t& );
+    Context* getContext( ctx_id_t );
     Context* findContext( ptl_pid_t pid );
     void processVCs();
     void processFromRtr();
@@ -137,20 +109,18 @@ class PtlNic : public RtrIF
     bool clock( SST::Cycle_t cycle );
     void rtrHandler( SST::Event* );
     void mmifHandler( SST::Event* );
-    void processPtlCmdQ();
-    void contextInit( PtlNicEvent* );
-    void contextFini( PtlNicEvent* );
-    void ptlCmd( PtlNicEvent* );
+    void ptlCmd( PtlNicEvent& );
 
     typedef std::map<ptl_nid_t,RecvEntry*>  nidRecvEntryM_t;
          
     int                     m_nid;
     SST::Link*              m_mmifLink;
-    std::deque<Cmd*>        m_ptlCmdQ;
-    std::vector<Context*>   m_contextV;
+    typedef std::map<ctx_id_t,Context*> ctxMap_t;
+    ctxMap_t                m_ctxM;
     DmaEngine               m_dmaEngine;
     std::vector< VCInfo >   m_vcInfoV;
     nidRecvEntryM_t         m_nidRecvEntryM;
+    static const char*  m_cmdNames[];
 };
 
 #endif

@@ -7,26 +7,17 @@
 #include "recvEntry.h"
 #include "ptlNic.h"
 #include "ptlNicEvent.h"
-#include "ptlNI.h"
-#include "ptlPT.h"
-#include "ptlMD.h"
-#include "ptlME.h"
-#include "ptlCT.h"
-#include "ptlEQ.h"
-#include "ptlProcess.h"
-#include "ptlPut.h"
-#include "ptlGet.h"
 
 #include "trace.h"
 
-const char * PtlNic::Cmd::m_cmdNames[] = CMD_NAMES;
+const char * PtlNic::m_cmdNames[] = CMD_NAMES;
+
 
 PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     RtrIF( id, params ),
     m_dmaEngine( *this, params.find_integer( "nid") ),
     m_nid( params.find_integer("nid") ),
-    m_vcInfoV( 2, *this ),
-    m_contextV( 1, NULL )
+    m_vcInfoV( 2, *this )
 {
     TRACE_ADD( PtlNic );
     TRACE_ADD( PtlCmd );
@@ -56,7 +47,6 @@ int PtlNic::Setup()
 
 bool PtlNic::clock( SST::Cycle_t cycle )
 {
-    processPtlCmdQ();
     processVCs();
     processFromRtr();
     return false;
@@ -107,52 +97,103 @@ Context* PtlNic::findContext( ptl_pid_t pid )
 {
     PRINT_AT(PtlNic,"targetPid=%d\n", pid );
 
-    for ( int i = 0; i < m_contextV.size(); i++ ) {
-        if ( m_contextV[i] ) {
-            if ( m_contextV[i]->pid() == pid ) {
-                return m_contextV[i];
-            }
+    ctxMap_t::iterator iter = m_ctxM.begin();
+
+    for (; iter != m_ctxM.end(); ++iter ) {
+        if ( (*iter).second->pid() == pid ) {
+                return (*iter).second;
         }
     }
+    return NULL;
 }
 
 void PtlNic::mmifHandler( SST::Event* e )
 {
-    PtlNicEvent* event = static_cast< PtlNicEvent* >( e );
-    switch( event->cmd ) {
+    PtlNicEvent& event = *static_cast< PtlNicEvent* >( e );
+    PRINT_AT(PtlNic,"cmd=%s\n",m_cmdNames[event.cmd().type]);
+
+    switch( event.cmd().type ) {
+
       case ContextInit:
-        contextInit( event );
+        allocContext( event.cmd().ctx_id, event.cmd().u.ctxInit );
         break;
 
       case ContextFini:
-        contextFini( event );
+        freeContext( event.cmd().ctx_id, event.cmd().u.ctxFini );
         break;
 
       default:
         ptlCmd( event );
     }
+    delete e;
 }
 
-void PtlNic::ptlCmd( PtlNicEvent* event )
+void PtlNic::ptlCmd( PtlNicEvent& event )
 {
-    Context* ctx = getContext( event->context );
+    Context* ctx = getContext( event.cmd().ctx_id );
     assert( ctx );
-    m_ptlCmdQ.push_back( Cmd::create( *this, *ctx, event ) );
-}
 
-void PtlNic::contextInit( PtlNicEvent* event )
-{
-    PRINT_AT(PtlNic,"uid=%d jid=%d\n",event->args[0], event->args[1]);
-    int retval = allocContext( event->args[0], event->args[1] );
-    m_mmifLink->Send( new PtlNicRespEvent( retval ) );
-    delete event;
-}
+    switch( event.cmd().type ) {
 
-void PtlNic::contextFini( PtlNicEvent* event )
-{
-    int retval = freeContext( event->context );
-    m_mmifLink->Send( new PtlNicRespEvent( retval ) );
-    delete event;
+        case PtlNIInit:
+            ctx->NIInit( event.cmd().u.niInit );
+            break;
+
+        case PtlNIFini:
+            ctx->NIFini( event.cmd().u.niFini );
+            break;
+
+        case PtlPTAlloc:
+            ctx->PTAlloc( event.cmd().u.ptAlloc );
+            break;
+
+        case PtlPTFree:
+            ctx->PTFree( event.cmd().u.ptFree );
+            break;
+
+        case PtlMDBind:
+            ctx->MDBind( event.cmd().u.mdBind );
+            break;
+
+        case PtlMDRelease:
+            ctx->MDRelease( event.cmd().u.mdRelease );
+            break;
+
+        case PtlMEAppend:
+            ctx->MEAppend( event.cmd().u.meAppend );
+            break;
+
+        case PtlMEUnlink:
+            ctx->MEUnlink( event.cmd().u.meUnlink );
+            break;
+
+        case PtlCTAlloc:
+            ctx->CTAlloc( event.cmd().u.ctAlloc );
+            break;
+
+        case PtlCTFree:
+            ctx->CTFree( event.cmd().u.ctFree );
+            break;
+
+        case PtlEQAlloc:
+            ctx->EQAlloc( event.cmd().u.eqAlloc );
+            break;
+
+        case PtlEQFree:
+            ctx->EQFree( event.cmd().u.eqFree );
+            break;
+
+        case PtlPut:
+            ctx->Put( event.cmd().u.ptlPut );
+            break;
+
+        case PtlGet:
+            ctx->Get( event.cmd().u.ptlGet );
+            break;
+
+        default:
+            assert(0);
+    }
 }
 
 ptl_pid_t PtlNic::allocPid( ptl_pid_t req_pid )
@@ -163,82 +204,27 @@ ptl_pid_t PtlNic::allocPid( ptl_pid_t req_pid )
     return req_pid;
 }
 
-void PtlNic::processPtlCmdQ( )
+void PtlNic::allocContext( ctx_id_t ctx, cmdContextInit_t& cmd )
 {
-    if ( !m_ptlCmdQ.empty() ) {
-        Cmd* cmd = m_ptlCmdQ.front();
-
-        if ( cmd->work() ) {
-            PRINT_AT(PtlNic,"%s done\n", cmd->name().c_str());
-            m_mmifLink->Send( new PtlNicRespEvent( cmd->retval() ) );
-            delete cmd;
-            m_ptlCmdQ.pop_front();
-        }
-    }
+    PRINT_AT( PtlNic, "ctx=%d uid=%d jid=%d ptlPtr=%p\n",
+                    ctx, cmd.uid, cmd.jid, cmd.nidPtr );
+    assert( m_ctxM.find( ctx ) == m_ctxM.end() );
+    m_ctxM[ctx] = new Context( this, cmd );
 }
 
-int PtlNic::allocContext(ptl_uid_t uid, ptl_jid_t jid )
+void PtlNic::freeContext( ctx_id_t ctx,  cmdContextFini_t& cmd )
 {
-    for ( int i = 0; i < m_contextV.size(); i++ ) {
-        if ( ! m_contextV[i] ) {
-            m_contextV[i] = new Context( this, uid, jid );
-            return i;
-        }
-    }
-    return -1;
+    PRINT_AT( PtlNic, "ctx=%d\n",ctx);
+    assert( m_ctxM.find( ctx ) != m_ctxM.end() );
+    delete m_ctxM[ctx];
+    m_ctxM.erase(ctx);
 }
 
-int PtlNic::freeContext( int i )
+Context* PtlNic::getContext( ctx_id_t ctx )
 {
-    assert( i < m_contextV.size() );
-    delete m_contextV[i];
-    m_contextV[i] = 0;
-    return 0;
-}
-
-Context* PtlNic::getContext( int i )
-{
-    assert( i < m_contextV.size() );
-    return m_contextV[i];
-}
-
-PtlNic::Cmd* PtlNic::Cmd::create( PtlNic& nic, 
-                    Context& ctx, PtlNicEvent* e ) 
-{
-    switch( e->cmd ) {
-        case PtlNIInit:
-            return new NIInitCmd(nic,ctx,e);
-        case PtlNIFini:
-            return new NIFiniCmd(nic,ctx,e);
-        case PtlPTAlloc:
-            return new PTAllocCmd(nic,ctx,e);
-        case PtlPTFree:
-            return new PTFreeCmd(nic,ctx,e);
-        case PtlMDBind:
-            return new MDBindCmd(nic,ctx,e);
-        case PtlMDRelease:
-            return new MDReleaseCmd(nic,ctx,e);
-        case PtlMEAppend:
-            return new MEAppendCmd(nic,ctx,e);
-        case PtlMEUnlink:
-            return new MEUnlinkCmd(nic,ctx,e);
-        case PtlGetId:
-            return new GetIdCmd(nic,ctx,e);
-        case PtlCTAlloc:
-            return new CTAllocCmd(nic,ctx,e);
-        case PtlCTFree:
-            return new CTFreeCmd(nic,ctx,e);
-        case PtlEQAlloc:
-            return new EQAllocCmd(nic,ctx,e);
-        case PtlEQFree:
-            return new EQFreeCmd(nic,ctx,e);
-        case PtlPut:
-            return new PutCmd(nic,ctx,e);
-        case PtlGet:
-            return new GetCmd(nic,ctx,e);
-        default:
-            abort();
-    }
+    PRINT_AT( PtlNic, "ctx=%d\n",ctx);
+    assert( m_ctxM.find( ctx ) != m_ctxM.end() );
+    return m_ctxM[ctx];
 }
 
 void PtlNic::processVCs()

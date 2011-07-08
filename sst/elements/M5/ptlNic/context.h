@@ -8,10 +8,13 @@
 #include "ptlHdr.h"
 #include "callback.h"
 #include "ptlNicTypes.h"
+#include "cmdQueueEntry.h"
 
 class PtlNic;
 class RecvEntry;
 class Context {
+
+    typedef int handle_t; 
 
     struct PT {
         bool used;
@@ -21,13 +24,11 @@ class Context {
     };
 
     struct CT {
-        bool                    avail;
         Addr                    vaddr;
         ptl_ct_event_t          event;
     };
 
     struct EQ {
-        bool                    avail;
         Addr                    vaddr;
         ptl_size_t              count;
         ptl_size_t              size;
@@ -37,74 +38,48 @@ class Context {
         ptl_me_t                me;
         void*                   user_ptr;
         ptl_size_t              offset;
-        bool                    avail;
     };
 
     struct MD {
         ptl_md_t                md;
-        bool                    avail;
     };
 
   public:
-    Context( PtlNic* nic, ptl_uid_t, ptl_jid_t );
+    Context( PtlNic* nic, cmdContextInit_t& cmd );
     ~Context();
-    void initPid( ptl_pid_t pid );
-    ptl_pid_t pid() { return m_pid; }
-    void initOptions( int options );
-    void initId();
-    ptl_ni_limits_t* limits();
-    ptl_process_t* id();
+
+    // mapped to Portals API
+    void NIInit( cmdPtlNIInit_t& ); 
+    void NIFini( cmdPtlNIFini_t& ); 
+    void MDBind( cmdPtlMDBind_t& );
+    void MDRelease( cmdPtlMDRelease_t& );
+    void MEAppend( cmdPtlMEAppend_t& );
+    void MEUnlink( cmdPtlMEUnlink_t& );
+    void CTAlloc( cmdPtlCTAlloc_t& );
+    void CTFree( cmdPtlCTFree_t& );
+    void EQAlloc( cmdPtlEQAlloc_t& );
+    void EQFree( cmdPtlEQFree_t& );
+    void Put( cmdPtlPut_t& );
+    void Get( cmdPtlGet_t& );
+    void PTAlloc( cmdPtlPTAlloc_t& );
+    void PTFree( cmdPtlPTFree_t& );
 
     RecvEntry* processHdrPkt( void* pkt );
+    ptl_pid_t pid() { return m_pid; }
 
-    int allocMD();
-    int freeMD( int handle );
-    ptl_md_t* findMD( int handle );
+ private:
+    void initPid( ptl_pid_t pid );
+    void initOptions( int options );
+    void initId();
 
-    int allocME( ptl_pt_index_t portal, ptl_list_t list, void* user_ptr );
-    ptl_me_t* findME( int handle );
-    int freeME( int handle );
-
-    int allocCT( Addr eventAddr );
     void addCT( int handle, ptl_size_t value );
     ptl_ct_event_t* findCTEvent( int handle );
     Addr findCTAddr( int handle );
-    int freeCT( int handle );
 
-    int allocEQ( Addr vaddr, int count );
-    int freeEQ( int handle );
+    ptl_me_t* findME( int handle );
+
     struct EQ&  findEQ( int handle );
     Addr findEventAddr( int handle, int pos );
-
-    int allocPT( unsigned int options, int eq_handle, 
-                    ptl_pt_index_t req_pt ); 
-    int freePT( int pt_index );
-
-    bool isvalidPT( int pt_index ) {
-        return m_ptV[pt_index].used; 
-    }
-
-    int appendPT( ptl_pt_index_t, ptl_list_t list, int handle );
-
-    int put( int  md_handle,
-           ptl_size_t       local_offset,
-           ptl_size_t       length,
-           ptl_ack_req_t    ack_req,
-           ptl_process_t    target_id,
-           ptl_pt_index_t   pt_index,
-           ptl_match_bits_t match_bits,
-           ptl_size_t       remote_offset,
-           void *           user_ptr,
-           ptl_hdr_data_t   hdr_data);
-
-    int get( int  md_handle,
-           ptl_size_t       local_offset,
-           ptl_size_t       length,
-           ptl_process_t    target_id,
-           ptl_pt_index_t   pt_index,
-           ptl_match_bits_t match_bits,
-           ptl_size_t       remote_offset,
-           void *           user_ptr );
 
   private:
 
@@ -221,7 +196,7 @@ class Context {
     PtlNic*                 m_nic;
     std::map< int, PutSendEntry* >   m_putM;
     std::map< int, GetSendEntry* >   m_getM;
- };
+};
 
 inline void Context::writeCtEvent( int ct_handle, ptl_ct_event_t& event )
 {
@@ -348,6 +323,5 @@ inline void Context::writeSendEvent( int eq_handle,
                 ni_fail_type
             );
 }
-
 
 #endif

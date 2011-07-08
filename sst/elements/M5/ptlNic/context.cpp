@@ -7,40 +7,37 @@
 #include "ptlHdr.h"
 #include "recvEntry.h"
 
-Context::Context( PtlNic* nic, ptl_uid_t uid, ptl_jid_t jid ) :
+Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
         m_nic( nic ),
-        m_uid( uid ),
-        m_jid( jid ) 
+        m_uid( cmd.uid ),
+        m_jid( cmd.jid ) 
 {
     TRACE_ADD( Context );
-    PRINT_AT(Context,"\n");
     PRINT_AT(Context,"sizeof(PtlHdr) %d\n",sizeof(PtlHdr));
-    m_limits.max_pt_index = 63;
-    m_limits.max_cts = 63;
-    m_limits.max_mds = 63;
-    m_limits.max_entries = 63;
-    m_limits.max_eqs = 63;
-    m_limits.max_list_size = 63;
+
+    m_limits.max_pt_index = MAX_PT_INDEX;
+    m_limits.max_cts = MAX_CTS;
+    m_limits.max_mds = MAX_MDS;
+    m_limits.max_entries = MAX_ENTRIES;
+    m_limits.max_eqs = MAX_EQS;
+    m_limits.max_list_size = MAX_LIST_SIZE;
+
     m_ptV.resize( m_limits.max_pt_index );
     m_ctV.resize( m_limits.max_cts );
     m_mdV.resize( m_limits.max_mds );
     m_meV.resize( m_limits.max_entries );
     m_eqV.resize( m_limits.max_eqs );
+
     for ( int i = 0; i < m_ptV.size(); i++ ) {
         m_ptV[i].used = false;
     }
-    for ( int i = 0; i < m_ctV.size(); i++ ) {
-        m_ctV[i].avail = true;
-    }
-    for ( int i = 0; i < m_eqV.size(); i++ ) {
-        m_eqV[i].avail = true;
-    }
-    for ( int i = 0; i < m_meV.size(); i++ ) {
-        m_meV[i].avail = true;
-    }
-    for ( int i = 0; i < m_mdV.size(); i++ ) {
-        m_mdV[i].avail = true;
-    }
+
+    m_nic->dmaEngine().write( cmd.limitsPtr, (uint8_t*) &m_limits, 
+                        sizeof( m_limits ), NULL );
+
+    // write this last, the host is waiting for value to change
+    m_nic->dmaEngine().write( cmd.nidPtr, (uint8_t*) &m_nic->nid(), 
+                        sizeof( m_nic->nid() ), NULL );
 }
 
 Context::~Context() {
@@ -48,6 +45,7 @@ Context::~Context() {
 }
 
 void Context::initPid( ptl_pid_t pid ) {
+    PRINT_AT(Context,"pid=%d\n",pid);
     m_pid = pid;
     initId( );
 } 
@@ -67,77 +65,72 @@ void Context::initId() {
     }  
 }
 
-int Context::allocMD() {
-    for ( int i = 0; i < m_mdV.size(); i++ ) {
-        if ( m_mdV[i].avail ) {
-            m_mdV[i].avail = false;
-            PRINT_AT(Context,"%d\n",i);
-            return i;
-        }       
-    }
-    return -PTL_FAIL;
-}
-
-int Context::freeMD( int handle ) {
-    PRINT_AT(Context,"%d\n",handle);
-    m_mdV[handle].avail = true;
-    return PTL_OK;
-}
-
-ptl_md_t* Context::findMD( int handle ) {
-    return &m_mdV[handle].md;
-}
-
-int Context::appendPT( ptl_pt_index_t pt_index, ptl_list_t list, int me_handle )
+void Context::NIInit( cmdPtlNIInit_t& cmd )
 {
-    PRINT_AT(Context,"pt_index=%d list=%d handle=%d\n",pt_index, list, me_handle );
-    if ( m_ptV[pt_index].meL[list].size() >= m_limits.max_list_size ) {
-        return -PTL_LIST_TOO_LONG;
-    }
-    m_ptV[pt_index].meL[list].push_back( me_handle );
-    return PTL_OK;
+    initPid( cmd.pid );
+    initOptions( cmd.options );
 }
 
-int Context::allocME( ptl_pt_index_t pt_index, ptl_list_t list, void* user_ptr )
+void Context::NIFini( cmdPtlNIFini_t& cmd )
 {
-    if ( ! isvalidPT( pt_index ) ) return -PTL_ARG_INVALID; 
+}
 
-    for ( int i = 0; i < m_meV.size(); i++ ) {
-        if ( m_meV[i].avail ) {
-            int retval; 
-            if ( ( retval = appendPT( pt_index, list, i ) ) < 0 )  {
-                return retval;
-            } 
-            m_meV[i].avail = false;
-            m_meV[i].user_ptr = user_ptr; 
-            m_meV[i].offset = 0;
-            return i;
-        }       
-    }
-    return -PTL_FAIL;
+void Context::MEAppend( cmdPtlMEAppend_t& cmd )
+{
+    PRINT_AT(Context,"pt_index=%d handle=%d list=%d\n", 
+                    cmd.pt_index, cmd.handle, cmd.list);
+    m_ptV[cmd.pt_index].meL[cmd.list].push_back( cmd.handle );
+    m_meV[cmd.handle].user_ptr = cmd.user_ptr; 
+    m_meV[cmd.handle].me = cmd.me;
+    m_meV[cmd.handle].offset = 0;
+}
+
+void Context::MEUnlink( cmdPtlMEUnlink_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d\n",cmd.handle);
 }
 
 ptl_me_t* Context::findME( int handle ) {
     return &m_meV[handle].me;
 }
 
-int Context::freeME( int handle ) {
-    m_meV[handle].avail = true;
-    return PTL_OK;
+void Context::CTAlloc( cmdPtlCTAlloc_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d addr=%#lx\n", cmd.handle, cmd.addr );
+    m_ctV[cmd.handle].vaddr = (Addr)cmd.addr;
+    m_ctV[cmd.handle].event.success = 0;
+    m_ctV[cmd.handle].event.failure = 0;
 }
 
-
-int Context::allocCT( Addr eventAddr ) {
-    for ( int i = 0; i <= m_ctV.size(); i++ ) {
-        if ( m_ctV[i].avail ) {
-            m_ctV[i].avail = false;
-            m_ctV[i].vaddr = eventAddr;
-            m_ctV[i].event.success = 0;
-            m_ctV[i].event.failure = 0;
-            return i;
-        }
-    }
+void Context::CTFree( cmdPtlCTFree_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d\n", cmd.handle );
 }
+
+void Context::EQAlloc( cmdPtlEQAlloc_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d addr=%#lx\n", cmd.handle, cmd.addr );
+    m_eqV[cmd.handle].vaddr = (Addr)cmd.addr;
+    m_eqV[cmd.handle].size = cmd.size;
+    m_eqV[cmd.handle].count = 0;
+}
+
+void Context::EQFree( cmdPtlEQFree_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d\n", cmd.handle );
+}
+
+void Context::MDBind( cmdPtlMDBind_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d addr=%#lx\n", cmd.handle );
+    m_mdV[cmd.handle].md = cmd.md;
+}
+
+void Context::MDRelease( cmdPtlMDRelease_t& cmd )
+{
+    PRINT_AT(Context,"handle=%d\n", cmd.handle );
+}
+
 
 void Context::addCT( int handle, ptl_size_t value ) {
     m_ctV[handle].event.success += value;
@@ -151,29 +144,6 @@ Addr Context::findCTAddr( int handle ) {
     return m_ctV[handle].vaddr;
 }
 
-int Context::freeCT( int handle ) {
-    m_ctV[handle].avail = true;
-    return PTL_OK;
-}
-
-int Context::allocEQ( Addr vaddr, int count ) {
-    for ( int i = 0; i <= m_eqV.size(); i++ ) {
-        if ( m_eqV[i].avail  == true) {
-            m_eqV[i].avail = false;
-            m_eqV[i].vaddr = vaddr;
-            m_eqV[i].count = 0;
-            m_eqV[i].size = count;
-            return i;
-        }
-    }
-    return -PTL_FAIL;
-}
-
-int Context::freeEQ( int handle ) {
-    m_eqV[handle].avail = true;
-    return PTL_OK;
-}
-
 struct Context::EQ& Context::findEQ( int handle )
 {
     return m_eqV[handle];
@@ -185,106 +155,58 @@ Addr Context::findEventAddr( int handle, int pos )
     return eq.vaddr + ( pos * sizeof( PtlEventInternal ) ); 
 }
 
-int Context::allocPT( unsigned int options, int eq_handle, 
-                    ptl_pt_index_t req_pt ) 
+void Context::PTAlloc( cmdPtlPTAlloc_t& cmd )
 {
-    if ( req_pt == PTL_PT_ANY ) {
-        req_pt = -PTL_PT_FULL;
-        for ( int i = 0; i < m_limits.max_pt_index; i++ ) {
-            if ( ! m_ptV[i].used ) {
-                req_pt = i;
-                break;
-            }
-        } 
-    } else if ( req_pt <= m_limits.max_pt_index ) {
-        if ( m_ptV[req_pt].used ) {
-            req_pt -PTL_PT_IN_USE;
-        }
-    } else {
-        req_pt -PTL_ARG_INVALID;
-    }
+    PRINT_AT(Context,"pt_index=%d eq_handle=%#x\n",cmd.pt_index,
+                                            cmd.eq_handle);
 
-    int tmp = req_pt;
-    if ( tmp >= 0 ) {
-        PRINT_AT(Context,"pt_index=%d eq_handle=%#x\n",req_pt,eq_handle);
-        m_ptV[req_pt].used = true; 
-        m_ptV[req_pt].eq_handle = eq_handle;
-        m_ptV[req_pt].options = options;
-    }
-    return req_pt;
+    m_ptV[cmd.pt_index].used = true; 
+    m_ptV[cmd.pt_index].eq_handle = cmd.eq_handle;
+    m_ptV[cmd.pt_index].options = cmd.options;
 }
 
-int Context::freePT( int pt_index ) {
-    int retval; 
-    if ( pt_index > m_limits.max_pt_index ) {
-        retval -PTL_ARG_INVALID;
-    } else if ( ! m_ptV[pt_index].used )  {
-        retval -PTL_ARG_INVALID;
-    } else if ( ! m_ptV[pt_index].meL[PTL_PRIORITY_LIST].empty() ) {
-        retval -PTL_PT_IN_USE;
-    } else if ( ! m_ptV[pt_index].meL[PTL_OVERFLOW].empty() ) {
-        retval -PTL_PT_IN_USE;
-    } else {
-        m_ptV[pt_index].used = false;
-        retval = PTL_OK;
-    }
-    return retval;
+void Context::PTFree( cmdPtlPTFree_t& cmd )
+{
+    PRINT_AT(Context,"pt_index=%d\n", cmd.pt_index );
+
+    m_ptV[cmd.pt_index].used = false; 
 }
 
-ptl_ni_limits_t* Context::limits() {
-    return &m_limits;
-}
-
-ptl_process_t* Context::id() {
-    return &m_id;
-}
-
-int Context::put( int md_handle,
-           ptl_size_t       local_offset,
-           ptl_size_t       length,
-           ptl_ack_req_t    ack_req,
-           ptl_process_t    target_id,
-           ptl_pt_index_t   pt_index,
-           ptl_match_bits_t match_bits,
-           ptl_size_t       remote_offset,
-           void *           user_ptr,
-           ptl_hdr_data_t   hdr_data)
+void Context::Put( cmdPtlPut_t& cmd ) 
 {
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%lu "
-    "remote_offset=%lu\n", md_handle, length, local_offset, remote_offset );
+            "remote_offset=%lu\n", 
+            cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
 
     if ( m_logicalIF ) {
-        PRINT_AT(Context,"target rank=%d\n",target_id.rank);
+        PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
     } else {
         PRINT_AT(Context,"target nid=%d pid=%d\n",
-                    target_id.phys.nid,target_id.phys.pid);
+                    cmd.target_id.phys.nid,cmd.target_id.phys.pid);
     }
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",pt_index,match_bits); 
-
-    if ( pt_index > m_limits.max_pt_index ) {
-        return -PTL_ARG_INVALID;
-    }
+    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",
+                                    cmd.pt_index,cmd.match_bits); 
 
     PutSendEntry* entry = new PutSendEntry;
     assert(entry);
 
-    entry->user_ptr = user_ptr;
+    entry->user_ptr = cmd.user_ptr;
     entry->state = PutSendEntry::WaitSend;
     entry->callback = new PutCallback(this, &Context::putCallback, entry );
 
-    entry->md_handle = md_handle;
-    entry->hdr.length = length;
-    entry->hdr.ack_req = ack_req;
-    entry->hdr.pt_index = pt_index;
-    entry->hdr.dest_pid = target_id.phys.pid;
+    entry->md_handle = cmd.md_handle;
+    entry->hdr.length = cmd.length;
+    entry->hdr.ack_req = cmd.ack_req;
+    entry->hdr.pt_index = cmd.pt_index;
+    entry->hdr.dest_pid = cmd.target_id.phys.pid;
     entry->hdr.src_pid  = m_pid;
-    entry->hdr.offset = remote_offset;
-    entry->hdr.match_bits = match_bits;
-    entry->hdr.hdr_data = hdr_data;
+    entry->hdr.offset = cmd.remote_offset;
+    entry->hdr.match_bits = cmd.match_bits;
+    entry->hdr.hdr_data = cmd.hdr_data;
     entry->hdr.uid = m_uid;
     entry->hdr.jid = m_jid;
     
-    entry->hdr.op = Put;
+    entry->hdr.op = ::Put;
 
     // need some data structure that contains a map of used keys and deque of 
     // free keys
@@ -292,58 +214,45 @@ int Context::put( int md_handle,
     entry->hdr.key = key; 
     m_putM[ key ] = entry;
 
-    m_nic->sendMsg( target_id.phys.nid, &entry->hdr, 
-                    (Addr) m_mdV[md_handle].md.start + local_offset, 
-                    length, entry->callback );  
-    return PTL_OK;
+    m_nic->sendMsg( cmd.target_id.phys.nid, &entry->hdr, 
+                    (Addr) m_mdV[cmd.md_handle].md.start + cmd.local_offset, 
+                    cmd.length, entry->callback );  
 }
 
-int Context::get( int md_handle,
-           ptl_size_t       local_offset,
-           ptl_size_t       length,
-           ptl_process_t    target_id,
-           ptl_pt_index_t   pt_index,
-           ptl_match_bits_t match_bits,
-           ptl_size_t       remote_offset,
-           void *           user_ptr )
+void Context::Get( cmdPtlGet_t& cmd ) 
 {
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
-    "remote_offset=%#lx\n", md_handle, length, local_offset, remote_offset );
+    "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
 
     if ( m_logicalIF ) {
-        PRINT_AT(Context,"target rank=%d\n",target_id.rank);
+        PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
     } else {
         PRINT_AT(Context,"target nid=%d pid=%d\n",
-                    target_id.phys.nid,target_id.phys.pid);
+                    cmd.target_id.phys.nid,cmd.target_id.phys.pid);
     }
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",pt_index,match_bits); 
-
-    if ( pt_index > m_limits.max_pt_index ) {
-        return -PTL_ARG_INVALID;
-    }
+    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
 
     GetSendEntry* entry = new GetSendEntry;
     assert(entry);
 
-    entry->user_ptr = user_ptr;
+    entry->user_ptr = cmd.user_ptr;
     entry->callback = new GetCallback(this, &Context::getCallback, entry );
 
-    entry->local_offset = local_offset;
-    entry->md_handle = md_handle;
-    entry->hdr.length = length;
-    entry->hdr.pt_index = pt_index;
-    entry->hdr.dest_pid = target_id.phys.pid;
+    entry->local_offset = cmd.local_offset;
+    entry->md_handle = cmd.md_handle;
+    entry->hdr.length = cmd.length;
+    entry->hdr.pt_index = cmd.pt_index;
+    entry->hdr.dest_pid = cmd.target_id.phys.pid;
     entry->hdr.src_pid  = m_pid;
-    entry->hdr.offset = remote_offset;
-    entry->hdr.match_bits = match_bits;
-    entry->hdr.op = Get;
+    entry->hdr.offset = cmd.remote_offset;
+    entry->hdr.match_bits = cmd.match_bits;
+    entry->hdr.op = ::Get;
 
     int key = 5;
     entry->hdr.key = key; 
     m_getM[ key ] = entry;
 
-    m_nic->sendMsg( target_id.phys.nid, &entry->hdr, (Addr) 0, 0,  NULL );
-    return PTL_OK;
+    m_nic->sendMsg( cmd.target_id.phys.nid, &entry->hdr, (Addr) 0, 0,  NULL );
 }
 
 
@@ -444,8 +353,6 @@ void Context::writeEvent( EventEntry* entry )
             findEventAddr( entry->handle, eq.count % eq.size ) );
 
     entry->event.count1 = entry->event.count2 = eq.count; 
-//    entry->event.count1 = eq.count; 
-//    entry->event.count2 = -1; 
 
     m_nic->dmaEngine().write( 
                             findEventAddr( entry->handle, eq.count % eq.size ),
@@ -458,6 +365,7 @@ void Context::writeEvent( EventEntry* entry )
 
 RecvEntry* Context::processHdrPkt( void* pkt )
 {
+    PRINT_AT(Context,"%p %lu \n",this,m_ptV.size());
     CtrlFlit* cFlit = (CtrlFlit*) pkt;
     RecvEntry* entry = processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
 }
@@ -512,6 +420,7 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
         printf("Drop\n");
         return NULL;
     }
+
     std::list< int >::iterator iter = 
                 m_ptV[hdr->pt_index].meL[PTL_PRIORITY_LIST].begin();
     std::list< int >::iterator end = 
@@ -553,7 +462,7 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
 
 RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
 {
-    if ( hdr->op == Get ) {
+    if ( hdr->op == ::Get ) {
         processGet( nid, hdr, me_handle );
     } else {
         processPut( nid, hdr, me_handle );
@@ -591,6 +500,10 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
     PRINT_AT(Context,"\n");
     if ( hdr->length == 0 ) {
         recvFini( nid, hdr, me_handle );
+        if ( ! (findME(me_handle)->options & PTL_ME_ACK_DISABLE ) ) {
+            // need to add ACK for zero length message
+            assert( hdr->ack_req != PTL_ACK_REQ );
+        }
         return NULL;
     } else {
         PutRecvEntry* entry = new PutRecvEntry; 
@@ -629,7 +542,8 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
     if ( entry->state == PutRecvEntry::WaitRecvComp ) {
         recvFini( entry->nid, &entry->hdr, entry->me_handle );
 
-        if ( entry->hdr.ack_req == PTL_ACK_REQ ) {
+        if ( entry->hdr.ack_req == PTL_ACK_REQ && 
+                ! (findME(entry->me_handle)->options & PTL_ME_ACK_DISABLE ) ) {
             entry->hdr.op = Ack;
             entry->hdr.dest_pid = entry->hdr.src_pid;
             entry->hdr.src_pid = m_pid;

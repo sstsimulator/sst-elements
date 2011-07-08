@@ -1,4 +1,3 @@
-
 #ifndef _nicPtlEvent_h
 #define _nicPtlEvent_h
 
@@ -31,30 +30,24 @@ class PtlNicEvent : public SST::Event {
   public:
     PtlNicEvent( cmdQueueEntry_t* entry )
     { 
-        cmd = entry->cmd;
-        context = entry->context;
-      //  printf("%s() cmd=%d\n",__func__,cmd);
-        for ( int i = 0; i < NUM_ARGS; i++ ) {
-            args[i] = entry->args[i];
-     //       printf("%s() arg%d %#lx\n",__func__,i,args[i]);
-        }
+        memcpy( data, entry, sizeof( *entry ) );
     }
-    int cmd;
-    int context;
-    unsigned long args[NUM_ARGS];
+
+    cmdQueueEntry_t& cmd() { 
+        return *((cmdQueueEntry_t*) data );
+    }
 
   private:
-        
     PtlNicEvent() {}
+        
+    unsigned char data[ sizeof( cmdQueueEntry_t ) ];
 
     friend class boost::serialization::access;
     template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
+    void serialize( Archive & ar, const unsigned int version )
     {   
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-        ar & BOOST_SERIALIZATION_NVP( cmd );
-        ar & BOOST_SERIALIZATION_NVP( context );
-        ar & BOOST_SERIALIZATION_NVP( args );
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP( Event );
+        ar & BOOST_SERIALIZATION_NVP( data );
     }
 };
 

@@ -87,8 +87,8 @@ void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )
 {
     PtlNicRespEvent* event = static_cast<PtlNicRespEvent*>(e);
     DBGX(2,"retval %#x\n",event->retval);
-    m_cmdQueue.queue[ m_cmdQueue.head ].retval = event->retval;
-    m_cmdQueue.queue[ m_cmdQueue.head ].cmd = 0;
+    //m_cmdQueue.queue[ m_cmdQueue.head ].retval = event->retval;
+    //m_cmdQueue.queue[ m_cmdQueue.head ].cmd = 0;
     m_cmdQueue.head = ( m_cmdQueue.head + 1 ) % CMD_QUEUE_SIZE;
     delete e;
 }
@@ -110,7 +110,7 @@ void PtlNicMMIF::addressRanges(AddrRangeList& resp)
 
 Tick PtlNicMMIF::write(Packet* pkt)
 {
-    DBGX(3,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
+    DBGX(2,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
                                         pkt->getSize());
 
     assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );
@@ -122,6 +122,7 @@ Tick PtlNicMMIF::write(Packet* pkt)
         if ( ! m_blocked ) {
             m_cmdLink->Send( 
                     new PtlNicEvent( &m_cmdQueue.queue[ m_cmdQueue.head ] ) );  
+            m_cmdQueue.head = ( m_cmdQueue.head + 1 ) % CMD_QUEUE_SIZE;
         }
     }
 
@@ -130,7 +131,7 @@ Tick PtlNicMMIF::write(Packet* pkt)
 
 Tick PtlNicMMIF::read(Packet* pkt)
 {
-    DBGX(3,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
+    DBGX(2,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
                                         pkt->getSize());
 
     assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );

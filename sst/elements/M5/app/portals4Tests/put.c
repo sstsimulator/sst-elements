@@ -20,19 +20,17 @@ static void printEvent( ptl_event_t *event );
 #define TEST_1 (1 << 0)
 #define TEST_2 (2 << 1)
 
-//#define ACK_REQ    PTL_NO_ACK_REQ
-#define ACK_REQ    PTL_ACK_REQ
+#define ACK_REQ    PTL_NO_ACK_REQ
+//#define ACK_REQ    PTL_ACK_REQ
 #define TEST_NUM TEST_2
 #define OFFSET_DIV 1
 
 //#define MSG_SIZE 0x2000 
-#define MSG_SIZE  100
+//#define MSG_SIZE  100
+#define MSG_SIZE  10 
 #define PTL_INDEX 11
 #define HDR_DATA 0xdeadbeef01234567
 ptl_match_bits_t match_bits = 0xdeadbeef;
-
-static int rank;
-
 
 extern char **environ;
 int main( int argc, char* argv[] )
@@ -64,6 +62,7 @@ int main( int argc, char* argv[] )
                 &ni_handle ) ) != PTL_OK ) {
         printf("PtlNIInit() failed %d\n", retval ); abort();
     }
+
     printf("max_pt_index=%d\n",ni_got_limits.max_pt_index);
 
     if ( ( retval = PtlGetId( ni_handle, &id ) ) != PTL_OK ) {
@@ -72,7 +71,6 @@ int main( int argc, char* argv[] )
 
     printf("id.phys.nid=%#x id.phys.pid=%d\n",id.phys.nid,id.phys.pid);
 
-    rank = id.phys.nid;
     if ( id.phys.nid == 0 ) {
         nid0(ni_handle,&id,TEST_NUM);
     } else {
@@ -84,8 +82,8 @@ int main( int argc, char* argv[] )
     }
     PtlFini();
 
-    printf("goodbye\n");
-    m5_barrier();
+    printf("goodbye nid=%d\n", id.phys.nid);
+    cnos_barrier();
     return 0;
 }
 
@@ -137,7 +135,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
     target_id.phys.nid = 1;
 
     printf("%d:%d: calling barrier\n",id->phys.nid,id->phys.pid);
-    m5_barrier(); 
+    cnos_barrier(); 
     printf("%d:%d: barrier returning\n",id->phys.nid,id->phys.pid);
 
     ptl_ack_req_t ack_req = ACK_REQ;
@@ -194,16 +192,16 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
         printf("PtlMDRelease() failed\n"); abort();
     } 
 
-    if ( testNum & TEST_1 ) { 
-        if ( PtlCTFree( md.ct_handle ) != PTL_OK ) {
-            printf("PtlCTFree() failed\n"); abort();
-        } 
-    }
-
     if ( testNum & TEST_2 ) {
         if ( (retval = PtlEQFree( md.eq_handle ) ) != PTL_OK ) {
             printf("PtlEQFree() failed %d\n",retval); abort();
         }
+    }
+
+    if ( testNum & TEST_1 ) { 
+        if ( PtlCTFree( md.ct_handle ) != PTL_OK ) {
+            printf("PtlCTFree() failed\n"); abort();
+        } 
     }
 
     printf("%s():%d\n",__func__,__LINE__);
@@ -245,9 +243,9 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
     me.start = malloc(MSG_SIZE);
     me.length = MSG_SIZE;
     me.min_free = 0;
-    me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL;
+    me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL;// | PTL_ME_ACK_DISABLE;
     me.match_id.phys.nid = 0;
-    me.match_id.phys.pid = 1;
+    me.match_id.phys.pid = id->phys.pid;
     me.match_bits = match_bits;
     me.ignore_bits = 0;
 
@@ -261,7 +259,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
     }
 
     printf("%d:%d: calling barrier\n",id->phys.nid,id->phys.pid);
-    m5_barrier(); 
+    cnos_barrier(); 
     printf("%d:%d: barrier returning\n",id->phys.nid,id->phys.pid);
 
     if ( testNum & TEST_1 ) {
@@ -283,7 +281,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
         //printEvent( &event );
         assert( event.type == PTL_EVENT_PUT );
         assert( event.initiator.phys.nid == 0 );
-        assert( event.initiator.phys.pid == 1 );
+        assert( event.initiator.phys.pid == id->phys.pid );
         assert( event.pt_index == pt_index );
         assert( event.start == me.start + event.remote_offset );
         assert( event.user_ptr == &me );
@@ -310,6 +308,12 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
     if ( (retval = PtlPTFree( ni_handle, 
                     pt_index ) ) != PTL_OK ) {
         printf("PtlPTFree() failed %d\n",retval); abort();
+    }
+
+    if ( testNum & TEST_1 ) { 
+        if ( PtlCTFree( me.ct_handle ) != PTL_OK ) {
+            printf("PtlCTFree() failed\n"); abort();
+        } 
     }
 
     if ( testNum & TEST_2 ) {

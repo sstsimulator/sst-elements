@@ -12,7 +12,7 @@ int _ptl_dbg_rank = -1;
 
 static __attribute__ ((constructor)) void init(void)
 {
-    char* tmp = getenv("PTL_DBG_RANK");
+    char* tmp = getenv("PTL_DBG_ID");
     if ( tmp ) {
         _ptl_dbg_rank = atoi( tmp );
     }

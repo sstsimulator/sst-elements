@@ -13,10 +13,13 @@ namespace PtlNic {
 
 class PtlIF {
   public:
-    PtlIF() :
-        m_tailShadow(0)
+    PtlIF( int jid, int uid, int pid ) :
+        m_tailShadow(0),
+        m_ctx_id( 101 ),
+        m_pid(pid),
+        m_nid(-1)
     {
-//        PTL_DBG2("\n");
+        PTL_DBG2("\n");
         char* tmp = getenv("PTLNIC_CMD_QUEUE_ADDR");
         unsigned long addr = 0;
         if ( tmp )
@@ -25,54 +28,63 @@ class PtlIF {
         m_cmdQueue = (cmdQueue_t*)syscall( SYS_foo, addr, sizeof( cmdQueue_t) );
 
         assert( m_cmdQueue );
-        ptl_jid_t jid = 1;
-        m_context = push_cmd( ContextInit, 2, getuid(), jid );
-        if ( m_context == -1 ) {
-            abort();
-        }
+        cmdUnion_t& cmd = getCmdSlot(ContextInit);
+        cmd.ctxInit.uid = uid;
+        cmd.ctxInit.jid = jid;
+        cmd.ctxInit.nidPtr = (cmdAddr_t) &m_nid;
+        cmd.ctxInit.limitsPtr = (cmdAddr_t) &m_limits;
+        commitCmd(); 
+
+        while (  m_nid == -1 ); 
+
+        PTL_DBG2("nid=%d\n",m_nid);
     }
 
     ~PtlIF() {
-//        PTL_DBG2("\n");
-        push_cmd( ContextFini , 0 );
+        PTL_DBG2("\n");
+
+        cmdUnion_t& cmd = getCmdSlot(ContextFini);
+        commitCmd();
     } 
+
+    ptl_nid_t nid() { return m_nid; }
+    ptl_pid_t pid() { return m_pid; }
+
+    ptl_ni_limits_t& limits() { return m_limits; }
 
   private:
 
     friend class PtlAPI;
-    int push_cmd( int cmd, int numArgs, ... ) 
+    cmdUnion_t& getCmdSlot( int type )
     {
-        va_list ap;
+        PTL_DBG2("%s\n", m_cmdNames[type] );
+        m_next = ( m_tailShadow + 1 ) % CMD_QUEUE_SIZE;
+        while ( m_next == m_cmdQueue->head );
 
-        int next = ( m_tailShadow + 1 ) % CMD_QUEUE_SIZE;
-        while ( next == m_cmdQueue->head );
+        cmdQueueEntry_t&  cmd = m_cmdQueue->queue[ m_tailShadow ]; 
+        cmd.type = type;
+        cmd.ctx_id = m_ctx_id; 
+        
+        return cmd.u; 
+    }
 
-        cmdQueueEntry_t* entry = &m_cmdQueue->queue[ m_tailShadow ]; 
-
-        va_start( ap, numArgs );
-        for ( int i = 0; i < numArgs; i++ ) {
-            unsigned long tmp = va_arg( ap, unsigned long );  
-            entry->args[i] = tmp; 
-        }
-        va_end( ap );
-
-        entry->cmd = cmd;
-        entry->context = m_context;
+    void commitCmd() {
 
         asm volatile("wmb");
 
         // moving the tail ptr tells the nic there is a new entry
-        m_cmdQueue->tail = m_tailShadow = next;
-
-        // the nic clears this field to inform us that the retval is valid 
-        while ( entry->cmd == cmd ); 
-
-        return entry->retval;
-    } 
+        m_cmdQueue->tail = m_tailShadow = m_next;
+    }
     
     cmdQueue_t* m_cmdQueue;    
     int         m_tailShadow;
-    int         m_context;
+    int         m_next;
+
+    int                 m_ctx_id;
+    ptl_pid_t           m_pid;
+    ptl_ni_limits_t     m_limits;
+    volatile ptl_nid_t  m_nid;
+
     static const char* m_cmdNames[];
 };
 

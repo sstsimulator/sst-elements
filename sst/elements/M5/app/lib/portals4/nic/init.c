@@ -26,6 +26,7 @@ static int ptlNIInit(
                         map_size, desired_mapping, actual_mapping );
 }
 
+
 static int ptlNIFini( struct ::PtlAPI* obj )
 {
     return ((PtlAPI*) obj->data)->ptlNIFini( );
@@ -70,7 +71,6 @@ static int ptlMEUnlink( struct ::PtlAPI* obj, ptl_handle_me_t me_handle)
     return ((PtlAPI*) obj->data)->ptlMEUnlink( me_handle ); 
 }
 
-
 static int  ptlGetId( struct ::PtlAPI* obj, ptl_process_t* id ) 
 {
     return ((PtlAPI*) obj->data)->ptlGetId( id ); 
@@ -93,7 +93,6 @@ static int ptlCTWait( struct ::PtlAPI* obj,
 {
     return ((PtlAPI*) obj->data)->ptlCTWait( ct, test,event ); 
 }
-
 
 static int ptlPut( struct ::PtlAPI* obj,
             ptl_handle_md_t  md_handle,
@@ -138,7 +137,6 @@ static int ptlGet( struct ::PtlAPI* obj,
                                 remote_offset,
                                 user_ptr );
 }
-
 
 static int ptlEQAlloc( struct ::PtlAPI* obj, ptl_size_t count )
 {
@@ -194,7 +192,7 @@ static struct ::PtlIF* initNetIF( )
     struct ::PtlIF*  ptlIF = (struct ::PtlIF*)malloc( sizeof(*ptlIF) );
     ptlIF->init = initPtlIF;
     ptlIF->fini = finiPtlIF;
-    ptlIF->data = new PtlIF( );
+    ptlIF->data = new PtlIF( /*jid*/ 1, getuid(), getpid() );
     
     return ptlIF;
 }

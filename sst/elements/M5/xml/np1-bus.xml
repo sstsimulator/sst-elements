@@ -8,7 +8,7 @@
     <component id="system" >
         <m5C.M5>
             <params>
-                <configFile>xml/memBusM5.xml</configFile>
+                <configFile>xml/dual-coreM5.xml</configFile>
                 <debug> 2 </debug>
                 <M5debug> ExecEffAddr ExecEnable ExeccMacro ExecMicro ExecOpClass ExecRegDelta ExecResult ExecSpeculative  ExecThread ExecSymbol ExecTicks  </M5debug>
                 <info>yes</info>

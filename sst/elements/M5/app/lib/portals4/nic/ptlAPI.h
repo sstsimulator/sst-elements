@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <deque>
 
 #include <ptlEvent.h>
 
@@ -20,6 +21,9 @@ class PtlAPI {
     PtlAPI( PtlIF& ptlIF ) :
         m_ptlIF( ptlIF ) 
     {
+        m_id.phys.nid = ptlIF.nid();
+        m_id.phys.pid = ptlIF.pid();
+
         PTL_DBG2("\n");
         assert( sizeof(ptl_size_t) == sizeof(long ) );
     }
@@ -27,6 +31,7 @@ class PtlAPI {
     ~PtlAPI() {
         PTL_DBG2("\n");
     } 
+
 
     int ptlNIInit( 
               unsigned int      options,
@@ -39,14 +44,24 @@ class PtlAPI {
     )
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlNIInit, 7, options, pid, desired,
-                        actual, map_size, desired_mapping, actual_mapping ); 
+        int handle = 1; 
+
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot(PtlNIInit);
+        cmd.niInit.pid     = m_id.phys.pid;
+        cmd.niInit.options = options;
+        m_ptlIF.commitCmd();
+
+        initLimits( m_ptlIF.limits() );
+        *actual = m_ptlIF.limits();
+        return handle;
     }
 
     int ptlNIFini( )
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlNIFini, 0 );
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlNIFini);
+        m_ptlIF.commitCmd();
+        return PTL_OK;
     }
 
     int ptlPTAlloc( unsigned int    options,
@@ -54,26 +69,47 @@ class PtlAPI {
                  ptl_pt_index_t  pt_index_req )
     {                                     
         PTL_DBG2("\n");
-        return  m_ptlIF.push_cmd( PtlPTAlloc, 3, options, 
-                        eq_handle, pt_index_req ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPTAlloc);
+        cmd.ptAlloc.options   = options;
+        cmd.ptAlloc.eq_handle = eq_handle;
+        cmd.ptAlloc.pt_index  = pt_index_req;
+        m_ptlIF.commitCmd();
+        return pt_index_req;
     }
 
     int ptlPTFree( ptl_pt_index_t pt_index ) 
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlPTFree, 1, pt_index ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPTFree);
+        cmd.ptAlloc.pt_index = pt_index;
+        m_ptlIF.commitCmd();
+        return PTL_OK;
     }
 
     int ptlMDBind( ptl_md_t* md )
     {
-        PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlMDBind, 1, md ); 
+        if( m_freeMDHandles.empty() ) return -PTL_FAIL; 
+        int handle = m_freeMDHandles.front();
+        m_freeMDHandles.pop_front();
+
+        PTL_DBG2("handle=%d\n",handle);
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMDBind );
+        cmd.mdBind.handle = handle;
+        cmd.mdBind.md = *md;
+        m_ptlIF.commitCmd();
+        return handle;
     }
 
     int ptlMDRelease( ptl_handle_md_t md_handle )
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlMDRelease, 1, md_handle ); 
+
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMDRelease );
+        cmd.mdRelease.handle = md_handle;
+        m_ptlIF.commitCmd();
+
+        m_freeMDHandles.push_back( md_handle );
+        return PTL_OK;
     }
 
     int ptlMEAppend( ptl_pt_index_t      pt_index,
@@ -82,37 +118,55 @@ class PtlAPI {
                 void*               user_ptr ) 
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlMEAppend, 4, pt_index,me,ptl_list,user_ptr);
+        if( m_freeMEHandles.empty() ) return -PTL_FAIL; 
+        int handle = m_freeMEHandles.front();
+        m_freeMEHandles.pop_front();
+
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMEAppend );
+        cmd.meAppend.handle   = handle;
+        cmd.meAppend.pt_index = pt_index;
+        cmd.meAppend.me       = *me;
+        cmd.meAppend.list     = ptl_list;
+        cmd.meAppend.user_ptr = user_ptr;
+        m_ptlIF.commitCmd();
     }
 
     int ptlMEUnlink(ptl_handle_me_t me_handle)
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlMDRelease, 1, me_handle ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMEUnlink );
+        cmd.meUnlink.handle = me_handle;
+        m_ptlIF.commitCmd();
+        m_freeMEHandles.push_back(me_handle);
     }
 
 
     int ptlGetId( ptl_process_t*     id)
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlGetId, 1, id ); 
+        *id = m_id;
+        return PTL_OK;
     }
 
     int ptlCTAlloc( )
     {
+        PTL_DBG2("\n");
+
+        if( m_freeCTHandles.empty() ) return -PTL_FAIL; 
+        int handle = m_freeCTHandles.front();
+        m_freeCTHandles.pop_front();
 
         ptl_ct_event_t* event = new ptl_ct_event_t;
         if ( !event ) return -PTL_NO_SPACE;
         event->success = event->failure = 0;
-        PTL_DBG2("\n");
-
-        int handle = m_ptlIF.push_cmd( PtlCTAlloc, 1, event ); 
-        
-        if ( handle <  0 ) {
-            delete event;
-            return handle;
-        }
         m_ctM[handle] = event;
+
+        cmdUnion_t& cmd  = m_ptlIF.getCmdSlot( PtlCTAlloc );
+
+        cmd.ctAlloc.handle = handle;
+        cmd.ctAlloc.addr   = event;
+        
+        m_ptlIF.commitCmd();
         
         return handle;
     }
@@ -120,11 +174,16 @@ class PtlAPI {
     int ptlCTFree( ptl_handle_ct_t ct )
     {
         PTL_DBG2("\n");
-        int retval = m_ptlIF.push_cmd( PtlCTFree, 1, ct ); 
-        if ( retval == PTL_OK ) {
-            delete m_ctM[ct];
-        }
-        return retval;
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlCTFree ); 
+
+        cmd.ctFree.handle = ct;
+
+        m_ptlIF.commitCmd();
+
+        delete m_ctM[ct];
+        m_freeCTHandles.push_back( ct );
+
+        return PTL_OK;
     }
 
     int ptlCTWait(ptl_handle_ct_t   ct_handle,
@@ -142,6 +201,10 @@ class PtlAPI {
 
     int ptlEQAlloc( ptl_size_t size )
     {
+        if( m_freeEQHandles.empty() ) return -PTL_FAIL; 
+        int handle = m_freeEQHandles.front();
+        m_freeEQHandles.pop_front();
+
         EventQ* eventQ = new EventQ;
         if ( !eventQ ) return -PTL_NO_SPACE;
 
@@ -159,13 +222,15 @@ class PtlAPI {
         }
 
         PTL_DBG2("%p\n",&eventQ->eventV[0]);
-        int handle =  m_ptlIF.push_cmd( PtlEQAlloc, 2, size,
-                                        &eventQ->eventV[0] ); 
-        if ( handle < 0 ) {
-            delete eventQ;
-            return handle;
-        }
-        PTL_DBG2("eq_handle=%d\n",handle);
+
+        cmdUnion_t& cmd  = m_ptlIF.getCmdSlot( PtlEQAlloc );
+
+        cmd.eqAlloc.handle = handle;
+        cmd.eqAlloc.size   = size;
+        cmd.eqAlloc.addr   = &eventQ->eventV[0];
+        
+        m_ptlIF.commitCmd();
+
         m_eqM[handle] = eventQ;
 
         return handle;
@@ -173,12 +238,16 @@ class PtlAPI {
 
     int ptlEQFree( ptl_handle_eq_t eq_handle )
     {
-        int retval = m_ptlIF.push_cmd( PtlEQFree, 1, eq_handle ); 
-        PTL_DBG2("\n");
-        if ( retval == PTL_OK ) {
-            delete m_eqM[eq_handle];
-        }
-        return retval;
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlEQFree ); 
+
+        cmd.eqFree.handle = eq_handle;
+
+        m_ptlIF.commitCmd();
+
+        delete m_eqM[eq_handle];
+        m_freeEQHandles.push_back( eq_handle );
+
+        return PTL_OK;
     }
 
     int ptlEQWait(ptl_handle_ct_t eq_handle, ptl_event_t* event )
@@ -198,7 +267,6 @@ class PtlAPI {
         }
 
         ++foo->count;
-
         return PTL_OK;
     }
 
@@ -214,17 +282,21 @@ class PtlAPI {
            ptl_hdr_data_t   hdr_data)
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlPut, 10, 
-                    md_handle,
-                    local_offset,
-                    length,
-                    ack_req,
-                    target_id,
-                    pt_index,
-                    match_bits,
-                    remote_offset,
-                    user_ptr,
-                    hdr_data ); 
+
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPut ); 
+
+        cmd.ptlPut.md_handle     = md_handle;
+        cmd.ptlPut.local_offset  = local_offset;
+        cmd.ptlPut.length        = length;
+        cmd.ptlPut.ack_req       = ack_req;
+        cmd.ptlPut.target_id     = target_id;
+        cmd.ptlPut.pt_index      = pt_index;
+        cmd.ptlPut.match_bits    = match_bits;
+        cmd.ptlPut.remote_offset = remote_offset;
+        cmd.ptlPut.user_ptr      = user_ptr;
+        cmd.ptlPut.hdr_data     = hdr_data;
+
+        m_ptlIF.commitCmd();
     }
 
     int ptlGet(ptl_handle_md_t  md_handle,
@@ -237,21 +309,49 @@ class PtlAPI {
            void *           user_ptr)
     {
         PTL_DBG2("\n");
-        return m_ptlIF.push_cmd( PtlGet, 8, 
-                    md_handle,
-                    local_offset,
-                    length,
-                    target_id,
-                    pt_index,
-                    match_bits,
-                    remote_offset,
-                    user_ptr);
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlGet ); 
+
+        cmd.ptlGet.md_handle     = md_handle;
+        cmd.ptlGet.local_offset  = local_offset;
+        cmd.ptlGet.length        = length;
+        cmd.ptlGet.target_id     = target_id;
+        cmd.ptlGet.pt_index      = pt_index;
+        cmd.ptlGet.match_bits    = match_bits;
+        cmd.ptlGet.remote_offset = remote_offset;
+        cmd.ptlGet.user_ptr      = user_ptr;
+
+        m_ptlIF.commitCmd();
     }
 
   private:
-    PtlIF& m_ptlIF;
-    std::map<int,ptl_ct_event_t*>  m_ctM;
-    std::map<int,EventQ*>     m_eqM;
+
+    void initLimits( ptl_ni_limits_t& limits )
+    {
+        for ( int i = 0; i < limits.max_cts; i++ ) {
+            m_freeCTHandles.push_back(i);
+        } 
+
+        for ( int i = 0; i < limits.max_mds; i++ ) {
+            m_freeMDHandles.push_back(i);
+        } 
+
+        for ( int i = 0; i < limits.max_list_size; i++ ) {
+            m_freeMEHandles.push_back(i);
+        } 
+
+        for ( int i = 0; i < limits.max_eqs; i++ ) {
+            m_freeEQHandles.push_back(i);
+        } 
+    }
+
+    PtlIF&                          m_ptlIF;
+    std::map<int,ptl_ct_event_t*>   m_ctM;
+    std::map<int,EventQ*>           m_eqM;
+    ptl_process_t                   m_id;
+    std::deque<int>                 m_freeCTHandles;
+    std::deque<int>                 m_freeMDHandles;
+    std::deque<int>                 m_freeMEHandles;
+    std::deque<int>                 m_freeEQHandles;
 };
 
 }

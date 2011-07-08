@@ -10,6 +10,13 @@
 
 #include <stdint.h>
 
+#define MAX_PT_INDEX 63
+#define MAX_CTS 63
+#define MAX_MDS 63
+#define MAX_ENTRIES 63
+#define MAX_EQS 63
+#define MAX_LIST_SIZE 63
+
 /*****************
  * Return Values *
  *****************/

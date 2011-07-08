@@ -54,7 +54,7 @@ void DmaEngine::eventHandler( SST::Event* e )
                     event->addr,event->buf,event->size);
     
     CallbackBase* callback = (CallbackBase*)event->key;
-    if ( (*callback)() ) {
+    if ( callback && (*callback)() ) {
         PRINT_AT(DmaEngine,"delete callback\n");
         delete  callback;
     }  

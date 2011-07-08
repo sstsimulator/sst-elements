@@ -20,9 +20,6 @@ static void printEvent( ptl_event_t *event );
 #define PTL_INDEX 11
 ptl_match_bits_t match_bits = 0xdeadbeef;
 
-static int rank;
-
-
 extern char **environ;
 int main( int argc, char* argv[] )
 {
@@ -61,7 +58,6 @@ int main( int argc, char* argv[] )
 
     printf("id.phys.nid=%#x id.phys.pid=%d\n",id.phys.nid,id.phys.pid);
 
-    rank = id.phys.nid;
     if ( id.phys.nid == 0 ) {
         nid0(ni_handle,&id);
     } else {
