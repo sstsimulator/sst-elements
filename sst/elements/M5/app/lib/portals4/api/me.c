@@ -46,7 +46,7 @@ int PtlMEUnlink(ptl_handle_me_t me_handle)
 
     struct PtlAPI* api = GetPtlAPI( ni );
 
-    int retval = api->PtlMDRelease( api, me.s.code );
+    int retval = api->PtlMEUnlink( api, me.s.code );
     if ( retval < 0 )  return -retval;
 
     return PTL_OK;

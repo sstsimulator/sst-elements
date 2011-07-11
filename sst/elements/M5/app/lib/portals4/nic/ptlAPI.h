@@ -129,6 +129,7 @@ class PtlAPI {
         cmd.meAppend.list     = ptl_list;
         cmd.meAppend.user_ptr = user_ptr;
         m_ptlIF.commitCmd();
+        return handle;
     }
 
     int ptlMEUnlink(ptl_handle_me_t me_handle)
@@ -138,6 +139,7 @@ class PtlAPI {
         cmd.meUnlink.handle = me_handle;
         m_ptlIF.commitCmd();
         m_freeMEHandles.push_back(me_handle);
+        return PTL_OK;
     }
 
 
