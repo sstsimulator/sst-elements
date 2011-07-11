@@ -55,13 +55,12 @@ bool PtlNic::clock( SST::Cycle_t cycle )
 void PtlNic::processFromRtr()
 {
     if ( ! toNicQ_empty( MsgVC ) ) {
-        PRINT_AT(PtlNic,"\n");
         RtrEvent* event = toNicQ_front( MsgVC );
         toNicQ_pop( MsgVC );
         CtrlFlit* cFlit = (CtrlFlit*) event->packet.payload; 
 
         if ( cFlit->s.head ) {
-            PRINT_AT(PtlNic,"got head Packet from nid %d\n",cFlit->s.nid);
+            PRINT_AT(PtlNic,"got head packet from nid %d\n",cFlit->s.nid);
             PtlHdr* hdr = (PtlHdr*) (cFlit + 1);
             assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
                                         m_nidRecvEntryM.end() );
@@ -73,13 +72,18 @@ void PtlNic::processFromRtr()
             }
         } else {
 
-            assert( m_nidRecvEntryM[ cFlit->s.nid ] );
-
-            if ( m_nidRecvEntryM[ cFlit->s.nid ]->pushPkt(
+            if( m_nidRecvEntryM.find( cFlit->s.nid ) != 
+                                        m_nidRecvEntryM.end() ) {
+            
+                PRINT_AT(PtlNic,"push packet\n");
+                if ( m_nidRecvEntryM[ cFlit->s.nid ]->pushPkt(
                                 (unsigned char*) ( cFlit + 1 ), 64 ) ) {
             
-                PRINT_AT(PtlNic,"erase send entry for nid %d\n", cFlit->s.nid );
-                m_nidRecvEntryM.erase( cFlit->s.nid );
+                    PRINT_AT(PtlNic,"erase send entry for nid %d\n", cFlit->s.nid );
+                    m_nidRecvEntryM.erase( cFlit->s.nid );
+                }
+            } else {
+                PRINT_AT(PtlNic,"drop packet\n");
             }
         }
 
