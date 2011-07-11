@@ -83,13 +83,19 @@ class Context {
 
   private:
 
+    int  search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t );
+
+    struct OverflowEntry;
+
+    struct XXX;
+    XXX* searchOverflow( ptl_me_t& );
     RecvEntry* processHdrPkt( ptl_nid_t nid, PtlHdr* hdr );
-    RecvEntry* processMatch( ptl_nid_t, PtlHdr*, int me_handle );
-    RecvEntry* processPut( ptl_nid_t, PtlHdr*, int me_handle );
-    RecvEntry* processGet( ptl_nid_t, PtlHdr*, int me_handle );
+    RecvEntry* processMatch( ptl_nid_t, PtlHdr*, int me_handle, ptl_list_t );
+    RecvEntry* processPut( ptl_nid_t, PtlHdr*, int me_handle, ptl_list_t );
+    RecvEntry* processGet( ptl_nid_t, PtlHdr*, int me_handle, ptl_list_t );
     void processAck( PtlHdr * );
     RecvEntry* processReply( PtlHdr * );
-    void recvFini( ptl_nid_t nid, PtlHdr* hdr, int me_handle );
+    void recvFini( XXX* );
 
     void writeEvent( int eq_handle,
                     ptl_event_kind_t    type,
@@ -147,13 +153,18 @@ class Context {
     bool getCallback( GetSendEntry* );
 
     struct XXX {
-        PtlHdr        hdr;
-        ptl_nid_t     nid;
-        int           me_handle;
-        CallbackBase* callback;
+        ptl_nid_t       srcNid;
+        int             me_handle;
+        ptl_size_t      mlength;
+        void*           start; 
+        CallbackBase*   callback;
+        int             op;
+        ptl_list_t      list;
+        PtlHdr          origHdr;
     };
 
     struct PutRecvEntry : XXX {
+        PtlHdr        ackHdr;
         enum { WaitRecvComp, WaitAckSent } state;
     };
 
@@ -162,6 +173,7 @@ class Context {
 
     //*************
     struct GetRecvEntry : XXX {
+        PtlHdr        replyHdr;
     };
     typedef Callback< Context, GetRecvEntry >  GetRecvCallback;
     bool getRecvCallback( GetRecvEntry* );
@@ -181,6 +193,11 @@ class Context {
 
     bool                    m_logicalIF;
     bool                    m_matching; 
+
+    bool checkME( PtlHdr& hdr, ptl_me_t& );
+
+    typedef std::deque<PutRecvEntry*>  overflowHdrList_t;
+    overflowHdrList_t                   m_overflowHdrList;
 
     ptl_process_t           m_id;
     ptl_pid_t               m_pid;

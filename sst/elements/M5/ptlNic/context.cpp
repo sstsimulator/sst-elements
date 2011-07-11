@@ -79,6 +79,43 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 {
     PRINT_AT(Context,"pt_index=%d handle=%d list=%d\n", 
                     cmd.pt_index, cmd.handle, cmd.list);
+
+    if ( cmd.list == PTL_PRIORITY_LIST ) { 
+
+        XXX* entry = searchOverflow( cmd.me );
+
+        if ( entry ) {
+
+            // if callback is not null then the data movement is not complete
+            assert( ! entry->callback );
+            PtlHdr& hdr = entry->origHdr;
+            PRINT_AT(Context,"Found Match in overflow me_handle=%d\n",
+                                        entry->me_handle );    
+
+            ptl_process_t initiator;
+            initiator.phys.nid = entry->srcNid; 
+            initiator.phys.pid = hdr.src_pid;
+
+            writeEvent( 
+                m_ptV[hdr.pt_index].eq_handle,
+                PTL_EVENT_PUT_OVERFLOW,
+                initiator,
+                hdr.pt_index,
+                hdr.uid,
+                hdr.jid,
+                hdr.match_bits,
+                hdr.length,
+                entry->mlength,
+                hdr.offset,
+                entry->start,
+                cmd.user_ptr,
+                hdr.hdr_data,
+                PTL_NI_OK
+            );
+            delete entry;
+        }
+    }
+
     m_ptV[cmd.pt_index].meL[cmd.list].push_back( cmd.handle );
     m_meV[cmd.handle].user_ptr = cmd.user_ptr; 
     m_meV[cmd.handle].me = cmd.me;
@@ -365,7 +402,6 @@ void Context::writeEvent( EventEntry* entry )
 
 RecvEntry* Context::processHdrPkt( void* pkt )
 {
-    PRINT_AT(Context,"%p %lu \n",this,m_ptV.size());
     CtrlFlit* cFlit = (CtrlFlit*) pkt;
     RecvEntry* entry = processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
 }
@@ -421,118 +457,185 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
         return NULL;
     }
 
-    std::list< int >::iterator iter = 
-                m_ptV[hdr->pt_index].meL[PTL_PRIORITY_LIST].begin();
-    std::list< int >::iterator end = 
-                m_ptV[hdr->pt_index].meL[PTL_PRIORITY_LIST].end();
-
-    for ( ; iter != end ; ++iter ) {
-        ptl_me_t* me = findME( *iter );
-        assert( me );
-        ptl_match_bits_t dont_ignore_bits = ~(me->ignore_bits);
-        PRINT_AT(Context, "me->match_bits %#lx dont_ignore %#lx\n", 
-                        me->match_bits, dont_ignore_bits  );
-        /* check the match_bits */
-        if ( ( (hdr->match_bits ^ me->match_bits) & dont_ignore_bits ) != 0 ) {
-             continue;
-        }    
-        /* check for forbidden truncation */
-        if (((me->options & PTL_ME_NO_TRUNCATE) != 0) &&
-                 ((hdr->offset + hdr->length) > me->length)) {
-            continue; 
-        }
-
-        if (( me->match_id.phys.nid != PTL_NID_ANY ) &&
-            ( me->match_id.phys.nid != 0 ) ) {
-            continue;
-        } 
-        if (( me->match_id.phys.pid != PTL_PID_ANY ) &&
-            ( me->match_id.phys.pid != hdr->src_pid ) ) {
-            continue;
-        } 
-        break;
+    int me_handle = search( nid, *hdr, PTL_PRIORITY_LIST );
+    if ( me_handle != -1 ) {
+        return processMatch( nid, hdr, me_handle, PTL_PRIORITY_LIST );
     }
-    if ( iter == end ) {
-        printf("No Match\n");
-    } else {
-        return processMatch( nid, hdr, *iter );
+
+    PRINT_AT(Context,"No match in PRIORITY_LIST\n");
+
+    me_handle = search( nid, *hdr, PTL_OVERFLOW );
+    if ( me_handle != 1 ) {
+        return processMatch( nid, hdr, me_handle, PTL_OVERFLOW );
     }
     return NULL;
 }
 
-RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
+
+Context::XXX* Context::searchOverflow( ptl_me_t& me )
 {
+    overflowHdrList_t::iterator iter = m_overflowHdrList.begin();
+    while ( iter != m_overflowHdrList.end() ) {
+        PtlHdr& hdr = (*iter)->origHdr;
+
+        PRINT_AT(Context,"srcNid=%d srcPid=%d targetPid=%d\n",
+                            (*iter)->srcNid, hdr.src_pid, hdr.dest_pid );
+        PRINT_AT(Context,"length=%lu offset=%lu\n",hdr.length, hdr.offset);
+        PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",hdr.pt_index, hdr.match_bits );
+
+        if ( checkME( hdr, me ) ) {
+            XXX* tmp = *iter;
+            m_overflowHdrList.erase(iter);
+            return tmp; 
+        }
+        ++iter;
+    }
+    return NULL;
+}
+
+int Context::search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t list )
+{
+    int me_handle = -1;
+    std::list< int >::iterator iter = 
+                m_ptV[hdr.pt_index].meL[list].begin();
+    std::list< int >::iterator end = 
+                m_ptV[hdr.pt_index].meL[list].end();
+
+    for ( ; iter != end ; ++iter ) {
+        ptl_me_t* me = findME( *iter );
+        assert( me );
+        if ( ! checkME( hdr, *me ) ) {
+            continue;
+        }
+        me_handle = *iter;
+        break;
+    }
+    return me_handle;
+}
+
+
+bool Context::checkME( PtlHdr& hdr, ptl_me_t& me )
+{
+
+    ptl_match_bits_t dont_ignore_bits = ~(me.ignore_bits);
+    PRINT_AT(Context, "me->match_bits %#lx dont_ignore %#lx\n", 
+                        me.match_bits, dont_ignore_bits  );
+    /* check the match_bits */
+    if ( ( (hdr.match_bits ^ me.match_bits) & dont_ignore_bits ) != 0 ) {
+        return false;
+    }    
+
+    /* check for forbidden truncation */
+    if (((me.options & PTL_ME_NO_TRUNCATE) != 0) &&
+             ((hdr.offset + hdr.length) > me.length)) {
+        return false;
+    }
+
+    if (( me.match_id.phys.nid != PTL_NID_ANY ) &&
+            ( me.match_id.phys.nid != 0 ) ) {
+        return false;
+    } 
+
+    if (( me.match_id.phys.pid != PTL_PID_ANY ) &&
+            ( me.match_id.phys.pid != hdr.src_pid ) ) {
+        return false;
+    } 
+    return true;
+}
+
+RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
+            ptl_list_t list )
+{
+    PRINT_AT(Context,"found match me=%d list=%d\n", me_handle, list );
     if ( hdr->op == ::Get ) {
-        processGet( nid, hdr, me_handle );
+        processGet( nid, hdr, me_handle, list );
     } else {
-        processPut( nid, hdr, me_handle );
+        processPut( nid, hdr, me_handle, list );
     }
 }
 
-RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
+RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
+                            ptl_list_t list )
 {
     PRINT_AT(Context,"\n");
 
     GetRecvEntry* entry = new GetRecvEntry; 
-    entry->hdr = *hdr;
-    entry->nid = nid;
-    entry->me_handle = me_handle;
+    entry->op          = ::Get;
+    entry->list        = list;
+    entry->srcNid      = nid;
+    entry->me_handle   = me_handle;
+    entry->origHdr     = *hdr;
+    entry->replyHdr    = *hdr;
+    entry->replyHdr.op = Reply;
+    
     entry->callback = 
                 new GetRecvCallback( this, &Context::getRecvCallback,entry );
-    entry->hdr.op = Reply;
-    
-    m_nic->sendMsg( nid, &entry->hdr, 
-                    (Addr) m_meV[me_handle].me.start + entry->hdr.offset, 
-                    entry->hdr.length, entry->callback );  
+
+    // this needs to be fixed
+    entry->mlength = hdr->length;
+    entry->start   = (void*) ((Addr) m_meV[me_handle].me.start + hdr->offset);
+
+    m_nic->sendMsg( nid, &entry->replyHdr, (Addr) entry->start,
+                    entry->mlength, entry->callback );  
     return NULL;
 }
 
 bool Context::getRecvCallback( GetRecvEntry* entry )
 {
     PRINT_AT(Context,"\n");
-    recvFini( entry->nid, &entry->hdr, entry->me_handle );
+    recvFini( entry );
     delete entry;
     return true;
 }
 
-RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
+RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
+                                    ptl_list_t list )
 {
     PRINT_AT(Context,"\n");
-    if ( hdr->length == 0 ) {
-        recvFini( nid, hdr, me_handle );
-        if ( ! (findME(me_handle)->options & PTL_ME_ACK_DISABLE ) ) {
-            // need to add ACK for zero length message
-            assert( hdr->ack_req != PTL_ACK_REQ );
-        }
-        return NULL;
-    } else {
-        PutRecvEntry* entry = new PutRecvEntry; 
-        entry->nid = nid;
-        entry->hdr = *hdr;
-        entry->me_handle = me_handle;
-        entry->state = PutRecvEntry::WaitRecvComp;
-        entry->callback = 
+    
+    PutRecvEntry* entry = new PutRecvEntry;
+    entry->op        = ::Put;
+    entry->list      = list;
+    entry->srcNid    = nid;
+    entry->me_handle = me_handle;
+    entry->origHdr   = *hdr;
+    entry->ackHdr    = *hdr;
+    entry->ackHdr.op = Ack;
+
+    entry->state = PutRecvEntry::WaitRecvComp;
+
+    entry->callback = 
                 new PutRecvCallback( this, &Context::putRecvCallback,entry );
-        ME& me = m_meV[me_handle];
 
-        ptl_size_t length = hdr->length;
-        ptl_size_t offset;
-        Addr start = (Addr) me.me.start;
-
-        if ( me.me.options & PTL_ME_MANAGE_LOCAL ) {
-            offset = me.offset;
-            me.offset += length;
-        } else {
-            offset = hdr->offset;
-        }
-        entry->hdr.offset = offset;
-        entry->hdr.length = length;
-
-        start += offset;
-
-        return new RecvEntry( m_nic->dmaEngine(), 
-                                    start, length, entry->callback );
+    if ( list == PTL_OVERFLOW ) {
+        m_overflowHdrList.push_back( entry );
     }
+
+    ME& me = m_meV[me_handle];
+
+    ptl_size_t offset;
+    entry->mlength = hdr->length;
+
+    if ( me.me.options & PTL_ME_MANAGE_LOCAL ) {
+        offset = me.offset;
+        me.offset += entry->mlength;
+    } else {
+        offset = hdr->offset;
+    }
+
+    entry->start   = (void*) ((Addr) m_meV[me_handle].me.start + offset);
+
+    entry->ackHdr.offset = offset;
+    entry->ackHdr.length = entry->mlength;
+
+    if ( entry->mlength ) {
+
+        return new RecvEntry( m_nic->dmaEngine(), (Addr) entry->start, 
+                                entry->mlength, entry->callback );
+    } else {
+        (*entry->callback)();
+    }
+    return NULL;
 }
 
 bool Context::putRecvCallback( PutRecvEntry* entry )
@@ -540,59 +643,66 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
     PRINT_AT(Context,"\n");
 
     if ( entry->state == PutRecvEntry::WaitRecvComp ) {
-        recvFini( entry->nid, &entry->hdr, entry->me_handle );
 
-        if ( entry->hdr.ack_req == PTL_ACK_REQ && 
+        recvFini( entry );
+
+        if ( entry->origHdr.ack_req == PTL_ACK_REQ && 
                 ! (findME(entry->me_handle)->options & PTL_ME_ACK_DISABLE ) ) {
-            entry->hdr.op = Ack;
-            entry->hdr.dest_pid = entry->hdr.src_pid;
-            entry->hdr.src_pid = m_pid;
+            entry->ackHdr.op = Ack;
+            entry->ackHdr.dest_pid = entry->origHdr.src_pid;
+            entry->ackHdr.src_pid = m_pid;
             PRINT_AT(Context,"send ack\n");
             PRINT_AT(Context,"mlength=%lu remote_offset=%lu\n",
-                                    entry->hdr.length,entry->hdr.offset);
-            m_nic->sendMsg( entry->nid, &entry->hdr, 0, 0, entry->callback );  
+                                entry->ackHdr.length, entry->ackHdr.offset);
+            m_nic->sendMsg( entry->srcNid, &entry->ackHdr, 
+                                                0, 0, entry->callback );  
             entry->state = PutRecvEntry::WaitAckSent;
             return false;
         }
     }
 
-    delete entry;
+    if ( entry->list == PTL_PRIORITY_LIST ) {
+        delete entry;
+    } else {
+        PRINT_AT(Context,"finished PTL_OVERFLOW data movement\n");
+        entry->callback = NULL;
+    } 
+
     return true;
 }
-void Context::recvFini( ptl_nid_t nid, PtlHdr* hdr, int me_handle )
+void Context::recvFini( XXX* entry )
 {
-    PRINT_AT( Context, "pt_index=%d\n", hdr->pt_index );
-    int eq_handle = m_ptV[ hdr->pt_index ].eq_handle;
+    PtlHdr& hdr   = entry->origHdr;
+    ME& me        = m_meV[ entry->me_handle ];
+    int eq_handle = m_ptV[ hdr.pt_index ].eq_handle;
+    int ct_handle = findME( entry->me_handle )->ct_handle;
 
-    ME& me = m_meV[ me_handle ];
-    ptl_size_t mlength = hdr->length;
-    void* start = (unsigned char*)me.me.start + hdr->offset;
-    ptl_size_t offset = hdr->offset;
+    PRINT_AT( Context, "pt_index=%d\n", hdr.pt_index );
 
-    int ct_handle = findME(me_handle)->ct_handle;
     if ( ct_handle != -1 ) {
         addCT( ct_handle, 1 );
         writeCtEvent( ct_handle, *findCTEvent( ct_handle) );
     }
 
-    if ( eq_handle != -1 ) {
+    if ( eq_handle != -1  && 
+                ! (me.me.options & PTL_ME_EVENT_SUCCESS_DISABLE ) ) {
         ptl_process_t initiator;
-        initiator.phys.nid = nid; 
-        initiator.phys.pid = hdr->src_pid;
+        initiator.phys.nid = entry->srcNid; 
+        initiator.phys.pid = hdr.src_pid;
 
         writeEvent( eq_handle,
-            hdr->op == Reply ? PTL_EVENT_GET : PTL_EVENT_PUT,
+            hdr.op == Reply ? PTL_EVENT_GET : PTL_EVENT_PUT,
             initiator,
-            hdr->pt_index,
-            hdr->uid,
-            hdr->jid,
-            hdr->match_bits,
-            hdr->length,
-            mlength,
-            offset,
-            start,
+            hdr.pt_index,
+            hdr.uid,
+            hdr.jid,
+            hdr.match_bits,
+            hdr.length,
+            entry->mlength,
+            hdr.offset,
+            entry->start,
             me.user_ptr,
-            hdr->hdr_data,
+            hdr.hdr_data,
             PTL_NI_OK
         );
     }
