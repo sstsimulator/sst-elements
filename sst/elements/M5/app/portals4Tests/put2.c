@@ -70,7 +70,7 @@ int main( int argc, char* argv[] )
     PtlFini();
 
     printf("goodbye\n");
-    m5_barrier();
+    cnos_barrier();
     return 0;
 }
 
@@ -105,7 +105,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     target_id.phys.nid = 1;
 
     printf("%d:%d: calling barrier\n",id->phys.nid,id->phys.pid);
-    m5_barrier(); 
+    cnos_barrier(); 
     printf("%d:%d: barrier returning\n",id->phys.nid,id->phys.pid);
 
     ptl_ack_req_t ack_req = ACK_REQ;
@@ -200,7 +200,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id )
     }
 
     printf("%d:%d: calling barrier\n",id->phys.nid,id->phys.pid);
-    m5_barrier(); 
+    cnos_barrier(); 
     printf("%d:%d: barrier returning\n",id->phys.nid,id->phys.pid);
 
     for ( i = 0; i < NUM_PUT; i++ )
