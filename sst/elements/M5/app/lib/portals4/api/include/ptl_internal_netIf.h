@@ -71,6 +71,17 @@ struct PtlAPI {
            ptl_size_t       remote_offset,
            void *           user_ptr);
 
+    int (*PtlTrigGet)( struct PtlAPI*,
+           ptl_handle_md_t  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr,
+            ptl_handle_ct_t trig_ct_handle,
+            ptl_size_t      threshold );
 
     int (*PtlEQAlloc)( struct PtlAPI*, ptl_size_t );
     int (*PtlEQFree)( struct PtlAPI*, ptl_handle_eq_t ); 

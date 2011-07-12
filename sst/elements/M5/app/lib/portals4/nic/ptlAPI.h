@@ -46,8 +46,9 @@ class PtlAPI {
         PTL_DBG2("\n");
         int handle = 1; 
 
+        m_id.phys.pid = pid;
         cmdUnion_t& cmd = m_ptlIF.getCmdSlot(PtlNIInit);
-        cmd.niInit.pid     = m_id.phys.pid;
+        cmd.niInit.pid     = m_id.phys.pid; 
         cmd.niInit.options = options;
         m_ptlIF.commitCmd();
 
@@ -321,6 +322,34 @@ class PtlAPI {
         cmd.ptlGet.match_bits    = match_bits;
         cmd.ptlGet.remote_offset = remote_offset;
         cmd.ptlGet.user_ptr      = user_ptr;
+
+        m_ptlIF.commitCmd();
+    }
+
+    int ptlTrigGet(ptl_handle_md_t  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr,
+            ptl_handle_ct_t trig_ct_handle,
+            ptl_size_t      threshold )
+    {
+        PTL_DBG2("\n");
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlTrigGet ); 
+
+        cmd.ptlTrigGet.md_handle     = md_handle;
+        cmd.ptlTrigGet.local_offset  = local_offset;
+        cmd.ptlTrigGet.length        = length;
+        cmd.ptlTrigGet.target_id     = target_id;
+        cmd.ptlTrigGet.pt_index      = pt_index;
+        cmd.ptlTrigGet.match_bits    = match_bits;
+        cmd.ptlTrigGet.remote_offset = remote_offset;
+        cmd.ptlTrigGet.user_ptr      = user_ptr;
+        cmd.ptlTrigGet.trig_ct_handle= trig_ct_handle;
+        cmd.ptlTrigGet.threshold     = threshold;
 
         m_ptlIF.commitCmd();
     }

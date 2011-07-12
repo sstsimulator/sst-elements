@@ -135,7 +135,31 @@ static int ptlGet( struct ::PtlAPI* obj,
                                 pt_index,
                                 match_bits,
                                 remote_offset,
-                                user_ptr );
+                                user_ptr);
+}
+
+static int ptlTrigGet( struct ::PtlAPI* obj,
+            ptl_handle_md_t  md_handle,
+           ptl_size_t       local_offset,
+           ptl_size_t       length,
+           ptl_process_t    target_id,
+           ptl_pt_index_t   pt_index,
+           ptl_match_bits_t match_bits,
+           ptl_size_t       remote_offset,
+           void *           user_ptr,
+            ptl_handle_ct_t trig_ct_handle,
+            ptl_size_t      threshold )
+{
+    return ((PtlAPI*) obj->data)->ptlTrigGet( md_handle,
+                                local_offset,
+                                length,
+                                target_id,
+                                pt_index,
+                                match_bits,
+                                remote_offset,
+                                user_ptr,
+                                trig_ct_handle,
+                                threshold );
 }
 
 static int ptlEQAlloc( struct ::PtlAPI* obj, ptl_size_t count )
@@ -172,6 +196,7 @@ static struct ::PtlAPI* initPtlIF( struct ::PtlIF* obj )
     ptlAPI->PtlCTWait   = ptlCTWait;
     ptlAPI->PtlPut      = ptlPut;
     ptlAPI->PtlGet      = ptlGet;
+    ptlAPI->PtlTrigGet  = ptlTrigGet;
     ptlAPI->PtlEQAlloc  = ptlEQAlloc;
     ptlAPI->PtlEQFree   = ptlEQFree;
     ptlAPI->PtlEQWait   = ptlEQWait;
