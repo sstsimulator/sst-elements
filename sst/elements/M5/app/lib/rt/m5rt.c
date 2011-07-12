@@ -28,7 +28,7 @@ int cnos_get_nidpid_map( cnos_nidpid_map_t** map )
 {
     int size = cnos_get_size();
     if ( size > 0) {
-        *map = malloc( sizeof( cnos_nidpid_map_t ) * size );
+        *map = (cnos_nidpid_map_t*) malloc( sizeof( cnos_nidpid_map_t ) * size );
         int i;
         for ( i = 0; i < size; i++ ) {
             (*map)[i].nid = i;  

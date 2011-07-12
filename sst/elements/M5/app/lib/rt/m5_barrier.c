@@ -28,7 +28,7 @@ static __attribute__ ((constructor)) void init(void)
     ptr  = (uint64_t*)syscall( SYS_mmap_dev, addr, 0x2000 );
 }
 
-static inline long my_syscall( long number, long arg0, long arg1, long arg2 )
+static inline long my_syscall( uint64_t number, long arg0, long arg1, long arg2 )
 {
     ptr[0] = arg0;
     ptr[1] = arg1;
@@ -38,7 +38,7 @@ static inline long my_syscall( long number, long arg0, long arg1, long arg2 )
     ptr[0xf] = number + 1;
     //asm volatile("wmb");
 
-    while ( ptr[0xf] == number + 1 );
+    while ( ptr[0xf] ==  number + 1 );
 
     long retval = ptr[0];
 
