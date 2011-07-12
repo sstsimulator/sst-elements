@@ -59,7 +59,7 @@ typedef unsigned int    ptl_interface_t; /*!< Integral type used for
                                            identifying different network
                                            interfaces. */
 #endif
-typedef char*    ptl_interface_t; 
+typedef const char*    ptl_interface_t; 
 typedef uint32_t        ptl_nid_t; /*!< Integral type used for representing
                                      node identifiers. */
 typedef uint32_t        ptl_pid_t; /*!< Integral type used for representing

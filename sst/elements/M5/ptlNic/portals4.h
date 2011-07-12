@@ -25,6 +25,10 @@ extern const ptl_handle_any_t PTL_INVALID_HANDLE;
 /*! Identify the default interface. */
 extern const ptl_interface_t PTL_IFACE_DEFAULT;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /******************************
  * Initialization and Cleanup *
  ******************************/
@@ -2087,5 +2091,9 @@ int PtlEndBundle(ptl_handle_ni_t ni_handle);
  */
 int PtlHandleIsEqual(ptl_handle_any_t handle1,
                      ptl_handle_any_t handle2);
+#ifdef __cplusplus
+}
+#endif
+
 /*! @} */
 #endif

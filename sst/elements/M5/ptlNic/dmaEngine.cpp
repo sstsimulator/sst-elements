@@ -12,7 +12,6 @@ DmaEngine::DmaEngine( SST::Component& comp, int nid ) :
     m_nicMmu( NULL ),
     m_nid( nid )
 {
-    TRACE_ADD( DmaEngine );
     PRINT_AT(DmaEngine,"nid=%d\n",nid);
     assert( nid != -1 );
 

@@ -22,6 +22,7 @@ typedef enum {
     PtlCTWait,
     PtlPut,
     PtlGet,
+    PtlTrigGet,
     PtlEQAlloc,
     PtlEQFree,
     ContextInit,
@@ -44,6 +45,7 @@ typedef enum {
     "PtlCTWait",\
     "PtlPut",\
     "PtlGet",\
+    "PtlTrigGet",\
     "PtlEQAlloc",\
     "PtlEQFree",\
     "ContextInit",\
@@ -133,7 +135,11 @@ typedef struct {
     ptl_size_t       remote_offset;
     void*           user_ptr;
     ptl_hdr_data_t  hdr_data;
+    ptl_handle_ct_t trig_ct_handle;
+    ptl_size_t      threshold;
 } cmdPtlGet_t;
+
+typedef cmdPtlGet_t cmdPtlTrigGet_t;
 
 
 typedef struct {
@@ -161,6 +167,7 @@ typedef union {
     cmdPtlMDRelease_t   mdRelease;
     cmdPtlPut_t         ptlPut;
     cmdPtlGet_t         ptlGet;
+    cmdPtlGet_t         ptlTrigGet;
     cmdPtlPTAlloc_t     ptAlloc;
     cmdPtlPTFree_t      ptFree;
     cmdPtlMEAppend_t    meAppend;

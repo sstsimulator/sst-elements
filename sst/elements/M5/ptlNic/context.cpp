@@ -159,7 +159,8 @@ void Context::EQFree( cmdPtlEQFree_t& cmd )
 
 void Context::MDBind( cmdPtlMDBind_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d addr=%#lx\n", cmd.handle );
+    PRINT_AT(Context,"handle=%d addr=%#lx size=%lu\n", 
+                    cmd.handle, cmd.md.start, cmd.md.length );
     m_mdV[cmd.handle].md = cmd.md;
 }
 
@@ -257,6 +258,42 @@ void Context::Put( cmdPtlPut_t& cmd )
 }
 
 void Context::Get( cmdPtlGet_t& cmd ) 
+{
+    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
+    "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
+
+    if ( m_logicalIF ) {
+        PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
+    } else {
+        PRINT_AT(Context,"target nid=%d pid=%d\n",
+                    cmd.target_id.phys.nid,cmd.target_id.phys.pid);
+    }
+    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
+
+    GetSendEntry* entry = new GetSendEntry;
+    assert(entry);
+
+    entry->user_ptr = cmd.user_ptr;
+    entry->callback = new GetCallback(this, &Context::getCallback, entry );
+
+    entry->local_offset = cmd.local_offset;
+    entry->md_handle = cmd.md_handle;
+    entry->hdr.length = cmd.length;
+    entry->hdr.pt_index = cmd.pt_index;
+    entry->hdr.dest_pid = cmd.target_id.phys.pid;
+    entry->hdr.src_pid  = m_pid;
+    entry->hdr.offset = cmd.remote_offset;
+    entry->hdr.match_bits = cmd.match_bits;
+    entry->hdr.op = ::Get;
+
+    int key = 5;
+    entry->hdr.key = key; 
+    m_getM[ key ] = entry;
+
+    m_nic->sendMsg( cmd.target_id.phys.nid, &entry->hdr, (Addr) 0, 0,  NULL );
+}
+
+void Context::TrigGet( cmdPtlTrigGet_t& cmd ) 
 {
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
     "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
@@ -441,7 +478,8 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
     PRINT_AT(Context,"srcNid=%d srcPid=%d targetPid=%d\n",
                             nid, hdr->src_pid, hdr->dest_pid );
     PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset);
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",hdr->pt_index, hdr->match_bits );
+    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",
+                                    hdr->pt_index, hdr->match_bits );
 
     if ( hdr->op == Ack ) {
         processAck( hdr );
@@ -691,7 +729,7 @@ void Context::recvFini( XXX* entry )
         initiator.phys.pid = hdr.src_pid;
 
         writeEvent( eq_handle,
-            hdr.op == Reply ? PTL_EVENT_GET : PTL_EVENT_PUT,
+            entry->op == ::Get ? PTL_EVENT_GET : PTL_EVENT_PUT,
             initiator,
             hdr.pt_index,
             hdr.uid,

@@ -61,6 +61,7 @@ class Context {
     void EQFree( cmdPtlEQFree_t& );
     void Put( cmdPtlPut_t& );
     void Get( cmdPtlGet_t& );
+    void TrigGet( cmdPtlTrigGet_t& );
     void PTAlloc( cmdPtlPTAlloc_t& );
     void PTFree( cmdPtlPTFree_t& );
 

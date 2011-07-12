@@ -23,6 +23,7 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     TRACE_ADD( PtlCmd );
     TRACE_ADD( RecvEntry);
     TRACE_ADD( DmaBuf );
+    TRACE_ADD( DmaEngine );
 
     PRINT_AT(PtlNic,"\n");
 
@@ -193,6 +194,10 @@ void PtlNic::ptlCmd( PtlNicEvent& event )
 
         case PtlGet:
             ctx->Get( event.cmd().u.ptlGet );
+            break;
+
+        case PtlTrigGet:
+            ctx->TrigGet( event.cmd().u.ptlGet );
             break;
 
         default:
