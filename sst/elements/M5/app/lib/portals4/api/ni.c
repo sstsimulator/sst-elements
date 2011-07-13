@@ -15,6 +15,8 @@
 
 const ptl_interface_t  PTL_IFACE_DEFAULT = "default";
 
+const ptl_handle_any_t PTL_INVALID_HANDLE = { UINT_MAX };
+
 #define NUM_IFACE ( 1 << HANDLE_IFACE_BITS )
 
 NetIFEntry ifTable[ NUM_IFACE ];
