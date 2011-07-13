@@ -13,7 +13,7 @@
 #include "ptl_internal_netIf.h"
 #include "ptl_internal_debug.h"
 
-const ptl_interface_t  PTL_IFACE_DEFAULT = "default";
+const ptl_interface_t  PTL_IFACE_DEFAULT = "PtlNic";
 
 const ptl_handle_any_t PTL_INVALID_HANDLE = { UINT_MAX };
 
@@ -26,7 +26,7 @@ void ptl_internal_register_netIF( const char* const name, struct NetIF* netIF )
     int i;
     assert( strlen( name ) < NET_IF_NAME_LEN );
 
-//    PTL_DBG("name=`%s`\n",name);
+    //PTL_DBG("name=`%s`\n",name);
 
     for ( i = 0; i < NUM_IFACE; i++ ) {
         assert ( strncmp( ifTable[i].name, name, NET_IF_NAME_LEN ) );
@@ -44,7 +44,7 @@ void ptl_internal_register_netIF( const char* const name, struct NetIF* netIF )
 static int lookup_iface( const char* const name )
 {
     int i;
-//    PTL_DBG("name=`%s`\n",name);
+    //PTL_DBG("name=`%s`\n",name);
     for ( i = 0; i < NUM_IFACE; i++ ) {
         if ( strncmp( ifTable[i].name, name, NET_IF_NAME_LEN ) == 0 ) {
             return i;
@@ -82,7 +82,7 @@ int PtlNIInit(ptl_interface_t   ifaceName,
             return PTL_ARG_INVALID;
     }   
 
-    PTL_DBG( "ni=%d\n", ni.s.ni);
+    PTL_DBG( "ifaceName=`%s` ni=%d\n", ifaceName,ni.s.ni);
 
     ni.s.iface = lookup_iface( ifaceName ); 
 
@@ -94,6 +94,7 @@ int PtlNIInit(ptl_interface_t   ifaceName,
     assert( iface );
     
     if ( ! iface->ptlIF ) {
+        assert( iface->netIF );
         iface->ptlIF = iface->netIF->init();
         assert( iface->ptlIF );
     }
