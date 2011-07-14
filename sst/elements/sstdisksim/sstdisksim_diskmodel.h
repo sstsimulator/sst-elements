@@ -29,7 +29,7 @@ using namespace SST;
 
 class sstdisksim_diskmodel {
 public:
-  virtual void addEvent(sstdisksim_posix_call call);
+  void addEvent(sstdisksim_posix_call call);
   
  protected:
   sstdisksim_posix_calls __list;
