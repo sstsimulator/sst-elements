@@ -13,6 +13,8 @@
 #define _SSTDISKSIM_POSIX_CALL_H_
 
 #include <stdlib.h>
+#include <sst/core/serialization/element.h>
+#include <sst/core/event.h>
 
 union __argument 
 {
@@ -89,6 +91,30 @@ public:
   sstdisksim_posix_call* head;
   sstdisksim_posix_call* tail;  
   sstdisksim_posix_name __calls[_END_CALLS];
+};
+
+class sstdisksim_posix_event : public SST::Event{
+ public:
+  __call call;
+  long arg_fd;
+  long arg_count;
+  long arg_offset;
+  long arg_whence;
+
+  sstdisksim_posix_event* next_event;
+
+ private:
+  friend class boost::serialization::access;
+  template<class Archive>
+    void
+    serialize( Archive & ar, const unsigned int version )
+    {
+      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+      ar & BOOST_SERIALIZATION_NVP(arg_fd);
+      ar & BOOST_SERIALIZATION_NVP(arg_count);
+      ar & BOOST_SERIALIZATION_NVP(arg_offset);
+      ar & BOOST_SERIALIZATION_NVP(arg_whence);
+    }
 };
 
 #endif // _SSTDISKSIM_POSIX_CALL_H_

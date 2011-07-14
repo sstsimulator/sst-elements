@@ -12,21 +12,27 @@
 #ifndef _SSTDISKSIM_DISKMODEL_H
 #define _SSTDISKSIM_DISKMODEL_H
 
-#include <stdio.h>
+#include "syssim_driver.h"
 #include "sstdisksim_event.h"
+
+#include <sst/core/log.h>
+#include <sst/core/component.h>
+#include <sst/core/simulation.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <sst/core/timeConverter.h>
+
 #include "sstdisksim_posix_call.h"
 
 using namespace std;
+using namespace SST;
 
-class sstdisksim_diskmodel : public Component {
+class sstdisksim_diskmodel {
 public:
-  virtual void read();
-  virtual void write();
-  virtual sstdisksim_event* getNextEvent();
-  virtual void sstdisksim_event* addEvent(sstdisksim_posix_call call);
+  virtual void addEvent(sstdisksim_posix_call call);
   
  protected:
-  sstdisksim_event_entries __list;
-}
+  sstdisksim_posix_calls __list;
+};
 
 #endif // _SSTDISKSIM_DISKMODEL_H

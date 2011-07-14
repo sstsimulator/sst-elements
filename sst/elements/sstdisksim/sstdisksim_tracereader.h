@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SSTDISKSIM_H
-#define _SSTDISKSIM_H
+#ifndef _SSTDISKSIM_TRACEREADER_H
+#define _SSTDISKSIM_TRACEREADER_H
 
 #include "sstdisksim_event.h"
 
@@ -83,4 +83,4 @@ class sstdisksim_tracereader : public Component {
   BOOST_SERIALIZATION_SPLIT_MEMBER()    
 };
 
-#endif /* _SSTDISKSIM_H */
+#endif /* _SSTDISKSIM_TRACEREADER_H */

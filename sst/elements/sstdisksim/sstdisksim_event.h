@@ -12,7 +12,7 @@
 #ifndef _SSTDISKSIM_EVENT_H
 #define _SSTDISKSIM_EVENT_H
 
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
 #include <sst/core/event.h>
 
 enum eventtype {DISKSIMREAD, DISKSIMWRITE, DISKSIMEND};

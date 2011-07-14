@@ -20,8 +20,6 @@ libsstdisksim_la_LIBADD = $(SSTDISKSIM_LIB)
 
 #libsstdisksim_tracereader
 libsstdisksim_tracereader_la_SOURCES = \
-	sstdisksim_posix_call.cpp \
-	sstdisksim_posix_call.h \
 	sstdisksim_tau_parser.cpp \
 	sstdisksim_tau_parser.h \
 	sstdisksim_tracereader.cpp \
@@ -29,6 +27,10 @@ libsstdisksim_tracereader_la_SOURCES = \
 	sstdisksim_diskmodel.h \
 	sstdisksim_event.cpp \
 	sstdisksim_event.h \
+	sstdisksim_posix_call.cpp \
+	sstdisksim_posix_call.h \
+	sstdisksim_straightdisk.h \
+	sstdisksim_straightdisk.cpp \
 	sstdisksim.cpp \
 	sstdisksim.h	
 
@@ -44,6 +46,10 @@ libsstdisksim_luascriptreader_la_SOURCES = \
 	sstdisksim_diskmodel.h \
 	sstdisksim_event.cpp \
 	sstdisksim_event.h \
+	sstdisksim_straightdisk.h \
+	sstdisksim_straightdisk.cpp \
+	sstdisksim_posix_call.cpp \
+	sstdisksim_posix_call.h 
 	sstdisksim.cpp \
 	sstdisksim.h	
 
