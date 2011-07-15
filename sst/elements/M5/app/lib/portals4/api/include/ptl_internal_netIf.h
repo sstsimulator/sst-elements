@@ -87,6 +87,8 @@ struct PtlAPI {
     int (*PtlEQFree)( struct PtlAPI*, ptl_handle_eq_t ); 
     int (*PtlEQWait)( struct PtlAPI*, ptl_handle_eq_t eq_handle,
               ptl_event_t * event);
+    int (*PtlEQGet)( struct PtlAPI*, ptl_handle_eq_t eq_handle,
+              ptl_event_t * event);
 
 
     void* data;

@@ -45,7 +45,7 @@ int PtlCTFree(ptl_handle_ct_t ct_handle)
 int PtlCTGet(ptl_handle_ct_t    ct_handle,
              ptl_ct_event_t *   event)
 {
-    return PTL_OK;        
+    return PTL_FAIL;        
 }
 
 int PtlCTWait(ptl_handle_ct_t   ct_handle,
@@ -73,17 +73,17 @@ int PtlCTPoll(ptl_handle_ct_t * ct_handles,
               ptl_ct_event_t *  event,
               int *             which)
 {
-    return PTL_OK;        
+    return PTL_FAIL;        
 }
 
 int PtlCTSet(ptl_handle_ct_t    ct_handle,
              ptl_ct_event_t     test)
 {
-    return PTL_OK;        
+    return PTL_FAIL;        
 }
 
 int PtlCTInc(ptl_handle_ct_t    ct_handle,
              ptl_ct_event_t     increment)
 {
-    return PTL_OK;        
+    return PTL_FAIL;        
 }

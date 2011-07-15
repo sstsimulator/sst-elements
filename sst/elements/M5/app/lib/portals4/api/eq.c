@@ -46,6 +46,17 @@ int PtlEQFree(ptl_handle_eq_t eq_handle)
 int PtlEQGet(ptl_handle_eq_t    eq_handle,
              ptl_event_t *      event)
 {
+    ptl_handle_ni_t ni_handle;
+    PtlNIHandle( eq_handle, &ni_handle );
+
+    const ptl_internal_handle_converter_t ni = { ni_handle };
+    const ptl_internal_handle_converter_t eq = { eq_handle };
+
+    struct PtlAPI* api = GetPtlAPI( ni );
+
+    int retval = api->PtlEQGet( api, eq.s.code, event );
+    if ( retval < 0 )  return -retval;
+
     return PTL_OK;
 }
 
@@ -72,5 +83,5 @@ int PtlEQPoll(ptl_handle_eq_t *     eq_handles,
               ptl_event_t *         event,
               int *                 which)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }

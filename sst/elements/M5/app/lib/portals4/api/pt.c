@@ -45,11 +45,11 @@ int PtlPTFree(ptl_handle_ni_t   ni_handle,
 int PtlPTDisable(ptl_handle_ni_t    ni_handle,
                  ptl_pt_index_t     pt_index)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlPTEnable(ptl_handle_ni_t ni_handle,
                 ptl_pt_index_t  pt_index)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }

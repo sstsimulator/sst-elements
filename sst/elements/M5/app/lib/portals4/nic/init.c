@@ -178,6 +178,12 @@ static int ptlEQWait( struct ::PtlAPI* obj, ptl_handle_eq_t   eq_handle,
     return ((PtlAPI*) obj->data)->ptlEQWait( eq_handle, event ); 
 }
 
+static int ptlEQGet( struct ::PtlAPI* obj, ptl_handle_eq_t   eq_handle,
+              ptl_event_t *     event)
+{
+    return ((PtlAPI*) obj->data)->ptlEQGet( eq_handle, event ); 
+}
+
 static struct ::PtlAPI* initPtlIF( struct ::PtlIF* obj )
 {
     struct ::PtlAPI*  ptlAPI = (struct ::PtlAPI*)malloc( sizeof(*ptlAPI) );
@@ -200,20 +206,19 @@ static struct ::PtlAPI* initPtlIF( struct ::PtlIF* obj )
     ptlAPI->PtlEQAlloc  = ptlEQAlloc;
     ptlAPI->PtlEQFree   = ptlEQFree;
     ptlAPI->PtlEQWait   = ptlEQWait;
+    ptlAPI->PtlEQGet    = ptlEQGet;
     ptlAPI->data = new PtlAPI( *(PtlIF*) obj->data );
     return ptlAPI;
 }
 
 static void finiPtlIF( struct ::PtlAPI* ptlAPI )
 {
-//    PTL_DBG("\n");
     delete (PtlAPI*) ptlAPI->data; 
     free( ptlAPI );
 }
 
 static struct ::PtlIF* initNetIF( )
 {
-//    PTL_DBG("\n");
     struct ::PtlIF*  ptlIF = (struct ::PtlIF*)malloc( sizeof(*ptlIF) );
     ptlIF->init = initPtlIF;
     ptlIF->fini = finiPtlIF;
@@ -224,7 +229,6 @@ static struct ::PtlIF* initNetIF( )
 
 static void finiNetIF( struct ::PtlIF* ptlIF )
 {
-//    PTL_DBG("\n");
     delete (PtlIF*) ptlIF->data;
     free( ptlIF );
 }

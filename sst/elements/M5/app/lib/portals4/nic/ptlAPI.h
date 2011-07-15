@@ -53,7 +53,9 @@ class PtlAPI {
         m_ptlIF.commitCmd();
 
         initLimits( m_ptlIF.limits() );
-        *actual = m_ptlIF.limits();
+        if ( actual ) {
+            *actual = m_ptlIF.limits();
+        }
         return handle;
     }
 
@@ -255,12 +257,21 @@ class PtlAPI {
 
     int ptlEQWait(ptl_handle_ct_t eq_handle, ptl_event_t* event )
     {
+        int retval;
+        while ( ( retval = ptlEQGet( eq_handle, event ) ) == -PTL_EQ_EMPTY );
+
+        return retval;
+    }
+
+    int ptlEQGet(ptl_handle_ct_t eq_handle, ptl_event_t* event )
+    {
         EventQ*    foo = m_eqM[ eq_handle ];
         ptl_size_t pos = foo->count % foo->size;
 
-        PTL_DBG2( "eq_handle=%d count=%lu\n", eq_handle, foo->count );
+        PTL_DBG2( "eq_handle=%d want count=%li cur %li\n", 
+                    eq_handle, foo->count, foo->eventV[ pos ].count1 );
 
-        while ( foo->eventV[ pos ].count1 < foo->count );
+        if ( foo->eventV[ pos ].count1 < foo->count ) return -PTL_EQ_EMPTY;
         while ( foo->eventV[ pos ].count2 < foo->count );
 
         *event = foo->eventV[ pos ].user;
@@ -272,6 +283,7 @@ class PtlAPI {
         ++foo->count;
         return PTL_OK;
     }
+
 
     int ptlPut(ptl_handle_md_t  md_handle,
            ptl_size_t       local_offset,

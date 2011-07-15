@@ -16,7 +16,7 @@ int PtlAtomic(ptl_handle_md_t   md_handle,
               ptl_op_t          operation,
               ptl_datatype_t    datatype)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlFetchAtomic(ptl_handle_md_t  get_md_handle,
@@ -33,7 +33,7 @@ int PtlFetchAtomic(ptl_handle_md_t  get_md_handle,
                    ptl_op_t         operation,
                    ptl_datatype_t   datatype)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlSwap(ptl_handle_md_t     get_md_handle,
@@ -51,6 +51,6 @@ int PtlSwap(ptl_handle_md_t     get_md_handle,
             ptl_op_t            operation,
             ptl_datatype_t      datatype)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 

@@ -7,7 +7,7 @@ int PtlGetUid(ptl_handle_ni_t   ni_handle,
               ptl_uid_t*        uid)
 {
 
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlGetId(ptl_handle_ni_t    ni_handle,
@@ -26,5 +26,5 @@ int PtlGetId(ptl_handle_ni_t    ni_handle,
 int PtlGetJid(ptl_handle_ni_t   ni_handle,
              ptl_jid_t*         jid)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }

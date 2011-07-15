@@ -17,7 +17,7 @@ int PtlTriggeredPut(ptl_handle_md_t     md_handle,
                     ptl_handle_ct_t     trig_ct_handle,
                     ptl_size_t          threshold)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlTriggeredGet(ptl_handle_md_t     md_handle,
@@ -70,7 +70,7 @@ int PtlTriggeredAtomic(ptl_handle_md_t  md_handle,
                        ptl_handle_ct_t  trig_ct_handle,
                        ptl_size_t       threshold)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlTriggeredFetchAtomic(ptl_handle_md_t     get_md_handle,
@@ -89,7 +89,7 @@ int PtlTriggeredFetchAtomic(ptl_handle_md_t     get_md_handle,
                             ptl_handle_ct_t     trig_ct_handle,
                             ptl_size_t          threshold)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlTriggeredSwap(ptl_handle_md_t    get_md_handle,
@@ -109,7 +109,7 @@ int PtlTriggeredSwap(ptl_handle_md_t    get_md_handle,
                      ptl_handle_ct_t    trig_ct_handle,
                      ptl_size_t         threshold)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlTriggeredCTInc(ptl_handle_ct_t   ct_handle,
@@ -117,7 +117,7 @@ int PtlTriggeredCTInc(ptl_handle_ct_t   ct_handle,
                       ptl_handle_ct_t   trig_ct_handle,
                       ptl_size_t        threshold)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlTriggeredCTSet(ptl_handle_ct_t   ct_handle,
@@ -125,5 +125,5 @@ int PtlTriggeredCTSet(ptl_handle_ct_t   ct_handle,
                       ptl_handle_ct_t   trig_ct_handle,
                       ptl_size_t        threshold)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }

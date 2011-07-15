@@ -5,10 +5,10 @@
 
 int PtlStartBundle(ptl_handle_ni_t ni_handle)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }
 
 int PtlEndBundle(ptl_handle_ni_t ni_handle)
 {
-    return PTL_OK;
+    return PTL_FAIL;
 }

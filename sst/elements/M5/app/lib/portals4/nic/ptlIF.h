@@ -57,7 +57,7 @@ class PtlIF {
     friend class PtlAPI;
     cmdUnion_t& getCmdSlot( int type )
     {
-        PTL_DBG2("%s\n", m_cmdNames[type] );
+    //    PTL_DBG2("%s\n", m_cmdNames[type] );
         m_next = ( m_tailShadow + 1 ) % CMD_QUEUE_SIZE;
         while ( m_next == m_cmdQueue->head );
 
