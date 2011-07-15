@@ -54,6 +54,9 @@ class Trace {
         while ( ( cur = str.find(' ') ) != std::string::npos ) {
             tmp.push_back( str.substr(0,cur) );
             str = str.substr(cur);
+            if ( str.find_first_not_of(" ") == std::string::npos ) {
+                break;
+            }
             str = str.substr( str.find_first_not_of(" ") );
         }
 
@@ -64,11 +67,11 @@ class Trace {
         while ( iter != tmp.end() ) {
             if ( (*iter)[0] == '-' ) {
                 m_excludeM[ (*iter).substr(1) ];
-//                ::printf("Trace: exclude %s\n",(*iter).c_str());
+                //::printf("Trace: exclude %s\n",(*iter).c_str());
             }
             if ( (*iter).compare( "all" ) == 0 ) {
                 m_all = true;
-//                ::printf("Trace: all\n");
+                //::printf("Trace: all\n");
             }
             ++iter;
         }
