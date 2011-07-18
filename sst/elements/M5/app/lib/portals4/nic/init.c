@@ -222,7 +222,7 @@ static struct ::PtlIF* initNetIF( )
     struct ::PtlIF*  ptlIF = (struct ::PtlIF*)malloc( sizeof(*ptlIF) );
     ptlIF->init = initPtlIF;
     ptlIF->fini = finiPtlIF;
-    ptlIF->data = new PtlIF( /*jid*/ 1, getuid(), getpid() );
+    ptlIF->data = new PtlIF( /*jid*/ 1, getuid() );
     
     return ptlIF;
 }

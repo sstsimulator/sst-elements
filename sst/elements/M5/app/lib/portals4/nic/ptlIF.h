@@ -13,10 +13,9 @@ namespace PtlNic {
 
 class PtlIF {
   public:
-    PtlIF( int jid, int uid, int pid ) :
+    PtlIF( int jid, int uid ) :
         m_tailShadow(0),
         m_ctx_id( 101 ),
-        m_pid(pid),
         m_nid(-1)
     {
         PTL_DBG2("\n");
@@ -48,7 +47,6 @@ class PtlIF {
     } 
 
     ptl_nid_t nid() { return m_nid; }
-    ptl_pid_t pid() { return m_pid; }
 
     ptl_ni_limits_t& limits() { return m_limits; }
 

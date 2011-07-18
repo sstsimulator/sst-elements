@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 
+#include <stddef.h>
 #include <ptlEvent.h>
 
 namespace PtlNic {
@@ -22,7 +23,6 @@ class PtlAPI {
         m_ptlIF( ptlIF ) 
     {
         m_id.phys.nid = ptlIF.nid();
-        m_id.phys.pid = ptlIF.pid();
 
         PTL_DBG2("\n");
         assert( sizeof(ptl_size_t) == sizeof(long ) );
@@ -43,10 +43,12 @@ class PtlAPI {
               ptl_process_t     *actual_mapping
     )
     {
-        PTL_DBG2("\n");
+        PTL_DBG2("requested pid %d\n",pid);
         int handle = 1; 
 
-        m_id.phys.pid = pid;
+        assert( pid == PTL_PID_ANY );
+        // this has to match what's in cnos_get_nidpid_map
+        m_id.phys.pid = getpid(); 
         cmdUnion_t& cmd = m_ptlIF.getCmdSlot(PtlNIInit);
         cmd.niInit.pid     = m_id.phys.pid; 
         cmd.niInit.options = options;
@@ -219,11 +221,6 @@ class PtlAPI {
 
         for ( int i = 0; i < (int) size; i++ ) {
             eventQ->eventV[i].count1 = eventQ->eventV[i].count2 = -1;
-            // we don't write the user part of the event and it's never marked
-            // dirty by the M5 Cache, when a write comes from the dma engine
-            // it doesn't make it into the cache, is this correct behaviour?
-            // touch the event makes things work
-            memset( &eventQ->eventV[i].user,0,sizeof(eventQ->eventV[i].user));
         }
 
         PTL_DBG2("%p\n",&eventQ->eventV[0]);
@@ -268,8 +265,9 @@ class PtlAPI {
         EventQ*    foo = m_eqM[ eq_handle ];
         ptl_size_t pos = foo->count % foo->size;
 
-        PTL_DBG2( "eq_handle=%d want count=%li cur %li\n", 
-                    eq_handle, foo->count, foo->eventV[ pos ].count1 );
+        PTL_DBG2( "eq_handle=%d want count=%li cur=%li %p\n", 
+                    eq_handle, foo->count, foo->eventV[ pos ].count1, 
+                                &foo->eventV[pos] );
 
         if ( foo->eventV[ pos ].count1 < foo->count ) return -PTL_EQ_EMPTY;
         while ( foo->eventV[ pos ].count2 < foo->count );
