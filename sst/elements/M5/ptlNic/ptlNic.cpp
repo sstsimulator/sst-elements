@@ -61,8 +61,9 @@ void PtlNic::processFromRtr()
         CtrlFlit* cFlit = (CtrlFlit*) event->packet.payload; 
 
         if ( cFlit->s.head ) {
-            PRINT_AT(PtlNic,"got head packet from nid %d\n",cFlit->s.nid);
             PtlHdr* hdr = (PtlHdr*) (cFlit + 1);
+            PRINT_AT(PtlNic,"got head packet from nid %d dest_pid=%d\n",
+                            cFlit->s.nid,hdr->dest_pid );
             assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
                                         m_nidRecvEntryM.end() );
             Context* ctx = findContext( hdr->dest_pid );

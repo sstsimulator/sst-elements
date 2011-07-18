@@ -79,6 +79,8 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 {
     PRINT_AT(Context,"pt_index=%d handle=%d list=%d\n", 
                     cmd.pt_index, cmd.handle, cmd.list);
+    PRINT_AT(Context,"match_bits=%#lx options=%#x\n", 
+                                cmd.me.match_bits, cmd.me.options );
 
     if ( cmd.list == PTL_PRIORITY_LIST ) { 
 
@@ -212,6 +214,7 @@ void Context::PTFree( cmdPtlPTFree_t& cmd )
 
 void Context::Put( cmdPtlPut_t& cmd ) 
 {
+    PRINT_AT(Context,"me=%d\n",m_nic->nid());
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%lu "
             "remote_offset=%lu\n", 
             cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
@@ -439,6 +442,7 @@ void Context::writeEvent( EventEntry* entry )
 
 RecvEntry* Context::processHdrPkt( void* pkt )
 {
+    PRINT_AT(Context,"me=%d\n",m_nic->nid());
     CtrlFlit* cFlit = (CtrlFlit*) pkt;
     RecvEntry* entry = processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
 }
@@ -521,7 +525,7 @@ Context::XXX* Context::searchOverflow( ptl_me_t& me )
         PRINT_AT(Context,"length=%lu offset=%lu\n",hdr.length, hdr.offset);
         PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",hdr.pt_index, hdr.match_bits );
 
-        if ( checkME( hdr, me ) ) {
+        if ( checkME( (*iter)->srcNid, hdr, me ) ) {
             XXX* tmp = *iter;
             m_overflowHdrList.erase(iter);
             return tmp; 
@@ -542,7 +546,7 @@ int Context::search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t list )
     for ( ; iter != end ; ++iter ) {
         ptl_me_t* me = findME( *iter );
         assert( me );
-        if ( ! checkME( hdr, *me ) ) {
+        if ( ! checkME( nid, hdr, *me ) ) {
             continue;
         }
         me_handle = *iter;
@@ -552,10 +556,12 @@ int Context::search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t list )
 }
 
 
-bool Context::checkME( PtlHdr& hdr, ptl_me_t& me )
+bool Context::checkME( ptl_nid_t src_nid, PtlHdr& hdr, ptl_me_t& me )
 {
 
     ptl_match_bits_t dont_ignore_bits = ~(me.ignore_bits);
+    PRINT_AT(Context, "nid=%d pid=%d\n", me.match_id.phys.nid,
+                                            me.match_id.phys.pid );
     PRINT_AT(Context, "me->match_bits %#lx dont_ignore %#lx\n", 
                         me.match_bits, dont_ignore_bits  );
     /* check the match_bits */
@@ -563,21 +569,28 @@ bool Context::checkME( PtlHdr& hdr, ptl_me_t& me )
         return false;
     }    
 
+    PRINT_AT(Context," matched bits \n");
+
     /* check for forbidden truncation */
     if (((me.options & PTL_ME_NO_TRUNCATE) != 0) &&
              ((hdr.offset + hdr.length) > me.length)) {
         return false;
     }
 
+    PRINT_AT(Context," matched options \n");
+
     if (( me.match_id.phys.nid != PTL_NID_ANY ) &&
-            ( me.match_id.phys.nid != 0 ) ) {
+            ( me.match_id.phys.nid != src_nid ) ) {
         return false;
     } 
+    PRINT_AT(Context," matched nid \n");
 
     if (( me.match_id.phys.pid != PTL_PID_ANY ) &&
             ( me.match_id.phys.pid != hdr.src_pid ) ) {
         return false;
     } 
+    PRINT_AT(Context," matched pid \n");
+
     return true;
 }
 

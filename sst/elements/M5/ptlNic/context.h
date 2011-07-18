@@ -195,7 +195,7 @@ class Context {
     bool                    m_logicalIF;
     bool                    m_matching; 
 
-    bool checkME( PtlHdr& hdr, ptl_me_t& );
+    bool checkME( ptl_nid_t, PtlHdr& hdr, ptl_me_t& );
 
     typedef std::deque<PutRecvEntry*>  overflowHdrList_t;
     overflowHdrList_t                   m_overflowHdrList;
