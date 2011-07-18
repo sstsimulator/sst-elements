@@ -44,7 +44,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
   sstdisksim_straightdisk( ComponentId_t id, Params_t& params );
   ~sstdisksim_straightdisk();
 
-  void addEvent(sstdisksim_event* ev){};
+  void addEvent(sstdisksim_posix_call call);
 
   int Setup();
   int Finish();
@@ -53,13 +53,10 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
 
  private:
 
-  std::string traceFile;
-  std::string edfFile;
-
-  unsigned long disksimTracereaderClockCycle;
   Params_t __params;
   ComponentId_t __id;
-  sstdisksim_tau_parser* __parser;
+
+  sstdisksim_event* getNextEvent();
 
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */

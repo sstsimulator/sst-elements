@@ -44,14 +44,11 @@ class sstdisksim_tracereader : public Component {
   int Setup();
   int Finish();
 
-  bool clock(Cycle_t current);
-
  private:
 
   std::string traceFile;
   std::string edfFile;
 
-  unsigned long disksimTracereaderClockCycle;
   Params_t __params;
   ComponentId_t __id;
   sstdisksim_tau_parser* __parser;

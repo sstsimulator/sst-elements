@@ -88,22 +88,22 @@ sstdisksim_posix_calls::sstdisksim_posix_calls()
 }
 
 void
-sstdisksim_posix_calls::add_entry(__call call, __argument args[_END_ARGS])
+sstdisksim_posix_calls::add_entry(sstdisksim_posix_call call)
 {
-  if ( call > _END_CALLS )
+  if ( call.call > _END_CALLS )
   {
     exit(1);
     return;
   }
 
   struct sstdisksim_posix_call* cur = new sstdisksim_posix_call;
-  cur->call = &(__calls[call]);
+  cur->call = call.call;
   cur->next = NULL;
 
 
   for ( int i = 0; i < _END_ARGS; i++ )
   {
-    cur->args[i].l = args[i].l;
+    cur->args[i].l = call.args[i].l;
   }
 
   if ( head == NULL )

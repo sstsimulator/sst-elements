@@ -76,7 +76,7 @@ struct sstdisksim_posix_name
 
 struct sstdisksim_posix_call
 {
-  sstdisksim_posix_name* call;
+  __call call;
   __argument args[_END_ARGS];
   sstdisksim_posix_call* next;
 };
@@ -85,11 +85,13 @@ class sstdisksim_posix_calls
 {
 public:
   sstdisksim_posix_calls();
-  void add_entry(__call call, __argument args[_END_ARGS]);
+  void add_entry(sstdisksim_posix_call call);
   sstdisksim_posix_call* pop_entry();
 
   sstdisksim_posix_call* head;
   sstdisksim_posix_call* tail;  
+
+ private:
   sstdisksim_posix_name __calls[_END_CALLS];
 };
 
