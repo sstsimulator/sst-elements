@@ -425,9 +425,10 @@ void Context::writeEvent( EventEntry* entry )
 {
     struct EQ& eq = findEQ( entry->handle ); 
 
-    PRINT_AT(Context,"eq_handle=%d eq.count=%d vaddr=%#lx\n", 
+    PRINT_AT(Context,"eq_handle=%d eq.count=%d vaddr=%#lx type=%d\n",
             entry->handle, eq.count, 
-            findEventAddr( entry->handle, eq.count % eq.size ) );
+            findEventAddr( entry->handle, eq.count % eq.size ),
+            entry->event.user.type );
 
     entry->event.count1 = entry->event.count2 = eq.count; 
 
@@ -507,7 +508,7 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
     PRINT_AT(Context,"No match in PRIORITY_LIST\n");
 
     me_handle = search( nid, *hdr, PTL_OVERFLOW );
-    if ( me_handle != 1 ) {
+    if ( me_handle != -1 ) {
         return processMatch( nid, hdr, me_handle, PTL_OVERFLOW );
     }
     return NULL;
@@ -552,6 +553,7 @@ int Context::search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t list )
         me_handle = *iter;
         break;
     }
+    PRINT_AT(Context,"me_handle=%d\n",me_handle);
     return me_handle;
 }
 
@@ -674,11 +676,19 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
         offset = hdr->offset;
     }
 
+    if ( ! ( me.me.options & PTL_ME_NO_TRUNCATE ) ) {
+        if ( entry->mlength > me.me.length - offset ) {
+            entry->mlength = me.me.length - offset;  
+        }
+    }
+
     entry->start   = (void*) ((Addr) m_meV[me_handle].me.start + offset);
 
     entry->ackHdr.offset = offset;
     entry->ackHdr.length = entry->mlength;
 
+    PRINT_AT(Context,"hdr->length=%lu me.length=%lu mlength=%lu\n",
+                                  hdr->length, me.me.length,entry->mlength);
     if ( entry->mlength ) {
 
         return new RecvEntry( m_nic->dmaEngine(), (Addr) entry->start, 
@@ -736,7 +746,7 @@ void Context::recvFini( XXX* entry )
     }
 
     if ( eq_handle != -1  && 
-                ! (me.me.options & PTL_ME_EVENT_SUCCESS_DISABLE ) ) {
+                ! (me.me.options & PTL_ME_EVENT_COMM_DISABLE ) ) {
         ptl_process_t initiator;
         initiator.phys.nid = entry->srcNid; 
         initiator.phys.pid = hdr.src_pid;
