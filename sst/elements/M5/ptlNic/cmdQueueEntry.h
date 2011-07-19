@@ -60,6 +60,7 @@ typedef struct {
     int jid;
     cmdAddr_t nidPtr; 
     cmdAddr_t limitsPtr; 
+    cmdAddr_t meUnlinkedPtr;
 } cmdContextInit_t;
 
 typedef struct {

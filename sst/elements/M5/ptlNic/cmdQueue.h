@@ -10,4 +10,6 @@ typedef struct {
     cmdQueueEntry_t  queue[CMD_QUEUE_SIZE];
 } cmdQueue_t ;    
 
+#define ME_UNLINKED_SIZE 64 
+
 #endif

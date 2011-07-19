@@ -10,7 +10,9 @@
 Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
         m_nic( nic ),
         m_uid( cmd.uid ),
-        m_jid( cmd.jid ) 
+        m_jid( cmd.jid ), 
+        m_meUnlinkedHostPtr( (int*) cmd.meUnlinkedPtr ),
+        m_meUnlinkedPos( 0 )
 {
     TRACE_ADD( Context );
     PRINT_AT(Context,"sizeof(PtlHdr) %d\n",sizeof(PtlHdr));
@@ -30,6 +32,14 @@ Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
 
     for ( int i = 0; i < m_ptV.size(); i++ ) {
         m_ptV[i].used = false;
+    }
+
+    for ( int i = 0; i < m_meV.size(); i++ ) {
+        m_meV[i].used = false;
+    }
+
+    for ( int i = 0; i < m_mdV.size(); i++ ) {
+        m_mdV[i].used = false;
     }
 
     m_nic->dmaEngine().write( cmd.limitsPtr, (uint8_t*) &m_limits, 
@@ -82,6 +92,8 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
     PRINT_AT(Context,"match_bits=%#lx options=%#x\n", 
                                 cmd.me.match_bits, cmd.me.options );
 
+    assert( ! m_meV[cmd.handle].used );
+
     if ( cmd.list == PTL_PRIORITY_LIST ) { 
 
         XXX* entry = searchOverflow( cmd.me );
@@ -122,11 +134,14 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
     m_meV[cmd.handle].user_ptr = cmd.user_ptr; 
     m_meV[cmd.handle].me = cmd.me;
     m_meV[cmd.handle].offset = 0;
+    m_meV[cmd.handle].used = true;
 }
 
 void Context::MEUnlink( cmdPtlMEUnlink_t& cmd )
 {
     PRINT_AT(Context,"handle=%d\n",cmd.handle);
+    assert( m_meV[cmd.handle].used );
+    m_meV[cmd.handle].used = false;
 }
 
 ptl_me_t* Context::findME( int handle ) {
@@ -163,12 +178,16 @@ void Context::MDBind( cmdPtlMDBind_t& cmd )
 {
     PRINT_AT(Context,"handle=%d addr=%#lx size=%lu\n", 
                     cmd.handle, cmd.md.start, cmd.md.length );
+    assert( ! m_mdV[cmd.handle].used );
     m_mdV[cmd.handle].md = cmd.md;
+    m_mdV[cmd.handle].used = true;
 }
 
 void Context::MDRelease( cmdPtlMDRelease_t& cmd )
 {
     PRINT_AT(Context,"handle=%d\n", cmd.handle );
+    assert( m_mdV[cmd.handle].used );
+    m_mdV[cmd.handle].used = false;
 }
 
 
@@ -301,6 +320,7 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
     "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
 
+    assert(false);
     if ( m_logicalIF ) {
         PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
     } else {
@@ -652,6 +672,7 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
     entry->srcNid    = nid;
     entry->me_handle = me_handle;
     entry->origHdr   = *hdr;
+    entry->unlink    = false;
     entry->ackHdr    = *hdr;
     entry->ackHdr.op = Ack;
 
@@ -679,6 +700,32 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
     if ( ! ( me.me.options & PTL_ME_NO_TRUNCATE ) ) {
         if ( entry->mlength > me.me.length - offset ) {
             entry->mlength = me.me.length - offset;  
+        }
+    }
+
+    if( me.me.options & PTL_ME_USE_ONCE || 
+                        ( me.me.length - me.offset ) < me.me.min_free ) {
+        PRINT_AT(Context,"unlink me_handle %d\n",me_handle);
+        assert( m_meV[me_handle].used );
+        m_ptV[hdr->pt_index].meL[list].remove(me_handle);
+        m_meV[me_handle].used = false;
+
+        m_meUnlinked[m_meUnlinkedPos] = me_handle;
+
+        m_nic->dmaEngine().write( (Addr) (m_meUnlinkedHostPtr + m_meUnlinkedPos), 
+                        (uint8_t*) &m_meUnlinked[m_meUnlinkedPos], 
+                        sizeof( int ), NULL );
+
+        m_meUnlinkedPos = (m_meUnlinkedPos + 1) % ME_UNLINKED_SIZE;
+
+        // this is messy, we need to remove from our table and the host 
+        // needs to free the handle
+        entry->unlink = true;
+
+        if ( ! ( me.me.options & PTL_ME_EVENT_UNLINK_DISABLE ) ) {
+            // not supported yet
+            // write PTL_EVENT_AUTO_UNLINK
+            assert(0);
         }
     }
 
@@ -766,5 +813,11 @@ void Context::recvFini( XXX* entry )
             hdr.hdr_data,
             PTL_NI_OK
         );
+    }
+    if ( eq_handle != -1  &&  entry->unlink &&
+                ! (me.me.options & PTL_ME_EVENT_UNLINK_DISABLE ) ) {
+        // not supported yet
+        // write PTL_EVENT_AUTO_FREE
+        assert(false);
     }
 }

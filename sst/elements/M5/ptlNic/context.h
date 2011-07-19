@@ -8,7 +8,7 @@
 #include "ptlHdr.h"
 #include "callback.h"
 #include "ptlNicTypes.h"
-#include "cmdQueueEntry.h"
+#include "cmdQueue.h"
 
 class PtlNic;
 class RecvEntry;
@@ -38,10 +38,12 @@ class Context {
         ptl_me_t                me;
         void*                   user_ptr;
         ptl_size_t              offset;
+        bool                    used; // purely for sanity check
     };
 
     struct MD {
         ptl_md_t                md;
+        bool                    used; // purely for sanity check
     };
 
   public:
@@ -162,6 +164,7 @@ class Context {
         int             op;
         ptl_list_t      list;
         PtlHdr          origHdr;
+        bool            unlink;
     };
 
     struct PutRecvEntry : XXX {
@@ -214,6 +217,12 @@ class Context {
     PtlNic*                 m_nic;
     std::map< int, PutSendEntry* >   m_putM;
     std::map< int, GetSendEntry* >   m_getM;
+
+    int*                    m_meUnlinkedHostPtr;
+    // instead of dynamically allocating/freeing a buffer for each write to
+    // host use m_meUnlinked as local buffer
+    int                     m_meUnlinked[ ME_UNLINKED_SIZE ];
+    int                     m_meUnlinkedPos;
 };
 
 inline void Context::writeCtEvent( int ct_handle, ptl_ct_event_t& event )
