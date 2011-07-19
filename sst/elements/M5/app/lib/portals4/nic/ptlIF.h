@@ -16,7 +16,8 @@ class PtlIF {
     PtlIF( int jid, int uid ) :
         m_tailShadow(0),
         m_ctx_id( 101 ),
-        m_nid(-1)
+        m_nid(-1),
+        m_meUnlinkedPos( 0 )
     {
         PTL_DBG2("\n");
         char* tmp = getenv("PTLNIC_CMD_QUEUE_ADDR");
@@ -26,12 +27,17 @@ class PtlIF {
 
         m_cmdQueue = (cmdQueue_t*)syscall( SYS_foo, addr, sizeof( cmdQueue_t) );
 
+        for ( int i = 0; i < ME_UNLINKED_SIZE; i++ ) {
+            m_meUnlinked[i] = -1;
+        }
+
         assert( m_cmdQueue );
         cmdUnion_t& cmd = getCmdSlot(ContextInit);
         cmd.ctxInit.uid = uid;
         cmd.ctxInit.jid = jid;
         cmd.ctxInit.nidPtr = (cmdAddr_t) &m_nid;
         cmd.ctxInit.limitsPtr = (cmdAddr_t) &m_limits;
+        cmd.ctxInit.meUnlinkedPtr = (cmdAddr_t) &m_meUnlinked;
         commitCmd(); 
 
         while (  m_nid == -1 ); 
@@ -49,6 +55,15 @@ class PtlIF {
     ptl_nid_t nid() { return m_nid; }
 
     ptl_ni_limits_t& limits() { return m_limits; }
+
+    int popMeUnlinked() {
+        int retval = m_meUnlinked[m_meUnlinkedPos]; 
+        if ( retval != -1 ) {
+            m_meUnlinked[m_meUnlinkedPos] = -1; 
+            m_meUnlinkedPos = ( m_meUnlinkedPos + 1 ) % ME_UNLINKED_SIZE; 
+        }
+        return retval;
+    }
 
   private:
 
@@ -82,6 +97,8 @@ class PtlIF {
     ptl_pid_t           m_pid;
     ptl_ni_limits_t     m_limits;
     volatile ptl_nid_t  m_nid;
+    int                 m_meUnlinked[ME_UNLINKED_SIZE]; 
+    int                 m_meUnlinkedPos;
 
     static const char* m_cmdNames[];
 };

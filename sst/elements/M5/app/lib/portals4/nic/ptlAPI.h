@@ -240,6 +240,7 @@ class PtlAPI {
 
     int ptlEQFree( ptl_handle_eq_t eq_handle )
     {
+        PTL_DBG2("eq_handle=%d\n",eq_handle );
         cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlEQFree ); 
 
         cmd.eqFree.handle = eq_handle;
@@ -260,10 +261,20 @@ class PtlAPI {
         return retval;
     }
 
+    void checkMeUnlinked() {
+        int handle; 
+        while ( ( handle = m_ptlIF.popMeUnlinked() ) != -1 ) {
+            PTL_DBG2( "handle=%d\n",handle );
+            m_freeMEHandles.push_back(handle);
+        } 
+    }
+
     int ptlEQGet(ptl_handle_ct_t eq_handle, ptl_event_t* event )
     {
         EventQ*    foo = m_eqM[ eq_handle ];
         ptl_size_t pos = foo->count % foo->size;
+
+        checkMeUnlinked();
 
         PTL_DBG2( "eq_handle=%d want count=%li cur=%li %p\n", 
                     eq_handle, foo->count, foo->eventV[ pos ].count1, 
