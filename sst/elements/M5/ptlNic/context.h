@@ -22,10 +22,20 @@ class Context {
         unsigned int options;
         std::list<int> meL[2];
     };
+    
+    struct GetSendEntry;
+
+    struct TriggeredOP {
+        union {
+            GetSendEntry*   get;
+        } u;
+        ptl_size_t      count;        
+    };
 
     struct CT {
         Addr                    vaddr;
         ptl_ct_event_t          event;
+        std::list< TriggeredOP* >        triggered;
     };
 
     struct EQ {
@@ -116,6 +126,8 @@ class Context {
                     ptl_ni_fail_t       ni_fail_type );
 
     void writeCtEvent( int ct_handle, ptl_ct_event_t&  );
+    
+    void doTriggered( int handle );
 
     void writeReplyEvent( int eq_handle,
                     ptl_size_t          mlength,
@@ -151,6 +163,7 @@ class Context {
     //*************
     struct GetSendEntry : YYY {
         ptl_size_t  local_offset;
+        ptl_nid_t   destNid;
     };
     typedef Callback< Context, GetSendEntry >  GetCallback;
     bool getCallback( GetSendEntry* );

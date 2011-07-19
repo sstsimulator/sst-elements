@@ -320,7 +320,6 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
     "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
 
-    assert(false);
     if ( m_logicalIF ) {
         PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
     } else {
@@ -328,6 +327,8 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
                     cmd.target_id.phys.nid,cmd.target_id.phys.pid);
     }
     PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
+    PRINT_AT(Context,"ct_handle=%d threshold=%lu\n",
+                            cmd.trig_ct_handle,cmd.threshold);
 
     GetSendEntry* entry = new GetSendEntry;
     assert(entry);
@@ -344,12 +345,16 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
     entry->hdr.offset = cmd.remote_offset;
     entry->hdr.match_bits = cmd.match_bits;
     entry->hdr.op = ::Get;
+    entry->destNid = cmd.target_id.phys.nid;
 
     int key = 5;
     entry->hdr.key = key; 
     m_getM[ key ] = entry;
+    TriggeredOP* op = new TriggeredOP;
+    op->u.get = entry; 
+    op->count = cmd.threshold;
 
-    m_nic->sendMsg( cmd.target_id.phys.nid, &entry->hdr, (Addr) 0, 0,  NULL );
+    m_ctV[cmd.trig_ct_handle].triggered.push_back( op );
 }
 
 
@@ -431,9 +436,30 @@ bool Context::eventCallback( EventEntry* entry )
     return true;
 }
 
+void Context::doTriggered( int ct_handle )
+{
+    
+    CT& ct = m_ctV[ct_handle];
+
+    std::list<TriggeredOP*>::iterator iter = ct.triggered.begin(); 
+
+    while ( iter != ct.triggered.end() )  {
+        PRINT_AT(Context,"count=%d %d\n", ct.event.success, (*iter)->count );  
+        if ( ct.event.success == (*iter)->count ) {
+            m_nic->sendMsg( (*iter)->u.get->destNid, 
+                    &(*iter)->u.get->hdr, (Addr) 0, 0,  NULL );
+        }
+
+        ++iter;
+    }
+
+}
+
 void Context::writeCtEvent( EventEntry* entry )
 {
     PRINT_AT(Context,"ct_handle=%#x\n", entry->handle );
+
+    doTriggered( entry->handle );
 
     m_nic->dmaEngine().write( findCTAddr( entry->handle ),
                                 (uint8_t*) &entry->ctEvent,
@@ -814,10 +840,12 @@ void Context::recvFini( XXX* entry )
             PTL_NI_OK
         );
     }
+#if 0
     if ( eq_handle != -1  &&  entry->unlink &&
                 ! (me.me.options & PTL_ME_EVENT_UNLINK_DISABLE ) ) {
         // not supported yet
         // write PTL_EVENT_AUTO_FREE
         assert(false);
     }
+#endif
 }
