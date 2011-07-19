@@ -36,8 +36,11 @@ int PtlTriggeredGet(ptl_handle_md_t     md_handle,
 
     const ptl_internal_handle_converter_t ni = { ni_handle };
     const ptl_internal_handle_converter_t md = { md_handle };
+    const ptl_internal_handle_converter_t ct = { trig_ct_handle };
 
     struct PtlAPI* api = GetPtlAPI( ni );
+
+    int _ct_handle = trig_ct_handle == PTL_CT_NONE ? -1 : ct.s.code;
 
     int retval = api->PtlTrigGet( api, md.s.code,
             local_offset,
@@ -47,7 +50,7 @@ int PtlTriggeredGet(ptl_handle_md_t     md_handle,
             match_bits,
             remote_offset,
             user_ptr,
-            trig_ct_handle,
+            _ct_handle,
             threshold);
 
     if ( retval < 0 ) return -retval;
