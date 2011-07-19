@@ -61,6 +61,7 @@ class sstdisksim_tracereader : public Component {
   sstdisksim_tracereader( const sstdisksim_tracereader& c );
   
   SST::Link* link;
+  SST::Link* diskmodel;
   
   friend class boost::serialization::access;
   template<class Archive>

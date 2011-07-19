@@ -58,6 +58,8 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
 
   sstdisksim_event* getNextEvent();
 
+  void handleEvent(Event* ev);
+
   /* To be removed later-this is just to test the component
      before we start having trace-reading functionality. */
 
@@ -65,6 +67,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
   
   sstdisksim_straightdisk( const sstdisksim_straightdisk& c );
   
+  SST::Link* straightdisk;
   SST::Link* link;
   
   friend class boost::serialization::access;
@@ -73,6 +76,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(link);
+      ar & BOOST_SERIALIZATION_NVP(straightdisk);
     }
   
   template<class Archive>
@@ -80,6 +84,13 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(link);
+      ar & BOOST_SERIALIZATION_NVP(straightdisk);
+
+      SST::Link* straightdisk;
+      
+      straightdisk->setFunctor(new 
+			       SST::Event::Handler<sstdisksim_straightdisk>(this, 
+									    &sstdisksim_straightdisk::handleEvent));
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    

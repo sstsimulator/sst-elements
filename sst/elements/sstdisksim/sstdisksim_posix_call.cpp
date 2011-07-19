@@ -88,6 +88,20 @@ sstdisksim_posix_calls::sstdisksim_posix_calls()
 }
 
 void
+sstdisksim_posix_calls::add_entry(sstdisksim_posix_event* ev)
+{
+  sstdisksim_posix_call call;
+
+  call.call = ev->call;
+  call.args[_ARG_FD].l = ev->arg_fd;
+  call.args[_ARG_COUNT].l = ev->arg_count;
+  call.args[_ARG_OFFSET].l = ev->arg_offset;
+  call.args[_ARG_WHENCE].l = ev->arg_whence;
+
+  add_entry(call);
+}
+
+void
 sstdisksim_posix_calls::add_entry(sstdisksim_posix_call call)
 {
   if ( call.call > _END_CALLS )

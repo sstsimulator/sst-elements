@@ -81,10 +81,12 @@ struct sstdisksim_posix_call
   sstdisksim_posix_call* next;
 };
 
+class sstdisksim_posix_event;
 class sstdisksim_posix_calls
 {
 public:
   sstdisksim_posix_calls();
+  void add_entry(sstdisksim_posix_event* ev);
   void add_entry(sstdisksim_posix_call call);
   sstdisksim_posix_call* pop_entry();
 

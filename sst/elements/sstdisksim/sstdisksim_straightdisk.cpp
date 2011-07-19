@@ -272,7 +272,12 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
   		new Clock::Handler<sstdisksim_straightdisk>(this, 
   							   &sstdisksim_straightdisk::clock));
  
+  straightdisk = configureLink("straightdisk",  
+			       new Event::Handler<sstdisksim_straightdisk>(this,&sstdisksim_straightdisk::handleEvent));
+  link = configureLink( "link" );
+
   DBG("Starting sstdisksim_straightdisk up\n");
+
 
   registerExit();
 }

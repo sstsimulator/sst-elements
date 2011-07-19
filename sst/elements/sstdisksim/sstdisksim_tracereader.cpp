@@ -22,6 +22,9 @@
 #include "sst/core/element.h"
 #include "sstdisksim.h"
 
+#include "sstdisksim_diskmodel.h"
+#include "sstdisksim_straightdisk.h"
+
 #define max_num_tracreaders 128
 static sstdisksim_tracereader* __ptrs[128];
 
@@ -70,9 +73,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   }
 
   // Change here to start specifying disk models.
-  diskmodel = configureLink( "straightdisk" )
-
-  __parser = new sstdisksim_tau_parser(traceFile.c_str(), edfFile.c_str());
+  diskmodel = configureLink( "straightdisk" );
 
   registerTimeBase("1ps");
   link = configureLink( "link" );
