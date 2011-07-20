@@ -48,6 +48,10 @@ Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
     // write this last, the host is waiting for value to change
     m_nic->dmaEngine().write( cmd.nidPtr, (uint8_t*) &m_nic->nid(), 
                         sizeof( m_nic->nid() ), NULL );
+
+    for ( int i = 0; i < 100; i++ ) {
+        m_keys.push_back(i);
+    }
 }
 
 Context::~Context() {
@@ -280,11 +284,8 @@ void Context::Put( cmdPtlPut_t& cmd )
     
     entry->hdr.op = ::Put;
 
-    // need some data structure that contains a map of used keys and deque of 
-    // free keys
-    int key = 5;
-    entry->hdr.key = key; 
-    m_putM[ key ] = entry;
+    entry->hdr.key = allocKey(); 
+    m_putM[ entry->hdr.key ] = entry;
 
     m_nic->sendMsg( cmd.target_id.phys.nid, &entry->hdr, 
                     (Addr) m_mdV[cmd.md_handle].md.start + cmd.local_offset, 
@@ -320,9 +321,8 @@ void Context::Get( cmdPtlGet_t& cmd )
     entry->hdr.match_bits = cmd.match_bits;
     entry->hdr.op = ::Get;
 
-    int key = 5;
-    entry->hdr.key = key; 
-    m_getM[ key ] = entry;
+    entry->hdr.key = allocKey(); 
+    m_getM[ entry->hdr.key ] = entry;
 
     m_nic->sendMsg( cmd.target_id.phys.nid, &entry->hdr, (Addr) 0, 0,  NULL );
 }
@@ -359,9 +359,8 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
     entry->hdr.op = ::Get;
     entry->destNid = cmd.target_id.phys.nid;
 
-    int key = 5;
-    entry->hdr.key = key; 
-    m_getM[ key ] = entry;
+    entry->hdr.key = allocKey(); 
+    m_getM[ entry->hdr.key ] = entry;
     TriggeredOP* op = new TriggeredOP;
     op->u.get = entry; 
     op->count = cmd.threshold;
@@ -526,6 +525,7 @@ void Context::processAck( PtlHdr* hdr )
         delete m_putM[hdr->key]->callback;
     }
     m_putM.erase( hdr->key );
+    freeKey( hdr->key );
 }
 
 RecvEntry* Context::processReply( PtlHdr* hdr )
@@ -533,6 +533,7 @@ RecvEntry* Context::processReply( PtlHdr* hdr )
     PRINT_AT(Context,"key=%d\n",hdr->key);
     GetSendEntry* entry = m_getM[ hdr->key ];
     m_getM.erase( hdr->key );
+    freeKey( hdr->key );
 
     // note we are writing over the PtlGet hdr
     entry->hdr = *hdr;

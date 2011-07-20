@@ -207,6 +207,8 @@ class Context {
     bool eventCallback( EventEntry* );
     void writeEvent( EventEntry* );
     void writeCtEvent( EventEntry* );
+    int allocKey();
+    void freeKey( int );
 
     bool                    m_logicalIF;
     bool                    m_matching; 
@@ -236,7 +238,22 @@ class Context {
     // host use m_meUnlinked as local buffer
     int                     m_meUnlinked[ ME_UNLINKED_SIZE ];
     int                     m_meUnlinkedPos;
+
+    std::deque<int>         m_keys;                     
 };
+
+inline int Context::allocKey()
+{ 
+    assert( ! m_keys.empty() );
+    int tmp = m_keys.front();
+    m_keys.pop_front();
+    return tmp;
+}
+
+inline void Context::freeKey(int key)
+{
+    m_keys.push_back(key);
+} 
 
 inline void Context::writeCtEvent( int ct_handle, ptl_ct_event_t& event )
 {
