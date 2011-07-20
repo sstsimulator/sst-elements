@@ -143,12 +143,11 @@ int PtlNIFini(ptl_handle_ni_t ni_handle)
 int PtlNIHandle(ptl_handle_any_t    handle,
                 ptl_handle_ni_t*    ni_handle)
 {
-    //PTL_DBG("selector=%d iface=%d ni=%d code=%d\n", 
-     //               ni.s.selector, ni.s.iface, ni.s.ni, ni.s.code );
-
     ptl_internal_handle_converter_t ehandle;
 
+    PTL_DBG("handle=%#x ni_handle=%p\n",handle,ni_handle);
     ehandle.a = handle;
+
     switch (ehandle.s.selector) {
         case HANDLE_NI_CODE:
             *ni_handle = ehandle.i;

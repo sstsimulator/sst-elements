@@ -37,12 +37,12 @@ int PtlMEAppend(ptl_handle_ni_t     ni_handle,
 
 int PtlMEUnlink(ptl_handle_me_t me_handle)
 {
+    PTL_DBG("me_handle=%#x\n",me_handle);
     ptl_handle_ni_t ni_handle;
     PtlNIHandle( me_handle, &ni_handle );
 
     const ptl_internal_handle_converter_t ni = { ni_handle };
     const ptl_internal_handle_converter_t me = { me_handle };
-    PTL_DBG("\n");
 
     struct PtlAPI* api = GetPtlAPI( ni );
 
