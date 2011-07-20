@@ -392,6 +392,7 @@ bool Context::getCallback( GetSendEntry* entry )
         );
     }
 
+    freeKey( entry->hdr.key );
     delete entry;
     return true;
 }
@@ -444,6 +445,7 @@ bool Context::putCallback( PutSendEntry* entry )
     }
 
     PRINT_AT(Context,"complete\n");
+    freeKey( entry->hdr.key );
     delete entry;
     return true;
 }
@@ -525,7 +527,6 @@ void Context::processAck( PtlHdr* hdr )
         delete m_putM[hdr->key]->callback;
     }
     m_putM.erase( hdr->key );
-    freeKey( hdr->key );
 }
 
 RecvEntry* Context::processReply( PtlHdr* hdr )
@@ -533,7 +534,6 @@ RecvEntry* Context::processReply( PtlHdr* hdr )
     PRINT_AT(Context,"key=%d\n",hdr->key);
     GetSendEntry* entry = m_getM[ hdr->key ];
     m_getM.erase( hdr->key );
-    freeKey( hdr->key );
 
     // note we are writing over the PtlGet hdr
     entry->hdr = *hdr;
