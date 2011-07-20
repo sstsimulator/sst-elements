@@ -89,8 +89,8 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 {
     PRINT_AT(Context,"pt_index=%d handle=%d list=%d\n", 
                     cmd.pt_index, cmd.handle, cmd.list);
-    PRINT_AT(Context,"match_bits=%#lx options=%#x\n", 
-                                cmd.me.match_bits, cmd.me.options );
+    PRINT_AT(Context,"match_bits=%#lx options=%#x ct_handle=%d\n", 
+                        cmd.me.match_bits, cmd.me.options, cmd.me.ct_handle );
 
     assert( ! m_meV[cmd.handle].used );
 
@@ -106,26 +106,38 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
             PRINT_AT(Context,"Found Match in overflow me_handle=%d\n",
                                         entry->me_handle );    
 
-            ptl_process_t initiator;
-            initiator.phys.nid = entry->srcNid; 
-            initiator.phys.pid = hdr.src_pid;
+            if ( cmd.me.ct_handle != -1 ) {
+                if ( cmd.me.options & PTL_ME_EVENT_CT_BYTES )  { 
+                    addCT( cmd.me.ct_handle, entry->mlength );
+                } else {
+                    addCT( cmd.me.ct_handle, 1 );
+                }
+                writeCtEvent( cmd.me.ct_handle, 
+                                *findCTEvent( cmd.me.ct_handle) );
+            }
 
-            writeEvent( 
-                m_ptV[hdr.pt_index].eq_handle,
-                PTL_EVENT_PUT_OVERFLOW,
-                initiator,
-                hdr.pt_index,
-                hdr.uid,
-                hdr.jid,
-                hdr.match_bits,
-                hdr.length,
-                entry->mlength,
-                hdr.offset,
-                entry->start,
-                cmd.user_ptr,
-                hdr.hdr_data,
-                PTL_NI_OK
-            );
+            if ( m_ptV[hdr.pt_index].eq_handle != - 1 ) {
+                ptl_process_t initiator;
+                initiator.phys.nid = entry->srcNid; 
+                initiator.phys.pid = hdr.src_pid;
+
+                writeEvent( 
+                    m_ptV[hdr.pt_index].eq_handle,
+                    PTL_EVENT_PUT_OVERFLOW,
+                    initiator,
+                    hdr.pt_index,
+                    hdr.uid,
+                    hdr.jid,
+                    hdr.match_bits,
+                    hdr.length,
+                    entry->mlength,
+                    hdr.offset,
+                    entry->start,
+                    cmd.user_ptr,
+                    hdr.hdr_data,
+                    PTL_NI_OK
+                );
+            }
             delete entry;
         }
     }
@@ -176,8 +188,8 @@ void Context::EQFree( cmdPtlEQFree_t& cmd )
 
 void Context::MDBind( cmdPtlMDBind_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d addr=%#lx size=%lu\n", 
-                    cmd.handle, cmd.md.start, cmd.md.length );
+    PRINT_AT(Context,"handle=%d addr=%#lx size=%lu ct_handle=%d\n", 
+                    cmd.handle, cmd.md.start, cmd.md.length, cmd.md.ct_handle );
     assert( ! m_mdV[cmd.handle].used );
     m_mdV[cmd.handle].md = cmd.md;
     m_mdV[cmd.handle].used = true;
@@ -233,7 +245,7 @@ void Context::PTFree( cmdPtlPTFree_t& cmd )
 
 void Context::Put( cmdPtlPut_t& cmd ) 
 {
-    PRINT_AT(Context,"me=%d\n",m_nic->nid());
+    PRINT_AT(Context,"my nid %d\n",m_nic->nid());
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%lu "
             "remote_offset=%lu\n", 
             cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
@@ -360,15 +372,20 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
 
 bool Context::getCallback( GetSendEntry* entry )
 {
+    ptl_md_t& md =  m_mdV[entry->md_handle].md;
     PRINT_AT(Context,"\n");
-    if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
-        addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
-        writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
-                    *findCTEvent( m_mdV[entry->md_handle].md.ct_handle) );
+    if ( md.ct_handle != -1  ) {
+        if ( md.options & PTL_MD_EVENT_CT_BYTES ) { 
+            assert(0);
+            //addCT( md.ct_handle, entry-> );
+        } else {
+            addCT( md.ct_handle, 1 );
+        }
+        writeCtEvent( md.ct_handle, *findCTEvent( md.ct_handle) );
     }
 
-    if ( m_mdV[entry->md_handle].md.eq_handle != -1  ) {
-        writeReplyEvent( m_mdV[entry->md_handle].md.eq_handle,
+    if ( md.eq_handle != -1  ) {
+        writeReplyEvent( md.eq_handle,
                         entry->hdr.length,
                         entry->hdr.offset,
                         entry->user_ptr,
@@ -383,20 +400,21 @@ bool Context::getCallback( GetSendEntry* entry )
 bool Context::putCallback( PutSendEntry* entry )
 {
     PRINT_AT(Context,"state %d\n",entry->state);
+    ptl_md_t& md = m_mdV[entry->md_handle].md;
     if ( entry->state == PutSendEntry::WaitSend ) {
 
         PRINT_AT(Context,"Send complete\n");
-        if ( m_mdV[entry->md_handle].md.eq_handle != -1  ) {
-            writeSendEvent( m_mdV[entry->md_handle].md.eq_handle,
-                        entry->user_ptr,
-                        PTL_NI_OK
-            );
+        if ( md.eq_handle != -1  ) {
+            writeSendEvent( md.eq_handle, entry->user_ptr, PTL_NI_OK);
         }
 
-        if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
-            addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
-            writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
-                    *findCTEvent( m_mdV[entry->md_handle].md.ct_handle) );
+        if ( md.ct_handle != -1  ) {
+            if ( md.options & PTL_MD_EVENT_CT_BYTES )  { 
+                assert(0);
+            } else {
+                addCT( md.ct_handle, 1 );
+            }
+            writeCtEvent( md.ct_handle, *findCTEvent( md.ct_handle) );
         }
 
         if ( entry->hdr.ack_req == PTL_ACK_REQ )  {
@@ -407,8 +425,8 @@ bool Context::putCallback( PutSendEntry* entry )
     } else {
 
         PRINT_AT(Context,"Got Ack\n");
-        if ( m_mdV[entry->md_handle].md.eq_handle != -1  ) {
-            writeAckEvent( m_mdV[entry->md_handle].md.eq_handle,
+        if ( md.eq_handle != -1  ) {
+            writeAckEvent( md.eq_handle,
                         entry->hdr.length,
                         entry->hdr.offset,
                         entry->user_ptr,
@@ -416,10 +434,13 @@ bool Context::putCallback( PutSendEntry* entry )
             );
         }
 
-        if ( m_mdV[entry->md_handle].md.ct_handle != -1  ) {
-            addCT( m_mdV[entry->md_handle].md.ct_handle, 1 );
-            writeCtEvent( m_mdV[entry->md_handle].md.ct_handle, 
-                    *findCTEvent( m_mdV[entry->md_handle].md.ct_handle) );
+        if ( md.ct_handle != -1  ) {
+            if ( md.options & PTL_MD_EVENT_CT_BYTES )  { 
+                assert(0);
+            } else {
+                addCT( md.ct_handle, 1 );
+            }
+            writeCtEvent( md.ct_handle, *findCTEvent( md.ct_handle) );
         }
     }
 
@@ -814,7 +835,11 @@ void Context::recvFini( XXX* entry )
     PRINT_AT( Context, "pt_index=%d\n", hdr.pt_index );
 
     if ( ct_handle != -1 ) {
-        addCT( ct_handle, 1 );
+        if ( me.me.options & PTL_ME_EVENT_CT_BYTES )  { 
+            addCT( ct_handle, entry->mlength );
+        } else {
+            addCT( ct_handle, 1 );
+        }
         writeCtEvent( ct_handle, *findCTEvent( ct_handle) );
     }
 
@@ -840,12 +865,11 @@ void Context::recvFini( XXX* entry )
             PTL_NI_OK
         );
     }
-#if 0
+
     if ( eq_handle != -1  &&  entry->unlink &&
                 ! (me.me.options & PTL_ME_EVENT_UNLINK_DISABLE ) ) {
         // not supported yet
         // write PTL_EVENT_AUTO_FREE
         assert(false);
     }
-#endif
 }
