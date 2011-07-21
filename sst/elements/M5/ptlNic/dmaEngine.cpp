@@ -23,9 +23,6 @@ DmaEngine::DmaEngine( SST::Component& comp, int nid ) :
     tmp << "/pTable." << m_nid;
 
     m_nicMmu = new NicMmu( tmp.str(), true );
-
-    printf("%#x\n",m_nicMmu->pageSize() );
-    assert(false);
 }    
 
 bool DmaEngine::write( Addr vaddr, uint8_t* buf, size_t size, 
