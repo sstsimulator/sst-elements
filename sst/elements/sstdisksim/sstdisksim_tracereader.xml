@@ -46,7 +46,7 @@
 	  </params>
 	</link>
       </links>
-    </sstdisksim_tracereader>
+    </sstdisksim_straightdisk>
   </component>
 
   <component id="0.sstdisksim">

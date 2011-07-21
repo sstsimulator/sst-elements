@@ -6,7 +6,8 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
 EXTRA_DIST = sstdisksim.xml
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libsstdisksim.la libsstdisksim_luascriptreader.la libsstdisksim_tracereader.la
+comp_LTLIBRARIES = libsstdisksim.la libsstdisksim_luascriptreader.la libsstdisksim_tracereader.la \
+	libsstdisksim_straightdisk.la
 
 #libsstdisksim
 libsstdisksim_la_SOURCES = \
@@ -38,6 +39,23 @@ libsstdisksim_tracereader_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SSTDISKSIM_CPPFLAGS)
 	-I$(top_srcdir)/elements/include
 libsstdisksim_tracereader_la_LDFLAGS = -module -avoid-version $(SSTDISKSIM_LDFLAGS)
 libsstdisksim_tracereader_la_LIBADD = $(SSTDISKSIM_LIB)
+
+#libsstdisksim_straightdisk
+libsstdisksim_straightdisk_la_SOURCES = \
+	sstdisksim_diskmodel.h \
+	sstdisksim_event.cpp \
+	sstdisksim_event.h \
+	sstdisksim_posix_call.cpp \
+	sstdisksim_posix_call.h \
+	sstdisksim_straightdisk.h \
+	sstdisksim_straightdisk.cpp \
+	sstdisksim.cpp \
+	sstdisksim.h	
+
+libsstdisksim_straightdisk_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SSTDISKSIM_CPPFLAGS) \
+	-I$(top_srcdir)/elements/include
+libsstdisksim_straightdisk_la_LDFLAGS = -module -avoid-version $(SSTDISKSIM_LDFLAGS)
+libsstdisksim_straightdisk_la_LIBADD = $(SSTDISKSIM_LIB)
 
 #libsstdisksim_luascriptreader
 libsstdisksim_luascriptreader_la_SOURCES = \
