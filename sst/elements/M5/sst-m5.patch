@@ -97,16 +97,15 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/dev/SConscript src/dev/SConscript
 +    Source('isa_fake.cc')
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh src/mem/cache/cache_impl.hh
 --- /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/cache/cache_impl.hh	2011-07-18 13:05:23.000000000 -0600
-@@ -1101,6 +1101,18 @@
++++ src/mem/cache/cache_impl.hh	2011-07-21 14:00:49.000000000 -0600
+@@ -1101,6 +1101,17 @@
      bool have_exclusive = blk->isWritable();
      bool invalidate = pkt->isInvalidate();
  
-+    if ( pkt->isWrite() ) {
-+	    DPRINTF( Cache, "%s()\n",pkt->getAddr() );
-+        printf("%s:Cache::%s() `%s` %#lx\n",name().c_str(),__func__,
-+                pkt->isRequest() ? "Request" : "Response", pkt->getAddr() );
++    if ( pkt->isWrite() && blk->status & BlkWritable ) {
++
 +        pkt->writeDataToBlock(blk->data, blkSize);
++        blk->status |= BlkDirty;
 +
 +        if ( ! respond ) {
 +            assert(!pkt->memInhibitAsserted());
@@ -190,7 +189,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/page_table.hh src/mem/page_ta
      void deallocate(Addr vaddr, int64_t size);
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/physical.cc src/mem/physical.cc
 --- /home/mjleven/tmp/m5/src/mem/physical.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/physical.cc	2011-07-18 13:03:27.000000000 -0600
++++ src/mem/physical.cc	2011-07-20 15:38:56.000000000 -0600
 @@ -54,7 +54,8 @@
  PhysicalMemory::PhysicalMemory(const Params *p)
      : MemObject(p), pmemAddr(NULL), pagePtr(0),
@@ -201,6 +200,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/physical.cc src/mem/physical.
  {
      if (params()->range.size() % TheISA::PageBytes != 0)
          panic("Memory Size not divisible by page size\n");
+@@ -360,6 +361,8 @@
          panic("PhysicalMemory::getPort: unknown port %s requested", if_name);
      }
  
