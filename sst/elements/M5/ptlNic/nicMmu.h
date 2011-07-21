@@ -115,6 +115,10 @@ class NicMmu
         //printf("vaddr %#lx paddr %#lx %d\n", tmp,vaddr, entry->pfn );
         return true;
     }
+
+    int pageSize() {
+        return 1 << PageSizeBits;
+    }
     
   private:
     int new_page() {
