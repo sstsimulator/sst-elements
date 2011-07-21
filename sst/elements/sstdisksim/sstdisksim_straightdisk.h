@@ -44,8 +44,6 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
   sstdisksim_straightdisk( ComponentId_t id, Params_t& params );
   ~sstdisksim_straightdisk();
 
-  void addEvent(sstdisksim_posix_call call);
-
   int Setup();
   int Finish();
 

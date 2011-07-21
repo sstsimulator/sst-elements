@@ -288,10 +288,13 @@ sstdisksim_straightdisk::~sstdisksim_straightdisk()
 }
 
 /******************************************************************************/
-void
-sstdisksim_straightdisk::addEvent(sstdisksim_posix_call call)
+void 
+sstdisksim_straightdisk::handleEvent(Event* event)
 {
-  __list.add_entry(call);
+  sstdisksim_posix_event* ev = static_cast<sstdisksim_posix_event*>(event);
+
+  __list.add_entry(ev);
+  delete(ev);
 }
 
 /******************************************************************************/

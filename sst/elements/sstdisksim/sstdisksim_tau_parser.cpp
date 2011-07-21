@@ -14,6 +14,11 @@
 #include <iostream>
 #include <stdio.h>
 #include <map>
+
+#include <sst/core/component.h>
+#include <sst/core/simulation.h>
+
+
 using namespace std;
 
 map< pair<int,int>, int, less< pair<int,int> > > EOF_Trace;
@@ -23,13 +28,14 @@ sstdisksim_posix_calls __list;
 unsigned __types[_END_CALLS][_END_ARGS];
 __argWithState __tmp_vals[_END_CALLS][_END_ARGS];
 
-sstdisksim_diskmodel* __model;
+SST::Link* __model;
 
 
 // This variable is used to hack our way around a TAU "feature" to allow spikes for viz
 // tools.
 unsigned __vizhack[_END_CALLS][_END_ARGS];
 
+/******************************************************************************/
 void __setargs( int i )
 {
   // true only for those args that are not used in the call
@@ -92,6 +98,7 @@ void __setargs( int i )
   }
 }
 
+/******************************************************************************/
 // implementation of callback routines 
 int EnterState(void *userData, double time, 
 	       unsigned int nid, unsigned int tid, unsigned int stateid)
@@ -99,23 +106,27 @@ int EnterState(void *userData, double time,
   return 0;
 }
 
+/******************************************************************************/
 int LeaveState(void *userData, double time, unsigned int nid, unsigned int tid, unsigned int stateid)
 {
   return 0;
 }
 
 
+/******************************************************************************/
 int ClockPeriod( void*  userData, double clkPeriod )
 {
   return 0;
 }
 
+/******************************************************************************/
 int DefThread(void *userData, unsigned int nid, unsigned int threadToken,
 	      const char *threadName )
 {
   return 0;
 }
 
+/******************************************************************************/
 int EndTrace( void *userData, unsigned int nid, unsigned int threadid)
 {
   //  EOF_Trace[pair<int,int> (nid,threadid) ] = 1; /* flag it as over */
@@ -133,18 +144,21 @@ int EndTrace( void *userData, unsigned int nid, unsigned int threadid)
   return 0;
 }
 
+/******************************************************************************/
 int DefStateGroup( void *userData, unsigned int stateGroupToken, 
 		   const char *stateGroupName )
 {
   return 0;
 }
 
+/******************************************************************************/
 int DefState( void *userData, unsigned int stateToken, const char *stateName, 
 	      unsigned int stateGroupToken )
 {
   return 0;
 }
 
+/******************************************************************************/
 // This is where to add new events for tau
 int DefUserEvent( void *userData, unsigned int userEventToken,
 		  const char *userEventName, int monotonicallyIncreasing )
@@ -237,6 +251,7 @@ int DefUserEvent( void *userData, unsigned int userEventToken,
   return 0;
 }
 
+/******************************************************************************/
 int EventTrigger( void *userData, double time, 
 		  unsigned int nodeToken,
 		  unsigned int threadToken,
@@ -261,14 +276,14 @@ int EventTrigger( void *userData, double time,
 	      break;
 	    else if ( k == _END_ARGS-1 )
 	    {
-	      sstdisksim_posix_call call;
-	      call.call = (__call)i;
-	      for ( int l = 0; l < _END_ARGS; l++ )
-	      {
-		call.args[l].l = __tmp_vals[i][l].arg.l;
-	      }
+	      sstdisksim_posix_event* call = new sstdisksim_posix_event;
+	      call->call = (__call)i;
+	      call->arg_fd = __tmp_vals[i][_ARG_FD].arg.l;
+	      call->arg_count = __tmp_vals[i][_ARG_COUNT].arg.l;
+	      call->arg_whence = __tmp_vals[i][_ARG_WHENCE].arg.l;
+	      call->arg_offset = __tmp_vals[i][_ARG_OFFSET].arg.l;
 
-	      __model->addEvent(call);
+	      __model->Send(0, call);
 
 	      __setargs(i);
 	      
@@ -285,6 +300,7 @@ int EventTrigger( void *userData, double time,
   return 0;
 }
 
+/******************************************************************************/
 int SendMessage ( void*  userData,
 		  double time,
 		  unsigned int sourceNodeToken, 
@@ -299,6 +315,7 @@ int SendMessage ( void*  userData,
   return 0;
 }
 
+/******************************************************************************/
 int RecvMessage ( void*  userData,
 		  double time,
 		  unsigned int sourceNodeToken, 
@@ -313,8 +330,9 @@ int RecvMessage ( void*  userData,
   return 0;
 }
 
+/******************************************************************************/
 sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* edf_file,
-					     sstdisksim_diskmodel* model)
+					     SST::Link* model)
 {
   Ttf_FileHandleT fh;
 

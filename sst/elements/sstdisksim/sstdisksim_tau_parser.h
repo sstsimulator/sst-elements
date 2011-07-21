@@ -22,17 +22,18 @@
 #include <string.h>
 #include <fstream>
 #include <string>
+
 #include "sstdisksim_event.h"
 #include "sstdisksim_posix_call.h"
-#include "sstdisksim_diskmodel.h"
 
 using namespace std;
+using namespace SST;
 
 class sstdisksim_tau_parser {
 
  public:
   sstdisksim_tau_parser(const char* trc_file, const char* edf_file,
-			sstdisksim_diskmodel* model);
+			SST::Link* model);
   ~sstdisksim_tau_parser();
 };
 
