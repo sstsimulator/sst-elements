@@ -96,6 +96,7 @@ class Context {
 
   private:
 
+    void freeHostMEHandle( int );
     int  search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t );
 
     struct OverflowEntry;

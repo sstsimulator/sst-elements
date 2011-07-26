@@ -91,8 +91,8 @@ void Context::NIFini( cmdPtlNIFini_t& cmd )
 
 void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 {
-    PRINT_AT(Context,"pt_index=%d handle=%d list=%d\n", 
-                    cmd.pt_index, cmd.handle, cmd.list);
+    PRINT_AT(Context,"pt_index=%d handle=%d list=%d length=%lu\n", 
+                    cmd.pt_index, cmd.handle, cmd.list, cmd.me.length );
     PRINT_AT(Context,"match_bits=%#lx options=%#x ct_handle=%d\n", 
                         cmd.me.match_bits, cmd.me.options, cmd.me.ct_handle );
 
@@ -143,6 +143,8 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
                 );
             }
             delete entry;
+            freeHostMEHandle( cmd.handle );
+            return;
         }
     }
 
@@ -179,7 +181,8 @@ void Context::CTFree( cmdPtlCTFree_t& cmd )
 
 void Context::EQAlloc( cmdPtlEQAlloc_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d addr=%#lx\n", cmd.handle, cmd.addr );
+    PRINT_AT(Context,"handle=%d size=%lu addr=%#lx\n", 
+                                    cmd.handle, cmd.size, cmd.addr );
     m_eqV[cmd.handle].vaddr = (Addr)cmd.addr;
     m_eqV[cmd.handle].size = cmd.size;
     m_eqV[cmd.handle].count = 0;
@@ -493,7 +496,8 @@ void Context::writeEvent( EventEntry* entry )
 {
     struct EQ& eq = findEQ( entry->handle ); 
 
-    PRINT_AT(Context,"eq_handle=%d eq.count=%d vaddr=%#lx type=%d\n",
+    PRINT_AT(Context,"nid=%d eq_handle=%d eq.count=%d vaddr=%#lx type=%d\n",
+            m_nic->nid(),
             entry->handle, eq.count, 
             findEventAddr( entry->handle, eq.count % eq.size ),
             entry->event.user.type );
@@ -758,13 +762,8 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
         m_ptV[hdr->pt_index].meL[list].remove(me_handle);
         m_meV[me_handle].used = false;
 
-        m_meUnlinked[m_meUnlinkedPos] = me_handle;
+        freeHostMEHandle( me_handle );
 
-        m_nic->dmaEngine().write( (Addr) (m_meUnlinkedHostPtr + m_meUnlinkedPos), 
-                        (uint8_t*) &m_meUnlinked[m_meUnlinkedPos], 
-                        sizeof( int ), NULL );
-
-        m_meUnlinkedPos = (m_meUnlinkedPos + 1) % ME_UNLINKED_SIZE;
 
         // this is messy, we need to remove from our table and the host 
         // needs to free the handle
@@ -792,6 +791,18 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
         (*entry->callback)();
     }
     return NULL;
+}
+
+void Context::freeHostMEHandle( int me_handle ) 
+{
+    m_meUnlinked[m_meUnlinkedPos] = me_handle;
+
+    PRINT_AT(Context,"%#lx\n",(m_meUnlinkedHostPtr + m_meUnlinkedPos));
+    m_nic->dmaEngine().write( (Addr) (m_meUnlinkedHostPtr + m_meUnlinkedPos), 
+                        (uint8_t*) &m_meUnlinked[m_meUnlinkedPos], 
+                        sizeof( int ), NULL );
+
+    m_meUnlinkedPos = (m_meUnlinkedPos + 1) % ME_UNLINKED_SIZE;
 }
 
 bool Context::putRecvCallback( PutRecvEntry* entry )
