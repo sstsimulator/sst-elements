@@ -11,15 +11,9 @@
 	<debug>yes</debug>
       </params>
       <links>
-	<link id="0">
-	  <params>
-	    <name> link </name>
-	    <lat> 1ps </lat>
-	  </params>
-	</link>
 	<link id="1">
 	  <params>
-	    <name> diskctl </name>
+	    <name> diskmodel </name>
 	    <lat> 1ps </lat>
 	  </params>
 	</link>
@@ -41,7 +35,7 @@
 	</link>
 	<link id="1">
 	  <params>
-	    <name> straightdisk </name>
+	    <name> diskmodel </name>
 	    <lat> 1ps </lat>
 	  </params>
 	</link>

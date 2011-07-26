@@ -276,8 +276,13 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
 			       new Event::Handler<sstdisksim_straightdisk>(this,&sstdisksim_straightdisk::handleEvent));
   link = configureLink( "link" );
 
-  DBG("Starting sstdisksim_straightdisk up\n");
+  if ( link == 0 )
+  {
+    printf("No disk specified.  See sstdisksim_tracereader.xml or README for more info.\n");
+    exit(1);
+  }
 
+  DBG("Starting sstdisksim_straightdisk up\n");
 
   registerExit();
 }

@@ -282,8 +282,8 @@ int EventTrigger( void *userData, double time,
 	      call->arg_count = __tmp_vals[i][_ARG_COUNT].arg.l;
 	      call->arg_whence = __tmp_vals[i][_ARG_WHENCE].arg.l;
 	      call->arg_offset = __tmp_vals[i][_ARG_OFFSET].arg.l;
-
-	      __model->Send(0, call);
+	      
+      	      __model->Send(0, call);
 
 	      __setargs(i);
 	      
@@ -340,6 +340,7 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
   Ttf_CallbacksT cb;
 
   __model = model;
+  printf("%p\n", __model);
 
   for ( int i = 0; i < _END_CALLS; i++ )
   {

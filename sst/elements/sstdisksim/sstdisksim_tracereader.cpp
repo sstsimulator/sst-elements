@@ -73,8 +73,13 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   }
 
   registerTimeBase("1ps");
-  link = configureLink( "link" );
-  diskmodel = configureLink( "straightdisk" );
+  diskmodel = configureLink( "diskmodel" );
+
+  if ( diskmodel == 0 )
+  {
+    printf("No diskmodel specified.  See sstdisksim_tracereader.xml or README for more info.\n");
+    exit(1);
+  }
 
   __parser = new sstdisksim_tau_parser(traceFile.c_str(), edfFile.c_str(), diskmodel);
 

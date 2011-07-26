@@ -60,7 +60,6 @@ class sstdisksim_tracereader : public Component {
   
   sstdisksim_tracereader( const sstdisksim_tracereader& c );
   
-  SST::Link* link;
   SST::Link* diskmodel;
   
   friend class boost::serialization::access;
@@ -75,7 +74,7 @@ class sstdisksim_tracereader : public Component {
     void load(Archive & ar, const unsigned int version)
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-      ar & BOOST_SERIALIZATION_NVP(link);
+      ar & BOOST_SERIALIZATION_NVP(diskmodel);
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    
