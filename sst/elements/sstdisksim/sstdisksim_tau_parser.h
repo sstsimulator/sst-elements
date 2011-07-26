@@ -32,9 +32,9 @@ using namespace SST;
 class sstdisksim_tau_parser {
 
  public:
-  sstdisksim_tau_parser(const char* trc_file, const char* edf_file,
-			SST::Link* model);
+  sstdisksim_tau_parser(const char* trc_file, const char* edf_file);
   ~sstdisksim_tau_parser();
+  sstdisksim_posix_event* getNextEvent();
 };
 
 #endif // _SSTDISKSIM_TAU_PARSER_H 

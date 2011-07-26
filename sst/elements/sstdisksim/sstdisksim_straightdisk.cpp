@@ -200,7 +200,9 @@ sstdisksim_straightdisk::getNextEvent()
       cur_event = __list.pop_entry();
 
       break;    
-
+    case _END_CALLS:
+      ev->etype = DISKSIMEND;      
+      break;
     case _CALL_CREAT:
     case _CALL_CREAT64:
     case _CALL_FSYNC:
@@ -251,7 +253,8 @@ sstdisksim_straightdisk::clock(Cycle_t current)
   /* At the end of our input */
   if ( event == NULL )
     return false;
-
+  
+  printf("sending straightdisk event\n");
   link->Send(0, event);
   return false;
 }

@@ -28,8 +28,8 @@ sstdisksim_posix_calls __list;
 unsigned __types[_END_CALLS][_END_ARGS];
 __argWithState __tmp_vals[_END_CALLS][_END_ARGS];
 
-SST::Link* __model;
-
+sstdisksim_posix_event* __head_ev = NULL;
+sstdisksim_posix_event* __tail_ev = NULL;
 
 // This variable is used to hack our way around a TAU "feature" to allow spikes for viz
 // tools.
@@ -282,8 +282,18 @@ int EventTrigger( void *userData, double time,
 	      call->arg_count = __tmp_vals[i][_ARG_COUNT].arg.l;
 	      call->arg_whence = __tmp_vals[i][_ARG_WHENCE].arg.l;
 	      call->arg_offset = __tmp_vals[i][_ARG_OFFSET].arg.l;
+	      call->next_event = NULL;
 	      
-      	      __model->Send(0, call);
+	      if ( __head_ev == NULL )
+	      {
+		__head_ev = call;
+		__tail_ev = call;
+	      }
+	      else
+	      {
+		__tail_ev->next_event = NULL;
+		__tail_ev = call;
+	      }
 
 	      __setargs(i);
 	      
@@ -331,16 +341,12 @@ int RecvMessage ( void*  userData,
 }
 
 /******************************************************************************/
-sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* edf_file,
-					     SST::Link* model)
+sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* edf_file)
 {
   Ttf_FileHandleT fh;
 
   int recs_read, pos;
   Ttf_CallbacksT cb;
-
-  __model = model;
-  printf("%p\n", __model);
 
   for ( int i = 0; i < _END_CALLS; i++ )
   {
@@ -383,6 +389,18 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
   while ((recs_read >=0) && (!EndOfTrace));
 
   Ttf_CloseFile(fh);
+}
+
+/******************************************************************************/
+sstdisksim_posix_event*
+sstdisksim_tau_parser::getNextEvent()
+{
+  if ( __head_ev == NULL )
+    return NULL;
+  
+  sstdisksim_posix_event* ret = __head_ev;
+  __head_ev = __head_ev->next_event;
+  return ret;
 }
 
 /******************************************************************************/

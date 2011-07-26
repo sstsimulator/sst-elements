@@ -118,6 +118,7 @@ class sstdisksim_posix_event : public SST::Event{
       ar & BOOST_SERIALIZATION_NVP(arg_count);
       ar & BOOST_SERIALIZATION_NVP(arg_offset);
       ar & BOOST_SERIALIZATION_NVP(arg_whence);
+      ar & BOOST_SERIALIZATION_NVP(next_event);
     }
 };
 

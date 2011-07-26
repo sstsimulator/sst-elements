@@ -36,6 +36,29 @@ static sstdisksim_tracereader* __ptrs[128];
     __dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
+bool
+sstdisksim_tracereader::clock(Cycle_t current)
+{
+  sstdisksim_posix_event* event = __parser->getNextEvent();
+
+  printf("sending diskmodel");
+  /* At the end of our input */
+  if ( event == NULL )
+  {
+    event = new sstdisksim_posix_event;
+    event->call  = _END_CALLS;
+    unregisterExit();
+    printf("END \n");
+  }
+
+  printf(" %p ", diskmodel);
+  diskmodel->Send(0, event);
+
+  printf("event\n");
+  return false;
+}
+
+/******************************************************************************/
 sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  
 						Params_t& params ) :
   Component( id ),
@@ -81,7 +104,12 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
     exit(1);
   }
 
-  __parser = new sstdisksim_tau_parser(traceFile.c_str(), edfFile.c_str(), diskmodel);
+  __parser = new sstdisksim_tau_parser(traceFile.c_str(), edfFile.c_str());
+
+  // Clock speed really doesn't matter much here-it is used to sync up the simulations.
+  registerClock("1GHz", 
+  		new Clock::Handler<sstdisksim_tracereader>(this, 
+  							   &sstdisksim_tracereader::clock));
 
   DBG("Starting sstdisksim_tracereader up\n");
 

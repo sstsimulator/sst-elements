@@ -44,6 +44,8 @@ class sstdisksim_tracereader : public Component {
   int Setup();
   int Finish();
 
+  bool clock(Cycle_t current);
+
  private:
 
   std::string traceFile;
