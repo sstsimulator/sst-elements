@@ -96,7 +96,7 @@ void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )
 void PtlNicMMIF::process( void* key )
 {
     ::DmaEvent* event = static_cast< ::DmaEvent* >(key);
-    DBGX( 2, "addr=%#lx size=%lu type=\n", event->addr, event->size,
+    DBGX( 2, "addr=%#lx size=%lu type=%s\n", event->addr, event->size,
                 event->type == ::DmaEvent::Write ? "Write" : "Read" );
     m_dmaLink->Send( event );
 }
