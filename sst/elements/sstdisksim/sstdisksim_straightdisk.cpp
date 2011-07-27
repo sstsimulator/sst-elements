@@ -201,6 +201,7 @@ sstdisksim_straightdisk::getNextEvent()
 
       break;    
     case _END_CALLS:
+      looping = false;
       ev->etype = DISKSIMEND;  
       break;
     case _CALL_CREAT:
@@ -253,11 +254,15 @@ sstdisksim_straightdisk::clock(Cycle_t current)
 
   /* At the end of our input */
   if ( event == NULL )
+    return false;
+
+  if ( event->etype == DISKSIMEND )
   {
     if ( _ended == false )
     {
       unregisterExit();
       _ended = true;
+      link->Send(0, event);
     }
 
     return false;

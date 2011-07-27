@@ -208,7 +208,6 @@ sstdisksim::handleEvent(Event* event)
     r.flags = DISKSIM_WRITE;
   else if ( ev->etype == DISKSIMEND)
   {
-    printf("End event\n", r.bytecount, r.blkno, __now-tmp);
     lockstep->Send(__cycle+100, ev);
     return;
   }
@@ -255,6 +254,7 @@ void
 sstdisksim::lockstepEvent(Event* ev)
 {
   static int event_count=0;
+  static int done_count=100;
 
   sstdisksim_event* event = static_cast<sstdisksim_event*>(ev);
   event->completed = true;
@@ -284,6 +284,7 @@ sstdisksim::lockstepEvent(Event* ev)
 
   __event_total--;
 
+  
   if ( __event_total == 0 )
   {
     if ( ! __done )
@@ -292,7 +293,6 @@ sstdisksim::lockstepEvent(Event* ev)
       unregisterExit();
       print_statistics(&__st, "response time");
       DBG("time: %f milliseconds\n", __now);
-
       printf("events processed: %d\n", event_count);
     }
   }
