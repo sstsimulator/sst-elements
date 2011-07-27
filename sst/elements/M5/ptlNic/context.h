@@ -95,14 +95,16 @@ class Context {
     Addr findEventAddr( int handle, int pos );
 
   private:
-
     void freeHostMEHandle( int );
     int  search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t );
 
     struct OverflowEntry;
 
     struct XXX;
+
+    void doMEOverflow( XXX* );
     XXX* searchOverflow( ptl_me_t& );
+
     RecvEntry* processHdrPkt( ptl_nid_t nid, PtlHdr* hdr );
     RecvEntry* processMatch( ptl_nid_t, PtlHdr*, int me_handle, ptl_list_t );
     RecvEntry* processPut( ptl_nid_t, PtlHdr*, int me_handle, ptl_list_t );
@@ -179,6 +181,7 @@ class Context {
         ptl_list_t      list;
         PtlHdr          origHdr;
         bool            unlink;
+        cmdPtlMEAppend_t* cmd;
     };
 
     struct PutRecvEntry : XXX {
@@ -208,6 +211,7 @@ class Context {
     bool eventCallback( EventEntry* );
     void writeEvent( EventEntry* );
     void writeCtEvent( EventEntry* );
+
     int allocKey();
     void freeKey( int );
 

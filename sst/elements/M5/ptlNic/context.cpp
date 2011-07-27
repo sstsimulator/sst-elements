@@ -91,8 +91,8 @@ void Context::NIFini( cmdPtlNIFini_t& cmd )
 
 void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 {
-    PRINT_AT(Context,"pt_index=%d handle=%d list=%d length=%lu\n", 
-                    cmd.pt_index, cmd.handle, cmd.list, cmd.me.length );
+    PRINT_AT(Context,"pt_index=%d handle=%d list=%d start=%#lx length=%lu\n", 
+            cmd.pt_index, cmd.handle, cmd.list, cmd.me.start, cmd.me.length );
     PRINT_AT(Context,"match_bits=%#lx options=%#x ct_handle=%d\n", 
                         cmd.me.match_bits, cmd.me.options, cmd.me.ct_handle );
 
@@ -104,28 +104,50 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 
         if ( entry ) {
 
-            // if callback is not null then the data movement is not complete
-            assert( ! entry->callback );
-            PtlHdr& hdr = entry->origHdr;
             PRINT_AT(Context,"Found Match in overflow me_handle=%d\n",
                                         entry->me_handle );    
 
-            if ( cmd.me.ct_handle != -1 ) {
-                if ( cmd.me.options & PTL_ME_EVENT_CT_BYTES )  { 
-                    addCT( cmd.me.ct_handle, entry->mlength );
-                } else {
-                    addCT( cmd.me.ct_handle, 1 );
-                }
-                writeCtEvent( cmd.me.ct_handle, 
-                                *findCTEvent( cmd.me.ct_handle) );
+            if ( entry->callback ) {
+                PRINT_AT(Context,"MEAppend xfer not complete %p\n",entry);
+                entry->cmd = new cmdPtlMEAppend_t;
+                *entry->cmd = cmd;
+            } else {
+                entry->cmd = &cmd;
+                doMEOverflow( entry );
             }
 
-            if ( m_ptV[hdr.pt_index].eq_handle != - 1 ) {
-                ptl_process_t initiator;
-                initiator.phys.nid = entry->srcNid; 
-                initiator.phys.pid = hdr.src_pid;
+            return;
+        }
+    }
 
-                writeEvent( 
+    m_ptV[cmd.pt_index].meL[cmd.list].push_back( cmd.handle );
+    m_meV[cmd.handle].user_ptr = cmd.user_ptr; 
+    m_meV[cmd.handle].me = cmd.me;
+    m_meV[cmd.handle].offset = 0;
+    m_meV[cmd.handle].used = true;
+}
+
+void Context::doMEOverflow( XXX* entry )
+{
+    PRINT_AT(Context, "\n" );
+
+    PtlHdr& hdr = entry->origHdr;
+    cmdPtlMEAppend_t& cmd = *entry->cmd; 
+    if ( cmd.me.ct_handle != -1 ) {
+        if ( cmd.me.options & PTL_ME_EVENT_CT_BYTES )  { 
+            addCT( cmd.me.ct_handle, entry->mlength );
+        } else {
+            addCT( cmd.me.ct_handle, 1 );
+        }
+        writeCtEvent( cmd.me.ct_handle, *findCTEvent( cmd.me.ct_handle) );
+    }
+
+    if ( m_ptV[hdr.pt_index].eq_handle != - 1 ) {
+        ptl_process_t initiator;
+        initiator.phys.nid = entry->srcNid; 
+        initiator.phys.pid = hdr.src_pid;
+
+        writeEvent( 
                     m_ptV[hdr.pt_index].eq_handle,
                     PTL_EVENT_PUT_OVERFLOW,
                     initiator,
@@ -140,19 +162,12 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
                     cmd.user_ptr,
                     hdr.hdr_data,
                     PTL_NI_OK
-                );
-            }
-            delete entry;
-            freeHostMEHandle( cmd.handle );
-            return;
-        }
+        );
     }
 
-    m_ptV[cmd.pt_index].meL[cmd.list].push_back( cmd.handle );
-    m_meV[cmd.handle].user_ptr = cmd.user_ptr; 
-    m_meV[cmd.handle].me = cmd.me;
-    m_meV[cmd.handle].offset = 0;
-    m_meV[cmd.handle].used = true;
+    freeHostMEHandle( cmd.handle );
+
+    delete entry;
 }
 
 void Context::MEUnlink( cmdPtlMEUnlink_t& cmd )
@@ -298,7 +313,8 @@ void Context::Put( cmdPtlPut_t& cmd )
 void Context::Get( cmdPtlGet_t& cmd ) 
 {
     PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
-    "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
+    "remote_offset=%#lx\n", cmd.md_handle, cmd.length,
+                        cmd.local_offset, cmd.remote_offset );
 
     if ( m_logicalIF ) {
         PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
@@ -526,9 +542,21 @@ void Context::processAck( PtlHdr* hdr )
     
     m_putM[hdr->key]->hdr = *hdr;
 
-    PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset );
-    if ( (*m_putM[hdr->key]->callback)() ) {
-        delete m_putM[hdr->key]->callback;
+    if ( hdr->op == Ack2 ) {
+        PRINT_AT(Context, "free blocked ack resources for key %d\n",hdr->key);
+        freeKey( hdr->key );
+
+        if (  m_putM[hdr->key]->callback ) {
+            delete m_putM[hdr->key]->callback;
+        }
+        delete m_putM[hdr->key];
+        
+    } else {
+
+        PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset );
+        if ( (*m_putM[hdr->key]->callback)() ) {
+            delete m_putM[hdr->key]->callback;
+        }
     }
     m_putM.erase( hdr->key );
 }
@@ -559,6 +587,11 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
                                     hdr->pt_index, hdr->match_bits );
 
     if ( hdr->op == Ack ) {
+        processAck( hdr );
+        return NULL;
+    }
+
+    if ( hdr->op == Ack2 ) {
         processAck( hdr );
         return NULL;
     }
@@ -692,13 +725,27 @@ RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
     entry->origHdr     = *hdr;
     entry->replyHdr    = *hdr;
     entry->replyHdr.op = Reply;
+    entry->cmd         = NULL;
     
     entry->callback = 
                 new GetRecvCallback( this, &Context::getRecvCallback,entry );
 
+    ME& me = m_meV[me_handle];
+
     // this needs to be fixed
+    // TODO implement local offsets 
     entry->mlength = hdr->length;
-    entry->start   = (void*) ((Addr) m_meV[me_handle].me.start + hdr->offset);
+    entry->start   = (void*) ((Addr) me.me.start + hdr->offset);
+
+    if( me.me.options & PTL_ME_USE_ONCE ) { 
+
+        PRINT_AT(Context,"unlink me_handle %d\n",me_handle);
+        assert( m_meV[me_handle].used );
+        m_ptV[hdr->pt_index].meL[list].remove(me_handle);
+        m_meV[me_handle].used = false;
+
+        freeHostMEHandle( me_handle );
+    }
 
     m_nic->sendMsg( nid, &entry->replyHdr, (Addr) entry->start,
                     entry->mlength, entry->callback );  
@@ -716,7 +763,7 @@ bool Context::getRecvCallback( GetRecvEntry* entry )
 RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
                                     ptl_list_t list )
 {
-    PRINT_AT(Context,"\n");
+    PRINT_AT(Context,"me_handle=%d\n",me_handle);
     
     PutRecvEntry* entry = new PutRecvEntry;
     entry->op        = ::Put;
@@ -727,6 +774,7 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
     entry->unlink    = false;
     entry->ackHdr    = *hdr;
     entry->ackHdr.op = Ack;
+    entry->cmd       = NULL;
 
     entry->state = PutRecvEntry::WaitRecvComp;
 
@@ -763,7 +811,6 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
         m_meV[me_handle].used = false;
 
         freeHostMEHandle( me_handle );
-
 
         // this is messy, we need to remove from our table and the host 
         // needs to free the handle
@@ -813,9 +860,13 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
 
         recvFini( entry );
 
-        if ( entry->origHdr.ack_req == PTL_ACK_REQ && 
-                ! (findME(entry->me_handle)->options & PTL_ME_ACK_DISABLE ) ) {
-            entry->ackHdr.op = Ack;
+        if ( entry->origHdr.ack_req == PTL_ACK_REQ ) {
+            if ( findME(entry->me_handle)->options & PTL_ME_ACK_DISABLE ) {
+                entry->ackHdr.op = Ack2;
+            } else {
+                entry->ackHdr.op = Ack;
+            }
+
             entry->ackHdr.dest_pid = entry->origHdr.src_pid;
             entry->ackHdr.src_pid = m_pid;
             PRINT_AT(Context,"send ack\n");
@@ -832,7 +883,12 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
         delete entry;
     } else {
         PRINT_AT(Context,"finished PTL_OVERFLOW data movement\n");
-        entry->callback = NULL;
+        if ( entry->cmd ) {
+            doMEOverflow( entry );
+            delete entry->cmd;
+        } else {
+            entry->callback = NULL;
+        }
     } 
 
     return true;

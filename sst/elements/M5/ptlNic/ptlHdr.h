@@ -13,7 +13,7 @@ union CtrlFlit {
 };
 
 typedef enum {
-    Put, Get, Atomic, FetchAtomic, Swap, Ack, Reply  
+    Put, Get, Atomic, FetchAtomic, Swap, Ack, Ack2, Reply  
 } op_t;
 
 struct PtlHdr {
