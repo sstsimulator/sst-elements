@@ -30,8 +30,6 @@ class DmaEngine {
         CallbackBase* callback;
     };
 
-    //bool callback( CallbackEntry* );
-
     bool xfer( DmaEvent::Type, Addr, uint8_t*, size_t, CallbackBase* );
     void eventHandler( SST::Event* );
 
