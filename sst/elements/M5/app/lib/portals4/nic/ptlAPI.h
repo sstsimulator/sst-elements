@@ -276,7 +276,8 @@ class PtlAPI {
 
         checkMeUnlinked();
 
-        PTL_DBG2( "eq_handle=%d want count=%li cur=%li %p\n", 
+        PTL_DBG2( "nid=%d eq_handle=%d want count=%li cur=%li %p\n", 
+                    m_id.phys.nid,
                     eq_handle, foo->count, foo->eventV[ pos ].count1, 
                                 &foo->eventV[pos] );
 
@@ -284,6 +285,7 @@ class PtlAPI {
         while ( foo->eventV[ pos ].count2 < foo->count );
 
         *event = foo->eventV[ pos ].user;
+        PTL_DBG2("nid=%d type=%d\n",m_id.phys.nid,event->type);
         
         if ( foo->eventV[ pos ].count2 != foo->count ) {
             return -PTL_EQ_DROPPED;
@@ -292,7 +294,6 @@ class PtlAPI {
         ++foo->count;
         return PTL_OK;
     }
-
 
     int ptlPut(ptl_handle_md_t  md_handle,
            ptl_size_t       local_offset,
