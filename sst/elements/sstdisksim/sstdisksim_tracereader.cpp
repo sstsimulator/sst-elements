@@ -39,24 +39,18 @@ static sstdisksim_tracereader* __ptrs[128];
 bool
 sstdisksim_tracereader::clock(Cycle_t current)
 {
-  static bool _ended = 0;
   sstdisksim_posix_event* event = __parser->getNextEvent();
-
-  if ( _ended == true )
-    return false;
+  static bool _ended;
 
   /* At the end of our input */
   if ( event == NULL )
   {
-    event = new sstdisksim_posix_event;
-    event->call  = _END_CALLS;
-    unregisterExit();
-    _ended = true;
+    if ( _ended )
+      unregisterExit();
     return false;
   }
 
   diskmodel->Send(0, event);
-
   return false;
 }
 

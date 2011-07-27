@@ -396,9 +396,21 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
 sstdisksim_posix_event*
 sstdisksim_tau_parser::getNextEvent()
 {
+  static bool _ended = false;
+  static int ___i = 0;
   sstdisksim_posix_event* ret = __head_ev;
+  if ( _ended == true )
+    return NULL;
+
   if ( __head_ev != NULL )
     __head_ev = __head_ev->next_event;
+  
+  if ( ret == NULL && _ended == false )
+  {
+    ret = new sstdisksim_posix_event;
+    ret->call = _END_CALLS;
+    _ended = true;
+  }
 
   return ret;
 }

@@ -201,7 +201,7 @@ sstdisksim_straightdisk::getNextEvent()
 
       break;    
     case _END_CALLS:
-      ev->etype = DISKSIMEND;      
+      ev->etype = DISKSIMEND;  
       break;
     case _CALL_CREAT:
     case _CALL_CREAT64:
@@ -249,10 +249,19 @@ bool
 sstdisksim_straightdisk::clock(Cycle_t current)
 {
   sstdisksim_event* event = getNextEvent();
+  static bool _ended = false;
 
   /* At the end of our input */
   if ( event == NULL )
+  {
+    if ( _ended == false )
+    {
+      unregisterExit();
+      _ended = true;
+    }
+
     return false;
+  }
   
   link->Send(0, event);
   return false;
@@ -309,9 +318,6 @@ sstdisksim_straightdisk::handleEvent(Event* event)
 int
 sstdisksim_straightdisk::Setup()
 {
-  // Should be the last thing added 
-  unregisterExit();
-
   return 0;
 }
 
