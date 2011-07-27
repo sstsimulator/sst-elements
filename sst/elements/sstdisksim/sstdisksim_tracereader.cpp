@@ -39,7 +39,11 @@ static sstdisksim_tracereader* __ptrs[128];
 bool
 sstdisksim_tracereader::clock(Cycle_t current)
 {
+  static bool _ended = 0;
   sstdisksim_posix_event* event = __parser->getNextEvent();
+
+  if ( _ended == true )
+    return false;
 
   printf("sending diskmodel");
   /* At the end of our input */
@@ -47,8 +51,9 @@ sstdisksim_tracereader::clock(Cycle_t current)
   {
     event = new sstdisksim_posix_event;
     event->call  = _END_CALLS;
-    unregisterExit();
-    printf("END \n");
+    //    unregisterExit();
+    printf(" END");
+    _ended = true;
   }
 
   printf(" %p ", diskmodel);
@@ -96,7 +101,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   }
 
   registerTimeBase("1ps");
-  diskmodel = configureLink( "diskmodel" );
+  diskmodel = configureLink( "straightdisk" );
 
   if ( diskmodel == 0 )
   {
@@ -126,9 +131,6 @@ sstdisksim_tracereader::~sstdisksim_tracereader()
 int
 sstdisksim_tracereader::Setup()
 {
-  // Should be the last thing added 
-  unregisterExit();
-
   return 0;
 }
 

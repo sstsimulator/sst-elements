@@ -13,7 +13,7 @@
       <links>
 	<link id="1">
 	  <params>
-	    <name> diskmodel </name>
+	    <name> straightdisk </name>
 	    <lat> 1ps </lat>
 	  </params>
 	</link>
@@ -35,7 +35,7 @@
 	</link>
 	<link id="1">
 	  <params>
-	    <name> diskmodel </name>
+	    <name> straightdisk </name>
 	    <lat> 1ps </lat>
 	  </params>
 	</link>
