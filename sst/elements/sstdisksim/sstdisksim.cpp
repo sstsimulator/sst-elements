@@ -208,6 +208,7 @@ sstdisksim::handleEvent(Event* event)
     r.flags = DISKSIM_WRITE;
   else if ( ev->etype == DISKSIMEND)
   {
+    printf("End event\n", r.bytecount, r.blkno, __now-tmp);
     lockstep->Send(__cycle+100, ev);
     return;
   }
@@ -243,7 +244,6 @@ sstdisksim::handleEvent(Event* event)
   double cyclespermillisec = 1000000;
   
   __event_total++;
-
   __cycle += (long)((__now-tmp)*cyclespermillisec);
   lockstep->Send(__cycle, ev);
   

@@ -45,21 +45,18 @@ sstdisksim_tracereader::clock(Cycle_t current)
   if ( _ended == true )
     return false;
 
-  printf("sending diskmodel");
   /* At the end of our input */
   if ( event == NULL )
   {
     event = new sstdisksim_posix_event;
     event->call  = _END_CALLS;
-    //    unregisterExit();
-    printf(" END");
+    unregisterExit();
     _ended = true;
+    return false;
   }
 
-  printf(" %p ", diskmodel);
   diskmodel->Send(0, event);
 
-  printf("event\n");
   return false;
 }
 

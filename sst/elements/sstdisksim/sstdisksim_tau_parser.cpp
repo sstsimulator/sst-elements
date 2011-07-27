@@ -268,7 +268,7 @@ int EventTrigger( void *userData, double time,
 	{
 	  // A real value.  
 	  __tmp_vals[i][j].arg.l = userEventValue;
-	   __tmp_vals[i][j].set = true;
+	  __tmp_vals[i][j].set = true;
 	   //	   printf("event %u value %lld\n", userEventToken, userEventValue);
 	  for ( int k = 0; k < _END_ARGS; k++ )
 	  {
@@ -288,10 +288,11 @@ int EventTrigger( void *userData, double time,
 	      {
 		__head_ev = call;
 		__tail_ev = call;
+
 	      }
 	      else
 	      {
-		__tail_ev->next_event = NULL;
+		__tail_ev->next_event = call;
 		__tail_ev = call;
 	      }
 
@@ -395,11 +396,10 @@ sstdisksim_tau_parser::sstdisksim_tau_parser(const char* trc_file, const char* e
 sstdisksim_posix_event*
 sstdisksim_tau_parser::getNextEvent()
 {
-  if ( __head_ev == NULL )
-    return NULL;
-  
   sstdisksim_posix_event* ret = __head_ev;
-  __head_ev = __head_ev->next_event;
+  if ( __head_ev != NULL )
+    __head_ev = __head_ev->next_event;
+
   return ret;
 }
 

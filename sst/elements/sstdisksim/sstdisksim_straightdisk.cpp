@@ -254,7 +254,6 @@ sstdisksim_straightdisk::clock(Cycle_t current)
   if ( event == NULL )
     return false;
   
-  printf("sending straightdisk event\n");
   link->Send(0, event);
   return false;
 }
