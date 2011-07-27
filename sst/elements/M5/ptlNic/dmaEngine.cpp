@@ -67,15 +67,16 @@ bool DmaEngine::xfer( DmaEvent::Type type, Addr vaddr,
 void DmaEngine::eventHandler( SST::Event* e )
 {
     DmaEvent* event = static_cast<DmaEvent*>(e);
-
-    PRINT_AT(DmaEngine,"addr=%#lx buf=%p size=%lu\n", 
-                    event->addr,event->buf,event->size);
-    
     DmaEntry* entry = (DmaEntry*)event->key;
 
     entry->doneLength += event->size;
+
+    PRINT_AT(DmaEngine,"addr=%#lx buf=%p size=%lu %s\n", 
+                    event->addr,event->buf,event->size,
+                    entry->doneLength == entry->length ? "done" : "" );
     
     if ( entry->doneLength == entry->length ) {
+        
         if ( entry->callback && (*entry->callback)() ) {
             PRINT_AT(DmaEngine,"delete callback\n");
             delete  entry->callback;
@@ -95,7 +96,6 @@ static size_t roundUp( size_t value, size_t align )
 void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list ) 
 {
     size_t left = length;
-    PRINT_AT( DmaEngine, "vaddr=%#lx length=%lu\n", vaddr, length );
 
     while ( left ) {
         struct XYZ item;
