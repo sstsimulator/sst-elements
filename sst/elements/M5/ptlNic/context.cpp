@@ -420,7 +420,20 @@ bool Context::putCallback( PutSendEntry* entry )
 {
     PRINT_AT(Context,"state %d\n",entry->state);
     ptl_md_t& md = m_mdV[entry->md_handle].md;
+
     if ( entry->state == PutSendEntry::WaitSend ) {
+
+        // the target refused to send an Ack so it sent an Ack2 to
+        // tell the initaltor to free the send entry
+        // we got the Ack2 message before the send is complete 
+        if ( entry->hdr.op == Ack2 ) {
+            // set op to Ack so we don't end up here again
+            // when the callback is called after all the data is sent
+            entry->hdr.op = Ack;
+            // set ack_req to NO ACK so we don't wait for an ack
+            entry->hdr.ack_req = PTL_NO_ACK_REQ;
+            return false;
+        }
 
         PRINT_AT(Context,"Send complete\n");
         if ( md.eq_handle != -1  ) {
@@ -542,22 +555,11 @@ void Context::processAck( PtlHdr* hdr )
     
     m_putM[hdr->key]->hdr = *hdr;
 
-    if ( hdr->op == Ack2 ) {
-        PRINT_AT(Context, "free blocked ack resources for key %d\n",hdr->key);
-        freeKey( hdr->key );
-
-        if (  m_putM[hdr->key]->callback ) {
-            delete m_putM[hdr->key]->callback;
-        }
-        delete m_putM[hdr->key];
-        
-    } else {
-
-        PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset );
-        if ( (*m_putM[hdr->key]->callback)() ) {
-            delete m_putM[hdr->key]->callback;
-        }
+    PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset );
+    if ( (*m_putM[hdr->key]->callback)() ) {
+        delete m_putM[hdr->key]->callback;
     }
+
     m_putM.erase( hdr->key );
 }
 
@@ -862,6 +864,9 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
 
         if ( entry->origHdr.ack_req == PTL_ACK_REQ ) {
             if ( findME(entry->me_handle)->options & PTL_ME_ACK_DISABLE ) {
+                // we can't send an ack but the initiator is waiting
+                // on one to free resources, send an Ack2 so the initiator
+                // can free resources 
                 entry->ackHdr.op = Ack2;
             } else {
                 entry->ackHdr.op = Ack;
