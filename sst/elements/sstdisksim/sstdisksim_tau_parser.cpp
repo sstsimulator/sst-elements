@@ -397,7 +397,6 @@ sstdisksim_posix_event*
 sstdisksim_tau_parser::getNextEvent()
 {
   static bool _ended = false;
-  static int ___i = 0;
   sstdisksim_posix_event* ret = __head_ev;
   if ( _ended == true )
     return NULL;

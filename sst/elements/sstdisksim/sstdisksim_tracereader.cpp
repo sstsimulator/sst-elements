@@ -96,7 +96,10 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
   }
 
   registerTimeBase("1ps");
+
   diskmodel = configureLink( "straightdisk" );
+  if ( diskmodel == 0 )
+    diskmodel = configureLink( "raid0" );
 
   if ( diskmodel == 0 )
   {

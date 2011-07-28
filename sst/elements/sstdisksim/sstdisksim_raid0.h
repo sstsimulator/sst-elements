@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SSTDISKSIM_STRAIGHTDISK_H
-#define _SSTDISKSIM_STRAIGHTDISK_H
+#ifndef _SSTDISKSIM_RAID0_H
+#define _SSTDISKSIM_RAID0_H
 
 #include "sstdisksim_event.h"
 
@@ -37,12 +37,12 @@ using namespace SST;
 #define DISKSIM_DBG 0
 #endif
 
-class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
+class sstdisksim_raid0 : public sstdisksim_diskmodel, public Component {
 
  public:
 
-  sstdisksim_straightdisk( ComponentId_t id, Params_t& params );
-  ~sstdisksim_straightdisk();
+  sstdisksim_raid0( ComponentId_t id, Params_t& params );
+  ~sstdisksim_raid0();
 
   int Setup();
   int Finish();
@@ -60,7 +60,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
 
   Log< DISKSIM_DBG >&  __dbg;
   
-  SST::Link* straightdisk;
+  SST::Link* raid0;
   SST::Link* link;
   
   friend class boost::serialization::access;
@@ -69,7 +69,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(link);
-      ar & BOOST_SERIALIZATION_NVP(straightdisk);
+      ar & BOOST_SERIALIZATION_NVP(raid0);
     }
   
   template<class Archive>
@@ -77,16 +77,16 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(link);
-      ar & BOOST_SERIALIZATION_NVP(straightdisk);
+      ar & BOOST_SERIALIZATION_NVP(raid0);
 
-      SST::Link* straightdisk;
+      SST::Link* raid0;
       
-      straightdisk->setFunctor(new 
-			       SST::Event::Handler<sstdisksim_straightdisk>(this, 
-									    &sstdisksim_straightdisk::handleEvent));
+      raid0->setFunctor(new 
+			SST::Event::Handler<sstdisksim_raid0>(this, 
+							      &sstdisksim_raid0::handleEvent));
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    
 };
 
-#endif /* _SSTDISKSIM_STRAIGHTDISK_H */
+#endif /* _SSTDISKSIM_RAID0_H */

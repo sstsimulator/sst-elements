@@ -23,7 +23,7 @@
 void 
 opFinishedCallback(sstdisksim_event* event, long long now)
 {
-  static int ___lockStepEventPrint__ = 0;
+  //static int ___lockStepEventPrint__ = 0;
   
   unsigned long sector;
   
@@ -31,15 +31,15 @@ opFinishedCallback(sstdisksim_event* event, long long now)
 
   static long long before = 0;
 
-  /*
-  if ( !___lockStepEventPrint__ )
-  {
-    ___lockStepEventPrint__ = 1;
-    printf("time\t\t pos\t\t sector\t\t nbytes\n");
-  }   
-  */
+  
+  //if ( !___lockStepEventPrint__ )
+  //{
+  //   ___lockStepEventPrint__ = 1;
+  //   printf("time\t\t pos\t\t sector\t\t nbytes\n");
+  //}   
+  
   static int ___x = 0;
-  printf("%d\t\t%ld\t\t%lu\t\t%lu\t\t%d\n", 
+  printf("%d\t\t%lld\t\t%lu\t\t%llu\t\t%d\n", 
 	 ___x,
 	 now-before,
 	 sector,

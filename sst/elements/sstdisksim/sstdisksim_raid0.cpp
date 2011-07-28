@@ -18,7 +18,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "sstdisksim_straightdisk.h"
+#include "sstdisksim_raid0.h"
 #include "sst/core/element.h"
 #include "sstdisksim.h"
 
@@ -26,14 +26,14 @@
 
 #include <map>
 typedef std::map<size_t, size_t> arg_map;
-arg_map fd_map;
+arg_map fd_raid0_map;
 
 #define DBG( fmt, args... ) \
     __dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
 sstdisksim_event*
-sstdisksim_straightdisk::getNextEvent()
+sstdisksim_raid0::getNextEvent()
 {
   sstdisksim_event* ev = new sstdisksim_event();
   ev->completed = 0;
@@ -62,8 +62,8 @@ sstdisksim_straightdisk::getNextEvent()
 	break;
       }
 
-      fd_map.erase(cur_event->args[_ARG_FD].t);
-      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid0_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid0_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       //      printf("%d PREAD pos %lld count %lld \n", ___j++, ev->pos, ev->count);
 
@@ -83,8 +83,8 @@ sstdisksim_straightdisk::getNextEvent()
 	break;
       }
 
-      fd_map.erase(cur_event->args[_ARG_FD].t);
-      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid0_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid0_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       //      printf("%d PWRITE pos %lld count %lld \n", ___j++, ev->pos, ev->count);
 
@@ -105,12 +105,12 @@ sstdisksim_straightdisk::getNextEvent()
 	break;
       }
 
-      iter = fd_map.find(cur_event->args[_ARG_FD].t);
+      iter = fd_raid0_map.find(cur_event->args[_ARG_FD].t);
 
-      if ( iter != fd_map.end() )
+      if ( iter != fd_raid0_map.end() )
       {
 	ev->pos =  iter->second;
-	fd_map.erase(cur_event->args[_ARG_FD].t);
+	fd_raid0_map.erase(cur_event->args[_ARG_FD].t);
       }
 
       /*      if ( cur_event->call->call == _CALL_READV )
@@ -120,7 +120,7 @@ sstdisksim_straightdisk::getNextEvent()
 
 	printf("%d READ pos %lld count %lld %d\n", ___j++, ev->pos, ev->count);*/
 
-      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid0_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
       break;
@@ -130,7 +130,7 @@ sstdisksim_straightdisk::getNextEvent()
     case _CALL_FWRITE:
       ev->etype = DISKSIMWRITE;
       ev->count = cur_event->args[_ARG_COUNT].t;
-      iter = fd_map.find(cur_event->args[_ARG_FD].t);
+      iter = fd_raid0_map.find(cur_event->args[_ARG_FD].t);
       ev->pos = 0;  
 
       if ( ev->count < 0 )
@@ -140,13 +140,13 @@ sstdisksim_straightdisk::getNextEvent()
 	break;
       }
 
-      if ( iter != fd_map.end() )
+      if ( iter != fd_raid0_map.end() )
       {
 	ev->pos =  iter->second;
-	fd_map.erase(cur_event->args[_ARG_FD].t);
+	fd_raid0_map.erase(cur_event->args[_ARG_FD].t);
       }
       
-      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid0_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
 
 
@@ -162,7 +162,7 @@ sstdisksim_straightdisk::getNextEvent()
 
     case _CALL_CLOSE:
     case _CALL_FCLOSE:
-      fd_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid0_map.erase(cur_event->args[_ARG_FD].t);
       free(cur_event);
       cur_event = __list.pop_entry();
       break;
@@ -176,7 +176,7 @@ sstdisksim_straightdisk::getNextEvent()
 	  cur_pos = cur_event->args[_ARG_OFFSET].l;
 	  break;
 	case 1: //seek_cur
-	  iter = fd_map.find(cur_event->args[_ARG_FD].t);
+	  iter = fd_raid0_map.find(cur_event->args[_ARG_FD].t);
 	  cur_pos = cur_event->args[_ARG_OFFSET].l + iter->second;
 	  break;
 	  
@@ -186,8 +186,8 @@ sstdisksim_straightdisk::getNextEvent()
 	  break;
 	}
       
-      fd_map.erase(cur_event->args[_ARG_FD].t);
-      fd_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid0_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid0_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_pos));
 
       /*      if ( cur_event->call->call == _CALL_FSEEK )
@@ -247,7 +247,7 @@ sstdisksim_straightdisk::getNextEvent()
 
 /******************************************************************************/
 bool
-sstdisksim_straightdisk::clock(Cycle_t current)
+sstdisksim_raid0::clock(Cycle_t current)
 {
   sstdisksim_event* event = getNextEvent();
   static bool _ended = false;
@@ -267,7 +267,7 @@ sstdisksim_straightdisk::clock(Cycle_t current)
 }
 
 /******************************************************************************/
-sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,  
+sstdisksim_raid0::sstdisksim_raid0( ComponentId_t id,  
 						  Params_t& params ) :
   Component( id ),
   __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
@@ -279,11 +279,11 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
 
   // Clock speed really doesn't matter much here-it is used to sync up the simulations.
   registerClock("1GHz", 
-  		new Clock::Handler<sstdisksim_straightdisk>(this, 
-  							   &sstdisksim_straightdisk::clock));
+  		new Clock::Handler<sstdisksim_raid0>(this, 
+  							   &sstdisksim_raid0::clock));
  
-  straightdisk = configureLink("straightdisk",  
-			       new Event::Handler<sstdisksim_straightdisk>(this,&sstdisksim_straightdisk::handleEvent));
+  raid0 = configureLink("raid0",  
+			       new Event::Handler<sstdisksim_raid0>(this,&sstdisksim_raid0::handleEvent));
   link = configureLink( "link" );
 
   if ( link == 0 )
@@ -292,19 +292,19 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
     exit(1);
   }
 
-  printf("Starting disk controller plain disk up\n");
+  printf("Starting raid0 up\n");
 
   registerExit();
 }
 
 /******************************************************************************/
-sstdisksim_straightdisk::~sstdisksim_straightdisk()
+sstdisksim_raid0::~sstdisksim_raid0()
 {
 }
 
 /******************************************************************************/
 void 
-sstdisksim_straightdisk::handleEvent(Event* event)
+sstdisksim_raid0::handleEvent(Event* event)
 {
   sstdisksim_posix_event* ev = static_cast<sstdisksim_posix_event*>(event);
 
@@ -315,34 +315,34 @@ sstdisksim_straightdisk::handleEvent(Event* event)
 
 /******************************************************************************/
 int
-sstdisksim_straightdisk::Setup()
+sstdisksim_raid0::Setup()
 {
   return 0;
 }
 
 /******************************************************************************/
 int 
-sstdisksim_straightdisk::Finish()
+sstdisksim_raid0::Finish()
 {
-  DBG("Shutting sstdisksim_straightdisk down\n");
+  DBG("Shutting sstdisksim_raid0 down\n");
 
   return 0;
 }
 
 /******************************************************************************/
 static Component*
-create_sstdisksim_straightdisk(SST::ComponentId_t id, 
+create_sstdisksim_raid0(SST::ComponentId_t id, 
                   SST::Component::Params_t& params)
 {
-    return new sstdisksim_straightdisk( id, params );
+    return new sstdisksim_raid0( id, params );
 }
 
 /******************************************************************************/
 static const ElementInfoComponent components[] = {
-    { "sstdisksim_straightdisk",
-      "sstdisksim_straightdisk driver",
+    { "sstdisksim_raid0",
+      "sstdisksim_raid0 driver",
       NULL,
-      create_sstdisksim_straightdisk
+      create_sstdisksim_raid0
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -350,9 +350,9 @@ static const ElementInfoComponent components[] = {
 /******************************************************************************/
 extern "C" 
 {
-  ElementLibraryInfo sstdisksim_straightdisk_eli = {
-    "sstdisksim_straightdisk",
-    "sstdisksim_straightdisk serialization",
+  ElementLibraryInfo sstdisksim_raid0_eli = {
+    "sstdisksim_raid0",
+    "sstdisksim_raid0 serialization",
     components
   };
 }
