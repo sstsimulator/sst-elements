@@ -427,6 +427,7 @@ bool Context::putCallback( PutSendEntry* entry )
         // tell the initaltor to free the send entry
         // we got the Ack2 message before the send is complete 
         if ( entry->hdr.op == Ack2 ) {
+            PRINT_AT(Context,"Ack2 before send completed\n");
             // set op to Ack so we don't end up here again
             // when the callback is called after all the data is sent
             entry->hdr.op = Ack;
@@ -456,23 +457,28 @@ bool Context::putCallback( PutSendEntry* entry )
         }
     } else {
 
-        PRINT_AT(Context,"Got Ack\n");
-        if ( md.eq_handle != -1  ) {
-            writeAckEvent( md.eq_handle,
-                        entry->hdr.length,
-                        entry->hdr.offset,
-                        entry->user_ptr,
-                        PTL_NI_OK
-            );
-        }
+        if ( entry->hdr.op == Ack2 ) {
+            PRINT_AT(Context,"Ack2 after send completed\n");
+        } else { 
 
-        if ( md.ct_handle != -1  ) {
-            if ( md.options & PTL_MD_EVENT_CT_BYTES )  { 
-                assert(0);
-            } else {
-                addCT( md.ct_handle, 1 );
+            PRINT_AT(Context,"Got Ack\n");
+            if ( md.eq_handle != -1  ) {
+                writeAckEvent( md.eq_handle,
+                            entry->hdr.length,
+                            entry->hdr.offset,
+                            entry->user_ptr,
+                            PTL_NI_OK
+                );
             }
-            writeCtEvent( md.ct_handle, *findCTEvent( md.ct_handle) );
+
+            if ( md.ct_handle != -1  ) {
+                if ( md.options & PTL_MD_EVENT_CT_BYTES )  { 
+                    assert(0);
+                } else {
+                    addCT( md.ct_handle, 1 );
+                }
+                writeCtEvent( md.ct_handle, *findCTEvent( md.ct_handle) );
+            }
         }
     }
 
@@ -551,7 +557,7 @@ RecvEntry* Context::processHdrPkt( void* pkt )
 
 void Context::processAck( PtlHdr* hdr )
 {
-    PRINT_AT(Context,"key=%d\n",hdr->key);
+    PRINT_AT(Context,"key=%d\n",hdr->key, hdr->op == Ack ? "Ack" : "Ack2");
     
     m_putM[hdr->key]->hdr = *hdr;
 
@@ -874,7 +880,9 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
 
             entry->ackHdr.dest_pid = entry->origHdr.src_pid;
             entry->ackHdr.src_pid = m_pid;
-            PRINT_AT(Context,"send ack\n");
+            PRINT_AT(Context,"send %s key=%d\n",
+                            entry->ackHdr.op == Ack ? "Ack" : "Ack2",
+                            entry->ackHdr.key );
             PRINT_AT(Context,"mlength=%lu remote_offset=%lu\n",
                                 entry->ackHdr.length, entry->ackHdr.offset);
             m_nic->sendMsg( entry->srcNid, &entry->ackHdr, 
