@@ -258,14 +258,8 @@ sstdisksim_straightdisk::clock(Cycle_t current)
 
   if ( event->etype == DISKSIMEND )
   {
-    if ( _ended == false )
-    {
-      unregisterExit();
-      _ended = true;
-      link->Send(0, event);
-    }
-
-    return false;
+    unregisterExit();
+    _ended = true;
   }
   
   link->Send(0, event);

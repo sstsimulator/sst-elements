@@ -40,13 +40,17 @@ bool
 sstdisksim_tracereader::clock(Cycle_t current)
 {
   sstdisksim_posix_event* event = __parser->getNextEvent();
-  static bool _ended;
+  static bool _ended = false;
 
   /* At the end of our input */
   if ( event == NULL )
   {
-    if ( _ended )
+    if ( _ended == false )
+    {
       unregisterExit();
+      _ended = true;
+    }
+
     return false;
   }
 
