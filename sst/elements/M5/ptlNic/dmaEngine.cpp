@@ -20,8 +20,9 @@ DmaEngine::DmaEngine( SST::Component& comp, int nid ) :
     assert( m_link );
 
     std::stringstream tmp;
-    tmp << "/pTable." << m_nid;
+    tmp << "/pTable." << m_nid << "." << getpid();
 
+    PRINT_AT(DmaEngine,"%s\n",__func__,tmp.str().c_str());
     m_nicMmu = new NicMmu( tmp.str(), true );
 }    
 

@@ -25,7 +25,7 @@ class PtlNic : public RtrIF
             m_offset( 0 ),
             m_dmaed( 0 ),
             m_hdrDone( false )
-        {} 
+        {}
 
         bool hdrDone() { return m_hdrDone; } 
         void setHdrDone() { m_hdrDone = true; } 
