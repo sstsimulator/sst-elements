@@ -97,8 +97,8 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/dev/SConscript src/dev/SConscript
 +    Source('isa_fake.cc')
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh src/mem/cache/cache_impl.hh
 --- /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/cache/cache_impl.hh	2011-07-21 14:00:49.000000000 -0600
-@@ -1101,6 +1101,17 @@
++++ src/mem/cache/cache_impl.hh	2011-07-27 13:14:12.000000000 -0600
+@@ -1101,6 +1101,14 @@
      bool have_exclusive = blk->isWritable();
      bool invalidate = pkt->isInvalidate();
  
@@ -107,10 +107,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh src/mem/c
 +        pkt->writeDataToBlock(blk->data, blkSize);
 +        blk->status |= BlkDirty;
 +
-+        if ( ! respond ) {
-+            assert(!pkt->memInhibitAsserted());
-+            pkt->assertMemInhibit();
-+        }
++        return;
 +    }
 +
      if (pkt->isRead() && !pkt->isInvalidate()) {
@@ -253,7 +250,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
 Only in src/sim: nicMmu.h
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
 --- /home/mjleven/tmp/m5/src/sim/process.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.cc	2011-06-13 09:09:53.000000000 -0600
++++ src/sim/process.cc	2011-07-29 12:05:30.000000000 -0600
 @@ -98,7 +98,9 @@
  
  Process::Process(ProcessParams * params)
@@ -280,7 +277,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
 +
 +    if ( tc->getProcessPtr() && nid > -1 ) {
 +        std::stringstream tmp;
-+        tmp << "/pTable." << nid;
++        tmp << "/pTable." << nid << "." << getpid();
 +        nicMmu = new NicMmu( tmp.str(), false );
 +    }
  }
@@ -288,7 +285,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
  // map simulator fd sim_fd to target fd tgt_fd
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.hh src/sim/process.hh
 --- /home/mjleven/tmp/m5/src/sim/process.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.hh	2011-06-01 08:08:14.000000000 -0600
++++ src/sim/process.hh	2011-07-29 10:43:28.000000000 -0600
 @@ -49,6 +49,7 @@
  #include "base/types.hh"
  #include "sim/sim_object.hh"

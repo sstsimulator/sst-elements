@@ -282,7 +282,6 @@ void Context::Put( cmdPtlPut_t& cmd )
                                     cmd.pt_index,cmd.match_bits); 
 
     PutSendEntry* entry = new PutSendEntry;
-    assert(entry);
 
     entry->user_ptr = cmd.user_ptr;
     entry->state = PutSendEntry::WaitSend;
@@ -325,7 +324,6 @@ void Context::Get( cmdPtlGet_t& cmd )
     PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
 
     GetSendEntry* entry = new GetSendEntry;
-    assert(entry);
 
     entry->user_ptr = cmd.user_ptr;
     entry->callback = new GetCallback(this, &Context::getCallback, entry );
@@ -362,7 +360,6 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
                             cmd.trig_ct_handle,cmd.threshold);
 
     GetSendEntry* entry = new GetSendEntry;
-    assert(entry);
 
     entry->user_ptr = cmd.user_ptr;
     entry->callback = new GetCallback(this, &Context::getCallback, entry );
@@ -498,21 +495,23 @@ bool Context::eventCallback( EventEntry* entry )
 
 void Context::doTriggered( int ct_handle )
 {
-    
     CT& ct = m_ctV[ct_handle];
 
     std::list<TriggeredOP*>::iterator iter = ct.triggered.begin(); 
 
     while ( iter != ct.triggered.end() )  {
+        std::list<TriggeredOP*>::iterator next = iter;
+        ++next;
         PRINT_AT(Context,"count=%d %d\n", ct.event.success, (*iter)->count );  
+
         if ( ct.event.success == (*iter)->count ) {
             m_nic->sendMsg( (*iter)->u.get->destNid, 
                     &(*iter)->u.get->hdr, (Addr) 0, 0,  NULL );
+            delete *iter;
+            ct.triggered.erase(iter);
         }
-
-        ++iter;
+        iter = next;
     }
-
 }
 
 void Context::writeCtEvent( EventEntry* entry )
