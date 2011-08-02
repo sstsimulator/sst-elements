@@ -154,6 +154,15 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
   __tc = registerTimeBase("1ps");
   link = configureLink("link",  
 		       new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent));
+  if ( link == NULL )
+  {
+    char link_name[256];
+    sprintf(link_name, "link%d", id);
+    link = configureLink(link_name, 
+			 new Event::Handler<sstdisksim>(this,&sstdisksim::handleEvent));
+  }
+
+
   lockstep = configureSelfLink("lockstep",
 			       __tc,
 			       new Event::Handler<sstdisksim>(this,&sstdisksim::lockstepEvent));

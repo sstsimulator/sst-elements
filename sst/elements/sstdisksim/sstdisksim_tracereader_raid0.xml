@@ -3,7 +3,7 @@
     stopAtCycle=1000000s
 </config>
 <sst>
-  <component id="2.sstdisksim_tracereader" >	
+  <component id="3.sstdisksim_tracereader" >	
     <sstdisksim_tracereader>
       <params> 
 	<trace_file>/Users/miwesto/TAU_TRACES/results_posixtest2/tau.trc</trace_file>
@@ -11,7 +11,7 @@
 	<debug>yes</debug>
       </params>
       <links>
-	<link id="1">
+	<link id="2">
 	  <params>
 	    <name> raid0 </name>
 	    <lat> 1ps </lat>
@@ -21,7 +21,7 @@
     </sstdisksim_tracereader>
   </component>
 
-  <component id="1.sstdisksim_raid0" >	
+  <component id="2.sstdisksim_raid0" >	
     <sstdisksim_raid0>
       <params> 
 	<debug>yes</debug>
@@ -29,11 +29,17 @@
       <links>
 	<link id="0">
 	  <params>
-	    <name> link </name>
+	    <name> link0 </name>
 	    <lat> 1ps </lat>
 	  </params>
 	</link>
 	<link id="1">
+	  <params>
+	    <name> link1 </name>
+	    <lat> 1ps </lat>
+	  </params>
+	</link>
+	<link id="2">
 	  <params>
 	    <name> raid0 </name>
 	    <lat> 1ps </lat>
@@ -43,7 +49,7 @@
     </sstdisksim_raid0>
   </component>
 
-  <component id="0.sstdisksim">
+  <component id="1.sstdisksim">
     <sstdisksim>
       <params>
         <param_file>/Users/miwesto/sst_google/sst-simulator/sst/elements/sstdisksim/disksim-src/seagate/testdir.parv</param_file>
@@ -52,9 +58,30 @@
 	<debug>yes</debug>
       </params>
       <links>
+	<link id="1">
+	  <params>
+	    <name> link1 </name>
+	    <lat> 1ps </lat>
+	  </params>
+	</link>
+      </links>
+    </sstdisksim>
+  </component>
+</sst>
+
+  <component id="0.sstdisksim">
+    <sstdisksim>
+      <params>
+        <param_file>/Users/miwesto/sst_google/sst-simulator/sst/elements/sstdisksim/disksim-src/seagate/testdir.parv</param_file>
+        <output_file>out.disksim</output_file>
+        <num_sectors>30000</num_sectors>
+	<num_drives>3</num_drives>
+	<debug>yes</debug>
+      </params>
+      <links>
 	<link id="0">
 	  <params>
-	    <name> link </name>
+	    <name> link0 </name>
 	    <lat> 1ps </lat>
 	  </params>
 	</link>

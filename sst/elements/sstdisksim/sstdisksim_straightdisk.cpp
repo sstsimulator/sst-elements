@@ -275,7 +275,6 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
   __id = id;
 
   registerTimeBase("1ps");
-  link = configureLink( "link" );
 
   // Clock speed really doesn't matter much here-it is used to sync up the simulations.
   registerClock("1GHz", 
@@ -284,8 +283,8 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
  
   straightdisk = configureLink("straightdisk",  
 			       new Event::Handler<sstdisksim_straightdisk>(this,&sstdisksim_straightdisk::handleEvent));
-  link = configureLink( "link" );
 
+  link = configureLink( "link" );
   if ( link == 0 )
   {
     printf("No disk specified.  See sstdisksim_tracereader.xml or README for more info.\n");
