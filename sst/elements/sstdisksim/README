@@ -19,12 +19,14 @@ and the setup of sstdisksim_tracereader.cpp.  Currently, it iterates
 through the potential disk models until it finds one that is identified.
 This is because I'm assuming that each I/O node only has one model.
 
-At the time of this writing, the raid0 model does not yet work.  This is because
+At the time of this writing, the raid0 model uses only 2 disks.
 I'm still waiting for instruction on how to allow for a variable number of links
-for separate disks for the controller.  The current sketch in there should work,
-but doesn't.  Yet.  The resulting raid controllers will need to be verified
-as real.  In order to get a decent "this is how to implement raid" go to 
+for separate disks for the controller.  Raid controllers will need to be 
+verified as accurate.  In order to get a decent "this is how to implement 
+raid" go to 
+
 http://www.pcguide.com/ref/hdd/perf/raid/levels/singleLevel0-c.html
+
 There is no written raid specification, so we have to make due with what is 
 available and hope we are close to what the controllers are actually doing.
 
