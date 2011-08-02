@@ -148,6 +148,10 @@ class Context {
                     void *              user_ptr,
                     ptl_ni_fail_t       ni_fail_type );
 
+    void writeAutoUnlinkEvent( int eq_handle,
+                    int pt_index,
+                    void *              user_ptr,
+                    ptl_ni_fail_t       ni_fail_type );
 
     struct YYY {
         PtlHdr      hdr;
@@ -386,4 +390,28 @@ inline void Context::writeSendEvent( int eq_handle,
             );
 }
 
+inline void Context::writeAutoUnlinkEvent( int eq_handle,
+                    int pt_index,
+                    void *              user_ptr,
+                    ptl_ni_fail_t       ni_fail_type )
+{
+    ptl_process_t initiator;
+    initiator.phys.nid = initiator.phys.pid = -1;
+
+    writeEvent( eq_handle,
+                PTL_EVENT_AUTO_UNLINK,
+                initiator,
+                pt_index,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                user_ptr,
+                0,
+                ni_fail_type
+            );
+}
 #endif

@@ -824,9 +824,10 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
         entry->unlink = true;
 
         if ( ! ( me.me.options & PTL_ME_EVENT_UNLINK_DISABLE ) ) {
-            // not supported yet
-            // write PTL_EVENT_AUTO_UNLINK
-            assert(0);
+            writeAutoUnlinkEvent( m_ptV[hdr->pt_index].eq_handle,
+                    hdr->pt_index,
+                    me.user_ptr,
+                    PTL_NI_OK );
         }
     }
 
