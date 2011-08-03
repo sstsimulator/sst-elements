@@ -99,12 +99,18 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
 
   diskmodel = configureLink( "straightdisk" );
   if ( diskmodel == 0 )
-    diskmodel = configureLink( "raid0" );
-
-  if ( diskmodel == 0 )
   {
-    printf("No diskmodel specified.  See sstdisksim_tracereader.xml or README for more info.\n");
-    exit(1);
+    diskmodel = configureLink( "raid0" );
+    if ( diskmodel == 0 )
+    {
+      diskmodel = configureLink( "raid1" );
+      if ( diskmodel == 0 )
+      {
+	printf("No diskmodel specified.  See sstdisksim_tracereader.xml or README for more info.\n"
+	       "Is the diskmodel you would like to use specified in the sstdisksim_tracereader.cp file?\n");
+	exit(1);
+      }
+    }
   }
 
   __parser = new sstdisksim_tau_parser(traceFile.c_str(), edfFile.c_str());

@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SSTDISKSIM_TRACEREADER_H
-#define _SSTDISKSIM_TRACEREADER_H
+#ifndef _SSTDISKSIM_RAID1_H
+#define _SSTDISKSIM_RAID1_H
 
 #include "sstdisksim_event.h"
 
@@ -23,10 +23,12 @@
 #include "syssim_driver.h"
 #include <disksim_interface.h>
 #include <disksim_rand48.h>
-
+ 
 #include <sstdisksim.h>
 #include <sstdisksim_event.h>
 #include "sstdisksim_tau_parser.h"
+
+#include "sstdisksim_diskmodel.h"
 
 using namespace std;
 using namespace SST;
@@ -35,12 +37,18 @@ using namespace SST;
 #define DISKSIM_DBG 0
 #endif
 
-class sstdisksim_tracereader : public Component {
+struct raid1_link_list
+{
+  SST::Link* link;
+  struct raid1_link_list* next;
+}raid1_link_list;
 
+class sstdisksim_raid1 : public sstdisksim_diskmodel, public Component {
  public:
 
-  sstdisksim_tracereader( ComponentId_t id, Params_t& params );
-  ~sstdisksim_tracereader();
+  sstdisksim_raid1( ComponentId_t id, Params_t& params );
+  ~sstdisksim_raid1();
+
   int Setup();
   int Finish();
 
@@ -48,21 +56,19 @@ class sstdisksim_tracereader : public Component {
 
  private:
 
-  std::string traceFile;
-  std::string edfFile;
-
   Params_t __params;
   ComponentId_t __id;
-  sstdisksim_tau_parser* __parser;
 
-  /* To be removed later-this is just to test the component
-     before we start having trace-reading functionality. */
+  sstdisksim_event* getNextEvent();
+
+  void handleEvent(Event* ev);
 
   Log< DISKSIM_DBG >&  __dbg;
   
-  sstdisksim_tracereader( const sstdisksim_tracereader& c );
-  
-  SST::Link* diskmodel;
+  SST::Link* raid1;
+
+  SST::Link* disk0;
+  SST::Link* disk1;
   
   friend class boost::serialization::access;
   template<class Archive>
@@ -70,16 +76,25 @@ class sstdisksim_tracereader : public Component {
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
       ar & BOOST_SERIALIZATION_NVP(link);
+      ar & BOOST_SERIALIZATION_NVP(raid1);
     }
   
   template<class Archive>
     void load(Archive & ar, const unsigned int version)
     {
       ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-      ar & BOOST_SERIALIZATION_NVP(diskmodel);
+      ar & BOOST_SERIALIZATION_NVP(raid1);
+      ar & BOOST_SERIALIZATION_NVP(disk0);
+      ar & BOOST_SERIALIZATION_NVP(disk1);
+
+      SST::Link* raid1;
+      
+      raid1->setFunctor(new 
+			SST::Event::Handler<sstdisksim_raid1>(this, 
+							      &sstdisksim_raid1::handleEvent));
     }
 	
   BOOST_SERIALIZATION_SPLIT_MEMBER()    
 };
 
-#endif /* _SSTDISKSIM_TRACEREADER_H */
+#endif /* _SSTDISKSIM_RAID1_H */

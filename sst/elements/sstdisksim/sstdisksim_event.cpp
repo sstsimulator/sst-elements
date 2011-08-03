@@ -55,3 +55,17 @@ sstdisksim_event::sstdisksim_event()
 {
   finishedCall = &opFinishedCallback;
 }
+
+/******************************************************************************/
+sstdisksim_event::sstdisksim_event(sstdisksim_event* ev)
+  :SST::Event()
+{
+  finishedCall = &opFinishedCallback;
+  etype = ev->etype;
+  pos = ev->pos;
+  count = ev->count;
+  devno = ev->devno;
+  time = ev->time;
+  completed = ev->completed;
+  bossClass = ev->bossClass;
+}

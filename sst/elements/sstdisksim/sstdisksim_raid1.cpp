@@ -18,7 +18,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "sstdisksim_raid0.h"
+#include "sstdisksim_raid1.h"
 #include "sst/core/element.h"
 #include "sstdisksim.h"
 
@@ -26,14 +26,14 @@
 
 #include <map>
 typedef std::map<size_t, size_t> arg_map;
-arg_map fd_raid0_map[256];
+arg_map fd_raid1_map;
 
 #define DBG( fmt, args... ) \
     __dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 /******************************************************************************/
 sstdisksim_event*
-sstdisksim_raid0::getNextEvent()
+sstdisksim_raid1::getNextEvent()
 {
   sstdisksim_event* ev = new sstdisksim_event();
   ev->completed = 0;
@@ -62,9 +62,9 @@ sstdisksim_raid0::getNextEvent()
 	break;
       }
 
-      fd_raid0_map[cur_device].erase(cur_event->args[_ARG_FD].t);
-      fd_raid0_map[cur_device].insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
-							      cur_event->args[_ARG_COUNT].t + ev->pos));
+      fd_raid1_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid1_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+						  cur_event->args[_ARG_COUNT].t + ev->pos));
       //      printf("%d PREAD pos %lld count %lld \n", ___j++, ev->pos, ev->count);
 
       looping = false;
@@ -83,9 +83,9 @@ sstdisksim_raid0::getNextEvent()
 	break;
       }
 
-      fd_raid0_map[cur_device].erase(cur_event->args[_ARG_FD].t);
-      fd_raid0_map[cur_device].insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
-					    cur_event->args[_ARG_COUNT].t + ev->pos));
+      fd_raid1_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid1_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+						  cur_event->args[_ARG_COUNT].t + ev->pos));
       //      printf("%d PWRITE pos %lld count %lld \n", ___j++, ev->pos, ev->count);
 
       looping = false;
@@ -105,12 +105,12 @@ sstdisksim_raid0::getNextEvent()
 	break;
       }
 
-      iter = fd_raid0_map[cur_device].find(cur_event->args[_ARG_FD].t);
+      iter = fd_raid1_map.find(cur_event->args[_ARG_FD].t);
 
-      if ( iter != fd_raid0_map[cur_device].end() )
+      if ( iter != fd_raid1_map.end() )
       {
 	ev->pos =  iter->second;
-	fd_raid0_map[cur_device].erase(cur_event->args[_ARG_FD].t);
+	fd_raid1_map.erase(cur_event->args[_ARG_FD].t);
       }
 
       /*      if ( cur_event->call->call == _CALL_READV )
@@ -120,7 +120,7 @@ sstdisksim_raid0::getNextEvent()
 
 	printf("%d READ pos %lld count %lld %d\n", ___j++, ev->pos, ev->count);*/
 
-      fd_raid0_map[cur_device].insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid1_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
       looping = false;
       break;
@@ -130,7 +130,7 @@ sstdisksim_raid0::getNextEvent()
     case _CALL_FWRITE:
       ev->etype = DISKSIMWRITE;
       ev->count = cur_event->args[_ARG_COUNT].t;
-      iter = fd_raid0_map[cur_device].find(cur_event->args[_ARG_FD].t);
+      iter = fd_raid1_map.find(cur_event->args[_ARG_FD].t);
       ev->pos = 0;  
 
       if ( ev->count < 0 )
@@ -140,13 +140,13 @@ sstdisksim_raid0::getNextEvent()
 	break;
       }
 
-      if ( iter != fd_raid0_map[cur_device].end() )
+      if ( iter != fd_raid1_map.end() )
       {
 	ev->pos =  iter->second;
-	fd_raid0_map[cur_device].erase(cur_event->args[_ARG_FD].t);
+	fd_raid1_map.erase(cur_event->args[_ARG_FD].t);
       }
       
-      fd_raid0_map[cur_device].insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+      fd_raid1_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
 					    cur_event->args[_ARG_COUNT].t + ev->pos));
 
 
@@ -162,7 +162,7 @@ sstdisksim_raid0::getNextEvent()
 
     case _CALL_CLOSE:
     case _CALL_FCLOSE:
-      fd_raid0_map[cur_device].erase(cur_event->args[_ARG_FD].t);
+      fd_raid1_map.erase(cur_event->args[_ARG_FD].t);
       free(cur_event);
       cur_event = __list.pop_entry();
       break;
@@ -176,7 +176,7 @@ sstdisksim_raid0::getNextEvent()
 	  cur_pos = cur_event->args[_ARG_OFFSET].l;
 	  break;
 	case 1: //seek_cur
-	  iter = fd_raid0_map[cur_device].find(cur_event->args[_ARG_FD].t);
+	  iter = fd_raid1_map.find(cur_event->args[_ARG_FD].t);
 	  cur_pos = cur_event->args[_ARG_OFFSET].l + iter->second;
 	  break;
 	  
@@ -186,9 +186,9 @@ sstdisksim_raid0::getNextEvent()
 	  break;
 	}
       
-      fd_raid0_map[cur_device].erase(cur_event->args[_ARG_FD].t);
-      fd_raid0_map[cur_device].insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
-							      cur_pos));
+      fd_raid1_map.erase(cur_event->args[_ARG_FD].t);
+      fd_raid1_map.insert(std::pair<size_t, long>(cur_event->args[_ARG_FD].t,
+						  cur_pos));
 
       /*      if ( cur_event->call->call == _CALL_FSEEK )
 	printf("F");
@@ -247,7 +247,7 @@ sstdisksim_raid0::getNextEvent()
 
 /******************************************************************************/
 bool
-sstdisksim_raid0::clock(Cycle_t current)
+sstdisksim_raid1::clock(Cycle_t current)
 {
   sstdisksim_event* event = getNextEvent();
   static bool _ended = false;
@@ -260,27 +260,18 @@ sstdisksim_raid0::clock(Cycle_t current)
   {
     unregisterExit();
     _ended = true;
-  }
+  } 
   
-  //  head_link->link->Send(0, event);
-
-  /* here just until we have a variable number of disks */
-   if ( cur_device == 0 )
-   {
-     disk0->Send(0, event);
-   }
-   else
-   {
-     disk1->Send(0, event);
-   }
-   cur_device = (cur_device+1)%2;    
-  /* end here just until we have a variable number of disks */
+  /* Sent to both because we are mirroring */
+  sstdisksim_event* event2 = new sstdisksim_event(event);
+  disk0->Send(0, event);
+  disk1->Send(0, event2);
 
   return false;
 }
 
 /******************************************************************************/
-sstdisksim_raid0::sstdisksim_raid0( ComponentId_t id,  
+sstdisksim_raid1::sstdisksim_raid1( ComponentId_t id,  
 						  Params_t& params ) :
   Component( id ),
   __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
@@ -289,9 +280,6 @@ sstdisksim_raid0::sstdisksim_raid0( ComponentId_t id,
 
   registerTimeBase("1ps");
 
-  cur_device = 0;
-
-  /* here just until we have a variable number of disks */
   disk0 = configureLink( "link0" );
   disk1 = configureLink( "link1" );
 
@@ -300,65 +288,28 @@ sstdisksim_raid0::sstdisksim_raid0( ComponentId_t id,
     printf("disks not specified\n");
     exit(1);
   }
-  num_devices = 2;
-  /* end here just until we have a variable number of disks */
-
-  // Replacement code for the current hard-coded 2 devices
-  /*
-  char link_name[256];
-  SST::Link* link = NULL;
-  struct raid0_link_list* rlink;
-
-  head_link = NULL;
-
-  link = (SST::Link*)1;
-  int i = 0;
-  while ( link != NULL )
-  {
-    sprintf(link_name, "link%d", i);
-    link = configureLink( link_name );
-    printf("Link %d is %p\n", i, link);
-    i++;
-
-
-    if ( link != NULL )
-    {
-      rlink = new struct raid0_link_list;
-      rlink->next = head_link;
-      head_link = rlink;
-    }
-  }
-
-  num_devices = i;
-
-  if ( head_link == NULL )
-  {
-    printf("No disk specified.  See sstdisksim_tracereader.xml or README for more info.\n");
-    exit(1);
-  }
-  */
 
   // Clock speed really doesn't matter much here-it is used to sync up the simulations.
   registerClock("1GHz", 
-  		new Clock::Handler<sstdisksim_raid0>(this, 
-  							   &sstdisksim_raid0::clock));
+  		new Clock::Handler<sstdisksim_raid1>(this, 
+  							   &sstdisksim_raid1::clock));
  
-  raid0 = configureLink("raid0",  
-			new Event::Handler<sstdisksim_raid0>(this,&sstdisksim_raid0::handleEvent));
+  raid1 = configureLink("raid1",  
+			new Event::Handler<sstdisksim_raid1>(this,&sstdisksim_raid1::handleEvent));
 
-  printf("Starting disk controller raid0 up\n");
+  printf("Starting disk controller raid1 up\n");
 
   registerExit();
 }
 
 /******************************************************************************/
-sstdisksim_raid0::~sstdisksim_raid0()
+sstdisksim_raid1::~sstdisksim_raid1()
 {
 }
 
 /******************************************************************************/
 void 
-sstdisksim_raid0::handleEvent(Event* event)
+sstdisksim_raid1::handleEvent(Event* event)
 {
   sstdisksim_posix_event* ev = static_cast<sstdisksim_posix_event*>(event);
 
@@ -369,34 +320,34 @@ sstdisksim_raid0::handleEvent(Event* event)
 
 /******************************************************************************/
 int
-sstdisksim_raid0::Setup()
+sstdisksim_raid1::Setup()
 {
   return 0;
 }
 
 /******************************************************************************/
 int 
-sstdisksim_raid0::Finish()
+sstdisksim_raid1::Finish()
 {
-  DBG("Shutting sstdisksim_raid0 down\n");
+  DBG("Shutting sstdisksim_raid1 down\n");
 
   return 0;
 }
 
 /******************************************************************************/
 static Component*
-create_sstdisksim_raid0(SST::ComponentId_t id, 
+create_sstdisksim_raid1(SST::ComponentId_t id, 
                   SST::Component::Params_t& params)
 {
-    return new sstdisksim_raid0( id, params );
+    return new sstdisksim_raid1( id, params );
 }
 
 /******************************************************************************/
 static const ElementInfoComponent components[] = {
-    { "sstdisksim_raid0",
-      "sstdisksim_raid0 driver",
+    { "sstdisksim_raid1",
+      "sstdisksim_raid1 driver",
       NULL,
-      create_sstdisksim_raid0
+      create_sstdisksim_raid1
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -404,9 +355,9 @@ static const ElementInfoComponent components[] = {
 /******************************************************************************/
 extern "C" 
 {
-  ElementLibraryInfo sstdisksim_raid0_eli = {
-    "sstdisksim_raid0",
-    "sstdisksim_raid0 serialization",
+  ElementLibraryInfo sstdisksim_raid1_eli = {
+    "sstdisksim_raid1",
+    "sstdisksim_raid1 serialization",
     components
   };
 }

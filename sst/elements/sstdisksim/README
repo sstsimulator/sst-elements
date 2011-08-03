@@ -8,11 +8,22 @@ Diskmodel:
 
 sstdisksim_straightdisk.cpp and sstdisksim_straightdisk.h are bases for 
 a plain, run-of-the-mill, model.  The test file, sstdisksim_tracereader.xml,
-is useful for running this.  You also need some fancy trace files.
-  
+is useful for running this.  You also need some fancy trace files.  This
+particular diskmodel ie disk controller, is for a single disk.
+
 sstdisksim_raid0.cpp and sstdisksim_raid0.h is the base for a 2-disk raid0
 striping mechanism.  The test file, sstdisksim_tracereader_raid0.xml,
-is useful for running this.
+is useful for an example on running this.
+
+sstdisksim_raid1.cpp and sstdisksim_raid1.h is the base for a 2-disk raid1
+mirroring mechanism.  The test file, sstdisksim_tracereader_raid1.xml,
+is useful for an example on running this.  
+
+Need to fix the times in the  output, as they are based on the last recorded 
+time in general and not the last recorded time of the actual disk.  This will
+ be a little tricky, as the callback doesn't know *which* disk it is using.
+I recommend you print out only the time and the disk instead of the time
+difference and then from there do some math.
 
 Please note that when adding new models, you need to change the Makefile
 and the setup of sstdisksim_tracereader.cpp.  Currently, it iterates 

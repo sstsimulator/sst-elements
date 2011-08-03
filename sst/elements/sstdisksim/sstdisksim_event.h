@@ -33,6 +33,7 @@ public:
   void (*finishedCall)(sstdisksim_event*, long long time);
 
   sstdisksim_event();
+  sstdisksim_event(sstdisksim_event* ev);
 
 private:
   friend class boost::serialization::access;
