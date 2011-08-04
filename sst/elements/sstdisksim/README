@@ -80,3 +80,55 @@ to handle the disk controller instead of straight disk.
 When writing scripts, in addition to the regular list of taken words, 
 there is now also sst_thread_id.  Don't make any variables with this
 name, or whatever happens can be unpredictable.
+
+************************************************************************************
+FILE LIST:
+
+test_lua_scripts/*, luascript_backend.cpp & luascript_backend.h:
+Not necessary for sstdisksim, but good example code for Lua 5.1
+
+sstdisksim.cpp & sstdisksim.h:
+Files that interface with the disksim API.  The disk "element".
+
+sstdisksim_event.cpp & sstdisksim.h:
+Event definition for what sstdisksim needs passed through a link to it.
+
+sstdisksim_lua.xml:
+test script for sstdisksim lua
+
+sstdisksim_luascriptreader.cpp & sstdisksim_luascriptreader.h:
+An interface that reads lua scripts.  Example .xml file is sstdisksim_lua.xml.
+An example script is "tracefile".
+
+sstdisksim_posix_call.cpp & sstdisksim_posix_call.h
+Files that define bits needed to pass posix events around.  Events are currently
+passed between the diskmodels and the tracereader and these are posix events.  
+Posix events should probably also be used to pass from the metadata server to the
+disk control models, which are fairly close to the io nodes as is.
+
+sstdisksim_tracereader.*:
+An element that takes the traces from a tracer, such as tau (see sstdisksim_tau_parser.*),
+and sends the events to the disk node.  This element will probably need to be changed in 
+the future to start sending events to the next level, probably a data server.
+
+sstdisksim_tau_parser.*
+The interface to TAU's api.  A new parser could be substitued for this one and
+added to the tracereader if one wished to use a different trace format.
+
+sstdisksim_diskmodel.h:
+A guide to what bits one needs to define for a disk control model.
+
+sstdisksim_straightdisk.* & sstdisksim_tracereader.xml:
+An example .xml file for running a disk controller model that just goes to a single
+disk.  sstdisksim_straightdisk.* are the simplest possible disk controller model
+in that it just forwards the posix calls to the single disk.
+
+sstdisksim_raid0.* & sstdisksim_tracereader_raid0.xml:
+An example .xml file for running a 2 disk raid0 disk controller model.  Similar to
+straightdisk, but uses a raid0 algorithm.
+
+sstdisksim_raid1.* & sstdisksim_tracereader_raid1.xml:
+An example .xml file for running a 2 disk raid1 disk controller model.  Similar to
+straightdisk & raid0, but uses a raid1 algorithm.
+
+
