@@ -79,7 +79,7 @@ objectMap_t buildConfigV2( M5* comp, std::string name, std::string configFile, S
         l0.portNum= -1;
         l1.portNum = -1;
 
-        linkMap[ tmp.name  ] =  make_pair( l0, l1 ); 
+        linkMap[ tmp.name  ] =  std::make_pair( l0, l1 ); 
     } 
     //printLinkMap( linkMap );
 
@@ -107,11 +107,11 @@ objectMap_t buildConfigV2( M5* comp, std::string name, std::string configFile, S
 
 objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST::Params& params )
 {
-    ifstream file( configFile.c_str() );
+    std::ifstream file( configFile.c_str() );
 
     assert( file.is_open() );
 
-    string line;
+    std::string line;
     getline(file,line);
 
     size_t pos1 = line.find_first_of( '"' ) + 1;
