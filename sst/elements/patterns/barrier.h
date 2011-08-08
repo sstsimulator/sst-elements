@@ -21,6 +21,7 @@ class Barrier_pattern   {
 	    cp(current_pattern),
 	    no_data(0)
 	{
+	    done= false;
 	    state= START;
 	    receives= 0;
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
@@ -37,8 +38,8 @@ class Barrier_pattern   {
 	// with these events.
 	typedef enum {START, WAIT_CHILDREN, WAIT_PARENT} barrier_state_t;
 
-	// The start event should always be START_START_EVENT
-	typedef enum {E_START= START_START_EVENT, E_FROM_CHILD, E_FROM_PARENT} barrier_events_t;
+	// The start event should always be SM_START_EVENT
+	typedef enum {E_START= SM_START_EVENT, E_FROM_CHILD, E_FROM_PARENT} barrier_events_t;
 
 
     private:
@@ -54,7 +55,10 @@ class Barrier_pattern   {
 	// We need to remember how to upcall into our parent object
 	Comm_pattern *cp;
 
+	// Barrier uses zero-length messages
 	const int no_data;
+
+	// Some more variables we need to keep track of state
 	barrier_state_t state;
 	int done;
 	int receives;

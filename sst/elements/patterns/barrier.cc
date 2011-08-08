@@ -89,9 +89,20 @@ Barrier_pattern::state_WAIT_CHILDREN(barrier_events_t event)
 	    // Count receives from my children. When I have them all, send to parent.
 	    receives++;
 	    if (receives == ctopo->num_children())   {
-		cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		if (ctopo->is_root())   {
+		    // Send to my children and get out of here
+		    std::list<int>::iterator it;
+		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+			cp->data_send(*it, no_data, E_FROM_PARENT);
+		    }
+
+		    state= START;  // For next barrier
+		    done= true;
+		} else   {
+		    cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		    state= WAIT_PARENT;
+		}
 		receives= 0;
-		state= WAIT_PARENT;
 	    }
 	    break;
 
