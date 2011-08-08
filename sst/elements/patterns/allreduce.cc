@@ -22,13 +22,13 @@ There are no configuration parameters for this module.
 
 
 void
-Allreduce_pattern::handle_events(int sst_event)
+Allreduce_pattern::handle_events(State_machine::state_event_t sst_event)
 {
 
 allreduce_events_t event;
 
 
-    event= (allreduce_events_t)sst_event;
+    event= (allreduce_events_t)sst_event.event;
 
     switch (state)   {
 	case START:
@@ -48,7 +48,7 @@ allreduce_events_t event;
     // Only "main" patterns should do that; i.e., patterns that use other
     // patterns like this one. Just return to our caller.
     if (done)   {
-	cp->SM_return();
+	cp->SM->SM_return();
     }
 
 }  /* end of handle_events() */
@@ -63,6 +63,7 @@ Allreduce_pattern::state_INIT(allreduce_events_t event)
 	    if (ctopo->is_root())   {
 		state= WAIT_CHILDREN;
 	    } else if (ctopo->is_leaf())   {
+		fprintf(stderr, "[%3d] Leaf: sending to parent %d\n", cp->my_rank, ctopo->parent_rank());
 		cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
 		state= WAIT_PARENT;
 	    } else   {
@@ -101,10 +102,24 @@ Allreduce_pattern::state_WAIT_CHILDREN(allreduce_events_t event)
 	case E_FROM_CHILD:
 	    // Count receives from my children. When I have them all, send to parent.
 	    receives++;
+	    fprintf(stderr, "[%3d] Receive %d form child, waiting for %d\n", cp->my_rank, receives, ctopo->num_children());
+
 	    if (receives == ctopo->num_children())   {
-		cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		if (ctopo->is_root())   {
+		    // Send to my children and get out of here
+		    std::list<int>::iterator it;
+		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+			cp->data_send(*it, no_data, E_FROM_PARENT);
+		    }
+
+		    state= START;  // For next allreduce
+		    done= true;
+		} else   {
+		    fprintf(stderr, "[%3d] sending to parent %d\n", cp->my_rank, ctopo->parent_rank());
+		    cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		    state= WAIT_PARENT;
+		}
 		receives= 0;
-		state= WAIT_PARENT;
 	    }
 	    break;
 
@@ -125,7 +140,9 @@ std::list<int>::iterator it;
     switch (event)   {
 	case E_FROM_PARENT:
 	    // Send to my children and get out of here
+	    fprintf(stderr, "[%3d] Receive form parent, sending to %d children\n", cp->my_rank, ctopo->num_children());
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+		fprintf(stderr, "[%3d] Interior: sending to child %d\n", cp->my_rank, *it);
 		cp->data_send(*it, no_data, E_FROM_PARENT);
 	    }
 	    done= true;

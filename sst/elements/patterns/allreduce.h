@@ -18,8 +18,10 @@
 class Allreduce_pattern   {
     public:
 	Allreduce_pattern(Comm_pattern * const& current_pattern) :
-	    cp(current_pattern)
+	    cp(current_pattern),
+	    no_data(0)
 	{
+	    done= false;
 	    state= START;
 	    receives= 0;
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
@@ -29,20 +31,22 @@ class Allreduce_pattern   {
 
 	uint32_t install_handler(void)
 	{
-	    return cp->SM_create((void *)this, Allreduce_pattern::wrapper_handle_events);
+	    return cp->SM->SM_create((void *)this, Allreduce_pattern::wrapper_handle_events);
 	}
 
 	// The Allreduce pattern generator can be in these states and deals
 	// with these events.
 	typedef enum {START, WAIT_CHILDREN, WAIT_PARENT} allreduce_state_t;
-	typedef enum {E_START, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
+
+	// The start event should always be SM_START_EVENT
+	typedef enum {E_START= SM_START_EVENT, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
 
 
     private:
 	// Wrapping a pointer to a non-static member function like this is from
 	// http://www.newty.de/fpt/callback.html
-	void handle_events(int sst_event);
-	static void wrapper_handle_events(void *obj, int sst_event)
+	void handle_events(State_machine::state_event_t sst_event);
+	static void wrapper_handle_events(void *obj, State_machine::state_event_t sst_event)
 	{
 	    Allreduce_pattern* mySelf = (Allreduce_pattern*) obj;
 	    mySelf->handle_events(sst_event);
@@ -50,6 +54,9 @@ class Allreduce_pattern   {
 
 	// We need to remember how to upcall into our parent object
 	Comm_pattern *cp;
+
+	// FIXME: This probably needs to change
+	const int no_data;
 
 	allreduce_state_t state;
 	int done;
