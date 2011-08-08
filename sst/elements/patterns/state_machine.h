@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdint.h>	// For uint32_t
 
-const int START_START_EVENT= 0;
+const int SM_START_EVENT= 0;
 
 
 class State_machine   {

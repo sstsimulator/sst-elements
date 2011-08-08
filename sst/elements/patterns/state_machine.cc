@@ -68,9 +68,12 @@ state_event_t e;
     currentSM= machineID;
 
     // Call the handler of the new SM with its start event
-    e.event= START_START_EVENT;
+    e.event= SM_START_EVENT;
     e.data= -2.0;
     (*SM[currentSM].handler)(SM[currentSM].obj, e);
+
+    // There may be events for this SM already pending
+    deliver_missed_events();
 
 }  // end of SM_call()
 
