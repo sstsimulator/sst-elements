@@ -20,6 +20,7 @@ libpingpong_pattern_la_SOURCES = ping_pong.h ping_pong.cc \
 			    state_machine.h state_machine.cc \
 			    pattern_common.h pattern_common.cc \
 			    barrier.h barrier.cc \
+			    allreduce.h allreduce.cc \
 			    collective_topology.h collective_topology.cc
 libpingpong_pattern_la_LDFLAGS = -module -avoid-version
 

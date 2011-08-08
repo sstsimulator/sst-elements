@@ -12,6 +12,7 @@
 
 #include "comm_pattern.h"
 #include "barrier.h"
+#include "allreduce.h"
 
 
 
@@ -59,8 +60,16 @@ class Pingpong_pattern : public Comm_pattern {
 		it++;
 	    }
 
+	    // Install other state machines which we (pingpong) need as
+	    // subroutines.
+	    // For pingpong we don't really need them, but we include
+	    // them here as an example, and for testing the gate keeper
+	    // switiching mechanism among state machines
 	    Barrier_pattern *b= new Barrier_pattern(this);
 	    SMbarrier= b->install_handler();
+
+	    Allreduce_pattern *a= new Allreduce_pattern(this);
+	    SMallreduce= a->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
 	    // Make sure to call SM_create() last in the main pattern
@@ -77,11 +86,11 @@ class Pingpong_pattern : public Comm_pattern {
 
 	// The Pingpong pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {PP_INIT, PP_RECEIVING, PP_BARRIER, PP_DONE} pingpong_state_t;
+	typedef enum {PP_INIT, PP_RECEIVING, PP_BARRIER, PP_ALLREDUCE, PP_DONE} pingpong_state_t;
 
 	// The start event should always be START_START_EVENT
-	typedef enum {E_START= START_START_EVENT, E_RECEIVE, E_BARRIER_ENTRY,
-	    E_BARRIER_EXIT} pingpong_events_t;
+	typedef enum {E_START= SM_START_EVENT, E_BARRIER_ENTRY,
+	    E_BARRIER_EXIT, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT, E_RECEIVE} pingpong_events_t;
 
 
 
@@ -96,10 +105,15 @@ class Pingpong_pattern : public Comm_pattern {
 	void state_INIT(pingpong_events_t event);
 	void state_RECEIVING(pingpong_events_t event);
 	void state_BARRIER(pingpong_events_t event);
+	void state_ALLREDUCE(pingpong_events_t event);
 	Params_t params;
 
+	// State machine identifiers
 	uint32_t SMpingpong;
 	uint32_t SMbarrier;
+	uint32_t SMallreduce;
+
+	// Some variables we need for pingpong to operate
 	int cnt;
 	int done;
 	int len;

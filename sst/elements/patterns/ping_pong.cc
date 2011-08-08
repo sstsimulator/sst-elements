@@ -48,6 +48,9 @@ pingpong_events_t event;
 	case PP_BARRIER:
 	    state_BARRIER(event);
 	    break;
+	case PP_ALLREDUCE:
+	    state_ALLREDUCE(event);
+	    break;
 	case PP_DONE:
 	    // Not really a state we need
 	    break;
@@ -194,7 +197,31 @@ Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 	    break;
 
 	case E_BARRIER_EXIT:
-	    // We just came back from the barrier SM. We're done
+	    // We just came back from the barrier SM. Go do an allreduce
+	    state= PP_ALLREDUCE;
+	    self_event_send(E_ALLREDUCE_ENTRY);
+	    break;
+
+	default:
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    break;
+    }
+
+}  // end of state_BARRIER()
+
+
+
+void
+Pingpong_pattern::state_ALLREDUCE(pingpong_events_t event)
+{
+
+    switch (event)   {
+	case E_ALLREDUCE_ENTRY:
+	    SM->SM_call(SMallreduce, E_ALLREDUCE_EXIT);
+	    break;
+
+	case E_ALLREDUCE_EXIT:
+	    // We just came back from the allreduce SM. We're done
 	    state= PP_DONE;
 	    done= true;
 	    break;
@@ -204,7 +231,7 @@ Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 	    break;
     }
 
-}  // end of state_BARRIER()
+}  // end of state_ALLREDUCE()
 
 
 
