@@ -283,7 +283,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
         assert( event.initiator.phys.nid == 0 );
         assert( event.initiator.phys.pid == id->phys.pid );
         assert( event.pt_index == pt_index );
-        assert( event.start == me.start + event.remote_offset );
+        assert( event.start == (unsigned char*)me.start + event.remote_offset );
         assert( event.user_ptr == &me );
         assert( event.hdr_data == HDR_DATA );
         assert( event.ni_fail_type == PTL_NI_OK );
