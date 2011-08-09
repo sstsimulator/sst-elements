@@ -22,7 +22,7 @@ int PtlPTAlloc(ptl_handle_ni_t  ni_handle,
     
     int handle = eq_handle == PTL_EQ_NONE ? -1 : eq.s.code;
 
-    ptl_pt_index_t retval = 
+    int retval =
             api->PtlPTAlloc( api, options, handle, pt_index_req );
     if ( retval < 0 ){
         return -retval;
