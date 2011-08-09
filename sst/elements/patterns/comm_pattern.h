@@ -258,12 +258,14 @@ class Comm_pattern : public Component {
 	void self_event_send(int event_type);
 	// FIXME: This needs to be more generic as well
 	void data_send(int dest, int len, int event_type);
+	void send_msg(int dest, int len, int event_type);
 
 	State_machine *SM;
 
     private:
 
         Comm_pattern(const Comm_pattern &c);
+	void handle_sst_events(CPUNicEvent *sst_event, const char *err_str);
 	void handle_net_events(Event *sst_event);
 	void handle_NoC_events(Event *sst_event);
 	void handle_self_events(Event *sst_event);

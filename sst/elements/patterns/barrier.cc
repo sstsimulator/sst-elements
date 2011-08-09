@@ -22,7 +22,7 @@ There are no configuration parameters for this module.
 
 
 void
-Barrier_pattern::handle_events(State_machine::state_event_t sst_event)
+Barrier_pattern::handle_events(State_machine::state_event sst_event)
 {
 
 barrier_events_t event;

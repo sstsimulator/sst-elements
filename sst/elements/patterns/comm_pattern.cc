@@ -17,6 +17,28 @@
 // Public functions
 //
 
+// Send and event that represents a message of length len to destination dest.
+// No actual data is contained in this message. There is some out of band data
+// that is taken from SM->SM_data and sent along.
+void
+Comm_pattern::send_msg(int dest, int len, int event_type)
+{
+
+// FIXME: We need a better model than 2440 for node latency!
+SimTime_t node_latency= 2440;
+
+
+    common->event_send(dest, (pattern_event_t)event_type,
+	SM->SM_current_tag(),
+	node_latency, len,
+	(const char *)SM->SM_data.payload,
+	SM->SM_data.payload_size);
+
+}  // end of send_msg()
+
+
+
+// FIXME: This has been replaced by send_msg
 void
 Comm_pattern::data_send(int dest, int len, int event_type)
 {
@@ -32,6 +54,7 @@ uint32_t tag= 0;
 
 
 
+// This is only used for state_transition macro.
 void
 Comm_pattern::self_event_send(int event_type)
 {
@@ -123,22 +146,37 @@ Comm_pattern::NumCores(void)
 //
 // Private functions
 //
+void
+Comm_pattern::handle_sst_events(CPUNicEvent *sst_event, const char *err_str)
+{
+
+State_machine::state_event sm;
+int payload_len;
+
+
+    if (sst_event->dest != my_rank)   {
+	_abort(comm_pattern, "%s dest %d != my rank %d\n", err_str, sst_event->dest, my_rank);
+    }
+
+    sm.event= sst_event->GetRoutine();
+    payload_len= sst_event->GetPayloadLen();
+    if (payload_len > 0)   {
+	sst_event->DetachPayload(sm.payload, &payload_len);
+	fprintf(stderr, "[%3d] Detached payload of length %d\n", my_rank, payload_len);
+    }
+
+    SM->handle_state_events(sst_event->tag, sm);
+
+}  /* end of handle_sst_events() */
+
+
+
 // Messages from the global network
 void
 Comm_pattern::handle_net_events(Event *sst_event)
 {
 
-CPUNicEvent *e;
-
-
-    e= static_cast<CPUNicEvent *>(sst_event);
-
-    if (e->dest != my_rank)   {
-	_abort(comm_pattern, "NETWORK dest %d != my rank %d\n", e->dest, my_rank);
-    }
-
-    SM->handle_state_events(e->tag, e->GetRoutine());
-    delete(e);
+    handle_sst_events((CPUNicEvent *)(sst_event), "NETWORK");
 
 }  /* end of handle_net_events() */
 
@@ -149,17 +187,7 @@ void
 Comm_pattern::handle_NoC_events(Event *sst_event)
 {
 
-CPUNicEvent *e;
-
-
-    e= static_cast<CPUNicEvent *>(sst_event);
-
-    if (e->dest != my_rank)   {
-	_abort(comm_pattern, "NoC dest %d != my rank %d\n", e->dest, my_rank);
-    }
-
-    SM->handle_state_events(e->tag, e->GetRoutine());
-    delete(e);
+    handle_sst_events((CPUNicEvent *)(sst_event), "NoC");
 
 }  /* end of handle_NoC_events() */
 
@@ -171,12 +199,7 @@ void
 Comm_pattern::handle_self_events(Event *sst_event)
 {
 
-CPUNicEvent *e;
-
-
-    e= static_cast<CPUNicEvent *>(sst_event);
-    SM->handle_state_events(e->tag, e->GetRoutine());
-    delete(e);
+    handle_sst_events((CPUNicEvent *)(sst_event), "SELF");
 
 }  /* end of handle_self_events() */
 
@@ -187,12 +210,7 @@ void
 Comm_pattern::handle_nvram_events(Event *sst_event)
 {
 
-CPUNicEvent *e;
-
-
-    e= static_cast<CPUNicEvent *>(sst_event);
-    SM->handle_state_events(e->tag, e->GetRoutine());
-    delete(e);
+    handle_sst_events((CPUNicEvent *)(sst_event), "NVRAM");
 
 }  /* end of handle_nvram_events() */
 
@@ -203,12 +221,7 @@ void
 Comm_pattern::handle_storage_events(Event *sst_event)
 {
 
-CPUNicEvent *e;
-
-
-    e= static_cast<CPUNicEvent *>(sst_event);
-    SM->handle_state_events(e->tag, e->GetRoutine());
-    delete(e);
+    handle_sst_events((CPUNicEvent *)(sst_event), "STORAGE");
 
 }  /* end of handle_storage_events() */
 

@@ -33,7 +33,6 @@ class Pingpong_pattern : public Comm_pattern {
 	    num_msg= 10;
 	    end_len= 1024;
 	    len_inc= 8;
-	    state= PP_INIT;
 
 
 
@@ -77,7 +76,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    SMpingpong= SM->SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
 
 	    // Kickstart ourselves
-	    self_event_send(E_START);
+	    state_transition(E_START, PP_INIT);
         }
 
         ~Pingpong_pattern()
@@ -96,12 +95,13 @@ class Pingpong_pattern : public Comm_pattern {
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);
-	void handle_events(State_machine::state_event_t sst_event);
-	static void wrapper_handle_events(void *obj, State_machine::state_event_t sst_event)
+	void handle_events(State_machine::state_event sst_event);
+	static void wrapper_handle_events(void *obj, State_machine::state_event sst_event)
 	{
 	    Pingpong_pattern* mySelf = (Pingpong_pattern*) obj;
 	    mySelf->handle_events(sst_event);
 	}
+
 	void state_INIT(pingpong_events_t event);
 	void state_RECEIVING(pingpong_events_t event);
 	void state_BARRIER(pingpong_events_t event);

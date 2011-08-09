@@ -30,7 +30,7 @@ iteself and the gate keeper mechanism in comm_pattern.cc
 
 
 void
-Pingpong_pattern::handle_events(State_machine::state_event_t sst_event)
+Pingpong_pattern::handle_events(State_machine::state_event sst_event)
 {
 
 pingpong_events_t event;
@@ -92,8 +92,7 @@ Pingpong_pattern::state_INIT(pingpong_events_t event)
 
 	    } else if (my_rank != dest)   {
 		// I'm not participating in pingpong. Go straight to barrier
-		state= PP_BARRIER;
-		self_event_send(E_BARRIER_ENTRY);
+		state_transition(E_BARRIER_ENTRY, PP_BARRIER);
 
 	    } else   {
 		printf("# [%3d] PONG I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
@@ -146,8 +145,7 @@ double latency;
 		    }
 		    cnt= num_msg;
 		    if (len > end_len)   {
-			state= PP_BARRIER;
-			self_event_send(E_BARRIER_ENTRY);
+			state_transition(E_BARRIER_ENTRY, PP_BARRIER);
 		    }
 		}
 
@@ -167,8 +165,7 @@ double latency;
 		    }
 		    if (len > end_len)   {
 			// We've done all sizes num_msg times
-			state= PP_BARRIER;
-			self_event_send(E_BARRIER_ENTRY);
+			state_transition(E_BARRIER_ENTRY, PP_BARRIER);
 		    } else   {
 			cnt= num_msg;
 			start_time= getCurrentSimTime();
@@ -198,8 +195,7 @@ Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 
 	case E_BARRIER_EXIT:
 	    // We just came back from the barrier SM. Go do an allreduce
-	    state= PP_ALLREDUCE;
-	    self_event_send(E_ALLREDUCE_ENTRY);
+	    state_transition(E_ALLREDUCE_ENTRY, PP_ALLREDUCE);
 	    break;
 
 	default:
@@ -217,11 +213,13 @@ Pingpong_pattern::state_ALLREDUCE(pingpong_events_t event)
 
     switch (event)   {
 	case E_ALLREDUCE_ENTRY:
+	    // FIXME: How can I pass a parameter value to the allreduce SM? (incl, and artificial msg len)
 	    SM->SM_call(SMallreduce, E_ALLREDUCE_EXIT);
 	    break;
 
 	case E_ALLREDUCE_EXIT:
 	    // We just came back from the allreduce SM. We're done
+	    // FIXME: How can I retrieve a parameter value from the allreduce SM?
 	    state= PP_DONE;
 	    done= true;
 	    break;
