@@ -1,3 +1,16 @@
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/faults.cc src/arch/alpha/faults.cc
+--- /home/mjleven/tmp/m5/src/arch/alpha/faults.cc	2010-10-20 13:51:48.000000000 -0600
++++ src/arch/alpha/faults.cc	2011-07-26 11:20:19.000000000 -0600
+@@ -201,7 +201,8 @@
+         success = p->pTable->lookup(vaddr, entry);
+     }
+     if (!success) {
+-        panic("Tried to access unmapped address %#x.\n", (Addr)vaddr);
++        panic("PC %#lx: Tried to access unmapped address %#x.\n", tc->readPC(),
++                                    (Addr)vaddr);
+     } else {
+         tc->getDTBPtr()->insert(vaddr.page(), entry);
+     }
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.cc src/arch/alpha/linux/linux.cc
 --- /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.cc	2010-10-20 13:51:48.000000000 -0600
 +++ src/arch/alpha/linux/linux.cc	2011-04-22 10:37:05.000000000 -0600
@@ -25,8 +38,8 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc src/a
  AlphaLinuxProcess::AlphaLinuxProcess(LiveProcessParams * params,
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc src/arch/alpha/tlb.cc
 --- /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc	2010-10-20 13:51:48.000000000 -0600
-+++ src/arch/alpha/tlb.cc	2011-05-02 09:10:18.000000000 -0600
-@@ -233,6 +233,19 @@
++++ src/arch/alpha/tlb.cc	2011-08-09 14:11:13.000000000 -0600
+@@ -233,6 +233,12 @@
              return new UnimpFault("CPU trying to fetch from uncached I/O");
  
      }
@@ -36,15 +49,128 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc src/arch/alpha/
 +        req->setFlags(Request::UNCACHEABLE);
 +    }
 +#endif
-+#if 0 
-+    if ( req->getPaddr() >= 0x20000000 && req->getPaddr() < 0x30000000 ) {
-+//	    fprintf(stderr,"TLB::%s() don't cache %#lx\n",__func__,req->getPaddr());
+     return NoFault;
+ }
+ 
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/linux/linux.hh src/arch/x86/linux/linux.hh
+--- /home/mjleven/tmp/m5/src/arch/x86/linux/linux.hh	2010-10-20 13:51:49.000000000 -0600
++++ src/arch/x86/linux/linux.hh	2011-08-09 14:17:22.000000000 -0600
+@@ -107,10 +107,39 @@
+ 
+     static const unsigned TGT_MAP_ANONYMOUS = 0x20;
+ 
++    // these values are incorrect but it allows compilation
++    static const unsigned TIOCGETP_   = -1;
++    static const unsigned TIOCSETP_   = -2;
++    static const unsigned TIOCSETN_   = -3;
++    static const unsigned TIOCSETC_   = -4;
++    static const unsigned TIOCGETC_   = -5;
++    static const unsigned FIONREAD_   = -6;
++    static const unsigned TIOCISATTY_ = -7;
++    static const unsigned TIOCGETS_   = -8;
++    static const unsigned TIOCGETA_   = -9;
++    static const unsigned TCGETS_ = 0x5401;
++
++
+     typedef struct {
+         uint64_t iov_base; // void *
+         uint64_t iov_len;  // size_t
+     } tgt_iovec;
++
++    enum rlimit_resources {
++        TGT_RLIMIT_CPU = 0,
++        TGT_RLIMIT_FSIZE = 1,
++        TGT_RLIMIT_DATA = 2,
++        TGT_RLIMIT_STACK = 3,
++        TGT_RLIMIT_CORE = 4,
++        TGT_RLIMIT_RSS = 5,
++        TGT_RLIMIT_NOFILE = 7,
++        TGT_RLIMIT_AS = 9,
++        TGT_RLIMIT_VMEM = -1,
++        TGT_RLIMIT_NPROC = 6,
++        TGT_RLIMIT_MEMLOCK = 8,
++        TGT_RLIMIT_LOCKS = 10
++    };
++
+ };
+ 
+ class X86Linux32 : public Linux
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/linux/syscalls.cc src/arch/x86/linux/syscalls.cc
+--- /home/mjleven/tmp/m5/src/arch/x86/linux/syscalls.cc	2010-10-20 13:51:49.000000000 -0600
++++ src/arch/x86/linux/syscalls.cc	2011-08-09 10:49:50.000000000 -0600
+@@ -232,7 +232,7 @@
+     /*   1 */ SyscallDesc("write", writeFunc),
+     /*   2 */ SyscallDesc("open", openFunc<X86Linux64>),
+     /*   3 */ SyscallDesc("close", closeFunc),
+-    /*   4 */ SyscallDesc("stat", unimplementedFunc),
++    /*   4 */ SyscallDesc("stat", statFunc<X86Linux64>),
+     /*   5 */ SyscallDesc("fstat", fstat64Func<X86Linux64>),
+     /*   6 */ SyscallDesc("lstat", unimplementedFunc),
+     /*   7 */ SyscallDesc("poll", unimplementedFunc),
+@@ -244,7 +244,7 @@
+     /*  13 */ SyscallDesc("rt_sigaction", unimplementedFunc),
+     /*  14 */ SyscallDesc("rt_sigprocmask", unimplementedFunc),
+     /*  15 */ SyscallDesc("rt_sigreturn", unimplementedFunc),
+-    /*  16 */ SyscallDesc("ioctl", unimplementedFunc),
++    /*  16 */ SyscallDesc("ioctl", ioctlFunc<X86Linux64>),
+     /*  17 */ SyscallDesc("pread64", unimplementedFunc),
+     /*  18 */ SyscallDesc("pwrite64", unimplementedFunc),
+     /*  19 */ SyscallDesc("readv", unimplementedFunc),
+@@ -307,7 +307,7 @@
+     /*  76 */ SyscallDesc("truncate", unimplementedFunc),
+     /*  77 */ SyscallDesc("ftruncate", unimplementedFunc),
+     /*  78 */ SyscallDesc("getdents", unimplementedFunc),
+-    /*  79 */ SyscallDesc("getcwd", unimplementedFunc),
++    /*  79 */ SyscallDesc("getcwd", getcwdFunc),
+     /*  80 */ SyscallDesc("chdir", unimplementedFunc),
+     /*  81 */ SyscallDesc("fchdir", unimplementedFunc),
+     /*  82 */ SyscallDesc("rename", renameFunc),
+@@ -325,7 +325,7 @@
+     /*  94 */ SyscallDesc("lchown", unimplementedFunc),
+     /*  95 */ SyscallDesc("umask", unimplementedFunc),
+     /*  96 */ SyscallDesc("gettimeofday", unimplementedFunc),
+-    /*  97 */ SyscallDesc("getrlimit", unimplementedFunc),
++    /*  97 */ SyscallDesc("getrlimit", getrlimitFunc<X86Linux64>),
+     /*  98 */ SyscallDesc("getrusage", unimplementedFunc),
+     /*  99 */ SyscallDesc("sysinfo", unimplementedFunc),
+     /* 100 */ SyscallDesc("times", unimplementedFunc),
+@@ -500,7 +500,9 @@
+     /* 269 */ SyscallDesc("faccessat", unimplementedFunc),
+     /* 270 */ SyscallDesc("pselect6", unimplementedFunc),
+     /* 271 */ SyscallDesc("ppoll", unimplementedFunc),
+-    /* 272 */ SyscallDesc("unshare", unimplementedFunc)
++    /* 272 */ SyscallDesc("unshare", unimplementedFunc),
++    /* 273 */ SyscallDesc("virt2phys", virt2physFunc),
++    /* 274 */ SyscallDesc("mmap_dev", mmap_devFunc)
+ };
+ 
+ const int X86_64LinuxProcess::numSyscalls = 
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/tlb.cc src/arch/x86/tlb.cc
+--- /home/mjleven/tmp/m5/src/arch/x86/tlb.cc	2010-10-20 13:51:49.000000000 -0600
++++ src/arch/x86/tlb.cc	2011-08-09 09:12:34.000000000 -0600
+@@ -635,7 +635,8 @@
+                     success = p->pTable->lookup(vaddr, newEntry);
+                 }
+                 if(!success) {
+-                    panic("Tried to execute unmapped address %#x.\n", vaddr);
++                    panic("PC %#lx, Tried to execute unmapped address %#x.\n",
++                                tc->readPC(),vaddr);
+                 } else {
+                     Addr alignedVaddr = p->pTable->pageAlign(vaddr);
+                     DPRINTF(TLB, "Mapping %#x to %#x\n", alignedVaddr,
+@@ -701,6 +702,13 @@
+         req->setPaddr(x86LocalAPICAddress(tc->contextId(), paddr - baseAddr));
+     }
+ #endif
++#if 1 
++    if ( req->getPaddr() < 0x10000 ) {
++       //DPRINTFN("TLB::%s() don't cache %#lx\n",__func__,req->getPaddr());
 +        req->setFlags(Request::UNCACHEABLE);
 +    }
 +#endif
 +
      return NoFault;
- }
+ };
  
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/cpu/intr_control.cc src/cpu/intr_control.cc
 --- /home/mjleven/tmp/m5/src/cpu/intr_control.cc	2010-10-20 13:51:49.000000000 -0600
@@ -97,18 +223,33 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/dev/SConscript src/dev/SConscript
 +    Source('isa_fake.cc')
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh src/mem/cache/cache_impl.hh
 --- /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/cache/cache_impl.hh	2011-07-27 13:14:12.000000000 -0600
-@@ -1101,6 +1101,14 @@
++++ src/mem/cache/cache_impl.hh	2011-08-09 14:19:18.000000000 -0600
+@@ -551,7 +551,7 @@
+     if (blkValid && useUpgrades) {
+         // only reason to be here is that blk is shared
+         // (read-only) and we need exclusive
+-        assert(needsExclusive && !blk->isWritable());
++        //assert(needsExclusive && !blk->isWritable());
+         cmd = MemCmd::UpgradeReq;
+     } else {
+         // block is invalid
+@@ -1101,6 +1101,20 @@
      bool have_exclusive = blk->isWritable();
      bool invalidate = pkt->isInvalidate();
  
-+    if ( pkt->isWrite() && blk->status & BlkWritable ) {
++#if 1 
++    if ( pkt->isWrite() && blk->isWritable() ) {
 +
-+        pkt->writeDataToBlock(blk->data, blkSize);
++        // is this check redundant
++        if (blk->checkWrite(pkt)) {
++            pkt->writeDataToBlock(blk->data, blkSize);
++        } else {
++            assert(false);
++        }
 +        blk->status |= BlkDirty;
-+
 +        return;
 +    }
++#endif
 +
      if (pkt->isRead() && !pkt->isInvalidate()) {
          assert(!pkt->needsExclusive());
@@ -250,7 +391,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
 Only in src/sim: nicMmu.h
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
 --- /home/mjleven/tmp/m5/src/sim/process.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.cc	2011-07-29 12:05:30.000000000 -0600
++++ src/sim/process.cc	2011-08-09 09:16:56.000000000 -0600
 @@ -98,7 +98,9 @@
  
  Process::Process(ProcessParams * params)
@@ -262,15 +403,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
  {
      string in = params->input;
      string out = params->output;
-@@ -170,7 +172,6 @@
-     // other parameters will be initialized when the program is loaded
- }
- 
--
- void
- Process::regStats()
- {
-@@ -247,6 +248,12 @@
+@@ -247,6 +249,12 @@
              TranslatingPort::Always);
      mem_port->setPeer(initVirtMem);
      initVirtMem->setPeer(mem_port);
@@ -285,7 +418,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
  // map simulator fd sim_fd to target fd tgt_fd
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.hh src/sim/process.hh
 --- /home/mjleven/tmp/m5/src/sim/process.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.hh	2011-07-29 10:43:28.000000000 -0600
++++ src/sim/process.hh	2011-08-09 13:39:44.000000000 -0600
 @@ -49,6 +49,7 @@
  #include "base/types.hh"
  #include "sim/sim_object.hh"
@@ -380,7 +513,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc src/sim/sysca
  unimplementedFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/syscall_emul.hh
 --- /home/mjleven/tmp/m5/src/sim/syscall_emul.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/syscall_emul.hh	2011-07-05 10:37:05.000000000 -0600
++++ src/sim/syscall_emul.hh	2011-08-09 10:46:55.000000000 -0600
 @@ -61,6 +61,8 @@
  #include "mem/page_table.hh"
  #include "sim/process.hh"
@@ -402,7 +535,15 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/sysca
  /// Handler for unimplemented syscalls that we never intend to
  /// implement (signal handling, etc.) and should not affect the correct
  /// behavior of the program.  Print a warning only if the appropriate
-@@ -996,6 +1003,33 @@
+@@ -485,6 +492,7 @@
+     }
+ 
+     switch (req) {
++      case OS::TCGETS_:
+       case OS::TIOCISATTY_:
+       case OS::TIOCGETP_:
+       case OS::TIOCSETP_:
+@@ -996,6 +1004,33 @@
              rlp->rlim_max = htog(rlp->rlim_max);
              break;
  
