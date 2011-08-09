@@ -9,8 +9,16 @@ class NicMmu
 {
     typedef unsigned long Addr;
     static const int NumTables = 100; 
+
+#if THE_ISA == X86_ISA
+    static const int PageSizeBits = 12;
+    static const int LevelBits = 9; 
+#elif THE_ISA == ALPHA_ISA
     static const int PageSizeBits = 13;
     static const int LevelBits = 10; 
+#else
+    #error What ISA
+#endif  
     static const int NumEntries = 1 << LevelBits;
     static const int Mask = NumEntries - 1;
     
@@ -32,7 +40,7 @@ class NicMmu
         int prot = PROT_READ|PROT_WRITE;
         
         //printf("NicMmu::%s() `%s` NumEntries=%d Mask=%#x\n",__func__,
-         //           fileName.c_str(),NumEntries,Mask);
+        //            fileName.c_str(),NumEntries,Mask);
 #if 1 
 
         if ( create ) {
@@ -64,9 +72,9 @@ class NicMmu
     void add( Addr vaddr, Addr paddr ) 
     {
         //printf("add() vaddr=%#lx paddr %#lx pfn=%d\n", vaddr, paddr,
-         //               (int) paddr >> 13 );
+        //                (int) paddr >> PageSizeBits );
         Entry* entry = find_L3_entry( vaddr ); 
-        entry->pfn = paddr >> 13; 
+        entry->pfn = paddr >> PageSizeBits; 
     }
 
     Entry* find_L3_entry( Addr vaddr ) {
@@ -86,21 +94,21 @@ class NicMmu
         Entry* l0_entry = &l0_table->entry[l0]; 
         if ( l0_entry->pfn == 0 ) {
             l0_entry->pfn = new_page();
-//            printf("new L1 pfn=%d\n",l0_entry->pfn); 
+            //printf("new L1 pfn=%d\n",l0_entry->pfn); 
         }
 
         Table* l1_table = &m_table[ l0_entry->pfn ];  
         Entry* l1_entry = &l1_table->entry[l1]; 
         if ( l1_entry->pfn == 0 ) {
             l1_entry->pfn = new_page();
-//            printf("new L2 pfn=%d\n",l1_entry->pfn); 
+            //printf("new L2 pfn=%d\n",l1_entry->pfn); 
         }
 
         Table* l2_table = &m_table[ l1_entry->pfn ];  
         Entry* l2_entry = &l2_table->entry[ l2 ];  
         if ( l2_entry->pfn == 0 ) {
             l2_entry->pfn = new_page();
-//            printf("new L3 pfn=%d\n",l2_entry->pfn); 
+            //printf("new L3 pfn=%d\n",l2_entry->pfn); 
         }
         //printf("l0pfn %d l1pfn %d l2pfn %d\n",
         //l0_entry->pfn, l1_entry->pfn, l2_entry->pfn);
@@ -111,7 +119,9 @@ class NicMmu
     bool lookup( Addr vaddr, Addr &paddr ) {
         //Addr tmp = vaddr;
         Entry* entry = find_L3_entry( vaddr ); 
-        paddr = ( entry->pfn << 13 )  | (vaddr & 0x1fff);
+        //printf("pfn=%d\n",entry->pfn);
+        paddr = ( entry->pfn << PageSizeBits )  | 
+                    ( vaddr & ( ( 1 << PageSizeBits) - 1 ) );
         //printf("vaddr %#lx paddr %#lx %d\n", tmp,vaddr, entry->pfn );
         return true;
     }
