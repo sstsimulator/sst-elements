@@ -45,8 +45,8 @@ class Allreduce_pattern   {
     private:
 	// Wrapping a pointer to a non-static member function like this is from
 	// http://www.newty.de/fpt/callback.html
-	void handle_events(State_machine::state_event_t sst_event);
-	static void wrapper_handle_events(void *obj, State_machine::state_event_t sst_event)
+	void handle_events(State_machine::state_event sst_event);
+	static void wrapper_handle_events(void *obj, State_machine::state_event sst_event)
 	{
 	    Allreduce_pattern* mySelf = (Allreduce_pattern*) obj;
 	    mySelf->handle_events(sst_event);
@@ -63,9 +63,9 @@ class Allreduce_pattern   {
 	int receives;
 	Collective_topology *ctopo;
 
-	void state_INIT(allreduce_events_t event);
-	void state_WAIT_CHILDREN(allreduce_events_t event);
-	void state_WAIT_PARENT(allreduce_events_t event);
+	void state_INIT(State_machine::state_event event);
+	void state_WAIT_CHILDREN(State_machine::state_event event);
+	void state_WAIT_PARENT(State_machine::state_event event);
 
 };
 
