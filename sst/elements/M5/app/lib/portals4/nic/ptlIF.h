@@ -83,7 +83,8 @@ class PtlIF {
 
     void commitCmd() {
 
-        asm volatile("wmb");
+        asm volatile( "":::"memory");
+        //asm volatile("wmb");
 
         // moving the tail ptr tells the nic there is a new entry
         m_cmdQueue->tail = m_tailShadow = m_next;
