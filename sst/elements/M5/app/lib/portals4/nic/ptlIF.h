@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <portals4_types.h>
 
-#define SYS_foo 443 
+#include <m5_syscall.h>
 
 namespace PtlNic {
 
@@ -25,7 +25,8 @@ class PtlIF {
         if ( tmp )
             addr = strtoul(tmp,NULL,16);
 
-        m_cmdQueue = (cmdQueue_t*)syscall( SYS_foo, addr, sizeof( cmdQueue_t) );
+        m_cmdQueue = (cmdQueue_t*)syscall( SYS_mmap_dev, addr, 
+                                                sizeof( cmdQueue_t) );
 
         for ( int i = 0; i < ME_UNLINKED_SIZE; i++ ) {
             m_meUnlinked[i] = -1;
@@ -40,7 +41,7 @@ class PtlIF {
         cmd.ctxInit.meUnlinkedPtr = (cmdAddr_t) &m_meUnlinked;
         commitCmd(); 
 
-        while (  m_nid == -1 ); 
+        while ( m_nid == -1 );
 
         PTL_DBG2("nid=%d\n",m_nid);
     }
