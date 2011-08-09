@@ -20,7 +20,7 @@
 // Register a state machine and a handler for events
 // Assign a SM number. Make the last created SM the current one.
 uint32_t
-State_machine::SM_create(void *obj, void (*handler)(void *obj, state_event_t event))
+State_machine::SM_create(void *obj, void (*handler)(void *obj, state_event event))
 {
 
 SM_t sm;
@@ -51,7 +51,7 @@ void
 State_machine::SM_call(int machineID, int exit_event)
 {
 
-state_event_t e;
+state_event e;
 
 
     if (machineID > lastSM)   {
@@ -61,7 +61,6 @@ state_event_t e;
     }
 
     e.event= exit_event;
-    e.data= -1.0;
     SM[currentSM].missed_events.push_back(e);
 
     SMstack.push_back(currentSM);
@@ -69,7 +68,6 @@ state_event_t e;
 
     // Call the handler of the new SM with its start event
     e.event= SM_START_EVENT;
-    e.data= -2.0;
     (*SM[currentSM].handler)(SM[currentSM].obj, e);
 
     // There may be events for this SM already pending
@@ -105,15 +103,13 @@ State_machine::SM_current_tag(void)
 
 
 
+//
+// Private functions
+//
 void
-State_machine::handle_state_events(uint32_t tag, int event)
+State_machine::handle_state_events(uint32_t tag, state_event e)
 {
 
-state_event_t e;
-
-
-    e.event= event;
-    e.data= 0.0;
     if (tag == SM_current_tag())   {
 	// If there are pending events for this SM we have not handled yet, do it now
 	deliver_missed_events();
@@ -136,7 +132,7 @@ void
 State_machine::deliver_missed_events(void)
 {
 
-state_event_t missed_event;
+state_event missed_event;
 int lastSM;
 
 
