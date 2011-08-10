@@ -22,6 +22,17 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.cc src/arc
  #ifdef O_SYNC
    { AlphaLinux::TGT_O_SYNC,     O_SYNC },
  #endif
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.hh src/arch/alpha/linux/linux.hh
+--- /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.hh	2010-10-20 13:51:48.000000000 -0600
++++ src/arch/alpha/linux/linux.hh	2011-08-10 12:12:20.000000000 -0600
+@@ -105,6 +105,7 @@
+     static const unsigned TIOCISATTY_ = 0x2000745e;
+     static const unsigned TIOCGETS_   = 0x402c7413;
+     static const unsigned TIOCGETA_   = 0x40127417;
++	static const unsigned TCGETS_    = -1;
+     //@}
+ 
+     /// For table().
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc src/arch/alpha/linux/process.cc
 --- /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc	2010-10-20 13:51:48.000000000 -0600
 +++ src/arch/alpha/linux/process.cc	2011-07-05 10:39:17.000000000 -0600
@@ -51,6 +62,47 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc src/arch/alpha/
 +#endif
      return NoFault;
  }
+ 
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/tru64/tru64.hh src/arch/alpha/tru64/tru64.hh
+--- /home/mjleven/tmp/m5/src/arch/alpha/tru64/tru64.hh	2010-10-20 13:51:48.000000000 -0600
++++ src/arch/alpha/tru64/tru64.hh	2011-08-10 12:15:34.000000000 -0600
+@@ -99,6 +99,7 @@
+     static const unsigned TIOCISATTY_ = 0x2000745e;
+     static const unsigned TIOCGETS_   = 0x402c7413;
+     static const unsigned TIOCGETA_   = 0x40127417;
++    static const unsigned TCGETS_   = -1;
+     //@}
+ 
+     //@{
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/sparc/linux/syscalls.cc src/arch/sparc/linux/syscalls.cc
+--- /home/mjleven/tmp/m5/src/arch/sparc/linux/syscalls.cc	2010-10-20 13:51:48.000000000 -0600
++++ src/arch/sparc/linux/syscalls.cc	2011-08-10 13:02:21.000000000 -0600
+@@ -677,7 +677,9 @@
+     /* 280 */ SyscallDesc("sys_setaltroot", unimplementedFunc),
+     /* 281 */ SyscallDesc("add_key", unimplementedFunc),
+     /* 282 */ SyscallDesc("request_key", unimplementedFunc),
+-    /* 283 */ SyscallDesc("keyctl", unimplementedFunc)
++    /* 283 */ SyscallDesc("keyctl", unimplementedFunc),
++	/* 284 */ SyscallDesc("virt2phys", virt2physFunc),
++    /* 285 */ SyscallDesc("mmap_dev", mmap_devFunc)
+ };
+ 
+ const int SparcLinuxProcess::Num_Syscall_Descs =
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/sparc/tlb.cc src/arch/sparc/tlb.cc
+--- /home/mjleven/tmp/m5/src/arch/sparc/tlb.cc	2010-10-20 13:51:48.000000000 -0600
++++ src/arch/sparc/tlb.cc	2011-08-10 15:15:19.000000000 -0600
+@@ -783,6 +783,12 @@
+     }
+     cacheValid = true;
+     req->setPaddr(e->pte.translate(vaddr));
++#if 1 
++    if ( req->getPaddr() < 0x10000 ) {
++       //DPRINTFN("TLB::%s() don't cache %#lx\n",__func__,req->getPaddr());
++        req->setFlags(Request::UNCACHEABLE);
++    }
++#endif
+     DPRINTF(TLB, "TLB: %#X -> %#X\n", vaddr, req->getPaddr());
+     return NoFault;
  
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/linux/linux.hh src/arch/x86/linux/linux.hh
 --- /home/mjleven/tmp/m5/src/arch/x86/linux/linux.hh	2010-10-20 13:51:49.000000000 -0600
@@ -97,7 +149,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/linux/linux.hh src/arch/
  class X86Linux32 : public Linux
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/linux/syscalls.cc src/arch/x86/linux/syscalls.cc
 --- /home/mjleven/tmp/m5/src/arch/x86/linux/syscalls.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/arch/x86/linux/syscalls.cc	2011-08-09 10:49:50.000000000 -0600
++++ src/arch/x86/linux/syscalls.cc	2011-08-10 07:59:39.000000000 -0600
 @@ -232,7 +232,7 @@
      /*   1 */ SyscallDesc("write", writeFunc),
      /*   2 */ SyscallDesc("open", openFunc<X86Linux64>),
@@ -125,16 +177,19 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/linux/syscalls.cc src/ar
      /*  80 */ SyscallDesc("chdir", unimplementedFunc),
      /*  81 */ SyscallDesc("fchdir", unimplementedFunc),
      /*  82 */ SyscallDesc("rename", renameFunc),
-@@ -325,7 +325,7 @@
+@@ -324,8 +324,9 @@
+     /*  93 */ SyscallDesc("fchown", unimplementedFunc),
      /*  94 */ SyscallDesc("lchown", unimplementedFunc),
      /*  95 */ SyscallDesc("umask", unimplementedFunc),
-     /*  96 */ SyscallDesc("gettimeofday", unimplementedFunc),
+-    /*  96 */ SyscallDesc("gettimeofday", unimplementedFunc),
 -    /*  97 */ SyscallDesc("getrlimit", unimplementedFunc),
++    /*  96 */ SyscallDesc("gettimeofday", gettimeofdayFunc<X86Linux64>),
 +    /*  97 */ SyscallDesc("getrlimit", getrlimitFunc<X86Linux64>),
++
      /*  98 */ SyscallDesc("getrusage", unimplementedFunc),
      /*  99 */ SyscallDesc("sysinfo", unimplementedFunc),
      /* 100 */ SyscallDesc("times", unimplementedFunc),
-@@ -500,7 +500,9 @@
+@@ -500,7 +501,9 @@
      /* 269 */ SyscallDesc("faccessat", unimplementedFunc),
      /* 270 */ SyscallDesc("pselect6", unimplementedFunc),
      /* 271 */ SyscallDesc("ppoll", unimplementedFunc),
@@ -229,7 +284,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh src/mem/c
          // only reason to be here is that blk is shared
          // (read-only) and we need exclusive
 -        assert(needsExclusive && !blk->isWritable());
-+        //assert(needsExclusive && !blk->isWritable());
++    //    assert(needsExclusive && !blk->isWritable());
          cmd = MemCmd::UpgradeReq;
      } else {
          // block is invalid
@@ -268,7 +323,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/packet.hh src/mem/packet.hh
      const std::string &cmdString() const { return cmd.toString(); }
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/page_table.cc src/mem/page_table.cc
 --- /home/mjleven/tmp/m5/src/mem/page_table.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/page_table.cc	2011-07-01 10:33:53.000000000 -0600
++++ src/mem/page_table.cc	2011-08-10 12:44:42.000000000 -0600
 @@ -65,6 +65,31 @@
  }
  
@@ -358,7 +413,6 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/physical.hh src/mem/physical.
    public:
      Addr new_page();
      uint64_t size() { return cachedSize; }
-Only in src: patch
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
 --- /home/mjleven/tmp/m5/src/SConscript	2010-10-20 13:51:48.000000000 -0600
 +++ src/SConscript	2011-03-15 15:09:39.000000000 -0600
@@ -388,11 +442,15 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
  
      def make_obj(source, static, extra_deps = None):
          '''This function adds the specified source to the correct
-Only in src/sim: nicMmu.h
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
 --- /home/mjleven/tmp/m5/src/sim/process.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.cc	2011-08-09 09:16:56.000000000 -0600
-@@ -98,7 +98,9 @@
++++ src/sim/process.cc	2011-08-10 12:33:04.000000000 -0600
+@@ -1,3 +1,4 @@
++
+ /*
+  * Copyright (c) 2001-2005 The Regents of The University of Michigan
+  * All rights reserved.
+@@ -98,7 +99,9 @@
  
  Process::Process(ProcessParams * params)
      : SimObject(params), system(params->system), checkpointRestored(false),
@@ -403,7 +461,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
  {
      string in = params->input;
      string out = params->output;
-@@ -247,6 +249,12 @@
+@@ -247,6 +250,12 @@
              TranslatingPort::Always);
      mem_port->setPeer(initVirtMem);
      initVirtMem->setPeer(mem_port);
@@ -513,7 +571,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc src/sim/sysca
  unimplementedFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/syscall_emul.hh
 --- /home/mjleven/tmp/m5/src/sim/syscall_emul.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/syscall_emul.hh	2011-08-09 10:46:55.000000000 -0600
++++ src/sim/syscall_emul.hh	2011-08-10 15:17:29.000000000 -0600
 @@ -61,6 +61,8 @@
  #include "mem/page_table.hh"
  #include "sim/process.hh"
