@@ -64,7 +64,7 @@ class PtlAPI {
     int ptlNIFini( )
     {
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlNIFini);
+        m_ptlIF.getCmdSlot( PtlNIFini);
         m_ptlIF.commitCmd();
         return PTL_OK;
     }
@@ -322,6 +322,7 @@ class PtlAPI {
         cmd.ptlPut.hdr_data     = hdr_data;
 
         m_ptlIF.commitCmd();
+		return PTL_OK;
     }
 
     int ptlGet(ptl_handle_md_t  md_handle,
@@ -346,6 +347,7 @@ class PtlAPI {
         cmd.ptlGet.user_ptr      = user_ptr;
 
         m_ptlIF.commitCmd();
+		return PTL_OK;
     }
 
     int ptlTrigGet(ptl_handle_md_t  md_handle,
@@ -374,6 +376,7 @@ class PtlAPI {
         cmd.ptlTrigGet.threshold     = threshold;
 
         m_ptlIF.commitCmd();
+		return PTL_OK;
     }
 
   private:

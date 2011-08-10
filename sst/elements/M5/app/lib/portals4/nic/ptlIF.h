@@ -16,7 +16,7 @@ class PtlIF {
     PtlIF( int jid, int uid ) :
         m_tailShadow(0),
         m_ctx_id( 101 ),
-        m_nid(-1),
+        m_nid((unsigned)-1),
         m_meUnlinkedPos( 0 )
     {
         PTL_DBG2("\n");
@@ -41,7 +41,7 @@ class PtlIF {
         cmd.ctxInit.meUnlinkedPtr = (cmdAddr_t) &m_meUnlinked;
         commitCmd(); 
 
-        while ( m_nid == -1 );
+        while ( m_nid == (unsigned) -1 );
 
         PTL_DBG2("nid=%d\n",m_nid);
     }
@@ -49,7 +49,7 @@ class PtlIF {
     ~PtlIF() {
         PTL_DBG2("\n");
 
-        cmdUnion_t& cmd = getCmdSlot(ContextFini);
+        getCmdSlot(ContextFini);
         commitCmd();
     } 
 
@@ -66,9 +66,6 @@ class PtlIF {
         return retval;
     }
 
-  private:
-
-    friend class PtlAPI;
     cmdUnion_t& getCmdSlot( int type )
     {
     //    PTL_DBG2("%s\n", m_cmdNames[type] );
@@ -90,6 +87,8 @@ class PtlIF {
         // moving the tail ptr tells the nic there is a new entry
         m_cmdQueue->tail = m_tailShadow = m_next;
     }
+
+  private:
     
     cmdQueue_t* m_cmdQueue;    
     int         m_tailShadow;
