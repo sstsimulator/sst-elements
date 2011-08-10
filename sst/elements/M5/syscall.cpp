@@ -17,7 +17,19 @@
 
 #if THE_ISA == SPARC_ISA
     #define ISA_OS SparcLinux
+
+    #include <byteswap.h>
+
     #include <arch/sparc/linux/linux.hh>
+
+    #define __NR_exit                                1
+    #define __NR_read                                3 
+    #define __NR_write                               4 
+    #define __NR_open                                5 
+    #define __NR_close                               6 
+
+	#define isaSwap( x ) bswap_64(x)
+
 #elif THE_ISA == ALPHA_ISA
     #define ISA_OS AlphaLinux
     #include <arch/alpha/linux/linux.hh>
@@ -27,6 +39,8 @@
     #define __NR_read                                3 
     #define __NR_write                               4 
     #define __NR_exit                                1
+
+	#define isaSwap(x) x
 
 #elif THE_ISA == X86_ISA
     #define ISA_OS X86Linux64
@@ -38,10 +52,11 @@
     #define __NR_write                               1 
     #define __NR_exit                                60 
 
+	#define isaSwap(x) x
+
 #else
     #error What ISA
 #endif
-
 
 #define __NR_barrier                             500
 
@@ -263,12 +278,12 @@ void Syscall::barrierReturn()
 
 void Syscall::startSyscall(void)
 {
-    DBGX(3,"%d\n", m_mailbox[0xf] - 1 );
+    DBGX(3,"%d\n", isaSwap(m_mailbox[0xf]) - 1 );
     int64_t retval = 0;
-    switch ( m_mailbox[0xf] - 1 ) 
+    switch ( isaSwap( m_mailbox[0xf] ) - 1 ) 
     {
         case __NR_exit:
-            m_comp->exit( m_mailbox[0] );
+            m_comp->exit( isaSwap( m_mailbox[0] ) );
             break; 
 
         case __NR_write:
