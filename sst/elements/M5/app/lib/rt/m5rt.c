@@ -1,6 +1,7 @@
 #include <m5rt.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "m5_syscall.h"
 
 int cnos_get_rank( void )
 {
@@ -36,4 +37,9 @@ int cnos_get_nidpid_map( cnos_nidpid_map_t** map )
         }
     }
     return size;
+}
+
+int cnos_barrier( void )
+{
+    return _m5_syscall(500,0,0,0);
 }
