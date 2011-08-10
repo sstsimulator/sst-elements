@@ -26,7 +26,7 @@ typedef enum {
     PtlEQAlloc,
     PtlEQFree,
     ContextInit,
-    ContextFini,
+    ContextFini
 } cmd_t;
 
 #define CMD_NAMES {\
