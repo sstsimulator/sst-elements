@@ -5,6 +5,8 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
+#include <arch/isa_specific.hh>
+
 class NicMmu 
 {
     typedef unsigned long Addr;
@@ -14,6 +16,9 @@ class NicMmu
     static const int PageSizeBits = 12;
     static const int LevelBits = 9; 
 #elif THE_ISA == ALPHA_ISA
+    static const int PageSizeBits = 13;
+    static const int LevelBits = 10; 
+#elif THE_ISA == SPARC_ISA
     static const int PageSizeBits = 13;
     static const int LevelBits = 10; 
 #else
@@ -39,6 +44,9 @@ class NicMmu
         int oflags = O_RDWR; 
         int prot = PROT_READ|PROT_WRITE;
         
+		//printf("create=%d PageSizeBits=%d LevelBits=%d pageSize=%d\n", 
+	    //		create, PageSizeBits, LevelBits, (1<<PageSizeBits) - 1 );
+
         //printf("NicMmu::%s() `%s` NumEntries=%d Mask=%#x\n",__func__,
         //            fileName.c_str(),NumEntries,Mask);
 #if 1 
@@ -88,7 +96,7 @@ class NicMmu
         int  l0 = tmp & Mask; 
         
         //printf("vaddr %#lx L0=%#x L1=%#x L2=%#x L3=%#x\n",
-        //                    vaddr, l0, l1, l2, l3 );
+        //                     vaddr, l0, l1, l2, l3 );
     
         Table* l0_table = &m_table[ m_l0_pfn ];  
         Entry* l0_entry = &l0_table->entry[l0]; 
@@ -117,12 +125,10 @@ class NicMmu
     }
 
     bool lookup( Addr vaddr, Addr &paddr ) {
-        //Addr tmp = vaddr;
         Entry* entry = find_L3_entry( vaddr ); 
-        //printf("pfn=%d\n",entry->pfn);
         paddr = ( entry->pfn << PageSizeBits )  | 
                     ( vaddr & ( ( 1 << PageSizeBits) - 1 ) );
-        //printf("vaddr %#lx paddr %#lx %d\n", tmp,vaddr, entry->pfn );
+        //printf("vaddr=%#lx paddr=%#lx pfn=%d\n", vaddr, paddr, entry->pfn );
         return true;
     }
 
