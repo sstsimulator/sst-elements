@@ -1,12 +1,9 @@
 
-SRCS = m5-sst.c  m5_syscall.c
+SRCS = m5_syscall.c m5_exit.c m5_io.c
 
 OBJS = ${SRCS:.c=.o}
 
-LIB = libm5c.a
-
-${LIB}: ${OBJS}
-	${AR} rcs $@ ${OBJS}
+all: ${OBJS} 
 
 clean:
-	rm -f ${OBJS} ${LIB}
+	rm -f ${OBJS}
