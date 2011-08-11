@@ -1,6 +1,4 @@
-
-
-LDFLAGS += -static -u ptlNic -lportals -lptlNic -lm5rt -lm5c
+LDFLAGS += -static -u ptlNic -lportals -lptlNic -lm5rt 
 LDFLAGS += -L../lib/rt -L../lib/libc -L../lib/portals4/api -L../lib/portals4/nic
 
 CPPFLAGS += -I../../ptlNic -I../lib/rt -I../lib/libc
