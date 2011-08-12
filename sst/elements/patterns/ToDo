@@ -1,4 +1,3 @@
-
 - Clean up and improve the message passing model
     - Use (some) LoGP parameters in the config file
     - Figure out what we want to be able to set (and what we cannot given the model)

@@ -43,16 +43,14 @@ int ID;
 
 
 // Transition to another state machine
-// We queue the exit_event, which is the event we will send to the
-// current running state machine when we return to it.
-// The we switch to the request SM and call it with a start event
-// All Sm should make their start events 0
+// We queue the return_event, which is the event we will send to the
+// currently running state machine when we return to it.
+// Then we switch to the requested SM and call it with the start event
+// If a caller wants to pass parameters to a state machine, it can do so
+// in the start_event.
 void
-State_machine::SM_call(int machineID, int exit_event)
+State_machine::SM_call(int machineID, state_event start_event, state_event return_event)
 {
-
-state_event e;
-
 
     if (machineID > lastSM)   {
 	// FIXME: We should abort here
@@ -60,17 +58,17 @@ state_event e;
 	    my_rank, currentSM, machineID);
     }
 
-    e.event= exit_event;
-    SM[currentSM].missed_events.push_back(e);
+    return_event.restart= true;
+    SM[currentSM].missed_events.push_back(return_event);
 
     SMstack.push_back(currentSM);
     currentSM= machineID;
 
     // Call the handler of the new SM with its start event
-    e.event= SM_START_EVENT;
-    (*SM[currentSM].handler)(SM[currentSM].obj, e);
+    (*SM[currentSM].handler)(SM[currentSM].obj, start_event);
 
-    // There may be events for this SM already pending
+    // There may be events for this SM already pending that should be
+    // delivered now that the new SM has been activated.
     deliver_missed_events();
 
 }  // end of SM_call()
@@ -78,15 +76,40 @@ state_event e;
 
 
 void
-State_machine::SM_return(void)
+State_machine::SM_return(state_event return_event)
 {
 
+state_event restart_event;
+
+
     if (SMstack.empty())   {
-	// FIXME:
-	// _abort(State_machine, "[%3d] SM stack is empty!\n", my_rank);
+	_sm_abort(State_machine, "[%3d] SM stack is empty!\n", my_rank);
     }
     currentSM= SMstack.back();
     SMstack.pop_back();
+
+    if (SM[currentSM].missed_events.empty())   {
+	// There has to be at least the return event pedning!
+	_sm_abort(State_machine, "[%3d] No events to return!\n", my_rank);
+    }
+
+    restart_event= (SM[currentSM].missed_events.front());
+    // This should be marked as a restart_event, otherwise something went wrong
+    if (!restart_event.restart)   {
+	_sm_abort(State_machine, "[%3d] Not a restart event!\n", my_rank);
+    }
+
+
+    // Copy the return data to the restart event
+    restart_event.set_Fdata(return_event.get_Fdata(0), return_event.get_Fdata(1));
+    // If the below is not true, we have to copy more fields above
+    assert(SM_MAX_DATA_FIELDS == 2);
+
+    // Call back up
+    (*SM[currentSM].handler)(SM[currentSM].obj, restart_event);
+    SM[lastSM].missed_events.pop_front();
+
+    // No delivery any other events that might be pending.
     deliver_missed_events();
 
 }  // end of SM_return()

@@ -22,7 +22,7 @@ There are no configuration parameters for this module.
 
 
 void
-Barrier_pattern::handle_events(State_machine::state_event sst_event)
+Barrier_pattern::handle_events(state_event sst_event)
 {
 
 barrier_events_t event;
@@ -48,7 +48,7 @@ barrier_events_t event;
     // Only "main" patterns should do that; i.e., patterns that use other
     // patterns like this one. Just return to our caller.
     if (done)   {
-	cp->SM->SM_return();
+	cp->SM->SM_return(sst_event);
     }
 
 }  /* end of handle_events() */

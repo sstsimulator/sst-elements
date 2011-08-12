@@ -10,6 +10,7 @@
 #ifndef _BARRIER_PATTERN_H
 #define _BARRIER_PATTERN_H
 
+#include "state_machine.h"
 #include "comm_pattern.h"
 #include "collective_topology.h"
 
@@ -45,8 +46,8 @@ class Barrier_pattern   {
     private:
 	// Wrapping a pointer to a non-static member function like this is from
 	// http://www.newty.de/fpt/callback.html
-	void handle_events(State_machine::state_event sst_event);
-	static void wrapper_handle_events(void *obj, State_machine::state_event sst_event)
+	void handle_events(state_event sst_event);
+	static void wrapper_handle_events(void *obj, state_event sst_event)
 	{
 	    Barrier_pattern* mySelf = (Barrier_pattern*) obj;
 	    mySelf->handle_events(sst_event);

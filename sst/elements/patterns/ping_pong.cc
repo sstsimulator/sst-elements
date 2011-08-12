@@ -30,13 +30,13 @@ iteself and the gate keeper mechanism in comm_pattern.cc
 
 
 void
-Pingpong_pattern::handle_events(State_machine::state_event sst_event)
+Pingpong_pattern::handle_events(state_event sm_event)
 {
 
 pingpong_events_t event;
 
 
-    event= (pingpong_events_t)sst_event.event;
+    event= (pingpong_events_t)sm_event.event;
 
     switch (state)   {
 	case PP_INIT:
@@ -49,7 +49,7 @@ pingpong_events_t event;
 	    state_BARRIER(event);
 	    break;
 	case PP_ALLREDUCE:
-	    state_ALLREDUCE(event);
+	    state_ALLREDUCE(sm_event);
 	    break;
 	case PP_DONE:
 	    // Not really a state we need
@@ -188,9 +188,18 @@ void
 Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 {
 
+state_event enter_barrier, exit_barrier;
+
+
     switch (event)   {
 	case E_BARRIER_ENTRY:
-	    SM->SM_call(SMbarrier, E_BARRIER_EXIT);
+	    // Set the parameters to be passed to the barrier SM
+	    enter_barrier.event= SM_START_EVENT;
+
+	    // We want to be called with this event, when allreduce returns
+	    exit_barrier.event= E_BARRIER_EXIT;
+
+	    SM->SM_call(SMbarrier, enter_barrier, exit_barrier);
 	    break;
 
 	case E_BARRIER_EXIT:
@@ -208,24 +217,52 @@ Pingpong_pattern::state_BARRIER(pingpong_events_t event)
 
 
 void
-Pingpong_pattern::state_ALLREDUCE(pingpong_events_t event)
+Pingpong_pattern::state_ALLREDUCE(state_event event)
 {
 
-    switch (event)   {
+state_event enter_allreduce, exit_allreduce;
+double check= 0.0;
+
+
+    switch (event.event)   {
 	case E_ALLREDUCE_ENTRY:
-	    // FIXME: How can I pass a parameter value to the allreduce SM? (incl, and artificial msg len)
-	    SM->SM_call(SMallreduce, E_ALLREDUCE_EXIT);
+	    // Set the parameters to be passed to the allreduce SM
+	    enter_allreduce.event= SM_START_EVENT;
+	    enter_allreduce.set_Fdata(my_rank + 1.0);
+
+	    // We want to be called with this event, when allreduce returns
+	    exit_allreduce.event= E_ALLREDUCE_EXIT;
+
+	    SM->SM_call(SMallreduce, enter_allreduce, exit_allreduce);
 	    break;
 
 	case E_ALLREDUCE_EXIT:
 	    // We just came back from the allreduce SM. We're done
-	    // FIXME: How can I retrieve a parameter value from the allreduce SM?
+
+	    for (int i= 0; i < num_ranks; i++)   {
+		check= check + i + 1.0;
+	    }
+
+	    if (my_rank == 0)   {
+		if (check == event.get_Fdata())   {
+		    printf("# [%3d] Allreduce test passed\n", my_rank);
+		} else   {
+		    printf("# [%3d] Allreduce test failed: %6.3f != %6.3f\n", my_rank,
+			event.get_Fdata(), check);
+		}
+	    } else   {
+		// Only report errors
+		if (check != event.get_Fdata())   {
+		    printf("# [%3d] Allreduce test failed: %6.3f != %6.3f\n", my_rank,
+			event.get_Fdata(), check);
+		}
+	    }
 	    state= PP_DONE;
 	    done= true;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event.event, state);
 	    break;
     }
 

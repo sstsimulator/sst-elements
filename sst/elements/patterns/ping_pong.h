@@ -10,6 +10,7 @@
 #ifndef _PINGPONG_PATTERN_H
 #define _PINGPONG_PATTERN_H
 
+#include "state_machine.h"
 #include "comm_pattern.h"
 #include "barrier.h"
 #include "allreduce.h"
@@ -87,7 +88,7 @@ class Pingpong_pattern : public Comm_pattern {
 	// with these events.
 	typedef enum {PP_INIT, PP_RECEIVING, PP_BARRIER, PP_ALLREDUCE, PP_DONE} pingpong_state_t;
 
-	// The start event should always be START_START_EVENT
+	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_BARRIER_ENTRY,
 	    E_BARRIER_EXIT, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT, E_RECEIVE} pingpong_events_t;
 
@@ -95,8 +96,8 @@ class Pingpong_pattern : public Comm_pattern {
 
     private:
 	Pingpong_pattern(const Pingpong_pattern &c);
-	void handle_events(State_machine::state_event sst_event);
-	static void wrapper_handle_events(void *obj, State_machine::state_event sst_event)
+	void handle_events(state_event sst_event);
+	static void wrapper_handle_events(void *obj, state_event sst_event)
 	{
 	    Pingpong_pattern* mySelf = (Pingpong_pattern*) obj;
 	    mySelf->handle_events(sst_event);
@@ -105,7 +106,7 @@ class Pingpong_pattern : public Comm_pattern {
 	void state_INIT(pingpong_events_t event);
 	void state_RECEIVING(pingpong_events_t event);
 	void state_BARRIER(pingpong_events_t event);
-	void state_ALLREDUCE(pingpong_events_t event);
+	void state_ALLREDUCE(state_event event);
 	Params_t params;
 
 	// State machine identifiers

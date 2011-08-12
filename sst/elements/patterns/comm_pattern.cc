@@ -10,6 +10,7 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <assert.h>
+#include "state_machine.h"
 #include "comm_pattern.h"
 
 
@@ -20,6 +21,7 @@
 // Send and event that represents a message of length len to destination dest.
 // No actual data is contained in this message. There is some out of band data
 // that is taken from SM->SM_data and sent along.
+// FIXME: Need a better name than send_msg(), or maybe pass in the state_event we're sending...
 void
 Comm_pattern::send_msg(int dest, int len, int event_type)
 {
@@ -150,7 +152,7 @@ void
 Comm_pattern::handle_sst_events(CPUNicEvent *sst_event, const char *err_str)
 {
 
-State_machine::state_event sm;
+state_event sm;
 int payload_len;
 
 
@@ -162,7 +164,6 @@ int payload_len;
     payload_len= sst_event->GetPayloadLen();
     if (payload_len > 0)   {
 	sst_event->DetachPayload(sm.payload, &payload_len);
-	fprintf(stderr, "[%3d] Detached payload of length %d\n", my_rank, payload_len);
     }
 
     SM->handle_state_events(sst_event->tag, sm);
