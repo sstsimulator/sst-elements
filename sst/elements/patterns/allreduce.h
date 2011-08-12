@@ -42,6 +42,9 @@ class Allreduce_pattern   {
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
 
+	// The operations we support
+	typedef enum {OP_SUM, OP_PROD, OP_MIN, OP_MAX} allreduce_op_t;
+
 
     private:
 	// Wrapping a pointer to a non-static member function like this is from

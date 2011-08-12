@@ -94,6 +94,7 @@ state_event restart_event;
     }
 
     restart_event= (SM[currentSM].missed_events.front());
+    SM[currentSM].missed_events.pop_front();
     // This should be marked as a restart_event, otherwise something went wrong
     if (!restart_event.restart)   {
 	_sm_abort(State_machine, "[%3d] Not a restart event!\n", my_rank);
@@ -102,12 +103,13 @@ state_event restart_event;
 
     // Copy the return data to the restart event
     restart_event.set_Fdata(return_event.get_Fdata(0), return_event.get_Fdata(1));
+    restart_event.set_Idata(return_event.get_Idata(0), return_event.get_Idata(1));
+
     // If the below is not true, we have to copy more fields above
     assert(SM_MAX_DATA_FIELDS == 2);
 
     // Call back up
     (*SM[currentSM].handler)(SM[currentSM].obj, restart_event);
-    SM[lastSM].missed_events.pop_front();
 
     // No delivery any other events that might be pending.
     deliver_missed_events();
@@ -163,8 +165,8 @@ int lastSM;
     lastSM= currentSM;
     while (!SM[currentSM].missed_events.empty())   {
 	missed_event= (SM[currentSM].missed_events.front());
+	SM[currentSM].missed_events.pop_front();
 	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
-	SM[lastSM].missed_events.pop_front();
 	if (lastSM != currentSM)   {
 	    // Handler switched us from lastSM to currentSM!
 	    break;

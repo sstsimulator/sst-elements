@@ -18,6 +18,9 @@ There are no configuration parameters for this module.
 Callers of this state machine pass in a double value in the first
 Fdata field of the starting event. Allreduce returns the result of
 the operation in the first Fdata field of the exit event.
+
+The operation to be performed can be chosen by setting the first
+Idata field. See allreduce_op_t in allreduce.h for possible values.
 */
 #include "sst/core/serialization/element.h"
 #include "allreduce.h"
@@ -60,7 +63,10 @@ void
 Allreduce_pattern::state_INIT(state_event event)
 {
     // Extract and store the value passed in by the caller
+    // The operation to be performed is stored in Idata(0),
+    // and the value is in Fdata(0)
     cp->SM->SM_data.set_Fdata(event.get_Fdata());
+    cp->SM->SM_data.set_Idata(event.get_Idata());
 
     switch (event.event)   {
 	case E_START:
@@ -104,13 +110,49 @@ Allreduce_pattern::state_INIT(state_event event)
 void
 Allreduce_pattern::state_WAIT_CHILDREN(state_event event)
 {
+
+allreduce_op_t op;
+
+
     switch (event.event)   {
 	case E_FROM_CHILD:
 	    // Count receives from my children. When I have them all, send to parent.
 	    receives++;
 
-	    // Extract child's contribution and add it to my current value
-	    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() + event.get_Fdata());
+	    // Extract child's contribution and perform the appropriate operation on it
+	    op= (allreduce_op_t)cp->SM->SM_data.get_Idata();
+	    switch (op)   {
+		case OP_SUM:
+		    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() + event.get_Fdata());
+		    break;
+
+		case OP_PROD:
+		    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() * event.get_Fdata());
+		    break;
+
+		case OP_MIN:
+		    if (cp->SM->SM_data.get_Fdata() < event.get_Fdata())   {
+			// Use mine
+			cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata());
+		    } else   {
+			// Use the child's
+			cp->SM->SM_data.set_Fdata(event.get_Fdata());
+		    }
+		    break;
+
+		case OP_MAX:
+		    if (cp->SM->SM_data.get_Fdata() > event.get_Fdata())   {
+			// Use mine
+			cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata());
+		    } else   {
+			// Use the child's
+			cp->SM->SM_data.set_Fdata(event.get_Fdata());
+		    }
+		    break;
+
+		default:
+		    _abort(allreduce_pattern, "[%3d] Invalid operation %d\n", cp->my_rank, op);
+	    }
 
 	    if (receives == ctopo->num_children())   {
 		if (ctopo->is_root())   {

@@ -56,7 +56,7 @@ class state_event   {
 	    return packed_data.Fdata[pos];
 	}
 
-	void set_Idata(double I1, double I2= 0.0)   {
+	void set_Idata(long long I1, long long I2= 0)   {
 	    packed_data.Idata[0]= I1;
 	    packed_data.Idata[1]= I2;
 	}
