@@ -18,23 +18,22 @@
 // Public functions
 //
 
-// Send and event that represents a message of length len to destination dest.
+// Send an event that represents a message of length len to destination dest.
 // No actual data is contained in this message. There is some out of band data
-// that is taken from SM->SM_data and sent along.
-// FIXME: Need a better name than send_msg(), or maybe pass in the state_event we're sending...
+// that is contained in the sm_event. It's packed into the payload and sent along.
 void
-Comm_pattern::send_msg(int dest, int len, int event_type)
+Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 {
 
 // FIXME: We need a better model than 2440 for node latency!
 SimTime_t node_latency= 2440;
 
 
-    common->event_send(dest, (pattern_event_t)event_type,
+    common->event_send(dest, (pattern_event_t)sm_event.event,
 	SM->SM_current_tag(),
 	node_latency, len,
-	(const char *)SM->SM_data.payload,
-	SM->SM_data.payload_size);
+	(const char *)sm_event.payload,
+	sm_event.payload_size);
 
 }  // end of send_msg()
 

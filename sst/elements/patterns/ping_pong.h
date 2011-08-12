@@ -103,10 +103,10 @@ class Pingpong_pattern : public Comm_pattern {
 	    mySelf->handle_events(sst_event);
 	}
 
-	void state_INIT(state_event event);
-	void state_RECEIVING(state_event event);
-	void state_BARRIER(state_event event);
-	void state_ALLREDUCE(state_event event);
+	void state_INIT(state_event sm_event);
+	void state_RECEIVING(state_event sm_event);
+	void state_BARRIER(state_event sm_event);
+	void state_ALLREDUCE(state_event sm_event);
 	Params_t params;
 
 	// State machine identifiers

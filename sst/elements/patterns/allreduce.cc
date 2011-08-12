@@ -60,21 +60,30 @@ Allreduce_pattern::handle_events(state_event sm_event)
 
 
 void
-Allreduce_pattern::state_INIT(state_event event)
+Allreduce_pattern::state_INIT(state_event sm_event)
 {
+
+allreduce_events_t e= (allreduce_events_t)sm_event.event;
+state_event send_event;
+
+
     // Extract and store the value passed in by the caller
     // The operation to be performed is stored in Idata(0),
     // and the value is in Fdata(0)
-    cp->SM->SM_data.set_Fdata(event.get_Fdata());
-    cp->SM->SM_data.set_Idata(event.get_Idata());
+    cp->SM->SM_data.set_Idata(sm_event.get_Idata());
+    cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
 
-    switch (event.event)   {
+    // The value gets passed up the tree
+    send_event.event= E_FROM_CHILD;
+    send_event.set_Fdata(sm_event.get_Fdata());
+
+    switch (e)   {
 	case E_START:
 	    if (ctopo->is_root())   {
 		state= WAIT_CHILDREN;
 	    } else if (ctopo->is_leaf())   {
 		// FIXME: This should not be no_data
-		cp->send_msg(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		cp->send_msg(ctopo->parent_rank(), no_data, send_event);
 		state= WAIT_PARENT;
 	    } else   {
 		// I must be an interior node
@@ -87,34 +96,36 @@ Allreduce_pattern::state_INIT(state_event event)
 	    // sent us events before we entered the state machine for allreduce.
 	    if (ctopo->is_root())   {
 		state= WAIT_CHILDREN;
-		state_WAIT_CHILDREN(event);
+		state_WAIT_CHILDREN(sm_event);
 	    } else if (ctopo->is_leaf())   {
 		// This cannot happen
 		_abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
-		    cp->my_rank, event.event, state);
+		    cp->my_rank, e, state);
 	    } else   {
 		// I must be an interior node
 		state= WAIT_CHILDREN;
-		state_WAIT_CHILDREN(event);
+		state_WAIT_CHILDREN(sm_event);
 	    }
 	    break;
 
 	default:
 	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
-		cp->my_rank, event.event, state);
+		cp->my_rank, e, state);
     }
 }  // end of state_INIT()
 
 
 
 void
-Allreduce_pattern::state_WAIT_CHILDREN(state_event event)
+Allreduce_pattern::state_WAIT_CHILDREN(state_event sm_event)
 {
 
+allreduce_events_t e= (allreduce_events_t)sm_event.event;
 allreduce_op_t op;
+state_event send_event;
 
 
-    switch (event.event)   {
+    switch (e)   {
 	case E_FROM_CHILD:
 	    // Count receives from my children. When I have them all, send to parent.
 	    receives++;
@@ -123,30 +134,30 @@ allreduce_op_t op;
 	    op= (allreduce_op_t)cp->SM->SM_data.get_Idata();
 	    switch (op)   {
 		case OP_SUM:
-		    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() + event.get_Fdata());
+		    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() + sm_event.get_Fdata());
 		    break;
 
 		case OP_PROD:
-		    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() * event.get_Fdata());
+		    cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata() * sm_event.get_Fdata());
 		    break;
 
 		case OP_MIN:
-		    if (cp->SM->SM_data.get_Fdata() < event.get_Fdata())   {
+		    if (cp->SM->SM_data.get_Fdata() < sm_event.get_Fdata())   {
 			// Use mine
-			cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata());
+			// cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata());
 		    } else   {
 			// Use the child's
-			cp->SM->SM_data.set_Fdata(event.get_Fdata());
+			cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
 		    }
 		    break;
 
 		case OP_MAX:
-		    if (cp->SM->SM_data.get_Fdata() > event.get_Fdata())   {
+		    if (cp->SM->SM_data.get_Fdata() > sm_event.get_Fdata())   {
 			// Use mine
-			cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata());
+			// cp->SM->SM_data.set_Fdata(cp->SM->SM_data.get_Fdata());
 		    } else   {
 			// Use the child's
-			cp->SM->SM_data.set_Fdata(event.get_Fdata());
+			cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
 		    }
 		    break;
 
@@ -157,17 +168,21 @@ allreduce_op_t op;
 	    if (receives == ctopo->num_children())   {
 		if (ctopo->is_root())   {
 		    // Send to my children and get out of here
+		    send_event.event= E_FROM_PARENT;
+		    send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
 		    std::list<int>::iterator it;
 		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
 			// FIXME: This should not be no_data
-			cp->send_msg(*it, no_data, E_FROM_PARENT);
+			cp->send_msg(*it, no_data, send_event);
 		    }
 
 		    state= START;  // For next allreduce
 		    done= true;
 		} else   {
+		    send_event.event= E_FROM_CHILD;
+		    send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
 		    // FIXME: This should not be no_data
-		    cp->send_msg(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		    cp->send_msg(ctopo->parent_rank(), no_data, send_event);
 		    state= WAIT_PARENT;
 		}
 		receives= 0;
@@ -176,28 +191,33 @@ allreduce_op_t op;
 
 	default:
 	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
-		cp->my_rank, event.event, state);
+		cp->my_rank, e, state);
     }
+
 }  // end of state_WAIT_CHILDREN()
 
 
 
 void
-Allreduce_pattern::state_WAIT_PARENT(state_event event)
+Allreduce_pattern::state_WAIT_PARENT(state_event sm_event)
 {
 
+allreduce_events_t e= (allreduce_events_t)sm_event.event;
+state_event send_event;
 std::list<int>::iterator it;
 
 
-    switch (event.event)   {
+    switch (e)   {
 	case E_FROM_PARENT:
 	    // Send to my children and get out of here
 	    // Save allreduce value received from root
-	    cp->SM->SM_data.set_Fdata(event.get_Fdata());
+	    cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
+	    send_event.set_Fdata(sm_event.get_Fdata());
+	    send_event.event= E_FROM_PARENT;
 
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
 		// FIXME: This should not be no_data
-		cp->send_msg(*it, no_data, E_FROM_PARENT);
+		cp->send_msg(*it, no_data, send_event);
 	    }
 
 	    state= START;  // For next allreduce
@@ -206,6 +226,7 @@ std::list<int>::iterator it;
 
 	default:
 	    _abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
-		cp->my_rank, event.event, state);
+		cp->my_rank, e, state);
     }
+
 }  // end of state_WAIT_PARENT()

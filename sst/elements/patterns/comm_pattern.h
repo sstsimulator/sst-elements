@@ -258,7 +258,7 @@ class Comm_pattern : public Component {
 	void self_event_send(int event_type);
 	// FIXME: This needs to be more generic as well
 	void data_send(int dest, int len, int event_type);
-	void send_msg(int dest, int len, int event_type);
+	void send_msg(int dest, int len, state_event sm_event);
 
 	State_machine *SM;
 
