@@ -103,9 +103,9 @@ class Pingpong_pattern : public Comm_pattern {
 	    mySelf->handle_events(sst_event);
 	}
 
-	void state_INIT(pingpong_events_t event);
-	void state_RECEIVING(pingpong_events_t event);
-	void state_BARRIER(pingpong_events_t event);
+	void state_INIT(state_event event);
+	void state_RECEIVING(state_event event);
+	void state_BARRIER(state_event event);
 	void state_ALLREDUCE(state_event event);
 	Params_t params;
 

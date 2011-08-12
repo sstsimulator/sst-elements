@@ -22,25 +22,19 @@ There are no configuration parameters for this module.
 
 
 void
-Barrier_pattern::handle_events(state_event sst_event)
+Barrier_pattern::handle_events(state_event sm_event)
 {
-
-barrier_events_t event;
-
-
-    event= (barrier_events_t)sst_event.event;
-
     switch (state)   {
 	case START:
-	    state_INIT(event);
+	    state_INIT(sm_event);
 	    break;
 
 	case WAIT_CHILDREN:
-	    state_WAIT_CHILDREN(event);
+	    state_WAIT_CHILDREN(sm_event);
 	    break;
 
 	case WAIT_PARENT:
-	    state_WAIT_PARENT(event);
+	    state_WAIT_PARENT(sm_event);
 	    break;
     }
 
@@ -48,7 +42,7 @@ barrier_events_t event;
     // Only "main" patterns should do that; i.e., patterns that use other
     // patterns like this one. Just return to our caller.
     if (done)   {
-	cp->SM->SM_return(sst_event);
+	cp->SM->SM_return(sm_event);
     }
 
 }  /* end of handle_events() */
@@ -56,10 +50,13 @@ barrier_events_t event;
 
 
 void
-Barrier_pattern::state_INIT(barrier_events_t event)
+Barrier_pattern::state_INIT(state_event sm_event)
 {
 
-    switch (event)   {
+barrier_events_t e= (barrier_events_t)sm_event.event;
+
+
+    switch (e)   {
 	case E_START:
 	    if (ctopo->is_root())   {
 		state= WAIT_CHILDREN;
@@ -73,7 +70,7 @@ Barrier_pattern::state_INIT(barrier_events_t event)
 	    break;
 
 	default:
-	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, event, state);
+	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_INIT()
@@ -81,10 +78,13 @@ Barrier_pattern::state_INIT(barrier_events_t event)
 
 
 void
-Barrier_pattern::state_WAIT_CHILDREN(barrier_events_t event)
+Barrier_pattern::state_WAIT_CHILDREN(state_event sm_event)
 {
 
-    switch (event)   {
+barrier_events_t e= (barrier_events_t)sm_event.event;
+
+
+    switch (e)   {
 	case E_FROM_CHILD:
 	    // Count receives from my children. When I have them all, send to parent.
 	    receives++;
@@ -107,7 +107,7 @@ Barrier_pattern::state_WAIT_CHILDREN(barrier_events_t event)
 	    break;
 
 	default:
-	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, event, state);
+	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_WAIT_CHILDREN()
@@ -115,13 +115,16 @@ Barrier_pattern::state_WAIT_CHILDREN(barrier_events_t event)
 
 
 void
-Barrier_pattern::state_WAIT_PARENT(barrier_events_t event)
+Barrier_pattern::state_WAIT_PARENT(state_event sm_event)
 {
 
 std::list<int>::iterator it;
+barrier_events_t e= (barrier_events_t)sm_event.event;
 
 
-    switch (event)   {
+
+
+    switch (e)   {
 	case E_FROM_PARENT:
 	    // Send to my children and get out of here
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
@@ -132,7 +135,7 @@ std::list<int>::iterator it;
 	    break;
 
 	default:
-	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, event, state);
+	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_WAIT_PARENT()

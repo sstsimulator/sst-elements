@@ -65,9 +65,9 @@ class Barrier_pattern   {
 	int receives;
 	Collective_topology *ctopo;
 
-	void state_INIT(barrier_events_t event);
-	void state_WAIT_CHILDREN(barrier_events_t event);
-	void state_WAIT_PARENT(barrier_events_t event);
+	void state_INIT(state_event event);
+	void state_WAIT_CHILDREN(state_event event);
+	void state_WAIT_PARENT(state_event event);
 
 };
 

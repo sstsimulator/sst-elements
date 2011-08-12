@@ -33,20 +33,15 @@ void
 Pingpong_pattern::handle_events(state_event sm_event)
 {
 
-pingpong_events_t event;
-
-
-    event= (pingpong_events_t)sm_event.event;
-
     switch (state)   {
 	case PP_INIT:
-	    state_INIT(event);
+	    state_INIT(sm_event);
 	    break;
 	case PP_RECEIVING:
-	    state_RECEIVING(event);
+	    state_RECEIVING(sm_event);
 	    break;
 	case PP_BARRIER:
-	    state_BARRIER(event);
+	    state_BARRIER(sm_event);
 	    break;
 	case PP_ALLREDUCE:
 	    state_ALLREDUCE(sm_event);
@@ -68,10 +63,13 @@ pingpong_events_t event;
 // Code for each possible state of the pingpong pattern
 //
 void
-Pingpong_pattern::state_INIT(pingpong_events_t event)
+Pingpong_pattern::state_INIT(state_event sm_event)
 {
 
-    switch (event)   {
+pingpong_events_t e= (pingpong_events_t)sm_event.event;
+
+
+    switch (e)   {
 	case E_START:
 	    cnt= num_msg;
 	    done= false;
@@ -102,7 +100,7 @@ Pingpong_pattern::state_INIT(pingpong_events_t event)
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -111,14 +109,15 @@ Pingpong_pattern::state_INIT(pingpong_events_t event)
 
 
 void
-Pingpong_pattern::state_RECEIVING(pingpong_events_t event)
+Pingpong_pattern::state_RECEIVING(state_event sm_event)
 {
 
+pingpong_events_t e= (pingpong_events_t)sm_event.event;
 double execution_time;
 double latency;
 
 
-    switch (event)   {
+    switch (e)   {
 	case E_RECEIVE:
 	    // We're either rank 0 or dest. Others don't receive.
 	    // Send it back, unless we're done
@@ -176,7 +175,7 @@ double latency;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -185,13 +184,14 @@ double latency;
 
 
 void
-Pingpong_pattern::state_BARRIER(pingpong_events_t event)
+Pingpong_pattern::state_BARRIER(state_event sm_event)
 {
 
+pingpong_events_t e= (pingpong_events_t)sm_event.event;
 state_event enter_barrier, exit_barrier;
 
 
-    switch (event)   {
+    switch (e)   {
 	case E_BARRIER_ENTRY:
 	    // Set the parameters to be passed to the barrier SM
 	    enter_barrier.event= SM_START_EVENT;
@@ -208,7 +208,7 @@ state_event enter_barrier, exit_barrier;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event, state);
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
@@ -217,14 +217,15 @@ state_event enter_barrier, exit_barrier;
 
 
 void
-Pingpong_pattern::state_ALLREDUCE(state_event event)
+Pingpong_pattern::state_ALLREDUCE(state_event sm_event)
 {
 
+pingpong_events_t e= (pingpong_events_t)sm_event.event;
 state_event enter_allreduce, exit_allreduce;
 double check= 0.0;
 
 
-    switch (event.event)   {
+    switch (e)   {
 	case E_ALLREDUCE_ENTRY:
 	    // Set the parameters to be passed to the allreduce SM
 	    enter_allreduce.event= SM_START_EVENT;
@@ -245,17 +246,17 @@ double check= 0.0;
 	    }
 
 	    if (my_rank == 0)   {
-		if (check == event.get_Fdata())   {
+		if (check == sm_event.get_Fdata())   {
 		    printf("# [%3d] Allreduce test passed\n", my_rank);
 		} else   {
 		    printf("# [%3d] Allreduce test failed: %6.3f != %6.3f\n", my_rank,
-			event.get_Fdata(), check);
+			sm_event.get_Fdata(), check);
 		}
 	    } else   {
 		// Only report errors
-		if (check != event.get_Fdata())   {
+		if (check != sm_event.get_Fdata())   {
 		    printf("# [%3d] Allreduce test failed: %6.3f != %6.3f\n", my_rank,
-			event.get_Fdata(), check);
+			sm_event.get_Fdata(), check);
 		}
 	    }
 	    state= PP_DONE;
@@ -263,7 +264,7 @@ double check= 0.0;
 	    break;
 
 	default:
-	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, event.event, state);
+	    _abort(pingpong_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
 	    break;
     }
 
