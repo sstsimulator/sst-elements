@@ -247,7 +247,8 @@ double check= 0.0;
 
 	    if (my_rank == 0)   {
 		if (check == sm_event.get_Fdata())   {
-		    printf("# [%3d] Allreduce test passed\n", my_rank);
+		    printf("# [%3d] Allreduce test of length %d passed\n", my_rank,
+			allreduce_msglen);
 		} else   {
 		    printf("# [%3d] Allreduce test failed: %6.3f != %6.3f\n", my_rank,
 			sm_event.get_Fdata(), check);

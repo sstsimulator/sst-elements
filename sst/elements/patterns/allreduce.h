@@ -18,13 +18,17 @@
 
 class Allreduce_pattern   {
     public:
-	Allreduce_pattern(Comm_pattern * const& current_pattern) :
+	Allreduce_pattern(Comm_pattern * const& current_pattern, int msglen) :
 	    cp(current_pattern),
-	    no_data(0)
+	    allreduce_msglen(msglen)
 	{
+	    // Do some initializations
 	    done= false;
 	    state= START;
 	    receives= 0;
+	    allreduce_msglen= sizeof(double);
+
+	    // Get access to a virtual tree topology
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
 	}
 
@@ -59,8 +63,8 @@ class Allreduce_pattern   {
 	// We need to remember how to upcall into our parent object
 	Comm_pattern *cp;
 
-	// FIXME: This probably needs to change
-	const int no_data;
+	// Simulated message size
+	int allreduce_msglen;
 
 	allreduce_state_t state;
 	int done;

@@ -34,6 +34,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    num_msg= 10;
 	    end_len= 1024;
 	    len_inc= 8;
+	    allreduce_msglen= sizeof(double);
 
 
 
@@ -57,6 +58,11 @@ class Pingpong_pattern : public Comm_pattern {
 		    sscanf(it->second.c_str(), "%d", &len_inc);
 		}
 
+		// Parameter for allreduce
+		if (!it->first.compare("allreduce_msglen"))   {
+		    sscanf(it->second.c_str(), "%d", &allreduce_msglen);
+		}
+
 		it++;
 	    }
 
@@ -68,7 +74,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    Barrier_pattern *b= new Barrier_pattern(this);
 	    SMbarrier= b->install_handler();
 
-	    Allreduce_pattern *a= new Allreduce_pattern(this);
+	    Allreduce_pattern *a= new Allreduce_pattern(this, allreduce_msglen);
 	    SMallreduce= a->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
@@ -108,6 +114,7 @@ class Pingpong_pattern : public Comm_pattern {
 	void state_BARRIER(state_event sm_event);
 	void state_ALLREDUCE(state_event sm_event);
 	Params_t params;
+	int allreduce_msglen;
 
 	// State machine identifiers
 	uint32_t SMpingpong;

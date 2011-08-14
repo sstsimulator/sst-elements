@@ -1,3 +1,12 @@
+- Right now allreduce takes message length as an initialization
+    parameter from the calling module. It might be nicer to have the
+    calling module just pass in the configuration file parameter
+    list, and let allreduce pull out the parameters it wants.
+    That would reduce the amount of code duplication in calling
+    modules, make input file processing a little bit more expensive,
+    and may another mechanism to set the message length from the
+    calling module, if it wants to set it.
+
 - Clean up and improve the message passing model
     - Use (some) LoGP parameters in the config file
     - Figure out what we want to be able to set (and what we cannot given the model)

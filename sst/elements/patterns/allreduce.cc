@@ -9,11 +9,13 @@
 
 /*
 
-A simple allreduce operation on a tree. The exact tree is defined in
-collective_topology.cc This state machine only assumes that there
-is a root, interior nodes, and leaves.
+A simple allreduce operation on a tree. The exact tree is defined
+in collective_topology.cc This state machine only assumes that
+there is a root, interior nodes, and leaves.
 
-There are no configuration parameters for this module.
+During object creation, the calling module can set the default
+message length.  It is used as the simulated message length for
+allreduce messages.
 
 Callers of this state machine pass in a double value in the first
 Fdata field of the starting event. Allreduce returns the result of
@@ -82,8 +84,7 @@ state_event send_event;
 	    if (ctopo->is_root())   {
 		state= WAIT_CHILDREN;
 	    } else if (ctopo->is_leaf())   {
-		// FIXME: This should not be no_data
-		cp->send_msg(ctopo->parent_rank(), no_data, send_event);
+		cp->send_msg(ctopo->parent_rank(), allreduce_msglen, send_event);
 		state= WAIT_PARENT;
 	    } else   {
 		// I must be an interior node
@@ -172,8 +173,7 @@ state_event send_event;
 		    send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
 		    std::list<int>::iterator it;
 		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-			// FIXME: This should not be no_data
-			cp->send_msg(*it, no_data, send_event);
+			cp->send_msg(*it, allreduce_msglen, send_event);
 		    }
 
 		    state= START;  // For next allreduce
@@ -181,8 +181,7 @@ state_event send_event;
 		} else   {
 		    send_event.event= E_FROM_CHILD;
 		    send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
-		    // FIXME: This should not be no_data
-		    cp->send_msg(ctopo->parent_rank(), no_data, send_event);
+		    cp->send_msg(ctopo->parent_rank(), allreduce_msglen, send_event);
 		    state= WAIT_PARENT;
 		}
 		receives= 0;
@@ -216,8 +215,7 @@ std::list<int>::iterator it;
 	    send_event.event= E_FROM_PARENT;
 
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-		// FIXME: This should not be no_data
-		cp->send_msg(*it, no_data, send_event);
+		cp->send_msg(*it, allreduce_msglen, send_event);
 	    }
 
 	    state= START;  // For next allreduce
