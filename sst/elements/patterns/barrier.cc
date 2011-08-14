@@ -54,6 +54,7 @@ Barrier_pattern::state_INIT(state_event sm_event)
 {
 
 barrier_events_t e= (barrier_events_t)sm_event.event;
+state_event barrier_event;
 
 
     switch (e)   {
@@ -61,7 +62,8 @@ barrier_events_t e= (barrier_events_t)sm_event.event;
 	    if (ctopo->is_root())   {
 		state= WAIT_CHILDREN;
 	    } else if (ctopo->is_leaf())   {
-		cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		barrier_event.event= E_FROM_CHILD;
+		cp->send_msg(ctopo->parent_rank(), no_data, barrier_event);
 		state= WAIT_PARENT;
 	    } else   {
 		// I must be an interior node
@@ -82,6 +84,7 @@ Barrier_pattern::state_WAIT_CHILDREN(state_event sm_event)
 {
 
 barrier_events_t e= (barrier_events_t)sm_event.event;
+state_event barrier_event;
 
 
     switch (e)   {
@@ -91,15 +94,17 @@ barrier_events_t e= (barrier_events_t)sm_event.event;
 	    if (receives == ctopo->num_children())   {
 		if (ctopo->is_root())   {
 		    // Send to my children and get out of here
+		    barrier_event.event= E_FROM_PARENT;
 		    std::list<int>::iterator it;
 		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-			cp->data_send(*it, no_data, E_FROM_PARENT);
+			cp->send_msg(*it, no_data, barrier_event);
 		    }
 
 		    state= START;  // For next barrier
 		    done= true;
 		} else   {
-		    cp->data_send(ctopo->parent_rank(), no_data, E_FROM_CHILD);
+		    barrier_event.event= E_FROM_CHILD;
+		    cp->send_msg(ctopo->parent_rank(), no_data, barrier_event);
 		    state= WAIT_PARENT;
 		}
 		receives= 0;
@@ -120,15 +125,16 @@ Barrier_pattern::state_WAIT_PARENT(state_event sm_event)
 
 std::list<int>::iterator it;
 barrier_events_t e= (barrier_events_t)sm_event.event;
-
+state_event barrier_event;
 
 
 
     switch (e)   {
 	case E_FROM_PARENT:
 	    // Send to my children and get out of here
+	    barrier_event.event= E_FROM_PARENT;
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-		cp->data_send(*it, no_data, E_FROM_PARENT);
+		cp->send_msg(*it, no_data, barrier_event);
 	    }
 	    state= START;  // For next barrier
 	    done= true;

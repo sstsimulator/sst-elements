@@ -39,22 +39,6 @@ SimTime_t node_latency= 2440;
 
 
 
-// FIXME: This has been replaced by send_msg
-void
-Comm_pattern::data_send(int dest, int len, int event_type)
-{
-
-uint32_t tag= 0;
-
-
-    tag= SM->SM_current_tag();
-    // FIXME: We need a better model than 2440 for node latency!
-    common->send(2440, dest, envelope_size + len, event_type, tag);
-
-}  // end of data_send()
-
-
-
 // This is only used for state_transition macro.
 void
 Comm_pattern::self_event_send(int event_type)

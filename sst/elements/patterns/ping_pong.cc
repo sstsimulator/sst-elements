@@ -67,6 +67,7 @@ Pingpong_pattern::state_INIT(state_event sm_event)
 {
 
 pingpong_events_t e= (pingpong_events_t)sm_event.event;
+state_event pp_event;
 
 
     switch (e)   {
@@ -85,7 +86,8 @@ pingpong_events_t e= (pingpong_events_t)sm_event.event;
 		start_time= getCurrentSimTime();
 
 		// If I'm rank 0 send, otherwise wait
-		data_send(dest, len, E_RECEIVE);
+		pp_event.event= E_RECEIVE;
+		send_msg(dest, len, pp_event);
 		state= PP_RECEIVING;
 
 	    } else if (my_rank != dest)   {
@@ -113,6 +115,7 @@ Pingpong_pattern::state_RECEIVING(state_event sm_event)
 {
 
 pingpong_events_t e= (pingpong_events_t)sm_event.event;
+state_event pp_event;
 double execution_time;
 double latency;
 
@@ -134,7 +137,8 @@ double latency;
 
 	    if (my_rank != 0)   {
 		// We always send back (to 0)
-		data_send(0, len, E_RECEIVE);
+		pp_event.event= E_RECEIVE;
+		send_msg(0, len, pp_event);
 
 		if (cnt < 1)   {
 		    if (len > 0)   {
@@ -151,7 +155,8 @@ double latency;
 	    } else   {
 		// I'm rank 0
 		if (cnt > 0)   {
-		    data_send(dest, len, E_RECEIVE);
+		    pp_event.event= E_RECEIVE;
+		    send_msg(dest, len, pp_event);
 		} else   {
 		    execution_time= (double)(getCurrentSimTime() - start_time) / 1000000000.0;
 		    latency= execution_time / num_msg / 2.0;
@@ -168,7 +173,8 @@ double latency;
 		    } else   {
 			cnt= num_msg;
 			start_time= getCurrentSimTime();
-			data_send(dest, len, E_RECEIVE);
+			pp_event.event= E_RECEIVE;
+			send_msg(dest, len, pp_event);
 		    }
 		}
 	    }
