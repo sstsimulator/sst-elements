@@ -4,7 +4,7 @@
 #include <sstream>
 #include <boost/mpi.hpp>
 
-Trace __trace;
+_Trace __trace;
 
 static __attribute__ ((constructor)) void init(void)
 {

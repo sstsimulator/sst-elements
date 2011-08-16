@@ -10,7 +10,7 @@
 class NicMmu 
 {
     typedef unsigned long Addr;
-    static const int NumTables = 100; 
+    static const int NumTables = 1000; 
 
 #if THE_ISA == X86_ISA
     static const int PageSizeBits = 12;
@@ -139,7 +139,11 @@ class NicMmu
   private:
     int new_page() {
         int tmp = m_nextPFN++; 
-        assert( m_nextPFN != NumTables );
+        
+        if( m_nextPFN == NumTables ) {
+            printf("%d %d\n",m_nextPFN,NumTables);
+            assert( 0 );
+        }
         return tmp;
     }
     int     m_nextPFN;

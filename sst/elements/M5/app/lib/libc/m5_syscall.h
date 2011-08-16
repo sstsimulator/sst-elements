@@ -4,6 +4,7 @@
 #ifdef __alpha__  
 #define SYS_virt2phys 442
 #define SYS_mmap_dev  443   
+#define SYS_fdmap     444   
 #elif __x86_64__
 #define SYS_virt2phys 273 
 #define SYS_mmap_dev  274 

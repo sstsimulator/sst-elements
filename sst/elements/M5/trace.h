@@ -36,10 +36,10 @@ static inline char const* __printf( char const* format, ... )
 #define DBG_STREAM std::cout
 #define DBG( fmt, args... )  DBG_STREAM << DBG2(fmt,##args)
 
-class Trace {
+class _Trace {
   public:
 
-    Trace( FILE* fp = stderr  ) :
+    _Trace( FILE* fp = stderr  ) :
         m_fp( fp ),
         m_all( false )  
     {
@@ -135,7 +135,7 @@ class Trace {
     bool        m_all;
 };
 
-extern Trace __trace;
+extern _Trace __trace;
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)

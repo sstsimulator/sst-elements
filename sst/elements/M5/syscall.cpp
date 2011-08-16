@@ -6,8 +6,13 @@
 
 #include <system.h>
 
-#include <barrier.h>
+#include <termios.h>
 
+#include <sim/syscall_emul.hh>
+#include <barrier.h>
+#include <trace.h>
+
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <syscall.h>
 #include <debug.h>
@@ -26,7 +31,6 @@
     #define __NR_read                                3 
     #define __NR_write                               4 
     #define __NR_open                                5 
-    #define __NR_close                               6 
 
 	#define isaSwap( x ) bswap_64(x)
 
@@ -35,10 +39,12 @@
     #include <arch/alpha/linux/linux.hh>
 
     #define __NR_open                                45 
-    #define __NR_close                               6 
     #define __NR_read                                3 
     #define __NR_write                               4 
     #define __NR_exit                                1
+    #define __NR_fstat                               91 
+    #define __NR_fstat64                             427
+    #define __NR_ioctl                               54
 
 	#define isaSwap(x) x
 
@@ -47,7 +53,6 @@
     #include <arch/x86/linux/linux.hh>
 
     #define __NR_open                                2 
-    #define __NR_close                               3 
     #define __NR_read                                0 
     #define __NR_write                               1 
     #define __NR_exit                                60 
@@ -143,6 +148,76 @@ Tick Syscall::read(Packet* pkt)
     return 1;
 }
 
+int64_t Syscall::startFstat( int fd, Addr bufAddr )
+{
+    DBGX(3, "fd=%d buf=%#lx\n", fd, bufAddr ); 
+
+    struct stat host_stat;
+    uint64_t retval = ::fstat( fd, &host_stat );
+    if ( retval == -1 ) {
+        return -errno;
+    }
+
+    typedef ISA_OS::tgt_stat tgt_stat_t; 
+
+    m_dmaEvent.buf = (uint8_t*) malloc( sizeof( tgt_stat_t ) );
+    assert( m_dmaEvent.buf );
+
+    ISA_OS::tgt_stat*  tgt_stat = (tgt_stat_t*) m_dmaEvent.buf ;
+
+    convertStatBuf< tgt_stat_t*, struct stat>( tgt_stat, &host_stat, (fd==1));
+
+    dmaWrite( bufAddr, sizeof(*tgt_stat), &m_dmaEvent, m_dmaEvent.buf, 0 );
+
+    return retval;
+}
+
+int64_t Syscall::startFstat64( int fd, Addr bufAddr )
+{
+    DBGX(3, "fd=%d buf=%#lx\n", fd, bufAddr ); 
+    assert(0);
+    
+    struct stat64 buf;
+    uint64_t retval = ::fstat64( fd, &buf );
+    if ( retval == -1 ) {
+        return -errno;
+    }
+    return retval;
+}
+
+void Syscall::finishFstat()
+{
+    DBGX(3, "\n" ); 
+    free( m_dmaEvent.buf );
+}
+
+int64_t Syscall::startIoctl( int fd, int request, Addr buf )
+{
+    DBGX(3, "fd=%d request=%#x buf=%#lx\n", fd, request ,buf ); 
+    
+    assert( request == ISA_OS::TCGETS_ );
+
+    return -ENOTTY;
+
+#if 0
+    struct termios host_termios;
+    uint64_t retval = ::ioctl( fd, TCGETS, &host_termios );
+    if ( retval == -1 ) {
+        return -errno;
+    }
+
+    assert( m_dmaEvent.buf );
+
+    dmaWrite( buf, sizeof( struct stat ), &m_dmaEvent, m_dmaEvent.buf, 0 );
+#endif
+}
+
+void Syscall::finishIoctl()
+{
+    DBGX(3, "\n" ); 
+    free( m_dmaEvent.buf );
+}
+
 void Syscall::startOpen( Addr path )
 {
     DBGX(3, "path=%#lx\n", path ); 
@@ -184,12 +259,6 @@ int64_t Syscall::finishOpen( int oflag, mode_t mode )
     DBGX(3,"retval=%d\n",retval);
 
     return retval;
-}
-
-int64_t Syscall::close( int fd )
-{
-    DBGX(3, "fd=%d\n", fd );
-    return ::close( fd );
 }
 
 int64_t Syscall::startRead( int fildes, Addr addr, size_t nbytes )
@@ -300,9 +369,16 @@ void Syscall::startSyscall(void)
             startOpen( m_mailbox[0] );
             break; 
 
-        case __NR_close:
-            foo( close( m_mailbox[0] ) );
-            break; 
+        case __NR_ioctl:
+            retval = startIoctl( m_mailbox[0], m_mailbox[1], m_mailbox[2] );
+            if ( retval < 0 ) foo( retval ); 
+            break;
+
+        case __NR_fstat:
+        case __NR_fstat64:
+            retval = startFstat( m_mailbox[1], m_mailbox[2] );
+            if ( retval < 0 ) foo( retval ); 
+            break;
 
         case __NR_barrier:
             m_comp->barrier().enter();
@@ -320,7 +396,7 @@ void Syscall::startSyscall(void)
 void Syscall::finishSyscall(void)
 {
     DBGX(3,"%d\n", m_mailbox[0xf] - 1 );
-    int64_t retval;
+    int64_t retval = 0;
     switch ( m_mailbox[0xf] - 1 ) 
     {
         case __NR_write:
@@ -334,6 +410,31 @@ void Syscall::finishSyscall(void)
         case __NR_open:
             retval = finishOpen( m_mailbox[1], m_mailbox[2] );
             break; 
+
+        case __NR_fstat:
+        case __NR_fstat64:
+            finishFstat( );
+            break;
+
+        case __NR_ioctl:
+            finishIoctl( );
+            break;
     }
     foo ( retval );
+}
+
+char* Syscall::syscallStr( int num )
+{
+    switch( num ) {
+        case __NR_open: return "open";
+        case __NR_read: return "read";
+        case __NR_write: return "write";
+        case __NR_exit: return "exit";
+        case __NR_fstat: return "fstat";
+        case __NR_fstat64: return "fstat64";
+        case __NR_ioctl: return "ioctl";
+        case __NR_barrier: return "barrier";
+        default:
+            return "?????";
+    }
 }

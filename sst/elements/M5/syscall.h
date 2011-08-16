@@ -66,13 +66,18 @@ class Syscall : public DmaDevice
     void startOpen( Addr path );
     int64_t finishOpen( int oflag, mode_t );
 
-    int64_t close( int );
-
     int64_t startRead( int, Addr, size_t );
     int64_t finishRead( int, size_t );
 
     int64_t startWrite( int, Addr, size_t );
     int64_t finishWrite( int, size_t );
+
+    int64_t startFstat( int, Addr );
+    int64_t startFstat64( int, Addr );
+    void finishFstat( );
+
+    int64_t startIoctl( int, int ,Addr );
+    void finishIoctl( );
 
     BarrierAction::Handler<Syscall> m_barrierHandler;
 
@@ -87,6 +92,7 @@ class Syscall : public DmaDevice
 
     M5*           m_comp;
 
+    char* syscallStr(int);
     void foo( int64_t retval ) {
         DBGX(3,"retval %d\n",retval);
         m_mailbox[0] = retval;
