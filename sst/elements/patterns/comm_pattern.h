@@ -243,6 +243,7 @@ class Comm_pattern : public Component {
 	{ }
 
 	int my_rank;
+	// FIXME: num_ranks and myNetX() etc. should all be variables or methods, not mixed
 	int num_ranks;
 
 	int myNetX(void);

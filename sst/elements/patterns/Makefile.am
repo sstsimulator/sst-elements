@@ -11,8 +11,12 @@ libghost_pattern_la_SOURCES = pattern_common.h pattern_common.cc \
                               ghost_pattern.h ghost_pattern.cc
 libghost_pattern_la_LDFLAGS = -module -avoid-version
 
-libmsgrate_pattern_la_SOURCES = pattern_common.h pattern_common.cc \
-                              msgrate_pattern.h msgrate_pattern.cc
+libmsgrate_pattern_la_SOURCES = msgrate_pattern.h msgrate_pattern.cc \
+			    comm_pattern.h comm_pattern.cc \
+			    state_machine.h state_machine.cc \
+			    pattern_common.h pattern_common.cc \
+			    allreduce.h allreduce.cc \
+			    collective_topology.h collective_topology.cc
 libmsgrate_pattern_la_LDFLAGS = -module -avoid-version
 
 libpingpong_pattern_la_SOURCES = ping_pong.h ping_pong.cc \

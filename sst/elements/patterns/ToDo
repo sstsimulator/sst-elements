@@ -1,3 +1,5 @@
+- Get rid of pattern_event_t
+
 - Right now allreduce takes message length as an initialization
     parameter from the calling module. It might be nicer to have the
     calling module just pass in the configuration file parameter

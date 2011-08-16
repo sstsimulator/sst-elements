@@ -78,7 +78,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    SMallreduce= a->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
-	    // Make sure to call SM_create() last in the main pattern
+	    // Make sure to call SM_create() last in the main pattern (pingpong)
 	    // This is the SM that will run first
 	    SMpingpong= SM->SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
 
@@ -139,8 +139,10 @@ class Pingpong_pattern : public Comm_pattern {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
+	    ar & BOOST_SERIALIZATION_NVP(allreduce_msglen);
 	    ar & BOOST_SERIALIZATION_NVP(SMpingpong);
 	    ar & BOOST_SERIALIZATION_NVP(SMbarrier);
+	    ar & BOOST_SERIALIZATION_NVP(SMallreduce);
 	    ar & BOOST_SERIALIZATION_NVP(cnt);
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(len);

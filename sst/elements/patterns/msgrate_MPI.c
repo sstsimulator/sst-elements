@@ -174,6 +174,9 @@ int num_rcvs;
 
 
 
+/*
+** First half of all ranks sends to second half
+*/
 static double
 Test1(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
@@ -205,6 +208,9 @@ char buf[msg_len];
 
 
 
+/*
+** Rank 0 sends to all other nodes round-robin
+*/
 static double
 Test2(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
@@ -251,6 +257,9 @@ char buf[msg_len];
 
 
 
+/*
+** Everybody sends to rank 0
+*/
 static double
 Test3(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
