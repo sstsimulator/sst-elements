@@ -24,26 +24,27 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.cc src/arc
  #endif
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.hh src/arch/alpha/linux/linux.hh
 --- /home/mjleven/tmp/m5/src/arch/alpha/linux/linux.hh	2010-10-20 13:51:48.000000000 -0600
-+++ src/arch/alpha/linux/linux.hh	2011-08-10 12:12:20.000000000 -0600
++++ src/arch/alpha/linux/linux.hh	2011-08-16 15:12:32.000000000 -0600
 @@ -105,6 +105,7 @@
      static const unsigned TIOCISATTY_ = 0x2000745e;
      static const unsigned TIOCGETS_   = 0x402c7413;
      static const unsigned TIOCGETA_   = 0x40127417;
-+	static const unsigned TCGETS_    = -1;
++	static const unsigned TCGETS_     = 0x403c7413;
      //@}
  
      /// For table().
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc src/arch/alpha/linux/process.cc
 --- /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc	2010-10-20 13:51:48.000000000 -0600
-+++ src/arch/alpha/linux/process.cc	2011-07-05 10:39:17.000000000 -0600
-@@ -563,7 +563,9 @@
++++ src/arch/alpha/linux/process.cc	2011-08-16 13:05:22.000000000 -0600
+@@ -563,7 +563,10 @@
      /* 438 */ SyscallDesc("waitid", unimplementedFunc),
      /* 439 */ SyscallDesc("add_key", unimplementedFunc),
      /* 440 */ SyscallDesc("request_key", unimplementedFunc),
 -    /* 441 */ SyscallDesc("keyctl", unimplementedFunc)
 +    /* 441 */ SyscallDesc("keyctl", unimplementedFunc),
 +    /* 442 */ SyscallDesc("virt2phys", virt2physFunc),
-+    /* 443 */ SyscallDesc("mmap_dev", mmap_devFunc)
++    /* 443 */ SyscallDesc("mmap_dev", mmap_devFunc),
++    /* 443 */ SyscallDesc("fdmap", fdmapFunc)
  };
  
  AlphaLinuxProcess::AlphaLinuxProcess(LiveProcessParams * params,
@@ -227,6 +228,27 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/tlb.cc src/arch/x86/tlb.
      return NoFault;
  };
  
+diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/base/trace.cc src/base/trace.cc
+--- /home/mjleven/tmp/m5/src/base/trace.cc	2010-10-20 13:51:49.000000000 -0600
++++ src/base/trace.cc	2011-04-01 13:47:50.000000000 -0600
+@@ -92,6 +92,17 @@
+         args.push_front(when);
+     }
+ 
++#if 1 
++    static int _rank = -1;
++    if ( _rank == - 1) {
++        char* tmp = getenv("RANK");
++        if ( tmp ) sscanf( tmp, "%d", &_rank );
++    }
++ 
++    fmt = "%d:" + fmt;
++    args.push_front(_rank);
++#endif
++
+     fmt += format;
+ 
+     ccprintf(os, fmt.c_str(), args);
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/cpu/intr_control.cc src/cpu/intr_control.cc
 --- /home/mjleven/tmp/m5/src/cpu/intr_control.cc	2010-10-20 13:51:49.000000000 -0600
 +++ src/cpu/intr_control.cc	2011-03-24 08:32:20.000000000 -0600
@@ -323,7 +345,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/packet.hh src/mem/packet.hh
      const std::string &cmdString() const { return cmd.toString(); }
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/page_table.cc src/mem/page_table.cc
 --- /home/mjleven/tmp/m5/src/mem/page_table.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/page_table.cc	2011-08-10 12:44:42.000000000 -0600
++++ src/mem/page_table.cc	2011-08-12 13:50:58.000000000 -0600
 @@ -65,6 +65,31 @@
  }
  
@@ -413,6 +435,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/physical.hh src/mem/physical.
    public:
      Addr new_page();
      uint64_t size() { return cachedSize; }
+Only in src: patch
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
 --- /home/mjleven/tmp/m5/src/SConscript	2010-10-20 13:51:48.000000000 -0600
 +++ src/SConscript	2011-03-15 15:09:39.000000000 -0600
@@ -442,9 +465,10 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
  
      def make_obj(source, static, extra_deps = None):
          '''This function adds the specified source to the correct
+Only in src/sim: nicMmu.h
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
 --- /home/mjleven/tmp/m5/src/sim/process.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.cc	2011-08-10 12:33:04.000000000 -0600
++++ src/sim/process.cc	2011-08-12 13:50:04.000000000 -0600
 @@ -1,3 +1,4 @@
 +
  /*
@@ -476,16 +500,17 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
  // map simulator fd sim_fd to target fd tgt_fd
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.hh src/sim/process.hh
 --- /home/mjleven/tmp/m5/src/sim/process.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.hh	2011-08-09 13:39:44.000000000 -0600
-@@ -49,6 +49,7 @@
++++ src/sim/process.hh	2011-08-12 12:18:38.000000000 -0600
+@@ -49,6 +49,8 @@
  #include "base/types.hh"
  #include "sim/sim_object.hh"
  #include "sim/syscallreturn.hh"
 +#include "sim/nicMmu.h"
++
  
  class GDBListener;
  class PageTable;
-@@ -123,6 +124,7 @@
+@@ -123,6 +125,7 @@
  
      // The maximum size allowed for the stack.
      Addr max_stack_size;
@@ -493,7 +518,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.hh src/sim/process.hh
  
      // addr to use for next stack region (for multithreaded apps)
      Addr next_thread_stack_base;
-@@ -157,6 +159,7 @@
+@@ -157,6 +160,7 @@
      //This id is assigned by m5 and is used to keep process' tlb entries
      //separated.
      uint64_t M5_pid;
@@ -529,11 +554,30 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/simulate.cc src/sim/simulate.
              return se_event;
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc src/sim/syscall_emul.cc
 --- /home/mjleven/tmp/m5/src/sim/syscall_emul.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/syscall_emul.cc	2011-07-05 10:36:48.000000000 -0600
-@@ -67,6 +67,38 @@
++++ src/sim/syscall_emul.cc	2011-08-17 11:55:54.000000000 -0600
+@@ -63,10 +63,57 @@
+     DPRINTFR(SyscallVerbose, "%d: %s: syscall %s returns %d\n",
+              curTick,tc->getCpuPtr()->name(), name, retval.value());
+ 
++#if 0
++    printf("%d:%s() %s: syscall %s returns %d\n",
++             curTick,__func__,tc->getCpuPtr()->name().c_str(), name, retval.value());
++#endif
++
+     if (!(flags & SyscallDesc::SuppressReturnValue))
          process->setSyscallReturn(tc, retval);
  }
  
++SyscallReturn
++fdmapFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
++                  ThreadContext *tc)
++{
++    int fd = process->getSyscallArg(tc, 0);
++    int sim_fd = process->sim_fd( fd );
++//    printf("%s() sim_fd=%d %d\n",__func__,sim_fd, fd );
++    return sim_fd;
++}
++
 +SyscallReturn
 +mmap_devFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
 +                  ThreadContext *tc)
@@ -571,7 +615,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.cc src/sim/sysca
  unimplementedFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/syscall_emul.hh
 --- /home/mjleven/tmp/m5/src/sim/syscall_emul.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/syscall_emul.hh	2011-08-10 15:17:29.000000000 -0600
++++ src/sim/syscall_emul.hh	2011-08-17 11:55:47.000000000 -0600
 @@ -61,6 +61,8 @@
  #include "mem/page_table.hh"
  #include "sim/process.hh"
@@ -581,7 +625,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/sysca
  ///
  /// System call descriptor.
  ///
-@@ -176,6 +178,11 @@
+@@ -176,6 +178,13 @@
  SyscallReturn unimplementedFunc(SyscallDesc *desc, int num,
                                  LiveProcess *p, ThreadContext *tc);
  
@@ -589,11 +633,13 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/sysca
 +                                LiveProcess *p, ThreadContext *tc);
 +SyscallReturn mmap_devFunc(SyscallDesc *desc, int num,
 +                                LiveProcess *p, ThreadContext *tc);
++SyscallReturn fdmapFunc(SyscallDesc *desc, int num,
++                                LiveProcess *p, ThreadContext *tc);
 +
  /// Handler for unimplemented syscalls that we never intend to
  /// implement (signal handling, etc.) and should not affect the correct
  /// behavior of the program.  Print a warning only if the appropriate
-@@ -485,6 +492,7 @@
+@@ -485,6 +494,7 @@
      }
  
      switch (req) {
@@ -601,7 +647,27 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/sysca
        case OS::TIOCISATTY_:
        case OS::TIOCGETP_:
        case OS::TIOCSETP_:
-@@ -996,6 +1004,33 @@
+@@ -507,6 +517,11 @@
+ openFunc(SyscallDesc *desc, int callnum, LiveProcess *process,
+          ThreadContext *tc)
+ {
++#if THE_ISA == ALPHA_ISA 
++    int fd= process->getSyscallArg(tc, 0);
++    int tmp = process->alloc_fd(fd,"", 0, 0, 0);
++    return tmp; 
++#else 
+     std::string path;
+ 
+     if (!tc->getMemPort()->tryReadString(path, process->getSyscallArg(tc, 0)))
+@@ -556,6 +571,7 @@
+         return (fd == -1) ? -errno : process->alloc_fd(fd,path.c_str(),hostFlags,mode, false);
+      }
+ 
++#endif
+ }
+ 
+ 
+@@ -996,6 +1012,33 @@
              rlp->rlim_max = htog(rlp->rlim_max);
              break;
  
@@ -637,7 +703,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/syscall_emul.hh src/sim/sysca
                  << std::endl;
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/system.cc src/sim/system.cc
 --- /home/mjleven/tmp/m5/src/sim/system.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/system.cc	2011-04-22 11:36:45.000000000 -0600
++++ src/sim/system.cc	2011-08-17 11:54:33.000000000 -0600
 @@ -253,7 +253,7 @@
      ++page_ptr;
      if (return_addr >= physmem->size())
@@ -649,7 +715,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/system.cc src/sim/system.cc
  Addr
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/system.hh src/sim/system.hh
 --- /home/mjleven/tmp/m5/src/sim/system.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/system.hh	2011-04-20 10:16:51.000000000 -0600
++++ src/sim/system.hh	2011-08-17 12:00:31.000000000 -0600
 @@ -89,7 +89,7 @@
      std::vector<ThreadContext *> threadContexts;
      int _numContexts;
