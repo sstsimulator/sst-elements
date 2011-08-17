@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-#define __ABC__ 256
+#define __ABC__ (1024*2) 
 
 #define MAX_PT_INDEX __ABC__ 
 #define MAX_CTS      __ABC__ 
