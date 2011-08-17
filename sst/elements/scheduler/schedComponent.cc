@@ -12,13 +12,22 @@
 #include "sst_config.h"
 #include "sst/core/serialization/element.h"
 #include <assert.h>
+#include <fstream>
 
 #include "sst/core/element.h"
 
+#include "misc.h"
+#include "PQScheduler.h"
 #include "schedComponent.h"
+#include "SimpleAllocator.h"
+#include "SimpleMachine.h"
 
 using namespace SST;
 using namespace std;
+
+Machine* schedComponent::getMachine() {
+  return machine;
+}
 
 schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
@@ -37,8 +46,7 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
     printf(" %s", name);
     SST::Link *l = configureLink( name, 
 				  new Event::Handler<schedComponent,int>(this,
-								     &schedComponent::
-									 handleEvent, count) );
+									 &schedComponent::handleCompletionEvent, count) );
     if (l) {
       nodes.push_back(l);
       count++;
@@ -47,13 +55,83 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
       done = 1;
     }
   }
-  
-  printf("\nScheduler Detects %d nodes\n", nodes.size());
 
-  //set our clock
-  registerClock( "1 s", 
-		 new Clock::Handler<schedComponent>(this, 
-						     &schedComponent::clockTic ) );
+  selfLink = configureSelfLink("linkToSelf",
+			       new Event::Handler<schedComponent>(this,
+								  &schedComponent::handleJobArrivalEvent) );
+  selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
+
+  machine = new SimpleMachine(nodes.size(), this);
+  scheduler = new PQScheduler(JobComparator::Make("fifo"));
+  theAllocator = new SimpleAllocator(dynamic_cast<SimpleMachine*>(machine));
+  string trace = "tracename";
+  stats = new Statistics(machine, scheduler, theAllocator, trace, "time");
+  ifstream input;
+  char* inputDir = getenv("SIMINPUT");
+  if(inputDir != NULL) {
+    string fullName = inputDir + trace;
+    input.open(fullName.c_str());
+  }
+  if(!input.is_open())
+    input.open(trace.c_str());  //try without directory                     
+  if(!input.is_open())
+    error("Unable to open file " + trace);
+
+  string line;
+  while(!input.eof()) {
+    getline(input, line);
+    if(line.find_first_not_of(" \t\n") == string::npos)
+      continue;
+
+    long arrivalTime;
+    int procsNeeded;
+    long runningTime;
+    long estRunningTime;
+    int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
+                     &procsNeeded, &runningTime, &estRunningTime);
+    if(num < 3)
+      error("Poorly formatted input line: " + line);
+    if(num == 3)
+      jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
+    else   //read all 4                                                        
+      jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
+
+    //validate                                                                  
+    Job* j = &jobs.back();
+    char mesg[100];
+    bool ok = true;
+    if (j -> getProcsNeeded() <= 0) {
+      sprintf(mesg, "Job %ld  requests %d processors; ignoring it",
+              j -> getJobNum(), j -> getProcsNeeded());
+      warning(mesg);
+      jobs.pop_back();
+      ok = false;
+    }
+    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
+      sprintf(mesg, "Job %ld  has running time of %ld; ignoring it",
+              j -> getJobNum(), runningTime);
+      warning(mesg);
+      jobs.pop_back();
+      ok = false;
+    }
+    if(ok && j -> getProcsNeeded() > machine -> getNumFreeProcessors()) {
+      sprintf(mesg,
+              "Job %ld requires %d processors but only %d are in the machine",
+              j -> getJobNum(), j -> getProcsNeeded(),
+              machine -> getNumFreeProcessors());
+      error(mesg);
+    }
+    if (ok) {
+      ArrivalEvent ae(j -> getArrivalTime(), jobs.size()-1);
+      selfLink->Send(j -> getArrivalTime(), &ae);
+    }
+  }
+  input.close();
+
+  machine -> reset();
+  scheduler -> reset();
+
+  printf("\nScheduler Detects %d nodes\n", (int)nodes.size());
 }
 
 schedComponent::schedComponent() :
@@ -64,36 +142,59 @@ schedComponent::schedComponent() :
 
 // incoming events are scanned and deleted. ev is the returned event,
 // node is the node it came from.
-void schedComponent::handleEvent(Event *ev, int node) {
-  SWFEvent *event = dynamic_cast<SWFEvent*>(ev);
+void schedComponent::handleCompletionEvent(Event *ev, int node) {
+  CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);
   if (event) {
-    if (event->jobStatus == SWFEvent::COMPLETED) {
-      printf("S: Job %d completed from n%d at time %lld\n", event->JobNumber, 
-	     node, getCurrentSimTime());
-      delete event;
-    } else {
-      printf("S: Job %d had odd jobStatus %d\n", event->JobNumber, 
-	     event->jobStatus);
+    int jobNum = event->jobNum;
+
+    if ((--(runningJobs[jobNum].i)) == 0) {
+      AllocInfo *ai = runningJobs[jobNum].ai;
+      runningJobs.erase(jobNum);
+      machine->deallocate(ai);
+      theAllocator->deallocate(ai);
+      stats->jobFinishes(ai, getCurrentSimTime());
+      scheduler->jobFinishes(ai->job, getCurrentSimTime());
+
+      //tries to start job
+      AllocInfo* allocInfo;
+      do {
+	allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
+      } while(allocInfo != NULL);
     }
   } else {
-    printf("S: Error! Bad Event Type!\n");
+    internal_error("S: Error! Bad Event Type!\n");
   }
 }
 
-void schedComponent::startJob(SWFEvent *e, targetList_t targs) {
-  // send to eachperson in the node list
-  for (targetList_t::iterator i = targs.begin(); i != targs.end(); ++i) {
-    // make a copy of the event
-    SWFEvent *ec = new SWFEvent;
-    *ec = *e;
-    // send it
-    nodes[*i]->Send(ec);
-  }
-
-  // delete the original event
-  delete e;
+void schedComponent::handleJobArrivalEvent(Event *ev) {
+  ArrivalEvent *event = dynamic_cast<ArrivalEvent*>(ev);
+  event -> happen(machine, theAllocator, scheduler, stats, &jobs[event->getJobIndex()]);
 }
 
+int schedComponent::Finish() {
+  scheduler -> done();
+  stats -> done();
+  theAllocator -> done();
+  return 0;
+}
+
+
+void schedComponent::startJob(AllocInfo* ai) {
+  Job* j = ai->job;
+  int* jobNodes = ai->nodeIndices;
+  // send to each person in the node list
+  for (int i = 0; i < j->getProcsNeeded(); ++i) {
+    JobStartEvent *ec = new JobStartEvent(j->getActualTime(), j->getJobNum());
+    nodes[jobNodes[i]]->Send(ec);
+  }
+
+  IAI iai;
+  iai.i = j->getProcsNeeded();
+  iai.ai = ai;
+  runningJobs[j->getJobNum()] = iai;
+}
+
+/*
 bool schedComponent::clockTic( Cycle_t ) {
 
   // send test jobs
@@ -135,8 +236,10 @@ bool schedComponent::clockTic( Cycle_t ) {
   // return false so we keep going
   return false;
 }
+*/
 
 // Element Libarary / Serialization stuff
 
+//BOOST_CLASS_EXPORT(ArrivalEvent)
 BOOST_CLASS_EXPORT(schedComponent)
 

@@ -17,7 +17,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include "SWFEvent.h"
+#include "JobStartEvent.h"
+#include "CompletionEvent.h"
 
 class nodeComponent : public SST::Component {
 public:
@@ -34,7 +35,7 @@ private:
   void handleEvent( SST::Event *ev );
   void handleSelfEvent( SST::Event *ev );
 
-  SWFEvent *currentJob;
+  int jobNum;
   int nodeNum;
 
   SST::Link* Scheduler;
@@ -45,7 +46,7 @@ private:
   void save(Archive & ar, const unsigned int version) const
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-    ar & BOOST_SERIALIZATION_NVP(currentJob);
+    ar & BOOST_SERIALIZATION_NVP(jobNum);
     ar & BOOST_SERIALIZATION_NVP(nodeNum);
     ar & BOOST_SERIALIZATION_NVP(Scheduler);
     ar & BOOST_SERIALIZATION_NVP(SelfLink);
@@ -55,7 +56,7 @@ private:
   void load(Archive & ar, const unsigned int version) 
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-    ar & BOOST_SERIALIZATION_NVP(currentJob);
+    ar & BOOST_SERIALIZATION_NVP(jobNum);
     ar & BOOST_SERIALIZATION_NVP(nodeNum);
     ar & BOOST_SERIALIZATION_NVP(Scheduler);
     ar & BOOST_SERIALIZATION_NVP(SelfLink);

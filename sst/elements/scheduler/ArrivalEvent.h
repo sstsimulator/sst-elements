@@ -1,0 +1,63 @@
+// Copyright 2011 Sandia Corporation. Under the terms                          
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.             
+// Government retains certain rights in this software.                         
+//                                                                             
+// Copyright (c) 2011, Sandia Corporation                                      
+// All rights reserved.                                                        
+//                                                                             
+// This file is part of the SST software package. For license                  
+// information, see the LICENSE file in the top level directory of the         
+// distribution.                                                               
+
+/*
+ * Classes representing system events
+ */
+
+#ifndef __ARRIVALEVENT_H__
+#define __ARRIVALEVENT_H__
+
+#include <sst/core/event.h>
+
+class Machine;
+class Allocator;
+class Scheduler;
+class Statistics;
+class Job;
+
+class ArrivalEvent : public SST::Event {
+ public:
+
+  ArrivalEvent(long time, int jobIndex) : SST::Event() {
+    this -> time = time;
+    this -> jobIndex = jobIndex;
+  }
+
+  virtual ~ArrivalEvent() {}
+
+  virtual void happen(Machine* mach, Allocator* alloc, Scheduler* sched,
+		      Statistics* stats, Job* arrivingJob);
+
+  long getTime() const;
+
+  int getJobIndex() const;
+
+ protected:
+
+  long time;   //when the event occurs
+
+ private:
+
+  int jobIndex;
+
+  friend class boost::serialization::access;
+  template<class Archive>
+    void serialize(Archive & ar, const unsigned int version )
+    {
+      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+      ar & BOOST_SERIALIZATION_NVP(time);
+      ar & BOOST_SERIALIZATION_NVP(jobIndex);
+    }
+};
+
+#endif
+

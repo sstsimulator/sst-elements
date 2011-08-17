@@ -17,10 +17,12 @@
 
 #include "nodeComponent.h"
 
+#include "misc.h"
+
 using namespace SST;
 
 nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
-  Component(id), currentJob(NULL) {
+  Component(id), jobNum(-1) {
 
   if ( params.find("nodeNum") == params.end() ) {
     _abort(event_test,"couldn't find name for this node\n");
@@ -53,49 +55,38 @@ nodeComponent::nodeComponent() :
 
 // incoming events start a new job
 void nodeComponent::handleEvent(Event *ev) {
-  //printf("recv\n");
-  SWFEvent *event = dynamic_cast<SWFEvent*>(ev);
+  JobStartEvent *event = dynamic_cast<JobStartEvent*>(ev);
   if (event) {
-    if (currentJob == NULL) {
-      // "start" the job
-      currentJob = event;
-      currentJob->jobStatus = SWFEvent::RUNNING;
-      // set a reminder to finish the job
-      printf("n%d@%llds: Launched Job %d for %d seconds\n", nodeNum, 
-	     getCurrentSimTime(),
-	     currentJob->JobNumber, 
-	     currentJob->RunTime);
-      SelfLink->Send(currentJob->RunTime, currentJob);      
+    if (jobNum == -1) {
+      jobNum = event->jobNum;
+      SelfLink->Send(event->time, event);      
     } else {
-      printf("Error?! Already running a job, but given a new one!\n");
+      internal_error("Error?! Already running a job, but given a new one!\n");
     }
   } else {
-    printf("Error! Bad Event Type!\n");
+    internal_error("Error! Bad Event Type!\n");
   }
 }
 
 // finish current job
 void nodeComponent::handleSelfEvent(Event *ev) {
-  SWFEvent *event = dynamic_cast<SWFEvent*>(ev);
+  JobStartEvent *event = dynamic_cast<JobStartEvent*>(ev);
   if (event) {
-    if (event->JobNumber == currentJob->JobNumber) {
-      // "finish" the job
-      currentJob->jobStatus = SWFEvent::COMPLETED;
-      Scheduler->Send(event);
-      currentJob = NULL;
-      printf("n%d@%llds: Finished Job %d\n", 
-	     nodeNum, getCurrentSimTime(), event->JobNumber);
+    if (event->jobNum == jobNum) {
+      CompletionEvent *ec = new CompletionEvent(jobNum);
+      Scheduler->Send(ec);
+      jobNum = -1;
     } else {
-      printf("Error!! We are not running this job we're supposed to finish!\n");
+      internal_error("Error!! We are not running this job we're supposed to finish!\n");
     }
   } else {
-    printf("Error! Bad Event Type!\n");
+    internal_error("Error! Bad Event Type!\n");
   }
 }
 
 
 // Element Libarary / Serialization stuff
     
-BOOST_CLASS_EXPORT(SWFEvent)
+BOOST_CLASS_EXPORT(JobStartEvent)
 BOOST_CLASS_EXPORT(nodeComponent)
 
