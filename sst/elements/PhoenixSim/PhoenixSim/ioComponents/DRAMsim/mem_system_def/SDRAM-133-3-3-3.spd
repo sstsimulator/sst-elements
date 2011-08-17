@@ -1,0 +1,25 @@
+//  SDRAM 133  memory system.  
+//  Composed of 256 Mbit chips.  4 ranks, each rank has 8 256 Mbit chips.
+//  Total is 1 GB
+//
+//
+type            	sdram
+datarate       		133
+channel_count   	1
+channel_width   	8
+PA_mapping_policy       sdram_close_page_map    // Comments are allowed here
+row_buffer_policy       close_page
+rank_count		8
+bank_count		4
+row_count		8192			// comment here too
+col_count		1024
+t_ras			10
+t_rp			3
+t_rcd			3
+t_cas			3
+t_cac			2
+t_cwd			0
+t_rtr			0
+t_dqs           	0
+t_rc			8
+

@@ -1,0 +1,25 @@
+PhoenixSim/ioComponents/DRAMsim/PrefetchCache.lo: \
+ PhoenixSim/ioComponents/DRAMsim/PrefetchCache.cc \
+ PhoenixSim/ioComponents/DRAMsim/PrefetchCache.h \
+ PhoenixSim/ioComponents/DRAMsim/constants.h /usr/include/stdint.h \
+ /usr/include/features.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+ /usr/include/gnu/stubs-64.h /usr/include/bits/wchar.h
+
+PhoenixSim/ioComponents/DRAMsim/PrefetchCache.h:
+
+PhoenixSim/ioComponents/DRAMsim/constants.h:
+
+/usr/include/stdint.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/wchar.h:

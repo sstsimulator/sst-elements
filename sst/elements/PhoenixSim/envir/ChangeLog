@@ -1,0 +1,1350 @@
+2010-06-11  ------ omnetpp-4.1 released ------
+
+2010-05-31  ------ omnetpp-4.1rc2 released ------
+
+2010-05-28  Levente Meszaros
+
+	* Ini file inclusion now behaves as textual substition: if an included 
+	ini file does not contain [General] or [Config XXX] lines, the file's  
+	content will be treated as if copy/pasted into the section containing
+	the include. Ini files that do not start with a section heading will
+	now be accepted and treated as if they started with [General].
+	Rationale: allow factoring out orthogonal pieces of config into 
+	separate files.
+
+2010-04-26  Andras Varga
+
+	* ValueIterator: fix bug #115: "1..4 step 0.1" went only up to 3.9 
+	not 4, due to floating-point rounding error.
+
+2010-04-20  ------ omnetpp-4.1b4 released ------
+
+2010-04-14  Andras Varga
+
+	* implemented "-h neddecls" option; it prints built-in NED declarations
+
+2010-04-08  Andras Varga
+
+	* result-recording-mode renamed to result-recording-modes=
+
+	* in the record= list of @statistic, now you can make items optional
+	by appending "?" to them. By default, only non-optional items
+	are used
+	
+	* result-recording-modes has changed: there are two keywords that
+	are accepted in the list: "all" and "default". "all" copies all items
+	from record= of @statistic() including optional ones (those suffixed
+	with "?"), and "default" copies only non-optional ones. "default" is 
+	the default setting; it is also implied if result-recording-modes 
+	starts with '+'  or '-'. A lone '-' disables all recording modes.
+	Examples:
+	**.result-recording-modes = default  --> the default setting
+	**.result-recording-modes = all      --> includes '?' items too
+	**.result-recording-modes = -        --> disable all
+	**.result-recording-modes = mean     --> only mean (disables 'default')
+	**.result-recording-modes = default,-vector,+histogram
+	**.result-recording-modes = -vector,+histogram   --> same as above
+	**.result-recording-modes = all,-vector,+histogram
+
+2010-03-14  ------ omnetpp-4.1b3 released ------
+
+2010-03-10  Andras Varga
+
+	* integrated statistics recording code (@statistic property)
+
+	* new configuration options: debug-statistics-recording, 
+	result-recording-mode
+
+	* new command-line options: -h resultfilters, -h resultrecorders
+
+2010-02-03  Andras Varga
+
+	* renamed "vector-recording-interval" configuration option to 
+	"vector-recording-intervals" (plural), to be consistent with 
+	eventlog-recoding-intervals.
+
+2010-01-31  Andras Varga
+
+	* checked in signals-based result recording; see the User Manual for more 
+	info. New configuration options: warmup-period,  **.result-recording-mode
+
+2009-05-13  Levente Meszaros
+
+	* changed EnvirBase to include hostname and pid by default in output file
+          names when parallel simulation is enabled.
+
+        * bugfix: insert hostname and pid into before default file extension instead
+          of appending it at the end.
+
+2009-03-12  ------ omnetpp-4.0 released ------
+
+2009-02-27  ------ omnetpp-4.0rc2 released ------
+
+2009-02-21  Andras Varga
+
+	* on the command-line, accept per-object configuration options, also
+	without object name pattern. Thus, both of the following are accepted,
+	and are equivalent:
+	    opp_run --**.vector-recording=false
+	    opp_run --vector-recording=false
+
+	* bugfixes: --repeat and --constraint command-line options were ignored
+	when using -x option ("dump scenarios generated from config")
+
+2009-02-20  Andras Varga
+
+	* refactoring around EnvirBase initialization and running
+
+2008-12-12  ------ omnetpp-4.0rc1 released ------
+
+2008-12-03  Andras Varga
+
+	* output scalar manager: also record iteration variables that look like
+	numbers with units, e.g. 100s (previously it only recorded pure numbers)
+
+2008-11-26  Andras Varga
+
+	* library renamed to oppenvir
+
+2008-02-23  Andras Varga
+
+	Summary of changes for omnetpp-4.0 (2006..2008):
+
+	Command line changes:
+
+	* "-f" option is now optional when specifying an inifile on the command
+	line (i.e. both "runsim omnetpp.ini" and "runsim -f omnetpp.ini" are
+	accepted). Like previously, more than one ini files can be specified.
+
+	Inifile syntax change:
+
+	* configuration handling rewritten...
+	* iterators, etc
+
+	Configuration options:
+
+	* output vector configuration: more than one recording intervals
+	can now be given, separated by comma
+
+	* output scalar file gets OVERWRITTEN in each run (not appended to it);
+	there is an inifile option to the restore old behaviour
+
+	* output-scalar-file-append=
+
+	* experiment-label   "${configname}"
+	* measurement-label  "${iterationvars}"
+	* replication-label  "#${repetition}, seedset=@"
+
+	* output-vector-file now defaults to: "${resultdir}/${configname}-${runnumber}.vec"
+	* output-scalar-file now defaults to: "${resultdir}/${configname}-${runnumber}.sca"
+
+	* **.enable-recording=
+	* **.record-event-numbers=
+	* **.recording-interval=
+	* **.record-scalar=  -- enable/disable recording scalars and/or their individual members (for cStatistic)
+	   ^^^ changed, see below:
+	      **.record-module-events = <bool>  ==> module-eventlog-recording
+	      **.record-event-numbers = <bool>  ==> vector-record-eventnumbers
+	      **.enable-recording = <bool>      ==> vector-recording
+	      **.recording-interval = <custom>  ==> vector-recording-interval
+	      **.max-buffered-samples = <int>   ==> vector-max-buffered-values
+	      **.save-as-scalar = <bool>        ==> param-record-as-scalar
+	      **.record-scalar = <bool>         ==> scalar-recording
+
+	* indexed outputvector file manager
+
+	* perform-gc was removed, but it can be turned back on per module,
+	from C++ code (setPerformFinalGC(true))
+
+	* simtime-scale
+	* ned-path, NEDPATH
+	* fingerprint
+	* seed-set
+	* record-eventlog
+	* eventlog-file
+	* eventlog-message-detail-pattern
+	* result-dir
+
+	* args.cc/h rewritten ("--" can be used to mark end of options, etc...)
+
+	* inifile entries are now checked against a database of recognized
+	options, and unrecognized options (typo, etc) are reported as
+	errors instead of failing silently
+
+	* added "-h config", "-h classes", etc command-line option, which prints
+	out available config file options, registered classes etc.
+
+	* opp_run program added -- this is an empty simulation executable,
+	which can be used to run simulation models that have been compiled
+	into a shared library (dll or shared object).
+
+	* out-of-directory build, and other Makefile changes
+
+	Scalar file format change: when a cStatistic is recorded as a scalar, the
+	values will be recorded with the following names: (before, the names
+	contained dot instead of colon):
+	  "<objectname>:count"   (was "samples")
+	  "<objectname>:mean"
+	  "<objectname>:stddev"
+	  "<objectname>:min"
+	  "<objectname>:max"
+
+	* parsim: the behavior of the <pattern>.partition-id inifile entries changed
+
+	TODO add the following info to the manual:
+
+	With the new code, you'd normally set up partitioning like this:
+	  - specify a concrete partition-id for compound modules which will be,
+	    in whole, on one partition
+	  - there's no need to specify anything for its submodules
+	  - for compound modules that have parts on more than one partition, list
+	    all those partitions in the partition-id string (e.g: 0,1,2); this is
+	    necessary because if a compound module is marked as belonging to
+	    some partition X, it will be created as "placeholder" on all other
+	    partitions, and no attempt will be made to create submodules in it.
+	  - "*" is a synonym for "all partitions"
+
+	For example, if there's a network which consists of 2 subnets (subnet1, subnet2),
+	and within the subnets you have 100 hosts, and you'd like to run it in 4 partitions,
+	the setup could look like this:
+
+	  Net.subnet1.partition-id = *  # or 0,1,2,3; or 0-3
+	  Net.subnet2.partition-id = *
+	  Net.subnet1.host[0..49].partition-id = 0
+	  Net.subnet1.host[50..99].partition-id = 1
+	  Net.subnet2.host[0..49].partition-id = 2
+	  Net.subnet2.host[50..99].partition-id = 3
+
+	No need to specify anything for the "tcp", "ip" etc submodules of hosts,
+	because they inherit the setting from their parent compound modules.
+
+2007-02-01 Tamas Borbely
+
+	* new [General] config options:
+	    output-vectors-memory-limit: the maximum memory allocated for the buffers by
+	                                 cIndexedFileOutputVectorManager (default is 16M)
+	    record-event-numbers: if true, event numbers are written into the vector file
+	                          (default is true)
+	    max-buffered-samples: number of samples collected in the memory before written
+	                          to the disk (cIndexedFileOutputVectorManager only).
+	                          When not given, the buffers grows as necessary and written
+	                          to the disk when the global memory limit is exceeded or at the
+	                          end of the simulation.
+
+2006-09-30  Andras Varga
+
+	* filemgrs.cc: default precision changed to 14
+
+2006-10-21  ------ omnetpp-3.3 released ------
+
+2006-09-13  Andras Varga
+
+	* fix: the simulation can now be in a directory whose path name
+	contains spaces (e.g. "Program Files" or "OMNEST Demo")
+
+	* cInifile::getAsFilenames() enhancement (as part of the above fix):
+	if directory name contains spaces, quotes are used to escape it.
+
+	* cinifile.cc/h: added getAsFilename()
+
+2006-06-26  Andras Varga
+
+	* cinifile.cc: clearContents() made public.
+
+2006-03-19  Andras Varga
+
+	* omnetapp.cc: optimized checkTimeLimits() to call gettimeofday() less
+	frequently.
+
+2006-02-27  Andras Varga
+
+	* cenvir.cc: implemented getParsimProcId() and getParsimNumPartitions()
+
+2006-02-06  Andras Varga
+
+	* envir.cc: undisposedObject() to print warning if it's called after
+	shutdown (when app==NULL). Source of such call is the destructor of
+	the global cDefaultList. Typically only global variables go to
+	that list, and we strongly disapprove global vars.
+
+2006-01-12  ------ omnetpp-3.2p1 released ------
+
+2005-10-19  ------ omnetpp-3.2 released ------
+
+2005-09-22  Andras Varga
+
+	* implemented @@listfile in the preload-ned-files option.
+	See nedc/ChangeLog for more info.
+
+2005-09-12  Andras Varga
+
+	* cenvir.cc, omnetapp.cc/h: default of "perform-gc" option changed to
+	false. USER-ALLOCATED OBJECTS ARE NO LONGER DELETED AT NETWORK CLEANUP.
+
+	* new option:
+	    [General]
+	    print-undisposed=<bool>, default=true
+	Selects whether the list of undisposed user objects is dumped at
+	network cleanup (provided perform-gc=false). Ideally, users should
+	fix simple module destructors instead of turning this option off.
+
+	* filemgrs.cc/h: added new omnetpp.ini settings to adjust number
+	of significant digits recorded into output vector and output scalar
+	files:
+	    [General]
+	    output-scalar-precision=<int>,  default=12
+	    output-vector-precision=<int>,  default=12
+	The default precision is 12 digits. The following has to be considered
+	when changing the default value:
+
+	IEEE-754 doubles are 64-bit numbers. The mantissa is 52 bits, which
+	is roughly equivalent to 16 decimal places (52*log(2)/log(10)).
+	However, due to rounding errors (see program below), usually only
+	12..14 digits are correct, and the rest is pretty much random garbage
+	which should be ignored. However, when you convert the decimal
+	representation back into an IEEE-754 double (as in Plove and Scalars),
+	an additional small error will occurs because 0.1 (0.01, etc) cannot be
+	represented precisely in binary. This error of converting to/from
+	decimal (text) format is usually smaller than the one that the double
+	variable already had before recording it into the file, however if
+	it is important you can eliminate it by setting >16 digits precision
+	for the file (but again, be aware that the last digits are garbage).
+
+	OMNeT++ internally uses the "%g" format of C's printf(), specifically
+	"%.*g". The precision specified in omnetpp.ini simply goes in there.
+	The upper limit of precision seems to be 17 digits (setting it higher
+	doesn't make any difference in the output).
+
+	To see finite machine precision and rounding errors, try this code:
+	    double x = 0.1;
+	    while (true)  {
+	       printf("%.15g\n", x);
+	       x = x + 0.1;
+	    }
+
+	The following, more advanced version will also print the error of
+	converting back from text to double:
+	    double x = 0.1;
+	    while (true) {
+	        char line[120];
+	        sprintf(line, "%.15g \t%.14g \t%.13g \t%.12g", x, x, x, x);
+	        double x15, x14, x13, x12;
+	        sscanf(line, "%lg%lg%lg%lg", &x15, &x14, &x13, &x12);
+	        printf("%s \t| %g  %g  %g  %g\n", line, (x15-x), (x14-x), (x13-x), (x12-x));
+	        x = x + 0.1;
+	    }
+
+	For the complexity of the issue, see "What Every Computer Scientist
+	Should Know About Floating-Point Arithmetic" by David Goldberg.
+
+2005-08-08  Andras Varga
+
+	* omnetapp.cc: make use of ModNameParamResolver in getXMLDocument().
+	This will allow parameters like $MODULE_FULLPATH, $MODULE_INDEX etc
+	to be used in XPath expressions (see doc of ModNameParamResolver
+	for the full list)
+
+2005-07-24  Andras Varga
+
+	* filemgrs.h/cc: implemented newly added flush() virtual function to
+	cFileOutputVectorManager and cFileOutputScalarManager classes
+
+2005-07-07  Andras Varga
+
+	omnetapp.cc: fix: ev.getUniqueNumber() produced garbage if it was
+	called from module constructors (its initialization took place too
+	late).
+
+2005-05-01  Andras Varga
+
+	* omnetapp.cc: added [General]/perform-gc omnetpp.ini option
+	(default=true). If turned off, sim.kernel doesn't do garbage
+	collection when deleting the network.
+
+2005-04-05  Andras Varga
+
+	* cinifile.cc: fix: getAsFilenames() crashed if ini file entry is was ""
+	[reported by Tom Parker]
+
+	* filemgrs.cc: throw error when output vector file from previous run
+	cannot be removed
+
+2005-03-31  ------ omnetpp-3.1 released ------
+
+2005-03-22  Andras Varga
+
+	* omnetapp.cc/h, cenvir.cc: cEnvir::getParameter() return type changed
+	from const char * to std::string. This was needed because if the
+	parameter value contains the xmldoc() function, getParameter() will
+	now modify the file name in it to make it relative to the
+	position of the ini file the setting was read from.
+
+	* omnetapp.cc/h: handling of -h option moved into TOmnetApp base class.
+
+2005-03-21  Andras Varga
+
+	* omnetapp.cc: fixed memory leak in shutdown code: RNG objects
+	didn't get freed in TOmnetApp destructor. [discovered and patch
+	provided by Nigel Sheridan-Smith]
+
+2005-03-18  Andras Varga
+
+	* cinifile.h/cc: implemented getAsFilenames(), getBaseDirectoryFor(),
+	getLocation() functions in cInifile: the class now remembers from which
+	ini file every entry was read from. Also, class was upgraded to use
+	std::vector.
+
+	* the following configuration settings (due to the use of cfg->getAs-
+	FileNames() instead of cfg->getAsString()) now became relative to the
+	location of the ini file which contains them:
+	  [General], load-libs=
+	  [Cmdenv], output-file=
+	  [Tkenv], bitmap-path=
+	  [General], preload-ned-files=
+	  [General] or [Run X], output-vector-file=
+	  [General] or [Run X], output-scalar-file=
+	  [General] or [Run X], snapshot-file=
+
+2005-03-02  Andras Varga
+
+	* omnetapp.cc: fix: RNGs were initialized with run number of the
+	previous run
+
+	* omnetapp.h/cc: makeOptionsEffective() merged into readPerRunOptions()
+
+	* omnetapp.cc: fixed ini file imports: included ini file names are now
+	understood as relative to the location of the ini file containing the
+	"include" directive, rather than to the current working directory.
+	E.g. if your omnetpp.ini contains "include ../../settings.ini", then
+	settings.ini may now contain "include defaults.ini" (instead of
+	"include ../../defaults.ini") to load defaults.ini from the same
+	directory.
+
+2005-02-24  Andras Varga
+
+	* cenvir.cc: fix: simple modules etc in dynamically loaded dlls/so's
+	([General]/load-libs=, -l command-line option) didn't get registered
+
+2005-02-18  Andras Varga
+
+	* cenvir.cc: ev.printf() fixed: it printed the buffer pointer value
+	instead of the string itself. (char buf[20]; strcpy(buf,"hello");
+	cout << buf; prints buf's address not "hello"!!!)
+
+	* cenvir.cc: fixed crash caused by writing one char past the
+	end of char buffer[1024] in cEnvir::gets().
+
+2005-02-07  Andras Varga
+
+	* cakaroarng.cc: fix: added missing #include
+
+	* cinifile.cc: fix in cInifile::getEntriesWithPrefix(): first check
+	for double (overlapping) entries, and make the first one win. This
+	fixes wrong priorities of rng mapping entries. [reported by Georg Lutz]
+
+2005-01-10  Andras Varga
+
+	* factored out platform dependencies to include/platdep
+
+2005-01-03  Andras Varga
+
+	* omnetapp.cc: scheduler's startRun() and endRun() methods didn't
+	get called
+
+2004-12-29  ------ omnetpp-3.0 released ------
+
+2004-12-16  Andras Varga
+
+	* optimizations
+
+	* removed ev.getDisplayString() and support for display strings in
+	omnetpp.ini (section [DisplayStrings])
+
+2004-12-10  Andras Varga
+
+	* omnetapp.cc/.h: implemented getUniqueNumber()
+
+2004-12-08  Andras Varga
+
+	* omnetapp.cc/h, cenvir.cc: added ev.getParameterUseDefault() function.
+	New ini file option:
+	  <paramname>.use-default = yes
+	If set, the given module parameter(s) will use the defaults specified
+	in the NED file via the input() operator.
+
+2004-11-29  Andras Varga
+
+  	* on Mac OS/X, implement ftime() with gettimeofday() [patch from
+  	Michael Tuexen]
+
+  	* platdep.cc: load-libs= omnetpp.ini option now adds plaform-specific
+  	extension (.dll or .so) to library name
+
+2004-11-23  ------ omnetpp-3.0b1 released ------
+
+2004-11-03  ------ omnetpp-3.0a9 released ------
+
+2004-10-31  Andras Varga
+
+	* omnetapp.cc: RNG mapping implemented. New ini file entries:
+	  [General]
+	  <modulepath>.rng-N=M  (where N,M are numeric, M<num-rngs)
+	This maps module-local RNG N to physical RNG M. The following
+	example maps all "gen" module's default (N=0) RNG to physical RNG 1,
+	and all "noisychannel" module's default (N=0) RNG to physical RNG 2.
+	  [General]
+	  num-rngs=3
+	  **.gen[*].rng-0=1
+	  **.noisychannel[*].rng-0=2
+	This mapping allows variance reduction techniques to be applied to
+	OMNeT++ models, without any model change or recompilation.
+
+	* cinifile.cc/h, patmatch.cc/h: added stuff needed for RNG mapping:
+	getEntriesWithPrefix(), patternPrefixMatches()
+
+2004-10-28  Andras Varga
+
+	* added cakaroarng.h/cc. Akaroa's RNG has some limitations, see class
+	doc for details.
+
+2004-10-27  Andras Varga
+
+	* omnetapp.h/cc, cenvir.cc: added numRNGs(), rng(k) functions (see
+	include/ChangeLog)
+
+	* omnetapp.cc: new omnetpp.ini entries:
+	  [General]
+	  num-rngs=n  (default:1)
+	  rng-class="classname"  (default:cMersenneTwister)
+	classes accepted: "cMersenneTwister", "cLCG32"
+	per-run settings:
+	  [General] or [Run n]
+	  seed-N-mt=seedvalue  (for MT; default: auto seed selection)
+	  seed-N-lcg32=seedvalue  (for cLCG32; default: auto seed selection)
+	N can be 0..num-rngs; see sim/cmersennetwister.cc and clcg32.cc for
+	exact auto-seeding procedure
+
+2004-10-25  Andras Varga
+
+	* updated for fullPath() signature change (see include/ChangeLog)
+
+2004-10-04  ------ omnetpp-3.0a8 released ------
+
+2004-09-24  ------ omnetpp-3.0a7 released ------
+
+2004-07-22  ------ omnetpp-3.0a6 released ------
+
+2004-07-06   Andras Varga
+
+	* speedmtr.cc/h: fix: use wall clock time (ftime() call) instead of
+	time consumed by the process (clock()) for the ev/sec, simsec/sec
+	calculations.
+
+2004-07-05   Andras Varga
+
+	* cenvir.cc,omnetapp.cc/h,filemgrs.cc/h: recordScalar() functions for
+	text and cStatistic data removed. (See also include/ChangeLog)
+
+2004-06-22   Andras Varga
+
+	* cenvir.cc, omnetapp.cc/h: added new cEnvir method getXMLDocument().
+	* added cxmldoccache.cc/h: contains cXMLDocCache class which reads and
+	caches XML config files
+
+2004-06-21   Andras Varga
+
+	* patmatch.cc/h: replaced old transform_pattern() and stringmatch()
+	methods with shiny new pattern matching class. cPatternMatcher can do
+	case sensitive/insensitive, full string/substring match, and supports
+	more pattern features, namely: numeric ranges and distinction between
+	"*" and "**". See class documentation for more info
+
+	* inifile.cc/h: cPatternMatcher used as the engine for wildcard
+	resolution in ini files. The default mode is "dottedpath on",
+	where "*" does NOT match dot ".", so oddities like "foo[*].param"
+	matching "foo[1].bar[5].param" will not occur any more. The new
+	wildcard "**" will match anything.
+	   This change is (of course) NOT backward compatible, so existing
+	omnetpp.ini's have to be updated. In practice, every line which begins
+	with "*." should be changed to begin with "**." -- that'll do most
+	of the time, further tweaking is rarely necessary.
+	   In any case: if you still want to run the old omnetpp.ini (e.g. to
+	check the new one against it), you can add the line
+	         #% old-wildcards
+	at the top of (each) old ini file. This will switch back to the old
+	behaviour. "#% old-wildcards" is provided to make it easier to migrate
+	from OMNeT++ 2.3 to 3.0, and will be removed in some future version.
+
+2004-06-17   Andras Varga
+
+	* cinifile.cc/h: cInifile is now subclassed from cConfiguration
+	(see include/ChangeLog). Class interface slightly changed.
+
+	* cenvir.cc: added new ini file option:
+	  [General]
+	  configuration-class=...
+	This makes it possible to use other data source than omnetpp.ini (or
+	in general, ini files) for configuration. E.g. it is possible to use
+	XML or database input.
+	The startup sequence is this (see cEnvir::setup()):
+	  1. First, omnetpp.ini (or the ini file(s) specified via the "-f"
+	     command-line option) is read.
+	  2. Shared libraries in [General]/load-libs are loaded. (Also the
+	     ones specified with the "-l" command-line option.)
+	  3. [General]/configuration-class is examined, and if it's present,
+	     and a configuration object of the given class is instantiated.
+	     The configuration object may read further entries from the
+	     ini file (e.g. database connect parameters, or XML file name).
+	  4. The original omnetpp.ini config object is deleted. No other
+	     settings are taken from it.
+	  5. [General]/load-libs from the new configuration object is
+	     processed.
+	  6. Then everything goes on as normal, using the new config object.
+
+
+2004-06-07  ------ omnetpp-3.0a5 released ------
+
+2004-05-15  ------ omnetpp-3.0a4 released ------
+
+2004-03-26  Andras Varga
+
+	* filemgrs.h: (patch from Johnny Lai  <johnny.lai@eng.monash.edu.au>):
+	made sVectorData protected (it was private)
+
+2004-03-22  ------ omnetpp-3.0a3 released ------
+
+2004-03-10  Andras Varga
+
+	* cenvir.cc: updated to reflect changes in cenvir.h (see include/
+	ChangeLog)
+
+	* omnetapp.h: puts(const char *) replaced by sputn(const char *, int n)
+
+2004-03-03  ------ omnetpp-3.0a2 released ------
+
+2004-02-23  Andras Varga
+
+	* omnetpp.cc/h, cenvir.cc: added moduleReparented() cEnvir method
+
+2004-02-22  Andras Varga
+
+	* added fsutils.cc/h; implemented wildcards in list files
+
+2004-02-10  Andras Varga
+
+	* omnetapp.cc: error messages to display module class name (NED type)
+	of current module
+
+2004-02-09  Andras Varga
+
+	* omnetapp.cc/h: preload-ned-files= omnetpp.ini option now supports
+	list files (@nedfiles.lst), even recursive ones (list files may refer
+	to other list files). Relative or absolute file name paths are also
+	allowed in list files; relative paths are relative from the location
+	of the list file.
+
+2004-02-04  ------ omnetpp-3.0pre1 released ------
+
+2004-01-09  Andras Varga
+
+	* cenvir.cc, omnetapp.h: added bubble()
+
+2004-01-06  Andras Varga
+
+	* cenvir.cc, omnetapp.h: added isGUI()
+
+2004-01-01  Andras Varga
+
+	* omnetapp.cc/h, cenvir.cc: handle new cEnvir notifications:
+	moduleCreated(), moduleDeleted(), connectionCreated(),
+	connectionRemoved(), displayStringChanged(cGate*),
+	displayStringChanged(cModule*),	displayStringAsParentChanged()
+
+2003-12-11  Andras Varga
+
+	* all files: follow changes in sim/; C-style casts replaced with
+	static_cast<>
+
+2003-11-13  Andras Varga
+
+	* Checked in parallel simulation code that was developed March-May 2003,
+	during my stay at Monash University. Changes:
+
+	2003-05-12  Andras Varga
+	* speedmtr.cc: changed so that if measurement interval (clocks) or
+	number of events are small, it refuses to give results (ie. returns
+	all zeroes). I had some weird readings other before that...
+
+	2003-04-18  Andras Varga
+	* omnetapp.cc: fname-append-host setting now also appends pid (process
+	id) to the file names
+
+	2003-03-31  Andras Varga
+	* omnetapp.cc/h: parallel simulation ini file options changed.
+	New options, with their default values:
+	  [General]
+	  scheduler-class="cSequentialScheduler" (only used when par-sim=false)
+	  parallel-simulation=false
+	  parsim-communications-class="cFileCommunications"
+	  parsim-syncronization-class= "cNullMessageProtocol"
+	Old, obsoleted options:
+	  [General]
+	  distributed=...
+	  parallel-system=...
+
+	2003-03-23  Andras Varga
+	* omnetapp.cc: install scheduler into 'simulation' object on startup --
+	see comments in include/ChangeLog about cScheduler
+
+2003-11-09  Andras Varga
+
+	* omnetapp.cc: added support for dynamic loading of NED files.
+	The new [General]/preload-ned-files= omnetpp.ini entry may contain
+	a list of NED file names, separated by spaces. The NED files will
+	be loaded before the user interface is started.
+
+2003-10-02  Andras Varga
+
+	* cenvir.cc, omnetapp.h: added new method cEnvir::moduleMethodCalled(),
+	needed for animation of method calls between modules
+
+2003-09-22  Andras Varga
+
+	* omnetapp.cc, cenvir.cc: messageSent() signature change, see
+	include/ChangeLog
+
+2003-06-16  ------ omnetpp-2.3 released ------
+
+2003-03-15  ------ omnetpp-2.3b2 released ------
+
+2003-03-15  Andras Varga
+
+	* cinifile.cc/h: bugfix: complained about unterminated last line
+
+2003-03-04  Andras Varga
+
+	* cinifile.cc/h: made it faster to process large ini files (added
+	haswildcard field)
+
+2003-02-15  ------ omnetpp-2.3b1 released ------
+
+2003-02-14  Andras Varga
+
+	* cinifile.cc: improved handling of lines ~ 1024 chars
+
+2003-01-07  Andras Varga
+
+	* implemented ev.flush()
+
+2002-10-20  Andras Varga
+
+	* misc improvements
+
+2002-10-07  Andras Varga
+
+	* main.cc: added call to ExecuteOnStartup::executeAll().
+	See new EXECUTE_ON_STARTUP() macro in include/ChangeLog.
+
+2002-10-04  Andras Varga
+
+	* error handling changed from simulation.ok() to exceptions.
+
+2002-09-21  Andras Varga
+
+	* filemgrs.cc, akoutvectormgr.cc: applied Steffen Sroka's patches
+	(thanks Steffen!). AKAROA_CFLAGS added to Makefile.in.
+
+2002-07-08  Andras Varga
+
+	* filemgrs.cc: added fname-append-host=true/false ini file setting.
+	When turned on, appends the host name to the names of the output
+	files (output vector, output scalar, snapshot files). This is
+	useful when the simulation is run on multiple machines concurrently
+	(parallel independent runs (Akaroa) or parallel/distributed simulation),
+	and all running instances write to the same directory (e.g. shared
+	via NFS mount). [Idea from Steffen Sroka's Akaroa extension]
+
+	* added akoutvectormgr.h/cc: integrated Steffen Sroka's Akaroa
+	extension that supports multiple independent replicated simulation runs.
+	Akaroa can be activated by specifying
+	  [General]
+	  outputvectormanager-class=cAkOutputVectorManager
+	in the ini file. By default, all output vectors are under Akaroa
+	control; the <modulename>.<vectorname>.akaroa=false setting can be used
+	to make Akaroa ignore specific vectors.
+	For more info see the Akaroa home page and the OMNeT++ documentation.
+
+	TBD: Akaroa integration into the makefiles; documentation
+
+2002-06-13  Andras Varga
+
+	* filemgrs.cc: 2 bugfixes: (1) output scalar file did not get opened
+	sometimes; (2) output scalar file got removed between runs
+
+2002-05-28  Frank Paehlke  <paehlke@tm.uni-karlsruhe.de>
+
+	* filemgrs.cc: Use standard headers and namespaces if
+	USE_STD_NAMESPACES is defined
+
+2002-05-16  Ulrich Kaage  <kaage@int.uni-karlsruhe.de>
+
+	* appreg.h (cOmnetAppRegistration): fixed declaration of className()
+
+2002-05-04  ------ omnetpp-2.2 released ------
+
+2002-03-11  Uli Kaage  <kaage@int.uni-karlsruhe.de>
+
+	* filemgrs.cc (initVector): make sure that vp->name is not
+	NULL. This would cause a crash on SUN Solaris
+	(recordScalar): make sure name is not null
+
+2002-03-03  Andras Varga
+
+	* filemgrs.cc: increased precision of numbers in output vector files
+	("%g" fprintf formats changed to "%.9g"). [suggested by George Young]
+
+2002-03-03  Andras Varga
+
+	* Various changes: management of output vectors, output scalars and
+	snapshots were moved into to the user interface library. See following
+	entries and include/ChangeLog.
+
+	* cenvir.cc: implementation of new cEnvir methods (just forward calls
+	to TOmnetApp.)
+
+	* omnetapp.h/cc: new methods; plugin mechanism: cOutputVectorManager,
+	cOutputScalarManager, cSnapshotManager. (see new file include/envirext.h)
+
+	* ini file entries no longer supported: [General]/log-parchanges,
+	[General]/parchange-file. (Parameter change logging no longer
+	supported, see include/ChangeLog).
+
+	* new ini file entries: [General]/outputvectormanager-class,
+	outputscalarmanager-class, snapshotmanager-class. They specify the name
+	of the output vector manager, etc class to be plugged into Envir.
+	The classes must have been registered with Register_Class().
+	The default values are cFileOutputVectorManager, cFileOutputScalarManager,
+	cFileSnapshotManager.
+
+	* filemgrs.h/cc: new files: implementation if plugin classes:
+	cFileOutputVectorManager, cFileOutputScalarManager, cFileSnapshotManager
+
+	* cenvir.cc: bugfix: TOmnetApp::shutdown() was never called from cEnvir.
+
+2002-02-24  Andras Varga
+
+	* exit with status 0 if simulation terminated normally (as determined
+	by simulation.normalTermination), otherwise with status 1.
+
+2002-02-14  Ulrich Kaage  <kaage@int.uni-karlsruhe.de>
+
+	* omnetapp.cc (putmsg): Bugfix: if OMNeT++ dies shortly after a
+	call to putmsg (e.g. SIGSEGV), the output might not be written
+	(especially when redirecting to a file). A call to ::fflush()
+	ensures that the stdout buffer is emptied.
+
+2001-10-04 Andras Varga
+
+	* cinifile.h, cinifile.cc: no more upper limit on size of ini file
+	(tables are dynamically reallocated if needed)
+
+2001-09-01 Andras Varga
+
+	* CONST_CAST() replaced by const_cast<>()
+
+2001-07-11 Andras Varga
+
+	* omnetapp.cc omnetapp.h: Eric Wu's Tru64/MPI port.
+	Added new ini file option: [General]/parallel-system=. Its value
+	can be "PVM" or "MPI", defaults to "MPI".
+
+2001-02-27  Andras Varga
+
+	* ------ omnetpp-2.1 released ------
+
+	* Borland C++ support removed: I deleted the project files
+	(*.ide). I added equivalent Makefile.bc files (generated from the
+	BC IDE), but they are completely unsupported at the moment. If
+	there's interest, it's possible that later I'll add makefiles for
+	the free command-line bc5.5 compiler.
+
+	* ------ omnetpp-2.0p1 released ------
+
+	* patch to prevent Unix linkers (falsely) report Speedometer as
+	missing symbol
+
+
+2001-02-06  Andras Varga
+
+	* ------ omnetpp-2.0 released ------
+
+	* added dllexport to Speedometer
+
+2001-01-16  Andras Varga
+
+	* added Speedometer class
+
+2000-06-19  Andras Varga
+
+	* bugfix: TOmnetApp::getOutVectorConfig() crashed when it was
+	called with vecname being NULL (on Solaris; other systems seem to
+	tolerate NULL being passed to sprintf() as a "%s" argument)
+	[reported by Ulrich Kaage]
+
+2000-05-07  Andras Varga
+
+	* ------ omnetpp-2.0b5 released ------
+
+	* ------ omnetpp-2.0b4 released ------
+
+	* Makefile.vc improvements from Balazs Kelemen
+
+2000-04-10  Andras Varga
+
+	* TRUE/FALSE (defines) replaced by true/false (C++ keywords)
+
+	* in printf() statements, all "%lf","%lg","%le" was replaced by
+	"%f","%g","%e"
+
+2000-04-10  Andras Varga (6-10)
+
+	* changes to enable linking a Windows DLL from the library
+
+	* the memoryIsLow() utility function was placed into this library,
+	and now it works through a new TOmnetApp::memoryIsLow() function.
+
+	* the "-u <user-interface>" command-line parameter is now
+	understood by envir: this can be used to select the user interface
+	if both Cmnenv and Tkenv is linked in (or is dynamically loaded).
+
+	The [General]/user-interface= ini file option was also added, with
+	the same functionality.
+
+	This allows the user to link the simulation without Cmdenv and
+	Tkenv, and load one of them at runtime, with a line like this in
+	omnetpp.ini:
+
+		[General]
+	         load-libs=../../lib/tkenv.so
+	         user-interface=Tkenv
+	Or the command-line equivalent:
+
+		mysim  -l ../../lib/tkenv.so  -u Tkenv
+
+	To allow all the above, the setup procedure (cEnvir::setup()) and
+	the constructor and the setup() function of TOmnetApp was
+	reorganized.
+
+2000-04-04  Andras Varga
+
+	* dynamic registration of user interface (TOmnetApp) classes
+	introduced.
+	(The formerly used method didn't make it possible to create
+	separate DLLs on Windows: envir.dll, tkenv.dll, cmdenv.dll).
+
+	See appreg.h, the Register_OmnetApp macros in cmdenv.cc and
+	tkapp.cc, and the chooseBestOmnetApp() function in envir.cc.
+
+2000-03-26  Andras Varga
+
+	* 'char *' pointers made const-correct (lots of 'char *' -->
+	'const char *' replacements throughout the code)
+
+2000-01-28  Andras Varga
+
+	* ------ omnetpp-2.0b3 released ------
+
+	* main stack size increased to 128K (omnetapp.cc)
+
+2000-01-16  Andras Varga
+
+	* improvements in cinifile.cc
+
+2000-01-15  Andras Varga
+
+	* MSDOS #defines removed from the code (omnetapp.cc)
+
+2000-01-09  Andras Varga
+
+	* bugfix: TOmnetApp's destructor made virtual
+
+1999-12-05  Andras Varga
+
+	* Makefile.vc added
+
+1999-12-04  Andras Varga
+
+	* first compile with MSVC. Minor changes: changed int to bool in
+	some places
+
+1999-09-20  Andras Varga
+
+	* ------ omnetpp-2.0b2 released ------
+
+	* typo fixed in Makefile.in: $(CLFAGS) --> $(CFLAGS)
+
+1999-08-30  Andras Varga
+
+	* ------ omnetpp-2.0b released ------
+
+	* Fixed a bug in omnetapp.cc which caused bogus reporting in the
+	number of random number generators initialized from table and from
+	ini file
+
+1999-08-13  Andras Varga
+
+	* cIniFile::readFile()'s include file handling modified. Now the
+	included file doesn't need to start with a section header line:
+	entries will use the current section header in the including file.
+	BUT: section headers in the included file are not propagated back
+	to the including file because it could lead to nasty behaviour.
+
+1999-06-21  Andras Varga
+
+	* all sources checked in under CVS
+
+	* makefile.in modified for use with GNU Autoconf; also renamed to
+	Makefile.in
+
+	* version.log renamed to ChangeLog
+
+	* removed support for DOS with BC3.1
+
+1999-02-09  Andras Varga
+
+	* updated for sim174
+
+1999-01-25  Andras Varga
+
+	* updated for sim172d
+
+1998-12-27  Andras Varga
+
+	* fixed bug in inifile reader
+
+	* DYNAMIC_LINKAGE config flag renamed to USE_DLOPEN
+
+	* makefile renamed to makefile.in
+
+	* runningModule() corrected to contextModule in slaveapp.cc
+
+1998-08-17  Andras Varga
+
+	* fixed a bug with output vector config
+
+1998-08-17  Andras Varga
+
+	* fixed a bug with output vector config
+
+1998-08-14  Andras Varga
+
+	* makefile fix
+
+1998-08-12  Andras Varga
+
+	* Borland C++ 5.0 project file added
+
+	* cenvir.h move to sim/
+
+	* small fixes
+
+1998-07-24  Andras Varga
+
+	* getDisplayString() added to cEnvir and TOmnetApp classes
+
+	* display strings now can be taken from [DisplayStrings] or [Run
+	nn] section of the ini file (hardcoded display strings take
+	precendence over the ones in the ini file)
+
+	* cIniFile edited -- getRaw() added
+
+1998-07-20  Andras Varga
+
+	Improved cIniFile: wildcards understood in keys; keys may contain
+	whitespace Support for output vector configuration from ini file
+
+	* getOutVectorConfig() added to cEnvir and TOmnetApp classes
+
+	* output vector config is taken from [OutVectors] or [Run nn] section.
+
+	  Syntax:
+	    module.vectorname.enabled=yes/no
+	    module.vectorname.interval=10s..30s
+	  Output vectors are enabled by default.
+
+1998-07-15  Andras Varga
+
+	* small fixes
+
+1998-07-10  Andras Varga
+
+	* main stack size increased to 64K
+
+	* new ini file option: [General]/load-libs=
+
+1998-06-24  Andras Varga
+
+	* modifications to cinifile.cc
+
+	* return value of TOmnetApp::askYesNo changed from bool to int
+	(-1==cancel)
+
+	* other small fixes
+
+1998-06-19  Andras Varga
+
+	* call to simulation.setup() added to TOmnetApp.setup()
+
+1998-06-18  Andras Varga
+
+	* opt_inifile_name bug fixed
+
+1998-06-09  Andras Varga
+
+	* new ini file option: output-scalar-file= (in [General] or
+	[Run-nn] section)
+	(supported from sim162 up)
+
+1998-05-20  Andras Varga
+
+	* `ev << ..' conversions for doubles changed
+
+1998-05-12  Andras Varga
+
+	* bugfixes
+
+1998-05-11  Andras Varga
+
+	* multiple -f and -l options: several ini files and libraries can
+	be loaded
+	(If you want to do several simulation runs with their parameters
+	in separate files, multiple -f will be very useful!)
+
+	* ini files can include each other. Syntax:
+	    ...
+	    include second.ini
+	    ...
+
+	* wildcard parameters in ini files. Like:
+	    [Parameters]
+	    net.station[*].gen_rate=100
+	  Wildcard characters are: * ?, and {} for range (using the conventional
+	  [] would be very inconvenient because they would interfere with vector
+	  indices).
+
+1998-04-27  Andras Varga
+
+	* new ini file option: [General] / total-stack-kb= Holds the total
+	stack size (in KB) needed by module coroutines.
+
+	* makefile can now create shared object (libenvir.so)
+
+	* support for dynamic loading of libraries: -l command line
+	option.  `foo -l ./token.so' (if `foo' is an OMNeT++ executable)
+	will now load the token.so file at startup.
+
+1998-03-26  Andras Varga
+
+	* use of gets() eliminated
+
+1998-02-15  Andras Varga
+
+	* makefile made compatible with configure script;
+	envir.a-->libenvir.a
+
+1997-12-13  Andras Varga
+
+	* for clarity, section name [All runs] changed to [Parameters]
+
+1997-10-10  Andras Varga
+
+	* added endl to cenvir.h. Example: ev << "Hello!" << endl;
+
+1997-10-06  Andras Varga
+
+	* further renaming; compatible with sim148
+
+1997-10-02  Andras Varga
+
+	* cleaned up & renamed several member functions; compatible with sim147
+
+1997-08-17  Andras Varga
+
+	* small bug in ini file reader fixed
+
+	* readPerRunOptions(1) in TOmnetApp::setup() commented out
+
+1997-08-17  Andras Varga
+
+	* TOTAL_STACK increased to 2Mb
+
+	* extrastack() support added
+
+	* new ini file entry: [General]/netif-check-freq=  (default:1)
+
+	* compatibility: sim146a
+
+1997-08-08  Andras Varga
+
+	* other [Slaves] options added that control whether different kinds of
+
+	  textual messages should be routed to the console:
+	     errmsgs-to-console=
+	     infomsgs-to-console=
+	     modmsgs-to-console=
+
+	* updated for sim144c
+
+1997-08-07  Andras Varga
+
+	* omnetapp.cc: cNetSimpleMod corrected to cNetMod
+
+	* compatibility: sim144a or later
+
+1997-08-04  Andras Varga
+
+	* fixed a bug with reporting how many rnd gens were initialized from table
+
+	* [Slaves]/module-messages= flag added; works similarly to
+	Cmdenv's.  Default value is NO: module messages from slaves do not
+	appear on console.
+
+1997-07-31  Andras Varga
+
+	* a bug introduced in #96 fixed
+
+	* [General]/number-of-runs= ini file setting was removed; its
+	place is taken by [Cmdenv]/runs-to-execute=
+
+	* added: cInifileSectionIterator
+
+	* compatible with: cmdenv87 and up
+
+1997-07-20  Andras Varga
+
+	Ini file reader improved; '#' as well as ';' can be used for
+	comments Improvements on distributed execution:
+
+	* ini file options added to enable logging of messages produced by
+	slaves:
+
+	     [Slaves]
+	     write-slavelog = true/false
+	     slavelog-file = slave.log
+	  Output between TSlaveApp creation and ini file processing is written in
+	  the file "slave.log".
+
+	* changed TOmnetApp::foreignputs()
+
+1997-07-10  Andras Varga
+
+	* makefile hacked upon to make it edible for Cygnus gcc
+
+1997-07-06  Andras Varga
+
+	* fixed a bug that caused segmentation fault if there was an error
+	during system setup
+
+1997-07-01  Andras Varga
+
+	* printing tons of "genXX-seed=..." ini warnings suppressed
+
+	* handling of boolean ini file entries improved
+
+1997-06-27  Andras Varga
+
+	* enable_modmsgs changed to disable_tracing
+
+	* main stack enlarged from 16K to 32K (cenvir.cc)
+
+1997-06-26  Andras Varga
+
+	* enable_modmsgs flag added. If set to FALSE, makes ev.printf()
+	and ev.puts() return immediately without doing anything.
+	Motivation was to decrease overhead when running the simulation at
+	full speed and module messages are not needed.
+
+1997-04-22  Andras Varga
+
+	* stepmode renamed to pause_in_sendmsg (compatibility: sim130 and above)
+
+1997-04-11  Andras Varga
+
+	* opt_helponly stuff (-h command-line option) moved to cmdenv package
+
+1997-04-06  Andras Varga
+
+	* cEnvir::messagedelivered() added
+
+	* STARTUPERROR_MODE stuff added
+
+	* compatible with: sim127
+
+1997-04-01  Andras Varga
+
+	* fmt of ini file warnings changed
+
+1997-03-24  Andras Varga
+
+	* file logging added to TSlaveApp ("slaveapp.log")
+
+	* bugfixes
+
+1997-03-21  Andras Varga
+
+	* changes on PVM stuff. *** COMPATIBLE WITH SIM122 OR UP ***
+
+	'-s' flag replaced with call to is_started_as_master() more error
+	checks
+
+	* copyright msg modified
+
+1997-03-16  Andras Varga
+
+	* Style of ini file [Machines] section changed from:
+
+	    whale.hit.bme.hu = node1, node2
+	    dolphin.hit.bme.hu = node3
+	  to:
+	    node1 = whale.hit.bme.hu
+	    node2 = whale.hit.bme.hu
+	    node3 = dolphin.hit.bme.hu
+
+1997-03-15  Andras Varga
+
+	* pvm stuff (cSlaveApp) modified
+
+1997-03-10  Andras Varga
+
+	* small modifications
+
+1997-03-08  Andras Varga
+
+1997-03-06  Andras Varga
+
+	* gen1_seed=, gen2_seed= etc entries finished;
+
+	* starting_seeds table added
+
+	* TOmnetApp::setOptions() renamed to makeOptionsEffective()
+
+1997-03-06  Andras Varga
+
+	* new cInifile members: getAs..2()
+
+	* better ini file warnings
+
+	* gen1_seed=, gen2_seed= etc entries added; not complete
+
+1997-02-28  Andras Varga
+
+	* adopted to sim105 & 'multiple runs' bug fixed
+
+	* ini file warning changed from ev.printfmsg() to ev.printf()
+
+1996-12-01  Andras Varga
+
+	 * fixed linker problem (undefined symbol
+	 `TSlaveApp::TSlaveApp(...)'
+
+	 * changed copyright message

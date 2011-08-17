@@ -1,0 +1,28 @@
+#####################################################
+# DDR SDRAM Configuration and Data Sheet Parameters #
+# corresponding to 512Mb 400 MHz x8 3-4-4 spd file  #
+#####################################################
+density	 512		  # Mb
+#DQ	 8		  # per chip
+DQS	 1		  # per chip
+max_VDD	 2.7		  # V
+min_VDD	 2.5		  # V
+IDD0	155		  # mA
+IDD2P	5		  # mA
+IDD2F	55		  # mA
+IDD3P	45		  # mA
+IDD3N	60		  # mA
+IDD4R	190		  # mA
+IDD4W	195		  # mA
+IDD5	11		  # mA
+t_CK	5		  # ns
+#t_RRD	10		  # ns
+#t_RC	55		  # ns
+#min_t_CK	5	  # ns
+#max_t_CK	13	  # ns
+
+###################################################
+# DRAM Usage Conditions in the System Environment #
+###################################################
+VDD		2.6	# V
+P_per_DQ	6.88	# mW

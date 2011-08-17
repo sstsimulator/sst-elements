@@ -1,0 +1,85 @@
+Simulation Time:, 0.010000059789
+Electronic Energy
+,E_static (J),E_dynamic (J),
+Electronic Arbiter,7.71672e-05,2.95651e-08,
+Electronic Clock Tree,0.000375557,0,
+Electronic Crossbar,0.00475046,2.68991e-08,
+Electronic Inport,0.000749877,1.21209e-07,
+Electronic Wire,3.64644e-06,1.22629e-06,
+
+
+Electronic Energy
+Sum:,0.00595811
+
+
+Photonic Energy
+,E_static (J),E_dynamic (J),
+Detector,0.000204801,9.21588e-06,
+Detector static,0,0,
+Modulator,0.000204801,5.11855e-06,
+PSE1x2,2.56002e-05,5.50684e-07,
+PSE1x2NX,1.28001e-05,4.02715e-07,
+
+
+Photonic Energy
+Sum:,0.000463291
+
+
+All Energy
+Sum:,0.0064214
+
+
+Component Counts
+,Count,
+Electronic Arbiter,32,
+Electronic Crossbar,32,
+Electronic Inport,80,
+Electronic Wire,48,
+PSE1x2,128,
+PSE1x2NX,64,
+
+
+Performance: Application
+,TimeAvg,
+Bandwidth App In (Gb/s),1.31071,
+
+
+Performance: Application
+,Count,Min,Avg,Max,StdDev,
+Latency (us),6400,0.002,0.145184,0.702129,0.072,
+Msg Size (B),6400,256,256,256,0,
+
+
+Performance: NIF
+,TimeAvg,
+Bandwidth NIF Out (Gb/s),1.24538,
+Blocking latency,6081,0,4.22442e-09,5.9e-07,3.14669e-08,
+Success setup latency,6081,5.5687e-08,1.33494e-07,3.86e-07,5.81408e-08,
+Time in NIF Q,6081,2e-09,2.61301e-09,4.21154e-07,1.03986e-08,
+Transmission latency,6081,1.2854e-08,1.2949e-08,1.3141e-08,6.87069e-11,
+
+
+Physical Layer Stats
+,Count,Min,Avg,Max,StdDev,
+1 Laser Noise Power (mW),6081,5.09012e-08,2.16565e-07,3.73297e-07,8.60725e-08,
+2 Message Noise Power (mW),6081,0,1.72357e-07,0.000366372,6.90714e-06,
+3 Cross Wavelength Noise Power (mW),6081,0,0,0,0,
+4 Total Optical Noise Power (mW),6081,5.09012e-08,3.88922e-07,0.000366627,6.90702e-06,
+5 Johnson Noise Power,6081,8.37118e-13,8.37118e-13,8.37118e-13,1.61559e-26,
+6 Shot Noise Power,6081,8.011e-10,8.011e-10,8.011e-10,1.40621e-23,
+7 Total Noise Power (dBm),6081,-60.6913,-59.9154,-34.3483,0.734566,
+8 Signal Power (dBm),6081,-20.1434,-14.2385,-11.4901,1.90072,
+Electrical SNR,6081,19.4628,45.6769,47.8086,1.67973,
+Optical SNR,6081,19.4774,52.7594,52.7893,0.888388,
+
+
+Insertion Loss
+,Count,Min,Avg,Max,StdDev,
+Bending,6081,0.035,0.0890988,0.19,0.0320824,
+Crossing,6081,0,0.858559,2.1,0.443068,
+Drop Into Ring,6081,1.5,2.6813,5,0.718396,
+Pass By Ring,6081,0.325,0.362951,0.425,0.0202357,
+Propagation,6081,0.953323,2.18482,4.67658,0.902886,
+Total,6081,3.42832,6.17673,12.0816,1.90072,
+
+

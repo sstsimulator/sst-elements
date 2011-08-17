@@ -1,0 +1,559 @@
+2010-06-11  ------ omnetpp-4.1 released ------
+
+2010-05-31  ------ omnetpp-4.1rc2 released ------
+
+2010-04-20  ------ omnetpp-4.1b4 released ------
+
+2010-04-12  Rudolf Hornig, Andras Varga
+
+	* improvement: in express mode, do not print log messages during
+	initialization
+
+2010-03-14  ------ omnetpp-4.1b3 released ------
+
+2009-09-10  Andras Varga
+
+	* fix: cmdenv.cc: opt_autoflush was used before getting initialized
+	[from Thomas Dreibholz]
+
+2009-07-07  Andras Varga
+
+	* fix: there was no error message if a nonexistent configuration name
+	was given via -c or cmdenv-config-name.
+
+2009-03-12  ------ omnetpp-4.0 released ------
+
+2009-02-27  ------ omnetpp-4.0rc2 released ------
+
+2008-12-14  Andras Varga
+
+	* added -a option: lists all configurations and the number of runs
+	in them
+
+2008-12-12  ------ omnetpp-4.0rc1 released ------
+
+2008-12-10  Andras Varga
+
+	* express mode status updates are now always flushed (no need to set
+	cmdenv-autoflush)
+
+	* cmdenv-status-frequency is now interpreted in seconds (default
+	is every 2 seconds)
+
+	* express mode: when simulation stops (on Ctrl+C, exception, normally,
+	etc), Cmdenv prints a final status update
+
+2008-11-26  Andras Varga
+
+	* library renamed to oppcmdenv
+
+2008-06-19  Andras Varga
+
+	* refined signal handling: only turn on special signal handling while
+	the simulation is processing events. During lengthy initializations
+	etc, one can still abort the program via Ctrl-C. SIGTERM and SIGINT
+	are handled. [suggested by Bradley Settlemyer]
+
+2008-02-23  Andras Varga
+
+	Summary of changes for omnetpp-4.0 (2006..2008):
+
+	* inifile syntax change: [Cmdenv] config entries became cmdenv-... ones
+
+	* cmdenv-express-mode= now defaults to true
+
+	* new inifile entry: cmdenv-interactive=. When false, Cmdenv will
+	never read stdin, which is better suited for batch execution.
+
+	* -c option and cmdenv-config-name= inifile entry for specifying the
+	configuration name to run; specific runs for the configuration can
+	be selected with existing -r option or cmdenv-runs-to-execute=.
+	For example,  "-c Foo -r 1..5" does 5 runs from [Config Foo]
+	in the ini file.
+
+	* prints progress percentages "nn% completed" during simulation.
+	It is used by the simulation launcher's progress bar in the IDE.
+	The algorithm computes percentage both from sim-time-limit and
+	cpu-time-limit, and prints the larger one.
+
+	* for run iterations (-r option and cmdenv-runs-to-execute=), accept
+	both ".." and "-" as range separator, i.e. both  "2..5" and "2-5" are
+	valid
+
+	* from now on, you need to specify "-u _cmdenv_lib" (gcc) or
+	"/include:_cmdenv_lib" (vc++) in addition to -lcmdenv (or cmdenv.lib)
+	on the linker command line. But: now you can have a program with both
+	Cmdenv and Tkenv in it.
+
+	* out-of-directory build, and other Makefile changes
+
+	* obsolete source heap.cc removed
+
+	* SEE CHANGES FOR ENVIR TOO. (Envir is the common part of Cmdenv and
+	Tkenv).
+
+2006-10-21  ------ omnetpp-3.3 released ------
+
+2006-01-12  ------ omnetpp-3.2p1 released ------
+
+2005-10-19  ------ omnetpp-3.2 released ------
+
+2005-03-31  ------ omnetpp-3.1 released ------
+
+2005-03-22  Andras Varga
+
+	* cmdenv.cc/h: handling of -h option moved into TOmnetApp base class.
+
+2005-03-02  Andras Varga
+
+	* cmdenv.h/cc: makeOptionsEffective() merged into readPerRunOptions()
+
+2005-01-10  Andras Varga
+
+	* cmdenv.cc: factored out platform dependencies to include/platdep
+
+2004-12-29  ------ omnetpp-3.0 released ------
+
+2004-12-15  Andras Varga
+
+        * extra-stack= option replaced with extra-stack-kb. (Default is 8K)
+
+2004-11-23  ------ omnetpp-3.0b1 released ------
+
+2004-11-03  ------ omnetpp-3.0a9 released ------
+
+2004-10-27  Andras Varga
+
+	* cmdenv.cc: minor ajustment: makeOptionsEffective() should be called
+	right after readPerRunOptions()
+
+2004-10-25  Andras Varga
+
+	* cmdenv.cc: updated for info() and fullPath() signature changes
+	(see include/ChangeLog)
+
+2004-10-04  ------ omnetpp-3.0a8 released ------
+
+2004-09-24  ------ omnetpp-3.0a7 released ------
+
+2004-07-22  ------ omnetpp-3.0a6 released ------
+
+2004-07-10  Andras Varga
+
+	* cmdenv.cc/h: now it's possible to control which modules' ev<< output
+	Cmdenv prints when run with express-mode=false and module-messages=
+	true. The configuration is: [Cmdenv]/<modulepath>.ev-output=true/false.
+	An example which enables only output from modules named "tcpdump":
+	  [Cmdenv]
+	  module-messages=true
+	  **.tcpdump.ev-output=true
+	  **.ev-output=false
+	ev<< in finish() is always fully printed.
+
+2004-07-06  Andras Varga
+
+	* cmdenv.cc: fixed Speedometer usage; added milliseconds to elapsed
+	time. FIXME calculated + speedometer values don't correspond because
+	the two call ftime() independently
+
+2004-06-07  ------ omnetpp-3.0a5 released ------
+
+2004-05-15  ------ omnetpp-3.0a4 released ------
+
+2004-03-22  ------ omnetpp-3.0a3 released ------
+
+2004-03-03  ------ omnetpp-3.0a2 released ------
+
+2004-02-23  Andras Varga
+
+	* cmdenv.cc: new omnetpp.ini option:
+	    event-banner-details= true/false (default: false).
+	It is in effect with normal mode (express-mode=false), and causes
+        elapsed time and number of messages (created,present, in FES) to be
+        printed in a second line below the event banner. Format:
+           Elapsed: 131s (2m 11s)  Messages: created: 45 present: 45 in FES: 18
+        Also changed the format of elapsed time display in express mode:
+        prints it in seconds as well.
+
+2004-02-11  Andras Varga
+
+	* cmdenv.cc: propagated semantic change in getNextEvent()'s and
+	selectNextModule()'s return value (see include/ChangeLog)
+
+2004-02-05  Andras Varga
+
+	* heap.cc made disabled by default (and has to be explicitly enabled
+	by defining USE_CMDENV_HEAPDEBUG), and changed to throw std::alloc
+	on out-of-memory condition.
+
+2004-02-04  ------ omnetpp-3.0pre1 released ------
+
+2004-01-06  Andras Varga
+
+	* cmdenv.h: added isGUI()
+
+2003-12-11  Andras Varga
+
+	* all files: follow changes in sim/; C-style casts replaced with
+	static_cast<>
+
+2003-11-13  Andras Varga
+
+	* Checked in parallel simulation code that was developed March-May 2003,
+	during my stay at Monash University. Changes:
+
+	2003-04-18  Andras Varga
+	* new ini file option:
+	  output-file=<filename>
+	If present, output will be redirected to the given file. If the
+	[General]/fname-append-host setting is turned on, the the host
+	name and pid (process id) will be appended to the file name.
+	Particularly useful when a parallel simulation is run from a shared
+	directory.
+
+2003-10-02  Andras Varga
+
+	* cmdenv.cc/h: added new method cEnvir::moduleMethodCalled()
+
+2003-09-22  Andras Varga
+
+	* cmdenv.cc/h: messageSent() signature change, see include/ChangeLog
+
+2003-06-16  ------ omnetpp-2.3 released ------
+
+2003-03-15  ------ omnetpp-2.3b2 released ------
+
+2003-02-15  ------ omnetpp-2.3b1 released ------
+
+2003-01-07  Andras Varga
+
+	* new ini file options:
+	  autoflush=yes/no (default: no)
+	    call fflush(stdout) after each event banner or status update;
+	    affects both express and normal mode.
+	  message-trace=yes/no (default: no)
+	    log message sending (by send(),scheduleAt(), etc) and delivery
+	    on standard output; effective only in normal mode
+
+	* format of event banner slightly changed
+
+2002-11-03  Andras Varga
+
+	* cmdenv.cc: improved status display
+
+2002-10-20  Andras Varga
+
+	* cmdenv.cc: revised omnetpp.ini entries understood by Cmdenv.
+	A new entry was introduced to make it easier to switch between
+	typical uses of Cmdenv.
+	  express-mode=yes/no (default: no)
+	Normal (non-express) mode is for debugging: detailed information
+	will be written	to the standard output (event banners, module output,
+	etc). Express mode can be used for long simulation runs: only
+	periodical status update is displayed about the progress of the
+	simulation.
+	When in normal (non-express) mode, the following ini file entries
+	are taken into account:
+	  module-messages=yes/no (default: yes)
+	     - printing module ev<< output on/off (as before)
+	  event-banners=yes/no (default: yes)
+	     - printing event banners on/off; replaces verbose-simulation=
+	When in express mode, these entries are used:
+	  status-frequency=<integer> (default: 50000)
+	     - print status update every n events (on today's computers, and
+	     for a typical model, this will produce an update every few seconds,
+	     perhaps a few times per second)
+	  performance-display=yes/no (default: yes)
+	     - print detailed performance status
+	Obsoleted entries: display-update=, verbose-simulation=.
+
+2002-10-08  Andras Varga
+
+	* cmdenv.cc: -h command-line option now lists linked-in modules too
+
+2002-10-04  Andras Varga
+
+	* error handling changed from simulation.ok() to exceptions.
+
+2002-05-04  ------ omnetpp-2.2 released ------
+
+2002-01-13  Andras Varga
+
+	* Graceful handling of SIGTERM and SIGINT signals: calls finish()
+        for current simulation and exits. Works on Unix only (Win32 doesn't
+        support SIGTERM and SIGINT, among others). Based on suggestion and
+        patch from Michele Baresi.
+
+2000-06-06  Andras Varga
+
+	* ------ omnetpp-2.1 released ------
+
+	* Borland C++ support removed: I deleted the project files
+	(*.ide). I added equivalent Makefile.bc files (generated from the
+	BC IDE), but they are completely unsupported at the moment. If
+	there's interest, it's possible that later I'll add makefiles for
+	the free command-line bc5.5 compiler.
+
+
+	* ------ omnetpp-2.0p1 released ------
+
+	* ------ omnetpp-2.0 released ------
+
+	* heap.cc, operator new fixed: when out of memory, it doesn't
+	return NULL but calls exit(1). (According to the ISO standard, op
+	new should throw an exception when out of memory. Unfortunately,
+	exceptions are incompatible with the coroutine library's
+	setjmp/longjmp magic, so OMNeT++ doesn't use exceptions at all.)
+
+	HEAP.CC TO BE TESTED!!!
+
+2000-05-10  Andras Varga
+
+	* ------ omnetpp-2.0b5 released ------
+
+	* ------ omnetpp-2.0b4 released ------
+
+	* [Cmdenv]/extra-stack= option added, it specifies (in bytes) how
+	much extra stack each activity() module needs when executing under
+	Cmdenv.  This used to be hardcoded (8192), now users can fine-tune
+	it.
+
+2000-05-07  Andras Varga
+
+       * Makefile.vc improvements from Balazs Kelemen
+
+2000-04-10  Andrea Varga
+
+	* changes to enable linking a Windows DLL from the library
+
+	* memoryIsLow() reorganized; cosmetic changes on heap.cc
+
+	* adjustments because of TOmnetApp constructor changes
+
+	* added cmdenvDummy()/envirDummy(): functions which can/should be
+	called from Envir in order to force the linker to include the
+	Cmdenv library into the executable. (These functions do absolutely
+	nothing.)
+
+	* TRUE/FALSE (defines) replaced by true/false (C++ keywords)
+
+	* in printf() statements, all "%lf","%lg","%le" was replaced by
+	"%f","%g","%e"
+
+2000-04-04  Andras Varga
+
+	* dynamic registration of user interface (TOmnetApp) classes
+	introduced: Register_OmnetApp() macro added to cmdenv.cc
+
+2000-03-26  Andras Varga
+
+	* 'char *' pointers made const-correct (lots of 'char *' -->
+	'const char *' replacements throughout the code)
+
+1999-12-05  Andras Varga
+
+	* ------ omnetpp-2.0b3 released ------
+
+        * Makefile.vc added
+
+1999-12-04  Andras Varga
+
+        * compiled with MSVC. cmdenv.dsp added. NOTE: one has to rename
+	all .cc files to .cpp for compiling (ren *.cc *.cpp)!
+
+        * To Do: check heap.cc
+
+1999-09-20  Andras Varga
+
+	* ------ omnetpp-2.0b2 released ------
+
+	* typo fixed in Makefile.in: $(CLFAGS) --> $(CFLAGS)
+
+1999-08-13  Andras Varga
+
+	* ------ omnetpp-2.0b released ------
+
+        * _dummy_for_tkenv_inspect() bug fixed
+
+1999-06-21  Andras Varga
+
+        * all sources checked in under CVS
+
+        * makefile.in modified for use with GNU Autoconf; also renamed to
+	Makefile.in
+
+        * version.log renamed to ChangeLog
+
+        * removed support for DOS with BC3.1
+
+1999-02-07  Andras Varga
+
+        * small fixes
+
+1999-01-25  Andras Varga
+
+        * updated for sim172d
+
+1998-12-27  Andras Varga
+
+        * updated for sim170
+
+        * extraStackForEnvir() raised to 8K (was zero)
+
+        * some bugs fixed in heap.cc
+
+        * makefile renamed to makefile.in
+
+        * runningModule() corrected to contextModule()
+
+1998-08-14  Andras Varga
+
+        * makefile fix
+
+1998-08-12  Andras Varga
+
+        * Borland C++ 5.0 project file added
+
+        * small fixes
+
+1998-07-15  Andras Varga
+
+        * small fixes
+
+        * callFinish() added
+
+1998-06-24  Andras Varga
+
+        * callFinish() added
+
+1998-05-18  Andras Varga
+
+        * inspectors made compatible with sim162
+
+1998-05-18  Andras Varga
+
+        * inspectors made compatible with sim160
+
+1998-05-12  Andras Varga
+
+        * makefile updated
+
+1998-04-26  Andras Varga
+
+        * makefile can now create shared object (libcmdenv.so)
+
+1998-02-15  Andras Varga
+
+        * makefile changed; cmdenv.a-->libcmdenv.a
+
+1997-12-13  Andras Varga
+
+        * brought up-to-date with sim151
+
+1997-10-06  Andras Varga
+
+        * further renaming; compatible with sim148
+
+1997-10-02  Andras Varga
+
+        * cleaned up & renamed several member functions; compatible with
+	sim147
+
+1997-08-17  Andras Varga
+
+        * "Network not found" msg improved
+
+1997-08-17  Andras Varga
+
+        * updated for sim146a
+
+1997-08-07  Andras Varga
+
+        * cNetSimpleMod corrected to cNetMod
+
+        * [Cmdenv]/runs-to-execute default value changed: NULL-->""
+
+        * compatibility: sim144a or up
+
+1997-07-31  Andras Varga
+
+        * [General]/number-of-runs= ini file option was replaced by
+
+	  [Cmdenv]/runs-to-execute=.
+	  Now it's possible to say things like:
+	     [Cmdenv]
+	     runs-to-execute = 1,2, 5-8
+	  There is a command-line equivalent: -r1,2,5-8
+	  If the list of runs is not given explicitly, executes all runs
+	  that have an ini file section; if no runs are given in the ini file,
+	  does one run.
+
+        * compatibility: envir97 or newer
+
+1997-07-20  Andras Varga
+
+        * removed TCmdenv::foreignputs()
+
+1997-07-10  Andras Varga
+
+        * makefile hacked upon to make it edible for Cygnus gcc
+
+1997-07-02  Andras Varga
+
+        * opt_verbose bug fixed
+
+        * usage of cEnvir::disable_tracing added
+
+1997-07-01  Andras Varga
+
+        * small changes
+
+1997-04-22  Andras Varga
+
+        * cSimulation's geteventnumber() and inc_eventnumber() introduced
+	instead of own event counting (compatible with sim130 and up)
+
+1997-04-11  Andras Varga
+
+        * opt_helponly moved from envir package to cmdenv
+
+1997-03-24  Andras Varga
+
+        * opt_networkname now explicitly casted from string to char* in
+	printf()
+
+1997-03-15  Andras Varga
+
+        * adopted to sim120c
+
+1997-02-28  Andras Varga
+
+        * adopted to envir81 and sim109
+
+1997-02-28  Andras Varga
+
+        * adopted to sim105 & 'multiple runs' bug fixed
+
+	#75
+
+        * bugfixes
+
+	#74
+
+        * heap.cc's alloctable[] made dynamic
+
+	#72
+
+        * upgraded for sim102's
+
+        * added periodic display update
+
+	#71
+
+        * improved alloctable[]
+
+        * better heap debugging messages
+
+	#23
+
+        * integrating VZ's stuff. Won't compile
