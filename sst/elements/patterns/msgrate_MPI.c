@@ -69,6 +69,13 @@ int num_rcvs;
 	exit(-1);
     }
 
+    if (num_ranks % 2 != 0)   {
+	if (my_rank == 0)   {
+	    fprintf(stderr, "Need to run on an even number of ranks\n");
+	}
+	MPI_Finalize();
+	exit(-1);
+    }
 
     /* Set the defaults */
     opterr= 0;		/* Disable getopt error printing */
