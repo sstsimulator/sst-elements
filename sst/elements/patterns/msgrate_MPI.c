@@ -118,6 +118,13 @@ int num_rcvs;
         }
     }
  
+    if (num_msgs < 2)   {
+	if (my_rank == 0)   {
+	    fprintf(stderr, "Number of messages must be > 1; e.g., %d\n", DEFAULT_NUM_MSGS);
+	}
+	error= TRUE;
+    }
+
     if (error)   {
         if (my_rank == 0)   {
             usage(argv[0]);
@@ -140,30 +147,26 @@ int num_rcvs;
     }
 
     duration= Test1(my_rank, num_ranks, num_msgs, msg_len);
-    MPI_Reduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	printf(">>> Average rate for %d messages of length %d: %.3f msgs/s\n",
-	    num_msgs, msg_len, 1.0 / (total_time / (num_msgs * num_ranks / 2)));
+	printf(">>> Bi-section rate: %d messages of length %d on %d paths:            %.3f msgs/s\n",
+	    num_msgs, msg_len, num_ranks / 2, 1.0 / ((total_time / (num_ranks / 2)) / num_msgs));
     }
-    MPI_Bcast(&duration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 
     duration= Test2(my_rank, num_ranks, num_msgs, msg_len);
-    MPI_Reduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	printf(">>> Average rate for %d messages from rank 0 to 1...%d of length %d: %.3f msgs/s\n",
-	    num_msgs, num_ranks - 1, msg_len, 1.0 / ((double)duration / num_msgs));
+	printf(">>> Send rate:       %d messages of length %d from rank 0 to 1...%d:  %.3f msgs/s\n",
+	    num_msgs, msg_len, num_ranks - 1, 1.0 / ((total_time / (num_ranks - 1)) / num_msgs));
     }
-    MPI_Bcast(&duration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 
     duration= Test3(my_rank, num_ranks, num_msgs, msg_len);
+    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	num_rcvs= num_msgs / (num_ranks - 1);
-	num_rcvs= num_rcvs * (num_ranks - 1);
-	printf(">>> Average rate for %d messages from ranks 1...%d to 0 of length %d: %.3f msgs/s\n",
-	    num_msgs, num_ranks - 1, msg_len, 1.0 / ((double)duration / num_rcvs));
+	printf(">>> Receive rate:    %d messages of length %d from ranks 1...%d to 0: %.3f msgs/s\n",
+	    num_msgs, msg_len, num_ranks - 1, 1.0 / (duration / (num_msgs * (num_ranks - 1))));
     }
 
     MPI_Finalize();
@@ -174,9 +177,6 @@ int num_rcvs;
 
 
 
-/*
-** First half of all ranks sends to second half
-*/
 static double
 Test1(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
@@ -195,9 +195,12 @@ char buf[msg_len];
 
     } else   {
 
-	/* I'm a receiver */
+	/* I'm a receiver, wait for the first message */
+	MPI_Recv(buf, msg_len, MPI_CHAR, my_rank - num_ranks / 2, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+	/* Now start the timer */
 	t= MPI_Wtime();
-	for (i= 0; i < num_msgs; i++)   {
+	for (i= 1; i < num_msgs; i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, my_rank - num_ranks / 2, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
@@ -208,9 +211,6 @@ char buf[msg_len];
 
 
 
-/*
-** Rank 0 sends to all other nodes round-robin
-*/
 static double
 Test2(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
@@ -224,42 +224,31 @@ char buf[msg_len];
 
     if (my_rank == 0)   {
 	/* I'm the sender */
-	t= MPI_Wtime();
 	dest= 1;
-	for (i= 0; i < num_msgs; i++)   {
+	for (i= 0; i < num_msgs * (num_ranks - 1); i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 13, MPI_COMM_WORLD);
 	    dest++;
 	    if (dest % num_ranks == 0)   {
 		dest= 1;
 	    }
 	}
-	return MPI_Wtime() - t;
+	return 0.0;
 
     } else   {
 	/* I'm a receiver */
-
-	// Every receiver gets this many messages
-	num_rcvs= num_msgs / (num_ranks - 1);
-
-	// Some may get one more
-	if (my_rank <= (num_msgs - (num_rcvs * (num_ranks - 1))))   {
-	    num_rcvs++;
-	}
-
-	for (i= 0; i < num_rcvs; i++)   {
+	MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	t= MPI_Wtime();
+	for (i= 1; i < num_rcvs; i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
-	return 0.0;
+	return MPI_Wtime() - t;
     }
 
 }  /* end of Test2() */
 
 
 
-/*
-** Everybody sends to rank 0
-*/
 static double
 Test3(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
@@ -273,8 +262,7 @@ char buf[msg_len];
 
     if (my_rank == 0)   {
 	/* I'm the receiver */
-	num_rcvs= num_msgs / (num_ranks - 1);
-	num_rcvs= num_rcvs * (num_ranks - 1);
+	num_rcvs= num_msgs * (num_ranks - 1);
 	t= MPI_Wtime();
 	for (i= 0; i < num_rcvs; i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, MPI_ANY_SOURCE, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -282,7 +270,7 @@ char buf[msg_len];
 	return MPI_Wtime() - t;
     } else   {
 	/* I'm a sender */
-	for (i= 0; i < num_msgs / (num_ranks - 1); i++)   {
+	for (i= 0; i < num_msgs; i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, 0, 14, MPI_COMM_WORLD);
 	}
 	return 0.0;
