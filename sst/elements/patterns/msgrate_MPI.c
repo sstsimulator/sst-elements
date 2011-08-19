@@ -52,7 +52,6 @@ int num_msgs;
 int i;
 double duration;
 double total_time;
-int num_rcvs;
 
 
 
@@ -223,7 +222,6 @@ Test2(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
 
 double t;
-int num_rcvs;
 int i;
 int dest;
 char buf[msg_len];
@@ -245,7 +243,7 @@ char buf[msg_len];
 	/* I'm a receiver */
 	MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	t= MPI_Wtime();
-	for (i= 1; i < num_rcvs; i++)   {
+	for (i= 1; i < num_msgs; i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
@@ -261,7 +259,6 @@ Test3(int my_rank, int num_ranks, int num_msgs, int msg_len)
 {
 
 double t;
-int num_rcvs;
 int i;
 int dest;
 char buf[msg_len];
@@ -269,9 +266,8 @@ char buf[msg_len];
 
     if (my_rank == 0)   {
 	/* I'm the receiver */
-	num_rcvs= num_msgs * (num_ranks - 1);
 	t= MPI_Wtime();
-	for (i= 0; i < num_rcvs; i++)   {
+	for (i= 0; i < num_msgs * (num_ranks - 1); i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, MPI_ANY_SOURCE, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	return MPI_Wtime() - t;
