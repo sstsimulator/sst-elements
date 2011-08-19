@@ -53,6 +53,8 @@ Allreduce_pattern::handle_events(state_event sm_event)
     if (done)   {
 	// For allreduce, which returns data, we return the first field of
 	// SM Fdata where the states keep the result
+	state= START;
+	done= false;
 	sm_event.set_Fdata(cp->SM->SM_data.get_Fdata());
 	cp->SM->SM_return(sm_event);
     }
@@ -95,17 +97,13 @@ state_event send_event;
 	case E_FROM_CHILD:
 	    // It's possible that other ranks have already entered the allreduce and
 	    // sent us events before we entered the state machine for allreduce.
-	    if (ctopo->is_root())   {
-		state= WAIT_CHILDREN;
-		state_WAIT_CHILDREN(sm_event);
-	    } else if (ctopo->is_leaf())   {
+	    if (ctopo->is_leaf())   {
 		// This cannot happen
 		_abort(allreduce_pattern, "[%3d] Invalid event %d in state %d\n",
 		    cp->my_rank, e, state);
 	    } else   {
-		// I must be an interior node
-		state= WAIT_CHILDREN;
-		state_WAIT_CHILDREN(sm_event);
+		// I must be an interior node or root
+		goto_state(state_WAIT_CHILDREN, WAIT_CHILDREN, E_FROM_CHILD);
 	    }
 	    break;
 
@@ -176,7 +174,6 @@ state_event send_event;
 			cp->send_msg(*it, allreduce_msglen, send_event);
 		    }
 
-		    state= START;  // For next allreduce
 		    done= true;
 		} else   {
 		    send_event.event= E_FROM_CHILD;
@@ -218,7 +215,6 @@ std::list<int>::iterator it;
 		cp->send_msg(*it, allreduce_msglen, send_event);
 	    }
 
-	    state= START;  // For next allreduce
 	    done= true;
 	    break;
 

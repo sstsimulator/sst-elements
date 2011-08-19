@@ -42,6 +42,8 @@ Barrier_pattern::handle_events(state_event sm_event)
     // Only "main" patterns should do that; i.e., patterns that use other
     // patterns like this one. Just return to our caller.
     if (done)   {
+	state= START;
+	done= false;
 	cp->SM->SM_return(sm_event);
     }
 
@@ -100,7 +102,6 @@ state_event barrier_event;
 			cp->send_msg(*it, no_data, barrier_event);
 		    }
 
-		    state= START;  // For next barrier
 		    done= true;
 		} else   {
 		    barrier_event.event= E_FROM_CHILD;
@@ -136,7 +137,6 @@ state_event barrier_event;
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
 		cp->send_msg(*it, no_data, barrier_event);
 	    }
-	    state= START;  // For next barrier
 	    done= true;
 	    break;
 

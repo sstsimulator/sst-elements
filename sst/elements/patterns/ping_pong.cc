@@ -92,7 +92,7 @@ state_event pp_event;
 
 	    } else if (my_rank != dest)   {
 		// I'm not participating in pingpong. Go straight to barrier
-		state_transition(E_BARRIER_ENTRY, PP_BARRIER);
+		goto_state(state_BARRIER, PP_BARRIER, E_BARRIER_ENTRY);
 
 	    } else   {
 		printf("# [%3d] PONG I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
@@ -148,7 +148,7 @@ double latency;
 		    }
 		    cnt= num_msg;
 		    if (len > end_len)   {
-			state_transition(E_BARRIER_ENTRY, PP_BARRIER);
+			goto_state(state_BARRIER, PP_BARRIER, E_BARRIER_ENTRY);
 		    }
 		}
 
@@ -169,7 +169,7 @@ double latency;
 		    }
 		    if (len > end_len)   {
 			// We've done all sizes num_msg times
-			state_transition(E_BARRIER_ENTRY, PP_BARRIER);
+			goto_state(state_BARRIER, PP_BARRIER, E_BARRIER_ENTRY);
 		    } else   {
 			cnt= num_msg;
 			start_time= getCurrentSimTime();
@@ -210,7 +210,7 @@ state_event enter_barrier, exit_barrier;
 
 	case E_BARRIER_EXIT:
 	    // We just came back from the barrier SM. Go do an allreduce
-	    state_transition(E_ALLREDUCE_ENTRY, PP_ALLREDUCE);
+	    goto_state(state_ALLREDUCE, PP_ALLREDUCE, E_ALLREDUCE_ENTRY);
 	    break;
 
 	default:

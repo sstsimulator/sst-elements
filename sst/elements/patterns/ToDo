@@ -11,8 +11,12 @@
 
 - Clean up and improve the message passing model
     - Use (some) LoGP parameters in the config file
-    - Figure out what we want to be able to set (and what we cannot given the model)
+    - Figure out what we want to be able to set (and what we cannot, given the model)
     - Hockney and more elaborate models
+    - send_msg() can be called over and over
+	It's like an Isend() with infinite buffer space.
+	Should we have a regular send? How would I do that?
+	How can pattern's confirm a message has gone out?
 
 - Find a way to cleanly seperate pattern-specifc parameters and
     the general ones, like size of torus

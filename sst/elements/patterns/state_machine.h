@@ -85,9 +85,22 @@ class state_event   {
 
 
 
-#define state_transition(event, new_state) {\
+// This transfer to another state by sending oursleves an event
+// This will probably be seldom used. It is necessary when you
+// want to go to the next state, but can't do any work there (yet)
+// and would have to block.
+// See if goto_state() works better for your needs.
+#define state_transition(event, new_state)   {\
 	    state= new_state;\
 	    self_event_send(event);\
+	}
+
+// This jumps (calls) directly to a function that handles a state
+#define goto_state(func, new_state, trigger_event)   {\
+	    state_event e; \
+	    state= new_state;\
+	    e.event= trigger_event; \
+	    func(e);\
 	}
 
 

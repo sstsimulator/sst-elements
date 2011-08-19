@@ -26,6 +26,7 @@ class Msgrate_pattern : public Comm_pattern    {
         {
 	    // Defaults for paramters
 	    num_msgs= 20;
+	    msg_len= 0;
 
 
 	    // Process the message rate specific paramaters
@@ -35,9 +36,20 @@ class Msgrate_pattern : public Comm_pattern    {
 		    sscanf(it->second.c_str(), "%d", &num_msgs);
 		}
 
+		if (!it->first.compare("msg_len"))   {
+		    sscanf(it->second.c_str(), "%d", &msg_len);
+		}
+
                 ++it;
             }
 
+
+	    if (num_ranks % 2 != 0)   {
+		if (my_rank == 0)   {
+		    printf("#  |||  Need to run on an even number of ranks!\n");
+		}
+		exit(-2);
+	    }
 
 	    // Install other state machines which we (msgrate) need as
 	    // subroutines.
@@ -52,16 +64,19 @@ class Msgrate_pattern : public Comm_pattern    {
 
 
 	    // Kickstart ourselves
-	    state_transition(E_START_T1, MSGR_INIT);
+	    done= false;
+	    state_transition(E_START_T1, STATE_INIT);
         }
 
 
 	// The Msgrate pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {MSGR_INIT, MSGR_T1_SENDING, MSGR_T1_RECEIVING} msgrate_state_t;
+	typedef enum {STATE_INIT, STATE_T1_SENDING, STATE_T1_RECEIVING, STATE_ALLREDUCE_T1, STATE_T2,
+	    STATE_T2_SENDING, STATE_T2_RECEIVING, STATE_ALLREDUCE_T2} msgrate_state_t;
 
 	// The start event should always be SM_START_EVENT
-	typedef enum {E_START_T1= SM_START_EVENT, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT} msgrate_events_t;
+	typedef enum {E_START_T1= SM_START_EVENT, E_T1_RECEIVE, E_START_T2, E_T2_RECEIVE,
+	    E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT} msgrate_events_t;
 
     private:
 
@@ -77,6 +92,11 @@ class Msgrate_pattern : public Comm_pattern    {
 	void state_INIT(state_event sm_event);
 	void state_T1_SENDING(state_event sm_event);
 	void state_T1_RECEIVING(state_event sm_event);
+	void state_ALLREDUCE_T1(state_event sm_event);
+	void state_T2(state_event sm_event);
+	void state_T2_SENDING(state_event sm_event);
+	void state_T2_RECEIVING(state_event sm_event);
+	void state_ALLREDUCE_T2(state_event sm_event);
 
 	Params_t params;
 	int allreduce_msglen;
@@ -88,9 +108,11 @@ class Msgrate_pattern : public Comm_pattern    {
 	// Some variables we need for msgrate to operate
 	msgrate_state_t state;
 	int num_msgs;
+	int msg_len;
 	int rcv_cnt;
 	int done;
 	SimTime_t msg_wait_time_start;
+	double msg_wait_time;
 
 
 	// Serialization
@@ -105,9 +127,11 @@ class Msgrate_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(SMallreduce);
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(num_msgs);
+	    ar & BOOST_SERIALIZATION_NVP(msg_len);
 	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(msg_wait_time);
         }
 
         template<class Archive>

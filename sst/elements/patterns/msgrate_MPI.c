@@ -155,24 +155,31 @@ double total_time;
     duration= Test1(my_rank, num_ranks, num_msgs, msg_len);
     MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	printf(">>> Bi-section rate: %d messages of length %d on %d paths:            %.3f msgs/s\n",
-	    num_msgs, msg_len, num_ranks / 2, 1.0 / ((total_time / (num_ranks / 2)) / num_msgs));
+	printf("#  |||  Test 1: Ranks 0...%d will send %d messages of length %d to "
+	    "ranks %d...%d along %d paths\n", num_ranks / 2 - 1, num_msgs,
+	    msg_len, num_ranks / 2, num_ranks - 1, num_ranks / 2);
+	printf("#  |||  Test 1: Average bi-section rate: %8.0f msgs/s\n",
+	    1.0 / ((total_time / (num_ranks / 2)) / num_msgs));
     }
 
 
     duration= Test2(my_rank, num_ranks, num_msgs, msg_len);
     MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	printf(">>> Send rate:       %d messages of length %d from rank 0 to 1...%d:  %.3f msgs/s\n",
-	    num_msgs, msg_len, num_ranks - 1, 1.0 / ((total_time / (num_ranks - 1)) / num_msgs));
+	printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d\n",
+	    num_msgs, msg_len, my_rank + 1, num_ranks - 1);
+	printf("#  |||  Test 2: Average send rate:       %8.0f msgs/s\n",
+	    1.0 / ((total_time / (num_ranks - 1)) / num_msgs));
     }
 
 
     duration= Test3(my_rank, num_ranks, num_msgs, msg_len);
     MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	printf(">>> Receive rate:    %d messages of length %d from ranks 1...%d to 0: %.3f msgs/s\n",
-	    num_msgs, msg_len, num_ranks - 1, 1.0 / (duration / (num_msgs * (num_ranks - 1))));
+	printf("#  |||  Test 3: Ranks 1...%d will send %d messages of length %d to rank 0\n",
+	    num_ranks - 1, num_msgs, msg_len);
+	printf("#  |||  Test 3: Average receive rate:    %8.0f msgs/s\n",
+	    1.0 / (duration / (num_msgs * (num_ranks - 1))));
     }
 
     MPI_Finalize();

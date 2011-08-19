@@ -21,6 +21,9 @@
 // Send an event that represents a message of length len to destination dest.
 // No actual data is contained in this message. There is some out of band data
 // that is contained in the sm_event. It's packed into the payload and sent along.
+//
+// This behave kind of like an MPI_Isend() When it returns, the message may not have
+// left the node yet. Right now it never blocks == infinite buffer space.
 void
 Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 {
@@ -39,7 +42,7 @@ SimTime_t node_latency= 2440;
 
 
 
-// This is only used for state_transition macro.
+// This is only used for the state_transition macro.
 void
 Comm_pattern::self_event_send(int event_type)
 {
