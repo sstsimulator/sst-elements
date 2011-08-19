@@ -72,11 +72,12 @@ class Msgrate_pattern : public Comm_pattern    {
 	// The Msgrate pattern generator can be in these states and deals
 	// with these events.
 	typedef enum {STATE_INIT, STATE_T1_SENDING, STATE_T1_RECEIVING, STATE_ALLREDUCE_T1, STATE_T2,
-	    STATE_T2_SENDING, STATE_T2_RECEIVING, STATE_ALLREDUCE_T2} msgrate_state_t;
+	    STATE_T2_SENDING, STATE_T2_RECEIVING, STATE_ALLREDUCE_T2, STATE_T3, STATE_T3_SENDING,
+	    STATE_T3_RECEIVING, STATE_ALLREDUCE_T3} msgrate_state_t;
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START_T1= SM_START_EVENT, E_T1_RECEIVE, E_START_T2, E_T2_RECEIVE,
-	    E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT} msgrate_events_t;
+	    E_START_T3, E_T3_RECEIVE, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT} msgrate_events_t;
 
     private:
 
@@ -97,6 +98,10 @@ class Msgrate_pattern : public Comm_pattern    {
 	void state_T2_SENDING(state_event sm_event);
 	void state_T2_RECEIVING(state_event sm_event);
 	void state_ALLREDUCE_T2(state_event sm_event);
+	void state_T3(state_event sm_event);
+	void state_T3_SENDING(state_event sm_event);
+	void state_T3_RECEIVING(state_event sm_event);
+	void state_ALLREDUCE_T3(state_event sm_event);
 
 	Params_t params;
 	int allreduce_msglen;

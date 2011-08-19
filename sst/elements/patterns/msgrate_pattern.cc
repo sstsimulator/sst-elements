@@ -45,30 +45,18 @@ Msgrate_pattern::handle_events(state_event sm_event)
 {
 
     switch (state)   {
-	case STATE_INIT:
-	    state_INIT(sm_event);
-	    break;
-	case STATE_T1_SENDING:
-	    state_T1_SENDING(sm_event);
-	    break;
-	case STATE_T1_RECEIVING:
-	    state_T1_RECEIVING(sm_event);
-	    break;
-	case STATE_ALLREDUCE_T1:
-	    state_ALLREDUCE_T1(sm_event);
-	    break;
-	case STATE_T2:
-	    state_T2(sm_event);
-	    break;
-	case STATE_T2_SENDING:
-	    state_T2_SENDING(sm_event);
-	    break;
-	case STATE_T2_RECEIVING:
-	    state_T2_RECEIVING(sm_event);
-	    break;
-	case STATE_ALLREDUCE_T2:
-	    state_ALLREDUCE_T2(sm_event);
-	    break;
+	case STATE_INIT:		state_INIT(sm_event); break;
+	case STATE_T1_SENDING:		state_T1_SENDING(sm_event); break;
+	case STATE_T1_RECEIVING:	state_T1_RECEIVING(sm_event); break;
+	case STATE_ALLREDUCE_T1:	state_ALLREDUCE_T1(sm_event); break;
+	case STATE_T2:			state_T2(sm_event); break;
+	case STATE_T2_SENDING:		state_T2_SENDING(sm_event); break;
+	case STATE_T2_RECEIVING:	state_T2_RECEIVING(sm_event); break;
+	case STATE_ALLREDUCE_T2:	state_ALLREDUCE_T2(sm_event); break;
+	case STATE_T3:			state_T3(sm_event); break;
+	case STATE_T3_SENDING:		state_T3_SENDING(sm_event); break;
+	case STATE_T3_RECEIVING:	state_T3_RECEIVING(sm_event); break;
+	case STATE_ALLREDUCE_T3:	state_ALLREDUCE_T3(sm_event); break;
     }
 
     if (done)   {
@@ -345,9 +333,8 @@ state_event t3_event;
 	    }
 
 	    // Go to test 3
-	    // t3_event.event= E_START_T3;
-	    // state_T3(t2_event);
-	    done= true;
+	    t3_event.event= E_START_T3;
+	    state_T3(t3_event);
 	    break;
 
 	default:
@@ -358,6 +345,131 @@ state_event t3_event;
 }  // end of state_ALLREDUCE_T2()
 
 
+
+void
+Msgrate_pattern::state_T3(state_event sm_event)
+{
+
+msgrate_events_t e= (msgrate_events_t)sm_event.event;
+
+
+    switch (e)   {
+	case E_START_T3:
+	    msg_wait_time= 0.0;
+	    rcv_cnt= 0;
+
+	    if (my_rank == 0)   {
+		printf("#  |||  Test 3: Ranks 1...%d will send %d messages of length %d to rank 0\n",
+		    num_ranks - 1, num_msgs, msg_len);
+		state= STATE_T3_RECEIVING;
+	    } else   {
+		// All other nodes send
+		goto_state(state_T3_SENDING, STATE_T3_SENDING, E_START_T3);
+	    }
+	    break;
+
+	default:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    break;
+    }
+
+}  // end of state_T3()
+
+
+
+void
+Msgrate_pattern::state_T3_SENDING(state_event sm_event)
+{
+
+msgrate_events_t e= (msgrate_events_t)sm_event.event;
+state_event msgr_event;
+
+
+    switch (e)   {
+	case E_START_T3:
+	    // Send num_msg to 0
+	    msg_wait_time_start= getCurrentSimTime();
+	    msgr_event.event= E_T3_RECEIVE;
+	    for (int i= 0; i < num_msgs; i++)   {
+		send_msg(0, msg_len, msgr_event);
+	    }
+	    msg_wait_time= (double)(getCurrentSimTime() - msg_wait_time_start) / TIME_BASE_FACTOR;
+
+	    // Go to the allreduce
+	    goto_state(state_ALLREDUCE_T3, STATE_ALLREDUCE_T3, E_ALLREDUCE_ENTRY);
+	    break;
+
+	default:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    break;
+    }
+
+}  // end of state_T3_SENDING()
+
+
+
+void
+Msgrate_pattern::state_T3_RECEIVING(state_event sm_event)
+{
+
+msgrate_events_t e= (msgrate_events_t)sm_event.event;
+
+
+    switch (e)   {
+	case E_T3_RECEIVE:
+	    // Got another message
+	    rcv_cnt++;
+	    if (rcv_cnt >= num_msgs)   {
+		goto_state(state_ALLREDUCE_T3, STATE_ALLREDUCE_T3, E_ALLREDUCE_ENTRY);
+	    }
+	    break;
+
+	default:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    break;
+    }
+
+}  // end of state_T3_RECEIVING()
+
+
+
+void
+Msgrate_pattern::state_ALLREDUCE_T3(state_event sm_event)
+{
+
+msgrate_events_t e= (msgrate_events_t)sm_event.event;
+state_event enter_allreduce, exit_allreduce;
+
+
+    switch (e)   {
+	case E_ALLREDUCE_ENTRY:
+	    // Set the parameters to be passed to the allreduce SM
+	    enter_allreduce.event= SM_START_EVENT;
+	    enter_allreduce.set_Fdata(msg_wait_time);
+	    enter_allreduce.set_Idata(Allreduce_pattern::OP_SUM);
+
+	    // We want to be called with this event, when allreduce returns
+	    exit_allreduce.event= E_ALLREDUCE_EXIT;
+
+	    SM->SM_call(SMallreduce, enter_allreduce, exit_allreduce);
+	    break;
+
+	case E_ALLREDUCE_EXIT:
+	    // Calculate the average, and let rank 0 display it
+	    if (my_rank == 0)   {
+		printf("#  |||  Test 3: Average receive rate:    %8.0f msgs/s\n",
+		    1.0 / (msg_wait_time / (num_msgs * (num_ranks - 1))));
+	    }
+
+	    done= true;
+	    break;
+
+	default:
+	    _abort(msgrate_pattern, "[%3d] Invalid event %d in state %d\n", my_rank, e, state);
+	    break;
+    }
+
+}  // end of state_ALLREDUCE_T3()
 
 
 
