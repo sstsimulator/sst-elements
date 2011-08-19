@@ -388,12 +388,10 @@ state_event msgr_event;
     switch (e)   {
 	case E_START_T3:
 	    // Send num_msg to 0
-	    msg_wait_time_start= getCurrentSimTime();
 	    msgr_event.event= E_T3_RECEIVE;
 	    for (int i= 0; i < num_msgs; i++)   {
 		send_msg(0, msg_len, msgr_event);
 	    }
-	    msg_wait_time= (double)(getCurrentSimTime() - msg_wait_time_start) / TIME_BASE_FACTOR;
 
 	    // Go to the allreduce
 	    goto_state(state_ALLREDUCE_T3, STATE_ALLREDUCE_T3, E_ALLREDUCE_ENTRY);
@@ -419,7 +417,12 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	case E_T3_RECEIVE:
 	    // Got another message
 	    rcv_cnt++;
-	    if (rcv_cnt >= num_msgs)   {
+	    if (rcv_cnt == 1)   {
+		msg_wait_time_start= getCurrentSimTime();
+	    }
+
+	    if (rcv_cnt >= num_msgs * (num_ranks - 1))   {
+		msg_wait_time= (double)(getCurrentSimTime() - msg_wait_time_start) / TIME_BASE_FACTOR;
 		goto_state(state_ALLREDUCE_T3, STATE_ALLREDUCE_T3, E_ALLREDUCE_ENTRY);
 	    }
 	    break;
