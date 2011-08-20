@@ -87,6 +87,17 @@ Collective_topology::num_children(void)
 
 
 
+// How many vertices are there?
+int
+Collective_topology::num_nodes(void)
+{
+
+    return this_topology_size;
+
+}  // end of num_nodes()
+
+
+
 // Generate my children
 void
 Collective_topology::gen_children(void)
