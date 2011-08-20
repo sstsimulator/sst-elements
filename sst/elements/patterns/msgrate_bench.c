@@ -30,6 +30,7 @@
 #define TRUE			(1)
 #define DEFAULT_MSG_LEN		(0)
 #define DEFAULT_NUM_MSGS	(200)
+#define MAX_MSG_LEN		(10 * 1024 * 1024)
 
 
 /* Local functions */
@@ -37,6 +38,7 @@ static void usage(char *pname);
 static double Test1(int my_rank, int num_ranks, int num_msgs, int msg_len);
 static double Test2(int my_rank, int num_ranks, int num_msgs, int msg_len);
 static double Test3(int my_rank, int num_ranks, int num_msgs, int msg_len);
+char buf[MAX_MSG_LEN];
 
 
 
@@ -45,7 +47,6 @@ main(int argc, char *argv[])
 {
 
 int ch, error;
-int verbose;
 int my_rank, num_ranks;
 int msg_len;
 int num_msgs;
@@ -91,6 +92,12 @@ double total_time;
 		if (msg_len < 0)   {
 		    if (my_rank == 0)   {
 			fprintf(stderr, "message length (-l) must be >= 0!\n");
+		    }
+		    error= TRUE;
+		}
+		if (msg_len > MAX_MSG_LEN)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "message length (-l) must be <= %d!\n", MAX_MSG_LEN);
 		    }
 		    error= TRUE;
 		}
@@ -196,7 +203,6 @@ Test1(int my_rank, int num_ranks, int num_msgs, int msg_len)
 
 double t;
 int i;
-char buf[msg_len];
 
 
     if (my_rank < num_ranks / 2)   {
@@ -231,7 +237,6 @@ Test2(int my_rank, int num_ranks, int num_msgs, int msg_len)
 double t;
 int i;
 int dest;
-char buf[msg_len];
 
 
     if (my_rank == 0)   {
@@ -268,7 +273,6 @@ Test3(int my_rank, int num_ranks, int num_msgs, int msg_len)
 double t;
 int i;
 int dest;
-char buf[msg_len];
 
 
     if (my_rank == 0)   {
@@ -280,8 +284,9 @@ char buf[msg_len];
 	return MPI_Wtime() - t;
     } else   {
 	/* I'm a sender */
+	dest= 0;
 	for (i= 0; i < num_msgs; i++)   {
-	    MPI_Send(buf, msg_len, MPI_CHAR, 0, 14, MPI_COMM_WORLD);
+	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 14, MPI_COMM_WORLD);
 	}
 	return 0.0;
     }

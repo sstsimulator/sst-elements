@@ -28,5 +28,10 @@ libpingpong_pattern_la_SOURCES = ping_pong.h ping_pong.cc \
 			    collective_topology.h collective_topology.cc
 libpingpong_pattern_la_LDFLAGS = -module -avoid-version
 
-
 include src_genPatterns/Makefile.inc
+
+CXXLD = $(MPICXX)
+allreduce_bench_SOURCES = allreduce_bench.cc 
+msgrate_bench_SOURCES = msgrate_bench.cc 
+bin_PROGRAMS += allreduce_bench msgrate_bench
+
