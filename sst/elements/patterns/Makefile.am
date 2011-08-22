@@ -31,9 +31,9 @@ libpingpong_pattern_la_LDFLAGS = -module -avoid-version
 include src_genPatterns/Makefile.inc
 
 CXXLD = $(MPICXX)
-allreduce_bench_LDFLAGS = -lmpi
+allreduce_bench_LDFLAGS = -lmpi -lmpi_cxx
 allreduce_bench_SOURCES = allreduce_bench.cc 
-msgrate_bench_LDFLAGS = -lmpi
+msgrate_bench_LDFLAGS = -lmpi -lmpi_cxx
 msgrate_bench_SOURCES = msgrate_bench.cc 
 bin_PROGRAMS += allreduce_bench msgrate_bench
 
