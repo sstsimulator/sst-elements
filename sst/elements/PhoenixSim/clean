@@ -1,4 +1,0 @@
-#!/bin/bash
-rm -f *.lo
-rm -f envir/*.lo
-rm -f common/*.lo

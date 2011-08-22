@@ -1,1 +1,0 @@
-./DRAMsim.exe -dram:refresh 64 -dram:refresh_issue_policy priority -dram:address_mapping_policy sdram_hiperf_map -max:inst 25000000 -cpu:frequency 4000 -stat:power drampowerstats -stat:all dramallstats -trace_file gcc.trc

@@ -1,8 +1,0 @@
-PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution_Constant.lo: \
- PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution_Constant.cc \
- PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution_Constant.h \
- PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution.h
-
-PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution_Constant.h:
-
-PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution.h:

@@ -1,5 +1,0 @@
-
-
-Changes required to make HotSpot 5.0 compatible with PhoenixSim
-
-1. a prototype needs to be added to flp.h so that outside code that references this file can find "flp_t *flp_alloc_init_mem(int count)"

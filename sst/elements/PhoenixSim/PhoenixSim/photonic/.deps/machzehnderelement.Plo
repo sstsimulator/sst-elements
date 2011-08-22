@@ -1,5 +1,0 @@
-PhoenixSim/photonic/machzehnderelement.lo: \
- PhoenixSim/photonic/machzehnderelement.cc \
- PhoenixSim/photonic/machzehnderelement.h
-
-PhoenixSim/photonic/machzehnderelement.h:

@@ -1,5 +1,0 @@
-PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution.lo: \
- PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution.cc \
- PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution.h
-
-PhoenixSim/processingPlane/apps/SizeDistribution/SizeDistribution.h:
