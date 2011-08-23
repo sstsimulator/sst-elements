@@ -25,7 +25,7 @@ iteself and the gate keeper mechanism in comm_pattern.cc
 */
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
-#include "ping_pong.h"
+#include "pingpong_pattern.h"
 
 
 
@@ -236,7 +236,7 @@ double check= 0.0;
 	    // Set the parameters to be passed to the allreduce SM
 	    enter_allreduce.event= SM_START_EVENT;
 	    enter_allreduce.set_Fdata(my_rank + 1.0);
-	    enter_allreduce.set_Idata(Allreduce_pattern::OP_SUM);
+	    enter_allreduce.set_Idata(Allreduce_op::OP_SUM);
 
 	    // We want to be called with this event, when allreduce returns
 	    exit_allreduce.event= E_ALLREDUCE_EXIT;

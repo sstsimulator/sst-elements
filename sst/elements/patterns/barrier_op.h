@@ -16,9 +16,9 @@
 
 
 
-class Barrier_pattern   {
+class Barrier_op   {
     public:
-	Barrier_pattern(Comm_pattern * const& current_pattern) :
+	Barrier_op(Comm_pattern * const& current_pattern) :
 	    cp(current_pattern),
 	    no_data(0)
 	{
@@ -28,11 +28,11 @@ class Barrier_pattern   {
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
 	}
 
-        ~Barrier_pattern() {}
+        ~Barrier_op() {}
 
 	uint32_t install_handler(void)
 	{
-	    return cp->SM->SM_create((void *)this, Barrier_pattern::wrapper_handle_events);
+	    return cp->SM->SM_create((void *)this, Barrier_op::wrapper_handle_events);
 	}
 
 	// The Barrier pattern generator can be in these states and deals
@@ -49,7 +49,7 @@ class Barrier_pattern   {
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
 	{
-	    Barrier_pattern* mySelf = (Barrier_pattern*) obj;
+	    Barrier_op* mySelf = (Barrier_op*) obj;
 	    mySelf->handle_events(sst_event);
 	}
 

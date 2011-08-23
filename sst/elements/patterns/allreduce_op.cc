@@ -25,12 +25,12 @@ The operation to be performed can be chosen by setting the first
 Idata field. See allreduce_op_t in allreduce.h for possible values.
 */
 #include "sst/core/serialization/element.h"
-#include "allreduce.h"
+#include "allreduce_op.h"
 
 
 
 void
-Allreduce_pattern::handle_events(state_event sm_event)
+Allreduce_op::handle_events(state_event sm_event)
 {
 
     switch (state)   {
@@ -64,7 +64,7 @@ Allreduce_pattern::handle_events(state_event sm_event)
 
 
 void
-Allreduce_pattern::state_INIT(state_event sm_event)
+Allreduce_op::state_INIT(state_event sm_event)
 {
 
 allreduce_events_t e= (allreduce_events_t)sm_event.event;
@@ -116,7 +116,7 @@ state_event send_event;
 
 
 void
-Allreduce_pattern::state_WAIT_CHILDREN(state_event sm_event)
+Allreduce_op::state_WAIT_CHILDREN(state_event sm_event)
 {
 
 allreduce_events_t e= (allreduce_events_t)sm_event.event;
@@ -195,7 +195,7 @@ state_event send_event;
 
 
 void
-Allreduce_pattern::state_WAIT_PARENT(state_event sm_event)
+Allreduce_op::state_WAIT_PARENT(state_event sm_event)
 {
 
 allreduce_events_t e= (allreduce_events_t)sm_event.event;

@@ -12,8 +12,8 @@
 
 #include "state_machine.h"
 #include "comm_pattern.h"
-#include "barrier.h"
-#include "allreduce.h"
+#include "barrier_op.h"
+#include "allreduce_op.h"
 
 
 
@@ -71,10 +71,10 @@ class Pingpong_pattern : public Comm_pattern {
 	    // For pingpong we don't really need them, but we include
 	    // them here as an example, and for testing the gate keeper
 	    // switiching mechanism among state machines
-	    Barrier_pattern *b= new Barrier_pattern(this);
+	    Barrier_op *b= new Barrier_op(this);
 	    SMbarrier= b->install_handler();
 
-	    Allreduce_pattern *a= new Allreduce_pattern(this, allreduce_msglen);
+	    Allreduce_op *a= new Allreduce_op(this, allreduce_msglen);
 	    SMallreduce= a->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called

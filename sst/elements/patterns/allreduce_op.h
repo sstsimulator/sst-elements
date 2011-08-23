@@ -16,9 +16,9 @@
 
 
 
-class Allreduce_pattern   {
+class Allreduce_op   {
     public:
-	Allreduce_pattern(Comm_pattern * const& current_pattern, int msglen) :
+	Allreduce_op(Comm_pattern * const& current_pattern, int msglen) :
 	    cp(current_pattern),
 	    allreduce_msglen(msglen)
 	{
@@ -32,11 +32,11 @@ class Allreduce_pattern   {
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
 	}
 
-        ~Allreduce_pattern() {}
+        ~Allreduce_op() {}
 
 	uint32_t install_handler(void)
 	{
-	    return cp->SM->SM_create((void *)this, Allreduce_pattern::wrapper_handle_events);
+	    return cp->SM->SM_create((void *)this, Allreduce_op::wrapper_handle_events);
 	}
 
 	// The Allreduce pattern generator can be in these states and deals
@@ -56,7 +56,7 @@ class Allreduce_pattern   {
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
 	{
-	    Allreduce_pattern* mySelf = (Allreduce_pattern*) obj;
+	    Allreduce_op* mySelf = (Allreduce_op*) obj;
 	    mySelf->handle_events(sst_event);
 	}
 

@@ -179,7 +179,7 @@ state_event enter_allreduce, exit_allreduce;
 	    // Set the parameters to be passed to the allreduce SM
 	    enter_allreduce.event= SM_START_EVENT;
 	    enter_allreduce.set_Fdata(msg_wait_time);
-	    enter_allreduce.set_Idata(Allreduce_pattern::OP_SUM);
+	    enter_allreduce.set_Idata(Allreduce_op::OP_SUM);
 
 	    // We want to be called with this event, when allreduce returns
 	    exit_allreduce.event= E_ALLREDUCE_EXIT;
@@ -317,7 +317,7 @@ state_event t3_event;
 	    // Set the parameters to be passed to the allreduce SM
 	    enter_allreduce.event= SM_START_EVENT;
 	    enter_allreduce.set_Fdata(msg_wait_time);
-	    enter_allreduce.set_Idata(Allreduce_pattern::OP_SUM);
+	    enter_allreduce.set_Idata(Allreduce_op::OP_SUM);
 
 	    // We want to be called with this event, when allreduce returns
 	    exit_allreduce.event= E_ALLREDUCE_EXIT;
@@ -449,7 +449,7 @@ state_event enter_allreduce, exit_allreduce;
 	    // Set the parameters to be passed to the allreduce SM
 	    enter_allreduce.event= SM_START_EVENT;
 	    enter_allreduce.set_Fdata(msg_wait_time);
-	    enter_allreduce.set_Idata(Allreduce_pattern::OP_SUM);
+	    enter_allreduce.set_Idata(Allreduce_op::OP_SUM);
 
 	    // We want to be called with this event, when allreduce returns
 	    exit_allreduce.event= E_ALLREDUCE_EXIT;

@@ -17,12 +17,12 @@ There are no configuration parameters for this module.
 
 */
 #include "sst/core/serialization/element.h"
-#include "barrier.h"
+#include "barrier_op.h"
 
 
 
 void
-Barrier_pattern::handle_events(state_event sm_event)
+Barrier_op::handle_events(state_event sm_event)
 {
     switch (state)   {
 	case START:
@@ -52,7 +52,7 @@ Barrier_pattern::handle_events(state_event sm_event)
 
 
 void
-Barrier_pattern::state_INIT(state_event sm_event)
+Barrier_op::state_INIT(state_event sm_event)
 {
 
 barrier_events_t e= (barrier_events_t)sm_event.event;
@@ -74,7 +74,7 @@ state_event barrier_event;
 	    break;
 
 	default:
-	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
+	    _abort(barrier_op, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_INIT()
@@ -82,7 +82,7 @@ state_event barrier_event;
 
 
 void
-Barrier_pattern::state_WAIT_CHILDREN(state_event sm_event)
+Barrier_op::state_WAIT_CHILDREN(state_event sm_event)
 {
 
 barrier_events_t e= (barrier_events_t)sm_event.event;
@@ -113,7 +113,7 @@ state_event barrier_event;
 	    break;
 
 	default:
-	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
+	    _abort(barrier_op, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_WAIT_CHILDREN()
@@ -121,7 +121,7 @@ state_event barrier_event;
 
 
 void
-Barrier_pattern::state_WAIT_PARENT(state_event sm_event)
+Barrier_op::state_WAIT_PARENT(state_event sm_event)
 {
 
 std::list<int>::iterator it;
@@ -141,7 +141,7 @@ state_event barrier_event;
 	    break;
 
 	default:
-	    _abort(barrier_pattern, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
+	    _abort(barrier_op, "[%3d] Invalid event %d in state %d\n", cp->my_rank, e, state);
     }
 
 }  // end of state_WAIT_PARENT()
