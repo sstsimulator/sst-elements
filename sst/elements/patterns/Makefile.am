@@ -39,9 +39,11 @@ liballreduce_pattern_la_SOURCES = allreduce_pattern.h allreduce_pattern.cc \
 			    collective_topology.h collective_topology.cc
 liballreduce_pattern_la_LDFLAGS = -module -avoid-version
 
-include src_genPatterns/Makefile.inc
-
 CXXLD = $(MPICXX)
+CCLD = $(MPICC)
+include src_genPatterns/Makefile.inc
+include src_ghost_bench/Makefile.inc
+
 # allreduce_bench_LDFLAGS = -lmpi -lmpi_cxx
 allreduce_bench_SOURCES = allreduce_bench.cc
 # msgrate_bench_LDFLAGS = -lmpi -lmpi_cxx
