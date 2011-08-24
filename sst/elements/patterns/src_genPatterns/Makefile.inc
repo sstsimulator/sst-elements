@@ -24,4 +24,4 @@ genPatternsV2_SOURCES = \
 
 
 
-bin_PROGRAMS = genPatterns genPatternsV2
+bin_PROGRAMS += genPatterns genPatternsV2

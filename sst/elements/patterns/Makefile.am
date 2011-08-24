@@ -41,6 +41,7 @@ liballreduce_pattern_la_LDFLAGS = -module -avoid-version
 
 CXXLD = $(MPICXX)
 CCLD = $(MPICC)
+bin_PROGRAMS = 
 include src_genPatterns/Makefile.inc
 include src_ghost_bench/Makefile.inc
 
@@ -48,5 +49,6 @@ include src_ghost_bench/Makefile.inc
 allreduce_bench_SOURCES = allreduce_bench.cc
 # msgrate_bench_LDFLAGS = -lmpi -lmpi_cxx
 msgrate_bench_SOURCES = msgrate_bench.cc 
-bin_PROGRAMS += allreduce_bench msgrate_bench
+pingpong_bench_SOURCES = pingpong_bench.c
+bin_PROGRAMS += allreduce_bench msgrate_bench pingpong_bench
 
