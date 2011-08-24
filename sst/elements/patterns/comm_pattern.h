@@ -29,10 +29,6 @@ using namespace SST;
 #endif
 
 
-// Make sure those two correspond
-#define TIME_BASE		"1ns"
-#define TIME_BASE_FACTOR	1000000000.0
-
 class Comm_pattern : public Component {
     public:
 	// The constructor

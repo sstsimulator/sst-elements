@@ -18,7 +18,10 @@
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
 #include <mpi.h>
+
+// FIXME: Don't like to include .cc files, but don't know how to fix the Makefile.am to avoid it
 #include "collective_topology.cc"
+#include "stats.cc"
 
 
 /* Constants */
@@ -262,6 +265,10 @@ double sbuf;
 
 
 
+// Instead of using the MPI provided allreduce, we use this algorithm.
+// It is the same one used in the communication pattern and allows for
+// more accurate comparisons, since the number of messages as well as
+// sources and destinations are the same.
 double
 my_allreduce(double in, Collective_topology *ctopo)
 {
@@ -303,45 +310,6 @@ std::list<int>::iterator it;
     return result;
 
 }  /* end of my_allreduce() */
-
-
-
-void
-print_stats(std::list<double> t)
-{
-
-int cnt;
-std::list<double>::iterator it;
-int num_sets;
-double min, avg, med, max, sd;
-
-
-	t.sort();
-	cnt= 0;
-	num_sets= t.size();
-	med= 0.0;
-	avg= 0.0;
-	for (it= t.begin(); it != t.end(); it++)   {
-	    if (cnt == (num_sets / 2))   {
-		med= *it;
-	    }
-	    avg= avg + *it;
-	    cnt++;
-	}
-	avg= avg / num_sets;
-
-	// Calulate the standard deviation
-	sd= 0.0;
-	for (it= t.begin(); it != t.end(); it++)   {
-	    sd= sd + ((*it - avg) * (*it - avg));
-	}
-	sd= sqrt(sd / num_sets);
-	min= t.front();
-	max= t.back();
-
-	printf("%12.9f %12.9f %12.9f %12.9f %12.9f\n", min, avg, med, max, sd);
-
-}  /* end of stats() */
 
 
 

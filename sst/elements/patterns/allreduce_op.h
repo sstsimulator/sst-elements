@@ -34,6 +34,15 @@ class Allreduce_op   {
 
         ~Allreduce_op() {}
 
+	void resize(int new_size)
+	{
+	    // Get rid of previous topology
+	    delete ctopo;
+
+	    // Start again
+	    ctopo= new Collective_topology(cp->my_rank, new_size);
+	}
+
 	uint32_t install_handler(void)
 	{
 	    return cp->SM->SM_create((void *)this, Allreduce_op::wrapper_handle_events);

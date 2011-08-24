@@ -28,7 +28,6 @@ class Allreduce_pattern : public Comm_pattern    {
 	    // Defaults for paramters
 	    num_sets= 9;
 	    num_ops= 200;
-	    nnodes= 1;		// Start test with 1 node
 
 
 	    // Process the message rate specific paramaters
@@ -58,18 +57,28 @@ class Allreduce_pattern : public Comm_pattern    {
 	    Barrier_op *b= new Barrier_op(this);
 	    SMbarrier= b->install_handler();
 
+	    // We are going to install two allreduce state machines
+	    // One we use for testing with different number of nodes.
+	    // The other we use to collect the timing information from all
+	    // the nodes
 	    allreduce_msglen= sizeof(double);
-	    Allreduce_op *a= new Allreduce_op(this, allreduce_msglen);
-	    SMallreduce= a->install_handler();
+	    a_collect= new Allreduce_op(this, allreduce_msglen);
+	    SMallreduce_collect= a_collect->install_handler();
+	    a_test= new Allreduce_op(this, allreduce_msglen);
+	    SMallreduce_test= a_test->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
 	    // Make sure to call SM_create() last in the main pattern (allreduce)
 	    // This is the SM that will run first
-	    SMallreduce_bench= SM->SM_create((void *)this, Allreduce_pattern::wrapper_handle_events);
+	    SMallreduce_pattern= SM->SM_create((void *)this, Allreduce_pattern::wrapper_handle_events);
 
 
 	    // Kickstart ourselves
 	    done= false;
+	    nnodes= 0;
+	    if (my_rank == 0)   {
+		printf("#  |||  my_allreduce() nodes, min, mean, median, max, sd\n");
+	    }
 	    state_transition(E_START, STATE_INIT);
         }
 
@@ -80,7 +89,9 @@ class Allreduce_pattern : public Comm_pattern    {
 	    STATE_COLLECT_RESULT, STATE_DONE} allreduce_state_t;
 
 	// The start event should always be SM_START_EVENT
-	typedef enum {E_START= SM_START_EVENT, E_NEXT_OUTER_LOOP, E_NEXT_INNER_LOOP} allreduce_events_t;
+	typedef enum {E_START= SM_START_EVENT, E_NEXT_OUTER_LOOP, E_NEXT_INNER_LOOP,
+	    E_NEXT_TEST, E_BARRIER_EXIT, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT,
+	    E_COLLECT, E_DONE} allreduce_events_t;
 
     private:
 
@@ -104,19 +115,26 @@ class Allreduce_pattern : public Comm_pattern    {
 	int allreduce_msglen;
 
 	// State machine identifiers
-	uint32_t SMallreduce;
+	uint32_t SMallreduce_collect;
+	uint32_t SMallreduce_test;
 	uint32_t SMbarrier;
-	uint32_t SMallreduce_bench;
+	uint32_t SMallreduce_pattern;
 
-	// Some variables we need for allreduce to operate
-	allreduce_state_t state;
+	// Parameters
 	int num_sets;
 	int num_ops;
-	int rcv_cnt;
+
+	// Runtime variables
+	allreduce_state_t state;
+	Allreduce_op *a_collect;
+	Allreduce_op *a_test;
+	int set;
+	int ops;
 	int nnodes;
 	int done;
 	SimTime_t test_start_time_start;
 	double duration;
+	std::list <double>times;
 
 
 	// Serialization
@@ -127,17 +145,20 @@ class Allreduce_pattern : public Comm_pattern    {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(allreduce_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(SMallreduce);
+	    ar & BOOST_SERIALIZATION_NVP(SMallreduce_collect);
+	    ar & BOOST_SERIALIZATION_NVP(SMallreduce_test);
 	    ar & BOOST_SERIALIZATION_NVP(SMbarrier);
-	    ar & BOOST_SERIALIZATION_NVP(SMallreduce_bench);
+	    ar & BOOST_SERIALIZATION_NVP(SMallreduce_pattern);
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(num_sets);
 	    ar & BOOST_SERIALIZATION_NVP(num_ops);
-	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(set);
+	    ar & BOOST_SERIALIZATION_NVP(ops);
 	    ar & BOOST_SERIALIZATION_NVP(nnodes);
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(test_start_time_start);
 	    ar & BOOST_SERIALIZATION_NVP(duration);
+	    ar & BOOST_SERIALIZATION_NVP(times);
         }
 
         template<class Archive>

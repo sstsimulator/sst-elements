@@ -26,6 +26,10 @@
 #include <sst/core/link.h>
 
 
+// Make sure those two correspond
+#define TIME_BASE		"1ns"
+#define TIME_BASE_FACTOR	1000000000.0
+
 
 // Event types sent among pattern generators
 typedef enum {START,		// Enter first state of state machine

@@ -83,14 +83,19 @@ state_event send_event;
 
     switch (e)   {
 	case E_START:
-	    if (ctopo->is_root())   {
-		state= WAIT_CHILDREN;
-	    } else if (ctopo->is_leaf())   {
+	    if (ctopo->is_leaf() && ctopo->num_nodes() > 1)   {
 		cp->send_msg(ctopo->parent_rank(), allreduce_msglen, send_event);
 		state= WAIT_PARENT;
 	    } else   {
-		// I must be an interior node
-		state= WAIT_CHILDREN;
+		// I must be an interior node or root
+		if (ctopo->num_nodes() > 1)   {
+		    state= WAIT_CHILDREN;
+		} else   {
+		    // I gues we're the only one
+		    send_event.event= E_FROM_PARENT;
+		    state= WAIT_PARENT;
+		    state_WAIT_PARENT(send_event);
+		}
 	    }
 	    break;
 

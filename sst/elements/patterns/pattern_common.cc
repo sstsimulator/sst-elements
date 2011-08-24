@@ -103,9 +103,9 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
 	    NoC_x_dim, NoC_y_dim, cores_per_router);
 	printf("#  |||  Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
 	printf("#  |||  Network bandwidth %.3f GB/s, latency %.9f s\n",
-	    (double)net_bandwidth / 1000000000.0, (double)net_latency / 1000000000.0);
+	    (double)net_bandwidth / TIME_BASE_FACTOR, (double)net_latency / TIME_BASE_FACTOR);
 	printf("#  |||  Node bandwidth    %.3f GB/s, latency %.9f s\n",
-	    (double)node_bandwidth / 1000000000.0, (double)node_latency / 1000000000.0);
+	    (double)node_bandwidth / TIME_BASE_FACTOR, (double)node_latency / TIME_BASE_FACTOR);
 	printf("#  |||  Checkpoint method is ");
 	switch (method)   {
 	    case CHCKPT_NONE:
@@ -113,7 +113,7 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
 		break;
 	    case CHCKPT_COORD:
 		printf("coordinated\n");
-		printf("#  |||  Checkpoint every %.9f s\n", (double)chckpt_interval / 1000000000.0);
+		printf("#  |||  Checkpoint every %.9f s\n", (double)chckpt_interval / TIME_BASE_FACTOR);
 		break;
 	    case CHCKPT_UNCOORD:
 		printf("uncoordinated with message logging\n");
@@ -161,10 +161,10 @@ SimTime_t delay;
     // net_bandwidth is in bytes per second
     if ((my_rank / total_cores) != (dest / total_cores))   {
 	// This message goes off node
-	delay= ((SimTime_t)len * 1000000000) / net_bandwidth + start_delay;
+	delay= ((SimTime_t)len * TIME_BASE_FACTOR) / net_bandwidth + start_delay;
     } else   {
 	// This is an intra-node message
-	delay= ((SimTime_t)len * 1000000000) / node_bandwidth + start_delay;
+	delay= ((SimTime_t)len * TIME_BASE_FACTOR) / node_bandwidth + start_delay;
     }
     event_send(dest, RECEIVE, 0, delay, len);
 
