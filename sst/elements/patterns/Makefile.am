@@ -40,6 +40,7 @@ liballreduce_pattern_la_SOURCES = allreduce_pattern.h allreduce_pattern.cc \
 liballreduce_pattern_la_LDFLAGS = -module -avoid-version
 
 CC = $(MPICC)
+CXX = $(MPICXX)
 CXXLD = $(MPICXX)
 CCLD = $(MPICC)
 bin_PROGRAMS = 
