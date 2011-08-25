@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<config>
+ stopAtCycle=10ms
+</config>
+
+<sst>
+  <component id="c0">
+    <exampleComponent.exampleComponent>
+      <params>
+	<workPerCycle>1000</workPerCycle>
+	<commFreq>100000</commFreq>
+      </params>
+      <links>
+	<link id="a">
+	  <params>
+	    <name>Nlink</name>
+	    <lat>10 ns</lat>
+	  </params>
+	</link>
+      </links>
+    </exampleComponent.exampleComponent>
+  </component>
+
+</sst>

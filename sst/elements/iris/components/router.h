@@ -1,0 +1,169 @@
+/*
+ * =====================================================================================
+// Copyright 2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+ * =====================================================================================
+ */
+
+#ifndef  _ROUTER_H_INC
+#define  _ROUTER_H_INC
+
+#include	"../interfaces/genericHeader.h"
+#include	"router_params.h"
+#include	"../interfaces/irisEvent.h"
+#include	"../data_types/flit.h"
+#include	"genericBuffer.h"
+#include	"genericRC.h"
+#include	"genericSwa.h"
+#include	"genericVca.h"
+
+enum Router_PS {
+    INVALID = 0,
+    EMPTY,
+    IB,
+    RC,
+    VCA_REQUESTED,
+    VCA,
+    SWA_REQUESTED,
+    SWA,
+    ST
+};
+
+const char* Router_PS_string[]= {
+    "INVALID",
+        "EMPTY",
+        "IB",
+        "RC",
+        "VCA_REQUESTED",
+        "VCA",
+        "SWA_REQUESTED",
+        "SWA",
+        "ST"
+};
+
+/*-----------------------------------------------------------------------------
+ *  Data structure that contains state for all active packets
+ *  in the system ( active->packets in IB/RC/VCA/SA/ST ). 
+ *  At any point there should be a max of ports*vcs no of entries in the
+ *  router.
+ *-----------------------------------------------------------------------------*/
+struct IB_state
+{
+    IB_state ():in_port(-1),in_channel(-1),out_port(-1),out_channel(-1)
+                , packet_length(-1), pipe_stage(INVALID), mclass(INVALID_PKT)
+                , is_valid(false), sa_head_done(false)
+                , pkt_arrival_time(0), no_arbitration_failures(0) 
+    {}  
+
+    uint16_t in_port;
+    uint16_t in_channel;
+    uint16_t out_port;
+    uint16_t out_channel;
+    uint16_t packet_length;
+    Router_PS pipe_stage;
+    message_class_t mclass;
+    bool is_valid;
+    bool sa_head_done;  // try to eliminate this
+    std::vector<uint16_t> oport_list;
+    std::vector<uint16_t> ovc_list;
+
+    /* Stats */
+    uint64_t pkt_arrival_time;
+    uint16_t no_arbitration_failures;
+
+    /* Helpful debugging entries */
+    uint16_t src_node_id;
+    uint16_t dst_node_id;
+    uint64_t address;
+
+    std::string 
+        toString() const
+        {
+            std::stringstream str;
+            str 
+                << in_port << "|"
+                << in_channel<< "|"
+                << out_port << "|"
+                << out_channel << "|"
+                << packet_length << "|"
+                << Router_PS_string[pipe_stage]<< "|"
+                <<"\n";
+
+            return str.str();
+        }
+                                                
+    /*TODO: Write the copy constructor for this so that it can be used to reset stats */
+}; 
+
+
+/*
+ * =====================================================================================
+ *        Class:  Router
+ *  Description:  Generic router with 5 pipeline stages and input buffers 
+ * =====================================================================================
+ */
+
+class Router : public DES_Component
+{
+    public:
+        Router (uint16_t node_id);
+        ~Router ();  
+
+        /* Event handlers from external components. Prioritize such that all
+         * these complete before the clocked event starts. ( Router state is
+         * updated for all incoming packets and credits this way )
+         * */
+        void handle_link_arrival (IrisEvent* e);
+
+        /* Clocked events */
+        void tock(void);
+
+        /* Router stats */
+        uint64_t stat_flits_in;
+        uint64_t stat_flits_out;
+        uint64_t stat_last_flit_time_nano;  /* Useful to detect if the router deadlocked  */
+        uint64_t stat_last_flit_cycle;
+        uint64_t stat_packets_out;
+        uint64_t stat_total_pkt_latency_nano;
+        uint64_t heartbeat_interval;
+        std::vector<uint32_t> total_buff_occ;
+        // take the buff occupancy at heartbeat_intervals
+        double stat_avg_buffer_occ;
+
+        /*  Generic Healper functions */
+        std::string print_stats() const;
+        uint64_t router_fastfwd;            /* fastfwd interval in cycles */
+        void reset_stats();    /* Useful for fast forwarding. (uses router_fastfwd) */
+        void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
+        inline void resize( void ); // Reconfigure the parameters for the router
+
+    private:
+            void do_ib( HeadFlit* , uint16_t ip, uint16_t ic);
+            void do_vca(void);
+            void do_swa(void);
+            void do_st(void);
+
+            // Node ID
+            int16_t node_id; /*  NOTE: node_id is not unique to a component. 
+                              *  Use getId from the kernel for a unique component id */
+
+            // sub components
+            std::vector<GenericBuffer> in_buffer;
+            std::vector<GenericRC> rc;
+            GenericVca vca;
+            GenericSwa swa;
+            std::vector<IB_state> ib_state;
+            std::vector<std::vector<uint16_t> > downstream_credits;
+
+
+}; /* -----  end of class Router  ----- */
+
+#endif   /* ----- #ifndef _ROUTER_H_INC  ----- */
