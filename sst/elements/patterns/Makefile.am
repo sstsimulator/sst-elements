@@ -39,6 +39,7 @@ liballreduce_pattern_la_SOURCES = allreduce_pattern.h allreduce_pattern.cc \
 			    collective_topology.h collective_topology.cc
 liballreduce_pattern_la_LDFLAGS = -module -avoid-version
 
+CC = $(MPICC)
 CXXLD = $(MPICXX)
 CCLD = $(MPICC)
 bin_PROGRAMS = 

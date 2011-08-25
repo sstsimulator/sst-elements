@@ -2,6 +2,7 @@
 #
 #
 
+ghost_bench_LDFLAGS = -lm -lmpi
 ghost_bench_SOURCES = \
 	src_ghost_bench/ghost.c \
 	src_ghost_bench/ghost.h \
