@@ -36,7 +36,7 @@
 
 
 /* Local functions */
-static double Test1(int num_ops, int msg_len);
+static double Test1(int num_ops, int msg_len, MPI_Comm comm);
 static double Test2(int num_ops, Collective_topology *ctopo, int msg_len);
 double my_allreduce(double in, Collective_topology *ctopo);
 void print_stats(std::list<double> t);
@@ -60,6 +60,7 @@ int num_sets;
 int msg_len;
 int set;
 std::list <double>times;
+int library;
 
 
 
@@ -83,11 +84,15 @@ std::list <double>times;
     num_ops= DEFAULT_NUM_OPS;
     num_sets= DEFAULT_NUM_SETS;
     msg_len= 1;
+    library= 0;
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "l:n:s:")) != EOF)   {
+    while ((ch= getopt(argc, argv, "bl:n:s:")) != EOF)   {
         switch (ch)   {
+            case 'b':
+		library= 1;
+		break;
             case 'l':
 		msg_len= strtol(optarg, (char **)NULL, 0);
 		if (msg_len < 1)   {
@@ -164,7 +169,7 @@ std::list <double>times;
     times.clear();
     for (set= 0; set < num_sets; set++)   {
 	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test1(num_ops, msg_len);
+	duration= Test1(num_ops, msg_len, MPI_COMM_WORLD);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	// Record the average time per allreduce
@@ -201,16 +206,36 @@ std::list <double>times;
     // Test 3
     // Now we do this with increasing number of ranks, instead of all of them
     if (my_rank == 0)   {
-	printf("#  |||  Test 3: my_allreduce() nodes, min, mean, median, max, sd\n");
+	if (library)   {
+	    printf("#  |||  Test 3: MPI_allreduce() nodes, min, mean, median, max, sd\n");
+	} else   {
+	    printf("#  |||  Test 3: my_allreduce() nodes, min, mean, median, max, sd\n");
+	}
     }
     for (nnodes= 1; nnodes <= num_ranks; nnodes++)   {
+	MPI_Group world_group, new_group;
+	MPI_Comm new_comm;
+	int ranges[][3]={{0, nnodes - 1, 1}};
+	int group_size;
+
+	MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+	MPI_Group_range_incl(world_group, 1, ranges, &new_group);
+	MPI_Group_size(new_group, &group_size);
+	MPI_Comm_create(MPI_COMM_WORLD, new_group, &new_comm);
+
 	delete ctopo;
 	ctopo= new Collective_topology(my_rank, nnodes);
 	times.clear();
 	for (set= 0; set < num_sets; set++)   {
 	    MPI_Barrier(MPI_COMM_WORLD);
 	    if (my_rank < nnodes)   {
-		duration= Test2(num_ops, ctopo, msg_len);
+		if (library)   {
+		    // Use the built-in MPI_Allreduce
+		    duration= Test1(num_ops, msg_len, new_comm);
+		} else   {
+		    // Use my allreduce
+		    duration= Test2(num_ops, ctopo, msg_len);
+		}
 	    } else   {
 		duration= 0.0;
 	    }
@@ -234,23 +259,35 @@ std::list <double>times;
 
 
 static double
-Test1(int num_ops, int msg_len)
+Test1(int num_ops, int msg_len, MPI_Comm comm)
 {
 
-double t;
+double t, t2;
 int i;
-double sbuf;
-double rbuf;
+double *sbuf;
+double *rbuf;
 
 
+	// Allocate memory
+	sbuf= (double *)malloc(sizeof(double) * msg_len);
+	rbuf= (double *)malloc(sizeof(double) * msg_len);
+	if ((sbuf == NULL) || (rbuf == NULL))   {
+	    fprintf(stderr, "Out of memory!\n");
+	    exit(-1);
+	}
+	memset(sbuf, 0, sizeof(double) * msg_len);
+	memset(rbuf, 0, sizeof(double) * msg_len);
+	
 	/* Start the timer */
 	t= MPI_Wtime();
-	sbuf= 0.0;
 	for (i= 0; i < num_ops; i++)   {
-	    MPI_Allreduce(&sbuf, &rbuf, msg_len, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    MPI_Allreduce(sbuf, rbuf, msg_len, MPI_DOUBLE, MPI_SUM, comm);
 	}
 
-	return MPI_Wtime() - t;
+	t2= MPI_Wtime() - t;
+	free(sbuf);
+	free(rbuf);
+	return t2;
 
 }  /* end of Test1() */
 
@@ -330,10 +367,12 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-l len] [-n num]\n", pname);
-    fprintf(stderr, "    -n num      Number of allreduce operations per test. Default %d\n",
+    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets]\n", pname);
+    fprintf(stderr, "    -b          Use the MPI library MPI_Allreduce\n");
+    fprintf(stderr, "    -l len      Size of allreduce operations in number of doubles. Default 1\n");
+    fprintf(stderr, "    -n ops      Number of allreduce operations per test. Default %d\n",
 	DEFAULT_NUM_OPS);
-    fprintf(stderr, "    -s num      Number of sets; i.e. number of test repeats. Default %d\n",
+    fprintf(stderr, "    -s sets     Number of sets; i.e. number of test repeats. Default %d\n",
 	DEFAULT_NUM_SETS);
 
 }  /* end of usage() */
