@@ -36,8 +36,8 @@
 
 
 /* Local functions */
-static double Test1(int num_ops);
-static double Test2(int num_ops, Collective_topology *ctopo);
+static double Test1(int num_ops, int msg_len);
+static double Test2(int num_ops, Collective_topology *ctopo, int msg_len);
 double my_allreduce(double in, Collective_topology *ctopo);
 void print_stats(std::list<double> t);
 static void usage(char *pname);
@@ -57,6 +57,7 @@ double total_time;
 Collective_topology *ctopo;
 int nnodes;
 int num_sets;
+int msg_len;
 int set;
 std::list <double>times;
 
@@ -81,11 +82,21 @@ std::list <double>times;
     error= FALSE;
     num_ops= DEFAULT_NUM_OPS;
     num_sets= DEFAULT_NUM_SETS;
+    msg_len= 1;
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "n:s:")) != EOF)   {
+    while ((ch= getopt(argc, argv, "l:n:s:")) != EOF)   {
         switch (ch)   {
+            case 'l':
+		msg_len= strtol(optarg, (char **)NULL, 0);
+		if (msg_len < 1)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Message length in doubles (-l) must be > 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
             case 'n':
 		num_ops= strtol(optarg, (char **)NULL, 0);
 		if (num_ops < 1)   {
@@ -153,13 +164,15 @@ std::list <double>times;
     times.clear();
     for (set= 0; set < num_sets; set++)   {
 	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test1(num_ops);
+	duration= Test1(num_ops, msg_len);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	// Record the average time per allreduce
 	times.push_back(total_time / num_ranks / num_ops);
     }
     if (my_rank == 0)   {
+	printf("#  |||  %d operations per set. %d sets per node size. %d byte msg len\n",
+		num_ops, num_sets, msg_len * (int)sizeof(double));
 	printf("#  |||  Test 1: MPI_Allreduce() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
@@ -171,7 +184,7 @@ std::list <double>times;
     times.clear();
     for (set= 0; set < num_sets; set++)   {
 	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test2(num_ops, ctopo);
+	duration= Test2(num_ops, ctopo, msg_len);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	// Record the average time per allreduce
@@ -197,7 +210,7 @@ std::list <double>times;
 	for (set= 0; set < num_sets; set++)   {
 	    MPI_Barrier(MPI_COMM_WORLD);
 	    if (my_rank < nnodes)   {
-		duration= Test2(num_ops, ctopo);
+		duration= Test2(num_ops, ctopo, msg_len);
 	    } else   {
 		duration= 0.0;
 	    }
@@ -221,7 +234,7 @@ std::list <double>times;
 
 
 static double
-Test1(int num_ops)
+Test1(int num_ops, int msg_len)
 {
 
 double t;
@@ -234,7 +247,7 @@ double rbuf;
 	t= MPI_Wtime();
 	sbuf= 0.0;
 	for (i= 0; i < num_ops; i++)   {
-	    MPI_Allreduce(&sbuf, &rbuf, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    MPI_Allreduce(&sbuf, &rbuf, msg_len, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 	}
 
 	return MPI_Wtime() - t;
@@ -244,7 +257,7 @@ double rbuf;
 
 
 static double
-Test2(int num_ops, Collective_topology *ctopo)
+Test2(int num_ops, Collective_topology *ctopo, int msg_len)
 {
 
 double t;
