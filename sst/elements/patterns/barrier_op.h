@@ -25,7 +25,7 @@ class Barrier_op   {
 	    done= false;
 	    state= START;
 	    receives= 0;
-	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
+	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks, TREE_DEEP);
 	}
 
         ~Barrier_op() {}

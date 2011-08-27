@@ -28,6 +28,8 @@ interfere with later, more local traffic.  Of course, this assumes
 that the ranking provided by the underlying network resembles some
 sort of physcial distance in the hardware topology.
 
+If TREE_BINARY is selected, then a simple binary tree is created.
+
 */
 
 #include "collective_topology.h"
@@ -54,10 +56,20 @@ bool
 Collective_topology::is_leaf(void)
 {
 
-    if (this_rank == (this_topology_size - 1))   {
-	return true;
+    if (t == TREE_BINARY)   {
+	if (this_rank >= (this_topology_size / 2))   {
+	    return true;
+	} else   {
+	    return false;
+	}
+
     } else   {
-	return this_rank & 1;
+	// TREE_DEEP)
+	if (this_rank == (this_topology_size - 1))   {
+	    return true;
+	} else   {
+	    return this_rank & 1;
+	}
     }
 
 }  // end of is_leaf()
@@ -70,13 +82,18 @@ int
 Collective_topology::parent_rank(void)
 {
 
-    return this_rank & ~(1 << lsb((uint32_t)this_rank));
+    if (t == TREE_BINARY)   {
+	return (this_rank - 1) / 2;
+    } else    {
+	// TREE_DEEP
+	return this_rank & ~(1 << lsb((uint32_t)this_rank));
+    }
 
 }  // end of parent_rank()
 
 
 
-// How many chidlren do I have?
+// How many children do I have?
 int
 Collective_topology::num_children(void)
 {
@@ -107,15 +124,28 @@ int child;
 int pos;
 
 
-    if (this_rank == 0)   {
-	pos= lsb(next_power2((uint32_t)this_topology_size));
-    } else   {
-	pos= lsb((uint32_t)this_rank);
-    }
-    for (int i= 0; i < pos; i++)   {
-	child= this_rank | (1 << i);
-	if (child >= this_topology_size) break;
-	children.push_front(child);
+    if (t == TREE_BINARY)   {
+	child= 2 * (this_rank + 1) - 1;
+	if (child < this_topology_size)   {
+	    children.push_front(child);
+	}
+
+	child= 2 * (this_rank + 1);
+	if (child < this_topology_size)   {
+	    children.push_front(child);
+	}
+
+    } else if (t == TREE_DEEP)   {
+	if (this_rank == 0)   {
+	    pos= lsb(next_power2((uint32_t)this_topology_size));
+	} else   {
+	    pos= lsb((uint32_t)this_rank);
+	}
+	for (int i= 0; i < pos; i++)   {
+	    child= this_rank | (1 << i);
+	    if (child >= this_topology_size) break;
+	    children.push_front(child);
+	}
     }
 
 }  // end of gen_children()

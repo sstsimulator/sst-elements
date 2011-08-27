@@ -29,7 +29,7 @@ class Allreduce_op   {
 	    allreduce_msglen= sizeof(double);
 
 	    // Get access to a virtual tree topology
-	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks);
+	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks, TREE_DEEP);
 	}
 
         ~Allreduce_op() {}
@@ -40,7 +40,7 @@ class Allreduce_op   {
 	    delete ctopo;
 
 	    // Start again
-	    ctopo= new Collective_topology(cp->my_rank, new_size);
+	    ctopo= new Collective_topology(cp->my_rank, new_size, TREE_DEEP);
 	}
 
 	uint32_t install_handler(void)

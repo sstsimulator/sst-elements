@@ -10,19 +10,31 @@
 #ifndef _COLLECTIVE_TOPOLOGY_H
 #define _COLLECTIVE_TOPOLOGY_H
 
-#include <list>
+#include <stdio.h>
 #include <stdint.h>
+#include <list>
 
+
+typedef enum {TREE_BINARY, TREE_DEEP} tree_type_t;
 
 
 class Collective_topology   {
     public:
-	Collective_topology(int const rank, int const num_ranks) :
+	Collective_topology(int const rank, int const num_ranks, tree_type_t const tree_type) :
 	    root(0),
 	    this_rank(rank),
-	    this_topology_size(num_ranks)
+	    this_topology_size(num_ranks),
+	    t(tree_type)
 
 	{
+	    switch (t)   {
+		case TREE_BINARY:
+		case TREE_DEEP:
+		    break;
+		default:
+		    fprintf(stderr, "%s: Unkown tree type!\n", __FUNCTION__);
+	    }
+
 	    // Generate the children of each node up front
 	    gen_children();
 	}
@@ -42,6 +54,7 @@ class Collective_topology   {
     private:
 	const int this_rank;
 	const int this_topology_size;
+	const tree_type_t t;
 
 	// Some utility functions we need
 	int lsb(uint32_t v);

@@ -61,6 +61,7 @@ int msg_len;
 int set;
 std::list <double>times;
 int library;
+tree_type_t tree;
 
 
 
@@ -85,10 +86,11 @@ int library;
     num_sets= DEFAULT_NUM_SETS;
     msg_len= 1;
     library= 0;
+    tree= TREE_DEEP;
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "bl:n:s:")) != EOF)   {
+    while ((ch= getopt(argc, argv, "bl:n:s:t:")) != EOF)   {
         switch (ch)   {
             case 'b':
 		library= 1;
@@ -116,6 +118,18 @@ int library;
 		if (num_sets < 1)   {
 		    if (my_rank == 0)   {
 			fprintf(stderr, "Number of sets (-s) must be > 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
+	    case 't':
+		if (strtol(optarg, (char **)NULL, 0) == 0)   {
+		    tree= TREE_DEEP;
+		} else if (strtol(optarg, (char **)NULL, 0) == 1)   {
+		    tree= TREE_BINARY;
+		} else   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Unknown tree type (-t) must be 0 or 1!\n");
 		    }
 		    error= TRUE;
 		}
@@ -148,7 +162,7 @@ int library;
         exit (-1);
     }
 
-    ctopo= new Collective_topology(my_rank, num_ranks);
+    ctopo= new Collective_topology(my_rank, num_ranks, tree);
 
     if (my_rank == 0)   {
 	printf("# Allreduce benchmark\n");
@@ -178,6 +192,13 @@ int library;
     if (my_rank == 0)   {
 	printf("#  |||  %d operations per set. %d sets per node size. %d byte msg len\n",
 		num_ops, num_sets, msg_len * (int)sizeof(double));
+	if (tree == TREE_BINARY)   {
+	    printf("#  |||  my_allreduce() uses binary tree\n");
+	} else if (tree == TREE_DEEP)   {
+	    printf("#  |||  my_allreduce() uses deep tree\n");
+	} else   {
+	    printf("#  |||  my_allreduce() uses unknown tree type\n");
+	}
 	printf("#  |||  Test 1: MPI_Allreduce() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
@@ -225,7 +246,7 @@ int library;
 	MPI_Comm_create(MPI_COMM_WORLD, new_group, &new_comm);
 
 	delete ctopo;
-	ctopo= new Collective_topology(my_rank, nnodes);
+	ctopo= new Collective_topology(my_rank, nnodes, tree);
 	times.clear();
 	for (set= 0; set < num_sets; set++)   {
 	    MPI_Barrier(MPI_COMM_WORLD);
@@ -388,12 +409,15 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets]\n", pname);
+    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets] [-t type]\n", pname);
     fprintf(stderr, "    -b          Use the MPI library MPI_Allreduce\n");
     fprintf(stderr, "    -l len      Size of allreduce operations in number of doubles. Default 1\n");
     fprintf(stderr, "    -n ops      Number of allreduce operations per test. Default %d\n",
 	DEFAULT_NUM_OPS);
     fprintf(stderr, "    -s sets     Number of sets; i.e. number of test repeats. Default %d\n",
 	DEFAULT_NUM_SETS);
+    fprintf(stderr, "    -t type     Select type of tree of allreduce algorithm. Default 0\n");
+    fprintf(stderr, "                0 is TREE_DEEP\n");
+    fprintf(stderr, "                1 is TREE_BINARY\n");
 
 }  /* end of usage() */
