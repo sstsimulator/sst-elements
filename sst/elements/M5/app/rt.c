@@ -7,7 +7,7 @@ extern char **environ;
 int main( int argc, char* argv[] )
 {
     printf("hello mike\n");
-	
+
 	int rank = cnos_get_rank();
 	int size = cnos_get_size();
 
