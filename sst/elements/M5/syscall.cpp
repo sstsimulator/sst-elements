@@ -320,13 +320,20 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
 
     DBGX( 3, "fd=%d nbytes=%lu\n", fildes, nbytes );
 
-    if ( fildes == 1 ) {
-        ::write( fildes, "<cout> ", 7 );
-    } else if ( fildes == 2 ) {
-        ::write( fildes, "<cerr> ", 7 );
-    }
-    int64_t retval = ::write( fildes, buf, nbytes ); 
+    time_t _time = time(NULL);
 
+    struct tm* tmp = localtime(&_time);
+     
+    SST::Simulation *sim = SST::Simulation::getSimulation();
+
+    char _buf[100];
+    if ( fildes == 1 ) {
+        ::sprintf(_buf,"%lu:%lu <cout> ", sim->getCurrentSimCycle(), _time );
+    } else if ( fildes == 2 ) {
+        ::sprintf(_buf,"%lu:%lu <cerr> ", sim->getCurrentSimCycle(), _time );
+    }
+    ::write( fildes, _buf, strlen(_buf));
+    int64_t retval = ::write( fildes, buf, nbytes ); 
 
     DBGX( 3, "retval=%d\n", retval );
 
