@@ -63,6 +63,7 @@ main(int argc, char **argv)
     int latency = 500;
     char * nic_link_latency = "150ns";
     FILE *output = stdout;
+    char *exe = "app";
 
     int argc_org = argc;
     char **argv_org = argv;
@@ -71,7 +72,7 @@ main(int argc, char **argv)
 
     char* M5sdlFile = "/tmp/M5.xml";
     
-    while ((ch = getopt_long(argc, argv, "hx:y:z:r:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "hx:y:z:r:e:", longopts, NULL)) != -1) {
         switch (ch) {
         case 'x':
             x_count = atoi(optarg);
@@ -96,6 +97,9 @@ main(int argc, char **argv)
         case 'f':
             new_format = 1;
             break;
+        case 'e':
+            exe = optarg;
+            break;
         default:
             print_usage(argv[0]);
             exit(1);
@@ -103,9 +107,11 @@ main(int argc, char **argv)
     }
     size = x_count * y_count * z_count;
 
-    extern void sdlgenM5( const char* file, int numM5Nids );
+    extern void sdlgenM5( const char* file, const char*, int numM5Nids );
 
-    sdlgenM5( "/tmp/M5.xml",  size / ranks ); 
+    fprintf( stderr, "exe=%s %d:%d:%d size=%d ranks=%d\n", exe, 
+                    x_count, y_count, z_count, size, ranks );
+    sdlgenM5( "/tmp/M5.xml",  exe, size / ranks ); 
 
     fprintf(output, "<?xml version=\"2.0\"?>\n");
     fprintf(output, "\n");
