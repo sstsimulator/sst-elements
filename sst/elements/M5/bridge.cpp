@@ -29,22 +29,23 @@ SimObject* create_Bridge( Component* comp, string name, Params& params )
     INIT_INT( bridgeP, params, resp_size_a );
     INIT_INT( bridgeP, params, resp_size_b );
 
-     bridgeP.filter_ranges_a.resize(1);
-     bridgeP.filter_ranges_b.resize(1);
+    bridgeP.filter_ranges_a.resize(1);
+    bridgeP.filter_ranges_b.resize(1);
 
-     bridgeP.filter_ranges_a[0].start = 0;
-     bridgeP.filter_ranges_a[0].end = -1;
+    bridgeP.filter_ranges_a[0].start = 
+                    params.find_integer( "filter_range_a.start", 0 );
+    bridgeP.filter_ranges_a[0].end = 
+                    params.find_integer( "filter_range_a.end", -1 );
 
-     bridgeP.filter_ranges_b[0].start = 0x00100000;
-     bridgeP.filter_ranges_b[0].end =   0xffffffff;
+    bridgeP.filter_ranges_b[0].start =
+                    params.find_integer( "filter_range_b.start", 0 );
+    bridgeP.filter_ranges_b[0].end =
+                    params.find_integer( "filter_range_b.end", -1 );
 
-#if 0
-    INIT_HEX( bridgeP, params, filter_ranges_a.start );
-    INIT_HEX( bridgeP, params, filter_ranges_a.end );
-
-    INIT_HEX( bridgeP, params, filter_ranges_b.start );
-    INIT_HEX( bridgeP, params, filter_ranges_b.end );
-#endif
+    DBGC(1,"range_a %#lx %#lx\n",bridgeP.filter_ranges_a[0].start,
+                            bridgeP.filter_ranges_a[0].end );
+    DBGC(1,"range_b %#lx %#lx\n",bridgeP.filter_ranges_b[0].start,
+                                bridgeP.filter_ranges_b[0].end );
 
     return bridgeP.create( );
 }
