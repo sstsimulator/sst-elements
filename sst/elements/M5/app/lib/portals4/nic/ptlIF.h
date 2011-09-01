@@ -28,6 +28,8 @@ class PtlIF {
         m_cmdQueue = (cmdQueue_t*)syscall( SYS_mmap_dev, addr, 
                                                 sizeof( cmdQueue_t) );
 
+        PTL_DBG2("&m_nid=%p size=%lu\n", &m_nid, sizeof(m_nid));
+        PTL_DBG2("&m_limits=%p size=%lu\n", &m_limits, sizeof(m_limits));
         for ( int i = 0; i < ME_UNLINKED_SIZE; i++ ) {
             m_meUnlinked[i] = -1;
         }
