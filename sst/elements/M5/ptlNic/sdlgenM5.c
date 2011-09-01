@@ -280,6 +280,8 @@ static foo( FILE* output, int nid, const char* exe )
     fprintf(output,"%s<component name=nid%d.Bridge type=Bridge >\n",indent,nid);
     fprintf(output,"%s    <params include=bridgeParams>\n",indent);
     fprintf(output,"%s        <size>1024</size>\n",indent);
+    fprintf(output,"%s        <filter_range_b.start> 0x00100000 </filter_range_b.start>\n",indent);
+    fprintf(output,"%s        <filter_range_b.end>   0xffffffff </filter_range_b.end>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
     fprintf(output,"%s    <link name=nid%d.Bridge-IOBus port=side_a latency=$lat />\n",indent,nid);
     fprintf(output,"%s    <link name=nid%d.Bridge-MemBus port=side_b latency=$lat />\n",indent,nid);
