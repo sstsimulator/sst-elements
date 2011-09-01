@@ -551,7 +551,7 @@ RecvEntry* Context::processHdrPkt( void* pkt )
 {
     PRINT_AT(Context,"me=%d\n",m_nic->nid());
     CtrlFlit* cFlit = (CtrlFlit*) pkt;
-    RecvEntry* entry = processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
+    return processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
 }
 
 void Context::processAck( PtlHdr* hdr )
