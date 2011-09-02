@@ -7,6 +7,13 @@
 
 #include <arch/isa_specific.hh>
 
+#if 0
+#define MMU_DBG( fmt, args... ) \
+    fprintf(stderr, "NicMmu::%s():%d: "fmt, __func__, __LINE__, ##args)
+#else
+#define MMU_DBG( fmt, args... )
+#endif
+
 class NicMmu 
 {
     typedef unsigned long Addr;
@@ -44,12 +51,11 @@ class NicMmu
         int oflags = O_RDWR; 
         int prot = PROT_READ|PROT_WRITE;
         
-		//printf("create=%d PageSizeBits=%d LevelBits=%d pageSize=%d\n", 
-	    //		create, PageSizeBits, LevelBits, (1<<PageSizeBits) - 1 );
+		MMU_DBG("create=%d PageSizeBits=%d LevelBits=%d pageSize=%d\n", 
+	    		create, PageSizeBits, LevelBits, (1<<PageSizeBits) - 1 );
 
-        //printf("NicMmu::%s() `%s` NumEntries=%d Mask=%#x\n",__func__,
-        //            fileName.c_str(),NumEntries,Mask);
-#if 1 
+        MMU_DBG("file=`%s` NumEntries=%d Mask=%#x\n",
+                                    fileName.c_str(), NumEntries,Mask);
 
         if ( create ) {
             oflags |= O_CREAT | O_TRUNC;
@@ -74,13 +80,12 @@ class NicMmu
             perror("mmap");
             abort();
         }
-#endif
     }
 
     void add( Addr vaddr, Addr paddr ) 
     {
-        //printf("add() vaddr=%#lx paddr %#lx pfn=%d\n", vaddr, paddr,
-        //                (int) paddr >> PageSizeBits );
+        MMU_DBG("vaddr=%#lx paddr %#lx pfn=%d\n", vaddr, paddr,
+                        (int) paddr >> PageSizeBits );
         Entry* entry = find_L3_entry( vaddr ); 
         entry->pfn = paddr >> PageSizeBits; 
     }
@@ -95,8 +100,8 @@ class NicMmu
         tmp >>= LevelBits;
         int  l0 = tmp & Mask; 
         
-        //printf("vaddr %#lx L0=%#x L1=%#x L2=%#x L3=%#x\n",
-        //                     vaddr, l0, l1, l2, l3 );
+        MMU_DBG("vaddr %#lx L0=%#x L1=%#x L2=%#x L3=%#x\n",
+                             vaddr, l0, l1, l2, l3 );
     
         Table* l0_table = &m_table[ m_l0_pfn ];  
         Entry* l0_entry = &l0_table->entry[l0]; 
@@ -118,8 +123,8 @@ class NicMmu
             l2_entry->pfn = new_page();
             //printf("new L3 pfn=%d\n",l2_entry->pfn); 
         }
-        //printf("l0pfn %d l1pfn %d l2pfn %d\n",
-        //l0_entry->pfn, l1_entry->pfn, l2_entry->pfn);
+        MMU_DBG("L0pfn %d L1pfn %d L2pfn %d\n",
+                    l0_entry->pfn, l1_entry->pfn, l2_entry->pfn);
         
         return &m_table[ l2_entry->pfn ].entry[l3];  
     }
@@ -128,7 +133,7 @@ class NicMmu
         Entry* entry = find_L3_entry( vaddr ); 
         paddr = ( entry->pfn << PageSizeBits )  | 
                     ( vaddr & ( ( 1 << PageSizeBits) - 1 ) );
-        //printf("vaddr=%#lx paddr=%#lx pfn=%d\n", vaddr, paddr, entry->pfn );
+        MMU_DBG("vaddr=%#lx paddr=%#lx pfn=%d\n", vaddr, paddr, entry->pfn );
         return true;
     }
 
