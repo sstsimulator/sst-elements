@@ -183,7 +183,7 @@ main(int argc, char **argv)
     fprintf(output, "%s<cpu_params>\n",indent);
     fprintf(output, "%s    <debug> 0 </debug>\n",indent);
     fprintf(output, "%s    <M5debug> none </M5debug>\n",indent);
-    fprintf(output, "%s    <info> yes </info>\n",indent);
+    fprintf(output, "%s    <info> no </info>\n",indent);
     fprintf(output, "%s    <registerExit> yes </registerExit>\n",indent);
     fprintf(output, "%s    <configFile> %s </configFile>\n",indent,M5sdlFile);
     fprintf(output, "%s</cpu_params>\n",indent);
