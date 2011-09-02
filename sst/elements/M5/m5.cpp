@@ -163,7 +163,7 @@ void M5::selfEvent( SST::Event* )
 {
     m_armed = false;
 
-    Cycle_t now = m_tc->convertToCoreTime( getCurrentSimTime(m_tc) );
+    //Cycle_t now = m_tc->convertToCoreTime( getCurrentSimTime(m_tc) );
 
     DBGX( 5, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
 
