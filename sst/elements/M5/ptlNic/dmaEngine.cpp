@@ -106,7 +106,8 @@ void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list )
 
         PRINT_AT( DmaEngine, "vaddr=%#lx length=%lu\n", vaddr, item.length );
 
-        assert( m_nicMmu->lookup( vaddr, item.addr ) );
+        bool ret = m_nicMmu->lookup( vaddr, item.addr );
+        assert( ret );
 
         list.push_back(item);
 
