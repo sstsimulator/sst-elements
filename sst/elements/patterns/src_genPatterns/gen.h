@@ -23,7 +23,7 @@ int next_router(int *id, router_function_t *role, int *wormhole);
 void reset_router_nics(int router);
 int next_router_nic(int router, int *port);
 void reset_router_links(int router);
-int next_router_link(int router, int *link_id, int *port);
+int next_router_link(int router, int *link_id, int *lport, int *rport);
 
 void reset_nic_list(void);
 int next_nic(int *id, int *router, int *port, int *aggregator, int *aggregator_port,

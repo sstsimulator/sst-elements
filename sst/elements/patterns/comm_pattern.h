@@ -48,6 +48,7 @@ class Comm_pattern : public Component {
 	    application_end_time= 0;
 	    exchange_msg_len= 128;
 	    cores= -1;
+	    nodes= -1;
 	    chckpt_method= CHCKPT_NONE;
 	    chckpt_interval= 0;
 	    envelope_size= 64;
@@ -86,6 +87,10 @@ class Comm_pattern : public Component {
 
 		if (!it->first.compare("cores"))   {
 		    sscanf(it->second.c_str(), "%d", &cores);
+		}
+
+		if (!it->first.compare("nodes"))   {
+		    sscanf(it->second.c_str(), "%d", &nodes);
 		}
 
 		if (!it->first.compare("net_latency"))   {
@@ -147,6 +152,8 @@ class Comm_pattern : public Component {
 		it++;
 	    }
 
+	    // FIXME: Do some input checking here; e.g., cores and nodes must be > 0
+
 	    // Interface with SST
 
 	    // Create a time converter
@@ -207,32 +214,14 @@ class Comm_pattern : public Component {
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, net, self_link,
-		    NoC, nvram, storage,
+	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, nodes,
+		    net, self_link, NoC, nvram, storage,
 		    net_latency, net_bandwidth, node_latency, node_bandwidth,
 		    chckpt_method, chckpt_size, chckpt_interval, envelope_size))   {
 		_ABORT(Comm_pattern, "Patterns->init() failed!\n");
 	    }
 
-	    // Who are my four neighbors?
-	    // The network is x_dim * NoC_x_dim by y_dim * NoC_y_dim
-	    // The virtual network of the cores is
-	    // (x_dim * NoC_x_dim * cores) * (y_dim * NoC_y_dim)
-	    int logical_width= x_dim * NoC_x_dim * cores;
-	    int logical_height= y_dim * NoC_y_dim;
-	    int myX= my_rank % logical_width;
-	    int myY= my_rank / logical_width;
-	    num_ranks= x_dim * y_dim * NoC_x_dim * NoC_y_dim * cores;
-
-	    if (my_rank == 0)   {
-		printf("#  |||  Arranging %d ranks as a %d * %d logical mesh\n",
-		    num_ranks, logical_width, logical_height);
-	    }
-
-	    right= ((myX + 1) % (logical_width)) + (myY * (logical_width));
-	    left= ((myX - 1 + (logical_width)) % (logical_width)) + (myY * (logical_width));
-	    down= myX + ((myY + 1) % logical_height) * (logical_width);
-	    up= myX + ((myY - 1 + logical_height) % logical_height) * (logical_width);
+	    num_ranks= x_dim * y_dim * nodes * NoC_x_dim * NoC_y_dim * cores;
 
 	    SM= new State_machine(my_rank);
 
@@ -276,6 +265,7 @@ class Comm_pattern : public Component {
 	int comm_pattern_debug;
 
 	int cores;
+	int nodes;
 	int x_dim;
 	int y_dim;
 	int NoC_x_dim;

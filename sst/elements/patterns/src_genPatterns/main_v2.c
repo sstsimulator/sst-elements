@@ -20,9 +20,6 @@
 ** Local functions
 */
 static void usage(char *argv[]);
-#ifdef _NO_LONGER_TRUE_
-static int is_pow2(int num);
-#endif /* _NO_LONGER_TRUE_ */
 
 
 
@@ -33,6 +30,7 @@ static struct option long_options[]=   {
     /* name, has arg, flag, val */
     {"help", 0, NULL, 'h'},
     {"cores", 1, NULL, 'c'},
+    {"nodes", 1, NULL, 'n'},
     {"sstfilename", 1, NULL, 's'},
     {"pattern", 1, NULL, 'p'},
     {"method", 1, NULL, 'm'},
@@ -70,7 +68,8 @@ uint64_t compute;	/* In ns */
 
 uint64_t app_time;	/* Application compute time per node in ns */
 int exchange_msg_len;
-int num_cores;		/* How many pattern generators per router */
+int num_cores;		/* How many pattern generators per NoC router */
+int num_router_nodes;	/* How many nodes per mesh router */
 uint64_t core_memory;	/* How much memory per core in bytes */
 int num_nodes;
 int IO_nodes;		/* Should be divisible by the number of nodes */
@@ -96,11 +95,11 @@ int ssd_write_bw;	/* In bytes per second */
     sstFname= "";
     net_x_dim= 1;
     net_y_dim= 1;
-    NoC_x_dim= -1;
-    NoC_y_dim= -1;
+    NoC_x_dim= 1;
+    NoC_y_dim= 1;
     net_lat= 30;
     net_bw= 1900000000;
-    node_lat= 150;
+    node_lat= 30;
     node_bw= 12600000000;
 
     /* Assume a SATA3 drive (Crucial C200) "somehow" connected to an I/O network */
@@ -116,6 +115,7 @@ int ssd_write_bw;	/* In bytes per second */
     app_time= 20 * compute; /* 20 time steps */
     core_memory= (uint64_t)512 * 1024 * 1024;
     num_cores= 1;
+    num_router_nodes= 1;
     IO_nodes= 1;
     method= "none";
     chckpt_size= core_memory / 5;
@@ -132,7 +132,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "c:o:hX:Y:x:y:p:m:i:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "c:n:o:hX:Y:x:y:p:m:i:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -140,29 +140,29 @@ int ssd_write_bw;	/* In bytes per second */
 	switch (ch)   {
 	    case 'X':
 		net_x_dim= strtol(optarg, (char **)NULL, 0);
-		if (net_x_dim < 1)   {
-		    fprintf(stderr, "X dimension must be > 0\n");
+		if (net_x_dim < 0)   {
+		    fprintf(stderr, "X dimension must be >= 0\n");
 		    error= TRUE;
 		}
 		break;
 	    case 'Y':
 		net_y_dim= strtol(optarg, (char **)NULL, 0);
-		if (net_y_dim < 1)   {
-		    fprintf(stderr, "Y dimension must be > 0\n");
+		if (net_y_dim < 0)   {
+		    fprintf(stderr, "Y dimension must be >= 0\n");
 		    error= TRUE;
 		}
 		break;
 	    case 'x':
 		NoC_x_dim= strtol(optarg, (char **)NULL, 0);
-		if (NoC_x_dim < 1)   {
-		    fprintf(stderr, "x dimension must be > 0\n");
+		if (NoC_x_dim < 0)   {
+		    fprintf(stderr, "x dimension must be >= 0\n");
 		    error= TRUE;
 		}
 		break;
 	    case 'y':
 		NoC_y_dim= strtol(optarg, (char **)NULL, 0);
-		if (NoC_y_dim < 1)   {
-		    fprintf(stderr, "y dimension must be > 0\n");
+		if (NoC_y_dim < 0)   {
+		    fprintf(stderr, "y dimension must be >= 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -170,6 +170,13 @@ int ssd_write_bw;	/* In bytes per second */
 		num_cores= strtol(optarg, (char **)NULL, 0);
 		if (num_cores < 1)   {
 		    fprintf(stderr, "Number of cores per router must be > 0\n");
+		    error= TRUE;
+		}
+		break;
+	    case 'n':
+		num_router_nodes= strtol(optarg, (char **)NULL, 0);
+		if (num_router_nodes < 1)   {
+		    fprintf(stderr, "Number of nodes per mesh router must be > 0\n");
 		    error= TRUE;
 		}
 		break;
@@ -240,10 +247,12 @@ int ssd_write_bw;	/* In bytes per second */
     } else   {
 	if ((strcasestr("ghost_pattern", pattern_name) == NULL)   &&
 	    (strcasestr("pingpong_pattern", pattern_name) == NULL)   &&
-	    (strcasestr("msgrate_pattern", pattern_name) == NULL))   {
+	    (strcasestr("msgrate_pattern", pattern_name) == NULL)   &&
+	    (strcasestr("allreduce_pattern", pattern_name) == NULL))   {
 	    error= TRUE;
 	    fprintf(stderr, "Unknown pattern name!\n");
-	    fprintf(stderr, "Must be one of \"ghost_pattern\", \"msgrate_pattern\", or \"pingpong_pattern\n");
+	    fprintf(stderr, "Must be one of \"ghost_pattern\", \"msgrate_pattern\", \"allreduce_pattern\","
+		" or \"pingpong_pattern\n");
 
 	} else   {
 
@@ -259,6 +268,13 @@ int ssd_write_bw;	/* In bytes per second */
 
 	    } else if (strcasestr("msgrate_pattern", pattern_name) != NULL)   {
 		pattern_name= "msgrate_pattern";
+		if (exchange_msg_len < 0)   {
+		    /* Use the default */
+		    exchange_msg_len= 0;
+		}
+
+	    } else if (strcasestr("allreduce_pattern", pattern_name) != NULL)   {
+		pattern_name= "allreduce_pattern";
 		if (exchange_msg_len < 0)   {
 		    /* Use the default */
 		    exchange_msg_len= 0;
@@ -328,40 +344,28 @@ int ssd_write_bw;	/* In bytes per second */
 
     }
 
-    if ((NoC_x_dim < 0) || (NoC_y_dim < 0))   {
-	error= TRUE;
-	fprintf(stderr, "-x and -y must be specified!\n");
+    if (net_x_dim * net_y_dim < 1)   {
+	/* No torus (mesh) network, user specified -X 0 or -Y 0 */
+	net_x_dim= 1;
+	net_y_dim= 1;
     }
 
-    if (((net_x_dim  == 1) && (net_y_dim > 1)) ||
-	((net_x_dim  > 1) && (net_y_dim == 1)))   {
-	error= TRUE;
-	fprintf(stderr, "Can't handle network rings yet! Increase x or y dimension.\n");
+    if (NoC_x_dim * NoC_y_dim < 1)   {
+	/* No NoC network, user specified -x 0 or -y 0 */
+	NoC_x_dim= 1;
+	NoC_y_dim= 1;
     }
-
-    if (((NoC_x_dim  == 1) && (NoC_y_dim > 1)) ||
-	((NoC_x_dim  > 1) && (NoC_y_dim == 1)))   {
-	error= TRUE;
-	fprintf(stderr, "Can't handle NoC rings yet! Increase x or y dimension.\n");
-    }
-
-    if ((NoC_x_dim * NoC_y_dim == 1) && (num_cores > 1))   {
-	error= TRUE;
-	fprintf(stderr, "Can't handle single router NoC (1x1) with more than one core each!\n");
-    }
-
-#ifdef _NO_LONGER_TRUE_
-    if (!is_pow2(num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim))   {
-	error= TRUE;
-	fprintf(stderr, "Total number of cores must be power of two!\n");
-    }
-#endif /* _NO_LONGER_TRUE_ */
 
     if (!error)   {
 	if (net_x_dim * net_y_dim > 1)   {
-	    printf("*** Network torus is X * Y = %d * %d\n", net_x_dim, net_y_dim);
+	    printf("*** Network torus is X * Y = %d * %d with %d node(s) per router\n",
+		net_x_dim, net_y_dim, num_router_nodes);
 	} else   {
-	    printf("*** Single node, no network\n");
+	    if (num_router_nodes == 1)   {
+		printf("*** Single node, no network\n");
+	    } else   {
+		printf("*** %d nodes, single router, no network\n", num_router_nodes);
+	    }
 	}
 	if (NoC_x_dim * NoC_y_dim > 1)   {
 	    printf("*** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
@@ -373,8 +377,9 @@ int ssd_write_bw;	/* In bytes per second */
 		printf("*** Each node consists of a single core\n");
 	    }
 	}
+	printf("*** Total number of nodes is %d\n", net_x_dim * net_y_dim * num_router_nodes);
 	printf("*** Total number of cores is %d\n",
-	    num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim);
+	    num_cores * NoC_x_dim * NoC_y_dim * net_x_dim * net_y_dim * num_router_nodes);
     }
 
     /* Open the SST xml file for output */
@@ -395,7 +400,7 @@ int ssd_write_bw;	/* In bytes per second */
     }
 
     /* A node is the endpoint of a network router */
-    num_nodes= net_x_dim * net_y_dim;
+    num_nodes= net_x_dim * net_y_dim * num_router_nodes;
     if (num_nodes % IO_nodes)   {
 	fprintf(stderr, "Number of nodes (%d) should be evenly divisible by number "
 	    "of I/O nodes (%d)!\n", num_nodes, IO_nodes);
@@ -413,7 +418,7 @@ int ssd_write_bw;	/* In bytes per second */
     printf("*** Writing output to \"%s\"\n", sstFname);
 
 
-    GenMesh2D(net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores, IO_nodes);
+    GenMesh2D(net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores, IO_nodes, num_router_nodes);
 
 
     /*
@@ -424,7 +429,7 @@ int ssd_write_bw;	/* In bytes per second */
     sst_param_start(fp_sst); /* start the parameter_include section */
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores,
-	net_lat, net_bw, node_lat, node_bw,
+	num_router_nodes, net_lat, net_bw, node_lat, node_bw,
 	compute, app_time, exchange_msg_len, method, chckpt_interval,
 	envelope_size, chckpt_size, pattern_name);
     sst_gen_param_end(fp_sst);
@@ -434,6 +439,7 @@ int ssd_write_bw;	/* In bytes per second */
     /*
     ** We have several types of routers:
     ** - Network routers always have five ports, hop_delay 25
+    **       Not true anymore. We can have multiple nodes per mesh router. See -n option
     ** - NoC routers have four + num_cores ports, hop_delay 25
     ** - Network aggregators have one + (num_cores * NoC_x_dim * NoC_y_dim) ports, hop_delay 25
     ** - NVRAM aggregators have one + (num_cores * NoC_x_dim * NoC_y_dim) ports, hop_delay 25
@@ -443,7 +449,8 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* We assume the router bandwidth is the same as the link bandwidth */
     wormhole= TRUE;
-    sst_router_param_start(fp_sst, RNAME_NETWORK, 5, net_bw, num_cores, 25, wormhole, power_method);
+    sst_router_param_start(fp_sst, RNAME_NETWORK, 4 + num_router_nodes, net_bw,
+	num_cores, 25, wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NETWORK);
 
     wormhole= FALSE;
@@ -495,9 +502,10 @@ usage(char *argv[])
 {
 
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -o out -p pname [-c num_cores] [--power model] [-i IO] [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -x dimX -y dimY -X dimX -Y dimY -o out -p pname [-c num_cores] [-n num_nodes] [--power model] [-i IO] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -s     Name of the SST xml output file\n");
     fprintf(stderr, "   --cores, -c           Number of cores per NoC router (Default 1)\n");
+    fprintf(stderr, "   --nodes, -n           Number of nodes per mesh router (Default 1)\n");
     fprintf(stderr, "   -X dimX               X dimension of tours network\n");
     fprintf(stderr, "   -Y dimY               Y dimension of tours network\n");
     fprintf(stderr, "   -x dimX               X dimension of NoC tours\n");
@@ -505,7 +513,7 @@ usage(char *argv[])
     fprintf(stderr, "   -o out                Name of output file\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
-    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate, pingpong\n");
+    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate, allreduce, pingpong\n");
     fprintf(stderr, "   --msg_len             Message size. Default is pattern dependent.\n");
     fprintf(stderr, "   --method, -m          Checkpointing method: none (default), coordinated,\n");
     fprintf(stderr, "                         uncoordinated, distributed\n");
@@ -515,22 +523,3 @@ usage(char *argv[])
     fprintf(stderr, "   --power <model>       Enable power modeling using McPAT or ORION\n");
 
 }  /* end of usage() */
-
-
-
-#ifdef _NO_LONGER_TRUE_
-static int
-is_pow2(int num)
-{
-    if (num < 1)   {
-	return FALSE;
-    }
-
-    if ((num & (num - 1)) == 0)   {
-	return TRUE;
-    }
-
-    return FALSE;
-
-}  /* end of is_pow2() */
-#endif /* _NO_LONGER_TRUE_ */

@@ -107,7 +107,7 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 void
 sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
-	int cores, uint64_t net_lat,
+	int cores, int nodes, uint64_t net_lat,
         uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
 	uint64_t app_time, int msg_len, char *method,
 	uint64_t chckpt_interval, int envelope_size, int chckpt_size,
@@ -124,6 +124,7 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int No
     fprintf(sstfile, "\t\t<NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim);
     fprintf(sstfile, "\t\t<NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim);
     fprintf(sstfile, "\t\t<cores> %d </cores>\n", cores);
+    fprintf(sstfile, "\t\t<nodes> %d </nodes>\n", cores);
     fprintf(sstfile, "\t\t<net_latency> %lu </net_latency>\n", net_lat);
     fprintf(sstfile, "\t\t<net_bandwidth> %lu </net_bandwidth>\n", net_bw);
     fprintf(sstfile, "\t\t<node_latency> %lu </node_latency>\n", node_lat);
@@ -623,6 +624,8 @@ sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
 {
 
 int l, r, p;
+int lp, rp;
+static int flip= 0;
 char net_link_id[MAX_ID_LEN];
 char nvram_link_id[MAX_ID_LEN];
 char router_id[MAX_ID_LEN];
@@ -655,8 +658,26 @@ int wormhole;
 
 	/* Links to other routers */
 	reset_router_links(r);
-	while (next_router_link(r, &l, &p))   {
-	    snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
+	while (next_router_link(r, &l, &lp, &rp))   {
+	    if (l < 0)   {
+		snprintf(net_link_id, MAX_ID_LEN, "unused");
+		/*
+		** This is a bit ugly. We're dealing with a loop back link on a router.
+		** It doesn't belong in the routermodel link section, but we have to list
+		** it in the parameter section so that the port numbering is sequential.
+		** So, once we use the left port, then the right port number.
+		*/
+		if (flip)   {
+		    p= lp;
+		    flip= 0;
+		} else   {
+		    p= rp;
+		    flip= 1;
+		}
+	    } else   {
+		p= rp;
+		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
+	    }
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
 	    fprintf(sstfile, "\t\t\t<%s> %s </%s>\n", cname, net_link_id, cname);
 	}
@@ -689,9 +710,13 @@ int wormhole;
 
 	/* Links to other routers */
 	reset_router_links(r);
-	while (next_router_link(r, &l, &p))   {
-	    snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
-	    sst_router_component_link(net_link_id, net_latency, net_link_id, sstfile);
+	while (next_router_link(r, &l, &lp, &rp))   {
+	    if (l >= 0)   {
+		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
+		sst_router_component_link(net_link_id, net_latency, net_link_id, sstfile);
+	    } else   {
+		/* Don't creat loops back to the same router */
+	    }
 	}
 
 	/* Link to local NVRAMS(s) */

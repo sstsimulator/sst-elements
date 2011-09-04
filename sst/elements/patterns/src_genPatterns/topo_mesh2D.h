@@ -8,6 +8,6 @@
 #define _MESH2D_H_
 
 void GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim, int num_cores,
-    int IO_nodes);
+    int IO_nodes, int num_router_nodes);
 
 #endif /* _MESH2D_H_ */

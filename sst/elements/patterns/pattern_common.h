@@ -72,6 +72,7 @@ class Patterns   {
 	}
 
 	int init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores,
+		int nodes,
 		SST::Link *net_link, SST::Link *self_link,
 		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
 		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat,
@@ -101,6 +102,7 @@ class Patterns   {
 	int total_cores;
 	int cores_per_router;
 	int cores_per_node;
+	int num_router_nodes;
 	SST::SimTime_t net_bandwidth;	// In bytes per second
 	SST::SimTime_t node_bandwidth;	// In bytes per second
 	SST::SimTime_t net_latency;	// in nano seconds FIXME: Variable not needed

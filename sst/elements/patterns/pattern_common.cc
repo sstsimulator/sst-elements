@@ -37,21 +37,15 @@ static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, Link *net_link,
+Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, int nodes,
+	Link *net_link,
 	Link *self_link, SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
 	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
 	chckpt_t method, int chckpt_size, SimTime_t chckpt_interval,
 	int envelope_size)
 {
 
-    total_cores= x * y * NoC_x_dim * NoC_y_dim * cores;
-#if NOT_NEEDED_I_THINK
-    /* Make sure number of ranks is a power of 2, and my_rank is within range */
-    if (!is_pow2(total_cores))   {
-	fprintf(stderr, "Total number of ranks (cores) %d is not a power of 2!\n", total_cores);
-	return FALSE;
-    }
-#endif
+    total_cores= x * y * nodes * NoC_x_dim * NoC_y_dim * cores;
 
     if ((rank < 0) || (rank >= total_cores))   {
 	fprintf(stderr, "My rank not 0 <= %d < %d (cores)\n", rank, total_cores);
@@ -93,12 +87,13 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
     net_bandwidth= net_bw;
     node_latency= node_lat;
     node_bandwidth= node_bw;
+    num_router_nodes= nodes;
     cores_per_router= cores;
     cores_per_node= NoC_width * NoC_height * cores;
 
     if (my_rank == 0)   {
-	printf("#  |||  mesh x %d, y %d, = %d nodes\n",
-	    mesh_width, mesh_height, mesh_width * mesh_height);
+	printf("#  |||  mesh x %d, y %d, with %d nodes each = %d nodes\n",
+	    mesh_width, mesh_height, num_router_nodes, mesh_width * mesh_height * num_router_nodes);
 	printf("#  |||  NoC x %d, y %d, with %d cores each\n",
 	    NoC_x_dim, NoC_y_dim, cores_per_router);
 	printf("#  |||  Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
@@ -256,6 +251,7 @@ int my_router, dest_router;
 	// Exit to the local (NIC) pattern generator
 	e->route.push_back(FIRST_LOCAL_PORT + (dest % cores_per_router));
 
+#define ROUTE_DEBUG 1
 #undef ROUTE_DEBUG
 #if ROUTE_DEBUG
     {
@@ -276,7 +272,7 @@ int my_router, dest_router;
 #endif  // ROUTE_DEBUG
 
 	// Send it
-	// FIXME: Multile sends during processing of a single events should be
+	// FIXME: Multiple sends during processing of a single events should be
 	// delayed, since they don't really ocur all at exactly the same nano second.
 	// However, since they go out on the same link, the router at the other end
 	// will delay them according to their length and link bandwidth.
@@ -289,14 +285,16 @@ int my_router, dest_router;
 	/* On the network aggregator we'll have to go out port 0 to reach the mesh */
 	e->route.push_back(0);
 
-	// We assume one node per mesh router
-	my_router= my_node;
-	dest_router= dest_node;
+	my_router= my_node / num_router_nodes;
+	dest_router= dest_node / num_router_nodes;
+/* fprintf(stderr, "Net from %d to %d gen_route(my router %d, dest router %d, width %d, height %d)\n", my_rank, dest, my_router, dest_router, mesh_width, mesh_height); */
 	gen_route(e, my_router, dest_router, mesh_width, mesh_height);
 
 
 	// Exit to the local node (aggregator on that node
-	e->route.push_back(FIRST_LOCAL_PORT);
+	e->route.push_back(FIRST_LOCAL_PORT +
+		((dest % (num_router_nodes * cores_per_node)) / cores_per_node));
+/* fprintf(stderr, "Net from %d to %d, exit port %d\n", my_rank, dest, FIRST_LOCAL_PORT + ((dest % (num_router_nodes * cores_per_node)) / cores_per_node)); */
 
 	/*
 	** We come out at the aggregator on the destination node.
@@ -508,22 +506,3 @@ int x_delta, y_delta;
     }
 
 }  /* end of gen_route() */
-
-
-
-#if NOT_NEEDED_ANYMORE
-static int
-is_pow2(int num)
-{
-    if (num < 1)   {
-	return FALSE;
-    }
-
-    if ((num & (num - 1)) == 0)   {
-	return TRUE;
-    }
-
-    return FALSE;
-
-}  /* end of is_pow2() */
-#endif

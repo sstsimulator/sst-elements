@@ -112,3 +112,5 @@ DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE DONE
 	and pattern generators much faster to emulate intra-node
 	speeds....
 
+- Somehow can't handle "rings" (one dim = 1). Why? Fix segfault!
+    This was becasue SST sdl files don't like loops on components (I think)

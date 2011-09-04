@@ -5,6 +5,7 @@
 **
 */
 #include <stdio.h>
+#include <assert.h>
 #include "gen.h"
 #include "topo_mesh2D.h"
 
@@ -18,19 +19,28 @@
 #define GEN_DEBUG		1
 #undef GEN_DEBUG
 void
-GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim, int num_cores, int IO_nodes)
+GenMesh2D(int net_x_dim, int net_y_dim, int NoC_x_dim, int NoC_y_dim,
+    int num_cores, int IO_nodes, int num_router_nodes)
 {
 
 int x, y;
 int R, r;
+int N;
 int me;
+int right;
+int row_start;
+int down;
+int col_start;
 int gen;
-int num_routers;
+int RouterID;
+int nvramID;
 int first_NoC_router;
-int all_cores;
+int first_net_aggregator;
+int first_nvram_aggregator;
+int first_ss_aggregator;
+int first_IO_aggregator;
 int NoC_router;
-int src, dest;
-int rank;
+int coreID;
 int net_aggregator;
 int net_aggregator_port;
 int nvram_aggregator;
@@ -41,273 +51,229 @@ int IO_aggregator;
 int IO_aggregator_port;
 int flit_based= 0;
 int wormhole= 1;
+int cores_per_node;
+#if defined GEN_DEBUG
+int all_cores;
+#endif
 
 
-    /* List the Net routers first; they each have 5 ports */
-    if (net_x_dim * net_y_dim > 1)   {
-	/* Only generate a network, if there are more than one node */
-	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	    #if defined GEN_DEBUG
-		fprintf(stderr, "gen_router(%3d, 5);\n", R);
-	    #endif /* GEN_DEBUG */
-	    gen_router(R, 5, Rnet, wormhole);
-	}
-	if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
-	    num_routers= net_x_dim * net_y_dim * NoC_x_dim * NoC_y_dim + (net_x_dim * net_y_dim);
-	} else   {
-	    num_routers= net_x_dim * net_y_dim;
-	}
-	first_NoC_router= net_x_dim * net_y_dim;
-    } else   {
-	num_routers= NoC_x_dim * NoC_y_dim;
-	first_NoC_router= 0;
+    assert((net_x_dim * net_y_dim) > 0);
+    assert((NoC_x_dim * NoC_y_dim) > 0);
+    assert(num_cores >= 1);
+    assert(num_router_nodes >= 1);
+    cores_per_node= num_cores * NoC_x_dim * NoC_y_dim;
+
+    /* List the Net routers first; they each have 4 + num_router_nodes ports */
+    RouterID= 0;
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	#if defined GEN_DEBUG
+	    fprintf(stderr, "gen_router(%3d, %d);\n", RouterID, 4 + num_router_nodes);
+	#endif /* GEN_DEBUG */
+	gen_router(RouterID, 4 + num_router_nodes, Rnet, wormhole);
+	RouterID++;
     }
 
 
     /* Now list the NoC routers; they have 4 + num_cores ports each */
-    if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
-	for (r= first_NoC_router; r < num_routers; r++)   {
-	    #if defined GEN_DEBUG
-		fprintf(stderr, "gen_router(%3d, %d);\n", r, 4 + num_cores);
-	    #endif /* GEN_DEBUG */
-	    gen_router(r, 4 + num_cores, RNoC, flit_based);
+    first_NoC_router= RouterID;
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	for (N= 0 ; N < num_router_nodes; N++)   {
+	    for (r= 0; r < NoC_x_dim * NoC_y_dim; r++)   {
+		#if defined GEN_DEBUG
+		    fprintf(stderr, "gen_router(%3d, %d);\n", RouterID, 4 + num_cores);
+		#endif /* GEN_DEBUG */
+		gen_router(RouterID, 4 + num_cores, RNoC, flit_based);
+		RouterID++;
+	    }
 	}
     }
 
-    /* Generate an aggregator to route Net traffic to each core */
-    if (net_x_dim * net_y_dim > 1)   {
-	/* Only generate a network aggregator, if there are more than one node */
-	net_aggregator= num_routers;
-	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+    /* Generate an aggregator on each node to route Net traffic to each core */
+    first_net_aggregator= RouterID;
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	for (N= 0 ; N < num_router_nodes; N++)   {
 	    #if defined GEN_DEBUG
-		fprintf(stderr, "gen_router(%3d, %2d); for net\n", net_aggregator, num_cores + 1);
+		fprintf(stderr, "gen_router(%3d, %2d); for net\n", RouterID, num_cores + 1);
 	    #endif /* GEN_DEBUG */
-	    gen_router(net_aggregator, num_cores + 1, RnetPort, wormhole);
-	    net_aggregator++;
+	    gen_router(RouterID, cores_per_node + 1, RnetPort, wormhole);
+	    RouterID++;
 	}
     }
 
-    /* Generate an aggregator to route data to a local NVRAM to and from each core */
-    nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
+    /* Generate an aggregator on each node to route data from each core to a local NVRAM */
+    first_nvram_aggregator= RouterID;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	#if defined GEN_DEBUG
-	    fprintf(stderr, "gen_router(%3d, %2d); for nvram\n", nvram_aggregator, num_cores + 1);
-	#endif /* GEN_DEBUG */
-	gen_router(nvram_aggregator, num_cores + 1, Rnvram, flit_based);
-	nvram_aggregator++;
+	for (N= 0 ; N < num_router_nodes; N++)   {
+	    #if defined GEN_DEBUG
+		fprintf(stderr, "gen_router(%3d, %2d); for nvram\n", RouterID, num_cores + 1);
+	    #endif /* GEN_DEBUG */
+	    gen_router(RouterID, cores_per_node + 1, Rnvram, flit_based);
+	    RouterID++;
+	}
     }
 
-    /* Generate an aggregator to route data to stable storage to and from each core */
-    ss_aggregator= num_routers + 2 * (net_x_dim * net_y_dim);
+    /* Generate an aggregator on each node to route data to stable storage from each core */
+    first_ss_aggregator= RouterID;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	#if defined GEN_DEBUG
-	    fprintf(stderr, "gen_router(%3d, %2d); for stable storage\n", ss_aggregator,
-		num_cores + 1);
-	#endif /* GEN_DEBUG */
-	gen_router(ss_aggregator, num_cores + 1, Rstorage, wormhole);
-	ss_aggregator++;
+	for (N= 0 ; N < num_router_nodes; N++)   {
+	    #if defined GEN_DEBUG
+		fprintf(stderr, "gen_router(%3d, %2d); for stable storage\n", RouterID,
+		    num_cores + 1);
+	    #endif /* GEN_DEBUG */
+	    gen_router(RouterID, cores_per_node + 1, Rstorage, wormhole);
+	    RouterID++;
+	}
     }
+
+    /* The next router will be used as an I/O aggregator further down. */
+    first_IO_aggregator= RouterID;
 
 
     /* Generate pattern generators and links between pattern generators and NoC routers */
-    all_cores= num_routers * num_cores;
     #if defined GEN_DEBUG
-	fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, cores %d\n", NoC_x_dim, NoC_y_dim,
-	    net_x_dim, net_y_dim, num_routers, all_cores);
+	all_cores= net_x_dim * net_y_dim * num_router_nodes * NoC_x_dim * NoC_y_dim * num_cores;
+	fprintf(stderr, "X %d, Y %d, x %d, y %d, routers %d, nodes %d, cores %d\n", NoC_x_dim, NoC_y_dim,
+	    net_x_dim, net_y_dim, RouterID, net_x_dim * net_y_dim * num_router_nodes, all_cores);
     #endif /* GEN_DEBUG */
-    net_aggregator= num_routers;
-    nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
-    ss_aggregator= num_routers + 2 * (net_x_dim * net_y_dim);
+    net_aggregator= first_net_aggregator;
+    nvram_aggregator= first_nvram_aggregator;
+    ss_aggregator= first_ss_aggregator;
+    NoC_router= first_NoC_router;
+    coreID= 0;
 
+    /* For each network router */
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 
-	/* For each network router */
-	net_aggregator_port= 1;
-	nvram_aggregator_port= 1;
-	ss_aggregator_port= 1;
-	if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
+	/* For each node */
+	for (N= 0 ; N < num_router_nodes; N++)   {
+	    net_aggregator_port= 1;
+	    nvram_aggregator_port= 1;
+	    ss_aggregator_port= 1;
+
+	    /* For each NoC router */
 	    for (r= 0; r < NoC_x_dim * NoC_y_dim; r++)   {
-		/* For each NoC router */
 
+		/* For each core */
 		for (gen= 0; gen < num_cores; gen++)   {
-		    /* For each core on a NoC router */
-		    rank= (R * NoC_x_dim * NoC_y_dim * num_cores) +
-			    (r * num_cores) + gen;
-		    NoC_router= first_NoC_router + r + (R * NoC_x_dim * NoC_y_dim);
-		    if (net_x_dim * net_y_dim > 1)   {
-			/* Connect each core to its Net, NVRAM, and SS aggregator */
-			#if defined GEN_DEBUG
-			    fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, "
-				"agg port %2d); net\n", rank, NoC_router,
-				FIRST_LOCAL_PORT + gen, net_aggregator, net_aggregator_port);
-			#endif /* GEN_DEBUG */
-			gen_nic(rank,
-			    NoC_router, FIRST_LOCAL_PORT + gen,
-			    net_aggregator, net_aggregator_port,
-			    nvram_aggregator, nvram_aggregator_port,
-			    ss_aggregator, ss_aggregator_port);
-			net_aggregator_port++;
-			nvram_aggregator_port++;
-			ss_aggregator_port++;
-		    } else   {
-			/* Single node, no connection to a network */
-			#if defined GEN_DEBUG
-			    fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg "
-				"port %2d, nvram %d/%d, ss %d/%d);\n", rank, NoC_router,
-				FIRST_LOCAL_PORT + gen, -1, -1, nvram_aggregator,
-				nvram_aggregator_port, ss_aggregator, ss_aggregator_port);
-			#endif /* GEN_DEBUG */
-			gen_nic(rank,
-			    NoC_router, FIRST_LOCAL_PORT + gen,
-			    -1, -1,
-			    nvram_aggregator, nvram_aggregator_port,
-			    ss_aggregator, ss_aggregator_port);
-			nvram_aggregator_port++;
-			ss_aggregator_port++;
-		    }
-		}
-	    }
-
-	} else   {
-
-	    /* There is no NoC */
-	    for (gen= 0; gen < num_cores; gen++)   {
-		/* For each core on a NoC router */
-		rank= (R * NoC_x_dim * NoC_y_dim * num_cores) + gen;
-		NoC_router= (net_x_dim * net_y_dim) + (R * NoC_x_dim * NoC_y_dim);
-		if (net_x_dim * net_y_dim > 1)   {
-		    /* Connect each core to its Net aggregator */
-		    gen_nic(rank,
-			-1, -1,
+		    /* Connect each core to its Net, NVRAM, and SS aggregator */
+		    #if defined GEN_DEBUG
+			fprintf(stderr, "gen_nic(coreID %3d, router %2d, port %2d, agg %2d, "
+			    "agg port %2d); net\n", coreID, NoC_router,
+			    FIRST_LOCAL_PORT + gen, net_aggregator, net_aggregator_port);
+		    #endif /* GEN_DEBUG */
+		    gen_nic(coreID,
+			NoC_router, FIRST_LOCAL_PORT + gen,
 			net_aggregator, net_aggregator_port,
 			nvram_aggregator, nvram_aggregator_port,
 			ss_aggregator, ss_aggregator_port);
-		    #if defined GEN_DEBUG
-			fprintf(stderr, "gen_nic(rank %3d, router %2d, port %2d, agg %2d, agg port "
-			    "%2d);\n", rank, -1, -1, net_aggregator, net_aggregator_port);
-		    #endif /* GEN_DEBUG */
 		    net_aggregator_port++;
 		    nvram_aggregator_port++;
 		    ss_aggregator_port++;
-		} else   {
-		    /* No network and no NoC? */
-		    #if defined GEN_DEBUG
-			fprintf(stderr, "ERROR: Nothing to simulate with a single core!\n");
-		    #endif /* GEN_DEBUG */
-		    return;
+		    coreID++;
 		}
+		NoC_router++;
 	    }
+	    net_aggregator++;
+	    nvram_aggregator++;
+	    ss_aggregator++;
 	}
-	net_aggregator++;
-	nvram_aggregator++;
-	ss_aggregator++;
     }
 
 
 
     /* Generate links between network routers */
-    if (net_x_dim * net_y_dim > 1)   {
-	for (y= 0; y < net_y_dim; y++)   {
-	    for (x= 0; x < net_x_dim; x++)   {
-		me= y * net_x_dim + x;
-		/* Go East */
-		if ((me + 1) < (net_x_dim * (y + 1)))   {
-		    gen_link(me, EAST_PORT, me + 1, WEST_PORT);
-		} else   {
-		    /* Wrap around */
-		    gen_link(me, EAST_PORT, y * net_x_dim, WEST_PORT);
-		}
+    for (y= 0; y < net_y_dim; y++)   {
+	for (x= 0; x < net_x_dim; x++)   {
+	    me= y * net_x_dim + x;
+	    right= me + 1;
+	    row_start= y * net_x_dim;
+	    down= me + net_x_dim;
+	    col_start= x;
 
-		/* Go South */
-		if ((me + net_x_dim) < (net_x_dim * net_y_dim))   {
-		    gen_link(me, SOUTH_PORT, me + net_x_dim, NORTH_PORT);
-		} else   {
-		    /* Wrap around */
-		    gen_link(me, SOUTH_PORT, x, NORTH_PORT);
-		}
+	    /* Go East */
+	    if ((x + 1) < net_x_dim)   {
+		gen_link(me, EAST_PORT, right, WEST_PORT);
+	    } else   {
+		/* Wrap around */
+		gen_link(me, EAST_PORT, row_start, WEST_PORT);
+	    }
+
+	    /* Go South */
+	    if ((y + 1) < net_y_dim)   {
+		gen_link(me, SOUTH_PORT, down, NORTH_PORT);
+	    } else   {
+		/* Wrap around */
+		gen_link(me, SOUTH_PORT, col_start, NORTH_PORT);
 	    }
 	}
     }
 
 
     /* Generate links between NoC routers */
-    if ((NoC_x_dim * NoC_y_dim > 1) || (num_cores > 1))   {
-	if (net_x_dim * net_y_dim > 1)   {
-	    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-		/* For each network router */
+    /* For each network router */
+    NoC_router= first_NoC_router;
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 
-		for (y= 0; y < NoC_y_dim; y++)   {
-		    for (x= 0; x < NoC_x_dim; x++)   {
-			me= y * NoC_x_dim + x;
-			src= (net_x_dim * net_y_dim) + me + (R * NoC_x_dim * NoC_y_dim);
+	/* For each node on a network router */
+	for (N= 0 ; N < num_router_nodes; N++)   {
 
-			/* Go East */
-			if ((me + 1) < (NoC_x_dim * (y + 1)))   {
-			    dest= src + 1;
-			    gen_link(src, EAST_PORT, dest, WEST_PORT);
-			} else   {
-			    /* Wrap around */
-			    dest= (net_x_dim * net_y_dim) + (y * NoC_x_dim) + (R * NoC_x_dim * NoC_y_dim);
-			    gen_link(src, EAST_PORT, dest, WEST_PORT);
-			}
-
-			/* Go South */
-			if ((me + NoC_x_dim) < (NoC_x_dim * NoC_y_dim))   {
-			    dest= src + NoC_x_dim;
-			    gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
-			} else   {
-			    /* Wrap around */
-			    dest= (net_x_dim * net_y_dim) + x + (R * NoC_x_dim * NoC_y_dim);
-			    gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
-			}
-		    }
-		}
-	    }
-
-	} else   {
-
-	    /* No network, just a NoC */
 	    for (y= 0; y < NoC_y_dim; y++)   {
 		for (x= 0; x < NoC_x_dim; x++)   {
-		    me= y * NoC_x_dim + x;
-		    src= me;
+		    me= y * NoC_x_dim + x + NoC_router;
+		    right= me + 1;
+		    row_start= y * NoC_x_dim + NoC_router;
+		    down= me + NoC_x_dim;
+		    col_start= x + NoC_router;
 
 		    /* Go East */
-		    if ((me + 1) < (NoC_x_dim * (y + 1)))   {
-			dest= src + 1;
-			gen_link(src, EAST_PORT, dest, WEST_PORT);
+		    if ((x + 1) < NoC_x_dim)   {
+			#if defined GEN_DEBUG
+			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC EAST\n",
+				me, EAST_PORT, right, WEST_PORT);
+			#endif /* GEN_DEBUG */
+			gen_link(me, EAST_PORT, right, WEST_PORT);
 		    } else   {
 			/* Wrap around */
-			dest= y * NoC_x_dim;
-			gen_link(src, EAST_PORT, dest, WEST_PORT);
+			#if defined GEN_DEBUG
+			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC EAST wrap\n",
+				me, EAST_PORT, row_start, WEST_PORT);
+			#endif /* GEN_DEBUG */
+			gen_link(me, EAST_PORT, row_start, WEST_PORT);
 		    }
 
 		    /* Go South */
-		    if ((me + NoC_x_dim) < (NoC_x_dim * NoC_y_dim))   {
-			dest= src + NoC_x_dim;
-			gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
+		    if ((y + 1) < NoC_y_dim)   {
+			#if defined GEN_DEBUG
+			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC SOUTH\n",
+				me, SOUTH_PORT, down, NORTH_PORT);
+			#endif /* GEN_DEBUG */
+			gen_link(me, SOUTH_PORT, down, NORTH_PORT);
 		    } else   {
 			/* Wrap around */
-			dest= x;
-			gen_link(src, SOUTH_PORT, dest, NORTH_PORT);
+			#if defined GEN_DEBUG
+			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC SOUTH wrap\n",
+				me, SOUTH_PORT, col_start, NORTH_PORT);
+			#endif /* GEN_DEBUG */
+			gen_link(me, SOUTH_PORT, col_start, NORTH_PORT);
 		    }
+
 		}
 	    }
+	    NoC_router= NoC_router + NoC_x_dim * NoC_y_dim;
 	}
     }
 
 
 
     /* Generate the links between Network aggregators and the network routers */
-    if (net_x_dim * net_y_dim > 1)   {
-	/* Only generate a network aggregator, if there are more than one node */
-	net_aggregator= num_routers;
-	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+    net_aggregator= first_net_aggregator;
+    for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	for (N= 0 ; N < num_router_nodes; N++)   {
 	    #if defined GEN_DEBUG
 		fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d);\n", net_aggregator, 0,
-		    R, FIRST_LOCAL_PORT);
+		    R, FIRST_LOCAL_PORT + N);
 	    #endif /* GEN_DEBUG */
-	    gen_link(net_aggregator, 0, R, FIRST_LOCAL_PORT);
+	    gen_link(net_aggregator, 0, R, FIRST_LOCAL_PORT + N);
 	    net_aggregator++;
 	}
     }
@@ -315,17 +281,21 @@ int wormhole= 1;
 
 
     /*
-    ** Generate one NVRAM component (a bit bucket) per node and connect the
-    ** NVRAM aggregator to it.
+    ** Generate one NVRAM component (a bit bucket) per node and connect
+    ** each NVRAM aggregator to it.
     */
-    nvram_aggregator= num_routers + (net_x_dim * net_y_dim);
+    nvram_aggregator= first_nvram_aggregator;
+    nvramID= 0;
+    nvram_aggregator_port= 0;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	nvram_aggregator_port= 0;
-	#if defined GEN_DEBUG
-	    fprintf(stderr, "gen_nvram(R %d, nvram %d,%d, local %d);\n",
-		R, nvram_aggregator, nvram_aggregator_port, LOCAL_NVRAM);
-	#endif /* GEN_DEBUG */
-	gen_nvram(R, nvram_aggregator++, nvram_aggregator_port, LOCAL_NVRAM);
+	for (N= 0 ; N < num_router_nodes; N++)   {
+	    #if defined GEN_DEBUG
+		fprintf(stderr, "gen_nvram(R %d, nvram %d,%d, local %d);\n",
+		    nvramID, nvram_aggregator, nvram_aggregator_port, LOCAL_NVRAM);
+	    #endif /* GEN_DEBUG */
+	    gen_nvram(nvramID, nvram_aggregator++, nvram_aggregator_port, LOCAL_NVRAM);
+	    nvramID++;
+	}
     }
 
 
@@ -339,13 +309,14 @@ int wormhole= 1;
     */
 
     /* Create N bit buckets attached to a router */
-    IO_aggregator= num_routers + 3 * (net_x_dim * net_y_dim);
+    IO_aggregator= first_IO_aggregator;
     for (R= 0; R < IO_nodes; R++)   {
 	#if defined GEN_DEBUG
 	    fprintf(stderr, "gen_router(%3d, %2d); for I/O nodes\n", IO_aggregator,
-		(net_x_dim * net_y_dim / IO_nodes) + 1);
+		(net_x_dim * net_y_dim * num_router_nodes / IO_nodes) + 1);
 	#endif /* GEN_DEBUG */
-	gen_router(IO_aggregator, (net_x_dim * net_y_dim / IO_nodes) + 1, RstoreIO, wormhole);
+	gen_router(IO_aggregator, (net_x_dim * net_y_dim * num_router_nodes / IO_nodes) + 1,
+	    RstoreIO, wormhole);
 	gen_nvram(R, IO_aggregator, 0, SSD); /* On port 0 */
 
 	IO_aggregator++;
@@ -353,24 +324,25 @@ int wormhole= 1;
 
     /*
     ** Attach (net_x_dim * net_y_dim / N) ss_aggregators to each of the N
-    ** bit bucket routers
+    ** bit-bucket routers
     */
-    IO_aggregator= num_routers + 3 * (net_x_dim * net_y_dim);
+    IO_aggregator= first_IO_aggregator;
     IO_aggregator_port= 1;
-    ss_aggregator= num_routers + 2 * (net_x_dim * net_y_dim);
+    ss_aggregator= first_ss_aggregator;
 
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
-	/* For each node */
-	#if defined GEN_DEBUG
-	    fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d); ss aggregator to SSD\n",
-		ss_aggregator, 0, IO_aggregator, IO_aggregator_port);
-	#endif /* GEN_DEBUG */
-	gen_link(ss_aggregator, 0, IO_aggregator, IO_aggregator_port++);
-	ss_aggregator++;
-	if (((R + 1) % (net_x_dim * net_y_dim / IO_nodes)) == 0)    {
-	    /* Switch to next I/I node */
-	    IO_aggregator++;
-	    IO_aggregator_port= 1;
+	for (N= 0 ; N < num_router_nodes; N++)   {
+	    #if defined GEN_DEBUG
+		fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d); ss aggregator to SSD\n",
+		    ss_aggregator, 0, IO_aggregator, IO_aggregator_port);
+	    #endif /* GEN_DEBUG */
+	    gen_link(ss_aggregator, 0, IO_aggregator, IO_aggregator_port++);
+	    ss_aggregator++;
+	    if (((R + 1) % (net_x_dim * net_y_dim * num_router_nodes / IO_nodes)) == 0)    {
+		/* Switch to next I/0 node */
+		IO_aggregator++;
+		IO_aggregator_port= 1;
+	    }
 	}
     }
 

@@ -64,6 +64,7 @@ class Ghost_pattern : public Component {
 	    application_end_time= 0;
 	    exchange_msg_len= 128;
 	    cores= -1;
+	    nodes= -1;
 	    chckpt_method= CHCKPT_NONE;
 	    chckpt_interval= 0;
 	    envelope_size= 64;
@@ -118,6 +119,10 @@ class Ghost_pattern : public Component {
 
 		if (!it->first.compare("cores"))   {
 		    sscanf(it->second.c_str(), "%d", &cores);
+		}
+
+		if (!it->first.compare("nodes"))   {
+		    sscanf(it->second.c_str(), "%d", &nodes);
 		}
 
 		if (!it->first.compare("net_latency"))   {
@@ -239,7 +244,7 @@ class Ghost_pattern : public Component {
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, net, self_link,
+	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, nodes, net, self_link,
 		    NoC, nvram, storage,
 		    net_latency, net_bandwidth, node_latency, node_bandwidth,
 		    chckpt_method, chckpt_size, chckpt_interval, envelope_size))   {
@@ -328,6 +333,7 @@ class Ghost_pattern : public Component {
 	// Input paramters for simulation
 	int my_rank;
 	int cores;
+	int nodes;
 	int x_dim;
 	int y_dim;
 	int NoC_x_dim;
@@ -407,6 +413,7 @@ class Ghost_pattern : public Component {
 	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(cores);
+	    ar & BOOST_SERIALIZATION_NVP(nodes);
 	    ar & BOOST_SERIALIZATION_NVP(x_dim);
 	    ar & BOOST_SERIALIZATION_NVP(y_dim);
 	    ar & BOOST_SERIALIZATION_NVP(NoC_x_dim);

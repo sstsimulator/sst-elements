@@ -58,18 +58,21 @@ uint32_t tag= 0;
 
 
 
+// This is mesg router X and doesn't take nodes into account!
 int
 Comm_pattern::myNetX(void)
 {
-    return (my_rank % (x_dim * NoC_x_dim * cores)) / (NoC_x_dim * NoC_y_dim * cores);
+    return (my_rank % (x_dim * NoC_x_dim * cores * nodes)) /
+	(NoC_x_dim * NoC_y_dim * cores * nodes);
 }  // end of myNetX()
 
 
 
+// This is mesg router Y and doesn't take nodes into account!
 int
 Comm_pattern::myNetY(void)
 {
-    return my_rank / (x_dim * NoC_x_dim * NoC_y_dim * cores);
+    return my_rank / (x_dim * NoC_x_dim * NoC_y_dim * cores * nodes);
 }  // end of myNetY()
 
 
@@ -77,7 +80,7 @@ Comm_pattern::myNetY(void)
 int
 Comm_pattern::myNoCX(void)
 {
-    return (my_rank % (NoC_x_dim * NoC_y_dim * cores)) % NoC_x_dim;
+    return (my_rank % (NoC_x_dim * NoC_y_dim * cores * nodes)) % NoC_x_dim;
 }  // end of myNoCX()
 
 
@@ -85,7 +88,7 @@ Comm_pattern::myNoCX(void)
 int
 Comm_pattern::myNoCY(void)
 {
-    return (my_rank % (NoC_x_dim * NoC_y_dim * cores)) / (NoC_x_dim * cores);
+    return (my_rank % (NoC_x_dim * NoC_y_dim * cores * nodes)) / (NoC_x_dim * cores);
 }  // end of myNoCY()
 
 
@@ -122,7 +125,7 @@ Comm_pattern::NoCHeight(void)
 
 
 
-// Cores per router
+// Cores per NoC router
 int
 Comm_pattern::NumCores(void)
 {
@@ -143,7 +146,8 @@ int payload_len;
 
 
     if (sst_event->dest != my_rank)   {
-	_abort(comm_pattern, "%s dest %d != my rank %d\n", err_str, sst_event->dest, my_rank);
+	_abort(comm_pattern, "%s dest %d != my rank %d. Msg ID 0x%08lx\n",
+	    err_str, sst_event->dest, my_rank, sst_event->msg_id);
     }
 
     sm.event= sst_event->GetRoutine();

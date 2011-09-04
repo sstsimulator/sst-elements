@@ -272,7 +272,7 @@ router_t *r;
 ** Traverse the list of ports connected to other routers
 */
 int
-next_router_link(int router, int *link_id, int *port)
+next_router_link(int router, int *link_id, int *lport, int *rport)
 {
 
 router_t *r;
@@ -294,18 +294,27 @@ link_t *l;
 	return 0;
     }
 
-    if (router == l->left_router)   {
-	/* router is connected to the left side */
-	*port= l->left_router_port;
-    } else if (router == l->right_router)   {
-	*port= l->right_router_port;
-    } else   {
+    if ((router != l->left_router) && (router != l->right_router))   {
 	/* Something is wrong */
 	fprintf(stderr, "Cannot find router %d on either end of this link!\n", router);
 	exit(8);
     }
 
-    *link_id= l->id;
+    if (router == l->left_router)   {
+	*lport= l->left_router_port;
+	*rport= l->right_router_port;
+    } else   {
+	*lport= l->right_router_port;
+	*rport= l->left_router_port;
+    }
+
+    if (l->left_router == l->right_router)   {
+	/* This link loops back to the same router. SST doesn't like that. */
+	/* Return success, but mark it */
+	*link_id= -1;
+    } else   {
+	*link_id= l->id;
+    }
 
     r->next_link++;
     return 1;
@@ -508,7 +517,7 @@ int i;
 
     if (i >= MAX_NVRAM)   {
 	fprintf(stderr, "Out of NVRAM port slots! Cannot handle more than %d NVRAM "
-	    "per router.\n", MAX_NVRAM);
+	    "per aggregator (node).\n", MAX_NVRAM);
 	exit(8);
     }
 
