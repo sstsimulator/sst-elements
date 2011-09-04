@@ -165,18 +165,18 @@ class Routermodel : public IntrospectedComponent {
 		    it++;
 		}
 
-		if (it != params.end())   {
+		if (it == params.end() || !it->second.compare("unused"))   {
+		    /* Push a dummy port, so port numbering and order in list match */
+		    strcpy(link_name, "Unused_port");
+		    new_port.link= NULL;
+		    _ROUTER_MODEL_DBG(2, "Recorded unused port %d, link \"%s\", on router %s\n",
+			i, link_name, component_name.c_str());
+		} else   {
 		    strcpy(link_name, it->second.c_str());
 		    new_port.link= configureLink(link_name, new Event::Handler<Routermodel,int>
 					(this, &Routermodel::handle_port_events, i));
 		    new_port.link->setDefaultTimeBase(tc);
 		    _ROUTER_MODEL_DBG(2, "Added handler for port %d, link \"%s\", on router %s\n",
-			i, link_name, component_name.c_str());
-		} else   {
-		    /* Push a dummy port, so port numbering and order in list match */
-		    strcpy(link_name, "Unused_port");
-		    new_port.link= NULL;
-		    _ROUTER_MODEL_DBG(2, "Recorded unused port %d, link \"%s\", on router %s\n",
 			i, link_name, component_name.c_str());
 		}
 
