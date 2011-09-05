@@ -40,20 +40,6 @@ class Comm_pattern : public Component {
 	    // Some defaults
 	    comm_pattern_debug= 0;
 	    my_rank= -1;
-	    net_latency= 0;
-	    net_bandwidth= 0;
-	    node_latency= 0;
-	    node_bandwidth= 0;
-	    compute_time= 0;
-	    application_end_time= 0;
-	    exchange_msg_len= 128;
-	    cores= -1;
-	    nodes= -1;
-	    chckpt_method= CHCKPT_NONE;
-	    chckpt_interval= 0;
-	    envelope_size= 64;
-	    chckpt_size= 0;
-	    msg_write_time= 0;
 
 
 
@@ -67,86 +53,6 @@ class Comm_pattern : public Component {
 
 		if (!it->first.compare("rank"))   {
 		    sscanf(it->second.c_str(), "%d", &my_rank);
-		}
-
-		if (!it->first.compare("x_dim"))   {
-		    sscanf(it->second.c_str(), "%d", &x_dim);
-		}
-
-		if (!it->first.compare("y_dim"))   {
-		    sscanf(it->second.c_str(), "%d", &y_dim);
-		}
-
-		if (!it->first.compare("NoC_x_dim"))   {
-		    sscanf(it->second.c_str(), "%d", &NoC_x_dim);
-		}
-
-		if (!it->first.compare("NoC_y_dim"))   {
-		    sscanf(it->second.c_str(), "%d", &NoC_y_dim);
-		}
-
-		if (!it->first.compare("cores"))   {
-		    sscanf(it->second.c_str(), "%d", &cores);
-		}
-
-		if (!it->first.compare("nodes"))   {
-		    sscanf(it->second.c_str(), "%d", &nodes);
-		}
-
-		if (!it->first.compare("net_latency"))   {
-		    sscanf(it->second.c_str(), "%lu", &net_latency);
-		}
-
-		if (!it->first.compare("net_bandwidth"))   {
-		    sscanf(it->second.c_str(), "%lu", &net_bandwidth);
-		}
-
-		if (!it->first.compare("node_latency"))   {
-		    sscanf(it->second.c_str(), "%lu", &node_latency);
-		}
-
-		if (!it->first.compare("node_bandwidth"))   {
-		    sscanf(it->second.c_str(), "%lu", &node_bandwidth);
-		}
-
-		if (!it->first.compare("compute_time"))   {
-		    sscanf(it->second.c_str(), "%lu", &compute_time);
-		}
-
-		if (!it->first.compare("application_end_time"))   {
-		    sscanf(it->second.c_str(), "%lu", &application_end_time);
-		}
-
-		if (!it->first.compare("exchange_msg_len"))   {
-		    sscanf(it->second.c_str(), "%d", &exchange_msg_len);
-		}
-
-		if (!it->first.compare("chckpt_method"))   {
-		    if (!it->second.compare("none"))   {
-			chckpt_method= CHCKPT_NONE;
-		    } else if (!it->second.compare("coordinated"))   {
-			chckpt_method= CHCKPT_COORD;
-		    } else if (!it->second.compare("uncoordinated"))   {
-			chckpt_method= CHCKPT_UNCOORD;
-		    } else if (!it->second.compare("distributed"))   {
-			chckpt_method= CHCKPT_RAID;
-		    }
-		}
-
-		if (!it->first.compare("chckpt_interval"))   {
-		    sscanf(it->second.c_str(), "%lu", &chckpt_interval);
-		}
-
-		if (!it->first.compare("envelope_size"))   {
-		    sscanf(it->second.c_str(), "%d", &envelope_size);
-		}
-
-		if (!it->first.compare("msg_write_time"))   {
-		    sscanf(it->second.c_str(), "%lu", &msg_write_time);
-		}
-
-		if (!it->first.compare("chckpt_size"))   {
-		    sscanf(it->second.c_str(), "%d", &chckpt_size);
 		}
 
 		it++;
@@ -214,15 +120,11 @@ class Comm_pattern : public Component {
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(x_dim, y_dim, NoC_x_dim, NoC_y_dim, my_rank, cores, nodes,
-		    net, self_link, NoC, nvram, storage,
-		    net_latency, net_bandwidth, node_latency, node_bandwidth,
-		    chckpt_method, chckpt_size, chckpt_interval, envelope_size))   {
+	    if (!common->init(params, net, self_link, NoC, nvram, storage))   {
 		_ABORT(Comm_pattern, "Patterns->init() failed!\n");
 	    }
 
-	    num_ranks= x_dim * y_dim * nodes * NoC_x_dim * NoC_y_dim * cores;
-
+	    num_ranks= common->get_total_cores();
 	    SM= new State_machine(my_rank);
 
         }  // Done with initialization
@@ -230,8 +132,8 @@ class Comm_pattern : public Component {
         ~Comm_pattern()
 	{ }
 
+
 	int my_rank;
-	// FIXME: num_ranks and myNetX() etc. should all be variables or methods, not mixed
 	int num_ranks;
 
 	int myNetX(void);
@@ -264,28 +166,7 @@ class Comm_pattern : public Component {
 	Patterns *common;
 	int comm_pattern_debug;
 
-	int cores;
-	int nodes;
-	int x_dim;
-	int y_dim;
-	int NoC_x_dim;
-	int NoC_y_dim;
-	SimTime_t net_latency;
-	SimTime_t net_bandwidth;
-	SimTime_t node_latency;
-	SimTime_t node_bandwidth;
-	SimTime_t compute_time;
-	SimTime_t application_end_time;
-	int exchange_msg_len;
-	chckpt_t chckpt_method;
-	SimTime_t chckpt_interval;
-	int chckpt_size;
-	int envelope_size;
-	SimTime_t msg_write_time;
 
-	// Precomputed values
-	int left, right, up, down;
-	int chckpt_steps;
 
 	// Interfacing with SST
         Params_t params;

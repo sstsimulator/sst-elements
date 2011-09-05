@@ -22,6 +22,7 @@
 #endif
 
 #include <sst_config.h>
+#include <sst/core/component.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 
@@ -31,28 +32,6 @@
 #define TIME_BASE_FACTOR	1000000000.0
 
 
-// Event types sent among pattern generators
-typedef enum {START,		// Enter first state of state machine
-              COMPUTE_DONE,	// Finished a compute step
-	      RECEIVE,		// Received a message
-	      CHCKPT_DONE,	// A checkpoint has been written
-	      FAIL,		// A failure occured on this rank
-	      LOG_MSG_DONE,	// Done logging a message to stable (local) storage
-	      ENV_LOG_DONE,	// Envelope write to log is done
-	      ENTER_WAIT,	// Wait for four receives from neighbors
-	      BCAST_DATA,	// Deal with a broadcast
-	      REDUCE_DATA,	// Deal with a reduce
-
-	      // Make sure you set this at 200 so we can talk to the bit_bucket component
-	      BIT_BUCKET_WRITE_START= 200,
-	      BIT_BUCKET_WRITE_DONE,
-	      BIT_BUCKET_READ_START,
-	      BIT_BUCKET_READ_DONE
-} pattern_event_t;
-
-
-// The checkpoint methods we support
-typedef enum {CHCKPT_NONE, CHCKPT_COORD, CHCKPT_UNCOORD, CHCKPT_RAID} chckpt_t;
 
 class Patterns   {
     public:
@@ -66,47 +45,51 @@ class Patterns   {
 	    NoC_height= -1;
 	    total_cores= 1;
 	    my_rank= -1;
-	    net_latency= 0;
-	    net_bandwidth= 0;
 	    msg_seq= 1;
 	}
 
-	int init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores,
-		int nodes,
+	int init(SST::Component::Params_t& params, 
 		SST::Link *net_link, SST::Link *self_link,
-		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
-		SST::SimTime_t net_lat, SST::SimTime_t net_bw, SST::SimTime_t node_lat,
-		SST::SimTime_t node_bw, chckpt_t method, int chckpt_size,
-		SST::SimTime_t chckpt_interval, int envelope_size);
+		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link);
 
-	void send(int dest, int len);
-	void send(SST::SimTime_t start_delay, int dest, int len);
-	void send(SST::SimTime_t start_delay, int dest, int len, int event_type, uint32_t tag);
-	void event_send(int dest, pattern_event_t event, int32_t tag= 0, SST::SimTime_t delay= 0,
-		uint32_t msg_len= 0, const char *payload= NULL, int payload_len= 0);
-	void storage_write(int data_size, pattern_event_t return_event);
-	void nvram_write(int data_size, pattern_event_t return_event);
+	void event_send(int dest, int event, int32_t tag= 0, uint32_t msg_len= 0,
+		const char *payload= NULL, int payload_len= 0);
+	void storage_write(int data_size, int return_event);
+	void nvram_write(int data_size, int return_event);
+
+	int get_total_cores(void)   {return total_cores;}
+	int get_mesh_width(void)   {return mesh_width;}
+	int get_mesh_height(void)   {return mesh_height;}
+	int get_NoC_width(void)   {return NoC_width;}
+	int get_NoC_height(void)   {return NoC_height;}
+	int get_my_rank(void)   {return my_rank;}
+	int get_cores_per_NoC_router(void)   {return cores_per_NoC_router;}
+	int get_cores_per_Net_router(void)   {return cores_per_Net_router;}
+	int get_num_router_nodes(void)   {return num_router_nodes;}
+	int get_cores_per_node(void)   {return cores_per_node;}
 
 
     private:
+	void NoCsend(SST::CPUNicEvent *e, int my_rank, int dest_rank);
+	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank);
+
 	SST::Link *my_net_link;
 	SST::Link *my_self_link;
 	SST::Link *my_NoC_link;
 	SST::Link *my_nvram_link;
 	SST::Link *my_storage_link;
+
+	int envelope_size;
 	int mesh_width;
 	int mesh_height;
 	int NoC_width;
 	int NoC_height;
 	int my_rank;
 	int total_cores;
-	int cores_per_router;
+	int cores_per_NoC_router;
+	int cores_per_Net_router;
 	int cores_per_node;
 	int num_router_nodes;
-	SST::SimTime_t net_bandwidth;	// In bytes per second
-	SST::SimTime_t node_bandwidth;	// In bytes per second
-	SST::SimTime_t net_latency;	// in nano seconds FIXME: Variable not needed
-	SST::SimTime_t node_latency;	// in nano seconds FIXME: Variable not needed
 	uint64_t msg_seq;		// Each message event gets a unique number for debugging
 
 } ;  // end of class Patterns

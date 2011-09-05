@@ -677,9 +677,6 @@ void
 Ghost_pattern::transition_to_COMPUTE(void)
 {
 
-SimTime_t delay;
-
-
     compute_segment_start= getCurrentSimTime();
 
     if (application_end_time - application_time_so_far > compute_time)   {
@@ -692,7 +689,7 @@ SimTime_t delay;
 
     // Send ourselves a COMPUTE_DONE event
     state= COMPUTE;
-    common->event_send(my_rank, COMPUTE_DONE, delay);
+    common->event_send(my_rank, COMPUTE_DONE);
 
 }  // end of transition_to_COMPUTE()
 

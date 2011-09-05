@@ -37,38 +37,54 @@ static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height);
 ** SST xml file.
 */
 int
-Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, int nodes,
-	Link *net_link,
-	Link *self_link, SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
-	SimTime_t net_lat, SimTime_t net_bw, SimTime_t node_lat, SimTime_t node_bw,
-	chckpt_t method, int chckpt_size, SimTime_t chckpt_interval,
-	int envelope_size)
+Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link,
+	SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link)
 {
 
-    total_cores= x * y * nodes * NoC_x_dim * NoC_y_dim * cores;
+    SST::Component::Params_t::iterator it= params.begin();
+    while (it != params.end())   {
+	if (!it->first.compare("rank"))   {
+	    sscanf(it->second.c_str(), "%d", &my_rank);
+	}
 
-    if ((rank < 0) || (rank >= total_cores))   {
-	fprintf(stderr, "My rank not 0 <= %d < %d (cores)\n", rank, total_cores);
-	return FALSE;
+	if (!it->first.compare("x_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &mesh_width);
+	}
+
+	if (!it->first.compare("y_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &mesh_height);
+	}
+
+	if (!it->first.compare("NoC_x_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &NoC_width);
+	}
+
+	if (!it->first.compare("NoC_y_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &NoC_height);
+	}
+
+	if (!it->first.compare("cores"))   {
+	    sscanf(it->second.c_str(), "%d", &cores_per_NoC_router);
+	}
+
+	if (!it->first.compare("nodes"))   {
+	    sscanf(it->second.c_str(), "%d", &num_router_nodes);
+	}
+
+	if (!it->first.compare("envelope_size"))   {
+	    sscanf(it->second.c_str(), "%d", &envelope_size);
+	}
+
+	it++;
     }
 
-    if (net_lat == 0)   {
-	fprintf(stderr, "Network latency in xml file must be specified\n");
-	return FALSE;
-    }
+    // FIXME: Do some more thorough input checking here; e.g., cores and nodes must be > 0
+    total_cores= mesh_width * mesh_height * num_router_nodes * NoC_width * NoC_height * cores_per_NoC_router;
+    cores_per_node= NoC_width * NoC_height * cores_per_NoC_router;
+    cores_per_Net_router= cores_per_node * num_router_nodes;
 
-    if (net_bw == 0)   {
-	fprintf(stderr, "Network bandwidth in xml file must be specified\n");
-	return FALSE;
-    }
-
-    if (node_lat == 0)   {
-	fprintf(stderr, "Node latency in xml file must be specified\n");
-	return FALSE;
-    }
-
-    if (node_bw == 0)   {
-	fprintf(stderr, "Node bandwidth in xml file must be specified\n");
+    if ((my_rank < 0) || (my_rank >= total_cores))   {
+	fprintf(stderr, "My rank not 0 <= %d < %d (cores)\n", my_rank, total_cores);
 	return FALSE;
     }
 
@@ -78,92 +94,18 @@ Patterns::init(int x, int y, int NoC_x_dim, int NoC_y_dim, int rank, int cores, 
     my_nvram_link= nvram_link;
     my_storage_link= storage_link;
 
-    mesh_width= x;
-    mesh_height= y;
-    NoC_width= NoC_x_dim;
-    NoC_height= NoC_y_dim;
-    my_rank= rank;
-    net_latency= net_lat;
-    net_bandwidth= net_bw;
-    node_latency= node_lat;
-    node_bandwidth= node_bw;
-    num_router_nodes= nodes;
-    cores_per_router= cores;
-    cores_per_node= NoC_width * NoC_height * cores;
 
     if (my_rank == 0)   {
 	printf("#  |||  mesh x %d, y %d, with %d nodes each = %d nodes\n",
 	    mesh_width, mesh_height, num_router_nodes, mesh_width * mesh_height * num_router_nodes);
 	printf("#  |||  NoC x %d, y %d, with %d cores each\n",
-	    NoC_x_dim, NoC_y_dim, cores_per_router);
+	    NoC_width, NoC_height, cores_per_NoC_router);
 	printf("#  |||  Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
-	printf("#  |||  Network bandwidth %.3f GB/s, latency %.9f s\n",
-	    (double)net_bandwidth / TIME_BASE_FACTOR, (double)net_latency / TIME_BASE_FACTOR);
-	printf("#  |||  Node bandwidth    %.3f GB/s, latency %.9f s\n",
-	    (double)node_bandwidth / TIME_BASE_FACTOR, (double)node_latency / TIME_BASE_FACTOR);
-	printf("#  |||  Checkpoint method is ");
-	switch (method)   {
-	    case CHCKPT_NONE:
-		printf("none\n");
-		break;
-	    case CHCKPT_COORD:
-		printf("coordinated\n");
-		printf("#  |||  Checkpoint every %.9f s\n", (double)chckpt_interval / TIME_BASE_FACTOR);
-		break;
-	    case CHCKPT_UNCOORD:
-		printf("uncoordinated with message logging\n");
-		break;
-	    case CHCKPT_RAID:
-		printf("distributed\n");
-		break;
-	}
     }
 
     return TRUE; /* success */
 
 }  /* end of init() */
-
-
-
-/*
-** Send "len" bytes to rank "dest"
-*/
-void
-Patterns::send(int dest, int len)
-{
-    send(0, dest, len);
-}  /* end of send() */
-
-
-void
-Patterns::send(SST::SimTime_t start_delay, int dest, int len, int event_type, uint32_t tag)
-{
-    event_send(dest, (pattern_event_t)event_type, tag, start_delay, len);
-}  /* end of send() */
-
-
-void
-Patterns::send(SST::SimTime_t start_delay, int dest, int len)
-{
-
-SimTime_t delay;
-
-
-    // This is a crude approximation of how long this message would
-    // take to transmit. We let SST handle latency by specyfing it
-    // on the links in the xml file
-    //
-    // net_bandwidth is in bytes per second
-    if ((my_rank / total_cores) != (dest / total_cores))   {
-	// This message goes off node
-	delay= ((SimTime_t)len * TIME_BASE_FACTOR) / net_bandwidth + start_delay;
-    } else   {
-	// This is an intra-node message
-	delay= ((SimTime_t)len * TIME_BASE_FACTOR) / node_bandwidth + start_delay;
-    }
-    event_send(dest, RECEIVE, 0, delay, len);
-
-}  /* end of send() */
 
 
 
@@ -193,13 +135,12 @@ SimTime_t delay;
 ** No actual data is sent.
 */
 void
-Patterns::event_send(int dest, pattern_event_t event, int32_t tag, SimTime_t delay, uint32_t msg_len,
+Patterns::event_send(int dest, int event, int32_t tag, uint32_t msg_len,
 	const char *payload, int payload_len)
 {
 
 CPUNicEvent *e;
 int my_node, dest_node;
-int my_router, dest_router;
 
 
     // Create an event and fill in the event info
@@ -219,109 +160,22 @@ int my_router, dest_router;
 
     if (dest == my_rank)   {
 	// No need to go through the network for this
-	my_self_link->Send(delay, e);
+	// FIXME: Shouldn't this involve some sort of delay?
+	my_self_link->Send(e);
 	return;
     }
 
     /* Is dest within our NoC? */
-    my_node= my_rank / (NoC_width * NoC_height * cores_per_router);
-    dest_node= dest / (NoC_width * NoC_height * cores_per_router);
+    my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+    dest_node= dest / (NoC_width * NoC_height * cores_per_NoC_router);
 
     if (my_node == dest_node)   {
 	/* Route locally */
-
-	/*
-	** For cores that share a router we'll assume that they
-	** can communicate with each other much faster; e.g., through
-	** a shared L2 cache. We mark that traffic so the router can
-	** deal with it seperatly.
-	*/
-	my_router= my_rank / cores_per_router;
-	dest_router= dest / cores_per_router;
-	if (my_router != dest_router)   {
-	    // This message travels through the NoC
-	    e->local_traffic= false;
-	} else   {
-	    // This is a message among cores of the same router
-	    e->local_traffic= true;
-	}
-
-	gen_route(e, my_router, dest_router, NoC_width, NoC_height);
-
-	// Exit to the local (NIC) pattern generator
-	e->route.push_back(FIRST_LOCAL_PORT + (dest % cores_per_router));
-
-#define ROUTE_DEBUG 1
-#undef ROUTE_DEBUG
-#if ROUTE_DEBUG
-    {
-	char route[128];
-	char tmp[128];
-	route[0]= 0;
-	tmp[0]= 0;
-	std::vector<int>::iterator itNum;
-
-	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    sprintf(tmp, "%s.%d", route, *itNum);
-	    strcpy(route, tmp);
-	}
-
-	fprintf(stderr, "NoC Event %d from %d --> %d, delay %lu, route %s\n", event,
-	     my_rank, dest, (uint64_t)delay, route);
-    }
-#endif  // ROUTE_DEBUG
-
-	// Send it
-	// FIXME: Multiple sends during processing of a single events should be
-	// delayed, since they don't really ocur all at exactly the same nano second.
-	// However, since they go out on the same link, the router at the other end
-	// will delay them according to their length and link bandwidth.
-	my_NoC_link->Send(delay, e);
+	NoCsend(e, my_rank, dest);
 
     } else   {
 	/* Route off chip */
-	e->local_traffic= false;
-
-	/* On the network aggregator we'll have to go out port 0 to reach the mesh */
-	e->route.push_back(0);
-
-	my_router= my_node / num_router_nodes;
-	dest_router= dest_node / num_router_nodes;
-/* fprintf(stderr, "Net from %d to %d gen_route(my router %d, dest router %d, width %d, height %d)\n", my_rank, dest, my_router, dest_router, mesh_width, mesh_height); */
-	gen_route(e, my_router, dest_router, mesh_width, mesh_height);
-
-
-	// Exit to the local node (aggregator on that node
-	e->route.push_back(FIRST_LOCAL_PORT +
-		((dest % (num_router_nodes * cores_per_node)) / cores_per_node));
-/* fprintf(stderr, "Net from %d to %d, exit port %d\n", my_rank, dest, FIRST_LOCAL_PORT + ((dest % (num_router_nodes * cores_per_node)) / cores_per_node)); */
-
-	/*
-	** We come out at the aggregator on the destination node.
-	** Figure out which port to go out to reach the destination core
-	** Port 0 is where we came in
-	*/
-	e->route.push_back(1 + (dest % cores_per_node));
-
-#if ROUTE_DEBUG
-    {
-	char route[128];
-	char tmp[128];
-	route[0]= 0;
-	tmp[0]= 0;
-	std::vector<int>::iterator itNum;
-
-	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    sprintf(tmp, "%s.%d", route, *itNum);
-	    strcpy(route, tmp);
-	}
-
-	fprintf(stderr, "Net Event %d from %d --> %d, delay %lu, route %s\n", event,
-	     my_rank, dest, (uint64_t)delay, route);
-    }
-#endif  // ROUTE_DEBUG
-
-	my_net_link->Send(delay, e);
+	Netsend(e, my_node, dest_node, dest);
     }
 
 }  /* end of event_send() */
@@ -332,7 +186,7 @@ int my_router, dest_router;
 ** Send a chunk of data to our stable storage device.
 */
 void
-Patterns::storage_write(int data_size, pattern_event_t return_event)
+Patterns::storage_write(int data_size, int return_event)
 {
 
 CPUNicEvent *e;
@@ -343,7 +197,8 @@ uint64_t delay;
 
     // Create an event and fill in the event info
     e= new CPUNicEvent();
-    e->SetRoutine(BIT_BUCKET_WRITE_START);
+    assert(0);  // FIXME: We need to SetRoutine()
+    // e->SetRoutine(BIT_BUCKET_WRITE_START);
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= data_size;
@@ -358,7 +213,7 @@ uint64_t delay;
     e->route.push_back(0);
 
     // Coming back: First hop is to the right node
-    my_node= my_rank / (NoC_width * NoC_height * cores_per_router);
+    my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
     e->reverse_route.push_back(my_node + 1);	// Port 0 is for the SSD
 
     // From the aggregator, pick the right core
@@ -377,7 +232,7 @@ uint64_t delay;
 ** Send a chunk of data to our local NVRAM
 */
 void
-Patterns::nvram_write(int data_size, pattern_event_t return_event)
+Patterns::nvram_write(int data_size, int return_event)
 {
 
 CPUNicEvent *e;
@@ -387,7 +242,8 @@ uint64_t delay;
 
     // Create an event and fill in the event info
     e= new CPUNicEvent();
-    e->SetRoutine(BIT_BUCKET_WRITE_START);
+    // assert(0);  // FIXME: We need to SetRoutine()
+    // e->SetRoutine(BIT_BUCKET_WRITE_START);
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= data_size;
@@ -415,6 +271,127 @@ uint64_t delay;
 ** Some local functions
 ** -----------------------------------------------------------------------------
 */
+
+
+
+/*
+** Send a message into the Network on Chip with the appropriate
+** delays.
+*/
+void
+Patterns::NoCsend(CPUNicEvent *e, int my_rank, int dest_rank)
+{
+
+SimTime_t delay= 0;
+int my_router, dest_router;
+
+
+    /*
+    ** For cores that share a router we'll assume that they
+    ** can communicate with each other much faster; e.g., through
+    ** a shared L2 cache. We mark that traffic so the router can
+    ** deal with it seperatly.
+    */
+    my_router= my_rank / cores_per_NoC_router;
+    dest_router= dest_rank / cores_per_NoC_router;
+    if (my_router != dest_router)   {
+	// This message travels through the NoC
+	e->local_traffic= false;
+    } else   {
+	// This is a message among cores of the same router
+	e->local_traffic= true;
+    }
+
+    gen_route(e, my_router, dest_router, NoC_width, NoC_height);
+
+    // Exit to the local (NIC) pattern generator
+    e->route.push_back(FIRST_LOCAL_PORT + (dest_rank % cores_per_NoC_router));
+
+#define ROUTE_DEBUG 1
+#undef ROUTE_DEBUG
+#if ROUTE_DEBUG
+{
+    char route[128];
+    char tmp[128];
+    route[0]= 0;
+    tmp[0]= 0;
+    std::vector<int>::iterator itNum;
+
+    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	sprintf(tmp, "%s.%d", route, *itNum);
+	strcpy(route, tmp);
+    }
+
+    fprintf(stderr, "NoC Event %d from %d --> %d, delay %lu, route %s\n", event,
+	 my_rank, dest_rank, (uint64_t)delay, route);
+}
+#endif  // ROUTE_DEBUG
+
+    // Send it
+    // FIXME: Multiple sends during processing of a single events should be
+    // delayed, since they don't really ocur all at exactly the same nano second.
+    // However, since they go out on the same link, the router at the other end
+    // will delay them according to their length and link bandwidth.
+    my_NoC_link->Send(delay, e);
+
+}  // end of NoCsend()
+
+
+
+/*
+** Send a message into the global Network with the
+** appropriate delays.
+*/
+void
+Patterns::Netsend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank)
+{
+
+SimTime_t delay= 0;
+int my_router, dest_router;
+
+
+	e->local_traffic= false;
+
+	/* On the network aggregator we'll have to go out port 0 to reach the mesh */
+	e->route.push_back(0);
+
+	my_router= my_node / num_router_nodes;
+	dest_router= dest_node / num_router_nodes;
+	gen_route(e, my_router, dest_router, mesh_width, mesh_height);
+
+
+	// Exit to the local node (aggregator on that node
+	e->route.push_back(FIRST_LOCAL_PORT +
+		((dest_rank % (num_router_nodes * cores_per_node)) / cores_per_node));
+
+	/*
+	** We come out at the aggregator on the destination node.
+	** Figure out which port to go out to reach the destination core
+	** Port 0 is where we came in
+	*/
+	e->route.push_back(1 + (dest_rank % cores_per_node));
+
+#if ROUTE_DEBUG
+    {
+	char route[128];
+	char tmp[128];
+	route[0]= 0;
+	tmp[0]= 0;
+	std::vector<int>::iterator itNum;
+
+	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	    sprintf(tmp, "%s.%d", route, *itNum);
+	    strcpy(route, tmp);
+	}
+
+	fprintf(stderr, "Net Event %d from %d --> %d, delay %lu, route %s\n", event,
+	     my_rank, dest_rank, (uint64_t)delay, route);
+    }
+#endif  // ROUTE_DEBUG
+
+	my_net_link->Send(delay, e);
+
+}  // end of Netsend()
 
 
 

@@ -28,13 +28,8 @@ void
 Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 {
 
-// FIXME: We need a better model than 2440 for node latency!
-SimTime_t node_latency= 2440;
-
-
-    common->event_send(dest, (pattern_event_t)sm_event.event,
-	SM->SM_current_tag(),
-	node_latency, len,
+    common->event_send(dest, sm_event.event,
+	SM->SM_current_tag(), len,
 	(const char *)sm_event.payload,
 	sm_event.payload_size);
 
@@ -51,28 +46,36 @@ uint32_t tag= 0;
 
 
     tag= SM->SM_current_tag();
-    // FIXME: We need a more generic event send so the cast can go away
-    common->event_send(my_rank, (pattern_event_t)event_type, tag, 0.0);
+    common->event_send(my_rank, event_type, tag);
 
 }  // end of self_event_send()
 
 
 
-// This is mesg router X and doesn't take nodes into account!
+// This is the width of the main network and doesn't take nodes into account!
 int
 Comm_pattern::myNetX(void)
 {
-    return (my_rank % (x_dim * NoC_x_dim * cores * nodes)) /
-	(NoC_x_dim * NoC_y_dim * cores * nodes);
+
+int width_in_cores;
+
+
+    width_in_cores= common->get_mesh_width() *
+		    common->get_NoC_width() *
+		    common->get_cores_per_NoC_router() *
+		    common->get_num_router_nodes();
+
+    return (my_rank % width_in_cores) / common->get_cores_per_Net_router();
+
 }  // end of myNetX()
 
 
 
-// This is mesg router Y and doesn't take nodes into account!
+// This is the height of the main network and doesn't take nodes into account!
 int
 Comm_pattern::myNetY(void)
 {
-    return my_rank / (x_dim * NoC_x_dim * NoC_y_dim * cores * nodes);
+    return my_rank / (common->get_mesh_width() * common->get_cores_per_Net_router());
 }  // end of myNetY()
 
 
@@ -80,7 +83,7 @@ Comm_pattern::myNetY(void)
 int
 Comm_pattern::myNoCX(void)
 {
-    return (my_rank % (NoC_x_dim * NoC_y_dim * cores * nodes)) % NoC_x_dim;
+    return (my_rank % common->get_cores_per_Net_router()) % common->get_NoC_width();
 }  // end of myNoCX()
 
 
@@ -88,7 +91,10 @@ Comm_pattern::myNoCX(void)
 int
 Comm_pattern::myNoCY(void)
 {
-    return (my_rank % (NoC_x_dim * NoC_y_dim * cores * nodes)) / (NoC_x_dim * cores);
+
+    return (my_rank % common->get_cores_per_NoC_router()) /
+	(common->get_NoC_width() * common->get_cores_per_NoC_router());
+
 }  // end of myNoCY()
 
 
@@ -96,7 +102,7 @@ Comm_pattern::myNoCY(void)
 int
 Comm_pattern::NetWidth(void)
 {
-    return x_dim;
+    return common->get_mesh_width();
 }  // end of NetWidth()
 
 
@@ -104,7 +110,7 @@ Comm_pattern::NetWidth(void)
 int
 Comm_pattern::NetHeight(void)
 {
-    return y_dim;
+    return common->get_mesh_height();
 }  // end of NetHeight()
 
 
@@ -112,7 +118,7 @@ Comm_pattern::NetHeight(void)
 int
 Comm_pattern::NoCWidth(void)
 {
-    return NoC_x_dim;
+    return common->get_NoC_width();
 }  // end of NoCWidth()
 
 
@@ -120,7 +126,7 @@ Comm_pattern::NoCWidth(void)
 int
 Comm_pattern::NoCHeight(void)
 {
-    return NoC_y_dim;
+    return common->get_NoC_height();
 }  // end of NoCHeight()
 
 
@@ -129,7 +135,7 @@ Comm_pattern::NoCHeight(void)
 int
 Comm_pattern::NumCores(void)
 {
-    return cores;
+    return common->get_cores_per_NoC_router();
 }  // end of NumCores()
 
 
