@@ -1,3 +1,5 @@
+- We have a memory leak. Allreduce on large number of nodes shows it clearly.
+
 - Rename Patterns object something like machine or arch
     Rexport its methods directly, instead of through more methods in comm_patterns.
 
