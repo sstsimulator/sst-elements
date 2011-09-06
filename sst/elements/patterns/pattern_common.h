@@ -36,23 +36,22 @@
 class Patterns   {
     public:
 	Patterns()   {
-	    // Nothing to do for now
 	    my_net_link= NULL;
 	    my_self_link= NULL;
-	    mesh_width= -1;
-	    mesh_height= -1;
-	    NoC_width= -1;
-	    NoC_height= -1;
-	    total_cores= 1;
-	    my_rank= -1;
-	    msg_seq= 1;
+	    my_NoC_link= NULL;
+	    my_nvram_link= NULL;
+	    my_storage_link= NULL;
+	}
+
+	~Patterns()   {
+	    stat_print();
 	}
 
 	int init(SST::Component::Params_t& params, 
 		SST::Link *net_link, SST::Link *self_link,
 		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link);
 
-	void event_send(int dest, int event, int32_t tag= 0, uint32_t msg_len= 0,
+	void event_send(int dest, int event, SST::SimTime_t CurrentSimTime, int32_t tag= 0, uint32_t msg_len= 0,
 		const char *payload= NULL, int payload_len= 0);
 	void storage_write(int data_size, int return_event);
 	void nvram_write(int data_size, int return_event);
@@ -70,8 +69,11 @@ class Patterns   {
 
 
     private:
-	void NoCsend(SST::CPUNicEvent *e, int my_rank, int dest_rank);
-	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank);
+	void NoCsend(SST::CPUNicEvent *e, int my_rank, int dest_rank,
+		SST::SimTime_t CurrentSimTime);
+	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
+		SST::SimTime_t CurrentSimTime);
+	void stat_print(void);
 
 	SST::Link *my_net_link;
 	SST::Link *my_self_link;
@@ -79,18 +81,41 @@ class Patterns   {
 	SST::Link *my_nvram_link;
 	SST::Link *my_storage_link;
 
-	int envelope_size;
+	// Input parameters for the machine architecture
 	int mesh_width;
 	int mesh_height;
 	int NoC_width;
 	int NoC_height;
 	int my_rank;
-	int total_cores;
 	int cores_per_NoC_router;
+	int num_router_nodes;
+
+	// Calculated values
+	int total_cores;
 	int cores_per_Net_router;
 	int cores_per_node;
-	int num_router_nodes;
-	uint64_t msg_seq;		// Each message event gets a unique number for debugging
+
+	// Input parameters for the NIC models
+	int envelope_size;
+	SST::SimTime_t NetNIClatency;
+	uint64_t NetNICbandwidth;
+	SST::SimTime_t NetNICgap;
+	SST::SimTime_t NoCNIClatency;
+	uint64_t NoCNICbandwidth;
+	SST::SimTime_t NoCNICgap;
+
+	// Each message event gets a unique number for debugging
+	uint64_t msg_seq;
+
+	// NIC model: When can next message leave?
+	SST::SimTime_t NextNetNICslot;
+	SST::SimTime_t NextNoCNICslot;
+
+	// Statistics
+	long long int stat_NoCNICsend;
+	long long int stat_NoCNICbusy;
+	long long int stat_NetNICsend;
+	long long int stat_NetNICbusy;
 
 } ;  // end of class Patterns
 

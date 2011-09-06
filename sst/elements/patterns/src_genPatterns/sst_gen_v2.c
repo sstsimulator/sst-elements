@@ -107,11 +107,7 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 void
 sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
-	int cores, int nodes, uint64_t net_lat,
-        uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
-	uint64_t app_time, int msg_len, char *method,
-	uint64_t chckpt_interval, int envelope_size, int chckpt_size,
-	char *pattern_name)
+	int cores, int nodes, int envelope_size, char *pattern_name)
 {
 
     if (sstfile == NULL)   {
@@ -125,23 +121,15 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int No
     fprintf(sstfile, "\t\t<NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim);
     fprintf(sstfile, "\t\t<cores> %d </cores>\n", cores);
     fprintf(sstfile, "\t\t<nodes> %d </nodes>\n", cores);
-    fprintf(sstfile, "\t\t<net_latency> %lu </net_latency>\n", net_lat);
-    fprintf(sstfile, "\t\t<net_bandwidth> %lu </net_bandwidth>\n", net_bw);
-    fprintf(sstfile, "\t\t<node_latency> %lu </node_latency>\n", node_lat);
-    fprintf(sstfile, "\t\t<node_bandwidth> %lu </node_bandwidth>\n", node_bw);
 
-    fprintf(sstfile, "\t\t<exchange_msg_len> %d </exchange_msg_len>\n", msg_len);
     fprintf(sstfile, "\t\t<envelope_size> %d </envelope_size>\n", envelope_size);
+    fprintf(sstfile, "\t\t<NetNIClatency> %d </NetNIClatency>\n", 18000);
+    fprintf(sstfile, "\t\t<NetNICbandwidth> %d </NetNICbandwidth>\n", 93750000);
+    fprintf(sstfile, "\t\t<NetNICgap> %d </NetNICgap>\n", 53000);
+    fprintf(sstfile, "\t\t<NoCNIClatency> %d </NoCNIClatency>\n", 850);
+    fprintf(sstfile, "\t\t<NoCNICbandwidth> %d </NoCNICbandwidth>\n", 100000000);
+    fprintf(sstfile, "\t\t<NoCNICgap> %d </NoCNICgap>\n", 15000);
 
-
-    /* Pattern specific parameters */
-    if (strcmp("ghost_pattern", pattern_name) == 0)   {
-	fprintf(sstfile, "\t\t<compute_time> %lu </compute_time>\n", compute_time);
-	fprintf(sstfile, "\t\t<application_end_time> %lu </application_end_time>\n", app_time);
-	fprintf(sstfile, "\t\t<chckpt_method> %s </chckpt_method>\n", method);
-	fprintf(sstfile, "\t\t<chckpt_interval> %lu </chckpt_interval>\n", chckpt_interval);
-	fprintf(sstfile, "\t\t<chckpt_size> %d </chckpt_size>\n", chckpt_size);
-    }
 
     if (strcmp("msgrate_pattern", pattern_name) == 0)   {
 	fprintf(sstfile, "\t\t<num_msgs> %d </num_msgs>\n", MSGRATE_NUM_MSGS);

@@ -41,6 +41,33 @@ Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link
 	SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link)
 {
 
+    my_rank= -1;
+    mesh_width= -1;
+    mesh_height= -1;
+    NoC_width= -1;
+    NoC_height= -1;
+    cores_per_NoC_router= -1;
+    num_router_nodes= -1;
+
+    envelope_size= 64;
+    NetNIClatency= 0;
+    NetNICbandwidth= 0;
+    NetNICgap= 0;
+    NoCNIClatency= 0;
+    NoCNICbandwidth= 0;
+    NoCNICgap= 0;
+
+    NextNetNICslot= 0;
+    NextNoCNICslot= 0;
+    msg_seq= 1;
+
+    // Clear stats
+    stat_NoCNICsend= 0;
+    stat_NoCNICbusy= 0;
+    stat_NetNICsend= 0;
+    stat_NetNICbusy= 0;
+
+
     SST::Component::Params_t::iterator it= params.begin();
     while (it != params.end())   {
 	if (!it->first.compare("rank"))   {
@@ -75,11 +102,59 @@ Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link
 	    sscanf(it->second.c_str(), "%d", &envelope_size);
 	}
 
+	if (!it->first.compare("NetNIClatency"))   {
+	    sscanf(it->second.c_str(), "%d", &NetNIClatency);
+	}
+
+	if (!it->first.compare("NetNICbandwidth"))   {
+	    sscanf(it->second.c_str(), "%d", &NetNICbandwidth);
+	}
+
+	if (!it->first.compare("NetNICgap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetNICgap);
+	}
+
+	if (!it->first.compare("NoCNIClatency"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCNIClatency);
+	}
+
+	if (!it->first.compare("NoCNICbandwidth"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCNICbandwidth);
+	}
+
+	if (!it->first.compare("NoCNICgap"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCNICgap);
+	}
+
 	it++;
     }
 
-    // FIXME: Do some more thorough input checking here; e.g., cores and nodes must be > 0
+    // None of these should be 0 (I think)
+    if ((envelope_size == 0) ||
+	(NetNIClatency == 0) ||
+	(NetNICbandwidth == 0) ||
+	(NetNICgap == 0) ||
+	(NoCNIClatency == 0) ||
+	(NoCNICbandwidth == 0) ||
+	(NoCNICgap == 0))   {
+
+	if (my_rank == 0)   {
+	    fprintf(stderr, "One of these params not set: envelope_size, NetNIClatency, NetNICbandwidth, "
+		"NetNICgap, NoCNIClatency, NoCNICbandwidth, NoCNICgap\n");
+	}
+	return FALSE;
+    }
+
     total_cores= mesh_width * mesh_height * num_router_nodes * NoC_width * NoC_height * cores_per_NoC_router;
+    if (total_cores < 0)   {
+	// That means one of the above parameters was not set in the XML file
+	if (my_rank == 0)   {
+	    fprintf(stderr, "One of these params not set: mesh_width, mesh_height, "
+		"num_router_nodes, NoC_width, NoC_height, cores_per_NoC_router\n");
+	}
+	return FALSE;
+    }
+
     cores_per_node= NoC_width * NoC_height * cores_per_NoC_router;
     cores_per_Net_router= cores_per_node * num_router_nodes;
 
@@ -98,9 +173,19 @@ Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link
     if (my_rank == 0)   {
 	printf("#  |||  mesh x %d, y %d, with %d nodes each = %d nodes\n",
 	    mesh_width, mesh_height, num_router_nodes, mesh_width * mesh_height * num_router_nodes);
-	printf("#  |||  NoC x %d, y %d, with %d cores each\n",
-	    NoC_width, NoC_height, cores_per_NoC_router);
-	printf("#  |||  Cores per node %d. Total %d cores in system\n", cores_per_node, total_cores);
+	printf("#  |||  NoC x %d, y %d, with %d cores each = %d cores per node\n",
+	    NoC_width, NoC_height, cores_per_NoC_router, cores_per_node);
+	printf("#  |||  Total %d cores in system\n", total_cores);
+	printf("#  |||  Network NIC model\n");
+	printf("#  |||      envelope size %11d bytes\n", envelope_size);
+	printf("#  |||      latency       %0.9f s\n", NetNIClatency / TIME_BASE_FACTOR);
+	printf("#  |||      gap           %0.9f s\n", NetNICgap / TIME_BASE_FACTOR);
+	printf("#  |||      bandwidth     %11d bytes/s\n", NetNICbandwidth);
+	printf("#  |||  NoC NIC model\n");
+	printf("#  |||      envelope size %11d bytes\n", envelope_size);
+	printf("#  |||      latency       %0.9f s\n", NoCNIClatency / TIME_BASE_FACTOR);
+	printf("#  |||      gap           %0.9f s\n", NoCNICgap / TIME_BASE_FACTOR);
+	printf("#  |||      bandwidth     %11d bytes/s\n", NoCNICbandwidth);
     }
 
     return TRUE; /* success */
@@ -135,8 +220,8 @@ Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link
 ** No actual data is sent.
 */
 void
-Patterns::event_send(int dest, int event, int32_t tag, uint32_t msg_len,
-	const char *payload, int payload_len)
+Patterns::event_send(int dest, int event, SST::SimTime_t CurrentSimTime,
+	int32_t tag, uint32_t msg_len, const char *payload, int payload_len)
 {
 
 CPUNicEvent *e;
@@ -171,11 +256,11 @@ int my_node, dest_node;
 
     if (my_node == dest_node)   {
 	/* Route locally */
-	NoCsend(e, my_rank, dest);
+	NoCsend(e, my_rank, dest, CurrentSimTime);
 
     } else   {
 	/* Route off chip */
-	Netsend(e, my_node, dest_node, dest);
+	Netsend(e, my_node, dest_node, dest, CurrentSimTime);
     }
 
 }  /* end of event_send() */
@@ -273,16 +358,37 @@ uint64_t delay;
 */
 
 
+#define ROUTE_DEBUG 1
+#undef ROUTE_DEBUG
+#if ROUTE_DEBUG
+void
+show_route(char *net_name, int dest_rank)    {
+
+char route[128];
+char tmp[128];
+route[0]= 0;
+tmp[0]= 0;
+std::vector<int>::iterator itNum;
+
+    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
+	sprintf(tmp, "%s.%d", route, *itNum);
+	strcpy(route, tmp);
+    }
+
+    fprintf(stderr, "%s from %d --> %d, delay %lu, route %s\n", net_name,
+	 my_rank, dest_rank, route);
+
+}  // end of show_route()
+#endif  // ROUTE_DEBUG
 
 /*
 ** Send a message into the Network on Chip with the appropriate
 ** delays.
 */
 void
-Patterns::NoCsend(CPUNicEvent *e, int my_rank, int dest_rank)
+Patterns::NoCsend(CPUNicEvent *e, int my_rank, int dest_rank, SST::SimTime_t CurrentSimTime)
 {
 
-SimTime_t delay= 0;
 int my_router, dest_router;
 
 
@@ -307,32 +413,26 @@ int my_router, dest_router;
     // Exit to the local (NIC) pattern generator
     e->route.push_back(FIRST_LOCAL_PORT + (dest_rank % cores_per_NoC_router));
 
-#define ROUTE_DEBUG 1
-#undef ROUTE_DEBUG
 #if ROUTE_DEBUG
-{
-    char route[128];
-    char tmp[128];
-    route[0]= 0;
-    tmp[0]= 0;
-    std::vector<int>::iterator itNum;
+    show_route("NoC", dest_rank);
+#endif
 
-    for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	sprintf(tmp, "%s.%d", route, *itNum);
-	strcpy(route, tmp);
+    // Calculate when this message can leave the NIC
+    stat_NoCNICsend++;
+    if (CurrentSimTime > NextNoCNICslot)   {
+	// NIC is not busy, send w/o delay (but add latency)
+	my_NoC_link->Send(NoCNIClatency, e);
+	NextNoCNICslot= CurrentSimTime + NoCNIClatency + ((e->msg_len + envelope_size) / NoCNICbandwidth);
+
+    } else   {
+	// NIC is busy
+	SimTime_t delay;
+
+	delay= NextNoCNICslot + NetNICgap - CurrentSimTime;
+	my_NoC_link->Send(delay, e);
+	NextNoCNICslot= CurrentSimTime + delay + ((e->msg_len + envelope_size) / NoCNICbandwidth);
+	stat_NoCNICbusy++;
     }
-
-    fprintf(stderr, "NoC Event %d from %d --> %d, delay %lu, route %s\n", event,
-	 my_rank, dest_rank, (uint64_t)delay, route);
-}
-#endif  // ROUTE_DEBUG
-
-    // Send it
-    // FIXME: Multiple sends during processing of a single events should be
-    // delayed, since they don't really ocur all at exactly the same nano second.
-    // However, since they go out on the same link, the router at the other end
-    // will delay them according to their length and link bandwidth.
-    my_NoC_link->Send(delay, e);
 
 }  // end of NoCsend()
 
@@ -343,53 +443,55 @@ int my_router, dest_router;
 ** appropriate delays.
 */
 void
-Patterns::Netsend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank)
+Patterns::Netsend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank, SST::SimTime_t CurrentSimTime)
 {
 
 SimTime_t delay= 0;
 int my_router, dest_router;
 
 
-	e->local_traffic= false;
+    e->local_traffic= false;
 
-	/* On the network aggregator we'll have to go out port 0 to reach the mesh */
-	e->route.push_back(0);
+    /* On the network aggregator we'll have to go out port 0 to reach the mesh */
+    e->route.push_back(0);
 
-	my_router= my_node / num_router_nodes;
-	dest_router= dest_node / num_router_nodes;
-	gen_route(e, my_router, dest_router, mesh_width, mesh_height);
+    my_router= my_node / num_router_nodes;
+    dest_router= dest_node / num_router_nodes;
+    gen_route(e, my_router, dest_router, mesh_width, mesh_height);
 
 
-	// Exit to the local node (aggregator on that node
-	e->route.push_back(FIRST_LOCAL_PORT +
-		((dest_rank % (num_router_nodes * cores_per_node)) / cores_per_node));
+    // Exit to the local node (aggregator on that node
+    e->route.push_back(FIRST_LOCAL_PORT +
+	    ((dest_rank % (num_router_nodes * cores_per_node)) / cores_per_node));
 
-	/*
-	** We come out at the aggregator on the destination node.
-	** Figure out which port to go out to reach the destination core
-	** Port 0 is where we came in
-	*/
-	e->route.push_back(1 + (dest_rank % cores_per_node));
+    /*
+    ** We come out at the aggregator on the destination node.
+    ** Figure out which port to go out to reach the destination core
+    ** Port 0 is where we came in
+    */
+    e->route.push_back(1 + (dest_rank % cores_per_node));
 
 #if ROUTE_DEBUG
-    {
-	char route[128];
-	char tmp[128];
-	route[0]= 0;
-	tmp[0]= 0;
-	std::vector<int>::iterator itNum;
+    show_route("Net", dest_rank);
+#endif
 
-	for(itNum = e->route.begin(); itNum < e->route.end(); itNum++)   {
-	    sprintf(tmp, "%s.%d", route, *itNum);
-	    strcpy(route, tmp);
-	}
+    // Calculate when this message can leave the NIC
+    stat_NetNICsend++;
+    if (CurrentSimTime > NextNetNICslot)   {
+	// NIC is not busy, send w/o delay (but add latency)
+	my_net_link->Send(NetNIClatency, e);
+	NextNetNICslot= CurrentSimTime + NetNIClatency + ((e->msg_len + envelope_size) / NetNICbandwidth);
 
-	fprintf(stderr, "Net Event %d from %d --> %d, delay %lu, route %s\n", event,
-	     my_rank, dest_rank, (uint64_t)delay, route);
-    }
-#endif  // ROUTE_DEBUG
+    } else   {
+	// NIC is busy
+	SimTime_t delay;
 
+	delay= NextNetNICslot + NetNICgap - CurrentSimTime;
 	my_net_link->Send(delay, e);
+	NextNetNICslot= CurrentSimTime + delay + ((e->msg_len + envelope_size) / NetNICbandwidth);
+	stat_NetNICbusy++;
+    }
+
 
 }  // end of Netsend()
 
@@ -483,3 +585,28 @@ int x_delta, y_delta;
     }
 
 }  /* end of gen_route() */
+
+
+
+void
+Patterns::stat_print(void)
+{
+
+    printf("#  [%3d] NoC NIC model statistics\n", my_rank);
+    printf("#  [%3d]     Total sends %12d\n", my_rank, stat_NoCNICsend);
+    if (stat_NoCNICsend > 0)   {
+	printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank, (100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
+    } else   {
+	printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+    }
+    printf("#  |||  \n");
+    printf("#  [%3d] Net NIC model statistics\n", my_rank);
+    printf("#  [%3d]     Total sends %12d\n", my_rank, stat_NetNICsend);
+    if (stat_NetNICsend > 0)   {
+	printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank, (100.0 / stat_NetNICsend) * stat_NetNICbusy);
+    } else   {
+	printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+    }
+    printf("#  |||  \n");
+
+}  // end of stat_print()

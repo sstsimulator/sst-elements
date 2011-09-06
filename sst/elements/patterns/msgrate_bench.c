@@ -34,10 +34,10 @@
 
 
 /* Local functions */
-static void usage(char *pname);
+static void usage(char *pname, int start_rank_default);
 static double Test1(int my_rank, int num_ranks, int num_msgs, int msg_len);
-static double Test2(int my_rank, int num_ranks, int num_msgs, int msg_len);
-static double Test3(int my_rank, int num_ranks, int num_msgs, int msg_len);
+static double Test2(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank);
+static double Test3(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank);
 char buf[MAX_MSG_LEN];
 
 
@@ -53,6 +53,7 @@ int num_msgs;
 int i;
 double duration;
 double total_time;
+int start_rank;
 
 
 
@@ -82,10 +83,11 @@ double total_time;
     error= FALSE;
     num_msgs= DEFAULT_NUM_MSGS;
     msg_len= DEFAULT_MSG_LEN;
+    start_rank= num_ranks / 2;
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, ":l:n:")) != EOF)   {
+    while ((ch= getopt(argc, argv, ":l:n:s:")) != EOF)   {
         switch (ch)   {
             case 'l':
 		msg_len= strtol(optarg, (char **)NULL, 0);
@@ -102,11 +104,22 @@ double total_time;
 		    error= TRUE;
 		}
 		break;
+
             case 'n':
 		num_msgs= strtol(optarg, (char **)NULL, 0);
 		if (num_msgs < 1)   {
 		    if (my_rank == 0)   {
 			fprintf(stderr, "Number of messages (-n) must be > 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
+
+            case 's':
+		start_rank= strtol(optarg, (char **)NULL, 0);
+		if ((start_rank < 1) || (start_rank > num_ranks))   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Start node (-s) must be > 0 and < n - 1!\n");
 		    }
 		    error= TRUE;
 		}
@@ -140,7 +153,7 @@ double total_time;
 
     if (error)   {
         if (my_rank == 0)   {
-            usage(argv[0]);
+            usage(argv[0], num_ranks / 2);
         }
 	MPI_Finalize();
         exit (-1);
@@ -170,23 +183,23 @@ double total_time;
     }
 
 
-    duration= Test2(my_rank, num_ranks, num_msgs, msg_len);
+    duration= Test2(my_rank, num_ranks, num_msgs, msg_len, start_rank);
     MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
 	printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d\n",
-	    num_msgs, msg_len, my_rank + 1, num_ranks - 1);
+	    num_msgs, msg_len, start_rank, num_ranks - 1);
 	printf("#  |||  Test 2: Average send rate:       %8.0f msgs/s\n",
-	    1.0 / ((total_time / (num_ranks - 1)) / num_msgs));
+	    1.0 / ((total_time / (num_ranks - start_rank)) / (num_msgs - 1)));
     }
 
 
-    duration= Test3(my_rank, num_ranks, num_msgs, msg_len);
+    duration= Test3(my_rank, num_ranks, num_msgs, msg_len, start_rank);
     MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (my_rank == 0)   {
-	printf("#  |||  Test 3: Ranks 1...%d will send %d messages of length %d to rank 0\n",
-	    num_ranks - 1, num_msgs, msg_len);
+	printf("#  |||  Test 3: Ranks %d...%d will send %d messages of length %d to rank 0\n",
+	    num_ranks - start_rank, num_ranks - 1, num_msgs, msg_len);
 	printf("#  |||  Test 3: Average receive rate:    %8.0f msgs/s\n",
-	    1.0 / (duration / (num_msgs * (num_ranks - 1))));
+	    1.0 / (duration / (num_msgs * (num_ranks - start_rank))));
     }
 
     MPI_Finalize();
@@ -231,7 +244,7 @@ int i;
 
 
 static double
-Test2(int my_rank, int num_ranks, int num_msgs, int msg_len)
+Test2(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank)
 {
 
 double t;
@@ -241,18 +254,18 @@ int dest;
 
     if (my_rank == 0)   {
 	/* I'm the sender */
-	dest= 1;
-	for (i= 0; i < num_msgs * (num_ranks - 1); i++)   {
+	dest= start_rank;
+	for (i= 0; i < num_msgs * (num_ranks - start_rank); i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 13, MPI_COMM_WORLD);
 	    dest++;
 	    if (dest % num_ranks == 0)   {
-		dest= 1;
+		dest= start_rank;
 	    }
 	}
 	return 0.0;
 
-    } else   {
-	/* I'm a receiver */
+    } else if (my_rank >= start_rank)   {
+	/* I am a receiver */
 	MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	t= MPI_Wtime();
 	for (i= 1; i < num_msgs; i++)   {
@@ -260,6 +273,8 @@ int dest;
 	}
 
 	return MPI_Wtime() - t;
+    } else   {
+	return 0.0;
     }
 
 }  /* end of Test2() */
@@ -267,7 +282,7 @@ int dest;
 
 
 static double
-Test3(int my_rank, int num_ranks, int num_msgs, int msg_len)
+Test3(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank)
 {
 
 double t;
@@ -278,29 +293,32 @@ int dest;
     if (my_rank == 0)   {
 	/* I'm the receiver */
 	t= MPI_Wtime();
-	for (i= 0; i < num_msgs * (num_ranks - 1); i++)   {
+	for (i= 0; i < num_msgs * (num_ranks - start_rank); i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, MPI_ANY_SOURCE, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	return MPI_Wtime() - t;
-    } else   {
+    } else if (my_rank >= start_rank)   {
 	/* I'm a sender */
 	dest= 0;
 	for (i= 0; i < num_msgs; i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 14, MPI_COMM_WORLD);
 	}
-	return 0.0;
     }
+
+    return 0.0;
 
 }  /* end of Test3() */
 
 
 
 static void
-usage(char *pname)
+usage(char *pname, int start_rank_default)
 {
 
-    fprintf(stderr, "Usage: %s [-l len] [-n num]\n", pname);
+    fprintf(stderr, "Usage: %s [-l len] [-n num] [-s start]\n", pname);
     fprintf(stderr, "    -l len      Message length. Default %d\n", DEFAULT_MSG_LEN);
     fprintf(stderr, "    -n num      Number of messages per test. Default %d\n", DEFAULT_NUM_MSGS);
+    fprintf(stderr, "    -s start    Rank 0 sends/recvs from \"start\" to n. Default %d\n",
+	    start_rank_default);
 
 }  /* end of usage() */

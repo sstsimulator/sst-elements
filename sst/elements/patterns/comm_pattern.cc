@@ -28,7 +28,7 @@ void
 Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 {
 
-    common->event_send(dest, sm_event.event,
+    common->event_send(dest, sm_event.event, getCurrentSimTime(),
 	SM->SM_current_tag(), len,
 	(const char *)sm_event.payload,
 	sm_event.payload_size);
@@ -46,7 +46,7 @@ uint32_t tag= 0;
 
 
     tag= SM->SM_current_tag();
-    common->event_send(my_rank, event_type, tag);
+    common->event_send(my_rank, event_type, getCurrentSimTime(), tag);
 
 }  // end of self_event_send()
 

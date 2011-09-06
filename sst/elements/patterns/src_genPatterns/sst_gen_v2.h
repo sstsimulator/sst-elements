@@ -36,11 +36,7 @@ void sst_router_param_end(FILE *sstfile, char *Rname);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
 void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
-	int cores, int nodes, uint64_t net_lat,
-        uint64_t net_bw, uint64_t node_lat, uint64_t node_bw, uint64_t compute_time,
-	uint64_t app_time, int msg_len, char *method,
-	uint64_t chckpt_interval, int envelope_size, int chckpt_size,
-	char *pattern_name);
+	int cores, int nodes, int envelope_size, char *pattern_name);
 void sst_gen_param_end(FILE *sstfile);
 
 void sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method);

@@ -130,7 +130,7 @@ class Comm_pattern : public Component {
         }  // Done with initialization
 
         ~Comm_pattern()
-	{ }
+	{delete common;}
 
 
 	int my_rank;

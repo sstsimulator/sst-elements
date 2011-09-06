@@ -181,38 +181,26 @@ int rc = 0;
 
     if (my_node == 0)   {
 	/* Post receive */
-	if (len == 0) {
-	    latencylen= 0;
-	    latencysrc= num_nodes - 1;
-	    latencytype= LATENCY;
-	    rc |= MPI_Irecv(buf, latencylen, MPI_BYTE, latencysrc, LATENCY, MPI_COMM_WORLD, &latencyflag);
-	} else {
-	    latencylen= len;
-	    latencysrc= num_nodes - 1;
-	    latencytype= LATENCY;
-	    rc |= MPI_Irecv(buf, latencylen, MPI_BYTE, latencysrc, LATENCY, MPI_COMM_WORLD, &latencyflag);
-	}
+	latencylen= len;
+	latencysrc= num_nodes - 1;
+	latencytype= LATENCY;
+	rc |= MPI_Irecv(buf, latencylen, MPI_BYTE, latencysrc, LATENCY, MPI_COMM_WORLD, &latencyflag);
 
 	/* Wait for ACK from node 1 */
 	msglen= 0;
 	msgsrc= num_nodes - 1;
 	msgtype= READY;
 	rc |= MPI_Recv(buf, msglen, MPI_BYTE, msgsrc, READY, MPI_COMM_WORLD, &status);
-	if (len == 0) {
-	    start= MPI_Wtime();
-	    rc |= MPI_Rsend(buf, 0, MPI_BYTE, num_nodes - 1, LATENCY, MPI_COMM_WORLD);
-	} else {
-	    start= MPI_Wtime();
-	    rc |= MPI_Rsend(buf, len, MPI_BYTE, num_nodes - 1, LATENCY, MPI_COMM_WORLD);
-	}
+
+	start= MPI_Wtime();
+	rc |= MPI_Rsend(buf, len, MPI_BYTE, num_nodes - 1, LATENCY, MPI_COMM_WORLD);
 
 	rc |= MPI_Wait(&latencyflag, &status);
 	delta = MPI_Wtime() - start;
 	*latency= delta * 1000000.0 / 2.0;
-	if ( delta != 0.0 ) {
+	if (delta != 0.0)    {
 	  *bandwidth= len / (delta) * 2.0;
-        }
-	else {
+        } else    {
 	  *bandwidth = 0;
 	}
 
@@ -224,17 +212,11 @@ int rc = 0;
 	/*
 	** Run on the last node
 	*/
-	if (len == 0)   {
-	    latencylen= 0;
-	    latencysrc= 0;
-	    latencytype= LATENCY;
-	    rc |= MPI_Irecv(buf, latencylen, MPI_BYTE, latencysrc, LATENCY, MPI_COMM_WORLD, &latencyflag);
-	} else   {
-	    latencylen= len;
-	    latencysrc= 0;
-	    latencytype= LATENCY;
-	    rc |= MPI_Irecv(buf, latencylen, MPI_BYTE, latencysrc, LATENCY, MPI_COMM_WORLD, &latencyflag);
-	}
+	latencylen= len;
+	latencysrc= 0;
+	latencytype= LATENCY;
+	rc |= MPI_Irecv(buf, latencylen, MPI_BYTE, latencysrc, LATENCY, MPI_COMM_WORLD, &latencyflag);
+
 	rc |= MPI_Send(buf, 0, MPI_BYTE, 0, READY, MPI_COMM_WORLD);
 
 	rc |= MPI_Wait(&latencyflag, &status);

@@ -429,9 +429,7 @@ int ssd_write_bw;	/* In bytes per second */
     sst_param_start(fp_sst); /* start the parameter_include section */
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst, net_x_dim, net_y_dim, NoC_x_dim, NoC_y_dim, num_cores,
-	num_router_nodes, net_lat, net_bw, node_lat, node_bw,
-	compute, app_time, exchange_msg_len, method, chckpt_interval,
-	envelope_size, chckpt_size, pattern_name);
+	num_router_nodes, envelope_size, pattern_name);
     sst_gen_param_end(fp_sst);
     sst_pwr_param_entries(fp_sst, power_method);
     sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
