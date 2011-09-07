@@ -16,7 +16,7 @@
 #undef FALSE
 #define FALSE           (0)
 
-#define SIZE		(10000000)
+#define SIZE		(10485760)
 #define READY		(10)
 #define BCAST		(11)
 #define LATENCY		(12)
@@ -74,6 +74,12 @@ double min_latency, min_bandwidth;
 		break;
             case 'e':
 		end_len= strtol(optarg, (char **)NULL, 0);
+		if (end_len > SIZE)   {
+		    if (my_node == 0)   {
+			fprintf(stderr, "Maximum end length is %d\n", SIZE);
+		    }
+		    error= 1;
+		}
 		break;
             case 's':
 		start_len= strtol(optarg, (char **)NULL, 0);
