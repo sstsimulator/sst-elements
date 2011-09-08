@@ -422,15 +422,20 @@ int my_router, dest_router;
     if (CurrentSimTime > NextNoCNICslot)   {
 	// NIC is not busy, send w/o delay (but add latency)
 	my_NoC_link->Send(NoCNIClatency, e);
-	NextNoCNICslot= CurrentSimTime + NoCNIClatency + ((e->msg_len + envelope_size) / NoCNICbandwidth);
+	NextNoCNICslot= CurrentSimTime + NoCNIClatency + ((e->msg_len + envelope_size) / NoCNICbandwidth)
+	    + NetNICgap;
+	/*
+	printf("[%3d] time %09d, send %09d, next %09d\n", my_rank,
+		CurrentSimTime, CurrentSimTime + NoCNIClatency, NextNoCNICslot);
+	*/
 
     } else   {
 	// NIC is busy
 	SimTime_t delay;
 
-	delay= NextNoCNICslot + NetNICgap - CurrentSimTime;
+	delay= NextNoCNICslot + NoCNIClatency - CurrentSimTime;
 	my_NoC_link->Send(delay, e);
-	NextNoCNICslot= CurrentSimTime + delay + ((e->msg_len + envelope_size) / NoCNICbandwidth);
+	NextNoCNICslot= CurrentSimTime + delay + ((e->msg_len + envelope_size) / NoCNICbandwidth) + NetNICgap;
 	stat_NoCNICbusy++;
     }
 

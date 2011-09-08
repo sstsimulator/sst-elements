@@ -30,8 +30,7 @@ void sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t 
 void sst_router_param_end(FILE *sstfile, char *Rname);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
-void sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
-	int cores, int nodes, int envelope_size, char *pattern_name);
+void sst_gen_param_entries(FILE *sstfile, FILE *fp_machine, char *pattern_name);
 void sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency);
 
 void sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method);

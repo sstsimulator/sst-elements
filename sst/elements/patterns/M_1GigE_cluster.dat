@@ -1,0 +1,35 @@
+# This is an example machine parameter file for an Ethernet
+# cluster with 1 GigE links from nodes to top-of-rack switches (ToR)
+# 
+# Anything after a # to end of line is ignored
+# Leading white space is ignored
+# Entries are Key = Value pairs
+# Repeated entries are allowed; the last value is used
+#
+# The following entries have no default and must must be specified:
+# Network NIC parameters
+# NetNIClatency = 18000
+# NetNICbandwidth = 93750000
+# NetNICgap = 53000
+
+# NoC NIC parameters
+# NoCNIClatency = 450
+# NoCNICbandwidth = 100000000
+# NoCNICgap = 15000
+
+# Network dimension
+Net_x_dim = 2
+Net_y_dim = 1
+
+# NoC dimension
+NoC_x_dim = 1
+NoC_y_dim = 2
+
+# Number of cores per NoC router
+num_cores = 6
+
+# Number of nodes per network router
+num_router_nodes = 8
+
+# These parameters have the following defaults
+envelope_size = 64

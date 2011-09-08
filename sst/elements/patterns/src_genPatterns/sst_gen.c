@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "sst_gen.h"
+#include "machine.h"
 #include "gen.h"
 
 #define MAX_ID_LEN		(256)
@@ -50,8 +51,7 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
-	int cores, int nodes, int envelope_size, char *pattern_name)
+sst_gen_param_entries(FILE *sstfile, FILE *fp_machine, char *pattern_name)
 {
 
     if (sstfile == NULL)   {
@@ -59,25 +59,20 @@ sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int No
     }
 
     /* Common parameters */
-    fprintf(sstfile, "    <x_dim> %d </x_dim>\n", x_dim);
-    fprintf(sstfile, "    <y_dim> %d </y_dim>\n", y_dim);
-    fprintf(sstfile, "    <NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim);
-    fprintf(sstfile, "    <NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim);
-    fprintf(sstfile, "    <cores> %d </cores>\n", cores);
-    fprintf(sstfile, "    <nodes> %d </nodes>\n", nodes);
+    fprintf(sstfile, "    <Net_x_dim> %d </Net_x_dim>\n", Net_x_dim());
+    fprintf(sstfile, "    <Net_y_dim> %d </Net_y_dim>\n", Net_y_dim());
+    fprintf(sstfile, "    <NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim());
+    fprintf(sstfile, "    <NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim());
+    fprintf(sstfile, "    <cores> %d </cores>\n", num_cores());
+    fprintf(sstfile, "    <nodes> %d </nodes>\n", num_router_nodes());
 
-    fprintf(sstfile, "    <envelope_size> %d </envelope_size>\n", envelope_size);
+    fprintf(sstfile, "    <envelope_size> %d </envelope_size>\n", envelope_size());
     fprintf(sstfile, "    <NetNIClatency> %d </NetNIClatency>\n", 18000);
     fprintf(sstfile, "    <NetNICbandwidth> %d </NetNICbandwidth>\n", 93750000);
     fprintf(sstfile, "    <NetNICgap> %d </NetNICgap>\n", 53000);
     fprintf(sstfile, "    <NoCNIClatency> %d </NoCNIClatency>\n", 450);
-    fprintf(sstfile, "    <NoCNICbandwidth> %d </NoCNICbandwidth>\n", 1000);
+    fprintf(sstfile, "    <NoCNICbandwidth> %d </NoCNICbandwidth>\n", 100000000);
     fprintf(sstfile, "    <NoCNICgap> %d </NoCNICgap>\n", 15000);
-
-
-    if (strcmp("msgrate_pattern", pattern_name) == 0)   {
-	fprintf(sstfile, "    <num_msgs> %d </num_msgs>\n", MSGRATE_NUM_MSGS);
-    }
 
 }  /* end of sst_gen_param_entries() */
 
