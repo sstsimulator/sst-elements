@@ -132,7 +132,7 @@ int i;
     fprintf(sstfile, "\t\t<NoCNICgap> %d </NoCNICgap>\n", NoCNICgap());
 
     for (i= 0; i < NetNICinflections(); i++)   {
-	fprintf(sstfile, "\t\t<NetNICinflection%d> %d </NetNICinflections%d>\n",
+	fprintf(sstfile, "\t\t<NetNICinflection%d> %d </NetNICinflection%d>\n",
 	    i, NetNICinflectionpoint(i), i);
 	fprintf(sstfile, "\t\t<NetNIClatency%d> %ld </NetNIClatency%d>\n",
 	    i, NetNIClatency(i), i);
@@ -141,7 +141,7 @@ int i;
     }
 
     for (i= 0; i < NoCNICinflections(); i++)   {
-	fprintf(sstfile, "\t\t<NoCNICinflection%d> %d </NoCNICinflections%d>\n",
+	fprintf(sstfile, "\t\t<NoCNICinflection%d> %d </NoCNICinflection%d>\n",
 	    i, NoCNICinflectionpoint(i), i);
 	fprintf(sstfile, "\t\t<NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
 	    i, NoCNIClatency(i), i);
