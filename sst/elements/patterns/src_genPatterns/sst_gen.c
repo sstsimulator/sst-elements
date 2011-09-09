@@ -54,6 +54,9 @@ void
 sst_gen_param_entries(FILE *sstfile, FILE *fp_machine, char *pattern_name)
 {
 
+int i;
+
+
     if (sstfile == NULL)   {
 	return;
     }
@@ -67,12 +70,29 @@ sst_gen_param_entries(FILE *sstfile, FILE *fp_machine, char *pattern_name)
     fprintf(sstfile, "    <nodes> %d </nodes>\n", num_router_nodes());
 
     fprintf(sstfile, "    <envelope_size> %d </envelope_size>\n", envelope_size());
-    fprintf(sstfile, "    <NetNIClatency> %d </NetNIClatency>\n", 18000);
-    fprintf(sstfile, "    <NetNICbandwidth> %d </NetNICbandwidth>\n", 93750000);
-    fprintf(sstfile, "    <NetNICgap> %d </NetNICgap>\n", 53000);
-    fprintf(sstfile, "    <NoCNIClatency> %d </NoCNIClatency>\n", 450);
-    fprintf(sstfile, "    <NoCNICbandwidth> %d </NoCNICbandwidth>\n", 100000000);
-    fprintf(sstfile, "    <NoCNICgap> %d </NoCNICgap>\n", 15000);
+    fprintf(sstfile, "    <NetNICinflections> %d </NetNICinflections>\n", NetNICinflections());
+    fprintf(sstfile, "    <NetNICgap> %d </NetNICgap>\n", NetNICgap());
+    fprintf(sstfile, "    <NoCNICinflections> %d </NoCNICinflections>\n", NoCNICinflections());
+    fprintf(sstfile, "    <NoCNICgap> %d </NoCNICgap>\n", NoCNICgap());
+
+    for (i= 0; i < NetNICinflections(); i++)   {
+	fprintf(sstfile, "    <NetNICinflection%d> %d </NetNICinflections%d>\n",
+	    i, NetNICinflectionpoint(i), i);
+	fprintf(sstfile, "    <NetNIClatency%d> %ld </NetNIClatency%d>\n",
+	    i, NetNIClatency(i), i);
+	fprintf(sstfile, "    <NetNICbandwidth%d> %ld </NetNICbandwidth%d>\n",
+	    i, NetNICbandwidth(i), i);
+    }
+
+    for (i= 0; i < NoCNICinflections(); i++)   {
+	fprintf(sstfile, "    <NoCNICinflection%d> %d </NoCNICinflections%d>\n",
+	    i, NoCNICinflectionpoint(i), i);
+	fprintf(sstfile, "    <NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
+	    i, NoCNIClatency(i), i);
+	fprintf(sstfile, "    <NoCNICbandwidth%d> %ld </NoCNICbandwidth%d>\n",
+	    i, NoCNICbandwidth(i), i);
+    }
+
 
 }  /* end of sst_gen_param_entries() */
 

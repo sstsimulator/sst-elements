@@ -6,16 +6,31 @@
 # Entries are Key = Value pairs
 # Repeated entries are allowed; the last value is used
 #
+# Order of entries does not matter, except NetNICinflections and
+# NoCNICinflections must be decrlared before any of the
+# NxxNIClatencyX and NxxNICbandwidthX parameters
+#
 # The following entries have no default and must must be specified:
 # Network NIC parameters
-# NetNIClatency = 18000
-# NetNICbandwidth = 93750000
-# NetNICgap = 53000
+NetNICinflections = 2
+
+NetNICinflection0 = 18000
+NetNIClatency0 = 18000
+NetNICbandwidth0 = 93750000
+
+NetNICinflection1 = 18000
+NetNIClatency1 = 18000
+NetNICbandwidth1 = 93750000
+
+NetNICgap = 53000
 
 # NoC NIC parameters
-# NoCNIClatency = 450
-# NoCNICbandwidth = 100000000
-# NoCNICgap = 15000
+NoCNICinflections = 1
+NoCNICinflection0 = 18000
+NoCNIClatency0 = 450
+NoCNICbandwidth0 = 100000000
+
+NoCNICgap = 15000
 
 # Network dimension
 Net_x_dim = 2

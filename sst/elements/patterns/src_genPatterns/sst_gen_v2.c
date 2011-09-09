@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "sst_gen_v2.h"
+#include "machine.h"
 #include "gen.h"
 
 #define MAX_ID_LEN		(256)
@@ -106,33 +107,46 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, int x_dim, int y_dim, int NoC_x_dim, int NoC_y_dim,
-	int cores, int nodes, int envelope_size, char *pattern_name)
+sst_gen_param_entries(FILE *sstfile, FILE *fp_machine, char *pattern_name)
 {
+
+int i;
+
 
     if (sstfile == NULL)   {
 	return;
     }
 
     /* Common parameters */
-    fprintf(sstfile, "\t\t<x_dim> %d </x_dim>\n", x_dim);
-    fprintf(sstfile, "\t\t<y_dim> %d </y_dim>\n", y_dim);
-    fprintf(sstfile, "\t\t<NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim);
-    fprintf(sstfile, "\t\t<NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim);
-    fprintf(sstfile, "\t\t<cores> %d </cores>\n", cores);
-    fprintf(sstfile, "\t\t<nodes> %d </nodes>\n", cores);
+    fprintf(sstfile, "\t\t<Net_x_dim> %d </Net_x_dim>\n", Net_x_dim());
+    fprintf(sstfile, "\t\t<Net_y_dim> %d </Net_y_dim>\n", Net_y_dim());
+    fprintf(sstfile, "\t\t<NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim());
+    fprintf(sstfile, "\t\t<NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim());
+    fprintf(sstfile, "\t\t<cores> %d </cores>\n", num_cores());
+    fprintf(sstfile, "\t\t<nodes> %d </nodes>\n", num_router_nodes());
 
-    fprintf(sstfile, "\t\t<envelope_size> %d </envelope_size>\n", envelope_size);
-    fprintf(sstfile, "\t\t<NetNIClatency> %d </NetNIClatency>\n", 18000);
-    fprintf(sstfile, "\t\t<NetNICbandwidth> %d </NetNICbandwidth>\n", 93750000);
-    fprintf(sstfile, "\t\t<NetNICgap> %d </NetNICgap>\n", 53000);
-    fprintf(sstfile, "\t\t<NoCNIClatency> %d </NoCNIClatency>\n", 850);
-    fprintf(sstfile, "\t\t<NoCNICbandwidth> %d </NoCNICbandwidth>\n", 100000000);
-    fprintf(sstfile, "\t\t<NoCNICgap> %d </NoCNICgap>\n", 15000);
+    fprintf(sstfile, "\t\t<envelope_size> %d </envelope_size>\n", envelope_size());
+    fprintf(sstfile, "\t\t<NetNICinflections> %d </NetNICinflections>\n", NetNICinflections());
+    fprintf(sstfile, "\t\t<NetNICgap> %d </NetNICgap>\n", NetNICgap());
+    fprintf(sstfile, "\t\t<NoCNICinflections> %d </NoCNICinflections>\n", NoCNICinflections());
+    fprintf(sstfile, "\t\t<NoCNICgap> %d </NoCNICgap>\n", NoCNICgap());
 
+    for (i= 0; i < NetNICinflections(); i++)   {
+	fprintf(sstfile, "\t\t<NetNICinflection%d> %d </NetNICinflections%d>\n",
+	    i, NetNICinflectionpoint(i), i);
+	fprintf(sstfile, "\t\t<NetNIClatency%d> %ld </NetNIClatency%d>\n",
+	    i, NetNIClatency(i), i);
+	fprintf(sstfile, "\t\t<NetNICbandwidth%d> %ld </NetNICbandwidth%d>\n",
+	    i, NetNICbandwidth(i), i);
+    }
 
-    if (strcmp("msgrate_pattern", pattern_name) == 0)   {
-	fprintf(sstfile, "\t\t<num_msgs> %d </num_msgs>\n", MSGRATE_NUM_MSGS);
+    for (i= 0; i < NoCNICinflections(); i++)   {
+	fprintf(sstfile, "\t\t<NoCNICinflection%d> %d </NoCNICinflections%d>\n",
+	    i, NoCNICinflectionpoint(i), i);
+	fprintf(sstfile, "\t\t<NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
+	    i, NoCNIClatency(i), i);
+	fprintf(sstfile, "\t\t<NoCNICbandwidth%d> %ld </NoCNICbandwidth%d>\n",
+	    i, NoCNICbandwidth(i), i);
     }
 
 }  /* end of sst_gen_param_entries() */

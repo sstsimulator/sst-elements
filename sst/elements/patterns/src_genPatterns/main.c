@@ -30,6 +30,7 @@ static void usage(char *argv[]);
 static struct option long_options[]=   {
     /* name, has arg, flag, val */
     {"help", 0, NULL, 'h'},
+    {"verbose", 0, NULL, 'v'},
     {"sstfilename", 1, NULL, 'o'},
     {"machine", 1, NULL, 'm'},
     {"pattern", 1, NULL, 'p'},
@@ -101,7 +102,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "o:hp:i:m:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "vo:hp:i:m:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -122,6 +123,9 @@ int ssd_write_bw;	/* In bytes per second */
 		break;
 	    case 'p':
 		pattern_name= optarg;
+		break;
+	    case 'v':
+		verbose++;
 		break;
 	    case 'h':
 		error= TRUE;
@@ -230,7 +234,7 @@ int ssd_write_bw;	/* In bytes per second */
     }
 
     /* Read the machine file */
-    if (read_machine_file(fp_machine) != 0)   {
+    if (read_machine_file(fp_machine, verbose) == FALSE)   {
 	error= TRUE;
     }
 
@@ -253,6 +257,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     printf("*** Reading machine parameters from \"%s\"\n", machineFname);
     printf("*** Writing output to \"%s\"\n", sstFname);
+    disp_machine_params();
 
 
     GenMesh2D(Net_x_dim(), Net_y_dim(), NoC_x_dim(), NoC_y_dim(), num_cores(), IO_nodes, num_router_nodes());
