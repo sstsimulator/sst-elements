@@ -32,6 +32,15 @@
 #define TIME_BASE_FACTOR	1000000000.0
 
 
+// Storage for NIC parameters
+typedef struct NICparams_t   {
+    int index;
+    int inflectionpoint;
+    int64_t latency;
+    int64_t bandwidth;
+} NICparams_t;
+
+
 
 class Patterns   {
     public:
@@ -97,12 +106,10 @@ class Patterns   {
 
 	// Input parameters for the NIC models
 	int envelope_size;
-	SST::SimTime_t NetNIClatency;
-	uint64_t NetNICbandwidth;
 	SST::SimTime_t NetNICgap;
-	SST::SimTime_t NoCNIClatency;
-	uint64_t NoCNICbandwidth;
 	SST::SimTime_t NoCNICgap;
+	std::list<NICparams_t> NetNICparams;
+	std::list<NICparams_t> NoCNICparams;
 
 	// Each message event gets a unique number for debugging
 	uint64_t msg_seq;

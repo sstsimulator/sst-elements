@@ -8,19 +8,34 @@
 #
 # Order of entries does not matter, except NetNICinflections and
 # NoCNICinflections must be decrlared before any of the
-# NxxNIClatencyX and NxxNICbandwidthX parameters
+# NxxNIClatencyX and NxxNICbandwidthX parameters. NxxNIC parameters
+# do not have to be sorted; i.e., NoCNICinflection0 can have a higher
+# value than NoCNICinflection1. NxxNIC indicies must be consecutive
+# 0...n
 #
 # The following entries have no default and must must be specified:
 # Network NIC parameters
-NetNICinflections = 2
+NetNICinflections = 5
 
 NetNICinflection0 = 18000
 NetNIClatency0 = 18000
 NetNICbandwidth0 = 93750000
 
-NetNICinflection1 = 18000
+NetNICinflection1 = 18001
 NetNIClatency1 = 18000
 NetNICbandwidth1 = 93750000
+
+NetNICinflection2 = 18000
+NetNIClatency2 = 18000
+NetNICbandwidth2 = 93750000
+
+NetNICinflection3 = 22000
+NetNIClatency3 = 18000
+NetNICbandwidth3 = 93750000
+
+NetNICinflection4 = 130
+NetNIClatency4 = 18000
+NetNICbandwidth4 = 93750000
 
 NetNICgap = 53000
 
