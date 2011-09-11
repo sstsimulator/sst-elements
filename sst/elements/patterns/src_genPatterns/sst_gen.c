@@ -78,15 +78,15 @@ int i;
     for (i= 0; i < NetNICinflections(); i++)   {
 	fprintf(sstfile, "    <NetNICinflection%d> %d </NetNICinflection%d>\n",
 	    i, NetNICinflectionpoint(i), i);
-	fprintf(sstfile, "    <NetNIClatency%d> %ld </NetNIClatency%d>\n",
-	    i, NetNIClatency(i), i);
+	fprintf(sstfile, "    <NetNIClatency%d> %lld </NetNIClatency%d>\n",
+	    i, (long long int)NetNIClatency(i), i);
     }
 
     for (i= 0; i < NoCNICinflections(); i++)   {
 	fprintf(sstfile, "    <NoCNICinflection%d> %d </NoCNICinflection%d>\n",
 	    i, NoCNICinflectionpoint(i), i);
-	fprintf(sstfile, "    <NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
-	    i, NoCNIClatency(i), i);
+	fprintf(sstfile, "    <NoCNIClatency%d> %lld </NoCNIClatency%d>\n",
+	    i, (long long int)NoCNIClatency(i), i);
     }
 
     pattern_params(sstfile);

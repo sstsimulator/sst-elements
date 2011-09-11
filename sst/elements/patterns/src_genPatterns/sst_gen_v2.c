@@ -129,14 +129,14 @@ int i;
 	fprintf(sstfile, "\t\t<NetNICinflection%d> %d </NetNICinflection%d>\n",
 	    i, NetNICinflectionpoint(i), i);
 	fprintf(sstfile, "\t\t<NetNIClatency%d> %ld </NetNIClatency%d>\n",
-	    i, NetNIClatency(i), i);
+	    i, (long long int)NetNIClatency(i), i);
     }
 
     for (i= 0; i < NoCNICinflections(); i++)   {
 	fprintf(sstfile, "\t\t<NoCNICinflection%d> %d </NoCNICinflection%d>\n",
 	    i, NoCNICinflectionpoint(i), i);
 	fprintf(sstfile, "\t\t<NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
-	    i, NoCNIClatency(i), i);
+	    i, (long long int)NoCNIClatency(i), i);
     }
 
     pattern_params(sstfile);
