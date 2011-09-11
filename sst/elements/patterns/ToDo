@@ -1,3 +1,4 @@
+- Fix reading of NIC latency param on 32-bit systems
 - Fix memory leak
 - Make NICstat selectable from configuration
 - Use NetIntraLatency and NoCIntraLatency as part of router calc

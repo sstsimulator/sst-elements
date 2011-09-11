@@ -15,6 +15,8 @@
 ** This file contains common routines used by all pattern generators.
 */
 #include <stdio.h>
+#define __STDC_FORMAT_MACROS	(1)
+#include <inttypes.h>		// For PRId64
 #include <string>
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
@@ -100,35 +102,35 @@ int index;
 	}
 
 	if (!it->first.compare("NetNICgap"))   {
-	    sscanf(it->second.c_str(), "%ld", &NetNICgap);
+	    sscanf(it->second.c_str(), "%" PRId64, &NetNICgap);
 	}
 
 	if (!it->first.compare("NoCNICgap"))   {
-	    sscanf(it->second.c_str(), "%ld", &NoCNICgap);
+	    sscanf(it->second.c_str(), "%" PRId64, &NoCNICgap);
 	}
 
 	if (!it->first.compare("NetLinkBandwidth"))   {
-	    sscanf(it->second.c_str(), "%ld", &NetLinkBandwidth);
+	    sscanf(it->second.c_str(), "%" PRId64, &NetLinkBandwidth);
 	}
 
 	if (!it->first.compare("NetLinkLatency"))   {
-	    sscanf(it->second.c_str(), "%ld", &NetLinkLatency);
+	    sscanf(it->second.c_str(), "%" PRId64, &NetLinkLatency);
 	}
 
 	if (!it->first.compare("NoCLinkBandwidth"))   {
-	    sscanf(it->second.c_str(), "%ld", &NoCLinkBandwidth);
+	    sscanf(it->second.c_str(), "%" PRId64, &NoCLinkBandwidth);
 	}
 
 	if (!it->first.compare("NoCLinkLatency"))   {
-	    sscanf(it->second.c_str(), "%ld", &NoCLinkLatency);
+	    sscanf(it->second.c_str(), "%" PRId64, &NoCLinkLatency);
 	}
 
 	if (!it->first.compare("IOLinkBandwidth"))   {
-	    sscanf(it->second.c_str(), "%ld", &IOLinkBandwidth);
+	    sscanf(it->second.c_str(), "%" PRId64, &IOLinkBandwidth);
 	}
 
 	if (!it->first.compare("IOLinkLatency"))   {
-	    sscanf(it->second.c_str(), "%ld", &IOLinkLatency);
+	    sscanf(it->second.c_str(), "%" PRId64, &IOLinkLatency);
 	}
 
 	if (it->first.find("NetNICinflection") != std::string::npos)   {
@@ -141,14 +143,14 @@ int index;
 	    for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
 		if (k->index == index)   {
 		    // Yes? Update the entry
-		    k->inflectionpoint= strtol(it->second.c_str(), (char **)NULL, 0);
+		    k->inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
 		    found= true;
 		}
 	    }
 	    if (!found)   {
 		// No? Create a new entry
 		NICparams_t another;
-		another.inflectionpoint= strtol(it->second.c_str(), (char **)NULL, 0);
+		another.inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.latency= -1;
 		NetNICparams.push_back(another);
@@ -165,14 +167,14 @@ int index;
 	    for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
 		if (k->index == index)   {
 		    // Yes? Update the entry
-		    k->inflectionpoint= strtol(it->second.c_str(), (char **)NULL, 0);
+		    k->inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
 		    found= true;
 		}
 	    }
 	    if (!found)   {
 		// No? Create a new entry
 		NICparams_t another;
-		another.inflectionpoint= strtol(it->second.c_str(), (char **)NULL, 0);
+		another.inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.latency= -1;
 		NoCNICparams.push_back(another);
@@ -299,14 +301,14 @@ int index;
 	printf("#  |||  Network NIC inflection points (sorted by inflection point)\n");
 	printf("#  |||      index inflection    latency\n");
 	for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
-	    printf("#  |||      %3d %12ld %12ld\n", k->index, k->inflectionpoint, k->latency);
+	    printf("#  |||      %3d %12" PRId64 " %12" PRId64 "\n", k->index, k->inflectionpoint, k->latency);
 	}
     }
     if (my_rank == 0)   {
 	printf("#  |||  NoC NIC inflection points (sorted by inflection point)\n");
 	printf("#  |||      index inflection    latency\n");
 	for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
-	    printf("#  |||      %3d %12ld %12ld\n", k->index, k->inflectionpoint, k->latency);
+	    printf("#  |||      %3d %12" PRId64 " %12" PRId64 "\n", k->index, k->inflectionpoint, k->latency);
 	}
     }
 
@@ -345,11 +347,13 @@ int index;
 	printf("#  |||  Network NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NetNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NetNICparams.size());
-	printf("#  |||  Network link bandwidth %ld B/S, latency %ld ns\n", NetLinkBandwidth, NetLinkLatency);
+	printf("#  |||  Network link bandwidth %" PRId64 " B/S, latency %" PRId64 " ns\n",
+	    NetLinkBandwidth, NetLinkLatency);
 	printf("#  |||  NoC NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NoCNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NoCNICparams.size());
-	printf("#  |||  NoC link bandwidth %ld B/S, latency %ld ns\n", NoCLinkBandwidth, NoCLinkLatency);
+	printf("#  |||  NoC link bandwidth %" PRId64 " B/S, latency %" PRId64 " ns\n",
+	    NoCLinkBandwidth, NoCLinkLatency);
     }
 
     return TRUE; /* success */
