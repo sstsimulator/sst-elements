@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <inttypes.h>		/* For PRId64 */
 #include "main.h"
 #include "machine.h"
 
@@ -253,13 +254,13 @@ disp_machine_params(void)
     printf("*** NoC NIC has %d inflection points, gap is %d ns\n",
 	NoCNICinflections(), NoCNICgap());
 
-    printf("*** Net link: Bandwidth %ld B/s, latency %ld ns\n",
+    printf("*** Net link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_NetLinkBandwidth, _NetLinkLatency);
-    printf("*** NoC link: Bandwidth %ld B/s, latency %ld ns\n",
+    printf("*** NoC link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_NoCLinkBandwidth, _NoCLinkLatency);
-    printf("*** I/O link: Bandwidth %ld B/s, latency %ld ns\n",
+    printf("*** I/O link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_IOLinkBandwidth, _IOLinkLatency);
-    printf("*** Link latency between routers: Network %ld ns, NoC %ld ns\n",
+    printf("*** Link latency between routers: Network %" PRId64 " ns, NoC %" PRId64 " ns\n",
 	_NetIntraLatency, _NoCIntraLatency);
 
 }  /* end of disp_machine_params() */
@@ -329,20 +330,20 @@ int rc;
 	    _NoCNICgap= strtol(value1, (char **)NULL, 0);
 
 	} else if (strcmp("NetLinkBandwidth", key) == 0)   {
-	    _NetLinkBandwidth= strtol(value1, (char **)NULL, 0);
+	    _NetLinkBandwidth= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCLinkBandwidth", key) == 0)   {
-	    _NoCLinkBandwidth= strtol(value1, (char **)NULL, 0);
+	    _NoCLinkBandwidth= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCLinkLatency", key) == 0)   {
-	    _NoCLinkLatency= strtol(value1, (char **)NULL, 0);
+	    _NoCLinkLatency= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("IOLinkBandwidth", key) == 0)   {
-	    _IOLinkBandwidth= strtol(value1, (char **)NULL, 0);
+	    _IOLinkBandwidth= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("IOLinkLatency", key) == 0)   {
-	    _IOLinkLatency= strtol(value1, (char **)NULL, 0);
+	    _IOLinkLatency= strtoll(value1, (char **)NULL, 0);
 
 	} else if (strcmp("NetIntraLatency", key) == 0)   {
-	    _NetIntraLatency= strtol(value1, (char **)NULL, 0);
+	    _NetIntraLatency= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCIntraLatency", key) == 0)   {
-	    _NoCIntraLatency= strtol(value1, (char **)NULL, 0);
+	    _NoCIntraLatency= strtoll(value1, (char **)NULL, 0);
 
 	/* Net NIC parameters */
 	} else if (strstr(key, "NetNICparams") == key)   {
@@ -352,7 +353,7 @@ int rc;
 		break;
 	    }
 	    _NetNICparams[_NetNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
-	    _NetNICparams[_NetNICinflections].latency= strtol(value2, (char **)NULL, 0);
+	    _NetNICparams[_NetNICinflections].latency= strtoll(value2, (char **)NULL, 0);
 	    if (_NetNICparams[_NetNICinflections].latency < _NetLinkLatency)   {
 		/* Set Net link latency to smallest NIC lateny we know of */
 		_NetLinkLatency= _NetNICparams[_NetNICinflections].latency;
@@ -365,7 +366,7 @@ int rc;
 		break;
 	    }
 	    _NoCNICparams[_NoCNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
-	    _NoCNICparams[_NoCNICinflections].latency= strtol(value2, (char **)NULL, 0);
+	    _NoCNICparams[_NoCNICinflections].latency= strtoll(value2, (char **)NULL, 0);
 	    if (_NoCNICparams[_NoCNICinflections].latency < _NoCLinkLatency)   {
 		/* Set NoC link latency to smallest NIC lateny we know of */
 		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency;

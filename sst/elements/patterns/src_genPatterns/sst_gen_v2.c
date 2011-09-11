@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>		/* For PRId64 */
 #include "sst_gen_v2.h"
 #include "machine.h"
 #include "pattern.h"
@@ -51,12 +52,12 @@ sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, uint64
     }
 
     fprintf(sstfile, "<variables>\n");
-    fprintf(sstfile, "\t<lat_local_net> %luns </lat_local_net>\n", node_latency);
-    fprintf(sstfile, "\t<lat_global_net> %luns </lat_global_net>\n", net_latency);
-    fprintf(sstfile, "\t<lat_local_nvram> %luns </lat_local_nvram>\n", node_latency);
-    fprintf(sstfile, "\t<lat_storage_net> %luns </lat_storage_net>\n", IO_latency);
-    fprintf(sstfile, "\t<lat_storage_nvram> %luns </lat_storage_nvram>\n", node_latency);
-    fprintf(sstfile, "\t<lat_ssd_io> %luns </lat_ssd_io>\n", IO_latency);
+    fprintf(sstfile, "\t<lat_local_net> %" PRId64 "ns </lat_local_net>\n", node_latency);
+    fprintf(sstfile, "\t<lat_global_net> %" PRId64 "ns </lat_global_net>\n", net_latency);
+    fprintf(sstfile, "\t<lat_local_nvram> %" PRId64 "ns </lat_local_nvram>\n", node_latency);
+    fprintf(sstfile, "\t<lat_storage_net> %" PRId64 "ns </lat_storage_net>\n", IO_latency);
+    fprintf(sstfile, "\t<lat_storage_nvram> %" PRId64 "ns </lat_storage_nvram>\n", node_latency);
+    fprintf(sstfile, "\t<lat_ssd_io> %" PRId64 "ns </lat_ssd_io>\n", IO_latency);
     fprintf(sstfile, "</variables>\n");
     fprintf(sstfile, "\n");
 
@@ -128,14 +129,14 @@ int i;
     for (i= 0; i < NetNICinflections(); i++)   {
 	fprintf(sstfile, "\t\t<NetNICinflection%d> %d </NetNICinflection%d>\n",
 	    i, NetNICinflectionpoint(i), i);
-	fprintf(sstfile, "\t\t<NetNIClatency%d> %ld </NetNIClatency%d>\n",
+	fprintf(sstfile, "\t\t<NetNIClatency%d> %" PRId64 " </NetNIClatency%d>\n",
 	    i, (long long int)NetNIClatency(i), i);
     }
 
     for (i= 0; i < NoCNICinflections(); i++)   {
 	fprintf(sstfile, "\t\t<NoCNICinflection%d> %d </NoCNICinflection%d>\n",
 	    i, NoCNICinflectionpoint(i), i);
-	fprintf(sstfile, "\t\t<NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
+	fprintf(sstfile, "\t\t<NoCNIClatency%d> %" PRId64 " </NoCNIClatency%d>\n",
 	    i, (long long int)NoCNIClatency(i), i);
     }
 
@@ -227,7 +228,7 @@ sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t route
     fprintf(sstfile, "\t\t<hop_delay> %d </hop_delay>\n", hop_delay);
     fprintf(sstfile, "\t\t<debug> 0 </debug>\n");
     fprintf(sstfile, "\t\t<num_ports> %d </num_ports>\n", num_ports);
-    fprintf(sstfile, "\t\t<bw> %lu </bw>\n", router_bw);
+    fprintf(sstfile, "\t\t<bw> %" PRId64 " </bw>\n", router_bw);
     fprintf(sstfile, "\t\t<wormhole> %d </wormhole>\n", wormhole);
 
     if (power_method == pwrNone)   {
@@ -478,7 +479,7 @@ sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *ss
 	return;
     }
 
-    fprintf(sstfile, "\t\t<link name=\"%s\" port=\"%s\" latency=%luns/>\n",
+    fprintf(sstfile, "\t\t<link name=\"%s\" port=\"%s\" latency=%" PRId64 "ns/>\n",
 	id, link_name, link_lat);
 
 }  /* end of sst_router_component_link() */
