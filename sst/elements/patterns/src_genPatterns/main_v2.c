@@ -254,7 +254,7 @@ int ssd_write_bw;	/* In bytes per second */
     ** Start the sst xml file
     */
     sst_header(fp_sst);
-    sst_variables(fp_sst, NoCLinkLatency(), NetLinkLatency(), IOLinkLatency());
+    sst_variables(fp_sst, IOLinkLatency());
     sst_param_start(fp_sst); /* start the parameter_include section */
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst);
@@ -301,7 +301,7 @@ int ssd_write_bw;	/* In bytes per second */
     sst_pwr_component(fp_sst, power_method);
     sst_pattern_generators(fp_sst);
     sst_nvram(fp_sst);
-    sst_routers(fp_sst, NoCIntraLatency(), NetIntraLatency(), nvram_lat, power_method);
+    sst_routers(fp_sst, nvram_lat, power_method);
     sst_body_end(fp_sst);
     sst_footer(fp_sst);
 

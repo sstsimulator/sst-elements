@@ -588,3 +588,29 @@ NoCIntraLatency(void)
 {
     return _NoCIntraLatency;
 }  /* end of NoCIntraLatency() */
+
+
+
+int
+NetRouterLatency(void)
+{
+    /*
+    ** We set the router hop_delay to 0 and add latency to the link connected to it.
+    ** That way SST can use it to loosen synchronization constraints.
+    */
+    return 0;
+
+}  /* end of NetRouterLatency() */
+
+
+
+int
+NoCRouterLatency(void)
+{
+    /*
+    ** We set the router hop_delay to 0 and add latency to the link connected to it.
+    ** That way SST can use it to loosen synchronization constraints.
+    */
+    return 0;
+
+}  /* end of NoCRouterLatency() */

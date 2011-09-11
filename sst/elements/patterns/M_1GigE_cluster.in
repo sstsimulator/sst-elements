@@ -6,14 +6,8 @@
 # Entries are Key = Value pairs
 # Repeated entries are allowed; the last value is used
 #
-# Order of entries does not matter, except NetNICinflections and
-# NoCNICinflections must be decrlared before any of the
-# NxxNIClatencyX and NxxNICbandwidthX parameters. NxxNIC parameters
-# do not have to be sorted; i.e., NoCNICinflection0 can have a higher
-# value than NoCNICinflection1. NxxNIC indicies must be consecutive
-# 0...n
+# NetNICparams and NoCNICparams do not have to be sorted.
 #
-# The following entries have no default and must must be specified:
 # Network NIC parameters
 #
 #         inflection latency 
@@ -41,25 +35,34 @@ NetNICparams =  98304 1201030
 NetNICparams = 102400 1231690
 NetNICparams = 114688 1258420
 
+# Minimum gap between messages going into the main network
 NetNICgap = 53000
 NetNICgap = 17000
 
 # NoC NIC parameters
+#
+#         inflection latency 
+#         bytes      nano s
 NoCNICparams = 0 450
 NoCNICparams = 18000 450
+
+# Minimum gap between messages going into the NoC
 NoCNICgap = 15000
 
+# (Achievable) Bandwidth between and to network routers
 # My guess of 1GigE link payload bandwith in bytes/second
 NetLinkBandwidth = 78000000
 
-# An even wilder guess
+# (Achievable) Bandwidth between and to NoC network routers
 NoCLinkBandwidth = 2000000000
 
-# And still guessing
+# Link latency between network routers
 NetIntraLatency = 25
+
+# Link latency between NoC network routers
 NoCIntraLatency = 5
 
-# Not working yet
+# I/O is not working yet
 IOLinkBandwidth = 0
 IOLinkLatency = 0
 

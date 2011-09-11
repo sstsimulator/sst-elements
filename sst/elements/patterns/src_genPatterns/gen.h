@@ -12,6 +12,7 @@
 
 typedef enum {LOCAL_NVRAM, SSD} nvram_type_t;
 typedef enum {Rnet, RNoC, RnetPort, Rnvram, Rstorage, RstoreIO} router_function_t;
+typedef enum {Lnet, LNoC, LIO, LNVRAM} link_type_t;
 
 void gen_nic(int rank, int router, int port, int aggregator, int aggregator_port,
 	int nvram, int nvram_port, int ss, int ss_port);
@@ -21,7 +22,7 @@ void gen_link(int Arouter, int Aport, int Brouter, int Bport);
 void reset_router_list(void);
 int next_router(int *id, router_function_t *role, int *wormhole);
 void reset_router_nics(int router);
-int next_router_nic(int router, int *port);
+int next_router_nic(int router, int *port, link_type_t *ltype);
 void reset_router_links(int router);
 int next_router_link(int router, int *link_id, int *lport, int *rport);
 

@@ -25,7 +25,7 @@ typedef enum {pwrNone, pwrMcPAT, pwrORION} pwr_method_t;
 void sst_header(FILE *sstfile);
 void sst_footer(FILE *dotfile);
 
-void sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, uint64_t IO_latency);
+void sst_variables(FILE *sstfile, uint64_t IO_latency);
 
 void sst_param_start(FILE *sstfile);
 void sst_param_end(FILE *sstfile);
@@ -57,7 +57,6 @@ void sst_nvram_component(char *id, char *link_id, nvram_type_t type, FILE *sstfi
 void sst_nvram_param_entries(FILE *sstfile, int nvram_read_bw, int nvram_write_bw,
 	int ssd_read_bw, int ssd_write_bw);
 void sst_nvram(FILE *sstfile);
-void sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
-	uint64_t nvram_latency, pwr_method_t power_method);
+void sst_routers(FILE *sstfile, uint64_t nvram_latency, pwr_method_t power_method);
 
 #endif /* _SST_GEN_H_ */

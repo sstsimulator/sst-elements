@@ -31,7 +31,7 @@ void sst_router_param_end(FILE *sstfile, char *Rname);
 
 void sst_gen_param_start(FILE *sstfile, int gen_debug);
 void sst_gen_param_entries(FILE *sstfile);
-void sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency);
+void sst_gen_param_end(FILE *sstfile);
 
 void sst_pwr_param_entries(FILE *sstfile, pwr_method_t power_method);
 void sst_pwr_component(FILE *sstfile, pwr_method_t power_method);
@@ -52,7 +52,6 @@ void sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t typ
 void sst_nvram_param_entries(FILE *sstfile, int nvram_read_bw, int nvram_write_bw,
 	int ssd_read_bw, int ssd_write_bw);
 void sst_nvram(FILE *sstfile);
-void sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
-	uint64_t nvram_latency, pwr_method_t power_method);
+void sst_routers(FILE *sstfile, uint64_t nvram_latency, pwr_method_t power_method);
 
 #endif /* _SST_GEN_H_ */

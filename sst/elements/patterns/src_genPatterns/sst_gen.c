@@ -96,7 +96,7 @@ int i;
 
 
 void
-sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
+sst_gen_param_end(FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -109,37 +109,37 @@ sst_gen_param_end(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
 
     fprintf(sstfile, "<LocalNet>\n");
     fprintf(sstfile, "    <name> NoC </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", node_latency);
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", NoCLinkLatency());
     fprintf(sstfile, "</LocalNet>\n");
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<GlobalNet>\n");
     fprintf(sstfile, "    <name> NETWORK </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", net_latency);
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", NetLinkLatency());
     fprintf(sstfile, "</GlobalNet>\n");
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<LocalNVRAMaccess>\n");
     fprintf(sstfile, "    <name> NVRAM </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", node_latency);
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", IOLinkLatency());
     fprintf(sstfile, "</LocalNVRAMaccess>\n");
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<StableStorageAccess>\n");
     fprintf(sstfile, "    <name> STORAGE </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", net_latency);
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", IOLinkLatency());
     fprintf(sstfile, "</StableStorageAccess>\n");
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<SSD_IO_port>\n");
     fprintf(sstfile, "    <name> STORAGE </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", net_latency);
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", IOLinkLatency());
     fprintf(sstfile, "</SSD_IO_port>\n");
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<NVRAM_IO_port>\n");
     fprintf(sstfile, "    <name> STORAGE </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", node_latency);
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", IOLinkLatency());
     fprintf(sstfile, "</NVRAM_IO_port>\n");
     fprintf(sstfile, "\n");
 
@@ -625,8 +625,7 @@ char link_id[MAX_ID_LEN];
 ** Generate the router components
 */
 void
-sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
-	uint64_t nvram_latency, pwr_method_t power_method)
+sst_routers(FILE *sstfile, uint64_t nvram_latency, pwr_method_t power_method)
 {
 
 int l, r, p;
@@ -638,6 +637,8 @@ char router_id[MAX_ID_LEN];
 char cname[MAX_ID_LEN];
 router_function_t role;
 int wormhole;
+int lat;
+link_type_t ltype;
 
 
     if (sstfile == NULL)   {
@@ -646,6 +647,29 @@ int wormhole;
 
     reset_router_list();
     while (next_router(&r, &role, &wormhole))   {
+	switch (role)   {
+	    case RNoC:
+		lat= NoCIntraLatency();
+		break;
+	    case Rnet:
+		lat= NetIntraLatency();
+		break;
+	    case RnetPort:
+		lat= NetIntraLatency();
+		break;
+	    case Rnvram:
+		lat= nvram_latency;
+		break;
+	    case Rstorage:
+		lat= IOLinkLatency();
+		break;
+	    case RstoreIO:
+		lat= IOLinkLatency();
+		break;
+	    default:
+		lat= -1;
+	}
+
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	sst_router_component_start(router_id, 1.0, cname, role, power_method, sstfile);
@@ -656,7 +680,7 @@ int wormhole;
 
 	/* Links to local NIC(s) */
 	reset_router_nics(r);
-	while (next_router_nic(r, &p))   {
+	while (next_router_nic(r, &p, &ltype))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
 	    fprintf(sstfile, "                <%s> %s </%s>\n", cname, net_link_id, cname);
@@ -710,9 +734,22 @@ int wormhole;
 
 	/* Links to local NIC(s) */
 	reset_router_nics(r);
-	while (next_router_nic(r, &p))   {
+	while (next_router_nic(r, &p, &ltype))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
-	    sst_router_component_link(net_link_id, node_latency, net_link_id, sstfile);
+	    switch (ltype)   {
+		case Lnet:
+		    sst_router_component_link(net_link_id, NetLinkLatency(), net_link_id, sstfile);
+		    break;
+		case LNoC:
+		    sst_router_component_link(net_link_id, NoCLinkLatency(), net_link_id, sstfile);
+		    break;
+		case LIO:
+		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
+		    break;
+		case LNVRAM:
+		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
+		    break;
+	    }
 	}
 
 	/* Links to other routers */
@@ -720,7 +757,7 @@ int wormhole;
 	while (next_router_link(r, &l, &lp, &rp))   {
 	    if (l >= 0)   {
 		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
-		sst_router_component_link(net_link_id, net_latency, net_link_id, sstfile);
+		sst_router_component_link(net_link_id, lat, net_link_id, sstfile);
 	    } else   {
 		/* Don't create loops back to the same router */
 	    }

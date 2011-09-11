@@ -43,7 +43,7 @@ sst_header(FILE *sstfile)
 
 
 void
-sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, uint64_t IO_latency)
+sst_variables(FILE *sstfile, uint64_t IO_latency)
 {
 
     if (sstfile == NULL)   {
@@ -52,11 +52,11 @@ sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, uint64
     }
 
     fprintf(sstfile, "<variables>\n");
-    fprintf(sstfile, "\t<lat_local_net> %" PRId64 "ns </lat_local_net>\n", node_latency);
-    fprintf(sstfile, "\t<lat_global_net> %" PRId64 "ns </lat_global_net>\n", net_latency);
-    fprintf(sstfile, "\t<lat_local_nvram> %" PRId64 "ns </lat_local_nvram>\n", node_latency);
+    fprintf(sstfile, "\t<lat_local_net> %" PRId64 "ns </lat_local_net>\n", NoCLinkLatency());
+    fprintf(sstfile, "\t<lat_global_net> %" PRId64 "ns </lat_global_net>\n", NetLinkLatency());
+    fprintf(sstfile, "\t<lat_local_nvram> %" PRId64 "ns </lat_local_nvram>\n", IO_latency);
     fprintf(sstfile, "\t<lat_storage_net> %" PRId64 "ns </lat_storage_net>\n", IO_latency);
-    fprintf(sstfile, "\t<lat_storage_nvram> %" PRId64 "ns </lat_storage_nvram>\n", node_latency);
+    fprintf(sstfile, "\t<lat_storage_nvram> %" PRId64 "ns </lat_storage_nvram>\n", IO_latency);
     fprintf(sstfile, "\t<lat_ssd_io> %" PRId64 "ns </lat_ssd_io>\n", IO_latency);
     fprintf(sstfile, "</variables>\n");
     fprintf(sstfile, "\n");
@@ -614,8 +614,7 @@ char link_id[MAX_ID_LEN];
 ** Generate the router components
 */
 void
-sst_routers(FILE *sstfile, uint64_t node_latency, uint64_t net_latency,
-	uint64_t nvram_latency, pwr_method_t power_method)
+sst_routers(FILE *sstfile, uint64_t nvram_latency, pwr_method_t power_method)
 {
 
 int l, r, p;
@@ -627,6 +626,8 @@ char router_id[MAX_ID_LEN];
 char cname[MAX_ID_LEN];
 router_function_t role;
 int wormhole;
+int lat;
+link_type_t ltype;
 
 
     if (sstfile == NULL)   {
@@ -635,6 +636,29 @@ int wormhole;
 
     reset_router_list();
     while (next_router(&r, &role, &wormhole))   {
+	switch (role)   {
+	    case RNoC:
+		lat= NoCIntraLatency();
+		break;
+	    case Rnet:
+		lat= NetIntraLatency();
+		break;
+	    case RnetPort:
+		lat= NetLinkLatency();
+		break;
+	    case Rnvram:
+		lat= nvram_latency;
+		break;
+	    case Rstorage:
+		lat= IOLinkLatency();
+		break;
+	    case RstoreIO:
+		lat= IOLinkLatency();
+		break;
+	    default:
+		lat= -1;
+	}
+
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	sst_router_component_start(router_id, cname, role, power_method, sstfile);
@@ -645,7 +669,7 @@ int wormhole;
 
 	/* Links to local NIC(s) */
 	reset_router_nics(r);
-	while (next_router_nic(r, &p))   {
+	while (next_router_nic(r, &p, &ltype))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
 	    fprintf(sstfile, "\t\t\t<%s> %s </%s>\n", cname, net_link_id, cname);
@@ -698,9 +722,22 @@ int wormhole;
 
 	/* Links to local NIC(s) */
 	reset_router_nics(r);
-	while (next_router_nic(r, &p))   {
+	while (next_router_nic(r, &p, &ltype))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
-	    sst_router_component_link(net_link_id, node_latency, net_link_id, sstfile);
+	    switch (ltype)   {
+		case Lnet:
+		    sst_router_component_link(net_link_id, NetLinkLatency(), net_link_id, sstfile);
+		    break;
+		case LNoC:
+		    sst_router_component_link(net_link_id, NoCLinkLatency(), net_link_id, sstfile);
+		    break;
+		case LIO:
+		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
+		    break;
+		case LNVRAM:
+		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
+		    break;
+	    }
 	}
 
 	/* Links to other routers */
@@ -708,7 +745,7 @@ int wormhole;
 	while (next_router_link(r, &l, &lp, &rp))   {
 	    if (l >= 0)   {
 		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
-		sst_router_component_link(net_link_id, net_latency, net_link_id, sstfile);
+		sst_router_component_link(net_link_id, lat, net_link_id, sstfile);
 	    } else   {
 		/* Don't creat loops back to the same router */
 	    }

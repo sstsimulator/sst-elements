@@ -31,5 +31,7 @@ int64_t IOLinkLatency(void);
 int64_t NetIntraLatency(void);
 int64_t NoCIntraLatency(void);
 
+int NoCRouterLatency(void);
+int NetRouterLatency(void);
 
 #endif /* _MACHINE_H_ */

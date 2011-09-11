@@ -200,7 +200,7 @@ router_t *r;
 ** Traverse the list of ports connected to NICs inside a router
 */
 int
-next_router_nic(int router, int *port)
+next_router_nic(int router, int *port, link_type_t *ltype)
 {
 
 router_t *r;
@@ -225,15 +225,19 @@ nic_t *n;
     if (n->router_id == router)   {
 	/* This is a NoC router */
 	*port= n->router_port;
+	*ltype= LNoC;
     } else if (n->net_aggregator_id == router)   {
 	/* This is an Network aggregator */
 	*port= n->net_aggregator_port;
+	*ltype= Lnet;
     } else if (n->nvram_aggregator_id == router)   {
 	/* This is an NVRAM aggregator */
 	*port= n->nvram_aggregator_port;
+	*ltype= LNVRAM;
     } else if (n->ss_aggregator_id == router)   {
 	/* This is an Stable Stoage aggregator */
 	*port= n->ss_aggregator_port;
+	*ltype= LIO;
     } else   {
 	fprintf(stderr, "Inconsistency: Router/aggregator link to a NIC with a link "
 	    "to another router!\n");
