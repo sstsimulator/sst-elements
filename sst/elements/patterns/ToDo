@@ -1,6 +1,5 @@
 - Fix memory leak
 - Make NICstat selectable from configuration
-- pattern file with pattern specific parameters
 - Use NetIntraLatency and NoCIntraLatency as part of router calc
 - Enter inflection points for NoCNICparams
 
@@ -133,3 +132,4 @@ Arch model
 - Clean up pattern_common.cc
 - Bring sst_gen_v2.c and main_v2.c back up to date
 - Get rid of bandwidth for params in machine file
+- pattern file with pattern specific parameters

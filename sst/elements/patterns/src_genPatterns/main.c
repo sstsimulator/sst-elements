@@ -13,6 +13,7 @@
 #include "main.h"
 #include "sst_gen.h"
 #include "machine.h"
+#include "pattern.h"
 #include "topo_mesh2D.h"
 
 
@@ -53,9 +54,10 @@ int ch, error;
 int verbose;
 char *sstFname;
 char *machineFname;
+char *patternFname;
 FILE *fp_sst;
 FILE *fp_machine;
-char *pattern_name;
+FILE *fp_pattern;
 
 int IO_nodes;		/* Should be divisible by the number of nodes */
 char *power_model;	/* Which, if any, power model to use */
@@ -75,6 +77,7 @@ int ssd_write_bw;	/* In bytes per second */
     verbose= 0;
     sstFname= "";
     machineFname= "";
+    patternFname= "";
 
     /* Assume a SATA3 drive (Crucial C200) "somehow" connected to an I/O network */
     ssd_read_bw= 200000000;
@@ -86,7 +89,6 @@ int ssd_write_bw;	/* In bytes per second */
     nvram_lat= 50000;
 
     IO_nodes= 1;
-    pattern_name= NULL;
 
     power_model= "none";
     power_method= pwrNone;
@@ -114,7 +116,7 @@ int ssd_write_bw;	/* In bytes per second */
 		sstFname= optarg;
 		break;
 	    case 'p':
-		pattern_name= optarg;
+		patternFname= optarg;
 		break;
 	    case 'v':
 		verbose++;
@@ -136,66 +138,8 @@ int ssd_write_bw;	/* In bytes per second */
 	fprintf(stderr, "No additional arguments expected!\n");
     }
 
-    if (pattern_name == NULL)   {
-	error= TRUE;
-	fprintf(stderr, "Need a pattern name!\n");
-    } else   {
-	if ((strcasestr("ghost_pattern", pattern_name) == NULL)   &&
-	    (strcasestr("pingpong_pattern", pattern_name) == NULL)   &&
-	    (strcasestr("msgrate_pattern", pattern_name) == NULL)   &&
-	    (strcasestr("allreduce_pattern", pattern_name) == NULL))   {
-	    error= TRUE;
-	    fprintf(stderr, "Unknown pattern name!\n");
-	    fprintf(stderr, "Must be one of \"ghost_pattern\", \"msgrate_pattern\", \"allreduce_pattern\","
-		" or \"pingpong_pattern\n");
-
-	} else   {
-
-	    if (strcasestr("ghost_pattern", pattern_name) != NULL)   {
-		pattern_name= "ghost_pattern";
-
-	    } else if (strcasestr("msgrate_pattern", pattern_name) != NULL)   {
-		pattern_name= "msgrate_pattern";
-
-	    } else if (strcasestr("allreduce_pattern", pattern_name) != NULL)   {
-		pattern_name= "allreduce_pattern";
-
-	    } else if (strcasestr("pingpong_pattern", pattern_name) != NULL)   {
-		pattern_name= "pingpong_pattern";
-
-	    } else   {
-		error= TRUE;
-	    }
-
-	    if (!error)   {
-		printf("*** Communication pattern is \"%s\"\n", pattern_name);
-	    }
-	}
-    }
-
-    if ((strcasestr("none", power_model) == NULL) &&
-	(strcasestr("McPAT", power_model) == NULL) &&
-        (strcasestr("ORION", power_model) == NULL))   {
-	error= TRUE;
-	fprintf(stderr, "Unknown power model!\n");
-	fprintf(stderr, "Must be one of \"McPAT\" or \"ORION\"\n");
-    } else   {
-	if (strcasestr("none", power_model) != NULL)   {
-	    printf("*** Power model is \"none\"\n");
-	    power_method= pwrNone;
-	} else if (strcasestr("McPAT", power_model) != NULL)   {
-	    printf("*** Power model is \"McPAT\"\n");
-	    power_method= pwrMcPAT;
-	} else if (strcasestr("ORION", power_model) != NULL)   {
-	    printf("*** Power model is \"ORION\"\n");
-	    power_method= pwrORION;
-	}
-
-    }
-
     /* Open the machine description file for input */
     if (strcmp(machineFname, "") == 0)   {
-	/* Default */
 	fp_machine= NULL;
 	error= TRUE;
 	fprintf(stderr, "Machine file must be specified with -m option!\n");
@@ -208,26 +152,54 @@ int ssd_write_bw;	/* In bytes per second */
 	}
     }
 
-    /* Open the SST xml file for output */
-    if (strcmp(sstFname, "") == 0)   {
-	/* Default */
-	fp_sst= NULL;
+    /* Open the pattern description file for input */
+    if (strcmp(patternFname, "") == 0)   {
+	fp_pattern= NULL;
 	error= TRUE;
-	fprintf(stderr, "Output file must be specified with -o option!\n");
-    } else if (strcmp(sstFname, "-") == 0)   {
-	fp_sst= stdout;
+	fprintf(stderr, "Pattern file must be specified with -p option!\n");
     } else   {
-	fp_sst= fopen(sstFname, "w");
-	if (fp_sst == NULL)   {
-	    fprintf(stderr, "Could not open the SST xml output file \"%s\": %s\n",
-		sstFname, strerror(errno));
+	fp_pattern= fopen(patternFname, "r");
+	if (fp_pattern == NULL)   {
+	    fprintf(stderr, "Could not open the pattern input file \"%s\": %s\n",
+		patternFname, strerror(errno));
 	    error= TRUE;
 	}
     }
 
+    if (!error)   {
+	/* Open the SST xml file for output */
+	printf("*** Writing output to \"%s\"\n", sstFname);
+	if (strcmp(sstFname, "") == 0)   {
+	    fp_sst= NULL;
+	    error= TRUE;
+	    fprintf(stderr, "Output file must be specified with -o option!\n");
+	} else if (strcmp(sstFname, "-") == 0)   {
+	    fp_sst= stdout;
+	} else   {
+	    fp_sst= fopen(sstFname, "w");
+	    if (fp_sst == NULL)   {
+		fprintf(stderr, "Could not open the SST xml output file \"%s\": %s\n",
+		    sstFname, strerror(errno));
+		error= TRUE;
+	    }
+	}
+    }
+
+
     /* Read the machine file */
-    if (read_machine_file(fp_machine, verbose) == FALSE)   {
-	error= TRUE;
+    if (!error)   {
+	printf("*** Reading machine parameters from \"%s\"\n", machineFname);
+	if (read_machine_file(fp_machine, verbose) == FALSE)   {
+	    error= TRUE;
+	}
+    }
+
+    /* Read the pattern file */
+    if (!error)   {
+	printf("*** Reading pattern parameters from \"%s\"\n", patternFname);
+	if (read_pattern_file(fp_pattern, verbose) == FALSE)   {
+	    error= TRUE;
+	}
     }
 
     /* A node is the endpoint of a network router */
@@ -242,14 +214,37 @@ int ssd_write_bw;	/* In bytes per second */
 	}
     }
 
+    if (!error)   {
+	disp_machine_params();
+	disp_pattern_params();
+    }
+
+    if (!error)   {
+	if ((strcasestr("none", power_model) == NULL) &&
+	    (strcasestr("McPAT", power_model) == NULL) &&
+	    (strcasestr("ORION", power_model) == NULL))   {
+	    error= TRUE;
+	    fprintf(stderr, "Unknown power model!\n");
+	    fprintf(stderr, "Must be one of \"McPAT\" or \"ORION\"\n");
+	} else   {
+	    if (strcasestr("none", power_model) != NULL)   {
+		printf("*** Power model is \"none\"\n");
+		power_method= pwrNone;
+	    } else if (strcasestr("McPAT", power_model) != NULL)   {
+		printf("*** Power model is \"McPAT\"\n");
+		power_method= pwrMcPAT;
+	    } else if (strcasestr("ORION", power_model) != NULL)   {
+		printf("*** Power model is \"ORION\"\n");
+		power_method= pwrORION;
+	    }
+
+	}
+    }
+
     if (error)   {
 	usage(argv);
 	exit(1);
     }
-
-    printf("*** Reading machine parameters from \"%s\"\n", machineFname);
-    printf("*** Writing output to \"%s\"\n", sstFname);
-    disp_machine_params();
 
 
     GenMesh2D(Net_x_dim(), Net_y_dim(), NoC_x_dim(), NoC_y_dim(), num_cores(), IO_nodes, num_router_nodes());
@@ -260,15 +255,15 @@ int ssd_write_bw;	/* In bytes per second */
     */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
-    sst_gen_param_entries(fp_sst, fp_machine, pattern_name);
+    sst_gen_param_entries(fp_sst);
     sst_gen_param_end(fp_sst, NoCLinkLatency(), NetLinkLatency());
     sst_pwr_param_entries(fp_sst, power_method);
     sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
 
     /* We assume the router bandwidth is the same as the link bandwidth */
     wormhole= TRUE;
-    sst_router_param_start(fp_sst, RNAME_NETWORK, 4 + num_router_nodes(), NetLinkBandwidth(),
-	num_cores(), 25, wormhole, power_method);
+    sst_router_param_start(fp_sst, RNAME_NETWORK, 4 + num_router_nodes(),
+	NetLinkBandwidth(), num_cores(), 25, wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NETWORK);
 
     wormhole= FALSE;
@@ -295,13 +290,14 @@ int ssd_write_bw;	/* In bytes per second */
     sst_router_param_end(fp_sst, RNAME_STORAGE);
 
     wormhole= FALSE;
-    sst_router_param_start(fp_sst, RNAME_IO, 1 + num_nodes() / IO_nodes,
-	NetLinkBandwidth(), num_cores(), 50, wormhole, pwrNone);
+    sst_router_param_start(fp_sst, RNAME_IO,
+	1 + num_nodes() / IO_nodes, NetLinkBandwidth(), num_cores(), 50,
+	wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_IO);
 
     sst_body_start(fp_sst);
     sst_pwr_component(fp_sst, power_method);
-    sst_pattern_generators(pattern_name, fp_sst);
+    sst_pattern_generators(fp_sst);
     sst_nvram(fp_sst);
     sst_routers(fp_sst, NoCIntraLatency(), NetIntraLatency(), nvram_lat, power_method);
     sst_body_end(fp_sst);
@@ -313,6 +309,10 @@ int ssd_write_bw;	/* In bytes per second */
 
     if (fp_machine)   {
 	fclose(fp_machine);
+    }
+
+    if (fp_pattern)   {
+	fclose(fp_pattern);
     }
 
     return 0;
@@ -331,7 +331,7 @@ usage(char *argv[])
     fprintf(stderr, "   --machine, -m         Name of machine description file\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
-    fprintf(stderr, "   --pattern, -p         Name of pattern; e.g., ghost, msgrate, allreduce, pingpong\n");
+    fprintf(stderr, "   --pattern, -p         Name of pattern description file\n");
     fprintf(stderr, "   --power <model>       Enable power modeling using McPAT or ORION\n");
 
 }  /* end of usage() */

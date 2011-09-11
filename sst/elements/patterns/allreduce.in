@@ -1,0 +1,3 @@
+name = allreduce_pattern
+param num_sets = 9
+param num_ops = 200

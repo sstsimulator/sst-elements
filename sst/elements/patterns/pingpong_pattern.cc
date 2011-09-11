@@ -11,13 +11,13 @@
 
 A simple ping-pong test between rank 0 and rank n/2 (the assumption
 is that n/2 is fardest from rank 0 in the underlying network
-topology). Each message length is done num_msg times. Rank 0
+topology). Each message length is done num_msgs times. Rank 0
 calculates the one-way latency and bandwidth. The message size is
-then incremented by len_inc bytes and another round of num_msg trials
+then incremented by len_inc bytes and another round of num_msgs trials
 starts.  The test ends when the message size end_len is reached.
 
 The following are configuration file input parameters: destination,
-num_msg, end_len, and len_inc.
+num_msgs, end_len, and len_inc.
 
 The barrier at the end is there only for testing of the barrier
 iteself and the gate keeper mechanism in comm_pattern.cc
@@ -72,7 +72,7 @@ state_event pp_event;
 
     switch (e)   {
 	case E_START:
-	    cnt= num_msg;
+	    cnt= num_msgs;
 	    done= false;
 	    first_receive= true;
 	    len= 0; // Starting length
@@ -80,7 +80,7 @@ state_event pp_event;
 
 	    if (my_rank == 0)   {
 		printf("#  |||  Ping pong between ranks 0 and %d\n", dest);
-		printf("#  |||  Number of messages per each size: %d\n", num_msg);
+		printf("#  |||  Number of messages per each size: %d\n", num_msgs);
 		printf("# [%3d] PING I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
 			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
 		start_time= getCurrentSimTime();
@@ -146,7 +146,7 @@ double latency;
 		    } else   {
 			len= len_inc;
 		    }
-		    cnt= num_msg;
+		    cnt= num_msgs;
 		    if (len > end_len)   {
 			goto_state(state_BARRIER, PP_BARRIER, E_BARRIER_ENTRY);
 		    }
@@ -159,7 +159,7 @@ double latency;
 		    send_msg(dest, len, pp_event);
 		} else   {
 		    execution_time= (double)(getCurrentSimTime() - start_time) / TIME_BASE_FACTOR;
-		    latency= execution_time / num_msg / 2.0;
+		    latency= execution_time / num_msgs / 2.0;
 		    printf("%9d %.9f\n", len, latency);
 		    // Start next message size, if we haven't reached the end yet
 		    if (len > 0)   {
@@ -168,10 +168,10 @@ double latency;
 			len= len_inc;
 		    }
 		    if (len > end_len)   {
-			// We've done all sizes num_msg times
+			// We've done all sizes num_msgs times
 			goto_state(state_BARRIER, PP_BARRIER, E_BARRIER_ENTRY);
 		    } else   {
-			cnt= num_msg;
+			cnt= num_msgs;
 			start_time= getCurrentSimTime();
 			pp_event.event= E_RECEIVE;
 			send_msg(dest, len, pp_event);

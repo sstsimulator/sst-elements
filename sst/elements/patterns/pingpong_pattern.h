@@ -31,7 +31,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    dest= NetWidth() * NetHeight() * NoCWidth() * NoCHeight() * NumCores() / 2;
 
 	    // Set some more defaults
-	    num_msg= 10;
+	    num_msgs= 10;
 	    end_len= 1024;
 	    len_inc= 8;
 	    allreduce_msglen= sizeof(double);
@@ -46,8 +46,8 @@ class Pingpong_pattern : public Comm_pattern {
 		    sscanf(it->second.c_str(), "%d", &dest);
 		}
 
-		if (!it->first.compare("num_msg"))   {
-		    sscanf(it->second.c_str(), "%d", &num_msg);
+		if (!it->first.compare("num_msgs"))   {
+		    sscanf(it->second.c_str(), "%d", &num_msgs);
 		}
 
 		if (!it->first.compare("end_len"))   {
@@ -126,7 +126,7 @@ class Pingpong_pattern : public Comm_pattern {
 	int done;
 	int len;
 	int end_len;
-	int num_msg;
+	int num_msgs;
 	int len_inc;
 	SimTime_t start_time;
 	int first_receive;
@@ -147,7 +147,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(len);
 	    ar & BOOST_SERIALIZATION_NVP(end_len);
-	    ar & BOOST_SERIALIZATION_NVP(num_msg);
+	    ar & BOOST_SERIALIZATION_NVP(num_msgs);
 	    ar & BOOST_SERIALIZATION_NVP(len_inc);
 	    ar & BOOST_SERIALIZATION_NVP(start_time);
 	    ar & BOOST_SERIALIZATION_NVP(first_receive);

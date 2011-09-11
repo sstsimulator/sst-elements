@@ -1,0 +1,3 @@
+name = msgrate_pattern
+param num_msgs = 20
+param msg_len = 0

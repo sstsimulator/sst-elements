@@ -47,7 +47,7 @@ static NICparams_t *_NoCNICparams= NULL;
 
 
 
-void
+static void
 set_defaults(void)
 {
 
@@ -96,7 +96,7 @@ int i;
 
 
 
-int
+static int
 error_check(void)
 {
 

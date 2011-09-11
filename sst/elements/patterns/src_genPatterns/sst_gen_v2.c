@@ -9,13 +9,10 @@
 #include <string.h>
 #include "sst_gen_v2.h"
 #include "machine.h"
+#include "pattern.h"
 #include "gen.h"
 
 #define MAX_ID_LEN		(256)
-
-
-/* Number of messages in the message rate pattern */
-#define MSGRATE_NUM_MSGS	(200)
 
 
 
@@ -107,7 +104,7 @@ sst_gen_param_start(FILE *sstfile, int gen_debug)
 
 
 void
-sst_gen_param_entries(FILE *sstfile, FILE *fp_machine, char *pattern_name)
+sst_gen_param_entries(FILE *sstfile)
 {
 
 int i;
@@ -141,6 +138,8 @@ int i;
 	fprintf(sstfile, "\t\t<NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
 	    i, NoCNIClatency(i), i);
     }
+
+    pattern_params(sstfile);
 
 }  /* end of sst_gen_param_entries() */
 
@@ -360,7 +359,7 @@ sst_pwr_component(FILE *sstfile, pwr_method_t power_method)
 void
 sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	char *nvram_aggregator_id, char *ss_aggregator_id,
-	int rank, char *pattern_name, FILE *sstfile)
+	int rank, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -368,7 +367,7 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	return;
     }
 
-    fprintf(sstfile, "\t<component name=\"%s\" type=\"%s\">\n", id, pattern_name);
+    fprintf(sstfile, "\t<component name=\"%s\" type=\"%s\">\n", id, pattern_name());
     fprintf(sstfile, "\t\t<params include=Gp>\n");
     fprintf(sstfile, "\t\t\t<rank> %d </rank>\n", rank);
     fprintf(sstfile, "\t\t</params>\n");
@@ -514,7 +513,7 @@ sst_footer(FILE *sstfile)
 ** Generate the pattern generator components
 */
 void
-sst_pattern_generators(char *pattern_name, FILE *sstfile)
+sst_pattern_generators(FILE *sstfile)
 {
 
 int n, r, p;
@@ -554,18 +553,18 @@ char *label;
 
 	if (r >= 0)   {
 	    if (aggregator >= 0)   {
-		sst_gen_component(id, net_link_id, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, pattern_name, sstfile);
+		sst_gen_component(id, net_link_id, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
 	    } else   {
 		/* No network aggregator in this configuration */
-		sst_gen_component(id, net_link_id, NULL, nvram_aggregator_id, ss_aggregator_id, n, pattern_name, sstfile);
+		sst_gen_component(id, net_link_id, NULL, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
 	    }
 	} else   {
 	    /* Single node, no network */
 	    if (aggregator >= 0)   {
-		sst_gen_component(id, NULL, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, pattern_name, sstfile);
+		sst_gen_component(id, NULL, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
 	    } else   {
 		/* No network aggregator nor NoC in this configuration */
-		sst_gen_component(id, NULL, NULL, nvram_aggregator_id, ss_aggregator_id, n, pattern_name, sstfile);
+		sst_gen_component(id, NULL, NULL, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
 	    }
 	}
     }
