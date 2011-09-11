@@ -189,14 +189,14 @@ int index;
 	    for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
 		if (k->index == index)   {
 		    // Yes? Update the entry
-		    k->latency= strtol(it->second.c_str(), (char **)NULL, 0);
+		    k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
 		    found= true;
 		}
 	    }
 	    if (!found)   {
 		// No? Create a new entry
 		NICparams_t another;
-		another.latency= strtol(it->second.c_str(), (char **)NULL, 0);
+		another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.inflectionpoint= -1;
 		NetNICparams.push_back(another);
@@ -213,14 +213,14 @@ int index;
 	    for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
 		if (k->index == index)   {
 		    // Yes? Update the entry
-		    k->latency= strtol(it->second.c_str(), (char **)NULL, 0);
+		    k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
 		    found= true;
 		}
 	    }
 	    if (!found)   {
 		// No? Create a new entry
 		NICparams_t another;
-		another.latency= strtol(it->second.c_str(), (char **)NULL, 0);
+		another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.inflectionpoint= -1;
 		NoCNICparams.push_back(another);
