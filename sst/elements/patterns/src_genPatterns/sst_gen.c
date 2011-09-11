@@ -73,6 +73,8 @@ int i;
     fprintf(sstfile, "    <NetLinkLatency> %" PRId64 " </NetLinkLatency>\n", NetLinkLatency());
     fprintf(sstfile, "    <NoCLinkBandwidth> %" PRId64 " </NoCLinkBandwidth>\n", NoCLinkBandwidth());
     fprintf(sstfile, "    <NoCLinkLatency> %" PRId64 " </NoCLinkLatency>\n", NoCLinkLatency());
+    fprintf(sstfile, "    <NetIntraLatency> %" PRId64 " </NetIntraLatency>\n", NetIntraLatency());
+    fprintf(sstfile, "    <NoCIntraLatency> %" PRId64 " </NoCIntraLatency>\n", NoCIntraLatency());
     fprintf(sstfile, "    <IOLinkBandwidth> %" PRId64 " </IOLinkBandwidth>\n", IOLinkBandwidth());
     fprintf(sstfile, "    <IOLinkLatency> %" PRId64 " </IOLinkLatency>\n", IOLinkLatency());
 
@@ -738,10 +740,21 @@ link_type_t ltype;
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	    switch (ltype)   {
 		case Lnet:
-		    sst_router_component_link(net_link_id, NetLinkLatency(), net_link_id, sstfile);
+		    /*
+		    ** FIXME: This should be NetLinkLatency()
+		    ** With NetIntraLatency() it causes the link latency to be asymteric; i.e.,
+		    ** in the two places the link between NIC and aggregator is listed, it has
+		    ** two different latencies.
+		    ** However, with NetLinkLatency(), which makes it symetric, the latency
+		    ** is too high.
+		    */
+		    sst_router_component_link(net_link_id, NetIntraLatency(), net_link_id, sstfile);
 		    break;
 		case LNoC:
-		    sst_router_component_link(net_link_id, NoCLinkLatency(), net_link_id, sstfile);
+		    /*
+		    ** FIXME: This should be NoCLinkLatency(), same problem as above
+		    */
+		    sst_router_component_link(net_link_id, NoCIntraLatency(), net_link_id, sstfile);
 		    break;
 		case LIO:
 		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);

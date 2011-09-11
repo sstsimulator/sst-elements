@@ -126,6 +126,16 @@ int i;
     fprintf(sstfile, "\t\t<NetNICgap> %d </NetNICgap>\n", NetNICgap());
     fprintf(sstfile, "\t\t<NoCNICgap> %d </NoCNICgap>\n", NoCNICgap());
 
+    fprintf(sstfile, "\t\t<NetLinkBandwidth> %" PRId64 " </NetLinkBandwidth>\n", NetLinkBandwidth());
+    fprintf(sstfile, "\t\t<NetLinkLatency> %" PRId64 " </NetLinkLatency>\n", NetLinkLatency());
+    fprintf(sstfile, "\t\t<NoCLinkBandwidth> %" PRId64 " </NoCLinkBandwidth>\n", NoCLinkBandwidth());
+    fprintf(sstfile, "\t\t<NoCLinkLatency> %" PRId64 " </NoCLinkLatency>\n", NoCLinkLatency());
+    fprintf(sstfile, "\t\t<NetIntraLatency> %" PRId64 " </NetIntraLatency>\n", NetIntraLatency());
+    fprintf(sstfile, "\t\t<NoCIntraLatency> %" PRId64 " </NoCIntraLatency>\n", NoCIntraLatency());
+    fprintf(sstfile, "\t\t<IOLinkBandwidth> %" PRId64 " </IOLinkBandwidth>\n", IOLinkBandwidth());
+    fprintf(sstfile, "\t\t<IOLinkLatency> %" PRId64 " </IOLinkLatency>\n", IOLinkLatency());
+
+
     for (i= 0; i < NetNICinflections(); i++)   {
 	fprintf(sstfile, "\t\t<NetNICinflection%d> %d </NetNICinflection%d>\n",
 	    i, NetNICinflectionpoint(i), i);

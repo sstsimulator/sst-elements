@@ -1,8 +1,6 @@
 - Fix reading of NIC latency param on 32-bit systems
 - Fix memory leak
 - Make NICstat selectable from configuration
-- Use NetIntraLatency and NoCIntraLatency as part of router calc
-- Enter inflection points for NoCNICparams
 
 - How to measure gap? Router latency? Link bandwidth?
 - Does it matter how accurate that is done? E.g., what do confidence intervals help with?
@@ -134,3 +132,5 @@ Arch model
 - Bring sst_gen_v2.c and main_v2.c back up to date
 - Get rid of bandwidth for params in machine file
 - pattern file with pattern specific parameters
+- Use NetIntraLatency and NoCIntraLatency as part of router calc
+- Enter inflection points for NoCNICparams

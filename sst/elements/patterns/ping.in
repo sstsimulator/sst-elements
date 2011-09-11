@@ -1,4 +1,4 @@
 name = pingpong_pattern
 param num_msgs = 10
 param end_len = 1024
-param len_inc = 8
+param len_inc = 16

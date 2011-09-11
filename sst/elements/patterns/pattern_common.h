@@ -53,6 +53,7 @@ class Patterns   {
 
 	~Patterns()   {
 	    stat_print(0);
+	    stat_print(3);
 	    stat_print(12);
 	}
 
@@ -117,6 +118,8 @@ class Patterns   {
 	int64_t NoCLinkLatency;
 	int64_t IOLinkBandwidth;
 	int64_t IOLinkLatency;
+	int64_t NoCIntraLatency;
+	int64_t NetIntraLatency;
 
 	// Each message event gets a unique number for debugging
 	uint64_t msg_seq;

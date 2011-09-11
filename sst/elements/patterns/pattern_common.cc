@@ -125,6 +125,14 @@ int index;
 	    sscanf(it->second.c_str(), "%" PRId64, &NoCLinkLatency);
 	}
 
+	if (!it->first.compare("NetIntraLatency"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &NetIntraLatency);
+	}
+
+	if (!it->first.compare("NoCIntraLatency"))   {
+	    sscanf(it->second.c_str(), "%" PRId64, &NoCIntraLatency);
+	}
+
 	if (!it->first.compare("IOLinkBandwidth"))   {
 	    sscanf(it->second.c_str(), "%" PRId64, &IOLinkBandwidth);
 	}
@@ -604,13 +612,16 @@ int64_t link_duration;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NoCLinkLatency;
+	// FIXME: I think -NetIntraLatency is because SST will give us one of those
+	// before we get to the router. Check!
+	delay= latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
 	my_NoC_link->Send(delay, e);
 	NextNoCNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
     } else   {
 	// NIC is busy
 	delay= NextNoCNICslot - CurrentSimTime + NoCNICgap +
-	    latency + msg_duration - link_duration - NoCLinkLatency;
+	    latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
 	my_NoC_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NoCNICbusy++;
@@ -674,13 +685,16 @@ int64_t link_duration;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NetLinkLatency;
+	// FIXME: I think -NetIntraLatency is because SST will give us one of those
+	// before we get to the router. Check!
+	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
     } else   {
 	// NIC is busy
 	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
-	    latency + msg_duration - link_duration - NetLinkLatency;
+	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NetNICbusy++;
@@ -786,17 +800,17 @@ Patterns::stat_print(int rank)
 {
 
     if (my_rank == rank)   {
-	printf("#  [%3d] NoC NIC model statistics\n", my_rank);
-	printf("#  [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
+	printf("# [%3d] NoC NIC model statistics\n", my_rank);
+	printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
 	if (stat_NoCNICsend > 0)   {
-	    printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
+	    printf("# [%3d]     NIC busy    %12.1f%%\n", my_rank,
 		(100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
 	} else   {
-	    printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+	    printf("# [%3d]     NIC busy             0.0%%\n", my_rank);
 	}
 	printf("#  |||  \n");
-	printf("#  [%3d] Net NIC model statistics\n", my_rank);
-	printf("#  [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
+	printf("# [%3d] Net NIC model statistics\n", my_rank);
+	printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
 	if (stat_NetNICsend > 0)   {
 	    printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
 		(100.0 / stat_NetNICsend) * stat_NetNICbusy);
