@@ -45,7 +45,7 @@ sst_header(FILE *sstfile)
 
 
 void
-sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
+sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, uint64_t IO_latency)
 {
 
     if (sstfile == NULL)   {
@@ -57,9 +57,9 @@ sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency)
     fprintf(sstfile, "\t<lat_local_net> %luns </lat_local_net>\n", node_latency);
     fprintf(sstfile, "\t<lat_global_net> %luns </lat_global_net>\n", net_latency);
     fprintf(sstfile, "\t<lat_local_nvram> %luns </lat_local_nvram>\n", node_latency);
-    fprintf(sstfile, "\t<lat_storage_net> %luns </lat_storage_net>\n", net_latency);
+    fprintf(sstfile, "\t<lat_storage_net> %luns </lat_storage_net>\n", IO_latency);
     fprintf(sstfile, "\t<lat_storage_nvram> %luns </lat_storage_nvram>\n", node_latency);
-    fprintf(sstfile, "\t<lat_ssd_io> %luns </lat_ssd_io>\n", net_latency);
+    fprintf(sstfile, "\t<lat_ssd_io> %luns </lat_ssd_io>\n", IO_latency);
     fprintf(sstfile, "</variables>\n");
     fprintf(sstfile, "\n");
 
@@ -125,10 +125,7 @@ int i;
     fprintf(sstfile, "\t\t<cores> %d </cores>\n", num_cores());
     fprintf(sstfile, "\t\t<nodes> %d </nodes>\n", num_router_nodes());
 
-    fprintf(sstfile, "\t\t<envelope_size> %d </envelope_size>\n", envelope_size());
-    fprintf(sstfile, "\t\t<NetNICinflections> %d </NetNICinflections>\n", NetNICinflections());
     fprintf(sstfile, "\t\t<NetNICgap> %d </NetNICgap>\n", NetNICgap());
-    fprintf(sstfile, "\t\t<NoCNICinflections> %d </NoCNICinflections>\n", NoCNICinflections());
     fprintf(sstfile, "\t\t<NoCNICgap> %d </NoCNICgap>\n", NoCNICgap());
 
     for (i= 0; i < NetNICinflections(); i++)   {
@@ -136,8 +133,6 @@ int i;
 	    i, NetNICinflectionpoint(i), i);
 	fprintf(sstfile, "\t\t<NetNIClatency%d> %ld </NetNIClatency%d>\n",
 	    i, NetNIClatency(i), i);
-	fprintf(sstfile, "\t\t<NetNICbandwidth%d> %ld </NetNICbandwidth%d>\n",
-	    i, NetNICbandwidth(i), i);
     }
 
     for (i= 0; i < NoCNICinflections(); i++)   {
@@ -145,8 +140,6 @@ int i;
 	    i, NoCNICinflectionpoint(i), i);
 	fprintf(sstfile, "\t\t<NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
 	    i, NoCNIClatency(i), i);
-	fprintf(sstfile, "\t\t<NoCNICbandwidth%d> %ld </NoCNICbandwidth%d>\n",
-	    i, NoCNICbandwidth(i), i);
     }
 
 }  /* end of sst_gen_param_entries() */

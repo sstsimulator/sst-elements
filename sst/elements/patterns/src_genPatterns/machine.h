@@ -12,7 +12,6 @@ int NoC_x_dim(void);
 int NoC_y_dim(void);
 int num_cores(void);
 int num_router_nodes(void);
-int envelope_size(void);
 int NetNICgap(void);
 int NoCNICgap(void);
 
@@ -22,9 +21,15 @@ int NetNICinflectionpoint(int index);
 int NoCNICinflectionpoint(int index);
 int64_t NetNIClatency(int index);
 int64_t NoCNIClatency(int index);
-int64_t NetNICbandwidth(int index);
-int64_t NoCNICbandwidth(int index);
 
+int64_t NetLinkBandwidth(void);
+int64_t NoCLinkBandwidth(void);
+int64_t NetLinkLatency(void);
+int64_t NoCLinkLatency(void);
+int64_t IOLinkBandwidth(void);
+int64_t IOLinkLatency(void);
+int64_t NetIntraLatency(void);
+int64_t NoCIntraLatency(void);
 
 
 #endif /* _MACHINE_H_ */

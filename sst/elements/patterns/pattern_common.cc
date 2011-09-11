@@ -55,7 +55,6 @@ int index;
     cores_per_NoC_router= -1;
     num_router_nodes= -1;
 
-    envelope_size= 64;
     NetNICgap= 0;
     NoCNICgap= 0;
 
@@ -100,16 +99,36 @@ int index;
 	    sscanf(it->second.c_str(), "%d", &num_router_nodes);
 	}
 
-	if (!it->first.compare("envelope_size"))   {
-	    sscanf(it->second.c_str(), "%d", &envelope_size);
-	}
-
 	if (!it->first.compare("NetNICgap"))   {
 	    sscanf(it->second.c_str(), "%ld", &NetNICgap);
 	}
 
 	if (!it->first.compare("NoCNICgap"))   {
 	    sscanf(it->second.c_str(), "%ld", &NoCNICgap);
+	}
+
+	if (!it->first.compare("NetLinkBandwidth"))   {
+	    sscanf(it->second.c_str(), "%ld", &NetLinkBandwidth);
+	}
+
+	if (!it->first.compare("NetLinkLatency"))   {
+	    sscanf(it->second.c_str(), "%ld", &NetLinkLatency);
+	}
+
+	if (!it->first.compare("NoCLinkBandwidth"))   {
+	    sscanf(it->second.c_str(), "%ld", &NoCLinkBandwidth);
+	}
+
+	if (!it->first.compare("NoCLinkLatency"))   {
+	    sscanf(it->second.c_str(), "%ld", &NoCLinkLatency);
+	}
+
+	if (!it->first.compare("IOLinkBandwidth"))   {
+	    sscanf(it->second.c_str(), "%ld", &IOLinkBandwidth);
+	}
+
+	if (!it->first.compare("IOLinkLatency"))   {
+	    sscanf(it->second.c_str(), "%ld", &IOLinkLatency);
 	}
 
 	if (it->first.find("NetNICinflection") != std::string::npos)   {
@@ -132,7 +151,6 @@ int index;
 		another.inflectionpoint= strtol(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.latency= -1;
-		another.bandwidth= -1;
 		NetNICparams.push_back(another);
 	    }
 	}
@@ -157,7 +175,6 @@ int index;
 		another.inflectionpoint= strtol(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.latency= -1;
-		another.bandwidth= -1;
 		NoCNICparams.push_back(another);
 	    }
 	}
@@ -182,7 +199,6 @@ int index;
 		another.latency= strtol(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.inflectionpoint= -1;
-		another.bandwidth= -1;
 		NetNICparams.push_back(another);
 	    }
 	}
@@ -207,57 +223,6 @@ int index;
 		another.latency= strtol(it->second.c_str(), (char **)NULL, 0);
 		another.index= index;
 		another.inflectionpoint= -1;
-		another.bandwidth= -1;
-		NoCNICparams.push_back(another);
-	    }
-	}
-
-	if (it->first.find("NetNICbandwidth") != std::string::npos)   {
-	    if (sscanf(it->first.c_str(), "NetNICbandwidth%d", &index) != 1)   {
-		it++;
-		continue;
-	    }
-	    // Is that index in the list already?
-	    found= false;
-	    for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
-		if (k->index == index)   {
-		    // Yes? Update the entry
-		    k->bandwidth= strtol(it->second.c_str(), (char **)NULL, 0);
-		    found= true;
-		}
-	    }
-	    if (!found)   {
-		// No? Create a new entry
-		NICparams_t another;
-		another.bandwidth= strtol(it->second.c_str(), (char **)NULL, 0);
-		another.index= index;
-		another.inflectionpoint= -1;
-		another.latency= -1;
-		NetNICparams.push_back(another);
-	    }
-	}
-
-	if (it->first.find("NoCNICbandwidth") != std::string::npos)   {
-	    if (sscanf(it->first.c_str(), "NoCNICbandwidth%d", &index) != 1)   {
-		it++;
-		continue;
-	    }
-	    // Is that index in the list already?
-	    found= false;
-	    for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
-		if (k->index == index)   {
-		    // Yes? Update the entry
-		    k->bandwidth= strtol(it->second.c_str(), (char **)NULL, 0);
-		    found= true;
-		}
-	    }
-	    if (!found)   {
-		// No? Create a new entry
-		NICparams_t another;
-		another.bandwidth= strtol(it->second.c_str(), (char **)NULL, 0);
-		another.index= index;
-		another.inflectionpoint= -1;
-		another.latency= -1;
 		NoCNICparams.push_back(another);
 	    }
 	}
@@ -266,12 +231,11 @@ int index;
     }
 
     // None of these should be 0 (I think)
-    if ((envelope_size == 0) ||
-	(NetNICgap == 0) ||
+    if ((NetNICgap == 0) ||
 	(NoCNICgap == 0))   {
 
 	if (my_rank == 0)   {
-	    fprintf(stderr, "One of these params not set: envelope_size, NetNICgap, or NoCNICgap\n");
+	    fprintf(stderr, "One of these params not set: NetNICgap, or NoCNICgap\n");
 	}
 	return FALSE;
     }
@@ -279,7 +243,7 @@ int index;
     if (NetNICparams.size() < 1)   {
 	if (my_rank == 0)   {
 	    fprintf(stderr, "Need at least one inflection point for the network NIC\n");
-	    fprintf(stderr, "    (NetNICinflectionX, NetNIClatencyX, and NetNICbandwidthX parameters)\n");
+	    fprintf(stderr, "    (NetNICinflectionX and NetNIClatencyX parameters)\n");
 	}
 	return FALSE;
     }
@@ -287,7 +251,7 @@ int index;
     if (NoCNICparams.size() < 1)   {
 	if (my_rank == 0)   {
 	    fprintf(stderr, "Need at least one inflection point for the NoC NIC\n");
-	    fprintf(stderr, "    (NoCNICinflectionX, NoCNIClatencyX, and NoCNICbandwidthX parameters)\n");
+	    fprintf(stderr, "    (NoCNICinflectionX and NoCNIClatencyX parameters)\n");
 	}
 	return FALSE;
     }
@@ -304,11 +268,6 @@ int index;
 		(int)distance(NetNICparams.begin(), k));
 	    return FALSE;
 	}
-	if (k->bandwidth <= 0)   {
-	    fprintf(stderr, "NetNICbandwidth%d in xml file must be > 0!\n",
-		(int)distance(NetNICparams.begin(), k));
-	    return FALSE;
-	}
     }
     for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
 	if (k->inflectionpoint < 0)   {
@@ -321,30 +280,33 @@ int index;
 		(int)distance(NoCNICparams.begin(), k));
 	    return FALSE;
 	}
-	if (k->bandwidth <= 0)   {
-	    fprintf(stderr, "NoCNICbandwidth%d in xml file must be > 0!\n",
-		(int)distance(NoCNICparams.begin(), k));
-	    return FALSE;
-	}
     }
 
-    // Sort the entries
+    // Sort the entries and do a basic check
     NetNICparams.sort(compare_NICparams);
+    if (NetNICparams.front().inflectionpoint != 0)   {
+	fprintf(stderr, "Need a NetNICparams entry for inflection point 0\n");
+	return FALSE;
+    }
+
     NoCNICparams.sort(compare_NICparams);
+    if (NoCNICparams.front().inflectionpoint != 0)   {
+	fprintf(stderr, "Need a NoCNICparams entry for inflection point 0\n");
+	return FALSE;
+    }
+
     if (my_rank == 0)   {
 	printf("#  |||  Network NIC inflection points (sorted by inflection point)\n");
-	printf("#  |||      index inflection    bandwidth      latency\n");
+	printf("#  |||      index inflection    latency\n");
 	for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
-	    printf("#  |||      %3d %12d %12ld %12ld\n", k->index, k->inflectionpoint,
-		k->bandwidth, k->latency);
+	    printf("#  |||      %3d %12ld %12ld\n", k->index, k->inflectionpoint, k->latency);
 	}
     }
     if (my_rank == 0)   {
 	printf("#  |||  NoC NIC inflection points (sorted by inflection point)\n");
-	printf("#  |||      index inflection    bandwidth      latency\n");
+	printf("#  |||      index inflection    latency\n");
 	for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
-	    printf("#  |||      %3d %12d %12ld %12ld\n", k->index, k->inflectionpoint,
-		k->bandwidth, k->latency);
+	    printf("#  |||      %3d %12ld %12ld\n", k->index, k->inflectionpoint, k->latency);
 	}
     }
 
@@ -381,13 +343,13 @@ int index;
 	    NoC_width, NoC_height, cores_per_NoC_router, cores_per_node);
 	printf("#  |||  Total %d cores in system\n", total_cores);
 	printf("#  |||  Network NIC model\n");
-	printf("#  |||      envelope size %11d bytes\n", envelope_size);
 	printf("#  |||      gap           %0.9f s\n", NetNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NetNICparams.size());
+	printf("#  |||  Network link bandwidth %ld B/S, latency %ld ns\n", NetLinkBandwidth, NetLinkLatency);
 	printf("#  |||  NoC NIC model\n");
-	printf("#  |||      envelope size %11d bytes\n", envelope_size);
 	printf("#  |||      gap           %0.9f s\n", NoCNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NoCNICparams.size());
+	printf("#  |||  NoC link bandwidth %ld B/S, latency %ld ns\n", NoCLinkBandwidth, NoCLinkLatency);
     }
 
     return TRUE; /* success */
@@ -583,6 +545,8 @@ std::vector<int>::iterator itNum;
 }  // end of show_route()
 #endif  // ROUTE_DEBUG
 
+
+
 /*
 ** Send a message into the Network on Chip with the appropriate
 ** delays.
@@ -592,6 +556,10 @@ Patterns::NoCsend(CPUNicEvent *e, int my_rank, int dest_rank, SST::SimTime_t Cur
 {
 
 int my_router, dest_router;
+SimTime_t delay;
+int64_t latency;
+int64_t msg_duration;
+int64_t link_duration;
 
 
     /*
@@ -621,27 +589,29 @@ int my_router, dest_router;
 
     // Calculate when this message can leave the NIC
     stat_NoCNICsend++;
-#if rrr
+    get_NICparams(NoCNICparams, e->msg_len, &latency, &msg_duration);
+
+    // How long will this message occupy the outbound link?
+    link_duration= e->msg_len / NoCLinkBandwidth;
+
     if (CurrentSimTime > NextNoCNICslot)   {
-	// NIC is not busy, send w/o delay (but add latency)
-	my_NoC_link->Send(NoCNIClatency, e);
-	NextNoCNICslot= CurrentSimTime + NoCNIClatency + ((e->msg_len + envelope_size) / NoCNICbandwidth)
-	    + NetNICgap;
-	/*
-	printf("[%3d] time %09d, send %09d, next %09d\n", my_rank,
-		CurrentSimTime, CurrentSimTime + NoCNIClatency, NextNoCNICslot);
-	*/
+	// NIC is not busy
+
+	// We move a portion of the delay to the link, so SST can use it for
+	// scheduling and partitioning.
+	delay= latency + msg_duration - link_duration - NoCLinkLatency;
+	my_NoC_link->Send(delay, e);
+	NextNoCNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
     } else   {
 	// NIC is busy
-	SimTime_t delay;
-
-	delay= NextNoCNICslot + NoCNIClatency - CurrentSimTime;
+	delay= NextNoCNICslot - CurrentSimTime + NoCNICgap +
+	    latency + msg_duration - link_duration - NoCLinkLatency;
 	my_NoC_link->Send(delay, e);
-	NextNoCNICslot= CurrentSimTime + delay + ((e->msg_len + envelope_size) / NoCNICbandwidth) + NetNICgap;
+	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NoCNICbusy++;
     }
-#endif
+
 
 }  // end of NoCsend()
 
@@ -656,6 +626,10 @@ Patterns::Netsend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank, SST
 {
 
 int my_router, dest_router;
+SimTime_t delay;
+int64_t latency;
+int64_t msg_duration;
+int64_t link_duration;
 
 
     e->local_traffic= false;
@@ -685,23 +659,28 @@ int my_router, dest_router;
 
     // Calculate when this message can leave the NIC
     stat_NetNICsend++;
-#if rrr
+    get_NICparams(NetNICparams, e->msg_len, &latency, &msg_duration);
+
+    // How long will this message occupy the outbound link?
+    link_duration= e->msg_len / NetLinkBandwidth;
+
     if (CurrentSimTime > NextNetNICslot)   {
-	// NIC is not busy, send w/o delay (but add latency)
-	my_net_link->Send(NetNIClatency, e);
-	NextNetNICslot= CurrentSimTime + NetNIClatency + ((e->msg_len + envelope_size) / NetNICbandwidth);
+	// NIC is not busy
+
+	// We move a portion of the delay to the link, so SST can use it for
+	// scheduling and partitioning.
+	delay= latency + msg_duration - link_duration - NetLinkLatency;
+	my_net_link->Send(delay, e);
+	NextNetNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
     } else   {
 	// NIC is busy
-	SimTime_t delay;
-
-	delay= NextNetNICslot + NetNICgap - CurrentSimTime;
+	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
+	    latency + msg_duration - link_duration - NetLinkLatency;
 	my_net_link->Send(delay, e);
-	NextNetNICslot= CurrentSimTime + delay + ((e->msg_len + envelope_size) / NetNICbandwidth);
+	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NetNICbusy++;
     }
-#endif
-
 
 }  // end of Netsend()
 
@@ -799,25 +778,29 @@ int x_delta, y_delta;
 
 
 void
-Patterns::stat_print(void)
+Patterns::stat_print(int rank)
 {
 
-    printf("#  [%3d] NoC NIC model statistics\n", my_rank);
-    printf("#  [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
-    if (stat_NoCNICsend > 0)   {
-	printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank, (100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
-    } else   {
-	printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+    if (my_rank == rank)   {
+	printf("#  [%3d] NoC NIC model statistics\n", my_rank);
+	printf("#  [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
+	if (stat_NoCNICsend > 0)   {
+	    printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
+		(100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
+	} else   {
+	    printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+	}
+	printf("#  |||  \n");
+	printf("#  [%3d] Net NIC model statistics\n", my_rank);
+	printf("#  [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
+	if (stat_NetNICsend > 0)   {
+	    printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
+		(100.0 / stat_NetNICsend) * stat_NetNICbusy);
+	} else   {
+	    printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+	}
+	printf("#  |||  \n");
     }
-    printf("#  |||  \n");
-    printf("#  [%3d] Net NIC model statistics\n", my_rank);
-    printf("#  [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
-    if (stat_NetNICsend > 0)   {
-	printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank, (100.0 / stat_NetNICsend) * stat_NetNICbusy);
-    } else   {
-	printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
-    }
-    printf("#  |||  \n");
 
 }  // end of stat_print()
 
@@ -833,3 +816,44 @@ compare_NICparams(NICparams_t first, NICparams_t second)
 	return false;
     }
 }  // end of compare_NICparams
+
+
+
+// Based on message length and the NIC parameter list, extract the
+// startup costs of a message of this length (latency) and the
+// duration msg_len bytes will occupy the NIC
+void
+Patterns::get_NICparams(std::list<NICparams_t> params, int64_t msg_len,
+	int64_t *latency, int64_t *msg_duration)
+{
+
+std::list<NICparams_t>::iterator k;
+std::list<NICparams_t>::iterator previous;
+int64_t T, B;
+int64_t byte_cost;
+
+
+    previous= NetNICparams.begin();
+    k= previous;
+    k++;
+    for (; k != NetNICparams.end(); k++)   {
+	if (k->inflectionpoint > msg_len)   {
+	    T= k->latency - previous->latency;
+	    B= k->inflectionpoint - previous->inflectionpoint;
+	    byte_cost= T / B;
+	    // We want the values from the previous point
+	    *latency= previous->latency;
+	    *msg_duration= (msg_len - previous->inflectionpoint) * byte_cost;
+	    return;
+	}
+	previous++;
+    }
+
+    // Use the last value in the list
+    T= NetNICparams.back().latency - previous->latency;
+    B= NetNICparams.back().inflectionpoint - previous->inflectionpoint;
+    byte_cost= T / B;
+    *latency= NetNICparams.back().latency;
+    *msg_duration= (msg_len - NetNICparams.back().inflectionpoint) * byte_cost;
+
+}  // end of getNICparams()

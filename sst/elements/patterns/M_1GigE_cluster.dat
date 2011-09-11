@@ -15,37 +15,53 @@
 #
 # The following entries have no default and must must be specified:
 # Network NIC parameters
-NetNICinflections = 5
-
-NetNICinflection0 = 18000
-NetNIClatency0 = 18000
-NetNICbandwidth0 = 93750000
-
-NetNICinflection1 = 18001
-NetNIClatency1 = 18000
-NetNICbandwidth1 = 93750000
-
-NetNICinflection2 = 18000
-NetNIClatency2 = 18000
-NetNICbandwidth2 = 93750000
-
-NetNICinflection3 = 22000
-NetNIClatency3 = 18000
-NetNICbandwidth3 = 93750000
-
-NetNICinflection4 = 130
-NetNIClatency4 = 18000
-NetNICbandwidth4 = 93750000
+#
+#         inflection latency 
+#         bytes      nano s
+NetNICparams =      0   17550
+NetNICparams =    576   29720
+NetNICparams =   1688   58240
+NetNICparams =   3160   63920
+NetNICparams =   3176  137110
+NetNICparams =   3352  182630
+NetNICparams =   3416  257280
+NetNICparams =  26624  289250
+NetNICparams =  27648  465400
+NetNICparams =  50176  495590
+NetNICparams =  51200  668990
+NetNICparams =  64512  684830
+NetNICparams =  65536  861020
+NetNICparams =  73728  890020
+NetNICparams =  74752  989130
+NetNICparams =  79872 1015450
+NetNICparams =  80896 1049740
+NetNICparams =  96256 1066680
+NetNICparams =  97280 1103630
+NetNICparams =  98304 1201030
+NetNICparams = 102400 1231690
+NetNICparams = 114688 1258420
 
 NetNICgap = 53000
+NetNICgap = 17000
 
 # NoC NIC parameters
-NoCNICinflections = 1
-NoCNICinflection0 = 18000
-NoCNIClatency0 = 450
-NoCNICbandwidth0 = 100000000
-
+NoCNICparams = 0 450
+NoCNICparams = 18000 450
 NoCNICgap = 15000
+
+# My guess of 1GigE link payload bandwith in bytes/second
+NetLinkBandwidth = 78000000
+
+# An even wilder guess
+NoCLinkBandwidth = 2000000000
+
+# And still guessing
+NetIntraLatency = 25
+NoCIntraLatency = 5
+
+# Not working yet
+IOLinkBandwidth = 0
+IOLinkLatency = 0
 
 # Network dimension
 Net_x_dim = 2
@@ -60,6 +76,3 @@ num_cores = 6
 
 # Number of nodes per network router
 num_router_nodes = 8
-
-# These parameters have the following defaults
-envelope_size = 64

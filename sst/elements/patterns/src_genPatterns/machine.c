@@ -21,22 +21,29 @@ static int _NoC_x_dim;
 static int _NoC_y_dim;
 static int _num_router_nodes;
 static int _num_cores;
-static int _envelope_size;
 static int _NetNICgap;
 static int _NoCNICgap;
 static int _NetNICinflections;
 static int _NoCNICinflections;
+static int64_t _NetLinkBandwidth;
+static int64_t _NoCLinkBandwidth;
+static int64_t _NetLinkLatency;
+static int64_t _NoCLinkLatency;
+static int64_t _IOLinkBandwidth;
+static int64_t _IOLinkLatency;
+static int64_t _NetIntraLatency;
+static int64_t _NoCIntraLatency;
 
 typedef struct NICparams_t   {
     int inflectionpoint;
     int64_t latency;
-    int64_t bandwidth;
 } NICparams_t;
 
-static NICparams_t *_NetNICparams;
-static NICparams_t *_NoCNICparams;
+static NICparams_t *_NetNICparams= NULL;
+static NICparams_t *_NoCNICparams= NULL;
 
 #define MAX_LINE	1024
+#define MAX_INFLECTIONS	256
 
 
 
@@ -44,17 +51,46 @@ void
 set_defaults(void)
 {
 
+int i;
+
+
     _Net_x_dim= NO_DEFAULT;
     _Net_y_dim= NO_DEFAULT;
     _NoC_x_dim= NO_DEFAULT;
     _NoC_y_dim= NO_DEFAULT;
     _num_router_nodes= NO_DEFAULT;
     _num_cores= NO_DEFAULT;
-    _envelope_size= DEFAULT_ENVELOPE;
     _NetNICinflections= 0;
     _NoCNICinflections= 0;
-    _NetNICparams= NULL;
-    _NoCNICparams= NULL;
+    _NetLinkBandwidth= NO_DEFAULT;
+    _NoCLinkBandwidth= NO_DEFAULT;
+    _NetLinkLatency= 999999999;
+    _NoCLinkLatency= 999999999;
+    _IOLinkBandwidth= NO_DEFAULT;
+    _IOLinkLatency= NO_DEFAULT;
+    _NetIntraLatency= NO_DEFAULT;
+    _NoCIntraLatency= NO_DEFAULT;
+
+    if (_NetNICparams != NULL)   {
+	free(_NetNICparams);
+    }
+    _NetNICparams= (NICparams_t *)malloc(sizeof(NICparams_t) * MAX_INFLECTIONS);
+    if (_NetNICparams == NULL)   {
+	fprintf(stderr, "Out of memory for _NetNICparams!\n");
+	exit(-1);
+    }
+    _NoCNICparams= (NICparams_t *)malloc(sizeof(NICparams_t) * MAX_INFLECTIONS);
+    if (_NoCNICparams == NULL)   {
+	fprintf(stderr, "Out of memory for _NoCNICparams!\n");
+	exit(-1);
+    }
+
+    for (i= 0; i < MAX_INFLECTIONS; i++)   {
+	_NetNICparams[i].inflectionpoint= -1;
+	_NetNICparams[i].latency= -1;
+	_NoCNICparams[i].inflectionpoint= -1;
+	_NoCNICparams[i].latency= -1;
+    }
 
 }  /* end of set_defaults() */
 
@@ -65,6 +101,7 @@ error_check(void)
 {
 
 int i;
+int found_zero;
 
 
     if (_Net_x_dim * _Net_y_dim < 1)   {
@@ -87,11 +124,6 @@ int i;
 	return FALSE;
     }
 
-    if (_envelope_size < 0)   {
-	fprintf(stderr, "envelope_size in machine file must be >= 0!\n");
-	return FALSE;
-    }
-
     if (_NetNICgap < 0)   {
 	fprintf(stderr, "NetNICgap in machine file must be >= 0!\n");
 	return FALSE;
@@ -103,43 +135,82 @@ int i;
     }
 
     if (_NetNICinflections < 1)   {
-	fprintf(stderr, "NetNICinflections in machine file must be > 0!\n");
+	fprintf(stderr, "Need at least one NetNICparams!\n");
 	return FALSE;
     }
 
     if (_NoCNICinflections < 1)   {
-	fprintf(stderr, "NoCNICinflections in machine file must be > 0!\n");
+	fprintf(stderr, "Need at least one NoCNICparams!\n");
 	return FALSE;
     }
 
+    if (_NetLinkBandwidth < 0)   {
+	fprintf(stderr, "Need to set NetLinkBandwidth in machine file!\n");
+	return FALSE;
+    }
+    if (_NoCLinkBandwidth < 0)   {
+	fprintf(stderr, "Need to set NoCLinkBandwidth in machine file!\n");
+	return FALSE;
+    }
+    if (_NoCLinkLatency < 0)   {
+	fprintf(stderr, "Need to set NoCLinkLatency in machine file!\n");
+	return FALSE;
+    }
+    if (_IOLinkBandwidth < 0)   {
+	fprintf(stderr, "Need to set IOLinkBandwidth in machine file!\n");
+	return FALSE;
+    }
+    if (_IOLinkLatency < 0)   {
+	fprintf(stderr, "Need to set IOLinkLatency in machine file!\n");
+	return FALSE;
+    }
+
+    if (_NetIntraLatency < 0)   {
+	fprintf(stderr, "Need to set NetIntraLatency in machine file!\n");
+	return FALSE;
+    }
+    if (_NoCIntraLatency < 0)   {
+	fprintf(stderr, "Need to set NoCIntraLatency in machine file!\n");
+	return FALSE;
+    }
+
+
+
+    found_zero= FALSE;
     for (i= 0; i < _NetNICinflections; i++)   {
 	if (_NetNICparams[i].inflectionpoint < 0)   {
 	    fprintf(stderr, "NetNICinflection%d in machine file must be >= 0!\n", i);
 	    return FALSE;
+	} else if (_NetNICparams[i].inflectionpoint == 0)   {
+	    found_zero= TRUE;
 	}
+
 	if (_NetNICparams[i].latency < 0)   {
 	    fprintf(stderr, "NetNIClatency%d in machine file must be >= 0!\n", i);
 	    return FALSE;
 	}
-	if (_NetNICparams[i].bandwidth < 0)   {
-	    fprintf(stderr, "NetNICbandwidth%d in machine file must be >= 0!\n", i);
-	    return FALSE;
-	}
+    }
+    if (!found_zero)   {
+	fprintf(stderr, "Need a NetNICparams entry for inflection point 0!\n");
+	return FALSE;
     }
 
+    found_zero= FALSE;
     for (i= 0; i < _NoCNICinflections; i++)   {
 	if (_NoCNICparams[i].inflectionpoint < 0)   {
 	    fprintf(stderr, "NoCNICinflection%d in machine file must be >= 0!\n", i);
 	    return FALSE;
+	} else if (_NoCNICparams[i].inflectionpoint == 0)   {
+	    found_zero= TRUE;
 	}
 	if (_NoCNICparams[i].latency < 0)   {
 	    fprintf(stderr, "NoCNIClatency%d in machine file must be >= 0!\n", i);
 	    return FALSE;
 	}
-	if (_NoCNICparams[i].bandwidth < 0)   {
-	    fprintf(stderr, "NoCNICbandwidth%d in machine file must be >= 0!\n", i);
-	    return FALSE;
-	}
+    }
+    if (!found_zero)   {
+	fprintf(stderr, "Need a NoCNICparams entry for inflection point 0!\n");
+	return FALSE;
     }
 
     /* No errors found */
@@ -177,11 +248,19 @@ disp_machine_params(void)
     printf("*** Total number of cores is %d\n", _num_cores *
 	_NoC_x_dim * _NoC_y_dim * num_nodes());
 
-    printf("*** Message enevelope size is %d\n", envelope_size());
-    printf("*** Network NIC has %d inflection points, gap is %dns\n",
+    printf("*** Network NIC has %d inflection points, gap is %d ns\n",
 	NetNICinflections(), NetNICgap());
-    printf("*** NoC NIC has %d inflection points, gap is %dns\n",
+    printf("*** NoC NIC has %d inflection points, gap is %d ns\n",
 	NoCNICinflections(), NoCNICgap());
+
+    printf("*** Net link: Bandwidth %ld B/s, latency %ld ns\n",
+	_NetLinkBandwidth, _NetLinkLatency);
+    printf("*** NoC link: Bandwidth %ld B/s, latency %ld ns\n",
+	_NoCLinkBandwidth, _NoCLinkLatency);
+    printf("*** I/O link: Bandwidth %ld B/s, latency %ld ns\n",
+	_IOLinkBandwidth, _IOLinkLatency);
+    printf("*** Link latency between routers: Network %ld ns, NoC %ld ns\n",
+	_NetIntraLatency, _NoCIntraLatency);
 
 }  /* end of disp_machine_params() */
 
@@ -194,9 +273,10 @@ read_machine_file(FILE *fp_machine, int verbose)
 int error;
 char line[MAX_LINE];
 char *pos;
-char key[MAX_LINE], value[MAX_LINE];
-int index;
-int i;
+char key[MAX_LINE];
+char value1[MAX_LINE];
+char value2[MAX_LINE];
+int rc;
 
 
     if (fp_machine == NULL)   {
@@ -217,116 +297,80 @@ int i;
 	}
 
 	/* Now scan it */
-	if (sscanf(line, "%s = %s", key, value) != 2)   {
+	rc= sscanf(line, "%s = %s %s", key, value1, value2);
+	if ((rc != 2) && (rc != 3))   {
 	    continue;
 	}
 
 	if (verbose > 1)   {
-	    printf("Debug: Found %s = %s\n", key, value);
+	    if (rc == 2)   {
+		printf("Debug: Found %s = %s\n", key, value1);
+	    } else   {
+		printf("Debug: Found %s = %s %s\n", key, value1, value2);
+	    }
 	}
 
 	/* Parameter matching */
 	if (strcmp("Net_x_dim", key) == 0)   {
-	    _Net_x_dim= strtol(value, (char **)NULL, 0);
+	    _Net_x_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("Net_y_dim", key) == 0)   {
-	    _Net_y_dim= strtol(value, (char **)NULL, 0);
+	    _Net_y_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoC_x_dim", key) == 0)   {
-	    _NoC_x_dim= strtol(value, (char **)NULL, 0);
+	    _NoC_x_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoC_y_dim", key) == 0)   {
-	    _NoC_y_dim= strtol(value, (char **)NULL, 0);
+	    _NoC_y_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("num_router_nodes", key) == 0)   {
-	    _num_router_nodes= strtol(value, (char **)NULL, 0);
+	    _num_router_nodes= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("num_cores", key) == 0)   {
-	    _num_cores= strtol(value, (char **)NULL, 0);
-	} else if (strcmp("envelope_size", key) == 0)   {
-	    _envelope_size= strtol(value, (char **)NULL, 0);
+	    _num_cores= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NetNICgap", key) == 0)   {
-	    _NetNICgap= strtol(value, (char **)NULL, 0);
+	    _NetNICgap= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCNICgap", key) == 0)   {
-	    _NoCNICgap= strtol(value, (char **)NULL, 0);
-	} else if (strcmp("NetNICinflections", key) == 0)   {
-	    _NetNICinflections= strtol(value, (char **)NULL, 0);
-	    if (_NetNICparams != NULL)   {
-		free(_NetNICparams);
-	    }
-	    _NetNICparams= (NICparams_t *)malloc(sizeof(NICparams_t) * _NetNICinflections);
-	    if (_NetNICparams == NULL)   {
-		fprintf(stderr, "Out of memory for _NetNICparams!\n");
-		error= TRUE;
-	    }
-	    for (i= 0; i < _NetNICinflections; i++)   {
-		_NetNICparams[i].inflectionpoint= -1;
-		_NetNICparams[i].latency= -1;
-		_NetNICparams[i].bandwidth= -1;
-	    }
-	} else if (strcmp("NoCNICinflections", key) == 0)   {
-	    _NoCNICinflections= strtol(value, (char **)NULL, 0);
-	    if (_NoCNICparams != NULL)   {
-		free(_NoCNICparams);
-	    }
-	    _NoCNICparams= (NICparams_t *)malloc(sizeof(NICparams_t) * _NoCNICinflections);
-	    if (_NoCNICparams == NULL)   {
-		fprintf(stderr, "Out of memory for _NoCNICparams!\n");
-		error= TRUE;
-		break;
-	    }
-	    for (i= 0; i < _NoCNICinflections; i++)   {
-		_NoCNICparams[i].inflectionpoint= -1;
-		_NoCNICparams[i].latency= -1;
-		_NoCNICparams[i].bandwidth= -1;
-	    }
+	    _NoCNICgap= strtol(value1, (char **)NULL, 0);
+
+	} else if (strcmp("NetLinkBandwidth", key) == 0)   {
+	    _NetLinkBandwidth= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoCLinkBandwidth", key) == 0)   {
+	    _NoCLinkBandwidth= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoCLinkLatency", key) == 0)   {
+	    _NoCLinkLatency= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("IOLinkBandwidth", key) == 0)   {
+	    _IOLinkBandwidth= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("IOLinkLatency", key) == 0)   {
+	    _IOLinkLatency= strtol(value1, (char **)NULL, 0);
+
+	} else if (strcmp("NetIntraLatency", key) == 0)   {
+	    _NetIntraLatency= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoCIntraLatency", key) == 0)   {
+	    _NoCIntraLatency= strtol(value1, (char **)NULL, 0);
 
 	/* Net NIC parameters */
-	} else if (strstr(key, "NetNICinflection") == key)   {
-	    sscanf(key, "NetNICinflection%d", &index);
-	    if ((index < 0) || (index >= _NetNICinflections))   {
-		fprintf(stderr, "Invalid index (%d) for NetNICinflection!\n", index);
+	} else if (strstr(key, "NetNICparams") == key)   {
+	    if (_NetNICinflections >= MAX_INFLECTIONS)   {
+		fprintf(stderr, "Too many NetNICparams. Max is %d\n", MAX_INFLECTIONS);
 		error= TRUE;
 		break;
 	    }
-	    _NetNICparams[index].inflectionpoint= strtol(value, (char **)NULL, 0);
-	} else if (strstr(key, "NetNIClatency") == key)   {
-	    sscanf(key, "NetNIClatency%d", &index);
-	    if ((index < 0) || (index >= _NetNICinflections))   {
-		fprintf(stderr, "Invalid index (%d) for NetNIClatency!\n", index);
+	    _NetNICparams[_NetNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
+	    _NetNICparams[_NetNICinflections].latency= strtol(value2, (char **)NULL, 0);
+	    if (_NetNICparams[_NetNICinflections].latency < _NetLinkLatency)   {
+		/* Set Net link latency to smallest NIC lateny we know of */
+		_NetLinkLatency= _NetNICparams[_NetNICinflections].latency;
+	    }
+	    _NetNICinflections++;
+	} else if (strstr(key, "NoCNICparams") == key)   {
+	    if (_NoCNICinflections >= MAX_INFLECTIONS)   {
+		fprintf(stderr, "Too many NoCNICparams. Max is %d\n", MAX_INFLECTIONS);
 		error= TRUE;
 		break;
 	    }
-	    _NetNICparams[index].latency= strtol(value, (char **)NULL, 0);
-	} else if (strstr(key, "NetNICbandwidth") == key)   {
-	    sscanf(key, "NetNICbandwidth%d", &index);
-	    if ((index < 0) || (index >= _NetNICinflections))   {
-		fprintf(stderr, "Invalid index (%d) for NetNICbandwidth!\n", index);
-		error= TRUE;
-		break;
+	    _NoCNICparams[_NoCNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
+	    _NoCNICparams[_NoCNICinflections].latency= strtol(value2, (char **)NULL, 0);
+	    if (_NoCNICparams[_NoCNICinflections].latency < _NoCLinkLatency)   {
+		/* Set NoC link latency to smallest NIC lateny we know of */
+		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency;
 	    }
-	    _NetNICparams[index].bandwidth= strtol(value, (char **)NULL, 0);
-
-	/* NoC NIC parameters */
-	} else if (strstr(key, "NoCNICinflection") == key)   {
-	    sscanf(key, "NoCNICinflection%d", &index);
-	    if ((index < 0) || (index >= _NoCNICinflections))   {
-		fprintf(stderr, "Invalid index (%d) for NoCNICinflection!\n", index);
-		error= TRUE;
-		break;
-	    }
-	    _NoCNICparams[index].inflectionpoint= strtol(value, (char **)NULL, 0);
-	} else if (strstr(key, "NoCNIClatency") == key)   {
-	    sscanf(key, "NoCNIClatency%d", &index);
-	    if ((index < 0) || (index >= _NoCNICinflections))   {
-		fprintf(stderr, "Invalid index (%d) for NoCNIClatency!\n", index);
-		error= TRUE;
-		break;
-	    }
-	    _NoCNICparams[index].latency= strtol(value, (char **)NULL, 0);
-	} else if (strstr(key, "NoCNICbandwidth") == key)   {
-	    sscanf(key, "NoCNICbandwidth%d", &index);
-	    if ((index < 0) || (index >= _NoCNICinflections))   {
-		fprintf(stderr, "Invalid index (%d) for NoCNICbandwidth!\n", index);
-		error= TRUE;
-		break;
-	    }
-	    _NoCNICparams[index].bandwidth= strtol(value, (char **)NULL, 0);
+	    _NoCNICinflections++;
 	} else   {
 	    fprintf(stderr, "Unknown parameter \"%s\" in machine file!\n", key);
 	    error= TRUE;
@@ -399,14 +443,6 @@ num_router_nodes(void)
 {
     return _num_router_nodes;
 }  /* end of num_router_nodes() */
-
-
-
-int
-envelope_size(void)
-{
-    return _envelope_size;
-}  /* end of envelope_size() */
 
 
 
@@ -491,23 +527,63 @@ NetNIClatency(int index)
 
 
 int64_t
-NoCNICbandwidth(int index)
+NetLinkBandwidth(void)
 {
-    if ((index >= 0) && (index < _NoCNICinflections))   {
-	return _NoCNICparams[index].bandwidth;
-    } else   {
-	return -1;
-    }
-}  /* end of NoCNICbandwidth() */
+    return _NetLinkBandwidth;
+}  /* end of NetLinkBandwidth() */
 
 
 
 int64_t
-NetNICbandwidth(int index)
+NoCLinkBandwidth(void)
 {
-    if ((index >= 0) && (index < _NetNICinflections))   {
-	return _NetNICparams[index].bandwidth;
-    } else   {
-	return -1;
-    }
-}  /* end of NetNICbandwidth() */
+    return _NoCLinkBandwidth;
+}  /* end of NoCLinkBandwidth() */
+
+
+
+int64_t
+NetLinkLatency(void)
+{
+    return _NetLinkLatency;
+}  /* end of NetLinkLatency() */
+
+
+
+int64_t
+NoCLinkLatency(void)
+{
+    return _NoCLinkLatency;
+}  /* end of NoCLinkLatency() */
+
+
+
+int64_t
+IOLinkBandwidth(void)
+{
+    return _IOLinkBandwidth;
+}  /* end of IOLinkBandwidth() */
+
+
+
+int64_t
+IOLinkLatency(void)
+{
+    return _IOLinkLatency;
+}  /* end of IOLinkLatency() */
+
+
+
+int64_t
+NetIntraLatency(void)
+{
+    return _NetIntraLatency;
+}  /* end of NetIntraLatency() */
+
+
+
+int64_t
+NoCIntraLatency(void)
+{
+    return _NoCIntraLatency;
+}  /* end of NoCIntraLatency() */

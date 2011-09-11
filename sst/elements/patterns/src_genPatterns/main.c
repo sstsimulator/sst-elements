@@ -56,10 +56,6 @@ char *machineFname;
 FILE *fp_sst;
 FILE *fp_machine;
 char *pattern_name;
-uint64_t net_lat;	/* In ns */
-uint64_t net_bw;	/* In bytes per second */
-uint64_t node_lat;	/* In ns */
-uint64_t node_bw;	/* In bytes per second */
 
 int IO_nodes;		/* Should be divisible by the number of nodes */
 char *power_model;	/* Which, if any, power model to use */
@@ -79,10 +75,6 @@ int ssd_write_bw;	/* In bytes per second */
     verbose= 0;
     sstFname= "";
     machineFname= "";
-    net_lat= 30;
-    net_bw= 1900000000;
-    node_lat= 30;
-    node_bw= 126000000;
 
     /* Assume a SATA3 drive (Crucial C200) "somehow" connected to an I/O network */
     ssd_read_bw= 200000000;
@@ -269,46 +261,49 @@ int ssd_write_bw;	/* In bytes per second */
     sst_header(fp_sst);
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst, fp_machine, pattern_name);
-    sst_gen_param_end(fp_sst, node_lat, net_lat);
+    sst_gen_param_end(fp_sst, NoCLinkLatency(), NetLinkLatency());
     sst_pwr_param_entries(fp_sst, power_method);
     sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
 
     /* We assume the router bandwidth is the same as the link bandwidth */
     wormhole= TRUE;
-    sst_router_param_start(fp_sst, RNAME_NETWORK, 4 + num_router_nodes(), net_bw,
+    sst_router_param_start(fp_sst, RNAME_NETWORK, 4 + num_router_nodes(), NetLinkBandwidth(),
 	num_cores(), 25, wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NETWORK);
 
     wormhole= FALSE;
-    sst_router_param_start(fp_sst, RNAME_NoC, 4 + num_cores(), node_bw, num_cores(), 25, wormhole,
-	power_method);
+    sst_router_param_start(fp_sst, RNAME_NoC, 4 + num_cores(), NoCLinkBandwidth(),
+	num_cores(), 20, wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NoC);
 
     wormhole= TRUE;
-    sst_router_param_start(fp_sst, RNAME_NET_ACCESS, 1 + (num_cores() * NoC_x_dim() * NoC_y_dim()),
-	node_bw, num_cores(), 25, wormhole, pwrNone);
+    sst_router_param_start(fp_sst, RNAME_NET_ACCESS,
+	1 + (num_cores() * NoC_x_dim() * NoC_y_dim()), NetLinkBandwidth(),
+	num_cores(), 30, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NET_ACCESS);
 
     wormhole= FALSE;
-    sst_router_param_start(fp_sst, RNAME_NVRAM, 1 + (num_cores() * NoC_x_dim() * NoC_y_dim()), node_bw,
-	num_cores(), 25, wormhole, pwrNone);
+    sst_router_param_start(fp_sst, RNAME_NVRAM,
+	1 + (num_cores() * NoC_x_dim() * NoC_y_dim()), NoCLinkBandwidth(),
+	num_cores(), 15, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NVRAM);
 
     wormhole= TRUE;
-    sst_router_param_start(fp_sst, RNAME_STORAGE, 1 + (num_cores() * NoC_x_dim() * NoC_y_dim()), node_bw,
-	num_cores(), 25, wormhole, pwrNone);
+    sst_router_param_start(fp_sst, RNAME_STORAGE,
+	1 + (num_cores() * NoC_x_dim() * NoC_y_dim()), IOLinkBandwidth(),
+	num_cores(), 40, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_STORAGE);
 
     wormhole= FALSE;
-    sst_router_param_start(fp_sst, RNAME_IO, 1 + num_nodes() / IO_nodes, net_bw, num_cores(), 25,
-	wormhole, pwrNone);
+    sst_router_param_start(fp_sst, RNAME_IO, 1 + num_nodes() / IO_nodes,
+	NetLinkBandwidth(), num_cores(), 50, wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_IO);
 
     sst_body_start(fp_sst);
     sst_pwr_component(fp_sst, power_method);
     sst_pattern_generators(pattern_name, fp_sst);
     sst_nvram(fp_sst);
-    sst_routers(fp_sst, node_lat, net_lat, nvram_lat, power_method);
+    sst_routers(fp_sst, NoCIntraLatency(), NetIntraLatency(), nvram_lat, power_method);
     sst_body_end(fp_sst);
     sst_footer(fp_sst);
 

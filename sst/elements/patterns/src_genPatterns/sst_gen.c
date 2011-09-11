@@ -69,19 +69,21 @@ int i;
     fprintf(sstfile, "    <cores> %d </cores>\n", num_cores());
     fprintf(sstfile, "    <nodes> %d </nodes>\n", num_router_nodes());
 
-    fprintf(sstfile, "    <envelope_size> %d </envelope_size>\n", envelope_size());
-    fprintf(sstfile, "    <NetNICinflections> %d </NetNICinflections>\n", NetNICinflections());
     fprintf(sstfile, "    <NetNICgap> %d </NetNICgap>\n", NetNICgap());
-    fprintf(sstfile, "    <NoCNICinflections> %d </NoCNICinflections>\n", NoCNICinflections());
     fprintf(sstfile, "    <NoCNICgap> %d </NoCNICgap>\n", NoCNICgap());
+
+    fprintf(sstfile, "    <NetLinkBandwidth> %ld </NetLinkBandwidth>\n", NetLinkBandwidth());
+    fprintf(sstfile, "    <NetLinkLatency> %ld </NetLinkLatency>\n", NetLinkLatency());
+    fprintf(sstfile, "    <NoCLinkBandwidth> %ld </NoCLinkBandwidth>\n", NoCLinkBandwidth());
+    fprintf(sstfile, "    <NoCLinkLatency> %ld </NoCLinkLatency>\n", NoCLinkLatency());
+    fprintf(sstfile, "    <IOLinkBandwidth> %ld </IOLinkBandwidth>\n", IOLinkBandwidth());
+    fprintf(sstfile, "    <IOLinkLatency> %ld </IOLinkLatency>\n", IOLinkLatency());
 
     for (i= 0; i < NetNICinflections(); i++)   {
 	fprintf(sstfile, "    <NetNICinflection%d> %d </NetNICinflection%d>\n",
 	    i, NetNICinflectionpoint(i), i);
 	fprintf(sstfile, "    <NetNIClatency%d> %ld </NetNIClatency%d>\n",
 	    i, NetNIClatency(i), i);
-	fprintf(sstfile, "    <NetNICbandwidth%d> %ld </NetNICbandwidth%d>\n",
-	    i, NetNICbandwidth(i), i);
     }
 
     for (i= 0; i < NoCNICinflections(); i++)   {
@@ -89,8 +91,6 @@ int i;
 	    i, NoCNICinflectionpoint(i), i);
 	fprintf(sstfile, "    <NoCNIClatency%d> %ld </NoCNIClatency%d>\n",
 	    i, NoCNIClatency(i), i);
-	fprintf(sstfile, "    <NoCNICbandwidth%d> %ld </NoCNICbandwidth%d>\n",
-	    i, NoCNICbandwidth(i), i);
     }
 
 

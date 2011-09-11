@@ -35,9 +35,8 @@
 // Storage for NIC parameters
 typedef struct NICparams_t   {
     int index;
-    int inflectionpoint;
+    int64_t inflectionpoint;
     int64_t latency;
-    int64_t bandwidth;
 } NICparams_t;
 
 
@@ -53,7 +52,8 @@ class Patterns   {
 	}
 
 	~Patterns()   {
-	    stat_print();
+	    stat_print(0);
+	    stat_print(12);
 	}
 
 	int init(SST::Component::Params_t& params, 
@@ -82,7 +82,9 @@ class Patterns   {
 		SST::SimTime_t CurrentSimTime);
 	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
 		SST::SimTime_t CurrentSimTime);
-	void stat_print(void);
+	void stat_print(int rank);
+	void get_NICparams(std::list<NICparams_t> params, int64_t msg_len, 
+	    int64_t *latency, int64_t *msg_duration);
 
 	SST::Link *my_net_link;
 	SST::Link *my_self_link;
@@ -105,11 +107,16 @@ class Patterns   {
 	int cores_per_node;
 
 	// Input parameters for the NIC models
-	int envelope_size;
 	SST::SimTime_t NetNICgap;
 	SST::SimTime_t NoCNICgap;
 	std::list<NICparams_t> NetNICparams;
 	std::list<NICparams_t> NoCNICparams;
+	int64_t NetLinkBandwidth;
+	int64_t NetLinkLatency;
+	int64_t NoCLinkBandwidth;
+	int64_t NoCLinkLatency;
+	int64_t IOLinkBandwidth;
+	int64_t IOLinkLatency;
 
 	// Each message event gets a unique number for debugging
 	uint64_t msg_seq;

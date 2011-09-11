@@ -25,7 +25,7 @@ typedef enum {pwrNone, pwrMcPAT, pwrORION} pwr_method_t;
 void sst_header(FILE *sstfile);
 void sst_footer(FILE *dotfile);
 
-void sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency);
+void sst_variables(FILE *sstfile, uint64_t node_latency, uint64_t net_latency, uint64_t IO_latency);
 
 void sst_param_start(FILE *sstfile);
 void sst_param_end(FILE *sstfile);
