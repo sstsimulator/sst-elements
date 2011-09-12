@@ -63,7 +63,7 @@ class Comm_pattern : public Component {
 	    // Interface with SST
 
 	    // Create a time converter
-	    tc= registerTimeBase(TIME_BASE, true);
+	    tc= registerTimeBase("1"TIME_BASE, true);
 
             // Create a handler for events from the Network
 	    net= configureLink("NETWORK", new Event::Handler<Comm_pattern>

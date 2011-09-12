@@ -66,9 +66,21 @@ int index;
 
     // Clear stats
     stat_NoCNICsend= 0;
+    stat_NoCNICsend_bytes= 0;
     stat_NoCNICbusy= 0;
     stat_NetNICsend= 0;
+    stat_NetNICsend_bytes= 0;
     stat_NetNICbusy= 0;
+    stat_NetNICrecv= 0;
+    stat_NetNICrecv_bytes= 0;
+    stat_Netmsg_hops= 0;
+    stat_Netmsg_congestion_cnt= 0;
+    stat_Netmsg_congestion_delay= 0;
+    stat_NoCNICrecv= 0;
+    stat_NoCNICrecv_bytes= 0;
+    stat_NoCmsg_hops= 0;
+    stat_NoCmsg_congestion_cnt= 0;
+    stat_NoCmsg_congestion_delay= 0;
 
 
     SST::Component::Params_t::iterator it= params.begin();
@@ -258,17 +270,17 @@ int index;
 	return FALSE;
     }
 
-    if (NetNICparams.size() < 1)   {
+    if (NetNICparams.size() < 2)   {
 	if (my_rank == 0)   {
-	    fprintf(stderr, "Need at least one inflection point for the network NIC\n");
+	    fprintf(stderr, "Need at least two inflection point for the network NIC\n");
 	    fprintf(stderr, "    (NetNICinflectionX and NetNIClatencyX parameters)\n");
 	}
 	return FALSE;
     }
 
-    if (NoCNICparams.size() < 1)   {
+    if (NoCNICparams.size() < 2)   {
 	if (my_rank == 0)   {
-	    fprintf(stderr, "Need at least one inflection point for the NoC NIC\n");
+	    fprintf(stderr, "Need at least two inflection point for the NoC NIC\n");
 	    fprintf(stderr, "    (NoCNICinflectionX and NoCNIClatencyX parameters)\n");
 	}
 	return FALSE;
@@ -372,13 +384,13 @@ int index;
 	printf("#  |||  Network NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NetNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NetNICparams.size());
-	printf("#  |||  Network link bandwidth %" PRId64 " B/S, latency %" PRId64 " ns\n",
-	    NetLinkBandwidth, NetLinkLatency);
+	printf("#  |||  Network link bandwidth %" PRId64 " B/S, latency %" PRId64 " %s\n",
+	    NetLinkBandwidth, NetLinkLatency, TIME_BASE);
 	printf("#  |||  NoC NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NoCNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NoCNICparams.size());
-	printf("#  |||  NoC link bandwidth %" PRId64 " B/S, latency %" PRId64 " ns\n",
-	    NoCLinkBandwidth, NoCLinkLatency);
+	printf("#  |||  NoC link bandwidth %" PRId64 " B/S, latency %" PRId64 " %s\n",
+	    NoCLinkBandwidth, NoCLinkLatency, TIME_BASE);
     }
 
     return TRUE; /* success */
@@ -618,6 +630,7 @@ int64_t link_duration;
 
     // Calculate when this message can leave the NIC
     stat_NoCNICsend++;
+    stat_NoCNICsend_bytes += e->msg_len;
     get_NICparams(NoCNICparams, e->msg_len, &latency, &msg_duration);
 
     // How long will this message occupy the outbound link?
@@ -691,6 +704,7 @@ int64_t link_duration;
 
     // Calculate when this message can leave the NIC
     stat_NetNICsend++;
+    stat_NetNICsend_bytes += e->msg_len;
     get_NICparams(NetNICparams, e->msg_len, &latency, &msg_duration);
 
     // How long will this message occupy the outbound link?
@@ -808,7 +822,37 @@ int x_delta, y_delta;
 	}
     }
 
-}  /* end of gen_route() */
+}  // end of gen_route()
+
+
+
+void
+Patterns::record_Net_msg_stat(int hops, long long congestion_cnt,
+	SimTime_t congestion_delay, uint32_t msg_len)
+{
+
+    stat_NetNICrecv++;
+    stat_NetNICrecv_bytes += msg_len;
+    stat_Netmsg_hops += hops;
+    stat_Netmsg_congestion_cnt += congestion_cnt;
+    stat_Netmsg_congestion_delay += congestion_delay;
+
+}  // End of record_Net_msg_stat()
+
+
+
+void
+Patterns::record_NoC_msg_stat(int hops, long long congestion_cnt,
+	SimTime_t congestion_delay, uint32_t msg_len)
+{
+
+    stat_NoCNICrecv++;
+    stat_NoCNICrecv_bytes += msg_len;
+    stat_NoCmsg_hops += hops;
+    stat_NoCmsg_congestion_cnt += congestion_cnt;
+    stat_NoCmsg_congestion_delay += congestion_delay;
+
+}  // End of record_NoC_msg_stat()
 
 
 
@@ -822,23 +866,53 @@ std::list<int>::iterator rank;
     for (rank= NICstat_ranks.begin(); rank != NICstat_ranks.end(); rank++)   {
 	if (my_rank == *rank)   {
 	    printf("# [%3d] NoC NIC model statistics\n", my_rank);
-	    printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
+	    printf("# [%3d]     Total receives           %12lld\n", my_rank, stat_NoCNICrecv);
+	    printf("# [%3d]     Bytes received           %12lld\n", my_rank, stat_NoCNICrecv_bytes);
+	    if (stat_NoCNICrecv > 0)   {
+		printf("# [%3d]     Average hop count        %12.2f\n", my_rank,
+		    (float)stat_NoCmsg_hops / (float)stat_NoCNICrecv);
+	    } else   {
+		printf("# [%3d]     Average hop count        %12.2f\n", my_rank, 0.0);
+	    }
+	    if (stat_NoCmsg_congestion_cnt > 0)   {
+		printf("# [%3d]     Average congestion delay %12lld %s\n", my_rank,
+		    stat_NoCmsg_congestion_delay / stat_NoCmsg_congestion_cnt, TIME_BASE);
+	    } else   {
+		printf("# [%3d]     Average congestion delay %12d %s\n", my_rank, 0, TIME_BASE);
+	    }
+	    printf("# [%3d]     Total sends              %12lld\n", my_rank, stat_NoCNICsend);
+	    printf("# [%3d]     Bytes sent               %12lld\n", my_rank, stat_NoCNICsend_bytes);
 	    if (stat_NoCNICsend > 0)   {
-		printf("# [%3d]     NIC busy    %12.1f%%\n", my_rank,
+		printf("# [%3d]     NIC send busy            %12.1f %%\n", my_rank,
 		    (100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
 	    } else   {
-		printf("# [%3d]     NIC busy             0.0%%\n", my_rank);
+		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }
-	    printf("#  |||  \n");
+	    printf("#\n");
 	    printf("# [%3d] Net NIC model statistics\n", my_rank);
-	    printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
+	    printf("# [%3d]     Total receives           %12lld\n", my_rank, stat_NetNICrecv);
+	    printf("# [%3d]     Bytes received           %12lld\n", my_rank, stat_NetNICrecv_bytes);
+	    if (stat_NetNICrecv > 0)   {
+		printf("# [%3d]     Average hop count        %12.2f\n", my_rank,
+		    (float)stat_Netmsg_hops / (float)stat_NetNICrecv);
+	    } else   {
+		printf("# [%3d]     Average hop count        %12.2f\n", my_rank, 0.0);
+	    }
+	    if (stat_Netmsg_congestion_cnt > 0)   {
+		printf("# [%3d]     Average congestion delay %12lld %s\n", my_rank,
+		    stat_Netmsg_congestion_delay / stat_Netmsg_congestion_cnt, TIME_BASE);
+	    } else   {
+		printf("# [%3d]     Average congestion delay %12d %s\n", my_rank, 0, TIME_BASE);
+	    }
+	    printf("# [%3d]     Total sends              %12lld\n", my_rank, stat_NetNICsend);
+	    printf("# [%3d]     Bytes sent               %12lld\n", my_rank, stat_NetNICsend_bytes);
 	    if (stat_NetNICsend > 0)   {
-		printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
+		printf("# [%3d]     NIC send busy            %12.1f %%\n", my_rank,
 		    (100.0 / stat_NetNICsend) * stat_NetNICbusy);
 	    } else   {
-		printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }
-	    printf("#  |||  \n");
+	    printf("#\n");
 	}
     }
 
@@ -869,8 +943,8 @@ Patterns::get_NICparams(std::list<NICparams_t> params, int64_t msg_len,
 
 std::list<NICparams_t>::iterator k;
 std::list<NICparams_t>::iterator previous;
-int64_t T, B;
-int64_t byte_cost;
+double T, B;
+double byte_cost;
 
 
     previous= params.begin();
@@ -889,7 +963,9 @@ int64_t byte_cost;
 	previous++;
     }
 
-    // Use the last value in the list
+    // We're beyond the list. Use the last two values in the list and
+    // extrapolite.
+    previous--;
     T= params.back().latency - previous->latency;
     B= params.back().inflectionpoint - previous->inflectionpoint;
     byte_cost= T / B;

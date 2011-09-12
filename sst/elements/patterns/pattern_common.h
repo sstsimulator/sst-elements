@@ -28,7 +28,7 @@
 
 
 // Make sure those two correspond
-#define TIME_BASE		"1ns"
+#define TIME_BASE		"ns"
 #define TIME_BASE_FACTOR	1000000000.0
 
 
@@ -74,6 +74,10 @@ class Patterns   {
 	int get_cores_per_Net_router(void)   {return cores_per_Net_router;}
 	int get_num_router_nodes(void)   {return num_router_nodes;}
 	int get_cores_per_node(void)   {return cores_per_node;}
+	void record_Net_msg_stat(int hops, long long congestion_cnt,
+		SST::SimTime_t congestion_delay, uint32_t msg_len);
+	void record_NoC_msg_stat(int hops, long long congestion_cnt,
+		SST::SimTime_t congestion_delay, uint32_t msg_len);
 
 
     private:
@@ -128,10 +132,27 @@ class Patterns   {
 
 	// Statistics
 	long long int stat_NoCNICsend;
+	long long int stat_NoCNICsend_bytes;
 	long long int stat_NoCNICbusy;
+
 	long long int stat_NetNICsend;
+	long long int stat_NetNICsend_bytes;
 	long long int stat_NetNICbusy;
+
 	std::list<int> NICstat_ranks;
+
+	long long int stat_NetNICrecv;
+	long long int stat_NetNICrecv_bytes;
+	long long int stat_Netmsg_hops;
+	long long int stat_Netmsg_congestion_cnt;
+	SST::SimTime_t stat_Netmsg_congestion_delay;
+
+	long long int stat_NoCNICrecv;
+	long long int stat_NoCNICrecv_bytes;
+	long long int stat_NoCmsg_hops;
+	long long int stat_NoCmsg_congestion_cnt;
+	SST::SimTime_t stat_NoCmsg_congestion_delay;
+
 
 } ;  // end of class Patterns
 

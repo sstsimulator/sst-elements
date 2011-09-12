@@ -7,6 +7,8 @@
 // distribution.
 
 
+#define __STDC_FORMAT_MACROS	(1)
+#include <inttypes.h>		// For PRIx64
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <assert.h>
@@ -152,7 +154,7 @@ int payload_len;
 
 
     if (sst_event->dest != my_rank)   {
-	_abort(comm_pattern, "%s dest %d != my rank %d. Msg ID 0x%08lx\n",
+	_abort(comm_pattern, "%s dest %d != my rank %d. Msg ID 0x%" PRIx64 "\n",
 	    err_str, sst_event->dest, my_rank, sst_event->msg_id);
     }
 
@@ -163,6 +165,7 @@ int payload_len;
     }
 
     SM->handle_state_events(sst_event->tag, sm);
+    delete(sst_event);
 
 }  /* end of handle_sst_events() */
 
@@ -173,6 +176,11 @@ void
 Comm_pattern::handle_net_events(Event *sst_event)
 {
 
+CPUNicEvent *e;
+
+    e= (CPUNicEvent *)sst_event;
+    common->record_Net_msg_stat(e->hops, e->congestion_cnt,
+	e->congestion_delay, e->msg_len);
     handle_sst_events((CPUNicEvent *)(sst_event), "NETWORK");
 
 }  /* end of handle_net_events() */
@@ -184,6 +192,11 @@ void
 Comm_pattern::handle_NoC_events(Event *sst_event)
 {
 
+CPUNicEvent *e;
+
+    e= (CPUNicEvent *)sst_event;
+    common->record_NoC_msg_stat(e->hops, e->congestion_cnt,
+	e->congestion_delay, e->msg_len);
     handle_sst_events((CPUNicEvent *)(sst_event), "NoC");
 
 }  /* end of handle_NoC_events() */

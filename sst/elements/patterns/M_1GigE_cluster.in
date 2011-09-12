@@ -81,8 +81,10 @@ NoCNICparams =    63488    9910
 NoCNICparams =    66560   10340
 NoCNICparams =    98304   14140
 NoCNICparams =   102400   15160
+NoCNICparams =  1048576  147670
 NoCNICparams =  7372800 2374790
 NoCNICparams =  7454720 2400270
+NoCNICparams =  7700480 2482750
 NoCNICparams = 10485760 3675750
 
 # Minimum gap between messages going into the main network
