@@ -96,7 +96,7 @@ int error;
 	    break;
 
 	case pingpong_pattern:
-	    // Don't check optional parameter "destination"
+	    /* Don't check optional parameter "destination" */
 	    PARAM_CHECK("Pingpong", num_msgs, <, 0);
 	    PARAM_CHECK("Pingpong", end_len, <, 0);
 	    PARAM_CHECK("Pingpong", len_inc, <, 0);
