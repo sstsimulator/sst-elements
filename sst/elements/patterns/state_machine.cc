@@ -89,7 +89,7 @@ state_event restart_event;
     SMstack.pop_back();
 
     if (SM[currentSM].missed_events.empty())   {
-	// There has to be at least the return event pedning!
+	// There has to be at least the return event pending!
 	_sm_abort(State_machine, "[%3d] No events to return!\n", my_rank);
     }
 
