@@ -150,6 +150,7 @@ int i;
 	    i, NoCNIClatency(i), i);
     }
 
+    machine_params(sstfile);
     pattern_params(sstfile);
 
 }  /* end of sst_gen_param_entries() */

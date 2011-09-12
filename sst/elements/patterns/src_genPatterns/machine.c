@@ -8,6 +8,11 @@
 
 
 
+#define MAX_LINE	1024
+#define MAX_INFLECTIONS	256
+#define MAX_NICSTAT	256
+
+
 /* Local functions */
 static void set_defaults(void);
 static int error_check(void);
@@ -26,6 +31,8 @@ static int _NetNICgap;
 static int _NoCNICgap;
 static int _NetNICinflections;
 static int _NoCNICinflections;
+static int _NICstat_num;
+static int _NICstat[MAX_NICSTAT];
 static int64_t _NetLinkBandwidth;
 static int64_t _NoCLinkBandwidth;
 static int64_t _NetLinkLatency;
@@ -42,9 +49,6 @@ typedef struct NICparams_t   {
 
 static NICparams_t *_NetNICparams= NULL;
 static NICparams_t *_NoCNICparams= NULL;
-
-#define MAX_LINE	1024
-#define MAX_INFLECTIONS	256
 
 
 
@@ -92,6 +96,11 @@ int i;
 	_NoCNICparams[i].inflectionpoint= -1;
 	_NoCNICparams[i].latency= -1;
     }
+
+    for (i= 0; i < MAX_NICSTAT; i++)   {
+	_NICstat[i]= NO_DEFAULT;
+    }
+    _NICstat_num= 0;
 
 }  /* end of set_defaults() */
 
@@ -225,6 +234,9 @@ void
 disp_machine_params(void)
 {
 
+int i;
+
+
     if (_Net_x_dim * _Net_y_dim > 1)   {
 	printf("*** Network torus is X * Y = %d * %d with %d node(s) per router\n",
 	    _Net_x_dim, _Net_y_dim, _num_router_nodes);
@@ -262,6 +274,12 @@ disp_machine_params(void)
 	_IOLinkBandwidth, _IOLinkLatency);
     printf("*** Link latency between routers: Network %" PRId64 " ns, NoC %" PRId64 " ns\n",
 	_NetIntraLatency, _NoCIntraLatency);
+
+    printf("*** Print NIC statistics for ranks: ");
+    for (i= 0; i < _NICstat_num; i++)   {
+	printf("%d, ", _NICstat[i]);
+    }
+    printf("\n");
 
 }  /* end of disp_machine_params() */
 
@@ -372,6 +390,10 @@ int rc;
 		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency;
 	    }
 	    _NoCNICinflections++;
+
+	} else if (strcmp("NICstat", key) == 0)   {
+	    _NICstat[_NICstat_num++]= strtol(value1, (char **)NULL, 0);
+
 	} else   {
 	    fprintf(stderr, "Unknown parameter \"%s\" in machine file!\n", key);
 	    error= TRUE;
@@ -614,3 +636,18 @@ NoCRouterLatency(void)
     return 0;
 
 }  /* end of NoCRouterLatency() */
+
+
+
+void
+machine_params(FILE *out)
+{
+
+int i;
+
+
+    for (i= 0; i < _NICstat_num; i++)   {
+	fprintf(out, "    <NICstat%d> %d </NICstat%d>\n", i, _NICstat[i], i);
+    }
+
+}  /* end of machine_params() */

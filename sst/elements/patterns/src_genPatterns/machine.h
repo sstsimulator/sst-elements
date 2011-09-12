@@ -34,4 +34,6 @@ int64_t NoCIntraLatency(void);
 int NoCRouterLatency(void);
 int NetRouterLatency(void);
 
+void machine_params(FILE *out);
+
 #endif /* _MACHINE_H_ */

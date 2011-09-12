@@ -35,6 +35,7 @@ static int _num_ops;
 static int _num_sets;
 
 /* Pingpong parameters */
+static int _destination;
 static int _num_msgs;
 static int _end_len;
 static int _len_inc;
@@ -56,6 +57,7 @@ set_defaults(void)
     _num_sets= NO_DEFAULT;
 
     /* Pingpong defaults */
+    _destination= OPTIONAL;
     _num_msgs= NO_DEFAULT;
     _end_len= NO_DEFAULT;
     _len_inc= NO_DEFAULT;
@@ -94,6 +96,7 @@ int error;
 	    break;
 
 	case pingpong_pattern:
+	    // Don't check optional parameter "destination"
 	    PARAM_CHECK("Pingpong", num_msgs, <, 0);
 	    PARAM_CHECK("Pingpong", end_len, <, 0);
 	    PARAM_CHECK("Pingpong", len_inc, <, 0);
@@ -128,6 +131,11 @@ disp_pattern_params(void)
 	    break;
 
 	case pingpong_pattern:
+	    if (_destination == OPTIONAL)   {
+		printf("***     destination =  default\n");
+	    } else   {
+		printf("***     destination =  %d\n", _destination);
+	    }
 	    printf("***     num_msgs =     %d\n", _num_msgs);
 	    printf("***     end_len =      %d\n", _end_len);
 	    printf("***     len_inc =      %d\n", _len_inc);
@@ -196,6 +204,9 @@ int rc;
 
 
 		/* Pingpong parameters */
+		} else if (strcmp("destination", key) == 0)   {
+		    _destination= strtol(value1, (char **)NULL, 0);
+
 		} else if (strcmp("num_msgs", key) == 0)   {
 		    _num_msgs= strtol(value1, (char **)NULL, 0);
 
@@ -279,6 +290,9 @@ pattern_params(FILE *out)
 	    break;
 
 	case pingpong_pattern:
+	    if (_destination != OPTIONAL)   {
+		PRINT_PARAM(out, destination);
+	    }
 	    PRINT_PARAM(out, num_msgs);
 	    PRINT_PARAM(out, end_len);
 	    PRINT_PARAM(out, len_inc);

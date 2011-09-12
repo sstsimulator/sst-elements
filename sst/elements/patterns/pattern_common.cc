@@ -237,6 +237,14 @@ int index;
 	    }
 	}
 
+	if (it->first.find("NICstat") != std::string::npos)   {
+	    if (sscanf(it->first.c_str(), "NICstat%d", &index) == 1)   {
+		int r;
+		sscanf(it->second.c_str(), "%d", &r);
+		NICstat_ranks.push_back(r);
+	    }
+	}
+
 	it++;
     }
 
@@ -347,11 +355,20 @@ int index;
 
 
     if (my_rank == 0)   {
+	std::list<int>::iterator rank;
+
 	printf("#  |||  mesh x %d, y %d, with %d nodes each = %d nodes\n",
 	    mesh_width, mesh_height, num_router_nodes, mesh_width * mesh_height * num_router_nodes);
 	printf("#  |||  NoC x %d, y %d, with %d cores each = %d cores per node\n",
 	    NoC_width, NoC_height, cores_per_NoC_router, cores_per_node);
 	printf("#  |||  Total %d cores in system\n", total_cores);
+
+	printf("#  |||  NIC statistics for ranks ");
+	for (rank= NICstat_ranks.begin(); rank != NICstat_ranks.end(); rank++)   {
+	    printf("%d, ", *rank);
+	}
+	printf("\n");
+
 	printf("#  |||  Network NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NetNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NetNICparams.size());
@@ -796,28 +813,33 @@ int x_delta, y_delta;
 
 
 void
-Patterns::stat_print(int rank)
+Patterns::stat_print(void)
 {
 
-    if (my_rank == rank)   {
-	printf("# [%3d] NoC NIC model statistics\n", my_rank);
-	printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
-	if (stat_NoCNICsend > 0)   {
-	    printf("# [%3d]     NIC busy    %12.1f%%\n", my_rank,
-		(100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
-	} else   {
-	    printf("# [%3d]     NIC busy             0.0%%\n", my_rank);
+std::list<int>::iterator rank;
+
+
+    for (rank= NICstat_ranks.begin(); rank != NICstat_ranks.end(); rank++)   {
+	if (my_rank == *rank)   {
+	    printf("# [%3d] NoC NIC model statistics\n", my_rank);
+	    printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NoCNICsend);
+	    if (stat_NoCNICsend > 0)   {
+		printf("# [%3d]     NIC busy    %12.1f%%\n", my_rank,
+		    (100.0 / stat_NoCNICsend) * stat_NoCNICbusy);
+	    } else   {
+		printf("# [%3d]     NIC busy             0.0%%\n", my_rank);
+	    }
+	    printf("#  |||  \n");
+	    printf("# [%3d] Net NIC model statistics\n", my_rank);
+	    printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
+	    if (stat_NetNICsend > 0)   {
+		printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
+		    (100.0 / stat_NetNICsend) * stat_NetNICbusy);
+	    } else   {
+		printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
+	    }
+	    printf("#  |||  \n");
 	}
-	printf("#  |||  \n");
-	printf("# [%3d] Net NIC model statistics\n", my_rank);
-	printf("# [%3d]     Total sends %12lld\n", my_rank, stat_NetNICsend);
-	if (stat_NetNICsend > 0)   {
-	    printf("#  [%3d]     NIC busy    %12.1f%%\n", my_rank,
-		(100.0 / stat_NetNICsend) * stat_NetNICbusy);
-	} else   {
-	    printf("#  [%3d]     NIC busy             0.0%%\n", my_rank);
-	}
-	printf("#  |||  \n");
     }
 
 }  // end of stat_print()
@@ -851,10 +873,10 @@ int64_t T, B;
 int64_t byte_cost;
 
 
-    previous= NetNICparams.begin();
+    previous= params.begin();
     k= previous;
     k++;
-    for (; k != NetNICparams.end(); k++)   {
+    for (; k != params.end(); k++)   {
 	if (k->inflectionpoint > msg_len)   {
 	    T= k->latency - previous->latency;
 	    B= k->inflectionpoint - previous->inflectionpoint;
@@ -868,10 +890,10 @@ int64_t byte_cost;
     }
 
     // Use the last value in the list
-    T= NetNICparams.back().latency - previous->latency;
-    B= NetNICparams.back().inflectionpoint - previous->inflectionpoint;
+    T= params.back().latency - previous->latency;
+    B= params.back().inflectionpoint - previous->inflectionpoint;
     byte_cost= T / B;
-    *latency= NetNICparams.back().latency;
-    *msg_duration= (msg_len - NetNICparams.back().inflectionpoint) * byte_cost;
+    *latency= params.back().latency;
+    *msg_duration= (msg_len - params.back().inflectionpoint) * byte_cost;
 
 }  // end of getNICparams()

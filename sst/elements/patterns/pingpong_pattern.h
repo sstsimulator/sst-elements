@@ -66,6 +66,11 @@ class Pingpong_pattern : public Comm_pattern {
 		it++;
 	    }
 
+	    if (dest >= num_ranks)   {
+		_abort(pingpong_pattern, "[%3d] Invalid destination %d for %d ranks\n",
+		    my_rank, dest, num_ranks);
+	    }
+
 	    // Install other state machines which we (pingpong) need as
 	    // subroutines.
 	    // For pingpong we don't really need them, but we include

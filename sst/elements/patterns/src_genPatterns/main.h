@@ -13,7 +13,8 @@
 #define TRUE            (1)
 #endif
 
-#define DEFAULT_ENVELOPE	(64)
 #define NO_DEFAULT      	(-1)
+#define OPTIONAL	      	(-2)
+
 
 #endif /* _MAIN_H_ */

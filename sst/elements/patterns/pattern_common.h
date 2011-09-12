@@ -52,9 +52,7 @@ class Patterns   {
 	}
 
 	~Patterns()   {
-	    stat_print(0);
-	    stat_print(3);
-	    stat_print(12);
+	    stat_print();
 	}
 
 	int init(SST::Component::Params_t& params, 
@@ -83,7 +81,7 @@ class Patterns   {
 		SST::SimTime_t CurrentSimTime);
 	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
 		SST::SimTime_t CurrentSimTime);
-	void stat_print(int rank);
+	void stat_print();
 	void get_NICparams(std::list<NICparams_t> params, int64_t msg_len, 
 	    int64_t *latency, int64_t *msg_duration);
 
@@ -133,6 +131,7 @@ class Patterns   {
 	long long int stat_NoCNICbusy;
 	long long int stat_NetNICsend;
 	long long int stat_NetNICbusy;
+	std::list<int> NICstat_ranks;
 
 } ;  // end of class Patterns
 
