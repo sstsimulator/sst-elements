@@ -32,7 +32,8 @@ class Pingpong_pattern : public Comm_pattern {
 
 	    // Set some more defaults
 	    num_msgs= 10;
-	    end_len= 1024;
+	    end_len= 1048576;
+	    user_len_inc= -1;
 	    len_inc= 8;
 	    allreduce_msglen= sizeof(double);
 
@@ -55,7 +56,7 @@ class Pingpong_pattern : public Comm_pattern {
 		}
 
 		if (!it->first.compare("len_inc"))   {
-		    sscanf(it->second.c_str(), "%d", &len_inc);
+		    sscanf(it->second.c_str(), "%d", &user_len_inc);
 		}
 
 		// Parameter for allreduce
@@ -133,6 +134,7 @@ class Pingpong_pattern : public Comm_pattern {
 	int end_len;
 	int num_msgs;
 	int len_inc;
+	int user_len_inc;
 	SimTime_t start_time;
 	int first_receive;
 	int dest;
@@ -154,6 +156,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    ar & BOOST_SERIALIZATION_NVP(end_len);
 	    ar & BOOST_SERIALIZATION_NVP(num_msgs);
 	    ar & BOOST_SERIALIZATION_NVP(len_inc);
+	    ar & BOOST_SERIALIZATION_NVP(user_len_inc);
 	    ar & BOOST_SERIALIZATION_NVP(start_time);
 	    ar & BOOST_SERIALIZATION_NVP(first_receive);
 	    ar & BOOST_SERIALIZATION_NVP(dest);

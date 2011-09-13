@@ -126,8 +126,6 @@ double latency;
 	    // Send it back, unless we're done
 	    cnt--;
 	    if (first_receive)   {
-		// FIXME: I'd like to print how many hops the first message took
-		// printf("# [%3d] Number of hops (routers) along path: %d\n", my_rank, e->hops);
 		if (my_rank == 0)   {
 		    printf("#\n");
 		    printf("# Msg size (bytes)   Latency (seconds)\n");
@@ -142,9 +140,21 @@ double latency;
 
 		if (cnt < 1)   {
 		    if (len > 0)   {
-			len= len + len_inc;
+			if (user_len_inc <= 0)   {
+			    if (len >= (len_inc << 4))   {
+				len_inc= len_inc << 1;
+			    }
+			    len= len + len_inc;
+			} else   {
+			    len= len + user_len_inc;
+			}
+
 		    } else   {
-			len= len_inc;
+			if (user_len_inc <= 0)   {
+			    len= len_inc;
+			} else   {
+			    len= user_len_inc;
+			}
 		    }
 		    cnt= num_msgs;
 		    if (len > end_len)   {
@@ -163,9 +173,21 @@ double latency;
 		    printf("%9d %.9f\n", len, latency);
 		    // Start next message size, if we haven't reached the end yet
 		    if (len > 0)   {
-			len= len + len_inc;
+			if (user_len_inc <= 0)   {
+			    if (len >= (len_inc << 4))   {
+				len_inc= len_inc << 1;
+			    }
+			    len= len + len_inc;
+			} else   {
+			    len= len + user_len_inc;
+			}
+
 		    } else   {
-			len= len_inc;
+			if (user_len_inc <= 0)   {
+			    len= len_inc;
+			} else   {
+			    len= user_len_inc;
+			}
 		    }
 		    if (len > end_len)   {
 			// We've done all sizes num_msgs times

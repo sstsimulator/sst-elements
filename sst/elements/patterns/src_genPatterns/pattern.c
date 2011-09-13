@@ -59,8 +59,8 @@ set_defaults(void)
     /* Pingpong defaults */
     _destination= OPTIONAL;
     _num_msgs= NO_DEFAULT;
-    _end_len= NO_DEFAULT;
-    _len_inc= NO_DEFAULT;
+    _end_len= OPTIONAL;
+    _len_inc= OPTIONAL;
 
     /* Msgrate defaults */
     _num_msgs= NO_DEFAULT;
@@ -98,8 +98,8 @@ int error;
 	case pingpong_pattern:
 	    /* Don't check optional parameter "destination" */
 	    PARAM_CHECK("Pingpong", num_msgs, <, 0);
-	    PARAM_CHECK("Pingpong", end_len, <, 0);
-	    PARAM_CHECK("Pingpong", len_inc, <, 0);
+	    /* Don't check optional parameter "end_len" */
+	    /* Don't check optional parameter "len_inc" */
 	    break;
 
 	case msgrate_pattern:
@@ -137,8 +137,16 @@ disp_pattern_params(void)
 		printf("***     destination =  %d\n", _destination);
 	    }
 	    printf("***     num_msgs =     %d\n", _num_msgs);
-	    printf("***     end_len =      %d\n", _end_len);
-	    printf("***     len_inc =      %d\n", _len_inc);
+	    if (_end_len == OPTIONAL)   {
+		printf("***     end_len =      default\n");
+	    } else   {
+		printf("***     end_len =      %d\n", _end_len);
+	    }
+	    if (_len_inc == OPTIONAL)   {
+		printf("***     len_inc =      default\n");
+	    } else   {
+		printf("***     len_inc =      %d\n", _len_inc);
+	    }
 	    break;
 
 	case msgrate_pattern:
@@ -294,8 +302,12 @@ pattern_params(FILE *out)
 		PRINT_PARAM(out, destination);
 	    }
 	    PRINT_PARAM(out, num_msgs);
-	    PRINT_PARAM(out, end_len);
-	    PRINT_PARAM(out, len_inc);
+	    if (_end_len != OPTIONAL)   {
+		PRINT_PARAM(out, end_len);
+	    }
+	    if (_len_inc != OPTIONAL)   {
+		PRINT_PARAM(out, len_inc);
+	    }
 	    break;
 
 	case msgrate_pattern:
