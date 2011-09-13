@@ -28,64 +28,82 @@ num_router_nodes = 8
 # Network NIC parameters
 # NetNICparams and NoCNICparams do not have to be sorted.
 #
-#               inflection latency 
-#               bytes      nano s
-NetNICparams =      0   17550
-NetNICparams =    576   29720
-NetNICparams =   1688   58240
-NetNICparams =   3160   63920
-NetNICparams =   3176  137110
-NetNICparams =   3352  182630
-NetNICparams =   3416  257280
-NetNICparams =  26624  289250
-NetNICparams =  27648  465400
-NetNICparams =  50176  495590
-NetNICparams =  51200  668990
-NetNICparams =  64512  684830
-NetNICparams =  65536  861020
-NetNICparams =  73728  890020
-NetNICparams =  74752  989130
-NetNICparams =  79872 1015450
-NetNICparams =  80896 1049740
-NetNICparams =  96256 1066680
-NetNICparams =  97280 1103630
-NetNICparams =  98304 1201030
-NetNICparams = 102400 1231690
-NetNICparams = 114688 1258420
+#                inflection      latency 
+#                bytes            nano s
+NetNICparams =            0        18920
+NetNICparams =            8        19170
+NetNICparams =           40        19860
+NetNICparams =           72        20560
+NetNICparams =          112        21430
+NetNICparams =          160        22480
+NetNICparams =          240        24020
+NetNICparams =          352        26270
+NetNICparams =          480        28930
+NetNICparams =          704        34810
+NetNICparams =         1024        47000
+NetNICparams =         1536        61250
+NetNICparams =         2048       100110
+NetNICparams =         3072       100280
+NetNICparams =         4096       197110
+NetNICparams =         5632       227670
+NetNICparams =         7168       231490
+NetNICparams =        10240       281200
+NetNICparams =        13312       285840
+NetNICparams =        16384       289140
+NetNICparams =        22528       294020
+NetNICparams =        28672       466980
+NetNICparams =        45056       486990
+NetNICparams =        61440       681750
+NetNICparams =        90112      1040680
+NetNICparams =       122880      1433070
+NetNICparams =       180224      1827960
+NetNICparams =       245760      2418030
+NetNICparams =       393216      3601960
+NetNICparams =       524288      4782190
+NetNICparams =       786432      6947430
+NetNICparams =      1310720     11471570
+NetNICparams =      1835008     15845810
+NetNICparams =      2883584     24863150
+NetNICparams =      3932160     33724660
+NetNICparams =      6815744     58153070
+NetNICparams =     10485760     89470230
+
 
 # NoC NIC parameters
 #
-#               inflection latency 
-#               bytes      nano s
-NoCNICparams =        0     770
-NoCNICparams =       80     800
-NoCNICparams =       96     910
-NoCNICparams =      464     930
-NoCNICparams =      480    1050
-NoCNICparams =      720    1080
-NoCNICparams =      736    1100
-NoCNICparams =      848    1180
-NoCNICparams =      864    1240
-NoCNICparams =      928    1250
-NoCNICparams =      944    1180
-NoCNICparams =     1024    1250
-NoCNICparams =     4024    1040
-NoCNICparams =     4032    1390
-NoCNICparams =     4096    1410
-NoCNICparams =     5120	   1550
-NoCNICparams =    10240    2160
-NoCNICparams =    35840    7240
-NoCNICparams = 	  56320    9350
-NoCNICparams =    57344    9310
-NoCNICparams =    63488    9910
-NoCNICparams =    66560   10340
-NoCNICparams =    98304   14140
-NoCNICparams =   102400   15160
-NoCNICparams =  1048576  147670
-NoCNICparams =  7372800 2374790
-NoCNICparams =  7454720 2400270
-NoCNICparams =  7700480 2482750
-NoCNICparams = 10485760 3675750
+#                inflection      latency 
+#                bytes            nano s
+NoCNICparams =            0          830
+NoCNICparams =            8          830
+NoCNICparams =           40          840
+NoCNICparams =          104          950
+NoCNICparams =          192          960
+NoCNICparams =          256          960
+NoCNICparams =          384          970
+NoCNICparams =          512         1090
+NoCNICparams =          832         1200
+NoCNICparams =         1024         1170
+NoCNICparams =         1664         1400
+NoCNICparams =         2304         1600
+NoCNICparams =         3328         1930
+NoCNICparams =         4608         3070
+NoCNICparams =         6656         3430
+NoCNICparams =         9216         4230
+NoCNICparams =        13312         5630
+NoCNICparams =        18432         7420
+NoCNICparams =        30720        12330
+NoCNICparams =        45056        17160
+NoCNICparams =        61440        21990
+NoCNICparams =        90112        30820
+NoCNICparams =       122880        41250
+NoCNICparams =       180224        59170
+NoCNICparams =       245760        79850
+NoCNICparams =       393216       126760
+NoCNICparams =       524288       168400
+NoCNICparams =      2621440       828730
+NoCNICparams =      6815744      2170100
+NoCNICparams =     10485760      3788340
+
 
 # Minimum gap between messages going into the main network
 NetNICgap = 53000
