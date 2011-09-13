@@ -13,7 +13,8 @@
 
 #define FALSE		(0)
 #define TRUE		(1)
-#define CHANGE		(0.40)
+#define CHANGE		(1.0)
+#define SUPRESS_THRESHOLD	(1)
 
 
 
@@ -29,6 +30,8 @@ double value_diff, size_diff;
 double previous_size;
 double previous_value;
 double previous_slope;
+double last_value;
+double last_size;
 double p;
 int supress;
 
@@ -65,14 +68,15 @@ int rc;
     previous_size= 0.0;
     previous_value= 0.0;
     previous_slope= 0.0;
-    supress= 0;
+    supress= 10;
 
 
     /* Read numbers until EOF */
+#define rrr (1)
 #if rrr
     while ((rc= scanf("%lf %lf %lf %lf %lf %lf %lf # %lf", &size, &dummy, &value, &dummy,
 		    &dummy, &dummy, &dummy, &dummy)) != EOF)   {
-	if (rc = 8)   {
+	if (rc != 8)   {
 #else
     while ((rc= scanf("%lf %lf %lf %lf %lf %lf %lf", &size, &dummy, &value, &dummy,
 		    &dummy, &dummy, &dummy)) != EOF)   {
@@ -81,26 +85,25 @@ int rc;
 	    fprintf(stderr, "%s   Error reading data on line %d\n", argv[0], cnt);
 	    exit(-1);
 	}
+
 	size_diff= size - previous_size;
 	value_diff= value - previous_value;
 	slope= fabs(value_diff / size_diff);
 
 	if (cnt == 0)   {
 	    /* Start the list */
-	    printf("%f %f\n", size, value);
-	    previous_slope= 0;
+	    printf("NetNICparams = %12.0f %12.0f\n", size, value * 1000.0);
 	}
 
-	printf("%3d: s %f, v %f, slope %f, previous s %f, v %f, s %f\n", cnt, size, value, fabs(value_diff / size_diff), previous_size, previous_value, previous_slope);
-	p= previous_slope * CHANGE;
-	if ((slope > (previous_slope + p)) || (slope < previous_slope - p))   {
+	previous_slope= (value - last_value) / (size - last_size);
+	p= fabs(slope * 100.0 / previous_slope - 100.0);
+	if (p > CHANGE)   {
 	    /* We've reached an inflection point */
 	    if (cnt > 1)   {
-		if (supress > 6)   {
-		    printf("%f %f\n", previous_size, previous_value);
-		    previous_slope= slope;
-		    previous_size= size;
-		    previous_value= value;
+		if (supress > SUPRESS_THRESHOLD)   {
+		    printf("NetNICparams = %12.0f %12.0f\n", previous_size, previous_value * 1000.0);
+		    last_size= size;
+		    last_value= value;
 		    supress= 0;
 		} else   {
 		    supress++;
@@ -108,8 +111,13 @@ int rc;
 	    }
 	}
 
+	previous_size= size;
+	previous_value= value;
+
 	cnt++;
     }
+
+    printf("NetNICparams = %12.0f %12.0f\n", size, value * 1000.0);
 
     return 0;
 
