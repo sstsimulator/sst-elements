@@ -112,13 +112,15 @@ sst_gen_param_end(FILE *sstfile)
 
     fprintf(sstfile, "<LocalNet>\n");
     fprintf(sstfile, "    <name> NoC </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", NoCLinkLatency());
+    /* This is 1/2 because it gets applied on the input AND output link */
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", NoCLinkLatency() / 2);
     fprintf(sstfile, "</LocalNet>\n");
     fprintf(sstfile, "\n");
 
     fprintf(sstfile, "<GlobalNet>\n");
     fprintf(sstfile, "    <name> NETWORK </name>\n");
-    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", NetLinkLatency());
+    /* This is 1/2 because it gets applied on the input AND output link */
+    fprintf(sstfile, "    <lat> %" PRId64 "ns </lat>\n", NetLinkLatency() / 2);
     fprintf(sstfile, "</GlobalNet>\n");
     fprintf(sstfile, "\n");
 
@@ -640,7 +642,6 @@ char router_id[MAX_ID_LEN];
 char cname[MAX_ID_LEN];
 router_function_t role;
 int wormhole;
-int lat;
 link_type_t ltype;
 
 
@@ -650,29 +651,6 @@ link_type_t ltype;
 
     reset_router_list();
     while (next_router(&r, &role, &wormhole))   {
-	switch (role)   {
-	    case RNoC:
-		lat= NoCIntraLatency();
-		break;
-	    case Rnet:
-		lat= NetIntraLatency();
-		break;
-	    case RnetPort:
-		lat= NetIntraLatency();
-		break;
-	    case Rnvram:
-		lat= nvram_latency;
-		break;
-	    case Rstorage:
-		lat= IOLinkLatency();
-		break;
-	    case RstoreIO:
-		lat= IOLinkLatency();
-		break;
-	    default:
-		lat= -1;
-	}
-
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	sst_router_component_start(router_id, 1.0, cname, role, power_method, sstfile);
@@ -691,7 +669,7 @@ link_type_t ltype;
 
 	/* Links to other routers */
 	reset_router_links(r);
-	while (next_router_link(r, &l, &lp, &rp))   {
+	while (next_router_link(r, &l, &lp, &rp, &ltype))   {
 	    if (l < 0)   {
 		snprintf(net_link_id, MAX_ID_LEN, "unused");
 		/*
@@ -740,22 +718,11 @@ link_type_t ltype;
 	while (next_router_nic(r, &p, &ltype))   {
 	    snprintf(net_link_id, MAX_ID_LEN, "R%dP%d", r, p);
 	    switch (ltype)   {
-		case Lnet:
-		    /*
-		    ** FIXME: This should be NetLinkLatency()
-		    ** With NetIntraLatency() it causes the link latency to be asymteric; i.e.,
-		    ** in the two places the link between NIC and aggregator is listed, it has
-		    ** two different latencies.
-		    ** However, with NetLinkLatency(), which makes it symetric, the latency
-		    ** is too high.
-		    */
-		    sst_router_component_link(net_link_id, NetIntraLatency(), net_link_id, sstfile);
+		case LnetAccess:
+		    sst_router_component_link(net_link_id, NetLinkLatency() / 2, net_link_id, sstfile);
 		    break;
 		case LNoC:
-		    /*
-		    ** FIXME: This should be NoCLinkLatency(), same problem as above
-		    */
-		    sst_router_component_link(net_link_id, NoCIntraLatency(), net_link_id, sstfile);
+		    sst_router_component_link(net_link_id, NoCLinkLatency() / 2, net_link_id, sstfile);
 		    break;
 		case LIO:
 		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
@@ -763,15 +730,41 @@ link_type_t ltype;
 		case LNVRAM:
 		    sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
 		    break;
+		case Lnet:
+		case LnetNIC:
+		case LNoCNIC:
+		    fprintf(stderr, "These type of links are not used going to NICs\n");
 	    }
 	}
 
 	/* Links to other routers */
 	reset_router_links(r);
-	while (next_router_link(r, &l, &lp, &rp))   {
+	while (next_router_link(r, &l, &lp, &rp, &ltype))   {
 	    if (l >= 0)   {
 		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
-		sst_router_component_link(net_link_id, lat, net_link_id, sstfile);
+		switch (ltype)   {
+		    case Lnet:
+			sst_router_component_link(net_link_id, NetIntraLatency(), net_link_id, sstfile);
+			break;
+		    case LNoC:
+			sst_router_component_link(net_link_id, NoCIntraLatency(), net_link_id, sstfile);
+			break;
+		    case LIO:
+			sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
+			break;
+		    case LNVRAM:
+			sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
+			break;
+		    case LnetAccess:
+			sst_router_component_link(net_link_id, NetIntraLatency() / 2, net_link_id, sstfile);
+			break;
+		    case LnetNIC:
+			sst_router_component_link(net_link_id, NetLinkLatency() / 2, net_link_id, sstfile);
+			break;
+		    case LNoCNIC:
+			sst_router_component_link(net_link_id, NoCLinkLatency() / 2, net_link_id, sstfile);
+			break;
+		}
 	    } else   {
 		/* Don't create loops back to the same router */
 	    }

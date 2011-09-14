@@ -192,18 +192,18 @@ int all_cores;
 
 	    /* Go East */
 	    if ((x + 1) < net_x_dim)   {
-		gen_link(me, EAST_PORT, right, WEST_PORT);
+		gen_link(me, EAST_PORT, right, WEST_PORT, Lnet);
 	    } else   {
 		/* Wrap around */
-		gen_link(me, EAST_PORT, row_start, WEST_PORT);
+		gen_link(me, EAST_PORT, row_start, WEST_PORT, Lnet);
 	    }
 
 	    /* Go South */
 	    if ((y + 1) < net_y_dim)   {
-		gen_link(me, SOUTH_PORT, down, NORTH_PORT);
+		gen_link(me, SOUTH_PORT, down, NORTH_PORT, Lnet);
 	    } else   {
 		/* Wrap around */
-		gen_link(me, SOUTH_PORT, col_start, NORTH_PORT);
+		gen_link(me, SOUTH_PORT, col_start, NORTH_PORT, Lnet);
 	    }
 	}
     }
@@ -231,14 +231,14 @@ int all_cores;
 			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC EAST\n",
 				me, EAST_PORT, right, WEST_PORT);
 			#endif /* GEN_DEBUG */
-			gen_link(me, EAST_PORT, right, WEST_PORT);
+			gen_link(me, EAST_PORT, right, WEST_PORT, LNoC);
 		    } else   {
 			/* Wrap around */
 			#if defined GEN_DEBUG
 			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC EAST wrap\n",
 				me, EAST_PORT, row_start, WEST_PORT);
 			#endif /* GEN_DEBUG */
-			gen_link(me, EAST_PORT, row_start, WEST_PORT);
+			gen_link(me, EAST_PORT, row_start, WEST_PORT, LNoC);
 		    }
 
 		    /* Go South */
@@ -247,14 +247,14 @@ int all_cores;
 			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC SOUTH\n",
 				me, SOUTH_PORT, down, NORTH_PORT);
 			#endif /* GEN_DEBUG */
-			gen_link(me, SOUTH_PORT, down, NORTH_PORT);
+			gen_link(me, SOUTH_PORT, down, NORTH_PORT, LNoC);
 		    } else   {
 			/* Wrap around */
 			#if defined GEN_DEBUG
 			    fprintf(stderr, "gen_link(%2d, %2d - %2d, %2d) NoC SOUTH wrap\n",
 				me, SOUTH_PORT, col_start, NORTH_PORT);
 			#endif /* GEN_DEBUG */
-			gen_link(me, SOUTH_PORT, col_start, NORTH_PORT);
+			gen_link(me, SOUTH_PORT, col_start, NORTH_PORT, LNoC);
 		    }
 
 		}
@@ -273,7 +273,7 @@ int all_cores;
 		fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d);\n", net_aggregator, 0,
 		    R, FIRST_LOCAL_PORT + N);
 	    #endif /* GEN_DEBUG */
-	    gen_link(net_aggregator, 0, R, FIRST_LOCAL_PORT + N);
+	    gen_link(net_aggregator, 0, R, FIRST_LOCAL_PORT + N, LnetAccess);
 	    net_aggregator++;
 	}
     }
@@ -336,7 +336,7 @@ int all_cores;
 		fprintf(stderr, "gen_link(From %2d, %2d, to %2d, %2d); ss aggregator to SSD\n",
 		    ss_aggregator, 0, IO_aggregator, IO_aggregator_port);
 	    #endif /* GEN_DEBUG */
-	    gen_link(ss_aggregator, 0, IO_aggregator, IO_aggregator_port++);
+	    gen_link(ss_aggregator, 0, IO_aggregator, IO_aggregator_port++, LIO);
 	    ss_aggregator++;
 	    if (((R + 1) % (net_x_dim * net_y_dim * num_router_nodes / IO_nodes)) == 0)    {
 		/* Switch to next I/0 node */

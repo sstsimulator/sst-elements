@@ -51,6 +51,7 @@ typedef struct link_t   {
     int left_router_port;
     int right_router_port;
     char label[MAX_LABEL];
+    link_type_t type;
     struct link_t *next;
 } link_t;
 
@@ -225,11 +226,11 @@ nic_t *n;
     if (n->router_id == router)   {
 	/* This is a NoC router */
 	*port= n->router_port;
-	*ltype= LNoC;
+	*ltype= LNoC; /* FIXME: This could also be LNoCNIC */
     } else if (n->net_aggregator_id == router)   {
 	/* This is an Network aggregator */
 	*port= n->net_aggregator_port;
-	*ltype= Lnet;
+	*ltype= LnetAccess;
     } else if (n->nvram_aggregator_id == router)   {
 	/* This is an NVRAM aggregator */
 	*port= n->nvram_aggregator_port;
@@ -276,7 +277,7 @@ router_t *r;
 ** Traverse the list of ports connected to other routers
 */
 int
-next_router_link(int router, int *link_id, int *lport, int *rport)
+next_router_link(int router, int *link_id, int *lport, int *rport, link_type_t *ltype)
 {
 
 router_t *r;
@@ -320,6 +321,7 @@ link_t *l;
 	*link_id= l->id;
     }
 
+    *ltype= l->type;
     r->next_link++;
     return 1;
 
@@ -547,7 +549,7 @@ int i;
 ** don't call it for each router individually!
 */
 void
-gen_link(int Arouter, int Aport, int Brouter, int Bport)
+gen_link(int Arouter, int Aport, int Brouter, int Bport, link_type_t ltype)
 {
 
 link_t *current;
@@ -562,6 +564,7 @@ router_t *A, *B;
     }
 
     current->id= next_link_id++;
+    current->type= ltype;
     current->left_router= Arouter;
     current->right_router= Brouter;
     current->left_router_port= Aport;
