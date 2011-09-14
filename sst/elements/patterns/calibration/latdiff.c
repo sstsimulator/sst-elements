@@ -41,8 +41,9 @@ double value1, size1;
 double value2, size2;
 double dummy;
 
-int cnt;
+int lineno;
 int verbose;
+double zero_diff;
 
 
     /* Defaults */
@@ -105,11 +106,16 @@ int verbose;
 
 
 
-    cnt= 0;
+    lineno= 0;
+    zero_diff= -1.0;
 
+    printf("# Size     Diff     Per byte   Multiples      Compared to\n");
+    printf("# bytes    us       in ns      of zero diff   size in %%\n");
 
     /* Process the input file */
     while (fgets(line, MAX_LINE, fp1) != NULL)   {
+	lineno++;
+
 	/* Get rid of comments */
 	pos= strchr(line, '#');
 	if (pos)   {
@@ -130,16 +136,25 @@ int verbose;
 	}
 
 	if (size1 != size2)   {
-	    fprintf(stderr, "Values in the two files are not aligned!\n");
-	    fprintf(stderr, "Value for size X in file 1 on line Y, must also be on line Y in second file\n");
+	    fprintf(stderr, "Values in the two files are not aligned starting at "
+		"line %d!\n", lineno);
+	    fprintf(stderr, "Value for size X in file 1 on line Y, must also be on "
+		"line Y in second file\n");
 	    exit(-1);
+	}
+
+	if (size1 == 0.0)   {
+	    zero_diff= value2 - value1;
 	}
 
 	if (verbose > 1)   {
 	    printf("Debug: Found size %f, value1 %f, value2 %f\n", size1, value1, value2);
 	}
 
-	cnt++;
+	printf("%9.0f  %7.3f   %7.3f   %7.3f   %7.3f\n",
+	    size1, value2 - value1, (value2 - value1) * 1000.0 / size1, (value2 - value1) / zero_diff,
+	    (value2 - value1) * 100.0 / value1);
+
     }
 
     return 0;
