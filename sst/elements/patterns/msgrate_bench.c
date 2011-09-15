@@ -211,7 +211,7 @@ int num_sender;
 	    num_msgs, msg_len, start_rank, num_ranks - 1, stride);
 	printf("#  |||  Test 2: %d receivers\n", num_sender);
 	printf("#  |||  Test 2: Average send rate:       %8.0f msgs/s\n",
-	    1.0 / ((total_time / (num_ranks - start_rank)) / (num_msgs - 1)));
+	    1.0 / ((total_time / num_sender) / (num_msgs - 1)));
     }
 
 
@@ -222,7 +222,7 @@ int num_sender;
 	    start_rank, num_ranks - 1, stride, num_msgs, msg_len);
 	printf("#  |||  Test 3: %d senders\n", num_sender);
 	printf("#  |||  Test 3: Average receive rate:    %8.0f msgs/s\n",
-	    1.0 / (duration / (num_msgs * (num_ranks - start_rank))));
+	    1.0 / (duration / (num_msgs * num_sender)));
     }
 
     MPI_Finalize();
