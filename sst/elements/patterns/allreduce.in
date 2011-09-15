@@ -1,3 +1,5 @@
 name = allreduce_pattern
 param num_sets = 9
 param num_ops = 200
+param num_doubles = 1
+param tree_type = 1

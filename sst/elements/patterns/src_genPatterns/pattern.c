@@ -20,6 +20,8 @@ static int error_check(void);
 #define MSGRATE_NAME		"msgrate_pattern"
 
 typedef enum {allreduce_pattern, pingpong_pattern, msgrate_pattern} pattern_t;
+/* For collectives */
+typedef enum {TREE_BINARY= 0, TREE_DEEP} tree_type_t;
 
 
 /* 
@@ -33,6 +35,8 @@ pattern_t _pattern;
 /* Allreduce parameters */
 static int _num_ops;
 static int _num_sets;
+static int _num_doubles;
+static tree_type_t _tree_type;
 
 /* Pingpong parameters */
 static int _destination;
@@ -55,6 +59,8 @@ set_defaults(void)
     /* Allreduce defaults */
     _num_ops= NO_DEFAULT;
     _num_sets= NO_DEFAULT;
+    _num_doubles= 1;
+    _tree_type= TREE_DEEP;
 
     /* Pingpong defaults */
     _destination= OPTIONAL;
@@ -93,6 +99,7 @@ int error;
 	case allreduce_pattern:
 	    PARAM_CHECK("Allreduce", num_ops, <, 0);
 	    PARAM_CHECK("Allreduce", num_sets, <, 0);
+	    PARAM_CHECK("Allreduce", num_doubles, <, 0);
 	    break;
 
 	case pingpong_pattern:
@@ -128,6 +135,15 @@ disp_pattern_params(void)
 	case allreduce_pattern:
 	    printf("***     num_sets =     %d\n", _num_sets);
 	    printf("***     num_ops =      %d\n", _num_ops);
+	    printf("***     num_doubles =  %d\n", _num_doubles);
+	    switch (_tree_type)   {
+		case TREE_DEEP:
+		    printf("***     tree_type =    deep\n");
+		    break;
+		case TREE_BINARY:
+		    printf("***     tree_type =    binary\n");
+		    break;
+	    }
 	    break;
 
 	case pingpong_pattern:
@@ -209,6 +225,12 @@ int rc;
 
 		} else if (strcmp("num_ops", key) == 0)   {
 		    _num_ops= strtol(value1, (char **)NULL, 0);
+
+		} else if (strcmp("num_doubles", key) == 0)   {
+		    _num_doubles= strtol(value1, (char **)NULL, 0);
+
+		} else if (strcmp("tree_type", key) == 0)   {
+		    _tree_type= strtol(value1, (char **)NULL, 0);
 
 
 		/* Pingpong parameters */
@@ -295,6 +317,15 @@ pattern_params(FILE *out)
 	case allreduce_pattern:
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);
+	    PRINT_PARAM(out, num_doubles);
+	    switch (_tree_type)   {
+		case TREE_DEEP:
+		    fprintf(out, "    <tree_type> %s </tree_type>\n", "deep");
+		    break;
+		case TREE_BINARY:
+		    fprintf(out, "    <tree_type> %s </tree_type>\n", "binary");
+		    break;
+	    }
 	    break;
 
 	case pingpong_pattern:

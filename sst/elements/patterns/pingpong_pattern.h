@@ -13,6 +13,7 @@
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "barrier_op.h"
+#include "collective_topology.h"
 #include "allreduce_op.h"
 
 
@@ -80,7 +81,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    Barrier_op *b= new Barrier_op(this);
 	    SMbarrier= b->install_handler();
 
-	    Allreduce_op *a= new Allreduce_op(this, allreduce_msglen);
+	    Allreduce_op *a= new Allreduce_op(this, allreduce_msglen, TREE_DEEP);
 	    SMallreduce= a->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called

@@ -8,16 +8,6 @@
 - Rename Patterns object something like machine or arch
     Rexport its methods directly, instead of through more methods in comm_patterns.
 
-- Set allreduce_msglen in allreduce_op through set_Idata, and then add a parameter to allreduce_pattern
-- Right now allreduce takes message length as an initialization
-    parameter from the calling module. It might be nicer to have the
-    calling module just pass in the configuration file parameter
-    list, and let allreduce pull out the parameters it wants.
-    That would reduce the amount of code duplication in calling
-    modules, make input file processing a little bit more expensive,
-    and may another mechanism to set the message length from the
-    calling module, if it wants to set it.
-
 - Serialization is broken big time...
 
 - Try to switch to the new xml format again
@@ -133,4 +123,14 @@ Arch model
 - Figure out where delays need to be computed
     Does 150ns in xml file translate to 150?
     Access to storage: incur latency only once, or split it
+
+- Set allreduce_msglen in allreduce_op through set_Idata, and then add a parameter to allreduce_pattern
+- Right now allreduce takes message length as an initialization
+    parameter from the calling module. It might be nicer to have the
+    calling module just pass in the configuration file parameter
+    list, and let allreduce pull out the parameters it wants.
+    That would reduce the amount of code duplication in calling
+    modules, make input file processing a little bit more expensive,
+    and may another mechanism to set the message length from the
+    calling module, if it wants to set it.
 

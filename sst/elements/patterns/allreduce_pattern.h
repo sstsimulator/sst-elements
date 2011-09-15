@@ -10,11 +10,12 @@
 // distribution.
 
 
-#ifndef _ALLREDUCE_OP_H
-#define _ALLREDUCE_OP_H
+#ifndef _ALLREDUCE_PATTERN_H
+#define _ALLREDUCE_PATTERN_H
 
 #include "state_machine.h"
 #include "comm_pattern.h"
+#include "collective_topology.h" 
 #include "barrier_op.h" 
 #include "allreduce_op.h" 
 
@@ -28,6 +29,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	    // Defaults for paramters
 	    num_sets= 9;
 	    num_ops= 200;
+	    num_doubles= 1;
+	    tree_type= TREE_DEEP;
 
 
 	    // Process the message rate specific paramaters
@@ -39,6 +42,23 @@ class Allreduce_pattern : public Comm_pattern    {
 
 		if (!it->first.compare("num_ops"))   {
 		    sscanf(it->second.c_str(), "%d", &num_ops);
+		}
+
+		if (!it->first.compare("num_doubles"))   {
+		    sscanf(it->second.c_str(), "%d", &num_doubles);
+		}
+
+		if (!it->first.compare("tree_type"))   {
+		    if (!it->second.compare("deep"))   {
+			tree_type= TREE_DEEP;
+		    } else if (!it->second.compare("binary"))   {
+			tree_type= TREE_BINARY;
+		    } else   {
+			if (my_rank == 0)   {
+			    printf("#  |||  Unknown tree type!\n");
+			}
+			exit(-2);
+		    }
 		}
 
                 ++it;
@@ -62,11 +82,11 @@ class Allreduce_pattern : public Comm_pattern    {
 	    // The other we use to collect the timing information from all
 	    // the nodes
 	    allreduce_msglen= sizeof(double);
-	    a_collect= new Allreduce_op(this, allreduce_msglen);
+	    a_collect= new Allreduce_op(this, allreduce_msglen, TREE_DEEP);
 	    SMallreduce_collect= a_collect->install_handler();
 
-	    allreduce_msglen= 1 * sizeof(double);
-	    a_test= new Allreduce_op(this, allreduce_msglen);
+	    allreduce_msglen= num_doubles * sizeof(double);
+	    a_test= new Allreduce_op(this, allreduce_msglen, tree_type);
 	    SMallreduce_test= a_test->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
@@ -79,7 +99,21 @@ class Allreduce_pattern : public Comm_pattern    {
 	    done= false;
 	    nnodes= 0;
 	    if (my_rank == 0)   {
-		printf("#  |||  my_allreduce() nodes, min, mean, median, max, sd\n");
+		printf("#  |||  Allreduce Pattern test\n");
+		printf("#  |||  Number of sets %d, with %d operations per set.\n",
+		    num_sets, num_ops);
+		printf("#  |||  Message length is %d doubles = %d bytes.\n", num_doubles,
+		    (int)(num_doubles * sizeof(double)));
+		printf("#  |||  Tree type is ");
+		switch (tree_type)   {
+		    case TREE_DEEP:
+			printf("deep\n");
+			break;
+		    case TREE_BINARY:
+			printf("binary\n");
+			break;
+		}
+		printf("#  |||  nodes, min, mean, median, max, sd\n");
 	    }
 	    state_transition(E_START, STATE_INIT);
         }
@@ -125,6 +159,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	// Parameters
 	int num_sets;
 	int num_ops;
+	int num_doubles;
+	tree_type_t tree_type;
 
 	// Runtime variables
 	allreduce_state_t state;
@@ -154,6 +190,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(num_sets);
 	    ar & BOOST_SERIALIZATION_NVP(num_ops);
+	    ar & BOOST_SERIALIZATION_NVP(num_doubles);
+	    ar & BOOST_SERIALIZATION_NVP(tree_type);
 	    ar & BOOST_SERIALIZATION_NVP(set);
 	    ar & BOOST_SERIALIZATION_NVP(ops);
 	    ar & BOOST_SERIALIZATION_NVP(nnodes);
@@ -189,4 +227,4 @@ class Allreduce_pattern : public Comm_pattern    {
         }
 };
 
-#endif // _ALLREDUCE_OP_H
+#endif // _ALLREDUCE_PATTERN_H

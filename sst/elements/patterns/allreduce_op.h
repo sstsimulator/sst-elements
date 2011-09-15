@@ -7,8 +7,8 @@
 // distribution.
 
 
-#ifndef _ALLREDUCE_PATTERN_H
-#define _ALLREDUCE_PATTERN_H
+#ifndef _ALLREDUCE_OP_H
+#define _ALLREDUCE_OP_H
 
 #include "state_machine.h"
 #include "comm_pattern.h"
@@ -18,9 +18,10 @@
 
 class Allreduce_op   {
     public:
-	Allreduce_op(Comm_pattern * const& current_pattern, int msglen) :
+	Allreduce_op(Comm_pattern * const& current_pattern, int msglen, tree_type_t tree) :
 	    cp(current_pattern),
-	    allreduce_msglen(msglen)
+	    allreduce_msglen(msglen),
+	    tree_type(tree)
 	{
 	    // Do some initializations
 	    done= false;
@@ -29,7 +30,7 @@ class Allreduce_op   {
 	    allreduce_msglen= msglen;
 
 	    // Get access to a virtual tree topology
-	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks, TREE_DEEP);
+	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks, tree_type);
 	}
 
         ~Allreduce_op() {}
@@ -40,7 +41,7 @@ class Allreduce_op   {
 	    delete ctopo;
 
 	    // Start again
-	    ctopo= new Collective_topology(cp->my_rank, new_size, TREE_DEEP);
+	    ctopo= new Collective_topology(cp->my_rank, new_size, tree_type);
 	}
 
 	uint32_t install_handler(void)
@@ -75,6 +76,9 @@ class Allreduce_op   {
 	// Simulated message size
 	int allreduce_msglen;
 
+	// What should the underlying tree look like?
+	tree_type_t tree_type;
+
 	allreduce_state_t state;
 	int done;
 	int receives;
@@ -86,4 +90,4 @@ class Allreduce_op   {
 
 };
 
-#endif // _ALLREDUCE_PATTERN_H
+#endif // _ALLREDUCE_OP_H

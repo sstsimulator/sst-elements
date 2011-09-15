@@ -106,11 +106,10 @@ NoCNICparams =     10485760      3788340
 
 
 # Minimum gap between messages going into the main network
-NetNICgap = 53000
-NetNICgap = 17000
+NetNICgap = 5685
 
 # Minimum gap between messages going into the NoC
-NoCNICgap = 150
+NoCNICgap = 160
 
 # (Achievable) Bandwidth between and to network routers
 # My guess of 1GigE link payload bandwith in bytes/second
