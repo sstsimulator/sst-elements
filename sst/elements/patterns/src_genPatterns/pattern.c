@@ -143,6 +143,8 @@ disp_pattern_params(void)
 		case TREE_BINARY:
 		    printf("***     tree_type =    binary\n");
 		    break;
+		default:
+		    printf("***     tree_type =    unknown\n");
 	    }
 	    break;
 
@@ -209,8 +211,7 @@ int rc;
 	if (rc != 2)   {
 	    rc= sscanf(line, "param %s = %s", key, value1);
 	    if (rc != 2)   {
-		fprintf(stderr, "Syntax error in this line:\n\t\"%s\"\nin pattern file!\n", line);
-		return FALSE;
+		continue;
 	    } else   {
 
 		/* Process parameter entries */
@@ -325,6 +326,8 @@ pattern_params(FILE *out)
 		case TREE_BINARY:
 		    fprintf(out, "    <tree_type> %s </tree_type>\n", "binary");
 		    break;
+		default:
+		    fprintf(out, "    <tree_type> %s </tree_type>\n", "unknown");
 	    }
 	    break;
 
