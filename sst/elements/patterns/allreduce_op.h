@@ -26,7 +26,7 @@ class Allreduce_op   {
 	    done= false;
 	    state= START;
 	    receives= 0;
-	    allreduce_msglen= sizeof(double);
+	    allreduce_msglen= msglen;
 
 	    // Get access to a virtual tree topology
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks, TREE_DEEP);

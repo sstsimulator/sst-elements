@@ -23,7 +23,7 @@ NoC_y_dim = 2
 num_cores = 6
 
 # Number of nodes per network router
-num_router_nodes = 8
+num_router_nodes = 5
 
 # Network NIC parameters
 # NetNICparams and NoCNICparams do not have to be sorted.
@@ -120,7 +120,7 @@ NetLinkBandwidth = 78000000
 NoCLinkBandwidth = 4000000000
 
 # Link latency between network routers
-NetIntraLatency = 1500
+NetIntraLatency = 5500
 
 # Link latency between NoC network routers
 NoCIntraLatency = 5

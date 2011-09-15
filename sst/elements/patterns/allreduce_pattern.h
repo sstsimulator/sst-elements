@@ -64,6 +64,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	    allreduce_msglen= sizeof(double);
 	    a_collect= new Allreduce_op(this, allreduce_msglen);
 	    SMallreduce_collect= a_collect->install_handler();
+
+	    allreduce_msglen= 1 * sizeof(double);
 	    a_test= new Allreduce_op(this, allreduce_msglen);
 	    SMallreduce_test= a_test->install_handler();
 
