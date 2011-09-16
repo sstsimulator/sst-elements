@@ -114,9 +114,9 @@ void Syscall::process(void)
 
 void Syscall::addressRanges(AddrRangeList& resp)
 {
-    DBGX(3,"\n");
+    DBGX(3," m_startAddr=%#lx m_endAddr=%#lx\n",m_startAddr,m_endAddr);
     resp.clear();
-    resp.push_back( RangeSize( m_startAddr, m_endAddr ));
+    resp.push_back( RangeSize( m_startAddr, sizeof(m_mailbox) ));
 }
 
 Tick Syscall::write(Packet* pkt)
