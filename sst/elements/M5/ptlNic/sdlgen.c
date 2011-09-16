@@ -70,7 +70,8 @@ main(int argc, char **argv)
     int ranks = 1;
     int new_format = 0;
 
-    char* M5sdlFile = "/tmp/M5.xml";
+    char M5sdlFile[256];
+    sprintf(M5sdlFile,"M5-%d.xml",getpid());
     
     while ((ch = getopt_long(argc, argv, "hx:y:z:r:e:", longopts, NULL)) != -1) {
         switch (ch) {
@@ -111,7 +112,7 @@ main(int argc, char **argv)
 
     fprintf( stderr, "exe=%s %d:%d:%d size=%d ranks=%d\n", exe, 
                     x_count, y_count, z_count, size, ranks );
-    sdlgenM5( "/tmp/M5.xml",  exe, size / ranks ); 
+    sdlgenM5( M5sdlFile,  exe, size / ranks ); 
 
     fprintf(output, "<?xml version=\"2.0\"?>\n");
     fprintf(output, "\n");
