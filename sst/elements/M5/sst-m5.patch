@@ -50,7 +50,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/linux/process.cc src/a
  AlphaLinuxProcess::AlphaLinuxProcess(LiveProcessParams * params,
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc src/arch/alpha/tlb.cc
 --- /home/mjleven/tmp/m5/src/arch/alpha/tlb.cc	2010-10-20 13:51:48.000000000 -0600
-+++ src/arch/alpha/tlb.cc	2011-08-09 14:11:13.000000000 -0600
++++ src/arch/alpha/tlb.cc	2011-09-01 12:50:20.000000000 -0600
 @@ -233,6 +233,12 @@
              return new UnimpFault("CPU trying to fetch from uncached I/O");
  
@@ -230,12 +230,12 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/arch/x86/tlb.cc src/arch/x86/tlb.
  
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/base/trace.cc src/base/trace.cc
 --- /home/mjleven/tmp/m5/src/base/trace.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/base/trace.cc	2011-04-01 13:47:50.000000000 -0600
++++ src/base/trace.cc	2011-08-22 13:05:48.000000000 -0600
 @@ -92,6 +92,17 @@
          args.push_front(when);
      }
  
-+#if 1 
++#if 0 
 +    static int _rank = -1;
 +    if ( _rank == - 1) {
 +        char* tmp = getenv("RANK");
@@ -300,37 +300,16 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/dev/SConscript src/dev/SConscript
 +    Source('isa_fake.cc')
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh src/mem/cache/cache_impl.hh
 --- /home/mjleven/tmp/m5/src/mem/cache/cache_impl.hh	2010-10-20 13:51:49.000000000 -0600
-+++ src/mem/cache/cache_impl.hh	2011-08-09 14:19:18.000000000 -0600
-@@ -551,7 +551,7 @@
-     if (blkValid && useUpgrades) {
-         // only reason to be here is that blk is shared
-         // (read-only) and we need exclusive
--        assert(needsExclusive && !blk->isWritable());
-+    //    assert(needsExclusive && !blk->isWritable());
-         cmd = MemCmd::UpgradeReq;
-     } else {
-         // block is invalid
-@@ -1101,6 +1101,20 @@
-     bool have_exclusive = blk->isWritable();
-     bool invalidate = pkt->isInvalidate();
++++ src/mem/cache/cache_impl.hh	2011-09-08 13:35:26.000000000 -0600
+@@ -1296,7 +1296,7 @@
  
-+#if 1 
-+    if ( pkt->isWrite() && blk->isWritable() ) {
-+
-+        // is this check redundant
-+        if (blk->checkWrite(pkt)) {
-+            pkt->writeDataToBlock(blk->data, blkSize);
-+        } else {
-+            assert(false);
-+        }
-+        blk->status |= BlkDirty;
-+        return;
-+    }
-+#endif
-+
-     if (pkt->isRead() && !pkt->isInvalidate()) {
-         assert(!pkt->needsExclusive());
-         pkt->assertShared();
+     // fall through... no pending requests.  Try a prefetch.
+     assert(!miss_mshr && !write_mshr);
+-    if (!mshrQueue.isFull()) {
++    if (prefetcher && !mshrQueue.isFull()) {
+         // If we have a miss queue slot, we can try a prefetch
+         PacketPtr pkt = prefetcher->getPacket();
+         if (pkt) {
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/mem/packet.hh src/mem/packet.hh
 --- /home/mjleven/tmp/m5/src/mem/packet.hh	2010-10-20 13:51:49.000000000 -0600
 +++ src/mem/packet.hh	2011-03-24 08:22:29.000000000 -0600
@@ -468,7 +447,7 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/SConscript src/SConscript
 Only in src/sim: nicMmu.h
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/process.cc src/sim/process.cc
 --- /home/mjleven/tmp/m5/src/sim/process.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/process.cc	2011-08-12 13:50:04.000000000 -0600
++++ src/sim/process.cc	2011-08-22 13:39:29.000000000 -0600
 @@ -1,3 +1,4 @@
 +
  /*
@@ -539,15 +518,19 @@ diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/Process.py src/sim/Process.py
      type = 'LiveProcess'
 diff -r -x '*.pyc' -u /home/mjleven/tmp/m5/src/sim/simulate.cc src/sim/simulate.cc
 --- /home/mjleven/tmp/m5/src/sim/simulate.cc	2010-10-20 13:51:49.000000000 -0600
-+++ src/sim/simulate.cc	2011-03-28 14:05:59.000000000 -0600
-@@ -85,6 +85,11 @@
++++ src/sim/simulate.cc	2011-08-22 13:40:27.000000000 -0600
+@@ -84,7 +84,15 @@
+             if (se_event != limit_event) {
                  assert(limit_event->scheduled());
                  limit_event->squash();
++#if 0
                  hack_once("be nice to actually delete the event here");
-+fprintf(stderr,"%s %s %d\n",se_event->getCause().c_str(),
++                fprintf(stderr,"%s %s %d\n",se_event->getCause().c_str(),
 +                    se_event->description(),
 +                    se_event->getCode());
++#endif
 +            } else { 
++                delete limit_event;
 +                se_event = NULL;
              }
  
