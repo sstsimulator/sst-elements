@@ -6,11 +6,11 @@
 ** information, see the LICENSE file in the top level directory of the
 ** distribution.
 **
-** Measure allreduce performance on an ever inresing number of nodes.
-** We use my_allreduce so the same communication pattern is used here
+** Measure alltoall performance on an ever inresing number of nodes.
+** We use my_alltoall so the same communication pattern is used here
 ** as well as in the pattern state machine.
-** Test 1 measures the MPI_Allreduce time and serves as a comparison.
-** Test 2 measures my_allreduce to compare againts test 1
+** Test 1 measures the MPI_Alltoall time and serves as a comparison.
+** Test 2 measures my_alltoall to compare againts test 1
 */
 
 #include <stdio.h>
@@ -20,7 +20,6 @@
 #include <mpi.h>
 
 // FIXME: Don't like to include .cc files, but don't know how to fix the Makefile.am to avoid it
-#include "collective_topology.cc"
 #include "stats.cc"
 
 
@@ -30,17 +29,19 @@
 #define DEFAULT_NUM_OPS		(200)
 #define DEFAULT_NUM_SETS	(9)
 
-#define MY_TAG_UP		(55)
-#define MY_TAG_DOWN		(77)
 
 
 
 /* Local functions */
-static double Test1(int num_ops, int msg_len, MPI_Comm comm);
-static double Test2(int num_ops, Collective_topology *ctopo, int msg_len);
-void my_allreduce(double *in, double *result, int msg_len, Collective_topology *ctopo);
+static double Test1(int num_ops, int msg_len, int nranks, MPI_Comm comm);
+static double Test2(int num_ops, int nranks, int msg_len);
+void my_alltoall(double *in, double *result, int msg_len, int nranks);
 void print_stats(std::list<double> t);
 static void usage(char *pname);
+
+
+/* Make these two global */
+static int my_rank, num_ranks;
 
 
 
@@ -49,19 +50,16 @@ main(int argc, char *argv[])
 {
 
 int ch, error;
-int my_rank, num_ranks;
 int num_ops;
 int i;
 double duration;
 double total_time;
-Collective_topology *ctopo;
 int nnodes;
 int num_sets;
 int msg_len;
 int set;
 std::list <double>times;
 int library;
-tree_type_t tree;
 
 
 
@@ -86,7 +84,6 @@ tree_type_t tree;
     num_sets= DEFAULT_NUM_SETS;
     msg_len= 1;
     library= 0;
-    tree= TREE_DEEP;
 
 
     /* Check command line args */
@@ -108,7 +105,7 @@ tree_type_t tree;
 		num_ops= strtol(optarg, (char **)NULL, 0);
 		if (num_ops < 1)   {
 		    if (my_rank == 0)   {
-			fprintf(stderr, "Number of allreduce operations (-n) must be > 0!\n");
+			fprintf(stderr, "Number of alltoall operations (-n) must be > 0!\n");
 		    }
 		    error= TRUE;
 		}
@@ -118,18 +115,6 @@ tree_type_t tree;
 		if (num_sets < 1)   {
 		    if (my_rank == 0)   {
 			fprintf(stderr, "Number of sets (-s) must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-	    case 't':
-		if (strtol(optarg, (char **)NULL, 0) == 0)   {
-		    tree= TREE_DEEP;
-		} else if (strtol(optarg, (char **)NULL, 0) == 1)   {
-		    tree= TREE_BINARY;
-		} else   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Unknown tree type (-t) must be 0 or 1!\n");
 		    }
 		    error= TRUE;
 		}
@@ -162,10 +147,8 @@ tree_type_t tree;
         exit (-1);
     }
 
-    ctopo= new Collective_topology(my_rank, num_ranks, tree);
-
     if (my_rank == 0)   {
-	printf("# Allreduce benchmark\n");
+	printf("# Alltoall benchmark\n");
 	printf("# -------------------\n");
 	printf("# Command line \"");
 	for (i= 0; i < argc; i++)   {
@@ -183,23 +166,16 @@ tree_type_t tree;
     times.clear();
     for (set= 0; set < num_sets; set++)   {
 	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test1(num_ops, msg_len, MPI_COMM_WORLD);
+	duration= Test1(num_ops, msg_len, num_ranks, MPI_COMM_WORLD);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-	// Record the average time per allreduce
+	// Record the average time per alltoall
 	times.push_back(total_time / num_ranks / num_ops);
     }
     if (my_rank == 0)   {
 	printf("#  |||  %d operations per set. %d sets per node size. %d byte msg len\n",
 		num_ops, num_sets, msg_len * (int)sizeof(double));
-	if (tree == TREE_BINARY)   {
-	    printf("#  |||  my_allreduce() uses binary tree\n");
-	} else if (tree == TREE_DEEP)   {
-	    printf("#  |||  my_allreduce() uses deep tree\n");
-	} else   {
-	    printf("#  |||  my_allreduce() uses unknown tree type\n");
-	}
-	printf("#  |||  Test 1: MPI_Allreduce() min, mean, median, max, sd\n");
+	printf("#  |||  Test 1: MPI_Alltoall() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
     }
@@ -210,58 +186,57 @@ tree_type_t tree;
     times.clear();
     for (set= 0; set < num_sets; set++)   {
 	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test2(num_ops, ctopo, msg_len);
+	duration= Test2(num_ops, num_ranks, msg_len);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-	// Record the average time per allreduce
+	// Record the average time per alltoall
 	times.push_back(total_time / num_ranks / num_ops);
     }
     if (my_rank == 0)   {
-	printf("#  |||  Test 2: my_allreduce() min, mean, median, max, sd\n");
+	printf("#  |||  Test 2: my_alltoall() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
     }
-
 
 
     // Test 3
     // Now we do this with increasing number of ranks, instead of all of them
     if (my_rank == 0)   {
 	if (library)   {
-	    printf("#  |||  Test 3: MPI_allreduce() nodes, min, mean, median, max, sd\n");
+	    printf("#  |||  Test 3: MPI_Alltoall() nodes, min, mean, median, max, sd\n");
 	} else   {
-	    printf("#  |||  Test 3: my_allreduce() nodes, min, mean, median, max, sd\n");
+	    printf("#  |||  Test 3: my_alltoall() nodes, min, mean, median, max, sd\n");
 	}
     }
 
-    for (nnodes= 1; nnodes <= num_ranks; nnodes++)   {
+    for (nnodes= 1; nnodes <= num_ranks; nnodes= nnodes << 1)   {
 	MPI_Group world_group, new_group;
 	MPI_Comm new_comm;
 	int ranges[][3]={{0, nnodes - 1, 1}};
+	int group_size;
 
 	MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 	MPI_Group_range_incl(world_group, 1, ranges, &new_group);
+	MPI_Group_size(new_group, &group_size);
 	MPI_Comm_create(MPI_COMM_WORLD, new_group, &new_comm);
 
-	delete ctopo;
-	ctopo= new Collective_topology(my_rank, nnodes, tree);
 	times.clear();
 	for (set= 0; set < num_sets; set++)   {
 	    MPI_Barrier(MPI_COMM_WORLD);
 	    if (my_rank < nnodes)   {
 		if (library)   {
-		    // Use the built-in MPI_Allreduce
-		    duration= Test1(num_ops, msg_len, new_comm);
+		    // Use the built-in MPI_Alltoall
+		    duration= Test1(num_ops, msg_len, nnodes, new_comm);
 		} else   {
-		    // Use my allreduce
-		    duration= Test2(num_ops, ctopo, msg_len);
+		    // Use my alltoall
+		    duration= Test2(num_ops, nnodes, msg_len);
 		}
 	    } else   {
 		duration= 0.0;
 	    }
 	    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-	    // Record the average time per allreduce
+	    // Record the average time per alltoall
 	    times.push_back(total_time / nnodes / num_ops);
 	}
 	if (my_rank == 0)   {
@@ -279,32 +254,47 @@ tree_type_t tree;
 
 
 static double
-Test1(int num_ops, int msg_len, MPI_Comm comm)
+Test1(int num_ops, int msg_len, int nranks, MPI_Comm comm)
 {
 
 double t, t2;
-int i;
+int i, j;
 double *sbuf;
 double *rbuf;
 
 
 	// Allocate memory
-	sbuf= (double *)malloc(sizeof(double) * msg_len);
-	rbuf= (double *)malloc(sizeof(double) * msg_len);
+	sbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
+	rbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
 	if ((sbuf == NULL) || (rbuf == NULL))   {
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
-	memset(sbuf, 0, sizeof(double) * msg_len);
-	memset(rbuf, 0, sizeof(double) * msg_len);
+	for (j= 0; j < nranks; j++)   {
+	    for (i= 0; i < msg_len; i++)   {
+		sbuf[j * msg_len + i]= i + my_rank;
+	    }
+	}
+
+	memset(rbuf, 0, sizeof(double) * msg_len * nranks);
 	
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
-	    MPI_Allreduce(sbuf, rbuf, msg_len, MPI_DOUBLE, MPI_SUM, comm);
+	    MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
 	}
 
 	t2= MPI_Wtime() - t;
+
+	/* Check */
+	for (j= 0; j < nranks; j++)   {
+	    for (i= 0; i < msg_len; i++)   {
+		if (rbuf[j * msg_len + i] != i + j)   {
+		    fprintf(stderr, "[%3d] MPI_Alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+		}
+	    }
+	}
+
 	free(sbuf);
 	free(rbuf);
 	return t2;
@@ -314,92 +304,128 @@ double *rbuf;
 
 
 static double
-Test2(int num_ops, Collective_topology *ctopo, int msg_len)
+Test2(int num_ops, int nranks, int msg_len)
 {
 
 double t;
-int i;
+int i, j;
 double *sbuf;
 double *rbuf;
 
 
 	// Allocate memory
-	sbuf= (double *)malloc(sizeof(double) * msg_len);
-	rbuf= (double *)malloc(sizeof(double) * msg_len);
+	sbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
+	rbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
 	if ((sbuf == NULL) || (rbuf == NULL))   {
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
-	memset(sbuf, 0, sizeof(double) * msg_len);
-	memset(rbuf, 0, sizeof(double) * msg_len);
+	for (j= 0; j < nranks; j++)   {
+	    for (i= 0; i < msg_len; i++)   {
+		sbuf[j * msg_len + i]= i + my_rank;
+	    }
+	}
 
+	memset(rbuf, 0, sizeof(double) * msg_len * nranks);
+	
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
-	    my_allreduce(sbuf, rbuf, msg_len, ctopo);
+	    my_alltoall(sbuf, rbuf, msg_len, nranks);
 	}
 
+	/* Check */
+	for (j= 0; j < nranks; j++)   {
+	    for (i= 0; i < msg_len; i++)   {
+		if (rbuf[j * msg_len + i] != i + j)   {
+		    fprintf(stderr, "[%3d] my_alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+		}
+	    }
+	}
+
+	free(sbuf);
+	free(rbuf);
 	return MPI_Wtime() - t;
 
 }  /* end of Test2() */
 
 
 
-// Instead of using the MPI provided allreduce, we use this algorithm.
+// Instead of using the MPI provided alltoall, we use this algorithm.
 // It is the same one used in the communication pattern and allows for
 // more accurate comparisons, since the number of messages as well as
 // sources and destinations are the same.
+//
+// NOTE! This only works for powers of 2!!!
 void
-my_allreduce(double *in, double *result, int msg_len, Collective_topology *ctopo)
+my_alltoall(double *in, double *result, int msg_len, int nranks)
 {
 
-double *tmp;
-std::list<int>::iterator it;
+unsigned int i;
+int shift, dest;
+int src;
+int offset;
+int len1, len2;
+MPI_Request sreq1, sreq2;
+MPI_Request rreq1, rreq2;
 
 
-    if (ctopo->is_leaf() && ctopo->num_nodes() > 1)   {
-	// Send data to parent and wait for result
-	MPI_Send(in, msg_len, MPI_DOUBLE, ctopo->parent_rank(), MY_TAG_UP, MPI_COMM_WORLD);
-	MPI_Recv(result, msg_len, MPI_DOUBLE, ctopo->parent_rank(), MY_TAG_DOWN,
-		MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else   {
-	// Wait for the children
-	memcpy(result, in, msg_len * sizeof(double));
+    sreq1= MPI_REQUEST_NULL;
+    sreq2= MPI_REQUEST_NULL;
+    rreq1= MPI_REQUEST_NULL;
+    rreq2= MPI_REQUEST_NULL;
 
-	// We could do this outside of the loop, but that would probably not be fair
-	// to MPI_Allreduce()
-	tmp= (double *)malloc(msg_len * sizeof(double));
-	if (tmp == NULL)   {
-	    fprintf(stderr, "Out of memory!\n");
-	    exit(-1);
-	}
-
-	for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-	    MPI_Recv(tmp, msg_len, MPI_DOUBLE, *it, MY_TAG_UP, MPI_COMM_WORLD,
-		    MPI_STATUS_IGNORE);
-	    for (int i= 0; i < msg_len; i++)   {
-		result[i]= result[i] + tmp[i];
-	    }
-	}
-
-	if (!ctopo->is_root())   {
-	    // Send it to the parent and wait for answer
-	    MPI_Send(result, msg_len, MPI_DOUBLE, ctopo->parent_rank(), MY_TAG_UP,
-		    MPI_COMM_WORLD);
-	    MPI_Recv(result, msg_len, MPI_DOUBLE, ctopo->parent_rank(),
-		    MY_TAG_DOWN, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	}
-
-	// Send it back out
-	for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-	    MPI_Send(result, msg_len, MPI_DOUBLE, *it, MY_TAG_DOWN,
-		    MPI_COMM_WORLD);
-	}
-
-	free(tmp);
+    /* My own contribution */
+    for (i= 0; i < msg_len; i++)   {
+	result[my_rank * msg_len + i]= in[my_rank * msg_len + i];
     }
 
-}  /* end of my_allreduce() */
+    i= nranks >> 1;
+    shift= 1;
+    while (i > 0)   {
+	dest= (my_rank + shift) % nranks;
+	src= ((my_rank - shift) + nranks) % nranks;
+
+	offset= (my_rank * msg_len) - ((shift - 1) * msg_len);
+	if (offset < 0)   {
+	    /* Need to break it up into two pieces */
+	    offset= offset + (nranks * msg_len);
+	    len1= (nranks * msg_len) - offset;
+	    MPI_Isend(result + offset, len1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	    len2= shift * msg_len - (nranks * msg_len - offset);
+	    MPI_Isend(result, len2, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq2);
+	} else   {
+	    /* I can send it in one piece */
+	    MPI_Isend(result + offset, shift * msg_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	}
+
+	offset= (src * msg_len) - ((shift - 1) * msg_len);
+	if (offset < 0)   {
+	    /* Need to break it up into two pieces */
+	    offset= offset + (nranks * msg_len);
+	    len1= (nranks * msg_len) - offset;
+	    MPI_Irecv(result + offset, len1, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
+	    len2= shift * msg_len - (nranks * msg_len - offset);
+	    MPI_Irecv(result, len2, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq2);
+	} else   {
+	    /* I can receive it in one piece */
+	    MPI_Irecv(result + offset, shift * msg_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
+	}
+
+	/* End of loop housekeeping */
+	shift= shift << 1;
+	i= i >> 1;
+	MPI_Wait(&rreq1, MPI_STATUS_IGNORE);
+	MPI_Wait(&sreq1, MPI_STATUS_IGNORE);
+	if (rreq2 != MPI_REQUEST_NULL)   {
+	    MPI_Wait(&rreq2, MPI_STATUS_IGNORE);
+	}
+	if (sreq2 != MPI_REQUEST_NULL)   {
+	    MPI_Wait(&sreq2, MPI_STATUS_IGNORE);
+	}
+    }
+
+}  /* end of my_alltoall() */
 
 
 
@@ -407,15 +433,12 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets] [-t type]\n", pname);
-    fprintf(stderr, "    -b          Use the MPI library MPI_Allreduce\n");
-    fprintf(stderr, "    -l len      Size of allreduce operations in number of doubles. Default 1\n");
-    fprintf(stderr, "    -n ops      Number of allreduce operations per test. Default %d\n",
+    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets]\n", pname);
+    fprintf(stderr, "    -b          Use the MPI library MPI_Alltoall\n");
+    fprintf(stderr, "    -l len      Size of alltoall operations in number of doubles. Default 1\n");
+    fprintf(stderr, "    -n ops      Number of alltoall operations per test. Default %d\n",
 	DEFAULT_NUM_OPS);
     fprintf(stderr, "    -s sets     Number of sets; i.e. number of test repeats. Default %d\n",
 	DEFAULT_NUM_SETS);
-    fprintf(stderr, "    -t type     Select type of tree of allreduce algorithm. Default 0\n");
-    fprintf(stderr, "                0 is TREE_DEEP\n");
-    fprintf(stderr, "                1 is TREE_BINARY\n");
 
 }  /* end of usage() */

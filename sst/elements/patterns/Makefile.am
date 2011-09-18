@@ -45,8 +45,9 @@ include src_genPatterns/Makefile.inc
 
 # breaks Bamboo   # allreduce_bench_LDFLAGS = -lmpi -lmpi_cxx
 # breaks Bamboo   allreduce_bench_SOURCES = allreduce_bench.cc
+# breaks Bamboo   alltoall_bench_SOURCES = alltoall_bench.cc
 # breaks Bamboo   # msgrate_bench_LDFLAGS = -lmpi -lmpi_cxx
 # breaks Bamboo   msgrate_bench_SOURCES = msgrate_bench.cc 
 # breaks Bamboo   pingpong_bench_SOURCES = pingpong_bench.c
-# breaks Bamboo   bin_PROGRAMS += allreduce_bench msgrate_bench pingpong_bench
+# breaks Bamboo   bin_PROGRAMS += alltoall allreduce_bench msgrate_bench pingpong_bench
 
