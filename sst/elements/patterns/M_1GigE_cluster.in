@@ -114,11 +114,15 @@ NoCNICgap = 160
 # (Achievable) Bandwidth between and to network routers
 # My guess of 1GigE link payload bandwith in bytes/second
 NetLinkBandwidth = 78000000
+NetLinkBandwidth = 2400000
+NetLinkBandwidth = 120000000 # works for 60 nodes 1024 and 4096 doubles
 
 # (Achievable) Bandwidth between and to NoC network routers
 NoCLinkBandwidth = 4000000000
+NoCLinkBandwidth = 800000000 # works for 60 nodes 1024 and 4096 doubles
 
 # Link latency between network routers
+NetIntraLatency = 5500
 NetIntraLatency = 5500
 
 # Link latency between NoC network routers
