@@ -142,6 +142,23 @@ Comm_pattern::NumCores(void)
 
 
 
+int
+Comm_pattern::is_pow2(int num)
+{
+    if (num < 1)   {
+	return FALSE;
+    }
+
+    if ((num & (num - 1)) == 0)   {
+	return TRUE;
+    }
+
+    return FALSE;
+
+}  /* end of is_pow2() */
+
+
+
 //
 // Private functions
 //

@@ -15,11 +15,14 @@ static int error_check(void);
 #define MAX_PATTERN_NAME	(256)
 
 /* These are the pattern names we recognize */
+#define ALLTOALL_NAME		"alltoall_pattern"
 #define ALLREDUCE_NAME		"allreduce_pattern"
 #define PINGPONG_NAME		"pingpong_pattern"
 #define MSGRATE_NAME		"msgrate_pattern"
 
-typedef enum {allreduce_pattern, pingpong_pattern, msgrate_pattern} pattern_t;
+typedef enum {alltoall_pattern, allreduce_pattern, pingpong_pattern,
+    msgrate_pattern} pattern_t;
+
 /* For collectives */
 typedef enum {TREE_BINARY= 0, TREE_DEEP} tree_type_t;
 
@@ -37,6 +40,12 @@ static int _num_ops;
 static int _num_sets;
 static int _num_doubles;
 static tree_type_t _tree_type;
+
+/* Alltoall parameters */
+    /* Reuse Allreduce parameters */
+/* static int _num_ops; already declared */
+/* static int _num_sets; already declared */
+/* static int _num_doubles; already declared */
 
 /* Pingpong parameters */
 static int _destination;
@@ -56,6 +65,7 @@ set_defaults(void)
 
     strcpy(_pattern_name, "");
 
+    /* Alltoall defaults */
     /* Allreduce defaults */
     _num_ops= NO_DEFAULT;
     _num_sets= NO_DEFAULT;
@@ -96,6 +106,12 @@ int error;
     }
 
     switch (_pattern)   {
+	case alltoall_pattern:
+	    PARAM_CHECK("Alltoall", num_ops, <, 0);
+	    PARAM_CHECK("Alltoall", num_sets, <, 0);
+	    PARAM_CHECK("Alltoall", num_doubles, <, 0);
+	    break;
+
 	case allreduce_pattern:
 	    PARAM_CHECK("Allreduce", num_ops, <, 0);
 	    PARAM_CHECK("Allreduce", num_sets, <, 0);
@@ -132,6 +148,12 @@ disp_pattern_params(void)
 
     printf("*** Pattern name \"%s\"\n", pattern_name());
     switch (_pattern)   {
+	case alltoall_pattern:
+	    printf("***     num_sets =     %d\n", _num_sets);
+	    printf("***     num_ops =      %d\n", _num_ops);
+	    printf("***     num_doubles =  %d\n", _num_doubles);
+	    break;
+
 	case allreduce_pattern:
 	    printf("***     num_sets =     %d\n", _num_sets);
 	    printf("***     num_ops =      %d\n", _num_ops);
@@ -220,6 +242,7 @@ int rc;
 		}
 
 
+		/* Alltoall parameters */
 		/* Allreduce parameters */
 		if (strcmp("num_sets", key) == 0)   {
 		    _num_sets= strtol(value1, (char **)NULL, 0);
@@ -266,7 +289,9 @@ int rc;
 
 	    if (strcmp("name", key) == 0)   {
 		strncpy(_pattern_name, value1, MAX_PATTERN_NAME);
-		if (strcmp(_pattern_name, ALLREDUCE_NAME) == 0)   {
+		if (strcmp(_pattern_name, ALLTOALL_NAME) == 0)   {
+		    _pattern= alltoall_pattern;
+		} else if (strcmp(_pattern_name, ALLREDUCE_NAME) == 0)   {
 		    _pattern= allreduce_pattern;
 		} else if (strcmp(_pattern_name, PINGPONG_NAME) == 0)   {
 		    _pattern= pingpong_pattern;
@@ -315,6 +340,12 @@ pattern_params(FILE *out)
 {
 
     switch (_pattern)   {
+	case alltoall_pattern:
+	    PRINT_PARAM(out, num_sets);
+	    PRINT_PARAM(out, num_ops);
+	    PRINT_PARAM(out, num_doubles);
+	    break;
+
 	case allreduce_pattern:
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);

@@ -149,6 +149,9 @@ class Comm_pattern : public Component {
 	void self_event_send(int event_type);
 	void send_msg(int dest, int len, state_event sm_event);
 
+	// Some patterns may be able to use this
+	int is_pow2(int num);
+
 	State_machine *SM;
 
     private:
@@ -212,5 +215,4 @@ class Comm_pattern : public Component {
             ::new(t)Comm_pattern(id, params);
         }
 };
-
 #endif // _COMM_PATTERN_H

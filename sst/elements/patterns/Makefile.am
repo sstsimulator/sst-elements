@@ -6,7 +6,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmsgrate_pattern.la libpingpong_pattern.la \
-			liballreduce_pattern.la
+			liballreduce_pattern.la liballtoall_pattern.la
 
 libmsgrate_pattern_la_SOURCES = msgrate_pattern.h msgrate_pattern.cc \
 			    comm_pattern.h comm_pattern.cc \
@@ -35,6 +35,17 @@ liballreduce_pattern_la_SOURCES = allreduce_pattern.h allreduce_pattern.cc \
 			    collective_topology.h collective_topology.cc
 liballreduce_pattern_la_LDFLAGS = -module -avoid-version
 
+liballtoall_pattern_la_SOURCES = alltoall_pattern.h alltoall_pattern.cc \
+			    comm_pattern.h comm_pattern.cc \
+			    state_machine.h state_machine.cc \
+			    pattern_common.h pattern_common.cc \
+			    barrier_op.h barrier_op.cc \
+			    allreduce_op.h allreduce_op.cc \
+			    collective_topology.h collective_topology.cc \
+			    alltoall_op.h alltoall_op.cc \
+			    stats.h stats.cc
+liballtoall_pattern_la_LDFLAGS = -module -avoid-version
+
 # breaks Bamboo   CC = $(MPICC)
 # breaks Bamboo   CXX = $(MPICXX)
 # breaks Bamboo   CXXLD = $(MPICXX)
@@ -49,5 +60,5 @@ include src_genPatterns/Makefile.inc
 # breaks Bamboo   # msgrate_bench_LDFLAGS = -lmpi -lmpi_cxx
 # breaks Bamboo   msgrate_bench_SOURCES = msgrate_bench.cc 
 # breaks Bamboo   pingpong_bench_SOURCES = pingpong_bench.c
-# breaks Bamboo   bin_PROGRAMS += alltoall allreduce_bench msgrate_bench pingpong_bench
+# breaks Bamboo   bin_PROGRAMS += alltoall_bench allreduce_bench msgrate_bench pingpong_bench
 

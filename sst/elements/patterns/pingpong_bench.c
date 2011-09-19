@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <unistd.h>	/* For getopt() */
+#include <assert.h>	/* For assert() */
 #include "mpi.h"
 
 #undef TRUE
@@ -146,6 +147,7 @@ double min_latency, min_bandwidth;
 
 	for (i= 0; i < trials; i++)   {
 	    doit(len, i, &latency, &bandwidth, &msgs);
+	    assert(latency > 0);
 	    tot_latency= tot_latency + latency;
 	    if (latency < min_latency)   {
 		min_latency= latency;
