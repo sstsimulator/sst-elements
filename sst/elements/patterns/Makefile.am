@@ -6,7 +6,8 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmsgrate_pattern.la libpingpong_pattern.la \
-			liballreduce_pattern.la liballtoall_pattern.la
+			liballreduce_pattern.la liballtoall_pattern.la \
+			libghost_pattern.la
 
 libmsgrate_pattern_la_SOURCES = msgrate_pattern.h msgrate_pattern.cc \
 			    comm_pattern.h comm_pattern.cc \
@@ -15,6 +16,14 @@ libmsgrate_pattern_la_SOURCES = msgrate_pattern.h msgrate_pattern.cc \
 			    allreduce_op.h allreduce_op.cc \
 			    collective_topology.h collective_topology.cc
 libmsgrate_pattern_la_LDFLAGS = -module -avoid-version
+
+libghost_pattern_la_SOURCES = ghost_pattern.h ghost_pattern.cc \
+			    comm_pattern.h comm_pattern.cc \
+			    state_machine.h state_machine.cc \
+			    pattern_common.h pattern_common.cc \
+			    allreduce_op.h allreduce_op.cc \
+			    collective_topology.h collective_topology.cc
+libghost_pattern_la_LDFLAGS = -module -avoid-version
 
 libpingpong_pattern_la_SOURCES = pingpong_pattern.h pingpong_pattern.cc \
 			    comm_pattern.h comm_pattern.cc \
