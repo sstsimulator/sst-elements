@@ -17,11 +17,12 @@ static int error_check(void);
 /* These are the pattern names we recognize */
 #define ALLTOALL_NAME		"alltoall_pattern"
 #define ALLREDUCE_NAME		"allreduce_pattern"
+#define GHOST_NAME		"ghost_pattern"
 #define PINGPONG_NAME		"pingpong_pattern"
 #define MSGRATE_NAME		"msgrate_pattern"
 
 typedef enum {alltoall_pattern, allreduce_pattern, pingpong_pattern,
-    msgrate_pattern} pattern_t;
+    ghost_pattern, msgrate_pattern} pattern_t;
 
 /* For collectives */
 typedef enum {TREE_BINARY= 0, TREE_DEEP} tree_type_t;
@@ -47,6 +48,16 @@ static tree_type_t _tree_type;
 /* static int _num_sets; already declared */
 /* static int _num_doubles; already declared */
 
+/* Ghost parameters */
+static int _time_steps;		/* Run for num time steps. Default 1000 */
+static int _x_elements;		/* Number of elements per rank in x dimension. Default 16384 */
+static int _y_elements;		/* Number of elements per rank in y dimension. Default 16384 */
+static int _z_elements;		/* Number of elements per rank in z dimension. Default 400 */
+static int _loops;		/* Number of loops to compute. Adjusts compute time. Default 16 */
+static int _reduce_steps;	/* Number of time steps between reduce operations. Default 20 */
+static float _delay;		/* Delay compute step by delay % */
+static int _imbalance;		/* Create compute imbalance. Requires delay > 0%. */
+
 /* Pingpong parameters */
 static int _destination;
 static int _num_msgs;
@@ -71,6 +82,16 @@ set_defaults(void)
     _num_sets= NO_DEFAULT;
     _num_doubles= 1;
     _tree_type= TREE_DEEP;
+
+    /* Ghost defaults */
+    _time_steps= 1000;
+    _x_elements= 400;
+    _y_elements= 400;
+    _z_elements= 400;
+    _loops= 16;
+    _reduce_steps= 20;
+    _delay= 0;
+    _imbalance= 0;
 
     /* Pingpong defaults */
     _destination= OPTIONAL;
@@ -116,6 +137,17 @@ int error;
 	    PARAM_CHECK("Allreduce", num_ops, <, 0);
 	    PARAM_CHECK("Allreduce", num_sets, <, 0);
 	    PARAM_CHECK("Allreduce", num_doubles, <, 0);
+	    break;
+
+	case ghost_pattern:
+	    PARAM_CHECK("Ghost", time_steps, <, 0);
+	    PARAM_CHECK("Ghost", x_elements, <, 0);
+	    PARAM_CHECK("Ghost", y_elements, <, 0);
+	    PARAM_CHECK("Ghost", z_elements, <, 0);
+	    PARAM_CHECK("Ghost", loops, <, 0);
+	    PARAM_CHECK("Ghost", reduce_steps, <, 0);
+	    PARAM_CHECK("Ghost", delay, <, 0);
+	    PARAM_CHECK("Ghost", imbalance, <, 0);
 	    break;
 
 	case pingpong_pattern:
@@ -168,6 +200,17 @@ disp_pattern_params(void)
 		default:
 		    printf("***     tree_type =    unknown\n");
 	    }
+	    break;
+
+	case ghost_pattern:
+	    printf("***     time_steps =   %d\n", _time_steps);
+	    printf("***     x_elements =   %d\n", _x_elements);
+	    printf("***     y_elements =   %d\n", _y_elements);
+	    printf("***     z_elements =   %d\n", _z_elements);
+	    printf("***     loops =        %d\n", _loops);
+	    printf("***     reduce_steps = %d\n", _reduce_steps);
+	    printf("***     delay =        %.2f%%\n", _delay);
+	    printf("***     imbalance =    %d\n", _imbalance);
 	    break;
 
 	case pingpong_pattern:
@@ -257,6 +300,24 @@ int rc;
 		    _tree_type= strtol(value1, (char **)NULL, 0);
 
 
+		/* Ghost parameters */
+		} else if (strcmp("time_steps", key) == 0)   {
+		    _time_steps= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("x_elements", key) == 0)   {
+		    _x_elements= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("y_elements", key) == 0)   {
+		    _y_elements= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("z_elements", key) == 0)   {
+		    _z_elements= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("loops", key) == 0)   {
+		    _loops= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("reduce_steps", key) == 0)   {
+		    _reduce_steps= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("delay", key) == 0)   {
+		    _delay= strtod(value1, (char **)NULL);
+		} else if (strcmp("imbalance", key) == 0)   {
+		    _imbalance= strtol(value1, (char **)NULL, 0);
+
 		/* Pingpong parameters */
 		} else if (strcmp("destination", key) == 0)   {
 		    _destination= strtol(value1, (char **)NULL, 0);
@@ -293,6 +354,8 @@ int rc;
 		    _pattern= alltoall_pattern;
 		} else if (strcmp(_pattern_name, ALLREDUCE_NAME) == 0)   {
 		    _pattern= allreduce_pattern;
+		} else if (strcmp(_pattern_name, GHOST_NAME) == 0)   {
+		    _pattern= ghost_pattern;
 		} else if (strcmp(_pattern_name, PINGPONG_NAME) == 0)   {
 		    _pattern= pingpong_pattern;
 		} else if (strcmp(_pattern_name, MSGRATE_NAME) == 0)   {
@@ -360,6 +423,17 @@ pattern_params(FILE *out)
 		default:
 		    fprintf(out, "    <tree_type> %s </tree_type>\n", "unknown");
 	    }
+	    break;
+
+	case ghost_pattern:
+	    PRINT_PARAM(out, time_steps);
+	    PRINT_PARAM(out, x_elements);
+	    PRINT_PARAM(out, y_elements);
+	    PRINT_PARAM(out, z_elements);
+	    PRINT_PARAM(out, loops);
+	    PRINT_PARAM(out, reduce_steps);
+	    fprintf(out, "    <delay> %.2f </delay>\n", _delay);
+	    PRINT_PARAM(out, imbalance);
 	    break;
 
 	case pingpong_pattern:
