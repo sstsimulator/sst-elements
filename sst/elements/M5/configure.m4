@@ -1,6 +1,9 @@
 dnl -*- Autoconf -*-
 
 AC_DEFUN([SST_M5_CONFIG], [
+
+  happy="yes"
+
   AC_ARG_WITH([m5],
     [AS_HELP_STRING([--with-m5@<:@=DIR@:>@],
     [Use M5 package installed in optionally specified DIR])])
@@ -11,7 +14,7 @@ AC_DEFUN([SST_M5_CONFIG], [
     [AS_HELP_STRING([--with-m5-build=TYPE],
       [Specify the type of library, Options: opt, debug (default: opt)])],
     [],
-    [with_m5_build=fast])
+    [with_m5_build=opt])
 
   isa=
 
@@ -56,25 +59,24 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  AC_LANG_PUSH(C++)
 
   AS_IF([test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"],
-    [DRAMSIM_CPPFLAGS="-I$with_dramsim"
-     CPPFLAGS="$DRAMSIM_CPPFLAGS $CPPFLAGS"
-     DRAMSIM_LDFLAGS="-L$with_dramsim"
-     LDFLAGS="$DRAMSIM_LDFLAGS $LDFLAGS"],
+    [
+      DRAMSIM_CPPFLAGS="-I$with_dramsim" 
+      DRAMSIM_LDFLAGS="-L$with_dramsim"	
+      AC_CHECK_HEADERS([MemorySystem.h], [], [happy="no"])
+      AC_CHECK_LIB([dramsim], [libdramsim_is_present], [], [happy="no"])
+    ],
     [DRAMSIM_CPPFLAGS=
-     DRAMSIM_LDFLAGS=])
+     DRAMSIM_LDFLAGS=]
+  )
 
-  AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([MemorySystem.h], [], [happy="no"])
-  AC_CHECK_LIB([dramsim], [libdramsim_is_present],
-    [DRAMSIM_LIB="-ldramsim"], [happy="no"])
   AC_LANG_POP(C++)
-
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
 
-  AM_CONDITIONAL([HAVE_DRAMSIM], 
+  AM_CONDITIONAL([HAVE_DRAMSIM],
 		[test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"])
 
   AC_SUBST([DRAMSIM_CPPFLAGS])
