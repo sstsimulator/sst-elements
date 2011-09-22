@@ -4,26 +4,26 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   happy="yes"
 
-  AC_ARG_WITH([m5],
-    [AS_HELP_STRING([--with-m5@<:@=DIR@:>@],
+  AC_ARG_WITH([gem5],
+    [AS_HELP_STRING([--with-gem5@<:@=DIR@:>@],
     [Use M5 package installed in optionally specified DIR])])
 
-  AS_IF([test "$with_m5" = "no"], [happy="no"])
+  AS_IF([test "$with_gem5" = "no"], [happy="no"])
 
-  AC_ARG_WITH([m5-build],
-    [AS_HELP_STRING([--with-m5-build=TYPE],
+  AC_ARG_WITH([gem5-build],
+    [AS_HELP_STRING([--with-gem5-build=TYPE],
       [Specify the type of library, Options: opt, debug (default: opt)])],
     [],
-    [with_m5_build=opt])
+    [with_gem5_build=opt])
 
   isa=
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
 
-  AS_IF([test ! -z "$with_m5" -a "$with_m5" != "yes"],
-    [ CPPFLAGS="-I$with_m5 $CPPFLAGS"
-      LDFLAGS="-L$with_m5 $LDFLAGS -lrt"],
+  AS_IF([test ! -z "$with_gem5" -a "$with_gem5" != "yes"],
+    [ CPPFLAGS="-I$with_gem5 $CPPFLAGS"
+      LDFLAGS="-L$with_gem5 $LDFLAGS -lrt"],
     [])
 
   AC_LANG_PUSH(C++)
@@ -31,8 +31,8 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
   AC_CHECK_HEADERS([params/X86TLB.hh], [isa=X86], [])
-  AC_CHECK_HEADERS([params/DerivO3CPU.hh], [use_m5_o3=true], [use_m5_o3=false])
-  AC_CHECK_LIB([m5_$with_m5_build], [initm5], [M5_LIB="-lm5_$with_m5_build"], [happy="no"])
+  AC_CHECK_HEADERS([params/DerivO3CPU.hh], [use_gem5_o3=true], [use_gem5_o3=false])
+  AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
@@ -40,7 +40,7 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   cpp_extra=
 
-  case "${with_m5_build}" in
+  case "${with_gem5_build}" in
     debug) cpp_extra="-DDEBUG -DTRACING_ON=1" ;;
     opt)   cpp_extra="-DTRACING_ON=1" ;;
     prof)  cpp_extra="-DNDEBUG -DTRACING_ON=0" ;;
@@ -48,10 +48,10 @@ AC_DEFUN([SST_M5_CONFIG], [
     *) happy="no" ;;
   esac
 
-  M5_CPPFLAGS="-I$with_m5 -DTHE_ISA=${isa}_ISA ${cpp_extra}"
-  M5_LDFLAGS="-L$with_m5"
+  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra}"
+  M5_LDFLAGS="-L$with_gem5"
 
-  AM_CONDITIONAL([USE_M5_O3], [test x$use_m5_o3 = xtrue])
+  AM_CONDITIONAL([USE_M5_O3], [test x$use_gem5_o3 = xtrue])
 
   AC_SUBST([M5_CPPFLAGS])
   AC_SUBST([M5_LDFLAGS])
