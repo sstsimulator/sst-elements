@@ -31,7 +31,7 @@ SimObject* create_PhysicalPlus( SST::Component* comp, std::string name,
 
     PhysicalMemory* physmem = new PhysicalMemoryPlus( &params );
 
-    loadMemory( name, physmem, _params.find_prefix_params("exe.") );
+    loadMemory( name + ".exe", physmem, _params.find_prefix_params("exe") );
 
     return physmem;
 }

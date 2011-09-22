@@ -45,10 +45,10 @@ SimObject* create_BaseCache( Component*, string name, Params& params )
     INIT_INT( cache, params, addr_range.start );
     INIT_INT( cache, params, addr_range.end );
     cache.repl = NULL;
+    INIT_INT( cache, params, num_cpus);
     INIT_INT( cache, params, latency);
     INIT_INT( cache, params, prefetch_latency);
     INIT_BOOL( cache, params, forward_snoops );
-    INIT_BOOL( cache, params, prefetch_cache_check_push );
     INIT_BOOL( cache, params, prefetch_data_accesses_only );
     INIT_BOOL( cache, params, prefetch_on_access );
     INIT_BOOL( cache, params, prefetch_past_page );

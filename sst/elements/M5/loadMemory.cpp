@@ -10,37 +10,41 @@ void loadMemory( string name, PhysicalMemory* memory,
                                     const SST::Params& params )
 {
     int num = 0;
+    DBGC(1,"%s\n",name.c_str());
     while ( 1 ) {
         Addr start,end;
-        std::stringstream tmp;
+        std::stringstream numSS;
+        std::string tmp;
 
-        tmp << num; 
+        numSS << num; 
 
-        std::string exe = 
-                    params.find_string( tmp.str() + ".process.executable");
+        tmp = numSS.str() + ".process.executable";
+
+        std::string exe = params.find_string( tmp );
         if ( exe.size() == 0 ) {
             break;
         }
+        DBGC(1,"%s%s %s\n",name.c_str(), tmp.c_str(), exe.c_str() );
 
-        DBGC(1, "%s.%s `%s`\n", name.c_str(), tmp.str().c_str(), exe.c_str() );
+        tmp = numSS.str() + ".physicalMemory.start";
+        start = params.find_integer( tmp );
+        DBGC(1,"%s%s %#lx\n", name.c_str(), tmp.c_str(), start);
 
-        start = params.find_integer( tmp.str() + ".physicalMemory.start" );
-        end = params.find_integer( tmp.str() + ".physicalMemory.end", 0 );
+        tmp = numSS.str() + ".physicalMemory.end";
+        end = params.find_integer( tmp, 0 );
+        DBGC(1,"%s%s %#lx\n", name.c_str(), tmp.c_str(), end);
 
-        DBGC(1,"%s.%s.physicalMemory.start %#lx\n",name.c_str(),
-                                tmp.str().c_str(),start);
-        DBGC(1,"%s.%s.physicalMemory.end %#lx\n",name.c_str(),
-                                tmp.str().c_str(),end);
-
-        DummySystem* system = create_DummySystem( name + "." + tmp.str() +  
-                            ".dummySystem", memory, Enums::timing, start, end);
+        tmp = name + numSS.str() + ".dummySystem";
+        DummySystem* system = create_DummySystem( tmp, memory,
+                                    Enums::timing, start, end);
 
         SST::Params mergedParams = mergeParams(  
-                params.find_prefix_params( tmp.str() + ".process."),
+                params.find_prefix_params( numSS.str() + ".process."),
                 params.find_prefix_params( "process." ) );
 
-        Process* process = newProcess( name + "." + tmp.str(), 
-                                            mergedParams, system );
+        tmp = name + numSS.str();
+
+        Process* process = newProcess( tmp, mergedParams, system );
         process->assignThreadContext(num);
 
         // NOTE: system and process are not needed after

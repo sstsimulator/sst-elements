@@ -34,8 +34,8 @@ class DummySystem : public System {
     }
 
     Addr new_page() {
-        Addr return_addr = page_ptr << LogVMPageSize;
-        ++page_ptr;
+        Addr return_addr = pagePtr << LogVMPageSize;
+        ++pagePtr;
 
         if (return_addr >= m_end - m_start)
             fatal("Out of memory, please increase size of physical memory.");

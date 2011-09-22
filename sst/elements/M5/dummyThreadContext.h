@@ -11,6 +11,27 @@ class DummyThreadContext : public ThreadContext {
     virtual BaseCPU *getCpuPtr() 
     { DBGX(2,"\n"); }
 
+    virtual TheISA::PCState pcState()
+    { DBGX(2,"\n"); }
+
+    virtual void pcState(const TheISA::PCState &val)
+    { DBGX(2,"\n"); }
+
+    virtual Addr instAddr()
+    { DBGX(2,"\n"); }
+
+    virtual Addr nextInstAddr()
+    { DBGX(2,"\n"); }
+
+    virtual MicroPC microPC()
+    { DBGX(2,"\n"); }
+
+    virtual int flattenIntIndex(int reg)
+    { DBGX(2,"\n"); }
+
+    virtual int flattenFloatIndex(int reg)
+    { DBGX(2,"\n"); }
+
     virtual int cpuId()
     { DBGX(2,"\n"); }
 

@@ -12,7 +12,7 @@ extern bool SST_M5_debug;
 #undef DPRINTFN
 #define DPRINTFN(...) do {                                      \
     if ( Trace::enabled && SST_M5_debug )                       \
-        Trace::dprintf(curTick, name(), __VA_ARGS__);           \
+        Trace::dprintf(curTick(), name(), __VA_ARGS__);           \
 } while (0)
 
 #define _error(name, fmt, args...) \

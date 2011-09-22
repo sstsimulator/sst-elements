@@ -5,8 +5,6 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-#include <arch/isa_specific.hh>
-
 #if 0
 #define MMU_DBG( fmt, args... ) \
     fprintf(stderr, "NicMmu::%s():%d: "fmt, __func__, __LINE__, ##args)

@@ -45,9 +45,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
         } 
     }
 
-    extern int rgdb_enable;
-    rgdb_enable = false;
-
     std::ostringstream tmp;
 
     tmp << world.rank();
@@ -99,13 +96,14 @@ M5::~M5()
 int M5::Setup()
 {
     DBGX( 2, "call initAll\n" );
-    initAll();
+    SimObject::initAll();
 
     DBGX( 2, "call regAllStats\n" );
-    regAllStats();
+    SimObject::regAllStats();
 
-    DBGX( 2, "call SimStartup\n" );
-    SimStartup();
+    DBGX( 2, "call startupAll\n" );
+    SimObject::startupAll();
+
     DBGX( 2, "SimStartup done\n" );
 
     arm( 0 );
@@ -127,16 +125,16 @@ void M5::exit( int status )
     --m_numRegisterExits;
     if ( m_numRegisterExits == 0) {
         ::Event *event = new SimLoopExitEvent("Exit M5", 0);
-        mainEventQueue.schedule(event, curTick);
+        mainEventQueue.schedule(event, curTick());
     } 
 }
 
 bool M5::catchup( SST::Cycle_t time ) 
 {
     DBGX( 5, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
-                                    time, curTick, time - curTick ); 
+                                    time, curTick(), time - curTick() ); 
 
-    m_exitEvent = simulate( time - curTick );
+    m_exitEvent = simulate( time - curTick() );
 
     m_event.cycles = m_event.time - time;
 
@@ -192,14 +190,7 @@ static void enableDebug( std::string name )
         SST_M5_debug = true;
     }
     Trace::enabled = true;
-    for ( int i = 0; i < Trace::flags.size(); i++ ) {
-//            printf("%s\n",Trace::flagStrings[i]);
 
-            if ( all || name.find( Trace::flagStrings[i] ) != std::string::npos)
-            {
-//                printf("enable %s\n",Trace::flagStrings[i]);
-                Trace::flags[i] = true;
-            }
-    }
+    extern void enableDebugFlags( std::string );
+    enableDebugFlags( name );
 }
-

@@ -45,7 +45,7 @@ class _Trace {
     {
         char* env = getenv( "TRACE_FLAGS" );
         if ( ! env ) return;
-        ::printf("TRACE_FLAGS=`%s`\n",env);
+        //::printf("TRACE_FLAGS=`%s`\n",env);
         std::string str = env;
         std::deque< std::string > tmp;
 

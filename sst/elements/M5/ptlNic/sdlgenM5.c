@@ -332,12 +332,12 @@ static foo( FILE* output, int nid, const char* exe )
     fprintf(output,"%s        <null> false </null>\n",indent);
     fprintf(output,"%s        <zero> false </zero>\n",indent);
 
-    fprintf(output,"%s        <exe.0.process.executable> %s </exe.0.process.executable>\n",indent,exe);
-    fprintf(output,"%s        <exe.0.process.cmd.0> hello  </exe.0.process.cmd.0>\n",indent);
-    fprintf(output,"%s        <exe.0.process.env.0> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe.0.process.env.0>\n",indent);
+    fprintf(output,"%s        <exe0.process.executable> %s </exe0.process.executable>\n",indent,exe);
+    fprintf(output,"%s        <exe0.process.cmd.0> hello  </exe0.process.cmd.0>\n",indent);
+    fprintf(output,"%s        <exe0.process.env.0> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.0>\n",indent);
 
-    fprintf(output,"%s        <exe.0.physicalMemory.start> 0x100000 </exe.0.physicalMemory.start>\n",indent);
-    fprintf(output,"%s        <exe.0.physicalMemory.end>   0x1fffffff </exe.0.physicalMemory.end>\n",indent);
+    fprintf(output,"%s        <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>\n",indent);
+    fprintf(output,"%s        <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>\n",indent);
     fprintf(output,"%s    </params>\n",indent);
     fprintf(output,"%s    <link name=nid%d.mem-bus port=port latency=$lat />\n",indent,nid);
     fprintf(output,"%s</component>\n",indent);

@@ -16,7 +16,6 @@
 #include <fcntl.h>
 #include <syscall.h>
 #include <debug.h>
-#include <arch/isa_specific.hh>
 #include <paramHelp.h>
 #include <m5.h>
 
@@ -121,7 +120,7 @@ void Syscall::addressRanges(AddrRangeList& resp)
 
 Tick Syscall::write(Packet* pkt)
 {
-    DBGX(5,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
+    DBGX(4,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
                                         pkt->getSize());
 
     assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );
@@ -130,7 +129,7 @@ Tick Syscall::write(Packet* pkt)
     pkt->makeTimingResponse();
 
     if ( pkt->getAddr() - m_startAddr == 0xf * sizeof( uint64_t ) ) {
-        schedule( m_syscallEvent, curTick + 0 );
+        schedule( m_syscallEvent, curTick() + 0 );
     }
 
     return 1;
@@ -138,7 +137,7 @@ Tick Syscall::write(Packet* pkt)
 
 Tick Syscall::read(Packet* pkt)
 {
-    DBGX(5,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
+    DBGX(4,"paddr=%#lx size=%d\n", (unsigned long) pkt->getAddr(),
                                         pkt->getSize());
 
     assert( pkt->getAddr() + pkt->getSize() <= m_endAddr );

@@ -33,7 +33,7 @@ SimObject* create_PhysicalMemory( Component*, string name, Params& sParams )
 
     PhysicalMemory* physmem = params.create();
 
-    loadMemory( name, physmem, sParams.find_prefix_params("exe.") );
+    loadMemory( name + ".exe", physmem, sParams.find_prefix_params("exe") );
 
     return physmem;
 }
