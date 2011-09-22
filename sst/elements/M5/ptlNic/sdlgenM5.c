@@ -158,6 +158,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s    <tgts_per_mshr> 5 </tgts_per_mshr>\n",indent);
     fprintf(output,"%s    <write_buffers> 8 </write_buffers>\n",indent);
     fprintf(output,"%s    <size> 0x8000 </size>\n",indent);
+    fprintf(output,"%s    <num_cpus> 1 </num_cpus>\n",indent);
     fprintf(output,"%s\n",indent);
 
 
