@@ -14,7 +14,6 @@
 
 
 /* Local functions */
-static int mem_alloc(int x, int y, int z, mem_ptr_t *m, size_t *mem_total);
 static void mem_init(int TwoD, mem_ptr_t *m, int seed);
 
 
@@ -35,10 +34,10 @@ size_t mem_estimate;
 	if (((my_rank == 0) && (verbose)) || ((my_rank == 0) && (decomposition_only)))   {
 	    printf("Will Allocate memory for %d * %d virtual elements (of size %ld bytes) per rank\n",
 		x_dim, y_dim, (long int)sizeof(ELEMENT_TYPE));
-	    printf("Emulated memory per rank: %ld bytes (%.3f GB), %.3f GB total\n",
-		x_dim * y_dim * (long int)sizeof(ELEMENT_TYPE),
-		(float)(x_dim * y_dim * (long int)sizeof(ELEMENT_TYPE)) / 1024 / 1024 / 1024,
-		(float)(x_dim * y_dim * (long int)sizeof(ELEMENT_TYPE)) / 1024 / 1024 / 1024 * num_ranks);
+	    printf("Emulated memory per rank: %lld bytes (%.3f GB), %.3f GB total\n",
+		x_dim * y_dim * (long long int)sizeof(ELEMENT_TYPE),
+		(float)(x_dim * y_dim * (long long int)sizeof(ELEMENT_TYPE)) / 1024 / 1024 / 1024,
+		(float)(x_dim * y_dim * (long long int)sizeof(ELEMENT_TYPE)) / 1024 / 1024 / 1024 * num_ranks);
 	    printf("Memory needed per rank: %ld bytes (%.3f MB), %.1f MB total\n",
 		(long int)mem_estimate, (float)mem_estimate / 1024 / 1024,
 		(float)mem_estimate / 1024 / 1024 * num_ranks);
@@ -158,15 +157,14 @@ mem_free(mem_ptr_t *m)
 
 
 
-/*
-** Local functions
-*/
-static int
+int
 mem_alloc(int x, int y, int z, mem_ptr_t *m, size_t *mem_total)
 {
 
     /* Clear the memory pointer structure */
-    *mem_total= 0;
+    if (mem_total != NULL)   {
+	*mem_total= 0;
+    }
     memset(m, 0, sizeof(mem_ptr_t));
 
     if (z <= 1)   {
@@ -176,22 +174,26 @@ mem_alloc(int x, int y, int z, mem_ptr_t *m, size_t *mem_total)
 	*/
 	m->z_dim= 0;
 	m->x_dim= x;
-	ALLOC_ROW(m->x_top_ghost, x);
-	ALLOC_ROW(m->x_top_interior1, x);
-	ALLOC_ROW(m->x_top_interior2, x);
-	ALLOC_ROW(m->x_bottom_ghost, x);
-	ALLOC_ROW(m->x_bottom_interior1, x);
-	ALLOC_ROW(m->x_bottom_interior2, x);
-	*mem_total += 6 * x * sizeof(ELEMENT_TYPE);
+	if (mem_total != NULL)   {
+	    ALLOC_ROW(m->x_top_ghost, x);
+	    ALLOC_ROW(m->x_top_interior1, x);
+	    ALLOC_ROW(m->x_top_interior2, x);
+	    ALLOC_ROW(m->x_bottom_ghost, x);
+	    ALLOC_ROW(m->x_bottom_interior1, x);
+	    ALLOC_ROW(m->x_bottom_interior2, x);
+	    *mem_total += 6 * x * sizeof(ELEMENT_TYPE);
+	}
 
 	m->y_dim= y;
-	ALLOC_ROW(m->y_top_ghost, y);
-	ALLOC_ROW(m->y_top_interior1, y);
-	ALLOC_ROW(m->y_top_interior2, y);
-	ALLOC_ROW(m->y_bottom_ghost, y);
-	ALLOC_ROW(m->y_bottom_interior1, y);
-	ALLOC_ROW(m->y_bottom_interior2, y);
-	*mem_total += 6 * y * sizeof(ELEMENT_TYPE);
+	if (mem_total != NULL)   {
+	    ALLOC_ROW(m->y_top_ghost, y);
+	    ALLOC_ROW(m->y_top_interior1, y);
+	    ALLOC_ROW(m->y_top_interior2, y);
+	    ALLOC_ROW(m->y_bottom_ghost, y);
+	    ALLOC_ROW(m->y_bottom_interior1, y);
+	    ALLOC_ROW(m->y_bottom_interior2, y);
+	    *mem_total += 6 * y * sizeof(ELEMENT_TYPE);
+	}
 
     } else   {
 
@@ -203,31 +205,37 @@ mem_alloc(int x, int y, int z, mem_ptr_t *m, size_t *mem_total)
 	** contained on one surface.
 	*/
 	m->x_dim= x;
-	ALLOC_SURFACE(m->x_top_ghost, x, y);
-	ALLOC_SURFACE(m->x_top_interior1, x, y);
-	ALLOC_SURFACE(m->x_top_interior2, x, y);
-	ALLOC_SURFACE(m->x_bottom_ghost, x, y);
-	ALLOC_SURFACE(m->x_bottom_interior1, x, y);
-	ALLOC_SURFACE(m->x_bottom_interior2, x, y);
-	*mem_total += 6 * x * y * sizeof(ELEMENT_TYPE);
+	if (mem_total != NULL)   {
+	    ALLOC_SURFACE(m->x_top_ghost, x, y);
+	    ALLOC_SURFACE(m->x_top_interior1, x, y);
+	    ALLOC_SURFACE(m->x_top_interior2, x, y);
+	    ALLOC_SURFACE(m->x_bottom_ghost, x, y);
+	    ALLOC_SURFACE(m->x_bottom_interior1, x, y);
+	    ALLOC_SURFACE(m->x_bottom_interior2, x, y);
+	    *mem_total += 6 * x * y * sizeof(ELEMENT_TYPE);
+	}
 
 	m->y_dim= y;
-	ALLOC_SURFACE(m->y_top_ghost, y, z);
-	ALLOC_SURFACE(m->y_top_interior1, y, z);
-	ALLOC_SURFACE(m->y_top_interior2, y, z);
-	ALLOC_SURFACE(m->y_bottom_ghost, y, z);
-	ALLOC_SURFACE(m->y_bottom_interior1, y, z);
-	ALLOC_SURFACE(m->y_bottom_interior2, y, z);
-	*mem_total += 6 * y * z * sizeof(ELEMENT_TYPE);
+	if (mem_total != NULL)   {
+	    ALLOC_SURFACE(m->y_top_ghost, y, z);
+	    ALLOC_SURFACE(m->y_top_interior1, y, z);
+	    ALLOC_SURFACE(m->y_top_interior2, y, z);
+	    ALLOC_SURFACE(m->y_bottom_ghost, y, z);
+	    ALLOC_SURFACE(m->y_bottom_interior1, y, z);
+	    ALLOC_SURFACE(m->y_bottom_interior2, y, z);
+	    *mem_total += 6 * y * z * sizeof(ELEMENT_TYPE);
+	}
 
 	m->z_dim= z;
-	ALLOC_SURFACE(m->z_top_ghost, x, z);
-	ALLOC_SURFACE(m->z_top_interior1, x, z);
-	ALLOC_SURFACE(m->z_top_interior2, x, z);
-	ALLOC_SURFACE(m->z_bottom_ghost, x, z);
-	ALLOC_SURFACE(m->z_bottom_interior1, x, z);
-	ALLOC_SURFACE(m->z_bottom_interior2, x, z);
-	*mem_total += 6 * x * z * sizeof(ELEMENT_TYPE);
+	if (mem_total != NULL)   {
+	    ALLOC_SURFACE(m->z_top_ghost, x, z);
+	    ALLOC_SURFACE(m->z_top_interior1, x, z);
+	    ALLOC_SURFACE(m->z_top_interior2, x, z);
+	    ALLOC_SURFACE(m->z_bottom_ghost, x, z);
+	    ALLOC_SURFACE(m->z_bottom_interior1, x, z);
+	    ALLOC_SURFACE(m->z_bottom_interior2, x, z);
+	    *mem_total += 6 * x * z * sizeof(ELEMENT_TYPE);
+	}
     }
 
     return 0;
@@ -236,6 +244,9 @@ mem_alloc(int x, int y, int z, mem_ptr_t *m, size_t *mem_total)
 
 
 
+/*
+** Local functions
+*/
 static void
 mem_init(int TwoD, mem_ptr_t *m, int seed)
 {

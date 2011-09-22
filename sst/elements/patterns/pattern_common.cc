@@ -418,6 +418,31 @@ int index;
 #define NORTH_PORT		(3)
 #define FIRST_LOCAL_PORT	(4)
 
+
+
+void
+Patterns::self_event_send(int event, int32_t tag, SST::SimTime_t delay)
+{
+
+CPUNicEvent *e;
+
+
+    // Create an event and fill in the event info
+    e= new CPUNicEvent();
+    e->SetRoutine((int)event);
+    e->router_delay= 0;
+    e->hops= 0;
+    e->msg_len= 0;
+    e->tag= tag;
+    e->dest= my_rank;
+    e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
+
+    my_self_link->Send(delay, e);
+
+}  // end of self_event_send()
+
+
+
 /*
 ** This function computes a route, based on the assumption that we
 ** are on a x * y torus for our NoC, and a x * y torus for the network.

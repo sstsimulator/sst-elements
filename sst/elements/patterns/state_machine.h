@@ -92,7 +92,7 @@ class state_event   {
 // See if goto_state() works better for your needs.
 #define state_transition(event, new_state)   {\
 	    state= new_state;\
-	    self_event_send(event);\
+	    self_event_send(event, 0);\
 	}
 
 // This jumps (calls) directly to a function that handles a state

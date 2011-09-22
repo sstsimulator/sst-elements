@@ -1,0 +1,11 @@
+name = ghost_pattern
+param time_steps = 100
+param x_elements = 400
+param y_elements = 400
+param z_elements = 0
+param loops = 16
+param reduce_steps = 20
+param delay = 0.0
+param imbalance = 0
+param verbose = 5
+param time_per_flop = 180

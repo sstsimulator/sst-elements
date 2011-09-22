@@ -152,7 +152,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    }
 
 	    if (rcv_cnt >= num_msgs)   {
-		msg_wait_time= (double)(getCurrentSimTime() - msg_wait_time_start) / TIME_BASE_FACTOR;
+		msg_wait_time= SimTimeToD(getCurrentSimTime() - msg_wait_time_start);
 		goto_state(state_ALLREDUCE_T1, STATE_ALLREDUCE_T1, E_ALLREDUCE_ENTRY);
 	    }
 	    break;
@@ -289,7 +289,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    }
 
 	    if (rcv_cnt >= num_msgs)   {
-		msg_wait_time= (double)(getCurrentSimTime() - msg_wait_time_start) / TIME_BASE_FACTOR;
+		msg_wait_time= SimTimeToD(getCurrentSimTime() - msg_wait_time_start);
 		goto_state(state_ALLREDUCE_T2, STATE_ALLREDUCE_T2, E_ALLREDUCE_ENTRY);
 	    }
 	    break;
@@ -422,7 +422,7 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    }
 
 	    if (rcv_cnt >= num_msgs * (num_ranks - 1))   {
-		msg_wait_time= (double)(getCurrentSimTime() - msg_wait_time_start) / TIME_BASE_FACTOR;
+		msg_wait_time= SimTimeToD(getCurrentSimTime() - msg_wait_time_start);
 		goto_state(state_ALLREDUCE_T3, STATE_ALLREDUCE_T3, E_ALLREDUCE_ENTRY);
 	    }
 	    break;

@@ -57,6 +57,8 @@ static int _loops;		/* Number of loops to compute. Adjusts compute time. Default
 static int _reduce_steps;	/* Number of time steps between reduce operations. Default 20 */
 static float _delay;		/* Delay compute step by delay % */
 static int _imbalance;		/* Create compute imbalance. Requires delay > 0%. */
+static int _verbose;
+static int _time_per_flop;	/* This determines "compute" time */
 
 /* Pingpong parameters */
 static int _destination;
@@ -92,6 +94,8 @@ set_defaults(void)
     _reduce_steps= 20;
     _delay= 0;
     _imbalance= 0;
+    _verbose= 0;
+    _time_per_flop= 10;
 
     /* Pingpong defaults */
     _destination= OPTIONAL;
@@ -148,6 +152,8 @@ int error;
 	    PARAM_CHECK("Ghost", reduce_steps, <, 0);
 	    PARAM_CHECK("Ghost", delay, <, 0);
 	    PARAM_CHECK("Ghost", imbalance, <, 0);
+	    PARAM_CHECK("Ghost", verbose, <, 0);
+	    PARAM_CHECK("Ghost", time_per_flop, <, 0);
 	    break;
 
 	case pingpong_pattern:
@@ -203,14 +209,16 @@ disp_pattern_params(void)
 	    break;
 
 	case ghost_pattern:
-	    printf("***     time_steps =   %d\n", _time_steps);
-	    printf("***     x_elements =   %d\n", _x_elements);
-	    printf("***     y_elements =   %d\n", _y_elements);
-	    printf("***     z_elements =   %d\n", _z_elements);
-	    printf("***     loops =        %d\n", _loops);
-	    printf("***     reduce_steps = %d\n", _reduce_steps);
-	    printf("***     delay =        %.2f%%\n", _delay);
-	    printf("***     imbalance =    %d\n", _imbalance);
+	    printf("***     time_steps =      %d\n", _time_steps);
+	    printf("***     x_elements =      %d\n", _x_elements);
+	    printf("***     y_elements =      %d\n", _y_elements);
+	    printf("***     z_elements =      %d\n", _z_elements);
+	    printf("***     loops =           %d\n", _loops);
+	    printf("***     reduce_steps =    %d\n", _reduce_steps);
+	    printf("***     delay =           %.2f%%\n", _delay);
+	    printf("***     imbalance =       %d\n", _imbalance);
+	    printf("***     verbose =         %d\n", _verbose);
+	    printf("***     time_per_flop =   %d ns\n", _time_per_flop);
 	    break;
 
 	case pingpong_pattern:
@@ -317,6 +325,10 @@ int rc;
 		    _delay= strtod(value1, (char **)NULL);
 		} else if (strcmp("imbalance", key) == 0)   {
 		    _imbalance= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("verbose", key) == 0)   {
+		    _verbose= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("time_per_flop", key) == 0)   {
+		    _time_per_flop= strtol(value1, (char **)NULL, 0);
 
 		/* Pingpong parameters */
 		} else if (strcmp("destination", key) == 0)   {
@@ -434,6 +446,8 @@ pattern_params(FILE *out)
 	    PRINT_PARAM(out, reduce_steps);
 	    fprintf(out, "    <delay> %.2f </delay>\n", _delay);
 	    PRINT_PARAM(out, imbalance);
+	    PRINT_PARAM(out, verbose);
+	    PRINT_PARAM(out, time_per_flop);
 	    break;
 
 	case pingpong_pattern:

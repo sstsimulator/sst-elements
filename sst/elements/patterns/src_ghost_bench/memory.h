@@ -15,7 +15,6 @@
 #define MPI_ELEMENT_TYPE	MPI_DOUBLE
 #define TRUNC_ELEMENT(x)	trunc(x)
 
-
 /* Keep track of local memory */
 typedef struct mem_ptr_t   {
     int x_dim;
@@ -49,6 +48,7 @@ int mem_needed(int verbose, int decomposition_only, int num_ranks, int my_rank, 
 void do_mem_alloc(int my_rank, int TwoD, size_t mem_estimate, mem_ptr_t *memory,
 	int x_dim, int y_dim, int z_dim);
 void mem_free(mem_ptr_t *m);
+int mem_alloc(int x, int y, int z, mem_ptr_t *m, size_t *mem_total);
 
 
 #endif /* _MEMORY_H_ */

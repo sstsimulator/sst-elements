@@ -146,11 +146,13 @@ class Comm_pattern : public Component {
 	int myNoCX(void);
 	int myNoCY(void);
 
-	void self_event_send(int event_type);
+	void self_event_send(int event_type, SimTime_t duration);
 	void send_msg(int dest, int len, state_event sm_event);
 
 	// Some patterns may be able to use this
 	int is_pow2(int num);
+	double SimTimeToD(SimTime_t t);
+	void local_compute(int done_event, SimTime_t duration);
 
 	State_machine *SM;
 

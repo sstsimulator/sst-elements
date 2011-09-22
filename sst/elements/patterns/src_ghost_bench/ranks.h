@@ -13,5 +13,4 @@ void map_ranks(int num_ranks, int TwoD, int *width, int *height, int *depth);
 void check_element_assignment(int verbose, int decomposition_only, int num_ranks, int width, int height,
 	int depth, int my_rank, int *TwoD, int *x_dim, int *y_dim, int *z_dim);
 
-
 #endif /* _RANKS_H_ */

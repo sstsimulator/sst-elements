@@ -17,13 +17,20 @@
 #include "comm_pattern.h"
 #include "collective_topology.h"
 #include "allreduce_op.h"
+extern "C" {
+#include "src_ghost_bench/memory.h"
+#include "src_ghost_bench/neighbors.h"
+#include "src_ghost_bench/ranks.h"
+#include "src_ghost_bench/work.h"
+}
 
 
 
 class Ghost_pattern : public Comm_pattern    {
     public:
         Ghost_pattern(ComponentId_t id, Params_t& params) :
-            Comm_pattern(id, params)
+            Comm_pattern(id, params),
+	    decomposition_only(0)
         {
 	    // Defaults for paramters
 	    time_steps= 1000;
@@ -33,7 +40,9 @@ class Ghost_pattern : public Comm_pattern    {
 	    loops= 16;
 	    reduce_steps= 20;
 	    delay= 0;
-	    imbalance= 0;
+	    compute_imbalance= 0;
+	    verbose= 0;
+	    time_per_flop= 10;
 
 
 	    // Process the message rate specific paramaters
@@ -68,7 +77,15 @@ class Ghost_pattern : public Comm_pattern    {
 		}
 
 		if (!it->first.compare("imbalance"))   {
-		    sscanf(it->second.c_str(), "%d", &imbalance);
+		    sscanf(it->second.c_str(), "%d", &compute_imbalance);
+		}
+
+		if (!it->first.compare("time_per_flop"))   {
+		    sscanf(it->second.c_str(), "%d", &time_per_flop);
+		}
+
+		if (!it->first.compare("verbose"))   {
+		    sscanf(it->second.c_str(), "%d", &verbose);
 		}
 
                 ++it;
@@ -93,6 +110,46 @@ class Ghost_pattern : public Comm_pattern    {
 	    SMghost= SM->SM_create((void *)this, Ghost_pattern::wrapper_handle_events);
 
 
+	    if (my_rank == 0)   {
+		printf("#  |||  Ghost cell exchange benchmark\n");
+		printf("#  |||\n");
+		printf("#  |||  time_steps =      %d\n", time_steps);
+		printf("#  |||  x_elements =      %d\n", x_elements);
+		printf("#  |||  y_elements =      %d\n", y_elements);
+		printf("#  |||  z_elements =      %d\n", z_elements);
+		printf("#  |||  loops =           %d\n", loops);
+		printf("#  |||  reduce_steps =    %d\n", reduce_steps);
+		printf("#  |||  delay =           %.2f%%\n", delay);
+		printf("#  |||  imbalance =       %d\n", compute_imbalance);
+		printf("#  |||  verbose =         %d\n", verbose);
+		printf("#  |||  time_per_flop =   %d %s\n", time_per_flop, TIME_BASE);
+		printf("#  |||\n");
+	    }
+
+
+	    // Assign ranks to portions of the data.
+	    do_decomposition();
+
+	    // The benchmark allocates memory. We don't do that in the pattern,
+	    // but we need to know how much would have been allocated. So we call
+	    // mem_alloc() directly and set the flag to NULL to avoid allocation.
+	    // do_mem_alloc(my_rank, TwoD, mem_estimate, &memory, x_elements, y_elements, z_elements);
+	    mem_alloc(x_elements, y_elements, z_elements, &memory, NULL);
+
+	    /* Some info about what happened so far */
+	    if (my_rank == 0)   {
+		if (TwoD)   {
+		    printf("#  |||  Border to area ratio is %.3g\n",
+			(2.0 * (x_elements + y_elements)) / ((float)x_elements * y_elements));
+		} else   {
+		    printf("#  |||  Area to volume ratio is %.3g\n",
+			(2.0 * x_elements * y_elements +
+			 2.0 * x_elements * z_elements +
+			 2.0 * y_elements * z_elements) /
+			((float)x_elements * y_elements * z_elements));
+		}
+	    }
+
 	    // Kickstart ourselves
 	    done= false;
 	    state_transition(E_START, STATE_INIT);
@@ -101,11 +158,13 @@ class Ghost_pattern : public Comm_pattern    {
 
 	// The Ghost pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {STATE_INIT, STATE_REDUCE} ghost_state_t;
+	typedef enum {STATE_INIT, STATE_CELL_EXCHANGE, STATE_COMPUTE_CELLS,
+	    STATE_REDUCE, STATE_DONE} ghost_state_t;
 
 	// The start event should always be SM_START_EVENT
-	typedef enum {E_START= SM_START_EVENT,
-	    E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT} ghost_events_t;
+	typedef enum {E_START= SM_START_EVENT, E_NEXT_LOOP, E_CELL_SEND,
+	    E_COMPUTE, E_COMPUTE_DONE, E_CELL_RECEIVE,
+	    E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT, E_DONE} ghost_events_t;
 
     private:
 
@@ -119,7 +178,13 @@ class Ghost_pattern : public Comm_pattern    {
 
 	// The states we can be in
 	void state_INIT(state_event sm_event);
+	void state_CELL_EXCHANGE(state_event sm_event);
+	void state_COMPUTE_CELLS(state_event sm_event);
 	void state_REDUCE(state_event sm_event);
+	void state_DONE(state_event sm_event);
+
+	// Other functions
+	void do_decomposition(void);
 
 	Params_t params;
 
@@ -127,7 +192,7 @@ class Ghost_pattern : public Comm_pattern    {
 	uint32_t SMghost;
 	uint32_t SMallreduce;
 
-	// Some variables we need for ghost to operate
+	// Some variables we need for the ghost SM to operate
 	ghost_state_t state;
 	bool done;
 
@@ -139,7 +204,30 @@ class Ghost_pattern : public Comm_pattern    {
 	int loops;
 	int reduce_steps;
 	float delay;
-	int imbalance;
+	int verbose;
+	int time_per_flop;	// In nano seconds
+
+	// Variables for the benchmark
+	int TwoD;
+	int rank_width, rank_height, rank_depth;
+	int decomposition_only;
+	size_t mem_estimate;
+	mem_ptr_t memory;
+	neighbors_t neighbor_list;
+	int t;
+	SimTime_t total_time_start;
+	SimTime_t total_time_end;
+	SimTime_t comm_time_start;
+	SimTime_t comm_time_total;
+	SimTime_t comp_time_start;
+	SimTime_t comp_time_total;
+	SimTime_t compute_delay;
+	int64_t num_sends;
+	int64_t fop_cnt;
+	int64_t reduce_cnt;
+	int64_t bytes_sent;
+	int compute_imbalance;
+	int rcv_cnt;
 
 
 	// Serialization
@@ -160,7 +248,30 @@ class Ghost_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(loops);
 	    ar & BOOST_SERIALIZATION_NVP(reduce_steps);
 	    ar & BOOST_SERIALIZATION_NVP(delay);
-	    ar & BOOST_SERIALIZATION_NVP(imbalance);
+	    ar & BOOST_SERIALIZATION_NVP(verbose);
+	    ar & BOOST_SERIALIZATION_NVP(time_per_flop);
+	    ar & BOOST_SERIALIZATION_NVP(TwoD);
+	    ar & BOOST_SERIALIZATION_NVP(rank_width);
+	    ar & BOOST_SERIALIZATION_NVP(rank_height);
+	    ar & BOOST_SERIALIZATION_NVP(rank_depth);
+	    ar & BOOST_SERIALIZATION_NVP(decomposition_only);
+	    ar & BOOST_SERIALIZATION_NVP(mem_estimate);
+	    // don't know how to do this... ar & BOOST_SERIALIZATION_NVP(memory);
+	    // don't know how to do this... ar & BOOST_SERIALIZATION_NVP(neighbor_list);
+	    ar & BOOST_SERIALIZATION_NVP(t);
+	    ar & BOOST_SERIALIZATION_NVP(total_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(total_time_end);
+	    ar & BOOST_SERIALIZATION_NVP(comm_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(comm_time_total);
+	    ar & BOOST_SERIALIZATION_NVP(comp_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(comp_time_total);
+	    ar & BOOST_SERIALIZATION_NVP(compute_delay);
+	    ar & BOOST_SERIALIZATION_NVP(num_sends);
+	    ar & BOOST_SERIALIZATION_NVP(fop_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(reduce_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(bytes_sent);
+	    ar & BOOST_SERIALIZATION_NVP(compute_imbalance);
+	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
         }
 
         template<class Archive>

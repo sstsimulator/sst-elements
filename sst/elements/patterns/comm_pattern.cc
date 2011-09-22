@@ -39,21 +39,6 @@ Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 
 
 
-// This is only used for the state_transition macro.
-void
-Comm_pattern::self_event_send(int event_type)
-{
-
-uint32_t tag= 0;
-
-
-    tag= SM->SM_current_tag();
-    common->event_send(my_rank, event_type, getCurrentSimTime(), tag);
-
-}  // end of self_event_send()
-
-
-
 // This is the width of the main network and doesn't take nodes into account!
 int
 Comm_pattern::myNetX(void)
@@ -139,6 +124,40 @@ Comm_pattern::NumCores(void)
 {
     return common->get_cores_per_NoC_router();
 }  // end of NumCores()
+
+
+
+//
+void
+Comm_pattern::self_event_send(int event_type, SimTime_t duration)
+{
+
+int tag;
+
+
+    tag= SM->SM_current_tag();
+    common->self_event_send(event_type, tag, duration);
+
+}  /* end of self_event_send() */
+
+
+
+// Pretend to do some work and then send an event
+void
+Comm_pattern::local_compute(int done_event, SimTime_t duration)
+{
+
+    self_event_send(done_event, duration);
+
+}  /* end of local_compute() */
+
+
+
+double
+Comm_pattern::SimTimeToD(SimTime_t t)
+{
+    return (double)t / TIME_BASE_FACTOR;
+}  /* end of SimTimeToD() */
 
 
 

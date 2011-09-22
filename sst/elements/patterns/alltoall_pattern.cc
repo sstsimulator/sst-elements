@@ -198,7 +198,7 @@ state_event enter_allreduce, exit_allreduce;
 
 	case E_ALLREDUCE_EXIT:
 	    // We just came back from the allreduce SM. We're done
-	    times.push_back(sm_event.get_Fdata() / nnodes / num_ops / TIME_BASE_FACTOR);
+	    times.push_back(SimTimeToD(sm_event.get_Fdata() / nnodes / num_ops));
 	    set++;
 	    if (set <= num_sets)   {
 		goto_state(state_INNER_LOOP, STATE_INNER_LOOP, E_NEXT_INNER_LOOP);

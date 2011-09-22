@@ -168,7 +168,7 @@ double latency;
 		    pp_event.event= E_RECEIVE;
 		    send_msg(dest, len, pp_event);
 		} else   {
-		    execution_time= (double)(getCurrentSimTime() - start_time) / TIME_BASE_FACTOR;
+		    execution_time= SimTimeToD(getCurrentSimTime() - start_time);
 		    latency= execution_time / num_msgs / 2.0;
 		    printf("%9d %.9f\n", len, latency);
 		    // Start next message size, if we haven't reached the end yet
