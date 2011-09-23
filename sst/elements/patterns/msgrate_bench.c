@@ -23,6 +23,7 @@
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <unistd.h>	/* For getopt() */
 #include <mpi.h>
+#include "stat_p.h"
 
 
 /* Constants */
@@ -39,6 +40,9 @@ static void usage(char *pname, int start_rank_default);
 static double Test1(int my_rank, int num_ranks, int num_msgs, int msg_len);
 static double Test2(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank, int stride);
 static double Test3(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank, int stride);
+
+
+/* Storage */
 char buf[MAX_MSG_LEN];
 
 
@@ -57,6 +61,9 @@ double total_time;
 int start_rank;
 int stride;
 int num_sender;
+int stat_mode;
+double req_precision;
+
 
 
 
@@ -88,10 +95,13 @@ int num_sender;
     msg_len= DEFAULT_MSG_LEN;
     start_rank= num_ranks / 2;
     stride= DEFAULT_STRIDE;
+    stat_mode= FALSE;
+    req_precision= 0.01;
+
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, ":l:n:s:i:")) != EOF)   {
+    while ((ch= getopt(argc, argv, ":l:n:s:i:p:t")) != EOF)   {
         switch (ch)   {
             case 'l':
 		msg_len= strtol(optarg, (char **)NULL, 0);
@@ -137,6 +147,17 @@ int num_sender;
 		    }
 		    error= TRUE;
 		}
+		break;
+
+            case 'p':
+		req_precision= strtod(optarg, (char **)NULL);
+		if (my_rank == 0)   {
+		    printf("req_precision is %f\n", req_precision);
+		}
+		break;
+
+	    case 't':
+		stat_mode= TRUE;
 		break;
 
 	    /* Command line error checking */
@@ -187,15 +208,58 @@ int num_sender;
     }
 
     num_sender= num_ranks / 2;
-    duration= Test1(my_rank, num_ranks, num_msgs, msg_len);
-    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    int ii = 0;
+    double precision;
+
+    int trials;
+    if (stat_mode)   {
+	trials= 10000;
+    } else   {
+	trials= 1;
+    }
+
+    double tot= 0.0;
+    double tot_squared= 0.0;
+
+    while (ii < trials)   {
+	duration = Test1(my_rank, num_ranks, num_msgs, msg_len);
+	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	//
+	double avg_bisection_rate = 1.0 / ((total_time / (num_ranks / 2)) / num_msgs);
+	tot = tot + avg_bisection_rate;
+	tot_squared = tot_squared + avg_bisection_rate * avg_bisection_rate;
+	precision = stat_p(my_rank, ii + 1, tot, tot_squared, avg_bisection_rate);
+	if (stat_mode)   {
+	    // check for precision if at least 3 trials have taken place. ii > 1 => N > 2.
+	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
+		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		if (0)   {
+		    printf("Node %d: Reached enough accuracy. Moving on.\n", my_rank);
+		}
+		trials= ii;
+	    } else   {
+		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	    }
+	}
+	ii++;
+    }
+
+    if (stat_mode) {
+	// if i = 10, actual trials done is 11
+	trials++; // this is the total number of trials that took place
+    }
+
+
     if (my_rank == 0)   {
 	printf("#  |||  Test 1: Ranks 0...%d will send %d messages of length %d to "
 	    "ranks %d...%d along %d paths\n", num_ranks / 2 - 1, num_msgs,
 	    msg_len, num_ranks / 2, num_ranks - 1, num_ranks / 2);
 	printf("#  |||  Test 1: %d senders, %d receivers\n", num_sender, num_sender);
 	printf("#  |||  Test 1: Average bi-section rate: %8.0f msgs/s\n",
-	    1.0 / ((total_time / (num_ranks / 2)) / num_msgs));
+	    tot/trials );
+	printf("#  |||  Test 1: Precision of %f, averaged over %d trials\n",
+	    precision, trials );
     }
 
 
@@ -204,25 +268,106 @@ int num_sender;
 	num_sender++;
     }
 
-    duration= Test2(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
-    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    ii= 0;
+    if (stat_mode)   {
+	trials= 10000;
+    } else   {
+        trials= 1;
+    }
+
+    tot= 0.0;
+    tot_squared= 0.0;
+    while  (ii < trials)    {
+	double metric;
+	int N;
+
+	duration= Test2(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
+	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	metric= 1.0 / ((total_time / num_sender) / (num_msgs - 1));
+	tot= tot + metric;
+	tot_squared= tot_squared + metric*metric;
+	N= ii + 1; 
+	precision= stat_p(my_rank, N, tot, tot_squared,metric);
+
+	if (stat_mode) {
+	    // check for precision if at least 3 trials have taken place. ii > 1 => N > 2. 
+	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
+		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+		if (0)   {
+		    printf("Node %d: Reached enough accuracy. Moving on.\n", my_rank);
+		}
+		trials= ii;
+	    } else   {
+		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+	    }
+	}
+	ii++;
+    }
+
+    if (stat_mode)   {
+        // if i = 10, actual trials done is 11
+        trials++; // this is the total number of trials that took place
+    }
+
+
     if (my_rank == 0)   {
 	printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d, stride %d\n",
 	    num_msgs, msg_len, start_rank, num_ranks - 1, stride);
 	printf("#  |||  Test 2: %d receivers\n", num_sender);
 	printf("#  |||  Test 2: Average send rate:       %8.0f msgs/s\n",
-	    1.0 / ((total_time / num_sender) / (num_msgs - 1)));
+        tot/trials );
+	printf("#  |||  Test 2: Precision of %f, averaged over %d trials\n",
+	    precision, trials );
     }
 
+    ii= 0;
+    if (stat_mode)   {
+        trials= 10000;
+    } else   {
+        trials= 1;
+    }
 
-    duration= Test3(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
-    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    tot= 0.0; 
+    tot_squared= 0.0; 
+    while  (ii < trials)   {
+	double metric;
+
+	duration= Test3(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
+	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	metric= 1.0 / (duration / (num_msgs * num_sender));
+	tot= tot + metric;
+	tot_squared= tot_squared + metric * metric;
+	precision= stat_p(my_rank, ii + 1, tot, tot_squared,metric);
+
+	if (stat_mode) {
+	    // check for precision if at least 3 trials have taken place. ii > 1 => N > 2. 
+	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
+		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+		if (0)   {
+		    printf("Node %d: Reached enough accuracy. Moving on.\n", my_rank);
+		}
+		trials = ii;
+	    }
+	    else {
+		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	    }
+	}
+	ii++;
+    }
+
+    if (stat_mode) {
+        // if i = 10, actual trials done is 11
+        trials++; // this is the total number of trials that took place
+    }
+
     if (my_rank == 0)   {
 	printf("#  |||  Test 3: Ranks %d...%d, stride %d, will send %d messages of length %d to rank 0\n",
 	    start_rank, num_ranks - 1, stride, num_msgs, msg_len);
 	printf("#  |||  Test 3: %d senders\n", num_sender);
 	printf("#  |||  Test 3: Average receive rate:    %8.0f msgs/s\n",
-	    1.0 / (duration / (num_msgs * num_sender)));
+	    tot/trials);
+	printf("#  |||  Test 3: Precision of %f, averaged over %d trials\n",
+	    precision, trials );
     }
 
     MPI_Finalize();
@@ -239,10 +384,12 @@ Test1(int my_rank, int num_ranks, int num_msgs, int msg_len)
 
 double t;
 int i;
+MPI_Request req;
 
 
     if (my_rank < num_ranks / 2)   {
 	/* I'm a sender */
+	MPI_Barrier(MPI_COMM_WORLD);
 	for (i= 0; i < num_msgs; i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, my_rank + num_ranks / 2, 12, MPI_COMM_WORLD);
 	}
@@ -251,7 +398,9 @@ int i;
     } else   {
 
 	/* I'm a receiver, wait for the first message */
-	MPI_Recv(buf, msg_len, MPI_CHAR, my_rank - num_ranks / 2, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	MPI_Irecv(buf, msg_len, MPI_CHAR, my_rank - num_ranks / 2, 12, MPI_COMM_WORLD, &req);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Wait(&req, MPI_STATUS_IGNORE);
 
 	/* Now start the timer */
 	t= MPI_Wtime();
@@ -273,11 +422,13 @@ Test2(int my_rank, int num_ranks, int num_msgs, int msg_len, int start_rank, int
 double t;
 int i;
 int dest;
+MPI_Request req;
 
 
     if (my_rank == 0)   {
 	/* I'm the sender */
 	dest= start_rank;
+	MPI_Barrier(MPI_COMM_WORLD);
 	for (i= 0; i < num_msgs * (num_ranks - start_rank); i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 13, MPI_COMM_WORLD);
 	    dest= dest + stride;
@@ -289,7 +440,9 @@ int dest;
 
     } else if ((my_rank >= start_rank) && ((my_rank - start_rank) % stride) == 0)   {
 	/* I am a receiver */
-	MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	MPI_Irecv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, &req);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Wait(&req, MPI_STATUS_IGNORE);
 	t= MPI_Wtime();
 	for (i= 1; i < num_msgs; i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, 0, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -297,6 +450,7 @@ int dest;
 
 	return MPI_Wtime() - t;
     } else   {
+	MPI_Barrier(MPI_COMM_WORLD);
 	return 0.0;
     }
 
@@ -312,26 +466,33 @@ double t;
 int i;
 int dest;
 int num_sender;
+MPI_Request req;
 
 
     if (my_rank == 0)   {
 	/* I'm the receiver */
-	t= MPI_Wtime();
 	num_sender= ((num_ranks - start_rank) / stride);
 	if ((num_ranks - start_rank) % stride != 0)   {
 	    num_sender++;
 	}
 
-	for (i= 0; i < num_msgs * num_sender; i++)   {
+	MPI_Irecv(buf, msg_len, MPI_CHAR, MPI_ANY_SOURCE, 14, MPI_COMM_WORLD, &req);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Wait(&req, MPI_STATUS_IGNORE);
+	t= MPI_Wtime();
+	for (i= 1; i < num_msgs * num_sender; i++)   {
 	    MPI_Recv(buf, msg_len, MPI_CHAR, MPI_ANY_SOURCE, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	return MPI_Wtime() - t;
     } else if ((my_rank >= start_rank) && ((my_rank - start_rank) % stride) == 0)   {
 	/* I'm a sender */
 	dest= 0;
+	MPI_Barrier(MPI_COMM_WORLD);
 	for (i= 0; i < num_msgs; i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 14, MPI_COMM_WORLD);
 	}
+    } else   {
+	MPI_Barrier(MPI_COMM_WORLD);
     }
 
     return 0.0;
