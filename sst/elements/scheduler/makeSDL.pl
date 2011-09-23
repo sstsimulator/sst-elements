@@ -13,6 +13,9 @@ $n = $ARGV[0];
 
 <sst>
   <component name="s" type="scheduler.schedComponent" rank=0>
+    <params>
+      <traceName>$ARGV[1]</traceName>
+    </params>
 EOT
 }
 

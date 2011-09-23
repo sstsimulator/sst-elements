@@ -32,6 +32,11 @@ Machine* schedComponent::getMachine() {
 schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
 
+  if ( params.find("traceName") == params.end() ) {
+    _abort(event_test,"couldn't find trace name\n");
+  }
+
+
   // tell the simulator not to end without us
   registerExit();
 
@@ -64,7 +69,7 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   machine = new SimpleMachine(nodes.size(), this);
   scheduler = new PQScheduler(JobComparator::Make("fifo"));
   theAllocator = new SimpleAllocator(dynamic_cast<SimpleMachine*>(machine));
-  string trace = "tracename";
+  string trace = params[ "traceName" ].c_str();
   stats = new Statistics(machine, scheduler, theAllocator, trace, "time");
   ifstream input;
   char* inputDir = getenv("SIMINPUT");
