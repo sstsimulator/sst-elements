@@ -1,5 +1,5 @@
 
-SRCS = m5_syscall.c m5_exit.c m5_io.c
+SRCS = m5_syscall.c m5_exit.c #m5_io.c
 
 OBJS = ${SRCS:.c=.o}
 

@@ -1,7 +1,11 @@
 
-export CC=alphaev67-unknown-linux-gnu-cc
-export CXX=alphaev67-unknown-linux-gnu-c++
-export AR=alphaev67-unknown-linux-gnu-ar
+export CC=gcc
+export CXX=c++
+export AR=ar
+
+#export CC=alphaev67-unknown-linux-gnu-cc
+#export CXX=alphaev67-unknown-linux-gnu-c++
+#export AR=alphaev67-unknown-linux-gnu-ar
 
 #export CC=sparc64-unknown-linux-gnu-gcc
 #export CXX=sparc64-unknown-linux-gnu-g++
@@ -12,7 +16,7 @@ LDFLAGS += -Llib/rt -Llib/libc
 
 CPPFLAGS += -Ilib/rt -Ilib/libc
 
-apps: libs hello rt portals
+apps: libs hello rt
 
 libs:
 	cd lib && $(MAKE)
@@ -25,7 +29,7 @@ hello: hello.o
 	${CC} hello.o -o $@ ${LDFLAGS}
 
 rt: rt.o
-	${CC} rt.o -o $@ ${LDFLAGS}
+	${CC} rt.o -o $@ ${LDFLAGS} lib/libc/m5_syscall.o
 
 clean:
 	cd portals4Tests && $(MAKE) clean
