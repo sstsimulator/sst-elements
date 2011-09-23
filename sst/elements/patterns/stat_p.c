@@ -43,14 +43,12 @@ int ii;
 double halfCI;
 
 
-    if (N <= 0.0)   {
+    if (N <= 0)   {
 	return tval[0];
     }
+
     mean= tot / N;
 
-    if (((N - mean * mean) <= 0.0) || (tot_squared <= 0.0))   {
-	return tval[0];
-    }
     if ((tot_squared / N - mean * mean) < 0.0)   {
 	return tval[0];
     }

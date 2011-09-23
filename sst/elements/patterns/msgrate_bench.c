@@ -63,7 +63,13 @@ int stride;
 int num_sender;
 int stat_mode;
 double req_precision;
-
+int ii;
+double precision;
+int trials;
+double tot;
+double tot_squared;
+double avg_bisection_rate;
+double metric;
 
 
 
@@ -152,7 +158,7 @@ double req_precision;
             case 'p':
 		req_precision= strtod(optarg, (char **)NULL);
 		if (my_rank == 0)   {
-		    printf("req_precision is %f\n", req_precision);
+		    printf("# req_precision is %f\n", req_precision);
 		}
 		break;
 
@@ -209,29 +215,26 @@ double req_precision;
 
     num_sender= num_ranks / 2;
 
-    int ii = 0;
-    double precision;
-
-    int trials;
+    ii= 0;
     if (stat_mode)   {
 	trials= 10000;
     } else   {
 	trials= 1;
     }
 
-    double tot= 0.0;
-    double tot_squared= 0.0;
+    tot= 0.0;
+    tot_squared= 0.0;
 
     while (ii < trials)   {
 	duration = Test1(my_rank, num_ranks, num_msgs, msg_len);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	//
-	double avg_bisection_rate = 1.0 / ((total_time / (num_ranks / 2)) / num_msgs);
-	tot = tot + avg_bisection_rate;
-	tot_squared = tot_squared + avg_bisection_rate * avg_bisection_rate;
-	precision = stat_p(my_rank, ii + 1, tot, tot_squared, avg_bisection_rate);
+
+	avg_bisection_rate= 1.0 / ((total_time / (num_ranks / 2)) / num_msgs);
+	tot= tot + avg_bisection_rate;
+	tot_squared= tot_squared + avg_bisection_rate * avg_bisection_rate;
+	precision= stat_p(my_rank, ii + 1, tot, tot_squared, avg_bisection_rate);
 	if (stat_mode)   {
-	    // check for precision if at least 3 trials have taken place. ii > 1 => N > 2.
+	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2. */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
 		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		if (0)   {
@@ -246,8 +249,8 @@ double req_precision;
     }
 
     if (stat_mode) {
-	// if i = 10, actual trials done is 11
-	trials++; // this is the total number of trials that took place
+	/* if i = 10, actual trials done is 11 */
+	trials++; /* this is the total number of trials that took place */
     }
 
 
@@ -278,19 +281,15 @@ double req_precision;
     tot= 0.0;
     tot_squared= 0.0;
     while  (ii < trials)    {
-	double metric;
-	int N;
-
 	duration= Test2(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 	metric= 1.0 / ((total_time / num_sender) / (num_msgs - 1));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric*metric;
-	N= ii + 1; 
-	precision= stat_p(my_rank, N, tot, tot_squared,metric);
+	precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
 
 	if (stat_mode) {
-	    // check for precision if at least 3 trials have taken place. ii > 1 => N > 2. 
+	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
 		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD); 
 		if (0)   {
@@ -305,8 +304,8 @@ double req_precision;
     }
 
     if (stat_mode)   {
-        // if i = 10, actual trials done is 11
-        trials++; // this is the total number of trials that took place
+        /* if i = 10, actual trials done is 11 */
+        trials++; /* this is the total number of trials that took place */
     }
 
 
@@ -330,17 +329,15 @@ double req_precision;
     tot= 0.0; 
     tot_squared= 0.0; 
     while  (ii < trials)   {
-	double metric;
-
 	duration= Test3(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 	metric= 1.0 / (duration / (num_msgs * num_sender));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric * metric;
-	precision= stat_p(my_rank, ii + 1, tot, tot_squared,metric);
+	precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
 
 	if (stat_mode) {
-	    // check for precision if at least 3 trials have taken place. ii > 1 => N > 2. 
+	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
 		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD); 
 		if (0)   {
@@ -356,8 +353,8 @@ double req_precision;
     }
 
     if (stat_mode) {
-        // if i = 10, actual trials done is 11
-        trials++; // this is the total number of trials that took place
+        /* if i = 10, actual trials done is 11 */
+        trials++; /* this is the total number of trials that took place */
     }
 
     if (my_rank == 0)   {

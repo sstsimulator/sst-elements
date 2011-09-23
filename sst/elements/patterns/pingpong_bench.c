@@ -47,6 +47,7 @@ double tot_squared_latency;
 double max_latency;
 double min_latency;
 
+double req_precision;
 double precision;
 
 
@@ -70,9 +71,10 @@ double precision;
     user_inc= -1;
     trials= 100;
     stat_mode = FALSE;
+    req_precision= 0.01;
 
     /* check command line args */
-    while ((ch= getopt(argc, argv, "i:e:s:n:t")) != EOF)   {
+    while ((ch= getopt(argc, argv, "i:e:s:n:tp:")) != EOF)   {
 	switch (ch)   {
 	    case 'i':
 		user_inc= strtol(optarg, (char **)NULL, 0);
@@ -81,7 +83,7 @@ double precision;
 		end_len= strtol(optarg, (char **)NULL, 0);
 		if (end_len > SIZE)   {
 		    if (my_rank == 0)   {
-			fprintf(stderr, "Maximum end length is %d\n", SIZE);
+			fprintf(stderr, "# Maximum end length is %d\n", SIZE);
 		    }
 		    error= 1;
 		}
@@ -91,6 +93,12 @@ double precision;
 		break;
 	    case 'n':
 		trials= strtol(optarg, (char **)NULL, 0);
+		break;
+            case 'p':
+		req_precision= strtod(optarg, (char **)NULL);
+		if (my_rank == 0)   {
+		    printf("# req_precision is %.3f\n", req_precision);
+		}
 		break;
 	    case 't': 
 		stat_mode= TRUE;
@@ -120,7 +128,7 @@ double precision;
 	printf("# Exchanging data between nodes %d and %d.\n", 0, num_nodes - 1);
 	printf("# Length                  Latency\n");
 	printf("# in bytes            in micro seconds\n");
-	printf("#           minimum     average     maximum     msgs per #trials       precision\n");
+	printf("#           minimum     average     maximum     msgs per #trials    precision\n");
 	printf("#                                               trial\n");
     }
 
@@ -162,7 +170,7 @@ double precision;
 	    
 	    if (stat_mode)   {
 		/* check for precision if at least 9 trials have taken place. i > 1 => N > 2. */
-		if (my_rank == 0 && i > 7 && precision <= 0.01)   {
+		if (my_rank == 0 && i > 7 && precision <= req_precision)   {
 		    MPI_Bcast(&i, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		    if (0)   {
 			printf("Node %d: Reached enough accuracy for msg size %d. Moving on to the next msg size.\n",
@@ -184,7 +192,7 @@ double precision;
 	}
 
 	if (my_rank == 0)   {
-	    printf("%9d  %8.2f    %8.2f    %8.2f    %3d      %5d        %6.2f\n",
+	    printf("%9d  %8.2f    %8.2f    %8.2f    %3d      %5d        %6.3f\n",
 		len, min_latency, tot_latency / trials, max_latency, msgs, trials, precision);
 	}
 
