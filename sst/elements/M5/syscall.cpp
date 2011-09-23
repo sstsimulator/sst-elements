@@ -55,6 +55,9 @@
     #define __NR_read                                0 
     #define __NR_write                               1 
     #define __NR_exit                                60 
+    #define __NR_fstat                               108
+    #define __NR_fstat64                             197 
+    #define __NR_ioctl                               54
 
 	#define isaSwap(x) x
 

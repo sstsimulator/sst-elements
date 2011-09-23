@@ -8,6 +8,7 @@
 #elif __x86_64__
 #define SYS_virt2phys 273 
 #define SYS_mmap_dev  274 
+#define SYS_fdmap     275 
 #elif __sparc__
 #define SYS_virt2phys 284
 #define SYS_mmap_dev  285

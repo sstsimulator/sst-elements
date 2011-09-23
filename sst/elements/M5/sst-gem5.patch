@@ -63,6 +63,95 @@ diff -r -x '*.pyc' -u sandbox-2/src/arch/alpha/tru64/tru64.hh sandbox-1/src/arch
      //@}
  
      //@{
+diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/linux/linux.hh sandbox-1/src/arch/x86/linux/linux.hh
+--- sandbox-2/src/arch/x86/linux/linux.hh	2011-09-20 09:21:52.000000000 -0600
++++ sandbox-1/src/arch/x86/linux/linux.hh	2011-09-22 15:33:15.000000000 -0600
+@@ -88,12 +88,41 @@
+     static const int NUM_OPEN_FLAGS;
+ 
+     static const unsigned TGT_MAP_ANONYMOUS = 0x20;
++    // these values are incorrect but it allows compilation
++    static const unsigned TIOCGETP_   = -1;
++    static const unsigned TIOCSETP_   = -2;
++    static const unsigned TIOCSETN_   = -3;
++    static const unsigned TIOCSETC_   = -4;
++    static const unsigned TIOCGETC_   = -5;
++    static const unsigned FIONREAD_   = -6;
++    static const unsigned TIOCISATTY_ = -7;
++    static const unsigned TIOCGETS_   = -8;
++    static const unsigned TIOCGETA_   = -9;
++    static const unsigned TCGETS_ = 0x5401;
++    static const unsigned TCSETAW_ = 0x507;
++
+ 
+     typedef struct {
+         uint64_t iov_base; // void *
+         uint64_t iov_len;  // size_t
+     } tgt_iovec;
+ 
++    enum rlimit_resources {
++        TGT_RLIMIT_CPU = 0,
++        TGT_RLIMIT_FSIZE = 1,
++        TGT_RLIMIT_DATA = 2,
++        TGT_RLIMIT_STACK = 3,
++        TGT_RLIMIT_CORE = 4,
++        TGT_RLIMIT_RSS = 5,
++        TGT_RLIMIT_NOFILE = 7,
++        TGT_RLIMIT_AS = 9,
++        TGT_RLIMIT_VMEM = -1,
++        TGT_RLIMIT_NPROC = 6,
++        TGT_RLIMIT_MEMLOCK = 8,
++        TGT_RLIMIT_LOCKS = 10
++    };
++
++
+     typedef struct {
+         int64_t  uptime;    /* Seconds since boot */
+         uint64_t loads[3];  /* 1, 5, and 15 minute load averages */
+diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/linux/syscalls.cc sandbox-1/src/arch/x86/linux/syscalls.cc
+--- sandbox-2/src/arch/x86/linux/syscalls.cc	2011-09-20 09:21:52.000000000 -0600
++++ sandbox-1/src/arch/x86/linux/syscalls.cc	2011-09-22 15:28:59.000000000 -0600
+@@ -229,7 +229,7 @@
+     /*  13 */ SyscallDesc("rt_sigaction", ignoreFunc),
+     /*  14 */ SyscallDesc("rt_sigprocmask", unimplementedFunc),
+     /*  15 */ SyscallDesc("rt_sigreturn", unimplementedFunc),
+-    /*  16 */ SyscallDesc("ioctl", unimplementedFunc),
++    /*  16 */ SyscallDesc("ioctl", ioctlFunc<X86Linux64>),
+     /*  17 */ SyscallDesc("pread64", unimplementedFunc),
+     /*  18 */ SyscallDesc("pwrite64", unimplementedFunc),
+     /*  19 */ SyscallDesc("readv", unimplementedFunc),
+@@ -292,7 +292,7 @@
+     /*  76 */ SyscallDesc("truncate", truncateFunc),
+     /*  77 */ SyscallDesc("ftruncate", ftruncateFunc),
+     /*  78 */ SyscallDesc("getdents", unimplementedFunc),
+-    /*  79 */ SyscallDesc("getcwd", unimplementedFunc),
++    /*  79 */ SyscallDesc("getcwd", getcwdFunc),
+     /*  80 */ SyscallDesc("chdir", unimplementedFunc),
+     /*  81 */ SyscallDesc("fchdir", unimplementedFunc),
+     /*  82 */ SyscallDesc("rename", renameFunc),
+@@ -309,8 +309,8 @@
+     /*  93 */ SyscallDesc("fchown", unimplementedFunc),
+     /*  94 */ SyscallDesc("lchown", unimplementedFunc),
+     /*  95 */ SyscallDesc("umask", unimplementedFunc),
+-    /*  96 */ SyscallDesc("gettimeofday", unimplementedFunc),
+-    /*  97 */ SyscallDesc("getrlimit", unimplementedFunc),
++    /*  96 */ SyscallDesc("gettimeofday", gettimeofdayFunc<X86Linux64>),
++    /*  97 */ SyscallDesc("getrlimit", getrlimitFunc<X86Linux64>),
+     /*  98 */ SyscallDesc("getrusage", unimplementedFunc),
+     /*  99 */ SyscallDesc("sysinfo", sysinfoFunc<X86Linux64>),
+     /* 100 */ SyscallDesc("times", unimplementedFunc),
+@@ -485,7 +485,10 @@
+     /* 269 */ SyscallDesc("faccessat", unimplementedFunc),
+     /* 270 */ SyscallDesc("pselect6", unimplementedFunc),
+     /* 271 */ SyscallDesc("ppoll", unimplementedFunc),
+-    /* 272 */ SyscallDesc("unshare", unimplementedFunc)
++    /* 272 */ SyscallDesc("unshare", unimplementedFunc),
++    /* 273 */ SyscallDesc("virt2phys", virt2physFunc),
++    /* 274 */ SyscallDesc("mmap_dev", mmap_devFunc),
++    /* 275 */ SyscallDesc("fdmap", fdmapFunc)
+ };
+ 
+ const int X86_64LinuxProcess::numSyscalls = 
 diff -r -x '*.pyc' -u sandbox-2/src/base/debug.cc sandbox-1/src/base/debug.cc
 --- sandbox-2/src/base/debug.cc	2011-09-20 09:21:52.000000000 -0600
 +++ sandbox-1/src/base/debug.cc	2011-09-22 13:33:43.000000000 -0600

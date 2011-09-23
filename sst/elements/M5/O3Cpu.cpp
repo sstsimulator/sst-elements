@@ -22,6 +22,9 @@ class Component;
 #elif THE_ISA == ALPHA_ISA
     #define ISA AlphaISA
     #define TLBParams AlphaTLBParams
+#elif THE_ISA == X86_ISA
+    #define ISA X86ISA
+    #define TLBParams X86TLBParams
 #else
     #error What ISA
 #endif
