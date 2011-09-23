@@ -65,8 +65,8 @@ diff -r -x '*.pyc' -u sandbox-2/src/arch/alpha/tru64/tru64.hh sandbox-1/src/arch
      //@{
 diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/linux/linux.hh sandbox-1/src/arch/x86/linux/linux.hh
 --- sandbox-2/src/arch/x86/linux/linux.hh	2011-09-20 09:21:52.000000000 -0600
-+++ sandbox-1/src/arch/x86/linux/linux.hh	2011-09-22 15:33:15.000000000 -0600
-@@ -88,12 +88,41 @@
++++ sandbox-1/src/arch/x86/linux/linux.hh	2011-09-23 11:56:00.000000000 -0600
+@@ -88,12 +88,39 @@
      static const int NUM_OPEN_FLAGS;
  
      static const unsigned TGT_MAP_ANONYMOUS = 0x20;
@@ -82,7 +82,6 @@ diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/linux/linux.hh sandbox-1/src/arch/x
 +    static const unsigned TIOCGETA_   = -9;
 +    static const unsigned TCGETS_ = 0x5401;
 +    static const unsigned TCSETAW_ = 0x507;
-+
  
      typedef struct {
          uint64_t iov_base; // void *
@@ -103,7 +102,6 @@ diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/linux/linux.hh sandbox-1/src/arch/x
 +        TGT_RLIMIT_MEMLOCK = 8,
 +        TGT_RLIMIT_LOCKS = 10
 +    };
-+
 +
      typedef struct {
          int64_t  uptime;    /* Seconds since boot */
@@ -152,6 +150,23 @@ diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/linux/syscalls.cc sandbox-1/src/arc
  };
  
  const int X86_64LinuxProcess::numSyscalls = 
+diff -r -x '*.pyc' -u sandbox-2/src/arch/x86/tlb.cc sandbox-1/src/arch/x86/tlb.cc
+--- sandbox-2/src/arch/x86/tlb.cc	2011-09-20 09:21:52.000000000 -0600
++++ sandbox-1/src/arch/x86/tlb.cc	2011-09-23 12:09:25.000000000 -0600
+@@ -691,6 +691,13 @@
+         req->setPaddr(x86LocalAPICAddress(tc->contextId(), paddr - baseAddr));
+     }
+ #endif
++#if 1           
++    if ( req->getPaddr() < 0x10000 ) {
++       //DPRINTFN("TLB::%s() don't cache %#lx\n",__func__,req->getPaddr());
++        req->setFlags(Request::UNCACHEABLE);
++    }       
++#endif      
++
+     return NoFault;
+ };
+ 
 diff -r -x '*.pyc' -u sandbox-2/src/base/debug.cc sandbox-1/src/base/debug.cc
 --- sandbox-2/src/base/debug.cc	2011-09-20 09:21:52.000000000 -0600
 +++ sandbox-1/src/base/debug.cc	2011-09-22 13:33:43.000000000 -0600
