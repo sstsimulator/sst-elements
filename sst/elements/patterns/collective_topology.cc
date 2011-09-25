@@ -152,6 +152,47 @@ int pos;
 
 
 
+// Count children of a rank
+int
+Collective_topology::num_children(int rank)
+{
+
+int child;
+int pos;
+int cnt;
+
+
+    cnt= 0;
+    if (t == TREE_BINARY)   {
+	child= 2 * (this_rank + 1) - 1;
+	if (child < this_topology_size)   {
+	    cnt++;
+	}
+
+	child= 2 * (this_rank + 1);
+	if (child < this_topology_size)   {
+	    cnt++;
+	}
+
+    } else if (t == TREE_DEEP)   {
+	if (this_rank == 0)   {
+	    pos= lsb(next_power2((uint32_t)this_topology_size));
+	} else   {
+	    pos= lsb((uint32_t)this_rank);
+	}
+	for (int i= 0; i < pos; i++)   {
+	    child= this_rank | (1 << i);
+	    if (child >= this_topology_size) break;
+	    cnt++;
+	}
+    }
+
+    return cnt;
+
+}  // end of num_children()
+
+
+
 //
 // A couple of bit-twidling utility functions we need
 // Algorithms from http://graphics.stanford.edu/~seander/bithacks.html

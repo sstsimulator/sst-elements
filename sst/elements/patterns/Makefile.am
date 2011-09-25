@@ -7,7 +7,7 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmsgrate_pattern.la libpingpong_pattern.la \
 			liballreduce_pattern.la liballtoall_pattern.la \
-			libghost_pattern.la
+			libghost_pattern.la libfft_pattern.la
 
 libmsgrate_pattern_la_SOURCES = msgrate_pattern.h msgrate_pattern.cc \
 			    comm_pattern.h comm_pattern.cc \
@@ -58,6 +58,15 @@ liballtoall_pattern_la_SOURCES = alltoall_pattern.h alltoall_pattern.cc \
 			    alltoall_op.h alltoall_op.cc \
 			    stats.h stats.cc
 liballtoall_pattern_la_LDFLAGS = -module -avoid-version
+
+libfft_pattern_la_SOURCES =  \
+			    comm_pattern.h comm_pattern.cc \
+			    state_machine.h state_machine.cc \
+			    pattern_common.h pattern_common.cc \
+			    scatter_op.h scatter_op.cc \
+			    collective_topology.h collective_topology.cc \
+			    stats.h stats.cc
+libfft_pattern_la_LDFLAGS = -module -avoid-version
 
 # breaks Bamboo   CC = $(MPICC)
 # breaks Bamboo   CXX = $(MPICXX)

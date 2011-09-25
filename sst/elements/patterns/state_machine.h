@@ -85,7 +85,7 @@ class state_event   {
 
 
 
-// This transfer to another state by sending oursleves an event
+// This transfers to another state by sending oursleves an event.
 // This will probably be seldom used. It is necessary when you
 // want to go to the next state, but can't do any work there (yet)
 // and would have to block.

@@ -45,6 +45,7 @@ class Collective_topology   {
 	bool is_leaf(void);
 	int parent_rank(void);
 	int num_children(void);
+	int num_children(int rank);
 	int num_nodes(void);
 
 	const int root;
