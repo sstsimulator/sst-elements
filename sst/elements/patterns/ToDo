@@ -1,9 +1,7 @@
+- Allow machine to be bigger than job that we run on it
 - Recreate and fix I/O and NVRAM infrastructure
-- Fix reading of NIC latency param on 32-bit systems
 
 - How to measure gap? Router latency? Link bandwidth?
-- Look at msgrate
-- Look at allreduce
 
 - Rename Patterns object something like machine or arch
     Rexport its methods directly, instead of through more methods in comm_patterns.
@@ -18,8 +16,6 @@
 
 - Flits in router
 
-- Make ghost_pattern.cc code more modular to make it easier to expand
-
 - Play with component weight
 
 - Implement checkpointing
@@ -28,7 +24,6 @@
     - RAID
 
 - More patterns
-    - FFT
     - Master/Slave
     - Integer Sort (IS)
 
@@ -134,3 +129,9 @@ Arch model
     and may another mechanism to set the message length from the
     calling module, if it wants to set it.
 
+- Fix reading of NIC latency param on 32-bit systems
+
+- Make ghost_pattern.cc code more modular to make it easier to expand
+
+- More patterns
+    - FFT

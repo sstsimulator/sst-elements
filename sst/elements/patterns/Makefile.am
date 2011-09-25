@@ -64,6 +64,7 @@ libfft_pattern_la_SOURCES =  \
 			    state_machine.h state_machine.cc \
 			    pattern_common.h pattern_common.cc \
 			    scatter_op.h scatter_op.cc \
+			    gather_op.h gather_op.cc \
 			    collective_topology.h collective_topology.cc \
 			    stats.h stats.cc
 libfft_pattern_la_LDFLAGS = -module -avoid-version
