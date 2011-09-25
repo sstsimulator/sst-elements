@@ -20,9 +20,10 @@ static int error_check(void);
 #define GHOST_NAME		"ghost_pattern"
 #define PINGPONG_NAME		"pingpong_pattern"
 #define MSGRATE_NAME		"msgrate_pattern"
+#define FFT_NAME		"fft_pattern"
 
 typedef enum {alltoall_pattern, allreduce_pattern, pingpong_pattern,
-    ghost_pattern, msgrate_pattern} pattern_t;
+    ghost_pattern, msgrate_pattern, fft_pattern} pattern_t;
 
 /* For collectives */
 typedef enum {TREE_BINARY= 0, TREE_DEEP} tree_type_t;
@@ -70,6 +71,10 @@ static int _len_inc;
 /* static int _num_msgs; already declared */
 static int _msg_len;
 
+/* FFT parameters */
+static int _N;
+static int _iter;
+
 
 
 static void
@@ -106,6 +111,10 @@ set_defaults(void)
     /* Msgrate defaults */
     _num_msgs= NO_DEFAULT;
     _msg_len= NO_DEFAULT;
+
+    /* FFT defaults */
+    _N= NO_DEFAULT;
+    _iter= 1;
 
 }  /* end of set_defaults() */
 
@@ -166,6 +175,11 @@ int error;
 	case msgrate_pattern:
 	    PARAM_CHECK("Msgrate", num_msgs, <, 0);
 	    PARAM_CHECK("Msgrate", msg_len, <, 0);
+	    break;
+
+	case fft_pattern:
+	    PARAM_CHECK("fft", N, <, 0);
+	    PARAM_CHECK("fft", iter, <, 0);
 	    break;
     }
 
@@ -243,6 +257,11 @@ disp_pattern_params(void)
 	case msgrate_pattern:
 	    printf("***     num_msgs =     %d\n", _num_msgs);
 	    printf("***     msg_len =      %d\n", _msg_len);
+	    break;
+
+	case fft_pattern:
+	    printf("***     N =            %d\n", _N);
+	    printf("***     iter =         %d\n", _iter);
 	    break;
     }
 
@@ -348,6 +367,13 @@ int rc;
 		} else if (strcmp("msg_len", key) == 0)   {
 		    _msg_len= strtol(value1, (char **)NULL, 0);
 
+		/* FFT parameters */
+		} else if (strcmp("N", key) == 0)   {
+		    _N= strtol(value1, (char **)NULL, 0);
+
+		} else if (strcmp("iter", key) == 0)   {
+		    _iter= strtol(value1, (char **)NULL, 0);
+
 		} else   {
 		    fprintf(stderr, "Unknown parameter \"%s\" in pattern file!\n", key);
 		    error= TRUE;
@@ -372,6 +398,8 @@ int rc;
 		    _pattern= pingpong_pattern;
 		} else if (strcmp(_pattern_name, MSGRATE_NAME) == 0)   {
 		    _pattern= msgrate_pattern;
+		} else if (strcmp(_pattern_name, FFT_NAME) == 0)   {
+		    _pattern= fft_pattern;
 		} else   {
 		    fprintf(stderr, "Unknown pattern name \"%s\" in pattern file!\n", _pattern_name);
 		    error= TRUE;
@@ -466,6 +494,11 @@ pattern_params(FILE *out)
 	case msgrate_pattern:
 	    PRINT_PARAM(out, num_msgs);
 	    PRINT_PARAM(out, msg_len);
+	    break;
+
+	case fft_pattern:
+	    PRINT_PARAM(out, N);
+	    PRINT_PARAM(out, iter);
 	    break;
     }
 

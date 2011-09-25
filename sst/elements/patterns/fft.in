@@ -1,0 +1,3 @@
+name = fft_pattern
+param N = 20000
+param iter = 1
