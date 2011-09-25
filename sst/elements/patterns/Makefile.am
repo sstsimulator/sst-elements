@@ -59,7 +59,7 @@ liballtoall_pattern_la_SOURCES = alltoall_pattern.h alltoall_pattern.cc \
 			    stats.h stats.cc
 liballtoall_pattern_la_LDFLAGS = -module -avoid-version
 
-libfft_pattern_la_SOURCES =  \
+libfft_pattern_la_SOURCES = fft_pattern.h fft_pattern.cc \
 			    comm_pattern.h comm_pattern.cc \
 			    state_machine.h state_machine.cc \
 			    pattern_common.h pattern_common.cc \

@@ -6,9 +6,14 @@
 
 
 
+/* For collectives */
+typedef enum {TREE_BINARY= 0, TREE_DEEP} tree_type_t;
+
+
 /* Local functions */
 static void set_defaults(void);
 static int error_check(void);
+static char *str_tree_type(tree_type_t t);
 
 
 #define MAX_LINE		(1024)
@@ -24,9 +29,6 @@ static int error_check(void);
 
 typedef enum {alltoall_pattern, allreduce_pattern, pingpong_pattern,
     ghost_pattern, msgrate_pattern, fft_pattern} pattern_t;
-
-/* For collectives */
-typedef enum {TREE_BINARY= 0, TREE_DEEP} tree_type_t;
 
 
 /* 
@@ -48,6 +50,7 @@ static tree_type_t _tree_type;
 /* static int _num_ops; already declared */
 /* static int _num_sets; already declared */
 /* static int _num_doubles; already declared */
+/* static tree_type_t _tree_type; already declared */
 
 /* Ghost parameters */
 static int _time_steps;		/* Run for num time steps. Default 1000 */
@@ -74,6 +77,7 @@ static int _msg_len;
 /* FFT parameters */
 static int _N;
 static int _iter;
+/* static tree_type_t _tree_type; already declared */
 
 
 
@@ -109,12 +113,13 @@ set_defaults(void)
     _len_inc= OPTIONAL;
 
     /* Msgrate defaults */
-    _num_msgs= NO_DEFAULT;
+    /* _num_msgs= NO_DEFAULT; already set */
     _msg_len= NO_DEFAULT;
 
     /* FFT defaults */
     _N= NO_DEFAULT;
-    _iter= 1;
+    _iter= OPTIONAL;
+    /* _tree_type= TREE_DEEP; already set */
 
 }  /* end of set_defaults() */
 
@@ -178,8 +183,8 @@ int error;
 	    break;
 
 	case fft_pattern:
-	    PARAM_CHECK("fft", N, <, 0);
-	    PARAM_CHECK("fft", iter, <, 0);
+	    PARAM_CHECK("FFT", N, <, 0);
+	    /* Don't check optional parameter "iter" */
 	    break;
     }
 
@@ -204,22 +209,14 @@ disp_pattern_params(void)
 	    printf("***     num_sets =     %d\n", _num_sets);
 	    printf("***     num_ops =      %d\n", _num_ops);
 	    printf("***     num_doubles =  %d\n", _num_doubles);
+	    printf("***     tree_type =    %s\n", str_tree_type(_tree_type));
 	    break;
 
 	case allreduce_pattern:
 	    printf("***     num_sets =     %d\n", _num_sets);
 	    printf("***     num_ops =      %d\n", _num_ops);
 	    printf("***     num_doubles =  %d\n", _num_doubles);
-	    switch (_tree_type)   {
-		case TREE_DEEP:
-		    printf("***     tree_type =    deep\n");
-		    break;
-		case TREE_BINARY:
-		    printf("***     tree_type =    binary\n");
-		    break;
-		default:
-		    printf("***     tree_type =    unknown\n");
-	    }
+	    printf("***     tree_type =    %s\n", str_tree_type(_tree_type));
 	    break;
 
 	case ghost_pattern:
@@ -261,7 +258,12 @@ disp_pattern_params(void)
 
 	case fft_pattern:
 	    printf("***     N =            %d\n", _N);
-	    printf("***     iter =         %d\n", _iter);
+	    if (_iter == OPTIONAL)   {
+		printf("***     iter =         default\n");
+	    } else   {
+		printf("***     iter =         %d\n", _iter);
+	    }
+	    printf("***     tree_type =    %s\n", str_tree_type(_tree_type));
 	    break;
     }
 
@@ -447,22 +449,14 @@ pattern_params(FILE *out)
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);
 	    PRINT_PARAM(out, num_doubles);
+	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
 
 	case allreduce_pattern:
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);
 	    PRINT_PARAM(out, num_doubles);
-	    switch (_tree_type)   {
-		case TREE_DEEP:
-		    fprintf(out, "    <tree_type> %s </tree_type>\n", "deep");
-		    break;
-		case TREE_BINARY:
-		    fprintf(out, "    <tree_type> %s </tree_type>\n", "binary");
-		    break;
-		default:
-		    fprintf(out, "    <tree_type> %s </tree_type>\n", "unknown");
-	    }
+	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
 
 	case ghost_pattern:
@@ -498,8 +492,30 @@ pattern_params(FILE *out)
 
 	case fft_pattern:
 	    PRINT_PARAM(out, N);
-	    PRINT_PARAM(out, iter);
+	    if (_iter != OPTIONAL)   {
+		PRINT_PARAM(out, iter);
+	    }
+	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
     }
 
 }  /* end of pattern_params() */
+
+
+
+static char *
+str_tree_type(tree_type_t t)
+{
+
+    switch (t)   {
+	case TREE_DEEP:
+	    return "deep";
+	    break;
+	case TREE_BINARY:
+	    return "binary";
+	    break;
+	default:
+	    return "unknown";
+    }
+
+}  /* end of str_tree_type() */
