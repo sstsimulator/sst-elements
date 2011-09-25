@@ -233,12 +233,9 @@ doit(int len, int trial, double *latency, int *msgs)
 static double last_delta= 0.0;
 static int pp= MAX_PING_PONG;
 double delta, start;
-int rc;
+int rc= 0;
 int j;
-
-
-    MPI_Request latencyflag[MAX_PING_PONG];
-    rc= 0;
+MPI_Request latencyflag[MAX_PING_PONG];
 
 
     /*
