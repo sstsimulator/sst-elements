@@ -78,6 +78,7 @@ static int _msg_len;
 static int _N;
 static int _iter;
 /* static tree_type_t _tree_type; already declared */
+/* static int _time_per_flop; already declared */
 
 
 
@@ -184,6 +185,7 @@ int error;
 
 	case fft_pattern:
 	    PARAM_CHECK("FFT", N, <, 0);
+	    PARAM_CHECK("FFT", time_per_flop, <, 0);
 	    /* Don't check optional parameter "iter" */
 	    break;
     }
@@ -257,13 +259,14 @@ disp_pattern_params(void)
 	    break;
 
 	case fft_pattern:
-	    printf("***     N =            %d\n", _N);
+	    printf("***     N =               %d\n", _N);
 	    if (_iter == OPTIONAL)   {
-		printf("***     iter =         default\n");
+		printf("***     iter =            default\n");
 	    } else   {
-		printf("***     iter =         %d\n", _iter);
+		printf("***     iter =            %d\n", _iter);
 	    }
-	    printf("***     tree_type =    %s\n", str_tree_type(_tree_type));
+	    printf("***     tree_type =       %s\n", str_tree_type(_tree_type));
+	    printf("***     time_per_flop =   %d ns\n", _time_per_flop);
 	    break;
     }
 
@@ -495,6 +498,7 @@ pattern_params(FILE *out)
 	    if (_iter != OPTIONAL)   {
 		PRINT_PARAM(out, iter);
 	    }
+	    PRINT_PARAM(out, time_per_flop);
 	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
     }

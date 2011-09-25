@@ -46,6 +46,7 @@ class Collective_topology   {
 	int parent_rank(void);
 	int num_children(void);
 	int num_children(int rank);
+	int num_descendants(int rank);
 	int num_nodes(void);
 
 	const int root;

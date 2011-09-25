@@ -30,6 +30,8 @@ class FFT_pattern : public Comm_pattern    {
 	    N= -1;
 	    iter= 1;
 	    tree_type= TREE_DEEP;
+	    time_per_flop= 10;
+	    verbose= 0;
 
 
 	    // Process the message rate specific paramaters
@@ -54,6 +56,14 @@ class FFT_pattern : public Comm_pattern    {
 			}
 			exit(-2);
 		    }
+		}
+
+		if (!it->first.compare("time_per_flop"))   {
+		    sscanf(it->second.c_str(), "%d", &time_per_flop);
+		}
+
+		if (!it->first.compare("verbose"))   {
+		    sscanf(it->second.c_str(), "%d", &verbose);
 		}
 
                 ++it;
@@ -93,9 +103,9 @@ class FFT_pattern : public Comm_pattern    {
 	    done= false;
 	    if (my_rank == 0)   {
 		printf("#  |||  FFT Pattern test\n");
-		printf("#  |||  Number of iterations %d\n", iter);
-		printf("#  |||  Vector size N is %d", N);
-		printf("#  |||  Tree type is ");
+		printf("#  |||      Number of iterations   %d\n", iter);
+		printf("#  |||      Vector size N is       %d\n", N);
+		printf("#  |||      Tree type is           ");
 		switch (tree_type)   {
 		    case TREE_DEEP:
 			printf("deep\n");
@@ -104,6 +114,8 @@ class FFT_pattern : public Comm_pattern    {
 			printf("binary\n");
 			break;
 		}
+		printf("#  |||      time_per_flop =        %d %s\n", time_per_flop, TIME_BASE);
+		printf("#\n");
 	    }
 	    state_transition(E_START, STATE_INIT);
         }
@@ -116,7 +128,8 @@ class FFT_pattern : public Comm_pattern    {
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_START_PHASE2, E_COMPUTE_DONE, E_COMPUTE,
-	    E_SCATTER_ENTRY, E_SCATTER_EXIT, 
+	    E_SCATTER_ENTRY, E_SCATTER_EXIT, E_PHASE3_ENTRY, E_PHASE3_EXIT,
+	    E_PHASE4_ENTRY, E_PHASE4_EXIT, E_GATHER_ENTRY, E_GATHER_EXIT,
 	    E_DONE} fft_events_t;
 
     private:
@@ -156,8 +169,16 @@ class FFT_pattern : public Comm_pattern    {
 	fft_state_t state;
 	int i;
 	int done;
-	SimTime_t duration;
+	int time_per_flop;		// In nano seconds
+	int verbose;
 	SimTime_t test_start_time;
+	SimTime_t phase1_time;
+	SimTime_t phase2_time;
+	SimTime_t phase3_time;
+	SimTime_t phase4_time;
+	SimTime_t phase5_time;
+	SimTime_t total_time;
+	int M;
 
 
 	// Serialization
@@ -179,6 +200,7 @@ class FFT_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(i);
 	    ar & BOOST_SERIALIZATION_NVP(done);
 	    ar & BOOST_SERIALIZATION_NVP(test_start_time);
+	    ar & BOOST_SERIALIZATION_NVP(M);
         }
 
         template<class Archive>

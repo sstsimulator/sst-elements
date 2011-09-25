@@ -42,6 +42,7 @@ Gather_op::handle_events(state_event sm_event)
     // patterns like this one. Just return to our caller.
     if (done)   {
 	state= START;
+	receives= 0;
 	done= false;
 	cp->SM->SM_return(sm_event);
     }
@@ -61,7 +62,8 @@ state_event send_event;
     switch (e)   {
 	case E_START:
 	    if (ctopo->is_leaf() && ctopo->num_nodes() > 1)   {
-		printf("[%3d] Gather: sending %d * %d bytes to parent %d\n", cp->my_rank, 1, gather_msglen, ctopo->parent_rank());
+		// printf("[%3d] Gather: sending %d * %d bytes to parent %d\n", cp->my_rank, 1, gather_msglen, ctopo->parent_rank());
+		send_event.event= E_FROM_CHILD;
 		cp->send_msg(ctopo->parent_rank(), gather_msglen, send_event);
 		done= true;
 	    } else   {
@@ -69,7 +71,7 @@ state_event send_event;
 		if (ctopo->num_nodes() > 1)   {
 		    state= WAIT_CHILDREN;
 		} else   {
-		    // I gues we're the only one
+		    // I guess we're the only one
 		    done= true;
 		}
 	    }
@@ -118,11 +120,11 @@ int msglen;
 		    send_event.event= E_FROM_CHILD;
 
 		    // Send what we received plus our own contribution
-		    msglen= (receives + 1) * gather_msglen;
-		    printf("[%3d] Gather: sending %d * %d bytes to parent %d\n", cp->my_rank, receives + 1, gather_msglen, ctopo->parent_rank());
+		    msglen= (ctopo->num_descendants(cp->my_rank) + 1) * gather_msglen;
+		    // printf("[%3d] Gather: sending %d * %d bytes on to parent %d\n", cp->my_rank, ctopo->num_descendants(cp->my_rank) + 1, gather_msglen, ctopo->parent_rank());
+		    send_event.event= E_FROM_CHILD;
 		    cp->send_msg(ctopo->parent_rank(), msglen, send_event);
 		}
-		receives= 0;
 		done= true;
 	    }
 	    break;

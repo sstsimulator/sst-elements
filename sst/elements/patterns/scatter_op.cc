@@ -71,8 +71,8 @@ int msglen;
 		    // That number determines how much data I have to send to each child.
 		    // This does not take into consideration how much time would be
 		    // required to pack (memcpy) the data before sending
-		    msglen= ctopo->num_children(*it) * scatter_msglen;
-		    printf("[%3d] Scatter: sending %d * %d bytes to child %d\n", cp->my_rank, ctopo->num_children(*it), scatter_msglen, *it);
+		    msglen= (ctopo->num_descendants(*it) + 1) * scatter_msglen;
+		    // printf("[%3d] Scatter: sending %d * %d bytes to child %d\n", cp->my_rank, ctopo->num_descendants(*it) + 1, scatter_msglen, *it);
 		    cp->send_msg(*it, msglen, send_event);
 		}
 
@@ -112,8 +112,8 @@ int msglen;
 		// That number determines how much data I have to send to each child.
 		// This does not take into consideration how much time would be
 		// required to pack (memcpy) the data before sending
-		msglen= ctopo->num_children(*it) * scatter_msglen;
-		printf("[%3d] Scatter: sending %d * %d bytes to child %d\n", cp->my_rank, ctopo->num_children(*it), scatter_msglen, *it);
+		msglen= (ctopo->num_descendants(*it) + 1) * scatter_msglen;
+		// printf("[%3d] Scatter: sending %d * %d bytes to child %d\n", cp->my_rank, ctopo->num_descendants(*it) + 1, scatter_msglen, *it);
 		cp->send_msg(*it, msglen, send_event);
 	    }
 
