@@ -318,12 +318,13 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 		printf("Bytes sent from each rank: %" PRId64 " bytes (%.3f MB), %.1f MB total\n",
 		    bytes_sent, (float)bytes_sent / 1024 / 1024,
 		    (float)bytes_sent / 1024 / 1024 * num_ranks);
-		printf("Sends per rank: %lld, %lld total\n", num_sends, num_sends * num_ranks);
+		printf("Sends per rank: %" PRId64 ", %" PRId64 " total\n", num_sends, num_sends * num_ranks);
 		printf("Average size per send: %.0f B (%.3f MB)\n", (float)bytes_sent / num_sends,
 		    (float)bytes_sent / num_sends / 1024 / 1024);
-		printf("Number of allreduces: %lld (one every %d time steps)\n", reduce_cnt, reduce_steps);
-		printf("Total number of flotaing point ops %lld (%.3f x 10^9)\n", fop_cnt * num_ranks,
-		    (float)fop_cnt / 1000000000.0 * num_ranks);
+		printf("Number of allreduces: %" PRId64 " (one every %d time steps)\n",
+		    reduce_cnt, reduce_steps);
+		printf("Total number of flotaing point ops %" PRId64 " (%.3f x 10^9)\n",
+		    fop_cnt * num_ranks, (float)fop_cnt / 1000000000.0 * num_ranks);
 		printf("Per second: %.0f Flops (%.3f GFlops)\n",
 		    (float)fop_cnt * num_ranks / SimTimeToD(total_time_end - total_time_start),
 		    (float)fop_cnt * num_ranks / SimTimeToD(total_time_end - total_time_start) / 1000000000.0);
