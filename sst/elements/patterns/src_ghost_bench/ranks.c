@@ -12,6 +12,7 @@
 #include "ghost.h"
 #include "ranks.h"
 
+long int lrint(double x);
 
 
 /*

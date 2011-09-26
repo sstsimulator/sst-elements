@@ -171,14 +171,14 @@ SimTime_t duration;
 		    // Extend compute time a little bit, by adding a wait of
 		    // delay percent of compute time.
 		    if (!compute_imbalance)   {
-			duration += duration * delay / 100.0;
+			duration += (SimTime_t)((double)duration * delay / 100.0);
 		    } else   {
 			// Randomly delay ranks by an average of delay %
 			r= -1.0 * log(drand48()) * delay;
 			if (r < 0.0)   {
 			    r= 0.0;
 			}
-			duration += duration * r / 100.0;
+			duration += (SimTime_t)((double)duration * r / 100.0);
 		    }
 		}
 
@@ -204,14 +204,14 @@ SimTime_t duration;
 		    // Extend compute time a little bit, by adding a wait of
 		    // delay percent of compute time.
 		    if (!compute_imbalance)   {
-			duration += duration * delay / 100.0;
+			duration += (SimTime_t)((double)duration * delay / 100.0);
 		    } else   {
 			// Randomly delay ranks by an average of delay %
 			r= -1.0 * log(drand48()) * delay;
 			if (r < 0.0)   {
 			    r= 0.0;
 			}
-			duration += duration * r / 100.0;
+			duration += (SimTime_t)((double)duration * r / 100.0);
 		    }
 		}
 

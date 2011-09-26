@@ -8,6 +8,10 @@
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
+#include <math.h>
+
+
+
 /*
 ** The following three defines have to match in type
 */

@@ -203,7 +203,7 @@ class Ghost_pattern : public Comm_pattern    {
 	int z_elements;
 	int loops;
 	int reduce_steps;
-	float delay;
+	double delay;
 	int verbose;
 	int time_per_flop;	// In nano seconds
 

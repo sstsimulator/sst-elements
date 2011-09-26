@@ -2,6 +2,9 @@
 #include <math.h>
 #include "stat_p.h"
 
+extern double sqrt(double x);
+
+
 
 /*
 

@@ -7,11 +7,15 @@
 
 #include <stdio.h>
 #include <mpi.h>
-#include <math.h>	/* For trunk(), log() */
+#include <math.h>	/* For trunk(), log(), lrint */
 #include <unistd.h>	/* For usleep() */
 #include <stdlib.h>	/* For drand48() */
 #include "ghost.h"
 #include "work.h"
+
+
+double trunc(double x);
+long int lrint(double x);
 
 
 /* Local functions */
