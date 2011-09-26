@@ -21,6 +21,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <assert.h>
 
 static void
 print_usage(char *argv0)
@@ -34,10 +35,9 @@ print_usage(char *argv0)
     fprintf(stderr, "  -y, --ydim=COUNT       Size of y dimension (default: 8)\n");
     fprintf(stderr, "  -z, --zdim=COUNT       Size of z dimension (default: 8)\n");
     fprintf(stderr, "      --latency=COUNT   Latency (in ns)\n");
-    fprintf(stderr, "      --output=FILENAME  Output should be sent to FILENAME (default: stdout)\n");
+    fprintf(stderr, "      --output=NAME  Output should be sent to NAME.xml and NAME-M5.xml (default: config)\n");
     fprintf(stderr, "      --ranks=COUNT If >1, will pre-partition for COUNT ranks (default: 1)\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "NOTE: If noise_runs is non-zero, noise_interval and noise_duration\n");
     fprintf(stderr, "must be specified\n");
 }
 
@@ -50,7 +50,6 @@ static struct option longopts[] = {
     { "output",            required_argument, NULL, 'o' },
     { "help",              no_argument,       NULL, 'h' },
     { "ranks",             required_argument, NULL, 'k' },
-    { "new_format",        no_argument,       NULL, 'f' },
     { NULL,                0,                 NULL, 0   }
 };
 
@@ -68,10 +67,9 @@ main(int argc, char **argv)
     int argc_org = argc;
     char **argv_org = argv;
     int ranks = 1;
-    int new_format = 0;
+    char *filePrefix = "config";
 
-    char M5sdlFile[256];
-    sprintf(M5sdlFile,"M5-%d.xml",getpid());
+    char fileName[256];
     
     while ((ch = getopt_long(argc, argv, "hx:y:z:r:e:", longopts, NULL)) != -1) {
         switch (ch) {
@@ -87,16 +85,13 @@ main(int argc, char **argv)
             latency = atoi(optarg);
             break;
         case 'o':
-            output = fopen(optarg, "w");
+            filePrefix = optarg;
             break;
         case 'h':
             print_usage(argv[0]);
             exit(0);
         case 'k':
             ranks = atoi(optarg);
-            break;
-        case 'f':
-            new_format = 1;
             break;
         case 'e':
             exe = optarg;
@@ -106,13 +101,21 @@ main(int argc, char **argv)
             exit(1);
         }
     }
+
+    sprintf(fileName,"%s.xml",filePrefix);
+
+    output = fopen( fileName ,"w"); 
+
+    assert( output );
+
     size = x_count * y_count * z_count;
 
     extern void sdlgenM5( const char* file, const char*, int numM5Nids );
 
+    sprintf(fileName,"%s-M5.xml",filePrefix);
     fprintf( stderr, "exe=%s %d:%d:%d size=%d ranks=%d\n", exe, 
                     x_count, y_count, z_count, size, ranks );
-    sdlgenM5( M5sdlFile,  exe, size / ranks ); 
+    sdlgenM5( fileName,  exe, size / ranks ); 
 
     fprintf(output, "<?xml version=\"2.0\"?>\n");
     fprintf(output, "\n");
@@ -186,7 +189,7 @@ main(int argc, char **argv)
     fprintf(output, "%s    <M5debug> none </M5debug>\n",indent);
     fprintf(output, "%s    <info> no </info>\n",indent);
     fprintf(output, "%s    <registerExit> yes </registerExit>\n",indent);
-    fprintf(output, "%s    <configFile> %s </configFile>\n",indent,M5sdlFile);
+    fprintf(output, "%s    <configFile> %s </configFile>\n",indent,fileName);
     fprintf(output, "%s</cpu_params>\n",indent);
     fprintf(output, "\n");
 
@@ -281,6 +284,7 @@ main(int argc, char **argv)
 
         memset( foo, 0, sizeof(int)*ranks); 
         int j;
+#if 0
         for ( j = 0; j < size; j++ ) {
 
             if ( nidMap[j] == rank ) {
@@ -290,6 +294,7 @@ main(int argc, char **argv)
                 ++foo[rank];
             }
         }
+#endif
 
 	    fprintf(output, "        </params>\n");
 

@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <assert.h>
 
-static foo( FILE* output, int nid, const char* exe );
+static foo( FILE* output, int nid, int numRanks, const char* exe );
 
 void sdlgenM5( const char* file, const char* exe, int numM5Nids )
 {
     FILE* output = fopen( file, "w" );
     char* indent="";
+
+printf("file=%s exe=%s numM5Nids=%d\n",file,exe,numM5Nids);
 
     assert( output );
 
@@ -194,7 +196,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
 
     int i;
     for ( i = 0; i < numM5Nids; i++ ) {
-        foo( output, i, exe ); 
+        foo( output, i, numM5Nids, exe ); 
         fprintf(output,"\n");
     }
 
@@ -202,13 +204,19 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"</sst>\n");
 }
 
-static foo( FILE* output, int nid, const char* exe )
+static foo( FILE* output, int nid, int numRanks, const char* exe )
 {
     char* indent = "    ";
 
+printf("%d %d\n",nid,numRanks);
     // CPU
     fprintf(output,"%s<component name=nid%d.cpu0 type=O3Cpu >\n",indent,nid);
     fprintf(output,"%s    <params include=cpuParams>\n",indent);
+    fprintf(output,"%s        <base.process.nid> %d            </base.process.nid>\n",indent,nid);
+    fprintf(output,"%s        <base.process.cmd.0> hello       </base.process.cmd.0>\n",indent);
+    fprintf(output,"%s        <base.process.env.0> RT_RANK=%d  </base.process.env.0>\n",indent,nid);
+    fprintf(output,"%s        <base.process.env.1> RT_SIZE=%d  </base.process.env.1>\n",indent,numRanks);
+
     fprintf(output,"%s    </params>\n",indent);
     fprintf(output,"%s    <link name=nid%d.cpu-dcache port=dcache_port latency=$lat/>\n",indent,nid);
     fprintf(output,"%s    <link name=nid%d.cpu-icache port=icache_port latency=$lat/>\n",indent,nid);
@@ -335,7 +343,8 @@ static foo( FILE* output, int nid, const char* exe )
 
     fprintf(output,"%s        <exe0.process.executable> %s </exe0.process.executable>\n",indent,exe);
     fprintf(output,"%s        <exe0.process.cmd.0> hello  </exe0.process.cmd.0>\n",indent);
-    fprintf(output,"%s        <exe0.process.env.0> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.0>\n",indent);
+    fprintf(output,"%s        <exe0.process.env.0> RT_RANK=%d  </exe0.process.env.0>\n",indent,nid);
+    fprintf(output,"%s        <exe0.process.env.1> RT_SIZE=%d  </exe0.process.env.1>\n",indent,numRanks);
 
     fprintf(output,"%s        <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>\n",indent);
     fprintf(output,"%s        <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>\n",indent);
