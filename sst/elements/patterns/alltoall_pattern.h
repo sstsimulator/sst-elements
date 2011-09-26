@@ -147,8 +147,8 @@ class Alltoall_pattern : public Comm_pattern    {
 	int ops;
 	int nnodes;
 	int done;
-	SimTime_t test_start_time_start;
-	double duration;
+	SimTime_t test_start_time;
+	SimTime_t duration;
 	std::list <double>times;
 
 
@@ -174,7 +174,7 @@ class Alltoall_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(ops);
 	    ar & BOOST_SERIALIZATION_NVP(nnodes);
 	    ar & BOOST_SERIALIZATION_NVP(done);
-	    ar & BOOST_SERIALIZATION_NVP(test_start_time_start);
+	    ar & BOOST_SERIALIZATION_NVP(test_start_time);
 	    ar & BOOST_SERIALIZATION_NVP(duration);
 	    ar & BOOST_SERIALIZATION_NVP(times);
         }

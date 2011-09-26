@@ -38,6 +38,7 @@ static double Test1(int num_ops, int msg_len, int nranks, MPI_Comm comm);
 static double Test2(int num_ops, int nranks, int msg_len);
 void my_alltoall(double *in, double *result, int msg_len, int nranks);
 static void usage(char *pname);
+static int is_pow2(int num);
 
 
 /* Make these two global */
@@ -73,6 +74,15 @@ double req_precision;
     if (num_ranks < 2)   {
 	if (my_rank == 0)   {
 	    fprintf(stderr, "Need to run on at least two ranks; more would be better\n");
+	}
+	MPI_Finalize();
+	exit(-1);
+    }
+
+
+    if (!is_pow2(num_ranks))   {
+	if (my_rank == 0)   {
+	    fprintf(stderr, "Need to run on a power of two number of ranks; sorry.\n");
 	}
 	MPI_Finalize();
 	exit(-1);
@@ -504,3 +514,20 @@ usage(char *pname)
 	DEFAULT_PRECISION);
 
 }  /* end of usage() */
+
+
+
+static int
+is_pow2(int num)
+{
+    if (num < 1)   {
+	return FALSE;
+    }
+
+    if ((num & (num - 1)) == 0)   {
+	return TRUE;
+    }
+
+    return FALSE;
+
+}  /* end of is_pow2() */

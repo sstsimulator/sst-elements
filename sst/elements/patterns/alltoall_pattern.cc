@@ -94,11 +94,11 @@ state_event enter_barrier, exit_barrier;
 	    if (my_rank < nnodes)   {
 		// My rank will be participating in the test. Go run it
 		ops= 0;
-		test_start_time_start= getCurrentSimTime();
+		test_start_time= getCurrentSimTime();
 		goto_state(state_TEST, STATE_TEST, E_NEXT_TEST);
 	    } else   {
 		// My rank is not part of this test, skip ahead
-		duration= 0.0;
+		duration= 0;
 		goto_state(state_COLLECT_RESULT, STATE_COLLECT_RESULT, E_COLLECT);
 	    }
 	    break;
@@ -127,7 +127,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 		goto_state(state_ALLTOALL_TEST, STATE_ALLTOALL_TEST, E_ALLTOALL_ENTRY);
 	    } else   {
 		// Done with the test, go to next inner loop
-		duration= getCurrentSimTime() - test_start_time_start;
+		duration= getCurrentSimTime() - test_start_time;
 		goto_state(state_COLLECT_RESULT, STATE_COLLECT_RESULT, E_COLLECT);
 	    }
 	    break;
@@ -187,7 +187,7 @@ state_event enter_allreduce, exit_allreduce;
 	case E_COLLECT:
 	    // Set the parameters to be passed to the allreduce SM
 	    enter_allreduce.event= SM_START_EVENT;
-	    enter_allreduce.set_Fdata(duration);
+	    enter_allreduce.set_Fdata(SimTimeToD(duration));
 	    enter_allreduce.set_Idata(Allreduce_op::OP_SUM);
 
 	    // We want to be called with this event, when allreduce returns
@@ -198,7 +198,7 @@ state_event enter_allreduce, exit_allreduce;
 
 	case E_ALLREDUCE_EXIT:
 	    // We just came back from the allreduce SM. We're done
-	    times.push_back(SimTimeToD(sm_event.get_Fdata() / nnodes / num_ops));
+	    times.push_back(sm_event.get_Fdata() / nnodes / num_ops);
 	    set++;
 	    if (set <= num_sets)   {
 		goto_state(state_INNER_LOOP, STATE_INNER_LOOP, E_NEXT_INNER_LOOP);

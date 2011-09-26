@@ -14,6 +14,7 @@
 */
 #define __STDC_FORMAT_MACROS			(1)
 #include <inttypes.h>				/* For PRId64 */
+#include <math.h>				/* For llrint() */
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include "fft_pattern.h"
@@ -129,7 +130,7 @@ SimTime_t duration;
     switch (e)   {
 	case E_PHASE3_ENTRY:
 	    phase2_time= getCurrentSimTime() - phase1_time;
-	    duration= time_per_flop * ((N / num_ranks) - (log2(N) - log2(num_ranks)));
+	    duration= llrint(time_per_flop * ((N / num_ranks) - (log2(N) - log2(num_ranks))));
 	    local_compute(E_PHASE3_EXIT, duration);
 	    break;
 
@@ -160,7 +161,7 @@ SimTime_t duration;
     switch (e)   {
 	case E_PHASE4_ENTRY:
 	    phase3_time= getCurrentSimTime() - phase2_time;
-	    M= log2(num_ranks);
+	    M= lrint(log2(num_ranks));
 	    // Do M message exchanges of size N/num_ranks?
 	    // With whom?
 	    duration= time_per_flop * N / num_ranks;
