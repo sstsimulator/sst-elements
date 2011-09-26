@@ -219,7 +219,7 @@ double metric;
     if (stat_mode)   {
 	trials= 10000;
     } else   {
-	trials= 1;
+	trials= 20;
     }
 
     tot= 0.0;
@@ -236,14 +236,9 @@ double metric;
 	if (stat_mode)   {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2. */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
-		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		if (0)   {
-		    printf("Node %d: Reached enough accuracy. Moving on.\n", my_rank);
-		}
 		trials= ii;
-	    } else   {
-		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	    }
+	    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	}
 	ii++;
     }
@@ -275,7 +270,7 @@ double metric;
     if (stat_mode)   {
 	trials= 10000;
     } else   {
-        trials= 1;
+        trials= 20;
     }
 
     tot= 0.0;
@@ -291,14 +286,9 @@ double metric;
 	if (stat_mode) {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
-		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD); 
-		if (0)   {
-		    printf("Node %d: Reached enough accuracy. Moving on.\n", my_rank);
-		}
 		trials= ii;
-	    } else   {
-		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD); 
 	    }
+	    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD); 
 	}
 	ii++;
     }
@@ -323,7 +313,7 @@ double metric;
     if (stat_mode)   {
         trials= 10000;
     } else   {
-        trials= 1;
+        trials= 20;
     }
 
     tot= 0.0; 
@@ -331,7 +321,7 @@ double metric;
     while  (ii < trials)   {
 	duration= Test3(my_rank, num_ranks, num_msgs, msg_len, start_rank, stride);
 	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	metric= 1.0 / (duration / (num_msgs * num_sender));
+	metric= 1.0 / (total_time / (num_msgs * num_sender - 1));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric * metric;
 	precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
@@ -339,15 +329,9 @@ double metric;
 	if (stat_mode) {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
-		MPI_Bcast(&ii, 1, MPI_INT, 0, MPI_COMM_WORLD); 
-		if (0)   {
-		    printf("Node %d: Reached enough accuracy. Moving on.\n", my_rank);
-		}
 		trials = ii;
 	    }
-	    else {
-		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	    }
+	    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	}
 	ii++;
     }
@@ -420,13 +404,21 @@ double t;
 int i;
 int dest;
 MPI_Request req;
+int num_receivers;
 
+
+    num_receivers= ((num_ranks - start_rank) / stride);
+    if ((num_ranks - start_rank) % stride != 0)   {
+	num_receivers++;
+    }
 
     if (my_rank == 0)   {
 	/* I'm the sender */
 	dest= start_rank;
 	MPI_Barrier(MPI_COMM_WORLD);
-	for (i= 0; i < num_msgs * (num_ranks - start_rank); i++)   {
+
+	/* Send num_msgs round robin to each of the receivers */
+	for (i= 0; i < num_msgs * num_receivers; i++)   {
 	    MPI_Send(buf, msg_len, MPI_CHAR, dest, 13, MPI_COMM_WORLD);
 	    dest= dest + stride;
 	    if (dest >= num_ranks)   {
