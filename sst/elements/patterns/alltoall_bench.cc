@@ -18,6 +18,7 @@
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
 #include <mpi.h>
+#include "stat_p.h"
 
 // FIXME: Don't like to include .cc files, but don't know how to fix the Makefile.am to avoid it
 #include "stats.cc"
@@ -28,6 +29,7 @@
 #define TRUE			(1)
 #define DEFAULT_NUM_OPS		(200)
 #define DEFAULT_NUM_SETS	(9)
+#define DEFAULT_PRECISION	(0.01)
 
 
 
@@ -60,11 +62,13 @@ int msg_len;
 int set;
 std::list <double>times;
 int library;
+int stat_mode;
+double req_precision;
 
 
 
     MPI_Init(&argc, &argv);
- 
+
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
@@ -84,15 +88,18 @@ int library;
     num_sets= DEFAULT_NUM_SETS;
     msg_len= 1;
     library= 0;
+    stat_mode= FALSE;
+    req_precision= DEFAULT_PRECISION;
+
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "bl:n:s:t:")) != EOF)   {
-        switch (ch)   {
-            case 'b':
+    while ((ch= getopt(argc, argv, "bl:n:s:tp:")) != EOF)   {
+	switch (ch)   {
+	    case 'b':
 		library= 1;
 		break;
-            case 'l':
+	    case 'l':
 		msg_len= strtol(optarg, (char **)NULL, 0);
 		if (msg_len < 1)   {
 		    if (my_rank == 0)   {
@@ -101,7 +108,7 @@ int library;
 		    error= TRUE;
 		}
 		break;
-            case 'n':
+	    case 'n':
 		num_ops= strtol(optarg, (char **)NULL, 0);
 		if (num_ops < 1)   {
 		    if (my_rank == 0)   {
@@ -110,7 +117,7 @@ int library;
 		    error= TRUE;
 		}
 		break;
-            case 's':
+	    case 's':
 		num_sets= strtol(optarg, (char **)NULL, 0);
 		if (num_sets < 1)   {
 		    if (my_rank == 0)   {
@@ -119,32 +126,43 @@ int library;
 		    error= TRUE;
 		}
 		break;
+	    case 'p':
+		req_precision= strtod(optarg, (char **)NULL);
+		if (my_rank == 0)   {
+		    printf("# req_precision is %f\n", req_precision);
+		}
+		break;
 
-	    /* Command line error checking */
-            case '?':
+	    case 't':
+		stat_mode= TRUE;
+		break;
+
+
+		/* Command line error checking */
+	    case '?':
 		if (my_rank == 0)   {
 		    fprintf(stderr, "Unknown option \"%s\"\n", argv[optind - 1]);
 		}
 		error= TRUE;
 		break;
-            case ':':
+	    case ':':
 		if (my_rank == 0)   {
 		    fprintf(stderr, "Missing option argument to \"%s\"\n", argv[optind - 1]);
 		}
 		error= TRUE;
 		break;
-            default:
+	    default:
 		error= TRUE;
 		break;
-        }
+	}
     }
- 
+
     if (error)   {
-        if (my_rank == 0)   {
-            usage(argv[0]);
-        }
+	if (my_rank == 0)   {
+	    usage(argv[0]);
+	}
 	MPI_Finalize();
-        exit (-1);
+	exit (-1);
     }
 
     if (my_rank == 0)   {
@@ -174,7 +192,7 @@ int library;
     }
     if (my_rank == 0)   {
 	printf("#  |||  %d operations per set. %d sets per node size. %d byte msg len\n",
-		num_ops, num_sets, msg_len * (int)sizeof(double));
+	    num_ops, num_sets, msg_len * (int)sizeof(double));
 	printf("#  |||  Test 1: MPI_Alltoall() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
@@ -222,22 +240,55 @@ int library;
 
 	times.clear();
 	for (set= 0; set < num_sets; set++)   {
-	    MPI_Barrier(MPI_COMM_WORLD);
-	    if (my_rank < nnodes)   {
-		if (library)   {
-		    // Use the built-in MPI_Alltoall
-		    duration= Test1(num_ops, msg_len, nnodes, new_comm);
-		} else   {
-		    // Use my alltoall
-		    duration= Test2(num_ops, nnodes, msg_len);
-		}
-	    } else   {
-		duration= 0.0;
-	    }
-	    MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	    int trials;
+	    int ii= 0;
+	    double tot= 0.0;
+	    double tot_squared= 0.0;
+	    double precision, metric;
 
+	    if (stat_mode)   {
+		trials= 10000;
+	    } else   {
+		trials= 1;
+	    }
+
+
+	    while (ii < trials)   {
+		MPI_Barrier(MPI_COMM_WORLD);
+		if (my_rank < nnodes)   {
+		    if (library)   {
+			// Use the built-in MPI_Alltoall
+			duration= Test1(num_ops, msg_len, nnodes, new_comm);
+		    } else   {
+			// Use my alltoall
+			duration= Test2(num_ops, nnodes, msg_len);
+		    }
+		} else   {
+		    duration= 0.0;
+		}
+		MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+		metric= total_time / nnodes / num_ops;
+		tot= tot + metric;
+		tot_squared= tot_squared + metric*metric;
+		precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
+
+		if (stat_mode) {
+		    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
+		    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
+			trials= ii;
+		    }
+		    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		}
+		ii++;
+
+	    }
+	    if (stat_mode)   {
+		/* if i = 10, actual trials done is 11 */
+		trials++; /* this is the total number of trials that took place */
+	    }
 	    // Record the average time per alltoall
-	    times.push_back(total_time / nnodes / num_ops);
+	    // times.push_back(total_time / nnodes / num_ops);
+	    times.push_back(tot/trials);
 	}
 	if (my_rank == 0)   {
 	    printf("%6d ", nnodes);
@@ -433,12 +484,15 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets]\n", pname);
+    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets] [-t] [-p P]\n", pname);
     fprintf(stderr, "    -b          Use the MPI library MPI_Alltoall\n");
     fprintf(stderr, "    -l len      Size of alltoall operations in number of doubles. Default 1\n");
     fprintf(stderr, "    -n ops      Number of alltoall operations per test. Default %d\n",
 	DEFAULT_NUM_OPS);
     fprintf(stderr, "    -s sets     Number of sets; i.e. number of test repeats. Default %d\n",
 	DEFAULT_NUM_SETS);
+    fprintf(stderr, "    -t          Run each experiement until confidence interval is within precision.\n");
+    fprintf(stderr, "    -p P        Set precision (confidence interval). Default %.3f\n",
+	DEFAULT_PRECISION);
 
 }  /* end of usage() */
