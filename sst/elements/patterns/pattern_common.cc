@@ -666,9 +666,6 @@ int64_t link_duration;
 
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
-	delay= latency + msg_duration - link_duration - NoCLinkLatency;
-	// FIXME: I think -NetIntraLatency is because SST will give us one of those
-	// before we get to the router. Check!
 	delay= latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
 	my_NoC_link->Send(delay, e);
 	NextNoCNICslot= CurrentSimTime + latency + msg_duration + link_duration;
@@ -740,18 +737,14 @@ int64_t link_duration;
 
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
-
-	// FIXME: I think -NetIntraLatency is because SST will give us one of those
-	// before we get to the router. Check!
 	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
-	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency - NetIntraLatency;
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
     } else   {
 	// NIC is busy
 	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
-	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency - NetIntraLatency;
+	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NetNICbusy++;
