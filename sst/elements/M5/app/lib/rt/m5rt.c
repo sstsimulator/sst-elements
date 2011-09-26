@@ -17,12 +17,12 @@ int cnos_get_rank( void )
 int cnos_get_size( void )
 {
     char* tmp = getenv("RT_SIZE");
-    int rank = 0;
+    int size = 0;
     if ( tmp ) {
-         rank = atoi(tmp);
+         size = atoi(tmp);
     }
 
-    return rank;
+    return size;
 }
 
 int cnos_get_nidpid_map( cnos_nidpid_map_t** map )
