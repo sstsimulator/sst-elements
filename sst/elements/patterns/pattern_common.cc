@@ -740,17 +740,18 @@ int64_t link_duration;
 
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
-	delay= latency + msg_duration - link_duration - NetLinkLatency;
+
 	// FIXME: I think -NetIntraLatency is because SST will give us one of those
 	// before we get to the router. Check!
 	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency - NetIntraLatency;
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
     } else   {
 	// NIC is busy
 	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
-	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency - NetIntraLatency;
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NetNICbusy++;
@@ -982,7 +983,7 @@ double byte_cost;
 	    byte_cost= T / B;
 	    // We want the values from the previous point
 	    *latency= previous->latency;
-	    *msg_duration= (msg_len - previous->inflectionpoint) * byte_cost;
+	    *msg_duration= (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost);
 	    return;
 	}
 	previous++;
@@ -995,6 +996,6 @@ double byte_cost;
     B= params.back().inflectionpoint - previous->inflectionpoint;
     byte_cost= T / B;
     *latency= params.back().latency;
-    *msg_duration= (msg_len - params.back().inflectionpoint) * byte_cost;
+    *msg_duration= (int64_t)((double)(msg_len - params.back().inflectionpoint) * byte_cost);
 
 }  // end of getNICparams()
