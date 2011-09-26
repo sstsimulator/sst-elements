@@ -171,15 +171,10 @@ double precision;
 	    if (stat_mode)   {
 		/* check for precision if at least 9 trials have taken place. i > 1 => N > 2. */
 		if (my_rank == 0 && i > 7 && precision <= req_precision)   {
-		    MPI_Bcast(&i, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		    if (0)   {
-			printf("Node %d: Reached enough accuracy for msg size %d. Moving on to the next msg size.\n",
-			    my_rank, len);
-		    }
+		    /* Required precision reached */
 		    trials= i;
-		} else   {
-		    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		}
+		MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	    }
 	    i++;
 	}
@@ -232,7 +227,7 @@ doit(int len, int trial, double *latency, int *msgs)
 
 static double last_delta= 0.0;
 static int pp= MAX_PING_PONG;
-double delta, start;
+double start;
 int rc= 0;
 int j;
 MPI_Request latencyflag[MAX_PING_PONG];
@@ -268,11 +263,10 @@ MPI_Request latencyflag[MAX_PING_PONG];
 	    rc |= MPI_Rsend(buf, len, MPI_BYTE, num_nodes - 1, LATENCY, MPI_COMM_WORLD);
 	    rc |= MPI_Wait(&latencyflag[j], MPI_STATUS_IGNORE);
 	}
-	delta = MPI_Wtime() - start;
-	*latency= delta / pp * 1000000.0 / 2.0;
-	last_delta= delta;
+	last_delta= MPI_Wtime() - start;
 
 	MPI_Bcast(&last_delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	*latency= last_delta / pp * 1000000.0 / 2.0;
 
     } else if (my_rank == num_nodes - 1)   {
 	/* Run on the last node */
@@ -289,13 +283,13 @@ MPI_Request latencyflag[MAX_PING_PONG];
 	    rc |= MPI_Rsend(buf, len, MPI_BYTE, 0, LATENCY, MPI_COMM_WORLD);
 	}
 
-	MPI_Bcast(&delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	*latency= delta / pp * 1000000.0 / 2.0;
+	MPI_Bcast(&last_delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	*latency= last_delta / pp * 1000000.0 / 2.0;
 
     } else   {
 	/* We're not involved, just participate in barrier */
-	MPI_Bcast(&delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	*latency= delta / pp * 1000000.0 / 2.0;
+	MPI_Bcast(&last_delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	*latency= last_delta / pp * 1000000.0 / 2.0;
     }
 
 }  /* end of doit() */
