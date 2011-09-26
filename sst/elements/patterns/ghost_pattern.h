@@ -73,7 +73,7 @@ class Ghost_pattern : public Comm_pattern    {
 		}
 
 		if (!it->first.compare("delay"))   {
-		    sscanf(it->second.c_str(), "%f", &delay);
+		    sscanf(it->second.c_str(), "%lf", &delay);
 		}
 
 		if (!it->first.compare("imbalance"))   {

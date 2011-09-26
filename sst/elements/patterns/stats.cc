@@ -10,6 +10,22 @@
 void
 print_stats(std::list<double> t)
 {
+    print_stats(t, 0.0, false);
+}  /* end of stats() */
+
+
+
+void
+print_stats(std::list<double> t, double precision)
+{
+    print_stats(t, precision, true);
+}  /* end of stats() */
+
+
+
+void
+print_stats(std::list<double> t, double precision, bool print_p)
+{
 
 int cnt;
 std::list<double>::iterator it;
@@ -31,7 +47,7 @@ double min, avg, med, max, sd;
 	}
 	avg= avg / num_sets;
 
-	// Calulate the standard deviation
+	// Calculate the standard deviation
 	sd= 0.0;
 	for (it= t.begin(); it != t.end(); it++)   {
 	    sd= sd + ((*it - avg) * (*it - avg));
@@ -40,9 +56,10 @@ double min, avg, med, max, sd;
 	min= t.front();
 	max= t.back();
 
-	printf("%12.9f %12.9f %12.9f %12.9f %12.9f\n", min, avg, med, max, sd);
+	if (print_p)   {
+	    printf("%12.9f %12.9f %12.9f %12.9f %12.9f %12.3f\n", min, avg, med, max, sd, precision);
+	} else   {
+	    printf("%12.9f %12.9f %12.9f %12.9f %12.9f\n", min, avg, med, max, sd);
+	}
 
 }  /* end of stats() */
-
-
-

@@ -7,6 +7,7 @@
 #include <list>
 
 void print_stats(std::list<double> t);
-
+void print_stats(std::list<double> t, double precision);
+void print_stats(std::list<double> t, double precision, bool print_p);
 
 #endif // _STATS_H_

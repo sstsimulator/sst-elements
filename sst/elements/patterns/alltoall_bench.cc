@@ -18,10 +18,9 @@
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
 #include <mpi.h>
+#include "stats.h"
 #include "stat_p.h"
 
-// FIXME: Don't like to include .cc files, but don't know how to fix the Makefile.am to avoid it
-#include "stats.cc"
 
 
 /* Constants */
@@ -38,7 +37,6 @@
 static double Test1(int num_ops, int msg_len, int nranks, MPI_Comm comm);
 static double Test2(int num_ops, int nranks, int msg_len);
 void my_alltoall(double *in, double *result, int msg_len, int nranks);
-void print_stats(std::list<double> t);
 static void usage(char *pname);
 
 
@@ -221,9 +219,14 @@ double req_precision;
     // Now we do this with increasing number of ranks, instead of all of them
     if (my_rank == 0)   {
 	if (library)   {
-	    printf("#  |||  Test 3: MPI_Alltoall() nodes, min, mean, median, max, sd\n");
+	    printf("#  |||  Test 3: MPI_Alltoall() nodes, min, mean, median, max, sd");
 	} else   {
-	    printf("#  |||  Test 3: my_alltoall() nodes, min, mean, median, max, sd\n");
+	    printf("#  |||  Test 3: my_alltoall() nodes, min, mean, median, max, sd");
+	}
+	if (stat_mode)   {
+	    printf(", precision\n");
+	} else   {
+	    printf("\n");
 	}
     }
 
@@ -232,6 +235,7 @@ double req_precision;
 	MPI_Comm new_comm;
 	int ranges[][3]={{0, nnodes - 1, 1}};
 	int group_size;
+	double precision;
 
 	MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 	MPI_Group_range_incl(world_group, 1, ranges, &new_group);
@@ -244,7 +248,7 @@ double req_precision;
 	    int ii= 0;
 	    double tot= 0.0;
 	    double tot_squared= 0.0;
-	    double precision, metric;
+	    double metric;
 
 	    if (stat_mode)   {
 		trials= 10000;
@@ -292,7 +296,11 @@ double req_precision;
 	}
 	if (my_rank == 0)   {
 	    printf("%6d ", nnodes);
-	    print_stats(times);
+	    if (stat_mode)   {
+		print_stats(times, precision);
+	    } else   {
+		print_stats(times);
+	    }
 	}
     }
 
@@ -412,7 +420,7 @@ void
 my_alltoall(double *in, double *result, int msg_len, int nranks)
 {
 
-unsigned int i;
+int i;
 int shift, dest;
 int src;
 int offset;
