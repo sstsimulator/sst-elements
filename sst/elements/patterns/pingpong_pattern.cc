@@ -128,7 +128,7 @@ double latency;
 	    if (first_receive)   {
 		if (my_rank == 0)   {
 		    printf("#\n");
-		    printf("# Msg size (bytes)   Latency (seconds)\n");
+		    printf("# Msg size (bytes)   Latency (micro seconds)\n");
 		}
 		first_receive= false;
 	    }
@@ -170,7 +170,7 @@ double latency;
 		} else   {
 		    execution_time= SimTimeToD(getCurrentSimTime() - start_time);
 		    latency= execution_time / num_msgs / 2.0;
-		    printf("%9d %.9f\n", len, latency);
+		    printf("%9d %.9f\n", len, latency * 1000000.0);
 		    // Start next message size, if we haven't reached the end yet
 		    if (len > 0)   {
 			if (user_len_inc <= 0)   {
