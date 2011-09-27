@@ -40,6 +40,19 @@ typedef struct NICparams_t   {
 } NICparams_t;
 
 
+// Describe a far link
+typedef struct FarLink_t   {
+    // int src;   Implicit, it is my node
+    int src_port;
+    int dest;
+    int dest_port;
+} FarLink_t;
+
+struct _FLcompare   {
+    bool operator () (const FarLink_t& x, const FarLink_t& y) const {return x.dest < y.dest;} 
+};
+
+
 
 class Patterns   {
     public:
@@ -86,6 +99,8 @@ class Patterns   {
 		SST::SimTime_t CurrentSimTime);
 	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
 		SST::SimTime_t CurrentSimTime);
+	void FarLinksend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
+		SST::SimTime_t CurrentSimTime);
 	void stat_print();
 	void get_NICparams(std::list<NICparams_t> params, int64_t msg_len, 
 	    int64_t *latency, int64_t *msg_duration);
@@ -115,6 +130,8 @@ class Patterns   {
 	SST::SimTime_t NoCNICgap;
 	std::list<NICparams_t> NetNICparams;
 	std::list<NICparams_t> NoCNICparams;
+	std::set<FarLink_t, _FLcompare> FarLink;
+	int FarLinkPortFieldWidth;
 	int64_t NetLinkBandwidth;
 	int64_t NetLinkLatency;
 	int64_t NoCLinkBandwidth;
@@ -128,8 +145,9 @@ class Patterns   {
 	uint64_t msg_seq;
 
 	// NIC model: When can next message leave?
-	SST::SimTime_t NextNetNICslot;
 	SST::SimTime_t NextNoCNICslot;
+	SST::SimTime_t NextNetNICslot;
+	SST::SimTime_t NextFarNICslot;
 
 	// Statistics
 	long long int stat_NoCNICsend;
@@ -139,6 +157,10 @@ class Patterns   {
 	long long int stat_NetNICsend;
 	long long int stat_NetNICsend_bytes;
 	long long int stat_NetNICbusy;
+
+	long long int stat_FarNICsend;
+	long long int stat_FarNICsend_bytes;
+	long long int stat_FarNICbusy;
 
 	std::list<int> NICstat_ranks;
 

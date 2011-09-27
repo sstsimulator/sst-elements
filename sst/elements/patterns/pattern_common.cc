@@ -47,6 +47,11 @@ Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link
 std::list<NICparams_t>::iterator k;
 bool found;
 int index;
+int far_dest, far_dest_port, far_src, far_src_port;
+int FarLinknum;
+int my_node;
+FarLink_t fl;
+uint64_t code;
 
 
     my_rank= -1;
@@ -62,7 +67,9 @@ int index;
 
     NextNetNICslot= 0;
     NextNoCNICslot= 0;
+    NextFarNICslot= 0;
     msg_seq= 1;
+    FarLinknum= 0;
 
     // Clear stats
     stat_NoCNICsend= 0;
@@ -71,6 +78,9 @@ int index;
     stat_NetNICsend= 0;
     stat_NetNICsend_bytes= 0;
     stat_NetNICbusy= 0;
+    stat_FarNICsend= 0;
+    stat_FarNICsend_bytes= 0;
+    stat_FarNICbusy= 0;
     stat_NetNICrecv= 0;
     stat_NetNICrecv_bytes= 0;
     stat_Netmsg_hops= 0;
@@ -82,13 +92,30 @@ int index;
     stat_NoCmsg_congestion_cnt= 0;
     stat_NoCmsg_congestion_delay= 0;
 
-
+    // Pre processing the parameter list
+    // Go through the parameter list to find my_rank.
+    // We need it to process far links and print debug info
+    // We also need to know what FarLinkPortFieldWidth is.
     SST::Component::Params_t::iterator it= params.begin();
     while (it != params.end())   {
 	if (!it->first.compare("rank"))   {
 	    sscanf(it->second.c_str(), "%d", &my_rank);
 	}
+	if (!it->first.compare("FarLinkPortFieldWidth"))   {
+	    sscanf(it->second.c_str(), "%d", &FarLinkPortFieldWidth);
+	}
+	it++;
+    }
 
+    if (my_rank < 0)   {
+	fprintf(stderr, "Need to specify my_rank in xml file!\n");
+	return FALSE;
+    }
+
+
+    // Now that we have my_rank, process the other parameters
+    it= params.begin();
+    while (it != params.end())   {
 	if (!it->first.compare("Net_x_dim"))   {
 	    sscanf(it->second.c_str(), "%d", &mesh_width);
 	}
@@ -260,6 +287,45 @@ int index;
 	it++;
     }
 
+
+    // Now process far links.
+    // I have to do this seperaty because I need NoC_width, NoC_height, cores_per_NoC_router
+    // to compute my node ID
+    //
+    it= params.begin();
+    while (it != params.end())   {
+	if (it->first.find("FarLink") != std::string::npos)   {
+	    if (sscanf(it->first.c_str(), "FarLink%dp%d", &far_src, &far_src_port) == 2)   {
+		sscanf(it->second.c_str(), "%" PRId64, &code);
+		my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+		far_dest= code >> FarLinkPortFieldWidth;
+		far_dest_port= code & ((1 << FarLinkPortFieldWidth) - 1);
+
+		if (my_rank == 0)   {
+		}
+		if (far_src == my_node)   {
+		    // I can reach the destination node via a far link
+		    fl.dest= far_dest;
+		    fl.dest_port= far_dest_port;
+		    fl.src_port= far_src_port;
+		    FarLink.insert(fl);
+		} else if (far_dest == my_node)   {
+		    // I am the destination of a far link; i.e.,
+		    // I can get to the source via the link.
+		    // We assume bidirection links
+		    fl.dest= far_src;
+		    fl.dest_port= far_src_port;
+		    fl.src_port= far_dest_port;
+		    FarLink.insert(fl);
+		}
+		// Count all links in system
+		FarLinknum++;
+	    }
+	}
+
+	it++;
+    }
+
     // None of these should be 0 (I think)
     if ((NetNICgap == 0) ||
 	(NoCNICgap == 0))   {
@@ -391,6 +457,8 @@ int index;
 	printf("#  |||      inflections   %11d\n", (int)NoCNICparams.size());
 	printf("#  |||  NoC link bandwidth %" PRId64 " B/S, latency %" PRId64 " %s\n",
 	    NoCLinkBandwidth, NoCLinkLatency, TIME_BASE);
+	printf("#  |||  Number of far links (from node 0) = %d\n", (int)FarLink.size());
+	printf("#  |||      Total in system (all nodes)   = %d\n", FarLinknum);
     }
 
     return TRUE; /* success */
@@ -456,6 +524,7 @@ Patterns::event_send(int dest, int event, SST::SimTime_t CurrentSimTime,
 
 CPUNicEvent *e;
 int my_node, dest_node;
+FarLink_t fl;
 
 
     // Create an event and fill in the event info
@@ -490,7 +559,15 @@ int my_node, dest_node;
 
     } else   {
 	/* Route off chip */
-	Netsend(e, my_node, dest_node, dest, CurrentSimTime);
+
+	fl.dest= dest_node;
+	if (FarLink.find(fl) != FarLink.end())   {
+	    // We have a far link to that destination node. Use it
+	    FarLinksend(e, my_node, dest_node, dest, CurrentSimTime);
+	} else   {
+	    // Send it through the network
+	    Netsend(e, my_node, dest_node, dest, CurrentSimTime);
+	}
     }
 
 }  /* end of event_send() */
@@ -592,7 +669,7 @@ uint64_t delay;
 #undef ROUTE_DEBUG
 #if ROUTE_DEBUG
 void
-show_route(char *net_name, int dest_rank)    {
+show_route(std::string net_name, CPUNicEvent *e, int src_rank, int dest_rank)    {
 
 char route[128];
 char tmp[128];
@@ -605,8 +682,8 @@ std::vector<int>::iterator itNum;
 	strcpy(route, tmp);
     }
 
-    fprintf(stderr, "%s from %d --> %d, delay %lu, route %s\n", net_name,
-	 my_rank, dest_rank, route);
+    fprintf(stderr, "%s from %d --> %d, route %s\n", net_name.c_str(),
+	 src_rank, dest_rank, route);
 
 }  // end of show_route()
 #endif  // ROUTE_DEBUG
@@ -650,7 +727,7 @@ int64_t link_duration;
     e->route.push_back(FIRST_LOCAL_PORT + (dest_rank % cores_per_NoC_router));
 
 #if ROUTE_DEBUG
-    show_route("NoC", dest_rank);
+    show_route("NoC", e, my_rank, dest_rank);
 #endif
 
     // Calculate when this message can leave the NIC
@@ -721,7 +798,7 @@ int64_t link_duration;
     e->route.push_back(1 + (dest_rank % cores_per_node));
 
 #if ROUTE_DEBUG
-    show_route("Net", dest_rank);
+    show_route("Net", e, my_rank, dest_rank);
 #endif
 
     // Calculate when this message can leave the NIC
@@ -751,6 +828,71 @@ int64_t link_duration;
     }
 
 }  // end of Netsend()
+
+
+
+/*
+** Send a message through a far link
+*/
+void
+Patterns::FarLinksend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank, SST::SimTime_t CurrentSimTime)
+{
+
+SimTime_t delay;
+int64_t latency;
+int64_t msg_duration;
+int64_t link_duration;
+FarLink_t fl;
+
+
+    e->local_traffic= false;
+
+    // On the network aggregator we'll have to go out the specified port to
+    // reach the appropriate far link
+    fl.dest= dest_node;
+    e->route.push_back(FarLink.find(fl)->src_port);
+
+
+    /*
+    ** We come out at the aggregator on the destination node.
+    ** Figure out which port to go out to reach the destination core
+    ** Port 0 is where we came in
+    */
+    e->route.push_back(1 + (dest_rank % cores_per_node));
+
+#if ROUTE_DEBUG
+    show_route("Far", e, my_rank, dest_rank);
+#endif
+
+    // Calculate when this message can leave the NIC
+    stat_FarNICsend++;
+    stat_FarNICsend_bytes += e->msg_len;
+
+    // We assume the far link is connected to a regular NIC
+    get_NICparams(NetNICparams, e->msg_len, &latency, &msg_duration);
+
+    // How long will this message occupy the outbound link?
+    link_duration= e->msg_len / NetLinkBandwidth;
+
+    if (CurrentSimTime > NextFarNICslot)   {
+	// NIC is not busy
+
+	// We move a portion of the delay to the link, so SST can use it for
+	// scheduling and partitioning.
+	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	my_net_link->Send(delay, e);
+	NextFarNICslot= CurrentSimTime + latency + msg_duration + link_duration;
+
+    } else   {
+	// NIC is busy
+	delay= NextFarNICslot - CurrentSimTime + NetNICgap +
+	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	my_net_link->Send(delay, e);
+	NextFarNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
+	stat_FarNICbusy++;
+    }
+
+}  // end of FarLinksend()
 
 
 
@@ -908,6 +1050,7 @@ std::list<int>::iterator rank;
 		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }
 	    printf("#\n");
+
 	    printf("# [%3d] Net NIC model statistics\n", my_rank);
 	    printf("# [%3d]     Total receives           %12lld\n", my_rank, stat_NetNICrecv);
 	    printf("# [%3d]     Bytes received           %12lld\n", my_rank, stat_NetNICrecv_bytes);
@@ -928,6 +1071,18 @@ std::list<int>::iterator rank;
 	    if (stat_NetNICsend > 0)   {
 		printf("# [%3d]     NIC send busy            %12.1f %%\n", my_rank,
 		    (100.0 / stat_NetNICsend) * stat_NetNICbusy);
+	    } else   {
+		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
+	    }
+	    printf("#\n");
+
+	    printf("# [%3d] Far link model statistics\n", my_rank);
+	    printf("# [%3d]     Total receives                unknown\n", my_rank);
+	    printf("# [%3d]     Total sends              %12lld\n", my_rank, stat_FarNICsend);
+	    printf("# [%3d]     Bytes sent               %12lld\n", my_rank, stat_FarNICsend_bytes);
+	    if (stat_FarNICbusy > 0)   {
+		printf("# [%3d]     NIC send busy            %12.1f %%\n", my_rank,
+		    (100.0 / stat_FarNICsend) * stat_FarNICbusy);
 	    } else   {
 		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }

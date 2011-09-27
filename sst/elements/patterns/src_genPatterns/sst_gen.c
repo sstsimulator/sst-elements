@@ -10,6 +10,7 @@
 #include <inttypes.h>		/* For PRId64 */
 #include "sst_gen.h"
 #include "machine.h"
+#include "farlink.h"
 #include "pattern.h"
 #include "gen.h"
 
@@ -93,6 +94,7 @@ int i;
     }
 
     machine_params(sstfile);
+    farlink_params(sstfile, num_cores() + 1);
     pattern_params(sstfile);
 
 }  /* end of sst_gen_param_entries() */
@@ -218,7 +220,9 @@ sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t route
     fprintf(sstfile, "<%s>\n", Rname);
     fprintf(sstfile, "    <hop_delay> %d </hop_delay>\n", hop_delay);
     fprintf(sstfile, "    <debug> 0 </debug>\n");
-    fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
+    if (num_ports >= 0)   {
+	fprintf(sstfile, "    <num_ports> %d </num_ports>\n", num_ports);
+    }
     fprintf(sstfile, "    <bw> %" PRId64 " </bw>\n", router_bw);
     fprintf(sstfile, "    <wormhole> %d </wormhole>\n", wormhole);
 
@@ -432,7 +436,7 @@ sst_nvram_component(char *id, char *link_id, float weight, nvram_type_t type, FI
 
 void
 sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
-	pwr_method_t power_method, FILE *sstfile)
+	int num_ports, pwr_method_t power_method, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -467,6 +471,9 @@ sst_router_component_start(char *id, float weight, char *cname, router_function_
 	    break;
     }
     fprintf(sstfile, "                <component_name> %s </component_name>\n", cname);
+    if (num_ports >= 0)   {
+	fprintf(sstfile, "                <num_ports> %d </num_ports>\n", num_ports);
+    }
 
 }  /* end of sst_router_component_start() */
 
@@ -643,6 +650,7 @@ char cname[MAX_ID_LEN];
 router_function_t role;
 int wormhole;
 link_type_t ltype;
+int num_ports;
 
 
     if (sstfile == NULL)   {
@@ -650,10 +658,15 @@ link_type_t ltype;
     }
 
     reset_router_list();
-    while (next_router(&r, &role, &wormhole))   {
+    while (next_router(&r, &role, &wormhole, &num_ports))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
-	sst_router_component_start(router_id, 1.0, cname, role, power_method, sstfile);
+	if (role == RnetPort)   {
+	    sst_router_component_start(router_id, 1.0, cname, role, num_ports,
+		power_method, sstfile);
+	} else   {
+	    sst_router_component_start(router_id, 1.0, cname, role, -1, power_method, sstfile);
+	}
 	/*
 	** We have to list the links in order in the params section, so the router
 	** componentn can get the names and create the appropriate links.

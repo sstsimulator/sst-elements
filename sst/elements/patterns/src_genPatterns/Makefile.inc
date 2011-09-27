@@ -10,6 +10,8 @@ genPatterns_SOURCES = \
 	src_genPatterns/sst_gen.h \
 	src_genPatterns/machine.c \
 	src_genPatterns/machine.h \
+	src_genPatterns/farlink.c \
+	src_genPatterns/farlink.h \
 	src_genPatterns/pattern.c \
 	src_genPatterns/pattern.h \
 	src_genPatterns/topo_mesh2D.c \
@@ -24,6 +26,8 @@ genPatternsV2_SOURCES = \
 	src_genPatterns/sst_gen_v2.h \
 	src_genPatterns/machine.c \
 	src_genPatterns/machine.h \
+	src_genPatterns/farlink.c \
+	src_genPatterns/farlink.h \
 	src_genPatterns/pattern.c \
 	src_genPatterns/pattern.h \
 	src_genPatterns/topo_mesh2D.c \

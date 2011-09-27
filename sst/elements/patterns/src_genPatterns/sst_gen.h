@@ -40,7 +40,7 @@ void sst_body_end(FILE *sstfile);
 void sst_body_start(FILE *sstfile);
 
 void sst_router_component_start(char *id, float weight, char *cname, router_function_t role,
-	pwr_method_t power_method, FILE *sstfile);
+	int num_ports, pwr_method_t power_method, FILE *sstfile);
 void sst_router_component_end(pwr_method_t power_method, FILE *sstfile);
 void sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *sstfile);
 

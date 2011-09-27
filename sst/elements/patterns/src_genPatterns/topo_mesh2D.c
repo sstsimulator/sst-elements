@@ -6,6 +6,7 @@
 */
 #include <stdio.h>
 #include <assert.h>
+#include "farlink.h"
 #include "gen.h"
 #include "topo_mesh2D.h"
 
@@ -67,7 +68,7 @@ int all_cores;
     RouterID= 0;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	#if defined GEN_DEBUG
-	    fprintf(stderr, "gen_router(%3d, %d);\n", RouterID, 4 + num_router_nodes);
+	    fprintf(stderr, "gen_router(ID %3d, %d ports);\n", RouterID, 4 + num_router_nodes);
 	#endif /* GEN_DEBUG */
 	gen_router(RouterID, 4 + num_router_nodes, Rnet, wormhole);
 	RouterID++;
@@ -80,7 +81,7 @@ int all_cores;
 	for (N= 0 ; N < num_router_nodes; N++)   {
 	    for (r= 0; r < NoC_x_dim * NoC_y_dim; r++)   {
 		#if defined GEN_DEBUG
-		    fprintf(stderr, "gen_router(%3d, %d);\n", RouterID, 4 + num_cores);
+		    fprintf(stderr, "gen_router(ID %3d, %d ports);\n", RouterID, 4 + num_cores);
 		#endif /* GEN_DEBUG */
 		gen_router(RouterID, 4 + num_cores, RNoC, flit_based);
 		RouterID++;
@@ -92,10 +93,12 @@ int all_cores;
     first_net_aggregator= RouterID;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	for (N= 0 ; N < num_router_nodes; N++)   {
+	    int nodeID= R * num_router_nodes + N;
 	    #if defined GEN_DEBUG
-		fprintf(stderr, "gen_router(%3d, %2d); for net\n", RouterID, num_cores + 1);
+		fprintf(stderr, "Node %3d gen_router(ID %3d, %2d ports); for net with %d far links\n",
+		    nodeID, RouterID, cores_per_node + 1 + numFarPorts(nodeID), numFarPorts(nodeID));
 	    #endif /* GEN_DEBUG */
-	    gen_router(RouterID, cores_per_node + 1, RnetPort, wormhole);
+	    gen_router(RouterID, cores_per_node + 1 + numFarPorts(nodeID), RnetPort, wormhole);
 	    RouterID++;
 	}
     }
@@ -105,7 +108,7 @@ int all_cores;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	for (N= 0 ; N < num_router_nodes; N++)   {
 	    #if defined GEN_DEBUG
-		fprintf(stderr, "gen_router(%3d, %2d); for nvram\n", RouterID, num_cores + 1);
+		fprintf(stderr, "gen_router(ID %3d, %2d ports); for nvram\n", RouterID, num_cores + 1);
 	    #endif /* GEN_DEBUG */
 	    gen_router(RouterID, cores_per_node + 1, Rnvram, flit_based);
 	    RouterID++;
@@ -117,7 +120,7 @@ int all_cores;
     for (R= 0; R < net_x_dim * net_y_dim; R++)   {
 	for (N= 0 ; N < num_router_nodes; N++)   {
 	    #if defined GEN_DEBUG
-		fprintf(stderr, "gen_router(%3d, %2d); for stable storage\n", RouterID,
+		fprintf(stderr, "gen_router(ID %3d, %2d ports); for stable storage\n", RouterID,
 		    num_cores + 1);
 	    #endif /* GEN_DEBUG */
 	    gen_router(RouterID, cores_per_node + 1, Rstorage, wormhole);
@@ -280,6 +283,39 @@ int all_cores;
 
 
 
+    /* Generate far links */
+    if (farlink_in_use())   {
+	net_aggregator= first_net_aggregator;
+	for (R= 0; R < net_x_dim * net_y_dim; R++)   {
+	    for (N= 0 ; N < num_router_nodes; N++)   {
+		int src_node= R * num_router_nodes + N;
+		int Rdest, Ndest;
+
+		for (Rdest= 0; Rdest < net_x_dim * net_y_dim; Rdest++)   {
+		    for (Ndest= 0 ; Ndest < num_router_nodes; Ndest++)   {
+			int dest_node= Rdest * num_router_nodes + Ndest;
+			int dest_aggregator= first_net_aggregator + dest_node;
+
+			/* Is there a link between these two nodes? */
+			if (farlink_exists(src_node, dest_node))   {
+			    #if defined GEN_DEBUG
+				fprintf(stderr, "gen_far_link(From node %4d, R %2d, p %2d, to node %4d, R %2d, p %2d);\n",
+				    src_node, net_aggregator, cores_per_node + 1 + farlink_src_port(src_node, dest_node),
+				    dest_node, dest_aggregator, cores_per_node + 1 + farlink_dest_port(src_node, dest_node));
+			    #endif /* GEN_DEBUG */
+			    gen_link(net_aggregator, cores_per_node + 1 + farlink_src_port(src_node, dest_node),
+				dest_aggregator, cores_per_node + 1 + farlink_dest_port(src_node, dest_node),
+				LnetAccess);
+			}
+		    }
+		}
+		net_aggregator++;
+	    }
+	}
+    }
+
+
+
     /*
     ** Generate one NVRAM component (a bit bucket) per node and connect
     ** each NVRAM aggregator to it.
@@ -312,7 +348,7 @@ int all_cores;
     IO_aggregator= first_IO_aggregator;
     for (R= 0; R < IO_nodes; R++)   {
 	#if defined GEN_DEBUG
-	    fprintf(stderr, "gen_router(%3d, %2d); for I/O nodes\n", IO_aggregator,
+	    fprintf(stderr, "gen_router(ID %3d, %2d ports); for I/O nodes\n", IO_aggregator,
 		(net_x_dim * net_y_dim * num_router_nodes / IO_nodes) + 1);
 	#endif /* GEN_DEBUG */
 	gen_router(IO_aggregator, (net_x_dim * net_y_dim * num_router_nodes / IO_nodes) + 1,

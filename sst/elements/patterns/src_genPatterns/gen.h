@@ -29,7 +29,7 @@ void gen_router(int id, int num_ports, router_function_t role, int wormhole);
 void gen_link(int Arouter, int Aport, int Brouter, int Bport, link_type_t ltype);
 
 void reset_router_list(void);
-int next_router(int *id, router_function_t *role, int *wormhole);
+int next_router(int *id, router_function_t *role, int *wormhole, int *num_ports);
 void reset_router_nics(int router);
 int next_router_nic(int router, int *port, link_type_t *ltype);
 void reset_router_links(int router);

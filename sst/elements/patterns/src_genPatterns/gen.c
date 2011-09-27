@@ -546,7 +546,8 @@ int i;
 /*
 ** Add a link between routers
 ** Call this only once per link. It will hook into both routers, so
-** don't call it for each router individually!
+** no need to call it for each router individually!
+** If you do call it for both ends, the second call will be ignored.
 */
 void
 gen_link(int Arouter, int Aport, int Brouter, int Bport, link_type_t ltype)
@@ -555,6 +556,23 @@ gen_link(int Arouter, int Aport, int Brouter, int Bport, link_type_t ltype)
 link_t *current;
 int i;
 router_t *A, *B;
+
+
+    current= link_list;
+    while (current)   {
+	if ((current->left_router == Arouter) && (current->right_router == Brouter) &&
+		(current->left_router_port == Aport) && (current->right_router_port == Bport))   {
+	    /* A to B link already exists. No need to add it */
+	    return;
+	}
+	if ((current->left_router == Brouter) && (current->right_router == Arouter) &&
+		(current->left_router_port == Bport) && (current->right_router_port == Aport))   {
+	    /* B to A link already exists. No need to add it */
+	    return;
+	}
+	current= current->next;
+    }
+
 
 
     current= (link_t *)malloc(sizeof(link_t));
@@ -634,7 +652,7 @@ reset_router_list(void)
 
 
 int
-next_router(int *id, router_function_t *role, int *wormhole)
+next_router(int *id, router_function_t *role, int *wormhole, int *num_ports)
 {
 
     if (!router_current)   {
@@ -643,6 +661,7 @@ next_router(int *id, router_function_t *role, int *wormhole)
     *id= router_current->id;
     *role= router_current->role;
     *wormhole= router_current->wormhole;
+    *num_ports= router_current->num_ports;
     router_current= router_current->next;
     return 1;
 

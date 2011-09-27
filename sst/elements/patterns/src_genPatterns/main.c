@@ -13,6 +13,7 @@
 #include "main.h"
 #include "sst_gen.h"
 #include "machine.h"
+#include "farlink.h"
 #include "pattern.h"
 #include "topo_mesh2D.h"
 
@@ -34,6 +35,7 @@ static struct option long_options[]=   {
     {"verbose", 0, NULL, 'v'},
     {"sstfilename", 1, NULL, 'o'},
     {"machine", 1, NULL, 'm'},
+    {"farlinks", 1, NULL, 'f'},
     {"pattern", 1, NULL, 'p'},
     {"IO_nodes", 1, NULL, 'i'},
     {"power", 1, NULL, 1003},
@@ -54,9 +56,11 @@ int ch, error;
 int verbose;
 char *sstFname;
 char *machineFname;
+char *farlinkFname;
 char *patternFname;
 FILE *fp_sst;
 FILE *fp_machine;
+FILE *fp_farlink;
 FILE *fp_pattern;
 
 int IO_nodes;		/* Should be divisible by the number of nodes */
@@ -75,8 +79,13 @@ int ssd_write_bw;	/* In bytes per second */
     /* Defaults */
     error= FALSE;
     verbose= 0;
+    fp_sst= NULL;
+    fp_machine= NULL;
+    fp_farlink= NULL;
+    fp_pattern= NULL;
     sstFname= "";
     machineFname= "";
+    farlinkFname= "";
     patternFname= "";
 
     /* Assume a SATA3 drive (Crucial C200) "somehow" connected to an I/O network */
@@ -96,7 +105,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* check command line args */
     while (1)   {
-	ch= getopt_long(argc, argv, "vo:hp:i:m:", long_options, &option_index);
+	ch= getopt_long(argc, argv, "vo:hp:i:m:f:", long_options, &option_index);
 	if (ch == -1)   {
 	    break;
 	}
@@ -117,6 +126,9 @@ int ssd_write_bw;	/* In bytes per second */
 		break;
 	    case 'p':
 		patternFname= optarg;
+		break;
+	    case 'f':
+		farlinkFname= optarg;
 		break;
 	    case 'v':
 		verbose++;
@@ -166,6 +178,18 @@ int ssd_write_bw;	/* In bytes per second */
 	}
     }
 
+    /* Open the (optional) far link configuration file for input */
+    if (strcmp(farlinkFname, "") == 0)   {
+	fp_farlink= NULL;
+    } else   {
+	fp_farlink= fopen(farlinkFname, "r");
+	if (fp_farlink == NULL)   {
+	    fprintf(stderr, "Could not open the far link configuration file \"%s\": %s\n",
+		farlinkFname, strerror(errno));
+	    error= TRUE;
+	}
+    }
+
     if (!error)   {
 	/* Open the SST xml file for output */
 	printf("*** Writing output to \"%s\"\n", sstFname);
@@ -202,6 +226,14 @@ int ssd_write_bw;	/* In bytes per second */
 	}
     }
 
+    /* Read the far link file, if one was specified */
+    if (!error && (fp_farlink != NULL))   {
+	printf("*** Reading far link configuration from \"%s\"\n", farlinkFname);
+	if (read_farlink_file(fp_farlink, verbose) == FALSE)   {
+	    error= TRUE;
+	}
+    }
+
     /* A node is the endpoint of a network router */
     if (!error)   {
 	if (num_nodes() % IO_nodes)   {
@@ -217,6 +249,7 @@ int ssd_write_bw;	/* In bytes per second */
     if (!error)   {
 	disp_machine_params();
 	disp_pattern_params();
+	disp_farlink_params();
     }
 
     if (!error)   {
@@ -272,8 +305,8 @@ int ssd_write_bw;	/* In bytes per second */
     sst_router_param_end(fp_sst, RNAME_NoC);
 
     wormhole= TRUE;
-    sst_router_param_start(fp_sst, RNAME_NET_ACCESS,
-	1 + (num_cores() * NoC_x_dim() * NoC_y_dim()), NetLinkBandwidth(),
+    sst_router_param_start(fp_sst, RNAME_NET_ACCESS, -1,
+	NetLinkBandwidth(),
 	num_cores(), NetRouterLatency(), wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NET_ACCESS);
 
@@ -315,6 +348,10 @@ int ssd_write_bw;	/* In bytes per second */
 	fclose(fp_pattern);
     }
 
+    if (fp_farlink)   {
+	fclose(fp_farlink);
+    }
+
     return 0;
 
 }  /* end of main() */
@@ -326,9 +363,10 @@ usage(char *argv[])
 {
 
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: %s -o out -m machine -p pname [--power model] [-i IO] [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -o out -m machine -p pname [-f farlink] [--power model] [-i IO] [-h]\n", argv[0]);
     fprintf(stderr, "   --sstfilename, -o     Name of the SST xml output file\n");
     fprintf(stderr, "   --machine, -m         Name of machine description file\n");
+    fprintf(stderr, "   --farlink, -f         Name of far link configuration file\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
     fprintf(stderr, "   --pattern, -p         Name of pattern description file\n");
