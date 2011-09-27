@@ -525,6 +525,8 @@ Patterns::event_send(int dest, int event, SST::SimTime_t CurrentSimTime,
 CPUNicEvent *e;
 int my_node, dest_node;
 FarLink_t fl;
+stat_dest_t dl;
+std::set<stat_dest_t>::iterator pos;
 
 
     // Create an event and fill in the event info
@@ -542,6 +544,23 @@ FarLink_t fl;
 	e->AttachPayload(payload, payload_len);
     }
 
+    my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+    dest_node= dest / (NoC_width * NoC_height * cores_per_NoC_router);
+    dl.dest= dest_node;
+    pos= stat_dest.find(dl);
+    if (pos != stat_dest.end())   {
+	// Update. FIXME: This seems overly complicated...
+	dl.cnt= pos->cnt + 1;
+	stat_dest.erase(dl);
+	stat_dest.insert(dl);
+	pos= stat_dest.find(dl);
+    } else   {
+	// Never sent to this node before. Create an entry.
+	dl.dest= dest_node;
+	dl.cnt= 0;
+	stat_dest.insert(dl);
+    }
+
     if (dest == my_rank)   {
 	// No need to go through the network for this
 	// FIXME: Shouldn't this involve some sort of delay?
@@ -550,9 +569,6 @@ FarLink_t fl;
     }
 
     /* Is dest within our NoC? */
-    my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
-    dest_node= dest / (NoC_width * NoC_height * cores_per_NoC_router);
-
     if (my_node == dest_node)   {
 	/* Route locally */
 	NoCsend(e, my_rank, dest, CurrentSimTime);
@@ -1022,6 +1038,7 @@ Patterns::stat_print(void)
 {
 
 std::list<int>::iterator rank;
+std::set<stat_dest_t>::iterator pos;
 
 
     for (rank= NICstat_ranks.begin(); rank != NICstat_ranks.end(); rank++)   {
@@ -1049,7 +1066,6 @@ std::list<int>::iterator rank;
 	    } else   {
 		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }
-	    printf("#\n");
 
 	    printf("# [%3d] Net NIC model statistics\n", my_rank);
 	    printf("# [%3d]     Total receives           %12lld\n", my_rank, stat_NetNICrecv);
@@ -1074,7 +1090,6 @@ std::list<int>::iterator rank;
 	    } else   {
 		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }
-	    printf("#\n");
 
 	    printf("# [%3d] Far link model statistics\n", my_rank);
 	    printf("# [%3d]     Total receives                unknown\n", my_rank);
@@ -1086,6 +1101,14 @@ std::list<int>::iterator rank;
 	    } else   {
 		printf("# [%3d]     NIC send busy                     0.0 %%\n", my_rank);
 	    }
+
+	    printf("# [%3d] Node destinations and message count\n", my_rank);
+	    int my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+	    printf("# [%3d]      From node %d to ", my_rank, my_node);
+	    for (pos= stat_dest.begin(); pos != stat_dest.end(); pos++)   {
+		printf("%d(%" PRId64 "), ", pos->dest, pos->cnt);
+	    }
+	    printf("\n");
 	    printf("#\n");
 	}
     }

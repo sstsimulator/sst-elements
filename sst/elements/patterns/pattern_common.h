@@ -54,6 +54,18 @@ struct _FLcompare   {
 
 
 
+// Destination statistics
+typedef struct stat_dest_t   {
+    int dest;
+    uint64_t cnt;
+} stat_dest_t;
+
+struct _dest_compare   {
+    bool operator () (const stat_dest_t& x, const stat_dest_t& y) const {return x.dest < y.dest;} 
+};
+
+
+
 class Patterns   {
     public:
 	Patterns()   {
@@ -163,6 +175,7 @@ class Patterns   {
 	long long int stat_FarNICbusy;
 
 	std::list<int> NICstat_ranks;
+	std::set<stat_dest_t, _dest_compare> stat_dest;
 
 	long long int stat_NetNICrecv;
 	long long int stat_NetNICrecv_bytes;
