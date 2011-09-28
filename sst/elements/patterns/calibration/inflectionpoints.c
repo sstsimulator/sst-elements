@@ -16,8 +16,8 @@
 
 #define FALSE				(0)
 #define TRUE				(1)
-#define DEFAULT_CHANGE_THRESHOLD	(1.0)
-#define DEFAULT_SUPRESS_THRESHOLD	(1)
+#define DEFAULT_CHANGE_THRESHOLD	(0.1)
+#define DEFAULT_SUPRESS_THRESHOLD	(0)
 #define MAX_LINE			(1024)
 
 
