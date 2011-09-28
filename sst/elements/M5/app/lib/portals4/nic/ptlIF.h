@@ -1,6 +1,7 @@
 #ifndef _ptlIF_h
 #define _ptlIF_h
 
+#include <limits.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <cmdQueue.h>
@@ -21,12 +22,17 @@ class PtlIF {
     {
         PTL_DBG2("\n");
         char* tmp = getenv("PTLNIC_CMD_QUEUE_ADDR");
+        assert( tmp );
         unsigned long addr = 0;
-        if ( tmp )
-            addr = strtoul(tmp,NULL,16);
 
+        addr = strtoul(tmp,NULL,16);
+
+        assert( addr != ULONG_MAX ); 
+        
         m_cmdQueue = (cmdQueue_t*)syscall( SYS_mmap_dev, addr, 
                                                 sizeof( cmdQueue_t) );
+
+        PTL_DBG2("PTLNIC_CMD_QUEUE_ADDR=`%s` %#lx -> %p\n",tmp,addr,m_cmdQueue);
 
         PTL_DBG2("&m_nid=%p size=%lu\n", &m_nid, sizeof(m_nid));
         PTL_DBG2("&m_limits=%p size=%lu\n", &m_limits, sizeof(m_limits));
