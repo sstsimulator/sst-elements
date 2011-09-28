@@ -215,6 +215,7 @@ static foo( FILE* output, int nid, int numRanks, const char* exe )
     fprintf(output,"%s        <base.process.cmd.0> hello       </base.process.cmd.0>\n",indent);
     fprintf(output,"%s        <base.process.env.0> RT_RANK=%d  </base.process.env.0>\n",indent,nid);
     fprintf(output,"%s        <base.process.env.1> RT_SIZE=%d  </base.process.env.1>\n",indent,numRanks);
+    fprintf(output,"%s        <base.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </base.process.env.2>\n",indent);
 
     fprintf(output,"%s    </params>\n",indent);
     fprintf(output,"%s    <link name=nid%d.cpu-dcache port=dcache_port latency=$lat/>\n",indent,nid);
@@ -344,6 +345,7 @@ static foo( FILE* output, int nid, int numRanks, const char* exe )
     fprintf(output,"%s        <exe0.process.cmd.0> hello  </exe0.process.cmd.0>\n",indent);
     fprintf(output,"%s        <exe0.process.env.0> RT_RANK=%d  </exe0.process.env.0>\n",indent,nid);
     fprintf(output,"%s        <exe0.process.env.1> RT_SIZE=%d  </exe0.process.env.1>\n",indent,numRanks);
+    fprintf(output,"%s        <exe0.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.2>\n",indent);
 
     fprintf(output,"%s        <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>\n",indent);
     fprintf(output,"%s        <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>\n",indent);
