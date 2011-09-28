@@ -38,15 +38,18 @@ cd install/bin
 
 PATH=`pwd`:$PATH
 
+
 BUILD TEST APPLICATION
 
 cd "sst tree"/sst/elments/M5/app 
+
 make
 
 you should end up with apps "hello" and "rt"
 
 the M5 xml file uses an enviroment variable to define the exe
 export M5_EXE=`pwd`/rt
+
 
 RUN SIMULATION
 
