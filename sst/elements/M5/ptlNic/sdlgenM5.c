@@ -8,8 +8,8 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     FILE* output = fopen( file, "w" );
     char* indent="";
 
-printf("file=%s exe=%s numM5Nids=%d\n",file,exe,numM5Nids);
-
+    printf("file=%s exe=%s numM5Nids=%d\n",file,exe,numM5Nids);
+    
     assert( output );
 
     fprintf(output,"<?xml version=\"2.0\"?>\n");
@@ -208,7 +208,6 @@ static foo( FILE* output, int nid, int numRanks, const char* exe )
 {
     char* indent = "    ";
 
-printf("%d %d\n",nid,numRanks);
     // CPU
     fprintf(output,"%s<component name=nid%d.cpu0 type=O3Cpu >\n",indent,nid);
     fprintf(output,"%s    <params include=cpuParams>\n",indent);
