@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 
 <cpuParams>
-    <base.process.executable> exe</base.process.executable>
+    <base.process.executable> ${M5_EXE} </base.process.executable>
     <base.process.stackbase> 0x7FFFFFFFF000 </base.process.stackbase>
-    <base.process.cmd.0> exe </base.process.cmd.0>
+    <base.process.cmd.0> ${M5_EXE} </base.process.cmd.0>
     <base.process.cmd.1> 4 </base.process.cmd.1>
     <base.process.cmd.2> 256 </base.process.cmd.2>
     <base.process.env.0> RANK=0 </base.process.env.0>
@@ -1200,9 +1200,9 @@
                 <null> false </null>
                 <zero> false </zero>
 
-                <exe0.process.executable> exe </exe0.process.executable>
+                <exe0.process.executable> ${M5_EXE} </exe0.process.executable>
                 <exe0.process.stackbase> 0x7FFFFFFFF000 </exe0.process.stackbase>
-                <exe0.process.cmd.0> exe </exe0.process.cmd.0>
+                <exe0.process.cmd.0> ${M5_EXE} </exe0.process.cmd.0>
                 <exe0.process.cmd.1> 4 </exe0.process.cmd.1>
                 <exe0.process.cmd.2> 256 </exe0.process.cmd.2>
                 <exe0.process.env.0> RANK=0 </exe0.process.env.0>
@@ -1211,9 +1211,9 @@
                 <exe0.physicalMemory.start> 0x00100000 </exe0.physicalMemory.start>
                 <exe0.physicalMemory.end>   0x011fffff </exe0.physicalMemory.end>
 
-                <exe1.process.executable> exe </exe1.process.executable>
+                <exe1.process.executable> ${M5_EXE} </exe1.process.executable>
                 <exe1.process.stackbase> 0x7FFFFFFFF000 </exe1.process.stackbase>
-                <exe1.process.cmd.0> exe </exe1.process.cmd.0>
+                <exe1.process.cmd.0> ${M5_EXE} </exe1.process.cmd.0>
                 <exe1.process.cmd.1> 4 </exe1.process.cmd.1>
                 <exe1.process.cmd.2> 256 </exe1.process.cmd.2>
 		        <exe1.process.env.0> RANK=0 </exe1.process.env.0>
@@ -1222,9 +1222,9 @@
                 <exe1.physicalMemory.start> 0x01200000 </exe1.physicalMemory.start>
                 <exe1.physicalMemory.end>   0x021fffff </exe1.physicalMemory.end>
 
-                <exe2.process.executable> exe </exe2.process.executable>
+                <exe2.process.executable> ${M5_EXE} </exe2.process.executable>
                 <exe2.process.stackbase> 0x7FFFFFFFF000 </exe2.process.stackbase>
-                <exe2.process.cmd.0> exe </exe2.process.cmd.0>
+                <exe2.process.cmd.0> ${M5_EXE} </exe2.process.cmd.0>
                 <exe2.process.cmd.1> 4 </exe2.process.cmd.1>
                 <exe2.process.cmd.2> 256 </exe2.process.cmd.2>
                 <exe2.process.env.0> RANK=0 </exe2.process.env.0>
@@ -1234,9 +1234,9 @@
                 <exe2.physicalMemory.end>   0x031fffff </exe2.physicalMemory.end>
 
 
-                <exe3.process.executable> exe </exe3.process.executable>
+                <exe3.process.executable> ${M5_EXE} </exe3.process.executable>
                 <exe3.process.stackbase> 0x7FFFFFFFF000 </exe3.process.stackbase>
-                <exe3.process.cmd.0> exe </exe3.process.cmd.0>
+                <exe3.process.cmd.0> ${M5_EXE} </exe3.process.cmd.0>
                 <exe3.process.cmd.1> 4 </exe3.process.cmd.1>
                 <exe3.process.cmd.2> 256 </exe3.process.cmd.2>
                 <exe3.process.env.0> RANK=0 </exe3.process.env.0>
@@ -1245,9 +1245,9 @@
                 <exe3.physicalMemory.start> 0x03200000 </exe3.physicalMemory.start>
                 <exe3.physicalMemory.end>   0x041fffff </exe3.physicalMemory.end>
 
-                <exe4.process.executable> exe </exe4.process.executable>
+                <exe4.process.executable> ${M5_EXE} </exe4.process.executable>
                 <exe4.process.stackbase> 0x7FFFFFFFF000 </exe4.process.stackbase>
-                <exe4.process.cmd.0> exe </exe4.process.cmd.0>
+                <exe4.process.cmd.0> ${M5_EXE} </exe4.process.cmd.0>
                 <exe4.process.cmd.1> 4 </exe4.process.cmd.1>
                 <exe4.process.cmd.2> 256 </exe4.process.cmd.2>
                 <exe4.process.env.0> RANK=0 </exe4.process.env.0>
@@ -1256,9 +1256,9 @@
                 <exe4.physicalMemory.start> 0x04200000 </exe4.physicalMemory.start>
                 <exe4.physicalMemory.end>   0x051fffff </exe4.physicalMemory.end>
 
-                <exe5.process.executable> exe </exe5.process.executable>
+                <exe5.process.executable> ${M5_EXE} </exe5.process.executable>
                 <exe5.process.stackbase> 0x7FFFFFFFF000 </exe5.process.stackbase>
-                <exe5.process.cmd.0> exe </exe5.process.cmd.0>
+                <exe5.process.cmd.0> ${M5_EXE} </exe5.process.cmd.0>
                 <exe5.process.cmd.1> 4 </exe5.process.cmd.1>
                 <exe5.process.cmd.2> 256 </exe5.process.cmd.2>
                 <exe5.process.env.0> RANK=0 </exe5.process.env.0>
@@ -1267,9 +1267,9 @@
                 <exe5.physicalMemory.start> 0x05200000 </exe5.physicalMemory.start>
                 <exe5.physicalMemory.end>   0x061fffff </exe5.physicalMemory.end>
 
-                <exe6.process.executable> exe</exe6.process.executable>
+                <exe6.process.executable> ${M5_EXE} </exe6.process.executable>
                 <exe6.process.stackbase> 0x7FFFFFFFF000 </exe6.process.stackbase>
-                <exe6.process.cmd.0> exe </exe6.process.cmd.0>
+                <exe6.process.cmd.0> ${M5_EXE} </exe6.process.cmd.0>
                 <exe6.process.cmd.1> 4 </exe6.process.cmd.1>
                 <exe6.process.cmd.2> 256 </exe6.process.cmd.2>
                 <exe6.process.env.0> RANK=0 </exe6.process.env.0>
@@ -1278,9 +1278,9 @@
                 <exe6.physicalMemory.start> 0x06200000 </exe6.physicalMemory.start>
                 <exe6.physicalMemory.end>   0x071fffff </exe6.physicalMemory.end>
 
-                <exe7.process.executable> exe </exe7.process.executable>
+                <exe7.process.executable> ${M5_EXE} </exe7.process.executable>
                 <exe7.process.stackbase> 0x7FFFFFFFF000 </exe7.process.stackbase>
-                <exe7.process.cmd.0> exe </exe7.process.cmd.0>
+                <exe7.process.cmd.0> ${M5_EXE} </exe7.process.cmd.0>
                 <exe7.process.cmd.1> 4 </exe7.process.cmd.1>
                 <exe7.process.cmd.2> 256 </exe7.process.cmd.2>
                 <exe7.process.env.0> RANK=0 </exe7.process.env.0>
