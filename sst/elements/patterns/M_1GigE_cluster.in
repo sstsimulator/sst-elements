@@ -30,99 +30,108 @@ num_router_nodes = 5
 #
 #                inflection      latency 
 #                bytes            nano s
-NetNICparams =            0        18920
-NetNICparams =            8        19170
-NetNICparams =           40        19860
-NetNICparams =           72        20560
-NetNICparams =          112        21430
-NetNICparams =          160        22480
-NetNICparams =          240        24020
-NetNICparams =          352        26270
-NetNICparams =          480        28930
-NetNICparams =          704        34810
-NetNICparams =         1024        47000
-NetNICparams =         1536        61250
-NetNICparams =         2048       100110
-NetNICparams =         3072       100280
-NetNICparams =         4096       197110
-NetNICparams =         5632       227670
-NetNICparams =         7168       231490
-NetNICparams =        10240       281200
-NetNICparams =        13312       285840
-NetNICparams =        16384       289140
-NetNICparams =        22528       294020
-NetNICparams =        28672       466980
-NetNICparams =        45056       486990
-NetNICparams =        61440       681750
-NetNICparams =        90112      1040680
-NetNICparams =       122880      1433070
-NetNICparams =       180224      1827960
-NetNICparams =       245760      2418030
-NetNICparams =       393216      3601960
-NetNICparams =       524288      4782190
-NetNICparams =       786432      6947430
-NetNICparams =      1310720     11471570
-NetNICparams =      1835008     15845810
-NetNICparams =      2883584     24863150
-NetNICparams =      3932160     33724660
-NetNICparams =      6815744     58153070
-NetNICparams =     10485760     89470230
+NetNICparams =            0        19470
+NetNICparams =            8        19700
+NetNICparams =           40        20410
+NetNICparams =           64        20900
+NetNICparams =           88        21420
+NetNICparams =          112        22430
+NetNICparams =          144        22650
+NetNICparams =          192        23510
+NetNICparams =          240        24430
+NetNICparams =          320        26020
+NetNICparams =          416        28110
+NetNICparams =          512        29880
+NetNICparams =          704        34860
+NetNICparams =          960        45010
+NetNICparams =         1280        83330
+NetNICparams =         1536        61480
+NetNICparams =         1920        98550
+NetNICparams =         2560       143970
+NetNICparams =         3072       101260
+NetNICparams =         3840       257680
+NetNICparams =         5120       192200
+NetNICparams =         6656       220720
+NetNICparams =         7680       192570
+NetNICparams =        10240       280940
+NetNICparams =        12288       287250
+NetNICparams =        15360       290260
+NetNICparams =        20480       291210
+NetNICparams =        26624       295820
+NetNICparams =        32768       472580
+NetNICparams =        45056       487100
+NetNICparams =        57344       675560
+NetNICparams =        73728       931330
+NetNICparams =        98304      1242960
+NetNICparams =       122880      1439650
+NetNICparams =       163840      1653870
+NetNICparams =       212992      2058800
+NetNICparams =       262144      2623970
+NetNICparams =       360448      3423130
+NetNICparams =       458752      4212860
+NetNICparams =       589824      5392940
+NetNICparams =       786432      6969910
+NetNICparams =       983040      8739420
+NetNICparams =      1048576      9317040
 
 
 # NoC NIC parameters
 #
 #                inflection      latency 
 #                bytes            nano s
-NoCNICparams =            0          830
-NoCNICparams =            8          830
-NoCNICparams =           40          840
-NoCNICparams =          104          950
-NoCNICparams =          192          960
-NoCNICparams =          256          960
-NoCNICparams =          384          970
-NoCNICparams =          512         1090
-NoCNICparams =          832         1200
-NoCNICparams =         1024         1170
-NoCNICparams =         1664         1400
-NoCNICparams =         2304         1600
-NoCNICparams =         3328         1930
-NoCNICparams =         4608         3070
-NoCNICparams =         6656         3430
-NoCNICparams =         9216         4230
-NoCNICparams =        13312         5630
-NoCNICparams =        18432         7420
-NoCNICparams =        30720        12330
-NoCNICparams =        45056        17160
-NoCNICparams =        61440        21990
-NoCNICparams =        90112        30820
-NoCNICparams =       122880        41250
-NoCNICparams =       180224        59170
-NoCNICparams =       245760        79850
-NoCNICparams =       393216       126760
-NoCNICparams =       524288       168400
-NoCNICparams =      2621440       828730
-NoCNICparams =      6815744      2170100
-NoCNICparams =     10485760      3788340
+NoCNICparams =            0          280
+NoCNICparams =            8          320
+NoCNICparams =           40          330
+NoCNICparams =          104          350
+NoCNICparams =          176          360
+NoCNICparams =          256          370
+NoCNICparams =          384          390
+NoCNICparams =          512          420
+NoCNICparams =          704          460
+NoCNICparams =          896          480
+NoCNICparams =         1152          530
+NoCNICparams =         1536          580
+NoCNICparams =         2304          730
+NoCNICparams =         3072          860
+NoCNICparams =         3840          980
+NoCNICparams =         5120         1440
+NoCNICparams =         7168         1650
+NoCNICparams =         9216         4010
+NoCNICparams =        12288         5110
+NoCNICparams =        15360         6090
+NoCNICparams =        20480         7940
+NoCNICparams =        26624        10470
+NoCNICparams =        32768        12950
+NoCNICparams =        45056        16780
+NoCNICparams =        57344        20390
+NoCNICparams =        73728        25550
+NoCNICparams =        98304        32640
+NoCNICparams =       122880        39640
+NoCNICparams =       163840        52090
+NoCNICparams =       212992        66740
+NoCNICparams =       262144        82240
+NoCNICparams =       360448       112660
+NoCNICparams =       458752       142870
+NoCNICparams =       589824       183150
+NoCNICparams =       786432       242680
+NoCNICparams =       983040       301970
+NoCNICparams =      1048576       321630
 
 
 # Minimum gap between messages going into the main network
-NetNICgap = 5685
+NetNICgap = 15342
 
 # Minimum gap between messages going into the NoC
 NoCNICgap = 160
 
 # (Achievable) Bandwidth between and to network routers
 # My guess of 1GigE link payload bandwith in bytes/second
-NetLinkBandwidth = 78000000
-NetLinkBandwidth = 2400000
 NetLinkBandwidth = 120000000 # works for 60 nodes 1024 and 4096 doubles
 
 # (Achievable) Bandwidth between and to NoC network routers
-NoCLinkBandwidth = 4000000000
 NoCLinkBandwidth = 800000000 # works for 60 nodes 1024 and 4096 doubles
 
 # Link latency between network routers
-NetIntraLatency = 5500
 NetIntraLatency = 5500
 
 # Link latency between NoC network routers
