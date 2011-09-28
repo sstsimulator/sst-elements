@@ -16,7 +16,7 @@ LDFLAGS += -Llib/rt -Llib/libc
 
 CPPFLAGS += -Ilib/rt -Ilib/libc
 
-apps: libs hello rt
+apps: libs hello rt portals
 
 libs:
 	cd lib && $(MAKE)
@@ -29,7 +29,7 @@ hello: hello.o
 	${CC} hello.o -o $@ ${LDFLAGS}
 
 rt: rt.o
-	${CC} rt.o -o $@ ${LDFLAGS} lib/libc/m5_syscall.o
+	${CC} rt.o -o $@ ${LDFLAGS}
 
 clean:
 	cd portals4Tests && $(MAKE) clean
