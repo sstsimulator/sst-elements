@@ -28,7 +28,7 @@ namespace SST {
     static double Co= 1.52e-5;
     static double A_EM=7.39125e-10;
     static double A_TDDB=1.36334e-10;
-    static double A_NBTI=1.36334e-10;
+    static double A_NBTI=0.006;
     //enum power_state{ACTIVE, IDLE, SLEEP};
 
      class Reliability {

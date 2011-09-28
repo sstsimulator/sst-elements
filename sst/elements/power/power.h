@@ -84,7 +84,7 @@ extern "C"{
 #endif //mcpat07_h
 
 /*********ORION******************/
-#define ORION_H
+////#define ORION_H
 
 /*added for ORION power analysis */
 extern "C"{
@@ -98,7 +98,7 @@ extern "C"{
 
 
 #define MAX_NUM_SUBCOMP 20
-#define MESMTHI_H  //mesmthi is a 4x4 multicore system model and need special mapping of power 
+////#define MESMTHI_H  //mesmthi is a 4x4 multicore system model and need special mapping of power 
 		   //to corresponding floorplan blocks 
 
 
@@ -373,14 +373,14 @@ typedef struct
 typedef struct
 {
 	/*McPAT*/
-	double branch_read, branch_write, RAS_read, RAS_write;
+	double branch_read[MAX_NUM_SUBCOMP], branch_write[MAX_NUM_SUBCOMP], RAS_read[MAX_NUM_SUBCOMP], RAS_write[MAX_NUM_SUBCOMP];
 	double il1_read[MAX_NUM_SUBCOMP], il1_readmiss[MAX_NUM_SUBCOMP], IB_read[MAX_NUM_SUBCOMP], IB_write[MAX_NUM_SUBCOMP], BTB_read[MAX_NUM_SUBCOMP], BTB_write[MAX_NUM_SUBCOMP], ID_inst_read[MAX_NUM_SUBCOMP], ID_operand_read[MAX_NUM_SUBCOMP], ID_misc_read[MAX_NUM_SUBCOMP];
-	double int_win_read, int_win_write, int_win_search, fp_win_read, fp_win_write, fp_win_search, ROB_read, ROB_write;
-	double iFRAT_read, iFRAT_write, iFRAT_search, fFRAT_read, fFRAT_write, fFRAT_search, iRRAT_read, fRRAT_read, iRRAT_write, fRRAT_write;
-	double ifreeL_read, ifreeL_write, ffreeL_read, ffreeL_write, idcl_read, fdcl_read;
+	double int_win_read[MAX_NUM_SUBCOMP], int_win_write[MAX_NUM_SUBCOMP], int_win_search[MAX_NUM_SUBCOMP], fp_win_read[MAX_NUM_SUBCOMP], fp_win_write[MAX_NUM_SUBCOMP], fp_win_search[MAX_NUM_SUBCOMP], ROB_read[MAX_NUM_SUBCOMP], ROB_write[MAX_NUM_SUBCOMP];
+	double iFRAT_read[MAX_NUM_SUBCOMP], iFRAT_write[MAX_NUM_SUBCOMP], iFRAT_search[MAX_NUM_SUBCOMP], fFRAT_read[MAX_NUM_SUBCOMP], fFRAT_write[MAX_NUM_SUBCOMP], fFRAT_search[MAX_NUM_SUBCOMP], iRRAT_read[MAX_NUM_SUBCOMP], fRRAT_read[MAX_NUM_SUBCOMP], iRRAT_write[MAX_NUM_SUBCOMP], fRRAT_write[MAX_NUM_SUBCOMP];
+	double ifreeL_read[MAX_NUM_SUBCOMP], ifreeL_write[MAX_NUM_SUBCOMP], ffreeL_read[MAX_NUM_SUBCOMP], ffreeL_write[MAX_NUM_SUBCOMP], idcl_read[MAX_NUM_SUBCOMP], fdcl_read[MAX_NUM_SUBCOMP];
 	double dl1_read[MAX_NUM_SUBCOMP], dl1_readmiss[MAX_NUM_SUBCOMP], dl1_write[MAX_NUM_SUBCOMP], dl1_writemiss[MAX_NUM_SUBCOMP], LSQ_read[MAX_NUM_SUBCOMP], LSQ_write[MAX_NUM_SUBCOMP], loadQ_read[MAX_NUM_SUBCOMP], loadQ_write[MAX_NUM_SUBCOMP];
 	double itlb_read[MAX_NUM_SUBCOMP], itlb_readmiss[MAX_NUM_SUBCOMP], dtlb_read[MAX_NUM_SUBCOMP], dtlb_readmiss[MAX_NUM_SUBCOMP];
-	double int_regfile_reads, int_regfile_writes, float_regfile_reads, float_regfile_writes, RFWIN_read, RFWIN_write;
+	double int_regfile_reads[MAX_NUM_SUBCOMP], int_regfile_writes[MAX_NUM_SUBCOMP], float_regfile_reads[MAX_NUM_SUBCOMP], float_regfile_writes[MAX_NUM_SUBCOMP], RFWIN_read[MAX_NUM_SUBCOMP], RFWIN_write[MAX_NUM_SUBCOMP];
 	double bypass_access;
 	double router_access;
 	double L2_read[MAX_NUM_SUBCOMP], L2_readmiss[MAX_NUM_SUBCOMP], L2_write[MAX_NUM_SUBCOMP], L2_writemiss[MAX_NUM_SUBCOMP], L3_read[MAX_NUM_SUBCOMP], L3_readmiss[MAX_NUM_SUBCOMP], L3_write[MAX_NUM_SUBCOMP], L3_writemiss[MAX_NUM_SUBCOMP];
@@ -400,7 +400,7 @@ typedef struct
 	unsigned itlb_accessaddress, itlb_latency;
 	double dtlb_ReadorWrite, dtlb_datablock, dtlb_access;
 	unsigned dtlb_accessaddress, dtlb_latency;
-	double bpred_access, rf_access, alu_access, fpu_access, mult_access, exeu_access, logic_access, clock_access; 
+	double bpred_access, rf_access, alu_access[MAX_NUM_SUBCOMP], fpu_access[MAX_NUM_SUBCOMP], mult_access[MAX_NUM_SUBCOMP], exeu_access, logic_access, clock_access;
 	double io_ReadorWrite, io_datablock, io_access;
 	unsigned io_accessaddress, io_latency;
 	/*IntSim*/
@@ -426,18 +426,18 @@ struct powerModel_t
 
 struct device_params_t
 {
-	unsigned number_il1, number_dl1, number_itlb, number_dtlb, number_L1dir, number_L2dir, number_L2, number_L3;
+	unsigned number_core, number_il1, number_dl1, number_itlb, number_dtlb, number_L1dir, number_L2dir, number_L2, number_L3;
 	unsigned machineType; //1: inorder, 0:ooo
 	float clockRate; //frequency McPAT
 };
 
 struct floorplan_id_t
 {
-	int il1, il2, dl1, dl2, itlb, dtlb;
-	int clock, bpred, rf, io, logic, alu, fpu, mult;
-	int ib, issueQ, decoder, bypass, exeu, pipeline;
-	int lsq, rat, rob, btb, L2, mc, router, loadQ;
-	int rename, scheduler, L3, L1dir, L2dir;
+	std::vector<int> il1, il2, dl1, dl2, itlb, dtlb;
+	std::vector<int> clock, bpred, rf, io, logic, alu, fpu, mult;
+	std::vector<int> ib, issueQ, decoder, bypass, exeu, pipeline;
+	std::vector<int> lsq, rat, rob, btb, L2, mc, router, loadQ;
+	std::vector<int> rename, scheduler, L3, L1dir, L2dir;
 };
 
 class Reliability;
@@ -453,27 +453,27 @@ class Power{
 	Pdissipation_t p_usage_clock;
 	Pdissipation_t p_usage_io;
 	Pdissipation_t p_usage_logic;
-	Pdissipation_t p_usage_alu;
+	std::vector<Pdissipation_t> p_usage_alu;
 	Pdissipation_t p_usage_fpu;
 	Pdissipation_t p_usage_mult;	
-	Pdissipation_t p_usage_rf;
-	Pdissipation_t p_usage_bpred;
-	Pdissipation_t p_usage_ib;
+	std::vector<Pdissipation_t> p_usage_rf;
+	std::vector<Pdissipation_t> p_usage_bpred;
+	std::vector<Pdissipation_t> p_usage_ib;
 	Pdissipation_t p_usage_rs;
-	Pdissipation_t p_usage_decoder;
+	std::vector<Pdissipation_t> p_usage_decoder;
 	Pdissipation_t p_usage_bypass;
 	Pdissipation_t p_usage_exeu;
 	Pdissipation_t p_usage_pipeline;
-	Pdissipation_t p_usage_lsq;
+	std::vector<Pdissipation_t> p_usage_lsq;
 	Pdissipation_t p_usage_rat;
 	Pdissipation_t p_usage_rob;
-	Pdissipation_t p_usage_btb;
+	std::vector<Pdissipation_t> p_usage_btb;
 	std::vector<Pdissipation_t> p_usage_cache_l2;
 	Pdissipation_t p_usage_mc;
 	Pdissipation_t p_usage_router;
-	Pdissipation_t p_usage_loadQ;
-	Pdissipation_t p_usage_renameU;
-	Pdissipation_t p_usage_schedulerU;
+	std::vector<Pdissipation_t> p_usage_loadQ;
+	std::vector<Pdissipation_t> p_usage_renameU;
+	std::vector<Pdissipation_t> p_usage_schedulerU;
 	std::vector<Pdissipation_t> p_usage_cache_l3;
 	std::vector<Pdissipation_t> p_usage_cache_l1dir;
 	std::vector<Pdissipation_t> p_usage_cache_l2dir;
@@ -853,6 +853,7 @@ class Power{
 	    device_tech.number_L2=1; device_tech.number_L3=1;
 	    device_tech.number_il1=1; device_tech.number_dl1=1;
 	    device_tech.number_itlb=1; device_tech.number_dtlb=1;
+	    device_tech.number_core=1;
             // cache params initilaization
             /* cache_il1 */
             cache_il1_tech.unit_scap.push_back(16384.0); cache_il1_tech.vss = 0.0; cache_il1_tech.op_freq = 0; cache_il1_tech.num_sets = 0;	    
@@ -1090,6 +1091,18 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	    router_tech.virtual_channel_per_port=1; router_tech.input_ports=8; router_tech.horizontal_nodes=2; router_tech.vertical_nodes=1;
 	    router_tech.output_ports=5; router_tech.link_throughput=1; router_tech.link_latency=1; router_tech.topology = RING; router_tech.area = 0.41391e-6; router_tech.num_transistors = 0.584e6;
 	    router_tech.link_length = 15500; //unit is micron
+	    /*floorplan*/
+	    floorplan_id.il1.push_back(-1); floorplan_id.il2.push_back(-1); floorplan_id.dl1.push_back(-1); 
+	    floorplan_id.dl2.push_back(-1); floorplan_id.itlb.push_back(-1); floorplan_id.dtlb.push_back(-1);
+	    floorplan_id.clock.push_back(-1); floorplan_id.bpred.push_back(-1); floorplan_id.rf.push_back(-1);
+	    floorplan_id.io.push_back(-1); floorplan_id.logic.push_back(-1); floorplan_id.alu.push_back(-1);
+	    floorplan_id.fpu.push_back(-1); floorplan_id.mult.push_back(-1); floorplan_id.ib.push_back(-1);
+	    floorplan_id.issueQ.push_back(-1); floorplan_id.decoder.push_back(-1); floorplan_id.bypass.push_back(-1);
+	    floorplan_id.exeu.push_back(-1); floorplan_id.pipeline.push_back(-1); floorplan_id.lsq.push_back(-1);
+	    floorplan_id.rat.push_back(-1); floorplan_id.rob.push_back(-1); floorplan_id.btb.push_back(-1);
+	    floorplan_id.L2.push_back(-1); floorplan_id.mc.push_back(-1); floorplan_id.router.push_back(-1);
+	    floorplan_id.loadQ.push_back(-1); floorplan_id.rename.push_back(-1); floorplan_id.scheduler.push_back(-1);
+	    floorplan_id.L3.push_back(-1); floorplan_id.L1dir.push_back(-1); floorplan_id.L2dir.push_back(-1);
 
 	    #ifdef LV2_PANALYZER_H
 	    il1_pspec = NULL; il2_pspec = NULL; dl1_pspec = NULL; dl2_pspec = NULL;  itlb_pspec = NULL;

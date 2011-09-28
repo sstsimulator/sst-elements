@@ -20,14 +20,14 @@ namespace SST {
 
 double Reliability::calc_EM(double t_in) {
         double lambdaEM;
-        lambdaEM= 1/(A_EM * exp(0.7/(8.62 * pow(10,-5) * t_in)));
+        lambdaEM= 1/(A_EM * exp(0.7/(0.0000862 * t_in)));
         return lambdaEM;
 }
 
 
 double Reliability::calc_TDDB(double t_in) {
         double lambdaTDDB;
-        lambdaTDDB= 1/(A_TDDB * exp(0.75/(8.62 * pow(10,-5) * t_in)));
+        lambdaTDDB= 1/(A_TDDB * exp(0.75/(0.0000862 * t_in)));
         return lambdaTDDB;
 }
 
@@ -37,15 +37,27 @@ double Reliability::calc_TC(double t_max, double t_min, double t_avg, double fre
         lambdaTC=Co* pow((t_max-t_min),Q)* freq;
         if (t_avg==0)
                 lambdaTC=0;
-        return lambdaTC;
+        ////return lambdaTC;  commented for now since cyling freq is still an issue
+	return (0);
 }
 
 double Reliability::calc_NBTI(double t_in) {
         double lambdaNBTI;
+	double A = 1.6328;
+	double B = 0.07377;
+	double C = 0.01;
+	double D = -0.06852;
+	double beta = 0.3;
+	double k = 0.0000862;
+	double itemA = log2(A/(1+(2*exp(B/(k*t_in)))));
+	double itemB = log2((A/(1+(2*exp(B/(k*t_in))))) - C);
+	double itemC = t_in/exp((-D)/(k*t_in));
 
-        lambdaNBTI=1/(A_NBTI * pow((log2(1.6328/(1+2*exp(0.07377/(8.62 * pow(10,-5) * t_in)))) - 
-				log2((1.6328/(1+2*exp(0.07377/(8.62 * pow(10,-5) * t_in)))-0.01)) *
-				(t_in/exp(0.06852/(8.62 * pow(10,-5) * t_in)))), 3.33) );
+	lambdaNBTI = 1/(A_NBTI * pow((itemA-itemB) * itemC, (1/beta)));
+
+        //lambdaNBTI=1/(A_NBTI * pow((log2(1.6328/(1+2*exp(0.07377/(8.62 * pow(10,-5) * t_in)))) - 
+	//			log2((1.6328/(1+2*exp(0.07377/(8.62 * pow(10,-5) * t_in)))-0.01)) *
+	//			(t_in/exp(0.06852/(8.62 * pow(10,-5) * t_in)))), 3.33) );
        
         return lambdaNBTI;
 }
@@ -60,7 +72,7 @@ double Reliability::generate_TTF(double frate)
 	r1 = rand()/(double)RAND_MAX;
 	r2 = rand()/(double)RAND_MAX;
 
-	TTF = exp( -log2(frate) - 0.125 + 0.5*sqrt(-2*log2(r1))*sin(2*3.1415926*r2) );
+	TTF = exp( -log2(frate) - 0.125 + (0.5*sqrt(-2*log2(r1))*sin(2*3.1415926*r2)) );
 
 	return TTF;
 }
@@ -78,10 +90,21 @@ double Reliability::compute_localMinTTF(double temp, double t_min, double t_max,
         l_TC=calc_TC(t_max, t_min, t_avg, freq);
 	l_NBTI = calc_NBTI(temp);
 
-	TTF_EM = generate_TTF(l_EM);
+	if (l_EM == 0)
+	    TTF_EM = 99999;
+	else
+	    TTF_EM = generate_TTF(l_EM);
+
 	TTF_TDDB = generate_TTF(l_TDDB);
-	TTF_TC = generate_TTF(l_TC);
+
+	if(l_TC == 0)
+	    TTF_TC = 99999;
+	else
+	    TTF_TC = generate_TTF(l_TC);
+
 	TTF_NBTI = generate_TTF(l_NBTI);
+
+	////std::cout << "TTF_EM = " << TTF_EM << ", TTF_TDDB = " << TTF_TDDB << ", TTF_TC = " << TTF_TC << ", TTF_NBTI = " << TTF_NBTI << std::endl;
 
 	if (minTTF > TTF_EM)
 	    minTTF = TTF_EM;
