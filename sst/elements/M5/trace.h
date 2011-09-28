@@ -41,17 +41,30 @@ class _Trace {
 
     _Trace( FILE* fp = stderr  ) :
         m_fp( fp ),
-        m_all( false )  
+        m_all( false ),
+        m_init( false )  
     {
+    }
+
+    void init( )
+    {
+        if ( m_init ) return;
+        m_init = true;
         char* env = getenv( "TRACE_FLAGS" );
         if ( ! env ) return;
-        //::printf("TRACE_FLAGS=`%s`\n",env);
+        ::printf("TRACE_FLAGS=`%s`\n",env);
         std::string str = env;
         std::deque< std::string > tmp;
+        bool enableAll = false;
 
         size_t cur = 0;
         str = str.substr( str.find_first_not_of(" ") );
         while ( ( cur = str.find(' ') ) != std::string::npos ) {
+            
+            if ( str.substr(0,cur).compare("enableAll") == 0 ) {
+                enableAll = true;
+            }
+
             tmp.push_back( str.substr(0,cur) );
             str = str.substr(cur);
             if ( str.find_first_not_of(" ") == std::string::npos ) {
@@ -61,6 +74,20 @@ class _Trace {
         }
 
         tmp.push_back( str );
+
+        if ( enableAll ) {
+            std::map<std::string,bool>::iterator iter = m_nameM.begin();
+            while ( iter != m_nameM.end() ) {
+                if ( ! (*iter).second ) {
+#if 0
+                    ::printf( "_Trace::%s() enable %s\n",
+                                            __func__, (*iter).first.c_str() );
+#endif
+                    (*iter).second = true;
+                }
+                ++iter;
+            }
+        }
 
         std::deque<std::string>::iterator iter = tmp.begin();
 
@@ -113,12 +140,12 @@ class _Trace {
         }
     }
 
-    void add( std::string const name, bool enable = true ) {
-        //::printf("Trace::add() %s\n",name.c_str());
-        //assert ( m_nameM.find( name ) == m_nameM.end() ); 
-        if ( m_nameM.find( name ) == m_nameM.end() ) {
-            m_nameM[name] = enable;
-        }
+    void add( std::string const name, bool enable = false ) {
+#if 0
+        ::printf("Trace::add() %s enable=%s\n",
+                        name.c_str(), enable ? "yes" : "no" );
+#endif
+        m_nameM[name] = enable;
     }
 
     void disable( std::string const name ) {
@@ -133,12 +160,14 @@ class _Trace {
     std::map<std::string,bool> m_nameM;
     std::map<std::string,bool> m_excludeM;
     bool        m_all;
+    bool        m_init;
 };
 
 extern _Trace __trace;
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
+#define TRACE_INIT() __trace.init()
 #define TRACE_ADD( x ) __trace.add( TOSTRING(x) )
 #define TRACE_WRITE( x, y ) __trace.write( TOSTRING(x), y )
 #define TRACE_PRINTF( x, fmt, args... ) \

@@ -24,6 +24,7 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     TRACE_ADD( RecvEntry);
     TRACE_ADD( DmaBuf );
     TRACE_ADD( DmaEngine );
+    TRACE_INIT();
 
     PRINT_AT(PtlNic,"\n");
 
