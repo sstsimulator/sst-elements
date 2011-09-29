@@ -1,6 +1,6 @@
 name = allreduce_pattern
-param num_sets = 9
+param num_sets = 3
 param num_ops = 200
 param num_doubles = 1
 # 0 is binary, 1 is deep
-param tree_type = 0
+param tree_type = 1

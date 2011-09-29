@@ -1,3 +1,5 @@
+- genPattern: pattern.c add rank_stride and start_rank for msgrate_pattern
+- Fix msgrate_patter Test 3 abort bug
 - Allow machine to be bigger than job that we run on it
 - Recreate and fix I/O and NVRAM infrastructure
 
