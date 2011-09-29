@@ -372,9 +372,14 @@ int rc;
 	    }
 	    _NetNICparams[_NetNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
 	    _NetNICparams[_NetNICinflections].latency= strtoll(value2, (char **)NULL, 0);
-	    if (_NetNICparams[_NetNICinflections].latency < _NetLinkLatency)   {
+	    if (_NetIntraLatency == NO_DEFAULT)   {
+		fprintf(stderr, "Please specify NetIntraLatency before any NetNICparams in the machine file\n");
+		error= TRUE;
+		break;
+	    }
+	    if ((_NetNICparams[_NetNICinflections].latency - _NetIntraLatency) < _NetLinkLatency)   {
 		/* Set Net link latency to smallest NIC lateny we know of */
-		_NetLinkLatency= _NetNICparams[_NetNICinflections].latency;
+		_NetLinkLatency= _NetNICparams[_NetNICinflections].latency - _NetIntraLatency;
 	    }
 	    _NetNICinflections++;
 	} else if (strstr(key, "NoCNICparams") == key)   {
@@ -385,9 +390,14 @@ int rc;
 	    }
 	    _NoCNICparams[_NoCNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
 	    _NoCNICparams[_NoCNICinflections].latency= strtoll(value2, (char **)NULL, 0);
-	    if (_NoCNICparams[_NoCNICinflections].latency < _NoCLinkLatency)   {
+	    if (_NoCIntraLatency == NO_DEFAULT)   {
+		fprintf(stderr, "Please specify NoCIntraLatency before any NoCNICparams in the machine file\n");
+		error= TRUE;
+		break;
+	    }
+	    if ((_NoCNICparams[_NoCNICinflections].latency - _NoCIntraLatency) < _NoCLinkLatency)   {
 		/* Set NoC link latency to smallest NIC lateny we know of */
-		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency;
+		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency - _NoCIntraLatency;
 	    }
 	    _NoCNICinflections++;
 
