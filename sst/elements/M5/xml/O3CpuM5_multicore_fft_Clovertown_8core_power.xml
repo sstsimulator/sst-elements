@@ -1,0 +1,1408 @@
+<?xml version="1.0"?>
+
+<cpuParams>
+    <base.process.executable> app/FFT/fft </base.process.executable>
+    <base.process.stackbase> 0x7FFFFFFFF000 </base.process.stackbase>
+    <base.process.cmd.0> app/FFT/fft </base.process.cmd.0>
+    <base.process.cmd.1> 4 </base.process.cmd.1>
+    <base.process.cmd.2> 256 </base.process.cmd.2>
+    <base.process.env.0> RANK=0 </base.process.env.0>
+    <base.process.env.1> SIZE=1 </base.process.env.1>
+    <base.process.env.2> SYSCALL_ADDR=0x0 </base.process.env.2>
+
+    <base.process.registerExit> yes </base.process.registerExit>
+
+    <base.process.egid> 1 </base.process.egid>
+    <base.process.euid> 1 </base.process.euid>
+    <base.process.gid> 1 </base.process.gid>
+    <base.process.pid> 1 </base.process.pid>
+    <base.process.ppid> 1 </base.process.ppid>
+    <base.process.uid> 1 </base.process.uid>
+    <base.process.cwd> . </base.process.cwd>
+    <base.process.simpoint> 0 </base.process.simpoint>
+    <base.process.errout> cerr </base.process.errout>
+    <base.process.input> cin </base.process.input>
+    <base.process.output> cout </base.process.output>
+    <base.process.max_stack_size> 0x04000000 </base.process.max_stack_size>
+
+    <base.dtb.size> 64 </base.dtb.size>
+    <base.itb.size> 48 </base.itb.size>
+    <base.max_insts_all_threads> 0 </base.max_insts_all_threads>
+    <base.max_insts_any_thread> 0 </base.max_insts_any_thread>
+    <base.max_loads_all_threads> 0 </base.max_loads_all_threads>
+    <base.max_loads_any_thread> 0 </base.max_loads_any_thread>
+    <base.clock> 376 </base.clock>
+    <base.function_trace_start> 0 </base.function_trace_start>
+    <base.phase> 0 </base.phase>
+    <base.progress_interval> 0 </base.progress_interval>
+    <base.defer_registration> 0 </base.defer_registration>  
+    <base.do_checkpoint_insts> 1 </base.do_checkpoint_insts>
+    <base.do_statistics_insts> 1 </base.do_statistics_insts>
+    <base.function_trace> 0 </base.function_trace>
+    <base.id> 0 </base.id>
+    <o3cpu.fetchTrapLatency> 1 </o3cpu.fetchTrapLatency>
+    <o3cpu.trapLatency> 13 </o3cpu.trapLatency>
+    <o3cpu.smtIQThreshold> 100 </o3cpu.smtIQThreshold>
+    <o3cpu.smtLSQThreshold> 100 </o3cpu.smtLSQThreshold>
+    <o3cpu.smtROBThreshold> 100 </o3cpu.smtROBThreshold>
+    <o3cpu.BTBEntries> 4096 </o3cpu.BTBEntries>
+    <o3cpu.BTBTagSize> 16 </o3cpu.BTBTagSize> 
+    <o3cpu.LFSTSize> 1024 </o3cpu.LFSTSize>
+    <o3cpu.LQEntries> 32 </o3cpu.LQEntries>
+    <o3cpu.RASSize> 16 </o3cpu.RASSize>
+    <o3cpu.SQEntries> 12 </o3cpu.SQEntries>
+    <o3cpu.SSITSize> 1024  </o3cpu.SSITSize>
+    <o3cpu.activity> 0 </o3cpu.activity>
+    <o3cpu.backComSize> 5 </o3cpu.backComSize>
+    <o3cpu.cachePorts> 200 </o3cpu.cachePorts>
+    <o3cpu.choiceCtrBits> 2 </o3cpu.choiceCtrBits>
+    <o3cpu.choicePredictorSize> 8192 </o3cpu.choicePredictorSize>
+    <o3cpu.commitToDecodeDelay> 1 </o3cpu.commitToDecodeDelay>
+    <o3cpu.commitToFetchDelay> 1 </o3cpu.commitToFetchDelay>
+    <o3cpu.commitToIEWDelay> 1 </o3cpu.commitToIEWDelay>
+    <o3cpu.commitToRenameDelay> 1 </o3cpu.commitToRenameDelay>
+    <o3cpu.commitWidth> 4 </o3cpu.commitWidth>
+    <o3cpu.decodeToFetchDelay> 1 </o3cpu.decodeToFetchDelay>
+    <o3cpu.decodeToRenameDelay> 1 </o3cpu.decodeToRenameDelay>
+    <o3cpu.decodeWidth> 4 </o3cpu.decodeWidth>
+    <o3cpu.dispatchWidth> 4 </o3cpu.dispatchWidth>
+    <o3cpu.fetchToDecodeDelay> 1 </o3cpu.fetchToDecodeDelay>
+    <o3cpu.fetchWidth> 4 </o3cpu.fetchWidth>
+    <o3cpu.forwardComSize> 5 </o3cpu.forwardComSize>
+    <o3cpu.globalCtrBits> 2 </o3cpu.globalCtrBits>
+    <o3cpu.globalHistoryBits> 13 </o3cpu.globalHistoryBits>
+    <o3cpu.globalPredictorSize> 8192 </o3cpu.globalPredictorSize>
+    <o3cpu.iewToCommitDelay> 1 </o3cpu.iewToCommitDelay>
+    <o3cpu.iewToDecodeDelay> 1 </o3cpu.iewToDecodeDelay>
+    <o3cpu.iewToFetchDelay> 1 </o3cpu.iewToFetchDelay>
+    <o3cpu.iewToRenameDelay> 1 </o3cpu.iewToRenameDelay>
+    <o3cpu.instShiftAmt> 2 </o3cpu.instShiftAmt>
+    <o3cpu.issueToExecuteDelay> 1 </o3cpu.issueToExecuteDelay>
+    <o3cpu.issueWidth> 4 </o3cpu.issueWidth>
+    <o3cpu.localCtrBits> 2 </o3cpu.localCtrBits>
+    <o3cpu.localHistoryBits> 11 </o3cpu.localHistoryBits>
+    <o3cpu.localHistoryTableSize> 2048 </o3cpu.localHistoryTableSize>
+    <o3cpu.localPredictorSize> 2048 </o3cpu.localPredictorSize>
+    <o3cpu.numIQEntries> 18 </o3cpu.numIQEntries>
+    <o3cpu.numPhysFloatRegs> 128 </o3cpu.numPhysFloatRegs>
+    <o3cpu.numPhysIntRegs> 128 </o3cpu.numPhysIntRegs>
+    <o3cpu.numROBEntries> 96 </o3cpu.numROBEntries>
+    <o3cpu.numRobs> 1 </o3cpu.numRobs>
+    <o3cpu.renameToDecodeDelay> 1 </o3cpu.renameToDecodeDelay>
+    <o3cpu.renameToFetchDelay> 1 </o3cpu.renameToFetchDelay>
+    <o3cpu.renameToIEWDelay> 2 </o3cpu.renameToIEWDelay>
+    <o3cpu.renameToROBDelay> 1 </o3cpu.renameToROBDelay>
+    <o3cpu.renameWidth> 4 </o3cpu.renameWidth>
+    <o3cpu.smtNumFetchingThreads> 1 </o3cpu.smtNumFetchingThreads>
+    <o3cpu.squashWidth> 4 </o3cpu.squashWidth>
+    <o3cpu.wbDepth> 1 </o3cpu.wbDepth>
+    <o3cpu.wbWidth> 4 </o3cpu.wbWidth>
+    <o3cpu.predType> tournament </o3cpu.predType>
+    <o3cpu.smtCommitPolicy> RoundRobin </o3cpu.smtCommitPolicy>
+    <o3cpu.smtFetchPolicy> SingleThread </o3cpu.smtFetchPolicy>
+    <o3cpu.smtIQPolicy> Partitioned </o3cpu.smtIQPolicy>
+    <o3cpu.smtLSQPolicy> Partitioned </o3cpu.smtLSQPolicy>
+    <o3cpu.smtROBPolicy> Partitioned </o3cpu.smtROBPolicy>
+</cpuParams>
+
+<cacheParams>
+
+    <trace_addr> 0 </trace_addr>
+    <max_miss_count> 0 </max_miss_count>
+    <prefetch_policy> none </prefetch_policy>
+    <addr_range.start> 0 </addr_range.start>
+    <addr_range.end> -1 </addr_range.end>
+    <latency> 2000 </latency>
+    <prefetch_latency> 10000 </prefetch_latency>
+    <forward_snoops> true </forward_snoops>
+    <prefetch_cache_check_push> true </prefetch_cache_check_push>
+    <prefetch_data_accesses_only> false </prefetch_data_accesses_only>
+    <prefetch_on_access> false </prefetch_on_access>
+    <prefetch_past_page> false </prefetch_past_page>
+    <prefetch_serial_squash> false </prefetch_serial_squash>
+    <prefetch_use_cpu_id> true </prefetch_use_cpu_id>
+    <prioritizeRequests> false </prioritizeRequests>
+    <two_queue> false </two_queue>
+    <assoc> 8 </assoc>
+    <block_size> 64 </block_size>
+    <hash_delay> 1 </hash_delay>
+    <mshrs> 10 </mshrs>
+    <prefetch_degree> 1  </prefetch_degree>
+    <prefetcher_size> 100 </prefetcher_size>
+    <subblock_size> 0 </subblock_size>
+    <tgts_per_mshr> 20 </tgts_per_mshr>
+    <write_buffers> 8 </write_buffers>
+    <size> 32768 </size>
+    <num_cpus> 1 </num_cpus>
+
+</cacheParams>
+
+<l2Params>
+    <trace_addr> 0 </trace_addr>
+    <max_miss_count> 0 </max_miss_count>
+    <prefetch_policy> none </prefetch_policy>
+    <addr_range.start> 0 </addr_range.start>
+    <addr_range.end> -1 </addr_range.end>
+    <latency> 5000 </latency>
+    <prefetch_latency> 10000 </prefetch_latency>
+    <forward_snoops> true </forward_snoops>
+    <prefetch_cache_check_push> true </prefetch_cache_check_push>
+    <prefetch_data_accesses_only> false </prefetch_data_accesses_only>
+    <prefetch_on_access> false </prefetch_on_access>
+    <prefetch_past_page> false </prefetch_past_page>
+    <prefetch_serial_squash> false </prefetch_serial_squash>
+    <prefetch_use_cpu_id> true </prefetch_use_cpu_id>
+    <prioritizeRequests> false </prioritizeRequests>
+    <two_queue> false </two_queue>
+    <assoc> 16 </assoc>
+    <block_size> 64 </block_size>
+    <hash_delay> 1 </hash_delay>
+    <mshrs> 10 </mshrs>
+    <prefetch_degree> 1  </prefetch_degree>
+    <prefetcher_size> 100 </prefetcher_size>
+    <subblock_size> 0 </subblock_size>
+    <tgts_per_mshr> 20 </tgts_per_mshr>
+    <write_buffers> 8 </write_buffers>
+    <size> 4194304 </size>
+    <num_cpus> 2 </num_cpus>
+</l2Params>
+
+<busParams>
+    <clock> 600 </clock>
+    <responder_set> false </responder_set>
+    <block_size> 64 </block_size>
+    <bus_id> 0 </bus_id> 
+    <header_cycles> 1 </header_cycles>
+    <width> 64 </width>
+</busParams>
+
+<sst>
+    <component id="cpu0" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x00100000 </physicalMemory.start>
+                <physicalMemory.end>   0x011fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu0-cpu0.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu0-cpu0.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu1" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x01200000 </physicalMemory.start>
+                <physicalMemory.end>   0x021fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu1-cpu1.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu1-cpu1.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu2" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x02200000 </physicalMemory.start>
+                <physicalMemory.end>   0x031fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu2-cpu2.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu2-cpu2.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu3" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x03200000 </physicalMemory.start>
+                <physicalMemory.end>   0x041fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu3-cpu3.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu3-cpu3.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu4" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x04200000 </physicalMemory.start>
+                <physicalMemory.end>   0x051fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu4-cpu4.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu4-cpu4.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu5" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x05200000 </physicalMemory.start>
+                <physicalMemory.end>   0x061fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu5-cpu5.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu5-cpu5.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu6" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x06200000 </physicalMemory.start>
+                <physicalMemory.end>   0x071fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu6-cpu6.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu6-cpu6.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu7" >
+        <O3Cpu>
+            <params include=cpuParams>
+                <physicalMemory.start> 0x07200000 </physicalMemory.start>
+                <physicalMemory.end>   0x081fffff </physicalMemory.end>
+            </params>
+            <links>
+                <link id="cpu7-cpu7.dcache">
+                    <params>
+                        <name> dcache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="cpu7-cpu7.icache">
+                    <params>
+                        <name> icache_port </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </O3Cpu>
+    </component>
+
+    <component id="cpu0.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu0-cpu0.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu0.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu1.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu1-cpu1.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu2.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu2-cpu2.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu2.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu3.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu3-cpu3.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu4.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu4-cpu4.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu4.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu5.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu5-cpu5.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu5.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu6.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu6-cpu6.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu6.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu7.dcache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu7-cpu7.dcache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.dcache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+
+    <component id="cpu0.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu0-cpu0.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu0.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu1.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu1-cpu1.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu2.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu2-cpu2.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu2.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu3.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+    		<latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu3-cpu3.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu4.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu4-cpu4.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu4.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu5.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu5-cpu5.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu5.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu6.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu6-cpu6.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu6.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpu7.icache" >
+        <BaseCache>
+            <params include=cacheParams>
+                <size>32768</size>
+                <latency> 2000 </latency>
+            </params>
+            <links>
+                <link id="cpu7-cpu7.icache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.icache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="share1.l2cache" >
+        <BaseCache>
+            <params include=l2Params>
+                <size>4194304</size>
+    		<assoc> 16 </assoc>
+    		<latency> 5000 </latency>
+            </params>
+            <links>
+                <link id="cpu0-cpu1.l2cache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu01.l2cache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="share2.l2cache" >
+        <BaseCache>
+            <params include=l2Params>
+                <size>4194304</size>
+    		<assoc> 16 </assoc>
+    		<latency> 5000 </latency>
+            </params>
+            <links>
+                <link id="cpu2-cpu3.l2cache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu23.l2cache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="share3.l2cache" >
+        <BaseCache>
+            <params include=l2Params>
+                <size>4194304</size>
+                <assoc> 16 </assoc>
+                <latency> 5000 </latency>
+            </params>
+            <links>
+                <link id="cpu4-cpu5.l2cache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu45.l2cache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="share4.l2cache" >
+        <BaseCache>
+            <params include=l2Params>
+                <size>4194304</size>
+                <assoc> 16 </assoc>
+                <latency> 5000 </latency>
+            </params>
+            <links>
+                <link id="cpu6-cpu7.l2cache">
+                    <params>
+                        <name> cpu_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu67.l2cache">
+                    <params>
+                        <name> mem_side </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </BaseCache>
+    </component>
+
+    <component id="cpus1-l2.bus" >
+        <Bus>
+            <params include=busParams>
+            </params>
+            <links>
+                <link id="bus-cpu0.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu0.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="cpu0-cpu1.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </Bus>
+    </component>
+
+    <component id="cpus2-l2.bus" >
+        <Bus>
+            <params include=busParams>
+            </params>
+            <links>
+                <link id="bus-cpu2.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu2.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="cpu2-cpu3.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </Bus>
+    </component>
+
+    <component id="cpus3-l2.bus" >
+        <Bus>
+            <params include=busParams>
+            </params>
+            <links>
+                <link id="bus-cpu4.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu4.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu5.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu5.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="cpu4-cpu5.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </Bus>
+    </component>
+
+    <component id="cpus4-l2.bus" >
+        <Bus>
+            <params include=busParams>
+            </params>
+            <links>
+                <link id="bus-cpu6.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu6.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.dcache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.icache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="cpu6-cpu7.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </Bus>
+    </component>
+
+    <component id="bus" >
+        <Bus>
+            <params include=busParams>
+            </params>
+            <links>
+                <link id="bus-physmem">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu01.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu23.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu45.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu67.l2cache">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu0.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu0.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu2.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu2.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+		<link id="bus-cpu4.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu4.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>                
+		<link id="bus-cpu5.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu5.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>          
+	        <link id="bus-cpu6.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu6.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.syscallDMA">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.syscallPIO">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>           
+            </links>
+        </Bus>
+    </component>
+
+    <component id="physmem" >
+        <PhysicalMemory>
+            <params>
+                <range.start> 0x00100000 </range.start>
+                <range.end>   0x1fffffff </range.end>
+
+                <latency> 28000 </latency>
+                <latency_var> 0 </latency_var>
+                <null> false </null>
+                <zero> false </zero>
+
+                <exe.0.process.executable> app/FFT/fft </exe.0.process.executable>
+                <exe.0.process.stackbase> 0x7FFFFFFFF000 </exe.0.process.stackbase>
+                <exe.0.process.cmd.0> app/FFT/fft </exe.0.process.cmd.0>
+                <exe.0.process.cmd.1> 4 </exe.0.process.cmd.1>
+                <exe.0.process.cmd.2> 256 </exe.0.process.cmd.2>
+                <exe.0.process.env.0> RANK=0 </exe.0.process.env.0>
+                <exe.0.process.env.1> SIZE=2 </exe.0.process.env.1>
+                <exe.0.process.env.2> SYSCALL_ADDR=0x0 </exe.0.process.env.2>
+                <exe.0.physicalMemory.start> 0x00100000 </exe.0.physicalMemory.start>
+                <exe.0.physicalMemory.end>   0x011fffff </exe.0.physicalMemory.end>
+
+                <exe.1.process.executable> app/FFT/fft </exe.1.process.executable>
+                <exe.1.process.stackbase> 0x7FFFFFFFF000 </exe.1.process.stackbase>
+                <exe.1.process.cmd.0> app/FFT/fft </exe.1.process.cmd.0>
+                <exe.1.process.cmd.1> 4 </exe.1.process.cmd.1>
+                <exe.1.process.cmd.2> 256 </exe.1.process.cmd.2>
+		<exe.1.process.env.0> RANK=0 </exe.1.process.env.0>
+                <exe.1.process.env.1> SIZE=2 </exe.1.process.env.1>
+                <exe.1.process.env.2> SYSCALL_ADDR=0x2000 </exe.1.process.env.2>
+                <exe.1.physicalMemory.start> 0x01200000 </exe.1.physicalMemory.start>
+                <exe.1.physicalMemory.end>   0x021fffff </exe.1.physicalMemory.end>
+
+                <exe.2.process.executable> app/FFT/fft </exe.2.process.executable>
+                <exe.2.process.stackbase> 0x7FFFFFFFF000 </exe.2.process.stackbase>
+                <exe.2.process.cmd.0> app/FFT/fft </exe.2.process.cmd.0>
+                <exe.2.process.cmd.1> 4 </exe.2.process.cmd.1>
+                <exe.2.process.cmd.2> 256 </exe.2.process.cmd.2>
+                <exe.2.process.env.0> RANK=0 </exe.2.process.env.0>
+                <exe.2.process.env.1> SIZE=2 </exe.2.process.env.1>
+                <exe.2.process.env.2> SYSCALL_ADDR=0x4000 </exe.2.process.env.2>
+                <exe.2.physicalMemory.start> 0x02200000 </exe.2.physicalMemory.start>
+                <exe.2.physicalMemory.end>   0x031fffff </exe.2.physicalMemory.end>
+
+
+                <exe.3.process.executable> app/FFT/fft </exe.3.process.executable>
+                <exe.3.process.stackbase> 0x7FFFFFFFF000 </exe.3.process.stackbase>
+                <exe.3.process.cmd.0> app/FFT/fft </exe.3.process.cmd.0>
+                <exe.3.process.cmd.1> 4 </exe.3.process.cmd.1>
+                <exe.3.process.cmd.2> 256 </exe.3.process.cmd.2>
+                <exe.3.process.env.0> RANK=0 </exe.3.process.env.0>
+                <exe.3.process.env.1> SIZE=2 </exe.3.process.env.1>
+                <exe.3.process.env.2> SYSCALL_ADDR=0x6000 </exe.3.process.env.2>
+                <exe.3.physicalMemory.start> 0x03200000 </exe.3.physicalMemory.start>
+                <exe.3.physicalMemory.end>   0x041fffff </exe.3.physicalMemory.end>
+
+                <exe.4.process.executable> app/FFT/fft </exe.4.process.executable>
+                <exe.4.process.stackbase> 0x7FFFFFFFF000 </exe.4.process.stackbase>
+                <exe.4.process.cmd.0> app/FFT/fft </exe.4.process.cmd.0>
+                <exe.4.process.cmd.1> 4 </exe.4.process.cmd.1>
+                <exe.4.process.cmd.2> 256 </exe.4.process.cmd.2>
+                <exe.4.process.env.0> RANK=0 </exe.4.process.env.0>
+                <exe.4.process.env.1> SIZE=2 </exe.4.process.env.1>
+                <exe.4.process.env.2> SYSCALL_ADDR=0x8000 </exe.4.process.env.2>
+                <exe.4.physicalMemory.start> 0x04200000 </exe.4.physicalMemory.start>
+                <exe.4.physicalMemory.end>   0x051fffff </exe.4.physicalMemory.end>
+
+                <exe.5.process.executable> app/FFT/fft </exe.5.process.executable>
+                <exe.5.process.stackbase> 0x7FFFFFFFF000 </exe.5.process.stackbase>
+                <exe.5.process.cmd.0> app/FFT/fft </exe.5.process.cmd.0>
+                <exe.5.process.cmd.1> 4 </exe.5.process.cmd.1>
+                <exe.5.process.cmd.2> 256 </exe.5.process.cmd.2>
+                <exe.5.process.env.0> RANK=0 </exe.5.process.env.0>
+                <exe.5.process.env.1> SIZE=2 </exe.5.process.env.1>
+                <exe.5.process.env.2> SYSCALL_ADDR=0xA000 </exe.5.process.env.2>
+                <exe.5.physicalMemory.start> 0x05200000 </exe.5.physicalMemory.start>
+                <exe.5.physicalMemory.end>   0x061fffff </exe.5.physicalMemory.end>
+
+                <exe.6.process.executable> app/FFT/fft </exe.6.process.executable>
+                <exe.6.process.stackbase> 0x7FFFFFFFF000 </exe.6.process.stackbase>
+                <exe.6.process.cmd.0> app/FFT/fft </exe.6.process.cmd.0>
+                <exe.6.process.cmd.1> 4 </exe.6.process.cmd.1>
+                <exe.6.process.cmd.2> 256 </exe.6.process.cmd.2>
+                <exe.6.process.env.0> RANK=0 </exe.6.process.env.0>
+                <exe.6.process.env.1> SIZE=2 </exe.6.process.env.1>
+                <exe.6.process.env.2> SYSCALL_ADDR=0xC000 </exe.6.process.env.2>
+                <exe.6.physicalMemory.start> 0x06200000 </exe.6.physicalMemory.start>
+                <exe.6.physicalMemory.end>   0x071fffff </exe.6.physicalMemory.end>
+
+                <exe.7.process.executable> app/FFT/fft </exe.7.process.executable>
+                <exe.7.process.stackbase> 0x7FFFFFFFF000 </exe.7.process.stackbase>
+                <exe.7.process.cmd.0> app/FFT/fft </exe.7.process.cmd.0>
+                <exe.7.process.cmd.1> 4 </exe.7.process.cmd.1>
+                <exe.7.process.cmd.2> 256 </exe.7.process.cmd.2>
+                <exe.7.process.env.0> RANK=0 </exe.7.process.env.0>
+                <exe.7.process.env.1> SIZE=2 </exe.7.process.env.1>
+                <exe.7.process.env.2> SYSCALL_ADDR=0xE000 </exe.7.process.env.2>
+                <exe.7.physicalMemory.start> 0x07200000 </exe.7.physicalMemory.start>
+                <exe.7.physicalMemory.end>   0x081fffff </exe.7.physicalMemory.end>
+
+            </params>
+            <links>
+                <link id="bus-physmem">
+                    <params>
+                        <name> port </name>
+                        <num> 0 </num>
+                    </params>
+                </link>
+            </links>
+        </PhysicalMemory>
+    </component>
+
+    <component id="cpu0.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x00000000 </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu0.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu0.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu1.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x00000100 </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu1.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu1.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu2.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x000002FF </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu2.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu2.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu3.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x000006FF </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu3.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu3.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu4.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x00000EFF </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu4.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu4.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu5.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x00001EFF </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu5.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu5.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu6.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x00004F00 </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu6.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu6.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+    <component id="cpu7.syscall" >
+        <Syscall>
+            <params>
+                <startAddr> 0x0000FFFF </startAddr>
+            </params>
+            <links>
+                <link id="bus-cpu7.syscallDMA">
+                    <params>
+                        <name> dma </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+                <link id="bus-cpu7.syscallPIO">
+                    <params>
+                        <name> pio </name>
+                        <num> -1 </num>
+                    </params>
+                </link>
+            </links>
+        </Syscall>
+    </component>
+
+</sst>
