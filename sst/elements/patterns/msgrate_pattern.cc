@@ -220,12 +220,15 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    rcv_cnt= 0;
 
 	    if (my_rank == 0)   {
-		printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d\n",
-		    num_msgs, msg_len, my_rank + 1, num_ranks - 1);
+		printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d, stride %d\n",
+		    num_msgs, msg_len, my_rank + 1, num_ranks - 1, rank_stride);
 		goto_state(state_T2_SENDING, STATE_T2_SENDING, E_START_T2);
-	    } else   {
+	    } else if ((my_rank >= start_rank) && ((my_rank - start_rank) % rank_stride) == 0)   {
 		// I'm one of the receivers; start the wait for messages.
 		state= STATE_T2_RECEIVING;
+	    } else   {
+		// I'm not participating in this test; skip it.
+		goto_state(state_ALLREDUCE_T2, STATE_ALLREDUCE_T2, E_ALLREDUCE_ENTRY);
 	    }
 	    break;
 
@@ -249,14 +252,20 @@ state_event msgr_event;
 
     switch (e)   {
 	case E_START_T2:
+	    // Give the receivers a chance to get ready
+	    // Doing a barrier would be cleaner
+	    local_compute(E_START_T2_SEND, 2000000);
+	    break;
+
+	case E_START_T2_SEND:
 	    // Send num_msg to my partners
-	    dest= 1;
+	    dest= start_rank;
 	    msgr_event.event= E_T2_RECEIVE;
 	    for (int i= 0; i < num_msgs * (num_ranks - 1); i++)   {
 		send_msg(dest, msg_len, msgr_event);
-		dest++;
-		if (dest % num_ranks == 0)   {
-		    dest= 1;
+		dest= dest + rank_stride;
+		if (dest >= num_ranks)   {
+		    dest= start_rank;
 		}
 	    }
 
@@ -328,6 +337,11 @@ state_event t3_event;
 	case E_ALLREDUCE_EXIT:
 	    // Calculate the average, and let rank 0 display it
 	    if (my_rank == 0)   {
+		int num_receivers= ((num_ranks - start_rank) / rank_stride);
+		if ((num_ranks - start_rank) % rank_stride != 0)   {
+		    num_receivers++;
+		}
+		printf("#  |||  Test 2: %d receivers\n", num_receivers);
 		printf("#  |||  Test 2: Average send rate:       %8.0f msgs/s\n",
 		    1.0 / ((sm_event.get_Fdata() / (num_ranks - 1) / num_msgs)));
 	    }

@@ -28,6 +28,8 @@ class Msgrate_pattern : public Comm_pattern    {
 	    // Defaults for paramters
 	    num_msgs= 20;
 	    msg_len= 0;
+	    rank_stride= 12;
+	    start_rank= 12;
 
 
 	    // Process the message rate specific paramaters
@@ -39,6 +41,14 @@ class Msgrate_pattern : public Comm_pattern    {
 
 		if (!it->first.compare("msg_len"))   {
 		    sscanf(it->second.c_str(), "%d", &msg_len);
+		}
+
+		if (!it->first.compare("rank_stride"))   {
+		    sscanf(it->second.c_str(), "%d", &rank_stride);
+		}
+
+		if (!it->first.compare("start_rank"))   {
+		    sscanf(it->second.c_str(), "%d", &start_rank);
 		}
 
                 ++it;
@@ -77,7 +87,7 @@ class Msgrate_pattern : public Comm_pattern    {
 	    STATE_T3_RECEIVING, STATE_ALLREDUCE_T3} msgrate_state_t;
 
 	// The start event should always be SM_START_EVENT
-	typedef enum {E_START_T1= SM_START_EVENT, E_T1_RECEIVE, E_START_T2, E_T2_RECEIVE,
+	typedef enum {E_START_T1= SM_START_EVENT, E_T1_RECEIVE, E_START_T2, E_START_T2_SEND, E_T2_RECEIVE,
 	    E_START_T3, E_T3_RECEIVE, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT} msgrate_events_t;
 
     private:
@@ -106,6 +116,8 @@ class Msgrate_pattern : public Comm_pattern    {
 
 	Params_t params;
 	int allreduce_msglen;
+	int rank_stride;
+	int start_rank;
 
 	// State machine identifiers
 	uint32_t SMmsgrate;
