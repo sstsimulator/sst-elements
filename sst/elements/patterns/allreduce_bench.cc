@@ -397,6 +397,8 @@ double *rbuf;
 	    my_allreduce(sbuf, rbuf, msg_len, ctopo);
 	}
 
+	free(sbuf);
+	free(rbuf);
 	return MPI_Wtime() - t;
 
 }  /* end of Test2() */
