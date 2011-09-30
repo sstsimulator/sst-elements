@@ -28,8 +28,8 @@ class Msgrate_pattern : public Comm_pattern    {
 	    // Defaults for paramters
 	    num_msgs= 20;
 	    msg_len= 0;
-	    rank_stride= 12;
-	    start_rank= 12;
+	    rank_stride= 0;
+	    start_rank= 8;
 
 
 	    // Process the message rate specific paramaters

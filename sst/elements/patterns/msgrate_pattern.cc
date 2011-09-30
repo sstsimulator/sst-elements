@@ -220,9 +220,20 @@ msgrate_events_t e= (msgrate_events_t)sm_event.event;
 	    rcv_cnt= 0;
 
 	    if (my_rank == 0)   {
-		printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d, stride %d\n",
-		    num_msgs, msg_len, my_rank + 1, num_ranks - 1, rank_stride);
+		if (rank_stride == 0)   {
+		    printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d\n",
+			num_msgs, msg_len, my_rank + 1, num_ranks - 1);
+		} else   {
+		    printf("#  |||  Test 2: Rank 0 will send %d messages of length %d to ranks %d...%d, stride %d\n",
+			num_msgs, msg_len, my_rank + 1, num_ranks - 1, rank_stride);
+		}
 		goto_state(state_T2_SENDING, STATE_T2_SENDING, E_START_T2);
+	    } else if ((rank_stride == 0) && (my_rank == start_rank))   {
+		/* I'm the only receiver */
+		state= STATE_T2_RECEIVING;
+	    } else if ((rank_stride == 0) && (my_rank != start_rank))   {
+		/* I'm one of the others */
+		goto_state(state_ALLREDUCE_T2, STATE_ALLREDUCE_T2, E_ALLREDUCE_ENTRY);
 	    } else if ((my_rank >= start_rank) && ((my_rank - start_rank) % rank_stride) == 0)   {
 		// I'm one of the receivers; start the wait for messages.
 		state= STATE_T2_RECEIVING;
@@ -337,9 +348,15 @@ state_event t3_event;
 	case E_ALLREDUCE_EXIT:
 	    // Calculate the average, and let rank 0 display it
 	    if (my_rank == 0)   {
-		int num_receivers= ((num_ranks - start_rank) / rank_stride);
-		if ((num_ranks - start_rank) % rank_stride != 0)   {
-		    num_receivers++;
+		int num_receivers;
+
+		if (rank_stride == 0)   {
+		    num_receivers= 1;
+		} else   {
+		    num_receivers= ((num_ranks - start_rank) / rank_stride);
+		    if ((num_ranks - start_rank) % rank_stride != 0)   {
+			num_receivers++;
+		    }
 		}
 		printf("#  |||  Test 2: %d receivers\n", num_receivers);
 		printf("#  |||  Test 2: Average send rate:       %8.0f msgs/s\n",
