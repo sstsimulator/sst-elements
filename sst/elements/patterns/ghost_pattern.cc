@@ -232,6 +232,7 @@ SimTime_t duration;
 	    /* Once in a while do an allreduce to check on convergence */
 	    if ((t + 1) % reduce_steps == 0)   {
 		comm_time_start= getCurrentSimTime();
+		goto_state(state_INIT, STATE_INIT, E_NEXT_LOOP); // rrr Makes it run to the end, but then still crashes!
 		goto_state(state_REDUCE, STATE_REDUCE, E_ALLREDUCE_ENTRY);
 	    } else   {
 		goto_state(state_INIT, STATE_INIT, E_NEXT_LOOP);
