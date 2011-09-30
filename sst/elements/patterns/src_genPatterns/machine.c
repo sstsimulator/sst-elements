@@ -238,44 +238,44 @@ int i;
 
 
     if (_Net_x_dim * _Net_y_dim > 1)   {
-	printf("*** Network torus is X * Y = %d * %d with %d node(s) per router\n",
+	printf("# *** Network torus is X * Y = %d * %d with %d node(s) per router\n",
 	    _Net_x_dim, _Net_y_dim, _num_router_nodes);
     } else   {
 	if (_num_router_nodes == 1)   {
-	    printf("*** Single node, no network\n");
+	    printf("# *** Single node, no network\n");
 	} else   {
-	    printf("*** %d nodes, single router, no network\n", _num_router_nodes);
+	    printf("# *** %d nodes, single router, no network\n", _num_router_nodes);
 	}
     }
     if (_NoC_x_dim * _NoC_y_dim > 1)   {
-	printf("*** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
+	printf("# *** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
 	    _NoC_x_dim, _NoC_y_dim, _num_cores);
     } else   {
 	if (_num_cores > 1)   {
-	    printf("*** Each node has a router with %d core(s)\n", _num_cores);
+	    printf("# *** Each node has a router with %d core(s)\n", _num_cores);
 	} else   {
-	    printf("*** Each node consists of a single core\n");
+	    printf("# *** Each node consists of a single core\n");
 	}
     }
-    printf("*** Total number of nodes is %d\n", num_nodes());
-    printf("*** Total number of cores is %d\n", _num_cores *
+    printf("# *** Total number of nodes is %d\n", num_nodes());
+    printf("# *** Total number of cores is %d\n", _num_cores *
 	_NoC_x_dim * _NoC_y_dim * num_nodes());
 
-    printf("*** Network NIC has %d inflection points, gap is %d ns\n",
+    printf("# *** Network NIC has %d inflection points, gap is %d ns\n",
 	NetNICinflections(), NetNICgap());
-    printf("*** NoC NIC has %d inflection points, gap is %d ns\n",
+    printf("# *** NoC NIC has %d inflection points, gap is %d ns\n",
 	NoCNICinflections(), NoCNICgap());
 
-    printf("*** Net link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
+    printf("# *** Net link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_NetLinkBandwidth, _NetLinkLatency);
-    printf("*** NoC link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
+    printf("# *** NoC link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_NoCLinkBandwidth, _NoCLinkLatency);
-    printf("*** I/O link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
+    printf("# *** I/O link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_IOLinkBandwidth, _IOLinkLatency);
-    printf("*** Link latency between routers: Network %" PRId64 " ns, NoC %" PRId64 " ns\n",
+    printf("# *** Link latency between routers: Network %" PRId64 " ns, NoC %" PRId64 " ns\n",
 	_NetIntraLatency, _NoCIntraLatency);
 
-    printf("*** Print NIC statistics for ranks: ");
+    printf("# *** Print NIC statistics for ranks: ");
     for (i= 0; i < _NICstat_num; i++)   {
 	printf("%d, ", _NICstat[i]);
     }

@@ -168,7 +168,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     if (!error)   {
 	/* Open the SST xml file for output */
-	printf("*** Writing output to \"%s\"\n", sstFname);
+	printf("# *** Writing output to \"%s\"\n", sstFname);
 	if (strcmp(sstFname, "") == 0)   {
 	    fp_sst= NULL;
 	    error= TRUE;
@@ -188,7 +188,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* Read the machine file */
     if (!error)   {
-	printf("*** Reading machine parameters from \"%s\"\n", machineFname);
+	printf("# *** Reading machine parameters from \"%s\"\n", machineFname);
 	if (read_machine_file(fp_machine, verbose) == FALSE)   {
 	    error= TRUE;
 	}
@@ -196,7 +196,7 @@ int ssd_write_bw;	/* In bytes per second */
 
     /* Read the pattern file */
     if (!error)   {
-	printf("*** Reading pattern parameters from \"%s\"\n", patternFname);
+	printf("# *** Reading pattern parameters from \"%s\"\n", patternFname);
 	if (read_pattern_file(fp_pattern, verbose) == FALSE)   {
 	    error= TRUE;
 	}
@@ -209,7 +209,7 @@ int ssd_write_bw;	/* In bytes per second */
 		"of I/O nodes (%d)!\n", num_nodes(), IO_nodes);
 	    error= TRUE;
 	} else   {
-	    printf("*** Number of I/O nodes is %d, one per %d compute nodes\n", IO_nodes,
+	    printf("# *** Number of I/O nodes is %d, one per %d compute nodes\n", IO_nodes,
 		num_nodes() / IO_nodes);
 	}
     }
@@ -228,13 +228,13 @@ int ssd_write_bw;	/* In bytes per second */
 	    fprintf(stderr, "Must be one of \"McPAT\" or \"ORION\"\n");
 	} else   {
 	    if (strcasestr("none", power_model) != NULL)   {
-		printf("*** Power model is \"none\"\n");
+		printf("# *** Power model is \"none\"\n");
 		power_method= pwrNone;
 	    } else if (strcasestr("McPAT", power_model) != NULL)   {
-		printf("*** Power model is \"McPAT\"\n");
+		printf("# *** Power model is \"McPAT\"\n");
 		power_method= pwrMcPAT;
 	    } else if (strcasestr("ORION", power_model) != NULL)   {
-		printf("*** Power model is \"ORION\"\n");
+		printf("# *** Power model is \"ORION\"\n");
 		power_method= pwrORION;
 	    }
 

@@ -205,68 +205,68 @@ void
 disp_pattern_params(void)
 {
 
-    printf("*** Pattern name \"%s\"\n", pattern_name());
+    printf("# *** Pattern name \"%s\"\n", pattern_name());
     switch (_pattern)   {
 	case alltoall_pattern:
-	    printf("***     num_sets =     %d\n", _num_sets);
-	    printf("***     num_ops =      %d\n", _num_ops);
-	    printf("***     num_doubles =  %d\n", _num_doubles);
-	    printf("***     tree_type =    %s\n", str_tree_type(_tree_type));
+	    printf("# ***     num_sets =     %d\n", _num_sets);
+	    printf("# ***     num_ops =      %d\n", _num_ops);
+	    printf("# ***     num_doubles =  %d\n", _num_doubles);
+	    printf("# ***     tree_type =    %s\n", str_tree_type(_tree_type));
 	    break;
 
 	case allreduce_pattern:
-	    printf("***     num_sets =     %d\n", _num_sets);
-	    printf("***     num_ops =      %d\n", _num_ops);
-	    printf("***     num_doubles =  %d\n", _num_doubles);
-	    printf("***     tree_type =    %s\n", str_tree_type(_tree_type));
+	    printf("# ***     num_sets =     %d\n", _num_sets);
+	    printf("# ***     num_ops =      %d\n", _num_ops);
+	    printf("# ***     num_doubles =  %d\n", _num_doubles);
+	    printf("# ***     tree_type =    %s\n", str_tree_type(_tree_type));
 	    break;
 
 	case ghost_pattern:
-	    printf("***     time_steps =      %d\n", _time_steps);
-	    printf("***     x_elements =      %d\n", _x_elements);
-	    printf("***     y_elements =      %d\n", _y_elements);
-	    printf("***     z_elements =      %d\n", _z_elements);
-	    printf("***     loops =           %d\n", _loops);
-	    printf("***     reduce_steps =    %d\n", _reduce_steps);
-	    printf("***     delay =           %.2f%%\n", _delay);
-	    printf("***     imbalance =       %d\n", _imbalance);
-	    printf("***     verbose =         %d\n", _verbose);
-	    printf("***     time_per_flop =   %d ns\n", _time_per_flop);
+	    printf("# ***     time_steps =      %d\n", _time_steps);
+	    printf("# ***     x_elements =      %d\n", _x_elements);
+	    printf("# ***     y_elements =      %d\n", _y_elements);
+	    printf("# ***     z_elements =      %d\n", _z_elements);
+	    printf("# ***     loops =           %d\n", _loops);
+	    printf("# ***     reduce_steps =    %d\n", _reduce_steps);
+	    printf("# ***     delay =           %.2f%%\n", _delay);
+	    printf("# ***     imbalance =       %d\n", _imbalance);
+	    printf("# ***     verbose =         %d\n", _verbose);
+	    printf("# ***     time_per_flop =   %d ns\n", _time_per_flop);
 	    break;
 
 	case pingpong_pattern:
 	    if (_destination == OPTIONAL)   {
-		printf("***     destination =  default\n");
+		printf("# ***     destination =  default\n");
 	    } else   {
-		printf("***     destination =  %d\n", _destination);
+		printf("# ***     destination =  %d\n", _destination);
 	    }
-	    printf("***     num_msgs =     %d\n", _num_msgs);
+	    printf("# ***     num_msgs =     %d\n", _num_msgs);
 	    if (_end_len == OPTIONAL)   {
-		printf("***     end_len =      default\n");
+		printf("# ***     end_len =      default\n");
 	    } else   {
-		printf("***     end_len =      %d\n", _end_len);
+		printf("# ***     end_len =      %d\n", _end_len);
 	    }
 	    if (_len_inc == OPTIONAL)   {
-		printf("***     len_inc =      default\n");
+		printf("# ***     len_inc =      default\n");
 	    } else   {
-		printf("***     len_inc =      %d\n", _len_inc);
+		printf("# ***     len_inc =      %d\n", _len_inc);
 	    }
 	    break;
 
 	case msgrate_pattern:
-	    printf("***     num_msgs =     %d\n", _num_msgs);
-	    printf("***     msg_len =      %d\n", _msg_len);
+	    printf("# ***     num_msgs =     %d\n", _num_msgs);
+	    printf("# ***     msg_len =      %d\n", _msg_len);
 	    break;
 
 	case fft_pattern:
-	    printf("***     N =               %d\n", _N);
+	    printf("# ***     N =               %d\n", _N);
 	    if (_iter == OPTIONAL)   {
-		printf("***     iter =            default\n");
+		printf("# ***     iter =            default\n");
 	    } else   {
-		printf("***     iter =            %d\n", _iter);
+		printf("# ***     iter =            %d\n", _iter);
 	    }
-	    printf("***     tree_type =       %s\n", str_tree_type(_tree_type));
-	    printf("***     time_per_flop =   %d ns\n", _time_per_flop);
+	    printf("# ***     tree_type =       %s\n", str_tree_type(_tree_type));
+	    printf("# ***     time_per_flop =   %d ns\n", _time_per_flop);
 	    break;
     }
 

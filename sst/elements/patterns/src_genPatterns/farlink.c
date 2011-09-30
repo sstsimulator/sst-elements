@@ -129,7 +129,7 @@ int i;
 	return;
     }
 
-    printf("*** Total number of far links is %d\n", _FarLinksCnt);
+    printf("# *** Total number of far links is %d\n", _FarLinksCnt);
 
     for (i= 0; i < _FarLinksCnt; i++)   {
     }
