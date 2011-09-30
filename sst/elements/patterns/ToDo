@@ -1,4 +1,5 @@
-- genPattern: pattern.c add rank_stride and start_rank for msgrate_pattern
+- NetIntraLatency Cannot be bigger than NetNICparams = 0. I don't think that is right.
+
 - Fix msgrate_patter Test 3 abort bug
 - Allow machine to be bigger than job that we run on it
 - Recreate and fix I/O and NVRAM infrastructure
@@ -137,3 +138,4 @@ Arch model
 
 - More patterns
     - FFT
+- genPattern: pattern.c add rank_stride and start_rank for msgrate_pattern

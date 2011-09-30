@@ -73,6 +73,8 @@ static int _len_inc;
 /* Msgrate parameters */
 /* static int _num_msgs; already declared */
 static int _msg_len;
+static int _rank_stride;
+static int _start_rank;
 
 /* FFT parameters */
 static int _N;
@@ -116,6 +118,8 @@ set_defaults(void)
     /* Msgrate defaults */
     /* _num_msgs= NO_DEFAULT; already set */
     _msg_len= NO_DEFAULT;
+    _rank_stride= NO_DEFAULT;
+    _start_rank= NO_DEFAULT;
 
     /* FFT defaults */
     _N= NO_DEFAULT;
@@ -181,6 +185,8 @@ int error;
 	case msgrate_pattern:
 	    PARAM_CHECK("Msgrate", num_msgs, <, 0);
 	    PARAM_CHECK("Msgrate", msg_len, <, 0);
+	    PARAM_CHECK("Msgrate", rank_stride, <, 0);
+	    PARAM_CHECK("Msgrate", start_rank, <, 0);
 	    break;
 
 	case fft_pattern:
@@ -256,6 +262,12 @@ disp_pattern_params(void)
 	case msgrate_pattern:
 	    printf("# ***     num_msgs =     %d\n", _num_msgs);
 	    printf("# ***     msg_len =      %d\n", _msg_len);
+	    printf("# ***     start_rank =   %d\n", _start_rank);
+	    if (_rank_stride == 0)   {
+		printf("# ***     rank_stride =  none. Send to a single destination\n");
+	    } else   {
+		printf("# ***     rank_stride =  %d\n", _rank_stride);
+	    }
 	    break;
 
 	case fft_pattern:
@@ -371,6 +383,10 @@ int rc;
 		/* Msgrate parameters */
 		} else if (strcmp("msg_len", key) == 0)   {
 		    _msg_len= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("start_rank", key) == 0)   {
+		    _start_rank= strtol(value1, (char **)NULL, 0);
+		} else if (strcmp("rank_stride", key) == 0)   {
+		    _rank_stride= strtol(value1, (char **)NULL, 0);
 
 		/* FFT parameters */
 		} else if (strcmp("N", key) == 0)   {
@@ -491,6 +507,8 @@ pattern_params(FILE *out)
 	case msgrate_pattern:
 	    PRINT_PARAM(out, num_msgs);
 	    PRINT_PARAM(out, msg_len);
+	    PRINT_PARAM(out, start_rank);
+	    PRINT_PARAM(out, rank_stride);
 	    break;
 
 	case fft_pattern:
