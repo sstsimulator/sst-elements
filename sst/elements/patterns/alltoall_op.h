@@ -53,7 +53,7 @@ class Alltoall_op   {
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_NEXT_LOOP, E_INITIAL_DATA,
-	    E_LAST_DATA, E_ALL_DATA} alltoall_events_t;
+	    E_SEND_DONE, E_LAST_DATA, E_ALL_DATA} alltoall_events_t;
 
 
 

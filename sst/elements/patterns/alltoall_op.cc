@@ -113,13 +113,14 @@ state_event send_event;
 		    cp->send_msg(dest, len1 * sizeof(double), send_event);
 		    len2= shift * alltoall_msglen - (alltoall_nranks * alltoall_msglen - offset);
 		    send_event.event= E_LAST_DATA;
-		    cp->send_msg(dest, len2 * sizeof(double), send_event);
+		    // Tricky: We only wait for the second send to finish. Receive has to be in order!
+		    cp->send_msg(dest, len2 * sizeof(double), send_event, E_SEND_DONE);
 
 		} else   {
 		    /* I can send it in one piece */
 		    len1= shift * alltoall_msglen;
 		    send_event.event= E_ALL_DATA;
-		    cp->send_msg(dest, len1 * sizeof(double), send_event);
+		    cp->send_msg(dest, len1 * sizeof(double), send_event, E_SEND_DONE);
 		}
 		state= WAIT_DATA;
 

@@ -54,7 +54,7 @@ class Allreduce_op   {
 	typedef enum {START, WAIT_CHILDREN, WAIT_PARENT} allreduce_state_t;
 
 	// The start event should always be SM_START_EVENT
-	typedef enum {E_START= SM_START_EVENT, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
+	typedef enum {E_START= SM_START_EVENT, E_SEND_DONE, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
 
 	// The operations we support
 	typedef enum {OP_SUM, OP_PROD, OP_MIN, OP_MAX} allreduce_op_t;
@@ -82,7 +82,10 @@ class Allreduce_op   {
 	allreduce_state_t state;
 	int done;
 	int receives;
+	int sends_complete;
 	Collective_topology *ctopo;
+
+	std::list <state_event>pending_msg;
 
 	void state_INIT(state_event event);
 	void state_WAIT_CHILDREN(state_event event);

@@ -71,18 +71,18 @@ allreduce_events_t e= (allreduce_events_t)sm_event.event;
 state_event send_event;
 
 
-    // Extract and store the value passed in by the caller
-    // The operation to be performed is stored in Idata(0),
-    // and the value is in Fdata(0)
-    cp->SM->SM_data.set_Idata(sm_event.get_Idata());
-    cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
-
-    // The value gets passed up the tree
-    send_event.event= E_FROM_CHILD;
-    send_event.set_Fdata(sm_event.get_Fdata());
-
     switch (e)   {
 	case E_START:
+	    // Extract and store the value passed in by the caller
+	    // The operation to be performed is stored in Idata(0),
+	    // and the value is in Fdata(0)
+	    cp->SM->SM_data.set_Idata(sm_event.get_Idata());
+	    cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
+
+	    // The value gets passed up the tree
+	    send_event.event= E_FROM_CHILD;
+	    send_event.set_Fdata(sm_event.get_Fdata());
+
 	    if (ctopo->is_leaf() && ctopo->num_nodes() > 1)   {
 		cp->send_msg(ctopo->parent_rank(), allreduce_msglen, send_event);
 		state= WAIT_PARENT;
@@ -90,8 +90,15 @@ state_event send_event;
 		// I must be an interior node or root
 		if (ctopo->num_nodes() > 1)   {
 		    state= WAIT_CHILDREN;
+		    // See if I have already received some messages
+		    while (!pending_msg.empty())   {
+			assert((allreduce_events_t)pending_msg.front().event == E_FROM_CHILD);
+			state_WAIT_CHILDREN(pending_msg.front());
+			pending_msg.pop_front();
+		    }
+
 		} else   {
-		    // I gues we're the only one
+		    // I guess we're the only one == root!
 		    send_event.event= E_FROM_PARENT;
 		    state= WAIT_PARENT;
 		    state_WAIT_PARENT(send_event);
@@ -108,7 +115,8 @@ state_event send_event;
 		    cp->my_rank, e, state);
 	    } else   {
 		// I must be an interior node or root
-		goto_state(state_WAIT_CHILDREN, WAIT_CHILDREN, E_FROM_CHILD);
+		pending_msg.push_back(sm_event);
+		// FIXME: delete goto_state(state_WAIT_CHILDREN, WAIT_CHILDREN, E_FROM_CHILD);
 	    }
 	    break;
 
@@ -171,15 +179,19 @@ state_event send_event;
 
 	    if (receives == ctopo->num_children())   {
 		if (ctopo->is_root())   {
-		    // Send to my children and get out of here
-		    send_event.event= E_FROM_PARENT;
-		    send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
-		    std::list<int>::iterator it;
-		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-			cp->send_msg(*it, allreduce_msglen, send_event);
+		    // Send to my children (if any) and get out of here
+		    if (ctopo->num_children() > 0)   {
+			send_event.event= E_FROM_PARENT;
+			send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
+			std::list<int>::iterator it;
+			for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+			    cp->send_msg(*it, allreduce_msglen, send_event, E_SEND_DONE);
+			}
+			sends_complete= 0;
+		    } else   {
+			done= true;
 		    }
 
-		    done= true;
 		} else   {
 		    send_event.event= E_FROM_CHILD;
 		    send_event.set_Fdata(cp->SM->SM_data.get_Fdata());
@@ -187,6 +199,14 @@ state_event send_event;
 		    state= WAIT_PARENT;
 		}
 		receives= 0;
+	    }
+	    break;
+
+	case E_SEND_DONE:
+	    assert(ctopo->is_root());
+	    sends_complete++;
+	    if (sends_complete == ctopo->num_children())   {
+		done= true;
 	    }
 	    break;
 
@@ -210,17 +230,34 @@ std::list<int>::iterator it;
 
     switch (e)   {
 	case E_FROM_PARENT:
-	    // Send to my children and get out of here
 	    // Save allreduce value received from root
 	    cp->SM->SM_data.set_Fdata(sm_event.get_Fdata());
 	    send_event.set_Fdata(sm_event.get_Fdata());
 	    send_event.event= E_FROM_PARENT;
 
-	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-		cp->send_msg(*it, allreduce_msglen, send_event);
+	    // Send to my children (if any) and get out of here
+	    if (!ctopo->is_leaf())   {
+		for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+		    cp->send_msg(*it, allreduce_msglen, send_event, E_SEND_DONE);
+		}
+		sends_complete= 0;
+	    } else   {
+		done= true;
 	    }
+	    break;
 
-	    done= true;
+	case E_SEND_DONE:
+	    sends_complete++;
+	    if (sends_complete == ctopo->num_children())   {
+		done= true;
+	    }
+	    break;
+
+	case E_FROM_CHILD:
+	    // A child of us may have received our data already and sent us more,
+	    // while we are here stuck waiting for our sends to the other children
+	    // to finish.
+	    pending_msg.push_back(sm_event);
 	    break;
 
 	default:
