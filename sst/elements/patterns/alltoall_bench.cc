@@ -437,6 +437,7 @@ int offset;
 int len1, len2;
 MPI_Request sreq1, sreq2;
 MPI_Request rreq1, rreq2;
+long long bytes_sent= 0;
 
 
     sreq1= MPI_REQUEST_NULL;
@@ -461,11 +462,14 @@ MPI_Request rreq1, rreq2;
 	    offset= offset + (nranks * msg_len);
 	    len1= (nranks * msg_len) - offset;
 	    MPI_Isend(result + offset, len1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	    bytes_sent= bytes_sent + len1 * sizeof(double);
 	    len2= shift * msg_len - (nranks * msg_len - offset);
 	    MPI_Isend(result, len2, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq2);
+	    bytes_sent= bytes_sent + len2 * sizeof(double);
 	} else   {
 	    /* I can send it in one piece */
 	    MPI_Isend(result + offset, shift * msg_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	    bytes_sent= bytes_sent + shift * msg_len * sizeof(double);
 	}
 
 	offset= (src * msg_len) - ((shift - 1) * msg_len);
@@ -493,6 +497,8 @@ MPI_Request rreq1, rreq2;
 	    MPI_Wait(&sreq2, MPI_STATUS_IGNORE);
 	}
     }
+
+    /* fprintf(stderr, "[%3d] bytes sent is %lld\n", my_rank, bytes_sent); */
 
 }  /* end of my_alltoall() */
 
