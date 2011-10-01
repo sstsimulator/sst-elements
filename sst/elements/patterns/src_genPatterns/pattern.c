@@ -217,7 +217,6 @@ disp_pattern_params(void)
 	    printf("# ***     num_sets =     %d\n", _num_sets);
 	    printf("# ***     num_ops =      %d\n", _num_ops);
 	    printf("# ***     num_doubles =  %d\n", _num_doubles);
-	    printf("# ***     tree_type =    %s\n", str_tree_type(_tree_type));
 	    break;
 
 	case allreduce_pattern:
