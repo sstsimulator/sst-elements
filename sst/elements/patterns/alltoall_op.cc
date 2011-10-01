@@ -38,8 +38,12 @@ Alltoall_op::handle_events(state_event sm_event)
 	    state_MAIN_LOOP(sm_event);
 	    break;
 
-	case WAIT_DATA:
-	    state_WAIT_DATA(sm_event);
+	case SEND:
+	    state_SEND(sm_event);
+	    break;
+
+	case WAIT:
+	    state_WAIT(sm_event);
 	    break;
 
     }
@@ -69,12 +73,13 @@ state_event send_event;
 	case E_START:
 	    /*
 	    ** If we did this for real, this would be the place where
-	    ** we copy our contrinution to from the in to the result array.
+	    ** we copy our contribution to from the in to the result array.
 	    */
 
 	    /* Set start parameters */
 	    i= alltoall_nranks >> 1;
 	    shift= 1;
+	    bytes_sent= 0;
 
 	    /* Go to the main loop */
 	    goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
@@ -94,38 +99,16 @@ Alltoall_op::state_MAIN_LOOP(state_event sm_event)
 {
 
 alltoall_events_t e= (alltoall_events_t)sm_event.event;
-state_event send_event;
 
 
     switch (e)   {
 	case E_NEXT_LOOP:
 	    if (i > 0)   {
 		/* We got (more) work to do */
-		dest= (cp->my_rank + shift) % alltoall_nranks;
-		src= ((cp->my_rank - shift) + alltoall_nranks) % alltoall_nranks;
-		offset= (cp->my_rank * alltoall_msglen) - ((shift - 1) * alltoall_msglen);
-
-		if (offset < 0)   {
-		    /* Need to break it up into two pieces */
-		    offset= offset + (alltoall_nranks * alltoall_msglen);
-		    len1= (alltoall_nranks * alltoall_msglen) - offset;
-		    send_event.event= E_INITIAL_DATA;
-		    cp->send_msg(dest, len1 * sizeof(double), send_event);
-		    len2= shift * alltoall_msglen - (alltoall_nranks * alltoall_msglen - offset);
-		    send_event.event= E_LAST_DATA;
-		    // Tricky: We only wait for the second send to finish. Receive has to be in order!
-		    cp->send_msg(dest, len2 * sizeof(double), send_event, E_SEND_DONE);
-
-		} else   {
-		    /* I can send it in one piece */
-		    len1= shift * alltoall_msglen;
-		    send_event.event= E_ALL_DATA;
-		    cp->send_msg(dest, len1 * sizeof(double), send_event, E_SEND_DONE);
-		}
-		state= WAIT_DATA;
-
+		goto_state(state_SEND, SEND, E_SEND_START);
 	    } else   {
 		/* We are done looping. Exit */
+		// fprintf(stderr, "[%3d] bytes sent is %lld\n", cp->my_rank, bytes_sent);
 		done= true;
 	    }
 	    break;
@@ -139,25 +122,47 @@ state_event send_event;
 
 
 
-// Data may arrive in one chunk, or in two pieces
 void
-Alltoall_op::state_WAIT_DATA(state_event sm_event)
+Alltoall_op::state_SEND(state_event sm_event)
 {
 
 alltoall_events_t e= (alltoall_events_t)sm_event.event;
 state_event send_event;
+int dest, src;
+int offset;
+int len1, len2;
 
 
     switch (e)   {
-	case E_LAST_DATA:
-	case E_ALL_DATA:
+	case E_SEND_START:
+	    dest= (cp->my_rank + shift) % alltoall_nranks;
+	    src= ((cp->my_rank - shift) + alltoall_nranks) % alltoall_nranks;
+	    offset= (cp->my_rank * alltoall_msglen) - ((shift - 1) * alltoall_msglen);
+
+	    if (offset < 0)   {
+		/* Need to break it up into two pieces */
+		offset= offset + (alltoall_nranks * alltoall_msglen);
+		len1= (alltoall_nranks * alltoall_msglen) - offset;
+		send_event.event= E_INITIAL_DATA;
+		cp->send_msg(dest, len1 * sizeof(double), send_event);
+		bytes_sent= bytes_sent + len1 * sizeof(double);
+		len2= shift * alltoall_msglen - (alltoall_nranks * alltoall_msglen - offset);
+		send_event.event= E_LAST_DATA;
+		// Tricky: We only wait for the second send to finish. Receive has to be in order!
+		cp->send_msg(dest, len2 * sizeof(double), send_event, E_SEND_DONE);
+		bytes_sent= bytes_sent + len2 * sizeof(double);
+
+	    } else   {
+		/* I can send it in one piece */
+		len1= shift * alltoall_msglen;
+		send_event.event= E_ALL_DATA;
+		cp->send_msg(dest, len1 * sizeof(double), send_event, E_SEND_DONE);
+		bytes_sent= bytes_sent + len1 * sizeof(double);
+	    }
+
 	    shift= shift << 1;
 	    i= i >> 1;
-	    goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
-	    break;
-
-	case E_INITIAL_DATA:
-	    // FIXME: Not entirely correct. Should have a seperate state
+	    state= WAIT;
 	    break;
 
 	default:
@@ -165,4 +170,39 @@ state_event send_event;
 		cp->my_rank, e, state);
     }
 
-}  // end of state_WAIT_DATA()
+}  // end of state_SEND()
+
+
+
+void
+Alltoall_op::state_WAIT(state_event sm_event)
+{
+
+alltoall_events_t e= (alltoall_events_t)sm_event.event;
+
+
+    switch (e)   {
+	case E_SEND_DONE:
+	    receives++;
+	    if (receives && (receives % 2 == 0))   {
+		goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
+	    }
+	    break;
+
+	case E_LAST_DATA:
+	case E_ALL_DATA:
+	    receives++;
+	    if (receives && (receives % 2 == 0))   {
+		goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
+	    }
+	    break;
+
+	case E_INITIAL_DATA:
+	    break;
+
+	default:
+	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+		cp->my_rank, e, state);
+    }
+
+}  // end of state_WAIT_SEND()

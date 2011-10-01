@@ -29,6 +29,7 @@ class Alltoall_op   {
 		_abort(alltoall_pattern, "[%3d] num_ranks (%d) must be power of 2!\n",
 		    cp->my_rank, alltoall_nranks);
 	    }
+	    receives= 0;
 	}
 
         ~Alltoall_op() {}
@@ -49,11 +50,11 @@ class Alltoall_op   {
 
 	// The Alltoall pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {START, MAIN_LOOP, WAIT_DATA} alltoall_state_t;
+	typedef enum {START, MAIN_LOOP, SEND, WAIT} alltoall_state_t;
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_NEXT_LOOP, E_INITIAL_DATA,
-	    E_SEND_DONE, E_LAST_DATA, E_ALL_DATA} alltoall_events_t;
+	    E_SEND_START, E_SEND_DONE, E_LAST_DATA, E_ALL_DATA} alltoall_events_t;
 
 
 
@@ -77,14 +78,14 @@ class Alltoall_op   {
 	alltoall_state_t state;
 	int done;
 	unsigned int i;
-	int shift, dest;
-	int src;
-	int offset;
-	int len1, len2;
+	int shift;
+	int receives;
+	long long bytes_sent;
 
 	void state_INIT(state_event event);
 	void state_MAIN_LOOP(state_event event);
-	void state_WAIT_DATA(state_event event);
+	void state_WAIT(state_event event);
+	void state_SEND(state_event event);
 
 };
 
