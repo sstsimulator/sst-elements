@@ -33,8 +33,8 @@ Ghost_pattern::handle_events(state_event sm_event)
     }
 
     if (done)   {
-	unregisterExit();
 	done= false;
+	unregisterExit();
     }
 
 }  /* end of handle_events() */
@@ -115,6 +115,21 @@ state_event send_event;
 			      2 * memory.x_dim * memory.z_dim * sizeof(double);
 		num_sends += 6;
 
+	    }
+
+
+	    // It is possible that all my receives are already here. No need to wait.
+	    if (TwoD)   {
+		// Do we have all four neighbors?
+		if (rcv_cnt % 4 == 0)   {
+		    comm_time_total += getCurrentSimTime() - comm_time_start;
+		    goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
+		}
+	    } else   {
+		if (rcv_cnt % 6 == 0)   {
+		    comm_time_total += getCurrentSimTime() - comm_time_start;
+		    goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
+		}
 	    }
 	    break;
 
@@ -232,7 +247,6 @@ SimTime_t duration;
 	    /* Once in a while do an allreduce to check on convergence */
 	    if ((t + 1) % reduce_steps == 0)   {
 		comm_time_start= getCurrentSimTime();
-		goto_state(state_INIT, STATE_INIT, E_NEXT_LOOP); // rrr Makes it run to the end, but then still crashes!
 		goto_state(state_REDUCE, STATE_REDUCE, E_ALLREDUCE_ENTRY);
 	    } else   {
 		goto_state(state_INIT, STATE_INIT, E_NEXT_LOOP);
@@ -303,6 +317,16 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 	case E_DONE:
 	    total_time_end= getCurrentSimTime();
 
+	    if (TwoD)   {
+		if (rcv_cnt % 4 != 0)   {
+		    fprintf(stderr, "[%3d] ERROR: Did not receive all msgs: %d\n", my_rank, rcv_cnt);
+		}
+	    } else   {
+		if (rcv_cnt % 6 != 0)   {
+		    fprintf(stderr, "[%3d] ERROR: Did not receive all msgs: %d\n", my_rank, rcv_cnt);
+		}
+	    }
+
 	    /* Print some statistics */
 	    if (my_rank == 0)   {
 		printf("Time to complete on %d ranks was %.6f seconds\n", num_ranks,
@@ -336,6 +360,7 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 		    printf("Each compute step was delayed by %.1f%%\n", SimTimeToD(compute_delay));
 		}
 	    }
+	    state= STATE_INIT;
 	    done= true;
 	    break;
 

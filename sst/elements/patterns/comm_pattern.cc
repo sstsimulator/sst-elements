@@ -147,7 +147,11 @@ void
 Comm_pattern::local_compute(int done_event, SimTime_t duration)
 {
 
-    self_event_send(done_event, duration);
+int tag;
+
+
+    tag= SM->SM_current_tag();
+    common->self_event_send(done_event, tag, duration);
 
 }  /* end of local_compute() */
 

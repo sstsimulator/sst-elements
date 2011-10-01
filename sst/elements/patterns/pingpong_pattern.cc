@@ -224,7 +224,7 @@ state_event enter_barrier, exit_barrier;
 	    // Set the parameters to be passed to the barrier SM
 	    enter_barrier.event= SM_START_EVENT;
 
-	    // We want to be called with this event, when allreduce returns
+	    // We want to be called with this event, when barrier returns
 	    exit_barrier.event= E_BARRIER_EXIT;
 
 	    SM->SM_call(SMbarrier, enter_barrier, exit_barrier);
