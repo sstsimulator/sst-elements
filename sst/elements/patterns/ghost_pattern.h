@@ -41,7 +41,7 @@ class Ghost_pattern : public Comm_pattern    {
 	    reduce_steps= 20;
 	    delay= 0;
 	    compute_imbalance= 0;
-	    verbose= 0;
+	    verbose= 1;
 	    time_per_flop= 10;
 
 
@@ -137,12 +137,12 @@ class Ghost_pattern : public Comm_pattern    {
 	    mem_alloc(x_elements, y_elements, z_elements, &memory, NULL);
 
 	    /* Some info about what happened so far */
-	    if (my_rank == 0)   {
+	    if ((my_rank == 0) && (verbose))   {
 		if (TwoD)   {
-		    printf("#  |||  Border to area ratio is %.3g\n",
+		    printf("Border to area ratio is %.3g\n",
 			(2.0 * (x_elements + y_elements)) / ((float)x_elements * y_elements));
 		} else   {
-		    printf("#  |||  Area to volume ratio is %.3g\n",
+		    printf("Area to volume ratio is %.3g\n",
 			(2.0 * x_elements * y_elements +
 			 2.0 * x_elements * z_elements +
 			 2.0 * y_elements * z_elements) /
@@ -152,6 +152,24 @@ class Ghost_pattern : public Comm_pattern    {
 
 	    // Kickstart ourselves
 	    done= false;
+	    comm_time_total= 0;
+	    comp_time_total= 0;
+	    total_time_start= getCurrentSimTime();
+	    rcv_cnt= 0;
+	    send_done= 0;
+	    bytes_sent= 0;
+	    reduce_cnt= 0;
+	    fop_cnt= 0;
+	    num_sends= 0;
+	    compute_delay= 0;
+	    wait_last_receives=false;
+
+	    if (TwoD)   {
+		neighbor_cnt= 4;
+	    } else   {
+		neighbor_cnt= 6;
+	    }
+	    t= -1;
 	    state_transition(E_START, STATE_INIT);
         }
 
@@ -163,7 +181,7 @@ class Ghost_pattern : public Comm_pattern    {
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_NEXT_LOOP, E_CELL_SEND,
-	    E_COMPUTE, E_COMPUTE_DONE, E_CELL_RECEIVE,
+	    E_SEND_DONE, E_COMPUTE, E_COMPUTE_DONE, E_CELL_RECEIVE,
 	    E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT, E_DONE} ghost_events_t;
 
     private:
@@ -228,6 +246,9 @@ class Ghost_pattern : public Comm_pattern    {
 	int64_t bytes_sent;
 	int compute_imbalance;
 	int rcv_cnt;
+	int send_done;
+	bool wait_last_receives;
+	int neighbor_cnt;
 
 
 	// Serialization
@@ -256,8 +277,8 @@ class Ghost_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(rank_depth);
 	    ar & BOOST_SERIALIZATION_NVP(decomposition_only);
 	    ar & BOOST_SERIALIZATION_NVP(mem_estimate);
-	    // don't know how to do this... ar & BOOST_SERIALIZATION_NVP(memory);
-	    // don't know how to do this... ar & BOOST_SERIALIZATION_NVP(neighbor_list);
+	    // FIXME: don't know how to do this... ar & BOOST_SERIALIZATION_NVP(memory);
+	    // FIXME: don't know how to do this... ar & BOOST_SERIALIZATION_NVP(neighbor_list);
 	    ar & BOOST_SERIALIZATION_NVP(t);
 	    ar & BOOST_SERIALIZATION_NVP(total_time_start);
 	    ar & BOOST_SERIALIZATION_NVP(total_time_end);
@@ -272,6 +293,9 @@ class Ghost_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(bytes_sent);
 	    ar & BOOST_SERIALIZATION_NVP(compute_imbalance);
 	    ar & BOOST_SERIALIZATION_NVP(rcv_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(send_done);
+	    ar & BOOST_SERIALIZATION_NVP(wait_last_receives);
+	    ar & BOOST_SERIALIZATION_NVP(neighbor_cnt);
         }
 
         template<class Archive>

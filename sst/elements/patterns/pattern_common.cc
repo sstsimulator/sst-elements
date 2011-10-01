@@ -519,7 +519,7 @@ CPUNicEvent *e;
 */
 void
 Patterns::event_send(int dest, int event, SST::SimTime_t CurrentSimTime,
-	int32_t tag, uint32_t msg_len, const char *payload, int payload_len)
+	int32_t tag, uint32_t msg_len, const char *payload, int payload_len, int blocking)
 {
 
 CPUNicEvent *e;
@@ -546,6 +546,8 @@ std::set<stat_dest_t>::iterator pos;
 
     my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
     dest_node= dest / (NoC_width * NoC_height * cores_per_NoC_router);
+
+    // Count number of sends to each destination
     dl.dest= dest_node;
     pos= stat_dest.find(dl);
     if (pos != stat_dest.end())   {
@@ -564,6 +566,9 @@ std::set<stat_dest_t>::iterator pos;
     if (dest == my_rank)   {
 	// No need to go through the network for this
 	// FIXME: Shouldn't this involve some sort of delay?
+	if (blocking >= 0)   {
+	    send_msg_complete(0, blocking, tag);
+	}
 	my_self_link->Send(e);
 	return;
     }
@@ -571,7 +576,7 @@ std::set<stat_dest_t>::iterator pos;
     /* Is dest within our NoC? */
     if (my_node == dest_node)   {
 	/* Route locally */
-	NoCsend(e, my_rank, dest, CurrentSimTime);
+	NoCsend(e, my_rank, dest, CurrentSimTime, blocking, tag);
 
     } else   {
 	/* Route off chip */
@@ -579,10 +584,10 @@ std::set<stat_dest_t>::iterator pos;
 	fl.dest= dest_node;
 	if (FarLink.find(fl) != FarLink.end())   {
 	    // We have a far link to that destination node. Use it
-	    FarLinksend(e, my_node, dest_node, dest, CurrentSimTime);
+	    FarLinksend(e, my_node, dest_node, dest, CurrentSimTime, blocking, tag);
 	} else   {
 	    // Send it through the network
-	    Netsend(e, my_node, dest_node, dest, CurrentSimTime);
+	    Netsend(e, my_node, dest_node, dest, CurrentSimTime, blocking, tag);
 	}
     }
 
@@ -711,7 +716,8 @@ std::vector<int>::iterator itNum;
 ** delays.
 */
 void
-Patterns::NoCsend(CPUNicEvent *e, int my_rank, int dest_rank, SST::SimTime_t CurrentSimTime)
+Patterns::NoCsend(CPUNicEvent *e, int my_rank, int dest_rank, SST::SimTime_t CurrentSimTime,
+	int blocking, int tag)
 {
 
 int my_router, dest_router;
@@ -760,6 +766,9 @@ int64_t link_duration;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
+	if (blocking >= 0)   {
+	    send_msg_complete(delay, blocking, tag);
+	}
 	my_NoC_link->Send(delay, e);
 	NextNoCNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
@@ -767,6 +776,9 @@ int64_t link_duration;
 	// NIC is busy
 	delay= NextNoCNICslot - CurrentSimTime + NoCNICgap +
 	    latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
+	if (blocking >= 0)   {
+	    send_msg_complete(delay, blocking, tag);
+	}
 	my_NoC_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NoCNICbusy++;
@@ -782,7 +794,8 @@ int64_t link_duration;
 ** appropriate delays.
 */
 void
-Patterns::Netsend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank, SST::SimTime_t CurrentSimTime)
+Patterns::Netsend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
+	SST::SimTime_t CurrentSimTime, int blocking, int tag)
 {
 
 int my_router, dest_router;
@@ -831,6 +844,9 @@ int64_t link_duration;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (blocking >= 0)   {
+	    send_msg_complete(delay, blocking, tag);
+	}
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
@@ -838,6 +854,9 @@ int64_t link_duration;
 	// NIC is busy
 	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
 	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (blocking >= 0)   {
+	    send_msg_complete(delay, blocking, tag);
+	}
 	my_net_link->Send(delay, e);
 	NextNetNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_NetNICbusy++;
@@ -851,7 +870,8 @@ int64_t link_duration;
 ** Send a message through a far link
 */
 void
-Patterns::FarLinksend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank, SST::SimTime_t CurrentSimTime)
+Patterns::FarLinksend(CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
+	SST::SimTime_t CurrentSimTime, int blocking, int tag)
 {
 
 SimTime_t delay;
@@ -896,6 +916,9 @@ FarLink_t fl;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (blocking >= 0)   {
+	    send_msg_complete(delay, blocking, tag);
+	}
 	my_net_link->Send(delay, e);
 	NextFarNICslot= CurrentSimTime + latency + msg_duration + link_duration;
 
@@ -903,12 +926,39 @@ FarLink_t fl;
 	// NIC is busy
 	delay= NextFarNICslot - CurrentSimTime + NetNICgap +
 	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (blocking >= 0)   {
+	    send_msg_complete(delay, blocking, tag);
+	}
 	my_net_link->Send(delay, e);
 	NextFarNICslot= CurrentSimTime + delay + latency + msg_duration + link_duration;
 	stat_FarNICbusy++;
     }
 
 }  // end of FarLinksend()
+
+
+
+// Send a send completion event to ourselves
+void
+Patterns::send_msg_complete(SimTime_t delay, int blocking, int tag)
+{
+
+CPUNicEvent *e;
+
+
+    // Create an event and fill in the event info
+    e= new CPUNicEvent();
+    e->SetRoutine(blocking);
+    e->router_delay= 0;
+    e->hops= 0;
+    e->msg_len= 0;
+    e->tag= tag;
+    e->dest= my_rank;
+    e->msg_id= (msg_seq++ << RANK_FIELD) | my_rank;
+
+    my_self_link->Send(delay, e);
+
+}  // end of send_msg_complete
 
 
 

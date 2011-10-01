@@ -148,6 +148,7 @@ class Comm_pattern : public Component {
 
 	void self_event_send(int event_type, SimTime_t duration);
 	void send_msg(int dest, int len, state_event sm_event);
+	void send_msg(int dest, int len, state_event sm_event, int blocking);
 
 	// Some patterns may be able to use this
 	int is_pow2(int num);

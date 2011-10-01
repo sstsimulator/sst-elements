@@ -85,8 +85,8 @@ class Patterns   {
 		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link);
 
 	void self_event_send(int event, int32_t tag= 0, SST::SimTime_t delay= 0);
-	void event_send(int dest, int event, SST::SimTime_t CurrentSimTime, int32_t tag= 0, uint32_t msg_len= 0,
-		const char *payload= NULL, int payload_len= 0);
+	void event_send(int dest, int event, SST::SimTime_t CurrentSimTime, int32_t tag= 0,
+		uint32_t msg_len= 0, const char *payload= NULL, int payload_len= 0, int blocking= -1);
 	void storage_write(int data_size, int return_event);
 	void nvram_write(int data_size, int return_event);
 
@@ -108,11 +108,12 @@ class Patterns   {
 
     private:
 	void NoCsend(SST::CPUNicEvent *e, int my_rank, int dest_rank,
-		SST::SimTime_t CurrentSimTime);
+		SST::SimTime_t CurrentSimTime, int blocking, int tag);
 	void Netsend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
-		SST::SimTime_t CurrentSimTime);
+		SST::SimTime_t CurrentSimTime, int blocking, int tag);
 	void FarLinksend(SST::CPUNicEvent *e, int my_node, int dest_node, int dest_rank,
-		SST::SimTime_t CurrentSimTime);
+		SST::SimTime_t CurrentSimTime, int blocking, int tag);
+	void send_msg_complete(SST::SimTime_t delay, int blocking, int tag);
 	void stat_print();
 	void get_NICparams(std::list<NICparams_t> params, int64_t msg_len, 
 	    int64_t *latency, int64_t *msg_duration);

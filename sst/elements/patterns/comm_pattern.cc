@@ -24,8 +24,8 @@
 // No actual data is contained in this message. There is some out of band data
 // that is contained in the sm_event. It's packed into the payload and sent along.
 //
-// This behave kind of like an MPI_Isend() When it returns, the message may not have
-// left the node yet. Right now it never blocks == infinite buffer space.
+// This behaves kind of like an MPI_Isend() When it returns, the message may not have
+// left the node yet.
 void
 Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 {
@@ -34,6 +34,21 @@ Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 	SM->SM_current_tag(), len,
 	(const char *)sm_event.payload,
 	sm_event.payload_size);
+
+}  // end of send_msg()
+
+
+
+// This version sends a completion event of type "blocking" back to
+// ourselves at the time the message leaves the NIC.
+void
+Comm_pattern::send_msg(int dest, int len, state_event sm_event, int blocking)
+{
+
+    common->event_send(dest, sm_event.event, getCurrentSimTime(),
+	SM->SM_current_tag(), len,
+	(const char *)sm_event.payload,
+	sm_event.payload_size, blocking);
 
 }  // end of send_msg()
 

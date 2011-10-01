@@ -50,16 +50,6 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 
     switch (e)   {
 	case E_START:
-	    comm_time_total= 0;
-	    comp_time_total= 0;
-	    total_time_start= getCurrentSimTime();
-	    rcv_cnt= 0;
-	    bytes_sent= 0;
-	    reduce_cnt= 0;
-	    fop_cnt= 0;
-	    num_sends= 0;
-	    compute_delay= 0;
-	    t= -1;
 	    // No break!
 
 	case E_NEXT_LOOP:
@@ -68,6 +58,21 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 		goto_state(state_CELL_EXCHANGE, STATE_CELL_EXCHANGE, E_CELL_SEND);
 	    } else   {
 		// We are done
+		if (rcv_cnt == neighbor_cnt * time_steps)   {
+		    goto_state(state_DONE, STATE_DONE, E_DONE);
+		} else   {
+		    // We are done, but some receives are still in flight
+fprintf(stderr, "[%3d] I'm going to wait for missing receives: rcv_cnt %d\n", my_rank, rcv_cnt);
+		    wait_last_receives= true;
+		}
+	    }
+	    break;
+
+	case E_CELL_RECEIVE:
+	    // Some guys are fast (or slow)
+	    rcv_cnt++;
+	    if (rcv_cnt == neighbor_cnt * time_steps)   {
+fprintf(stderr, "[%3d] Got the last receive: rcv_cnt %d\n", my_rank, rcv_cnt);
 		goto_state(state_DONE, STATE_DONE, E_DONE);
 	    }
 	    break;
@@ -95,58 +100,45 @@ state_event send_event;
 	    send_event.event= E_CELL_RECEIVE;
 	    if (TwoD)   {
 		// Send lines
-		send_msg(neighbor_list.up, memory.x_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.down, memory.x_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.left, memory.y_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.right, memory.y_dim * sizeof(double), send_event);
+		send_msg(neighbor_list.up, memory.x_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.down, memory.x_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.left, memory.y_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.right, memory.y_dim * sizeof(double), send_event, E_SEND_DONE);
 		bytes_sent += 2 * memory.x_dim * sizeof(double) +
 		    2 * memory.y_dim * sizeof(double);
 		num_sends += 4;
 	    } else   {
 		// Send surfaces
-		send_msg(neighbor_list.up, memory.x_dim * memory.y_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.down, memory.x_dim * memory.y_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.left, memory.y_dim * memory.z_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.right, memory.y_dim * memory.z_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.back, memory.x_dim * memory.z_dim * sizeof(double), send_event);
-		send_msg(neighbor_list.front, memory.x_dim * memory.z_dim * sizeof(double), send_event);
+		send_msg(neighbor_list.up, memory.x_dim * memory.y_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.down, memory.x_dim * memory.y_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.left, memory.y_dim * memory.z_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.right, memory.y_dim * memory.z_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.back, memory.x_dim * memory.z_dim * sizeof(double), send_event, E_SEND_DONE);
+		send_msg(neighbor_list.front, memory.x_dim * memory.z_dim * sizeof(double), send_event, E_SEND_DONE);
 		bytes_sent += 2 * memory.x_dim * memory.y_dim * sizeof(double) +
 		              2 * memory.y_dim * memory.z_dim * sizeof(double) +
 			      2 * memory.x_dim * memory.z_dim * sizeof(double);
 		num_sends += 6;
 
 	    }
+	    send_done= 0;
+	    break;
 
-
-	    // It is possible that all my receives are already here. No need to wait.
-	    if (TwoD)   {
-		// Do we have all four neighbors?
-		if (rcv_cnt % 4 == 0)   {
-		    comm_time_total += getCurrentSimTime() - comm_time_start;
-		    goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
-		}
-	    } else   {
-		if (rcv_cnt % 6 == 0)   {
-		    comm_time_total += getCurrentSimTime() - comm_time_start;
-		    goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
-		}
+	case E_SEND_DONE:
+	    send_done++;
+	    // Do we have all neighbors?
+	    if ((rcv_cnt == neighbor_cnt * (t + 1)) && (send_done == neighbor_cnt))   {
+		comm_time_total += getCurrentSimTime() - comm_time_start;
+		goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
 	    }
 	    break;
 
 	case E_CELL_RECEIVE:
 	    rcv_cnt++;
-	    if (TwoD)   {
-		// Do we have all four neighbors?
-		if (rcv_cnt % 4 == 0)   {
-		    comm_time_total += getCurrentSimTime() - comm_time_start;
-		    goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
-		}
-	    } else   {
-		// Do we have all six neighbors?
-		if (rcv_cnt % 6 == 0)   {
-		    comm_time_total += getCurrentSimTime() - comm_time_start;
-		    goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
-		}
+	    // Do we have all neighbors?
+	    if ((rcv_cnt == neighbor_cnt * (t + 1)) && (send_done == neighbor_cnt))   {
+		comm_time_total += getCurrentSimTime() - comm_time_start;
+		goto_state(state_COMPUTE_CELLS, STATE_COMPUTE_CELLS, E_COMPUTE);
 	    }
 	    break;
 
@@ -253,6 +245,11 @@ SimTime_t duration;
 	    }
 	    break;
 
+	case E_SEND_DONE:
+	    send_done++;
+	    fprintf(stderr, "[%3d] SEND DONE in state_COMPUTE_CELLS() should not happen %d\n", my_rank, send_done);
+	    break;
+
 	case E_CELL_RECEIVE:
 	    // Only count receives here. We wait until we are in state_CELL_EXCHANGE
 	    // to make decisions.
@@ -317,14 +314,8 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 	case E_DONE:
 	    total_time_end= getCurrentSimTime();
 
-	    if (TwoD)   {
-		if (rcv_cnt % 4 != 0)   {
-		    fprintf(stderr, "[%3d] ERROR: Did not receive all msgs: %d\n", my_rank, rcv_cnt);
-		}
-	    } else   {
-		if (rcv_cnt % 6 != 0)   {
-		    fprintf(stderr, "[%3d] ERROR: Did not receive all msgs: %d\n", my_rank, rcv_cnt);
-		}
+	    if (rcv_cnt % neighbor_cnt != 0)   {
+		fprintf(stderr, "[%3d] ERROR: Did not receive all msgs: %d\n", my_rank, rcv_cnt);
 	    }
 
 	    /* Print some statistics */
@@ -360,7 +351,6 @@ ghost_events_t e= (ghost_events_t)sm_event.event;
 		    printf("Each compute step was delayed by %.1f%%\n", SimTimeToD(compute_delay));
 		}
 	    }
-	    state= STATE_INIT;
 	    done= true;
 	    break;
 
