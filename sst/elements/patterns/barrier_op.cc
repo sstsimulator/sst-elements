@@ -99,6 +99,7 @@ state_event barrier_event;
 		    barrier_event.event= E_FROM_PARENT;
 		    std::list<int>::iterator it;
 		    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+			// FIXME: Should wait for these sends to finish
 			cp->send_msg(*it, no_data, barrier_event);
 		    }
 
@@ -135,6 +136,7 @@ state_event barrier_event;
 	    // Send to my children and get out of here
 	    barrier_event.event= E_FROM_PARENT;
 	    for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
+		// FIXME: Should wait for these sends to finish
 		cp->send_msg(*it, no_data, barrier_event);
 	    }
 	    done= true;
