@@ -18,7 +18,7 @@
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
 #include <mpi.h>
-#include "stats.h"
+#include "../stats.h"
 #include "stat_p.h"
 
 

@@ -18,8 +18,8 @@
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
 #include <mpi.h>
-#include "collective_topology.h"
-#include "stats.h"
+#include "../collective_topology.h"
+#include "../stats.h"
 #include "stat_p.h"
 
 
