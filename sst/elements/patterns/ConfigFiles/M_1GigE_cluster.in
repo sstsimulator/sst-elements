@@ -10,7 +10,7 @@
 NICstat = 0
 
 # Network dimension
-Net_x_dim = 2
+Net_x_dim = 1
 Net_y_dim = 1
 
 # NoC dimension
@@ -18,10 +18,10 @@ NoC_x_dim = 1
 NoC_y_dim = 2
 
 # Number of cores per NoC router
-num_cores = 6
+num_router_cores = 6
 
 # Number of nodes per network router
-num_router_nodes = 6
+num_router_nodes = 40
 
 # Link latency between network routers
 # Must be specified before any NetNICparams

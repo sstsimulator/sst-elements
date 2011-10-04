@@ -1,14 +1,14 @@
 
 # Network dimension
-Net_x_dim = 8
-Net_y_dim = 8
+Net_x_dim = 16
+Net_y_dim = 4
 
 # NoC dimension
 NoC_x_dim = 1
 NoC_y_dim = 2
 
 # Number of cores per NoC router
-num_cores = 1
+num_router_cores = 1
 
 # Number of nodes per network router
 num_router_nodes = 1
@@ -20,6 +20,13 @@ NetIntraLatency = 300
 # Link latency between NoC network routers
 # Must be specified before any NetNICparams
 NoCIntraLatency = 2500
+
+NetNICgap =    100
+NoCNICgap =   2422
+
+NetLinkBandwidth =   1000000000 # 
+NoCLinkBandwidth =   2500000000 # 
+
 NetNICparams =            0         5910
 NetNICparams =            8         6170
 NetNICparams =           32         9690
@@ -63,6 +70,7 @@ NetNICparams =       425984       244370
 NetNICparams =       720896       408650
 NetNICparams =       917504       518300
 NetNICparams =      1048576       591200
+
 NoCNICparams =            0         3160
 NoCNICparams =            8         4560
 NoCNICparams =           32         4570
@@ -105,61 +113,6 @@ NoCNICparams =       589824       293630
 NoCNICparams =       786432       388500
 NoCNICparams =       983040       480780
 NoCNICparams =      1048576       511850
-
-# NetNICgap =   2740			# 1.244%
-# NetNICgap =    500			# 1.041%
-# NetNICgap =      1			# 1.003%
-# NetNICgap =   2740			# 1.244%
-# NetNICgap =   2740			# 154,548 msgs/s vs. 364,908 msgs/s measured
-# NetNICgap =    500			# 208,556 msgs/s vs. 364,908 msgs/s measured
-NetNICgap =      1			# 226,162 msgs/s vs. 364,908 msgs/s measured
-
-
-# NoCNICgap =    500			# 1.244%
-# NoCNICgap =   5000			# 1.244%
-# NoCNICgap =   2000			# 1.244%
-# NoCNICgap =   3000			# 1.244%
-# NoCNICgap =   2300			# 1.244%
-# NoCNICgap =   2500			# 1.244%
-NoCNICgap =   2422			# 1.244%
-
-# NetLinkBandwidth =   2000000000		# 5.846%
-# NetLinkBandwidth =   2500000000		# 5.959%
-# NetLinkBandwidth =   1500000000		# 5.658%
-# NetLinkBandwidth =   1000000000		# 5.274%
-# NetLinkBandwidth =    500000000		# 3.380%
-# NetLinkBandwidth =     50000000		# 39.777%
-# NetLinkBandwidth =     20000000		# 111.729%
-# NetLinkBandwidth =    750000000		# 4.747%
-# NetLinkBandwidth =    250000000		# 1.777%
-# NetLinkBandwidth =    650000000		# 4.296%
-# NetLinkBandwidth =    150000000		# 7.858%
-# NetLinkBandwidth =    350000000		# 1.761%
-# NetLinkBandwidth =    200000000		# 3.942%
-# NetLinkBandwidth =    400000000		# 2.427%
-# NetLinkBandwidth =    360000000		# 1.912%
-# NetLinkBandwidth =    320000000		# 1.329%
-# NetLinkBandwidth =    300000000		# 1.140%
-# NetLinkBandwidth =    280000000		# 1.173%
-# NetLinkBandwidth =    270000000		# 1.304%
-# NetLinkBandwidth =    310000000		# 1.216%
-# NetLinkBandwidth =    290000000		# 1.120%
-# NetLinkBandwidth =    275000000		# 1.229%
-# NetLinkBandwidth =    285000000		# 1.137%
-# NetLinkBandwidth =    295000000		# 1.122%
-NetLinkBandwidth =      290000000		# 10.240%
-NetLinkBandwidth =      100000000		# 41.303% for offnode pingpong
-NetLinkBandwidth =      200000000		# 17.553% for offnode pingpong
-NetLinkBandwidth =      400000000		#  5.824% for offnode pingpong
-NetLinkBandwidth =      600000000		#  2.060% for offnode pingpong, 4.040% for allreduce
-NetLinkBandwidth =      500000000		#  3.538% for offnode pingpong, 3.380% for allreduce
-
-# NoCLinkBandwidth =   2500000000		# 1.120%
-# NoCLinkBandwidth =   2000000000		# 1.120%
-# NoCLinkBandwidth =   1500000000		# 1.120%
-# NoCLinkBandwidth =   3500000000		# 1.120%
-
-NoCLinkBandwidth =   2500000000		# 1.120%
 
 # I/O is not working yet
 IOLinkBandwidth = 0
