@@ -29,7 +29,7 @@ using namespace SST;
 
 
 /* Local functions */
-static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height);
+static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int x_wrap, int y_wrap);
 static bool compare_NICparams(NICparams_t first, NICparams_t second);
 
 
@@ -70,6 +70,10 @@ uint64_t code;
     NextFarNICslot= 0;
     msg_seq= 1;
     FarLinknum= 0;
+    NetXwrap= 0;
+    NetYwrap= 0;
+    NoCXwrap= 0;
+    NoCYwrap= 0;
 
     // Clear stats
     stat_NoCNICsend= 0;
@@ -130,6 +134,22 @@ uint64_t code;
 
 	if (!it->first.compare("NoC_y_dim"))   {
 	    sscanf(it->second.c_str(), "%d", &NoC_height);
+	}
+
+	if (!it->first.compare("NetXwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetXwrap);
+	}
+
+	if (!it->first.compare("NetYwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetYwrap);
+	}
+
+	if (!it->first.compare("NoCXwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetXwrap);
+	}
+
+	if (!it->first.compare("NoCYwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetYwrap);
 	}
 
 	if (!it->first.compare("cores"))   {
@@ -435,10 +455,30 @@ uint64_t code;
     if (my_rank == 0)   {
 	std::list<int>::iterator rank;
 
-	printf("#  |||  mesh x %d, y %d, with %d nodes each = %d nodes\n",
+	printf("#  |||  Network x %d, y %d, with %d nodes each = %d nodes\n",
 	    mesh_width, mesh_height, num_router_nodes, mesh_width * mesh_height * num_router_nodes);
+	if (NetXwrap && NetYwrap)   {
+	    printf("#  |||  Network: X and Y dimensions wrapped\n");
+	} else if (!NetXwrap && NetYwrap)   {
+	    printf("#  |||  Network: Y dimension wrapped\n");
+	} else if (NetXwrap && !NetYwrap)   {
+	    printf("#  |||  Network: X dimension wrapped\n");
+	} else   {
+	    printf("#  |||  Network: No dimensions wrapped\n");
+	}
+
 	printf("#  |||  NoC x %d, y %d, with %d cores each = %d cores per node\n",
 	    NoC_width, NoC_height, cores_per_NoC_router, cores_per_node);
+	if (NoCXwrap && NoCYwrap)   {
+	    printf("#  |||  NoC: X and Y dimensions wrapped\n");
+	} else if (!NoCXwrap && NoCYwrap)   {
+	    printf("#  |||  NoC: Y dimension wrapped\n");
+	} else if (NoCXwrap && !NoCYwrap)   {
+	    printf("#  |||  NoC: X dimension wrapped\n");
+	} else   {
+	    printf("#  |||  NoC: No dimensions wrapped\n");
+	}
+
 	printf("#  |||  Total %d cores in system\n", total_cores);
 
 	printf("#  |||  NIC statistics for ranks ");
@@ -743,7 +783,7 @@ int64_t link_duration;
 	e->local_traffic= true;
     }
 
-    gen_route(e, my_router, dest_router, NoC_width, NoC_height);
+    gen_route(e, my_router, dest_router, NoC_width, NoC_height, NoCXwrap, NoCYwrap);
 
     // Exit to the local (NIC) pattern generator
     e->route.push_back(FIRST_LOCAL_PORT + (dest_rank % cores_per_NoC_router));
@@ -812,7 +852,7 @@ int64_t link_duration;
 
     my_router= my_node / num_router_nodes;
     dest_router= dest_node / num_router_nodes;
-    gen_route(e, my_router, dest_router, mesh_width, mesh_height);
+    gen_route(e, my_router, dest_router, mesh_width, mesh_height, NetXwrap, NetYwrap);
 
 
     // Exit to the local node (aggregator on that node
@@ -967,7 +1007,7 @@ CPUNicEvent *e;
 ** We use it to traverse the mesh as well as the NoC
 */
 static void
-gen_route(CPUNicEvent *e, int src, int dest, int width, int height)
+gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int x_wrap, int y_wrap)
 {
 
 int c1, c2;
@@ -983,42 +1023,50 @@ int x_delta, y_delta;
     dest_X= dest % width;
 
     // Use the shortest distance to reach the destination
-    if (my_X > dest_X)   {
-	// How much does it cost to go left?
-	c1= my_X - dest_X;
-	// How much does it cost to go right?
-	c2= (dest_X + width) - my_X;
+    if (x_wrap)   {
+	if (my_X > dest_X)   {
+	    // How much does it cost to go left?
+	    c1= my_X - dest_X;
+	    // How much does it cost to go right?
+	    c2= (dest_X + width) - my_X;
+	} else   {
+	    // How much does it cost to go left?
+	    c1= (my_X + width) - dest_X;
+	    // How much does it cost to go right?
+	    c2= dest_X - my_X;
+	}
+	if (c1 > c2)   {
+	    // go right
+	    x_delta= c2;
+	} else   {
+	    // go left
+	    x_delta= -c1;
+	}
     } else   {
-	// How much does it cost to go left?
-	c1= (my_X + width) - dest_X;
-	// How much does it cost to go right?
-	c2= dest_X - my_X;
-    }
-    if (c1 > c2)   {
-	// go right
-	x_delta= c2;
-    } else   {
-	// go left
-	x_delta= -c1;
+	x_delta= dest_X - my_X;
     }
 
-    if (my_Y > dest_Y)   {
-	// How much does it cost to go up?
-	c1= my_Y - dest_Y;
-	// How much does it cost to go down?
-	c2= (dest_Y + height) - my_Y;
+    if (y_wrap)   {
+	if (my_Y > dest_Y)   {
+	    // How much does it cost to go up?
+	    c1= my_Y - dest_Y;
+	    // How much does it cost to go down?
+	    c2= (dest_Y + height) - my_Y;
+	} else   {
+	    // How much does it cost to go up?
+	    c1= (my_Y + height) - dest_Y;
+	    // How much does it cost to go down?
+	    c2= dest_Y - my_Y;
+	}
+	if (c1 > c2)   {
+	    // go down
+	    y_delta= c2;
+	} else   {
+	    // go up
+	    y_delta= -c1;
+	}
     } else   {
-	// How much does it cost to go up?
-	c1= (my_Y + height) - dest_Y;
-	// How much does it cost to go down?
-	c2= dest_Y - my_Y;
-    }
-    if (c1 > c2)   {
-	// go down
-	y_delta= c2;
-    } else   {
-	// go up
-	y_delta= -c1;
+	y_delta= dest_Y - my_Y;
     }
 
     if (x_delta > 0)   {

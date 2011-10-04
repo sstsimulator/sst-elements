@@ -10,6 +10,12 @@ int Net_x_dim(void);
 int Net_y_dim(void);
 int NoC_x_dim(void);
 int NoC_y_dim(void);
+
+int Net_x_wrap(void);
+int Net_y_wrap(void);
+int NoC_x_wrap(void);
+int NoC_y_wrap(void);
+
 int num_cores(void);
 int num_router_nodes(void);
 int NetNICgap(void);

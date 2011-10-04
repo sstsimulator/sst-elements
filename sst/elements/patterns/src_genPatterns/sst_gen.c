@@ -64,6 +64,10 @@ int i;
     fprintf(sstfile, "    <Net_y_dim> %d </Net_y_dim>\n", Net_y_dim());
     fprintf(sstfile, "    <NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim());
     fprintf(sstfile, "    <NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim());
+    fprintf(sstfile, "    <NetXwrap> %d </NetXwrap>\n", Net_x_wrap());
+    fprintf(sstfile, "    <NetYwrap> %d </NetYwrap>\n", Net_y_wrap());
+    fprintf(sstfile, "    <NoCXwrap> %d </NoCXwrap>\n", NoC_x_wrap());
+    fprintf(sstfile, "    <NoCYwrap> %d </NoCYwrap>\n", NoC_y_wrap());
     fprintf(sstfile, "    <cores> %d </cores>\n", num_cores());
     fprintf(sstfile, "    <nodes> %d </nodes>\n", num_router_nodes());
 

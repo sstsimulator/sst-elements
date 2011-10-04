@@ -133,6 +133,12 @@ class Patterns   {
 	int cores_per_NoC_router;
 	int num_router_nodes;
 
+	// Are any dimensions wrapped?
+	int NetXwrap;
+	int NetYwrap;
+	int NoCXwrap;
+	int NoCYwrap;
+
 	// Calculated values
 	int total_cores;
 	int cores_per_Net_router;

@@ -25,6 +25,10 @@ static int _Net_x_dim;
 static int _Net_y_dim;
 static int _NoC_x_dim;
 static int _NoC_y_dim;
+static int _Net_x_wrap;
+static int _Net_y_wrap;
+static int _NoC_x_wrap;
+static int _NoC_y_wrap;
 static int _num_router_nodes;
 static int _num_cores;
 static int _NetNICgap;
@@ -63,6 +67,10 @@ int i;
     _Net_y_dim= NO_DEFAULT;
     _NoC_x_dim= NO_DEFAULT;
     _NoC_y_dim= NO_DEFAULT;
+    _Net_x_wrap= 0;
+    _Net_y_wrap= 0;
+    _NoC_x_wrap= 0;
+    _NoC_y_wrap= 0;
     _num_router_nodes= NO_DEFAULT;
     _num_cores= NO_DEFAULT;
     _NetNICinflections= 0;
@@ -242,11 +250,21 @@ int i;
 	    _Net_x_dim, _Net_y_dim, _num_router_nodes);
     } else   {
 	if (_num_router_nodes == 1)   {
-	    printf("# *** Single node, no network\n");
+	    printf("#     Single node, no network\n");
 	} else   {
-	    printf("# *** %d nodes, single router, no network\n", _num_router_nodes);
+	    printf("#     %d nodes, single router, no network\n", _num_router_nodes);
 	}
     }
+    if (_Net_x_wrap && _Net_y_wrap)   {
+	printf("#     Net: X and Y dimensions wrapped\n");
+    } else if (!_Net_x_wrap && _Net_y_wrap)   {
+	printf("#     Net: Y dimension wrapped\n");
+    } else if (_Net_x_wrap && !_Net_y_wrap)   {
+	printf("#     Net: X dimension wrapped\n");
+    } else   {
+	printf("#     Net: No dimensions wrapped\n");
+    }
+
     if (_NoC_x_dim * _NoC_y_dim > 1)   {
 	printf("# *** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
 	    _NoC_x_dim, _NoC_y_dim, _num_cores);
@@ -257,6 +275,17 @@ int i;
 	    printf("# *** Each node consists of a single core\n");
 	}
     }
+    if (_NoC_x_wrap && _NoC_x_wrap)   {
+	printf("#     NoC: X and Y dimensions wrapped\n");
+    } else if (!_NoC_x_wrap && _NoC_x_wrap)   {
+	printf("#     NoC: Y dimension wrapped\n");
+    } else if (_NoC_x_wrap && !_NoC_x_wrap)   {
+	printf("#     NoC: X dimension wrapped\n");
+    } else   {
+	printf("#     NoC: No dimensions wrapped\n");
+    }
+
+
     printf("# *** Total number of nodes is %d\n", num_nodes());
     printf("# *** Total number of cores is %d\n", _num_cores *
 	_NoC_x_dim * _NoC_y_dim * num_nodes());
@@ -347,6 +376,15 @@ int rc;
 	} else if (strcmp("NoCNICgap", key) == 0)   {
 	    _NoCNICgap= strtol(value1, (char **)NULL, 0);
 
+	} else if (strcmp("Net_x_wrap", key) == 0)   {
+	    _Net_x_wrap= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("Net_y_wrap", key) == 0)   {
+	    _Net_y_wrap= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoC_x_wrap", key) == 0)   {
+	    _NoC_x_wrap= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoC_y_wrap", key) == 0)   {
+	    _NoC_y_wrap= strtol(value1, (char **)NULL, 0);
+
 	} else if (strcmp("NetLinkBandwidth", key) == 0)   {
 	    _NetLinkBandwidth= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCLinkBandwidth", key) == 0)   {
@@ -430,6 +468,40 @@ num_nodes(void)
 {
     return _Net_x_dim * _Net_y_dim * _num_router_nodes;
 }
+
+
+
+int
+Net_x_wrap(void)
+{
+    return _Net_x_wrap;
+}  /* end of Net_x_wrap() */
+
+
+
+int
+Net_y_wrap(void)
+{
+    return _Net_y_wrap;
+}  /* end of Net_y_wrap() */
+
+
+
+int
+NoC_x_wrap(void)
+{
+    return _NoC_x_wrap;
+}  /* end of NoC_x_wrap() */
+
+
+
+int
+NoC_y_wrap(void)
+{
+    return _NoC_y_wrap;
+}  /* end of NoC_y_wrap() */
+
+
 
 int
 Net_x_dim(void)
