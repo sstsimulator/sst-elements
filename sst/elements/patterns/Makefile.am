@@ -23,10 +23,10 @@ libghost_pattern_la_SOURCES = ghost_pattern.h ghost_pattern.cc \
 			    pattern_common.h pattern_common.cc \
 			    allreduce_op.h allreduce_op.cc \
 			    collective_topology.h collective_topology.cc \
-			    src_ghost_bench/memory.h src_ghost_bench/memory.c \
-			    src_ghost_bench/ranks.h src_ghost_bench/ranks.c \
-			    src_ghost_bench/neighbors.h src_ghost_bench/neighbors.c \
-			    src_ghost_bench/work.h src_ghost_bench/work.c
+			    Benchmarks/src_ghost_bench/memory.h Benchmarks/src_ghost_bench/memory.c \
+			    Benchmarks/src_ghost_bench/ranks.h Benchmarks/src_ghost_bench/ranks.c \
+			    Benchmarks/src_ghost_bench/neighbors.h Benchmarks/src_ghost_bench/neighbors.c \
+			    Benchmarks/src_ghost_bench/work.h Benchmarks/src_ghost_bench/work.c
 libghost_pattern_la_LDFLAGS = -module -avoid-version
 
 libpingpong_pattern_la_SOURCES = pingpong_pattern.h pingpong_pattern.cc \
@@ -68,20 +68,4 @@ libfft_pattern_la_SOURCES = fft_pattern.h fft_pattern.cc \
 			    collective_topology.h collective_topology.cc \
 			    stats.h stats.cc
 libfft_pattern_la_LDFLAGS = -module -avoid-version
-
-# breaks Bamboo   CC = $(MPICC)
-# breaks Bamboo   CXX = $(MPICXX)
-# breaks Bamboo   CXXLD = $(MPICXX)
-# breaks Bamboo   CCLD = $(MPICC)
-bin_PROGRAMS = 
-include src_genPatterns/Makefile.inc
-# breaks Bamboo   include src_ghost_bench/Makefile.inc
-
-# breaks Bamboo   # allreduce_bench_LDFLAGS = -lmpi -lmpi_cxx
-# breaks Bamboo   allreduce_bench_SOURCES = allreduce_bench.cc
-# breaks Bamboo   alltoall_bench_SOURCES = alltoall_bench.cc
-# breaks Bamboo   # msgrate_bench_LDFLAGS = -lmpi -lmpi_cxx
-# breaks Bamboo   msgrate_bench_SOURCES = msgrate_bench.cc 
-# breaks Bamboo   pingpong_bench_SOURCES = pingpong_bench.c
-# breaks Bamboo   bin_PROGRAMS += alltoall_bench allreduce_bench msgrate_bench pingpong_bench
 

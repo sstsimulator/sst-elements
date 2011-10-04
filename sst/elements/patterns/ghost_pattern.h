@@ -18,10 +18,10 @@
 #include "collective_topology.h"
 #include "allreduce_op.h"
 extern "C" {
-#include "src_ghost_bench/memory.h"
-#include "src_ghost_bench/neighbors.h"
-#include "src_ghost_bench/ranks.h"
-#include "src_ghost_bench/work.h"
+#include "Benchmarks/src_ghost_bench/memory.h"
+#include "Benchmarks/src_ghost_bench/neighbors.h"
+#include "Benchmarks/src_ghost_bench/ranks.h"
+#include "Benchmarks/src_ghost_bench/work.h"
 }
 
 
