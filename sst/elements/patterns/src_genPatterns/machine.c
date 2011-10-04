@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <inttypes.h>		/* For PRId64 */
 #include "main.h"
@@ -23,14 +22,18 @@ static int error_check(void);
 */
 static int _Net_x_dim;
 static int _Net_y_dim;
+static int _Net_z_dim;
 static int _NoC_x_dim;
 static int _NoC_y_dim;
+static int _NoC_z_dim;
 static int _Net_x_wrap;
 static int _Net_y_wrap;
+static int _Net_z_wrap;
 static int _NoC_x_wrap;
 static int _NoC_y_wrap;
+static int _NoC_z_wrap;
 static int _num_router_nodes;
-static int _num_cores;
+static int _num_router_cores;
 static int _NetNICgap;
 static int _NoCNICgap;
 static int _NetNICinflections;
@@ -65,14 +68,18 @@ int i;
 
     _Net_x_dim= NO_DEFAULT;
     _Net_y_dim= NO_DEFAULT;
+    _Net_z_dim= 1;
     _NoC_x_dim= NO_DEFAULT;
     _NoC_y_dim= NO_DEFAULT;
+    _NoC_z_dim= 1;
     _Net_x_wrap= 0;
     _Net_y_wrap= 0;
+    _Net_z_wrap= 0;
     _NoC_x_wrap= 0;
     _NoC_y_wrap= 0;
+    _NoC_z_wrap= 0;
     _num_router_nodes= NO_DEFAULT;
-    _num_cores= NO_DEFAULT;
+    _num_router_cores= NO_DEFAULT;
     _NetNICinflections= 0;
     _NoCNICinflections= 0;
     _NetLinkBandwidth= NO_DEFAULT;
@@ -122,13 +129,13 @@ int i;
 int found_zero;
 
 
-    if (_Net_x_dim * _Net_y_dim < 1)   {
-	fprintf(stderr, "Both Net_x_dim and Net_y_dim in machine file must be > 0!\n");
+    if (_Net_x_dim * _Net_y_dim * _Net_z_dim < 1)   {
+	fprintf(stderr, "Net_x_dim, Net_y_dim, and Net_z_dim in machine file must be > 0!\n");
 	return FALSE;
     }
 
-    if (_NoC_x_dim * _NoC_y_dim < 1)   {
-	fprintf(stderr, "Both NoC_x_dim and NoC_y_dim in machine file must be > 0!\n");
+    if (_NoC_x_dim * _NoC_y_dim * _NoC_z_dim < 1)   {
+	fprintf(stderr, "NoC_x_dim, NoC_y_dim, and NoC_z_dim in machine file must be > 0!\n");
 	return FALSE;
     }
 
@@ -137,8 +144,8 @@ int found_zero;
 	return FALSE;
     }
 
-    if (_num_cores < 1)   {
-	fprintf(stderr, "num_cores in machine file must be > 0!\n");
+    if (_num_router_cores < 1)   {
+	fprintf(stderr, "num_router_cores in machine file must be > 0!\n");
 	return FALSE;
     }
 
@@ -245,9 +252,12 @@ disp_machine_params(void)
 int i;
 
 
-    if (_Net_x_dim * _Net_y_dim > 1)   {
+    if ((_Net_x_dim * _Net_y_dim > 1) && (_Net_z_dim == 1))   {
 	printf("# *** Network torus is X * Y = %d * %d with %d node(s) per router\n",
 	    _Net_x_dim, _Net_y_dim, _num_router_nodes);
+    } else if (_Net_x_dim * _Net_y_dim * _Net_z_dim > 1)   {
+	printf("# *** Network torus is X * Y * Z = %d * %d * %d with %d node(s) per router\n",
+	    _Net_x_dim, _Net_y_dim, _Net_z_dim, _num_router_nodes);
     } else   {
 	if (_num_router_nodes == 1)   {
 	    printf("#     Single node, no network\n");
@@ -255,40 +265,56 @@ int i;
 	    printf("#     %d nodes, single router, no network\n", _num_router_nodes);
 	}
     }
-    if (_Net_x_wrap && _Net_y_wrap)   {
-	printf("#     Net: X and Y dimensions wrapped\n");
-    } else if (!_Net_x_wrap && _Net_y_wrap)   {
-	printf("#     Net: Y dimension wrapped\n");
-    } else if (_Net_x_wrap && !_Net_y_wrap)   {
-	printf("#     Net: X dimension wrapped\n");
+    printf("#     Net dimensions wrapped: ");
+    if (_Net_x_wrap || _Net_y_wrap || _Net_z_wrap)   {
+	if (_Net_x_wrap)   {
+	    printf("X ");
+	}
+	if (_Net_y_wrap)   {
+	    printf("Y ");
+	}
+	if (_Net_z_wrap)   {
+	    printf("Z ");
+	}
+	printf("\n");
     } else   {
-	printf("#     Net: No dimensions wrapped\n");
+	printf("none\n");
     }
 
-    if (_NoC_x_dim * _NoC_y_dim > 1)   {
+    if ((_NoC_x_dim * _NoC_y_dim > 1) && (_NoC_z_dim == 1))   {
 	printf("# *** Each node has a x * y = %d * %d NoC torus, with %d core(s) per router\n",
-	    _NoC_x_dim, _NoC_y_dim, _num_cores);
+	    _NoC_x_dim, _NoC_y_dim, _num_router_cores);
+    } else if (_NoC_x_dim * _NoC_y_dim * _NoC_z_dim > 1)   {
+	printf("# *** Each node has a x * y * z = %d * %d * %d NoC torus, with %d core(s) per router\n",
+	    _NoC_x_dim, _NoC_y_dim, _NoC_z_dim, _num_router_cores);
     } else   {
-	if (_num_cores > 1)   {
-	    printf("# *** Each node has a router with %d core(s)\n", _num_cores);
+	if (_num_router_cores > 1)   {
+	    printf("# *** Each node has a router with %d core(s)\n", _num_router_cores);
 	} else   {
 	    printf("# *** Each node consists of a single core\n");
 	}
     }
-    if (_NoC_x_wrap && _NoC_x_wrap)   {
-	printf("#     NoC: X and Y dimensions wrapped\n");
-    } else if (!_NoC_x_wrap && _NoC_x_wrap)   {
-	printf("#     NoC: Y dimension wrapped\n");
-    } else if (_NoC_x_wrap && !_NoC_x_wrap)   {
-	printf("#     NoC: X dimension wrapped\n");
+    printf("#     NoC dimensions wrapped: ");
+    if (_NoC_x_wrap || _NoC_y_wrap || _NoC_z_wrap)   {
+	if (_NoC_x_wrap)   {
+	    printf("X ");
+	}
+	if (_NoC_y_wrap)   {
+	    printf("Y ");
+	}
+	if (_NoC_z_wrap)   {
+	    printf("Z ");
+	}
+	printf("\n");
     } else   {
-	printf("#     NoC: No dimensions wrapped\n");
+	printf("none\n");
     }
 
 
-    printf("# *** Total number of nodes is %d\n", num_nodes());
-    printf("# *** Total number of cores is %d\n", _num_cores *
-	_NoC_x_dim * _NoC_y_dim * num_nodes());
+
+    printf("# *** Number of nodes is %d\n", num_nodes());
+    printf("# *** Number of cores per node is %d\n", num_cores());
+    printf("# *** Total number of cores is %d\n", num_cores() * num_nodes());
 
     printf("# *** Network NIC has %d inflection points, gap is %d ns\n",
 	NetNICinflections(), NetNICgap());
@@ -363,14 +389,20 @@ int rc;
 	    _Net_x_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("Net_y_dim", key) == 0)   {
 	    _Net_y_dim= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("Net_x_dim", key) == 0)   {
+	    _Net_x_dim= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("Net_z_dim", key) == 0)   {
+	    _Net_z_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoC_x_dim", key) == 0)   {
 	    _NoC_x_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoC_y_dim", key) == 0)   {
 	    _NoC_y_dim= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoC_z_dim", key) == 0)   {
+	    _NoC_z_dim= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("num_router_nodes", key) == 0)   {
 	    _num_router_nodes= strtol(value1, (char **)NULL, 0);
-	} else if (strcmp("num_cores", key) == 0)   {
-	    _num_cores= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("num_router_cores", key) == 0)   {
+	    _num_router_cores= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NetNICgap", key) == 0)   {
 	    _NetNICgap= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCNICgap", key) == 0)   {
@@ -380,10 +412,14 @@ int rc;
 	    _Net_x_wrap= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("Net_y_wrap", key) == 0)   {
 	    _Net_y_wrap= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("Net_z_wrap", key) == 0)   {
+	    _Net_z_wrap= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoC_x_wrap", key) == 0)   {
 	    _NoC_x_wrap= strtol(value1, (char **)NULL, 0);
 	} else if (strcmp("NoC_y_wrap", key) == 0)   {
 	    _NoC_y_wrap= strtol(value1, (char **)NULL, 0);
+	} else if (strcmp("NoC_z_wrap", key) == 0)   {
+	    _NoC_z_wrap= strtol(value1, (char **)NULL, 0);
 
 	} else if (strcmp("NetLinkBandwidth", key) == 0)   {
 	    _NetLinkBandwidth= strtoll(value1, (char **)NULL, 0);
@@ -463,123 +499,50 @@ int rc;
 
 
 
-int
-num_nodes(void)
-{
-    return _Net_x_dim * _Net_y_dim * _num_router_nodes;
-}
+/* Per machine */
+int num_net_routers(void) {return _Net_x_dim * _Net_y_dim * _Net_z_dim;}
+int num_nodes(void) {return num_net_routers() * _num_router_nodes;}
+
+/* Per node */
+int num_NoC_routers(void) {return _NoC_x_dim * _NoC_y_dim * _NoC_z_dim;}
+int num_cores(void) {return num_NoC_routers() * _num_router_cores;}
+
+int Net_x_wrap(void) {return _Net_x_wrap;}
+int Net_y_wrap(void) {return _Net_y_wrap;}
+int Net_z_wrap(void) {return _Net_z_wrap;}
+int NoC_x_wrap(void) {return _NoC_x_wrap;}
+int NoC_y_wrap(void) {return _NoC_y_wrap;}
+int NoC_z_wrap(void) {return _NoC_z_wrap;}
+int Net_x_dim(void) {return _Net_x_dim;}
+int Net_y_dim(void) {return _Net_y_dim;}
+int Net_z_dim(void) {return _Net_z_dim;}
+int NoC_x_dim(void) {return _NoC_x_dim;}
+int NoC_y_dim(void) {return _NoC_y_dim;}
+int NoC_z_dim(void) {return _NoC_z_dim;}
 
 
 
-int
-Net_x_wrap(void)
-{
-    return _Net_x_wrap;
-}  /* end of Net_x_wrap() */
+/* Cores attached to same router */
+int num_router_cores(void) {return _num_router_cores;}
+
+/* Nodes attached to the same router */
+int num_router_nodes(void) {return _num_router_nodes;}
 
 
 
-int
-Net_y_wrap(void)
-{
-    return _Net_y_wrap;
-}  /* end of Net_y_wrap() */
-
-
-
-int
-NoC_x_wrap(void)
-{
-    return _NoC_x_wrap;
-}  /* end of NoC_x_wrap() */
-
-
-
-int
-NoC_y_wrap(void)
-{
-    return _NoC_y_wrap;
-}  /* end of NoC_y_wrap() */
-
-
-
-int
-Net_x_dim(void)
-{
-    return _Net_x_dim;
-}  /* end of Net_x_dim() */
-
-
-
-int
-Net_y_dim(void)
-{
-    return _Net_y_dim;
-}  /* end of Net_y_dim() */
-
-
-
-int
-NoC_x_dim(void)
-{
-    return _NoC_x_dim;
-}  /* end of NoC_x_dim() */
-
-
-
-int
-NoC_y_dim(void)
-{
-    return _NoC_y_dim;
-}  /* end of NoC_y_dim() */
-
-
-
-int
-num_cores(void)
-{
-    return _num_cores;
-}  /* end of num_cores() */
-
-
-
-int
-num_router_nodes(void)
-{
-    return _num_router_nodes;
-}  /* end of num_router_nodes() */
-
-
-
-int
-NetNICgap(void)
-{
-    return _NetNICgap;
-}  /* end of NetNICgap() */
-
-
-
-int
-NoCNICgap(void)
-{
-    return _NoCNICgap;
-}  /* end of NoCNICgap() */
-
-
-
-int
-NetNICinflections(void)
-{
-    return _NetNICinflections;
-}  /* end of NetNICinflections() */
-
-
-
-int
-NoCNICinflections(void)
-{
-    return _NoCNICinflections;
-}  /* end of NoCNICinflections() */
+/* Parameters */
+int NetNICgap(void) {return _NetNICgap;}
+int NoCNICgap(void) {return _NoCNICgap;}
+int NetNICinflections(void) {return _NetNICinflections;}
+int NoCNICinflections(void) {return _NoCNICinflections;}
+int64_t NetLinkBandwidth(void) {return _NetLinkBandwidth;}
+int64_t NoCLinkBandwidth(void) {return _NoCLinkBandwidth;}
+int64_t NetLinkLatency(void) {return _NetLinkLatency;}
+int64_t NoCLinkLatency(void) {return _NoCLinkLatency;}
+int64_t IOLinkBandwidth(void) {return _IOLinkBandwidth;}
+int64_t IOLinkLatency(void) {return _IOLinkLatency;}
+int64_t NetIntraLatency(void) {return _NetIntraLatency;}
+int64_t NoCIntraLatency(void) {return _NoCIntraLatency;}
 
 
 
@@ -628,70 +591,6 @@ NetNIClatency(int index)
 	return -1;
     }
 }  /* end of NetNIClatency() */
-
-
-
-int64_t
-NetLinkBandwidth(void)
-{
-    return _NetLinkBandwidth;
-}  /* end of NetLinkBandwidth() */
-
-
-
-int64_t
-NoCLinkBandwidth(void)
-{
-    return _NoCLinkBandwidth;
-}  /* end of NoCLinkBandwidth() */
-
-
-
-int64_t
-NetLinkLatency(void)
-{
-    return _NetLinkLatency;
-}  /* end of NetLinkLatency() */
-
-
-
-int64_t
-NoCLinkLatency(void)
-{
-    return _NoCLinkLatency;
-}  /* end of NoCLinkLatency() */
-
-
-
-int64_t
-IOLinkBandwidth(void)
-{
-    return _IOLinkBandwidth;
-}  /* end of IOLinkBandwidth() */
-
-
-
-int64_t
-IOLinkLatency(void)
-{
-    return _IOLinkLatency;
-}  /* end of IOLinkLatency() */
-
-
-
-int64_t
-NetIntraLatency(void)
-{
-    return _NetIntraLatency;
-}  /* end of NetIntraLatency() */
-
-
-
-int64_t
-NoCIntraLatency(void)
-{
-    return _NoCIntraLatency;
-}  /* end of NoCIntraLatency() */
 
 
 

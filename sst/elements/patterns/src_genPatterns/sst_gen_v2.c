@@ -119,13 +119,17 @@ int i;
     /* Common parameters */
     fprintf(sstfile, "\t\t<Net_x_dim> %d </Net_x_dim>\n", Net_x_dim());
     fprintf(sstfile, "\t\t<Net_y_dim> %d </Net_y_dim>\n", Net_y_dim());
+    fprintf(sstfile, "\t\t<Net_z_dim> %d </Net_z_dim>\n", Net_z_dim());
     fprintf(sstfile, "\t\t<NoC_x_dim> %d </NoC_x_dim>\n", NoC_x_dim());
     fprintf(sstfile, "\t\t<NoC_y_dim> %d </NoC_y_dim>\n", NoC_y_dim());
+    fprintf(sstfile, "\t\t<NoC_z_dim> %d </NoC_z_dim>\n", NoC_z_dim());
     fprintf(sstfile, "\t\t<NetXwrap> %d </NetXwrap>\n", Net_x_wrap());
     fprintf(sstfile, "\t\t<NetYwrap> %d </NetYwrap>\n", Net_y_wrap());
+    fprintf(sstfile, "\t\t<NetZwrap> %d </NetZwrap>\n", Net_z_wrap());
     fprintf(sstfile, "\t\t<NoCXwrap> %d </NoCXwrap>\n", NoC_x_wrap());
     fprintf(sstfile, "\t\t<NoCYwrap> %d </NoCYwrap>\n", NoC_y_wrap());
-    fprintf(sstfile, "\t\t<cores> %d </cores>\n", num_cores());
+    fprintf(sstfile, "\t\t<NoCZwrap> %d </NoCZwrap>\n", NoC_z_wrap());
+    fprintf(sstfile, "\t\t<cores> %d </cores>\n", num_router_cores());
     fprintf(sstfile, "\t\t<nodes> %d </nodes>\n", num_router_nodes());
 
     fprintf(sstfile, "\t\t<NetNICgap> %d </NetNICgap>\n", NetNICgap());
@@ -156,7 +160,7 @@ int i;
     }
 
     machine_params(sstfile);
-    farlink_params(sstfile, num_cores() + 1);
+    farlink_params(sstfile, num_router_cores() + 1);
     pattern_params(sstfile);
 
 }  /* end of sst_gen_param_entries() */
@@ -232,7 +236,7 @@ sst_nvram_param_entries(FILE *sstfile, int nvram_read_bw, int nvram_write_bw,
 
 
 void
-sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t router_bw, int num_cores,
+sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t router_bw, int num_router_cores,
     int hop_delay, int wormhole, pwr_method_t power_method)
 {
 
@@ -274,7 +278,7 @@ sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t route
 	fprintf(sstfile, "\t\t<router_horizontal_nodes>1</router_horizontal_nodes>\n");
 	fprintf(sstfile, "\t\t<router_vertical_nodes>1</router_vertical_nodes>\n");
 	fprintf(sstfile, "\t\t<router_topology>RING</router_topology>\n");
-	fprintf(sstfile, "\t\t<core_number_of_NoCs>%d</core_number_of_NoCs>\n", num_cores);
+	fprintf(sstfile, "\t\t<core_number_of_NoCs>%d</core_number_of_NoCs>\n", num_router_cores);
 	fprintf(sstfile, "\t\t<push_introspector>routerIntrospector</push_introspector>\n");
 
     } else if (power_method == pwrORION)   {
@@ -299,7 +303,7 @@ sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t route
 	fprintf(sstfile, "\t\t<router_horizontal_nodes>1</router_horizontal_nodes>\n");
 	fprintf(sstfile, "\t\t<router_vertical_nodes>1</router_vertical_nodes>\n");
 	fprintf(sstfile, "\t\t<router_topology>RING</router_topology>\n");
-	fprintf(sstfile, "\t\t<core_number_of_NoCs>%d</core_number_of_NoCs>\n", num_cores);
+	fprintf(sstfile, "\t\t<core_number_of_NoCs>%d</core_number_of_NoCs>\n", num_router_cores);
 	fprintf(sstfile, "\t\t<push_introspector>routerIntrospector</push_introspector>\n");
 
     } else   {

@@ -93,8 +93,10 @@ class Patterns   {
 	int get_total_cores(void)   {return total_cores;}
 	int get_mesh_width(void)   {return mesh_width;}
 	int get_mesh_height(void)   {return mesh_height;}
+	int get_mesh_depth(void)   {return mesh_depth;}
 	int get_NoC_width(void)   {return NoC_width;}
 	int get_NoC_height(void)   {return NoC_height;}
+	int get_NoC_depth(void)   {return NoC_depth;}
 	int get_my_rank(void)   {return my_rank;}
 	int get_cores_per_NoC_router(void)   {return cores_per_NoC_router;}
 	int get_cores_per_Net_router(void)   {return cores_per_Net_router;}
@@ -127,8 +129,10 @@ class Patterns   {
 	// Input parameters for the machine architecture
 	int mesh_width;
 	int mesh_height;
+	int mesh_depth;
 	int NoC_width;
 	int NoC_height;
+	int NoC_depth;
 	int my_rank;
 	int cores_per_NoC_router;
 	int num_router_nodes;
@@ -136,8 +140,10 @@ class Patterns   {
 	// Are any dimensions wrapped?
 	int NetXwrap;
 	int NetYwrap;
+	int NetZwrap;
 	int NoCXwrap;
 	int NoCYwrap;
+	int NoCZwrap;
 
 	// Calculated values
 	int total_cores;

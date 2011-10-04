@@ -29,7 +29,8 @@ using namespace SST;
 
 
 /* Local functions */
-static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int x_wrap, int y_wrap);
+static void gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int depth,
+	int x_wrap, int y_wrap, int z_wrap);
 static bool compare_NICparams(NICparams_t first, NICparams_t second);
 
 
@@ -57,8 +58,10 @@ uint64_t code;
     my_rank= -1;
     mesh_width= -1;
     mesh_height= -1;
+    mesh_depth= -1;
     NoC_width= -1;
     NoC_height= -1;
+    NoC_depth= -1;
     cores_per_NoC_router= -1;
     num_router_nodes= -1;
 
@@ -72,8 +75,10 @@ uint64_t code;
     FarLinknum= 0;
     NetXwrap= 0;
     NetYwrap= 0;
+    NetZwrap= 0;
     NoCXwrap= 0;
     NoCYwrap= 0;
+    NoCZwrap= 0;
 
     // Clear stats
     stat_NoCNICsend= 0;
@@ -128,12 +133,20 @@ uint64_t code;
 	    sscanf(it->second.c_str(), "%d", &mesh_height);
 	}
 
+	if (!it->first.compare("Net_z_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &mesh_depth);
+	}
+
 	if (!it->first.compare("NoC_x_dim"))   {
 	    sscanf(it->second.c_str(), "%d", &NoC_width);
 	}
 
 	if (!it->first.compare("NoC_y_dim"))   {
 	    sscanf(it->second.c_str(), "%d", &NoC_height);
+	}
+
+	if (!it->first.compare("NoC_z_dim"))   {
+	    sscanf(it->second.c_str(), "%d", &NoC_depth);
 	}
 
 	if (!it->first.compare("NetXwrap"))   {
@@ -144,12 +157,20 @@ uint64_t code;
 	    sscanf(it->second.c_str(), "%d", &NetYwrap);
 	}
 
+	if (!it->first.compare("NetZwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NetZwrap);
+	}
+
 	if (!it->first.compare("NoCXwrap"))   {
-	    sscanf(it->second.c_str(), "%d", &NetXwrap);
+	    sscanf(it->second.c_str(), "%d", &NoCXwrap);
 	}
 
 	if (!it->first.compare("NoCYwrap"))   {
-	    sscanf(it->second.c_str(), "%d", &NetYwrap);
+	    sscanf(it->second.c_str(), "%d", &NoCYwrap);
+	}
+
+	if (!it->first.compare("NoCZwrap"))   {
+	    sscanf(it->second.c_str(), "%d", &NoCZwrap);
 	}
 
 	if (!it->first.compare("cores"))   {
@@ -317,7 +338,7 @@ uint64_t code;
 	if (it->first.find("FarLink") != std::string::npos)   {
 	    if (sscanf(it->first.c_str(), "FarLink%dp%d", &far_src, &far_src_port) == 2)   {
 		sscanf(it->second.c_str(), "%" PRId64, &code);
-		my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+		my_node= my_rank / (NoC_width * NoC_height * NoC_depth * cores_per_NoC_router);
 		far_dest= code >> FarLinkPortFieldWidth;
 		far_dest_port= code & ((1 << FarLinkPortFieldWidth) - 1);
 
@@ -427,17 +448,18 @@ uint64_t code;
     }
 
 
-    total_cores= mesh_width * mesh_height * num_router_nodes * NoC_width * NoC_height * cores_per_NoC_router;
+    total_cores= mesh_width * mesh_height * mesh_depth * num_router_nodes *
+	         NoC_width * NoC_height * NoC_depth * cores_per_NoC_router;
     if (total_cores < 0)   {
 	// That means one of the above parameters was not set in the XML file
 	if (my_rank == 0)   {
 	    fprintf(stderr, "One of these params not set: mesh_width, mesh_height, "
-		"num_router_nodes, NoC_width, NoC_height, cores_per_NoC_router\n");
+		"mesh_depth, num_router_nodes, NoC_width, NoC_height, NoC_depth, or cores_per_NoC_router\n");
 	}
 	return FALSE;
     }
 
-    cores_per_node= NoC_width * NoC_height * cores_per_NoC_router;
+    cores_per_node= NoC_width * NoC_height * NoC_depth * cores_per_NoC_router;
     cores_per_Net_router= cores_per_node * num_router_nodes;
 
     if ((my_rank < 0) || (my_rank >= total_cores))   {
@@ -455,29 +477,56 @@ uint64_t code;
     if (my_rank == 0)   {
 	std::list<int>::iterator rank;
 
-	printf("#  |||  Network x %d, y %d, with %d nodes each = %d nodes\n",
-	    mesh_width, mesh_height, num_router_nodes, mesh_width * mesh_height * num_router_nodes);
-	if (NetXwrap && NetYwrap)   {
-	    printf("#  |||  Network: X and Y dimensions wrapped\n");
-	} else if (!NetXwrap && NetYwrap)   {
-	    printf("#  |||  Network: Y dimension wrapped\n");
-	} else if (NetXwrap && !NetYwrap)   {
-	    printf("#  |||  Network: X dimension wrapped\n");
-	} else   {
-	    printf("#  |||  Network: No dimensions wrapped\n");
+	printf("#  |||  Network x %d, y %d, z %d, with %d nodes each = %d nodes\n",
+	    mesh_width, mesh_height, mesh_depth, num_router_nodes,
+	    mesh_width * mesh_height * mesh_depth * num_router_nodes);
+	printf("#  |||  Network: ");
+	if (NetXwrap)   {
+	    printf("X");
 	}
+	if (NetYwrap)   {
+	    if (NetXwrap)   {
+		printf(", Y");
+	    } else   {
+		printf("Y");
+	    }
+	}
+	if (NetZwrap)   {
+	    if (NetXwrap || NetYwrap)   {
+		printf(", Z");
+	    } else   {
+		printf("Z");
+	    }
+	}
+	if (!(NetXwrap || NetYwrap || NetZwrap))   {
+	    printf("No");
+	}
+	printf(" dimensions wrapped\n");
 
-	printf("#  |||  NoC x %d, y %d, with %d cores each = %d cores per node\n",
-	    NoC_width, NoC_height, cores_per_NoC_router, cores_per_node);
-	if (NoCXwrap && NoCYwrap)   {
-	    printf("#  |||  NoC: X and Y dimensions wrapped\n");
-	} else if (!NoCXwrap && NoCYwrap)   {
-	    printf("#  |||  NoC: Y dimension wrapped\n");
-	} else if (NoCXwrap && !NoCYwrap)   {
-	    printf("#  |||  NoC: X dimension wrapped\n");
-	} else   {
-	    printf("#  |||  NoC: No dimensions wrapped\n");
+	printf("#  |||  NoC x %d, y %d, z %d with %d cores each = %d cores per node\n",
+	    NoC_width, NoC_height, NoC_depth, cores_per_NoC_router, cores_per_node);
+	printf("#  |||  NoC: ");
+	if (NoCXwrap)   {
+	    printf("x");
 	}
+	if (NoCYwrap)   {
+	    if (NoCXwrap)   {
+		printf(", y");
+	    } else   {
+		printf("y");
+	    }
+	}
+	if (NoCZwrap)   {
+	    if (NoCXwrap || NoCYwrap)   {
+		printf(", z");
+	    } else   {
+		printf("z");
+	    }
+	}
+	if (!(NoCXwrap || NoCYwrap || NoCZwrap))   {
+	    printf("No");
+	}
+	printf(" dimensions wrapped\n");
 
 	printf("#  |||  Total %d cores in system\n", total_cores);
 
@@ -524,7 +573,9 @@ uint64_t code;
 #define SOUTH_PORT		(1)
 #define WEST_PORT		(2)
 #define NORTH_PORT		(3)
-#define FIRST_LOCAL_PORT	(4)
+#define BACK_PORT		(4)
+#define FRONT_PORT		(5)
+#define FIRST_LOCAL_PORT	(6)
 
 
 
@@ -584,8 +635,8 @@ std::set<stat_dest_t>::iterator pos;
 	e->AttachPayload(payload, payload_len);
     }
 
-    my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
-    dest_node= dest / (NoC_width * NoC_height * cores_per_NoC_router);
+    my_node= my_rank / (NoC_width * NoC_height * NoC_depth * cores_per_NoC_router);
+    dest_node= dest / (NoC_width * NoC_height * NoC_depth * cores_per_NoC_router);
 
     // Count number of sends to each destination
     dl.dest= dest_node;
@@ -666,7 +717,7 @@ uint64_t delay;
     e->route.push_back(0);
 
     // Coming back: First hop is to the right node
-    my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+    my_node= my_rank / (NoC_width * NoC_height * NoC_depth * cores_per_NoC_router);
     e->reverse_route.push_back(my_node + 1);	// Port 0 is for the SSD
 
     // From the aggregator, pick the right core
@@ -783,7 +834,7 @@ int64_t link_duration;
 	e->local_traffic= true;
     }
 
-    gen_route(e, my_router, dest_router, NoC_width, NoC_height, NoCXwrap, NoCYwrap);
+    gen_route(e, my_router, dest_router, NoC_width, NoC_height, NoC_depth, NoCXwrap, NoCYwrap, NoCZwrap);
 
     // Exit to the local (NIC) pattern generator
     e->route.push_back(FIRST_LOCAL_PORT + (dest_rank % cores_per_NoC_router));
@@ -852,7 +903,7 @@ int64_t link_duration;
 
     my_router= my_node / num_router_nodes;
     dest_router= dest_node / num_router_nodes;
-    gen_route(e, my_router, dest_router, mesh_width, mesh_height, NetXwrap, NetYwrap);
+    gen_route(e, my_router, dest_router, mesh_width, mesh_height, mesh_depth, NetXwrap, NetYwrap, NetZwrap);
 
 
     // Exit to the local node (aggregator on that node
@@ -1007,20 +1058,26 @@ CPUNicEvent *e;
 ** We use it to traverse the mesh as well as the NoC
 */
 static void
-gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int x_wrap, int y_wrap)
+gen_route(CPUNicEvent *e, int src, int dest, int width, int height, int depth,
+	int x_wrap, int y_wrap, int z_wrap)
 {
 
 int c1, c2;
-int my_X, my_Y;
-int dest_X, dest_Y;
-int x_delta, y_delta;
+int my_X, my_Y, my_Z;
+int dest_X, dest_Y, dest_Z;
+int x_delta, y_delta, z_delta;
 
 
-    // Calculate x and y coordinates within the Network
-    my_Y= src / width;
-    my_X= src % width;
-    dest_Y= dest / width;
-    dest_X= dest % width;
+// fprintf(stderr, "[%3d] to %3d gen_route(x %2d * y %2d * z %2d, wrap %d %d %d)\n", src, dest, width, height, depth, x_wrap, y_wrap, z_wrap);
+
+    // Calculate x, y and z coordinates within the Network or NoC
+    my_Y= (src % (width * height)) / width;
+    my_X= (src % (width * height)) % width;
+    my_Z= src / (width * height);
+
+    dest_Y= (dest % (width * height)) / width;
+    dest_X= (dest % (width * height)) % width;
+    dest_Z= dest / (width * height);
 
     // Use the shortest distance to reach the destination
     if (x_wrap)   {
@@ -1069,6 +1126,29 @@ int x_delta, y_delta;
 	y_delta= dest_Y - my_Y;
     }
 
+    if (z_wrap)   {
+	if (my_Z > dest_Z)   {
+	    // How much does it cost to go back?
+	    c1= my_Z - dest_Z;
+	    // How much does it cost to go forward?
+	    c2= (dest_Z + depth) - my_Z;
+	} else   {
+	    // How much does it cost to go back?
+	    c1= (my_Z + depth) - dest_Z;
+	    // How much does it cost to go forward?
+	    c2= dest_Z - my_Z;
+	}
+	if (c1 > c2)   {
+	    // go back
+	    z_delta= c2;
+	} else   {
+	    // go forward
+	    z_delta= -c1;
+	}
+    } else   {
+	z_delta= dest_Z - my_Z;
+    }
+
     if (x_delta > 0)   {
 	// Go East
 	while (x_delta > 0)   {
@@ -1094,6 +1174,20 @@ int x_delta, y_delta;
 	while (y_delta < 0)   {
 	    e->route.push_back(NORTH_PORT);
 	    y_delta++;
+	}
+    }
+
+    if (z_delta > 0)   {
+	// Go BACK
+	while (z_delta > 0)   {
+	    e->route.push_back(BACK_PORT);
+	    z_delta--;
+	}
+    } else if (z_delta < 0)   {
+	// Go NORTH
+	while (z_delta < 0)   {
+	    e->route.push_back(FRONT_PORT);
+	    z_delta++;
 	}
     }
 
@@ -1201,7 +1295,7 @@ std::set<stat_dest_t>::iterator pos;
 	    }
 
 	    printf("# [%3d] Node destinations and message count\n", my_rank);
-	    int my_node= my_rank / (NoC_width * NoC_height * cores_per_NoC_router);
+	    int my_node= my_rank / (NoC_width * NoC_height * NoC_depth * cores_per_NoC_router);
 	    printf("# [%3d]      From node %d to ", my_rank, my_node);
 	    for (pos= stat_dest.begin(); pos != stat_dest.end(); pos++)   {
 		printf("%d(%" PRId64 "), ", pos->dest, pos->cnt);

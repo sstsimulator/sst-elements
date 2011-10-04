@@ -624,6 +624,8 @@ router_t *A, *B;
 
     if (i >= B->num_ports)   {
 	fprintf(stderr, "Out of router port slots on destination router!\n");
+	fprintf(stderr, "gen_link(Arouter %d, Aport %d, Brouter %d, Bport %d, ltype %d)\n",
+	    Arouter, Aport, Brouter, Bport, (int)ltype);
 	exit(8);
     }
 

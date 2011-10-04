@@ -1,23 +1,33 @@
 #ifndef _MACHINE_H_
 #define _MACHINE_H_
 
+#include <stdint.h> 
+
+
 
 int read_machine_file(FILE *fp_machine, int verbose);
 void disp_machine_params(void);
 
-int num_nodes(void);
 int Net_x_dim(void);
 int Net_y_dim(void);
+int Net_z_dim(void);
 int NoC_x_dim(void);
 int NoC_y_dim(void);
+int NoC_z_dim(void);
 
 int Net_x_wrap(void);
 int Net_y_wrap(void);
+int Net_z_wrap(void);
 int NoC_x_wrap(void);
 int NoC_y_wrap(void);
+int NoC_z_wrap(void);
 
+int num_net_routers(void);
+int num_nodes(void);
+int num_NoC_routers(void);
 int num_cores(void);
 int num_router_nodes(void);
+int num_router_cores(void);
 int NetNICgap(void);
 int NoCNICgap(void);
 
