@@ -119,7 +119,7 @@ int main(int argc, char* argv[]){
   ////////////////////////////////////////////////////////////////////
   // Input checks
 
-  if (N==-1 || Nmin==-1){
+  if (N==-1 && Nmin==-1){
     if (myrank==0){
       fprintf(stderr,"Problem size parameter has not been specified. Check usage to specify FFT size...terminating\n");
       usage_drive(argv[0]);
