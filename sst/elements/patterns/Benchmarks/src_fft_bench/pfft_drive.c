@@ -242,7 +242,7 @@ int main(int argc, char* argv[]){
       metric = stats->avg_tot_time;
       tot= tot + metric;
       tot_squared= tot_squared + metric*metric;
-      precision= stat_p(myrank, ii + 1, tot, tot_squared, metric);
+      precision= stat_p(ii + 1, tot, tot_squared, metric);
       for (j=0;j<5;j++){
         avg_compute_time[j]+=stats->avgcompute_time[j];
         avg_comm_time[j]+=stats->avgcomm_time[j];

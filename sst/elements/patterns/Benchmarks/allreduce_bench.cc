@@ -10,7 +10,10 @@
 ** We use my_allreduce so the same communication pattern is used here
 ** as well as in the pattern state machine.
 ** Test 1 measures the MPI_Allreduce time and serves as a comparison.
-** Test 2 measures my_allreduce to compare againts test 1
+** Test 2 measures my_allreduce to compare against test 1
+**
+** The number of trials for each experiment (node size) is not fixed.
+** Enough trials are done until the desired precision is achieved.
 */
 
 #include <stdio.h>
@@ -26,18 +29,25 @@
 /* Constants */
 #define FALSE			(0)
 #define TRUE			(1)
-#define DEFAULT_NUM_OPS		(200)
-#define DEFAULT_NUM_SETS	(9)
 #define DEFAULT_PRECISION	(0.01)
 
 #define MY_TAG_UP		(55)
 #define MY_TAG_DOWN		(77)
 
+#define MAX_TRIALS		(10000)
+#define LARGE_ALLREDUCE_OPS	(1)
+#define SMALL_ALLREDUCE_OPS	(20)
+#define SMALL_LARGE_CUTOFF	(16)
+
 
 
 /* Local functions */
-static double Test1(int num_ops, int msg_len, MPI_Comm comm);
-static double Test2(int num_ops, Collective_topology *ctopo, int msg_len);
+static double do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo);
+static double do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo);
+static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, int nnodes,
+	MPI_Comm comm, Collective_topology *ctopo, double req_precision,
+	double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo));
+
 void my_allreduce(double *in, double *result, int msg_len, Collective_topology *ctopo);
 static void usage(char *pname);
 
@@ -49,22 +59,15 @@ main(int argc, char *argv[])
 
 int ch, error;
 int my_rank, num_ranks;
-int num_ops;
-int i;
-double duration;
-double total_time;
 Collective_topology *ctopo;
 int nnodes;
-int num_sets;
 int msg_len;
-int set;
-std::list <double>times;
-int library;
+bool library;
 tree_type_t tree;
-int stat_mode;
+bool stat_mode;
 double req_precision;
-
-
+int num_ops;
+int max_trials;
 
 
 
@@ -85,22 +88,34 @@ double req_precision;
     /* Set the defaults */
     opterr= 0;		/* Disable getopt error printing */
     error= FALSE;
-    num_ops= DEFAULT_NUM_OPS;
-    num_sets= DEFAULT_NUM_SETS;
-    msg_len= 1;
-    library= 0;
+    msg_len= 1; // 1 sizeof(double)
+    library= false;
     tree= TREE_DEEP;
-    stat_mode= FALSE;
-    req_precision= 0.01;
+    stat_mode= true;
+    req_precision= DEFAULT_PRECISION;
 
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "a:bl:n:s:tp:")) != EOF)   {
+    while ((ch= getopt(argc, argv, "a:l:p:")) != EOF)   {
 	switch (ch)   {
-	    case 'b':
-		library= 1;
+	    case 'a': // Algorithm
+		if (strtol(optarg, (char **)NULL, 0) == 0)   {
+		    tree= TREE_DEEP;
+		    library= false;
+		} else if (strtol(optarg, (char **)NULL, 0) == 1)   {
+		    tree= TREE_BINARY;
+		    library= false;
+		} else if (strtol(optarg, (char **)NULL, 0) == 2)   {
+		    library= true;
+		} else   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Unknown tree type (-t) must be 0 or 1!\n");
+		    }
+		    error= TRUE;
+		}
 		break;
+
 	    case 'l':
 		msg_len= strtol(optarg, (char **)NULL, 0);
 		if (msg_len < 1)   {
@@ -110,45 +125,13 @@ double req_precision;
 		    error= TRUE;
 		}
 		break;
-	    case 'n':
-		num_ops= strtol(optarg, (char **)NULL, 0);
-		if (num_ops < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Number of allreduce operations (-n) must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-	    case 's':
-		num_sets= strtol(optarg, (char **)NULL, 0);
-		if (num_sets < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Number of sets (-s) must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-	    case 'a':
-		if (strtol(optarg, (char **)NULL, 0) == 0)   {
-		    tree= TREE_DEEP;
-		} else if (strtol(optarg, (char **)NULL, 0) == 1)   {
-		    tree= TREE_BINARY;
-		} else   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Unknown tree type (-t) must be 0 or 1!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
+
 	    case 'p':
 		req_precision= strtod(optarg, (char **)NULL);
-		if (my_rank == 0)   {
-		    printf("# req_precision is %f\n", req_precision);
+		if (req_precision == 0.0)   {
+		    // Turn sampling off
+		    stat_mode= false;
 		}
-		break;
-
-	    case 't':
-		stat_mode= TRUE;
 		break;
 
 	    /* Command line error checking */
@@ -178,13 +161,22 @@ double req_precision;
         exit (-1);
     }
 
-    ctopo= new Collective_topology(my_rank, num_ranks, tree);
-
     if (my_rank == 0)   {
 	printf("# Allreduce benchmark\n");
 	printf("# -------------------\n");
+	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
+	printf("# Algorithm used for my_allreduce(): ");
+	if (tree == TREE_BINARY)   {
+	    printf("binary\n ");
+	} else if (tree == TREE_DEEP)   {
+	    printf("deep\n");
+	} else   {
+	    printf("unknown\n ");
+	}
+
 	printf("# Command line \"");
-	for (i= 0; i < argc; i++)   {
+	for (int i= 0; i < argc; i++)   {
 	    printf("%s", argv[i]);
 	    if (i < (argc - 1))   {
 		printf(" ");
@@ -195,71 +187,73 @@ double req_precision;
 
 
 
-    // Test 1
-    times.clear();
-    for (set= 0; set < num_sets; set++)   {
-	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test1(num_ops, msg_len, MPI_COMM_WORLD);
-	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    // For small allreduces, we do more than one to make sure we don't run into
+    // issues with timer resolution.
+    if (num_ranks < SMALL_LARGE_CUTOFF)   {
+	num_ops= SMALL_ALLREDUCE_OPS;
+    } else   {
+	num_ops= LARGE_ALLREDUCE_OPS;
+    }
 
-	// Record the average time per allreduce
-	times.push_back(total_time / num_ranks / num_ops);
+    if (stat_mode)   {
+	max_trials= MAX_TRIALS;
+    } else   {
+	max_trials= 1;
     }
+
+    // Test 1
     if (my_rank == 0)   {
-	printf("#  |||  %d operations per set. %d sets per node size. %d byte msg len\n",
-		num_ops, num_sets, msg_len * (int)sizeof(double));
-	if (tree == TREE_BINARY)   {
-	    printf("#  |||  my_allreduce() uses binary tree\n");
-	} else if (tree == TREE_DEEP)   {
-	    printf("#  |||  my_allreduce() uses deep tree\n");
-	} else   {
-	    printf("#  |||  my_allreduce() uses unknown tree type\n");
-	}
-	printf("#  |||  Test 1: MPI_Allreduce() min, mean, median, max, sd\n");
-	printf("#      ");
-	print_stats(times);
+	printf("#  |||  Test 1: MPI_Allreduce()\n");
+	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
+	printf("#");
     }
+    experiment(my_rank, max_trials, num_ops, msg_len, num_ranks, MPI_COMM_WORLD,
+	    NULL, req_precision, &do_one_Test1_trial);
 
 
 
     // Test 2
-    times.clear();
-    for (set= 0; set < num_sets; set++)   {
-	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test2(num_ops, ctopo, msg_len);
-	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-	// Record the average time per allreduce
-	times.push_back(total_time / num_ranks / num_ops);
-    }
     if (my_rank == 0)   {
-	printf("#  |||  Test 2: my_allreduce() min, mean, median, max, sd\n");
-	printf("#      ");
-	print_stats(times);
+	if (tree == TREE_BINARY)   {
+	    printf("#  |||  Test 2: my_allreduce() using binary tree\n");
+	} else if (tree == TREE_DEEP)   {
+	    printf("#  |||  Test 2: my_allreduce() using deep tree\n");
+	} else   {
+	    printf("#  |||  Test 2: my_allreduce() using unknown tree type\n");
+	}
+	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
+	printf("#");
     }
+    ctopo= new Collective_topology(my_rank, num_ranks, tree);
+    experiment(my_rank, max_trials, num_ops, msg_len, num_ranks, MPI_COMM_WORLD,
+	    ctopo, req_precision, &do_one_Test2_trial);
 
 
 
     // Test 3
     // Now we do this with increasing number of ranks, instead of all of them
     if (my_rank == 0)   {
+	printf("#  |||  Test 3: ");
 	if (library)   {
-	    printf("#  |||  Test 3: MPI_allreduce() nodes, min, mean, median, max, sd");
+	    printf("#  |||  Test 3: Using MPI library MPI_allreduce()\n");
 	} else   {
-	    printf("#  |||  Test 3: my_allreduce() nodes, min, mean, median, max, sd");
+	    if (tree == TREE_BINARY)   {
+		printf("#  |||  Test 3: my_allreduce() using binary tree\n");
+	    } else if (tree == TREE_DEEP)   {
+		printf("#  |||  Test 3: my_allreduce() using deep tree\n");
+	    } else   {
+		printf("#  |||  Test 3: my_allreduce() using unknown tree type\n");
+	    }
 	}
-	if (stat_mode)   {
-	    printf(", precision\n");
-	} else   {
-	    printf("\n");
-	}
+
+	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
     }
 
     for (nnodes= 1; nnodes <= num_ranks; nnodes++)   {
+	// Adjust to the new node size
 	MPI_Group world_group, new_group;
 	MPI_Comm new_comm;
 	int ranges[][3]={{0, nnodes - 1, 1}};
-	double precision;
 
 	MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 	MPI_Group_range_incl(world_group, 1, ranges, &new_group);
@@ -267,63 +261,24 @@ double req_precision;
 
 	delete ctopo;
 	ctopo= new Collective_topology(my_rank, nnodes, tree);
-	times.clear();
-	for (set= 0; set < num_sets; set++)   {
-	    int trials;
-	    int ii= 0;
-	    double tot= 0.0;
-	    double tot_squared= 0.0;
-	    double metric;
 
-	    if (stat_mode)   {
-		trials= 10000;
-	    } else   {
-		trials= 1;
-	    }
-
-	    while (ii < trials)   {
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (my_rank < nnodes)   {
-		    if (library)   {
-			// Use the built-in MPI_Allreduce
-			duration= Test1(num_ops, msg_len, new_comm);
-		    } else   {
-			// Use my allreduce
-			duration= Test2(num_ops, ctopo, msg_len);
-		    }
-		} else   {
-		    duration= 0.0;
-		}
-		MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-		metric= total_time / nnodes / num_ops;
-		tot= tot + metric;
-		tot_squared= tot_squared + metric*metric;
-		precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
-
-		if (stat_mode) {
-		    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
-		    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
-			trials= ii;
-		    }
-		    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		}
-		ii++;
-	    }
-	    if (stat_mode)   {
-		/* if i = 10, actual trials done is 11 */
-		trials++; /* this is the total number of trials that took place */
-	    }
-
-	    // Record the average time per allreduce
-	    times.push_back(tot/trials);
+	// For small allreduces, we do more than one to make sure we don't run into
+	// issues with timer resolution.
+	if (nnodes < 16)   {
+	    num_ops= SMALL_ALLREDUCE_OPS;
+	} else   {
+	    num_ops= LARGE_ALLREDUCE_OPS;
 	}
 
-	if (my_rank == 0)   {
-	    printf("%6d ", nnodes);
-	    if (stat_mode)   {
-		print_stats(times, precision);
+	if (my_rank < nnodes)   {
+	    if (library)   {
+		// Use the built-in MPI_Allreduce
+		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
+		    ctopo, req_precision, &do_one_Test1_trial);
 	    } else   {
-		print_stats(times);
+		// Use my allreduce
+		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
+		    ctopo, req_precision, &do_one_Test2_trial);
 	    }
 	}
     }
@@ -337,7 +292,7 @@ double req_precision;
 
 
 static double
-Test1(int num_ops, int msg_len, MPI_Comm comm)
+do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo)
 {
 
 double t, t2;
@@ -353,29 +308,32 @@ double *rbuf;
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
-	memset(sbuf, 0, sizeof(double) * msg_len);
-	memset(rbuf, 0, sizeof(double) * msg_len);
+	memset(sbuf, 0xAA, sizeof(double) * msg_len);
+	memset(rbuf, 0x55, sizeof(double) * msg_len);
 	
+	/* Do a warm-up */
+	MPI_Allreduce(sbuf, rbuf, msg_len, MPI_DOUBLE, MPI_SUM, comm);
+
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
 	    MPI_Allreduce(sbuf, rbuf, msg_len, MPI_DOUBLE, MPI_SUM, comm);
 	}
-
 	t2= MPI_Wtime() - t;
+
 	free(sbuf);
 	free(rbuf);
-	return t2;
+	return t2 / num_ops;
 
-}  /* end of Test1() */
+}  // end of do_one_Test1_trial()
 
 
 
 static double
-Test2(int num_ops, Collective_topology *ctopo, int msg_len)
+do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo)
 {
 
-double t;
+double t, t2;
 int i;
 double *sbuf;
 double *rbuf;
@@ -388,20 +346,101 @@ double *rbuf;
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
-	memset(sbuf, 0, sizeof(double) * msg_len);
-	memset(rbuf, 0, sizeof(double) * msg_len);
+	memset(sbuf, 0xAA, sizeof(double) * msg_len);
+	memset(rbuf, 0x55, sizeof(double) * msg_len);
+
+	/* Do a warm-up */
+	my_allreduce(sbuf, rbuf, msg_len, ctopo);
 
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
 	    my_allreduce(sbuf, rbuf, msg_len, ctopo);
 	}
+	t2= MPI_Wtime() - t;
 
 	free(sbuf);
 	free(rbuf);
-	return MPI_Wtime() - t;
+	return t2 / num_ops;
 
-}  /* end of Test2() */
+}  // end of do_one_Test2_trial()
+
+
+
+static void
+experiment(int my_rank, int max_trials, int num_ops, int msg_len, int nnodes,
+    MPI_Comm comm, Collective_topology *ctopo, double req_precision,
+    double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo))
+{
+
+double tot;
+double tot_squared;
+double metric;
+int cnt;
+std::list <double>times;
+double duration;
+double total_time;
+double precision;
+#if node0
+int done;
+#endif
+
+
+    times.clear();
+    tot= 0.0;
+    cnt= 0;
+    tot_squared= 0.0;
+
+    while (cnt < max_trials)   {
+	cnt++;
+
+	MPI_Barrier(comm);
+
+	// Run one trial
+	duration= do_one_trial(num_ops, msg_len, comm, ctopo);
+
+#if !node0
+	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, comm);
+	metric= total_time / nnodes;
+#else
+	metric= duration;
+#endif
+
+	tot= tot + metric;
+	times.push_back(tot / cnt);
+
+	tot_squared= tot_squared + metric * metric;
+	precision= stat_p(cnt, tot, tot_squared, metric);
+
+#if !node0
+	// Need at least tree trials
+	if ((cnt >= 3) && (precision < req_precision))   {
+	    // Attained the required precisions. Done!
+	    break;
+	}
+#else
+	// Need at least tree trials
+	if ((cnt >= 3) && (precision < req_precision))   {
+	    // Attained the required precisions. Done!
+	    done= 1;
+	} else   {
+	    done= 0;
+	}
+	// 0 tells everyone else
+	MPI_Bcast(&done, 1, MPI_INT, 0, comm);
+	if (done)   {
+	    break;
+	}
+#endif
+    }
+
+    if (my_rank == 0)   {
+	printf("%6d ", nnodes);
+	print_stats(times, precision);
+	printf(" %5d\n", cnt);
+    }
+
+}  // end of experiment()
 
 
 
@@ -467,18 +506,14 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets] [-a type]\n", pname);
-    fprintf(stderr, "    -b          Use the MPI library MPI_Allreduce\n");
-    fprintf(stderr, "    -l len      Size of allreduce operations in number of doubles. Default 1\n");
-    fprintf(stderr, "    -n ops      Number of allreduce operations per test. Default %d\n",
-	DEFAULT_NUM_OPS);
-    fprintf(stderr, "    -s sets     Number of sets; i.e. number of test repeats. Default %d\n",
-	DEFAULT_NUM_SETS);
-    fprintf(stderr, "    -a type     Select type of tree of allreduce algorithm. Default 0\n");
-    fprintf(stderr, "                0 is TREE_DEEP\n");
-    fprintf(stderr, "                1 is TREE_BINARY\n");
-    fprintf(stderr, "    -t          Run each experiement until confidence interval is within precision.\n");
-    fprintf(stderr, "    -p P        Set precision (confidence interval). Default %.3f\n",
+    fprintf(stderr, "Usage: %s [-l len] [-a type] [-p precision]\n", pname);
+    fprintf(stderr, "    -a type        Select type of allreduce algorithm. Default 0\n");
+    fprintf(stderr, "                     0 is TREE_DEEP\n");
+    fprintf(stderr, "                     1 is TREE_BINARY\n");
+    fprintf(stderr, "                     2 is MPI library MPI_Allreduce()\n");
+    fprintf(stderr, "    -l len         Size of allreduce operations in number of doubles. Default 1\n");
+    fprintf(stderr, "    -p rpecision   Set precision (confidence interval). Default %.3f\n",
 	DEFAULT_PRECISION);
+    fprintf(stderr, "                   A precision of 0.0 disables sampling\n");
 
 }  /* end of usage() */

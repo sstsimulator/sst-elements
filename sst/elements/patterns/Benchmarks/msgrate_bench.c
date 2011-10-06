@@ -232,7 +232,7 @@ double metric;
 	avg_bisection_rate= 1.0 / ((total_time / (num_ranks / 2)) / num_msgs);
 	tot= tot + avg_bisection_rate;
 	tot_squared= tot_squared + avg_bisection_rate * avg_bisection_rate;
-	precision= stat_p(my_rank, ii + 1, tot, tot_squared, avg_bisection_rate);
+	precision= stat_p(ii + 1, tot, tot_squared, avg_bisection_rate);
 	if (stat_mode)   {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2. */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
@@ -281,7 +281,7 @@ double metric;
 	metric= 1.0 / ((total_time / num_sender) / (num_msgs - 1));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric*metric;
-	precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
+	precision= stat_p(ii + 1, tot, tot_squared, metric);
 
 	if (stat_mode) {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
@@ -324,7 +324,7 @@ double metric;
 	metric= 1.0 / (total_time / (num_msgs * num_sender - 1));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric * metric;
-	precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
+	precision= stat_p(ii + 1, tot, tot_squared, metric);
 
 	if (stat_mode) {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */

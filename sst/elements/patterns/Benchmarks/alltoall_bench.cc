@@ -204,6 +204,7 @@ double req_precision;
 	printf("#  |||  Test 1: MPI_Alltoall() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
+	printf("\n");
     }
 
 
@@ -222,6 +223,7 @@ double req_precision;
 	printf("#  |||  Test 2: my_alltoall() min, mean, median, max, sd\n");
 	printf("#      ");
 	print_stats(times);
+	printf("\n");
     }
 
 
@@ -284,7 +286,7 @@ double req_precision;
 		metric= total_time / nnodes / num_ops;
 		tot= tot + metric;
 		tot_squared= tot_squared + metric*metric;
-		precision= stat_p(my_rank, ii + 1, tot, tot_squared, metric);
+		precision= stat_p(ii + 1, tot, tot_squared, metric);
 
 		if (stat_mode) {
 		    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
@@ -311,6 +313,7 @@ double req_precision;
 	    } else   {
 		print_stats(times);
 	    }
+	    printf("\n");
 	}
     }
 

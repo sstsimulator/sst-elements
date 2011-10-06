@@ -206,6 +206,7 @@ state_event enter_allreduce, exit_allreduce;
 		if (my_rank == 0)   {
 		    printf("%6d ", nnodes);
 		    print_stats(times);
+		    printf("\n");
 		}
 		goto_state(state_INIT, STATE_INIT, E_NEXT_OUTER_LOOP);
 	    }

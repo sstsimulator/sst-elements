@@ -40,6 +40,8 @@ double min, avg, med, max, sd;
 	avg= 0.0;
 	for (it= t.begin(); it != t.end(); it++)   {
 	    if (cnt == (num_sets / 2))   {
+		// FIXME: For an even number of entries, this should be the average of the
+		// two middle ones.
 		med= *it;
 	    }
 	    avg= avg + *it;
@@ -57,9 +59,9 @@ double min, avg, med, max, sd;
 	max= t.back();
 
 	if (print_p)   {
-	    printf("%12.9f %12.9f %12.9f %12.9f %12.9f %12.3f\n", min, avg, med, max, sd, precision);
+	    printf("%12.9f %12.9f %12.9f %12.9f %12.9f %12.6f", min, avg, med, max, sd, precision);
 	} else   {
-	    printf("%12.9f %12.9f %12.9f %12.9f %12.9f\n", min, avg, med, max, sd);
+	    printf("%12.9f %12.9f %12.9f %12.9f %12.9f", min, avg, med, max, sd);
 	}
 
 }  /* end of stats() */

@@ -33,7 +33,7 @@ We will do at least 6 (df=n-1=5) iterations to need no more than 2.571 SD's.
 
 
 double 
-stat_p(int my_rank, int N, double tot, double tot_squared, double metric)
+stat_p(int N, double tot, double tot_squared, double metric)
 {
 
 double tval[]= {1000, 1000, 4.303, 3.182, 2.776, 2.571};
@@ -59,7 +59,7 @@ double halfCI;
     sd= sqrt(tot_squared / N - mean * mean);
     se= sd / sqrt(N);
 
-    ii= N - 1;
+    ii= N - 1;	/* Array offset starts at 0 */
     if (ii > 1 && ii < 6)   {
 	tVal= tval[ii];
     } else if (ii <= 8)   {
@@ -78,12 +78,6 @@ double halfCI;
 
     halfCI= tVal * se;
     precision= halfCI / mean;
-
-    if (0 && my_rank == 0)   {
-	printf(" ... Node %d: ii is %d, mean %f, metric is %f, tot_squared_metric is %f, "
-	    "tot_metric is %f, SD=%f, SE=%f, tVal is %f, halfCI=%f, precision is %f.\n",
-	    my_rank, ii, mean, metric, tot_squared, tot, sd, se, tVal, halfCI, precision);
-    }
 
     return precision;
 

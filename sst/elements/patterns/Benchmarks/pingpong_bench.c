@@ -166,7 +166,7 @@ double precision;
 		max_latency= latency;
 	    }
 	    
-	    precision= stat_p(my_rank, i + 1, tot_latency, tot_squared_latency, latency);
+	    precision= stat_p(i + 1, tot_latency, tot_squared_latency, latency);
 	    
 	    if (stat_mode)   {
 		/* check for precision if at least 9 trials have taken place. i > 1 => N > 2. */
