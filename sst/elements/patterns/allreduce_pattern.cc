@@ -93,8 +93,7 @@ state_event enter_barrier, exit_barrier;
 	    // We just came back from the barrier SM.
 	    if (my_rank < nnodes)   {
 		// My rank will be participating in the test. Go run it
-		ops= 0;
-		test_start_time= getCurrentSimTime();
+		ops= -1;
 		goto_state(state_TEST, STATE_TEST, E_NEXT_TEST);
 	    } else   {
 		// My rank is not part of this test, skip ahead
@@ -121,6 +120,9 @@ allreduce_events_t e= (allreduce_events_t)sm_event.event;
 
     switch (e)   {
 	case E_NEXT_TEST:
+	    if (ops == 0)   {
+		test_start_time= getCurrentSimTime();
+	    }
 	    ops++;
 	    if (ops <= num_ops)   {
 		// Do the allreduce test on nnodes
