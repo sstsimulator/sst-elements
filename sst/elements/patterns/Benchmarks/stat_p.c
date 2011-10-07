@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>	/* For qsort() */
 #include <math.h>
 #include "stat_p.h"
 
@@ -81,3 +82,71 @@ double halfCI;
     return precision;
 
 }  /* end of stat_p() */
+
+
+
+static int
+cmpdouble(const void *a, const void *b)
+{
+
+    if (*((double *)a) < *((double *)b))  {
+	return -1;
+    } else if (*((double *)a) > *((double *)b))  {
+	return 1;
+    } else   {
+	return 0;
+    }
+
+}  /* end of cmpdouble() */
+
+
+
+void
+disp_stats(double *results, int cnt, double precision)
+{
+
+double min;
+double max;
+double med;
+double avg;
+double sd;
+int i;
+
+
+    min= 999999999.99;
+    max= -999999999.99;
+    avg= 0.0;
+    med= 0.0;
+    sd= 0.0;
+
+    /* Sort the list */
+    qsort(results, cnt, sizeof(double), &cmpdouble);
+
+    for (i= 0; i < cnt; i++)   {
+	if (i == (cnt / 2))   {
+	    /*
+	    ** FIXME: For an even number of entries, this should be the
+	    ** average of the two middle ones.
+	    */
+	    med= results[i];
+	}
+	avg= avg + results[i];
+	if (results[i] < min)   {
+	    min= results[i];
+	}
+	if (results[i] > min)   {
+	    max= results[i];
+	}
+    }
+    avg= avg / cnt;
+
+    /* Calculate the standard deviation */
+    for (i= 0; i < cnt; i++)   {
+	sd= sd + ((results[i] - avg) * (results[i] - avg));
+    }
+    sd= sqrt(sd / cnt);
+
+    printf("%9.3f    %9.3f    %9.3f    %9.3f    %12.6f",
+	min, avg, med, max, precision);
+
+}  /* end of disp_stats() */

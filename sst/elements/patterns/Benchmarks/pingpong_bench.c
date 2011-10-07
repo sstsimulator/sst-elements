@@ -181,7 +181,7 @@ int pingping;
 	printf("#\n");
 	printf("# Length                  Latency\n");
 	printf("# in bytes            in micro seconds\n");
-	printf("#           minimum     average     maximum       precision  trials\n");
+	printf("#            minimum         mean       median      maximum       precision  trials\n");
     }
 
     len= start_len;
@@ -370,29 +370,28 @@ experiment(int my_rank, int max_trials, int num_ops, int msg_len, int dest,
 double tot;
 double tot_squared;
 double metric;
-double min_metric, max_metric;
 int cnt;
 double precision;
 int done;
+double *results;
 
 
     tot= 0.0;
     cnt= 0;
     tot_squared= 0.0;
-    max_metric= 0;
-    min_metric= 999999999.9;
+
+    results= (double *)malloc(sizeof(double) * max_trials);
+    if (results == NULL)   {
+	fprintf(stderr, "Out of memory!\n");
+	exit(-1);
+    }
 
     while (cnt < max_trials)   {
 	cnt++;
 
 	/* Run one trial */
 	metric= do_one_trial(num_ops, msg_len, dest);
-	if (metric < min_metric)   {
-	    min_metric= metric;
-	}
-	if (metric > max_metric)   {
-	    max_metric= metric;
-	}
+	results[cnt - 1]= metric * 1000000.0;
 
 	tot= tot + metric;
 	tot_squared= tot_squared + metric * metric;
@@ -414,13 +413,11 @@ int done;
     }
 
     if (my_rank == 0)   {
-	/* Convert to micro seconds */
-	min_metric= min_metric * 1000000.0;
-	tot= tot  * 1000000.0;
-	max_metric= max_metric * 1000000.0;
-
-	printf("%9d  %9.3f    %9.3f    %9.3f    %12.6f   %5d\n",
-	    msg_len, min_metric, tot / cnt, max_metric, precision, cnt);
+	printf("%9d  ", msg_len);
+	disp_stats(results, cnt, precision);
+	printf("   %5d\n", cnt);
     }
+
+    free(results);
 
 }  /* end of experiment() */
