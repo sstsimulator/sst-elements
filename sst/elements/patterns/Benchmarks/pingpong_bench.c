@@ -33,7 +33,7 @@
 #define SHORT_MEDIUM_CUTOFF	( 2 * 1024)
 #define MEDIUM_LONG_CUTOFF	(16 * 1024)
 
-#define	MIN_NUM_PINGPING	(16)
+#define	MAX_NUM_PREPOST	(16)
 
 static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, int dest,
     double req_precision, double (*do_one_trial)(int num_ops, int msg_len, int dest));
@@ -299,6 +299,7 @@ do_one_Test2_trial(int num_ops, int msg_len, int dest)
 int j;
 double t, t2;
 MPI_Request latencyflag[SHORT_MSG_OPS];
+int prepost;
 
 
     /* Touch the memory we are going to use */
@@ -329,8 +330,13 @@ MPI_Request latencyflag[SHORT_MSG_OPS];
 	}
 
     } else if (my_rank == dest)   {
-	/* Pre-post MIN_NUM_PINGPING receives */ 
-	for (j= 0; j < MIN_NUM_PINGPING; j++)   {
+	/* Pre-post MAX_NUM_PREPOST receives */ 
+	if (num_ops >= MAX_NUM_PREPOST)   {
+	    prepost= MAX_NUM_PREPOST;
+	} else   {
+	    prepost= num_ops;
+	}
+	for (j= 0; j < prepost; j++)   {
 	    MPI_Irecv(aligned_buf, msg_len, MPI_BYTE, 0, TAG_LATENCY, MPI_COMM_WORLD, &latencyflag[j]);
 	}
 
@@ -339,10 +345,10 @@ MPI_Request latencyflag[SHORT_MSG_OPS];
 
 	for (j= 0; j < num_ops; j++)   {
 	    MPI_Wait(&latencyflag[j], MPI_STATUS_IGNORE);
-	    if (j + MIN_NUM_PINGPING < num_ops)   {
+	    if (j + prepost < num_ops)   {
 		/* Post another */
 		MPI_Irecv(aligned_buf, msg_len, MPI_BYTE, 0, TAG_LATENCY, MPI_COMM_WORLD,
-		    &latencyflag[j + MIN_NUM_PINGPING]);
+		    &latencyflag[j + prepost]);
 	    }
 	}
 
