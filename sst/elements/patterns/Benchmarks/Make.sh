@@ -12,10 +12,16 @@ if [[ $1 == "clean" ]] ; then
     exit
 fi
 
-mpic++  -Wall allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc -o allreduce_bench
-mpic++  -Wall alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc -o alltoall_bench
-mpicc -Wall msgrate_bench.c stat_p.c -o msgrate_bench
-mpicc -Wall pingpong_bench.c stat_p.c -o pingpong_bench
+if [[ $1 == "extra" ]] ; then
+    extra="-Wextra -Wunused-macros -pedantic"
+else
+    extra=""
+fi
+
+mpic++  -Wall $extra allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c -o allreduce_bench
+mpic++  -Wall $extra alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c -o alltoall_bench
+mpicc -Wall $extra msgrate_bench.c stat_p.c util.c -o msgrate_bench
+mpicc -Wall $extra pingpong_bench.c stat_p.c util.c -o pingpong_bench
 
 cd src_ghost_bench
     bash Make.sh

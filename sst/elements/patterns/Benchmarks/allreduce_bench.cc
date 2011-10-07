@@ -24,6 +24,7 @@
 #include "../collective_topology.h"
 #include "../stats.h"
 #include "stat_p.h"
+#include "util.h"
 
 
 /* Constants */
@@ -135,21 +136,7 @@ int max_trials;
 		break;
 
 	    /* Command line error checking */
-	    case '?':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Unknown option \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-	    case ':':
-		if (my_rank == 0)   {
-			fprintf(stderr, "Missing option argument to \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-	    default:
-		error= TRUE;
-		break;
+	    DEFAULT_CMD_LINE_ERR_CHECK
 	}
     }
  
@@ -164,6 +151,8 @@ int max_trials;
     if (my_rank == 0)   {
 	printf("# Allreduce benchmark\n");
 	printf("# -------------------\n");
+	disp_cmd_line(argc, argv);
+	printf("#\n");
 	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
 	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
 	printf("# Algorithm used for my_allreduce(): ");
@@ -174,15 +163,6 @@ int max_trials;
 	} else   {
 	    printf("unknown\n ");
 	}
-
-	printf("# Command line \"");
-	for (int i= 0; i < argc; i++)   {
-	    printf("%s", argv[i]);
-	    if (i < (argc - 1))   {
-		printf(" ");
-	    }
-	}
-	printf("\"\n");
     }
 
 
@@ -292,7 +272,8 @@ int max_trials;
 
 
 static double
-do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo)
+do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm,
+    Collective_topology *ctopo __attribute__ ((unused)))
 {
 
 double t, t2;
@@ -330,7 +311,8 @@ double *rbuf;
 
 
 static double
-do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo)
+do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm __attribute__ ((unused)),
+    Collective_topology *ctopo)
 {
 
 double t, t2;
@@ -378,11 +360,11 @@ double tot_squared;
 double metric;
 int cnt;
 std::list <double>times;
-double duration;
-double total_time;
 double precision;
 #if node0
 int done;
+#else
+double total_time;
 #endif
 
 
@@ -397,20 +379,18 @@ int done;
 	MPI_Barrier(comm);
 
 	// Run one trial
-	duration= do_one_trial(num_ops, msg_len, comm, ctopo);
+	metric= do_one_trial(num_ops, msg_len, comm, ctopo);
 
 #if !node0
-	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, comm);
+	MPI_Allreduce(&metric, &total_time, 1, MPI_DOUBLE, MPI_SUM, comm);
 	metric= total_time / nnodes;
-#else
-	metric= duration;
 #endif
 
-	tot= tot + metric;
-	times.push_back(tot / cnt);
+	times.push_back(metric);
 
+	tot= tot + metric;
 	tot_squared= tot_squared + metric * metric;
-	precision= stat_p(cnt, tot, tot_squared, metric);
+	precision= stat_p(cnt, tot, tot_squared);
 
 #if !node0
 	// Need at least tree trials

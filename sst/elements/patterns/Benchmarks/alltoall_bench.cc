@@ -20,6 +20,7 @@
 #include <mpi.h>
 #include "../stats.h"
 #include "stat_p.h"
+#include "util.h"
 
 
 
@@ -52,7 +53,6 @@ main(int argc, char *argv[])
 
 int ch, error;
 int num_ops;
-int i;
 double duration;
 double total_time;
 int nnodes;
@@ -146,22 +146,8 @@ double req_precision;
 		break;
 
 
-		/* Command line error checking */
-	    case '?':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Unknown option \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-	    case ':':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Missing option argument to \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-	    default:
-		error= TRUE;
-		break;
+	    /* Command line error checking */
+	    DEFAULT_CMD_LINE_ERR_CHECK
 	}
     }
 
@@ -175,15 +161,9 @@ double req_precision;
 
     if (my_rank == 0)   {
 	printf("# Alltoall benchmark\n");
-	printf("# -------------------\n");
-	printf("# Command line \"");
-	for (i= 0; i < argc; i++)   {
-	    printf("%s", argv[i]);
-	    if (i < (argc - 1))   {
-		printf(" ");
-	    }
-	}
-	printf("\"\n");
+	printf("# ------------------\n");
+	disp_cmd_line(argc, argv);
+	printf("#\n");
     }
 
 
@@ -286,7 +266,7 @@ double req_precision;
 		metric= total_time / nnodes / num_ops;
 		tot= tot + metric;
 		tot_squared= tot_squared + metric*metric;
-		precision= stat_p(ii + 1, tot, tot_squared, metric);
+		precision= stat_p(ii + 1, tot, tot_squared);
 
 		if (stat_mode) {
 		    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */

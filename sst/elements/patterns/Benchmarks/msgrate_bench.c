@@ -24,6 +24,7 @@
 #include <unistd.h>	/* For getopt() */
 #include <mpi.h>
 #include "stat_p.h"
+#include "util.h"
 
 
 /* Constants */
@@ -167,21 +168,7 @@ double metric;
 		break;
 
 	    /* Command line error checking */
-            case '?':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Unknown option \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-            case ':':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Missing option argument to \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-            default:
-		error= TRUE;
-		break;
+	    DEFAULT_CMD_LINE_ERR_CHECK
         }
     }
  
@@ -232,7 +219,7 @@ double metric;
 	avg_bisection_rate= 1.0 / ((total_time / (num_ranks / 2)) / num_msgs);
 	tot= tot + avg_bisection_rate;
 	tot_squared= tot_squared + avg_bisection_rate * avg_bisection_rate;
-	precision= stat_p(ii + 1, tot, tot_squared, avg_bisection_rate);
+	precision= stat_p(ii + 1, tot, tot_squared);
 	if (stat_mode)   {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2. */
 	    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
@@ -281,7 +268,7 @@ double metric;
 	metric= 1.0 / ((total_time / num_sender) / (num_msgs - 1));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric*metric;
-	precision= stat_p(ii + 1, tot, tot_squared, metric);
+	precision= stat_p(ii + 1, tot, tot_squared);
 
 	if (stat_mode) {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
@@ -324,7 +311,7 @@ double metric;
 	metric= 1.0 / (total_time / (num_msgs * num_sender - 1));
 	tot= tot + metric;
 	tot_squared= tot_squared + metric * metric;
-	precision= stat_p(ii + 1, tot, tot_squared, metric);
+	precision= stat_p(ii + 1, tot, tot_squared);
 
 	if (stat_mode) {
 	    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */

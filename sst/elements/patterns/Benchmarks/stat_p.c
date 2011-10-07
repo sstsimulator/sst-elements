@@ -2,7 +2,6 @@
 #include <math.h>
 #include "stat_p.h"
 
-extern double sqrt(double x);
 
 
 
@@ -33,7 +32,7 @@ We will do at least 6 (df=n-1=5) iterations to need no more than 2.571 SD's.
 
 
 double 
-stat_p(int N, double tot, double tot_squared, double metric)
+stat_p(int N, double tot, double tot_squared)
 {
 
 double tval[]= {1000, 1000, 4.303, 3.182, 2.776, 2.571};
