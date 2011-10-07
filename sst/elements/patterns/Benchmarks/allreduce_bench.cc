@@ -155,13 +155,17 @@ int max_trials;
 	printf("#\n");
 	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
 	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
-	printf("# Algorithm used for my_allreduce(): ");
-	if (tree == TREE_BINARY)   {
-	    printf("binary\n ");
-	} else if (tree == TREE_DEEP)   {
-	    printf("deep\n");
+	printf("# Algorithm used for Test 3: ");
+	if (library)   {
+	    printf("MPI_Allreduce\n ");
 	} else   {
-	    printf("unknown\n ");
+	    if (tree == TREE_BINARY)   {
+		printf("binary\n ");
+	    } else if (tree == TREE_DEEP)   {
+		printf("deep\n");
+	    } else   {
+		printf("unknown\n ");
+	    }
 	}
     }
 
