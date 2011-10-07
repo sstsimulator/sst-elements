@@ -264,7 +264,7 @@ MPI_Request latencyflag[SHORT_MSG_OPS];
 	}
     }
 
-    return t2 / num_ops;
+    return t2 / num_ops / 2.0;
 
 }  /* end of do_one_Test1_trial() */
 
