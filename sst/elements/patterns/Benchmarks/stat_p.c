@@ -127,7 +127,7 @@ int i;
 	if (results[i] < min)   {
 	    min= results[i];
 	}
-	if (results[i] > min)   {
+	if (results[i] > max)   {
 	    max= results[i];
 	}
     }
