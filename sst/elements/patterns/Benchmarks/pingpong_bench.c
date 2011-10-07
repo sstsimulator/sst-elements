@@ -25,6 +25,7 @@
 #define MAX_MSG_LEN		(10485760)
 #define TAG_READY		(20)
 #define TAG_LATENCY		(21)
+#define TAG_DONE		(22)
 
 #define SHORT_MSG_OPS		(500)
 #define MEDIUM_MSG_OPS		(50)
@@ -32,9 +33,12 @@
 #define SHORT_MEDIUM_CUTOFF	( 2 * 1024)
 #define MEDIUM_LONG_CUTOFF	(16 * 1024)
 
+#define	MIN_NUM_PINGPING	(16)
+
 static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, int dest,
     double req_precision, double (*do_one_trial)(int num_ops, int msg_len, int dest));
 static double do_one_Test1_trial(int num_ops, int msg_len, int dest);
+static double do_one_Test2_trial(int num_ops, int msg_len, int dest);
 void doit(int len, int trial, double *latency, int *msgs);
 double aligned_buf[MAX_MSG_LEN/sizeof(double)];
 char *buf;
@@ -59,6 +63,7 @@ int stat_mode;
 double req_precision;
 int num_ops;
 int dest;
+int pingping;
 
 
     MPI_Init(&argc, &argv);
@@ -83,10 +88,16 @@ int dest;
     stat_mode= TRUE;
     req_precision= DEFAULT_PRECISION;
     dest= num_nodes - 1;
+    pingping= FALSE;
+
 
     /* check command line args */
-    while ((ch= getopt(argc, argv, "d:e:i:p:s:")) != EOF)   {
+    while ((ch= getopt(argc, argv, "ad:e:i:p:s:")) != EOF)   {
 	switch (ch)   {
+	    case 'a':
+		pingping= TRUE;
+		break;
+
 	    case 'd':
 		dest= strtol(optarg, (char **)NULL, 0);
 		if ((dest < 0) || (dest >= num_nodes))   {
@@ -136,7 +147,9 @@ int dest;
 
     if (error)   {
 	if (my_rank == 0)   {
-	    fprintf(stderr, "Usage: %s [-s start_length] [-e end_length] [-i inc] [-p precision]\n", argv[0]);
+	    fprintf(stderr, "Usage: %s [-a] [-s start_length] [-e end_length] [-i inc] [-p precision]\n",
+		argv[0]);
+	    fprintf(stderr, "           -a            Do ping-ping instead of ping-pong\n");
 	}
 	exit (-1);
     }
@@ -148,8 +161,12 @@ int dest;
     }
 
     if (my_rank == 0)   {
-	printf("# Pingpong benchmark\n");
-	printf("# -----------------\n");
+	if (pingping)   {
+	    printf("# Ping-Ping benchmark\n");
+	} else   {
+	    printf("# Ping-pong benchmark\n");
+	}
+	printf("# ------------------\n");
 	disp_cmd_line(argc, argv);
 	printf("#\n");
 	if (user_inc > 0)   {
@@ -179,8 +196,13 @@ int dest;
 	    num_ops= LONG_MSG_OPS;
 	}
 
-	experiment(my_rank, max_trials, num_ops, len, dest, req_precision,
-	    &do_one_Test1_trial);
+	if (pingping)   {
+	    experiment(my_rank, max_trials, num_ops, len, dest, req_precision,
+		&do_one_Test2_trial);
+	} else   {
+	    experiment(my_rank, max_trials, num_ops, len, dest, req_precision,
+		&do_one_Test1_trial);
+	}
 
 	if (user_inc <= 0)   {
 	    if (len >= (inc << 4))   {
@@ -267,6 +289,70 @@ MPI_Request latencyflag[SHORT_MSG_OPS];
     return t2 / num_ops / 2.0;
 
 }  /* end of do_one_Test1_trial() */
+
+
+
+static double
+do_one_Test2_trial(int num_ops, int msg_len, int dest)
+{
+
+int j;
+double t, t2;
+MPI_Request latencyflag[SHORT_MSG_OPS];
+
+
+    /* Touch the memory we are going to use */
+    memset(aligned_buf, 0xAA, msg_len);
+    memset(aligned_buf, 0x55, msg_len);
+
+    /* Do a warm-up */
+
+
+
+    /* Post warm-up: Run the actual experiment */
+    t2= 0.0;
+    if (my_rank == 0)   {
+	/* Wait for ACK from other node */
+	MPI_Recv(NULL, 0, MPI_BYTE, dest, TAG_READY, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+	/* Start the timer */
+	t= MPI_Wtime();
+	for (j= 0; j < num_ops; j++)   {
+	    MPI_Isend(aligned_buf, msg_len, MPI_BYTE, dest, TAG_LATENCY, MPI_COMM_WORLD, &latencyflag[j]);
+	}
+	MPI_Recv(NULL, 0, MPI_BYTE, dest, TAG_DONE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	t2= MPI_Wtime() - t;
+
+	/* Clean up outside the timing loop */
+	for (j= 0; j < num_ops; j++)   {
+	    MPI_Wait(&latencyflag[j], MPI_STATUS_IGNORE);
+	}
+
+    } else if (my_rank == dest)   {
+	/* Pre-post MIN_NUM_PINGPING receives */ 
+	for (j= 0; j < MIN_NUM_PINGPING; j++)   {
+	    MPI_Irecv(aligned_buf, msg_len, MPI_BYTE, 0, TAG_LATENCY, MPI_COMM_WORLD, &latencyflag[j]);
+	}
+
+	/* Send ACK */
+	MPI_Send(NULL, 0, MPI_BYTE, 0, TAG_READY, MPI_COMM_WORLD);
+
+	for (j= 0; j < num_ops; j++)   {
+	    MPI_Wait(&latencyflag[j], MPI_STATUS_IGNORE);
+	    if (j + MIN_NUM_PINGPING < num_ops)   {
+		/* Post another */
+		MPI_Irecv(aligned_buf, msg_len, MPI_BYTE, 0, TAG_LATENCY, MPI_COMM_WORLD,
+		    &latencyflag[j + MIN_NUM_PINGPING]);
+	    }
+	}
+
+	/* Got them all */
+	MPI_Send(NULL, 0, MPI_BYTE, 0, TAG_DONE, MPI_COMM_WORLD);
+    }
+
+    return t2 / num_ops / 2.0;
+
+}  /* end of do_one_Test2_trial() */
 
 
 
