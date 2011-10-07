@@ -25,25 +25,25 @@
 
 
 /* Constants */
-#define FALSE			(0)
-#define TRUE			(1)
-#define DEFAULT_NUM_OPS		(200)
-#define DEFAULT_NUM_SETS	(9)
 #define DEFAULT_PRECISION	(0.01)
 
+#define MAX_TRIALS		(10000)
+#define LARGE_ALLREDUCE_OPS	(1)
+#define SMALL_ALLREDUCE_OPS	(20)
+#define SMALL_LARGE_CUTOFF	(16)
 
 
 
 /* Local functions */
-static double Test1(int num_ops, int msg_len, int nranks, MPI_Comm comm);
-static double Test2(int num_ops, int nranks, int msg_len);
-void my_alltoall(double *in, double *result, int msg_len, int nranks);
+static double do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data);
+static double do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data);
+static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, int nnodes,
+    MPI_Comm comm, bool check_data, double req_precision,
+    double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, bool check_data));
+
+void my_alltoall(double *in, double *result, int msg_len, int nranks, int my_rank);
 static void usage(char *pname);
-static int is_pow2(int num);
-
-
-/* Make these two global */
-static int my_rank, num_ranks;
+static bool is_pow2(int num);
 
 
 
@@ -52,17 +52,15 @@ main(int argc, char *argv[])
 {
 
 int ch, error;
-int num_ops;
-double duration;
-double total_time;
+int my_rank, num_ranks;
 int nnodes;
-int num_sets;
 int msg_len;
-int set;
-std::list <double>times;
-int library;
-int stat_mode;
+bool library;
+bool stat_mode;
 double req_precision;
+int num_ops;
+int max_trials;
+bool check_data;
 
 
 
@@ -91,60 +89,52 @@ double req_precision;
 
     /* Set the defaults */
     opterr= 0;		/* Disable getopt error printing */
-    error= FALSE;
-    num_ops= DEFAULT_NUM_OPS;
-    num_sets= DEFAULT_NUM_SETS;
+    error= false;
     msg_len= 1;
-    library= 0;
-    stat_mode= FALSE;
+    library= false;
+    stat_mode= true;
     req_precision= DEFAULT_PRECISION;
+    check_data= false;
 
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "bl:n:s:tp:")) != EOF)   {
+    while ((ch= getopt(argc, argv, "a:cl:p:")) != EOF)   {
 	switch (ch)   {
-	    case 'b':
-		library= 1;
+	    case 'a': // Algorithm
+		if (strtol(optarg, (char **)NULL, 0) == 0)   {
+		    library= false;
+		} else if (strtol(optarg, (char **)NULL, 0) == 1)   {
+		    library= true;
+		} else   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Unknown algorithm. Must be 0 (my_alltoall) or 1 (MPI)!\n");
+		    }
+		    error= true;
+		}
 		break;
+
+	    case 'c':
+		check_data= true;
+		break;
+
 	    case 'l':
 		msg_len= strtol(optarg, (char **)NULL, 0);
 		if (msg_len < 1)   {
 		    if (my_rank == 0)   {
 			fprintf(stderr, "Message length in doubles (-l) must be > 0!\n");
 		    }
-		    error= TRUE;
+		    error= true;
 		}
 		break;
-	    case 'n':
-		num_ops= strtol(optarg, (char **)NULL, 0);
-		if (num_ops < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Number of alltoall operations (-n) must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-	    case 's':
-		num_sets= strtol(optarg, (char **)NULL, 0);
-		if (num_sets < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Number of sets (-s) must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
+
 	    case 'p':
 		req_precision= strtod(optarg, (char **)NULL);
-		if (my_rank == 0)   {
-		    printf("# req_precision is %f\n", req_precision);
+		if (req_precision == 0.0)   {
+		    // Turn sampling off
+		    stat_mode= false;
 		}
 		break;
-
-	    case 't':
-		stat_mode= TRUE;
-		break;
-
 
 	    /* Command line error checking */
 	    DEFAULT_CMD_LINE_ERR_CHECK
@@ -164,136 +154,100 @@ double req_precision;
 	printf("# ------------------\n");
 	disp_cmd_line(argc, argv);
 	printf("#\n");
+	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
+	printf("# Algorithm used for Test 3: ");
+	if (library)   {
+	    printf("MPI_Alltoall\n");
+	} else   {
+	    printf("my_alltoall\n");
+	}
+	if (check_data)   {
+	    printf("# Data checked after each alltoall operation\n");
+	} else   {
+	    printf("# Data will not be checked\n");
+	}
+	printf("#\n");
+    }
+
+
+
+    // For small alltoall, we do more than one to make sure we don't run into
+    // issues with timer resolution.
+    if (num_ranks < SMALL_LARGE_CUTOFF)   {
+	num_ops= SMALL_ALLREDUCE_OPS;
+    } else   {
+	num_ops= LARGE_ALLREDUCE_OPS;
+    }
+
+    if (stat_mode)   {
+	max_trials= MAX_TRIALS;
+    } else   {
+	max_trials= 1;
     }
 
 
 
     // Test 1
-    times.clear();
-    for (set= 0; set < num_sets; set++)   {
-	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test1(num_ops, msg_len, num_ranks, MPI_COMM_WORLD);
-	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-	// Record the average time per alltoall
-	times.push_back(total_time / num_ranks / num_ops);
-    }
     if (my_rank == 0)   {
-	printf("#  |||  %d operations per set. %d sets per node size. %d byte msg len\n",
-	    num_ops, num_sets, msg_len * (int)sizeof(double));
-	printf("#  |||  Test 1: MPI_Alltoall() min, mean, median, max, sd\n");
-	printf("#      ");
-	print_stats(times);
-	printf("\n");
+	printf("#  |||  Test 1: MPI_Alltoall()\n");
+	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
+	printf("#");
     }
+    experiment(my_rank, max_trials, num_ops, msg_len, num_ranks, MPI_COMM_WORLD,
+	    check_data, req_precision, &do_one_Test1_trial);
 
 
 
     // Test 2
-    times.clear();
-    for (set= 0; set < num_sets; set++)   {
-	MPI_Barrier(MPI_COMM_WORLD);
-	duration= Test2(num_ops, num_ranks, msg_len);
-	MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-	// Record the average time per alltoall
-	times.push_back(total_time / num_ranks / num_ops);
-    }
     if (my_rank == 0)   {
-	printf("#  |||  Test 2: my_alltoall() min, mean, median, max, sd\n");
-	printf("#      ");
-	print_stats(times);
-	printf("\n");
+	printf("#  |||  Test 2: my_alltoall()\n");
+	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
+	printf("#");
     }
+    experiment(my_rank, max_trials, num_ops, msg_len, num_ranks, MPI_COMM_WORLD,
+	    check_data, req_precision, &do_one_Test1_trial);
 
 
     // Test 3
     // Now we do this with increasing number of ranks, instead of all of them
     if (my_rank == 0)   {
 	if (library)   {
-	    printf("#  |||  Test 3: MPI_Alltoall() nodes, min, mean, median, max, sd");
+	    printf("#  |||  Test 3: MPI_Alltoall()\n");
 	} else   {
-	    printf("#  |||  Test 3: my_alltoall() nodes, min, mean, median, max, sd");
+	    printf("#  |||  Test 3: my_alltoall()\n");
 	}
-	if (stat_mode)   {
-	    printf(", precision\n");
-	} else   {
-	    printf("\n");
-	}
+	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
     }
 
     for (nnodes= 1; nnodes <= num_ranks; nnodes= nnodes << 1)   {
+	// Adjust to the new node size
 	MPI_Group world_group, new_group;
 	MPI_Comm new_comm;
 	int ranges[][3]={{0, nnodes - 1, 1}};
-	int group_size;
-	double precision;
 
 	MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 	MPI_Group_range_incl(world_group, 1, ranges, &new_group);
-	MPI_Group_size(new_group, &group_size);
 	MPI_Comm_create(MPI_COMM_WORLD, new_group, &new_comm);
 
-	times.clear();
-	for (set= 0; set < num_sets; set++)   {
-	    int trials;
-	    int ii= 0;
-	    double tot= 0.0;
-	    double tot_squared= 0.0;
-	    double metric;
-
-	    if (stat_mode)   {
-		trials= 10000;
-	    } else   {
-		trials= 1;
-	    }
-
-
-	    while (ii < trials)   {
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (my_rank < nnodes)   {
-		    if (library)   {
-			// Use the built-in MPI_Alltoall
-			duration= Test1(num_ops, msg_len, nnodes, new_comm);
-		    } else   {
-			// Use my alltoall
-			duration= Test2(num_ops, nnodes, msg_len);
-		    }
-		} else   {
-		    duration= 0.0;
-		}
-		MPI_Allreduce(&duration, &total_time, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-		metric= total_time / nnodes / num_ops;
-		tot= tot + metric;
-		tot_squared= tot_squared + metric*metric;
-		precision= stat_p(ii + 1, tot, tot_squared);
-
-		if (stat_mode) {
-		    /* check for precision if at least 3 trials have taken place. ii > 1 => N > 2.  */
-		    if (my_rank == 0 && ii > 1 && precision <= req_precision)   {
-			trials= ii;
-		    }
-		    MPI_Bcast(&trials, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		}
-		ii++;
-
-	    }
-	    if (stat_mode)   {
-		/* if i = 10, actual trials done is 11 */
-		trials++; /* this is the total number of trials that took place */
-	    }
-	    // Record the average time per alltoall
-	    // times.push_back(total_time / nnodes / num_ops);
-	    times.push_back(tot/trials);
+	// For small alltoall, we do more than one to make sure we don't run into
+	// issues with timer resolution.
+	if (nnodes < 16)   {
+	    num_ops= SMALL_ALLREDUCE_OPS;
+	} else   {
+	    num_ops= LARGE_ALLREDUCE_OPS;
 	}
-	if (my_rank == 0)   {
-	    printf("%6d ", nnodes);
-	    if (stat_mode)   {
-		print_stats(times, precision);
+
+	if (my_rank < nnodes)   {
+	    if (library)   {
+		// Use the built-in MPI_Alltoall
+		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
+		    check_data, req_precision, &do_one_Test1_trial);
 	    } else   {
-		print_stats(times);
+		// Use my alltoall
+		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
+		    check_data, req_precision, &do_one_Test2_trial);
 	    }
-	    printf("\n");
 	}
     }
 
@@ -306,14 +260,19 @@ double req_precision;
 
 
 static double
-Test1(int num_ops, int msg_len, int nranks, MPI_Comm comm)
+do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data)
 {
 
 double t, t2;
 int i, j;
 double *sbuf;
 double *rbuf;
+int nranks;
+int my_rank;
 
+
+	MPI_Comm_size(comm, &nranks);
+	MPI_Comm_rank(comm, &my_rank);
 
 	// Allocate memory
 	sbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
@@ -328,42 +287,51 @@ double *rbuf;
 	    }
 	}
 
-	memset(rbuf, 0, sizeof(double) * msg_len * nranks);
+	memset(rbuf, 0x55, sizeof(double) * msg_len * nranks);
+
+	/* Do a warm-up */
+	MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
 	
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
 	    MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
 	}
-
 	t2= MPI_Wtime() - t;
 
 	/* Check */
-	for (j= 0; j < nranks; j++)   {
-	    for (i= 0; i < msg_len; i++)   {
-		if (rbuf[j * msg_len + i] != i + j)   {
-		    fprintf(stderr, "[%3d] MPI_Alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+	if (check_data)   {
+	    for (j= 0; j < nranks; j++)   {
+		for (i= 0; i < msg_len; i++)   {
+		    if (rbuf[j * msg_len + i] != i + j)   {
+			fprintf(stderr, "[%3d] MPI_Alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+		    }
 		}
 	    }
 	}
 
 	free(sbuf);
 	free(rbuf);
-	return t2;
+	return t2 / num_ops;
 
-}  /* end of Test1() */
+}  // end of do_one_Test1_trial()
 
 
 
 static double
-Test2(int num_ops, int nranks, int msg_len)
+do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data)
 {
 
-double t;
+double t, t2;
 int i, j;
 double *sbuf;
 double *rbuf;
+int nranks;
+int my_rank;
 
+
+	MPI_Comm_rank(comm, &my_rank);
+	MPI_Comm_size(comm, &nranks);
 
 	// Allocate memory
 	sbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
@@ -378,28 +346,112 @@ double *rbuf;
 	    }
 	}
 
-	memset(rbuf, 0, sizeof(double) * msg_len * nranks);
+	memset(rbuf, 0x55, sizeof(double) * msg_len * nranks);
+
+	/* Do a warm-up */
+	my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
 	
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
-	    my_alltoall(sbuf, rbuf, msg_len, nranks);
+	    my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
 	}
+	t2= MPI_Wtime() - t;
 
 	/* Check */
-	for (j= 0; j < nranks; j++)   {
-	    for (i= 0; i < msg_len; i++)   {
-		if (rbuf[j * msg_len + i] != i + j)   {
-		    fprintf(stderr, "[%3d] my_alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+	if (check_data)   {
+	    for (j= 0; j < nranks; j++)   {
+		for (i= 0; i < msg_len; i++)   {
+		    if (rbuf[j * msg_len + i] != i + j)   {
+			fprintf(stderr, "[%3d] my_alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+		    }
 		}
 	    }
 	}
 
 	free(sbuf);
 	free(rbuf);
-	return MPI_Wtime() - t;
+	return t2 / num_ops;
 
-}  /* end of Test2() */
+}  // end of do_one_Test2_trial()
+
+
+
+static void
+experiment(int my_rank, int max_trials, int num_ops, int msg_len, int nnodes,
+    MPI_Comm comm, bool check_data, double req_precision,
+    double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, bool check_data))
+{
+
+double tot;
+double tot_squared;
+double metric;
+int cnt;
+std::list <double>times;
+double precision;
+#if node0
+int done;
+#else
+double total_time;
+#endif
+
+
+    times.clear();
+    tot= 0.0;
+    cnt= 0;
+    tot_squared= 0.0;
+
+    while (cnt < max_trials)   {
+	cnt++;
+
+	MPI_Barrier(comm);
+
+	// Run one trial
+	metric= do_one_trial(num_ops, msg_len, comm, check_data);
+
+#if !node0
+	MPI_Allreduce(&metric, &total_time, 1, MPI_DOUBLE, MPI_SUM, comm);
+	metric= total_time / nnodes;
+#endif
+
+	times.push_back(metric);
+
+	tot= tot + metric;
+	tot_squared= tot_squared + metric * metric;
+	precision= stat_p(cnt, tot, tot_squared);
+
+#if !node0
+	// Need at least tree trials
+	if ((cnt >= 3) && (precision < req_precision))   {
+	    // Attained the required precisions. Done!
+	    break;
+	}
+#else
+	// Need at least tree trials
+	if ((cnt >= 3) && (precision < req_precision))   {
+	    // Attained the required precisions. Done!
+	    done= 1;
+	} else   {
+	    done= 0;
+	}
+	// 0 tells everyone else
+	MPI_Bcast(&done, 1, MPI_INT, 0, comm);
+	if (done)   {
+	    break;
+	}
+#endif
+    }
+
+    if (my_rank == 0)   {
+	printf("%6d ", nnodes);
+	print_stats(times, precision);
+	printf(" %5d\n", cnt);
+    }
+
+}  // end of experiment()
+
+
+
 
 
 
@@ -410,7 +462,7 @@ double *rbuf;
 //
 // NOTE! This only works for powers of 2!!!
 void
-my_alltoall(double *in, double *result, int msg_len, int nranks)
+my_alltoall(double *in, double *result, int msg_len, int nranks, int my_rank)
 {
 
 int i;
@@ -420,7 +472,7 @@ int offset;
 int len1, len2;
 MPI_Request sreq1, sreq2;
 MPI_Request rreq1, rreq2;
-long long bytes_sent= 0;
+int64_t bytes_sent= 0;
 
 
     sreq1= MPI_REQUEST_NULL;
@@ -491,32 +543,31 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-b] [-l len] [-n ops] [-s sets] [-t] [-p P]\n", pname);
-    fprintf(stderr, "    -b          Use the MPI library MPI_Alltoall\n");
+    fprintf(stderr, "Usage: %s [-l len] [-a type] [-p precision] [-c]\n", pname);
+    fprintf(stderr, "    -a type        Select type of alltoall algorithm\n");
+    fprintf(stderr, "                   0 = my_alltoall (default)\n");
+    fprintf(stderr, "                   1 = MPI_Alltoall\n");
+
     fprintf(stderr, "    -l len      Size of alltoall operations in number of doubles. Default 1\n");
-    fprintf(stderr, "    -n ops      Number of alltoall operations per test. Default %d\n",
-	DEFAULT_NUM_OPS);
-    fprintf(stderr, "    -s sets     Number of sets; i.e. number of test repeats. Default %d\n",
-	DEFAULT_NUM_SETS);
-    fprintf(stderr, "    -t          Run each experiement until confidence interval is within precision.\n");
     fprintf(stderr, "    -p P        Set precision (confidence interval). Default %.3f\n",
 	DEFAULT_PRECISION);
+    fprintf(stderr, "                   A precision of 0.0 disables sampling\n");
 
 }  /* end of usage() */
 
 
 
-static int
+static bool
 is_pow2(int num)
 {
     if (num < 1)   {
-	return FALSE;
+	return false;
     }
 
     if ((num & (num - 1)) == 0)   {
-	return TRUE;
+	return true;
     }
 
-    return FALSE;
+    return false;
 
 }  /* end of is_pow2() */

@@ -5,6 +5,14 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#ifndef TRUE
+#define TRUE	(1)
+#endif
+
+#ifndef FALSE
+#define FALSE	(0)
+#endif
+
 void disp_cmd_line(int argc, char **argv);
 
 #define DEFAULT_CMD_LINE_ERR_CHECK \

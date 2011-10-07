@@ -28,8 +28,6 @@
 
 
 /* Constants */
-#define FALSE			(0)
-#define TRUE			(1)
 #define DEFAULT_PRECISION	(0.01)
 
 #define MY_TAG_UP		(55)
@@ -58,7 +56,8 @@ int
 main(int argc, char *argv[])
 {
 
-int ch, error;
+int ch;
+bool error;
 int my_rank, num_ranks;
 Collective_topology *ctopo;
 int nnodes;
@@ -88,7 +87,7 @@ int max_trials;
 
     /* Set the defaults */
     opterr= 0;		/* Disable getopt error printing */
-    error= FALSE;
+    error= false;
     msg_len= 1; // 1 sizeof(double)
     library= false;
     tree= TREE_DEEP;
@@ -111,9 +110,9 @@ int max_trials;
 		    library= true;
 		} else   {
 		    if (my_rank == 0)   {
-			fprintf(stderr, "Unknown tree type (-t) must be 0 or 1!\n");
+			fprintf(stderr, "Unknown algorithm. Must be 0 (deep), 1 (binary), or 2 (MPI)!\n");
 		    }
-		    error= TRUE;
+		    error= true;
 		}
 		break;
 
@@ -123,7 +122,7 @@ int max_trials;
 		    if (my_rank == 0)   {
 			fprintf(stderr, "Message length in doubles (-l) must be > 0!\n");
 		    }
-		    error= TRUE;
+		    error= true;
 		}
 		break;
 
@@ -184,6 +183,8 @@ int max_trials;
     } else   {
 	max_trials= 1;
     }
+
+
 
     // Test 1
     if (my_rank == 0)   {
