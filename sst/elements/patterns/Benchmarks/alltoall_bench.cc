@@ -220,7 +220,8 @@ bool check_data;
 	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
     }
 
-    for (nnodes= 1; nnodes <= num_ranks; nnodes= nnodes << 1)   {
+    nnodes= 1;
+    while (nnodes <= num_ranks)   {
 	// Adjust to the new node size
 	MPI_Group world_group, new_group;
 	MPI_Comm new_comm;
@@ -248,6 +249,26 @@ bool check_data;
 		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
 		    check_data, req_precision, &do_one_Test2_trial);
 	    }
+	}
+
+	/* Don't measure every single node size... */
+	if (nnodes == num_ranks)   {
+	    break;
+	}
+	if (nnodes < 64)   {
+	    nnodes++;
+	} else if (nnodes < 128)   {
+	    nnodes= nnodes + 8;
+	    if (nnodes > num_ranks) nnodes= num_ranks;
+	} else if (nnodes < 512)   {
+	    nnodes= nnodes + 32;
+	    if (nnodes > num_ranks) nnodes= num_ranks;
+	} else if (nnodes < 2048)   {
+	    nnodes= nnodes + 128;
+	    if (nnodes > num_ranks) nnodes= num_ranks;
+	} else   {
+	    nnodes= nnodes + 512;
+	    if (nnodes > num_ranks) nnodes= num_ranks;
 	}
     }
 
