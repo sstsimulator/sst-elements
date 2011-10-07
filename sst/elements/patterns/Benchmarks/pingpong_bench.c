@@ -327,7 +327,7 @@ int done;
 	tot= tot  * 1000000.0;
 	max_metric= max_metric * 1000000.0;
 
-	printf("%9d  %8.3f    %8.3f    %8.3f    %12.6f   %5d\n",
+	printf("%9d  %9.3f    %9.3f    %9.3f    %12.6f   %5d\n",
 	    msg_len, min_metric, tot / cnt, max_metric, precision, cnt);
     }
 
