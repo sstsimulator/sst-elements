@@ -123,13 +123,6 @@ int i;
     qsort(results, cnt, sizeof(double), &cmpdouble);
 
     for (i= 0; i < cnt; i++)   {
-	if (i == (cnt / 2))   {
-	    /*
-	    ** FIXME: For an even number of entries, this should be the
-	    ** average of the two middle ones.
-	    */
-	    med= results[i];
-	}
 	avg= avg + results[i];
 	if (results[i] < min)   {
 	    min= results[i];
@@ -139,6 +132,13 @@ int i;
 	}
     }
     avg= avg / cnt;
+    if (cnt % 2 == 0)   {
+	/* even */
+	med= (results[cnt / 2] + results[(cnt / 2) - 1]) / 2.0;;
+    } else   {
+	/* odd */
+	med= results[cnt / 2];
+    }
 
     /* Calculate the standard deviation */
     for (i= 0; i < cnt; i++)   {
@@ -146,7 +146,7 @@ int i;
     }
     sd= sqrt(sd / cnt);
 
-    printf("%9.3f    %9.3f    %9.3f    %9.3f    %12.6f",
-	min, avg, med, max, precision);
+    printf("%9.3f    %9.3f    %9.3f    %9.3f    %9.3f    %12.6f",
+	min, avg, med, max, sd, precision);
 
 }  /* end of disp_stats() */

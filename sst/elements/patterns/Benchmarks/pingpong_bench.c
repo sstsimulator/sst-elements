@@ -181,7 +181,7 @@ int pingping;
 	printf("#\n");
 	printf("# Length                  Latency\n");
 	printf("# in bytes            in micro seconds\n");
-	printf("#            minimum         mean       median      maximum       precision  trials\n");
+	printf("#            minimum         mean       median      maximum           sd       precision  trials\n");
     }
 
     len= start_len;
