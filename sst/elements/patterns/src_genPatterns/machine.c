@@ -177,10 +177,6 @@ int found_zero;
 	fprintf(stderr, "Need to set NoCLinkBandwidth in machine file!\n");
 	return FALSE;
     }
-    if (_NoCLinkLatency < 0)   {
-	fprintf(stderr, "Need to set NoCLinkLatency in machine file!\n");
-	return FALSE;
-    }
     if (_IOLinkBandwidth < 0)   {
 	fprintf(stderr, "Need to set IOLinkBandwidth in machine file!\n");
 	return FALSE;
@@ -425,8 +421,6 @@ int rc;
 	    _NetLinkBandwidth= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("NoCLinkBandwidth", key) == 0)   {
 	    _NoCLinkBandwidth= strtoll(value1, (char **)NULL, 0);
-	} else if (strcmp("NoCLinkLatency", key) == 0)   {
-	    _NoCLinkLatency= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("IOLinkBandwidth", key) == 0)   {
 	    _IOLinkBandwidth= strtoll(value1, (char **)NULL, 0);
 	} else if (strcmp("IOLinkLatency", key) == 0)   {
@@ -453,7 +447,12 @@ int rc;
 	    }
 	    if ((_NetNICparams[_NetNICinflections].latency - _NetIntraLatency) < _NetLinkLatency)   {
 		/* Set Net link latency to smallest NIC lateny we know of */
+		/* We do this to move some latency onto the SST links */
+		/* The NIC model will subtract it, but SST will add it back in for link transfers */
 		_NetLinkLatency= _NetNICparams[_NetNICinflections].latency - _NetIntraLatency;
+		if (_NetLinkLatency < 0)   {
+		    _NetLinkLatency= 0;
+		}
 	    }
 	    _NetNICinflections++;
 	} else if (strstr(key, "NoCNICparams") == key)   {
@@ -471,7 +470,12 @@ int rc;
 	    }
 	    if ((_NoCNICparams[_NoCNICinflections].latency - _NoCIntraLatency) < _NoCLinkLatency)   {
 		/* Set NoC link latency to smallest NIC lateny we know of */
+		/* We do this to move some latency onto the SST links */
+		/* The NIC model will subtract it, but SST will add it back in for link transfers */
 		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency - _NoCIntraLatency;
+		if (_NoCLinkLatency < 0)   {
+		    _NoCLinkLatency= 0;
+		}
 	    }
 	    _NoCNICinflections++;
 
