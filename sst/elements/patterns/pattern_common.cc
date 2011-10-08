@@ -857,6 +857,9 @@ int64_t link_duration;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
+	if (delay < 0)   {
+	    delay= 0;
+	}
 	if (blocking >= 0)   {
 	    send_msg_complete(delay, blocking, tag);
 	}
@@ -867,6 +870,9 @@ int64_t link_duration;
 	// NIC is busy
 	delay= NextNoCNICslot - CurrentSimTime + NoCNICgap +
 	    latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
+	if (delay < 0)   {
+	    delay= 0;
+	}
 	if (blocking >= 0)   {
 	    send_msg_complete(delay, blocking, tag);
 	}
@@ -935,6 +941,9 @@ int64_t link_duration;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (delay < 0)   {
+	    delay= 0;
+	}
 	if (blocking >= 0)   {
 	    send_msg_complete(delay, blocking, tag);
 	}
@@ -945,6 +954,9 @@ int64_t link_duration;
 	// NIC is busy
 	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
 	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (delay < 0)   {
+	    delay= 0;
+	}
 	if (blocking >= 0)   {
 	    send_msg_complete(delay, blocking, tag);
 	}
@@ -1007,6 +1019,9 @@ FarLink_t fl;
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
 	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (delay < 0)   {
+	    delay= 0;
+	}
 	if (blocking >= 0)   {
 	    send_msg_complete(delay, blocking, tag);
 	}
@@ -1017,6 +1032,9 @@ FarLink_t fl;
 	// NIC is busy
 	delay= NextFarNICslot - CurrentSimTime + NetNICgap +
 	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	if (delay < 0)   {
+	    delay= 0;
+	}
 	if (blocking >= 0)   {
 	    send_msg_complete(delay, blocking, tag);
 	}

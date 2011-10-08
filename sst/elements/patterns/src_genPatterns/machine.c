@@ -318,9 +318,9 @@ int i;
 	NoCNICinflections(), NoCNICgap());
 
     printf("# *** Net link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
-	_NetLinkBandwidth, _NetLinkLatency);
+	_NetLinkBandwidth, _NetLinkLatency + _NetIntraLatency);
     printf("# *** NoC link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
-	_NoCLinkBandwidth, _NoCLinkLatency);
+	_NoCLinkBandwidth, _NoCLinkLatency + _NoCIntraLatency);
     printf("# *** I/O link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_IOLinkBandwidth, _IOLinkLatency);
     printf("# *** Link latency between routers: Network %" PRId64 " ns, NoC %" PRId64 " ns\n",

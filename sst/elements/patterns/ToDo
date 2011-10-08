@@ -1,3 +1,5 @@
+- NoCIntraLatency cannot be less than NoCNICparams 0. Why?
+
 - NetIntraLatency Cannot be bigger than NetNICparams = 0. I don't think that is right.
 
 - Fix msgrate_patter Test 3 abort bug
