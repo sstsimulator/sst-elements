@@ -69,3 +69,5 @@ libfft_pattern_la_SOURCES = fft_pattern.h fft_pattern.cc \
 			    stats.h stats.cc
 libfft_pattern_la_LDFLAGS = -module -avoid-version
 
+bin_PROGRAMS =
+include src_genPatterns/Makefile.inc
