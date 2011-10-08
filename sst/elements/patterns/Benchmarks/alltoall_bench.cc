@@ -15,8 +15,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>	/* For strtol(), exit() */
+#include <stdint.h>	/* For uint32_t */
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
+#include <assert.h>
 #include <mpi.h>
 #include "../stats.h"
 #include "stat_p.h"
@@ -44,6 +46,7 @@ static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, in
 void my_alltoall(double *in, double *result, int msg_len, int nranks, int my_rank);
 static void usage(char *pname);
 static bool is_pow2(int num);
+static uint32_t next_power2(uint32_t v);
 
 
 
@@ -68,24 +71,6 @@ bool check_data;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
-
-    if (num_ranks < 2)   {
-	if (my_rank == 0)   {
-	    fprintf(stderr, "Need to run on at least two ranks; more would be better\n");
-	}
-	MPI_Finalize();
-	exit(-1);
-    }
-
-
-    if (!is_pow2(num_ranks))   {
-	if (my_rank == 0)   {
-	    fprintf(stderr, "Need to run on a power of two number of ranks; sorry.\n");
-	}
-	MPI_Finalize();
-	exit(-1);
-    }
-
 
     /* Set the defaults */
     opterr= 0;		/* Disable getopt error printing */
@@ -154,7 +139,11 @@ bool check_data;
 	printf("# ------------------\n");
 	disp_cmd_line(argc, argv);
 	printf("#\n");
-	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	if (stat_mode)   {
+	    printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	} else   {
+	    printf("# Statistics mode is off\n");
+	}
 	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
 	printf("# Algorithm used for Test 3: ");
 	if (library)   {
@@ -310,6 +299,19 @@ int my_rank;
 
 	memset(rbuf, 0x55, sizeof(double) * msg_len * nranks);
 
+	/* Check */
+	if (check_data)   {
+	    MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
+	    for (j= 0; j < nranks; j++)   {
+		for (i= 0; i < msg_len; i++)   {
+		    if (rbuf[j * msg_len + i] != i + j)   {
+			fprintf(stderr, "[%3d] MPI_Alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
+			exit(-1);
+		    }
+		}
+	    }
+	}
+
 	/* Do a warm-up */
 	MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
 	
@@ -319,17 +321,6 @@ int my_rank;
 	    MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
 	}
 	t2= MPI_Wtime() - t;
-
-	/* Check */
-	if (check_data)   {
-	    for (j= 0; j < nranks; j++)   {
-		for (i= 0; i < msg_len; i++)   {
-		    if (rbuf[j * msg_len + i] != i + j)   {
-			fprintf(stderr, "[%3d] MPI_Alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
-		    }
-		}
-	    }
-	}
 
 	free(sbuf);
 	free(rbuf);
@@ -363,11 +354,31 @@ int my_rank;
 	}
 	for (j= 0; j < nranks; j++)   {
 	    for (i= 0; i < msg_len; i++)   {
-		sbuf[j * msg_len + i]= i + my_rank;
+		sbuf[j * msg_len + i]= j * my_rank + i + my_rank;
 	    }
 	}
 
 	memset(rbuf, 0x55, sizeof(double) * msg_len * nranks);
+
+	/* Check */
+	if (check_data)   {
+	    my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
+	    for (j= 0; j < nranks; j++)   {
+		for (i= 0; i < msg_len; i++)   {
+		    if (rbuf[j * msg_len + i] != j * j + i + j)   {
+			fprintf(stderr, "[%3d] %d ranks, my_alltoall() failed at rbuf[j %d, i %d]\n",
+			    my_rank, nranks, j, i);
+			if (my_rank == 4)   {
+			for (int k= 0; k < nranks; k++)   {
+			    fprintf(stderr, "[%3d]    [%2d][%2d] Expected %4.1f, got %4.1f\n", my_rank,
+				k, i, (float)k * k + i + k, rbuf[k * msg_len + i]);
+			}
+			}
+			exit(-1);
+		    }
+		}
+	    }
+	}
 
 	/* Do a warm-up */
 	my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
@@ -378,17 +389,6 @@ int my_rank;
 	    my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
 	}
 	t2= MPI_Wtime() - t;
-
-	/* Check */
-	if (check_data)   {
-	    for (j= 0; j < nranks; j++)   {
-		for (i= 0; i < msg_len; i++)   {
-		    if (rbuf[j * msg_len + i] != i + j)   {
-			fprintf(stderr, "[%3d] my_alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
-		    }
-		}
-	    }
-	}
 
 	free(sbuf);
 	free(rbuf);
@@ -473,15 +473,11 @@ double total_time;
 
 
 
-
-
-
 // Instead of using the MPI provided alltoall, we use this algorithm.
 // It is the same one used in the communication pattern and allows for
 // more accurate comparisons, since the number of messages as well as
 // sources and destinations are the same.
 //
-// NOTE! This only works for powers of 2!!!
 void
 my_alltoall(double *in, double *result, int msg_len, int nranks, int my_rank)
 {
@@ -496,11 +492,6 @@ MPI_Request rreq1, rreq2;
 int64_t bytes_sent= 0;
 
 
-    sreq1= MPI_REQUEST_NULL;
-    sreq2= MPI_REQUEST_NULL;
-    rreq1= MPI_REQUEST_NULL;
-    rreq2= MPI_REQUEST_NULL;
-
     /* My own contribution */
     for (i= 0; i < msg_len; i++)   {
 	result[my_rank * msg_len + i]= in[my_rank * msg_len + i];
@@ -511,6 +502,11 @@ int64_t bytes_sent= 0;
     while (i > 0)   {
 	dest= (my_rank + shift) % nranks;
 	src= ((my_rank - shift) + nranks) % nranks;
+
+	sreq1= MPI_REQUEST_NULL;
+	sreq2= MPI_REQUEST_NULL;
+	rreq1= MPI_REQUEST_NULL;
+	rreq2= MPI_REQUEST_NULL;
 
 	offset= (my_rank * msg_len) - ((shift - 1) * msg_len);
 	if (offset < 0)   {
@@ -554,6 +550,85 @@ int64_t bytes_sent= 0;
 	}
     }
 
+    // If we are not on a power of two ranks, we have some more work to do.
+    // n additional pieces of data (of length msg_len) still need to be xfered
+    if (!is_pow2(nranks))   {
+	int n;
+	double *r1_start, *r2_start;
+	double *s1_start, *s2_start;
+	int r1_len, r2_len;
+	int s1_len, s2_len;
+
+
+	// One more step: Each rank sends n blocks of data n ranks back, if
+	// we are n over the last power of two
+	n= nranks - next_power2(nranks) / 2;
+	// if (my_rank == 0)   fprintf(stderr, "nranks %d, next pow %d, n %d\n", nranks, next_power2(nranks), n);
+	dest= (my_rank + nranks - n) % nranks;
+	// is the same as dest= (my_rank + shift) % nranks;
+	assert(dest == (my_rank + shift) % nranks);
+	src= (my_rank + n + nranks) % nranks;
+
+	sreq1= MPI_REQUEST_NULL;
+	sreq2= MPI_REQUEST_NULL;
+	rreq1= MPI_REQUEST_NULL;
+	rreq2= MPI_REQUEST_NULL;
+
+	// Do I need to receive in two pieces?
+	if (src < n - 1)   {
+	    // Receive it in two pieces
+	    r1_start= &result[(my_rank + 1) * msg_len];
+	    r1_len= (nranks - my_rank - 1) * msg_len;
+	    r2_start= &result[0];
+	    r2_len= n * msg_len - r1_len;;
+	    // fprintf(stderr, "[%3d] expect two of lengths %d and %d from %d\n", my_rank, r1_len, r2_len, src);
+	    MPI_Irecv(r1_start, r1_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
+	    MPI_Irecv(r2_start, r2_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq2);
+	} else   {
+	    // Receive it all in one piece
+	    r1_start= &result[((my_rank + 1) % nranks) * msg_len];
+	    r1_len= n * msg_len;
+	    // fprintf(stderr, "[%3d] expect one from %d\n", my_rank, src);
+	    MPI_Irecv(r1_start, r1_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
+	}
+
+
+	// Send one piece or two?
+	if (my_rank < n - 1)   {
+	    // Split buffer; send two pieces
+	    s1_start= &result[(nranks - (n - my_rank - 1)) * msg_len];
+	    s1_len= (n - my_rank - 1) * msg_len;
+	    s2_start= &result[0];
+	    s2_len= (my_rank + 1) * msg_len;
+	    // fprintf(stderr, "[%3d] Sending two pieces (%4.1f, %4.1f) of lengths %d, %d to %d\n", my_rank, *s1_start, *s2_start, s1_len, s2_len, dest);
+	    MPI_Isend(s1_start, s1_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	    bytes_sent= bytes_sent + s1_len;
+	    MPI_Isend(s2_start, s2_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq2);
+	    bytes_sent= bytes_sent + s2_len;
+	} else   {
+	    // All in one piece
+	    s1_start= &result[(my_rank - n + 1) * msg_len];
+	    s1_len= n * msg_len;
+	    // fprintf(stderr, "[%3d] Sending one piece (%4.1f) of len %d to %d\n", my_rank, *s1_start, s1_len, dest);
+	    MPI_Isend(s1_start, s1_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	    bytes_sent= bytes_sent + s1_len;
+	}
+
+	/* Clean up */
+	MPI_Wait(&rreq1, MPI_STATUS_IGNORE);
+	// fprintf(stderr, "[%3d] Got piece 1 of len %d: %4.1f from %d\n", my_rank, r1_len, *r1_start, src);
+	MPI_Wait(&sreq1, MPI_STATUS_IGNORE);
+	// fprintf(stderr, "[%3d] Sent piece 1 of len %d: %4.1f to %d\n", my_rank, s1_len, *s1_start, dest);
+	if (rreq2 != MPI_REQUEST_NULL)   {
+	    MPI_Wait(&rreq2, MPI_STATUS_IGNORE);
+	    // fprintf(stderr, "[%3d] Got piece 2 of len %d: %4.1f from %d\n", my_rank, r2_len, *r2_start, src);
+	}
+	if (sreq2 != MPI_REQUEST_NULL)   {
+	    MPI_Wait(&sreq2, MPI_STATUS_IGNORE);
+	    // fprintf(stderr, "[%3d] Sent piece 2 of len %d: %4.1f to %d\n", my_rank, s2_len, *s2_start, dest);
+	}
+    }
+
     /* fprintf(stderr, "[%3d] bytes sent is %lld\n", my_rank, bytes_sent); */
 
 }  /* end of my_alltoall() */
@@ -573,11 +648,13 @@ usage(char *pname)
     fprintf(stderr, "    -p P        Set precision (confidence interval). Default %.3f\n",
 	DEFAULT_PRECISION);
     fprintf(stderr, "                   A precision of 0.0 disables sampling\n");
+    fprintf(stderr, "    -c             Check data\n");
 
 }  /* end of usage() */
 
 
 
+// from http://graphics.stanford.edu/~seander/bithacks.html
 static bool
 is_pow2(int num)
 {
@@ -592,3 +669,20 @@ is_pow2(int num)
     return false;
 
 }  /* end of is_pow2() */
+
+
+
+static uint32_t
+next_power2(uint32_t v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+
+    return v;
+
+}  // end of next_power2()

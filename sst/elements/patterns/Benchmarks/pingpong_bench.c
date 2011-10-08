@@ -177,7 +177,11 @@ int pingping;
 		start_len, end_len);
 	}
 	printf("# Exchanging data between nodes %d and %d of, %d nodes\n", 0, dest, num_nodes);
-	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	if (stat_mode)   {
+	    printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	} else   {
+	    printf("# Statistics mode is off\n");
+	}
 	printf("#\n");
 	printf("# Length                  Latency\n");
 	printf("# in bytes            in micro seconds\n");

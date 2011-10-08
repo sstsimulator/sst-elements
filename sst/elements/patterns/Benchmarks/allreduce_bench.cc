@@ -152,7 +152,11 @@ int max_trials;
 	printf("# -------------------\n");
 	disp_cmd_line(argc, argv);
 	printf("#\n");
-	printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	if (stat_mode)   {
+	    printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	} else   {
+	    printf("# Statistics mode is off\n");
+	}
 	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
 	printf("# Algorithm used for Test 3: ");
 	if (library)   {
