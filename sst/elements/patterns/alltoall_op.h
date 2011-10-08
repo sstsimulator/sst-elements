@@ -25,10 +25,6 @@ class Alltoall_op   {
 	    done= false;
 	    state= START;
 	    alltoall_nranks= cp->num_ranks;
-	    if (!cp->is_pow2(alltoall_nranks))   {
-		_abort(alltoall_pattern, "[%3d] num_ranks (%d) must be power of 2!\n",
-		    cp->my_rank, alltoall_nranks);
-	    }
 	    receives= 0;
 	}
 
@@ -37,10 +33,6 @@ class Alltoall_op   {
 	void resize(int new_size)
 	{
 	    alltoall_nranks= new_size;
-	    if (!cp->is_pow2(alltoall_nranks))   {
-		_abort(alltoall_pattern, "[%3d] num_ranks (%d) must be power of 2!\n",
-		    cp->my_rank, alltoall_nranks);
-	    }
 	}
 
 	uint32_t install_handler(void)
@@ -50,11 +42,12 @@ class Alltoall_op   {
 
 	// The Alltoall pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {START, MAIN_LOOP, SEND, WAIT} alltoall_state_t;
+	typedef enum {START, MAIN_LOOP, SEND, REMAINDER, WAIT} alltoall_state_t;
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_NEXT_LOOP, E_INITIAL_DATA,
-	    E_SEND_START, E_SEND_DONE, E_LAST_DATA, E_ALL_DATA} alltoall_events_t;
+	    E_SEND_START, E_SEND_DONE, E_REMAINDER_START,
+	    E_LAST_DATA, E_ALL_DATA} alltoall_events_t;
 
 
 
@@ -81,11 +74,13 @@ class Alltoall_op   {
 	int shift;
 	int receives;
 	long long bytes_sent;
+	bool remainder_done;
 
 	void state_INIT(state_event event);
 	void state_MAIN_LOOP(state_event event);
-	void state_WAIT(state_event event);
 	void state_SEND(state_event event);
+	void state_REMAINDER(state_event event);
+	void state_WAIT(state_event event);
 
 };
 

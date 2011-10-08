@@ -180,6 +180,29 @@ Comm_pattern::SimTimeToD(SimTime_t t)
 
 
 
+//
+// A couple of bit-twidling utility functions we need
+// Algorithms from http://graphics.stanford.edu/~seander/bithacks.html
+//
+
+// Find the next higher power of 2 for v
+uint32_t
+Comm_pattern::next_power2(uint32_t v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+
+    return v;
+
+}  // end of next_power2()
+
+
+
 int
 Comm_pattern::is_pow2(int num)
 {

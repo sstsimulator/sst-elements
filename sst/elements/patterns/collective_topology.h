@@ -60,8 +60,8 @@ class Collective_topology   {
 
 	// Some utility functions we need
 	int lsb(uint32_t v);
-	uint32_t next_power2(uint32_t v);
 	void gen_children(void);
+	uint32_t next_power2(uint32_t v);
 
 };
 

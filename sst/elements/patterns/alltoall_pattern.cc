@@ -51,7 +51,18 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
     switch (e)   {
 	case E_START:
 	case E_NEXT_OUTER_LOOP:
-	    nnodes= nnodes << 1;
+	    if (nnodes < 64)   {
+		nnodes++;
+	    } else if (nnodes < 128)   {
+		nnodes= nnodes + 8;
+	    } else if (nnodes < 512)   {
+		nnodes= nnodes + 32;
+	    } else if (nnodes < 2048)   {
+		nnodes= nnodes + 128;
+	    } else   {
+		nnodes= nnodes + 512;
+	    }
+
 	    if (nnodes <= num_ranks)   {
 		// Start next loop with nnodes
 		a_test->resize(nnodes);

@@ -42,6 +42,10 @@ Alltoall_op::handle_events(state_event sm_event)
 	    state_SEND(sm_event);
 	    break;
 
+	case REMAINDER:
+	    state_REMAINDER(sm_event);
+	    break;
+
 	case WAIT:
 	    state_WAIT(sm_event);
 	    break;
@@ -80,6 +84,7 @@ state_event send_event;
 	    i= alltoall_nranks >> 1;
 	    shift= 1;
 	    bytes_sent= 0;
+	    remainder_done= false;
 
 	    /* Go to the main loop */
 	    goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
@@ -107,9 +112,18 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 		/* We got (more) work to do */
 		goto_state(state_SEND, SEND, E_SEND_START);
 	    } else   {
-		/* We are done looping. Exit */
-		// fprintf(stderr, "[%3d] bytes sent is %lld\n", cp->my_rank, bytes_sent);
-		done= true;
+		// If we are not on a power of two ranks, we need one more step
+		if (!remainder_done)   {
+		    if (!cp->is_pow2(alltoall_nranks))   {
+			goto_state(state_REMAINDER, REMAINDER, E_REMAINDER_START);
+		    } else   {
+			/* We are done looping. Exit */
+			// fprintf(stderr, "[%3d] bytes sent is %lld\n", cp->my_rank, bytes_sent);
+			done= true;
+		    }
+		} else   {
+		    done= true;
+		}
 	    }
 	    break;
 
@@ -175,6 +189,63 @@ int len1, len2;
 
 
 void
+Alltoall_op::state_REMAINDER(state_event sm_event)
+{
+
+alltoall_events_t e= (alltoall_events_t)sm_event.event;
+state_event send_event;
+int n;
+int s1_len, s2_len;
+int src, dest;
+
+
+    switch (e)   {
+	case E_REMAINDER_START:
+
+	    // One more step: Each rank sends n blocks of data n ranks back, if
+	    // we are n over the last power of two
+	    n= alltoall_nranks - cp->next_power2(alltoall_nranks) / 2;
+	    dest= (cp->my_rank + alltoall_nranks - n) % alltoall_nranks;
+	    src= (cp->my_rank + n + alltoall_nranks) % alltoall_nranks;
+
+
+	    // Send one piece or two?
+	    if (cp->my_rank < n - 1)   {
+		// Split buffer; send two pieces
+		s1_len= (n - cp->my_rank - 1) * alltoall_msglen;
+		s2_len= (cp->my_rank + 1) * alltoall_msglen;
+
+		send_event.event= E_INITIAL_DATA;
+		cp->send_msg(dest, s1_len, send_event);
+		bytes_sent= bytes_sent + s1_len;
+
+		send_event.event= E_LAST_DATA;
+		// Tricky: We only wait for the second send to finish. Receive has to be in order!
+		cp->send_msg(dest, s2_len, send_event, E_SEND_DONE);
+		bytes_sent= bytes_sent + s2_len;
+	    } else   {
+		// All in one piece
+		s1_len= n * alltoall_msglen;
+
+		send_event.event= E_ALL_DATA;
+		cp->send_msg(dest, s1_len, send_event, E_SEND_DONE);
+		bytes_sent= bytes_sent + s1_len;
+	    }
+
+	    remainder_done= true;
+	    state= WAIT;
+	    break;
+
+	default:
+	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+		cp->my_rank, e, state);
+    }
+
+}  // end of state_REMAINDER()
+
+
+
+void
 Alltoall_op::state_WAIT(state_event sm_event)
 {
 
@@ -185,6 +256,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	case E_SEND_DONE:
 	    receives++;
 	    if (receives && (receives % 2 == 0))   {
+		// 2 because we got our own send event and data from our source
 		goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
 	    }
 	    break;
@@ -193,11 +265,13 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	case E_ALL_DATA:
 	    receives++;
 	    if (receives && (receives % 2 == 0))   {
+		// 2 because we got our own send event and data from our source
 		goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
 	    }
 	    break;
 
 	case E_INITIAL_DATA:
+	    // We don't count those to keep things simple. There will be another one soon.
 	    break;
 
 	default:

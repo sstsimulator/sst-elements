@@ -151,6 +151,7 @@ class Comm_pattern : public Component {
 	void send_msg(int dest, int len, state_event sm_event, int blocking);
 
 	// Some patterns may be able to use this
+	uint32_t next_power2(uint32_t v);
 	int is_pow2(int num);
 	double SimTimeToD(SimTime_t t);
 	void local_compute(int done_event, SimTime_t duration);
