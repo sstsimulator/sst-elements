@@ -12,6 +12,9 @@
 #include <math.h>
 #include <mpi.h>
 
+#include "collective_topology.h"
+#include "Collectives/allreduce.h"
+#include "util.h"	/* For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK */
 #include "ghost.h"
 #include "ranks.h"
 #include "neighbors.h"
@@ -37,7 +40,7 @@ int time_steps;
 int x_dim, y_dim, z_dim;
 int width, height, depth;
 mem_ptr_t memory;
-int t, i;
+int t;
 neighbors_t neighbor_list;
 double total_time_start, total_time_end;
 double comm_time_start, comm_time_total;
@@ -163,21 +166,7 @@ double compute_delay;
 		break;
 
 	    /* Command line error checking */
-            case '?':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Unknown option \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-            case ':':
-		if (my_rank == 0)   {
-		    fprintf(stderr, "Missing option argument to \"%s\"\n", argv[optind - 1]);
-		}
-		error= TRUE;
-		break;
-            default:
-		error= TRUE;
-		break;
+	    DEFAULT_CMD_LINE_ERR_CHECK
         }
     }
  
@@ -190,16 +179,9 @@ double compute_delay;
     }
 
     if (my_rank == 0)   {
-	printf("Ghost cell exchange benchmark. Version %s\n", GHOST_VERSION);
-	printf("------------------------------------------\n");
-	printf("Command line \"");
-	for (i= 0; i < argc; i++)   {
-	    printf("%s", argv[i]);
-	    if (i < (argc - 1))   {
-		printf(" ");
-	    }
-	}
-	printf("\"\n");
+	printf("# Ghost cell exchange benchmark. Version %s\n", GHOST_VERSION);
+	printf("# ------------------------------------------\n");
+	disp_cmd_line(argc, argv);
     }
 
 
@@ -246,6 +228,12 @@ double compute_delay;
 
 
 
+    /* Setup the allreduce */
+    Collective_topology *ctopo;
+    ctopo= new Collective_topology(my_rank, num_ranks, TREE_DEEP);
+
+
+
     /* Now perform the work */
     comm_time_total= 0.0;
     comp_time_total= 0.0;
@@ -272,10 +260,10 @@ double compute_delay;
 
 	/* Once in a while do an allreduce to check on convergence */
 	if ((t + 1) % reduce_steps == 0)   {
-	    int res= 0;
-	    int in= 1;
+	    double res= 0.0;
+	    double in= 1.0;
 	    comm_time_start= MPI_Wtime();
-	    MPI_Allreduce(&in, &res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	    my_allreduce(&in, &res, 1, ctopo);
 	    comm_time_total += MPI_Wtime() - comm_time_start;
 	    reduce_cnt++;
 	}
@@ -287,8 +275,10 @@ double compute_delay;
 	printf("Time to complete on %d ranks was %.3g seconds\n", num_ranks,
 	    total_time_end - total_time_start);
 	printf("Total %d time steps\n", time_steps);
-	printf("Estimated timing error: %.2f%%\n",
+	printf("Estimated timing error: %.3f%% (Diff between total time and comp + comm)\n",
 	    100.0 - (100.0 / (total_time_end - total_time_start) * (comm_time_total + comp_time_total)));
+	printf("Compute time %.9f, communication time %.9f, total %.9f\n",
+	    comp_time_total, comm_time_total, (total_time_end - total_time_start));
 	printf("Compute to communicate ratio was %.3g/%.3g = %.1f:1 (%.2f%% computation, %.2f%% "
 	    "communication)\n",
 	    comp_time_total, comm_time_total, comp_time_total / comm_time_total,
