@@ -21,17 +21,15 @@
 #include <unistd.h>	/* For getopt() */
 #include <math.h>
 #include <mpi.h>
-#include "../collective_topology.h"
-#include "../stats.h"
+#include "collective_topology.h"
+#include "Collectives/allreduce.h"
+#include "stats.h"
 #include "stat_p.h"
 #include "util.h"
 
 
 /* Constants */
 #define DEFAULT_PRECISION	(0.01)
-
-#define MY_TAG_UP		(55)
-#define MY_TAG_DOWN		(77)
 
 #define MAX_TRIALS		(10000)
 #define LARGE_ALLREDUCE_OPS	(1)
@@ -47,7 +45,6 @@ static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, in
 	MPI_Comm comm, Collective_topology *ctopo, double req_precision,
 	double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, Collective_topology *ctopo));
 
-void my_allreduce(double *in, double *result, int msg_len, Collective_topology *ctopo);
 static void usage(char *pname);
 
 
@@ -451,64 +448,6 @@ double total_time;
     }
 
 }  // end of experiment()
-
-
-
-// Instead of using the MPI provided allreduce, we use this algorithm.
-// It is the same one used in the communication pattern and allows for
-// more accurate comparisons, since the number of messages as well as
-// sources and destinations are the same.
-void
-my_allreduce(double *in, double *result, int msg_len, Collective_topology *ctopo)
-{
-
-double *tmp;
-std::list<int>::iterator it;
-
-
-    if (ctopo->is_leaf() && ctopo->num_nodes() > 1)   {
-	// Send data to parent and wait for result
-	MPI_Send(in, msg_len, MPI_DOUBLE, ctopo->parent_rank(), MY_TAG_UP, MPI_COMM_WORLD);
-	MPI_Recv(result, msg_len, MPI_DOUBLE, ctopo->parent_rank(), MY_TAG_DOWN,
-		MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else   {
-	// Wait for the children
-	memcpy(result, in, msg_len * sizeof(double));
-
-	// We could do this outside of the loop, but that would probably not be fair
-	// to MPI_Allreduce()
-	tmp= (double *)malloc(msg_len * sizeof(double));
-	if (tmp == NULL)   {
-	    fprintf(stderr, "Out of memory!\n");
-	    exit(-1);
-	}
-
-	for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-	    MPI_Recv(tmp, msg_len, MPI_DOUBLE, *it, MY_TAG_UP, MPI_COMM_WORLD,
-		    MPI_STATUS_IGNORE);
-	    for (int i= 0; i < msg_len; i++)   {
-		result[i]= result[i] + tmp[i];
-	    }
-	}
-
-	if (!ctopo->is_root())   {
-	    // Send it to the parent and wait for answer
-	    MPI_Send(result, msg_len, MPI_DOUBLE, ctopo->parent_rank(), MY_TAG_UP,
-		    MPI_COMM_WORLD);
-	    MPI_Recv(result, msg_len, MPI_DOUBLE, ctopo->parent_rank(),
-		    MY_TAG_DOWN, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	}
-
-	// Send it back out
-	for (it= ctopo->children.begin(); it != ctopo->children.end(); it++)   {
-	    MPI_Send(result, msg_len, MPI_DOUBLE, *it, MY_TAG_DOWN,
-		    MPI_COMM_WORLD);
-	}
-
-	free(tmp);
-    }
-
-}  /* end of my_allreduce() */
 
 
 

@@ -18,8 +18,10 @@ else
     extra=""
 fi
 
-mpic++  -Wall $extra allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c -o allreduce_bench -lm
-mpic++  -Wall $extra alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c -o alltoall_bench -lm
+mpic++  -Wall $extra -I.. allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/allreduce.cc -o allreduce_bench -lm
+
+mpic++  -Wall $extra -I.. alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/alltoall.cc -o alltoall_bench -lm
+
 mpicc -Wall $extra msgrate_bench.c stat_p.c util.c -o msgrate_bench -lm
 mpicc -Wall $extra pingpong_bench.c stat_p.c util.c -o pingpong_bench -lm
 

@@ -36,7 +36,6 @@ int my_rank, num_ranks;
 int time_steps;
 int x_dim, y_dim, z_dim;
 int width, height, depth;
-int res;
 mem_ptr_t memory;
 int t, i;
 neighbors_t neighbor_list;
@@ -273,8 +272,10 @@ double compute_delay;
 
 	/* Once in a while do an allreduce to check on convergence */
 	if ((t + 1) % reduce_steps == 0)   {
+	    int res= 0;
+	    int in= 1;
 	    comm_time_start= MPI_Wtime();
-	    MPI_Allreduce(MPI_IN_PLACE, &res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	    MPI_Allreduce(&in, &res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 	    comm_time_total += MPI_Wtime() - comm_time_start;
 	    reduce_cnt++;
 	}
