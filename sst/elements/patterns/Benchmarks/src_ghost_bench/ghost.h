@@ -22,5 +22,13 @@
 #define DEFAULT_LOOP		(16)
 #define DEFAULT_REDUCE_STEPS	(20)
 
+extern int my_rank;
+extern int num_ranks;
+
+
+int ghost_init(int argc, char *argv[]);
+double ghost_work(void);
+void ghost_print(void);
+
 
 #endif  /* _GHOST_H_ */

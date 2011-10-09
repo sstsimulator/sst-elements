@@ -23,53 +23,50 @@
 
 #define GHOST_VERSION	"1.0"
 
-
 /* Local functions */
 static void usage(char *pname);
 
 
 
+/*
+** Unfortunately these have to be (file) global to avoid massive
+** argument lists to functions.
+*/
+static int verbose;
+static int time_steps;
+static int x_dim, y_dim, z_dim;
+static mem_ptr_t memory;
+static neighbors_t neighbor_list;
+static double total_time_start, total_time_end;
+static double comm_time_start, comm_time_total;
+static double comp_time_start, comp_time_total;
+static size_t mem_estimate;
+static long long int num_sends;
+static long long int fop_cnt;
+static long long int reduce_cnt;
+static long long int bytes_sent;
+static int TwoD;
+static int loop;
+static int reduce_steps;
+static int compute_imbalance;
+static double compute_delay;
+
+
+
 int
-main(int argc, char *argv[])
+ghost_init(int argc, char *argv[])
 {
 
 int ch, error;
-int verbose;
-int my_rank, num_ranks;
-int time_steps;
-int x_dim, y_dim, z_dim;
 int width, height, depth;
-mem_ptr_t memory;
-int t;
-neighbors_t neighbor_list;
-double total_time_start, total_time_end;
-double comm_time_start, comm_time_total;
-double comp_time_start, comp_time_total;
-size_t mem_estimate;
-long long int num_sends;
-long long int fop_cnt;
-long long int reduce_cnt;
-long long int bytes_sent;
-int TwoD;
-int loop;
 int decomposition_only;
-int reduce_steps;
-int compute_imbalance;
-double compute_delay;
 
-
-
-    MPI_Init(&argc, &argv);
- 
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
     if (num_ranks < 2)   {
 	if (my_rank == 0)   {
 	    fprintf(stderr, "Need to run on at least two ranks; more would be better\n");
 	}
-	MPI_Finalize();
-	exit(-1);
+	return -1;
     }
 
 
@@ -174,8 +171,7 @@ double compute_delay;
         if (my_rank == 0)   {
             usage(argv[0]);
         }
-	MPI_Finalize();
-        exit (-1);
+	return -1;
     }
 
     if (my_rank == 0)   {
@@ -183,7 +179,6 @@ double compute_delay;
 	printf("# ------------------------------------------\n");
 	disp_cmd_line(argc, argv);
     }
-
 
 
     /*
@@ -205,12 +200,8 @@ double compute_delay;
 
     /* If we did a trial run to calculate the decomposition only, we can stop here. */
     if (decomposition_only)   {
-	MPI_Finalize();
-	return 0;
+	return 1;
     }
-
-    /* Go ahead and allocate and initialize the memory we need */
-    do_mem_alloc(my_rank, TwoD, mem_estimate, &memory, x_dim, y_dim, z_dim);
 
     /* Some info about what happened so far */
     if ((my_rank == 0) && (verbose))   {
@@ -226,13 +217,26 @@ double compute_delay;
 	}
     }
 
+    return 0;
+
+}  /* end of ghost_init() */
+
+
+
+double
+ghost_work(void)
+{
+
+int t;
+
+
+    /* Go ahead and allocate and initialize the memory we need */
+    do_mem_alloc(my_rank, TwoD, mem_estimate, &memory, x_dim, y_dim, z_dim);
 
 
     /* Setup the allreduce */
     Collective_topology *ctopo;
     ctopo= new Collective_topology(my_rank, num_ranks, TREE_DEEP);
-
-
 
     /* Now perform the work */
     comm_time_total= 0.0;
@@ -269,21 +273,38 @@ double compute_delay;
 	}
     }
     total_time_end= MPI_Wtime();
+    mem_free(&memory);
+    delete ctopo;
+
+    return total_time_end - total_time_start;
+
+}  /* end of ghost_work() */
+
+
+
+void
+ghost_print(void)
+{
+
+double elapsed;
+
+
 
     /* Print some statistics */
     if (my_rank == 0)   {
-	printf("Time to complete on %d ranks was %.3g seconds\n", num_ranks,
-	    total_time_end - total_time_start);
+	elapsed= total_time_end - total_time_start;
+
+	printf("Time to complete on %d ranks was %.3g seconds\n", num_ranks, elapsed);
 	printf("Total %d time steps\n", time_steps);
 	printf("Estimated timing error: %.3f%% (Diff between total time and comp + comm)\n",
-	    100.0 - (100.0 / (total_time_end - total_time_start) * (comm_time_total + comp_time_total)));
+	    100.0 - (100.0 / elapsed * (comm_time_total + comp_time_total)));
 	printf("Compute time %.9f, communication time %.9f, total %.9f\n",
-	    comp_time_total, comm_time_total, (total_time_end - total_time_start));
+	    comp_time_total, comm_time_total, elapsed);
 	printf("Compute to communicate ratio was %.3g/%.3g = %.1f:1 (%.2f%% computation, %.2f%% "
 	    "communication)\n",
 	    comp_time_total, comm_time_total, comp_time_total / comm_time_total,
-	    100.0 / (total_time_end - total_time_start) * comp_time_total,
-	    100.0 / (total_time_end - total_time_start) * comm_time_total);
+	    100.0 / elapsed * comp_time_total,
+	    100.0 / elapsed * comm_time_total);
 	printf("Bytes sent from each rank: %ld bytes (%.3f MB), %.1f MB total\n",
 	    (long int)bytes_sent, (float)bytes_sent / 1024 / 1024,
 	    (float)bytes_sent / 1024 / 1024 * num_ranks);
@@ -294,8 +315,8 @@ double compute_delay;
 	printf("Total number of flotaing point ops %lld (%.3f x 10^9)\n", fop_cnt * num_ranks,
 	    (float)fop_cnt / 1000000000.0 * num_ranks);
 	printf("Per second: %.0f Flops (%.3f GFlops)\n",
-	    (float)fop_cnt * num_ranks / (total_time_end - total_time_start),
-	    (float)fop_cnt * num_ranks / (total_time_end - total_time_start) / 1000000000.0);
+	    (float)fop_cnt * num_ranks / elapsed,
+	    (float)fop_cnt * num_ranks / elapsed / 1000000000.0);
 	printf("Flops per byte sent: %.2f Flops\n", (float)fop_cnt / bytes_sent);
 	if (compute_imbalance)   {
 	    printf("Each compute step was imbalanced by an average %.1f%%\n", compute_delay);
@@ -304,12 +325,7 @@ double compute_delay;
 	}
     }
 
-    mem_free(&memory);
-    MPI_Finalize();
-
-    return 0;
-
-}  /* end of main() */
+}  /* end of ghost_print() */
 
 
 

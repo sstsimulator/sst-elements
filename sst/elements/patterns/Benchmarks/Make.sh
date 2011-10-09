@@ -26,9 +26,15 @@ mpicc -Wall $extra msgrate_bench.c stat_p.c util.c -o msgrate_bench -lm
 mpicc -Wall $extra pingpong_bench.c stat_p.c util.c -o pingpong_bench -lm
 
 cd src_ghost_bench
+    echo -n "Enter "
+    pwd
     bash Make.sh
+    echo -n "Back in "
 cd -
 
 cd src_fft_bench
+    echo -n "Enter "
+    pwd
     bash Make.sh
+    echo -n "Back in "
 cd -
