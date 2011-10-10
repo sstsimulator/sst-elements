@@ -23,7 +23,7 @@
 #include "util.h"	/* For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK */
 #include "ws.h"
 
-#define WS_VERSION			"1.0"
+#define WS_VERSION			"0.2"
 #define DEFAULT_SEED			(543219876)
 #define DEFAULT_TIME_STEPS		(360000)
 #define DEFAULT_TIME_STEP_DURATION	(500000) // In ns; i.e., 500 us
@@ -49,8 +49,7 @@ static int gen_new_task(void);
 ** argument lists to functions.
 */
 static int verbose;
-static double total_time_end;
-static double total_time_start;
+static double elapsed;
 static int time_steps;
 static uint64_t time_unit;
 static std::list <int> *my_task_list;
@@ -67,6 +66,7 @@ static double p_task_creation;		// Prob. of a new task being created when one fi
 static std::list <MPI_Request> *pending_sends;
 static std::list <MPI_Request> *work_requests;
 static int report_rank;
+static int root;
 
 static int stat_time_worked;
 static int stat_time_idle;
@@ -81,6 +81,9 @@ static int stat_new_task_requests_rcvd;
 static int stat_new_task_requests_denied;
 static int stat_new_task_requests_granted;
 static int stat_new_task_requests_honored;
+static int stat_total_tasks;
+static int stat_total_time_units;
+static double stat_elapsed;
 
 
 
@@ -111,7 +114,8 @@ bool error;
     max_task_duration= MAX_TASK_DURATION;
     time_unit= DEFAULT_TIME_STEP_DURATION;
     new_tasks= DEFAULT_NUM_NEW_TASKS;
-    report_rank= 0;
+    root= 0;
+    report_rank= root;
 
 
     /* Check command line args */
@@ -654,6 +658,8 @@ bool busy;
 char *work_buf;
 int max_work_size;
 bool deny;
+double total_time_end;
+double total_time_start;
 
 
     clear_stats();
@@ -726,7 +732,15 @@ bool deny;
     delete pending_sends;
     delete work_requests;
 
-    return total_time_end - total_time_start;
+    MPI_Reduce(&stat_tasks_completed, &stat_total_tasks, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_time_worked, &stat_total_time_units, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    elapsed= total_time_end - total_time_start;
+    MPI_Reduce(&elapsed, &stat_elapsed, 1, MPI_DOUBLE, MPI_MAX, root, MPI_COMM_WORLD);
+
+    // What do we want for a metric?
+    // return elapsed;
+    // return stat_elapsed;
+    return stat_total_time_units;
 
 }  /* end of ws_work() */
 
@@ -736,10 +750,7 @@ void
 ws_print(void)
 {
 
-double elapsed;
 int cnt;
-int root= 0;
-int result;
 
 
     // Some consistency checking
@@ -761,15 +772,15 @@ int result;
 
 
     // Print some statistics
-    elapsed= total_time_end - total_time_start;
-
-    if (my_rank == 0)   {
-	printf("# Rank %3d Total time         %12.6f seconds\n", my_rank, elapsed);
+    if (my_rank == root)   {
+	printf("#          Total time         %12.6f seconds\n", stat_elapsed);
+	printf("#          Total tasks completed    %6d\n", stat_total_tasks);
+	printf("#          Time units completed     %6d\n", stat_total_time_units);
     }
 
 
     if (my_rank == report_rank)   {
-	printf("# Rank %3d Total time         %12.6f seconds\n", my_rank, elapsed);
+	printf("# Rank %3d My total time      %12.6f seconds\n", my_rank, elapsed);
 	printf("# Rank %3d started with             %6d tasks,    %6d time units of work\n", my_rank, num_start_tasks, stat_initial_work_time);
 	printf("# Rank %3d created                  %6d new tasks\n", my_rank, stat_new_tasks);
 	printf("# Rank %3d completed                %6d tasks,    %6d left in queue\n", my_rank, stat_tasks_completed, stat_tasks_left_in_queue);
@@ -783,16 +794,6 @@ int result;
 	printf("# Rank %3d had                      %6d task requests denied by other ranks\n", my_rank, stat_new_task_requests_not_granted);
 	printf("# Rank %3d had                      %6d task requests honored by other ranks\n", my_rank, stat_new_task_requests_honored);
 	printf("# Rank %3d back_off now             %6d, circle now %6d\n", my_rank, back_off, circle);
-    }
-
-    MPI_Reduce(&stat_tasks_completed, &result, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    if (my_rank == root)   {
-	printf("#          Total tasks completed    %6d\n", result);
-    }
-
-    MPI_Reduce(&stat_time_worked, &result, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    if (my_rank == root)   {
-	printf("#          Time units completed     %6d\n", result);
     }
 
 }  /* end of ws_print() */
