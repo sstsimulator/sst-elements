@@ -1,4 +1,4 @@
-- NoCIntraLatency cannot be less than NoCNICparams 0. Why?
+- NoCIntraLatency cannot be less than NoCNICparams 0. Why? Same is true for NetIntraLatency
 
 - NetIntraLatency Cannot be bigger than NetNICparams = 0. I don't think that is right.
 

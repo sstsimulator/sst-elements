@@ -1,6 +1,6 @@
 #!/bin/bash
 if [[ $1 == "clean" ]] ; then
-    rm fft_bench
+    rm -f fft_bench
     exit
 fi
 

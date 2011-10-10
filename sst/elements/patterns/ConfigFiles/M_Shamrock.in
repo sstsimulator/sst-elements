@@ -1,0 +1,207 @@
+# This is an example machine parameter file for an Ethernet
+# cluster with 1 GigE links from nodes to top-of-rack switches (ToR)
+#
+# Anything after a # to end of line is ignored
+# Leading white space is ignored
+# Entries are Key = Value pairs
+# Repeated entries are allowed; the last value is used
+
+#
+# From which NICs do we want to see stats?
+NICstat = 0
+
+# Network dimension
+Net_x_dim = 2
+Net_y_dim = 1
+
+# NoC dimension
+NoC_x_dim = 1
+NoC_y_dim = 2
+
+# Number of cores per NoC router
+num_router_cores = 6
+
+# Number of nodes per network router
+num_router_nodes = 5
+
+# Link latency between network routers
+# Must be specified before any NetNICparams
+NetIntraLatency =  5600		# 1s 2.683%, 4096d 3.934%, pp core 3.140%, pp socket 1.362%, pp node 0.792%, pp router 1.092%
+
+# Link latency between NoC network routers
+# Must be specified before any NetNICparams
+NoCIntraLatency =  400		# 
+
+
+NetLinkBandwidth =    234626531	# 1ѕ 4.109%, 4096d 4.452%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    260000000	# 1ѕ 4.109%, 4096d 4.464%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    200000000	# 1ѕ 4.109%, 4096d 4.433%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    150000000	# 1ѕ 4.109%, 4096d 4.395%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    100000000	# 1ѕ 4.109%, 4096d 4.397%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    125000000	# 1ѕ 4.109%, 4096d 4.386%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    112500000	# 1ѕ 4.109%, 4096d 4.386%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    137500000	# 1ѕ 4.109%, 4096d 4.380%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    142500000	# 1ѕ 4.109%, 4096d 4.386%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    130000000	# 1ѕ 4.109%, 4096d 4.389%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    140000000	# 1ѕ 4.109%, 4096d 4.383%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    132500000	# 1ѕ 4.109%, 4096d 4.390%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+
+NetLinkBandwidth =    137500000	# 1ѕ 4.109%, 4096d 4.380%, pp core 2.944%, pp socket 0.235%, pp node 0.792%, pp router 1.092%
+
+
+NoCLinkBandwidth =  14742762018	# 1ѕ 4.109%, 4096d 4.380%, pp core  2.944%, pp socket  0.235%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =  20000000000	# 1ѕ 4.109%, 4096d 4.382%, pp core  2.944%, pp socket  0.235%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =  10000000000	# 1ѕ 4.109%, 4096d 4.376%, pp core  2.944%, pp socket  0.235%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   5000000000	# 1ѕ 4.109%, 4096d 4.333%, pp core  2.944%, pp socket  0.235%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   2500000000	# 1ѕ 4.108%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   1000000000	# 1ѕ 4.108%, 4096d 2.638%, pp core 13.157%, pp socket 11.839%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =    500000000	# 1ѕ 4.107%, 4096d 2.246%, pp core 32.588%, pp socket 30.343%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   4000000000	# 1ѕ 4.109%, 4096d 4.237%, pp core  2.944%, pp socket  0.235%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   3000000000	# 1ѕ 4.109%, 4096d 4.072%, pp core  2.973%, pp socket  0.496%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   2000000000	# 1ѕ 4.108%, 4096d 3.698%, pp core  4.432%, pp socket  2.944%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   2500000000	# 1ѕ 4.108%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+
+
+NetNICgap =   1544		# 1ѕ 4.108%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NetNICgap =   3000		# 1ѕ 4.110%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NetNICgap =    500		# 1ѕ 4.119%, 4096d 3.932%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NetNICgap =   2000		# 1ѕ 4.107%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NetNICgap =   1000		# 1ѕ 4.113%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NetNICgap =   2500		# 1ѕ 4.108%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+
+NetNICgap =   2000		# 1ѕ 4.107%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+
+NoCNICgap =    189		# 1ѕ 4.107%, 4096d 3.933%, pp core  3.336%, pp socket  1.353%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1000		# 1ѕ 3.135%, 4096d 3.933%, pp core  2.115%, pp socket  1.357%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   2000		# 1ѕ 2.471%, 4096d 3.933%, pp core  4.742%, pp socket  1.368%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   3000		# 1ѕ 2.818%, 4096d 3.933%, pp core  8.334%, pp socket  1.388%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1500		# 1ѕ 2.696%, 4096d 3.933%, pp core  3.140%, pp socket  1.362%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   2500		# 1ѕ 2.514%, 4096d 3.933%, pp core  6.508%, pp socket  1.377%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1750		# 1ѕ 2.551%, 4096d 3.933%, pp core  3.907%, pp socket  1.365%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1875		# 1ѕ 2.503%, 4096d 3.933%, pp core  4.319%, pp socket  1.367%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   2250		# 1ѕ 2.457%, 4096d 3.933%, pp core  5.614%, pp socket  1.373%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   2125		# 1ѕ 2.455%, 4096d 3.933%, pp core  5.174%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   2100		# 1ѕ 2.457%, 4096d 3.933%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+
+
+NetLinkBandwidth =    137500000	# 1ѕ 2.457%, 4096d 3.933%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    140000000	# 1ѕ 2.457%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetLinkBandwidth =    130000000	# 1ѕ 2.457%, 4096d 3.938%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+
+NetLinkBandwidth =    140000000	# 1ѕ 2.457%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+
+
+NoCLinkBandwidth =   2500000000	# 1ѕ 2.457%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NoCLinkBandwidth =   2400000000	# 1ѕ 2.457%, 4096d 3.895%, pp core  5.190%, pp socket  1.617%, pp node 0.792%, pp router 1.092%
+
+NoCLinkBandwidth =   2500000000	# 1ѕ 2.457%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+
+NetNICgap =   2000		# 1ѕ 2.457%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =   2500		# 1ѕ 2.467%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =   1500		# 1ѕ 2.445%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =   1000		# 1ѕ 2.436%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =    500		# 1ѕ 2.430%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =    100		# 1ѕ 2.427%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =     10		# 1ѕ 2.427%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NetNICgap =    200		# 1ѕ 2.428%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+
+
+NoCNICgap =   2100		# 1ѕ 2.428%, 4096d 3.934%, pp core  5.087%, pp socket  1.370%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   2000		# 1ѕ 2.443%, 4096d 3.934%, pp core  4.742%, pp socket  1.368%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1500		# 1ѕ 2.683%, 4096d 3.934%, pp core  3.140%, pp socket  1.362%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1000		# 1ѕ 3.137%, 4096d 3.934%, pp core  2.115%, pp socket  1.357%, pp node 0.792%, pp router 1.092%
+NoCNICgap =   1500		# 1ѕ 2.683%, 4096d 3.934%, pp core  3.140%, pp socket  1.362%, pp node 0.792%, pp router 1.092%
+
+
+
+NetNICparams =            0        18707
+NetNICparams =            8        19036
+NetNICparams =           32        19636
+NetNICparams =           56        20169
+NetNICparams =           80        20830
+NetNICparams =          104        21128
+NetNICparams =          128        21675
+NetNICparams =          176        22729
+NetNICparams =          224        23529
+NetNICparams =          288        24994
+NetNICparams =          384        26797
+NetNICparams =          480        28857
+NetNICparams =          640        32249
+NetNICparams =          832        40192
+NetNICparams =         1152        80802
+NetNICparams =         1536        64344
+NetNICparams =         1920       113401
+NetNICparams =         2560       196462
+NetNICparams =         3072       115380
+NetNICparams =         3840       257988
+NetNICparams =         5120       206099
+NetNICparams =         6656       216489
+NetNICparams =         7680       210880
+NetNICparams =         9216       219402
+NetNICparams =        11264       233982
+NetNICparams =        13312       290771
+NetNICparams =        15360       265751
+NetNICparams =        18432       287104
+NetNICparams =        22528       297904
+NetNICparams =        28672       465703
+NetNICparams =        36864       475383
+NetNICparams =        49152       488305
+NetNICparams =        61440       678492
+NetNICparams =        81920      1062298
+NetNICparams =       106496      1259804
+NetNICparams =       147456      1653910
+NetNICparams =       196608      2048206
+NetNICparams =       245760      2442217
+NetNICparams =       327680      3032804
+NetNICparams =       425984      4017901
+NetNICparams =       655360      5986309
+NetNICparams =      1179648     10318208
+NetNICparams =      1310720     11499596
+
+NoCNICparams =            0          393
+NoCNICparams =            8          410
+NoCNICparams =           32          427
+NoCNICparams =           56          435
+NoCNICparams =           80          438
+NoCNICparams =          112          450
+NoCNICparams =          144          473
+NoCNICparams =          192          460
+NoCNICparams =          224          464
+NoCNICparams =          288          515
+NoCNICparams =          384          530
+NoCNICparams =          480          552
+NoCNICparams =          576          542
+NoCNICparams =          768          567
+NoCNICparams =          960          610
+NoCNICparams =         1280          665
+NoCNICparams =         1664          741
+NoCNICparams =         2048          808
+NoCNICparams =         2816          920
+NoCNICparams =         3584         1066
+NoCNICparams =         4608         1731
+NoCNICparams =         6144         1941
+NoCNICparams =         7680         2122
+NoCNICparams =        10240         2515
+NoCNICparams =        13312         3080
+NoCNICparams =        16384         3695
+NoCNICparams =        24576         5102
+NoCNICparams =        30720         6199
+NoCNICparams =        40960         8202
+NoCNICparams =        53248         9084
+NoCNICparams =        65536        10252
+NoCNICparams =        90112        13149
+NoCNICparams =       114688        16308
+NoCNICparams =       147456        21410
+NoCNICparams =       196608        29707
+NoCNICparams =       245760        42415
+NoCNICparams =       327680        58818
+NoCNICparams =       393216        66209
+NoCNICparams =       524288        91600
+NoCNICparams =       720896       127244
+NoCNICparams =       917504       150299
+NoCNICparams =      1179648       178599
+NoCNICparams =      1310720       190854
+
+# I/O is not working yet
+IOLinkBandwidth = 0
+IOLinkLatency = 0

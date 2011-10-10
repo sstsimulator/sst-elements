@@ -1,13 +1,17 @@
 #!/bin/bash
 if [[ $1 == "clean" ]] ; then
     echo "Cleaning up..."
-    rm allreduce_bench alltoall_bench msgrate_bench pingpong_bench
+    rm -f allreduce_bench alltoall_bench msgrate_bench pingpong_bench
     cd src_ghost_bench
-	bash Make.sh clean
+	bash Make.sh $1
     cd -
 
     cd src_fft_bench
-	bash Make.sh
+	bash Make.sh $1
+    cd -
+
+    cd src_work_stealing_bench
+	bash Make.sh $1
     cd -
     exit
 fi

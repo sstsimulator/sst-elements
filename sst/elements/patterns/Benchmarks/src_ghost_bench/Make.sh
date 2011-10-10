@@ -1,6 +1,6 @@
 #!/bin/bash
 if [[ $1 == "clean" ]] ; then
-    rm ghost
+    rm -f ghost
     exit
 fi
 
