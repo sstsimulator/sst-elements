@@ -86,10 +86,42 @@ int decomposition_only;
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, ":vt:x:y:z:l:Dr:d:i")) != EOF)   {
+    while ((ch= getopt(argc, argv, "d:Dil:r:t:vx:y:z:")) != EOF)   {
         switch (ch)   {
-            case 'v':
-		verbose++;
+            case 'd':
+		compute_delay= strtod(optarg, (char **)NULL);
+		if (compute_delay < 0.0)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Compute delay cannot be less than 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
+            case 'D':
+		decomposition_only= TRUE;
+		break;
+            case 'i':
+		srand48(543219876 * (my_rank + 1));
+		compute_imbalance= TRUE;
+		break;
+
+            case 'l':
+		loop= strtol(optarg, (char **)NULL, 0);
+		if (loop < 1)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Loop must be > 0!\n");
+		    }
+		    error= TRUE;
+		}
+		break;
+            case 'r':
+		reduce_steps= strtol(optarg, (char **)NULL, 0);
+		if (reduce_steps <= 1)   {
+		    if (my_rank == 0)   {
+			fprintf(stderr, "Number of steps between reduce ops must be > 0!\n");
+		    }
+		    error= TRUE;
+		}
 		break;
             case 't':
 		time_steps= strtol(optarg, (char **)NULL, 0);
@@ -99,6 +131,9 @@ int decomposition_only;
 		    }
 		    error= TRUE;
 		}
+		break;
+            case 'v':
+		verbose++;
 		break;
             case 'x':
 		x_dim= strtol(optarg, (char **)NULL, 0);
@@ -126,40 +161,6 @@ int decomposition_only;
 		    }
 		    error= TRUE;
 		}
-		break;
-            case 'l':
-		loop= strtol(optarg, (char **)NULL, 0);
-		if (loop < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Loop must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-            case 'D':
-		decomposition_only= TRUE;
-		break;
-            case 'r':
-		reduce_steps= strtol(optarg, (char **)NULL, 0);
-		if (reduce_steps <= 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Number of steps between reduce ops must be > 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-            case 'd':
-		compute_delay= strtod(optarg, (char **)NULL);
-		if (compute_delay < 0.0)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Compute delay cannot be less than 0!\n");
-		    }
-		    error= TRUE;
-		}
-		break;
-            case 'i':
-		srand48(543219876 * (my_rank + 1));
-		compute_imbalance= TRUE;
 		break;
 
 	    /* Command line error checking */
@@ -294,7 +295,7 @@ double elapsed;
     if (my_rank == 0)   {
 	elapsed= total_time_end - total_time_start;
 
-	printf("Time to complete on %d ranks was %.3g seconds\n", num_ranks, elapsed);
+	printf("Time to complete on %d ranks was %.6f seconds\n", num_ranks, elapsed);
 	printf("Total %d time steps\n", time_steps);
 	printf("Estimated timing error: %.3f%% (Diff between total time and comp + comm)\n",
 	    100.0 - (100.0 / elapsed * (comm_time_total + comp_time_total)));
