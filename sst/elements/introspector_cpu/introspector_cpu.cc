@@ -86,10 +86,10 @@ bool Introspector_cpu::triggeredUpdate()
 {
 	for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
 	     i != MyCompList.end(); ++i) {
-		std::cout << "Pull data from component ID " << (*i)->getId() << " and total counts = " << getData<uint64_t>(*i, "totalCounts") << std::endl;
-		std::cout << "Pull data from component ID " << (*i)->getId() << " and temperature = " << getData<double>(*i, "temperature") << std::endl;
-		std::cout << "Pull data from component ID " << (*i)->getId() << " and general counts = " << getData<int>(*i, "generalCounts") << std::endl;
-		std::cout << "Pull data from component ID " << (*i)->getId() << " and some data = " << getData<int>(*i, "some data") << std::endl;
+		std::cout << "introspector_cpu pulls data from component ID " << (*i)->getId() << " and total counts = " << getData<uint64_t>(*i, "totalCounts") << std::endl;
+		////std::cout << "Pull data from component ID " << (*i)->getId() << " and temperature = " << getData<double>(*i, "temperature") << std::endl;
+		std::cout << "introspector_cpu pulls data from component ID " << (*i)->getId() << " and general counts = " << getData<int>(*i, "generalCounts") << std::endl;
+		std::cout << "introspector_cpu pulls data from component ID " << (*i)->getId() << " and some data = " << getData<int>(*i, "some data") << std::endl;
 	        ////intData = getData(*i, "totalCounts");
 	    }
 
