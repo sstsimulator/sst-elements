@@ -16,11 +16,12 @@
 #ifndef  _GENERICRC_H_INC
 #define  _GENERICRC_H_INC
 
-#include "../interfaces/genericHeader.h"
+#include "genericHeader.h"
 #include "router_params.h"
-#include "../data_types/flit.h"
+#include "SST_interface.h"
 
 
+extern Router_params* r_param; 
 /*
  * =====================================================================================
  *        Class:  GenericRC
@@ -36,7 +37,7 @@ class GenericRC
         GenericRC (); 
         ~GenericRC();
 
-        void push( Flit*);
+        void push( const irisNPkt*);
         uint16_t get_output_port ( uint16_t );
         uint16_t get_virtual_channel ( uint16_t );
         uint16_t no_adaptive_ports( uint16_t );
@@ -71,11 +72,11 @@ class GenericRC
         std::vector<RC_entry> entries;
 
     private:
-        void route_x_y( HeadFlit* hf );
-        void route_twonode( HeadFlit* hf );
-        void route_torus( HeadFlit* hf );
-        void route_ring( HeadFlit* hf );
-        void route_ring_unidirection( HeadFlit* hf );
+        void route_x_y( const irisNPkt* hf );
+        void route_twonode( const irisNPkt* hf );
+        void route_torus(const irisNPkt* hf );
+        void route_ring( const irisNPkt* hf );
+        void route_ring_unidirection( const irisNPkt* hf );
 
 
 }; /* ----- end of class GenericRC ----- */

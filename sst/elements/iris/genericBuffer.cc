@@ -9,9 +9,9 @@
 
 #include	"genericBuffer.h"
 
-GenericBuffer::GenericBuffer ()// : Router_params()
+GenericBuffer::GenericBuffer ()
 {
-    buffers.resize(r_param.vcs);
+    buffers.resize(r_param->vcs);
 }  /* -----  end of method GenericBuffer::GenericBuffer  (constructor)  ----- */
 
 GenericBuffer::~GenericBuffer ()
@@ -20,23 +20,23 @@ GenericBuffer::~GenericBuffer ()
 
 
 void
-GenericBuffer::push ( Flit* f, uint16_t push_channel )
+GenericBuffer::push ( irisNPkt* f)
 {
-    assert( buffers[push_channel].size() > 0 
-            && buffers[push_channel].size() <=r_param.buffer_size 
-            && "Pushed flit into buffer. Buffer overflow!");
+    uint16_t push_channel = f->vc;
     buffers[push_channel].push_back(f);
+    assert( push_channel< buffers.size() && " incorrect vc GenericBuffer::push\n");
+    assert( buffers.at(push_channel).size() <= r_param->buffer_size && "Pushed flit into buffer. Buffer overflow!");
     return ;
 }		/* -----  end of method GenericBuffer::push  ----- */
 
-Flit*
+irisNPkt*
 GenericBuffer::pull ( uint16_t pull_channel )
 {
-    assert ( pull_channel < buffers.size() 
-             && buffers[pull_channel].size() != 0 
-             && " Incorrect pull channel! pull channel>no of channels");
+    assert( buffers.size() > 0 
+            && pull_channel < buffers.size() 
+            && " Incorrect pull channel! pull channel>no of channels");
 
-    Flit* f = buffers[pull_channel].front();
+    irisNPkt* f = buffers[pull_channel].front();
     buffers[pull_channel].pop_front();
     return f;
 }		/* -----  end of method GenericBuffer::pull  ----- */
@@ -49,14 +49,14 @@ GenericBuffer::pull ( uint16_t pull_channel )
  * * on the specified channel without actually pulling it out from the buffer.
  * =====================================================================================
  * */
-Flit*
+irisNPkt*
 GenericBuffer::peek ( uint16_t peek_channel)
 {
     assert ( peek_channel < buffers.size() 
              && buffers[peek_channel].size() != 0 
              && " Incorrect peek channel! peek channel>no of channels");
 
-    Flit* f = buffers[peek_channel].front();
+    irisNPkt* f = buffers[peek_channel].front();
     return f;
 }		/* -----  end of method GenericBuffer::peek  ----- */
 
@@ -77,7 +77,7 @@ GenericBuffer::get_occupancy ( uint16_t channel ) const
 bool
 GenericBuffer::is_buffer_full ( uint16_t channel ) const
 {
-    return buffers[channel].size() > r_param.buffer_size;
+    return buffers[channel].size() > r_param->buffer_size;
 }		/* -----  end of method GenericBuffer::is_channel_full  ----- */
 
 /* 

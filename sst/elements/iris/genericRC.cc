@@ -11,55 +11,57 @@
 
 GenericRC::GenericRC ()
 {
-    entries.resize(r_param.vcs);
+    entries.resize(r_param->vcs);
 }
 
 GenericRC::~GenericRC()
 {
-    for ( uint16_t i=0; i<entries.size() ; i++ ) {
-        delete &entries.at(i);
-    }
+    /*  Router resize is failing. Hence commenting it */
+//    for ( uint16_t i=0; i<entries.size() ; i++ ) {
+//        delete &entries.at(i);
+//    }
 }
 
 void
-GenericRC::route_x_y(HeadFlit* hf)
+GenericRC::route_x_y(const irisNPkt* hf)
 {
-    int oport = -1;
-    uint16_t myx = (int)(node_id%r_param.grid_size);
-    uint16_t destx = (int)(hf->dst_node_id%r_param.grid_size);
-    uint16_t myy = (int)(node_id/r_param.grid_size);
-    uint16_t desty = (int)(hf->dst_node_id/r_param.grid_size);
-
+    ports_t oport = INV;
+    uint16_t myx = (int)(node_id%r_param->grid_size);
+    uint16_t destx = (int)(hf->destNum%r_param->grid_size);
+    uint16_t myy = (int)(node_id/r_param->grid_size);
+    uint16_t desty = (int)(hf->destNum/r_param->grid_size);
     if ( myx == destx && myy == desty )
-        oport = EJECT_PORT;
+        oport = nic;
     else if ( myx == destx )
     {
         if( desty < myy )
-            oport = 3;
+            oport = yNeg;
         else
-            oport = 4;
+            oport = yPos;
     }
     else
     {
         if( destx < myx )
-            oport = 1;
+            oport = xNeg;
         else
-            oport = 2;
+            oport = xPos;
     }
 
-    assert ( oport != -1 && " Routing for flit failed \n");
-    entries.at(hf->virtual_channel).possible_out_ports.push_back(oport);
+    assert ( oport != INV && " Routing for flit failed \n");
+    entries.at(hf->vc).possible_out_ports.push_back(oport);
+    entries.at(hf->vc).possible_out_vcs.push_back(0);
 
+//    printf(" route pkt %d \n", oport);
     return ;
 }
 
 void
-GenericRC::route_torus(HeadFlit* hf)
+GenericRC::route_torus(const irisNPkt* hf)
 {
-    uint16_t myx = (int)(node_id%r_param.grid_size);
-    uint16_t destx = (int)(hf->dst_node_id%r_param.grid_size);
-    uint16_t myy = (int)(node_id/r_param.grid_size);
-    uint16_t desty = (int)(hf->dst_node_id/r_param.grid_size);
+    uint16_t myx = (int)(node_id%r_param->grid_size);
+    uint16_t destx = (int)(hf->destNum%r_param->grid_size);
+    uint16_t myy = (int)(node_id/r_param->grid_size);
+    uint16_t desty = (int)(hf->destNum/r_param->grid_size);
     int oport = -1;
     int ovc= -1;
 
@@ -76,14 +78,14 @@ GenericRC::route_torus(HeadFlit* hf)
         /* Decide the port based on hops around the ring */
         if ( desty > myy )
         {
-            if ((desty-myy)>r_param.grid_size/2)
+            if ((desty-myy)>r_param->grid_size/2)
                 oport = 3;
             else
                 oport = 4;
         }
         else
         {
-            if ((myy - desty )>r_param.grid_size/2)
+            if ((myy - desty )>r_param->grid_size/2)
                 oport = 4;
             else
                 oport = 3;
@@ -92,8 +94,8 @@ GenericRC::route_torus(HeadFlit* hf)
         /* Decide the vc */
         if( oport == 3)
         {
-            desty = (r_param.grid_size-desty)%r_param.grid_size;
-            myy= (r_param.grid_size-myy)%r_param.grid_size;
+            desty = (r_param->grid_size-desty)%r_param->grid_size;
+            myy= (r_param->grid_size-myy)%r_param->grid_size;
         }
 
         if ( desty > myy )
@@ -118,14 +120,14 @@ GenericRC::route_torus(HeadFlit* hf)
     {
         if ( destx > myx )
         {
-            if ((destx - myx)>r_param.grid_size/2)
+            if ((destx - myx)>r_param->grid_size/2)
                 oport = 1;
             else
                 oport = 2;
         }
         else
         {
-            if ((myx - destx )>r_param.grid_size/2)
+            if ((myx - destx )>r_param->grid_size/2)
                 oport = 2;
             else
                 oport = 1;
@@ -134,8 +136,8 @@ GenericRC::route_torus(HeadFlit* hf)
         /* Decide the vc */
         if( oport == 1)
         {
-            destx = (r_param.grid_size-destx)%r_param.grid_size;
-            myx= (r_param.grid_size-myx)%r_param.grid_size;
+            destx = (r_param->grid_size-destx)%r_param->grid_size;
+            myx= (r_param->grid_size-myx)%r_param->grid_size;
         }
 
         if ( destx > myx )
@@ -156,8 +158,8 @@ GenericRC::route_torus(HeadFlit* hf)
     }
 
     assert ( oport != -1 && ovc != -1 && " Routing for flit failed \n");
-    entries.at(hf->virtual_channel).possible_out_ports.push_back(oport);
-    entries.at(hf->virtual_channel).possible_out_vcs.push_back(ovc);
+    entries.at(hf->vc).possible_out_ports.push_back(oport);
+    entries.at(hf->vc).possible_out_vcs.push_back(ovc);
 
     return;
 }
@@ -166,12 +168,12 @@ GenericRC::route_torus(HeadFlit* hf)
 // directional case remember to adjust for channel widths/no of flits in a
 // packet for a fair evaluation
 void
-GenericRC::route_ring_unidirection(HeadFlit* hf)
+GenericRC::route_ring_unidirection(const irisNPkt* hf)
 {
 
-    r_param.grid_size = r_param.no_nodes;
+    r_param->grid_size = r_param->no_nodes;
     uint16_t myx = node_id;
-    uint16_t destx = hf->dst_node_id;
+    uint16_t destx = hf->destNum;
     int oport = -1;
     int ovc = -1;
 
@@ -211,18 +213,18 @@ GenericRC::route_ring_unidirection(HeadFlit* hf)
     }
 
     assert ( oport != -1 && ovc != -1 && " Routing for flit failed \n");
-    entries.at(hf->virtual_channel).possible_out_ports.push_back(oport);
-    entries.at(hf->virtual_channel).possible_out_vcs.push_back(ovc);
+    entries.at(hf->vc).possible_out_ports.push_back(oport);
+    entries.at(hf->vc).possible_out_vcs.push_back(ovc);
     return;
 }
 
 void
-GenericRC::route_ring(HeadFlit* hf)
+GenericRC::route_ring(const irisNPkt* hf)
 {
 
-    r_param.grid_size = r_param.no_nodes;
+    r_param->grid_size = r_param->no_nodes;
     uint16_t myx = node_id;
-    uint16_t destx = hf->dst_node_id;
+    uint16_t destx = hf->destNum;
     int oport = -1, ovc = -1;
 
     if ( myx == destx )
@@ -242,14 +244,14 @@ GenericRC::route_ring(HeadFlit* hf)
     {
         if ( destx > myx)
         {
-            if ( (destx - myx) > r_param.grid_size/2)
+            if ( (destx - myx) > r_param->grid_size/2)
                 oport = 1;
             else
                 oport = 2;
         }
         else
         {
-            if ( (myx - destx) > r_param.grid_size/2)
+            if ( (myx - destx) > r_param->grid_size/2)
                 oport = 2;
             else
                 oport = 1;
@@ -258,8 +260,8 @@ GenericRC::route_ring(HeadFlit* hf)
         /* Decide the vc */
         if( oport == 1)
         {
-            destx = (r_param.grid_size-destx)%r_param.grid_size;
-            myx= (r_param.grid_size-myx)%r_param.grid_size;
+            destx = (r_param->grid_size-destx)%r_param->grid_size;
+            myx= (r_param->grid_size-myx)%r_param->grid_size;
         }
 
         if ( destx > myx )
@@ -280,20 +282,20 @@ GenericRC::route_ring(HeadFlit* hf)
     }
 
     assert ( oport != -1 && ovc != -1 && " Routing for flit failed \n");
-    entries.at(hf->virtual_channel).possible_out_ports.push_back(oport);
-    entries.at(hf->virtual_channel).possible_out_vcs.push_back(ovc);
+    entries.at(hf->vc).possible_out_ports.push_back(oport);
+    entries.at(hf->vc).possible_out_vcs.push_back(ovc);
     return;
 }
 
 
 void
-GenericRC::route_twonode(HeadFlit* hf)
+GenericRC::route_twonode(const irisNPkt* hf)
 {
     int oport = -1, ovc = -1;
 
     if ( node_id == 0 )
     {
-        if ( hf->dst_node_id == 1)
+        if ( hf->destNum== 1)
             oport = 1;
         else
             oport = 0;
@@ -301,7 +303,7 @@ GenericRC::route_twonode(HeadFlit* hf)
 
     if ( node_id == 1 )
     {
-        if ( hf->dst_node_id == 0)
+        if ( hf->destNum== 0)
             oport = 1;
         else
             oport = 0;
@@ -313,40 +315,39 @@ GenericRC::route_twonode(HeadFlit* hf)
         ovc = 1;
 
     assert ( oport != -1 && ovc != -1 && " Routing for flit failed \n");
-    entries.at(hf->virtual_channel).possible_out_ports.push_back(oport);
-    entries.at(hf->virtual_channel).possible_out_vcs.push_back(ovc);
+    entries.at(hf->vc).possible_out_ports.push_back(oport);
+    entries.at(hf->vc).possible_out_vcs.push_back(ovc);
     return;
 }
 
 void
-GenericRC::push (Flit* f)
+GenericRC::push (const irisNPkt* f)
 {
-    uint16_t push_channel =f->virtual_channel;
+    uint16_t push_channel =f->vc;
     assert ( push_channel < entries.size() && " Invalid push channel RC");
 
 
     //Route the head
-    if( f->type == HEAD )
+    //    if( f->type == HEAD )
     {
-        HeadFlit* header = static_cast< HeadFlit* >( f );
         entries.at(push_channel).possible_out_ports.clear();
         entries.at(push_channel).possible_out_vcs.clear();
 
-        switch ( r_param.rc_scheme ) {
+        switch ( r_param->rc_scheme ) {
             case RING_ROUTING:	
-                route_ring( header );
+                route_ring( f );
                 break;
 
             case TWONODE_ROUTING:	
-                route_twonode( header );
+                route_twonode( f );
                 break;
 
             case XY:	
-                route_x_y(header);
+                route_x_y(f);
                 break;
 
             case TORUS_ROUTING:	
-                route_torus( header );
+                route_torus( f );
                 break;
 
             default:	
@@ -362,24 +363,26 @@ GenericRC::push (Flit* f)
         entries.at(push_channel).route_valid = true;
 
     }
-    else if(f->type == TAIL)
-    {
-        assert (entries.at(push_channel).route_valid
-                && " Got TAIL flit but rc unit has no valid route");
+    /* need to clear the rc unit when sending the tail flit out 
+       else if(f->type == TAIL)
+       {
+       assert (entries.at(push_channel).route_valid
+       && " Got TAIL flit but rc unit has no valid route");
 
-        entries.at(push_channel).route_valid = false;
-        entries.at(push_channel).possible_out_ports.clear();
-        entries.at(push_channel).possible_out_vcs.clear();
-    }
-    else if (f->type == BODY)
-    {
-        assert (entries.at(push_channel).route_valid
-                && " Got BODY flit but rc unit has no valid route");
-    }
-    else
-    {
-        _abort("RC","InvalidFlitException fty: %d ", f->type);
-    }
+       entries.at(push_channel).route_valid = false;
+       entries.at(push_channel).possible_out_ports.clear();
+       entries.at(push_channel).possible_out_vcs.clear();
+       }
+       else if (f->type == BODY)
+       {
+       assert (entries.at(push_channel).route_valid
+       && " Got BODY flit but rc unit has no valid route");
+       }
+       else
+       {
+       _abort("RC","InvalidFlitException fty: %d ", f->type);
+       }
+     * */
 
     return ;
 } /* ----- end of method genericRC::push ----- */
@@ -421,24 +424,24 @@ GenericRC::no_adaptive_ports( uint16_t channel)
 }
 
 /* 
-std::vector<uint16_t>*
-GenericRC::get_oport_list( uint16_t channel)
-{
-    return &entries.at(channel).possible_out_ports;
-}
+   std::vector<uint16_t>*
+   GenericRC::get_oport_list( uint16_t channel)
+   {
+   return &entries.at(channel).possible_out_ports;
+   }
 
-std::vector<uint16_t>*
-GenericRC::get_ovcs_list ( uint16_t channel)
-{
-    return &entries.at(channel).possible_out_vcs;
-}
+   std::vector<uint16_t>*
+   GenericRC::get_ovcs_list ( uint16_t channel)
+   {
+   return &entries.at(channel).possible_out_vcs;
+   }
  * */
 
 /*  The RC unit is busy between cycles IB for HEAD and IB for TAIL */
 bool
 GenericRC::is_empty ()
 {
-    for ( uint16_t i=0 ; i<r_param.vcs; i++ )
+    for ( uint16_t i=0 ; i<r_param->vcs; i++ )
         if(entries.at(i).route_valid)
             return false;
 

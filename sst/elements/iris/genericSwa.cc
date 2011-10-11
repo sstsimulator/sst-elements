@@ -23,7 +23,7 @@ inline void
 GenericSwa::resize()
 {
     /* Clear out the previous setting */
-    for ( uint i=0; i<r_param.ports; i++)
+    for ( uint16_t i=0; i<requesting_inputs.size(); i++)
         requesting_inputs.at(i).clear();
 
     requesting_inputs.clear();
@@ -33,14 +33,14 @@ GenericSwa::resize()
 
     // Use of these vectors can be confusing see header for explanation.
     // 2D array
-    requesting_inputs.resize(r_param.ports);
+    requesting_inputs.resize(r_param->ports);
 
     //1D array
-    last_winner.resize(r_param.ports);
-    last_port_winner.insert(last_port_winner.begin(),r_param.ports,0);
+    last_winner.resize(r_param->ports);
+    last_port_winner.insert(last_port_winner.begin(),r_param->ports,0);
 
-    for ( uint i=0; i<r_param.ports; i++)
-        requesting_inputs.at(i).resize(r_param.ports*r_param.vcs);
+    for ( uint i=0; i<r_param->ports; i++)
+        requesting_inputs.at(i).resize(r_param->ports*r_param->vcs);
 
     return;
 }
@@ -48,25 +48,25 @@ GenericSwa::resize()
 bool
 GenericSwa::is_requested ( uint16_t op, uint16_t ip, uint16_t ic )
 {
-    assert( op < r_param.ports && " Requested outport > configured r_param.ports ");
-    assert( ip < r_param.ports && " Requested inport > configured r_param.ports ");
-    assert( ic < r_param.vcs && " Requested Vc greater than configured r_param.vcs");
-    return requesting_inputs.at(op).at(ip*r_param.vcs+ic).is_valid;
+    assert( op < r_param->ports && " Requested outport > configured r_param->ports ");
+    assert( ip < r_param->ports && " Requested inport > configured r_param->ports ");
+    assert( ic < r_param->vcs && " Requested Vc greater than configured r_param->vcs");
+    return requesting_inputs.at(op).at(ip*r_param->vcs+ic).is_valid;
 }		/* -----  end of function is_requested  ----- */
 
 void
 GenericSwa::clear_requestor ( uint16_t op, uint16_t ip, uint16_t ic )
 {
-    requesting_inputs.at(op).at(ip*r_param.vcs+ic).is_valid=false;
+    requesting_inputs.at(op).at(ip*r_param->vcs+ic).is_valid=false;
     return ;
 }		/* -----  end of method GenericSwa::clear_requestor  ----- */
 
 void
 GenericSwa::request ( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc, uint64_t now )
 {
-    requesting_inputs.at(op).at(ip*r_param.vcs+ovc).is_valid = true;
-    requesting_inputs.at(op).at(ip*r_param.vcs+ovc).port = ip;
-    requesting_inputs.at(op).at(ip*r_param.vcs+ovc).channel = ivc;
+    requesting_inputs.at(op).at(ip*r_param->vcs+ovc).is_valid = true;
+    requesting_inputs.at(op).at(ip*r_param->vcs+ovc).port = ip;
+    requesting_inputs.at(op).at(ip*r_param->vcs+ovc).channel = ivc;
     return ;
 }		/* -----  end of method GenericSwa::request  ----- */
 
@@ -92,7 +92,7 @@ GenericSwa::do_round_robin_arbitration ( uint16_t op, uint64_t now )
         return last_winner.at(op);
 
     bool found_winner = false;
-    for ( uint16_t i=last_port_winner.at(op)+1; i<r_param.ports*r_param.vcs; i++) 
+    for ( uint16_t i=last_port_winner.at(op); i<r_param->ports*r_param->vcs; i++) 
         if ( requesting_inputs.at(op).at(i).is_valid)
         {
             last_port_winner.at(op)=i;
@@ -101,7 +101,7 @@ GenericSwa::do_round_robin_arbitration ( uint16_t op, uint64_t now )
 
     if ( !found_winner )
     {
-        for ( uint16_t i=0; i <= last_port_winner.at(op);++i) 
+        for ( uint16_t i=0; i < last_port_winner.at(op);i++) 
             if ( requesting_inputs.at(op).at(i).is_valid )
             {
                 last_port_winner.at(op)=i;
@@ -125,11 +125,12 @@ GenericSwa::do_round_robin_arbitration ( uint16_t op, uint64_t now )
 bool
 GenericSwa::is_empty ( void )
 {
-    std::vector< std::vector< SA_unit> >::const_iterator it;
-    for ( it=requesting_inputs.begin(); it!=requesting_inputs.end(); ++it){
-        std::vector<SA_unit>::const_iterator it2;
-        for ( it2=it->begin(); it2!=it->end(); ++it2){
-            if ( it2->is_valid )
+    for( uint16_t p=0; p<requesting_inputs.size(); p++)
+    {
+        std::vector<SA_unit> tmp = requesting_inputs.at(p);
+        std::vector<SA_unit>::const_iterator it = tmp.begin();
+        for ( it=tmp.begin(); it!=tmp.end(); it++){
+            if ( it->is_valid )
                 return false;
         }
     }

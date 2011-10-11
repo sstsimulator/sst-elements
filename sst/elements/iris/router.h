@@ -16,10 +16,8 @@
 #ifndef  _ROUTER_H_INC
 #define  _ROUTER_H_INC
 
-#include	"../interfaces/genericHeader.h"
+#include	"genericHeader.h"
 #include	"router_params.h"
-#include	"../interfaces/irisEvent.h"
-#include	"../data_types/flit.h"
 #include	"genericBuffer.h"
 #include	"genericRC.h"
 #include	"genericSwa.h"
@@ -37,6 +35,8 @@ enum Router_PS {
     ST
 };
 
+extern const char* Router_PS_string;
+/* Moved it genericHeader.cc
 const char* Router_PS_string[]= {
     "INVALID",
         "EMPTY",
@@ -48,18 +48,19 @@ const char* Router_PS_string[]= {
         "SWA",
         "ST"
 };
+ * */
 
 /*-----------------------------------------------------------------------------
  *  Data structure that contains state for all active packets
  *  in the system ( active->packets in IB/RC/VCA/SA/ST ). 
  *  At any point there should be a max of ports*vcs no of entries in the
- *  router.
+\n *  router.
  *-----------------------------------------------------------------------------*/
 struct IB_state
 {
     IB_state ():in_port(-1),in_channel(-1),out_port(-1),out_channel(-1)
-                , packet_length(-1), pipe_stage(INVALID), mclass(INVALID_PKT)
-                , is_valid(false), sa_head_done(false)
+                , packet_length(-1), pipe_stage(EMPTY), mclass(INVALID_PKT)
+                , is_valid(false)
                 , pkt_arrival_time(0), no_arbitration_failures(0) 
     {}  
 
@@ -107,30 +108,35 @@ struct IB_state
 /*
  * =====================================================================================
  *        Class:  Router
- *  Description:  Generic router with 5 pipeline stages and input buffers 
+ *  Description:  Generic router with 5 pipeline stages 
+ *  IB+RC| VCA | SA | ST | LT
+ *  sub components for buffers, rc, vca and sa.. see corresponding class files
+ *  lt is on the sst provided link/ for manifold its a manifold link
+ *  links are bidirectional dlinks for data and slinks for signalling
  * =====================================================================================
  */
 
 class Router : public DES_Component
 {
     public:
-        Router (uint16_t node_id);
+        Router (SST::ComponentId_t id, Params_t& params);
         ~Router ();  
 
         /* Event handlers from external components. Prioritize such that all
          * these complete before the clocked event starts. ( Router state is
          * updated for all incoming packets and credits this way )
          * */
-        void handle_link_arrival (IrisEvent* e);
+        void handle_link_arrival (DES_Event* e, int dir);
 
         /* Clocked events */
-        void tock(void);
+        bool tock(SST::Cycle_t c);
 
         /* Router stats */
         uint64_t stat_flits_in;
         uint64_t stat_flits_out;
         uint64_t stat_last_flit_time_nano;  /* Useful to detect if the router deadlocked  */
         uint64_t stat_last_flit_cycle;
+        uint64_t stat_packets_in;
         uint64_t stat_packets_out;
         uint64_t stat_total_pkt_latency_nano;
         uint64_t heartbeat_interval;
@@ -145,24 +151,27 @@ class Router : public DES_Component
         void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
         inline void resize( void ); // Reconfigure the parameters for the router
 
+
     private:
-            void do_ib( HeadFlit* , uint16_t ip, uint16_t ic);
-            void do_vca(void);
-            void do_swa(void);
-            void do_st(void);
+        void do_ib( const irisNPkt* , uint16_t ip); 
+        void do_vca(void);
+        void do_swa(void);
+        void do_st(void);
 
-            // Node ID
-            int16_t node_id; /*  NOTE: node_id is not unique to a component. 
-                              *  Use getId from the kernel for a unique component id */
+        // Node ID
+        int16_t node_id; /*  NOTE: node_id is not unique to a component. 
+                          *  Use getId from the kernel for a unique component id */
 
-            // sub components
-            std::vector<GenericBuffer> in_buffer;
-            std::vector<GenericRC> rc;
-            GenericVca vca;
-            GenericSwa swa;
-            std::vector<IB_state> ib_state;
-            std::vector<std::vector<uint16_t> > downstream_credits;
+        // sub components
+        std::vector<GenericBuffer> in_buffer;
+        std::vector<GenericRC> rc;
+        GenericVca vca;
+        GenericSwa swa;
+        std::vector<IB_state> ib_state;
+        std::vector<std::vector<uint16_t> > downstream_credits;
 
+        std::vector<SST::Link*> links;
+        bool currently_clocking;
 
 }; /* -----  end of class Router  ----- */
 

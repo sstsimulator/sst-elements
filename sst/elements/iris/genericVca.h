@@ -16,9 +16,10 @@
 #ifndef  _GENERICVCA_H_INC
 #define  _GENERICVCA_H_INC
 
-#include	"../interfaces/genericHeader.h"
+#include	"genericHeader.h"
 #include	"router_params.h"
 
+extern Router_params* r_param; 
 struct VCA_unit
 {
     VCA_unit(): in_port(-1), in_vc(-1), out_port(-1), out_vc(-1), is_valid(false){}
@@ -35,6 +36,7 @@ class GenericVca
         GenericVca ();
         ~GenericVca ();
 
+        inline void resize ( void );
         bool is_requested( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc) const;
         bool request( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc);
         void pick_winner( void );

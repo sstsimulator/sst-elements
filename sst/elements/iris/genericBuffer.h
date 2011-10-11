@@ -17,8 +17,8 @@
 #define  _GENERICBUFFER_H_INC
 
 #include        <sst/core/sst_types.h>
-#include        "../data_types/flit.h"
 #include	"router_params.h"
+#include        "SST_interface.h"
 /*
  * =====================================================================================
  *        Class:  GenericBuffer
@@ -26,15 +26,16 @@
  *  the input and output buffers of the router.
  * =====================================================================================
  */
+extern Router_params* r_param; 
 class GenericBuffer 
 {
     public:
         GenericBuffer ();
         ~GenericBuffer(); 
 
-        void push( Flit* , uint16_t);
-        Flit* pull(uint16_t);
-        Flit* peek(uint16_t);
+        void push( irisNPkt*);
+        irisNPkt* pull(uint16_t);
+        irisNPkt* peek(uint16_t);
         uint16_t get_occupancy( uint16_t ) const;
         bool is_buffer_full( uint16_t ) const;
         bool is_buffer_empty( uint16_t ) const;
@@ -47,7 +48,7 @@ class GenericBuffer
     protected:
 
     private:
-        std::vector < std::deque<Flit*> > buffers;
+        std::vector < std::deque<irisNPkt*> > buffers;
 
 }; /* -----  end of class GenericBuffer  ----- */
 

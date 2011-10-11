@@ -16,9 +16,10 @@
 #ifndef  _GENERICSWA_H_INC
 #define  _GENERICSWA_H_INC
 
-#include	"../interfaces/genericHeader.h"
+#include	"genericHeader.h"
 #include	"router_params.h"
 
+extern Router_params* r_param; 
 struct SA_unit
 {
         SA_unit():port(-1),channel(-1),win_cycle(0), is_valid(false){};

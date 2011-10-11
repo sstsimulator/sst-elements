@@ -53,6 +53,17 @@ enum routing_scheme_t{
     RING_ROUTING // one-dimension unidirection torus.. NOT A RING!
 };
 
+enum ports_t{
+    nic = 0,
+    xPos,
+    xNeg,
+    yPos,
+    yNeg,
+    zPos,
+    zNeg,
+    INV
+};
+
 /*  Make swaping DES kernels cleaner */
 typedef class SST::Component DES_Component;
 typedef class SST::Event DES_Event;
