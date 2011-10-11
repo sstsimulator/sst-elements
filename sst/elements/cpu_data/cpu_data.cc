@@ -1,81 +1,184 @@
-// Copyright 2009-2010 Sandia Corporation. Under the terms
+// Copyright 2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2010, Sandia Corporation
+// Copyright (c) 2010, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
-#include <sst_config.h>
+#include "sst_config.h"
 #include "sst/core/serialization/element.h"
+#include <assert.h>
+
+#include "sst/core/element.h"
 
 #include "cpu_data.h"
-#include "myMemEvent.h"
+#include "simpleEvent.h"
 
+using namespace SST;
 
-bool Cpu_data::clock( Cycle_t current)
+Cpu_data::Cpu_data(ComponentId_t id, Params_t& params) :
+  IntrospectedComponent(id) {
+
+  // get parameters
+  if ( params.find("workPerCycle") == params.end() ) {
+    _abort(event_test,"couldn't find work per cycle\n");
+  }
+  workPerCycle = strtol( params[ "workPerCycle" ].c_str(), NULL, 0 );
+
+  if ( params.find("commFreq") == params.end() ) {
+    _abort(event_test,"couldn't find communication frequency\n");
+  }
+  commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
+
+  if ( params.find("commSize") == params.end() ) {
+    _abort(event_test,"couldn't find communication size\n");
+  }
+  commSize = strtol( params[ "commSize" ].c_str(), NULL, 0 );
+  if (params.find("push_introspector") != params.end() ) {
+  pushIntrospector = params[ "push_introspector" ];
+  }
+        
+ 
+  // init randomness
+  srand(1);
+  neighbor = rand() % 4;
+
+  // tell the simulator not to end without us
+  registerExit();
+
+  // configure out links
+  N = configureLink( "Nlink", 
+		     new Event::Handler<Cpu_data>(this,
+							 &Cpu_data::
+							 handleEvent) );
+  S = configureLink( "Slink", 
+		     new Event::Handler<Cpu_data>(this,
+							 &Cpu_data::
+							 handleEvent) );
+  E = configureLink( "Elink", 
+		     new Event::Handler<Cpu_data>(this,
+							 &Cpu_data::
+							 handleEvent) );
+  W = configureLink( "Wlink", 
+		     new Event::Handler<Cpu_data>(this,
+							 &Cpu_data::
+							 handleEvent) );
+  assert(N);
+  assert(S);
+  assert(E);
+  assert(W);
+
+  //set our clock
+  registerClock( "1GHz", 
+		 new Clock::Handler<Cpu_data>(this, 
+						     &Cpu_data::clockTic ) );
+
+  //for introspection
+  counts = 0;
+	    num_il1_read = 0;
+	    num_branch_read = 0;
+	    num_branch_write = 0;
+	    num_RAS_read = 0;
+	    num_RAS_write = 0;
+	    if (getId() == 2)
+        	mycore_temperature = 360.5;
+    	    else
+		mycore_temperature = 300.1;
+}
+
+Cpu_data::Cpu_data() :
+    IntrospectedComponent(-1)
 {
-    //_CPU_DATA_DBG("id=%lu currentCycle=%lu \n", Id(), current );
+    // for serialization only
+}
 
-    MyMemEvent* event = NULL; 
+// incoming events are scanned and deleted
+void Cpu_data::handleEvent(Event *ev) {
+  //printf("recv\n");
+  simpleEvent *event = dynamic_cast<simpleEvent*>(ev);
+  if (event) {
+    // scan through each element in the payload and do something to it
+    volatile int sum = 0;
+    for (simpleEvent::dataVec::iterator i = event->payload.begin();
+	 i != event->payload.end(); ++i) {
+      sum += *i;
+    }
+    delete event;
+  } else {
+    printf("Error! Bad Event Type!\n");
+  }
+}
 
-    if (current == 5000 ) unregisterExit();
+// each clock tick we do 'workPerCycle' iterations of a simple loop.
+// We have a 1/commFreq chance of sending an event of size commSize to
+// one of our neighbors.
+bool Cpu_data::clockTic( Cycle_t ) {
+  // do work
+  // loop becomes:
+  /*  00001ab5        movl    0xe0(%ebp),%eax
+      00001ab8        incl    %eax
+      00001ab9        movl    %eax,0xe0(%ebp)
+      00001abc        incl    %edx
+      00001abd        cmpl    %ecx,%edx
+      00001abf        jne     0x00001ab5
 
+      6 instructions. 
+  */
 
-    if ( state == SEND ) { 
-        if ( ! event ) event = new MyMemEvent();
+  volatile int v = 0;
+  for (int i = 0; i < workPerCycle; ++i) {
+    v++;
+  }
 
-        if ( who == WHO_MEM ) { 
-            event->address = 0x1000; 
-            who = WHO_NIC;
-        } else {
-            event->address = 0x10000000; 
-            who = WHO_MEM;
-        }
-
-        _CPU_DATA_DBG("send a MEM event address=%#lx\n", event->address );
-	//printf("send a MEM event address=%#lx at cycle=%lu\n", event->address, current );
-	
-
-        mem->Send( (Cycle_t)3, event );
-        state = WAIT;
-
-
-    } else {
-        if ( ( event = static_cast< MyMemEvent* >( mem->Recv() ) ) ) {
-            _CPU_DATA_DBG("got a MEM event address=%#lx\n", event->address);
-	    //printf("got a MEM event address=%#lx at cycle=%lu\n", event->address, current );
-
-
-            state = SEND;
-	    if (getId() == 3){
+  // communicate?
+  if ((rand() % commFreq) == 0) {
+    // yes, communicate
+    // create event
+    simpleEvent *e = new simpleEvent();
+    // fill payload with commSize bytes
+    for (int i = 0; i < (commSize); ++i) {
+      e->payload.push_back(1);
+    }
+    // find target
+    neighbor = (++neighbor) % 4;
+    // send
+    switch (neighbor) {
+    case 0:
+      N->Send(e);
+      break;
+    case 1:
+      S->Send(e);
+      break;
+    case 2:
+      E->Send(e);
+      break;
+    case 3:
+      W->Send(e);
+      break;
+    default:
+      printf("bad neighbor\n");
+    }
+    //printf("sent\n");
+    //for introspection
+    printf("Communicating with neighbors and updating usage counts\n");
+    if (getId() == 2){
 	       counts++;
 	       num_il1_read++;
 	       num_branch_read = num_branch_read + 2;
 	       num_RAS_read = num_RAS_read + 2;
-	    }
-	    else{
+    }
+    else{
 		counts = counts+2;
 		num_il1_read = num_il1_read +2;
-	    }
-        }
     }
-    return false;
-}
+  }
 
-bool Cpu_data::pushData( Cycle_t current)
-{    		
-	  if(isTimeToPush(current, pushIntrospector.c_str())){
-	    //_CPU_DATA_DBG("id=%lu currentCycle=%lu \n", Id(), current );
-
-	    //Here you can push power statistics by 1) set up values in the mycounts structure
-	    //and 2) call the gerPower function. See cpu_PowerAndData for example
-	}
-	return false;
+  // return false so we keep going
+  return false;
 }
 
 uint64_t Cpu_data::someCalculation()
@@ -85,20 +188,38 @@ uint64_t Cpu_data::someCalculation()
 
 double Cpu_data::updateTemperature()
 {
-	if (getId() == 3)
+	if (getId() == 0)
             mycore_temperature += 1.5;
         else
 	    mycore_temperature += 1.0;
 	return (mycore_temperature);
 }
 
-extern "C" {
-Cpu_data* cpu_dataAllocComponent( SST::ComponentId_t id,
-                                    SST::Component::Params_t& params )
+// Element Libarary / Serialization stuff
+    
+BOOST_CLASS_EXPORT(simpleEvent)
+BOOST_CLASS_EXPORT(Cpu_data)
+
+static Component*
+create_cpu_data(SST::ComponentId_t id, 
+                  SST::Component::Params_t& params)
 {
     return new Cpu_data( id, params );
 }
-}
 
-BOOST_CLASS_EXPORT(Cpu_data)
-BOOST_CLASS_EXPORT(SST::MyMemEvent)
+static const ElementInfoComponent components[] = {
+    { "cpu_data",
+      "Simple Demo Component",
+      NULL,
+      create_cpu_data
+    },
+    { NULL, NULL, NULL, NULL }
+};
+
+extern "C" {
+    ElementLibraryInfo cpu_data_eli = {
+        "Cpu_data",
+        "Demo Component",
+        components,
+    };
+}
