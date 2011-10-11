@@ -15,7 +15,18 @@
 #include "introspector_cpuTemperature.h"
 #include "sst/core/element.h"
 
-bool Introspector_cpuTemperature::pullData( Cycle_t current )
+bool Introspector_cpuTemperature::triggeredUpdate()
+{
+	for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
+	     i != MyCompList.end(); ++i) {
+		
+		std::cout << "Introspector_cpuTemperature pulls data from component ID " << (*i)->getId() << " and temperature = " << getData<double>(*i, "temperature") << std::endl;
+		
+	    }
+
+}
+
+/*bool Introspector_cpuTemperature::pullData( Cycle_t current )
 {
     //_INTROSPECTOR_DBG("id=%lu currentCycle=%lu \n", Id(), current );
     IntrospectedComponent *c;
@@ -37,7 +48,7 @@ bool Introspector_cpuTemperature::pullData( Cycle_t current )
 	}
 
 	return false;
-}
+}*/
 
 
 
