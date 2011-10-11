@@ -55,10 +55,10 @@ class Introspector_cpuTemperature : public Introspector {
 //             Handler = new EventHandler< Introspector_cpuTemperature, bool, Cycle_t >
 //                                                 ( this, &Introspector_cpuTemperature::pullData );
 //             TimeConverter* tc = registerClock( frequency, handler );
-	    TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpuTemperature>( this, &Introspector_cpuTemperature::pullData ) );
+	    //TimeConverter* tc = registerClock( frequency, new Clock::Handler<Introspector_cpuTemperature>( this, &Introspector_cpuTemperature::pullData ) );
 
-	    printf("INTROSPECTOR_CPUTEMPERATURE period: %ld\n",
-                   (long int) tc->getFactor());
+	    //printf("INTROSPECTOR_CPUTEMPERATURE period: %ld\n",
+            //       (long int) tc->getFactor());
             _INTROSPECTOR_CPUTEMPERATURE_DBG("Done registering clock\n");
 
             
@@ -67,9 +67,9 @@ class Introspector_cpuTemperature : public Introspector {
 	    std::pair<bool, int> pdouble;
 
 	    //get a list of relevant component. Must be done after all components are created 
-	    MyCompList = getModels(model); 
+	    MyCompList = getModelsByType(model);  
 	    //std::cout << " introspector_cpuTemperature has MyCompList size = " << MyCompList.size() << std::endl;
-	    for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
+	    /*for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();
 	        i != MyCompList.end(); ++i) {
      		    // state that we will monitor those components 
 		    // (pass introspector's info to the component)
@@ -84,12 +84,13 @@ class Introspector_cpuTemperature : public Introspector {
 		    }
 
 
-	     }
+	     }*/
 
             _INTROSPECTOR_CPUTEMPERATURE_DBG("\n");
             return 0;
         }
         int Finish() {
+	    triggeredUpdate();
             _INTROSPECTOR_CPUTEMPERATURE_DBG("\n");
             return 0;
         }
@@ -102,7 +103,7 @@ class Introspector_cpuTemperature : public Introspector {
 	Introspector_cpuTemperature() :  Introspector() {} // for serialization only
 
         bool pullData( Cycle_t );
-	
+	bool triggeredUpdate();	
 
         Component::Params_t    params;        
 	std::string frequency;
