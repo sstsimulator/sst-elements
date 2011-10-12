@@ -4,7 +4,11 @@ if [[ $1 == "clean" ]] ; then
     exit
 fi
 
-extra=$1
+if [[ $1 == "extra" ]] ; then
+    extra="-Wextra -Wunused-macros -pedantic"
+else
+    extra=""
+fi
 
 mpic++ -Wall $extra -I../.. -I.. \
 	driver.cc \

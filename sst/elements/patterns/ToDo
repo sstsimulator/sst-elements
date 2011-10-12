@@ -1,3 +1,8 @@
+- Seperate out NIC model
+    + Send side is in pattern_common.cc
+    + Receive side is in comm_pattern.cc
+    + Should there be a queue in front of the receive side?
+
 - NoCIntraLatency cannot be less than NoCNICparams 0. Why? Same is true for NetIntraLatency
 
 - NetIntraLatency Cannot be bigger than NetNICparams = 0. I don't think that is right.
