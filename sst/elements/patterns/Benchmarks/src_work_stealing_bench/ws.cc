@@ -20,19 +20,18 @@
 #include <mpi.h>
 #include <list>
 
-#include "util.h"	/* For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK */
+#include "util.h"			// For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK
+#include "collective_topology.h"	// For ctopo
+#include "allreduce.h"			// For my_allreduce
 #include "ws.h"
 
-#define WS_VERSION			"0.2"
-#define DEFAULT_SEED			(543219876)
-#define DEFAULT_TIME_STEPS		(360000)
+
+#define WS_VERSION			"0.3"
 #define DEFAULT_TIME_STEP_DURATION	(500000) // In ns; i.e., 500 us
-#define DEFAULT_INITIAL_TASKS		(10)
-#define DEFAULT_TASK_DURATION		(150)	// in time steps
-#define MAX_TASK_DURATION		(450)	// in time steps
-#define DEFAULT_NUM_NEW_TASKS		(2)	// Average of new tasks, if a tasks spawns others
-#define DEFAULT_ASK_NEW_TASKS		(4)	// How many ranks to ask for work, if we are out
+#define DEFAULT_ASK_TASKS		(4)	// How many ranks to ask for work, if we are out
 #define MSG_SIZE_PER_WORK_UNIT		(3 * 1024)	// Migration cost depends on work size
+#define DEFAULT_RANK_WORK_UNITS		(5000)	// Approximate number of work units per rank
+#define DEFAULT_COMPLETION_CHECK	(25)	// Number of time steps between checks
 
 #define TAG_WORK_REQUEST		(101)	// Tag for work request messages
 #define TAG_WORK_MIGRATION		(105)	// Tag for work
@@ -40,7 +39,6 @@
 /* Local functions */
 static void usage(char *pname);
 static float units2seconds(int duration);
-static int gen_new_task(void);
 
 
 
@@ -50,40 +48,38 @@ static int gen_new_task(void);
 */
 static int verbose;
 static double elapsed;
-static int time_steps;
 static uint64_t time_unit;
 static std::list <int> *my_task_list;
 
 static int debug;
-static int max_task_duration;
-static int initial_tasks;
 static long int seed;
-static int new_tasks;
-static int num_start_tasks;
 static int back_off;
 static int circle;
-static double p_task_creation;		// Prob. of a new task being created when one finishes
 static std::list <MPI_Request> *pending_sends;
 static std::list <MPI_Request> *work_requests;
 static int report_rank;
 static int root;
+static int rank_work_units;
+static int completion_check;
 
 static int stat_time_worked;
 static int stat_time_idle;
 static int stat_tasks_completed;
 static int stat_interrupts;
 static int stat_tasks_left_in_queue;
-static int stat_initial_work_time;
-static int stat_new_tasks;
-static int stat_new_task_requests_sent;
-static int stat_new_task_requests_not_granted;
-static int stat_new_task_requests_rcvd;
-static int stat_new_task_requests_denied;
-static int stat_new_task_requests_granted;
-static int stat_new_task_requests_honored;
-static int stat_total_tasks;
-static int stat_total_time_units;
+static int stat_task_requests_sent;
+static int stat_task_requests_not_granted;
+static int stat_task_requests_rcvd;
+static int stat_task_requests_denied;
+static int stat_task_requests_granted;
+static int stat_task_requests_honored;
 static double stat_elapsed;
+static int stat_initial_work_units;
+static int stat_initial_tasks;
+static int stat_global_initial_tasks;
+static int stat_global_tasks_completed;
+static int stat_gloabl_initial_work_units;
+static int stat_global_time_worked;
 
 
 
@@ -93,6 +89,7 @@ ws_init(int argc, char *argv[])
 
 int ch;
 bool error;
+bool seed_set;
 
 
     if (num_ranks < 2)   {
@@ -108,41 +105,19 @@ bool error;
     error= false;
     verbose= 0;
     debug= 0;
-    seed= DEFAULT_SEED;
-    time_steps= DEFAULT_TIME_STEPS;
-    initial_tasks= DEFAULT_INITIAL_TASKS;
-    max_task_duration= MAX_TASK_DURATION;
+    seed_set= false;
     time_unit= DEFAULT_TIME_STEP_DURATION;
-    new_tasks= DEFAULT_NUM_NEW_TASKS;
     root= 0;
     report_rank= root;
+    rank_work_units= DEFAULT_RANK_WORK_UNITS;
+    completion_check= DEFAULT_COMPLETION_CHECK;
 
 
     /* Check command line args */
-    while ((ch= getopt(argc, argv, "di:m:r:s:t:v")) != EOF)   {
+    while ((ch= getopt(argc, argv, "dr:s:v")) != EOF)   {
         switch (ch)   {
 	    case 'd':
 		debug++;
-		break;
-
-            case 'i':
-		initial_tasks= strtol(optarg, (char **)NULL, 0);
-		if (initial_tasks < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Initial tasks (-i %d) needs to be >= 1\n", initial_tasks);
-		    }
-		    error= true;
-		}
-		break;
-
-            case 'm':
-		max_task_duration= strtol(optarg, (char **)NULL, 0);
-		if (max_task_duration < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Max task duration (-m %d) needs to be >= 1\n", max_task_duration);
-		    }
-		    error= true;
-		}
 		break;
 
             case 'r':
@@ -158,16 +133,7 @@ bool error;
 
             case 's':
 		seed= strtol(optarg, (char **)NULL, 0);
-		break;
-
-            case 't':
-		time_steps= strtol(optarg, (char **)NULL, 0);
-		if (time_steps < 1)   {
-		    if (my_rank == 0)   {
-			fprintf(stderr, "Time steps (-t %d) needs to be >= 1\n", time_steps);
-		    }
-		    error= true;
-		}
+		seed_set= true;
 		break;
 
             case 'v':
@@ -182,6 +148,13 @@ bool error;
     if (time_unit > 999999999)   {
 	fprintf(stderr, "nanosleep() requires the nanosecond field to be less than 999999999.!\n");
 	return -1;
+    }
+
+    if (!seed_set)   {
+        if (my_rank == 0)   {
+	    fprintf(stderr, "Seed (-s value) is a required argument\n");
+	}
+	error= true;
     }
 
     if (error)   {
@@ -199,12 +172,6 @@ bool error;
 	printf("# Number of ranks is %d\n", num_ranks);
 	printf("# Random number seed is %ld\n", seed);
 	printf("# One time unit is %.9f s\n", units2seconds(1));
-	printf("# Will do %d time units of work, ~%.6f s per trial\n",
-	    time_steps, units2seconds(time_steps));
-	printf("# Maximum task duration is %d time units, %.6f s\n",
-	    max_task_duration, units2seconds(max_task_duration));
-	printf("# Each rank gets an average of %d tasks to start\n", initial_tasks);
-	printf("# When a tasks spawns more work, it will create an average of %d\n", new_tasks);
     }
 
 
@@ -225,14 +192,13 @@ clear_stats(void)
     stat_time_worked= 0;
     stat_time_idle= 0;
     stat_tasks_completed= 0;
-    stat_initial_work_time= 0;
-    stat_new_tasks= 0;
-    stat_new_task_requests_sent= 0;
-    stat_new_task_requests_not_granted= 0;
-    stat_new_task_requests_honored= 0;
-    stat_new_task_requests_rcvd= 0;
-    stat_new_task_requests_denied= 0;
-    stat_new_task_requests_granted= 0;
+    stat_task_requests_sent= 0;
+    stat_task_requests_not_granted= 0;
+    stat_task_requests_honored= 0;
+    stat_task_requests_rcvd= 0;
+    stat_task_requests_denied= 0;
+    stat_task_requests_granted= 0;
+    stat_initial_tasks= 0;
 
 }  // end of clear_stats()
 
@@ -260,11 +226,28 @@ char *work_buf;
 
 
 
+// Peek at the next task, but don't pop it off the list
+static int
+next_task_duration(void)
+{
+
+int duration= 0;
+
+
+    if (!my_task_list->empty())   {
+	duration= my_task_list->front();
+    }
+    return duration;
+
+}  // end of next_task_duration()
+
+
+
 static int
 get_next_task(void)
 {
 
-int current_task= 0;
+int current_task= -1;
 
 
     if (!my_task_list->empty())   {
@@ -278,59 +261,55 @@ int current_task= 0;
 
 
 static int
-gen_new_task(void)
+assign_tasks(void)
 {
 
 int duration;
+int remainder;
+int max_task_duration;
 
 
-    // Generate a task; i.e., determine a duration for it
-    duration= (int) (drand48() * DEFAULT_TASK_DURATION);
-    if (duration < 1)   {
-	// No zero-length tasks, please
-	duration= 1;
-    }
-    if (duration > max_task_duration)   {
-	// We have an upper limit too
-	duration= max_task_duration;
-    }
+    max_task_duration= 0;
 
-    my_task_list->push_back(duration);
+    // How much total work units do we want to do this time?
+    stat_initial_work_units= drand48() * rank_work_units;
+    remainder= stat_initial_work_units;
 
-    return duration;
+    while (remainder)   {
+	// Break up the total work into tasks
+	// May want to use a gamma distribution here at some point
+	duration= drand48() * remainder;
 
-}  // end of gen_new_task() 
-
-
-
-static void
-assign_first_tasks(void)
-{
-
-int duration;
-
-
-    // Give every rank an initial set of tasks
-    num_start_tasks= (int)(-1.0 * log(drand48()) * initial_tasks);
-    if (num_start_tasks < 1)   {
-	// Everybody gets at least one task to start
-	num_start_tasks= 1;
-    }
-
-    if (debug)   {
-	printf("[%3d] Will start with %5d tasks\n", my_rank, num_start_tasks);
-    }
-
-
-    for (int i= 0; i < num_start_tasks; i++)   {
-	duration= gen_new_task();
-	stat_initial_work_time += duration;
-	if (debug > 2)   {
-	    printf("[%3d] Task %5d has duration %5d time units\n", my_rank, i, duration);
+	// Don't allow zero-length tasks
+	if (duration < 1)   {
+	    duration= 1;
 	}
+
+	my_task_list->push_back(duration);
+
+	if (duration > max_task_duration)   {
+	    max_task_duration= duration;
+	}
+
+	remainder= remainder - duration;
+	stat_initial_tasks++;
     }
 
-}  // end of assign_first_taks()
+    // We need to know the largest possible task size that may get sent around
+    // so we can allocate a buffer that is large enough.
+    if (debug)   {
+	printf("[%3d] Will start with %5d tasks totaling %8d work units, my largest work size is %d\n",
+	    my_rank, stat_initial_tasks, stat_initial_work_units, max_task_duration);
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, &max_task_duration, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    if (debug && my_rank == 0)   {
+	printf("      Max work size is %d\n", max_task_duration);
+    }
+
+    return max_task_duration * MSG_SIZE_PER_WORK_UNIT;
+
+}  // end of assign_taks()
 
 
 
@@ -369,22 +348,12 @@ do_task_work(void)
 
     // We don't actually do anything during work. Use nanosleep to pass
     // the time.
-
     work();
-    // We did a time unit's worth of "work". Now do some
-    // housekeeping
 
-    // Lower the probability of new tasks being created
-    // As time goes on, it should be less and less likely
-    // that new tasks get created.
-    p_task_creation= p_task_creation - 1.0 / time_steps;
-    if (p_task_creation < 0.0)   {
-	// This should not happen, but just in case
-	p_task_creation= 0.0;
-    }
 
     // Lower our back off threshold. We use it to determine whether it
-    // is OK now to ask for more work.
+    // is OK now to ask for more work. (We come through here even if we
+    // don't currently have work.)
     back_off--;
     if (back_off < 0)   {
 	back_off= 0;
@@ -411,19 +380,21 @@ int send_off_task;
 	if (flag)   {
 	    // Consume the request
 	    MPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE, TAG_WORK_REQUEST, MPI_COMM_WORLD, &status);
-	    stat_new_task_requests_rcvd++;
+	    stat_task_requests_rcvd++;
 
-	    if (deny || my_task_list->size() < 5)   {
+	    // If my work queue is getting low, or my next task is short,
+	    // don't give it away.
+	    if (deny || (my_task_list->size() < 5) || (next_task_duration() < 2))   {
 		// Sorry, no work for you
 		MPI_Send(NULL, 0, MPI_BYTE, status.MPI_SOURCE, TAG_WORK_MIGRATION, MPI_COMM_WORLD);
-		stat_new_task_requests_denied++;
+		stat_task_requests_denied++;
 
 	    } else   {
 		// Pass off some work
 		send_off_task= get_next_task();
 		MPI_Isend(buf, send_off_task * MSG_SIZE_PER_WORK_UNIT, MPI_BYTE,
 		    status.MPI_SOURCE, TAG_WORK_MIGRATION, MPI_COMM_WORLD, &req);
-		stat_new_task_requests_granted++;
+		stat_task_requests_granted++;
 		pending_sends->push_back(req);
 	    }
 
@@ -462,11 +433,15 @@ std::list <MPI_Request>::iterator it;
 	    if (count > 0)   {
 		// Add it to work list
 		my_task_list->push_back(count / MSG_SIZE_PER_WORK_UNIT);
-		stat_new_task_requests_honored++;
+		stat_task_requests_honored++;
+		circle= circle / 2;
+		if (circle <= 1)   {
+		    circle= 1;
+		}
 
 	    } else   {
 		// If we get a decline, back off and increase the circle
-		stat_new_task_requests_not_granted++;
+		stat_task_requests_not_granted++;
 
 		// Back off a little
 		back_off= back_off + 5;
@@ -509,27 +484,16 @@ std::list <MPI_Request>::iterator it;
 
 
 
-// A task has completed. See if it spawned other
-// tasks. Start the next task if one is in the queue.
+// A task has completed. Start the next task if one is in the queue.
 bool static
 finish_task(int *current_task)
 {
 
-int num_new_tasks;
 bool busy;
 
 
     // We are done with this task
     stat_tasks_completed++;
-
-    // See if the work of this task generated new work
-    if (drand48() < p_task_creation)   {
-	num_new_tasks= (int)(-1.0 * log(drand48()) * new_tasks);
-	for (int i= 0; i < num_new_tasks; i++)   {
-	    gen_new_task();
-	    stat_new_tasks++;
-	}
-    }
 
 
     if (my_task_list->empty())   {
@@ -542,7 +506,11 @@ bool busy;
     } else   {
 	// Grab the next one to do
 	*current_task= get_next_task();
-	busy= true;
+	if (*current_task > 0)   {
+	    busy= true;
+	} else   {
+	    busy= false;
+	}
     }
 
     return busy;
@@ -552,21 +520,22 @@ bool busy;
 
 
 static void
-request_more_work(char *buf, int max_work_size)
+request_more_work(char *buf, int max_buf_size)
 {
 
-int num_new_tasks;
+int num_tasks;
 MPI_Request req;
-int dest; int ask_tasks;
+int dest;
+int ask_tasks;
 
 
     // Send out some work requests to random nodes
     // Close ones initially, then farther away
-    ask_tasks= DEFAULT_ASK_NEW_TASKS;
-    num_new_tasks= (int)(-1.0 * log(drand48()) * ask_tasks);
-    for (int i= 0; i < num_new_tasks; i++)   {
+    ask_tasks= DEFAULT_ASK_TASKS;
+    num_tasks= (int)(-1.0 * log(drand48()) * ask_tasks);
+    for (int i= 0; i < num_tasks; i++)   {
 
-	dest= (int)(-1.0 * log(drand48()) * (circle % num_ranks));
+	dest= (int)(drand48() * (circle % num_ranks));
 	dest= dest - dest / 2;
 	dest= (my_rank + dest + num_ranks) % num_ranks;
 	assert(0 <= dest);
@@ -574,16 +543,17 @@ int dest; int ask_tasks;
 
 	if (dest == my_rank)   {
 	    // No point in asking myself for more work
+	    circle++;
 	    continue;
 	}
 
 	// Post a work receive for the new task or the decline
-	MPI_Irecv(buf, max_work_size, MPI_BYTE, dest, TAG_WORK_MIGRATION, MPI_COMM_WORLD, &req);
+	MPI_Irecv(buf, max_buf_size, MPI_BYTE, dest, TAG_WORK_MIGRATION, MPI_COMM_WORLD, &req);
 	work_requests->push_back(req);
 
 	// Send a work request
 	MPI_Isend(NULL, 0, MPI_BYTE, dest, TAG_WORK_REQUEST, MPI_COMM_WORLD, &req);
-	stat_new_task_requests_sent++;
+	stat_task_requests_sent++;
 	pending_sends->push_back(req);
     }
 
@@ -596,49 +566,29 @@ clean_pending_comm(char *buf)
 {
 
 bool deny;
-int cut_off;
 
 
-    // At the end, we may have pending sends and receives that we
+    // At the end, we may have pending sends that we
     // need to clean out of the system
 
     deny= true; // Don't send more work away
-    cut_off= 0;
     while (!pending_sends->empty())   {
 	clean_pending_sends();
-	handle_work_requests(buf, deny);
 	incoming_work();
-	if (cut_off++ > 100000)   {
-	    fprintf(stderr, "[%3d] WARNING!!! Not waiting any longer for sends to "
-		"complete!\n", my_rank);
-	    break;
-	}
+	handle_work_requests(buf, deny);
     }
 
-    cut_off= 0;
+    // If we have pending work requests, wait for the NAC's
     while (!work_requests->empty())   {
-	handle_work_requests(buf, deny);
 	incoming_work();
-	if (cut_off++ > 100000)   {
-	    fprintf(stderr, "[%3d] WARNING!!! Not waiting any longer for work requests "
-		" to complete!\n", my_rank);
-	    break;
-	}
+	handle_work_requests(buf, deny);
     }
-
-    // FIXME:
-    // I'm not sure how long to make the loop below. It should be long
-    // to make sure there are no pending requests, but that delays completion
-    // of the benchmark.
-    // One idea is basically a non-blocking allreduce or barrier. After we have
-    // all of our sends and requests are done, and our children have reported in,
-    // send a done flag to my parent in the tree.  When I get it back that all
-    // are done, I pass it on, and abort the loop below.
 
     // All our sends are out, and our work requests have been answered.
     // It is possible that more work requests are on the way to us
-    // Hang around for a little while to answer them
-    for (int i= 0; i < num_ranks * 50; i++)   {
+    // Hang around for a little while to NACK them
+    // I'm not sure how long to make the loop below.
+    for (int i= 0; i < 5; i++)   {
 	work(); // wait a while
 	handle_work_requests(buf, deny);
     }
@@ -652,42 +602,48 @@ double
 ws_work(void)
 {
 
-int t;
 int current_task;
 bool busy;
 char *work_buf;
-int max_work_size;
+int max_buf_size;
 bool deny;
 double total_time_end;
 double total_time_start;
+int time_step;
+bool done;
+Collective_topology *ctopo;
 
 
     clear_stats();
-    p_task_creation= 1.0;
     back_off= 0;
     circle= 1;
-    srand48(seed * (my_rank + 1));
+    done= false;
+    ctopo= new Collective_topology(my_rank, num_ranks, TREE_DEEP);
 
-    max_work_size= MAX_TASK_DURATION * MSG_SIZE_PER_WORK_UNIT;
-    work_buf= alloc_work_buf(max_work_size);
+    srand48(seed * (my_rank + 1));
 
     my_task_list= new std::list <int>;
     pending_sends= new std::list <MPI_Request>;
     work_requests= new std::list <MPI_Request>;
 
-    // Each rank gets a few tasks to start with
-    assign_first_tasks();
+    max_buf_size= assign_tasks();
+    work_buf= alloc_work_buf(max_buf_size);
 
     // Grab the first task on the list
     current_task= get_next_task();
-    busy= true;
+    if (current_task > 0)   {
+	busy= true;
+    } else   {
+	busy= false;
+    }
+    time_step= 0;
 
 
-    // Sync and start timmer
+    // Sync and start timer
     MPI_Barrier(MPI_COMM_WORLD);
     total_time_start= MPI_Wtime();
 
-    for (t= 0; t < time_steps; t++)   {
+    while (!done)   {
 	do_task_work();
 	deny= false; // Give work away, if we have enough
 	handle_work_requests(work_buf, deny);
@@ -714,16 +670,25 @@ double total_time_start;
 
 	// If no longer busy, and we are not currently backing off,
 	// then send requests for more work
-	if (!busy && (back_off == 0))   {
-	    request_more_work(work_buf, max_work_size);
+	if (!busy && (back_off == 0) && work_requests->empty())   {
+	    request_more_work(work_buf, max_buf_size);
+	}
+
+	time_step++;
+	if ((time_step % completion_check) == 0)   {
+	    // Time to check with everyone
+	    double in;
+	    double result;
+
+	    in= busy;
+	    my_allreduce(&in, &result, 1, ctopo);
+	    if (result == 0.0)   {
+		done= true;
+	    }
 	}
     }
     total_time_end= MPI_Wtime();
 
-    if (busy)   {
-	// I was working on a task at the end. Count it as completed
-	stat_tasks_completed++;
-    }
     clean_pending_comm(work_buf);
 
     free(work_buf);
@@ -732,15 +697,15 @@ double total_time_start;
     delete pending_sends;
     delete work_requests;
 
-    MPI_Reduce(&stat_tasks_completed, &stat_total_tasks, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    MPI_Reduce(&stat_time_worked, &stat_total_time_units, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    elapsed= total_time_end - total_time_start;
-    MPI_Reduce(&elapsed, &stat_elapsed, 1, MPI_DOUBLE, MPI_MAX, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_tasks_completed, &stat_global_tasks_completed, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_time_worked, &stat_global_time_worked, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_initial_tasks, &stat_global_initial_tasks, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_initial_work_units, &stat_gloabl_initial_work_units, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
 
-    // What do we want for a metric?
-    // return elapsed;
-    // return stat_elapsed;
-    return stat_total_time_units;
+    elapsed= total_time_end - total_time_start;
+    MPI_Allreduce(&elapsed, &stat_elapsed, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    return stat_elapsed;
 
 }  /* end of ws_work() */
 
@@ -754,17 +719,17 @@ int cnt;
 
 
     // Some consistency checking
-    if (stat_new_task_requests_sent !=
-	stat_new_task_requests_not_granted + stat_new_task_requests_honored)   {
+    if (stat_task_requests_sent !=
+	stat_task_requests_not_granted + stat_task_requests_honored)   {
 	fprintf(stderr, "[%3d] Comm pending in system: requests %d, granted %d, denied %d\n",
-		my_rank, stat_new_task_requests_sent, stat_new_task_requests_honored,
-		stat_new_task_requests_not_granted);
+		my_rank, stat_task_requests_sent, stat_task_requests_honored,
+		stat_task_requests_not_granted);
     }
 
     // Tasks available to me
-    cnt= num_start_tasks + stat_new_tasks + stat_new_task_requests_honored;
+    cnt= stat_initial_tasks + stat_task_requests_honored;
     // Minus work done or given away
-    cnt= cnt - stat_tasks_completed - stat_new_task_requests_granted;
+    cnt= cnt - stat_tasks_completed - stat_task_requests_granted;
     // Should equal what is left in queue
     if (cnt != stat_tasks_left_in_queue)   {
 	fprintf(stderr, "[%3d] Work done and given away != work given + queue!\n", my_rank);
@@ -773,27 +738,48 @@ int cnt;
 
     // Print some statistics
     if (my_rank == root)   {
+	if (stat_global_initial_tasks != stat_global_tasks_completed)   {
+	    fprintf(stderr, "      Total initial tasks %d != tasks completed %d\n",
+		stat_global_tasks_completed, stat_global_tasks_completed);
+	}
+	if (stat_gloabl_initial_work_units != stat_global_time_worked)   {
+	    fprintf(stderr, "      Total initial time units %d != time units completed %d\n",
+		stat_gloabl_initial_work_units, stat_global_time_worked);
+	}
+	printf("#          Total tasks assigend        %6d\n", stat_global_initial_tasks);
+	printf("#          Total tasks completed       %6d\n", stat_global_tasks_completed);
+	printf("#          Total time units assigned   %6d\n", stat_gloabl_initial_work_units);
+	printf("#          Total time units completed  %6d\n", stat_global_time_worked);
 	printf("#          Total time         %12.6f seconds\n", stat_elapsed);
-	printf("#          Total tasks completed    %6d\n", stat_total_tasks);
-	printf("#          Time units completed     %6d\n", stat_total_time_units);
     }
 
 
     if (my_rank == report_rank)   {
 	printf("# Rank %3d My total time      %12.6f seconds\n", my_rank, elapsed);
-	printf("# Rank %3d started with             %6d tasks,    %6d time units of work\n", my_rank, num_start_tasks, stat_initial_work_time);
-	printf("# Rank %3d created                  %6d new tasks\n", my_rank, stat_new_tasks);
-	printf("# Rank %3d completed                %6d tasks,    %6d left in queue\n", my_rank, stat_tasks_completed, stat_tasks_left_in_queue);
-	printf("# Rank %3d worked                   %6d time units\n", my_rank, stat_time_worked);
-	printf("# Rank %3d was idle                 %6d time units\n", my_rank, stat_time_idle);
-	printf("# Rank %3d had                      %6d interrupts in nanosleep\n", my_rank, stat_interrupts);
-	printf("# Rank %3d received                 %6d task requests from other ranks\n", my_rank, stat_new_task_requests_rcvd);
-	printf("# Rank %3d denied                   %6d task requests to other ranks\n", my_rank, stat_new_task_requests_denied);
-	printf("# Rank %3d granted                  %6d task requests to other ranks\n", my_rank, stat_new_task_requests_granted);
-	printf("# Rank %3d sent                     %6d task requests to other ranks\n", my_rank, stat_new_task_requests_sent);
-	printf("# Rank %3d had                      %6d task requests denied by other ranks\n", my_rank, stat_new_task_requests_not_granted);
-	printf("# Rank %3d had                      %6d task requests honored by other ranks\n", my_rank, stat_new_task_requests_honored);
-	printf("# Rank %3d back_off now             %6d, circle now %6d\n", my_rank, back_off, circle);
+	printf("# Rank %3d started with                %6d tasks,    %6d time units of work\n",
+	    my_rank, stat_initial_tasks, stat_initial_work_units);
+	printf("# Rank %3d completed                   %6d tasks,    %6d left in queue\n",
+	    my_rank, stat_tasks_completed, stat_tasks_left_in_queue);
+	printf("# Rank %3d worked                      %6d time units\n",
+	    my_rank, stat_time_worked);
+	printf("# Rank %3d was idle                    %6d time units\n",
+	    my_rank, stat_time_idle);
+	printf("# Rank %3d had                         %6d interrupts in nanosleep\n",
+	    my_rank, stat_interrupts);
+	printf("# Rank %3d received                    %6d task requests from other ranks\n",
+	    my_rank, stat_task_requests_rcvd);
+	printf("# Rank %3d denied                      %6d task requests to other ranks\n",
+	    my_rank, stat_task_requests_denied);
+	printf("# Rank %3d granted                     %6d task requests to other ranks\n",
+	    my_rank, stat_task_requests_granted);
+	printf("# Rank %3d sent                        %6d task requests to other ranks\n",
+	    my_rank, stat_task_requests_sent);
+	printf("# Rank %3d had                         %6d task requests denied by other ranks\n",
+	    my_rank, stat_task_requests_not_granted);
+	printf("# Rank %3d had                         %6d task requests honored by other ranks\n",
+	    my_rank, stat_task_requests_honored);
+	printf("# Rank %3d back_off now                %6d, circle now %6d\n",
+	    my_rank, back_off, circle);
     }
 
 }  /* end of ws_print() */
@@ -804,14 +790,9 @@ static void
 usage(char *pname)
 {
 
-    fprintf(stderr, "Usage: %s [-v] [-t time steps] [-m max] [-s seed] [-u unit] [-r rank]\n", pname);
+    fprintf(stderr, "Usage: %s -s seed [-v] [-u unit] [-r rank]\n", pname);
     fprintf(stderr, "    -v               Increase verbosity\n");
-    fprintf(stderr, "    -t time steps    Number of time steps to do. Default %d\n",
-	DEFAULT_TIME_STEPS);
-    fprintf(stderr, "    -m max           Max task duration in time steps. Default %d\n",
-	MAX_TASK_DURATION);
-    fprintf(stderr, "    -s seed          Random number seed to use. Default %d\n",
-	DEFAULT_SEED);
+    fprintf(stderr, "    -s seed          Random number seed to use.\n");
     fprintf(stderr, "    -u unit          Duration of one time unit in ns. Default %d\n",
 	DEFAULT_TIME_STEP_DURATION);
     fprintf(stderr, "    -d               Debug\n");

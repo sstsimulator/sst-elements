@@ -10,10 +10,12 @@ else
     extra=""
 fi
 
-mpic++ -Wall $extra -I../.. -I.. \
+mpic++ -Wall $extra -I../.. -I.. -I../Collectives \
 	driver.cc \
 	ws.cc \
 	../util.c \
 	../stat_p.c \
 	../../stats.cc \
+	../Collectives/allreduce.cc \
+	../../collective_topology.cc \
 	-o ws -lm
