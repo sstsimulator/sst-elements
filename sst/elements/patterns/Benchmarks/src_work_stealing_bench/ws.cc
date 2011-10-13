@@ -13,6 +13,8 @@
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <stdint.h>	/* For uint64_t */
 #include <unistd.h>	/* For getopt() */
+#define __STDC_FORMAT_MACROS	(1)
+#include <inttypes.h>	// For PRIu64
 #include <math.h>	/* For log() */
 #include <time.h>	/* For nanosleep() */
 #include <errno.h>	/* For EINTR */
@@ -22,6 +24,7 @@
 
 #include "util.h"			// For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK
 #include "collective_topology.h"	// For ctopo
+#include "msg_counter.h"		// 
 #include "allreduce.h"			// For my_allreduce
 #include "ws.h"
 
@@ -39,6 +42,19 @@
 /* Local functions */
 static void usage(char *pname);
 static float units2seconds(int duration);
+static void clear_stats(void);
+static char * alloc_work_buf(int size);
+static int next_task_duration(void);
+static int get_next_task(void);
+static int assign_tasks(void);
+static void work(void);
+static void do_task_work(void);
+static void handle_work_requests(char *buf, bool deny);
+static void incoming_work(void);
+static void clean_pending_sends(void);
+bool static finish_task(int *current_task);
+static void request_more_work(char *buf, int max_buf_size);
+static void clean_pending_comm(char *buf);
 
 
 
@@ -50,6 +66,7 @@ static int verbose;
 static double elapsed;
 static uint64_t time_unit;
 static std::list <int> *my_task_list;
+static Msg_counter *counter;
 
 static int debug;
 static long int seed;
@@ -80,6 +97,9 @@ static int stat_global_initial_tasks;
 static int stat_global_tasks_completed;
 static int stat_gloabl_initial_work_units;
 static int stat_global_time_worked;
+static int stat_task_requests_attempted;
+static uint64_t stat_total_sends;
+static uint64_t stat_global_total_sends;
 
 
 
@@ -111,6 +131,7 @@ bool seed_set;
     report_rank= root;
     rank_work_units= DEFAULT_RANK_WORK_UNITS;
     completion_check= DEFAULT_COMPLETION_CHECK;
+    counter= new Msg_counter(num_ranks);
 
 
     /* Check command line args */
@@ -169,9 +190,14 @@ bool seed_set;
 	printf("# Work stealing benchmark. Version %s\n", WS_VERSION);
 	printf("# ------------------------------------\n");
 	disp_cmd_line(argc, argv);
-	printf("# Number of ranks is %d\n", num_ranks);
-	printf("# Random number seed is %ld\n", seed);
-	printf("# One time unit is %.9f s\n", units2seconds(1));
+	printf("# Number of ranks:                                       %5d\n", num_ranks);
+	printf("# Random number seed:                       %18ld\n", seed);
+	printf("# One time step:                                  %12.9f s\n", units2seconds(1));
+	printf("# Neighbors to contact in same time step when out of work  %3d (approx.)\n",
+	    DEFAULT_ASK_TASKS);
+	printf("# Message size per work unit during migration           %6d\n", MSG_SIZE_PER_WORK_UNIT);
+	printf("# Amount of initial work assigned to each rank is 0 ...  %5d units\n", rank_work_units);
+	printf("# Number of time steps between completion checks         %5d\n", completion_check);
     }
 
 
@@ -192,13 +218,24 @@ clear_stats(void)
     stat_time_worked= 0;
     stat_time_idle= 0;
     stat_tasks_completed= 0;
+    stat_interrupts= 0;
+    stat_tasks_left_in_queue= 0;
     stat_task_requests_sent= 0;
     stat_task_requests_not_granted= 0;
-    stat_task_requests_honored= 0;
     stat_task_requests_rcvd= 0;
     stat_task_requests_denied= 0;
     stat_task_requests_granted= 0;
+    stat_task_requests_honored= 0;
+    stat_elapsed= 0.0;
+    stat_initial_work_units= 0;
     stat_initial_tasks= 0;
+    stat_global_initial_tasks= 0;
+    stat_global_tasks_completed= 0;
+    stat_gloabl_initial_work_units= 0;
+    stat_global_time_worked= 0;
+    stat_task_requests_attempted= 0;
+    stat_total_sends= 0;
+    stat_global_total_sends= 0;
 
 }  // end of clear_stats()
 
@@ -260,6 +297,7 @@ int current_task= -1;
 
 
 
+// Initial assigned of tasks
 static int
 assign_tasks(void)
 {
@@ -388,6 +426,8 @@ int send_off_task;
 		// Sorry, no work for you
 		MPI_Send(NULL, 0, MPI_BYTE, status.MPI_SOURCE, TAG_WORK_MIGRATION, MPI_COMM_WORLD);
 		stat_task_requests_denied++;
+		counter->record(status.MPI_SOURCE, 0);
+		stat_total_sends++;
 
 	    } else   {
 		// Pass off some work
@@ -396,6 +436,8 @@ int send_off_task;
 		    status.MPI_SOURCE, TAG_WORK_MIGRATION, MPI_COMM_WORLD, &req);
 		stat_task_requests_granted++;
 		pending_sends->push_back(req);
+		counter->record(status.MPI_SOURCE, send_off_task * MSG_SIZE_PER_WORK_UNIT);
+		stat_total_sends++;
 	    }
 
 	} else   {
@@ -533,6 +575,7 @@ int ask_tasks;
     // Close ones initially, then farther away
     ask_tasks= DEFAULT_ASK_TASKS;
     num_tasks= (int)(-1.0 * log(drand48()) * ask_tasks);
+    stat_task_requests_attempted++;
     for (int i= 0; i < num_tasks; i++)   {
 
 	dest= (int)(drand48() * (circle % num_ranks));
@@ -555,6 +598,8 @@ int ask_tasks;
 	MPI_Isend(NULL, 0, MPI_BYTE, dest, TAG_WORK_REQUEST, MPI_COMM_WORLD, &req);
 	stat_task_requests_sent++;
 	pending_sends->push_back(req);
+	counter->record(dest, 0);
+	stat_total_sends++;
     }
 
 }  // end of request_more_work()
@@ -619,6 +664,7 @@ Collective_topology *ctopo;
     circle= 1;
     done= false;
     ctopo= new Collective_topology(my_rank, num_ranks, TREE_DEEP);
+    counter->clear();
 
     srand48(seed * (my_rank + 1));
 
@@ -693,14 +739,21 @@ Collective_topology *ctopo;
 
     free(work_buf);
     stat_tasks_left_in_queue= my_task_list->size();
+    delete ctopo;
     delete my_task_list;
     delete pending_sends;
     delete work_requests;
 
-    MPI_Reduce(&stat_tasks_completed, &stat_global_tasks_completed, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    MPI_Reduce(&stat_time_worked, &stat_global_time_worked, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    MPI_Reduce(&stat_initial_tasks, &stat_global_initial_tasks, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-    MPI_Reduce(&stat_initial_work_units, &stat_gloabl_initial_work_units, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_tasks_completed, &stat_global_tasks_completed, 1, MPI_INT,
+	MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_time_worked, &stat_global_time_worked, 1, MPI_INT, MPI_SUM,
+	root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_initial_tasks, &stat_global_initial_tasks, 1, MPI_INT,
+	MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_initial_work_units, &stat_gloabl_initial_work_units, 1,
+	MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+    MPI_Reduce(&stat_total_sends, &stat_global_total_sends, 1, MPI_LONG_LONG_INT,
+	MPI_SUM, root, MPI_COMM_WORLD);
 
     elapsed= total_time_end - total_time_start;
     MPI_Allreduce(&elapsed, &stat_elapsed, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
@@ -716,6 +769,9 @@ ws_print(void)
 {
 
 int cnt;
+uint64_t t;
+const char *msg_cnt_fname= "ws_count.dat";
+const char *msg_size_fname= "ws_size.dat";
 
 
     // Some consistency checking
@@ -751,6 +807,8 @@ int cnt;
 	printf("#          Total time units assigned   %6d\n", stat_gloabl_initial_work_units);
 	printf("#          Total time units completed  %6d\n", stat_global_time_worked);
 	printf("#          Total time         %12.6f seconds\n", stat_elapsed);
+	printf("#          Total messages sent      %9" PRIu64 " (excluding allreduce)\n",
+	    stat_global_total_sends);
     }
 
 
@@ -772,15 +830,43 @@ int cnt;
 	    my_rank, stat_task_requests_denied);
 	printf("# Rank %3d granted                     %6d task requests to other ranks\n",
 	    my_rank, stat_task_requests_granted);
+	printf("# Rank %3d attempted                   %6d times to ask for more work\n",
+	    my_rank, stat_task_requests_attempted);
 	printf("# Rank %3d sent                        %6d task requests to other ranks\n",
 	    my_rank, stat_task_requests_sent);
+	printf("# Rank %3d sent an average of          %6.2f task requests per round\n",
+	    my_rank, (float)stat_task_requests_sent / stat_task_requests_attempted);
 	printf("# Rank %3d had                         %6d task requests denied by other ranks\n",
 	    my_rank, stat_task_requests_not_granted);
 	printf("# Rank %3d had                         %6d task requests honored by other ranks\n",
 	    my_rank, stat_task_requests_honored);
+	printf("# Rank %3d sent                        %6" PRIu64 " messages (excluding allreduce)\n",
+	    my_rank, stat_total_sends);
 	printf("# Rank %3d back_off now                %6d, circle now %6d\n",
 	    my_rank, back_off, circle);
     }
+
+    t= counter->total_cnt();
+    if (t != stat_total_sends)   {
+	fprintf(stderr, "[%3d] Account problem in number of messages sent! %"
+	    PRIu64 " != %" PRIu64 "\n", my_rank, t, stat_total_sends);
+    }
+
+    // Print the message count table suitable for gnuplot
+    // in ascending order of rank
+    if (my_rank == 0)   {
+	unlink(msg_cnt_fname);
+	unlink(msg_size_fname);
+    }
+    for (int i= 0; i < num_ranks; i++)   {
+	if (my_rank == i)   {
+	    counter->output_cnt(num_ranks, msg_cnt_fname);
+	    counter->output_bytes(num_ranks, msg_size_fname);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    delete counter;
 
 }  /* end of ws_print() */
 

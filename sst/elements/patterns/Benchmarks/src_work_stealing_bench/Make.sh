@@ -18,4 +18,5 @@ mpic++ -Wall $extra -I../.. -I.. -I../Collectives \
 	../../stats.cc \
 	../Collectives/allreduce.cc \
 	../../collective_topology.cc \
+	../../msg_counter.cc \
 	-o ws -lm

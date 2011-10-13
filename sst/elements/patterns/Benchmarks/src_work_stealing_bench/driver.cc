@@ -98,10 +98,12 @@ int rc;
 
     if (my_rank == 0)   {
 	if (stat_mode)   {
-	    printf("# Requested precision is %.3f%%\n", req_precision * 100.0);
+	    printf("# Requested precision is                                %6.3f%%\n",
+		req_precision * 100.0);
 	} else   {
 	    printf("# Statistics mode is off. Will do a single trial.\n");
 	}
+	printf("#\n");
     }
     experiment(max_trials, req_precision);
 
