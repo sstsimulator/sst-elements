@@ -145,12 +145,17 @@ class Router : public DES_Component
         double stat_avg_buffer_occ;
 
         /*  Generic Healper functions */
-        std::string print_stats() const;
+        const char* print_stats() const;
         uint64_t router_fastfwd;            /* fastfwd interval in cycles */
         void reset_stats();    /* Useful for fast forwarding. (uses router_fastfwd) */
         void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
         inline void resize( void ); // Reconfigure the parameters for the router
 
+    int Finish()
+    {
+        fprintf(stderr,"\n Stats for node %d %s ",node_id, print_stats());
+        return 0;
+    }
 
     private:
         void do_ib( const irisNPkt* , uint16_t ip); 
@@ -171,6 +176,8 @@ class Router : public DES_Component
         std::vector<std::vector<uint16_t> > downstream_credits;
 
         std::vector<SST::Link*> links;
+        std::vector<uint16_t> stmsgs;
+        std::vector<uint16_t> swa_msgs;
         bool currently_clocking;
 
 }; /* -----  end of class Router  ----- */

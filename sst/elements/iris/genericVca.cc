@@ -19,8 +19,8 @@ GenericVca::~GenericVca ()
 
 }
 
-inline void
-GenericVca::resize()
+void
+GenericVca::resize( void )
 {
     /* Clean out previous config */
     for ( uint16_t i=0; i<requesting_inputs.size(); ++i)
@@ -83,38 +83,19 @@ GenericVca::resize()
 bool
 GenericVca::request ( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc )
 {
-    if ( requesting_inputs.at(op).at(ip+r_param->ports*ivc).is_valid == false )
+    VCA_unit& tmp = requesting_inputs.at(op).at(ip+r_param->ports*ivc);
+    if ( tmp.is_valid == false )
     {
-        requesting_inputs.at(op).at(ip+r_param->ports*ivc).is_valid = true;
-        requesting_inputs.at(op).at(ip+r_param->ports*ivc).in_port = ip;
-        requesting_inputs.at(op).at(ip+r_param->ports*ivc).in_vc = ivc;
-        requesting_inputs.at(op).at(ip+r_param->ports*ivc).out_port = op;
-        requesting_inputs.at(op).at(ip+r_param->ports*ivc).out_vc = ovc;
+        tmp.is_valid = true;
+        tmp.in_port = ip;
+        tmp.in_vc = ivc;
+        tmp.out_port = op;
+        tmp.out_vc = ovc;
     }
 
-    return requesting_inputs.at(op).at(ip+r_param->ports*ivc).is_valid;
+    return tmp.is_valid;
 
 }		/* -----  end of method GenericVca::request  ----- */
-
-bool
-GenericVca::is_empty ( void ) const
-{
-    for ( uint16_t p=0; p<r_param->ports; ++p )
-        if (!is_empty(p))
-            return false;
-
-    return true;
-}		/* -----  end of method GenericVca::is_empty  ----- */
-
-bool
-GenericVca::is_empty ( uint16_t port ) const
-{
-    for ( uint16_t i=0; i<r_param->ports*r_param->vcs; ++i )
-        if (requesting_inputs.at(port).at(i).is_valid)
-            return false;
-
-    return true;
-}		/* -----  end of method GenericVca::is_empty  ----- */
 
 uint16_t
 GenericVca::no_requestors ( uint16_t op )
@@ -194,35 +175,30 @@ GenericVca::pick_winner ( void )
     return ;
 }		/* -----  end of method GenericVca::pick_winner  ----- */
 
-bool
-GenericVca::is_requested ( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc ) const
-{
-    return requesting_inputs.at(op).at(ip+r_param->ports*ivc).is_valid ;
-}		/* -----  end of method GenericVca::is_requested  ----- */
-
 void
 GenericVca::clear_winner ( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc )
 {
-    requesting_inputs.at(op).at(ip+r_param->ports*ivc).is_valid =false;
-    requesting_inputs.at(op).at(ip+r_param->ports*ivc).out_port=-1;
-    requesting_inputs.at(op).at(ip+r_param->ports*ivc).out_vc=-1;
-    requesting_inputs.at(op).at(ip+r_param->ports*ivc).in_port=-1;
-    requesting_inputs.at(op).at(ip+r_param->ports*ivc).in_vc=-1;
+    VCA_unit& tmp = requesting_inputs.at(op).at(ip+r_param->ports*ivc);
+    tmp.is_valid =false;
+    tmp.out_port=-1;
+    tmp.out_vc=-1;
+    tmp.in_port=-1;
+    tmp.in_vc=-1;
 
     // Erase the winner from the current winners list
     /* DEBUG
-    printf (" *********** Clear for op %d-%d|%d-%d\n", ip,ivc,op,ovc);
-    assert(current_winners.size() > op);
-    for ( uint i=0; i<current_winners.size(); i++){
-        printf(" No of winners for op %d is %d\t", i, (int)current_winners.at(i).size());
-        std::vector<VCA_unit> ::iterator it;
-        for( it=current_winners.at(i).begin(); it!=current_winners.at(i).end(); ++it)
-        {
-            printf(" %d-%d|%d-%d ", it->in_port, it->in_vc, it->out_port, it->out_vc);
-        }
-        printf("\n");
-    }
-    */
+       printf (" *********** Clear for op %d-%d|%d-%d\n", ip,ivc,op,ovc);
+       assert(current_winners.size() > op);
+       for ( uint i=0; i<current_winners.size(); i++){
+       printf(" No of winners for op %d is %d\t", i, (int)current_winners.at(i).size());
+       std::vector<VCA_unit> ::iterator it;
+       for( it=current_winners.at(i).begin(); it!=current_winners.at(i).end(); ++it)
+       {
+       printf(" %d-%d|%d-%d ", it->in_port, it->in_vc, it->out_port, it->out_vc);
+       }
+       printf("\n");
+       }
+     */
 
     std::vector<VCA_unit> ::iterator it;
     for( it=current_winners.at(op).begin(); it!=current_winners.at(op).end(); it++)

@@ -43,6 +43,7 @@ class irisNPkt
         uint sizeInFlits;
         int vc;
         int link;
+        uint64_t sending_time;
 
         uint32_t payload[HDR_SIZE+PKT_SIZE];
 
@@ -57,6 +58,7 @@ class irisNPkt
                 ar & BOOST_SERIALIZATION_NVP(sizeInFlits);
                 ar & BOOST_SERIALIZATION_NVP(vc);
                 ar & BOOST_SERIALIZATION_NVP(link);
+                ar & BOOST_SERIALIZATION_NVP(sending_time);
                 ar & BOOST_SERIALIZATION_NVP(payload);
             }
 

@@ -50,7 +50,9 @@ public:
     RtrIF( ComponentId_t id, Params_t& params ) :
         Component(id),
         rtrCountP(0),
-        num_vcP(2)
+        num_vcP(2),
+        stat_avg_pkt_lat(0),
+        stat_total_pkts_recv(0)
     {
         int num_tokens = 512;
 
@@ -106,6 +108,7 @@ public:
     {
         irisNPkt* pkt = &event->packet;
         if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
+        pkt->sending_time=getCurrentSimTimeNano();
 //  	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum,getCurrentSimTimeNano()); 
 
 // 	// Translate destination into x,y,z
@@ -121,7 +124,13 @@ public:
         return retval;
     }
 
-    int Finish() { return 0; }
+    int Finish() 
+    { 
+        fprintf(stderr,"\n RtrIF Node %d\n", m_id );
+        fprintf(stderr," Total no of pkts recv %lu \n",stat_total_pkts_recv); 
+        fprintf(stderr," Avg pkt latency %0.2f \n",stat_avg_pkt_lat+0.0/stat_total_pkts_recv); 
+        return 0; 
+    }
 
 private:
     bool rtrWillTake( int vc, int numFlits )
@@ -129,25 +138,25 @@ private:
         if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
         return toRtrMapP[vc]->willTake( numFlits );
     }
-    
+
     void processEvent( Event* e)
     {
         irisRtrEvent* event = static_cast<irisRtrEvent*>(e);
-// 	printf("%5d:  got an event from %d @ %lu\n",m_id,event->packet.srcNum,getCurrentSimTimeNano());
-	
+        // 	printf("%5d:  got an event from %d @ %lu\n",m_id,event->packet.srcNum,getCurrentSimTimeNano());
+
 
         switch ( event->type ) {
-        case irisRtrEvent::Credit:
-            returnTokens2Nic( event->credit.vc, event->credit.num );
-            delete event;
-            break;
+            case irisRtrEvent::Credit:
+                returnTokens2Nic( event->credit.vc, event->credit.num );
+                delete event;
+                break;
 
-        case irisRtrEvent::Packet:
-            send2Nic( event );
-            break;
+            case irisRtrEvent::Packet:
+                send2Nic( event );
+                break;
 
-        default:
-            _abort(RtrIF,"unknown type %d\n",event->type);
+            default:
+                _abort(RtrIF,"unknown type %d\n",event->type);
         }
     }
 
@@ -155,20 +164,22 @@ private:
     {
         rtrCountP = (rtrCountP >= 0) ? 0 : rtrCountP + 1;
 
-//         if ( ! toRtrQP.empty() ) {
-//             sendPktToRtr( toRtrQP.front());
-//             toRtrQP.pop_front();
-//         }
-// 	else {
-// 	    // Nothing to be done, remove clock handler
-// 	    return true;
-// 	}
+        //         if ( ! toRtrQP.empty() ) {
+        //             sendPktToRtr( toRtrQP.front());
+        //             toRtrQP.pop_front();
+        //         }
+        // 	else {
+        // 	    // Nothing to be done, remove clock handler
+        // 	    return true;
+        // 	}
         return false;
     }
 
     void send2Nic( irisRtrEvent* event )
     {
         irisNPkt *pkt = &event->packet; 
+        stat_avg_pkt_lat += (getCurrentSimTimeNano()-pkt->sending_time);
+        stat_total_pkts_recv++;
 
         pkt->vc = RTR_2_NIC_VC(pkt->vc);
 
@@ -181,7 +192,7 @@ private:
 
     void returnTokens2Nic( int vc, uint32_t num )
     {
-        if ( vc >= (int) num_vcP ) _abort(RtrIF,"\n");
+        if ( vc >= (int) num_vcP ) _abort(RtrIF," vc is %d and num_vcP is %d \n", vc, num_vcP);
         toRtrMapP[vc]->returnTokens( num );
     }
 
@@ -216,33 +227,33 @@ private:
     typedef std::deque<irisRtrEvent*> ToNic;
 
     class ToRtr {
-    public:
-        ToRtr( int num_tokens, std::deque<irisRtrEvent*> &eventQ ) :
+        public:
+            ToRtr( int num_tokens, std::deque<irisRtrEvent*> &eventQ ) :
                 tokensP(num_tokens), eventQP(eventQ) {}
 
-        bool push( irisRtrEvent* event) {
-            irisNPkt* pkt = &event->packet;
-            if ( pkt->sizeInFlits > (unsigned int) tokensP ) return false;
-            tokensP -= pkt->sizeInFlits;
-            eventQP.push_back(event);
-            return true;
-        }
+            bool push( irisRtrEvent* event) {
+                irisNPkt* pkt = &event->packet;
+                if ( pkt->sizeInFlits > (unsigned int) tokensP ) return false;
+                tokensP -= pkt->sizeInFlits;
+                eventQP.push_back(event);
+                return true;
+            }
 
-        int size() {
-            return eventQP.size();
-        }
+            int size() {
+                return eventQP.size();
+            }
 
-        bool willTake( int numFlits ) {
-            return (numFlits <= tokensP );
-        }
+            bool willTake( int numFlits ) {
+                return (numFlits <= tokensP );
+            }
 
-        void returnTokens( int num ) {
-            tokensP += num;
-        }
+            void returnTokens( int num ) {
+                tokensP += num;
+            }
 
-    private:
-        int tokensP;
-        std::deque<irisRtrEvent*> &eventQP;
+        private:
+            int tokensP;
+            std::deque<irisRtrEvent*> &eventQP;
     };
 
     int rtrCountP;
@@ -258,6 +269,10 @@ private:
 protected:
     int                     m_id;
     std::string             frequency;
+
+private:
+    uint64_t stat_avg_pkt_lat;
+    uint64_t stat_total_pkts_recv;
 };
 
 }

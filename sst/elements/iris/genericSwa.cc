@@ -19,8 +19,8 @@ GenericSwa::~GenericSwa()
     last_port_winner.clear();
 }
 
-inline void
-GenericSwa::resize()
+void
+GenericSwa::resize( )
 {
     /* Clear out the previous setting */
     for ( uint16_t i=0; i<requesting_inputs.size(); i++)
@@ -64,9 +64,10 @@ GenericSwa::clear_requestor ( uint16_t op, uint16_t ip, uint16_t ic )
 void
 GenericSwa::request ( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc, uint64_t now )
 {
-    requesting_inputs.at(op).at(ip*r_param->vcs+ovc).is_valid = true;
-    requesting_inputs.at(op).at(ip*r_param->vcs+ovc).port = ip;
-    requesting_inputs.at(op).at(ip*r_param->vcs+ovc).channel = ivc;
+    SA_unit& tmp = requesting_inputs.at(op).at(ip*r_param->vcs+ovc);
+    tmp.is_valid = true;
+    tmp.port = ip;
+    tmp.channel = ivc;
     return ;
 }		/* -----  end of method GenericSwa::request  ----- */
 

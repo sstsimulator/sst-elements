@@ -36,17 +36,41 @@ class GenericVca
         GenericVca ();
         ~GenericVca ();
 
-        inline void resize ( void );
-        bool is_requested( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc) const;
+        void resize ( void );
         bool request( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc);
         void pick_winner( void );
         void clear_winner( uint16_t op, uint16_t oc, uint16_t ip, uint16_t ic); 
         uint16_t no_requestors ( uint16_t op );
-        bool is_empty( void) const;
-        bool is_empty( uint16_t i) const;       // can check on specified channel only
+
         std::string toString() const;
 
+        // should be visible in router class
         std::vector < std::vector <VCA_unit> > current_winners;
+
+        // useful inlines
+        inline bool is_empty ( uint16_t port ) const
+        {
+            for ( uint16_t i=0; i<r_param->ports*r_param->vcs; ++i )
+                if (requesting_inputs.at(port).at(i).is_valid)
+                    return false;
+
+            return true;
+        }	
+
+        inline bool is_empty ( void ) const
+        {
+            for ( uint16_t p=0; p<r_param->ports; ++p )
+                if (!is_empty(p))
+                    return false;
+
+            return true;
+        }
+
+        inline bool is_requested ( uint16_t op, uint16_t ovc, uint16_t ip, uint16_t ivc ) const
+        {
+            return requesting_inputs.at(op).at(ip+r_param->ports*ivc).is_valid ;
+        }
+
 
     private:
         //Requestor matrix 

@@ -32,6 +32,10 @@
 #include	<vector>
 #include	<stdint.h>
 #include        <cstdlib>
+
+// cool trick to disable all asserts during a run from C++ in a nutshell
+// to enable just comment the define to NDEBUG
+//#define NDEBUG
 #include	<cassert>
 
 // SST related

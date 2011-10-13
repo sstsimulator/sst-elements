@@ -35,7 +35,7 @@ class GenericSwa
         GenericSwa();
         ~GenericSwa ();
 
-        inline void resize();
+        void resize( void );
         bool is_requested(uint16_t outp, uint16_t inp, uint16_t ovc);
         void clear_requestor(uint16_t outp, uint16_t inp, uint16_t ovc);
         void request(uint16_t op, uint16_t ovc, uint16_t inp, uint16_t ivc, uint64_t now);

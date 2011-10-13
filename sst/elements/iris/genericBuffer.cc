@@ -60,12 +60,6 @@ GenericBuffer::peek ( uint16_t peek_channel)
     return f;
 }		/* -----  end of method GenericBuffer::peek  ----- */
 
-uint16_t
-GenericBuffer::get_occupancy ( uint16_t channel ) const
-{
-    return buffers[channel].size();
-}		/* -----  end of method GenericBuffer::get_occupancy  ----- */
-
 /* !
  * * === FUNCTION
  * ======================================================================

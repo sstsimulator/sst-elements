@@ -36,7 +36,11 @@ class GenericBuffer
         void push( irisNPkt*);
         irisNPkt* pull(uint16_t);
         irisNPkt* peek(uint16_t);
-        uint16_t get_occupancy( uint16_t ) const;
+        inline uint16_t get_occupancy ( uint16_t channel ) const
+        {
+            return buffers[channel].size();
+        }		/* -----  end of method GenericBuffer::get_occupancy  ----- */
+
         bool is_buffer_full( uint16_t ) const;
         bool is_buffer_empty( uint16_t ) const;
 
