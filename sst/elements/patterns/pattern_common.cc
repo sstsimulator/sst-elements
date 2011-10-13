@@ -539,12 +539,12 @@ uint64_t code;
 	printf("#  |||  Network NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NetNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NetNICparams.size());
-	printf("#  |||  Network link bandwidth %" PRId64 " B/S, latency %" PRId64 " %s\n",
+	printf("#  |||  Network link bandwidth %" PRId64 " B/s, latency %" PRId64 " %s\n",
 	    NetLinkBandwidth, NetLinkLatency, TIME_BASE);
 	printf("#  |||  NoC NIC model\n");
 	printf("#  |||      gap           %0.9f s\n", NoCNICgap / TIME_BASE_FACTOR);
 	printf("#  |||      inflections   %11d\n", (int)NoCNICparams.size());
-	printf("#  |||  NoC link bandwidth %" PRId64 " B/S, latency %" PRId64 " %s\n",
+	printf("#  |||  NoC link bandwidth %" PRId64 " B/s, latency %" PRId64 " %s\n",
 	    NoCLinkBandwidth, NoCLinkLatency, TIME_BASE);
 	printf("#  |||  Number of far links (from node 0) = %d\n", (int)FarLink.size());
 	printf("#  |||      Total in system (all nodes)   = %d\n", FarLinknum);
