@@ -68,6 +68,7 @@ static struct option longopts[] = {
     { "enable_putv",       required_argument, NULL, 'p' },
     { "ranks",             required_argument, NULL, 'k' },
     { "new_format",        no_argument,       NULL, 'f' },
+    { "self_partition",    no_argument,       NULL, 's' },
     { NULL,                0,                 NULL, 0   }
 };
 
@@ -92,6 +93,7 @@ main(int argc, char **argv)
     char **argv_org = argv;
     int ranks = 1;
     int new_format = 0;
+    int self_partition = 0;
     
     while ((ch = getopt_long(argc, argv, "hx:y:z:r:", longopts, NULL)) != -1) {
         switch (ch) {
@@ -152,6 +154,9 @@ main(int argc, char **argv)
         case 'f':
             new_format = 1;
             break;
+        case 's':
+            self_partition = 1;
+            break;
         default:
             print_usage(argv[0]);
             exit(1);
@@ -188,8 +193,9 @@ main(int argc, char **argv)
     
     size = x_count * y_count * z_count;
 
-    if ( new_format ) fprintf(output, "<?xml version=\"2.0\"?>\n");
-    else fprintf(output, "<?xml version=\"1.0\"?>\n");
+    fprintf(output, "<?xml version=\"1.0\"?>\n");
+
+    if ( new_format ) fprintf(output, "\n<sdl version=\"2.0\"/>\n");
     fprintf(output, "\n");
 
     fprintf(output,"<|-- Command Line: -->\n ");
@@ -208,7 +214,8 @@ main(int argc, char **argv)
 
     fprintf(output, "<config>\n");
     fprintf(output, "    run-mode=both\n");
-    if ( ranks > 1 || new_format ) fprintf(output, "    partitioner=self\n");
+    if ( !self_partition ) fprintf(output, "    partitioner=portals4_sm.partitioner\n");
+    else if ( ranks > 1 || new_format ) fprintf(output, "    partitioner=self\n");
     fprintf(output, "</config>\n");
     fprintf(output, "\n");
     char* s_indent = "    ";
@@ -333,14 +340,16 @@ main(int argc, char **argv)
         }
 
 	if ( new_format ) {
-	    fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu rank=%d >\n",i,rank);
+	    if ( self_partition ) fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu rank=%d >\n",i,rank);
+	    else                  fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu >\n",i);
 	    fprintf(output, "        <params include=cpu_params>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "        </params>\n");
 	    fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$nic_link_lat/>\n",i);
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
-	    fprintf(output, "    <component name=%d.nic type=portals4_sm.trig_nic rank=%d >\n",i,rank);
+	    if ( self_partition ) fprintf(output, "    <component name=%d.nic type=portals4_sm.trig_nic rank=%d >\n",i,rank);
+	    else                  fprintf(output, "    <component name=%d.nic type=portals4_sm.trig_nic >\n",i);
 	    fprintf(output, "        <params include=nic_params1,nic_params2>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "        </params>\n");
@@ -348,7 +357,8 @@ main(int argc, char **argv)
 	    fprintf(output, "        <link name=%d.nic2rtr port=rtr latency=$nic_link_lat/>\n",i);
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
-	    fprintf(output, "    <component name=%d.rtr type=SS_router.SS_router rank=%d >\n",i,rank);
+	    if ( self_partition ) fprintf(output, "    <component name=%d.rtr type=SS_router.SS_router rank=%d >\n",i,rank);
+	    else                  fprintf(output, "    <component name=%d.rtr type=SS_router.SS_router >\n",i);
 	    fprintf(output, "        <params include=rtr_params>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "        </params>\n");
