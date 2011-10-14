@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>	// For uint64_t
 #include <set>
+#include <list>
 
 
 class Msg_counter   {
@@ -22,8 +23,10 @@ class Msg_counter   {
 
 	void clear(void);
 	void record(int rank, uint64_t len);
-	void output_cnt(int num_ranks, const char *fname);
-	void output_bytes(int num_ranks, const char *fname);
+	void insert_log_entry(int rank, uint64_t len, int time_step);
+	void output_cnt(const char *fname);
+	void output_bytes(const char *fname);
+	void show_log(const char *fname);
 	uint64_t total_cnt(void);
 
     private:
@@ -33,12 +36,19 @@ class Msg_counter   {
 	    uint64_t bytes;
 	} counter_t;
 
+	typedef struct log_entry_t   {
+	    int rank;
+	    int time_step;
+	    uint64_t bytes;
+	} log_entry_t;
+
 	struct _compare   {
 	    bool operator () (const counter_t& x, const counter_t& y) const {return x.rank < y.rank;}
 	};
 
 	std::set<counter_t, _compare> counters;
-	void output(int num_ranks, const char *fname, bool cnt);
+	std::list<log_entry_t> log;
+	void output(const char *fname, bool cnt);
 	int max_rank;
 };
 

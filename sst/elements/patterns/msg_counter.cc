@@ -15,7 +15,6 @@
 
 
 
-// Am I the root of the tree?
 void
 Msg_counter::record(int rank, uint64_t len)
 {
@@ -51,6 +50,27 @@ std::set<counter_t>::iterator p;
 
 
 void
+Msg_counter::insert_log_entry(int rank, uint64_t len, int time_step)
+{
+
+log_entry_t entry;
+
+
+    if ((rank < 0) || (rank >= max_rank))   {
+	fprintf(stderr, "Error: rank %d must be 0...%d\n", rank, max_rank);
+	return;
+    }
+
+    entry.rank= rank;
+    entry.time_step= time_step;
+    entry.bytes= len;
+    log.push_back(entry);
+
+}  // end of insert_log_entry()
+
+
+
+void
 Msg_counter::clear(void)
 {
     counters.clear();
@@ -78,23 +98,23 @@ uint64_t total;
 
 
 void
-Msg_counter::output_cnt(int num_ranks, const char *fname)
+Msg_counter::output_cnt(const char *fname)
 {
-    output(num_ranks, fname, true);
+    output(fname, true);
 }  // end of output_cnt()
 
 
 
 void
-Msg_counter::output_bytes(int num_ranks, const char *fname)
+Msg_counter::output_bytes(const char *fname)
 {
-    output(num_ranks, fname, false);
+    output(fname, false);
 }  // end of output_bytes()
 
 
 
 void
-Msg_counter::output(int num_ranks, const char *fname, bool cnt)
+Msg_counter::output(const char *fname, bool cnt)
 {
 
 std::set<counter_t>::iterator it;
@@ -114,7 +134,7 @@ FILE *fp;
     field_width= 4;
     expect_rank= 0;
     for (it= counters.begin(); it != counters.end(); it++)   {
-	if ((it->rank < 0) || (it->rank >= num_ranks))   {
+	if ((it->rank < 0) || (it->rank >= max_rank))   {
 	    fprintf(stderr, "\nError: rank %d\n", it->rank);
 	    return;
 	}
@@ -132,7 +152,7 @@ FILE *fp;
 	expect_rank++;
     }
 
-    while (expect_rank < num_ranks)   {
+    while (expect_rank < max_rank)   {
 	// there might be trailing entries we need to fill
 	fprintf(fp, "%*d ", field_width, 0);
 	expect_rank++;
@@ -140,8 +160,45 @@ FILE *fp;
     fprintf(fp, "\n");
     fclose(fp);
 
-    if (expect_rank > num_ranks)   {
-	fprintf(stderr, "\nError in %s: rank > num_ranks %d\n", __FUNCTION__, num_ranks);
+    if (expect_rank > max_rank)   {
+	fprintf(stderr, "\nError in %s: rank > max_rank %d\n", __FUNCTION__, max_rank);
     }
 
 }  // end of output()
+
+
+
+void
+Msg_counter::show_log(const char *fname)
+{
+
+std::list<log_entry_t>::iterator it;
+FILE *fp;
+int cnt;
+
+
+    fp= fopen(fname, "a");
+    if (fp == NULL)   {
+	fprintf(stderr, "Could not open \"%s\" for writing message count data!\n", fname);
+	fprintf(stderr, "    %s\n", strerror(errno));
+	return;
+    }
+
+
+    cnt= 1;
+    for (it= log.begin(); it != log.end(); it++)   {
+	if ((it->rank < 0) || (it->rank >= max_rank))   {
+	    fprintf(stderr, "\nError: rank 0 <= %d < %d\n", it->rank, max_rank);
+	    return;
+	}
+
+	if (it->bytes > 0)   {
+	    // Only show actual task migrations
+	    fprintf(fp, "%7d %5d %3d %" PRIu64 "\n", cnt, it->time_step, it->rank, it->bytes);
+	}
+	cnt++;
+    }
+
+    fclose(fp);
+
+}  // end of show_log()

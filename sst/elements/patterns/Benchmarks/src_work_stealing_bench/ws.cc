@@ -78,6 +78,7 @@ static int report_rank;
 static int root;
 static int rank_work_units;
 static int completion_check;
+static int time_step;
 
 static int stat_time_worked;
 static int stat_time_idle;
@@ -418,6 +419,7 @@ int send_off_task;
 	if (flag)   {
 	    // Consume the request
 	    MPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE, TAG_WORK_REQUEST, MPI_COMM_WORLD, &status);
+	    counter->insert_log_entry(status.MPI_SOURCE, 0, time_step);
 	    stat_task_requests_rcvd++;
 
 	    // If my work queue is getting low, or my next task is short,
@@ -472,6 +474,7 @@ std::list <MPI_Request>::iterator it;
 	    // If it is 0, we got a decline
 
 	    MPI_Get_count(&status, MPI_BYTE, &count);
+	    counter->insert_log_entry(status.MPI_SOURCE, count, time_step);
 	    if (count > 0)   {
 		// Add it to work list
 		my_task_list->push_back(count / MSG_SIZE_PER_WORK_UNIT);
@@ -578,7 +581,7 @@ int ask_tasks;
     stat_task_requests_attempted++;
     for (int i= 0; i < num_tasks; i++)   {
 
-	dest= (int)(drand48() * (circle % num_ranks));
+	dest= (int)(drand48() * circle) % num_ranks;
 	dest= dest - dest / 2;
 	dest= (my_rank + dest + num_ranks) % num_ranks;
 	assert(0 <= dest);
@@ -654,7 +657,6 @@ int max_buf_size;
 bool deny;
 double total_time_end;
 double total_time_start;
-int time_step;
 bool done;
 Collective_topology *ctopo;
 
@@ -860,10 +862,14 @@ const char *msg_size_fname= "ws_size.dat";
     }
     for (int i= 0; i < num_ranks; i++)   {
 	if (my_rank == i)   {
-	    counter->output_cnt(num_ranks, msg_cnt_fname);
-	    counter->output_bytes(num_ranks, msg_size_fname);
+	    counter->output_cnt(msg_cnt_fname);
+	    counter->output_bytes(msg_size_fname);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    if (my_rank == 0)   {
+	counter->show_log("Rank0trace.out");
     }
 
     delete counter;
