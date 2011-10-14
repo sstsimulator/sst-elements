@@ -14,12 +14,10 @@
 
 #include <sst/core/element.h>
 
-#include <sst/core/ConfigGraph.h>
+#include <sst/core/configGraph.h>
 
 #include "trig_cpu/trig_cpu.h"
 #include "trig_nic/trig_nic.h"
-
-class SST::ConfigGraph;
 
 static Component* 
 create_trig_cpu(SST::ComponentId_t id, 
