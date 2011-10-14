@@ -32,6 +32,9 @@ typedef uint32_t  ptl_ack_req_t;
 #define PTL_CT_ACK_REQ  2
 #define PTL_OC_ACK_REQ  3
 
+#define PTL_UNDEF (~0)
+#define PTL_PTR_UNDEF (NULL)
+
 // typedef enum {PTL_ACK_REQ,
 // 	      PTL_NO_ACK_REQ,
 // 	      PTL_CT_ACK_REQ,
@@ -74,7 +77,7 @@ typedef enum {
 #define PTL_PROD   3
 #define PTL_LOR    4
 #define PTL_LAND   5
-#define PLT_BOR    6
+#define PTL_BOR    6
 #define PTL_BAND   7
 #define PTL_LXOR   8
 #define PTL_BXOR   9

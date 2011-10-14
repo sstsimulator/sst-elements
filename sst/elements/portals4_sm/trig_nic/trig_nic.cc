@@ -1345,7 +1345,9 @@ trig_nic::computeIntAtomic(unsigned long addr, int64_t value, ptl_op_t op)
     }
     else {
 	entry = atomic_cache[addr] = new atomic_cache_entry;
-	entry->int_val = 0;
+	// Need to actually request the data from the host, but for
+	// now, just initialize to correct value.
+	entry->int_val = *((int64_t*)addr);
     }
 
     switch (op) {

@@ -41,8 +41,9 @@ static void partition(ConfigGraph* graph, int ranks) {
         
     // Need to look through components until we find a router so we
     // can get the dimensions of the torus
-    for ( ConfigComponentMap_t::iterator iter = graph->comps.begin();
-                            iter != graph->comps.end(); ++iter )
+    ConfigComponentMap_t& comps = graph->getComponentMap();
+    for ( ConfigComponentMap_t::iterator iter = comps.begin();
+                            iter != comps.end(); ++iter )
     {
 	ConfigComponent* ccomp = (*iter).second;
 	if ( ccomp->type == "SS_router.SS_router" ) {
@@ -57,8 +58,8 @@ static void partition(ConfigGraph* graph, int ranks) {
 	}
     }
     
-    for ( ConfigComponentMap_t::iterator iter = graph->comps.begin();
-                            iter != graph->comps.end(); ++iter )
+    for ( ConfigComponentMap_t::iterator iter = comps.begin();
+                            iter != comps.end(); ++iter )
     {
 	ConfigComponent* ccomp = (*iter).second;
 	int id = ccomp->params.find_integer("id");
