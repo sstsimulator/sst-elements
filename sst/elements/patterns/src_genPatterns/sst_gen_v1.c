@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>		/* For PRId64 */
-#include "sst_gen.h"
+#include "sst_gen_v1.h"
 #include "machine.h"
 #include "farlink.h"
 #include "pattern.h"

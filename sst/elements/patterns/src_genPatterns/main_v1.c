@@ -11,7 +11,7 @@
 #include <errno.h>
 
 #include "main.h"
-#include "sst_gen.h"
+#include "sst_gen_v1.h"
 #include "machine.h"
 #include "farlink.h"
 #include "pattern.h"

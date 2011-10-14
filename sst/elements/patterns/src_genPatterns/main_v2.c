@@ -259,6 +259,7 @@ int ssd_write_bw;	/* In bytes per second */
     sst_gen_param_start(fp_sst, 0);
     sst_gen_param_entries(fp_sst);
     sst_pwr_param_entries(fp_sst, power_method);
+    sst_gen_param_end(fp_sst);
     sst_nvram_param_entries(fp_sst, nvram_read_bw, nvram_write_bw, ssd_read_bw, ssd_write_bw);
 
     /* We assume the router bandwidth is the same as the link bandwidth */

@@ -456,7 +456,7 @@ pattern_name(void)
 
 
 #define PRINT_PARAM(f, p) \
-    fprintf(f, "    <%s> %d </%s>\n", #p, _##p, #p);
+    fprintf(f, "\t\t<%s> %d </%s>\n", #p, _##p, #p);
 
 void
 pattern_params(FILE *out)
@@ -467,14 +467,14 @@ pattern_params(FILE *out)
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);
 	    PRINT_PARAM(out, num_doubles);
-	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
+	    fprintf(out, "\t\t<tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
 
 	case allreduce_pattern:
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);
 	    PRINT_PARAM(out, num_doubles);
-	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
+	    fprintf(out, "\t\t<tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
 
 	case ghost_pattern:
@@ -484,7 +484,7 @@ pattern_params(FILE *out)
 	    PRINT_PARAM(out, z_elements);
 	    PRINT_PARAM(out, loops);
 	    PRINT_PARAM(out, reduce_steps);
-	    fprintf(out, "    <delay> %.2f </delay>\n", _delay);
+	    fprintf(out, "\t\t<delay> %.2f </delay>\n", _delay);
 	    PRINT_PARAM(out, imbalance);
 	    PRINT_PARAM(out, verbose);
 	    PRINT_PARAM(out, time_per_flop);
@@ -516,7 +516,7 @@ pattern_params(FILE *out)
 		PRINT_PARAM(out, iter);
 	    }
 	    PRINT_PARAM(out, time_per_flop);
-	    fprintf(out, "    <tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
+	    fprintf(out, "\t\t<tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
     }
 

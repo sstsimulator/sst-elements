@@ -27,7 +27,8 @@ sst_header(FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "<?xml version=\"2.0\"?>\n");
+    fprintf(sstfile, "<?xml version=\"1.0\"?>\n");
+    fprintf(sstfile, "<sdl version=\"2.0\"/>\n");
     fprintf(sstfile, "\n");
 
     /*
@@ -36,6 +37,7 @@ sst_header(FILE *sstfile)
     */
     fprintf(sstfile, "<config>\n");
     fprintf(sstfile, "\trun-mode=both\n");
+    /* fprintf(sstfile, "\tpartitioner=self\n"); */
     fprintf(sstfile, "</config>\n");
     fprintf(sstfile, "\n");
 
@@ -662,7 +664,6 @@ int num_ports;
 
     reset_router_list();
     while (next_router(&r, &role, &wormhole, &num_ports))   {
-
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	if (role == RnetPort)   {
@@ -702,7 +703,7 @@ int num_ports;
 		    flip= 1;
 		}
 	    } else   {
-		p= rp;
+		p= lp;
 		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
 	    }
 	    snprintf(cname, MAX_ID_LEN, "Link%dname", p);
@@ -781,7 +782,7 @@ int num_ports;
 			break;
 		}
 	    } else   {
-		/* Don't creat loops back to the same router */
+		/* Don't create loops back to the same router */
 	    }
 	}
 
