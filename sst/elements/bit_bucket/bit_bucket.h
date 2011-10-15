@@ -18,7 +18,10 @@
 #ifndef _BIT_BUCKET_H
 #define _BIT_BUCKET_H
 
-#include <sst/core/event.h>
+#include <sst_config.h>
+#include "sst/core/serialization/element.h"
+#include <sst/core/element.h>
+
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
@@ -135,31 +138,19 @@ class Bit_bucket : public Component {
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
-        }
-
-        template<class Archive>
-        friend void save_construct_data(Archive & ar,
-                                        const Bit_bucket * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Bit_bucket,"\n");
-            ComponentId_t     id     = t->getId();
-            Params_t          params = t->params;
-            ar << BOOST_SERIALIZATION_NVP(id);
-            ar << BOOST_SERIALIZATION_NVP(params);
-        }
-
-        template<class Archive>
-        friend void load_construct_data(Archive & ar,
-                                        Bit_bucket * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Bit_bucket,"\n");
-            ComponentId_t     id;
-            Params_t          params;
-            ar >> BOOST_SERIALIZATION_NVP(id);
-            ar >> BOOST_SERIALIZATION_NVP(params);
-            ::new(t)Bit_bucket(id, params);
+	    ar & BOOST_SERIALIZATION_NVP(net);
+	    ar & BOOST_SERIALIZATION_NVP(self_link);
+	    ar & BOOST_SERIALIZATION_NVP(bit_bucket_debug);
+	    ar & BOOST_SERIALIZATION_NVP(read_pipe);
+	    ar & BOOST_SERIALIZATION_NVP(write_pipe);
+	    ar & BOOST_SERIALIZATION_NVP(write_bw);
+	    ar & BOOST_SERIALIZATION_NVP(read_bw);
+	    ar & BOOST_SERIALIZATION_NVP(bytes_written);
+	    ar & BOOST_SERIALIZATION_NVP(bytes_read);
+	    ar & BOOST_SERIALIZATION_NVP(total_read_delay);
+	    ar & BOOST_SERIALIZATION_NVP(total_write_delay);
+	    ar & BOOST_SERIALIZATION_NVP(total_reads);
+	    ar & BOOST_SERIALIZATION_NVP(total_writes);
         }
 };
 

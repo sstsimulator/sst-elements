@@ -123,13 +123,20 @@ SimTime_t read_time;
 
 
 
-extern "C" {
-Bit_bucket *
-bit_bucketAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
+
+static SST::Component *
+create_bit_bucket(SST::ComponentId_t id, SST::Component::Params_t& params)
 {
     return new Bit_bucket(id, params);
 }
-}
 
-BOOST_CLASS_EXPORT(Bit_bucket)
+static const SST::ElementInfoComponent components[]= {
+    {"bit_bucket", "Bit bucket", NULL, create_bit_bucket},
+    {NULL, NULL, NULL, NULL}
+};
+
+extern "C" {
+    SST::ElementLibraryInfo bit_bucket_eli= {
+        "bit_bucket", "Trying to figure this out", components
+    };
+}
