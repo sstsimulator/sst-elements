@@ -7,6 +7,6 @@
 #ifndef _MESH2D_H_
 #define _MESH2D_H_
 
-void GenMesh3D(int IO_nodes);
+void GenMesh3D(int IO_nodes, int partition);
 
 #endif /* _MESH2D_H_ */

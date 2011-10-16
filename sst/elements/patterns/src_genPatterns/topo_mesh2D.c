@@ -23,7 +23,7 @@
 #define GEN_DEBUG		1
 #undef GEN_DEBUG
 void
-GenMesh3D(int IO_nodes)
+GenMesh3D(int IO_nodes, int partition)
 {
 
 int x, y, z;
@@ -56,10 +56,20 @@ int IO_aggregator;
 int IO_aggregator_port;
 int flit_based= 0;
 int wormhole= 1;
+int mpi_rank;
 #if defined GEN_DEBUG
 int all_cores;
 #endif
 
+
+    if (num_net_routers() >= partition)   {
+	/* put num_net_routers / partition  onto each MPI rank */
+    } else   {
+	printf("# >>> Only have %d net routers, but %d MPI ranks\n",
+	    num_net_routers(), partition);
+	printf("# >>> Will only use %d MPI ranks\n", num_net_routers());
+	partition= num_net_routers();
+    }
 
     /* List the Net routers first; they each have 6 + num_router_nodes ports */
     RouterID= 0;
@@ -67,7 +77,8 @@ int all_cores;
 	#if defined GEN_DEBUG
 	    fprintf(stderr, "gen_router(ID %3d, %d ports);\n", RouterID, 6 + num_router_nodes());
 	#endif /* GEN_DEBUG */
-	gen_router(RouterID, 6 + num_router_nodes(), Rnet, wormhole);
+	mpi_rank= R / (num_net_routers() / partition);
+	gen_router(RouterID, 6 + num_router_nodes(), Rnet, wormhole, mpi_rank);
 	RouterID++;
     }
 
@@ -86,7 +97,8 @@ int all_cores;
 		#if defined GEN_DEBUG
 		    fprintf(stderr, "gen_router(ID %3d, %d ports);\n", RouterID, 6 + num_router_cores());
 		#endif /* GEN_DEBUG */
-		gen_router(RouterID, 6 + num_router_cores(), RNoC, flit_based);
+		mpi_rank= R / (num_net_routers() / partition);
+		gen_router(RouterID, 6 + num_router_cores(), RNoC, flit_based, mpi_rank);
 		RouterID++;
 	    }
 	}
@@ -101,7 +113,8 @@ int all_cores;
 		fprintf(stderr, "Node %3d gen_router(ID %3d, %2d ports); for net with %d far links\n",
 		    nodeID, RouterID, num_cores() + 1 + numFarPorts(nodeID), numFarPorts(nodeID));
 	    #endif /* GEN_DEBUG */
-	    gen_router(RouterID, num_cores() + 1 + numFarPorts(nodeID), RnetPort, wormhole);
+	    mpi_rank= R / (num_net_routers() / partition);
+	    gen_router(RouterID, num_cores() + 1 + numFarPorts(nodeID), RnetPort, wormhole, mpi_rank);
 	    RouterID++;
 	}
     }
@@ -113,7 +126,8 @@ int all_cores;
 	    #if defined GEN_DEBUG
 		fprintf(stderr, "gen_router(ID %3d, %2d ports); for nvram\n", RouterID, num_cores() + 1);
 	    #endif /* GEN_DEBUG */
-	    gen_router(RouterID, num_cores() + 1, Rnvram, flit_based);
+	    mpi_rank= R / (num_net_routers() / partition);
+	    gen_router(RouterID, num_cores() + 1, Rnvram, flit_based, mpi_rank);
 	    RouterID++;
 	}
     }
@@ -126,7 +140,8 @@ int all_cores;
 		fprintf(stderr, "gen_router(ID %3d, %2d ports); for stable storage\n", RouterID,
 		    num_cores() + 1);
 	    #endif /* GEN_DEBUG */
-	    gen_router(RouterID, num_cores() + 1, Rstorage, wormhole);
+	    mpi_rank= R / (num_net_routers() / partition);
+	    gen_router(RouterID, num_cores() + 1, Rstorage, wormhole, mpi_rank);
 	    RouterID++;
 	}
     }
@@ -365,7 +380,8 @@ int all_cores;
 		fprintf(stderr, "gen_nvram(R %d, nvram %d,%d, local %d);\n",
 		    nvramID, nvram_aggregator, nvram_aggregator_port, LOCAL_NVRAM);
 	    #endif /* GEN_DEBUG */
-	    gen_nvram(nvramID, nvram_aggregator++, nvram_aggregator_port, LOCAL_NVRAM);
+	    mpi_rank= R / (num_net_routers() / partition);
+	    gen_nvram(nvramID, nvram_aggregator++, nvram_aggregator_port, LOCAL_NVRAM, mpi_rank);
 	    nvramID++;
 	}
     }
@@ -387,9 +403,14 @@ int all_cores;
 	    fprintf(stderr, "gen_router(ID %3d, %2d ports); for I/O nodes\n", IO_aggregator,
 		(num_net_routers() * num_router_nodes() / IO_nodes) + 1);
 	#endif /* GEN_DEBUG */
+	if (IO_nodes >= partition)   {
+	    mpi_rank= R / (IO_nodes / partition);
+	} else   {
+	    mpi_rank= R % partition;
+	}
 	gen_router(IO_aggregator, (num_net_routers() * num_router_nodes() / IO_nodes) + 1,
-	    RstoreIO, wormhole);
-	gen_nvram(R, IO_aggregator, 0, SSD); /* On port 0 */
+	    RstoreIO, wormhole, mpi_rank);
+	gen_nvram(R, IO_aggregator, 0, SSD, mpi_rank); /* On port 0 */
 
 	IO_aggregator++;
     }

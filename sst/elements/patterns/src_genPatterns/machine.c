@@ -632,7 +632,7 @@ int i;
 
 
     for (i= 0; i < _NICstat_num; i++)   {
-	fprintf(out, "    <NICstat%d> %d </NICstat%d>\n", i, _NICstat[i], i);
+	fprintf(out, "\t\t<NICstat%d> %d </NICstat%d>\n", i, _NICstat[i], i);
     }
 
 }  /* end of machine_params() */

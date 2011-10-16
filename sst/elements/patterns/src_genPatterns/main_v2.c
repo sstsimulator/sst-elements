@@ -36,6 +36,7 @@ static struct option long_options[]=   {
     {"machine", 1, NULL, 'm'},
     {"pattern", 1, NULL, 'p'},
     {"IO_nodes", 1, NULL, 'i'},
+    {"partition", 1, NULL, 1002},
     {"power", 1, NULL, 1003},
     {NULL, 0, NULL, 0}
 };
@@ -70,6 +71,8 @@ int nvram_write_bw;	/* In bytes per second */
 int ssd_read_bw;	/* In bytes per second */
 int ssd_write_bw;	/* In bytes per second */
 
+int partition;
+
 
 
     /* Defaults */
@@ -92,6 +95,8 @@ int ssd_write_bw;	/* In bytes per second */
 
     power_model= "none";
     power_method= pwrNone;
+
+    partition= 0;
 
 
     /* check command line args */
@@ -123,6 +128,13 @@ int ssd_write_bw;	/* In bytes per second */
 		break;
 	    case 'h':
 		error= TRUE;
+		break;
+	    case 1002:
+		partition= strtol(optarg, (char **)NULL, 0);
+		if (partition < 1)   {
+		    fprintf(stderr, "Need to specify for how many ranks to partition for: --partition num\n");
+		    error= TRUE;
+		}
 		break;
 	    case 1003:
 		power_model= optarg;
@@ -217,6 +229,9 @@ int ssd_write_bw;	/* In bytes per second */
     if (!error)   {
 	disp_machine_params();
 	disp_pattern_params();
+	if (partition)   {
+	    printf("# *** Creating a self-partition for %d ranks\n", partition);
+	}
     }
 
     if (!error)   {
@@ -247,13 +262,17 @@ int ssd_write_bw;	/* In bytes per second */
     }
 
 
-    GenMesh3D(IO_nodes);
+    if (partition < 1)   {
+	/* Set this to the default */
+	partition= 1;
+    }
+    GenMesh3D(IO_nodes, partition);
 
 
     /*
     ** Start the sst xml file
     */
-    sst_header(fp_sst);
+    sst_header(fp_sst, partition);
     sst_variables(fp_sst, IOLinkLatency());
     sst_param_start(fp_sst); /* start the parameter_include section */
     sst_gen_param_start(fp_sst, 0);
@@ -325,12 +344,14 @@ usage(char *argv[])
 {
 
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: %s -o out -m machine -p pname [--power model] [-i IO] [-h]\n", argv[0]);
+    fprintf(stderr, "Usage: %s -o out -m machine -p pname [--power model] [-i IO] [--partition num] [-h]\n",
+	argv[0]);
     fprintf(stderr, "   --sstfilename, -o     Name of the SST xml output file\n");
     fprintf(stderr, "   --machine, -m         Name of machine description file\n");
     fprintf(stderr, "   --IO_nodes, -i        Number of I/O nodes (Default 1)\n");
     fprintf(stderr, "   --help, -h            Print this message\n");
     fprintf(stderr, "   --pattern, -p         Name of pattern description file\n");
     fprintf(stderr, "   --power <model>       Enable power modeling using McPAT or ORION\n");
+    fprintf(stderr, "   --partition num       Create a self partitioned XML file\n");
 
 }  /* end of usage() */

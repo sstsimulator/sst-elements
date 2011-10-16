@@ -19,7 +19,7 @@
 
 
 void
-sst_header(FILE *sstfile)
+sst_header(FILE *sstfile, int partition)
 {
 
     if (sstfile == NULL)   {
@@ -37,7 +37,9 @@ sst_header(FILE *sstfile)
     */
     fprintf(sstfile, "<config>\n");
     fprintf(sstfile, "\trun-mode=both\n");
-    /* fprintf(sstfile, "\tpartitioner=self\n"); */
+    if (partition)   {
+	fprintf(sstfile, "\tpartitioner=self\n");
+    }
     fprintf(sstfile, "</config>\n");
     fprintf(sstfile, "\n");
 
@@ -385,7 +387,7 @@ sst_pwr_component(FILE *sstfile, pwr_method_t power_method)
 void
 sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	char *nvram_aggregator_id, char *ss_aggregator_id,
-	int rank, FILE *sstfile)
+	int core_num, int mpi_rank, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -393,9 +395,9 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	return;
     }
 
-    fprintf(sstfile, "\t<component name=\"%s\" type=\"%s\">\n", id, pattern_name());
+    fprintf(sstfile, "\t<component name=%s type=%s rank=%d>\n", id, pattern_name(), mpi_rank);
     fprintf(sstfile, "\t\t<params include=Gp>\n");
-    fprintf(sstfile, "\t\t\t<rank> %d </rank>\n", rank);
+    fprintf(sstfile, "\t\t\t<rank> %d </rank>\n", core_num);
     fprintf(sstfile, "\t\t</params>\n");
 
     if (net_link_id)   {
@@ -422,7 +424,7 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 
 
 void
-sst_nvram_component(char *id, char *link_id, nvram_type_t type, FILE *sstfile)
+sst_nvram_component(char *id, char *link_id, nvram_type_t type, int mpi_rank, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -430,7 +432,7 @@ sst_nvram_component(char *id, char *link_id, nvram_type_t type, FILE *sstfile)
 	return;
     }
 
-    fprintf(sstfile, "\t<component name=\"%s\" type=\"bit_bucket\">\n", id);
+    fprintf(sstfile, "\t<component name=\"%s\" type=bit_bucket rank=%d>\n", id, mpi_rank);
     if (type == LOCAL_NVRAM)   {
 	fprintf(sstfile, "\t\t<params include=NVRAMparams></params>\n");
     }
@@ -455,7 +457,7 @@ sst_nvram_component(char *id, char *link_id, nvram_type_t type, FILE *sstfile)
 
 void
 sst_router_component_start(char *id, char *cname, router_function_t role,
-	int num_ports, pwr_method_t power_method, FILE *sstfile)
+	int num_ports, pwr_method_t power_method, int mpi_rank, FILE *sstfile)
 {
 
     if (sstfile == NULL)   {
@@ -465,9 +467,9 @@ sst_router_component_start(char *id, char *cname, router_function_t role,
 
     fprintf(sstfile, "\t<component name=\"%s\" ", id);
     if (power_method == pwrNone)   {
-	fprintf(sstfile, "type=\"routermodel\">\n");
+	fprintf(sstfile, "type=routermodel rank=%d>\n", mpi_rank);
     } else   {
-	fprintf(sstfile, "type=\"routermodel_power\">\n");
+	fprintf(sstfile, "type=routermodel_power rank=%d>\n", mpi_rank);
     }
     switch (role)   {
 	case Rnet:
@@ -546,6 +548,7 @@ sst_pattern_generators(FILE *sstfile)
 {
 
 int n, r, p;
+int mpi_rank;
 int aggregator, aggregator_port;
 int nvram, nvram_port;
 int ss, ss_port;
@@ -564,7 +567,7 @@ char *label;
     }
 
     reset_nic_list();
-    while (next_nic(&n, &r, &p,
+    while (next_nic(&n, &r, &p, &mpi_rank,
 	    &aggregator, &aggregator_port,
 	    &nvram, &nvram_port,
 	    &ss, &ss_port,
@@ -582,18 +585,18 @@ char *label;
 
 	if (r >= 0)   {
 	    if (aggregator >= 0)   {
-		sst_gen_component(id, net_link_id, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
+		sst_gen_component(id, net_link_id, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, mpi_rank, sstfile);
 	    } else   {
 		/* No network aggregator in this configuration */
-		sst_gen_component(id, net_link_id, NULL, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
+		sst_gen_component(id, net_link_id, NULL, nvram_aggregator_id, ss_aggregator_id, n, mpi_rank, sstfile);
 	    }
 	} else   {
 	    /* Single node, no network */
 	    if (aggregator >= 0)   {
-		sst_gen_component(id, NULL, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
+		sst_gen_component(id, NULL, net_aggregator_id, nvram_aggregator_id, ss_aggregator_id, n, mpi_rank, sstfile);
 	    } else   {
 		/* No network aggregator nor NoC in this configuration */
-		sst_gen_component(id, NULL, NULL, nvram_aggregator_id, ss_aggregator_id, n, sstfile);
+		sst_gen_component(id, NULL, NULL, nvram_aggregator_id, ss_aggregator_id, n, mpi_rank, sstfile);
 	    }
 	}
     }
@@ -610,6 +613,7 @@ sst_nvram(FILE *sstfile)
 {
 
 int n, r, p;
+int mpi_rank;
 nvram_type_t t;
 char id[MAX_ID_LEN];
 char link_id[MAX_ID_LEN];
@@ -620,7 +624,7 @@ char link_id[MAX_ID_LEN];
     }
 
     reset_nvram_list();
-    while (next_nvram(&n, &r, &p, &t))   {
+    while (next_nvram(&n, &r, &p, &mpi_rank, &t))   {
 	if (t == LOCAL_NVRAM)   {
 	    snprintf(id, MAX_ID_LEN, "LocalNVRAM%d", n);
 	}
@@ -630,7 +634,7 @@ char link_id[MAX_ID_LEN];
 	snprintf(link_id, MAX_ID_LEN, "R%dP%d", r, p);
 
 	if (r >= 0)   {
-	    sst_nvram_component(id, link_id, t, sstfile);
+	    sst_nvram_component(id, link_id, t, mpi_rank, sstfile);
 	}
     }
 
@@ -656,6 +660,7 @@ router_function_t role;
 int wormhole;
 link_type_t ltype;
 int num_ports;
+int mpi_rank;
 
 
     if (sstfile == NULL)   {
@@ -663,13 +668,15 @@ int num_ports;
     }
 
     reset_router_list();
-    while (next_router(&r, &role, &wormhole, &num_ports))   {
+    while (next_router(&r, &role, &wormhole, &num_ports, &mpi_rank))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	if (role == RnetPort)   {
-	    sst_router_component_start(router_id, cname, role, num_ports, power_method, sstfile);
+	    sst_router_component_start(router_id, cname, role, num_ports, power_method,
+		mpi_rank, sstfile);
 	} else   {
-	    sst_router_component_start(router_id, cname, role, -1, power_method, sstfile);
+	    sst_router_component_start(router_id, cname, role, -1, power_method,
+		mpi_rank, sstfile);
 	}
 	/*
 	** We have to list the links in order in the params section, so the router

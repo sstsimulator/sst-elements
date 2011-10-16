@@ -567,7 +567,7 @@ char *label;
     }
 
     reset_nic_list();
-    while (next_nic(&n, &r, &p,
+    while (next_nic(&n, &r, &p, NULL,
 	    &aggregator, &aggregator_port,
 	    &nvram, &nvram_port,
 	    &ss, &ss_port,
@@ -616,6 +616,7 @@ int n, r, p;
 nvram_type_t t;
 char id[MAX_ID_LEN];
 char link_id[MAX_ID_LEN];
+int mpi_rank;
 
 
     if (sstfile == NULL)   {
@@ -623,7 +624,7 @@ char link_id[MAX_ID_LEN];
     }
 
     reset_nvram_list();
-    while (next_nvram(&n, &r, &p, &t))   {
+    while (next_nvram(&n, &r, &p, &mpi_rank, &t))   {
 	if (t == LOCAL_NVRAM)   {
 	    snprintf(id, MAX_ID_LEN, "LocalNVRAM%d", n);
 	}
@@ -659,6 +660,7 @@ router_function_t role;
 int wormhole;
 link_type_t ltype;
 int num_ports;
+int mpi_rank;
 
 
     if (sstfile == NULL)   {
@@ -666,7 +668,7 @@ int num_ports;
     }
 
     reset_router_list();
-    while (next_router(&r, &role, &wormhole, &num_ports))   {
+    while (next_router(&r, &role, &wormhole, &num_ports, &mpi_rank))   {
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	if (role == RnetPort)   {

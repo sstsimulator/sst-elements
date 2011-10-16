@@ -280,7 +280,7 @@ int ssd_write_bw;	/* In bytes per second */
     }
 
 
-    GenMesh3D(IO_nodes);
+    GenMesh3D(IO_nodes, 1);
 
 
     /*

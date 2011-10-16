@@ -39,6 +39,7 @@ typedef struct nvram_t   {
     int id;
     int router_id;
     int router_port;
+    int mpi_rank;
     nvram_type_t type;
     struct nvram_t *next;
 } nvram_t;
@@ -63,6 +64,7 @@ typedef struct router_t   {
     int next_link;
     int next_nvram;
     int wormhole;
+    int mpi_rank;
     router_function_t role;
     nic_t *nics[MAX_NICS];
     nvram_t *nvram[MAX_NVRAM];
@@ -93,7 +95,7 @@ static nvram_t *nvram_list_end= NULL;
 ** Add a Router
 */
 void
-gen_router(int id, int num_ports, router_function_t role, int wormhole)
+gen_router(int id, int num_ports, router_function_t role, int wormhole, int mpi_rank)
 {
 
 router_t *current;
@@ -122,6 +124,7 @@ int i;
     current->num_ports= num_ports;
     current->wormhole= wormhole;
     current->role= role;
+    current->mpi_rank= mpi_rank;
 
     current->next_nic= 0;
     for (i= 0; i < MAX_NICS; i++)   {
@@ -485,7 +488,7 @@ int i;
 ** Add an NVRAM component
 */
 void
-gen_nvram(int id, int router, int port, nvram_type_t type)
+gen_nvram(int id, int router, int port, nvram_type_t type, int mpi_rank)
 {
 
 nvram_t *current;
@@ -504,6 +507,7 @@ int i;
     current->router_id= router;
     current->router_port= port;
     current->type= type;
+    current->mpi_rank= mpi_rank;
 
     r= find_router(router);
     if (!r)   {
@@ -654,7 +658,8 @@ reset_router_list(void)
 
 
 int
-next_router(int *id, router_function_t *role, int *wormhole, int *num_ports)
+next_router(int *id, router_function_t *role, int *wormhole, int *num_ports,
+	int *mpi_rank)
 {
 
     if (!router_current)   {
@@ -664,6 +669,7 @@ next_router(int *id, router_function_t *role, int *wormhole, int *num_ports)
     *role= router_current->role;
     *wormhole= router_current->wormhole;
     *num_ports= router_current->num_ports;
+    *mpi_rank= router_current->mpi_rank;
     router_current= router_current->next;
     return 1;
 
@@ -680,12 +686,25 @@ reset_nic_list(void)
 
 
 int
-next_nic(int *id, int *router, int *port, int *aggregator, int *aggregator_port,
+next_nic(int *id, int *router, int *port, int *mpi_rank,
+	int *aggregator, int *aggregator_port,
 	int *nvram, int *nvram_port, int *ss, int *ss_port, char **label)
 {
 
+router_t *r;
+
+
     if (!nic_current)   {
 	return 0;
+    }
+
+    if (mpi_rank != NULL)   {
+	/* Dig up the mpi_rank of the router we are attached to */
+	r= find_router(nic_current->router_id);
+	if (r == NULL)   {
+	    return 0;
+	}
+	*mpi_rank= r->mpi_rank;
     }
 
     *id= nic_current->rank;
@@ -733,7 +752,7 @@ reset_nvram_list(void)
 
 
 int
-next_nvram(int *id, int *router, int *port, nvram_type_t *type)
+next_nvram(int *id, int *router, int *port, int *mpi_rank, nvram_type_t *type)
 {
 
     if (!nvram_current)   {
@@ -743,6 +762,7 @@ next_nvram(int *id, int *router, int *port, nvram_type_t *type)
     *id= nvram_current->id;
     *router= nvram_current->router_id;
     *port= nvram_current->router_port;
+    *mpi_rank= nvram_current->mpi_rank;
     *type= nvram_current->type;
     nvram_current= nvram_current->next;
     return 1;

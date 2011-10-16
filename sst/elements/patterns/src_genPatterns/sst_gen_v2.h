@@ -22,7 +22,7 @@
 
 typedef enum {pwrNone, pwrMcPAT, pwrORION} pwr_method_t;
 
-void sst_header(FILE *sstfile);
+void sst_header(FILE *sstfile, int partition);
 void sst_footer(FILE *dotfile);
 
 void sst_variables(FILE *sstfile, uint64_t IO_latency);
@@ -45,15 +45,16 @@ void sst_body_end(FILE *sstfile);
 void sst_body_start(FILE *sstfile);
 
 void sst_router_component_start(char *id, char *cname, router_function_t role,
-	int num_ports, pwr_method_t power_method, FILE *sstfile);
+	int num_ports, pwr_method_t power_method, int mpi_rank, FILE *sstfile);
 void sst_router_component_end(FILE *sstfile);
 void sst_router_component_link(char *id, uint64_t link_lat, char *link_name, FILE *sstfile);
 
 void sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	char *nvram_aggregator_id, char *ss_aggregator_id,
-	int rank, FILE *sstfile);
+	int core_num, int mpi_rank, FILE *sstfile);
 void sst_pattern_generators(FILE *sstfile);
-void sst_nvram_component(char *id, char *link_id, nvram_type_t type, FILE *sstfile);
+void sst_nvram_component(char *id, char *link_id, nvram_type_t type,
+	int mpi_rank, FILE *sstfile);
 void sst_nvram_param_entries(FILE *sstfile, int nvram_read_bw, int nvram_write_bw,
 	int ssd_read_bw, int ssd_write_bw);
 void sst_nvram(FILE *sstfile);
