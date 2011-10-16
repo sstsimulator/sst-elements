@@ -140,3 +140,5 @@ extern "C" {
         "bit_bucket", "Trying to figure this out", components
     };
 }
+
+BOOST_CLASS_EXPORT(Bit_bucket)
