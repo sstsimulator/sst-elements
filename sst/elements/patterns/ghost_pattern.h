@@ -13,6 +13,8 @@
 #ifndef _GHOST_PATTERN_H
 #define _GHOST_PATTERN_H
 
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "collective_topology.h"
@@ -186,6 +188,9 @@ class Ghost_pattern : public Comm_pattern    {
 
     private:
 
+#ifdef SERIALIZARION_WORKS_NOW
+        Ghost_pattern();  // For serialization only
+#endif  // SERIALIZARION_WORKS_NOW
         Ghost_pattern(const Ghost_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
@@ -256,7 +261,7 @@ class Ghost_pattern : public Comm_pattern    {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Comm_pattern);
 	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(SMghost);
 	    ar & BOOST_SERIALIZATION_NVP(SMallreduce);
@@ -298,30 +303,6 @@ class Ghost_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(neighbor_cnt);
         }
 
-        template<class Archive>
-        friend void save_construct_data(Archive & ar,
-                                        const Ghost_pattern * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Ghost_pattern,"\n");
-            ComponentId_t     id     = t->getId();
-            Params_t          params = t->params;
-            ar << BOOST_SERIALIZATION_NVP(id);
-            ar << BOOST_SERIALIZATION_NVP(params);
-        }
-
-        template<class Archive>
-        friend void load_construct_data(Archive & ar,
-                                        Ghost_pattern * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Ghost_pattern,"\n");
-            ComponentId_t     id;
-            Params_t          params;
-            ar >> BOOST_SERIALIZATION_NVP(id);
-            ar >> BOOST_SERIALIZATION_NVP(params);
-            ::new(t)Ghost_pattern(id, params);
-        }
 };
 
 #endif // _GHOST_PATTERN_H

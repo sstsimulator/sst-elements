@@ -3,6 +3,8 @@
 */
 #include <stdio.h>
 #include <math.h>
+#include <boost/serialization/list.hpp>
+#include <sst_config.h>
 #include "stats.h"
 
 

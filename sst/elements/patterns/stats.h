@@ -4,7 +4,7 @@
 #ifndef _STATS_H_
 #define _STATS_H_
 
-#include <list>
+#include <boost/serialization/list.hpp>
 
 void print_stats(std::list<double> t);
 void print_stats(std::list<double> t, double precision);

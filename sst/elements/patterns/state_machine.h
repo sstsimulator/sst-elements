@@ -11,10 +11,11 @@
 #define _STATE_MACHINE_H
 
 #include <stdlib.h>	// For exit()
-#include <list>
-#include <vector>
 #include <stdint.h>	// For uint32_t
 #include <assert.h>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
+#include <sst/core/serialization/element.h>
 
 const int SM_START_EVENT= 0;
 const int SM_MAX_DATA_FIELDS= 2;
@@ -77,10 +78,32 @@ class state_event   {
     private:
 	// Some state machine specific data that travels in the event
 	// Most state machines wont need this. Others may use any way they wish
-	struct packed_data   {
+	typedef struct    {
 	    double Fdata[SM_MAX_DATA_FIELDS];
 	    long long Idata[SM_MAX_DATA_FIELDS];
-	} packed_data;
+
+	    friend class boost::serialization::access;
+	    template<class Archive>
+	    void serialize(Archive & ar, const unsigned int version)
+	    {
+		ar & BOOST_SERIALIZATION_NVP(Fdata);
+		ar & BOOST_SERIALIZATION_NVP(Idata);
+	    }
+	} packed_data_t;
+
+	packed_data_t packed_data;
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version)
+        {
+	    ar & BOOST_SERIALIZATION_NVP(payload_size);
+	    ar & BOOST_SERIALIZATION_NVP(payload);
+	    ar & BOOST_SERIALIZATION_NVP(event);
+	    ar & BOOST_SERIALIZATION_NVP(restart);
+	    ar & BOOST_SERIALIZATION_NVP(packed_data);
+        }
+
 };
 
 
@@ -132,15 +155,29 @@ class State_machine   {
 
     private:
 
+#ifdef SERIALIZARION_WORKS_NOW
+	State_machine();  // For serialization only
+#endif  // SERIALIZARION_WORKS_NOW
 	void handle_state_events(uint32_t tag, state_event event);
 	void deliver_missed_events(void);
 
-	typedef struct SM_t   {
+	typedef struct   {
 	    void (*handler)(void *obj, state_event event);
 	    void *obj;
 	    uint32_t tag;
 	    std::list <state_event>missed_events;
+
+	    friend class boost::serialization::access;
+	    template<class Archive>
+	    void serialize(Archive & ar, const unsigned int version)
+	    {
+		ar & BOOST_SERIALIZATION_NVP(handler);
+		ar & BOOST_SERIALIZATION_NVP(obj);
+		ar & BOOST_SERIALIZATION_NVP(tag);
+		ar & BOOST_SERIALIZATION_NVP(missed_events);
+	    }
 	} SM_t;
+
 	std::vector <SM_t>SM;
 	std::vector <int>SMstack;
 
@@ -149,6 +186,19 @@ class State_machine   {
 
 	// For debugging
 	const int my_rank;
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version)
+        {
+	    // FIXME: I don't know why I can't serialize this....
+	    ar & BOOST_SERIALIZATION_NVP(SM_data);
+	    ar & BOOST_SERIALIZATION_NVP(SM);
+	    ar & BOOST_SERIALIZATION_NVP(SMstack);
+	    ar & BOOST_SERIALIZATION_NVP(currentSM);
+	    ar & BOOST_SERIALIZATION_NVP(lastSM);
+	    ar & BOOST_SERIALIZATION_NVP(my_rank);
+        }
 
 };
 

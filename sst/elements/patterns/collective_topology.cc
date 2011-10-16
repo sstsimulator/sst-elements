@@ -32,6 +32,7 @@ If TREE_BINARY is selected, then a simple binary tree is created.
 
 */
 
+#include <sst_config.h>
 #include "collective_topology.h"
 
 
@@ -273,3 +274,7 @@ Collective_topology::lsb(uint32_t v)
     return MultiplyDeBruijnBitPosition[((uint32_t)((v & -v) * 0x077CB531U)) >> 27];
 
 }  // end of lsb
+
+#ifdef SERIALIZARION_WORKS_NOW
+BOOST_CLASS_EXPORT(Collective_topology)
+#endif // SERIALIZARION_WORKS_NOW

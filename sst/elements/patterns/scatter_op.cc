@@ -18,7 +18,9 @@ message length.  It is used as the simulated message length for
 scatter messages.
 
 */
-#include "sst/core/serialization/element.h"
+#include <boost/serialization/list.hpp>
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
 #include "scatter_op.h"
 
 
@@ -126,3 +128,7 @@ int msglen;
     }
 
 }  // end of state_WAIT_PARENT()
+
+#ifdef SERIALIZARION_WORKS_NOW
+BOOST_CLASS_EXPORT(Scatter_op)
+#endif // SERIALIZARION_WORKS_NOW

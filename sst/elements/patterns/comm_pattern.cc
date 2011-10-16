@@ -10,7 +10,8 @@
 #define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		// For PRIx64
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
+#include <sst/core/element.h>
 #include <assert.h>
 #include "state_machine.h"
 #include "comm_pattern.h"
@@ -315,13 +316,8 @@ Comm_pattern::handle_storage_events(Event *sst_event)
 
 
 
-extern "C" {
-Comm_pattern *
-comm_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Comm_pattern(id, params);
-}
-}
+eli(Comm_pattern, comm_pattern, "Communication pattern base object")
 
+#ifdef SERIALIZARION_WORKS_NOW
 BOOST_CLASS_EXPORT(Comm_pattern)
+#endif // SERIALIZARION_WORKS_NOW

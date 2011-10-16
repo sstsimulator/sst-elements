@@ -11,6 +11,9 @@
 #include <errno.h>
 #define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		// For PRIu64
+#include <sst_config.h>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/set.hpp>
 #include "msg_counter.h"
 
 
@@ -202,3 +205,7 @@ int cnt;
     fclose(fp);
 
 }  // end of show_log()
+
+#ifdef SERIALIZARION_WORKS_NOW
+BOOST_CLASS_EXPORT(Msg_counter)
+#endif // SERIALIZARION_WORKS_NOW

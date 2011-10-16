@@ -13,7 +13,8 @@
 /*
 */
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
+#include <sst/core/element.h>
 #include "allreduce_pattern.h"
 #include "stats.h"
 
@@ -259,13 +260,8 @@ allreduce_events_t e= (allreduce_events_t)sm_event.event;
 
 
 
-extern "C" {
-Allreduce_pattern *
-allreduce_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Allreduce_pattern(id, params);
-}
-}
+eli(Allreduce_pattern, allreduce_pattern, "Allreduce pattern")
 
+#ifdef SERIALIZARION_WORKS_NOW
 BOOST_CLASS_EXPORT(Allreduce_pattern)
+#endif // SERIALIZARION_WORKS_NOW

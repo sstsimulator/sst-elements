@@ -13,6 +13,8 @@
 #ifndef _FFT_PATTERN_H
 #define _FFT_PATTERN_H
 
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "collective_topology.h" 
@@ -134,6 +136,9 @@ class FFT_pattern : public Comm_pattern    {
 
     private:
 
+#ifdef SERIALIZARION_WORKS_NOW
+        FFT_pattern();  // For serialization only
+#endif  // SERIALIZARION_WORKS_NOW
         FFT_pattern(const FFT_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)
@@ -186,12 +191,12 @@ class FFT_pattern : public Comm_pattern    {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Comm_pattern);
 	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(scatter_msglen);
 	    ar & BOOST_SERIALIZATION_NVP(gather_msglen);
-	    ar & BOOST_SERIALIZATION_NVP(SMscatter);
 	    ar & BOOST_SERIALIZATION_NVP(SMgather);
+	    ar & BOOST_SERIALIZATION_NVP(SMscatter);
 	    ar & BOOST_SERIALIZATION_NVP(SMfft_pattern);
 	    ar & BOOST_SERIALIZATION_NVP(N);
 	    ar & BOOST_SERIALIZATION_NVP(iter);
@@ -199,33 +204,16 @@ class FFT_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(state);
 	    ar & BOOST_SERIALIZATION_NVP(i);
 	    ar & BOOST_SERIALIZATION_NVP(done);
+	    ar & BOOST_SERIALIZATION_NVP(time_per_flop);
+	    ar & BOOST_SERIALIZATION_NVP(verbose);
 	    ar & BOOST_SERIALIZATION_NVP(test_start_time);
+	    ar & BOOST_SERIALIZATION_NVP(phase1_time);
+	    ar & BOOST_SERIALIZATION_NVP(phase2_time);
+	    ar & BOOST_SERIALIZATION_NVP(phase3_time);
+	    ar & BOOST_SERIALIZATION_NVP(phase4_time);
+	    ar & BOOST_SERIALIZATION_NVP(phase5_time);
+	    ar & BOOST_SERIALIZATION_NVP(total_time);
 	    ar & BOOST_SERIALIZATION_NVP(M);
-        }
-
-        template<class Archive>
-        friend void save_construct_data(Archive & ar,
-                                        const FFT_pattern * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(FFT_pattern,"\n");
-            ComponentId_t     id     = t->getId();
-            Params_t          params = t->params;
-            ar << BOOST_SERIALIZATION_NVP(id);
-            ar << BOOST_SERIALIZATION_NVP(params);
-        }
-
-        template<class Archive>
-        friend void load_construct_data(Archive & ar,
-                                        FFT_pattern * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(FFT_pattern,"\n");
-            ComponentId_t     id;
-            Params_t          params;
-            ar >> BOOST_SERIALIZATION_NVP(id);
-            ar >> BOOST_SERIALIZATION_NVP(params);
-            ::new(t)FFT_pattern(id, params);
         }
 };
 

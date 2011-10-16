@@ -13,7 +13,8 @@
 /*
 */
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
+#include <sst/core/element.h>
 #include "alltoall_pattern.h"
 #include "stats.h"
 
@@ -254,13 +255,8 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 
 
 
-extern "C" {
-Alltoall_pattern *
-alltoall_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Alltoall_pattern(id, params);
-}
-}
+eli(Alltoall_pattern, alltoall_pattern, "Alltoall pattern")
 
+#ifdef SERIALIZARION_WORKS_NOW
 BOOST_CLASS_EXPORT(Alltoall_pattern)
+#endif // SERIALIZARION_WORKS_NOW

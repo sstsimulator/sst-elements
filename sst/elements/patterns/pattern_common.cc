@@ -19,7 +19,10 @@
 #include <inttypes.h>		// For PRId64
 #include <string>
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/set.hpp>
+#include <sst/core/serialization/element.h>
 #include <sst/core/cpunicEvent.h>
 
 #include "pattern_common.h"
@@ -1380,3 +1383,7 @@ double byte_cost;
     *msg_duration= (int64_t)((double)(msg_len - params.back().inflectionpoint) * byte_cost);
 
 }  // end of getNICparams()
+
+#ifdef SERIALIZARION_WORKS_NOW
+BOOST_CLASS_EXPORT(Patterns)
+#endif // SERIALIZARION_WORKS_NOW

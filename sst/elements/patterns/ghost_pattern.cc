@@ -15,7 +15,8 @@
 #define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		/* For PRId64 */
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
+#include <sst/core/element.h>
 #include "ghost_pattern.h"
 
 
@@ -392,13 +393,10 @@ Ghost_pattern::do_decomposition(void)
 
 // -----------------------------------------------------------------------------
 
-extern "C" {
-Ghost_pattern *
-ghost_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Ghost_pattern(id, params);
-}
-}
 
+
+eli(Ghost_pattern, ghost_pattern, "Ghost pattern")
+
+#ifdef SERIALIZARION_WORKS_NOW
 BOOST_CLASS_EXPORT(Ghost_pattern)
+#endif // SERIALIZARION_WORKS_NOW

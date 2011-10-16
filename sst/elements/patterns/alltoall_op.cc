@@ -20,7 +20,8 @@ No actual data is transferred, only events of the appropriate length.
 This version only works on power of 2 ranks!
 
 */
-#include "sst/core/serialization/element.h"
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
 #include "alltoall_op.h"
 
 
@@ -280,3 +281,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
     }
 
 }  // end of state_WAIT_SEND()
+
+#ifdef SERIALIZARION_WORKS_NOW
+BOOST_CLASS_EXPORT(Alltoall_op)
+#endif // SERIALIZARION_WORKS_NOW

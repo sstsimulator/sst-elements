@@ -24,7 +24,9 @@ iteself and the gate keeper mechanism in comm_pattern.cc
 
 */
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
+#include <sst/core/element.h>
+#include <sst/core/component.h>
 #include "pingpong_pattern.h"
 
 
@@ -301,13 +303,8 @@ double check= 0.0;
 
 
 
-extern "C" {
-Pingpong_pattern *
-pingpong_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Pingpong_pattern(id, params);
-}
-}
+eli(Pingpong_pattern, pingpong_pattern, "Ping-pong pattern")
 
+#ifdef SERIALIZARION_WORKS_NOW
 BOOST_CLASS_EXPORT(Pingpong_pattern)
+#endif // SERIALIZARION_WORKS_NOW

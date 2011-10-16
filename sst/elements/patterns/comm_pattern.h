@@ -10,6 +10,8 @@
 #ifndef _COMM_PATTERN_H
 #define _COMM_PATTERN_H
 
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/cpunicEvent.h>
@@ -17,6 +19,32 @@
 #include "pattern_common.h"
 
 using namespace SST;
+
+// Macro to fill in eli structure needed in dynamic libraries
+// Required for all components loadable by SST. In this
+// directory, this means all components that inherit from Comm_pattern
+// Use it like this: eli(Allreduce_pattern, allreduce_pattern, "Allreduce pattern")
+// where the first argument is the name of the Comm_pattern object, the second
+// argument is the name of the resulting library, and the last argument is
+// a brief description.
+#define eli(comp, lib, desc) \
+static SST::Component *create_##comp(SST::ComponentId_t id, SST::Component::Params_t& params) \
+{ \
+    return new comp(id, params); \
+} \
+ \
+static const SST::ElementInfoComponent components[]= { \
+    {#lib, desc, NULL, create_##comp}, \
+    {NULL, NULL, NULL, NULL} \
+}; \
+ \
+extern "C" { \
+    SST::ElementLibraryInfo lib##_eli= { \
+       #lib, "Trying to figure this out", components \
+    }; \
+} \
+
+
 
 #define DBG_COMM_PATTERN 1
 #if DBG_COMM_PATTERN
@@ -40,8 +68,6 @@ class Comm_pattern : public Component {
 	    // Some defaults
 	    comm_pattern_debug= 0;
 	    my_rank= -1;
-
-
 
 	    registerExit();
 
@@ -129,8 +155,10 @@ class Comm_pattern : public Component {
 
         }  // Done with initialization
 
-        ~Comm_pattern()
-	{delete common;}
+        ~Comm_pattern()   {
+	    delete common;
+	    delete SM;
+	}
 
 
 	int my_rank;
@@ -160,6 +188,9 @@ class Comm_pattern : public Component {
 
     private:
 
+#ifdef SERIALIZARION_WORKS_NOW
+        Comm_pattern();  // For serialization only
+#endif  // SERIALIZARION_WORKS_NOW
         Comm_pattern(const Comm_pattern &c);
 	void handle_sst_events(CPUNicEvent *sst_event, const char *err_str);
 	void handle_net_events(Event *sst_event);
@@ -189,34 +220,19 @@ class Comm_pattern : public Component {
         void serialize(Archive & ar, const unsigned int version )
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
+	    ar & BOOST_SERIALIZATION_NVP(num_ranks);
+	    ar & BOOST_SERIALIZATION_NVP(SM);
+	    ar & BOOST_SERIALIZATION_NVP(params);
 	    ar & BOOST_SERIALIZATION_NVP(comm_pattern_debug);
+	    ar & BOOST_SERIALIZATION_NVP(params);
+	    ar & BOOST_SERIALIZATION_NVP(net);
+	    ar & BOOST_SERIALIZATION_NVP(self_link);
+	    ar & BOOST_SERIALIZATION_NVP(NoC);
+	    ar & BOOST_SERIALIZATION_NVP(nvram);
+	    ar & BOOST_SERIALIZATION_NVP(storage);
+	    ar & BOOST_SERIALIZATION_NVP(tc);
         }
 
-        template<class Archive>
-        friend void save_construct_data(Archive & ar,
-                                        const Comm_pattern * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Comm_pattern,"\n");
-            ComponentId_t     id     = t->getId();
-            Params_t          params = t->params;
-            ar << BOOST_SERIALIZATION_NVP(id);
-            ar << BOOST_SERIALIZATION_NVP(params);
-        }
-
-        template<class Archive>
-        friend void load_construct_data(Archive & ar,
-                                        Comm_pattern * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Comm_pattern,"\n");
-            ComponentId_t     id;
-            Params_t          params;
-            ar >> BOOST_SERIALIZATION_NVP(id);
-            ar >> BOOST_SERIALIZATION_NVP(params);
-            ::new(t)Comm_pattern(id, params);
-        }
 };
 #endif // _COMM_PATTERN_H

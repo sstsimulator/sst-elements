@@ -22,6 +22,9 @@
 #endif
 
 #include <sst_config.h>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/set.hpp>
+#include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
@@ -33,19 +36,38 @@
 
 
 // Storage for NIC parameters
-typedef struct NICparams_t   {
+typedef struct   {
     int index;
     int64_t inflectionpoint;
     int64_t latency;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+	ar & BOOST_SERIALIZATION_NVP(index);
+	ar & BOOST_SERIALIZATION_NVP(inflectionpoint);
+	ar & BOOST_SERIALIZATION_NVP(latency);
+    }
 } NICparams_t;
 
 
+
 // Describe a far link
-typedef struct FarLink_t   {
+typedef struct   {
     // int src;   Implicit, it is my node
     int src_port;
     int dest;
     int dest_port;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+	ar & BOOST_SERIALIZATION_NVP(src_port);
+	ar & BOOST_SERIALIZATION_NVP(dest);
+	ar & BOOST_SERIALIZATION_NVP(dest_port);
+    }
 } FarLink_t;
 
 struct _FLcompare   {
@@ -55,9 +77,17 @@ struct _FLcompare   {
 
 
 // Destination statistics
-typedef struct stat_dest_t   {
+typedef struct   {
     int dest;
     uint64_t cnt;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+	ar & BOOST_SERIALIZATION_NVP(dest);
+	ar & BOOST_SERIALIZATION_NVP(cnt);
+    }
 } stat_dest_t;
 
 struct _dest_compare   {
@@ -202,6 +232,75 @@ class Patterns   {
 	long long int stat_NoCmsg_congestion_cnt;
 	SST::SimTime_t stat_NoCmsg_congestion_delay;
 
+
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version)
+        {
+	    ar & BOOST_SERIALIZATION_NVP(my_net_link);
+	    ar & BOOST_SERIALIZATION_NVP(my_self_link);
+	    ar & BOOST_SERIALIZATION_NVP(my_NoC_link);
+	    ar & BOOST_SERIALIZATION_NVP(my_nvram_link);
+	    ar & BOOST_SERIALIZATION_NVP(my_storage_link);
+	    ar & BOOST_SERIALIZATION_NVP(mesh_width);
+	    ar & BOOST_SERIALIZATION_NVP(mesh_height);
+	    ar & BOOST_SERIALIZATION_NVP(mesh_depth);
+	    ar & BOOST_SERIALIZATION_NVP(NoC_width);
+	    ar & BOOST_SERIALIZATION_NVP(NoC_height);
+	    ar & BOOST_SERIALIZATION_NVP(NoC_depth);
+	    ar & BOOST_SERIALIZATION_NVP(my_rank);
+	    ar & BOOST_SERIALIZATION_NVP(cores_per_NoC_router);
+	    ar & BOOST_SERIALIZATION_NVP(num_router_nodes);
+	    ar & BOOST_SERIALIZATION_NVP(NetXwrap);
+	    ar & BOOST_SERIALIZATION_NVP(NetYwrap);
+	    ar & BOOST_SERIALIZATION_NVP(NetZwrap);
+	    ar & BOOST_SERIALIZATION_NVP(NoCXwrap);
+	    ar & BOOST_SERIALIZATION_NVP(NoCYwrap);
+	    ar & BOOST_SERIALIZATION_NVP(NoCZwrap);
+	    ar & BOOST_SERIALIZATION_NVP(total_cores);
+	    ar & BOOST_SERIALIZATION_NVP(cores_per_Net_router);
+	    ar & BOOST_SERIALIZATION_NVP(cores_per_node);
+	    ar & BOOST_SERIALIZATION_NVP(NetNICgap);
+	    ar & BOOST_SERIALIZATION_NVP(NoCNICgap);
+	    ar & BOOST_SERIALIZATION_NVP(NetNICparams);
+	    ar & BOOST_SERIALIZATION_NVP(NoCNICparams);
+	    ar & BOOST_SERIALIZATION_NVP(FarLink);
+	    ar & BOOST_SERIALIZATION_NVP(FarLinkPortFieldWidth);
+	    ar & BOOST_SERIALIZATION_NVP(NetLinkBandwidth);
+	    ar & BOOST_SERIALIZATION_NVP(NetLinkLatency);
+	    ar & BOOST_SERIALIZATION_NVP(NoCLinkBandwidth);
+	    ar & BOOST_SERIALIZATION_NVP(NoCLinkLatency);
+	    ar & BOOST_SERIALIZATION_NVP(IOLinkBandwidth);
+	    ar & BOOST_SERIALIZATION_NVP(IOLinkLatency);
+	    ar & BOOST_SERIALIZATION_NVP(NoCIntraLatency);
+	    ar & BOOST_SERIALIZATION_NVP(NetIntraLatency);
+	    ar & BOOST_SERIALIZATION_NVP(msg_seq);
+	    ar & BOOST_SERIALIZATION_NVP(NextNoCNICslot);
+	    ar & BOOST_SERIALIZATION_NVP(NextNetNICslot);
+	    ar & BOOST_SERIALIZATION_NVP(NextFarNICslot);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCNICsend);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCNICsend_bytes);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCNICbusy);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NetNICsend);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NetNICsend_bytes);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NetNICbusy);
+	    ar & BOOST_SERIALIZATION_NVP(stat_FarNICsend);
+	    ar & BOOST_SERIALIZATION_NVP(stat_FarNICsend_bytes);
+	    ar & BOOST_SERIALIZATION_NVP(stat_FarNICbusy);
+	    ar & BOOST_SERIALIZATION_NVP(NICstat_ranks);
+	    ar & BOOST_SERIALIZATION_NVP(stat_dest);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NetNICrecv);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NetNICrecv_bytes);
+	    ar & BOOST_SERIALIZATION_NVP(stat_Netmsg_hops);
+	    ar & BOOST_SERIALIZATION_NVP(stat_Netmsg_congestion_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(stat_Netmsg_congestion_delay);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCNICrecv);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCNICrecv_bytes);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCmsg_hops);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCmsg_congestion_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(stat_NoCmsg_congestion_delay);
+        }
 
 } ;  // end of class Patterns
 

@@ -35,7 +35,8 @@
     1...n-1.
 */
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include <sst/core/serialization/element.h>
+#include <sst/core/element.h>
 #include "msgrate_pattern.h"
 
 
@@ -507,13 +508,8 @@ state_event enter_allreduce, exit_allreduce;
 
 
 
-extern "C" {
-Msgrate_pattern *
-msgrate_patternAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Msgrate_pattern(id, params);
-}
-}
+eli(Msgrate_pattern, msgrate_pattern, "Message rate pattern")
 
+#ifdef SERIALIZARION_WORKS_NOW
 BOOST_CLASS_EXPORT(Msgrate_pattern)
+#endif // SERIALIZARION_WORKS_NOW
