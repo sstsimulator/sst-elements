@@ -1,3 +1,5 @@
+- Move as much latency onto the links as possible
+
 - Seperate out NIC model
     + Send side is in pattern_common.cc
     + Receive side is in comm_pattern.cc
@@ -7,7 +9,7 @@
 
 - NetIntraLatency Cannot be bigger than NetNICparams = 0. I don't think that is right.
 
-- Fix msgrate_patter Test 3 abort bug
+- Fix msgrate_pattern Test 3 abort bug
 - Allow machine to be bigger than job that we run on it
 - Recreate and fix I/O and NVRAM infrastructure
 
@@ -16,17 +18,11 @@
 - Rename Patterns object something like machine or arch
     Rexport its methods directly, instead of through more methods in comm_patterns.
 
-- Serialization is broken big time...
-
-- Try to switch to the new xml format again
-
 - Create bit_bucket component
     DONE Initially, just a component to consume events
     Then act on reads, do the proper delays, and route acks back
 
 - Flits in router
-
-- Play with component weight
 
 - Implement checkpointing
     - Coordinated
@@ -145,4 +141,11 @@ Arch model
 
 - More patterns
     - FFT
+
 - genPattern: pattern.c add rank_stride and start_rank for msgrate_pattern
+
+- Serialization is broken big time...
+
+- Try to switch to the new xml format again
+
+- Play with component weight

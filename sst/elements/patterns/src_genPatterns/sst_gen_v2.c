@@ -244,19 +244,48 @@ sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t route
     int hop_delay, int wormhole, pwr_method_t power_method)
 {
 
+int aggregator;
+
+
     if (sstfile == NULL)   {
 	/* Nothing to output */
 	return;
     }
 
     fprintf(sstfile, "\t<%s>\n", Rname);
-    fprintf(sstfile, "\t\t<hop_delay> %d </hop_delay>\n", hop_delay);
-    fprintf(sstfile, "\t\t<debug> 0 </debug>\n");
     if (num_ports >= 0)   {
 	fprintf(sstfile, "\t\t<num_ports> %d </num_ports>\n", num_ports);
     }
-    fprintf(sstfile, "\t\t<bw> %" PRId64 " </bw>\n", router_bw);
-    fprintf(sstfile, "\t\t<wormhole> %d </wormhole>\n", wormhole);
+    fprintf(sstfile, "\t\t<debug> 0 </debug>\n");
+    /* FIXME: This could be done more efficiently w/o a string compare */
+    if (strcmp(Rname, RNAME_NETWORK) == 0)   {
+	aggregator= 0;
+    }
+    if (strcmp(Rname, RNAME_NoC) == 0)   {
+	aggregator= 0;
+    }
+    if (strcmp(Rname, RNAME_NET_ACCESS) == 0)   {
+	aggregator= 1;
+    }
+    if (strcmp(Rname, RNAME_NVRAM) == 0)   {
+	aggregator= 1;
+    }
+    if (strcmp(Rname, RNAME_STORAGE) == 0)   {
+	aggregator= 1;
+    }
+    if (strcmp(Rname, RNAME_IO) == 0)   {
+	aggregator= 1;
+    }
+
+
+
+    if (!aggregator)   {
+	fprintf(sstfile, "\t\t<hop_delay> %d </hop_delay>\n", hop_delay);
+	fprintf(sstfile, "\t\t<bw> %" PRId64 " </bw>\n", router_bw);
+	fprintf(sstfile, "\t\t<wormhole> %d </wormhole>\n", wormhole);
+    } else   {
+	fprintf(sstfile, "\t\t<aggregator> 1 </aggregator>\n");
+    }
 
     if (power_method == pwrNone)   {
 	/* Nothing to do */
@@ -672,9 +701,14 @@ int mpi_rank;
 	snprintf(router_id, MAX_ID_LEN, "R%d", r);
 	snprintf(cname, MAX_ID_LEN, "R%d", r);
 	if (role == RnetPort)   {
+	    /* We specify the number of ports because it can differ by role and location */
 	    sst_router_component_start(router_id, cname, role, num_ports, power_method,
 		mpi_rank, sstfile);
 	} else   {
+	    /*
+	    ** We'll specify the number of ports in a variable, since it is the
+	    ** same for all router of this type.
+	    */
 	    sst_router_component_start(router_id, cname, role, -1, power_method,
 		mpi_rank, sstfile);
 	}

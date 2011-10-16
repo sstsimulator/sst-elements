@@ -13,6 +13,8 @@
 #ifndef _ROUTERMODEL_H
 #define _ROUTERMODEL_H
 
+#include "sst/core/serialization/element.h"
+#include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/introspectedComponent.h>
@@ -56,6 +58,7 @@ class Routermodel : public IntrospectedComponent {
 	    num_ports= -1;
 	    hop_delay= 20;
 	    router_bw= 1200000000; // Bytes per second
+	    aggregator= false;
 	    congestion_out_cnt= 0;
 	    congestion_out= 0;
 	    congestion_in_cnt= 0;
@@ -84,6 +87,14 @@ class Routermodel : public IntrospectedComponent {
 
 		else if (!it->first.compare("bw"))   {
 		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&router_bw);
+		}
+
+		else if (!it->first.compare("aggregator"))   {
+		    int tmp;
+		    sscanf(it->second.c_str(), "%d", &tmp);
+		    if (tmp != 0)   {
+			aggregator= true;
+		    }
 		}
 
 		else if (!it->first.compare("component_name"))   {
@@ -143,17 +154,19 @@ class Routermodel : public IntrospectedComponent {
       	    tc= registerTimeBase(frequency, true);
 
 #ifdef WITH_POWER
-      	    // for power introspection
-      	    if (ifModelPower)   {
-		registerClock(frequency, new Clock::Handler<Routermodel>
-		    (this, &Routermodel::pushData));
+	    if (!aggregator)   {
+		// for power introspection
+		if (ifModelPower)   {
+		    registerClock(frequency, new Clock::Handler<Routermodel>
+			(this, &Routermodel::pushData));
+		}
 	    }
 #endif
 
 
 	    /* Attach the handler to each port */
 	    for (int i= 0; i < num_ports; i++)   {
-		port_t new_port;
+		struct port_t new_port;
 		char link_name[MAX_LINK_NAME];
 
 		sprintf(link_name, "Link%dname", i);
@@ -187,20 +200,27 @@ class Routermodel : public IntrospectedComponent {
 		port.push_back(new_port);
 	    }
 
-	    _ROUTER_MODEL_DBG(1, "Router model component \"%s\" is on rank %d\n",
-		component_name.c_str(), _debug_rank);
-
-            // Create a channel for "out of band" events sent to ourselves
-	    self_link= configureSelfLink("Me", new Event::Handler<Routermodel>
-		    (this, &Routermodel::handle_self_events));
-	    if (self_link == NULL)   {
-		_ABORT(Ghost_pattern, "That was no good!\n");
+	    if (!aggregator)   {
+		_ROUTER_MODEL_DBG(1, "Router model component \"%s\" is on rank %d\n",
+		    component_name.c_str(), _debug_rank);
 	    } else   {
-		_ROUTER_MODEL_DBG(2, "Added a self link and a handler on router %s\n",
-		    component_name.c_str());
+		_ROUTER_MODEL_DBG(1, "Aggregator component \"%s\" is on rank %d\n",
+		    component_name.c_str(), _debug_rank);
 	    }
 
-	    self_link->setDefaultTimeBase(tc);
+	    if (!aggregator)   {
+		// Create a channel for "out of band" events sent to ourselves
+		self_link= configureSelfLink("Me", new Event::Handler<Routermodel>
+			(this, &Routermodel::handle_self_events));
+		if (self_link == NULL)   {
+		    _ABORT(Ghost_pattern, "That was no good!\n");
+		} else   {
+		    _ROUTER_MODEL_DBG(2, "Added a self link and a handler on router %s\n",
+			component_name.c_str());
+		}
+
+		self_link->setDefaultTimeBase(tc);
+	    }
 
         }
 
@@ -209,26 +229,28 @@ class Routermodel : public IntrospectedComponent {
 	Setup()
 	{
 #ifdef WITH_POWER
-	    if (ifModelPower)   {
-		power = new Power(getId());
+	    if (!aggregator)   {
+		if (ifModelPower)   {
+		    power = new Power(getId());
 
-		//set up floorplan and thermal tiles
-		power->setChip(params);
+		    //set up floorplan and thermal tiles
+		    power->setChip(params);
 
-		//set up architecture parameters
-		power->setTech(getId(), params, ROUTER, powerModel);
+		    //set up architecture parameters
+		    power->setTech(getId(), params, ROUTER, powerModel);
 
-		//reset all counts to zero
-		power->resetCounts(&mycounts);
+		    //reset all counts to zero
+		    power->resetCounts(&mycounts);
 
-		registerIntrospector(pushIntrospector);
-	   	registerMonitor("router_delay", new MonitorPointer<SimTime_t>(&router_totaldelay));
-	   	registerMonitor("local_message", new MonitorPointer<uint64_t>(&num_local_message));
-		registerMonitor("current_power", new MonitorPointer<I>(&pdata.currentPower));
-		registerMonitor("leakage_power", new MonitorPointer<I>(&pdata.leakagePower));
-		registerMonitor("runtime_power", new MonitorPointer<I>(&pdata.runtimeDynamicPower));
-		registerMonitor("total_power", new MonitorPointer<I>(&pdata.totalEnergy));
-		registerMonitor("peak_power", new MonitorPointer<I>(&pdata.peak));
+		    registerIntrospector(pushIntrospector);
+		    registerMonitor("router_delay", new MonitorPointer<SimTime_t>(&router_totaldelay));
+		    registerMonitor("local_message", new MonitorPointer<uint64_t>(&num_local_message));
+		    registerMonitor("current_power", new MonitorPointer<I>(&pdata.currentPower));
+		    registerMonitor("leakage_power", new MonitorPointer<I>(&pdata.leakagePower));
+		    registerMonitor("runtime_power", new MonitorPointer<I>(&pdata.runtimeDynamicPower));
+		    registerMonitor("total_power", new MonitorPointer<I>(&pdata.totalEnergy));
+		    registerMonitor("peak_power", new MonitorPointer<I>(&pdata.peak));
+		}
 	    }
 #endif
 	    return 0;
@@ -239,10 +261,12 @@ class Routermodel : public IntrospectedComponent {
 	Finish()
 	{
 #ifdef WITH_POWER
-	    //power->printFloorplanAreaInfo();
-	    //std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
-	    //power->printFloorplanPowerInfo();
-	    //power->printFloorplanThermalInfo();
+	    if (!aggregator)   {
+		//power->printFloorplanAreaInfo();
+		//std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
+		//power->printFloorplanPowerInfo();
+		//power->printFloorplanThermalInfo();
+	    }
 #endif
 	    return 0;
 	}
@@ -252,9 +276,10 @@ class Routermodel : public IntrospectedComponent {
 
     private:
 
-        Params_t params;
 
+        Routermodel(); // For serialization only
         Routermodel(const Routermodel &c);
+        Params_t params;
 	void handle_port_events(Event *, int in_port);
 	void handle_self_events(Event *);
 	Link *initPort(int port, char *link_name);
@@ -284,19 +309,32 @@ class Routermodel : public IntrospectedComponent {
 	uint64_t num_local_message;
 
 
-	typedef struct port_t   {
+	struct port_t   {
 	    Link *link;
 	    long long int cnt_in;
 	    long long int cnt_out;
 	    SimTime_t next_out;
 	    SimTime_t next_in;
-	} port_t;
-	std::vector<port_t> port;
+
+	    friend class boost::serialization::access;                                                        
+	    template<class Archive>
+	    void
+	    serialize(Archive & ar, const unsigned int version)
+	    {
+		ar & BOOST_SERIALIZATION_NVP(link);
+		ar & BOOST_SERIALIZATION_NVP(cnt_in);
+		ar & BOOST_SERIALIZATION_NVP(cnt_out);
+		ar & BOOST_SERIALIZATION_NVP(next_out);
+		ar & BOOST_SERIALIZATION_NVP(next_in);
+	    }
+	};
+	std::vector<struct port_t> port;
 
 	Link *self_link;
 	int num_ports;
 	int router_model_debug;
 	uint64_t router_bw;
+	bool aggregator;
 	SimTime_t congestion_out;
 	long long int congestion_out_cnt;
 	SimTime_t congestion_in;
@@ -305,37 +343,39 @@ class Routermodel : public IntrospectedComponent {
 
         friend class boost::serialization::access;
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version )
+        void serialize(Archive & ar, const unsigned int version)
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
 	    ar & BOOST_SERIALIZATION_NVP(params);
-	    // FIXME: Do we need this? ar & BOOST_SERIALIZATION_NVP(tc);
+	    ar & BOOST_SERIALIZATION_NVP(frequency);
+	    ar & BOOST_SERIALIZATION_NVP(tc);
+	    ar & BOOST_SERIALIZATION_NVP(hop_delay);
+	    ar & BOOST_SERIALIZATION_NVP(component_name);
+#ifdef NEEDS_MORE_WORK
+#ifdef WITH_POWER
+	    ar & BOOST_SERIALIZATION_NVP(pushIntrospector);
+	    ar & BOOST_SERIALIZATION_NVP(pdata);
+	    ar & BOOST_SERIALIZATION_NVP(pstats);
+	    ar & BOOST_SERIALIZATION_NVP(power);
+	    ar & BOOST_SERIALIZATION_NVP(mycounts);
+	    ar & BOOST_SERIALIZATION_NVP(powerModel);
+	    ar & BOOST_SERIALIZATION_NVP(ifModelPower);
+#endif // WITH_POWER
+#endif // NEEDS_MORE_WORK
+	    ar & BOOST_SERIALIZATION_NVP(router_totaldelay);
+	    ar & BOOST_SERIALIZATION_NVP(num_local_message);
+	    ar & BOOST_SERIALIZATION_NVP(port);
+	    ar & BOOST_SERIALIZATION_NVP(self_link);
+	    ar & BOOST_SERIALIZATION_NVP(num_ports);
+	    ar & BOOST_SERIALIZATION_NVP(router_model_debug);
+	    ar & BOOST_SERIALIZATION_NVP(router_bw);
+	    ar & BOOST_SERIALIZATION_NVP(aggregator);
+	    ar & BOOST_SERIALIZATION_NVP(congestion_out);
+	    ar & BOOST_SERIALIZATION_NVP(congestion_out_cnt);
+	    ar & BOOST_SERIALIZATION_NVP(congestion_in);
+	    ar & BOOST_SERIALIZATION_NVP(congestion_in_cnt);
         }
 
-        template<class Archive>
-        friend void save_construct_data(Archive & ar,
-                                        const Routermodel * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Routermodel,"\n");
-            ComponentId_t     id     = t->getId();
-            Params_t          params = t->params;
-            ar << BOOST_SERIALIZATION_NVP(id);
-            ar << BOOST_SERIALIZATION_NVP(params);
-        }
-
-        template<class Archive>
-        friend void load_construct_data(Archive & ar,
-                                        Routermodel * t,
-                                        const unsigned int file_version)
-        {
-            _AR_DBG(Routermodel,"\n");
-            ComponentId_t     id;
-            Params_t          params;
-            ar >> BOOST_SERIALIZATION_NVP(id);
-            ar >> BOOST_SERIALIZATION_NVP(params);
-            ::new(t)Routermodel(id, params);
-        }
 };
 
 #endif

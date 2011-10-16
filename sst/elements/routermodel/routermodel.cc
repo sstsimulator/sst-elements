@@ -44,9 +44,7 @@ int out_port;
 
     _ROUTER_MODEL_DBG(3, "%s in port %d, time %lu, src %lu, seq %lu\n",
 	component_name.c_str(), in_port, (uint64_t)current_time,
-	e->msg_id & ((1 << RANK_FIELD) - 1),
-	e->msg_id >> RANK_FIELD);
-    port[in_port].cnt_in++;
+	e->msg_id & ((1 << RANK_FIELD) - 1), e->msg_id >> RANK_FIELD);
 
 
 #if DBG_ROUTER_MODEL > 1
@@ -82,6 +80,15 @@ int out_port;
     out_port= e->route[e->hops];
     assert((out_port >= 0) && (out_port < num_ports));
 
+    if (aggregator)   {
+	// We're not really a router, rather we are being used as an aggregator
+	// Just send the event on: no delays, not queuing
+	e->hops++;
+	port[out_port].link->Send(0, e);
+	return;
+    }
+
+    port[in_port].cnt_in++;
 
     // How long will this message occupy the input and output port?
     // FIXME: The constant 1000000000 should be replaced with our time base
@@ -206,15 +213,6 @@ Routermodel::pushData(Cycle_t current)
 
 
 
-/*extern "C" {
-Routermodel *
-routermodelAllocComponent(SST::ComponentId_t id,
-                          SST::Component::Params_t& params)
-{
-    return new Routermodel(id, params);
-}
-}*/
-
 static Component*
 create_routermodel(SST::ComponentId_t id, 
                   SST::Component::Params_t& params)
@@ -264,7 +262,5 @@ extern "C" {
         components2,
     };
 }
-
-
 
 BOOST_CLASS_EXPORT(Routermodel)
