@@ -65,13 +65,14 @@ objectMap_t buildConfigV2( M5* comp, std::string name, std::string configFile, S
 
     SST::ConfigLinkMap_t::iterator lmIter;
 
-    for ( lmIter = graph.links.begin(); lmIter != graph.links.end(); ++lmIter ) {
+    for ( lmIter = graph.getLinkMap().begin(); 
+                lmIter != graph.getLinkMap().end(); ++lmIter ) {
         SST::ConfigLink& tmp = *(*lmIter).second;
         DBGC(2,"key=%s name=%s\n",(*lmIter).first.c_str(), tmp.name.c_str());
 
         LinkInfo l0,l1;
-        l0.compName = tmp.component[0]->name.c_str();
-        l1.compName = tmp.component[1]->name.c_str();
+        l0.compName = graph.getComponentMap()[ tmp.component[0] ]->name.c_str();
+        l1.compName = graph.getComponentMap()[ tmp.component[1] ]->name.c_str();
 
         l0.portName = tmp.port[0];
         l1.portName = tmp.port[1];
@@ -87,7 +88,8 @@ objectMap_t buildConfigV2( M5* comp, std::string name, std::string configFile, S
 
     SST::ConfigComponentMap_t::iterator iter; 
 
-    for ( iter = graph.comps.begin(); iter != graph.comps.end(); ++iter ) {
+    for ( iter = graph.getComponentMap().begin(); 
+            iter != graph.getComponentMap().end(); ++iter ) {
         SST::ConfigComponent& tmp = *(*iter).second;
         DBGC(2,"id=%d %s %s\n",(*iter).first, tmp.name.c_str(), tmp.type.c_str());
         SST::SDL_Component sdl( tmp.type) ;
