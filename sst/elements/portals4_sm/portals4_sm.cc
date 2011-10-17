@@ -131,8 +131,8 @@ static void generate(ConfigGraph* graph, string options) {
     int z_count = 8;
     int radix = 8;
     int size = x_count * y_count * z_count;
-    
-    
+
+
     Params rtr_params;
     rtr_params["clock"] = "500Mhz";
     rtr_params["debug"] = "no";
