@@ -37,16 +37,16 @@
     <number_of_L1Directories>0</number_of_L1Directories>
     <number_of_L2Directories>0</number_of_L2Directories>
     <core_clock_rate>2660000000</core_clock_rate>
-    <core_physical_address_width>52</core_physical_address_width>
+    <core_physical_address_width>38</core_physical_address_width>
     <core_virtual_address_width>64</core_virtual_address_width>
     <core_virtual_memory_page_size>4096</core_virtual_memory_page_size>
     <core_number_hardware_threads>1</core_number_hardware_threads>
     <archi_Regs_IRF_size>16</archi_Regs_IRF_size>
     <archi_Regs_FRF_size>32</archi_Regs_FRF_size>
-    <core_phy_Regs_IRF_size>256</core_phy_Regs_IRF_size>
-    <core_phy_Regs_FRF_size>256</core_phy_Regs_FRF_size>
+    <core_phy_Regs_IRF_size>128</core_phy_Regs_IRF_size>
+    <core_phy_Regs_FRF_size>128</core_phy_Regs_FRF_size>
     <core_issue_width>4</core_issue_width>
-    <core_peak_issue_width>6</core_peak_issue_width>
+    <core_peak_issue_width>4</core_peak_issue_width>
     <core_register_windows_size>8</core_register_windows_size> 
     <core_opcode_width>16</core_opcode_width>
     <core_micro_opcode_width>8</core_micro_opcode_width>	
@@ -54,23 +54,23 @@
     <core_instruction_length>32</core_instruction_length>
     <core_instruction_buffer_size>32</core_instruction_buffer_size> 
     <core_number_instruction_fetch_ports>1</core_number_instruction_fetch_ports>
-    <core_fp_issue_width>2</core_fp_issue_width>
+    <core_fp_issue_width>4</core_fp_issue_width>
     <core_fp_instruction_window_size>64</core_fp_instruction_window_size>  
-    <core_store_buffer_size>32</core_store_buffer_size> 
+    <core_store_buffer_size>20</core_store_buffer_size> 
     <core_memory_ports>2</core_memory_ports>	
     <core_fetch_width>4</core_fetch_width> 
     <core_decode_width>4</core_decode_width>
     <core_commit_width>4</core_commit_width> 
     <core_int_pipeline_depth>31</core_int_pipeline_depth>
     <core_RAS_size>16</core_RAS_size>
-    <core_load_buffer_size>48</core_load_buffer_size>
-    <cache_freq>1200000000</cache_freq>
-    <cache_il1_sC>16384,16384,16384,16384,16384,16384,16384,16384</cache_il1_sC>
+    <core_load_buffer_size>32</core_load_buffer_size>
+    <cache_freq>2660000000</cache_freq>
+    <cache_il1_sC>32768,32768,32768,32768,32768,32768,32768,32768</cache_il1_sC>
     <cache_il1_line_size>64,64,64,64,64,64,64,64</cache_il1_line_size>
     <cache_il1_associativity>8,8,8,8,8,8,8,8</cache_il1_associativity>
     <cache_il1_number_banks>1,1,1,1,1,1,1,1</cache_il1_number_banks>   
     <cache_il1_throughput>1,1,1,1,1,1,1,1</cache_il1_throughput>
-    <cache_il1_latency>2,2,2,2,2,2,2,2</cache_il1_latency>
+    <cache_il1_latency>4,4,4,4,4,4,4,4</cache_il1_latency>
     <cache_il1_output_width>8,8,8,8,8,8,8,8</cache_il1_output_width>
     <cache_il1_cache_policy>0,0,0,0,0,0,0,0</cache_il1_cache_policy>
     <cache_il1_miss_buffer_size>16,16,16,16,16,16,16,16</cache_il1_miss_buffer_size>
@@ -78,12 +78,12 @@
     <cache_il1_prefetch_buffer_size>16,16,16,16,16,16,16,16</cache_il1_prefetch_buffer_size>
     <cache_il1_wbb_buffer_size>0,0,0,0,0,0,0,0</cache_il1_wbb_buffer_size> 
     <cache_il1_floorplan_id>0,1,2,3,8,9,10,11</cache_il1_floorplan_id>    
-    <cache_dl1_sC>8192,8192,8192,8192,8192,8192,8192,8192</cache_dl1_sC>
+    <cache_dl1_sC>32768,32768,32768,32768,32768,32768,32768,32768</cache_dl1_sC>
     <cache_dl1_line_size>64,64,64,64,64,64,64,64</cache_dl1_line_size>
     <cache_dl1_associativity>8,8,8,8,8,8,8,8</cache_dl1_associativity>
     <cache_dl1_number_banks>1,1,1,1,1,1,1,1</cache_dl1_number_banks>
     <cache_dl1_throughput>1,1,1,1,1,1,1,1</cache_dl1_throughput>
-    <cache_dl1_latency>2,2,2,2,2,2,2,2</cache_dl1_latency>
+    <cache_dl1_latency>4,4,4,4,4,4,4,4</cache_dl1_latency>
     <cache_dl1_output_width>64,64,64,64,64,64,64,64</cache_dl1_output_width>
     <cache_dl1_cache_policy>1,1,1,1,1,1,1,1</cache_dl1_cache_policy>
     <cache_dl1_miss_buffer_size>16,16,16,16,16,16,16,16</cache_dl1_miss_buffer_size>
@@ -91,13 +91,13 @@
     <cache_dl1_prefetch_buffer_size>16,16,16,16,16,16,16,16</cache_dl1_prefetch_buffer_size>
     <cache_dl1_wbb_buffer_size>16,16,16,16,16,16,16,16</cache_dl1_wbb_buffer_size> 
     <cache_dl1_floorplan_id>0,1,2,3,8,9,10,11</cache_dl1_floorplan_id>
-    <cache_l2_clock_rate>1200000000</cache_l2_clock_rate>
-    <cache_l2_sC>786432,786432,786432,786432</cache_l2_sC>
+    <cache_l2_clock_rate>2660000000</cache_l2_clock_rate>
+    <cache_l2_sC>4194304,4194304,4194304,4194304</cache_l2_sC>
     <cache_l2_line_size>64,64,64,64</cache_l2_line_size>
     <cache_l2_number_banks>1,1,1,1</cache_l2_number_banks>
     <cache_l2_associativity>16,16,16,16</cache_l2_associativity>
     <cache_l2_throughput>4,4,4,4</cache_l2_throughput>
-    <cache_l2_latency>5,5,5,5</cache_l2_latency>
+    <cache_l2_latency>9,9,9,9</cache_l2_latency>
     <cache_l2_output_width>64,64,64,64</cache_l2_output_width>
     <cache_l2_cache_policy>1,1,1,1</cache_l2_cache_policy>
     <cache_l2_miss_buffer_size>16,16,16,16</cache_l2_miss_buffer_size>
@@ -107,7 +107,7 @@
     <cache_l2_device_type>0</cache_l2_device_type>
     <cache_l2_floorplan_id>4,5,12,13</cache_l2_floorplan_id>    
     <btb_sC>5120</btb_sC>
-    <btb_line_size>4</btb_line_size>
+    <btb_line_size>16</btb_line_size>
     <btb_number_banks>1</btb_number_banks>
     <btb_associativity>2</btb_associativity>
     <btb_throughput>1</btb_throughput>
