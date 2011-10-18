@@ -160,11 +160,31 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
             iter->second.second.portName.c_str(),
             iter->second.second.portNum);
 
-        if ( ! connectPorts( objMap[iter->second.first.compName],
-                        iter->second.first.portName,
+        std::string portName1 = iter->second.first.portName;
+        std::string portName2 = iter->second.second.portName;
+        SimObject* obj1 = objMap[iter->second.first.compName];
+        SimObject* obj2 = objMap[iter->second.second.compName];
+        if ( ( ! portName1.compare(0,4,"pic." ) ) )
+        {
+            //obj1 = obj1->getInterruptController();
+            portName1 = portName1.substr(4); 
+            DBGC( 2, "PIC portName=%s\n",portName1.c_str());
+            continue;
+        }
+
+        if ( ( ! portName2.compare(0,4,"pic." ) ) ) 
+        {
+            //obj2 = obj2->getInterruptController();
+            portName2 = portName2.substr(4); 
+            DBGC( 2, "PIC portName=%s\n",portName2.c_str());
+            continue;
+        }
+        
+        if ( ! connectPorts( obj1,
+                        portName1,
                         iter->second.first.portNum,
-                        objMap[iter->second.second.compName],
-                        iter->second.second.portName,
+                        obj2,
+                        portName2,
                         iter->second.second.portNum) ) 
         {
             printf("connectPorts failed\n");
