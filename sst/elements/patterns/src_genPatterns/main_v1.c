@@ -296,32 +296,32 @@ int ssd_write_bw;	/* In bytes per second */
     /* We assume the router bandwidth is the same as the link bandwidth */
     wormhole= TRUE;
     sst_router_param_start(fp_sst, RNAME_NETWORK, 6 + num_router_nodes(),
-	NetLinkBandwidth(), num_router_cores(), NetRouterLatency(), wormhole, power_method);
+	NetLinkBandwidth(), num_router_cores(), wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NETWORK);
 
     wormhole= FALSE;
     sst_router_param_start(fp_sst, RNAME_NoC, 6 + num_router_cores(), NoCLinkBandwidth(),
-	num_router_cores(), NoCRouterLatency(), wormhole, power_method);
+	num_router_cores(), wormhole, power_method);
     sst_router_param_end(fp_sst, RNAME_NoC);
 
     wormhole= TRUE;
     sst_router_param_start(fp_sst, RNAME_NET_ACCESS, -1, NetLinkBandwidth(),
-	num_router_cores(), NetRouterLatency(), wormhole, pwrNone);
+	num_router_cores(), wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NET_ACCESS);
 
     wormhole= FALSE;
     sst_router_param_start(fp_sst, RNAME_NVRAM, 1 + num_cores(), NoCLinkBandwidth(),
-	num_router_cores(), NoCRouterLatency(), wormhole, pwrNone);
+	num_router_cores(), wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_NVRAM);
 
     wormhole= TRUE;
     sst_router_param_start(fp_sst, RNAME_STORAGE, 1 + num_cores(), IOLinkBandwidth(),
-	num_router_cores(), NetRouterLatency(), wormhole, pwrNone);
+	num_router_cores(), wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_STORAGE);
 
     wormhole= FALSE;
     sst_router_param_start(fp_sst, RNAME_IO, 1 + num_nodes() / IO_nodes,
-	NetLinkBandwidth(), num_router_cores(), NetRouterLatency(), wormhole, pwrNone);
+	NetLinkBandwidth(), num_router_cores(), wormhole, pwrNone);
     sst_router_param_end(fp_sst, RNAME_IO);
 
     sst_body_start(fp_sst);

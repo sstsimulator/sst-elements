@@ -33,10 +33,16 @@ int NoCNICgap(void);
 
 int NetNICinflections(void);
 int NoCNICinflections(void);
+int NetRtrinflections(void);
+int NoCRtrinflections(void);
 int NetNICinflectionpoint(int index);
 int NoCNICinflectionpoint(int index);
+int NetRtrinflectionpoint(int index);
+int NoCRtrinflectionpoint(int index);
 int64_t NetNIClatency(int index);
 int64_t NoCNIClatency(int index);
+int64_t NetRtrlatency(int index);
+int64_t NoCRtrlatency(int index);
 
 int64_t NetLinkBandwidth(void);
 int64_t NoCLinkBandwidth(void);
@@ -46,9 +52,6 @@ int64_t IOLinkBandwidth(void);
 int64_t IOLinkLatency(void);
 int64_t NetIntraLatency(void);
 int64_t NoCIntraLatency(void);
-
-int NoCRouterLatency(void);
-int NetRouterLatency(void);
 
 void machine_params(FILE *out);
 

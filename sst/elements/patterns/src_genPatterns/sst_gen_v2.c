@@ -240,11 +240,12 @@ sst_nvram_param_entries(FILE *sstfile, int nvram_read_bw, int nvram_write_bw,
 
 
 void
-sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, uint64_t router_bw, int num_router_cores,
-    int hop_delay, int wormhole, pwr_method_t power_method)
+sst_router_param_start(FILE *sstfile, char *Rname, int num_ports, int num_router_cores,
+    int wormhole, pwr_method_t power_method)
 {
 
 int aggregator;
+int i;
 
 
     if (sstfile == NULL)   {
@@ -260,10 +261,24 @@ int aggregator;
     /* FIXME: This could be done more efficiently w/o a string compare */
     if (strcmp(Rname, RNAME_NETWORK) == 0)   {
 	aggregator= 0;
+	for (i= 0; i < NetRtrinflections(); i++)   {
+	    fprintf(sstfile, "\t\t<Rtrinflection%d> %d </Rtrinflection%d>\n",
+		i, NetRtrinflectionpoint(i), i);
+	    fprintf(sstfile, "\t\t<Rtrlatency%d> %" PRId64 " </Rtrlatency%d>\n",
+		i, NetRtrlatency(i), i);
+	}
     }
+
     if (strcmp(Rname, RNAME_NoC) == 0)   {
 	aggregator= 0;
+	for (i= 0; i < NoCRtrinflections(); i++)   {
+	    fprintf(sstfile, "\t\t<Rtrinflection%d> %d </Rtrinflection%d>\n",
+		i, NoCRtrinflectionpoint(i), i);
+	    fprintf(sstfile, "\t\t<Rtrlatency%d> %" PRId64 " </Rtrlatency%d>\n",
+		i, NoCRtrlatency(i), i);
+	}
     }
+
     if (strcmp(Rname, RNAME_NET_ACCESS) == 0)   {
 	aggregator= 1;
     }
@@ -280,8 +295,6 @@ int aggregator;
 
 
     if (!aggregator)   {
-	fprintf(sstfile, "\t\t<hop_delay> %d </hop_delay>\n", hop_delay);
-	fprintf(sstfile, "\t\t<bw> %" PRId64 " </bw>\n", router_bw);
 	fprintf(sstfile, "\t\t<wormhole> %d </wormhole>\n", wormhole);
     } else   {
 	fprintf(sstfile, "\t\t<aggregator> 1 </aggregator>\n");
