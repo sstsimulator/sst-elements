@@ -7,6 +7,7 @@
 #include <util.h>
 #include <python/swig/pyobject.hh>
 #include <factory.h>
+#include <cpu/base.hh>
 
 struct LinkInfo {
     std::string compName;
@@ -164,20 +165,23 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
         std::string portName2 = iter->second.second.portName;
         SimObject* obj1 = objMap[iter->second.first.compName];
         SimObject* obj2 = objMap[iter->second.second.compName];
+
+
+        // this is a hack to allow M5 full system mode to work
         if ( ( ! portName1.compare(0,4,"pic." ) ) )
         {
-            //obj1 = obj1->getInterruptController();
+            DBGC( 2, "PIC portName=%s cpuId=%d\n",portName1.c_str(),
+                            ((BaseCPU*)obj1)->cpuId());
+            //obj1 = ((BaseCPU*)obj1)->getInterruptController();
             portName1 = portName1.substr(4); 
-            DBGC( 2, "PIC portName=%s\n",portName1.c_str());
-            continue;
         }
 
         if ( ( ! portName2.compare(0,4,"pic." ) ) ) 
         {
-            //obj2 = obj2->getInterruptController();
+            DBGC( 2, "PIC portName=%s cpuId=%d\n",portName2.c_str(),
+                            ((BaseCPU*)obj2)->cpuId());
+            //obj2 = ((BaseCPU*)obj2)->getInterruptController();
             portName2 = portName2.substr(4); 
-            DBGC( 2, "PIC portName=%s\n",portName2.c_str());
-            continue;
         }
         
         if ( ! connectPorts( obj1,
