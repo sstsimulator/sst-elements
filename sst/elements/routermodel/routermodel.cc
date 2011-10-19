@@ -154,25 +154,20 @@ int out_port;
 	port[out_port].next_out= current_time + delay + link_time;
 
     } else   {
-	int64_t latency;
-	int64_t msg_duration;
-
 
 	// Calculate when this message can leave the router port
-	get_Rtrparams(Rtrparams, e->msg_len, &latency, &msg_duration);
+	delay= get_Rtrparams(Rtrparams, e->msg_len);
 	if (current_time > port[out_port].next_out)   {
 	    // Port is not busy
-
 	    // How long will this message occupy the outbound link?
-	    delay= latency + msg_duration;
 	    port[out_port].next_out= current_time + delay;
 	    port[in_port].next_in= current_time + delay;
 
 	} else   {
 	    // Port is busy
-	    delay= port[out_port].next_out - current_time + latency + msg_duration;
-	    port[out_port].next_out= current_time + delay + latency + msg_duration;
-	    port[in_port].next_in= current_time + delay + latency + msg_duration;
+	    delay= port[out_port].next_out - current_time + delay;
+	    port[out_port].next_out= current_time + delay;
+	    port[in_port].next_in= current_time + delay;
 
 	    congestion_out_cnt++;
 	    congestion_out += delay;
@@ -243,18 +238,16 @@ Routermodel::pushData(Cycle_t current)
 
 
 // Based on message length and the router parameter list, extract the
-// startup costs of a message of this length (latency) and the
-// duration msg_len bytes will occupy the output port
-// FIXME: Just add latency and msg_duration here, and return it
-void
-Routermodel::get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len,
-	int64_t *latency, int64_t *msg_duration)
+// delay this message will experience on the output port.
+int64_t
+Routermodel::get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len)
 {
 
 std::list<Rtrparams_t>::iterator k;
 std::list<Rtrparams_t>::iterator previous;
 double T, B;
 double byte_cost;
+int64_t latency;
 
 
     previous= params.begin();
@@ -265,14 +258,17 @@ double byte_cost;
 	    T= k->latency - previous->latency;
 	    B= k->inflectionpoint - previous->inflectionpoint;
 	    byte_cost= T / B;
+	    if (byte_cost < 0)   {
+		// FIXME: Not sure this is a good decision
+		byte_cost= 0;
+	    }
 	    // We want the values from the previous point
 	    if (previous->latency < 0)   {
-		*latency= 0;
+		latency= 0;
 	    } else   {
-		*latency= previous->latency;
+		latency= previous->latency;
 	    }
-	    *msg_duration= (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost);
-	    return;
+	    return (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost) + latency;
 	}
 	previous++;
     }
@@ -283,12 +279,16 @@ double byte_cost;
     T= params.back().latency - previous->latency;
     B= params.back().inflectionpoint - previous->inflectionpoint;
     byte_cost= T / B;
-    if (params.back().latency < 0)   {
-	*latency= 0;
-    } else   {
-	*latency= params.back().latency;
+    if (byte_cost < 0)   {
+	// FIXME: Not sure this is a good decision
+	byte_cost= 0;
     }
-    *msg_duration= (int64_t)((double)(msg_len - params.back().inflectionpoint) * byte_cost);
+    if (previous->latency < 0)   {
+	latency= 0;
+    } else   {
+	latency= previous->latency;
+    }
+    return (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost) + latency;
 
 }  // end of getRtrparams()
 

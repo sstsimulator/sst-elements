@@ -1361,6 +1361,9 @@ double byte_cost;
 	    T= k->latency - previous->latency;
 	    B= k->inflectionpoint - previous->inflectionpoint;
 	    byte_cost= T / B;
+	    if (byte_cost < 0)   {
+		byte_cost= 0;
+	    }
 	    // We want the values from the previous point
 	    *latency= previous->latency;
 	    *msg_duration= (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost);
@@ -1375,8 +1378,11 @@ double byte_cost;
     T= params.back().latency - previous->latency;
     B= params.back().inflectionpoint - previous->inflectionpoint;
     byte_cost= T / B;
-    *latency= params.back().latency;
-    *msg_duration= (int64_t)((double)(msg_len - params.back().inflectionpoint) * byte_cost);
+    if (byte_cost < 0)   {
+	byte_cost= 0;
+    }
+    *latency= previous->latency;
+    *msg_duration= (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost);
 
 }  // end of getNICparams()
 

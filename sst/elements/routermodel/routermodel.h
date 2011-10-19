@@ -381,8 +381,7 @@ class Routermodel : public IntrospectedComponent {
 
         Routermodel(); // For serialization only
         Routermodel(const Routermodel &c);
-	void get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len,
-		int64_t *latency, int64_t *msg_duration);
+	int64_t get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len);
 
         Params_t params;
 	void handle_port_events(Event *, int in_port);
