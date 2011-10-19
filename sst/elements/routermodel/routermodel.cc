@@ -88,12 +88,6 @@ int out_port;
 	return;
     }
 
-    port[in_port].cnt_in++;
-
-    // How long will this message occupy the input and output port?
-    // FIXME: The constant 1000000000 should be replaced with our time base
-    link_time= ((uint64_t)e->msg_len * 1000000000) / router_bw;
-
     if (port[in_port].next_in > current_time)   {
 	SimTime_t arrival_delay;
 
@@ -114,6 +108,9 @@ int out_port;
 	return;
     }
 
+    // We'll take it
+    port[in_port].cnt_in++;
+
 
     // Update total usage counts of all ports for power
     if (!e->local_traffic)   {
@@ -126,33 +123,65 @@ int out_port;
 
 
     // What is the current delay to send on this output port?
-    if (port[out_port].next_out <= current_time)   {
-	// No output port delays.  We can send as soon as the message arrives;
-	delay= 0;
+    if (!new_model)   {
+	if (port[out_port].next_out <= current_time)   {
+	    // No output port delays.  We can send as soon as the message arrives;
+	    delay= 0;
+
+	} else   {
+	    // Busy right now
+	    delay= port[out_port].next_out - current_time;
+	    congestion_out_cnt++;
+	    congestion_out += delay;
+	    e->congestion_cnt++;
+	    e->congestion_delay += delay;
+	}
+
+	// Add in the generic router delay
+	delay += hop_delay;
+
+	// For introspection (router_delay)
+	router_totaldelay= router_totaldelay + e->congestion_delay + delay;
+
+	// How long will this message occupy the input and output port?
+	// FIXME: The constant 1000000000 should be replaced with our time base
+	link_time= ((uint64_t)e->msg_len * 1000000000) / router_bw;
+
+	port[in_port].next_in= current_time + delay + link_time;
+
+	// Once this message is going out, the port will be busy for that
+	// much longer
+	port[out_port].next_out= current_time + delay + link_time;
 
     } else   {
-	// Busy right now
-	delay= port[out_port].next_out - current_time;
-	congestion_out_cnt++;
-	congestion_out += delay;
-	e->congestion_cnt++;
-	e->congestion_delay += delay;
+	int64_t latency;
+	int64_t msg_duration;
+
+
+	// Calculate when this message can leave the router port
+	get_Rtrparams(Rtrparams, e->msg_len, &latency, &msg_duration);
+	if (current_time > port[out_port].next_out)   {
+	    // Port is not busy
+
+	    // How long will this message occupy the outbound link?
+	    delay= latency + msg_duration;
+	    port[out_port].next_out= current_time + delay;
+	    port[in_port].next_in= current_time + delay;
+
+	} else   {
+	    // Port is busy
+	    delay= port[out_port].next_out - current_time + latency + msg_duration;
+	    port[out_port].next_out= current_time + delay + latency + msg_duration;
+	    port[in_port].next_in= current_time + delay + latency + msg_duration;
+
+	    congestion_out_cnt++;
+	    congestion_out += delay;
+	    e->congestion_cnt++;
+	    e->congestion_delay += delay;
+	}
     }
 
-    // Add in the generic router delay
-    delay += hop_delay;
-
-    // For introspection (router_delay)
-    router_totaldelay= router_totaldelay + e->congestion_delay + delay;
-
-    port[in_port].next_in= current_time + delay + link_time;
-
-    // Once this message is going out, the port will be busy for that
-    // much longer
-    port[out_port].next_out= current_time + delay + link_time;
-
     e->hops++;
-
     port[out_port].link->Send(delay, e);
 
 }  // end of handle_port_events()
@@ -210,6 +239,58 @@ Routermodel::pushData(Cycle_t current)
 
 } // end of pushData()
 #endif
+
+
+
+// Based on message length and the router parameter list, extract the
+// startup costs of a message of this length (latency) and the
+// duration msg_len bytes will occupy the output port
+// FIXME: Just add latency and msg_duration here, and return it
+void
+Routermodel::get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len,
+	int64_t *latency, int64_t *msg_duration)
+{
+
+std::list<Rtrparams_t>::iterator k;
+std::list<Rtrparams_t>::iterator previous;
+double T, B;
+double byte_cost;
+
+
+    previous= params.begin();
+    k= previous;
+    k++;
+    for (; k != params.end(); k++)   {
+	if (k->inflectionpoint > msg_len)   {
+	    T= k->latency - previous->latency;
+	    B= k->inflectionpoint - previous->inflectionpoint;
+	    byte_cost= T / B;
+	    // We want the values from the previous point
+	    if (previous->latency < 0)   {
+		*latency= 0;
+	    } else   {
+		*latency= previous->latency;
+	    }
+	    *msg_duration= (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost);
+	    return;
+	}
+	previous++;
+    }
+
+    // We're beyond the list. Use the last two values in the list and
+    // extrapolite.
+    previous--;
+    T= params.back().latency - previous->latency;
+    B= params.back().inflectionpoint - previous->inflectionpoint;
+    byte_cost= T / B;
+    if (params.back().latency < 0)   {
+	*latency= 0;
+    } else   {
+	*latency= params.back().latency;
+    }
+    *msg_duration= (int64_t)((double)(msg_len - params.back().inflectionpoint) * byte_cost);
+
+}  // end of getRtrparams()
 
 
 

@@ -13,6 +13,9 @@
 #ifndef _ROUTERMODEL_H
 #define _ROUTERMODEL_H
 
+#include <stdio.h>
+#define __STDC_FORMAT_MACROS		(1)
+#include <inttypes.h>			// For PRId64
 #include "sst/core/serialization/element.h"
 #include <sst/core/element.h>
 #include <sst/core/event.h>
@@ -43,6 +46,25 @@ using namespace SST;
 #ifdef WITH_POWER
 bool Power::p_hasUpdatedTemp __attribute__((weak));
 #endif
+
+
+
+// Storage for Router parameters
+typedef struct   {
+    int index;
+    int64_t inflectionpoint;
+    int64_t latency;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+	ar & BOOST_SERIALIZATION_NVP(index);
+	ar & BOOST_SERIALIZATION_NVP(inflectionpoint);
+	ar & BOOST_SERIALIZATION_NVP(latency);
+    }
+} Rtrparams_t;
+
 
 
 class Routermodel : public IntrospectedComponent {
@@ -138,6 +160,63 @@ class Routermodel : public IntrospectedComponent {
 #endif
     		}
 
+		if (it->first.find("Rtrinflection") != std::string::npos)   {
+		    int index;
+		    bool found;
+		    std::list<Rtrparams_t>::iterator k;
+
+		    if (sscanf(it->first.c_str(), "Rtrinflection%d", &index) != 1)   {
+			it++;
+			continue;
+		    }
+		    // Is that index in the list already?
+		    found= false;
+		    for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
+			if (k->index == index)   {
+			    // Yes? Update the entry
+			    k->inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
+			    found= true;
+			}
+		    }
+		    if (!found)   {
+			// No? Create a new entry
+			Rtrparams_t another;
+			another.inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
+			another.index= index;
+			another.latency= -1;
+			Rtrparams.push_back(another);
+		    }
+		}
+
+		if (it->first.find("Rtrlatency") != std::string::npos)   {
+		    int index;
+		    bool found;
+		    std::list<Rtrparams_t>::iterator k;
+
+		    if (sscanf(it->first.c_str(), "Rtrlatency%d", &index) != 1)   {
+			it++;
+			continue;
+		    }
+		    // Is that index in the list already?
+		    found= false;
+		    for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
+			if (k->index == index)   {
+			    // Yes? Update the entry
+			    k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
+			    found= true;
+			}
+		    }
+		    if (!found)   {
+			// No? Create a new entry
+			Rtrparams_t another;
+			another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
+			another.index= index;
+			another.inflectionpoint= -1;
+			Rtrparams.push_back(another);
+		    }
+		}
+
+
                 ++it;
             }
 
@@ -162,6 +241,29 @@ class Routermodel : public IntrospectedComponent {
 		}
 	    }
 #endif
+
+
+	    if (Rtrparams.size() < 2)   {
+		new_model= false;
+
+	    } else   {
+		std::list<Rtrparams_t>::iterator k;
+
+
+		_ROUTER_MODEL_DBG(1, "%s: Found %d inflection points. Using new router model.\n",
+		    component_name.c_str(), (int)Rtrparams.size());
+		new_model= true;
+		hop_delay= 0;		// We'll read this out of the router params
+
+		// Check it
+		for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
+		    if ((k->inflectionpoint < 0) || (k->latency < 0))   {
+			fprintf(stderr, "Invalid inflection point: index %d, len %" PRId64 "d, lat %" PRId64 "d\n",
+			    k->index, k->inflectionpoint, k->latency);
+			_abort(Routermodel, "Fix xml file!\n");
+		    }
+		}
+	    }
 
 
 	    /* Attach the handler to each port */
@@ -279,6 +381,9 @@ class Routermodel : public IntrospectedComponent {
 
         Routermodel(); // For serialization only
         Routermodel(const Routermodel &c);
+	void get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len,
+		int64_t *latency, int64_t *msg_duration);
+
         Params_t params;
 	void handle_port_events(Event *, int in_port);
 	void handle_self_events(Event *);
@@ -335,6 +440,8 @@ class Routermodel : public IntrospectedComponent {
 	int router_model_debug;
 	uint64_t router_bw;
 	bool aggregator;
+	std::list<Rtrparams_t> Rtrparams;
+	bool new_model;
 	SimTime_t congestion_out;
 	long long int congestion_out_cnt;
 	SimTime_t congestion_in;
@@ -370,6 +477,8 @@ class Routermodel : public IntrospectedComponent {
 	    ar & BOOST_SERIALIZATION_NVP(router_model_debug);
 	    ar & BOOST_SERIALIZATION_NVP(router_bw);
 	    ar & BOOST_SERIALIZATION_NVP(aggregator);
+	    ar & BOOST_SERIALIZATION_NVP(Rtrparams);
+	    ar & BOOST_SERIALIZATION_NVP(new_model);
 	    ar & BOOST_SERIALIZATION_NVP(congestion_out);
 	    ar & BOOST_SERIALIZATION_NVP(congestion_out_cnt);
 	    ar & BOOST_SERIALIZATION_NVP(congestion_in);
