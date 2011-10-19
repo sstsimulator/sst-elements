@@ -36,7 +36,7 @@ SimObject* create_DRAMSimWrap( SST::Component* comp, string name,
     INIT_STR( params, sstParams, systemIniFilename );
 
     params.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
-    params.exeParams = sstParams.find_prefix_params("exe.");
+    params.exeParams = sstParams.find_prefix_params("exe");
 
     return new DRAMSimWrap( &params );
 }
