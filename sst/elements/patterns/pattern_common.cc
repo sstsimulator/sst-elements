@@ -45,7 +45,7 @@ static bool compare_NICparams(NICparams_t first, NICparams_t second);
 */
 int
 Patterns::init(SST::Component::Params_t& params, Link *net_link, Link *self_link,
-	SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link)
+	SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link, int verbose)
 {
 
 std::list<NICparams_t>::iterator k;
@@ -206,14 +206,6 @@ uint64_t code;
 
 	if (!it->first.compare("NoCLinkLatency"))   {
 	    sscanf(it->second.c_str(), "%" PRId64, &NoCLinkLatency);
-	}
-
-	if (!it->first.compare("NetIntraLatency"))   {
-	    sscanf(it->second.c_str(), "%" PRId64, &NetIntraLatency);
-	}
-
-	if (!it->first.compare("NoCIntraLatency"))   {
-	    sscanf(it->second.c_str(), "%" PRId64, &NoCIntraLatency);
 	}
 
 	if (!it->first.compare("IOLinkBandwidth"))   {
@@ -435,18 +427,22 @@ uint64_t code;
 	return FALSE;
     }
 
-    if (my_rank == 0)   {
-	printf("#  |||  Network NIC inflection points (sorted by inflection point)\n");
-	printf("#  |||      index inflection    latency\n");
-	for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
-	    printf("#  |||      %3d %12" PRId64 " %12" PRId64 "\n", k->index, k->inflectionpoint, k->latency);
+    if (verbose)   {
+	if (my_rank == 0)   {
+	    printf("#  |||  Network NIC inflection points (sorted by inflection point)\n");
+	    printf("#  |||      index inflection    latency\n");
+	    for (k= NetNICparams.begin(); k != NetNICparams.end(); k++)   {
+		printf("#  |||      %3d %12" PRId64 " %12" PRId64 "\n", k->index,
+		    k->inflectionpoint, k->latency);
+	    }
 	}
-    }
-    if (my_rank == 0)   {
-	printf("#  |||  NoC NIC inflection points (sorted by inflection point)\n");
-	printf("#  |||      index inflection    latency\n");
-	for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
-	    printf("#  |||      %3d %12" PRId64 " %12" PRId64 "\n", k->index, k->inflectionpoint, k->latency);
+	if (my_rank == 0)   {
+	    printf("#  |||  NoC NIC inflection points (sorted by inflection point)\n");
+	    printf("#  |||      index inflection    latency\n");
+	    for (k= NoCNICparams.begin(); k != NoCNICparams.end(); k++)   {
+		printf("#  |||      %3d %12" PRId64 " %12" PRId64 "\n", k->index,
+		    k->inflectionpoint, k->latency);
+	    }
 	}
     }
 
@@ -859,7 +855,7 @@ int64_t link_duration;
 
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
-	delay= latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
+	delay= latency + msg_duration - link_duration - NoCLinkLatency;
 	if (delay < 0)   {
 	    delay= 0;
 	}
@@ -872,7 +868,7 @@ int64_t link_duration;
     } else   {
 	// NIC is busy
 	delay= NextNoCNICslot - CurrentSimTime + NoCNICgap +
-	    latency + msg_duration - link_duration - NoCLinkLatency - NoCIntraLatency;
+	    latency + msg_duration - link_duration - NoCLinkLatency;
 	if (delay < 0)   {
 	    delay= 0;
 	}
@@ -943,7 +939,7 @@ int64_t link_duration;
 
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
-	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	delay= latency + msg_duration - link_duration - NetLinkLatency;
 	if (delay < 0)   {
 	    delay= 0;
 	}
@@ -956,7 +952,7 @@ int64_t link_duration;
     } else   {
 	// NIC is busy
 	delay= NextNetNICslot - CurrentSimTime + NetNICgap +
-	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	    latency + msg_duration - link_duration - NetLinkLatency;
 	if (delay < 0)   {
 	    delay= 0;
 	}
@@ -1021,7 +1017,7 @@ FarLink_t fl;
 
 	// We move a portion of the delay to the link, so SST can use it for
 	// scheduling and partitioning.
-	delay= latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	delay= latency + msg_duration - link_duration - NetLinkLatency;
 	if (delay < 0)   {
 	    delay= 0;
 	}
@@ -1034,7 +1030,7 @@ FarLink_t fl;
     } else   {
 	// NIC is busy
 	delay= NextFarNICslot - CurrentSimTime + NetNICgap +
-	    latency + msg_duration - link_duration - NetLinkLatency - NetIntraLatency;
+	    latency + msg_duration - link_duration - NetLinkLatency;
 	if (delay < 0)   {
 	    delay= 0;
 	}

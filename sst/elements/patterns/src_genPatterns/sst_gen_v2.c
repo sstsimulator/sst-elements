@@ -143,8 +143,6 @@ int i;
     fprintf(sstfile, "\t\t<NetLinkLatency> %" PRId64 " </NetLinkLatency>\n", NetLinkLatency());
     fprintf(sstfile, "\t\t<NoCLinkBandwidth> %" PRId64 " </NoCLinkBandwidth>\n", NoCLinkBandwidth());
     fprintf(sstfile, "\t\t<NoCLinkLatency> %" PRId64 " </NoCLinkLatency>\n", NoCLinkLatency());
-    fprintf(sstfile, "\t\t<NetIntraLatency> %" PRId64 " </NetIntraLatency>\n", NetIntraLatency());
-    fprintf(sstfile, "\t\t<NoCIntraLatency> %" PRId64 " </NoCIntraLatency>\n", NoCIntraLatency());
     fprintf(sstfile, "\t\t<IOLinkBandwidth> %" PRId64 " </IOLinkBandwidth>\n", IOLinkBandwidth());
     fprintf(sstfile, "\t\t<IOLinkLatency> %" PRId64 " </IOLinkLatency>\n", IOLinkLatency());
 
@@ -814,10 +812,11 @@ int mpi_rank;
 		snprintf(net_link_id, MAX_ID_LEN, "L%d", l);
 		switch (ltype)   {
 		    case Lnet:
-			sst_router_component_link(net_link_id, NetIntraLatency(), net_link_id, sstfile);
+			/* FIXME: The 0's below are temporary. */
+			sst_router_component_link(net_link_id, 0, net_link_id, sstfile);
 			break;
 		    case LNoC:
-			sst_router_component_link(net_link_id, NoCIntraLatency(), net_link_id, sstfile);
+			sst_router_component_link(net_link_id, 0, net_link_id, sstfile);
 			break;
 		    case LIO:
 			sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
@@ -826,13 +825,13 @@ int mpi_rank;
 			sst_router_component_link(net_link_id, IOLinkLatency(), net_link_id, sstfile);
 			break;
 		    case LnetAccess:
-			sst_router_component_link(net_link_id, NetIntraLatency() / 2, net_link_id, sstfile);
+			sst_router_component_link(net_link_id, 0, net_link_id, sstfile);
 			break;
 		    case LnetNIC:
-			sst_router_component_link(net_link_id, NetLinkLatency() / 2, net_link_id, sstfile);
+			sst_router_component_link(net_link_id, 0, net_link_id, sstfile);
 			break;
 		    case LNoCNIC:
-			sst_router_component_link(net_link_id, NoCLinkLatency() / 2, net_link_id, sstfile);
+			sst_router_component_link(net_link_id, 0, net_link_id, sstfile);
 			break;
 		}
 	    } else   {

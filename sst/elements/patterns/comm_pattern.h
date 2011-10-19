@@ -146,7 +146,7 @@ class Comm_pattern : public Component {
 
 	    // Initialize the common functions we need
 	    common= new Patterns();
-	    if (!common->init(params, net, self_link, NoC, nvram, storage))   {
+	    if (!common->init(params, net, self_link, NoC, nvram, storage, comm_pattern_debug))   {
 		_ABORT(Comm_pattern, "Patterns->init() failed!\n");
 	    }
 

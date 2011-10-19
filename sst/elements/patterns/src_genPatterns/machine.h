@@ -50,8 +50,6 @@ int64_t NetLinkLatency(void);
 int64_t NoCLinkLatency(void);
 int64_t IOLinkBandwidth(void);
 int64_t IOLinkLatency(void);
-int64_t NetIntraLatency(void);
-int64_t NoCIntraLatency(void);
 
 void machine_params(FILE *out);
 

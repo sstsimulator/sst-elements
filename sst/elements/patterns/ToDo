@@ -1,9 +1,11 @@
+
 - Move as much latency onto the links as possible
 
 - Seperate out NIC model
     + Send side is in pattern_common.cc
     + Receive side is in comm_pattern.cc
     + Should there be a queue in front of the receive side?
+    + Make a NIC only read and store the NoC or Net params, depending on its function
 
 - NoCIntraLatency cannot be less than NoCNICparams 0. Why? Same is true for NetIntraLatency
 

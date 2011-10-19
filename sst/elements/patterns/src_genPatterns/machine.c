@@ -45,8 +45,6 @@ static int64_t _NetLinkLatency;
 static int64_t _NoCLinkLatency;
 static int64_t _IOLinkBandwidth;
 static int64_t _IOLinkLatency;
-static int64_t _NetIntraLatency;
-static int64_t _NoCIntraLatency;
 
 typedef struct NICparams_t   {
     int inflectionpoint;
@@ -94,12 +92,10 @@ int i;
     _NoCRtrinflections= 0;
     _NetLinkBandwidth= NO_DEFAULT;
     _NoCLinkBandwidth= NO_DEFAULT;
-    _NetLinkLatency= 999999999;
-    _NoCLinkLatency= 999999999;
+    _NetLinkLatency= 0;
+    _NoCLinkLatency= 0;
     _IOLinkBandwidth= NO_DEFAULT;
     _IOLinkLatency= NO_DEFAULT;
-    _NetIntraLatency= NO_DEFAULT;
-    _NoCIntraLatency= NO_DEFAULT;
 
     if (_NetNICparams != NULL)   {
 	free(_NetNICparams);
@@ -258,15 +254,6 @@ error_check(void)
 	return FALSE;
     }
 
-    if (_NetIntraLatency < 0)   {
-	fprintf(stderr, "Need to set NetIntraLatency in machine file!\n");
-	return FALSE;
-    }
-    if (_NoCIntraLatency < 0)   {
-	fprintf(stderr, "Need to set NoCIntraLatency in machine file!\n");
-	return FALSE;
-    }
-
 
 
     if (!check_inflections(_NetNICparams, _NetNICinflections, "NetCNIC"))   {
@@ -372,13 +359,11 @@ int i;
     printf("# *** NoC router has %d inflection points\n", NoCRtrinflections());
 
     printf("# *** Net link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
-	_NetLinkBandwidth, _NetLinkLatency + _NetIntraLatency);
+	_NetLinkBandwidth, _NetLinkLatency);
     printf("# *** NoC link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
-	_NoCLinkBandwidth, _NoCLinkLatency + _NoCIntraLatency);
+	_NoCLinkBandwidth, _NoCLinkLatency);
     printf("# *** I/O link: Bandwidth %" PRId64 " B/s, latency %" PRId64 " ns\n",
 	_IOLinkBandwidth, _IOLinkLatency);
-    printf("# *** Link latency between routers: Network %" PRId64 " ns, NoC %" PRId64 " ns\n",
-	_NetIntraLatency, _NoCIntraLatency);
 
     printf("# *** Print NIC statistics for ranks: ");
     for (i= 0; i < _NICstat_num; i++)   {
@@ -480,10 +465,6 @@ int rc;
 	} else if (strcmp("IOLinkLatency", key) == 0)   {
 	    _IOLinkLatency= strtoll(value1, (char **)NULL, 0);
 
-	} else if (strcmp("NetIntraLatency", key) == 0)   {
-	    _NetIntraLatency= strtoll(value1, (char **)NULL, 0);
-	} else if (strcmp("NoCIntraLatency", key) == 0)   {
-	    _NoCIntraLatency= strtoll(value1, (char **)NULL, 0);
 
 	/* Net NIC parameters */
 	} else if (strstr(key, "NetNICparams") == key)   {
@@ -494,20 +475,6 @@ int rc;
 	    }
 	    _NetNICparams[_NetNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
 	    _NetNICparams[_NetNICinflections].latency= strtoll(value2, (char **)NULL, 0);
-	    if (_NetIntraLatency == NO_DEFAULT)   {
-		fprintf(stderr, "Please specify NetIntraLatency before any NetNICparams in the machine file\n");
-		error= TRUE;
-		break;
-	    }
-	    if ((_NetNICparams[_NetNICinflections].latency - _NetIntraLatency) < _NetLinkLatency)   {
-		/* Set Net link latency to smallest NIC lateny we know of */
-		/* We do this to move some latency onto the SST links */
-		/* The NIC model will subtract it, but SST will add it back in for link transfers */
-		_NetLinkLatency= _NetNICparams[_NetNICinflections].latency - _NetIntraLatency;
-		if (_NetLinkLatency < 0)   {
-		    _NetLinkLatency= 0;
-		}
-	    }
 	    _NetNICinflections++;
 	} else if (strstr(key, "NoCNICparams") == key)   {
 	    if (_NoCNICinflections >= MAX_INFLECTIONS)   {
@@ -517,20 +484,6 @@ int rc;
 	    }
 	    _NoCNICparams[_NoCNICinflections].inflectionpoint= strtol(value1, (char **)NULL, 0);
 	    _NoCNICparams[_NoCNICinflections].latency= strtoll(value2, (char **)NULL, 0);
-	    if (_NoCIntraLatency == NO_DEFAULT)   {
-		fprintf(stderr, "Please specify NoCIntraLatency before any NoCNICparams in the machine file\n");
-		error= TRUE;
-		break;
-	    }
-	    if ((_NoCNICparams[_NoCNICinflections].latency - _NoCIntraLatency) < _NoCLinkLatency)   {
-		/* Set NoC link latency to smallest NIC lateny we know of */
-		/* We do this to move some latency onto the SST links */
-		/* The NIC model will subtract it, but SST will add it back in for link transfers */
-		_NoCLinkLatency= _NoCNICparams[_NoCNICinflections].latency - _NoCIntraLatency;
-		if (_NoCLinkLatency < 0)   {
-		    _NoCLinkLatency= 0;
-		}
-	    }
 	    _NoCNICinflections++;
 	} else if (strstr(key, "NetRtrparams") == key)   {
 	    if (_NetRtrinflections >= MAX_INFLECTIONS)   {
@@ -619,8 +572,6 @@ int64_t NetLinkLatency(void) {return _NetLinkLatency;}
 int64_t NoCLinkLatency(void) {return _NoCLinkLatency;}
 int64_t IOLinkBandwidth(void) {return _IOLinkBandwidth;}
 int64_t IOLinkLatency(void) {return _IOLinkLatency;}
-int64_t NetIntraLatency(void) {return _NetIntraLatency;}
-int64_t NoCIntraLatency(void) {return _NoCIntraLatency;}
 
 
 

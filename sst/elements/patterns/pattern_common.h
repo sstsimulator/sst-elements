@@ -112,7 +112,8 @@ class Patterns   {
 
 	int init(SST::Component::Params_t& params, 
 		SST::Link *net_link, SST::Link *self_link,
-		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link);
+		SST::Link *NoC_link, SST::Link *nvram_link, SST::Link *storage_link,
+		int verbose);
 
 	void self_event_send(int event, int32_t tag= 0, SST::SimTime_t delay= 0);
 	void event_send(int dest, int event, SST::SimTime_t CurrentSimTime, int32_t tag= 0,
@@ -193,8 +194,6 @@ class Patterns   {
 	int64_t NoCLinkLatency;
 	int64_t IOLinkBandwidth;
 	int64_t IOLinkLatency;
-	int64_t NoCIntraLatency;
-	int64_t NetIntraLatency;
 
 	// Each message event gets a unique number for debugging
 	uint64_t msg_seq;
@@ -273,8 +272,6 @@ class Patterns   {
 	    ar & BOOST_SERIALIZATION_NVP(NoCLinkLatency);
 	    ar & BOOST_SERIALIZATION_NVP(IOLinkBandwidth);
 	    ar & BOOST_SERIALIZATION_NVP(IOLinkLatency);
-	    ar & BOOST_SERIALIZATION_NVP(NoCIntraLatency);
-	    ar & BOOST_SERIALIZATION_NVP(NetIntraLatency);
 	    ar & BOOST_SERIALIZATION_NVP(msg_seq);
 	    ar & BOOST_SERIALIZATION_NVP(NextNoCNICslot);
 	    ar & BOOST_SERIALIZATION_NVP(NextNetNICslot);
