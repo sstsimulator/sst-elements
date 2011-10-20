@@ -104,11 +104,11 @@ class Routermodel : public IntrospectedComponent {
 		}
 
 		else if (!it->first.compare("hop_delay"))   {
-		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&hop_delay);
+		    sscanf(it->second.c_str(), "%" PRIu64, (uint64_t *)&hop_delay);
 		}
 
 		else if (!it->first.compare("bw"))   {
-		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&router_bw);
+		    sscanf(it->second.c_str(), "%" PRIu64, (uint64_t *)&router_bw);
 		}
 
 		else if (!it->first.compare("aggregator"))   {

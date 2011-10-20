@@ -42,7 +42,7 @@ int out_port;
     current_time= getCurrentSimTime();
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
 
-    _ROUTER_MODEL_DBG(3, "%s in port %d, time %lu, src %lu, seq %lu\n",
+    _ROUTER_MODEL_DBG(3, "%s in port %d, time %" PRIu64 ", src %" PRId64 ", seq %" PRId64 "\n",
 	component_name.c_str(), in_port, (uint64_t)current_time,
 	e->msg_id & ((1 << RANK_FIELD) - 1), e->msg_id >> RANK_FIELD);
 
