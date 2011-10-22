@@ -13,8 +13,7 @@
 #ifndef _FFT_PATTERN_H
 #define _FFT_PATTERN_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "collective_topology.h" 
@@ -136,9 +135,9 @@ class FFT_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
         FFT_pattern();  // For serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
         FFT_pattern(const FFT_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)

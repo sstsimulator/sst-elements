@@ -14,9 +14,7 @@
 #define _ALLREDUCE_PATTERN_H
 
 #include <boost/serialization/list.hpp>
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include "state_machine.h"
+#include "patterns.h"
 #include "comm_pattern.h"
 #include "collective_topology.h" 
 #include "barrier_op.h" 
@@ -134,9 +132,9 @@ class Allreduce_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
         Allreduce_pattern();  // For serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
         Allreduce_pattern(const Allreduce_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)

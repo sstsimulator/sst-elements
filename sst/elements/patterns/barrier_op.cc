@@ -16,9 +16,7 @@ is a root, interior nodes, and leaves.
 There are no configuration parameters for this module.
 
 */
-#include <sst_config.h>
 #include <boost/serialization/list.hpp>
-#include <sst/core/serialization/element.h>
 #include "barrier_op.h"
 
 
@@ -150,6 +148,6 @@ state_event barrier_event;
 
 }  // end of state_WAIT_PARENT()
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Barrier_op)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

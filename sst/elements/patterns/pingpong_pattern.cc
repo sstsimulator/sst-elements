@@ -23,11 +23,9 @@ The barrier at the end is there only for testing of the barrier
 iteself and the gate keeper mechanism in comm_pattern.cc
 
 */
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "pingpong_pattern.h"
 #include <sst/core/element.h>
 #include <sst/core/component.h>
-#include "pingpong_pattern.h"
 
 
 
@@ -84,7 +82,7 @@ state_event pp_event;
 		printf("#  |||  Ping pong between ranks 0 and %d\n", dest);
 		printf("#  |||  Number of messages per each size: %d\n", num_msgs);
 		printf("# [%3d] PING I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
-			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
+			my_rank, machine->myNetX(), machine->myNetY(), machine->myNoCX(), machine->myNoCY());
 		start_time= getCurrentSimTime();
 
 		// If I'm rank 0 send, otherwise wait
@@ -98,7 +96,7 @@ state_event pp_event;
 
 	    } else   {
 		printf("# [%3d] PONG I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
-			my_rank, myNetX(), myNetY(), myNoCX(), myNoCY());
+			my_rank, machine->myNetX(), machine->myNetY(), machine->myNoCX(), machine->myNoCY());
 		state= PP_RECEIVING;
 	    }
 	    break;
@@ -305,6 +303,6 @@ double check= 0.0;
 
 eli(Pingpong_pattern, pingpong_pattern, "Ping-pong pattern")
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Pingpong_pattern)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

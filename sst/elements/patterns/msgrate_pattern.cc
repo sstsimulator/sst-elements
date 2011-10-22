@@ -34,10 +34,8 @@
     In the second test, rank 0 sends messages round-robin to ranks
     1...n-1.
 */
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include <sst/core/element.h>
 #include "msgrate_pattern.h"
+#include <sst/core/element.h>
 
 
 
@@ -510,6 +508,6 @@ state_event enter_allreduce, exit_allreduce;
 
 eli(Msgrate_pattern, msgrate_pattern, "Message rate pattern")
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Msgrate_pattern)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

@@ -12,10 +12,8 @@
 
 /*
 */
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include <sst/core/element.h>
 #include "allreduce_pattern.h"
+#include <sst/core/element.h>
 #include "stats.h"
 
 
@@ -262,6 +260,6 @@ allreduce_events_t e= (allreduce_events_t)sm_event.event;
 
 eli(Allreduce_pattern, allreduce_pattern, "Allreduce pattern")
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Allreduce_pattern)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

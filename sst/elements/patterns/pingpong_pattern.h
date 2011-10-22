@@ -10,8 +10,7 @@
 #ifndef _PINGPONG_PATTERN_H
 #define _PINGPONG_PATTERN_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "barrier_op.h"
@@ -31,7 +30,7 @@ class Pingpong_pattern : public Comm_pattern {
 	    // The default for "dest" is to place it as far away
 	    // as possible in the (logical) torus created by the
 	    // Comm_pattern object
-	    dest= NetWidth() * NetHeight() * NoCWidth() * NoCHeight() * NumCores() / 2;
+	    dest= machine->get_total_cores() / 2;
 
 	    // Set some more defaults
 	    num_msgs= 10;
@@ -110,9 +109,9 @@ class Pingpong_pattern : public Comm_pattern {
 
 
     private:
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 	Pingpong_pattern();  // For serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
 	Pingpong_pattern(const Pingpong_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)

@@ -12,7 +12,6 @@
 
 
 */
-#include <sst_config.h>
 #include <stdio.h>
 #include "state_machine.h"
 
@@ -178,6 +177,6 @@ int lastSM;
 
 
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(State_machine)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

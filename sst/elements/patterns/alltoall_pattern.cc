@@ -12,10 +12,8 @@
 
 /*
 */
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include <sst/core/element.h>
 #include "alltoall_pattern.h"
+#include <sst/core/element.h>
 #include "stats.h"
 
 
@@ -257,6 +255,6 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 
 eli(Alltoall_pattern, alltoall_pattern, "Alltoall pattern")
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Alltoall_pattern)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

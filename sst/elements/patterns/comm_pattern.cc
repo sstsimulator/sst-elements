@@ -9,12 +9,10 @@
 
 #define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		// For PRIx64
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "comm_pattern.h"
 #include <sst/core/element.h>
 #include <assert.h>
 #include "state_machine.h"
-#include "comm_pattern.h"
 
 
 //
@@ -55,95 +53,6 @@ Comm_pattern::send_msg(int dest, int len, state_event sm_event, int blocking)
 
 
 
-// This is the width of the main network and doesn't take nodes into account!
-int
-Comm_pattern::myNetX(void)
-{
-
-int width_in_cores;
-
-
-    width_in_cores= common->get_mesh_width() *
-		    common->get_NoC_width() *
-		    common->get_cores_per_NoC_router() *
-		    common->get_num_router_nodes();
-
-    return (my_rank % width_in_cores) / common->get_cores_per_Net_router();
-
-}  // end of myNetX()
-
-
-
-// This is the height of the main network and doesn't take nodes into account!
-int
-Comm_pattern::myNetY(void)
-{
-    return my_rank / (common->get_mesh_width() * common->get_cores_per_Net_router());
-}  // end of myNetY()
-
-
-
-int
-Comm_pattern::myNoCX(void)
-{
-    return (my_rank % common->get_cores_per_Net_router()) % common->get_NoC_width();
-}  // end of myNoCX()
-
-
-
-int
-Comm_pattern::myNoCY(void)
-{
-
-    return (my_rank % common->get_cores_per_NoC_router()) /
-	(common->get_NoC_width() * common->get_cores_per_NoC_router());
-
-}  // end of myNoCY()
-
-
-
-int
-Comm_pattern::NetWidth(void)
-{
-    return common->get_mesh_width();
-}  // end of NetWidth()
-
-
-
-int
-Comm_pattern::NetHeight(void)
-{
-    return common->get_mesh_height();
-}  // end of NetHeight()
-
-
-
-int
-Comm_pattern::NoCWidth(void)
-{
-    return common->get_NoC_width();
-}  // end of NoCWidth()
-
-
-
-int
-Comm_pattern::NoCHeight(void)
-{
-    return common->get_NoC_height();
-}  // end of NoCHeight()
-
-
-
-// Cores per NoC router
-int
-Comm_pattern::NumCores(void)
-{
-    return common->get_cores_per_NoC_router();
-}  // end of NumCores()
-
-
-
-//
 void
 Comm_pattern::self_event_send(int event_type, SimTime_t duration)
 {
@@ -204,20 +113,20 @@ Comm_pattern::next_power2(uint32_t v)
 
 
 
-int
+bool
 Comm_pattern::is_pow2(int num)
 {
     if (num < 1)   {
-	return FALSE;
+	return false;
     }
 
     if ((num & (num - 1)) == 0)   {
-	return TRUE;
+	return true;
     }
 
-    return FALSE;
+    return false;
 
-}  /* end of is_pow2() */
+}  // end of is_pow2()
 
 
 
@@ -247,38 +156,6 @@ int payload_len;
     delete(sst_event);
 
 }  /* end of handle_sst_events() */
-
-
-
-// Messages from the global network
-void
-Comm_pattern::handle_net_events(Event *sst_event)
-{
-
-CPUNicEvent *e;
-
-    e= (CPUNicEvent *)sst_event;
-    common->record_Net_msg_stat(e->hops, e->congestion_cnt,
-	e->congestion_delay, e->msg_len);
-    handle_sst_events((CPUNicEvent *)(sst_event), "NETWORK");
-
-}  /* end of handle_net_events() */
-
-
-
-// Messages from the local chip network
-void
-Comm_pattern::handle_NoC_events(Event *sst_event)
-{
-
-CPUNicEvent *e;
-
-    e= (CPUNicEvent *)sst_event;
-    common->record_NoC_msg_stat(e->hops, e->congestion_cnt,
-	e->congestion_delay, e->msg_len);
-    handle_sst_events((CPUNicEvent *)(sst_event), "NoC");
-
-}  /* end of handle_NoC_events() */
 
 
 
@@ -318,6 +195,6 @@ Comm_pattern::handle_storage_events(Event *sst_event)
 
 eli(Comm_pattern, comm_pattern, "Communication pattern base object")
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Comm_pattern)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

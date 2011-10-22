@@ -10,8 +10,7 @@
 #ifndef _SCATTER_OP_H
 #define _SCATTER_OP_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "collective_topology.h"

@@ -13,8 +13,7 @@
 #ifndef _MSGRATE_PATTERN_H
 #define _MSGRATE_PATTERN_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 #include "state_machine.h"
 #include "comm_pattern.h"
 #include "collective_topology.h"
@@ -94,9 +93,9 @@ class Msgrate_pattern : public Comm_pattern    {
 
     private:
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
         Msgrate_pattern();  // Fro serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
         Msgrate_pattern(const Msgrate_pattern &c);
 	void handle_events(state_event sst_event);
 	static void wrapper_handle_events(void *obj, state_event sst_event)

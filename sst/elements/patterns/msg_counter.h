@@ -12,10 +12,9 @@
 
 #include <stdio.h>
 #include <stdint.h>	// For uint64_t
-#include <sst_config.h>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/list.hpp>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 
 
 class Msg_counter   {

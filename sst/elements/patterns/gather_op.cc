@@ -18,8 +18,6 @@ message length.  It is used as the simulated message length for
 gather messages.
 
 */
-#include <sst_config.h>
-#include "sst/core/serialization/element.h"
 #include "gather_op.h"
 
 
@@ -137,6 +135,6 @@ int msglen;
 
 }  // end of state_WAIT_CHILDREN()
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Gather_op)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

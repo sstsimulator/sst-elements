@@ -16,6 +16,7 @@
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/vector.hpp>
 #include <sst/core/serialization/element.h>
+#include "patterns.h"
 
 const int SM_START_EVENT= 0;
 const int SM_MAX_DATA_FIELDS= 2;
@@ -103,7 +104,6 @@ class state_event   {
 	    ar & BOOST_SERIALIZATION_NVP(restart);
 	    ar & BOOST_SERIALIZATION_NVP(packed_data);
         }
-
 };
 
 
@@ -155,9 +155,9 @@ class State_machine   {
 
     private:
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 	State_machine();  // For serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
 	void handle_state_events(uint32_t tag, state_event event);
 	void deliver_missed_events(void);
 

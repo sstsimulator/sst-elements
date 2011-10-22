@@ -25,8 +25,6 @@ The operation to be performed can be chosen by setting the first
 Idata field. See allreduce_op_t in allreduce.h for possible values.
 */
 #include <boost/serialization/list.hpp>
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
 #include "allreduce_op.h"
 
 
@@ -270,6 +268,6 @@ std::list<int>::iterator it;
 }  // end of state_WAIT_PARENT()
 
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Allreduce_op)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

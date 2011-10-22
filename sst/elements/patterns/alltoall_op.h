@@ -10,8 +10,7 @@
 #ifndef _ALLTOALL_OP_H
 #define _ALLTOALL_OP_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 #include "state_machine.h"
 #include "comm_pattern.h"
 

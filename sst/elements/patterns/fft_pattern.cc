@@ -15,10 +15,8 @@
 #define __STDC_FORMAT_MACROS			(1)
 #include <inttypes.h>				/* For PRId64 */
 #include <math.h>				/* For llrint() */
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include <sst/core/element.h>
 #include "fft_pattern.h"
+#include <sst/core/element.h>
 #include "stats.h"
 
 
@@ -253,6 +251,6 @@ fft_events_t e= (fft_events_t)sm_event.event;
 
 eli(FFT_pattern, fft_pattern, "FFT pattern")
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(FFT_pattern)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW

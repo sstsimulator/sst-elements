@@ -10,39 +10,15 @@
 #ifndef _COMM_PATTERN_H
 #define _COMM_PATTERN_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include "patterns.h"
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/cpunicEvent.h>
 #include "state_machine.h"
 #include "pattern_common.h"
+#include "machine_info.h"
 
 using namespace SST;
-
-// Macro to fill in eli structure needed in dynamic libraries
-// Required for all components loadable by SST. In this
-// directory, this means all components that inherit from Comm_pattern
-// Use it like this: eli(Allreduce_pattern, allreduce_pattern, "Allreduce pattern")
-// where the first argument is the name of the Comm_pattern object, the second
-// argument is the name of the resulting library, and the last argument is
-// a brief description.
-#define eli(comp, lib, desc) \
-static SST::Component *create_##comp(SST::ComponentId_t id, SST::Component::Params_t& params) \
-{ \
-    return new comp(id, params); \
-} \
- \
-static const SST::ElementInfoComponent components[]= { \
-    {#lib, desc, NULL, create_##comp}, \
-    {NULL, NULL, NULL, NULL} \
-}; \
- \
-extern "C" { \
-    SST::ElementLibraryInfo lib##_eli= { \
-       #lib, "Trying to figure this out", components \
-    }; \
-} \
 
 
 
@@ -65,69 +41,64 @@ class Comm_pattern : public Component {
             Component(id), params(params)
         {
 
-	    // Some defaults
-	    comm_pattern_debug= 0;
-	    my_rank= -1;
+	    NIC_model *NICmodel[NUM_NIC_MODELS];
+
 
 	    registerExit();
 
-	    Params_t::iterator it= params.begin();
-	    while (it != params.end())   {
-		if (!it->first.compare("debug"))   {
-		    sscanf(it->second.c_str(), "%d", &comm_pattern_debug);
-		}
+	    // Figure out what the target machine looks like
+	    machine= new MachineInfo(params);
+	    my_rank= machine->myRank();
+	    comm_pattern_debug= machine->verbose;
 
-		if (!it->first.compare("rank"))   {
-		    sscanf(it->second.c_str(), "%d", &my_rank);
-		}
-
-		it++;
-	    }
-
-	    // FIXME: Do some input checking here; e.g., cores and nodes must be > 0
 
 	    // Interface with SST
 
 	    // Create a time converter
 	    tc= registerTimeBase("1"TIME_BASE, true);
 
-            // Create a handler for events from the Network
-	    net= configureLink("NETWORK", new Event::Handler<Comm_pattern>
-		    (this, &Comm_pattern::handle_net_events));
-	    if (net == NULL)   {
-		_COMM_PATTERN_DBG(1, "There is no network... Single node!\n");
-	    } else   {
-		net->setDefaultTimeBase(tc);
-		_COMM_PATTERN_DBG(2, "[%3d] Added a link and a handler for the Network\n", my_rank);
-	    }
 
-            // Create a handler for events from the network on chip (NoC)
-	    NoC= configureLink("NoC", new Event::Handler<Comm_pattern>
-		    (this, &Comm_pattern::handle_NoC_events));
-	    if (NoC == NULL)   {
-		_COMM_PATTERN_DBG(1, "There is no NoC...\n");
-	    } else   {
-		NoC->setDefaultTimeBase(tc);
-		_COMM_PATTERN_DBG(2, "[%3d] Added a link and a handler for the NoC\n", my_rank);
-	    }
-
-            // Create a channel for "out of band" events sent to ourselves
+            // Create a channel to receive messages from our NICs
 	    self_link= configureSelfLink("Me", new Event::Handler<Comm_pattern>
 		    (this, &Comm_pattern::handle_self_events));
 	    if (self_link == NULL)   {
 		_ABORT(Comm_pattern, "That was no good!\n");
-	    } else   {
-		_COMM_PATTERN_DBG(2, "[%3d] Added a self link and a handler\n", my_rank);
 	    }
+
+
+	    // Create an instance of a NIC model, then attach a handler
+	    // to the SST link, and tell the NIC model about the link
+	    // so it can send on it.
+	    // This is a little convoluted because configureLink() is
+	    // part of the SST Component object. I'd like to have this
+	    // code in the NIC_model, but don't know how to do that cleanly.
+	    // Do this for all three NIC models we have: Net, NoC, and Far.
+	    for (int i= Net; i <= Far; i++)   {
+		NIC_model *model;
+		Link *link;
+		const char *name= type_name((NIC_model_t)i);
+
+		model= new NIC_model(machine, (NIC_model_t)i, self_link);
+
+		link= configureLink(name, new Event::Handler<NIC_model>
+			(model, &NIC_model::handle_rcv_events));
+		if (link == NULL)   {
+		    _COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"%s\"\n",
+			name);
+		    _ABORT(Comm_pattern, "Check the input XML file! for %s\n", name);
+		}
+		model->set_send_link(link);
+		NICmodel[i]= model;
+	    }
+
+
 
             // Create a handler for events from local NVRAM
 	    nvram= configureLink("NVRAM", new Event::Handler<Comm_pattern>
 		    (this, &Comm_pattern::handle_nvram_events));
 	    if (nvram == NULL)   {
 		_COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"NVRAM\"\n");
-		_ABORT(Comm_pattern, "Check the input XML file!\n");
-	    } else   {
-		_COMM_PATTERN_DBG(2, "[%3d] Added a link and a handler for the NVRAM\n", my_rank);
+		_ABORT(Comm_pattern, "Check the input XML file for NVRAM!\n");
 	    }
 
             // Create a handler for events from the storage network
@@ -135,9 +106,7 @@ class Comm_pattern : public Component {
 		    (this, &Comm_pattern::handle_storage_events));
 	    if (storage == NULL)   {
 		_COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"STORAGE\"\n");
-		_ABORT(Comm_pattern, "Check the input XML file!\n");
-	    } else   {
-		_COMM_PATTERN_DBG(2, "[%3d] Added a link and a handler for the storage\n", my_rank);
+		_ABORT(Comm_pattern, "Check the input XML file! for STORAGE\n");
 	    }
 
 	    self_link->setDefaultTimeBase(tc);
@@ -145,12 +114,12 @@ class Comm_pattern : public Component {
 	    storage->setDefaultTimeBase(tc);
 
 	    // Initialize the common functions we need
+	    // FIXME: Since I gutted patterns() this should probably be called
+	    // something other than common.
 	    common= new Patterns();
-	    if (!common->init(params, net, self_link, NoC, nvram, storage, comm_pattern_debug))   {
-		_ABORT(Comm_pattern, "Patterns->init() failed!\n");
-	    }
+	    common->init(params, self_link, NICmodel, nvram, storage, machine, my_rank);
 
-	    num_ranks= common->get_total_cores();
+	    num_ranks= machine->get_total_ranks();
 	    SM= new State_machine(my_rank);
 
         }  // Done with initialization
@@ -158,43 +127,32 @@ class Comm_pattern : public Component {
         ~Comm_pattern()   {
 	    delete common;
 	    delete SM;
+	    delete machine;
 	}
 
-
-	int my_rank;
-	int num_ranks;
-
-	int myNetX(void);
-	int myNetY(void);
-	int NetWidth(void);
-	int NetHeight(void);
-	int NoCWidth(void);
-	int NoCHeight(void);
-	int NumCores(void);
-	int myNoCX(void);
-	int myNoCY(void);
 
 	void self_event_send(int event_type, SimTime_t duration);
 	void send_msg(int dest, int len, state_event sm_event);
 	void send_msg(int dest, int len, state_event sm_event, int blocking);
 
-	// Some patterns may be able to use this
+	// Some patterns may be able to use these
 	uint32_t next_power2(uint32_t v);
-	int is_pow2(int num);
+	bool is_pow2(int num);
 	double SimTimeToD(SimTime_t t);
 	void local_compute(int done_event, SimTime_t duration);
 
+	MachineInfo *machine;
+	int my_rank;
+	int num_ranks;
 	State_machine *SM;
 
     private:
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
         Comm_pattern();  // For serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
         Comm_pattern(const Comm_pattern &c);
 	void handle_sst_events(CPUNicEvent *sst_event, const char *err_str);
-	void handle_net_events(Event *sst_event);
-	void handle_NoC_events(Event *sst_event);
 	void handle_self_events(Event *sst_event);
 	void handle_nvram_events(Event *sst_event);
 	void handle_storage_events(Event *sst_event);
@@ -205,34 +163,30 @@ class Comm_pattern : public Component {
 	int comm_pattern_debug;
 
 
-
 	// Interfacing with SST
         Params_t params;
-	Link *net;
 	Link *self_link;
-	Link *NoC;
 	Link *nvram;
 	Link *storage;
 	TimeConverter *tc;
+
 
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )
         {
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+	    ar & BOOST_SERIALIZATION_NVP(machine);
 	    ar & BOOST_SERIALIZATION_NVP(my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(num_ranks);
 	    ar & BOOST_SERIALIZATION_NVP(SM);
-	    ar & BOOST_SERIALIZATION_NVP(params);
+	    ar & BOOST_SERIALIZATION_NVP(common);
 	    ar & BOOST_SERIALIZATION_NVP(comm_pattern_debug);
 	    ar & BOOST_SERIALIZATION_NVP(params);
-	    ar & BOOST_SERIALIZATION_NVP(net);
 	    ar & BOOST_SERIALIZATION_NVP(self_link);
-	    ar & BOOST_SERIALIZATION_NVP(NoC);
 	    ar & BOOST_SERIALIZATION_NVP(nvram);
 	    ar & BOOST_SERIALIZATION_NVP(storage);
 	    ar & BOOST_SERIALIZATION_NVP(tc);
         }
-
 };
 #endif // _COMM_PATTERN_H

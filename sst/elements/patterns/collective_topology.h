@@ -13,8 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <boost/serialization/list.hpp>
-#include <sst/core/serialization/element.h>
-#include <sst_config.h>
+#include "patterns.h"
 
 
 typedef enum {TREE_BINARY, TREE_DEEP} tree_type_t;
@@ -56,9 +55,9 @@ class Collective_topology   {
 
 
     private:
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 	Collective_topology();	// For serialization only
-#endif  // SERIALIZARION_WORKS_NOW
+#endif  // SERIALIZATION_WORKS_NOW
 	const int this_rank;
 	const int this_topology_size;
 	const tree_type_t t;

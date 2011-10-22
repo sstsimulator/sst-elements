@@ -19,8 +19,6 @@ scatter messages.
 
 */
 #include <boost/serialization/list.hpp>
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
 #include "scatter_op.h"
 
 
@@ -129,6 +127,6 @@ int msglen;
 
 }  // end of state_WAIT_PARENT()
 
-#ifdef SERIALIZARION_WORKS_NOW
+#ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Scatter_op)
-#endif // SERIALIZARION_WORKS_NOW
+#endif // SERIALIZATION_WORKS_NOW
