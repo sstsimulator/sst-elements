@@ -84,6 +84,7 @@ int out_port;
 	// We're not really a router, rather we are being used as an aggregator
 	// Just send the event on: no delays, not queuing
 	e->hops++;
+	assert(port[out_port].link); // Trying to use an unused port. This is a routing error
 	port[out_port].link->Send(0, e);
 	return;
     }
@@ -103,6 +104,7 @@ int out_port;
 	e->congestion_delay += arrival_delay;
 
 	e->entry_port= in_port;
+	assert(self_link); // Trying to use an unused port. This is a routing error
 	self_link->Send(arrival_delay, e);
 
 	return;
@@ -177,6 +179,7 @@ int out_port;
     }
 
     e->hops++;
+    assert(port[out_port].link); // Trying to use an unused port. This is a routing error
     port[out_port].link->Send(delay, e);
 
 }  // end of handle_port_events()
