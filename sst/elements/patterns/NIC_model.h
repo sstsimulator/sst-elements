@@ -39,6 +39,7 @@ class NIC_model   {
 	    nstats= new NIC_stats(_my_rank, type_name(_nic), do_print, _m);
 	    rtr= new Router(_m);
 	    send_link= NULL;
+	    NextSendSlot= 0;
 	}
 
 	~NIC_model()   {

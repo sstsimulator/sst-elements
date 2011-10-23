@@ -83,9 +83,12 @@ class Comm_pattern : public Component {
 		link= configureLink(name, new Event::Handler<NIC_model>
 			(model, &NIC_model::handle_rcv_events));
 		if (link == NULL)   {
-		    _COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"%s\"\n",
-			name);
-		    _ABORT(Comm_pattern, "Check the input XML file! for %s\n", name);
+		    if (i != Far)   {
+			// Net and NoC are mandatory; Far is optional
+			_COMM_PATTERN_DBG(0, "The Comm pattern generator expects a link named \"%s\"\n",
+			    name);
+			_ABORT(Comm_pattern, "Check the input XML file! for %s\n", name);
+		    }
 		}
 		model->set_send_link(link);
 		NICmodel[i]= model;

@@ -55,15 +55,16 @@ int64_t link_duration;
     // FIXME: I don't think we need that!
     link_duration= 0;
 
-    if (CurrentSimTime > NextSendSlot)   {
+    if (CurrentSimTime >= NextSendSlot)   {
 	// NIC is not busy
 
 	// We subtract LinkLatency because the configuration tool already moved
 	// some latency onto that link to help SST with synchronization
 	event_delay= nic_delay - link_duration - _m->get_LinkLatency(_nic);
 
-// For now until we have figured this out and start moving laency back onto links
+// For now until we have figured this out and start moving latency back onto links
 assert(_m->get_LinkLatency(_nic) == 0); // For now
+
 	if (event_delay < 0)   {
 	    event_delay= 0;
 	}

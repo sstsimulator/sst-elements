@@ -48,13 +48,15 @@ FarLink_t fl;
 	NICgap[i]= 0;
     }
 
-    FarLinknum= 0;
     NetXwrap= 0;
     NetYwrap= 0;
     NetZwrap= 0;
     NoCXwrap= 0;
     NoCYwrap= 0;
     NoCZwrap= 0;
+
+    FarLinkPortFieldWidth= 0;
+    FarLinknum= 0;
 
 
     // Pre processing the parameter list
@@ -340,6 +342,11 @@ MachineInfo::myNetX(void)
 int width_in_cores;
 
 
+    if (Net_depth > 1 || NoC_depth > 1)   {
+	fprintf(stderr, "%s:%s on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
+	return -1;
+    }
+
     width_in_cores= Net_width *
 		    NoC_width *
 		    cores_per_NoC_router *
@@ -355,6 +362,11 @@ int width_in_cores;
 int
 MachineInfo::myNetY(void)
 {
+    if (Net_depth > 1 || NoC_depth > 1)   {
+	fprintf(stderr, "%s:%s() on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
+	return -1;
+    }
+
     return _my_rank / (Net_width * cores_per_Net_router);
 }  // end of myNetY()
 
@@ -364,7 +376,7 @@ int
 MachineInfo::myNetZ(void)
 {
 
-    fprintf(stderr, "%s:%s on line %d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
+    fprintf(stderr, "%s:%s() on line %d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
     return -1;
 
 }  // end of myNetY()
@@ -374,6 +386,11 @@ MachineInfo::myNetZ(void)
 int
 MachineInfo::myNoCX(void)
 {
+    if (Net_depth > 1 || NoC_depth > 1)   {
+	fprintf(stderr, "%s:%s() on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
+	return -1;
+    }
+
     return (_my_rank % cores_per_Net_router) % NoC_width;
 }  // end of myNoCX()
 
@@ -383,8 +400,24 @@ int
 MachineInfo::myNoCY(void)
 {
 
+    if (Net_depth > 1 || NoC_depth > 1)   {
+	fprintf(stderr, "%s:%s() on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
+	return -1;
+    }
+
     return (_my_rank % cores_per_NoC_router) /
 	(NoC_width * cores_per_NoC_router);
+
+}  // end of myNoCY()
+
+
+
+int
+MachineInfo::myNoCZ(void)
+{
+
+    fprintf(stderr, "%s:%s() on line %d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
+    return -1;
 
 }  // end of myNoCY()
 
@@ -427,17 +460,6 @@ MachineInfo::destNetRouter(int dest_node)
     return dest_node / num_router_nodes;
 
 }  // end of destNetRouter()
-
-
-
-int
-MachineInfo::myNoCZ(void)
-{
-
-    fprintf(stderr, "%s:%s on line %d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
-    return -1;
-
-}  // end of myNoCY()
 
 
 

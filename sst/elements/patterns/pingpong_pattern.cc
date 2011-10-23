@@ -81,8 +81,11 @@ state_event pp_event;
 	    if (my_rank == 0)   {
 		printf("#  |||  Ping pong between ranks 0 and %d\n", dest);
 		printf("#  |||  Number of messages per each size: %d\n", num_msgs);
-		printf("# [%3d] PING I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
-			my_rank, machine->myNetX(), machine->myNetY(), machine->myNoCX(), machine->myNoCY());
+		printf("# [%3d] PING I (%d of %d on node %d) am at X,Y,Z %3d/%3d/%3d in the network, "
+		    "and x,y %3d/%3d/%3d in the NoC\n",
+			my_rank, my_rank % machine->get_cores_per_node(), machine->get_cores_per_node(),
+			machine->myNode(), machine->myNetX(), machine->myNetY(), machine->myNetZ(),
+			machine->myNoCX(), machine->myNoCY(), machine->myNoCZ());
 		start_time= getCurrentSimTime();
 
 		// If I'm rank 0 send, otherwise wait
@@ -95,8 +98,11 @@ state_event pp_event;
 		goto_state(state_BARRIER, PP_BARRIER, E_BARRIER_ENTRY);
 
 	    } else   {
-		printf("# [%3d] PONG I'm at X,Y %3d/%-3d in the network, and x,y %3d/%-3d in the NoC\n",
-			my_rank, machine->myNetX(), machine->myNetY(), machine->myNoCX(), machine->myNoCY());
+		printf("# [%3d] PONG I (%d of %d on node %d) am at X,Y,Z %3d/%3d/%3d in the network, "
+		    "and x,y %3d/%3d/%3d in the NoC\n",
+			my_rank, my_rank % machine->get_cores_per_node(), machine->get_cores_per_node(),
+			machine->myNode(), machine->myNetX(), machine->myNetY(), machine->myNetZ(),
+			machine->myNoCX(), machine->myNoCY(), machine->myNoCZ());
 		state= PP_RECEIVING;
 	    }
 	    break;

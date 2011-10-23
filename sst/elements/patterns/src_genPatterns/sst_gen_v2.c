@@ -445,7 +445,7 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	    net_link_id);
     }
     if (net_aggregator_id)   {
-	fprintf(sstfile, "\t\t<link name=\"%s\" port=\"NETWORK\" latency=$lat_global_net/>\n",
+	fprintf(sstfile, "\t\t<link name=\"%s\" port=\"Net\" latency=$lat_global_net/>\n",
 	    net_aggregator_id);
     }
     if (nvram_aggregator_id)   {

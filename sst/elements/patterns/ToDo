@@ -1,3 +1,4 @@
+- Fix calculations of myNetX etc for Z or z > 1
 - Make NIC_model_t an iterator or something
 - Clean up the core == rank ambiguity
 - generate far links (Did this get lost when I got rid of V1?)

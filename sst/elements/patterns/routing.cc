@@ -47,7 +47,7 @@ int my_router, dest_router;
 
 
     if (_m->myNode() == _m->destNode(dest_core))   {
-	// We're on the smae node, go through the NoC
+	// We're on the same node, go through the NoC
 	my_router= _m->myCore() / _m->get_cores_per_NoC_router();
 	dest_router= dest_core / _m->get_cores_per_NoC_router();
 
@@ -87,9 +87,9 @@ int my_router, dest_router;
 	    // On the network aggregator we'll have to go out port 0 to reach the mesh
 	    e->route.push_back(0);
 
-	    gen_route(e, _m->myNetRouter(), _m->destNetRouter(dest_core), _m->get_Net_width(),
-		    _m->get_Net_height(), _m->get_Net_depth(), _m->get_NetXwrap(), _m->get_NetYwrap(),
-		    _m->get_NetZwrap());
+	    gen_route(e, _m->myNetRouter(), _m->destNetRouter(_m->destNode(dest_core)),
+		_m->get_Net_width(), _m->get_Net_height(), _m->get_Net_depth(),
+		_m->get_NetXwrap(), _m->get_NetYwrap(), _m->get_NetZwrap());
 
 	    // Exit to the local node (aggregator on that node)
 	    e->route.push_back(FIRST_LOCAL_PORT +

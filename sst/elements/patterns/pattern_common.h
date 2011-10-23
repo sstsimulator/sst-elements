@@ -29,12 +29,15 @@
 class Patterns   {
     public:
 	Patterns()   {
+	    _my_rank= -1;
+	    _m= NULL;
 	    my_self_link= NULL;
 	    my_nvram_link= NULL;
 	    my_storage_link= NULL;
 	    nic[NoC]= NULL;
 	    nic[Net]= NULL;
 	    nic[Far]= NULL;
+	    msg_seq= 0;
 	}
 
 	~Patterns()   {
