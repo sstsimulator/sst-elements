@@ -67,6 +67,22 @@ typedef struct   {
 
 
 
+// Sort by inflectionpoint value
+static bool
+compare_Rtrparams(Rtrparams_t first, Rtrparams_t second)
+{
+    if (first.inflectionpoint < second.inflectionpoint)   {
+	return true;
+    } else   {
+	return false;
+    }
+}  // end of compare_Rtrparams
+
+
+
+
+
+
 class Routermodel : public IntrospectedComponent {
     public:
         Routermodel(ComponentId_t id, Params_t& params) :
@@ -256,6 +272,7 @@ class Routermodel : public IntrospectedComponent {
 		hop_delay= 0;		// We'll read this out of the router params
 
 		// Check it
+		Rtrparams.sort(compare_Rtrparams);
 		for (k= Rtrparams.begin(); k != Rtrparams.end(); k++)   {
 		    if ((k->inflectionpoint < 0) || (k->latency < 0))   {
 			fprintf(stderr, "Invalid inflection point: index %d, len %" PRId64 "d, lat %" PRId64 "d\n",
