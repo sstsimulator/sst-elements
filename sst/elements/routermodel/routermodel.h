@@ -233,6 +233,63 @@ class Routermodel : public IntrospectedComponent {
 		}
 
 
+		if (it->first.find("NICinflection") != std::string::npos)   {
+		    int index;
+		    bool found;
+		    std::list<Rtrparams_t>::iterator k;
+
+		    if (sscanf(it->first.c_str(), "NICinflection%d", &index) != 1)   {
+			it++;
+			continue;
+		    }
+		    // Is that index in the list already?
+		    found= false;
+		    for (k= NICparams.begin(); k != NICparams.end(); k++)   {
+			if (k->index == index)   {
+			    // Yes? Update the entry
+			    k->inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
+			    found= true;
+			}
+		    }
+		    if (!found)   {
+			// No? Create a new entry
+			Rtrparams_t another;
+			another.inflectionpoint= strtoll(it->second.c_str(), (char **)NULL, 0);
+			another.index= index;
+			another.latency= -1;
+			NICparams.push_back(another);
+		    }
+		}
+
+		if (it->first.find("NIClatency") != std::string::npos)   {
+		    int index;
+		    bool found;
+		    std::list<Rtrparams_t>::iterator k;
+
+		    if (sscanf(it->first.c_str(), "NIClatency%d", &index) != 1)   {
+			it++;
+			continue;
+		    }
+		    // Is that index in the list already?
+		    found= false;
+		    for (k= NICparams.begin(); k != NICparams.end(); k++)   {
+			if (k->index == index)   {
+			    // Yes? Update the entry
+			    k->latency= strtoll(it->second.c_str(), (char **)NULL, 0);
+			    found= true;
+			}
+		    }
+		    if (!found)   {
+			// No? Create a new entry
+			Rtrparams_t another;
+			another.latency= strtoll(it->second.c_str(), (char **)NULL, 0);
+			another.index= index;
+			another.inflectionpoint= -1;
+			NICparams.push_back(another);
+		    }
+		}
+
+
                 ++it;
             }
 
@@ -266,8 +323,10 @@ class Routermodel : public IntrospectedComponent {
 		std::list<Rtrparams_t>::iterator k;
 
 
-		_ROUTER_MODEL_DBG(1, "%s: Found %d inflection points. Using new router model.\n",
+		_ROUTER_MODEL_DBG(1, "%s: Found %d Rtr inflection points. Using new router model.\n",
 		    component_name.c_str(), (int)Rtrparams.size());
+		_ROUTER_MODEL_DBG(1, "%s: Found %d NIC inflection points.\n",
+		    component_name.c_str(), (int)NICparams.size());
 		new_model= true;
 		hop_delay= 0;		// We'll read this out of the router params
 
@@ -280,6 +339,8 @@ class Routermodel : public IntrospectedComponent {
 			_abort(Routermodel, "Fix xml file!\n");
 		    }
 		}
+
+		NICparams.sort(compare_Rtrparams);
 	    }
 
 
@@ -457,6 +518,7 @@ class Routermodel : public IntrospectedComponent {
 	uint64_t router_bw;
 	bool aggregator;
 	std::list<Rtrparams_t> Rtrparams;
+	std::list<Rtrparams_t> NICparams;
 	bool new_model;
 	SimTime_t congestion_out;
 	long long int congestion_out_cnt;
@@ -494,6 +556,7 @@ class Routermodel : public IntrospectedComponent {
 	    ar & BOOST_SERIALIZATION_NVP(router_bw);
 	    ar & BOOST_SERIALIZATION_NVP(aggregator);
 	    ar & BOOST_SERIALIZATION_NVP(Rtrparams);
+	    ar & BOOST_SERIALIZATION_NVP(NICparams);
 	    ar & BOOST_SERIALIZATION_NVP(new_model);
 	    ar & BOOST_SERIALIZATION_NVP(congestion_out);
 	    ar & BOOST_SERIALIZATION_NVP(congestion_out_cnt);

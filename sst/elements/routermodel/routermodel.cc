@@ -33,6 +33,7 @@ Routermodel::handle_port_events(Event *event, int in_port)
 SimTime_t current_time;
 SimTime_t delay;
 SimTime_t link_time;
+SimTime_t blocked;
 int out_port;
 
 
@@ -95,9 +96,9 @@ int out_port;
 	// If the input port is in use right now, then this message actually
 	// wont come in until later
 	arrival_delay= port[in_port].next_in - current_time;
+	port[in_port].next_in= current_time + arrival_delay;
 
 	// FIXME: I am not sure these are meaningful statistics
-	port[in_port].next_in= current_time + arrival_delay;
 	congestion_in_cnt++;
 	congestion_in += arrival_delay;
 	e->congestion_cnt++;
@@ -110,7 +111,7 @@ int out_port;
 	return;
     }
 
-    // We'll take it
+    // We'll take it now
     port[in_port].cnt_in++;
 
 
@@ -132,11 +133,11 @@ int out_port;
 
 	} else   {
 	    // Busy right now
-	    delay= port[out_port].next_out - current_time;
+	    blocked= port[out_port].next_out - current_time;
 	    congestion_out_cnt++;
-	    congestion_out += delay;
+	    congestion_out += blocked;
 	    e->congestion_cnt++;
-	    e->congestion_delay += delay;
+	    e->congestion_delay += blocked;
 	}
 
 	// Add in the generic router delay
@@ -159,22 +160,23 @@ int out_port;
 
 	// Calculate when this message can leave the router port
 	delay= get_Rtrparams(Rtrparams, e->msg_len);
-	if (current_time > port[out_port].next_out)   {
+	link_time= get_Rtrparams(NICparams, e->msg_len);
+	if (current_time >= port[out_port].next_out)   {
 	    // Port is not busy
 	    // How long will this message occupy the outbound link?
-	    port[out_port].next_out= current_time + delay;
-	    port[in_port].next_in= current_time + delay;
+	    port[out_port].next_out= current_time + delay + link_time;
+	    port[in_port].next_in= current_time + link_time;
 
 	} else   {
 	    // Port is busy
-	    delay= port[out_port].next_out - current_time + delay;
-	    port[out_port].next_out= current_time + delay;
-	    port[in_port].next_in= current_time + delay;
+	    blocked= port[out_port].next_out - current_time ;
+	    port[out_port].next_out= current_time + blocked + delay + link_time;
+	    port[in_port].next_in= current_time + blocked + link_time;
 
 	    congestion_out_cnt++;
-	    congestion_out += delay;
+	    congestion_out += blocked;
 	    e->congestion_cnt++;
-	    e->congestion_delay += delay;
+	    e->congestion_delay += blocked;
 	}
     }
 
@@ -201,6 +203,7 @@ Routermodel::handle_self_events(Event *event)
     handle_port_events(e, e->entry_port);
 
 }  /* end of handle_self_events() */
+
 
 
 #ifdef WITH_POWER
