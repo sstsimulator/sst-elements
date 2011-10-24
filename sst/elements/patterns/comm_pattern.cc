@@ -29,7 +29,7 @@ void
 Comm_pattern::send_msg(int dest, int len, state_event sm_event)
 {
 
-    common->event_send(dest, sm_event.event, getCurrentSimTime(),
+    common->event_send(dest, sm_event.event,
 	SM->SM_current_tag(), len,
 	(const char *)sm_event.payload,
 	sm_event.payload_size);
@@ -44,7 +44,7 @@ void
 Comm_pattern::send_msg(int dest, int len, state_event sm_event, int blocking)
 {
 
-    common->event_send(dest, sm_event.event, getCurrentSimTime(),
+    common->event_send(dest, sm_event.event,
 	SM->SM_current_tag(), len,
 	(const char *)sm_event.payload,
 	sm_event.payload_size, blocking);

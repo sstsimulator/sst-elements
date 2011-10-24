@@ -36,26 +36,28 @@ type_name(NIC_model_t nic)
 // delays.
 //
 SST::SimTime_t
-NIC_model::send(SST::CPUNicEvent *e, int dest_rank, SST::SimTime_t CurrentSimTime)
+NIC_model::send(SST::CPUNicEvent *e, int dest_rank)
 {
 
+SST::SimTime_t current_time;
 SST::SimTime_t event_delay;
 int64_t nic_delay;
 int64_t link_duration;
 
 
+    current_time= (*NICtime_handler)(NICtime_obj);
     rtr->attach_route(e, dest_rank);
 
     // Calculate when this message can leave the NIC
     nstats->record_send(dest_rank, e->msg_len);
-    nic_delay= get_NICparams(_m->NICparams[_nic], e->msg_len);
+    nic_delay= get_NICparams(_m->NICparams[_nic], e->msg_len, _m->NICsend_fraction[_nic]);
 
     // How long will this message occupy the outbound link?
     link_duration= e->msg_len / _m->get_LinkBandwidth(_nic);
     // FIXME: I don't think we need that!
     link_duration= 0;
 
-    if (CurrentSimTime >= NextSendSlot)   {
+    if (current_time >= NextSendSlot)   {
 	// NIC is not busy
 
 	// We subtract LinkLatency because the configuration tool already moved
@@ -69,20 +71,18 @@ assert(_m->get_LinkLatency(_nic) == 0); // For now
 	    event_delay= 0;
 	}
 	send_link->Send(event_delay, e);
-	NextSendSlot= CurrentSimTime + nic_delay + link_duration;
-	// FIXME: Don't I need to subtract _m->get_LinkLatency(_nic)?
+	NextSendSlot= current_time + event_delay;
 
     } else   {
 	// NIC is busy
-	event_delay= NextSendSlot - CurrentSimTime + _m->get_NICgap(_nic) +
+	event_delay= NextSendSlot - current_time + _m->get_NICgap(_nic) +
 	    nic_delay - link_duration - _m->get_LinkLatency(_nic);
 	if (event_delay < 0)   {
 	    event_delay= 0;
 	}
 	send_link->Send(event_delay, e);
-	nstats->record_busy(NextSendSlot - CurrentSimTime);
-	// FIXME: check this
-	NextSendSlot= CurrentSimTime + event_delay;
+	nstats->record_busy(NextSendSlot - current_time);
+	NextSendSlot= current_time + event_delay;
     }
 
     return event_delay;
@@ -91,12 +91,45 @@ assert(_m->get_LinkLatency(_nic) == 0); // For now
 
 
 
+void
+NIC_model::handle_rcv_events(SST::Event *sst_event)
+{
+
+SST::CPUNicEvent *e;
+int64_t nic_delay;
+int64_t event_delay;
+SST::SimTime_t current_time;
+
+
+    current_time= (*NICtime_handler)(NICtime_obj);
+    e= (SST::CPUNicEvent *)sst_event;
+    nstats->record_rcv(e->hops, e->congestion_cnt, e->congestion_delay,
+	e->msg_len);
+
+    // This message was delayed at the send side by _m->NICsend_fraction * the
+    // message size dependent delay. Now it has to pay the remainder.
+    nic_delay= get_NICparams(_m->NICparams[_nic], e->msg_len,
+		    1.0 - _m->NICsend_fraction[_nic]);
+
+    if (current_time >= NextRecvSlot)   {
+	// Not busy
+	event_delay= nic_delay;
+    } else   {
+	event_delay= NextRecvSlot - current_time + nic_delay;
+    }
+    _self_link->Send(event_delay, e);
+    NextRecvSlot= current_time + event_delay;
+
+}  /* end of handle_rcv_events() */
+
+
+
 // Based on message length and the NIC parameter list, extract the
 // startup costs of a message of this length (latency) and the
 // duration msg_len bytes will occupy the NIC. Return the sum of
 // those two values.
 int64_t
-NIC_model::get_NICparams(std::list<NICparams_t> params, int64_t msg_len)
+NIC_model::get_NICparams(std::list<NICparams_t> params, int64_t msg_len, float send_fraction)
 {
 
 std::list<NICparams_t>::iterator k;
@@ -104,6 +137,7 @@ std::list<NICparams_t>::iterator previous;
 double T, B;
 double byte_cost;
 int64_t latency;
+double delay;
 
 
     previous= params.begin();
@@ -123,7 +157,8 @@ int64_t latency;
 	    } else   {
 		latency= previous->latency;
 	    }
-	    return (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost) + latency;
+	    delay= ((double)(msg_len - previous->inflectionpoint) * byte_cost) + latency;
+	    return (int64_t)(delay * send_fraction);
 	}
 	previous++;
     }
@@ -142,29 +177,10 @@ int64_t latency;
     } else   {
 	latency= previous->latency;
     }
-    return (int64_t)((double)(msg_len - previous->inflectionpoint) * byte_cost) + latency;
+    delay= ((double)(msg_len - previous->inflectionpoint) * byte_cost) + latency;
+    return (int64_t)(delay * send_fraction);
 
 }  // end of get_NICparams()
-
-
-
-void
-NIC_model::handle_rcv_events(SST::Event *sst_event)
-{
-
-SST::CPUNicEvent *e;
-
-
-    e= (SST::CPUNicEvent *)sst_event;
-    nstats->record_rcv(e->hops, e->congestion_cnt, e->congestion_delay,
-	e->msg_len);
-
-    // Turn this into a self event with 0 delay for now
-    // FIXME: Take some of the total ping-pong latency and move it
-    // here and subtract above on the send side
-    _self_link->Send(0, e);
-
-}  /* end of handle_rcv_events() */
 
 
 

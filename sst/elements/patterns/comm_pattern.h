@@ -10,13 +10,15 @@
 #ifndef _COMM_PATTERN_H
 #define _COMM_PATTERN_H
 
+
 #include "patterns.h"
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/cpunicEvent.h>
 #include "state_machine.h"
-#include "pattern_common.h"
 #include "machine_info.h"
+#include "pattern_common.h"
+#include "NIC_model.h"
 
 using namespace SST;
 
@@ -31,6 +33,7 @@ using namespace SST;
 #else
 #define _COMM_PATTERN_DBG(lvl, fmt, args...)
 #endif
+
 
 
 class Comm_pattern : public Component {
@@ -78,7 +81,8 @@ class Comm_pattern : public Component {
 		Link *link;
 		const char *name= type_name((NIC_model_t)i);
 
-		model= new NIC_model(machine, (NIC_model_t)i, self_link);
+		model= new NIC_model(machine, (NIC_model_t)i, self_link,
+				(void *)this, Comm_pattern::wrapper_getComponentTime);
 
 		link= configureLink(name, new Event::Handler<NIC_model>
 			(model, &NIC_model::handle_rcv_events));
@@ -148,6 +152,14 @@ class Comm_pattern : public Component {
 	int my_rank;
 	int num_ranks;
 	State_machine *SM;
+
+	// The NIC model is not a component, but it needs to know what time it is.
+	SST::SimTime_t getComponentTime(void)   {return getCurrentSimTime();}
+	static SST::SimTime_t wrapper_getComponentTime(void *obj)
+	{
+	    Comm_pattern * mySelf= (Comm_pattern *)obj;
+	    return mySelf->getComponentTime();
+	}
 
     private:
 

@@ -21,10 +21,14 @@
 
 class NIC_model   {
     public:
-	NIC_model(MachineInfo *machine, NIC_model_t nic, SST::Link *self_link) :
+	NIC_model(MachineInfo *machine, NIC_model_t nic, SST::Link *self_link,
+		void *obj, SST::SimTime_t (*rrr)(void *obj)) :
 	    _m(machine),
 	    _nic(nic),
-	    _self_link(self_link)
+	    _self_link(self_link),
+	    NICtime_handler(rrr),
+	    NICtime_obj(obj)
+
 	{
 	    bool do_print;
 
@@ -40,6 +44,7 @@ class NIC_model   {
 	    rtr= new Router(_m);
 	    send_link= NULL;
 	    NextSendSlot= 0;
+	    NextRecvSlot= 0;
 	}
 
 	~NIC_model()   {
@@ -49,26 +54,29 @@ class NIC_model   {
 
 
 
-	SST::SimTime_t send(SST::CPUNicEvent *e, int dest_rank,
-		SST::SimTime_t CurrentSimTime);
+	SST::SimTime_t send(SST::CPUNicEvent *e, int dest_rank);
 	void handle_rcv_events(SST::Event *sst_event);
 	void set_send_link(SST::Link *link) {send_link= link;}
 
     private:
 
-	int64_t get_NICparams(std::list<NICparams_t> params, int64_t msg_len);
+	int64_t get_NICparams(std::list<NICparams_t> params, int64_t msg_len,
+		float send_fraction);
 
 	MachineInfo *_m;
 	NIC_model_t _nic;
-	int _my_rank;
 	SST::Link *_self_link;
-	SST::Link *send_link;
+	SST::SimTime_t (*NICtime_handler)(void *obj);
+	void *NICtime_obj;
 
+	int _my_rank;
+	SST::Link *send_link;
 	NIC_stats *nstats;
 	Router *rtr;
 
-	// When can next message leave?
+	// When can next message leave (or arrive)?
 	SST::SimTime_t NextSendSlot;
+	SST::SimTime_t NextRecvSlot;
 
 
 
@@ -78,12 +86,16 @@ class NIC_model   {
         {
 	    ar & BOOST_SERIALIZATION_NVP(_m);
 	    ar & BOOST_SERIALIZATION_NVP(_nic);
-	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(_self_link);
+	    ar & BOOST_SERIALIZATION_NVP(NICtime_handler);
+	    ar & BOOST_SERIALIZATION_NVP(NICtime_obj);
+
+	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(send_link);
 	    ar & BOOST_SERIALIZATION_NVP(nstats);
 	    ar & BOOST_SERIALIZATION_NVP(rtr);
 	    ar & BOOST_SERIALIZATION_NVP(NextSendSlot);
+	    ar & BOOST_SERIALIZATION_NVP(NextRecvSlot);
         }
 
 } ;  // end of class NIC_model

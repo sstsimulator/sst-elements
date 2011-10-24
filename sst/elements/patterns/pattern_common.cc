@@ -82,8 +82,8 @@ SST::CPUNicEvent *e;
 // The data is out of band and used internally.
 //
 void
-Patterns::event_send(int dest_rank, int event, SST::SimTime_t CurrentSimTime,
-	int32_t tag, uint32_t msg_len, const char *payload, int payload_len, int blocking)
+Patterns::event_send(int dest_rank, int event, int32_t tag, uint32_t msg_len,
+	const char *payload, int payload_len, int blocking)
 {
 
 SST::CPUNicEvent *e;
@@ -119,17 +119,17 @@ SST::SimTime_t delay;
     /* Is dest within our NoC? */
     if (_m->myNode() == _m->destNode(dest_rank))   {
 	/* Route locally */
-	delay= nic[NoC]->send(e, dest_rank, CurrentSimTime);
+	delay= nic[NoC]->send(e, dest_rank);
 
     } else   {
 	/* Route off chip */
 
 	if (_m->FarLinkExists(_m->destNode(dest_rank)))   {
 	    // We have a far link to that destination node. Use it
-	    delay= nic[Far]->send(e, dest_rank, CurrentSimTime);
+	    delay= nic[Far]->send(e, dest_rank);
 	} else   {
 	    // Send it through the network
-	    delay= nic[Net]->send(e, dest_rank, CurrentSimTime);
+	    delay= nic[Net]->send(e, dest_rank);
 	}
     }
     if (blocking >= 0)   {

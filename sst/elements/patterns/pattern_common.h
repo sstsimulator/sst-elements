@@ -49,8 +49,8 @@ class Patterns   {
 		MachineInfo *m, int my_rank);
 
 	void self_event_send(int event, int32_t tag= 0, SST::SimTime_t delay= 0);
-	void event_send(int dest, int event, SST::SimTime_t CurrentSimTime, int32_t tag= 0,
-		uint32_t msg_len= 0, const char *payload= NULL, int payload_len= 0, int blocking= -1);
+	void event_send(int dest, int event, int32_t tag= 0, uint32_t msg_len= 0,
+		const char *payload= NULL, int payload_len= 0, int blocking= -1);
 	void storage_write(int data_size, int return_event);
 	void nvram_write(int data_size, int return_event);
 

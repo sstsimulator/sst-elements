@@ -119,6 +119,7 @@ class MachineInfo   {
 	unsigned int debug;
 	std::set<int> NICstat_ranks;
 	std::list<NICparams_t> NICparams[NUM_NIC_MODELS];
+	float NICsend_fraction[NUM_NIC_MODELS];
 
 
 
@@ -174,6 +175,7 @@ class MachineInfo   {
 	    ar & BOOST_SERIALIZATION_NVP(debug);
 	    ar & BOOST_SERIALIZATION_NVP(NICstat_ranks);
 	    ar & BOOST_SERIALIZATION_NVP(NICparams);
+	    ar & BOOST_SERIALIZATION_NVP(NICsend_fraction);
 	    ar & BOOST_SERIALIZATION_NVP(_my_rank);
 	    ar & BOOST_SERIALIZATION_NVP(_my_core);
 	    ar & BOOST_SERIALIZATION_NVP(Net_width);

@@ -48,6 +48,11 @@ FarLink_t fl;
 	NICgap[i]= 0;
     }
 
+    // FIXME: Make these a parameter
+    NICsend_fraction[NoC]= 0.5;
+    NICsend_fraction[Net]= 0.75;
+    NICsend_fraction[Far]= 0.5;
+
     NetXwrap= 0;
     NetYwrap= 0;
     NetZwrap= 0;

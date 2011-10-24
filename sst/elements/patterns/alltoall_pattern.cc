@@ -62,6 +62,12 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 		nnodes= nnodes + 512;
 	    }
 
+	    if (nnodes < SMALL_LARGE_CUTOFF)   {
+		num_ops= SMALL_ALLREDUCE_OPS;
+	    } else   {
+		num_ops= LARGE_ALLREDUCE_OPS;
+	    }
+
 	    if (nnodes <= num_ranks)   {
 		// Start next loop with nnodes
 		a_test->resize(nnodes);
@@ -136,8 +142,8 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 		// Do the alltoall test on nnodes
 		goto_state(state_ALLTOALL_TEST, STATE_ALLTOALL_TEST, E_ALLTOALL_ENTRY);
 	    } else   {
-		// Done with the test, go to next inner loop
-		duration= getCurrentSimTime() - test_start_time;
+		// Done with the test
+		duration= (getCurrentSimTime() - test_start_time) / num_ops;
 		goto_state(state_COLLECT_RESULT, STATE_COLLECT_RESULT, E_COLLECT);
 	    }
 	    break;
@@ -208,7 +214,7 @@ state_event enter_allreduce, exit_allreduce;
 
 	case E_ALLREDUCE_EXIT:
 	    // We just came back from the allreduce SM. We're done
-	    times.push_back(sm_event.get_Fdata() / nnodes / num_ops);
+	    times.push_back(sm_event.get_Fdata() / nnodes);
 	    set++;
 	    if (set < num_sets)   {
 		goto_state(state_INNER_LOOP, STATE_INNER_LOOP, E_NEXT_INNER_LOOP);

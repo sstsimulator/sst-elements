@@ -220,7 +220,7 @@ bool check_data;
 
 	// For small alltoall, we do more than one to make sure we don't run into
 	// issues with timer resolution.
-	if (nnodes < 16)   {
+	if (nnodes < SMALL_LARGE_CUTOFF)   {
 	    num_ops= SMALL_ALLREDUCE_OPS;
 	} else   {
 	    num_ops= LARGE_ALLREDUCE_OPS;

@@ -40,7 +40,7 @@ std::set<counter_t>::iterator p;
     } else   {
 	// Update with new data
 	// FIXME: Is this the best (only) way to do this?
-	// See also event_send in pattern_common.cc with the same problem
+	// See also record_send in NIC_stats.cc with the same problem
 	i.messages= p->messages + 1;
 	i.bytes= p->bytes + len;
 	counters.erase(p);

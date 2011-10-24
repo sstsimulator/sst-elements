@@ -78,7 +78,7 @@ class state_event   {
 
     private:
 	// Some state machine specific data that travels in the event
-	// Most state machines wont need this. Others may use any way they wish
+	// Most state machines wont need this. Others may use it any way they wish
 	typedef struct    {
 	    double Fdata[SM_MAX_DATA_FIELDS];
 	    long long Idata[SM_MAX_DATA_FIELDS];

@@ -32,6 +32,7 @@ std::set<stat_dest_t>::iterator pos;
 	pos= destination_nodes.find(dl);
 	if (pos != destination_nodes.end())   {
 	    // Update. FIXME: This seems overly complicated...
+	    // See also record() in msg_counter.cc with the same problem
 	    dl.cnt= pos->cnt + 1;
 	    destination_nodes.erase(dl);
 	    destination_nodes.insert(dl);

@@ -265,6 +265,17 @@ int i;
 	    fprintf(sstfile, "\t\t<Rtrlatency%d> %" PRId64 " </Rtrlatency%d>\n",
 		i, NetRtrlatency(i), i);
 	}
+
+	/*
+	** The routers need the NICinflection values as well. It's
+	** basically the bandwidth of the links between routers
+	*/
+	for (i= 0; i < NetNICinflections(); i++)   {
+	    fprintf(sstfile, "\t\t<NICinflection%d> %d </NICinflection%d>\n",
+		i, NetNICinflectionpoint(i), i);
+	    fprintf(sstfile, "\t\t<NIClatency%d> %" PRId64 " </NIClatency%d>\n",
+		i, NetNIClatency(i), i);
+	}
     }
 
     if (strcmp(Rname, RNAME_NoC) == 0)   {
@@ -274,6 +285,13 @@ int i;
 		i, NoCRtrinflectionpoint(i), i);
 	    fprintf(sstfile, "\t\t<Rtrlatency%d> %" PRId64 " </Rtrlatency%d>\n",
 		i, NoCRtrlatency(i), i);
+	}
+
+	for (i= 0; i < NoCNICinflections(); i++)   {
+	    fprintf(sstfile, "\t\t<NICinflection%d> %d </NICinflection%d>\n",
+		i, NoCNICinflectionpoint(i), i);
+	    fprintf(sstfile, "\t\t<NIClatency%d> %" PRId64 " </NIClatency%d>\n",
+		i, NoCNIClatency(i), i);
 	}
     }
 

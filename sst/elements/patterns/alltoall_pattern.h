@@ -21,6 +21,10 @@
 #include "allreduce_op.h" 
 #include "alltoall_op.h" 
 
+#define LARGE_ALLREDUCE_OPS	(1)
+#define SMALL_ALLREDUCE_OPS	(20)
+#define SMALL_LARGE_CUTOFF	(16)
+
 
 
 class Alltoall_pattern : public Comm_pattern    {
@@ -30,7 +34,6 @@ class Alltoall_pattern : public Comm_pattern    {
         {
 	    // Defaults for paramters
 	    num_sets= 9;
-	    num_ops= 200;
 	    num_doubles= 1;
 
 
@@ -39,10 +42,6 @@ class Alltoall_pattern : public Comm_pattern    {
             while (it != params.end())   {
 		if (!it->first.compare("num_sets"))   {
 		    sscanf(it->second.c_str(), "%d", &num_sets);
-		}
-
-		if (!it->first.compare("num_ops"))   {
-		    sscanf(it->second.c_str(), "%d", &num_ops);
 		}
 
 		if (!it->first.compare("num_doubles"))   {
@@ -87,8 +86,8 @@ class Alltoall_pattern : public Comm_pattern    {
 	    nnodes= 1;
 	    if (my_rank == 0)   {
 		printf("#  |||  Alltoall Pattern test\n");
-		printf("#  |||  Number of sets %d, with %d operations per set.\n",
-		    num_sets, num_ops);
+		printf("#  |||  Number of sets %d, with %d or %d (> %d ranks) operations per set.\n",
+		    num_sets, SMALL_ALLREDUCE_OPS, LARGE_ALLREDUCE_OPS, SMALL_LARGE_CUTOFF);
 		printf("#  |||  Message length is %d doubles = %d bytes.\n", num_doubles,
 		    (int)(num_doubles * sizeof(double)));
 		printf("#  |||  nodes, min, mean, median, max, sd\n");
