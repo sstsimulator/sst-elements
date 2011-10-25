@@ -49,6 +49,7 @@ class Collective_topology   {
 	int num_children(int rank);
 	int num_descendants(int rank);
 	int num_nodes(void);
+	int my_rank(void)   {return this_rank;}
 
 	const int root;
 	std::list <int>children;
