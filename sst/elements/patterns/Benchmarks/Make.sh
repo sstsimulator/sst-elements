@@ -22,12 +22,12 @@ else
     extra=""
 fi
 
-mpic++  -Wall $extra -I.. allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/allreduce.cc -o allreduce_bench -lm
+mpic++  -Wall $extra -I.. -D_PATTERNS_H_ allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/allreduce.cc -o allreduce_bench -lm
 
-mpic++  -Wall $extra -I.. alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/alltoall.cc -o alltoall_bench -lm
+mpic++  -Wall $extra -I.. -D_PATTERNS_H_ alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/alltoall.cc -o alltoall_bench -lm
 
-mpicc -Wall $extra msgrate_bench.c stat_p.c util.c -o msgrate_bench -lm
-mpicc -Wall $extra pingpong_bench.c stat_p.c util.c -o pingpong_bench -lm
+mpicc -Wall $extra -D_PATTERNS_H_ msgrate_bench.c stat_p.c util.c -o msgrate_bench -lm
+mpicc -Wall $extra -D_PATTERNS_H_ pingpong_bench.c stat_p.c util.c -o pingpong_bench -lm
 
 cd src_ghost_bench
     echo -n "Enter "

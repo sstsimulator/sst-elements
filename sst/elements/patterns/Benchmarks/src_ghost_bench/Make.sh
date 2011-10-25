@@ -4,7 +4,7 @@ if [[ $1 == "clean" ]] ; then
     exit
 fi
 
-mpic++ -Wall -I../.. -I.. \
+mpic++ -Wall -I../.. -I.. -I../../../.. -I../../../../.. \
 	ghost_driver.cc \
 	ghost.c \
 	memory.c \

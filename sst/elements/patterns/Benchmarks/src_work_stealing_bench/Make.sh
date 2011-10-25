@@ -10,7 +10,7 @@ else
     extra=""
 fi
 
-mpic++ -Wall $extra -I../.. -I.. -I../Collectives \
+mpic++ -Wall $extra -I../.. -I.. -I../Collectives -I../../../.. -I../../../../.. \
 	driver.cc \
 	ws.cc \
 	../util.c \
