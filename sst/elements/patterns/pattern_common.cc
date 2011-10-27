@@ -223,6 +223,18 @@ uint64_t delay;
 
 
 
+// We assume a memcpy is the same as a "messsage send" between two cores
+// Someday we may have to distinguish between cores and sockets.
+SST::SimTime_t
+Patterns::memdelay(int bytes)
+{
+
+    return nic[NoC]->delay(bytes);
+
+}  // end of memdelay()
+
+
+
 #ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Patterns)
 #endif // SERIALIZATION_WORKS_NOW

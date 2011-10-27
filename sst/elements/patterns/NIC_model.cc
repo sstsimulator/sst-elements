@@ -184,6 +184,18 @@ double delay;
 
 
 
+// What is the delay for a given message length?
+// memcpy and vector_op above us need to know.
+SST::SimTime_t
+NIC_model::delay(int bytes)
+{
+
+    return get_NICparams(_m->NICparams[_nic], bytes, 1.0);
+
+}  // end of delay()
+
+
+
 #ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(NIC_model)
 #endif // SERIALIZATION_WORKS_NOW

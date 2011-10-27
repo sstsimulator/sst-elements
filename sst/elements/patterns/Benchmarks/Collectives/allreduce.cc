@@ -44,6 +44,7 @@ std::list<int>::iterator it;
 	    MPI_Recv(tmp, msg_len, MPI_DOUBLE, *it, MY_TAG_UP, MPI_COMM_WORLD,
 		    MPI_STATUS_IGNORE);
 	    for (int i= 0; i < msg_len; i++)   {
+		// Only doing sum for now
 		result[i]= result[i] + tmp[i];
 	    }
 	}

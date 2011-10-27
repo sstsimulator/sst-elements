@@ -55,6 +55,7 @@ class NIC_model   {
 
 
 	SST::SimTime_t send(SST::CPUNicEvent *e, int dest_rank);
+	SST::SimTime_t delay(int bytes);
 	void handle_rcv_events(SST::Event *sst_event);
 	void set_send_link(SST::Link *link) {send_link= link;}
 

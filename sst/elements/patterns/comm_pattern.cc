@@ -82,6 +82,52 @@ int tag;
 
 
 
+// Pretend to do a memcpy
+void
+Comm_pattern::memcpy(int done_event, int bytes)
+{
+
+SimTime_t duration;
+int tag;
+
+
+    duration= common->memdelay(bytes);
+    tag= SM->SM_current_tag();
+    common->self_event_send(done_event, tag, duration);
+
+}  // end of memcpy()
+
+
+
+// Pretend to do a vector operation, such as an add or max on a
+// number of double words.
+void
+Comm_pattern::vector_op(int done_event, int doubles)
+{
+
+SimTime_t duration;
+double d;
+int tag;
+bool first_time= true;
+
+
+    // This is how long it takes to read and write a word
+    d= common->memdelay(sizeof(double));
+
+    // Add half of that to read the second operand
+    d= d * 1.5;
+
+    // Multiply by the number of double words we are processing
+    d= d * doubles;
+
+    duration= d;
+    tag= SM->SM_current_tag();
+    common->self_event_send(done_event, tag, duration);
+
+}  // end of vector_op()
+
+
+
 double
 Comm_pattern::SimTimeToD(SimTime_t t)
 {

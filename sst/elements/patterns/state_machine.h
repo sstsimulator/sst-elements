@@ -46,6 +46,7 @@ class state_event   {
 	    }
 	    restart= false;
 	    event= -1;
+	    packed_data.epoch= -1;
 	}
 
 	void set_Fdata(double F1, double F2= 0.0)   {
@@ -68,6 +69,9 @@ class state_event   {
 	    return packed_data.Idata[pos];
 	}
 
+	void set_epoch(int epoch)   {packed_data.epoch= epoch;}
+	int get_epoch(void)   {return packed_data.epoch;}
+
 	int payload_size;
 	void *payload;
 	int event;
@@ -82,6 +86,7 @@ class state_event   {
 	typedef struct    {
 	    double Fdata[SM_MAX_DATA_FIELDS];
 	    long long Idata[SM_MAX_DATA_FIELDS];
+	    int epoch;
 
 	    friend class boost::serialization::access;
 	    template<class Archive>

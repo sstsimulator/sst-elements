@@ -147,6 +147,8 @@ class Comm_pattern : public Component {
 	bool is_pow2(int num);
 	double SimTimeToD(SimTime_t t);
 	void local_compute(int done_event, SimTime_t duration);
+	void memcpy(int done_event, int bytes);
+	void vector_op(int done_event, int doubles);
 
 	MachineInfo *machine;
 	int my_rank;

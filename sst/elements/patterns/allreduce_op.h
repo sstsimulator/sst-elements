@@ -29,7 +29,11 @@ class Allreduce_op   {
 	    done= false;
 	    state= START;
 	    receives= 0;
-	    allreduce_msglen= msglen;
+	    sends_complete= 0;
+	    vector_op_pending= 0;
+	    epoch= 0;
+	    memcpy_done= false;
+	    active= false;
 
 	    // Get access to a virtual tree topology
 	    ctopo= new Collective_topology(cp->my_rank, cp->num_ranks, tree_type);
@@ -39,11 +43,16 @@ class Allreduce_op   {
 
 	void resize(int new_size)
 	{
+	    assert(ctopo);
+	    assert((sends_complete == 0) || sends_complete == ctopo->num_children());
+	    assert((receives == 0) || receives == ctopo->num_children());
+
 	    // Get rid of previous topology
 	    delete ctopo;
 
 	    // Start again
 	    ctopo= new Collective_topology(cp->my_rank, new_size, tree_type);
+	    epoch= 0;
 	}
 
 	uint32_t install_handler(void)
@@ -53,10 +62,12 @@ class Allreduce_op   {
 
 	// The Allreduce pattern generator can be in these states and deals
 	// with these events.
-	typedef enum {START, WAIT_CHILDREN, WAIT_PARENT} allreduce_state_t;
+	typedef enum {START, WAIT_MEMCPY, WAIT_VECTOR_OP, WAIT_CHILDREN,
+	    WAIT_PARENT} allreduce_state_t;
 
 	// The start event should always be SM_START_EVENT
-	typedef enum {E_START= SM_START_EVENT, E_SEND_DONE, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
+	typedef enum {E_START= SM_START_EVENT, E_MEMCPY_DONE, E_VECTOR_OP_DONE,
+	    E_SEND_DONE, E_FROM_CHILD, E_FROM_PARENT} allreduce_events_t;
 
 	// The operations we support
 	typedef enum {OP_SUM, OP_PROD, OP_MIN, OP_MAX} allreduce_op_t;
@@ -87,9 +98,15 @@ class Allreduce_op   {
 	int sends_complete;
 	Collective_topology *ctopo;
 
-	std::list <state_event>pending_msg;
+	std::list <state_event>pending_msg[2];
+	int vector_op_pending;
+	int epoch;
+	bool memcpy_done;
+	bool active;
 
 	void state_INIT(state_event event);
+	void state_WAIT_MEMCPY(state_event event);
+	void state_WAIT_VECTOR_OP(state_event event);
 	void state_WAIT_CHILDREN(state_event event);
 	void state_WAIT_PARENT(state_event event);
 
@@ -106,6 +123,10 @@ class Allreduce_op   {
 	    ar & BOOST_SERIALIZATION_NVP(sends_complete);
 	    ar & BOOST_SERIALIZATION_NVP(ctopo);
 	    ar & BOOST_SERIALIZATION_NVP(pending_msg);
+	    ar & BOOST_SERIALIZATION_NVP(vector_op_pending);
+	    ar & BOOST_SERIALIZATION_NVP(epoch);
+	    ar & BOOST_SERIALIZATION_NVP(memcpy_done);
+	    ar & BOOST_SERIALIZATION_NVP(active);
         }
 };
 

@@ -53,6 +53,7 @@ class Patterns   {
 		const char *payload= NULL, int payload_len= 0, int blocking= -1);
 	void storage_write(int data_size, int return_event);
 	void nvram_write(int data_size, int return_event);
+	SST::SimTime_t memdelay(int bytes);
 
 
     private:
