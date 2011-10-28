@@ -84,6 +84,7 @@ int out_port;
     if (aggregator)   {
 	// We're not really a router, rather we are being used as an aggregator
 	// Just send the event on: no delays, no queuing
+	e->hops++;
 	assert(port[out_port].link); // Trying to use an unused port. This is a routing error
 	port[out_port].link->Send(0, e);
 	return;
