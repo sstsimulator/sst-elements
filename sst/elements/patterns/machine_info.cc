@@ -344,20 +344,11 @@ int
 MachineInfo::myNetX(void)
 {
 
-int width_in_cores;
+int plane;
 
 
-    if (Net_depth > 1 || NoC_depth > 1)   {
-	fprintf(stderr, "%s:%s on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
-	return -1;
-    }
-
-    width_in_cores= Net_width *
-		    NoC_width *
-		    cores_per_NoC_router *
-		    num_router_nodes;
-
-    return (_my_rank % width_in_cores) / cores_per_Net_router;
+    plane= _my_rank % (Net_width * cores_per_Net_router * Net_height);
+    return (plane % (Net_width * cores_per_Net_router)) / cores_per_Net_router;
 
 }  // end of myNetX()
 
@@ -367,12 +358,13 @@ int width_in_cores;
 int
 MachineInfo::myNetY(void)
 {
-    if (Net_depth > 1 || NoC_depth > 1)   {
-	fprintf(stderr, "%s:%s() on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
-	return -1;
-    }
 
-    return _my_rank / (Net_width * cores_per_Net_router);
+int plane;
+
+
+    plane= _my_rank % (Net_width * cores_per_Net_router * Net_height);
+    return plane / (Net_width * cores_per_Net_router);
+
 }  // end of myNetY()
 
 
@@ -381,8 +373,7 @@ int
 MachineInfo::myNetZ(void)
 {
 
-    fprintf(stderr, "%s:%s() on line %d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
-    return -1;
+    return _my_rank / (Net_width * cores_per_Net_router * Net_height);
 
 }  // end of myNetY()
 
@@ -391,12 +382,15 @@ MachineInfo::myNetZ(void)
 int
 MachineInfo::myNoCX(void)
 {
-    if (Net_depth > 1 || NoC_depth > 1)   {
-	fprintf(stderr, "%s:%s() on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
-	return -1;
-    }
 
-    return (_my_rank % cores_per_Net_router) % NoC_width;
+int node_core;
+int plane;
+
+
+    node_core= _my_rank % cores_per_Net_router;
+    plane= node_core % (NoC_width * cores_per_NoC_router * NoC_height);
+    return (plane % (NoC_width * cores_per_NoC_router)) / cores_per_NoC_router;
+
 }  // end of myNoCX()
 
 
@@ -405,13 +399,13 @@ int
 MachineInfo::myNoCY(void)
 {
 
-    if (Net_depth > 1 || NoC_depth > 1)   {
-	fprintf(stderr, "%s:%s() on line %d not implemented yet for Z > 1\n", __FILE__, __FUNCTION__, __LINE__);
-	return -1;
-    }
+int node_core;
+int plane;
 
-    return (_my_rank % cores_per_NoC_router) /
-	(NoC_width * cores_per_NoC_router);
+
+    node_core= _my_rank % cores_per_Net_router;
+    plane= node_core % (NoC_width * cores_per_NoC_router * NoC_height);
+    return plane / (NoC_width * cores_per_NoC_router);
 
 }  // end of myNoCY()
 
@@ -421,8 +415,11 @@ int
 MachineInfo::myNoCZ(void)
 {
 
-    fprintf(stderr, "%s:%s() on line %d not implemented yet\n", __FILE__, __FUNCTION__, __LINE__);
-    return -1;
+int node_core;
+
+
+    node_core= _my_rank % cores_per_Net_router;
+    return node_core / (NoC_width * cores_per_NoC_router * NoC_height);
 
 }  // end of myNoCY()
 
