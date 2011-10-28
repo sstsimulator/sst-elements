@@ -22,6 +22,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "portals_args.h"
+#include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
+
 static Component* 
 create_trig_cpu(SST::ComponentId_t id, 
                 SST::Component::Params_t& params)
@@ -120,18 +124,61 @@ static void partition(ConfigGraph* graph, int ranks) {
 
 }
 
-
+using namespace boost;
 
 static void generate(ConfigGraph* graph, string options) {
-    // partition2(graph,ranks);
-    // return;
-    
-    int x_count = 16;
-    int y_count = 8;
-    int z_count = 8;
-    int radix = 8;
-    int size = x_count * y_count * z_count;
+    // Need to break up the string options into argc, argv type format
+    char_separator<char> sep(" ");
+    tokenizer< char_separator<char> > tok(options, sep);
+    int count = 1;
+    BOOST_FOREACH(string t, tok) {
+	count++;
+    }
+    // for (tokenizer<>::iterator it = tok.begin(); it != tok.end(); ++it){
+    // 	count++;
+    // }
 
+    char** argv = new char*[count];
+    int loop = 1;
+    argv[0] = "portals4_sm.generate";
+    
+    BOOST_FOREACH(string t, tok) {
+	char* new_str = (char*)malloc((t.length() + 1) * sizeof(char));
+	argv[loop++] = strncpy(new_str,t.c_str(),t.length() + 1);
+    }
+    // for (tokenizer<>::iterator it = tok.begin(); it != tok.end(); ++it){
+    // 	argv[i++] = (*it)->c_str();
+    // }
+
+    portals_args args;
+
+    parse_partals_args(count,argv,&args);
+
+    if (0 != args.noise_runs && (NULL == args.noise_interval || NULL == args.noise_duration)) {
+        print_usage(argv[0]);
+        exit(1);
+    }
+
+    if (NULL == args.application) {
+        print_usage(argv[0]);
+        exit(1);
+    }
+
+    /* clean up so SDL file looks nice */
+    if (NULL == args.noise_interval) args.noise_interval = "1kHz";
+    if (NULL == args.noise_duration) args.noise_duration = "25us";
+
+    string rtr_link_lat = "10ns";
+    string nic_link_lat;
+    if ( args.timing_set == 1 ) nic_link_lat = "100ns";
+    if ( args.timing_set == 2 ) nic_link_lat = "200ns";
+    if ( args.timing_set == 3 ) nic_link_lat = "250ns";
+    
+    int x_count = args.x;
+    int y_count = args.y;
+    int z_count = args.z;
+    int radix = args.radix;
+    int size = x_count * y_count * z_count;
 
     Params rtr_params;
     rtr_params["clock"] = "500Mhz";
@@ -154,38 +201,44 @@ static void generate(ConfigGraph* graph, string options) {
     rtr_params["routing.yDateline"] = "0";
     rtr_params["routing.zDateline"] = "0";
 
+    // cout << "rtr_params:" << endl;
+    // rtr_params.print_all_params(cout);
+    
     Params cpu_params;
     cpu_params["radix"] = str("%d",radix);
-    cpu_params["timing_set"] = "2";
+    cpu_params["timing_set"] = str("%d",args.timing_set);
     cpu_params["nodes"] = str("%d",size);
-    cpu_params["msgrate"] = "5MHz";
+    cpu_params["msgrate"] = str("%s",args.msg_rate);
     cpu_params["xDimSize"] = str("%d",x_count);
     cpu_params["yDimSize"] = str("%d",y_count);
     cpu_params["zDimSize"] = str("%d",z_count);
-    cpu_params["noiseRuns"] = "0";
-    cpu_params["noiseInterval"] = "1kHz";
-    cpu_params["noiseDuration"] = "25us";
-    cpu_params["application"] = "allreduce.tree_triggered";
-    cpu_params["latency"] = "500";
-    cpu_params["msg_size"] = "1048576";
-    cpu_params["chunk_size"] = "16384";
-    cpu_params["coalesce"] = "0";
-    cpu_params["enable_putv"] = "0";
+    cpu_params["noiseRuns"] = str("%d",args.noise_runs);
+    cpu_params["noiseInterval"] = str("%s",args.noise_interval);
+    cpu_params["noiseDuration"] = str("%s",args.noise_duration);
+    cpu_params["application"] = str("%s",args.application);
+    cpu_params["latency"] = str("%d",args.latency);
+    cpu_params["msg_size"] = str("%d",args.msg_size);
+    cpu_params["chunk_size"] = str("%d",args.chunk_size);
+    cpu_params["coalesce"] = str("%d",args.coalesce);
+    cpu_params["enable_putv"] = str("%d",args.enable_putv);
+
+    // cout << "cpu_params:" << endl;
+    // cpu_params.print_all_params(cout);
 
     Params nic_params;
     nic_params["clock"] = "500MHz";
-    nic_params["timing_set"] = "2";
+    nic_params["timing_set"] = str("%d",args.timing_set);
     nic_params["info"] = "no";
     nic_params["debug"] = "no";
     nic_params["dummyDebug"] = "no";
-    nic_params["latency"] = "500";
+    nic_params["latency"] = str("%d",args.latency);
 
-    string nic_link_lat = "200ns";
-    string rtr_link_lat = "10ns";
+    // cout << "nic_params:" << endl;
+    // nic_params.print_all_params(cout);
     
     ComponentId_t cid;
     for ( int i = 0; i < size; ++i) {
-        int x, y, z;
+	int x, y, z;
 
 	z = i / (x_count * y_count);
 	y = (i / x_count) % y_count;

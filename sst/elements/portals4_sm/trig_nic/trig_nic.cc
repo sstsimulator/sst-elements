@@ -41,7 +41,6 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     send_atomic_from_cache(true),
     next_out_msg_handle(0)
 {
-
     clock_handler_ptr = new Clock::Handler<trig_nic>(this, &trig_nic::clock_handler);
     registerClock( frequency, clock_handler_ptr, false  );
  
@@ -53,7 +52,7 @@ trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
 	_abort(trig_nic,"couldn't find timing set\n");
     }
     timing_set = strtol( params[ "timing_set" ].c_str(), NULL, 0 );
-
+    
     setTimingParams(timing_set);
 
     nextToRtr = NULL;

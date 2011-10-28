@@ -107,11 +107,10 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         }
     }
 
-    if ( params.find( "id" ) == params.end() ) {
+    routerID = params.find_integer("id");
+    if ( routerID == -1 ) {
         _abort(SS_router,"couldn't find routerID\n" );
     }
-
-    routerID = str2long( params[ "id" ] );
 
     std::ostringstream idStr;
     idStr << routerID << ":";
@@ -133,30 +132,30 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         tx_netlinks[ln] = NULL;
     }
 
-    if ( params.find( "iLCBLat" ) == params.end() ) {
+    iLCBLat = params.find_integer("iLCBLat");
+    if ( iLCBLat == -1 ) {
         _abort(SS_router,"couldn't find iLCBLat\n" );
     }
-    iLCBLat = str2long( params[ "iLCBLat" ] );
 
-    if ( params.find( "oLCBLat" ) == params.end() ) {
+    oLCBLat = params.find_integer("oLCBLat");
+    if ( oLCBLat == -1 ) {
         _abort(SS_router,"couldn't find oLCBLat\n" );
     }
-    oLCBLat = str2long( params[ "oLCBLat" ] );
 
-    if ( params.find( "routingLat" ) == params.end() ) {
+    routingLat = params.find_integer("routingLat");
+    if ( routingLat == -1 ) {
         _abort(SS_router,"couldn't find routingLat\n" );
     }
-    routingLat = str2long( params[ "routingLat" ] );
 
-    if ( params.find( "iQLat" ) == params.end() ) {
+    iQLat = params.find_integer("iQLat");
+    if ( iQLat == -1 ) {
         _abort(SS_router,"couldn't find iQLat\n" );
     }
-    iQLat = str2long( params[ "iQLat" ] );
 
-    if ( params.find( "OutputQSize_flits" ) == params.end() ) {
+    tmp = params.find_integer("OutputQSize_flits");
+    if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find OutputQSize_flits\n" );
     }
-    tmp = str2long( params[ "OutputQSize_flits" ] );
 
     m_log.write("OutputQSize_flits=%d\n",tmp);
 
@@ -164,39 +163,31 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         rtrOutput_maxQSize_flits[i] = tmp;
     }
 
-    if ( params.find( "InputQSize_flits" ) == params.end() ) {
+    tmp = params.find_integer("InputQSize_flits");
+    if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find InputQSize_flits\n" );
     }
-    tmp = str2long( params[ "InputQSize_flits" ] );
-
     m_log.write("InputQSize_flits=%d\n",tmp);
 
     for ( int i = 0; i < ROUTER_NUM_LINKS; i++ ) {
         rtrInput_maxQSize_flits[i] = tmp;
     }
 
-    if ( params.find( "Router2NodeQSize_flits" ) == params.end() ) {
+    tmp = params.find_integer("Router2NodeQSize_flits");
+    if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find Router2NodeQSize_flits\n" );
     }
-    tmp = str2long( params[ "Router2NodeQSize_flits" ] );
 
     m_log.write("Router2NodeQSize_flits=%d\n",tmp);
 
     rtrOutput_maxQSize_flits[ROUTER_HOST_PORT] = tmp;
     rtrInput_maxQSize_flits[ROUTER_HOST_PORT] = tmp;
 
-    if ( params.find( "debugInterval" ) != params.end() ) {
-        debug_interval = str2long( params[ "debugInterval" ] );
-    }
-    else debug_interval = 0;
+    debug_interval = params.find_integer( "debugInterval", 0 );
 
-    if ( params.find( "dumpTables" ) != params.end() ) {
-        dumpTables = str2long( params[ "dumpTables" ] );
-    }
+    dumpTables = params.find_integer( "dumpTables", 0 );
 
-    if ( params.find( "overheadMult" ) != params.end() ) {
-        overheadMultP = str2long( params[ "overheadMult" ] );
-    }
+    overheadMultP = params.find_integer( "overheadMult", 0 );
 
     m_log.write("overhead mult %f\n",overheadMultP);
 
@@ -447,25 +438,28 @@ void SS_router::setupRoutingTable( Params_t params, int nodes,
 
     DBprintf("\n");
 
-    if ( params.find( "xDateline" ) == params.end() ) {
+    int tmp;
+    tmp = params.find_integer("xDateline");
+    if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find xDateline\n" );
     }
-    if ( str2long( params["xDateline"] ) == calcXPosition(routerID,xDim,yDim,zDim) ) {
+    if ( tmp == calcXPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_X)] = true; 
     }
 
-    if ( params.find( "yDateline" ) == params.end() ) {
+    tmp = params.find_integer("yDateline");
+    if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find yDateline\n" );
     }
-    if ( str2long( params["yDateline"] ) == calcYPosition(routerID,xDim,yDim,zDim) ) {
+    if ( tmp == calcYPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_Y)] = true; 
     }
 
-    if ( params.find( "zDateline" ) == params.end() ) {
+    tmp = params.find_integer("zDateline");
+    if ( tmp == -1 ) {
         _abort(SS_router,"couldn't find zDateline\n" );
     }
-
-    if ( str2long( params["xDateline"] ) == calcZPosition(routerID,xDim,yDim,zDim) ) {
+    if ( tmp == calcZPosition(routerID,xDim,yDim,zDim) ) {
         m_datelineV[dimension(LINK_POS_Z)] = true; 
     }
 

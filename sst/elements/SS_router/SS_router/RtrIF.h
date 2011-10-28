@@ -55,17 +55,24 @@ public:
         int num_tokens = 512;
 
 
-        if ( params.find( "id" ) == params.end() ) {
+        // if ( params.find( "id" ) == params.end() ) {
+        //     _abort(RtrIF,"couldn't find routerID\n" );
+        // }
+        m_id = params.find_integer( "id" );
+        if ( m_id == -1 ) {
             _abort(RtrIF,"couldn't find routerID\n" );
         }
-        m_id = str2long( params[ "id" ] );
 
         if ( params.find("clock") != params.end() ) {
             frequency = params["clock"];
         }
 
+        // if ( params.find( "num_vc" ) != params.end() ) {
+        //     num_vcP = str2long( params["num_vc"] );
+        // }
+
         if ( params.find( "num_vc" ) != params.end() ) {
-            num_vcP = str2long( params["num_vc"] );
+            num_vcP = params.find_integer("num_vc");
         }
 
         if ( params.find( "Node2RouterQSize_flits" ) != params.end() ) {

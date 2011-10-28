@@ -31,20 +31,20 @@
 
 Network::Network( SST::Component::Params_t params )
 {
-    if ( params.find( "xDimSize" ) == params.end() ) {
+    _xDimSize = params.find_integer("xDimSize");
+    if ( _xDimSize == -1 ) {
         _abort(Network,"couldn't find xDimSize\n" );
     } 
-    _xDimSize = str2long( params[ "xDimSize" ] );
 
-    if ( params.find( "yDimSize" ) == params.end() ) {
+    _yDimSize = params.find_integer("yDimSize");
+    if ( _yDimSize == -1 ) {
         _abort(Network,"couldn't find yDimSize\n" );
     } 
-    _yDimSize = str2long( params[ "yDimSize" ] );
 
-    if ( params.find( "zDimSize" ) == params.end() ) {
+    _zDimSize = params.find_integer("zDimSize");
+    if ( _zDimSize == -1 ) {
         _abort(Network,"couldn't find zDimSize\n" );
     } 
-    _zDimSize = str2long( params[ "zDimSize" ] );
 
     _size = _xDimSize*_yDimSize*_zDimSize;
 #if 0

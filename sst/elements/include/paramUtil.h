@@ -14,14 +14,17 @@
 #ifndef _PARAMUTIL_H
 #define _PARAMUTIL_H
 
+#warning paramUtil.h has been deprecated.  Please use equivalent functionality contained in the Params class
+
 #include <errno.h>
 #include <sst/core/component.h>
 
 inline long str2long( std::string str )
 {
-    long value = strtol( str.c_str(), NULL, 0 );
+    long value = -1;
+    value = strtol( str.c_str(), NULL, 0 );
     if ( errno == EINVAL ) {
-        _abort(XbarV2,"strtol( %s, NULL, 10\n", str.c_str());
+        _abort(XbarV2,"strtol( %s, NULL, 0: %ld\n", str.c_str(),value);
     }
     return value;
 }

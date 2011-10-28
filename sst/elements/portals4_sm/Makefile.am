@@ -9,6 +9,7 @@ comp_LTLIBRARIES = libportals4_sm.la
 
 libportals4_sm_la_SOURCES = \
 	portals4_sm.cc \
+	portals_args.h \
 	trig_cpu/application.h \
 	trig_cpu/portals.h \
 	trig_cpu/portals.cc \
@@ -41,4 +42,4 @@ libportals4_sm_la_SOURCES = \
 libportals4_sm_la_LDFLAGS = -module -avoid-version
 
 bin_PROGRAMS = portals4_sm_sdlgen
-portals4_sm_sdlgen_SOURCES = portals4_sm_sdlgen.c
+portals4_sm_sdlgen_SOURCES = portals4_sm_sdlgen.c portals_args.h
