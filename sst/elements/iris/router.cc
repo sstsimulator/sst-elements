@@ -77,7 +77,7 @@ Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
 
     //set our clock
     clock_handler = new SST::Clock::Handler<Router>(this, &Router::tock);
-//    SST::TimeConverter* tc = registerClock(ROUTER_FREQ,clock_handler);
+    SST::TimeConverter* tc = registerClock(ROUTER_FREQ,clock_handler);
 //    printf(" Routers time conversion factor is %lu \n", tc->getFactor());
 
     resize();
@@ -350,6 +350,7 @@ Router::do_st ( void )
                 f->vc = oc;
                 ev->type = irisRtrEvent::Packet;
                 ev->packet = *f;
+                printf("%d: Send pkt at%lu", node_id, _TICK_NOW);
                 links.at(op)->Send(ev);
 
                 /*  I have one slot in the next buffer less now. */
