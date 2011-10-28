@@ -91,7 +91,9 @@ SimTime_t duration;
 int tag;
 
 
-    duration= common->memdelay(bytes);
+    // FIXME: Read this value out of of the XML file
+    // duration= common->memdelay(bytes);
+    duration= (SimTime_t)(0.000000000428 * bytes);
     tag= SM->SM_current_tag();
     common->self_event_send(done_event, tag, duration);
 
@@ -106,21 +108,11 @@ Comm_pattern::vector_op(int done_event, int doubles)
 {
 
 SimTime_t duration;
-double d;
 int tag;
-bool first_time= true;
 
 
-    // This is how long it takes to read and write a word
-    d= common->memdelay(sizeof(double));
-
-    // Add half of that to read the second operand
-    d= d * 1.5;
-
-    // Multiply by the number of double words we are processing
-    d= d * doubles;
-
-    duration= d;
+    // FIXME: Read this value out of of the XML file
+    duration= (SimTime_t)(4.0 * doubles);
     tag= SM->SM_current_tag();
     common->self_event_send(done_event, tag, duration);
 
