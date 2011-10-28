@@ -22,6 +22,9 @@ else
     extra=""
 fi
 
+mpic++  -Wall $extra -I.. -D_PATTERNS_H_ memcpy.cc ../stats.cc stat_p.c util.c -o memcpy -lm
+mpic++  -Wall $extra -I.. -D_PATTERNS_H_ vector_add.cc ../stats.cc stat_p.c util.c -o vector_add -lm
+
 mpic++  -Wall $extra -I.. -D_PATTERNS_H_ allreduce_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/allreduce.cc -o allreduce_bench -lm
 
 mpic++  -Wall $extra -I.. -D_PATTERNS_H_ alltoall_bench.cc ../stats.cc stat_p.c ../collective_topology.cc util.c Collectives/alltoall.cc -o alltoall_bench -lm
