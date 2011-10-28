@@ -1,6 +1,6 @@
 /*
  * =====================================================================================
-//       Filename:  router.cc
+ *       Filename:  router.cc
  * =====================================================================================
  */
 
@@ -13,6 +13,8 @@
 #include "sst/core/element.h"
 
 #include	"router.h"
+const char* ROUTER_FREQ = "500MHz";
+
 // Move this include into irisComponent
 //#include	"genericHeader.cc"
 
@@ -32,9 +34,10 @@ Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                 stat_last_flit_cycle(0), stat_packets_in(0),stat_packets_out(0),
                 stat_total_pkt_latency_nano(0),
                 heartbeat_interval(500)/* in cycles */, stat_avg_buffer_occ(0.0),
-                router_fastfwd(0)
+                router_fastfwd(0), empty_cycles(0)
 {
 
+    currently_clocking = true;
     // get configuration parameters
     if ( params.find("id") == params.end() ) {
         _abort(event_test,"Specify node_id for the router\n");
@@ -63,7 +66,7 @@ Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
         r_param->buffer_size= strtol( params[ "buffer_size" ].c_str(), NULL, 0 );
     }
     /* ************ End of update configuration *************** */
-    
+
 
     // Need to configure all links with the handler functions 
     // TODO: Check the 7 here
@@ -73,13 +76,13 @@ Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                                         (this, &Router::handle_link_arrival, dir)));
 
     //set our clock
-    registerClock( "1GHz", 
-                   new SST::Clock::Handler<Router>(this, 
-                                                   &Router::tock) );
+    clock_handler = new SST::Clock::Handler<Router>(this, &Router::tock);
+//    SST::TimeConverter* tc = registerClock(ROUTER_FREQ,clock_handler);
+//    printf(" Routers time conversion factor is %lu \n", tc->getFactor());
 
     resize();
 
-//    r_param->dump_router_config();
+    //    r_param->dump_router_config();
 }  /* -----  end of method Router::Router  (constructor)  ----- */
 
 Router::~Router ()
@@ -89,7 +92,7 @@ Router::~Router ()
 
 }		/* -----  end of method Router::~Router  ----- */
 
-inline void
+void
 Router::resize( void )
 {
 
@@ -143,6 +146,7 @@ Router::print_stats ( void ) const
         << "\n SimpleRouter[" << node_id << "] stat_flits_in: " << stat_flits_in
         << "\n SimpleRouter[" << node_id << "] stat_flits_out: " << stat_flits_out
         << "\n SimpleRouter[" << node_id << "] avg_router_pkt_latency: " << stat_total_pkt_latency_nano+0.0/stat_packets_out
+        << "\n SimpleRouter[" << node_id << "] stat_last_flit_cycle: " << stat_last_flit_cycle
         << "\n";
 
     return str.str().c_str();
@@ -212,33 +216,40 @@ Router::do_vca ( void )
             uint16_t op = winner.out_port;
             uint16_t oc = winner.out_vc;
 
-            uint16_t msgid = ip*r_param->vcs+ic;
-            if ( ib_state.at(msgid).pipe_stage == VCA_REQUESTED ) 
+            IB_state& curr_msg= ib_state.at(ip*r_param->vcs+ic);
+            if ( curr_msg.pipe_stage == VCA_REQUESTED ) 
                 // &&                  downstream_credits[op)[oc)==credits)
             {
-//                printf(" vca winner %d-%d|%d-%d \n",ip,ic,op,oc);
-                ib_state.at(msgid).out_port = op;
-                ib_state.at(msgid).out_channel= oc;
-                ib_state.at(msgid).pipe_stage = VCA;
+                curr_msg.out_port = op;
+                curr_msg.out_channel= oc;
+                curr_msg.pipe_stage = VCA;
                 // if requesting multiple outr_param->ports make sure to cancel them as
                 // pkt will no longer be VCA_REQUESTED
+                if(in_buffer.at(ip).get_occupancy(ic))
+                {
+                    //                printf(" request swa %d-%d|%d-%d \n",ip,ic,op,oc);
+                    swa.request(op, oc, ip, ic, _TICK_NOW);
+                    curr_msg.pipe_stage = SWA_REQUESTED;
+                }
             }
 
         }
 
+    // If swa request failed and your stuck in vca you can request here
     for( uint16_t i=0; i<(r_param->ports*r_param->vcs); ++i)
         if( ib_state.at(i).pipe_stage == VCA)
         {
-            uint16_t ip = ib_state.at(i).in_port;
-            uint16_t ic = ib_state.at(i).in_channel;
-            uint16_t op = ib_state.at(i).out_port;
-            uint16_t oc = ib_state.at(i).out_channel;
+            IB_state& curr_msg = ib_state.at(i);
+            uint16_t ip = curr_msg.in_port;
+            uint16_t ic = curr_msg.in_channel;
+            uint16_t op = curr_msg.out_port;
+            uint16_t oc = curr_msg.out_channel;
+            printf(" request swa %d-%d|%d-%d \n",ip,ic,op,oc);
 
             if(in_buffer.at(ip).get_occupancy(ic))
             {
-//                printf(" request swa %d-%d|%d-%d \n",ip,ic,op,oc);
                 swa.request(op, oc, ip, ic, _TICK_NOW);
-                ib_state.at(i).pipe_stage = SWA_REQUESTED;
+                curr_msg.pipe_stage = SWA_REQUESTED;
             }
         }
 
@@ -260,16 +271,17 @@ Router::do_vca ( void )
     for( uint16_t i=0; i<(r_param->ports*r_param->vcs); ++i)
         if( ib_state.at(i).pipe_stage == IB )
         {
-            uint16_t ip = ib_state.at(i).in_port;
-            uint16_t ic = ib_state.at(i).in_channel;
-            uint16_t op = ib_state.at(i).oport_list.at(0);
-            uint16_t oc = ib_state.at(i).ovc_list.at(0);
+            IB_state& tmp = ib_state.at(i);
+            uint16_t ip = tmp.in_port;
+            uint16_t ic = tmp.in_channel;
+            uint16_t op = tmp.oport_list.at(0);
+            uint16_t oc = tmp.ovc_list.at(0);
             //                if( downstream_credits[op)[oc) == credits &&
             if ( !vca.is_requested(op, oc, ip, ic) 
                  && downstream_credits.at(op).at(oc)>0 )
             {
-//                printf(" requesting vca %d-%d|%d-%d", ip, ic, op, oc);
-                ib_state.at(i).pipe_stage = VCA_REQUESTED;
+                //                printf(" requesting vca %d-%d|%d-%d", ip, ic, op, oc);
+                tmp.pipe_stage = VCA_REQUESTED;
                 vca.request(op,oc,ip,ic);
                 //break;      /* allow just one */
             }
@@ -283,121 +295,95 @@ void
 Router::do_swa ( void )
 {
     /* Switch Allocation */
-        for( uint16_t i=0; i<r_param->ports*r_param->vcs; ++i)
-            if( ib_state.at(i).pipe_stage == SWA_REQUESTED)
-                if ( !swa.is_empty())
+    for( uint16_t i=0; i<r_param->ports*r_param->vcs; ++i)
+        if( ib_state.at(i).pipe_stage == SWA_REQUESTED)
+            if ( !swa.is_empty())
+            {
+                IB_state& sa_msg = ib_state.at(i);
+                uint16_t op = -1, oc = -1;
+                SA_unit sa_winner;
+                uint16_t ip = sa_msg.in_port;
+                uint16_t ic = sa_msg.in_channel;
+                op = sa_msg.out_port;
+                oc= sa_msg.out_channel;
+                sa_winner = swa.pick_winner(op, _TICK_NOW);
+
+                if( sa_winner.port == ip && sa_winner.channel == ic
+                    && in_buffer.at(ip).get_occupancy(ic) > 0
+                    && downstream_credits.at(op).at(oc)>0 )
                 {
-                    IB_state& sa_msg = ib_state.at(i);
-                    uint16_t op = -1, oc = -1;
-                    SA_unit sa_winner;
-                    uint16_t ip = sa_msg.in_port;
-                    uint16_t ic = sa_msg.in_channel;
-                    op = sa_msg.out_port;
-                    oc= sa_msg.out_channel;
-                    sa_winner = swa.pick_winner(op, _TICK_NOW);
-
-                    if( sa_winner.port == ip && sa_winner.channel == ic
-                        && in_buffer.at(ip).get_occupancy(ic) > 0
-                        && downstream_credits.at(op).at(oc)>0 )
-                    {
-                        //                    printf(" swa won %d-%d|%d-%d \n",ip,ic,op,oc);
-                        sa_msg.pipe_stage = ST;
-                        stmsgs.push_back(i);
-                    }
-                    else
-                    {
-                        sa_msg.pipe_stage = VCA;
-                        swa.clear_requestor(op, ip,oc);
-                    }
-
+                    //                    printf(" swa won %d-%d|%d-%d \n",ip,ic,op,oc);
+                    sa_msg.pipe_stage = ST;
                 }
+                else
+                {
+                    sa_msg.pipe_stage = VCA;
+                    swa.clear_requestor(op, ip,oc);
+                }
+
+            }
 
 
     return ;
 }		/* -----  end of method Router::do_st  ----- */
 
-inline void
+void
 Router::do_st ( void )
 {
-    /* Switch traversal */
-    //    for( uint16_t i=0; i<r_param->ports*r_param->vcs; i++)
-    for( uint16_t a=0; a<stmsgs.size(); ++a)
-    {
-        IB_state curr_pkt=ib_state.at(stmsgs.at(a));
-        if( curr_pkt.pipe_stage == ST )
+    for ( uint i=0; i<ib_state.size(); ++i)
+        if( ib_state.at(i).pipe_stage==ST &&
+            ib_state.at(i).pkt_arrival_time+12 <= _TICK_NOW)
         {
+            IB_state& curr_pkt = ib_state.at(i);
             uint16_t op = curr_pkt.out_port;
             uint16_t oc = curr_pkt.out_channel;
             uint16_t ip = curr_pkt.in_port;
             uint16_t ic = curr_pkt.in_channel;
-            if( in_buffer.at(ip).get_occupancy(ic)> 0
-                && downstream_credits.at(op).at(oc)>0 )
+            printf("%d@%lu: credits%d  \n",node_id, _TICK_NOW, downstream_credits.at(op).at(oc));
+            if ( downstream_credits.at(op).at(oc) )
             {
+
                 irisNPkt* f = in_buffer.at(ip).pull(ic);
                 f->vc = oc;
-
-                //Request for the next flit.. extra request when the tail is
-                //being pushed out but the swa is cleared when the tail is
-                //pushed out so its safe to request here for all types of flits
-                //TODO: Dont request again pkt being sent
-                //                swa.request(op, oc, ip, ic, _TICK_NOW);
-                //                ib_state.at(i).pipe_stage = SWA_REQUESTED;
-
-                //                if( f->type == TAIL || f->pkt_length == 1)
-                /*
-                   if( ib_state.at(i).pkt_arrival_time+4+f->sizeInFlits == _TICK_NOW )
-                   {
-                   stat_packets_out++;
-
-                   ib_state.at(i).is_valid = true;
-                   ib_state.at(i).pipe_stage = EMPTY;
-                   ib_state.at(i).in_port = -1;
-                   ib_state.at(i).in_channel = -1;
-                   ib_state.at(i).out_port = -1;
-                   ib_state.at(i).out_channel = -1;
-                   vca.clear_winner(op, oc, ip, ic);
-                   swa.clear_requestor(op, ip,oc);
-                   ib_state.at(i).oport_list.clear();
-                   ib_state.at(i).ovc_list.clear();
-                   }
-                 */
-
-                stat_flits_out++;
-                // update xbar access stats
 
                 irisRtrEvent* ev = new irisRtrEvent;
                 f->vc = oc;
                 ev->type = irisRtrEvent::Packet;
                 ev->packet = *f;
-
                 links.at(op)->Send(ev);
-                //                printf("%d: Router push pkt out pkt_id %u dst:%d inp/op:%d|%d @ %lu\n", node_id, f->pkt_id,f->destNum,ip,op, _TICK_NOW );
 
-                /* Send a credit back and update buffer state for the
-                 * downstream router buffer */
+                /*  I have one slot in the next buffer less now. */
                 downstream_credits.at(op).at(oc)--;
+
                 irisRtrEvent* cr_ev = new irisRtrEvent; //(CREDIT, ic);
                 cr_ev->type = irisRtrEvent::Credit;
                 cr_ev->credit.vc = ic;
                 cr_ev->credit.num = 1;
-                //cr_ev->link_id = 0;
-                if ( ip == 0 ) cr_ev->credit.num  = 8;
-                links.at(0)->Send(cr_ev);
 
+                // make sure to send back 8 credits to the interface because it
+                // assumes it sent out 8 flits 
+                if ( ip == 0 ) cr_ev->credit.num  = 8;
+                links.at(ip)->Send(cr_ev);
+
+                /* Update packet stats */
+                stat_packets_out++;
                 stat_last_flit_cycle = _TICK_NOW;
                 uint16_t lat = _TICK_NOW - curr_pkt.pkt_arrival_time;
                 stat_total_pkt_latency_nano += lat;
+                printf("%d: pkt out @%lu\n",node_id, _TICK_NOW);
 
-            }
-            else
-            {
-                //                ib_state.at(i).pipe_stage = VCA;
+                curr_pkt.pipe_stage = EMPTY;
+                curr_pkt.in_port = -1;
+                curr_pkt.in_channel = -1;
+                curr_pkt.out_port = -1;
+                curr_pkt.out_channel = -1;
+                vca.clear_winner(op, oc, ip, ic);
                 swa.clear_requestor(op, ip,oc);
+                curr_pkt.oport_list.clear();
+                curr_pkt.ovc_list.clear();
             }
         }
-    }
 
-    stmsgs.clear();
     return ;
 }		/* -----  end of method Router::do_swa  ----- */
 
@@ -430,6 +416,15 @@ Router::handle_link_arrival ( DES_Event* ev, int dir)
             break;
     }
 
+    if ( !currently_clocking ) {
+        //        printf(" Restart the clock@%lu \n", _TICK_NOW);
+        currently_clocking = true;
+        clock_handler = new SST::Clock::Handler<Router>(this, &Router::tock);
+        SST::TimeConverter* tc = registerClock(ROUTER_FREQ,clock_handler, true);
+        if ( !tc)
+            _abort(event_test,"Failed to restart the clock\n");
+    }
+
     return ;
 }		/* -----  end of method Router::handle_link_arrival  ----- */
 
@@ -460,49 +455,30 @@ Router::tock ( SST::Cycle_t t )
     //            stat_avg_buff += in_buffers[i].get_occupancy(j);
     //        }
 
-    uint curr_occ = 0;
-    for( uint16_t i=0; i<r_param->ports; ++i)
-        for ( uint16_t ai=0; ai<r_param->vcs; ++ai)
-            curr_occ += in_buffer.at(i).get_occupancy(ai);
-
-    for ( uint i=0; i<ib_state.size(); ++i)
-        if( ib_state.at(i).pipe_stage==ST &&
-            ib_state.at(i).pkt_arrival_time+12 == _TICK_NOW )
-        {
-            uint16_t op = ib_state.at(i).out_port;
-            uint16_t oc = ib_state.at(i).out_channel;
-            uint16_t ip = ib_state.at(i).in_port;
-            uint16_t ic= ib_state.at(i).in_channel;
-
-            /* Update packet stats */
-            stat_packets_out++;
-            //            printf("%d: Make pkt state empty currocc:%d @%lu\n",node_id, curr_occ,_TICK_NOW);
-            //            fflush(stdout);
-
-            ib_state.at(i).is_valid = true;
-            ib_state.at(i).pipe_stage = EMPTY;
-            ib_state.at(i).in_port = -1;
-            ib_state.at(i).in_channel = -1;
-            ib_state.at(i).out_port = -1;
-            ib_state.at(i).out_channel = -1;
-            vca.clear_winner(op, oc, ip, ic);
-            swa.clear_requestor(op, ip,oc);
-            ib_state.at(i).oport_list.clear();
-            ib_state.at(i).ovc_list.clear();
-        }
-
-    if( stmsgs.size())
-        do_st();
+    do_st();
     do_swa();
     do_vca();
 
     /* Try to unregister and register clock for simulation speedup
-       for ( uint i=0; i<ib_state.size(); ++i)
-       if ( ib_state.at(i).pipe_stage != EMPTY )
-       {
-       return true;
-       }
+     * Returning true from the function registered with the clock will
+     * automatically unregister the clock. 
+     * Return false to stay ticked every cycle
      * */
+    //    printf(" still clocked node%d @%lu\n",node_id, _TICK_NOW);
+    bool work_done = true;
+    for( uint16_t i=0; i<(r_param->ports*r_param->vcs); ++i)
+        if ( ib_state.at(i).pipe_stage != EMPTY )
+        {
+            work_done = false;
+            break;
+        }
+
+    if ( work_done )
+    {
+        currently_clocking = false;
+        empty_cycles++;
+        return true;
+    }
 
     return false;
 }		/* -----  end of method Router::tock  ----- */

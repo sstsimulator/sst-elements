@@ -21,7 +21,7 @@
 enum defaults { 
     DEFAULT_PORTS=5, 
     DEFAULT_VCS=6, 
-    DEFAULT_NO_RCR=20, 
+    DEFAULT_NO_RCR=96, 
     DEFAULT_RC_M = static_cast<int>(XY), 
     DEFAULT_NO_NODES = 64,
     DEFAULT_GRID_SIZE = 8

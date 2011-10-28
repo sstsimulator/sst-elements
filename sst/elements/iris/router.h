@@ -10,6 +10,9 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+//
+// Current router is a 4 stage input buffered only router. 
+// TODO: remove packet level flow control add flit convertor to interface
  * =====================================================================================
  */
 
@@ -35,26 +38,14 @@ enum Router_PS {
     ST
 };
 
+/* its in genericHeader.cc */
 extern const char* Router_PS_string;
-/* Moved it genericHeader.cc
-const char* Router_PS_string[]= {
-    "INVALID",
-        "EMPTY",
-        "IB",
-        "RC",
-        "VCA_REQUESTED",
-        "VCA",
-        "SWA_REQUESTED",
-        "SWA",
-        "ST"
-};
- * */
 
 /*-----------------------------------------------------------------------------
  *  Data structure that contains state for all active packets
  *  in the system ( active->packets in IB/RC/VCA/SA/ST ). 
  *  At any point there should be a max of ports*vcs no of entries in the
-\n *  router.
+ *  router.
  *-----------------------------------------------------------------------------*/
 struct IB_state
 {
@@ -100,7 +91,7 @@ struct IB_state
 
             return str.str();
         }
-                                                
+
     /*TODO: Write the copy constructor for this so that it can be used to reset stats */
 }; 
 
@@ -140,22 +131,24 @@ class Router : public DES_Component
         uint64_t stat_packets_out;
         uint64_t stat_total_pkt_latency_nano;
         uint64_t heartbeat_interval;
-        std::vector<uint32_t> total_buff_occ;
         // take the buff occupancy at heartbeat_intervals
         double stat_avg_buffer_occ;
-
-        /*  Generic Healper functions */
-        const char* print_stats() const;
         uint64_t router_fastfwd;            /* fastfwd interval in cycles */
+        uint64_t empty_cycles;
+        std::vector<uint32_t> total_buff_occ;
+
+        /*  Generic Helper functions */
+        const char* print_stats() const;
         void reset_stats();    /* Useful for fast forwarding. (uses router_fastfwd) */
         void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
-        inline void resize( void ); // Reconfigure the parameters for the router
+        void resize( void ); // Reconfigure the parameters for the router
 
-    int Finish()
-    {
-        fprintf(stderr,"\n Stats for node %d %s ",node_id, print_stats());
-        return 0;
-    }
+        int Finish()
+        {
+            fprintf(stderr,"\n Stats for node %d %s ",node_id, print_stats());
+            fprintf(stderr,"empty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
+            return 0;
+        }
 
     private:
         void do_ib( const irisNPkt* , uint16_t ip); 
@@ -176,9 +169,11 @@ class Router : public DES_Component
         std::vector<std::vector<uint16_t> > downstream_credits;
 
         std::vector<SST::Link*> links;
-        std::vector<uint16_t> stmsgs;
-        std::vector<uint16_t> swa_msgs;
+        std::vector<uint16_t> pending_stmsg;
+
         bool currently_clocking;
+        SST::Clock::Handler<Router>* clock_handler;
+
 
 }; /* -----  end of class Router  ----- */
 
