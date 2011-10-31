@@ -227,7 +227,7 @@ int partition;
     }
 
     /* Read the farlink file */
-    if (!error)   {
+    if (!error && fp_farlink)   {
 	printf("# *** Reading far link configuration from \"%s\"\n", farlinkFname);
 	if (read_farlink_file(fp_farlink, verbose) == FALSE)   {
 	    error= TRUE;
