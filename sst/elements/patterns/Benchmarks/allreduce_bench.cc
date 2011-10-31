@@ -399,6 +399,7 @@ double total_time;
     tot= 0.0;
     cnt= 0;
     tot_squared= 0.0;
+    precision= 0.0;
 
     while (cnt < max_trials)   {
 	cnt++;
