@@ -38,11 +38,11 @@
 
 
 /* Local functions */
-static double do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data);
-static double do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data);
-static void experiment(int my_rank, int max_trials, int num_ops, int msg_len, int nnodes,
+static double do_one_Test1_trial(int num_ops, int num_doubles, MPI_Comm comm, bool check_data);
+static double do_one_Test2_trial(int num_ops, int num_doubles, MPI_Comm comm, bool check_data);
+static void experiment(int my_rank, int max_trials, int num_ops, int num_doubles, int nnodes,
     MPI_Comm comm, bool check_data, double req_precision,
-    double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, bool check_data));
+    double (*do_one_trial)(int num_ops, int num_doubles, MPI_Comm comm, bool check_data));
 
 static void usage(char *pname);
 
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 int ch, error;
 int my_rank, num_ranks;
 int nnodes;
-int msg_len;
+int num_doubles;
 bool library;
 bool stat_mode;
 double req_precision;
@@ -73,7 +73,7 @@ bool check_data;
     /* Set the defaults */
     opterr= 0;		/* Disable getopt error printing */
     error= false;
-    msg_len= 1;
+    num_doubles= 1;
     library= false;
     stat_mode= true;
     req_precision= DEFAULT_PRECISION;
@@ -102,8 +102,8 @@ bool check_data;
 		break;
 
 	    case 'l':
-		msg_len= strtol(optarg, (char **)NULL, 0);
-		if (msg_len < 1)   {
+		num_doubles= strtol(optarg, (char **)NULL, 0);
+		if (num_doubles < 1)   {
 		    if (my_rank == 0)   {
 			fprintf(stderr, "Message length in doubles (-l) must be > 0!\n");
 		    }
@@ -142,7 +142,7 @@ bool check_data;
 	} else   {
 	    printf("# Statistics mode is off\n");
 	}
-	printf("# Message size is %d bytes\n", (int)(msg_len * sizeof(double)));
+	printf("# Message size is %d bytes\n", (int)(num_doubles * sizeof(double)));
 	printf("# Algorithm used for Test 3: ");
 	if (library)   {
 	    printf("MPI_Alltoall\n");
@@ -181,7 +181,7 @@ bool check_data;
 	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
 	printf("#");
     }
-    experiment(my_rank, max_trials, num_ops, msg_len, num_ranks, MPI_COMM_WORLD,
+    experiment(my_rank, max_trials, num_ops, num_doubles, num_ranks, MPI_COMM_WORLD,
 	    check_data, req_precision, &do_one_Test1_trial);
 
 
@@ -192,7 +192,7 @@ bool check_data;
 	printf("# nodes,        min,        mean,      median,         max,          sd,   precision, trials\n");
 	printf("#");
     }
-    experiment(my_rank, max_trials, num_ops, msg_len, num_ranks, MPI_COMM_WORLD,
+    experiment(my_rank, max_trials, num_ops, num_doubles, num_ranks, MPI_COMM_WORLD,
 	    check_data, req_precision, &do_one_Test1_trial);
 
 
@@ -229,11 +229,11 @@ bool check_data;
 	if (my_rank < nnodes)   {
 	    if (library)   {
 		// Use the built-in MPI_Alltoall
-		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
+		experiment(my_rank, max_trials, num_ops, num_doubles, nnodes, new_comm,
 		    check_data, req_precision, &do_one_Test1_trial);
 	    } else   {
 		// Use my alltoall
-		experiment(my_rank, max_trials, num_ops, msg_len, nnodes, new_comm,
+		experiment(my_rank, max_trials, num_ops, num_doubles, nnodes, new_comm,
 		    check_data, req_precision, &do_one_Test2_trial);
 	    }
 	}
@@ -268,7 +268,7 @@ bool check_data;
 
 
 static double
-do_one_Test1_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data)
+do_one_Test1_trial(int num_ops, int num_doubles, MPI_Comm comm, bool check_data)
 {
 
 double t, t2;
@@ -283,26 +283,26 @@ int my_rank;
 	MPI_Comm_rank(comm, &my_rank);
 
 	// Allocate memory
-	sbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
-	rbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
+	sbuf= (double *)malloc(sizeof(double) * num_doubles * nranks);
+	rbuf= (double *)malloc(sizeof(double) * num_doubles * nranks);
 	if ((sbuf == NULL) || (rbuf == NULL))   {
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
 	for (j= 0; j < nranks; j++)   {
-	    for (i= 0; i < msg_len; i++)   {
-		sbuf[j * msg_len + i]= i + my_rank;
+	    for (i= 0; i < num_doubles; i++)   {
+		sbuf[j * num_doubles + i]= i + my_rank;
 	    }
 	}
 
-	memset(rbuf, 0x55, sizeof(double) * msg_len * nranks);
+	memset(rbuf, 0x55, sizeof(double) * num_doubles * nranks);
 
 	/* Check */
 	if (check_data)   {
-	    MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
+	    MPI_Alltoall(sbuf, num_doubles, MPI_DOUBLE, rbuf, num_doubles, MPI_DOUBLE, comm);
 	    for (j= 0; j < nranks; j++)   {
-		for (i= 0; i < msg_len; i++)   {
-		    if (rbuf[j * msg_len + i] != i + j)   {
+		for (i= 0; i < num_doubles; i++)   {
+		    if (rbuf[j * num_doubles + i] != i + j)   {
 			fprintf(stderr, "[%3d] MPI_Alltoall() failed at rbuf[j %d, i %d]\n", my_rank, j, i);
 			exit(-1);
 		    }
@@ -311,12 +311,12 @@ int my_rank;
 	}
 
 	/* Do a warm-up */
-	MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
+	MPI_Alltoall(sbuf, num_doubles, MPI_DOUBLE, rbuf, num_doubles, MPI_DOUBLE, comm);
 	
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
-	    MPI_Alltoall(sbuf, msg_len, MPI_DOUBLE, rbuf, msg_len, MPI_DOUBLE, comm);
+	    MPI_Alltoall(sbuf, num_doubles, MPI_DOUBLE, rbuf, num_doubles, MPI_DOUBLE, comm);
 	}
 	t2= MPI_Wtime() - t;
 
@@ -329,7 +329,7 @@ int my_rank;
 
 
 static double
-do_one_Test2_trial(int num_ops, int msg_len, MPI_Comm comm, bool check_data)
+do_one_Test2_trial(int num_ops, int num_doubles, MPI_Comm comm, bool check_data)
 {
 
 double t, t2;
@@ -344,32 +344,32 @@ int my_rank;
 	MPI_Comm_size(comm, &nranks);
 
 	// Allocate memory
-	sbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
-	rbuf= (double *)malloc(sizeof(double) * msg_len * nranks);
+	sbuf= (double *)malloc(sizeof(double) * num_doubles * nranks);
+	rbuf= (double *)malloc(sizeof(double) * num_doubles * nranks);
 	if ((sbuf == NULL) || (rbuf == NULL))   {
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
 	for (j= 0; j < nranks; j++)   {
-	    for (i= 0; i < msg_len; i++)   {
-		sbuf[j * msg_len + i]= j * my_rank + i + my_rank;
+	    for (i= 0; i < num_doubles; i++)   {
+		sbuf[j * num_doubles + i]= j * my_rank + i + my_rank;
 	    }
 	}
 
-	memset(rbuf, 0x55, sizeof(double) * msg_len * nranks);
+	memset(rbuf, 0x55, sizeof(double) * num_doubles * nranks);
 
 	/* Check */
 	if (check_data)   {
-	    my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
+	    my_alltoall(sbuf, rbuf, num_doubles, nranks, my_rank);
 	    for (j= 0; j < nranks; j++)   {
-		for (i= 0; i < msg_len; i++)   {
-		    if (rbuf[j * msg_len + i] != j * j + i + j)   {
+		for (i= 0; i < num_doubles; i++)   {
+		    if (rbuf[j * num_doubles + i] != j * j + i + j)   {
 			fprintf(stderr, "[%3d] %d ranks, my_alltoall() failed at rbuf[j %d, i %d]\n",
 			    my_rank, nranks, j, i);
 			if (my_rank == 4)   {
 			for (int k= 0; k < nranks; k++)   {
 			    fprintf(stderr, "[%3d]    [%2d][%2d] Expected %4.1f, got %4.1f\n", my_rank,
-				k, i, (float)k * k + i + k, rbuf[k * msg_len + i]);
+				k, i, (float)k * k + i + k, rbuf[k * num_doubles + i]);
 			}
 			}
 			exit(-1);
@@ -379,12 +379,12 @@ int my_rank;
 	}
 
 	/* Do a warm-up */
-	my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
+	my_alltoall(sbuf, rbuf, num_doubles, nranks, my_rank);
 	
 	/* Start the timer */
 	t= MPI_Wtime();
 	for (i= 0; i < num_ops; i++)   {
-	    my_alltoall(sbuf, rbuf, msg_len, nranks, my_rank);
+	    my_alltoall(sbuf, rbuf, num_doubles, nranks, my_rank);
 	}
 	t2= MPI_Wtime() - t;
 
@@ -397,9 +397,9 @@ int my_rank;
 
 
 static void
-experiment(int my_rank, int max_trials, int num_ops, int msg_len, int nnodes,
+experiment(int my_rank, int max_trials, int num_ops, int num_doubles, int nnodes,
     MPI_Comm comm, bool check_data, double req_precision,
-    double (*do_one_trial)(int num_ops, int msg_len, MPI_Comm comm, bool check_data))
+    double (*do_one_trial)(int num_ops, int num_doubles, MPI_Comm comm, bool check_data))
 {
 
 double tot;
@@ -426,7 +426,7 @@ double total_time;
 	MPI_Barrier(comm);
 
 	// Run one trial
-	metric= do_one_trial(num_ops, msg_len, comm, check_data);
+	metric= do_one_trial(num_ops, num_doubles, comm, check_data);
 
 #if !node0
 	MPI_Allreduce(&metric, &total_time, 1, MPI_DOUBLE, MPI_SUM, comm);
