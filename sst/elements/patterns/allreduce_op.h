@@ -20,6 +20,7 @@
 
 class Allreduce_op   {
     public:
+	// msglen is in bytes
 	Allreduce_op(Comm_pattern * const& current_pattern, int msglen, tree_type_t tree) :
 	    cp(current_pattern),
 	    allreduce_msglen(msglen),
@@ -86,7 +87,7 @@ class Allreduce_op   {
 	// We need to remember how to upcall into our parent object
 	Comm_pattern *cp;
 
-	// Simulated message size
+	// Simulated message size in bytes
 	int allreduce_msglen;
 
 	// What should the underlying tree look like?
