@@ -94,6 +94,7 @@ class state_event   {
 	    {
 		ar & BOOST_SERIALIZATION_NVP(Fdata);
 		ar & BOOST_SERIALIZATION_NVP(Idata);
+		ar & BOOST_SERIALIZATION_NVP(epoch);
 	    }
 	} packed_data_t;
 
