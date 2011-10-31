@@ -147,9 +147,10 @@ int pingping;
 
     if (error)   {
 	if (my_rank == 0)   {
-	    fprintf(stderr, "Usage: %s [-a] [-s start_length] [-e end_length] [-i inc] [-p precision]\n",
+	    fprintf(stderr, "Usage: %s [-a] [-d destination] [-s start_length] [-e end_length] [-i inc] [-p precision]\n",
 		argv[0]);
 	    fprintf(stderr, "           -a            Do ping-ping instead of ping-pong\n");
+	    fprintf(stderr, "           -d            Destination rank. Default is n - 1\n");
 	}
 	exit (-1);
     }
