@@ -1,4 +1,4 @@
-- Fix calculations of myNetX etc for Z or z > 1
+- Clean up CPUNICevents and state events. Get rid of redundant information and isolate.
 - Make NIC_model_t an iterator or something
 - Clean up the core == rank ambiguity
 - generate far links (Did this get lost when I got rid of V1?)
@@ -7,9 +7,9 @@
 - Come up with a unified strategy for debug and verbose
 
 - Seperate out NIC model
-    + Send side is in pattern_common.cc
-    + Receive side is in comm_pattern.cc
-    + Should there be a queue in front of the receive side?
+    + DONE Send side is in pattern_common.cc
+    + DONE Receive side is in comm_pattern.cc
+    + DONE Should there be a queue in front of the receive side?
     + Make a NIC only read and store the NoC or Net params, depending on its function
 
 - NoCIntraLatency cannot be less than NoCNICparams 0. Why? Same is true for NetIntraLatency
@@ -156,3 +156,5 @@ Arch model
 - Try to switch to the new xml format again
 
 - Play with component weight
+
+- Fix calculations of myNetX etc for Z or z > 1
