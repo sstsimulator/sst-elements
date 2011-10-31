@@ -50,33 +50,37 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
     switch (e)   {
 	case E_START:
 	case E_NEXT_OUTER_LOOP:
-	    if (nnodes < 64)   {
-		nnodes++;
-	    } else if (nnodes < 128)   {
-		nnodes= nnodes + 8;
-	    } else if (nnodes < 512)   {
-		nnodes= nnodes + 32;
-	    } else if (nnodes < 2048)   {
-		nnodes= nnodes + 128;
+	    if (nnodes == num_ranks)   {
+		// We are done
+		goto_state(state_DONE, STATE_DONE, E_DONE);
 	    } else   {
-		nnodes= nnodes + 512;
-	    }
+		if (nnodes < 64)   {
+		    nnodes++;
+		} else if (nnodes < 128)   {
+		    nnodes= nnodes + 8;
+		    if (nnodes > num_ranks) nnodes= num_ranks;
+		} else if (nnodes < 512)   {
+		    nnodes= nnodes + 32;
+		    if (nnodes > num_ranks) nnodes= num_ranks;
+		} else if (nnodes < 2048)   {
+		    nnodes= nnodes + 128;
+		    if (nnodes > num_ranks) nnodes= num_ranks;
+		} else   {
+		    nnodes= nnodes + 512;
+		    if (nnodes > num_ranks) nnodes= num_ranks;
+		}
 
-	    if (nnodes < SMALL_LARGE_CUTOFF)   {
-		num_ops= SMALL_ALLREDUCE_OPS;
-	    } else   {
-		num_ops= LARGE_ALLREDUCE_OPS;
-	    }
+		if (nnodes < SMALL_LARGE_CUTOFF)   {
+		    num_ops= SMALL_ALLREDUCE_OPS;
+		} else   {
+		    num_ops= LARGE_ALLREDUCE_OPS;
+		}
 
-	    if (nnodes <= num_ranks)   {
 		// Start next loop with nnodes
 		a_test->resize(nnodes);
 		times.clear();
 		set= 0;
 		goto_state(state_INNER_LOOP, STATE_INNER_LOOP, E_NEXT_INNER_LOOP);
-	    } else   {
-		// We are done
-		goto_state(state_DONE, STATE_DONE, E_DONE);
 	    }
 	    break;
 

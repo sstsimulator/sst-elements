@@ -71,8 +71,7 @@ class Alltoall_pattern : public Comm_pattern    {
 	    SMallreduce_collect= a_collect->install_handler();
 
 	    // Then we need a state machine for the operation under test
-	    alltoall_msglen= num_doubles;
-	    a_test= new Alltoall_op(this, alltoall_msglen);
+	    a_test= new Alltoall_op(this, num_doubles);
 	    SMalltoall_test= a_test->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
@@ -83,7 +82,7 @@ class Alltoall_pattern : public Comm_pattern    {
 
 	    // Kickstart ourselves
 	    done= false;
-	    nnodes= 1;
+	    nnodes= 0;
 	    if (my_rank == 0)   {
 		printf("#  |||  Alltoall Pattern test\n");
 		printf("#  |||  Number of sets %d, with %d or %d (> %d ranks) operations per set.\n",
@@ -103,7 +102,7 @@ class Alltoall_pattern : public Comm_pattern    {
 
 	// The start event should always be SM_START_EVENT
 	typedef enum {E_START= SM_START_EVENT, E_NEXT_OUTER_LOOP, E_NEXT_INNER_LOOP,
-	    E_NEXT_TEST, E_BARRIER_EXIT, E_ALLREDUCE_ENTRY, E_ALLREDUCE_EXIT,
+	    E_NEXT_TEST, E_BARRIER_EXIT, E_ALLREDUCE_EXIT,
 	    E_ALLTOALL_ENTRY, E_ALLTOALL_EXIT, E_COLLECT, E_DONE} alltoall_events_t;
 
     private:
