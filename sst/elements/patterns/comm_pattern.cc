@@ -93,7 +93,7 @@ int tag;
 
     // FIXME: Read this value out of of the XML file
     // duration= common->memdelay(bytes);
-    duration= (SimTime_t)(0.000000000428 * bytes);
+    duration= (SimTime_t)(0.000000000428 * bytes * 1000000000.0);
     tag= SM->SM_current_tag();
     common->self_event_send(done_event, tag, duration);
 
