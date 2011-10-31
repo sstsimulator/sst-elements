@@ -17,7 +17,7 @@ static uint32_t next_power2(uint32_t v);
 
 
 void
-my_alltoall(double *in, double *result, int msg_len, int nranks, int my_rank)
+my_alltoall(double *in, double *result, int num_doubles, int nranks, int my_rank)
 {
 
 int i;
@@ -31,8 +31,8 @@ int64_t bytes_sent= 0;
 
 
     /* My own contribution */
-    for (i= 0; i < msg_len; i++)   {
-	result[my_rank * msg_len + i]= in[my_rank * msg_len + i];
+    for (i= 0; i < num_doubles; i++)   {
+	result[my_rank * num_doubles + i]= in[my_rank * num_doubles + i];
     }
 
     i= nranks >> 1;
@@ -46,33 +46,33 @@ int64_t bytes_sent= 0;
 	rreq1= MPI_REQUEST_NULL;
 	rreq2= MPI_REQUEST_NULL;
 
-	offset= (my_rank * msg_len) - ((shift - 1) * msg_len);
+	offset= (my_rank * num_doubles) - ((shift - 1) * num_doubles);
 	if (offset < 0)   {
 	    /* Need to break it up into two pieces */
-	    offset= offset + (nranks * msg_len);
-	    len1= (nranks * msg_len) - offset;
+	    offset= offset + (nranks * num_doubles);
+	    len1= (nranks * num_doubles) - offset;
 	    MPI_Isend(result + offset, len1, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
 	    bytes_sent= bytes_sent + len1 * sizeof(double);
-	    len2= shift * msg_len - (nranks * msg_len - offset);
+	    len2= shift * num_doubles - (nranks * num_doubles - offset);
 	    MPI_Isend(result, len2, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq2);
 	    bytes_sent= bytes_sent + len2 * sizeof(double);
 	} else   {
 	    /* I can send it in one piece */
-	    MPI_Isend(result + offset, shift * msg_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
-	    bytes_sent= bytes_sent + shift * msg_len * sizeof(double);
+	    MPI_Isend(result + offset, shift * num_doubles, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
+	    bytes_sent= bytes_sent + shift * num_doubles * sizeof(double);
 	}
 
-	offset= (src * msg_len) - ((shift - 1) * msg_len);
+	offset= (src * num_doubles) - ((shift - 1) * num_doubles);
 	if (offset < 0)   {
 	    /* Need to break it up into two pieces */
-	    offset= offset + (nranks * msg_len);
-	    len1= (nranks * msg_len) - offset;
+	    offset= offset + (nranks * num_doubles);
+	    len1= (nranks * num_doubles) - offset;
 	    MPI_Irecv(result + offset, len1, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
-	    len2= shift * msg_len - (nranks * msg_len - offset);
+	    len2= shift * num_doubles - (nranks * num_doubles - offset);
 	    MPI_Irecv(result, len2, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq2);
 	} else   {
 	    /* I can receive it in one piece */
-	    MPI_Irecv(result + offset, shift * msg_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
+	    MPI_Irecv(result + offset, shift * num_doubles, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
 	}
 
 	/* End of loop housekeeping */
@@ -89,7 +89,7 @@ int64_t bytes_sent= 0;
     }
 
     // If we are not on a power of two ranks, we have some more work to do.
-    // n additional pieces of data (of length msg_len) still need to be xfered
+    // n additional pieces of data (of length num_doubles) still need to be xfered
     if (!is_pow2(nranks))   {
 	int n;
 	double *r1_start, *r2_start;
@@ -115,17 +115,17 @@ int64_t bytes_sent= 0;
 	// Do I need to receive in two pieces?
 	if (src < n - 1)   {
 	    // Receive it in two pieces
-	    r1_start= &result[(my_rank + 1) * msg_len];
-	    r1_len= (nranks - my_rank - 1) * msg_len;
+	    r1_start= &result[(my_rank + 1) * num_doubles];
+	    r1_len= (nranks - my_rank - 1) * num_doubles;
 	    r2_start= &result[0];
-	    r2_len= n * msg_len - r1_len;;
+	    r2_len= n * num_doubles - r1_len;;
 	    // fprintf(stderr, "[%3d] expect two of lengths %d and %d from %d\n", my_rank, r1_len, r2_len, src);
 	    MPI_Irecv(r1_start, r1_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
 	    MPI_Irecv(r2_start, r2_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq2);
 	} else   {
 	    // Receive it all in one piece
-	    r1_start= &result[((my_rank + 1) % nranks) * msg_len];
-	    r1_len= n * msg_len;
+	    r1_start= &result[((my_rank + 1) % nranks) * num_doubles];
+	    r1_len= n * num_doubles;
 	    // fprintf(stderr, "[%3d] expect one from %d\n", my_rank, src);
 	    MPI_Irecv(r1_start, r1_len, MPI_DOUBLE, src, 0, MPI_COMM_WORLD, &rreq1);
 	}
@@ -134,10 +134,10 @@ int64_t bytes_sent= 0;
 	// Send one piece or two?
 	if (my_rank < n - 1)   {
 	    // Split buffer; send two pieces
-	    s1_start= &result[(nranks - (n - my_rank - 1)) * msg_len];
-	    s1_len= (n - my_rank - 1) * msg_len;
+	    s1_start= &result[(nranks - (n - my_rank - 1)) * num_doubles];
+	    s1_len= (n - my_rank - 1) * num_doubles;
 	    s2_start= &result[0];
-	    s2_len= (my_rank + 1) * msg_len;
+	    s2_len= (my_rank + 1) * num_doubles;
 	    // fprintf(stderr, "[%3d] Sending two pieces (%4.1f, %4.1f) of lengths %d, %d to %d\n", my_rank, *s1_start, *s2_start, s1_len, s2_len, dest);
 	    MPI_Isend(s1_start, s1_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
 	    bytes_sent= bytes_sent + s1_len;
@@ -145,8 +145,8 @@ int64_t bytes_sent= 0;
 	    bytes_sent= bytes_sent + s2_len;
 	} else   {
 	    // All in one piece
-	    s1_start= &result[(my_rank - n + 1) * msg_len];
-	    s1_len= n * msg_len;
+	    s1_start= &result[(my_rank - n + 1) * num_doubles];
+	    s1_len= n * num_doubles;
 	    // fprintf(stderr, "[%3d] Sending one piece (%4.1f) of len %d to %d\n", my_rank, *s1_start, s1_len, dest);
 	    MPI_Isend(s1_start, s1_len, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &sreq1);
 	    bytes_sent= bytes_sent + s1_len;
