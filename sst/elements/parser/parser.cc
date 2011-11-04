@@ -191,6 +191,7 @@ bool parser::parseM5( Cycle_t current) {
 	    pdata= power->getPower(this, BTB, mycounts);
 	    pdata= power->getPower(this, BPRED, mycounts);
 	}
+  power->calibrate_for_clovertown();
   power->compute_temperature(getId());
   regPowerStats(pdata);
 
