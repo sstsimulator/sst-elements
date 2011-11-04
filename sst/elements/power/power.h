@@ -117,6 +117,7 @@ namespace SST {
 	enum pmodel{McPAT, SimPanalyzer, McPAT05, IntSim, ORION}; //McPAT05 is an older version
 	enum tmodel {HOTSPOT};
 	enum tlayer{SILICON, INTERFACE, SPREADER, HEATSINK, NUM_THERMAL_LAYERS};
+	enum rtype {SERIES, SERIES_PARALLEL, PARALLEL};
 	
 	
 
@@ -523,6 +524,7 @@ class Power{
 	unsigned p_maxNumSubComp;  //max number of sub-comp of the same type
 	bool p_ifReadEntireXML, p_ifGetMcPATUnitP;
 	static std::multimap<ptype,int> subcompList; //stores subcomp types and the floorplan they reside on
+	rtype p_systemTopology; //series or series-parallel or parallel
 	
 	// floorplan and thermal tiles parameters
 	static parameters_chip_t chip;
@@ -805,6 +807,7 @@ class Power{
 	    p_hasUpdatedTemp = false;
 	    p_TotalFailureRate = 0;
 	    p_NumSamples = 0;
+	    p_systemTopology = SERIES;
 	    //p_McPATonPipe = p_McPATonIRS = p_McPATonRF = false;  //if xxx has power estimated by McPAT already
 	    #ifdef McPAT05_H
 	    McPAT05initBasic(); //initialize basic InputParameter interface_ip
@@ -1012,7 +1015,7 @@ cache_dtlb_tech.output_width.push_back(0); cache_dtlb_tech.cache_policy.push_bac
 	    core_tech.machine_bits=64; core_tech.archi_Regs_IRF_size=32; core_tech.archi_Regs_FRF_size=32;
 	    core_tech.core_issue_width=1; core_tech.core_register_windows_size=8; core_tech.core_opcode_width=9;	
 	    core_tech.core_instruction_window_size=16; core_tech.core_decode_width=1; core_tech.core_instruction_length=32;
-   	    core_tech.core_instruction_buffer_size=16; core_tech.ALU_per_core=1; core_tech.FPU_per_core=1; core_tech.MUL_per_core=1; core_tech.core_ROB_size = 80;	
+   	    core_tech.core_instruction_buffer_size=16; core_tech.ALU_per_core=1; core_tech.FPU_per_core=1; core_tech.MUL_per_core=1; core_tech.core_ROB_size = 128;	
 	    core_tech.core_store_buffer_size=32; core_tech.core_load_buffer_size=32; core_tech.core_memory_ports=1; core_tech.core_fetch_width=1;
 	    core_tech.core_commit_width=1; core_tech.core_int_pipeline_depth=6; core_tech.core_phy_Regs_IRF_size=80; core_tech.core_phy_Regs_FRF_size=80; core_tech.core_RAS_size=32;	
 	    core_tech.core_number_of_NoCs = 1; 	core_tech.core_number_instruction_fetch_ports = 1; core_tech.core_fp_issue_width = 1; core_tech.core_fp_instruction_window_size =16;
@@ -1145,6 +1148,7 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	void getTemperatureStatistics();
 	void setupDPM(int block_id, power_state pstate);
 	void dynamic_power_management();
+	void calibrate_for_clovertown();
 	void test();
 
 	// McPAT interface

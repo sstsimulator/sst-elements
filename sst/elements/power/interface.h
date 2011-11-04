@@ -303,7 +303,7 @@ class floorplan_t
 {
  public:
   floorplan_t() : 
-  area_estimate(0.0), leakage_feedback(false)
+  area_estimate(0.0), leakage_feedback(false), TTF(0)
   { }
   ~floorplan_t() {}
 
@@ -314,6 +314,7 @@ class floorplan_t
   double area_estimate;
   bool leakage_feedback;
   std::vector<double> TDB;		//thermal database that holds thermal traces of the floorplan
+  double TTF;				//TTF of a ploorplan block at a time step 
 
   Pdissipation_t p_usage_floorplan;	// instant power dissipation
   power_state pstate;                   // DPM

@@ -7049,9 +7049,9 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		ifu->SSTcomputeEnergy(false, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
 		leakage = (I)icache.power.readOp.leakage + (I)icache.power.readOp.gate_leakage;
-		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", il1 leakage = " << leakage << "readOP = " << icache.power.readOp.leakage << " gate = " << icache.power.readOp.gate_leakage << std::endl;
+		using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", il1 leakage = " << leakage << "readOP = " << icache.power.readOp.leakage << " gate = " << icache.power.readOp.gate_leakage << std::endl;
 		dynamicPower = (I)icache.rt_power.readOp.dynamic / executionTime;
-		//using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", icache.rt_power = " << icache.rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
+		using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", icache.rt_power = " << icache.rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		ifu->SSTcomputeEnergy(true, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
@@ -10039,6 +10039,14 @@ void Power::setTech(Component::Params_t deviceParams)
 	    else
 		opt_for_clk = false;
 	}
+	else if(!it->first.compare("system_failure_type")){ 
+	        if (!it->second.compare("SERIES"))
+			p_systemTopology = SERIES;
+		else if (!it->second.compare("SERIES_PARALLEL"))
+			p_systemTopology = SERIES_PARALLEL;
+		else if (!it->second.compare("PARALLEL"))
+			p_systemTopology = PARALLEL;
+	}
         it++;
     }
     
@@ -10169,7 +10177,7 @@ void Power::McPATSetup()
 	p_Mp1->sys.number_of_NoCs = core_tech.core_number_of_NoCs;
 	// All params at the level of 'system'
 	p_Mp1->sys.core_tech_node = core_tech.core_tech_node;
-	p_Mp1->sys.target_core_clockrate=2200;
+	p_Mp1->sys.target_core_clockrate=2660;
 	p_Mp1->sys.target_chip_area=200;
 	p_Mp1->sys.temperature = core_tech.core_temperature;
 	p_Mp1->sys.number_cache_levels=3;
@@ -10199,7 +10207,7 @@ void Power::McPATSetup()
 	p_Mp1->sys.virtual_memory_page_size = core_tech.core_virtual_memory_page_size;
 		p_Mp1->sys.core[0].clock_rate=(int)(device_tech.clockRate/1000000); // Mc unit is MHz
 		p_Mp1->sys.core[0].opt_local = true;
-		p_Mp1->sys.core[0].x86 = false;
+		p_Mp1->sys.core[0].x86 = true;
 		p_Mp1->sys.core[0].machine_bits = core_tech.machine_bits;
 		p_Mp1->sys.core[0].virtual_address_width = core_tech.core_virtual_address_width;
 		p_Mp1->sys.core[0].physical_address_width = core_tech.core_physical_address_width;
@@ -10224,7 +10232,7 @@ void Power::McPATSetup()
 		p_Mp1->sys.core[0].FPU_per_core = core_tech.FPU_per_core;
 		p_Mp1->sys.core[0].MUL_per_core = core_tech.MUL_per_core;
 		p_Mp1->sys.core[0].instruction_buffer_size = core_tech.core_instruction_buffer_size;
-		p_Mp1->sys.core[0].decoded_stream_buffer_size=20;		
+		p_Mp1->sys.core[0].decoded_stream_buffer_size=16;		
 		//strcpy(sys.core[i].instruction_window_scheme,"default");
 		p_Mp1->sys.core[0].instruction_window_scheme=0;
 		p_Mp1->sys.core[0].instruction_window_size = core_tech.core_instruction_window_size;
@@ -13242,6 +13250,9 @@ void Power::compute_MTTF()
 	double t_min, t_max, t_avg, freq;
 	double temp_TTF, total_TTF = 0;
 	double minTTF = 99999;
+	double maxTTF = 0;
+	double min1TTF = 99999; //min TTF of the 4 cores on the 1st chip
+	double min2TTF = 99999; //min TTF of the 4 cores on the 2nd chip
 	int i, j, k, TDBsize = 0;
 	int iterations = 1000;
 	map<int,floorplan_t>::iterator fit;
@@ -13254,7 +13265,7 @@ void Power::compute_MTTF()
 
 	fit = p_chip.floorplan.begin();
 	TDBsize = (*fit).second.TDB.size();
-	std::vector<double> MTTF(TDBsize);
+	std::vector<double> systemMTTF(TDBsize);
 	std::cout << "TDB.size = " << TDBsize << ", floorplan id = " << (*fit).second.id << std::endl;
 	getTemperatureStatistics();
 
@@ -13265,26 +13276,74 @@ void Power::compute_MTTF()
 	    for (i=0; i<iterations; i++){
 		k = 0; //block id
 
-	        //search global(system-wide) minimum TTF 
+	        //calculate global(system-wide) TTF 
 	        for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
 	        {
 	           temp_TTF = r->compute_localMinTTF((*fit).second.TDB.at(j) , p_minTemperature.at(k), p_maxTemperature.at(k), p_maxTemperature.at(k) - p_minTemperature.at(k), p_thermalFreq[k][j], false);
-		    k++;
+		   (*fit).second.TTF += temp_TTF;
 
-	           if (minTTF > temp_TTF)
-		        minTTF = temp_TTF;
+
+	           
+		   if (k >=0 && k <=3) //cores on the 1st chip
+		   {
+		        if (min1TTF > temp_TTF)
+		            min1TTF = temp_TTF;
+			if (minTTF > temp_TTF)
+		            minTTF = temp_TTF;
+		        if (maxTTF < temp_TTF)
+		            maxTTF = temp_TTF;
+		   }
+		   if (k >=8 && k <=11) //cores on the 2nd chip
+		   {
+			if (min2TTF > temp_TTF)
+		            min2TTF = temp_TTF;
+			if (minTTF > temp_TTF)
+		            minTTF = temp_TTF;
+		        if (maxTTF < temp_TTF)
+		            maxTTF = temp_TTF;
+		   }
+
+		   //proceed to the next block
+		    k++;
     	        }
-	
-	        total_TTF = total_TTF + minTTF;
+
+		//Min-Max Method
+		switch(p_systemTopology) 
+      		{
+		    case SERIES:	
+	               total_TTF = total_TTF + minTTF;
+		    break;
+		    case SERIES_PARALLEL:
+			if (min1TTF >= min2TTF)
+		       	    total_TTF = total_TTF + min1TTF;
+			else
+		       	    total_TTF = total_TTF + min2TTF;
+		    break;		
+		    case PARALLEL:
+		       total_TTF = total_TTF + maxTTF;
+		    break;		
+		}
 		minTTF = 99999; //reset
+		min1TTF = 99999; //reset
+		min2TTF = 99999; //reset
+		maxTTF = 0; //reset
 	    }
 
-	    MTTF.at(j) = (total_TTF/iterations);
+	    systemMTTF.at(j) = (total_TTF/iterations);
             std::cout << "total_TTF = " << total_TTF << std::endl;
 	    total_TTF = 0; //reset
 
-	    std::cout << "At time step " << j << ", MTTF = " << MTTF.at(j) << std::endl;
-	}
+	    std::cout << "At time step " << j << ", system MTTF = " << systemMTTF.at(j) << std::endl;
+	    
+            //print individual block(core)'s MTTF
+	    k = 0; //block id
+	    for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+	    {
+		std::cout << "Block id " << k << " 's MTTF = " << (*fit).second.TTF/iterations << std::endl;
+		k++;
+		(*fit).second.TTF = 0; //reset
+	    }
+	} //end for each time instance
 	delete r;
 
 }
@@ -13400,7 +13459,39 @@ void Power::dynamic_power_management()
 	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
 							+ (*fit).second.p_usage_floorplan.currentPower;
 
-	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;	
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has leakage power = " << (*fit).second.p_usage_floorplan.leakagePower << " W" << std::endl;
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" current power = " << (*fit).second.p_usage_floorplan.currentPower << " W" << std::endl;	
+  }
+
+}
+
+
+void Power::calibrate_for_clovertown()
+{
+    map<int,floorplan_t>::iterator fit;
+
+  for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
+  {
+    if (((*fit).second.id >=0 && (*fit).second.id <=3) || ((*fit).second.id >=8 && (*fit).second.id <=11)){
+	//reset the original value of total energy at the previous step
+	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
+							- (*fit).second.p_usage_floorplan.runtimeDynamicPower
+							- (*fit).second.p_usage_floorplan.leakagePower;
+
+	//calibrate the rumtime power [power = (power + unmodeled power:0.755)*calibrate rate:1.83] 
+	(*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)((*fit).second.p_usage_floorplan.runtimeDynamicPower + 0.755)*1.83;
+
+	//calculate leakage power based on the industry model (0.5W/mm2; 36mm2 per core; leakage feedback)
+	(*fit).second.p_usage_floorplan.leakagePower = (I)0.5 * 36.0 * exp(0.017*((*fit).second.device_tech.temperature-383));
+
+         //the new current power/total power after DPM
+	(*fit).second.p_usage_floorplan.currentPower = (*fit).second.p_usage_floorplan.runtimeDynamicPower
+							+ (*fit).second.p_usage_floorplan.leakagePower;
+	
+        (*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
+							+ (*fit).second.p_usage_floorplan.currentPower;
+    }	
   }
 
 }
