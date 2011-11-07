@@ -1113,6 +1113,7 @@ bool ppcInstruction::Perform_PIM_FORCE_CALC(processor *proc, simRegister *regs) 
   
   return true;
 #else
+  printf("no HAVE_PHXSIM_H\n");
   return false;
 #endif
 }

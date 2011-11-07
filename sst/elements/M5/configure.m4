@@ -20,10 +20,11 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_gem5" -a "$with_gem5" != "yes"],
     [ CPPFLAGS="-I$with_gem5 $CPPFLAGS"
-      LDFLAGS="-L$with_gem5 $LDFLAGS -lrt"],
+      LDFLAGS="-L$with_gem5 $LDFLAGS "],
     [])
 
   AC_LANG_PUSH(C++)
@@ -37,6 +38,7 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   cpp_extra=
 
@@ -59,6 +61,7 @@ AC_DEFUN([SST_M5_CONFIG], [
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
   AC_LANG_PUSH(C++)
 
   AS_IF([test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"],
@@ -75,12 +78,14 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_LANG_POP(C++)
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   AM_CONDITIONAL([HAVE_DRAMSIM],
 		[test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"])
 
   AC_SUBST([DRAMSIM_CPPFLAGS])
   AC_SUBST([DRAMSIM_LDFLAGS])
+  AC_SUBST([DRAMSIM_LIB])
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])

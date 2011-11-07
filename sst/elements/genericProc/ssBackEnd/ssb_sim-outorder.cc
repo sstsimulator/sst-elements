@@ -1348,7 +1348,7 @@ void convProc::ruu_dispatch(void)
 	  ruu_dispatch_delay = getFEBDelay();
 	  break;
 	}
-	printf("sbb %p: Commit failed for %x\n", this, ntohl((uint)inst->PC()));
+	printf("sbb %p: Commit failed for %x exception %d\n", this, ntohl((uint)inst->PC()), inst->exception());
       }
       committingInst = 0;
 

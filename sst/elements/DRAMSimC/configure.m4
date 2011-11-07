@@ -9,6 +9,7 @@ AC_DEFUN([SST_DRAMSimC_CONFIG], [
 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"],
     [DRAMSIM_CPPFLAGS="-I$with_dramsim"
@@ -26,6 +27,7 @@ AC_DEFUN([SST_DRAMSimC_CONFIG], [
 
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
 
   AC_SUBST([DRAMSIM_CPPFLAGS])
   AC_SUBST([DRAMSIM_LDFLAGS])

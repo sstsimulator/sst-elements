@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 
 <config>
-    stopAtCycle=100000000000
     run-mode=both
 </config>
 
