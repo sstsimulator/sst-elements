@@ -5,6 +5,7 @@ AC_DEFUN([SST_DRAMSimC_CONFIG], [
     [AS_HELP_STRING([--with-dramsim@<:@=DIR@:>@],
       [Use DRAMSim package installed in optionally specified DIR])])
 
+  happy="yes"
   AS_IF([test "$with_dramsim" = "no"], [happy="no"])
 
   CPPFLAGS_saved="$CPPFLAGS"
