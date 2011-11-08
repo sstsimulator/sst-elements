@@ -525,6 +525,7 @@ class Power{
 	bool p_ifReadEntireXML, p_ifGetMcPATUnitP;
 	static std::multimap<ptype,int> subcompList; //stores subcomp types and the floorplan they reside on
 	rtype p_systemTopology; //series or series-parallel or parallel
+	bool p_ifParser; //if the component which calls the interface is a parser; if yes, the interfance directly returns the final values from McPAT based on the calculation of the xml, p_McPATxmlpath; if not, power calculation is done in the interface.
 	
 	// floorplan and thermal tiles parameters
 	static parameters_chip_t chip;
@@ -808,6 +809,7 @@ class Power{
 	    p_TotalFailureRate = 0;
 	    p_NumSamples = 0;
 	    p_systemTopology = SERIES;
+	    p_ifParser = false;
 	    //p_McPATonPipe = p_McPATonIRS = p_McPATonRF = false;  //if xxx has power estimated by McPAT already
 	    #ifdef McPAT05_H
 	    McPAT05initBasic(); //initialize basic InputParameter interface_ip
@@ -1148,7 +1150,7 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	void getTemperatureStatistics();
 	void setupDPM(int block_id, power_state pstate);
 	void dynamic_power_management();
-	void calibrate_for_clovertown();
+	void calibrate_for_clovertown(IntrospectedComponent *c);
 	void test();
 
 	// McPAT interface

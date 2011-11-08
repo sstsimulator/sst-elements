@@ -8,13 +8,12 @@
   <component id="M5">
     <parser.parser>
       <params>
-	<samplingFreq>93ms</samplingFreq>
-	<McPAT_XMLfile>/home/myhsieh/Desktop/latest/Jie/Clovertown2/sst-simulator/sst/core/techModels/libMcPATbeta/Niagara1.xml</McPAT_XMLfile>
-    <StatsFile>/home/myhsieh/Desktop/documents/DATE12/mcpat_specrand_int</StatsFile>
-    <number_of_stats_files>1</number_of_stats_files>
+	<samplingFreq>76ms</samplingFreq>
+	<McPAT_XMLfile>/home/myhsieh/Desktop/documents/DATE12/mcpat_astar_1.xml</McPAT_XMLfile>
     <core_temperature>350</core_temperature>
     <core_tech_node>65</core_tech_node>
     <core_longer_channel_device>1</core_longer_channel_device>
+    <if_parser>YES</if_parser>
     <clock>2.66GHz</clock>
     <rev>1.5</rev>
     <power_monitor>YES</power_monitor>

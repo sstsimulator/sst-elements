@@ -79,6 +79,8 @@ bool parser::parseM5( Cycle_t current) {
   std::ostringstream step;
   step << current;
 
+//xml is parsed in the power interface
+#if 0  
   assert (numStatsFile >= current);
 
   filename.append(mcpatXML);
@@ -87,11 +89,16 @@ bool parser::parseM5( Cycle_t current) {
   filename.append(".xml");
   std::cout << "Parsing McPAT xml" << filename << std::endl;
 
-  //m_mcpat->parse("/home/myhsieh/Desktop/documents/DATE12/mcpat_bzip_2.xml");
-  //m_mcpat->parse("/home/myhsieh/Desktop/documents/DATE12/Xeon.xml");
-  m_mcpat->parse(&filename[0]);    
+  
+  m_mcpat->parse(&filename[0]);    //<StatsFile>/home/myhsieh/Desktop/documents/DATE12/mcpat_mcf</StatsFile>
+				//<number_of_stats_files>1</number_of_stats_files>
+#endif
+
+
   //std::cout << "icache[0] = " << m_mcpat->sys.core[0].icache.read_accesses << std::endl;
 
+//power is directly calculated and return by McPAT
+#if 0
   for (unsigned int i=0; i< m_mcpat->sys.number_of_cores; i++){
       //icache
       mycounts.il1_read[i] = m_mcpat->sys.core[i].icache.read_accesses - 
@@ -191,14 +198,17 @@ bool parser::parseM5( Cycle_t current) {
 	    pdata= power->getPower(this, BTB, mycounts);
 	    pdata= power->getPower(this, BPRED, mycounts);
 	}
-  power->calibrate_for_clovertown();
+
+#endif
+
+  power->calibrate_for_clovertown(this);
   power->compute_temperature(getId());
   regPowerStats(pdata);
 
   //reset all counts to zero for next power query
   power->resetCounts(&mycounts);
 	
-#if 1
+#if 0
 	using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << pdata.currentPower << " W" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": leakage power = " << pdata.leakagePower << " W" << std::endl;
 	using namespace io_interval; std::cout <<"ID " << getId() <<": runtime power = " << pdata.runtimeDynamicPower << " W" << std::endl;

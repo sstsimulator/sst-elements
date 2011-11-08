@@ -51,7 +51,7 @@ void Power::test()
 	     ////McPATSetup();	    
 	     p_Mproc.initialize(p_Mp1); //unit energy is computed by McPAT in this step
 	    
-	     p_Mcore = p_Mproc.SSTreturnCore(); //return core
+	     p_Mcore = p_Mproc.SSTreturnCore(0); //return core
 	     ifu = p_Mcore->SSTreturnIFU();
 	     lsu = p_Mcore->SSTreturnLSU();
 	     mmu = p_Mcore->SSTreturnMMU();
@@ -109,6 +109,12 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	else if (!it->first.compare("McPAT_XMLfile")){ //Mc
 	        p_McPATxmlpath = &it->second[0];
 		//sscanf(it->second.c_str(), "%s", p_McPATxmlpath);
+	}
+	else if (!it->first.compare("if_parser")){ //Mc
+		if (!it->second.compare("YES"))
+		   p_ifParser = true;
+	        else
+		   p_ifParser = false;
 	}
 	else {
 	    if (power_model == McPAT || power_model == McPAT05){
@@ -5093,17 +5099,26 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
           if(p_ifGetMcPATUnitP == false){
 	     //ensure that the following will only be called once to reduce computational time
 	     p_Mp1->parse(p_McPATxmlpath);
-	     McPATSetup();	    
-	     p_Mproc.initialize(p_Mp1); //unit energy is computed by McPAT in this step
-	     p_ifGetMcPATUnitP = true;
-	     p_Mcore = p_Mproc.SSTreturnCore(); //return core
-	     ifu = p_Mcore->SSTreturnIFU();
-	     lsu = p_Mcore->SSTreturnLSU();
-	     mmu = p_Mcore->SSTreturnMMU();
-	     exu = p_Mcore->SSTreturnEXU();
-	     rnu = p_Mcore->SSTreturnRNU();
+	     if (p_ifParser == false){
+	         McPATSetup();	//Component is not a parser; re-setup McPAT    
+	         p_Mproc.initialize(p_Mp1); //unit energy is computed by McPAT in this step
+		 p_ifGetMcPATUnitP = true;
+	         p_Mcore = p_Mproc.SSTreturnCore(0); //return core
+	         ifu = p_Mcore->SSTreturnIFU();
+	         lsu = p_Mcore->SSTreturnLSU();
+	         mmu = p_Mcore->SSTreturnMMU();
+	         exu = p_Mcore->SSTreturnEXU();
+	         rnu = p_Mcore->SSTreturnRNU();
+	     }
+	     else{
+		p_Mproc.initialize(p_Mp1); //final power values computed by McPAT in this step
+		p_ifGetMcPATUnitP = true;
+	     }
+	     
 	  }
-	  getUnitPower(power_type, -1, McPAT); //read
+	  if (p_ifParser == false){
+	      getUnitPower(power_type, -1, McPAT); //read
+	  }
 	  #endif /*McPAT07_H*/   
                     
 	break;
@@ -7049,9 +7064,9 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 		ifu->SSTcomputeEnergy(false, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
 		leakage = (I)icache.power.readOp.leakage + (I)icache.power.readOp.gate_leakage;
-		using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", il1 leakage = " << leakage << "readOP = " << icache.power.readOp.leakage << " gate = " << icache.power.readOp.gate_leakage << std::endl;
+		////using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", il1 leakage = " << leakage << "readOP = " << icache.power.readOp.leakage << " gate = " << icache.power.readOp.gate_leakage << std::endl;
 		dynamicPower = (I)icache.rt_power.readOp.dynamic / executionTime;
-		using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", icache.rt_power = " << icache.rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
+		////using namespace io_interval;  std::cout << "SST CompID " << c->getId() << ", dynamicPower = " << dynamicPower << ", icache.rt_power = " << icache.rt_power.readOp.dynamic << ", executionTime = " << executionTime << std::endl;
 		totalPowerUsage = leakage + dynamicPower;
 		ifu->SSTcomputeEnergy(true, counts.il1_read[i], counts.il1_readmiss[i], counts.IB_read[i], counts.IB_write[i], counts.BTB_read[i], counts.BTB_write[i]);
 		icache = ifu->SSTreturnIcache();
@@ -12797,9 +12812,9 @@ void Power::compute_temperature(ComponentId_t compID)
 {
   boost::mpi::communicator world;
   
-  ////std::cout << " I entered compute_temperature " << std::endl;
+  std::cout << " I entered compute_temperature " << std::endl;
 
-  if (p_tempMonitor == true && ((world.size() > 1 && p_SumNumCompNeedPower == 0) || (world.size() == 1 && p_NumCompNeedPower == 0)))
+  if (p_tempMonitor == true && ((world.size() > 1 && p_SumNumCompNeedPower == 0) || (world.size() == 1 && p_NumCompNeedPower == 0) || p_ifParser ==true))
   {   ////std::cout << " world.size = " << world.size() << ", numCompNeedPower = " << p_NumCompNeedPower << std::endl;
   //first resume numCompNeedPower for next power updates
   p_NumCompNeedPower = chip.num_comps;
@@ -13467,31 +13482,68 @@ void Power::dynamic_power_management()
 }
 
 
-void Power::calibrate_for_clovertown()
+void Power::calibrate_for_clovertown(IntrospectedComponent *c)
 {
     map<int,floorplan_t>::iterator fit;
+    unsigned i = 0;
+    unsigned j = 0;
+    I executionTime = 1.0;
+    executionTime = getExecutionTime(c);
+
+  using namespace io_interval;  std::cout << "executionTime = " << executionTime << std::endl;
+  std::cout << "number of cores: " << p_Mp1->sys.number_of_cores << ", number of L2 " << p_Mp1->sys.number_of_L2s << std::endl;
 
   for(fit = p_chip.floorplan.begin(); fit != p_chip.floorplan.end(); fit++)
   {
+    ////std::cout << " i = " << i << ", j = " << j << std::endl;
+    //cores
     if (((*fit).second.id >=0 && (*fit).second.id <=3) || ((*fit).second.id >=8 && (*fit).second.id <=11)){
 	//reset the original value of total energy at the previous step
 	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
 							- (*fit).second.p_usage_floorplan.runtimeDynamicPower
 							- (*fit).second.p_usage_floorplan.leakagePower;
 
-	//calibrate the rumtime power [power = (power + unmodeled power:0.755)*calibrate rate:1.83] 
-	(*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)((*fit).second.p_usage_floorplan.runtimeDynamicPower + 0.755)*1.83;
+	p_Mcore = p_Mproc.SSTreturnCore(i); //return core i
+
+	//calibrate the rumtime power [power = power*calibrate rate:1.83] 
+	(*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)p_Mcore->rt_power.readOp.dynamic *1.83 / executionTime;
 
 	//calculate leakage power based on the industry model (0.5W/mm2; 36mm2 per core; leakage feedback)
 	(*fit).second.p_usage_floorplan.leakagePower = (I)0.5 * 36.0 * exp(0.017*((*fit).second.device_tech.temperature-383));
 
-         //the new current power/total power after DPM
+         //the new current power/total power 
 	(*fit).second.p_usage_floorplan.currentPower = (*fit).second.p_usage_floorplan.runtimeDynamicPower
 							+ (*fit).second.p_usage_floorplan.leakagePower;
 	
         (*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
 							+ (*fit).second.p_usage_floorplan.currentPower;
-    }	
+	i++; //proceed to the next core
+    }
+
+    //L2 caches
+    else if (((*fit).second.id >=4 && (*fit).second.id <=5) || ((*fit).second.id >=12 && (*fit).second.id <=13)){
+        //reset the original value of total energy at the previous step
+	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
+							- (*fit).second.p_usage_floorplan.runtimeDynamicPower
+							- (*fit).second.p_usage_floorplan.leakagePower;
+
+	l2array = p_Mproc.SSTreturnL2(j); //return L2 j
+
+	//dynamic rumtime power  
+	(*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)l2array->rt_power.readOp.dynamic / executionTime;
+
+	//leakage power
+	(*fit).second.p_usage_floorplan.leakagePower = (I)l2array->power.readOp.longer_channel_leakage + (I)l2array->power.readOp.gate_leakage;
+
+         //the new current power/total power 
+	(*fit).second.p_usage_floorplan.currentPower = (*fit).second.p_usage_floorplan.runtimeDynamicPower
+							+ (*fit).second.p_usage_floorplan.leakagePower;
+	
+        (*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
+							+ (*fit).second.p_usage_floorplan.currentPower;
+	j++; //proceed to the next L2
+    }
+	
   }
 
 }
