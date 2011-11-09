@@ -198,11 +198,11 @@ int partition;
 	}
     }
 
+    fp_sst= NULL;
     if (!error)   {
 	/* Open the SST xml file for output */
 	printf("# *** Writing output to \"%s\"\n", sstFname);
 	if (strcmp(sstFname, "") == 0)   {
-	    fp_sst= NULL;
 	    error= TRUE;
 	    fprintf(stderr, "Output file must be specified with -o option!\n");
 	} else if (strcmp(sstFname, "-") == 0)   {
