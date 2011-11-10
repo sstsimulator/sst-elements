@@ -18,6 +18,4 @@ genPatterns_SOURCES = \
 	src_genPatterns/topo_mesh2D.h \
 	src_genPatterns/main.h
 
-
-
 bin_PROGRAMS += genPatterns

@@ -14,11 +14,11 @@
 #define _FFT_PATTERN_H
 
 #include "patterns.h"
-#include "state_machine.h"
-#include "comm_pattern.h"
-#include "collective_topology.h" 
-#include "scatter_op.h" 
-#include "gather_op.h" 
+#include "support/state_machine.h"
+#include "support/comm_pattern.h"
+#include "collective_patterns/collective_topology.h" 
+#include "collective_patterns/scatter_op.h" 
+#include "collective_patterns/gather_op.h" 
 
 
 

@@ -14,7 +14,7 @@
 */
 #include "allreduce_pattern.h"
 #include <sst/core/element.h>
-#include "stats.h"
+#include "util/stats.h"
 
 
 

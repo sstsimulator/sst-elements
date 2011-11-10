@@ -14,15 +14,15 @@
 #define _GHOST_PATTERN_H
 
 #include "patterns.h"
-#include "state_machine.h"
-#include "comm_pattern.h"
-#include "collective_topology.h"
-#include "allreduce_op.h"
+#include "support/state_machine.h"
+#include "support/comm_pattern.h"
+#include "collective_patterns/collective_topology.h"
+#include "collective_patterns/allreduce_op.h"
 extern "C" {
-#include "Benchmarks/src_ghost_bench/memory.h"
-#include "Benchmarks/src_ghost_bench/neighbors.h"
-#include "Benchmarks/src_ghost_bench/ranks.h"
-#include "Benchmarks/src_ghost_bench/work.h"
+#include "benchmarks/src_ghost_bench/memory.h"
+#include "benchmarks/src_ghost_bench/neighbors.h"
+#include "benchmarks/src_ghost_bench/ranks.h"
+#include "benchmarks/src_ghost_bench/work.h"
 }
 
 

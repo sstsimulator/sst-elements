@@ -14,10 +14,10 @@
 #define _MSGRATE_PATTERN_H
 
 #include "patterns.h"
-#include "state_machine.h"
-#include "comm_pattern.h"
-#include "collective_topology.h"
-#include "allreduce_op.h"
+#include "support/state_machine.h"
+#include "support/comm_pattern.h"
+#include "collective_patterns/collective_topology.h"
+#include "collective_patterns/allreduce_op.h"
 
 
 

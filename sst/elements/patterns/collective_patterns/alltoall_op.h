@@ -11,8 +11,8 @@
 #define _ALLTOALL_OP_H
 
 #include "patterns.h"
-#include "state_machine.h"
-#include "comm_pattern.h"
+#include "support/state_machine.h"
+#include "support/comm_pattern.h"
 
 
 
