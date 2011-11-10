@@ -18,6 +18,8 @@
 #ifndef _BIT_BUCKET_H
 #define _BIT_BUCKET_H
 
+#define __STDC_FORMAT_MACROS	(1)
+#include <inttypes.h>		// For PRIu64
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <sst/core/element.h>
@@ -71,10 +73,10 @@ class Bit_bucket : public Component {
 		    sscanf(it->second.c_str(), "%d", &bit_bucket_debug);
 		
 		} else if (!it->first.compare("write_bw"))   {
-		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&write_bw);
+		    sscanf(it->second.c_str(), "%"PRIu64, (uint64_t *)&write_bw);
 		
 		} else if (!it->first.compare("read_bw"))   {
-		    sscanf(it->second.c_str(), "%lud", (uint64_t *)&read_bw);
+		    sscanf(it->second.c_str(), "%"PRIu64, (uint64_t *)&read_bw);
 		}
 						                                                                                                        
                 ++it;
