@@ -17,13 +17,16 @@
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <stdint.h>	/* For uint32_t */
 #include <unistd.h>	/* For getopt() */
+#include <string.h>	/* For memset() */
 #include <math.h>
 #include <assert.h>
 #include <mpi.h>
 #include "Collectives/alltoall.h"
-#include "stats.h"
+#include "util/stats.h"
+extern "C" {
 #include "stat_p.h"
 #include "util.h"
+}
 
 
 
@@ -419,6 +422,7 @@ double total_time;
     tot= 0.0;
     cnt= 0;
     tot_squared= 0.0;
+    precision= 999.9;
 
     while (cnt < max_trials)   {
 	cnt++;

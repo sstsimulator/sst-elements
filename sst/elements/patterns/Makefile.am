@@ -11,3 +11,4 @@ bin_PROGRAMS =
 include end_points/Makefile.inc
 include components/Makefile.inc
 include src_genPatterns/Makefile.inc
+include benchmarks/Makefile.inc

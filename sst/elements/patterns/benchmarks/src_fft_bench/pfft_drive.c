@@ -16,7 +16,7 @@
 #include "dft.h"
 #include "timestats_structures.h"
 #include "pfft_r2_dit.h"
-#include "../stat_p.h"
+#include "benchmarks/stat_p.h"
 
 
 /* Constants */
@@ -41,8 +41,22 @@ int main(int argc, char* argv[]){
   int Nsamples = 4;
   int Nstep = 1;
 
-  /////////////////////////////////////////////////////////
-  // Initialize MPI Env
+  int j,sample;
+  double metric=0,tot=0,tot_squared=0,precision;
+  int ii=0;
+  int aborttrials;
+  double avg_compute_time[5]={0,0,0,0,0};
+  double min_compute_time[5]={1000,1000,1000,1000,1000};
+  double max_compute_time[5]={-1000,-1000,-1000,-1000,-1000};
+  double avg_comm_time[5]={0,0,0,0,0};
+  double min_comm_time[5]={1000,1000,1000,1000,1000};
+  double max_comm_time[5]={-1000,-1000,-1000,-1000,-1000};
+  
+  FILE *fp;
+  char fname[64];
+
+  /* ///////////////////////////////////////////////////////// */
+  /* // Initialize MPI Env */
   int rc = MPI_Init(&argc,&argv);
   if (rc != MPI_SUCCESS) {
     printf ("Fatal Error :unable to initialize the MPI environemnt. Terminating....\n");
@@ -54,8 +68,8 @@ int main(int argc, char* argv[]){
   
   opterr = 0;
 
-  /////////////////////////////////////////////////////////
-  // Process Input Args
+  /* ///////////////////////////////////////////////////////// */
+  /* // Process Input Args */
  
   while ((actual_char = getopt (argc, argv, "hf:s:vrp:a:b:c:")) != -1)
     switch (actual_char){
@@ -116,8 +130,8 @@ int main(int argc, char* argv[]){
          return -1;
     }
 
-  ////////////////////////////////////////////////////////////////////
-  // Input checks
+  /* //////////////////////////////////////////////////////////////////// */
+  /* // Input checks */
 
   if (N==-1 && Nmin==-1){
     if (myrank==0){
@@ -129,7 +143,7 @@ int main(int argc, char* argv[]){
   }
 
   if (Nmin!=-1){
-    // Check that problem size is a power of 2
+    /* Check that problem size is a power of 2 */
     if (log_2(Nmin)==-1){
       if (myrank==0){
         printf("Fatal Error in file mpi_fft.c: Size of Input sequence must be a power of 2...exiting\n");
@@ -148,7 +162,7 @@ int main(int argc, char* argv[]){
   }
 
   if (N!=-1){ 
-    // Check that problem size is a power of 2
+    /* Check that problem size is a power of 2 */
     if (log_2(N)==-1){
       if (myrank==0){
         printf("Fatal Error in file mpi_fft.c: Size of Input sequence must be a power of 2...exiting\n");
@@ -172,7 +186,7 @@ int main(int argc, char* argv[]){
   if (Nmin!=-1)
     N = Nmin;
 
-  // Check that #ranks is a power of 2
+  /* Check that #ranks is a power of 2 */
   if (log_2(numranks)==-1){
     if (myrank==0){
       printf ("\nInput Error: Number of ranks must a power of two. Terminating....\n\n\n");
@@ -182,7 +196,7 @@ int main(int argc, char* argv[]){
     return(-1);
   }
 
-  // Check that #ranks is at most half the input size
+  /* Check that #ranks is at most half the input size */
   if (numranks > N/2){
     if (myrank==0)
       printf ("\nInput Error: Number of ranks must be at most half the problem size. Please decrease the number of ranks. Terminating....\n\n\n");
@@ -191,21 +205,8 @@ int main(int argc, char* argv[]){
   }
 
 
-  ////////////////////////////////////////////////////
-  //// Fire FFT(s)
-  int j,sample;
-  double metric=0,tot=0,tot_squared=0,precision;
-  int ii=0;
-  int aborttrials;
-  double avg_compute_time[5]={0,0,0,0,0};
-  double min_compute_time[5]={1000,1000,1000,1000,1000};
-  double max_compute_time[5]={-1000,-1000,-1000,-1000,-1000};
-  double avg_comm_time[5]={0,0,0,0,0};
-  double min_comm_time[5]={1000,1000,1000,1000,1000};
-  double max_comm_time[5]={-1000,-1000,-1000,-1000,-1000};
-  
-  FILE *fp;
-  char fname[64];
+  /* //////////////////////////////////////////////////// */
+  /* // Fire FFT(s) */
   if (myrank==0){
     sprintf(fname,"FFT_results_%d_cores_precision_%f",numranks,req_precision);
     if ((fp = fopen(fname, "w")) != NULL){
@@ -222,10 +223,8 @@ int main(int argc, char* argv[]){
     if (myrank==0){
       if (printstats)
         printf("Trial\tAvg Total\tMin Total\tMax Total\tPh1 CoMP Avg\tPh2 CoMM Avg\tPh3 CoMP Avg\tPh4 CoMP Avg\tPh4 CoMM Avg\tPh5 CoMM Avg\tPrecision\n");
-      else
-        ;//printf("Trial\tPrecision\n");
       }  
-    // for each problem size run multiple trials until you reach statistical convergence
+    /* for each problem size run multiple trials until you reach statistical convergence */
     aborttrials=0;
     ii=0;
     metric = tot = tot_squared = precision = 0;
@@ -271,9 +270,9 @@ int main(int argc, char* argv[]){
             printf("\n");
           }
           else{
-            //printf("%d\t",ii);
-            //printf("%f",precision);
-            ;//printf("\n");
+            /* printf("%d\t",ii); */
+            /* printf("%f",precision); */
+            /* printf("\n"); */
           }
         }
       }

@@ -11,11 +11,14 @@
 #include <stdio.h>
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <unistd.h>	/* For getopt() */
+#include <string.h>	/* For memset() */
 #include <math.h>
 #include <mpi.h>
-#include "stats.h"
+#include "util/stats.h"
+extern "C" {
 #include "stat_p.h"
 #include "util.h"
+}
 
 
 /* Constants */

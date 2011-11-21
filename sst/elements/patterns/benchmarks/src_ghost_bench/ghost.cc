@@ -12,14 +12,16 @@
 #include <math.h>
 #include <mpi.h>
 
-#include "collective_topology.h"
-#include "Collectives/allreduce.h"
-#include "util.h"	/* For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK */
+#include "collective_patterns/collective_topology.h"
+#include "benchmarks/Collectives/allreduce.h"
+extern "C" {
+#include "benchmarks/util.h"	/* For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK */
 #include "ghost.h"
 #include "ranks.h"
 #include "neighbors.h"
 #include "memory.h"
 #include "work.h"
+}
 
 #define GHOST_VERSION	"1.0"
 

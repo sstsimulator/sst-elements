@@ -22,10 +22,12 @@
 #include <mpi.h>
 #include <list>
 
-#include "util.h"			// For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK
-#include "collective_topology.h"	// For ctopo
-#include "msg_counter.h"		// 
-#include "allreduce.h"			// For my_allreduce
+extern "C" {
+#include "benchmarks/util.h"				// For disp_cmd_line() and DEFAULT_CMD_LINE_ERR_CHECK
+}
+#include "collective_patterns/collective_topology.h"	// For ctopo
+#include "util/msg_counter.h"				// 
+#include "benchmarks/Collectives/allreduce.h"		// For my_allreduce
 #include "ws.h"
 
 

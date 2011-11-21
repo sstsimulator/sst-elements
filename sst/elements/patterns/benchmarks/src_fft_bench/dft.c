@@ -35,13 +35,13 @@
 	double common_phase;
 	
 	for (k=0;k<n;k++){
-		// initialize output vector element
+		/* initialize output vector element */
 		z[k].real = 0;
 		z[k].imag = 0;
-		// part of the phase is common for each element, so compute once for each element
+		/* part of the phase is common for each element, so compute once for each element */
 		common_phase = (-1) * 2.0 * M_PI * (double)k / (double)n;
 		
-		// sum of n weighted roots of unity
+		/* sum of n weighted roots of unity */
 		for (i=0;i<n;i++){
 			z[k].real += x[i].real*cos(common_phase*i) - x[i].imag*sin(common_phase*i);
 			z[k].imag += x[i].real*sin(common_phase*i) + x[i].imag*cos(common_phase*i);

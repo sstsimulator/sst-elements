@@ -14,11 +14,14 @@
 #include <stdio.h>
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <unistd.h>	/* For getopt() */
+#include <string.h>	/* For strcmp() */
 #include <mpi.h>
-#include "stats.h"
-#include "stat_p.h"
-#include "util.h"
+#include "util/stats.h"
+extern "C" {
+#include "benchmarks/stat_p.h"
+#include "benchmarks/util.h"
 #include "ghost.h"
+}
 
 
 /* Constants */

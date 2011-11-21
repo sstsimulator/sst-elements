@@ -12,9 +12,15 @@
 
 #include <stdio.h>
 #include <stdint.h>	// For uint64_t
-#include <boost/serialization/set.hpp>
+#if defined(NOT_PART_OF_SIM)
+#include <list>
+#include <set>
+using namespace std;
+#else
 #include <boost/serialization/list.hpp>
+#include <boost/serialization/set.hpp>
 #include "patterns.h"
+#endif
 
 
 class Msg_counter   {
@@ -39,6 +45,7 @@ class Msg_counter   {
 	    uint64_t messages;
 	    uint64_t bytes;
 
+#if !defined(NOT_PART_OF_SIM)
 	    friend class boost::serialization::access;
 	    template<class Archive>
 	    void serialize(Archive & ar, const unsigned int version)
@@ -47,6 +54,7 @@ class Msg_counter   {
 		ar & BOOST_SERIALIZATION_NVP(messages);
 		ar & BOOST_SERIALIZATION_NVP(bytes);
 	    }
+#endif
 	} counter_t;
 
 	typedef struct   {
@@ -54,6 +62,7 @@ class Msg_counter   {
 	    int time_step;
 	    uint64_t bytes;
 
+#if !defined(NOT_PART_OF_SIM)
 	    friend class boost::serialization::access;
 	    template<class Archive>
 	    void serialize(Archive & ar, const unsigned int version)
@@ -62,6 +71,7 @@ class Msg_counter   {
 		ar & BOOST_SERIALIZATION_NVP(time_step);
 		ar & BOOST_SERIALIZATION_NVP(bytes);
 	    }
+#endif
 	} log_entry_t;
 
 	struct _compare   {
@@ -72,6 +82,7 @@ class Msg_counter   {
 	std::list<log_entry_t> log;
 	int max_rank;
 
+#if !defined(NOT_PART_OF_SIM)
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version)
@@ -80,6 +91,7 @@ class Msg_counter   {
 	    ar & BOOST_SERIALIZATION_NVP(log);
 	    ar & BOOST_SERIALIZATION_NVP(max_rank);
         }
+#endif
 
 };
 

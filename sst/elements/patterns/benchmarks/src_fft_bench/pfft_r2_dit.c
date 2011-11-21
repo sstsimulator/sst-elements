@@ -19,24 +19,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <mpi.h>
 
-//#define DEBUG_L1 0
-//#define DEBUG_L1_PHASE3 0
-//#define DEBUG_L1_PHASE4 0
-//#define DEBUG_MPI_L1 0
-//#define DEBUG_MPI_L1_PHASE2
-//#define DEBUG_L1_PHASE4_RANKDATASWAP 0
-//#define DEBUG_L1_PHASE4_TWIDDLES
-//#define OUTPUT_FREQ_VECTOR
-//#define DEBUG_PHASE3_OUTPUT1
-//#define DEBUG_PHASE4_OUTPUT1
-//#define DEBUG_PHASE4_DATAMOVEMENT
-//#define DEBUG_PHASE4_BFLYDIRECTION
+#if 0
+#define DEBUG_L1 0
+#define DEBUG_L1_PHASE3 0
+#define DEBUG_L1_PHASE4 0
+#define DEBUG_MPI_L1 0
+#define DEBUG_MPI_L1_PHASE2
+#define DEBUG_L1_PHASE4_RANKDATASWAP 0
+#define DEBUG_L1_PHASE4_TWIDDLES
+#define OUTPUT_FREQ_VECTOR
+#define DEBUG_PHASE3_OUTPUT1
+#define DEBUG_PHASE4_OUTPUT1
+#define DEBUG_PHASE4_DATAMOVEMENT
+#define DEBUG_PHASE4_BFLYDIRECTION
+#endif
 #define TIMING_MEASUREMENTS_ON
-//#define PRINT_TIMING_MEASUREMENTS_RANKS
-//#define PRINT_TIMING_MEASUREMENTS_SUMMARY
+#if 0
+#define PRINT_TIMING_MEASUREMENTS_RANKS
+#define PRINT_TIMING_MEASUREMENTS_SUMMARY
+#endif
 #include "dft.h"
-#include "mpi.h"
 #include "timestats_structures.h"
 #include "pfft_r2_dit.h"
 
@@ -44,7 +48,7 @@
 /* Local functions */
 static int validateFFT(int n,d_complex* fft_in,d_complex* x);
 
-// Constants
+/* Constants */
 #define TRUE 1
 #define FALSE 0
 #define EPSILON 0.0000001
@@ -55,9 +59,30 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
   double temp1,temp2,a,e,c,s,time1,time2,time3;
   double* x_real;
   double* x_imag;
-  d_complex* x;
-  d_complex* x_original;
+  d_complex* x= NULL;
+  d_complex* x_original= NULL;
   MPI_Status stat;  
+
+  double* subvector_real;
+  double* subvector_imag;
+  d_complex t1;
+  int n2;
+  int n1;
+  d_complex* subvector;
+  double* subvector_real_send;
+  double* subvector_imag_send;
+  int rankblocks;
+  int ranksperblock;
+  int inblockstride;
+  int dstrank;
+  #ifdef DEBUG_L1_PHASE4_RANKDATASWAP
+  int myblock;
+  #endif
+  int tempoff;
+  int temp;
+  double* FFT_x_real= NULL;
+  double* FFT_x_imag= NULL;
+  int validation_result;
  
   #ifdef TIMING_MEASUREMENTS_ON
   double phase1_compute_t =0.0;
@@ -77,8 +102,8 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
   time_stat* measurements = (time_stat*)malloc(sizeof(time_stat));
   measurements->status=0;
   
-  ////////////////////////////////////////
-  //// FFT hits the road
+  /* //////////////////////////////////////// */
+  /* //// FFT hits the road */
   
   #ifdef TIMING_MEASUREMENTS_ON
   time3 = MPI_Wtime();
@@ -86,24 +111,24 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
 
   rankelems = N/numranks;
   
-  double* subvector_real = (double*)malloc(rankelems * sizeof(double));
+  subvector_real = (double*)malloc(rankelems * sizeof(double));
   if (subvector_real==NULL){
     printf("Fatal Error in file mpi_FFT: Unable to allocate memory for subvecotr_real ...exiting\n");
     measurements->status=-1;
     return measurements;
   }
-  double* subvector_imag = (double*)malloc(rankelems * sizeof(double));
+  subvector_imag = (double*)malloc(rankelems * sizeof(double));
   if (subvector_imag==NULL){
     printf("Fatal Error in file mpi_FFT: Unable to allocate memory for subvecotr_imag ...exiting\n");
     measurements->status=-1;
     return measurements;
   }
 
-////////////// PHASE-0: Input Generation ////////////////
-/////////////////////////////////////////////////////////
+/* ////////////// PHASE-0: Input Generation //////////////// */
+/* ///////////////////////////////////////////////////////// */
   if (myrank==0){
 
-    // generate input vector     
+    /* generate input vector */
     x = (d_complex*)malloc(N * sizeof(d_complex));
     if (x==NULL){
       printf("Fatal Error in file mpi_FFT: Unable to allocate memory for DFT input vector...exiting\n");
@@ -119,7 +144,7 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     printf("\n\n");
     #endif
 
-    // maintain an unchanged copy of the original input for validation purposes
+    /* maintain an unchanged copy of the original input for validation purposes */
     x_original = (d_complex*)malloc(N * sizeof(d_complex));
     if (x_original==NULL){
       printf("Fatal Error in file mpi_FFT: Unable to allocate memory for (original) input vector...exiting\n");
@@ -131,17 +156,15 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
       x_original[i].imag = x[i].imag;
     }  
     
-////////////// PHASE-1: Bit-Reversal  // ////////////////
-/////////////////////////////////////////////////////////
+/* ////////////// PHASE-1: Bit-Reversal  // //////////////// */
+/* ///////////////////////////////////////////////////////// */
  
     #ifdef TIMING_MEASUREMENTS_ON
     time1 = MPI_Wtime();
     #endif
-    // dummy complex
-    d_complex t1;
+    /* dummy complex */
     j = 0; /* bit-reverse */
-    int n2 = N/2;
-    int n1;
+    n2 = N/2;
     for (i=1; i < N - 1; i++)
     {
       n1 = n2;
@@ -171,12 +194,12 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     printf("\n\n");
     #endif
 
-////////////// PHASE-2: Input Data Scattering /////////////
-///////////////////////////////////////////////////////////
+/* ////////////// PHASE-2: Input Data Scattering ///////////// */
+/* /////////////////////////////////////////////////////////// */
 
-    // scatter sub-vectors to ranks
-    // re-format the input vector of complex numbers to two vectors containing doubles,
-    // since native MPI Scatter works only for MPI native datatypes
+    /* scatter sub-vectors to ranks */
+    /* re-format the input vector of complex numbers to two vectors containing doubles, */
+    /* since native MPI Scatter works only for MPI native datatypes */
     x_real = (double*)malloc(N * sizeof(double));
     if (x_real==NULL){
       printf("Fatal Error in file mpi_FFT: Unable to allocate memory for temp input vector...exiting\n");
@@ -234,8 +257,8 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     #endif
   }
 
-  // reformat the subvectors from two separate double array to a single complex array
-  d_complex* subvector = (d_complex*)malloc(rankelems * sizeof(d_complex));
+  /* reformat the subvectors from two separate double array to a single complex array */
+  subvector = (d_complex*)malloc(rankelems * sizeof(d_complex));
   if (subvector==NULL){
     printf("Fatal Error in file mpi_FFT: Unable to allocate memory for subvector...exiting\n");
     measurements->status=-1;
@@ -263,8 +286,8 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     free(x_imag);
   }
 
-////////////// PHASE-3: Local Butterfly Stages ///////////////////
-//////////////////////////////////////////////////////////////////
+/* ////////////// PHASE-3: Local Butterfly Stages /////////////////// */
+/* ////////////////////////////////////////////////////////////////// */
 
   strides_init = 0;
   block_stride = 1;
@@ -287,9 +310,9 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
       printf("---------------------------------------------------------------------------\n");
     }
     #endif
-    // Flies with butter served per stage
+    /* Flies with butter served per stage */
     for (j=0;j<strides_init;j++){
-      // compute twiddle factors
+      /* compute twiddle factors */
       c=cos(a);
       s=sin(a);
       a+=e;
@@ -300,10 +323,10 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
           printf("Butterfly %d\t%d\n",k,k+strides_init);
         }
         #endif
-        // multiplying the second butterfly input with the twiddle factor
+        /* multiplying the second butterfly input with the twiddle factor */
         temp1 = c*subvector[k+strides_init].real-s*subvector[k+strides_init].imag;
         temp2 = s*subvector[k+strides_init].real+c*subvector[k+strides_init].imag;
-        // butterfly additions with in=place store
+        /* butterfly additions with in=place store */
         subvector[k+strides_init].real=subvector[k].real-temp1;
         subvector[k+strides_init].imag=subvector[k].imag-temp2;
         subvector[k].real=subvector[k].real+temp1;
@@ -325,18 +348,18 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     #endif
   }
   
-////////////// PHASE-4: Parallel Butterfly Stages ////////////////
-//////////////////////////////////////////////////////////////////
+/* ////////////// PHASE-4: Parallel Butterfly Stages //////////////// */
+/* ////////////////////////////////////////////////////////////////// */
 
-  // Allocate send buffer vectors
-  double* subvector_real_send = (double*)malloc(rankelems * sizeof(double));
+  /* Allocate send buffer vectors */
+  subvector_real_send = (double*)malloc(rankelems * sizeof(double));
   if (subvector_real==NULL){
     printf("Fatal Error in file mpi_FFT: Unable to allocate memory for subvecotr_real ...exiting\n");
     measurements->status=-1;
     return measurements;
 
   }
-  double* subvector_imag_send = (double*)malloc(rankelems * sizeof(double));
+  subvector_imag_send = (double*)malloc(rankelems * sizeof(double));
   if (subvector_imag==NULL){
     printf("Fatal Error in file mpi_FFT: Unable to allocate memory for subvecotr_imag ...exiting\n");
     measurements->status=-1;
@@ -347,7 +370,7 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
   #ifdef TIMING_MEASUREMENTS_ON
   time1 = MPI_Wtime();
   #endif
-  // Allocate rcv buffer vectors
+  /* Allocate rcv buffer vectors */
   subvector_real = (double*)malloc(rankelems * sizeof(double));
   if (subvector_real==NULL){
     printf("Fatal Error in file mpi_FFT: Unable to allocate memory for subvecotr_real ...exiting\n");
@@ -371,13 +394,12 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     e=(-1.0)*2.0*M_PI/(double)block_stride;
     a=0.0;
 
-    int rankblocks = numranks/(2<<stage);
-    int ranksperblock = numranks/rankblocks;
-    int inblockstride = ranksperblock/2;
-    int dstrank;
+    rankblocks = numranks/(2<<stage);
+    ranksperblock = numranks/rankblocks;
+    inblockstride = ranksperblock/2;
      
     #ifdef DEBUG_L1_PHASE4_RANKDATASWAP
-    int myblock = ((myrank-(myrank%ranksperblock))/ranksperblock)+1;
+    myblock = ((myrank-(myrank%ranksperblock))/ranksperblock)+1;
     printf("---------------------------------------------------------------------------\n");
     printf("Stage-%d\n",stage+log_2(rankelems));
     printf("I am rank-%d, I belong to block %d \n",myrank, myblock);
@@ -403,7 +425,7 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     printf("---------------------------------------------------------------------------\n");
     #endif
  
-    // reformat data for sending
+    /* reformat data for sending */
     for (i=0;i<rankelems;i++){
       subvector_real_send[i]=subvector[i].real;
       subvector_imag_send[i]=subvector[i].imag;
@@ -413,10 +435,10 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     time2 = MPI_Wtime();
     #endif
 
-    ///// PER STAGE COMM
+    /* ///// PER STAGE COMM */
     MPI_Sendrecv (subvector_real_send,rankelems,MPI_DOUBLE,dstrank,dstrank,subvector_real,rankelems,MPI_DOUBLE,dstrank,myrank,MPI_COMM_WORLD,&stat);
     MPI_Sendrecv (subvector_imag_send,rankelems,MPI_DOUBLE,dstrank,dstrank+1,subvector_imag,rankelems,MPI_DOUBLE,dstrank,myrank+1,MPI_COMM_WORLD,&stat);
-    ///// END PER STAGE COMM  
+    /* ///// END PER STAGE COMM   */
 
     #ifdef TIMING_MEASUREMENTS_ON
     phase4_comm_t += MPI_Wtime() - time2;
@@ -436,22 +458,22 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     }
     #endif  
     
-    //
-    // Now you have your data, do your butterfly part
+
+    /* Now you have your data, do your butterfly part */
     
     #ifdef TIMING_MEASUREMENTS_ON
     time1 = MPI_Wtime();
     #endif
     
-    int tempoff =myrank%(ranksperblock/2);
-    int temp = myrank%ranksperblock;
+    tempoff =myrank%(ranksperblock/2);
+    temp = myrank%ranksperblock;
     a = a+ tempoff*rankelems*e;
     for (i=0;i<rankelems;i++){
-       //a = (double)factor_offset*e;
+       /* a = (double)factor_offset*e; */
        c = cos(a);
        s = sin(a);
        a += e;
-       //which side are you on boys?
+       /* which side are you on boys? */
        #ifdef DEBUG_L1_PHASE4_TWIDDLES
        printf("Rank-%d is doing butterflies with rank-%d in STAGE-%d\n",myrank,dstrank,stage+log_2(rankelems));
        #endif
@@ -471,8 +493,8 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
          temp2 = s*subvector[i].real + c*subvector[i].imag;
          subvector[i].real = subvector_real[i]-temp1;
          subvector[i].imag = subvector_imag[i]-temp2;     
-         //subvector[i].real = subvector_real[i] - c*subvector[i].real + s*subvector[i].imag;
-         //subvector[i].imag = subvector_imag[i] - s*subvector[i].real - c*subvector[i].imag;
+         /* subvector[i].real = subvector_real[i] - c*subvector[i].real + s*subvector[i].imag; */
+         /* subvector[i].imag = subvector_imag[i] - s*subvector[i].real - c*subvector[i].imag; */
          #ifdef DEBUG_PHASE4_BFLYDIRECTION
          printf("Rank-%d in STAGE-%d IS TAKING DOWN DIRECTION\n",myrank,stage+log_2(rankelems));
          #endif
@@ -495,13 +517,11 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     #endif
   }
 
-////////////// PHASE-5: Gathering Output to the Master //////////////////
-/////////////////////////////////////////////////////////////////////////
+/* ////////////// PHASE-5: Gathering Output to the Master ////////////////// */
+/* ///////////////////////////////////////////////////////////////////////// */
 
-  double* FFT_x_real;
-  double* FFT_x_imag;
   if (myrank==0){
-    // allocate real and imaginary vectors at the master to hold the FFT output
+    /* allocate real and imaginary vectors at the master to hold the FFT output */
     FFT_x_real = (double*)malloc(N * sizeof(double));
     if (FFT_x_real==NULL){
       printf("Fatal Error in file mpi_FFT: Unable to allocate memory for FFT_x_real ...exiting\n");
@@ -517,7 +537,7 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     }
   }
 
-  //reformat the complex subvectors to be gathered as MPI_DOUBLED
+  /* reformat the complex subvectors to be gathered as MPI_DOUBLED */
   for (i=0;i<rankelems;i++){
     subvector_real[i]=subvector[i].real;
     subvector_imag[i]=subvector[i].imag;
@@ -542,11 +562,11 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
   time2=MPI_Wtime();
   #endif
 
-/////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////
+/* ///////////////////////////////////////////////////////////////////////// */
+/* ///////////////////////////////////////////////////////////////////////// */
 
   #ifdef TIMING_MEASUREMENTS_ON
-  // Reduce Time statistics and compute averages
+  /* Reduce Time statistics and compute averages */
   MPI_Reduce(&total_t,&measurements->avg_tot_time,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
   MPI_Reduce(&total_t,&measurements->min_tot_time,1,MPI_DOUBLE,MPI_MIN,0,MPI_COMM_WORLD);
   MPI_Reduce(&total_t,&measurements->max_tot_time,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
@@ -625,7 +645,7 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
     }
     #endif
 
-    // validate the result
+    /* validate the result */
     if (validation==1){
       d_complex* FFT_complex=(d_complex*)malloc(N * sizeof(d_complex));
       for (i=0;i<N;i++){
@@ -633,7 +653,7 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
         FFT_complex[i].imag = FFT_x_imag[i];
       }
 
-      int validation_result = validateFFT(N,FFT_complex,x_original);
+      validation_result = validateFFT(N,FFT_complex,x_original);
       if (validation_result == TRUE)
         printf("FFT is correct\n\n");
       else
@@ -682,14 +702,15 @@ time_stat* pfft_r2_dit(int N, int validation,int numranks,int myrank,int rc){
  * otherwise it returns TRUE.
  */
 static int validateFFT(int n,d_complex* fft_in,d_complex* x){
+    int i;
 
-  // perform DFT
+  /* perform DFT */
   d_complex* z = (d_complex*)malloc(n * sizeof(d_complex));
   if (z==NULL){
     printf("Fatal Error in function validateFFT: Unable to allocate memory for DFT output vector...exiting\n");
     return FALSE;
   }
-  int i=0;
+  i=0;
 
   serialDFT(n,x,z);
 
@@ -704,7 +725,7 @@ static int validateFFT(int n,d_complex* fft_in,d_complex* x){
   }
   #endif
 
-  // calculate diff between DFT and FFTint ret = serialDFT(n,x,z);
+  /* calculate diff between DFT and FFTint ret = serialDFT(n,x,z); */
   for (i=0;i<n;i++)
     if (((fft_in[i].real - z[i].real) > EPSILON ) || ((fft_in[i].imag - z[i].imag) > EPSILON ))
       return FALSE;

@@ -384,6 +384,7 @@ double *results;
     tot= 0.0;
     cnt= 0;
     tot_squared= 0.0;
+    precision= 999.9;
 
     results= (double *)malloc(sizeof(double) * max_trials);
     if (results == NULL)   {
