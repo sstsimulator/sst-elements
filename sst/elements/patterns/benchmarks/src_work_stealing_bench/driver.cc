@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <unistd.h>	/* For getopt() */
+#include <string.h>	/* For strcmp() */
 #include <mpi.h>
 #include "util/stats.h"
 extern "C" {

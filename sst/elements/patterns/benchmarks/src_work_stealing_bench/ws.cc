@@ -13,6 +13,7 @@
 #include <stdlib.h>	/* For strtol(), exit() */
 #include <stdint.h>	/* For uint64_t */
 #include <unistd.h>	/* For getopt() */
+#include <string.h>	/* For memset() */
 #define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>	// For PRIu64
 #include <math.h>	/* For log() */
