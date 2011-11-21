@@ -14,7 +14,8 @@ class Factory {
   public:
     Factory( M5* );
     ~Factory( );
-    SimObject* createObject( std::string name, SST::SDL_Component& sdl );
+    SimObject* createObject( std::string name, std::string type, 
+            SST::Params&  );
     
   private:     
     void *m_dl;
@@ -39,10 +40,10 @@ inline Factory::~Factory()
 }
 
 inline SimObject* Factory::createObject( std::string name, 
-                SST::SDL_Component& sdl )
+                std::string type, SST::Params& params )
 {
     std::string tmp = "create_";
-    tmp += sdl.type().c_str();
+    tmp += type;
     DBGX(2,"type `%s`\n", tmp.c_str());
     createObjFunc_t ptr = (createObjFunc_t)(dlsym( m_dl, tmp.c_str() ));
     if ( ! ptr ) {
@@ -51,10 +52,9 @@ inline SimObject* Factory::createObject( std::string name,
     }
 
     SimObject* obj;
-    obj = (*ptr)( m_comp, name, sdl.params );
+    obj = (*ptr)( m_comp, name, params );
     if ( ! obj ) {
-        printf("Factory::Factory() failed to create %s\n",
-                                sdl.type().c_str() );
+        printf("Factory::Factory() failed to create %s\n", type.c_str() );
         exit(-1);
     }
 
