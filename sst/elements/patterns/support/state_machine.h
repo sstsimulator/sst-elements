@@ -11,7 +11,7 @@
 #define _STATE_MACHINE_H
 
 #include <stdlib.h>	// For exit()
-#include <stdint.h>	// For uint32_t
+#include <stdint.h>
 #include <assert.h>
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/vector.hpp>
@@ -46,6 +46,7 @@ class state_event   {
 	    }
 	    restart= false;
 	    event= -1;
+	    tag= -4;
 	    packed_data.epoch= -1;
 	}
 
@@ -75,6 +76,7 @@ class state_event   {
 	int payload_size;
 	void *payload;
 	int event;
+	int tag;
 
 	// For runtime debugging. Before returning from a SM call, we make sure the
 	// event we are returning has this flag set.
@@ -129,6 +131,7 @@ class state_event   {
 	    state_event e; \
 	    state= new_state;\
 	    e.event= trigger_event; \
+	    e.tag= -3; \
 	    func(e);\
 	}
 
@@ -140,6 +143,7 @@ class State_machine   {
 	    // my_rank is only needed for debug output
 	    my_rank(rank)
 	{
+	    SM_data.tag= -5;
 	}
 
         ~State_machine() {}
@@ -151,10 +155,10 @@ class State_machine   {
 	state_event SM_data;
 
 
-	uint32_t SM_create(void *obj, void (*handler)(void *obj, state_event event));
+	int SM_create(void *obj, void (*handler)(void *obj, state_event event));
 	void SM_call(int machineID, state_event start_event, state_event return_event);
 	void SM_return(state_event return_event);
-	uint32_t SM_current_tag(void);
+	int SM_current_tag(void);
 
 	// Comm_pattern needs to call handle_state_events()
 	friend class Comm_pattern;
@@ -164,13 +168,13 @@ class State_machine   {
 #ifdef SERIALIZATION_WORKS_NOW
 	State_machine();  // For serialization only
 #endif  // SERIALIZATION_WORKS_NOW
-	void handle_state_events(uint32_t tag, state_event event);
-	void deliver_missed_events(void);
+	void handle_state_events(int tag, state_event event);
+	bool deliver_missed_events(void);
 
 	typedef struct   {
 	    void (*handler)(void *obj, state_event event);
 	    void *obj;
-	    uint32_t tag;
+	    int tag;
 	    std::list <state_event>missed_events;
 
 	    friend class boost::serialization::access;

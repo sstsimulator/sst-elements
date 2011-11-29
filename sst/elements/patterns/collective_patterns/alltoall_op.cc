@@ -72,23 +72,44 @@ state_event send_event;
 
     switch (e)   {
 	case E_START:
-	    /*
-	    ** If we did this for real, this would be the place where
-	    ** we copy our contribution to from the in to the result array.
-	    */
-
-	    /* Set start parameters */
+	    // Set start parameters
 	    i= alltoall_nranks >> 1;
 	    shift= 1;
 	    bytes_sent= 0;
 	    remainder_done= false;
+	    epoch= 0;
 
-	    /* Go to the main loop */
+	    // We have to copy our contribution from the "in" to the "out" array
+	    cp->memcpy(E_MEMCPY_DONE, alltoall_msglen);
+	    break;
+
+	case E_MEMCPY_DONE:
+	    // Done with the memcpy, go to the main loop
 	    goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
 	    break;
 
+	case E_LAST_DATA:
+	case E_ALL_DATA:
+	    // Early data, while we are waiting for the memcpy to finish
+	    receives[sm_event.get_epoch()]++;
+	    if (receives[epoch] == expected_receives)   {
+		receives[epoch]= 0;
+		got_all_receives= true;
+	    }
+
+	    if (got_all_sends && got_all_receives)   {
+		// The sends cannot be complete yet; they haven't been sent
+		assert(false);
+	    }
+	    break;
+
+	case E_INITIAL_DATA:
+	    // We don't count these to keep things simple. There will be an
+	    // E_LAST_DATA soon.
+	    break;
+
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -105,8 +126,9 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 
     switch (e)   {
 	case E_NEXT_LOOP:
+	    epoch= (epoch + 1) % MAX_EPOCH;
 	    if (i > 0)   {
-		/* We got (more) work to do */
+		// We got (more) work to do
 		goto_state(state_SEND, SEND, E_SEND_START);
 	    } else   {
 		// If we are not on a power of two ranks, we need one more step
@@ -114,7 +136,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 		    if (!cp->is_pow2(alltoall_nranks))   {
 			goto_state(state_REMAINDER, REMAINDER, E_REMAINDER_START);
 		    } else   {
-			/* We are done looping. Exit */
+			// We are done looping. Exit
 			// fprintf(stderr, "[%3d] bytes sent is %lld\n", cp->my_rank, bytes_sent);
 			done= true;
 		    }
@@ -125,7 +147,7 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -151,33 +173,44 @@ int len1, len2;
 	    offset= (cp->my_rank * alltoall_msglen) - ((shift - 1) * alltoall_msglen);
 
 	    if (offset < 0)   {
-		/* Need to break it up into two pieces */
+		// Need to break it up into two pieces
 		offset= offset + (alltoall_nranks * alltoall_msglen);
 		len1= (alltoall_nranks * alltoall_msglen) - offset;
 		send_event.event= E_INITIAL_DATA;
+		send_event.set_epoch(epoch);
 		cp->send_msg(dest, len1 * sizeof(double), send_event);
 		bytes_sent= bytes_sent + len1 * sizeof(double);
 		len2= shift * alltoall_msglen - (alltoall_nranks * alltoall_msglen - offset);
 		send_event.event= E_LAST_DATA;
+		send_event.set_epoch(epoch);
 		// Tricky: We only wait for the second send to finish. Receive has to be in order!
 		cp->send_msg(dest, len2 * sizeof(double), send_event, E_SEND_DONE);
+		expected_sends++;
 		bytes_sent= bytes_sent + len2 * sizeof(double);
 
 	    } else   {
-		/* I can send it in one piece */
+		// I can send it in one piece
 		len1= shift * alltoall_msglen;
 		send_event.event= E_ALL_DATA;
+		send_event.set_epoch(epoch);
 		cp->send_msg(dest, len1 * sizeof(double), send_event, E_SEND_DONE);
+		expected_sends++;
 		bytes_sent= bytes_sent + len1 * sizeof(double);
 	    }
 
 	    shift= shift << 1;
 	    i= i >> 1;
 	    state= WAIT;
+
+	    // See if the receive we are waiting for is already here
+	    if (receives[epoch] == expected_receives)   {
+		receives[epoch]= 0;
+		got_all_receives= true;
+	    }
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -213,28 +246,41 @@ int src, dest;
 		s2_len= (cp->my_rank + 1) * alltoall_msglen;
 
 		send_event.event= E_INITIAL_DATA;
+		send_event.set_epoch(epoch);
 		cp->send_msg(dest, s1_len, send_event);
 		bytes_sent= bytes_sent + s1_len;
 
 		send_event.event= E_LAST_DATA;
+		send_event.set_epoch(epoch);
 		// Tricky: We only wait for the second send to finish. Receive has to be in order!
 		cp->send_msg(dest, s2_len, send_event, E_SEND_DONE);
+		expected_sends++;
 		bytes_sent= bytes_sent + s2_len;
 	    } else   {
 		// All in one piece
 		s1_len= n * alltoall_msglen;
 
 		send_event.event= E_ALL_DATA;
+		send_event.set_epoch(epoch);
 		cp->send_msg(dest, s1_len, send_event, E_SEND_DONE);
+		expected_sends++;
 		bytes_sent= bytes_sent + s1_len;
 	    }
 
+	    shift= shift << 1;
+	    i= i >> 1;
 	    remainder_done= true;
 	    state= WAIT;
+
+	    // See if the receive we are waiting for is already here
+	    if (receives[epoch] == expected_receives)   {
+		receives[epoch]= 0;
+		got_all_receives= true;
+	    }
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 
@@ -251,28 +297,42 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 
     switch (e)   {
 	case E_SEND_DONE:
-	    receives++;
-	    if (receives && (receives % 2 == 0))   {
-		// 2 because we got our own send event and data from our source
+	    // This event doesn't have epoch set, since it came through Patterns::self_event_send
+	    sends++;
+	    if (sends == expected_sends)   {
+		expected_sends= 0;
+		sends= 0;
+		got_all_sends= true;
+	    }
+	    if (got_all_sends && got_all_receives)   {
+		got_all_sends= false;
+		got_all_receives= false;
 		goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
 	    }
 	    break;
 
 	case E_LAST_DATA:
 	case E_ALL_DATA:
-	    receives++;
-	    if (receives && (receives % 2 == 0))   {
-		// 2 because we got our own send event and data from our source
+	    receives[sm_event.get_epoch()]++;
+	    if (receives[epoch] == expected_receives)   {
+		receives[epoch]= 0;
+		got_all_receives= true;
+	    }
+
+	    if (got_all_sends && got_all_receives)   {
+		got_all_sends= false;
+		got_all_receives= false;
 		goto_state(state_MAIN_LOOP, MAIN_LOOP, E_NEXT_LOOP);
 	    }
 	    break;
 
 	case E_INITIAL_DATA:
-	    // We don't count those to keep things simple. There will be another one soon.
+	    // We don't count these to keep things simple. There will be a
+	    // E_LAST_DATA event soon.
 	    break;
 
 	default:
-	    _abort(alltoall_pattern, "[%3d] Invalid event %d in state %d\n",
+	    _abort(alltoall_op, "[%3d] Invalid event %d in state %d\n",
 		cp->my_rank, e, state);
     }
 

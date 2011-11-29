@@ -185,6 +185,8 @@ int payload_len;
     }
 
     sm.event= sst_event->GetRoutine();
+    assert(sst_event->tag >= 0);
+    sm.tag= sst_event->tag;
     payload_len= sst_event->GetPayloadLen();
     if (payload_len > 0)   {
 	sst_event->DetachPayload(sm.payload, &payload_len);

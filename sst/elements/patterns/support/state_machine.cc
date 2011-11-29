@@ -19,7 +19,7 @@
 
 // Register a state machine and a handler for events
 // Assign a SM number. Make the last created SM the current one.
-uint32_t
+int
 State_machine::SM_create(void *obj, void (*handler)(void *obj, state_event event))
 {
 
@@ -59,6 +59,7 @@ State_machine::SM_call(int machineID, state_event start_event, state_event retur
     }
 
     return_event.restart= true;
+    return_event.tag= SM_current_tag();
     SM[currentSM].missed_events.push_back(return_event);
 
     SMstack.push_back(currentSM);
@@ -94,6 +95,7 @@ state_event restart_event;
     }
 
     restart_event= (SM[currentSM].missed_events.front());
+    assert(restart_event.tag == SM_current_tag());
     SM[currentSM].missed_events.pop_front();
     // This should be marked as a restart_event, otherwise something went wrong
     if (!restart_event.restart)   {
@@ -111,17 +113,18 @@ state_event restart_event;
     // Call back up
     (*SM[currentSM].handler)(SM[currentSM].obj, restart_event);
 
-    // No delivery any other events that might be pending.
+    // Now delivery any other events that might be pending.
     deliver_missed_events();
 
 }  // end of SM_return()
 
 
 
-uint32_t
+int
 State_machine::SM_current_tag(void)
 {
 
+    assert(SM[currentSM].tag >= 0);
     return SM[currentSM].tag;
 
 }  // end of SM_current_tag()
@@ -132,14 +135,22 @@ State_machine::SM_current_tag(void)
 // Private functions
 //
 void
-State_machine::handle_state_events(uint32_t tag, state_event e)
+State_machine::handle_state_events(int tag, state_event e)
 {
 
+bool switched;
+
+
+    assert(tag >= 0);
+    assert(e.tag >= 0);
     if (tag == SM_current_tag())   {
 	// If there are pending events for this SM we have not handled yet, do it now
-	deliver_missed_events();
+	switched= deliver_missed_events();
+	assert(!switched);
 
 	// Then call the current SM with the event that just arrived
+	assert(SM_current_tag() == tag); // otherwise we got switched
+	assert(e.tag >= 0);
 	(*SM[currentSM].handler)(SM[currentSM].obj, e);
 
     } else   {
@@ -153,7 +164,7 @@ State_machine::handle_state_events(uint32_t tag, state_event e)
 
 
 
-void
+bool
 State_machine::deliver_missed_events(void)
 {
 
@@ -166,12 +177,16 @@ int lastSM;
     while (!SM[currentSM].missed_events.empty())   {
 	missed_event= (SM[currentSM].missed_events.front());
 	SM[currentSM].missed_events.pop_front();
+	assert(missed_event.tag == SM_current_tag());
+	assert(missed_event.tag >= 0);
 	(*SM[currentSM].handler)(SM[currentSM].obj, missed_event);
 	if (lastSM != currentSM)   {
 	    // Handler switched us from lastSM to currentSM!
-	    break;
+	    return true;
 	}
     }
+
+    return false;
 
 }  // end of deliver_missed_events
 

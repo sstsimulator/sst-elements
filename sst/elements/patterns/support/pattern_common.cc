@@ -62,10 +62,11 @@ SST::CPUNicEvent *e;
 
     // Create an event and fill in the event info
     e= new SST::CPUNicEvent();
-    e->SetRoutine((int)event);
+    e->SetRoutine(event);
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= 0;
+    assert(tag >= 0);
     e->tag= tag;
     e->dest= _my_rank;
     e->msg_id= (msg_seq++ << RANK_FIELD) | _my_rank;
@@ -92,10 +93,11 @@ SST::SimTime_t delay;
 
     // Create an event and fill in the event info
     e= new SST::CPUNicEvent();
-    e->SetRoutine((int)event);
+    e->SetRoutine(event);
     e->router_delay= 0;
     e->hops= 0;
     e->msg_len= msg_len;
+    assert(tag >= 0);
     e->tag= tag;
     e->dest= dest_rank;
     e->msg_id= (msg_seq++ << RANK_FIELD) | _my_rank;
@@ -108,11 +110,11 @@ SST::SimTime_t delay;
     if (dest_rank == _my_rank)   {
 	// No need to go through the network for this
 	// FIXME: Shouldn't this involve some sort of delay?
+	fprintf(stderr, "Event send to my self!\n"); //  Does this get used?
+	my_self_link->Send(e);
 	if (blocking >= 0)   {
 	    self_event_send(blocking, tag, 0);
 	}
-	fprintf(stderr, "Event send to my self!\n"); //  Does this get used?
-	my_self_link->Send(e);
 	return;
     }
 
@@ -199,7 +201,7 @@ uint64_t delay;
 
     // Create an event and fill in the event info
     e= new SST::CPUNicEvent();
-    // assert(0);  // FIXME: We need to SetRoutine()
+    assert(0);  // FIXME: We need to SetRoutine()
     // e->SetRoutine(BIT_BUCKET_WRITE_START);
     e->router_delay= 0;
     e->hops= 0;

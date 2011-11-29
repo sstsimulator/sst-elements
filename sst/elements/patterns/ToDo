@@ -1,4 +1,7 @@
-- Clean up CPUNICevents and state events. Get rid of redundant information and isolate.
+- Make memcpy and vector_add parameters
+- Measure memcpy and vector_add inside allreduce
+- genPatterns: tree_type not needed in XML file for alltoall
+- Clean up CPUNICevents and state events. Get rid of redundant information and isolate. What about tag?
 - Make NIC_model_t an iterator or something
 - Clean up the core == rank ambiguity
 - generate far links (Did this get lost when I got rid of V1?)
