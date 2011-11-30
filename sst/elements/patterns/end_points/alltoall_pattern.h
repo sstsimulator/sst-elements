@@ -71,7 +71,7 @@ class Alltoall_pattern : public Comm_pattern    {
 	    SMallreduce_collect= a_collect->install_handler();
 
 	    // Then we need a state machine for the operation under test
-	    a_test= new Alltoall_op(this, num_doubles);
+	    a_test= new Alltoall_op(this, num_doubles * sizeof(double));
 	    SMalltoall_test= a_test->install_handler();
 
 	    // Let Comm_pattern know which handler we want to have called
