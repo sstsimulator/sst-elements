@@ -36,6 +36,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	    num_sets= 9;
 	    num_doubles= 1;
 	    tree_type= TREE_DEEP;
+	    start_nnodes= 1;
+	    end_nnodes= 0;
 
 
 	    // Process the message rate specific paramaters
@@ -43,6 +45,14 @@ class Allreduce_pattern : public Comm_pattern    {
             while (it != params.end())   {
 		if (!it->first.compare("num_sets"))   {
 		    sscanf(it->second.c_str(), "%d", &num_sets);
+		}
+
+		if (!it->first.compare("start_nnodes"))   {
+		    sscanf(it->second.c_str(), "%d", &start_nnodes);
+		}
+
+		if (!it->first.compare("end_nnodes"))   {
+		    sscanf(it->second.c_str(), "%d", &end_nnodes);
 		}
 
 		if (!it->first.compare("num_doubles"))   {
@@ -73,6 +83,11 @@ class Allreduce_pattern : public Comm_pattern    {
 		exit(-2);
 	    }
 
+	    if (end_nnodes == 0)   {
+		// Use the default
+		end_nnodes= num_ranks;
+	    }
+
 	    // Install other state machines which we (allreduce pattern) need as
 	    // subroutines.
 	    Barrier_op *b= new Barrier_op(this);
@@ -98,11 +113,12 @@ class Allreduce_pattern : public Comm_pattern    {
 
 	    // Kickstart ourselves
 	    done= false;
-	    nnodes= 0;
+	    nnodes= start_nnodes;
 	    if (my_rank == 0)   {
 		printf("#  |||  Allreduce Pattern test\n");
 		printf("#  |||  Number of sets %d, with %d or %d (> %d ranks) operations per set.\n",
 		    num_sets, SMALL_ALLREDUCE_OPS, LARGE_ALLREDUCE_OPS, SMALL_LARGE_CUTOFF);
+		printf("#  |||  Test range %d through %d ranks\n", start_nnodes, end_nnodes);
 		printf("#  |||  Message length is %d doubles = %d bytes.\n", num_doubles,
 		    (int)(num_doubles * sizeof(double)));
 		printf("#  |||  Tree type is ");
@@ -177,6 +193,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	SimTime_t test_start_time;
 	SimTime_t duration;
 	std::list <double>times;
+	int start_nnodes;
+	int end_nnodes;
 
 
 	// Serialization
@@ -205,6 +223,8 @@ class Allreduce_pattern : public Comm_pattern    {
 	    ar & BOOST_SERIALIZATION_NVP(test_start_time);
 	    ar & BOOST_SERIALIZATION_NVP(duration);
 	    ar & BOOST_SERIALIZATION_NVP(times);
+	    ar & BOOST_SERIALIZATION_NVP(start_nnodes);
+	    ar & BOOST_SERIALIZATION_NVP(end_nnodes);
         }
 };
 
