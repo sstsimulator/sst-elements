@@ -70,6 +70,18 @@ bin_PROGRAMS += pingpong_bench
 
 
 
+# router characteristic benchmark
+router_bench_CPPFLAGS = -DNOT_PART_OF_SIM -D_PATTERNS_H_ $(MPI_CPPFLAGS)
+router_bench_LDADD = $(MPILIBS) -lm
+router_bench_SOURCES = \
+	benchmarks/router_bench.c \
+	benchmarks/stat_p.c \
+	benchmarks/util.c
+
+bin_PROGRAMS += router_bench
+
+
+
 # message rate benchmark
 msgrate_bench_CPPFLAGS = -DNOT_PART_OF_SIM -D_PATTERNS_H_ $(MPI_CPPFLAGS)
 msgrate_bench_LDADD = $(MPILIBS) -lm
