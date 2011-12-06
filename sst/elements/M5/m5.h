@@ -22,6 +22,7 @@ class M5 : public SST::Component
     M5( SST::ComponentId_t id, Params_t& params );
     ~M5();
     int Setup();
+    int Finish();
     bool catchup( SST::Cycle_t );
     void arm( SST::Cycle_t );
 
@@ -40,6 +41,8 @@ class M5 : public SST::Component
     SimLoopExitEvent   *m_exitEvent;
     int                 m_numRegisterExits;
     BarrierAction*       m_barrier;
+    // flag for fastforwarding
+    bool FastForwarding_flag;
 };
 
 #endif

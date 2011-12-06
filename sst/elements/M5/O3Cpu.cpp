@@ -11,6 +11,8 @@
 #include <process.h>
 #include <debug.h>
 
+#include <cpu/simple/atomic.hh>
+
 using namespace SST;
 using namespace std;
 
@@ -39,6 +41,167 @@ static OpDesc* newOpDesc( Enums::OpClass opClass, int opLat,
 static FUPool* newFUPool( string );
 template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
+
+extern "C" {
+SimObject* create_O3switchCpu( SST::Component*, string name, Params& sstParams );
+}
+
+SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstParams )
+{
+
+    AtomicSimpleCPUParams*  atomicparams     = new AtomicSimpleCPUParams;
+    atomicparams->name ="base"+ name;
+
+    Addr start = sstParams.find_integer( "physicalMemory.start" );
+    Addr end = sstParams.find_integer( "physicalMemory.end", 0 );
+
+    DBGC( 1, "%s.physicalMemory.start %#lx\n",name.c_str(),start);
+    DBGC( 1, "%s.physicalMemory.end %#lx\n",name.c_str(),end);
+
+    PhysicalMemoryParams& PMparams   = *new PhysicalMemoryParams;
+    PMparams.range.start = start;
+    PMparams.range.end = end;
+    PMparams.name = name + ".physmem";
+
+    System* system = create_System( name + ".system",
+                new PhysicalMemory2( & PMparams ), Enums::atomic);
+
+    const Params baseSSTParams = sstParams.find_prefix_params("base.");
+    AtomicSimpleCPUParams& BaseParams = *atomicparams;
+
+
+    // system and physmem are not needed after startup how do free them
+    BaseParams.dtb = newTLB<ISA::TLB>( BaseParams.name + ".dtb",
+                                    baseSSTParams.find_prefix_params("dtb.") );
+    BaseParams.itb = newTLB<ISA::TLB>( BaseParams.name + ".itb",
+                                    baseSSTParams.find_prefix_params("itb.") );
+
+    BaseParams.checker = NULL;
+
+    INIT_INT( BaseParams, baseSSTParams, max_insts_all_threads );
+    INIT_INT( BaseParams, baseSSTParams, max_insts_any_thread );
+    INIT_INT( BaseParams, baseSSTParams, max_loads_all_threads );
+    INIT_INT( BaseParams, baseSSTParams, max_loads_any_thread );
+    INIT_INT( BaseParams, baseSSTParams, max_insts_FF);
+
+    BaseParams.system = system;
+
+    INIT_INT( BaseParams, baseSSTParams, clock );
+    INIT_INT( BaseParams, baseSSTParams, width );
+    INIT_INT( BaseParams, baseSSTParams, function_trace_start );
+    INIT_INT( BaseParams, baseSSTParams, phase );
+    INIT_INT( BaseParams, baseSSTParams, progress_interval );
+
+    BaseParams.tracer = newTracer( BaseParams.name + ".tracer" );
+
+    INIT_INT( BaseParams, baseSSTParams, defer_registration );
+    INIT_INT( BaseParams, baseSSTParams, do_checkpoint_insts );
+    INIT_INT( BaseParams, baseSSTParams, do_statistics_insts );
+    INIT_INT( BaseParams, baseSSTParams, function_trace );
+    INIT_INT( BaseParams, baseSSTParams, cpu_id );
+
+    BaseParams.workload.resize(1);
+    BaseParams.workload[0] = newProcess( BaseParams.name + ".workload",
+                             baseSSTParams.find_prefix_params( "process." ),
+                             system, comp );
+
+    BaseParams.numThreads = 1;
+
+
+    DerivO3CPUParams* o3params = new DerivO3CPUParams;
+    DerivO3CPUParams& O3Params = *o3params;
+
+    o3params->name = "o3"+name;
+
+    O3Params.system = system;
+    O3Params.clock = BaseParams.clock;
+    O3Params.workload.resize(1);
+    O3Params.workload[0] = BaseParams.workload[0];
+    O3Params.numThreads = 1;
+    O3Params.checker = NULL;
+    O3Params.fuPool = newFUPool( O3Params.name + ".fuPool" );
+
+    const Params O3SSTParams = sstParams.find_prefix_params( "o3cpu." );
+
+    // system and physmem are not needed after startup how do free them
+    O3Params.dtb = newTLB<ISA::TLB>( O3Params.name + ".dtb",
+                                    baseSSTParams.find_prefix_params("dtb.") );
+    O3Params.itb = newTLB<ISA::TLB>( O3Params.name + ".itb",
+                                    baseSSTParams.find_prefix_params("itb.") );
+
+    INIT_INT(O3Params, O3SSTParams, fetchTrapLatency);
+    INIT_INT(O3Params, O3SSTParams, trapLatency);
+    INIT_INT(O3Params, O3SSTParams, smtIQThreshold);
+    INIT_INT(O3Params, O3SSTParams, smtLSQThreshold);
+    INIT_INT(O3Params, O3SSTParams, smtROBThreshold);
+    INIT_STR(O3Params, O3SSTParams, predType);
+    INIT_STR(O3Params, O3SSTParams, smtCommitPolicy);
+    INIT_STR(O3Params, O3SSTParams, smtFetchPolicy);
+    INIT_STR(O3Params, O3SSTParams, smtIQPolicy);
+    INIT_STR(O3Params, O3SSTParams, smtLSQPolicy);
+    INIT_STR(O3Params, O3SSTParams, smtROBPolicy);
+    INIT_INT(O3Params, O3SSTParams, BTBEntries);
+    INIT_INT(O3Params, O3SSTParams, BTBTagSize);
+    INIT_INT(O3Params, O3SSTParams, LFSTSize);
+    INIT_INT(O3Params, O3SSTParams, LQEntries);
+    INIT_INT(O3Params, O3SSTParams, RASSize);
+    INIT_INT(O3Params, O3SSTParams, SQEntries);
+    INIT_INT(O3Params, O3SSTParams, SSITSize);
+    INIT_INT(O3Params, O3SSTParams, activity);
+    INIT_INT(O3Params, O3SSTParams, backComSize);
+    INIT_INT(O3Params, O3SSTParams, cachePorts);
+    INIT_INT(O3Params, O3SSTParams, choiceCtrBits);
+    INIT_INT(O3Params, O3SSTParams, choicePredictorSize);
+    INIT_INT(O3Params, O3SSTParams, commitToDecodeDelay);
+    INIT_INT(O3Params, O3SSTParams, commitToFetchDelay);
+    INIT_INT(O3Params, O3SSTParams, commitToIEWDelay);
+    INIT_INT(O3Params, O3SSTParams, commitToRenameDelay);
+    INIT_INT(O3Params, O3SSTParams, commitWidth);
+    INIT_INT(O3Params, O3SSTParams, decodeToFetchDelay);
+    INIT_INT(O3Params, O3SSTParams, decodeToRenameDelay);
+    INIT_INT(O3Params, O3SSTParams, decodeWidth);
+    INIT_INT(O3Params, O3SSTParams, dispatchWidth);
+    INIT_INT(O3Params, O3SSTParams, fetchToDecodeDelay);
+    INIT_INT(O3Params, O3SSTParams, fetchWidth);
+    INIT_INT(O3Params, O3SSTParams, forwardComSize);
+    INIT_INT(O3Params, O3SSTParams, globalCtrBits);
+    INIT_INT(O3Params, O3SSTParams, globalHistoryBits);
+    INIT_INT(O3Params, O3SSTParams, globalPredictorSize);
+    INIT_INT(O3Params, O3SSTParams, iewToCommitDelay);
+    INIT_INT(O3Params, O3SSTParams, iewToDecodeDelay);
+    INIT_INT(O3Params, O3SSTParams, iewToFetchDelay);
+    INIT_INT(O3Params, O3SSTParams, iewToRenameDelay);
+    INIT_INT(O3Params, O3SSTParams, instShiftAmt);
+    INIT_INT(O3Params, O3SSTParams, issueToExecuteDelay);
+    INIT_INT(O3Params, O3SSTParams, issueWidth);
+    INIT_INT(O3Params, O3SSTParams, localCtrBits);
+    INIT_INT(O3Params, O3SSTParams, localHistoryBits);
+    INIT_INT(O3Params, O3SSTParams, localHistoryTableSize);
+    INIT_INT(O3Params, O3SSTParams, localPredictorSize);
+    INIT_INT(O3Params, O3SSTParams, numIQEntries);
+    INIT_INT(O3Params, O3SSTParams, numPhysFloatRegs);
+    INIT_INT(O3Params, O3SSTParams, numPhysIntRegs);
+    INIT_INT(O3Params, O3SSTParams, numROBEntries);
+    INIT_INT(O3Params, O3SSTParams, numRobs);
+    INIT_INT(O3Params, O3SSTParams, renameToDecodeDelay);
+    INIT_INT(O3Params, O3SSTParams, renameToFetchDelay);
+    INIT_INT(O3Params, O3SSTParams, renameToIEWDelay);
+    INIT_INT(O3Params, O3SSTParams, renameToROBDelay);
+    INIT_INT(O3Params, O3SSTParams, renameWidth);
+    INIT_INT(O3Params, O3SSTParams, smtNumFetchingThreads);
+    INIT_INT(O3Params, O3SSTParams, squashWidth);
+    INIT_INT(O3Params, O3SSTParams, wbDepth);
+    INIT_INT(O3Params, O3SSTParams, wbWidth);
+    INIT_INT(O3Params, O3SSTParams, defer_registration );
+    INIT_INT(O3Params, O3SSTParams, max_insts_all_threads );
+    INIT_INT(O3Params, O3SSTParams, max_insts_any_thread );
+    INIT_INT(O3Params, O3SSTParams, max_loads_all_threads );
+    INIT_INT(O3Params, O3SSTParams, max_loads_any_thread );
+  
+    static_cast<BaseCPU*>(static_cast<void*>(o3params->create()));
+    return static_cast<SimObject*>(static_cast<void*>(BaseParams.create()));
+}
+
 
 extern "C" {
 SimObject* create_O3Cpu( SST::Component*, string name, Params& sstParams );
