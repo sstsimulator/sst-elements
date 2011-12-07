@@ -12,5 +12,5 @@ static __attribute__ ((constructor)) void init(void)
     std::ostringstream tmp;
     tmp << world.rank();
 
-    TRACE_SET_PREFIX( tmp.str() + ":" );
+//    TRACE_SET_PREFIX( tmp.str() + ":" );
 }
