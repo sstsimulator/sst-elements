@@ -298,7 +298,9 @@ int my_rank;
 	    }
 	}
 
-	memset(rbuf, 0x55, sizeof(double) * num_doubles * nranks);
+	for (i= 0; i < num_doubles * nranks; i++)   {
+	    rbuf[i]= -51.0;
+	}
 
 	/* Check */
 	if (check_data)   {
@@ -359,7 +361,10 @@ int my_rank;
 	    }
 	}
 
-	memset(rbuf, 0x55, sizeof(double) * num_doubles * nranks);
+	for (i= 0; i < num_doubles * nranks; i++)   {
+	    rbuf[i]= -51.0;
+	}
+
 
 	/* Check */
 	if (check_data)   {
@@ -444,14 +449,14 @@ double total_time;
 	precision= stat_p(cnt, tot, tot_squared);
 
 #if !node0
-	// Need at least tree trials
-	if ((cnt >= 3) && (precision < req_precision))   {
+	// Need at least nine trials
+	if ((cnt >= 9) && (precision < req_precision))   {
 	    // Attained the required precisions. Done!
 	    break;
 	}
 #else
-	// Need at least tree trials
-	if ((cnt >= 3) && (precision < req_precision))   {
+	// Need at least nine trials
+	if ((cnt >= 9) && (precision < req_precision))   {
 	    // Attained the required precisions. Done!
 	    done= 1;
 	} else   {

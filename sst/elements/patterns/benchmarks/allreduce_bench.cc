@@ -319,8 +319,12 @@ double *rbuf;
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
-	memset(sbuf, 0xAA, sizeof(double) * msg_len);
-	memset(rbuf, 0x55, sizeof(double) * msg_len);
+
+	for (i= 0; i < msg_len; i++)   {
+	    sbuf[i]= 1.0;
+	    rbuf[i]= -51.0;
+	}
+
 	
 	/* Do a warm-up */
 	MPI_Allreduce(sbuf, rbuf, msg_len, MPI_DOUBLE, MPI_SUM, comm);
@@ -358,8 +362,11 @@ double *rbuf;
 	    fprintf(stderr, "Out of memory!\n");
 	    exit(-1);
 	}
-	memset(sbuf, 0xAA, sizeof(double) * msg_len);
-	memset(rbuf, 0x55, sizeof(double) * msg_len);
+
+	for (i= 0; i < msg_len; i++)   {
+	    sbuf[i]= 1.0;
+	    rbuf[i]= -51.0;
+	}
 
 	/* Do a warm-up */
 	my_allreduce(sbuf, rbuf, msg_len, ctopo);
@@ -424,14 +431,14 @@ double total_time;
 	precision= stat_p(cnt, tot, tot_squared);
 
 #if !node0
-	// Need at least tree trials
-	if ((cnt >= 3) && (precision < req_precision))   {
+	// Need at least nine trials
+	if ((cnt >= 9) && (precision < req_precision))   {
 	    // Attained the required precisions. Done!
 	    break;
 	}
 #else
-	// Need at least tree trials
-	if ((cnt >= 3) && (precision < req_precision))   {
+	// Need at least nine trials
+	if ((cnt >= 9) && (precision < req_precision))   {
 	    // Attained the required precisions. Done!
 	    done= 1;
 	} else   {
