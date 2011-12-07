@@ -8,6 +8,7 @@
 #include <map>
 #include <deque>
 #include <assert.h>
+#include <string.h>
 
 #include <cxxabi.h>
 
