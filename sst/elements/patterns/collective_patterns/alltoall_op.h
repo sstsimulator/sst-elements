@@ -14,7 +14,7 @@
 #include "support/state_machine.h"
 #include "support/comm_pattern.h"
 
-#define MAX_EPOCH	(4)	// FIXME: Not sure why 2 or 3 is not enough...
+#define MAX_EPOCH	(6)	// FIXME: Not sure why 2 or 3 is not enough...
 
 
 
