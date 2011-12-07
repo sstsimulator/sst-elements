@@ -43,14 +43,14 @@ int out_port;
     current_time= getCurrentSimTime();
     CPUNicEvent *e= static_cast<CPUNicEvent *>(event);
 
-    _ROUTER_MODEL_DBG(3, "%s in port %d, time %" PRIu64 ", src %" PRId64 ", seq %" PRId64 "\n",
+    _ROUTER_MODEL_DBG(4, "%s in port %d, time %" PRIu64 ", src %" PRId64 ", seq %" PRId64 "\n",
 	component_name.c_str(), in_port, (uint64_t)current_time,
 	e->msg_id & ((1 << RANK_FIELD) - 1), e->msg_id >> RANK_FIELD);
 
 
 #if DBG_ROUTER_MODEL > 1
     /* Diagnostic: print the route this event is taking */
-    if (router_model_debug >= 4)   {
+    if (router_model_debug >= 5)   {
 	std::vector<int>::iterator itNum;
 	char str[132];
 	char tmp[132];
@@ -73,7 +73,7 @@ int out_port;
 	    strcpy(str, tmp);
 	    i++;
 	}
-	_ROUTER_MODEL_DBG(4, "%s\n", str);
+	_ROUTER_MODEL_DBG(5, "%s\n", str);
     }
 #endif  // DBG_ROUTER_MODEL
 
@@ -183,6 +183,8 @@ int out_port;
     e->hops++;
     assert(port[out_port].link); // Trying to use an unused port. This is a routing error
     port[out_port].link->Send(delay, e);
+    port[out_port].cnt_out++;
+    msg_cnt++;
 
 }  // end of handle_port_events()
 

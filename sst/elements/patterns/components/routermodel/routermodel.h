@@ -101,6 +101,7 @@ class Routermodel : public IntrospectedComponent {
 	    congestion_out= 0;
 	    congestion_in_cnt= 0;
 	    congestion_in= 0;
+	    msg_cnt= 0;
 
 #ifdef WITH_POWER
 	    // Power modeling
@@ -112,7 +113,7 @@ class Routermodel : public IntrospectedComponent {
 
 
             while (it != params.end())   {
-                _ROUTER_MODEL_DBG(1, "Router %s: key=%s value=%s\n", component_name.c_str(),
+                _ROUTER_MODEL_DBG(2, "Router %s: key=%s value=%s\n", component_name.c_str(),
 		    it->first.c_str(), it->second.c_str());
 
 		if (!it->first.compare("debug"))   {
@@ -137,7 +138,7 @@ class Routermodel : public IntrospectedComponent {
 
 		else if (!it->first.compare("component_name"))   {
 		    component_name= it->second;
-		    _ROUTER_MODEL_DBG(1, "Component name for ID %lu is \"%s\"\n", id,
+		    _ROUTER_MODEL_DBG(2, "Component name for ID %lu is \"%s\"\n", id,
 			component_name.c_str());
 		}
 
@@ -161,12 +162,12 @@ class Routermodel : public IntrospectedComponent {
 		    if (!it->second.compare("McPAT"))   {
 			powerModel= McPAT;
 			ifModelPower= true;
-			_ROUTER_MODEL_DBG(1, "%s: Power modeling enabled, using McPAT\n",
+			_ROUTER_MODEL_DBG(2, "%s: Power modeling enabled, using McPAT\n",
 			    component_name.c_str());
 		    } else if (!it->second.compare("ORION"))   {
 			powerModel= ORION;
 			ifModelPower= true;
-			_ROUTER_MODEL_DBG(1, "%s: Power modeling enabled, using ORION\n",
+			_ROUTER_MODEL_DBG(2, "%s: Power modeling enabled, using ORION\n",
 			    component_name.c_str());
 		    } else   {
 			_abort(Routermodel, "Unknown power model!\n");
@@ -323,9 +324,9 @@ class Routermodel : public IntrospectedComponent {
 		std::list<Rtrparams_t>::iterator k;
 
 
-		_ROUTER_MODEL_DBG(1, "%s: Found %d Rtr inflection points. Using new router model.\n",
+		_ROUTER_MODEL_DBG(2, "%s: Found %d Rtr inflection points. Using new router model.\n",
 		    component_name.c_str(), (int)Rtrparams.size());
-		_ROUTER_MODEL_DBG(1, "%s: Found %d NIC inflection points.\n",
+		_ROUTER_MODEL_DBG(2, "%s: Found %d NIC inflection points.\n",
 		    component_name.c_str(), (int)NICparams.size());
 		new_model= true;
 		hop_delay= 0;		// We'll read this out of the router params
@@ -362,14 +363,14 @@ class Routermodel : public IntrospectedComponent {
 		    /* Push a dummy port, so port numbering and order in list match */
 		    strcpy(link_name, "Unused_port");
 		    new_port.link= NULL;
-		    _ROUTER_MODEL_DBG(2, "Recorded unused port %d, link \"%s\", on router %s\n",
+		    _ROUTER_MODEL_DBG(3, "Recorded unused port %d, link \"%s\", on router %s\n",
 			i, link_name, component_name.c_str());
 		} else   {
 		    strcpy(link_name, it->second.c_str());
 		    new_port.link= configureLink(link_name, new Event::Handler<Routermodel,int>
 					(this, &Routermodel::handle_port_events, i));
 		    new_port.link->setDefaultTimeBase(tc);
-		    _ROUTER_MODEL_DBG(2, "Added handler for port %d, link \"%s\", on router %s\n",
+		    _ROUTER_MODEL_DBG(3, "Added handler for port %d, link \"%s\", on router %s\n",
 			i, link_name, component_name.c_str());
 		}
 
@@ -381,10 +382,10 @@ class Routermodel : public IntrospectedComponent {
 	    }
 
 	    if (!aggregator)   {
-		_ROUTER_MODEL_DBG(1, "Router model component \"%s\" is on rank %d\n",
+		_ROUTER_MODEL_DBG(2, "Router model component \"%s\" is on rank %d\n",
 		    component_name.c_str(), _debug_rank);
 	    } else   {
-		_ROUTER_MODEL_DBG(1, "Aggregator component \"%s\" is on rank %d\n",
+		_ROUTER_MODEL_DBG(2, "Aggregator component \"%s\" is on rank %d\n",
 		    component_name.c_str(), _debug_rank);
 	    }
 
@@ -395,7 +396,7 @@ class Routermodel : public IntrospectedComponent {
 		if (self_link == NULL)   {
 		    _ABORT(Ghost_pattern, "That was no good!\n");
 		} else   {
-		    _ROUTER_MODEL_DBG(2, "Added a self link and a handler on router %s\n",
+		    _ROUTER_MODEL_DBG(3, "Added a self link and a handler on router %s\n",
 			component_name.c_str());
 		}
 
@@ -403,6 +404,23 @@ class Routermodel : public IntrospectedComponent {
 	    }
 
         }
+
+
+        ~Routermodel()   {
+	    if (router_model_debug)   {
+		printf("%s msg cnt %8lld, congestion cnt in %6lld out %6lld, delay in %12"
+		    PRId64 " out %12" PRId64 "\n", component_name.c_str(), msg_cnt,
+		    congestion_in_cnt, congestion_out_cnt, congestion_in, congestion_out);
+
+		for (int i= 0; i < num_ports; i++)   {
+		    if (port[i].link == NULL)   {
+			printf("%s    port %2d unused\n", component_name.c_str(), i);
+		    } else   {
+			printf("%s    port %2d cnt in %6lld, out %6lld\n", component_name.c_str(), i, port[i].cnt_in, port[i].cnt_out);
+		    }
+		}
+	    }
+	}
 
 
 	int
@@ -524,6 +542,7 @@ class Routermodel : public IntrospectedComponent {
 	long long int congestion_out_cnt;
 	SimTime_t congestion_in;
 	long long int congestion_in_cnt;
+	long long int msg_cnt;
 
 
         friend class boost::serialization::access;
