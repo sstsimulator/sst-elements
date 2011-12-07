@@ -403,8 +403,8 @@ double *results;
 	tot_squared= tot_squared + metric * metric;
 	precision= stat_p(cnt, tot, tot_squared);
 
-	/* Need at least tree trials */
-	if ((cnt >= 3) && (precision < req_precision))   {
+	/* Need at least nine trials */
+	if ((cnt >= 9) && (precision < req_precision))   {
 	    /* Attained the required precisions. Done! */
 	    done= 1;
 	} else   {
