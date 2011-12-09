@@ -1,6 +1,6 @@
 #ifndef _nicMmu_h
 #define _nicMmu_h
-
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
