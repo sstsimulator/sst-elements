@@ -1,0 +1,27 @@
+# -*- Makefile -*-
+#
+#
+
+EXTRA_DIST =
+
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libportals4.la
+libportals4_la_SOURCES = \
+    portals4lib.cc\
+    ptlNic/recvEntry.cpp\
+    ptlNic/recvEntry.h\
+    ptlNic/dmaEngine.cpp \
+    ptlNic/dmaEngine.h \
+    ptlNic/context.h \
+    ptlNic/context.cpp \
+    ptlNic/ptlNic.cpp \
+    ptlNic/ptlNicVCInfo.cpp \
+    ptlNic/ptlNic.h \
+    ptlNic/ptlNicMMIF.cpp \
+    ptlNic/ptlNicMMIF.h \
+    ptlNic/ptlNicEvent.h
+
+libportals4_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+            -I$(top_srcdir)/sst/elements/include
+libportals4_la_LDFLAGS = -module -avoid-version
+libportals4_la_LIBADD =
