@@ -48,49 +48,28 @@ make
 you should end up with apps "hello" and "rt"
 
 the M5 xml file uses an enviroment variable to define the exe
-export M5_EXE=`pwd`/rt
-
+export M5_EXE=`pwd`/hello
 
 RUN SIMULATION
 
 cd "sst tree"/sst/elements/M5/xml
 
-mpirun -np 1 sst.x --s np1-bus.xml
-
-this will execute the "rt" app on 2 cores sharing the same bus
+mpirun -np 1 sst.x --s example.xml
 
 You should see this:
 
-[mjleven@redsky-login2 xml]$ mpirun -np1 sst.x --s np1-bus.xml
-Version: 1.0
-main() My rank is 0, on 1 nodes
-Initialized references
+[mjleven@morbo xml]$ mpirun -np 1 sst.x example.xml
 WARNING: Building component "system" with no links assigned.
-0:M5:configFile `dual-coreM5.xml`
-Initialized references
-0:M5:registering exit `m5.node0.cpu0.workload`
-0:M5:registering exit `m5.node0.cpu1.workload`
+0:M5:configFile `exampleM5.xml`
+0:M5:registering exit `m5.nid0.cpu0.workload`
 0:M5:registering exit
 0:Exit::refInc():45: component multiple increment
-Starting main event loop
-warn: instruction 'fnstcw_Mw' unimplemented
-warn: instruction 'fldcw_Mw' unimplemented
+the name of the new process is:m5.nid0.cpu0.workload 
 hello mike
-hello mike
-rank=0 size=2
-rank=1 size=2
-0: rank=0 nid=0 pid=1
-1: rank=0 nid=0 pid=1
-1: rank=1 nid=1 pid=1
-0: rank=1 nid=1 pid=1
-call cnos_barrier
-call cnos_barrier
+`/home/mjleven/sstSVN/sandbox-18/sst/elements/M5/app/hello`
+`RT_RANK=0`
+`RT_SIZE=1`
+`PTLNIC_CMD_QUEUE_ADDR=0x2000`
 goodby mike
-goodby mike
-0:M5:exiting: time=25363000 cause=`target called exit()` code=0
-
-Simulation times
-  Build time: 0.04 s
-  Simulation time: 0.58 s
-  Total time: 0.62 s
-[mjleven@redsky-login2 xml]$
+0:M5:exiting: time=25373000 cause=`target exitGroupFunc called exit()` code=0
+[mjleven@morbo xml]$ 
