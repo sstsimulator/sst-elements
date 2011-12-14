@@ -5,7 +5,7 @@
 #include "dmaEvent.h"
 #include "nicMmu.h"
 
-#include "trace.h"
+#define PRINT_AT(...)
 
 DmaEngine::DmaEngine( SST::Component& comp, int nid ) :
     m_comp( comp ),

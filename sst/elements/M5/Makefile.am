@@ -18,18 +18,6 @@ libm5C_la_SOURCES = \
     debug.cpp \
     trace.cpp\
     trace.h\
-    ptlNic/recvEntry.cpp\
-    ptlNic/recvEntry.h\
-    ptlNic/dmaEngine.cpp \
-    ptlNic/dmaEngine.h \
-    ptlNic/context.h \
-    ptlNic/context.cpp \
-    ptlNic/ptlNic.cpp \
-    ptlNic/ptlNicVCInfo.cpp \
-    ptlNic/ptlNic.h \
-    ptlNic/ptlNicMMIF.cpp \
-    ptlNic/ptlNicMMIF.h \
-    ptlNic/ptlNicEvent.h \
     dummyPhysicalMemory.h \
     dummySystem.h \
     dummyThreadContext.h \

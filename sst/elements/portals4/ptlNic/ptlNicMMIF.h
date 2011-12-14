@@ -1,6 +1,8 @@
 #ifndef _ptlNicMMIF_h
 #define _ptlNicMMIF_h
 
+#if 0 // this code is dependent on gem5 
+
 #include <dev/io_device.hh>
 #include "cmdQueue.h"
 
@@ -63,5 +65,6 @@ class PtlNicMMIF : public DmaDevice
 };
 
 const char * PtlNicMMIF::m_cmdNames[] = CMD_NAMES;
+#endif
 
 #endif

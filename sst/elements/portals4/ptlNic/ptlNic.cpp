@@ -8,7 +8,9 @@
 #include "ptlNic.h"
 #include "ptlNicEvent.h"
 
-#include "trace.h"
+#define TRACE_ADD(x)
+#define TRACE_INIT()
+#define PRINT_AT(...)
 
 const char * PtlNic::m_cmdNames[] = CMD_NAMES;
 

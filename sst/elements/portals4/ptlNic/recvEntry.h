@@ -4,7 +4,8 @@
 #include <vector>
 #include "ptlNicTypes.h"
 #include "callback.h"
-#include "trace.h"
+//#include "trace.h"
+#define PRINT_AT(...)
 
 class DmaEngine;
 class CallbackBase;

@@ -3,6 +3,8 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 
+#if 0 // this code is dependent on gem5
+
 #include "ptlNicMMIF.h"
 #include <debug.h>
 #include <paramHelp.h>
@@ -143,3 +145,4 @@ Tick PtlNicMMIF::read(Packet* pkt)
 
 BOOST_CLASS_EXPORT(PtlNicEvent);
 BOOST_CLASS_EXPORT(PtlNicRespEvent);
+#endif

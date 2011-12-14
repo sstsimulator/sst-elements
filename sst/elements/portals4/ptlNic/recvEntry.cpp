@@ -4,7 +4,6 @@
 #include "recvEntry.h"
 #include "dmaEngine.h"
 #include "callback.h"
-#include "trace.h"
 
 RecvEntry::RecvEntry( DmaEngine const& dma, Addr vaddr,
                         size_t length, CallbackBase* callback ) :

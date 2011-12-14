@@ -7,6 +7,9 @@
 #include "ptlHdr.h"
 #include "recvEntry.h"
 
+#define TRACE_ADD(x)
+#define PRINT_AT(...)
+
 Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
         m_nic( nic ),
         m_uid( cmd.uid ),
