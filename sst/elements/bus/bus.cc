@@ -13,7 +13,6 @@
 #include "sst/core/serialization/element.h"
 
 #include "bus.h"
-#include <sst/elements/include/paramUtil.h>
 
 #define DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
@@ -96,14 +95,14 @@ void Bus::initDevice( std::string name, Params_t&  params )
 
     DBG("%s\n",name.c_str());
 
-    findParams( name + ".", params, portParams );
+    portParams = params.find_prefix_params( name + "." ); 
 
     if ( portParams.find( "address" ) != portParams.end()) {
-        addr = str2long( portParams["address"] ); 
+        addr = portParams.find_integer("address"); 
     } 
 
     if ( portParams.find( "length" ) != portParams.end()) {
-        length = str2long( portParams["length"] ); 
+        length = portParams.find_integer("length"); 
     }
 
     m_log.write("create Device \"%s\" addr=%#lx length=%#lx\n",

@@ -19,7 +19,6 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/log.h>
-#include <sst/elements/include/paramUtil.h>
 #include "sst/elements/SS_router/SS_router/SS_network.h"
 
 #define RTRIF_DBG 1 
@@ -123,18 +122,18 @@ public:
         if ( params.find( "id" ) == params.end() ) {
             _abort(RtrIF,"couldn't find routerID\n" );
         }
-        m_id = str2long( params[ "id" ] );
+        m_id = params.find_integer( "id" );
 
         if ( params.find("clock") != params.end() ) {
             frequency = params["clock"];
         }
 
         if ( params.find( "num_vc" ) != params.end() ) {
-            num_vcP = str2long( params["num_vc"] );
+            num_vcP = params.find_integer( "num_vc" );
         }
 
         if ( params.find( "Node2RouterQSize_flits" ) != params.end() ) {
-            num_tokens = str2long( params["Node2RouterQSize_flits"] );
+            num_tokens = params.find_integer( "Node2RouterQSize_flits" );
         }
 
         std::ostringstream idStr;
@@ -150,8 +149,7 @@ public:
 
 	m_rtrLink = configureLink( "rtr", new Event::Handler<RtrIF>(this, &RtrIF::processEvent));
 
-        Params_t tmp_params;
-        findParams( "dummy.", params, tmp_params );
+        Params_t tmp_params = params.find_prefix_params( "dummy." );
         dummyInit( tmp_params, frequency );
 
 //         ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >

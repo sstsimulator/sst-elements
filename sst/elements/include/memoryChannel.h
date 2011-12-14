@@ -84,16 +84,16 @@ class MemoryChannel :
             }
 
             if ( params.find("readReqCredit") != params.end() ) {
-                m_readReqCredit = str2long( params["readReqCredit"] ); 
+                m_readReqCredit = params.find_integer("readReqCredit"); 
             }
             if ( params.find("writeReqCredit") != params.end() ) {
-                m_writeReqCredit = str2long( params["writeReqCredit"] ); 
+                m_writeReqCredit = params.find_integer("writeReqCredit"); 
             }
             if ( params.find("readRespCredit") != params.end() ) {
-                m_readRespCredit = str2long( params["readRespCredit"] ); 
+                m_readRespCredit = params.find_integer("readRespCredit"); 
             }
             if ( params.find("writeRespCredit") != params.end() ) {
-                m_writeRespCredit = str2long( params["writeRespCredit"] ); 
+                m_writeRespCredit = params.find_integer("writeRespCredit"); 
             }
 
             m_log.write( "readReqCredit=%d readRespCredit=%d\n",

@@ -37,7 +37,7 @@ void RtrIF::dummyInit( Params_t params, std::string frequency )
     if ( params.find("nodes") == params.end() ) {
 	_abort(RtrIF,"couldn't find number of nodes\n");
     }
-    m_num_nodes = str2long( params[ "nodes" ] );
+    m_num_nodes = params.find_integer( "nodes" );
 
     if ( params.find( "file" ) == params.end() ) {
         _abort(RtrIF,"couldn't find file\n" );

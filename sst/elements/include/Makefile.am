@@ -8,7 +8,6 @@ nobase_sst_HEADERS = \
 	memMap.h \
 	memoryChannel.h \
 	memoryDev2.h \
-	paramUtil.h \
 	eventChannel2.h \
 	memoryDev.h \
 	memoryIF.h

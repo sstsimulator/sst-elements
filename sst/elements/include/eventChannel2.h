@@ -10,7 +10,6 @@
 // distribution.
 
 
-#include <sst/elements/include/paramUtil.h>
 #include "sst/core/event.h"
 
 #define _EC_DBG( fmt, args... ) \
@@ -56,7 +55,7 @@ EVENTCHANNEL()::EventChannel( Component& comp,
     int startCredit = 0;
     int threshold = 0;
     if ( params.find("initialCredit") != params.end() ) {
-        startCredit = str2long( params["initialCredit"] );
+        startCredit = params.find_integer("initialCredit" );
     }
 
     for ( int i = 0; i < numVC; i++ ) {

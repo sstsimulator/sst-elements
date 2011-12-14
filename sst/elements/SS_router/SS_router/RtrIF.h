@@ -32,7 +32,6 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/elements/include/paramUtil.h>
 #include "SS_network.h"
 
 #define RTRIF_DBG 1 
@@ -76,7 +75,7 @@ public:
         }
 
         if ( params.find( "Node2RouterQSize_flits" ) != params.end() ) {
-            num_tokens = str2long( params["Node2RouterQSize_flits"] );
+            num_tokens = params.find_integer("Node2RouterQSize_flits");
         }
 
 	m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<RtrIF>(this,&RtrIF::processEvent) );

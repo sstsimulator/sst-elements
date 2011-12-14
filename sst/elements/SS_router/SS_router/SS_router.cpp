@@ -27,7 +27,6 @@
 #include <sstream>
 
 #include "SS_router.h"
-#include <sst/elements/include/paramUtil.h>
 #include "SS_routerInternals.cpp"
 #include "SS_routerEvent.cpp"
 
@@ -271,10 +270,10 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
     for ( int i = 0; i < 3; i++ ) {
         m_datelineV[i] = false;
     }
-    findParams( "network.", params, tmp_params );
+    tmp_params = params.find_prefix_params( "network." );
     network = new Network( tmp_params ); 
 
-    findParams( "routing.", params, tmp_params );
+    tmp_params = params.find_prefix_params( "routing." );
     setupRoutingTable ( tmp_params, network->size(), network->xDimSize(),
                         network->yDimSize(), network->zDimSize() );
 
