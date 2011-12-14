@@ -16,7 +16,7 @@ LDFLAGS += -Llib/rt -Llib/libc
 
 CPPFLAGS += -Ilib/rt -Ilib/libc
 
-apps: libs hello rt portals
+apps: libs hello rt
 
 libs:
 	cd lib && $(MAKE)
