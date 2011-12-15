@@ -34,6 +34,7 @@ SimObject* create_DRAMSimWrap( SST::Component* comp, string name,
     INIT_STR( params, sstParams, printStats);
     INIT_STR( params, sstParams, deviceIniFilename );
     INIT_STR( params, sstParams, systemIniFilename );
+    INIT_STR( params, sstParams, megsOfMemory );
 
     params.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
     params.exeParams = sstParams.find_prefix_params("exe");
@@ -49,6 +50,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     m_dbg( *new Log< DRAMSIMC_DBG >( cerr, "DRAMSimC::", false ) ),
     m_log( *new Log< >( cout, "INFO DRAMSimC: ", false ) )
 {
+    unsigned megsOfMemory = 4096;
     DBGX( 2, "name=`%s`\n", name().c_str() );
 
     if ( p->info.compare( "yes" ) == 0 ) {
@@ -64,10 +66,13 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     string deviceIniFilename = p->pwd + "/" + p->deviceIniFilename;
     string systemIniFilename = p->pwd + "/" + p->systemIniFilename;
 
+    stringstream(p->megsOfMemory) >> megsOfMemory;
+
     m_log.write("device ini %s\n",deviceIniFilename.c_str());
     m_log.write("system ini %s\n",systemIniFilename.c_str());
 
     m_log.write("freq %s\n",p->frequency.c_str());
+    m_log.write("megsOfMemory %lu\n",megsOfMemory);
 
     m_tc = m_comp->registerClock( p->frequency,
             new SST::Clock::Handler<DRAMSimWrap>(this, &DRAMSimWrap::clock) );
@@ -76,7 +81,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     m_log.write("period %ld\n",m_tc->getFactor());
 
     m_memorySystem = new DRAMSim::MemorySystem(0, deviceIniFilename,
-                    systemIniFilename, "", "");
+                    systemIniFilename, "", "", megsOfMemory );
 
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* readDataCB;
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* writeDataCB;
@@ -170,7 +175,7 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 
     assert( ! m_readQ.empty() );
 
-    m_readQ.front().second += JEDEC_DATA_BUS_WIDTH; 
+    m_readQ.front().second += JEDEC_DATA_BUS_BITS; 
 
     PacketPtr pkt = m_readQ.front().first;
 
@@ -187,7 +192,7 @@ void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
 
     assert( ! m_writeQ.empty() );
 
-    m_writeQ.front().second += JEDEC_DATA_BUS_WIDTH; 
+    m_writeQ.front().second += JEDEC_DATA_BUS_BITS; 
 
     PacketPtr pkt = m_writeQ.front().first;
 
@@ -223,7 +228,7 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
         PacketPtr pkt = m_recvQ.front().first;
         int ret;
         uint64_t addr = pkt->getAddr() + m_recvQ.front().second;
-        addr &= ~( JEDEC_DATA_BUS_WIDTH - 1 );
+        addr &= ~( JEDEC_DATA_BUS_BITS - 1 );
 
         if ( ! MS_CAST( m_memorySystem )->addTransaction( 
                         pkt->isWrite(), addr) ) 
@@ -234,7 +239,7 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
         DPRINTFN("%s: added trans, cycle=%lu addr=%#lx\n", 
                                                 __func__,cycle, addr );
 
-        m_recvQ.front().second += JEDEC_DATA_BUS_WIDTH;
+        m_recvQ.front().second += JEDEC_DATA_BUS_BITS;
 
         if ( m_recvQ.front().second >= pkt->getSize() ) {
             if ( pkt->isRead() ) {

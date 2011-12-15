@@ -264,6 +264,7 @@
             <info> yes </info>
             <debug> yes </debug>
             <frequency> 1.0 Ghz </frequency>
+            <megsOfMemory> 1024 </megsOfMemory>
             <systemIniFilename> system.ini </systemIniFilename>
             <deviceIniFilename> ini/DDR3_micron_32M_8B_x8_sg15.ini </deviceIniFilename>
             <pwd> /home/mjleven/sstLibs/DRAMSim2 </pwd>

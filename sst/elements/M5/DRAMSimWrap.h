@@ -29,6 +29,7 @@ struct DRAMSimWrapParams : public PhysicalMemoryParams
     std::string debug;
     std::string pwd;
     std::string printStats;
+    std::string megsOfMemory;
 };
 
 class DRAMSimWrap : public PhysicalMemory 

@@ -12,6 +12,7 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 #include <DRAMSimC.h>
+#include <sstream> // for stringstream() so I don't have to use atoi()
 
 #define DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
@@ -25,6 +26,7 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     std::string frequency = "2.2 GHz";
     std::string systemIniFilename = "ini/system.ini";
     std::string deviceIniFilename = "";
+    unsigned megsOfMemory = 4096;
 
     if ( params.find( "info" ) != params.end() ) {
         if ( params[ "info" ].compare( "yes" ) == 0 ) {
@@ -64,6 +66,10 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
         if ( ! it->first.compare("printStats") ) {
             m_printStats = it->second;
         }
+        if ( ! it->first.compare("megsOfMemory") ) {
+            stringstream(it->second) >> megsOfMemory;
+        }
+
         ++it;
     }
 
@@ -86,7 +92,7 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
 
 
     m_memorySystem = new MemorySystem(0, deviceIniFilename,
-                    systemIniFilename, "", "");
+                    systemIniFilename, "", "", megsOfMemory);
     if ( ! m_memorySystem ) {
       _abort(DRAMSimC,"MemorySystem() failed\n");
     }
