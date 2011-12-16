@@ -23,7 +23,14 @@ static inline std::string resolveString( std::string str )
         pos2 = str.find( "}" );
 
         retStr += str.substr( 0, pos1 );
-        retStr += getenv( str.substr( pos1+2, pos2-(pos1+2) ).c_str() );
+        const char *tmp = getenv( str.substr( pos1+2, pos2-(pos1+2) ).c_str() );
+        if ( ! tmp ) {
+            fprintf(stderr,"warn: NULL = getenv(`%s`)\n",
+                            str.substr( pos1+2, pos2-(pos1+2) ).c_str());
+            return "";
+        }
+
+        retStr += tmp; 
 
         str = str.substr( pos2 + 1 );
 

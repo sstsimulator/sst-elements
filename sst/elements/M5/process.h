@@ -46,7 +46,13 @@ static inline Process* newProcess( const std::string name,
     INIT_STR( process, params, cwd );
     INIT_STR( process, params, executable );
 
-    process.executable = resolveString( process.executable );
+    std::string tmpName = resolveString( process.executable );
+    if ( tmpName.empty() ) {
+        fprintf(stderr,"fatal: bad executable name `%s`\n", 
+                                            process.executable.c_str() );
+        exit(-1);
+    }
+    process.executable = tmpName;
 	
     std::string str = params.find_string( "registerExit" );
     
@@ -66,6 +72,12 @@ static inline Process* newProcess( const std::string name,
         SST::Params::iterator iter = tmp.begin();
         for ( int i = 0; i < process.cmd.size(); i++ ) { 
             process.cmd[i] = resolveString((*iter).second);
+            if ( process.cmd[i].empty() ) {
+                fprintf(stderr,"fatal: bad executable name `%s`\n", 
+                                (*iter).second.c_str() );
+                exit(-1);
+            }
+
             ++iter;
             F_STR( process, cmd[i] );
         }
