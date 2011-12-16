@@ -65,6 +65,8 @@ double req_precision;
 int num_ops;
 int max_trials;
 bool check_data;
+char processor_name[MPI_MAX_PROCESSOR_NAME];
+int name_len;
 
 
 
@@ -159,6 +161,9 @@ bool check_data;
 	}
 	printf("#\n");
     }
+
+    MPI_Get_processor_name(processor_name, &name_len);
+    printf("# proc name for %4d/%-4d on %s\n", my_rank, num_ranks, processor_name);
 
 
 
