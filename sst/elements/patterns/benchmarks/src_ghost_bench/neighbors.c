@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#if STANDALONECPLUSPLUS
+extern "C" {
+#endif
 #include "ghost.h"
 #include "neighbors.h"
 
@@ -63,3 +66,6 @@ int x, y, z;
     }
 
 }  /* end of neighbors() */
+#if STANDALONECPLUSPLUS
+}
+#endif

@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>	/* For qsort() */
 #include <math.h>
+#if STANDALONECPLUSPLUS
+extern "C" {
+#endif
 #include "stat_p.h"
 
 
@@ -150,3 +153,6 @@ int i;
 	min, avg, med, max, sd, precision);
 
 }  /* end of disp_stats() */
+#if STANDALONECPLUSPLUS
+}
+#endif

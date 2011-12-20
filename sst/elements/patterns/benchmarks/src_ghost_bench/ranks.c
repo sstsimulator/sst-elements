@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <mpi.h>
+#if STANDALONECPLUSPLUS
+extern "C" {
+#endif
 #include "ghost.h"
 #include "ranks.h"
 
@@ -201,3 +204,6 @@ check_element_assignment(int verbose, int decomposition_only, int num_ranks, int
     }
 
 }  /* end of check_element_assignment() */
+#if STANDALONECPLUSPLUS
+}
+#endif

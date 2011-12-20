@@ -175,7 +175,7 @@ int stride= 6;
     if (my_rank < num_streams)   {
 	dest= num_nodes - 1 - my_rank;
 	if (my_rank % stride != 0)   {
-	    // I don't participate
+	    /* I don't participate */
 	    return t2;
 	}
 
@@ -199,7 +199,7 @@ int stride= 6;
     } else if (my_rank >= (num_nodes - num_streams))   {
 	src= num_nodes - 1 - my_rank;
 	if ((my_rank + 1) % stride != 0)   {
-	    // I don't participate
+	    /* I don't participate */
 	    return t2;
 	}
 

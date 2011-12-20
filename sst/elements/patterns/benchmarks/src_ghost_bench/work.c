@@ -10,6 +10,9 @@
 #include <math.h>	/* For trunk(), log(), lrint */
 #include <unistd.h>	/* For usleep() */
 #include <stdlib.h>	/* For drand48() */
+#if STANDALONECPLUSPLUS
+extern "C" {
+#endif
 #include "ghost.h"
 #include "work.h"
 
@@ -348,3 +351,6 @@ double r;
     }
 
 }  /* end of do_delay() */
+#if STANDALONECPLUSPLUS
+}
+#endif

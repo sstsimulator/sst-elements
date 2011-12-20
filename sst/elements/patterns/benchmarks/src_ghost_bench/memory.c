@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>	/* For memset() */
 #include <mpi.h>
+#if STANDALONECPLUSPLUS
+extern "C" {
+#endif
 #include "ghost.h"
 #include "memory.h"
 
@@ -313,3 +316,6 @@ ELEMENT_TYPE value;
     }
 
 }  /* end of mem_init() */
+#if STANDALONECPLUSPLUS
+}
+#endif

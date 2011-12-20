@@ -8,6 +8,7 @@
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
+#include <string.h>	/* For size_t */
 #include <math.h>
 
 

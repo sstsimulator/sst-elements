@@ -1,3 +1,5 @@
+#ifndef _TIMESTATS_STRUCTURES_H_
+#define _TIMESTATS_STRUCTURES_H_
 /* data structure for returning timing statistics */
 typedef struct {
   double avgcompute_time[5]; /* each element i corresponds to avg computation overhead */
@@ -29,3 +31,4 @@ typedef struct {
                              /* be ignored. Otherwise, the results are valid. */
  } time_stat;
 
+#endif /*  _TIMESTATS_STRUCTURES_H_ */

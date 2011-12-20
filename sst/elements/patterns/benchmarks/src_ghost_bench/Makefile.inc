@@ -4,7 +4,6 @@ ghost_bench_CPPFLAGS = -DNOT_PART_OF_SIM -D_PATTERNS_H_ $(MPI_CPPFLAGS)
 ghost_bench_LDADD = $(MPILIBS) -lm
 ghost_bench_SOURCES = \
 	benchmarks/src_ghost_bench/ghost_driver.cc \
-	benchmarks/src_ghost_bench/ghost_driver.h \
 	benchmarks/src_ghost_bench/ghost.cc \
 	benchmarks/src_ghost_bench/ghost.h \
 	benchmarks/src_ghost_bench/memory.c \

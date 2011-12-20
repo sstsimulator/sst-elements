@@ -3,6 +3,9 @@
 */
 
 #include <stdio.h>
+#if STANDALONECPLUSPLUS
+extern "C" {
+#endif
 #include "util.h"
 
 
@@ -23,3 +26,6 @@ int i;
     printf("\"\n");
 
 }  /* end of disp_cmd_line() */
+#if STANDALONECPLUSPLUS
+}
+#endif
