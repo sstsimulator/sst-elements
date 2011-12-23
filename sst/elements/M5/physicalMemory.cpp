@@ -25,8 +25,8 @@ SimObject* create_PhysicalMemory( Component*, string name, Params& sParams )
 
     INIT_HEX( params, sParams, range.start );
     INIT_HEX( params, sParams, range.end );
-    INIT_INT( params, sParams, latency );
-    INIT_INT( params, sParams, latency_var );
+    INIT_LATENCY( params, sParams, latency );
+    INIT_LATENCY( params, sParams, latency_var );
     INIT_BOOL( params, sParams, null );
     INIT_BOOL( params, sParams, zero );
     INIT_STR( params, sParams, file );

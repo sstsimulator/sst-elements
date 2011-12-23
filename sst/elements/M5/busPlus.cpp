@@ -17,7 +17,7 @@ SimObject* create_BusPlus( SST::Component* comp, std::string name,
 
     busP.name = name;
 
-    INIT_INT( busP, params, clock);
+    INIT_CLOCK( busP, params, clock);
     INIT_INT( busP, params, block_size);
     INIT_INT( busP, params, bus_id );
     INIT_INT( busP, params, header_cycles);

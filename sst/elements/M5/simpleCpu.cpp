@@ -88,7 +88,7 @@ static void initBaseCPUParams( TimingSimpleCPUParams& cpu,
 
     cpu.system                = system;
 
-    INIT_INT( cpu, sstParams, clock );
+    INIT_CLOCK( cpu, sstParams, clock );
     INIT_INT( cpu, sstParams, function_trace_start );
     INIT_INT( cpu, sstParams, phase );
     INIT_INT( cpu, sstParams, progress_interval );

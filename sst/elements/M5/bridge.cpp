@@ -21,8 +21,8 @@ SimObject* create_Bridge( Component* comp, string name, Params& params )
 
     bridgeP.name = name;
 
-    INIT_INT( bridgeP, params, delay );
-    INIT_INT( bridgeP, params, nack_delay );
+    INIT_LATENCY( bridgeP, params, delay );
+    INIT_LATENCY( bridgeP, params, nack_delay );
     INIT_BOOL( bridgeP, params, write_ack );
     INIT_INT( bridgeP, params, req_size_a );
     INIT_INT( bridgeP, params, req_size_b );

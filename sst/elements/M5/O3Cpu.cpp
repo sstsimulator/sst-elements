@@ -86,7 +86,7 @@ SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstPar
 
     BaseParams.system = system;
 
-    INIT_INT( BaseParams, baseSSTParams, clock );
+    INIT_CLOCK( BaseParams, baseSSTParams, clock );
     INIT_INT( BaseParams, baseSSTParams, width );
     INIT_INT( BaseParams, baseSSTParams, function_trace_start );
     INIT_INT( BaseParams, baseSSTParams, phase );
@@ -197,7 +197,10 @@ SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstPar
     INIT_INT(O3Params, O3SSTParams, max_insts_any_thread );
     INIT_INT(O3Params, O3SSTParams, max_loads_all_threads );
     INIT_INT(O3Params, O3SSTParams, max_loads_any_thread );
-  
+    INIT_INT(O3Params, O3SSTParams, max_loads_any_thread );
+    INIT_INT(O3Params, O3SSTParams, LSQDepCheckShift);
+    INIT_BOOL(O3Params, O3SSTParams, LSQCheckLoads );
+
     static_cast<BaseCPU*>(static_cast<void*>(o3params->create()));
     return static_cast<SimObject*>(static_cast<void*>(BaseParams.create()));
 }
@@ -258,7 +261,7 @@ static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
 
     cpu.system                = system;
 
-    INIT_INT( cpu, sstParams, clock );
+    INIT_CLOCK( cpu, sstParams, clock );
     INIT_INT( cpu, sstParams, function_trace_start );
     INIT_INT( cpu, sstParams, phase );
     INIT_INT( cpu, sstParams, progress_interval );
@@ -353,6 +356,8 @@ static void initDerivO3CPUParams( DerivO3CPUParams& cpu,
     INIT_INT(cpu,tmp,squashWidth);
     INIT_INT(cpu,tmp,wbDepth);
     INIT_INT(cpu,tmp,wbWidth);
+    INIT_INT(cpu,tmp,LSQDepCheckShift);
+    INIT_BOOL(cpu,tmp,LSQCheckLoads );
 }
 
 static OpDesc* newOpDesc( Enums::OpClass opClass, int opLat, int issueLat,

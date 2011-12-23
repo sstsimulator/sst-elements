@@ -4,6 +4,17 @@
 
 #include <debug.h>
 
+extern unsigned freq_to_ticks( std::string val );
+extern unsigned latency_to_ticks( std::string val );
+
+#define INIT_CLOCK( c, p, member )\
+    c.member = freq_to_ticks( p.find_string(#member) );\
+    F_INT(c,member)
+
+#define INIT_LATENCY( c, p, member )\
+    c.member = latency_to_ticks( p.find_string(#member) );\
+    F_INT(c,member)
+
 #define INIT_INT( c, p, member )\
     c.member = p.find_integer(#member);\
     F_INT(c,member)

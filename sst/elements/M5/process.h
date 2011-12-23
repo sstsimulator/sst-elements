@@ -62,9 +62,7 @@ static inline Process* newProcess( const std::string name,
     }
 
     process.cmd.resize(1);
-    process.env.resize(1);
     process.cmd[0] = "";
-    process.env[0] = "";
 
     SST::Params tmp = params.find_prefix_params( "cmd." ); 
     if ( tmp.size() ) {

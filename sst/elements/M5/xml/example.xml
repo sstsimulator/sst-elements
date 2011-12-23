@@ -9,7 +9,7 @@
 <sst>
     <component name=system type=m5C.M5 rank=0 >
         <params>
-            <configFile>exampleM5.xml</configFile>
+            <configFile>exmapleM5.xml</configFile>
             <debug> 0 </debug>
             <M5debug> none </M5debug>
             <info>yes</info>

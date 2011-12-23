@@ -380,3 +380,20 @@ static void print_cpu_usagecounts(usage_counts &perf_usage, int i)
 
 }
 
+unsigned freq_to_ticks( std::string val )
+{
+
+    unsigned cycles = SST::Simulation::getSimulation()->
+                    getTimeLord()->getSimCycles(val,__func__);
+ //   printf("%s() %s ticks=%lu\n",__func__,val.c_str(),cycles);
+    return cycles;
+}
+
+unsigned latency_to_ticks( std::string val )
+{
+
+    unsigned cycles = SST::Simulation::getSimulation()->
+                    getTimeLord()->getSimCycles(val,__func__);
+//    printf("%s() %s ticks=%lu\n",__func__,val.c_str(),cycles);
+    return cycles;
+}

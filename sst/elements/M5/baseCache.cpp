@@ -66,6 +66,7 @@ SimObject* create_BaseCache( Component*, string name, Params& params )
     INIT_INT( cache, params, tgts_per_mshr );
     INIT_INT( cache, params, write_buffers);
     INIT_INT( cache, params, size );
+    INIT_BOOL( cache, params, is_top_level );
 
     return cache.create();
 }
