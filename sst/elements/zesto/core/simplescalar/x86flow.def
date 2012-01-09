@@ -1,0 +1,3534 @@
+/* This doesn't look like -*- C -*-, but it is!
+ *
+ * x86flow.def - X86 ISA machine definition
+ * This file has been substantially rewritten from the pre-release maintained by
+ * Brad Calder et al.  In particular, uop definitions have been implemented such
+ * that all supported x86 macro-instructions can be decomposed into uop flows.
+ * The uop definitions have also been modified to limit each uop to only three
+ * inputs and one output.  Additional uop definitions have been provided to help
+ * decompose complex x86 macro-instructions to satisfy the 3-in/1-out constraint.
+ *
+ * Copyright © 2009 by Gabriel H. Loh and the Georgia Tech Research Corporation
+ * Atlanta, GA  30332-0415
+ * All Rights Reserved.
+ * 
+ * THIS IS A LEGAL DOCUMENT BY DOWNLOADING ZESTO, YOU ARE AGREEING TO THESE
+ * TERMS AND CONDITIONS.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNERS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * NOTE: Portions of this release are directly derived from the SimpleScalar
+ * Toolset (property of SimpleScalar LLC), and as such, those portions are
+ * bound by the corresponding legal terms and conditions.  All source files
+ * derived directly or in part from the SimpleScalar Toolset bear the original
+ * user agreement.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * 
+ * 3. Neither the name of the Georgia Tech Research Corporation nor the names of
+ * its contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ * 
+ * 4. Zesto is distributed freely for commercial and non-commercial use.  Note,
+ * however, that the portions derived from the SimpleScalar Toolset are bound
+ * by the terms and agreements set forth by SimpleScalar, LLC.  In particular:
+ * 
+ *   "Nonprofit and noncommercial use is encouraged. SimpleScalar may be
+ *   downloaded, compiled, executed, copied, and modified solely for nonprofit,
+ *   educational, noncommercial research, and noncommercial scholarship
+ *   purposes provided that this notice in its entirety accompanies all copies.
+ *   Copies of the modified software can be delivered to persons who use it
+ *   solely for nonprofit, educational, noncommercial research, and
+ *   noncommercial scholarship purposes provided that this notice in its
+ *   entirety accompanies all copies."
+ * 
+ * User is responsible for reading and adhering to the terms set forth by
+ * SimpleScalar, LLC where appropriate.
+ * 
+ * 5. No nonprofit user may place any restrictions on the use of this software,
+ * including as modified by the user, by any other authorized user.
+ * 
+ * 6. Noncommercial and nonprofit users may distribute copies of Zesto in
+ * compiled or executable form as set forth in Section 2, provided that either:
+ * (A) it is accompanied by the corresponding machine-readable source code, or
+ * (B) it is accompanied by a written offer, with no time limit, to give anyone
+ * a machine-readable copy of the corresponding source code in return for
+ * reimbursement of the cost of distribution. This written offer must permit
+ * verbatim duplication by anyone, or (C) it is distributed by someone who
+ * received only the executable form, and is accompanied by a copy of the
+ * written offer of source code.
+ * 
+ * 7. Zesto was developed by Gabriel H. Loh, Ph.D.  US Mail: 266 Ferst Drive,
+ * Georgia Institute of Technology, Atlanta, GA 30332-0765
+ *
+ * NOTE: This file (x86.def) contains code directly derived from previous
+ * SimpleScalar source files.  As such, this code is bound by the combination
+ * of terms and agreements from both Zesto and SimpleScalar.  In case of any
+ * conflicting terms (for example, but not limited to, use by commercial
+ * entities), the more restrictive terms shall take precedence (e.g.,
+ * non-commercial and for-profit entities may not make use of the code without
+ * a license from SimpleScalar, LLC).  The SimpleScalar terms and agreements
+ * are replicated below as per their original requirements.
+ *
+ * __COPYRIGHT_ UMICH
+ *
+ */
+
+
+#define ADD_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, ADDBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ADD_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ADD), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define OR_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, ORBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define OR_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(OR), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define ADC_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, ADCBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ADC_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ADC), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define SBB_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, SBBBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SBB_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SBB), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define AND_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, ANDBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define AND_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(AND), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define SUB_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, SUBBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SUB_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SUB), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define XOR_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, XORBI, XR_AL, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define XOR_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(XOR), XR_eAX, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define CMP_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, SUBBI, XR_ZERO, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define CMP_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SUB), XR_ZERO, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define INC_ROv_FLOW							\
+{									\
+  UOP_R2(UV, XV(INC), XF_RO, XF_RO, FUSION_NONE);					\
+}
+
+#define DEC_ROv_FLOW							\
+{									\
+  UOP_R2(UV, XV(DEC), XF_RO, XF_RO, FUSION_NONE);					\
+}
+
+#define PUSH_ROv_FLOW							\
+{									\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XF_RO, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}
+
+#define POP_ROv_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LD), XF_RO, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IB(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define PUSH_Iv_FLOW							\
+{									\
+  UOP_IV(UP, XVI(ADD), XR_TMP1, XR_ZERO, XF_IMMV, FUSION_NONE);			\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}
+
+#define PUSH_Ib_FLOW							\
+{									\
+  UOP_IV(UP, XVI(ADD), XR_TMP1, XR_ZERO, XF_IMMB, FUSION_NONE);			\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}
+
+#define JCC_Jb_FLOW							\
+{									\
+  UOP_IB(UV, JCCB, XF_CC, XE_ILEN, XF_IMMB, FUSION_NONE);				\
+}
+
+#define NOP_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_ZERO, XR_ZERO, XR_ZERO, FUSION_NONE);			\
+}
+
+#define FENCE_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_ZERO, XR_ZERO, XR_ZERO, FUSION_NONE);			\
+}
+
+
+#define BOUND_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE); /* load lower bound */\
+  UOP_R3(UP, XV(BOUND_LOWER), XR_ZERO, XF_R, XR_TMP0, FUSION_LOAD_OP); /* test it */			\
+  UOP_IV(UP, XAI(ADD), XR_TMP1, XF_BASE, XE_SIZEV_IMMW, FUSION_NONE); /* compute addr of upper bound */		\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XR_TMP1, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE); /* load upper bound */\
+  UOP_R3(UP, XV(BOUND_UPPER), XR_ZERO, XF_R, XR_TMP1, FUSION_LOAD_OP); /* test it */			\
+}
+
+
+#define XCHG_eAXRv_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XF_R, XR_ZERO, FUSION_NONE);				\
+  UOP_R3(UP, XV(ADD), XF_R, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+  // cristiano
+#define XCHG_eAXeCX_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eCX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eCX, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define XCHG_eAXeBX_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eBX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eBX, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define XCHG_eAXeDX_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eDX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eDX, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define XCHG_eAXeBP_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eBP, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eBP, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define XCHG_eAXeSP_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eSP, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eSP, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define XCHG_eAXeSI_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eSI, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eSI, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+  // skumar
+#define XCHG_eAXeDI_FLOW						\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XR_eAX, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_eDI, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eDI, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+
+#define CBW_CWDE_FLOW							\
+{									\
+  UOP_R2(UV, XV(SEXT), XR_eAX, XR_eAX, FUSION_NONE);				\
+}
+
+#define CWD_CDQ_FLOW							\
+{									\
+  UOP_R2(UV, XV(SIGN), XR_eDX, XR_eAX, FUSION_NONE);				\
+}
+
+#define SAHF_FLOW							\
+{									\
+  UOP_IB(UV, MOVFB, XR_AH, XR_ZERO, XE_SFZFAFPFCF, FUSION_NONE);			\
+}
+
+#define LAHF_FLOW							\
+{									\
+  UOP_IB(UV, MOVBF, XR_AH, XR_ZERO, XE_SFZFAFPFCF, FUSION_NONE);			\
+}
+
+#define MOV_ALOb_FLOW							\
+{									\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XR_AL, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XR_ZERO, XR_ZERO, XE_ZERO, XF_IMMA, FUSION_PARTIAL);	\
+  UOP_R3(UV, PARTIAL_MERGEB, XR_AL, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define MOV_eAXOv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_eAX, XF_SEG, XR_ZERO, XR_ZERO, XE_ZERO, XF_IMMA, FUSION_NONE);	\
+}
+
+#define MOV_ObAL_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XR_ZERO, XR_ZERO, XE_ZERO, XF_IMMA, FUSION_NONE);	\
+  UOP_R2(UV, STB, XR_AL, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define MOV_OveAX_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XR_ZERO, XR_ZERO, XE_ZERO, XF_IMMA, FUSION_NONE);	\
+  UOP_R2(UV, XV(ST), XR_eAX, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define MOVSB_XbYb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XR_eSI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UV, XA(ADDF), XR_eSI, XR_eSI, XE_ONE, FUSION_NONE);			\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_ONE, FUSION_NONE);			\
+}
+
+#define MOVSB_XvYv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XR_eSI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UV, XA(ADDF), XR_eSI, XR_eSI, XE_SIZEV, FUSION_NONE);			\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define CMPSB_XbYb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XR_eSI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP2, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R3(UV, SUBB, XR_ZERO, XR_TMP1, XR_TMP2, FUSION_LOAD_OP);			\
+  UOP_IV(UV, XA(ADDF), XR_eSI, XR_eSI, XE_ONE, FUSION_NONE);			\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_ONE, FUSION_NONE);			\
+}
+
+#define CMPSB_XvYv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XR_eSI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R3(UV, XV(SUB), XR_ZERO, XR_TMP1, XR_TMP2, FUSION_LOAD_OP);			\
+  UOP_IV(UV, XA(ADDF), XR_eSI, XR_eSI, XE_SIZEV, FUSION_NONE);			\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define TEST_ALIb_FLOW							\
+{									\
+  UOP_IB(UV, ANDBI, XR_ZERO, XR_AL, XF_IMMB, FUSION_NONE);				\
+}
+
+#define TEST_eAXIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(AND), XR_ZERO, XR_eAX, XF_IMMV, FUSION_NONE);			\
+}
+
+#define STOSB_ALYb_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R2(UV, STB, XR_AL, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_ONE, FUSION_NONE);			\
+}
+
+#define STOSV_eAXYv_FLOW						\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R2(UV, XV(ST), XR_eAX, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define LODSB_ALXb_FLOW							\
+{									\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XR_AL, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XR_eSI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_PARTIAL);	\
+  UOP_R3(UV, PARTIAL_MERGEB, XR_AL, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  UOP_IV(UV, XA(ADDF), XR_eSI, XR_eSI, XE_ONE, FUSION_NONE);			\
+}
+
+#define LODSV_eAXXv_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_eAX, XF_SEG, XR_eSI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UV, XA(ADDF), XR_eSI, XR_eSI, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define SCASB_Yb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R3(UV, SUBB, XR_ZERO, XR_AL, XR_TMP1, FUSION_LOAD_OP);				\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_ONE, FUSION_NONE);			\
+}
+
+#define SCASV_Yv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XR_eDI, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_R3(UV, XV(SUB), XR_ZERO, XR_eAX, XR_TMP1, FUSION_LOAD_OP);			\
+  UOP_IV(UV, XA(ADDF), XR_eDI, XR_eDI, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define MOV_RObIb_FLOW							\
+{									\
+  UOP_IB(UP, ADDBI, XF_RO, XR_ZERO, XF_IMMB, FUSION_NONE);				\
+}
+
+#define MOV_ROvIv_FLOW							\
+{									\
+  UOP_IV(UP, XVI(ADD), XF_RO, XR_ZERO, XF_IMMV, FUSION_NONE);			\
+}
+
+#define RETN_Iw_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LDPC), XR_ZERO, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV_IMMW, FUSION_LOAD_OP);		\
+}
+
+#define RETN_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LDPC), XR_ZERO, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_LOAD_OP);			\
+}
+
+#define LEAVE_FLOW							\
+{									\
+  UOP_R3(UP, XS(ADD), XR_eSP, XR_eBP, XR_ZERO, FUSION_NONE);			\
+  UOP_RLI(UV, XSXV(LD), XR_eBP, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+}
+
+//TODO: Returns from far should also load the CS from the stack but that is not yet implemented
+
+#define RETF_Iw_FLOW						\
+{									\
+  UOP_RLI(UV, XSXV(LDPC), XR_ZERO, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV_IMMW, FUSION_LOAD_OP);		\
+}
+
+#define RETF_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LDPC), XR_ZERO, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_LOAD_OP);			\
+}
+
+
+/* just insert a NOP; this will still cause a pipeflush */
+#define INT3_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_ZERO, XR_ZERO, XR_ZERO, FUSION_NONE);			\
+}
+
+#define INT_Ib_FLOW							\
+{									\
+  UOP_IB(UV, INT, XR_ZERO, XR_ZERO, XF_IMMB, FUSION_NONE);				\
+}
+
+#define INTO_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_ZERO, XR_ZERO, XR_ZERO, FUSION_NONE);			\
+}
+
+//TODO: IRET ordinarily also pops the CS and EFLAGS register but we do not emulated that, we treat it as a normal return
+
+#define IRET_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LDPC), XR_ZERO, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_LOAD_OP);			\
+}
+
+
+#define LOOPNZ_Jb_FLOW							\
+{									\
+  UOP_IV(UP, XAI(ADD), XR_eCX, XR_eCX, XE_MONE, FUSION_NONE);			\
+  UOP_R2(UV, SETCC, XE_CCNE, XR_TMP0, FUSION_NONE);				\
+  UOP_RL(UV, XA(CMPCC), XR_TMP1, XR_eCX, XR_ZERO, XE_CCNE, FUSION_NONE);		\
+  UOP_R3(UP, ANDB, XR_TMP2, XR_TMP0, XR_TMP1, FUSION_NONE);			\
+  UOP_RLI(UV, BRCCB, XE_CCNE, XR_TMP2, XE_ILEN, XE_ZERO, XF_IMMB, FUSION_NONE);	\
+}
+
+#define LOOPZ_Jb_FLOW							\
+{									\
+  UOP_IV(UP, XAI(ADD), XR_eCX, XR_eCX, XE_MONE, FUSION_NONE);			\
+  UOP_R2(UV, SETCC, XE_CCE, XR_TMP0, FUSION_NONE);					\
+  UOP_RL(UV, XA(CMPCC), XR_TMP1, XR_eCX, XR_ZERO, XE_CCNE, FUSION_NONE);		\
+  UOP_R3(UP, ANDB, XR_TMP2, XR_TMP0, XR_TMP1, FUSION_NONE);			\
+  UOP_RLI(UV, BRCCB, XE_CCNE, XR_TMP2, XE_ILEN, XE_ZERO, XF_IMMB, FUSION_NONE);	\
+}
+
+#define LOOP_Jb_FLOW							\
+{									\
+  UOP_IV(UP, XAI(ADD), XR_eCX, XR_eCX, XE_MONE, FUSION_NONE);			\
+  UOP_RLI(UV, XA(BRCC), XE_CCNE, XR_eCX, XE_ILEN, XE_ZERO, XF_IMMB, FUSION_NONE);	\
+}
+
+#define JCXZ_Jb_FLOW							\
+{									\
+  UOP_RLI(UV, XA(BRCC), XE_CCE, XR_eCX, XE_ILEN, XE_ZERO, XF_IMMB, FUSION_NONE);	\
+}
+
+#define CALLN_Jv_FLOW							\
+{									\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(STPC), XR_ZERO, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+  UOP_IV(UV, XV(JMP), XR_ZERO, XE_ILEN, XF_IMMV, FUSION_NONE);			\
+}
+
+#define JMPN_Jv_FLOW							\
+{									\
+  UOP_IV(UV, XV(JMP), XR_ZERO, XE_ILEN, XF_IMMV, FUSION_NONE);			\
+}
+
+#define JMPF_Ap_FLOW							\
+{									\
+  UOP_IV(UV, JMPD, XR_ZERO, XE_ILEN, XF_IMMV, FUSION_NONE);			\
+}
+
+#define JMPN_Jb_FLOW							\
+{									\
+  UOP_IB(UV, JMPB, XR_ZERO, XE_ILEN, XF_IMMB, FUSION_NONE);			\
+}
+
+#define HLT_FLOW							\
+{									\
+  UOP_R0(UV, UHLT, FUSION_NONE);							\
+}
+
+#define CMC_FLOW							\
+{									\
+  UOP_IB(UV, MOVBF, XR_TMP0, XR_ZERO, XE_CF, FUSION_NONE);				\
+  UOP_IB(UP, XORBI, XR_TMP0, XR_TMP0, XE_CF, FUSION_NONE);				\
+  UOP_IB(UV, MOVFB, XR_TMP0, XR_ZERO, XE_CF, FUSION_NONE);				\
+}
+
+#define CLC_FLOW							\
+{									\
+  UOP_IB(UV, MOVFB, XR_ZERO, XR_ZERO, XE_CF, FUSION_NONE);				\
+}
+
+#define STC_FLOW							\
+{									\
+  UOP_IB(UP, ADDBI, XR_TMP0, XR_ZERO, XE_CF, FUSION_NONE);				\
+  UOP_IB(UV, MOVFB, XR_TMP0, XR_ZERO, XE_CF, FUSION_NONE);				\
+}
+
+#define CLI_FLOW							\
+{									\
+  UOP_IB(UV, MOVFW, XR_ZERO, XR_ZERO, XE_DF, FUSION_NONE);				\
+}
+
+#define STIF_FLOW							\
+{									\
+  UOP_IB(UP, ADDDI, XR_TMP0, XR_ZERO, XE_DF, FUSION_NONE);				\
+  UOP_IB(UV, MOVFW, XR_TMP0, XR_ZERO, XE_DF, FUSION_NONE);				\
+}
+
+#define CLD_FLOW							\
+{									\
+  UOP_IV(UV, MOVFW, XR_ZERO, XR_ZERO, XE_DF, FUSION_NONE);				\
+}
+
+#define STDF_FLOW							\
+{									\
+  UOP_IV(UP, ADDDI, XR_TMP0, XR_ZERO, XE_DF, FUSION_NONE);				\
+  UOP_IV(UV, MOVFW, XR_TMP0, XR_ZERO, XE_DF, FUSION_NONE);				\
+}
+
+#define LEA_RvMx_FLOW							\
+{									\
+  UOP_RLI(UP, XA(AGEN), XF_R, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);	\
+}
+
+#define ADD_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADDB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ADD_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, ADDB, XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define POPF_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LD), XR_TMP1, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IB(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+  UOP_R1(UP, XV(SETFLAGS), XR_TMP1, FUSION_NONE);			\
+}									\
+
+#define PUSHF_FLOW							\
+{									\
+  UOP_R1(UP, XV(GETFLAGS), XR_TMP1, FUSION_NONE);			\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}									\
+
+#define XCHG_MvRv_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XF_R, XR_TMP0, FUSION_STA_STD);					\
+  UOP_R3(UP, XV(ADD), XF_R, XR_TMP1, XR_ZERO, FUSION_NONE);			\
+}									\
+
+#define XCHG_RMvRv_FLOW						\
+{									\
+  UOP_R3(UV, XV(ADD), XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);				\
+  UOP_R3(UP, XV(ADD), XF_RM, XF_R, XR_ZERO, FUSION_NONE);				\
+  UOP_R3(UP, XV(ADD), XF_R, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}									\
+
+#define CMPXCHG_MvRv_FLOW						\
+{									\
+  UOP_RLI_OV(UP, XAXV(LD), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SUB), XR_TMP1, XR_EAX, XR_TMP0, FUSION_NONE);				\
+  UOP_R3(UP, XV(CMPXCHGMEM_CMOV), XR_EAX, XR_TMP0, XR_TMP1, FUSION_NONE);	/* dst, src, cond */			\
+  UOP_R3(UP, XV(CMPXCHGMEM_CMOVN), XR_TMP0, XF_R, XR_TMP1, FUSION_NONE);	/* dst, src, !cond */			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UP, XV(ST), XR_TMP0, XR_TMP1, FUSION_STA_STD);					\
+}									\
+
+#define CMPXCHG_RMvRv_FLOW						\
+{									\
+  UOP_R3(UV, XV(CMPXCHG1), XR_TMP0, XR_EAX, XF_RM, FUSION_NONE);			\
+  UOP_R3(UP, XV(CMPXCHG2), XF_RM, XF_R, XR_TMP0, FUSION_NONE);			\
+  UOP_R3(UP, XV(CMPXCHG3), XR_EAX, XF_RM, XR_TMP0, FUSION_NONE);			\
+}									\
+
+
+#define CMPXCHG8B_MvRv_FLOW						\
+{									\
+  UOP_RLI_OV(UP, XAXV(LD), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SUB), XR_TMP1, XR_EAX, XR_TMP0, FUSION_NONE);				\
+  UOP_R3(UP, XV(CMPXCHGMEM_CMOV), XR_EAX, XR_TMP0, XR_TMP1, FUSION_NONE);	/* dst, src, cond */			\
+  UOP_R3(UP, XV(CMPXCHGMEM_CMOVN), XR_TMP0, XF_R, XR_TMP1, FUSION_NONE);	/* dst, src, !cond */			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UP, XV(ST), XR_TMP0, XR_TMP1, FUSION_STA_STD);					\
+}
+
+#define XADD_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(ADD), XR_TMP2, XR_TMP1, XF_R, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XF_R, XR_TMP1, XR_ZERO, FUSION_NONE);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define XADD_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(ADD), XR_TMP0, XF_RM, XF_R, FUSION_NONE);				\
+  UOP_R3(UP, XV(ADD), XF_R, XF_RM, XR_ZERO, FUSION_NONE);				\
+  UOP_R3(UP, XV(ADD), XF_RM, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define RDTSC_FLOW							\
+{									\
+  UOP_R1(UP, RDTSC1, XR_eDX , FUSION_NONE);						\
+  UOP_R1(UP, RDTSC2, XR_eAX , FUSION_NONE);						\
+}
+
+#define SYSENTER_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_ZERO, XR_ZERO, XR_ZERO, FUSION_NONE);			\
+}
+
+
+#define DO_ONE_POPA_FLOW( target ) \
+  UOP_RLI(UV, XSXV(LD), target, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IB(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+
+#define POPA_FLOW							\
+{									\
+  DO_ONE_POPA_FLOW( XR_EDI );						\
+  DO_ONE_POPA_FLOW( XR_ESI );						\
+  DO_ONE_POPA_FLOW( XR_EBP );						\
+  UOP_IB(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE); /* Skip one -- why? */	\
+  DO_ONE_POPA_FLOW( XR_EBX );						\
+  DO_ONE_POPA_FLOW( XR_EDX );						\
+  DO_ONE_POPA_FLOW( XR_ECX );						\
+  DO_ONE_POPA_FLOW( XR_EAX );						\
+}
+
+#define DO_ONE_PUSHA_FLOW( target ) \
+{ \
+    UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), target, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+} 
+
+#define PUSHA_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP1, XR_eSP, XR_ZERO, FUSION_NONE); 			\
+  DO_ONE_PUSHA_FLOW( XR_EAX );						\
+  DO_ONE_PUSHA_FLOW( XR_ECX );						\
+  DO_ONE_PUSHA_FLOW( XR_EDX );						\
+  DO_ONE_PUSHA_FLOW( XR_EBX );						\
+  DO_ONE_PUSHA_FLOW( XR_TMP1 );						\
+  DO_ONE_PUSHA_FLOW( XR_EBP );						\
+  DO_ONE_PUSHA_FLOW( XR_ESI );						\
+  DO_ONE_PUSHA_FLOW( XR_EDI );						\
+}
+
+#define CPUID_FLOW							\
+{									\
+  UOP_R1(UP, CPUID1, XR_eAX, FUSION_NONE);					\
+  UOP_R1(UP, CPUID2, XR_eBX, FUSION_NONE);					\
+  UOP_R1(UP, CPUID3, XR_eDX, FUSION_NONE);					\
+  UOP_R1(UP, CPUID4, XR_eCX, FUSION_NONE);					\
+}
+
+#define ADD_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(ADD), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ADD_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(ADD), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define ADD_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADDB, XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define ADD_RbRMb_FLOW							\
+{									\
+  UOP_R3(UV, ADDB, XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define ADD_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(ADD), XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define ADD_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(ADD), XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define OR_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ORB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define OR_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, ORB, XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define OR_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(OR), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define OR_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(OR), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define OR_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ORB, XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define OR_RbRMb_FLOW							\
+{									\
+  UOP_R3(UV, ORB, XF_R, XF_R, XF_RM, FUSION_NONE);					\
+}
+
+#define OR_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(OR), XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define OR_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(OR), XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define ADC_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADCB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ADC_RMbRb_FLOW							\
+{									\
+/* was: UOP_R3(UV, ADCB, XF_RM, XF_RM, XF_R, FUSION_NONE);	*/			\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_RM, FUSION_NONE);			\
+  UOP_R3(UV, ADCB, XR_TMP1, XF_RM, XF_R, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define ADC_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(ADC), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ADC_RMvRv_FLOW							\
+{									\
+  if(VMODE32) { \
+    UOP_R3(UV, ADCD, XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+  } else {     \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, ADCW, XR_TMP1, XF_RM, XF_R, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }   \
+}
+
+#define ADC_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+/* was: UOP_R3(UV, ADCB, XF_R, XF_R, XR_TMP1, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R3(UV, ADCB, XR_TMP1, XF_R, XR_TMP1, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define ADC_RbRMb_FLOW							\
+{									\
+/* was: UOP_R3(UV, ADCB, XF_R, XF_R, XF_RM, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R3(UV, ADCB, XR_TMP1, XF_R, XF_RM, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define ADC_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  if(VMODE32) {   \
+    UOP_R3(UV, ADCD, XF_R, XF_R, XR_TMP1, FUSION_NONE);				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_R, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, ADCW, XR_TMP1, XF_R, XR_TMP1, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }   \
+}
+
+#define ADC_RvRMv_FLOW							\
+{									\
+  if(VMODE32) {   \
+    UOP_R3(UV, ADCD, XF_R, XF_R, XF_RM, FUSION_NONE); 				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_R, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, ADCW, XR_TMP1, XF_R, XF_RM, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define SBB_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SBBB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SBB_RMbRb_FLOW							\
+{									\
+/* was: UOP_R3(UV, SBBB, XF_RM, XF_RM, XF_R, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_RM, FUSION_NONE);			\
+  UOP_R3(UV, SBBB, XR_TMP1, XF_RM, XF_R, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define SBB_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SBB), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SBB_RMvRv_FLOW							\
+{									\
+  if(VMODE32) {  \
+    UOP_R3(UV, SBBD, XF_RM, XF_RM, XF_R, FUSION_NONE); 				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, SBBW, XR_TMP1, XF_RM, XF_R, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define SBB_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+/* was: UOP_R3(UV, SBBB, XF_R, XF_R, XR_TMP1, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R3(UV, SBBB, XR_TMP1, XF_R, XR_TMP1, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define SBB_RbRMb_FLOW							\
+{									\
+/* was: UOP_R3(UV, SBBB, XF_R, XF_R, XF_RM, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R3(UV, SBBB, XR_TMP1, XF_R, XF_RM, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define SBB_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  if(VMODE32) {  \
+    UOP_R3(UV, SBBD, XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_R, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, SBBW, XR_TMP1, XF_R, XR_TMP1, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define SBB_RvRMv_FLOW							\
+{									\
+  if(VMODE32) {  \
+    UOP_R3(UV, SBBD, XF_R, XF_R, XF_RM, FUSION_NONE);				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_R, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, SBBW, XR_TMP1, XF_R, XF_RM, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define AND_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ANDB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define AND_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, ANDB, XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define AND_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(AND), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define AND_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(AND), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define AND_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ANDB, XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define AND_RbRMb_FLOW							\
+{									\
+  UOP_R3(UV, ANDB, XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define AND_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(AND), XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define AND_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(AND), XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define SUB_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SUB_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, SUBB, XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define SUB_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SUB), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SUB_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(SUB), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define SUB_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBB, XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define SUB_RbRMb_FLOW							\
+{									\
+  UOP_R3(UV, SUBB, XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define SUB_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SUB), XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define SUB_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(SUB), XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define XOR_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XORB, XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define XOR_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, XORB, XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define XOR_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(XOR), XR_TMP1, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define XOR_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(XOR), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define XOR_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XORB, XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define XOR_RbRMb_FLOW							\
+{									\
+  UOP_R3(UV, XORB, XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define XOR_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(XOR), XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define XOR_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(XOR), XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define CMP_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBB, XR_ZERO, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+}
+
+#define CMP_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, SUBB, XR_ZERO, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define CMP_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SUB), XR_ZERO, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+}
+
+#define CMP_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(SUB), XR_ZERO, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define CMP_RbMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBB, XR_ZERO, XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define CMP_RbRMb_FLOW							\
+{									\
+  UOP_R3(UV, SUBB, XR_ZERO, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define CMP_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SUB), XR_ZERO, XF_R, XR_TMP1, FUSION_LOAD_OP);			\
+}
+
+#define CMP_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(SUB), XR_ZERO, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define IMUL_RvMvIv_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(IMUL), XF_R, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+}
+
+  // skumar -- was UOP_R3
+
+#define IMUL_RvRMvIv_FLOW						\
+{									\
+  UOP_IV(UV, XVI(IMUL), XF_R, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define IMUL_RvMvIb_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(IMUL), XF_R, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+}
+
+#define IMUL_RvRMvIb_FLOW						\
+{									\
+  UOP_IV(UV, XVI(IMUL), XF_R, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define ADD_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ADDBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ADD_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, ADDBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define OR_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ORBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define OR_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, ORBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ADC_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ADCBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ADC_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, ADCBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SBB_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SBBBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SBB_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, SBBBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define AND_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ANDBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define AND_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, ANDBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SUB_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SUBBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SUB_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, SUBBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define XOR_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, XORBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define XOR_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, XORBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define CMP_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SUBBI, XR_ZERO, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+}
+
+#define CMP_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, SUBBI, XR_ZERO, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ADD_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ADD), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ADD_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ADD), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define OR_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(OR), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define OR_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(OR), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);				\
+}
+
+#define ADC_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ADC), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ADC_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ADC), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define SBB_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SBB), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SBB_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SBB), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define AND_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(AND), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define AND_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(AND), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define SUB_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SUB), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SUB_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SUB), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define XOR_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(XOR), XR_TMP1, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define XOR_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(XOR), XF_RM, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define CMP_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SUB), XR_ZERO, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+}
+
+#define CMP_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SUB), XR_ZERO, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define ADD_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ADD), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ADD_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ADD), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define OR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(OR), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define OR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(OR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ADC_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ADC), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ADC_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ADC), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define SBB_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SBB), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SBB_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SBB), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define AND_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(AND), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define AND_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(AND), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define SUB_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SUB), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SUB_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SUB), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define XOR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(XOR), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define XOR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(XOR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define CMP_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SUB), XR_ZERO, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+}
+
+#define CMP_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SUB), XR_ZERO, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define TEST_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ANDB, XR_ZERO, XR_TMP1, XF_R, FUSION_LOAD_OP);				\
+}
+
+#define TEST_RMbRb_FLOW							\
+{									\
+  UOP_R3(UV, ANDB, XR_ZERO, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define TEST_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(AND), XR_ZERO, XR_TMP1, XF_R, FUSION_LOAD_OP);			\
+}
+
+#define TEST_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(AND), XR_ZERO, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+  // skumar - sykora
+
+  // cristiano
+#define XCHG_MbRb_FLOW							 \
+{									 \
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XF_R, XR_TMP0, FUSION_STA_STD);					\
+  UOP_R3(UP, ADDB, XF_R, XR_TMP1, XR_ZERO, FUSION_NONE);			 \
+}
+
+  // cristiano
+#define XCHG_RMbRb_FLOW							\
+{									\
+  UOP_R3(UP, ADDB, XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);                               \
+  UOP_R3(UP, ADDB, XF_RM, XF_R, XR_ZERO, FUSION_NONE);                          \
+  UOP_R3(UP, ADDB, XF_R, XR_TMP0, XR_ZERO, FUSION_NONE);                        \
+}
+
+#define MOV_MbRb_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XF_R, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define MOV_RMbRb_FLOW							\
+{									\
+  UOP_R3(UP, ADDB, XF_RM, XF_R, XR_ZERO, FUSION_NONE);				\
+}
+
+#define MOV_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XF_R, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define MOV_RMvRv_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XF_RM, XF_R, XR_ZERO, FUSION_NONE);				\
+}
+
+#define MOV_RbMb_FLOW							\
+{									\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_PARTIAL);\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_R, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define MOV_RbRMb_FLOW							\
+{									\
+  UOP_R3(UP, ADDB, XF_R, XF_RM, XR_ZERO, FUSION_NONE);				\
+}
+
+#define MOV_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XF_R, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+}
+
+  // UCSD
+#define MOV_RvRMv_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XF_R, XF_RM, XR_ZERO, FUSION_NONE);				\
+}
+
+#define MOV_SwMw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LDS), XF_R, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+}						                        
+
+#define MOV_SwRMw_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADDS), XF_R, XF_RM, XR_ZERO, FUSION_NONE);			        \
+}						
+
+#define MOV_MwSw_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(STS), XF_R, XR_TMP0, FUSION_STA_STD);					\
+}						
+
+#define MOV_RMwSw_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADDSS), XF_RM, XF_R, XR_ZERO, FUSION_NONE);			        \
+}
+
+#define POP_Mv_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LD), XR_TMP1, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  /* FIXME: side-effect before fault detection */			\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define POP_RMv_FLOW							\
+{									\
+  UOP_RLI(UV, XSXV(LD), XF_RM, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define POP_NONSENSE_FLOW							\
+{									\
+  UOP_RLI(UV, XS(AGEN), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);	\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_SIZEV, FUSION_NONE);			\
+}
+
+#define PUSH_NONSENSE_FLOW							\
+{									\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_ZERO, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}
+
+#define PUSHES_FLOW PUSH_NONSENSE_FLOW
+#define PUSHDS_FLOW PUSH_NONSENSE_FLOW
+#define PUSHFS_FLOW PUSH_NONSENSE_FLOW
+#define PUSHSS_FLOW PUSH_NONSENSE_FLOW
+#define PUSHGS_FLOW PUSH_NONSENSE_FLOW
+#define PUSHCS_FLOW PUSH_NONSENSE_FLOW
+#define POPES_FLOW POP_NONSENSE_FLOW
+#define POPDS_FLOW POP_NONSENSE_FLOW
+#define POPFS_FLOW POP_NONSENSE_FLOW
+#define POPSS_FLOW POP_NONSENSE_FLOW
+#define POPGS_FLOW POP_NONSENSE_FLOW
+
+#define ROL_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ROLBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ROL_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, ROLBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ROR_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, RORBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ROR_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, RORBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define RCL_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, RCLBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define RCL_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, RCLBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define RCR_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, RCRBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define RCR_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, RCRBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SHL_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SHLBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SHL_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, SHLBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SHR_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SHRBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SHR_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, SHRBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define SAR_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SARBI, XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SAR_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, SARBI, XF_RM, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define ROL_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ROL), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ROL_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ROL), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define ROR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ROR), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ROR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ROR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define RCL_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(RCL), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define RCL_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(RCL), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define RCR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(RCR), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define RCR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(RCR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define SHL_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SHL), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHL_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SHL), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define SHR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SHR), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SHR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define SAR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SAR), XR_TMP1, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SAR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SAR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define MOV_MbIb_FLOW							\
+{									\
+  UOP_IB(UP, ADDBI, XR_TMP1, XR_ZERO, XF_IMMB, FUSION_NONE);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define MOV_RMbIb_FLOW							\
+{									\
+  UOP_IB(UP, ADDBI, XF_RM, XR_ZERO, XF_IMMB, FUSION_NONE);				\
+}
+
+#define MOV_MvIv_FLOW							\
+{									\
+  UOP_IV(UP, XVI(ADD), XR_TMP1, XR_ZERO, XF_IMMV, FUSION_NONE);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define MOV_RMvIv_FLOW							\
+{									\
+  UOP_IV(UP, XVI(ADD), XF_RM, XR_ZERO, XF_IMMV, FUSION_NONE);			\
+}
+
+#define ROL_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ROLBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ROL_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, ROLBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define ROR_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, RORBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ROR_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, RORBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define RCL_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, RCLBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define RCL_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, RCLBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define RCR_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, RCRBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define RCR_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, RCRBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define SHL_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SHLBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SHL_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, SHLBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define SHR_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SHRBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SHR_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, SHRBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define SAR_Mb1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, SARBI, XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SAR_RMb1_FLOW							\
+{									\
+  UOP_IB(UV, SARBI, XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define ROL_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ROL), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ROL_RMv1_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ROL), XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define ROR_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(ROR), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ROR_RMv1_FLOW							\
+{									\
+  UOP_IV(UV, XVI(ROR), XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define RCL_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(RCL), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define RCL_RMv1_FLOW							\
+{									\
+  UOP_IV(UV, XVI(RCL), XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define RCR_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(RCR), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define RCR_RMv1_FLOW							\
+{									\
+  if(VMODE32) {  \
+    UOP_IV(UV, RCRD, XF_RM, XF_RM, XE_ONE, FUSION_NONE); 				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, RCRW, XR_TMP1, XF_RM, XE_ONE, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define SHL_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SHL), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHL_RMv1_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SHL), XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define SHR_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SHR), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHR_RMv1_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SHR), XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define SAR_Mv1_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(SAR), XR_TMP1, XR_TMP1, XE_ONE, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SAR_RMv1_FLOW							\
+{									\
+  UOP_IV(UV, XVI(SAR), XF_RM, XF_RM, XE_ONE, FUSION_NONE);				\
+}
+
+#define ROL_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ROLB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ROL_RMbCL_FLOW							\
+{									\
+  UOP_R3(UV, ROLB, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define ROR_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, RORB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define ROR_RMbCL_FLOW							\
+{									\
+  UOP_R3(UV, RORB, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define RCL_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, RCLB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define RCL_RMbCL_FLOW							\
+{									\
+/* was: UOP_R3(UV, RCLB, XF_RM, XF_RM, XR_CL, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_RM, FUSION_NONE);			\
+  UOP_R3(UV, RCLB, XR_TMP1, XF_RM, XR_CL, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define RCR_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, RCRB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define RCR_RMbCL_FLOW							\
+{									\
+/* was: UOP_R3(UV, RCRB, XF_RM, XF_RM, XR_CL, FUSION_NONE); */				\
+  UOP_R2(UP, MOV_DB, XR_TMP0, XF_RM, FUSION_NONE);			\
+  UOP_R3(UV, RCRB, XR_TMP1, XF_RM, XR_CL, FUSION_PARTIAL);				\
+  UOP_R3(UV, PARTIAL_MERGEB, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+}
+
+#define SHL_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SHLB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SHL_RMbCL_FLOW							\
+{									\
+  UOP_R3(UV, SHLB, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define SHR_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SHRB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SHR_RMbCL_FLOW							\
+{									\
+  UOP_R3(UV, SHRB, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define SAR_MbCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SARB, XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SAR_RMbCL_FLOW							\
+{									\
+  UOP_R3(UV, SARB, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define ROL_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(ROL), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ROL_RMvCL_FLOW							\
+{									\
+  UOP_R3(UV, XV(ROL), XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define ROR_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(ROR), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define ROR_RMvCL_FLOW							\
+{									\
+  UOP_R3(UV, XV(ROR), XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define RCL_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(RCL), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define RCL_RMvCL_FLOW							\
+{									\
+  if(VMODE32) { \
+    UOP_R3(UV, RCLD, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, RCLW, XR_TMP1, XF_RM, XR_CL, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define RCR_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(RCR), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define RCR_RMvCL_FLOW							\
+{									\
+  if(VMODE32) {  \
+    UOP_R3(UV, RCRD, XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+  } else {  \
+    UOP_R3(UP, ADDD, XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+    UOP_R3(UV, RCRW, XR_TMP1, XF_RM, XR_CL, FUSION_PARTIAL);				\
+    UOP_R3(UV, PARTIAL_MERGEW, XF_RM, XR_TMP0, XR_TMP1, FUSION_PARTIAL);				\
+  }  \
+}
+
+#define SHL_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SHL), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHL_RMvCL_FLOW							\
+{									\
+  UOP_R3(UV, XV(SHL), XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define SHR_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SHR), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHR_RMvCL_FLOW							\
+{									\
+  UOP_R3(UV, XV(SHR), XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define SAR_MvCL_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(SAR), XR_TMP1, XR_TMP1, XR_CL, FUSION_LOAD_OP);			\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SAR_RMvCL_FLOW							\
+{									\
+  UOP_R3(UV, XV(SAR), XF_RM, XF_RM, XR_CL, FUSION_NONE);				\
+}
+
+#define TEST_MbIb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IB(UV, ANDBI, XR_ZERO, XR_TMP1, XF_IMMB, FUSION_LOAD_OP);			\
+}
+
+#define TEST_RMbIb_FLOW							\
+{									\
+  UOP_IB(UV, ANDBI, XR_ZERO, XF_RM, XF_IMMB, FUSION_NONE);				\
+}
+
+#define NOT_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, NOTB, XR_TMP1, XR_TMP1, FUSION_LOAD_OP);					\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define NOT_RMb_FLOW							\
+{									\
+  UOP_R2(UV, NOTB, XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define NEG_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, NEGB, XR_TMP1, XR_TMP1, FUSION_LOAD_OP);					\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define NEG_RMb_FLOW							\
+{									\
+  UOP_R2(UV, NEGB, XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define MUL_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, MULB, XR_AX, XR_AL, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define MUL_RMb_FLOW							\
+{									\
+  UOP_R3(UV, MULB, XR_AX, XR_AL, XF_RM, FUSION_NONE);				\
+}
+
+#define IMUL_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, IMULB, XR_AX, XR_AL, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define IMUL_RMb_FLOW							\
+{									\
+  UOP_R3(UV, IMULB, XR_AX, XR_AL, XF_RM, FUSION_NONE);				\
+}
+
+#define DIV_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  /* do not whack the input operands, just yet... */			\
+  UOP_R3(UV, QUOB, XR_TMP2, XR_AX, XR_TMP1, FUSION_NONE);				\
+  UOP_R3(UV, REMB, XR_AH, XR_AX, XR_TMP1, FUSION_NONE);				\
+  UOP_R3(UP, ADDB, XR_AL, XR_TMP2, XR_ZERO, FUSION_NONE);				\
+}
+
+#define DIV_RMb_FLOW							\
+{									\
+  UOP_R3(UV, QUOB, XR_TMP0, XR_AX, XF_RM, FUSION_NONE);				\
+  UOP_R3(UV, REMB, XR_AH, XR_AX, XF_RM, FUSION_NONE);				\
+  UOP_R3(UP, ADDB, XR_AL, XR_TMP0, XR_ZERO, FUSION_NONE);				\
+}
+
+#define IDIV_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, IQUOB, XR_TMP2, XR_AX, XR_TMP1, FUSION_NONE);				\
+  UOP_R3(UV, IREMB, XR_AH, XR_AX, XR_TMP1, FUSION_NONE);				\
+  UOP_R3(UP, ADDB, XR_AL, XR_TMP2, XR_ZERO, FUSION_NONE);				\
+}
+
+#define IDIV_RMb_FLOW							\
+{									\
+  UOP_R3(UV, IQUOB, XR_TMP0, XR_AX, XF_RM, FUSION_NONE);				\
+  UOP_R3(UV, IREMB, XR_AH, XR_AX, XF_RM, FUSION_NONE);				\
+  UOP_R3(UP, ADDB, XR_AL, XR_TMP0, XR_ZERO, FUSION_NONE);				\
+}
+
+#define TEST_MvIv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(AND), XR_ZERO, XR_TMP1, XF_IMMV, FUSION_LOAD_OP);			\
+}
+
+#define TEST_RMvIv_FLOW							\
+{									\
+  UOP_IV(UV, XVI(AND), XR_ZERO, XF_RM, XF_IMMV, FUSION_NONE);			\
+}
+
+#define NOT_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(NOT), XR_TMP1, XR_TMP1, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define NOT_RMv_FLOW							\
+{									\
+  UOP_R2(UV, XV(NOT), XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define NEG_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(NEG), XR_TMP1, XR_TMP1, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define NEG_RMv_FLOW							\
+{									\
+  UOP_R2(UV, XV(NEG), XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define MUL_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(MULHI), XR_eDX, XR_eAX, XR_TMP1, FUSION_NONE);			\
+  UOP_R3(UV, XV(MULLO), XR_eAX, XR_eAX, XR_TMP1, FUSION_NONE);			\
+}
+
+#define MUL_RMv_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UV, XV(MULHI), XR_eDX, XR_eAX, XR_TMP0, FUSION_NONE);			\
+  UOP_R3(UV, XV(MULLO), XR_eAX, XR_eAX, XR_TMP0, FUSION_NONE);			\
+}
+
+#define IMUL_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(IMULHI), XR_eDX, XR_eAX, XR_TMP1, FUSION_NONE);			\
+  UOP_R3(UV, XV(IMULLO), XR_eAX, XR_eAX, XR_TMP1, FUSION_NONE);			\
+}
+
+#define IMUL_RMv_FLOW							\
+{									\
+  UOP_R3(UP, XV(ADD), XR_TMP0, XF_RM, XR_ZERO, FUSION_NONE);			\
+  UOP_R3(UV, XV(IMULHI), XR_eDX, XR_eAX, XR_TMP0, FUSION_NONE);			\
+  UOP_R3(UV, XV(IMULLO), XR_eAX, XR_eAX, XR_TMP0, FUSION_NONE);			\
+}
+
+#define DIV_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R4(UV, XV(QUO), XR_TMP2, XR_eDX, XR_eAX, XR_TMP1, FUSION_NONE);		\
+  UOP_R4(UV, XV(REM), XR_eDX, XR_eDX, XR_eAX, XR_TMP1, FUSION_NONE);		\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_TMP2, XR_ZERO, FUSION_NONE);			\
+}
+
+#define DIV_RMv_FLOW							\
+{									\
+  UOP_R4(UV, XV(QUO), XR_TMP0, XR_eDX, XR_eAX, XF_RM, FUSION_NONE);		\
+  UOP_R4(UV, XV(REM), XR_eDX, XR_eDX, XR_eAX, XF_RM, FUSION_NONE);			\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define IDIV_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R4(UV, XV(IQUO), XR_TMP2, XR_eDX, XR_eAX, XR_TMP1, FUSION_NONE);		\
+  UOP_R4(UV, XV(IREM), XR_eDX, XR_eDX, XR_eAX, XR_TMP1, FUSION_NONE);		\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_TMP2, XR_ZERO, FUSION_NONE);			\
+}
+
+#define IDIV_RMv_FLOW							\
+{									\
+  UOP_R4(UV, XV(IQUO), XR_TMP0, XR_eDX, XR_eAX, XF_RM, FUSION_NONE);		\
+  UOP_R4(UV, XV(IREM), XR_eDX, XR_eDX, XR_eAX, XF_RM, FUSION_NONE);		\
+  UOP_R3(UP, XV(ADD), XR_eAX, XR_TMP0, XR_ZERO, FUSION_NONE);			\
+}
+
+#define INC_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, INCB, XR_TMP1, XR_TMP1, FUSION_LOAD_OP);					\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define INC_RMb_FLOW							\
+{									\
+  UOP_R2(UV, INCB, XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define DEC_Mb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, DECB, XR_TMP1, XR_TMP1, FUSION_LOAD_OP);					\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define DEC_RMb_FLOW							\
+{									\
+  UOP_R2(UV, DECB, XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+
+#define CALLN_Mv_FLOW							\
+{									\
+    UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE); \
+    UOP_R2(UV, XV(STPC), XR_ZERO, XR_TMP0, FUSION_STA_STD);				     \
+    UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+    UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);		\
+    UOP_R1(UV, XV(JMPR), XR_TMP1, FUSION_NONE);					\
+}
+
+#define CALLN_RMv_FLOW							\
+{									\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(STPC), XR_ZERO, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+  UOP_R1(UV, XV(JMPR), XF_RM, FUSION_NONE);					\
+}
+
+//call to far pointer should also load the CS register but that is not yet implemented
+#define CALLF_Mv_FLOW							\
+{									\
+  /* UCSD FIXME: not sure about the call *%gs system call interface */\
+  if ( (Mop->fetch.inst.seg-1) == MD_REG_GS && Mop->fetch.inst.disp == 0x10)              \
+  {                                                                   \
+    UOP_IB(UV, INT, XR_ZERO, XR_ZERO, XF_SYSCALL, FUSION_NONE);		        \
+  }                                                                   \
+  else                             					\
+  {									\
+    UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE); \
+    UOP_R2(UV, XV(STPC), XR_ZERO, XR_TMP0, FUSION_STA_STD);				     \
+    UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+    UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);		\
+    UOP_R1(UV, XV(JMPR), XR_TMP1, FUSION_NONE);					\
+  }									\
+}
+
+
+#define JMPN_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R1(UV, XV(JMPR), XR_TMP1, FUSION_LOAD_OP);					\
+}
+
+#define JMPN_RMv_FLOW							\
+{									\
+  UOP_R1(UV, XV(JMPR), XF_RM, FUSION_NONE);					\
+}
+
+#define JMPF_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R1(UV, XV(JMPR), XR_TMP1, FUSION_LOAD_OP);					\
+}
+
+#define INC_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(INC), XR_TMP1, XR_TMP1, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define INC_RMv_FLOW							\
+{									\
+  UOP_R2(UV, XV(INC), XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define DEC_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(DEC), XR_TMP1, XR_TMP1, FUSION_LOAD_OP);				\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define DEC_RMv_FLOW							\
+{									\
+  UOP_R2(UV, XV(DEC), XF_RM, XF_RM, FUSION_NONE);					\
+}
+
+#define PUSH_Mv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}
+
+#define PUSH_RMv_FLOW							\
+{									\
+  UOP_RLI(UV, XS(STA), XR_TMP0, XR_eSP, XR_ZERO, XE_ZERO, XE_MSIZEV, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XF_RM, XR_TMP0, FUSION_STA_STD);					\
+  UOP_IV(UP, XSI(ADD), XR_eSP, XR_eSP, XE_MSIZEV, FUSION_NONE);			\
+}
+
+#define JCC_Jv_FLOW							\
+{									\
+  UOP_IV(UV, XV(JCC), XF_CC, XE_ILEN, XF_IMMV, FUSION_NONE);			\
+}
+
+#define BSWAP_ROd_FLOW							\
+{									\
+  UOP_R2(UV, BSWAP, XF_RO, XF_RO, FUSION_NONE);					\
+}
+
+#define CMOV_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_RL(UV, XV(CMOV), XF_R, XF_R, XR_TMP1, XF_CC, FUSION_LOAD_OP);			\
+}
+
+#define CMOV_RvRMv_FLOW							\
+{									\
+  UOP_R4(UV, XV(CMOV), XF_R, XF_R, XF_RM, XF_CC, FUSION_NONE);			\
+}
+
+#define SETCC_Mb_FLOW							\
+{									\
+  UOP_R2(UV, SETCC, XF_CC, XR_TMP1, FUSION_NONE);					\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STB, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define SETCC_RMb_FLOW							\
+{									\
+  UOP_R2(UV, SETCC, XF_CC, XF_RM, FUSION_NONE);					\
+}
+
+#define BT_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_R3(UV, XV(BTS), XR_ZERO, XR_TMP2, XF_R, FUSION_LOAD_OP);			\
+}
+
+#define BT_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(BTS), XR_ZERO, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define SHLD_MvRvIb_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_RLI(UV, XVI(SHLD), XR_TMP1, XR_TMP1, XF_R, XE_ZERO, XF_IMMB, FUSION_LOAD_OP);	\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHLD_RMvRvIb_FLOW						\
+{									\
+  UOP_RLI(UV, XVI(SHLD), XF_RM, XF_RM, XF_R, XE_ZERO, XF_IMMB, FUSION_NONE);	\
+}
+
+#define SHLD_MvRvCL_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R4(UV, XV(SHLD), XR_TMP1, XR_TMP1, XF_R, XR_CL, FUSION_LOAD_OP);		\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHLD_RMvRvCL_FLOW						\
+{									\
+  UOP_R4(UV, XV(SHLD), XF_RM, XF_RM, XF_R, XR_CL, FUSION_NONE);			\
+}
+
+#define SHRD_MvRvIb_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_RLI(UV, XVI(SHRD), XR_TMP1, XR_TMP1, XF_R, XE_ZERO, XF_IMMB, FUSION_LOAD_OP);	\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHRD_RMvRvIb_FLOW						\
+{									\
+  UOP_RLI(UV, XVI(SHRD), XF_RM, XF_RM, XF_R, XE_ZERO, XF_IMMB, FUSION_NONE);	\
+}
+
+#define SHRD_MvRvCL_FLOW						\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R4(UV, XV(SHRD), XR_TMP1, XR_TMP1, XF_R, XR_CL, FUSION_LOAD_OP);		\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(ST), XR_TMP1, XR_TMP0, FUSION_STA_STD);				\
+}
+
+#define SHRD_RMvRvCL_FLOW						\
+{									\
+  UOP_R4(UV, XV(SHRD), XF_RM, XF_RM, XF_R, XR_CL, FUSION_NONE);			\
+}
+
+#define BTS_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_R3(UV, XV(BTS), XR_TMP2, XR_TMP2, XF_R, FUSION_LOAD_OP);			\
+  UOP_R3(UV, XV(STA_BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP1, FUSION_STA_STD);				\
+}
+
+#define BTS_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(BTS), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define IMUL_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(IMULLO), XF_R, XF_R, XR_TMP1, FUSION_LOAD_OP);			\
+}
+
+#define IMUL_RvRMv_FLOW							\
+{									\
+  UOP_R3(UV, XV(IMULLO), XF_R, XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define BTR_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_R3(UV, XV(BTR), XR_TMP2, XR_TMP2, XF_R, FUSION_LOAD_OP);			\
+  UOP_R3(UV, XV(STA_BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP1, FUSION_STA_STD);				\
+}
+
+#define BTR_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(BTR), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define BTC_MvRv_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, XV(BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_R3(UV, XV(BTC), XR_TMP2, XR_TMP2, XF_R, FUSION_LOAD_OP);			\
+  UOP_R3(UV, XV(STA_BGEN), XR_TMP1, XR_TMP0, XF_R, FUSION_NONE);			\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP1, FUSION_STA_STD);				\
+}
+
+#define BTC_RMvRv_FLOW							\
+{									\
+  UOP_R3(UV, XV(BTC), XF_RM, XF_RM, XF_R, FUSION_NONE);				\
+}
+
+#define MOVZX_RvMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(MOVZXB), XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define MOVZX_RvRMb_FLOW						\
+{									\
+  UOP_R2(UV, XV(MOVZXB), XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define MOVZX_RvMw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,W), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(MOVZXW), XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define MOVZX_RvRMw_FLOW						\
+{									\
+  UOP_R2(UV, XV(MOVZXW), XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define BT_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);                        \
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_R3(UV, XVI(BTS), XR_ZERO, XR_TMP2, XF_IMMB, FUSION_LOAD_OP);	\
+}
+
+#define BT_RMvIb_FLOW							\
+{									\
+  UOP_R3(UV, XVI(BTS), XR_ZERO, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define BTS_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_IV(UV, XVI(BTS), XR_TMP2, XR_TMP2, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_IV(UV, XVI(STA_BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);			\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP1, FUSION_STA_STD);				\
+}
+
+#define BTS_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(BTS), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define BTR_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_IV(UV, XVI(BTR), XR_TMP2, XR_TMP2, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_IV(UV, XVI(STA_BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);			\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP1, FUSION_STA_STD);				\
+}
+
+#define BTR_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(BTR), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define BTC_MvIb_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(AGEN), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_IV(UV, XVI(BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);			\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP2, XR_SEGNONE, XR_TMP1, XR_ZERO, XE_ZERO, XE_ZERO, FUSION_NONE);\
+  UOP_IV(UV, XVI(BTC), XR_TMP2, XR_TMP2, XF_IMMB, FUSION_LOAD_OP);			\
+  UOP_IV(UV, XVI(STA_BGEN), XR_TMP1, XR_TMP0, XF_IMMB, FUSION_NONE);			\
+  UOP_R2(UV, XV(ST), XR_TMP2, XR_TMP1, FUSION_STA_STD);				\
+}
+
+#define BTC_RMvIb_FLOW							\
+{									\
+  UOP_IV(UV, XVI(BTC), XF_RM, XF_RM, XF_IMMB, FUSION_NONE);			\
+}
+
+#define BSF_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(BSF), XF_R, XR_TMP1, FUSION_LOAD_OP);					\
+}
+
+#define BSF_RvRMv_FLOW							\
+{									\
+  UOP_R2(UV, XV(BSF), XF_R, XF_RM, FUSION_NONE);					\
+}
+
+#define BSR_RvMv_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAXV(LD), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(BSR), XF_R, XR_TMP1, FUSION_LOAD_OP);					\
+}
+
+#define BSR_RvRMv_FLOW							\
+{									\
+  UOP_R2(UV, XV(BSR), XF_R, XF_RM, FUSION_NONE);					\
+}
+
+#define MOVSX_RvMb_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,B), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(MOVSXB), XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define MOVSX_RvRMb_FLOW						\
+{									\
+  UOP_R2(UV, XV(MOVSXB), XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define MOVSX_RvMw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(LD,W), XR_TMP1, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, XV(MOVSXW), XF_R, XR_TMP1, FUSION_LOAD_OP);				\
+}
+
+#define MOVSX_RvRMw_FLOW						\
+{									\
+  UOP_R2(UV, XV(MOVSXW), XF_R, XF_RM, FUSION_NONE);				\
+}
+
+#define FADD_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADDE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FADD_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, ADDE, XR_ST0, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FMUL_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, MULE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FMUL_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, MULE, XR_ST0, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FCOM_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FCOM_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FCOMP_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FCOMP_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FSUB_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FSUB_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, SUBE, XR_ST0, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FSUBR_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FSUBR_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, SUBE, XR_ST0, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FDIV_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FDIV_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, DIVE, XR_ST0, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FDIVR_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FDIVR_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, DIVE, XR_ST0, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FLD_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,S), XR_ST7, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FLD_ST0STi_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XR_ST7, XF_STI, FUSION_NONE);		\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FXCH_ST0STi_FLOW						\
+{									\
+  UOP_R2(UV, MOVE, XR_FTMP0, XR_ST0, FUSION_NONE);		\
+  UOP_R2(UV, MOVE, XR_ST0, XF_STI, FUSION_NONE);			\
+  UOP_R2(UV, MOVE, XF_STI, XR_FTMP0, FUSION_NONE);		\
+}
+
+#define FST_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTS, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+}
+
+#define FNOP_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);		\
+}
+
+#define FSTP_Ms_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTS, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FCHS_FLOW							\
+{									\
+  UOP_R2(UV, CHS, XR_ST0, XR_ST0, FUSION_NONE);			\
+}
+
+#define FABS_FLOW							\
+{									\
+  UOP_R2(UV, ABS, XR_ST0, XR_ST0, FUSION_NONE);			\
+}
+
+#define FTST_FLOW							\
+{									\
+  UOP_R1(UV, TST, XR_ZERO, FUSION_NONE);			\
+}
+
+#define FXAM_FLOW							\
+{									\
+  UOP_R1(UV, XAM, XR_ST0, FUSION_NONE);			\
+}
+
+#define FLDCW_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLDC,W), XR_ZERO, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+}
+
+#define FLDC_FLOW							\
+{									\
+  UOP_R2(UV, LDC, XR_ST7, XF_RM, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define F2XM1_FLOW							\
+{									\
+  UOP_R2(UV, TWOXM1, XR_ST0, XR_ST0, FUSION_NONE);		\
+}
+
+#define FYL2X_FLOW							\
+{									\
+  UOP_R3(UV, YL2X, XR_ST1, XR_ST0, XR_ST1, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FPTAN_FLOW							\
+{									\
+  UOP_R2(UV, TAN, XR_ST0, XR_ST0, FUSION_NONE);			\
+  UOP_R2(UV, LDC, XR_ST7, XE_FP1, FUSION_NONE); 		\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FPATAN_FLOW							\
+{									\
+  UOP_R3(UV, ATAN, XR_ST1, XR_ST0, XR_ST1, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FPREM1_FLOW							\
+{									\
+  UOP_R3(UV, REM1, XR_ST0, XR_ST0, XR_ST1, FUSION_NONE);			\
+}
+
+#define FSTCW_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R1(UV, XAx(FSTC,W), XR_TMP0, FUSION_STA_STD);		\
+}
+
+#define FPREM_FLOW							\
+{									\
+  UOP_R3(UV, REM, XR_ST0, XR_ST0, XR_ST1, FUSION_NONE);			\
+}
+
+#define FYL2XP1_FLOW							\
+{									\
+  UOP_R3(UV, YL2XP1, XR_ST1, XR_ST0, XR_ST1, FUSION_NONE);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FSQRT_FLOW							\
+{									\
+  UOP_R2(UV, SQRT, XR_ST0, XR_ST0, FUSION_NONE);			\
+}
+
+#define FSINCOS_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XR_FTMP0, XR_ST0, FUSION_NONE);		\
+  UOP_R2(UV, SIN, XR_ST0, XR_FTMP0, FUSION_NONE);		\
+  UOP_R2(UV, COS, XR_ST7, XR_FTMP0, FUSION_NONE);		\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FRNDINT_FLOW							\
+{									\
+  UOP_R2(UV, RNDINT, XR_ST0, XR_ST0, FUSION_NONE);		\
+}
+
+#define FSCALE_FLOW							\
+{									\
+  UOP_R3(UV, SCL, XR_ST0, XR_ST0, XR_ST1, FUSION_NONE);			\
+}
+
+#define FSIN_FLOW							\
+{									\
+  UOP_R2(UV, SIN, XR_ST0, XR_ST0, FUSION_NONE);			\
+}
+
+#define FCOS_FLOW							\
+{									\
+  UOP_R2(UV, COS, XR_ST0, XR_ST0, FUSION_NONE);			\
+}
+
+#define FIADD_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADDE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FCMOVB_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCB, FUSION_NONE);			\
+}
+
+#define FIMUL_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, MULE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FCMOVE_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCE, FUSION_NONE);			\
+}
+
+#define FICOM_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FCMOVBE_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCBE, FUSION_NONE);		\
+}
+
+#define FICOMP_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FCMOVU_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCU, FUSION_NONE);			\
+}
+
+#define FISUB_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FISUBR_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FUCOMPP_FLOW							\
+{									\
+  UOP_R3(UV, UCOM, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);		\
+  FP_STACK_OP(fpstk_poppop);		\
+}
+
+#define FIDIV_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FIDIVR_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FILD_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,D), XR_ST7, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FCMOVNB_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCNB, FUSION_NONE);		\
+}
+
+#define FCMOVNE_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCNE, FUSION_NONE);		\
+}
+
+#define FIST_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTD, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+}
+
+#define FCMOVNBE_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCNBE, FUSION_NONE);		\
+}
+
+#define FISTP_Md_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTD, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FCMOVNU_ST0STi_FLOW						\
+{									\
+  UOP_RL(UV, CMOVE, XR_ST0, XR_ST0, XF_STI, XE_FCCNU, FUSION_NONE);		\
+}
+
+#define FCLEX_FLOW							\
+{									\
+  UOP_R0(UV, FCLEX_UOP, FUSION_NONE);		\
+}
+
+#define FLD_Me_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,E), XR_ST7, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FUCOMI_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, UCOMI, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);		\
+}
+
+#define FCOMI_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, COMI, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FSTP_Me_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTE, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FADD_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADDE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FADD_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, ADDE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FMUL_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, MULE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FMUL_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, MULE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FCOM_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FCOMP_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FSUB_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FSUBR_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, SUBE, XF_STI, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FSUBR_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FSUB_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, SUBE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FDIV_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FDIVR_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, DIVE, XF_STI, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FDIVR_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FDIV_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, DIVE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FSTSW_Mw_FLOW							\
+{									\
+  UOP_R2(UV, FSTSW, XR_TMP1, XR_ZERO, FUSION_NONE);		\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, STW, XR_TMP1, XR_TMP0, FUSION_STA_STD);					\
+}
+
+#define FLD_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,T), XR_ST7, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FST_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTT, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+}
+
+#define FST_STi_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XF_STI, XR_ST0, FUSION_NONE);			\
+}
+
+#define FSTP_Mt_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTT, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FSTP_STi_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XF_STI, XR_ST0, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FUCOM_STi_FLOW							\
+{									\
+  UOP_R3(UV, UCOM, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);			\
+}
+
+#define FUCOMP_STi_FLOW							\
+{									\
+  UOP_R3(UV, UCOM, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FIADD_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, ADDE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FADDP_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, ADDE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FIMUL_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, MULE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FMULP_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, MULE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FICOM_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FICOMP_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FCOMPP_FLOW							\
+{									\
+  UOP_R3(UV, COM, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);		\
+  FP_STACK_OP(fpstk_poppop);		\
+}
+
+#define FISUB_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FSUBRP_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, SUBE, XF_STI, XR_ST0, XF_STI, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FISUBR_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, SUBE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FSUBP_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, SUBE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FIDIV_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_ST0, XR_FTMP0, FUSION_LOAD_OP);		\
+}
+
+#define FDIVRP_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, DIVE, XF_STI, XR_ST0, XF_STI, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FIDIVR_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_FTMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R3(UV, DIVE, XR_ST0, XR_FTMP0, XR_ST0, FUSION_LOAD_OP);		\
+}
+
+#define FDIVP_STiST0_FLOW						\
+{									\
+  UOP_R3(UV, DIVE, XF_STI, XF_STI, XR_ST0, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FILD_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,W), XR_ST7, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FIST_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTW, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+}
+
+#define FISTP_Mw_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTW, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FSTSW_AX_FLOW							\
+{									\
+  UOP_R2(UV, FSTSW, XR_AX, XR_ZERO, FUSION_NONE);		\
+}
+
+#define FILD_Mq_FLOW							\
+{									\
+  UOP_RLI_OV(UV, XAx(FLD,Q), XR_ST7, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  FP_STACK_OP(fpstk_push);		\
+}
+
+#define FUCOMIP_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, UCOMI, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FCOMIP_ST0STi_FLOW						\
+{									\
+  UOP_R3(UV, COMI, XR_ZERO, XR_ST0, XF_STI, FUSION_NONE);			\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+#define FISTP_Mq_FLOW							\
+{									\
+  UOP_RLI_OV(UP, XA(STA), XR_TMP0, XF_SEG, XF_BASE, XF_INDEX, XF_SCALE, XF_DISP, FUSION_NONE);\
+  UOP_R2(UV, FSTQ, XR_ST0, XR_TMP0, FUSION_STA_STD);		\
+  FP_STACK_OP(fpstk_pop);		\
+}
+
+/* GL: */
+#define DAS_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("DAS uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define AAM_Ib_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("AAM uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define AAD_Ib_FLOW							\
+{									\
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("AAD uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define IN_ALIb_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("IN_ALIb uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define IN_eAXIb_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("IN_eAXIb uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define OUT_IbAL_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("OUT_IbAL uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define OUT_IbeAX_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("OUT_IbeAX uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define IN_ALDX_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("IN_ALDX uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define IN_eAXDX_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("IN_eAXDX uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define OUT_DXAL_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("OUT_DXAL uop flow not implemented yet (%s:%d)",__FILE__,__LINE__); \
+}
+
+#define OUT_DXeAX_FLOW              \
+{                           \
+  UOP_R2(UV, MOVE, XR_ZERO, XR_ZERO, FUSION_NONE);	\
+  if(!bogus) warn("OUT_DXeAX uop flow implemented as No-op (%s:%d)",__FILE__,__LINE__); \
+}
+
