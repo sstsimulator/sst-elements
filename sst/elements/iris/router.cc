@@ -244,7 +244,7 @@ Router::do_vca ( void )
             uint16_t ic = curr_msg.in_channel;
             uint16_t op = curr_msg.out_port;
             uint16_t oc = curr_msg.out_channel;
-            printf(" request swa %d-%d|%d-%d \n",ip,ic,op,oc);
+            //printf(" request swa %d-%d|%d-%d \n",ip,ic,op,oc);
 
             if(in_buffer.at(ip).get_occupancy(ic))
             {
@@ -339,7 +339,7 @@ Router::do_st ( void )
             uint16_t oc = curr_pkt.out_channel;
             uint16_t ip = curr_pkt.in_port;
             uint16_t ic = curr_pkt.in_channel;
-            printf("%d@%lu: credits%d  \n",node_id, _TICK_NOW, downstream_credits.at(op).at(oc));
+            //printf("%d@%lu: credits%d  \n",node_id, _TICK_NOW, downstream_credits.at(op).at(oc));
             if ( downstream_credits.at(op).at(oc) )
             {
 
@@ -350,7 +350,7 @@ Router::do_st ( void )
                 f->vc = oc;
                 ev->type = irisRtrEvent::Packet;
                 ev->packet = *f;
-                printf("%d: Send pkt at%lu", node_id, _TICK_NOW);
+                //printf("%d: Send pkt at%lu", node_id, _TICK_NOW);
                 links.at(op)->Send(ev);
 
                 /*  I have one slot in the next buffer less now. */
@@ -371,7 +371,7 @@ Router::do_st ( void )
                 stat_last_flit_cycle = _TICK_NOW;
                 uint16_t lat = _TICK_NOW - curr_pkt.pkt_arrival_time;
                 stat_total_pkt_latency_nano += lat;
-                printf("%d: pkt out @%lu\n",node_id, _TICK_NOW);
+                //printf("%d: pkt out @%lu\n",node_id, _TICK_NOW);
 
                 curr_pkt.pipe_stage = EMPTY;
                 curr_pkt.in_port = -1;

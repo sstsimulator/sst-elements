@@ -1,8 +1,4 @@
-<?xml version="2.0"?>
-
-<|-- Command Line: -->
- <|-- ./portals4_sm_sdlgen -x 8 -y 8 -z 1 --application=allreduce.tree_triggered --new_format 1 -->
- <|-- for router configurable parameters see router.cc -->
+<sdl version="2.0"/>
 
  <config>
      run-mode=both
