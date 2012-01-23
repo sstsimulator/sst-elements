@@ -61,25 +61,17 @@ static inline Process* newProcess( const std::string name,
         static_cast< M5* >( static_cast< void* >( comp ) )->registerExit();
     }
 
-    process.cmd.resize(1);
-    process.cmd[0] = "";
-
+    process.cmd.clear();
     SST::Params tmp = params.find_prefix_params( "cmd." ); 
     if ( tmp.size() ) {
-        process.cmd.resize( tmp.size() );
         SST::Params::iterator iter = tmp.begin();
-        for ( int i = 0; i < process.cmd.size(); i++ ) { 
-            process.cmd[i] = resolveString((*iter).second);
-            if ( process.cmd[i].empty() ) {
-                fprintf(stderr,"fatal: bad executable name `%s`\n", 
-                                (*iter).second.c_str() );
-                exit(-1);
-            }
-
-            ++iter;
-            F_STR( process, cmd[i] );
+        for ( iter = tmp.begin(); iter!= tmp.end(); iter++ ) { 
+            process.cmd.push_back(resolveString((*iter).second));
         }
     }
+
+    assert(process.cmd.size() != 0 &&
+           " fatal: bad executable name ");
 
     tmp = params.find_prefix_params( "env." ); 
     if ( tmp.size() ) {
