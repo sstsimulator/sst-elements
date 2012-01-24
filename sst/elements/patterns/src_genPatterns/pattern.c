@@ -43,6 +43,7 @@ pattern_t _pattern;
 static int _num_ops;
 static int _num_sets;
 static int _num_doubles;
+static int _start_nnodes;
 static tree_type_t _tree_type;
 
 /* Alltoall parameters */
@@ -50,6 +51,7 @@ static tree_type_t _tree_type;
 /* static int _num_ops; already declared */
 /* static int _num_sets; already declared */
 /* static int _num_doubles; already declared */
+/* static int _start_nnodes; */
 /* static tree_type_t _tree_type; already declared */
 
 /* Ghost parameters */
@@ -96,6 +98,7 @@ set_defaults(void)
     _num_sets= NO_DEFAULT;
     _num_doubles= 1;
     _tree_type= TREE_DEEP;
+    _start_nnodes= 0;
 
     /* Ghost defaults */
     _time_steps= 1000;
@@ -342,6 +345,9 @@ int rc;
 		} else if (strcmp("tree_type", key) == 0)   {
 		    _tree_type= strtol(value1, (char **)NULL, 0);
 
+		} else if (strcmp("start_nnodes", key) == 0)   {
+		    _start_nnodes= strtol(value1, (char **)NULL, 0);
+
 
 		/* Ghost parameters */
 		} else if (strcmp("time_steps", key) == 0)   {
@@ -464,16 +470,11 @@ pattern_params(FILE *out)
 
     switch (_pattern)   {
 	case alltoall_pattern:
-	    PRINT_PARAM(out, num_sets);
-	    PRINT_PARAM(out, num_ops);
-	    PRINT_PARAM(out, num_doubles);
-	    fprintf(out, "\t\t<tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
-	    break;
-
 	case allreduce_pattern:
 	    PRINT_PARAM(out, num_sets);
 	    PRINT_PARAM(out, num_ops);
 	    PRINT_PARAM(out, num_doubles);
+	    PRINT_PARAM(out, start_nnodes);
 	    fprintf(out, "\t\t<tree_type> %s </tree_type>\n", str_tree_type(_tree_type));
 	    break;
 

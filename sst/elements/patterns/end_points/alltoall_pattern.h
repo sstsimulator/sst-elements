@@ -35,6 +35,7 @@ class Alltoall_pattern : public Comm_pattern    {
 	    // Defaults for paramters
 	    num_sets= 9;
 	    num_doubles= 1;
+	    nnodes= 0;
 
 
 	    // Process the message rate specific paramaters
@@ -46,6 +47,16 @@ class Alltoall_pattern : public Comm_pattern    {
 
 		if (!it->first.compare("num_doubles"))   {
 		    sscanf(it->second.c_str(), "%d", &num_doubles);
+		}
+
+		if (!it->first.compare("start_nnodes"))   {
+		    sscanf(it->second.c_str(), "%d", &nnodes);
+		    if ((nnodes < 0) || (nnodes >= num_ranks))   {
+			if (my_rank == 0)   {
+			    printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
+			}
+			exit(-2);
+		    }
 		}
 
                 ++it;
@@ -82,7 +93,6 @@ class Alltoall_pattern : public Comm_pattern    {
 
 	    // Kickstart ourselves
 	    done= false;
-	    nnodes= 0;
 	    if (my_rank == 0)   {
 		printf("#  |||  Alltoall Pattern test\n");
 		printf("#  |||  Number of sets %d, with %d or %d (> %d ranks) operations per set.\n",
