@@ -1,0 +1,6 @@
+
+apps: libs
+	cd tests && $(MAKE)
+
+libs:
+	cd usr_lib && $(MAKE)
