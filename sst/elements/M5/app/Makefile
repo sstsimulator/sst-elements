@@ -21,10 +21,6 @@ apps: libs hello rt
 libs:
 	cd lib && $(MAKE)
 
-portals:
-	cd portals4Tests && $(MAKE)
-
-
 hello: hello.o
 	${CC} hello.o -o $@ ${LDFLAGS}
 
@@ -32,6 +28,5 @@ rt: rt.o
 	${CC} rt.o -o $@ ${LDFLAGS}
 
 clean:
-	cd portals4Tests && $(MAKE) clean
 	cd lib && $(MAKE) clean
 	rm -rf hello.o hello rt rt.o
