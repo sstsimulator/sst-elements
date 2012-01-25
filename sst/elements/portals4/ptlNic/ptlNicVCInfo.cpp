@@ -2,9 +2,7 @@
 #include <sst/core/serialization/element.h>
 
 #include "ptlNic.h"
-
-#define TRACE_ADD(x)
-#define PRINT_AT(...)
+#include "./debug.h"
 
 PtlNic::VCInfo::VCInfo( PtlNic& nic ) :
     m_nic( nic ),

@@ -106,8 +106,13 @@ void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list )
 
         PRINT_AT( DmaEngine, "vaddr=%#lx length=%lu\n", vaddr, item.length );
 
+#if 0
         bool ret = m_nicMmu->lookup( vaddr, item.addr );
         assert( ret );
+#else
+        // Palacios converts the vaddr to physaddr in the DMA request
+        item.addr = vaddr;
+#endif
 
         list.push_back(item);
 

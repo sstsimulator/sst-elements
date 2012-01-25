@@ -7,13 +7,9 @@
 #include "recvEntry.h"
 #include "ptlNic.h"
 #include "ptlNicEvent.h"
-
-#define TRACE_ADD(x)
-#define TRACE_INIT()
-#define PRINT_AT(...)
+#include "./debug.h"
 
 const char * PtlNic::m_cmdNames[] = CMD_NAMES;
-
 
 PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     RtrIF( id, params ),
