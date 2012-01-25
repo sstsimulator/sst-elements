@@ -1,5 +1,5 @@
 LDFLAGS += -static -u ptlNic -lportals -lptlNic -lruntime 
-LDFLAGS += -L../lib/rt -L../usr_lib/api -L../usr_lib/nic -L../usr_lib/runtime
+LDFLAGS += -L../usr_lib/api -L../usr_lib/nic -L../usr_lib/runtime
 
 CPPFLAGS += -I../ptlNic/ -I../usr_lib/runtime
 
