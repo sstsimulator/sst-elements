@@ -22,6 +22,7 @@ libportals4_la_SOURCES = \
     ptlNic/ptlNicEvent.h
 
 libportals4_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
-            -I$(top_srcdir)/sst/elements/include
+            -I$(top_srcdir)/sst/elements/include \
+            -I$(top_srcdir)/sst/elements
 libportals4_la_LDFLAGS = -module -avoid-version
 libportals4_la_LIBADD =
