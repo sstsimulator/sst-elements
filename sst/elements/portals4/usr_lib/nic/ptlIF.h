@@ -58,6 +58,7 @@ class PtlIF {
 
         m_cmdQueue = (cmdQueue_t*) mmap(0, sizeof(cmdQueue_t), 
                     PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        assert( m_cmdQueue != (void*) -1 );
 #else
 #error <don't know how to setup command queue>
 #endif
