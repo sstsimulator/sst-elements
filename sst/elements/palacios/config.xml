@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<sdl version="2.0"/>
+
+<config>
+    stopAtCycle=1000000000s
+</config>
+
+<variables>
+    <lat> 10ns </lat>
+</variables>
+
+<sst>
+    <component name=system type=palacios.PtlNicMMIF rank=0 >
+        <params>
+            <vm-dev> /dev/v3-vm0 </vm-dev>
+            <dev> user:foo </dev>
+        </params>
+        <link name=0.ptlNicLink port=nic latency=$lat />
+        <link name=0.dmaLink port=dma latency=$lat />
+
+    </component>
+
+    <component name=ptlNic type=portals4.PtlNic rank=0  >
+        <params>
+            <nid> 0 </nid>
+            <id> 0 </id>
+            <clock> 500 Mhz </clock>
+            <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
+        </params>
+        <link name=0.ptlNicLink port=mmif latency=$lat />
+        <link name=0.dmaLink port=dma latency=$lat />
+    </component>
+
+</sst>
+
