@@ -1,6 +1,30 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <runtime.h>
+#include <assert.h>
+
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <stdio.h>
+
+static int* _barrierPtr;
+
+static __attribute__ ((constructor)) void init(void)
+{
+    int fd;
+    if ((fd=open("node", O_RDWR|O_SYNC))<0)
+    {   
+        perror("open");
+        exit(-1);
+    }
+        
+    void* devPtr =  mmap(0, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    assert( devPtr != 0 );
+    _barrierPtr = (devPtr + 4096) - sizeof(*_barrierPtr); 
+}
 
 int cnos_get_rank( void )
 {
@@ -40,4 +64,6 @@ int cnos_get_nidpid_map( cnos_nidpid_map_t** map )
 
 int cnos_barrier( void )
 {
+    *_barrierPtr = 1;
+    while( *_barrierPtr );
 }
