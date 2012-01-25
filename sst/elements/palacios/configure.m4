@@ -6,7 +6,7 @@ AC_DEFUN([SST_palacios_CONFIG], [
     [AS_HELP_STRING([--with-palacios@<:@=DIR@:>@],
       [Use Palacios package installed in optionally specified DIR])])
 
-  happy = "yes"
+  happy="yes"
 
   AS_IF([test "$with_palacios" = "no"], [happy="no"])
 
@@ -15,17 +15,17 @@ AC_DEFUN([SST_palacios_CONFIG], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_palacios" -a "$with_palacios" != "yes"],
-    [PALACIOS_CPPFLAGS="-I$with_palacios"
+    [PALACIOS_CPPFLAGS="-I$with_palacios/linux_usr -I$with_palacios/linux_module"
      CPPFLAGS="$PALACIOS_CPPFLAGS $CPPFLAGS"
-     PALACIOS_LDFLAGS="-L$with_palacios"
+     PALACIOS_LDFLAGS="-L$with_palacios/linux_usr"
      LDFLAGS="$PALACIOS_LDFLAGS $LDFLAGS"],
     [PALACIOS_CPPFLAGS=
      PALACIOS_LDFLAGS=])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([MemorySystem.h], [], [happy="no"])
-  AC_CHECK_LIB([palacios], [libpalacios_is_present], 
-    [PALACIOS_LIB="-lpalacios"], [happy="no"])
+  AC_CHECK_HEADERS([v3_user_host_dev.h], [], [happy="no"])
+  AC_CHECK_LIB([v3hostdev], [v3_user_host_dev_rendezvous], 
+    [PALACIOS_LIBS="-lv3hostdev"], [happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
@@ -34,7 +34,7 @@ AC_DEFUN([SST_palacios_CONFIG], [
 
   AC_SUBST([PALACIOS_CPPFLAGS])
   AC_SUBST([PALACIOS_LDFLAGS])
-  AC_SUBST([PALACIOS_LIB])
+  AC_SUBST([PALACIOS_LIBS])
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
