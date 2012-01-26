@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+
+<sdl version="2.0"/>
+
+<config>
+    stopAtCycle=1000000000s
+</config>
+
+<sst>
+    <component name=system type=m5C.M5 rank=0 >
+        <params>
+            <configFile>/home/myhsieh/Desktop/latest/truely/sst-simulator/sst/elements/M5/xml/exampleM5_power.xml</configFile>
+            <debug> 0 </debug>
+            <M5debug> none </M5debug>
+            <info>yes</info>
+            <registerExit>yes</registerExit>
+            <samplingFreq>500us</samplingFreq>
+    <McPAT_XMLfile>/home/myhsieh/Desktop/latest/truely/sst-simulator/sst/core/techModels/libMcPATbeta/Niagara1.xml</McPAT_XMLfile>
+    <core_temperature>350</core_temperature>
+    <core_tech_node>65</core_tech_node>
+    <core_longer_channel_device>1</core_longer_channel_device>
+    <clock>2.66GHz</clock>
+    <rev>1.5</rev>
+    <power_monitor>YES</power_monitor>
+    <temperature_monitor>YES</temperature_monitor>
+    <power_level>2</power_level>    
+    <supply_voltage>1.1</supply_voltage>
+    <opt_for_clk>NO</opt_for_clk>
+    <machine_bits>64</machine_bits>
+    <machine_type>0</machine_type>
+    <number_of_cores>1</number_of_cores> 
+    <number_of_IL1s>1</number_of_IL1s>
+    <number_of_DL1s>1</number_of_DL1s>
+    <number_of_ITLBs>0</number_of_ITLBs>
+    <number_of_DTLBs>0</number_of_DTLBs>
+    <number_of_L2s>1</number_of_L2s>
+    <number_of_L3s>0</number_of_L3s>
+    <number_of_L1Directories>0</number_of_L1Directories>
+    <number_of_L2Directories>0</number_of_L2Directories>
+    <core_clock_rate>2660000000</core_clock_rate>
+    <core_physical_address_width>38</core_physical_address_width>
+    <core_virtual_address_width>64</core_virtual_address_width>
+    <core_virtual_memory_page_size>4096</core_virtual_memory_page_size>
+    <core_number_hardware_threads>1</core_number_hardware_threads>
+    <archi_Regs_IRF_size>16</archi_Regs_IRF_size>
+    <archi_Regs_FRF_size>32</archi_Regs_FRF_size>
+    <core_phy_Regs_IRF_size>128</core_phy_Regs_IRF_size>
+    <core_phy_Regs_FRF_size>128</core_phy_Regs_FRF_size>
+    <core_issue_width>4</core_issue_width>
+    <core_peak_issue_width>4</core_peak_issue_width>
+    <core_register_windows_size>8</core_register_windows_size> 
+    <core_opcode_width>16</core_opcode_width>
+    <core_micro_opcode_width>8</core_micro_opcode_width>	
+    <core_instruction_window_size>64</core_instruction_window_size> 
+    <core_instruction_length>32</core_instruction_length>
+    <core_instruction_buffer_size>32</core_instruction_buffer_size> 
+    <core_number_instruction_fetch_ports>1</core_number_instruction_fetch_ports>
+    <core_fp_issue_width>4</core_fp_issue_width>
+    <core_fp_instruction_window_size>64</core_fp_instruction_window_size>  
+    <core_store_buffer_size>20</core_store_buffer_size> 
+    <core_memory_ports>2</core_memory_ports>	
+    <core_fetch_width>4</core_fetch_width> 
+    <core_decode_width>4</core_decode_width>
+    <core_commit_width>4</core_commit_width> 
+    <core_int_pipeline_depth>31</core_int_pipeline_depth>
+    <core_RAS_size>16</core_RAS_size>
+    <core_load_buffer_size>32</core_load_buffer_size>
+    <cache_freq>2660000000</cache_freq>
+    <cache_il1_sC>32768</cache_il1_sC>
+    <cache_il1_line_size>64</cache_il1_line_size>
+    <cache_il1_associativity>8</cache_il1_associativity>
+    <cache_il1_number_banks>1</cache_il1_number_banks>   
+    <cache_il1_throughput>1</cache_il1_throughput>
+    <cache_il1_latency>4</cache_il1_latency>
+    <cache_il1_output_width>8</cache_il1_output_width>
+    <cache_il1_cache_policy>0</cache_il1_cache_policy>
+    <cache_il1_miss_buffer_size>16</cache_il1_miss_buffer_size>
+    <cache_il1_fill_buffer_size>16</cache_il1_fill_buffer_size>
+    <cache_il1_prefetch_buffer_size>16</cache_il1_prefetch_buffer_size>
+    <cache_il1_wbb_buffer_size>0</cache_il1_wbb_buffer_size> 
+    <cache_il1_floorplan_id>0</cache_il1_floorplan_id>    
+    <cache_dl1_sC>32768</cache_dl1_sC>
+    <cache_dl1_line_size>64</cache_dl1_line_size>
+    <cache_dl1_associativity>8</cache_dl1_associativity>
+    <cache_dl1_number_banks>1</cache_dl1_number_banks>
+    <cache_dl1_throughput>1</cache_dl1_throughput>
+    <cache_dl1_latency>4</cache_dl1_latency>
+    <cache_dl1_output_width>64</cache_dl1_output_width>
+    <cache_dl1_cache_policy>1</cache_dl1_cache_policy>
+    <cache_dl1_miss_buffer_size>16</cache_dl1_miss_buffer_size>
+    <cache_dl1_fill_buffer_size>16</cache_dl1_fill_buffer_size>
+    <cache_dl1_prefetch_buffer_size>16</cache_dl1_prefetch_buffer_size>
+    <cache_dl1_wbb_buffer_size>16</cache_dl1_wbb_buffer_size> 
+    <cache_dl1_floorplan_id>0</cache_dl1_floorplan_id>
+    <cache_l2_clock_rate>2660000000</cache_l2_clock_rate>
+    <cache_l2_sC>4194304</cache_l2_sC>
+    <cache_l2_line_size>64</cache_l2_line_size>
+    <cache_l2_number_banks>1</cache_l2_number_banks>
+    <cache_l2_associativity>16</cache_l2_associativity>
+    <cache_l2_throughput>4</cache_l2_throughput>
+    <cache_l2_latency>9</cache_l2_latency>
+    <cache_l2_output_width>64</cache_l2_output_width>
+    <cache_l2_cache_policy>1</cache_l2_cache_policy>
+    <cache_l2_miss_buffer_size>16</cache_l2_miss_buffer_size>
+    <cache_l2_fill_buffer_size>16</cache_l2_fill_buffer_size>
+    <cache_l2_prefetch_buffer_size>16</cache_l2_prefetch_buffer_size>
+    <cache_l2_wbb_buffer_size>16</cache_l2_wbb_buffer_size>
+    <cache_l2_device_type>0</cache_l2_device_type>
+    <cache_l2_floorplan_id>4</cache_l2_floorplan_id>    
+    <btb_sC>5120</btb_sC>
+    <btb_line_size>16</btb_line_size>
+    <btb_number_banks>1</btb_number_banks>
+    <btb_associativity>2</btb_associativity>
+    <btb_throughput>1</btb_throughput>
+    <btb_latency>3</btb_latency>  
+    <bpred_global_predictor_bits> 2</bpred_global_predictor_bits>
+    <bpred_global_predictor_entries> 4096</bpred_global_predictor_entries>
+    <bpred_local_predictor_size> 10</bpred_local_predictor_size>
+    <bpred_local_predictor_entries>1024 </bpred_local_predictor_entries>
+    <bpred_chooser_predictor_bits> 2</bpred_chooser_predictor_bits>
+    <bpred_chooser_predictor_entries>4096 </bpred_chooser_predictor_entries>     
+    <rf_floorplan_id>0</rf_floorplan_id>
+    <alu_floorplan_id>0</alu_floorplan_id>
+    <ib_floorplan_id>0</ib_floorplan_id>
+    <decoder_floorplan_id>0</decoder_floorplan_id>
+    <lsq_floorplan_id>0</lsq_floorplan_id>
+    <loadQ_floorplan_id>0</loadQ_floorplan_id>
+    <rename_floorplan_id>0</rename_floorplan_id>
+    <scheduler_floorplan_id>0</scheduler_floorplan_id>
+    <btb_floorplan_id>0</btb_floorplan_id>
+    <bpred_floorplan_id>0</bpred_floorplan_id>
+        </params>
+    </component>
+</sst>

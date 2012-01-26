@@ -87,5 +87,68 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_SUBST([DRAMSIM_LDFLAGS])
   AC_SUBST([DRAMSIM_LIB])
 
+
+  AC_ARG_WITH([McPAT],
+    [AS_HELP_STRING([--with-McPAT@<:@=DIR@:>@],
+    [Use McPAT package installed in optionally specified DIR])])
+
+  AC_LANG_PUSH(C++)
+
+  AS_IF([test ! -z "$with_McPAT" -a "$with_McPAT" != "yes"],
+    [MCPAT_CPPFLAGS="-I$with_McPAT"
+     CPPFLAGS="$MCPAT_CPPFLAGS $CPPFLAGS"
+     MCPAT_LDFLAGS="-L$with_McPAT"
+     LDFLAGS="$MCPAT_LDFLAGS $LDFLAGS"
+     AC_CHECK_LIB([McPAT], [main], 
+    [MCPAT_LIB="-lMcPAT"], [happy="no"])
+    ],
+    [MCPAT_CPPFLAGS=
+     MCPAT_LDFLAGS=])
+
+  AC_LANG_POP(C++)
+
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
+
+
+  AM_CONDITIONAL([MODEL_POWER], 
+		[test ! -z "$with_McPAT" -a "$with_McPAT" != "yes"])
+
+  AC_SUBST([MCPAT_CPPFLAGS])
+  AC_SUBST([MCPAT_LDFLAGS])
+  AC_SUBST([MCPAT_LIB])
+
+
+  AC_ARG_WITH([hotspot],
+    [AS_HELP_STRING([--with-hotspot@<:@=DIR@:>@],
+    [Use HotSpot package installed in optionally specified DIR])])
+
+  AC_LANG_PUSH(C++)
+
+  AS_IF([test ! -z "$with_hotspot" -a "$with_hotspot" != "yes"],
+    [HOTSPOT_CPPFLAGS="-I$with_hotspot"
+     CPPFLAGS="$HOTSPOT_CPPFLAGS $CPPFLAGS"
+     HOTSPOT_LDFLAGS="-L$with_hotspot"
+     LDFLAGS="$HOTSPOT_LDFLAGS $LDFLAGS"
+     AC_CHECK_LIB([hotspot], [main], 
+    [HOTSPOT_LIB="-lhotspot"], [happy="no"])
+    ],
+    [HOTSPOT_CPPFLAGS=
+     HOTSPOT_LDFLAGS=])
+  AC_LANG_POP(C++)
+
+
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
+
+
+  AC_SUBST([HOTSPOT_CPPFLAGS])
+  AC_SUBST([HOTSPOT_LDFLAGS])
+  AC_SUBST([HOTSPOT_LIB])
+
+
+
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])

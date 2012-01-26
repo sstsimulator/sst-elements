@@ -1,14 +1,8 @@
 BUILD gem5 LIBRARY 
 
-download gem5-patched-v003.tar.gz
+download gem5-patched-v004.tar.gz
 
-tar xfz gem5-patched.tgz
-
-cd gem5-patched-v003/src/sim
-
-ln -s "sst tree"/sst/elements/M5/ptlNic/nicMmu.h 
-
-cd ../..
+tar xfz gem5-patched-v004.tar.gz
 
 scons -j8 build/X86_SE/libgem5_opt.so 
 

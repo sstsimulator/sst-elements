@@ -4,11 +4,6 @@ download gem5-patched.tgz
 
 tar xzvf gem5-patched.tgz
 
-cd gem5-patched/src/sim
-
-ln -s "sst tree"/sst/elements/M5/ptlNic/nicMmu.h 
-
-cd ../..
 
 scons -j8 build/X86_SE/libgem5_opt.so 
 
