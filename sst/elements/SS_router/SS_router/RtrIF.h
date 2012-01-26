@@ -79,9 +79,9 @@ public:
         }
 
 	m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<RtrIF>(this,&RtrIF::processEvent) );
+    assert(m_rtrLink);
 
 	registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock), false );
-
 
         for ( unsigned int i=0; i < num_vcP; i++ ) {
             toNicMapP[i] = new ToNic();
