@@ -15,15 +15,12 @@
 
 void* PalaciosIF::thread1( void* ptr )
 {
-    printf("%s() enter ptr=%p\n",__func__,ptr);
-printf("THREAD %d\n",getpid());
-
     return ((PalaciosIF*)ptr)->thread2();
 }
 
 void* PalaciosIF::thread2( )
 {
-    printf("%s() enter\n",__func__);
+    DBGX(x,"enter\n");
 
     struct palacios_host_dev_host_request_response *req;
     struct palacios_host_dev_host_request_response *resp;
@@ -44,7 +41,7 @@ void* PalaciosIF::thread2( )
             free(req);
         }
     }   
-    printf("%s() leave\n",__func__);
+    DBGX(x,"leave\n");
     return NULL;
 }
 
@@ -54,7 +51,7 @@ int PalaciosIF::do_work(
 {
     uint64_t datasize;
  
-    printf("%s data_len=%d len=%d port=%d gpa=%p op_len=%d %d\n",
+    DBGX(x,"%s data_len=%d len=%d port=%d gpa=%p op_len=%d %d\n",
         getType(req->type), req->data_len, req->len, req->port,
         req->gpa, req->op_len, sizeof(*req));
 
@@ -86,7 +83,7 @@ int PalaciosIF::do_work(
 
 
         default:
-            printf("Huh?  Unknown request %d\n", req->type);
+            DBGX(x,"Huh?  Unknown request %d\n", req->type);
     }
     return 0;
 }

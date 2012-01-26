@@ -7,17 +7,6 @@
 #include "portals4/ptlNic/ptlNicEvent.h"
 #include "portals4/ptlNic/dmaEvent.h"
 
-#include <cxxabi.h>
-
-#define DBGX( x, fmt, args... ) \
-{\
-     char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%s::%s():%d: "fmt, realname ? realname : "?????????", \
-                        __func__, __LINE__, ##args);\
-    fflush(stderr);\
-    if ( realname ) free(realname);\
-}
-
 BOOST_CLASS_EXPORT(PtlNicEvent);
 BOOST_CLASS_EXPORT(PtlNicRespEvent);
 
@@ -32,6 +21,7 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     DBGX(1,"\n");
 
 
+    registerExit();
     registerTimeBase( "1ns" );
 
 //    m_cmdLink = configureLink( "nic", "1ps",

@@ -20,6 +20,16 @@
 #include "v3_user_host_dev.h"
 
 #include <stdint.h>
+#include <cxxabi.h>
+
+#define DBGX( x, fmt, args... ) \
+{\
+     char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
+    fprintf( stderr, "%s::%s():%d: "fmt, realname ? realname : "?????????", \
+                        __func__, __LINE__, ##args);\
+    fflush(stderr);\
+    if ( realname ) free(realname);\
+}
 
 class WriteFunctorBase {
 public:
@@ -56,20 +66,21 @@ public:
         m_writeFunc( writeFunc )
     {
         int ret;
-        printf("%s() this=%p\n", __func__, this ); 
-        printf("%s() vm=%s dev=%s\n", __func__, vm.c_str(), dev.c_str() );
+        DBGX(x,"this=%p\n", this ); 
+        DBGX(x,"vm=%s dev=%s\n", vm.c_str(), dev.c_str() );
 
         m_fd = v3_user_host_dev_rendezvous( vm.c_str(), dev.c_str() );
+        if ( m_fd == -1 ) {
+            perror("v3_user_host_dev_rendezvous failed");
+        }
         assert( m_fd != -1 );
        
-printf("MAIN %d\n",getpid());
         ret = pthread_create( &m_thread, NULL, thread1, this ); 
         assert( ret == 0 );
-        printf("%s():%d\n",__func__,__LINE__);
     }
     ~PalaciosIF(){
         int ret;
-        printf("%s():%d\n",__func__,__LINE__);
+        DBGX(x,"\n");
         
         m_threadRun = false;
 
@@ -78,7 +89,6 @@ printf("MAIN %d\n",getpid());
 
         ret = v3_user_host_dev_depart( m_fd );
         assert( ret == 0 );
-        printf("%s():%d\n",__func__,__LINE__);
     }
 
 
@@ -110,23 +120,19 @@ private:
 void PalaciosIF::printData( uint64_t offset, void* data, int count ) {
     switch (count) {
         case 1:
-            printf("%s() offset=%#lx %#010x\n", __func__, offset,  
-                                        *((uint8_t*)data) );
+            DBGX(x,"offset=%#lx %#010x\n", offset, *((uint8_t*)data) );
             break;
         case 2:
-            printf("%s() offset=%#lx %#010x\n", __func__, offset,  
-                                        *((uint16_t*)data) );
+            DBGX(x,"offset=%#lx %#010x\n", offset, *((uint16_t*)data) );
             break;
         case 4:
-            printf("%s() offset=%#lx %#010x\n", __func__, offset,  
-                                        *((uint32_t*)data) );
+            DBGX(x,"offset=%#lx %#010x\n", offset, *((uint32_t*)data) );
             break;
         case 8:
-            printf("%s() offset=%#lx %#018lx\n", __func__, offset,
-                                        *((uint64_t*)data) );
+            DBGX(x,"offset=%#lx %#018lx\n", offset, *((uint64_t*)data) );
             break;
         default:
-            printf("PalaciosIF::printData() count=%d ???????\n",count);
+            DBGX(x,"PalaciosIF::printData() count=%d ???????\n",count);
     }
 }
 
@@ -134,8 +140,7 @@ void PalaciosIF::readMem( uint64_t gpa, void* data, int count )
 {   
     uint64_t offset = gpa - m_backingAddr;
     if ( offset >= m_backingLen ) {
-        printf("Warn: %s() offset %#lx > m_backingLen %#x\n",__func__, 
-                                                offset, m_backingLen );
+        DBGX(x,"Warn: offset %#lx > m_backingLen %#x\n", offset, m_backingLen );
         return; 
     }
     memcpy( data, m_backing + offset, count );
@@ -149,8 +154,7 @@ void PalaciosIF::writeMem( uint64_t gpa, void* data, int count )
     uint64_t offset = gpa - m_backingAddr;
 
     if ( offset >= m_backingLen ) {
-        printf("Warn: %s() offset %#lx > m_backingLen %#x\n",__func__, 
-                                                offset, m_backingLen );
+        DBGX(x,"Warn: offset %#lx > m_backingLen %#x\n", offset, m_backingLen );
         return; 
     }
 

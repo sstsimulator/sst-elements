@@ -11,7 +11,7 @@
 </variables>
 
 <sst>
-    <component name=system type=palacios.PtlNicMMIF rank=0 >
+    <component name=0.system type=palacios.PtlNicMMIF rank=0 >
         <params>
             <vm-dev> /dev/v3-vm0 </vm-dev>
             <dev> user:foo </dev>
@@ -21,7 +21,7 @@
 
     </component>
 
-    <component name=ptlNic type=portals4.PtlNic rank=0  >
+    <component name=0.ptlNic type=portals4.PtlNic rank=0  >
         <params>
             <nid> 0 </nid>
             <id> 0 </id>
@@ -30,7 +30,31 @@
         </params>
         <link name=0.ptlNicLink port=mmif latency=$lat />
         <link name=0.dmaLink port=dma latency=$lat />
+
+        <link name=0-rtr-1 port=rtr latency=$lat />
     </component>
 
+    <component name=1.system type=palacios.PtlNicMMIF rank=1 >
+        <params>
+            <vm-dev> /dev/v3-vm0 </vm-dev>
+            <dev> user:foo </dev>
+        </params>
+        <link name=1.ptlNicLink port=nic latency=$lat />
+        <link name=1.dmaLink port=dma latency=$lat />
+
+    </component>
+
+    <component name=1.ptlNic type=portals4.PtlNic rank=1  >
+        <params>
+            <nid> 1 </nid>
+            <id> 1 </id>
+            <clock> 500 Mhz </clock>
+            <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
+        </params>
+        <link name=1.ptlNicLink port=mmif latency=$lat />
+        <link name=1.dmaLink port=dma latency=$lat />
+
+        <link name=0-rtr-1 port=rtr latency=$lat />
+    </component>
 </sst>
 
