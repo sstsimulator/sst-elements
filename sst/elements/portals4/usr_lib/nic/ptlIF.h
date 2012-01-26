@@ -25,7 +25,6 @@ namespace PtlNic {
 class PtlIF {
   public:
     PtlIF( int jid, int uid ) :
-        m_tailShadow(0),
         m_ctx_id( 101 ),
         m_nid((unsigned)-1),
         m_meUnlinkedPos( 0 )
@@ -63,6 +62,7 @@ class PtlIF {
 #error <don't know how to setup command queue>
 #endif
 
+        m_tailShadow = m_cmdQueue->tail;
         PTL_DBG2("m_cmdQueue=%p\n",m_cmdQueue);
         PTL_DBG2("&m_nid=%p size=%lu\n", &m_nid, sizeof(m_nid));
         PTL_DBG2("&m_limits=%p size=%lu\n", &m_limits, sizeof(m_limits));
