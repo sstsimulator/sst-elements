@@ -25,6 +25,7 @@
         <params>
             <nid> 0 </nid>
             <id> 0 </id>
+            <dma-virt2phys> false </dma-virt2phys>
             <clock> 500 Mhz </clock>
             <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
         </params>
@@ -48,6 +49,7 @@
         <params>
             <nid> 1 </nid>
             <id> 1 </id>
+            <dma-virt2phys> false </dma-virt2phys>
             <clock> 500 Mhz </clock>
             <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
         </params>
