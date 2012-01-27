@@ -20,7 +20,7 @@ class DRAMSimWrap2 : public DRAMSimWrap
         }
       protected:
         virtual bool recvTiming(PacketPtr pkt ) {
-            DPRINTFN("%s\n",__func__);
+            PRINTFN("%s\n",__func__);
             static_cast<DRAMSimWrap2*>(owner)->recvTimingBackdoor( pkt);
         }
 

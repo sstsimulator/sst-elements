@@ -105,7 +105,7 @@ DRAMSimWrap::~DRAMSimWrap()
 
 Port * DRAMSimWrap::getPort(const std::string &if_name, int idx )
 {
-    DPRINTFN("%s: if_name=`%s` idx=%d\n", __func__, if_name.c_str(), idx );
+    PRINTF("%s: if_name=`%s` idx=%d\n", __func__, if_name.c_str(), idx );
 
     if (if_name == "functional") {
         return new MemoryPort(csprintf("%s-functional", name()), this);
@@ -131,7 +131,7 @@ void DRAMSimWrap::init()
 
 bool DRAMSimWrap::recvTiming(PacketPtr pkt)
 {
-    DPRINTFN("%s: %s %#lx\n", __func__, pkt->cmdString().c_str(),
+    PRINTF("%s: %s %#lx\n", __func__, pkt->cmdString().c_str(),
                                         (long)pkt->getAddr());
 
     if ( pkt->isRead() || pkt->isWrite() ) {
@@ -149,7 +149,7 @@ bool DRAMSimWrap::recvTiming(PacketPtr pkt)
 
 void DRAMSimWrap::recvRetry()
 {
-    DPRINTFN("%s:\n",__func__);
+    PRINTF("%s:\n",__func__);
     assert( ! m_readyQ.empty() );
 
     m_waitRetry = false;
@@ -160,10 +160,10 @@ void DRAMSimWrap::sendTry()
 {
     while ( ! m_waitRetry && ! m_readyQ.empty() ) {
         if ( ! m_port->sendTiming( m_readyQ.front() )  ) {
-            DPRINTFN("%s: sendTiming failed\n",__func__);
+            PRINTF("%s: sendTiming failed\n",__func__);
             m_waitRetry = true;
         } else {
-            DPRINTFN("%s: sendTiming succeeded\n",__func__);
+            PRINTF("%s: sendTiming succeeded\n",__func__);
             m_readyQ.pop_front();
         }
     }
@@ -171,7 +171,7 @@ void DRAMSimWrap::sendTry()
 
 void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 {
-    DPRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
+    PRINTF("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
     assert( ! m_readQ.empty() );
 
@@ -188,7 +188,7 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 
 void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
 {
-    DPRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
+    PRINTF("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
     assert( ! m_writeQ.empty() );
 
@@ -236,7 +236,7 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
             break;
         }
 
-        DPRINTFN("%s: added trans, cycle=%lu addr=%#lx\n", 
+        PRINTF("%s: added trans, cycle=%lu addr=%#lx\n", 
                                                 __func__,cycle, addr );
 
         m_recvQ.front().second += JEDEC_DATA_BUS_BITS;

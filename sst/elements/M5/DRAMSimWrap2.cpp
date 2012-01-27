@@ -56,7 +56,7 @@ DRAMSimWrap2::DRAMSimWrap2( const Params* p ) :
 
 Port* DRAMSimWrap2::getPort(const std::string &if_name, int idx )
 {
-    DPRINTFN("%s: if_name=`%s` idx=%d\n", __func__, if_name.c_str(), idx );
+    PRINTFN("%s: if_name=`%s` idx=%d\n", __func__, if_name.c_str(), idx );
 
     if (if_name == "backdoor") {
         assert( ! m_backdoor);
@@ -84,13 +84,13 @@ bool DRAMSimWrap2::recvTiming(PacketPtr pkt )
         if ( !( pkt->getAddr() >= m_myRange.start &&
                         pkt->getAddr() < m_myRange.end ) ) {
 
-            DPRINTFN("%s: backdoor send %#lx\n",__func__,pkt->getAddr());
+            PRINTFN("%s: backdoor send %#lx\n",__func__,pkt->getAddr());
             DBGX(4,"backdoor %s needsResp=%s %#lx\n",pkt->cmdString().c_str(),
                pkt->needsResponse() ? "yes" : "no", pkt->getAddr());
             return m_backdoor->sendTiming( pkt );
         }
     } 
-    DPRINTFN("%s: %s %#lx\n",__func__,pkt->cmdString().c_str(),pkt->getAddr());
+    PRINTFN("%s: %s %#lx\n",__func__,pkt->cmdString().c_str(),pkt->getAddr());
     //DBGX(4,"%s %#lx\n",__func__,pkt->cmdString().c_str(),pkt->getAddr());
     return DRAMSimWrap::recvTiming( pkt );
 }
@@ -101,13 +101,13 @@ bool DRAMSimWrap2::recvTimingBackdoor( PacketPtr pkt )
                 pkt->needsResponse() ? "yes" : "no", pkt->getAddr());
 
     if ( pkt->isResponse() ) {
-        DPRINTFN("%s: %s %#lx\n",__func__, pkt->cmdString().c_str(),
+        PRINTFN("%s: %s %#lx\n",__func__, pkt->cmdString().c_str(),
                                                         pkt->getAddr());
         DBGX(4,"%s %#lx\n", pkt->cmdString().c_str(), pkt->getAddr());
         return m_port->sendTiming(pkt);
     }
 
-    DPRINTFN("%s: %s %#lx do access\n",__func__,
+    PRINTFN("%s: %s %#lx do access\n",__func__,
                         pkt->cmdString().c_str(),pkt->getAddr());
 
     DBGX(4,"%s %#lx do access\n",pkt->cmdString().c_str(),pkt->getAddr());

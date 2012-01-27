@@ -47,7 +47,7 @@ class DRAMSimWrap : public PhysicalMemory
             if (pkt->memInhibitAsserted()) {
                 // snooper will supply based on copy of packet
                 // still target's responsibility to delete packet
-                DPRINTFN("recvTiming: %s %#lx memInhibitAssert()\n",
+                PRINTFN("recvTiming: %s %#lx memInhibitAssert()\n",
                         pkt->cmdString().c_str(), (long)pkt->getAddr());
                 delete pkt;
                 return true;

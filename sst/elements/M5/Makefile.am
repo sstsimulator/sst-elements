@@ -36,6 +36,8 @@ libm5C_la_SOURCES = \
     physicalPlus.cpp \
     physicalPlus.h \
     physicalMemory.cpp \
+    ptlNicMMIF.cpp \
+    ptlNicMMIF.h \
     process.h \
     simpleCpu.cpp \
     syscall.cpp \
@@ -67,7 +69,9 @@ endif
 
 libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
             $(DRAMSIM_CPPFLAGS) \
-            -I$(top_srcdir)/sst/elements/include
+            -I$(top_srcdir)/sst/elements/include \
+            -I$(top_srcdir)/sst/elements
+
 
 libm5C_la_LDFLAGS = -module -avoid-version $(M5_LDFLAGS) $(DRAMSIM_LDFLAGS)
 libm5C_la_LIBADD = $(M5_LIB) $(DRAMSIM_LIB)

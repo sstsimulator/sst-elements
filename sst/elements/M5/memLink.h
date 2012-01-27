@@ -32,7 +32,7 @@ class MemLink : public MemObject
 
         void sendFunctional(PacketPtr pkt)
         {
-            DPRINTFN("%s()\n",__func__);
+            PRINTFN("%s()\n",__func__);
             Port::sendFunctional( pkt );
             delete pkt;
         }
@@ -40,22 +40,22 @@ class MemLink : public MemObject
         bool sendTiming(PacketPtr pkt)
         {
             if ( pkt->memInhibitAsserted() ) {
-                DPRINTFN("%s() memInhbitAssert()\n",__func__);
+                PRINTFN("%s() memInhbitAssert()\n",__func__);
                 delete pkt;
                 return true;
             }
             if ( ! m_deferred.empty() || ! Port::sendTiming( pkt ) ) {
-                DPRINTFN("%s() deffered\n",__func__);
+                PRINTFN("%s() deffered\n",__func__);
                 m_deferred.push_back( pkt );
             } else {
-                DPRINTFN("%s()\n",__func__);
+                PRINTFN("%s()\n",__func__);
             }
             return true;
         }
 
       protected:
         virtual bool recvTiming(PacketPtr pkt) {
-            DPRINTFN("%s()\n",__func__);
+            PRINTFN("%s()\n",__func__);
             return static_cast<MemLink*>(owner)->send( new MemEvent( pkt ) );
         }
 
@@ -63,7 +63,7 @@ class MemLink : public MemObject
 
         virtual void recvFunctional(PacketPtr pkt)
         {
-            DPRINTFN("%s()\n",__func__);
+            PRINTFN("%s()\n",__func__);
 
             if ( ! pkt->cmd.isWrite() ) { panic( "read is not supported" ); }
 
@@ -76,7 +76,7 @@ class MemLink : public MemObject
                 if ( ! Port::sendTiming( m_deferred.front() ) ) {
                     break;
                 }
-                DPRINTFN("%s()\n",__func__);
+                PRINTFN("%s()\n",__func__);
                 m_deferred.pop_front();
             }
         }
