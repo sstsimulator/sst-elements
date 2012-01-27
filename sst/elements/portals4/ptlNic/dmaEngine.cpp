@@ -4,18 +4,17 @@
 #include "dmaEngine.h"
 #include "dmaEvent.h"
 #include "nicMmu.h"
-
-#define PRINT_AT(...)
+#include "debug.h"
 
 DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_comp( comp ),
     m_nicMmu( NULL ),
-    m_virt2phys( false )
+    m_virt2phys( true )
 {
-    PRINT_AT(DmaEngine,"nid=%d\n",nid);
 
     m_nid = params.find_integer( "nid" );
 
+    PRINT_AT(DmaEngine,"nid=%d\n",m_nid);
     if ( ! params.find_string( "dma-virt2phys" ).compare("false") ) {
         fprintf( stderr, "don't translate virt 2 phys address\n");
         m_virt2phys = false;
