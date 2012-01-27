@@ -17,8 +17,6 @@ libportals4_la_SOURCES = \
     ptlNic/ptlNic.cpp \
     ptlNic/ptlNicVCInfo.cpp \
     ptlNic/ptlNic.h \
-    ptlNic/ptlNicMMIF.cpp \
-    ptlNic/ptlNicMMIF.h \
     ptlNic/ptlNicEvent.h
 
 libportals4_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
