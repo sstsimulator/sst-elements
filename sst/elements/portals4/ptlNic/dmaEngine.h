@@ -2,6 +2,7 @@
 #define _dmaEngine_h
 
 #include <sst/core/component.h>
+#include <sst/core/params.h>
 
 #include "callback.h"
 #include "ptlNicTypes.h"
@@ -12,7 +13,7 @@ class DmaEngine {
 
   public:
 
-    DmaEngine( SST::Component&, int nid ); 
+    DmaEngine( SST::Component&, SST::Params& ); 
     bool write( Addr, uint8_t*, size_t, CallbackBase* );
     bool read( Addr, uint8_t*, size_t, CallbackBase* );
     size_t  maxXfer( ) { return 0x2000; }
@@ -39,6 +40,7 @@ class DmaEngine {
     SST::Link*      m_link;
     int             m_nid;
     NicMmu         *m_nicMmu;
+    bool            m_virt2phys;
 };
 
 #endif

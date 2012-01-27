@@ -13,7 +13,7 @@ const char * PtlNic::m_cmdNames[] = CMD_NAMES;
 
 PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     RtrIF( id, params ),
-    m_dmaEngine( *this, params.find_integer( "nid") ),
+    m_dmaEngine( *this, params ),
     m_nid( params.find_integer("nid") ),
     m_vcInfoV( 2, *this )
 {

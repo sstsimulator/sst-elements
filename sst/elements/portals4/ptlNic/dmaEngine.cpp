@@ -7,13 +7,21 @@
 
 #define PRINT_AT(...)
 
-DmaEngine::DmaEngine( SST::Component& comp, int nid ) :
+DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_comp( comp ),
     m_nicMmu( NULL ),
-    m_nid( nid )
+    m_virt2phys( false )
 {
     PRINT_AT(DmaEngine,"nid=%d\n",nid);
-    assert( nid != -1 );
+
+    m_nid = params.find_integer( "nid" );
+
+    if ( ! params.find_string( "dma-virt2phys" ).compare("false") ) {
+        fprintf( stderr, "don't translate virt 2 phys address\n");
+        m_virt2phys = false;
+    }
+
+    assert( m_nid != -1 );
 
     m_link = comp.configureLink( "dma", "1ps",
            new SST::Event::Handler<DmaEngine>(this, &DmaEngine::eventHandler));
@@ -106,13 +114,13 @@ void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list )
 
         PRINT_AT( DmaEngine, "vaddr=%#lx length=%lu\n", vaddr, item.length );
 
-#if 0
-        bool ret = m_nicMmu->lookup( vaddr, item.addr );
-        assert( ret );
-#else
-        // Palacios converts the vaddr to physaddr in the DMA request
-        item.addr = vaddr;
-#endif
+        if ( m_virt2phys ) {
+            bool ret = m_nicMmu->lookup( vaddr, item.addr );
+            assert( ret );
+        } else {
+            // Palacios converts the vaddr to physaddr in the DMA request
+            item.addr = vaddr;
+        }
 
         list.push_back(item);
 
