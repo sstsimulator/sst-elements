@@ -51,9 +51,11 @@ int PalaciosIF::do_work(
 {
     uint64_t datasize;
  
+#if 0
     DBGX(x,"%s data_len=%d len=%d port=%d gpa=%p op_len=%d %d\n",
         getType(req->type), req->data_len, req->len, req->port,
         req->gpa, req->op_len, sizeof(*req));
+#endif
 
     switch (req->type) {
         case PALACIOS_HOST_DEV_HOST_REQUEST_READ_MEM:

@@ -59,7 +59,7 @@ PtlNicMMIF::~PtlNicMMIF()
 
 void PtlNicMMIF::writeFunc( unsigned long offset )
 {
-    DBGX(5,"offset=%#lx\n", offset );
+    //DBGX(5,"offset=%#lx\n", offset );
 
     if ( offset == offsetof( cmdQueue_t,tail) ) {
         DBGX(2,"new command head=%d tail=%d\n",

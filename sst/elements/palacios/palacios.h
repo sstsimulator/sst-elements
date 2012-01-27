@@ -145,7 +145,7 @@ void PalaciosIF::readMem( uint64_t gpa, void* data, int count )
     }
     memcpy( data, m_backing + offset, count );
     
-    printData(offset, data, count );
+    //printData(offset, data, count );
 }
 
 
@@ -160,7 +160,7 @@ void PalaciosIF::writeMem( uint64_t gpa, void* data, int count )
 
     memcpy( m_backing + offset, data, count );
     
-    printData(offset, data, count );
+    //printData(offset, data, count );
     
     (m_writeFunc)( offset );
 }
