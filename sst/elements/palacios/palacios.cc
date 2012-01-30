@@ -34,9 +34,12 @@ void* PalaciosIF::thread2( )
     
         if ( ret > 0 && FD_ISSET(m_fd,&readset) ) {
     
-            v3_user_host_dev_pull_request( m_fd, &req );
+            int ret;
+            ret = v3_user_host_dev_pull_request( m_fd, &req );
+            assert( ret != -1);
             do_work(req, &resp);
-            v3_user_host_dev_push_response( m_fd, resp );
+            ret = v3_user_host_dev_push_response( m_fd, resp );
+            assert( ret != -1);
             free(resp);
             free(req);
         }
@@ -82,7 +85,6 @@ int PalaciosIF::do_work(
             (*resp)->op_len = req->op_len;
         }
             break;
-
 
         default:
             DBGX(x,"Huh?  Unknown request %d\n", req->type);
