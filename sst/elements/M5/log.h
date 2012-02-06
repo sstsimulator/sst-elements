@@ -16,6 +16,7 @@
 #include <cstdarg>
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
 
 template < int ENABLE = 1 >
 class Log {
