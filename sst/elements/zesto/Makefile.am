@@ -86,7 +86,7 @@ libzesto_la_SOURCES = \
     simpleCache/simple_cache.h \
     simpleCache/cache_types.h \
     simpleCache/hash_table.h \
-    simpleCache/hash_table.c \
+    simpleCache/hash_table.cpp \
     \
     simpleMC/simple_mc.cc \
     simpleMC/simple_mc.h \

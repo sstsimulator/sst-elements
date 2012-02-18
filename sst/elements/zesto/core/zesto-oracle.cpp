@@ -135,7 +135,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <sys/io.h>
+//#include <sys/io.h>
 #include "simplescalar/misc.h"
 #include "simplescalar/thread.h"
 //#include "syscall.h"

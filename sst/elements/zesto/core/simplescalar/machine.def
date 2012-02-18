@@ -2152,6 +2152,7 @@ CONNECT(TOPLEV)
       DNA, DNA)
 
 /* GL: */
+#if 0
 #define IN_ALIb_IMPL              \
 {                  \
   byte_t port = IMM_B & 0xff; \
@@ -2214,6 +2215,7 @@ CONNECT(TOPLEV)
       DNA,
       DNA, DNA, DNA,
       DNA, DNA)
+#endif
 
 #define CALLN_Jv_IMPL              \
 {                  \
@@ -2281,6 +2283,7 @@ CONNECT(TOPLEV)
       DNA, DNA, DNA,
       DNA, DNA)
 
+#if 0
 /* GL: */
 #define IN_ALDX_IMPL              \
 {                  \
@@ -2344,6 +2347,7 @@ CONNECT(TOPLEV)
       DNA,
       DNA, DNA, DNA,
       DNA, DNA)
+#endif
 
   /* FIXME: TODO 0xf0: lock prefix */
 
@@ -11041,6 +11045,7 @@ CONNECT(FCHS_LINK)
       DNA, DNA, DNA,
       DNA, DNA)
 
+#if 0
 #define FXAM_IMPL              \
 {                  \
   efloat_t _src;              \
@@ -11067,7 +11072,7 @@ CONNECT(FCHS_LINK)
       DNA,
       DNA, DNA, DNA,
       DNA, DNA)
-
+#endif
 
 CONNECT(FLDCW_Mw_LINK)
 
@@ -17995,6 +18000,7 @@ CONNECT(FISTP_Mq_LINK)
       DFPR(URD), DNA, DNA,
       DNA, DNA)
 
+#if 0
 #define XAM_IMPL              \
 {                  \
   efloat_t _src;              \
@@ -18020,6 +18026,7 @@ CONNECT(FISTP_Mq_LINK)
       DCREG(MD_REG_FSW),
       DFPR(URD), DNA, DNA,
       DNA, DNA)
+#endif
 
 #define TWOXM1_IMPL              \
 {                  \
