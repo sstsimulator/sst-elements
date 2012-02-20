@@ -14,8 +14,8 @@
     <component name=system type=m5C.M5 rank=0 >
         <params>
             <configFile>n0-M5.xml</configFile>
-            <debug> 5 </debug>
-            <M5debug> Cache CachePort Bus BusAddrRanges </M5debug>
+            <debug> 0 </debug>
+            <M5debug> none </M5debug>
             <info>yes</info>
             <registerExit>yes</registerExit>
         </params>
@@ -25,8 +25,8 @@
     <component name=system type=m5C.M5 rank=1 >
         <params>
             <configFile>n1-M5.xml</configFile>
-            <debug> 5 </debug>
-            <M5debug> Cache CachePort Bus BusAddrRanges </M5debug>
+            <debug> 0 </debug>
+            <M5debug> none </M5debug>
             <info>yes</info>
             <registerExit>no</registerExit>
         </params>
