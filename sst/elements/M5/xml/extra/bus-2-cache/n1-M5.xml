@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+
+<sdl version="2.0"/>
+
+<variables>
+    <lat> 10ns </lat>
+</variables>
+
+<param_include>
+
+<cacheParams>
+
+    <trace_addr> 0 </trace_addr>
+    <max_miss_count> 0 </max_miss_count>
+    <prefetch_policy> none </prefetch_policy>
+    <addr_range.start> 0 </addr_range.start>
+    <addr_range.end> -1 </addr_range.end>
+    <latency> 1000 </latency>
+    <prefetch_latency> 10000 </prefetch_latency>
+    <forward_snoops> true </forward_snoops>
+    <prefetch_cache_check_push> true </prefetch_cache_check_push>
+    <prefetch_data_accesses_only> false </prefetch_data_accesses_only>
+    <prefetch_on_access> false </prefetch_on_access>
+    <prefetch_past_page> false </prefetch_past_page>
+    <prefetch_serial_squash> false </prefetch_serial_squash>
+    <prefetch_use_cpu_id> true </prefetch_use_cpu_id>
+    <prioritizeRequests> false </prioritizeRequests>
+    <two_queue> false </two_queue>
+    <assoc> 2 </assoc>
+    <block_size> 64 </block_size>
+    <hash_delay> 1 </hash_delay>
+    <mshrs> 10 </mshrs>
+    <prefetch_degree> 1  </prefetch_degree>
+    <prefetcher_size> 100 </prefetcher_size>
+    <subblock_size> 0 </subblock_size>
+    <tgts_per_mshr> 20 </tgts_per_mshr>
+    <write_buffers> 8 </write_buffers>
+    <size> 0x8000 </size>
+    <num_cpus> 1 </num_cpus>
+    <is_top_level> false </is_top_level>
+
+</cacheParams>
+
+<busParams>
+    <clock> 1Ghz </clock>
+    <responder_set> false </responder_set>
+    <block_size> 64 </block_size>
+    <bus_id> 0 </bus_id>
+    <header_cycles> 1 </header_cycles>
+    <width> 64 </width>
+</busParams>
+
+</param_include>
+
+<sst>
+
+    <component name=nid0.L2cache type=BaseCachePlus rank=3 >
+        <params include=cacheParams>
+            <size> 2097152 </size>
+            <assoc> 8 </assoc>
+            <latency> 10000 </latency>
+            <mshrs> 20 </mshrs>
+            <tgts_per_mshr> 12 </tgts_per_mshr>
+            <link.0.name> L2Bus-L2Cache </link.0.name>
+            <link.0.port> cpu_side </link.0.port>
+            <link.0.snoop> false </link.0.snoop>
+            <link.0.range.start> 0 </link.0.range.start>
+            <link.0.range.end>   0xffffffffffffffff </link.0.range.end>
+        </params>
+        <link name=nid0.L2cache-MemBus port=mem_side latency=$lat />
+    </component>
+
+    <component name=nid0.MemBus type=Bus rank=5 >
+        <params include=busParams>
+        </params>
+        <link name=nid0.L2cache-MemBus port=port latency=$lat />
+        <link name=nid0.mem-bus port=port latency=$lat />
+    </component>
+
+    <component name=nid0.physmem type=PhysicalMemory rank=6 >
+        <params>
+            <range.start> 0x00100000 </range.start>
+            <range.end>   0xffffffff </range.end>
+            <latency> 30ns </latency>
+            <latency_var> 0ns </latency_var>
+            <null> false </null>
+            <zero> false </zero>
+            <exe0.process.executable> ${M5_EXE} </exe0.process.executable>
+            <exe0.process.cmd.0> ${M5_EXE}  </exe0.process.cmd.0>
+            <exe0.process.env.0> RT_RANK=0  </exe0.process.env.0>
+            <exe0.process.env.1> RT_SIZE=1  </exe0.process.env.1>
+            <exe0.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.2>
+            <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>
+            <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>
+        </params>
+        <link name=nid0.mem-bus port=port latency=$lat />
+    </component>
+
+</sst>
