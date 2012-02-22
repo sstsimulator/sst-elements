@@ -36,7 +36,7 @@ class PtlNicMMIF : public SST::Component
         if ( m_threadRun ) return false; 
 
         int ret = m_palaciosIF->vm_pause();
-        assert( ret = 0 );
+        assert( ret == 0 );
 
         m_threadRun = true;
         ret = pthread_create( &m_thread, NULL, thread1, this );
@@ -52,7 +52,7 @@ class PtlNicMMIF : public SST::Component
         assert( ret == 0 );
     
         ret = m_palaciosIF->vm_continue();
-        assert( ret = 0 );
+        assert( ret == 0 );
         return true;
     }
 
