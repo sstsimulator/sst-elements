@@ -1,0 +1,118 @@
+// Copyright 2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+#ifndef _MACRO_PROCESSOR_H
+#define _MACRO_PROCESSOR_H
+
+#include "macro_address.h"
+#include "macro_fakeeventmanager.h"
+
+#include <sstmac/software/ami/environment.h>
+
+#include <sstmac/common/debug.h>
+
+#include <sstmac/common/sim_parameters.h>
+
+#include <sstmac/common/messages/sst_message.h>
+#include <sstmac/software/process/softwareid.h>
+
+#include <sstmac/common/ptr_type.h>
+
+#include <sstmac/hardware/node/node.h>
+
+
+
+
+//#include <sst/core/event.h>
+#include <sst/core/sst_types.h>
+#include        <sst/core/serialization/element.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/timeConverter.h>
+
+#include <queue>
+
+class macro_processor : public SST::Component, public eventmanager_interface
+{
+
+
+public:
+
+  sstmac::hw::node::ptr node_;
+  friend class macro_fakenic;
+  //sstcore_fakenic::ptr nic_;
+
+  static sstmac::debug dbg_;
+  static bool debug_init_;
+
+  virtual sstmac::timestamp
+  now();
+
+protected:
+
+  SST::Link* outgate;
+  SST::Link* self_proc_link_;
+
+  int coresPerProc;
+
+  macro_address::ptr myid_;
+
+  fakeeventmanager::ptr fem_;
+
+  bool
+  isMasterCore()
+  {
+    return (myid_->unique_id() == 0);
+  }
+
+public:
+
+  macro_processor(SST::ComponentId_t id, SST::Component::Params_t& params);
+  virtual
+  ~macro_processor()
+  {
+  }
+  int
+  Setup();
+  int
+  Finish()
+  {
+   
+    return 0;
+  }
+
+  virtual SST::Link*
+    get_self_event_link(){
+    return self_proc_link_;
+  }
+
+
+
+private:
+//  friend class boost::serialization::access;
+
+// macro_processor() :
+//   Component(-1) {} // for serialization only
+// macro_processor(const macro_processor&); // do not implement
+// void
+// operator=(const macro_processor&); // do not implement
+
+  void
+  handleEvent(SST::Event *ev);
+
+  void
+  handle_proc_event(SST::Event *ev);
+
+  //BOOST_SERIALIZATION_SPLIT_MEMBER()
+
+};
+
+#endif /* _SIMPLECOMPONENT_H */

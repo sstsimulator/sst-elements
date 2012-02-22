@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<sdl version=2.0/>
+<config>
+run-mode=both
+</config>
+<param_include>
+	<net_params>
+		<network_name>fullnetwork</network_name>
+		<network_latency>380ns</network_latency>
+		<network_bandwidth>524Mbps</network_bandwidth>
+		<network_size>10</network_size>
+		<topology_name>torus</topology_name>
+		<topology_geometry>10,1,1</topology_geometry>
+	</net_params>
+	<node_params>
+		<manager>simple</manager>
+		<node_name>simple</node_name>
+		<node_cores>2</node_cores>
+		<node_mem_latency>200ns</node_mem_latency>
+		<node_mem_bandwidth>500Mbps</node_mem_bandwidth>
+		<node_frequency>1e9</node_frequency>
+		<node_num>10</node_num>
+		<nic_name>simple</nic_name>
+		<logging_string>app,launch,mpicheck</logging_string>
+	</node_params>
+	<app_params>
+		<launch_name>instant</launch_name>
+		<launch_indexing>block</launch_indexing>
+		<launch_allocation>firstavailable</launch_allocation>
+		<launch_app1>MPI_testall</launch_app1>
+		<launch_app1_size>10</launch_app1_size>
+		<launch_app1_start>1200ms</launch_app1_start>
+	</app_params>
+</param_include>
+<sst>
+  <component name=c0 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port0 port=nic latency=100ns/>
+  </component>
+
+  <component name=c1 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port1 port=nic latency=100ns/>
+  </component>
+
+  <component name=c2 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port2 port=nic latency=100ns/>
+  </component>
+
+  <component name=c3 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port3 port=nic latency=100ns/>
+  </component>
+
+  <component name=c4 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port4 port=nic latency=100ns/>
+  </component>
+
+  <component name=c5 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port5 port=nic latency=100ns/>
+  </component>
+
+  <component name=c6 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port6 port=nic latency=100ns/>
+  </component>
+
+  <component name=c7 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port7 port=nic latency=100ns/>
+  </component>
+
+  <component name=c8 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port8 port=nic latency=100ns/>
+  </component>
+
+  <component name=c9 type=macro_component.macro_processor>
+      <params include=node_params,app_params>
+      </params>
+	<link name=port9 port=nic latency=100ns/>
+  </component>
+
+  <component name="network" type=macro_component.macro_network>
+      <params include=net_params> 
+      </params> 
+	<link name=port0 port=port0 latency=100ns /> 
+	<link name=port1 port=port1 latency=100ns /> 
+	<link name=port2 port=port2 latency=100ns /> 
+	<link name=port3 port=port3 latency=100ns /> 
+	<link name=port4 port=port4 latency=100ns /> 
+	<link name=port5 port=port5 latency=100ns /> 
+	<link name=port6 port=port6 latency=100ns /> 
+	<link name=port7 port=port7 latency=100ns /> 
+	<link name=port8 port=port8 latency=100ns /> 
+	<link name=port9 port=port9 latency=100ns /> 
+  </component> 
+</sst>

@@ -90,10 +90,6 @@ libsstdisksim_raid1_la_SOURCES = \
 	sstdisksim.cpp \
 	sstdisksim.h	
 
-libsstdisksim_raid0_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SSTDISKSIM_CPPFLAGS) \
-	-I$(top_srcdir)/elements/include
-libsstdisksim_raid0_la_LDFLAGS = -module -avoid-version $(SSTDISKSIM_LDFLAGS)
-libsstdisksim_raid0_la_LIBADD = $(SSTDISKSIM_LIB)
 
 #libsstdisksim_luascriptreader
 libsstdisksim_luascriptreader_la_SOURCES = \
