@@ -16,31 +16,35 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     Component( id ),
     m_writeFunc( this, &PtlNicMMIF::writeFunc ),
     m_barrierCallback( BarrierAction::Handler<PtlNicMMIF>(this,
-                        &PtlNicMMIF::barrierLeave) )
+                        &PtlNicMMIF::barrierLeave) ),
+    m_threadRun( false )
 {
     DBGX(1,"\n");
 
-
     registerExit();
+#if 1
     registerTimeBase( "1ns" );
 
-//    m_cmdLink = configureLink( "nic", "1ps",
     m_cmdLink = configureLink( "nic",
         new SST::Event::Handler<PtlNicMMIF>( 
                         this, &PtlNicMMIF::ptlCmdRespHandler ) );
     
     assert( m_cmdLink );
 
-//    m_dmaLink = configureLink( "dma", "1ps",
     m_dmaLink = configureLink( "dma",
         new SST::Event::Handler<PtlNicMMIF>( this, &PtlNicMMIF::dmaHandler ) );
 
     assert( m_dmaLink );
+#endif
+
+    m_self = configureSelfLink("self",
+            new SST::Event::Handler<PtlNicMMIF>(this,&PtlNicMMIF::selfEvent));
 
     m_devMemory.resize(4096);
     m_cmdQueue = (cmdQueue_t*) &m_devMemory[0];
     m_cmdQueue->head = m_cmdQueue->tail = 0;
     m_barrierOffset = 4096 - sizeof(int);
+    m_simulationCtrlCmd = 4096 - (sizeof(int) * 2);
     
     m_barrier.add( &m_barrierCallback );
     m_palaciosIF = new PalaciosIF( params.find_string("vm-dev"), 
@@ -50,11 +54,74 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
                                     0xfffff000,
                                     m_writeFunc );
     assert( m_palaciosIF );
+
+    int ret = m_palaciosIF->vm_launch();
+    assert( ret == 0 );
+
+#if 0
+    registerClock( "3khz",
+        new SST::Clock::Handler< PtlNicMMIF >( this, &PtlNicMMIF::clock ) );
+#endif
 }    
 
 PtlNicMMIF::~PtlNicMMIF()
 {
     DBGX(1,"\n");
+}
+
+void PtlNicMMIF::selfEvent( SST::Event* e )
+{
+    Event* event = static_cast<Event*>(e); 
+    DBGX(5,"cmd=%d\n",event->cmd);
+
+    switch ( event->cmd ) {
+    case VM_SIM_START:
+        if ( ! sim_mode_start() ) {
+            fprintf(stderr,"PtlNicMMIF::%s() already in simulation mode\n",
+                                                        __func__);
+        } 
+        break;
+
+    case VM_SIM_STOP:
+        if ( ! sim_mode_stop()  ) {
+            fprintf(stderr,"PtlNicMMIF::%s() not in simulation mode \n",
+                                                        __func__);
+        } 
+        break;
+
+    case VM_SIM_TERM:
+        sim_mode_stop();
+        m_palaciosIF->vm_stop();
+        delete m_palaciosIF;
+        unregisterExit();
+        break;
+
+    default:
+        fprintf(stderr,"PtlNicMMIF::%s() invalid cmd %d \n", __func__, 
+                                                event->cmd );
+        abort();
+    }
+    delete e;
+    DBGX(5,"return\n");
+}
+
+int PtlNicMMIF::Setup()
+{
+    return 0;
+}
+
+void* PtlNicMMIF::thread1( void* ptr )
+{
+    return ((PtlNicMMIF*)ptr)->thread2();
+}
+
+void* PtlNicMMIF::thread2( )
+{
+    while ( m_threadRun ) {
+        int ret =  m_palaciosIF->vm_run_msecs(1);
+        assert( ret == 0 );
+    }
+    return NULL;
 }
 
 void PtlNicMMIF::writeFunc( unsigned long offset )
@@ -71,6 +138,14 @@ void PtlNicMMIF::writeFunc( unsigned long offset )
     if ( offset == m_barrierOffset ) {
         DBGX(2,"barrier\n");
         m_barrier.enter();
+    }
+
+    if ( offset == m_simulationCtrlCmd ) {
+        uint32_t* tmp = (uint32_t*) &m_devMemory[m_simulationCtrlCmd];
+        Event* event = new Event;
+        event->cmd = *tmp;
+        m_self->Send( event );
+        *tmp = 0;
     }
 }    
 
@@ -99,13 +174,12 @@ void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )
 {
     DBGX(2,"\n");
     assert(0);
-#if 0
+#if 0 
     PtlNicRespEvent* event = static_cast<PtlNicRespEvent*>(e);
     DBGX(2,"retval %#x\n",event->retval);
-    //m_cmdQueue.queue[ m_cmdQueue.head ].retval = event->retval;
-    //m_cmdQueue.queue[ m_cmdQueue.head ].cmd = 0;
-    m_cmdQueue.head = ( m_cmdQueue.head + 1 ) % CMD_QUEUE_SIZE;
+    m_cmdQueue->queue[ m_cmdQueue->head ].retval = event->retval;
+    m_cmdQueue->queue[ m_cmdQueue->head ].cmd = 0;
+    m_cmdQueue->head = ( m_cmdQueue->head + 1 ) % CMD_QUEUE_SIZE;
     delete e;
 #endif
 }
-

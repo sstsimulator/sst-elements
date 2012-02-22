@@ -12,12 +12,18 @@
 #ifndef _PALACIOS_H
 #define _PALACIOS_H
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <string>
 #include <vector>
 #include <assert.h>
 #include <pthread.h>
+#include <signal.h>
 #include "v3_user_host_dev.h"
+#include "v3_ctrl.h"
 
 #include <stdint.h>
 #include <cxxabi.h>
@@ -63,17 +69,28 @@ public:
         m_backing( backing ),
         m_backingLen( backingLen ),
         m_backingAddr( addr ),
-        m_writeFunc( writeFunc )
+        m_writeFunc( writeFunc ),
+        m_vmName( vm )
     {
         int ret;
         DBGX(x,"this=%p\n", this ); 
-        DBGX(x,"vm=%s dev=%s\n", vm.c_str(), dev.c_str() );
+        DBGX(x,"vm=%s dev=%s\n", m_vmName.c_str(), dev.c_str() );
 
-        m_fd = v3_user_host_dev_rendezvous( vm.c_str(), dev.c_str() );
+        m_fd = v3_user_host_dev_rendezvous( m_vmName.c_str(), dev.c_str() );
         if ( m_fd == -1 ) {
             perror("v3_user_host_dev_rendezvous failed");
         }
         assert( m_fd != -1 );
+        
+        struct sigaction act;
+        act.sa_handler = sigHandler;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+        ret = sigaction( SIGUSR1, &act, NULL );
+        assert( ret == 0 );
+
+        ret = pthread_mutex_init( &m_mutex, NULL );
+        assert( ret == 0 );
        
         ret = pthread_create( &m_thread, NULL, thread1, this ); 
         assert( ret == 0 );
@@ -83,6 +100,9 @@ public:
         DBGX(x,"\n");
         
         m_threadRun = false;
+
+        ret = pthread_kill( m_thread, SIGUSR1 );
+        assert( ret == 0 );
 
         ret = pthread_join( m_thread, NULL );
         assert( ret == 0 );
@@ -94,8 +114,14 @@ public:
 
     inline uint64_t writeGuestMemVirt( uint64_t gva, void* data, int count );
     inline uint64_t readGuestMemVirt( uint64_t gva, void* data, int count );
+    inline int vm_launch();
+    inline int vm_stop();
+    inline int vm_pause();
+    inline int vm_continue();
+    inline int vm_run_msecs( int );
 
 private:
+    static void sigHandler( int );
     static void* thread1( void* );
     void* thread2();
     int do_work(
@@ -107,15 +133,111 @@ private:
     inline void readMem( uint64_t gpa, void* data, int count );
     inline void writeMem( uint64_t gpa, void* data, int count );
     inline uint32_t virt2phys( uint64_t );
+    inline void timeout();
 
     int                 m_fd;
     pthread_t           m_thread;
     bool                m_threadRun;
+    pthread_mutex_t     m_mutex;
     uint8_t*            m_backing;
     uint64_t            m_backingLen;
     uint64_t            m_backingAddr;
     WriteFunctorBase&   m_writeFunc;
+    std::string         m_vmName;
 };
+
+int PalaciosIF::vm_launch( )
+{
+    int fd,ret;
+    fd = open( m_vmName.c_str(), O_RDONLY);
+
+    if (fd == -1) {
+        printf("Error opening V3Vee VM device\n");
+        return -1;
+    }
+
+    pthread_mutex_lock( &m_mutex );
+    ret = ioctl(fd, V3_VM_LAUNCH, NULL);
+    pthread_mutex_unlock( &m_mutex );
+
+    close(fd);
+
+    return ret;
+}
+
+int PalaciosIF::vm_stop( )
+{
+    int fd,ret;
+    fd = open( m_vmName.c_str(), O_RDONLY);
+
+    if (fd == -1) {
+        printf("Error opening V3Vee VM device\n");
+        return -1;
+    }
+
+    pthread_mutex_lock( &m_mutex );
+    ret = ioctl(fd, V3_VM_STOP, NULL);
+    pthread_mutex_unlock( &m_mutex );
+
+    close(fd);
+
+    return ret;
+}
+
+int PalaciosIF::vm_pause( )
+{
+    int fd,ret;
+    fd = open( m_vmName.c_str(), O_RDONLY);
+
+    if (fd == -1) {
+        printf("Error opening V3Vee VM device\n");
+        return -1;
+    }
+
+    pthread_mutex_lock( &m_mutex );
+    ret = ioctl(fd, V3_VM_PAUSE, NULL);
+    pthread_mutex_unlock( &m_mutex );
+
+    close(fd);
+
+    return ret;
+}
+
+int PalaciosIF::vm_continue( )
+{
+    int fd,ret;
+    fd = open( m_vmName.c_str(), O_RDONLY);
+
+    if (fd == -1) {
+        printf("Error opening V3Vee VM device\n");
+        return -1;
+    }
+
+    pthread_mutex_lock( &m_mutex );
+    ret = ioctl(fd, V3_VM_CONTINUE, NULL);
+    pthread_mutex_unlock( &m_mutex );
+
+    close(fd);
+
+    return ret;
+}
+
+int PalaciosIF::vm_run_msecs( int msecs )
+{
+    int fd,ret;
+    fd = open( m_vmName.c_str(), O_RDONLY);
+
+    if (fd == -1) {
+        printf("Error opening V3Vee VM device\n");
+        return -1;
+    }
+
+    ret = ioctl(fd, V3_VM_SIMULATE, msecs);
+
+    close(fd);
+
+    return ret;
+}
 
 void PalaciosIF::printData( uint64_t offset, void* data, int count ) {
     switch (count) {

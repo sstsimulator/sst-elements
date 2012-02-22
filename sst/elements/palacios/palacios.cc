@@ -13,6 +13,10 @@
 
 #include <sys/select.h>
 
+void PalaciosIF::sigHandler(int)
+{
+}
+
 void* PalaciosIF::thread1( void* ptr )
 {
     return ((PalaciosIF*)ptr)->thread2();
@@ -34,6 +38,7 @@ void* PalaciosIF::thread2( )
     
         if ( ret > 0 && FD_ISSET(m_fd,&readset) ) {
     
+            pthread_mutex_lock( &m_mutex );
             int ret;
             ret = v3_user_host_dev_pull_request( m_fd, &req );
             assert( ret != -1);
@@ -42,6 +47,7 @@ void* PalaciosIF::thread2( )
             assert( ret != -1);
             free(resp);
             free(req);
+            pthread_mutex_unlock( &m_mutex );
         }
     }   
     DBGX(x,"leave\n");
@@ -54,7 +60,7 @@ int PalaciosIF::do_work(
 {
     uint64_t datasize;
  
-#if 0
+#if 0 
     DBGX(x,"%s data_len=%d len=%d port=%d gpa=%p op_len=%d %d\n",
         getType(req->type), req->data_len, req->len, req->port,
         req->gpa, req->op_len, sizeof(*req));
