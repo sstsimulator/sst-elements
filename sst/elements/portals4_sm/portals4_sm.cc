@@ -126,7 +126,7 @@ static void partition(ConfigGraph* graph, int ranks) {
 
 using namespace boost;
 
-static void generate(ConfigGraph* graph, string options) {
+static void generate(ConfigGraph* graph, string options, int ranks) {
     // Need to break up the string options into argc, argv type format
     char_separator<char> sep(" ");
     tokenizer< char_separator<char> > tok(options, sep);
