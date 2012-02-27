@@ -50,7 +50,6 @@ int main( int argc, char* argv[] )
 
     if ( cmd == 2 ) {
         usleep(10);
-        //sleep(1);
     }
 
     while ( *cmdPtr ) {

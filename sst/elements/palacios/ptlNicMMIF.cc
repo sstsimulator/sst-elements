@@ -12,11 +12,14 @@ BOOST_CLASS_EXPORT(PtlNicRespEvent);
 
 const char * PtlNicMMIF::m_cmdNames[] = CMD_NAMES;
 
+using namespace SST;
+
 PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     Component( id ),
     m_writeFunc( this, &PtlNicMMIF::writeFunc ),
     m_barrierCallback( BarrierAction::Handler<PtlNicMMIF>(this,
                         &PtlNicMMIF::barrierLeave) ),
+    m_fooTicks( 0 ),
     m_threadRun( false )
 {
     DBGX(1,"\n");
@@ -37,9 +40,6 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     assert( m_dmaLink );
 #endif
 
-    m_self = configureSelfLink("self",
-            new SST::Event::Handler<PtlNicMMIF>(this,&PtlNicMMIF::selfEvent));
-
     m_devMemory.resize(4096);
     m_cmdQueue = (cmdQueue_t*) &m_devMemory[0];
     m_cmdQueue->head = m_cmdQueue->tail = 0;
@@ -58,10 +58,32 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     int ret = m_palaciosIF->vm_launch();
     assert( ret == 0 );
 
-#if 0
-    registerClock( "3khz",
+    Cycle_t ticksPerSync = 0;
+    TimeConverter *minPartTC = Simulation::getSimulation()->getMinPartTC();
+    if ( minPartTC ) {
+        ticksPerSync = minPartTC->getFactor();
+    }
+
+    float clockFreqKhz = (1000000000000 / ticksPerSync) / 1000;
+
+    std::string strBuf;
+    strBuf.resize(32);
+    snprintf( &strBuf[0], 32, "%.0f khz", clockFreqKhz );
+
+    DBGX( 3, "SST sync factor %i, `%s`\n",
+                        ticksPerSync, strBuf.c_str() );
+
+    registerClock( strBuf,
         new SST::Clock::Handler< PtlNicMMIF >( this, &PtlNicMMIF::clock ) );
-#endif
+
+    m_fooTicksPer = (int) clockFreqKhz;  
+    DBGX(3,"m_fooTicksPer=%d\n", m_fooTicksPer );
+
+    ret = pthread_mutex_init( &m_threadMutex, NULL );
+    assert( ret == 0 ); 
+
+    ret = pthread_cond_init( &m_threadCond, NULL );
+    assert( ret == 0 ); 
 }    
 
 PtlNicMMIF::~PtlNicMMIF()
@@ -69,12 +91,32 @@ PtlNicMMIF::~PtlNicMMIF()
     DBGX(1,"\n");
 }
 
-void PtlNicMMIF::selfEvent( SST::Event* e )
-{
-    Event* event = static_cast<Event*>(e); 
-    DBGX(5,"cmd=%d\n",event->cmd);
+bool PtlNicMMIF::Status() {
+    return false;
+}
 
-    switch ( event->cmd ) {
+bool PtlNicMMIF::clock( Cycle_t cycle )
+{
+    checkForSimCtrlCmd();
+
+    if ( m_threadRun ) {
+        ++ m_fooTicks;
+        if ( m_fooTicks == m_fooTicksPer ) {
+    
+            pthread_mutex_lock( &m_threadMutex );
+            pthread_cond_signal( &m_threadCond );
+            pthread_mutex_unlock( &m_threadMutex );
+            m_fooTicks = 0;
+        }
+    }
+    return false;
+}
+
+void PtlNicMMIF::doSimCtrlCmd( int cmd )
+{
+    DBGX(5,"cmd=%d\n",cmd);
+
+    switch ( cmd ) {
     case VM_SIM_START:
         if ( ! sim_mode_start() ) {
             fprintf(stderr,"PtlNicMMIF::%s() already in simulation mode\n",
@@ -97,11 +139,9 @@ void PtlNicMMIF::selfEvent( SST::Event* e )
         break;
 
     default:
-        fprintf(stderr,"PtlNicMMIF::%s() invalid cmd %d \n", __func__, 
-                                                event->cmd );
+        fprintf(stderr,"PtlNicMMIF::%s() invalid cmd %d \n", __func__, cmd );
         abort();
     }
-    delete e;
     DBGX(5,"return\n");
 }
 
@@ -118,15 +158,21 @@ void* PtlNicMMIF::thread1( void* ptr )
 void* PtlNicMMIF::thread2( )
 {
     while ( m_threadRun ) {
+
+        pthread_mutex_lock( &m_threadMutex );
+        pthread_cond_wait( &m_threadCond, &m_threadMutex );
+
         int ret =  m_palaciosIF->vm_run_msecs(1);
         assert( ret == 0 );
+
+        pthread_mutex_unlock( &m_threadMutex );
     }
     return NULL;
 }
 
 void PtlNicMMIF::writeFunc( unsigned long offset )
 {
-    //DBGX(5,"offset=%#lx\n", offset );
+    DBGX(5,"offset=%#lx\n", offset );
 
     if ( offset == offsetof( cmdQueue_t,tail) ) {
         DBGX(2,"new command head=%d tail=%d\n",
@@ -139,12 +185,14 @@ void PtlNicMMIF::writeFunc( unsigned long offset )
         DBGX(2,"barrier\n");
         m_barrier.enter();
     }
+}
 
-    if ( offset == m_simulationCtrlCmd ) {
-        uint32_t* tmp = (uint32_t*) &m_devMemory[m_simulationCtrlCmd];
-        Event* event = new Event;
-        event->cmd = *tmp;
-        m_self->Send( event );
+void PtlNicMMIF::checkForSimCtrlCmd()
+{
+    uint32_t* tmp = (uint32_t*) &m_devMemory[m_simulationCtrlCmd];
+    if ( *tmp ) {
+        DBGX(2,"simulation cmd %d\n", *tmp );
+        doSimCtrlCmd( *tmp );
         *tmp = 0;
     }
 }    

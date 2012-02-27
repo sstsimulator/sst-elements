@@ -22,6 +22,7 @@ class PtlNicMMIF : public SST::Component
     PtlNicMMIF( SST::ComponentId_t, Params_t& );
     virtual ~PtlNicMMIF();
     int Setup();
+    virtual bool Status();
 
   private:
 
@@ -31,6 +32,13 @@ class PtlNicMMIF : public SST::Component
 
     void writeFunc( unsigned long );
     void barrierLeave();
+    bool clock( SST::Cycle_t );
+
+    void doSimCtrlCmd(int cmd);
+    void checkForSimCtrlCmd();
+
+    int  m_fooTicks;
+    int  m_fooTicksPer;
 
     bool sim_mode_start() {
         if ( m_threadRun ) return false; 
@@ -41,6 +49,8 @@ class PtlNicMMIF : public SST::Component
         m_threadRun = true;
         ret = pthread_create( &m_thread, NULL, thread1, this );
         assert( ret == 0 );
+
+        m_fooTicks = m_fooTicksPer - 1;
         return true;
     }
 
@@ -56,11 +66,8 @@ class PtlNicMMIF : public SST::Component
         return true;
     }
 
-    void selfEvent( SST::Event* );
-
     SST::Link*                  m_cmdLink;
     SST::Link*                  m_dmaLink;
-    SST::Link*                  m_self;
     PalaciosIF*                 m_palaciosIF;
     
     unsigned long               m_barrierOffset;
@@ -71,15 +78,16 @@ class PtlNicMMIF : public SST::Component
     WriteFunctor<PtlNicMMIF>    m_writeFunc;
 
     static const char          *m_cmdNames[];
-    BarrierAction               m_barrier;
 
+    BarrierAction               m_barrier;
     BarrierAction::Handler<PtlNicMMIF> m_barrierCallback;
 
-    pthread_t                   m_thread;
-    bool                        m_threadRun;
     static void* thread1( void* );
     void* thread2();
-
+    pthread_t                   m_thread;
+    bool                        m_threadRun;
+    pthread_cond_t              m_threadCond;
+    pthread_mutex_t             m_threadMutex;
 };
 
 #endif

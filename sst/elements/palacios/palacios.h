@@ -89,9 +89,6 @@ public:
         ret = sigaction( SIGUSR1, &act, NULL );
         assert( ret == 0 );
 
-        ret = pthread_mutex_init( &m_mutex, NULL );
-        assert( ret == 0 );
-       
         ret = pthread_create( &m_thread, NULL, thread1, this ); 
         assert( ret == 0 );
     }
@@ -138,7 +135,6 @@ private:
     int                 m_fd;
     pthread_t           m_thread;
     bool                m_threadRun;
-    pthread_mutex_t     m_mutex;
     uint8_t*            m_backing;
     uint64_t            m_backingLen;
     uint64_t            m_backingAddr;
@@ -156,9 +152,7 @@ int PalaciosIF::vm_launch( )
         return -1;
     }
 
-    pthread_mutex_lock( &m_mutex );
     ret = ioctl(fd, V3_VM_LAUNCH, NULL);
-    pthread_mutex_unlock( &m_mutex );
 
     close(fd);
 
@@ -175,9 +169,7 @@ int PalaciosIF::vm_stop( )
         return -1;
     }
 
-    pthread_mutex_lock( &m_mutex );
     ret = ioctl(fd, V3_VM_STOP, NULL);
-    pthread_mutex_unlock( &m_mutex );
 
     close(fd);
 
@@ -194,9 +186,9 @@ int PalaciosIF::vm_pause( )
         return -1;
     }
 
-    pthread_mutex_lock( &m_mutex );
+    DBGX(2,"\n");
     ret = ioctl(fd, V3_VM_PAUSE, NULL);
-    pthread_mutex_unlock( &m_mutex );
+    DBGX(2,"\n");
 
     close(fd);
 
@@ -213,9 +205,9 @@ int PalaciosIF::vm_continue( )
         return -1;
     }
 
-    pthread_mutex_lock( &m_mutex );
+    DBGX(2,"\n");
     ret = ioctl(fd, V3_VM_CONTINUE, NULL);
-    pthread_mutex_unlock( &m_mutex );
+    DBGX(2,"\n");
 
     close(fd);
 

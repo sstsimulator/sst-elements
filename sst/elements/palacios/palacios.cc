@@ -38,7 +38,6 @@ void* PalaciosIF::thread2( )
     
         if ( ret > 0 && FD_ISSET(m_fd,&readset) ) {
     
-            pthread_mutex_lock( &m_mutex );
             int ret;
             ret = v3_user_host_dev_pull_request( m_fd, &req );
             assert( ret != -1);
@@ -47,7 +46,6 @@ void* PalaciosIF::thread2( )
             assert( ret != -1);
             free(resp);
             free(req);
-            pthread_mutex_unlock( &m_mutex );
         }
     }   
     DBGX(x,"leave\n");
