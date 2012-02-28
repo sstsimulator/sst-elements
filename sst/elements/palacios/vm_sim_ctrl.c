@@ -45,12 +45,7 @@ int main( int argc, char* argv[] )
     // sizeof(*cmdPtr) * 2  because barrier uses the top int
     unsigned int* cmdPtr = (devPtr + 4096) - ( sizeof(*cmdPtr) * 2 );
 
-
     *cmdPtr = cmd;
-
-    if ( cmd == 2 ) {
-        usleep(10);
-    }
 
     while ( *cmdPtr ) {
         sched_yield();

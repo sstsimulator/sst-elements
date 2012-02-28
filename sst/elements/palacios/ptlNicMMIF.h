@@ -13,12 +13,6 @@
 class PtlNicMMIF : public SST::Component
 {
   public:
-    class Event : public SST::Event {
-        public:
-            int cmd;
-    };
-
-  public:
     PtlNicMMIF( SST::ComponentId_t, Params_t& );
     virtual ~PtlNicMMIF();
     int Setup();
@@ -65,6 +59,8 @@ class PtlNicMMIF : public SST::Component
         assert( ret == 0 );
         return true;
     }
+    void ptlCmd();
+    void barrierCmd();
 
     SST::Link*                  m_cmdLink;
     SST::Link*                  m_dmaLink;
@@ -75,7 +71,6 @@ class PtlNicMMIF : public SST::Component
     
     std::vector<uint8_t>        m_devMemory;
     cmdQueue_t*                 m_cmdQueue;
-    WriteFunctor<PtlNicMMIF>    m_writeFunc;
 
     static const char          *m_cmdNames[];
 

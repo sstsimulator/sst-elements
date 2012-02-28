@@ -16,7 +16,6 @@ using namespace SST;
 
 PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     Component( id ),
-    m_writeFunc( this, &PtlNicMMIF::writeFunc ),
     m_barrierCallback( BarrierAction::Handler<PtlNicMMIF>(this,
                         &PtlNicMMIF::barrierLeave) ),
     m_fooTicks( 0 ),
@@ -51,8 +50,7 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
                                     params.find_string("dev" ), 
                                     &m_devMemory[0],
                                     m_devMemory.size(),
-                                    0xfffff000,
-                                    m_writeFunc );
+                                    0xfffff000 );
     assert( m_palaciosIF );
 
     int ret = m_palaciosIF->vm_launch();
@@ -92,12 +90,15 @@ PtlNicMMIF::~PtlNicMMIF()
 }
 
 bool PtlNicMMIF::Status() {
+    
     return false;
 }
 
 bool PtlNicMMIF::clock( Cycle_t cycle )
 {
     checkForSimCtrlCmd();
+    ptlCmd();
+    barrierCmd();
 
     if ( m_threadRun ) {
         ++ m_fooTicks;
@@ -170,21 +171,15 @@ void* PtlNicMMIF::thread2( )
     return NULL;
 }
 
-void PtlNicMMIF::writeFunc( unsigned long offset )
+void PtlNicMMIF::ptlCmd()
 {
-    DBGX(5,"offset=%#lx\n", offset );
-
-    if ( offset == offsetof( cmdQueue_t,tail) ) {
+    if ( m_cmdQueue->head != m_cmdQueue->tail ) {
         DBGX(2,"new command head=%d tail=%d\n",
                                 m_cmdQueue->head, m_cmdQueue->tail );
         m_cmdLink->Send( 
                     new PtlNicEvent( &m_cmdQueue->queue[ m_cmdQueue->head ] ) );  
         m_cmdQueue->head = ( m_cmdQueue->head + 1 ) % CMD_QUEUE_SIZE;
     } 
-    if ( offset == m_barrierOffset ) {
-        DBGX(2,"barrier\n");
-        m_barrier.enter();
-    }
 }
 
 void PtlNicMMIF::checkForSimCtrlCmd()
@@ -196,6 +191,16 @@ void PtlNicMMIF::checkForSimCtrlCmd()
         *tmp = 0;
     }
 }    
+
+void PtlNicMMIF::barrierCmd()
+{
+    uint32_t* tmp = (uint32_t*) &m_devMemory[m_barrierOffset];   
+    if ( *tmp == 1 ) {
+        DBGX(2,"\n");
+        m_barrier.enter();
+        ++(*tmp);
+    }
+}
 
 void PtlNicMMIF::barrierLeave()
 {

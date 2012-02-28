@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <cxxabi.h>
 
+#if 0
 #define DBGX( x, fmt, args... ) \
 {\
      char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
@@ -37,39 +38,22 @@
     if ( realname ) free(realname);\
 }
 
-class WriteFunctorBase {
-public:
-    virtual void operator()( unsigned long ) = 0;
-};
+#else
 
-template <class XX> class WriteFunctor : public WriteFunctorBase
-{
-public:
-    WriteFunctor( XX* pt2object, void(XX::*fpt)( unsigned long ) ) {
-        m_pt2object = pt2object; 
-        m_fpt = fpt;
-    }
-    virtual void operator()(unsigned long addr ) {
-        (*m_pt2object.*m_fpt)(addr);
-    } 
+#define DBGX( x, fmt, args... )
 
-private:
-    void (XX::*m_fpt)(unsigned long);
-    XX* m_pt2object;
-};
+#endif
 
 class PalaciosIF {
 public:
     PalaciosIF( std::string vm, std::string dev, 
                                 uint8_t* backing,
                                 uint64_t backingLen,
-                                uint64_t addr,
-                                WriteFunctorBase& writeFunc ) :
+                                uint64_t addr ) :
         m_threadRun( true ),
         m_backing( backing ),
         m_backingLen( backingLen ),
         m_backingAddr( addr ),
-        m_writeFunc( writeFunc ),
         m_vmName( vm )
     {
         int ret;
@@ -138,7 +122,6 @@ private:
     uint8_t*            m_backing;
     uint64_t            m_backingLen;
     uint64_t            m_backingAddr;
-    WriteFunctorBase&   m_writeFunc;
     std::string         m_vmName;
 };
 
@@ -275,8 +258,6 @@ void PalaciosIF::writeMem( uint64_t gpa, void* data, int count )
     memcpy( m_backing + offset, data, count );
     
     //printData(offset, data, count );
-    
-    (m_writeFunc)( offset );
 }
 
 uint32_t PalaciosIF::virt2phys( uint64_t gva ) {
@@ -313,6 +294,5 @@ char* PalaciosIF::getType( int type )
     }    
     return "???? type";
 }
-
 
 #endif /* _PALACIOS_H */
