@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #if defined(USE_M5) 
 #include <m5_syscall.h>
@@ -49,9 +50,10 @@ class PtlIF {
 
         int ret = mlockall( MCL_CURRENT | MCL_FUTURE );
         assert ( ret == 0 );
-        if ((fd=open("node", O_RDWR|O_SYNC))<0)
+        #define P4_DEV "/dev/p4"
+        if ((fd=open( P4_DEV, O_RDWR|O_SYNC))<0)
         {
-            perror("open");
+            fprintf(stderr,"open %s failed %s",P4_DEV,strerror(errno));
             exit(-1);
         }
 

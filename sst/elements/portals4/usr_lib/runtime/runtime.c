@@ -15,7 +15,7 @@ static int* _barrierPtr;
 static __attribute__ ((constructor)) void init(void)
 {
     int fd;
-    if ((fd=open("node", O_RDWR|O_SYNC))<0)
+    if ((fd=open("/dev/p4", O_RDWR|O_SYNC))<0)
     {   
         perror("open");
         exit(-1);
