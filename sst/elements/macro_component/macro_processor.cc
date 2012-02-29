@@ -30,7 +30,7 @@
 #include "macro_fakenic.h"
 
 #include "sst/core/simulation.h"
-#include "sst/core/timelord.h"
+#include "sst/core/timeLord.h"
 
 #include <sstmac/common/basicstringtokenizer.h>
 

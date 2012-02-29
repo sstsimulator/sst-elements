@@ -21,7 +21,7 @@
 #include "macro_parameters.h"
 
 #include "sst/core/simulation.h"
-#include "sst/core/timelord.h"
+#include "sst/core/timeLord.h"
 
 using namespace SST;
 using namespace std;
