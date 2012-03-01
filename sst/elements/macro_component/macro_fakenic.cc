@@ -33,10 +33,10 @@ macro_fakenic::macro_fakenic(const sstmac::hw::node::ptr &parent, macro_processo
 	if (!spy_)
 	{
 		spy_ = sstmac::stat_spyplot::construct("<stats> spyplot",
-									   "network_spyplot.csv", nodenum);
+									   "network_spyplot.csv");
 		register_stat(spy_);
 		
-		spy_bytes_ = sstmac::stat_spyplot::construct("<stats> spyplot", "network_spyplot_bytes.csv", nodenum);
+		spy_bytes_ = sstmac::stat_spyplot::construct("<stats> spyplot", "network_spyplot_bytes.csv");
 		register_stat(spy_bytes_);
 	}
 }

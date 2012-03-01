@@ -23,6 +23,7 @@
 #include <sstmac/hardware/node/simplenode.h>
 #include <sstmac/common/driver_util.h>
 #include <sstmac/software/services/launch/instantlaunch.h>
+#include <sstmac/software/libraries/mpi/mpi_queue/mpiqueue.h>
 
 #include "sstMessageEvent.h"
 #include "macro_network.h"
@@ -126,6 +127,10 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
       sstmac::hw::interconnect::ptr(), nodenum);
   node_->set_nic(nic);
   nic->set_eventmanager(fem_);
+	
+	/** In case we have an mpi app, set the event manager so mpi statistics can
+	 be collected */
+	mpiqueue::set_eventmanager(fem_);
 
   registerTimeBase("1 ps", true);
 	
