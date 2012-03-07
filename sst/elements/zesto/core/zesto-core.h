@@ -190,7 +190,7 @@ class core_t : public SST::Component
     struct uop_array_t * next; /* 4 bytes */
     int padding0; /* 4 bytes */
     int padding1; /* 4 bytes  - want uop array to start aligned to 16 bytes */
-    struct uop_t uop[0]; /* we calloc different sized arrays and use this as the
+    struct uop_t uop[1]; /* we calloc different sized arrays and use this as the
                             base for the array (see the original simplescalar
                             cache data block structure) */
   };

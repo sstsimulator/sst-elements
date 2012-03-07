@@ -66,7 +66,7 @@ libzesto_la_SOURCES = \
 	core/zesto-fetch.h \
 	core/zesto-memdep.cpp \
 	core/zesto-memdep.h \
-	core/zesto-opts.c \
+	core/zesto-opts.cpp \
 	core/zesto-opts.h \
 	core/zesto-oracle.cpp \
 	core/zesto-oracle.h \
