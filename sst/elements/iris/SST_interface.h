@@ -45,6 +45,10 @@ class irisNPkt
         int link;
         uint64_t sending_time;
 
+	// adding for macsim.. need to add to serialize if reqd
+	void* req;   
+	uint64_t address;
+
         uint32_t payload[HDR_SIZE+PKT_SIZE];
 
     private:

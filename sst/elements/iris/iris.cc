@@ -16,6 +16,7 @@
 
 #include <sst/core/element.h>
 #include "router.h"
+#include "ninterface.h"
 
 static SST::Component* 
 create_router(SST::ComponentId_t id, 
@@ -24,11 +25,23 @@ create_router(SST::ComponentId_t id,
     return new Router( id, params );
 }
 
+static SST::Component* 
+create_ninterface(SST::ComponentId_t id, 
+                SST::Component::Params_t& params)
+{
+    return new NInterface( id, params );
+}
+
 static const SST::ElementInfoComponent components[] = {
     { "router",
       "Iris Router",
       NULL,
       create_router,
+    },
+    { "ninterface",
+      "Interface for iris terminal and router",
+      NULL,
+      create_ninterface,
     },
     { NULL, NULL, NULL, NULL }
 };

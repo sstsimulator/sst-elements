@@ -23,7 +23,12 @@ libiris_la_SOURCES = \
 	genericVca.h \
 	router.cc \
 	router.h \
-	router_params.h 
+	router_params.h \
+	irisTerminal.h \
+	ninterface.h \
+	ninterface.cc \
+	macsim_terminal.h \
+	macsim_terminal.cc
 
 libiris_la_LDFLAGS = -module -avoid-version
 

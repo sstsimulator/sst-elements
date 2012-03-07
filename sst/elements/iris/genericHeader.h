@@ -71,6 +71,7 @@ enum ports_t{
 typedef class SST::Component DES_Component;
 typedef class SST::Link DES_Link;
 typedef class SST::Event DES_Event;
+typedef class SST::Clock DES_Clock;
 
 /* Timing helpers */
 #define _DES_SEND SST::Send
@@ -79,5 +80,10 @@ typedef class SST::Event DES_Event;
 
 /* Name ports if its easy to track */
 #define EJECT_PORT 0
+
+#define iris_panic(...) printf("panic"); iris_warn(__VA_ARGS__); exit(1)
+
+#define iris_warn(...) \
+  std::cerr << "warn"<< __FUNCTION__ <<  __FILE__<< __LINE__<< __VA_ARGS__ 
 
 #endif   /* ----- #ifndef _GENERICHEADER_H_INC  ----- */

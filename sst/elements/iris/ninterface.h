@@ -20,6 +20,7 @@
 #define  _NINTERFACE_H_INC
 
 #include	"router.h"
+#include        "irisTerminal.h"
 
 /* Local arbiter for ninterface */
 class SimpleArbiter
@@ -55,21 +56,22 @@ class NInterface : public DES_Component
         NInterface (SST::ComponentId_t id, Params_t& params);
         ~NInterface ();  
 
+        //link to macsim object
+        IrisTerminal* terminal;
+
         /* Event handlers from external components. Prioritize such that all
          * these pkts are recieved before the clock runs so the new pkt state
          * can be updated
          * */
-        void handle_link_arrival (DES_Event* e, int dir);
+        void handle_router_link_arrival (DES_Event* e, int port_id);
+        void handle_terminal_link_arrival (DES_Event* e, int port_id);
 
         /* Clocked events */
-        bool tock(SST::Cycle_t c);
+        bool tock(SST::Cycle_t now);
 
-        /*  Generic Helper functions */
-        void handle_issue_pkt_event( int inputid, uint64_t data); 
-        void handle_new_packet_event( int port, NetworkPacket* data); 
-
-        void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
         void resize( void ); // Reconfigure the parameters for the router
+        const char* print_stats ( void ) const;
+        void reset_stats ( void );
 
         int Finish()
         {
@@ -83,23 +85,25 @@ class NInterface : public DES_Component
         int16_t node_id; /*  NOTE: node_id is not unique to a component. */
 
         // sub components
-        std::vector<uint16_t > downstream_credits;
+        std::vector<uint16_t > router_credits;
+        std::vector<bool> router_pktcomplete;
+        std::vector<uint64_t > router_inPkt_time;
+
         std::vector<bool> terminal_credits;
-        std::vector<uint16_t > terminal_outbuffer_flitindex;
-        std::vector<uint16_t > terminal_inbuffer_flitindex;
-        std::vector<bool> router_outbuffer_pktcomplete;
+        std::vector<bool> terminal_pktcomplete;
+        std::vector<uint64_t > terminal_inPkt_time;
+
+        GenericBuffer* router_inBuffer;
+        GenericBuffer* terminal_inBuffer;
 
         DES_Link* router_link;
         DES_Link* terminal_link;
 
+        int no_vcs;
+        int buffer_size;
+        int credits;
+        int last_inpkt_winner;
         SimpleArbiter arbiter;
-        
-        //link to macsim object
-//        macsim_c* m_simBase;
-
-        bool currently_clocking;
-        SST::Clock::Handler<NInterface>* clock_handler;
-
 
 }; /* -----  end of class NInterface  ----- */
 

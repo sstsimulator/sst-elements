@@ -31,6 +31,7 @@ class GenericBuffer
 {
     public:
         GenericBuffer ();
+	 GenericBuffer (int vcs);
         ~GenericBuffer(); 
 
         void push( irisNPkt*);
@@ -39,7 +40,12 @@ class GenericBuffer
         inline uint16_t get_occupancy ( uint16_t channel ) const
         {
             return buffers[channel].size();
-        }		/* -----  end of method GenericBuffer::get_occupancy  ----- */
+        }
+
+	inline uint16_t get_pktLength ( uint16_t channel ) const
+        {
+	  return buffers[channel].front()->sizeInFlits;
+        }
 
         bool is_buffer_full( uint16_t ) const;
         bool is_buffer_empty( uint16_t ) const;

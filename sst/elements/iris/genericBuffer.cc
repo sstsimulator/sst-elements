@@ -14,6 +14,11 @@ GenericBuffer::GenericBuffer ()
     buffers.resize(r_param->vcs);
 }  /* -----  end of method GenericBuffer::GenericBuffer  (constructor)  ----- */
 
+GenericBuffer::GenericBuffer (int vcs)
+{
+    buffers.resize(vcs);
+}  /* -----  end of method GenericBuffer::GenericBuffer  (constructor)  ----- */
+
 GenericBuffer::~GenericBuffer ()
 {
 }		/* -----  end of method GenericBuffer::~GenericBuffer  ----- */
