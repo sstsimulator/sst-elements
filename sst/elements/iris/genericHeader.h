@@ -69,6 +69,7 @@ enum ports_t{
 
 /*  Make swaping DES kernels cleaner */
 typedef class SST::Component DES_Component;
+typedef class SST::Link DES_Link;
 typedef class SST::Event DES_Event;
 
 /* Timing helpers */
