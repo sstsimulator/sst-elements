@@ -13,17 +13,17 @@
 #include "ptl_internal_netIf.h"
 #include "ptl_internal_debug.h"
 
-const ptl_interface_t  PTL_IFACE_DEFAULT = "PtlNic";
-
-const ptl_handle_any_t PTL_INVALID_HANDLE = { UINT_MAX };
-
 #define NUM_IFACE ( 1 << HANDLE_IFACE_BITS )
 
 NetIFEntry ifTable[ NUM_IFACE ];
 
+extern int ptlNic;
+
+
 void ptl_internal_register_netIF( const char* const name, struct NetIF* netIF )
 {
     int i;
+    int xxx = ptlNic;
     assert( strlen( name ) < NET_IF_NAME_LEN );
 
     //PTL_DBG("name=`%s`\n",name);
@@ -56,11 +56,13 @@ static int lookup_iface( const char* const name )
 int PtlNIInit(ptl_interface_t   ifaceName,
               unsigned int      options,
               ptl_pid_t         pid,
-              ptl_ni_limits_t   *desired,
+              const ptl_ni_limits_t   *desired,
               ptl_ni_limits_t   *actual,
+#if 0
               ptl_size_t        map_size,
               ptl_process_t     *desired_mapping,
               ptl_process_t     *actual_mapping,
+#endif
               ptl_handle_ni_t   *ni_handle)
 {
     ptl_internal_handle_converter_t ni = { .s.selector = HANDLE_NI_CODE };
@@ -108,8 +110,8 @@ int PtlNIInit(ptl_interface_t   ifaceName,
     *ni_handle = ni.a; 
     int retval = iface->ptlAPI[ni.s.ni]->PtlNIInit( 
                         iface->ptlAPI[ni.s.ni],
-                        options, pid, desired, actual, 
-                        map_size, desired_mapping, actual_mapping ); 
+                        options, pid, desired, actual ); 
+                        //map_size, desired_mapping, actual_mapping ); 
     if ( retval < 0 ) return -retval;
 
     return PTL_OK;

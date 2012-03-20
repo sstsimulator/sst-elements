@@ -21,6 +21,7 @@ LIB= libportals.a
 
 CPPFLAGS += -Wall
 CPPFLAGS += -I../../ptlNic -Iinclude
+#CPPFLAGS += -DDEBUG
 
 ${LIB}: ${OBJS}
 	${AR} rcs $@ ${OBJS} 

@@ -37,10 +37,7 @@ class PtlAPI {
               unsigned int      options,
               ptl_pid_t         pid,
               ptl_ni_limits_t   *desired,
-              ptl_ni_limits_t   *actual,
-              ptl_size_t        map_size,
-              ptl_process_t     *desired_mapping,
-              ptl_process_t     *actual_mapping
+              ptl_ni_limits_t   *actual
     )
     {
         PTL_DBG2("requested pid %d\n",pid);
@@ -49,7 +46,7 @@ class PtlAPI {
         assert( pid == PTL_PID_ANY );
         // this has to match what's in cnos_get_nidpid_map
         m_id.phys.pid = getpid(); 
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot(PtlNIInit);
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot(PtlNIInitCmd );
         cmd.niInit.pid     = m_id.phys.pid; 
         cmd.niInit.options = options;
         m_ptlIF.commitCmd();
@@ -64,7 +61,7 @@ class PtlAPI {
     int ptlNIFini( )
     {
         PTL_DBG2("\n");
-        m_ptlIF.getCmdSlot( PtlNIFini);
+        m_ptlIF.getCmdSlot( PtlNIFiniCmd );
         m_ptlIF.commitCmd();
         return PTL_OK;
     }
@@ -74,7 +71,7 @@ class PtlAPI {
                  ptl_pt_index_t  pt_index_req )
     {                                     
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPTAlloc);
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPTAllocCmd );
         cmd.ptAlloc.options   = options;
         cmd.ptAlloc.eq_handle = eq_handle;
         cmd.ptAlloc.pt_index  = pt_index_req;
@@ -85,7 +82,7 @@ class PtlAPI {
     int ptlPTFree( ptl_pt_index_t pt_index ) 
     {
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPTFree);
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPTFreeCmd );
         cmd.ptAlloc.pt_index = pt_index;
         m_ptlIF.commitCmd();
         return PTL_OK;
@@ -98,7 +95,7 @@ class PtlAPI {
         m_freeMDHandles.pop_front();
 
         PTL_DBG2("handle=%d\n",handle);
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMDBind );
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMDBindCmd );
         cmd.mdBind.handle = handle;
         cmd.mdBind.md = *md;
         m_ptlIF.commitCmd();
@@ -109,7 +106,7 @@ class PtlAPI {
     {
         PTL_DBG2("\n");
 
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMDRelease );
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMDReleaseCmd );
         cmd.mdRelease.handle = md_handle;
         m_ptlIF.commitCmd();
 
@@ -126,11 +123,13 @@ class PtlAPI {
         if( m_freeMEHandles.empty() ) return -PTL_FAIL; 
         int handle = m_freeMEHandles.front();
         m_freeMEHandles.pop_front();
+        PTL_DBG2("%#lx\n",0xdeadbeefL);
 
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMEAppend );
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMEAppendCmd );
         cmd.meAppend.handle   = handle;
         cmd.meAppend.pt_index = pt_index;
         cmd.meAppend.me       = *me;
+        PTL_DBG2("%#lx\n",(unsigned long) me->match_bits);
         cmd.meAppend.list     = ptl_list;
         cmd.meAppend.user_ptr = user_ptr;
         m_ptlIF.commitCmd();
@@ -140,7 +139,7 @@ class PtlAPI {
     int ptlMEUnlink(ptl_handle_me_t me_handle)
     {
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMEUnlink );
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlMEUnlinkCmd );
         cmd.meUnlink.handle = me_handle;
         m_ptlIF.commitCmd();
         m_freeMEHandles.push_back(me_handle);
@@ -168,7 +167,7 @@ class PtlAPI {
         event->success = event->failure = 0;
         m_ctM[handle] = event;
 
-        cmdUnion_t& cmd  = m_ptlIF.getCmdSlot( PtlCTAlloc );
+        cmdUnion_t& cmd  = m_ptlIF.getCmdSlot( PtlCTAllocCmd );
 
         cmd.ctAlloc.handle = handle;
         cmd.ctAlloc.addr   = event;
@@ -181,7 +180,7 @@ class PtlAPI {
     int ptlCTFree( ptl_handle_ct_t ct )
     {
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlCTFree ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlCTFreeCmd ); 
 
         cmd.ctFree.handle = ct;
 
@@ -225,7 +224,7 @@ class PtlAPI {
 
         PTL_DBG2("%p\n",&eventQ->eventV[0]);
 
-        cmdUnion_t& cmd  = m_ptlIF.getCmdSlot( PtlEQAlloc );
+        cmdUnion_t& cmd  = m_ptlIF.getCmdSlot( PtlEQAllocCmd );
 
         cmd.eqAlloc.handle = handle;
         cmd.eqAlloc.size   = size;
@@ -241,7 +240,7 @@ class PtlAPI {
     int ptlEQFree( ptl_handle_eq_t eq_handle )
     {
         PTL_DBG2("eq_handle=%d\n",eq_handle );
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlEQFree ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlEQFreeCmd ); 
 
         cmd.eqFree.handle = eq_handle;
 
@@ -276,10 +275,12 @@ class PtlAPI {
 
         checkMeUnlinked();
 
+#if 0
         PTL_DBG2( "nid=%d eq_handle=%d want count=%li cur=%li %p\n", 
                     m_id.phys.nid,
                     eq_handle, foo->count, foo->eventV[ pos ].count1, 
                                 &foo->eventV[pos] );
+#endif
 
         if ( foo->eventV[ pos ].count1 < foo->count ) return -PTL_EQ_EMPTY;
         while ( foo->eventV[ pos ].count2 < foo->count );
@@ -308,7 +309,7 @@ class PtlAPI {
     {
         PTL_DBG2("\n");
 
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPut ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlPutCmd ); 
 
         cmd.ptlPut.md_handle     = md_handle;
         cmd.ptlPut.local_offset  = local_offset;
@@ -335,7 +336,7 @@ class PtlAPI {
            void *           user_ptr)
     {
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlGet ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlGetCmd ); 
 
         cmd.ptlGet.md_handle     = md_handle;
         cmd.ptlGet.local_offset  = local_offset;
@@ -362,7 +363,7 @@ class PtlAPI {
             ptl_size_t      threshold )
     {
         PTL_DBG2("\n");
-        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlTrigGet ); 
+        cmdUnion_t& cmd = m_ptlIF.getCmdSlot( PtlTrigGetCmd ); 
 
         cmd.ptlTrigGet.md_handle     = md_handle;
         cmd.ptlTrigGet.local_offset  = local_offset;

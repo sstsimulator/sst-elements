@@ -16,14 +16,10 @@ static int ptlNIInit(
                 unsigned int      options,
                 ptl_pid_t         pid,
                 ptl_ni_limits_t   *desired,
-                ptl_ni_limits_t   *actual,
-                ptl_size_t        map_size,
-                ptl_process_t     *desired_mapping,
-                ptl_process_t     *actual_mapping
+                ptl_ni_limits_t   *actual
     )
 {
-    return ((PtlAPI*) obj->data)->ptlNIInit( options, pid, desired, actual,
-                        map_size, desired_mapping, actual_mapping );
+    return ((PtlAPI*) obj->data)->ptlNIInit( options, pid, desired, actual );
 }
 
 

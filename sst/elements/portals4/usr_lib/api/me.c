@@ -51,3 +51,13 @@ int PtlMEUnlink(ptl_handle_me_t me_handle)
 
     return PTL_OK;
 }
+
+int PtlMESearch(ptl_handle_ni_t ni_handle,
+                ptl_pt_index_t  pt_index,
+                const ptl_me_t       *me,
+                ptl_search_op_t ptl_search_op,
+                void           *user_ptr)
+{
+    return PTL_FAIL;
+}
+

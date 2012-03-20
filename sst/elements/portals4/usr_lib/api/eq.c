@@ -4,8 +4,6 @@
 #include <portals4.h>
 #include <ptl_internal_netIf.h>
 
-const ptl_handle_eq_t PTL_EQ_NONE = (( 1 << 24 ) - 1); 
-
 int PtlEQAlloc(ptl_handle_ni_t      ni_handle,
                ptl_size_t           count,
                ptl_handle_eq_t *    eq_handle)
@@ -77,11 +75,11 @@ int PtlEQWait(ptl_handle_eq_t   eq_handle,
     return PTL_OK;
 }
 
-int PtlEQPoll(ptl_handle_eq_t *     eq_handles,
+int PtlEQPoll(const ptl_handle_eq_t *eq_handles,
               unsigned int          size,
               ptl_time_t            timeout,
               ptl_event_t *         event,
-              int *                 which)
+              unsigned int *        which)
 {
     return PTL_FAIL;
 }

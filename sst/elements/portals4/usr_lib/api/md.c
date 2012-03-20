@@ -6,7 +6,7 @@
 #include <ptl_internal_debug.h>
 
 int PtlMDBind(ptl_handle_ni_t   ni_handle,
-              ptl_md_t*         md,
+              const ptl_md_t*         md,
               ptl_handle_md_t*  md_handle)
 {
     const ptl_internal_handle_converter_t ct = { md->ct_handle };

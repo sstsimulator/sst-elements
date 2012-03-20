@@ -18,7 +18,7 @@
 #endif
 
 #include <cmdQueue.h>
-#include <portals4_types.h>
+#include <portals4.h>
 
 
 namespace PtlNic {
@@ -73,9 +73,8 @@ class PtlIF {
         }
 
         assert( m_cmdQueue );
-        cmdUnion_t& cmd = getCmdSlot(ContextInit);
+        cmdUnion_t& cmd = getCmdSlot(ContextInitCmd);
         cmd.ctxInit.uid = uid;
-        cmd.ctxInit.jid = jid;
         cmd.ctxInit.nidPtr = (cmdAddr_t) &m_nid;
         cmd.ctxInit.limitsPtr = (cmdAddr_t) &m_limits;
         cmd.ctxInit.meUnlinkedPtr = (cmdAddr_t) &m_meUnlinked;
@@ -89,7 +88,7 @@ class PtlIF {
     ~PtlIF() {
         PTL_DBG2("\n");
 
-        getCmdSlot(ContextFini);
+        getCmdSlot(ContextFiniCmd);
         commitCmd();
     } 
 

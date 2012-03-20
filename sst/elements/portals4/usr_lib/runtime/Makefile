@@ -3,7 +3,7 @@ SRCS = runtime.c
 
 OBJS = ${SRCS:.c=.o}
 
-CPPFLAGS += -I.
+CPPFLAGS += -I. -DUSE_M5
 LIB = libruntime.a
 
 ${LIB}: ${OBJS}

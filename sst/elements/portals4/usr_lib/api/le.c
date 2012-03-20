@@ -5,7 +5,7 @@
 
 int PtlLEAppend(ptl_handle_ni_t     ni_handle,
                 ptl_pt_index_t      pt_index,
-                ptl_le_t *          le,
+                const ptl_le_t *          le,
                 ptl_list_t          ptl_list,
                 void*               user_ptr,
                 ptl_handle_le_t*    le_handle)
@@ -20,7 +20,7 @@ int PtlLEUnlink(ptl_handle_le_t le_handle)
 
 int PtlLESearch(ptl_handle_ni_t ni_handle,
                 ptl_pt_index_t  pt_index,
-                ptl_le_t       *le,
+                const ptl_le_t       *le,
                 ptl_search_op_t ptl_search_op,
                 void           *user_ptr)
 {

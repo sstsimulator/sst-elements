@@ -22,9 +22,3 @@ int PtlGetId(ptl_handle_ni_t    ni_handle,
 
     return retval;
 }
-
-int PtlGetJid(ptl_handle_ni_t   ni_handle,
-             ptl_jid_t*         jid)
-{
-    return PTL_FAIL;
-}

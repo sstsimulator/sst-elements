@@ -47,7 +47,7 @@ int PtlSwap(ptl_handle_md_t     get_md_handle,
             ptl_size_t          remote_offset,
             void *              user_ptr,
             ptl_hdr_data_t      hdr_data,
-            void *              operand,
+            const void *              operand,
             ptl_op_t            operation,
             ptl_datatype_t      datatype)
 {
