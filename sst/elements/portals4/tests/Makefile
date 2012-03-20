@@ -1,7 +1,13 @@
-LDFLAGS += -static -u ptlNic -lportals -lptlNic -lruntime 
-LDFLAGS += -L../usr_lib/api -L../usr_lib/nic -L../usr_lib/runtime
 
-CPPFLAGS += -I../ptlNic/ -I../usr_lib/runtime
+
+LDFLAGS += -static -u ptlNic -lportals -lptlNic 
+LDFLAGS += -lruntime 
+
+LDFLAGS += -L../usr_lib/api -L../usr_lib/nic 
+LDFLAGS += -L../usr_lib/runtime
+
+CPPFLAGS += -I../ptlNic/ 
+CPPFLAGS += -I../usr_lib/runtime
 
 apps: put 
 

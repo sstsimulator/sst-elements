@@ -56,9 +56,6 @@ int main( int argc, char* argv[] )
                 PTL_PID_ANY,  
                 &ni_ask_limits,
                 &ni_got_limits,
-                0,
-                NULL,
-                NULL, 
                 &ni_handle ) ) != PTL_OK ) {
         printf("PtlNIInit() failed %d\n", retval ); abort();
     }
@@ -330,7 +327,6 @@ static void printEvent( ptl_event_t *event )
                                 event->initiator.phys.pid);
     printf("pt_index=%d\n",event->pt_index);
     printf("uid=%d\n",event->uid);
-    printf("jid=%d\n",event->jid);
     printf("match_bits=%#lx\n",event->match_bits);
     printf("rlength=%lu\n",event->rlength);
     printf("mlength=%lu\n",event->mlength);
