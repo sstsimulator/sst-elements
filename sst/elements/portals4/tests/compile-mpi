@@ -1,0 +1,1 @@
+gcc -static mpi.c pthread.c -I/home/mjleven/ompiSVN/sandbox1/build-m5/install/include -L/home/mjleven/ompiSVN/sandbox1/build-m5/install/lib -lmpi -lm  -lportals -lptlNic -lruntime -lstdc++ -L/home/mjleven/sstSVN/sandbox-1/sst/elements/portals4/usr_lib/lib aio.c clock_gettime.c 
