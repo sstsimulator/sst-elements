@@ -1,0 +1,115 @@
+
+<?xml version="1.0"?>
+
+<sdl version="2.0"/>
+
+<|-- Command Line: -->
+ <|-- ./a.out -x 2 -y 1 -z 1 -->
+
+<config>
+    run-mode=both
+    partitioner=self
+</config>
+
+<variables>
+    <nic_link_lat> 150ns </nic_link_lat>
+    <foo_link_lat> 1ps </foo_link_lat>
+    <rtr_link_lat> 10ns </rtr_link_lat>
+</variables>
+
+<param_include>
+    <rtr_params>
+        <clock>         500Mhz </clock>
+        <debug>         no     </debug>
+        <info>          no     </info>
+
+        <iLCBLat>       13     </iLCBLat>
+        <oLCBLat>       7      </oLCBLat>
+        <routingLat>    3      </routingLat>
+        <iQLat>         2      </iQLat>
+
+        <OutputQSize_flits>       16  </OutputQSize_flits>
+        <InputQSize_flits>        96  </InputQSize_flits>
+        <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>
+
+        <network.xDimSize> 2 </network.xDimSize>
+        <network.yDimSize> 1 </network.yDimSize>
+        <network.zDimSize> 1 </network.zDimSize>
+
+        <routing.xDateline> 0 </routing.xDateline>
+        <routing.yDateline> 0 </routing.yDateline>
+        <routing.zDateline> 0 </routing.zDateline>
+    </rtr_params>
+
+    <nic_params1>
+        <clock>500Mhz</clock>
+    </nic_params1>
+
+    <nic_params2>
+        <info>no</info>
+        <debug>no</debug>
+        <dummyDebug> no </dummyDebug>
+        <latency> 500 </latency>
+    </nic_params2>
+
+    <cpu_params>
+        <debug> 0 </debug>
+        <M5debug> none</M5debug>
+        <info> no </info>
+        <registerExit> yes </registerExit>
+        <configFile> config-M5.xml </configFile>
+    </cpu_params>
+
+</param_include>
+
+<sst>
+    <component name=0.nic type=portals4.PtlNic rank=0 >
+        <params include=nic_params1,nic_params2>
+            <id> 0 </id>
+            <nid> 0 </nid>
+        </params>
+        <link name=0.cpu2nic port=mmif latency=$foo_link_lat/>
+        <link name=0.dmaLink port=dma latency=$foo_link_lat/>
+        <link name=0.nic2rtr port=rtr latency=$nic_link_lat/>
+    </component>
+
+    <component name=0.rtr type=SS_router.SS_router rank=0 >
+        <params include=rtr_params>
+            <id> 0 </id>
+        </params>
+        <link name=0.nic2rtr port=nic latency=$nic_link_lat/>
+        <link name=xr2r.0.0.1 port=xPos latency=$rtr_link_lat/>
+        <link name=xr2r.0.0.0 port=xNeg latency=$rtr_link_lat/>
+    </component>
+
+
+    <component name=1.nic type=portals4.PtlNic rank=0 >
+        <params include=nic_params1,nic_params2>
+            <id> 1 </id>
+            <nid> 1 </nid>
+        </params>
+        <link name=1.cpu2nic port=mmif latency=$foo_link_lat/>
+        <link name=1.dmaLink port=dma latency=$foo_link_lat/>
+        <link name=1.nic2rtr port=rtr latency=$nic_link_lat/>
+    </component>
+
+    <component name=1.rtr type=SS_router.SS_router rank=0 >
+        <params include=rtr_params>
+            <id> 1 </id>
+        </params>
+        <link name=1.nic2rtr port=nic latency=$nic_link_lat/>
+        <link name=xr2r.0.0.0 port=xPos latency=$rtr_link_lat/>
+        <link name=xr2r.0.0.1 port=xNeg latency=$rtr_link_lat/>
+    </component>
+
+
+    <component name=0.cpu type=m5C.M5 rank=0 >
+        <params include=cpu_params>
+        </params>
+        <link name=0.cpu2nic port=nic0 latency=$foo_link_lat/>
+        <link name=0.dmaLink port=dma0 latency=$foo_link_lat/>
+        <link name=1.cpu2nic port=nic1 latency=$foo_link_lat/>
+        <link name=1.dmaLink port=dma1 latency=$foo_link_lat/>
+    </component>
+
+</sst>
