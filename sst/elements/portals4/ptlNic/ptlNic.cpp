@@ -24,7 +24,7 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     TRACE_ADD( DmaEngine );
     TRACE_INIT();
 
-    PRINT_AT(PtlNic,"\n");
+    PtlNic_DBG("\n");
 
     for ( int i=0; i < m_vcInfoV.size(); i++ ) {
         m_vcInfoV[ i ].setVC( i );
@@ -61,7 +61,7 @@ void PtlNic::processFromRtr()
 
         if ( cFlit->s.head ) {
             PtlHdr* hdr = (PtlHdr*) (cFlit + 1);
-            PRINT_AT(PtlNic,"got head packet from nid %d dest_pid=%d\n",
+            PtlNic_DBG("got head packet from nid %d dest_pid=%d\n",
                             cFlit->s.nid,hdr->dest_pid );
             assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
                                         m_nidRecvEntryM.end() );
@@ -76,20 +76,20 @@ void PtlNic::processFromRtr()
             if( m_nidRecvEntryM.find( cFlit->s.nid ) != 
                                         m_nidRecvEntryM.end() ) {
             
-                PRINT_AT(PtlNic,"push packet\n");
+                PtlNic_DBG("push packet\n");
                 if ( m_nidRecvEntryM[ cFlit->s.nid ]->pushPkt(
                                 (unsigned char*) ( cFlit + 1 ), 64 ) ) {
             
-                    PRINT_AT(PtlNic,"erase send entry for nid %d\n", cFlit->s.nid );
+                    PtlNic_DBG("erase send entry for nid %d\n", cFlit->s.nid );
                     m_nidRecvEntryM.erase( cFlit->s.nid );
                 }
             } else {
-                PRINT_AT(PtlNic,"drop packet\n");
+                PtlNic_DBG("drop packet\n");
             }
         }
 
         if ( cFlit->s.tail ) {
-            PRINT_AT(PtlNic,"got tailPacket for nid %d\n",cFlit->s.nid);
+            PtlNic_DBG("got tailPacket for nid %d\n",cFlit->s.nid);
             assert( m_nidRecvEntryM.find( cFlit->s.nid ) == 
                                         m_nidRecvEntryM.end() );
         }
@@ -100,7 +100,7 @@ void PtlNic::processFromRtr()
 
 Context* PtlNic::findContext( ptl_pid_t pid )
 {
-    PRINT_AT(PtlNic,"targetPid=%d\n", pid );
+    PtlNic_DBG("targetPid=%d\n", pid );
 
     ctxMap_t::iterator iter = m_ctxM.begin();
 
@@ -115,15 +115,15 @@ Context* PtlNic::findContext( ptl_pid_t pid )
 void PtlNic::mmifHandler( SST::Event* e )
 {
     PtlNicEvent& event = *static_cast< PtlNicEvent* >( e );
-    PRINT_AT(PtlNic,"cmd=%s\n",m_cmdNames[event.cmd().type]);
+    PtlNic_DBG("cmd=%s\n",m_cmdNames[event.cmd().type]);
 
     switch( event.cmd().type ) {
 
-      case ContextInit:
+      case ContextInitCmd:
         allocContext( event.cmd().ctx_id, event.cmd().u.ctxInit );
         break;
 
-      case ContextFini:
+      case ContextFiniCmd:
         freeContext( event.cmd().ctx_id, event.cmd().u.ctxFini );
         break;
 
@@ -140,63 +140,63 @@ void PtlNic::ptlCmd( PtlNicEvent& event )
 
     switch( event.cmd().type ) {
 
-        case PtlNIInit:
+        case PtlNIInitCmd:
             ctx->NIInit( event.cmd().u.niInit );
             break;
 
-        case PtlNIFini:
+        case PtlNIFiniCmd:
             ctx->NIFini( event.cmd().u.niFini );
             break;
 
-        case PtlPTAlloc:
+        case PtlPTAllocCmd:
             ctx->PTAlloc( event.cmd().u.ptAlloc );
             break;
 
-        case PtlPTFree:
+        case PtlPTFreeCmd:
             ctx->PTFree( event.cmd().u.ptFree );
             break;
 
-        case PtlMDBind:
+        case PtlMDBindCmd:
             ctx->MDBind( event.cmd().u.mdBind );
             break;
 
-        case PtlMDRelease:
+        case PtlMDReleaseCmd:
             ctx->MDRelease( event.cmd().u.mdRelease );
             break;
 
-        case PtlMEAppend:
+        case PtlMEAppendCmd:
             ctx->MEAppend( event.cmd().u.meAppend );
             break;
 
-        case PtlMEUnlink:
+        case PtlMEUnlinkCmd:
             ctx->MEUnlink( event.cmd().u.meUnlink );
             break;
 
-        case PtlCTAlloc:
+        case PtlCTAllocCmd:
             ctx->CTAlloc( event.cmd().u.ctAlloc );
             break;
 
-        case PtlCTFree:
+        case PtlCTFreeCmd:
             ctx->CTFree( event.cmd().u.ctFree );
             break;
 
-        case PtlEQAlloc:
+        case PtlEQAllocCmd:
             ctx->EQAlloc( event.cmd().u.eqAlloc );
             break;
 
-        case PtlEQFree:
+        case PtlEQFreeCmd:
             ctx->EQFree( event.cmd().u.eqFree );
             break;
 
-        case PtlPut:
+        case PtlPutCmd:
             ctx->Put( event.cmd().u.ptlPut );
             break;
 
-        case PtlGet:
+        case PtlGetCmd:
             ctx->Get( event.cmd().u.ptlGet );
             break;
 
-        case PtlTrigGet:
+        case PtlTrigGetCmd:
             ctx->TrigGet( event.cmd().u.ptlGet );
             break;
 
@@ -215,15 +215,14 @@ ptl_pid_t PtlNic::allocPid( ptl_pid_t req_pid )
 
 void PtlNic::allocContext( ctx_id_t ctx, cmdContextInit_t& cmd )
 {
-    PRINT_AT( PtlNic, "ctx=%d uid=%d jid=%d ptlPtr=%p\n",
-                    ctx, cmd.uid, cmd.jid, cmd.nidPtr );
+    PtlNic_DBG(  "ctx=%d uid=%d ptlPtr=%p\n", ctx, cmd.uid, cmd.nidPtr );
     assert( m_ctxM.find( ctx ) == m_ctxM.end() );
     m_ctxM[ctx] = new Context( this, cmd );
 }
 
 void PtlNic::freeContext( ctx_id_t ctx,  cmdContextFini_t& cmd )
 {
-    PRINT_AT( PtlNic, "ctx=%d\n",ctx);
+    PtlNic_DBG(  "ctx=%d\n",ctx);
     assert( m_ctxM.find( ctx ) != m_ctxM.end() );
     delete m_ctxM[ctx];
     m_ctxM.erase(ctx);
@@ -231,7 +230,7 @@ void PtlNic::freeContext( ctx_id_t ctx,  cmdContextFini_t& cmd )
 
 Context* PtlNic::getContext( ctx_id_t ctx )
 {
-    PRINT_AT( PtlNic, "ctx=%d\n",ctx);
+    PtlNic_DBG(  "ctx=%d\n",ctx);
     assert( m_ctxM.find( ctx ) != m_ctxM.end() );
     return m_ctxM[ctx];
 }
@@ -246,7 +245,7 @@ void PtlNic::processVCs()
 bool PtlNic::sendMsg( ptl_nid_t nid, PtlHdr* hdr, Addr vaddr, ptl_size_t nbytes,
                                             CallbackBase* callback )
 {
-    PRINT_AT(PtlNic,"destNid=%d vaddr=%#lx nbytes=%lu\n", nid, vaddr, nbytes );
+    PtlNic_DBG("destNid=%d vaddr=%#lx nbytes=%lu\n", nid, vaddr, nbytes );
     SendEntry* entry = new SendEntry( nid, hdr, vaddr, nbytes, callback );
 
     assert( entry );

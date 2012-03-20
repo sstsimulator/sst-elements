@@ -1,7 +1,7 @@
 #ifndef _ptlEventInternal_h
 #define _ptlEventInternal_h
 
-#include "portals4_types.h"
+#include "portals4.h"
 
 struct PtlEventInternal  {
     volatile long  count1;

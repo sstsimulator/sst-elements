@@ -4,29 +4,29 @@
 
 #ifndef _cmdQueueEntry_h
 #define _cmdQueueEntry_h
-#include "portals4_types.h"
+#include "portals4.h"
 #include "ptlEvent.h"
 
 typedef enum {
-    PtlNIInit = 1,   
-    PtlNIFini,
-    PtlPTAlloc,
-    PtlPTFree,
-    PtlMDBind,
-    PtlMDRelease,
-    PtlMEAppend,
-    PtlMEUnlink,
-    PtlGetId,
-    PtlCTAlloc,
-    PtlCTFree,
-    PtlCTWait,
-    PtlPut,
-    PtlGet,
-    PtlTrigGet,
-    PtlEQAlloc,
-    PtlEQFree,
-    ContextInit,
-    ContextFini
+    PtlNIInitCmd = 1,   
+    PtlNIFiniCmd,
+    PtlPTAllocCmd,
+    PtlPTFreeCmd,
+    PtlMDBindCmd,
+    PtlMDReleaseCmd,
+    PtlMEAppendCmd,
+    PtlMEUnlinkCmd,
+    PtlGetIdCmd,
+    PtlCTAllocCmd,
+    PtlCTFreeCmd,
+    PtlCTWaitCmd,
+    PtlPutCmd,
+    PtlGetCmd,
+    PtlTrigGetCmd,
+    PtlEQAllocCmd,
+    PtlEQFreeCmd,
+    ContextInitCmd,
+    ContextFiniCmd
 } cmd_t;
 
 #define CMD_NAMES {\
@@ -57,7 +57,6 @@ typedef unsigned long cmdAddr_t;
 
 typedef struct {
     int uid;
-    int jid;
     cmdAddr_t nidPtr; 
     cmdAddr_t limitsPtr; 
     cmdAddr_t meUnlinkedPtr;

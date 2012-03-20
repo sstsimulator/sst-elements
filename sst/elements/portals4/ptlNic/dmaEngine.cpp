@@ -14,7 +14,7 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
 
     m_nid = params.find_integer( "nid" );
 
-    PRINT_AT(DmaEngine,"nid=%d\n",m_nid);
+    DmaEngine_DBG("nid=%d\n",m_nid);
     if ( ! params.find_string( "dma-virt2phys" ).compare("false") ) {
         fprintf( stderr, "don't translate virt 2 phys address\n");
         m_virt2phys = false;
@@ -29,7 +29,7 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     std::stringstream tmp;
     tmp << "/pTable." << m_nid << "." << getpid();
 
-    PRINT_AT(DmaEngine,"%s\n",__func__,tmp.str().c_str());
+    DmaEngine_DBG("%s\n",__func__,tmp.str().c_str());
     m_nicMmu = new NicMmu( tmp.str(), true );
 }    
 
@@ -60,7 +60,7 @@ bool DmaEngine::xfer( DmaEvent::Type type, Addr vaddr,
 
     while( iter != list.end() ) {
         XYZ& item = *iter;
-        PRINT_AT(DmaEngine," %s vaddr=%#lx paddr=%#lx buf=%p size=%lu\n",
+        DmaEngine_DBG(" %s vaddr=%#lx paddr=%#lx buf=%p size=%lu\n",
                     type == DmaEvent::Read ? "Read" : "Write", 
                                         vaddr, item.addr, buf, item.length );
         m_link->Send( new DmaEvent( type, item.addr, buf,
@@ -79,14 +79,14 @@ void DmaEngine::eventHandler( SST::Event* e )
 
     entry->doneLength += event->size;
 
-    PRINT_AT(DmaEngine,"addr=%#lx buf=%p size=%lu %s\n", 
+    DmaEngine_DBG("addr=%#lx buf=%p size=%lu %s\n", 
                     event->addr,event->buf,event->size,
                     entry->doneLength == entry->length ? "done" : "" );
     
     if ( entry->doneLength == entry->length ) {
         
         if ( entry->callback && (*entry->callback)() ) {
-            PRINT_AT(DmaEngine,"delete callback\n");
+            DmaEngine_DBG("delete callback\n");
             delete  entry->callback;
         }  
         delete entry;
@@ -111,7 +111,7 @@ void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list )
         item.length = vaddr + left > roundUp( vaddr, m_nicMmu->pageSize() ) ? 
                        roundUp( vaddr, m_nicMmu->pageSize() ) - vaddr : left;
 
-        PRINT_AT( DmaEngine, "vaddr=%#lx length=%lu\n", vaddr, item.length );
+        DmaEngine_DBG(  "vaddr=%#lx length=%lu\n", vaddr, item.length );
 
         if ( m_virt2phys ) {
             bool ret = m_nicMmu->lookup( vaddr, item.addr );

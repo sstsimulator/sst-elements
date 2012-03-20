@@ -11,12 +11,11 @@
 Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
         m_nic( nic ),
         m_uid( cmd.uid ),
-        m_jid( cmd.jid ), 
         m_meUnlinkedHostPtr( (int*) cmd.meUnlinkedPtr ),
         m_meUnlinkedPos( 0 )
 {
     TRACE_ADD( Context );
-    PRINT_AT(Context,"sizeof(PtlHdr) %d\n",sizeof(PtlHdr));
+    Context_DBG( "sizeof(PtlHdr) %d\n",sizeof(PtlHdr));
 
     m_limits.max_pt_index = MAX_PT_INDEX;
     m_limits.max_cts = MAX_CTS;
@@ -56,11 +55,11 @@ Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
 }
 
 Context::~Context() {
-    PRINT_AT(Context,"\n");
+    Context_DBG("\n");
 }
 
 void Context::initPid( ptl_pid_t pid ) {
-    PRINT_AT(Context,"pid=%d\n",pid);
+    Context_DBG("pid=%d\n",pid);
     m_pid = pid;
     initId( );
 } 
@@ -92,9 +91,9 @@ void Context::NIFini( cmdPtlNIFini_t& cmd )
 
 void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 {
-    PRINT_AT(Context,"pt_index=%d handle=%d list=%d start=%#lx length=%lu\n", 
+    Context_DBG("pt_index=%d handle=%d list=%d start=%#lx length=%lu\n", 
             cmd.pt_index, cmd.handle, cmd.list, cmd.me.start, cmd.me.length );
-    PRINT_AT(Context,"match_bits=%#lx options=%#x ct_handle=%d\n", 
+    Context_DBG("match_bits=%#lx options=%#x ct_handle=%d\n", 
                         cmd.me.match_bits, cmd.me.options, cmd.me.ct_handle );
 
     assert( ! m_meV[cmd.handle].used );
@@ -105,11 +104,11 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 
         if ( entry ) {
 
-            PRINT_AT(Context,"Found Match in overflow me_handle=%d\n",
+            Context_DBG("Found Match in overflow me_handle=%d\n",
                                         entry->me_handle );    
 
             if ( entry->callback ) {
-                PRINT_AT(Context,"MEAppend xfer not complete %p\n",entry);
+                Context_DBG("MEAppend xfer not complete %p\n",entry);
                 entry->cmd = new cmdPtlMEAppend_t;
                 *entry->cmd = cmd;
             } else {
@@ -130,7 +129,7 @@ void Context::MEAppend( cmdPtlMEAppend_t& cmd )
 
 void Context::doMEOverflow( XXX* entry )
 {
-    PRINT_AT(Context, "\n" );
+    Context_DBG( "\n" );
 
     PtlHdr& hdr = entry->origHdr;
     cmdPtlMEAppend_t& cmd = *entry->cmd; 
@@ -154,7 +153,6 @@ void Context::doMEOverflow( XXX* entry )
                     initiator,
                     hdr.pt_index,
                     hdr.uid,
-                    hdr.jid,
                     hdr.match_bits,
                     hdr.length,
                     entry->mlength,
@@ -173,7 +171,7 @@ void Context::doMEOverflow( XXX* entry )
 
 void Context::MEUnlink( cmdPtlMEUnlink_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d\n",cmd.handle);
+    Context_DBG("handle=%d\n",cmd.handle);
     assert( m_meV[cmd.handle].used );
     m_meV[cmd.handle].used = false;
 }
@@ -184,7 +182,7 @@ ptl_me_t* Context::findME( int handle ) {
 
 void Context::CTAlloc( cmdPtlCTAlloc_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d addr=%#lx\n", cmd.handle, cmd.addr );
+    Context_DBG("handle=%d addr=%#lx\n", cmd.handle, cmd.addr );
     m_ctV[cmd.handle].vaddr = (Addr)cmd.addr;
     m_ctV[cmd.handle].event.success = 0;
     m_ctV[cmd.handle].event.failure = 0;
@@ -192,12 +190,12 @@ void Context::CTAlloc( cmdPtlCTAlloc_t& cmd )
 
 void Context::CTFree( cmdPtlCTFree_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d\n", cmd.handle );
+    Context_DBG("handle=%d\n", cmd.handle );
 }
 
 void Context::EQAlloc( cmdPtlEQAlloc_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d size=%lu addr=%#lx\n", 
+    Context_DBG("handle=%d size=%lu addr=%#lx\n", 
                                     cmd.handle, cmd.size, cmd.addr );
     m_eqV[cmd.handle].vaddr = (Addr)cmd.addr;
     m_eqV[cmd.handle].size = cmd.size;
@@ -206,12 +204,12 @@ void Context::EQAlloc( cmdPtlEQAlloc_t& cmd )
 
 void Context::EQFree( cmdPtlEQFree_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d\n", cmd.handle );
+    Context_DBG("handle=%d\n", cmd.handle );
 }
 
 void Context::MDBind( cmdPtlMDBind_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d addr=%#lx size=%lu ct_handle=%d\n", 
+    Context_DBG("handle=%d addr=%#lx size=%lu ct_handle=%d\n", 
                     cmd.handle, cmd.md.start, cmd.md.length, cmd.md.ct_handle );
     assert( ! m_mdV[cmd.handle].used );
     m_mdV[cmd.handle].md = cmd.md;
@@ -220,7 +218,7 @@ void Context::MDBind( cmdPtlMDBind_t& cmd )
 
 void Context::MDRelease( cmdPtlMDRelease_t& cmd )
 {
-    PRINT_AT(Context,"handle=%d\n", cmd.handle );
+    Context_DBG("handle=%d\n", cmd.handle );
     assert( m_mdV[cmd.handle].used );
     m_mdV[cmd.handle].used = false;
 }
@@ -251,7 +249,7 @@ Addr Context::findEventAddr( int handle, int pos )
 
 void Context::PTAlloc( cmdPtlPTAlloc_t& cmd )
 {
-    PRINT_AT(Context,"pt_index=%d eq_handle=%#x\n",cmd.pt_index,
+    Context_DBG("pt_index=%d eq_handle=%#x\n",cmd.pt_index,
                                             cmd.eq_handle);
 
     m_ptV[cmd.pt_index].used = true; 
@@ -261,25 +259,25 @@ void Context::PTAlloc( cmdPtlPTAlloc_t& cmd )
 
 void Context::PTFree( cmdPtlPTFree_t& cmd )
 {
-    PRINT_AT(Context,"pt_index=%d\n", cmd.pt_index );
+    Context_DBG("pt_index=%d\n", cmd.pt_index );
 
     m_ptV[cmd.pt_index].used = false; 
 }
 
 void Context::Put( cmdPtlPut_t& cmd ) 
 {
-    PRINT_AT(Context,"my nid %d\n",m_nic->nid());
-    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%lu "
+    Context_DBG("my nid %d\n",m_nic->nid());
+    Context_DBG("md_handle=%d length=%lu local_offset=%lu "
             "remote_offset=%lu\n", 
             cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
 
     if ( m_logicalIF ) {
-        PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
+        Context_DBG("target rank=%d\n",cmd.target_id.rank);
     } else {
-        PRINT_AT(Context,"target nid=%d pid=%d\n",
+        Context_DBG("target nid=%d pid=%d\n",
                     cmd.target_id.phys.nid,cmd.target_id.phys.pid);
     }
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",
+    Context_DBG("pt_index=%d match_bits=%#lx\n",
                                     cmd.pt_index,cmd.match_bits); 
 
     PutSendEntry* entry = new PutSendEntry;
@@ -298,7 +296,6 @@ void Context::Put( cmdPtlPut_t& cmd )
     entry->hdr.match_bits = cmd.match_bits;
     entry->hdr.hdr_data = cmd.hdr_data;
     entry->hdr.uid = m_uid;
-    entry->hdr.jid = m_jid;
     
     entry->hdr.op = ::Put;
 
@@ -312,17 +309,17 @@ void Context::Put( cmdPtlPut_t& cmd )
 
 void Context::Get( cmdPtlGet_t& cmd ) 
 {
-    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
+    Context_DBG("md_handle=%d length=%lu local_offset=%#lx "
     "remote_offset=%#lx\n", cmd.md_handle, cmd.length,
                         cmd.local_offset, cmd.remote_offset );
 
     if ( m_logicalIF ) {
-        PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
+        Context_DBG("target rank=%d\n",cmd.target_id.rank);
     } else {
-        PRINT_AT(Context,"target nid=%d pid=%d\n",
+        Context_DBG("target nid=%d pid=%d\n",
                     cmd.target_id.phys.nid,cmd.target_id.phys.pid);
     }
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
+    Context_DBG("pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
 
     GetSendEntry* entry = new GetSendEntry;
 
@@ -347,17 +344,17 @@ void Context::Get( cmdPtlGet_t& cmd )
 
 void Context::TrigGet( cmdPtlTrigGet_t& cmd ) 
 {
-    PRINT_AT(Context,"md_handle=%d length=%lu local_offset=%#lx "
+    Context_DBG("md_handle=%d length=%lu local_offset=%#lx "
     "remote_offset=%#lx\n", cmd.md_handle, cmd.length, cmd.local_offset, cmd.remote_offset );
 
     if ( m_logicalIF ) {
-        PRINT_AT(Context,"target rank=%d\n",cmd.target_id.rank);
+        Context_DBG("target rank=%d\n",cmd.target_id.rank);
     } else {
-        PRINT_AT(Context,"target nid=%d pid=%d\n",
+        Context_DBG("target nid=%d pid=%d\n",
                     cmd.target_id.phys.nid,cmd.target_id.phys.pid);
     }
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
-    PRINT_AT(Context,"ct_handle=%d threshold=%lu\n",
+    Context_DBG("pt_index=%d match_bits=%#lx\n",cmd.pt_index,cmd.match_bits); 
+    Context_DBG("ct_handle=%d threshold=%lu\n",
                             cmd.trig_ct_handle,cmd.threshold);
 
     GetSendEntry* entry = new GetSendEntry;
@@ -389,7 +386,7 @@ void Context::TrigGet( cmdPtlTrigGet_t& cmd )
 bool Context::getCallback( GetSendEntry* entry )
 {
     ptl_md_t& md =  m_mdV[entry->md_handle].md;
-    PRINT_AT(Context,"\n");
+    Context_DBG("\n");
     if ( md.ct_handle != -1  ) {
         if ( md.options & PTL_MD_EVENT_CT_BYTES ) { 
             assert(0);
@@ -416,7 +413,7 @@ bool Context::getCallback( GetSendEntry* entry )
 
 bool Context::putCallback( PutSendEntry* entry )
 {
-    PRINT_AT(Context,"state %d\n",entry->state);
+    Context_DBG("state %d\n",entry->state);
     ptl_md_t& md = m_mdV[entry->md_handle].md;
 
     if ( entry->state == PutSendEntry::WaitSend ) {
@@ -425,7 +422,7 @@ bool Context::putCallback( PutSendEntry* entry )
         // tell the initaltor to free the send entry
         // we got the Ack2 message before the send is complete 
         if ( entry->hdr.op == Ack2 ) {
-            PRINT_AT(Context,"Ack2 before send completed\n");
+            Context_DBG("Ack2 before send completed\n");
             // set op to Ack so we don't end up here again
             // when the callback is called after all the data is sent
             entry->hdr.op = Ack;
@@ -434,7 +431,7 @@ bool Context::putCallback( PutSendEntry* entry )
             return false;
         }
 
-        PRINT_AT(Context,"Send complete\n");
+        Context_DBG("Send complete\n");
         if ( md.eq_handle != -1  ) {
             writeSendEvent( md.eq_handle, entry->user_ptr, PTL_NI_OK);
         }
@@ -449,17 +446,17 @@ bool Context::putCallback( PutSendEntry* entry )
         }
 
         if ( entry->hdr.ack_req == PTL_ACK_REQ )  {
-            PRINT_AT(Context,"need ack\n");
+            Context_DBG("need ack\n");
             entry->state = PutSendEntry::WaitAck;
             return false;
         }
     } else {
 
         if ( entry->hdr.op == Ack2 ) {
-            PRINT_AT(Context,"Ack2 after send completed\n");
+            Context_DBG("Ack2 after send completed\n");
         } else { 
 
-            PRINT_AT(Context,"Got Ack\n");
+            Context_DBG("Got Ack\n");
             if ( md.eq_handle != -1  ) {
                 writeAckEvent( md.eq_handle,
                             entry->hdr.length,
@@ -480,7 +477,7 @@ bool Context::putCallback( PutSendEntry* entry )
         }
     }
 
-    PRINT_AT(Context,"complete\n");
+    Context_DBG("complete\n");
     freeKey( entry->hdr.key );
     delete entry;
     return true;
@@ -489,7 +486,7 @@ bool Context::putCallback( PutSendEntry* entry )
 
 bool Context::eventCallback( EventEntry* entry )
 {
-    PRINT_AT(Context,"delete EventEntry %p\n",entry);
+    Context_DBG("delete EventEntry %p\n",entry);
     delete entry;
     return true;
 }
@@ -503,7 +500,7 @@ void Context::doTriggered( int ct_handle )
     while ( iter != ct.triggered.end() )  {
         std::list<TriggeredOP*>::iterator next = iter;
         ++next;
-        PRINT_AT(Context,"count=%d %d\n", ct.event.success, (*iter)->count );  
+        Context_DBG("count=%d %d\n", ct.event.success, (*iter)->count );  
 
         if ( ct.event.success == (*iter)->count ) {
             m_nic->sendMsg( (*iter)->u.get->destNid, 
@@ -517,7 +514,7 @@ void Context::doTriggered( int ct_handle )
 
 void Context::writeCtEvent( EventEntry* entry )
 {
-    PRINT_AT(Context,"ct_handle=%#x\n", entry->handle );
+    Context_DBG("ct_handle=%#x\n", entry->handle );
 
     doTriggered( entry->handle );
 
@@ -531,7 +528,7 @@ void Context::writeEvent( EventEntry* entry )
 {
     struct EQ& eq = findEQ( entry->handle ); 
 
-    PRINT_AT(Context,"nid=%d eq_handle=%d eq.count=%d vaddr=%#lx type=%d\n",
+    Context_DBG("nid=%d eq_handle=%d eq.count=%d vaddr=%#lx type=%d\n",
             m_nic->nid(),
             entry->handle, eq.count, 
             findEventAddr( entry->handle, eq.count % eq.size ),
@@ -550,18 +547,18 @@ void Context::writeEvent( EventEntry* entry )
 
 RecvEntry* Context::processHdrPkt( void* pkt )
 {
-    PRINT_AT(Context,"me=%d\n",m_nic->nid());
+    Context_DBG("my nid %d\n",m_nic->nid());
     CtrlFlit* cFlit = (CtrlFlit*) pkt;
     return processHdrPkt( cFlit->s.nid, (PtlHdr*) (cFlit + 1) );
 }
 
 void Context::processAck( PtlHdr* hdr )
 {
-    PRINT_AT(Context,"key=%d\n",hdr->key, hdr->op == Ack ? "Ack" : "Ack2");
+    Context_DBG("key=%d\n",hdr->key, hdr->op == Ack ? "Ack" : "Ack2");
     
     m_putM[hdr->key]->hdr = *hdr;
 
-    PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset );
+    Context_DBG("length=%lu offset=%lu\n",hdr->length, hdr->offset );
     if ( (*m_putM[hdr->key]->callback)() ) {
         delete m_putM[hdr->key]->callback;
     }
@@ -571,7 +568,7 @@ void Context::processAck( PtlHdr* hdr )
 
 RecvEntry* Context::processReply( PtlHdr* hdr )
 {
-    PRINT_AT(Context,"key=%d\n",hdr->key);
+    Context_DBG("key=%d\n",hdr->key);
     GetSendEntry* entry = m_getM[ hdr->key ];
     m_getM.erase( hdr->key );
 
@@ -588,10 +585,10 @@ RecvEntry* Context::processReply( PtlHdr* hdr )
 
 RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
 {
-    PRINT_AT(Context,"srcNid=%d srcPid=%d targetPid=%d\n",
+    Context_DBG("srcNid=%d srcPid=%d targetPid=%d\n",
                             nid, hdr->src_pid, hdr->dest_pid );
-    PRINT_AT(Context,"length=%lu offset=%lu\n",hdr->length, hdr->offset);
-    PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",
+    Context_DBG("length=%lu offset=%lu\n",hdr->length, hdr->offset);
+    Context_DBG("pt_index=%d match_bits=%#lx\n",
                                     hdr->pt_index, hdr->match_bits );
 
     if ( hdr->op == Ack ) {
@@ -618,11 +615,11 @@ RecvEntry* Context::processHdrPkt( ptl_nid_t nid, PtlHdr* hdr )
         return processMatch( nid, hdr, me_handle, PTL_PRIORITY_LIST );
     }
 
-    PRINT_AT(Context,"No match in PRIORITY_LIST\n");
+    Context_DBG("No match in PRIORITY_LIST\n");
 
-    me_handle = search( nid, *hdr, PTL_OVERFLOW );
+    me_handle = search( nid, *hdr, PTL_OVERFLOW_LIST );
     if ( me_handle != -1 ) {
-        return processMatch( nid, hdr, me_handle, PTL_OVERFLOW );
+        return processMatch( nid, hdr, me_handle, PTL_OVERFLOW_LIST );
     }
     return NULL;
 }
@@ -634,10 +631,10 @@ Context::XXX* Context::searchOverflow( ptl_me_t& me )
     while ( iter != m_overflowHdrList.end() ) {
         PtlHdr& hdr = (*iter)->origHdr;
 
-        PRINT_AT(Context,"srcNid=%d srcPid=%d targetPid=%d\n",
+        Context_DBG("srcNid=%d srcPid=%d targetPid=%d\n",
                             (*iter)->srcNid, hdr.src_pid, hdr.dest_pid );
-        PRINT_AT(Context,"length=%lu offset=%lu\n",hdr.length, hdr.offset);
-        PRINT_AT(Context,"pt_index=%d match_bits=%#lx\n",hdr.pt_index, hdr.match_bits );
+        Context_DBG("length=%lu offset=%lu\n",hdr.length, hdr.offset);
+        Context_DBG("pt_index=%d match_bits=%#lx\n",hdr.pt_index, hdr.match_bits );
 
         if ( checkME( (*iter)->srcNid, hdr, me ) ) {
             XXX* tmp = *iter;
@@ -666,7 +663,7 @@ int Context::search( ptl_nid_t nid, PtlHdr& hdr, ptl_list_t list )
         me_handle = *iter;
         break;
     }
-    PRINT_AT(Context,"me_handle=%d\n",me_handle);
+    Context_DBG("me_handle=%d\n",me_handle);
     return me_handle;
 }
 
@@ -675,16 +672,16 @@ bool Context::checkME( ptl_nid_t src_nid, PtlHdr& hdr, ptl_me_t& me )
 {
 
     ptl_match_bits_t dont_ignore_bits = ~(me.ignore_bits);
-    PRINT_AT(Context, "nid=%d pid=%d\n", me.match_id.phys.nid,
+    Context_DBG( "nid=%d pid=%d\n", me.match_id.phys.nid,
                                             me.match_id.phys.pid );
-    PRINT_AT(Context, "me->match_bits %#lx dont_ignore %#lx\n", 
+    Context_DBG( "me->match_bits %#lx dont_ignore %#lx\n", 
                         me.match_bits, dont_ignore_bits  );
     /* check the match_bits */
     if ( ( (hdr.match_bits ^ me.match_bits) & dont_ignore_bits ) != 0 ) {
         return false;
     }    
 
-    PRINT_AT(Context," matched bits \n");
+    Context_DBG(" matched bits \n");
 
     /* check for forbidden truncation */
     if (((me.options & PTL_ME_NO_TRUNCATE) != 0) &&
@@ -692,19 +689,19 @@ bool Context::checkME( ptl_nid_t src_nid, PtlHdr& hdr, ptl_me_t& me )
         return false;
     }
 
-    PRINT_AT(Context," matched options \n");
+    Context_DBG(" matched options \n");
 
     if (( me.match_id.phys.nid != PTL_NID_ANY ) &&
             ( me.match_id.phys.nid != src_nid ) ) {
         return false;
     } 
-    PRINT_AT(Context," matched nid \n");
+    Context_DBG(" matched nid \n");
 
     if (( me.match_id.phys.pid != PTL_PID_ANY ) &&
             ( me.match_id.phys.pid != hdr.src_pid ) ) {
         return false;
     } 
-    PRINT_AT(Context," matched pid \n");
+    Context_DBG(" matched pid \n");
 
     return true;
 }
@@ -712,7 +709,7 @@ bool Context::checkME( ptl_nid_t src_nid, PtlHdr& hdr, ptl_me_t& me )
 RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
             ptl_list_t list )
 {
-    PRINT_AT(Context,"found match me=%d list=%d\n", me_handle, list );
+    Context_DBG("found match me=%d list=%d\n", me_handle, list );
     if ( hdr->op == ::Get ) {
         processGet( nid, hdr, me_handle, list );
     } else {
@@ -723,7 +720,7 @@ RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
 RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
                             ptl_list_t list )
 {
-    PRINT_AT(Context,"\n");
+    Context_DBG("\n");
 
     GetRecvEntry* entry = new GetRecvEntry; 
     entry->op          = ::Get;
@@ -747,7 +744,7 @@ RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
 
     if( me.me.options & PTL_ME_USE_ONCE ) { 
 
-        PRINT_AT(Context,"unlink me_handle %d\n",me_handle);
+        Context_DBG("unlink me_handle %d\n",me_handle);
         assert( m_meV[me_handle].used );
         m_ptV[hdr->pt_index].meL[list].remove(me_handle);
         m_meV[me_handle].used = false;
@@ -762,7 +759,7 @@ RecvEntry* Context::processGet( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
 
 bool Context::getRecvCallback( GetRecvEntry* entry )
 {
-    PRINT_AT(Context,"\n");
+    Context_DBG("\n");
     recvFini( entry );
     delete entry;
     return true;
@@ -771,7 +768,7 @@ bool Context::getRecvCallback( GetRecvEntry* entry )
 RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
                                     ptl_list_t list )
 {
-    PRINT_AT(Context,"me_handle=%d\n",me_handle);
+    Context_DBG("me_handle=%d\n",me_handle);
     
     PutRecvEntry* entry = new PutRecvEntry;
     entry->op        = ::Put;
@@ -789,7 +786,7 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
     entry->callback = 
                 new PutRecvCallback( this, &Context::putRecvCallback,entry );
 
-    if ( list == PTL_OVERFLOW ) {
+    if ( list == PTL_OVERFLOW_LIST ) {
         m_overflowHdrList.push_back( entry );
     }
 
@@ -813,7 +810,7 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
 
     if( me.me.options & PTL_ME_USE_ONCE || 
                         ( me.me.length - me.offset ) < me.me.min_free ) {
-        PRINT_AT(Context,"unlink me_handle %d\n",me_handle);
+        Context_DBG("unlink me_handle %d\n",me_handle);
         assert( m_meV[me_handle].used );
         m_ptV[hdr->pt_index].meL[list].remove(me_handle);
         m_meV[me_handle].used = false;
@@ -837,7 +834,7 @@ RecvEntry* Context::processPut( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
     entry->ackHdr.offset = offset;
     entry->ackHdr.length = entry->mlength;
 
-    PRINT_AT(Context,"hdr->length=%lu me.length=%lu mlength=%lu\n",
+    Context_DBG("hdr->length=%lu me.length=%lu mlength=%lu\n",
                                   hdr->length, me.me.length,entry->mlength);
     if ( entry->mlength ) {
 
@@ -853,7 +850,7 @@ void Context::freeHostMEHandle( int me_handle )
 {
     m_meUnlinked[m_meUnlinkedPos] = me_handle;
 
-    PRINT_AT(Context,"%#lx\n",(m_meUnlinkedHostPtr + m_meUnlinkedPos));
+    Context_DBG("%#lx\n",(m_meUnlinkedHostPtr + m_meUnlinkedPos));
     m_nic->dmaEngine().write( (Addr) (m_meUnlinkedHostPtr + m_meUnlinkedPos), 
                         (uint8_t*) &m_meUnlinked[m_meUnlinkedPos], 
                         sizeof( int ), NULL );
@@ -863,7 +860,7 @@ void Context::freeHostMEHandle( int me_handle )
 
 bool Context::putRecvCallback( PutRecvEntry* entry )
 {
-    PRINT_AT(Context,"\n");
+    Context_DBG("\n");
 
     if ( entry->state == PutRecvEntry::WaitRecvComp ) {
 
@@ -881,10 +878,10 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
 
             entry->ackHdr.dest_pid = entry->origHdr.src_pid;
             entry->ackHdr.src_pid = m_pid;
-            PRINT_AT(Context,"send %s key=%d\n",
+            Context_DBG("send %s key=%d\n",
                             entry->ackHdr.op == Ack ? "Ack" : "Ack2",
                             entry->ackHdr.key );
-            PRINT_AT(Context,"mlength=%lu remote_offset=%lu\n",
+            Context_DBG("mlength=%lu remote_offset=%lu\n",
                                 entry->ackHdr.length, entry->ackHdr.offset);
             m_nic->sendMsg( entry->srcNid, &entry->ackHdr, 
                                                 0, 0, entry->callback );  
@@ -896,7 +893,7 @@ bool Context::putRecvCallback( PutRecvEntry* entry )
     if ( entry->list == PTL_PRIORITY_LIST ) {
         delete entry;
     } else {
-        PRINT_AT(Context,"finished PTL_OVERFLOW data movement\n");
+        Context_DBG("finished PTL_OVERFLOW data movement\n");
         if ( entry->cmd ) {
             doMEOverflow( entry );
             delete entry->cmd;
@@ -914,7 +911,7 @@ void Context::recvFini( XXX* entry )
     int eq_handle = m_ptV[ hdr.pt_index ].eq_handle;
     int ct_handle = findME( entry->me_handle )->ct_handle;
 
-    PRINT_AT( Context, "pt_index=%d\n", hdr.pt_index );
+    Context_DBG(  "pt_index=%d\n", hdr.pt_index );
 
     if ( ct_handle != -1 ) {
         if ( me.me.options & PTL_ME_EVENT_CT_BYTES )  { 
@@ -936,7 +933,6 @@ void Context::recvFini( XXX* entry )
             initiator,
             hdr.pt_index,
             hdr.uid,
-            hdr.jid,
             hdr.match_bits,
             hdr.length,
             entry->mlength,

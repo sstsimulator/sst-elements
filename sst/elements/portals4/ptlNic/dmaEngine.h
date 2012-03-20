@@ -8,6 +8,13 @@
 #include "ptlNicTypes.h"
 #include "dmaEvent.h"
 
+#define DmaEngine_DBG( fmt, args... ) {\
+    char _tmp[16]; \
+    sprintf(_tmp,"%d:",m_nid); \
+    _PRINT_AT( DmaEngine, _tmp, fmt, ##args ); \
+}\
+
+
 class NicMmu;
 class DmaEngine {
 

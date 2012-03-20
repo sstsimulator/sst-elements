@@ -2,12 +2,18 @@
 #define _ptlNic_h
 
 #include "ptlNicEvent.h"
-#include "portals4_types.h"
+#include "portals4.h"
 #include "dmaEngine.h"
 #include "context.h"
 #include "callback.h"
 
 #include "sst/elements/SS_router/SS_router/RtrIF.h"
+
+#define PtlNic_DBG( fmt, args... ) {\
+    char _tmp[16]; \
+    sprintf(_tmp,"%d:",m_nid); \
+    _PRINT_AT( PtlNic, _tmp, fmt, ##args ); \
+}\
 
 struct PtlHdr;
 

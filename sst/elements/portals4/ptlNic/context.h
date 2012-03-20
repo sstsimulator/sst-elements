@@ -10,6 +10,12 @@
 #include "ptlNicTypes.h"
 #include "cmdQueue.h"
 
+#define Context_DBG( fmt, args... ) {\
+    char _tmp[16]; \
+    sprintf(_tmp,"%d:",m_nic->nid()); \
+    _PRINT_AT( Context, _tmp, fmt, ##args ); \
+}\
+
 class PtlNic;
 class RecvEntry;
 class Context {
@@ -118,7 +124,6 @@ class Context {
                     ptl_process_t&      initiator,
                     ptl_pt_index_t      pt_index,
                     ptl_uid_t           uid,
-                    ptl_jid_t           jid,
                     ptl_match_bits_t    match_bits,
                     ptl_size_t          rlength,
                     ptl_size_t          mlength,
@@ -230,7 +235,6 @@ class Context {
     ptl_process_t           m_id;
     ptl_pid_t               m_pid;
     ptl_uid_t               m_uid;
-    ptl_jid_t               m_jid;
 
     std::vector<PT>         m_ptV;
     std::vector<CT>         m_ctV;
@@ -280,7 +284,6 @@ inline void Context::writeEvent( int eq_handle,
                     ptl_process_t&      initiator,
                     ptl_pt_index_t      pt_index,
                     ptl_uid_t           uid,
-                    ptl_jid_t           jid,
                     ptl_match_bits_t    match_bits,
                     ptl_size_t          rlength,
                     ptl_size_t          mlength,
@@ -299,7 +302,6 @@ inline void Context::writeEvent( int eq_handle,
     entry->event.user.initiator     = initiator;
     entry->event.user.pt_index      = pt_index;
     entry->event.user.uid           = uid;
-    entry->event.user.jid           = jid;
     entry->event.user.match_bits    = match_bits;
     entry->event.user.rlength       = rlength;
     entry->event.user.mlength       = mlength;
@@ -328,7 +330,7 @@ inline void Context::writeReplyEvent( int eq_handle,
                 initiator,
                 0,
                 0,
-                0,
+    //            0,
                 0,
                 0,
                 mlength,
@@ -354,7 +356,7 @@ inline void Context::writeAckEvent( int eq_handle,
                 initiator,
                 0,
                 0,
-                0,
+//                0,
                 0,
                 0,
                 mlength,
@@ -378,7 +380,7 @@ inline void Context::writeSendEvent( int eq_handle,
                 initiator,
                 0,
                 0,
-                0,
+ //               0,
                 0,
                 0,
                 0,
@@ -403,7 +405,7 @@ inline void Context::writeAutoUnlinkEvent( int eq_handle,
                 initiator,
                 pt_index,
                 0,
-                0,
+//                0,
                 0,
                 0,
                 0,

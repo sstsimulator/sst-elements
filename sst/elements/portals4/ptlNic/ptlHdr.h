@@ -1,7 +1,7 @@
 #ifndef _ptlHdr_t
 #define _ptlHdr_t
 
-#include "portals4_types.h"
+#include "portals4.h"
 
 union CtrlFlit {
     struct {
@@ -23,7 +23,6 @@ struct PtlHdr {
     ptl_size_t          offset;
     uint16_t            dest_pid;
     uint16_t            src_pid;
-    uint16_t            jid;
     uint16_t            uid;
     uint8_t             key;
     uint8_t             ni       : 2;
