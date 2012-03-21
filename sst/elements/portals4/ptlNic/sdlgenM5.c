@@ -1,18 +1,19 @@
 #include <stdio.h>
 #include <assert.h>
 
-static foo( FILE* output, int nid, int numRanks, const char* exe );
+static foo( FILE* output, int nid, int numRanks );
 
-void sdlgenM5( const char* file, const char* exe, int numM5Nids )
+void sdlgenM5( const char* file, int numM5Nids )
 {
     FILE* output = fopen( file, "w" );
     char* indent="";
 
-    printf("file=%s exe=%s numM5Nids=%d\n",file,exe,numM5Nids);
+    printf("file=%s numM5Nids=%d\n",file,numM5Nids);
     
     assert( output );
 
-    fprintf(output,"<?xml version=\"2.0\"?>\n");
+    fprintf(output,"<?xml version=\"1.0\"?>\n");
+    fprintf(output, "<sdl version=\"2.0\"/>\n");
     fprintf(output,"\n");
 
     fprintf(output,"<variables>\n");
@@ -34,7 +35,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s    <base.process.ppid> 1 </base.process.ppid>\n",indent);
     fprintf(output,"%s    <base.process.uid> 1 </base.process.uid>\n",indent); 
     fprintf(output,"%s    <base.process.cwd> / </base.process.cwd>\n",indent);
-    fprintf(output,"%s    <base.process.executable> %s </base.process.executable>\n",indent,exe);
+    fprintf(output,"%s    <base.process.executable> ${M5_EXE} </base.process.executable>\n",indent);
     fprintf(output,"%s    <base.process.simpoint> 0 </base.process.simpoint>\n",indent);
     fprintf(output,"%s    <base.process.errout> cerr </base.process.errout>\n",indent);
     fprintf(output,"%s    <base.process.input> cin </base.process.input>\n",indent);
@@ -97,6 +98,10 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s    <o3cpu.localHistoryBits> 11 </o3cpu.localHistoryBits>\n",indent);
     fprintf(output,"%s    <o3cpu.localHistoryTableSize> 2048 </o3cpu.localHistoryTableSize>\n",indent);
     fprintf(output,"%s    <o3cpu.localPredictorSize> 2048 </o3cpu.localPredictorSize>\n",indent);
+
+    fprintf(output,"%s    <o3cpu.LSQDepCheckShift> 4 </o3cpu.LSQDepCheckShift>\n",indent);
+    fprintf(output,"%s    <o3cpu.LSQCheckLoads> true </o3cpu.LSQCheckLoads>\n",indent);
+
     fprintf(output,"%s    <o3cpu.numIQEntries> 64 </o3cpu.numIQEntries>\n",indent);
     fprintf(output,"%s    <o3cpu.numPhysFloatRegs> 256 </o3cpu.numPhysFloatRegs>\n",indent);
     fprintf(output,"%s    <o3cpu.numPhysIntRegs> 256 </o3cpu.numPhysIntRegs>\n",indent);
@@ -119,7 +124,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s    <base.max_insts_any_thread> 0 </base.max_insts_any_thread>\n",indent);
     fprintf(output,"%s    <base.max_loads_all_threads> 0 </base.max_loads_all_threads>\n",indent);
     fprintf(output,"%s    <base.max_loads_any_thread> 0 </base.max_loads_any_thread>\n",indent);
-    fprintf(output,"%s    <base.clock> 1000 </base.clock>\n",indent);
+    fprintf(output,"%s    <base.clock> 2Ghz </base.clock>\n",indent);
     fprintf(output,"%s    <base.function_trace_start> 0 </base.function_trace_start>\n",indent);
     fprintf(output,"%s    <base.phase> 0 </base.phase>\n",indent);
     fprintf(output,"%s    <base.progress_interval> 0 </base.progress_interval>\n",indent);
@@ -128,6 +133,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s    <base.do_statistics_insts> 1 </base.do_statistics_insts>\n",indent);
     fprintf(output,"%s    <base.function_trace> 0 </base.function_trace>\n",indent);
     fprintf(output,"%s    <base.id> 0 </base.id>\n",indent);
+    fprintf(output,"%s    <base.cpu_id> 0 </base.cpu_id>\n",indent);
     fprintf(output,"%s</cpuParams>\n",indent);
     fprintf(output,"%s\n",indent);
 
@@ -161,6 +167,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s    <write_buffers> 8 </write_buffers>\n",indent);
     fprintf(output,"%s    <size> 0x8000 </size>\n",indent);
     fprintf(output,"%s    <num_cpus> 1 </num_cpus>\n",indent);
+    fprintf(output,"%s    <is_top_level> false </is_top_level>\n",indent);
     fprintf(output,"%s\n",indent);
 
 
@@ -168,7 +175,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s\n",indent);
 
     fprintf(output,"%s<busParams>\n",indent);
-    fprintf(output,"%s    <clock> 1000 </clock>\n",indent);
+    fprintf(output,"%s    <clock> 1Ghz </clock>\n",indent);
     fprintf(output,"%s    <responder_set> false </responder_set>\n",indent);
     fprintf(output,"%s    <block_size> 64 </block_size>\n",indent);
     fprintf(output,"%s    <bus_id> 0 </bus_id>\n",indent);
@@ -178,8 +185,8 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"%s\n",indent);
 
     fprintf(output,"%s<bridgeParams>\n",indent);
-    fprintf(output,"%s    <delay> 0 </delay>\n",indent);
-    fprintf(output,"%s    <nack_delay> 0 </nack_delay>\n",indent);
+    fprintf(output,"%s    <delay> 0ns </delay>\n",indent);
+    fprintf(output,"%s    <nack_delay> 0ns </nack_delay>\n",indent);
     fprintf(output,"%s    <write_ack> false </write_ack>\n",indent);
     fprintf(output,"%s    <req_size_a> 16 </req_size_a>\n",indent);
     fprintf(output,"%s    <req_size_b> 16 </req_size_b>\n",indent);
@@ -196,7 +203,7 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
 
     int i;
     for ( i = 0; i < numM5Nids; i++ ) {
-        foo( output, i, numM5Nids, exe ); 
+        foo( output, i, numM5Nids ); 
         fprintf(output,"\n");
     }
 
@@ -204,18 +211,13 @@ void sdlgenM5( const char* file, const char* exe, int numM5Nids )
     fprintf(output,"</sst>\n");
 }
 
-static foo( FILE* output, int nid, int numRanks, const char* exe )
+static foo( FILE* output, int nid, int numRanks )
 {
     char* indent = "    ";
 
     // CPU
     fprintf(output,"%s<component name=nid%d.cpu0 type=O3Cpu >\n",indent,nid);
     fprintf(output,"%s    <params include=cpuParams>\n",indent);
-    fprintf(output,"%s        <base.process.nid> %d            </base.process.nid>\n",indent,nid);
-    fprintf(output,"%s        <base.process.cmd.0> hello       </base.process.cmd.0>\n",indent);
-    fprintf(output,"%s        <base.process.env.0> RT_RANK=%d  </base.process.env.0>\n",indent,nid);
-    fprintf(output,"%s        <base.process.env.1> RT_SIZE=%d  </base.process.env.1>\n",indent,numRanks);
-    fprintf(output,"%s        <base.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </base.process.env.2>\n",indent);
 
     fprintf(output,"%s    </params>\n",indent);
     fprintf(output,"%s    <link name=nid%d.cpu-dcache port=dcache_port latency=$lat/>\n",indent,nid);
@@ -336,16 +338,12 @@ static foo( FILE* output, int nid, int numRanks, const char* exe )
     fprintf(output,"%s        <range.start> 0x00100000 </range.start>\n",indent);
     fprintf(output,"%s        <range.end>   0xffffffff </range.end>\n",indent);
 
-    fprintf(output,"%s        <latency> 28000 </latency>\n",indent);
-    fprintf(output,"%s        <latency_var> 0 </latency_var>\n",indent);
+    fprintf(output,"%s        <latency> 28ns </latency>\n",indent);
+    fprintf(output,"%s        <latency_var> 0ns </latency_var>\n",indent);
     fprintf(output,"%s        <null> false </null>\n",indent);
     fprintf(output,"%s        <zero> false </zero>\n",indent);
 
-    fprintf(output,"%s        <exe0.process.executable> %s </exe0.process.executable>\n",indent,exe);
-    fprintf(output,"%s        <exe0.process.cmd.0> hello  </exe0.process.cmd.0>\n",indent);
-    fprintf(output,"%s        <exe0.process.env.0> RT_RANK=%d  </exe0.process.env.0>\n",indent,nid);
-    fprintf(output,"%s        <exe0.process.env.1> RT_SIZE=%d  </exe0.process.env.1>\n",indent,numRanks);
-    fprintf(output,"%s        <exe0.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.2>\n",indent);
+    fprintf(output,"%s        <exe0.process.executable> ${M5_EXE} </exe0.process.executable>\n",indent);
 
     fprintf(output,"%s        <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>\n",indent);
     fprintf(output,"%s        <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>\n",indent);

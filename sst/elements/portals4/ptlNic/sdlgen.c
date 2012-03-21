@@ -62,12 +62,11 @@ main(int argc, char **argv)
     int latency = 500;
     char * nic_link_latency = "150ns";
     FILE *output = stdout;
-    char *exe = "app";
 
     int argc_org = argc;
     char **argv_org = argv;
     int ranks = 1;
-    char *filePrefix = "config";
+    char *filePrefix = NULL;
 
     char fileName[256];
     
@@ -93,15 +92,16 @@ main(int argc, char **argv)
         case 'k':
             ranks = atoi(optarg);
             break;
-        case 'e':
-            exe = optarg;
-            break;
         default:
             print_usage(argv[0]);
             exit(1);
         }
     }
 
+    if ( !filePrefix ) {
+        print_usage(argv[0]); 
+        exit(-1);
+    }
     sprintf(fileName,"%s.xml",filePrefix);
 
     output = fopen( fileName ,"w"); 
@@ -110,14 +110,15 @@ main(int argc, char **argv)
 
     size = x_count * y_count * z_count;
 
-    extern void sdlgenM5( const char* file, const char*, int numM5Nids );
+    extern void sdlgenM5( const char* file, int numM5Nids );
 
     sprintf(fileName,"%s-M5.xml",filePrefix);
-    fprintf( stderr, "exe=%s %d:%d:%d size=%d ranks=%d\n", exe, 
+    fprintf( stderr, "%d:%d:%d size=%d ranks=%d\n",
                     x_count, y_count, z_count, size, ranks );
-    sdlgenM5( fileName,  exe, size / ranks ); 
+    sdlgenM5( fileName,  size / ranks ); 
 
-    fprintf(output, "<?xml version=\"2.0\"?>\n");
+    fprintf(output, "<?xml version=\"1.0\"?>\n");
+    fprintf(output, "<sdl version=\"2.0\"/>\n");
     fprintf(output, "\n");
 
     fprintf(output,"<|-- Command Line: -->\n ");
@@ -236,7 +237,7 @@ main(int argc, char **argv)
 
         nidMap[i] = rank; 
         //printf("nidMap[%d]=%d\n",i,rank);
-	    fprintf(output, "    <component name=%d.nic type=m5C.PtlNic rank=%d >\n",i,rank);
+	    fprintf(output, "    <component name=%d.nic type=portals4.PtlNic rank=%d >\n",i,rank);
 	    fprintf(output, "        <params include=nic_params1,nic_params2>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "            <nid> %d </nid>\n",i);
@@ -284,17 +285,28 @@ main(int argc, char **argv)
 
         memset( foo, 0, sizeof(int)*ranks); 
         int j;
-#if 0
         for ( j = 0; j < size; j++ ) {
 
             if ( nidMap[j] == rank ) {
     	        fprintf(output, "            <nid%d.cpu0.base.process.nid> %d </nid%d.cpu0.base.process.nid>\n",foo[rank],j,foo[rank]);
-    	        fprintf(output, "            <nid%d.physmem.exe.process.env.0> RT_RANK=%d </nid%d.physmem.exe.process.env.0>\n",foo[rank],j,foo[rank]);
-    	        fprintf(output, "            <nid%d.physmem.exe.process.env.1> RT_SIZE=%d </nid%d.physmem.exe.process.env.1>\n",foo[rank],size,foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.cmd.0> ${M5_EXE} </nid%d.cpu0.base.process.cmd.0>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.cmd.1> ${ARG1} </nid%d.cpu0.base.process.cmd.1>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.cmd.2> ${ARG2} </nid%d.cpu0.base.process.cmd.2>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.cmd.3> ${ARG3} </nid%d.cpu0.base.process.cmd.3>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.env.0> RT_RANK=%d </nid%d.cpu0.base.process.env.0>\n",foo[rank],j,foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.env.1> RT_SIZE=%d </nid%d.cpu0.base.process.env.1>\n",foo[rank],size,foo[rank]);
+    	        fprintf(output, "            <nid%d.cpu0.base.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000 </nid%d.cpu0.base.process.env.2>\n",foo[rank],foo[rank]);
+
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.cmd.0> ${M5_EXE} </nid%d.physmem.exe0.process.cmd.0>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.cmd.1> ${ARG1} </nid%d.physmem.exe0.process.cmd.1>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.cmd.2> ${ARG2} </nid%d.physmem.exe0.process.cmd.2>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.cmd.3> ${ARG3} </nid%d.physmem.exe0.process.cmd.3>\n",foo[rank],foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.env.0> RT_RANK=%d </nid%d.physmem.exe0.process.env.0>\n",foo[rank],j,foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.env.1> RT_SIZE=%d </nid%d.physmem.exe0.process.env.1>\n",foo[rank],size,foo[rank]);
+    	        fprintf(output, "            <nid%d.physmem.exe0.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000 </nid%d.physmem.exe0.process.env.2>\n",foo[rank],foo[rank]);
                 ++foo[rank];
             }
         }
-#endif
 
 	    fprintf(output, "        </params>\n");
 
