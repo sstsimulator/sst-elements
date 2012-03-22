@@ -18,22 +18,12 @@ bool SST::Power::p_hasUpdatedTemp __attribute__((weak));
 class SimLoopExitEvent;
 class M5 : public SST::IntrospectedComponent
 {
-    class Event : public SST::Event {
-      public:
-        Event() { 
-            setPriority(98);
-        }
-        SST::Cycle_t time;
-        SST::Cycle_t cycles;
-    };
-
   public:
     M5( SST::ComponentId_t id, Params_t& params );
     ~M5();
     int Setup();
     int Finish();
-    bool catchup( SST::Cycle_t );
-    void arm( SST::Cycle_t );
+    bool catchup( );
 
     void registerExit();
     void exit( int status );
@@ -41,15 +31,15 @@ class M5 : public SST::IntrospectedComponent
     BarrierAction&  barrier() { return *m_barrier; }
 
   private:
-    void selfEvent( SST::Event* );
+    bool clock( SST::Cycle_t cycle );
 
     SST::Link*          m_self;
-    bool                m_armed;
-    Event&              m_event;
-    SST::TimeConverter *m_tc;
-    SimLoopExitEvent   *m_exitEvent;
     int                 m_numRegisterExits;
-    BarrierAction*       m_barrier;
+    BarrierAction*      m_barrier;
+    int                 m_m5ticksPerSSTclock;
+    SST::Cycle_t        m_fooTicks;
+    SimLoopExitEvent*   m_exitEvent;
+
     // flag for fastforwarding
     bool FastForwarding_flag;
 

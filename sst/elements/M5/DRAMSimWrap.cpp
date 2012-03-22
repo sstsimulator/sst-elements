@@ -211,18 +211,13 @@ bool DRAMSimWrap::clock( SST::Cycle_t cycle )
 {
     SST::Cycle_t now = m_tc->convertToCoreTime( cycle );
 
-    // calling sendTiming can change the state of the M5 queue, 
-    // we need to bring it up to the current time and then arm it 
-    if ( m_comp->catchup( now ) ) {
-	    DBGX(3,"catchup() says we're exiting\n");
+    if ( m_comp->catchup( ) ) {
         return true;
     }
 
     MS_CAST( m_memorySystem )->update();
 
     sendTry();
-
-    m_comp->arm( now );
 
     while ( ! m_recvQ.empty() ) {
         PacketPtr pkt = m_recvQ.front().first;

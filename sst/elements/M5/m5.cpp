@@ -21,21 +21,25 @@ using namespace SST;
 
 boost::mpi::communicator world;
 
+int _mpi_rank;
+
 static void enableDebug( std::string name );
+#if 0
 static void print_cpu_usagecounts(usage_counts &perf_usage, int i);
+#endif
 
 M5::M5( ComponentId_t id, Params_t& params ) :
-    IntrospectedComponent( id),
-    m_armed( false ),
-    m_event( * new Event() ),
-    m_exitEvent( NULL ),
-    m_numRegisterExits(0),
+    IntrospectedComponent( id ),
+    m_numRegisterExits( 0 ),
     m_barrier( new BarrierAction ),
-    params (params)  //for power
+    params( params ),  //for power
+    m_m5ticksPerSSTclock( 1000 ),
+    m_exitEvent( NULL )
 {
     // M5 variable
     want_info = false;
 
+printf("XXXXXXX\n");
     // a flag for telling if fastforwarding is used 
     FastForwarding_flag=false;
 
@@ -58,6 +62,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     std::ostringstream tmp;
 
+    _mpi_rank = world.rank();
     tmp << world.rank();
     // libm5 src/base/trace.cc references "RANK"
     setenv("RANK", tmp.str().c_str(), 1 );
@@ -76,15 +81,28 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     buildConfig( this, "m5", configFile, params );
 
-    setClockFrequency(1000000000000);
+    // It makes things easier if we match the m5 simulation clock with 
+    // the SST simulation clock. We don't have access to the SST clock but
+    // it is 1 ps.
+	unsigned long m5_freq = 1000000000000; 
+    setClockFrequency( m5_freq );
 
-    m_tc = registerTimeBase("1ps");
-    assert( m_tc );
+    TimeConverter *minPartTC = Simulation::getSimulation()->getMinPartTC();
+    if ( minPartTC ) {
+        m_m5ticksPerSSTclock = minPartTC->getFactor();
+    }
+    m_fooTicks = m_m5ticksPerSSTclock;
 
-    m_self = configureSelfLink("self", m_tc,
-            new SST::Event::Handler<M5>(this,&M5::selfEvent));
+    float clockFreqKhz = (m5_freq / m_m5ticksPerSSTclock) / 1000; 
 
-    assert( m_self );
+    string strBuf;
+    strBuf.resize(32);
+    snprintf( &strBuf[0], 32, "%.0f khz", clockFreqKhz );
+
+    DBGX( 3, "SST sync factor %i, `%s`\n", 
+                        m_m5ticksPerSSTclock, strBuf.c_str() ); 
+
+    registerClock( strBuf, new SST::Clock::Handler< M5 >( this, &M5::clock ) );
 
     if ( params.find( "registerExit" ) != params.end() ) {
         if( ! params["registerExit"].compare("yes") ) {
@@ -115,16 +133,11 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 		(this, &M5::pushData));
     #endif
 
-
     DBGX( 2, "returning\n" );
 }
 
 M5::~M5()
 {
-    // do we really need to cleanup?
-    if ( ! m_armed ) {
-        delete &m_event;
-    }
 }
 
 int M5::Setup()
@@ -156,12 +169,9 @@ int M5::Setup()
 
     DBGX( 2, "call SimStartup\n" );
     SimStartup();
-
     DBGX( 2, "SimStartup done\n" );
 
-    arm( 0 );
-
-     //
+    //
     // for power modeling in SST-M5
     //
     #ifdef M5_WITH_POWER
@@ -204,6 +214,16 @@ int M5::Setup()
 
     #endif
 
+    // hack: If simulate returns a value it means that it has exited,
+    // don't bothter doing proper exit handler here. What simulation
+    // would exit after a one clock?
+#if 0
+    DBGX( 5, "call simulate M5 curTick() %lu\n", curTick() );
+    assert( ! simulate( m_m5ticksPerSSTclock ) ); 
+    DBGX( 5, "simulate returned M5 curTick() %lu\n", curTick() );
+#endif
+
+
     return 0;
 }
 
@@ -226,67 +246,53 @@ void M5::exit( int status )
     } 
 }
 
-bool M5::catchup( SST::Cycle_t time ) 
+bool M5::catchup()
 {
-    DBGX( 5, "SST-time=%lu, M5-time=%lu simulate(%lu)\n",
-                                    time, curTick(), time - curTick() ); 
+    Cycle_t cycles = SST::Simulation::getSimulation()-> getCurrentSimCycle();
+    Cycle_t ticks = cycles - curTick();
 
-    m_exitEvent = simulate( time - curTick() );
+    DBGX(5,"m5 curTick()=%lu sst getCurrentSimCycle()=%lu\n", curTick(), cycles );
 
-    m_event.cycles = m_event.time - time;
+    m_fooTicks -= ticks;
 
-    return ( m_exitEvent );
+    return ( m_exitEvent = simulate( ticks ) ) == NULL ? false : true;
 }
 
-void M5::arm( SST::Cycle_t now )
+bool M5::clock( SST::Cycle_t cycle )
 {
-    if ( ! m_armed && ! mainEventQueue.empty() )  {
-        m_event.cycles = mainEventQueue.nextTick() - now;
-        m_event.time = mainEventQueue.nextTick();
+    DBGX( 5, "current_cycle=%lu\n", cycle * m_m5ticksPerSSTclock );
 
-        DBGX( 5, "nextTick=%lu cycles=%lu\n", m_event.time, m_event.cycles );
-        assert( ! ( now != 0 && m_event.cycles == 0 ) );
-
-        DBGX( 5, "send %lu\n", now + m_event.cycles );
-        m_self->Send( m_event.cycles, &m_event );
-
-        m_armed = true;
-    }
-}
-
-void M5::selfEvent( SST::Event* )
-{
-    m_armed = false;
-
-    DBGX( 5, "currentTime=%lu cycles=%lu\n", m_event.time, m_event.cycles );
-
+    // if catchup() has not triggered an M5 exit
     if ( ! m_exitEvent ) {
-	////std::cout << "m_event.cycles = " << m_event.cycles << std::endl;
-
-        m_exitEvent = simulate( m_event.cycles );
+        DBGX( 5, "call simulate M5 curTick()=%lu m_fooTicks=%lu\n", curTick(), m_fooTicks );
+        m_exitEvent = simulate( m_fooTicks );
+        DBGX( 5, "simulate returned M5 curTick() %lu\n", curTick() );
+        m_fooTicks = m_m5ticksPerSSTclock;
     }
 
-    if ( ! m_exitEvent ) {
-        arm( m_event.time );
-    }  
-    //
-    // for fast-forwarding to reache the ROI at a faster speed in real benchmarks
-    // the exitcode is set to 100 to distinguish from regular exit
-    else if(m_exitEvent->getCode()==100){
-	std::cout << "I entered getCode = 100" << std::endl;
+    if( m_exitEvent )  {
+        // for fast-forwarding to reache the ROI at a faster speed in real 
+        // benchmarks the exitcode is set to 100 to distinguish from regular 
+        // exit
+        if ( m_exitEvent->getCode() == 100 ){
+	        std::cout << "I entered getCode = 100" << std::endl;
 
-	FastForwarding_flag=true;
-	SimObject::SST_FF();
-	if(simulate()->getCode()>=0){
-		unregisterExit();
-	}
-    }
-    else {
-        // bug what if we didn't call registerExit()
-        unregisterExit();
-        INFO( "exiting: time=%lu cause=`%s` code=%d\n", m_event.time,
+	        FastForwarding_flag=true;
+#if 0
+	        SimObject::SST_FF();
+#endif
+	        if(simulate()->getCode()>=0){
+		        unregisterExit();
+	        }
+        } else {
+            // bug what if we didn't call registerExit()
+            unregisterExit();
+            INFO( "exiting: time=%lu cause=`%s` code=%d\n", cycle,
                 m_exitEvent->getCause().c_str(), m_exitEvent->getCode() );
+        }
+        return true;
     }
+    return false;
 }
 
 static void enableDebug( std::string name )
@@ -539,7 +545,9 @@ M5::pushData(Cycle_t current)
 int M5::Finish()
 {
     unsigned int i;
+#if 0
     usage_counts McPAT_usage_counts;
+
 
     printf("\nPrinting statistic results:\n\n");
 
@@ -578,10 +586,12 @@ int M5::Finish()
     	printf("		l2cache_conflicts	: %ld\n",   (long)McPAT_usage_counts.l2cache_conflicts[i]);
     }
 
+#endif
    
     return 0;
 }
 
+#if 0
 static void print_cpu_usagecounts(usage_counts &perf_usage, int i)
 {
 
@@ -680,6 +690,7 @@ static void print_cpu_usagecounts(usage_counts &perf_usage, int i)
     }
 
 }
+#endif
 
 unsigned freq_to_ticks( std::string val )
 {

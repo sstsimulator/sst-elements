@@ -14,11 +14,11 @@ struct MemLinkParams : public MemObjectParams
     M5*             m5Comp;
     Range< Addr >   range;
     std::string     linkName;
+    bool            snoop;
+    int             delay;
 };
 
-class SST::Link;
-class SST::TimeConverter;
-class MemEvent;
+//class SST::Link;
 
 class MemLink : public MemObject
 {
@@ -32,30 +32,34 @@ class MemLink : public MemObject
 
         void sendFunctional(PacketPtr pkt)
         {
-            PRINTFN("%s()\n",__func__);
+            DBGX_M5(3,"\n");
             Port::sendFunctional( pkt );
             delete pkt;
         }
 
         bool sendTiming(PacketPtr pkt)
         {
+            DBGX_M5(3,"cmd=`%s`addr=%#lx\n",
+                        pkt->cmdString().c_str(),pkt->getAddr());
             if ( pkt->memInhibitAsserted() ) {
-                PRINTFN("%s() memInhbitAssert()\n",__func__);
+                DBGX_M5(3,"memInhibitAsserted\n");
                 delete pkt;
                 return true;
             }
             if ( ! m_deferred.empty() || ! Port::sendTiming( pkt ) ) {
-                PRINTFN("%s() deffered\n",__func__);
+                DBGX_M5(3,"deffered\n");
                 m_deferred.push_back( pkt );
             } else {
-                PRINTFN("%s()\n",__func__);
+                DBGX_M5(3,"\n");
             }
             return true;
         }
 
       protected:
         virtual bool recvTiming(PacketPtr pkt) {
-            PRINTFN("%s()\n",__func__);
+            DBGX_M5(3,"cmd=`%s`addr=%#lx first=%lu finish=%lu\n",
+                        pkt->cmdString().c_str(),pkt->getAddr(),
+                        pkt->firstWordTime,pkt->finishTime);
             return static_cast<MemLink*>(owner)->send( new MemEvent( pkt ) );
         }
 
@@ -63,7 +67,7 @@ class MemLink : public MemObject
 
         virtual void recvFunctional(PacketPtr pkt)
         {
-            PRINTFN("%s()\n",__func__);
+            DBGX_M5(2,"\n");
 
             if ( ! pkt->cmd.isWrite() ) { panic( "read is not supported" ); }
 
@@ -76,7 +80,7 @@ class MemLink : public MemObject
                 if ( ! Port::sendTiming( m_deferred.front() ) ) {
                     break;
                 }
-                PRINTFN("%s()\n",__func__);
+                DBGX_M5(3,"\n");
                 m_deferred.pop_front();
             }
         }
@@ -104,9 +108,10 @@ class MemLink : public MemObject
 
     M5*                   m_comp;
     SST::Link*            m_link;
-    SST::TimeConverter*   m_tc;
     LinkPort*             m_port;
     Range< Addr >         m_range;
+    bool                  m_snoop;
+    int                   m_delay;
 };
 
 #endif
