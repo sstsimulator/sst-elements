@@ -39,7 +39,6 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     // M5 variable
     want_info = false;
 
-printf("XXXXXXX\n");
     // a flag for telling if fastforwarding is used 
     FastForwarding_flag=false;
 
