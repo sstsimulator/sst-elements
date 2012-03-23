@@ -17,8 +17,6 @@
 #include <assert.h>
 #include "routermodel.h"
 
-// FIXME:
-// Add virtual lanes
 
 
 // The lower 27 bits of the event ID are the rank number, high order bits are sequence
@@ -130,6 +128,7 @@ int out_port;
 	if (port[out_port].next_out <= current_time)   {
 	    // No output port delays.  We can send as soon as the message arrives;
 	    delay= 0;
+	    blocked= 0;
 
 	} else   {
 	    // Busy right now
@@ -150,12 +149,6 @@ int out_port;
 	// FIXME: The constant 1000000000 should be replaced with our time base
 	link_time= ((uint64_t)e->msg_len * 1000000000) / router_bw;
 
-	port[in_port].next_in= current_time + delay + link_time;
-
-	// Once this message is going out, the port will be busy for that
-	// much longer
-	port[out_port].next_out= current_time + delay + link_time;
-
     } else   {
 
 	// Calculate when this message can leave the router port
@@ -163,15 +156,11 @@ int out_port;
 	link_time= get_Rtrparams(NICparams, e->msg_len);
 	if (current_time >= port[out_port].next_out)   {
 	    // Port is not busy
-	    // How long will this message occupy the outbound link?
-	    port[out_port].next_out= current_time + delay + link_time;
-	    port[in_port].next_in= current_time + link_time;
+	    blocked= 0.0;
 
 	} else   {
 	    // Port is busy
 	    blocked= port[out_port].next_out - current_time ;
-	    port[out_port].next_out= current_time + blocked + delay + link_time;
-	    port[in_port].next_in= current_time + blocked + link_time;
 
 	    congestion_out_cnt++;
 	    congestion_out += blocked;
@@ -180,9 +169,13 @@ int out_port;
 	}
     }
 
+    // When can these ports be used again?
+    port[out_port].next_out= current_time + blocked + delay + link_time;
+    port[in_port].next_in= current_time + blocked + link_time;
+
     e->hops++;
     assert(port[out_port].link); // Trying to use an unused port. This is a routing error
-    port[out_port].link->Send(delay, e);
+    port[out_port].link->Send(delay + blocked, e);
     port[out_port].cnt_out++;
     msg_cnt++;
 
