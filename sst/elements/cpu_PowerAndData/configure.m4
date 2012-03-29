@@ -9,7 +9,7 @@ AC_DEFUN([SST_cpu_PowerAndData_CONFIG], [
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test ! -z "$with_panalyzer" -a "$with_panalyzer" != "yes"],
-    [SIMPANALYZER_CPPFLAGS="-I$with_panalyzer/include"
+    [SIMPANALYZER_CPPFLAGS="-I$with_panalyzer"
      CPPFLAGS="$SIMPANALYZER_CPPFLAGS $CPPFLAGS"
      SIMPANALYZER_LDFLAGS="-L$with_panalyzer"
      LDFLAGS="$SIMPANALYZER_LDFLAGS $LDFLAGS"],
@@ -43,7 +43,7 @@ AC_DEFUN([SST_cpu_PowerAndData_CONFIG], [
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test ! -z "$with_McPAT" -a "$with_McPAT" != "yes"],
-    [MCPAT_CPPFLAGS="-I$with_McPAT/include"
+    [MCPAT_CPPFLAGS="-I$with_McPAT"
      CPPFLAGS="$MCPAT_CPPFLAGS $CPPFLAGS"
      MCPAT_LDFLAGS="-L$with_McPAT"
      LDFLAGS="$MCPAT_LDFLAGS $LDFLAGS"],

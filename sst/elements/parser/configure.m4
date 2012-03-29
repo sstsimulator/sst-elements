@@ -9,7 +9,7 @@ AC_DEFUN([SST_parser_CONFIG], [
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test ! -z "$with_McPAT" -a "$with_McPAT" != "yes"],
-    [MCPAT_CPPFLAGS="-I$with_McPAT/include"
+    [MCPAT_CPPFLAGS="-I$with_McPAT"
      CPPFLAGS="$MCPAT_CPPFLAGS $CPPFLAGS"
      MCPAT_LDFLAGS="-L$with_McPAT"
      LDFLAGS="$MCPAT_LDFLAGS $LDFLAGS"],
@@ -43,7 +43,7 @@ AC_DEFUN([SST_parser_CONFIG], [
   LDFLAGS_saved="$LDFLAGS"
 
   AS_IF([test ! -z "$with_hotspot" -a "$with_hotspot" != "yes"],
-    [HOTSPOT_CPPFLAGS="-I$with_hotspot/include"
+    [HOTSPOT_CPPFLAGS="-I$with_hotspot"
      CPPFLAGS="$HOTSPOT_CPPFLAGS $CPPFLAGS"
      HOTSPOT_LDFLAGS="-L$with_hotspot"
      LDFLAGS="$HOTSPOT_LDFLAGS $LDFLAGS"],
