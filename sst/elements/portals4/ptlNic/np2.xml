@@ -55,7 +55,7 @@
         <M5debug> none </M5debug>
         <info> no </info>
         <registerExit> yes </registerExit>
-        <configFile> foo-M5.xml </configFile>
+        <configFile> np2-M5.xml </configFile>
     </cpu_params>
 
 </param_include>
