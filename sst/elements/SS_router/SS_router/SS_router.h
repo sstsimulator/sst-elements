@@ -134,19 +134,38 @@ public:
 //!SEC:EDSim
 class rtrPPool {
 private:
+#if 1 
+    deque<rtrP*> thePool;
+#else
     vector<rtrP*> thePool;
     int count;
+#endif
 public:
     rtrPPool() {
+#if 1
+        for (int i = 0; i < 100; i++) {
+            thePool.push_back(new rtrP);
+        }
+#else
         rtrP *rp;
         for (int i = 0; i < 10; i++) {
             rp = new rtrP;
             thePool.push_back(rp);
         }
         count = 10;
+#endif
     }
 
     rtrP *getRp() {
+#if 1 
+        if ( thePool.empty() ) {
+            return new rtrP;
+        } else {
+            rtrP *rp = thePool.front();
+            thePool.pop_front();
+            return rp;
+        }
+#else
         rtrP *rp;
         if (count > 0) {
             rp = thePool.back();
@@ -159,11 +178,14 @@ public:
             count++;
         }
         return rp;
+#endif
     }
 
     void returnRp(rtrP* rp) {
         thePool.push_back(rp);
+#if 0 
         count++;
+#endif
     }
 };
 
