@@ -1,6 +1,6 @@
-#include <sys/syscall.h>
 #include <unistd.h>
-#include "m5_syscall.h"
+#include <m5_syscall.h>
+#include <syscall.h> // for SYS_exit
 
 void exit( int status )
 {

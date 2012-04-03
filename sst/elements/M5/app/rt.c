@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <m5rt.h>
+#include <runtime.h>
 #include <assert.h>
 
 extern char **environ;

@@ -1,12 +1,15 @@
 
 all:
+	cd m5syscall && $(MAKE)
+	cd runtime && $(MAKE)
 	cd libc && $(MAKE)
-	cd rt && $(MAKE)
-	test -d lib || mkdir lib
-	cd lib && test -f libm5rt.a || ln -s ../rt/libm5rt.a
-	test -d include || mkdir include 
-	cd include && test -f cnos_mpi_os.h || ln -s ../rt/m5rt.h cnos_mpi_os.h
+
+install:
+	cd m5syscall && $(MAKE) install
+	cd runtime && $(MAKE) install
+	cd libc && $(MAKE) install
 
 clean:
+	cd m5syscall && $(MAKE) clean
+	cd runtime && $(MAKE) clean
 	cd libc && $(MAKE) clean
-	cd rt && $(MAKE) clean

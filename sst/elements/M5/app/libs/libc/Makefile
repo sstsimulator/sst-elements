@@ -1,9 +1,13 @@
 
-SRCS = m5_syscall.c m5_exit.c #m5_io.c
+SRCS = m5_exit.c
+
+CPPFLAGS=-I../include
 
 OBJS = ${SRCS:.c=.o}
 
 all: ${OBJS} 
+
+install:
 
 clean:
 	rm -f ${OBJS}

@@ -1,11 +1,11 @@
 
-SRCS = m5rt.c
+SRCS = runtime.c
 
 OBJS = ${SRCS:.c=.o}
 
-LIB = libm5rt.a
+LIB = libruntime.a
 
-CPPFLAGS += -I../include
+CPPFLAGS += -I../include -Wall
 
 ${LIB}: ${OBJS}
 	${AR} rcs $@ ${OBJS}
