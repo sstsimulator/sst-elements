@@ -53,6 +53,9 @@ class DummyThreadContext : public ThreadContext {
     virtual TheISA::TLB *getDTBPtr()
     { DBGX(2,"\n"); }
 
+    virtual Decoder *getDecoderPtr()
+    { DBGX(2,"\n"); }
+
     virtual System *getSystemPtr()
     { DBGX(2,"\n"); }
 #if FULL_SYSTEM
@@ -164,7 +167,7 @@ class DummyThreadContext : public ThreadContext {
     { DBGX(2,"\n"); }
 
     virtual void setIntReg(int reg_idx, uint64_t val)
-    { DBGX(2,"\n"); }
+    { DBGX(2,"reg=%d val=%#lx\n",reg_idx, val); }
 
     virtual void setFloatReg(int reg_idx, FloatReg val, int width)
     { DBGX(2,"\n"); }
@@ -215,10 +218,10 @@ class DummyThreadContext : public ThreadContext {
     { DBGX(2,"\n"); }
 
     virtual void setMiscRegNoEffect(int misc_reg, const MiscReg &val)
-    { DBGX(2,"\n"); }
+    { DBGX(2,"reg=%d val=%#lx\n",misc_reg, val); }
 
     virtual void setMiscReg(int misc_reg, const MiscReg &val)
-    { DBGX(2,"\n"); }
+    { DBGX(2,"reg=%d val=%#lx\n",misc_reg, val); }
 
     virtual uint64_t
     readRegOtherThread(int misc_reg, ThreadID tid)

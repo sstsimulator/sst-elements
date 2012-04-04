@@ -38,7 +38,6 @@ class M5 : public SST::IntrospectedComponent
     BarrierAction*      m_barrier;
     int                 m_m5ticksPerSSTclock;
     SST::Cycle_t        m_fooTicks;
-    SimLoopExitEvent*   m_exitEvent;
 
     // flag for fastforwarding
     bool FastForwarding_flag;
@@ -54,6 +53,9 @@ class M5 : public SST::IntrospectedComponent
 	// Over-specified struct that holds usage counts of its sub-components
  	SST::usagecounts_t mycounts, tempcounts; //M5 statistics are accumulative, so we need tempcounts to get the real statistics for a time step
 	bool pushData(SST::Cycle_t);
+    void Init_Power();
+    void Setup_Power();
+    void Finish_Power();
    #endif
 
 };

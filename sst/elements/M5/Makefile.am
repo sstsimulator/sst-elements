@@ -36,6 +36,7 @@ libm5C_la_SOURCES = \
     physicalPlus.cpp \
     physicalPlus.h \
     physicalMemory.cpp \
+    power.cpp \
     ptlNicMMIF.cpp \
     ptlNicMMIF.h \
     process.h \

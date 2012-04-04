@@ -13,6 +13,8 @@ static inline System* create_System( std::string name,
     params.name = name;
     params.physmem = physmem;
     params.mem_mode = mem_mode;
+    params.memories.resize(1);
+    params.memories[0] = physmem;
 
     return new System( &params );
 }

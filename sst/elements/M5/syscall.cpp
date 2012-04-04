@@ -193,6 +193,7 @@ void Syscall::finishFstat()
     free( m_dmaEvent.buf );
 }
 
+#if 0
 int64_t Syscall::startIoctl( int fd, int request, Addr buf )
 {
     DBGX(3, "fd=%d request=%#x buf=%#lx\n", fd, request ,buf ); 
@@ -213,6 +214,7 @@ int64_t Syscall::startIoctl( int fd, int request, Addr buf )
     dmaWrite( buf, sizeof( struct stat ), &m_dmaEvent, m_dmaEvent.buf, 0 );
 #endif
 }
+#endif
 
 void Syscall::finishIoctl()
 {

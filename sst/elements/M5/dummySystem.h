@@ -33,13 +33,11 @@ class DummySystem : public System {
         return& m_threadContext; 
     }
 
-    Addr new_page() {
+    Addr allocPhysPages(int npages) {
         Addr return_addr = pagePtr << LogVMPageSize;
-        ++pagePtr;
-
+        pagePtr += npages;
         if (return_addr >= m_end - m_start)
             fatal("Out of memory, please increase size of physical memory.");
-        //printf("%s %#lx\n",__func__,m_start + return_addr);
         return m_start + return_addr;
     }
 

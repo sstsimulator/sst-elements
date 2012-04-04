@@ -3,9 +3,7 @@
 #define _paramHelp_h
 
 #include <debug.h>
-
-extern unsigned freq_to_ticks( std::string val );
-extern unsigned latency_to_ticks( std::string val );
+#include <util.h>
 
 #define INIT_CLOCK( c, p, member )\
     c.member = freq_to_ticks( p.find_string(#member) );\

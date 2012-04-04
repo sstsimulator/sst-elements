@@ -9,6 +9,8 @@ extern Log<> _dbg;
 extern Log<> _info;
 extern bool SST_M5_debug;
 
+extern void enableDebug( std::string name );
+
 #define PRINTFN(...) do {                                      \
     if ( Trace::enabled && SST_M5_debug )                       \
         Trace::dprintf(curTick(), name(), __VA_ARGS__);           \
@@ -22,11 +24,10 @@ exit(-1); \
 
 
 #if 1 
-extern int _mpi_rank;
 #define DBGX_M5( x, fmt, args... ) \
 {\
      char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%d:%7lu: %s: %s::%s():%d: "fmt, _mpi_rank,curTick(),\
+    fprintf( stderr, "%7lu: %s: %s::%s():%d: "fmt, curTick(),\
                         name().c_str(), realname ? realname : "?????????", \
                         __func__, __LINE__, ##args);\
     if ( realname ) free(realname);\

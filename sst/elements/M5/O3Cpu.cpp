@@ -82,7 +82,9 @@ SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstPar
     INIT_INT( BaseParams, baseSSTParams, max_insts_any_thread );
     INIT_INT( BaseParams, baseSSTParams, max_loads_all_threads );
     INIT_INT( BaseParams, baseSSTParams, max_loads_any_thread );
+#if 0
     INIT_INT( BaseParams, baseSSTParams, max_insts_FF);
+#endif
 
     BaseParams.system = system;
 

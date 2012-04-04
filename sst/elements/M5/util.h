@@ -9,6 +9,9 @@ typedef std::map< std::string, SimObject* > objectMap_t;
 
 extern objectMap_t buildConfig( M5*, std::string, std::string, SST::Params& );
 
+extern unsigned freq_to_ticks( std::string val );
+extern unsigned latency_to_ticks( std::string val );
+
 static inline std::string resolveString( std::string str )      
 {
     std::string retStr;

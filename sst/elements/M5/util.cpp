@@ -2,6 +2,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
+#include <sst/core/timeLord.h>
 #include <sst/core/configGraph.h>
 
 #include <util.h>
@@ -49,8 +50,8 @@ objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST
         l0.portName = tmp.port[0];
         l1.portName = tmp.port[1];
 
-        l0.portNum= -1;
-        l1.portNum = -1;
+        l0.portNum = 0;
+        l1.portNum = 0;
 
         linkMap[ tmp.name  ] =  std::make_pair( l0, l1 ); 
     } 
@@ -131,4 +132,20 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
             exit(1);
         }
     } 
+}
+unsigned freq_to_ticks( std::string val )
+{
+
+    unsigned cycles = SST::Simulation::getSimulation()->
+                    getTimeLord()->getSimCycles(val,__func__);
+    DBGC(2,"%s() %s ticks=%lu\n",__func__,val.c_str(),cycles);
+    return cycles;
+}
+unsigned latency_to_ticks( std::string val )
+{
+
+    unsigned cycles = SST::Simulation::getSimulation()->
+                    getTimeLord()->getSimCycles(val,__func__);
+    DBGC(2,"%s() %s ticks=%lu\n",__func__,val.c_str(),cycles);
+    return cycles;
 }
