@@ -26,6 +26,8 @@
 #include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>
 
+using namespace std;
+
 static Component* 
 create_trig_cpu(SST::ComponentId_t id, 
                 SST::Component::Params_t& params)
