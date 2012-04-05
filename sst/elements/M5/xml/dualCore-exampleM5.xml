@@ -14,8 +14,6 @@
     <base.process.euid> 100 </base.process.euid>
     <base.process.gid> 100 </base.process.gid>
     <base.process.egid> 100 </base.process.egid>
-    <base.process.pid> 1 </base.process.pid>
-    <base.process.ppid> 1 </base.process.ppid>
     <base.process.cwd> / </base.process.cwd>
     <base.process.executable> ${M5_EXE} </base.process.executable>
     <base.process.simpoint> 0 </base.process.simpoint>
@@ -171,7 +169,10 @@
 
     <component name=nid0.core0 type=O3Cpu >
         <params include=cpuParams>
+            <base.process.pid> 100 </base.process.pid>
             <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
+            <base.process.env.0> RT_RANK=0  </base.process.env.0>
+            <base.process.env.1> RT_SIZE=2  </base.process.env.1>
             <physicalMemory.start> 0x00100000 </physicalMemory.start>
             <physicalMemory.end>   0x011fffff </physicalMemory.end>
             <base.cpu_id> 0 </base.cpu_id>
@@ -202,7 +203,10 @@
 
     <component name=nid0.core1 type=O3Cpu >
         <params include=cpuParams>
+            <base.process.pid> 101 </base.process.pid>
             <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
+            <base.process.env.0> RT_RANK=1  </base.process.env.0>
+            <base.process.env.1> RT_SIZE=2  </base.process.env.1>
             <physicalMemory.start> 0x01200000 </physicalMemory.start>
             <physicalMemory.end>   0x021fffff </physicalMemory.end>
             <base.cpu_id> 1 </base.cpu_id>
@@ -320,10 +324,15 @@
             <zero> false </zero>
             <exe0.process.executable> ${M5_EXE}    </exe0.process.executable>
             <exe0.process.cmd.0> ${M5_EXE}         </exe0.process.cmd.0>
+            <exe0.process.env.0> RT_RANK=0          </exe0.process.env.0>
+            <exe0.process.env.1> RT_SIZE=2          </exe0.process.env.1>
             <exe0.physicalMemory.start> 0x00100000 </exe0.physicalMemory.start>
             <exe0.physicalMemory.end>   0x011fffff </exe0.physicalMemory.end>
+
             <exe1.process.executable> ${M5_EXE}    </exe1.process.executable>
             <exe1.process.cmd.0> ${M5_EXE}         </exe1.process.cmd.0>
+            <exe1.process.env.0> RT_RANK=1          </exe1.process.env.0>
+            <exe1.process.env.1> RT_SIZE=2          </exe1.process.env.1>
             <exe1.physicalMemory.start> 0x01200000 </exe1.physicalMemory.start>
             <exe1.physicalMemory.end>   0x021fffff </exe1.physicalMemory.end>
         </params>

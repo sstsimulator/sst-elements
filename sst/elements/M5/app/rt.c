@@ -22,8 +22,9 @@ int main( int argc, char* argv[] )
 	printf("%d: rank=%d nid=%d pid=%d\n", rank, i, map[i].nid, map[i].pid );
     }
 
-    printf("call cnos_barrier\n");
+    printf("call cnos_barrier()\n");
     cnos_barrier();
+    printf("cnos_barrier() return\n");
     printf("goodby mike\n");
 
     return 0;

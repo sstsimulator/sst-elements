@@ -17,7 +17,6 @@
     <base.process.gid> 100 </base.process.gid>
     <base.process.egid> 100 </base.process.egid>
     <base.process.pid> 1 </base.process.pid>
-    <base.process.ppid> 1 </base.process.ppid>
     <base.process.cwd> / </base.process.cwd>
     <base.process.executable> ${M5_EXE} </base.process.executable>
     <base.process.simpoint> 0 </base.process.simpoint>
@@ -174,6 +173,8 @@
     <component name=nid0.cpu0 type=O3Cpu >
         <params include=cpuParams>
             <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
+            <base.process.env.0> RT_RANK=0  </base.process.env.0>
+               
         </params>
         <link name=nid0.cpu-dcache port=dcache_port latency=$lat/>
         <link name=nid0.cpu-icache port=icache_port latency=$lat/>
@@ -271,6 +272,7 @@
             <zero> false </zero>
             <exe0.process.executable> ${M5_EXE} </exe0.process.executable>
             <exe0.process.cmd.0> ${M5_EXE}  </exe0.process.cmd.0>
+            <exe0.process.env.0> RT_RANK=0 </exe0.process.env.0>
             <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>
             <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>
         </params>

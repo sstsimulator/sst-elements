@@ -16,7 +16,7 @@ using namespace SST;
 M5::M5( ComponentId_t id, Params_t& params ) :
     IntrospectedComponent( id ),
     m_numRegisterExits( 0 ),
-    m_barrier( new BarrierAction ),
+    m_barrier( NULL ),
     params( params ),  //for power
     m_m5ticksPerSSTclock( 1000 )
 {
@@ -80,6 +80,11 @@ M5::M5( ComponentId_t id, Params_t& params ) :
             INFO("registering exit\n");
             IntrospectedComponent::registerExit();
         }
+    }
+
+    int numBarrier = params.find_integer( "numBarrier" );
+    if ( numBarrier > 0 ) {
+        m_barrier = new BarrierAction( numBarrier );
     }
 
     //

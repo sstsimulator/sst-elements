@@ -1,7 +1,31 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <m5_syscall.h>
+#include <assert.h>
+#include <stdio.h>
 #include "runtime.h"
+
+
+static int _readFd;
+static int _writeFd;
+
+static __attribute__ ((constructor)) void  init(void)
+{
+    char buf[100];
+    
+    sprintf( buf, "/tmp/sst-barrier.%d", getppid() );
+    
+    _writeFd = open( buf, O_WRONLY ); 
+    assert( _writeFd > -1 );
+
+    sprintf( buf, "/tmp/sst-barrier-app-%d.%d", getpid() - 100, getppid() );
+    
+    _readFd = open( buf, O_RDONLY | O_NONBLOCK ); 
+    assert( _readFd > -1 );
+}
+
 
 int cnos_get_rank( void )
 {
@@ -41,5 +65,12 @@ int cnos_get_nidpid_map( cnos_nidpid_map_t** map )
 
 int cnos_barrier( void )
 {
-    return _m5_syscall(SYS_barrier,0,0,0);
+    int buf = getpid();
+    int rc;
+    rc = write( _writeFd, &buf, sizeof(buf) );
+    assert( rc == sizeof(buf) ); 
+
+    while ( ( rc = read( _readFd, &buf, sizeof(buf) ) ) == 0 );
+    assert( rc == sizeof(buf) );
+    return 0; 
 }

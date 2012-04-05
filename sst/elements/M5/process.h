@@ -40,7 +40,9 @@ static inline Process* newProcess( const std::string name,
     INIT_INT( process, params, euid );
     INIT_INT( process, params, gid );
     INIT_INT( process, params, pid );
-    INIT_INT( process, params, ppid );
+
+    process.ppid = getpid();
+
     INIT_INT( process, params, uid );
     INIT_STR( process, params, cwd );
     INIT_STR( process, params, executable );

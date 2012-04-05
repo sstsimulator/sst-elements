@@ -65,8 +65,6 @@
     #error What ISA
 #endif
 
-#define __NR_barrier                             500
-
 extern "C" {
 SimObject* create_Syscall( SST::Component*, string name,
                                                 SST::Params& sstParams );
@@ -101,7 +99,9 @@ Syscall::Syscall( const Params* p ) :
     DBGX(3,"startAddr=%#lx endAddr=%#lx\n", m_startAddr, m_endAddr);
     memset( m_mailbox, 0, sizeof(m_mailbox) );
 
+#if 0
     m_comp->barrier().add( &m_barrierHandler );
+#endif
 }    
 
 Syscall::~Syscall()
@@ -391,9 +391,11 @@ void Syscall::startSyscall(void)
             if ( retval < 0 ) foo( retval ); 
             break;
 
+#if 0
         case __NR_barrier:
             m_comp->barrier().enter();
             break; 
+#endif
 
          default:
             for ( int i = 0; i < 0x10; i++ ) {
@@ -444,7 +446,6 @@ char* Syscall::syscallStr( int num )
         case __NR_fstat: return "fstat";
         case __NR_fstat64: return "fstat64";
         case __NR_ioctl: return "ioctl";
-        case __NR_barrier: return "barrier";
         default:
             return "?????";
     }

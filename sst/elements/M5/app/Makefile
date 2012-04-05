@@ -1,5 +1,5 @@
 LDFLAGS = -Llibs/lib
-LIBS=-lruntime -lm5syscall 
+LIBS=-lruntime
 CPPFLAGS += -Ilibs/include
 
 apps: libs hello rt
@@ -10,7 +10,7 @@ libs:
 hello: hello.c
 	${CC} -static hello.c -o $@ ${LDFLAGS}
 
-rt: rt.c  libs/lib/libruntime.a libs/lib/libm5syscall.a
+rt: rt.c  libs/lib/libruntime.a
 	${CC} ${CPPFLAGS} ${LDFLAGS} -static rt.c -o $@ ${LIBS}
 
 clean:
