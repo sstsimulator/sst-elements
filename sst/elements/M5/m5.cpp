@@ -177,11 +177,6 @@ bool M5::clock( SST::Cycle_t cycle )
     return false;
 }
 
-//
-// This is for actions after the performance simulation in SST-M5.
-// It is added to get the usage counts for McPAT power calculation July 1st, 2011
-//
-
 int M5::Finish()
 {
     #ifdef M5_WITH_POWER
