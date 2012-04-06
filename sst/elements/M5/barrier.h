@@ -115,7 +115,7 @@ class BarrierAction : public SST::Action
         for ( int i = 0; i < m_writeFds.size(); i++ ) {
             char buf[100];
             sprintf( buf, "/tmp/sst-barrier-app-%d.%d", i, getpid() );
-            m_writeFds[i] = open( buf, O_WRONLY  ); 
+            m_writeFds[i] = open( buf, O_WRONLY ); 
             assert( m_writeFds[i] > -1 );
         }
     }
