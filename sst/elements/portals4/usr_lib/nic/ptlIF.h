@@ -7,15 +7,11 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#if defined(USE_M5) 
-#include <m5_syscall.h>
-#elif defined(USE_PALACIOS_DEV)
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#endif
 
 #include <cmdQueue.h>
 #include <portals4.h>
@@ -26,43 +22,30 @@ namespace PtlNic {
 class PtlIF {
   public:
     PtlIF( int jid, int uid ) :
-        m_ctx_id( 101 ),
+        m_ctx_id( getpid() ),
         m_nid((unsigned)-1),
         m_meUnlinkedPos( 0 )
     {
-        PTL_DBG2("\n");
-#if defined(USE_M5) 
-        char* tmp = getenv("PTLNIC_CMD_QUEUE_ADDR");
-        assert( tmp );
-        unsigned long addr = 0;
-
-        addr = strtoul(tmp,NULL,16);
-
-        assert( addr != ULONG_MAX ); 
-        
-        m_cmdQueue = (cmdQueue_t*)syscall( SYS_mmap_dev, addr, 
-                                                sizeof( cmdQueue_t) );
-
-        PTL_DBG2("PTLNIC_CMD_QUEUE_ADDR=`%s` %#lx -> %p\n",tmp,addr,m_cmdQueue);
-#elif defined(USE_PALACIOS_DEV)
-
         int fd;
-
+#if 0
         int ret = mlockall( MCL_CURRENT | MCL_FUTURE );
         assert ( ret == 0 );
-        #define P4_DEV "/dev/p4"
-        if ((fd=open( P4_DEV, O_RDWR|O_SYNC))<0)
+#endif
+
+        char* filename = getenv( "P4_DEVICE" );
+        assert( filename );
+        PTL_DBG2("P4 device file `%s`\n", filename );
+        if ( ( fd=open( filename, O_RDWR ) ) < 0 )
         {
-            fprintf(stderr,"open %s failed %s",P4_DEV,strerror(errno));
+            fprintf(stderr,"open %s failed %s", filename, strerror(errno) );
             exit(-1);
         }
+        assert( fd > -1 );
 
-        m_cmdQueue = (cmdQueue_t*) mmap(0, sizeof(cmdQueue_t), 
+        assert( sizeof(cmdQueue_t) <= 4096 );
+        m_cmdQueue = (cmdQueue_t*) mmap(0, 4096, 
                     PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
         assert( m_cmdQueue != (void*) -1 );
-#else
-#error <don't know how to setup command queue>
-#endif
 
         m_tailShadow = m_cmdQueue->tail;
         PTL_DBG2("m_cmdQueue=%p\n",m_cmdQueue);

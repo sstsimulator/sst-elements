@@ -52,14 +52,16 @@ class NicMmu
 		MMU_DBG("create=%d PageSizeBits=%d LevelBits=%d pageSize=%d\n", 
 	    		create, PageSizeBits, LevelBits, (1<<PageSizeBits) - 1 );
 
+        size_t pos = fileName.find_last_of( "/" );
+
         MMU_DBG("file=`%s` NumEntries=%d Mask=%#x\n",
-                                    fileName.c_str(), NumEntries,Mask);
+                              fileName.substr(pos).c_str(), NumEntries,Mask);
 
         if ( create ) {
             oflags |= O_CREAT | O_TRUNC;
         }
         
-        m_fd = shm_open( fileName.c_str(), oflags, 0777 );
+        m_fd = shm_open( fileName.substr(pos).c_str(), oflags, 0777 );
        
         if( m_fd == -1 ) {
             perror("shm_open");

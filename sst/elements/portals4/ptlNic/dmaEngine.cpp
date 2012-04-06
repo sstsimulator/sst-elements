@@ -26,11 +26,9 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
            new SST::Event::Handler<DmaEngine>(this, &DmaEngine::eventHandler));
     assert( m_link );
 
-    std::stringstream tmp;
-    tmp << "/pTable." << m_nid << "." << getpid();
-
-    DmaEngine_DBG("%s\n",__func__,tmp.str().c_str());
-    m_nicMmu = new NicMmu( tmp.str(), true );
+    std::string file = params.find_string( "deviceFile" );
+    DmaEngine_DBG("%s\n", __func__, file.c_str() );
+    m_nicMmu = new NicMmu( file, true );
 }    
 
 bool DmaEngine::write( Addr vaddr, uint8_t* buf, size_t size, 

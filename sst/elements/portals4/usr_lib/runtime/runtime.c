@@ -14,9 +14,8 @@
 
 
 #ifdef USE_M5
-#define SYS_mmap_dev 274
-static uint64_t volatile * ptr = NULL;
-static long _m5_syscall( long number, long arg0, long arg1, long arg2 );
+static int _readFd;
+static int _writeFd;
 #else
 static int* _barrierPtr;
 #endif
@@ -24,15 +23,18 @@ static int* _barrierPtr;
 static __attribute__ ((constructor)) void init(void)
 {
 #ifdef USE_M5
-    char* tmp = getenv("SYSCALL_ADDR");
-    unsigned long addr = 0;
-    if ( tmp )
-        addr = strtoul(tmp,NULL,16);
+    char buf[100];
 
+    sprintf( buf, "/tmp/sst-barrier.%d", getppid() );
 
-    ptr = (int64_t*)syscall( SYS_mmap_dev, addr, 0x2000 );
-    //printf("%s():%d paddr=%#lx vaddr=%p\n",__func__,__LINE__,addr,ptr);
-    assert( ptr );
+    _writeFd = open( buf, O_WRONLY );
+    assert( _writeFd > -1 );
+
+    sprintf( buf, "/tmp/sst-barrier-app-%s.%d", 
+                    getenv("BARRIER_UNIQUE"), getppid() );
+
+    _readFd = open( buf, O_RDONLY | O_NONBLOCK );
+    assert( _readFd > -1 );
 #else
 
     int fd;
@@ -91,34 +93,17 @@ int cnos_barrier( void )
 {
 //printf("%s():%d\n",__func__,__LINE__);
 #ifdef USE_M5
-    return _m5_syscall(500,0,0,0);
+    int buf = getpid();
+    int rc;
+    rc = write( _writeFd, &buf, sizeof(buf) );
+    assert( rc == sizeof(buf) );
+
+    while ( ( rc = read( _readFd, &buf, sizeof(buf) ) ) == 0 || 
+                                        ( rc == -1 && errno == EAGAIN ) );
+    assert( rc == sizeof(buf) );
+    return 0;
 #else
     *_barrierPtr = 1;
     while( *_barrierPtr );
 #endif
 }
-
-
-#ifdef USE_M5
-static long _m5_syscall( long number, long arg0, long arg1, long arg2 )
-{
-    ptr[0] = arg0;
-    ptr[1] = arg1;
-    ptr[2] = arg2;
-
-    //asm volatile("wmb");
-    ptr[0xf] = number + 1;
-    //asm volatile("wmb");
-
-    while ( (signed) ptr[0xf] == number + 1 );
-
-    long retval = ptr[0];
-
-    if ( retval < 0 ) {
-        errno = -retval;
-        retval = -1;
-    }
-    return retval;
-}
-#endif
-

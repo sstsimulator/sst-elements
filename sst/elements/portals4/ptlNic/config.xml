@@ -54,10 +54,11 @@
 
     <cpu_params>
         <debug> 0 </debug>
-        <M5debug> none</M5debug>
+        <M5debug> None</M5debug>
         <info> no </info>
         <registerExit> yes </registerExit>
         <configFile> config-M5.xml </configFile>
+        <numBarrier> 2 </numBarrier>
     </cpu_params>
 
 </param_include>
@@ -67,6 +68,7 @@
         <params include=nic_params1,nic_params2>
             <id> 0 </id>
             <nid> 0 </nid>
+            <deviceFile> /tmp/p4nic.0  </deviceFile>
         </params>
         <link name=0.cpu2nic port=mmif latency=$foo_link_lat/>
         <link name=0.dmaLink port=dma latency=$foo_link_lat/>
@@ -87,6 +89,7 @@
         <params include=nic_params1,nic_params2>
             <id> 1 </id>
             <nid> 1 </nid>
+            <deviceFile> /tmp/p4nic.1  </deviceFile>
         </params>
         <link name=1.cpu2nic port=mmif latency=$foo_link_lat/>
         <link name=1.dmaLink port=dma latency=$foo_link_lat/>

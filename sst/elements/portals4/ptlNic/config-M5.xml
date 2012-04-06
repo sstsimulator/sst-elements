@@ -12,11 +12,10 @@
     <physicalMemory.end>   0x1fffffff </physicalMemory.end>
     <base.process.registerExit> yes </base.process.registerExit>
 
+    <base.process.pid> 100 </base.process.pid>
     <base.process.egid> 1 </base.process.egid>
     <base.process.euid> 1 </base.process.euid>
     <base.process.gid> 1 </base.process.gid>
-    <base.process.pid> 1 </base.process.pid>
-    <base.process.ppid> 1 </base.process.ppid>
     <base.process.uid> 1 </base.process.uid>
     <base.process.cwd> / </base.process.cwd>
     <base.process.executable> ${M5_EXE} </base.process.executable>
@@ -25,6 +24,7 @@
     <base.process.input> cin </base.process.input>
     <base.process.output> cout </base.process.output>
     <base.process.max_stack_size> 0x4000000 </base.process.max_stack_size>
+
 
     <o3cpu.fetchTrapLatency> 1 </o3cpu.fetchTrapLatency>
     <o3cpu.trapLatency> 13 </o3cpu.trapLatency>
@@ -111,8 +111,6 @@
     <base.do_checkpoint_insts> 1 </base.do_checkpoint_insts>
     <base.do_statistics_insts> 1 </base.do_statistics_insts>
     <base.function_trace> 0 </base.function_trace>
-    <base.id> 0 </base.id>
-    <base.cpu_id> 0 </base.cpu_id>
 </cpuParams>
 
 <cacheParams>
@@ -173,12 +171,14 @@
 
     <component name=nid0.cpu0 type=O3Cpu >
         <params include=cpuParams>
-            <base.process.nid> 0            </base.process.nid>
-            <base.process.cmd.0> ${M5_EXE}      </base.process.cmd.0>
+            <base.cpu_id> 0                 </base.cpu_id>
+            <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
             <base.process.env.0> RT_RANK=0  </base.process.env.0>
             <base.process.env.1> RT_SIZE=2  </base.process.env.1>
-            <base.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </base.process.env.2>
-            <base.process.env.3> PTL_DBG_ID=0  </base.process.env.3>
+            <base.process.env.2> PTL_DBG_ID=0  </base.process.env.2>
+            <base.process.env.3> P4_DEVICE=/tmp/p4nic.0  </base.process.env.3>
+            <base.process.env.4> BARRIER_UNIQUE=0  </base.process.env.4>
+            <base.process.deviceFile> /tmp/p4nic.0 </base.process.deviceFile>
         </params>
         <link name=nid0.cpu-dcache port=dcache_port latency=$lat/>
         <link name=nid0.cpu-icache port=icache_port latency=$lat/>
@@ -277,8 +277,9 @@
             <exe0.process.cmd.0> ${M5_EXE}  </exe0.process.cmd.0>
             <exe0.process.env.0> RT_RANK=0  </exe0.process.env.0>
             <exe0.process.env.1> RT_SIZE=2  </exe0.process.env.1>
-            <exe0.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.2>
-            <exe0.process.env.3> PTL_DBG_ID=0  </exe0.process.env.3>
+            <exe0.process.env.2> PTL_DBG_ID=0  </exe0.process.env.2>
+            <exe0.process.env.3> P4_DEVICE=/tmp/p4nic.0  </exe0.process.env.3>
+            <exe0.process.env.4> BARRIER_UNIQUE=0  </exe0.process.env.4>
             <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>
             <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>
         </params>
@@ -304,12 +305,14 @@
 
     <component name=nid1.cpu0 type=O3Cpu >
         <params include=cpuParams>
-            <base.process.nid> 1            </base.process.nid>
-            <base.process.cmd.0> ${M5_EXE}       </base.process.cmd.0>
+            <base.process.cpu_id> 0         </base.process.cpu_id>
+            <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
             <base.process.env.0> RT_RANK=1  </base.process.env.0>
             <base.process.env.1> RT_SIZE=2  </base.process.env.1>
-            <base.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </base.process.env.2>
-            <base.process.env.3> PTL_DBG_ID=1  </base.process.env.3>
+            <base.process.env.2> PTL_DBG_ID=1  </base.process.env.2>
+            <base.process.env.3> P4_DEVICE=/tmp/p4nic.1  </base.process.env.3>
+            <base.process.env.4> BARRIER_UNIQUE=1  </base.process.env.4>
+            <base.process.deviceFile> /tmp/p4nic.1 </base.process.deviceFile>
         </params>
         <link name=nid1.cpu-dcache port=dcache_port latency=$lat/>
         <link name=nid1.cpu-icache port=icache_port latency=$lat/>
@@ -408,8 +411,9 @@
             <exe0.process.cmd.0> ${M5_EXE}  </exe0.process.cmd.0>
             <exe0.process.env.0> RT_RANK=1  </exe0.process.env.0>
             <exe0.process.env.1> RT_SIZE=2  </exe0.process.env.1>
-            <exe0.process.env.2> PTLNIC_CMD_QUEUE_ADDR=0x2000  </exe0.process.env.2>
-            <exe0.process.env.3> PTL_DBG_ID=1  </exe0.process.env.3>
+            <exe0.process.env.2> PTL_DBG_ID=1  </exe0.process.env.2>
+            <exe0.process.env.3> P4_DEVICE=/tmp/p4nic.1  </exe0.process.env.3>
+            <exe0.process.env.4> BARRIER_UNIQUE=1  </exe0.process.env.4>
             <exe0.physicalMemory.start> 0x100000 </exe0.physicalMemory.start>
             <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>
         </params>
