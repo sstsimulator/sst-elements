@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#if 1 
+#if 0 
 #define BA_DBG(fmt,args...) \
   fprintf(stderr,"%d:BarrierAction::%s() "fmt, world.rank(), __func__, ##args)
 #else
