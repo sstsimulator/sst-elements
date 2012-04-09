@@ -284,7 +284,8 @@ typedef struct {
 #define PTL_INVALID_HANDLE ((ptl_handle_any_t)0xffffffff)
 
 /*! Identify the default interface. */
-#define PTL_IFACE_DEFAULT ((ptl_interface_t)0xffffffff)
+//#define PTL_IFACE_DEFAULT ((ptl_interface_t)0xffffffff)
+#define PTL_IFACE_DEFAULT "PtlNic" 
 
 /*! Match any process identifier. */
 #define PTL_PID_ANY ((ptl_pid_t)0xffff)
