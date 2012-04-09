@@ -22,6 +22,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 {
     // M5 variable
     want_info = false;
+    extern int remote_gdb_base_port;
+    remote_gdb_base_port = 0;
 
     // a flag for telling if fastforwarding is used 
     FastForwarding_flag=false;
