@@ -61,6 +61,7 @@ class BarrierAction : public SST::Action
 
         char buf[100];
         sprintf( buf, "/tmp/sst-barrier.%d", getpid() );
+        BA_DBG("filename=`%s`\n",buf);
         int rc = mkfifo( buf, 0666 );
         assert( rc == 0 );
 
@@ -72,6 +73,7 @@ class BarrierAction : public SST::Action
         for ( int i = 0; i < m_writeFds.size(); i++ ) {
             sprintf( buf, "/tmp/sst-barrier-app-%d.%d", i, getpid() );
             rc = mkfifo( buf, 0666);
+            BA_DBG("filename=`%s`\n",buf);
             assert( rc == 0 );
         }
     }
