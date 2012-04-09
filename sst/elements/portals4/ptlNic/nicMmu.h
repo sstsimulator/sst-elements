@@ -52,6 +52,7 @@ class NicMmu
 		MMU_DBG("create=%d PageSizeBits=%d LevelBits=%d pageSize=%d\n", 
 	    		create, PageSizeBits, LevelBits, (1<<PageSizeBits) - 1 );
 
+        MMU_DBG("fileName=`%s`\n",fileName.c_str());
         size_t pos = fileName.find_last_of( "/" );
 
         MMU_DBG("file=`%s` NumEntries=%d Mask=%#x\n",
