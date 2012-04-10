@@ -250,8 +250,6 @@
         </params>
         <link name=nid0.Bridge-IOBus port=port latency=$lat />
         <link name=nid0.IOCache-IOBus port=port latency=$lat />
-        <link name=nid0.bus-syscallDMA port=port latency=$lat />
-        <link name=nid0.bus-syscallPIO port=port latency=$lat />
         <link name=nid0.bus-nicDMA port=port latency=$lat />
         <link name=nid0.bus-nicPIO port=port latency=$lat />
     </component>
@@ -269,14 +267,6 @@
             <exe0.physicalMemory.end>   0x1fffffff </exe0.physicalMemory.end>
         </params>
         <link name=nid0.mem-bus port=port latency=$lat />
-    </component>
-
-    <component name=nid0.cpu0.syscall type=Syscall >
-        <params>
-            <startAddr> 0x00000000 </startAddr>
-        </params>
-        <link name=nid0.bus-syscallDMA port=dma latency=$lat />
-        <link name=nid0.bus-syscallPIO port=pio latency=$lat />
     </component>
 
     <component name=nid0.cpu0.PtlNic type=PtlNicMMIF >
