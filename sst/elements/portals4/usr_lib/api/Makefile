@@ -26,5 +26,9 @@ CPPFLAGS += -I../../ptlNic -Iinclude
 ${LIB}: ${OBJS}
 	${AR} rcs $@ ${OBJS} 
 
+install:
+	cp ${LIB} ../lib
+	cp ../../ptlNic/portals4.h ../include
+
 clean:
 	rm -f ${OBJS} ${LIB}

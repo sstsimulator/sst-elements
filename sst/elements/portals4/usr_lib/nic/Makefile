@@ -15,3 +15,7 @@ ${LIB}: ${OBJS}
 
 clean:
 	rm -f ${OBJS} ${LIB}
+
+install:
+	cp ${LIB} ../lib
+
