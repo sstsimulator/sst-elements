@@ -27,7 +27,7 @@ static void printEvent( ptl_event_t *event );
 
 //#define MSG_SIZE 0x2000 
 //#define MSG_SIZE  100
-#define MSG_SIZE  10 
+#define MSG_SIZE  (32768*2*2*2)
 #define PTL_INDEX 11
 #define HDR_DATA 0xdeadbeef01234567
 ptl_match_bits_t match_bits = 0xdeadbeef;
@@ -35,7 +35,7 @@ ptl_match_bits_t match_bits = 0xdeadbeef;
 extern char **environ;
 int main( int argc, char* argv[] )
 {
-    printf("hello mike\n");
+    printf("hello mike %d\n",MSG_SIZE);
 
     ptl_handle_ni_t ni_handle;
     ptl_ni_limits_t  ni_ask_limits;
@@ -84,7 +84,6 @@ int main( int argc, char* argv[] )
     return 0;
 }
 
-
 static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
 {
     int retval;
@@ -95,6 +94,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
                                         (unsigned long) ni_handle);
 
     md.start = malloc(MSG_SIZE);
+    printf("md.start=%p\n",md.start);
     md.length = MSG_SIZE;
     md.options = 0;
     md.eq_handle = PTL_EQ_NONE;
@@ -239,6 +239,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
 
     me.start = malloc(MSG_SIZE);
     me.length = MSG_SIZE;
+    printf("me.start=%p\n",me.start);
     me.min_free = 0;
     me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL;// | PTL_ME_ACK_DISABLE;
     me.match_id.phys.nid = 0;
@@ -289,6 +290,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
         printf("got PTL_EVENT_PUT, mlength=%lu remote_offset=%lu\n",
                             event.mlength, event.remote_offset );
         int i;
+#if 0
         for ( i = 0; i < event.mlength; i++ ) {
             unsigned int tmp = (i + event.remote_offset ) % 256;
             unsigned char c = ( (unsigned char*) event.start )[ i ]; 
@@ -296,6 +298,7 @@ static void nid1( ptl_handle_ni_t ni_handle, ptl_process_t* id, int testNum )
                 printf("%d != %d\n", tmp, c );
             }
         }
+#endif
     }
 
     if ( ( retval = PtlMEUnlink( me_handle ) ) != PTL_OK ) {
