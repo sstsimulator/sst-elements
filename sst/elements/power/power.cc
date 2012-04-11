@@ -13505,8 +13505,9 @@ void Power::calibrate_for_clovertown(IntrospectedComponent *c)
 
 	p_Mcore = p_Mproc.SSTreturnCore(i); //return core i
 
-	//calibrate the rumtime power [power = power*calibrate rate:1.83] 
-	(*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)p_Mcore->rt_power.readOp.dynamic *1.83 / executionTime;
+	//calibrate the rumtime power [power = power*calibrate rate:7.76] 
+        std::cout << "for core " << i << ", rt_power = " << p_Mcore->rt_power.readOp.dynamic << std::endl;
+	(*fit).second.p_usage_floorplan.runtimeDynamicPower = (I)p_Mcore->rt_power.readOp.dynamic *7.76 / executionTime;
 
 	//calculate leakage power based on the industry model (0.5W/mm2; 36mm2 per core; leakage feedback)
 	(*fit).second.p_usage_floorplan.leakagePower = (I)0.5 * 36.0 * exp(0.017*((*fit).second.device_tech.temperature-383));
