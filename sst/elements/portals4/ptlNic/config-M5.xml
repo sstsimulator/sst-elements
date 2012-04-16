@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <sdl version="2.0"/>
 
 <variables>
@@ -78,10 +77,8 @@
     <o3cpu.localHistoryBits> 11 </o3cpu.localHistoryBits>
     <o3cpu.localHistoryTableSize> 2048 </o3cpu.localHistoryTableSize>
     <o3cpu.localPredictorSize> 2048 </o3cpu.localPredictorSize>
-
     <o3cpu.LSQDepCheckShift> 4 </o3cpu.LSQDepCheckShift>
     <o3cpu.LSQCheckLoads> true </o3cpu.LSQCheckLoads>
-
     <o3cpu.numIQEntries> 64 </o3cpu.numIQEntries>
     <o3cpu.numPhysFloatRegs> 256 </o3cpu.numPhysFloatRegs>
     <o3cpu.numPhysIntRegs> 256 </o3cpu.numPhysIntRegs>
@@ -173,6 +170,9 @@
         <params include=cpuParams>
             <base.cpu_id> 0                 </base.cpu_id>
             <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
+            <base.process.cmd.1> ${ARG1}    </base.process.cmd.1>
+            <base.process.cmd.2> ${ARG2}    </base.process.cmd.2>
+            <base.process.cmd.3> ${ARG3}    </base.process.cmd.3>
             <base.process.env.0> RT_RANK=0  </base.process.env.0>
             <base.process.env.1> RT_SIZE=2  </base.process.env.1>
             <base.process.env.2> PTL_DBG_ID=0  </base.process.env.2>
@@ -275,6 +275,9 @@
             <zero> false </zero>
             <exe0.process.executable> ${M5_EXE} </exe0.process.executable>
             <exe0.process.cmd.0> ${M5_EXE}  </exe0.process.cmd.0>
+            <exe0.process.cmd.1> ${ARG1}    </exe0.process.cmd.1>
+            <exe0.process.cmd.2> ${ARG2}    </exe0.process.cmd.2>
+            <exe0.process.cmd.3> ${ARG3}    </exe0.process.cmd.3>
             <exe0.process.env.0> RT_RANK=0  </exe0.process.env.0>
             <exe0.process.env.1> RT_SIZE=2  </exe0.process.env.1>
             <exe0.process.env.2> PTL_DBG_ID=0  </exe0.process.env.2>
@@ -307,6 +310,9 @@
         <params include=cpuParams>
             <base.process.cpu_id> 0         </base.process.cpu_id>
             <base.process.cmd.0> ${M5_EXE}  </base.process.cmd.0>
+            <base.process.cmd.1> ${ARG1}    </base.process.cmd.1>
+            <base.process.cmd.2> ${ARG2}    </base.process.cmd.2>
+            <base.process.cmd.3> ${ARG3}    </base.process.cmd.3>
             <base.process.env.0> RT_RANK=1  </base.process.env.0>
             <base.process.env.1> RT_SIZE=2  </base.process.env.1>
             <base.process.env.2> PTL_DBG_ID=1  </base.process.env.2>
@@ -409,6 +415,9 @@
             <zero> false </zero>
             <exe0.process.executable> ${M5_EXE} </exe0.process.executable>
             <exe0.process.cmd.0> ${M5_EXE}  </exe0.process.cmd.0>
+            <exe0.process.cmd.1> ${ARG1}    </exe0.process.cmd.1>
+            <exe0.process.cmd.2> ${ARG2}    </exe0.process.cmd.2>
+            <exe0.process.cmd.3> ${ARG3}    </exe0.process.cmd.3>
             <exe0.process.env.0> RT_RANK=1  </exe0.process.env.0>
             <exe0.process.env.1> RT_SIZE=2  </exe0.process.env.1>
             <exe0.process.env.2> PTL_DBG_ID=1  </exe0.process.env.2>
