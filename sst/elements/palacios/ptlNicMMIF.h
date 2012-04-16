@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include "palacios.h"
 #include "portals4/ptlNic/cmdQueue.h"
-#include "M5/barrier.h"
+#include "barrier.h"
 
 class PtlNicMMIF : public SST::Component
 {
