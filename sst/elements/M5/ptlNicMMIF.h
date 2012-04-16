@@ -14,6 +14,7 @@ struct PtlNicMMIFParams : public DmaDeviceParams
     M5*  m5Comp; 
     Addr startAddr;
     int  id;
+    int  clockFreq;
 };
 
 class PtlNicMMIF : public DmaDevice 
@@ -36,6 +37,28 @@ class PtlNicMMIF : public DmaDevice
         void*       m_key;
     };
 
+    class ClockEvent : public ::Event
+    {
+      public:
+        ClockEvent( PtlNicMMIF* obj, int interval ) : 
+            m_obj( obj ), m_interval( interval)  {
+            m_obj->schedule( this, curTick() + m_interval );
+        }
+
+        void process() {
+            m_obj->clock();
+            m_obj->schedule( this, curTick() + m_interval );
+        }
+
+        const char *description() const {
+            return "clock";
+        }
+
+      private:
+        PtlNicMMIF* m_obj;
+        int         m_interval;
+    };
+
   public:
     typedef PtlNicMMIFParams Params;
     PtlNicMMIF( const Params* p );
@@ -48,6 +71,7 @@ class PtlNicMMIF : public DmaDevice
   private:
 
     void process( void* );
+    void clock( );
     void ptlCmdRespHandler( SST::Event* );
     void dmaHandler( SST::Event* );
 
@@ -56,10 +80,12 @@ class PtlNicMMIF : public DmaDevice
     uint64_t            m_endAddr;
     M5*                 m_comp;
     static const char*  m_cmdNames[];
-//    SST::TimeConverter* m_tc;
     SST::Link*          m_cmdLink;
     SST::Link*          m_dmaLink;
     bool                m_blocked;
+    ClockEvent*         m_clockEvent;
+    std::deque< SST::Event* > m_dmaReadEventQ;
+    std::deque< SST::Event* > m_dmaWriteEventQ;
 };
 
 const char * PtlNicMMIF::m_cmdNames[] = CMD_NAMES;

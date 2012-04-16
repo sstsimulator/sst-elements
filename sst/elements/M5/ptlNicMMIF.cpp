@@ -23,6 +23,7 @@ SimObject* create_PtlNicMMIF( SST::Component* comp, string name,
 
     memP.name = name;
     INIT_HEX( memP, sstParams, startAddr );
+    INIT_INT( memP, sstParams, clockFreq );
     INIT_INT( memP, sstParams, id );
     memP.system = create_System( "syscall", NULL, Enums::timing ); 
     memP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
@@ -51,10 +52,14 @@ PtlNicMMIF::PtlNicMMIF( const Params* p ) :
         new SST::Event::Handler<PtlNicMMIF>( this, &PtlNicMMIF::dmaHandler ) );
 
     assert( m_dmaLink );
-    
-    //m_tc = p->m5Comp->registerTimeBase("1ns");
-    //assert( m_tc ); 
-    //m_cmdLink->setDefaultTimeBase(m_tc);
+
+#define chunk_size (128) 
+
+    assert( p->clockFreq > 0 );  
+    int clockPeriod = 1.0/(double)p->clockFreq * 1000000000000; 
+    INFO("%s: clockFreq=%d hz, clockPeriod=%d ps, B/W=%d b/s\n",__func__,
+                      p->clockFreq, clockPeriod, p->clockFreq * chunk_size );
+    m_clockEvent = new ClockEvent( this, clockPeriod );
 }    
 
 PtlNicMMIF::~PtlNicMMIF()
@@ -69,16 +74,11 @@ void PtlNicMMIF::dmaHandler( SST::Event* e )
     ::DmaEvent* event = static_cast< ::DmaEvent* >(e);
     DBGX( 2, "addr=%#lx size=%lu type=%s\n", event->addr, event->size,
                 event->type == ::DmaEvent::Write ? "Write" : "Read" );
+    event->_size = event->size;
     if ( event->type == ::DmaEvent::Write ) {
-        dmaWrite( event->addr, 
-                event->size, 
-                new DmaEvent( this, event), 
-                event->buf, 0 );
+        m_dmaWriteEventQ.push_back( e );
     } else {
-        dmaRead( event->addr, 
-                event->size, 
-                new DmaEvent( this, event), 
-                event->buf, 0 );
+        m_dmaReadEventQ.push_back( e );
     }
 }
 
@@ -93,8 +93,56 @@ void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )
     delete e;
 }
 
+void PtlNicMMIF::clock(  )
+{
+    if ( ! m_dmaReadEventQ.empty() ) {
+        ::DmaEvent* event = 
+            static_cast< ::DmaEvent* >( m_dmaReadEventQ.front() );
+
+        DmaEvent* foo;
+        size_t size;
+        if ( (int) event->_size - chunk_size > 0 ) {
+            size = chunk_size;
+            foo = new DmaEvent( this, NULL );
+        } else {
+            size = event->_size;
+            foo = new DmaEvent( this, event );
+            m_dmaReadEventQ.pop_front();
+        }
+
+        dmaRead( event->addr, size, foo, event->buf, 0 );
+        event->addr += size;
+        event->_size -= size;
+        event->buf += size;
+    }
+    
+    if ( ! m_dmaWriteEventQ.empty() ) {
+        ::DmaEvent* event = 
+            static_cast< ::DmaEvent* >( m_dmaWriteEventQ.front() );
+
+        size_t size;
+        DmaEvent* foo;
+        if ( (int) event->_size - chunk_size > 0 ) {
+            size = chunk_size;
+            foo = new DmaEvent( this, NULL);
+        } else {
+            size = event->_size;
+            foo = new DmaEvent( this, event);
+            m_dmaWriteEventQ.pop_front();
+        }
+
+        dmaWrite( event->addr, size, foo, event->buf, 0 );
+
+        event->addr += size;
+        event->_size -= size;
+        event->buf += size;
+    }
+}
+
 void PtlNicMMIF::process( void* key )
 {
+    if ( ! key ) return;
+
     ::DmaEvent* event = static_cast< ::DmaEvent* >(key);
     DBGX( 2, "addr=%#lx size=%lu type=%s\n", event->addr, event->size,
                 event->type == ::DmaEvent::Write ? "Write" : "Read" );
