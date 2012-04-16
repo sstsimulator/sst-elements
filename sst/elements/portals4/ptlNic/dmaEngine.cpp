@@ -9,6 +9,9 @@
 DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_comp( comp ),
     m_nicMmu( NULL ),
+#if USE_DMA_LIMIT_BW
+    m_pendingBytes( 0.0 ),
+#endif
     m_virt2phys( true )
 {
 
@@ -19,6 +22,11 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
         fprintf( stderr, "don't translate virt 2 phys address\n");
         m_virt2phys = false;
     }
+
+#if USE_DMA_LIMIT_BW
+    m_bytesPerClock = params.find_floating( "dmaEngine.bytesPerClock", -1.0 );
+    assert( m_bytesPerClock > 0 ); 
+#endif
 
     assert( m_nid != -1 );
 
@@ -31,6 +39,19 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_nicMmu = new NicMmu( file, true );
 }    
 
+#if USE_DMA_LIMIT_BW
+void DmaEngine::clock()
+{
+    if ( m_pendingBytes > 0 ) {
+        m_pendingBytes -= m_bytesPerClock; 
+    } else if ( ! m_dmaQ.empty() ) {
+        m_link->Send( m_dmaQ.front() );
+        m_pendingBytes = m_dmaQ.front()->size;
+        m_dmaQ.pop_front();
+    }
+}
+#endif
+
 bool DmaEngine::write( Addr vaddr, uint8_t* buf, size_t size, 
             CallbackBase* callback )
 {
@@ -42,6 +63,7 @@ bool DmaEngine::read( Addr vaddr, uint8_t* buf, size_t size,
 {
     return xfer( DmaEvent::Read, vaddr, buf, size, callback );
 }
+
 
 bool DmaEngine::xfer( DmaEvent::Type type, Addr vaddr, 
                 uint8_t* buf, size_t size, CallbackBase* callback )
@@ -61,8 +83,13 @@ bool DmaEngine::xfer( DmaEvent::Type type, Addr vaddr,
         DmaEngine_DBG(" %s vaddr=%#lx paddr=%#lx buf=%p size=%lu\n",
                     type == DmaEvent::Read ? "Read" : "Write", 
                                         vaddr, item.addr, buf, item.length );
+#if USE_DMA_LIMIT_BW
+        m_dmaQ.push_back( new DmaEvent( type, item.addr, buf,
+#else
         m_link->Send( new DmaEvent( type, item.addr, buf,
                                             item.length, entry ) );
+#endif
+
         vaddr += item.length;
         buf += item.length;
         ++iter;

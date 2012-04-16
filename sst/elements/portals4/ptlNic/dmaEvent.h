@@ -15,7 +15,7 @@ class DmaEvent : public SST::Event {
         type( _type ),
         addr( _addr ),
         buf( _buf ),
-        size( _size ),
+        size( _size ), // this is a hack, used by PtlNicMMIF
         key( _key )
     { 
     }
@@ -23,6 +23,7 @@ class DmaEvent : public SST::Event {
     Addr        addr;     
     uint8_t*    buf;
     size_t      size;
+    size_t      _size;
     void*       key;
     
   private:

@@ -258,7 +258,7 @@
         <params>
             <range.start> 0x00100000 </range.start>
             <range.end>   0xffffffff </range.end>
-            <latency> 28ns </latency>
+            <latency> 50ns </latency>
             <latency_var> 0ns </latency_var>
             <null> false </null>
             <zero> false </zero>
@@ -272,6 +272,7 @@
     <component name=nid0.cpu0.PtlNic type=PtlNicMMIF >
         <params>
             <startAddr> 0x00002000 </startAddr>
+            <clockFreq> 13281250 </clockFreq>
             <id> 0 </id>
         </params>
         <link name=nid0.bus-nicDMA port=dma latency=$lat />

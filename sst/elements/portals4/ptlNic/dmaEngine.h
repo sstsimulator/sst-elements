@@ -24,6 +24,9 @@ class DmaEngine {
     bool write( Addr, uint8_t*, size_t, CallbackBase* );
     bool read( Addr, uint8_t*, size_t, CallbackBase* );
     size_t  maxXfer( ) { return 0x2000; }
+#if USE_DMA_LIMIT_BW
+    void clock();
+#endif
     
   private:
     struct XYZ {
@@ -48,6 +51,11 @@ class DmaEngine {
     int             m_nid;
     NicMmu         *m_nicMmu;
     bool            m_virt2phys;
+#if USE_DMA_LIMIT_BW
+    std::deque<DmaEvent*> m_dmaQ;
+    double          m_pendingBytes;
+    double          m_bytesPerClock;
+#endif
 };
 
 #endif

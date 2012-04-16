@@ -41,6 +41,7 @@
 
     <nic_params1>
         <clock>500Mhz</clock>
+        <dmaEngine.bytesPerClock> 4 </dmaEngine.bytesPerClock>
     </nic_params1>
 
     <nic_params2>
@@ -53,7 +54,7 @@
     <cpu_params>
         <debug> 0 </debug>
         <M5debug> none </M5debug>
-        <info> no </info>
+        <info> yes </info>
         <registerExit> yes </registerExit>
         <configFile> np2-M5.xml </configFile>
         <numBarrier> 1 </numBarrier>
@@ -115,6 +116,8 @@
             <nid0.cpu0.base.process.env.1> RT_SIZE=2 </nid0.cpu0.base.process.env.1>
             <nid0.cpu0.base.process.env.2> P4_DEVICE=/tmp/p4nic.0 </nid0.cpu0.base.process.env.2>
             <nid0.cpu0.base.process.env.3> BARRIER_UNIQUE=0       </nid0.cpu0.base.process.env.3>
+            <nid0.cpu0.base.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.cpu0.base.process.env.4>
+            <nid0.cpu0.base.process.env.5> OMPI_MCA_mtl_portals4_eager_limit=16384 </nid0.cpu0.base.process.env.5>
             <nid0.cpu0.base.process.deviceFile> /tmp/p4nic.0 </nid0.cpu0.base.process.deviceFile>
             <nid0.physmem.exe0.process.cmd.0> ${M5_EXE} </nid0.physmem.exe0.process.cmd.0>
             <nid0.physmem.exe0.process.cmd.1> ${ARG1} </nid0.physmem.exe0.process.cmd.1>
@@ -124,6 +127,8 @@
             <nid0.physmem.exe0.process.env.1> RT_SIZE=2 </nid0.physmem.exe0.process.env.1>
             <nid0.physmem.exe0.process.env.2> P4_DEVICE=/tmp/p4nic.0 </nid0.physmem.exe0.process.env.2>
             <nid0.physmem.exe0.process.env.3> BARRIER_UNIQUE=0 </nid0.physmem.exe0.process.env.3>
+            <nid0.physmem.exe0.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.physmem.exe0.process.env.4>
+            <nid0.physmem.exe0.process.env.5> OMPI_MCA_mtl_portals4_eager_limit=16384 </nid0.physmem.exe0.process.env.5>
         </params>
         <link name=0.cpu2nic port=nic0 latency=$foo_link_lat/>
         <link name=0.dmaLink port=dma0 latency=$foo_link_lat/>
@@ -140,6 +145,8 @@
             <nid0.cpu0.base.process.env.1> RT_SIZE=2 </nid0.cpu0.base.process.env.1>
             <nid0.cpu0.base.process.env.2> P4_DEVICE=/tmp/p4nic.0</nid0.cpu0.base.process.env.2>
             <nid0.cpu0.base.process.env.3> BARRIER_UNIQUE=0</nid0.cpu0.base.process.env.3>
+            <nid0.cpu0.base.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.cpu0.base.process.env.4>
+            <nid0.cpu0.base.process.env.5> OMPI_MCA_mtl_portals4_eager_limit=16384 </nid0.cpu0.base.process.env.5>
             <nid0.cpu0.base.process.deviceFile> /tmp/p4nic.0 </nid0.cpu0.base.process.deviceFile>
             <nid0.physmem.exe0.process.cmd.0> ${M5_EXE} </nid0.physmem.exe0.process.cmd.0>
             <nid0.physmem.exe0.process.cmd.1> ${ARG1} </nid0.physmem.exe0.process.cmd.1>
@@ -149,6 +156,8 @@
             <nid0.physmem.exe0.process.env.1> RT_SIZE=2 </nid0.physmem.exe0.process.env.1>
             <nid0.physmem.exe0.process.env.2> P4_DEVICE=/tmp/p4nic.0 </nid0.physmem.exe0.process.env.2>
             <nid0.physmem.exe0.process.env.3> BARRIER_UNIQUE=0 </nid0.physmem.exe0.process.env.3>
+            <nid0.physmem.exe0.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.physmem.exe0.process.env.4>
+            <nid0.physmem.exe0.process.env.5> OMPI_MCA_mtl_portals4_eager_limit=16384 </nid0.physmem.exe0.process.env.5>
         </params>
         <link name=1.cpu2nic port=nic0 latency=$foo_link_lat/>
         <link name=1.dmaLink port=dma0 latency=$foo_link_lat/>

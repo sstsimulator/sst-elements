@@ -30,8 +30,12 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
         m_vcInfoV[ i ].setVC( i );
     }
 
-    registerTimeBase( "1ns" );
-    registerClock( "500Mhz",
+    std::string freq = params.find_string( "clock" );
+
+    printf("%s: freq = %s\n",__func__,freq.c_str());
+    assert ( ! freq.empty() );
+
+    registerClock( freq,
             new SST::Clock::Handler< PtlNic >( this, &PtlNic::clock ) );
 
     m_mmifLink = configureLink( "mmif",
@@ -49,6 +53,9 @@ bool PtlNic::clock( SST::Cycle_t cycle )
 {
     processVCs();
     processFromRtr();
+#if USE_DMA_LIMIT_BW
+    m_dmaEngine.clock();
+#endif
     return false;
 }
 
