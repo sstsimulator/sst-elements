@@ -440,6 +440,7 @@
     <component name=nid1.cpu0.PtlNic type=PtlNicMMIF >
         <params>
             <startAddr> 0x00002000 </startAddr>
+            <clockFreq> 13281250 </clockFreq>
             <id> 1 </id>
         </params>
         <link name=nid1.bus-nicDMA port=dma latency=$lat />
