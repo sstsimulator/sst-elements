@@ -1,6 +1,8 @@
 #ifndef _util_h
 #define _util_h
 
+#include <cstdio>
+
 class SimObject;
 
 class M5;
