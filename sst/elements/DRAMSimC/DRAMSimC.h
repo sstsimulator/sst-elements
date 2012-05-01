@@ -17,7 +17,7 @@
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
 #include <memoryChannel.h>
-#include <MemorySystem.h>
+#include <MultiChannelMemorySystem.h>
 
 
 using namespace std;
@@ -51,7 +51,7 @@ class DRAMSimC : public IntrospectedComponent {
 	///uint64_t getIntData(int dataID, int index);
 
         std::deque<Transaction> m_transQ;
-        MemorySystem*           m_memorySystem;
+        MultiChannelMemorySystem*           m_memorySystem;
         memChan_t*              m_memChan;
         std::string             m_printStats;
         Log< DRAMSIMC_DBG >&    m_dbg;

@@ -90,8 +90,7 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     TimeConverter* tc = registerClock( frequency, new Clock::Handler<DRAMSimC>(this, &DRAMSimC::clock) );
     m_log.write("period %ld\n",tc->getFactor());
 
-
-    m_memorySystem = new MemorySystem(0, deviceIniFilename,
+    m_memorySystem = new MultiChannelMemorySystem(0, deviceIniFilename,
                     systemIniFilename, "", "", megsOfMemory);
     if ( ! m_memorySystem ) {
       _abort(DRAMSimC,"MemorySystem() failed\n");
