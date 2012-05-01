@@ -90,7 +90,7 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     TimeConverter* tc = registerClock( frequency, new Clock::Handler<DRAMSimC>(this, &DRAMSimC::clock) );
     m_log.write("period %ld\n",tc->getFactor());
 
-    m_memorySystem = new MultiChannelMemorySystem(0, deviceIniFilename,
+    m_memorySystem = new MultiChannelMemorySystem(/*0,*/ deviceIniFilename,
                     systemIniFilename, "", "", megsOfMemory);
     if ( ! m_memorySystem ) {
       _abort(DRAMSimC,"MemorySystem() failed\n");
@@ -115,7 +115,7 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
 
 int DRAMSimC::Finish() 
 {
-  vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
+  /*vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
   for (int i = 0; i < v.size(); ++i) {
     printf("DRAM: Background Energy %llu\n", 
 	   m_memorySystem->memoryController->backgroundEnergy[i]);
@@ -125,7 +125,7 @@ int DRAMSimC::Finish()
 	   m_memorySystem->memoryController->actpreEnergy[i]);
     printf("DRAM: Refresh Energy %llu\n", 
 	   m_memorySystem->memoryController->refreshEnergy[i]);
-  }
+  }*/
   
   m_memorySystem->printStats();
   return 0;
