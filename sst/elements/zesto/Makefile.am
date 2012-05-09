@@ -6,7 +6,8 @@ CC=$(CXX)
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS) \
+	-DUSE_QSIM
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzesto.la
@@ -50,8 +51,6 @@ libzesto_la_SOURCES = \
 	core/zesto-commit.h \
 	core/zesto-core.cpp \
 	core/zesto-core.h \
-	core/qsim/qsim-client.h \
-	core/qsim/qsim-client.cc \
 	core/qsim/qsimclient-core.cc \
 	core/qsim/qsimclient-core.h \
 	core/qsim/qsimlib-core.cc \
@@ -164,4 +163,4 @@ EXTRA_DIST = \
 	core/ZCOMPS-ras/ras-perfect.cpp \
 	core/ZCOMPS-ras/ras-stack.cpp
 
-libzesto_la_LDFLAGS = -module -avoid-version
+libzesto_la_LDFLAGS = -module -avoid-version -lqsim

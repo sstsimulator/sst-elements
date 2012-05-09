@@ -1,9 +1,11 @@
-#ifdef USE_QSIM
+#ifndef USE_QSIM
 
 #include "qsimclient-core.h"
 #include "zesto-fetch.h"
 #include <assert.h>
 
+namespace manifold {
+namespace zesto {
 
 //! @param \c core_id  ID of the core.
 //! @param \c conifg  Name of the config file.
@@ -193,6 +195,8 @@ fprintf(stdout,"\n[%lld][Core%d]Trace DequeuedPC: 0x%llx   ",core->sim_cycle,cor
 
 
 
+} //namespace zesto
+} //namespace manifold
 
 
 #endif //USE_QSIM

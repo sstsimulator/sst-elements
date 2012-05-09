@@ -1,5 +1,6 @@
 #include "core/zesto-core.h"
 #include "core/trace-core.h"
+#include "core/qsim/qsimlib-core.h"
 #include "simpleCache/simple_cache.h"
 #include "simpleMC/simple_mc.h"
 #include "irisNIC/irisNic.h"
@@ -29,6 +30,12 @@ create_trace_core_t(SST::ComponentId_t id, SST::Component::Params_t & params)
 }
 
 static SST::Component*
+create_qsimlib_core_t(SST::ComponentId_t id, SST::Component::Params_t & params)
+{
+	return new qsimlib_core_t(id, params);
+}
+
+static SST::Component*
 create_iris_nic(SST::ComponentId_t id, SST::Component::Params_t & params)
 {
     if(params.find("event_type") != params.end()) {
@@ -46,6 +53,11 @@ static const SST::ElementInfoComponent components[] = {
 	  "Zesto core with trace input",
 	  NULL,
 	  create_trace_core_t
+	},
+	{ "qsimlib_core_t",
+	  "Zesto core with qsim lib input",
+	  NULL,
+	  create_qsimlib_core_t
 	},
 	{ "simpleCache",
 	  "A simple cache module for zesto",

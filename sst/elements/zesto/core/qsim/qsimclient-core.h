@@ -1,11 +1,13 @@
-#ifndef ZESTO_QSIMCLIENT_CORE
-#define ZESTO_QSIMCLIENT_CORE
+#ifndef MANIFOLD_ZESTO_QSIMCLIENT_CORE
+#define MANIFOLD_ZESTO_QSIMCLIENT_CORE
 
-#ifdef USE_QSIM
+#ifndef USE_QSIM
 
 #include "zesto-core.h"
 #include "qsim-client.h"
 
+namespace manifold {
+namespace zesto {
 
 struct QsimClient_Settings {
     QsimClient_Settings(const char* s, int p) : server(s), port(p) {}
@@ -33,7 +35,9 @@ private:
 };
 
 
+} // namespace zesto
+} // namespace manifold
 
 #endif //USE_QSIM
 
-#endif // ZESTO_QSIMCLIENT_CORE
+#endif // MANIFOLD_ZESTO_QSIMCLIENT_CORE

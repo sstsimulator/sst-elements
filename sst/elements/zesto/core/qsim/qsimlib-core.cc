@@ -1,19 +1,32 @@
 #ifdef USE_QSIM
 
 #include "qsimlib-core.h"
-#include "zesto-fetch.h"
+#include "qsim-load.h"
+#include "../zesto-fetch.h"
 #include <assert.h>
 
+Qsim::OSDomain * qsimlib_core_t::m_Qsim_osd = NULL;
+int qsimlib_core_t::osd_users = 0;
+std::vector<qsimlib_core_t*> qsimlib_core_t :: Procs; //static variable.
 
-//! @param \c core_id  ID of the core.
-//! @param \c conifg  Name of the config file.
-//! @param \c osd  The QSim OS domain object.
-//! @param \c cpuid  QSim cpu ID assigned to this core. Note this may be different from core ID.
-qsimlib_core_t::qsimlib_core_t(const int core_id, char * config, Qsim::OSDomain* osd, int cpuid) :
-    core_t(core_id, config),
-    m_Qsim_cpuid(cpuid)
+qsimlib_core_t::qsimlib_core_t(SST::ComponentId_t cid, SST::Component::Params_t & params) : core_t(cid, params)
 {
-  m_Qsim_osd = osd;
+  m_Qsim_cpuid = id;
+
+  if(params.find("stateFile") == params.end())
+    _abort(zesto_core, "couldn't find zesto qsim state file\n");
+  if(params.find("benchmark") == params.end())
+    _abort(zesto_core, "couldn't find zesto qsim benchmark file\n");
+
+  if(m_Qsim_osd == NULL) {
+    std::cout << "Loading state...\n";
+    m_Qsim_osd = new Qsim::OSDomain(params["stateFile"].c_str());
+    std::cout << "Loading app...\n";
+    Qsim::load_file(*m_Qsim_osd, params["appFile"].c_str());
+    std::cout << "Finished loading app.\n";
+  }
+
+  osd_users++;
   m_Qsim_queue = 0;
   m_got_first_pc = false;
   Procs.push_back(this);
@@ -23,7 +36,19 @@ qsimlib_core_t::qsimlib_core_t(const int core_id, char * config, Qsim::OSDomain*
 
 qsimlib_core_t:: ~qsimlib_core_t()
 {
-    delete m_Qsim_queue;
+  delete m_Qsim_queue;
+  osd_users--;
+  if(m_Qsim_osd && osd_users == 0) {
+    delete m_Qsim_osd;
+    m_Qsim_osd = NULL;
+  }
+
+}
+
+int qsimlib_core_t::Setup() {
+	create_queue();
+	get_first_pc();
+	core_t::Setup();
 }
 
 //! Qsim queue should be created at app start.
@@ -48,56 +73,10 @@ void qsimlib_core_t :: get_first_pc()
 
 
 //for Qsim: app start callback
-static bool Qsim_inited = false;
 static unsigned Count = 0; //this records number of instructions % 1M at the time when app_start_cb is called.
                            //we need this because we need to call timer_interrupt() roughly after each proc
 			   //has advanced 1M instructions.
 
-//This class is really a functor. It implements an app start callback.
-class AppStartCB {
-public:
-    void app_start_cb(int)
-    {
-        if(Qsim_inited == false) {
-	    Qsim_inited = true;
-	    for(unsigned i=0; i<qsimlib_core_t::Procs.size(); i++)
-	        qsimlib_core_t::Procs[i]->create_queue();
-	}
-    }
-};
-
-
-std::vector<qsimlib_core_t*> qsimlib_core_t :: Procs; //static variable.
-
-//! @brief This function does the fast forwarding of the OS domain.
-void qsimlib_core_t :: Start_qsim(Qsim::OSDomain* qsim_osd)
-{
-    //Create an app start callback object, and register it.
-    AppStartCB* mycb = new AppStartCB;
-    qsim_osd->set_app_start_cb(mycb, &AppStartCB::app_start_cb); //sets the application start callback
-                                                                 //so we only get instructions after that point.
-
-    while(!Qsim_inited) {
-	Count = 0;
-	for (unsigned i = 0; i < 100; i++) {
-	    for(int j=0; j<qsim_osd->get_n(); j++) { //advance each cpu 10k instructions
-		qsim_osd->run(j, 10000);
-	    }
-	    Count += 10000;
-
-	    if(Qsim_inited)
-		break;
-	}
-
-	if(!Qsim_inited) {
-	    //call timer_interrupt() after all CPUs have advanced 1M instructions.
-	    qsim_osd->timer_interrupt(); //this is called after each proc has advanced 1M instructions
-	}
-    }
-    for(unsigned i=0; i<qsimlib_core_t::Procs.size(); i++) {
-	Procs[i]->get_first_pc();
-    }
-}
 
 
 
@@ -246,8 +225,6 @@ fprintf(stdout,"\n[%lld][Core%d]Trace DequeuedPC: 0x%llx   ",core->sim_cycle,cor
     }//while(true)
 
 }
-
-
 
 
 
