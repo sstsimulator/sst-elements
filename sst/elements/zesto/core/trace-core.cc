@@ -30,23 +30,6 @@ trace_core_t::trace_core_t(SST::ComponentId_t cid, SST::Component::Params_t& par
   fetch->PC = current_thread->regs.regs_PC;
   store_nextPC = nextPC;
 
-  //interface with SST simulator
-  registerExit();
-
-  if (params.find("clockFreq") == params.end()) {
-	_abort(zesto_core, "clock frequency not specified\n");
-  }
-
-  registerClock( params["clockFreq"],
-		new SST::Clock::Handler<trace_core_t>(this,
-					&trace_core_t::tick));
-
-  //SST Links
-  cache_link = configureLink ("cache_link",
-				new SST::Event::Handler<core_t>(this,
-					&trace_core_t::cache_response_handler));
-  assert(cache_link);
-
 
 }
 

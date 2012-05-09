@@ -106,6 +106,24 @@ core_t::core_t(SST::ComponentId_t cid, SST::Component::Params_t & params):
   oracle(NULL), fetch(NULL), decode(NULL), alloc(NULL),
   exec(NULL), commit(NULL), global_action_id(0), request_id(0) 
 {
+  //interface with SST simulator
+  registerExit();
+
+  if (params.find("clockFreq") == params.end()) {
+	_abort(zesto_core, "clock frequency not specified\n");
+  }
+
+  registerClock( params["clockFreq"],
+		new SST::Clock::Handler<core_t>(this,
+					&core_t::tick));
+
+  //SST Links
+  cache_link = configureLink ("cache_link",
+				new SST::Event::Handler<core_t>(this,
+					&core_t::cache_response_handler));
+  assert(cache_link);
+
+
   if(params.find("nodeId") == params.end()) {
     _abort(zesto_core, "couldn't find node id\n");
   }
