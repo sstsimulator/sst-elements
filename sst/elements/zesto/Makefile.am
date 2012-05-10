@@ -163,4 +163,4 @@ EXTRA_DIST = \
 	core/ZCOMPS-ras/ras-perfect.cpp \
 	core/ZCOMPS-ras/ras-stack.cpp
 
-libzesto_la_LDFLAGS = -module -avoid-version -lqsim
+libzesto_la_LDFLAGS = -module -avoid-version -lqsim -lqsim-client

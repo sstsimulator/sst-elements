@@ -1,23 +1,21 @@
-#ifndef USE_QSIM
+#ifdef USE_QSIM
 
 #include "qsimclient-core.h"
-#include "zesto-fetch.h"
+#include "../zesto-fetch.h"
 #include <assert.h>
 
-namespace manifold {
-namespace zesto {
-
-//! @param \c core_id  ID of the core.
-//! @param \c conifg  Name of the config file.
-//! @param \c cpuid  QSim cpu ID assigned to this core. Note this may be different from core ID.
-qsimclient_core_t::qsimclient_core_t(const int core_id, char * config, int cpuid, const QsimClient_Settings& settings) :
-    core_t(core_id, config),
-    m_Qsim_cpuid(cpuid)
+qsimclient_core_t::qsimclient_core_t(SST::ComponentId_t cid, SST::Component::Params_t &params) : core_t(cid, params)
+//const int core_id, char * config, int cpuid, const QsimClient_Settings& settings) :
+//    core_t(core_id, config),
+//    m_Qsim_cpuid(cpuid)
 {
+	m_Qsim_cpuid = id;
     //client_socket() requires port to be passed as a string, so convert to string first.
-    char port_str[20];
-    sprintf(port_str, "%d", settings.port);
-    m_Qsim_client = new Qsim::Client(client_socket(settings.server, port_str));
+	if(params.find("port") == params.end())
+		_abort(zesto_core, "couldn't find zesto qsim server port\n");
+	if(params.find("server") == params.end())
+		_abort(zesto_core, "couldn't find zesto qsim server name\n");
+    m_Qsim_client = new Qsim::Client(client_socket(params["server"].c_str(), params["port"].c_str()));
     m_Qsim_queue = new Qsim::ClientQueue(*m_Qsim_client, m_Qsim_cpuid);
 
     md_addr_t nextPC = 0;
@@ -193,10 +191,6 @@ fprintf(stdout,"\n[%lld][Core%d]Trace DequeuedPC: 0x%llx   ",core->sim_cycle,cor
     }//while(true)
 }
 
-
-
-} //namespace zesto
-} //namespace manifold
 
 
 #endif //USE_QSIM

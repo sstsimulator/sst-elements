@@ -48,7 +48,7 @@ qsimlib_core_t:: ~qsimlib_core_t()
 int qsimlib_core_t::Setup() {
 	create_queue();
 	get_first_pc();
-	core_t::Setup();
+	return core_t::Setup();
 }
 
 //! Qsim queue should be created at app start.

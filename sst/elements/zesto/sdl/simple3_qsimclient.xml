@@ -29,13 +29,13 @@ cache, which is further connected to simple mc directly-->
 
 <sst>
 
-  <component name="zesto_qsimlib_0" type="zesto.qsimlib_core_t" rank=0>
+  <component name="zesto_qsimclient_0" type="zesto.qsimclient_core_t" rank=0>
       <params>
         <nodeId>0</nodeId>
         <clockFreq>1 GHz</clockFreq>
         <configFile>core_config/6.cfg</configFile>
-        <stateFile>qsimTrace/state.1</stateFile>
-		<benchmark>qsimTrace/fft.tar</benchmark>
+        <server>localhost</server>
+		<port>8998</port>
       </params>
       <link name="proc_cache_0" port="cache_link" latency="1 ns"/>
   </component>

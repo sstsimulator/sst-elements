@@ -11,7 +11,6 @@ class qsimlib_core_t: public core_t
 {
 public:
     qsimlib_core_t(SST::ComponentId_t core_id, SST::Component::Params_t& params);
-//const int core_id, char* config, Qsim::OSDomain* osd, int cpuid);
 	~qsimlib_core_t();
 
 	virtual int Setup();
