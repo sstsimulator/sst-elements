@@ -35,7 +35,7 @@ cache, which is further connected to simple mc directly-->
         <clockFreq>1 GHz</clockFreq>
         <configFile>core_config/6.cfg</configFile>
         <server>localhost</server>
-		<port>8998</port>
+		<port>18998</port>
       </params>
       <link name="proc_cache_0" port="cache_link" latency="1 ns"/>
   </component>

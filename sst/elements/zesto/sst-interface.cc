@@ -1,7 +1,9 @@
 #include "core/zesto-core.h"
 #include "core/trace-core.h"
+#ifdef USE_QSIM
 #include "core/qsim/qsimlib-core.h"
 #include "core/qsim/qsimclient-core.h"
+#endif
 #include "simpleCache/simple_cache.h"
 #include "simpleMC/simple_mc.h"
 #include "irisNIC/irisNic.h"
@@ -30,6 +32,7 @@ create_trace_core_t(SST::ComponentId_t id, SST::Component::Params_t & params)
 	return new trace_core_t(id, params);
 }
 
+#ifdef USE_QSIM
 static SST::Component*
 create_qsimlib_core_t(SST::ComponentId_t id, SST::Component::Params_t & params)
 {
@@ -41,6 +44,7 @@ create_qsimclient_core_t(SST::ComponentId_t id, SST::Component::Params_t & param
 {
 	return new qsimclient_core_t(id, params);
 }
+#endif
 
 static SST::Component*
 create_iris_nic(SST::ComponentId_t id, SST::Component::Params_t & params)
@@ -61,6 +65,7 @@ static const SST::ElementInfoComponent components[] = {
 	  NULL,
 	  create_trace_core_t
 	},
+#ifdef USE_QSIM
 	{ "qsimlib_core_t",
 	  "Zesto core with qsim lib frontend",
 	  NULL,
@@ -71,6 +76,7 @@ static const SST::ElementInfoComponent components[] = {
 	  NULL,
 	  create_qsimclient_core_t
 	},
+#endif
 	{ "simpleCache",
 	  "A simple cache module for zesto",
 	  NULL,
