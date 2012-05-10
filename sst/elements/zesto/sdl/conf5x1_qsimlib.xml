@@ -1,0 +1,238 @@
+<!-- This is a sdl file for zesto, 
+Five nodes network, four of which are
+zesto cores with simple cache and the fifth
+is a simple MC. All are connected by iris
+router with iris nic-->
+
+<?xml version=1.0?>
+
+<sdl version=2.0/>
+
+<config>
+  stopAtCycle=0.5ms
+  partitioner=self
+  run-mode=both
+</config>
+
+<variables>
+  <link_lat>1ns</link_lat>
+</variables>
+
+<param_include>
+  <cache_params>
+    <size>524288</size>
+    <assoc>4</assoc>
+    <block_size>32</block_size>
+    <hit_time>2</hit_time>
+    <lookup_time>5</lookup_time>
+    <mc_node_ids>4</mc_node_ids>
+  </cache_params>
+
+  <mc_params>
+    <clockFreq>300MHz</clockFreq>  
+    <latency>50</latency>
+  </mc_params>
+
+  <iris_nic_params>
+    <event_type>mem_req</event_type>
+    <num_vc>1</num_vc>
+    <clock>500MHz</clock>
+    <Node2RouterQSize_flits>30</Node2RouterQSize_flits>
+  </iris_nic_params> 
+
+  <iris_rtr_params>
+    <credits> 30 </credits>
+    <ports> 3 </ports>
+    <vcs> 4 </vcs>
+    <no_nodes> 5 </no_nodes>
+    <grid_size> 5 </grid_size>
+  </iris_rtr_params>
+</param_include>
+
+<sst>
+
+  <component name=0.core type=zesto.qsimlib_core_t rank=0>
+      <params>
+        <nodeId>0</nodeId>
+        <clockFreq>1 GHz</clockFreq>
+        <configFile>core_config/6.cfg</configFile>
+        <stateFile>qsimTrace/state.4</stateFile>
+		<benchmark>qsimTrace/fft.tar</benchmark>
+      </params>
+      <link name=0.core2cache port=cache_link latency=$link_lat/>
+  </component>
+
+  <component name=0.cache type=zesto.simpleCache rank=0>
+      <params include=cache_params>
+        <nodeId>0</nodeId>
+        <clockFreq>1 GHz</clockFreq> 
+      </params>
+      <link name=0.core2cache port=link_upper latency=$link_lat/>
+      <link name=0.cache2nic port=link_lower latency=$link_lat/>
+  </component>
+
+  <component name=0.nic type=zesto.irisNic rank=0>
+    <params include=iris_nic_params>
+      <id>0</id>
+    </params>
+    <link name=0.cache2nic port=terminal latency=$link_lat/>
+    <link name=0.nic2rtr port=rtr latency=$link_lat/>
+  </component>
+
+  <component name=0.rtr type=iris.router rank=0>
+    <params include=iris_rtr_params>
+      <id>0</id>
+    </params>
+    <link name=0.nic2rtr port=nic latency=$link_lat/>
+    <link name=xr2r.0.0.1 port=xPos latency=$link_lat/>
+    <link name=xr2r.0.0.0 port=xNeg latency=$link_lat/>
+  </component>
+
+
+
+  <component name=1.core type=zesto.qsimlib_core_t rank=1>
+      <params>
+        <nodeId>1</nodeId>
+        <clockFreq>1 GHz</clockFreq>
+        <configFile>core_config/6.cfg</configFile>
+        <stateFile>qsimTrace/state.4</stateFile>
+		<benchmark>qsimTrace/fft.tar</benchmark>
+      </params>
+      <link name=1.core2cache port=cache_link latency=$link_lat/>
+  </component>
+
+  <component name=1.cache type=zesto.simpleCache rank=1>
+      <params include=cache_params>
+        <nodeId>1</nodeId>
+        <clockFreq>1 GHz</clockFreq> 
+      </params>
+      <link name=1.core2cache port=link_upper latency=$link_lat/>
+      <link name=1.cache2nic port=link_lower latency=$link_lat/>
+  </component>
+
+  <component name=1.nic type=zesto.irisNic rank=1>
+    <params include=iris_nic_params>
+      <id>1</id>
+    </params>
+    <link name=1.cache2nic port=terminal latency=$link_lat/>
+    <link name=1.nic2rtr port=rtr latency=$link_lat/>
+  </component>
+
+  <component name=1.rtr type=iris.router rank=1>
+    <params include=iris_rtr_params>
+      <id>1</id>
+    </params>
+    <link name=1.nic2rtr port=nic latency=$link_lat/>
+    <link name=xr2r.0.0.2 port=xPos latency=$link_lat/>
+    <link name=xr2r.0.0.1 port=xNeg latency=$link_lat/>
+  </component>
+
+
+
+
+  <component name=2.core type=zesto.qsimlib_core_t rank=2>
+      <params>
+        <nodeId>2</nodeId>
+        <clockFreq>1 GHz</clockFreq>
+        <configFile>core_config/6.cfg</configFile>
+        <stateFile>qsimTrace/state.4</stateFile>
+		<benchmark>qsimTrace/fft.tar</benchmark>
+      </params>
+      <link name=2.core2cache port=cache_link latency=$link_lat/>
+  </component>
+
+  <component name=2.cache type=zesto.simpleCache rank=2>
+      <params include=cache_params>
+        <nodeId>2</nodeId>
+        <clockFreq>1 GHz</clockFreq> 
+      </params>
+      <link name=2.core2cache port=link_upper latency=$link_lat/>
+      <link name=2.cache2nic port=link_lower latency=$link_lat/>
+  </component>
+
+  <component name=2.nic type=zesto.irisNic rank=2>
+    <params include=iris_nic_params>
+      <id>2</id>
+    </params>
+    <link name=2.cache2nic port=terminal latency=$link_lat/>
+    <link name=2.nic2rtr port=rtr latency=$link_lat/>
+  </component>
+
+  <component name=2.rtr type=iris.router rank=2>
+    <params include=iris_rtr_params>
+      <id>2</id>
+    </params>
+    <link name=2.nic2rtr port=nic latency=$link_lat/>
+    <link name=xr2r.0.0.3 port=xPos latency=$link_lat/>
+    <link name=xr2r.0.0.2 port=xNeg latency=$link_lat/>
+  </component>
+
+
+
+  <component name=3.core type=zesto.qsimlib_core_t rank=3>
+      <params>
+        <nodeId>3</nodeId>
+        <clockFreq>1 GHz</clockFreq>
+        <configFile>core_config/6.cfg</configFile>
+        <stateFile>qsimTrace/state.4</stateFile>
+		<benchmark>qsimTrace/fft.tar</benchmark>
+      </params>
+      <link name=3.core2cache port=cache_link latency=$link_lat/>
+  </component>
+
+  <component name=3.cache type=zesto.simpleCache rank=3>
+      <params include=cache_params>
+        <nodeId>3</nodeId>
+        <clockFreq>1 GHz</clockFreq> 
+      </params>
+      <link name=3.core2cache port=link_upper latency=$link_lat/>
+      <link name=3.cache2nic port=link_lower latency=$link_lat/>
+  </component>
+
+  <component name=3.nic type=zesto.irisNic rank=3>
+    <params include=iris_nic_params>
+      <id>3</id>
+    </params>
+    <link name=3.cache2nic port=terminal latency=$link_lat/>
+    <link name=3.nic2rtr port=rtr latency=$link_lat/>
+  </component>
+
+  <component name=3.rtr type=iris.router rank=3>
+    <params include=iris_rtr_params>
+      <id>3</id>
+    </params>
+    <link name=3.nic2rtr port=nic latency=$link_lat/>
+    <link name=xr2r.0.0.4 port=xPos latency=$link_lat/>
+    <link name=xr2r.0.0.3 port=xNeg latency=$link_lat/>
+  </component>
+
+
+
+
+
+  <component name=4.mc type=zesto.simpleMC rank=4>
+    <params include=mc_params>
+      <nodeId>4</nodeId>
+    </params>
+    <link name=4.mc2nic port=link_ni latency=$link_lat/>
+  </component>
+
+  <component name=4.nic type=zesto.irisNic rank=4>
+    <params include=iris_nic_params>
+      <id>4</id>
+    </params>
+    <link name=4.mc2nic port=terminal latency=$link_lat/>
+    <link name=4.nic2rtr port=rtr latency=$link_lat/>
+  </component>
+
+  <component name=4.rtr type=iris.router rank=4>
+    <params include=iris_rtr_params>
+      <id>4</id>
+    </params>
+    <link name=4.nic2rtr port=nic latency=$link_lat/>
+    <link name=xr2r.0.0.0 port=xPos latency=$link_lat/>
+    <link name=xr2r.0.0.4 port=xNeg latency=$link_lat/>
+  </component>
+
+
+</sst>
