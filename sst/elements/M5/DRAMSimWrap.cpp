@@ -80,8 +80,8 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     assert( m_tc );
     m_log.write("period %ld\n",m_tc->getFactor());
 
-    m_memorySystem = new DRAMSim::MemorySystem(0, deviceIniFilename,
-                    systemIniFilename, "", "", megsOfMemory );
+    extern ofstream visDataOut;
+    m_memorySystem = new DRAMSim::MemorySystem(0, megsOfMemory, visDataOut);
 
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* readDataCB;
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* writeDataCB;
