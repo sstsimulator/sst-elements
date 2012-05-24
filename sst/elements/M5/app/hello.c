@@ -4,7 +4,7 @@
 extern char **environ;
 int main( int argc, char* argv[] )
 {
-    printf("hello mike ppid=%d\n",getppid());
+    printf("hello mike pid=%d ppid=%d\n",getpid(),getppid());
     int i;
     for ( i = 0; i< argc; i++ ) {
         printf("`%s`\n",argv[i]);
