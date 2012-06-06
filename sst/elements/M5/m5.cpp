@@ -3,6 +3,7 @@
 #include <sst/core/params.h>
 
 #include <sim/simulate.hh>
+#include <base/statistics.hh>
 #include <util.h>
 #include <debug.h>
 
@@ -18,7 +19,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     m_numRegisterExits( 0 ),
     m_barrier( NULL ),
     params( params ),  //for power
-    m_m5ticksPerSSTclock( 1000 )
+    m_m5ticksPerSSTclock( 1000000000 )
 {
     // M5 variable
     want_info = false;
@@ -50,6 +51,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
       configFile = params["configFile"];
     }
 
+    m_statFile = params.find_string("statFile");
+
     INFO( "configFile `%s`\n", configFile.c_str() );
 
     buildConfig( this, "m5", configFile, params );
@@ -68,7 +71,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     float clockFreqKhz = (m5_freq / m_m5ticksPerSSTclock) / 1000; 
 
-    string strBuf;
+    std::string strBuf;
     strBuf.resize(32);
     snprintf( &strBuf[0], 32, "%.0f khz", clockFreqKhz );
 
@@ -177,6 +180,9 @@ bool M5::clock( SST::Cycle_t cycle )
             unregisterExit();
             INFO( "exiting: time=%lu cause=`%s` code=%d\n", cycle,
                 exitEvent->getCause().c_str(), exitEvent->getCode() );
+        }
+        if ( !m_statFile.empty() ) {
+            Stats::dump(m_statFile);
         }
         return true;
     }
