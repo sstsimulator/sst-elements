@@ -7,12 +7,12 @@
 #include "barrier.h"
 
 // for power modeling
-////#ifdef M5_WITH_POWER
+//#ifdef M5_WITH_POWER
 #include "../power/power.h"
 // Notice: there is no using namespace SST, 
 // so we should use SST::Power
 bool SST::Power::p_hasUpdatedTemp __attribute__((weak));
-////#endif
+//#endif
 
 
 class SimLoopExitEvent;
@@ -41,6 +41,8 @@ class M5 : public SST::IntrospectedComponent
 
     // flag for fastforwarding
     bool FastForwarding_flag;
+
+    std::string m_statFile;
 
     // parameters for power modeling
    Params_t params;
