@@ -146,7 +146,7 @@ class Router : public DES_Component
         int Finish()
         {
             fprintf(stderr,"\n Stats for node %d %s ",node_id, print_stats());
-            fprintf(stderr,"empty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
+//            fprintf(stderr,"\n\nempty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
             return 0;
         }
 

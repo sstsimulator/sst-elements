@@ -368,6 +368,7 @@ Router::do_st ( void )
 
                 /* Update packet stats */
                 stat_packets_out++;
+                stat_flits_out++;
                 stat_last_flit_cycle = _TICK_NOW;
                 uint16_t lat = _TICK_NOW - curr_pkt.pkt_arrival_time;
                 stat_total_pkt_latency_nano += lat;
