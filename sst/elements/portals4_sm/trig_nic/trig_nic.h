@@ -16,7 +16,6 @@
 #include <queue>
 #include <map>
 
-#define USE_IRIS
 #ifdef USE_IRIS
 #include "sst/elements/iris/RtrIF.h"
 #include "sst/elements/iris/SST_interface.h"
