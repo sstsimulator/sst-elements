@@ -14,8 +14,8 @@ AllocInfo.h		ArrivalEvent.h		CompletionEvent.h	exceptions.h \
 AllocInfo.cc		ArrivalEvent.cc \
 Job.h			JobStartEvent.h		Machine.h \
 Job.cc \
-misc.h			nodeComponent.h		PQScheduler.h		schedComponent.h \
-misc.cc			nodeComponent.cc	PQScheduler.cc		schedComponent.cc \
+misc.h			nodeComponent.h		EASYScheduler.h 	PQScheduler.h		schedComponent.h \
+misc.cc			nodeComponent.cc	EASYScheduler.cc 	PQScheduler.cc		schedComponent.cc \
 Scheduler.h 		SimpleAllocator.h	SimpleMachine.h		Statistics.h \
 schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc
 

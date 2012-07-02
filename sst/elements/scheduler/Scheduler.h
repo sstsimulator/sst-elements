@@ -18,40 +18,41 @@
 
 #include <string>
 #include <queue>
+#include "Job.h"
 using namespace std;
 
-class Job;
+//class Job;
 class AllocInfo;
 class Allocator;
 class Machine;
 class Statistics;
 
 class Scheduler {
- public:
-  virtual ~Scheduler() {}
+  public:
+    virtual ~Scheduler() {}
 
-  virtual string getSetupInfo(bool comment) = 0;
+    virtual string getSetupInfo(bool comment) = 0;
 
-  virtual void jobArrives(Job* j, long time) = 0;
-  //called when j arrives; time is current time
-  //tryToStart will be called after announcing all arriving jobs
+    virtual void jobArrives(Job* j, long time, Machine* mach) = 0;
+    //called when j arrives; time is current time
+    //tryToStart will be called after announcing all arriving jobs
 
-  virtual void jobFinishes(Job* j, long time) {}
-  //called when j finishes; time is current time
-  //tryToStart will be called after announcing all arriving jobs
+    virtual void jobFinishes(Job* j, long time, Machine* mach) = 0;
+    //called when j finishes; time is current time
+    //tryToStart will be called after announcing all arriving jobs
 
-  virtual AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
-				Statistics* stats) = 0;
-  //allows the scheduler to start a job if desired; time is current time
-  //called after calls to jobArrives and jobFinishes
-  //returns information on job it started or NULL if none
-  //(if not NULL, tryToStart will be called again)
+    virtual AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
+        Statistics* stats) = 0;
+    //allows the scheduler to start a job if desired; time is current time
+    //called after calls to jobArrives and jobFinishes
+    //returns information on job it started or NULL if none
+    //(if not NULL, tryToStart will be called again)
 
-  virtual void reset() {}
-  //delete stored state so scheduler can be run on new input
+    virtual void reset() {}
+    //delete stored state so scheduler can be run on new input
 
-  virtual void done() {}
-  //tell scheduler that simulation is done so it can print information
+    virtual void done() {}
+    //tell scheduler that simulation is done so it can print information
 };
 
 #endif

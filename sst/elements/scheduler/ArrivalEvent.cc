@@ -29,7 +29,7 @@ int ArrivalEvent::getJobIndex() const {
 
 void ArrivalEvent::happen(Machine* mach, Allocator* alloc, Scheduler* sched,
 			  Statistics* stats, Job* arrivingJob) {
-  sched -> jobArrives(arrivingJob, time);
+  sched -> jobArrives(arrivingJob, time, mach);
   stats -> jobArrives(time);
 
   //tries to start job                                                                    

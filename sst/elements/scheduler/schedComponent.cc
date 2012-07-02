@@ -18,6 +18,7 @@
 
 #include "misc.h"
 #include "PQScheduler.h"
+#include "EASYScheduler.h"
 #include "schedComponent.h"
 #include "SimpleAllocator.h"
 #include "SimpleMachine.h"
@@ -67,10 +68,11 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
 
   machine = new SimpleMachine(nodes.size(), this);
-  scheduler = new PQScheduler(JobComparator::Make("fifo"));
+  scheduler = new EASYScheduler(EASYScheduler::JobComparator::Make("fifo"));
   theAllocator = new SimpleAllocator(dynamic_cast<SimpleMachine*>(machine));
   string trace = params[ "traceName" ].c_str();
-  stats = new Statistics(machine, scheduler, theAllocator, trace, "time");
+  char timestring[] = "time";
+  stats = new Statistics(machine, scheduler, theAllocator, trace, timestring);
   ifstream input;
   char* inputDir = getenv("SIMINPUT");
   if(inputDir != NULL) {
@@ -127,8 +129,8 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
       error(mesg);
     }
     if (ok) {
-      ArrivalEvent ae(j -> getArrivalTime(), jobs.size()-1);
-      selfLink->Send(j -> getArrivalTime(), &ae);
+      ArrivalEvent* ae = new ArrivalEvent(j -> getArrivalTime(), jobs.size()-1);
+      selfLink->Send(j -> getArrivalTime(), ae);
     }
   }
   input.close();
@@ -158,7 +160,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       machine->deallocate(ai);
       theAllocator->deallocate(ai);
       stats->jobFinishes(ai, getCurrentSimTime());
-      scheduler->jobFinishes(ai->job, getCurrentSimTime());
+      scheduler->jobFinishes(ai->job, getCurrentSimTime(), machine);
 
       //tries to start job
       AllocInfo* allocInfo;
@@ -166,9 +168,17 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
 	allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
       } while(allocInfo != NULL);
     }
+    if(jobNum == jobs.back().jobNum)
+    {
+      while(!jobs.empty() && runningJobs.find(jobs.back().jobNum) == runningJobs.end())
+        jobs.pop_back();
+      if(jobs.empty())
+        unregisterExit();
+    }
   } else {
     internal_error("S: Error! Bad Event Type!\n");
   }
+  
 }
 
 void schedComponent::handleJobArrivalEvent(Event *ev) {

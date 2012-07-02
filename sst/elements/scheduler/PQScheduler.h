@@ -18,49 +18,59 @@
 #include "Scheduler.h"
 using namespace std;
 
-enum ComparatorType {  //to represent type of JobComparator
-  FIFO = 0,
-  LARGEFIRST = 1,
-  SMALLFIRST = 2,
-  LONGFIRST = 3,
-  SHORTFIRST = 4
-};
-
-class JobComparator : public binary_function<Job*,Job*,bool> {
- public:
-  static JobComparator* Make(string typeName);  //return NULL if name is invalid
-  static void printComparatorList(ostream& out);  //print list of possible comparators
-  bool operator()(Job*& j1, Job*& j2);
-  string toString();
- private:
-  JobComparator(ComparatorType type);
-  ComparatorType type;
-};
-
 class PQScheduler : public Scheduler {
- public:
-  PQScheduler(JobComparator* comp);
+  private:
 
-  virtual ~PQScheduler() {
-    delete toRun;
-  }
+    enum ComparatorType {  //to represent type of JobComparator
+      FIFO = 0,
+      LARGEFIRST = 1,
+      SMALLFIRST = 2,
+      LONGFIRST = 3,
+      SHORTFIRST = 4
+    };
 
-  //static Scheduler* Make(vector<string>* params);
-  //static string getParamHelp();
-  string getSetupInfo(bool comment);
+    struct compTableEntry {
+      ComparatorType val;
+      string name;
+    };
 
-  void jobArrives(Job* j, long time);
+    static const compTableEntry compTable[5] ;
 
-  AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
-			Statistics* stats);
 
-  void reset();
+    static const int numCompTableEntries;
 
- protected:
-  priority_queue<Job*,vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
+    string compSetupInfo;
+  public:
+    virtual ~PQScheduler() { delete toRun;}
 
- private:
-  string compSetupInfo;
+    class JobComparator : public binary_function<Job*,Job*,bool> {
+      public:
+        static JobComparator* Make(string typeName);  //return NULL if name is invalid
+        static void printComparatorList(ostream& out);  //print list of possible comparators
+        bool operator()(Job*& j1, Job*& j2);
+        bool operator()(Job* const& j1, Job* const& j2);
+        string toString();
+      private:
+        JobComparator(ComparatorType type);
+        ComparatorType type;
+    };
+
+    PQScheduler(JobComparator* comp);
+
+    //static Scheduler* Make(vector<string>* params);
+    //static string getParamHelp();
+    string getSetupInfo(bool comment);
+
+    void jobArrives(Job* j, long time, Machine* mach);
+
+    void jobFinishes(Job* j, long time, Machine* mach){}
+
+    AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
+        Statistics* stats);
+
+    void reset();
+  protected:
+    priority_queue<Job*,vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
 };
 
 #endif
