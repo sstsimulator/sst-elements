@@ -116,7 +116,6 @@
 </cpuParams>
 
 <cacheParams>
-
     <trace_addr> 0 </trace_addr>
     <max_miss_count> 0 </max_miss_count>
     <prefetch_policy> none </prefetch_policy>
@@ -145,7 +144,6 @@
     <size> 0x8000 </size>
     <num_cpus> 1 </num_cpus>
     <is_top_level> false </is_top_level>
-
 </cacheParams>
 
 <busParams>
@@ -156,16 +154,6 @@
     <header_cycles> 1 </header_cycles>
     <width> 64 </width>
 </busParams>
-
-<bridgeParams>
-    <delay> 0ns </delay>
-    <nack_delay> 0ns </nack_delay>
-    <write_ack> false </write_ack>
-    <req_size_a> 16 </req_size_a>
-    <req_size_b> 16 </req_size_b>
-    <resp_size_a> 16 </resp_size_a>
-    <resp_size_b> 16 </resp_size_b>
-</bridgeParams>
 
 </param_include>
 
