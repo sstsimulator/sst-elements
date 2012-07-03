@@ -178,7 +178,7 @@ bool M5::clock( SST::Cycle_t cycle )
         } else {
             // bug what if we didn't call registerExit()
             unregisterExit();
-            INFO( "exiting: time=%lu cause=`%s` code=%d\n", cycle,
+            INFO( "exiting: curTick()=%lu cause=`%s` code=%d\n", curTick(),
                 exitEvent->getCause().c_str(), exitEvent->getCode() );
         }
         if ( !m_statFile.empty() ) {
