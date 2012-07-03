@@ -6,6 +6,7 @@
 #include <cpu/func_unit.hh>
 #include <params/FUPool.hh>
 
+#include <m5.h>
 #include <system.h>
 #include <physical2.h>
 #include <process.h>
@@ -203,7 +204,6 @@ SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstPar
     INIT_INT(O3Params, O3SSTParams, LSQDepCheckShift);
     INIT_BOOL(O3Params, O3SSTParams, LSQCheckLoads );
 
-    static_cast<BaseCPU*>(static_cast<void*>(o3params->create()));
     return static_cast<SimObject*>(static_cast<void*>(BaseParams.create()));
 }
 
@@ -212,12 +212,8 @@ extern "C" {
 SimObject* create_O3Cpu( SST::Component*, string name, Params& sstParams );
 }
 
-SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
+System* foo( string name, Params& sstParams )
 {
-    DerivO3CPUParams*  params     = new DerivO3CPUParams;
-
-    params->name = name;
-
     Addr start = sstParams.find_integer( "physicalMemory.start" );
     Addr end = sstParams.find_integer( "physicalMemory.end", 0 );
 
@@ -228,9 +224,34 @@ SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
     PMparams.range.start = start;
     PMparams.range.end = end;
     PMparams.name = name + ".physmem";
+    PMparams.megsMem = PMparams.range.size() / (1024 * 1024);
+    PMparams.ddrConfig = sstParams.find_string( "ddrConfig", "" );
+    PMparams.tx_q = sstParams.find_integer( "tx_q", 0 );
 
-    System* system = create_System( name + ".system", 
+    return create_System( name + ".system", 
             new PhysicalMemory2( & PMparams ), Enums::timing );
+}
+
+SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
+{
+    DerivO3CPUParams*  params     = new DerivO3CPUParams;
+    System* system;
+
+    params->name = name;
+
+    std::string systemName = sstParams.find_string( "system" );
+    if ( ! systemName.empty() ) {
+        M5* m5comp = static_cast<M5*>(comp);
+        printf("system `%s`\n",systemName.c_str());
+        objectMap_t::iterator it = m5comp->objectMap().find( systemName );
+        if ( it == m5comp->objectMap().end() ) {
+            m5comp->objectMap()[systemName] = foo(name, sstParams);
+        }
+        system = static_cast<System*>( m5comp->objectMap()[systemName] );
+    } else {
+        printf("default system\n");
+        system = foo(name,sstParams);
+    }
 
     // system and physmem are not needed after startup how do free them
 
@@ -277,11 +298,27 @@ static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
     INIT_INT( cpu, sstParams, cpu_id );
 
     cpu.workload.resize(1);
-    cpu.workload[0]           = newProcess( cpu.name + ".workload", 
+    cpu.numThreads            = 1;
+
+    std::string processName = sstParams.find_string( "process" );
+    if ( ! processName.empty() ) {
+        M5* m5comp = static_cast<M5*>(comp);
+        printf("process `%s`\n", processName.c_str());
+        objectMap_t::iterator it = m5comp->objectMap().find( processName );
+        if ( it == m5comp->objectMap().end() ) {
+            m5comp->objectMap()[processName] = 
+                        newProcess( cpu.name + ".workload", 
                                     sstParams.find_prefix_params( "process." ),
                                     system, comp );
-
-    cpu.numThreads            = 1;
+        }
+        cpu.workload[0] = static_cast<Process*>( 
+                                    m5comp->objectMap()[processName] );
+    } else {
+        printf("default process\n");
+        cpu.workload[0] = newProcess( cpu.name + ".workload", 
+                                    sstParams.find_prefix_params( "process." ),
+                                    system, comp );
+    }
 
 }
 
@@ -403,7 +440,7 @@ static FUPool* newFUPool( string prefix )
 	// IntALU  *****************************
 	fuName = prefix + "0";
 	opV.push_back( newOpDesc( IntAluOp, 1, 1, fuName + ".opList" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 6, fuName) );
+	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
 
 	// IntMultDiv  *****************************
 	opV.clear();
@@ -416,10 +453,11 @@ static FUPool* newFUPool( string prefix )
 	// FP_ALU  *****************************
 	opV.clear();
 	fuName = prefix + "2";
-	opV.push_back( newOpDesc( FloatAddOp, 2, 1, fuName + ".opList0" ) );
-	opV.push_back( newOpDesc( FloatCmpOp, 2, 1, fuName + ".opList1" ) );
-	opV.push_back( newOpDesc( FloatCvtOp, 2, 1, fuName + ".opList2" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 4, fuName) );
+	opV.push_back( newOpDesc( FloatAddOp, 1, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( FloatCmpOp, 1, 1, fuName + ".opList1" ) );
+	opV.push_back( newOpDesc( FloatCvtOp, 1, 1, fuName + ".opList2" ) );
+	opV.push_back( newOpDesc( FloatMultOp, 2, 1, fuName + ".opList2" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 16, fuName) );
 
 	// FP_MultDiv  *****************************
 	opV.clear();
@@ -427,7 +465,32 @@ static FUPool* newFUPool( string prefix )
 	opV.push_back( newOpDesc( FloatMultOp, 4, 1, fuName + ".opList0" ) );
 	opV.push_back( newOpDesc( FloatDivOp, 12, 12, fuName + ".opList1" ) );
 	opV.push_back( newOpDesc( FloatSqrtOp, 24, 24, fuName + ".opList2" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
+	fuPool->FUList.push_back( newFUDesc( opV, 4, fuName) );
+
+    // SIMD_Unit
+	opV.clear();
+	fuName = prefix + "8";
+	opV.push_back( newOpDesc( SimdAddOp, 1, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( SimdAddAccOp, 1, 1, fuName + ".opList1" ) );
+	opV.push_back( newOpDesc( SimdAluOp, 1, 1, fuName + ".opList2" ) );
+	opV.push_back( newOpDesc( SimdCmpOp, 1, 1, fuName + ".opList3" ) );
+	opV.push_back( newOpDesc( SimdCvtOp, 1, 1, fuName + ".opList4" ) );
+	opV.push_back( newOpDesc( SimdMiscOp, 1, 1, fuName + ".opList5" ) );
+	opV.push_back( newOpDesc( SimdMultOp, 1, 1, fuName + ".opList6" ) );
+	opV.push_back( newOpDesc( SimdMultAccOp, 1, 1, fuName + ".opList7" ) );
+	opV.push_back( newOpDesc( SimdShiftOp, 1, 1, fuName + ".opList8" ) );
+	opV.push_back( newOpDesc( SimdShiftAccOp, 1, 1, fuName + ".opList9" ) );
+	opV.push_back( newOpDesc( SimdSqrtOp, 1, 1, fuName + ".opList10" ) );
+	opV.push_back( newOpDesc( SimdFloatAddOp, 1, 1, fuName + ".opList11" ) );
+	opV.push_back( newOpDesc( SimdFloatAluOp, 1, 1, fuName + ".opList12" ) );
+	opV.push_back( newOpDesc( SimdFloatCmpOp, 1, 1, fuName + ".opList13" ) );
+	opV.push_back( newOpDesc( SimdFloatCvtOp, 1, 1, fuName + ".opList14" ) );
+	opV.push_back( newOpDesc( SimdFloatDivOp, 1, 1, fuName + ".opList15" ) );
+	opV.push_back( newOpDesc( SimdFloatMiscOp, 1, 1, fuName + ".opList16" ) );
+	opV.push_back( newOpDesc( SimdFloatMultOp, 1, 1, fuName + ".opList17" ) );
+	opV.push_back( newOpDesc( SimdFloatMultAccOp, 1, 1, fuName + ".opList18" ));
+	opV.push_back( newOpDesc( SimdFloatSqrtOp, 1, 1, fuName + ".opList19" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 4, fuName) );
 
 	// ReadPort *****************************
 	opV.clear();

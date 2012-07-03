@@ -30,7 +30,10 @@ SimObject* create_PhysicalMemory( Component*, string name, Params& sParams )
     INIT_BOOL( params, sParams, null );
     INIT_BOOL( params, sParams, zero );
     INIT_STR( params, sParams, file );
+    INIT_STR( params, sParams, ddrConfig );
+    INIT_INT( params, sParams, tx_q );
 
+    params.megsMem = params.range.size() / (1024 * 1024);
     PhysicalMemory* physmem = params.create();
 
     loadMemory( name + ".exe", physmem, sParams.find_prefix_params("exe") );

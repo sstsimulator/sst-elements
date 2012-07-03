@@ -55,7 +55,7 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     INFO( "configFile `%s`\n", configFile.c_str() );
 
-    buildConfig( this, "m5", configFile, params );
+    m_objectMap = buildConfig( this, "m5", configFile, params );
 
     // It makes things easier if we match the m5 simulation clock with 
     // the SST simulation clock. We don't have access to the SST clock but

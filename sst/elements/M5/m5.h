@@ -6,6 +6,8 @@
 #include <sst/core/introspectedComponent.h>
 #include "barrier.h"
 
+#include <util.h>
+
 // for power modeling
 //#ifdef M5_WITH_POWER
 #include "../power/power.h"
@@ -30,6 +32,8 @@ class M5 : public SST::IntrospectedComponent
 
     BarrierAction&  barrier() { return *m_barrier; }
 
+    objectMap_t& objectMap() { return m_objectMap; }
+
   private:
     bool clock( SST::Cycle_t cycle );
 
@@ -38,6 +42,7 @@ class M5 : public SST::IntrospectedComponent
     BarrierAction*      m_barrier;
     int                 m_m5ticksPerSSTclock;
     SST::Cycle_t        m_fooTicks;
+    objectMap_t         m_objectMap;
 
     // flag for fastforwarding
     bool FastForwarding_flag;
