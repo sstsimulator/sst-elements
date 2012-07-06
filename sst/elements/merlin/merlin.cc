@@ -13,46 +13,40 @@
 #include "sst/core/serialization/element.h"
 
 #include <sst/core/element.h>
-
 #include <sst/core/configGraph.h>
+
+#include "hr_router/hr_router.h"
 
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "portals_args.h"
-#include <boost/tokenizer.hpp>
-#include <boost/foreach.hpp>
-
 using namespace std;
-using namespace boost;
 
 static Component* 
 create_portals_nic(SST::ComponentId_t id, 
-                SST::Component::Params_t& params)
+		   SST::Component::Params_t& params)
 {
-    return new portals_nic( id, params );
+    // return new portals_nic( id, params );
+    return NULL;
+}
+
+static Component* 
+create_hr_router(SST::ComponentId_t id, 
+	      SST::Component::Params_t& params)
+{
+    return new hr_router( id, params );
 }
 
 
-static string str(const char* format, ...) {
-    char buffer[256];
-    va_list args;
-    va_start (args, format);
-    vsprintf (buffer,format, args);
-    va_end (args);
-    string ret(buffer);
-    return ret;
-}
-
-
-static void partition(ConfigGraph* graph, int ranks) {
-}
-
-
-static void generate(ConfigGraph* graph, string options, int ranks) {
-}
-
-
+// static string str(const char* format, ...) {
+//     char buffer[256];
+//     va_list args;
+//     va_start (args, format);
+//     vsprintf (buffer,format, args);
+//     va_end (args);
+//     string ret(buffer);
+//     return ret;
+// }
 
 
 static const ElementInfoComponent components[] = {
@@ -61,37 +55,44 @@ static const ElementInfoComponent components[] = {
       NULL,
       create_portals_nic,
     },
+    { "hr_router",
+      "High radix router.",
+      NULL,
+      create_hr_router,
+    },
     { NULL, NULL, NULL, NULL }
 };
 
-static const ElementInfoPartitioner partitioners[] = {
-    { "partitioner",
-      "Partitioner for portals4_sm simulations",
-      NULL,
-      partition,
-    },
-    { NULL, NULL, NULL, NULL }
-};
+// static const ElementInfoPartitioner partitioners[] = {
+//     { "partitioner",
+//       "Partitioner for portals4_sm simulations",
+//       NULL,
+//       partition,
+//     },
+//     { NULL, NULL, NULL, NULL }
+// };
       
-static const ElementInfoGenerator generators[] = {
-    { "generator",
-      "Generator for portals4_sm simulations",
-      NULL,
-      generate,
-    },
-    { NULL, NULL, NULL, NULL }
-};
+// static const ElementInfoGenerator generators[] = {
+//     { "generator",
+//       "Generator for portals4_sm simulations",
+//       NULL,
+//       generate,
+//     },
+//     { NULL, NULL, NULL, NULL }
+// };
       
 					     
 
 extern "C" {
-    ElementLibraryInfo portals4_sm_eli = {
-        "portals4_sm",
+    ElementLibraryInfo merlin_eli = {
+        "merlin",
         "State-machine based processor/nic for Portals 4 research",
         components,
 	NULL,
 	NULL,
-	partitioners,
-	generators,
+	// partitioners,
+	// generators,
+	NULL,
+	NULL,
     };
 }
