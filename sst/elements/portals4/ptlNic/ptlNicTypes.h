@@ -3,6 +3,6 @@
 
 #include <stdlib.h>
 
-typedef unsigned long Addr;
+typedef uint64_t Addr;
 
 #endif
