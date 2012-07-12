@@ -14,7 +14,7 @@
 
 class NicMmu 
 {
-    typedef unsigned long Addr;
+    typedef uint64_t Addr;
     static const int NumTables = 1000; 
 
 #if THE_ISA == X86_ISA
