@@ -19,6 +19,9 @@
 #include <sst/core/timeConverter.h>
 #include "JobStartEvent.h"
 #include "CompletionEvent.h"
+#include "JobFaultEvent.h"
+
+#include <vector>
 
 class nodeComponent : public SST::Component {
 public:
@@ -34,12 +37,20 @@ private:
 
   void handleEvent( SST::Event *ev );
   void handleSelfEvent( SST::Event *ev );
+  
+  void sendNextFault( std::string faultType );
 
   int jobNum;
   int nodeNum;
+  float lambda;
 
   SST::Link* Scheduler;
   SST::Link* SelfLink;
+
+  std::vector<SST::Link *> Parents;
+  std::vector<SST::Link *> Children;
+  
+  std::map<std::string, float> Faults;
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -50,6 +61,11 @@ private:
     ar & BOOST_SERIALIZATION_NVP(nodeNum);
     ar & BOOST_SERIALIZATION_NVP(Scheduler);
     ar & BOOST_SERIALIZATION_NVP(SelfLink);
+
+    ar & BOOST_SERIALIZATION_NVP(Parents);
+    ar & BOOST_SERIALIZATION_NVP(Children);
+    
+    ar & BOOST_SERIALIZATION_NVP(Faults);
   }
 
   template<class Archive>
@@ -60,11 +76,28 @@ private:
     ar & BOOST_SERIALIZATION_NVP(nodeNum);
     ar & BOOST_SERIALIZATION_NVP(Scheduler);
     ar & BOOST_SERIALIZATION_NVP(SelfLink);
+
+    ar & BOOST_SERIALIZATION_NVP(Parents);
+    ar & BOOST_SERIALIZATION_NVP(Children);
+    
+    ar & BOOST_SERIALIZATION_NVP(Faults);
+
     //restore links
     Scheduler->setFunctor(new SST::Event::Handler<nodeComponent>(this,
 								 &nodeComponent::handleEvent));
     SelfLink->setFunctor(new SST::Event::Handler<nodeComponent>(this,
 								&nodeComponent::handleSelfEvent));
+	  
+	  for( unsigned int counter = 0; counter < Parents.size(); counter ++ ){
+	    Parents.at( counter )->setFunctor( new SST::Event::Handler<nodeComponent>( this,
+							                                                                   &nodeComponent::handleEvent ) );
+	  }
+		
+		
+	  for( unsigned int counter = 0; counter < Children.size(); counter ++ ){
+	    Children.at( counter )->setFunctor( new SST::Event::Handler<nodeComponent>( this,
+							                                                                    &nodeComponent::handleEvent ) );
+	  }
   }
     
   BOOST_SERIALIZATION_SPLIT_MEMBER()

@@ -21,6 +21,8 @@
 #include "ArrivalEvent.h"
 #include "CompletionEvent.h"
 #include "JobStartEvent.h"
+#include "JobKillEvent.h"
+#include "JobFaultEvent.h"
 
 using namespace std;
 
@@ -39,6 +41,8 @@ private:
   schedComponent();  // for serialization only
   schedComponent(const schedComponent&); // do not implement
   void operator=(const schedComponent&); // do not implement
+  
+  bool newJobLine( std::string line );
 
   void handleCompletionEvent( SST::Event *ev, int n );
   void handleJobArrivalEvent( SST::Event *ev );

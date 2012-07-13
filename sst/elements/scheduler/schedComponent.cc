@@ -13,6 +13,9 @@
 #include "sst/core/serialization/element.h"
 #include <assert.h>
 #include <fstream>
+#include <iostream>
+
+//#include <QFileSystemWatcher>
 
 #include "sst/core/element.h"
 
@@ -83,62 +86,23 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
     input.open(trace.c_str());  //try without directory                     
   if(!input.is_open())
     error("Unable to open file " + trace);
+  
+  printf("\nScheduler Detects %d nodes\n", (int)nodes.size());
+    
+  machine -> reset();
+  scheduler -> reset();
 
   string line;
   while(!input.eof()) {
     getline(input, line);
-    if(line.find_first_not_of(" \t\n") == string::npos)
-      continue;
-
-    long arrivalTime;
-    int procsNeeded;
-    long runningTime;
-    long estRunningTime;
-    int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
-                     &procsNeeded, &runningTime, &estRunningTime);
-    if(num < 3)
-      error("Poorly formatted input line: " + line);
-    if(num == 3)
-      jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
-    else   //read all 4                                                        
-      jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
-
-    //validate                                                                  
-    Job* j = &jobs.back();
-    char mesg[100];
-    bool ok = true;
-    if (j -> getProcsNeeded() <= 0) {
-      sprintf(mesg, "Job %ld  requests %d processors; ignoring it",
-              j -> getJobNum(), j -> getProcsNeeded());
-      warning(mesg);
-      jobs.pop_back();
-      ok = false;
-    }
-    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
-      sprintf(mesg, "Job %ld  has running time of %ld; ignoring it",
-              j -> getJobNum(), runningTime);
-      warning(mesg);
-      jobs.pop_back();
-      ok = false;
-    }
-    if(ok && j -> getProcsNeeded() > machine -> getNumFreeProcessors()) {
-      sprintf(mesg,
-              "Job %ld requires %d processors but only %d are in the machine",
-              j -> getJobNum(), j -> getProcsNeeded(),
-              machine -> getNumFreeProcessors());
-      error(mesg);
-    }
-    if (ok) {
-      ArrivalEvent* ae = new ArrivalEvent(j -> getArrivalTime(), jobs.size()-1);
-      selfLink->Send(j -> getArrivalTime(), ae);
-    }
+    newJobLine( line );
   }
   input.close();
-
-  machine -> reset();
-  scheduler -> reset();
-
-  printf("\nScheduler Detects %d nodes\n", (int)nodes.size());
+  
+  /*QFileSystemWatcher monitor;
+  monitor.addPath( fullName.c_str() );
+  
+  QObject::connect( &monitor, SIGNAL( QFileSystemWatcher::fileChanged ( QString ), this,  )*/
 }
 
 schedComponent::schedComponent() :
@@ -147,13 +111,71 @@ schedComponent::schedComponent() :
     // for serialization only
 }
 
+
+
+bool schedComponent::newJobLine( std::string line ){
+  if(line.find_first_not_of(" \t\n") == string::npos)
+    return false;
+
+  long arrivalTime;
+  int procsNeeded;
+  long runningTime;
+  long estRunningTime;
+  int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
+                   &procsNeeded, &runningTime, &estRunningTime);
+  if(num < 3)
+    error("Poorly formatted input line: " + line);
+  if(num == 3)
+    jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
+  else   //read all 4                                                        
+    jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
+
+  //validate                                                                  
+  Job* j = &jobs.back();
+  char mesg[100];
+  bool ok = true;
+  if (j -> getProcsNeeded() <= 0) {
+    sprintf(mesg, "Job %ld  requests %d processors; ignoring it",
+            j -> getJobNum(), j -> getProcsNeeded());
+    warning(mesg);
+    jobs.pop_back();
+    ok = false;
+  }
+  if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
+    sprintf(mesg, "Job %ld  has running time of %ld; ignoring it",
+            j -> getJobNum(), runningTime);
+    warning(mesg);
+    jobs.pop_back();
+    ok = false;
+  }
+  if(ok && j -> getProcsNeeded() > machine -> getNumFreeProcessors()) {
+    sprintf(mesg,
+            "Job %ld requires %d processors but only %d are in the machine",
+            j -> getJobNum(), j -> getProcsNeeded(),
+            machine -> getNumFreeProcessors());
+    error(mesg);
+  }
+  if (ok) {
+    ArrivalEvent* ae = new ArrivalEvent(j -> getArrivalTime(), jobs.size()-1);
+    selfLink->Send(j -> getArrivalTime(), ae);
+  }
+  
+  return ok;
+}
+
+
+
 // incoming events are scanned and deleted. ev is the returned event,
 // node is the node it came from.
 void schedComponent::handleCompletionEvent(Event *ev, int node) {
   CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);
   if (event) {
     int jobNum = event->jobNum;
-
+      if(runningJobs[jobNum].ai == NULL)
+      {
+        runningJobs.erase(jobNum);
+        return; //this event has already stopped (probably faulted)
+      }
     if ((--(runningJobs[jobNum].i)) == 0) {
       AllocInfo *ai = runningJobs[jobNum].ai;
       runningJobs.erase(jobNum);
@@ -165,7 +187,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       //tries to start job
       AllocInfo* allocInfo;
       do {
-	allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
+        allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
       } while(allocInfo != NULL);
     }
     if(jobNum == jobs.back().jobNum)
@@ -173,12 +195,61 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       while(!jobs.empty() && runningJobs.find(jobs.back().jobNum) == runningJobs.end())
         jobs.pop_back();
       if(jobs.empty())
+      {
         unregisterExit();
+      }
     }
   } else {
-    internal_error("S: Error! Bad Event Type!\n");
-  }
-  
+    //If it is not a completion it is (hopefully) a fault.
+    //as far as the scheduler is concerned this is treated the same way
+    //however, must send a kill event to tell all nodes with this job to
+    //stop running (not all the nodes may have failed but all must stop)
+    //for now, the job is dropped forever
+    JobFaultEvent *event = dynamic_cast<JobFaultEvent*>(ev);
+    if (event) {
+      int jobNum = event->jobNum;
+      if(jobNum == -1 )
+        return; // the node that faulted was not running a job, nothing for 
+                //scheduler, allocator, machine to do
+      //force all nodes running the job to kill it
+      AllocInfo *ai = runningJobs[jobNum].ai;
+      if(ai == NULL)
+      {
+        runningJobs.erase(jobNum);
+        return;
+      }
+      //if ai is NULL we already killed this job
+      for (int i = 0; i < ai->job->getProcsNeeded(); ++i) {
+        JobKillEvent *ec = new JobKillEvent(ai->job->getJobNum());
+        nodes[ai->nodeIndices[i]]->Send(ec);
+      }
+
+      runningJobs.erase(jobNum);
+      //char a;
+      //cin >> a;
+      machine->deallocate(ai);
+      theAllocator->deallocate(ai);
+      stats->jobFinishes(ai, getCurrentSimTime());
+      scheduler->jobFinishes(ai->job, getCurrentSimTime(), machine);
+
+      //tries to start job
+      AllocInfo* allocInfo;
+      do {
+        allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
+      } while(allocInfo != NULL);
+      if(jobNum == jobs.back().jobNum)
+      {
+        while(!jobs.empty() && runningJobs.find(jobs.back().jobNum) == runningJobs.end())
+          jobs.pop_back();
+        if(jobs.empty())
+        {
+          unregisterExit();
+        }
+      }
+    } else {
+      internal_error("S: Error! Bad Event Type!\n");
+    }
+  }  
 }
 
 void schedComponent::handleJobArrivalEvent(Event *ev) {
