@@ -2,7 +2,7 @@ LDFLAGS = -Llibs/lib
 LIBS=-lruntime
 CPPFLAGS += -Ilibs/include
 
-apps: libs hello rt
+apps: libs hello
 
 libs:
 	cd libs && $(MAKE)
