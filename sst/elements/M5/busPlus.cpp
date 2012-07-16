@@ -22,6 +22,7 @@ SimObject* create_BusPlus( SST::Component* comp, std::string name,
     INIT_INT( busP, params, bus_id );
     INIT_INT( busP, params, header_cycles);
     INIT_INT( busP, params, width);
+    INIT_BOOL( busP, params, async);
 
     busP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
     busP.params = params.find_prefix_params( "link." );
@@ -38,10 +39,25 @@ BusPlus::BusPlus( const BusPlusParams *p ) :
         return;
     }
 
-    Port* port = getPort( "port" );
-    assert( port );
+    int num = 0;
+    while ( 1 ) {
+        std::stringstream numSS;
+        std::string tmp;
 
-    SST::Params params = p->params.find_prefix_params( "0." );
+        numSS << num;
 
-    m_links.push_back( MemLink::create( name(), p->m5Comp, port, params ) );
+        tmp = numSS.str() + ".";
+
+        SST::Params params = p->params.find_prefix_params( tmp );
+
+        if ( params.empty() ) {
+            return;
+        }
+
+        Port* port = getPort( "port" );
+        assert( port );
+
+        m_links.push_back( MemLink::create( name(), p->m5Comp, port, params ) );
+        ++num;
+    }
 }
