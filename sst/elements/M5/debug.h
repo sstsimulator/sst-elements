@@ -26,14 +26,12 @@ exit(-1); \
 #if 1 
 #define DBGX_M5( x, fmt, args... ) \
 {\
-     char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%7lu: %s: %s::%s():%d: "fmt, curTick(),\
-                        name().c_str(), realname ? realname : "?????????", \
+    fprintf( stderr, "%7lu: %s: %s():%d: "fmt, curTick(), name().c_str(), \
                         __func__, __LINE__, ##args);\
-    if ( realname ) free(realname);\
 }
 
 #else
+
 #define DBGX_M5( x, fmt, args... ) 
 #endif
 
