@@ -22,7 +22,7 @@ SimObject* create_BusPlus( SST::Component* comp, std::string name,
     INIT_INT( busP, params, bus_id );
     INIT_INT( busP, params, header_cycles);
     INIT_INT( busP, params, width);
-    INIT_BOOL( busP, params, async);
+//    INIT_BOOL( busP, params, async);
 
     busP.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
     busP.params = params.find_prefix_params( "link." );
