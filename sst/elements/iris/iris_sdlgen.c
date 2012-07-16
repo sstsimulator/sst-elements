@@ -188,7 +188,7 @@ main(int argc, char **argv)
     
     size = x_count * y_count * z_count;
 
-    if ( new_format ) fprintf(output, "<?xml version=\"2.0\"?>\n");
+    if ( new_format ) fprintf(output, "<sdl version=\"2.0\"/>\n");
     else fprintf(output, "<?xml version=\"1.0\"?>\n");
     fprintf(output, "\n");
 
@@ -237,26 +237,11 @@ main(int argc, char **argv)
     }
     
     fprintf(output, "%s<rtr_params>\n",indent);
-    fprintf(output, "%s    <clock>         500Mhz </clock>\n",indent);
-    fprintf(output, "%s    <debug>         no     </debug>\n",indent);
-    fprintf(output, "%s    <info>          no     </info>\n",indent);
-    fprintf(output, "\n");
-    fprintf(output, "%s    <iLCBLat>       13     </iLCBLat>\n",indent);
-    fprintf(output, "%s    <oLCBLat>       7      </oLCBLat>\n",indent);
-    fprintf(output, "%s    <routingLat>    3      </routingLat>\n",indent);
-    fprintf(output, "%s    <iQLat>         2      </iQLat>\n",indent);
-    fprintf(output, "\n");
-    fprintf(output, "%s    <OutputQSize_flits>       16  </OutputQSize_flits>\n",indent);
-    fprintf(output, "%s    <InputQSize_flits>        96  </InputQSize_flits>\n",indent);
-    fprintf(output, "%s    <Router2NodeQSize_flits>  512 </Router2NodeQSize_flits>\n",indent);
-    fprintf(output, "\n");
-    fprintf(output, "%s    <network.xDimSize> %d </network.xDimSize>\n",indent,x_count);
-    fprintf(output, "%s    <network.yDimSize> %d </network.yDimSize>\n",indent,y_count);
-    fprintf(output, "%s    <network.zDimSize> %d </network.zDimSize>\n",indent,z_count);
-    fprintf(output, "\n");
-    fprintf(output, "%s    <routing.xDateline> 0 </routing.xDateline>\n",indent);
-    fprintf(output, "%s    <routing.yDateline> 0 </routing.yDateline>\n",indent);
-    fprintf(output, "%s    <routing.zDateline> 0 </routing.zDateline>\n",indent);
+    fprintf(output, "%s<credits> 30 </credits>\n",indent);
+    fprintf(output, "%s<ports> 7 </ports>\n",indent);
+    fprintf(output, "%s<vcs> 4 </vcs>\n",indent);
+    fprintf(output, "%s<no_nodes> %d </no_nodes>\n",indent,x_count*y_count);
+    fprintf(output, "%s<grid_size> %d </grid_size>\n",indent,x_count);
     fprintf(output, "%s</rtr_params>\n",indent);
     fprintf(output, "\n");
     fprintf(output, "%s<cpu_params>\n",indent);
@@ -292,20 +277,20 @@ main(int argc, char **argv)
     fprintf(output, "\n");
 
     if ( new_format ) {
-	fprintf(output, "</param_include>\n");
-	fprintf(output, "\n");
+        fprintf(output, "</param_include>\n");
+        fprintf(output, "\n");
     }
-    
+
     fprintf(output, "<sst>\n");
 
     for ( i = 0; i < size; ++i) {
         int x, y, z;
 
-	z = i / (x_count * y_count);
-	y = (i / x_count) % y_count;
-	x = i % x_count;
+        z = i / (x_count * y_count);
+        y = (i / x_count) % y_count;
+        x = i % x_count;
 
-	/* Partition logic */
+        /* Partition logic */
         int rank = i % ranks;
         if ( ranks == 2 ) {
             if ( x < x_count/2 ) rank = 0;
@@ -325,176 +310,176 @@ main(int argc, char **argv)
 
         if ( ranks == 16 ) {
             rank = 0;
-	    if ( x >= 3*(x_count/4) ) rank = rank | 3;
-	    else if ( x >= x_count/2 && x < 3*(x_count/4) ) rank = rank | 2;
-	    else if ( x >= x_count/4 && x < x_count/2 ) rank = rank | 1;
+            if ( x >= 3*(x_count/4) ) rank = rank | 3;
+            else if ( x >= x_count/2 && x < 3*(x_count/4) ) rank = rank | 2;
+            else if ( x >= x_count/4 && x < x_count/2 ) rank = rank | 1;
             if ( y >= y_count/2 ) rank = rank | (1 << 2);
             if ( z >= z_count/2 ) rank = rank | (1 << 3);
         }
 
-	if ( new_format ) {
-	    fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu rank=%d >\n",i,rank);
-	    fprintf(output, "        <params include=cpu_params>\n");
-	    fprintf(output, "            <id> %d </id>\n",i);
-	    fprintf(output, "        </params>\n");
-	    fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$nic_link_lat/>\n",i);
-	    fprintf(output, "    </component>\n");
-	    fprintf(output, "\n");
-	    fprintf(output, "    <component name=%d.nic type=iris.trig_nic rank=%d >\n",i,rank);
-	    fprintf(output, "        <params include=nic_params1,nic_params2>\n");
-	    fprintf(output, "            <id> %d </id>\n",i);
-	    fprintf(output, "        </params>\n");
-	    fprintf(output, "        <link name=%d.cpu2nic port=cpu latency=$nic_link_lat/>\n",i);
-	    fprintf(output, "        <link name=%d.nic2rtr port=rtr latency=$nic_link_lat/>\n",i);
-	    fprintf(output, "    </component>\n");
-	    fprintf(output, "\n");
-	    fprintf(output, "    <component name=%d.rtr type=iris.router rank=%d >\n",i,rank);
-	    fprintf(output, "        <params include=rtr_params>\n");
-	    fprintf(output, "            <id> %d </id>\n",i);
-	    fprintf(output, "        </params>\n");
-	    fprintf(output, "        <link name=%d.nic2rtr port=nic latency=$nic_link_lat/>\n",i);
+        if ( new_format ) {
+            fprintf(output, "    <component name=%d.cpu type=portals4_sm.trig_cpu rank=%d >\n",i,rank);
+            fprintf(output, "        <params include=cpu_params>\n");
+            fprintf(output, "            <id> %d </id>\n",i);
+            fprintf(output, "        </params>\n");
+            fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$nic_link_lat/>\n",i);
+            fprintf(output, "    </component>\n");
+            fprintf(output, "\n");
+            fprintf(output, "    <component name=%d.nic type=iris.trig_nic rank=%d >\n",i,rank);
+            fprintf(output, "        <params include=nic_params1,nic_params2>\n");
+            fprintf(output, "            <id> %d </id>\n",i);
+            fprintf(output, "        </params>\n");
+            fprintf(output, "        <link name=%d.cpu2nic port=cpu latency=$nic_link_lat/>\n",i);
+            fprintf(output, "        <link name=%d.nic2rtr port=rtr latency=$nic_link_lat/>\n",i);
+            fprintf(output, "    </component>\n");
+            fprintf(output, "\n");
+            fprintf(output, "    <component name=%d.rtr type=iris.router rank=%d >\n",i,rank);
+            fprintf(output, "        <params include=rtr_params>\n");
+            fprintf(output, "            <id> %d </id>\n",i);
+            fprintf(output, "        </params>\n");
+            fprintf(output, "        <link name=%d.nic2rtr port=nic latency=$nic_link_lat/>\n",i);
 
-	    if ( x_count > 1 ) {
-		fprintf(output, "        <link name=xr2r.%d.%d.%d port=xPos latency=$rtr_link_lat/>\n",y,z,(x+1)%x_count);
-		fprintf(output, "        <link name=xr2r.%d.%d.%d port=xNeg latency=$rtr_link_lat/>\n",y,z,x);
-	    }
+            if ( x_count > 1 ) {
+                fprintf(output, "        <link name=xr2r.%d.%d.%d port=xPos latency=$rtr_link_lat/>\n",y,z,(x+1)%x_count);
+                fprintf(output, "        <link name=xr2r.%d.%d.%d port=xNeg latency=$rtr_link_lat/>\n",y,z,x);
+            }
 
-	    if ( y_count > 1 ) {
-		fprintf(output, "        <link name=yr2r.%d.%d.%d port=yPos latency=$rtr_link_lat/>\n",x,z,(y+1)%y_count);
-		fprintf(output, "        <link name=yr2r.%d.%d.%d port=yNeg latency=$rtr_link_lat/>\n",x,z,y);
-	    }
+            if ( y_count > 1 ) {
+                fprintf(output, "        <link name=yr2r.%d.%d.%d port=yPos latency=$rtr_link_lat/>\n",x,z,(y+1)%y_count);
+                fprintf(output, "        <link name=yr2r.%d.%d.%d port=yNeg latency=$rtr_link_lat/>\n",x,z,y);
+            }
 
-	    if ( z_count > 1 ) {
-		fprintf(output, "        <link name=zr2r.%d.%d.%d port=zPos latency=$rtr_link_lat/>\n",x,y,(z+1)%z_count);
-		fprintf(output, "        <link name=zr2r.%d.%d.%d port=zNeg latency=$rtr_link_lat/>\n",x,y,z);
-	    }
-	
-	    fprintf(output, "    </component>\n");
-	}
-	else {
-	    if ( ranks > 1 ) {
-		fprintf(output, "    <component id=\"%d.cpu\" rank=%d >\n",i,rank);
-	    }
-	    else {
-		fprintf(output, "    <component id=\"%d.cpu\" >\n",i);
-	    }
-	    fprintf(output, "        <portals4_sm.trig_cpu>\n");
-	    fprintf(output, "            <params include1=cpu_params>\n");
-	    fprintf(output, "                <id> %d </id>\n",i);
-	    fprintf(output, "            </params>\n");
-	    fprintf(output, "            <links>\n");
-	    fprintf(output, "                <link id=\"%d.cpu2nic\">\n",i);
-	    fprintf(output, "        	    <params include=nicLink>\n");
-	    fprintf(output, "                        <name> nic </name>\n");
-	    fprintf(output, "                    </params>\n");
-	    fprintf(output, "                </link>\n");
-	    fprintf(output, "            </links>\n");
-	    fprintf(output, "        </portals4_sm.trig_cpu>\n");
-	    fprintf(output, "    </component>\n");
-	    fprintf(output, "\n");
-	    fprintf(output, "    <component id=\"%d.nic\" rank=%d >\n",i,rank);
-	    fprintf(output, "        <iris.trig_nic>\n");
-	    fprintf(output, "            <params include1=nic_params1 include2=nic_params2>\n");
-	    fprintf(output, "                <id> %d </id>\n",i);
-	    fprintf(output, "            </params>\n");
-	    fprintf(output, "            <links>\n");
-	    fprintf(output, "                <link id=\"%d.cpu2nic\">\n",i);
-	    fprintf(output, "        	    <params include=nicLink>\n");
-	    fprintf(output, "                        <name> cpu </name>\n");
-	    fprintf(output, "                    </params>\n");
-	    fprintf(output, "                </link>\n");
-	    fprintf(output, "                <link id=\"%d.nic2rtr\">\n",i);
-	    fprintf(output, "        	    <params include=nicLink>\n");
-	    fprintf(output, "                        <name> rtr </name>\n");
-	    fprintf(output, "                    </params>\n");
-	    fprintf(output, "                </link>\n");
-	    fprintf(output, "            </links>\n");
-	    fprintf(output, "        </trig_nic.trig_nic>\n");
-	    fprintf(output, "    </component>\n");
-	    fprintf(output, "\n");
+            if ( z_count > 1 ) {
+                fprintf(output, "        <link name=zr2r.%d.%d.%d port=zPos latency=$rtr_link_lat/>\n",x,y,(z+1)%z_count);
+                fprintf(output, "        <link name=zr2r.%d.%d.%d port=zNeg latency=$rtr_link_lat/>\n",x,y,z);
+            }
+
+            fprintf(output, "    </component>\n");
+        }
+        else {
+            if ( ranks > 1 ) {
+                fprintf(output, "    <component id=\"%d.cpu\" rank=%d >\n",i,rank);
+            }
+            else {
+                fprintf(output, "    <component id=\"%d.cpu\" >\n",i);
+            }
+            fprintf(output, "        <portals4_sm.trig_cpu>\n");
+            fprintf(output, "            <params include1=cpu_params>\n");
+            fprintf(output, "                <id> %d </id>\n",i);
+            fprintf(output, "            </params>\n");
+            fprintf(output, "            <links>\n");
+            fprintf(output, "                <link id=\"%d.cpu2nic\">\n",i);
+            fprintf(output, "        	    <params include=nicLink>\n");
+            fprintf(output, "                        <name> nic </name>\n");
+            fprintf(output, "                    </params>\n");
+            fprintf(output, "                </link>\n");
+            fprintf(output, "            </links>\n");
+            fprintf(output, "        </portals4_sm.trig_cpu>\n");
+            fprintf(output, "    </component>\n");
+            fprintf(output, "\n");
+            fprintf(output, "    <component id=\"%d.nic\" rank=%d >\n",i,rank);
+            fprintf(output, "        <iris.trig_nic>\n");
+            fprintf(output, "            <params include1=nic_params1 include2=nic_params2>\n");
+            fprintf(output, "                <id> %d </id>\n",i);
+            fprintf(output, "            </params>\n");
+            fprintf(output, "            <links>\n");
+            fprintf(output, "                <link id=\"%d.cpu2nic\">\n",i);
+            fprintf(output, "        	    <params include=nicLink>\n");
+            fprintf(output, "                        <name> cpu </name>\n");
+            fprintf(output, "                    </params>\n");
+            fprintf(output, "                </link>\n");
+            fprintf(output, "                <link id=\"%d.nic2rtr\">\n",i);
+            fprintf(output, "        	    <params include=nicLink>\n");
+            fprintf(output, "                        <name> rtr </name>\n");
+            fprintf(output, "                    </params>\n");
+            fprintf(output, "                </link>\n");
+            fprintf(output, "            </links>\n");
+            fprintf(output, "        </trig_nic.trig_nic>\n");
+            fprintf(output, "    </component>\n");
+            fprintf(output, "\n");
             /*  XML for dummy component
-	    fprintf(output, "    <component id=\"%d.rtr\" rank=%d >\n",i,rank);
-	    fprintf(output, "        <simpleComponent.simpleComponent>\n");
-	    fprintf(output, "            <params include=rtr_params>\n");
-	    fprintf(output, "                <id> %d </id>\n",i);
-	    fprintf(output, "            </params>\n");
-	    fprintf(output, "            <links>\n");
-	    fprintf(output, "                <link id=\"%d.nic2rtr\">\n",i);
-	    fprintf(output, "                    <params include=nicLink>\n");
-	    fprintf(output, "                        <name> nic </name>\n");
-	    fprintf(output, "                    </params>\n");
-	    fprintf(output, "                </link>\n");
-	    fprintf(output, "            </links>\n");
-	    fprintf(output, "        </simpleComponent.simpleComponent>\n");
-	    fprintf(output, "    </component>\n");
+                fprintf(output, "    <component id=\"%d.rtr\" rank=%d >\n",i,rank);
+                fprintf(output, "        <simpleComponent.simpleComponent>\n");
+                fprintf(output, "            <params include=rtr_params>\n");
+                fprintf(output, "                <id> %d </id>\n",i);
+                fprintf(output, "            </params>\n");
+                fprintf(output, "            <links>\n");
+                fprintf(output, "                <link id=\"%d.nic2rtr\">\n",i);
+                fprintf(output, "                    <params include=nicLink>\n");
+                fprintf(output, "                        <name> nic </name>\n");
+                fprintf(output, "                    </params>\n");
+                fprintf(output, "                </link>\n");
+                fprintf(output, "            </links>\n");
+                fprintf(output, "        </simpleComponent.simpleComponent>\n");
+                fprintf(output, "    </component>\n");
              *  */
             /* XML for the SS_router 
              * */
-	    fprintf(output, "    <component id=\"%d.rtr\" rank=%d >\n",i,rank);
-	    fprintf(output, "        <iris.router>\n");
-	    fprintf(output, "            <params include=rtr_params>\n");
-	    fprintf(output, "                <id> %d </id>\n",i);
-	    fprintf(output, "                <node_id> %d </node_id>\n",i);
-	    fprintf(output, "            </params>\n");
-	    fprintf(output, "            <links>\n");
+            fprintf(output, "    <component id=\"%d.rtr\" rank=%d >\n",i,rank);
+            fprintf(output, "        <iris.router>\n");
+            fprintf(output, "            <params include=rtr_params>\n");
+            fprintf(output, "                <id> %d </id>\n",i);
+            fprintf(output, "                <node_id> %d </node_id>\n",i);
+            fprintf(output, "            </params>\n");
+            fprintf(output, "            <links>\n");
 
-	    fprintf(output, "                <link id=\"%d.nic2rtr\">\n",i);
-	    fprintf(output, "                    <params include=nicLink>\n");
-	    fprintf(output, "                        <name> nic </name>\n");
-	    fprintf(output, "                    </params>\n");
-	    fprintf(output, "                </link>\n");
+            fprintf(output, "                <link id=\"%d.nic2rtr\">\n",i);
+            fprintf(output, "                    <params include=nicLink>\n");
+            fprintf(output, "                        <name> nic </name>\n");
+            fprintf(output, "                    </params>\n");
+            fprintf(output, "                </link>\n");
 
-	    if ( x_count > 1 ) {
-		fprintf(output, "                <link id=\"xr2r.%d.%d.%d\">\n",y,z,(x+1)%x_count);
-		fprintf(output, "                    <params include=rtrLink>\n");
-		fprintf(output, "                        <name> xPos </name>\n");
-		fprintf(output, "                    </params>\n");
-		fprintf(output, "                </link>\n");
-	    
-		fprintf(output, "                <link id=\"xr2r.%d.%d.%d\">\n",y,z,x);
-		fprintf(output, "                    <params include=rtrLink>\n");
-		fprintf(output, "                        <name> xNeg </name>\n");
-		fprintf(output, "                    </params>\n");
-		fprintf(output, "                </link>\n");
+            if ( x_count > 1 ) {
+                fprintf(output, "                <link id=\"xr2r.%d.%d.%d\">\n",y,z,(x+1)%x_count);
+                fprintf(output, "                    <params include=rtrLink>\n");
+                fprintf(output, "                        <name> xPos </name>\n");
+                fprintf(output, "                    </params>\n");
+                fprintf(output, "                </link>\n");
 
-	    }
+                fprintf(output, "                <link id=\"xr2r.%d.%d.%d\">\n",y,z,x);
+                fprintf(output, "                    <params include=rtrLink>\n");
+                fprintf(output, "                        <name> xNeg </name>\n");
+                fprintf(output, "                    </params>\n");
+                fprintf(output, "                </link>\n");
 
-	    if ( y_count > 1 ) {
-		fprintf(output, "                <link id=\"yr2r.%d.%d.%d\">\n",x,z,(y+1)%y_count);
-		fprintf(output, "                    <params include=rtrLink>\n");
-		fprintf(output, "                        <name> yPos </name>\n");
-		fprintf(output, "                    </params>\n");
-		fprintf(output, "                </link>\n");
-	    
-		fprintf(output, "                <link id=\"yr2r.%d.%d.%d\">\n",x,z,y);
-		fprintf(output, "                    <params include=rtrLink>\n");
-		fprintf(output, "                        <name> yNeg </name>\n");
-		fprintf(output, "                    </params>\n");
-		fprintf(output, "                </link>\n");
+            }
 
-	    }
+            if ( y_count > 1 ) {
+                fprintf(output, "                <link id=\"yr2r.%d.%d.%d\">\n",x,z,(y+1)%y_count);
+                fprintf(output, "                    <params include=rtrLink>\n");
+                fprintf(output, "                        <name> yPos </name>\n");
+                fprintf(output, "                    </params>\n");
+                fprintf(output, "                </link>\n");
+
+                fprintf(output, "                <link id=\"yr2r.%d.%d.%d\">\n",x,z,y);
+                fprintf(output, "                    <params include=rtrLink>\n");
+                fprintf(output, "                        <name> yNeg </name>\n");
+                fprintf(output, "                    </params>\n");
+                fprintf(output, "                </link>\n");
+
+            }
             /* 
-	    if ( z_count > 1 ) {
-		fprintf(output, "                <link id=\"zr2r.%d.%d.%d\">\n",x,y,(z+1)%z_count);
-		fprintf(output, "                    <params include=rtrLink>\n");
-		fprintf(output, "                        <name> zPos </name>\n");
-		fprintf(output, "                    </params>\n");
-		fprintf(output, "                </link>\n");
-	    
-		fprintf(output, "                <link id=\"zr2r.%d.%d.%d\">\n",x,y,z);
-		fprintf(output, "                    <params include=rtrLink>\n");
-		fprintf(output, "                        <name> zNeg </name>\n");
-		fprintf(output, "                    </params>\n");
-		fprintf(output, "                </link>\n");
-	    }
+               if ( z_count > 1 ) {
+               fprintf(output, "                <link id=\"zr2r.%d.%d.%d\">\n",x,y,(z+1)%z_count);
+               fprintf(output, "                    <params include=rtrLink>\n");
+               fprintf(output, "                        <name> zPos </name>\n");
+               fprintf(output, "                    </params>\n");
+               fprintf(output, "                </link>\n");
+
+               fprintf(output, "                <link id=\"zr2r.%d.%d.%d\">\n",x,y,z);
+               fprintf(output, "                    <params include=rtrLink>\n");
+               fprintf(output, "                        <name> zNeg </name>\n");
+               fprintf(output, "                    </params>\n");
+               fprintf(output, "                </link>\n");
+               }
              * */
-	
-	    fprintf(output, "            </links>\n");
-	    fprintf(output, "        </iris.router>\n");
-	    fprintf(output, "    </component>\n");
-	}
-	fprintf(output, "\n");
-	fprintf(output, "\n");
+
+            fprintf(output, "            </links>\n");
+            fprintf(output, "        </iris.router>\n");
+            fprintf(output, "    </component>\n");
+        }
+        fprintf(output, "\n");
+        fprintf(output, "\n");
     }
     fprintf(output, "</sst>\n");
 

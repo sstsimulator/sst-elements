@@ -37,5 +37,5 @@ nobase_sst_HEADERS = \
 
 libiris_la_LDFLAGS = -module -avoid-version
 
-noinst_PROGRAMS = portals4_sm_sdlgen
-SS_router_test_sdlgen_SOURCES = portals4_sm_sdlgen.c
+noinst_PROGRAMS = iris_sdlgen
+iris_sdlgen_SOURCES = iris_sdlgen.c
