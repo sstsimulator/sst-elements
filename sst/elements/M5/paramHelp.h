@@ -30,6 +30,8 @@ static inline bool find_bool( std::string val ) {
         return true;
     else if ( val.compare("false") == 0 )
         return false;
+    else if ( val.compare("") == 0 )
+        return false;
     else
         assert(0);
 }
