@@ -31,7 +31,6 @@
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/elements/include/paramUtil.h>
 #include	"SST_interface.h"
 
 #define RTRIF_DBG 1 
@@ -80,9 +79,9 @@ class Flit_conv {
         }
 };
 
-class RtrIF : public Component {
+class iris_RtrIF : public Component {
 public:
-    RtrIF( ComponentId_t id, Params_t& params ) :
+    iris_RtrIF( ComponentId_t id, Params_t& params ) :
         Component(id),
         rtrCountP(0),
         num_vcP(2),
@@ -95,18 +94,18 @@ public:
         if ( params.find( "id" ) == params.end() ) {
             _abort(RtrIF,"couldn't find routerID\n" );
         }
-        m_id = str2long( params[ "id" ] );
+        m_id = params.find_integer("id");
 
         if ( params.find("clock") != params.end() ) {
             frequency = params["clock"];
         }
 
         if ( params.find( "num_vc" ) != params.end() ) {
-            num_vcP = str2long( params["num_vc"] );
+            num_vcP = params.find_integer("num_vc");
         }
 
         if ( params.find( "Node2RouterQSize_flits" ) != params.end() ) {
-            num_tokens = str2long( params["Node2RouterQSize_flits"] );
+            num_tokens = params.find_integer("Node2RouterQSize_flits");
         }
 
         for( uint16_t i=0; i<num_vcP; ++i){
@@ -114,9 +113,8 @@ public:
             flit_outq.insert(std::make_pair(i, tmp));
         }
 
-        m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<RtrIF>(this,&RtrIF::processEvent) );
-
-        registerClock( frequency, new Clock::Handler<RtrIF>(this, &RtrIF::clock), false );
+	m_rtrLink = configureLink( "rtr", frequency, new Event::Handler<iris_RtrIF>(this,&iris_RtrIF::processEvent) );
+	registerClock( frequency, new Clock::Handler<iris_RtrIF>(this, &iris_RtrIF::clock), false );
 
 
         for ( unsigned int i=0; i < num_vcP; i++ ) {

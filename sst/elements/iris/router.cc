@@ -30,7 +30,7 @@ const char* LinkNames[] = {
 
 Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                 /*  Init stats */
-                stat_flits_in(0), stat_flits_out(0), stat_last_flit_time_nano(0), 
+                stat_flits_in(0), stat_flits_out(0), 
                 stat_last_flit_cycle(0), stat_packets_in(0),stat_packets_out(0),
                 stat_total_pkt_latency_nano(0),
                 heartbeat_interval(500)/* in cycles */, stat_avg_buffer_occ(0.0),
@@ -127,7 +127,6 @@ Router::reset_stats ( void )
 {
     stat_flits_in = 0;
     stat_flits_out = 0;
-    stat_last_flit_time_nano = 0;
     stat_last_flit_cycle = 0;
     stat_packets_out = 0;
     stat_total_pkt_latency_nano = 0;
@@ -147,7 +146,7 @@ Router::print_stats ( void ) const
         << "\n SimpleRouter[" << node_id << "] stat_flits_out: " << stat_flits_out
         << "\n SimpleRouter[" << node_id << "] avg_router_pkt_latency: " << stat_total_pkt_latency_nano+0.0/stat_packets_out
         << "\n SimpleRouter[" << node_id << "] stat_last_flit_cycle: " << stat_last_flit_cycle
-        << "\n";
+        ;
 
     return str.str().c_str();
 }		/* -----  end of method Router::print_stats  ----- */

@@ -60,7 +60,7 @@
          <link name=0.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=0.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=0.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 0 </id>
          </params>
@@ -87,7 +87,7 @@
          <link name=1.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=1.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=1.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 1 </id>
          </params>
@@ -114,7 +114,7 @@
          <link name=2.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=2.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=2.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 2 </id>
          </params>
@@ -141,7 +141,7 @@
          <link name=3.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=3.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=3.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 3 </id>
          </params>
@@ -168,7 +168,7 @@
          <link name=4.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=4.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=4.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 4 </id>
          </params>
@@ -195,7 +195,7 @@
          <link name=5.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=5.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=5.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 5 </id>
          </params>
@@ -222,7 +222,7 @@
          <link name=6.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=6.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=6.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 6 </id>
          </params>
@@ -249,7 +249,7 @@
          <link name=7.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=7.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=7.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 7 </id>
          </params>
@@ -276,7 +276,7 @@
          <link name=8.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=8.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=8.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 8 </id>
          </params>
@@ -303,7 +303,7 @@
          <link name=9.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=9.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=9.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 9 </id>
          </params>
@@ -330,7 +330,7 @@
          <link name=10.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=10.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=10.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 10 </id>
          </params>
@@ -357,7 +357,7 @@
          <link name=11.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=11.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=11.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 11 </id>
          </params>
@@ -384,7 +384,7 @@
          <link name=12.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=12.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=12.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 12 </id>
          </params>
@@ -411,7 +411,7 @@
          <link name=13.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=13.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=13.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 13 </id>
          </params>
@@ -438,7 +438,7 @@
          <link name=14.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=14.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=14.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 14 </id>
          </params>
@@ -465,7 +465,7 @@
          <link name=15.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=15.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=15.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 15 </id>
          </params>
@@ -492,7 +492,7 @@
          <link name=16.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=16.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=16.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 16 </id>
          </params>
@@ -519,7 +519,7 @@
          <link name=17.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=17.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=17.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 17 </id>
          </params>
@@ -546,7 +546,7 @@
          <link name=18.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=18.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=18.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 18 </id>
          </params>
@@ -573,7 +573,7 @@
          <link name=19.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=19.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=19.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 19 </id>
          </params>
@@ -600,7 +600,7 @@
          <link name=20.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=20.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=20.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 20 </id>
          </params>
@@ -627,7 +627,7 @@
          <link name=21.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=21.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=21.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 21 </id>
          </params>
@@ -654,7 +654,7 @@
          <link name=22.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=22.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=22.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 22 </id>
          </params>
@@ -681,7 +681,7 @@
          <link name=23.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=23.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=23.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 23 </id>
          </params>
@@ -708,7 +708,7 @@
          <link name=24.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=24.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=24.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 24 </id>
          </params>
@@ -735,7 +735,7 @@
          <link name=25.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=25.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=25.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 25 </id>
          </params>
@@ -762,7 +762,7 @@
          <link name=26.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=26.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=26.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 26 </id>
          </params>
@@ -789,7 +789,7 @@
          <link name=27.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=27.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=27.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 27 </id>
          </params>
@@ -816,7 +816,7 @@
          <link name=28.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=28.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=28.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 28 </id>
          </params>
@@ -843,7 +843,7 @@
          <link name=29.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=29.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=29.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 29 </id>
          </params>
@@ -870,7 +870,7 @@
          <link name=30.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=30.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=30.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 30 </id>
          </params>
@@ -897,7 +897,7 @@
          <link name=31.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=31.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=31.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 31 </id>
          </params>
@@ -924,7 +924,7 @@
          <link name=32.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=32.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=32.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 32 </id>
          </params>
@@ -951,7 +951,7 @@
          <link name=33.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=33.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=33.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 33 </id>
          </params>
@@ -978,7 +978,7 @@
          <link name=34.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=34.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=34.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 34 </id>
          </params>
@@ -1005,7 +1005,7 @@
          <link name=35.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=35.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=35.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 35 </id>
          </params>
@@ -1032,7 +1032,7 @@
          <link name=36.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=36.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=36.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 36 </id>
          </params>
@@ -1059,7 +1059,7 @@
          <link name=37.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=37.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=37.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 37 </id>
          </params>
@@ -1086,7 +1086,7 @@
          <link name=38.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=38.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=38.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 38 </id>
          </params>
@@ -1113,7 +1113,7 @@
          <link name=39.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=39.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=39.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 39 </id>
          </params>
@@ -1140,7 +1140,7 @@
          <link name=40.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=40.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=40.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 40 </id>
          </params>
@@ -1167,7 +1167,7 @@
          <link name=41.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=41.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=41.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 41 </id>
          </params>
@@ -1194,7 +1194,7 @@
          <link name=42.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=42.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=42.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 42 </id>
          </params>
@@ -1221,7 +1221,7 @@
          <link name=43.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=43.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=43.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 43 </id>
          </params>
@@ -1248,7 +1248,7 @@
          <link name=44.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=44.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=44.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 44 </id>
          </params>
@@ -1275,7 +1275,7 @@
          <link name=45.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=45.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=45.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 45 </id>
          </params>
@@ -1302,7 +1302,7 @@
          <link name=46.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=46.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=46.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 46 </id>
          </params>
@@ -1329,7 +1329,7 @@
          <link name=47.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=47.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=47.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 47 </id>
          </params>
@@ -1356,7 +1356,7 @@
          <link name=48.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=48.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=48.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 48 </id>
          </params>
@@ -1383,7 +1383,7 @@
          <link name=49.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=49.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=49.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 49 </id>
          </params>
@@ -1410,7 +1410,7 @@
          <link name=50.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=50.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=50.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 50 </id>
          </params>
@@ -1437,7 +1437,7 @@
          <link name=51.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=51.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=51.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 51 </id>
          </params>
@@ -1464,7 +1464,7 @@
          <link name=52.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=52.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=52.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 52 </id>
          </params>
@@ -1491,7 +1491,7 @@
          <link name=53.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=53.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=53.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 53 </id>
          </params>
@@ -1518,7 +1518,7 @@
          <link name=54.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=54.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=54.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 54 </id>
          </params>
@@ -1545,7 +1545,7 @@
          <link name=55.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=55.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=55.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 55 </id>
          </params>
@@ -1572,7 +1572,7 @@
          <link name=56.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=56.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=56.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 56 </id>
          </params>
@@ -1599,7 +1599,7 @@
          <link name=57.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=57.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=57.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 57 </id>
          </params>
@@ -1626,7 +1626,7 @@
          <link name=58.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=58.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=58.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 58 </id>
          </params>
@@ -1653,7 +1653,7 @@
          <link name=59.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=59.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=59.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 59 </id>
          </params>
@@ -1680,7 +1680,7 @@
          <link name=60.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=60.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=60.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 60 </id>
          </params>
@@ -1707,7 +1707,7 @@
          <link name=61.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=61.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=61.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 61 </id>
          </params>
@@ -1734,7 +1734,7 @@
          <link name=62.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=62.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=62.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 62 </id>
          </params>
@@ -1761,7 +1761,7 @@
          <link name=63.cpu2nic port=nic latency=$nic_link_lat/>
      </component>
 
-     <component name=63.nic type=portals4_sm.trig_nic rank=0 >
+     <component name=63.nic type=iris.trig_nic rank=0 >
          <params include=nic_params1,nic_params2>
              <id> 63 </id>
          </params>

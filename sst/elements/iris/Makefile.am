@@ -28,7 +28,14 @@ libiris_la_SOURCES = \
 	ninterface.h \
 	ninterface.cc \
 	macsim_terminal.h \
-	macsim_terminal.cc
+	macsim_terminal.cc \
+	trig_nic/trig_nic.cc
+
+sstdir = $(includedir)/sst/elements/iris
+nobase_sst_HEADERS = \
+	RtrIF.h 
 
 libiris_la_LDFLAGS = -module -avoid-version
 
+noinst_PROGRAMS = portals4_sm_sdlgen
+SS_router_test_sdlgen_SOURCES = portals4_sm_sdlgen.c

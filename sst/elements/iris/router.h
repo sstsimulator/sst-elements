@@ -125,7 +125,6 @@ class Router : public DES_Component
         /* Router stats */
         uint64_t stat_flits_in;
         uint64_t stat_flits_out;
-        uint64_t stat_last_flit_time_nano;  /* Useful to detect if the router deadlocked  */
         uint64_t stat_last_flit_cycle;
         uint64_t stat_packets_in;
         uint64_t stat_packets_out;
@@ -145,7 +144,7 @@ class Router : public DES_Component
 
         int Finish()
         {
-            fprintf(stderr,"\n Stats for node %d %s ",node_id, print_stats());
+            fprintf(stderr,"\n Stats for node %d %s \n",node_id, print_stats());
 //            fprintf(stderr,"\n\nempty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
             return 0;
         }

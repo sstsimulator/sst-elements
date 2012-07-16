@@ -340,7 +340,7 @@ main(int argc, char **argv)
 	    fprintf(output, "        <link name=%d.cpu2nic port=nic latency=$nic_link_lat/>\n",i);
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
-	    fprintf(output, "    <component name=%d.nic type=portals4_sm.trig_nic rank=%d >\n",i,rank);
+	    fprintf(output, "    <component name=%d.nic type=iris.trig_nic rank=%d >\n",i,rank);
 	    fprintf(output, "        <params include=nic_params1,nic_params2>\n");
 	    fprintf(output, "            <id> %d </id>\n",i);
 	    fprintf(output, "        </params>\n");
@@ -393,7 +393,7 @@ main(int argc, char **argv)
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
 	    fprintf(output, "    <component id=\"%d.nic\" rank=%d >\n",i,rank);
-	    fprintf(output, "        <portals4_sm.trig_nic>\n");
+	    fprintf(output, "        <iris.trig_nic>\n");
 	    fprintf(output, "            <params include1=nic_params1 include2=nic_params2>\n");
 	    fprintf(output, "                <id> %d </id>\n",i);
 	    fprintf(output, "            </params>\n");
@@ -409,7 +409,7 @@ main(int argc, char **argv)
 	    fprintf(output, "                    </params>\n");
 	    fprintf(output, "                </link>\n");
 	    fprintf(output, "            </links>\n");
-	    fprintf(output, "        </portals4_sm.trig_nic>\n");
+	    fprintf(output, "        </trig_nic.trig_nic>\n");
 	    fprintf(output, "    </component>\n");
 	    fprintf(output, "\n");
             /*  XML for dummy component

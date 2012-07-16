@@ -17,6 +17,7 @@
 #include <sst/core/element.h>
 #include "router.h"
 #include "ninterface.h"
+#include "trig_nic/trig_nic.h"
 
 static SST::Component* 
 create_router(SST::ComponentId_t id, 
@@ -32,6 +33,13 @@ create_ninterface(SST::ComponentId_t id,
     return new NInterface( id, params );
 }
 
+static SST::Component* 
+create_trig_nic(SST::ComponentId_t id, 
+                SST::Component::Params_t& params)
+{
+    return new iris_trig_nic( id, params );
+}
+
 static const SST::ElementInfoComponent components[] = {
     { "router",
       "Iris Router",
@@ -42,6 +50,11 @@ static const SST::ElementInfoComponent components[] = {
       "Interface for iris terminal and router",
       NULL,
       create_ninterface,
+    },
+    { "trig_nic",
+      "Trig NIC",
+      NULL,
+      create_trig_nic,
     },
     { NULL, NULL, NULL, NULL }
 };
