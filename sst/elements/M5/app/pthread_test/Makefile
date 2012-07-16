@@ -1,7 +1,11 @@
 LDFLAGS = -Llibs/lib
 
-test: test.c pthread.c
-	${CC} -I. -Wall -static $? -o $@ ${LDFLAGS}
+CFLAGS = -Wall -O3
+
+OBJS = test.o pthread.o
+
+test: ${OBJS} 
+	${CC} -I. -static ${OBJS} -o ${@} ${LDFLAGS}
 
 clean:
-	rm -f test.o pthread.o test
+	rm -f ${OBJS} test

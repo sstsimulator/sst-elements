@@ -6,7 +6,6 @@
 
 static void* threadMain( void *args )
 {
-    printf("thread %p running\n", args );
     return NULL;
 }
 
@@ -21,7 +20,7 @@ int main( int argc, char* argv[] )
     printf("numThreads %d\n",numThreads);
 
     for ( i = 0; i < numThreads; ++i ) {
-        pthread_create( &threads[i], NULL, threadMain, (void*) (long) i );
+        pthread_create( &threads[i], NULL, threadMain, NULL );
     } 
 
     for ( i = 0; i < numThreads; ++i ) {
