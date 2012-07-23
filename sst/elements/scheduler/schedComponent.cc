@@ -22,6 +22,7 @@
 #include "misc.h"
 #include "PQScheduler.h"
 #include "EASYScheduler.h"
+#include "StatefulScheduler.h"
 #include "schedComponent.h"
 #include "SimpleAllocator.h"
 #include "SimpleMachine.h"
@@ -71,7 +72,7 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
 
   machine = new SimpleMachine(nodes.size(), this);
-  scheduler = new EASYScheduler(EASYScheduler::JobComparator::Make("fifo"));
+  scheduler = new EASYScheduler(EASYScheduler::JobComparator::Make("smallfirst"));
   theAllocator = new SimpleAllocator(dynamic_cast<SimpleMachine*>(machine));
   string trace = params[ "traceName" ].c_str();
   char timestring[] = "time";
@@ -168,38 +169,22 @@ bool schedComponent::newJobLine( std::string line ){
 // incoming events are scanned and deleted. ev is the returned event,
 // node is the node it came from.
 void schedComponent::handleCompletionEvent(Event *ev, int node) {
-  CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);
-  if (event) {
+  if(dynamic_cast<CompletionEvent*>(ev))
+  {
+    CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);
     int jobNum = event->jobNum;
-      if(runningJobs[jobNum].ai == NULL)
-      {
-        runningJobs.erase(jobNum);
-        return; //this event has already stopped (probably faulted)
-      }
-    if ((--(runningJobs[jobNum].i)) == 0) {
-      AllocInfo *ai = runningJobs[jobNum].ai;
-      runningJobs.erase(jobNum);
-      machine->deallocate(ai);
-      theAllocator->deallocate(ai);
-      stats->jobFinishes(ai, getCurrentSimTime());
-      scheduler->jobFinishes(ai->job, getCurrentSimTime(), machine);
-
-      //tries to start job
-      AllocInfo* allocInfo;
-      do {
-        allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
-      } while(allocInfo != NULL);
-    }
-    if(jobNum == jobs.back().jobNum)
+    if(runningJobs[jobNum].ai == NULL)
     {
-      while(!jobs.empty() && runningJobs.find(jobs.back().jobNum) == runningJobs.end())
-        jobs.pop_back();
-      if(jobs.empty())
-      {
-        unregisterExit();
-      }
+      runningJobs.erase(jobNum);
+      return; //this event has already stopped (probably faulted)
     }
-  } else {
+    if ((--(runningJobs[jobNum].i)) == 0) {
+      finishingcomp.push_back(event);
+      FinalTimeEvent *fte = new FinalTimeEvent();
+      selfLink->Send(0, fte); //send back an event at the same time so we know it finished
+    }
+  }
+ else {
     //If it is not a completion it is (hopefully) a fault.
     //as far as the scheduler is concerned this is treated the same way
     //however, must send a kill event to tell all nodes with this job to
@@ -253,10 +238,63 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
 }
 
 void schedComponent::handleJobArrivalEvent(Event *ev) {
-  ArrivalEvent *event = dynamic_cast<ArrivalEvent*>(ev);
-  event -> happen(machine, theAllocator, scheduler, stats, &jobs[event->getJobIndex()]);
+  ArrivalEvent *arevent = dynamic_cast<ArrivalEvent*>(ev);
+  if(arevent)
+  {
+    finishingarr.push_back(arevent);
+    FinalTimeEvent* fte = new FinalTimeEvent();
+    selfLink->Send(0, fte); //send back an event at the same time so we know it finished
+  }
+  else
+  {
+    if ( dynamic_cast<FinalTimeEvent*>(ev))
+    {
+      while(!finishingcomp.empty())
+      {
+        vector<CompletionEvent*>::iterator it = finishingcomp.begin();
+        CompletionEvent* event = *it;
+        int jobNum = event->jobNum;
+        AllocInfo *ai = runningJobs[jobNum].ai;
+        runningJobs.erase(jobNum);
+        machine->deallocate(ai);
+        theAllocator->deallocate(ai);
+        stats->jobFinishes(ai, getCurrentSimTime());
+        scheduler->jobFinishes(ai->job, getCurrentSimTime(), machine);
+        if(jobNum == jobs.back().jobNum)
+        {
+          while(!jobs.empty() && runningJobs.find(jobs.back().jobNum) == runningJobs.end())
+            jobs.pop_back();
+          if(jobs.empty())
+          {
+            unregisterExit();
+          }
+        }
+        finishingcomp.erase(it);
+        delete event;
+      } 
+      //arrivals are handled strictly after finishes at the same time to
+      //match the Java
+      //each time step these are cleared so we don't need to worry about
+      //events not at the same time step, and they should already be sorted
+      //by number because they are given to SST (and therefore come back) that way.
+      while(!finishingarr.empty())
+      {
+        vector<ArrivalEvent*>::iterator it = finishingarr.begin();
+        ArrivalEvent *event = *it;
+        event -> happen(machine, theAllocator, scheduler, stats, &jobs[event->getJobIndex()]);
+        finishingarr.erase(it);
+        //delete event;
+      }      
+      //tries to start job now that the scheduler knows about all jobs 
+      AllocInfo* allocInfo;
+      do {
+        allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
+      } while(allocInfo != NULL);
+    }
+    else
+      error("Arriving event was not an arrival nor finaltime event");
+  }
 }
-
 int schedComponent::Finish() {
   scheduler -> done();
   stats -> done();

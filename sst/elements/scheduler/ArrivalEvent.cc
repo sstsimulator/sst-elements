@@ -32,9 +32,14 @@ void ArrivalEvent::happen(Machine* mach, Allocator* alloc, Scheduler* sched,
   sched -> jobArrives(arrivingJob, time, mach);
   stats -> jobArrives(time);
 
-  //tries to start job                                                                    
+  /* no longer tries to start job as we only try to start once all events that
+happen at the same time have been received and handled successfully.
+Only schedComponent knows this, so it is responsible for calling tryToStart
+for both arrival and completion events
+
   AllocInfo* allocInfo;
   do {
     allocInfo = sched -> tryToStart(alloc, time, mach, stats);
   } while(allocInfo != NULL);
+  */
 }

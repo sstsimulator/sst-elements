@@ -95,13 +95,13 @@ AllocInfo* PQScheduler::tryToStart(Allocator* alloc, long time,
 
   AllocInfo* allocInfo = NULL;
   Job* job = toRun -> top();
+//printf("middle of tts\n");
   if (alloc -> canAllocate(job)) 
     allocInfo = alloc -> allocate(job);
   if(allocInfo != NULL) {
     toRun -> pop();  //remove the job we just allocated
     job -> start(time, mach, allocInfo, stats);
   }
-
   return allocInfo;
 }
 

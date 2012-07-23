@@ -23,6 +23,7 @@
 #include "JobStartEvent.h"
 #include "JobKillEvent.h"
 #include "JobFaultEvent.h"
+#include "FinalTimeEvent.h"
 
 using namespace std;
 
@@ -51,6 +52,8 @@ private:
   typedef vector<int> targetList_t;
 
   vector<Job> jobs;
+  vector<CompletionEvent*> finishingcomp;
+  vector<ArrivalEvent*> finishingarr;
   Machine* machine;
   Scheduler* scheduler;
   Allocator* theAllocator;

@@ -78,7 +78,6 @@ string Job::toString() {
 void Job::start(long time, Machine* machine, AllocInfo* allocInfo,
 		  Statistics* stats) {
   //start the job
-
   if(startTime != -1) {
     string mesg = "attempt to start an already-running job: ";
     mesg += toString();
