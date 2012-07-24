@@ -362,23 +362,24 @@ irisNic<T>::tick (SST::Cycle_t cycle)
     
             next_to_router = new irisRtrEvent(); 
             next_to_router->type = irisRtrEvent::Packet;
-            next_to_router->packet.vc = 0;
+            next_to_router->packet = new irisNPkt();
+            next_to_router->packet->vc = 0;
             assert(f->src_id == m_id);
-            next_to_router->packet.srcNum = f->src_id;
-            next_to_router->packet.destNum = f->dst_id;
-            next_to_router->packet.sizeInFlits = f->pkt_length;
-            next_to_router->packet.mclass = PROC_REQ; //FIX ME, what actually is message class?
+            next_to_router->packet->srcNum = f->src_id;
+            next_to_router->packet->destNum = f->dst_id;
+            next_to_router->packet->sizeInFlits = f->pkt_length;
+            next_to_router->packet->mclass = PROC_REQ; //FIX ME, what actually is message class?
     
     
-            next_to_router->packet.payload[0] = f->type ;
+            next_to_router->packet->payload[0] = f->type ;
             assert(winner == f->virtual_channel);
-            next_to_router->packet.payload[1] = winner;
+            next_to_router->packet->payload[1] = winner;
     
             if(f->type == BODY)
-                memcpy(&next_to_router->packet.payload[2], 
+                memcpy(&next_to_router->packet->payload[2], 
                     (static_cast<BodyFlit *>(f))->data, PKT_SIZE*sizeof(int));
             else
-                memset(&next_to_router->packet.payload[2], 0, PKT_SIZE*sizeof(int));
+                memset(&next_to_router->packet->payload[2], 0, PKT_SIZE*sizeof(int));
             delete f;
 
         }
@@ -418,38 +419,38 @@ irisNic<T>::tick (SST::Cycle_t cycle)
             irisRtrEvent * event = toNicQ_front(i);
             toNicQ_pop(i);
 
-            if (event->packet.payload[0] == HEAD) {
+            if (event->packet->payload[0] == HEAD) {
                 HeadFlit * hf = new HeadFlit();
-                hf->src_id = event->packet.srcNum;
-                hf->dst_id = event->packet.destNum;
-                hf->virtual_channel = event->packet.payload[1];
-                hf->pkt_length = event->packet.sizeInFlits;
+                hf->src_id = event->packet->srcNum;
+                hf->dst_id = event->packet->destNum;
+                hf->virtual_channel = event->packet->payload[1];
+                hf->pkt_length = event->packet->sizeInFlits;
                 //push the incoming flit to the router in buffer 
                 router_in_buffer->push(hf->virtual_channel, hf);
             }
-            else if(event->packet.payload[0] == BODY) {
+            else if(event->packet->payload[0] == BODY) {
                 BodyFlit * bf = new BodyFlit();
-                bf->src_id = event->packet.srcNum;
-                bf->dst_id = event->packet.destNum;
-                bf->virtual_channel = event->packet.payload[1];
-                bf->pkt_length = event->packet.sizeInFlits;
-                memcpy(bf->data, &event->packet.payload[2], PKT_SIZE*sizeof(int));
+                bf->src_id = event->packet->srcNum;
+                bf->dst_id = event->packet->destNum;
+                bf->virtual_channel = event->packet->payload[1];
+                bf->pkt_length = event->packet->sizeInFlits;
+                memcpy(bf->data, &event->packet->payload[2], PKT_SIZE*sizeof(int));
                 //push the incoming flit to the router in buffer 
                 router_in_buffer->push(bf->virtual_channel, bf);
             }
-            else if(event->packet.payload[0] == TAIL) {
+            else if(event->packet->payload[0] == TAIL) {
                 TailFlit * tf = new TailFlit();
-                tf->src_id = event->packet.srcNum;
-                tf->dst_id = event->packet.destNum;
-                tf->virtual_channel = event->packet.payload[1];
-                tf->pkt_length = event->packet.sizeInFlits;
-                tf->sent_time = event->packet.sending_time;
+                tf->src_id = event->packet->srcNum;
+                tf->dst_id = event->packet->destNum;
+                tf->virtual_channel = event->packet->payload[1];
+                tf->pkt_length = event->packet->sizeInFlits;
+                tf->sent_time = event->packet->sending_time;
                 stat_packets_in_from_router++;
                 //push the incoming flit to the router in buffer 
                 router_in_buffer->push(tf->virtual_channel, tf);
             }
             else
-                assert(false && "event->packet.payload[0] invalid");
+                assert(false && "event->packet->payload[0] invalid");
             
             delete event;
         }

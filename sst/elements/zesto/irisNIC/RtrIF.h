@@ -99,13 +99,13 @@ public:
     void toNicQ_pop(unsigned int vc)
     {
         if ( vc >= num_vcP ) _abort(RtrIF,"vc=%d\n",vc);
-        returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet.sizeInFlits );
+        returnTokens2Rtr( vc, toNicMapP[vc]->front()->packet->sizeInFlits );
         toNicMapP[vc]->pop_front();
     }
 
     bool send2Rtr( irisRtrEvent *event)
     {
-        irisNPkt* pkt = &event->packet;
+        irisNPkt* pkt = event->packet;
         if ( pkt->vc >= (int) num_vcP ) _abort(RtrIF,"vc=%d\n",pkt->vc);
         pkt->sending_time=getCurrentSimTimeNano();
 //  	printf("%5d: Sending to %d @ %lu\n",m_id,pkt->destNum,getCurrentSimTimeNano()); 
@@ -176,7 +176,7 @@ private:
 
     void send2Nic( irisRtrEvent* event )
     {
-        irisNPkt *pkt = &event->packet; 
+        irisNPkt* pkt = event->packet; 
         stat_avg_pkt_lat += (getCurrentSimTimeNano()-pkt->sending_time);
         stat_total_pkts_recv++;
 
@@ -207,11 +207,11 @@ private:
 
     void sendPktToRtr( irisRtrEvent* event ) 
     {
-        irisNPkt* pkt = &event->packet;
+        irisNPkt* pkt = event->packet;
 
 
         event->type = irisRtrEvent::Packet;
-        event->packet = *pkt;
+        event->packet = pkt;
         int lat = reserveRtrLine(pkt->sizeInFlits);
         m_rtrLink->Send( lat, event );
     }
@@ -231,7 +231,7 @@ private:
                 tokensP(num_tokens), eventQP(eventQ) {}
 
             bool push( irisRtrEvent* event) {
-                irisNPkt* pkt = &event->packet;
+                irisNPkt* pkt = event->packet;
                 if ( pkt->sizeInFlits > (unsigned int) tokensP ) return false;
                 tokensP -= pkt->sizeInFlits;
                 eventQP.push_back(event);
