@@ -82,7 +82,7 @@ SimpleArbiter::pick_winner ( void )
 }
 
 /* *********** Network Interface Functions ************ */
-NInterface::NInterface (SST::ComponentId_t id, Params_t& params): DES_Component(id) 
+NInterface::NInterface (SST::ComponentId_t id, Params_t& params): DES_Component(id), no_vcs(2)
 {
 
     // get configuration parameters
@@ -97,9 +97,14 @@ NInterface::NInterface (SST::ComponentId_t id, Params_t& params): DES_Component(
     if ( params.find("buffer_size") != params.end() ) {
         buffer_size= strtol( params[ "buffer_size" ].c_str(), NULL, 0 );
     }
-    if ( params.find("credits") != params.end() ) {
-        buffer_size= strtol( params[ "credits" ].c_str(), NULL, 0 );
+    if ( params.find("terminal_credits") != params.end() ) {
+        tcredits = strtol( params[ "terminal_credits" ].c_str(), NULL, 0 );
     }
+    if ( params.find("rtr_credits") != params.end() ) {
+        rcredits = strtol( params[ "rtr_credits" ].c_str(), NULL, 0 );
+    }
+    std::string nic_frequency = "500MHz";
+    nic_frequency = params["clock"];
     /* ************ End of update configuration *************** */
     arbiter = *new SimpleArbiter();
     arbiter.no_channels = no_vcs;
@@ -107,16 +112,18 @@ NInterface::NInterface (SST::ComponentId_t id, Params_t& params): DES_Component(
     arbiter.init();
 
     // Need to configure all links with the handler functions 
-    terminal_link = configureLink( "terminal_link", 
+    terminal_link = configureLink( "cpu", 
 					    new SST::Event::Handler<NInterface,int>
 					    (this, &NInterface::handle_terminal_link_arrival,1)); 
     
-    router_link = configureLink( "router_link", 
+    router_link = configureLink( "rtr", 
 					    new SST::Event::Handler<NInterface,int>
 					    (this, &NInterface::handle_router_link_arrival,0)); 
 
     //set our clock
-    new DES_Clock::Handler<NInterface>(this, &NInterface::tock);
+    DES_Clock::Handler<NInterface>* clock_handler
+        = new DES_Clock::Handler<NInterface>(this, &NInterface::tock);
+    registerClock(nic_frequency, clock_handler);
 
     resize();
 
@@ -125,15 +132,15 @@ NInterface::NInterface (SST::ComponentId_t id, Params_t& params): DES_Component(
 
 NInterface::~NInterface ()
 {
-  terminal_credits.clear();
-//  terminal_inBuffer.clear();
-  terminal_inPkt_time.clear();
-  terminal_pktcomplete.clear();
+    terminal_credits.clear();
+//    terminal_inBuffer.clear();
+    terminal_inPkt_time.clear();
+    terminal_pktcomplete.clear();
 
-  router_credits.clear();
-//  router_inBuffer.clear();
-  router_inPkt_time.clear();
-  router_pktcomplete.clear();
+    router_credits.clear();
+//    router_inBuffer.clear();
+    router_inPkt_time.clear();
+    router_pktcomplete.clear();
 
 }		/* -----  end of method NInterface::~NInterface  ----- */
 
@@ -141,50 +148,42 @@ void
 NInterface::resize( void )
 {
 
-    /* Clear out the previous setting */
-  terminal_credits.clear();
-  //terminal_inBuffer.clear();
-  terminal_inPkt_time.clear();
-  terminal_pktcomplete.clear();
+    /* Clear out the previous setting 
+    terminal_credits.clear();
+    terminal_inBuffer.clear();
+    terminal_inPkt_time.clear();
+    terminal_pktcomplete.clear();
 
-  router_credits.clear();
-  //router_inBuffer.clear();
-  router_inPkt_time.clear();
-  router_pktcomplete.clear();
+    router_credits.clear();
+    router_inBuffer.clear();
+    router_inPkt_time.clear();
+    router_pktcomplete.clear();
+     * */
 
-  /* ************* END of clean up *************/
+    /* ************* END of clean up *************/
 
-  router_inBuffer = new GenericBuffer(no_vcs);
-  terminal_inBuffer = new GenericBuffer(no_vcs);
+    router_inBuffer = new GenericBuffer(no_vcs);
+    terminal_inBuffer = new GenericBuffer(no_vcs);
 
-// TODO want to bound buffers using buffer size
-//  router_inBuffer->resize ( no_vcs, buffer_size);     
-//  terminal_inBuffer->resize ( no_vcs, buffer_size);
+    // TODO want to bound buffers using buffer size
+    //  router_inBuffer->resize ( no_vcs, buffer_size);     
+    //  terminal_inBuffer->resize ( no_vcs, buffer_size);
 
-  router_credits.resize( no_vcs );
-  terminal_credits.resize ( no_vcs );
+    last_inpkt_winner = 0;
 
-  terminal_inPkt_time.resize ( no_vcs );
-  router_inPkt_time.resize ( no_vcs );
+    for ( int i=0; i<no_vcs; i++)
+    {
+        terminal_inPkt_time.push_back(0);
+        router_inPkt_time.push_back(0);
 
-  terminal_pktcomplete.resize(no_vcs);
-  router_pktcomplete.resize(no_vcs);
+        terminal_pktcomplete.push_back(false);
+        router_pktcomplete.push_back(false);
 
-  last_inpkt_winner = 0;
+        router_credits.push_back(rcredits);
+        terminal_credits.push_back(tcredits);
+    }
 
-  for ( int i=0; i<no_vcs; i++)
-  {
-      terminal_inPkt_time[i] = 0;
-      router_inPkt_time[i] = 0;
-
-      terminal_pktcomplete[i] = false;
-      router_pktcomplete[i] = false;
-
-      router_credits[i] = credits;
-      terminal_credits[i]=true;
-  }
-
-  return;
+    return;
 }
 
 void
@@ -223,8 +222,8 @@ NInterface::handle_router_link_arrival ( DES_Event* ev, int port_id)
             {
 
                 // Get the port from the link name or pass a parameter
-                router_inBuffer->push(&event->packet);
-                router_inPkt_time.at(event->packet.vc) = _TICK_NOW;
+                router_inBuffer->push(event->packet);
+                router_inPkt_time.at(event->packet->vc) = _TICK_NOW;
 
                 // add some fixed latency for accepting all the flits in the packet
 
@@ -252,23 +251,25 @@ NInterface::handle_terminal_link_arrival ( DES_Event* ev ,int port_id )
                     iris_panic(" ninterface got credit from terminal for non existing vc!!");
                 }
                 else
-                    terminal_credits.at(event->credit.vc) = true;
+                    terminal_credits.at(event->credit.vc)++;
 
                 break;
             }
         case irisRtrEvent::Packet:
             {
-                terminal_inBuffer->push(&event->packet);
-                terminal_inPkt_time.at(event->packet.vc) = _TICK_NOW;
+                assert ( event->packet != NULL && "Pkt event has null packet\n" );
+                terminal_inBuffer->push(event->packet);
+                terminal_inPkt_time.at(event->packet->vc) = _TICK_NOW;
+
                 break;
             }
     }
 }		/* -----  end of method NInterface::handle_terminal_link_arrival  ----- */
 
 bool
-NInterface::tock ( SST::Cycle_t now )
+NInterface::tock (SST::Cycle_t cycle )
 { 
-    /******************* Handle events on the ROUTER side ********************/
+    /******************* Handle events TERMINAL->NETWORK ********************/
     {
 
         //Request the arbiter for all completed packets. Do not request if
@@ -277,8 +278,7 @@ NInterface::tock ( SST::Cycle_t now )
         {
             // check all the packets that can be sent out and request the arbiter
             // to pick the winning packet
-            if ( terminal_pktcomplete.at(i) &&
-                 router_credits.at(i) >= terminal_inBuffer->get_pktLength(i) )
+            if ( terminal_pktcomplete.at(i) && router_credits.at(i) )
             {
                 if ( !arbiter.is_requested(i) )
                     arbiter.request(i);
@@ -299,14 +299,14 @@ NInterface::tock ( SST::Cycle_t now )
             pkt->vc = winner;
             irisRtrEvent* pkt_event = new irisRtrEvent;
             pkt_event->type = irisRtrEvent::Packet;
-            pkt_event->packet = *pkt;
+            pkt_event->packet = pkt;
             router_link->Send(pkt_event);
+            router_credits.at(winner)--;
 
             terminal_pktcomplete.at(winner) = false;
 
             // update your credits counter to indicate router has one
             // less empty buffer
-            router_credits.at(winner)--;
 
             /* create des event for terminal signalling pkt out */
             irisRtrEvent* credit_event = new irisRtrEvent; 
@@ -322,11 +322,11 @@ NInterface::tock ( SST::Cycle_t now )
         // interface+no of flits is the current time
         // Move flits from the pkt buffer to the router_out_buffer
         for ( int i=0 ; i<no_vcs ; i++ )
-            if( terminal_inBuffer->get_occupancy(i) )
+            if( terminal_inBuffer->get_occupancy(i) && !terminal_pktcomplete[i])
             {
                 uint64_t send_pkt_time = terminal_inPkt_time.at(i) + 
-                    terminal_inBuffer->get_pktLength(i);
-                if (send_pkt_time >= _TICK_NOW )
+                    terminal_inBuffer->get_pktLength(i)+1;
+                if (send_pkt_time <= _TICK_NOW )
                 {
                     // push the flit into the router out buffer and clear the
                     // terminal buffer to send out the next packet
@@ -334,57 +334,34 @@ NInterface::tock ( SST::Cycle_t now )
                 }
             }
     }
-    /************** Handle events on the PROCESSOR side *********************/
+    /************** Handle events on the NETWORK->TERMINAL *********************/
 
     // Move completed packets to the terminal
-    bool found = false;
-    // send a new packet to the terminal.
-    // In order to make sure it gets one packet in a cycle you check the
-    // terminal_recv flag
-    // for parallel simulation make sure the interface and terminal are on the
-    // same node
-    if ( !static_cast<IrisTerminal*>(terminal)->terminal_recv )
-    {
-        for ( int i=last_inpkt_winner+1; i<no_vcs ; i++)
-            if ( terminal_credits.at(i) && router_pktcomplete.at(i) ) 
-            {
-                last_inpkt_winner= i;
-                found = true;
-                break;
-            }
-        if ( !found )
-            for ( int i=0; i<=last_inpkt_winner; i++)
-                if ( terminal_credits.at(i) && router_pktcomplete.at(i) ) 
-                {
-                    last_inpkt_winner= i;
-                    found = true;
-                    break;
-                }
-
-        if ( found )
+    for ( int i=0; i<no_vcs ; i++ )
+        if( router_inBuffer->get_occupancy(i) && terminal_credits[i] && router_pktcomplete[i] )
         {
-            terminal_credits.at(last_inpkt_winner) = false;
-            router_pktcomplete.at(last_inpkt_winner) = false;
-            static_cast<IrisTerminal*>(terminal)->terminal_recv = true;
+            terminal_credits.at(i)--;
+            router_pktcomplete.at(i) = false;
+//            static_cast<IrisTerminal*>(terminal)->terminal_recv = true;
 
             //send the new pkt to the terminal
-            irisNPkt* pkt = router_inBuffer->pull(last_inpkt_winner);
-            pkt->vc = last_inpkt_winner;
+            irisNPkt* pkt = router_inBuffer->pull(i);
+            pkt->vc = i;
             irisRtrEvent* pkt_event = new irisRtrEvent;
             pkt_event->type = irisRtrEvent::Packet;
-            pkt_event->packet = *pkt;
+            pkt_event->packet = pkt;
             terminal_link->Send(pkt_event);
 
             //send the credit back to the router
             irisRtrEvent* credit_event = new irisRtrEvent; 
             credit_event->type = irisRtrEvent::Credit;
-            credit_event->credit.vc = last_inpkt_winner;
+            credit_event->credit.vc = i;
             credit_event->credit.num = 1;      // if we do use flits then update this
             //credit_ev->src = this->GetComponentId();
             router_link->Send(credit_event);
 
         }
-    }
+
 
     // mock the interface streaming flits in on the router link
     for ( int i=0; i<no_vcs ; i++ )
@@ -392,9 +369,9 @@ NInterface::tock ( SST::Cycle_t now )
         if( router_inBuffer->get_occupancy(i) )
         {
             uint64_t pkt_complete_time = router_inBuffer->get_pktLength(i)
-                + router_inPkt_time.at(i);
-            if( pkt_complete_time >= _TICK_NOW )
-                terminal_pktcomplete.at(i) = true;
+                + router_inPkt_time.at(i)+1;
+            if( pkt_complete_time <= _TICK_NOW )
+                router_pktcomplete.at(i) = true;
         }
     }
 

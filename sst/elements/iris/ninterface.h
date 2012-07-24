@@ -67,7 +67,7 @@ class NInterface : public DES_Component
         void handle_terminal_link_arrival (DES_Event* e, int port_id);
 
         /* Clocked events */
-        bool tock(SST::Cycle_t now);
+        bool tock( SST::Cycle_t cycle);
 
         void resize( void ); // Reconfigure the parameters for the router
         const char* print_stats ( void ) const;
@@ -89,7 +89,7 @@ class NInterface : public DES_Component
         std::vector<bool> router_pktcomplete;
         std::vector<uint64_t > router_inPkt_time;
 
-        std::vector<bool> terminal_credits;
+        std::vector<int> terminal_credits;
         std::vector<bool> terminal_pktcomplete;
         std::vector<uint64_t > terminal_inPkt_time;
 
@@ -101,7 +101,8 @@ class NInterface : public DES_Component
 
         int no_vcs;
         int buffer_size;
-        int credits;
+        int rcredits;
+        int tcredits;
         int last_inpkt_winner;
         SimpleArbiter arbiter;
 

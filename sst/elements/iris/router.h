@@ -137,14 +137,16 @@ class Router : public DES_Component
         std::vector<uint32_t> total_buff_occ;
 
         /*  Generic Helper functions */
-        std::string print_stats() const;
+        void print_stats(std::string&) const;
         void reset_stats();    /* Useful for fast forwarding. (uses router_fastfwd) */
         void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
         void resize( void ); // Reconfigure the parameters for the router
 
         int Finish()
         {
-            fprintf(stderr,"\n Stats for node %d %s \n",node_id, print_stats().c_str());
+            std::string stat_string;
+            print_stats(stat_string);
+            fprintf(stderr,"\n Stats for node %d %s \n",node_id, stat_string.c_str());
 //            fprintf(stderr,"\n\nempty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
             return 0;
         }

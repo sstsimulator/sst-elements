@@ -137,8 +137,8 @@ Router::reset_stats ( void )
     return ;
 }		/* -----  end of method Router::reset_stats  ----- */
 
-std::string 
-Router::print_stats ( void ) const
+void
+Router::print_stats ( std::string& result) const
 {
     std::stringstream str;
     str 
@@ -148,7 +148,8 @@ Router::print_stats ( void ) const
         << "\n SimpleRouter[" << node_id << "] stat_last_flit_cycle: " << stat_last_flit_cycle
         ;
 
-    return str.str();
+    result.assign(str.str());
+    return;
 }		/* -----  end of method Router::print_stats  ----- */
 
 void
@@ -348,8 +349,8 @@ Router::do_st ( void )
                 irisRtrEvent* ev = new irisRtrEvent;
                 f->vc = oc;
                 ev->type = irisRtrEvent::Packet;
-                ev->packet = *f;
-                //printf("%d: Send pkt at%lu", node_id, _TICK_NOW);
+                ev->packet = f;
+                //printf("N%d:@%lu Rtr pkt out addr:0x%lx \n",node_id, _TICK_NOW,f->address );
                 links.at(op)->Send(ev);
 
                 /*  I have one slot in the next buffer less now. */
@@ -404,12 +405,12 @@ Router::handle_link_arrival ( DES_Event* ev, int dir)
             }
         case irisRtrEvent::Packet:
             {
-                //                printf("%d: Router got pkt dst:%d @ %lu\n", node_id, event->packet.destNum, _TICK_NOW );
+                //printf("N%d@%lu: Rtr PktEv addr:0x%lx \n", node_id, _TICK_NOW, event->packet->address );
                 /* Stats update */
                 stat_flits_in++;
 
                 // Get the port from the link name or pass a parameter
-                in_buffer.at(dir).push(&event->packet);
+                in_buffer.at(dir).push(event->packet);
 
                 break;
             }

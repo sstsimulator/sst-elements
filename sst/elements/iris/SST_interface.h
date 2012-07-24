@@ -16,7 +16,7 @@
 #ifndef  SST_INTERFACE_H_INC
 #define  SST_INTERFACE_H_INC
 
-#include <sst_stdint.h>
+#include        <sst_stdint.h>
 #include	"genericHeader.h"
 #include	<sst/core/event.h>
 
@@ -76,11 +76,18 @@ class irisNPkt
  */
 class irisRtrEvent : public SST::Event {
     public:
+        ~irisRtrEvent()
+        {
+            // Do not delete the pkt with the event
+            // Its explicitly deleted by the sender after
+            // verification of the response
+        }
+
         typedef enum { Credit, Packet } msgType_t;
 
         int             type;
         char            mesh_loc[3];
-        irisNPkt        packet;
+        irisNPkt*        packet;
         struct Credit {
             uint32_t        num;
             int             vc;

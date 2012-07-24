@@ -44,6 +44,7 @@ class GenericBuffer
 
 	inline uint16_t get_pktLength ( uint16_t channel ) const
         {
+	  assert (buffers[channel].front()!=NULL && "Error packet is NULL\n");
 	  return buffers[channel].front()->sizeInFlits;
         }
 

@@ -47,7 +47,7 @@
 
 /*  Enums for router configurations.. if you change them modify the string in
  *  genericHeader.cc */
-enum message_class_t { INVALID_PKT=0, PROC_REQ, MC_RESP };
+enum message_class_t { INVALID_PKT=0, PROC_REQ, MC_RESP, PROC_READ_REQ, PROC_WRITE_REQ };
 
 enum routing_scheme_t{ 
     TWONODE_ROUTING,  // Simple send<--> recv between two nodes
@@ -81,7 +81,8 @@ typedef class SST::Clock DES_Clock;
 /* Name ports if its easy to track */
 #define EJECT_PORT 0
 
-#define iris_panic(...) printf("panic"); iris_warn(__VA_ARGS__); exit(1)
+#define iris_panic(...) printf("panic"); std::cerr << "warn"<< __FUNCTION__ \
+   <<  __FILE__<< __LINE__<< __VA_ARGS__ ; exit(1)
 
 #define iris_warn(...) \
   std::cerr << "warn"<< __FUNCTION__ <<  __FILE__<< __LINE__<< __VA_ARGS__ 

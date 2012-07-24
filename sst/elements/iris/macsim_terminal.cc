@@ -56,7 +56,7 @@ MacsimTerminal::handle_interface_link_arrival ( DES_Event* ev ,int port_id )
                 // update macsim
                 // @ Genie FIXME: MEM_NOC_DONE and mem_req_s are types in macsim
                 // need includes for them
-                mem_req_s* req = static_cast<mem_req_s*>(event->packet.req);
+                mem_req_s* req = static_cast<mem_req_s*>(event->packet->req);
                 req->m_state = MEM_NOC_DONE; 
                 recvQ.push(req);
                 delete (&event->packet);
@@ -108,7 +108,7 @@ MacsimTerminal::send_packet(mem_req_s *req)
 
         irisRtrEvent* pkt_event = new irisRtrEvent;
         pkt_event->type = irisRtrEvent::Packet;
-        pkt_event->packet = *np;
+        pkt_event->packet = np;
         owner->interface_link->Send(pkt_event);
 
         //FIXME: memory leaks check what np should do

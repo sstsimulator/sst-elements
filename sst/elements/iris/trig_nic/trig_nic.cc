@@ -107,23 +107,24 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 
 	// The first entry tells us if this a portals packet, which will
 	// change the latency through the NIC
-        bool portals = event->packet.payload[0] & PTL_HDR_PORTALS;
-        bool head_packet = event->packet.payload[0] & PTL_HDR_HEAD_PACKET;
+        bool portals = event->packet->payload[0] & PTL_HDR_PORTALS;
+        bool head_packet = event->packet->payload[0] & PTL_HDR_HEAD_PACKET;
 
 	// Either way we have to create a trig_nic_event, so do that
 	// now.
 	trig_nic_event* nic_event = new trig_nic_event();
-	nic_event->src = event->packet.srcNum;
-	nic_event->dest = event->packet.destNum;
+	nic_event->src = event->packet->srcNum;
+	nic_event->dest = event->packet->destNum;
 	nic_event->ptl_op = PTL_NIC_PROCESS_MSG;
 	nic_event->portals = portals;
 	nic_event->head_packet = head_packet;
 	
-	nic_event->stream = event->packet.payload[1];
+	nic_event->stream = event->packet->payload[1];
 	
 	// Copy over the payload
-	memcpy(nic_event->ptl_data,&event->packet.payload[2],16*sizeof(uint32_t));
+	memcpy(nic_event->ptl_data,&event->packet->payload[2],16*sizeof(uint32_t));
 	
+	delete event->packet;
 	delete event;
 
 	if (portals) {
@@ -308,18 +309,19 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 // 	    printf("%5d:  Got something on my self link\n",m_id);
             nextToRtr = new irisRtrEvent();
             nextToRtr->type = irisRtrEvent::Packet;
-            nextToRtr->packet.vc = 0;
-            nextToRtr->packet.srcNum = m_id;
-            nextToRtr->packet.destNum = to_rtr->dest;
-            nextToRtr->packet.sizeInFlits = 8;
+            nextToRtr->packet = new irisNPkt();
+            nextToRtr->packet->vc = 0;
+            nextToRtr->packet->srcNum = m_id;
+            nextToRtr->packet->destNum = to_rtr->dest;
+            nextToRtr->packet->sizeInFlits = 8;
 
 	    
-	    nextToRtr->packet.payload[0] = 0;
-            if (to_rtr->portals) nextToRtr->packet.payload[0] |= PTL_HDR_PORTALS;
-            if (to_rtr->head_packet) nextToRtr->packet.payload[0] |= PTL_HDR_HEAD_PACKET;
-	    nextToRtr->packet.payload[1] = to_rtr->stream;
+	    nextToRtr->packet->payload[0] = 0;
+            if (to_rtr->portals) nextToRtr->packet->payload[0] |= PTL_HDR_PORTALS;
+            if (to_rtr->head_packet) nextToRtr->packet->payload[0] |= PTL_HDR_HEAD_PACKET;
+	    nextToRtr->packet->payload[1] = to_rtr->stream;
 
-	    memcpy(&nextToRtr->packet.payload[2],to_rtr->ptl_data,16*sizeof(uint32_t));
+	    memcpy(&nextToRtr->packet->payload[2],to_rtr->ptl_data,16*sizeof(uint32_t));
  	    delete to_rtr;
         }
     }
