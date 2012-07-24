@@ -16,13 +16,7 @@
 #include <queue>
 #include <map>
 
-#ifdef USE_IRIS
-#include "sst/elements/iris/RtrIF.h"
-#include "sst/elements/iris/SST_interface.h"
-#else
 #include "sst/elements/SS_router/SS_router/RtrIF.h"
-#endif
-
 #include "sst/elements/portals4_sm/trig_cpu/portals_types.h"
 #include "trig_nic_event.h"
 
@@ -138,11 +132,7 @@ public:
 private:
 
     // Next event to go to the router
-#ifdef USE_IRIS
-    irisRtrEvent* nextToRtr;
-#else
     RtrEvent* nextToRtr;
-#endif
 
     bool clock_handler(Cycle_t cycle);
     void processCPUEvent( Event* e);

@@ -97,11 +97,7 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
     bool work_done = false;
     if ( !toNicQ_empty( 0 ) ) {
 	work_done = true;
-#ifdef USE_IRIS
-        irisRtrEvent* event = toNicQ_front(0);
-#else
         RtrEvent* event = toNicQ_front( 0 );
-#endif
         toNicQ_pop( 0 );
 
 // 	if (m_id == 1) printf("Received packet @ %llu\n",getCurrentSimTimeNano());
@@ -311,13 +307,8 @@ bool trig_nic::clock_handler ( Cycle_t cycle ) {
         trig_nic_event* to_rtr;
         if ( ( to_rtr = static_cast< trig_nic_event* >( self_link->Recv() ) ) ) {
 // 	    printf("%5d:  Got something on my self link\n",m_id);
-#ifdef USE_IRIS
-            nextToRtr = new irisRtrEvent();
-            nextToRtr->type = irisRtrEvent::Packet;
-#else
             nextToRtr = new RtrEvent();
             nextToRtr->type = RtrEvent::Packet;
-#endif
             nextToRtr->packet.vc = 0;
             nextToRtr->packet.srcNum = m_id;
             nextToRtr->packet.destNum = to_rtr->dest;

@@ -137,7 +137,7 @@ Router::reset_stats ( void )
     return ;
 }		/* -----  end of method Router::reset_stats  ----- */
 
-const char* 
+std::string 
 Router::print_stats ( void ) const
 {
     std::stringstream str;
@@ -148,7 +148,7 @@ Router::print_stats ( void ) const
         << "\n SimpleRouter[" << node_id << "] stat_last_flit_cycle: " << stat_last_flit_cycle
         ;
 
-    return str.str().c_str();
+    return str.str();
 }		/* -----  end of method Router::print_stats  ----- */
 
 void
