@@ -8,19 +8,20 @@
 
 DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_comp( comp ),
-    m_nicMmu( NULL ),
 #if USE_DMA_LIMIT_BW
     m_pendingBytes( 0.0 ),
 #endif
-    m_virt2phys( true )
+    m_nicMmu( NULL )
 {
 
     m_nid = params.find_integer( "nid" );
 
     DmaEngine_DBG("nid=%d\n",m_nid);
-    if ( ! params.find_string( "dma-virt2phys" ).compare("false") ) {
+    if ( params.find_string( "dma-virt2phys" ).compare("false") ) {
         fprintf( stderr, "don't translate virt 2 phys address\n");
-        m_virt2phys = false;
+        std::string file = params.find_string( "deviceFile" );
+        DmaEngine_DBG("%s\n", __func__, file.c_str() );
+        m_nicMmu = new NicMmu( file, true );
     }
 
 #if USE_DMA_LIMIT_BW
@@ -33,10 +34,6 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_link = comp.configureLink( "dma", "1ps",
            new SST::Event::Handler<DmaEngine>(this, &DmaEngine::eventHandler));
     assert( m_link );
-
-    std::string file = params.find_string( "deviceFile" );
-    DmaEngine_DBG("%s\n", __func__, file.c_str() );
-    m_nicMmu = new NicMmu( file, true );
 }    
 
 #if USE_DMA_LIMIT_BW
@@ -138,7 +135,7 @@ void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list )
 
         DmaEngine_DBG(  "vaddr=%#lx length=%lu\n", vaddr, item.length );
 
-        if ( m_virt2phys ) {
+        if ( m_nicMmu ) {
             bool ret = m_nicMmu->lookup( vaddr, item.addr );
             assert( ret );
         } else {

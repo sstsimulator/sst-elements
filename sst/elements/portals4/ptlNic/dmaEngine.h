@@ -50,7 +50,6 @@ class DmaEngine {
     SST::Link*      m_link;
     int             m_nid;
     NicMmu         *m_nicMmu;
-    bool            m_virt2phys;
 #if USE_DMA_LIMIT_BW
     std::deque<DmaEvent*> m_dmaQ;
     double          m_pendingBytes;
