@@ -99,7 +99,8 @@ public:
     inline int vm_stop();
     inline int vm_pause();
     inline int vm_continue();
-    inline int vm_run_msecs( int );
+    inline int vm_run_cycles( uint64_t );
+    inline uint64_t rdtsc();
 
 private:
     static void sigHandler( int );
@@ -197,7 +198,7 @@ int PalaciosIF::vm_continue( )
     return ret;
 }
 
-int PalaciosIF::vm_run_msecs( int msecs )
+int PalaciosIF::vm_run_cycles( uint64_t cycles )
 {
     int fd,ret;
     fd = open( m_vmName.c_str(), O_RDONLY);
@@ -207,7 +208,7 @@ int PalaciosIF::vm_run_msecs( int msecs )
         return -1;
     }
 
-    ret = ioctl(fd, V3_VM_SIMULATE, msecs);
+    ret = ioctl(fd, V3_VM_SIMULATE, cycles );
 
     close(fd);
 
@@ -263,6 +264,11 @@ void PalaciosIF::writeMem( uint64_t gpa, void* data, int count )
 uint32_t PalaciosIF::virt2phys( uint64_t gva ) {
     return v3_user_host_dev_virt2phys( m_fd, (void*) gva );
 }
+
+uint64_t PalaciosIF::rdtsc() {
+    return v3_user_host_dev_rdtsc( m_fd );
+}
+
 
 uint64_t  PalaciosIF::writeGuestMemVirt( uint64_t gva, void* data, int count )
 {

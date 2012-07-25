@@ -29,10 +29,13 @@ class PtlNicMMIF : public SST::Component
     bool clock( SST::Cycle_t );
 
     void doSimCtrlCmd(int cmd);
-    void checkForSimCtrlCmd();
+    void simCtrlCmd();
 
-    int  m_fooTicks;
-    int  m_fooTicksPer;
+    float adjustPeriod( float a, float b ) {
+        float tmp = a;
+        while ( tmp < b ) tmp += a; 
+        return tmp;
+    }
 
     bool sim_mode_start() {
         if ( m_threadRun ) return false; 
@@ -44,7 +47,6 @@ class PtlNicMMIF : public SST::Component
         ret = pthread_create( &m_thread, NULL, thread1, this );
         assert( ret == 0 );
 
-        m_fooTicks = m_fooTicksPer - 1;
         return true;
     }
 
@@ -57,8 +59,10 @@ class PtlNicMMIF : public SST::Component
     
         ret = m_palaciosIF->vm_continue();
         assert( ret == 0 );
+
         return true;
     }
+
     void ptlCmd();
     void barrierCmd();
 
@@ -83,6 +87,15 @@ class PtlNicMMIF : public SST::Component
     bool                        m_threadRun;
     pthread_cond_t              m_threadCond;
     pthread_mutex_t             m_threadMutex;
+
+    uint64_t m_sstStart;
+    uint64_t m_guestStart;
+    uint64_t m_guestHz;
+
+    int m_mult;
+    int m_count;
+    uint64_t m_runCycles;
+
 };
 
 #endif

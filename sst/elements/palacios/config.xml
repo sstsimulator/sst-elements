@@ -54,6 +54,8 @@
         <params>
             <vm-dev> /dev/v3-vm0 </vm-dev>
             <dev> user:foo </dev>
+            <minCycles> 1000 </minCycles>
+            <cpuhz> 2933333333 </cpuhz>
         </params>
         <link name=0.ptlNicLink port=nic latency=$foo_link_lat />
         <link name=0.dmaLink port=dma latency=$foo_link_lat />
@@ -86,6 +88,8 @@
         <params>
             <vm-dev> /dev/v3-vm0 </vm-dev>
             <dev> user:foo </dev>
+            <minCycles> 1000 </minCycles>
+            <cpuhz> 2933333333 </cpuhz>
         </params>
         <link name=1.ptlNicLink port=nic latency=$foo_link_lat />
         <link name=1.dmaLink port=dma latency=$foo_link_lat />
