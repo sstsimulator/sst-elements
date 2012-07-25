@@ -27,7 +27,7 @@ class PtlIF {
         m_meUnlinkedPos( 0 )
     {
         int fd;
-#if 0
+#if USE_PALACIOS_DEV 
         int ret = mlockall( MCL_CURRENT | MCL_FUTURE );
         assert ( ret == 0 );
 #endif
