@@ -82,7 +82,11 @@ int cnos_get_nidpid_map( cnos_nidpid_map_t** map )
         int i;
         for ( i = 0; i < size; i++ ) {
             (*map)[i].nid = i;  
+#ifdef USE_M5
             (*map)[i].pid = getpid();
+#else
+            (*map)[i].pid = 100;
+#endif
         }
     }
 //    printf("%s():%d size=%d\n",__func__,__LINE__,size);

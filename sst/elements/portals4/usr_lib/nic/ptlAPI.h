@@ -45,7 +45,11 @@ class PtlAPI {
 
         assert( pid == PTL_PID_ANY );
         // this has to match what's in cnos_get_nidpid_map
+#if USE_PALACIOS_DEV
+        m_id.phys.pid = 100; 
+#else
         m_id.phys.pid = getpid(); 
+#endif
         cmdUnion_t& cmd = m_ptlIF.getCmdSlot(PtlNIInitCmd );
         cmd.niInit.pid     = m_id.phys.pid; 
         cmd.niInit.options = options;
