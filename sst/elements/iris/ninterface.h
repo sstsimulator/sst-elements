@@ -70,12 +70,14 @@ class NInterface : public DES_Component
         bool tock( SST::Cycle_t cycle);
 
         void resize( void ); // Reconfigure the parameters for the router
-        const char* print_stats ( void ) const;
+        void print_stats ( std::string& stat_str ) const;
         void reset_stats ( void );
 
         int Finish()
         {
-            fprintf(stderr,"\nNinterface Stats for node %d %s ",node_id, print_stats());
+            std::string tmp;
+            print_stats(tmp);
+            fprintf(stderr,"\nNode%d Interface \n%s ",node_id, tmp.c_str());
             return 0;
         }
 
@@ -105,6 +107,10 @@ class NInterface : public DES_Component
         int tcredits;
         int last_inpkt_winner;
         SimpleArbiter arbiter;
+
+        /* Stats for interface */
+        uint64_t total_pkts_out;
+        uint64_t avg_pkt_lat;
 
 }; /* -----  end of class NInterface  ----- */
 

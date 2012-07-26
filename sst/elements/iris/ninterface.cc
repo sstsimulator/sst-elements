@@ -12,6 +12,7 @@
 #include "sst/core/serialization/element.h"
 
 #include "sst/core/element.h"
+#include	<sstream>
 
 #include	"ninterface.h"
 const char* NINTERFACE_FREQ = "500MHz";
@@ -183,6 +184,10 @@ NInterface::resize( void )
         terminal_credits.push_back(tcredits);
     }
 
+    /*  Stats */
+    total_pkts_out = 0;
+    avg_pkt_lat = 0;
+
     return;
 }
 
@@ -193,10 +198,16 @@ NInterface::reset_stats ( void )
     return ;
 }		/* -----  end of method NInterface::reset_stats  ----- */
 
-const char* 
-NInterface::print_stats ( void ) const
+void
+NInterface::print_stats ( std::string& stat_str ) const
 {
-    return "add stats for interface";
+    std::stringstream ss;
+    ss << 
+        "NInt ["<<node_id<<"] total_pkts_out: "<< total_pkts_out << "\n"
+        "NInt ["<<node_id<<"] avg_pkt_lat: "<< avg_pkt_lat *1.0 / total_pkts_out << "\n"
+        ;
+    stat_str.assign(ss.str());
+    return ;
 }		/* -----  end of method NInterface::print_stats  ----- */
 
 void
@@ -302,6 +313,8 @@ NInterface::tock (SST::Cycle_t cycle )
             pkt_event->packet = pkt;
             router_link->Send(pkt_event);
             router_credits.at(winner)--;
+            total_pkts_out++;
+            avg_pkt_lat += (_TICK_NOW - terminal_inPkt_time.at(winner)); 
 
             terminal_pktcomplete.at(winner) = false;
 
@@ -342,7 +355,7 @@ NInterface::tock (SST::Cycle_t cycle )
         {
             terminal_credits.at(i)--;
             router_pktcomplete.at(i) = false;
-//            static_cast<IrisTerminal*>(terminal)->terminal_recv = true;
+            //            static_cast<IrisTerminal*>(terminal)->terminal_recv = true;
 
             //send the new pkt to the terminal
             irisNPkt* pkt = router_inBuffer->pull(i);
