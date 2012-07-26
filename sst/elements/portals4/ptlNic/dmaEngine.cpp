@@ -18,10 +18,11 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
 
     DmaEngine_DBG("nid=%d\n",m_nid);
     if ( params.find_string( "dma-virt2phys" ).compare("false") ) {
-        fprintf( stderr, "don't translate virt 2 phys address\n");
         std::string file = params.find_string( "deviceFile" );
         DmaEngine_DBG("%s\n", __func__, file.c_str() );
         m_nicMmu = new NicMmu( file, true );
+    } else {
+        fprintf( stderr, "don't translate virt 2 phys address\n");
     }
 
 #if USE_DMA_LIMIT_BW
