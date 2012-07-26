@@ -101,6 +101,7 @@ public:
     inline int vm_continue();
     inline int vm_run_cycles( uint64_t );
     inline uint64_t rdtsc();
+    inline uint64_t getCpuFreq();
 
 private:
     static void sigHandler( int );
@@ -269,6 +270,9 @@ uint64_t PalaciosIF::rdtsc() {
     return v3_user_host_dev_rdtsc( m_fd );
 }
 
+uint64_t PalaciosIF::getCpuFreq() {
+    return v3_user_host_dev_getcpuhz( m_fd );
+}
 
 uint64_t  PalaciosIF::writeGuestMemVirt( uint64_t gva, void* data, int count )
 {

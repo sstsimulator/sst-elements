@@ -47,16 +47,22 @@ class PtlNicMMIF : public SST::Component
         ret = pthread_create( &m_thread, NULL, thread1, this );
         assert( ret == 0 );
 
+        m_count = m_mult;
         return true;
     }
 
     bool sim_mode_stop() {
+        int ret;
         if ( ! m_threadRun ) return false; 
 
         m_threadRun = false;
-        int ret = pthread_join( m_thread, NULL );
+        
+        ret = pthread_barrier_wait( &m_threadBarrier );
+        assert (ret == 0 || ret == PTHREAD_BARRIER_SERIAL_THREAD );
+
+        ret = pthread_join( m_thread, NULL );
         assert( ret == 0 );
-    
+
         ret = m_palaciosIF->vm_continue();
         assert( ret == 0 );
 
@@ -83,19 +89,18 @@ class PtlNicMMIF : public SST::Component
 
     static void* thread1( void* );
     void* thread2();
-    pthread_t                   m_thread;
     bool                        m_threadRun;
-    pthread_cond_t              m_threadCond;
-    pthread_mutex_t             m_threadMutex;
+    pthread_t                   m_thread;
+    pthread_barrier_t           m_threadBarrier;
 
-    uint64_t m_sstStart;
-    uint64_t m_guestStart;
-    uint64_t m_guestHz;
+    int         m_mult;
+    int         m_count;
+    uint64_t    m_runCycles;
 
-    int m_mult;
-    int m_count;
-    uint64_t m_runCycles;
-
+    uint64_t    m_sstStart;
+    uint64_t    m_guestStart;
+    uint64_t    m_guestHz;
+    time_t      m_simStartWallTime;
 };
 
 #endif

@@ -19,7 +19,6 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     m_barrierCallback( BarrierAction::Handler<PtlNicMMIF>(this,
                         &PtlNicMMIF::barrierLeave) ),
     m_threadRun( false ),
-    m_count( 0 ),
     m_runCycles( 100 )
 {
     int ret;
@@ -60,7 +59,7 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
 
     // getFactor returns number of ps between Sync's
     float clockPeriod_ns = minPartTC->getFactor() / 1000.0;
-    m_guestHz            = params.find_integer( "cpuhz"); 
+    m_guestHz            = m_palaciosIF->getCpuFreq();
     m_runCycles          = params.find_integer( "minCycles" );
 
     printf("requested minCycles=%lu, guest CPU freq %lu hz\n",
@@ -87,10 +86,7 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
         new SST::Clock::Handler< PtlNicMMIF >( this, &PtlNicMMIF::clock ) );
     assert( tmp );
 
-    ret = pthread_mutex_init( &m_threadMutex, NULL );
-    assert( ret == 0 ); 
-
-    ret = pthread_cond_init( &m_threadCond, NULL );
+    ret = pthread_barrier_init( &m_threadBarrier, NULL, 2 );
     assert( ret == 0 ); 
 }    
 
@@ -113,14 +109,12 @@ bool PtlNicMMIF::clock( Cycle_t cycle )
     if ( m_threadRun ) {
         
         if ( m_count == 0 ) {
-            pthread_mutex_lock( &m_threadMutex );
-            pthread_cond_signal( &m_threadCond );
-            pthread_mutex_unlock( &m_threadMutex );
+            int ret;
+            ret = pthread_barrier_wait( &m_threadBarrier );
+            assert (ret == 0 || ret == PTHREAD_BARRIER_SERIAL_THREAD );
+            m_count = m_mult;
         }
-        ++m_count;
-        if ( m_count == m_mult ) {
-            m_count = 0;
-        }
+        --m_count;
     }
     return false;
 }
@@ -131,7 +125,8 @@ void PtlNicMMIF::doSimCtrlCmd( int cmd )
 
     switch ( cmd ) {
     case VM_SIM_START:
-        system("/bin/date");
+        m_simStartWallTime = time(NULL);
+        fprintf(stderr,"Starting Palacios simulate\n");
         if ( ! sim_mode_start() ) {
             fprintf(stderr,"PtlNicMMIF::%s() already in simulation mode\n",
                                                         __func__);
@@ -144,9 +139,10 @@ void PtlNicMMIF::doSimCtrlCmd( int cmd )
         break;
 
     case VM_SIM_STOP:
-        system("/bin/date");
 
-        printf("guest time %.6f, sst time %.6f\n",
+        fprintf(stderr, "Stopping Palacios simulate, wall %d sec, "
+                    "guest %.5f sec, SST %.5f sec\n",
+            time(NULL) - m_simStartWallTime,
             (m_palaciosIF->rdtsc() - m_guestStart)* (1.0/(float) m_guestHz),
             (Simulation::getSimulation()->getCurrentSimCycle() - m_sstStart) *
                     (1.0/(float)1000000000000));
@@ -183,16 +179,14 @@ void* PtlNicMMIF::thread1( void* ptr )
 
 void* PtlNicMMIF::thread2( )
 {
-    while ( m_threadRun ) {
-
-        pthread_mutex_lock( &m_threadMutex );
-        pthread_cond_wait( &m_threadCond, &m_threadMutex );
-
+    do {
         int ret =  m_palaciosIF->vm_run_cycles( m_runCycles );
         assert( ret == 0 );
 
-        pthread_mutex_unlock( &m_threadMutex );
-    }
+        ret = pthread_barrier_wait( &m_threadBarrier );
+        assert (ret == 0 || ret == PTHREAD_BARRIER_SERIAL_THREAD );
+
+    } while ( m_threadRun );
     return NULL;
 }
 
