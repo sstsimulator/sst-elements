@@ -32,21 +32,21 @@ static struct file_operations p4_fops = {
 /* character device open method */
 static int p4_open(struct inode *inode, struct file *filp)
 {
-printk("%s()\n",__func__);
         return 0;
 }
 /* character device last close method */
 static int p4_release(struct inode *inode, struct file *filp)
 {
-printk("%s()\n",__func__);
         return 0;
 }
 
 /* character device p4 method */
 static int p4_mmap(struct file *filp, struct vm_area_struct *vma)
 {
+#if 0
     printk("%s() %#lx %#lx\n",__func__,
                     vma->vm_start,vma->vm_end - vma->vm_start);
+#endif
     if ( remap_pfn_range( vma, vma->vm_start, 0xfffff000>>PAGE_SHIFT, 
                     vma->vm_end - vma->vm_start, vma->vm_page_prot ) ) {
         return -EAGAIN;
@@ -59,7 +59,6 @@ static int __init p4_init(void)
 {
         int ret = 0;
 
-printk("%s()\n",__func__);
         /* get the major number of the character device */
         if ((ret = alloc_chrdev_region(&p4_dev, 0, 1, "p4")) < 0) {
                 printk(KERN_ERR "could not allocate major number for p4\n");
@@ -83,7 +82,6 @@ printk("%s()\n",__func__);
 /* module unload */
 static void __exit p4_exit(void)
 {
-printk("%s()\n",__func__);
         /* remove the character deivce */
         cdev_del(&p4_cdev);
         unregister_chrdev_region(p4_dev, 1);
