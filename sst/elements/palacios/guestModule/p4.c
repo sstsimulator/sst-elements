@@ -91,5 +91,5 @@ module_init(p4_init);
 module_exit(p4_exit);
 MODULE_DESCRIPTION("P4 demo driver");
 MODULE_AUTHOR("Michael Levenhagen");
-MODULE_LICENSE("BSD");
+MODULE_LICENSE("Dual BSD/GPL");
 
