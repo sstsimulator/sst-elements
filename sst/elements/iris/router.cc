@@ -30,9 +30,7 @@ const char* LinkNames[] = {
 
 Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                 /*  Init stats */
-                stat_flits_in(0), stat_flits_out(0), 
-                stat_last_flit_cycle(0), stat_packets_in(0),stat_packets_out(0),
-                stat_total_pkt_latency_nano(0),
+                stat_flits_in(0), stat_flits_out(0), stat_last_flit_cycle(0), 
                 heartbeat_interval(500)/* in cycles */, stat_avg_buffer_occ(0.0),
                 router_fastfwd(0), empty_cycles(0)
 {
@@ -128,8 +126,7 @@ Router::reset_stats ( void )
     stat_flits_in = 0;
     stat_flits_out = 0;
     stat_last_flit_cycle = 0;
-    stat_packets_out = 0;
-    stat_total_pkt_latency_nano = 0;
+    stat_total_pkt_latency.Clear();
     heartbeat_interval = 0;
     total_buff_occ.clear();
     stat_avg_buffer_occ=0;
@@ -142,10 +139,12 @@ Router::print_stats ( std::string& result) const
 {
     std::stringstream str;
     str 
-        << "\n SimpleRouter[" << node_id << "] stat_flits_in: " << stat_flits_in
-        << "\n SimpleRouter[" << node_id << "] stat_flits_out: " << stat_flits_out
-        << "\n SimpleRouter[" << node_id << "] avg_router_pkt_latency: " << stat_total_pkt_latency_nano+0.0/stat_packets_out
-        << "\n SimpleRouter[" << node_id << "] stat_last_flit_cycle: " << stat_last_flit_cycle
+        << "\nSimpleRouter[" << node_id << "] stat_pkts: " <<stat_total_pkt_latency.NumDataValues() 
+        << "\nSimpleRouter[" << node_id << "] stat_flits_in: " << stat_flits_in
+        << "\nSimpleRouter[" << node_id << "] stat_flits_out: " << stat_flits_out
+        << "\nSimpleRouter[" << node_id << "] stat_avg_pkt_lat: " << stat_total_pkt_latency.Mean()
+        << "\nSimpleRouter[" << node_id << "] stat_var_pkt_lat: " << stat_total_pkt_latency.Variance()
+        << "\nSimpleRouter[" << node_id << "] stat_last_flit_cycle: " << stat_last_flit_cycle
         ;
 
     result.assign(str.str());
@@ -332,7 +331,7 @@ Router::do_st ( void )
 {
     for ( uint i=0; i<ib_state.size(); ++i)
         if( ib_state.at(i).pipe_stage==ST &&
-            ib_state.at(i).pkt_arrival_time+12 <= _TICK_NOW)
+            ib_state.at(i).pkt_arrival_time+ib_state.at(i).packet_length <= _TICK_NOW)
         {
             IB_state& curr_pkt = ib_state.at(i);
             uint16_t op = curr_pkt.out_port;
@@ -348,6 +347,7 @@ Router::do_st ( void )
 
                 irisRtrEvent* ev = new irisRtrEvent;
                 f->vc = oc;
+                stat_flits_out+=f->sizeInFlits;
                 ev->type = irisRtrEvent::Packet;
                 ev->packet = f;
                 //printf("N%d:@%lu Rtr pkt out addr:0x%lx \n",node_id, _TICK_NOW,f->address );
@@ -367,12 +367,10 @@ Router::do_st ( void )
                 links.at(ip)->Send(cr_ev);
 
                 /* Update packet stats */
-                stat_packets_out++;
-                stat_flits_out++;
                 stat_last_flit_cycle = _TICK_NOW;
-                uint16_t lat = _TICK_NOW - curr_pkt.pkt_arrival_time;
-                stat_total_pkt_latency_nano += lat;
-                //printf("%d: pkt out @%lu\n",node_id, _TICK_NOW);
+                int lat = _TICK_NOW - curr_pkt.pkt_arrival_time;
+                assert(lat > 0 && "pkt lat @ rtr is negative \n");
+                stat_total_pkt_latency.Push(lat);
 
                 curr_pkt.pipe_stage = EMPTY;
                 curr_pkt.in_port = -1;
@@ -407,7 +405,7 @@ Router::handle_link_arrival ( DES_Event* ev, int dir)
             {
                 //printf("N%d@%lu: Rtr PktEv addr:0x%lx \n", node_id, _TICK_NOW, event->packet->address );
                 /* Stats update */
-                stat_flits_in++;
+                stat_flits_in += event->packet->sizeInFlits;
 
                 // Get the port from the link name or pass a parameter
                 in_buffer.at(dir).push(event->packet);

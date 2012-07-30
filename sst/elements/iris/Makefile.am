@@ -21,6 +21,7 @@ libiris_la_SOURCES = \
 	genericSwa.h \
 	genericVca.cc \
 	genericVca.h \
+	stat.h \
 	router.cc \
 	router.h \
 	router_params.h \

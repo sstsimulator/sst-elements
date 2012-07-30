@@ -25,6 +25,7 @@
 #include	"genericRC.h"
 #include	"genericSwa.h"
 #include	"genericVca.h"
+#include	"stat.h"
 
 enum Router_PS {
     INVALID = 0,
@@ -126,9 +127,7 @@ class Router : public DES_Component
         uint64_t stat_flits_in;
         uint64_t stat_flits_out;
         uint64_t stat_last_flit_cycle;
-        uint64_t stat_packets_in;
-        uint64_t stat_packets_out;
-        uint64_t stat_total_pkt_latency_nano;
+        RunningStat stat_total_pkt_latency;
         uint64_t heartbeat_interval;
         // take the buff occupancy at heartbeat_intervals
         double stat_avg_buffer_occ;
@@ -146,7 +145,7 @@ class Router : public DES_Component
         {
             std::string stat_string;
             print_stats(stat_string);
-            fprintf(stderr,"\n Stats for node %d %s \n",node_id, stat_string.c_str());
+            fprintf(stderr,"\nNode %d Rtr %s \n",node_id, stat_string.c_str());
 //            fprintf(stderr,"\n\nempty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
             return 0;
         }
