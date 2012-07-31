@@ -136,7 +136,6 @@ void nodeComponent::handleEvent(Event *ev) {
     
     if( Scheduler ){
       dynamic_cast<JobFaultEvent*>(ev)->jobNum= jobNum;
-      //printf("nodejobnum: %d\n", jobNum);
       dynamic_cast<JobFaultEvent*>(ev)->nodeNumber = nodeNum;
       Scheduler->Send( ev );
       
@@ -151,7 +150,6 @@ void nodeComponent::handleEvent(Event *ev) {
     
   }else if( dynamic_cast<JobKillEvent*>(ev) ){
     if( dynamic_cast<JobKillEvent*>(ev)->jobNum== this->jobNum ){
-      //printf("node killing %d\n", this->jobNum);
       CompletionEvent *ec = new CompletionEvent(jobNum);
       Scheduler->Send(ec);
       jobNum = -1;

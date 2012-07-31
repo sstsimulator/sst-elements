@@ -132,6 +132,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, long time,
   {
     if(alloc->canAllocate(*job))
     {
+      //need to make sure first job can still start at guaranteed time
       allocInfo = doesntDisturbFirst(alloc,*job,mach,time);
       if(allocInfo != NULL)
       {
@@ -165,7 +166,8 @@ void EASYScheduler::reset() {
 
 void EASYScheduler::giveGuarantee(long time, Machine* mach)
 {
-
+  //gives a guaranteed start time for a job.  The first job in the queue cannot
+  //be delayed past this guarantee
   if(toRun->empty())
     return;
 
@@ -257,7 +259,9 @@ EASYScheduler::JobComparator* EASYScheduler::JobComparator::Make(string typeName
 void internal_error(string mesg);
 
 bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) { 
-  //printf("in comp\n");
+  //for this to work correctly, it returns the reverse of what it would
+  //in the comparators for the PQscheduler (because this uses sets and maps
+  //instead of priority queues)
   switch(type) {
     case FIFO:
       if(j1 -> getArrivalTime() != j2 -> getArrivalTime())
@@ -266,47 +270,47 @@ bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) {
     case LARGEFIRST:
       //largest job goes first if they are different size
       if(j1 -> getProcsNeeded() != j2 -> getProcsNeeded())
-        return (j2 -> getProcsNeeded() > j1 -> getProcsNeeded());
-
-      //secondary criteria: earlier arriving job first
-      if(j1 -> getArrivalTime() != j2 -> getArrivalTime())
-        return j1 -> getArrivalTime() > j2 -> getArrivalTime();
-
-      //break ties so different jobs are never equal:
-      return j2 -> getJobNum() < j1 -> getJobNum();
-    case SMALLFIRST:
-      //smaller job goes first if they are different size
-      if(j1 -> getProcsNeeded() != j2 -> getProcsNeeded())
         return (j2 -> getProcsNeeded() < j1 -> getProcsNeeded());
 
       //secondary criteria: earlier arriving job first
       if(j1 -> getArrivalTime() != j2 -> getArrivalTime())
-        return j1 -> getArrivalTime() > j2 -> getArrivalTime();
+        return j1 -> getArrivalTime() < j2 -> getArrivalTime();
 
       //break ties so different jobs are never equal:
-      return j2 -> getJobNum() < j1 -> getJobNum();
-    case LONGFIRST:
-      //longest job goes first if different lengths
-      if(j1 -> getEstimatedRunningTime() != j2 -> getEstimatedRunningTime())
-        return j2 -> getEstimatedRunningTime() > j1 -> getEstimatedRunningTime();
+      return j2 -> getJobNum() > j1 -> getJobNum();
+    case SMALLFIRST:
+      //smaller job goes first if they are different size
+      if(j1 -> getProcsNeeded() != j2 -> getProcsNeeded())
+        return (j2 -> getProcsNeeded() > j1 -> getProcsNeeded());
 
-      //secondary criteria: earliest arriving job first
+      //secondary criteria: earlier arriving job first
       if(j1 -> getArrivalTime() != j2 -> getArrivalTime())
-        return j1 -> getArrivalTime() > j2 -> getArrivalTime();
+        return j1 -> getArrivalTime() < j2 -> getArrivalTime();
 
       //break ties so different jobs are never equal:
-      return j2 -> getJobNum() < j1 -> getJobNum();
-    case SHORTFIRST:
+      return j2 -> getJobNum() > j1 -> getJobNum();
+    case LONGFIRST:
       //longest job goes first if different lengths
       if(j1 -> getEstimatedRunningTime() != j2 -> getEstimatedRunningTime())
         return j2 -> getEstimatedRunningTime() < j1 -> getEstimatedRunningTime();
 
       //secondary criteria: earliest arriving job first
       if(j1 -> getArrivalTime() != j2 -> getArrivalTime())
-        return j1 -> getArrivalTime() > j2 -> getArrivalTime();
+        return j1 -> getArrivalTime() < j2 -> getArrivalTime();
 
       //break ties so different jobs are never equal:
-      return j2 -> getJobNum() < j1 -> getJobNum();
+      return j2 -> getJobNum() > j1 -> getJobNum();
+    case SHORTFIRST:
+      //longest job goes first if different lengths
+      if(j1 -> getEstimatedRunningTime() != j2 -> getEstimatedRunningTime())
+        return j2 -> getEstimatedRunningTime() > j1 -> getEstimatedRunningTime();
+
+      //secondary criteria: earliest arriving job first
+      if(j1 -> getArrivalTime() != j2 -> getArrivalTime())
+        return j1 -> getArrivalTime() < j2 -> getArrivalTime();
+
+      //break ties so different jobs are never equal:
+      return j2 -> getJobNum() > j1 -> getJobNum();
     default:
       internal_error("operator() called on JobComparator w/ invalid type");
       return true;  //never reach here
@@ -314,11 +318,21 @@ bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) {
 }
 
 string EASYScheduler::JobComparator::toString() {
-  for(int i=0; i<numCompTableEntries; i++)
-    if(type == compTable[i].val)
-      return compTable[i].name;
-  internal_error("toString() called on JobComparator w/ invalid type");
-  return "";  //never reach here...
+  switch(type){
+    case FIFO:
+      return "FIFOComparator";
+    case LARGEFIRST:
+      return "LargestFirstComparator";
+    case SMALLFIRST:
+      return "SmallestFirstComparator";
+    case LONGFIRST:
+      return "LongestFirstComparator";
+    case SHORTFIRST:
+      return "ShortestFirstComparator";
+    default:
+      internal_error("toString() called on JobComparator w/ invalid type");
+  }
+      return "";  //never reach here...
 }
 
 

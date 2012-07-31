@@ -17,7 +17,7 @@
 #include <time.h>
 #include "Statistics.h"
 #include "Machine.h"
-//#include "Mesh.h"
+#include "MachineMesh.h"
 #include "Scheduler.h"
 #include "Allocator.h"
 #include "AllocInfo.h"
@@ -32,22 +32,22 @@ struct logInfo {  //information about one type of log that can be created
 
 const logInfo supportedLogs[] = {
   {"time", "\n# Job \tArrival\tStart\tEnd\tRun\tWait\tResp.\tProcs\n"},
-  //  {"alloc", "\n# Procs Needed\tActual Time\t Pairwise L1 Distance\n"},
-  //  {"visual", ""},   //requires special header
+  {"alloc", "\n# Procs Needed\tActual Time\t Pairwise L1 Distance\n"},
+  {"visual", ""},   //requires special header
   {"util", "\n# Time\tUtilization\n"},
   {"wait", "\n# Time\tWaiting Jobs\n"}};
-const int numSupportedLogs = 3;
+const int numSupportedLogs = 5;
 
 enum LOGNAME {  //to use symbolic names on logs; must be updated with supportedLogs
   TIME = 0,
-  /*
   ALLOC = 1,
   VISUAL = 2,
   UTIL = 3,
   WAIT = 4};
-  */
+  /*
   UTIL = 1,
   WAIT = 2};
+  */
 
 void Statistics::printLogList(ostream& out) {  //print list of possible logs
   for(int i=0; i<numSupportedLogs; i++)
@@ -78,7 +78,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
   time(&raw);
   struct tm* structured = localtime(&raw);
   fileHeader= "# Simulation for trace " + baseName +
-    " started " + asctime(structured) + "\n# [Machine] \n" +
+    " started " + asctime(structured) + "# [Machine] \n" +
     machine -> getSetupInfo(true) + "\n# [Scheduler] \n" +
     sched -> getSetupInfo(true) + "\n# [Allocator] \n" +
     alloc -> getSetupInfo(true) + "\n";
@@ -93,11 +93,11 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
     for(int i=0; !found && i<numSupportedLogs; i++)
       if(logName == supportedLogs[i].logName) {
 	found = true;
-	/*
-	if((mesh == NULL) && ((i == ALLOC) || (i == VISUAL))) {
+	
+	if(((MachineMesh*)machine == NULL) && ((i == ALLOC) || (i == VISUAL))) {
 	  error(string(logName) + " log only implemented for meshes");
 	}
-	*/
+	
 	initializeLog(logName);
 	if(supportedLogs[i].header.length() > 0)
 	  appendToLog(supportedLogs[i].header, supportedLogs[i].logName);
@@ -139,9 +139,9 @@ void Statistics::jobArrives(long time) {   //called when a job has arrived
 void Statistics::jobStarts(AllocInfo* allocInfo, long time) {
   //called every time a job starts
 
-  /*
   if(record[ALLOC])
     writeAlloc(allocInfo);
+  /*
   if(record[VISUAL]) {
     char mesg[100];
     sprintf(mesg, "BEGIN %ld ", allocInfo -> job -> getJobNum());
@@ -203,7 +203,7 @@ void Statistics::writeTime(AllocInfo* allocInfo, long time) {
   appendToLog(mesg, supportedLogs[TIME].logName);
 }
 
-/*
+
 void Statistics::writeAlloc(AllocInfo* allocInfo) {
   //write allocation information to file
   
@@ -213,7 +213,7 @@ void Statistics::writeAlloc(AllocInfo* allocInfo) {
   sprintf(mesg, "%d\t%ld\t%ld\n",
 	  num,
 	  mai -> job -> getActualTime(),
-	  mai -> mesh -> pairwiseL1Distance(mai -> processors, num));
+	  ((MachineMesh*)(machine))-> pairwiseL1Distance(mai -> processors));
   appendToLog(mesg, supportedLogs[ALLOC].logName);
 }
 
@@ -222,7 +222,7 @@ void Statistics::writeVisual(string mesg) {
 
   appendToLog(mesg + "\n", supportedLogs[VISUAL].logName);
 }
-*/
+
 
 void Statistics::writeUtil(long time) {
   //method to write utilization statistics to file

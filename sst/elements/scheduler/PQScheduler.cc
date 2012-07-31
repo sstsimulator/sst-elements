@@ -95,7 +95,6 @@ AllocInfo* PQScheduler::tryToStart(Allocator* alloc, long time,
 
   AllocInfo* allocInfo = NULL;
   Job* job = toRun -> top();
-//printf("middle of tts\n");
   if (alloc -> canAllocate(job)) 
     allocInfo = alloc -> allocate(job);
   if(allocInfo != NULL) {
@@ -183,12 +182,23 @@ bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2) {
       return true;  //never reach here
   }
 }
+
 string PQScheduler::JobComparator::toString() {
-  for(int i=0; i<numCompTableEntries; i++)
-    if(type == compTable[i].val)
-      return compTable[i].name;
-  internal_error("toString() called on JobComparator w/ invalid type");
-  return "";  //never reach here...
+  switch(type){
+    case FIFO:
+      return "FIFOComparator";
+    case LARGEFIRST:
+      return "LargestFirstComparator";
+    case SMALLFIRST:
+      return "SmallestFirstComparator";
+    case LONGFIRST:
+      return "LongestFirstComparator";
+    case SHORTFIRST:
+      return "ShortestFirstComparator";
+    default:
+      internal_error("toString() called on JobComparator w/ invalid type");
+  }
+      return "";  //never reach here...
 }
 
 

@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <string>
+#include "MeshAllocInfo.h"
 using namespace std;
 
 class Machine;
@@ -27,6 +28,7 @@ class Allocator {
   virtual string getSetupInfo(bool comment) = 0;
 
   virtual bool canAllocate(Job* j);
+  virtual bool canAllocate(Job* j, vector<MeshLocation*>* available);
 
   virtual AllocInfo* allocate(Job* job) = 0;
     //allocates job if possible

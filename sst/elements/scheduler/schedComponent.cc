@@ -19,13 +19,17 @@
 
 #include "sst/core/element.h"
 
+
 #include "misc.h"
 #include "PQScheduler.h"
 #include "EASYScheduler.h"
 #include "StatefulScheduler.h"
 #include "schedComponent.h"
 #include "SimpleAllocator.h"
+#include "RandomAllocator.h"
+#include "NearestAllocator.h"
 #include "SimpleMachine.h"
+#include "MachineMesh.h"
 
 using namespace SST;
 using namespace std;
@@ -70,12 +74,27 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
 			       new Event::Handler<schedComponent>(this,
 								  &schedComponent::handleJobArrivalEvent) );
   selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
-
-  machine = new SimpleMachine(nodes.size(), this);
-  scheduler = new EASYScheduler(EASYScheduler::JobComparator::Make("smallfirst"));
-  theAllocator = new SimpleAllocator(dynamic_cast<SimpleMachine*>(machine));
+  unsigned int xdim = 1;
+  unsigned int ydim = 1;
+  for(xdim = 1; xdim*xdim <= nodes.size(); xdim++){}
+  bool flag = true;
+  while(flag && --xdim > 1)
+  {
+    ydim = nodes.size()/xdim;
+    if(ydim*xdim == nodes.size())
+      flag = false;
+  }
+  if(xdim == 1)
+    error("prime number of nodes in mesh");
+  else
+    printf("\n#xdim: %u ydim: %u\n", xdim, ydim, nodes.size());
+  machine = new MachineMesh(xdim,ydim,1, this);
+  scheduler = new EASYScheduler(EASYScheduler::JobComparator::Make("longfirst"));
+  vector<string>* allocparams = new vector<string>;
+  allocparams->push_back("MC1x1");
+  theAllocator = new NearestAllocator(allocparams, dynamic_cast<MachineMesh*>(machine));
   string trace = params[ "traceName" ].c_str();
-  char timestring[] = "time";
+  char timestring[] = "time,alloc";
   stats = new Statistics(machine, scheduler, theAllocator, trace, timestring);
   ifstream input;
   char* inputDir = getenv("SIMINPUT");
@@ -210,8 +229,6 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       }
 
       runningJobs.erase(jobNum);
-      //char a;
-      //cin >> a;
       machine->deallocate(ai);
       theAllocator->deallocate(ai);
       stats->jobFinishes(ai, getCurrentSimTime());
@@ -290,11 +307,13 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
       do {
         allocInfo = scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats);
       } while(allocInfo != NULL);
+
     }
     else
       error("Arriving event was not an arrival nor finaltime event");
   }
 }
+
 int schedComponent::Finish() {
   scheduler -> done();
   stats -> done();
@@ -334,7 +353,6 @@ bool schedComponent::clockTic( Cycle_t ) {
     // start the job
     startJob(e, nodeList);
   } else if (getCurrentSimTime() == 12) {
-    printf("\n");
   } else if (getCurrentSimTime() == 13) {
     // send to odd nodes
     // create the event

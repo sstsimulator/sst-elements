@@ -52,13 +52,13 @@ class Statistics {
   void writeTime(AllocInfo* allocInfo, long time);
   //write time statistics to file
 
-  /*
+  
   void writeAlloc(AllocInfo* allocInfo);
   //write allocation information to file
 
   void writeVisual(string mesg);
   //write to log for visualization
-  */
+  
 
   void writeUtil(long time);
   //method to write utilization statistics to file

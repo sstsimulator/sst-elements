@@ -32,6 +32,12 @@ bool Allocator::canAllocate(Job* j) {  //returns whether j can be allocated
   return (machine -> getNumFreeProcessors() >= j -> getProcsNeeded());
 }
 
+
+bool Allocator::canAllocate(Job* j, vector<MeshLocation*>* available) {  //returns whether j can be allocated
+  //default strategies are non-contig so "true" if enough free processors
+  return (available->size() >= (unsigned int)j -> getProcsNeeded());
+}
+
 void warning(string mesg) {        //report warning (program continues)
   cerr << "WARNING: " << mesg << endl;
 }

@@ -52,7 +52,7 @@ StatefulScheduler::StatefulScheduler(int numprocs, StatefulScheduler::JobCompara
   freeProcs = numprocs;
   estSched = new set<SchedChange*, SCComparator>(*sccomp);
   jobToEvents = new map<Job*, SchedChange*, StatefulScheduler::JobComparator>(*comp);
-  heart = new OpportunisticManager(this, comp, filltimes);
+  heart = new PrioritizeCompressionManager(this, comp, filltimes);
 }
 
 StatefulScheduler::StatefulScheduler(int numprocs, StatefulScheduler::JobComparator* comp){
@@ -61,7 +61,7 @@ StatefulScheduler::StatefulScheduler(int numprocs, StatefulScheduler::JobCompara
   freeProcs = numprocs;
   estSched = new set<SchedChange*, SCComparator>(*sccomp);
   jobToEvents = new map<Job*, SchedChange*, StatefulScheduler::JobComparator>(*comp);
-  heart = new RestrictiveManager(this, comp); 
+  heart = new DelayedCompressionManager(this, comp); 
 }
 
 StatefulScheduler::StatefulScheduler(int numprocs, StatefulScheduler::JobComparator* comp, int filltimes, bool dummy){
@@ -86,9 +86,9 @@ string StatefulScheduler::getSetupInfo(bool comment) {
   return com + heartstring + com +
     "Comparator: " + compSetupInfo; 
 }
-string StatefulScheduler::RestrictiveManager::getString(){return "Restrictive Less Conservative Scheduler\n"; }
+string StatefulScheduler::DelayedCompressionManager::getString(){return "DelayedCompression Less Conservative Scheduler\n"; }
 string StatefulScheduler::ConservativeManager::getString(){return "Conservative Scheduler\n"; }
-string StatefulScheduler::OpportunisticManager::getString(){return "Opportunistic Scheduler\n"; }
+string StatefulScheduler::PrioritizeCompressionManager::getString(){return "PrioritizeCompression Scheduler\n"; }
 string StatefulScheduler::EvenLessManager::getString(){return "Even Less Conservative Scheduler\n"; }
 
 void StatefulScheduler::jobArrives(Job* j, long time, Machine* mach) {
@@ -454,7 +454,7 @@ void StatefulScheduler::Manager::compress(long time)
   delete sccomp;
 }
 
-StatefulScheduler::OpportunisticManager::OpportunisticManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes){
+StatefulScheduler::PrioritizeCompressionManager::PrioritizeCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes){
   scheduler = inscheduler;
   backfill = new set<Job*, JobComparator>(*comp);
   fillTimes = infillTimes;
@@ -463,19 +463,19 @@ StatefulScheduler::OpportunisticManager::OpportunisticManager(StatefulScheduler*
     numSBF[x] = 0;
 }
 
-void StatefulScheduler::OpportunisticManager::reset(){
+void StatefulScheduler::PrioritizeCompressionManager::reset(){
   for(int x = 0; x < fillTimes + 1; x++)
     numSBF[x] = 0;
 }
 
-void StatefulScheduler::OpportunisticManager::printPlan(){}
-void StatefulScheduler::OpportunisticManager::done(){
+void StatefulScheduler::PrioritizeCompressionManager::printPlan(){}
+void StatefulScheduler::PrioritizeCompressionManager::done(){
   for(int i = 0; i < fillTimes; i++)
     if(numSBF[i] != 0)
       printf("backfilled successfully %d times in a row %d times\n", i, numSBF[i]);
 }
 
-void StatefulScheduler::OpportunisticManager::earlyFinish(Job* j, long time){
+void StatefulScheduler::PrioritizeCompressionManager::earlyFinish(Job* j, long time){
   //backfills and compresses as necessary
   int times;
   bool exit = true;
@@ -502,7 +502,7 @@ void StatefulScheduler::OpportunisticManager::earlyFinish(Job* j, long time){
           (*sc)->print();
         printf("old: %ld, new:%ld\nbackfilling: %s\n", oldTime, newTime, (*it)->toString().c_str());
         oldStartTime->print();
-        error("Opportunistic Backfilling gave a new reservation that was later than previous one");
+        error("PrioritizeCompression Backfilling gave a new reservation that was later than previous one");
       }
       delete oldStartTime;
 
@@ -527,27 +527,27 @@ void StatefulScheduler::OpportunisticManager::earlyFinish(Job* j, long time){
 
 
 
-  void StatefulScheduler::OpportunisticManager::tryToStart(long time){
+  void StatefulScheduler::PrioritizeCompressionManager::tryToStart(long time){
   }
 
-  void StatefulScheduler::OpportunisticManager::removeJob(Job* j, long time){
+  void StatefulScheduler::PrioritizeCompressionManager::removeJob(Job* j, long time){
   }
 
-  void StatefulScheduler::OpportunisticManager::onTimeFinish(Job* j, long time){
+  void StatefulScheduler::PrioritizeCompressionManager::onTimeFinish(Job* j, long time){
   }
 
-  StatefulScheduler::RestrictiveManager::RestrictiveManager(StatefulScheduler* inscheduler, JobComparator* comp){
+  StatefulScheduler::DelayedCompressionManager::DelayedCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp){
     scheduler = inscheduler;
     backfill = new set<Job*, JobComparator>(*comp);
     results = 0;
   }
 
-  void StatefulScheduler::RestrictiveManager::reset(){
+  void StatefulScheduler::DelayedCompressionManager::reset(){
     results = 0;
     backfill->clear();
   }
 
-  void StatefulScheduler::RestrictiveManager::arrival(Job* j, long time){
+  void StatefulScheduler::DelayedCompressionManager::arrival(Job* j, long time){
     SchedChange* newJobStart = scheduler->jobToEvents->find(j)->second;
     SchedChange* newJobEnd = newJobStart->getPartner();
 
@@ -601,26 +601,26 @@ void StatefulScheduler::OpportunisticManager::earlyFinish(Job* j, long time){
 
 
 
-  void StatefulScheduler::RestrictiveManager::printPlan(){
+  void StatefulScheduler::DelayedCompressionManager::printPlan(){
     printf(" backfilling queue:\n");
     for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++)
       printf("%s\n", (*it)->toString().c_str());
   }
 
 
-  void StatefulScheduler::RestrictiveManager::done(){
+  void StatefulScheduler::DelayedCompressionManager::done(){
     printf("Backfilled %d times\n", results);
   }
 
-  void StatefulScheduler::RestrictiveManager::earlyFinish(Job* j, long time){
+  void StatefulScheduler::DelayedCompressionManager::earlyFinish(Job* j, long time){
     fill(time);
   }
 
-  void StatefulScheduler::RestrictiveManager::tryToStart(long time){
+  void StatefulScheduler::DelayedCompressionManager::tryToStart(long time){
     fill(time);
   }
 
-  void StatefulScheduler::RestrictiveManager::fill(long time){
+  void StatefulScheduler::DelayedCompressionManager::fill(long time){
     //backfills
     for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++)
     {
@@ -645,9 +645,9 @@ void StatefulScheduler::OpportunisticManager::earlyFinish(Job* j, long time){
     }
   }
 
-  void StatefulScheduler::RestrictiveManager::removeJob(Job* j, long time){ }
+  void StatefulScheduler::DelayedCompressionManager::removeJob(Job* j, long time){ }
 
-  void StatefulScheduler::RestrictiveManager::onTimeFinish(Job* j, long time){ } 
+  void StatefulScheduler::DelayedCompressionManager::onTimeFinish(Job* j, long time){ } 
 
   StatefulScheduler::EvenLessManager::EvenLessManager(StatefulScheduler* inscheduler, JobComparator* comp, int fillTimes){
     SCComparator* sccomp = new SCComparator();
@@ -974,14 +974,24 @@ bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
       return true;  //never reach here
   }
 }
- 
 
-  string StatefulScheduler::JobComparator::toString() {
-    for(int i=0; i<numCompTableEntries; i++)
-      if(type == compTable[i].val)
-        return compTable[i].name;
-    internal_error("toString() called on JobComparator w/ invalid type");
-    return "";  //never reach here...
+
+string StatefulScheduler::JobComparator::toString() {
+  switch(type){
+    case FIFO:
+      return "FIFOComparator";
+    case LARGEFIRST:
+      return "LargestFirstComparator";
+    case SMALLFIRST:
+      return "SmallestFirstComparator";
+    case LONGFIRST:
+      return "LongestFirstComparator";
+    case SHORTFIRST:
+      return "ShortestFirstComparator";
+    default:
+      internal_error("toString() called on JobComparator w/ invalid type");
   }
+      return "";  //never reach here...
+}
 
 

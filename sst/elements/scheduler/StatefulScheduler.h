@@ -178,13 +178,13 @@ class StatefulScheduler : public Scheduler {
         string getString();
     };
 
-    class OpportunisticManager : public Manager{
+    class PrioritizeCompressionManager : public Manager{
       protected:
         set<Job*, JobComparator>* backfill;
         int fillTimes;
         int* numSBF;
       public:
-          OpportunisticManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes);
+          PrioritizeCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes);
           void reset();
           void arrival(Job* j, long time){
             backfill->insert(j);
@@ -201,11 +201,11 @@ class StatefulScheduler : public Scheduler {
         string getString();
     };
 
-    class RestrictiveManager : public Manager{
+    class DelayedCompressionManager : public Manager{
       protected:
         set<Job*, JobComparator>* backfill;
       public:
-        RestrictiveManager(StatefulScheduler* inscheduler, JobComparator* comp);
+        DelayedCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp);
         void reset();
         void arrival(Job* j, long time);
         void start(Job* j, long time){

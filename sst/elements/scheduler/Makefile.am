@@ -16,8 +16,8 @@ Job.h			JobStartEvent.h		Machine.h \
 Job.cc \
 misc.h			nodeComponent.h		EASYScheduler.h 	PQScheduler.h		StatefulScheduler.h 	schedComponent.h \
 misc.cc			nodeComponent.cc	EASYScheduler.cc 	PQScheduler.cc		StatefulScheduler.cc 	schedComponent.cc \
-Scheduler.h 		SimpleAllocator.h	SimpleMachine.h		Statistics.h \
-schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc
+Scheduler.h 		SimpleAllocator.h	SimpleMachine.h		Statistics.h 	NearestAllocator.h 	NearestAllocClasses.h 	NearestAllocator.cc \
+schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc		RandomAllocator.cc 	RandomAllocator.h 	MachineMesh.cc 	MachineMesh.h 	NearestAllocClasses.cc
 
 EXTRA_DIST = makeSDL.pl test.xml test30.xml
 
