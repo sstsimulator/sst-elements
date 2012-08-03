@@ -28,8 +28,9 @@
 
 #include <sstmac/hardware/node/node.h>
 
+#include <sstmac/hardware/network/congestion/interconnect.h>
 
-
+#include "sstMessageEvent.h"
 
 //#include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -37,6 +38,10 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+
+#include <sst/core/simulation.h>
+#include <sst/core/timeLord.h>
+#include <sst/core/element.h>
 
 #include <queue>
 
@@ -72,6 +77,72 @@ protected:
   {
     return (myid_->unique_id() == 0);
   }
+	
+	friend class fake_interconnect;
+	
+	class fake_interconnect : public sstmac::hw::interconnect {
+		
+	protected:
+		fake_interconnect(macro_processor* p) : sstmac::hw::interconnect(sstmac::hw::topology::ptr()),
+		parent_(p){
+			
+		}
+		
+		macro_processor* parent_;
+		
+	public:
+		typedef boost::intrusive_ptr<fake_interconnect> ptr;
+		
+		
+		static ptr
+		construct(macro_processor* p){
+			return ptr(new fake_interconnect(p));
+			
+		}
+		
+		virtual std::string
+		to_string() const {
+			return "fake_interconnect";
+			
+		}
+		
+		virtual
+		~fake_interconnect() {
+			
+		}
+		
+		
+		/// The maximum number of nodes on this network.
+		/// Return a negative (really <= 0) value to indicate an infinite capacity.
+		virtual int64_t
+		slots() const {
+			return 1;
+		}
+		
+		/// Send the given message at the given time.
+		/// Notify the sendhandler when the send is complete.
+		/// Notify the recvhandler when the recv is complete.
+		virtual void
+		send(const sstmac::timestamp &start_time, const sstmac::sst_message::ptr &payload){
+			
+			sstMessageEvent* msg = new sstMessageEvent();
+			
+			msg->bytes_ = payload->get_byte_length();
+			msg->toaddr_ = payload->toaddr_;
+			msg->fromaddr_ = payload->fromaddr_;
+			msg->data_ = payload;
+			
+			sstmac::timestamp ts = parent_->now();
+		
+			double d = (start_time - ts).sec();
+			SST::SimTime_t delay(d);
+						
+			parent_->outgate->Send(delay, msg);
+			
+		}
+		
+		
+	};
 
 public:
 

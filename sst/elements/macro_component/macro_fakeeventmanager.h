@@ -78,6 +78,17 @@ public:
 
   }
 
+  virtual void 
+  register_finish(boost::intrusive_ptr<sstmac::ptr_type>){
+	
+  }
+
+	virtual void
+	cancel_all_messages(const boost::intrusive_ptr<sstmac::eventhandler>&){
+		
+	}
+	
+	
   virtual void
   run()
   {

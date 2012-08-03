@@ -23,8 +23,6 @@ macro_component.cc \
 	macro_network.h \
 	macro_network.cc \
 	macro_parameters.h \
-	macro_fakenic.h \
-	macro_fakenic.cc \
 	macro_fakeeventmanager.h
 
 EXTRA_DIST = makeSDL.pl

@@ -131,8 +131,8 @@ class macro_network : public SST::Component, public eventmanager_interface
 
   };
 
-  sstmac::eventhandler::ptr sent_handler_;
-  sstmac::eventhandler::ptr recv_handler_;
+//  sstmac::eventhandler::ptr sent_handler_;
+//  sstmac::eventhandler::ptr recv_handler_;
   fakeeventmanager::ptr fem_;
 
 public:

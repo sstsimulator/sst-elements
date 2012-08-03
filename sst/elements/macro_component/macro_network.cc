@@ -23,6 +23,8 @@
 #include "sst/core/simulation.h"
 #include "sst/core/timeLord.h"
 
+#include <sstmac/common/factories/network_factory.h>
+
 using namespace SST;
 using namespace std;
 
@@ -35,7 +37,7 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
 {
 
   macro_parameters::ptr macroparams = macro_parameters::construct(params);
-  intercon_ = sstmac::construct_circuit(macroparams);
+	intercon_ = SSTNetworkFactory::get_network(macroparams->get_param("network_name"), macroparams);
 
   num_ports_ = intercon_->slots();
 
@@ -51,9 +53,7 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
   // tell the simulator not to end without us
   registerExit();
 
-  sent_handler_ = message_sent_handler::construct(this);
-  recv_handler_ = message_recv_handler::construct(this);
-
+ 
   self_proc_link_ = configureSelfLink(
        "self_proc_link",
        new Event::Handler<macro_network>(this,
@@ -63,6 +63,9 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
   Event::Handler<macro_network> *h = new Event::Handler<macro_network>(this,
       &macro_network::handleEvent);
 
+	//sstmac::eventhandler::ptr sent = message_sent_handler::construct(this);
+	sstmac::eventhandler::ptr recv = message_recv_handler::construct(this);
+	
   for (int i = 0; i < num_ports_; i++)
     {
       stringstream ss;
@@ -70,6 +73,9 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
       ports_[i] = configureLink(ss.str(), h);
 
       assert(ports_[i]);
+		
+		intercon_->set_endpoint(macro_address::construct(i), recv);
+
     }
 
   registerTimeBase("1 ps", true);
@@ -92,7 +98,7 @@ macro_network::handleEvent(Event *ev)
   sstMessageEvent *event = dynamic_cast<sstMessageEvent*>(ev);
   if (event)
     {
-      intercon_->send(now(), event->data_, sent_handler_, recv_handler_);
+      intercon_->send(now(), event->data_);
 
       delete event;
     }

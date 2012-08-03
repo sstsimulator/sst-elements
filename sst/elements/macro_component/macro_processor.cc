@@ -16,7 +16,7 @@
 
 #include "sstMessageEvent.h"
 
-#include "sst/core/element.h"
+
 
 #include "macro_processor.h"
 
@@ -24,14 +24,13 @@
 #include <sstmac/common/driver_util.h>
 #include <sstmac/software/services/launch/instantlaunch.h>
 #include <sstmac/software/libraries/mpi/mpi_queue/mpiqueue.h>
+#include <sstmac/common/factories/nic_factory.h>
+#include <sstmac/common/factories/node_factory.h>
 
 #include "sstMessageEvent.h"
 #include "macro_network.h"
 
-#include "macro_fakenic.h"
 
-#include "sst/core/simulation.h"
-#include "sst/core/timeLord.h"
 
 #include <sstmac/common/basicstringtokenizer.h>
 
@@ -122,15 +121,16 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
 	
 	long nodenum = macroparams->get_long_param("node_num");
 
-  node_ = sstmac::hw::simplenode::construct(macroparams);
-  macro_fakenic::ptr nic = macro_fakenic::construct(node_, this,
-      sstmac::hw::interconnect::ptr(), nodenum);
+	node_ = SSTNodeFactory::get_node(macroparams->get_param("node_name"), macroparams);
+	
+	fake_interconnect::ptr fi = fake_interconnect::construct(this);
+	sstmac::hw::networkinterface::ptr nic = SSTNicFactory::get_nic(macroparams->get_param("nic_name"), macroparams, node_, fi);
+//  macro_fakenic::ptr nic = macro_fakenic::construct(node_, this,
+//      sstmac::hw::interconnect::ptr(), nodenum);
   node_->set_nic(nic);
   nic->set_eventmanager(fem_);
-	
-	/** In case we have an mpi app, set the event manager so mpi statistics can
-	 be collected */
-	mpiqueue::set_eventmanager(fem_);
+	fi->set_eventmanager(fem_);
+
 
   registerTimeBase("1 ps", true);
 	
@@ -142,7 +142,7 @@ int
 macro_processor::Setup()
 {
 
-  node_->initialize(myid_, fem_);
+  node_->initialize(fem_);
 
   return 0;
 }
