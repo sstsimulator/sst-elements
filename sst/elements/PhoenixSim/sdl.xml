@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<config>
+ stopAtCycle=11ms
+</config>
+
+<sst>
+
+  <component id="ps">
+    <PhoenixSim>
+      <params>
+	<ini>PhoenixSim/parameters/Hendry-Thesis/A.2.5-TDM.ini</ini>
+	<timebase>1000GHz</timebase>
+	<nedsource>PhoenixSim</nedsource>
+	<network>topologies.photonicMesh.PhotonicMeshNetwork</network>
+	<configuration>PhotonicMesh</configuration>
+	<run>3</run>
+	<mode>express</mode>
+      </params>
+       <links>
+	<link id="self1">
+	  <params>
+	    <name>slink</name>
+	    <lat>0 ns</lat>
+	  </params>
+	</link>
+
+      </links>
+    </PhoenixSim>
+  </component>
+
+</sst>

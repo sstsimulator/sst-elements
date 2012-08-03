@@ -1,0 +1,43 @@
+//  DDR2 667 Mbps memory system.  
+//  Composed of 1 Gbit chips.  1 rank, each rank has 5 1 Gbit (x8) chips.
+//  The 5th chip is for ECC, otherwise this is a 32 bit wide interface.
+//  Total is 512 MB
+//  Bandwidth is 2.67 GB/s
+// Bus speed = 6*SDRAM Speed
+type            	fbd_ddr2
+mc_freq			    4002	
+dram_freq			667
+clock_granularity	2			// 2 half cycles per cycle (timing listed in half cycles)
+channel_count   	1			// Logical channel
+up_channel_width   	10			// Bit width
+down_channel_width  14			// Bit width
+channel_width  		8			// Bit width
+PA_mapping_policy	sdram_close_page_map	// Comments are allowed here
+row_buffer_policy	close_page
+rank_count		1
+bank_count		8			// 8 banks per chip
+row_count		16384			// 14 bits row address space
+col_count		1024			// 10 bits col address space
+t_ras			30			// 45 ns
+t_rp			8			// 12 ns
+t_rcd			8			// 12 ns
+t_cas			8			// 4 * 2
+t_cac			6			// 3 * 2
+t_cwd			4			// t_cac - 1 * 2  
+t_rtr			0			// no retirement buffer
+t_dqs           	2			// 1 * 2
+t_rc			38			// 57 ns  
+t_wr			10			// ~15 ns  ?
+t_rfc           85          // 127.5 ns
+posted_cas		TRUE			// posted CAS
+t_al			6			// 3 * 2 
+t_amb_up		6			// Overhead for cas_write 8.1 ns
+t_amb_down		4			// Overhead for cas read  5 ns
+t_bundle		6			// In terms of the number of half cycles of the BUS
+t_bus			4			// time to travel between dimms 2 ns
+var_latency		FALSE 		// Whether the t_bus is constant or f(rank id)
+amb_up_buffer_count		1
+amb_down_buffer_count	1
+auto_refresh	 FALSE // Enable auto refresh
+auto_refresh_policy refresh_one_chan_one_rank_one_bank 	
+refresh_time   64000

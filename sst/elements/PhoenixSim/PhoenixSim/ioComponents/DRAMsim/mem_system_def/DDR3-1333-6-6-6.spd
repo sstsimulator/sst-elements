@@ -1,0 +1,35 @@
+//  DDR3 1.333 Gbps memory system.  
+//  Composed of 2 Gbit chips.  2 ranks, each rank has 8 2 Gbit (x8) chips.
+//  This is a 64 bit wide interface.
+//  Total is 4096 MB
+//  Bandwidth is  10.667 GB/s
+//  The parameters contained in this file are estimated. 12/25/05
+//  Do not take as gospel. Use at your own risk!
+//
+type            	ddr3			// ddr3  (burst of 8 only)
+datarate       		1600
+clock_granularity	2			// 2 half cycles per cycle (timing listed in half cycles)
+channel_count   	2			// Logical channel
+channel_width   	8			// Byte width
+PA_mapping_policy	sdram_close_page_map	// Comments are allowed here
+row_buffer_policy	close_page
+rank_count		2
+bank_count		8			// 8 banks per chip
+row_count		16384			// 14 bits row address space
+col_count		1024			// 10 bits col address space
+t_cas			10			// 6 * 2
+t_faw			40			// 30 ns
+t_ras			40			// 30 ns
+t_rc			54			// 40.5 ns  
+t_rcd			10			// 9 ns
+t_rfc			280			// takes 210 ns to do one refresh
+t_rrd			8			// 6 ns
+t_rp			10			// 9 ns
+t_dqs           	2			// 1 * 2
+t_wr             	12         		// 10 ns
+posted_cas		TRUE			// posted CAS
+t_al			10			// 4 * 2 
+auto_refresh     	FALSE 			// Enable auto refresh
+auto_refresh_policy 	refresh_one_chan_one_rank_all_bank
+refresh_time  		64000 			// 64 ms refresh time
+cacheline_size  32     //in bytes

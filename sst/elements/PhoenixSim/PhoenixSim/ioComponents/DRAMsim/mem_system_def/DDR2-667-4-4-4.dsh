@@ -1,0 +1,26 @@
+#####################################################
+# DDR SDRAM Configuration and Data Sheet Parameters #
+# corresponding to 1 Gb 667 MHz 4-4-4 spd file       #
+#####################################################
+density	 1024		  # Mb
+#DQ	 8		  # per chip
+DQS	 2		  # per chip
+max_VDD	 1.9		  # V
+min_VDD	 1.7		  # V
+IDD0	100		  # mA
+IDD2P	7		  # mA
+IDD2F	65		  # mA
+IDD3P	40		  # mA
+IDD3N	70		  # mA
+IDD4R	205		  # mA
+IDD4W	180		  # mA
+IDD5	270		  # mA
+t_CK	3		  # ns
+t_RFC_min    127.5	  # ns
+t_REFI  7.8		  # microseconds
+
+
+###################################################
+# DRAM Usage Conditions in the System Environment #
+###################################################
+VDD		1.8	# V

@@ -1,0 +1,85 @@
+Simulation Time:, 0.000999765
+Electronic Energy
+,E_static (J),E_dynamic (J),
+Electronic Arbiter,7.71486e-06,3.63654e-10,
+Electronic Clock Tree,3.75466e-05,0,
+Electronic Crossbar,0.000474932,3.56873e-10,
+Electronic Inport,7.49696e-05,1.43796e-09,
+Electronic Wire,3.64557e-07,1.47101e-08,
+
+
+Electronic Energy
+Sum:,0.000595544
+
+
+Photonic Energy
+,E_static (J),E_dynamic (J),
+Detector,2.04752e-05,3.43822e-06,
+Detector static,0,0,
+Modulator,2.04752e-05,1.9096e-06,
+PSE1x2,2.5594e-06,3.44216e-08,
+PSE1x2NX,1.2797e-06,2.73417e-08,
+
+
+Photonic Energy
+Sum:,5.01991e-05
+
+
+All Energy
+Sum:,0.000645743
+
+
+Component Counts
+,Count,
+Electronic Arbiter,32,
+Electronic Crossbar,32,
+Electronic Inport,80,
+Electronic Wire,48,
+PSE1x2,128,
+PSE1x2NX,64,
+
+
+Performance: Application
+,TimeAvg,
+Bandwidth App In (Gb/s),4.8508,
+
+
+Performance: Application
+,Count,Min,Avg,Max,StdDev,
+Latency (us),74,0.002,0.537392,0.958,0.136619,
+Msg Size (B),74,8192,8192,8192,0,
+
+
+Performance: NIF
+,TimeAvg,
+Bandwidth NIF Out (Gb/s),4.65415,
+Blocking latency,71,0,0,0,0,
+Success setup latency,71,5.6e-08,1.36986e-07,2.86e-07,5.37473e-08,
+Time in NIF Q,71,2e-09,1.30282e-08,4e-07,6.4785e-08,
+Transmission latency,71,4.09e-07,4.09e-07,4.09e-07,3.70577e-22,
+
+
+Physical Layer Stats
+,Count,Min,Avg,Max,StdDev,
+1 Laser Noise Power (mW),71,5.982e-08,2.09586e-07,3.73297e-07,8.2623e-08,
+2 Message Noise Power (mW),71,0,0,0,0,
+3 Cross Wavelength Noise Power (mW),71,0,0,0,0,
+4 Total Optical Noise Power (mW),71,5.982e-08,2.09586e-07,3.73297e-07,8.2623e-08,
+5 Johnson Noise Power,71,8.37118e-13,8.37118e-13,8.37118e-13,9.08768e-28,
+6 Shot Noise Power,71,8.011e-10,8.011e-10,8.011e-10,3.10193e-25,
+7 Total Noise Power (dBm),71,-60.6462,-59.9645,-59.2988,0.350672,
+8 Signal Power (dBm),71,-19.4422,-14.364,-11.4901,1.85389,
+Electrical SNR,71,41.2039,45.6005,47.8086,1.51326,
+Optical SNR,71,52.7893,52.7893,52.7893,6.68253e-14,
+
+
+Insertion Loss
+,Count,Min,Avg,Max,StdDev,
+Bending,71,0.035,0.0909859,0.18,0.0327132,
+Crossing,71,0,0.857746,2.1,0.459535,
+Drop Into Ring,71,1.5,2.73239,4.5,0.706265,
+Pass By Ring,71,0.325,0.363451,0.425,0.0211232,
+Propagation,71,0.953323,2.25765,4.67541,0.854463,
+Total,71,3.42832,6.30223,11.3804,1.85389,
+
+
