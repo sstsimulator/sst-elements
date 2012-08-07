@@ -3,13 +3,11 @@
 #
 # Pull in OMNeT++ configuration (Makefile.inc or configuser.vc)
 
-OMNETPP_LIB_DIR = $(PHOENIXSIM_LDFLAGS)/lib
-OMNETPP_INCLUDE_DIR = $(PHOENIXSIM_CPPFLAGS)/include
-TOOLCHAIN_NAME = gcc
-OMNETPP_LIB_SUBDIR = $(OMNETPP_LIB_DIR)/$(TOOLCHAIN_NAME)
-KERNEL_LIBS = -loppsim -L$(OMNETPP_LIB_DIR)
+#OMNETPP_INCLUDE_DIR = $(PHOENIXSIM_CPPFLAGS)/include
+#TOOLCHAIN_NAME = gcc
+#KERNEL_LIBS = -loppsim -L$(OMNETPP_LIB_DIR)
 SYS_LIBS = -ldl -lstdc++
-OMNETPP_LDFLAGS = -Wl,-rpath,.
+#OMNETPP_LDFLAGS = -Wl,-rpath,.
 OMNETPP_CFLAGS = -O2 -DNDEBUG=1 -fno-stack-protector -fPIC -DXMLPARSER=libxml -DWITH_PARSIM -DWITH_NETBUILDER
 
 # -------
@@ -95,7 +93,7 @@ AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
 	$(OMNETPP_CFLAGS) \
-	-I$(OMNETPP_INCLUDE_DIR) \
+	$(PHOENIXSIM_CPPFLAGS) \
 	$(PHOENIXSIM_INCLUDE_PATH) \
 	$(PROJECT_PATHS)
 
@@ -615,7 +613,7 @@ libPhoenixSim_la_SOURCES = \
 
 EXTRA_DIST = makeSDL.pl
 
-libPhoenixSim_la_LDFLAGS = $(OMNETPP_LDFLAGS) -module -avoid-version 
+libPhoenixSim_la_LDFLAGS = $(PHOENIXSIM_LDFLAGS) -module -avoid-version 
 
-#libPhoenixSim_la_LIBADD = -L"$(OMNETPP_LIB_SUBDIR)" -L"$(OMNETPP_LIB_DIR)" $(KERNEL_LIBS) $(SYS_LIBS)
-libPhoenixSim_la_LIBADD = $(KERNEL_LIBS) $(SYS_LIBS)
+libPhoenixSim_la_LIBADD = $(OMNETPP_LIB) $(PHOENIXSIM_LDFLAGS) $(SYS_LIBS)
+#libPhoenixSim_la_LIBADD = $(KERNEL_LIBS) $(SYS_LIBS)
