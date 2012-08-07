@@ -57,7 +57,7 @@ PtlNicMMIF::PtlNicMMIF( const Params* p ) :
 
     assert( p->clockFreq > 0 );  
     int clockPeriod = 1.0/(double)p->clockFreq * 1000000000000; 
-    INFO("%s: clockFreq=%d hz, clockPeriod=%d ps, B/W=%d b/s\n",__func__,
+    INFO("%s: clockFreq=%d hz, clockPeriod=%d ps, B/W=%lu b/s\n",__func__,
                       p->clockFreq, clockPeriod, p->clockFreq * chunk_size );
     m_clockEvent = new ClockEvent( this, clockPeriod );
 }    
