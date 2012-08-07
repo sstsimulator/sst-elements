@@ -80,7 +80,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     assert( m_tc );
     m_log.write("period %ld\n",m_tc->getFactor());
 
-    m_memorySystem = new DRAMSim::MemorySystem(/* 0, */ deviceIniFilename,
+    m_memorySystem = new DRAMSim::MultiChannelMemorySystem(/* 0, */ deviceIniFilename,
                     systemIniFilename, "", "", megsOfMemory );
 
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* readDataCB;
