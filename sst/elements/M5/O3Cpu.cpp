@@ -150,6 +150,7 @@ SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstPar
     INIT_INT(O3Params, O3SSTParams, RASSize);
     INIT_INT(O3Params, O3SSTParams, SQEntries);
     INIT_INT(O3Params, O3SSTParams, SSITSize);
+    INIT_INT(O3Params, O3SSTParams, store_set_clear_period);
     INIT_INT(O3Params, O3SSTParams, activity);
     INIT_INT(O3Params, O3SSTParams, backComSize);
     INIT_INT(O3Params, O3SSTParams, cachePorts);
@@ -350,6 +351,7 @@ static void initDerivO3CPUParams( DerivO3CPUParams& cpu,
     INIT_INT(cpu,tmp,RASSize);
     INIT_INT(cpu,tmp,SQEntries);
     INIT_INT(cpu,tmp,SSITSize);
+    INIT_INT(cpu,tmp,store_set_clear_period);
     INIT_INT(cpu,tmp,activity);
     INIT_INT(cpu,tmp,backComSize);
     INIT_INT(cpu,tmp,cachePorts);
@@ -440,7 +442,7 @@ static FUPool* newFUPool( string prefix )
 	// IntALU  *****************************
 	fuName = prefix + "0";
 	opV.push_back( newOpDesc( IntAluOp, 1, 1, fuName + ".opList" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
+	fuPool->FUList.push_back( newFUDesc( opV, 12, fuName) );
 
 	// IntMultDiv  *****************************
 	opV.clear();
@@ -448,7 +450,7 @@ static FUPool* newFUPool( string prefix )
 	opV.push_back( newOpDesc( IntMultOp, 3, 1, fuName + ".opList0" ) );
 	opV.push_back( newOpDesc( IntDivOp, 20, 19, fuName  + ".opList1" ) );
 
-	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
+	fuPool->FUList.push_back( newFUDesc( opV, 8, fuName) );
 
 	// FP_ALU  *****************************
 	opV.clear();
@@ -496,7 +498,7 @@ static FUPool* newFUPool( string prefix )
 	opV.clear();
 	fuName = prefix + "4";
 	opV.push_back( newOpDesc( MemReadOp, 1, 1, fuName + ".opList" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
+	fuPool->FUList.push_back( newFUDesc( opV, 0, fuName) );
 
 
 	// WritePort *****************************
@@ -510,7 +512,7 @@ static FUPool* newFUPool( string prefix )
 	fuName = prefix + "6";
 	opV.push_back( newOpDesc( MemReadOp, 1, 1, fuName + ".opList0" ) );
 	opV.push_back( newOpDesc( MemWriteOp, 1, 1, fuName + ".opList1" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 4, fuName) );
+	fuPool->FUList.push_back( newFUDesc( opV, 8, fuName) );
 
 	// IprPort *****************************
 	opV.clear();
