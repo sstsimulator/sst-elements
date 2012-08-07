@@ -1,3 +1,7 @@
+#include "sst_config.h"
+#include "sst/core/serialization/element.h"
+#include "sst/core/element.h"
+
 #include <DRAMSimTrace.h>
 //#include <sst/memEvent.h>
 
@@ -21,13 +25,9 @@ DRAMSimTrace::DRAMSimTrace( ComponentId_t id,
 
     registerExit();
 
-    ClockHandler_t* handler;
-    handler = new EventHandler< DRAMSimTrace, bool, Cycle_t >
-                                            ( this, &DRAMSimTrace::clock );
-
+    Clock::Handler<DRAMSimTrace>* clock_handler = new Clock::Handler< DRAMSimTrace >( this, &DRAMSimTrace::clock );
     m_log.write(" DRAMSimC freq : %s\n", frequency.c_str() );
-    TimeConverter* tc = registerClock( frequency, handler );
-    m_log.write(" DRAMSimC  period: %ld\n",tc->getFactor());
+    registerClock( frequency, clock_handler);
 
     std::string     pwdString = "";
 
@@ -67,13 +67,13 @@ DRAMSimTrace::DRAMSimTrace( ComponentId_t id,
     }
 }
 
+void *parseTraceFileLine(std::string &line, uint64_t &addr, 
+                         enum DRAMSim::TransactionType &transType, 
+                         uint64_t &clockCycle, TraceType type, bool useClockCycle);
 bool DRAMSimTrace::clock( Cycle_t current )
 {
 //    DBG( "id=%lu currentCycle=%lu\n", Id(), current );
 
-    extern void *parseTraceFileLine(string &line, uint64_t &addr,
-        enum DRAMSim::TransactionType &transType, uint64_t &clockCycle, 
-                                TraceType type);
 
     while ( current == m_clockCycle ) {
         if ( ! m_onDeckOp ) {
@@ -84,7 +84,7 @@ bool DRAMSimTrace::clock( Cycle_t current )
                 return true;
             }
 
-            string line;
+            std::string line;
             getline( m_traceFile, line );
             if ( line.size() == 0 ) 
             {
@@ -98,7 +98,7 @@ bool DRAMSimTrace::clock( Cycle_t current )
 
             // running with -DNO_STORAGE, ignore data coming from this function
             parseTraceFileLine( line, tempAddr, transType, 
-                                            m_clockCycle, m_traceType );
+                                            m_clockCycle, m_traceType, false);
             m_onDeckOp->type = transType;
 	        m_onDeckOp->addr = (unsigned long)tempAddr;
             DBG("%lu: read, next %lu\n", current, m_clockCycle);
