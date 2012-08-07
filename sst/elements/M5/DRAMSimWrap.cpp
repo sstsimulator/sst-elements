@@ -10,9 +10,9 @@
 // DEBUG might be defined for M5, include DRAMSim/MemorySystem.h last
 // and undefined DEBUG because DRAMSim defines it
 #undef DEBUG
-#include <MemorySystem.h>
+#include	<MultiChannelMemorySystem.h>
 
-#define MS_CAST( x ) static_cast<DRAMSim::MemorySystem*>(x)
+#define MS_CAST( x ) static_cast<DRAMSim::MultiChannelMemorySystem*>(x)
 
 extern "C" {
     SimObject* create_DRAMSimWrap( SST::Component*, std::string, SST::Params& );
@@ -80,7 +80,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     assert( m_tc );
     m_log.write("period %ld\n",m_tc->getFactor());
 
-    m_memorySystem = new DRAMSim::MemorySystem(0, deviceIniFilename,
+    m_memorySystem = new DRAMSim::MemorySystem(/* 0, */ deviceIniFilename,
                     systemIniFilename, "", "", megsOfMemory );
 
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* readDataCB;
