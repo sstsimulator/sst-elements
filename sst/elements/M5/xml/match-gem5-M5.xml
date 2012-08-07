@@ -50,6 +50,7 @@
     <o3cpu.cachePorts> 200 </o3cpu.cachePorts>
     <o3cpu.choiceCtrBits> 2 </o3cpu.choiceCtrBits>
     <o3cpu.choicePredictorSize> 8192 </o3cpu.choicePredictorSize>
+    <o3cpu.store_set_clear_period> 250000 </o3cpu.store_set_clear_period>
 
     <o3cpu.commitToDecodeDelay> 1 </o3cpu.commitToDecodeDelay>
     <o3cpu.commitToFetchDelay> 1 </o3cpu.commitToFetchDelay>
@@ -149,23 +150,13 @@
 </cacheParams>
 
 <busParams>
-    <clock> 1Ghz </clock>
+    <clock> 1.6Ghz </clock>
     <responder_set> false </responder_set>
     <block_size> 64 </block_size>
     <bus_id> 0 </bus_id>
     <header_cycles> 1 </header_cycles>
     <width> 64 </width>
 </busParams>
-
-<bridgeParams>
-    <delay> 0ns </delay>
-    <nack_delay> 0ns </nack_delay>
-    <write_ack> false </write_ack>
-    <req_size_a> 16 </req_size_a>
-    <req_size_b> 16 </req_size_b>
-    <resp_size_a> 16 </resp_size_a>
-    <resp_size_b> 16 </resp_size_b>
-</bridgeParams>
 
 </param_include>
 
@@ -230,7 +221,7 @@
             <range.start> 0x00000000 </range.start>
             <range.end>   0xffffffff </range.end>
             <latency> 30ns </latency>
-            <latency_var> 0ns </latency_var>
+            <latency_var> 30ns </latency_var>
             <null> false </null>
             <zero> false </zero>
             <exe0.process.egid> 100 </exe0.process.egid>
