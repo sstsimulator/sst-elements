@@ -1,0 +1,37 @@
+SST - PhoenixSim Installation directions:
+
+1. Install VMWare Player
+2. Get the Ubuntu 12.04 LTS iso (http://releases.ubuntu.com/12.04/). Select the 64-bit PC (AMD64) desktop CD. 
+3. Set up a vm using the downloaded iso (recommended memory is 20GB; multiple processors if supported)
+4. Perform any upgrades/updates for the vm
+5. Install sst dependencies:
+
+sudo apt-get install patch scons autoconf m4 swig python python-dev libopenmpi-dev openmpi-bin bison flex indent gcc g++ zlib1g-dev zlib-bin bzip2 libtool binutils binutils-dev subversion mercurial git 
+
+
+6. Download and untar sstComponents-DATE-XX.tar (sstComponents_2012-APR-03.tar.gz). After untaring, a sstDeps directory will be created. 
+
+7. Download omnetpp-4.1-src.tgz and place in the sstDeps/src/pristine folder. 
+
+8. Check out the sst code: 
+svn checkout http://sst-simulator.googlecode.com/svn/trunk/ sst-simulator-read-only
+For those that have commit access:
+svn checkout https://sst-simulator.googlecode.com/svn/trunk/ sst-simulator --username xx.XX@gmail.com
+
+9. cd into your sst-simulator src directory:
+Open the bamboo.sh script: uncomment line 56 to save the environment variable SST_RETAIN_BIN. Save the file and run:
+./bamboo.sh phoenixsim_test openmpi-1.6 boost-1.50
+
+10. ALTERNATE step 9:
+cd deps/bin
+./sstDependencies.sh -b 1.50 -e default cleanBuild
+cd SST_ROOT(src directory)
+./autogen.sh
+./configure --with-omnetpp=/path/to/omnetpp/base/directory
+make
+sudo make install
+10b. cd sst/elements/PhoenixSim 
+Run test(s) by specifying sst.x nameof.xml
+
+
+
