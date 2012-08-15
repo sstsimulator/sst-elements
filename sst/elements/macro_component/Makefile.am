@@ -5,14 +5,14 @@
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
-	$(shell sstmacro-config --cppflags)
+	$(shell sstmacro-config --cppflags) -O0 -g
 
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmacro_component.la
 libmacro_component_la_CPPFLAGS = $(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
-	$(shell sstmacro-config --cppflags)
+	$(shell sstmacro-config --cppflags) -O0 -g
 libmacro_component_la_SOURCES = \
 macro_component.cc \
 	macro_processor.h \

@@ -12,7 +12,7 @@
 #ifndef _MACRO_FAKEEVENTMANAGER_H
 #define _MACRO_FAKEEVENTMANAGER_H
 
-
+#include <sstmac/common/errors.h>
 #include <sstmac/common/eventmanager.h>
 
 #include <sst/core/sst_types.h>
@@ -21,13 +21,18 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+
 class eventmanager_interface
 {
 public:
   virtual SST::Link*
   get_self_event_link() = 0;
 
-  virtual sstmac::timestamp
+  virtual const sstmac::timestamp&
   now() = 0;
 
   virtual ~eventmanager_interface() { }
@@ -63,7 +68,9 @@ class fakeeventmanager : public sstmac::eventmanager
 
   }
 
+
 public:
+	typedef boost::intrusive_ptr<fakeeventmanager> ptr;
 
   static boost::intrusive_ptr<fakeeventmanager>
   construct(eventmanager_interface *p)
@@ -100,13 +107,11 @@ public:
   {
 
   }
-
-  virtual const sstmac::timestamp&
-  now()
-  {
-    now_ = parent_->now();
-    return now_;
-  }
+	
+	void
+	update(const sstmac::timestamp &t){
+		set_now(t);
+	}
 
   /// Set off the given eventhandler at the given time.
   virtual void
@@ -120,16 +125,28 @@ public:
 
     if (!parent_)
       {
-        throw sstmac::ssterror("fakeeventmanager::schedule - parent not set");
+		  sst_throw(sstmac::ssterror, "fakeeventmanager::schedule - parent not set");
       }
 
+	   SST::SimTime_t delay = start_time.psec() - parent_->now().psec();
+	  
     if (start_time.psec() < parent_->now().psec())
       {
-        throw sstmac::valueerror(
-            "fakeeventmanager: tried to schedule to the past. doh!");
+		  std::cout << "now: " << parent_->now() << "\n";
+		  std::cout << "start time: " << start_time << "\n";
+		  
+		  //exit(1);
+		  
+		 // sst_throw(sstmac::sst_error, "doh");
+		//  sstmac::sst_throw(sstmac::sst_error,
+        //    "fakeeventmanager: now=%s, tried to schedule to %s. doh!", parent_->now().pse(), start_time.psec());
+		  throw sstmac::ssterror("doh");
+		 // delay = 0;
       }
+	  
+	//  std::cout << "fakeeventmanager: scheudling message with delay " << delay << "\n";
 
-    SST::SimTime_t delay = start_time.psec() - parent_->now().psec();
+   
 
     parent_->get_self_event_link()->Send(delay, evt);
 

@@ -29,7 +29,7 @@
 
 #include "sstMessageEvent.h"
 #include "macro_network.h"
-
+#include <sstmac/backends/native/nodeid.h>
 
 
 #include <sstmac/common/basicstringtokenizer.h>
@@ -42,25 +42,31 @@ using namespace sstmac::hw;
 
 debug macro_processor::dbg_;
 bool macro_processor::debug_init_ = false;
+bool macro_processor::timeinit_ = false;
 
 macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
     Component(id)
 {
 
+	nodeaddress::ptr dummy = sstmac::native::nodeid::construct(-1);
+	
+	
+	
   if (!dbg_.is_real())
     {
       dbg_ = debug("<debug> processor | proc | node");
       logger::register_logger(&dbg_);
     }
 
-  myid_ = macro_address::construct(id);
+  myid_ = nodeaddress::convert_from_uniqueid(id);
 
   std::cout << "constructing macro_processor " << id << " with address "
       << myid_->to_string() << "\n";
 
+
   outgate = configureLink("nic",
       new Event::Handler<macro_processor>(this, &macro_processor::handleEvent));
-  std::cout << "outgate is " << outgate << "\n";
+ // std::cout << "outgate is " << outgate << "\n";
 
   if (!debug_init_)
     {
@@ -110,6 +116,10 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
   logger::timer_ = fem_;
 
   macro_parameters::ptr macroparams = macro_parameters::construct(params);
+	
+	if(!sstmac_env::params){
+		sstmac_env::params = macroparams;
+	}
 
 
   self_proc_link_ = configureSelfLink(
@@ -117,31 +127,39 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
       new Event::Handler<macro_processor>(this,
           &macro_processor::handle_proc_event));
 
-  std::cout << "self_proc_link is " << self_proc_link_ << "\n";
+ // std::cout << "self_proc_link is " << self_proc_link_ << "\n";
 	
 	long nodenum = macroparams->get_long_param("node_num");
 
 	node_ = SSTNodeFactory::get_node(macroparams->get_param("node_name"), macroparams);
-	
+	node_ = node_->clone(myid_);
 	fake_interconnect::ptr fi = fake_interconnect::construct(this);
 	sstmac::hw::networkinterface::ptr nic = SSTNicFactory::get_nic(macroparams->get_param("nic_name"), macroparams, node_, fi);
+	//nic = nic->clone(newnode, fi, macroparams);
+
 //  macro_fakenic::ptr nic = macro_fakenic::construct(node_, this,
 //      sstmac::hw::interconnect::ptr(), nodenum);
+	
   node_->set_nic(nic);
   nic->set_eventmanager(fem_);
 	fi->set_eventmanager(fem_);
 
-
+	if(!timeinit_){
+	long timescale = macroparams->get_optional_long_param("timestamp_resolution", 1);
+	timestamp::init_stamps(timescale);
+		timeinit_ = true;
+	}
+	
   registerTimeBase("1 ps", true);
 	
 	// tell the simulator not to end without us
-	registerExit();
+	//registerExit();
 }
 
 int
 macro_processor::Setup()
 {
-
+	fem_->update(timestamp(0));
   node_->initialize(fem_);
 
   return 0;
@@ -150,7 +168,10 @@ macro_processor::Setup()
 void
 macro_processor::handle_proc_event(Event *evt)
 {
-  SSTMAC_DEBUG << "macro_procesor: handling proc event: \n";
+	fem_->update(now());
+	
+  SSTMAC_DEBUG << "macro_procesor: handling proc event at time " << now() << ": \n";
+	
   if (dbg_.is_active())
     {
       evt->print("macro_processor:");
@@ -164,8 +185,9 @@ macro_processor::handle_proc_event(Event *evt)
 void
 macro_processor::handleEvent(Event *evt)
 {
+	fem_->update(now());
   //printf("recv\n");
-  SSTMAC_DEBUG << "macro_procesor: handling event: \n";
+  SSTMAC_DEBUG << "macro_procesor: handling event at time " << now() << ": \n";
   if (dbg_.is_active())
     {
       evt->print("macro_processor:");
@@ -184,10 +206,12 @@ macro_processor::handleEvent(Event *evt)
     }
 }
 
-timestamp
+const timestamp&
 macro_processor::now()
 {
-  SimTime_t current_time = getCurrentSimTime();
-  return timestamp::exact_psec(current_time);
+	  SimTime_t current_time = getCurrentSimTime();
+	now_ = timestamp::exact_psec(current_time);
+	
+	return now_;
 }
 

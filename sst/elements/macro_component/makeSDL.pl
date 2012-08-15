@@ -23,35 +23,11 @@ $y = $ARGV[1];  # nothing right now
 $set = $ARGV[2]; #set
 $ranks = $ARGV[3]; #ranks
 
-if ($set == 1) { # NOC
+if ($set == 1) { #
     $interconnectName = "fullnetwork";
-    $topologyName = "none";
-    $flowerName = "none";
-    $switchLatency = "380ns";
-    $switchBandwidth = "524Mbps";
+    $network_latency = "380ns";
+    $network_bandwidth = "524Mbps";
     $commLat = "100ns";
-
-} elsif ($set == 2) {
-    $interconnectName = "circuit";
-    $topologyName = "crossbar";
-    $flowerName = "none";
-    $switchLatency = 0.000001;
-    $switchBandwidth = 1000000000;
-    $commLat = "100 ns";
-} elsif ($set == 3) {
-    $interconnectName = "sharedcircuit";
-    $topologyName = "crossbar";
-    $flowerName = "ordered_flower";
-    $switchLatency = 0.000001;
-    $switchBandwidth = 1000000000;
-    $commLat = "100 ns";
-}  elsif ($set == 4) {
-    $interconnectName = "sharedcircuit";
-    $topologyName = "crossbar";
-    $flowerName = "none";
-    $switchLatency = 0.000001;
-    $switchBandwidth = 1000000000;
-    $commLat = "100 ns";
 } else {
     printf("Bad Set\n");
     exit(-1);
@@ -74,11 +50,10 @@ printf(OUT "<?xml version=\"1.0\"?>\n".
 printf(OUT "<param_include>\n".
     "\t<net_params>\n".
     "\t\t<network_name>$interconnectName</network_name>\n".
-    "\t\t<network_latency>$switchLatency</network_latency>\n".
-    "\t\t<network_bandwidth>$switchBandwidth</network_bandwidth>\n".
-    "\t\t<network_size>$x</network_size>\n".
-    "\t\t<topology_name>torus</topology_name>\n".
-    "\t\t<topology_geometry>$x,1,1</topology_geometry>\n".
+    "\t\t<network_latency>$network_latency </network_latency>\n".
+    "\t\t<network_bandwidth>$network_bandwidth </network_bandwidth>\n".
+    "\t\t<topology_name>xbar</topology_name>\n".
+    "\t\t<topology_geometry>$x</topology_geometry>\n".
     "\t</net_params>\n".
     "\t<node_params>\n".
     "\t\t<manager>simple</manager>\n".
@@ -96,7 +71,7 @@ printf(OUT "<param_include>\n".
     "\t\t<launch_indexing>block</launch_indexing>\n".
     "\t\t<launch_allocation>firstavailable</launch_allocation>\n".
     "\t\t<launch_app1>MPI_testall</launch_app1>\n".
-    "\t\t<launch_app1_size>$x</launch_app1_size>\n".
+    "\t\t<launch_app1_size>$ranks</launch_app1_size>\n".
     "\t\t<launch_app1_start>1200ms</launch_app1_start>\n".
     "\t</app_params>\n".
     "</param_include>\n");

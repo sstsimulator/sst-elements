@@ -58,17 +58,21 @@ public:
   static sstmac::debug dbg_;
   static bool debug_init_;
 
-  virtual sstmac::timestamp
+  virtual const sstmac::timestamp&
   now();
 
 protected:
+	
+	sstmac::timestamp now_;
 
   SST::Link* outgate;
   SST::Link* self_proc_link_;
+	
+	static bool timeinit_;
 
   int coresPerProc;
 
-  macro_address::ptr myid_;
+	sstmac::nodeaddress::ptr myid_;
 
   fakeeventmanager::ptr fem_;
 
@@ -116,7 +120,8 @@ protected:
 		/// Return a negative (really <= 0) value to indicate an infinite capacity.
 		virtual int64_t
 		slots() const {
-			return 1;
+			std::cout << ";akjf;akjdf;kajd;fkjadsf\n";
+			return 10;
 		}
 		
 		/// Send the given message at the given time.
@@ -124,6 +129,9 @@ protected:
 		/// Notify the recvhandler when the recv is complete.
 		virtual void
 		send(const sstmac::timestamp &start_time, const sstmac::sst_message::ptr &payload){
+			
+			parent_->fem_->update(parent_->now());
+
 			
 			sstMessageEvent* msg = new sstMessageEvent();
 			
@@ -134,15 +142,18 @@ protected:
 			
 			sstmac::timestamp ts = parent_->now();
 		
-			double d = (start_time - ts).sec();
+			double d = (start_time - ts).psec();
 			SST::SimTime_t delay(d);
 						
 			parent_->outgate->Send(delay, msg);
 			
+						
 		}
 		
 		
 	};
+	
+	friend class fake_interconnect;
 
 public:
 
@@ -156,7 +167,7 @@ public:
   int
   Finish()
   {
-   
+	  std::cout << "---proc finished \n";
     return 0;
   }
 

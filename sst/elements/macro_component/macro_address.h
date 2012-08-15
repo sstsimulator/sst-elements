@@ -133,8 +133,16 @@ public:
   bool
   equals(const nodeaddress::ptr &addr) const
   {
+	  if(!addr){
+		  sst_throw(sstmac::ssterror, "macroaddress::equals - null incoming address");
+	  }
     macro_address::ptr maddr = boost::dynamic_pointer_cast<macro_address>(addr);
-    return (maddr->id == id);
+	  
+	  if(maddr){
+		  return (maddr->id == id);
+	  }else{
+		  return addr->unique_id() == unique_id();  
+	  }
   }
 
 };

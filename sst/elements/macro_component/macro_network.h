@@ -29,70 +29,15 @@
 class macro_network : public SST::Component, public eventmanager_interface
 {
 
-  friend class message_sent_handler;
-
-  class message_sent_handler : public sstmac::eventhandler
-  {
-    macro_network* parent_;
-
-    message_sent_handler(macro_network* p) :
-        parent_(p)
-    {
-    }
-
-  public:
-    typedef boost::intrusive_ptr<message_sent_handler> ptr;
-
-    virtual void
-    handle(const sstmac::sst_message::ptr &msg)
-    {
-      //sstmac::sst_message::ptr sstm = msg->clone(sstmac::sst_message::SEND_ACK);
-      sstMessageEvent *ack = new sstMessageEvent();
-      ack->data_ = msg;
-      ack->toaddr_ = msg->fromaddr_;
-      ack->fromaddr_ = msg->toaddr_;
-      ack->bytes_ = 1;
-
-      macro_address::ptr madd = boost::dynamic_pointer_cast<macro_address>(
-          msg->fromaddr_);
-      if(!madd){
-          std::cout << "address memory addr: " << msg->fromaddr_ << "\n";
-          std::cout << "addr: " << msg->fromaddr_->to_string() << "\n";
-          throw sstmac::ssterror("macro_network::message_sent_handler::handle - can't convert address to macro_address");
-      }
-      int portnum = madd->unique_id();
-
-      if(parent_->ports_.find(portnum) == parent_->ports_.end()){
-          std::cout << "portnum: " << portnum << "\n";
-          throw sstmac::ssterror("macro_network::message_sent_handler::handle - port not found");
-      }
-
-      parent_->ports_[portnum]->Send(ack);
-    }
-
-    virtual std::string
-    toString() const
-    {
-      return "macro_network::message_sent_handler";
-    }
-
-    static message_sent_handler::ptr
-    construct(macro_network* p)
-    {
-      message_sent_handler::ptr ret(new message_sent_handler(p));
-      return ret;
-    }
-
-  };
-
   friend class message_recv_handler;
 
   class message_recv_handler : public sstmac::eventhandler
   {
     macro_network* parent_;
-
-    message_recv_handler(macro_network* p) :
-        parent_(p)
+	  sstmac::nodeaddress::ptr addr_;
+	  
+	  message_recv_handler(macro_network* p, sstmac::nodeaddress::ptr a) :
+        parent_(p), addr_(a)
     {
     }
 
@@ -109,10 +54,11 @@ class macro_network : public SST::Component, public eventmanager_interface
       done->fromaddr_ = msg->fromaddr_;
       done->bytes_ = msg->get_byte_length();
 
-      macro_address::ptr madd = boost::dynamic_pointer_cast<macro_address>(
-          msg->toaddr_);
-      int portnum = madd->unique_id();
+     // macro_address::ptr madd = boost::dynamic_pointer_cast<macro_address>(
+     //     msg->toaddr_);
+      int portnum = addr_->unique_id();
 
+	//	std::cout << "sending message to port " << portnum << "\n";
       parent_->ports_[portnum]->Send(done);
     }
 
@@ -123,13 +69,15 @@ class macro_network : public SST::Component, public eventmanager_interface
     }
 
     static message_recv_handler::ptr
-    construct(macro_network* p)
+	  construct(macro_network* p, sstmac::nodeaddress::ptr a)
     {
-      message_recv_handler::ptr ret(new message_recv_handler(p));
+      message_recv_handler::ptr ret(new message_recv_handler(p, a));
       return ret;
     }
 
   };
+	
+	boost::unordered_map<long, message_recv_handler::ptr> recvhandlers_;
 
 //  sstmac::eventhandler::ptr sent_handler_;
 //  sstmac::eventhandler::ptr recv_handler_;
@@ -167,7 +115,7 @@ public:
     return 0;
   }
 
-  virtual sstmac::timestamp
+  virtual const sstmac::timestamp&
   now();
 
   virtual SST::Link*
@@ -201,6 +149,10 @@ private:
   sstmac::hw::topology::ptr topology_;
 
   SST::Link* self_proc_link_;
+	
+	//sstmac::eventhandler::ptr recv_;
+	
+	sstmac::timestamp now_;
 
 };
 
