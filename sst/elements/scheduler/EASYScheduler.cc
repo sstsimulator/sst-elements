@@ -31,17 +31,23 @@ using namespace std;
 #include "misc.h"
 #include "Machine.h"
 
-const EASYScheduler::compTableEntry EASYScheduler::compTable[5] = {
+
+#define DEBUG false
+
+const EASYScheduler::compTableEntry EASYScheduler::compTable[6] = {
   { FIFO, "fifo"},
   { LARGEFIRST, "largefirst"},
   { SMALLFIRST, "smallfirst"},
   { LONGFIRST, "longfirst"},
-  { SHORTFIRST, "shortfirst"}};
-const int EASYScheduler::numCompTableEntries = 5;
+  { SHORTFIRST, "shortfirst"},
+  { BETTERFIT, "betterfit"}};
+const int EASYScheduler::numCompTableEntries = 6;
 
 EASYScheduler::EASYScheduler(JobComparator* comp) { 
   toRun = new set< Job*,JobComparator, std::allocator<Job*> >(*comp);
-  running = new multimap<long, Job*>(); //don't need to pass comp because compare longs
+  RunningInfo* RIComp = new RunningInfo();
+  running = new multiset<RunningInfo*, RunningInfo>(*RIComp); //don't need to pass comp because compare longs
+  delete RIComp;
   compSetupInfo = comp -> toString();
   prevFirstJobNum = -1;
   guaranteedStart = 0;
@@ -56,13 +62,14 @@ string EASYScheduler::getSetupInfo(bool comment) {
     com="# ";
   else
     com="";
-  return com + "EASY Scheduler\n" + com +
-    "Comparator: " + compSetupInfo; 
+  return com + "EASY Scheduler (" + compSetupInfo + ")"; 
 }
 
-void EASYScheduler::jobArrives(Job* j, long time, Machine* mach) {
+void EASYScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) {
   //called when j arrives; time is current time
   //tryToStart should be called after each job arrives
+  if(DEBUG)
+    printf("%ld: Job #%ld arrives\n", time, j->getJobNum());
   toRun -> insert(j);
 
 
@@ -74,14 +81,16 @@ void EASYScheduler::jobArrives(Job* j, long time, Machine* mach) {
   }
 }
 
-void EASYScheduler::jobFinishes(Job* j, long time, Machine* mach){
+void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach){
   //remove j from the list of running jobs and update start
 
-  multimap<long, Job*>::iterator it = running->begin();
+  if(DEBUG)
+    printf("%ld: Job #%ld completes\n", time, j->getJobNum());
+  multiset<RunningInfo*, RunningInfo>::iterator it = running->begin();
   bool success = false;
   while(!success && it != running->end())
   {  
-    if(it->second == j)
+    if((*it)->jobNum == j->getJobNum())
     {
       running->erase(it);
       success = true;
@@ -93,7 +102,7 @@ void EASYScheduler::jobFinishes(Job* j, long time, Machine* mach){
   giveGuarantee(time, mach);
 }
 
-AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, long time,
+AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
     Machine* mach,
     Statistics* stats) {
   //allows the scheduler to start a job if desired; time is current time
@@ -101,7 +110,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, long time,
   //(either after each call or after each call occuring at same time)
   //returns first job to start, NULL if none
   //(if not NULL, should call tryToStart again)
-  if(!running->empty() && running->begin()->first == time)
+  if(!running->empty() && (*(running->begin()))->estComp == time)
     return NULL;  //don't backfill if another job is about to finish
 
   if(toRun->empty()) 
@@ -145,16 +154,33 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, long time,
   //allocate job if found
   if(succeeded)
   {
+    if(DEBUG)
+      printf("%ld: %s starts\n", time, (*job)->toString().c_str());
     if(allocInfo == NULL)
-    {
       allocInfo = alloc->allocate(*job);
-    }
+    RunningInfo* started = new RunningInfo();
+    started->jobNum = (*job)->getJobNum();
+    started->numProcs = (*job)->getProcsNeeded();
+    started->estComp = time + (*job)->getEstimatedRunningTime();
+    Job* temp = *job;
     toRun->erase(job); //remove the job from toRun list
-    pair<long, Job*> temp = pair<long, Job*>(time + (*job)->getEstimatedRunningTime(),*job);
-    multimap<long, Job*>::iterator justinserted = running->insert(temp); //add to running list       
-    (justinserted->second)->start(time,mach,allocInfo,stats);
+    //pair<long, Job*> temp = pair<long, Job*>(time + (*job)->getEstimatedRunningTime(),*job);
+    multiset<RunningInfo*, RunningInfo>::iterator justinserted = running->insert(started); //add to running list       
+    temp->start(time,mach,allocInfo,stats);
     if(first) //update the guarantee if starting the first job
       giveGuarantee(time, mach);      
+    if(DEBUG)
+    {
+      multiset<RunningInfo*, RunningInfo>::iterator dit = running->begin();
+      printf("Currently running jobs: ");
+      while(dit != running->end())
+      {
+        printf("%ld ", (*dit)->jobNum);
+        ++dit;
+      }
+      printf("\n");
+    }
+    
     return allocInfo;
   }
   return NULL;
@@ -164,15 +190,28 @@ void EASYScheduler::reset() {
   toRun -> clear();
 }
 
-void EASYScheduler::giveGuarantee(long time, Machine* mach)
+void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
 {
   //gives a guaranteed start time for a job.  The first job in the queue cannot
   //be delayed past this guarantee
+  if(DEBUG)
+  {
+    printf("%ld: giveGuarantee ( ", time);
+    set<Job*, JobComparator>::iterator it2 = toRun->begin();
+    while(it2 != toRun->end())
+    {
+      printf("%ld ", (*it2)->getJobNum());
+      ++it2;
+    }
+    printf(")\n");
+  }
+
+
   if(toRun->empty())
     return;
 
   set<Job*, JobComparator>::iterator firstJob = toRun->begin();
-  long lastGuarantee = guaranteedStart;
+  unsigned long lastGuarantee = guaranteedStart;
   bool succeeded = false;
 
   int size = (*firstJob)->getProcsNeeded();
@@ -185,20 +224,22 @@ void EASYScheduler::giveGuarantee(long time, Machine* mach)
   }
 
   int futureFree = free;
-  multimap<long, Job*>::iterator it = running->begin();
+  multiset<RunningInfo*, RunningInfo>::iterator it = running->begin();
 
   while(!succeeded && it != running->end())
   {
-    futureFree += it->second->getProcsNeeded();
+    futureFree += (*it)->numProcs;
     if(futureFree >= size)
     {
-      guaranteedStart = it->first;
+      guaranteedStart = (*it)->estComp;
       succeeded = true;
     }
     it++;
   }
   if(succeeded)
   {
+    if(DEBUG)
+      printf("%ld: Giving %s guarantee of time %ld\n", time, (*firstJob)->toString().c_str(), guaranteedStart);
     if((*firstJob)->getJobNum() == prevFirstJobNum && lastGuarantee < guaranteedStart && lastGuarantee > 0)
     {
 
@@ -213,7 +254,7 @@ void EASYScheduler::giveGuarantee(long time, Machine* mach)
   }
 }
 
-AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, long time){
+AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, unsigned long time){
 
   //returns if j would delay the first job by starting now
   if(!alloc->canAllocate(j))
@@ -224,10 +265,10 @@ AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* 
     return retVal;
 
   int avail = mach->getNumFreeProcessors();
-  multimap<long,Job*>::iterator it  = running->begin();
-  while(it != running->end() && it->first <= guaranteedStart)
+  multiset<RunningInfo*, RunningInfo>::iterator it  = running->begin();
+  while(it != running->end() && (*it)->estComp <= guaranteedStart)
   {
-    avail += it->second->getProcsNeeded();
+    avail += (*it)->numProcs;
     it++;
   }
   set<Job*, JobComparator>::iterator tempit = toRun->begin();
@@ -311,6 +352,25 @@ bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) {
 
       //break ties so different jobs are never equal:
       return j2 -> getJobNum() > j1 -> getJobNum();
+
+    case BETTERFIT:
+      //Primary criteria: Most Processors Required
+      if(j1->getProcsNeeded() != j2->getProcsNeeded())
+        return (j2->getProcsNeeded() < j1->getProcsNeeded());
+
+      //Secondary criteria: Longest Run Time
+      if(j1->getEstimatedRunningTime() != j2->getEstimatedRunningTime()) {
+        return (j2->getEstimatedRunningTime() < j1->getEstimatedRunningTime());
+      }
+
+      //Tertiary criteria: Arrival Time
+      if(j1->getArrivalTime() != j2->getArrivalTime()) {
+        return  (j2->getArrivalTime() > j1->getArrivalTime());
+      }
+
+      //break ties so different jobs are never equal:
+      return j2 -> getJobNum() > j1 -> getJobNum();
+
     default:
       internal_error("operator() called on JobComparator w/ invalid type");
       return true;  //never reach here
@@ -329,6 +389,8 @@ string EASYScheduler::JobComparator::toString() {
       return "LongestFirstComparator";
     case SHORTFIRST:
       return "ShortestFirstComparator";
+    case BETTERFIT:
+      return "BetterFitComparator";
     default:
       internal_error("toString() called on JobComparator w/ invalid type");
   }

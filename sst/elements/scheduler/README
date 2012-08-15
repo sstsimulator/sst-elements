@@ -1,0 +1,237 @@
+--------------------------------------------------
+    How to Use The Scheduler Componenent With SST
+--------------------------------------------------
+
+The scheduler component reads in a trace (usually .sim) file, which consists
+of four entries: arrival time, number of processors, actual run time (the
+amount of time the job actually ran for) and estimated run time (the
+estimated job given when the job was submitted, if any).  These can be
+created from the Parallel Workloads Archive .swf format using
+convert_trace.pl.  The output from the simulatons is stored in a .time
+file (stating information about each job, particularly what time and in
+what order each was run) and a .alloc file (gives allocation
+information about each job such as number of processors and total
+pairwise L1 distance--note that SimpleMachine does not support
+.alloc files).  If the original simulation was example.sim, the
+outputs will be example.sim.time and (possibly) example.sim.alloc.
+All the files necesary to do this, both example simulations from the
+PWA and perl scripts to create helper files, are in the /simulations
+subfolder. Note that as if this writing, simulations with jobs that
+require more than (UNSIGNED_LONG_MAX)/10^12 bits will not run correctly.  If
+there are 64 bits in a long, this corresponds to 7 months after the
+start (time 18446744).
+
+--------------------------------------------------
+    Running SST
+--------------------------------------------------
+
+SST is run using the command 
+
+./sst.x --sdl-file=example.sdl --verbose 
+
+where --verbose is optional.  sst.x is in the /core folder of the installation.
+The simulation file being run must be copied there as well.  An sdl file for a
+given instance can be generated using makeSDL.pl, with the first argument the
+number of processors, second argument the name of the trace file (the .sim
+file), and the third through fifth argument the name of the scheduler,
+machine, and allocator respectively.  The scheduler, machine, and
+allocator can be modified from their original version using brackets,
+i.e.  pqueue[shortfirst] is a priority queue that runs the shortest jobs
+first, whereas pqueue defaults to a fifo priority queue.  Note that the
+Perl script gives the SDL as terminal output and it must be piped into
+the file directly.  An example command to generate an SDL file named
+"testsdl.sdl" with the easy scheduler (with priorities based on largest
+ number of required processors), on a 24x167x1 mesh with a random
+allocator would be: 
+
+./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random > testsdl.sdl 
+
+Another option is to use the runtests.pl script.  This file automatically
+generates and runs .sdl files, possibly with several different inputs. This
+requires fewer steps, as the only required action is putting the script in the
+same directory as the simulation file, changing the internal parameters so that
+the correct SST file, sim file, scheduler, allocator, etc., is used, and then
+running 
+
+./runtests.pl
+
+It can run several tests in a loop (among different simulations, schedulers,
+etc), and generates output files that concatenate the scheduler, machine,
+and allocator info in the file name so each output file can be identified.
+These output files are stored in a subdirectory tests/ to avoid cluttering
+the current directory.  (Do note that if a test is run twice the output will
+be overwritten without warning).  
+
+--------------------------------------------------
+    Arguments to the Scheduler Component
+--------------------------------------------------
+
+             Schedulers:
+
+  Most schedulers take one optional argument determining the order in which
+they keep lists of waiting jobs (beyond their own ordering; i.e.  EASY only
+uses the argument to determine what order jobs would be backfilled in,
+whereas pqueue schedules strictly in the given ordering).  This defaults
+to fifo in all cases, but an argument can be given to name a comparator,
+i.e., pqueue[smallfirst].  The prioritize scheduler takes one additional,
+optional argument.
+
+pqueue - a basic scheduler which keeps a priority queue of jobs that are
+available to run. The queue is kept in order based on the given comparator,
+fifo by default. 
+
+easy - based on the EASY scheduler.  Gives guaranteed times to the first job
+which cannot be violated; backfilling can occur otherwise.  
+
+  These three are all based on the Conservative Scheduler, which gives
+guarantees to all jobs and only backfills when the backfilling does not
+disturb any other job's guarantee:
+
+cons - Just compresses the jobs (makes the guarantees better when possible),
+does not do any backfilling.
+
+prioritize - does backfilling and compression.  Takes one more argument for the
+number of successive times to backfill.  (In other words, backfills in a
+repeated loop, default 1 loop per backfill attempt).  Note that the first
+argument must be specified for the second argument to work correctly--if the
+second is not the default, the first cannot be the default (need to specify
+fifo)
+
+delayed - compresses, but only backfills if that would cause a job to start
+right away
+
+              Comparators:
+
+These can be given as arguments to the schedulers above.
+
+fifo - first in, first out
+
+largefirst - job with most required nodes first
+
+smallfirst - job with fewest required nodes first
+
+longfirst - job with longest estimated running time first
+
+shortfirst - job with shortest estimated running time first
+
+betterfit - job with most processors first, if tied longest estimated running
+time, if tied first arrival time
+
+              Machines:
+
+simple - a simple machine, which is a bag of nodes.  Can only be used with
+simple allocator 
+
+mesh - a three dimensional mesh of nodes.  Must take 3 arguments [x,y,z], or
+two arguments [x,y] in which case z is assumed to be 1.  Requires that x*y*z =
+numprocs.
+
+              Allocators: 
+
+  Note that no allocators currently require any arguments (though the linear
+allocators have an optional argument)
+
+simple - allocates any available nodes without regards for location.  Can only
+be used with simple machine; does not support .alloc output file
+
+random - chooses which nodes to allocate randomly.  Can only be used with
+meshmachine
+
+genalg - the general algorithm for the nearest allocator; collects points
+around a given center based on the L1 metric.  Considers any free node to be a
+potential center, compares them using their total pairwise L1 distance.  Only
+works on a 3 dimensional mesh (though one or more dimensions can be 1).  Very
+time-consuming on even moderate numbers of processors (several hundred).
+
+mm - the MM allocator based on the nearest paradigm; collects points around a
+given center based on the L1 metric.  Considers the intersection of any two
+free nodes to be a potential center, compares them using their total pairwise
+L1 distance.  Only works on a 3 dimensional mesh (though one or more
+dimensions can be 1).  The most time-consuming allocator.
+
+oldmc1x1 - the old MC1x1 allocator based on the nearest paradigm ; collects
+points around a given center based on the LInf metric.  Considers any free node
+to be a potential center, compares them using their total pairwise LInf
+distance. Currently only works on a mesh where one of the three dimensions is
+1.  Very time-consuming on even moderate numbers of processos.
+
+mc1x1 - an improved version of OldMC1x1 that uses an improved point collector,
+based on the idea that the outer shell of nodes (the last few chosen)
+should be clustered as close to each other as possible.  OldMC1x1 treats all
+points equally if they have the same distance from previous layers.
+Currently only works on a mesh where one of the three dimensions is 1.  Very
+time-consuming on even moderate numbers of processors.
+
+nearest - the nearest allocator, allowing customization of which point
+collector, center generator, scorer, and tiebreaker is used.  Very time
+consuming, similarly to other Nearest allocators.  The format is
+nearest[centergenerator,pointcollector,scorer]  
+
+The possible center generators are: 
+all - all nodes are considered.  Note that this is not used by any other
+nearest allocator.  
+free - all free nodes are considered 
+intersect - the pairwise intersections of all free nodes are considered 
+
+The point collectors are: 
+l1 - collects points using the L1 metric 
+linf - collects points using the Linf metric 
+greedylinf - collects points using the Linf metric with better
+awareness of the shape of the last shell.  Used in MC1x1 
+
+The scorers are: 
+l1 - scores by L1 distance from center.  Note that this is not used by any 
+other nearest allocator.  
+pairwise - scores by total pairwise L1 distance of a set of nodes 
+linf - scores by Linf distance from center.  This particular scorer can
+take up to six more parameters, which are used by the tiebreaker.  The format
+then is 
+nearest[centergenerator,pointcollector,linf, maxshells, availFactor,
+wallFactor, borderFactor, curvefactor,curvewidth]
+Each takes a long, except maxshells which can also be assigned the value m,
+which sets it to the largest signed 64 bit integer.  The defaults are
+0,1,0,0,0,2.  Note that the tiebreaker, and therefore the LInf scorer in
+general, only work for meshes in which one of the dimensions is 1.
+
+mbs - the MBS (or Multiple Buddy Strategy) allocator uses a block-based
+approach.   The idea is to allocate the best possible square set of nodes.
+This allocator and its variants are much quicker than the Nearest allocators.
+
+granularmbs - very similar to MBS but uses granular divisions when splitting
+square blocks of nodes into smaller parts
+
+octetmbs - very similar to MBS but uses Octet divisions when splitting blocks
+into smaller parts
+
+sortedfreelist - based on the Linear paradigm, which gives each node a rank
+based on its position along a space-filling curve.  The curve must currently be
+a snake.  The first and only argument, which is optional, specifies whether the
+shortest dimension should be followed first (sort) or whether the dimensions
+should be followed in the order they are given (nosort). If no argument is
+given the default is false.  This allocator in particular picks the nodes with
+the smallest rank to give to a processor, without regards to their relative
+positions.  An example of a correct parameter for this allocator would be
+sortedfreelist[sort].  
+
+bestfit - based on the Linear paradigm, which gives each node a rank based on
+its position along a space-filling curve.  The curve must currently be a snake.
+The first and only argument, which is optional, specifies whether the shortest
+dimension should be followed first (sort) or whether the dimensions should be
+followed in the order they are given (nosort). If no argument is given the
+default is false.  This allocator in particular looks at all sequences of empty
+nodes with consecutive rank, picks the sequence with length closest to the
+number of needed nodes, and allocates those processors in order.  If no single
+interval is found that is large enough, it minimizes the span of processors
+returned.
+
+firstfit - based on the Linear paradigm, which gives each node a rank based on
+its position along a space-filling curve.  The curve must currently be a snake.
+The first and only argument, which is optional, specifies whether the shortest
+dimension should be followed first (sort) or whether the dimensions should be
+followed in the order they are given (nosort). If no argument is given the
+default is false.  This allocator in particular looks at all sequences of empty
+nodes with consecutive rank, picks the first sequence with length longer than
+the number of needed nodes, and allocates those processors in order.  If no
+single interval is found that is large enough, it minimizes the span of
+processors returned.
+

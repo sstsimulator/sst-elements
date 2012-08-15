@@ -38,18 +38,18 @@ class Statistics {
 
   static void printLogList(ostream& out);  //print list of possible logs
 
-  void jobArrives(long time);  //called when a job has arrived
+  void jobArrives(unsigned long time);  //called when a job has arrived
 
-  void jobStarts(AllocInfo* allocInfo, long time);
+  void jobStarts(AllocInfo* allocInfo, unsigned long time);
   //called every time a job starts
 
-  void jobFinishes(AllocInfo* allocInfo, long time);
+  void jobFinishes(AllocInfo* allocInfo, unsigned long time);
   //called every time a job completes
 
   void done();  //called after all events have occurred
 
  private:
-  void writeTime(AllocInfo* allocInfo, long time);
+  void writeTime(AllocInfo* allocInfo, unsigned long time);
   //write time statistics to file
 
   
@@ -60,11 +60,11 @@ class Statistics {
   //write to log for visualization
   
 
-  void writeUtil(long time);
+  void writeUtil(unsigned long time);
   //method to write utilization statistics to file
   //force it to write last entry by setting time = -1
 
-  void writeWaiting(long time);
+  void writeWaiting(unsigned long time);
   //possibly add line to log recording number of waiting jobs
   //  (only prints 1 line per time: #waiting jobs after all events at that time)
   //argument is current time or -1 at end of trace
@@ -74,16 +74,16 @@ class Statistics {
 
   string baseName;  //part of name used as base of output files (i.e. baseName.time)
   Machine* machine;
-  long currentTime;
+  unsigned long currentTime;
   int procsUsed;    //#processors used at currentTime
 
   bool* record;  //array giving whether each kind of log should be kept
 
   int lastUtil;  //last observed utilization value; used to filter out values w/ shared time
-  long lastUtilTime;  //when it first reached this val (-1 = no observations)
+  unsigned long lastUtilTime;  //when it first reached this val (-1 = no observations)
 
   //variables to do the same thing for the number of waiting jobs:
-  long lastWaitTime;  //time for which we next will record #waiting jobs
+  unsigned long lastWaitTime;  //time for which we next will record #waiting jobs
   long lastWaitJobs;  //# waiting jobs last printed
   int waitingJobs;    //current guess of what to record for that time
   int tempWaiting;    //actual number of waiting jobs right now

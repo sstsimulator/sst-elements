@@ -24,12 +24,12 @@ using namespace std;
 
 class SchedChange{
   protected:
-    long time;
+    unsigned long time;
     SchedChange* partner;
   public:
     bool isEnd;
     Job* j;
-    SchedChange(long intime, Job* inj, bool end, SchedChange* inpartner = NULL){
+    SchedChange(unsigned long intime, Job* inj, bool end, SchedChange* inpartner = NULL){
       if(inpartner == NULL && !end)
         error("Schedchange beginning not given partner");
       partner = inpartner;
@@ -39,7 +39,7 @@ class SchedChange{
     }
     //need to implement some sort of comparison function for SchedChange
 
-    const long getTime(){
+    const unsigned long getTime(){
       return time;
     }
 
@@ -89,36 +89,37 @@ class StatefulScheduler : public Scheduler {
       LARGEFIRST = 1,
       SMALLFIRST = 2,
       LONGFIRST = 3,
-      SHORTFIRST = 4
+      SHORTFIRST = 4,
+        BETTERFIT = 5
     };
     struct compTableEntry {
       ComparatorType val;
       string name;
     };
-    static const compTableEntry compTable[5];
+    static const compTableEntry compTable[6];
 
     string compSetupInfo;
     set<SchedChange*, SCComparator> *estSched;
-    long findTime(set<SchedChange*, SCComparator> *sched, Job* Job, long time);
+    unsigned long findTime(set<SchedChange*, SCComparator> *sched, Job* Job, unsigned long time);
     
     int numProcs;
     int freeProcs;
 
   public:
-    void jobArrives(Job* j, long time, Machine* mach);
-    void jobFinishes(Job* j, long time, Machine* mach);
+    void jobArrives(Job* j, unsigned long time, Machine* mach);
+    void jobFinishes(Job* j, unsigned long time, Machine* mach);
 
     //Make????
     void reset();
-    long scheduleJob(Job* job, long time);
-    long zeroCase(set<SchedChange*, SCComparator> *sched, Job* filler, long time);
-    AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach, Statistics* stats);
+    unsigned long scheduleJob(Job* job, unsigned long time);
+    unsigned long zeroCase(set<SchedChange*, SCComparator> *sched, Job* filler, unsigned long time);
+    AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach, Statistics* stats);
     string getSetupInfo(bool comment);
     void printPlan();
     void done(){
       heart->done(); 
     }
-    void removeJob(Job* j, long time);
+    void removeJob(Job* j, unsigned long time);
 
     class JobComparator : public binary_function<Job*,Job*,bool> {
       public:
@@ -137,17 +138,17 @@ class StatefulScheduler : public Scheduler {
       protected:
         StatefulScheduler* scheduler;
       public:
-        virtual void arrival(Job* j, long time) = 0;
-        virtual void start(Job* j, long time) = 0;
-        virtual void tryToStart(long time) = 0;
+        virtual void arrival(Job* j, unsigned long time) = 0;
+        virtual void start(Job* j, unsigned long time) = 0;
+        virtual void tryToStart(unsigned long time) = 0;
         virtual void printPlan() = 0;
-        virtual void onTimeFinish(Job* j, long time) = 0;
+        virtual void onTimeFinish(Job* j, unsigned long time) = 0;
         virtual void reset() = 0;
         virtual void done() = 0;
-        virtual void earlyFinish(Job* j, long time) = 0;
-        virtual void removeJob(Job* j, long time) = 0;
+        virtual void earlyFinish(Job* j, unsigned long time) = 0;
+        virtual void removeJob(Job* j, unsigned long time) = 0;
         virtual string getString() = 0;
-        void compress(long time) ;
+        void compress(unsigned long time) ;
     };
 
     class ConservativeManager : public Manager{
@@ -155,21 +156,21 @@ class StatefulScheduler : public Scheduler {
         ConservativeManager(StatefulScheduler* inscheduler){
           scheduler = inscheduler;
         }
-        void earlyFinish(Job* j, long time){
+        void earlyFinish(Job* j, unsigned long time){
           compress(time);
         }
-        void removeJob(Job* j, long time){
+        void removeJob(Job* j, unsigned long time){
           compress(time);
         }
-        void arrival(Job* j, long time){
+        void arrival(Job* j, unsigned long time){
         }
-        void start(Job* j, long time){
+        void start(Job* j, unsigned long time){
         }
-        void tryToStart(long time){
+        void tryToStart(unsigned long time){
         }
         void printPlan(){
         }
-        void onTimeFinish(Job* j, long time){
+        void onTimeFinish(Job* j, unsigned long time){
         }
         void reset(){
         }
@@ -186,18 +187,18 @@ class StatefulScheduler : public Scheduler {
       public:
           PrioritizeCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes);
           void reset();
-          void arrival(Job* j, long time){
+          void arrival(Job* j, unsigned long time){
             backfill->insert(j);
           }
-          void start(Job *j, long time){
+          void start(Job *j, unsigned long time){
             backfill->erase(j);
           }
           void printPlan();
           void done();
-          void earlyFinish(Job* j, long time);
-          void tryToStart(long time);
-          void removeJob(Job* j, long time);
-          void onTimeFinish(Job* j, long time);
+          void earlyFinish(Job* j, unsigned long time);
+          void tryToStart(unsigned long time);
+          void removeJob(Job* j, unsigned long time);
+          void onTimeFinish(Job* j, unsigned long time);
         string getString();
     };
 
@@ -207,17 +208,17 @@ class StatefulScheduler : public Scheduler {
       public:
         DelayedCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp);
         void reset();
-        void arrival(Job* j, long time);
-        void start(Job* j, long time){
+        void arrival(Job* j, unsigned long time);
+        void start(Job* j, unsigned long time){
           backfill->erase(j);
         }
-        void tryToStart(long time);
+        void tryToStart(unsigned long time);
         void printPlan();
         void done();
-        void earlyFinish(Job *j, long time);
-        void fill(long time);
-        void removeJob(Job* j, long time);
-        void onTimeFinish(Job* j, long time);
+        void earlyFinish(Job *j, unsigned long time);
+        void fill(unsigned long time);
+        void removeJob(Job* j, unsigned long time);
+        void onTimeFinish(Job* j, unsigned long time);
         string getString();
       private:
         int results;
@@ -232,16 +233,16 @@ class StatefulScheduler : public Scheduler {
       public:
         EvenLessManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes);
         void deepCopy(set<SchedChange*, SCComparator> *from, set<SchedChange*, SCComparator> *to, map<Job*, SchedChange*, JobComparator> *toJ);
-        void backfillfunc(long time);
-        void arrival(Job* j, long time);
-        void start(Job* j, long time);
-        void tryToStart(long time){};
+        void backfillfunc(unsigned long time);
+        void arrival(Job* j, unsigned long time);
+        void start(Job* j, unsigned long time);
+        void tryToStart(unsigned long time){};
         void printPlan();
         void done(){};
-        void earlyFinish(Job* j, long time);
-        void onTimeFinish(Job* j, long time);
-        void fill(long time);
-        void removeJob(Job* j, long time);
+        void earlyFinish(Job* j, unsigned long time);
+        void onTimeFinish(Job* j, unsigned long time);
+        void fill(unsigned long time);
+        void removeJob(Job* j, unsigned long time);
         void reset();
         string getString();
       private:

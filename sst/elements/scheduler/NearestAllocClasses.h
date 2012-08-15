@@ -99,10 +99,9 @@ class LInfComparator : public binary_function<MeshLocation*, MeshLocation*, bool
 
 class CenterGenerator {
   //a way to generate possible center points
-  private:
-    MachineMesh* machine;  //the machine we're generating for
 
   protected:
+    MachineMesh* machine;  //the machine we're generating for
     CenterGenerator(MachineMesh* m) {
       machine = m;
     }
@@ -139,6 +138,26 @@ class IntersectionCenterGen : public CenterGenerator {
 
     string getSetupInfo(bool comment);
 };
+
+
+class AllCenterGenerator : public CenterGenerator {
+  //generated list is all locations 
+  public:
+
+    AllCenterGenerator(MachineMesh* m) : CenterGenerator(m){
+    }
+
+    vector<MeshLocation*>* getCenters(vector<MeshLocation*>* available);
+
+    string getSetupInfo(bool comment){
+      string com;
+      if(comment) com="# ";
+      else com="";
+      return com+"AllCenterGenerator";
+    }
+
+};
+
 
 //Point Collectors:
 
@@ -303,5 +322,24 @@ class LInfDistFromCenterScorer : public Scorer {
 
     string getSetupInfo(bool comment);
 }; 
+
+
+class L1DistFromCenterScorer : public Scorer {
+  //evaluates by sum of L1 distance from center
+  public:
+    L1DistFromCenterScorer(){
+    }
+
+    pair<long,long>* valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MachineMesh* mach);
+
+    string getSetupInfo(bool comment){
+      string com;
+      if(comment) com="# ";
+      else com="";
+      return com+"L1DistFromCenterScorer";
+    }
+
+};
+
 
 #endif

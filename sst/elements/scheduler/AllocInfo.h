@@ -20,8 +20,6 @@
 
 class Job;
 class Machine;
-//class Mesh;
-//class MeshLocation;
 
 class AllocInfo {
  public:
@@ -35,15 +33,5 @@ class AllocInfo {
   virtual string getProcList();
 };
 
-/*class MeshAllocInfo : public AllocInfo {
-
- public:
-  MeshAllocInfo(Job* j, Mesh* mesh);
-  string getProcList();
-
-  MeshLocation* processors;
-  Mesh* mesh;
-};
-*/
 
 #endif

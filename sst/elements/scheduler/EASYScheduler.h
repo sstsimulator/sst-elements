@@ -30,7 +30,8 @@ class EASYScheduler : public Scheduler {
       LARGEFIRST = 1,
       SMALLFIRST = 2,
       LONGFIRST = 3,
-      SHORTFIRST = 4
+      SHORTFIRST = 4,
+      BETTERFIT = 5
     };
 
     struct compTableEntry {
@@ -38,15 +39,15 @@ class EASYScheduler : public Scheduler {
       string name;
     };
 
-    static const compTableEntry compTable[5];
+    static const compTableEntry compTable[6];
 
 
     string compSetupInfo;
-    void giveGuarantee(long time, Machine* mach);
-    long lastGuarantee;
-    long guaranteedStart;
+    void giveGuarantee(unsigned long time, Machine* mach);
+    unsigned long lastGuarantee;
+    unsigned long guaranteedStart;
     long prevFirstJobNum;
-    AllocInfo* doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, long time);
+    AllocInfo* doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, unsigned long time);
 
   public:
 
@@ -68,12 +69,25 @@ class EASYScheduler : public Scheduler {
       delete running;
     }
 
+    class RunningInfo : public binary_function<RunningInfo*, RunningInfo*,bool> {
+      public:
+        long jobNum;
+        int numProcs;
+        unsigned long estComp;
+        bool operator()(RunningInfo* r1, RunningInfo* r2){
+          if(r1->estComp != r2->estComp)
+            return r1->estComp < r2->estComp;
+          else
+            return r1->jobNum < r2->jobNum;
+        }
+    };
+
     string getSetupInfo(bool comment);
 
-    void jobArrives(Job* j, long time, Machine* mach);
-    void jobFinishes(Job* j, long time, Machine* mach);
+    void jobArrives(Job* j, unsigned long time, Machine* mach);
+    void jobFinishes(Job* j, unsigned long time, Machine* mach);
 
-    AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
+    AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach,
         Statistics* stats);
 
     void reset();
@@ -81,7 +95,7 @@ class EASYScheduler : public Scheduler {
   protected:
     //need to use a set instead of a priority queue to suppport iteration
     set<Job*, JobComparator>* toRun;  //jobs waiting to run
-    multimap<long, Job*>* running; //keeps track of running jobs in order based on their estimated completion time.  Must use multi in case jobs end at same time (careful not to erase jobs by key = finishing time)
+    multiset<RunningInfo*, RunningInfo>* running; //keeps track of running jobs in order based on their estimated completion time.  Must use multi in case jobs end at same time (careful not to erase jobs by key = finishing time)
 
 
 };

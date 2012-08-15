@@ -27,7 +27,7 @@ class Job;
 class ArrivalEvent : public SST::Event {
  public:
 
-  ArrivalEvent(long time, int jobIndex) : SST::Event() {
+  ArrivalEvent(unsigned long time, int jobIndex) : SST::Event() {
     this -> time = time;
     this -> jobIndex = jobIndex;
   }
@@ -37,13 +37,13 @@ class ArrivalEvent : public SST::Event {
   virtual void happen(Machine* mach, Allocator* alloc, Scheduler* sched,
 		      Statistics* stats, Job* arrivingJob);
 
-  long getTime() const;
+  unsigned long getTime() const;
 
   int getJobIndex() const;
 
  protected:
 
-  long time;   //when the event occurs
+  unsigned long time;   //when the event occurs
 
  private:
 

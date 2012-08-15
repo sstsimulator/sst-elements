@@ -21,9 +21,15 @@
 
 class FinalTimeEvent : public SST::Event {
  public:
+   bool forceExecute; //only one final time event is looked at at a given time.
+   //however, if there is (say) a job with length 0, it will not be able to
+   //complete on time as its finaltimeevent will be ignored.  This variable
+   //is therefore set to force schedComponent to handle this event.
+
   FinalTimeEvent() : SST::Event() {
     setPriority(98); // one less than the event that says everything is done
     //(we want this to be after everything except that)
+    forceExecute = false;
   }
 
   friend class boost::serialization::access;

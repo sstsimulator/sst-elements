@@ -27,13 +27,14 @@ using namespace std;
 #include "misc.h"
 #include "Machine.h"
 
-const StatefulScheduler::compTableEntry StatefulScheduler::compTable[5] = {
+const StatefulScheduler::compTableEntry StatefulScheduler::compTable[6] = {
   { FIFO, "fifo"},
   { LARGEFIRST, "largefirst"},
   { SMALLFIRST, "smallfirst"},
   { LONGFIRST, "longfirst"},
-  { SHORTFIRST, "shortfirst"}};
-const int StatefulScheduler::numCompTableEntries = 5;
+  { SHORTFIRST, "shortfirst"},
+  {BETTERFIT, "betterfit"}};
+const int StatefulScheduler::numCompTableEntries = 6;
 
 //each manager has a different constructor for stateful scheduler
 StatefulScheduler::StatefulScheduler(int numprocs, StatefulScheduler::JobComparator* comp, bool dummy){
@@ -91,15 +92,15 @@ string StatefulScheduler::ConservativeManager::getString(){return "Conservative 
 string StatefulScheduler::PrioritizeCompressionManager::getString(){return "PrioritizeCompression Scheduler\n"; }
 string StatefulScheduler::EvenLessManager::getString(){return "Even Less Conservative Scheduler\n"; }
 
-void StatefulScheduler::jobArrives(Job* j, long time, Machine* mach) {
+void StatefulScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) {
   scheduleJob(j, time);
   heart->arrival(j, time);
 }
 
-long StatefulScheduler::scheduleJob(Job* j, long time){
+unsigned long StatefulScheduler::scheduleJob(Job* j, unsigned long time){
   //inserts a job into the estimated schedule as early as possible without causing conflicts
   //updates jobToEvents accordingly
-  long starttime;
+  unsigned long starttime;
   starttime = findTime(estSched, j, time);
   SchedChange* endChange = new SchedChange(starttime + j->getEstimatedRunningTime(), j, true, NULL);
   SchedChange* startChange = new SchedChange(starttime, j, false, endChange);
@@ -111,8 +112,8 @@ long StatefulScheduler::scheduleJob(Job* j, long time){
   return starttime;
 }
 
-long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j, long time) {
-  long intime = time;
+unsigned long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j, unsigned long time) {
+  unsigned long intime = time;
   if (j->getEstimatedRunningTime() == 0)
     return zeroCase(sched, j, intime);
 
@@ -123,7 +124,7 @@ long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j,
   //to traverse schedule
   int currentFree = freeProcs;  //number of procs free at time being considered
   bool done = false;    //whether we've found working anchor point
-  long anchorTime = intime;  //anchor point; possible starting time for job
+  unsigned long anchorTime = intime;  //anchor point; possible starting time for job
   SchedChange *sc = NULL;   //first change we haven't looked at yet
 
   while (!done) {
@@ -131,7 +132,7 @@ long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j,
 
     if (it != sched->end()){
       sc = *(it);
-      long scTime = sc->getTime();
+      unsigned long scTime = sc->getTime();
       if (scTime <= anchorTime)
       {
         currentFree += sc->freeProcChange();
@@ -197,12 +198,12 @@ long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j,
   return anchorTime;
 }
 
-long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched, Job* filler, long time) {
+unsigned long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched, Job* filler, unsigned long time) {
 
   //iterate through event list to find first time where
   //there are enough avaiable procs
   int avaProcs = freeProcs;
-  long lookAtTime = time;//to keep track of time being checked
+  unsigned long lookAtTime = time;//to keep track of time being checked
   if ( avaProcs >= filler->getProcsNeeded()) 
     return time;
 
@@ -279,7 +280,7 @@ long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched, Job* fi
   return lookAtTime;
 }
 
-void StatefulScheduler::jobFinishes(Job* j, long time, Machine* mach){
+void StatefulScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach){
   //remove j from the list of running jobs and update start
 
   set<SchedChange*, SCComparator>::reverse_iterator it = estSched->rend();
@@ -288,7 +289,7 @@ void StatefulScheduler::jobFinishes(Job* j, long time, Machine* mach){
   while(it != estSched->rbegin()&& !success )
   {  
     sc = *(--it);
-    long scTime = sc->getTime();
+    unsigned long scTime = sc->getTime();
     if(scTime < time)
     {
       printPlan();
@@ -331,7 +332,7 @@ void StatefulScheduler::printPlan() {
   heart->printPlan();
 }
 
-void StatefulScheduler::removeJob(Job* j, long time)
+void StatefulScheduler::removeJob(Job* j, unsigned long time)
 {
   //removes job from schedule
   set<SchedChange*, SCComparator>::iterator it  = estSched->begin();
@@ -347,7 +348,7 @@ void StatefulScheduler::removeJob(Job* j, long time)
   }
 }
 
-AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, long time, Machine* mach, Statistics* stats) {
+AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, unsigned long time, Machine* mach, Statistics* stats) {
   //allows the scheduler to start a job if desired; time is current time
   //called after calls to jobArrives and jobFinishes
   //(either after each call or after each call occuring at same time)
@@ -358,7 +359,7 @@ AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, long time, Machine* m
   while(it != estSched->end())
   {
     SchedChange* sc = *(it); 
-    long scTime = sc->getTime();
+    unsigned long scTime = sc->getTime();
     if(scTime < time)
     {
       printPlan();
@@ -412,7 +413,7 @@ StatefulScheduler::JobComparator* StatefulScheduler::JobComparator::Make(string 
 void internal_error(string mesg);
 
 //manager functions:
-void StatefulScheduler::Manager::compress(long time)
+void StatefulScheduler::Manager::compress(unsigned long time)
 {
   //compresses the schedule so jobs start as quickly as possible
   //it is up to the manager to make sure this does not conflict with its guarantees
@@ -439,8 +440,8 @@ void StatefulScheduler::Manager::compress(long time)
     SchedChange* sc = *it;
     if(!sc->isEnd)
     {
-      long scTime = sc->getTime();
-      long newStartTime = scheduler->scheduleJob(sc->j, time);
+      unsigned long scTime = sc->getTime();
+      unsigned long newStartTime = scheduler->scheduleJob(sc->j, time);
       if(newStartTime > scTime)
         error("Attempt to delay estimated start of Job");
       delete sc; 
@@ -475,7 +476,7 @@ void StatefulScheduler::PrioritizeCompressionManager::done(){
       printf("backfilled successfully %d times in a row %d times\n", i, numSBF[i]);
 }
 
-void StatefulScheduler::PrioritizeCompressionManager::earlyFinish(Job* j, long time){
+void StatefulScheduler::PrioritizeCompressionManager::earlyFinish(Job* j, unsigned long time){
   //backfills and compresses as necessary
   int times;
   bool exit = true;
@@ -492,8 +493,8 @@ void StatefulScheduler::PrioritizeCompressionManager::earlyFinish(Job* j, long t
       scheduler->estSched->erase(oldStartTime);
       scheduler->estSched->erase(oldStartTime->getPartner());
 
-      long oldTime = oldStartTime->getTime();
-      long newTime = oldTime;
+      unsigned long oldTime = oldStartTime->getTime();
+      unsigned long newTime = oldTime;
       scheduler->jobToEvents->erase(*it); // otherwise there are multiple pais for the job and the wrong one may be used
       //try to backfill job
       newTime = scheduler->scheduleJob(*it, time);
@@ -527,394 +528,394 @@ void StatefulScheduler::PrioritizeCompressionManager::earlyFinish(Job* j, long t
 
 
 
-  void StatefulScheduler::PrioritizeCompressionManager::tryToStart(long time){
-  }
+void StatefulScheduler::PrioritizeCompressionManager::tryToStart(unsigned long time){
+}
 
-  void StatefulScheduler::PrioritizeCompressionManager::removeJob(Job* j, long time){
-  }
+void StatefulScheduler::PrioritizeCompressionManager::removeJob(Job* j, unsigned long time){
+}
 
-  void StatefulScheduler::PrioritizeCompressionManager::onTimeFinish(Job* j, long time){
-  }
+void StatefulScheduler::PrioritizeCompressionManager::onTimeFinish(Job* j, unsigned long time){
+}
 
-  StatefulScheduler::DelayedCompressionManager::DelayedCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp){
-    scheduler = inscheduler;
-    backfill = new set<Job*, JobComparator>(*comp);
-    results = 0;
-  }
+StatefulScheduler::DelayedCompressionManager::DelayedCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp){
+  scheduler = inscheduler;
+  backfill = new set<Job*, JobComparator>(*comp);
+  results = 0;
+}
 
-  void StatefulScheduler::DelayedCompressionManager::reset(){
-    results = 0;
-    backfill->clear();
-  }
+void StatefulScheduler::DelayedCompressionManager::reset(){
+  results = 0;
+  backfill->clear();
+}
 
-  void StatefulScheduler::DelayedCompressionManager::arrival(Job* j, long time){
-    SchedChange* newJobStart = scheduler->jobToEvents->find(j)->second;
-    SchedChange* newJobEnd = newJobStart->getPartner();
+void StatefulScheduler::DelayedCompressionManager::arrival(Job* j, unsigned long time){
+  SchedChange* newJobStart = scheduler->jobToEvents->find(j)->second;
+  SchedChange* newJobEnd = newJobStart->getPartner();
 
-    scheduler->estSched->erase(newJobStart);
-    scheduler->estSched->erase(newJobEnd);
+  scheduler->estSched->erase(newJobStart);
+  scheduler->estSched->erase(newJobEnd);
 
-    bool moved = false;
-    backfill->insert(j);
+  bool moved = false;
+  backfill->insert(j);
 
 
-    //stop hole from being filled by newly arrived job
+  //stop hole from being filled by newly arrived job
 
-    //other more effecictive methods go here
-    long start = newJobStart->getTime();
+  //other more effecictive methods go here
+  unsigned long start = newJobStart->getTime();
 
-    //check if any existing job can fill that spot
-    for (set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++){//iterate through backfill queue
-      //remove from schedule
+  //check if any existing job can fill that spot
+  for (set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++){//iterate through backfill queue
+    //remove from schedule
 
-      SchedChange *oldStart = scheduler->jobToEvents->find(*it)->second;
-      SchedChange *oldEnd = oldStart->getPartner();
-      if((*it)->getJobNum() != j->getJobNum()){
-        scheduler->estSched->erase(oldStart);
-        scheduler->estSched->erase(oldEnd);
-      }
-      //check where would fit in schedule
-      long newTime = scheduler->findTime(scheduler->estSched, *it, time);
-
-      //if if can move it up
-      if (newTime <= (start + j->getEstimatedRunningTime()) &&
-          newTime != oldStart->getTime()) {
-
-        scheduler->scheduleJob(*it, time);
-        if(((*it)->getJobNum() == j->getJobNum()))
-          moved = true;
-      } else {
-        //else put back in old place
-        if(!((*it)->getJobNum() == j->getJobNum())){
-          scheduler->estSched->insert(oldStart);
-          scheduler->estSched->insert(oldEnd);
-        }
-      }
+    SchedChange *oldStart = scheduler->jobToEvents->find(*it)->second;
+    SchedChange *oldEnd = oldStart->getPartner();
+    if((*it)->getJobNum() != j->getJobNum()){
+      scheduler->estSched->erase(oldStart);
+      scheduler->estSched->erase(oldEnd);
     }
-    if(!moved)
-      scheduler->scheduleJob(j, time); //reschedule new job
-    delete newJobStart;
-    delete newJobEnd;
-  }
+    //check where would fit in schedule
+    unsigned long newTime = scheduler->findTime(scheduler->estSched, *it, time);
 
+    //if if can move it up
+    if (newTime <= (start + j->getEstimatedRunningTime()) &&
+        newTime != oldStart->getTime()) {
 
-
-
-
-  void StatefulScheduler::DelayedCompressionManager::printPlan(){
-    printf(" backfilling queue:\n");
-    for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++)
-      printf("%s\n", (*it)->toString().c_str());
-  }
-
-
-  void StatefulScheduler::DelayedCompressionManager::done(){
-    printf("Backfilled %d times\n", results);
-  }
-
-  void StatefulScheduler::DelayedCompressionManager::earlyFinish(Job* j, long time){
-    fill(time);
-  }
-
-  void StatefulScheduler::DelayedCompressionManager::tryToStart(long time){
-    fill(time);
-  }
-
-  void StatefulScheduler::DelayedCompressionManager::fill(long time){
-    //backfills
-    for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++)
-    {
-      SchedChange* OldStart = scheduler->jobToEvents->find(*it)->second;
-      SchedChange* OldEnd = OldStart->getPartner(); 
-
-      scheduler->estSched->erase(OldStart);
-      scheduler->estSched->erase(OldEnd);
-
-      //check if readding to scheduler allows Job to start now
-      if(time == scheduler->findTime(scheduler->estSched, *it, time)) {
-        //if so reschedule
-        scheduler->scheduleJob(*it, time);
-        results++;
-        delete OldStart;
-        delete OldEnd;
-      }
-      else {
-        scheduler->estSched->insert(OldStart);
-        scheduler->estSched->insert(OldEnd);
-      }
-    }
-  }
-
-  void StatefulScheduler::DelayedCompressionManager::removeJob(Job* j, long time){ }
-
-  void StatefulScheduler::DelayedCompressionManager::onTimeFinish(Job* j, long time){ } 
-
-  StatefulScheduler::EvenLessManager::EvenLessManager(StatefulScheduler* inscheduler, JobComparator* comp, int fillTimes){
-    SCComparator* sccomp = new SCComparator();
-    scheduler = inscheduler;
-    backfill = new set<Job*, JobComparator>(*comp);
-    guarantee = new set<SchedChange*, SCComparator>(*sccomp);
-    guarJobToEvents = new map<Job*, SchedChange*, JobComparator>(*comp);
-    bftimes = fillTimes;
-  }
-
-  void StatefulScheduler::EvenLessManager::deepCopy(set<SchedChange*, SCComparator> *from, set<SchedChange*, SCComparator> *to, map<Job*, SchedChange*, JobComparator> *toJ) {
-    // this does not actually delete elements: to->clear();
-    set<SchedChange*, SCComparator>::iterator sc2 = to->begin();
-    while(!to->empty())
-    {
-      sc2 = to->begin();
-      SchedChange* sc = *sc2;
-      to->erase(sc2);
-      delete sc;
-    }
-    //the elements of toJ are of type pair<> (not a pointer) so can be cleared normally.
-    toJ->clear();
-    for(set<SchedChange*, SCComparator>::iterator sc = from->begin(); sc != from->end(); sc++){
-      if (!((*sc)->isEnd)) {
-        SchedChange* je = new SchedChange((*sc)->getTime()+(*sc)->j->getEstimatedRunningTime(), (*sc)->j, true, NULL);
-        SchedChange* js = new SchedChange((*sc)->getTime(),(*sc)->j,false, je);
-        to->insert(js);
-        to->insert(je);
-        toJ->insert(pair<Job*, SchedChange*>(js->j,js));
-      } else if ((*sc)->isEnd) {
-        if (toJ->find((*sc)->j) == toJ->end()) {
-          SchedChange* je = new SchedChange((*sc)->getTime(), (*sc)->j, true, NULL);
-          to->insert(je);
-        }
-      }
-    }
-
-  }
-
-  void StatefulScheduler::EvenLessManager::backfillfunc(long time){
-    for(int i = 0; i < bftimes; i++){
-      for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++){
-        SchedChange* js = (scheduler->jobToEvents->find(*it)->second);
-        //DEBUG:
-        if(!js)
-          printf("null pointer %p is js\n", js);
-        if(!js->getPartner())
-          printf("null pointer  %p is jspartner\n", js->getPartner());
-        set<SchedChange*,SCComparator>::iterator lower = scheduler->estSched->lower_bound(js->getPartner());
-        set<SchedChange*,SCComparator>::iterator upper =  scheduler->estSched->upper_bound(js->getPartner());
-        --upper;
-        if(lower != upper)
-        {
-          printf("failed equality test:\n");  
-          printf("%p |", *lower);
-          (*lower)->print();
-          printf("%p |", *upper);
-          (*upper)->print();
-        }
-        //***
-        scheduler->estSched->erase(js);
-        scheduler->estSched->erase(js->getPartner());
-        scheduler->jobToEvents->erase(*it);
-
-        long old = js->getTime();
-        long start = scheduler->findTime(scheduler->estSched,*it,time);
-        SchedChange* je = new SchedChange(start+(*it)->getEstimatedRunningTime(),(*it), true, NULL);
-        SchedChange* js2 = new SchedChange(start,(*it),false, je);
-        scheduler->estSched->insert(js2);
-        scheduler->estSched->insert(je);
-        scheduler->jobToEvents->insert(pair<Job*,SchedChange*>((*it),js2));
-
-        if (start==time && old != time) {
-          //We are trying to run something now, check if it would kill the guaranteed
-          //schedule
-
-          SchedChange* gjs = guarJobToEvents->find((*it))->second;
-          if(!gjs)
-            printf("null pointer is gjs\n");
-          SchedChange* gje = gjs->getPartner();
-
-          guarantee->erase(gjs);
-          guarantee->erase(gje);
-
-          //Try adding the new start time to the guarantee
-          //schedule and check if it is broken.
-          guarantee->insert(je);
-          guarantee->insert(js2);
-
-          int freeprocs = scheduler->freeProcs;
-          //We keep track of the last time seen so that the order of
-          //jobs at the same time does not cause a negative value
-          long last = -1;
-          bool destroyed = false;
-          //String reason = "";
-          for (set<SchedChange*,SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++) {
-            //If this is a new time from the last time
-            if (last!=(*sc)->getTime() && freeprocs<0) {
-              destroyed = true;
-              printf("Bad at job |" );
-              (*sc)->print();
-              printf("\nwhen inserting ");
-              je->print();
-              int tempfreeprocs = scheduler->freeProcs;
-              printf("\nguarantee:\n");
-              for (set<SchedChange*,SCComparator>::iterator sc3 = guarantee->begin(); sc3 != guarantee->end(); sc3++) 
-              {
-                tempfreeprocs+= (*sc3)->freeProcChange();
-                printf("%d |",tempfreeprocs);
-                (*sc3)->print();
-              }
-              tempfreeprocs = scheduler->freeProcs;
-              printf("\nestSched:\n");
-              for (set<SchedChange*,SCComparator>::iterator sc3 = scheduler->estSched->begin(); sc3 != scheduler->estSched->end(); sc3++) 
-              {
-                tempfreeprocs+= (*sc3)->freeProcChange();
-                printf("%d |",tempfreeprocs);
-                (*sc3)->print();
-              }
-            }
-
-            last = (*sc)->getTime();
-            freeprocs += (*sc)->freeProcChange();
-          }
-          if (destroyed || freeprocs<0 || freeprocs != scheduler->numProcs) {
-            //The schedule is impossible.
-
-            printf(": backfilling of  destroys schedule ()\n");
-
-            //Use the estimated schedule instead.
-
-            //if we don't take these out, they are in both estSched and guar,
-            //and deepcopy deletes and then copies them
-            guarantee->erase(je);
-            guarantee->erase(js2);
-            deepCopy(scheduler->estSched,guarantee,guarJobToEvents);
-          } else {
-            //Guaranteed schedule looks OK.
-            //Remove the temporary changes.
-            guarantee->erase(je);
-            guarantee->erase(js2);
-            guarantee->insert(gje);
-            guarantee->insert(gjs);
-          }
-        }
-        delete js->getPartner();
-        delete js;//new ones are made to replace them (je and js2)
-
-        if (start < old) {
-          //Backfilled to earlier time.
-          break;
-        } else if (start > old) {
-          error(": Backfilling error, plan:");
-          scheduler->printPlan();
-          error("ELC gave a worse start time to . Old: , New: ");
-        } else {
-          //error(": Unable to backfill ");
-        }
-      }
-    }
-    compress(time);
-  }
-
-
-
-  void StatefulScheduler::EvenLessManager::reset(){
-  }
-
-  void StatefulScheduler::EvenLessManager::arrival(Job* j, long time){
-
-    long gtime = scheduler->findTime(guarantee,j,time);
-    SchedChange* je = new SchedChange(gtime+j->getEstimatedRunningTime(),j,true,NULL);
-    SchedChange* js = new SchedChange(gtime,j,false,je);
-    guarantee->insert(js);
-    guarantee->insert(je);
-    guarJobToEvents->insert(pair<Job*,SchedChange*>(j,js));
-    backfill->insert(j);
-    deepCopy(guarantee, scheduler->estSched, scheduler->jobToEvents);
-    backfillfunc(time);
-  }
-
-  void StatefulScheduler::EvenLessManager::printPlan(){
-    int free = scheduler->freeProcs;
-    for( set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++)
-    {
-      free+=(*sc)->freeProcChange();
-      printf("\t %ld, %d", (*sc)->j->getJobNum() , free);
-    }
-    printf("\n");
-  }
-
-
-  void StatefulScheduler::EvenLessManager::earlyFinish(Job* j, long time){
-    for( set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++)
-      if((*sc)->j->getJobNum() == j->getJobNum())
-      {
-        guarantee->erase(*sc);
-        break;
-      }
-
-    deepCopy(guarantee, scheduler->estSched, scheduler->jobToEvents);
-    backfillfunc(time);
-  }
-
-
-  void StatefulScheduler::EvenLessManager::fill(long time){
-  }
-
-  void StatefulScheduler::EvenLessManager::removeJob(Job* j, long time){
-  }
-
-  void StatefulScheduler::EvenLessManager::onTimeFinish(Job* j, long time){ 
-
-    for( set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++)
-      if((*sc)->j->getJobNum() == j->getJobNum())
-      {
-        guarantee->erase(sc);
-        break;
-      }
-  } 
-
-  void StatefulScheduler::EvenLessManager::start(Job* j, long time){
-    //Remove the job's current guarantees and add a guaranteed end time
-    SchedChange* js = guarJobToEvents->find(j)->second;
-    guarJobToEvents->erase(j);
-    guarantee->erase(js);
-    set<SchedChange*, SCComparator>::iterator temp2 = guarantee->find(js->getPartner());
-    guarantee->erase(js->getPartner());
-    backfill->erase(j);
-    SchedChange* temp = new SchedChange(time+j->getEstimatedRunningTime(),j, true);
-    guarantee->insert(temp);
-    int freeprocs = scheduler->freeProcs;
-
-    //We keep track of the last time seen so that the order of
-    //jobs at the same time does not cause a negative value
-    long last = -1;
-    bool destroyed = false;
-    for(set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); )
-    {
-      //If this is a new time from the last time
-      if (last!=(*sc)->getTime() && freeprocs<0) { //the last test is because a negative (temporarily) is OK if they're all at the same time; and any needed processors are immediately released.
-        destroyed = true;
-        printf("Bad at point %ld | %d \n", (*sc)->getTime(), freeprocs);
-
-      }
-      freeprocs += (*sc)->freeProcChange();
-      last = (*sc)->getTime();
-      sc++;
-    }
-    if (destroyed || freeprocs<0 || freeprocs != scheduler->numProcs) {
-      //The schedule is impossible.
-      if (freeprocs<0)
-        printf( "Negative procs at end | \n");
-      if (freeprocs!=scheduler->numProcs)
-        printf(  "All procs not freed\n");
-
-      printf("the schedule is impossible, using estimated schedule instead\n");
-
-      //Use the estimated schedule instead.
-      deepCopy(scheduler->estSched,guarantee,guarJobToEvents);
+      scheduler->scheduleJob(*it, time);
+      if(((*it)->getJobNum() == j->getJobNum()))
+        moved = true;
     } else {
-      //deepCopy(guarantee,scheduler->estSched,scheduler->jobToEvents);
-      //(this was commented out in the Java as well)
+      //else put back in old place
+      if(!((*it)->getJobNum() == j->getJobNum())){
+        scheduler->estSched->insert(oldStart);
+        scheduler->estSched->insert(oldEnd);
+      }
+    }
+  }
+  if(!moved)
+    scheduler->scheduleJob(j, time); //reschedule new job
+  delete newJobStart;
+  delete newJobEnd;
+}
+
+
+
+
+
+void StatefulScheduler::DelayedCompressionManager::printPlan(){
+  printf(" backfilling queue:\n");
+  for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++)
+    printf("%s\n", (*it)->toString().c_str());
+}
+
+
+void StatefulScheduler::DelayedCompressionManager::done(){
+  printf("Backfilled %d times\n", results);
+}
+
+void StatefulScheduler::DelayedCompressionManager::earlyFinish(Job* j, unsigned long time){
+  fill(time);
+}
+
+void StatefulScheduler::DelayedCompressionManager::tryToStart(unsigned long time){
+  fill(time);
+}
+
+void StatefulScheduler::DelayedCompressionManager::fill(unsigned long time){
+  //backfills
+  for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++)
+  {
+    SchedChange* OldStart = scheduler->jobToEvents->find(*it)->second;
+    SchedChange* OldEnd = OldStart->getPartner(); 
+
+    scheduler->estSched->erase(OldStart);
+    scheduler->estSched->erase(OldEnd);
+
+    //check if readding to scheduler allows Job to start now
+    if(time == scheduler->findTime(scheduler->estSched, *it, time)) {
+      //if so reschedule
+      scheduler->scheduleJob(*it, time);
+      results++;
+      delete OldStart;
+      delete OldEnd;
+    }
+    else {
+      scheduler->estSched->insert(OldStart);
+      scheduler->estSched->insert(OldEnd);
+    }
+  }
+}
+
+void StatefulScheduler::DelayedCompressionManager::removeJob(Job* j, unsigned long time){ }
+
+void StatefulScheduler::DelayedCompressionManager::onTimeFinish(Job* j, unsigned long time){ } 
+
+StatefulScheduler::EvenLessManager::EvenLessManager(StatefulScheduler* inscheduler, JobComparator* comp, int fillTimes){
+  SCComparator* sccomp = new SCComparator();
+  scheduler = inscheduler;
+  backfill = new set<Job*, JobComparator>(*comp);
+  guarantee = new set<SchedChange*, SCComparator>(*sccomp);
+  guarJobToEvents = new map<Job*, SchedChange*, JobComparator>(*comp);
+  bftimes = fillTimes;
+}
+
+void StatefulScheduler::EvenLessManager::deepCopy(set<SchedChange*, SCComparator> *from, set<SchedChange*, SCComparator> *to, map<Job*, SchedChange*, JobComparator> *toJ) {
+  // this does not actually delete elements: to->clear();
+  set<SchedChange*, SCComparator>::iterator sc2 = to->begin();
+  while(!to->empty())
+  {
+    sc2 = to->begin();
+    SchedChange* sc = *sc2;
+    to->erase(sc2);
+    delete sc;
+  }
+  //the elements of toJ are of type pair<> (not a pointer) so can be cleared normally.
+  toJ->clear();
+  for(set<SchedChange*, SCComparator>::iterator sc = from->begin(); sc != from->end(); sc++){
+    if (!((*sc)->isEnd)) {
+      SchedChange* je = new SchedChange((*sc)->getTime()+(*sc)->j->getEstimatedRunningTime(), (*sc)->j, true, NULL);
+      SchedChange* js = new SchedChange((*sc)->getTime(),(*sc)->j,false, je);
+      to->insert(js);
+      to->insert(je);
+      toJ->insert(pair<Job*, SchedChange*>(js->j,js));
+    } else if ((*sc)->isEnd) {
+      if (toJ->find((*sc)->j) == toJ->end()) {
+        SchedChange* je = new SchedChange((*sc)->getTime(), (*sc)->j, true, NULL);
+        to->insert(je);
+      }
     }
   }
 
-  //JobComparator operator
+}
+
+void StatefulScheduler::EvenLessManager::backfillfunc(unsigned long time){
+  for(int i = 0; i < bftimes; i++){
+    for(set<Job*, JobComparator>::iterator it = backfill->begin(); it != backfill->end(); it++){
+      SchedChange* js = (scheduler->jobToEvents->find(*it)->second);
+      //DEBUG:
+      if(!js)
+        printf("null pointer %p is js\n", js);
+      if(!js->getPartner())
+        printf("null pointer  %p is jspartner\n", js->getPartner());
+      set<SchedChange*,SCComparator>::iterator lower = scheduler->estSched->lower_bound(js->getPartner());
+      set<SchedChange*,SCComparator>::iterator upper =  scheduler->estSched->upper_bound(js->getPartner());
+      --upper;
+      if(lower != upper)
+      {
+        printf("failed equality test:\n");  
+        printf("%p |", *lower);
+        (*lower)->print();
+        printf("%p |", *upper);
+        (*upper)->print();
+      }
+      //***
+      scheduler->estSched->erase(js);
+      scheduler->estSched->erase(js->getPartner());
+      scheduler->jobToEvents->erase(*it);
+
+      unsigned long old = js->getTime();
+      unsigned long start = scheduler->findTime(scheduler->estSched,*it,time);
+      SchedChange* je = new SchedChange(start+(*it)->getEstimatedRunningTime(),(*it), true, NULL);
+      SchedChange* js2 = new SchedChange(start,(*it),false, je);
+      scheduler->estSched->insert(js2);
+      scheduler->estSched->insert(je);
+      scheduler->jobToEvents->insert(pair<Job*,SchedChange*>((*it),js2));
+
+      if (start==time && old != time) {
+        //We are trying to run something now, check if it would kill the guaranteed
+        //schedule
+
+        SchedChange* gjs = guarJobToEvents->find((*it))->second;
+        if(!gjs)
+          printf("null pointer is gjs\n");
+        SchedChange* gje = gjs->getPartner();
+
+        guarantee->erase(gjs);
+        guarantee->erase(gje);
+
+        //Try adding the new start time to the guarantee
+        //schedule and check if it is broken.
+        guarantee->insert(je);
+        guarantee->insert(js2);
+
+        int freeprocs = scheduler->freeProcs;
+        //We keep track of the last time seen so that the order of
+        //jobs at the same time does not cause a negative value
+        unsigned long last = (unsigned long)-1;
+        bool destroyed = false;
+        //String reason = "";
+        for (set<SchedChange*,SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++) {
+          //If this is a new time from the last time
+          if (last!=(*sc)->getTime() && freeprocs<0) {
+            destroyed = true;
+            printf("Bad at job |" );
+            (*sc)->print();
+            printf("\nwhen inserting ");
+            je->print();
+            int tempfreeprocs = scheduler->freeProcs;
+            printf("\nguarantee:\n");
+            for (set<SchedChange*,SCComparator>::iterator sc3 = guarantee->begin(); sc3 != guarantee->end(); sc3++) 
+            {
+              tempfreeprocs+= (*sc3)->freeProcChange();
+              printf("%d |",tempfreeprocs);
+              (*sc3)->print();
+            }
+            tempfreeprocs = scheduler->freeProcs;
+            printf("\nestSched:\n");
+            for (set<SchedChange*,SCComparator>::iterator sc3 = scheduler->estSched->begin(); sc3 != scheduler->estSched->end(); sc3++) 
+            {
+              tempfreeprocs+= (*sc3)->freeProcChange();
+              printf("%d |",tempfreeprocs);
+              (*sc3)->print();
+            }
+          }
+
+          last = (*sc)->getTime();
+          freeprocs += (*sc)->freeProcChange();
+        }
+        if (destroyed || freeprocs<0 || freeprocs != scheduler->numProcs) {
+          //The schedule is impossible.
+
+          printf(": backfilling of  destroys schedule ()\n");
+
+          //Use the estimated schedule instead.
+
+          //if we don't take these out, they are in both estSched and guar,
+          //and deepcopy deletes and then copies them
+          guarantee->erase(je);
+          guarantee->erase(js2);
+          deepCopy(scheduler->estSched,guarantee,guarJobToEvents);
+        } else {
+          //Guaranteed schedule looks OK.
+          //Remove the temporary changes.
+          guarantee->erase(je);
+          guarantee->erase(js2);
+          guarantee->insert(gje);
+          guarantee->insert(gjs);
+        }
+      }
+      delete js->getPartner();
+      delete js;//new ones are made to replace them (je and js2)
+
+      if (start < old) {
+        //Backfilled to earlier time.
+        break;
+      } else if (start > old) {
+        error(": Backfilling error, plan:");
+        scheduler->printPlan();
+        error("ELC gave a worse start time to . Old: , New: ");
+      } else {
+        //error(": Unable to backfill ");
+      }
+    }
+  }
+  compress(time);
+}
+
+
+
+void StatefulScheduler::EvenLessManager::reset(){
+}
+
+void StatefulScheduler::EvenLessManager::arrival(Job* j, unsigned long time){
+
+  unsigned long gtime = scheduler->findTime(guarantee,j,time);
+  SchedChange* je = new SchedChange(gtime+j->getEstimatedRunningTime(),j,true,NULL);
+  SchedChange* js = new SchedChange(gtime,j,false,je);
+  guarantee->insert(js);
+  guarantee->insert(je);
+  guarJobToEvents->insert(pair<Job*,SchedChange*>(j,js));
+  backfill->insert(j);
+  deepCopy(guarantee, scheduler->estSched, scheduler->jobToEvents);
+  backfillfunc(time);
+}
+
+void StatefulScheduler::EvenLessManager::printPlan(){
+  int free = scheduler->freeProcs;
+  for( set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++)
+  {
+    free+=(*sc)->freeProcChange();
+    printf("\t %ld, %d", (*sc)->j->getJobNum() , free);
+  }
+  printf("\n");
+}
+
+
+void StatefulScheduler::EvenLessManager::earlyFinish(Job* j, unsigned long time){
+  for( set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++)
+    if((*sc)->j->getJobNum() == j->getJobNum())
+    {
+      guarantee->erase(*sc);
+      break;
+    }
+
+  deepCopy(guarantee, scheduler->estSched, scheduler->jobToEvents);
+  backfillfunc(time);
+}
+
+
+void StatefulScheduler::EvenLessManager::fill(unsigned long time){
+}
+
+void StatefulScheduler::EvenLessManager::removeJob(Job* j, unsigned long time){
+}
+
+void StatefulScheduler::EvenLessManager::onTimeFinish(Job* j, unsigned long time){ 
+
+  for( set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); sc++)
+    if((*sc)->j->getJobNum() == j->getJobNum())
+    {
+      guarantee->erase(sc);
+      break;
+    }
+} 
+
+void StatefulScheduler::EvenLessManager::start(Job* j, unsigned long time){
+  //Remove the job's current guarantees and add a guaranteed end time
+  SchedChange* js = guarJobToEvents->find(j)->second;
+  guarJobToEvents->erase(j);
+  guarantee->erase(js);
+  set<SchedChange*, SCComparator>::iterator temp2 = guarantee->find(js->getPartner());
+  guarantee->erase(js->getPartner());
+  backfill->erase(j);
+  SchedChange* temp = new SchedChange(time+j->getEstimatedRunningTime(),j, true);
+  guarantee->insert(temp);
+  int freeprocs = scheduler->freeProcs;
+
+  //We keep track of the last time seen so that the order of
+  //jobs at the same time does not cause a negative value
+  unsigned long last = (unsigned long)-1;
+  bool destroyed = false;
+  for(set<SchedChange*, SCComparator>::iterator sc = guarantee->begin(); sc != guarantee->end(); )
+  {
+    //If this is a new time from the last time
+    if (last!=(*sc)->getTime() && freeprocs<0) { //the last test is because a negative (temporarily) is OK if they're all at the same time; and any needed processors are immediately released.
+      destroyed = true;
+      printf("Bad at point %ld | %d \n", (*sc)->getTime(), freeprocs);
+
+    }
+    freeprocs += (*sc)->freeProcChange();
+    last = (*sc)->getTime();
+    sc++;
+  }
+  if (destroyed || freeprocs<0 || freeprocs != scheduler->numProcs) {
+    //The schedule is impossible.
+    if (freeprocs<0)
+      printf( "Negative procs at end | \n");
+    if (freeprocs!=scheduler->numProcs)
+      printf(  "All procs not freed\n");
+
+    printf("the schedule is impossible, using estimated schedule instead\n");
+
+    //Use the estimated schedule instead.
+    deepCopy(scheduler->estSched,guarantee,guarJobToEvents);
+  } else {
+    //deepCopy(guarantee,scheduler->estSched,scheduler->jobToEvents);
+    //(this was commented out in the Java as well)
+  }
+}
+
+//JobComparator operator
 bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2){ 
   //true means j1 comes before j2
   //for this to work correctly, it returns the reverse of what it would
@@ -969,6 +970,25 @@ bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
 
       //break ties so different jobs are never equal:
       return j2 -> getJobNum() > j1 -> getJobNum();
+
+    case BETTERFIT:
+      //Primary criteria: Most Processors Required
+      if(j1->getProcsNeeded() != j2->getProcsNeeded())
+        return (j2->getProcsNeeded() < j1->getProcsNeeded());
+
+      //Secondary criteria: Longest Run Time
+      if(j1->getEstimatedRunningTime() != j2->getEstimatedRunningTime()) {
+        return (j2->getEstimatedRunningTime() < j1->getEstimatedRunningTime());
+      }
+
+      //Tertiary criteria: Arrival Time
+      if(j1->getArrivalTime() != j2->getArrivalTime()) {
+        return  (j2->getArrivalTime() > j1->getArrivalTime());
+      }
+
+      //break ties so different jobs are never equal:
+      return j2 -> getJobNum() > j1 -> getJobNum();
+
     default:
       internal_error("operator() called on JobComparator w/ invalid type");
       return true;  //never reach here
@@ -988,10 +1008,12 @@ string StatefulScheduler::JobComparator::toString() {
       return "LongestFirstComparator";
     case SHORTFIRST:
       return "ShortestFirstComparator";
+    case BETTERFIT:
+      return "BestFitComparator";
     default:
       internal_error("toString() called on JobComparator w/ invalid type");
   }
-      return "";  //never reach here...
+  return "";  //never reach here...
 }
 
 

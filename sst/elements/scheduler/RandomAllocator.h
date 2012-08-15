@@ -26,7 +26,7 @@
 class RandomAllocator : public Allocator {
 
   public:
-    RandomAllocator(MachineMesh* mesh);
+    RandomAllocator(Machine* mesh);
 
     RandomAllocator Make(vector<string*>* params);
 

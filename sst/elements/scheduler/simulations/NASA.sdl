@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <sdl version="2.0"/>
 
 <config>
@@ -11,6 +10,9 @@
   <component name="s" type="scheduler.schedComponent" rank=0>
     <params>
       <traceName>NASA.sim</traceName>
+	<scheduler>easy[largefirst]</scheduler>
+	<machine>mesh[16,8]</machine>
+	<allocator>sortedfreelist</allocator>
     </params>
    <link name="l0" port="nodeLink0" latency="0 ns"/>
    <link name="l1" port="nodeLink1" latency="0 ns"/>

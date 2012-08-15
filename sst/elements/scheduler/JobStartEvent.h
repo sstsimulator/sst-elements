@@ -19,12 +19,12 @@
 class JobStartEvent : public SST::Event {
  public:
 
-  JobStartEvent(long time, int jobNum) : SST::Event() {
+  JobStartEvent(unsigned long time, int jobNum) : SST::Event() {
     this -> time = time;
     this -> jobNum = jobNum;
   }
 
-  long time;   //the length of the started job
+  unsigned long time;   //the length of the started job
 
   int jobNum;
 

@@ -39,6 +39,7 @@ public:
   void startJob(AllocInfo* ai);
 
 private:
+  unsigned long lastfinaltime;
   schedComponent();  // for serialization only
   schedComponent(const schedComponent&); // do not implement
   void operator=(const schedComponent&); // do not implement

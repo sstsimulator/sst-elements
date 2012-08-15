@@ -19,7 +19,7 @@
 #include "Statistics.h"
 #include "Job.h"
 
-long ArrivalEvent::getTime() const {
+unsigned long ArrivalEvent::getTime() const {
   return time;
 }
 

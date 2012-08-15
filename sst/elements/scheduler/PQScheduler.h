@@ -26,7 +26,8 @@ class PQScheduler : public Scheduler {
       LARGEFIRST = 1,
       SMALLFIRST = 2,
       LONGFIRST = 3,
-      SHORTFIRST = 4
+      SHORTFIRST = 4,
+      BETTERFIT = 5
     };
 
     struct compTableEntry {
@@ -34,7 +35,7 @@ class PQScheduler : public Scheduler {
       string name;
     };
 
-    static const compTableEntry compTable[5] ;
+    static const compTableEntry compTable[6] ;
 
 
     static const int numCompTableEntries;
@@ -61,11 +62,11 @@ class PQScheduler : public Scheduler {
     //static string getParamHelp();
     string getSetupInfo(bool comment);
 
-    void jobArrives(Job* j, long time, Machine* mach);
+    void jobArrives(Job* j, unsigned long time, Machine* mach);
 
-    void jobFinishes(Job* j, long time, Machine* mach){}
+    void jobFinishes(Job* j, unsigned long time, Machine* mach){}
 
-    AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
+    AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach,
         Statistics* stats);
 
     void reset();

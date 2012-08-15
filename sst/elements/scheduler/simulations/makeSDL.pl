@@ -4,7 +4,8 @@ $n = $ARGV[0];
 
 {
     print <<EOT
-<?xml version="2.0"?>
+<?xml version="1.0"?>
+<sdl version="2.0"/>
 
 <config>
     run-mode=both
@@ -15,12 +16,15 @@ $n = $ARGV[0];
   <component name="s" type="scheduler.schedComponent" rank=0>
     <params>
       <traceName>$ARGV[1]</traceName>
+	<scheduler>$ARGV[2]</scheduler>
+	<machine>$ARGV[3]</machine>
+	<allocator>$ARGV[4]</allocator>
     </params>
 EOT
 }
 
 for ($i = 0; $i < $n; ++$i) {
-    printf("   <link name=\"l$i\" port=\"nodeLink$i\" latency=\"1 ns\"/>\n");
+    printf("   <link name=\"l$i\" port=\"nodeLink$i\" latency=\"0 ns\"/>\n");
 }
 printf(" </component>\n\n");
 
@@ -30,7 +34,7 @@ print <<EOT
    <params>
      <nodeNum>$i</nodeNum>
    </params>
-   <link name="l$i" port="Scheduler" latency="1 ns"/>
+   <link name="l$i" port="Scheduler" latency="0 ns"/>
  </component>
 EOT
 }

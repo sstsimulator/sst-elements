@@ -32,24 +32,4 @@ string AllocInfo::getProcList() {
   return "";
 }
 
-/*string MeshAllocInfo::getProcList() {
-  string ret= "";
-
-  int num = job -> getProcsNeeded();
-  for(int i=0; i<num; i++) {
-    MeshLocation* ml = processors + i;	
-    ret += (ml->x + mesh->getXDim()*ml->y 
-	    + mesh->getXDim()*mesh->getYDim()*ml->z);
-    if(i < num-1)
-      ret += ",";
-  }
-  
-  return ret;	
-}
-
-MeshAllocInfo::MeshAllocInfo(Job* j, Mesh* mesh) : AllocInfo(j) {
-  processors = new MeshLocation[j->getProcsNeeded()];
-  this -> mesh = mesh;
-}
-*/
 

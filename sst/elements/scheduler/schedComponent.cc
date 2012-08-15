@@ -21,14 +21,8 @@
 
 
 #include "misc.h"
-#include "PQScheduler.h"
-#include "EASYScheduler.h"
-#include "StatefulScheduler.h"
-#include "schedComponent.h"
-#include "SimpleAllocator.h"
-#include "RandomAllocator.h"
-#include "NearestAllocator.h"
-#include "SimpleMachine.h"
+#include "Factory.h"
+#include "MachineMesh.h"
 #include "MachineMesh.h"
 
 using namespace SST;
@@ -40,6 +34,7 @@ Machine* schedComponent::getMachine() {
 
 schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
+    lastfinaltime = ~0;
 
   if ( params.find("traceName") == params.end() ) {
     _abort(event_test,"couldn't find trace name\n");
@@ -71,31 +66,28 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   }
 
   selfLink = configureSelfLink("linkToSelf",
-			       new Event::Handler<schedComponent>(this,
-								  &schedComponent::handleJobArrivalEvent) );
+      new Event::Handler<schedComponent>(this,
+        &schedComponent::handleJobArrivalEvent) );
   selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
-  unsigned int xdim = 1;
-  unsigned int ydim = 1;
-  for(xdim = 1; xdim*xdim <= nodes.size(); xdim++){}
-  bool flag = true;
-  while(flag && --xdim > 1)
-  {
-    ydim = nodes.size()/xdim;
-    if(ydim*xdim == nodes.size())
-      flag = false;
-  }
-  if(xdim == 1)
-    error("prime number of nodes in mesh");
-  else
-    printf("\n#xdim: %u ydim: %u\n", xdim, ydim, nodes.size());
-  machine = new MachineMesh(xdim,ydim,1, this);
-  scheduler = new EASYScheduler(EASYScheduler::JobComparator::Make("longfirst"));
-  vector<string>* allocparams = new vector<string>;
-  allocparams->push_back("MC1x1");
-  theAllocator = new NearestAllocator(allocparams, dynamic_cast<MachineMesh*>(machine));
+
+  printf("\n");
+  Factory factory;
+  machine = factory.getMachine(params, nodes.size(), this);
+  scheduler = factory.getScheduler(params, nodes.size());
+  theAllocator = factory.getAllocator(params, machine);
   string trace = params[ "traceName" ].c_str();
-  char timestring[] = "time,alloc";
-  stats = new Statistics(machine, scheduler, theAllocator, trace, timestring);
+
+  if(dynamic_cast<MachineMesh*>(machine) == NULL)
+  {
+    char timestring[] = "time";
+    stats = new Statistics(machine, scheduler, theAllocator, trace, timestring);
+  }
+  else
+  {
+    //the alloc output only works on a mesh because it calculates L1 distances
+    char timestring[] = "time,alloc";
+    stats = new Statistics(machine, scheduler, theAllocator, trace, timestring);
+  }
   ifstream input;
   char* inputDir = getenv("SIMINPUT");
   if(inputDir != NULL) {
@@ -137,10 +129,10 @@ bool schedComponent::newJobLine( std::string line ){
   if(line.find_first_not_of(" \t\n") == string::npos)
     return false;
 
-  long arrivalTime;
+ unsigned long arrivalTime;
   int procsNeeded;
-  long runningTime;
-  long estRunningTime;
+  unsigned long runningTime;
+  unsigned long estRunningTime;
   int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
                    &procsNeeded, &runningTime, &estRunningTime);
   if(num < 3)
@@ -200,6 +192,8 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
     if ((--(runningJobs[jobNum].i)) == 0) {
       finishingcomp.push_back(event);
       FinalTimeEvent *fte = new FinalTimeEvent();
+      if(runningJobs[jobNum].ai->job->getStartTime() == getCurrentSimTime())
+        fte->forceExecute = true;
       selfLink->Send(0, fte); //send back an event at the same time so we know it finished
     }
   }
@@ -233,6 +227,8 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       theAllocator->deallocate(ai);
       stats->jobFinishes(ai, getCurrentSimTime());
       scheduler->jobFinishes(ai->job, getCurrentSimTime(), machine);
+      delete ai; //the job is done and deleted from our records; don't need
+      //its allocinfo again
 
       //tries to start job
       AllocInfo* allocInfo;
@@ -264,8 +260,15 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
   }
   else
   {
-    if ( dynamic_cast<FinalTimeEvent*>(ev))
+    FinalTimeEvent* fev = dynamic_cast<FinalTimeEvent*>(ev);
+    if(fev)
     {
+      if(lastfinaltime == getCurrentSimTime() && !fev->forceExecute)
+        return; //ignore duplicate final time events (unless the event forces us
+                //to handle them)
+      else
+        lastfinaltime = getCurrentSimTime();
+
       while(!finishingcomp.empty())
       {
         vector<CompletionEvent*>::iterator it = finishingcomp.begin();
@@ -277,6 +280,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
         theAllocator->deallocate(ai);
         stats->jobFinishes(ai, getCurrentSimTime());
         scheduler->jobFinishes(ai->job, getCurrentSimTime(), machine);
+        delete ai;
         if(jobNum == jobs.back().jobNum)
         {
           while(!jobs.empty() && runningJobs.find(jobs.back().jobNum) == runningJobs.end())

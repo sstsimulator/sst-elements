@@ -101,6 +101,22 @@ string IntersectionCenterGen::getSetupInfo(bool comment){
   return com+"IntersectionCenterGen";
 }
 
+
+vector<MeshLocation*>* AllCenterGenerator::getCenters(vector<MeshLocation*>* available) {
+  //returns List containing all locations in mesh
+  vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
+
+  int xdim = machine->getXDim();
+  int ydim = machine->getYDim();
+  int zdim = machine->getZDim();
+  for(int i=0; i<xdim; i++)
+    for(int j=0; j<ydim; j++)
+      for(int k=0; k<zdim; k++)
+        retVal->push_back(new MeshLocation(i,j,k));
+  return retVal;
+}
+
+
 //Point Collectors:
 
 vector<MeshLocation*>* L1PointCollector::getNearest(MeshLocation* center, int num,
@@ -156,8 +172,7 @@ string GreedyLInfPointCollector::PointInfo::toString(){
   return ret.str();
 }
 
-vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center, int num,
-    vector<MeshLocation*>* available) {
+vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center, int num, vector<MeshLocation*>* available) {
   vector<MeshLocation*>* tempavail = new vector<MeshLocation*>;
   for(unsigned int x = 0; x < available->size(); x++)
     tempavail->push_back(available->at(x));
@@ -182,16 +197,16 @@ vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center
   for (int i=0; i<outerIndex; ++i){
     innerProcs->push_back((*tempavail)[i]);
   }
+  PointInfo PIComp(NULL,0); //a dummy PointInfo that serves as the comparator (as we must give a specific comparator in C++)
   //Put points in the outer shell into PointInfos with L1 distance to rest of group
-  vector<PointInfo*>* outerProcs = new vector<PointInfo*>();
+  set<PointInfo*, PointInfo >* outerProcs = new set<PointInfo*, PointInfo>(PIComp);
+  set<PointInfo*, PointInfo >* newouterProcs = new set<PointInfo*, PointInfo>(PIComp); //helps change the values within a set as this cannot be done directly
   for (unsigned int i=outerIndex;i<tempavail->size();i++){
     PointInfo* outerPoint = new PointInfo((*tempavail)[i], L1toInner((*tempavail)[i],innerProcs));
     outerPoint->tieBreaker = outerPoint->point->L1DistanceTo(center);
-    outerProcs->push_back(outerPoint);
+    outerProcs->insert(outerPoint);
   }
-  PointInfo PIComp(NULL,0); //a dummy PointInfo that serves as the comparator (as we must give a specific comparator in C++)
-  stable_sort(outerProcs->begin(), outerProcs->end(),PIComp );
-  //(*(outerProcs->begin()))->point->print();
+
   //Find the minimum L1toGroup, add it to tempavail
   int totalSelected = innerProcs->size();	//Keeps track of all the processors thus far added
   while (totalSelected < num){
@@ -200,16 +215,22 @@ vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center
     outerProcs->erase(outerProcs->begin());
     ++totalSelected; 	//Make progress in the loop
     //recalculate all the other distances adding this point into the inner group.
+    newouterProcs->clear(); //don't have to do deletes because all pointers
+    //are in outerProcs anyway
     if ( totalSelected < num){	//TODO bad form?
-      for (vector<PointInfo*>::iterator info = outerProcs->begin(); info != outerProcs->end(); info++){
-        //printf("info*: %p %p %d\n", *info, (*info)->point, (*info)->L1toGroup);
+      for (set<PointInfo*, PointInfo>::iterator info = outerProcs->begin(); info != outerProcs->end(); info++){
         if((*info)->L1toGroup < 0)
           exit(0);
         //instead of recalculating the whole thing, we just need to add another length to the total distance
-        (*info)->L1toGroup +=  (*info)->point->L1DistanceTo(first->point);
-        //printf("info* after change: %p %p %d\n", *info, (*info)->point, (*info)->L1toGroup);
+        //sets cannot have values changed so must erase and reinsert the pointinfo, using newouterProcs as an intermediary so the iterator isn't invalidated
+        PointInfo* iter = *info;
+        (iter)->L1toGroup +=  (iter)->point->L1DistanceTo(first->point);
+        newouterProcs->insert(iter);
       }
-      stable_sort(outerProcs->begin(), outerProcs->end(),PIComp );
+      outerProcs->clear();
+      set<PointInfo*, PointInfo>* temp = outerProcs;
+      outerProcs = newouterProcs;
+      newouterProcs = temp;
     }
     delete first; //the point may still be used but the PointInfo will not
     first = NULL;
@@ -307,7 +328,9 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
   //Subtract from score for bordering allocated processors
   if(borderFactor!=0){
     vector<MeshLocation*>* used = mesh->usedProcessors();
-    stable_sort(used->begin(), used->end(),*(new LInfComparator(center->x,center->y,center->z)));
+    LInfComparator* lc = new LInfComparator(center->x,center->y,center->z);
+    stable_sort(used->begin(), used->end(),*lc);
+    delete lc;
     for(vector<MeshLocation*>::iterator it = used->begin(); it != used->end(); ++it){
       MeshLocation* ml = *it;
       long dist = center->LInfDistanceTo(ml);
@@ -318,6 +341,14 @@ long Tiebreaker::getTiebreak(MeshLocation* center, vector<MeshLocation*>* avail,
         bscore -= borderFactor * (lastlook - dist + 1);
       }
     }
+    //get rid of everything in used as it was allocated during the function call
+    while(!used->empty())
+    {
+      delete used->back();
+      used->pop_back();
+    }
+    used->clear();
+    delete used;
   }
 
   //Add to score for being at a worse curve location
@@ -380,5 +411,13 @@ string  LInfDistFromCenterScorer::getSetupInfo(bool comment){
   else com="";
   ret << com<<"LInfDistFromCenterScorer (Tiebreaker: "<<tiebreaker->getInfo()<<")";
   return ret.str();
+}
+
+pair<long,long>* L1DistFromCenterScorer::valueOf(MeshLocation* center, vector<MeshLocation*>* procs, int num, MachineMesh* mach) {
+  //returns sum of L1 distances from center
+  long retVal = 0;
+  for(int i=0; i<num; i++)
+    retVal += center->L1DistanceTo(procs->at(i));
+  return new pair<long,long>(retVal,0);
 }
 

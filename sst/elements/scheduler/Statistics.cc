@@ -130,13 +130,13 @@ Statistics::~Statistics() {
   delete record;
 }
 
-void Statistics::jobArrives(long time) {   //called when a job has arrived
+void Statistics::jobArrives(unsigned long time) {   //called when a job has arrived
   tempWaiting++;
   if(record[WAIT])
     writeWaiting(time);
 }
 
-void Statistics::jobStarts(AllocInfo* allocInfo, long time) {
+void Statistics::jobStarts(AllocInfo* allocInfo, unsigned long time) {
   //called every time a job starts
 
   if(record[ALLOC])
@@ -160,7 +160,7 @@ void Statistics::jobStarts(AllocInfo* allocInfo, long time) {
   currentTime = time;
 }
 
-void Statistics::jobFinishes(AllocInfo* allocInfo, long time) {
+void Statistics::jobFinishes(AllocInfo* allocInfo, unsigned long time) {
   //called every time a job completes
 
   /*
@@ -182,16 +182,16 @@ void Statistics::jobFinishes(AllocInfo* allocInfo, long time) {
   currentTime = time;
 }
 
-void Statistics::writeTime(AllocInfo* allocInfo, long time) {
+void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time) {
   //write time statistics to a file
 
-  long arrival = allocInfo -> job -> getArrivalTime();
-  long runtime = allocInfo -> job -> getActualTime();
-  long startTime = allocInfo -> job -> getStartTime();
+  unsigned long arrival = allocInfo -> job -> getArrivalTime();
+  unsigned long runtime = allocInfo -> job -> getActualTime();
+  unsigned long startTime = allocInfo -> job -> getStartTime();
   int procsneeded = allocInfo -> job -> getProcsNeeded();
 
   char mesg[100];
-  sprintf(mesg, "%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%d\n",
+  sprintf(mesg, "%ld\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%d\n",
 	  allocInfo -> job -> getJobNum(),  //Job Num
 	  arrival,			    //Arrival time
 	  startTime,                        //Start time(currentTime)
@@ -210,7 +210,7 @@ void Statistics::writeAlloc(AllocInfo* allocInfo) {
   MeshAllocInfo* mai = static_cast<MeshAllocInfo*>(allocInfo);
   char mesg[100];
   int num = mai -> job -> getProcsNeeded();
-  sprintf(mesg, "%d\t%ld\t%ld\n",
+  sprintf(mesg, "%d\t%lu\t%ld\n",
 	  num,
 	  mai -> job -> getActualTime(),
 	  ((MachineMesh*)(machine))-> pairwiseL1Distance(mai -> processors));
@@ -224,35 +224,35 @@ void Statistics::writeVisual(string mesg) {
 }
 
 
-void Statistics::writeUtil(long time) {
+void Statistics::writeUtil(unsigned long time) {
   //method to write utilization statistics to file
   //force it to write last entry by setting time = -1
 
-  if(lastUtilTime == -1) {  //if first observation, just remember it
+  if(lastUtilTime == (unsigned long)-1) {  //if first observation, just remember it
     lastUtil = procsUsed;
     lastUtilTime = time;
     return;
   }
 
-  if((procsUsed == lastUtil) && (time != -1))  
+  if((procsUsed == lastUtil) && (time != (unsigned long)-1))  
     return;  //don't record if utilization unchanged unless forced
   if(lastUtilTime == time) {  //update record of utilization for this time
     lastUtil = procsUsed;
   } else {  //actually record the previous utilization
     char mesg[100];
-    sprintf(mesg, "%ld\t%d\n", lastUtilTime, lastUtil);
+    sprintf(mesg, "%lu\t%d\n", lastUtilTime, lastUtil);
     appendToLog(mesg, supportedLogs[UTIL].logName);
     lastUtil = procsUsed;
     lastUtilTime = time;
   }
 }
 
-void Statistics::writeWaiting(long time) {
+void Statistics::writeWaiting(unsigned long time) {
   //possibly add line to log recording number of waiting jobs
   //  (only prints 1 line per time: #waiting jobs after all events at that time)
   //argument is current time or -1 at end of trace
 
-  if(lastWaitTime == -1) {  //if first observation, just remember it
+  if(lastWaitTime == (unsigned long)-1) {  //if first observation, just remember it
     lastWaitTime = time;
     return;
   }
@@ -263,7 +263,7 @@ void Statistics::writeWaiting(long time) {
   } else {  //actually record the previous # waiting jobs
     if (lastWaitJobs != waitingJobs) {
       char mesg[100];
-      sprintf(mesg, "%ld\t%d\n", lastWaitTime, waitingJobs);
+      sprintf(mesg, "%lu\t%d\n", lastWaitTime, waitingJobs);
       appendToLog(mesg, supportedLogs[WAIT].logName);
     }
     

@@ -25,8 +25,10 @@
 
 using namespace std;
 
-RandomAllocator::RandomAllocator(MachineMesh* mesh) {
-  machine = mesh;
+RandomAllocator::RandomAllocator(Machine* mesh) {
+  machine = dynamic_cast<MachineMesh*>(mesh);
+  if(machine == NULL)
+    error("Random Allocator requires Mesh");
   srand(0);
 }
 /*
@@ -73,5 +75,9 @@ AllocInfo* RandomAllocator::allocate(Job* job) {
     retVal->nodeIndices[i] = (*available)[num]->toInt((MachineMesh*)machine);
     available->erase(available->begin() + num);
   }
+  for(int i = 0; i < (int)available->size(); i++)
+    delete available->at(i);
+  available->clear();
+  delete available;
   return retVal;
 }

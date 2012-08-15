@@ -33,15 +33,15 @@ class Scheduler {
 
     virtual string getSetupInfo(bool comment) = 0;
 
-    virtual void jobArrives(Job* j, long time, Machine* mach) = 0;
+    virtual void jobArrives(Job* j, unsigned long time, Machine* mach) = 0;
     //called when j arrives; time is current time
     //tryToStart will be called after announcing all arriving jobs
 
-    virtual void jobFinishes(Job* j, long time, Machine* mach) = 0;
+    virtual void jobFinishes(Job* j, unsigned long time, Machine* mach) = 0;
     //called when j finishes; time is current time
     //tryToStart will be called after announcing all arriving jobs
 
-    virtual AllocInfo* tryToStart(Allocator* alloc, long time, Machine* mach,
+    virtual AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach,
         Statistics* stats) = 0;
     //allows the scheduler to start a job if desired; time is current time
     //called after calls to jobArrives and jobFinishes

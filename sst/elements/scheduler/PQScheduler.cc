@@ -33,9 +33,10 @@ const PQScheduler::compTableEntry PQScheduler::compTable[] = {
   { LARGEFIRST, "largefirst"},
   { SMALLFIRST, "smallfirst"},
   { LONGFIRST, "longfirst"},
-  { SHORTFIRST, "shortfirst"}};
+  { SHORTFIRST, "shortfirst"},
+  {BETTERFIT, "betterfit"}};
 
-const int PQScheduler::numCompTableEntries = 5;
+const int PQScheduler::numCompTableEntries = 6;
 
 PQScheduler::PQScheduler(JobComparator* comp) {
   toRun = new priority_queue<Job*,vector<Job*>,JobComparator>(*comp);
@@ -74,14 +75,14 @@ string PQScheduler::getSetupInfo(bool comment) {
     "Comparator: " + compSetupInfo; 
 }
 
-void PQScheduler::jobArrives(Job* j, long time, Machine* mach) {
+void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) {
   //called when j arrives; time is current time
   //tryToStart should be called after each job arrives
 
   toRun -> push(j);
 }
 
-AllocInfo* PQScheduler::tryToStart(Allocator* alloc, long time,
+AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
     Machine* mach,
     Statistics* stats) {
   //allows the scheduler to start a job if desired; time is current time
@@ -177,6 +178,25 @@ bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2) {
 
       //break ties so different jobs are never equal:
       return j2 -> getJobNum() < j1 -> getJobNum();
+
+    case BETTERFIT:
+      //Primary criteria: Most Processors Required
+      if(j1->getProcsNeeded() != j2->getProcsNeeded())
+        return (j2->getProcsNeeded() > j1->getProcsNeeded());
+
+      //Secondary criteria: Longest Run Time
+      if(j1->getEstimatedRunningTime() != j2->getEstimatedRunningTime()) {
+        return (j2->getEstimatedRunningTime() > j1->getEstimatedRunningTime());
+      }
+
+      //Tertiary criteria: Arrival Time
+      if(j1->getArrivalTime() != j2->getArrivalTime()) {
+        return  (j2->getArrivalTime() < j1->getArrivalTime());
+      }
+
+      //break ties so different jobs are never equal:
+      return j2 -> getJobNum() < j1 -> getJobNum();
+
     default:
       internal_error("operator() called on JobComparator w/ invalid type");
       return true;  //never reach here
@@ -195,6 +215,8 @@ string PQScheduler::JobComparator::toString() {
       return "LongestFirstComparator";
     case SHORTFIRST:
       return "ShortestFirstComparator";
+    case BETTERFIT:
+      return "BetterFitComparator";     
     default:
       internal_error("toString() called on JobComparator w/ invalid type");
   }

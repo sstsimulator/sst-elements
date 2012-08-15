@@ -23,10 +23,10 @@ Job::Job(istream& input, bool accurateEsts) {
   string line;  
   getline(input, line);
 
-  long arrivalTime;
+  unsigned long arrivalTime;
   int procsNeeded;
-  long actualRunningTime;
-  long estRunningTime;
+  unsigned long actualRunningTime;
+  unsigned long estRunningTime;
   int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime, &procsNeeded,
 		   &actualRunningTime, &estRunningTime);
   if((num != 3) && (num != 4))
@@ -38,17 +38,17 @@ Job::Job(istream& input, bool accurateEsts) {
 	     estRunningTime);
 }
 
-Job::Job(long arrivalTime, int procsNeeded, long actualRunningTime,
-	 long estRunningTime) {
+Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime,
+	 unsigned long estRunningTime) {
   initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
 }
 
-void Job::initialize(long arrivalTime, int procsNeeded,
-		     long actualRunningTime, long estRunningTime) {
+void Job::initialize(unsigned long arrivalTime, int procsNeeded,
+		     unsigned long actualRunningTime, unsigned long estRunningTime) {
   //helper for constructors
   
   //make sure estimate is valid; workload log uses -1 for "no estimate"
-  if(estRunningTime < actualRunningTime)
+  if(estRunningTime < actualRunningTime || estRunningTime == (unsigned long)-1)
     estRunningTime = actualRunningTime;
   
   this -> arrivalTime = arrivalTime;
@@ -62,23 +62,23 @@ void Job::initialize(long arrivalTime, int procsNeeded,
   nextJobNum++;
 }
 
-long Job::getStartTime() {
-  if(startTime == -1)
+unsigned long Job::getStartTime() {
+  if(startTime == (unsigned long)-1)
     throw InternalErrorException();
   return startTime;
 }
 
 string Job::toString() {
   char retVal[100];
-  snprintf(retVal, 100, "Job #%ld (%ld, %d, %ld, %ld)", jobNum,
+  snprintf(retVal, 100, "Job #%ld (%ld, %d, %ld, %ld, null)", jobNum,
 	   arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
   return retVal;
 }
 
-void Job::start(long time, Machine* machine, AllocInfo* allocInfo,
+void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
 		  Statistics* stats) {
   //start the job
-  if(startTime != -1) {
+  if(startTime != (unsigned long)-1) {
     string mesg = "attempt to start an already-running job: ";
     mesg += toString();
     internal_error(mesg);

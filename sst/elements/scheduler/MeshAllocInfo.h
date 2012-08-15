@@ -28,7 +28,6 @@ using namespace std;
 #define MAX(X,Y) ((X)>(Y)?(X):(Y))
 #define ABS(X) ((X) >=0 ? (X) : (-(X)))
 
-
 /**
  * The default ordering for MeshLocations is by the component: x, y, then z.
  * Comparator used to order free blocks in MBSAllocator.
@@ -72,6 +71,10 @@ class MeshLocation : public binary_function<MeshLocation*, MeshLocation*,bool>{
       return loc1->x < loc2->x;
     }
 
+    bool equals(MeshLocation* other){
+      return x == other->x && y == other->y && z == other->z;
+    }
+
     void print() {
       printf("(%d,%d,%d)\n",x,y,z);
     }
@@ -79,6 +82,12 @@ class MeshLocation : public binary_function<MeshLocation*, MeshLocation*,bool>{
 
     int toInt(MachineMesh* m){
       return x + m->getXDim()*y + m->getXDim()*m->getYDim()*z; 
+    }
+
+    string toString(){
+      stringstream ret;
+      ret << "(" << x <<  ", " << y  << ", " << z << ")";
+      return ret.str();
     }
 
     int hashCode() {
@@ -96,6 +105,18 @@ class MeshAllocInfo : public AllocInfo {
         nodeIndices[x] = -1;
       for(int x = 0; x < j->getProcsNeeded(); x++)
         processors->push_back(NULL);
+    }
+    ~MeshAllocInfo(){
+      /*
+       *note that the MeshLocations in MeshAllocInfo are assumed to be unique!
+       *in other words, they were created solely for the purpose of storing a
+       *location of a processor in this MAI.  All current allocators except MBS
+       *use machine->getprocessors() to get these processors; this function 
+       *  creates new MeshLocations so it works
+       */
+      for(int x = 0; x < (int)processors->size(); x++)
+        delete processors->at(x);
+      processors->clear();
     }
 
     string getProcList(Machine* m){

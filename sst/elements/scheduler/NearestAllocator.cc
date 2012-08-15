@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <time.h>
+#include <limits>
 
 #include "sst/core/serialization/element.h"
 
@@ -57,7 +58,7 @@ NearestAllocator::NearestAllocator(vector<string>* params, Machine* mach){
 
   MachineMesh* m = (MachineMesh*) mach;
   if(m == NULL)
-    error("Nearest allocators require a MachineMesh machine");
+    error("Nearest allocators require a Mesh machine");
 
   if(params->at(0) == "MM")
     MMAllocator(m);
@@ -68,77 +69,86 @@ NearestAllocator::NearestAllocator(vector<string>* params, Machine* mach){
   else if(params->at(0) == "OldMC1x1")
     OldMC1x1Allocator(m);
   else
-    error("Custom nearest allocator not implemented yet");
-/*
-  CenterGenerator* cg=NULL;
-  PointCollector* pc=NULL;
-  Scorer* sc=NULL;
+  {
+    configName = "custom";
+    //custom Nearest allocator
+    CenterGenerator* cg=NULL;
+    PointCollector* pc=NULL;
+    Scorer* sc=NULL;
+    machine = m;
 
-  string cgstr=params.at(1);
+    string cgstr=params->at(1);
 
-  if(cgstr.equals("all"))
-    cg=new AllCenterGenerator(m);
-  else if(cgstr.equals("free"))
-    cg=new FreeCenterGenerator(m);
-  else if(cgstr.equals("intersect"))
-    cg=new IntersectionCenterGen(m);
-  else
-    Main.error("Unknown center generator "+cgstr);
+    if(cgstr==("all"))
+      cg=new AllCenterGenerator(m);
+    else if(cgstr==("free"))
+      cg=new FreeCenterGenerator(m);
+    else if(cgstr==("intersect"))
+      cg=new IntersectionCenterGen(m);
+    else
+      error("Unknown center generator "+cgstr);
 
-  string pcstr=params.at(2);
+    string pcstr=params->at(2);
 
-  if(pcstr.equals("L1"))
-    pc=new L1PointCollector();
-  else if(pcstr.equals("LInf"))
-    pc=new LInfPointCollector();
-  else if(pcstr.equals("GreedyLInf"))
-    pc=new GreedyLInfPointCollector();
-  else
-    Main.error("Unknown point collector "+pcstr);
+    if(pcstr==("l1"))
+      pc=new L1PointCollector();
+    else if(pcstr==("linf"))
+      pc=new LInfPointCollector();
+    else if(pcstr==("greedylinf"))
+      pc=new GreedyLInfPointCollector();
+    else
+      error("Unknown point collector "+pcstr);
 
 
-  vector<string> sclist = Factory.ParseInput(params.at(3));
-  string scstr=sclist.at(0);
+    pcstr=params->at(3);
 
-  if(scstr.equals("L1"))
-    sc=new L1DistFromCenterScorer();
-  else if(scstr.equals("LInf")){
-    Factory.argsAtMost(6,sclist);
-    long TB=0;
-    long af=1;
-    long wf=0;
-    long bf=0;
-    long cf=0;
-    long cw=2;
-    if(sclist.size()-1 >= 1)
-      if(sclist.at(1).equals("M"))
-        TB=long.MAX_VALUE;
-      else
-        TB=long.parselong(sclist.at(1));
-    if(sclist.size()-1 >= 2)
-      af=long.parselong(sclist.at(2));
-    if(sclist.size()-1 >= 3)
-      wf=long.parselong(sclist.at(3));
-    if(sclist.size()-1 >= 4)
-      bf=long.parselong(sclist.at(4));
-    if(sclist.size()-1 >= 5)
-      cf=long.parselong(sclist.at(5));
-    if(sclist.size()-1 >= 6)
-      cw=long.parselong(sclist.at(6));
+    if(pcstr==("l1"))
+      sc=new L1DistFromCenterScorer();
+    else if(pcstr==("linf")){
+      if(m->getXDim() > 1 && m->getYDim() > 1 && m->getZDim() > 1)
+        error("\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
+      long TB=0;
+      long af=1;
+      long wf=0;
+      long bf=0;
+      long cf=0;
+      long cw=2;
+      if(params->size() > 4)
+      {
+        if(params->at(4)==("m"))
+          TB=LONG_MAX;
+        else
+          TB= atol(params->at(4).c_str());
+      }
+      if(params->size() > 5)
+        af= atol(params->at(5).c_str());
+      if(params->size() > 6)
+        wf= atol(params->at(6).c_str());
+      if(params->size() > 7)
+        bf= atol(params->at(7).c_str());
+      if(params->size() > 8)
+        cf= atol(params->at(8).c_str());
+      if(params->size() > 9)
+        cw= atol(params->at(9).c_str());
 
-    Tiebreaker tb = new Tiebreaker(TB,af,wf,bf);
-    tb.setCurveFactor(cf);
-    tb.setCurveWidth(cw);
-    sc=new LInfDistFromCenterScorer(tb);
+      Tiebreaker* tb = new Tiebreaker(TB,af,wf,bf);
+      tb->setCurveFactor(cf);
+      tb->setCurveWidth(cw);
+      sc=new LInfDistFromCenterScorer(tb);
+    }
+    else if(pcstr==("pairwise"))
+      sc=new PairwiseL1DistScorer();
+    else
+      error("Unknown scorer "+pcstr);
+
+    centerGenerator = cg;
+    pointCollector = pc;
+    scorer = sc;
   }
-  else if(scstr.equals("Pairwise"))
-    sc=new PairwiseL1DistScorer();
-  else
-    Main.error("Unknown scorer "+scstr);
-
-  return new NearestAllocator(m,cg,pc,sc,"custom");
-  return null;
-*/
+  delete params;
+  params = NULL;
+  if(centerGenerator == NULL || pointCollector == NULL || scorer == NULL)
+    error("Nearest input not correctly parsed");
 }
 
 string NearestAllocator::getParamHelp(){
@@ -151,7 +161,7 @@ string NearestAllocator::getParamHelp(){
 }
 
 string NearestAllocator::getSetupInfo(bool comment){
-  
+
   string com;
   if(comment) com="# ";
   else com="";
@@ -190,7 +200,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, vector<MeshLocation*>* available
   }
 
   //score of best value found so far with it tie-break score:
-  pair<long,long>* bestVal = new pair<long,long>(-1,-1);
+  pair<long,long>* bestVal = new pair<long,long>(LONG_MAX,LONG_MAX);
 
   bool recordingTies = false;//Statistics.recordingTies();
   //stores allocations w/ best score (no tiebreaking) if ties being recorded:
@@ -203,7 +213,8 @@ AllocInfo* NearestAllocator::allocate(Job* job, vector<MeshLocation*>* available
     vector<MeshLocation*>* nearest = pointCollector->getNearest(*center, numProcs, available);
 
     pair<long,long>* val = scorer->valueOf(*center, nearest, numProcs, (MachineMesh*) machine); 
-    if(val->first < bestVal->first || (val->first == bestVal->first && val->second < bestVal->second) || bestVal->first == -1 ) {
+    if(val->first < bestVal->first || 
+        (val->first == bestVal->first && val->second < bestVal->second) ) {
       delete bestVal;
       bestVal = val;
       for(int i=0; i<numProcs; i++)
