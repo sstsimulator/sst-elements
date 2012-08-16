@@ -19,6 +19,8 @@
 #include <queue>
 #include <set>
 #include <iostream>
+#include <stdio.h>
+#include <string.h>
 using namespace std;
 #include "sst/core/serialization/element.h"
 #include "StatefulScheduler.h"
