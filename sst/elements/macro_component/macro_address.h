@@ -134,7 +134,8 @@ public:
   equals(const nodeaddress::ptr &addr) const
   {
 	  if(!addr){
-		  sst_throw(sstmac::ssterror, "macroaddress::equals - null incoming address");
+		  // sst_throw(sstmac::ssterror, "macroaddress::equals - null incoming address");
+		  throw sstmac::ssterror("macroaddress::equals - null incoming address");
 	  }
     macro_address::ptr maddr = boost::dynamic_pointer_cast<macro_address>(addr);
 	  

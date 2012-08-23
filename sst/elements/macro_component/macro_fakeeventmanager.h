@@ -125,7 +125,8 @@ public:
 
     if (!parent_)
       {
-		  sst_throw(sstmac::ssterror, "fakeeventmanager::schedule - parent not set");
+		  //sst_throw(sstmac::ssterror, "fakeeventmanager::schedule - parent not set");
+		  throw sstmac::ssterror("fakeeventmanager::schedule - parent not set");
       }
 
 	   SST::SimTime_t delay = start_time.psec() - parent_->now().psec();
