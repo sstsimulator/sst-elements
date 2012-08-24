@@ -128,9 +128,7 @@ protected:
 		/// Notify the sendhandler when the send is complete.
 		/// Notify the recvhandler when the recv is complete.
 		virtual void
-		send(const sstmac::timestamp &start_time, const sstmac::sst_message::ptr &payload,
-			const sstmac::eventhandler::ptr& sendhandler,
-			const sstmac::eventhandler::ptr& recvhandler){	
+		send(const sstmac::timestamp &start_time, const sstmac::sst_message::ptr &payload){	
 			parent_->fem_->update(parent_->now());
 
 			
