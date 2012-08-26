@@ -15,8 +15,13 @@
 
 #include "interface.h"
 #include "HotSpot-interface.h"
-////#include "IntSim-interface.h"
 
+/********IntSim*****************/
+#define IntSim_H
+
+#ifdef IntSim_H
+#include "IntSim-interface.h"
+#endif
 
 /*********Sim-Panalyzer************/
 //#define PANALYZER_H
@@ -84,7 +89,7 @@ extern "C"{
 #endif //mcpat07_h
 
 /*********ORION******************/
-////#define ORION_H
+#define ORION_H
 
 /*added for ORION power analysis */
 extern "C"{

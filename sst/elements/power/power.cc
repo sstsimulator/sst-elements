@@ -5095,6 +5095,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 	case 0:
 	/* McPAT*/
 	  #ifdef McPAT07_H
+          std::cout << "McPAT is called for power modeling." << std::endl;
 	  //initialize all the McPAT params from McPAT xml; some tech params will be over written later by SST xml	    
           if(p_ifGetMcPATUnitP == false){
 	     //ensure that the following will only be called once to reduce computational time
@@ -5411,7 +5412,9 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
 		fit = p_chip.floorplan.find(floorplan_id.clock.at(0));
         	if(fit == p_chip.floorplan.end())
             	    cout << "ERROR: No matching floorplan is found" << endl;
-		intsim_clock = new IntSim_library((*fit).second.device_tech,(*fit).second.feature.area, 0.25*(*fit).second.feature.area/pow((*fit).second.device_tech.feature_size*1e-9,2)*1e-2);
+		//intsim_clock = new IntSim_library((*fit).second.device_tech,(*fit).second.feature.area, 0.25*(*fit).second.feature.area/pow((*fit).second.device_tech.feature_size*1e-9,2)*1e-2);
+		//Genie 08/25/12. Need to fix IntSim parameter values for logical gate sizing
+	        cout << "IntSim is called. Make sure gate sizing meets the requirements" << endl;
 	      break;
 	      case BPRED:
 		fit = p_chip.floorplan.find(floorplan_id.bpred.at(0));
@@ -5551,6 +5554,7 @@ void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype powe
    case 4:
    /*ORION*/
       #ifdef ORION_H
+      cout << "ORION is called for router power modeling." << endl;
       SST_SIM_router_init(&GLOB(router_info), &GLOB(router_power), NULL,
                           router_tech.input_ports,
                           router_tech.output_ports,
@@ -5875,13 +5879,16 @@ void Power::getUnitPower(ptype power_type, int user_data, pmodel power_model)
 	            case 3:
 		    /*IntSim*/
 			#ifdef INTSIM_H
-                     	if(clock_tech.clock_option == GLOBAL_CLOCK)
-        		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic*(1-intsim_clock->param->clock_gating_factor);
+                     	if(clock_tech.clock_option == GLOBAL_CLOCK){
+        		    //p_unitPower.clock = intsim_clock->chip->clock_power_dynamic*(1-intsim_clock->param->clock_gating_factor);
+			    //Genie 082512. Need to make IntSim parameter values match logical gate sizing
+			    p_unitPower.clock = 0;
+			}
       			else if(clock_tech.clock_option == LOCAL_CLOCK)
         		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic*(intsim_clock->param->clock_gating_factor);
       			else
         		    p_unitPower.clock = intsim_clock->chip->clock_power_dynamic;	   
-			std::cout << "unit clock power = " << p_unitPower.clock << std::endl;
+			//std::cout << "unit clock power = " << p_unitPower.clock << std::endl;
 			#endif
                     break;
 
@@ -7473,8 +7480,13 @@ Pdissipation_t& Power::getPower(IntrospectedComponent* c, ptype power_type, usag
 	      /*IntSim*/
 		#ifdef INTSIM_H
                 dynamicPower = (I)counts.clock_access * (I)p_unitPower.clock;
-		if(clock_tech.clock_option == GLOBAL_CLOCK)
-        	    leakage = (I)intsim_clock->chip->clock_power_leakage*(1-intsim_clock->param->clock_gating_factor);     
+		if(clock_tech.clock_option == GLOBAL_CLOCK){
+        	    //leakage = (I)intsim_clock->chip->clock_power_leakage*(1-intsim_clock->param->clock_gating_factor);     
+		    //Genie 082512. To use the above calculation, the IntSim params values need to provide logical gate sizing.
+		    //comment for now.
+		    leakage = 0;
+		    
+		}
       		else if(clock_tech.clock_option == LOCAL_CLOCK)     
         	    leakage = (I)intsim_clock->chip->clock_power_leakage*(intsim_clock->param->clock_gating_factor);      
       		else     
@@ -13008,7 +13020,7 @@ void Power::compute_temperature(ComponentId_t compID)
 	//getFailureRate((*fit).second.device_tech.temperature);
 	//std::cout << " total failure rate = " << p_TotalFailureRate << std::endl;
 	(*fit).second.TDB.push_back( (*fit).second.device_tech.temperature );
-	std::cout << "fit.TDB.size() = " << (*fit).second.TDB.size() << ", temp = " << (*fit).second.device_tech.temperature <<std::endl;
+	//std::cout << "fit.TDB.size() = " << (*fit).second.TDB.size() << ", temp = " << (*fit).second.device_tech.temperature <<std::endl;
     }
   } //end if model temperature
 }
@@ -13474,9 +13486,9 @@ void Power::dynamic_power_management()
 	(*fit).second.p_usage_floorplan.totalEnergy = (*fit).second.p_usage_floorplan.totalEnergy
 							+ (*fit).second.p_usage_floorplan.currentPower;
 
-	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;
+	/*using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has runtime power = " << (*fit).second.p_usage_floorplan.runtimeDynamicPower << " W" << std::endl;
 	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" has leakage power = " << (*fit).second.p_usage_floorplan.leakagePower << " W" << std::endl;
-	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" current power = " << (*fit).second.p_usage_floorplan.currentPower << " W" << std::endl;	
+	using namespace io_interval; std::cout <<"floorplan id " <<(*fit).second.id<<" current power = " << (*fit).second.p_usage_floorplan.currentPower << " W" << std::endl;	*/
   }
 
 }
