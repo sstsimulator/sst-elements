@@ -2,13 +2,16 @@
 #
 #
 
+AM_CPPFLAGS = \
+	$(BOOST_CPPFLAGS) \
+	$(MPI_CPPFLAGS) 
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcpu_power.la
 libcpu_power_la_SOURCES = \
 	cpu_power.h \
 	cpu_power.cc \
-	myMemEvent.h \
+	simpleEvent.h \
 	../power/power.cc \
 	../power/power.h \
 	../power/interface.h \
@@ -18,9 +21,9 @@ libcpu_power_la_SOURCES = \
 	../power/IntSim-interface.h 
 
 
-libcpu_power_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(SIMPANALYZER_CPPFLAGS) $(MCPAT_CPPFLAGS) $(HOTSPOT_CPPFLAGS) $(INTSIM_CPPFLAGS) $(ORION_CPPFLAGS) 
-libcpu_power_la_LDFLAGS = -module -avoid-version $(SIMPANALYZER_LDFLAGS) $(MCPAT_LDFLAGS) $(HOTSPOT_LDFLAGS) $(INTSIM_LDFLAGS) $(ORION_LDFLAGS)   
-libcpu_power_la_LIBADD = $(SIMPANALYZER_LIB) $(MCPAT_LIB) $(HOTSPOT_LIB) $(INTSIM_LIB) $(ORION_LIB)
+libcpu_power_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MCPAT_CPPFLAGS) $(HOTSPOT_CPPFLAGS) $(INTSIM_CPPFLAGS) $(ORION_CPPFLAGS) 
+libcpu_power_la_LDFLAGS = -module -avoid-version $(MCPAT_LDFLAGS) $(HOTSPOT_LDFLAGS) $(INTSIM_LDFLAGS) $(ORION_LDFLAGS)   
+libcpu_power_la_LIBADD = $(MCPAT_LIB) $(HOTSPOT_LIB) $(INTSIM_LIB) $(ORION_LIB)
 
 
 

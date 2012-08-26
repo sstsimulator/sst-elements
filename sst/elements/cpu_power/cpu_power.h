@@ -1,21 +1,19 @@
-// Copyright 2009-2010 Sandia Corporation. Under the terms
+// Copyright 2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2010, Sandia Corporation
+// Copyright (c) 2010, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-// A cpu component that can report unit power 
-// Built for testing the power model.
-
 #ifndef _CPU_POWER_H
 #define _CPU_POWER_H
 
-//#include <sst/core/eventFunctor.h>
+#include <sst/core/event.h>
+#include <sst/core/sst_types.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -23,79 +21,31 @@
 
 using namespace SST;
 
-#if DBG_CPU_POWER
-#define _CPU_POWER_DBG( fmt, args...)\
-         printf( "%d:Cpu_power::%s():%d: "fmt, _debug_rank, __FUNCTION__,__LINE__, ## args )
-#else
-#define _CPU_POWER_DBG( fmt, args...)
-#endif
-
 class Cpu_power : public IntrospectedComponent {
-        typedef enum { WAIT, SEND } state_t;
-        typedef enum { WHO_NIC, WHO_MEM } who_t;
-    public:
-        Cpu_power( ComponentId_t id, Params_t& params ) :
-            IntrospectedComponent( id ),
-            params( params ),
-            state(SEND),
-            who(WHO_MEM), 
-            frequency( "2.2GHz" )
-        {
-            _CPU_POWER_DBG( "new id=%lu\n", id );
+public:
 
-	    registerExit();
+  Cpu_power(ComponentId_t id, Params_t& params);
 
-            Params_t::iterator it = params.begin(); 
-            while( it != params.end() ) { 
-                _CPU_POWER_DBG("key=%s value=%s\n",
-                            it->first.c_str(),it->second.c_str());
-                if ( ! it->first.compare("clock") ) {
-                    frequency = it->second;
-                }    
-                ++it;
-            } 
-            
-            mem = configureLink( "MEM" );
- //           handler = new SST::EventHandler< Cpu_power, bool, Cycle_t >
- //                                               ( this, &Cpu_power::clock );
- //           TimeConverter* tc = registerClock( frequency, handler );
-       TimeConverter* tc = registerClock( frequency, new Clock::Handler<Cpu_power>(this,&Cpu_power::clock) );
-	  
-	    mem->setDefaultTimeBase(tc);
-	    printf("CPU_POWER period: %ld\n",tc->getFactor());
-            _CPU_POWER_DBG("Done registering clock\n");
-
-	    
-        }
-        int Setup() {
-            // report/register power dissipation	    
+  
+int Setup() { 
+	  // report/register power dissipation	    
 	    power = new Power(getId());
 	    power->setChip(params);
             power->setTech(getId(), params, CACHE_IL1, McPAT);
 	    power->setTech(getId(), params, CACHE_DL1, McPAT);
-	    power->setTech(getId(), params, CACHE_ITLB, McPAT);
-	    power->setTech(getId(), params, CACHE_DTLB, McPAT);
 	    power->setTech(getId(), params, RF, McPAT);
 	    power->setTech(getId(), params, IB, McPAT);
-	    power->setTech(getId(), params, PIPELINE, McPAT);
-	    power->setTech(getId(), params, BYPASS, McPAT);
-	    //power->setTech(getId(), params, EXEU_ALU, McPAT);
-	    //power->setTech(getId(), params, EXEU_FPU, McPAT);
-	    power->setTech(getId(), params, LSQ, McPAT);
-	    power->setTech(getId(), params, BPRED, McPAT);
-	    power->setTech(getId(), params, SCHEDULER_U, McPAT);
-	    ///power->setTech(getId(), params, RENAME_U, McPAT);
-	    //power->setTech(getId(), params, BTB, McPAT);
-	    ///power->setTech(getId(), params,  LOAD_Q, McPAT);
-	    power->setTech(getId(), params, CACHE_L1DIR, McPAT);
-	    power->setTech(getId(), params, CACHE_L2DIR, McPAT);
+	    power->setTech(getId(), params, EXEU_ALU, McPAT); 
+	    power->setTech(getId(), params, LSQ, McPAT);	   	   
 	    power->setTech(getId(), params, CACHE_L2, McPAT);
-	    power->setTech(getId(), params, CACHE_L3, McPAT);
-	    //power->setTech(getId(), params, MEM_CTRL, McPAT);
-	    power->setTech(getId(), params, ROUTER, McPAT);
+	    power->setTech(getId(), params, INST_DECODER, McPAT);	    
+	    power->setTech(getId(), params, CLOCK, IntSim);
+	    power->setTech(getId(), params, ROUTER, ORION);  
+	   
            return 0;
-        }
-        int Finish() {
+}
+
+/*int Finish() {
        std::pair<bool, Pdissipation_t> res = readPowerStats(this);
 	    if(res.first){ 
 	        using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << res.second.currentPower << " W" << std::endl;
@@ -121,44 +71,96 @@ class Cpu_power : public IntrospectedComponent {
 		std::cout << "area return from McPAT = " << power->estimateAreaMcPAT() << " mm^2" << std::endl;
 		power->printFloorplanPowerInfo();
 		power->printFloorplanThermalInfo();
-	    }
-            _CPU_POWER_DBG("\n");
-	    //unregisterExit();
-            return 0;
-        }
+	   }
 
-
-    private:
-
-        Cpu_power( const Cpu_power& c );
-	Cpu_power() :  IntrospectedComponent(-1) {} // for serialization only
-
-        bool clock( Cycle_t );
-        //bool handler1( Time_t time, Event *e );
-
-        Params_t    params;
-        Link*       mem;
-        state_t     state;
-        who_t       who;
-	std::string frequency;
-	
-
-	Pdissipation_t pdata, pstats;
-	Power *power;
-	usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
-
-
-	  friend class boost::serialization::access;
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
-    {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        ar & BOOST_SERIALIZATION_NVP(params);
-        ar & BOOST_SERIALIZATION_NVP(mem);
-        ar & BOOST_SERIALIZATION_NVP(state);
-        ar & BOOST_SERIALIZATION_NVP(who);
-        ar & BOOST_SERIALIZATION_NVP(frequency);
+    static int n = 0;
+    n++;
+    if (n == 10) {
+      printf("Several Simple Components Finished\n");
+    } else if (n > 10) {
+      ;
+    } else {
+      printf("Simple Component for Power and Thermal Simulations Finished\n");
     }
+
+      
+            return 0;
+        }*/
+ int Finish() {
+    static int n = 0;
+    n++;
+    if (n == 10) {
+      printf("Several Simple Components Finished\n");
+    } else if (n > 10) {
+      ;
+    } else {
+      printf("Simple Component Finished\n");
+    }
+    return 0;
+  }
+
+
+public:
+  private:
+  Cpu_power();  // for serialization only
+  Cpu_power(const Cpu_power&); // do not implement
+  void operator=(const Cpu_power&); // do not implement
+
+  void handleEvent( Event *ev );
+  virtual bool clockTic( Cycle_t );
+  
+  int workPerCycle;
+  int commFreq;
+  int commSize;
+  int neighbor;
+
+  Link* N;
+  Link* S;
+  Link* E;
+  Link* W;
+
+  Params_t    params;
+  Pdissipation_t pdata, pstats;
+  Power *power;
+  usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
+
+
+  friend class boost::serialization::access;
+  template<class Archive>
+  void save(Archive & ar, const unsigned int version) const
+  {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+    ar & BOOST_SERIALIZATION_NVP(workPerCycle);
+    ar & BOOST_SERIALIZATION_NVP(commFreq);
+    ar & BOOST_SERIALIZATION_NVP(commSize);
+    ar & BOOST_SERIALIZATION_NVP(neighbor);
+    ar & BOOST_SERIALIZATION_NVP(N);
+    ar & BOOST_SERIALIZATION_NVP(S);
+    ar & BOOST_SERIALIZATION_NVP(E);
+    ar & BOOST_SERIALIZATION_NVP(W);
+  }
+
+  template<class Archive>
+  void load(Archive & ar, const unsigned int version) 
+  {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
+    ar & BOOST_SERIALIZATION_NVP(workPerCycle);
+    ar & BOOST_SERIALIZATION_NVP(commFreq);
+    ar & BOOST_SERIALIZATION_NVP(commSize);
+    ar & BOOST_SERIALIZATION_NVP(neighbor);
+    ar & BOOST_SERIALIZATION_NVP(N);
+    ar & BOOST_SERIALIZATION_NVP(S);
+    ar & BOOST_SERIALIZATION_NVP(E);
+    ar & BOOST_SERIALIZATION_NVP(W);
+    //resture links
+    N->setFunctor(new Event::Handler<Cpu_power>(this,&Cpu_power::handleEvent));
+    S->setFunctor(new Event::Handler<Cpu_power>(this,&Cpu_power::handleEvent));
+    E->setFunctor(new Event::Handler<Cpu_power>(this,&Cpu_power::handleEvent));
+    W->setFunctor(new Event::Handler<Cpu_power>(this,&Cpu_power::handleEvent));
+  }
+    
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+ 
 };
 
-#endif
+#endif /* _SIMPLECOMPONENT_H */
