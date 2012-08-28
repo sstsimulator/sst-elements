@@ -1,7 +1,6 @@
-dnl -*- Autoconf -*-
 
-AC_DEFUN([SST_MACRO_CONFIG], [
-  AC_ARG_WITH([sstmacro],
+AC_DEFUN([SST_Macro_CONFIG], [
+  AC_ARG_WITH([omnetpp],
     [AS_HELP_STRING([--with-sstmacro@<:@=DIR@:>@],
       [Use SST Macro package installed in optionally specified DIR])])
 
@@ -15,7 +14,7 @@ AC_DEFUN([SST_MACRO_CONFIG], [
   AS_IF([test ! -z "$with_sstmacro" -a "$with_sstmacro" != "yes"],
     [SSTMACRO_CPPFLAGS="-I$with_sstmacro/include"
      CPPFLAGS="$SSTMACRO_CPPFLAGS $CPPFLAGS"
-     SSTMACRO_LDFLAGS="-L$with_sstmacro/lib"
+     SSTMACRO_LDFLAGS="-L$with_sstmacro/lib -L$with_sstmacro/lib/gcc"
      LDFLAGS="$SSTMACRO_LDFLAGS $LDFLAGS"],
     [SSTMACRO_CPPFLAGS=
      SSTMACRO_LDFLAGS=
@@ -33,3 +32,4 @@ AC_DEFUN([SST_MACRO_CONFIG], [
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
+
