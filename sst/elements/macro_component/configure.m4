@@ -1,6 +1,7 @@
+dnl -*- Autoconf -*-
 
 AC_DEFUN([SST_Macro_CONFIG], [
-  AC_ARG_WITH([omnetpp],
+  AC_ARG_WITH([sstmacro],
     [AS_HELP_STRING([--with-sstmacro@<:@=DIR@:>@],
       [Use SST Macro package installed in optionally specified DIR])])
 
@@ -32,4 +33,3 @@ AC_DEFUN([SST_Macro_CONFIG], [
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
-
