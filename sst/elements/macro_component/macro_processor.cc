@@ -153,7 +153,7 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
   registerTimeBase("1 ps", true);
 	
 	// tell the simulator not to end without us
-	//registerExit();
+	registerExit();
 }
 
 int

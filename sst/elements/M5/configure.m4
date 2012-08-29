@@ -36,7 +36,7 @@ AC_DEFUN([SST_M5_CONFIG], [
     [])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([Python.h], [], [happy="no"])
+  AC_CHECK_HEADERS([Python.h], [M5_CPPFLAGS="-I$with_python $CPPFLAGS"], [happy="no"])
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
@@ -59,7 +59,11 @@ AC_DEFUN([SST_M5_CONFIG], [
     *) happy="no" ;;
   esac
 
-  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra}"
+  AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([Python.h], [M5PYTHON_CPPFLAGS="-I$with_python $CPPFLAGS"], [happy="no"])
+  AC_LANG_POP(C++)
+
+  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra} ${M5PYTHON_CPPFLAGS}"
   M5_LDFLAGS="-L$with_gem5"
 
   AM_CONDITIONAL([USE_M5_O3], [test x$use_gem5_o3 = xtrue])
