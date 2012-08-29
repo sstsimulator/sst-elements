@@ -16,6 +16,10 @@ AC_DEFUN([SST_M5_CONFIG], [
     [],
     [with_gem5_build=opt])
 
+  AC_ARG_WITH([python],
+    [AS_HELP_STRING([--with-python@<:@=DIR@:>@],
+    [Use Python installed in optionally specified DIR])])
+
   isa=
 
   CPPFLAGS_saved="$CPPFLAGS"
@@ -27,7 +31,12 @@ AC_DEFUN([SST_M5_CONFIG], [
       LDFLAGS="-L$with_gem5 $LDFLAGS "],
     [])
 
+  AS_IF([test ! -z "$with_python" -a "$with_python" != "yes"],
+    [ CPPFLAGS="-I$with_python $CPPFLAGS"],
+    [])
+
   AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([Python.h], [], [happy="no"])
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
