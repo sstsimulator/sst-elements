@@ -15,15 +15,29 @@
 #include <fstream>
 #include <iostream>
 
+#include <iostream>
+#include <boost/tokenizer.hpp>        // for reading YumYum jobs
+#include <boost/algorithm/string.hpp>
+#include <cstring>
+#include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
+
 //#include <QFileSystemWatcher>
 
 #include "sst/core/element.h"
+
+
+#include "unistd.h"             // for sleep
 
 
 #include "misc.h"
 #include "Factory.h"
 #include "MachineMesh.h"
 #include "MachineMesh.h"
+
+#include "JobKillEvent.h"
+#include "JobFaultEvent.h"
+#include "CommunicationEvent.h"
 
 using namespace SST;
 using namespace std;
@@ -44,6 +58,9 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   // tell the simulator not to end without us
   registerExit();
 
+  selfLink = configureSelfLink("linkToSelf", new Event::Handler<schedComponent>(this, &schedComponent::handleJobArrivalEvent) );
+  selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
+
   // configure links
   bool done = 0;
   int count = 0;
@@ -53,10 +70,10 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
     char name[50];
     snprintf(name, 50, "nodeLink%d", count);
     printf(" %s", name);
-    SST::Link *l = configureLink( name, 
-				  new Event::Handler<schedComponent,int>(this,
-									 &schedComponent::handleCompletionEvent, count) );
+    SST::Link *l = configureLink( name, new Event::Handler<schedComponent,int>(this, &schedComponent::handleCompletionEvent, count) );
     if (l) {
+      SST::Event * getID = new CommunicationEvent( ID );
+      l->Send( getID );
       nodes.push_back(l);
       count++;
     } else {
@@ -64,11 +81,6 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
       done = 1;
     }
   }
-
-  selfLink = configureSelfLink("linkToSelf",
-      new Event::Handler<schedComponent>(this,
-        &schedComponent::handleJobArrivalEvent) );
-  selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
 
   printf("\n");
   Factory factory;
@@ -88,33 +100,47 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
     char timestring[] = "time,alloc";
     stats = new Statistics(machine, scheduler, theAllocator, trace, timestring);
   }
-  ifstream input;
+  
+  useYumYumSimulationKill = params.find( "useYumYumSimulationKill" ) != params.end();
+  YumYumSimulationKillFlag = false;
+
+  if( params.find( "YumYumPollWait" ) != params.end() ){
+    YumYumPollWait = atoi( params.find( "YumYumPollWait" )->second.c_str() );
+  }else{
+    YumYumPollWait = 250;
+  }
+  
+  useYumYumTraceFormat = params.find( "useYumYumTraceFormat" ) != params.end();
+  printYumYumJobLog = params.find( "printYumYumJobLog" ) != params.end();
+  printJobLog = params.find( "printJobLog" ) != params.end();
+  
   char* inputDir = getenv("SIMINPUT");
   if(inputDir != NULL) {
     string fullName = inputDir + trace;
-    input.open(fullName.c_str());
+    jobListFileName = fullName;
+  }else{
+    jobListFileName = trace;
   }
-  if(!input.is_open())
-    input.open(trace.c_str());  //try without directory                     
-  if(!input.is_open())
-    error("Unable to open file " + trace);
-  
+    
+  jobListFileNamePath = boost::filesystem::path( jobListFileName.c_str() );
+  LastJobFileModTime = boost::filesystem::last_write_time( jobListFileNamePath );
+ 
   printf("\nScheduler Detects %d nodes\n", (int)nodes.size());
     
   machine -> reset();
   scheduler -> reset();
 
-  string line;
-  while(!input.eof()) {
-    getline(input, line);
-    newJobLine( line );
+  lastJobRead[ 0 ] = '\0';
+
+  readJobs();
+
+  if( useYumYumTraceFormat ){
+    CommunicationEvent * CommEvent = new CommunicationEvent( START_FILE_WATCH );
+    CommEvent->payload = jobListFileName;
+    selfLink->Send( CommEvent );
   }
-  input.close();
   
-  /*QFileSystemWatcher monitor;
-  monitor.addPath( fullName.c_str() );
-  
-  QObject::connect( &monitor, SIGNAL( QFileSystemWatcher::fileChanged ( QString ), this,  )*/
+  jobLogFileName = params[ "jobLogFileName" ];
 }
 
 schedComponent::schedComponent() :
@@ -125,25 +151,52 @@ schedComponent::schedComponent() :
 
 
 
-bool schedComponent::newJobLine( std::string line ){
-  if(line.find_first_not_of(" \t\n") == string::npos)
-    return false;
+void schedComponent::readJobs(){
+  ifstream input;
+ 
+  input.open( jobListFileName.c_str() );
+ 
+  if(!input.is_open())
+    input.open(trace.c_str());  //try without directory                     
+  if(!input.is_open())
+    error("Unable to open file " + trace);
+ 
+  string line;
+  while(!input.eof()) {
+    getline(input, line);
+    if( useYumYumTraceFormat ){
+      newYumYumJobLine( line );
+    }else{
+      newJobLine( line );
+    }
+  }
+  input.close();
 
- unsigned long arrivalTime;
-  int procsNeeded;
-  unsigned long runningTime;
-  unsigned long estRunningTime;
-  int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
-                   &procsNeeded, &runningTime, &estRunningTime);
-  if(num < 3)
-    error("Poorly formatted input line: " + line);
-  if(num == 3)
-    jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
-  else   //read all 4                                                        
-    jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
+}
 
-  //validate                                                                  
-  Job* j = &jobs.back();
+
+/*
+ * Returns true if the job list file has been modified since the last time it was checked, false otherwise
+ */
+bool schedComponent::checkJobFile(){
+  if( boost::filesystem::exists( jobListFileNamePath ) ){
+    time_t lastWritten = boost::filesystem::last_write_time( jobListFileNamePath );
+    if( lastWritten > LastJobFileModTime ){
+      LastJobFileModTime = lastWritten;
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
+/*
+  Ensures that j can be scheduled.  Assumes that j is at jobs.back()
+
+  If j can be scheduled, it is scheduled
+*/
+bool schedComponent::validateJob( Job * j, vector<Job> jobs, long runningTime ){
   char mesg[100];
   bool ok = true;
   if (j -> getProcsNeeded() <= 0) {
@@ -169,10 +222,122 @@ bool schedComponent::newJobLine( std::string line ){
   }
   if (ok) {
     ArrivalEvent* ae = new ArrivalEvent(j -> getArrivalTime(), jobs.size()-1);
-    selfLink->Send(j -> getArrivalTime(), ae);
+    selfLink->Send(0 , ae);
   }
   
   return ok;
+}
+
+
+/*
+  Reads in a joblist in the YumYum format.
+  
+  All jobs will have an arrival time of getCurrentSimTime().
+  
+  The YumYum format is something like:
+  [Job ID], [Job duration], [Procs needed]
+*/
+bool schedComponent::newYumYumJobLine( std::string line ){
+  if(line.find_first_not_of(" \t\n") == string::npos)
+    return false;
+
+  boost::algorithm::trim( line );
+
+  if( line.compare( "YYKILL" ) == 0 ){
+    YumYumSimulationKillFlag = true;
+    useYumYumSimulationKill = false;
+    return false;
+  }
+
+  char ID[ JobIDlength ];
+  uint64_t duration;
+  uint64_t procs;
+      
+  boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer( line );
+  vector<string> tokens;
+  tokens.assign( Tokenizer.begin(), Tokenizer.end() );
+
+  boost::algorithm::trim( tokens.at( 0 ) );
+  boost::algorithm::trim( tokens.at( 1 ) );
+  boost::algorithm::trim( tokens.at( 2 ) );
+  
+  strncpy( ID, tokens.at( 0 ).c_str(), JobIDlength );
+  if( JobIDlength > 0 ){
+    ID[ JobIDlength - 1 ] = '\0';
+  }
+
+  uint64_t currentJobID;
+  uint64_t lastJobID;
+
+  sscanf( ID, "%lu", &currentJobID );
+  sscanf( lastJobRead, "%lu", &lastJobID );
+
+  if( currentJobID <= lastJobID && lastJobRead[ 0 ] != '\0'){
+    return false;       // We have read this job before, don't do it again.
+  }
+
+  sscanf( tokens.at( 1 ).c_str(), "%lu", &duration );
+  sscanf( tokens.at( 2 ).c_str(), "%lu", &procs );
+
+  strcpy( lastJobRead, ID );
+
+  if( tokens.size() != 3 ){
+    error( "Poorly formatted input line: " + line );
+  }else{
+    jobs.push_back( Job( getCurrentSimTime(), procs, duration, duration, std::string( ID ) ) );
+  }
+
+  // validate the job to make sure that the specified machine can actually run it. 
+  Job* j = &jobs.back();
+  
+  return validateJob( j, jobs, abs( (long)duration ) );
+}
+
+
+
+bool schedComponent::newJobLine( std::string line ){
+  if(line.find_first_not_of(" \t\n") == string::npos)
+    return false;
+
+  unsigned long arrivalTime;
+  int procsNeeded;
+  unsigned long runningTime;
+  unsigned long estRunningTime;
+  int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
+                   &procsNeeded, &runningTime, &estRunningTime);
+  if(num < 3)
+    error("Poorly formatted input line: " + line);
+  if(num == 3)
+    jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
+  else   //read all 4                                                        
+    jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, estRunningTime));
+
+  //validate                                                                  
+  Job* j = &jobs.back();
+  
+  return validateJob( j, jobs, runningTime );
+}
+
+
+
+// If we aren't using the Yum Yum functionality, this will just unregister and return;
+// Otherwise, this will block, checking if there are new jobs at intervals defined by YumYumPollWait, or if the YumYumSimulationKillFlag has been set.
+void schedComponent::unregisterYourself(){
+  if( useYumYumSimulationKill ){
+    while( YumYumSimulationKillFlag != true && jobs.empty() ){
+      boost::this_thread::sleep( boost::posix_time::milliseconds( YumYumPollWait ) );
+      if( checkJobFile() ){
+        readJobs();
+        if( !jobs.empty() ){
+          break;
+        }
+      }if( YumYumSimulationKillFlag ){
+        unregisterExit();
+      }
+    }
+  }else{
+    unregisterExit();
+  }
 }
 
 
@@ -180,7 +345,12 @@ bool schedComponent::newJobLine( std::string line ){
 // incoming events are scanned and deleted. ev is the returned event,
 // node is the node it came from.
 void schedComponent::handleCompletionEvent(Event *ev, int node) {
-  if(dynamic_cast<CompletionEvent*>(ev))
+
+  if( dynamic_cast<CommunicationEvent *>( ev ) ){
+    CommunicationEvent * CommEvent = dynamic_cast<CommunicationEvent *>( ev );
+    nodeIDs.insert( nodeIDs.begin() + node, CommEvent->payload );
+  }
+  else if(dynamic_cast<CompletionEvent*>(ev))
   {
     CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);
     int jobNum = event->jobNum;
@@ -189,13 +359,25 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       runningJobs.erase(jobNum);
       return; //this event has already stopped (probably faulted)
     }
+
     if ((--(runningJobs[jobNum].i)) == 0) {
+       if( printJobLog ){
+        logJobFinish( runningJobs.at( jobNum ) );
+       }
       finishingcomp.push_back(event);
       FinalTimeEvent *fte = new FinalTimeEvent();
       if(runningJobs[jobNum].ai->job->getStartTime() == getCurrentSimTime())
         fte->forceExecute = true;
       selfLink->Send(0, fte); //send back an event at the same time so we know it finished
     }
+    if(jobNum == jobs.back().jobNum)
+    {
+      if(jobs.empty())
+      {
+        unregisterYourself();
+      }
+    }
+
   }
  else {
     //If it is not a completion it is (hopefully) a fault.
@@ -210,6 +392,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
         return; // the node that faulted was not running a job, nothing for 
                 //scheduler, allocator, machine to do
       //force all nodes running the job to kill it
+
       AllocInfo *ai = runningJobs[jobNum].ai;
       if(ai == NULL)
       {
@@ -217,8 +400,14 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
         return;
       }
       //if ai is NULL we already killed this job
+      
+      if( printJobLog ){
+        logJobFault( runningJobs[ jobNum ], event );
+      }
+
       for (int i = 0; i < ai->job->getProcsNeeded(); ++i) {
         JobKillEvent *ec = new JobKillEvent(ai->job->getJobNum());
+
         nodes[ai->nodeIndices[i]]->Send(ec);
       }
 
@@ -241,7 +430,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
           jobs.pop_back();
         if(jobs.empty())
         {
-          unregisterExit();
+          unregisterYourself();             // This is the one that actually does the unregistering.
         }
       }
     } else {
@@ -250,7 +439,20 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
   }  
 }
 
+
 void schedComponent::handleJobArrivalEvent(Event *ev) {
+  if( dynamic_cast<CommunicationEvent *>( ev ) ){
+    CommunicationEvent * CommEvent = dynamic_cast<CommunicationEvent *>( ev );
+
+    if( CommEvent->CommType == LOG_JOB_START ){
+      if( printJobLog ){
+        logJobStart( runningJobs[ atoi( CommEvent->payload.c_str() ) ] );
+      }
+    }else if( CommEvent->CommType == START_FILE_WATCH ){
+    }
+    return;
+  }
+
   ArrivalEvent *arevent = dynamic_cast<ArrivalEvent*>(ev);
   if(arevent)
   {
@@ -287,7 +489,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
             jobs.pop_back();
           if(jobs.empty())
           {
-            unregisterExit();
+            unregisterYourself();
           }
         }
         finishingcomp.erase(it);
@@ -319,6 +521,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
 }
 
 int schedComponent::Finish() {
+
   scheduler -> done();
   stats -> done();
   theAllocator -> done();
@@ -329,6 +532,7 @@ int schedComponent::Finish() {
 void schedComponent::startJob(AllocInfo* ai) {
   Job* j = ai->job;
   int* jobNodes = ai->nodeIndices;
+
   // send to each person in the node list
   for (int i = 0; i < j->getProcsNeeded(); ++i) {
     JobStartEvent *ec = new JobStartEvent(j->getActualTime(), j->getJobNum());
@@ -339,7 +543,87 @@ void schedComponent::startJob(AllocInfo* ai) {
   iai.i = j->getProcsNeeded();
   iai.ai = ai;
   runningJobs[j->getJobNum()] = iai;
+
+  char jobnum[ 16 ];
+
+  snprintf( jobnum, 15, "%lu", j->getJobNum() );
+  CommunicationEvent * CommEvent = new CommunicationEvent( LOG_JOB_START );
+  CommEvent->payload = std::string( jobnum );
+
+  selfLink->Send( 1, CommEvent );
 }
+
+
+void schedComponent::logJobStart( IAI iai ){
+  std::ofstream jobLog;
+  jobLog.open( this->jobLogFileName.c_str(), ios::out | ios::ate | ios::app );
+  if( jobLog.is_open() ){
+    jobLog << "\"" << iai.ai->job->getID() << "\",\"" << iai.ai->job->getStartTime() << "\",\"-1\",\"-1\",\"";
+    for( int counter = 0; counter < iai.ai->job->getProcsNeeded(); counter ++ ){
+      if( counter > 0 ){
+        jobLog << " ";
+      }
+      jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
+    }
+
+    jobLog << "\"" << endl;;
+    jobLog.close();
+  }else{
+    char errorMessage[ 1024 ];
+    
+    snprintf( errorMessage, 1023, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
+    
+    error( errorMessage );
+  }
+}
+
+void schedComponent::logJobFinish( IAI iai ){
+  std::ofstream jobLog;
+  jobLog.open( this->jobLogFileName.c_str(), ios::out | ios::ate | ios::app );
+  if( jobLog.is_open() ){
+    jobLog << "\"" << iai.ai->job->getID() << "\",\"" << iai.ai->job->getStartTime() << "\",\"" << getCurrentSimTime() << "\",\"0\",\"";
+    for( int counter = 0; counter < iai.ai->job->getProcsNeeded(); counter ++ ){
+      if( counter > 0 ){
+        jobLog << " ";
+      }
+      jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
+    }
+
+    jobLog << "\"" << endl;;
+    jobLog.close();
+  }else{
+    char errorMessage[ 1024 ];
+    
+    snprintf( errorMessage, 1023, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
+    
+    error( errorMessage );
+  } 
+}
+
+void schedComponent::logJobFault( IAI iai, JobFaultEvent * faultEvent ){
+  std::ofstream jobLog;
+  jobLog.open( this->jobLogFileName.c_str(), ios::out | ios::ate | ios::app );
+  if( jobLog.is_open() ){
+    jobLog << "\"" << iai.ai->job->getID() << "\",\"" << iai.ai->job->getStartTime() << "\",\"" << getCurrentSimTime() << "\",\"1\",\"";
+    for( int counter = 0; counter < iai.ai->job->getProcsNeeded(); counter ++ ){
+      if( counter > 0 ){
+        jobLog << " ";
+      }
+      jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
+    }
+
+    jobLog << "\"" << endl;;
+    jobLog.close();
+  }else{
+    char errorMessage[ 1024 ];
+    
+    snprintf( errorMessage, 1023, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
+    
+    error( errorMessage );
+  } 
+}
+
+
 
 /*
 bool schedComponent::clockTic( Cycle_t ) {

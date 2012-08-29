@@ -17,6 +17,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <boost/filesystem.hpp>
 #include "AllocInfo.h"
 #include "ArrivalEvent.h"
 #include "CompletionEvent.h"
@@ -26,6 +27,8 @@
 #include "FinalTimeEvent.h"
 
 using namespace std;
+
+#define JobIDlength 16
 
 struct IAI {int i; AllocInfo *ai;};
 
@@ -44,11 +47,25 @@ private:
   schedComponent(const schedComponent&); // do not implement
   void operator=(const schedComponent&); // do not implement
   
+  bool validateJob( Job * j, vector<Job> jobs, long runningTime );
+
+  std::string trace;
+  std::string jobListFilename;
+  
+  void readJobs();
+  bool checkJobFile();
   bool newJobLine( std::string line );
+  bool newYumYumJobLine( std::string line );
 
   void handleCompletionEvent( SST::Event *ev, int n );
   void handleJobArrivalEvent( SST::Event *ev );
   //virtual bool clockTic( SST::Cycle_t );
+  
+  void unregisterYourself();
+
+  void logJobStart( IAI iai );
+  void logJobFinish( IAI iai );
+  void logJobFault( IAI iai, JobFaultEvent * faultEvent );
 
   typedef vector<int> targetList_t;
 
@@ -60,8 +77,22 @@ private:
   Allocator* theAllocator;
   Statistics* stats;
   std::vector<SST::Link*> nodes;
+  std::vector<std::string> nodeIDs;
   SST::Link* selfLink;
   map<int, IAI> runningJobs;
+ 
+  std::string jobListFileName;
+  boost::filesystem::path jobListFileNamePath;
+  std::string jobLogFileName;
+  bool printJobLog;
+  bool printYumYumJobLog;       // should the Job Log use the YumYum format?
+  bool useYumYumTraceFormat;    // should we expect the incoming job list to use the YumYum format?
+  bool useYumYumSimulationKill;         // should the simulation end on a special job (true), or just when the job list is exhausted (false)?
+  bool YumYumSimulationKillFlag;        // this will signal the schedComponent to unregister itself iff useYumYumSimulationKill == true
+  int YumYumPollWait;                   // this is the length of time in ms to wait between checks for new jobs
+  time_t LastJobFileModTime;            // Contains the last time that the job file was modified
+  char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
+  
 
   friend class boost::serialization::access;
   template<class Archive>

@@ -20,6 +20,8 @@
 #include "Scheduler.h"
 #include "misc.h"
 
+#include <stdio.h>
+
 using namespace std;
 
 class SchedChange{

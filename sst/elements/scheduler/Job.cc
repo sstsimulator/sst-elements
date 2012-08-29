@@ -43,6 +43,12 @@ Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunning
   initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
 }
 
+Job::Job(long arrivalTime, int procsNeeded, long actualRunningTime,
+	 long estRunningTime, std::string ID) {
+  initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
+  this->ID = ID;
+}
+
 void Job::initialize(unsigned long arrivalTime, int procsNeeded,
 		     unsigned long actualRunningTime, unsigned long estRunningTime) {
   //helper for constructors

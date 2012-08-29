@@ -20,15 +20,26 @@
 #include "JobStartEvent.h"
 #include "CompletionEvent.h"
 #include "JobFaultEvent.h"
+#include "JobKillEvent.h"
+
+#include "linkBuilder.h"
 
 #include <vector>
 
-class nodeComponent : public SST::Component {
+class nodeComponent : public SST::Component, public virtual linkChanger {
+  friend class linkBuilder;
+
 public:
 
   nodeComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   int Setup() {return 0;}
   int Finish() {return 0;}
+
+  virtual void addLink( SST::Link * link, enum linkTypes type );
+  virtual void rmLink( SST::Link * link, enum linkTypes type );
+  virtual void disconnectYourself();
+  virtual std::string getType();
+  virtual std::string getID();
 
 private:
   nodeComponent();  // for serialization only
@@ -37,20 +48,34 @@ private:
 
   void handleEvent( SST::Event *ev );
   void handleSelfEvent( SST::Event *ev );
+  void handleFaultEvent( SST::Event * ev );
+  
+  void handleJobKillEvent( JobKillEvent * killEvent );
   
   void sendNextFault( std::string faultType );
+  void logSymptom( JobFaultEvent * faultEvent );
+  void logError( JobFaultEvent * faultEvent );
 
   int jobNum;
   int nodeNum;
-  float lambda;
 
   SST::Link* Scheduler;
   SST::Link* SelfLink;
+  SST::Link * FaultLink;
 
-  std::vector<SST::Link *> Parents;
-  std::vector<SST::Link *> Children;
+  std::vector<SST::Link *> ParentFaultLinks;
+  std::vector<SST::Link *> ChildFaultLinks;
+  SST::Link * Builder;
   
   std::map<std::string, float> Faults;
+  std::map<std::string, float> symptomLogProbability;
+  std::map<std::string, float> jobKillProbability;
+  std::map<int, int> killedJobs;        // jobs that had to be killed, but haven't finished yet.  used to keep track of this node's state
+  std::string faultLogFileName;
+  std::string symptomLogFileName;
+
+  std::string ID;
+  std::string nodeType;
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -62,10 +87,13 @@ private:
     ar & BOOST_SERIALIZATION_NVP(Scheduler);
     ar & BOOST_SERIALIZATION_NVP(SelfLink);
 
-    ar & BOOST_SERIALIZATION_NVP(Parents);
-    ar & BOOST_SERIALIZATION_NVP(Children);
+    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
+    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
     
     ar & BOOST_SERIALIZATION_NVP(Faults);
+    ar & BOOST_SERIALIZATION_NVP(symptomLogProbability);
+    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
+    ar & BOOST_SERIALIZATION_NVP(symptomLogFileName);
   }
 
   template<class Archive>
@@ -77,10 +105,13 @@ private:
     ar & BOOST_SERIALIZATION_NVP(Scheduler);
     ar & BOOST_SERIALIZATION_NVP(SelfLink);
 
-    ar & BOOST_SERIALIZATION_NVP(Parents);
-    ar & BOOST_SERIALIZATION_NVP(Children);
+    ar & BOOST_SERIALIZATION_NVP(ParentFaultLinks);
+    ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
     
     ar & BOOST_SERIALIZATION_NVP(Faults);
+    ar & BOOST_SERIALIZATION_NVP(symptomLogProbability);
+    ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
+    ar & BOOST_SERIALIZATION_NVP(symptomLogFileName);
 
     //restore links
     Scheduler->setFunctor(new SST::Event::Handler<nodeComponent>(this,
@@ -88,14 +119,14 @@ private:
     SelfLink->setFunctor(new SST::Event::Handler<nodeComponent>(this,
 								&nodeComponent::handleSelfEvent));
 	  
-	  for( unsigned int counter = 0; counter < Parents.size(); counter ++ ){
-	    Parents.at( counter )->setFunctor( new SST::Event::Handler<nodeComponent>( this,
+	  for( unsigned int counter = 0; counter < ParentFaultLinks.size(); counter ++ ){
+	    ParentFaultLinks.at( counter )->setFunctor( new SST::Event::Handler<nodeComponent>( this,
 							                                                                   &nodeComponent::handleEvent ) );
 	  }
 		
 		
-	  for( unsigned int counter = 0; counter < Children.size(); counter ++ ){
-	    Children.at( counter )->setFunctor( new SST::Event::Handler<nodeComponent>( this,
+	  for( unsigned int counter = 0; counter < ChildFaultLinks.size(); counter ++ ){
+	    ChildFaultLinks.at( counter )->setFunctor( new SST::Event::Handler<nodeComponent>( this,
 							                                                                    &nodeComponent::handleEvent ) );
 	  }
   }

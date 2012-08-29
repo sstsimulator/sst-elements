@@ -4,7 +4,9 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) 
+	$(MPI_CPPFLAGS) \
+	$(BOOST_FILESYSTEM_LIB) \
+	$(BOOST_THREAD_LIB)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
@@ -14,8 +16,8 @@ AllocInfo.h		ArrivalEvent.h		CompletionEvent.h	exceptions.h \
 AllocInfo.cc		ArrivalEvent.cc \
 Job.h			JobStartEvent.h		Machine.h \
 Job.cc \
-misc.h			nodeComponent.h		EASYScheduler.h 	PQScheduler.h		StatefulScheduler.h 	schedComponent.h \
-misc.cc			nodeComponent.cc	EASYScheduler.cc 	PQScheduler.cc		StatefulScheduler.cc 	schedComponent.cc \
+linkBuilder.h		misc.h			nodeComponent.h		EASYScheduler.h 	PQScheduler.h		StatefulScheduler.h 	schedComponent.h \
+linkBuilder.cc		misc.cc			nodeComponent.cc	EASYScheduler.cc 	PQScheduler.cc		StatefulScheduler.cc 	schedComponent.cc \
 Scheduler.h 		SimpleAllocator.h	SimpleMachine.h		Statistics.h 	NearestAllocator.h 	NearestAllocClasses.h 	NearestAllocator.cc \
 schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc		RandomAllocator.cc 	RandomAllocator.h \
 MachineMesh.cc		MachineMesh.h		NearestAllocClasses.cc		MBSAllocator.cc		MBSAllocator.h		MBSAllocInfo.h \
@@ -26,4 +28,4 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc
 
 EXTRA_DIST = makeSDL.pl test.xml test30.xml
 
-libscheduler_la_LDFLAGS = -module -avoid-version
+libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)

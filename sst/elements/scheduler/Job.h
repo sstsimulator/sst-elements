@@ -16,6 +16,9 @@
 #include <string>
 #include <queue>
 #include "Statistics.h"  //needed for friend declaration
+
+#include <sstream>
+
 using namespace std;
 
 class AllocInfo;
@@ -26,11 +29,23 @@ public:
   Job(istream& input, bool accurateEsts);
   Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime,
       unsigned long estRunningTime);
+  Job(long arrivalTime, int procsNeeded, long actualRunningTime,
+      long estRunningTime, std::string ID );
 
   unsigned long getArrivalTime() { return arrivalTime; }
   unsigned long getStartTime();
   int getProcsNeeded() { return procsNeeded; }
   long getJobNum() { return jobNum; }
+  
+  
+  std::string getID() {
+    if( ID.length() == 0 ){
+      std::ostringstream jobNumStr;
+      jobNumStr << jobNum;
+      return jobNumStr.str();
+    }
+    return ID;
+  }
 
   //two versions depending on whether allocation is considered:
   unsigned long getEstimatedRunningTime() { return estRunningTime; }
@@ -50,6 +65,8 @@ private:
   unsigned long startTime;	     //when the job started (-1 if not running)
   
   long jobNum;             //ID number unique to this job
+  
+  std::string ID;       // alternate ID not used by SST
 
   unsigned long getActualTime() { return actualRunningTime; }
 
@@ -71,6 +88,7 @@ private:
       ar & BOOST_SERIALIZATION_NVP(estRunningTime);
       ar & BOOST_SERIALIZATION_NVP(startTime);
       ar & BOOST_SERIALIZATION_NVP(jobNum);
+      ar & BOOST_SERIALIZATION_NVP(ID);
     }
   
 };

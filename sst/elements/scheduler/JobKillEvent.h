@@ -6,7 +6,7 @@ class JobKillEvent : public SST::Event{
   public:
 
     JobKillEvent( int jobNumber ) : SST::Event(){
-      this->jobNum= jobNum;
+      this->jobNum= jobNumber;
     }
     
     

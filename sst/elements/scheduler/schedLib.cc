@@ -16,6 +16,7 @@
 
 #include "nodeComponent.h"
 #include "schedComponent.h"
+#include "linkBuilder.h"
 
 static SST::Component*
 create_schedComponent(SST::ComponentId_t id, 
@@ -31,6 +32,10 @@ create_nodeComponent(SST::ComponentId_t id,
     return new nodeComponent( id, params );
 }
 
+static SST::Component * create_linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & params ){
+  return new linkBuilder( id, params );
+}
+
 static const SST::ElementInfoComponent components[] = {
     { "schedComponent",
       "Schedular Component",
@@ -41,6 +46,11 @@ static const SST::ElementInfoComponent components[] = {
       "Component for use with Scheduler",
       NULL,
       create_nodeComponent
+    },
+    { "linkBuilder",
+      "Builds links, yo",
+      NULL,
+      create_linkBuilder
     },
     { NULL, NULL, NULL, NULL }
 };
