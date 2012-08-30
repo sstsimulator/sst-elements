@@ -4,9 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_THREAD_LIB)
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
@@ -28,4 +26,4 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc
 
 EXTRA_DIST = makeSDL.pl test.xml test30.xml
 
-libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
+libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
