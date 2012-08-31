@@ -29,6 +29,18 @@ class Factory {
     M5* m_comp;
 };
 
+#if LIBTYPE == FAST
+    #define LIBNAME "libgem5_fast.so" 
+#elif LIBTYPE == OPT 
+    #define LIBNAME "libgem5_opt.so" 
+#elif LIBTYPE == PROF
+    #define LIBNAME "libgem5_prof.so" 
+#elif LIBTYPE == DEBUG 
+    #define LIBNAME "libgem5_debug.so" 
+#else
+    #error What LIBTYPE 
+#endif
+
 
 inline Factory::Factory( M5* comp ) :
     m_comp( comp )
@@ -38,7 +50,7 @@ inline Factory::Factory( M5* comp ) :
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
     }
-    m_libgem5 = dlopen("libgem5_opt.so",RTLD_NOW);
+    m_libgem5 = dlopen(LIBNAME,RTLD_NOW);
     if ( ! m_libgem5 ) {
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
@@ -120,7 +132,6 @@ inline SimObject* Factory::createObject2( const std::string name,
         printf("Factory::Factory() failed to create %s\n", type.c_str() );
         exit(-1);
     }
-    printf("name %s  %p \n", name.c_str(), obj);
 
     for ( int i=0; i < params.size(); i++ ){
         free( xxx[i].key );
