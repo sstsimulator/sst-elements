@@ -52,10 +52,10 @@ AC_DEFUN([SST_M5_CONFIG], [
   cpp_extra=
 
   case "${with_gem5_build}" in
-    debug) cpp_extra="-DDEBUG -DTRACING_ON=1" ;;
-    opt)   cpp_extra="-DTRACING_ON=1" ;;
-    prof)  cpp_extra="-DNDEBUG -DTRACING_ON=0" ;;
-    fast)  cpp_extra="-DNDEBUG -DTRACING_ON=0" ;;
+    debug) cpp_extra="-DDEBUG -DTRACING_ON=1 -DLIBTYPE=DEBUG" ;;
+    opt)   cpp_extra="-DTRACING_ON=1 -DLIBTYPE=OPT" ;;
+    prof)  cpp_extra="-DNDEBUG -DTRACING_ON=0 -DLIBTYPE=PROF" ;;
+    fast)  cpp_extra="-DNDEBUG -DTRACING_ON=0 -DLIBTYPE=FAST" ;;
     *) happy="no" ;;
   esac
 
