@@ -6,11 +6,10 @@
 #include <sst/core/configGraph.h>
 
 #include <util.h>
-#include <python/swig/pyobject.hh>
 #include <debug.h>
 #include <sst/core/sdl.h>
 #include <factory.h>
-#include <cpu/base.hh>
+#include <dll/gem5dll.hh>
 
 struct LinkInfo {
     std::string compName;
@@ -107,21 +106,15 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
         // this is a hack to allow M5 full system mode to work
         if ( ( ! portName1.compare(0,4,"pic." ) ) )
         {
-            DBGC( 2, "PIC portName=%s cpuId=%d\n",portName1.c_str(),
-                            ((BaseCPU*)obj1)->cpuId());
-            //obj1 = ((BaseCPU*)obj1)->getInterruptController();
             portName1 = portName1.substr(4); 
         }
 
         if ( ( ! portName2.compare(0,4,"pic." ) ) ) 
         {
-            DBGC( 2, "PIC portName=%s cpuId=%d\n",portName2.c_str(),
-                            ((BaseCPU*)obj2)->cpuId());
-            //obj2 = ((BaseCPU*)obj2)->getInterruptController();
             portName2 = portName2.substr(4); 
         }
         
-        if ( ! connectPorts( obj1,
+        if ( ! libgem5::ConnectPorts( obj1,
                         portName1,
                         iter->second.first.portNum,
                         obj2,

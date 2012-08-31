@@ -2,15 +2,15 @@
 #include <sst/core/serialization/element.h>
 #include <sst/core/params.h>
 
+#include <dll/gem5dll.hh>
 #include <sim/simulate.hh>
 #include <base/statistics.hh>
 #include <util.h>
 #include <debug.h>
 
-#include <base/misc.hh>
-#include <sim/sim_object.hh>
-
 #include "m5.h"
+
+#define curTick libgem5::CurTick
 
 using namespace SST;
 
@@ -21,10 +21,8 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     params( params ),  //for power
     m_m5ticksPerSSTclock( 1000000000 )
 {
-    // M5 variable
-    want_info = false;
-    extern int remote_gdb_base_port;
-    remote_gdb_base_port = 0;
+    libgem5::SetWantInfo( false );
+    libgem5::SetRemoteGDBPort(0);
 
     // a flag for telling if fastforwarding is used 
     FastForwarding_flag=false;
@@ -53,15 +51,14 @@ M5::M5( ComponentId_t id, Params_t& params ) :
 
     m_statFile = params.find_string("statFile");
 
-    INFO( "configFile `%s`\n", configFile.c_str() );
-
-    m_objectMap = buildConfig( this, "m5", configFile, params );
-
     // It makes things easier if we match the m5 simulation clock with 
     // the SST simulation clock. We don't have access to the SST clock but
     // it is 1 ps.
     unsigned long m5_freq = 1000000000000; 
-    setClockFrequency( m5_freq );
+    libgem5::SetClockFrequency( m5_freq );
+
+    INFO( "configFile `%s`\n", configFile.c_str() );
+    m_objectMap = buildConfig( this, "m5", configFile, params );
 
     TimeConverter *minPartTC = Simulation::getSimulation()->getMinPartTC();
     if ( minPartTC ) {
@@ -107,7 +104,7 @@ M5::~M5()
 int M5::Setup()
 {
     DBGX( 2, "call initAllObjects()\n" );
-    SimObject::initAllObjects();
+    libgem5::InitAllObjects();
     DBGX( 2, "initAllObjects\n" );
 
     #ifdef M5_WITH_POWER
@@ -131,8 +128,7 @@ void M5::exit( int status )
     DBGX(2,"M5::exit() status=%d\n",status);
     --m_numRegisterExits;
     if ( m_numRegisterExits == 0) {
-        ::Event *event = new SimLoopExitEvent("Exit M5", 0);
-        mainEventQueue.schedule(event, curTick());
+        libgem5::SchedExitEvent();
     } 
 }
 
