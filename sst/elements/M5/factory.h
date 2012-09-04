@@ -29,18 +29,10 @@ class Factory {
     M5* m_comp;
 };
 
-#if LIBTYPE == FAST
-    #define LIBNAME "libgem5_fast.so" 
-#elif LIBTYPE == OPT 
-    #define LIBNAME "libgem5_opt.so" 
-#elif LIBTYPE == PROF
-    #define LIBNAME "libgem5_prof.so" 
-#elif LIBTYPE == DEBUG 
-    #define LIBNAME "libgem5_debug.so" 
-#else
-    #error What LIBTYPE 
-#endif
-
+#define FAST "fast"
+#define OPT  "opt" 
+#define PROF "prof" 
+#define DEBUG "debug"
 
 inline Factory::Factory( M5* comp ) :
     m_comp( comp )
@@ -50,7 +42,7 @@ inline Factory::Factory( M5* comp ) :
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
     }
-    m_libgem5 = dlopen(LIBNAME,RTLD_NOW);
+    m_libgem5 = dlopen("libgem5_"LIBTYPE".so",RTLD_NOW);
     if ( ! m_libgem5 ) {
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
