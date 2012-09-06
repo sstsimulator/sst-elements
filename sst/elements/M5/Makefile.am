@@ -51,7 +51,9 @@ if USE_M5_O3
 libm5C_la_SOURCES += O3Cpu.cpp
 endif
 
-if MODEL_POWER
+if ENABLE_GEM5_POWER_MODEL
+if USE_MCPAT
+if USE_HOTSPOT
 libm5C_la_SOURCES += ../power/power.cc \
 		../power/power.h \
 		../power/interface.h \
@@ -59,6 +61,8 @@ libm5C_la_SOURCES += ../power/power.cc \
 		../power/HotSpot-interface.h \
 		../power/reliability.cc \
 		../power/reliability.h
+endif
+endif
 endif
 
 if HAVE_DRAMSIM 
@@ -77,10 +81,14 @@ libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
 libm5C_la_LDFLAGS = -module -avoid-version $(M5_LDFLAGS) $(DRAMSIM_LDFLAGS)
 libm5C_la_LIBADD = $(M5_LIB) $(DRAMSIM_LIB)
 
-if MODEL_POWER
+if ENABLE_GEM5_POWER_MODEL
+if USE_MCPAT
+if USE_HOTSPOT
 libm5C_la_CPPFLAGS += $(MCPAT_CPPFLAGS) $(HOTSPOT_CPPFLAGS) \
 		      -DM5_WITH_POWER 
 libm5C_la_LDFLAGS += $(MCPAT_LDFLAGS) $(HOTSPOT_LDFLAGS) 
-libm5C_la_LIBADD += $(MCPAT_LIB) $(HOTSPOT_LIB) 
+libm5C_la_LIBADD += $(MCPAT_LIB) $(HOTSPOT_LIB)
+endif
+endif
 endif
 

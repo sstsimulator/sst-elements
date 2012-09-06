@@ -189,7 +189,7 @@ bool M5::clock( SST::Cycle_t cycle )
 int M5::Finish()
 {
     #ifdef M5_WITH_POWER
-    Finish_Power()
+    Finish_Power();
     #endif
    
     return 0;
