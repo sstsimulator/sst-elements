@@ -4,7 +4,6 @@
 
 #include <dll/gem5dll.hh>
 #include <sim/simulate.hh>
-#include <base/statistics.hh>
 #include <util.h>
 #include <debug.h>
 
@@ -178,7 +177,7 @@ bool M5::clock( SST::Cycle_t cycle )
                 exitEvent->getCause().c_str(), exitEvent->getCode() );
         }
         if ( !m_statFile.empty() ) {
-            Stats::dump(m_statFile);
+            libgem5::DumpStats(m_statFile);
         }
         return true;
     }
