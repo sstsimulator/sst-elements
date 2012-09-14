@@ -69,7 +69,7 @@ objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST
         SST::Params tmpParams = params.find_prefix_params( tmp.name + "." );
         tmp.params.insert( tmpParams.begin(), tmpParams.end() );
 
-        SimObject * simObject = factory.createObject( 
+        Gem5Object_t* simObject = factory.createObject( 
                         name + "." + tmp.name, tmp.type, tmp.params );
         objectMap[ tmp.name.c_str() ] = simObject;  
         
@@ -129,8 +129,8 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
 
         std::string portName1 = iter->second.first.portName;
         std::string portName2 = iter->second.second.portName;
-        SimObject* obj1 = objMap[iter->second.first.compName];
-        SimObject* obj2 = objMap[iter->second.second.compName];
+        Gem5Object_t* obj1 = objMap[iter->second.first.compName];
+        Gem5Object_t* obj2 = objMap[iter->second.second.compName];
 
 
         // this is a hack to allow M5 full system mode to work

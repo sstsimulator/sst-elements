@@ -246,9 +246,9 @@ SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
         printf("system `%s`\n",systemName.c_str());
         objectMap_t::iterator it = m5comp->objectMap().find( systemName );
         if ( it == m5comp->objectMap().end() ) {
-            m5comp->objectMap()[systemName] = foo(name, sstParams);
+            m5comp->objectMap()[systemName]->memObject = foo(name, sstParams);
         }
-        system = static_cast<System*>( m5comp->objectMap()[systemName] );
+        system = static_cast<System*>( m5comp->objectMap()[systemName]->memObject );
     } else {
         printf("default system\n");
         system = foo(name,sstParams);
@@ -307,13 +307,13 @@ static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
         printf("process `%s`\n", processName.c_str());
         objectMap_t::iterator it = m5comp->objectMap().find( processName );
         if ( it == m5comp->objectMap().end() ) {
-            m5comp->objectMap()[processName] = 
+            m5comp->objectMap()[processName]->memObject = 
                         newProcess( cpu.name + ".workload", 
                                     sstParams.find_prefix_params( "process." ),
                                     system, comp );
         }
         cpu.workload[0] = static_cast<Process*>( 
-                                    m5comp->objectMap()[processName] );
+                                    m5comp->objectMap()[processName]->memObject );
     } else {
         printf("default process\n");
         cpu.workload[0] = newProcess( cpu.name + ".workload", 

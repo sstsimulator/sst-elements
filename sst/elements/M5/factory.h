@@ -16,13 +16,13 @@ class Factory {
   public:
     Factory( M5* );
     ~Factory( );
-    SimObject* createObject( std::string name, std::string type, 
+    Gem5Object_t* createObject( std::string name, std::string type, 
             SST::Params&  );
     
   private:     
-    SimObject* createObject1( std::string name, std::string type, 
+    Gem5Object_t* createObject1( std::string name, std::string type, 
             SST::Params&  );
-    SimObject* createObject2( std::string name, std::string type, 
+    Gem5Object_t* createObject2( std::string name, std::string type, 
             SST::Params&  );
     void *m_libm5C;
     void *m_libgem5;
@@ -55,7 +55,7 @@ inline Factory::~Factory()
     dlclose(m_libgem5);
 }
 
-inline SimObject* Factory::createObject( std::string name, 
+inline Gem5Object_t* Factory::createObject( std::string name, 
                 std::string type, SST::Params& params )
 {
     if ( type[0] != '+' ) {
@@ -65,7 +65,7 @@ inline SimObject* Factory::createObject( std::string name,
     }
 }
 
-inline SimObject* Factory::createObject1( std::string name, 
+inline Gem5Object_t* Factory::createObject1( std::string name, 
                 std::string type, SST::Params& params )
 {
     typedef SimObject* (*createObjFunc_t)( void*, std::string, SST::Params&);
@@ -79,7 +79,10 @@ inline SimObject* Factory::createObject1( std::string name,
         exit(-1);
     }
 
-    SimObject* obj = (*ptr)( m_comp, name, params );
+    
+    Gem5Object_t* obj = new Gem5Object_t;
+    assert(obj);
+    obj->memObject = (*ptr)( m_comp, name, params );
     if ( ! obj ) {
         printf("Factory::Factory() failed to create %s\n", type.c_str() );
         exit(-1);
@@ -95,10 +98,10 @@ inline char * make_copy( const std::string & str )
     return strcpy( tmp, str.c_str() );
 }
 
-inline SimObject* Factory::createObject2( const std::string name, 
+inline Gem5Object_t* Factory::createObject2( const std::string name, 
                 std::string type, SST::Params& params )
 {
-    typedef void* (*createObjFunc_t)( const char*, const xxx * );
+    typedef Gem5Object_t* (*createObjFunc_t)( const char*, const xxx * );
     std::string tmp = "Create";
     tmp += type;
     DBGX(2,"type `%s`\n", tmp.c_str());
@@ -119,7 +122,7 @@ inline SimObject* Factory::createObject2( const std::string name,
     xxx[params.size()].key   = NULL;  
     xxx[params.size()].value = NULL;
 
-    void* obj = (*ptr)( name.c_str(), xxx );
+    Gem5Object_t* obj = (*ptr)( name.c_str(), xxx );
     if ( ! obj ) {
         printf("Factory::Factory() failed to create %s\n", type.c_str() );
         exit(-1);
@@ -131,7 +134,7 @@ inline SimObject* Factory::createObject2( const std::string name,
     }
 
     free( xxx );
-    return (SimObject*) obj;
+    return obj;
 }
 
 #endif

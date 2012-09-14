@@ -2,12 +2,11 @@
 #define _util_h
 
 #include <cstdio>
-
-class SimObject;
+#include <dll/gem5dll.hh>
 
 class M5;
 
-typedef std::map< std::string, SimObject* > objectMap_t;
+typedef std::map< std::string, Gem5Object_t* > objectMap_t;
 
 extern objectMap_t buildConfig( M5*, std::string, std::string, SST::Params& );
 
