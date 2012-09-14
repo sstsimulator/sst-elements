@@ -10,6 +10,7 @@
 #include <sst/core/sdl.h>
 #include <factory.h>
 #include <dll/gem5dll.hh>
+#include <portLink.h>
 
 struct LinkInfo {
     std::string compName;
@@ -22,6 +23,7 @@ typedef std::map< std::string, link_t >     linkMap_t;
 
 static void printLinkMap( linkMap_t& );
 static void connectAll( objectMap_t&, linkMap_t& );
+static void createLinks( M5&, Gem5Object_t&, SST::Params& );
 
 objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST::Params& params )
 {
@@ -67,13 +69,41 @@ objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST
         SST::Params tmpParams = params.find_prefix_params( tmp.name + "." );
         tmp.params.insert( tmpParams.begin(), tmpParams.end() );
 
-        objectMap[ tmp.name.c_str() ]  = factory.createObject( 
+        SimObject * simObject = factory.createObject( 
                         name + "." + tmp.name, tmp.type, tmp.params );
+        objectMap[ tmp.name.c_str() ] = simObject;  
+        
+        createLinks( *comp, *(Gem5Object_t*) simObject, tmp.params );
     }
 
     connectAll( objectMap, linkMap );
 
     return objectMap;
+}
+
+static void createLinks( M5& comp,
+                        Gem5Object_t& obj, SST::Params& params ) 
+{
+    const SST::Params& links = params.find_prefix_params("link.");
+        
+    int num = 0;
+    while ( 1 ) {
+        std::stringstream numSS;
+        std::string tmp;
+
+        numSS << num;
+
+        tmp = numSS.str() + ".";
+            
+        SST::Params link = links.find_prefix_params( tmp );
+
+        if ( link.empty() ) {
+                return;
+        }
+
+        obj.links.push_back(  new PortLink( comp, obj, link ) );
+        ++num;
+    }
 }
 
 void printLinkMap( linkMap_t& map  )
@@ -114,10 +144,10 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
             portName2 = portName2.substr(4); 
         }
         
-        if ( ! libgem5::ConnectPorts( obj1,
+        if ( ! libgem5::ConnectPorts( (Gem5Object_t*) obj1,
                         portName1,
                         iter->second.first.portNum,
-                        obj2,
+                        (Gem5Object_t*) obj2,
                         portName2,
                         iter->second.second.portNum) ) 
         {
