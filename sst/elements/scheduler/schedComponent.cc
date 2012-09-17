@@ -238,16 +238,16 @@ bool schedComponent::validateJob( Job * j, vector<Job> jobs, long runningTime ){
   [Job ID], [Job duration], [Procs needed]
 */
 bool schedComponent::newYumYumJobLine( std::string line ){
-  if(line.find_first_not_of(" \t\n") == string::npos)
-    return false;
-
   boost::algorithm::trim( line );
-
+  
   if( line.compare( "YYKILL" ) == 0 ){
     YumYumSimulationKillFlag = true;
     useYumYumSimulationKill = false;
     return false;
   }
+
+  if(line.find_first_of("1234567890") == string::npos)
+    return false;
 
   char ID[ JobIDlength ];
   uint64_t duration;
@@ -272,7 +272,7 @@ bool schedComponent::newYumYumJobLine( std::string line ){
   sscanf( ID, "%lu", &currentJobID );
   sscanf( lastJobRead, "%lu", &lastJobID );
 
-  if( currentJobID <= lastJobID && lastJobRead[ 0 ] != '\0'){
+  if( lastJobRead[ 0 ] != '\0' && currentJobID <= lastJobID ){
     return false;       // We have read this job before, don't do it again.
   }
 
@@ -445,9 +445,6 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
     CommunicationEvent * CommEvent = dynamic_cast<CommunicationEvent *>( ev );
 
     if( CommEvent->CommType == LOG_JOB_START ){
-      if( printJobLog ){
-        logJobStart( runningJobs[ atoi( CommEvent->payload.c_str() ) ] );
-      }
     }else if( CommEvent->CommType == START_FILE_WATCH ){
     }
     return;
@@ -544,13 +541,9 @@ void schedComponent::startJob(AllocInfo* ai) {
   iai.ai = ai;
   runningJobs[j->getJobNum()] = iai;
 
-  char jobnum[ 16 ];
-
-  snprintf( jobnum, 15, "%lu", j->getJobNum() );
-  CommunicationEvent * CommEvent = new CommunicationEvent( LOG_JOB_START );
-  CommEvent->payload = std::string( jobnum );
-
-  selfLink->Send( 1, CommEvent );
+  if( printJobLog ){
+    logJobStart( iai );
+  }
 }
 
 
@@ -558,7 +551,7 @@ void schedComponent::logJobStart( IAI iai ){
   std::ofstream jobLog;
   jobLog.open( this->jobLogFileName.c_str(), ios::out | ios::ate | ios::app );
   if( jobLog.is_open() ){
-    jobLog << "\"" << iai.ai->job->getID() << "\",\"" << iai.ai->job->getStartTime() << "\",\"-1\",\"-1\",\"";
+    jobLog << iai.ai->job->getID() << "," << getCurrentSimTime() << ",-1,-1,";
     for( int counter = 0; counter < iai.ai->job->getProcsNeeded(); counter ++ ){
       if( counter > 0 ){
         jobLog << " ";
@@ -566,7 +559,7 @@ void schedComponent::logJobStart( IAI iai ){
       jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
     }
 
-    jobLog << "\"" << endl;;
+    jobLog << endl;
     jobLog.close();
   }else{
     char errorMessage[ 1024 ];
@@ -581,7 +574,7 @@ void schedComponent::logJobFinish( IAI iai ){
   std::ofstream jobLog;
   jobLog.open( this->jobLogFileName.c_str(), ios::out | ios::ate | ios::app );
   if( jobLog.is_open() ){
-    jobLog << "\"" << iai.ai->job->getID() << "\",\"" << iai.ai->job->getStartTime() << "\",\"" << getCurrentSimTime() << "\",\"0\",\"";
+    jobLog << iai.ai->job->getID() << "," << iai.ai->job->getStartTime() << "," << getCurrentSimTime() << ",0,";
     for( int counter = 0; counter < iai.ai->job->getProcsNeeded(); counter ++ ){
       if( counter > 0 ){
         jobLog << " ";
@@ -589,7 +582,7 @@ void schedComponent::logJobFinish( IAI iai ){
       jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
     }
 
-    jobLog << "\"" << endl;;
+    jobLog << endl;
     jobLog.close();
   }else{
     char errorMessage[ 1024 ];
@@ -604,7 +597,7 @@ void schedComponent::logJobFault( IAI iai, JobFaultEvent * faultEvent ){
   std::ofstream jobLog;
   jobLog.open( this->jobLogFileName.c_str(), ios::out | ios::ate | ios::app );
   if( jobLog.is_open() ){
-    jobLog << "\"" << iai.ai->job->getID() << "\",\"" << iai.ai->job->getStartTime() << "\",\"" << getCurrentSimTime() << "\",\"1\",\"";
+    jobLog << iai.ai->job->getID() << "," << iai.ai->job->getStartTime() << "," << getCurrentSimTime() << ",1,";
     for( int counter = 0; counter < iai.ai->job->getProcsNeeded(); counter ++ ){
       if( counter > 0 ){
         jobLog << " ";
@@ -612,7 +605,7 @@ void schedComponent::logJobFault( IAI iai, JobFaultEvent * faultEvent ){
       jobLog << nodeIDs.at( iai.ai->nodeIndices[ counter ] );
     }
 
-    jobLog << "\"" << endl;;
+    jobLog << endl;
     jobLog.close();
   }else{
     char errorMessage[ 1024 ];

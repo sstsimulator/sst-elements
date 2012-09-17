@@ -25,7 +25,7 @@ AllocInfo::AllocInfo(Job* job) {
 }
 
 AllocInfo::~AllocInfo() {
-  delete nodeIndices;
+  delete[] nodeIndices;
 }
 
 string AllocInfo::getProcList() {

@@ -25,6 +25,7 @@
 #include "linkBuilder.h"
 
 #include <vector>
+#include <fstream>
 
 class nodeComponent : public SST::Component, public virtual linkChanger {
   friend class linkBuilder;
@@ -53,8 +54,8 @@ private:
   void handleJobKillEvent( JobKillEvent * killEvent );
   
   void sendNextFault( std::string faultType );
-  void logSymptom( JobFaultEvent * faultEvent );
   void logError( JobFaultEvent * faultEvent );
+  void logFault( JobFaultEvent * faultEvent );
 
   int jobNum;
   int nodeNum;
@@ -68,11 +69,11 @@ private:
   SST::Link * Builder;
   
   std::map<std::string, float> Faults;
-  std::map<std::string, float> symptomLogProbability;
+  std::map<std::string, float> errorLogProbability;
   std::map<std::string, float> jobKillProbability;
   std::map<int, int> killedJobs;        // jobs that had to be killed, but haven't finished yet.  used to keep track of this node's state
   std::string faultLogFileName;
-  std::string symptomLogFileName;
+  std::string errorLogFileName;
 
   std::string ID;
   std::string nodeType;
@@ -91,9 +92,9 @@ private:
     ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
     
     ar & BOOST_SERIALIZATION_NVP(Faults);
-    ar & BOOST_SERIALIZATION_NVP(symptomLogProbability);
+    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
     ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
-    ar & BOOST_SERIALIZATION_NVP(symptomLogFileName);
+    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
   }
 
   template<class Archive>
@@ -109,9 +110,9 @@ private:
     ar & BOOST_SERIALIZATION_NVP(ChildFaultLinks);
     
     ar & BOOST_SERIALIZATION_NVP(Faults);
-    ar & BOOST_SERIALIZATION_NVP(symptomLogProbability);
+    ar & BOOST_SERIALIZATION_NVP(errorLogProbability);
     ar & BOOST_SERIALIZATION_NVP(faultLogFileName);
-    ar & BOOST_SERIALIZATION_NVP(symptomLogFileName);
+    ar & BOOST_SERIALIZATION_NVP(errorLogFileName);
 
     //restore links
     Scheduler->setFunctor(new SST::Event::Handler<nodeComponent>(this,

@@ -48,7 +48,7 @@ static const SST::ElementInfoComponent components[] = {
       create_nodeComponent
     },
     { "linkBuilder",
-      "Builds links, yo",
+      "Graph Link Modifier",
       NULL,
       create_linkBuilder
     },

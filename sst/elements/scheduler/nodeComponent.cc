@@ -30,6 +30,9 @@
 
 using namespace SST;
 
+static ofstream faultLog;
+static ofstream errorLog;
+
 nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
   Component(id), jobNum(-1) {
 
@@ -40,7 +43,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
   ID = params[ "id" ];
   nodeType = params[ "type" ];
   faultLogFileName = params[ "faultLogFileName" ];
-  symptomLogFileName = params[ "symptomLogFileName" ];
+  errorLogFileName = params[ "errorLogFileName" ];
 
   Scheduler = configureLink( "Scheduler", new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent) );
   Builder = configureLink( "Builder", new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ) );
@@ -108,7 +111,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
   for( unsigned int counter = 0; counter < tokens.size(); counter += 2 ){
     boost::algorithm::trim( tokens.at( counter ) );
     boost::algorithm::trim( tokens.at( counter + 1 ) );
-    symptomLogProbability.insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
+    errorLogProbability.insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
   }
 
 
@@ -181,7 +184,10 @@ void nodeComponent::handleFaultEvent( SST::Event * ev ){
   if( dynamic_cast<JobFaultEvent*>(ev) ){
     JobFaultEvent * faultEvent = dynamic_cast<JobFaultEvent*>(ev);
 
-    logError( faultEvent );
+#ifdef JRSDEBUG
+	cerr << getCurrentSimTime() << ": in handleFaultEvent for node " << this->ID << endl;
+#endif
+    logFault( faultEvent );
     
     if( Scheduler && jobNum != -1 ){
       // Kill the job if there is a probability associated with it and a roll of the dice says to do so.
@@ -239,9 +245,12 @@ void nodeComponent::handleEvent(Event *ev) {
       internal_error("Error?! Already running a job, but given a new one!\n");
     }
   }else if( dynamic_cast<JobFaultEvent*>(ev) ){
+#ifdef JRSDEBUG
+	cerr << getCurrentSimTime() << ": in handleEvent for node " << this->ID << endl;
+#endif
     JobFaultEvent * faultEvent = dynamic_cast<JobFaultEvent*>(ev);
 
-    logError( faultEvent );
+//    logFault( faultEvent );
     
     if( Scheduler && jobNum != -1 ){
       // Kill the job if there is a probability associated with it and a roll of the dice says to do so.
@@ -264,7 +273,7 @@ void nodeComponent::handleEvent(Event *ev) {
     }
 
     // log the symptom for the analysis tool
-    logSymptom( faultEvent );
+    logError( faultEvent );
    
   }else if( dynamic_cast<JobKillEvent*>(ev) ){
     handleJobKillEvent( dynamic_cast<JobKillEvent*>(ev) );
@@ -289,6 +298,10 @@ void nodeComponent::handleSelfEvent(Event *ev) {
       internal_error("Error!! We are not running this job we're supposed to finish!\n");
     }
   }else if( dynamic_cast<JobFaultEvent*>(ev) ){
+
+#ifdef JRSDEBUG
+	cerr << getCurrentSimTime() << ": in handleSelfEvent for node " << this->ID << endl;
+#endif
     JobFaultEvent * faultEvent = dynamic_cast<JobFaultEvent*>(ev);
     
     sendNextFault( faultEvent->faultType );     // handled this fault, send another fault to the future
@@ -310,12 +323,12 @@ void nodeComponent::handleSelfEvent(Event *ev) {
     }
     
     // log the symptom for the analysis tool
-    logSymptom( faultEvent );
+    logError( faultEvent );
     
     
     // last, write the fault to the Fault Log
     if( this->faultLogFileName.length() > 0 ){
-      logError( faultEvent );
+      logFault( faultEvent );
     }
     
 
@@ -348,27 +361,31 @@ void nodeComponent::sendNextFault( std::string faultType ){
     internal_error( "Error, recieved a fault with a type that is unknown.\n" );
   }
   
-  unsigned fail_time = genexp( Faults.find( faultType.c_str() )->second / 31556926.0 );     // lambda scaled to one year
-  SelfLink->Send( fail_time / 100, new JobFaultEvent( faultType ) );
-  
-  /*
-      No idea what the magic number means, and it wasn't documented.  It comes from
-      
-      #define PROPDEPTH 100
-      
-      in resil.h
-  */
+  unsigned fail_time = genexp( Faults.find( faultType.c_str() )->second / 86400.0 );     // lambda scaled to one day
+#ifdef JRSDEBUG
+	cerr << getCurrentSimTime() << ": in sendNextFault for node " << this->ID << " with lambda " << Faults.find( faultType.c_str() )->second << ", next faultTime is " << fail_time << endl;
+#endif
+  SelfLink->Send( fail_time, new JobFaultEvent( faultType ) );
 }
 
 
 
 /*
-Uses the probability in symptomLogProbability to determine if a fault should be logged.
+Uses the probability in errorLogProbability to determine if a fault should be logged.
 If it should be logged, it is logged.
 */
-void nodeComponent::logSymptom( JobFaultEvent * faultEvent ){
-  std::ofstream symptomLog;
-  symptomLog.open( this->symptomLogFileName.c_str(), ios::out | ios::ate | ios::app );
+void nodeComponent::logError( JobFaultEvent * faultEvent ){
+  if (!errorLog.is_open()) {
+#ifdef JRSDEBUG
+	cerr << getCurrentSimTime() << ": in logError.open for node " << this->ID << endl;
+#endif
+  	errorLog.open(this->errorLogFileName.c_str());
+	if (!errorLog.is_open()) {
+		cerr << "Failed to open " << this->errorLogFileName.c_str() << endl;
+		exit(1);
+	}
+    errorLog << "time,host,type" << endl;
+  }
 
     /* Log the symptom if
      *
@@ -376,39 +393,30 @@ void nodeComponent::logSymptom( JobFaultEvent * faultEvent ){
      * b) EITHER there is a symptom logging probability associated with this fault and a random number [0, 1) is less than the probability OR
      * c) there is no probability associated with this type of fault
      */
-  if( symptomLog.is_open() ){
-    if( (this->symptomLogProbability.find( faultEvent->faultType ) != this->symptomLogProbability.end() &&
-          drand48() < this->symptomLogProbability.find( faultEvent->faultType )->second) ||
-         this->symptomLogProbability.find( faultEvent->faultType ) == this->symptomLogProbability.end()){
-      symptomLog << getCurrentSimTime() << "\t" << this->nodeNum << "\t" << faultEvent->faultType << endl;
-    }
-    symptomLog.close();
-  }else{
-      char errorMessage[ 1024 ];
-      
-      snprintf( errorMessage, 1023, "Couldn't open %s for writing the symptom log for node %d.", this->symptomLogFileName.c_str(), this->nodeNum );
-      
-      error( errorMessage );
-    }
+    if( (this->errorLogProbability.find( faultEvent->faultType ) != this->errorLogProbability.end() &&
+          drand48() < this->errorLogProbability.find( faultEvent->faultType )->second) ||
+         this->errorLogProbability.find( faultEvent->faultType ) == this->errorLogProbability.end()){
+  			errorLog << getCurrentSimTime() << "," << this->ID << "," << faultEvent->faultType << endl;
+         }
 }
 
 
 /*
 Logs the "ground truth" to the fault log.  This is used to measure the accuracy of the Analysis Tool
 */
-void nodeComponent::logError( JobFaultEvent * faultEvent ){
-  std::ofstream faultLog;
-  faultLog.open( this->faultLogFileName.c_str(), ios::out | ios::ate | ios::app );
-  if( faultLog.is_open() ){
-    faultLog << getCurrentSimTime() << "\t" << this->nodeNum << "\t" << faultEvent->faultType << endl;
-    faultLog.close();
-  }else{
-    char errorMessage[ 1024 ];
-    
-    snprintf( errorMessage, 1023, "Couldn't open %s for writing the error log for node %d.", this->faultLogFileName.c_str(), this->nodeNum );
-    
-    error( errorMessage );
+void nodeComponent::logFault( JobFaultEvent * faultEvent ){
+  if (!faultLog.is_open()) {
+#ifdef JRSDEBUG
+	cerr << getCurrentSimTime() << ": in logFault.open for node " << this->ID << endl;
+#endif
+  	faultLog.open(this->faultLogFileName.c_str());
+	if (!faultLog.is_open()) {
+		cerr << "Failed to open " << this->faultLogFileName.c_str() << endl;
+		exit(1);
+	}
+    faultLog << "time,host,type" << endl;
   }
+  faultLog << getCurrentSimTime() << "," << this->ID << "," << faultEvent->faultType << endl;
 }
 
 

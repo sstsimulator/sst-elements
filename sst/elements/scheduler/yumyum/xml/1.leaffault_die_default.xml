@@ -6,7 +6,7 @@
 
     <node_logs>
       <faultLogFileName>fault.log</faultLogFileName>
-      <symptomLogFileName>symptom.log</symptomLogFileName>
+      <errorLogFileName>error.log</errorLogFileName>
     </node_logs>
 
 </param_include>

@@ -6,7 +6,7 @@
 
     <node_logs>
       <faultLogFileName>fault.log</faultLogFileName>
-      <symptomLogFileName>symptom.log</symptomLogFileName>
+      <errorLogFileName>error.log</errorLogFileName>
     </node_logs>
 
 </param_include>
@@ -20,10 +20,10 @@
       <id>1.1</id>
       <type>node</type>
       <nodeNum>0</nodeNum>
-      <symptomLogProb>
+      <errorLogProb>
         "fault_a", "1",
         "fault_b", "0"
-      </symptomLogProb>
+      </errorLogProb>
     </params>
   </component>
   <component name="1.2" type="scheduler.nodeComponent">
@@ -65,9 +65,9 @@
       <id>2.1</id>
       <type>node</type>
       <nodeNum>4</nodeNum>
-      <symptomLogProb>
+      <errorLogProb>
         "fault_a", "0"
-      </symptomLogProb>
+      </errorLogProb>
       <faults>
         "fault_a", "100",
         "fault_b", "100"
