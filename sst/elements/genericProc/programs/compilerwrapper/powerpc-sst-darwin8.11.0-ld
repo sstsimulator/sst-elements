@@ -1,5 +1,0 @@
-#!/bin/sh
-
-HOME_BUILD_ROOT="/Users/kbwheel"
-
-ld "$@" -search_paths_first -L${HOME_BUILD_ROOT}/sstlib -static

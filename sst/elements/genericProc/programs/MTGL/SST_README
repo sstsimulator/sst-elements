@@ -1,4 +1,0 @@
-In order to build for the SST, all you have to do is make sure you're using the
-wrapper compiler (i.e. CXX=powerpc-sst-darwin8.11.0-g++), and a version of
-qthreads (with or without cprops) that has also been compiled for the simulator
-(see the documentation of qthreads to find out how to build it for the SST).
