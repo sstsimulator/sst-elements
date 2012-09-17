@@ -174,7 +174,9 @@ void nodeComponent::handleJobKillEvent( JobKillEvent * killEvent ){
     killedJobs.insert( std::pair<int, int>( jobNum, jobNum ) );
     jobNum = -1;
   }else{
-    internal_error( "Error, asked to kill a job we're not running.\n" );
+#ifdef JRSDEBUG
+    std::cout << "A node was asked to kill a job it was not running.\n" << std::endl;
+#endif
   }
 }
 
