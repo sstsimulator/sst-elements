@@ -31,7 +31,6 @@
 #include "macro_network.h"
 #include <sstmac/backends/native/nodeid.h>
 
-#include <sst/core/stopAction.h>
 #include <sstmac/common/basicstringtokenizer.h>
 
 using namespace SST;
@@ -47,10 +46,6 @@ bool macro_processor::timeinit_ = false;
 macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
     Component(id)
 {
-        StopAction* sa = new StopAction();
-//        sa->setDeliveryTime(1000000000000000);
-        Simulation::getSimulation()->insertActivity(10000000000000000, sa);
-
 	nodeaddress::ptr dummy = sstmac::native::nodeid::construct(-1);
 	
 	
