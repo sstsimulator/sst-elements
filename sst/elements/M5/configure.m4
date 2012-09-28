@@ -19,6 +19,9 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_ARG_WITH([python],
     [AS_HELP_STRING([--with-python@<:@=DIR@:>@],
     [Use Python installed in optionally specified DIR])])
+  AC_ARG_WITH([python-includes],
+    [AS_HELP_STRING([--with-python-includes[[=DIR@]]],
+	[Expect Python headers in the specified DIR])])
 
   AC_ARG_ENABLE([gem5-power-model], [Enable power modeling in SST-GEM5)])
 
@@ -34,11 +37,13 @@ AC_DEFUN([SST_M5_CONFIG], [
     [])
 
   AS_IF([test ! -z "$with_python" -a "$with_python" != "yes"],
-    [ CPPFLAGS="-I$with_python $CPPFLAGS"],
+    [AS_IF([test "x$with_python_includes" != "x"],
+	       [CPPFLAGS="-I$with_python_includes $CPPFLAGS"],
+		   [CPPFLAGS="-I$with_python $CPPFLAGS"])],
     [])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([Python.h], [M5_CPPFLAGS="-I$with_python $CPPFLAGS"], [happy="no"])
+  AC_CHECK_HEADERS([Python.h], [M5_CPPFLAGS="$CPPFLAGS"], [happy="no"])
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
