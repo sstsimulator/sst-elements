@@ -128,6 +128,7 @@ inline Gem5Object_t* Factory::createObject2( const std::string name,
         exit(-1);
     }
 
+    obj->name = name;
     for ( int i=0; i < params.size(); i++ ){
         free( xxx[i].key );
         free( xxx[i].value );
