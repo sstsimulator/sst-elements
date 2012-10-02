@@ -4,9 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) \
-	$(BOOST_FILESYSTEM_LIB) \
-	$(BOOST_THREAD_LIB)
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libscheduler.la
