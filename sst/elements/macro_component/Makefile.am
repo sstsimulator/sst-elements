@@ -2,6 +2,8 @@
 #
 #
 
+if USE_SSTMACRO
+
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
@@ -28,3 +30,5 @@ macro_component.cc \
 EXTRA_DIST = makeSDL.pl
 
 libmacro_component_la_LDFLAGS = -module -avoid-version $(shell $(SSTMACRO_CONFIG_TOOL) --ldflags) $(SSTMACRO_LDFLAGS)
+
+endif

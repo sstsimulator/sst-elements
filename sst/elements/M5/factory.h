@@ -38,11 +38,18 @@ inline Factory::Factory( M5* comp ) :
     m_comp( comp )
 {
     m_libm5C = dlopen("libm5C.so",RTLD_NOW);
+
     if ( ! m_libm5C ) {
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
     }
+
+#ifdef USE_MACOSX_DYLIB
+    m_libgem5 = dlopen("libgem5_"LIBTYPE".dylib",RTLD_NOW);
+#else
     m_libgem5 = dlopen("libgem5_"LIBTYPE".so",RTLD_NOW);
+#endif
+
     if ( ! m_libgem5 ) {
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
@@ -128,7 +135,6 @@ inline Gem5Object_t* Factory::createObject2( const std::string name,
         exit(-1);
     }
 
-    obj->name = name;
     for ( int i=0; i < params.size(); i++ ){
         free( xxx[i].key );
         free( xxx[i].value );

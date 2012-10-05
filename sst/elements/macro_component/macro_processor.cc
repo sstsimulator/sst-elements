@@ -31,6 +31,7 @@
 #include "macro_network.h"
 #include <sstmac/backends/native/nodeid.h>
 
+
 #include <sstmac/common/basicstringtokenizer.h>
 
 using namespace SST;
@@ -46,6 +47,7 @@ bool macro_processor::timeinit_ = false;
 macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
     Component(id)
 {
+
 	nodeaddress::ptr dummy = sstmac::native::nodeid::construct(-1);
 	
 	

@@ -19,9 +19,6 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_ARG_WITH([python],
     [AS_HELP_STRING([--with-python@<:@=DIR@:>@],
     [Use Python installed in optionally specified DIR])])
-  AC_ARG_WITH([python-includes],
-    [AS_HELP_STRING([--with-python-includes[[=DIR@]]],
-	[Expect Python headers in the specified DIR])])
 
   AC_ARG_ENABLE([gem5-power-model], [Enable power modeling in SST-GEM5)])
 
@@ -36,22 +33,18 @@ AC_DEFUN([SST_M5_CONFIG], [
       LDFLAGS="-L$with_gem5 $LDFLAGS "],
     [])
 
-  AS_IF([test "x$with_python_includes" != "x"],
-    [PYTHON_CPPFLAGS="-I$with_python_includes"],
-    [AS_IF([test ! -z "$with_python" -a "$with_python" != "yes"],
-           [PYTHON_CPPFLAGS="-I$with_python"],
-           [PYTHON_CPPFLAGS="-DALL_FAIL"])])
-  CPPFLAGS="$PYTHON_CPPFLAGS $CPPFLAGS"
-
+  AS_IF([test ! -z "$with_python" -a "$with_python" != "yes"],
+    [ CPPFLAGS="-I$with_python $CPPFLAGS"],
+    [])
 
   AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([Python.h], [M5_CPPFLAGS="-I$with_python $CPPFLAGS"], [happy="no"])
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
   AC_CHECK_HEADERS([params/X86TLB.hh], [isa=X86], [])
   AC_CHECK_HEADERS([params/DerivO3CPU.hh], [use_gem5_o3=true], [use_gem5_o3=false])
   AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [happy="no"])
-  AC_CHECK_HEADERS([Python.h], [M5PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS"], [happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
@@ -68,11 +61,15 @@ AC_DEFUN([SST_M5_CONFIG], [
     *) happy="no" ;;
   esac
 
+  AC_LANG_PUSH(C++)
+  AC_CHECK_HEADERS([Python.h], [M5PYTHON_CPPFLAGS="-I$with_python $CPPFLAGS"], [happy="no"])
+  AC_LANG_POP(C++)
 
   M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra} ${M5PYTHON_CPPFLAGS}"
   M5_LDFLAGS="-L$with_gem5"
 
   AM_CONDITIONAL([USE_M5_O3], [test x$use_gem5_o3 = xtrue])
+  AM_CONDITIONAL([USE_OSX_DYLIB], [test `uname` = "Darwin"])
 
   AC_SUBST([M5_CPPFLAGS])
   AC_SUBST([M5_LDFLAGS])
