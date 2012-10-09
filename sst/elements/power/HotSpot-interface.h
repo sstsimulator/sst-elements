@@ -18,14 +18,14 @@
 /* HotSpot files */
 extern "C"{
 #ifdef HotSpot_H
-#include "../sst/core/techModels/libHotSpot/flp.h"
-#include "../sst/core/techModels/libHotSpot/npe.h"
-#include "../sst/core/techModels/libHotSpot/package.h"
-#include "../sst/core/techModels/libHotSpot/shape.h"
-#include "../sst/core/techModels/libHotSpot/temperature.h"
-#include "../sst/core/techModels/libHotSpot/temperature_block.h"
-#include "../sst/core/techModels/libHotSpot/temperature_grid.h"
-#include "../sst/core/techModels/libHotSpot/util.h"
+#include "flp.h"
+#include "npe.h"
+#include "package.h"
+#include "shape.h"
+#include "temperature.h"
+#include "temperature_block.h"
+#include "temperature_grid.h"
+#include "util.h"
 #endif //hotspot_h
 }
 
