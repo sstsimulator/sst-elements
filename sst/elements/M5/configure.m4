@@ -103,11 +103,18 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_SUBST([DRAMSIM_LDFLAGS])
   AC_SUBST([DRAMSIM_LIB])
 
-  AS_IF([test -z "$enable-gem5-power-model" -a "happy" = "yes"],
+  AS_IF([test -z "$enable-gem5-power-model" -a "$happy" = "yes"],
 	[AC_MSG_NOTICE([GEM5 Power Models are enabled.])],
 	[AC_MSG_NOTICE([GEM5 Power Models are disabled for this build.])]) 
   AM_CONDITIONAL([ENABLE_GEM5_POWER_MODEL], 
 	[test -z "$enable-gem5-power-model" -a "$happy" = "yes"])
+
+  AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$happy" = "no"],
+	[AC_MSG_ERROR(
+		[Unable to correctly determine requirements for GEM5, configure specifies to build GEM5 but cannot build successfully],
+		[1], 
+	 )],
+	[])
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
