@@ -43,7 +43,6 @@ AC_DEFUN([SST_M5_CONFIG], [
 			  [PYTHON_CPPFLAGS="-DALL_FAIL"])])
   CPPFLAGS="$PYTHON_CPPFLAGS $CPPFLAGS"	
 
-
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
   AC_CHECK_HEADERS([params/AlphaTLB.hh], [isa=ALPHA], [])
@@ -74,7 +73,7 @@ AC_DEFUN([SST_M5_CONFIG], [
   esac
 
 
-  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra} ${M5PYTHON_CPPFLAGS}"
+  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra} ${M5PYTHON_CPPFLAGS} $M5_CPPFLAGS"
   M5_LDFLAGS="-L$with_gem5"
 
   AM_CONDITIONAL([USE_M5_O3], [test x$use_gem5_o3 = xtrue])
