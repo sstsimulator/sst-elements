@@ -44,7 +44,12 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_CHECK_HEADERS([params/SparcTLB.hh], [isa=SPARC], [])
   AC_CHECK_HEADERS([params/X86TLB.hh], [isa=X86], [])
   AC_CHECK_HEADERS([params/DerivO3CPU.hh], [use_gem5_o3=true], [use_gem5_o3=false])
+
+  CXX_saved="$CXX"
+  AS_IF([test -n "$MPICXX"], [ CXX="$MPICXX" ], [] )
   AC_CHECK_LIB([gem5_$with_gem5_build], [initm5], [M5_LIB="-lgem5_$with_gem5_build"], [happy="no"])
+  CXX="$CXX_saved"
+
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
