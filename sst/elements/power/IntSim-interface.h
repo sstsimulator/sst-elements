@@ -17,9 +17,9 @@
 //#include "energy-interface.h"
 #include "interface.h"
 
-#include "../sst/core/techModels/libIntSim/intsim.h"
-#include "../sst/core/techModels/libIntSim/chip.h"
-#include "../sst/core/techModels/libIntSim/parameters.h"
+#include "../deps/src/intsim/intsim.h"
+#include "../deps/src/intsim/chip.h"
+#include "../deps/src/intsim/parameters.h"
 
 
 namespace SST {

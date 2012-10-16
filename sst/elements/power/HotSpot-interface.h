@@ -18,14 +18,14 @@
 /* HotSpot files */
 extern "C"{
 #ifdef HotSpot_H
-#include "flp.h"
-#include "npe.h"
-#include "package.h"
-#include "shape.h"
-#include "temperature.h"
-#include "temperature_block.h"
-#include "temperature_grid.h"
-#include "util.h"
+#include "../deps/src/hotspot/flp.h"
+#include "../deps/src/hotspot/npe.h"
+#include "../deps/src/hotspot/package.h"
+#include "../deps/src/hotspot/shape.h"
+#include "../deps/src/hotspot/temperature.h"
+#include "../deps/src/hotspot/temperature_block.h"
+#include "../deps/src/hotspot/temperature_grid.h"
+#include "../deps/src/hotspot/util.h"
 #endif //hotspot_h
 }
 

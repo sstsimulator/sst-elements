@@ -33,18 +33,18 @@ extern "C"{
 #ifdef PANALYZER_H
 
 #ifdef LV1_PANALYZER_H
-#include "../sst/core/techModels/libsim-panalyzer/lv1_opts.h"
-#include "../sst/core/techModels/libsim-panalyzer/lv1_panalyzer.h"
-#include "../sst/core/techModels/libsim-panalyzer/lv1_cache_panalyzer.h"
-#include "../sst/core/techModels/libsim-panalyzer/io_panalyzer.h"
+#include "../deps/src/panalyzer/lv1_opts.h"
+#include "../deps/src/panalyzer/lv1_panalyzer.h"
+#include "../deps/src/panalyzer/lv1_cache_panalyzer.h"
+#include "../deps/src/panalyzer/io_panalyzer.h"
 #endif
 
 #ifdef LV2_PANALYZER_H
-#include "../sst/core/techModels/libsim-panalyzer/technology.h"
-#include "../sst/core/techModels/libsim-panalyzer/alu_panalyzer.h"
-#include "../sst/core/techModels/libsim-panalyzer/mult_panalyzer.h"
-#include "../sst/core/techModels/libsim-panalyzer/fpu_panalyzer.h"
-#include "../sst/core/techModels/libsim-panalyzer/uarch_panalyzer.h"
+#include "../deps/src/panalyzer/technology.h"
+#include "../deps/src/panalyzer/alu_panalyzer.h"
+#include "../deps/src/panalyzer/mult_panalyzer.h"
+#include "../deps/src/panalyzer/fpu_panalyzer.h"
+#include "../deps/src/panalyzer/uarch_panalyzer.h"
 #endif //lv2_panalyzer_h
 
 #endif //panalyzer_h
@@ -56,12 +56,12 @@ extern "C"{
 
 /*added for McPAT05 power analysis */
 #ifdef McPAT05_H
-#include "../sst/core/techModels/libMcPAT/io.h"
-#include "../sst/core/techModels/libMcPAT/logic.h"
-#include "../sst/core/techModels/libMcPAT/full_decoder.h"
-#include "../sst/core/techModels/libMcPAT/crossbarswitch.h"
-#include "../sst/core/techModels/libMcPAT/basic_circuit.h"
-#include "../sst/core/techModels/libMcPAT/processor.h"
+#include "../deps/src/mcpat/io.h"
+#include "../deps/src/mcpat/logic.h"
+#include "../deps/src/mcpat/full_decoder.h"
+#include "../deps/src/mcpat/crossbarswitch.h"
+#include "../deps/src/mcpat/basic_circuit.h"
+#include "../deps/src/mcpat/processor.h"
 #endif //mcpat05_h
 
 
@@ -70,10 +70,10 @@ extern "C"{
 
 /*added for McPAT06 power analysis */
 #ifdef McPAT06_H
-#include "../sst/core/techModels/libMcPATbeta06/io.h"
-#include "../sst/core/techModels/libMcPATbeta06/logic.h"
-#include "../sst/core/techModels/libMcPATbeta06/basic_circuit.h"
-#include "../sst/core/techModels/libMcPATbeta06/processor.h"
+#include "../deps/src/mcpat/io.h"
+#include "../deps/src/mcpat/logic.h"
+#include "../deps/src/mcpat/basic_circuit.h"
+#include "../deps/src/mcpat/processor.h"
 #endif //mcpat06_h
 
 /***********McPAT07****************/
@@ -81,11 +81,11 @@ extern "C"{
 
 /*added for McPAT07 power analysis */
 #ifdef McPAT07_H
-#include "../sst/core/techModels/libMcPATbeta/io.h"
-#include "../sst/core/techModels/libMcPATbeta/logic.h"
-#include "../sst/core/techModels/libMcPATbeta/basic_circuit.h"
-#include "../sst/core/techModels/libMcPATbeta/processor.h"
-#include "../sst/core/techModels/libMcPATbeta/globalvar.h"
+#include "../deps/src/mcpat/io.h"
+#include "../deps/src/mcpat/logic.h"
+#include "../deps/src/mcpat/basic_circuit.h"
+#include "../deps/src/mcpat/processor.h"
+#include "../deps/src/mcpat/globalvar.h"
 #endif //mcpat07_h
 
 /*********ORION******************/
@@ -94,9 +94,9 @@ extern "C"{
 /*added for ORION power analysis */
 extern "C"{
 #ifdef ORION_H
-#include "../sst/core/techModels/libORION/SIM_parameter.h"
-#include "../sst/core/techModels/libORION/SIM_router.h"
-#include "../sst/core/techModels/libORION/SIM_link.h"
+#include "../deps/src/orion/SIM_parameter.h"
+#include "../deps/src/orion/SIM_router.h"
+#include "../deps/src/orion/SIM_link.h"
 #endif //orion_h
 }
 
