@@ -52,6 +52,7 @@ inline Factory::Factory( M5* comp ) :
 
     if ( ! m_libgem5 ) {
         printf("Factory::Factory() %s\n",dlerror());
+	printf("SST was unable to find a GEM5 library to use. This may have happened because GEM5 is not referenced in your LD_LIBRARY_PATH. Please see the SST documentation.");
         exit(-1);
     }
 }
