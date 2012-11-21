@@ -13,6 +13,7 @@ struct MemLinkParams : public MemObjectParams
 {
     M5*             m5Comp;
     Range< Addr >   range;
+	unsigned        blocksize;
     std::string     linkName;
     bool            snoop;
     int             delay;
@@ -105,11 +106,13 @@ class MemLink : public MemObject
     bool send( SST::Event* );
     void eventHandler( SST::Event* );
     void getAddressRanges(AddrRangeList &resp, bool &snoop );
+	void getBlockSize( void ) const;
 
     M5*                   m_comp;
     SST::Link*            m_link;
     LinkPort*             m_port;
     Range< Addr >         m_range;
+	unsigned              m_blocksize;
     bool                  m_snoop;
     int                   m_delay;
 };

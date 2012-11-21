@@ -66,6 +66,7 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
     assert( ! portName.empty() );
     int idx = params.find_integer( "portIndex" );
     uint64_t addrStart = 0, addrEnd = -1;
+	unsigned blocksize = 0;
 
     if ( params.find_string("snoopOut").compare("true") == 0 ) {
         snoopOut = true;
@@ -81,6 +82,9 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
     if ( params.find("range.end") != params.end() ) {
         addrEnd = params.find_integer("range.end");
     }
+    if ( params.find("blocksize") != params.end() ) {
+        blocksize = params.find_integer("blocksize");
+    }
 
     DBGX(2,"%s portName=%s index=%d\n", name.c_str(), portName.c_str(), idx );
 
@@ -89,7 +93,7 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
     assert( m_link );
 
     m_gem5EndPoint = GetPort(obj, m_myEndPoint, snoopOut, snoopIn, 
-                            addrStart, addrEnd, name, portName, idx ); 
+                            addrStart, addrEnd, blocksize, name, portName, idx ); 
 
     assert( m_gem5EndPoint );
 }
