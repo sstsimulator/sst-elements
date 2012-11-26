@@ -248,7 +248,7 @@ class DummyThreadContext : public ThreadContext {
     virtual Counter readFuncExeInst()
     { DBGX(2,"\n"); }
 
-    virtual void syscall(int64_t callnum)
+    virtual bool syscall(int64_t callnum)
     { DBGX(2,"\n"); }
 
     // This function exits the thread context in the CPU and returns
