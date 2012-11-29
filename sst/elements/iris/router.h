@@ -145,7 +145,7 @@ class Router : public DES_Component
         {
             std::string stat_string;
             print_stats(stat_string);
-            fprintf(stderr,"\nNode %d Rtr %s \n",node_id, stat_string.c_str());
+            fprintf(stdout,"\nNode %d Rtr %s \n",node_id, stat_string.c_str());
 //            fprintf(stderr,"\n\nempty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
             return 0;
         }
