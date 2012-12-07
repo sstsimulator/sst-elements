@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<config>
+ stopAtCycle=1ms
+</config>
+
+<sst>
+  <component id="msgGen0">
+    <messageGeneratorComponent.messageGeneratorComponent>
+      <params>
+	<clock>1GHz</clock>
+      </params>
+      <links>
+	<link id="a">
+		<lat>10ns</lat>
+	</link>
+      </links>
+    </messageGeneratorComponent.messageGeneratorComponent>
+  </component>
+  <component id="msgGen1">
+    <messageGeneratorComponent.messageGeneratorComponent>
+      <params>
+	<clock>1GHz</clock>
+      </params>
+      <links>
+	<link id="a">
+		<lat>10ns</lat>
+	</link>
+      </links>
+    </messageGeneratorComponent.messageGeneratorComponent>
+  </component>
+</sst>
