@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<config>
+ stopAtCycle=1ms
+</config>
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 1ns </buslat>
+</variables>
+
+
+<sst>
+	<component name="cpu" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x100000 </memSize>
+		</params>
+		<link name=cpu_cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 32 </blocksize>
+			<access_time> 10 </access_time>
+		</params>
+		<link name=cpu_cache_link port=cpu_link latency=$lat />
+		<link name=cache_bus_link port=bus_link latency=$buslat />
+	</component>
+
+
+	<component name="membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 2 </numPorts>
+			<busDelay> 20 </busDelay>
+		</params>
+		<link name=cache_bus_link port=port0 latency=$buslat />
+		<link name=mem_bus_link port=port1 latency=$buslat />
+	</component>
+
+
+	<component name="memory" type="memHierarchy.trivialMem">
+		<params>
+			<accessTime> 1000 </accessTime>
+			<memSize> 0xffffff </memSize>
+		</params>
+		<link name=mem_bus_link port=bus_link latency=$buslat />
+	</component>
+
+</sst>
