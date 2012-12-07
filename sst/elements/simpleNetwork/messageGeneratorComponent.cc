@@ -12,16 +12,30 @@ using namespace SST;
 
 messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
-  
+
   if( params.find("clock") == params.end() ) {
   	clock_frequency_str = "1GHz";
   } else {
   	clock_frequency_str = params[ "clock" ];
   }
-  
+
+  std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
+
+  if( params.find("sendcount") == params.end() ) {
+	total_message_send_count = 1000;
+  } else {
+	total_message_send_count = strtol( params[ "sendcount" ].c_str(), NULL, 0);
+  }
+
+  if( params.find("outputinfo") == params.end() ) {
+	output_message_info = 1;
+  } else {
+	output_message_info = strtol( params["outputinfo"].c_str(), NULL, 0);
+  }
+
   message_counter_recv = 0;
   message_counter_sent = 0;
-  
+
   // tell the simulator not to end without us
   registerExit();
 
@@ -32,7 +46,7 @@ messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params_t&
   assert(remote_component);
 
   //set our clock
-  registerClock( "1GHz", 
+  registerClock( clock_frequency_str, 
 		 new Clock::Handler<messageGeneratorComponent>(this, 
 						     &messageGeneratorComponent::tick ) );
 }
@@ -45,25 +59,32 @@ messageGeneratorComponent::messageGeneratorComponent() :
 
 void messageGeneratorComponent::handleEvent(Event *event) {
 	message_counter_recv++;
+
+	if(output_message_info)
+		std::cout << "Received message: " << message_counter_recv << " (time=" << getCurrentSimTimeMicro() << "us)" << std::endl;
 	
-	std::cout << "Received message: " << message_counter_recv << std::endl;
 	delete event;
+
+	if(message_counter_recv == total_message_send_count) {
+		unregisterExit();
+	}
 }
 
 // each clock tick we do 'workPerCycle' iterations of a simple loop.
 // We have a 1/commFreq chance of sending an event of size commSize to
 // one of our neighbors.
 bool messageGeneratorComponent::tick( Cycle_t ) {
-	
+
 	simpleMessage* msg = new simpleMessage();
 	remote_component->Send(msg);
-	
-	std::cout << "Sent message: " << message_counter_sent << std::endl;
+
+	if(output_message_info)
+		std::cout << "Sent message: " << message_counter_sent << " (time=" << getCurrentSimTimeMicro() << "us)" << std::endl;
 
 	message_counter_sent++;
 
   	// return false so we keep going
-  	if(message_counter_sent == 1000) {
+  	if(message_counter_sent == total_message_send_count) {
   		return true;
   	} else {
   		return false;

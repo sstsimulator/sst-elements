@@ -1,32 +1,25 @@
 <?xml version="1.0"?>
+<sdl version="2.0"/>
 
 <config>
- stopAtCycle=1ms
+ stopAtCycle=10000000000s
 </config>
 
 <sst>
-  <component id="msgGen0">
-    <messageGeneratorComponent.messageGeneratorComponent>
+  <component name="msgGen0" type=messageGeneratorComponent.messageGeneratorComponent rank=0>
       <params>
-	<clock>1GHz</clock>
+	<clock>1MHz</clock>
+	<sendcount>10000000</sendcount>
+        <outputinfo>0</outputinfo>
       </params>
-      <links>
-	<link id="a">
-		<lat>10ns</lat>
-	</link>
-      </links>
-    </messageGeneratorComponent.messageGeneratorComponent>
+      <link name="0.1" port=remoteComponent latency="1us" />
   </component>
-  <component id="msgGen1">
-    <messageGeneratorComponent.messageGeneratorComponent>
+  <component name="msgGen1" type=messageGeneratorComponent.messageGeneratorComponent rank=0>
       <params>
-	<clock>1GHz</clock>
+	<clock>1MHz</clock>
+	<sendcount>10000000</sendcount>
+        <outputinfo>0</outputinfo>
       </params>
-      <links>
-	<link id="a">
-		<lat>10ns</lat>
-	</link>
-      </links>
-    </messageGeneratorComponent.messageGeneratorComponent>
+      <link name="0.1" port=remoteComponent latency="1us" />
   </component>
 </sst>

@@ -9,6 +9,7 @@
 #include <sst/core/timeConverter.h>
 
 #include <cstring>
+#include <string>
 
 class messageGeneratorComponent : public SST::Component {
 public:
@@ -19,15 +20,17 @@ public:
 
 private:
   messageGeneratorComponent();  // for serialization only
-  messageGeneratorComponent(const simpleComponent&); // do not implement
-  void operator=(const simpleComponent&); // do not implement
+  messageGeneratorComponent(const messageGeneratorComponent&); // do not implement
+  void operator=(const messageGeneratorComponent&); // do not implement
 
   void handleEvent( SST::Event *ev );
   virtual bool tick( SST::Cycle_t );
 
-  string clock_frequency_str;
+  std::string clock_frequency_str;
   int    message_counter_sent;
   int	 message_counter_recv;
+  int    total_message_send_count;
+  int	 output_message_info;
 
   SST::Link* remote_component;
 
@@ -39,7 +42,9 @@ private:
     ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
     ar & BOOST_SERIALIZATION_NVP(message_counter_sent);
     ar & BOOST_SERIALIZATION_NVP(message_counter_recv);
+    ar & BOOST_SERIALIZATION_NVP(total_message_send_count);
     ar & BOOST_SERIALIZATION_NVP(remote_component);
+    ar & BOOST_SERIALIZATION_NVP(output_message_info);
   }
 
   template<class Archive>
@@ -49,7 +54,9 @@ private:
     ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
     ar & BOOST_SERIALIZATION_NVP(message_counter_sent);
     ar & BOOST_SERIALIZATION_NVP(message_counter_recv);
+    ar & BOOST_SERIALIZATION_NVP(total_message_send_count);
     ar & BOOST_SERIALIZATION_NVP(remote_component);
+    ar & BOOST_SERIALIZATION_NVP(output_message_info);
 
     remote_component->setFunctor(new SST::Event::Handler<messageGeneratorComponent>(this,&messageGeneratorComponent::handleEvent));
   }
