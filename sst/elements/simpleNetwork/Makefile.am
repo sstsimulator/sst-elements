@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmessageGeneratorComponent.la
-libsimpleComponent_la_SOURCES = \
+libmessageGeneratorComponent_la_SOURCES = \
 	messageGeneratorComponent.h \
 	messageGeneratorComponent.cc \
 	simpleMessage.h 
