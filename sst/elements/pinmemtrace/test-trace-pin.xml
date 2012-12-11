@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+
+<config>
+ stopAtCycle=10000000000s
+</config>
+
+<sst>
+  <component name="tracer0" type=PinMemTraceComponent.PinMemTraceComponent rank=0>
+      <params>
+	<outputlevel>1</outputlevel>
+	<tracetype>pin</tracetype>
+      </params>
+  </component>
+</sst>

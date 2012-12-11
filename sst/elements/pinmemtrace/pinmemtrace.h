@@ -11,6 +11,14 @@
 #include <cstring>
 #include <string>
 
+#include <stdio.h>
+#include <stdint.h>
+
+typedef enum {
+	EXECUTE_PIN,
+	TRACE_FILE
+} PIN_MEM_TRACE_TYPE;
+
 class PinMemTrace : public SST::Component {
 public:
 
@@ -25,26 +33,28 @@ private:
 
   virtual bool tick( SST::Cycle_t );
 
-  std::string clock_frequency_str;
-  int clock_count;
+  FILE* trace_input;
+  uint64_t max_trace_count;
+  int output_level;
+  std::string pin_path;
 
   friend class boost::serialization::access;
   template<class Archive>
   void save(Archive & ar, const unsigned int version) const
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-    ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
-    ar & BOOST_SERIALIZATION_NVP(clock_count);
+    ar & BOOST_SERIALIZATION_NVP(max_trace_count);
   }
 
   template<class Archive>
   void load(Archive & ar, const unsigned int version) 
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-    ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
-    ar & BOOST_SERIALIZATION_NVP(clock_count);
+    ar & BOOST_SERIALIZATION_NVP(max_trace_count);
+    // This is going to be a problem, we are trying to recreate
+    // a file handle or alternatively a UNIX pipe.
+    trace_input = NULL;
   }
-    
   BOOST_SERIALIZATION_SPLIT_MEMBER()
  
 };
