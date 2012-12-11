@@ -10,7 +10,7 @@
       <params>
 	<clock>1MHz</clock>
 	<sendcount>100000</sendcount>
-        <outputinfo>1</outputinfo>
+        <outputinfo>0</outputinfo>
       </params>
       <link name="0.1" port=remoteComponent latency="1us" />
   </component>
@@ -18,7 +18,7 @@
       <params>
 	<clock>1MHz</clock>
 	<sendcount>100000</sendcount>
-        <outputinfo>1</outputinfo>
+        <outputinfo>0</outputinfo>
       </params>
       <link name="0.1" port=remoteComponent latency="1us" />
   </component>

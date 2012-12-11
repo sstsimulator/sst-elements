@@ -16,7 +16,12 @@ public:
 
   messageGeneratorComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   int Setup()  { return 0; }
-  int Finish() { return 0; }
+  int Finish() 
+  { 
+	std::cout << "Component completed at: " << getCurrentSimTimeMilli() 
+		<<  " milliseconds" << std::endl;
+	return 0; 
+  }
 
 private:
   messageGeneratorComponent();  // for serialization only
