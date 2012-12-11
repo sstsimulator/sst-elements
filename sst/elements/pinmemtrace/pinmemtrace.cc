@@ -31,7 +31,8 @@ PinMemTrace::PinMemTrace(ComponentId_t id, Params_t& params) :
 	}
   }
 
-  PIN_MEM_TRACE_TYPE trace_type = TRACE_FILE;
+  // Default is to interpret as a file.
+  trace_type = TRACE_FILE;
   if(params.find("tracetype") != params.end() ) {
 	if( params[ "tracetype" ] == "pin" ) {
 		trace_type = EXECUTE_PIN;
@@ -40,6 +41,9 @@ PinMemTrace::PinMemTrace(ComponentId_t id, Params_t& params) :
 	} else if ( params[ "tracetype" ] == "file" ) {
 		trace_type = TRACE_FILE;
 		if(output_level > 0) std::cout << "TRACE:  Trace input type is load from file" << std::endl;
+	} else if ( params["tracetype"] == "execute" ) {
+		trace_type = EXECUTE_ONLY;
+		if(output_level > 0) std::cout << "TRACE:  Trace input type is execute binary" << std::endl;
 	} else {
 		std::cerr << "Unknown trace type: " << params[ "tracetype" ] << std::endl;
 		exit(-1);
@@ -65,20 +69,25 @@ PinMemTrace::PinMemTrace(ComponentId_t id, Params_t& params) :
 	}
 	// Load the trace based on the type interpretation from above
 	//trace_input = params[ "trace" ].c_str();
+
+	switch( trace_type ) {
+	case TRACE_FILE:
+		// Open the file and go.
+		trace_input = fopen(params["trace"].c_str(), "rt");
+		break;
+	case EXECUTE_ONLY:
+		// Just boot up the executable and read from the pipe
+		trace_input = popen(params["trace"].c_str(), "r");
+		break;
+	case EXECUTE_PIN:
+		// Load up PIN and run out executable against it
+		trace_input = popen( (pin_path + " -- " + params["trace"]).c_str(), "r");
+		break;
+	}
   }
 
   // tell the simulator not to end without us
   registerExit();
-
-  if(output_level > 0) {
-	std::cout << "Trace Input: " << trace_input << std::endl;
-
-	if( trace_type == TRACE_FILE ) {
-		std::cout << "Trace Type:  Trace File" << std::endl;
-	} else if (trace_type == EXECUTE_PIN ) {
-		std::cout << "Trace Type:  Execute via PIN" << std::endl;
-	}
-  }
 
   //set our clock
   //registerClock( clock_frequency_str, 

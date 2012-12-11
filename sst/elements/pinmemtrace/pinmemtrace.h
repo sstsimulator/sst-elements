@@ -16,6 +16,7 @@
 
 typedef enum {
 	EXECUTE_PIN,
+	EXECUTE_ONLY,
 	TRACE_FILE
 } PIN_MEM_TRACE_TYPE;
 
@@ -24,7 +25,25 @@ public:
 
   PinMemTrace(SST::ComponentId_t id, SST::Component::Params_t& params);
   int Setup()  { return 0; }
-  int Finish() { return 0; }
+  int Finish() 
+  { 
+	if(output_level > 0) 
+		std::cout << "TRACE:  Closing trace input..." << std::endl;
+	switch(trace_type) {
+	case TRACE_FILE:
+		fclose(trace_input);
+		break;
+
+	case EXECUTE_PIN:
+	case EXECUTE_ONLY:
+		pclose(trace_input);
+		break;
+	}
+
+	if(output_level > 0) 
+		std::cout << "TRACE:  Close of trace input complete." << std::endl;
+	return 0; 
+  }
 
 private:
   PinMemTrace();  // for serialization only
@@ -33,6 +52,7 @@ private:
 
   virtual bool tick( SST::Cycle_t );
 
+  PIN_MEM_TRACE_TYPE trace_type;
   FILE* trace_input;
   uint64_t max_trace_count;
   int output_level;
