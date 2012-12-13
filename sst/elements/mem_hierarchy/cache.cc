@@ -277,6 +277,7 @@ void Cache::handleWriteReq(MemEvent *ev, bool isSnoop)
 		} else {
 			// We're already exclusive
 			updateBlock(ev, block);
+			sendWriteResponse(ev);
 		}
 		num_write_hit++;
 	} else { /* Miss! */
@@ -464,6 +465,8 @@ void Cache::finishInvalidate(BusRequest *req)
 	DPRINTF("INVALIDATE Finished.  Updating block\n");
 	updateBlock(req->msg, req->block);
 	req->block->status = CacheBlock::EXCLUSIVE;
+	MemEvent *origEV = static_cast<MemEvent*>(req->ud);
+	sendWriteResponse(origEV);
 }
 
 
@@ -488,6 +491,16 @@ void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 		}
 	}
 	block->last_touched = getCurrentSimTime();
+}
+
+void Cache::sendWriteResponse(MemEvent *origEV)
+{
+	MemEvent *ev = origEV->makeResponse(getName());
+	if ( cpu_side_link != NULL ) {
+		cpu_side_link->Send(ev);
+	} else {
+		requestBus(new BusRequest(ev, NULL, false));
+	}
 }
 
 

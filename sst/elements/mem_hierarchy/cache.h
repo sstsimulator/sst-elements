@@ -38,11 +38,13 @@ public:
 				"\tnum_write_hit:\t%lu\n"
 				"\tnum_write_miss:\t%lu\n"
 				"\tnum_snoops_provided:\t%lu\n"
-				"\tnum_miss_held:\t%lu\n",
+				"\tnum_miss_held:\t%lu\n"
+				"\tStill tracking:\t%zu\n",
 				getName().c_str(),
 				num_read_hit, num_read_miss,
 				num_write_hit, num_write_miss,
-				num_snoops_provided, num_miss_held);
+				num_snoops_provided, num_miss_held,
+				awaitingResponse.size());
 		return 0;
 	}
 
@@ -196,6 +198,10 @@ private:
 			return reqs.find(addr) != reqs.end();
 		}
 
+		size_t size(void) const {
+			return reqs.size();
+		}
+
 	};
 
 
@@ -231,6 +237,7 @@ private:
 	void sendInvalidate(MemEvent *ev, CacheBlock *block);
 	void finishInvalidate(BusRequest *req);
 	void cancelInvalidate(BusRequest *req);
+	void sendWriteResponse(MemEvent *origEV);
 	void updateBlock(MemEvent *ev, CacheBlock *block);
 
 
