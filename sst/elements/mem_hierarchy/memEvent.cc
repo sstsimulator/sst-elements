@@ -23,8 +23,6 @@ uint64_t SST::MemHierarchy::MemEvent::main_id = 0;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-
-
 void MemEvent::setPayload(uint32_t size, uint8_t *data)
 {
 	setSize(size);

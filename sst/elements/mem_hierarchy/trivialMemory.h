@@ -37,20 +37,25 @@ private:
   void operator=(const trivialMemory&); // do not implement
 
   void handleRequest( SST::Event *ev );  // From CPU
+  void handleSelfEvent( SST::Event *ev );
 
   void handleReadRequest(MemEvent *ev);
   void handleWriteRequest(MemEvent *ev);
   void sendBusPacket(void);
 
-  void sendEvent(MemEvent *ev, SimTime_t delay = 0);
+  void sendEvent(MemEvent *ev);
+  bool canceled(MemEvent *ev);
+  void cancelEvent(MemEvent::id_type id);
 
-  std::deque<std::pair<MemEvent*, SimTime_t> > reqs;
+  std::deque<MemEvent*> reqs;
 
   SST::Link* bus_link;
+  SST::Link* self_link;
   uint8_t *data;
   uint32_t memSize;
   SimTime_t accessTime;
   bool bus_requested;
+  std::map<MemEvent::id_type, bool> outstandingReqs;
 
   friend class boost::serialization::access;
   template<class Archive>

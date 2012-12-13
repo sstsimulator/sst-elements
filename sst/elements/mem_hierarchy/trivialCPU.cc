@@ -60,6 +60,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 	registerClock( "1GHz",
 			new Clock::Handler<trivialCPU>(this,
 				&trivialCPU::clockTic ) );
+	num_reads_issued = num_reads_returned = 0;
 }
 
 trivialCPU::trivialCPU() :
@@ -74,14 +75,18 @@ void trivialCPU::handleEvent(Event *ev)
 	//printf("recv\n");
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
-		printf("Received MemEvent with command %d (response to %lu)\n",
-				event->getCmd(), event->getResponseToID().first);
-		std::set<MemEvent::id_type>::iterator i = requests.find(event->getResponseToID());
+		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
 			printf("Event not found!\n");
 		} else {
+			SimTime_t et = getCurrentSimTime() - i->second;
+			printf("%s: Received MemEvent with command %d (response to %lu, addr 0x%lx) [Time: %lu]\n",
+					getName().c_str(),
+					event->getCmd(), event->getResponseToID().first, event->getAddr(), et);
 			requests.erase(i);
+			num_reads_returned++;
 		}
+
 		delete event;
 	} else {
 		printf("Error! Bad Event Type!\n");
@@ -113,19 +118,28 @@ bool trivialCPU::clockTic( Cycle_t )
 	// communicate?
 	if ((rand() % commFreq) == 0) {
 		if ( requests.size() > 10 ) {
-			printf("Not issuing read.  Too many outstanding requests.\n");
+			printf("%s: Not issuing read.  Too many outstanding requests.\n",
+					getName().c_str());
 		} else {
+
 			// yes, communicate
 			// create event
 			// x4 to prevent splitting blocks
 			Addr addr = ((((Addr) rand()) % maxAddr)>>2) << 2;
 
-			MemEvent *e = new MemEvent(addr, ReadReq);
-			e->setSize(4); // Load 4 bytes
-			mem_link->Send(e);
-			requests.insert(e->getID());
+			bool doWrite = ((rand() % 10) == 0);
 
-			printf("Issued Read (%d) for address 0x%lx\n", e->getID().second, addr);
+			MemEvent *e = new MemEvent(getName(), addr, doWrite ? WriteReq : ReadReq);
+			e->setSize(4); // Load 4 bytes
+			if ( doWrite ) {
+				e->setPayload(4, (uint8_t*)&addr);
+			}
+			mem_link->Send(e);
+			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
+
+			printf("%s: Issued %s (%lu) for address 0x%lx\n",
+					getName().c_str(), doWrite ? "Write" : "Read", e->getID().first, addr);
+			num_reads_issued++;
 		}
 
 	}

@@ -39,11 +39,10 @@ private:
 	Bus(const Bus&); // do not implement
 	void operator=(const Bus&); // do not implement
 
-	void requestPort(int link_id);
-	void cancelPortRequest(int link_id);
-	void sendMessage(int from_link, MemEvent *ev);
-	void sendMessage(int from_link, int to_link, MemEvent *ev);
-	int arbitrateNext(void);
+	void requestPort(LinkId_t link_id);
+	void cancelPortRequest(LinkId_t link_id);
+	void sendMessage(MemEvent *ev, LinkId_t from_link);
+	LinkId_t arbitrateNext(void);
 
 	void handleEvent( SST::Event *ev );
 
@@ -54,8 +53,6 @@ private:
 	void handleSelfEvent( SST::Event *ev );
 
 
-	int translateLinkId(LinkId_t evId);
-
 	class SelfEvent : public Event {
 	public:
 		typedef enum { Schedule, BusFinish } EventType;
@@ -65,13 +62,13 @@ private:
 
 
 	int numPorts;
-	int activePort;
+	LinkId_t activePort;
 	bool busBusy;
 	SimTime_t busDelay;
 	SST::Link** ports;
 	SST::Link *selfLink;
-	std::deque<int> busRequests;
-	std::map<LinkId_t, int> linkMap;
+	std::deque<LinkId_t> busRequests;
+	std::map<LinkId_t, SST::Link*> linkMap;
 
 
 	friend class boost::serialization::access;
@@ -88,7 +85,6 @@ private:
 			}
 			ar & BOOST_SERIALIZATION_NVP(selfLink);
 			ar & BOOST_SERIALIZATION_NVP(busRequests);
-			ar & BOOST_SERIALIZATION_NVP(linkMap);
 		}
 
 	template<class Archive>
@@ -108,7 +104,6 @@ private:
 			ar & BOOST_SERIALIZATION_NVP(selfLink);
 			selfLink->setFunctor(new SST::Event::Handler<Bus>(this, &Bus::handleSelfEvent));
 			ar & BOOST_SERIALIZATION_NVP(busRequests);
-			ar & BOOST_SERIALIZATION_NVP(linkMap);
 		}
 
 	BOOST_SERIALIZATION_SPLIT_MEMBER()

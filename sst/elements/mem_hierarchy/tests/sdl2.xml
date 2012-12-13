@@ -16,9 +16,9 @@
 		<params>
 			<workPerCycle> 1000 </workPerCycle>
 			<commFreq> 100 </commFreq>
-			<memSize> 0x1000 </memSize>
+			<memSize> 0x100 </memSize>
 		</params>
-		<link name=cpu_cache_link port=mem_link latency=$lat />
+		<link name=cpu_l1cache_link port=mem_link latency=$lat />
 	</component>
 
 	<component name="l1cache" type="memHierarchy.Cache">
@@ -27,19 +27,31 @@
 			<num_rows> 16 </num_rows>
 			<blocksize> 32 </blocksize>
 			<access_time> 10 </access_time>
+			<next_level> l2cache </next_level>
 		</params>
-		<link name=cpu_cache_link port=cpu_link latency=$lat />
-		<link name=cache_bus_link port=bus_link latency=$buslat />
+		<link name=cpu_l1cache_link port=cpu_link latency=$lat />
+		<link name=l1cache_bus_link port=bus_link latency=$buslat />
+	</component>
+
+	<component name="l2cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 8 </num_ways>
+			<num_rows> 64 </num_rows>
+			<blocksize> 32 </blocksize>
+			<access_time> 100 </access_time>
+		</params>
+		<link name=l2cache_bus_link port=bus_link latency=$buslat />
 	</component>
 
 
 	<component name="membus" type="memHierarchy.Bus">
 		<params>
-			<numPorts> 2 </numPorts>
+			<numPorts> 3 </numPorts>
 			<busDelay> 20 </busDelay>
 		</params>
-		<link name=cache_bus_link port=port0 latency=$buslat />
-		<link name=mem_bus_link port=port1 latency=$buslat />
+		<link name=l1cache_bus_link port=port0 latency=$buslat />
+		<link name=l2cache_bus_link port=port1 latency=$buslat />
+		<link name=mem_bus_link port=port2 latency=$buslat />
 	</component>
 
 

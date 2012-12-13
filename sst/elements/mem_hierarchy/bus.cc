@@ -25,6 +25,8 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+static const LinkId_t BUS_INACTIVE = (LinkId_t)(-2);
+
 Bus::Bus(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
@@ -32,7 +34,7 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	// get parameters
 	numPorts = params.find_integer("numPorts", 0);
 	if ( numPorts < 1 ) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
-	activePort = -1;
+	activePort = BUS_INACTIVE;
 	busBusy = false;
 
 	// TODO:  Use proper time conversion
@@ -48,11 +50,11 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 		std::ostringstream linkName;
 		linkName << "port" << i;
 		std::string ln = linkName.str();
-		ports[i] = configureLink(ln,
+		ports[i] = configureLink(ln, "50 ps",
 				new Event::Handler<Bus>(this, &Bus::handleEvent));
-		ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
+		//ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
 		assert(ports[i]);
-		linkMap[ports[i]->getId()] = i;
+		linkMap[ports[i]->getId()] = ports[i];
 		DPRINTF("Port %lu = Link %d\n", ports[i]->getId(), i);
 	}
 
@@ -68,43 +70,41 @@ Bus::Bus() :
 }
 
 
-void Bus::requestPort(int link_id)
+void Bus::requestPort(LinkId_t link_id)
 {
-	DPRINTF("(%d) [active = %d]\n", link_id, activePort);
+	DPRINTF("(%lu) [active = %lu]\n", link_id, activePort);
 
 	busRequests.push_back(link_id);
 
-	if ( activePort == -1 ) {
+	if ( activePort == BUS_INACTIVE ) {
 		// Nobody's active.  Schedule it.
 		selfLink->Send(new SelfEvent(SelfEvent::Schedule));
 	}
 }
 
 
-void Bus::cancelPortRequest(int link_id)
+void Bus::cancelPortRequest(LinkId_t link_id)
 {
-	DPRINTF("(%d) [active = %d]\n", link_id, activePort);
+	DPRINTF("(%lu) [active = %lu]\n", link_id, activePort);
 	// You don't cancel a request until you're the owner
 	assert(activePort == link_id);
 	// You don't cancel a request if you're already sending a msg
 	assert(!busBusy);
 
-	activePort = -1;
+	activePort = BUS_INACTIVE;
 	// We're cleared now
 	selfLink->Send(new SelfEvent(SelfEvent::Schedule));
 }
 
 
-void Bus::sendMessage(int from_link, MemEvent *ev)
+void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 {
-	DPRINTF("(%d) [active = %d]\n", from_link, activePort);
+	DPRINTF("(%s -> %s) [active = %lu]\n", ev->getSrc().c_str(), ev->getDst().c_str(), activePort);
 	// Only should be sending data if have clear-to-send
 	assert(from_link == activePort);
 	// Can't send while already busy
 	assert(!busBusy);
 
-	ev->setSrc(from_link);
-	ev->setDst(-1);
 	// TODO:  Calcuate delay including message size
 
 	for ( int i = 0 ; i < numPorts ; i++ ) {
@@ -114,32 +114,15 @@ void Bus::sendMessage(int from_link, MemEvent *ev)
 	busBusy = true;
 }
 
-void Bus::sendMessage(int from_link, int to_link, MemEvent *ev)
-{
-	DPRINTF("(%d) [active = %d]\n", from_link, activePort);
-	// Only should be sending data if have clear-to-send
-	assert(from_link == activePort);
-	// Can't send while already busy
-	assert(!busBusy);
 
-
-	ev->setSrc(from_link);
-	ev->setDst(to_link);
-
-	// TODO:  Calcuate delay including message size
-	ports[to_link]->Send(busDelay, new MemEvent(ev));
-	selfLink->Send(busDelay, new SelfEvent(SelfEvent::BusFinish));
-	busBusy = true;
-}
-
-int Bus::arbitrateNext(void)
+LinkId_t Bus::arbitrateNext(void)
 {
 	if ( busRequests.size() > 0 ) {
 		int id = busRequests.front();
 		busRequests.pop_front();
 		return id;
 	}
-	return -1;
+	return BUS_INACTIVE;
 }
 
 
@@ -149,7 +132,7 @@ void Bus::handleEvent(Event *ev) {
 	//printf("recv\n");
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
-		int link_id = translateLinkId(event->getLinkId());
+		LinkId_t link_id = event->getLinkId();
 		switch(event->getCmd())
 		{
 		case RequestBus:
@@ -160,7 +143,7 @@ void Bus::handleEvent(Event *ev) {
 			break;
 		default:
 			// All other messages.  Send on bus
-			sendMessage(link_id, event);
+			sendMessage(event, link_id);
 			break;
 		}
 		delete event;
@@ -173,16 +156,16 @@ void Bus::handleEvent(Event *ev) {
 
 void Bus::schedule(void)
 {
-	if ( activePort != -1 || busBusy ) {
+	if ( activePort != BUS_INACTIVE || busBusy ) {
 		// Most likely, two people asked to schedule in the same cycle.
 		return;
 	}
 
-	int next_id = arbitrateNext();
-	if ( next_id != -1 ) {
+	LinkId_t next_id = arbitrateNext();
+	if ( next_id != BUS_INACTIVE ) {
 		activePort = next_id;
-		DPRINTF("Setting activePort = %d\n", activePort);
-		ports[next_id]->Send(new MemEvent(NULL, BusClearToSend));
+		DPRINTF("Setting activePort = %lu\n", activePort);
+		linkMap[next_id]->Send(new MemEvent(getName(), NULL, BusClearToSend));
 	}
 }
 
@@ -191,7 +174,7 @@ void Bus::busFinish(void)
 {
 	DPRINTF("\n");
 	busBusy = false;
-	activePort = -1;
+	activePort = BUS_INACTIVE;
 	schedule();
 }
 
@@ -216,15 +199,6 @@ void Bus::handleSelfEvent(Event *ev) {
 	}
 }
 
-
-int Bus::translateLinkId(LinkId_t evId)
-{
-	std::map<LinkId_t, int>::iterator i = linkMap.find(evId);
-	if ( i != linkMap.end() ) {
-		return i->second;
-	}
-	return -1;
-}
 
 // Element Libarary / Serialization stuff
 

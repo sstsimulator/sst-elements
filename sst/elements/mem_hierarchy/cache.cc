@@ -20,10 +20,12 @@
 #include "memEvent.h"
 
 
-#define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Cache, fmt, ## args )
+#define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Cache, "%s: " fmt, getName().c_str(), ## args )
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+
+static const std::string NO_NEXT_LEVEL = "NONE";
 
 static inline uint32_t numBits(uint32_t x) {
 	return (uint32_t)(log(x)/log(2));
@@ -39,8 +41,10 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	if ( n_ways == 0 || n_rows == 0 || blocksize == 0 ) {
 		_abort(Cache, "# Ways, # Rows and Blocksize must all be >0\n");
 	}
-	DPRINTF("Cache Config:\n\t%u rows\n\t%u ways\n\t%u byte blocks\n",
-			n_rows, n_ways, blocksize);
+
+	next_level_name = params.find_string("next_level", NO_NEXT_LEVEL);
+	DPRINTF("Cache Config:\n\t%u rows\n\t%u ways\n\t%u byte blocks\n\t%s as next level\n",
+			n_rows, n_ways, blocksize, next_level_name.c_str());
 
 	rowshift = numBits(blocksize);
 	rowmask = n_rows - 1;  // Assumption => n_rows is power of 2
@@ -55,17 +59,20 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	registerExit();
 
 	// configure out links
-	cpu_link = configureLink( "cpu_link",
+	cpu_side_link = configureLink( "cpu_link",
 			new Event::Handler<Cache>(this, &Cache::handleCpuEvent) );
-	bus_link = configureLink( "bus_link",
+	coherency_link = configureLink( "bus_link", "50 ps",
 			new Event::Handler<Cache>(this, &Cache::handleBusEvent) );
 	registerTimeBase("1 ns", true);
-	assert(bus_link);
+	assert(coherency_link);
 
 	busRequested = false;
 
 	database = std::vector<CacheRow>(n_rows, CacheRow(this));
 
+	num_read_hit = num_read_miss = 0;
+	num_write_hit = num_write_miss = 0;
+	num_snoops_provided = num_miss_held = 0;
 }
 
 Cache::Cache() :
@@ -101,35 +108,45 @@ void Cache::handleBusEvent(Event *ev)
 {
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
-		switch(event->getCmd()) {
-		case ReadReq:
-			handleReadReq(event, true);
-			break;
-		case ReadResp:
-			handleReadResponse(event);
-			break;
-		case WriteReq:
-			handleWriteReq(event, true);
-			break;
-		case WriteResp: /* TODO */
-			break;
-		case Invalidate:
-			handleInvalidate(event);
-			break;
-		case Fetch:
-			handleFetch(event, false);
-			break;
-		case Fetch_Invalidate:
-			handleFetch(event, true);
-			break;
-		case FetchResp:
-			/* Ignore */
-			break;
-		case BusClearToSend:
-			sendBusPacket();
-			break;
-		default:
-			_abort(Cache, "Cache doesn't recognize command %d from Bus\n", event->getCmd());
+		if ( event->getSrc() != getName() ) { // Ignore own messages
+			DPRINTF("Received msg of cmd %s\n", CommandString[event->getCmd()]);
+			bool for_me = ( event->getDst() == getName() || event->getDst() == BROADCAST_TARGET );
+			switch(event->getCmd()) {
+			case ReadReq:
+				handleReadReq(event, event->getDst() != getName());
+				break;
+			case ReadResp:
+				handleReadResponse(event, for_me);
+				break;
+			case WriteReq:
+				handleWriteReq(event, event->getDst() != getName());
+				break;
+			case WriteResp: /* TODO */
+				break;
+			case WriteBack:
+				handleWriteBack(event);
+				break;
+			case Invalidate:
+				handleInvalidate(event);
+				break;
+			case Fetch:
+				if ( for_me )
+					handleFetch(event, false);
+				break;
+			case Fetch_Invalidate:
+				if ( for_me )
+					handleFetch(event, true);
+				break;
+			case FetchResp:
+				/* Ignore */
+				break;
+			case BusClearToSend:
+				if ( for_me )
+					sendBusPacket();
+				break;
+			default:
+				_abort(Cache, "Cache doesn't recognize command %s from Bus\n", CommandString[event->getCmd()]);
+			}
 		}
 		delete event;
 	} else {
@@ -141,10 +158,12 @@ void Cache::handleBusEvent(Event *ev)
 void Cache::requestBus(BusRequest *req, SimTime_t delay)
 {
 	if ( req != NULL ) {
+		DPRINTF("Requesting Bus for Event (%lu, %d)\n",
+				req->msg->getID().first, req->msg->getID().second);
 		packetQueue.push_back(req);
 	}
 	if ( !busRequested ) { // Don't request if we've already got a request
-		bus_link->Send(delay, new MemEvent(NULL, RequestBus));
+		coherency_link->Send(delay, new MemEvent(getName(), NULL, RequestBus));
 		busRequested = true;
 	}
 }
@@ -153,12 +172,15 @@ void Cache::requestBus(BusRequest *req, SimTime_t delay)
 void Cache::sendBusPacket(void)
 {
 	if ( packetQueue.size() == 0 ) {
-		bus_link->Send(new MemEvent(NULL, CancelBusRequest));
+		coherency_link->Send(new MemEvent(getName(), NULL, CancelBusRequest));
 		busRequested = false;
 	} else {
 		BusRequest *req = packetQueue.front();
 		packetQueue.pop_front();
-		bus_link->Send(req->msg);
+		DPRINTF("Sending msg  (%lu, %d: %s 0x%lx) to %s\n",
+				req->msg->getID().first, req->msg->getID().second,
+				CommandString[req->msg->getCmd()], req->msg->getAddr(), req->msg->getDst().c_str());
+		coherency_link->Send(req->msg);
 		busRequested = false;
 		if ( req->finishFunc ) {
 			(this->*(req->finishFunc))(req);
@@ -180,25 +202,41 @@ void Cache::handleReadReq(MemEvent *ev, bool isSnoop)
 	if ( block ) { /* Hit! */
 		if ( isSnoop && block->status == CacheBlock::EXCLUSIVE ) {
 			writeBack(block, &Cache::finishWriteBackAsShared);
+		} else {
+			sendData(ev, block, isSnoop||(cpu_side_link == NULL));
 		}
 		// Update LRU
 		block->last_touched = getCurrentSimTime();
-		sendData(ev, block, isSnoop);
+		if ( isSnoop )
+			num_snoops_provided++;
+		else
+			num_read_hit++;
 	} else { /* Miss! */
 		if ( !isSnoop ) {
+			num_read_miss++;
 			handleMiss(ev);
 		}
 	}
 }
 
 
-void Cache::handleReadResponse(MemEvent *ev)
+void Cache::handleReadResponse(MemEvent *ev, bool for_me)
 {
+	if ( !for_me ) {
+		// Check to see if we're trying to provide the response as well.
+		// If so, cancel it.
+		cancelWorkInProgress(ev->getAddr());
+		return;
+	}
+
 	RequestHold::RequestList *list = awaitingResponse.findReqs(ev->getAddr());
 	if ( list == NULL ) {
 		// Can't find matching request
-		_abort(Cache, "What to do with unmatched responses! 0x%lx\n",
-				ev->getAddr());
+		_abort(Cache, "%s: What to do with unmatched responses! 0x%lx\n"
+				"ID: (%lu, %d) in response to (%lu, %d)\n",
+				getName().c_str(), ev->getAddr(),
+				ev->getID().first, ev->getID().second,
+				ev->getResponseToID().first, ev->getResponseToID().second);
 	}
 
 
@@ -218,6 +256,7 @@ void Cache::handleReadResponse(MemEvent *ev)
 		/* handleCpuEvent() will delete origEvent */
 		/* Can assume Cpu-style event as snoops don't cause us to miss */
 		/* BJM:  TODO: Validate this assumption, please */
+		num_read_hit--; // We'll be incrementing later, so don't count that */
 		handleCpuEvent(origEvent);
 	}
 
@@ -230,7 +269,7 @@ void Cache::handleWriteReq(MemEvent *ev, bool isSnoop)
 {
 	CacheBlock *block = findBlock(ev->getAddr());
 	DPRINTF("Write Request %sfor addr 0x%lx (%s)\n",
-			isSnoop ? "" : "(snoop) ", ev->getAddr(), block ? "Hit" : "Miss");
+			isSnoop ? "(snoop)" : "", ev->getAddr(), block ? "Hit" : "Miss");
 	assert(!isSnoop);  // Should get an invalidate, not a write req
 	if ( block ) { /* Hit! */
 		if ( block->status == CacheBlock::SHARED ) {
@@ -239,9 +278,56 @@ void Cache::handleWriteReq(MemEvent *ev, bool isSnoop)
 			// We're already exclusive
 			updateBlock(ev, block);
 		}
+		num_write_hit++;
 	} else { /* Miss! */
+		num_write_miss++;
 		handleMiss(ev);
 	}
+}
+
+
+void Cache::handleWriteBack(MemEvent *ev)
+{
+	// If we currently have the block
+	CacheBlock *block = findBlock(ev->getAddr());
+	if ( block ) {
+		DPRINTF("Handling writeback for 0x%lx\n", block->baseAddr);
+		updateBlock(ev, block);
+		block->status = CacheBlock::SHARED;
+	}
+
+	// If we're looking for this data...
+	RequestHold::RequestList *list = awaitingResponse.findReqs(ev->getAddr());
+	if ( list != NULL ) {
+		CacheBlock *block = list->block;
+		DPRINTF("Handling writeback for 0x%lx\n", block->baseAddr);
+		/* Update cache with this block */
+		assert(block->tag == addrToTag(ev->getAddr()));
+		updateBlock(ev, block);
+		block->status = CacheBlock::SHARED;
+
+		// We have other requests that can be satisfied here
+		while ( list->requests.size() > 0 ) {
+			MemEvent *origEvent = list->requests.front();
+			list->requests.pop_front();
+			DPRINTF("Clearing response for 0x%lx req (%lu, %d)\n", ev->getAddr(),
+					origEvent->getID().first, origEvent->getID().second);
+
+			/* handleCpuEvent() will delete origEvent */
+			/* Can assume Cpu-style event as snoops don't cause us to miss */
+			/* BJM:  TODO: Validate this assumption, please */
+			num_read_hit--; // We'll be incrementing later, so don't count that */
+			handleCpuEvent(origEvent);
+		}
+
+
+		awaitingResponse.clearReqs(ev->getAddr());
+	}
+
+	/* Ideally, this would be first. But if so, we need to muck with awaitingResponse, too */
+	// Somebody else just provided data
+	cancelWorkInProgress(ev->getAddr());
+
 }
 
 
@@ -249,6 +335,7 @@ void Cache::handleInvalidate(MemEvent *ev)
 {
 	CacheBlock *block = findBlock(ev->getAddr());
 	if ( block ) {
+		DPRINTF("INVALIDATING block 0x%lx\n", block->baseAddr);
 		assert( block->status == CacheBlock::SHARED );  // Shouldn't be Exclusive or Invalid
 		block->status = CacheBlock::INVALID;
 		/* TODO:  Send Acknowledge */
@@ -260,7 +347,7 @@ void Cache::handleFetch(MemEvent *ev, bool invalidate)
 {
 	CacheBlock *block = findBlock(ev->getAddr());
 	assert( block );  // Shouldn't be asked for a fetch if we don't have it.
-	MemEvent *me = new MemEvent(block->baseAddr, FetchResp);
+	MemEvent *me = new MemEvent(getName(), block->baseAddr, FetchResp);
 	me->setSize(blocksize);
 	me->setPayload(block->data);
 	me->setDst(ev->getSrc());
@@ -292,14 +379,18 @@ void Cache::handleMiss(MemEvent *ev)
 		/* Request block */
 		block->activate(ev->getAddr());
 
-		MemEvent *me = new MemEvent(block->baseAddr, ReadReq);
+		MemEvent *me = new MemEvent(getName(), block->baseAddr, ReadReq);
 		me->setSize(blocksize);
 
-		requestBus(new BusRequest(me, block, false));
+		if ( next_level_name != NO_NEXT_LEVEL )
+			me->setDst(next_level_name);
+
+		requestBus(new BusRequest(me, block, true, NULL, &Cache::cancelMiss), access_time);
 		awaitingResponse.storeReq(block, new MemEvent(ev));
 		DPRINTF("Storing request (%lu, %d) for addr 0x%lx\n", ev->getID().first, ev->getID().second, block->baseAddr);
 	} else {
 		awaitingResponse.addReq(addrToBlockAddr(ev->getAddr()), new MemEvent(ev));
+		num_miss_held++;
 		DPRINTF("Adding request (%lu, %d) for addr 0x%lx\n", ev->getID().first, ev->getID().second, addrToBlockAddr(ev->getAddr()));
 	}
 }
@@ -313,12 +404,18 @@ void Cache::advanceMiss(BusRequest *req)
 	delete ev;
 }
 
+void Cache::cancelMiss(BusRequest *req)
+{
+	// Canceled a read.  Mark block as invalid, rather than ASSIGNED
+	if ( req->block->status == CacheBlock::ASSIGNED )
+		req->block->status = CacheBlock::INVALID;
+}
 
 
 void Cache::writeBack(CacheBlock *block, postSendHandler finishFunc, void *ud)
 {
 	assert( block );
-	MemEvent *me = new MemEvent(block->baseAddr, WriteBack);
+	MemEvent *me = new MemEvent(getName(), block->baseAddr, WriteBack);
 	me->setSize(blocksize);
 	me->setPayload(block->data);
 	requestBus(new BusRequest(me, block, false, finishFunc, NULL, ud), access_time);
@@ -331,7 +428,7 @@ void Cache::finishWriteBackAsShared(BusRequest *req)
 }
 
 
-void Cache::sendData(MemEvent *ev, CacheBlock *block, bool isSnoop)
+void Cache::sendData(MemEvent *ev, CacheBlock *block, bool useBus)
 {
 	Addr offset = ev->getAddr() - block->baseAddr;
 	if ( offset+ev->getSize() > blocksize ) {
@@ -339,21 +436,21 @@ void Cache::sendData(MemEvent *ev, CacheBlock *block, bool isSnoop)
 				ev->getAddr(), offset, ev->getSize(), blocksize);
 	}
 
-	MemEvent *resp = ev->makeResponse();
+	MemEvent *resp = ev->makeResponse(getName());
 	resp->setPayload(ev->getSize(), &block->data[offset]);
 
-	if ( isSnoop ) {
-		resp->setDst(ev->getSrc());
-		requestBus(new BusRequest(resp, block, false), access_time);
+	if ( useBus ) {
+		requestBus(new BusRequest(resp, block, true), access_time);
 	} else {
-		cpu_link->Send(access_time, resp);
+		cpu_side_link->Send(access_time, resp);
 	}
 }
 
 
 void Cache::sendInvalidate(MemEvent *ev, CacheBlock *block)
 {
-	MemEvent *me = new MemEvent(block->baseAddr, Invalidate);
+	MemEvent *me = new MemEvent(getName(), block->baseAddr, Invalidate);
+	me->setSize(blocksize);
 	requestBus(new BusRequest(me, block, true, &Cache::finishInvalidate, &Cache::cancelInvalidate, (void*)new MemEvent(ev)));
 }
 
@@ -364,7 +461,9 @@ void Cache::finishInvalidate(BusRequest *req)
 	/* Assumption:  Bus-based.  Can fire off as soon as we get the bus to send invalidates
 	 *     TODO     This assumption is wrong.  Need to wait until they're all actually processed.
 	 */
+	DPRINTF("INVALIDATE Finished.  Updating block\n");
 	updateBlock(req->msg, req->block);
+	req->block->status = CacheBlock::EXCLUSIVE;
 }
 
 
@@ -378,8 +477,16 @@ void Cache::cancelInvalidate(BusRequest *req)
 
 void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 {
-	assert(ev->getSize() == blocksize);
-	std::copy(ev->getPayload().begin(), ev->getPayload().end(), block->data.begin());
+	if (ev->getSize() == blocksize) {
+		// Assumption:  if sizes are equal, base addresses are, too
+		std::copy(ev->getPayload().begin(), ev->getPayload().end(), block->data.begin());
+	} else {
+		// Update a portion of the block
+		Addr offset = ev->getAddr() - block->baseAddr;
+		for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
+			block->data[offset+i] = ev->getPayload()[i];
+		}
+	}
 	block->last_touched = getCurrentSimTime();
 }
 
@@ -416,6 +523,39 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 	Addr row = (addr >> rowshift) & rowmask;
 	assert(row < n_rows);
 	return &database[row];
+}
+
+Cache::BusRequest* Cache::findWorkInProgress(Addr addr)
+{
+	BusRequest* br = NULL;
+
+	for ( std::list<BusRequest*>::iterator i = packetQueue.begin() ; i != packetQueue.end() ; ++i ) {
+		BusRequest* b = *i;
+		if ( b->msg->getAddr() == addr ) {
+			br = *i;
+			break;
+		}
+	}
+
+	return br;
+}
+
+void Cache::cancelWorkInProgress(Addr addr)
+{
+	DPRINTF("Looking to clear anything for addr 0x%lx\n", addr);
+	BusRequest* br = findWorkInProgress(addr);
+	while ( br ) {
+		DPRINTF("Canceling request (%lu, %d) in progress for 0x%lx\n",
+				br->msg->getID().first, br->msg->getID().second, addr);
+		packetQueue.remove(br);
+		assert(br->canCancel);
+		if ( br->cancelFunc ) {
+			(this->*(br->cancelFunc))(br);
+		}
+		// Really, should only have on BR for any address, but just in case
+		br = findWorkInProgress(addr);
+	}
+
 }
 
 

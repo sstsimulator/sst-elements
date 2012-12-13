@@ -29,7 +29,8 @@ public:
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
 	int Setup() {return 0;}
 	int Finish() {
-		printf("TrivialCPU Finished\n");
+		printf("TrivialCPU Finished after %lu issued reads, %lu returned\n",
+				num_reads_issued, num_reads_returned);
 		return 0;
 	}
 
@@ -44,8 +45,9 @@ private:
 	int workPerCycle;
 	int commFreq;
 	uint32_t maxAddr;
+	uint64_t num_reads_issued, num_reads_returned;
 
-	std::set<MemEvent::id_type> requests;
+	std::map<MemEvent::id_type, SimTime_t> requests;
 
 	SST::Link* mem_link;
 

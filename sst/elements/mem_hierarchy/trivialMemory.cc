@@ -18,6 +18,9 @@
 
 #include "trivialMemory.h"
 
+
+#define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Memory, "%s: " fmt, getName().c_str(), ## args )
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -36,12 +39,16 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 	registerExit();
 
 	// configure out links
-	bus_link = configureLink( "bus_link",
+	bus_link = configureLink( "bus_link", "50 ps",
 			new Event::Handler<trivialMemory>(this,
 				&trivialMemory::
 				handleRequest) );
-	registerTimeBase("1 ns", true);
 	assert(bus_link);
+
+	self_link = configureSelfLink("Self", "50 ps",
+			new Event::Handler<trivialMemory>(this, &trivialMemory::handleSelfEvent));
+
+	registerTimeBase("1 ns", true);
 	bus_requested = false;
 
 }
@@ -52,21 +59,41 @@ trivialMemory::trivialMemory() :
 	// for serialization only
 }
 
+
+
+void trivialMemory::handleSelfEvent(Event *ev)
+{
+	MemEvent *event = dynamic_cast<MemEvent*>(ev);
+	assert(event);
+	if ( !canceled(event) )
+		sendEvent(event);
+}
+
+
 // incoming events are scanned and deleted
 void trivialMemory::handleRequest(Event *ev)
 {
 	//printf("recv\n");
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
+		bool to_me = ( event->getDst() == getName() || event->getDst() == BROADCAST_TARGET );
 		switch (event->getCmd()) {
 		case ReadReq:
-			handleReadRequest(event);
+			if ( to_me )
+				handleReadRequest(event);
+			break;
+		case ReadResp:
+			if ( event->getSrc() != getName() ) // don't cancel from our own response.
+				cancelEvent(event->getResponseToID());
 			break;
 		case WriteReq:
-			handleWriteRequest(event);
+		case WriteBack:
+			if ( to_me )
+				handleWriteRequest(event);
 			break;
 		case BusClearToSend:
-			sendBusPacket();
+			if ( to_me )
+				sendBusPacket();
 			break;
 		default:
 			/* Ignore */
@@ -83,54 +110,96 @@ void trivialMemory::handleRequest(Event *ev)
 void trivialMemory::handleReadRequest(MemEvent *ev)
 {
 	Addr a = ev->getAddr();
+	DPRINTF("Read for addr 0x%lx\n", a);
 	if ( a > memSize ) _abort(TrivialMem, "Bad address 0x%lx\n", a);
-	MemEvent *resp = ev->makeResponse();
+	MemEvent *resp = ev->makeResponse(getName());
 	for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
 		resp->getPayload()[i] = data[a+i];
 	}
-	sendEvent(resp);
+	outstandingReqs[ev->getID()] = false;
+	self_link->Send(accessTime, resp);
 }
 
 
 void trivialMemory::handleWriteRequest(MemEvent *ev)
 {
 	Addr a = ev->getAddr();
+	DPRINTF("Write for addr 0x%lx\n", a);
 	if ( a > memSize ) _abort(TrivialMem, "Bad address 0x%lx\n", a);
-	MemEvent *resp = ev->makeResponse();
 	for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
 		data[a+i] = ev->getPayload()[i];
 	}
-	sendEvent(resp);
+	outstandingReqs[ev->getID()] = false;
+	MemEvent *resp = ev->makeResponse(getName());
+	if ( resp->getCmd() != NULLCMD ) {
+		self_link->Send(accessTime, resp);
+	} else {
+		delete resp;
+	}
 }
 
 
 void trivialMemory::sendBusPacket(void)
 {
-	assert(reqs.size() > 0);
-
-	std::pair<MemEvent*, SimTime_t> pair = reqs.front();
-	reqs.pop_front();
-	bus_link->Send(pair.second, pair.first);
-	bus_requested = false;
-	if ( reqs.size() > 0 ) {
-		// Re-request bus
-		sendEvent(NULL);
+	for (;;) {
+		if ( reqs.size() == 0 ) {
+			bus_link->Send(new MemEvent(getName(), NULL, CancelBusRequest));
+			bus_requested = false;
+			break;
+		} else {
+			MemEvent *ev = reqs.front();
+			reqs.pop_front();
+			if ( !canceled(ev) ) {
+				outstandingReqs.erase(ev->getResponseToID());
+				DPRINTF("Sending (%lu, %d) in response to (%lu, %d) 0x%lx\n",
+						ev->getID().first, ev->getID().second,
+						ev->getResponseToID().first, ev->getResponseToID().second,
+						ev->getAddr());
+				bus_link->Send(0, ev);
+				bus_requested = false;
+				if ( reqs.size() > 0 ) {
+					// Re-request bus
+					sendEvent(NULL);
+				}
+				break;
+			}
+		}
 	}
 }
 
 
-void trivialMemory::sendEvent(MemEvent *ev, SimTime_t delay)
+void trivialMemory::sendEvent(MemEvent *ev)
 {
 	if ( ev != NULL ) {
-		reqs.push_back(std::make_pair<MemEvent*, SimTime_t>(ev, delay));
+		reqs.push_back(ev);
 	}
 	if (!bus_requested) {
-		bus_link->Send(new MemEvent(NULL, RequestBus));
+		bus_link->Send(new MemEvent(getName(), NULL, RequestBus));
 		bus_requested = true;
 	}
 }
 
-// Element Libarary / Serialization stuff
+
+bool trivialMemory::canceled(MemEvent *ev)
+{
+	std::map<MemEvent::id_type, bool>::iterator i = outstandingReqs.find(ev->getResponseToID());
+	if ( i == outstandingReqs.end() ) return false;
+	return i->second;
+}
+
+
+void trivialMemory::cancelEvent(MemEvent::id_type id)
+{
+	std::map<MemEvent::id_type, bool>::iterator i = outstandingReqs.find(id);
+	DPRINTF("Looking to cancel (%lu, %d)\n", id.first, id.second);
+	if ( i != outstandingReqs.end() ) {
+		DPRINTF("Canceling event (%lu, %d)\n", id.first, id.second);
+		outstandingReqs[id] = true;
+	}
+}
+
+
+
 
 BOOST_CLASS_EXPORT(trivialMemory)
 

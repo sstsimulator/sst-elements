@@ -14,13 +14,13 @@
 
 #include <deque>
 #include <map>
+#include <list>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include "memTypes.h"
 #include "memEvent.h"
 
 namespace SST {
@@ -31,7 +31,20 @@ public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
 	int Setup()  { return 0; }
-	int Finish() { return 0; }
+	int Finish() {
+		printf("STATS for %s\n"
+				"\tnum_read_hit:\t%lu\n"
+				"\tnum_read_miss:\t%lu\n"
+				"\tnum_write_hit:\t%lu\n"
+				"\tnum_write_miss:\t%lu\n"
+				"\tnum_snoops_provided:\t%lu\n"
+				"\tnum_miss_held:\t%lu\n",
+				getName().c_str(),
+				num_read_hit, num_read_miss,
+				num_write_hit, num_write_miss,
+				num_snoops_provided, num_miss_held);
+		return 0;
+	}
 
 private:
 	struct CacheBlock {
@@ -62,9 +75,10 @@ private:
 		void activate(Addr addr)
 		{
 			assert(status != ASSIGNED);
-			__DBG( DBG_CACHE, CacheBlock, "Activating block %p for Address 0x%lx.\n", this, addr);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
+			__DBG( DBG_CACHE, CacheBlock, "Activating block %p for Address 0x%lx.\t"
+					"baseAddr: 0x%lx  Tag: 0x%lx\n", this, addr, baseAddr, tag);
 			status = ASSIGNED;
 		}
 
@@ -116,9 +130,8 @@ private:
 			msg(_msg), block(_block), canCancel(_canCancel),
 			finishFunc(_finish), cancelFunc(_cancel), ud(_ud)
 		{ }
-		~BusRequest(void)
-		{
-		}
+
+		~BusRequest(void) { }
 
 		MemEvent *msg; /* Assume We're owner of this MemEvent */
 		CacheBlock *block;
@@ -127,60 +140,6 @@ private:
 		postSendHandler cancelFunc;
 		void *ud;
 	};
-
-
-
-	Cache();  // for serialization only
-	Cache(const Cache&); // do not implement
-	void operator=(const Cache&); // do not implement
-
-	void handleCpuEvent( SST::Event *ev );
-	void handleBusEvent( SST::Event *ev );
-
-	void requestBus(BusRequest *req, SimTime_t delay = 0);
-	void sendBusPacket(void);
-
-	void handleReadReq(MemEvent *ev, bool isSnoop);
-	void handleReadResponse(MemEvent *ev);
-	void handleWriteReq(MemEvent *ev, bool isSnoop);
-	void handleInvalidate(MemEvent *ev);
-	void handleFetch(MemEvent *ev, bool invalidate);
-	void finishFetch(BusRequest *req);
-
-
-	void handleMiss(MemEvent *ev);
-	void advanceMiss(BusRequest *req);
-
-
-	void writeBack(CacheBlock *block, postSendHandler finishFunc, void *ud = NULL);
-	void finishWriteBackAsShared(BusRequest *req);
-	void finishWriteBack(BusRequest *req);
-	void sendData(MemEvent *ev, CacheBlock *block, bool isSnoop);
-
-	void sendInvalidate(MemEvent *ev, CacheBlock *block);
-	void finishInvalidate(BusRequest *req);
-	void cancelInvalidate(BusRequest *req);
-	void updateBlock(MemEvent *ev, CacheBlock *block);
-
-	Addr addrToTag(Addr addr);
-	Addr addrToBlockAddr(Addr addr);
-	CacheBlock* findBlock(Addr addr);
-	CacheRow* findRow(Addr addr);
-
-
-	uint32_t n_ways;
-	uint32_t n_rows;
-	uint32_t blocksize;
-	uint32_t access_time; // TODO:  Type this properly
-
-	Addr tagshift;
-	Addr rowshift;
-	Addr rowmask;
-
-	bool busRequested;
-
-	std::vector<CacheRow> database;
-	std::deque<BusRequest*> packetQueue;
 
 	class RequestHold {
 	public:
@@ -238,11 +197,80 @@ private:
 		}
 
 	};
+
+
+	Cache();  // for serialization only
+	Cache(const Cache&); // do not implement
+	void operator=(const Cache&); // do not implement
+
+	void handleCpuEvent( SST::Event *ev );
+	void handleBusEvent( SST::Event *ev );
+
+	void requestBus(BusRequest *req, SimTime_t delay = 0);
+	void sendBusPacket(void);
+
+	void handleReadReq(MemEvent *ev, bool isSnoop);
+	void handleReadResponse(MemEvent *ev, bool for_me);
+	void handleWriteReq(MemEvent *ev, bool isSnoop);
+	void handleWriteBack(MemEvent *ev);
+	void handleInvalidate(MemEvent *ev);
+	void handleFetch(MemEvent *ev, bool invalidate);
+	void finishFetch(BusRequest *req);
+
+
+	void handleMiss(MemEvent *ev);
+	void advanceMiss(BusRequest *req);
+	void cancelMiss(BusRequest *req);
+
+
+	void writeBack(CacheBlock *block, postSendHandler finishFunc, void *ud = NULL);
+	void finishWriteBackAsShared(BusRequest *req);
+	void finishWriteBack(BusRequest *req);
+	void sendData(MemEvent *ev, CacheBlock *block, bool isSnoop);
+
+	void sendInvalidate(MemEvent *ev, CacheBlock *block);
+	void finishInvalidate(BusRequest *req);
+	void cancelInvalidate(BusRequest *req);
+	void updateBlock(MemEvent *ev, CacheBlock *block);
+
+
+	BusRequest* findWorkInProgress(Addr addr);
+	void cancelWorkInProgress(Addr addr);
+
+	Addr addrToTag(Addr addr);
+	Addr addrToBlockAddr(Addr addr);
+	CacheBlock* findBlock(Addr addr);
+	CacheRow* findRow(Addr addr);
+
+
+	uint32_t n_ways;
+	uint32_t n_rows;
+	uint32_t blocksize;
+	uint32_t access_time; // TODO:  Type this properly
+	std::string next_level_name;
+
+	Addr tagshift;
+	Addr rowshift;
+	Addr rowmask;
+
+	bool busRequested;
+
+	std::vector<CacheRow> database;
+	std::list<BusRequest*> packetQueue;
+
 	RequestHold awaitingResponse;
 
-	SST::Link* cpu_link;
-	SST::Link* bus_link;
+	SST::Link* cpu_side_link;
+	SST::Link* mem_side_link;
+	SST::Link* coherency_link;
 
+	/* Stats */
+	uint64_t num_read_hit;
+	uint64_t num_read_miss;
+	uint64_t num_write_hit;
+	uint64_t num_write_miss;
+	uint64_t num_snoops_provided;
+	uint64_t num_miss_held;
 
 };
 
