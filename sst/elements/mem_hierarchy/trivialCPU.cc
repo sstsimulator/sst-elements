@@ -41,6 +41,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 		_abort(trivialCPU, "Must set memSize\n");
 	}
 
+	do_write = (bool)params.find_integer("do_write", 1);
 
 	// init randomness
 	srand(1);
@@ -75,9 +76,12 @@ void trivialCPU::handleEvent(Event *ev)
 	//printf("recv\n");
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
+		// May receive invalidates.  Just ignore 'em.
+		if ( event->getCmd() == Invalidate ) return;
+
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
-			printf("Event not found!\n");
+			_abort(trivialCPU, "Event (%lu, %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			printf("%s: Received MemEvent with command %d (response to %lu, addr 0x%lx) [Time: %lu]\n",
@@ -127,7 +131,7 @@ bool trivialCPU::clockTic( Cycle_t )
 			// x4 to prevent splitting blocks
 			Addr addr = ((((Addr) rand()) % maxAddr)>>2) << 2;
 
-			bool doWrite = ((rand() % 10) == 0);
+			bool doWrite = do_write && (((rand() % 10) == 0));
 
 			MemEvent *e = new MemEvent(getName(), addr, doWrite ? WriteReq : ReadReq);
 			e->setSize(4); // Load 4 bytes

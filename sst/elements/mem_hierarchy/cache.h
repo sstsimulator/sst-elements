@@ -27,37 +27,28 @@ namespace SST {
 namespace MemHierarchy {
 
 class Cache : public SST::Component {
-public:
-
-	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
-	int Setup()  { return 0; }
-	int Finish() {
-		printf("STATS for %s\n"
-				"\tnum_read_hit:\t%lu\n"
-				"\tnum_read_miss:\t%lu\n"
-				"\tnum_write_hit:\t%lu\n"
-				"\tnum_write_miss:\t%lu\n"
-				"\tnum_snoops_provided:\t%lu\n"
-				"\tnum_miss_held:\t%lu\n"
-				"\tStill tracking:\t%zu\n",
-				getName().c_str(),
-				num_read_hit, num_read_miss,
-				num_write_hit, num_write_miss,
-				num_snoops_provided, num_miss_held,
-				awaitingResponse.size());
-		return 0;
-	}
 
 private:
-	struct CacheBlock {
+	typedef enum {DOWNSTREAM, SNOOP, DIRECTORY, UPSTREAM, SELF} SourceType_t;
+
+	class Request;
+	class CacheRow;
+	class CacheBlock;
+	class SelfEvent;
+
+	class CacheBlock {
+	public:
 		/* Flags */
 		typedef enum {INVALID, ASSIGNED, SHARED, EXCLUSIVE} BlockStatus;
+
 		Addr tag;
 		Addr baseAddr;
 		SimTime_t last_touched;
 		BlockStatus status;
 		Cache *cache;
 		std::vector<uint8_t> data;
+		uint32_t locked;
+		MemEvent *currentEvent;
 
 		CacheBlock() {}
 		CacheBlock(Cache *_cache)
@@ -68,15 +59,17 @@ private:
 			status = INVALID;
 			cache = _cache;
 			data = std::vector<uint8_t>(cache->blocksize);
-			//data = new uint8_t[cache->blocksize];
+			locked = 0;
+			currentEvent = NULL;
 		}
+
 		~CacheBlock()
-		{
-			//delete [] data;
-		}
+		{ }
+
 		void activate(Addr addr)
 		{
 			assert(status != ASSIGNED);
+			assert(locked == 0);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
 			__DBG( DBG_CACHE, CacheBlock, "Activating block %p for Address 0x%lx.\t"
@@ -85,10 +78,13 @@ private:
 		}
 
 		bool isValid(void) { return (status != INVALID && status != ASSIGNED); }
+		bool isInvalid(void) { return (status == INVALID); }
 		bool isAssigned(void) { return (status == ASSIGNED); }
+
 	};
 
-	struct CacheRow {
+	class CacheRow {
+	public:
 		std::vector<CacheBlock> blocks;
 		Cache *cache;
 
@@ -102,8 +98,9 @@ private:
 		{
 			SimTime_t t = (SimTime_t)-1;
 			int lru = -1;
-			for ( uint32_t i = 0 ; i < cache->n_ways ; i++ ) {
+			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
 				if ( blocks[i].isAssigned() ) continue; // Assigned, waiting for incoming
+				if ( blocks[i].locked > 0 ) continue; // Currently in use
 
 				if ( !blocks[i].isValid() ) {
 					lru = i;
@@ -120,167 +117,222 @@ private:
 		}
 	};
 
-	struct BusRequest;
-	typedef void (Cache::*postSendHandler)(BusRequest *req);
 
-	struct BusRequest {
-		BusRequest() {} // For serialization
-		BusRequest(MemEvent *_msg, CacheBlock *_block, bool _canCancel,
-				postSendHandler _finish = NULL,
-				postSendHandler _cancel = NULL,
-				void* _ud = NULL) :
-			msg(_msg), block(_block), canCancel(_canCancel),
-			finishFunc(_finish), cancelFunc(_cancel), ud(_ud)
+	typedef union {
+		struct {
+			CacheBlock *block;
+			CacheBlock::BlockStatus newStatus;
+			bool decrementLock;
+		} writebackBlock;
+		struct {
+			CacheBlock *block;
+			MemEvent *ev;
+		} issueInvalidate;
+		struct {
+			CacheBlock *block;
+			SourceType_t src;
+		} supplyData;
+	} BusFinishHandlerArgs;
+	typedef void(Cache::*BusFinishHandlerFunc)(BusFinishHandlerArgs &args);
+
+	class BusFinishHandler {
+	public:
+		BusFinishHandler(BusFinishHandlerFunc func, BusFinishHandlerArgs args) :
+			func(func), args(args)
 		{ }
 
-		~BusRequest(void) { }
-
-		MemEvent *msg; /* Assume We're owner of this MemEvent */
-		CacheBlock *block;
-		bool canCancel;
-		postSendHandler finishFunc;
-		postSendHandler cancelFunc;
-		void *ud;
+		BusFinishHandlerFunc func;
+		BusFinishHandlerArgs args;
 	};
 
-	class RequestHold {
+	class BusQueue {
 	public:
-		struct RequestList {
-			CacheBlock *block;
-			std::deque<MemEvent*> requests;
+		BusQueue(void) :
+			requested(false), comp(NULL), link(NULL)
+		{ }
 
-			RequestList(CacheBlock *b) : block(b), requests(std::deque<MemEvent*>()) { }
-		};
-	private:
-		std::map<Addr, RequestList*> reqs;
-	public:
+		BusQueue(Cache *comp, SST::Link *link) :
+			requested(false), comp(comp), link(link)
+		{ }
 
-		void storeReq(CacheBlock *block, MemEvent *event)
+		bool requested;
+
+		void setup(Cache *_comp, SST::Link *_link) {
+			comp = _comp;
+			link = _link;
+		}
+
+		int size(void) const { return queue.size(); }
+		void request(MemEvent *event, BusFinishHandler *handler)
 		{
-			std::map<Addr, RequestList*>::iterator i = reqs.find(block->baseAddr);
-			struct RequestList *req;
-			if ( i == reqs.end() ) {
-				req = new RequestList(block);
-				reqs.insert(std::make_pair(block->baseAddr, req));
+			if ( event ) {
+				queue.push_back(event);
+				if ( handler != NULL ) {
+					map[event] = handler;
+				}
+			}
+			if ( !requested ) {
+				link->Send(new MemEvent(comp->getName(), NULL, RequestBus));
+				requested = true;
+			}
+		}
+
+		BusFinishHandler* cancelRequest(MemEvent *event)
+		{
+			BusFinishHandler *retval = NULL;
+			queue.remove(event);
+			std::map<MemEvent*, BusFinishHandler*>::iterator i = map.find(event);
+			if ( i != map.end() ) {
+				retval = i->second;
+				map.erase(i);
+			}
+			//delete event; // We have responsibility for this event, due to the contract of Link::Send()
+			return retval;
+		}
+
+		void clearToSend(void)
+		{
+			if ( size() == 0 ) {
+				__DBG( DBG_CACHE, BusQueue, "No Requests to send!\n");
+				/* Must have canceled the request */
+				link->Send(new MemEvent(comp->getName(), NULL, CancelBusRequest));
+				requested = false;
 			} else {
-				req = i->second;
-			}
-			req->requests.push_back(event);
-		}
+				MemEvent *ev = queue.front();
+				queue.pop_front();
 
-		void addReq(Addr addr, MemEvent *event)
-		{
-			std::map<Addr, RequestList*>::iterator i = reqs.find(addr);
-			assert ( i != reqs.end() );
-			struct RequestList *req = i->second;
-			req->requests.push_back(event);
-		}
+				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%lx)!\n", CommandString[ev->getCmd()], ev->getAddr());
+				link->Send(ev);
 
-		RequestList* findReqs(Addr addr)
-		{
-			struct RequestList *req = NULL;
-			std::map<Addr, RequestList*>::iterator i = reqs.find(addr);
-			if ( i != reqs.end() ) req = i->second;
+				std::map<MemEvent*, BusFinishHandler*>::iterator i = map.find(ev);
+				if ( i != map.end() ) {
+					BusFinishHandler *br = i->second;
+					if ( br ) {
+						(comp->*(br->func))(br->args);
+						delete br;
+					}
+					map.erase(i);
+				}
 
-			return req;
-		}
-
-		void clearReqs(Addr addr)
-		{
-			std::map<Addr, RequestList*>::iterator i = reqs.find(addr);
-			if ( i != reqs.end() ) {
-				delete i->second;
-				reqs.erase(i);
+				requested = false;
+				if ( size() > 0 ) {
+					/* Re-request.  We have more to send */
+					request(NULL, NULL);
+				}
 			}
 		}
 
-		bool exists(Addr addr) {
-			return reqs.find(addr) != reqs.end();
-		}
 
-		size_t size(void) const {
-			return reqs.size();
-		}
+	private:
+		Cache *comp;
+		SST::Link *link;
+		std::list<MemEvent*> queue;
+		std::map<MemEvent*, BusFinishHandler*> map;
 
 	};
 
+	typedef void (Cache::*SelfEventHandler)(MemEvent*, CacheBlock*, SourceType_t);
+	class SelfEvent : public SST::Event {
+	public:
+		SelfEvent() {} // For serialization
 
-	Cache();  // for serialization only
-	Cache(const Cache&); // do not implement
-	void operator=(const Cache&); // do not implement
+		SelfEvent(SelfEventHandler handler, MemEvent *event, CacheBlock *block,
+				SourceType_t event_source = SELF) :
+			handler(handler), event(event), block(block), event_source(event_source)
+		{ }
 
-	void handleCpuEvent( SST::Event *ev );
-	void handleBusEvent( SST::Event *ev );
+		SelfEventHandler handler;
+		MemEvent *event;
+		CacheBlock *block;
+		SourceType_t event_source;
+	};
 
-	void requestBus(BusRequest *req, SimTime_t delay = 0);
-	void sendBusPacket(void);
+public:
 
-	void handleReadReq(MemEvent *ev, bool isSnoop);
-	void handleReadResponse(MemEvent *ev, bool for_me);
-	void handleWriteReq(MemEvent *ev, bool isSnoop);
-	void handleWriteBack(MemEvent *ev);
-	void handleInvalidate(MemEvent *ev);
-	void handleFetch(MemEvent *ev, bool invalidate);
-	void finishFetch(BusRequest *req);
+	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
+	int Setup()  { return 0; }
+	int Finish() { return 0; }
 
+private:
+	void handleIncomingEvent(SST::Event *event, SourceType_t src);
+	void handleSelfEvent(SST::Event *event);
 
-	void handleMiss(MemEvent *ev);
-	void advanceMiss(BusRequest *req);
-	void cancelMiss(BusRequest *req);
+	void handleCPURequest(MemEvent *ev);
+	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
+	void issueInvalidate(MemEvent *ev, CacheBlock *block);
+	void loadBlock(MemEvent *ev, SourceType_t src);
 
-	void writeBack(CacheBlock *block, postSendHandler finishFunc, void *ud = NULL);
-	void finishWriteBackAsShared(BusRequest *req);
-	void finishWriteBack(BusRequest *req);
-	void sendData(MemEvent *ev, CacheBlock *block, bool isSnoop);
+	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src);
+	void supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src);
+	void finishBusSupplyData(BusFinishHandlerArgs &args);
+	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
+	void finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t src);
+	void handleInvalidate(MemEvent *ev, SourceType_t src);
 
-	void sendInvalidate(MemEvent *ev, CacheBlock *block);
-	void finishInvalidate(BusRequest *req);
-	void cancelInvalidate(BusRequest *req);
-	void sendWriteResponse(MemEvent *origEV);
+	bool waitingForInvalidate(CacheBlock *block);
+	void cancelInvalidate(CacheBlock *block);
+	void finishIssueInvalidateVA(BusFinishHandlerArgs &args);
+	void finishIssueInvalidate(MemEvent *ev, CacheBlock *block);
+
+	void writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus);
+	void finishWritebackBlockVA(BusFinishHandlerArgs &args);
+	void finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock);
+
+	void busClear(SST::Link *busLink);
+
 	void updateBlock(MemEvent *ev, CacheBlock *block);
-
-
-	BusRequest* findWorkInProgress(Addr addr);
-	void cancelWorkInProgress(Addr addr);
-
+	SST::Link *getLink(SourceType_t type, int link_id);
+	int numBits(int x);
 	Addr addrToTag(Addr addr);
 	Addr addrToBlockAddr(Addr addr);
-	CacheBlock* findBlock(Addr addr);
+	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
 
 
-	uint32_t n_ways;
-	uint32_t n_rows;
-	uint32_t blocksize;
-	uint32_t access_time; // TODO:  Type this properly
+	int n_ways;
+	int n_rows;
+	int blocksize;
+	std::string access_time;
+	std::vector<CacheRow> database;
 	std::string next_level_name;
 
-	Addr tagshift;
-	Addr rowshift;
-	Addr rowmask;
+	int rowshift;
+	unsigned rowmask;
+	int tagshift;
 
-	bool busRequested;
+	int n_upstream;
+	SST::Link *snoop_link; // Points to a snoopy bus, or snoopy network (if any)
+	SST::Link *directory_link; // Points to a network for directory lookups (if any)
+	SST::Link **upstream_links; // Points to directly upstream caches or cpus (if any) [no snooping]
+	SST::Link *downstream_link; // Points to directly downstream cache (if any)
+	SST::Link *self_link; // Used for scheduling access
+	std::map<LinkId_t, int> upstreamLinkMap;
 
-	std::vector<CacheRow> database;
-	std::list<BusRequest*> packetQueue;
 
-	RequestHold awaitingResponse;
+	struct LoadInfo_t {
+		CacheBlock *targetBlock;
+		std::vector<std::pair<MemEvent*, SourceType_t> > list;
+		LoadInfo_t() : targetBlock(NULL) { }
+	};
+	typedef std::map<Addr, LoadInfo_t> LoadList_t;
+	LoadList_t waitingLoads;
 
-	SST::Link* cpu_side_link;
-	SST::Link* mem_side_link;
-	SST::Link* coherency_link;
 
-	/* Stats */
-	uint64_t num_read_hit;
-	uint64_t num_read_miss;
-	uint64_t num_write_hit;
-	uint64_t num_write_miss;
-	uint64_t num_snoops_provided;
-	uint64_t num_miss_held;
+	struct SupplyInfo {
+		MemEvent *busEvent;
+		bool canceled;
+		SupplyInfo() : busEvent(NULL), canceled(false) { }
+		SupplyInfo(MemEvent *event) : busEvent(event), canceled(false) { }
+	};
+	typedef std::map<std::pair<Addr, SourceType_t>, SupplyInfo> supplyMap_t;
+	supplyMap_t supplyInProgress;
+
+	BusQueue snoopBusQueue;
 
 };
 
-};
-};
-#endif /* _CACHE_H */
+}
+}
+
+#endif

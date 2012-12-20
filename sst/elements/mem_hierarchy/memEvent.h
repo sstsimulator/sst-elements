@@ -24,41 +24,43 @@ namespace MemHierarchy {
 typedef uint64_t Addr;
 
 #define X_TYPES \
-	X(ReadReq, 0) \
-	X(ReadResp, 1) \
-	X(WriteReq, 2) \
-	X(WriteResp, 3) \
-	X(Invalidate, 4) \
-	X(Fetch, 5) \
-	X(Fetch_Invalidate, 6) \
-	X(FetchResp, 7) \
-	X(WriteBack, 8) \
-	X(RequestBus, 9) \
-	X(CancelBusRequest, 10) \
-	X(BusClearToSend, 11) \
-	X(ACK, 12) \
-	X(NACK, 13) \
-	X(NULLCMD, 14)
+	/* CPU <-> Cache */ \
+	X(ReadReq) \
+	X(ReadResp) \
+	X(WriteReq) \
+	X(WriteResp) \
+	/* Cache <-> Cache/MemControl */ \
+	X(RequestData) \
+	X(SupplyData) \
+	X(Invalidate) \
+	/* Component <-> Bus */ \
+	X(RequestBus) \
+	X(CancelBusRequest) \
+	X(BusClearToSend) \
+	X(NULLCMD)
 
 typedef enum {
-#define X(x, n) x = n,
+#define X(x) x,
 	X_TYPES
 #undef X
 } Command;
 
-
 //extern const char* CommandString[];
 static const char* CommandString[] __attribute__((unused)) = {
-#define X(x, n) #x ,
+#define X(x) #x ,
 	X_TYPES
 #undef X
 };
+
+#undef X_TYPES
 
 
 static const std::string BROADCAST_TARGET = "BROADCAST";
 
 class MemEvent : public SST::Event {
 public:
+	static const uint32_t F_WRITEBACK = (1<<0);
+
 	typedef std::vector<uint8_t> dataVec;
 	typedef std::pair<uint64_t, int> id_type;
 
@@ -72,6 +74,7 @@ public:
 		response_to_id = std::make_pair(0, -1);
 		dst = BROADCAST_TARGET;
 		size = 0;
+		flags = 0;
 	}
 
 	MemEvent(const MemEvent &me) : SST::Event()
@@ -84,6 +87,8 @@ public:
 		payload = me.payload;
 		src = me.src;
 		dst = me.dst;
+		flags = me.flags;
+		setDeliveryLink(me.getLinkId(), NULL);
 	}
 	MemEvent(const MemEvent *me) : SST::Event()
 	{
@@ -95,8 +100,9 @@ public:
 		payload = me->payload;
 		src = me->src;
 		dst = me->dst;
+		flags = me->flags;
+		setDeliveryLink(me->getLinkId(), NULL);
 	}
-
 
 
 	MemEvent* makeResponse(const std::string &source)
@@ -113,19 +119,34 @@ public:
 	Command getCmd(void) const { return cmd; }
 	void setCmd(Command newcmd) { cmd = newcmd; }
 	Addr getAddr(void) const { return addr; }
+
 	uint32_t getSize(void) const { return size; }
 	void setSize(uint32_t sz) {
 		size = sz;
 		payload.resize(size);
 	}
+
 	dataVec& getPayload(void) { return payload; }
 	void setPayload(uint32_t size, uint8_t *data);
 	void setPayload(std::vector<uint8_t> &data);
+
 	const std::string& getSrc(void) const { return src; }
 	void setSrc(const std::string &s) { src = s; }
 	const std::string& getDst(void) const { return dst; }
-	bool isBroadcast(void) const { return (dst == BROADCAST_TARGET); }
 	void setDst(const std::string &d) { dst = d; }
+
+	bool isBroadcast(void) const { return (dst == BROADCAST_TARGET); }
+
+	uint32_t getFlags(void) const { return flags; }
+	void setFlag(uint32_t flag) { flags = flags | flag; }
+	void clearFlag(uint32_t flag) { flags = flags & (~flag); }
+	void clearFlags(void) { flags = 0; }
+	bool queryFlag(uint32_t flag) const { return flags & flag; };
+	void setFlags(uint32_t _flags) { flags = _flags; }
+
+	bool isResponse(void) const {
+		return ((cmd == ReadResp) || (cmd == WriteResp));
+	}
 
 private:
 	static uint64_t main_id;
@@ -137,6 +158,7 @@ private:
 	dataVec payload;
 	std::string src;
 	std::string dst;
+	uint32_t flags;
 
 	Command commandResponse(Command c)
 	{
@@ -145,9 +167,6 @@ private:
 			return ReadResp;
 		case WriteReq:
 			return WriteResp;
-		case Fetch:
-		case Fetch_Invalidate:
-			return FetchResp;
 		default:
 			return NULLCMD;
 		}

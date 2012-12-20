@@ -78,6 +78,7 @@ void trivialMemory::handleRequest(Event *ev)
 	if (event) {
 		bool to_me = ( event->getDst() == getName() || event->getDst() == BROADCAST_TARGET );
 		switch (event->getCmd()) {
+		case RequestData:
 		case ReadReq:
 			if ( to_me )
 				handleReadRequest(event);
@@ -87,9 +88,12 @@ void trivialMemory::handleRequest(Event *ev)
 				cancelEvent(event->getResponseToID());
 			break;
 		case WriteReq:
-		case WriteBack:
-			if ( to_me )
+		case SupplyData:
+			if ( event->queryFlag(MemEvent::F_WRITEBACK) )
 				handleWriteRequest(event);
+			else
+				cancelEvent(event->getResponseToID());
+
 			break;
 		case BusClearToSend:
 			if ( to_me )

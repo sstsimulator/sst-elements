@@ -44,6 +44,7 @@ private:
 
 	int workPerCycle;
 	int commFreq;
+	bool do_write;
 	uint32_t maxAddr;
 	uint64_t num_reads_issued, num_reads_returned;
 
