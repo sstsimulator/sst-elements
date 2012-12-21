@@ -2,7 +2,7 @@
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
 <config>
- stopAtCycle=5000ns
+ stopAtCycle=100000ns
 </config>
 
 <variables>
@@ -16,7 +16,7 @@
 		<params>
 			<workPerCycle> 1000 </workPerCycle>
 			<commFreq> 100 </commFreq>
-			<memSize> 0x100 </memSize>
+			<memSize> 0x1000 </memSize>
 			<do_write> 1 </do_write>
 		</params>
 		<link name=cpu0_l1cache_link port=mem_link latency=$lat />
@@ -39,7 +39,7 @@
 		<params>
 			<workPerCycle> 1000 </workPerCycle>
 			<commFreq> 100 </commFreq>
-			<memSize> 0x100 </memSize>
+			<memSize> 0x1000 </memSize>
 			<do_write> 1 </do_write>
 		</params>
 		<link name=cpu1_l1cache_link port=mem_link latency=$lat />

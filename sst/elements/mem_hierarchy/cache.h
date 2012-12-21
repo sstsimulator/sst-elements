@@ -290,6 +290,7 @@ private:
 	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
 
+	void printCache(void);
 
 	int n_ways;
 	int n_rows;

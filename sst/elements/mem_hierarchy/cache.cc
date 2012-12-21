@@ -9,6 +9,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sstream>
+#include <iomanip>
+
 #include "sst_config.h"
 #include "sst/core/serialization/element.h"
 #include "sst/core/simulation.h"
@@ -108,6 +111,7 @@ int Cache::Finish(void)
 			num_supply_hit, num_supply_miss,
 			num_write_hit, num_write_miss,
 			num_upgrade_miss);
+	printCache();
 	return 0;
 }
 
@@ -437,7 +441,9 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 		waitingLoads.erase(i);
 	} else {
 		assert ( src == SNOOP );
-		assert ( ev->getDst() != getName() ); // Unmatched reply
+		if ( ev->getDst() == getName() ) {
+			_abort(Cache, "%s Received an unmatched message!\n", getName().c_str());
+		}
 	}
 
 }
@@ -617,3 +623,28 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 	return &database[row];
 }
 
+
+void Cache::printCache(void)
+{
+	static const char *status[] = {"I", "A", "S", "E"};
+	std::ostringstream ss;
+
+	ss << getName() << std::endl;
+	ss << std::setfill('0');
+
+	for ( int r = 0 ; r < n_rows; r++ ) {
+		ss << "| ";
+		CacheRow &row = database[r];
+		for ( int c = 0 ; c < n_ways ; c++ ) {
+			CacheBlock &b = row.blocks[c];
+			ss << status[b.status] << " ";
+			ss << "0x" << std::setw(4) << std::hex << b.baseAddr << " ";
+			ss << b.tag << " ";
+			ss << "| ";
+		}
+		ss << std::endl;
+	}
+
+	std::cout << ss.str();
+
+}
