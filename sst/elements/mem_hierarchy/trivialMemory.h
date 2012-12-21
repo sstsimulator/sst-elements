@@ -45,7 +45,7 @@ private:
 
   void sendEvent(MemEvent *ev);
   bool canceled(MemEvent *ev);
-  void cancelEvent(MemEvent::id_type id);
+  void cancelEvent(MemEvent* ev);
 
   std::deque<MemEvent*> reqs;
 
@@ -53,9 +53,8 @@ private:
   SST::Link* self_link;
   uint8_t *data;
   uint32_t memSize;
-  SimTime_t accessTime;
   bool bus_requested;
-  std::map<MemEvent::id_type, bool> outstandingReqs;
+  std::map<Addr, bool> outstandingReqs;
 
   friend class boost::serialization::access;
   template<class Archive>

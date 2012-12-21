@@ -7,7 +7,7 @@
 
 <variables>
 	<lat> 1ns </lat>
-	<buslat> 1ns </buslat>
+	<buslat> 10ns </buslat>
 </variables>
 
 
@@ -27,7 +27,7 @@
 			<num_ways> 4 </num_ways>
 			<num_rows> 16 </num_rows>
 			<blocksize> 32 </blocksize>
-			<access_time> 10 ns </access_time>
+			<access_time> 2 ns </access_time>
 			<num_upstream> 1 </num_upstream>
 			<next_level> l2cache </next_level>
 		</params>
@@ -40,7 +40,7 @@
 			<num_ways> 8 </num_ways>
 			<num_rows> 64 </num_rows>
 			<blocksize> 32 </blocksize>
-			<access_time> 100 ns </access_time>
+			<access_time> 10 ns </access_time>
 		</params>
 		<link name=l2cache_bus_link port=snoop_link latency=$buslat />
 	</component>
@@ -49,7 +49,7 @@
 	<component name="membus" type="memHierarchy.Bus">
 		<params>
 			<numPorts> 3 </numPorts>
-			<busDelay> 20 </busDelay>
+			<busDelay> 20 ns </busDelay>
 		</params>
 		<link name=l1cache_bus_link port=port0 latency=$buslat />
 		<link name=l2cache_bus_link port=port1 latency=$buslat />
@@ -59,7 +59,7 @@
 
 	<component name="memory" type="memHierarchy.trivialMem">
 		<params>
-			<accessTime> 1000 </accessTime>
+			<accessTime> 1000 ns </accessTime>
 			<memSize> 0xffffff </memSize>
 		</params>
 		<link name=mem_bus_link port=bus_link latency=$buslat />

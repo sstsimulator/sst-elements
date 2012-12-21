@@ -15,6 +15,7 @@
 #include "sst/core/serialization/element.h"
 #include <assert.h>
 
+#include "sst/core/component.h"
 #include "sst/core/element.h"
 
 #include "bus.h"
@@ -37,9 +38,10 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	activePort = BUS_INACTIVE;
 	busBusy = false;
 
-	// TODO:  Use proper time conversion
-	busDelay = params.find_integer("busDelay", 0);
-	if ( busDelay < 1 ) _abort(Bus,"couldn't find bus delay (busDelay)\n");
+
+	std::string delay = params.find_string("busDelay", "100 ns");
+	delayTC = registerTimeBase(delay, false);
+	busDelay = 1;
 
 	// tell the simulator not to end without us
 	registerExit();
@@ -99,7 +101,10 @@ void Bus::cancelPortRequest(LinkId_t link_id)
 
 void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 {
-	DPRINTF("(%s -> %s) [active = %lu]\n", ev->getSrc().c_str(), ev->getDst().c_str(), activePort);
+	DPRINTF("(%s -> %s: %s 0x%lx) [active = %lu]\n",
+			ev->getSrc().c_str(), ev->getDst().c_str(),
+			CommandString[ev->getCmd()], ev->getAddr(),
+			activePort);
 	// Only should be sending data if have clear-to-send
 	assert(from_link == activePort);
 	// Can't send while already busy
@@ -108,9 +113,9 @@ void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 	// TODO:  Calcuate delay including message size
 
 	for ( int i = 0 ; i < numPorts ; i++ ) {
-		ports[i]->Send(busDelay, new MemEvent(ev));
+		ports[i]->Send(busDelay, delayTC, new MemEvent(ev));
 	}
-	selfLink->Send(busDelay, new SelfEvent(SelfEvent::BusFinish));
+	selfLink->Send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));
 	busBusy = true;
 }
 

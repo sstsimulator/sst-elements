@@ -163,6 +163,10 @@ private:
 	Command commandResponse(Command c)
 	{
 		switch(c) {
+		case RequestData:
+			return SupplyData;
+		case SupplyData:
+			return WriteResp; // TODO
 		case ReadReq:
 			return ReadResp;
 		case WriteReq:

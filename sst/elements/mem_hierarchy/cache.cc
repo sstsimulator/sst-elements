@@ -79,17 +79,49 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
 	database = std::vector<CacheRow>(n_rows, CacheRow(this));
 
+
 	// TODO:  Is this right?
-	registerTimeBase("1 ns", true);
+	registerTimeBase("2 ns", true);
+
+	num_read_hit = 0;
+	num_read_miss = 0;
+	num_supply_hit = 0;
+	num_supply_miss = 0;
+	num_write_hit = 0;
+	num_write_miss = 0;
+	num_upgrade_miss = 0;
+
+}
+
+int Cache::Finish(void)
+{
+	printf("Cache %s stats:\n"
+			"\t# Read    Hits:      %lu\n"
+			"\t# Read    Misses:    %lu\n"
+			"\t# Supply  Hits:      %lu\n"
+			"\t# Supply  Misses:    %lu\n"
+			"\t# Write   Hits:      %lu\n"
+			"\t# Write   Misses:    %lu\n"
+			"\t# Upgrade Misses:    %lu\n",
+			getName().c_str(),
+			num_read_hit, num_read_miss,
+			num_supply_hit, num_supply_miss,
+			num_write_hit, num_write_miss,
+			num_upgrade_miss);
+	return 0;
 }
 
 
 void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 {
+	handleIncomingEvent(event, src, true);
+}
+
+void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed)
+{
 	MemEvent *ev = dynamic_cast<MemEvent*>(event);
 	if (event) {
 		DPRINTF("Received Event (to %s) %s 0x%lx\n", ev->getDst().c_str(), CommandString[ev->getCmd()], ev->getAddr());
-		//bool to_me = (ev->getDst() == getName());
 		switch (ev->getCmd()) {
 		case BusClearToSend:
 			snoopBusQueue.clearToSend();
@@ -97,11 +129,11 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 
 		case ReadReq:
 		case WriteReq:
-			handleCPURequest(ev);
+			handleCPURequest(ev, firstTimeProcessed);
 			break;
 
 		case RequestData:
-			handleCacheRequestEvent(ev, src);
+			handleCacheRequestEvent(ev, src, firstTimeProcessed);
 			break;
 		case SupplyData:
 			handleCacheSupplyEvent(ev, src);
@@ -135,7 +167,7 @@ void Cache::handleSelfEvent(SST::Event *event)
 
 
 
-void Cache::handleCPURequest(MemEvent *ev)
+void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 {
 	assert(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
 	bool isRead = (ev->getCmd() == ReadReq);
@@ -147,17 +179,26 @@ void Cache::handleCPURequest(MemEvent *ev)
 		/* HIT */
 		if ( isRead ) {
 			block->locked++;
+			if ( firstProcess ) num_read_hit++;
 			self_link->Send(new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
 		} else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
+				if ( firstProcess ) num_write_hit++;
 				block->locked++;
 				self_link->Send(new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
 			} else {
+				if ( firstProcess ) num_upgrade_miss++;
 				issueInvalidate(ev, block);
 			}
 		}
 		block->last_touched = getCurrentSimTime();
 	} else {
+		if ( firstProcess ) {
+			if ( isRead )
+				num_read_miss++;
+			else
+				num_write_miss++;
+		}
 		/* Miss */
 		loadBlock(ev, UPSTREAM);
 	}
@@ -226,7 +267,7 @@ void Cache::finishIssueInvalidate(MemEvent *ev, CacheBlock *block)
 	block->status = CacheBlock::EXCLUSIVE;
 	block->currentEvent = NULL;
 	// Only thing that can cause us to issue Invalidate is a WriteReq
-	handleCPURequest(ev);
+	handleCPURequest(ev, false);
 	delete ev;
 }
 
@@ -253,9 +294,9 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 
 	if ( !already_asked ) {
 		if ( snoop_link ) {
-			snoopBusQueue.request(
-					new MemEvent(getName(), block->baseAddr, RequestData),
-					NULL /* No post-send Handler */);
+			MemEvent *req = new MemEvent(getName(), block->baseAddr, RequestData);
+			if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
+			snoopBusQueue.request( req, NULL /* No post-send Handler */);
 		}
 		if ( downstream_link ) {
 			downstream_link->Send(new MemEvent(getName(), block->baseAddr, RequestData));
@@ -267,10 +308,13 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 
 
 
-void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src)
+void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess)
 {
+	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it
+
 	CacheBlock *block = findBlock(ev->getAddr(), false);
 	if ( block ) {
+		if ( firstProcess ) num_supply_hit++;
 		supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
 		/* Hit */
 
@@ -287,13 +331,8 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src)
 		block->last_touched = getCurrentSimTime();
 	} else {
 		/* Miss */
-		switch ( src ) {
-		case SNOOP:
-			if ( ev->getDst() == getName() )
-				/* Ignore if not to us */
-				loadBlock(ev, src);
-			break;
-		default:
+		if ( src != SNOOP || ev->getDst() == getName() ) {
+			if ( firstProcess) num_supply_miss++;
 			loadBlock(ev, src);
 		}
 	}
@@ -348,6 +387,7 @@ void Cache::finishBusSupplyData(BusFinishHandlerArgs &args)
 
 void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 {
+	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it
 	/*
 	 * If snoop, cancel any supplies we're trying to do
 	 * Check to see if we're trying to load this data, if so, handle
@@ -405,7 +445,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 
 void Cache::finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t origSrc)
 {
-	handleIncomingEvent(origEV, origSrc);
+	handleIncomingEvent(origEV, origSrc, false);
 }
 
 
@@ -435,7 +475,7 @@ void Cache::cancelInvalidate(CacheBlock *block)
 	assert( waitingForInvalidate(block) );
 	BusFinishHandler *handler = snoopBusQueue.cancelRequest(block->currentEvent);
 	block->currentEvent = NULL;
-	handleCPURequest(handler->args.issueInvalidate.ev);
+	handleCPURequest(handler->args.issueInvalidate.ev, false);
 	delete handler;
 }
 
@@ -551,7 +591,7 @@ Cache::CacheBlock* Cache::findBlock(Addr addr, bool emptyOK)
 	uint32_t tag = addrToTag(addr);
 	for ( int i = 0 ; i < n_ways ; i++ ) {
 		CacheBlock *b = &(row->blocks[i]);
-		if ( !b->isInvalid() && b->tag == tag ) {
+		if ( b->isValid() && b->tag == tag ) {
 			block = b;
 			break;
 		}

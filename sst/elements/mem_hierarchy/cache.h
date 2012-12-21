@@ -251,19 +251,20 @@ public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
 	int Setup()  { return 0; }
-	int Finish() { return 0; }
+	int Finish();
 
 private:
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
+	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed);
 	void handleSelfEvent(SST::Event *event);
 
-	void handleCPURequest(MemEvent *ev);
+	void handleCPURequest(MemEvent *ev, bool firstProcess);
 	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
 	void issueInvalidate(MemEvent *ev, CacheBlock *block);
 	void loadBlock(MemEvent *ev, SourceType_t src);
 
-	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src);
+	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
 	void supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src);
 	void finishBusSupplyData(BusFinishHandlerArgs &args);
 	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
@@ -308,6 +309,15 @@ private:
 	SST::Link *downstream_link; // Points to directly downstream cache (if any)
 	SST::Link *self_link; // Used for scheduling access
 	std::map<LinkId_t, int> upstreamLinkMap;
+
+	/* Stats */
+	uint64_t num_read_hit;
+	uint64_t num_read_miss;
+	uint64_t num_supply_hit;
+	uint64_t num_supply_miss;
+	uint64_t num_write_hit;
+	uint64_t num_write_miss;
+	uint64_t num_upgrade_miss;
 
 
 	struct LoadInfo_t {

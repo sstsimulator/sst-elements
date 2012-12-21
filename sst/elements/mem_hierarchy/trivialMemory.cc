@@ -31,8 +31,6 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 	memSize = (uint32_t)params.find_integer("memSize", 0);
 	if ( !memSize ) _abort(TrivialMem, "no memSize set\n");
 
-	accessTime = (SimTime_t)params.find_integer("accessTime", 1000);
-
 	data = new uint8_t[memSize];
 
 	// tell the simulator not to end without us
@@ -45,7 +43,7 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 				handleRequest) );
 	assert(bus_link);
 
-	self_link = configureSelfLink("Self", "50 ps",
+	self_link = configureSelfLink("Self", params.find_string("accessTime", "1000 ns"),
 			new Event::Handler<trivialMemory>(this, &trivialMemory::handleSelfEvent));
 
 	registerTimeBase("1 ns", true);
@@ -85,14 +83,15 @@ void trivialMemory::handleRequest(Event *ev)
 			break;
 		case ReadResp:
 			if ( event->getSrc() != getName() ) // don't cancel from our own response.
-				cancelEvent(event->getResponseToID());
+				cancelEvent(event);
 			break;
 		case WriteReq:
 		case SupplyData:
 			if ( event->queryFlag(MemEvent::F_WRITEBACK) )
 				handleWriteRequest(event);
 			else
-				cancelEvent(event->getResponseToID());
+				/* TODO: XXX:  We don't necessarily have events with the ResponseToID anymore */
+				cancelEvent(event);
 
 			break;
 		case BusClearToSend:
@@ -120,8 +119,8 @@ void trivialMemory::handleReadRequest(MemEvent *ev)
 	for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
 		resp->getPayload()[i] = data[a+i];
 	}
-	outstandingReqs[ev->getID()] = false;
-	self_link->Send(accessTime, resp);
+	outstandingReqs[ev->getAddr()] = false;
+	self_link->Send(resp);
 }
 
 
@@ -133,10 +132,10 @@ void trivialMemory::handleWriteRequest(MemEvent *ev)
 	for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
 		data[a+i] = ev->getPayload()[i];
 	}
-	outstandingReqs[ev->getID()] = false;
+	outstandingReqs[ev->getAddr()] = false;
 	MemEvent *resp = ev->makeResponse(getName());
 	if ( resp->getCmd() != NULLCMD ) {
-		self_link->Send(accessTime, resp);
+		self_link->Send(resp);
 	} else {
 		delete resp;
 	}
@@ -154,7 +153,7 @@ void trivialMemory::sendBusPacket(void)
 			MemEvent *ev = reqs.front();
 			reqs.pop_front();
 			if ( !canceled(ev) ) {
-				outstandingReqs.erase(ev->getResponseToID());
+				outstandingReqs.erase(ev->getAddr());
 				DPRINTF("Sending (%lu, %d) in response to (%lu, %d) 0x%lx\n",
 						ev->getID().first, ev->getID().second,
 						ev->getResponseToID().first, ev->getResponseToID().second,
@@ -186,19 +185,18 @@ void trivialMemory::sendEvent(MemEvent *ev)
 
 bool trivialMemory::canceled(MemEvent *ev)
 {
-	std::map<MemEvent::id_type, bool>::iterator i = outstandingReqs.find(ev->getResponseToID());
+	std::map<Addr, bool>::iterator i = outstandingReqs.find(ev->getAddr());
 	if ( i == outstandingReqs.end() ) return false;
 	return i->second;
 }
 
 
-void trivialMemory::cancelEvent(MemEvent::id_type id)
+void trivialMemory::cancelEvent(MemEvent* ev)
 {
-	std::map<MemEvent::id_type, bool>::iterator i = outstandingReqs.find(id);
-	DPRINTF("Looking to cancel (%lu, %d)\n", id.first, id.second);
+	std::map<Addr, bool>::iterator i = outstandingReqs.find(ev->getAddr());
+	DPRINTF("Looking to cancel (0x%lx)\n", ev->getAddr());
 	if ( i != outstandingReqs.end() ) {
-		DPRINTF("Canceling event (%lu, %d)\n", id.first, id.second);
-		outstandingReqs[id] = true;
+		outstandingReqs[ev->getAddr()] = true;
 	}
 }
 

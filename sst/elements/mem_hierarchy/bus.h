@@ -64,6 +64,7 @@ private:
 	int numPorts;
 	LinkId_t activePort;
 	bool busBusy;
+	TimeConverter *delayTC;
 	SimTime_t busDelay;
 	SST::Link** ports;
 	SST::Link *selfLink;
