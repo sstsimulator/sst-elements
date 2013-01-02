@@ -45,10 +45,10 @@ class MemoryDev :
 
         MemoryDev( Component& comp, Component::Params_t params,
                                                         std::string name );
-        virtual bool read( addr_t, cookie_t );
-        virtual bool write( addr_t, cookie_t );
-        virtual bool read( addr_t, data_t*, cookie_t );
-        virtual bool write( addr_t, data_t*, cookie_t );
+        virtual bool read( addr_t, cookie_t cookie = NULL);
+        virtual bool write( addr_t, cookie_t cookie = NULL);
+        virtual bool read( addr_t, data_t*, cookie_t cookie = NULL);
+        virtual bool write( addr_t, data_t*, cookie_t cookie = NULL);
         virtual bool popCookie( cookie_t& );
         
         bool send( addr_t, data_t*, cookie_t, typename event_t::reqType_t );

@@ -27,27 +27,27 @@ MEMORYDEV()::MemoryDev( Component& comp,
 }
 
 
-MEMORYDEV( inline bool )::read( addr_t addr, cookie_t cookie = NULL )
+MEMORYDEV( inline bool )::read( addr_t addr, cookie_t cookie )
 {
     _MD_DBG("\n");
     return send( addr, NULL, cookie, event_t::READ );
 }
 
-MEMORYDEV( inline bool )::write( addr_t addr, cookie_t cookie = NULL )
+MEMORYDEV( inline bool )::write( addr_t addr, cookie_t cookie )
 {
     _MD_DBG("\n");
     return send( addr, NULL, cookie, event_t::WRITE );
 }
 
 MEMORYDEV( inline bool )::read( addr_t addr, data_t* data, 
-                                cookie_t cookie = NULL )
+                                cookie_t cookie )
 {
     _MD_DBG("\n");
     return send( addr, data, cookie, event_t::READ );
 }
 
 MEMORYDEV( inline bool ) ::write( addr_t addr, data_t* data,
-                                cookie_t cookie = NULL )
+                                cookie_t cookie )
 {
     _MD_DBG("\n");
     return send( addr, data, cookie, event_t::WRITE );
