@@ -54,6 +54,7 @@ private:
   uint8_t *data;
   uint32_t memSize;
   bool bus_requested;
+  /* map address to boolean:  true == req was canceled */
   std::map<Addr, bool> outstandingReqs;
 
   friend class boost::serialization::access;

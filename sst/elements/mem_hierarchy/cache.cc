@@ -41,6 +41,9 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 		_abort(Cache, "# Ways, # Rows and Blocksize must all be >0\n");
 	}
 
+	//  Is this right?
+	registerTimeBase("2 ns", true);
+
 	n_upstream = params.find_integer("num_upstream", 0);
 	if ( n_upstream > 0 ) {
 		upstream_links = new SST::Link*[n_upstream];
@@ -81,10 +84,14 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
 
 	database = std::vector<CacheRow>(n_rows, CacheRow(this));
+	for ( int r = 0 ; r < n_rows ; r++ ) {
+		for ( int c = 0 ; c < n_ways ; c++ ) {
+			database[r].blocks[c].row = r;
+			database[r].blocks[c].col = c;
+		}
+	}
 
 
-	// TODO:  Is this right?
-	registerTimeBase("2 ns", true);
 
 	num_read_hit = 0;
 	num_read_miss = 0;
@@ -169,6 +176,10 @@ void Cache::handleSelfEvent(SST::Event *event)
 	}
 }
 
+void Cache::retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src)
+{
+	handleIncomingEvent(ev, src, false);
+}
 
 
 void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
@@ -184,12 +195,12 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 		if ( isRead ) {
 			block->locked++;
 			if ( firstProcess ) num_read_hit++;
-			self_link->Send(new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
+			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
 		} else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				block->locked++;
-				self_link->Send(new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
+				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
 				issueInvalidate(ev, block);
@@ -240,6 +251,7 @@ void Cache::issueInvalidate(MemEvent *ev, CacheBlock *block)
 		args.issueInvalidate.block = block;
 		MemEvent *invEvent = new MemEvent(getName(), block->baseAddr, Invalidate);
 		block->currentEvent = invEvent;
+		DPRINTF("Enqueuing request to Invalidate block 0x%lx\n", block->baseAddr);
 		snoopBusQueue.request( invEvent,
 				new BusFinishHandler(&Cache::finishIssueInvalidateVA, args));
 	} else {
@@ -288,19 +300,27 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 		already_asked = true;
 	} else {
 		block = findRow(ev->getAddr())->getLRU();
+		if ( !block ) {
+			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
+			return;
+		}
 		block->activate(ev->getAddr());
 		block->locked++;
 
 		li.targetBlock = block;
 	}
 
-	li.list.push_back(std::make_pair(new MemEvent(ev), src));
+	li.list.push_back(LoadInfo_t::LoadElement_t(new MemEvent(ev), src, getCurrentSimTime()));
 
 	if ( !already_asked ) {
 		if ( snoop_link ) {
 			MemEvent *req = new MemEvent(getName(), block->baseAddr, RequestData);
 			if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
-			snoopBusQueue.request( req, NULL /* No post-send Handler */);
+			DPRINTF("Enqueuing request to load block 0x%lx\n", block->baseAddr);
+			BusFinishHandlerArgs args;
+			args.loadBlock.loadInfo = &li;
+			snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
+			li.busEvent = req;
 		}
 		if ( downstream_link ) {
 			downstream_link->Send(new MemEvent(getName(), block->baseAddr, RequestData));
@@ -309,14 +329,21 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 }
 
 
+void Cache::finishLoadBlockBus(BusFinishHandlerArgs &args)
+{
+	args.loadBlock.loadInfo->busEvent = NULL;
+}
 
 
 
 void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess)
 {
-	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it
+	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it, ignore
 
 	CacheBlock *block = findBlock(ev->getAddr(), false);
+	DPRINTF("0x%lx %s %s\n", ev->getAddr(),
+			(src == SNOOP && ev->getDst() != getName()) ? "SNOOP" : "",
+			(block) ? "HIT" : "MISS");
 	if ( block ) {
 		if ( firstProcess ) num_supply_hit++;
 		supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
@@ -330,7 +357,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 		}
 
 		supplyInProgress[supplyMapKey] = SupplyInfo(NULL);
-		self_link->Send(new SelfEvent(&Cache::supplyData, new MemEvent(ev), block, src));
+		self_link->Send(1, new SelfEvent(&Cache::supplyData, new MemEvent(ev), block, src));
 		block->locked++;
 		block->last_touched = getCurrentSimTime();
 	} else {
@@ -370,6 +397,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 		args.supplyData.block = block;
 		args.supplyData.src = src;
 		supMapI->second.busEvent = resp;
+		DPRINTF("Enqueuing request to supply block 0x%lx\n", block->baseAddr);
 		snoopBusQueue.request( resp,
 				new BusFinishHandler(&Cache::finishBusSupplyData, args));
 	}
@@ -405,6 +433,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 			supMapI->second.canceled = true;
 			if ( supMapI->second.busEvent != NULL ) {
 				// Bus requested.  Cancel it, too
+				DPRINTF("Canceling Bus Request for Supply on 0x%lx\n", supMapI->second.busEvent->getAddr());
 				BusFinishHandler *handler = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
 				if ( handler ) {
 					handler->args.supplyData.block->locked--;
@@ -418,25 +447,29 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 	LoadList_t::iterator i = waitingLoads.find(ev->getAddr());
 	if ( i != waitingLoads.end() ) {
 		LoadInfo_t &li = i->second;
+		if ( li.busEvent ) {
+			DPRINTF("Canceling Bus Request for Load on 0x%lx\n", li.busEvent->getAddr());
+			snoopBusQueue.cancelRequest(li.busEvent);
+		}
 
 		updateBlock(ev, li.targetBlock);
 		li.targetBlock->locked--;
 		li.targetBlock->status = CacheBlock::SHARED;
 
 		for ( uint32_t n = 0 ; n < li.list.size() ; n++ ) {
-			std::pair<MemEvent *, SourceType_t> oldEV = li.list[n];
+			LoadInfo_t::LoadElement_t &oldEV = li.list[n];
 			/* If this was from the Snoop Bus, and we've got other cache's asking
 			 * for this data over the snoop bus, we can assume they saw it, and
 			 * we don't need to reprocess them.
 			 */
-			if ( src == SNOOP && oldEV.second == SNOOP ) {
-				delete oldEV.first;
+			if ( src == SNOOP && oldEV.src == SNOOP ) {
+				delete oldEV.ev;
 				continue;
 			}
 
 			/* Make them be processed in order, so pass 'n' as a delay */
 			self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent,
-						oldEV.first, li.targetBlock, oldEV.second));
+						oldEV.ev, li.targetBlock, oldEV.src));
 		}
 		waitingLoads.erase(i);
 	} else {
@@ -479,6 +512,7 @@ bool Cache::waitingForInvalidate(CacheBlock *block)
 void Cache::cancelInvalidate(CacheBlock *block)
 {
 	assert( waitingForInvalidate(block) );
+	DPRINTF("Canceling Bus Request for Invalidate 0x%lx\n", block->baseAddr);
 	BusFinishHandler *handler = snoopBusQueue.cancelRequest(block->currentEvent);
 	block->currentEvent = NULL;
 	handleCPURequest(handler->args.issueInvalidate.ev, false);
@@ -498,6 +532,7 @@ void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
 		args.writebackBlock.block = block;
 		args.writebackBlock.newStatus = newStatus;
 		args.writebackBlock.decrementLock = true;
+		DPRINTF("Enqueuing request to writeback block 0x%lx\n", block->baseAddr);
 		snoopBusQueue.request(new MemEvent(ev),
 				new BusFinishHandler(&Cache::finishWritebackBlockVA, args));
 	} else {
@@ -633,16 +668,35 @@ void Cache::printCache(void)
 	ss << std::setfill('0');
 
 	for ( int r = 0 ; r < n_rows; r++ ) {
-		ss << "| ";
+		ss << std::setw(2) << r << " | ";
 		CacheRow &row = database[r];
 		for ( int c = 0 ; c < n_ways ; c++ ) {
 			CacheBlock &b = row.blocks[c];
 			ss << status[b.status] << " ";
-			ss << "0x" << std::setw(4) << std::hex << b.baseAddr << " ";
+			ss << "0x" << std::setw(4) << std::hex << b.baseAddr << std::dec << " ";
 			ss << b.tag << " ";
 			ss << "| ";
 		}
 		ss << std::endl;
+	}
+
+	ss << std::endl;
+	ss << "Waiting Loads\n";
+	for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
+		Addr addr = i->first;
+		LoadInfo_t &li = i->second;
+
+		ss << "0x" << std::setw(4) << std::hex << addr << std:: dec;
+		if ( li.targetBlock != NULL )
+			ss << " slated for [" << li.targetBlock->row << ", " << li.targetBlock->col << "]";
+		ss << "\n";
+
+		for ( std::vector<LoadInfo_t::LoadElement_t>::iterator j = li.list.begin() ; j != li.list.end() ; ++j ) {
+			MemEvent *ev = j->ev;
+			SourceType_t src = j->src;
+			SimTime_t elapsed = getCurrentSimTime() - j->issueTime;
+			ss << "\t(" << ev->getID().first << ", " << ev->getID().second << ")  " << CommandString[ev->getCmd()] << "\t" << elapsed << "\n";
+		}
 	}
 
 	std::cout << ss.str();

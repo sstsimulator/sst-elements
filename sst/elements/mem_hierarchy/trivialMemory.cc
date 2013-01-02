@@ -19,7 +19,7 @@
 #include "trivialMemory.h"
 
 
-#define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Memory, "%s: " fmt, getName().c_str(), ## args )
+#define DPRINTF( fmt, args...) __DBG( DBG_MEMORY, Memory, "%s: " fmt, getName().c_str(), ## args )
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -90,7 +90,6 @@ void trivialMemory::handleRequest(Event *ev)
 			if ( event->queryFlag(MemEvent::F_WRITEBACK) )
 				handleWriteRequest(event);
 			else
-				/* TODO: XXX:  We don't necessarily have events with the ResponseToID anymore */
 				cancelEvent(event);
 
 			break;
@@ -153,7 +152,6 @@ void trivialMemory::sendBusPacket(void)
 			MemEvent *ev = reqs.front();
 			reqs.pop_front();
 			if ( !canceled(ev) ) {
-				outstandingReqs.erase(ev->getAddr());
 				DPRINTF("Sending (%lu, %d) in response to (%lu, %d) 0x%lx\n",
 						ev->getID().first, ev->getID().second,
 						ev->getResponseToID().first, ev->getResponseToID().second,
@@ -166,6 +164,7 @@ void trivialMemory::sendBusPacket(void)
 				}
 				break;
 			}
+				outstandingReqs.erase(ev->getAddr());
 		}
 	}
 }

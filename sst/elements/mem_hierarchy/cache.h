@@ -35,6 +35,7 @@ private:
 	class CacheRow;
 	class CacheBlock;
 	class SelfEvent;
+	struct LoadInfo_t;
 
 	class CacheBlock {
 	public:
@@ -49,6 +50,7 @@ private:
 		std::vector<uint8_t> data;
 		uint32_t locked;
 		MemEvent *currentEvent;
+		uint32_t row, col;
 
 		CacheBlock() {}
 		CacheBlock(Cache *_cache)
@@ -72,8 +74,8 @@ private:
 			assert(locked == 0);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
-			__DBG( DBG_CACHE, CacheBlock, "Activating block %p for Address 0x%lx.\t"
-					"baseAddr: 0x%lx  Tag: 0x%lx\n", this, addr, baseAddr, tag);
+			__DBG( DBG_CACHE, CacheBlock, "Activating block (%u, %u) for Address 0x%lx.\t"
+					"baseAddr: 0x%lx  Tag: 0x%lx\n", row, col, addr, baseAddr, tag);
 			status = ASSIGNED;
 		}
 
@@ -111,7 +113,13 @@ private:
 					lru = i;
 				}
 			}
-			assert(lru >= 0); // If this fails, no block available.
+			if ( lru < 0 ) {
+				__DBG( DBG_CACHE, CacheRow, "No empy slot in this row.\n");
+				//if ( DBG_CACHE & SST::_debug_flags )
+					//cache->printCache();
+					//_abort(Cache, "Crap\n");
+				return NULL;
+			}
 
 			return &blocks[lru];
 		}
@@ -132,6 +140,9 @@ private:
 			CacheBlock *block;
 			SourceType_t src;
 		} supplyData;
+		struct {
+			LoadInfo_t *loadInfo;
+		} loadBlock;
 	} BusFinishHandlerArgs;
 	typedef void(Cache::*BusFinishHandlerFunc)(BusFinishHandlerArgs &args);
 
@@ -257,12 +268,14 @@ private:
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
 	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed);
 	void handleSelfEvent(SST::Event *event);
+	void retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
 	void handleCPURequest(MemEvent *ev, bool firstProcess);
 	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
 	void issueInvalidate(MemEvent *ev, CacheBlock *block);
 	void loadBlock(MemEvent *ev, SourceType_t src);
+	void finishLoadBlockBus(BusFinishHandlerArgs &args);
 
 	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
 	void supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src);
@@ -323,8 +336,17 @@ private:
 
 	struct LoadInfo_t {
 		CacheBlock *targetBlock;
-		std::vector<std::pair<MemEvent*, SourceType_t> > list;
-		LoadInfo_t() : targetBlock(NULL) { }
+		MemEvent *busEvent;
+		struct LoadElement_t {
+			MemEvent * ev;
+			SourceType_t src;
+			SimTime_t issueTime;
+			LoadElement_t(MemEvent *ev, SourceType_t src, SimTime_t issueTime) :
+				ev(ev), src(src), issueTime(issueTime)
+			{ }
+		};
+		std::vector<LoadElement_t> list;
+		LoadInfo_t() : targetBlock(NULL), busEvent(NULL) { }
 	};
 	typedef std::map<Addr, LoadInfo_t> LoadList_t;
 	LoadList_t waitingLoads;
