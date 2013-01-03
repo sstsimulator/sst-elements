@@ -20,9 +20,28 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-#include "RtrIF.h"
-
 using namespace SST;
+
+class RtrEvent : public Event {
+    
+public:
+    int dest;
+    int vc;
+    int size_in_flits;
+};
+
+
+class credit_event : public Event {
+public:
+    int vc;
+    int credits;
+
+    credit_event(int vc, int credits) :
+	Event(),
+	vc(vc),
+	credits(credits)
+    {}
+};
 
 class internal_router_event : public Event {
     int next_port;
@@ -39,6 +58,11 @@ public:
     inline void setNextPort(int np) {next_port = np; return;}
     inline int getNextPort() {return next_port;}
 
+    inline void setVC(int vc) {encap_ev->vc = vc; return;}
+    inline int getVC() {return encap_ev->vc;}
+
+    inline int getFlitCount() {return encap_ev->size_in_flits;}
+
     inline void setEncapsulatedEvent(RtrEvent* ev) {encap_ev = ev;}
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
 };
@@ -46,11 +70,22 @@ public:
 class Topology {
 public:
     Topology() {}
-    ~Topology() {}
+    virtual ~Topology() {}
     
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
     virtual bool isHostPort(int port) = 0;
+};
+
+class PortControl;
+
+class XbarArbitration {
+public:
+    XbarArbitration() {}
+    virtual ~XbarArbitration() {}
+
+    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc);
+    
 };
 
 #endif // COMPONENTS_MERLIN_ROUTER_H

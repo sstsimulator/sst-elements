@@ -45,13 +45,11 @@ topo_torus::topo_torus(Params& params) :
 	end = shape.find('x',start);
 	size_t length = end - start;
 	std::string sub = shape.substr(start,length);
+	std::cout << "Substring: " << sub << std::endl;
 	dim_size[i] = strtol(sub.c_str(), NULL, 0);
 	start = end + 1;
 	std::cout << "    dim_size[" << i << "] = " << dim_size[i] << std::endl;
     }
-
-    // Temporary, just to test functionality
-    process_input(NULL);
 }
 
 topo_torus::~topo_torus()
@@ -86,7 +84,7 @@ topo_torus::process_input(RtrEvent* ev)
 	run_id -= (value * div);
     }
     tt_ev->dest_loc[0] = run_id;
-    std::cout << "dim[0] = " << run_id << std::endl;
+    // std::cout << "dim[0] = " << run_id << std::endl;
     
     return tt_ev;
 }

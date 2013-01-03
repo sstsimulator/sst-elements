@@ -24,45 +24,31 @@
 
 using namespace SST;
 
-typedef std::queue<internal_router_event*> port_queue_t;
-
-class port_buffer {
-private:
-    port_queue_t* buffers;
-    int* tokens;
-    int num_vcs;
-    
-public:
-    port_buffer(int num_vcs);
-    ~port_buffer();
-
-    void setTokens(int vc, int num_tokens);
-    
-};
+class PortControl;
 
 class hr_router : public Component {
 
 private:
     int id;
-    int rows;
-    int columns;
     int num_ports;
     int num_vcs;
 
     Topology* topo;
+    XbarArbitration* arb;
     
-    port_buffer** input_bufs;
-    port_buffer** output_bufs;
+    PortControl** ports;
 
-    Link** links;
-
-    void port_handler(Event* event, int port);
+    int* in_port_busy;
+    int* out_port_busy;
+    int* progress_vcs;
+    
+    bool clock_handler(Cycle_t cycle);
     
 public:
     hr_router(ComponentId_t cid, Params& params);
     ~hr_router();
     
-    int Setup() {return false;}
+    int Setup();
     int Finish() {return false;}
 };
 

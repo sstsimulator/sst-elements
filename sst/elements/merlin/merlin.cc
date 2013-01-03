@@ -16,6 +16,7 @@
 #include <sst/core/configGraph.h>
 
 #include "hr_router/hr_router.h"
+#include "test/nic.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -37,6 +38,12 @@ create_hr_router(SST::ComponentId_t id,
     return new hr_router( id, params );
 }
 
+static Component*
+create_test_nic(SST::ComponentId_t id,
+		SST::Params& params)
+{
+    return new nic( id, params );
+}
 
 // static string str(const char* format, ...) {
 //     char buffer[256];
@@ -59,6 +66,11 @@ static const ElementInfoComponent components[] = {
       "High radix router.",
       NULL,
       create_hr_router,
+    },
+    { "test_nic",
+      "Simple NIC to test base functionality.",
+      NULL,
+      create_test_nic,
     },
     { NULL, NULL, NULL, NULL }
 };

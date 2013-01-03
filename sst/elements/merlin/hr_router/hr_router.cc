@@ -12,27 +12,15 @@
 #include "sst/core/serialization/element.h"
 
 #include <sst/core/element.h>
+#include <sst/core/simulation.h>
+#include <sst/core/timeLord.h>
 
 #include <sstream>
 
 #include "hr_router.h"
+#include "portControl.h"
 #include "sst/elements/merlin/topology/torus.h"
-
-port_buffer::port_buffer(int num_vcs)
-{
-    this->num_vcs = num_vcs;
-    buffers = new port_queue_t[num_vcs];
-    tokens = new int[num_vcs];
-}
-
-void port_buffer::setTokens(int vc, int num_tokens)
-{
-    if ( vc < 0 || vc >= num_vcs ) {
-	std::cout << "ERROR: Invalid VC specified in call to port_buffer::setTokens()" << std::endl;
-	abort();
-    }
-    tokens[vc] = num_tokens;
-}
+#include "xbar_arb_rr.h"
 
 hr_router::~hr_router()
 {
@@ -57,33 +45,13 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     }
     std::cout << "num_vcs: " << num_vcs << std::endl;
 
-    // Create all the buffers
-    input_bufs = new port_buffer*[num_ports];
-    output_bufs = new port_buffer*[num_ports];
-
-    for ( int i = 0; i < num_ports; i++ ) {
-	input_bufs[i] = new port_buffer(num_vcs);
-	output_bufs[i] = new port_buffer(num_vcs);
-
-	// For now, just give all the buffers a depth of 10
-	for ( int j = 0; j < num_vcs; j++ ) {
-	    input_bufs[i]->setTokens(j,10);
-	    output_bufs[i]->setTokens(j,10);
-	}
+    std::string link_bw = params.find_string("link_bw");
+    if ( link_bw == "" ) {
     }
+    std::cout << "link_bw: " << link_bw << std::endl;
 
-
-    // Register all the links to the ports
-    links = new Link*[num_ports];
+    TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);    
     
-    for ( int i = 0; i < num_ports; i++ ) {
-	std::stringstream port_name;
-	port_name << "port";
-	port_name << i;
-	std::cout << port_name.str() << std::endl;
-	links[i] = configureLink(port_name.str(), "1ns", new Event::Handler<hr_router,int>(this,&hr_router::port_handler,i));
-    }
-
     // Get the topology
     std::string topology = params.find_string("topology");
     std::cout << "Topology: " << topology << std::endl;
@@ -92,10 +60,81 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 	std::cout << "Creating new topology" << std::endl;
 	topo = new topo_torus(params);
     }
+
+    // Get the Xbar arbitration
+    arb = new xbar_arb_rr(num_ports,num_vcs);
     
+    // Create all the PortControl blocks
+    ports = new PortControl*[num_ports];
+
+    
+    int in_buf_sizes[num_vcs];
+    int out_buf_sizes[num_vcs];
+    
+    for ( int i = 0; i < num_vcs; i++ ) {
+	in_buf_sizes[i] = 10;
+	out_buf_sizes[i] = 10;
+    }
+    
+    // Naming convention is from point of view of the xbar.  So,
+    // in_port_busy is >0 if someone is writing to that xbar port and
+    // out_port_busy is >0 if that xbar port being read.
+    in_port_busy = new int[num_ports];
+    out_port_busy = new int[num_ports];
+
+    progress_vcs = new int[num_ports];
+
+    for ( int i = 0; i < num_ports; i++ ) {
+	in_port_busy[i] = 0;
+	out_port_busy[i] = 0;
+
+	std::stringstream port_name;
+	port_name << "port";
+	port_name << i;
+	std::cout << port_name.str() << std::endl;
+
+	ports[i] = new PortControl(this, port_name.str(), i, tc, topo, num_vcs, in_buf_sizes, out_buf_sizes);
+	
+	std::cout << port_name.str() << std::endl;
+	// links[i] = configureLink(port_name.str(), "1ns", new Event::Handler<hr_router,int>(this,&hr_router::port_handler,i));
+    }
+
+    registerClock( "1GHz", new Clock::Handler<hr_router>(this,&hr_router::clock_handler), false);
 }
 
-void
-hr_router::port_handler(Event* ev, int port)
+
+bool
+hr_router::clock_handler(Cycle_t cycle)
 {
+    /*
+    internal_router_event** heads = new internal_router_event*[num_vcs];
+// Progress the input ports.  For now, no arbitration or
+    // contention is accounted for
+    for ( int i = rr_port, j = 0; j < num_ports; i = (i + 1) % num_ports, j++ ) {
+	// Nothing to do if port into crossbar is busy
+	if ( port_in_busy[i] > 0 ) {
+	    port_in_busy[i]--;
+	    continue;
+	}
+
+	// See what we should progress
+	ports[i]->getVCHeads(heads);
+	for ( int k = rr_vcs[i], l = 0; l < num_vcs; k = (k+1) % num_vcs, l++ ) {
+	    
+	}
+    }
+    */
+    return false;
 }
+
+int
+hr_router::Setup()
+{
+    /*
+    for ( int i = rr_port; i < rr_port + num_ports; i++ ) {
+	ports[i]->Setup();
+    }
+    */
+    return 0;
+}
+
