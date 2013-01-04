@@ -20,8 +20,15 @@ libmemHierarchy_la_SOURCES = \
 	trivialCPU.cc \
 	trivialMemory.h \
 	trivialMemory.cc \
+	memController.h \
+	memController.cc \
 	libmemHierarchy.cc
 
 EXTRA_DIST = makeSDL.pl
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
+if HAVE_DRAMSIM
+libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
+libmemHierarchy_la_LIBADD = $(DRAMSIM_LIB)
+libmemHierarchy_la_CPPFLAGS = $(DRAMSIM_CPPFLAGS)
+endif

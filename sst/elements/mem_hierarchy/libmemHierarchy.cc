@@ -18,6 +18,7 @@
 #include "bus.h"
 #include "trivialCPU.h"
 #include "trivialMemory.h"
+#include "memController.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -53,6 +54,13 @@ create_trivialMemory(SST::ComponentId_t id,
 	return new trivialMemory( id, params );
 }
 
+static Component*
+create_MemController(SST::ComponentId_t id,
+		SST::Component::Params_t& params)
+{
+	return new MemController( id, params );
+}
+
 
 static const ElementInfoComponent components[] = {
 	{ "Cache",
@@ -74,6 +82,11 @@ static const ElementInfoComponent components[] = {
 		"Simple Demo Component",
 		NULL,
 		create_trivialMemory
+	},
+	{"MemController",
+		"Simple Demo Component",
+		NULL,
+		create_MemController
 	},
 	{ NULL, NULL, NULL, NULL }
 };
