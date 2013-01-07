@@ -61,7 +61,9 @@ topo_torus::~topo_torus()
 void
 topo_torus::route(int port, int vc, internal_router_event* ev)
 {
-
+    // Just for a quick test.
+    if ( ev->getDest() == id ) ev->setNextPort(2);
+    else ev->setNextPort(0);
 }
 
 internal_router_event*

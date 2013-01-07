@@ -76,7 +76,8 @@ nic::clock_handler(Cycle_t cycle)
     // Send packets
     if ( link_control->spaceToSend(0,5) ) {
 	RtrEvent* ev = new RtrEvent();
-	ev->dest = 1;
+	if ( id == 0 ) ev->dest = 1;
+	else ev->dest = 0;
 	ev->vc = 0;
 	ev->size_in_flits = 5;
 	link_control->send(ev,0);
@@ -90,6 +91,7 @@ nic::clock_handler(Cycle_t cycle)
 
     RtrEvent* rec_ev = link_control->recv(0);
     if ( rec_ev != NULL ) {
+	std::cout << "Received an event"<< std::endl;
 	delete rec_ev;
 	packets_recd++;
     }

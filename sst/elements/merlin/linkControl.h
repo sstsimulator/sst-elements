@@ -161,7 +161,7 @@ private:
 	credit_event* ce = dynamic_cast<credit_event*>(ev);
 	if ( ce != NULL ) {
 	    rtr_credits[ce->vc] += ce->credits;
-	    std::cout << "Got " << ce->credits << " credits.  Current credits: " << rtr_credits[ce->vc] << std::endl;
+	    // std::cout << "Got " << ce->credits << " credits.  Current credits: " << rtr_credits[ce->vc] << std::endl;
 	    delete ev;
 
 	    // If we're waiting, we need to send a wakeup event to the
@@ -172,6 +172,7 @@ private:
 	    }	    
 	}
 	else {
+	    // std::cout << "LinkControl received an event" << std::endl;
 	    RtrEvent* event = static_cast<RtrEvent*>(ev);
 	    // Simply put the event into the right virtual network queue
 	    input_buf[event->vc].push(event);
@@ -235,7 +236,7 @@ private:
 	    // Subtract credits
 	    rtr_credits[vc_to_send] -= size;
 	    rtr_link->Send(send_event);	    
-	    std::cout << "Sent packet on vc " << vc_to_send << std::endl;
+	    // std::cout << "Sent packet on vc " << vc_to_send << std::endl;
 	}
 	else {
 	    // What do we do if there's nothing to send??  It could be
@@ -245,7 +246,7 @@ private:
 	    // we either get something new in the output buffers or
 	    // receive credits back from the router.  However, we need
 	    // to know that we got to this state.
-	    std::cout << "Waiting ..." << std::endl;
+	    // std::cout << "Waiting ..." << std::endl;
 	    waiting = true;
 	}
     }

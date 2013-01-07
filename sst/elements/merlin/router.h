@@ -65,6 +65,8 @@ public:
 
     inline void setEncapsulatedEvent(RtrEvent* ev) {encap_ev = ev;}
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
+
+    inline int getDest() {return encap_ev->dest;}
 };
 
 class Topology {
@@ -84,7 +86,7 @@ public:
     XbarArbitration() {}
     virtual ~XbarArbitration() {}
 
-    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc);
+    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
     
 };
 

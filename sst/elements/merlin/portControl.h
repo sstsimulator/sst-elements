@@ -79,6 +79,7 @@ public:
     // Returns true if there is space in the output buffer and false
     // otherwise.
     bool send(internal_router_event* ev, int vc) {
+	// std::cout << "sending event on port " << port_number << " and VC " << vc << std::endl;
 	if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
 
 	xbar_in_credits[vc] -= ev->getFlitCount();
@@ -86,6 +87,7 @@ public:
 
 	output_buf[vc].push(ev);
 	if ( waiting ) {
+	    // std::cout << "waking up the output" << std::endl;
 	    output_timing->Send(1,NULL);
 	    waiting = false;
 	}
@@ -191,7 +193,7 @@ private:
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
 	    if ( waiting ) {
-		std::cout << output_timing << std::endl;
+		// std::cout << output_timing << std::endl;
 		output_timing->Send(1,NULL);
 		waiting = false;
 	    }	    
@@ -203,7 +205,7 @@ private:
 	    // Need to process input and do the routing
 	    internal_router_event* rtr_event = topo->process_input(event);
 	    topo->route(port_number, event->vc, rtr_event);
-	    input_buf[event->vc].push(topo->process_input(event));	
+	    input_buf[event->vc].push(rtr_event);
 	}
     }
     
@@ -224,6 +226,9 @@ private:
 	else {
 	    internal_router_event* event = static_cast<internal_router_event*>(ev);
 	    // Simply put the event into the right virtual network queue
+
+	    // Need to do the routing
+	    topo->route(port_number, event->getVC(), event);
 	    input_buf[event->getVC()].push(event);
 	}
     }
@@ -268,6 +273,7 @@ private:
 
 	// If we found an event to send, go ahead and send it
 	if ( found ) {
+	    // std::cout << "Found an event to send on output port " << port_number << std::endl;
 	    // Send the output to the network.
 	    // First set the virtual channel.
 	    send_event->setVC(vc_to_send);
@@ -279,13 +285,16 @@ private:
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->Send(size,NULL);
 
+	    // Take care of the round variable
 	    curr_out_vc = vc_to_send + 1;
 	    if ( curr_out_vc == num_vcs ) curr_out_vc = 0;
 
 	    // Subtract credits
 	    port_out_credits[vc_to_send] -= size;
 	    if ( host_port ) {
+		// std::cout << "Found an event to send on host port " << port_number << std::endl;
 		port_link->Send(send_event->getEncapsulatedEvent());
+		send_event->setEncapsulatedEvent(NULL);
 		delete send_event;
 	    }
 	    else port_link->Send(send_event);

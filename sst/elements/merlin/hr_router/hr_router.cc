@@ -106,35 +106,33 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 bool
 hr_router::clock_handler(Cycle_t cycle)
 {
-    /*
-    internal_router_event** heads = new internal_router_event*[num_vcs];
-// Progress the input ports.  For now, no arbitration or
-    // contention is accounted for
-    for ( int i = rr_port, j = 0; j < num_ports; i = (i + 1) % num_ports, j++ ) {
-	// Nothing to do if port into crossbar is busy
-	if ( port_in_busy[i] > 0 ) {
-	    port_in_busy[i]--;
-	    continue;
-	}
+    // All we need to do is arbitrate the crossbar
+    arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
 
-	// See what we should progress
-	ports[i]->getVCHeads(heads);
-	for ( int k = rr_vcs[i], l = 0; l < num_vcs; k = (k+1) % num_vcs, l++ ) {
-	    
+    // Move the events and decrement the busy values
+    for ( int i = 0; i < num_ports; i++ ) {
+	if ( progress_vcs[i] != -1 ) {
+	    internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
+	    ports[ev->getNextPort()]->send(ev,ev->getVC());
+	    // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
+	    // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
 	}
+	
+	// Should stop at zero, need to find a clean way to do this
+	// with no branch.  For now it should work.
+	in_port_busy[i]--;
+	out_port_busy[i]--;
     }
-    */
+
     return false;
 }
 
 int
 hr_router::Setup()
 {
-    /*
-    for ( int i = rr_port; i < rr_port + num_ports; i++ ) {
+    for ( int i = 0; i < num_ports; i++ ) {
 	ports[i]->Setup();
     }
-    */
     return 0;
 }
 
