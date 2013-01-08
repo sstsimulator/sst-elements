@@ -48,7 +48,7 @@ AC_DEFUN([SST_M5_CONFIG], [
   AC_CHECK_HEADERS([Python.h], [FOUND_PYTHON="yes"], [FOUND_PYTHON="no"])
   AC_LANG_POP(C++)
 
-  AS_IF([test "$FOUND_PYTHON" == "no"],
+  AS_IF([test ! -z "$with_gem5" -a "$with_gem5" != "no" -a "$FOUND_PYTHON" = "no"],
 	[AC_MSG_ERROR(["Cannot find Python.h, this is required for M5 component to build."])])
   AC_SUBST([PYTHON_CPPFLAGS])
   AC_SUBST([PYTHON_CONFIG_EXE])  
