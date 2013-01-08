@@ -81,12 +81,17 @@
 	</component>
 
 
-	<component name="memory" type="memHierarchy.trivialMem">
+	<component name="memory" type="memHierarchy.MemController">
 		<params>
-			<accessTime> 1000 ns </accessTime>
-			<memSize> 0xffffff </memSize>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+			<use_dramsim> 1 </use_dramsim>
+			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
+			<system_ini> system.ini </system_ini>
 		</params>
-		<link name=mem_bus_link port=bus_link latency=$buslat />
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
 	</component>
+
 
 </sst>

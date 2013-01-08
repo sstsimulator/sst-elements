@@ -39,7 +39,7 @@
 		<params>
 			<num_ways> 8 </num_ways>
 			<num_rows> 64 </num_rows>
-			<blocksize> 64 </blocksize>
+			<blocksize> 32 </blocksize>
 			<access_time> 10 ns </access_time>
 		</params>
 		<link name=l2cache_bus_link port=snoop_link latency=$buslat />
@@ -56,13 +56,14 @@
 		<link name=mem_bus_link port=port2 latency=$buslat />
 	</component>
 
-
-	<component name="memory" type="memHierarchy.trivialMem">
+	<component name="memory" type="memHierarchy.MemController">
 		<params>
-			<accessTime> 1000 ns </accessTime>
-			<memSize> 0xffffff </memSize>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
 		</params>
-		<link name=mem_bus_link port=bus_link latency=$buslat />
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
 	</component>
+
 
 </sst>

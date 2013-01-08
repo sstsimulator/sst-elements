@@ -36,6 +36,8 @@ private:
 	class CacheBlock;
 	class SelfEvent;
 	struct LoadInfo_t;
+	typedef std::list<LoadInfo_t> LoadList_t;
+
 
 	class CacheBlock {
 	public:
@@ -302,12 +304,13 @@ private:
 	Addr addrToBlockAddr(Addr addr);
 	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
+	LoadList_t::iterator findWaitingLoad(Addr addr, uint32_t size);
 
 	void printCache(void);
 
 	int n_ways;
 	int n_rows;
-	int blocksize;
+	uint32_t blocksize;
 	std::string access_time;
 	std::vector<CacheRow> database;
 	std::string next_level_name;
@@ -333,8 +336,8 @@ private:
 	uint64_t num_write_miss;
 	uint64_t num_upgrade_miss;
 
-
 	struct LoadInfo_t {
+		Addr addr;
 		CacheBlock *targetBlock;
 		MemEvent *busEvent;
 		struct LoadElement_t {
@@ -346,9 +349,9 @@ private:
 			{ }
 		};
 		std::vector<LoadElement_t> list;
-		LoadInfo_t() : targetBlock(NULL), busEvent(NULL) { }
+		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL) { }
+		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL) { }
 	};
-	typedef std::map<Addr, LoadInfo_t> LoadList_t;
 	LoadList_t waitingLoads;
 
 
@@ -358,6 +361,7 @@ private:
 		SupplyInfo() : busEvent(NULL), canceled(false) { }
 		SupplyInfo(MemEvent *event) : busEvent(event), canceled(false) { }
 	};
+	// Map from <addr, from where req came> to SupplyInfo
 	typedef std::map<std::pair<Addr, SourceType_t>, SupplyInfo> supplyMap_t;
 	supplyMap_t supplyInProgress;
 

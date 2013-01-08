@@ -33,6 +33,7 @@ void MemEvent::setPayload(uint32_t size, uint8_t *data)
 
 void MemEvent::setPayload(std::vector<uint8_t> &data)
 {
+	setSize(data.size());
 	payload = data;
 }
 

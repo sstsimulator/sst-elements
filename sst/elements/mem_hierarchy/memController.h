@@ -27,7 +27,7 @@
 # define OLD_DEBUG DEBUG
 # undef DEBUG
 #endif
-#include <MultiChannelMemorySystem.h>
+#include <DRAMSim.h>
 #ifdef OLD_DEBUG
 # define DEBUG OLD_DEBUG
 # undef OLD_DEBUG

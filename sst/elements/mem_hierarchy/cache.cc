@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sstream>
+#include <algorithm>
 #include <iomanip>
 
 #include "sst_config.h"
@@ -187,9 +188,12 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	assert(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
 	bool isRead = (ev->getCmd() == ReadReq);
 	CacheBlock *block = findBlock(ev->getAddr(), false);
-	DPRINTF("0x%lx %s %s\n", ev->getAddr(),
+	DPRINTF("(%lu, %d) 0x%lx %s %s (block 0x%lx)\n",
+			ev->getID().first, ev->getID().second,
+			ev->getAddr(),
 			isRead ? "READ" : "WRITE",
-			(block) ? "HIT" : "MISS");
+			(block) ? "HIT" : "MISS",
+			addrToBlockAddr(ev->getAddr()));
 	if ( block ) {
 		/* HIT */
 		if ( isRead ) {
@@ -200,6 +204,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				block->locked++;
+				updateBlock(ev, block);
 				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
@@ -294,33 +299,49 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 
 	CacheBlock *block = NULL;
 	bool already_asked = false;
-	LoadInfo_t &li = waitingLoads[addrToBlockAddr(ev->getAddr())];
-	if ( li.targetBlock != NULL ) {
-		block = li.targetBlock;
+	LoadList_t::iterator i = findWaitingLoad(addrToBlockAddr(ev->getAddr()), blocksize);
+	LoadInfo_t *li;
+	if ( i != waitingLoads.end() ) {
+		DPRINTF("Adding to existing outstanding Load for this block.\n");
+		li = &(*i);
+		assert (li->addr == addrToBlockAddr(ev->getAddr()));
+	} else {
+		DPRINTF("No existing Load for this block.  Creating.\n");
+		waitingLoads.push_back(LoadInfo_t(addrToBlockAddr(ev->getAddr())));
+		i = findWaitingLoad(addrToBlockAddr(ev->getAddr()), blocksize);
+		assert ( i != waitingLoads.end() );
+		li = &(*i);
+		li->addr = addrToBlockAddr(ev->getAddr());
+	}
+
+
+	if ( li->targetBlock != NULL ) {
+		block = li->targetBlock;
 		already_asked = true;
 	} else {
 		block = findRow(ev->getAddr())->getLRU();
-		if ( !block ) {
+		if ( !block ) { // Row is full, wait for one to be available
 			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
 			return;
 		}
 		block->activate(ev->getAddr());
 		block->locked++;
 
-		li.targetBlock = block;
+		li->targetBlock = block;
 	}
 
-	li.list.push_back(LoadInfo_t::LoadElement_t(new MemEvent(ev), src, getCurrentSimTime()));
+	li->list.push_back(LoadInfo_t::LoadElement_t(new MemEvent(ev), src, getCurrentSimTime()));
 
 	if ( !already_asked ) {
 		if ( snoop_link ) {
 			MemEvent *req = new MemEvent(getName(), block->baseAddr, RequestData);
+			req->setSize(blocksize);
 			if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
 			DPRINTF("Enqueuing request to load block 0x%lx\n", block->baseAddr);
 			BusFinishHandlerArgs args;
-			args.loadBlock.loadInfo = &li;
+			args.loadBlock.loadInfo = li;
 			snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
-			li.busEvent = req;
+			li->busEvent = req;
 		}
 		if ( downstream_link ) {
 			downstream_link->Send(new MemEvent(getName(), block->baseAddr, RequestData));
@@ -341,9 +362,10 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it, ignore
 
 	CacheBlock *block = findBlock(ev->getAddr(), false);
-	DPRINTF("0x%lx %s %s\n", ev->getAddr(),
+	DPRINTF("0x%lx %s %s (block 0x%lx)\n", ev->getAddr(),
 			(src == SNOOP && ev->getDst() != getName()) ? "SNOOP" : "",
-			(block) ? "HIT" : "MISS");
+			(block) ? "HIT" : "MISS",
+			addrToBlockAddr(ev->getAddr()));
 	if ( block ) {
 		if ( firstProcess ) num_supply_hit++;
 		supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
@@ -425,6 +447,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 	 * Check to see if we're trying to load this data, if so, handle
 	 */
 	if ( src == SNOOP ) {
+		// TODO:  BROKEN:  Need to check for data being supplied, not just addr
 		supplyMap_t::key_type supplyMapKey = std::make_pair(ev->getAddr(), src);
 		supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
 		if ( supMapI != supplyInProgress.end() ) {
@@ -444,38 +467,63 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 	}
 
 	/* Check to see if we're trying to load this data */
-	LoadList_t::iterator i = waitingLoads.find(ev->getAddr());
+	LoadList_t::iterator i = findWaitingLoad(ev->getAddr(), ev->getSize());
 	if ( i != waitingLoads.end() ) {
-		LoadInfo_t &li = i->second;
-		if ( li.busEvent ) {
-			DPRINTF("Canceling Bus Request for Load on 0x%lx\n", li.busEvent->getAddr());
-			snoopBusQueue.cancelRequest(li.busEvent);
-		}
-
-		updateBlock(ev, li.targetBlock);
-		li.targetBlock->locked--;
-		li.targetBlock->status = CacheBlock::SHARED;
-
-		for ( uint32_t n = 0 ; n < li.list.size() ; n++ ) {
-			LoadInfo_t::LoadElement_t &oldEV = li.list[n];
-			/* If this was from the Snoop Bus, and we've got other cache's asking
-			 * for this data over the snoop bus, we can assume they saw it, and
-			 * we don't need to reprocess them.
-			 */
-			if ( src == SNOOP && oldEV.src == SNOOP ) {
-				delete oldEV.ev;
-				continue;
+		while ( i != waitingLoads.end() ) {
+			LoadInfo_t &li = *i;
+			if ( li.busEvent ) {
+				DPRINTF("Canceling Bus Request for Load on 0x%lx\n", li.busEvent->getAddr());
+				snoopBusQueue.cancelRequest(li.busEvent);
 			}
 
-			/* Make them be processed in order, so pass 'n' as a delay */
-			self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent,
-						oldEV.ev, li.targetBlock, oldEV.src));
+			if ( ev->getSize() < blocksize ) {
+				// This isn't enough for us, but may satisfy others
+				DPRINTF("Not enough info in block (%u vs %u blocksize)\n",
+						ev->getSize(), blocksize);
+				li.targetBlock->status = CacheBlock::INVALID;
+				li.targetBlock->locked--;
+
+				// Delete events that we would be reprocessing
+				for ( uint32_t n = 0 ; n < li.list.size() ; n++ ) {
+					LoadInfo_t::LoadElement_t &oldEV = li.list[n];
+					if ( src == SNOOP && oldEV.src == SNOOP ) {
+						delete oldEV.ev;
+					}
+				}
+
+			} else {
+				DPRINTF("Updating block 0x%lx\n", li.targetBlock->baseAddr);
+				updateBlock(ev, li.targetBlock);
+				li.targetBlock->status = CacheBlock::SHARED;
+				li.targetBlock->locked--;
+
+				for ( uint32_t n = 0 ; n < li.list.size() ; n++ ) {
+					LoadInfo_t::LoadElement_t &oldEV = li.list[n];
+					/* If this was from the Snoop Bus, and we've got other cache's asking
+					 * for this data over the snoop bus, we can assume they saw it, and
+					 * we don't need to reprocess them.
+					 */
+					if ( src == SNOOP && oldEV.src == SNOOP ) {
+						delete oldEV.ev;
+						continue;
+					}
+
+					/* Make them be processed in order, so pass 'n' as a delay */
+					self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent,
+								oldEV.ev, li.targetBlock, oldEV.src));
+				}
+			}
+			waitingLoads.erase(i);
+			i = findWaitingLoad(ev->getAddr(), ev->getSize());
 		}
-		waitingLoads.erase(i);
 	} else {
 		assert ( src == SNOOP );
 		if ( ev->getDst() == getName() ) {
+			DPRINTF("WARNING:  Unmatched message.  Hopefully we recently just canceled this request, and our sender didn't get the memo.\n");
+#if 0
+			printCache();
 			_abort(Cache, "%s Received an unmatched message!\n", getName().c_str());
+#endif
 		}
 	}
 
@@ -577,14 +625,22 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
 
 void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 {
-	if (ev->getSize() == (uint32_t)blocksize) {
+	if (ev->getSize() == blocksize) {
 		// Assumption:  if sizes are equal, base addresses are, too
 		std::copy(ev->getPayload().begin(), ev->getPayload().end(), block->data.begin());
 	} else {
 		// Update a portion of the block
-		Addr offset = ev->getAddr() - block->baseAddr;
-		for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
-			block->data[offset+i] = ev->getPayload()[i];
+		Addr blockoffset = (ev->getAddr() <= block->baseAddr) ?
+			0 :
+			ev->getAddr() - block->baseAddr;
+
+		Addr payloadoffset = (ev->getAddr() >= block->baseAddr) ?
+			0 :
+			block->baseAddr - ev->getAddr();
+
+		for ( uint32_t i = 0 ; i < std::min(blocksize,ev->getSize()) ; i++ ) {
+			assert(blockoffset+i < blocksize);
+			block->data[blockoffset+i] = ev->getPayload()[payloadoffset+i];
 		}
 	}
 	block->last_touched = getCurrentSimTime();
@@ -659,6 +715,35 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 }
 
 
+Cache::LoadList_t::iterator Cache::findWaitingLoad(Addr addr, uint32_t size)
+{
+	uint32_t offset = 0;
+	while ( offset < size ) {
+		// Check potentialls multiple blocks
+
+		Addr baddr = addrToBlockAddr(addr + offset);
+		LoadList_t::iterator i = waitingLoads.begin();
+		while ( i != waitingLoads.end() ) {
+#if 0
+			DPRINTF("Comparing [0x%lx]  to  [0x%lx] : %s\n",
+					i->addr, addr + offset, (addrToBlockAddr(i->addr) == baddr) ?
+					"TRUE" : "FALSE");
+#endif
+			if ( addrToBlockAddr(i->addr) == baddr ) {
+#if 0
+				DPRINTF("FOUND!\n");
+#endif
+				return i;
+			}
+			++i;
+		}
+		offset += blocksize;
+	}
+
+	return waitingLoads.end();
+}
+
+
 void Cache::printCache(void)
 {
 	static const char *status[] = {"I", "A", "S", "E"};
@@ -683,8 +768,8 @@ void Cache::printCache(void)
 	ss << std::endl;
 	ss << "Waiting Loads\n";
 	for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
-		Addr addr = i->first;
-		LoadInfo_t &li = i->second;
+		Addr addr = i->addr;
+		LoadInfo_t &li = *i;
 
 		ss << "0x" << std::setw(4) << std::hex << addr << std:: dec;
 		if ( li.targetBlock != NULL )
