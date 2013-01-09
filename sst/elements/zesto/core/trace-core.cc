@@ -46,7 +46,9 @@ bool trace_core_t::fetch_next_pc(md_addr_t *nextPC, struct core_t * core)
   {
     if(!feof(tcore->current_thread->pin_trace))
     {
-      fscanf(tcore->current_thread->pin_trace,"%llx", nextPC);
+      unsigned long nextPC64;
+      fscanf(tcore->current_thread->pin_trace,"%llx", &nextPC64);
+      *nextPC = nextPC64;
       tcore->store_nextPC = *nextPC;
     }
     else
