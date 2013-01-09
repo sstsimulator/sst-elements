@@ -36,6 +36,8 @@ private:
     int packets_recd;
     int stalled_cycles;
     
+    bool done;
+    
     LinkControl* link_control;
 
 public:

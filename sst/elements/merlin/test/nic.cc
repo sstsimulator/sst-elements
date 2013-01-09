@@ -22,7 +22,8 @@ nic::nic(ComponentId_t cid, Params& params) :
     Component(cid),
     packets_sent(0),
     packets_recd(0),
-    stalled_cycles(0)
+    stalled_cycles(0),
+    done(false)
 {
     id = params.find_integer("id");
     if ( id == -1 ) {
@@ -72,7 +73,10 @@ nic::Setup()
 bool
 nic::clock_handler(Cycle_t cycle)
 {
-    if ( cycle == 100 ) unregisterExit();
+    if ( !done && (cycle == 100 || packets_recd >= 10) ) {
+	unregisterExit();
+	done = true;
+    }
     // Send packets
     if ( link_control->spaceToSend(0,5) ) {
 	RtrEvent* ev = new RtrEvent();
@@ -94,10 +98,6 @@ nic::clock_handler(Cycle_t cycle)
 	std::cout << "Received an event"<< std::endl;
 	delete rec_ev;
 	packets_recd++;
-    }
-
-    if ( packets_recd >= 10 ) {
-	unregisterExit();
     }
     
     return false;
