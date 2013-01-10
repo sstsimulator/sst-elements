@@ -40,6 +40,8 @@ private:
     
     LinkControl* link_control;
 
+    int last_target;
+
 public:
     nic(ComponentId_t cid, Params& params);
     ~nic() {}

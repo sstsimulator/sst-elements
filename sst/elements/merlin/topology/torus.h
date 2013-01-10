@@ -29,26 +29,44 @@ class topo_torus_event : public internal_router_event {
 
 public:
     int dimensions;
+    int routing_dim;
     int* dest_loc;
 
-    topo_torus_event(int dim) {	dimensions = dim; dest_loc = new int[dim]; }
+    topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
 };
 
 
 class topo_torus: public Topology {
 
-    int id;
+    int router_id;
+	int* id_loc;
+
     int dimensions;
     int* dim_size;
-    
+    int* dim_width;
+
+    int (* port_start)[2]; // port_start[dim][direction: 0=pos, 1=neg]
+
+    int num_local_ports;
+    int local_port_start;
+
 public:
     topo_torus(Params& params);
     ~topo_torus();
-    
-    void route(int port, int vc, internal_router_event* ev);
-    internal_router_event* process_input(RtrEvent* ev);
-    bool isHostPort(int port);
+
+    virtual void route(int port, int vc, internal_router_event* ev);
+    virtual internal_router_event* process_input(RtrEvent* ev);
+    virtual bool isHostPort(int port);
+
+protected:
+    virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
+
+private:
+	void idToLocation(int id, int *location);
+    void parseDimString(std::string &shape, int *output);
+    int get_dest_router(int dest_id);
+    int get_dest_local_port(int dest_id);
 };
 
 #endif // COMPONENTS_MERLIN_TOPOLOGY_TORUS_H

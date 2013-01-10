@@ -29,6 +29,7 @@ nic::nic(ComponentId_t cid, Params& params) :
     if ( id == -1 ) {
     }
     std::cout << "id: " << id << std::endl;
+    std::cout << "Nic ID:  " << id << " has Component id " << cid << std::endl;
 
     num_peers = params.find_integer("num_peers");
     if ( num_peers == -1 ) {
@@ -49,6 +50,8 @@ nic::nic(ComponentId_t cid, Params& params) :
     // Create a LinkControl object
     int buf_size[2] = {10, 10};
     link_control = new LinkControl(this, "rtr", tc, 2, buf_size, buf_size);
+
+    last_target = id;
 
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<nic>(this,&nic::clock_handler), false);
@@ -73,32 +76,43 @@ nic::Setup()
 bool
 nic::clock_handler(Cycle_t cycle)
 {
-    if ( !done && (cycle == 100 || packets_recd >= 10) ) {
-	unregisterExit();
-	done = true;
+    if ( !done && (cycle == 500 || packets_recd >= 10) ) {
+        unregisterExit();
+        done = true;
     }
     // Send packets
     if ( link_control->spaceToSend(0,5) ) {
-	RtrEvent* ev = new RtrEvent();
-	if ( id == 0 ) ev->dest = 1;
-	else ev->dest = 0;
-	ev->vc = 0;
-	ev->size_in_flits = 5;
-	link_control->send(ev,0);
-	if ( id == 0 ) {
-	    std::cout << cycle << ": sent packet" << std::endl;
-	}
+        RtrEvent* ev = new RtrEvent();
+
+        last_target++;
+        if ( last_target == id ) last_target++;
+        last_target %= num_peers;
+        if ( last_target == id ) last_target++;
+        last_target %= num_peers;
+
+        ev->dest = last_target;
+
+        ev->vc = 0;
+        ev->size_in_flits = 5;
+        link_control->send(ev,0);
+        std::cout << cycle << ": " << id << " sent packet to " << ev->dest << std::endl;
     }
     else {
-	stalled_cycles++;
+        stalled_cycles++;
     }
 
     RtrEvent* rec_ev = link_control->recv(0);
     if ( rec_ev != NULL ) {
-	std::cout << "Received an event"<< std::endl;
-	delete rec_ev;
-	packets_recd++;
+        packets_recd++;
+        std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " (packet "<<packets_recd<<" )"<< std::endl;
+        delete rec_ev;
     }
-    
+    rec_ev = link_control->recv(1);
+    if ( rec_ev != NULL ) {
+        packets_recd++;
+        std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " (packet "<<packets_recd<<" )"<< std::endl;
+        delete rec_ev;
+    }
+
     return false;
 }
