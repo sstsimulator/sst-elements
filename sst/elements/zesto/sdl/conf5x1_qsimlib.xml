@@ -57,7 +57,7 @@ router with iris nic-->
         <clockFreq>1 GHz</clockFreq>
         <configFile>core_config/6.cfg</configFile>
         <stateFile>qsimTrace/state.4</stateFile>
-		<benchmark>qsimTrace/fft.tar</benchmark>
+        <appFile>qsimTrace/fft.tar</appFile>
       </params>
       <link name=0.core2cache port=cache_link latency=$link_lat/>
   </component>
@@ -96,7 +96,7 @@ router with iris nic-->
         <clockFreq>1 GHz</clockFreq>
         <configFile>core_config/6.cfg</configFile>
         <stateFile>qsimTrace/state.4</stateFile>
-		<benchmark>qsimTrace/fft.tar</benchmark>
+        <appFile>qsimTrace/fft.tar</appFile>
       </params>
       <link name=1.core2cache port=cache_link latency=$link_lat/>
   </component>
@@ -136,7 +136,7 @@ router with iris nic-->
         <clockFreq>1 GHz</clockFreq>
         <configFile>core_config/6.cfg</configFile>
         <stateFile>qsimTrace/state.4</stateFile>
-		<benchmark>qsimTrace/fft.tar</benchmark>
+        <appFile>qsimTrace/fft.tar</appFile>
       </params>
       <link name=2.core2cache port=cache_link latency=$link_lat/>
   </component>
@@ -175,7 +175,7 @@ router with iris nic-->
         <clockFreq>1 GHz</clockFreq>
         <configFile>core_config/6.cfg</configFile>
         <stateFile>qsimTrace/state.4</stateFile>
-		<benchmark>qsimTrace/fft.tar</benchmark>
+        <appFile>qsimTrace/fft.tar</appFile>
       </params>
       <link name=3.core2cache port=cache_link latency=$link_lat/>
   </component>

@@ -4,6 +4,9 @@
 
 CC=$(CXX)
 
+# In order to use QSim, add -DUSE_QSIM to AM_CPPFLAGS and -lqsim -lqsim-client
+# to libzesto_la_LDFLAGS
+
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)

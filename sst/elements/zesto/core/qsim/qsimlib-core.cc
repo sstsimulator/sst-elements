@@ -15,13 +15,14 @@ qsimlib_core_t::qsimlib_core_t(SST::ComponentId_t cid, SST::Component::Params_t 
 
   if(params.find("stateFile") == params.end())
     _abort(zesto_core, "couldn't find zesto qsim state file\n");
-  if(params.find("benchmark") == params.end())
+  if(params.find("appFile") == params.end())
     _abort(zesto_core, "couldn't find zesto qsim benchmark file\n");
 
   if(m_Qsim_osd == NULL) {
     std::cout << "Loading state...\n";
     m_Qsim_osd = new Qsim::OSDomain(params["stateFile"].c_str());
     std::cout << "Loading app...\n";
+    m_Qsim_osd->connect_console(std::cout);
     Qsim::load_file(*m_Qsim_osd, params["appFile"].c_str());
     std::cout << "Finished loading app.\n";
   }

@@ -5,7 +5,7 @@
 
 
 #include "../zesto-core.h"
-#include "qsim.h"
+#include <qsim.h>
 
 class qsimlib_core_t: public core_t
 {

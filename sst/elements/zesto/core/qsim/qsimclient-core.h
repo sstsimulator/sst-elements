@@ -1,11 +1,10 @@
 #ifndef ZESTO_QSIMCLIENT_CORE
 #define ZESTO_QSIMCLIENT_CORE
 
-
 #ifdef USE_QSIM
 
 #include "../zesto-core.h"
-#include "qsim-client.h"
+#include <qsim-client.h>
 
 struct QsimClient_Settings {
     QsimClient_Settings(const char* s, int p) : server(s), port(p) {}

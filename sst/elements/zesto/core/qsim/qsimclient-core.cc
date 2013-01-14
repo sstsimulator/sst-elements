@@ -4,17 +4,17 @@
 #include "../zesto-fetch.h"
 #include <assert.h>
 
-qsimclient_core_t::qsimclient_core_t(SST::ComponentId_t cid, SST::Component::Params_t &params) : core_t(cid, params)
+qsimclient_core_t::qsimclient_core_t(SST::ComponentId_t cid, SST::Component::Params_t &params) : core_t(cid, params), m_Qsim_cpuid(id)
 //const int core_id, char * config, int cpuid, const QsimClient_Settings& settings) :
 //    core_t(core_id, config),
 //    m_Qsim_cpuid(cpuid)
 {
-	m_Qsim_cpuid = id;
     //client_socket() requires port to be passed as a string, so convert to string first.
-	if(params.find("port") == params.end())
-		_abort(zesto_core, "couldn't find zesto qsim server port\n");
-	if(params.find("server") == params.end())
-		_abort(zesto_core, "couldn't find zesto qsim server name\n");
+    if(params.find("port") == params.end())
+      _abort(zesto_core, "couldn't find zesto qsim server port\n");
+    if(params.find("server") == params.end())
+      _abort(zesto_core, "couldn't find zesto qsim server name\n");
+
     m_Qsim_client = new Qsim::Client(client_socket(params["server"].c_str(), params["port"].c_str()));
     m_Qsim_queue = new Qsim::ClientQueue(*m_Qsim_client, m_Qsim_cpuid);
 
@@ -82,7 +82,6 @@ fprintf(stdout,"\n[%lld][Core%d]Interrupt seen in md_fetch_next_PC",core->sim_cy
 
     return(interrupt);
 }	
-
 
 
 
