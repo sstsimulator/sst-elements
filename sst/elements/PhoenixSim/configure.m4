@@ -5,7 +5,7 @@ AC_DEFUN([SST_PhoenixSim_CONFIG], [
     [AS_HELP_STRING([--with-omnetpp@<:@=DIR@:>@],
       [Use Omnet++ package installed in optionally specified DIR])])
 
-  AC_ARG_ENABLE([phoenixsim], [AS_HELP_STRING([--enable-phoenixsim]), 
+  AC_ARG_ENABLE([phoenixsim], [AS_HELP_STRING([--enable-phoenixsim])], 
 	[], [enable_phoenixsim="no"])
   happy="yes"
   
