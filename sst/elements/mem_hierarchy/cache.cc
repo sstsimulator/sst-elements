@@ -447,21 +447,26 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 	 * Check to see if we're trying to load this data, if so, handle
 	 */
 	if ( src == SNOOP ) {
-		// TODO:  BROKEN:  Need to check for data being supplied, not just addr
-		supplyMap_t::key_type supplyMapKey = std::make_pair(ev->getAddr(), src);
-		supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-		if ( supMapI != supplyInProgress.end() ) {
-			// Mark it canceled
-			DPRINTF("Marking request for 0x%lx as canceled\n", ev->getAddr());
-			supMapI->second.canceled = true;
-			if ( supMapI->second.busEvent != NULL ) {
-				// Bus requested.  Cancel it, too
-				DPRINTF("Canceling Bus Request for Supply on 0x%lx\n", supMapI->second.busEvent->getAddr());
-				BusFinishHandler *handler = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
-				if ( handler ) {
-					handler->args.supplyData.block->locked--;
-					delete handler;
+		if ( ev->getSize() >= blocksize ) {
+			Addr blkAddr = addrToBlockAddr(ev->getAddr());
+			while ( blkAddr < (ev->getAddr() + ev->getSize()) ) {
+				supplyMap_t::key_type supplyMapKey = std::make_pair(blkAddr, src);
+				supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
+				if ( supMapI != supplyInProgress.end() ) {
+					// Mark it canceled
+					DPRINTF("Marking request for 0x%lx as canceled\n", ev->getAddr());
+					supMapI->second.canceled = true;
+					if ( supMapI->second.busEvent != NULL ) {
+						// Bus requested.  Cancel it, too
+						DPRINTF("Canceling Bus Request for Supply on 0x%lx\n", supMapI->second.busEvent->getAddr());
+						BusFinishHandler *handler = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
+						if ( handler ) {
+							handler->args.supplyData.block->locked--;
+							delete handler;
+						}
+					}
 				}
+				blkAddr += blocksize;
 			}
 		}
 	}
