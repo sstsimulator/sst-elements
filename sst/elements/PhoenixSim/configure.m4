@@ -5,8 +5,10 @@ AC_DEFUN([SST_PhoenixSim_CONFIG], [
     [AS_HELP_STRING([--with-omnetpp@<:@=DIR@:>@],
       [Use Omnet++ package installed in optionally specified DIR])])
 
+  AC_ARG_ENABLE([phoenixsim], [AS_HELP_STRING([--enable-phoenixsim]), 
+	[], [enable_phoenixsim="no"])
   happy="yes"
-
+  
   AS_IF([test "$with_omnetpp" = "no"], [happy="no"])
 
   CPPFLAGS_saved="$CPPFLAGS"
@@ -28,10 +30,12 @@ AC_DEFUN([SST_PhoenixSim_CONFIG], [
 
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
+  BUILD_PHOENIXSIM=""
 
-  AC_SUBST([PHOENIXSIM_CPPFLAGS])
-  AC_SUBST([PHOENIXSIM_LDFLAGS])
-  AC_SUBST([OMNETPP_LIB])
+  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([PHOENIXSIM_CPPFLAGS])])
+  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([PHOENIXSIM_LDFLAGS])])
+  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([OMNETPP_LIB])])
+  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([BUILD_PHOENIXSIM])])
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
