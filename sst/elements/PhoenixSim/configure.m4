@@ -32,10 +32,15 @@ AC_DEFUN([SST_PhoenixSim_CONFIG], [
   LDFLAGS="$LDFLAGS_saved"
   BUILD_PHOENIXSIM=""
 
-  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([PHOENIXSIM_CPPFLAGS])])
-  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([PHOENIXSIM_LDFLAGS])])
-  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([OMNETPP_LIB])])
-  AS_IF([test ! -z "$enable_phoenixsim" -a "$enable_phoenixsim" != "no"], [AC_SUBST([BUILD_PHOENIXSIM])])
+  AS_IF( [test "$enable_phoenixsim" = "yes"],
+	[AS_IF([test "$happy" = "no"], AC_MSG_FAILURE(["PhoenixSim enabled by user but system cannot locate OMNET libraries."]),
+		 [AC_MSG_NOTICE(["PhoenixSim has been enabled by user"])])],
+        [AC_MSG_NOTICE(["PhoenixSim has not been enabled by user, build is disabled"])] )
+
+  AC_SUBST([PHOENIXSIM_CPPFLAGS])
+  AC_SUBST([PHOENIXSIM_LDFLAGS])
+  AC_SUBST([OMNETPP_LIB])
+  AM_CONDITIONAL([BUILD_PHOENIXSIM], [test "$enable_phoenixsim" = "yes"])
 
   AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])
