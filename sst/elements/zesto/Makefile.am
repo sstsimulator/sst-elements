@@ -4,13 +4,6 @@
 
 CC=$(CXX)
 
-# In order to use QSim, add -DUSE_QSIM to AM_CPPFLAGS and -lqsim -lqsim-client
-# to libzesto_la_LDFLAGS
-
-AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS)
-
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzesto.la
 
@@ -165,4 +158,6 @@ EXTRA_DIST = \
 	core/ZCOMPS-ras/ras-perfect.cpp \
 	core/ZCOMPS-ras/ras-stack.cpp
 
-libzesto_la_LDFLAGS = -module -avoid-version
+libzesto_la_LDFLAGS = -module -avoid-version $(QSIM_LDFLAGS)
+libzesto_la_LIBADD = $(QSIM_LIB)
+libzesto_la_CPPFLAGS = $(QSIM_CPPFLAGS) $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
