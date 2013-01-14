@@ -20,7 +20,7 @@ AC_DEFUN([SST_M5_CONFIG], [
 	  [AS_HELP_STRING([--with-python-inc-dir[[=DIR@]]],		
 		  [Expect Python headers in the specified DIR])])
 
-  AC_ARG_ENABLE([gem5-power-model], [Enable power modeling in SST-GEM5)])
+  AC_ARG_ENABLE([gem5-power-model], [AS_HELP_STRING([--enable-gem5-power-model], [Enable power modeling in SST-GEM5])])
 
   isa=
 
