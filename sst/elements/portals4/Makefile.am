@@ -22,5 +22,5 @@ libportals4_la_SOURCES = \
 libportals4_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
             -I$(top_srcdir)/sst/elements/include \
             -I$(top_srcdir)/sst/elements
-libportals4_la_LDFLAGS = -module -avoid-version
+libportals4_la_LDFLAGS = -module -avoid-version -lrt
 libportals4_la_LIBADD =
