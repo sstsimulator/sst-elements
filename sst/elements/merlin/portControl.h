@@ -263,8 +263,9 @@ private:
 	    // Simply put the event into the right virtual network queue
 
 	    // Need to do the routing
+	    int curr_vc = event->getVC();
 	    topo->route(port_number, event->getVC(), event);
-	    input_buf[event->getVC()].push(event);
+	    input_buf[curr_vc].push(event);
 	}
     }
     
