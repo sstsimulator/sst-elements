@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<sdl version="2.0"/>
+
+<config>
+    run-mode=both
+</config>
+
+<param_include>
+  <rtr_params>
+    <num_ports>  3   </num_ports>
+    <num_vcs>    2   </num_vcs>
+    <link_bw>   1GHz </link_bw>
+    <topology> torus </topology>
+    <torus:shape> 2 </torus:shape>
+  </rtr_params>
+
+  <nic_params>
+    <num_vcs>    2   </num_vcs>
+    <link_bw>  1GHz  </link_bw>
+    <packet_size> 10  </packet_size>
+    <packets_to_send> 40 </packets_to_send>
+  </nic_params>
+</param_include>
+
+<sst>
+    <component name=0.rtr type=merlin.hr_router >
+        <params include=rtr_params>
+            <id> 0 </id>
+        </params>
+        <link name=link_0_1 port=port0 latency=10ns/>
+        <link name=link_1_0 port=port1 latency=10ns/>
+        <link name=nic0 port=port2 latency=10ns/>
+    </component>
+
+    <component name=0.nic type=merlin.pt2pt_test >
+        <params include=nic_params>
+            <id> 0 </id>
+        </params>
+        <link name=nic0 port=rtr latency=10ns/>
+    </component>
+
+    <component name=1.rtr type=merlin.hr_router >
+        <params include=rtr_params>
+            <id> 1 </id>
+        </params>
+        <link name=link_1_0 port=port0 latency=10ns/>
+        <link name=link_0_1 port=port1 latency=10ns/>
+        <link name=nic1 port=port2 latency=10ns/>
+    </component>
+
+    <component name=1.nic type=merlin.pt2pt_test >
+        <params include=nic_params>
+            <id> 1 </id>
+        </params>
+        <link name=nic1 port=rtr latency=10ns/>
+    </component>
+
+
+</sst>
