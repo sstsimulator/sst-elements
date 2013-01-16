@@ -187,7 +187,7 @@ public:
 	stream << "  Waiting = " << waiting << std::endl;
 	stream << "  curr_out_vc = " << curr_out_vc << std::endl;
 	for ( int i = 0; i < num_vcs; i++ ) {
-	    stream << "  VC << " << i << " Information:" << std::endl;
+	    stream << "  VC " << i << " Information:" << std::endl;
 	    stream << "    xbar_in_credits = " << xbar_in_credits[i] << std::endl;
 	    stream << "    port_out_credits = " << port_out_credits[i] << std::endl;
 	    stream << "    port_ret_credits = " << port_ret_credits[i] << std::endl;
@@ -236,8 +236,9 @@ private:
 
 	    // Need to process input and do the routing
 	    internal_router_event* rtr_event = topo->process_input(event);
+	    int curr_vc = event->vc;
 	    topo->route(port_number, event->vc, rtr_event);
-	    input_buf[event->vc].push(rtr_event);
+	    input_buf[curr_vc].push(rtr_event);
 	}
     }
     
