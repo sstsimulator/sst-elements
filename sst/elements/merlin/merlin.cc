@@ -17,6 +17,7 @@
 
 #include "hr_router/hr_router.h"
 #include "test/nic.h"
+#include "test/pt2pt/pt2pt_test.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -45,6 +46,13 @@ create_test_nic(SST::ComponentId_t id,
     return new nic( id, params );
 }
 
+static Component*
+create_pt2pt_test(SST::ComponentId_t id,
+		  SST::Params& params)
+{
+    return new pt2pt_test( id, params );
+}
+
 // static string str(const char* format, ...) {
 //     char buffer[256];
 //     va_list args;
@@ -71,6 +79,11 @@ static const ElementInfoComponent components[] = {
       "Simple NIC to test base functionality.",
       NULL,
       create_test_nic,
+    },
+    { "pt2pt_test",
+      "Simple NIC to test basic pt2pt performance.",
+      NULL,
+      create_pt2pt_test,
     },
     { NULL, NULL, NULL, NULL }
 };

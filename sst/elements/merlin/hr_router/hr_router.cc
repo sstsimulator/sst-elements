@@ -44,13 +44,6 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     if ( num_vcs == -1 ) {
     }
     std::cout << "num_vcs: " << num_vcs << std::endl;
-
-    std::string link_bw = params.find_string("link_bw");
-    if ( link_bw == "" ) {
-    }
-    std::cout << "link_bw: " << link_bw << std::endl;
-
-    TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);    
     
     // Get the topology
     std::string topology = params.find_string("topology");
@@ -64,6 +57,22 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // Get the Xbar arbitration
     arb = new xbar_arb_rr(num_ports,num_vcs);
     
+
+    // Parse all the timing parameters
+    std::string link_bw = params.find_string("link_bw");
+    if ( link_bw == "" ) {
+    }
+    std::cout << "link_bw: " << link_bw << std::endl;
+
+    TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);    
+    
+    // std::string link_bw = params.find_string("link_bw");
+    // if ( link_bw == "" ) {
+    // }
+    // std::cout << "link_bw: " << link_bw << std::endl;
+
+    // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);    
+    
     // Create all the PortControl blocks
     ports = new PortControl*[num_ports];
 
@@ -72,8 +81,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     int out_buf_sizes[num_vcs];
     
     for ( int i = 0; i < num_vcs; i++ ) {
-	in_buf_sizes[i] = 10;
-	out_buf_sizes[i] = 10;
+	in_buf_sizes[i] = 100;
+	out_buf_sizes[i] = 100;
     }
     
     // Naming convention is from point of view of the xbar.  So,
@@ -93,13 +102,25 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 	port_name << i;
 	std::cout << port_name.str() << std::endl;
 
-	ports[i] = new PortControl(this, port_name.str(), i, tc, topo, num_vcs, in_buf_sizes, out_buf_sizes);
+	ports[i] = new PortControl(this, id, port_name.str(), i, tc, topo, num_vcs, in_buf_sizes, out_buf_sizes);
 	
 	std::cout << port_name.str() << std::endl;
 	// links[i] = configureLink(port_name.str(), "1ns", new Event::Handler<hr_router,int>(this,&hr_router::port_handler,i));
     }
 
     registerClock( "1GHz", new Clock::Handler<hr_router>(this,&hr_router::clock_handler), false);
+}
+
+void
+hr_router::dumpState(std::ostream& stream)
+{
+    stream << "Router id: " << id << std::endl;
+    for ( int i = 0; i < num_ports; i++ ) {
+	ports[i]->dumpState(stream);
+	stream << "  Output_busy: " << out_port_busy[i] << std::endl;
+	stream << "  Input_Busy: " <<  in_port_busy[i] << std::endl;
+    }
+    
 }
 
 
@@ -114,8 +135,8 @@ hr_router::clock_handler(Cycle_t cycle)
 	if ( progress_vcs[i] != -1 ) {
 	    internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
 	    ports[ev->getNextPort()]->send(ev,ev->getVC());
-	    // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
-	    // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
+	    std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
+	    	" for port " << i << " to port " << ev->getNextPort() << std::endl;
 	}
 	
 	// Should stop at zero, need to find a clean way to do this

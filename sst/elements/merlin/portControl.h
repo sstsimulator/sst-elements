@@ -43,6 +43,7 @@ private:
     // usage
     Link* output_timing;
 
+    int rtr_id;
     // Number of virtual channels
     int num_vcs;
 
@@ -125,13 +126,14 @@ public:
     void getVCHeads(internal_router_event** heads) {
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    if ( input_buf[i].size() == 0 ) heads[i] = NULL;
-	    heads[i] = input_buf[i].front();
+	    else heads[i] = input_buf[i].front();
 	}
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    PortControl(Component* rif, std::string link_port_name, int port_number, TimeConverter* time_base,
+    PortControl(Component* rif, int rtr_id, std::string link_port_name, int port_number, TimeConverter* time_base,
 		Topology *topo, int vcs, int* in_buf_size, int* out_buf_size) :
+	rtr_id(rtr_id),
 	num_vcs(vcs),
 	topo(topo),
 	port_number(port_number),
@@ -180,9 +182,39 @@ public:
 	return 0;
     }
 
+    void dumpState(std::ostream& stream) {
+	stream << "Router id: " << rtr_id << ", port " << port_number << ":" << std::endl;
+	stream << "  Waiting = " << waiting << std::endl;
+	stream << "  curr_out_vc = " << curr_out_vc << std::endl;
+	for ( int i = 0; i < num_vcs; i++ ) {
+	    stream << "  VC << " << i << " Information:" << std::endl;
+	    stream << "    xbar_in_credits = " << xbar_in_credits[i] << std::endl;
+	    stream << "    port_out_credits = " << port_out_credits[i] << std::endl;
+	    stream << "    port_ret_credits = " << port_ret_credits[i] << std::endl;
+	    stream << "    Input Buffer:" << std::endl;
+	    dumpQueueState(input_buf[i],stream);
+	    stream << "    Output Buffer:" << std::endl;
+	    dumpQueueState(output_buf[i],stream);
+	}
+    }
+
     
 private:
 
+    void dumpQueueState(port_queue_t& q, std::ostream& stream) {
+	int size = q.size();
+	for ( int i = 0; i < size; i++ ) {
+	    internal_router_event* ev = q.front();
+	    stream << "      dest = " << ev->getDest()
+		   << ", size = " << ev->getFlitCount()
+		   << ", vc = " << ev->getVC()
+		   << ", next_port = " << ev->getNextPort()
+		   << std::endl;
+	    q.pop();
+	    q.push(ev);
+	}
+    }
+    
     void handle_input_n2r(Event* ev) {
 	// Check to see if this is a credit or data packet
 	credit_event* ce = dynamic_cast<credit_event*>(ev);
@@ -214,6 +246,8 @@ private:
 	credit_event* ce = dynamic_cast<credit_event*>(ev);
 	if ( ce != NULL ) {
 	    port_out_credits[ce->vc] += ce->credits;
+	    std::cout << rtr_id << ": port " << port_number << " got " << ce->credits << " credits for VC " << ce->vc
+		      << ", current = " << port_out_credits[ce->vc] << std::endl;
 	    delete ce;
 
 	    // If we're waiting, we need to send a wakeup event to the

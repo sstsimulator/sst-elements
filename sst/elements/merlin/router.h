@@ -87,6 +87,7 @@ public:
     virtual ~XbarArbitration() {}
 
     virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
+    virtual void dumpState(std::ostream& stream) {};
     
 };
 

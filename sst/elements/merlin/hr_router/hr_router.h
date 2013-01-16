@@ -50,6 +50,9 @@ public:
     
     int Setup();
     int Finish() {return false;}
+
+    void dumpState(std::ostream& stream);
+
 };
 
 #endif // COMPONENTS_HR_ROUTER_HR_ROUTER_H

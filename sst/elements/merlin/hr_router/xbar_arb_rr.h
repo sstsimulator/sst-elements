@@ -95,6 +95,18 @@ public:
 	}
 	rr_port = (rr_port + 1) % num_ports;
     }
+
+    void dumpState(std::ostream& stream) {
+	int *rr_vcs;
+	int rr_port;
+
+	stream << "Current round robin port: " << rr_port << std::endl;
+	stream << "  Current round robin VC by port:" << std::endl;
+	for ( int i = 0; i < num_ports; i++ ) {
+	    stream << i << ": " << rr_vcs[i] << std::endl;
+	}
+    }
+
 };
 
 #endif // COMPONENTS_HR_ROUTER_XBAR_ARB_RR_H

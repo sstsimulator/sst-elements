@@ -47,6 +47,7 @@ nic::nic(ComponentId_t cid, Params& params) :
     std::cout << "link_bw: " << link_bw << std::endl;
     TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
     
+
     // Create a LinkControl object
     int buf_size[2] = {10, 10};
     link_control = new LinkControl(this, "rtr", tc, 2, buf_size, buf_size);
