@@ -56,6 +56,9 @@ private:
     port_queue_t* input_buf;
     port_queue_t* output_buf;
 
+    int* input_buf_count;
+    int* output_buf_count;
+
     // Variables to keep track of credits.  You need to keep track of
     // the credits available for your next buffer, as well as track
     // the credits you need to return to the buffer sending data to
@@ -74,6 +77,7 @@ private:
     // is: 1 - adding new data to output buffers, or 2 - getting
     // credits back from the router.
     bool waiting;
+    Component* parent;
 
 public:
 
@@ -137,12 +141,21 @@ public:
 	num_vcs(vcs),
 	topo(topo),
 	port_number(port_number),
-	waiting(true)
+	waiting(true),
+	parent(rif)
     {
 	// Input and output buffers
 	input_buf = new port_queue_t[vcs];
 	output_buf = new port_queue_t[vcs];
 
+	input_buf_count = new int[vcs];
+	output_buf_count = new int[vcs];
+
+	for ( int i = 0; i < num_vcs; i++ ) {
+	    input_buf_count[i] = 0;
+	    output_buf_count[i] = 0;
+	}
+	
 	// Initialize credit arrays
 	xbar_in_credits = new int[vcs];
 	port_ret_credits = new int[vcs];
@@ -239,6 +252,15 @@ private:
 	    int curr_vc = event->vc;
 	    topo->route(port_number, event->vc, rtr_event);
 	    input_buf[curr_vc].push(rtr_event);
+	    input_buf_count[curr_vc]++;
+
+	    if ( event->getTraceType() != RtrEvent::NONE ) {
+		std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+			  << " ns: Received an event on port " << port_number
+			  << " in router " << rtr_id << " ("
+			  << parent->getName() << ") on VC " << curr_vc << " from src " << event->src
+			  << " to dest " << event->dest << "." << std::endl;
+	    }
 	}
     }
     
@@ -247,8 +269,8 @@ private:
 	credit_event* ce = dynamic_cast<credit_event*>(ev);
 	if ( ce != NULL ) {
 	    port_out_credits[ce->vc] += ce->credits;
-	    std::cout << rtr_id << ": port " << port_number << " got " << ce->credits << " credits for VC " << ce->vc
-		      << ", current = " << port_out_credits[ce->vc] << std::endl;
+	    // std::cout << rtr_id << ": port " << port_number << " got " << ce->credits << " credits for VC " << ce->vc
+	    // 	      << ", current = " << port_out_credits[ce->vc] << std::endl;
 	    delete ce;
 
 	    // If we're waiting, we need to send a wakeup event to the
@@ -266,6 +288,15 @@ private:
 	    int curr_vc = event->getVC();
 	    topo->route(port_number, event->getVC(), event);
 	    input_buf[curr_vc].push(event);
+	    input_buf_count[curr_vc]++;
+
+	    if ( event->getTraceType() != RtrEvent::NONE ) {
+		std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+			  << " ns: Received an event on port " << port_number
+			  << " in router " << rtr_id << " ("
+			  << parent->getName() << ") on VC " << curr_vc << " from src " << event->getSrc()
+			  << " to dest " << event->getDest() << "." << std::endl;
+	    }
 	}
     }
     
@@ -320,20 +351,23 @@ private:
 	    
 	    // Send an event to wake up again after this packet is sent.
 	    output_timing->Send(size,NULL);
-
+	    
 	    // Take care of the round variable
 	    curr_out_vc = vc_to_send + 1;
 	    if ( curr_out_vc == num_vcs ) curr_out_vc = 0;
 
 	    // Subtract credits
 	    port_out_credits[vc_to_send] -= size;
+	    output_buf_count[vc_to_send]++;
 	    if ( host_port ) {
 		// std::cout << "Found an event to send on host port " << port_number << std::endl;
 		port_link->Send(send_event->getEncapsulatedEvent());
 		send_event->setEncapsulatedEvent(NULL);
 		delete send_event;
 	    }
-	    else port_link->Send(send_event);
+	    else {
+		port_link->Send(send_event);
+	    }
 
 
 	}

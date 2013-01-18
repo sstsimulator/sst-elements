@@ -70,6 +70,8 @@ private:
     // credits back from the router.
     bool waiting;
 
+    Component* parent;
+    
 public:
 
     // Returns true if there is space in the output buffer and false
@@ -84,6 +86,12 @@ public:
 	if ( waiting ) {
 	    output_timing->Send(1,NULL);
 	    waiting = false;
+	}
+
+	if ( ev->getTraceType() != RtrEvent::NONE ) {
+	    std::cout << "TRACE(" << ev->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+		      << " ns: Sent on LinkControl in NIC: "
+		      << parent->getName() << std::endl;
 	}
 	return true;
     }
@@ -112,13 +120,20 @@ public:
 	rtr_link->Send(1,new credit_event(vc,in_ret_credits[vc]));
 	in_ret_credits[vc] = 0;
 	
+	if ( event->getTraceType() != RtrEvent::NONE ) {
+	    std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+		      << " ns: recv called on LinkControl in NIC: "
+		      << parent->getName() << std::endl;
+	}
+
 	return event;
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     LinkControl(Component* rif, std::string port_name, TimeConverter* time_base, int vcs, int* in_buf_size, int* out_buf_size) :
 	num_vcs(vcs),
-	waiting(true)
+	waiting(true),
+	parent(rif)
     {
 	// Input and output buffers
 	input_buf = new network_queue_t[vcs];
@@ -176,6 +191,12 @@ private:
 	    RtrEvent* event = static_cast<RtrEvent*>(ev);
 	    // Simply put the event into the right virtual network queue
 	    input_buf[event->vc].push(event);
+	    if ( event->getTraceType() == RtrEvent::FULL ) {
+		std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+			  << " ns: Received an event on LinkControl in NIC: "
+			  << parent->getName() << " on VC " << event->vc << " from src " << event->src
+			  << "." << std::endl;
+	    }
 	}
     }
     
@@ -237,6 +258,13 @@ private:
 	    rtr_credits[vc_to_send] -= size;
 	    rtr_link->Send(send_event);	    
 	    // std::cout << "Sent packet on vc " << vc_to_send << std::endl;
+
+	    if ( send_event->getTraceType() == RtrEvent::FULL ) {
+		std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+			  << " ns: Sent an event to router from LinkControl in NIC: "
+			  << parent->getName() << " on VC " << send_event->vc << " to dest " << send_event->dest
+			  << "." << std::endl;
+	    }
 	}
 	else {
 	    // What do we do if there's nothing to send??  It could be

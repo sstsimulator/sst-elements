@@ -135,8 +135,18 @@ hr_router::clock_handler(Cycle_t cycle)
 	if ( progress_vcs[i] != -1 ) {
 	    internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
 	    ports[ev->getNextPort()]->send(ev,ev->getVC());
-	    std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
-	    	" for port " << i << " to port " << ev->getNextPort() << std::endl;
+	    // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
+	    // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
+
+	    if ( ev->getTraceType() == RtrEvent::FULL ) {
+		std::cout << "TRACE(" << ev->getTraceID() << "): " << getCurrentSimTimeNano()
+			  << " ns: Copying event (src = " << ev->getSrc() << ","
+			  << " dest = "<< ev->getDest() << ") over crossbar in router " << id
+			  << " (" << getName() << ")"
+			  << " from port " << i << ", VC " << progress_vcs[i] 
+			  << " to port " << ev->getNextPort() << ", VC " << ev->getVC()
+			  << "." << std::endl;
+	    }
 	}
 	
 	// Should stop at zero, need to find a clean way to do this

@@ -149,6 +149,8 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 	
 	if ( link_control->spaceToSend(0,packet_size) ) {
 	    pt2pt_test_event* ev = new pt2pt_test_event();
+	    ev->setTraceType(RtrEvent::FULL);
+	    ev->setTraceID(packets_sent);
 	    ev->dest = 2;
 	    ev->vc = 0;
 	    ev->size_in_flits = packet_size;

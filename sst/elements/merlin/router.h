@@ -22,12 +22,33 @@
 
 using namespace SST;
 
+#define MERLIN_ENABLE_TRACE
 class RtrEvent : public Event {
     
 public:
     int dest;
+    int src;
     int vc;
     int size_in_flits;
+
+    enum TraceType {NONE, ROUTE, FULL};
+
+    RtrEvent() :
+	Event(),
+	trace(NONE)
+    {}
+
+    inline void setTraceID(int id) {traceID = id;}
+    inline void setTraceType(TraceType type) {trace = type;}
+
+    inline TraceType getTraceType() {return trace;}
+    inline int getTraceID() {return traceID;}
+    
+private:
+    TraceType trace;
+    int traceID;
+    
+    
 };
 
 
@@ -67,6 +88,10 @@ public:
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
 
     inline int getDest() {return encap_ev->dest;}
+    inline int getSrc() {return encap_ev->src;}
+
+    inline RtrEvent::TraceType getTraceType() {return encap_ev->getTraceType();}
+    inline int getTraceID() {return encap_ev->getTraceID();}
 };
 
 class Topology {
