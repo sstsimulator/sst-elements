@@ -130,26 +130,33 @@ hr_router::clock_handler(Cycle_t cycle)
     // All we need to do is arbitrate the crossbar
     arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
 
+    // Do a quick check on results of arbitrate to see if the results are valid
+    int* dest_ports = new int[num_ports];
+    internal_router_event** events = new internal_router_event*[num_vcs];
+    for ( int i = 0; i < num_ports; i++ ) {
+	if ( progress_vcs[i] == -1 ) {
+	    dest_ports[i] = -(i+1);  // So I don't have to check for -1 later
+	    continue;
+	}
+	ports[i]->getVCHeads(events);
+	dest_ports[i] = events[progress_vcs[i]]->getNextPort();
+    }    
+    delete events;
+    
+    for ( int i = 0; i < num_ports; i++ ) {
+	for ( int j = i+1; j < num_ports; j++ ) {
+	    if ( dest_ports[i] == dest_ports[j] ) {
+		std::cout << "ERROR two ports trying to write to same output over xbar" << std::endl;
+	    }
+	}
+    }
+    delete dest_ports;
+    
     // Move the events and decrement the busy values
     for ( int i = 0; i < num_ports; i++ ) {
 	if ( progress_vcs[i] != -1 ) {
 	    internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
 	    bool success = ports[ev->getNextPort()]->send(ev,ev->getVC());
-	    if ( !success ) {
-		internal_router_event** events = new internal_router_event*[num_vcs];
-		std::cout << "ERROR in xbar send to port " << ev->getNextPort() << ": " << std::endl;
-		for ( int j = 0; j < num_ports; j++ ) {
-		    if ( progress_vcs[j] == -1 ) continue;
-		    ports[j]->getVCHeads(events);
-		    if ( events[progress_vcs[j]] == NULL ) {
-			std::cout << "  progress_vcs[" << j << "] points to NULL event." << std::endl;
-		    }
-		    else {
-			std::cout << "  Trying to route port " << j << " to port "
-				  << events[progress_vcs[j]]->getNextPort() << std::endl;
-		    }
-		}
-	    }
 	    // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
 	    // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
 
