@@ -359,6 +359,16 @@ private:
 	    // Subtract credits
 	    port_out_credits[vc_to_send] -= size;
 	    output_buf_count[vc_to_send]++;
+
+	    if ( send_event->getTraceType() == RtrEvent::FULL ) {
+		std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+			  << " ns: Sent an event to router from PortControl in router: " << rtr_id
+			  << " (" << parent->getName() << ") on VC " << send_event->getVC()
+			  << " from src " << send_event->getSrc()
+			  << " to dest " << send_event->getDest()
+			  << "." << std::endl;
+	    }
+
 	    if ( host_port ) {
 		// std::cout << "Found an event to send on host port " << port_number << std::endl;
 		port_link->Send(send_event->getEncapsulatedEvent());
@@ -368,7 +378,6 @@ private:
 	    else {
 		port_link->Send(send_event);
 	    }
-
 
 	}
 	else {
