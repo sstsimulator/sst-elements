@@ -31,16 +31,19 @@ private:
     int id;
     int num_peers;
     int num_vcs;
-    
+    int last_vc;
+
     int packets_sent;
     int packets_recd;
     int stalled_cycles;
-    
+
     bool done;
-    
+
     LinkControl* link_control;
 
     int last_target;
+
+    int *next_seq;
 
 public:
     nic(ComponentId_t cid, Params& params);

@@ -29,6 +29,8 @@ class PortControl;
 class hr_router : public Component {
 
 private:
+    static int num_routers;
+    static int print_debug;
     int id;
     int num_ports;
     int num_vcs;
@@ -43,7 +45,10 @@ private:
     int* progress_vcs;
     
     bool clock_handler(Cycle_t cycle);
-    
+    bool debug_clock_handler(Cycle_t cycle);
+    static void sigHandler(int signal);
+
+
 public:
     hr_router(ComponentId_t cid, Params& params);
     ~hr_router();

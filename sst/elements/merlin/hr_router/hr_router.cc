@@ -17,10 +17,17 @@
 
 #include <sstream>
 
+#include <signal.h>
+
 #include "hr_router.h"
 #include "portControl.h"
 #include "sst/elements/merlin/topology/torus.h"
 #include "xbar_arb_rr.h"
+
+
+
+int hr_router::num_routers = 0;
+int hr_router::print_debug = 0;
 
 hr_router::~hr_router()
 {
@@ -108,7 +115,23 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 	// links[i] = configureLink(port_name.str(), "1ns", new Event::Handler<hr_router,int>(this,&hr_router::port_handler,i));
     }
 
-    registerClock( "1GHz", new Clock::Handler<hr_router>(this,&hr_router::clock_handler), false);
+    if ( params.find_integer("debug", 0) ) {
+        if ( num_routers == 0 ) {
+            signal(SIGUSR2, &hr_router::sigHandler);
+        }
+        registerClock( "1GHz", new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler), false);
+    } else {
+        registerClock( "1GHz", new Clock::Handler<hr_router>(this,&hr_router::clock_handler), false);
+    }
+    num_routers++;
+
+}
+
+
+void
+hr_router::sigHandler(int signal)
+{
+    print_debug = num_routers * 5;
 }
 
 void
@@ -123,6 +146,19 @@ hr_router::dumpState(std::ostream& stream)
     
 }
 
+
+bool
+hr_router::debug_clock_handler(Cycle_t cycle)
+{
+    if ( print_debug > 0 ) {
+        /* TODO:  PRINT DEBUGGING */
+        printf("Debug output for %s at cycle %llu\n", getName().c_str(), cycle);
+        dumpState(std::cout);
+        print_debug--;
+    }
+
+    return clock_handler(cycle);
+}
 
 bool
 hr_router::clock_handler(Cycle_t cycle)
@@ -173,8 +209,8 @@ hr_router::clock_handler(Cycle_t cycle)
 	
 	// Should stop at zero, need to find a clean way to do this
 	// with no branch.  For now it should work.
-	in_port_busy[i]--;
-	out_port_busy[i]--;
+        if ( in_port_busy[i] != 0 ) in_port_busy[i]--;
+	if ( out_port_busy[i] != 0 ) out_port_busy[i]--;
     }
 
     return false;

@@ -269,8 +269,6 @@ private:
 	credit_event* ce = dynamic_cast<credit_event*>(ev);
 	if ( ce != NULL ) {
 	    port_out_credits[ce->vc] += ce->credits;
-	    // std::cout << rtr_id << ": port " << port_number << " got " << ce->credits << " credits for VC " << ce->vc
-	    // 	      << ", current = " << port_out_credits[ce->vc] << std::endl;
 	    delete ce;
 
 	    // If we're waiting, we need to send a wakeup event to the

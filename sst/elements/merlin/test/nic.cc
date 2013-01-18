@@ -8,6 +8,8 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+#include <unistd.h>
+#include <signal.h>
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 
@@ -20,6 +22,7 @@
 
 nic::nic(ComponentId_t cid, Params& params) :
     Component(cid),
+    last_vc(0),
     packets_sent(0),
     packets_recd(0),
     stalled_cycles(0),
@@ -49,10 +52,13 @@ nic::nic(ComponentId_t cid, Params& params) :
     
 
     // Create a LinkControl object
-    int buf_size[2] = {10, 10};
+    int buf_size[2] = {100, 100};
     link_control = new LinkControl(this, "rtr", tc, 2, buf_size, buf_size);
 
     last_target = id;
+    next_seq = new int[num_peers];
+    for ( int i = 0 ; i < num_peers ; i++ )
+        next_seq[i] = 0;
 
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<nic>(this,&nic::clock_handler), false);
@@ -74,45 +80,80 @@ nic::Setup()
     return link_control->Setup();
 }
 
+class MyRtrEvent : public RtrEvent {
+public:
+    int seq;
+    MyRtrEvent(int seq) : seq(seq)
+    {}
+};
+
 bool
 nic::clock_handler(Cycle_t cycle)
 {
-    if ( !done && (cycle == 500 || packets_recd >= 10) ) {
+    static const int num_msg = 10;
+    int expected_recv_count = (num_peers-1)*num_msg;
+
+    if ( !done && (packets_recd >= expected_recv_count) ) {
+        std::cout << "NIC " << id << " received all packets!" << std::endl;
         unregisterExit();
         done = true;
     }
     // Send packets
-    if ( link_control->spaceToSend(0,5) ) {
-        RtrEvent* ev = new RtrEvent();
+    if ( packets_sent < expected_recv_count ) {
+        if ( link_control->spaceToSend(0,5) ) {
+            last_target++;
+            if ( last_target == id ) last_target++;
+            last_target %= num_peers;
+            if ( last_target == id ) last_target++;
+            last_target %= num_peers;
 
-        last_target++;
-        if ( last_target == id ) last_target++;
-        last_target %= num_peers;
-        if ( last_target == id ) last_target++;
-        last_target %= num_peers;
+            MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
 
-        ev->dest = last_target;
+            ev->dest = last_target;
+            ev->src = id;
+            if ( ev->dest == 4 && id == 6 ) {
+                std::cout << id << " Sending packet " << ev->seq << " to 4" << std::endl;
+                if ( ev->seq == 8 || ev->seq == 7 ) {
+                    ev->setTraceType(RtrEvent::FULL);
+                    ev->setTraceID(ev->seq);
+                }
+            }
 
-        ev->vc = 0;
-        ev->size_in_flits = 5;
-        link_control->send(ev,0);
-        std::cout << cycle << ": " << id << " sent packet to " << ev->dest << std::endl;
+            ev->vc = 0;
+            ev->size_in_flits = 5;
+            bool sent = link_control->send(ev,0);
+            assert( sent );
+    //        std::cout << cycle << ": " << id << " sent packet to " << ev->dest << std::endl;
+            packets_sent++;
+            if ( packets_sent == expected_recv_count ) {
+                std::cout << cycle << ":  " << id << " Finished sending packets" << std::endl;
+            }
+        }
+        else {
+            stalled_cycles++;
+        }
     }
-    else {
-        stalled_cycles++;
-    }
 
-    RtrEvent* rec_ev = link_control->recv(0);
-    if ( rec_ev != NULL ) {
-        packets_recd++;
-        std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " (packet "<<packets_recd<<" )"<< std::endl;
-        delete rec_ev;
-    }
-    rec_ev = link_control->recv(1);
-    if ( rec_ev != NULL ) {
-        packets_recd++;
-        std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " (packet "<<packets_recd<<" )"<< std::endl;
-        delete rec_ev;
+    for ( int vc = 0 ; vc < num_vcs ; vc++ ) {
+        last_vc = (last_vc + 1) % num_vcs; // round-robin
+        RtrEvent* rec_ev = link_control->recv(last_vc);
+        MyRtrEvent* ev = dynamic_cast<MyRtrEvent*>(rec_ev);
+        if ( ev == NULL && rec_ev != NULL ) {
+            _abort(nic, "Aieeee!\n");
+        }
+        if ( ev != NULL ) {
+            packets_recd++;
+            if ( id == 4 && ev->src == 6 )
+                std::cout << id << " received packet " << ev->seq << " from " << ev->src << std::endl;
+            if ( next_seq[ev->src] != ev->seq ) {
+                std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
+                assert(false);
+            }
+            next_seq[ev->src]++;
+            //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
+            delete ev;
+            break;
+        }
     }
 
     return false;

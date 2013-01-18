@@ -54,7 +54,7 @@ topo_torus::topo_torus(Params& params) :
         parseDimString(width, dim_width);
     }
     for ( int i = 0 ; i < dimensions ; i++ ) {
-        std::cout << "dim[i] = " << dim_size[i] << " x " << dim_width[i] << std::endl;
+        std::cout << "dim[" << i << "] = " << dim_size[i] << " x " << dim_width[i] << std::endl;
     }
 
     int next_port = 0;
@@ -90,6 +90,11 @@ topo_torus::topo_torus(Params& params) :
 
 	id_loc = new int[dimensions];
 	idToLocation(router_id, id_loc);
+    std::cout << "Coordinates:\t";
+    for ( int i = 0 ; i < dimensions ; i++ ) {
+        std::cout << id_loc[i] << "\t";
+    }
+    std::cout << std::endl;
 }
 
 topo_torus::~topo_torus()
@@ -99,11 +104,9 @@ topo_torus::~topo_torus()
     delete[] dim_width;
 }
 
-
 void
 topo_torus::route(int port, int vc, internal_router_event* ev)
 {
-    // Just for a quick test.
     int dest_router = get_dest_router(ev->getDest());
     if ( dest_router == router_id ) {
         ev->setNextPort(get_dest_local_port(ev->getDest()));
@@ -112,20 +115,22 @@ topo_torus::route(int port, int vc, internal_router_event* ev)
 
         for ( int dim = tt_ev->routing_dim ; dim < dimensions ; dim++ ) {
             if ( tt_ev->dest_loc[dim] != id_loc[dim] ) {
+
                 int dist_neg = id_loc[dim] - tt_ev->dest_loc[dim];
                 if ( dist_neg < 0 ) dist_neg += dim_size[dim];
                 int dist_pos = tt_ev->dest_loc[dim] - id_loc[dim];
                 if ( dist_pos < 0 ) dist_pos += dim_size[dim];
 
+                int go_pos = (dist_pos <= dist_neg);
+
 
                 DPRINTF(" %d to %d:  Dist Neg: %d, Dist Pos: %d\n",
                         id_loc[dim], tt_ev->dest_loc[dim], dist_neg, dist_pos);
 
-                /* TODO: XXX: TODO:  Determine how to do multipath! */
                 int p = choose_multipath(
-                        port_start[dim][(dist_pos<=dist_neg) ? 0 : 1],
+                        port_start[dim][(go_pos) ? 0 : 1],
                         dim_width[dim],
-                        (dist_pos<=dist_neg)? dist_pos : dist_neg);
+                        (go_pos)? dist_pos : dist_neg);
 
                 tt_ev->setNextPort(p);
 
@@ -144,8 +149,6 @@ topo_torus::route(int port, int vc, internal_router_event* ev)
             }
         }
     }
-    DPRINTF("%d received event on port %d, dest: %d.  Setting next port %d\n",
-            router_id, port, ev->getDest(), ev->getNextPort());
 }
 
 
