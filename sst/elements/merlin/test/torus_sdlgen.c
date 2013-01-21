@@ -20,6 +20,8 @@
 typedef struct params {
     int ndim;
     int *dims;
+    int *dimwidth;
+    int numnodes;
     int peers;
     char link_bw[64];
     char link_lat[64];
@@ -33,12 +35,18 @@ int collect_parameters(FILE *f)
     fprintf(stderr, "Enter the number of dimensions:  ");
     fscanf(f, "%d", &params.ndim);
     params.dims = (int*)calloc(params.ndim, sizeof(int));
+    params.dimwidth = (int*)calloc(params.ndim, sizeof(int));
     params.peers = 1;
     for ( int i = 0 ; i < params.ndim ; i++ ) {
         fprintf(stderr, "Enter size of dimension %d:  ", i);
         fscanf(f, "%d", &params.dims[i]);
+        fprintf(stderr, "Enter number of links in dimension %d:  ", i);
+        fscanf(f, "%d", &params.dimwidth[i]);
         params.peers *= params.dims[i];
     }
+    fprintf(stderr, "Enter number of nodes attached to each router:  ");
+    fscanf(f, "%d", &params.numnodes);
+    params.peers *= params.numnodes;
     fprintf(stderr, "Enter Link Bandwidth  (ie:  1GHz):  ");
     fscanf(f, "%s", params.link_bw);
     fprintf(stderr, "Enter Link Latency  (ie:  10ns):  ");
@@ -48,80 +56,31 @@ int collect_parameters(FILE *f)
 }
 
 
-void idToLoc(int id, int *loc)
+void idToLoc(int router_id, int *loc)
 {
 	for ( int i = params.ndim - 1; i > 0; i-- ) {
 		int div = 1;
 		for ( int j = 0; j < i; j++ ) {
 			div *= params.dims[j];
 		}
-		int value = (id / div);
+		int value = (router_id / div);
 		loc[i] = value;
-		id -= (value * div);
+		router_id -= (value * div);
 	}
-	loc[0] = id;
+	loc[0] = router_id;
 }
 
 
 
-void format_id(int id, int port, int isSrc, char **P)
+void formatLoc(int *dims, char *buf)
 {
-    static int *loc = NULL;
-    if ( loc == NULL ) loc = (int*)calloc(params.ndim, sizeof(int));
-    idToLoc(id, loc);
-
-    int posDirection = !( port & 1 );
-    int dim = port / 2;
-
-    if ( posDirection ) {
-        if ( !isSrc ) {
-            loc[dim] = (loc[dim] + 1) % params.dims[dim];
-        }
-    } else {
-        if ( isSrc ) {
-            loc[dim] = (loc[dim] - 1 + params.dims[dim]) % params.dims[dim];
-        }
+    char *p = buf;
+    p += sprintf(buf, "%d", dims[0]);
+    for ( int i = 1 ; i < params.ndim ; i++ ) {
+        p += sprintf(p, "x%d", dims[i]);
     }
-
-    char *p = *P;
-    p += sprintf(p, "%d", loc[0]);
-    for ( int i = 1 ; i < params.ndim ; i++ )
-        p += sprintf(p, "x%d", loc[i]);
-
-    *P = p;
 }
 
-
-char *portName(int id, int port)
-{
-    static char pName[256];
-    memset(pName, '\0', 256);
-    char *p = pName;
-    *p++ = 'l';
-    *p++ = 'i';
-    *p++ = 'n';
-    *p++ = 'k';
-    *p++ = '_';
-    format_id(id, port, 1, &p);
-    *p++ = '_';
-    format_id(id, port, 0, &p);
-
-    return pName;
-}
-
-char *routerName(int id)
-{
-    static char rName[256];
-    memset(rName, '\0', 256);
-    char *p = rName;
-    *p++ = 'r';
-    *p++ = 't';
-    *p++ = 'r';
-    *p++ = '.';
-    format_id(id, 0, 0, &p);
-
-    return rName;
-}
 
 int
 main(int argc, char **argv)
@@ -149,7 +108,11 @@ main(int argc, char **argv)
 
     fprintf(output, "  <rtr_params>\n");
     fprintf(output, "    <debug> 0 </debug>\n");
-    fprintf(output, "    <num_ports> %d </num_ports>\n", 2*params.ndim +1);
+    int num_rtr_ports = 0;
+    for ( int d = 0 ; d < params.ndim ; d++ ) {
+        num_rtr_ports += 2 * params.dimwidth[d];
+    }
+    fprintf(output, "    <num_ports> %d </num_ports>\n", num_rtr_ports + params.numnodes);
     fprintf(output, "    <num_vcs> 2 </num_vcs>\n");
     fprintf(output, "    <link_bw> %s </link_bw>\n", params.link_bw);
     fprintf(output, "    <topology> torus </topology>\n");
@@ -158,6 +121,13 @@ main(int argc, char **argv)
     for ( int i = 1 ; i < params.ndim ; i++ )
         fprintf(output, "x%d", params.dims[i]);
     fprintf(output, " </torus:shape>\n");
+
+    fprintf(output, "    <torus:width> %d",  params.dimwidth[0]);
+    for ( int i = 1 ; i < params.ndim ; i++ )
+        fprintf(output, "x%d", params.dimwidth[i]);
+    fprintf(output, " </torus:width>\n");
+
+    fprintf(output, "    <torus:local_ports> %d </torus:local_ports>\n", params.numnodes);
 
     fprintf(output, "  </rtr_params>\n");
     fprintf(output, "\n");
@@ -173,27 +143,61 @@ main(int argc, char **argv)
     fprintf(output, "<sst>\n");
 
 
-    for ( int i = 0 ; i < params.peers ; i++ ) {
-        fprintf(output, "  <component name=%s type=merlin.hr_router>\n", routerName(i));
+    int num_routers = params.peers / params.numnodes;
+    int *mydims = (int*)calloc(params.ndim, sizeof(int));
+    int *theirdims = (int*)calloc(params.ndim, sizeof(int));
+
+    for ( int i = 0 ; i < num_routers ; i++ ) {
+        idToLoc(i, mydims);
+
+        char mylocstr[256], otherlocstr[256];
+        formatLoc(mydims, mylocstr);
+
+        fprintf(output, "  <component name=rtr.%s type=merlin.hr_router>\n", mylocstr);
         fprintf(output, "    <params include=rtr_params>\n");
         fprintf(output, "      <id> %d </id>\n", i);
         fprintf(output, "    </params>\n");
-        for ( int p = 0 ; p < (2*params.ndim) ; p++ ) {
-            fprintf(output, "    <link name=%s port=port%d latency=%s />\n",
-                    portName(i, p), p, params.link_lat);
+
+        int port = 0;
+        for ( int dim = 0 ; dim < params.ndim ; dim++ ) {
+            memcpy(theirdims, mydims, sizeof(int) * params.ndim);
+
+            /* Positive direction */
+            theirdims[dim] = (mydims[dim] + 1) % params.dims[dim];
+            formatLoc(theirdims, otherlocstr);
+            for ( int num = 0 ; num < params.dimwidth[dim] ; num++ ) {
+                fprintf(output, "    <link name=link.%s:%s:%d port=port%d latency=%s />\n",
+                        mylocstr, otherlocstr, num, port++, params.link_lat);
+            }
+
+            /* Negative direction */
+            theirdims[dim] = ((mydims[dim] - 1) + params.dims[dim]) % params.dims[dim];
+            formatLoc(theirdims, otherlocstr);
+            for ( int num = 0 ; num < params.dimwidth[dim] ; num++ ) {
+                fprintf(output, "    <link name=link.%s:%s:%d port=port%d latency=%s />\n",
+                        otherlocstr, mylocstr, num, port++, params.link_lat);
+            }
         }
-        fprintf(output, "    <link name=nic%d port=port%d latency=%s />\n",
-                i, 2*params.ndim, params.link_lat);
+
+        for ( int n = 0 ; n < params.numnodes ; n++ ) {
+            fprintf(output, "    <link name=nic.%d:%d port=port%d latency=%s />\n",
+                    i, n, port++, params.link_lat);
+        }
         fprintf(output, "  </component>\n");
         fprintf(output, "\n");
-        fprintf(output, "  <component name=%d.nic type=merlin.test_nic>\n", i);
-        fprintf(output, "    <params include=nic_params>\n");
-        fprintf(output, "      <id> %d </id>\n", i);
-        fprintf(output, "    </params>\n");
-        fprintf(output, "    <link name=nic%d port=rtr latency=%s />\n",
-                i, params.link_lat);
-        fprintf(output, "  </component>\n");
-        fprintf(output, "\n");
+
+        for ( int n = 0 ; n < params.numnodes ; n++ ) {
+            int nodeID = params.numnodes*i + n;
+
+            fprintf(output, "  <component name=nic.%s-%d type=merlin.test_nic>\n", mylocstr, n);
+            fprintf(output, "    <params include=nic_params>\n");
+            fprintf(output, "      <id> %d </id>\n", nodeID);
+            fprintf(output, "    </params>\n");
+            fprintf(output, "    <link name=nic.%d:%d port=rtr latency=%s />\n",
+                    i, n, params.link_lat);
+            fprintf(output, "  </component>\n");
+            fprintf(output, "\n");
+        }
     }
 
     fprintf(output, "\n");
@@ -201,3 +205,9 @@ main(int argc, char **argv)
 
     return 0;
 }
+
+
+
+
+
+
