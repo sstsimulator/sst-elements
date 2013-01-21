@@ -166,6 +166,7 @@ hr_router::clock_handler(Cycle_t cycle)
     // All we need to do is arbitrate the crossbar
     arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
 
+#if 0
     // Do a quick check on results of arbitrate to see if the results are valid
     int* dest_ports = new int[num_ports];
     internal_router_event** events = new internal_router_event*[num_vcs];
@@ -188,6 +189,7 @@ hr_router::clock_handler(Cycle_t cycle)
 	}
     }
     delete dest_ports;
+#endif
     
     // Move the events and decrement the busy values
     for ( int i = 0; i < num_ports; i++ ) {

@@ -33,7 +33,8 @@ private:
 
     int *rr_vcs;
     int rr_port;
-    
+
+    internal_router_event** vc_heads;
 public:
     xbar_arb_rr(int num_ports, int num_vcs) :
 	XbarArbitration(),
@@ -44,9 +45,14 @@ public:
 	for ( int i = 0; i < num_ports; i++ ) {
 	    rr_vcs[i] = 0;
 	}
+	
 	rr_port = 0;
+
+	vc_heads = new internal_router_event*[num_vcs];
     }
-    ~xbar_arb_rr() {}
+    ~xbar_arb_rr() {
+	delete[] vc_heads;
+    }
 
     // Naming convention is from point of view of the xbar.  So,
     // in_port_busy is >0 if someone is writing to that xbar port and
@@ -59,7 +65,6 @@ public:
 	    // if the output of this port is busy, nothing to do.
 	    if ( in_port_busy[port] > 0 ) continue;
 
-	    internal_router_event** vc_heads = new internal_router_event*[num_vcs];
 	    ports[port]->getVCHeads(vc_heads);
 	    
 	    // See what we should progress for this port
