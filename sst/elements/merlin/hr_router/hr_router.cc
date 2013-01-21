@@ -182,7 +182,8 @@ hr_router::clock_handler(Cycle_t cycle)
     for ( int i = 0; i < num_ports; i++ ) {
 	for ( int j = i+1; j < num_ports; j++ ) {
 	    if ( dest_ports[i] == dest_ports[j] ) {
-		std::cout << "ERROR two ports trying to write to same output over xbar" << std::endl;
+		std::cout << "ERROR two ports trying to write to same output over xbar: "
+			  << dest_ports[i] << ", " << dest_ports[j] << std::endl;
 	    }
 	}
     }

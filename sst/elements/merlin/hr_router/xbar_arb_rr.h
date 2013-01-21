@@ -86,8 +86,8 @@ public:
 		progress_vc[port] = vc;
 
 		// Need to set the busy values
-		in_port_busy[next_port] = src_event->getFlitCount();
-		out_port_busy[port] = src_event->getFlitCount();
+		in_port_busy[port] = src_event->getFlitCount();
+		out_port_busy[next_port] = src_event->getFlitCount();
 		break;  // Go to next port;
 	    }
 	    // Increemnt rr_vcs for next time

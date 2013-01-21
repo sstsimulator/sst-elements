@@ -19,7 +19,7 @@
     <num_vcs>    2   </num_vcs>
     <link_bw>  1GHz  </link_bw>
     <packet_size> 10  </packet_size>
-    <packets_to_send> 40 </packets_to_send>
+    <packets_to_send> 5 </packets_to_send>
   </nic_params>
 </param_include>
 
