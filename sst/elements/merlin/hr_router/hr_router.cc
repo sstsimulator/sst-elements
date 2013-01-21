@@ -31,6 +31,17 @@ int hr_router::print_debug = 0;
 
 hr_router::~hr_router()
 {
+    delete [] in_port_busy;
+    delete [] out_port_busy;
+    delete [] progress_vcs;
+
+    for ( int i = 0 ; i < num_ports ; i++ ) {
+        delete ports[i];
+    }
+    delete ports;
+
+    delete topo;
+    delete arb;
 }
 
 hr_router::hr_router(ComponentId_t cid, Params& params) :

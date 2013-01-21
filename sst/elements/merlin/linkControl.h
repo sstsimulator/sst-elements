@@ -161,6 +161,14 @@ public:
 	curr_out_vc = 0;
     }
 
+    ~LinkControl() {
+        delete [] input_buf;
+        delete [] output_buf;
+        delete [] rtr_credits;
+        delete [] in_ret_credits;
+        delete [] outbuf_credits;
+    }
+
     int Setup() {
 	// Need to send the available credits to the other side
 	for ( int i = 0; i < num_vcs; i++ ) {

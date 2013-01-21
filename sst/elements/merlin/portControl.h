@@ -186,6 +186,16 @@ public:
 	curr_out_vc = 0;
     }
 
+    ~PortControl() {
+        delete [] input_buf;
+        delete [] output_buf;
+        delete [] input_buf_count;
+        delete [] output_buf_count;
+        delete [] xbar_in_credits;
+        delete [] port_ret_credits;
+        delete [] port_out_credits;
+    }
+
     int Setup() {
 	// Need to send the available credits to the other side
 	for ( int i = 0; i < num_vcs; i++ ) {

@@ -31,18 +31,18 @@ nic::nic(ComponentId_t cid, Params& params) :
     id = params.find_integer("id");
     if ( id == -1 ) {
     }
-    std::cout << "id: " << id << std::endl;
-    std::cout << "Nic ID:  " << id << " has Component id " << cid << std::endl;
+    std::cout << "id: " << id << "\n";
+    std::cout << "Nic ID:  " << id << " has Component id " << cid << "\n";
 
     num_peers = params.find_integer("num_peers");
     if ( num_peers == -1 ) {
     }
-    std::cout << "num_peers: " << num_peers << std::endl;
+    std::cout << "num_peers: " << num_peers << "\n";
 
     num_vcs = params.find_integer("num_vcs");
     if ( num_vcs == -1 ) {
     }
-    std::cout << "num_vcs: " << num_vcs << std::endl;
+    std::cout << "num_vcs: " << num_vcs << "\n";
 
     std::string link_bw = params.find_string("link_bw");
     if ( link_bw == "" ) {
@@ -65,6 +65,13 @@ nic::nic(ComponentId_t cid, Params& params) :
 
     registerExit();
 
+}
+
+
+nic::~nic()
+{
+    delete link_control;
+    delete [] next_seq;
 }
 
 int
@@ -111,14 +118,6 @@ nic::clock_handler(Cycle_t cycle)
 
             ev->dest = last_target;
             ev->src = id;
-            if ( ev->dest == 4 && id == 6 ) {
-                std::cout << id << " Sending packet " << ev->seq << " to 4" << std::endl;
-                if ( ev->seq == 8 || ev->seq == 7 ) {
-                    ev->setTraceType(RtrEvent::FULL);
-                    ev->setTraceID(ev->seq);
-                }
-            }
-
             ev->vc = 0;
             ev->size_in_flits = 5;
             bool sent = link_control->send(ev,0);
@@ -143,8 +142,6 @@ nic::clock_handler(Cycle_t cycle)
         }
         if ( ev != NULL ) {
             packets_recd++;
-            if ( id == 4 && ev->src == 6 )
-                std::cout << id << " received packet " << ev->seq << " from " << ev->src << std::endl;
             if ( next_seq[ev->src] != ev->seq ) {
                 std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
                 assert(false);

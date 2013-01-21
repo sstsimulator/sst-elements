@@ -47,7 +47,7 @@ private:
 
 public:
     nic(ComponentId_t cid, Params& params);
-    ~nic() {}
+    ~nic();
 
     int Setup();
     int Finish();

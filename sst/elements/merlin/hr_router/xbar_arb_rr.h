@@ -51,7 +51,8 @@ public:
 	vc_heads = new internal_router_event*[num_vcs];
     }
     ~xbar_arb_rr() {
-	delete[] vc_heads;
+	delete [] vc_heads;
+        delete [] rr_vcs;
     }
 
     // Naming convention is from point of view of the xbar.  So,

@@ -38,8 +38,6 @@ topo_torus::topo_torus(Params& params) :
     // and the size of each dimension
     dimensions = std::count(shape.begin(),shape.end(),'x') + 1;
 
-    std::cout << "  dimensions: " << dimensions << std::endl;
-
     dim_size = new int[dimensions];
     dim_width = new int[dimensions];
     port_start = new int[dimensions][2];
@@ -53,8 +51,10 @@ topo_torus::topo_torus(Params& params) :
     } else {
         parseDimString(width, dim_width);
     }
+
+    std::cout << "  dimensions: " << dimensions << "\n";
     for ( int i = 0 ; i < dimensions ; i++ ) {
-        std::cout << "dim[" << i << "] = " << dim_size[i] << " x " << dim_width[i] << std::endl;
+        std::cout << "\tdim[" << i << "] = " << dim_size[i] << " x " << dim_width[i] << "\n";
     }
 
     int next_port = 0;
@@ -90,7 +90,7 @@ topo_torus::topo_torus(Params& params) :
 
 	id_loc = new int[dimensions];
 	idToLocation(router_id, id_loc);
-    std::cout << "Coordinates:\t";
+    std::cout << "  Coordinates:\t";
     for ( int i = 0 ; i < dimensions ; i++ ) {
         std::cout << id_loc[i] << "\t";
     }
@@ -99,9 +99,10 @@ topo_torus::topo_torus(Params& params) :
 
 topo_torus::~topo_torus()
 {
-	delete[] id_loc;
-    delete[] dim_size;
-    delete[] dim_width;
+    delete [] id_loc;
+    delete [] dim_size;
+    delete [] dim_width;
+    delete [] port_start;
 }
 
 void
@@ -200,10 +201,8 @@ topo_torus::parseDimString(std::string &shape, int *output)
         end = shape.find('x',start);
         size_t length = end - start;
         std::string sub = shape.substr(start,length);
-        //std::cout << "Substring: " << sub << std::endl;
         output[i] = strtol(sub.c_str(), NULL, 0);
         start = end + 1;
-        //std::cout << "    dim_size[" << i << "] = " << dim_size[i] << std::endl;
     }
 }
 
