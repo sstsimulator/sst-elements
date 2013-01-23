@@ -79,6 +79,19 @@ public:
   ~macro_parameters()
   {
   }
+	
+	virtual sstmac::sim_parameters::ptr
+    clone(){
+		return construct(params_);
+	}
+	
+	virtual void print_params(std::ostream& os = std::cerr) const {
+		SST::Component::Params_t::const_iterator it, end = params_.end();
+		for(it = params_.begin(); it != end; it++){
+				os << it->first << " = " << it->second << "\n";
+		}
+		
+	}
 
 protected:
   SST::Component::Params_t params_;

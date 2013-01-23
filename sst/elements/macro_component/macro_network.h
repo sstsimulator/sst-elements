@@ -50,8 +50,8 @@ class macro_network : public SST::Component, public eventmanager_interface
 
       sstMessageEvent *done = new sstMessageEvent();
       done->data_ = msg;
-      done->toaddr_ = msg->toaddr_;
-      done->fromaddr_ = msg->fromaddr_;
+      done->toaddr_ = msg->toaddr();
+      done->fromaddr_ = msg->fromaddr();
       done->bytes_ = msg->get_byte_length();
 
      // macro_address::ptr madd = boost::dynamic_pointer_cast<macro_address>(
@@ -63,7 +63,7 @@ class macro_network : public SST::Component, public eventmanager_interface
     }
 
     virtual std::string
-    toString() const
+    to_string() const
     {
       return "macro_network::message_recv_handler";
     }

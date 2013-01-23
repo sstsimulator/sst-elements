@@ -16,7 +16,7 @@
 #include <sstmac/common/eventmanager.h>
 
 #include <sst/core/sst_types.h>
-#include        <sst/core/serialization/element.h>
+//#include        <sst/core/serialization/element.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -58,6 +58,25 @@ public:
 
 };
 
+class ScheduleEvent2 : public SST::Event
+{
+public:
+	sstmac::event::ptr event_;
+	
+	ScheduleEvent2() :
+	SST::Event()
+	{
+	}
+	
+	virtual void
+	print(const std::string& header) const
+	{
+		std::cout << header << "macro_processor::ScheduleEvent2 " << " with event "
+        << event_->to_string() << std::endl;
+	}
+	
+};
+
 class fakeeventmanager : public sstmac::eventmanager
 {
   eventmanager_interface *parent_;
@@ -91,7 +110,7 @@ public:
   }
 
 	virtual void
-	cancel_all_messages(const boost::intrusive_ptr<sstmac::eventhandler>&){
+	cancel_all_messages(const sstmac::eventmodulePtr& mod){
 		
 	}
 	
@@ -111,6 +130,43 @@ public:
 	void
 	update(const sstmac::timestamp &t){
 		set_now(t);
+	}
+	
+	virtual void
+	schedule(const sstmac::timestamp& start_time,
+             const sstmac::event::ptr& event){
+		
+		 ScheduleEvent2 *evt = new ScheduleEvent2();
+		evt->event_ = event;
+		
+		if (!parent_)
+		{
+			//sst_throw(sstmac::ssterror, "fakeeventmanager::schedule - parent not set");
+			throw sstmac::ssterror("fakeeventmanager::schedule - parent not set");
+		}
+		
+		SST::SimTime_t delay = start_time.psec() - parent_->now().psec();
+		
+		if (start_time.psec() < parent_->now().psec())
+		{
+			std::cout << "now: " << parent_->now() << "\n";
+			std::cout << "start time: " << start_time << "\n";
+			
+			//exit(1);
+			
+			// sst_throw(sstmac::sst_error, "doh");
+			//  sstmac::sst_throw(sstmac::sst_error,
+			//    "fakeeventmanager: now=%s, tried to schedule to %s. doh!", parent_->now().pse(), start_time.psec());
+			throw sstmac::ssterror("doh");
+			// delay = 0;
+		}
+		
+		//  std::cout << "fakeeventmanager: scheudling message with delay " << delay << "\n";
+		
+		
+		
+		parent_->get_self_event_link()->Send(delay, evt);
+		
 	}
 
   /// Set off the given eventhandler at the given time.

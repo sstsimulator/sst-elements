@@ -34,7 +34,7 @@
 
 //#include <sst/core/event.h>
 #include <sst/core/sst_types.h>
-#include        <sst/core/serialization/element.h>
+//#include        <sst/core/serialization/element.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -135,8 +135,8 @@ protected:
 			sstMessageEvent* msg = new sstMessageEvent();
 			
 			msg->bytes_ = payload->get_byte_length();
-			msg->toaddr_ = payload->toaddr_;
-			msg->fromaddr_ = payload->fromaddr_;
+			msg->toaddr_ = payload->toaddr();
+			msg->fromaddr_ = payload->fromaddr();
 			msg->data_ = payload;
 			
 			sstmac::timestamp ts = parent_->now();
