@@ -40,7 +40,7 @@ public:
 class topo_torus: public Topology {
 
     int router_id;
-	int* id_loc;
+    int* id_loc;
 
     int dimensions;
     int* dim_size;

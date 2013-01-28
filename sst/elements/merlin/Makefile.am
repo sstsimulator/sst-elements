@@ -17,6 +17,7 @@ libmerlin_la_SOURCES = \
 	test/pt2pt/pt2pt_test.h \
 	test/pt2pt/pt2pt_test.cc \
 	topology/torus.cc \
+	topology/fattree.cc \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_rr.h

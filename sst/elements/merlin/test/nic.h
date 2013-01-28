@@ -28,7 +28,14 @@ class LinkControl;
 class nic : public Component {
 
 private:
+
+    enum AddressMode { SEQUENTIAL, FATTREE_IP };
+
+    AddressMode addressMode;
+
     int id;
+    int ft_loading;
+    int ft_radix;
     int num_peers;
     int num_vcs;
     int last_vc;
@@ -55,7 +62,8 @@ public:
 
 private:
     bool clock_handler(Cycle_t cycle);
-    
+    int fattree_ID_to_IP(int id);
+    int IP_to_fattree_ID(int id);
 };
 
 #endif // COMPONENTS_MERLIN_TEST_NIC_H

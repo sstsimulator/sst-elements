@@ -49,7 +49,14 @@ nic::nic(ComponentId_t cid, Params& params) :
     }
     std::cout << "link_bw: " << link_bw << std::endl;
     TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
-    
+
+    addressMode = SEQUENTIAL;
+
+    if ( !params.find_string("topology").compare("fattree") ) {
+        addressMode = FATTREE_IP;
+        ft_loading = params.find_integer("fattree:loading");
+        ft_radix = params.find_integer("fattree:radix");
+    }
 
     // Create a LinkControl object
     int buf_size[2] = {100, 100};
@@ -116,13 +123,21 @@ nic::clock_handler(Cycle_t cycle)
 
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
 
-            ev->dest = last_target;
-            ev->src = id;
+            switch ( addressMode ) {
+            case SEQUENTIAL:
+                ev->dest = last_target;
+                ev->src = id;
+                break;
+            case FATTREE_IP:
+                ev->dest = fattree_ID_to_IP(last_target);
+                ev->src = fattree_ID_to_IP(id);
+                break;
+            }
             ev->vc = 0;
             ev->size_in_flits = 5;
             bool sent = link_control->send(ev,0);
             assert( sent );
-    //        std::cout << cycle << ": " << id << " sent packet to " << ev->dest << std::endl;
+     //       std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
             packets_sent++;
             if ( packets_sent == expected_recv_count ) {
                 std::cout << cycle << ":  " << id << " Finished sending packets" << std::endl;
@@ -142,11 +157,13 @@ nic::clock_handler(Cycle_t cycle)
         }
         if ( ev != NULL ) {
             packets_recd++;
-            if ( next_seq[ev->src] != ev->seq ) {
-                std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
+            int src = (addressMode == FATTREE_IP) ? IP_to_fattree_ID(ev->src) : ev->src;
+    //            std::cout << id << " received packet " << ev->seq << " from " << ev->src  << std::endl;
+            if ( next_seq[src] != ev->seq ) {
+                std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[src] << std::endl;
                 assert(false);
             }
-            next_seq[ev->src]++;
+            next_seq[src]++;
             //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             break;
@@ -154,4 +171,49 @@ nic::clock_handler(Cycle_t cycle)
     }
 
     return false;
+}
+
+
+int nic::fattree_ID_to_IP(int id)
+{
+    union Addr {
+        uint8_t x[4];
+        int32_t s;
+    };
+
+    Addr addr;
+
+    int edge_switch = (id / ft_loading);
+    int pod = edge_switch / (ft_radix/2);
+    int subnet = edge_switch % (ft_radix/2);
+
+    addr.x[0] = 10;
+    addr.x[1] = pod;
+    addr.x[2] = subnet;
+    addr.x[3] = 2 + (id % ft_loading);
+
+#if 0
+    printf("Converted NIC id %d to %u.%u.%u.%u.\n", id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]\n");
+#endif
+
+    return addr.s;
+}
+
+
+int nic::IP_to_fattree_ID(int ip)
+{
+    union Addr {
+        uint8_t x[4];
+        int32_t s;
+    };
+
+    Addr addr;
+    addr.s = ip;
+
+    int id = 0;
+    id += addr.x[1] * (ft_radix/2) * ft_loading;
+    id += addr.x[2] * ft_loading;
+    id += addr.x[3] -2;
+
+    return id;
 }
