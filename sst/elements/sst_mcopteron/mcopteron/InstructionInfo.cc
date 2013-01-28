@@ -1,7 +1,13 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <malloc.h>
+#ifdef __APPLE__
+  #ifdef __MACH__
+    #include <sys/malloc.h>
+  #endif
+#else
+  #include <malloc.h>
+#endif
 
 #include "InstructionInfo.h"
 
