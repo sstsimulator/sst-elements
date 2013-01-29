@@ -2,9 +2,9 @@
 #include <string.h>
 #include <stdio.h>
 #ifdef __APPLE__
-  #ifdef __MACH__
+  //#ifdef __MACH__
     #include <sys/malloc.h>
-  #endif
+  //#endif
 #else
   #include <malloc.h>
 #endif
