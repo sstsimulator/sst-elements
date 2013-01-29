@@ -23,7 +23,7 @@
 #include <sstmac/hardware/node/simplenode.h>
 #include <sstmac/common/driver_util.h>
 #include <sstmac/software/services/launch/instantlaunch.h>
-#include <sstmac/software/libraries/mpi/mpi_queue/mpiqueue.h>
+//#include <sstmac/software/libraries/mpi/mpi_queue/mpiqueue.h>
 #include <sstmac/common/factories/nic_factory.h>
 #include <sstmac/common/factories/node_factory.h>
 

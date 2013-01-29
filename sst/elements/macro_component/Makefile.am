@@ -5,17 +5,15 @@
 if USE_SSTMACRO
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) 
-
-#	$(MPI_CPPFLAGS)
+	$(BOOST_CPPFLAGS) \
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmacro_component.la
 libmacro_component_la_CPPFLAGS = $(BOOST_CPPFLAGS) \
 	$(shell $(SSTMACRO_CONFIG_TOOL) --cppflags) -O0 -g \
-	$(SSTMACRO_CPPFLAGS)
-
-#    	$(MPI_CPPFLAGS)
+	$(SSTMACRO_CPPFLAGS) \
+    	$(MPI_CPPFLAGS)
 
 libmacro_component_la_SOURCES = \
 macro_component.cc \
