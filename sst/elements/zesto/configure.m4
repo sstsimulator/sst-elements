@@ -24,8 +24,9 @@ AC_DEFUN([SST_zesto_CONFIG], [
 
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([qsim-client.h], [], [happy="no"])
+  LIBS="$LIBS -ldl"
   AC_CHECK_LIB([qsim], [qsim_present], 
-    [QSIM_LIB="-lqsim -lqsim-client"], [happy="no"])
+    [QSIM_LIB="-lqsim -lqsim-client -ldl"], [happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"

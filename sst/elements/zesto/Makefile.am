@@ -11,28 +11,28 @@ comp_LTLIBRARIES = libzesto.la
 
 libzesto_la_SOURCES = \
 	core/simplescalar/elf.h \
-	core/simplescalar/endian.c \
+	core/simplescalar/endian.cpp \
 	core/simplescalar/endian.h \
-	core/simplescalar/eval.c \
+	core/simplescalar/eval.cpp \
 	core/simplescalar/eval.h \
 	core/simplescalar/host.h \
 	core/simplescalar/loader.h \
-	core/simplescalar/machine.c \
+	core/simplescalar/machine.cpp \
 	core/simplescalar/machine.h \
-	core/simplescalar/memory.c \
+	core/simplescalar/memory.cpp \
 	core/simplescalar/memory.h \
-	core/simplescalar/misc.c \
+	core/simplescalar/misc.cpp \
 	core/simplescalar/misc.h \
-	core/simplescalar/options.c \
+	core/simplescalar/options.cpp \
 	core/simplescalar/options.h \
-	core/simplescalar/range.c \
+	core/simplescalar/range.cpp \
 	core/simplescalar/range.h \
-	core/simplescalar/regs.c \
+	core/simplescalar/regs.cpp \
 	core/simplescalar/regs.h \
 	core/simplescalar/sim.h \
-	core/simplescalar/stats.c \
+	core/simplescalar/stats.cpp \
 	core/simplescalar/stats.h \
-	core/simplescalar/symbol.c \
+	core/simplescalar/symbol.cpp \
 	core/simplescalar/symbol.h \
 	core/simplescalar/thread.h \
 	core/simplescalar/version.h \
