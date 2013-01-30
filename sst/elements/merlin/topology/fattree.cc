@@ -154,7 +154,7 @@ Topology::PortState topo_fattree::getPortState(int port)
 {
         if ( rtr_level == 1 ) {
             if ( port < edge_loading ) return R2N;
-            else if ( port > (num_ports/2) ) return R2R;
+            else if ( port >= (num_ports/2) ) return R2R;
             else return UNCONNECTED;
         } else {
             return R2R;

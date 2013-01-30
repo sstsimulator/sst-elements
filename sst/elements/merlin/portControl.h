@@ -171,15 +171,23 @@ public:
 	for ( int i = 0; i < vcs; i++ ) port_out_credits[i] = 0;
 
 	// Configure the links
-	host_port = topo->isHostPort(port_number);
-	if ( host_port ) {
+        switch ( topo->getPortState(port_number) ) {
+        case Topology::R2N:
+            host_port = true;
 	    port_link = rif->configureLink(link_port_name, time_base,
 					   new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
-	}
-	else {
+            break;
+        case Topology::R2R:
+            host_port = false;
 	    port_link = rif->configureLink(link_port_name, time_base,
 					   new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
-	}
+            break;
+        default:
+            host_port = false;
+            port_link = NULL;
+            break;
+        }
+
 	output_timing = rif->configureSelfLink(link_port_name + "_output_timing", time_base,
 					       new Event::Handler<PortControl>(this,&PortControl::handle_output));
 
@@ -197,11 +205,13 @@ public:
     }
 
     int Setup() {
-	// Need to send the available credits to the other side
-	for ( int i = 0; i < num_vcs; i++ ) {
-	    port_link->Send(1,new credit_event(i,port_ret_credits[i]));
-	    port_ret_credits[i] = 0;
-	}
+        if ( topo->getPortState(port_number) != Topology::UNCONNECTED ) {
+            // Need to send the available credits to the other side
+            for ( int i = 0; i < num_vcs; i++ ) {
+                port_link->Send(1,new credit_event(i,port_ret_credits[i]));
+                port_ret_credits[i] = 0;
+            }
+        }
 	return 0;
     }
 
