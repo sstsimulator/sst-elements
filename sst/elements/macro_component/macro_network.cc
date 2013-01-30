@@ -95,9 +95,16 @@ macro_network::handle_proc_event(Event *evt)
 {
 	//std::cout << "macro_network: handle_proc_event \n";
 	fem_->update(now());
-  ScheduleEvent *event = dynamic_cast<ScheduleEvent*>(evt);
-  event->handler_->handle(event->msg_);
-  delete event;
+	ScheduleEvent *event = dynamic_cast<ScheduleEvent*>(evt);
+	if(!event){
+		ScheduleEvent2 *ev2 = dynamic_cast<ScheduleEvent2*>(evt);
+		if(ev2){
+			ev2->event_->execute();
+		}
+	}else{
+		event->handler_->handle(event->msg_);
+	}
+	delete event;
 }
 
 // incoming events are scanned and deleted

@@ -63,6 +63,7 @@ public:
 
 protected:
 	
+	static bool nodeid_init_;
 	sstmac::timestamp now_;
 
   SST::Link* outgate;

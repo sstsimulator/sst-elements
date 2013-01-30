@@ -43,11 +43,17 @@ using namespace sstmac::hw;
 debug macro_processor::dbg_;
 bool macro_processor::debug_init_ = false;
 bool macro_processor::timeinit_ = false;
+bool macro_processor::nodeid_init_ = false;
 
 macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
     Component(id)
 {
 
+	if(!nodeid_init_){
+		sstmac::native::nodeid::init_statics();
+		nodeid_init_ = true;
+	}
+	
 	nodeaddress::ptr dummy = sstmac::native::nodeid::construct(-1);
 	
 	
@@ -177,7 +183,14 @@ macro_processor::handle_proc_event(Event *evt)
       evt->print("macro_processor:");
     }
   ScheduleEvent *event = dynamic_cast<ScheduleEvent*>(evt);
-  event->handler_->handle(event->msg_);
+	if(!event){
+		ScheduleEvent2 *ev2 = dynamic_cast<ScheduleEvent2*>(evt);
+		if(ev2){
+			ev2->event_->execute();
+		}
+	}else{
+		event->handler_->handle(event->msg_);
+	}
   delete event;
 }
 

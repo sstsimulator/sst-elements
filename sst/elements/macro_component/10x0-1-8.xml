@@ -20,7 +20,7 @@ run-mode=both
 		<node_frequency>1e9</node_frequency>
 		<node_num>10</node_num>
 		<nic_name>simple</nic_name>
-		<logging_string>app,launch,mpicheck,all</logging_string>
+		<logging_string>app,launch,mpicheck</logging_string>
 	</node_params>
 	<app_params>
 		<launch_name>instant</launch_name>
