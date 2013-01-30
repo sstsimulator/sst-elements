@@ -72,7 +72,7 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
-    virtual bool isHostPort(int port);
+    virtual PortState getPortState(int port);
 
 
 private:

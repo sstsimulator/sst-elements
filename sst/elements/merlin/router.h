@@ -96,12 +96,14 @@ public:
 
 class Topology {
 public:
+    enum PortState {R2R, R2N, UNCONNECTED};
     Topology() {}
     virtual ~Topology() {}
-    
+
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
-    virtual bool isHostPort(int port) = 0;
+    virtual PortState getPortState(int port) = 0;
+    bool isHostPort(int port) { return getPortState(port) == R2N; }
 };
 
 class PortControl;

@@ -150,9 +150,13 @@ internal_router_event* topo_fattree::process_input(RtrEvent* ev)
 }
 
 
-bool topo_fattree::isHostPort(int id)
+Topology::PortState topo_fattree::getPortState(int port)
 {
-    return ( rtr_level == 1 && id < edge_loading );
+        if ( rtr_level == 1 ) {
+            if ( port < edge_loading ) return R2N;
+            else if ( port > (num_ports/2) ) return R2R;
+            else return UNCONNECTED;
+        } else {
+            return R2R;
+        }
 }
-
-

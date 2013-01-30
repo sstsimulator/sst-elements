@@ -169,11 +169,11 @@ topo_torus::process_input(RtrEvent* ev)
 }
 
 
-bool
-topo_torus::isHostPort(int port)
+Topology::PortState
+topo_torus::getPortState(int port)
 {
-    if (port >= local_port_start) return true;
-    return false;
+    if (port >= local_port_start) return R2N;
+    return R2R;
 }
 
 
