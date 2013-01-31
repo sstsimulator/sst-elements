@@ -127,8 +127,16 @@ public:
 	}
 
 	dataVec& getPayload(void) { return payload; }
-	void setPayload(uint32_t size, uint8_t *data);
-	void setPayload(std::vector<uint8_t> &data);
+	void setPayload(uint32_t size, uint8_t *data) {
+		setSize(size);
+		for ( uint32_t i = 0 ; i < size ; i++ ) {
+			payload[i] = data[i];
+		}
+	}
+	void setPayload(std::vector<uint8_t> &data) {
+		setSize(data.size());
+		payload = data;
+	}
 
 	const std::string& getSrc(void) const { return src; }
 	void setSrc(const std::string &s) { src = s; }
@@ -185,10 +193,12 @@ private:
 		ar & BOOST_SERIALIZATION_NVP(event_id);
 		ar & BOOST_SERIALIZATION_NVP(response_to_id);
 		ar & BOOST_SERIALIZATION_NVP(addr);
+		ar & BOOST_SERIALIZATION_NVP(size);
 		ar & BOOST_SERIALIZATION_NVP(cmd);
 		ar & BOOST_SERIALIZATION_NVP(payload);
 		ar & BOOST_SERIALIZATION_NVP(src);
 		ar & BOOST_SERIALIZATION_NVP(dst);
+		ar & BOOST_SERIALIZATION_NVP(flags);
 	}
 };
 

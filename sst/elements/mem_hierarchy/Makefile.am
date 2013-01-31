@@ -14,7 +14,6 @@ libmemHierarchy_la_SOURCES = \
 	cache.h \
 	cache.cc \
 	memEvent.h \
-	memEvent.cc \
 	memTypes.h \
 	trivialCPU.h \
 	trivialCPU.cc \
@@ -22,6 +21,7 @@ libmemHierarchy_la_SOURCES = \
 	trivialMemory.cc \
 	memController.h \
 	memController.cc \
+	gem5_translator.h \
 	libmemHierarchy.cc
 
 EXTRA_DIST = makeSDL.pl
