@@ -170,7 +170,7 @@ topo_torus::process_input(RtrEvent* ev)
 
 
 Topology::PortState
-topo_torus::getPortState(int port)
+topo_torus::getPortState(int port) const
 {
     if (port >= local_port_start) return R2N;
     return R2R;
@@ -178,7 +178,7 @@ topo_torus::getPortState(int port)
 
 
 void
-topo_torus::idToLocation(int run_id, int *location)
+topo_torus::idToLocation(int run_id, int *location) const
 {
 	for ( int i = dimensions - 1; i > 0; i-- ) {
 		int div = 1;
@@ -193,7 +193,7 @@ topo_torus::idToLocation(int run_id, int *location)
 }
 
 void
-topo_torus::parseDimString(std::string &shape, int *output)
+topo_torus::parseDimString(const std::string const &shape, int *output) const
 {
     size_t start = 0;
     size_t end = 0;
@@ -208,13 +208,13 @@ topo_torus::parseDimString(std::string &shape, int *output)
 
 
 int
-topo_torus::get_dest_router(int dest_id)
+topo_torus::get_dest_router(int dest_id) const
 {
     return dest_id / num_local_ports;
 }
 
 int
-topo_torus::get_dest_local_port(int dest_id)
+topo_torus::get_dest_local_port(int dest_id) const
 {
     return local_port_start + (dest_id % num_local_ports);
 }

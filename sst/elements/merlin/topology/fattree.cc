@@ -103,7 +103,7 @@ void topo_fattree::buildRouteTable(void)
 }
 
 
-void topo_fattree::printRouteTable(FILE *fp)
+void topo_fattree::printRouteTable(FILE *fp) const
 {
     fprintf(fp, "Route Table:\n");
     fprintf(fp, "%4s  %15s  %15s\n", "Port", "Mask", "Value");
@@ -119,24 +119,24 @@ void topo_fattree::printRouteTable(FILE *fp)
 
 void topo_fattree::route(int port, int vc, internal_router_event* ev)
 {
-    topo_fattree_event *tt_ev = static_cast<topo_fattree_event*>(ev);
-    Addr dest = tt_ev->getDestAddr();
+    Addr dest;
+    dest.s = ev->getDest();
 
-    bool found = false;
+    /* Going in order means that downstream matches (ports 0 - radix/2) will
+     * have priority over upstream.
+     */
     for ( int i = 0 ; i < num_ports ; i++ ) {
         if ( (dest.u & table[i].mask.u) == table[i].value.u ) {
-            tt_ev->setNextPort(i);
-            found = true;
-            break;
+            ev->setNextPort(i);
+            return;
         }
     }
-    if ( !found ) {
-        printf("Router %u.%u.%u.%u Unable to match address %u.%u.%u.%u!\n",
-                my_address.x[0], my_address.x[1], my_address.x[2], my_address.x[3],
-                dest.x[0], dest.x[1], dest.x[2], dest.x[3]);
-        printRouteTable(stdout);
-        _abort(topo_fattree, "Aborting!\n");
-    }
+    /* Should only make it here if nothing matched.  That's not a good condition */
+    printf("Router %u.%u.%u.%u Unable to match address %u.%u.%u.%u!\n",
+            my_address.x[0], my_address.x[1], my_address.x[2], my_address.x[3],
+            dest.x[0], dest.x[1], dest.x[2], dest.x[3]);
+    printRouteTable(stdout);
+    _abort(topo_fattree, "Aborting!\n");
 
 }
 
@@ -144,13 +144,11 @@ void topo_fattree::route(int port, int vc, internal_router_event* ev)
 
 internal_router_event* topo_fattree::process_input(RtrEvent* ev)
 {
-    topo_fattree_event* tt_ev = new topo_fattree_event(ev);
-
-    return tt_ev;
+    return new internal_router_event(ev);
 }
 
 
-Topology::PortState topo_fattree::getPortState(int port)
+Topology::PortState topo_fattree::getPortState(int port) const
 {
         if ( rtr_level == 1 ) {
             if ( port < edge_loading ) return R2N;

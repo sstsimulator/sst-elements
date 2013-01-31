@@ -57,16 +57,16 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
-    virtual PortState getPortState(int port);
+    virtual PortState getPortState(int port) const;
 
 protected:
     virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
 
 private:
-	void idToLocation(int id, int *location);
-    void parseDimString(std::string &shape, int *output);
-    int get_dest_router(int dest_id);
-    int get_dest_local_port(int dest_id);
+    void idToLocation(int id, int *location) const;
+    void parseDimString(const std::string const &shape, int *output) const;
+    int get_dest_router(int dest_id) const;
+    int get_dest_local_port(int dest_id) const;
 };
 
 #endif // COMPONENTS_MERLIN_TOPOLOGY_TORUS_H

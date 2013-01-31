@@ -39,21 +39,6 @@ class topo_fattree: public Topology {
     };
 
 
-    class topo_fattree_event : public internal_router_event {
-
-    public:
-        Addr destaddr;
-
-        topo_fattree_event(RtrEvent *ev)
-        {
-            setEncapsulatedEvent(ev);
-            destaddr.s = getDest();
-        }
-        ~topo_fattree_event() { }
-        Addr getDestAddr() { return destaddr; }
-    };
-
-
     int router_id;
     int rtr_level;
     int edge_loading;
@@ -64,7 +49,7 @@ class topo_fattree: public Topology {
 
 
     void buildRouteTable(void);
-    void printRouteTable(FILE *fp);
+    void printRouteTable(FILE *fp) const;
 
 public:
     topo_fattree(Params& params);
@@ -72,7 +57,7 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
-    virtual PortState getPortState(int port);
+    virtual PortState getPortState(int port) const;
 
 
 private:

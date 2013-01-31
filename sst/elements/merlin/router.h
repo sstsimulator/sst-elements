@@ -102,8 +102,8 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
-    virtual PortState getPortState(int port) = 0;
-    bool isHostPort(int port) { return getPortState(port) == R2N; }
+    virtual PortState getPortState(int port) const = 0;
+    inline bool isHostPort(int port) const { return getPortState(port) == R2N; }
 };
 
 class PortControl;
