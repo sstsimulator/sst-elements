@@ -458,7 +458,7 @@ static FUPool* newFUPool( string prefix )
 	opV.push_back( newOpDesc( FloatAddOp, 1, 1, fuName + ".opList0" ) );
 	opV.push_back( newOpDesc( FloatCmpOp, 1, 1, fuName + ".opList1" ) );
 	opV.push_back( newOpDesc( FloatCvtOp, 1, 1, fuName + ".opList2" ) );
-	opV.push_back( newOpDesc( FloatMultOp, 2, 1, fuName + ".opList2" ) );
+	opV.push_back( newOpDesc( FloatMultOp, 2, 1, fuName + ".opList3" ) );
 	fuPool->FUList.push_back( newFUDesc( opV, 16, fuName) );
 
 	// FP_MultDiv  *****************************
