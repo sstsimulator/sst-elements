@@ -123,16 +123,8 @@ nic::clock_handler(Cycle_t cycle)
 
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
 
-            switch ( addressMode ) {
-            case SEQUENTIAL:
-                ev->dest = last_target;
-                ev->src = id;
-                break;
-            case FATTREE_IP:
-                ev->dest = fattree_ID_to_IP(last_target);
-                ev->src = fattree_ID_to_IP(id);
-                break;
-            }
+            ev->dest = last_target;
+            ev->src = id;
             ev->vc = 0;
             ev->size_in_flits = 5;
             bool sent = link_control->send(ev,0);
@@ -157,10 +149,8 @@ nic::clock_handler(Cycle_t cycle)
         }
         if ( ev != NULL ) {
             packets_recd++;
-            int src = (addressMode == FATTREE_IP) ? IP_to_fattree_ID(ev->src) : ev->src;
-    //            std::cout << id << " received packet " << ev->seq << " from " << ev->src  << std::endl;
-            if ( next_seq[src] != ev->seq ) {
-                std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[src] << std::endl;
+            if ( next_seq[ev->src] != ev->seq ) {
+                std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
                 assert(false);
             }
             next_seq[src]++;
