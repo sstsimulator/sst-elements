@@ -108,7 +108,7 @@ nic::clock_handler(Cycle_t cycle)
     int expected_recv_count = (num_peers-1)*num_msg;
 
     if ( !done && (packets_recd >= expected_recv_count) ) {
-        std::cout << "NIC " << id << " received all packets!" << std::endl;
+        std::cout << cycle << ": NIC " << id << " received all packets!" << std::endl;
         unregisterExit();
         done = true;
     }
@@ -183,7 +183,7 @@ int nic::fattree_ID_to_IP(int id)
     addr.x[3] = 2 + (id % ft_loading);
 
 #if 0
-    printf("Converted NIC id %d to %u.%u.%u.%u.\n", id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]\n");
+    printf("Converted NIC id %d to %u.%u.%u.%u.\n", id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]\n);
 #endif
 
     return addr.s;

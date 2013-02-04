@@ -64,7 +64,7 @@ protected:
 
 private:
     void idToLocation(int id, int *location) const;
-    void parseDimString(const std::string const &shape, int *output) const;
+    void parseDimString(const std::string &shape, int *output) const;
     int get_dest_router(int dest_id) const;
     int get_dest_local_port(int dest_id) const;
 };

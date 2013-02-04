@@ -193,7 +193,7 @@ topo_torus::idToLocation(int run_id, int *location) const
 }
 
 void
-topo_torus::parseDimString(const std::string const &shape, int *output) const
+topo_torus::parseDimString(const std::string &shape, int *output) const
 {
     size_t start = 0;
     size_t end = 0;
