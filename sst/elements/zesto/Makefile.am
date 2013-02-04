@@ -2,9 +2,9 @@
 #
 #
 
-if BUILD_ZESTO
-
 CC=$(CXX)
+
+if BUILD_ZESTO
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzesto.la
