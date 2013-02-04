@@ -2,7 +2,7 @@
 #
 #
 
-comp_LTLIBRARIES += libroutermodel.la libroutermodel_power.la
+comp_LTLIBRARIES += libroutermodel.la
 
 libroutermodel_la_SOURCES = \
 		components/routermodel/routermodel.h \
@@ -12,6 +12,7 @@ libroutermodel_la_LDFLAGS = -module -avoid-version
 if USE_MCPAT
 if USE_ORION
 if USE_HOTSPOT
+comp_LTLIBRARIES += libroutermodel_power.la
 
 libroutermodel_power_la_SOURCES = \
 		components/routermodel/routermodel.h \
