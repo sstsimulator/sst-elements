@@ -2,9 +2,10 @@
 #ifndef MEMORYMODEL_H
 #define MEMORYMODEL_H
 
-#include <McSimDefs.h>
-#include <CycleTracker.h>
+#include "McSimDefs.h"
+#include "CycleTracker.h"
 
+namespace McNiagara{
 //-------------------------------------------------------------------
 /// @brief Memory model class
 ///
@@ -90,5 +91,5 @@ class MemoryModel
    unsigned long long numICHits, numIL2Hits, numIMemoryHits, numITLBMisses;
    unsigned long long numSTBHits, numStores, numLoads, numILoads;
 };
-
+}//end namespace McNiagara
 #endif

@@ -1,12 +1,5 @@
 <?xml version="1.0"?>
 
-<!-- This example was taken from the first version of the "cpu" -->
-<!-- component and the "sdl.xml" configuration file that had two -->
-<!-- cpus and two xbars connected to each other. It probably does -->
-<!-- not work anymore since the current build is using the second -->
-<!-- version of the cpu ("cpuV2"). See the cpuV1.cc and cpuV1.h for -->
-<!-- how it was interfaced with SST. -->
-
 <!-- general sim configuration -->
 <!-- overridden by the command line -->
 <config>

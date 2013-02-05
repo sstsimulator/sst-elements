@@ -1,7 +1,7 @@
 
 #ifndef MCSIMDEFS_H
 #define MCSIMDEFS_H
-
+namespace McNiagara{
 typedef unsigned long long InstructionNumber;
 //typedef unsigned long long CycleCount;
 typedef double CycleCount;
@@ -20,5 +20,5 @@ enum StallReason {
 ***/
 
 double my_rand(void);
-
+}//end namespace McNiagara
 #endif

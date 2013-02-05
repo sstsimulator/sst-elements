@@ -1,6 +1,6 @@
 
-#include <Dependency.h>
-
+#include "Dependency.h"
+namespace McNiagara{
 /// @brief Dependency tracker constructor
 ///
 DependencyTracker::DependencyTracker()
@@ -102,3 +102,4 @@ CycleCount DependencyTracker::isDependent(InstructionNumber instructionNum,
    delete d;
    return avail;
 }
+}//end namespace McNiagara

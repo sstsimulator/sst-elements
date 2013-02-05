@@ -2,9 +2,10 @@
 #ifndef DEPENDENCY_H
 #define DEPENDENCY_H
 
-#include <McSimDefs.h>
-#include <CycleTracker.h>
+#include "McSimDefs.h"
+#include "CycleTracker.h"
 
+namespace McNiagara{
 //-------------------------------------------------------------------
 /// @brief Dependency tracker class
 ///
@@ -32,5 +33,5 @@ class DependencyTracker
    Dependency *DepQHead, ///< Dependency list head pointer
               *DepQTail; ///< Dependency list tail pointer
 };
-
+}//end namespace McNiagara
 #endif

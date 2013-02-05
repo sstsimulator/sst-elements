@@ -80,8 +80,7 @@ void Cpu::memoryAccess(OffCpuIF::access_mode mode,
      else
         event->type = MemEvent::MEM_STORE;
      event->address = address + Id();
-     //memLink->Send(getCurrentSimTime(), event);
-     delete event;  // remove this if sending
+     memLink->Send(getCurrentSimTime(), event);
 }
 
 void Cpu::NICAccess(OffCpuIF::access_mode mode, long unsigned int data_size)
@@ -91,10 +90,19 @@ void Cpu::NICAccess(OffCpuIF::access_mode mode, long unsigned int data_size)
 
 
 extern "C" {
-Cpu* mcniagaraAllocComponent( SST::ComponentId_t id, SST::Simulation* sim,
+Cpu* cpuMcNiagaraAllocComponent( SST::ComponentId_t id, SST::Simulation* sim,
                                     SST::Component::Params_t& params )
 {
 //     printf("cpuAllocComponent--> sim = %p\n",sim);
     return new Cpu( id, sim, params );
 }
 }
+
+#if WANT_CHECKPOINT_SUPPORT
+BOOST_CLASS_EXPORT(Cpu)
+
+// BOOST_CLASS_EXPORT_TEMPLATE4( SST::EventHandler,
+//                                 Cpu, bool, SST::Cycle_t, SST::Time_t )
+BOOST_CLASS_EXPORT_TEMPLATE3( SST::EventHandler,
+                                Cpu, bool, SST::Cycle_t)
+#endif

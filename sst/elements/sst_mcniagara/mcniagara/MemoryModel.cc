@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <MemoryModel.h>
+#include "MemoryModel.h"
 
+namespace McNiagara{
 static bool Debug = false;
 
 /// @brief Memory model constructor
@@ -102,9 +103,9 @@ void MemoryModel::initProbabilities(double pSTBHit, double pL1Hit, double pL2Hit
 CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
                                   unsigned int numBytes, CycleTracker::CycleReason *reason)
 {
-   CycleCount satisfiedCycle = currentCycle;
+	CycleCount satisfiedCycle = currentCycle;
 
-   numLoads++;
+	numLoads++;
    purgeMemoryQ(currentCycle); // update mem Q (removes old loads/stores)
 
    // check if an existing load is not yet satisfied
@@ -122,12 +123,12 @@ CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
 
    // Now step through memory hierarchy (including store buffer)
    if (my_rand() <= pSTBHit) { 
-      // Load is satisfied from store buffer
+   	// Load is satisfied from store buffer
       *reason = CycleTracker::LD_STB;
       numSTBHits++;
       satisfiedCycle += Cost::LoadFromSTB; 
    } else if (my_rand() <= pL1Hit) { 
-      // Load is satisfied in L1 cache
+   	// Load is satisfied in L1 cache
       *reason = CycleTracker::L1_CACHE;
       numL1Hits++;
       satisfiedCycle += latencyL1;
@@ -159,12 +160,12 @@ CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
 CycleCount MemoryModel::serveILoad(CycleCount currentCycle, Address address,
                                    unsigned int numBytes, CycleTracker::CycleReason *reason)
 {
-   CycleCount satisfiedCycle = currentCycle;
+	CycleCount satisfiedCycle = currentCycle;
 
-   numILoads++;
-   
-   // JEC: Instruction loads should check for conflicting loads
-   //      from L2 on up, since they share resources
+	numILoads++;
+	
+	// JEC: Instruction loads should check for conflicting loads
+	//      from L2 on up, since they share resources
    purgeMemoryQ(currentCycle); // update mem Q (removes old loads/stores)
 
    // All memops might suffer a TLB miss, so adjust if this happens
@@ -175,7 +176,7 @@ CycleCount MemoryModel::serveILoad(CycleCount currentCycle, Address address,
 
    // Now step through memory hierarchy
    if (my_rand() <= pICHit) { 
-      // Load is satisfied in I cache
+   	// Load is satisfied in I cache
       *reason = CycleTracker::I_CACHE;
       numICHits++;
       //satisfiedCycle += 0;  // no cost to hit i-cache
@@ -358,4 +359,4 @@ void MemoryModel::getStoreStats(unsigned long long *numStores )
 {
    *numStores = this->numStores;
 }
-
+}//end namespace McNiagara

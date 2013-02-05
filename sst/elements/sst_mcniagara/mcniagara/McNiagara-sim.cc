@@ -1,10 +1,17 @@
+#include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+
 #include "McNiagara.h"
 
+namespace McNiagara{
 //#include "inst_prob.h"   // Instruction Special Probabilities
 // NOTE: the inst_prob defs are now read in as a data file
 //       and accessed through the instructionProb[] array
@@ -23,7 +30,6 @@ int McNiagara::sim_cycle(unsigned long current_cycle)
 {
    double d;
    Token token;
-
    // Simulate only for one cycle, if cpu issues
    // multiple instructions in one cycle, this loop
    // will handle them
@@ -164,15 +170,16 @@ int McNiagara::sim_instruction(Token *token)
 {
    CycleCount when_satisfied; //, den;
    CycleCount cur_cpi = 0, latency;
-   unsigned long long next_load, next_fp;
+   unsigned long long next_fp;
+   //unsigned long long next_load, next_fp;
    int dep_distance;
    CycleTracker::CycleReason reason, where;
    CycleCount cycles2;
    
    // following vars need remembered in between instructions
-   static CycleTracker::CycleReason last_ld_reason;
+   //static CycleTracker::CycleReason last_ld_reason;
    static double last_cpi = 0.0;
-   static double last_ld_satisfied = 0.0;
+   //static double last_ld_satisfied = 0.0;
    static double delay_cycles; // cycles required by last branch
 
    // check if insn is in delay slot
@@ -219,14 +226,16 @@ int McNiagara::sim_instruction(Token *token)
 
    // is this a load?
    if (token->type == I_LOAD) {
-
+	//external_if->memoryAccess(OffCpuIF::AM_READ, 0x1000, 9);
       // Call out to external interface module for memory read
       if (my_rand() < 0.000001) {
-         external_if->NICAccess(OffCpuIF::AM_READ, 7);
+	if(Debug>5) cout<<"external_if->NICAccess"<<endl;
+        external_if->NICAccess(OffCpuIF::AM_READ, 7);
       } else {
-         external_if->memoryAccess(OffCpuIF::AM_READ, 0x1000, 9);
+	if(Debug>5) cout<<"external_if->memoryAccess"<<endl;
+	external_if->memoryAccess(OffCpuIF::AM_READ, 0x1000, 9);
       }
-
+      if(Debug>5) cout<<"external_if call success"<<endl;
       n_memops++;
       n_loads++;
       cycles2 = cycles;
@@ -263,13 +272,13 @@ int McNiagara::sim_instruction(Token *token)
       // How far is the consumer?
       dep_distance = sample_hist(ld_use_hist, LD_USE_HIST_LENGTH);
       // How far is the next load?
-      next_load = sample_hist(ld_ld_hist, LD_LD_HIST_LENGTH);
+      //next_load = sample_hist(ld_ld_hist, LD_LD_HIST_LENGTH);
 
       // Add this to the dependency chain
       depTracker.addDependency(tot_insns + dep_distance, cycles, reason);
 
-      last_ld_satisfied = cycles;
-      last_ld_reason = reason;
+      //last_ld_satisfied = cycles;
+      //last_ld_reason = reason;
 
    } else if (token->type == I_STORE) {
 
@@ -450,3 +459,4 @@ int McNiagara::sim_instruction(Token *token)
 
    return 0;
 }
+}//end namespace McNiagara

@@ -26,4 +26,4 @@ BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc
 
 EXTRA_DIST = makeSDL.pl test.xml test30.xml
 
-libscheduler_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
+libscheduler_la_LDFLAGS = -module -avoid-version -L/usr/local/lib64 $(BOOST_LDFLAGS) $(BOOST_FILESYSTEM_LIB) $(BOOST_THREAD_LIB)
