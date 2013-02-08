@@ -2,8 +2,9 @@
 #
 #
 
+if HAVE_STDCXX_0X
 
-AM_CPPFLAGS = -std=c++11 -Wall \
+AM_CPPFLAGS = $(SST_CXX0X_FLAGS) -Wall \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) 
 
@@ -22,3 +23,5 @@ libsst_mcniagara_la_SOURCES = \
 #	mcniagara/readdefs.cc 
 
 libsst_mcniagara_la_LDFLAGS = -module -avoid-version
+
+endif
