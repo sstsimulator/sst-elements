@@ -223,11 +223,16 @@ int InstructionQueue::scheduleInstructions(CycleCount currentCycle)
 ///
 bool InstructionQueue::canHandleInstruction(Token *token, CycleCount atCycle)
 {
-   if (numInstructions >= size ) // full queue
-      return false; 
-   if ((size-nextAvailableSlot) < token->getType()->getMops()) // full queue
-      return false; 
+   if (numInstructions >= size ) {// full queue
+        if(Debug>=5) cerr<<"IQ: full queue >= size"<<endl;
+	return false; 
+   }
+   if ((size-nextAvailableSlot) < token->getType()->getMops()){ // full queue
+      if(Debug>=5) cerr<<"IQ: full queue > size-nextAvailableSlot"<<endl;
+      return false;
+   } 
    // easy int instructions can use any int queue
+   if(Debug>=5) cerr<<"IQ: token=getType()->getCategory()="<<token->getType()->getCategory()<<endl;
    if ((type == INT || type == INTMUL || type == INTSP) &&
        token->getType()->getCategory() == GENERICINT)
        return true;
@@ -240,8 +245,10 @@ bool InstructionQueue::canHandleInstruction(Token *token, CycleCount atCycle)
    // float instructions need the float queue
    else if (type == FLOAT && token->getType()->getCategory() == FLOAT)
        return true;
-   else
+   else{
+      if(Debug>=5)cerr<<"IQ: No Type Match"<<endl;
       return false;
+   }
 }
 
 

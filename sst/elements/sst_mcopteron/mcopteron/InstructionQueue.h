@@ -25,7 +25,7 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 class InstructionQueue
 {
  public:
-   enum QType {INT, INTMUL, INTSP, FLOAT};
+   enum QType {UNKNOWN,INT, INTMUL, INTSP, FLOAT};
    InstructionQueue(QType type, string name, unsigned int id, unsigned int size, unsigned int acceptRate);
    ~InstructionQueue();
    void setNext(InstructionQueue *other);

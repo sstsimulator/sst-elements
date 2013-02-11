@@ -26,8 +26,6 @@ namespace McOpteron{		//Scoggin: Added a namespace to reduce possible conflicts 
 ///
 McOpteron::McOpteron()
 {
-   treatImmAsNone = false;	//Scoggin: Moved this here from global space
-   local_debug=0;		//Scoggin: Added to pass Debug Level around in library form
    totalInstructions = 0;
    currentCycle = 0;
    functionalUnitsHead = 0;
@@ -52,6 +50,20 @@ McOpteron::McOpteron()
    repeatTrace = false;
 	fetchSizeProbabilities = instructionSizeProbabilities = 0; 
    markovModel = 0;
+
+   maxInstrSize=-1;
+   nextAvailableFetch=0;
+   treatImmAsNone = false;	//Scoggin: Moved this here from global space
+   local_debug=0;		//Scoggin: Added to pass Debug Level around in library form
+   fetchBuffSize=-1;
+   fetchBufferIndex=-1;
+   decodeWidth=-1;
+   reorderBuffer=0;
+   fakeIBuffer=0;
+   instructionsPerCycle=0;
+   instructionsPerFetch=0;
+   fetchedBuffer=0;
+   decodeBuffer=0;
 }
 
 
@@ -1434,7 +1446,8 @@ int McOpteron::simCycle()
    	   fetchedBuffer[i] = NULL;  
       }         
       // ROB, ld-st queus, and fetch buffers should all be already cleared at this point
-      nextAvailableFetch = currentCycle + branchMissPenalty; 
+      nextAvailableFetch = currentCycle + branchMissPenalty;
+      if(Debug>=3) cerr<<"  nextAvilableFetch = "<<currentCycle<<" + "<<branchMissPenalty<<" = "<<nextAvailableFetch<<endl; 
    }
    if (Debug>=2) fprintf(stderr, "===Updated reorder buffer===\n");
    // Update load-store queue (must be done after reorder buffer update
@@ -1616,6 +1629,7 @@ int McOpteron::fetchInstructions()
          // be for multiple cycles and so we have to re-use the value of 
          // nextAvailableFetch in the above if statement over multiple calls)
          nextAvailableFetch = memoryModel->serveILoad(currentCycle+1,0,16);
+         if(Debug>=3) cerr<<"nextAvailableFetch = "<<nextAvailableFetch<<endl;
          // generate number of instructions for this fetch 
 			// this is based on fetching up to 32 bytes of code 
 
