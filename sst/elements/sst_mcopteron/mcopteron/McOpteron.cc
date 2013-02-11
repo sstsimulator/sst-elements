@@ -382,7 +382,7 @@ int McOpteron::init(string appDirectory, string definitionFilename,
    string fname;
    Debug=local_debug;		//Scoggin: Added to pass Debug around in library form
    if (Debug>=0) {
-      fprintf(stderr, "\nInitializing McOpteron model....\n");
+      cerr<<endl<<"Initializing McOpteron model...."<<endl;//fprintf(stderr, "\nInitializing McOpteron model....\n");
       if(definitionFilename.size()) 
         cerr<<"Instruction Definition File: "<<definitionFilename<<endl;    
       if(mixFilename.size()) 
@@ -1331,7 +1331,7 @@ int McOpteron::finish(bool printInstMix)
    fprintf(stdout, "Total cycles simulated: %llu\n", currentCycle);
    fprintf(stdout, "Total instructions generated: %llu\n", totalInstructions);
    //fprintf(stdout, "Total instructions retired  : %llu\n", retiredInstructions);
-   fprintf(stdout, "Predicted CPIt: %g\n", currentCPI());
+   fprintf(stdout, "Predicted CPI : %g\n", currentCPI());
    fprintf(stdout, "Measured  CPI : %g\n", measuredCPI);
 
    //fprintf(stdout, "Predicted CPIr: %g\n", (double) currentCycle /
@@ -1355,19 +1355,19 @@ int McOpteron::finish(bool printInstMix)
    }
 
    // deconstruct physical model
-   if (Debug>0) fprintf(stderr,"\nDeleting stuff\n");
+   if (Debug>0) cerr<<endl<<"Deleting stuff"<<endl;//fprintf(stderr,"\nDeleting stuff\n");
    while (instructionQueuesHead) {
       iq = instructionQueuesHead;
       instructionQueuesHead = iq->getNext();
       delete iq;
    }
-   if (Debug>0) fprintf(stderr, ".\n");
+   //if (Debug>0) fprintf(stderr, ".\n");
    while (functionalUnitsHead) {
       fu = functionalUnitsHead;
       functionalUnitsHead = fu->getNext();
       delete fu;
    }
-   if (Debug) fprintf(stderr, ".\n");
+   //if (Debug) fprintf(stderr, ".\n");
 
    delete fetchedBuffer; 
 
