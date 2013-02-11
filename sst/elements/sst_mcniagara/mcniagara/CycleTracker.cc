@@ -10,20 +10,33 @@ namespace McNiagara{
    "Pipe Flush", "STB Full", "Special Loads", 
    "Ld STB", "TLB Miss", "ITLB Miss", 0 };*/
 
-CycleTracker::CycleTracker():cycleReasonNames{
-   "CPI-inh", "I Cache", "L1 Cache", "L2 Cache", "Memory", 
-   "Int Dep", "Int-Use Dep", "Int-DSU Dep", 
-   "FGU Dep", "Branch MisP", "Branch Stall", 
-   "Pipe Flush", "STB Full", "Special Loads", 
-   "Ld STB", "TLB Miss", "ITLB Miss"}
+CycleTracker::CycleTracker()
 {
+	cycleReasonNames.push_back("CPI-inh");
+	cycleReasonNames.push_back("I Cache");
+	cycleReasonNames.push_back("L1 Cache");
+	cycleReasonNames.push_back("L2 Cache");
+	cycleReasonNames.push_back("Memory"); 
+	cycleReasonNames.push_back("Int Dep");
+	cycleReasonNames.push_back("Int-Use Dep");
+	cycleReasonNames.push_back("Int-DSU Dep"); 
+	cycleReasonNames.push_back("FGU Dep");
+	cycleReasonNames.push_back("Branch MisP");
+	cycleReasonNames.push_back("Branch Stall"); 
+	cycleReasonNames.push_back("Pipe Flush");
+	cycleReasonNames.push_back("STB Full");
+	cycleReasonNames.push_back("Special Loads"); 
+	cycleReasonNames.push_back("Ld STB");
+	cycleReasonNames.push_back("TLB Miss");
+	cycleReasonNames.push_back("ITLB Miss");
+
 	int i;
-   categoryCycles = new CycleCount[NUMCYCLEREASONS+1];
-   categoryCount = new unsigned long long[NUMCYCLEREASONS+1];
-   for (i = 0; i <= NUMCYCLEREASONS; i++) {
-      categoryCycles[i] = 0;
-      categoryCount[i] = 0;
-   }
+	categoryCycles = new CycleCount[NUMCYCLEREASONS+1];
+	categoryCount = new unsigned long long[NUMCYCLEREASONS+1];
+	for (i = 0; i <= NUMCYCLEREASONS; i++) {
+		categoryCycles[i] = 0;
+		categoryCount[i] = 0;
+	}
 }
 
 CycleTracker::~CycleTracker()

@@ -2,9 +2,9 @@
 #
 #
 
-if HAVE_STDCXX_0X
+#if HAVE_STDCXX_0X
 
-AM_CPPFLAGS = $(SST_CXX0X_FLAGS) -Wall \
+AM_CPPFLAGS = -Wall \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) 
 
@@ -24,4 +24,4 @@ libsst_mcniagara_la_SOURCES = \
 
 libsst_mcniagara_la_LDFLAGS = -module -avoid-version
 
-endif
+#endif
