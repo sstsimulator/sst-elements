@@ -95,6 +95,7 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
                         (this, &DRAMSimWrap::writeData);
 
     MS_CAST( m_memorySystem )->RegisterCallbacks(readDataCB, writeDataCB, NULL);
+    MS_CAST( m_memorySystem )->setCPUClockSpeed(0U);
 }
 
 DRAMSimWrap::~DRAMSimWrap()
