@@ -37,7 +37,7 @@
 				.
 			</appDirectory>
 			<seed><!-- set random number seed -->
-				100
+				375
 			</seed>
 			<traceFile><!-- use 'name' as input instruction trace file -->
 				mcopteron/trace.txt
