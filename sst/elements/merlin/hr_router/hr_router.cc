@@ -23,6 +23,7 @@
 #include "portControl.h"
 #include "sst/elements/merlin/topology/torus.h"
 #include "sst/elements/merlin/topology/fattree.h"
+#include "sst/elements/merlin/topology/dragonfly.h"
 #include "xbar_arb_rr.h"
 
 
@@ -69,11 +70,14 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::cout << "Topology: " << topology << std::endl;
 
     if ( !topology.compare("torus") ) {
-	std::cout << "Creating new topology: torus" << std::endl;
-	topo = new topo_torus(params);
+        std::cout << "Creating new topology: torus" << std::endl;
+        topo = new topo_torus(params);
     } else if ( !topology.compare("fattree") ) {
-	std::cout << "Creating new topology: fattree" << std::endl;
-	topo = new topo_fattree(params);
+        std::cout << "Creating new topology: fattree" << std::endl;
+        topo = new topo_fattree(params);
+    } else if ( !topology.compare("dragonfly") ) {
+        std::cout << "Creating new topology: dragonfly" << std::endl;
+        topo = new topo_dragonfly(params);
     }
 
     // Get the Xbar arbitration
