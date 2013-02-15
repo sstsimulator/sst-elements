@@ -60,7 +60,7 @@ nic::nic(ComponentId_t cid, Params& params) :
 
     // Create a LinkControl object
     int buf_size[2] = {100, 100};
-    link_control = new LinkControl(this, "rtr", tc, 2, buf_size, buf_size);
+    link_control = new LinkControl(this, "rtr", tc, num_vcs, buf_size, buf_size);
 
     last_target = id;
     next_seq = new int[num_peers];
@@ -123,13 +123,22 @@ nic::clock_handler(Cycle_t cycle)
 
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/(num_peers-1));
 
-            ev->dest = last_target;
-            ev->src = id;
+            switch ( addressMode ) {
+            case SEQUENTIAL:
+                ev->dest = last_target;
+                ev->src = id;
+                break;
+            case FATTREE_IP:
+                ev->dest = fattree_ID_to_IP(last_target);
+                ev->src = fattree_ID_to_IP(id);
+                break;
+            }
+
             ev->vc = 0;
             ev->size_in_flits = 5;
             bool sent = link_control->send(ev,0);
             assert( sent );
-     //       std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
+            //std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
             packets_sent++;
             if ( packets_sent == expected_recv_count ) {
                 std::cout << cycle << ":  " << id << " Finished sending packets" << std::endl;
@@ -149,11 +158,12 @@ nic::clock_handler(Cycle_t cycle)
         }
         if ( ev != NULL ) {
             packets_recd++;
-            if ( next_seq[ev->src] != ev->seq ) {
+            int src = (addressMode == FATTREE_IP) ? IP_to_fattree_ID(ev->src) : ev->src;
+            if ( next_seq[src] != ev->seq ) {
                 std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
                 assert(false);
             }
-            next_seq[ev->src]++;
+            next_seq[src]++;
             //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             break;
