@@ -39,6 +39,8 @@ topo_dragonfly::topo_dragonfly(Params &p) :
     uint32_t id = p.find_integer("id");
     group_id = id / params.a;
     router_id = id % params.a;
+    DPRINTF("%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
+            group_id, router_id, id, params.p, params.a, params.k, params.h, params.g);
 }
 
 

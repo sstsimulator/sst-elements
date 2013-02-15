@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     fprintf(output, "    <link_bw> %s </link_bw>\n", params.link_bw);
     fprintf(output, "    <topology> dragonfly </topology>\n");
     fprintf(output, "    <dragonfly:hosts_per_router> %u </dragonfly:hosts_per_router>\n", params.p);
-    fprintf(output, "    <dragonfly:router_per_group> %u </dragonfly:router_per_group>\n", params.a);
+    fprintf(output, "    <dragonfly:routers_per_group> %u </dragonfly:routers_per_group>\n", params.a);
     fprintf(output, "    <dragonfly:intergroup_per_router> %u </dragonfly:intergroup_per_router>\n", params.h);
     fprintf(output, "    <dragonfly:num_groups> %u </dragonfly:num_groups>\n", params.g);
     fprintf(output, "  </rtr_params>\n");
@@ -142,9 +142,12 @@ int main(int argc, char **argv)
 
             }
             for ( uint32_t p = 0 ; p < params.a ; p++ ) {
-                if ( p != r )
+                if ( p != r ) {
+                    uint32_t src = (p < r) ? p : r;
+                    uint32_t dst = (p < r) ? r : p;
                     fprintf(output, "    <link name=link:g%ur%ur%u port=port%u latency=%s />\n",
-                            g, r, p, port++, params.link_lat);
+                            g, src, dst, port++, params.link_lat);
+                }
             }
             for ( uint32_t p = 0 ; p < params.h ; p++ ) {
                 tgt_grp %= params.g;
