@@ -29,7 +29,7 @@ class JobStartEvent : public SST::Event {
   int jobNum;
 
  private:
- JobStartEvent();  // for serialization only
+ JobStartEvent() { }  // for serialization only
 
   friend class boost::serialization::access;
   template<class Archive>
