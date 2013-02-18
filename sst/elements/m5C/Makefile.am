@@ -87,7 +87,7 @@ libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
             -I$(top_srcdir)/sst/elements
 endif 
 
-libm5C_la_LDFLAGS = -module -avoid-version $(M5_LDFLAGS) $(DRAMSIM_LDFLAGS) -L../interfaces/.libs -linterfaces
+libm5C_la_LDFLAGS = -module -avoid-version $(M5_LDFLAGS) $(DRAMSIM_LDFLAGS)
 libm5C_la_LIBADD = $(M5_LIB) $(DRAMSIM_LIB)
 
 if ENABLE_GEM5_POWER_MODEL
