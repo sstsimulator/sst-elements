@@ -36,13 +36,21 @@ class topo_dragonfly: public Topology {
         uint32_t g;  /* # of Groups */
     };
 
+    enum RouteAlgo {
+        MINIMAL,
+        VALIANT
+    };
+
+
     struct dgnflyParams params;
+    RouteAlgo algorithm;
     uint32_t group_id;
     uint32_t router_id;
 
 public:
     struct dgnflyAddr {
         uint32_t group;
+        uint32_t mid_group;
         uint32_t router;
         uint32_t host;
     };

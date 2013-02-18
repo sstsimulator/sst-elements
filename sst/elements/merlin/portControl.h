@@ -261,7 +261,7 @@ private:
 		// std::cout << output_timing << std::endl;
 		output_timing->Send(1,NULL);
 		waiting = false;
-	    }	    
+	    }
 	}
 	else {
 	    RtrEvent* event = static_cast<RtrEvent*>(ev);

@@ -59,7 +59,8 @@ nic::nic(ComponentId_t cid, Params& params) :
     }
 
     // Create a LinkControl object
-    int buf_size[2] = {100, 100};
+    // NOTE:  This MUST be the same length as 'num_vcs'
+    int buf_size[3] = {100, 100, 100};
     link_control = new LinkControl(this, "rtr", tc, num_vcs, buf_size, buf_size);
 
     last_target = id;
@@ -159,11 +160,13 @@ nic::clock_handler(Cycle_t cycle)
         if ( ev != NULL ) {
             packets_recd++;
             int src = (addressMode == FATTREE_IP) ? IP_to_fattree_ID(ev->src) : ev->src;
+#if 0
             if ( next_seq[src] != ev->seq ) {
                 std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
                 assert(false);
             }
-            next_seq[ev->src]++;
+#endif
+            next_seq[src]++;
             //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             break;

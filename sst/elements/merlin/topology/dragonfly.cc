@@ -36,6 +36,19 @@ topo_dragonfly::topo_dragonfly(Params &p) :
     params.h = (uint32_t)p.find_integer("dragonfly:intergroup_per_router");
     params.g = (uint32_t)p.find_integer("dragonfly:num_groups");
 
+    std::string route_algo = p.find_string("dragonfly:algorithm", "minimal");
+
+    if ( !route_algo.compare("valiant") ) {
+        if ( params.g <= 2 ) {
+            /* 2 or less groups... no point in valiant */
+            algorithm = MINIMAL;
+        } else {
+            algorithm = VALIANT;
+        }
+    } else {
+        algorithm = MINIMAL;
+    }
+
     uint32_t id = p.find_integer("id");
     group_id = id / params.a;
     router_id = id % params.a;
@@ -53,16 +66,20 @@ void topo_dragonfly::route(int port, int vc, internal_router_event* ev)
 {
     topo_dragonfly_event *td_ev = static_cast<topo_dragonfly_event*>(ev);
 
-    if ( port > (params.p + params.a-1) ) {
+    if ( port >= (params.p + params.a-1) ) {
         /* Came in from another group.  Increment VC */
-        td_ev->setVC(vc++);
+        td_ev->setVC(vc+1);
     }
 
 
     /* Minimal Route */
     uint32_t next_port = 0;
     if ( td_ev->dest.group != group_id ) {
-        next_port = port_for_group(td_ev->dest.group);
+        if ( td_ev->dest.mid_group != group_id ) {
+            next_port = port_for_group(td_ev->dest.mid_group);
+        } else {
+            next_port = port_for_group(td_ev->dest.group);
+        }
     } else if ( td_ev->dest.router != router_id ) {
         next_port = port_for_router(td_ev->dest.router);
     } else {
@@ -78,6 +95,24 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
 {
     dgnflyAddr dstAddr;
     idToLocation(ev->dest, &dstAddr);
+
+    switch (algorithm) {
+    case MINIMAL:
+        dstAddr.mid_group = dstAddr.group;
+        break;
+    case VALIANT:
+        if ( dstAddr.group == group_id ) {
+            // staying here.
+            dstAddr.mid_group = dstAddr.group;
+        } else {
+            do {
+                dstAddr.mid_group = rand() % params.g;
+            } while ( dstAddr.mid_group == group_id || dstAddr.mid_group == dstAddr.group );
+        }
+        break;
+    }
+
+    DPRINTF("Init packet from %d to %d to %u:%u:%u:%u\n", ev->src, ev->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
 
     topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
     td_ev->setEncapsulatedEvent(ev);
@@ -99,7 +134,6 @@ void topo_dragonfly::idToLocation(int id, dgnflyAddr *location) const
     location->group = id / hosts_per_group;
     location->router = (id % hosts_per_group) / params.p;
     location->host = id % params.p;
-    DPRINTF("Translated %d to %u:%u:%u\n", id, location->group, location->router, location->host);
 }
 
 
