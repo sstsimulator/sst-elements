@@ -12,6 +12,9 @@
 
 #include <cxxabi.h>
 
+namespace SST {
+namespace M5 {
+
 static inline char const* __demangle( std::type_info const& ti ) {
     static char* buf = NULL;
     if ( buf ) free( buf );
@@ -179,4 +182,6 @@ extern _Trace __trace;
 #define PRINT_AT( x, fmt, args... ) \
     TRACE_PRINTF( x, "%s::%s():%d "fmt, OBJ_NAME, __func__, __LINE__, ##args ) 
 
+}
+}
 #endif

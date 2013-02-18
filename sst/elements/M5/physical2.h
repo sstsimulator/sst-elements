@@ -4,6 +4,9 @@
 
 #include <mem/physical.hh>
 
+namespace SST {
+namespace M5 {
+
 class PhysicalMemory2 : public PhysicalMemory 
 {
   public:
@@ -11,5 +14,8 @@ class PhysicalMemory2 : public PhysicalMemory
     // PhyscialMemory panics in init() if it is not connected
     void init() {}
 };
+
+}
+}
 
 #endif

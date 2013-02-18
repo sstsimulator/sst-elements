@@ -6,6 +6,9 @@
 
 #include <debug.h>
 
+namespace SST {
+namespace M5 {
+
 class RawEvent : public SST::Event {
   public:
     typedef uint64_t type_t;
@@ -33,7 +36,7 @@ class RawEvent : public SST::Event {
     template<class Archive>
     void save(Archive & ar, const unsigned int version) const
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
         ar & BOOST_SERIALIZATION_NVP( m_numElements );
 
         DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
@@ -46,7 +49,7 @@ class RawEvent : public SST::Event {
     template<class Archive>
     void load(Archive & ar, const unsigned int version)
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
         ar & BOOST_SERIALIZATION_NVP( m_numElements );
 
         DBGX(2,"%s() data=%p numElements=%d\n",__func__,m_data,m_numElements);
@@ -58,5 +61,8 @@ class RawEvent : public SST::Event {
     }
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
+
+}
+}
 
 #endif

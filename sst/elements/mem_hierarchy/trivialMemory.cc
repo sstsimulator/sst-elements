@@ -14,7 +14,9 @@
 #include "sst/core/serialization/element.h"
 #include <assert.h>
 
-#include "sst/core/element.h"
+#include <sst/core/element.h>
+#include <sst/core/component.h>
+#include <sst/core/simulation.h>
 
 #include "trivialMemory.h"
 
@@ -42,6 +44,7 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialMemory::
 				handleRequest) );
 	assert(bus_link);
+	bus_link->sendInitData("SST::Interfaces::MemEvent");
 
 	self_link = configureSelfLink("Self", params.find_string("accessTime", "1000 ns"),
 			new Event::Handler<trivialMemory>(this, &trivialMemory::handleSelfEvent));
@@ -49,6 +52,8 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 	registerTimeBase("1 ns", true);
 	bus_requested = false;
 
+	// Let the Simulation know we use the interface
+	Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
 }
 
 trivialMemory::trivialMemory() :
@@ -114,7 +119,7 @@ void trivialMemory::handleReadRequest(MemEvent *ev)
 	Addr a = ev->getAddr();
 	DPRINTF("Read for addr 0x%lx\n", a);
 	if ( a > memSize ) _abort(TrivialMem, "Bad address 0x%lx\n", a);
-	MemEvent *resp = ev->makeResponse(getName());
+	MemEvent *resp = ev->makeResponse(this);
 	for ( uint32_t i = 0 ; i < ev->getSize() ; i++ ) {
 		resp->getPayload()[i] = data[a+i];
 	}
@@ -132,7 +137,7 @@ void trivialMemory::handleWriteRequest(MemEvent *ev)
 		data[a+i] = ev->getPayload()[i];
 	}
 	outstandingReqs[ev->getAddr()] = false;
-	MemEvent *resp = ev->makeResponse(getName());
+	MemEvent *resp = ev->makeResponse(this);
 	if ( resp->getCmd() != NULLCMD ) {
 		self_link->Send(resp);
 	} else {
@@ -145,7 +150,7 @@ void trivialMemory::sendBusPacket(void)
 {
 	for (;;) {
 		if ( reqs.size() == 0 ) {
-			bus_link->Send(new MemEvent(getName(), NULL, CancelBusRequest));
+			bus_link->Send(new MemEvent(this, NULL, CancelBusRequest));
 			bus_requested = false;
 			break;
 		} else {
@@ -176,7 +181,7 @@ void trivialMemory::sendEvent(MemEvent *ev)
 		reqs.push_back(ev);
 	}
 	if (!bus_requested) {
-		bus_link->Send(new MemEvent(getName(), NULL, RequestBus));
+		bus_link->Send(new MemEvent(this, NULL, RequestBus));
 		bus_requested = true;
 	}
 }

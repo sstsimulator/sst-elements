@@ -19,7 +19,8 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-#include "memEvent.h"
+#include <sst/core/interfaces/memEvent.h>
+using namespace SST::Interfaces;
 
 namespace SST {
 	namespace MemHierarchy {

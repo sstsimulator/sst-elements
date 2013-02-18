@@ -163,7 +163,7 @@ nic::clock_handler(Cycle_t cycle)
                 std::cout << id << " received packet " << ev->seq << " from " << ev->src << " Expected sequence number " << next_seq[ev->src] << std::endl;
                 assert(false);
             }
-            next_seq[src]++;
+            next_seq[ev->src]++;
             //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             break;

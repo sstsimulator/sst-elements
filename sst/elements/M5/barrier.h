@@ -16,6 +16,9 @@
 #define BA_DBG(fmt,args...)
 #endif
 
+namespace SST {
+namespace M5 {
+
 class BarrierAction : public SST::Action 
 {
      boost::mpi::communicator world; 
@@ -70,8 +73,8 @@ class BarrierAction : public SST::Action
 
         m_writeFds.resize( numPerRank );
 
-        for ( int i = 0; i < m_writeFds.size(); i++ ) {
-            sprintf( buf, "/tmp/sst-barrier-app-%d.%d", i, getpid() );
+        for ( unsigned int i = 0; i < m_writeFds.size(); i++ ) {
+            sprintf( buf, "/tmp/sst-barrier-app-%u.%d", i, getpid() );
             rc = mkfifo( buf, 0666);
             BA_DBG("filename=`%s`\n",buf);
             assert( rc == 0 );
@@ -100,7 +103,7 @@ class BarrierAction : public SST::Action
                 m_opened = true;
             }
 
-            for ( int i = 0; i < m_writeFds.size(); i++ ) {
+            for ( unsigned int i = 0; i < m_writeFds.size(); i++ ) {
                 int rc = write( m_writeFds[i], &buf, sizeof(buf) ); 
                 assert( rc == sizeof(buf) );
             }
@@ -114,20 +117,22 @@ class BarrierAction : public SST::Action
     }
 
     void openWriteFds() {
-        for ( int i = 0; i < m_writeFds.size(); i++ ) {
+        for ( int unsigned i = 0; i < m_writeFds.size(); i++ ) {
             char buf[100];
-            sprintf( buf, "/tmp/sst-barrier-app-%d.%d", i, getpid() );
+            sprintf( buf, "/tmp/sst-barrier-app-%u.%d", i, getpid() );
             m_writeFds[i] = open( buf, O_WRONLY ); 
             assert( m_writeFds[i] > -1 );
         }
     }
 
   private:
-    int m_opened;
     int m_nRanks;
     int m_numReporting;
+    int m_opened;
     int m_readFd;
     std::vector< int > m_writeFds;
 };
 
+}
+}
 #endif

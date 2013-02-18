@@ -14,9 +14,10 @@
 #include "sst/core/serialization/element.h"
 
 #include "sst/core/element.h"
+#include "sst/core/simulation.h"
+#include "sst/core/interfaces/TestEvent.h"
 
 #include "event_test.h"
-#include "myEvent.h"
 
 using namespace SST;
 
@@ -41,13 +42,19 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
     
     registerExit();
 
+    Simulation::getSimulation()->requireEvent("interfaces.TestEvent");
+
 //     EventHandler_t* linkHandler = new EventHandler<event_test,bool,Event*>
 // 	(this,&event_test::handleEvent);
 
 //     link = LinkAdd( "link", linkHandler );
     link = configureLink( "link", new Event::Handler<event_test>(this,&event_test::handleEvent) );
+    if (NULL == link) abort();
 
     registerTimeBase("1ns");
+
+    // Test the InitData capabilities
+    link->sendInitData("test");
 }
 
 
@@ -61,16 +68,19 @@ event_test::event_test() :
 int
 event_test::Setup()
 {
-    if ( my_id == 0 ) {
-	MyEvent* event = new MyEvent();
-	event->count = 0;
-	link->Send(latency,event);
-	printf("Sending initial event\n");
-    }
-    else if ( my_id != 1) {
-        _abort(event_test,"event_test class only works with two instances\n");	
-    }
-    return 0;
+
+    if ( link->recvInitDataString().compare("test") != 0 ) printf("InitData not working\n");
+    
+	if ( my_id == 0 ) {
+		Interfaces::TestEvent* event = new Interfaces::TestEvent();
+		event->count = 0;
+		link->Send(latency,event);
+		printf("Sending initial event\n");
+	}
+	else if ( my_id != 1) {
+		_abort(event_test,"event_test class only works with two instances\n");	
+	}
+	return 0;
 }
 
 
@@ -84,7 +94,7 @@ event_test::Finish()
 void
 event_test::handleEvent(Event* ev)
 {
-    MyEvent* event = static_cast<MyEvent*>(ev);
+	Interfaces::TestEvent* event = static_cast<Interfaces::TestEvent*>(ev);
     // See if we have counted far enough, if not, increment and send
     // back
     if (event->count > count_to) {
@@ -105,7 +115,6 @@ event_test::handleEvent(Event* ev)
 
 // Element Libarary / Serialization stuff
     
-BOOST_CLASS_EXPORT(MyEvent)
 BOOST_CLASS_EXPORT(event_test)
 
 static Component*

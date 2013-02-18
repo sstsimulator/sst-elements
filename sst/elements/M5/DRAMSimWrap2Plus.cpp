@@ -5,6 +5,8 @@
 #include <memLink.h>
 #include <paramHelp.h>
 
+using namespace SST::M5;
+
 extern "C" {
     SimObject* create_DRAMSimWrap2Plus( SST::Component*, std::string name,
                                                     SST::Params& params );

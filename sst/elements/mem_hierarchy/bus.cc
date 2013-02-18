@@ -10,16 +10,16 @@
 // distribution.
 
 #include <sstream>
-
-#include "sst_config.h"
-#include "sst/core/serialization/element.h"
 #include <assert.h>
 
-#include "sst/core/component.h"
-#include "sst/core/element.h"
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
+
+#include <sst/core/component.h>
+#include <sst/core/simulation.h>
+#include <sst/core/element.h>
 
 #include "bus.h"
-#include "memEvent.h"
 
 #define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Bus, fmt, ## args )
 
@@ -57,11 +57,15 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 		//ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
 		assert(ports[i]);
 		linkMap[ports[i]->getId()] = ports[i];
+		ports[i]->sendInitData("SST::Interfaces::MemEvent");
 		DPRINTF("Port %lu = Link %d\n", ports[i]->getId(), i);
 	}
 
 	selfLink = configureSelfLink("Self", "50 ps",
 				new Event::Handler<Bus>(this, &Bus::handleSelfEvent));
+
+	// Let the Simulation know we use the interface
+    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
 
 }
 
@@ -170,7 +174,7 @@ void Bus::schedule(void)
 	if ( next_id != BUS_INACTIVE ) {
 		activePort = next_id;
 		DPRINTF("Setting activePort = %lu\n", activePort);
-		linkMap[next_id]->Send(new MemEvent(getName(), NULL, BusClearToSend));
+		linkMap[next_id]->Send(new MemEvent(this, NULL, BusClearToSend));
 	}
 }
 

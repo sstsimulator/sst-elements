@@ -6,6 +6,9 @@
 #include <paramHelp.h>
 #include <loadMemory.h>
 
+
+using namespace SST::M5;
+
 extern "C" {
     SimObject* create_PhysicalPlus( SST::Component*, std::string name,
                                                     SST::Params& params );
@@ -29,7 +32,7 @@ SimObject* create_PhysicalPlus( SST::Component* comp, std::string name,
     params.linkName = _params.find_string( "link.name" );
     params.m5Comp = static_cast< M5* >( static_cast< void* >( comp ) );
 
-    PhysicalMemory* physmem = new PhysicalMemoryPlus( &params );
+    ::PhysicalMemory* physmem = new PhysicalMemoryPlus( &params );
 
     loadMemory( name + ".exe", physmem, _params.find_prefix_params("exe") );
 

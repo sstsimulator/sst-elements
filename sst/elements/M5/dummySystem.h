@@ -10,6 +10,9 @@
 using namespace std;
 using namespace TheISA;
 
+namespace SST {
+namespace M5 {
+
 struct DummySystemParams : public SystemParams {
     Addr start;
     Addr end;
@@ -48,7 +51,7 @@ class DummySystem : public System {
 };
 
 static inline DummySystem* create_DummySystem( string name, 
-                    PhysicalMemory* physmem,
+                    ::PhysicalMemory* physmem,
                     Enums::MemoryMode mem_mode,
                     Addr start, Addr end) 
 {
@@ -64,6 +67,9 @@ static inline DummySystem* create_DummySystem( string name,
     params.end = end;
 
     return new DummySystem( &params );
+}
+
+}
 }
 
 #endif

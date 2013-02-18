@@ -2,8 +2,6 @@
 #
 #
 
-if USE_SSTMACRO
-
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
@@ -13,10 +11,10 @@ comp_LTLIBRARIES = libmacro_component.la
 libmacro_component_la_CPPFLAGS = $(BOOST_CPPFLAGS) \
 	$(shell $(SSTMACRO_CONFIG_TOOL) --cppflags) -O0 -g \
 	$(SSTMACRO_CPPFLAGS) \
-    	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS)
 
 libmacro_component_la_SOURCES = \
-macro_component.cc \
+	macro_component.cc \
 	macro_processor.h \
 	macro_processor.cc \
 	macro_address.h \
@@ -30,5 +28,3 @@ macro_component.cc \
 EXTRA_DIST = makeSDL.pl
 
 libmacro_component_la_LDFLAGS = -module -avoid-version $(shell $(SSTMACRO_CONFIG_TOOL) --ldflags) $(SSTMACRO_LDFLAGS)
-
-endif

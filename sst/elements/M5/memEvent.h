@@ -4,7 +4,12 @@
 #include <sst_config.h>
 #include <sst/core/component.h>
 
+#include <mem/mem_object.hh>
+
 #include <debug.h>
+
+namespace SST {
+namespace M5 {
 
 class MemEvent : public SST::Event {
 
@@ -140,10 +145,10 @@ class MemEvent : public SST::Event {
     MemEvent( PacketPtr pkt, Type type = Timing ) :
         m_type( type ),
         m_isResponse( false ),
-        m_senderState( (uint64_t) pkt ),
+        m_flags( pkt->getFlags() ),
         m_cmd( pkt->cmd.toInt() ),
         m_req( *pkt->req ),
-        m_flags( pkt->getFlags() )
+        m_senderState( (uint64_t) pkt )
     {
         DBGX(4,"pkt=%p %s cmd=`%s` %s addr=%#x\n",
                 pkt, type == Timing ? "Timing" : "Functional", 
@@ -201,8 +206,8 @@ class MemEvent : public SST::Event {
             }
             DBGX(4,"isResponse pkt=%p\n",m_senderState);
         } else {
-            ::Request* req = m_req.M5_Request(); 
-            if ( req->getPaddr() == m_addr && req->getSize() == m_size ) {
+            ::Request* req = m_req.M5_Request();
+            if ( req->getPaddr() == m_addr && (unsigned)req->getSize() == m_size ) {
                 pkt = new ::Packet( req, MemCmd(m_cmd), m_dest );
             } else {
                 pkt = new ::Packet( req, MemCmd(m_cmd), m_dest, m_size );
@@ -252,7 +257,7 @@ class MemEvent : public SST::Event {
     void
     serialize(Archive & ar, const unsigned int version )
     {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Event);
 
         ar & BOOST_SERIALIZATION_NVP(m_type);
         ar & BOOST_SERIALIZATION_NVP(m_isResponse);
@@ -268,5 +273,8 @@ class MemEvent : public SST::Event {
         ar & BOOST_SERIALIZATION_NVP(m_senderState);
     }
 };
+
+}
+}
 
 #endif

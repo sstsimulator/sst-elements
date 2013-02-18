@@ -3,8 +3,6 @@
 #
 # Pull in OMNeT++ configuration (Makefile.inc or configuser.vc)
 
-if BUILD_PHOENIXSIM
-
 #OMNETPP_INCLUDE_DIR = $(PHOENIXSIM_CPPFLAGS)/include
 #TOOLCHAIN_NAME = gcc
 #KERNEL_LIBS = -loppsim -L$(OMNETPP_LIB_DIR)
@@ -615,5 +613,3 @@ libPhoenixSim_la_LDFLAGS = $(PHOENIXSIM_LDFLAGS) -module -avoid-version
 
 libPhoenixSim_la_LIBADD = $(OMNETPP_LIB) $(PHOENIXSIM_LDFLAGS) $(SYS_LIBS)
 #libPhoenixSim_la_LIBADD = $(KERNEL_LIBS) $(SYS_LIBS)
-
-endif

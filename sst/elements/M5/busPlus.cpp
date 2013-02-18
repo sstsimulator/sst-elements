@@ -5,6 +5,8 @@
 #include <memLink.h>
 #include <paramHelp.h>
 
+using namespace SST::M5;
+
 extern "C" {
     SimObject* create_BusPlus( SST::Component*, std::string name, 
                                                     SST::Params& params );

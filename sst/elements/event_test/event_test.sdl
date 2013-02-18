@@ -1,45 +1,26 @@
 <?xml version="1.0"?>
+<sdl version="2.0"/>
 
 <config>
-    run-mode=both
+  run-mode=both
 </config>
 
 <sst>
-    <component id="0.cpu" >
-        <event_test>
-            <params>
-                <id> 0 </id>
-		<count_to> 20 </count_to>
-		<latency> 10 </latency>
-            </params>
-            <links>
-                <link id="link">
-        	    <params>
-                        <name> link </name>
-			<lat> 10ns </lat>
-                    </params>
-                </link>
-            </links>
-        </event_test>
-    </component>
+  <component name="a" type="event_test.event_test" rank=0>
+    <params>
+      <id> 0 </id>
+      <count_to> 20 </count_to>
+      <latency> 10 </latency>
+    </params>
+    <link name="0.1" port="link" latency="10 ns" />
+  </component>
 
-    <component id="1.cpu" >
-        <event_test>
-            <params>
-                <id> 1 </id>
-		<count_to> 25 </count_to>
-		<latency> 10 </latency>
-            </params>
-            <links>
-                <link id="link">
-        	    <params>
-                        <name> link </name>
-			<lat> 10ns </lat>
-                    </params>
-                </link>
-            </links>
-        </event_test>
-    </component>
-
-
+  <component name="b" type="event_test.event_test" rank=1>
+    <params>
+      <id> 1 </id>
+      <count_to> 25 </count_to>
+      <latency> 10 </latency>
+    </params>
+    <link name="0.1" port="link" latency="10ns" />
+  </component>
 </sst>

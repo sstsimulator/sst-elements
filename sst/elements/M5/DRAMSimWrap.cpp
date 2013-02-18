@@ -14,6 +14,9 @@
 
 #define MS_CAST( x ) static_cast<DRAMSim::MultiChannelMemorySystem*>(x)
 
+
+using namespace SST::M5;
+
 extern "C" {
     SimObject* create_DRAMSimWrap( SST::Component*, std::string, SST::Params& );
 }

@@ -7,6 +7,10 @@
 #include <debug.h>
 
 using namespace std;
+
+namespace SST {
+namespace M5 {
+
 class M5;
 
 struct PtlNicMMIFParams : public DmaDeviceParams
@@ -89,5 +93,8 @@ class PtlNicMMIF : public DmaDevice
 };
 
 const char * PtlNicMMIF::m_cmdNames[] = CMD_NAMES;
+
+}
+}
 
 #endif

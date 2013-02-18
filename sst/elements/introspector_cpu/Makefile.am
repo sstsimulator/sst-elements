@@ -1,8 +1,4 @@
-
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
-
-CC = $(MPICC)
-CXX = $(MPICXX)
 
 introdir = $(pkglibdir)
 intro_LTLIBRARIES = libintrospector_cpu.la

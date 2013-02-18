@@ -4,7 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS)  -g
+	-g
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
@@ -21,7 +21,6 @@ libmemHierarchy_la_SOURCES = \
 	trivialMemory.cc \
 	memController.h \
 	memController.cc \
-	gem5_translator.h \
 	libmemHierarchy.cc
 
 EXTRA_DIST = makeSDL.pl

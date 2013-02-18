@@ -4,8 +4,6 @@
 
 CC=$(CXX)
 
-if BUILD_ZESTO
-
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzesto.la
 
@@ -163,5 +161,3 @@ EXTRA_DIST = \
 libzesto_la_LDFLAGS = -module -avoid-version $(QSIM_LDFLAGS)
 libzesto_la_LIBADD = $(QSIM_LIB)
 libzesto_la_CPPFLAGS = $(QSIM_CPPFLAGS) $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS)
-
-endif

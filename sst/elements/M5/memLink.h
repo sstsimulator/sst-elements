@@ -7,6 +7,9 @@
 #include <mem/mem_object.hh>
 #include <memEvent.h>
 
+namespace SST {
+namespace M5 {
+
 class M5;
 
 struct MemLinkParams : public MemObjectParams
@@ -116,5 +119,8 @@ class MemLink : public MemObject
     bool                  m_snoop;
     int                   m_delay;
 };
+
+}
+}
 
 #endif

@@ -15,9 +15,13 @@
 #include <cpu/simple/atomic.hh>
 
 using namespace SST;
+using namespace SST::M5;
 using namespace std;
 
 class Component;
+
+namespace SST {
+namespace M5 {
 
 #if THE_ISA == SPARC_ISA
     #define ISA SparcISA
@@ -43,8 +47,12 @@ static FUPool* newFUPool( string );
 template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
 
+}
+}
+
 extern "C" {
 SimObject* create_O3switchCpu( SST::Component*, string name, Params& sstParams );
+SimObject* create_O3Cpu( SST::Component*, string name, Params& sstParams );
 }
 
 SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstParams )
@@ -209,11 +217,9 @@ SimObject* create_O3switchCpu( SST::Component* comp, string name, Params& sstPar
 }
 
 
-extern "C" {
-SimObject* create_O3Cpu( SST::Component*, string name, Params& sstParams );
-}
 
-System* foo( string name, Params& sstParams )
+
+static System* foo( string name, Params& sstParams )
 {
     Addr start = sstParams.find_integer( "physicalMemory.start" );
     Addr end = sstParams.find_integer( "physicalMemory.end", 0 );
@@ -233,6 +239,7 @@ System* foo( string name, Params& sstParams )
             new PhysicalMemory2( & PMparams ), Enums::timing );
 }
 
+
 SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
 {
     DerivO3CPUParams*  params     = new DerivO3CPUParams;
@@ -242,7 +249,7 @@ SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
 
     std::string systemName = sstParams.find_string( "system" );
     if ( ! systemName.empty() ) {
-        M5* m5comp = static_cast<M5*>(comp);
+		SST::M5::M5* m5comp = static_cast<SST::M5::M5*>(comp);
         printf("system `%s`\n",systemName.c_str());
         objectMap_t::iterator it = m5comp->objectMap().find( systemName );
         if ( it == m5comp->objectMap().end() ) {
@@ -260,6 +267,9 @@ SimObject* create_O3Cpu( SST::Component* comp, string name, Params& sstParams )
 
     return static_cast<BaseCPU*>(static_cast<void*>(params->create()));
 }
+
+namespace SST {
+namespace M5 {
 
 static Trace::InstTracer* newTracer( string name )
 {
@@ -303,7 +313,7 @@ static void initBaseCPUParams( DerivO3CPUParams& cpu, const Params& sstParams,
 
     std::string processName = sstParams.find_string( "process" );
     if ( ! processName.empty() ) {
-        M5* m5comp = static_cast<M5*>(comp);
+		SST::M5::M5* m5comp = static_cast<SST::M5::M5*>(comp);
         printf("process `%s`\n", processName.c_str());
         objectMap_t::iterator it = m5comp->objectMap().find( processName );
         if ( it == m5comp->objectMap().end() ) {
@@ -533,4 +543,7 @@ template<class type> static type* newTLB( string name, const Params& params )
     INIT_INT( tlb, params, size );
 
 	return tlb.create();
+}
+
+}
 }

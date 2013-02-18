@@ -6,7 +6,10 @@
 #include <debug.h>
 #include <process.h>
 
-void loadMemory( string name, PhysicalMemory* memory, 
+namespace SST {
+namespace M5 {
+
+void loadMemory( string name, ::PhysicalMemory* memory, 
                                     const SST::Params& params )
 {
     int num = 0;
@@ -52,4 +55,8 @@ void loadMemory( string name, PhysicalMemory* memory,
 
         ++num;
     }
+}
+
+
+}
 }

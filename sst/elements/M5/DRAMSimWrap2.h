@@ -4,6 +4,9 @@
 
 #include <DRAMSimWrap.h>
 
+namespace SST {
+namespace M5 {
+
 struct DRAMSimWrap2Params : public DRAMSimWrapParams 
 {
     Range< Addr > backdoorRange;
@@ -47,4 +50,6 @@ class DRAMSimWrap2 : public DRAMSimWrap
     Port*           m_backdoor;
 };
 
+}
+}
 #endif

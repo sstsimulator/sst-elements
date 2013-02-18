@@ -1,6 +1,9 @@
 #include <debug.h>
 #include <dll/gem5dll.hh>
 
+namespace SST {
+namespace M5 {
+
 bool SST_M5_debug = false;
 Log<1> _dbg( std::cerr, "M5:", false );
 Log<1> _info( std::cout, "M5:", false );
@@ -17,4 +20,7 @@ void enableDebug( std::string name )
         SST_M5_debug = true;
     }
     libgem5::EnableDebugFlags( name );
+}
+
+}
 }

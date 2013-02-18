@@ -7,6 +7,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace M5 {
+
 class DummyThreadContext : public ThreadContext {
     virtual BaseCPU *getCpuPtr() 
     { DBGX(2,"\n"); }
@@ -259,4 +262,7 @@ class DummyThreadContext : public ThreadContext {
 #endif
 
 };
+
+}
+}
 #endif

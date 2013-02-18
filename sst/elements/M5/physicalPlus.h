@@ -5,6 +5,9 @@
 #include <sst/core/component.h>
 #include <mem/physical.hh>
 
+namespace SST {
+namespace M5 {
+
 class M5;
 class MemLink;
 
@@ -24,6 +27,9 @@ class PhysicalMemoryPlus : public PhysicalMemory
   private:
     MemLink* m_link;
 };
+
+}
+}
 
 #endif
 

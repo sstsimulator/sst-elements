@@ -1,3 +1,5 @@
+#ifndef __M5_PROCESS_H__
+#define __M5_PROCESS_H__
 #include <sim/system.hh>
 #include <sim/process.hh>
 #include <sst/core/params.h>
@@ -8,6 +10,9 @@
 
 #include <debug.h>
 #include <paramHelp.h>
+
+namespace SST {
+namespace M5 {
 
 static inline Process* newProcess( const std::string name, 
      const SST::Params& params, System* system, SST::Component* comp = NULL )
@@ -48,16 +53,14 @@ static inline Process* newProcess( const std::string name,
     INIT_STR( process, params, cwd );
     INIT_STR( process, params, executable );
 
-    std::string tmpName = resolveString( process.executable );
-    if ( tmpName.empty() ) {
-        fprintf(stderr,"fatal: bad executable name `%s`\n", 
+    if ( process.executable.empty() ) {
+        fprintf(stderr,"fatal: bad executable name `%s`\n",
                                             process.executable.c_str() );
         exit(-1);
     }
-    process.executable = tmpName;
-	
+
     std::string str = params.find_string( "registerExit" );
-    
+
     if( comp && ! str.compare("yes") ) {
         INFO("registering exit `%s`\n",name.c_str());
         static_cast< M5* >( static_cast< void* >( comp ) )->registerExit();
@@ -68,7 +71,7 @@ static inline Process* newProcess( const std::string name,
     if ( tmp.size() ) {
         SST::Params::iterator iter = tmp.begin();
         for ( iter = tmp.begin(); iter!= tmp.end(); iter++ ) { 
-            process.cmd.push_back(resolveString((*iter).second));
+            process.cmd.push_back((*iter).second);
         }
     }
 
@@ -79,7 +82,7 @@ static inline Process* newProcess( const std::string name,
     if ( tmp.size() ) {
         process.env.resize( tmp.size() );
         SST::Params::iterator iter = tmp.begin();
-        for ( int i = 0; i < process.env.size(); i++ ) { 
+        for ( unsigned int i = 0; i < process.env.size(); i++ ) { 
             process.env[i] = (*iter).second;
             ++iter;
             F_STR( process, env[i] );
@@ -113,4 +116,10 @@ static inline SST::Params mergeParams( SST::Params p1, SST::Params p2 )
     SST:: Params params = mergeParams( "cmd.", p1, p2 ); 
     return mergeParams( "env.", params, p2 ); 
 }
+
+
+}
+}
+
+#endif
 

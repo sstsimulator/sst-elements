@@ -65,6 +65,8 @@
     #error What ISA
 #endif
 
+using namespace SST::M5;
+
 extern "C" {
 SimObject* create_Syscall( SST::Component*, string name,
                                                 SST::Params& sstParams );

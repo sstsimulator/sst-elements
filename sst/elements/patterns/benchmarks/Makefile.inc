@@ -1,6 +1,4 @@
 # -*- Makefile -*-
-CC = $(MPICC)
-CXX = $(MPICXX)
 
 # Allreduce_bench
 allreduce_bench_CPPFLAGS = -DNOT_PART_OF_SIM -D_PATTERNS_H_ $(MPI_CPPFLAGS)

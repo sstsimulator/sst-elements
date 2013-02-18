@@ -16,8 +16,10 @@
 bool SST::Power::p_hasUpdatedTemp __attribute__((weak));
 #endif
 
-
 class SimLoopExitEvent;
+namespace SST {
+namespace M5 {
+
 class M5 : public SST::IntrospectedComponent
 {
   public:
@@ -64,7 +66,11 @@ class M5 : public SST::IntrospectedComponent
     void Setup_Power();
     void Finish_Power();
    #endif
+	void setupLinks();
 
 };
+
+}
+}
 
 #endif

@@ -8,6 +8,9 @@
 
 #include <debug.h>
 
+namespace SST {
+namespace M5 {
+
 class M5;
 
 class SimObject;
@@ -143,6 +146,9 @@ inline Gem5Object_t* Factory::createObject2( const std::string name,
 
     free( xxx );
     return obj;
+}
+
+}
 }
 
 #endif

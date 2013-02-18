@@ -3,6 +3,9 @@
 
 #include <sim/system.hh>
 
+namespace SST {
+namespace M5 {
+
 static inline System* create_System( std::string name, 
                     PhysicalMemory* physmem,
                     Enums::MemoryMode mem_mode) 
@@ -17,6 +20,9 @@ static inline System* create_System( std::string name,
     params.memories[0] = physmem;
 
     return new System( &params );
+}
+
+}
 }
 
 #endif

@@ -7,6 +7,7 @@
 #include <paramHelp.h>
 
 using namespace SST;
+using namespace SST::M5;
 using namespace std;
 
 class Component;

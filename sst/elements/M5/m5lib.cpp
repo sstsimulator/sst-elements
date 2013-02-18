@@ -7,20 +7,25 @@
 
 #include <bounce.h>
 #include <m5.h>
+#include <rawEvent.h>
+#include <memEvent.h>
 
 using namespace SST;
 
 static Component*
 create_M5(ComponentId_t id, Component::Params_t& params)
 {
-    return new M5( id, params );
+    return new SST::M5::M5( id, params );
 }
 
 static Component*
 create_Bounce(ComponentId_t id, Component::Params_t& params)
 {
-    return new Bounce( id, params );
+    return new SST::M5::Bounce( id, params );
 }
+
+BOOST_CLASS_EXPORT(SST::M5::RawEvent);
+BOOST_CLASS_EXPORT(SST::M5::MemEvent);
 
 static const ElementInfoComponent components[] = {
     { "M5",

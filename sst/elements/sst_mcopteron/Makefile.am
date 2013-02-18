@@ -4,7 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) 
+	$(MPI_CPPFLAGS) -DNOTSTANDALONE
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsst_mcopteron.la

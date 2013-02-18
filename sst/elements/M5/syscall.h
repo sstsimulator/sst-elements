@@ -6,6 +6,9 @@
 #include <debug.h>
 
 using namespace std;
+namespace SST {
+namespace M5 {
+
 class M5;
 
 struct SyscallParams : public DmaDeviceParams
@@ -100,4 +103,6 @@ class Syscall : public DmaDevice
     }
 };
 
+}
+}
 #endif

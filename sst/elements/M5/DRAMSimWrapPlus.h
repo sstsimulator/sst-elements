@@ -3,6 +3,9 @@
 
 #include <DRAMSimWrap.h>
 
+namespace SST {
+namespace M5 {
+
 class M5;
 class MemLink;
 
@@ -21,6 +24,9 @@ class DRAMSimWrapPlus : public DRAMSimWrap
   private:
     MemLink* m_link;
 };
+
+}
+}
 
 #endif
 

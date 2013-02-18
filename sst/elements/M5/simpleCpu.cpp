@@ -28,10 +28,16 @@ class Component;
     #error What ISA
 #endif
 
+namespace SST {
+namespace M5 {
+
 static void initBaseCPUParams( TimingSimpleCPUParams& cpu,
                              const Params&, System*, SST::Component* );
 template<class type> static type* newTLB( string name, const Params& );
 static Trace::InstTracer* newTracer( string name );
+
+}
+}
 
 extern "C" {
 SimObject* create_SimpleCpu( SST::Component*, string name, Params& sstParams );
@@ -55,14 +61,18 @@ SimObject* create_SimpleCpu( SST::Component* comp, string name, Params& sstParam
     PMparams.name = name + ".physmem";
 
     System* system = create_System( name + ".system", 
-                new PhysicalMemory2( & PMparams ), Enums::timing );
+                new SST::M5::PhysicalMemory2( & PMparams ), Enums::timing );
 
     // system and physmem are not needed after startup how do free them
 
-    initBaseCPUParams( *params, sstParams.find_prefix_params("base."), system, comp );
+	SST::M5::initBaseCPUParams( *params, sstParams.find_prefix_params("base."), system, comp );
 
     return static_cast<SimObject*>(static_cast<void*>(params->create()));
 }
+
+namespace SST {
+namespace M5 {
+
 
 static Trace::InstTracer* newTracer( string name )
 {
@@ -119,4 +129,7 @@ template<class type> static type* newTLB( string name, const Params& params )
     INIT_INT( tlb, params, size );
 
 	return tlb.create();
+}
+
+}
 }

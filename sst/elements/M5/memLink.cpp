@@ -7,6 +7,9 @@
 #include <memEvent.h>
 #include <paramHelp.h>
 
+using namespace SST::M5;
+
+
 MemLink::MemLink( const MemLinkParams *p ) :
     MemObject( p ),
     m_comp( p->m5Comp ),
@@ -20,12 +23,14 @@ MemLink::MemLink( const MemLinkParams *p ) :
     m_link = p->m5Comp->configureLink( p->linkName,
         new SST::Event::Handler<MemLink>( this, &MemLink::eventHandler ) );
 
+	assert( !m_port);
     assert( m_link );
 }
 
 Port *MemLink::getPort(const std::string &if_name, int idx )
 {
     DBGX_M5(2,"if_name=`%s` idx=%d\n",if_name.c_str(), idx );
+	fprintf(stderr, "in %s:  m_port = %p, name = %s\n", __FUNCTION__, m_port, if_name.c_str());
     assert ( ! m_port );
     return m_port = new LinkPort( name() + ".linkPort", this );
 }
@@ -85,13 +90,11 @@ bool MemLink::send( SST::Event* event )
 
 void MemLink::eventHandler( SST::Event* e )
 {
-    SST::Cycle_t now = m_comp->getCurrentSimTime();
-
     MemEvent* event = static_cast<MemEvent*>(e);
     PacketPtr pkt = event->M5_Packet();
 
     DBGX_M5(3, "`%s` %#lx\n", pkt->cmdString().c_str(), (long)pkt->getAddr());
- 
+
     switch ( event->type() ) {
         case MemEvent::Functional:
             m_port->sendFunctional( pkt );
@@ -104,4 +107,4 @@ void MemLink::eventHandler( SST::Event* e )
 
     delete event;
 }
-BOOST_CLASS_EXPORT(MemEvent);
+

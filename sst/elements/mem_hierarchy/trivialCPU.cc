@@ -9,14 +9,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
 #include <assert.h>
 
-#include "sst/core/element.h"
+#include <sst/core/element.h>
+#include <sst/core/simulation.h>
 
 #include "trivialCPU.h"
-#include "memEvent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -55,6 +55,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialCPU::
 				handleEvent) );
 	assert(mem_link);
+	mem_link->sendInitData("SST::Interfaces::MemEvent");
 
 	registerTimeBase("1 ns", true);
 	//set our clock
@@ -62,6 +63,11 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 			new Clock::Handler<trivialCPU>(this,
 				&trivialCPU::clockTic ) );
 	num_reads_issued = num_reads_returned = 0;
+
+
+	// Let the Simulation know we use the interface
+    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
+
 }
 
 trivialCPU::trivialCPU() :
@@ -133,7 +139,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
 			bool doWrite = do_write && (((rand() % 10) == 0));
 
-			MemEvent *e = new MemEvent(getName(), addr, doWrite ? WriteReq : ReadReq);
+			MemEvent *e = new MemEvent(this, addr, doWrite ? WriteReq : ReadReq);
 			e->setSize(4); // Load 4 bytes
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&addr);

@@ -12,6 +12,9 @@
 #define DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
+namespace SST {
+namespace M5 {
+
 class Bounce : public SST::Component
 {
     public:
@@ -56,6 +59,9 @@ inline void Bounce::eventHandler( SST::Event* e, int port )
 //    m_dbg.write("%7lu: Bounce::eventHandler() port=%d\n", (unsigned long)
 //                m_tc->convertToCoreTime(getCurrentSimTime(m_tc) ), port );
     m_linkM[port == 0 ? 1 : 0]->Send( e );
+}
+
+}
 }
 
 #endif

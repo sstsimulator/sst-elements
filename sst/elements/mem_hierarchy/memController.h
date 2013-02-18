@@ -19,7 +19,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 
-#include "memEvent.h"
+#include <sst/core/interfaces/memEvent.h>
+using namespace SST::Interfaces;
 
 #if defined(HAVE_LIBDRAMSIM)
 // DRAMSim uses DEBUG
@@ -66,6 +67,8 @@ private:
 
 	MemController();  // for serialization only
 
+	void loadExec(const std::string &filename);
+
 	void handleEvent(SST::Event *event);
 	void handleSelfEvent(SST::Event *event);
 
@@ -96,6 +99,8 @@ private:
 	int backing_fd;
 	uint8_t *memBuffer;
 	size_t memSize;
+	Addr rangeStart;
+	Addr rangeEnd;
 
 #if defined(HAVE_LIBDRAMSIM)
 	void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);

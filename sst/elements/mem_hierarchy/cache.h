@@ -21,7 +21,9 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include "memEvent.h"
+
+#include <sst/core/interfaces/memEvent.h>
+using namespace SST::Interfaces;
 
 namespace SST {
 namespace MemHierarchy {
@@ -185,7 +187,7 @@ private:
 				}
 			}
 			if ( !requested ) {
-				link->Send(new MemEvent(comp->getName(), NULL, RequestBus));
+				link->Send(new MemEvent(comp, NULL, RequestBus));
 				requested = true;
 			}
 		}
@@ -208,7 +210,7 @@ private:
 			if ( size() == 0 ) {
 				__DBG( DBG_CACHE, BusQueue, "No Requests to send!\n");
 				/* Must have canceled the request */
-				link->Send(new MemEvent(comp->getName(), NULL, CancelBusRequest));
+				link->Send(new MemEvent(comp, NULL, CancelBusRequest));
 				requested = false;
 			} else {
 				MemEvent *ev = queue.front();

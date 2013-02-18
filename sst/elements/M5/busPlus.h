@@ -5,6 +5,9 @@
 #include <sst/core/component.h>
 #include <mem/bus.hh>
 
+namespace SST {
+namespace M5 {
+
 class M5;
 class MemLink;
 
@@ -24,5 +27,8 @@ class BusPlus : public Bus
   private:
     std::deque<MemLink*> m_links;
 };
+
+}
+}
 
 #endif

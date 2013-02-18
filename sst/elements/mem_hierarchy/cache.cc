@@ -12,16 +12,14 @@
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
-
-#include "sst_config.h"
-#include "sst/core/serialization/element.h"
-#include "sst/core/simulation.h"
 #include <assert.h>
 
-#include "sst/core/element.h"
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
+#include <sst/core/simulation.h>
+#include <sst/core/element.h>
 
 #include "cache.h"
-#include "memEvent.h"
 
 
 #define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Cache, "%s: " fmt, getName().c_str(), ## args )
@@ -56,6 +54,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 					new Event::Handler<Cache, SourceType_t>(this,
 						&Cache::handleIncomingEvent, UPSTREAM) );
 			assert(upstream_links[i]);
+			upstream_links[i]->sendInitData("SST::Interfaces::MemEvent");
 			upstreamLinkMap[upstream_links[i]->getId()] = i;
 		}
 	}
@@ -64,9 +63,11 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	downstream_link = configureLink( "downstream",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, DOWNSTREAM) );
+	if ( downstream_link ) downstream_link->sendInitData("SST::Interfaces::MemEvent");
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, SNOOP) );
+	if ( snoop_link ) snoop_link->sendInitData("SST::Interfaces::MemEvent");
 	if ( snoop_link != NULL ) { // Snoop is a bus.
 		snoopBusQueue.setup(this, snoop_link);
 	}
@@ -74,6 +75,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	directory_link = configureLink( "directory_link",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, DIRECTORY) );
+	if ( directory_link ) directory_link->sendInitData("SST::Interfaces::MemEvent");
 
 	self_link = configureSelfLink("Self", params.find_string("access_time", ""),
 				new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
@@ -92,6 +94,9 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 		}
 	}
 
+
+	// Let the Simulation know we use the interface
+    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
 
 
 	num_read_hit = 0;
@@ -233,7 +238,7 @@ void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 				ev->getAddr(), offset, ev->getSize(), blocksize);
 	}
 
-	MemEvent *resp = ev->makeResponse(getName());
+	MemEvent *resp = ev->makeResponse(this);
 	DPRINTF("Sending Response to CPU: (%lu, %d) in Response To (%lu, %d) [%s: 0x%lx]\n",
 			resp->getID().first, resp->getID().second,
 			resp->getResponseToID().first, resp->getResponseToID().second,
@@ -254,7 +259,7 @@ void Cache::issueInvalidate(MemEvent *ev, CacheBlock *block)
 		BusFinishHandlerArgs args;
 		args.issueInvalidate.ev = new MemEvent(ev);
 		args.issueInvalidate.block = block;
-		MemEvent *invEvent = new MemEvent(getName(), block->baseAddr, Invalidate);
+		MemEvent *invEvent = new MemEvent(this, block->baseAddr, Invalidate);
 		block->currentEvent = invEvent;
 		DPRINTF("Enqueuing request to Invalidate block 0x%lx\n", block->baseAddr);
 		snoopBusQueue.request( invEvent,
@@ -275,14 +280,14 @@ void Cache::finishIssueInvalidate(MemEvent *ev, CacheBlock *block)
 {
 	/* TODO:  Deal with the lack of atomicity.  Count ACKs */
 	if ( downstream_link ) {
-		downstream_link->Send(new MemEvent(getName(), block->baseAddr, Invalidate));
+		downstream_link->Send(new MemEvent(this, block->baseAddr, Invalidate));
 	}
 	if ( directory_link ) {
-		directory_link->Send(new MemEvent(getName(), block->baseAddr, Invalidate));
+		directory_link->Send(new MemEvent(this, block->baseAddr, Invalidate));
 	}
 	for ( int i = 0 ; i < n_upstream ; i++ ) {
 		if ( upstream_links[i]->getId() != ev->getLinkId() ) {
-			upstream_links[i]->Send(new MemEvent(getName(), block->baseAddr, Invalidate));
+			upstream_links[i]->Send(new MemEvent(this, block->baseAddr, Invalidate));
 		}
 	}
 	block->status = CacheBlock::EXCLUSIVE;
@@ -334,7 +339,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 
 	if ( !already_asked ) {
 		if ( snoop_link ) {
-			MemEvent *req = new MemEvent(getName(), block->baseAddr, RequestData);
+			MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
 			req->setSize(blocksize);
 			if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
 			DPRINTF("Enqueuing request to load block 0x%lx\n", block->baseAddr);
@@ -344,7 +349,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 			li->busEvent = req;
 		}
 		if ( downstream_link ) {
-			downstream_link->Send(new MemEvent(getName(), block->baseAddr, RequestData));
+			downstream_link->Send(new MemEvent(this, block->baseAddr, RequestData));
 		}
 	}
 }
@@ -406,7 +411,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	}
 
 
-	MemEvent *resp = new MemEvent(getName(), block->baseAddr, SupplyData);
+	MemEvent *resp = new MemEvent(this, block->baseAddr, SupplyData);
 	resp->setPayload(block->data);
 
 	if ( src != SNOOP ) {
@@ -575,7 +580,7 @@ void Cache::cancelInvalidate(CacheBlock *block)
 
 void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
 {
-	MemEvent *ev = new MemEvent(getName(), block->baseAddr, SupplyData);
+	MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
 	ev->setFlag(MemEvent::F_WRITEBACK);
 	ev->setPayload(block->data);
 
@@ -606,7 +611,7 @@ void Cache::finishWritebackBlockVA(BusFinishHandlerArgs& args)
 void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock)
 {
 
-	MemEvent *ev = new MemEvent(getName(), block->baseAddr, SupplyData);
+	MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
 	ev->setFlag(MemEvent::F_WRITEBACK);
 	ev->setPayload(block->data);
 

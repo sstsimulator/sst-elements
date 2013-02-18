@@ -4,13 +4,17 @@
 #include <sst/core/component.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/configGraph.h>
+#include <sst/core/sdl.h>
+
+#include <dll/gem5dll.hh>
 
 #include <util.h>
 #include <debug.h>
-#include <sst/core/sdl.h>
 #include <factory.h>
-#include <dll/gem5dll.hh>
 #include <portLink.h>
+
+namespace SST {
+namespace M5 {
 
 struct LinkInfo {
     std::string compName;
@@ -25,7 +29,7 @@ static void printLinkMap( linkMap_t& );
 static void connectAll( objectMap_t&, linkMap_t& );
 static void createLinks( M5&, Gem5Object_t&, SST::Params& );
 
-objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST::Params& params )
+objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string configFile, SST::Params& params )
 {
     objectMap_t     objectMap;
     linkMap_t       linkMap;
@@ -77,7 +81,6 @@ objectMap_t buildConfig( M5* comp, std::string name, std::string configFile, SST
     }
 
     connectAll( objectMap, linkMap );
-
     return objectMap;
 }
 
@@ -106,16 +109,17 @@ static void createLinks( M5& comp,
     }
 }
 
-void printLinkMap( linkMap_t& map  )
+
+static void printLinkMap( linkMap_t& map  )
 {
     for ( linkMap_t::iterator iter=map.begin(); iter != map.end(); ++iter ) {
         printf("link=%s %s<->%s\n",iter->first.c_str(),
             iter->second.first.compName.c_str(), 
             iter->second.second.compName.c_str());
-    } 
+    }
 }
 
-void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
+static void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
 {
     linkMap_t::iterator iter; 
     for ( iter=linkMap.begin(); iter != linkMap.end(); ++iter ) {
@@ -156,14 +160,15 @@ void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
         }
     } 
 }
+
 unsigned freq_to_ticks( std::string val )
 {
-
     unsigned cycles = SST::Simulation::getSimulation()->
                     getTimeLord()->getSimCycles(val,__func__);
     DBGC(2,"%s() %s ticks=%lu\n",__func__,val.c_str(),cycles);
     return cycles;
 }
+
 unsigned latency_to_ticks( std::string val )
 {
 
@@ -172,3 +177,8 @@ unsigned latency_to_ticks( std::string val )
     DBGC(2,"%s() %s ticks=%lu\n",__func__,val.c_str(),cycles);
     return cycles;
 }
+
+
+}
+}
+

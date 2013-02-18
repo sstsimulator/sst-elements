@@ -4,16 +4,18 @@
 
 #include <dll/gem5dll.hh>
 #include <sim/simulate.hh>
-#include <util.h>
-#include <debug.h>
+#include "portLink.h"
+#include "util.h"
+#include "debug.h"
 
 #include "m5.h"
 
 #define curTick libgem5::CurTick
 
 using namespace SST;
+using namespace SST::M5;
 
-M5::M5( ComponentId_t id, Params_t& params ) :
+SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     IntrospectedComponent( id ),
     m_numRegisterExits( 0 ),
     m_barrier( NULL ),
@@ -88,6 +90,9 @@ M5::M5( ComponentId_t id, Params_t& params ) :
         m_barrier = new BarrierAction( numBarrier );
     }
 
+	// In case we need to translate, let the system load the interface
+    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
+
     //
     // for power and thermal modeling
     //
@@ -96,11 +101,11 @@ M5::M5( ComponentId_t id, Params_t& params ) :
     #endif
 }
 
-M5::~M5()
+SST::M5::M5::~M5()
 {
 }
 
-int M5::Setup()
+int SST::M5::M5::Setup()
 {
     DBGX( 2, "call initAllObjects()\n" );
     libgem5::InitAllObjects();
@@ -110,10 +115,12 @@ int M5::Setup()
     Setup_Power();
     #endif
 
+	setupLinks();
+
     return 0;
 }
 
-void M5::registerExit(void)
+void SST::M5::M5::registerExit(void)
 {
     DBGX(2,"m_numRegisterExits %d\n",m_numRegisterExits);
     if ( m_numRegisterExits == 0) {
@@ -122,7 +129,7 @@ void M5::registerExit(void)
     ++m_numRegisterExits;
 }
 
-void M5::exit( int status )
+void SST::M5::M5::exit( int status )
 {
     DBGX(2,"M5::exit() status=%d\n",status);
     --m_numRegisterExits;
@@ -131,7 +138,7 @@ void M5::exit( int status )
     } 
 }
 
-bool M5::catchup()
+bool SST::M5::M5::catchup()
 {
     Cycle_t cycles = SST::Simulation::getSimulation()-> getCurrentSimCycle();
     Cycle_t ticks = cycles - curTick();
@@ -141,18 +148,18 @@ bool M5::catchup()
 
     m_fooTicks -= ticks;
 
-    SimLoopExitEvent* exitEvent = simulate( ticks );
+    ::SimLoopExitEvent* exitEvent = simulate( ticks );
     bool rc = exitEvent->getCode() != 256;
     delete exitEvent;
     return rc;  
 }
 
-bool M5::clock( SST::Cycle_t cycle )
+bool SST::M5::M5::clock( SST::Cycle_t cycle )
 {
     DBGX( 5, "current_cycle=%lu\n", cycle * m_m5ticksPerSSTclock );
     DBGX( 5, "call simulate M5 curTick()=%lu m_fooTicks=%lu\n", 
 						curTick(), m_fooTicks );
-    SimLoopExitEvent* exitEvent = simulate( m_fooTicks );
+    ::SimLoopExitEvent* exitEvent = simulate( m_fooTicks );
     DBGX( 5, "simulate returned M5 curTick() %lu\n", curTick() );
     m_fooTicks = m_m5ticksPerSSTclock;
 
@@ -185,11 +192,23 @@ bool M5::clock( SST::Cycle_t cycle )
     return false;
 }
 
-int M5::Finish()
+int SST::M5::M5::Finish()
 {
     #ifdef M5_WITH_POWER
     Finish_Power();
     #endif
    
     return 0;
+}
+
+
+void SST::M5::M5::setupLinks()
+{
+	for ( objectMap_t::iterator i = m_objectMap.begin() ; i != m_objectMap.end() ; ++i ) {
+		Gem5Object_t *obj = i->second;
+		for ( std::deque<void*>::iterator j = obj->links.begin() ; j != obj->links.end() ; ++j ) {
+			PortLink *link = static_cast<PortLink*>(*j);
+			link->setup();
+		}
+	}
 }

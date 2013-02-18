@@ -16,6 +16,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace M5 {
+
 class M5;
 
 struct DRAMSimWrapParams : public PhysicalMemoryParams
@@ -114,5 +117,8 @@ class DRAMSimWrap : public PhysicalMemory
     Log< DRAMSIMC_DBG >&    m_dbg;
     Log<>&                  m_log;
 };
+
+}
+}
 
 #endif

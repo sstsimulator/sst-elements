@@ -1,5 +1,6 @@
 #include <m5.h>
 
+using namespace SST::M5;
 #ifdef M5_WITH_POWER
 void m5::Init_Power()
 {

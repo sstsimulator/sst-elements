@@ -5,6 +5,9 @@
 #include <debug.h>
 #include <util.h>
 
+namespace SST {
+namespace M5 {
+
 #define INIT_CLOCK( c, p, member )\
     c.member = freq_to_ticks( p.find_string(#member) );\
     F_INT(c,member)
@@ -51,5 +54,8 @@ static inline bool find_bool( std::string val ) {
 
 #define F_BOOL( x, member )\
     DBGC(1,"%s.%s `%s`\n", x.name.c_str(), #member, x.member ? "true" : "false")
+
+}
+}
 
 #endif

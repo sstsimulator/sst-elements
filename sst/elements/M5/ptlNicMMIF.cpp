@@ -11,6 +11,8 @@
 #include "portals4/ptlNic/ptlNicEvent.h"
 #include "portals4/ptlNic/dmaEvent.h"
 
+using namespace SST::M5;
+
 extern "C" {
 SimObject* create_PtlNicMMIF( SST::Component*, string name,
                                                 SST::Params& sstParams );
@@ -169,7 +171,7 @@ Tick PtlNicMMIF::write(Packet* pkt)
     if ( ( pkt->getAddr() - m_startAddr ) == offsetof( cmdQueue_t, tail ) ) {
         if ( ! m_blocked ) {
             m_cmdLink->Send( 
-                    new PtlNicEvent( &m_cmdQueue.queue[ m_cmdQueue.head ] ) );  
+                    new ::PtlNicEvent( &m_cmdQueue.queue[ m_cmdQueue.head ] ) );  
             m_cmdQueue.head = ( m_cmdQueue.head + 1 ) % CMD_QUEUE_SIZE;
         }
     }

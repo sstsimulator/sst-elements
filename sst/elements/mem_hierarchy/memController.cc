@@ -9,14 +9,18 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sys/mman.h>
-#include <fcntl.h>
-
-#include "sst_config.h"
-#include "sst/core/serialization/element.h"
 #include <assert.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include "sst/core/element.h"
+#include <sst_config.h>
+#include <sst/core/serialization/element.h>
+#include <sst/core/simulation.h>
+#include <sst/core/element.h>
 
 #include "memController.h"
 
@@ -36,8 +40,11 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	if ( ramSize == 0 )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
 	memSize = ramSize * (1024*1024);
+	rangeStart = (Addr)params.find_integer("rangeStart", 0);
+	rangeEnd = rangeStart + memSize;
 
 	std::string memoryFile = params.find_string("memory_file", NO_STRING_DEFINED);
+	std::string exeFile = params.find_string("executable", NO_STRING_DEFINED);
 
 	std::string clock_freq = params.find_string("clock", "");
 
@@ -101,9 +108,17 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 		_abort(MemController, "Unable to MMAP backing store for Memory\n");
 	}
 
+	if ( exeFile != NO_STRING_DEFINED ) {
+		loadExec(exeFile);
+	}
+
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<MemController>(this, &MemController::handleEvent));
 	assert(snoop_link);
+	snoop_link->sendInitData("SST::Interfaces::MemEvent");
+
+	// Let the Simulation know we use the interface
+    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
 }
 
 
@@ -119,6 +134,32 @@ int MemController::Finish(void)
 #endif
 	return 0;
 }
+
+
+
+void MemController::loadExec(const std::string &filename)
+{
+	int fd = open(filename.c_str(), O_RDONLY);
+	if ( !fd ) {
+		fprintf(stderr, "Unable to open file %s\n", filename.c_str());
+		perror("open");
+	} else {
+		struct stat sb;
+		fstat(fd, &sb);
+		void *ptr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+		if ( !ptr ) {
+			fprintf(stderr, "Unable to mmap executable.\n");
+			perror("mmap");
+		} else {
+			memcpy(memBuffer, ptr, sb.st_size);
+
+			munmap(ptr, sb.st_size);
+		}
+		close(fd);
+	}
+}
+
+
 
 
 void MemController::handleEvent(SST::Event *event)
@@ -238,14 +279,14 @@ bool MemController::clock(Cycle_t cycle)
 
 MemEvent* MemController::performRequest(DRAMReq *req)
 {
-	MemEvent *resp = req->reqEvent->makeResponse(getName());
+	MemEvent *resp = req->reqEvent->makeResponse(this);
 	if ( req->isWrite ) {
 		for ( size_t i = 0 ; i < req->size ; i++ ) {
-			memBuffer[req->addr + i] = req->reqEvent->getPayload()[i];
+			memBuffer[req->addr + i - rangeStart] = req->reqEvent->getPayload()[i];
 		}
 	} else {
 		for ( size_t i = 0 ; i < req->size ; i++ ) {
-			resp->getPayload()[i] = memBuffer[req->addr + i];
+			resp->getPayload()[i] = memBuffer[req->addr + i - rangeStart];
 		}
 	}
 	return resp;
@@ -256,7 +297,7 @@ void MemController::sendBusPacket(void)
 {
 	for (;;) {
 		if ( busReqs.size() == 0 ) {
-			snoop_link->Send(new MemEvent(getName(), NULL, CancelBusRequest));
+			snoop_link->Send(new MemEvent(this, NULL, CancelBusRequest));
 			bus_requested = false;
 			break;
 		} else {
@@ -288,7 +329,7 @@ void MemController::sendResponse(MemEvent *ev)
 		busReqs.push_back(ev);
 	}
 	if (!bus_requested) {
-		snoop_link->Send(new MemEvent(getName(), NULL, RequestBus));
+		snoop_link->Send(new MemEvent(this, NULL, RequestBus));
 		bus_requested = true;
 	}
 }

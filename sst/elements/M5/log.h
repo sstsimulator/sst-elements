@@ -18,6 +18,9 @@
 #include <fstream>
 #include <stdlib.h>
 
+namespace SST {
+namespace M5 {
+
 template < int ENABLE = 1 >
 class Log {
     public:
@@ -82,4 +85,6 @@ class Log {
         int         m_level;
 };
 
+}
+}
 #endif
