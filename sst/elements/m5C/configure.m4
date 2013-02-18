@@ -1,6 +1,6 @@
 dnl -*- Autoconf -*-
 
-AC_DEFUN([SST_M5_CONFIG], [
+AC_DEFUN([SST_m5C_CONFIG], [
 
   happy="yes"
 
