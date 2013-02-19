@@ -3,7 +3,7 @@
 #
 
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
+	$(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
 	-g
 
 compdir = $(pkglibdir)
