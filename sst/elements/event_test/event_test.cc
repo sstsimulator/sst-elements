@@ -42,8 +42,6 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
     
     registerExit();
 
-    Simulation::getSimulation()->requireEvent("interfaces.TestEvent");
-
 //     EventHandler_t* linkHandler = new EventHandler<event_test,bool,Event*>
 // 	(this,&event_test::handleEvent);
 
