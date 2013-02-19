@@ -786,6 +786,14 @@ void McNiagara::init(string in_file, OffCpuIF * extif,
 		seed = (unsigned long) (time(NULL) % 1000);
 	init_genrand(seed);  // this function is defined in mersene.h
 	printf("\nRandom Number Generator SEED initialized to %lu\n", seed);
+	if(Debug>0){	
+		cerr<<"Sample Random Number: "<<my_rand()<<endl;
+		cerr<<"Size(int): "<< sizeof(int) <<endl;
+		cerr<<"Size(long):"<< sizeof(long) <<endl;
+		cerr<<"Size(*int):"<< sizeof(int*) <<endl;
+		cerr<<"Size(double):"<< sizeof(double) <<endl;
+	}
+
 
 	if (tracefile.size())//if (tracefile)
 	{

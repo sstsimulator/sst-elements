@@ -397,6 +397,11 @@ int McOpteron::init(string appDirectory, string definitionFilename,
         cerr<<"Fetch Block Size  File: "<<FetchSizeFilename<<endl;     
       if(TransProbFilename.size()) 
         cerr<<"Markov Model based on Instr Transition Prob File: "<<TransProbFilename<<endl;    
+      cerr<<"Sample Random Number: "<<genRandomProbability()<<endl;
+      cerr<<"Size(int): "<< sizeof(int) <<endl;
+      cerr<<"Size(long):"<< sizeof(long) <<endl;
+      cerr<<"Size(*int):"<< sizeof(int*) <<endl;
+      cerr<<"Size(double):"<< sizeof(double) <<endl;
    }   
    readConfigFile("cpuconfig.ini");
    //strcpy(fname, appDirectory);
@@ -750,6 +755,8 @@ int McOpteron::init(string appDirectory, string definitionFilename,
 
    if (Debug>0) fprintf(stderr, "Done initializing\n");
    
+   cerr<<endl;
+   cout<<endl;
    return 0;
 }
 
