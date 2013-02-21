@@ -90,9 +90,6 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
         m_barrier = new BarrierAction( numBarrier );
     }
 
-	// In case we need to translate, let the system load the interface
-    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
-
     //
     // for power and thermal modeling
     //
