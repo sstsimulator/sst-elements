@@ -15,9 +15,9 @@ AC_DEFUN([SST_zesto_CONFIG], [
   LIBS_saved="$LIBS"
 
   AS_IF([test ! -z "$with_qsim" -a "$with_qsim" != "yes"],
-    [QSIM_CPPFLAGS="-I$with_qsim/include -DUSE_QSIM"
+    [QSIM_CPPFLAGS="-I$with_qsim -DUSE_QSIM"
      CPPFLAGS="$QSIM_CPPFLAGS $CPPFLAGS"
-     QSIM_LDFLAGS="-L$with_qsim/lib"
+     QSIM_LDFLAGS="-L$with_qsim"
      LDFLAGS="$QSIM_LDFLAGS $LDFLAGS"],
     [QSIM_CPPFLAGS=
      QSIM_LDFLAGS=])
