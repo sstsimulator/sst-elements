@@ -174,10 +174,6 @@
     <width> 64 </width>
 </busParams>
 
-<osParams>
-    <osParams.rank.0.numThreads> 2 </osParams.rank.0.numThreads>
-</osParams>
-
 </param_include>
 
 <sst>
@@ -185,7 +181,7 @@
     <!-- Core 0 -->
 
     <component name=nid0.cpu0 type=O3Cpu >
-        <params include=cpuParams,osParams>
+        <params include=cpuParams>
             <base.process.pid> 1 </base.process.pid>
             <base.cpu_id>      0 </base.cpu_id>
         </params>
@@ -220,7 +216,7 @@
     <!-- Core 1 -->
 
     <component name=nid0.cpu1 type=O3Cpu >
-        <params include=cpuParams,osParams>
+        <params include=cpuParams>
             <base.process.pid> 100 </base.process.pid>
             <base.cpu_id>        1 </base.cpu_id>
         </params>
