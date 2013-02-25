@@ -4,6 +4,7 @@
 #include <sst_config.h>
 #include <sst/core/component.h>
 
+#include <base/statistics.hh>
 #include <mem/physical.hh>
 #include <debug.h>
 #include <deque>
@@ -79,6 +80,31 @@ class DRAMSimWrap : public PhysicalMemory
         }
     };
 
+    class TickEvent : public ::Event
+    {
+        DRAMSimWrap* m_obj;
+        unsigned long m_delay;
+      public:
+        TickEvent( DRAMSimWrap* obj, int delay ) : m_obj(obj), m_delay( delay ) 
+        {
+            m_obj->schedule( this, curTick() );  
+        }
+        void process() {
+            m_obj->tick();
+            m_obj->schedule( this, curTick() + m_delay );  
+        }
+        
+        const char *description() const {
+            return "DRAMSimWrap tick";
+        }
+    };
+
+    void tick();
+
+    TickEvent*   m_tickEvent;
+
+    bool        m_blocked;
+
   public:
     typedef DRAMSimWrapParams Params;
     DRAMSimWrap( const Params* p );
@@ -87,6 +113,7 @@ class DRAMSimWrap : public PhysicalMemory
     virtual Port * getPort(const std::string &if_name, int idx = -1);
 
     void init();
+    void regStats();
 
    protected:
     virtual bool recvTiming(PacketPtr pkt);
@@ -102,10 +129,12 @@ class DRAMSimWrap : public PhysicalMemory
     void readData(unsigned int id, uint64_t addr, uint64_t clockcycle);
     void writeData(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
-    std::deque<std::pair<PacketPtr,int> >       m_recvQ;
-    std::deque<PacketPtr >                      m_readyQ;
-    std::deque<std::pair<PacketPtr,int> >       m_readQ;
-    std::deque<std::pair<PacketPtr,int> >       m_writeQ;
+    std::map< uint64_t, PacketPtr >       m_rd_pktMap;
+    std::multimap< uint64_t, PacketPtr >       m_wr_pktMap;
+    std::deque< PacketPtr >       m_readyQ;
+
+    Stats::Distribution m_rd_lat;
+    Stats::Distribution m_wr_lat;
 
     // define this as void so we don't have to pull in DRAMSim header files
     void*           m_memorySystem;

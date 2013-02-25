@@ -2,7 +2,6 @@
 #include <sst/core/serialization/element.h>
 
 #include <DRAMSimWrap.h>
-#include <memLink.h>
 #include <m5.h>
 #include <paramHelp.h>
 #include <loadMemory.h>
@@ -77,14 +76,8 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     m_log.write("freq %s\n",p->frequency.c_str());
     m_log.write("megsOfMemory %lu\n",megsOfMemory);
 
-    m_tc = m_comp->registerClock( p->frequency,
-            new SST::Clock::Handler<DRAMSimWrap>(this, &DRAMSimWrap::clock) );
-
-    assert( m_tc );
-    m_log.write("period %ld\n",m_tc->getFactor());
-
-    m_memorySystem = new DRAMSim::MultiChannelMemorySystem(/* 0, */ deviceIniFilename,
-                    systemIniFilename, "", "", megsOfMemory );
+    m_memorySystem = new DRAMSim::MultiChannelMemorySystem(/* 0, */ 
+            deviceIniFilename, systemIniFilename, "", "", megsOfMemory );
 
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* readDataCB;
     DRAMSim::Callback<DRAMSimWrap, void, uint, uint64_t,uint64_t >* writeDataCB;
@@ -98,7 +91,15 @@ DRAMSimWrap::DRAMSimWrap( const Params* p ) :
                         (this, &DRAMSimWrap::writeData);
 
     MS_CAST( m_memorySystem )->RegisterCallbacks(readDataCB, writeDataCB, NULL);
-    MS_CAST( m_memorySystem )->setCPUClockSpeed(0U);
+
+    SST::SimTime_t delay = SST::Simulation::getSimulation()->
+                            getTimeLord()->getSimCycles( p->frequency,"");
+    
+    m_tickEvent = new TickEvent( this, delay );
+
+    unsigned long freqHz = ( ( 1.0 / delay ) * 1000000000000 ); 
+    printf("DRAMSimWrap clock %lu hz\n", freqHz );
+    MS_CAST( m_memorySystem )->setCPUClockSpeed(freqHz);
 }
 
 DRAMSimWrap::~DRAMSimWrap()
@@ -135,11 +136,30 @@ void DRAMSimWrap::init()
 
 bool DRAMSimWrap::recvTiming(PacketPtr pkt)
 {
-    PRINTFN("%s: %s %#lx\n", __func__, pkt->cmdString().c_str(),
-                                        (long)pkt->getAddr());
+    uint64_t addr    = pkt->getAddr();
+    bool     isWrite = pkt->isWrite();
+    bool     isRead = pkt->isRead();
 
-    if ( pkt->isRead() || pkt->isWrite() ) {
-        m_recvQ.push_back( make_pair( pkt, 0 ) );
+    PRINTFN("%s: %s %#lx\n", __func__, pkt->cmdString().c_str(), (long)addr);
+
+    if ( ! MS_CAST( m_memorySystem )->willAcceptTransaction( addr ) ) {
+        return false; 
+    } 
+
+    assert( addr &= ~( JEDEC_DATA_BUS_BITS - 1 ) );
+
+    pkt->dram_enter_time = curTick();
+
+    if ( isRead ) { 
+        assert(m_rd_pktMap.find( addr ) == m_rd_pktMap.end());
+        m_rd_pktMap[ addr ] = pkt;
+        MS_CAST( m_memorySystem )->addTransaction( isWrite, addr );
+    } else if ( isWrite ) {
+        std::multimap< uint64_t, PacketPtr >::iterator it;
+        it = m_wr_pktMap.find( addr );
+        assert( it == m_wr_pktMap.end());
+        m_wr_pktMap.insert( pair<uint64_t, PacketPtr>(addr, pkt) );
+        MS_CAST( m_memorySystem )->addTransaction( isWrite, addr );
     } else {
         if ( pkt->needsResponse() ) {
             pkt->makeTimingResponse();
@@ -162,7 +182,7 @@ void DRAMSimWrap::recvRetry()
 
 void DRAMSimWrap::sendTry()
 {
-    while ( ! m_waitRetry && ! m_readyQ.empty() ) {
+    while ( ! m_readyQ.empty() && ! m_waitRetry ) {
         if ( ! m_port->sendTiming( m_readyQ.front() )  ) {
             PRINTFN("%s: sendTiming failed\n",__func__);
             m_waitRetry = true;
@@ -177,78 +197,72 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 {
     PRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
-    assert( ! m_readQ.empty() );
 
-    m_readQ.front().second += JEDEC_DATA_BUS_BITS; 
+    assert( m_rd_pktMap.find( addr ) != m_rd_pktMap.end() );
 
-    PacketPtr pkt = m_readQ.front().first;
+    PacketPtr    pkt   = m_rd_pktMap[addr];
 
-    if ( m_readQ.front().second >= pkt->getSize() ) {
-        PhysicalMemory::doAtomicAccess( pkt );
-        m_readyQ.push_back(pkt);
-        m_readQ.pop_front();
-    } 
+    m_rd_lat.sample( curTick() - pkt->dram_enter_time );
+
+    PRINTFN("%s() `%s` addr=%#lx size=%d\n", __func__, pkt->cmdString().c_str(),
+                                        (long)pkt->getAddr(), pkt->getSize());
+
+    PhysicalMemory::doAtomicAccess( pkt );
+
+    m_readyQ.push_back(pkt);
+
+    m_rd_pktMap.erase( addr );
 }
 
 void DRAMSimWrap::writeData(uint id, uint64_t addr, uint64_t clockcycle)
 {
     PRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
-    assert( ! m_writeQ.empty() );
+    std::multimap< uint64_t, PacketPtr >::iterator it =
+                    m_wr_pktMap.find( addr );
+    assert( it != m_wr_pktMap.end() );
 
-    m_writeQ.front().second += JEDEC_DATA_BUS_BITS; 
+    PacketPtr    pkt   = it->second;
 
-    PacketPtr pkt = m_writeQ.front().first;
+    m_wr_lat.sample( curTick() - pkt->dram_enter_time );
 
-    if ( m_writeQ.front().second >= pkt->getSize() ) {
-        PhysicalMemory::doAtomicAccess( pkt );
-        if ( pkt->needsResponse() ) {
-            m_readyQ.push_back(pkt);
-        } else {
-            delete pkt;
-        }
-        m_writeQ.pop_front();
-    } 
-}
+    PRINTFN("%s() `%s` addr=%#lx size=%d\n", __func__, pkt->cmdString().c_str(),
+                                        (long)pkt->getAddr(), pkt->getSize());
 
-bool DRAMSimWrap::clock( SST::Cycle_t cycle )
-{
-    SST::Cycle_t now = m_tc->convertToCoreTime( cycle );
+    PhysicalMemory::doAtomicAccess( pkt );
 
-    if ( m_comp->catchup( ) ) {
-        return true;
+    if ( pkt->needsResponse() ) {
+        m_readyQ.push_back(pkt);
+    } else {
+        delete pkt;
     }
 
+    m_wr_pktMap.erase( addr );
+}
+
+void DRAMSimWrap::regStats()
+{
+    using namespace Stats;
+
+    m_rd_lat
+        .init(0,250000,50000)
+        .name(name() + ".rt_read_lat")
+        .desc("Round trip latency for a dram read req")
+        .precision(2)
+        ;
+
+    m_wr_lat
+        .init(0,250000,50000)
+        .name(name() + ".rt_write_lat")
+        .desc("Round trip latency for a dram write req")
+        .precision(2)
+        ;
+}
+
+
+void DRAMSimWrap::tick()
+{
     MS_CAST( m_memorySystem )->update();
 
     sendTry();
-
-    while ( ! m_recvQ.empty() ) {
-        PacketPtr pkt = m_recvQ.front().first;
-        int ret;
-        uint64_t addr = pkt->getAddr() + m_recvQ.front().second;
-        addr &= ~( JEDEC_DATA_BUS_BITS - 1 );
-
-        if ( ! MS_CAST( m_memorySystem )->addTransaction( 
-                        pkt->isWrite(), addr) ) 
-        {
-            break;
-        }
-
-        PRINTFN("%s: added trans, cycle=%lu addr=%#lx\n", 
-                                                __func__,cycle, addr );
-
-        m_recvQ.front().second += JEDEC_DATA_BUS_BITS;
-
-        if ( m_recvQ.front().second >= pkt->getSize() ) {
-            if ( pkt->isRead() ) {
-                m_readQ.push_back( make_pair( pkt, 0 ) );
-            } else {
-                m_writeQ.push_back( make_pair( pkt, 0 ) );
-            }
-            m_recvQ.pop_front();
-        }
-    }
-
-    return false;
 }
