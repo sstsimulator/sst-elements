@@ -1,6 +1,9 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/params.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/linkMap.h>
 
 #include <dll/gem5dll.hh>
 #include <sim/simulate.hh>
@@ -51,6 +54,7 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     }
 
     m_statFile = params.find_string("statFile");
+	m_init_link_name = params.find_string("mem_initializer_port");
 
     // It makes things easier if we match the m5 simulation clock with 
     // the SST simulation clock. We don't have access to the SST clock but
@@ -113,6 +117,19 @@ int SST::M5::M5::Setup()
     #endif
 
 	setupLinks();
+
+
+	/* Because there's no clean way to get my link (that was configured elsewhere... */
+	if ( m_init_link_name != "" ) {
+		SST::Link* memInitLink = Simulation::getSimulation()->getComponentLinkMap(getId())->getLink(m_init_link_name);
+		assert( memInitLink );
+		/* TODO: Should be part of intitialization
+		 * Also, the call to InitAllObjects will need to be done
+		 * before this call. */
+		std::vector<libgem5::Blob> blobs;
+		libgem5::getInitializedMemory(blobs);
+
+		/* blobs -> memInitLink */
 
     return 0;
 }

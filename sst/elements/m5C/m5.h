@@ -45,6 +45,7 @@ class M5 : public SST::IntrospectedComponent
     int                 m_m5ticksPerSSTclock;
     SST::Cycle_t        m_fooTicks;
     objectMap_t         m_objectMap;
+	std::string         m_init_link_name;
 
     // flag for fastforwarding
     bool FastForwarding_flag;
