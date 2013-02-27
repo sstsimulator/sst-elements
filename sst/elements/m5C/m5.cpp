@@ -130,6 +130,7 @@ int SST::M5::M5::Setup()
 		libgem5::getInitializedMemory(blobs);
 
 		/* blobs -> memInitLink */
+	}
 
     return 0;
 }
