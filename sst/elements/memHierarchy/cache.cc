@@ -54,7 +54,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 					new Event::Handler<Cache, SourceType_t>(this,
 						&Cache::handleIncomingEvent, UPSTREAM) );
 			assert(upstream_links[i]);
-			upstream_links[i]->sendInitData("SST::Interfaces::MemEvent");
+			//upstream_links[i]->sendInitData("SST::Interfaces::MemEvent");
 			upstreamLinkMap[upstream_links[i]->getId()] = i;
 		}
 	}
@@ -63,11 +63,11 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	downstream_link = configureLink( "downstream",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, DOWNSTREAM) );
-	if ( downstream_link ) downstream_link->sendInitData("SST::Interfaces::MemEvent");
+	//if ( downstream_link ) downstream_link->sendInitData("SST::Interfaces::MemEvent");
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, SNOOP) );
-	if ( snoop_link ) snoop_link->sendInitData("SST::Interfaces::MemEvent");
+	//if ( snoop_link ) snoop_link->sendInitData("SST::Interfaces::MemEvent");
 	if ( snoop_link != NULL ) { // Snoop is a bus.
 		snoopBusQueue.setup(this, snoop_link);
 	}
@@ -75,7 +75,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	directory_link = configureLink( "directory_link",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, DIRECTORY) );
-	if ( directory_link ) directory_link->sendInitData("SST::Interfaces::MemEvent");
+	//if ( directory_link ) directory_link->sendInitData("SST::Interfaces::MemEvent");
 
 	self_link = configureSelfLink("Self", params.find_string("access_time", ""),
 				new Event::Handler<Cache>(this, &Cache::handleSelfEvent));

@@ -52,7 +52,7 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
     registerTimeBase("1ns");
 
     // Test the InitData capabilities
-    link->sendInitData("test");
+    //link->sendInitData("test");
 }
 
 
@@ -67,7 +67,7 @@ int
 event_test::Setup()
 {
 
-    if ( link->recvInitDataString().compare("test") != 0 ) printf("InitData not working\n");
+    //if ( link->recvInitDataString().compare("test") != 0 ) printf("InitData not working\n");
     
 	if ( my_id == 0 ) {
 		Interfaces::TestEvent* event = new Interfaces::TestEvent();

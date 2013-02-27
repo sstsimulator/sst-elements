@@ -57,7 +57,7 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 		//ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
 		assert(ports[i]);
 		linkMap[ports[i]->getId()] = ports[i];
-		ports[i]->sendInitData("SST::Interfaces::MemEvent");
+		//ports[i]->sendInitData("SST::Interfaces::MemEvent");
 		DPRINTF("Port %lu = Link %d\n", ports[i]->getId(), i);
 	}
 

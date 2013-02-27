@@ -115,7 +115,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<MemController>(this, &MemController::handleEvent));
 	assert(snoop_link);
-	snoop_link->sendInitData("SST::Interfaces::MemEvent");
+	//snoop_link->sendInitData("SST::Interfaces::MemEvent");
 
 	// Let the Simulation know we use the interface
     Simulation::getSimulation()->requireEvent("interfaces.MemEvent");

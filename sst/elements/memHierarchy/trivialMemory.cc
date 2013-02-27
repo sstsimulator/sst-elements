@@ -44,7 +44,7 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialMemory::
 				handleRequest) );
 	assert(bus_link);
-	bus_link->sendInitData("SST::Interfaces::MemEvent");
+	//bus_link->sendInitData("SST::Interfaces::MemEvent");
 
 	self_link = configureSelfLink("Self", params.find_string("accessTime", "1000 ns"),
 			new Event::Handler<trivialMemory>(this, &trivialMemory::handleSelfEvent));

@@ -60,6 +60,7 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
 }
 
 void PortLink::setup(void) {
+#if 0
 	std::string linkCfgStr = m_link->recvInitDataString();
 	fprintf(stderr, "Received string:  [[%s]]\n", linkCfgStr.c_str());
 	if ( linkCfgStr == "SST::Interfaces::MemEvent" ) {
@@ -68,6 +69,9 @@ void PortLink::setup(void) {
 	} else {
 		fprintf(stderr, "PortLink will NOT translate to MemEvent!\n");
 	}
+#else
+	m_doTranslate = false;
+#endif
 }
 
 void PortLink::eventHandler( SST::Event *e )

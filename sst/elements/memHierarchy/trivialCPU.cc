@@ -55,7 +55,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialCPU::
 				handleEvent) );
 	assert(mem_link);
-	mem_link->sendInitData("SST::Interfaces::MemEvent");
+	//mem_link->sendInitData("SST::Interfaces::MemEvent");
 
 	registerTimeBase("1 ns", true);
 	//set our clock
