@@ -44,7 +44,6 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	rangeEnd = rangeStart + memSize;
 
 	std::string memoryFile = params.find_string("memory_file", NO_STRING_DEFINED);
-	std::string exeFile = params.find_string("executable", NO_STRING_DEFINED);
 
 	std::string clock_freq = params.find_string("clock", "");
 
@@ -108,10 +107,6 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 		_abort(MemController, "Unable to MMAP backing store for Memory\n");
 	}
 
-	if ( exeFile != NO_STRING_DEFINED ) {
-		loadExec(exeFile);
-	}
-
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<MemController>(this, &MemController::handleEvent));
 	assert(snoop_link);
@@ -134,32 +129,6 @@ int MemController::Finish(void)
 #endif
 	return 0;
 }
-
-
-
-void MemController::loadExec(const std::string &filename)
-{
-	int fd = open(filename.c_str(), O_RDONLY);
-	if ( !fd ) {
-		fprintf(stderr, "Unable to open file %s\n", filename.c_str());
-		perror("open");
-	} else {
-		struct stat sb;
-		fstat(fd, &sb);
-		void *ptr = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-		if ( !ptr ) {
-			fprintf(stderr, "Unable to mmap executable.\n");
-			perror("mmap");
-		} else {
-			memcpy(memBuffer, ptr, sb.st_size);
-
-			munmap(ptr, sb.st_size);
-		}
-		close(fd);
-	}
-}
-
-
 
 
 void MemController::handleEvent(SST::Event *event)

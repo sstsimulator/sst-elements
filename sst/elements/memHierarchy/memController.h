@@ -67,8 +67,6 @@ private:
 
 	MemController();  // for serialization only
 
-	void loadExec(const std::string &filename);
-
 	void handleEvent(SST::Event *event);
 	void handleSelfEvent(SST::Event *event);
 
