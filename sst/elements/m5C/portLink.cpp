@@ -146,7 +146,7 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 	}
 
 	pkt->size = sstev->getSize();
-	assert(pkt->size <= MemPkt::DataSize);
+	assert(pkt->size <= (unsigned)MemPkt::DataSize);
 	memcpy(pkt->data, &(sstev->getPayload()[0]), pkt->size);
 
 	/* Swap src/dst */
@@ -165,6 +165,14 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 	fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
 	SST::Interfaces::MemEvent *ev = new SST::Interfaces::MemEvent(&m_comp, pkt->addr, SST::Interfaces::NULLCMD);
 	ev->setPayload(pkt->size, pkt->data);
+
+	/* From ${GEM5}/src/mem/request.hh */
+    static const uint32_t LOCKED                      = 0x00100003;
+
+	if ( pkt->req.flags & LOCKED ) {
+		ev->setFlags(SST::Interfaces::MemEvent::F_LOCKED);
+		ev->setLockID(((uint64_t)(pkt->req.contextId) <<32) | (uint64_t)(pkt->req.threadId));
+	}
 
 	switch ( (::MemCmd::Command)pkt->cmd) {
 	case ::MemCmd::ReadReq:
