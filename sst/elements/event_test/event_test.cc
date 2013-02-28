@@ -23,6 +23,7 @@ using namespace SST;
 
 event_test::event_test(ComponentId_t id, Params_t& params) :
     Component(id),
+    init_count(0),
     done(false)
 {
     if ( params.find("id") == params.end() ) {
@@ -62,7 +63,6 @@ event_test::event_test() :
     // for serialization only
 }
 
-
 int
 event_test::Setup()
 {
@@ -88,6 +88,27 @@ event_test::Finish()
     return 0;
 }
 
+
+void
+event_test::init()
+{
+    Interfaces::TestEvent* event;
+    if ( init_count == 0 || init_count == 1 ) {
+	event = new Interfaces::TestEvent();
+	event->print_on_delete = true;
+	printf("%d: sending event during phase %d\n",my_id,init_count);
+	link->sendInitData(event);
+    }
+
+    if ( init_count == 0 || init_count == 1 ) {
+	event = static_cast<Interfaces::TestEvent*>(link->recvInitData());
+	if ( event != NULL ) {
+	    printf("%d: received init event during phase %d\n",my_id,init_count);
+	    delete event;
+	}
+    }
+    init_count++;
+}
 
 void
 event_test::handleEvent(Event* ev)

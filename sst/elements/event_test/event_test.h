@@ -23,6 +23,7 @@ class event_test : public SST::Component {
 public:
     event_test(SST::ComponentId_t id, SST::Component::Params_t& params);
 
+    void init();
     int Setup();
     int Finish();
     
@@ -35,6 +36,7 @@ private:
 
     int my_id;
     int count_to;
+    int init_count;
     int latency;
     bool done;
     SST::Link* link;
