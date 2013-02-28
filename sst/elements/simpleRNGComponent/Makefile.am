@@ -1,0 +1,15 @@
+# -*- Makefile -*-
+#
+#
+
+AM_CPPFLAGS = \
+	$(BOOST_CPPFLAGS) \
+	$(MPI_CPPFLAGS) 
+
+compdir = $(pkglibdir)
+comp_LTLIBRARIES = libsimpleRNGComponent.la
+libsimpleRNGComponent_la_SOURCES = \
+	simpleRNGComponent.h \
+	simpleRNGComponent.cc
+
+libsimpleRNGComponent_la_LDFLAGS = -module -avoid-version
