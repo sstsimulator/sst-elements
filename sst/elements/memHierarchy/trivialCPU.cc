@@ -15,11 +15,14 @@
 
 #include <sst/core/element.h>
 #include <sst/core/simulation.h>
+#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include "trivialCPU.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 
 trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
@@ -55,7 +58,6 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialCPU::
 				handleEvent) );
 	assert(mem_link);
-	//mem_link->sendInitData("SST::Interfaces::MemEvent");
 
 	registerTimeBase("1 ns", true);
 	//set our clock
@@ -64,16 +66,20 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialCPU::clockTic ) );
 	num_reads_issued = num_reads_returned = 0;
 
-
-	// Let the Simulation know we use the interface
-    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
-
 }
 
 trivialCPU::trivialCPU() :
 	Component(-1)
 {
 	// for serialization only
+}
+
+
+void trivialCPU::init(unsigned int phase)
+{
+	if ( !phase ) {
+		mem_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+	}
 }
 
 // incoming events are scanned and deleted

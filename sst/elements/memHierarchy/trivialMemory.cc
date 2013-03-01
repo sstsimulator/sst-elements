@@ -17,6 +17,8 @@
 #include <sst/core/element.h>
 #include <sst/core/component.h>
 #include <sst/core/simulation.h>
+#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include "trivialMemory.h"
 
@@ -25,6 +27,7 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 {
@@ -44,7 +47,6 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 				&trivialMemory::
 				handleRequest) );
 	assert(bus_link);
-	//bus_link->sendInitData("SST::Interfaces::MemEvent");
 
 	self_link = configureSelfLink("Self", params.find_string("accessTime", "1000 ns"),
 			new Event::Handler<trivialMemory>(this, &trivialMemory::handleSelfEvent));
@@ -52,14 +54,36 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 	registerTimeBase("1 ns", true);
 	bus_requested = false;
 
-	// Let the Simulation know we use the interface
-	Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
 }
 
 trivialMemory::trivialMemory() :
 	Component(-1)
 {
 	// for serialization only
+}
+
+
+void trivialMemory::init(unsigned int phase)
+{
+	if ( !phase ) {
+		bus_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+	}
+
+	SST::Event *ev = NULL;
+	while ( (ev = bus_link->recvInitData()) != NULL ) {
+		MemEvent *me = dynamic_cast<MemEvent*>(ev);
+		if ( me ) {
+			/* Push data to memory */
+			if ( me->getCmd() == WriteReq ) {
+				for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
+					data[me->getAddr() + i] = me->getPayload()[i];
+				}
+			} else {
+				printf("TrivialMemory received unexpected Init Command: %d\n", me->getCmd() );
+			}
+		}
+		delete ev;
+	}
 }
 
 

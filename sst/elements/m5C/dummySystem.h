@@ -40,7 +40,7 @@ class DummySystem : public System {
         Addr return_addr = pagePtr << LogVMPageSize;
         pagePtr += npages;
         if (return_addr >= m_end - m_start)
-            fatal("Out of memory, please increase size of physical memory.");
+            fatal("m5C:DummySystem: Out of memory, please increase size of physical memory.");
         return m_start + return_addr;
     }
 

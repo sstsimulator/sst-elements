@@ -106,31 +106,56 @@ SST::M5::M5::~M5()
 {
 }
 
+
+void SST::M5::M5::init(unsigned int phase)
+{
+	if ( !phase ) {
+		DBGX( 2, "call initAllObjects()\n" );
+		libgem5::InitAllObjects();
+		DBGX( 2, "initAllObjects\n" );
+
+		/* Because there's no clean way to get my link (that was configured elsewhere... */
+		if ( m_init_link_name != "" ) {
+			SST::Link* memInitLink = Simulation::getSimulation()->getComponentLinkMap(getId())->getLink(m_init_link_name);
+			assert( memInitLink );
+			/* TODO: Should be part of intitialization
+			 * Also, the call to InitAllObjects will need to be done
+			 * before this call. */
+			std::vector<libgem5::Blob> blobs;
+			libgem5::getInitializedMemory(blobs);
+
+			/* blobs -> memInitLink */
+			for ( std::vector<libgem5::Blob>::iterator i = blobs.begin() ; i != blobs.end() ; ++i ) {
+				SST::Interfaces::MemEvent *ev = new SST::Interfaces::MemEvent(this, i->address, SST::Interfaces::WriteReq);
+				ev->setPayload(i->size, i->data);
+
+				memInitLink->sendInitData(ev);
+
+				/* Save memory */
+				delete i->data;
+				i->data = NULL;
+				i->size = 0;
+			}
+		}
+
+	}
+
+	/* Setup Links */
+	for ( objectMap_t::iterator i = m_objectMap.begin() ; i != m_objectMap.end() ; ++i ) {
+		Gem5Object_t *obj = i->second;
+		for ( std::deque<void*>::iterator j = obj->links.begin() ; j != obj->links.end() ; ++j ) {
+			PortLink *link = static_cast<PortLink*>(*j);
+			link->setup();
+		}
+	}
+}
+
 int SST::M5::M5::Setup()
 {
-    DBGX( 2, "call initAllObjects()\n" );
-    libgem5::InitAllObjects();
-    DBGX( 2, "initAllObjects\n" );
 
     #ifdef M5_WITH_POWER
     Setup_Power();
     #endif
-
-	setupLinks();
-
-
-	/* Because there's no clean way to get my link (that was configured elsewhere... */
-	if ( m_init_link_name != "" ) {
-		SST::Link* memInitLink = Simulation::getSimulation()->getComponentLinkMap(getId())->getLink(m_init_link_name);
-		assert( memInitLink );
-		/* TODO: Should be part of intitialization
-		 * Also, the call to InitAllObjects will need to be done
-		 * before this call. */
-		std::vector<libgem5::Blob> blobs;
-		libgem5::getInitializedMemory(blobs);
-
-		/* blobs -> memInitLink */
-	}
 
     return 0;
 }
@@ -217,13 +242,3 @@ int SST::M5::M5::Finish()
 }
 
 
-void SST::M5::M5::setupLinks()
-{
-	for ( objectMap_t::iterator i = m_objectMap.begin() ; i != m_objectMap.end() ; ++i ) {
-		Gem5Object_t *obj = i->second;
-		for ( std::deque<void*>::iterator j = obj->links.begin() ; j != obj->links.end() ; ++j ) {
-			PortLink *link = static_cast<PortLink*>(*j);
-			link->setup();
-		}
-	}
-}

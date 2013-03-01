@@ -29,13 +29,13 @@ class trivialMemory : public SST::Component {
 public:
 
   trivialMemory(SST::ComponentId_t id, SST::Component::Params_t& params);
-  int Setup() {return 0;}
-  int Finish() { return 0;}
+  void init();
 
 private:
   trivialMemory();  // for serialization only
   trivialMemory(const trivialMemory&); // do not implement
   void operator=(const trivialMemory&); // do not implement
+  void init(unsigned int phase);
 
   void handleRequest( SST::Event *ev );  // From CPU
   void handleSelfEvent( SST::Event *ev );

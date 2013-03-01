@@ -33,8 +33,7 @@ class Bus : public SST::Component {
 public:
 
 	Bus(SST::ComponentId_t id, SST::Component::Params_t& params);
-	int Setup() { return 0; }
-	int Finish() { return 0; }
+	void init(unsigned int phase);
 
 private:
 	Bus();  // for serialization only

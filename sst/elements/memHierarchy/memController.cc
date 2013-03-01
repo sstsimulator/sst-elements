@@ -21,6 +21,8 @@
 #include <sst/core/serialization/element.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
+#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include "memController.h"
 
@@ -33,6 +35,7 @@ static unsigned JEDEC_DATA_BUS_BITS_local= 64;
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 {
@@ -110,10 +113,32 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<MemController>(this, &MemController::handleEvent));
 	assert(snoop_link);
-	//snoop_link->sendInitData("SST::Interfaces::MemEvent");
 
-	// Let the Simulation know we use the interface
-    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
+}
+
+
+void MemController::init(unsigned int phase)
+{
+	if ( !phase ) {
+		snoop_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+	}
+
+	SST::Event *ev = NULL;
+	while ( (ev = snoop_link->recvInitData()) != NULL ) {
+		MemEvent *me = dynamic_cast<MemEvent*>(ev);
+		if ( me ) {
+			/* Push data to memory */
+			if ( me->getCmd() == WriteReq ) {
+				for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
+					memBuffer[me->getAddr() + i - rangeStart] = me->getPayload()[i];
+				}
+			} else {
+				printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+			}
+		}
+		delete ev;
+	}
+
 }
 
 

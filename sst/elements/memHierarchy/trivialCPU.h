@@ -28,7 +28,7 @@ class trivialCPU : public SST::Component {
 public:
 
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
-	int Setup() {return 0;}
+	void init();
 	int Finish() {
 		printf("TrivialCPU Finished after %lu issued reads, %lu returned\n",
 				num_reads_issued, num_reads_returned);
@@ -39,6 +39,7 @@ private:
 	trivialCPU();  // for serialization only
 	trivialCPU(const trivialCPU&); // do not implement
 	void operator=(const trivialCPU&); // do not implement
+	void init(unsigned int phase);
 
 	void handleEvent( SST::Event *ev );
 	virtual bool clockTic( SST::Cycle_t );

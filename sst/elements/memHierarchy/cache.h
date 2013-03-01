@@ -265,7 +265,7 @@ private:
 public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
-	int Setup()  { return 0; }
+	void init(unsigned int);
 	int Finish();
 
 private:

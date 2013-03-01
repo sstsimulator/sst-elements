@@ -42,7 +42,7 @@ namespace SST {
 class MemController : public SST::Component {
 public:
 	MemController(ComponentId_t id, Params_t &params);
-	int Setup() { return 0; }
+	void init(unsigned int);
 	int Finish();
 
 
@@ -107,6 +107,7 @@ private:
 
 	std::map<uint64_t, DRAMReq*> dramReqs;
 #endif
+
 
 };
 

@@ -18,6 +18,8 @@
 #include <sst/core/component.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
+#include <sst/core/interfaces/stringEvent.h>
+#include <sst/core/interfaces/memEvent.h>
 
 #include "bus.h"
 
@@ -25,13 +27,13 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 static const LinkId_t BUS_INACTIVE = (LinkId_t)(-2);
 
 Bus::Bus(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
-
 	// get parameters
 	numPorts = params.find_integer("numPorts", 0);
 	if ( numPorts < 1 ) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
@@ -57,15 +59,11 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 		//ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
 		assert(ports[i]);
 		linkMap[ports[i]->getId()] = ports[i];
-		//ports[i]->sendInitData("SST::Interfaces::MemEvent");
 		DPRINTF("Port %lu = Link %d\n", ports[i]->getId(), i);
 	}
 
 	selfLink = configureSelfLink("Self", "50 ps",
 				new Event::Handler<Bus>(this, &Bus::handleSelfEvent));
-
-	// Let the Simulation know we use the interface
-    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
 
 }
 
@@ -73,6 +71,32 @@ Bus::Bus() :
 	Component(-1)
 {
 	// for serialization only
+}
+
+
+void Bus::init(unsigned int phase)
+{
+	if ( !phase ) {
+		for ( int i = 0 ; i < numPorts ; i++ ) {
+			ports[i]->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		}
+	}
+
+	/* Pass on any messages */
+	for ( int i = 0 ; i < numPorts ; i++ ) {
+		SST::Event *ev = NULL;
+		while ( (ev = ports[i]->recvInitData()) != NULL ) {
+			MemEvent *me = dynamic_cast<MemEvent*>(ev);
+			if ( me ) {
+				for ( int j = 0 ; j < numPorts ; j++ ) {
+					if ( i == j ) continue;
+					ports[j]->sendInitData(new MemEvent(me));
+				}
+			}
+			delete ev;
+		}
+	}
+
 }
 
 

@@ -25,6 +25,7 @@ class M5 : public SST::IntrospectedComponent
   public:
     M5( SST::ComponentId_t id, Params_t& params );
     ~M5();
+	void init(unsigned int);
     int Setup();
     int Finish();
     bool catchup( );
@@ -67,7 +68,6 @@ class M5 : public SST::IntrospectedComponent
     void Setup_Power();
     void Finish_Power();
    #endif
-	void setupLinks();
 
 };
 

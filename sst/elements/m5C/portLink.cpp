@@ -1,6 +1,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/component.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include <debug.h>
 #include <m5.h>
@@ -60,18 +61,17 @@ PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
 }
 
 void PortLink::setup(void) {
-#if 0
-	std::string linkCfgStr = m_link->recvInitDataString();
-	fprintf(stderr, "Received string:  [[%s]]\n", linkCfgStr.c_str());
-	if ( linkCfgStr == "SST::Interfaces::MemEvent" ) {
-		fprintf(stderr, "PortLink will translate to MemEvent!\n");
-		m_doTranslate = true;
-	} else {
-		fprintf(stderr, "PortLink will NOT translate to MemEvent!\n");
+	SST::Event *ev = NULL;
+	while ( (ev = m_link->recvInitData()) != NULL ) {
+		SST::Interfaces::StringEvent *se = dynamic_cast<SST::Interfaces::StringEvent*>(ev);
+		if ( se ) {
+			std::string str = se->getString();
+			if ( str == "SST::Interfaces::MemEvent" ) {
+				m_doTranslate = true;
+			}
+		}
+		delete ev;
 	}
-#else
-	m_doTranslate = false;
-#endif
 }
 
 void PortLink::eventHandler( SST::Event *e )
@@ -107,7 +107,7 @@ void PortLink::eventHandler( SST::Event *e )
 MemPkt* PortLink::findMatchingEvent(SST::Interfaces::MemEvent *sstev)
 {
 	MemPkt* g5ev = NULL;
-	fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
+	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
 	for ( std::list<MemPkt*>::iterator i = m_g5events.begin() ; i != m_g5events.end() ; ++i ) {
 		MemPkt *ev = *i;
 		/* TODO:  More intelligent matching? */
@@ -117,14 +117,14 @@ MemPkt* PortLink::findMatchingEvent(SST::Interfaces::MemEvent *sstev)
 			break;
 		}
 	}
-	fprintf(stderr, "%s:%d %s: Returning patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, g5ev->pktId);
+	//fprintf(stderr, "%s:%d %s: Returning patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, g5ev->pktId);
 	return g5ev;
 }
 
 
 MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 {
-	fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
+	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
 	SST::Interfaces::MemEvent *sstev = static_cast<SST::Interfaces::MemEvent*>(e);
 	MemPkt* pkt = findMatchingEvent(sstev);
 	if ( !pkt ) {
@@ -162,7 +162,7 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 
 SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 {
-	fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
+	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
 	SST::Interfaces::MemEvent *ev = new SST::Interfaces::MemEvent(&m_comp, pkt->addr, SST::Interfaces::NULLCMD);
 	ev->setPayload(pkt->size, pkt->data);
 
@@ -192,7 +192,7 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 				pkt->cmd);
 	}
 	m_g5events.push_back(new MemPkt(*pkt));
-	fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
+	//fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
 	return ev;
 }
 

@@ -18,6 +18,8 @@
 #include <sst/core/serialization/element.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
+#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/stringEvent.h>
 
 #include "cache.h"
 
@@ -26,6 +28,7 @@
 
 using namespace SST;
 using namespace SST::MemHierarchy;
+using namespace SST::Interfaces;
 
 static const std::string NO_NEXT_LEVEL = "NONE";
 
@@ -54,7 +57,6 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 					new Event::Handler<Cache, SourceType_t>(this,
 						&Cache::handleIncomingEvent, UPSTREAM) );
 			assert(upstream_links[i]);
-			//upstream_links[i]->sendInitData("SST::Interfaces::MemEvent");
 			upstreamLinkMap[upstream_links[i]->getId()] = i;
 		}
 	}
@@ -63,11 +65,9 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	downstream_link = configureLink( "downstream",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, DOWNSTREAM) );
-	//if ( downstream_link ) downstream_link->sendInitData("SST::Interfaces::MemEvent");
 	snoop_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, SNOOP) );
-	//if ( snoop_link ) snoop_link->sendInitData("SST::Interfaces::MemEvent");
 	if ( snoop_link != NULL ) { // Snoop is a bus.
 		snoopBusQueue.setup(this, snoop_link);
 	}
@@ -75,7 +75,6 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	directory_link = configureLink( "directory_link",
 			new Event::Handler<Cache, SourceType_t>(this,
 				&Cache::handleIncomingEvent, DIRECTORY) );
-	//if ( directory_link ) directory_link->sendInitData("SST::Interfaces::MemEvent");
 
 	self_link = configureSelfLink("Self", params.find_string("access_time", ""),
 				new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
@@ -95,10 +94,6 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	}
 
 
-	// Let the Simulation know we use the interface
-    Simulation::getSimulation()->requireEvent("interfaces.MemEvent");
-
-
 	num_read_hit = 0;
 	num_read_miss = 0;
 	num_supply_hit = 0;
@@ -108,6 +103,45 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	num_upgrade_miss = 0;
 
 }
+
+
+void Cache::init(unsigned int phase)
+{
+	if ( !phase ) {
+		for ( int i = 0 ; i < n_upstream ; i++ ) {
+			upstream_links[i]->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		}
+		if ( directory_link ) directory_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		if ( downstream_link ) downstream_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+		if ( snoop_link ) snoop_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+	}
+
+
+	/* Cache should only initialize from upstream.  */
+	for ( int i = 0 ; i < n_upstream ; i++ ) {
+		SST::Event *ev = NULL;
+		while ( (ev = upstream_links[i]->recvInitData()) != NULL ) {
+			MemEvent *me = dynamic_cast<MemEvent*>(ev);
+			if ( me ) {
+				/* TODO:  Break down to cache-line size */
+				// Pass down
+				if ( downstream_link ) downstream_link->sendInitData(me);
+				else if ( snoop_link ) snoop_link->sendInitData(me);
+				else if ( directory_link ) directory_link->sendInitData(me);
+				else delete me;
+			} else {
+				delete ev;
+			}
+		}
+	}
+
+	/* Eat anything coming over snoopy */
+	SST::Event *ev = NULL;
+	while ( (ev = snoop_link->recvInitData()) != NULL )
+		delete ev;
+
+}
+
 
 int Cache::Finish(void)
 {
