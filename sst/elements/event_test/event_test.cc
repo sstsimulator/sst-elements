@@ -23,7 +23,6 @@ using namespace SST;
 
 event_test::event_test(ComponentId_t id, Params_t& params) :
     Component(id),
-    init_count(0),
     done(false)
 {
     if ( params.find("id") == params.end() ) {
@@ -90,24 +89,23 @@ event_test::Finish()
 
 
 void
-event_test::init()
+event_test::init(unsigned int phase)
 {
     Interfaces::TestEvent* event;
-    if ( init_count == 0 || init_count == 1 ) {
+    if ( phase == 0 || phase == 1 ) {
 	event = new Interfaces::TestEvent();
 	event->print_on_delete = true;
-	printf("%d: sending event during phase %d\n",my_id,init_count);
+	printf("%d: sending event during phase %d\n",my_id,phase);
 	link->sendInitData(event);
     }
 
-    if ( init_count == 0 || init_count == 1 ) {
+    if ( phase == 0 || phase == 1 ) {
 	event = static_cast<Interfaces::TestEvent*>(link->recvInitData());
 	if ( event != NULL ) {
-	    printf("%d: received init event during phase %d\n",my_id,init_count);
+	    printf("%d: received init event during phase %d\n",my_id,phase);
 	    delete event;
 	}
     }
-    init_count++;
 }
 
 void
