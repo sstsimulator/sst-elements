@@ -12,7 +12,7 @@ Log<1> _info( std::cout, "M5:", false );
 void enableDebug( std::string name )
 {
     bool all = false;
-    if ( name.find( "all") != std::string::npos) {
+    if ( name.find( "All") != std::string::npos) {
         all = true;
     }
 
