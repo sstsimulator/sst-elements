@@ -8,6 +8,8 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+#include <sst/core/interfaces/memEvent.h>
+
 #include <cstring>
 #include <string>
 #include <fstream>
@@ -18,6 +20,8 @@
 #include <stdint.h>
 
 using namespace std;
+using namespace SST;
+using namespace SST::Interfaces;
 
 typedef enum {
 	READ_SUCCESS,
@@ -51,14 +55,33 @@ public:
 	if(output_level > 0) 
 		std::cout << "TRACE:  Close of trace input complete." << std::endl;
 
+	double sim_seconds = (double) getCurrentSimTimeNano() / (double) 1000000000.0;
+
 	std::cout << "---------------------------------------------------------------------------" << std::endl;
 	std::cout << "TRACE Statistics:" << std::endl;
+	std::cout << "- Cycles not full:         " << cycles_pending_not_full << std::endl;
         std::cout << "- Total pages created:     " << new_page_creates << std::endl;
 	std::cout << "- Requests generated:      " << requests_generated << std::endl;
+	std::cout << "- Read req generated:      " << read_req_generated << std::endl;
+	std::cout << "- Write req generated:     " << write_req_generated << std::endl;
+	std::cout << "- Split request count:     " << split_request_count << std::endl;
+        std::cout << "- Total bytes read:        " << total_bytes_read << std::endl;
+        std::cout << "- Total bytes written:     " << total_bytes_written << std::endl;
+        std::cout << "- Simulated Time (ns):     " << getCurrentSimTimeNano() << std::endl;
+	std::cout << "- Simulated Time (secs):   " << sim_seconds << std::endl;
+        std::cout << "- Read Bandwidth (B/s):    " << ((double)total_bytes_read / sim_seconds) << std::endl;
+        std::cout << "- Write Bandwidth (B/s):   " << ((double)total_bytes_written / sim_seconds) << std::endl;
+        std::cout << "- Bandwidth (combined):    " << ((total_bytes_read + total_bytes_written) / sim_seconds) << std::endl;
+        std::cout << "- Read Bandwidth (MB/s):   " << (((double)total_bytes_read / (1024 * 1024)) / sim_seconds) << std::endl;
+        std::cout << "- Write Bandwidth (MB/s):  " << (((double)total_bytes_written / (1024 * 1024)) / sim_seconds) << std::endl;
+        std::cout << "- Bandwidth (combined):    " << (((total_bytes_read + total_bytes_written) / (1024.0 * 1024.0)) / sim_seconds) << std::endl;
+	std::cout << "---------------------------------------------------------------------------" << std::endl;
 
 	return 0; 
   }
 
+  void handleEvent(SST::Event* event);
+  void createPendingRequest(memory_request req);
   read_trace_return readNextRequest(memory_request* req);
 
 private:
@@ -70,16 +93,28 @@ private:
 
   FILE* trace_input;
   memory_request next_request;
+  uint64_t total_bytes_read;
+  uint64_t total_bytes_written;
   uint64_t max_trace_count;
   uint64_t tick_count;
   uint64_t max_tick_count;
   uint64_t requests_generated;
+  uint64_t read_req_generated;
+  uint64_t write_req_generated;
   int output_level;
   int pending_request_limit;
   int page_size;
+  int cache_line_size;
   uint64_t next_page_start;
+  uint64_t split_request_count;
   map<uint64_t, uint64_t> page_table;
   int new_page_creates;
+  uint8_t* zero_buffer;
+  uint64_t cycles_pending_not_full;
+  map<MemEvent::id_type, memory_request*> pending_requests;
+  bool keep_generating;
+
+  SST::Link* cache_link;
 
   friend class boost::serialization::access;
   template<class Archive>
