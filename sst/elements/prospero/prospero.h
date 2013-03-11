@@ -12,6 +12,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <map>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -49,6 +50,12 @@ public:
 
 	if(output_level > 0) 
 		std::cout << "TRACE:  Close of trace input complete." << std::endl;
+
+	std::cout << "---------------------------------------------------------------------------" << std::endl;
+	std::cout << "TRACE Statistics:" << std::endl;
+        std::cout << "- Total pages created:     " << new_page_creates << std::endl;
+	std::cout << "- Requests generated:      " << requests_generated << std::endl;
+
 	return 0; 
   }
 
@@ -66,8 +73,13 @@ private:
   uint64_t max_trace_count;
   uint64_t tick_count;
   uint64_t max_tick_count;
+  uint64_t requests_generated;
   int output_level;
   int pending_request_limit;
+  int page_size;
+  uint64_t next_page_start;
+  map<uint64_t, uint64_t> page_table;
+  int new_page_creates;
 
   friend class boost::serialization::access;
   template<class Archive>

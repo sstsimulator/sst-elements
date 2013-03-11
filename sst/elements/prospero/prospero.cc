@@ -59,6 +59,17 @@ prospero::prospero(ComponentId_t id, Params_t& params) :
 	}
   }
 
+  if( params.find("page_size") == params.end() ) {
+	page_size = 4096;
+  } else {
+	page_size = atoi( params[ "page_size" ].c_str() );
+
+	if(output_level > 0) {
+		std::cout << "TRACE:  Configuring traces for a page size of " << page_size << " bytes" << std::endl;
+	}
+  }
+  next_page_start = 0;
+
   if( params.find("max_ticks") == params.end() ) {
 	max_tick_count = 4611686018427390000;
   } else {
@@ -131,11 +142,36 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		exit(-1);
 	}
 
+        if(output_level > 0) {
+		std::cout << "TRACE:  Performing page table lookup..." << std::endl;
+	}
+
+	uint64_t remainder = (req->memory_address % page_size);
+	uint64_t page_lookup = req->memory_address - remainder;
+        uint64_t page_start;
+        if(page_table.find(page_lookup) == page_table.end()) {
+		// page fault
+		page_table[page_lookup] = next_page_start;
+		page_start = next_page_start;
+		next_page_start = next_page_start + page_size;
+		new_page_creates++;
+
+		if(output_level > 0) {
+			std::cout << "TRACE:  Page fault, " << page_lookup << " not found, created new page at: " <<
+				page_table[page_lookup] << " request offset: " << remainder << std::endl;
+		}
+        } else {
+		page_start = page_table[page_lookup];
+        }
+
+	req->memory_address = page_start + remainder;
+
 	if(output_level > 0) {
 		std::cout << "TRACE: Next record: Ins=" << req->instruction_count <<
 			"/ MA=" << req->memory_address << "/ Size=" << req->size << std::endl;
 	}
 
+	requests_generated++;
 	return READ_SUCCESS;
 }
 
