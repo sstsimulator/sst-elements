@@ -53,6 +53,7 @@ public:
     hr_router(ComponentId_t cid, Params& params);
     ~hr_router();
     
+    void init(unsigned int phase);
     int Setup();
     int Finish() {return false;}
 

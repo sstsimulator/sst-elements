@@ -170,13 +170,34 @@ public:
     }
 
     int Setup() {
-	// Need to send the available credits to the other side
-	for ( int i = 0; i < num_vcs; i++ ) {
-	    rtr_link->Send(1,new credit_event(i,in_ret_credits[i]));
-	    in_ret_credits[i] = 0;
-	}
-	return 0;
+     	return 0;
     }
+
+    void init(unsigned int phase) {
+	switch ( phase ) {
+	case 0:
+	    // Need to send the available credits to the other side
+	    for ( int i = 0; i < num_vcs; i++ ) {
+		rtr_link->sendInitData(new credit_event(i,in_ret_credits[i]));
+		in_ret_credits[i] = 0;
+	    }
+	    break;
+	case 1:
+	    // Need to recv the credits send from the other side
+	    Event* ev;
+	    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+		credit_event* ce = dynamic_cast<credit_event*>(ev);
+		if ( ce != NULL ) {
+		    rtr_credits[ce->vc] += ce->credits;
+		    delete ev;
+		}
+	    }
+	    break;
+	default:
+	    break;
+	}
+    }
+
 
 private:
     void handle_input(Event* ev) {

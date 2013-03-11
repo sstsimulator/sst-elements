@@ -67,7 +67,7 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<pt2pt_test>(this,&pt2pt_test::clock_handler), false);
 
-    if ( id == 2 ) {
+    if ( id == 1 ) {
 	self_link = configureSelfLink("complete_link", tc,
 				      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
     }
@@ -85,7 +85,14 @@ pt2pt_test::Finish()
 int
 pt2pt_test::Setup()
 {
-    return link_control->Setup();
+    // return link_control->Setup();
+    return 0;
+}
+
+void
+pt2pt_test::init(unsigned int phase)
+{
+    link_control->init(phase);
 }
 /*
 bool
@@ -138,58 +145,35 @@ bool
 pt2pt_test::clock_handler(Cycle_t cycle)
 {
     if ( id == 0 ) {
-	// ID 0 is the sender on VC 0
-
 	// Do a bandwidth test
 	if ( packets_sent == packets_to_send ) {
 	    unregisterExit();
-	    cout << "0: Done" << endl;
+	    cout << "0: Done @ " << getCurrentSimTimeNano() << endl;
 	    return true;  // Take myself off clock list
 	}
 	
 	if ( link_control->spaceToSend(0,packet_size) ) {
 	    pt2pt_test_event* ev = new pt2pt_test_event();
-	    ev->setTraceType(RtrEvent::FULL);
+	    if ( packets_sent == 0 ) ev->setTraceType(RtrEvent::FULL);
+	    else ev->setTraceType(RtrEvent::NONE);
 	    ev->setTraceID(packets_sent);
-	    ev->dest = 2;
+	    ev->dest = 1;
 	    ev->src = 0;
 	    ev->vc = 0;
 	    ev->size_in_flits = packet_size;
 	    link_control->send(ev,0);
 	    ++packets_sent;
 	}
-    }
-    
-    if ( id == 1 ) {
-	// ID 1 is the sender on VC 1
-	// Do a bandwidth test
-	if ( packets_sent == packets_to_send ) {
-	    unregisterExit();
-	    cout << "1: Done" << endl;
-	    return true;  // Take myself off clock list
-	}
-	
-	if ( link_control->spaceToSend(1,packet_size) ) {
-	    pt2pt_test_event* ev = new pt2pt_test_event();
-	    ev->setTraceType(RtrEvent::FULL);
-	    ev->setTraceID(1000+packets_sent);
-	    ev->dest = 2;
-	    ev->src = 1;
-	    ev->vc = 1;
-	    ev->size_in_flits = packet_size;
-	    link_control->send(ev,1);
-	    ++packets_sent;
-	}
-    }
-    
+    }    
     else {
-	// ID 2 is the receiver
+	// ID 1 is the receiver
 	pt2pt_test_event* rec_ev = static_cast<pt2pt_test_event*>(link_control->recv(0));
 	if ( rec_ev != NULL ) {
+	    // cout << "received packet at " << getCurrentSimTimeNano() << endl;
 	    if ( packets_recd == 0 ) start_time = getCurrentSimTimeNano();
 	    ++packets_recd;
 	    
-	    if ( packets_recd == 2*packets_to_send ) {
+	    if ( packets_recd == packets_to_send ) {
 		// Need to send this event to a self link to account
 		// for serialization latency.  This will trigger an
 		// event handler that will compute the BW.
@@ -205,7 +189,7 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 	if ( rec_ev != NULL ) {
 	    if ( packets_recd == 0 ) start_time = getCurrentSimTimeNano();
 	    ++packets_recd;
-	    cout << "2: Received event on VC 1" << endl;
+	    cout << "1: Received event on VC 1" << endl;
 
 	    if ( packets_recd == 2*packets_to_send ) {
 		// Need to send this event to a self link to account
@@ -225,6 +209,7 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 
 void
 pt2pt_test::handle_complete(Event* ev) {
+    std::cout << "handle_complete()" << std::endl;
     delete ev;
 
     // Compute BW

@@ -136,7 +136,9 @@ public:
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     PortControl(Component* rif, int rtr_id, std::string link_port_name, int port_number, TimeConverter* time_base,
-		Topology *topo, int vcs, int* in_buf_size, int* out_buf_size) :
+		Topology *topo, int vcs, int* in_buf_size, int* out_buf_size,
+		SimTime_t input_latency_cycles, std::string input_latency_timebase,
+		SimTime_t output_latency_cycles, std::string output_latency_timebase) :
 	rtr_id(rtr_id),
 	num_vcs(vcs),
 	topo(topo),
@@ -147,10 +149,10 @@ public:
 	// Input and output buffers
 	input_buf = new port_queue_t[vcs];
 	output_buf = new port_queue_t[vcs];
-
+	
 	input_buf_count = new int[vcs];
 	output_buf_count = new int[vcs];
-
+	
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    input_buf_count[i] = 0;
 	    output_buf_count[i] = 0;
@@ -174,12 +176,12 @@ public:
         switch ( topo->getPortState(port_number) ) {
         case Topology::R2N:
             host_port = true;
-	    port_link = rif->configureLink(link_port_name, time_base,
+	    port_link = rif->configureLink(link_port_name, output_latency_timebase,
 					   new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
             break;
         case Topology::R2R:
             host_port = false;
-	    port_link = rif->configureLink(link_port_name, time_base,
+	    port_link = rif->configureLink(link_port_name, output_latency_timebase,
 					   new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
             break;
         default:
@@ -187,6 +189,13 @@ public:
             port_link = NULL;
             break;
         }
+
+
+	if ( input_latency_timebase != "" ) {
+	    // std::cout << "Adding extra latency" << std::endl;
+	    port_link->addOutputLatency(input_latency_cycles,input_latency_timebase);
+	}
+
 
 	output_timing = rif->configureSelfLink(link_port_name + "_output_timing", time_base,
 					       new Event::Handler<PortControl>(this,&PortControl::handle_output));
@@ -205,14 +214,33 @@ public:
     }
 
     int Setup() {
-        if ( topo->getPortState(port_number) != Topology::UNCONNECTED ) {
-            // Need to send the available credits to the other side
-            for ( int i = 0; i < num_vcs; i++ ) {
-                port_link->Send(1,new credit_event(i,port_ret_credits[i]));
-                port_ret_credits[i] = 0;
-            }
-        }
-	return 0;
+    	return 0;
+    }
+
+    void init(unsigned int phase) {
+	if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
+	switch ( phase ) {
+	case 0:
+	    // Need to send the available credits to the other side
+	    for ( int i = 0; i < num_vcs; i++ ) {
+		port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
+		port_ret_credits[i] = 0;
+	    }
+	    break;
+	case 1:
+	    // Need to recv the credits send from the other side
+	    Event* ev;
+	    while ( ( ev = port_link->recvInitData() ) != NULL ) {
+		credit_event* ce = dynamic_cast<credit_event*>(ev);
+		if ( ce != NULL ) {
+		    port_out_credits[ce->vc] += ce->credits;
+		    delete ev;
+		}
+	    }
+	    break;
+	default:
+	    break;
+	}
     }
 
     void dumpState(std::ostream& stream) {
@@ -389,12 +417,12 @@ private:
 
 	    if ( host_port ) {
 		// std::cout << "Found an event to send on host port " << port_number << std::endl;
-		port_link->Send(send_event->getEncapsulatedEvent());
+		port_link->Send(1,send_event->getEncapsulatedEvent());
 		send_event->setEncapsulatedEvent(NULL);
 		delete send_event;
 	    }
 	    else {
-		port_link->Send(send_event);
+		port_link->Send(1,send_event);
 	    }
 
 	}

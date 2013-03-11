@@ -56,6 +56,7 @@ public:
     nic(ComponentId_t cid, Params& params);
     ~nic();
 
+    void init(unsigned int phase);
     int Setup();
     int Finish();
 

@@ -46,6 +46,7 @@ public:
     pt2pt_test(ComponentId_t cid, Params& params);
     ~pt2pt_test() {}
 
+    void init(unsigned int phase);
     int Setup();
     int Finish();
 

@@ -95,6 +95,11 @@ nic::Setup()
     return link_control->Setup();
 }
 
+void
+nic::init(unsigned int phase) {
+    return link_control->init(phase);
+}
+
 class MyRtrEvent : public RtrEvent {
 public:
     int seq;
