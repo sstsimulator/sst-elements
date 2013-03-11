@@ -99,6 +99,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AC_SUBST([M5_LDFLAGS])
   AC_SUBST([M5_LIB])
 
+  # DRAMSim configuration begin 
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   LIBS_saved="$LIBS"
@@ -126,6 +127,43 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AC_SUBST([DRAMSIM_CPPFLAGS])
   AC_SUBST([DRAMSIM_LDFLAGS])
   AC_SUBST([DRAMSIM_LIB])
+  # DRAMSim configuration end 
+
+  # PHXSim configuration begin 
+  AC_ARG_WITH([phxsim],
+    [AS_HELP_STRING([--with-phxsim@<:@=DIR@:>@],
+      [Use PHXSim package installed in optionally specified DIR])])
+
+  CPPFLAGS_saved="$CPPFLAGS"
+  LDFLAGS_saved="$LDFLAGS"
+  LIBS_saved="$LIBS"
+  AC_LANG_PUSH(C++)
+  AS_IF([test ! -z "$with_phxsim" -a "$with_phxsim" != "yes"],
+     [PHXSIM_CPPFLAGS="-I$with_phxsim" 
+      CPPFLAGS="$PHXSIM_CPPFLAGS $CPPFLAGS"
+      PHXSIM_LDFLAGS="-L$with_phxsim"	
+      LDFLAGS="$PHXSIM_LDFLAGS $LDFLAGS"
+      AC_CHECK_HEADERS([SingleCube.h], [], [happy="no"])
+      AC_CHECK_LIB([phxsim], [libphxsim_is_present],
+                    [PHXSIM_LIB="-lphxsim"], [happy="no"])
+    ],
+    [PHXSIM_CPPFLAGS=
+     PHXSIM_LDFLAGS=]
+  )
+
+  AC_LANG_POP(C++)
+  CPPFLAGS="$CPPFLAGS_saved"
+  LDFLAGS="$LDFLAGS_saved"
+  LIBS="$LIBS_saved"
+
+  AM_CONDITIONAL([HAVE_PHXSIM],
+		[test ! -z "$with_phxsim" -a "$with_phxsim" != "yes"])
+
+  AC_SUBST([PHXSIM_CPPFLAGS])
+  AC_SUBST([PHXSIM_LDFLAGS])
+  AC_SUBST([PHXSIM_LIB])
+
+  # PHXSim configuration end
 
   AS_IF([test -z "$enable-gem5-power-model" -a "$happy" = "yes"],
 	[AC_MSG_NOTICE([GEM5 Power Models are enabled.])],
