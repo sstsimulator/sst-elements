@@ -10,7 +10,7 @@ all: sstmemtrace.so
 
 sstmemtrace.so: sstmemtrace.o
 	$(LD) -Wl,--hash-style=sysv -shared -Wl,-Bsymbolic \
-		-Wl,--version-script=$(PINDIR)/source/include/pintool.ver \
+		-Wl,--version-script=$(PINDIR)/source/include/pin/pintool.ver \
 		-L$(PINDIR)/Lib/ \
 		-L$(PINDIR)/ExtLib/ \
 		-L$(PINDIR)/extras/xed2-intel64/lib \
@@ -28,8 +28,8 @@ sstmemtrace.o: sstmemtrace.c
 	$(CXX) -g -c -O3 -fomit-frame-pointer \
 	-Wl,-Bsymbolic \
 	-Wl,--version-script=$(PINDIR)/source/include/pintool.ver \
-	-I $(PINDIR)/source/include \
-	-I $(PINDIR)/source/include/gen \
+	-I $(PINDIR)/source/include/pin \
+	-I $(PINDIR)/source/include/pin/gen \
 	-I $(PINDIR)/extras/xed2-intel64/include \
 	-I $(PINDIR)/extras/components/include \
 	$(PREPROC) \
