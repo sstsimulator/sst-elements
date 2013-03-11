@@ -520,6 +520,14 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 				snoopBusQueue.cancelRequest(li.busEvent);
 			}
 
+			if ( !li.targetBlock ) {
+				/* We still don't have a block assigned, so we didn't ask for
+				 * this.  Must be a snoop that we can ignore.
+				 * (no room in the inn) */
+				assert( src == SNOOP );
+				break;
+			}
+
 			if ( ev->getSize() < blocksize ) {
 				// This isn't enough for us, but may satisfy others
 				DPRINTF("Not enough info in block (%u vs %u blocksize)\n",
@@ -590,8 +598,12 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src)
 		cancelInvalidate(block); /* Should cause a re-issue of the write */
 	}
 
-	if ( block->status == CacheBlock::SHARED ) block->status = CacheBlock::INVALID;
+	if ( block->status == CacheBlock::SHARED ) {
+		DPRINTF("Invalidating block 0x%lx\n", block->baseAddr);
+		block->status = CacheBlock::INVALID;
+	}
 	if ( block->status == CacheBlock::EXCLUSIVE ) {
+		DPRINTF("Invalidating EXCLUSIVE block 0x%lx\n", block->baseAddr);
 		writebackBlock(block, CacheBlock::INVALID);
 	}
 }
