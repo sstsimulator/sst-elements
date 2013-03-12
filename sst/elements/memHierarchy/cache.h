@@ -119,9 +119,6 @@ private:
 			}
 			if ( lru < 0 ) {
 				__DBG( DBG_CACHE, CacheRow, "No empy slot in this row.\n");
-				//if ( DBG_CACHE & SST::_debug_flags )
-					//cache->printCache();
-					//_abort(Cache, "Crap\n");
 				return NULL;
 			}
 
@@ -275,6 +272,7 @@ private:
 	void retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
 	void handleCPURequest(MemEvent *ev, bool firstProcess);
+	MemEvent* makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
 	void issueInvalidate(MemEvent *ev, CacheBlock *block);

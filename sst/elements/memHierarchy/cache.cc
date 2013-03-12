@@ -236,15 +236,13 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	if ( block ) {
 		/* HIT */
 		if ( isRead ) {
-			block->locked++;
 			if ( firstProcess ) num_read_hit++;
-			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
+			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), NULL, UPSTREAM));
 		} else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
-				block->locked++;
 				updateBlock(ev, block);
-				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, new MemEvent(ev), block, UPSTREAM));
+				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), NULL, UPSTREAM));
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
 				issueInvalidate(ev, block);
@@ -264,7 +262,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 }
 
 
-void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
+MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
 	Addr offset = ev->getAddr() - block->baseAddr;
 	if ( offset+ev->getSize() > (Addr)blocksize ) {
@@ -280,10 +278,13 @@ void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	if ( ev->getCmd() == ReadReq)
 		resp->setPayload(ev->getSize(), &block->data[offset]);
 
+	return resp;
+}
+
+void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
+{
 	/* CPU is always upstream link 0 */
-	upstream_links[0]->Send(resp);
-	block->locked--;
-	delete ev; // This should only come through handleCPURequest, which creates new events.
+	upstream_links[0]->Send(ev);
 }
 
 
@@ -363,9 +364,11 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
 			return;
 		} else if ( block->status == CacheBlock::EXCLUSIVE ) {
-			DPRINTF("Need to evict block 0x%lx to satisfy load for 0x%lx\n",
+			printf("Need to evict block 0x%lx to satisfy load for 0x%lx\n",
 					block->baseAddr, ev->getAddr());
 
+			/* TODO:  Fix this logic.  Problem:  Request gets retried before this is evicted */
+			block->status = CacheBlock::ASSIGNED; // We're kicking this out, don't allow additional reqs to keep it here.
 			writebackBlock(block, CacheBlock::INVALID); // We'll get it next time
 
 			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
