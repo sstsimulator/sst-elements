@@ -362,6 +362,14 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 		if ( !block ) { // Row is full, wait for one to be available
 			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
 			return;
+		} else if ( block->status == CacheBlock::EXCLUSIVE ) {
+			DPRINTF("Need to evict block 0x%lx to satisfy load for 0x%lx\n",
+					block->baseAddr, ev->getAddr());
+
+			writebackBlock(block, CacheBlock::INVALID); // We'll get it next time
+
+			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
+			return;
 		}
 		block->activate(ev->getAddr());
 		block->locked++;
@@ -834,7 +842,6 @@ void Cache::printCache(void)
 
 		for ( std::vector<LoadInfo_t::LoadElement_t>::iterator j = li.list.begin() ; j != li.list.end() ; ++j ) {
 			MemEvent *ev = j->ev;
-			SourceType_t src = j->src;
 			SimTime_t elapsed = getCurrentSimTime() - j->issueTime;
 			ss << "\t(" << ev->getID().first << ", " << ev->getID().second << ")  " << CommandString[ev->getCmd()] << "\t" << elapsed << "\n";
 		}

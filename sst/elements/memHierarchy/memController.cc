@@ -130,6 +130,7 @@ void MemController::init(unsigned int phase)
 		if ( me ) {
 			/* Push data to memory */
 			if ( me->getCmd() == WriteReq ) {
+				//printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
 				for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
 					memBuffer[me->getAddr() + i - rangeStart] = me->getPayload()[i];
 				}
@@ -140,6 +141,11 @@ void MemController::init(unsigned int phase)
 		delete ev;
 	}
 
+}
+
+int MemController::Setup(void)
+{
+	return 0;
 }
 
 
@@ -309,6 +315,8 @@ void MemController::sendBusPacket(void)
 					// Re-request bus
 					sendResponse(NULL);
 				}
+				delete outstandingReqs[ev->getAddr()];
+				outstandingReqs.erase(ev->getAddr());
 				break;
 			}
 			delete outstandingReqs[ev->getAddr()];
