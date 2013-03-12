@@ -364,7 +364,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
 			return;
 		} else if ( block->status == CacheBlock::EXCLUSIVE ) {
-			printf("Need to evict block 0x%lx to satisfy load for 0x%lx\n",
+			DPRINTF("Need to evict block 0x%lx to satisfy load for 0x%lx\n",
 					block->baseAddr, ev->getAddr());
 
 			/* TODO:  Fix this logic.  Problem:  Request gets retried before this is evicted */
