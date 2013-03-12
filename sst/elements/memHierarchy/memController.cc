@@ -26,8 +26,10 @@
 
 #include "memController.h"
 
+#if defined(HAVE_LIBDRAMSIM)
 // Our local copy of 'JEDEC_DATA_BUS_BITS', which has the comment // In bytes
 static unsigned JEDEC_DATA_BUS_BITS_local= 64;
+#endif
 
 #define DPRINTF( fmt, args...) __DBG( DBG_MEMORY, Memory, "%s: " fmt, getName().c_str(), ## args )
 
@@ -52,7 +54,6 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 
 	registerClock(clock_freq, new Clock::Handler<MemController>(this,
 				&MemController::clock));
-	registerExit();
 	registerTimeBase("1 ns", true);
 
 	use_dramsim = (bool)params.find_integer("use_dramsim", 0);

@@ -45,9 +45,6 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	delayTC = registerTimeBase(delay, false);
 	busDelay = 1;
 
-	// tell the simulator not to end without us
-	registerExit();
-
 	ports = new SST::Link*[numPorts];
 
 	for ( int i = 0 ; i < numPorts ; i++ ) {

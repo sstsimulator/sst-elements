@@ -38,9 +38,6 @@ trivialMemory::trivialMemory(ComponentId_t id, Params_t& params) : Component(id)
 
 	data = new uint8_t[memSize];
 
-	// tell the simulator not to end without us
-	registerExit();
-
 	// configure out links
 	bus_link = configureLink( "bus_link", "50 ps",
 			new Event::Handler<trivialMemory>(this,
