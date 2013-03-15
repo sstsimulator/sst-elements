@@ -9,15 +9,12 @@
 #include <debug.h>
 #include <deque>
 
-//#include <SingleCube.h>
-
 #include <sst/core/timeConverter.h>
 
 #ifndef PHXSIMC_DBG
 #define PHXSIMC_DBG 1 
 #endif
 
-#undef PRINT
 #include <SingleCube.h>
 
 using namespace std;
@@ -122,6 +119,7 @@ class PHXSimWrap : public PhysicalMemory
 
     void recvRetry();
     void sendTry();
+    void finish();
 	
     void recv(PHXSim::Transaction *t, uint64_t cycle);
     bool recvSignalWrapper(void *arg);

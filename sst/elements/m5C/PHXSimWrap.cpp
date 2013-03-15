@@ -38,23 +38,13 @@ PHXSimWrap::PHXSimWrap( const Params* p ) :
 {
     loadMemory( name(), this, p->exeParams );
 
-    std::string csvFilename = "cvs.out";
-
-    std::ofstream statsOut(csvFilename.c_str());
-
-    PHXSim::CSVWriter* CSVOut = new PHXSim::CSVWriter(statsOut); 
-    
-    const char* sim_desc ="";
-
-    PHXSim::writeIssuedSignal = create_signal("write issued", *this, 
-                &PHXSimWrap::recvSignalWrapper);
-
     PHXSim::PacketReturnCB *cb = new PHXSim::Callback< PHXSimWrap, 
                                     void, 
                                     PHXSim::Transaction *, 
                                     uint64_t >( this, &PHXSimWrap::recv );
+    const char* sim_desc ="";
     
-    m_memorySystem = new PHXSim::SingleCube( cb, *CSVOut, sim_desc );
+    m_memorySystem = new PHXSim::SingleCube( cb, sim_desc, true );
 
     SST::SimTime_t delay = SST::Simulation::getSimulation()->
                             getTimeLord()->getSimCycles( p->frequency,"");
@@ -64,6 +54,11 @@ PHXSimWrap::PHXSimWrap( const Params* p ) :
     unsigned long freqHz = ( ( 1.0 / delay ) * 1000000000000 ); 
     printf("PHXSimWrap clock %lu hz\n", freqHz );
     m_memorySystem->SetCPUClock(freqHz);
+}
+
+void PHXSimWrap::finish() 
+{
+    m_memorySystem->simulationDone();
 }
 
 PHXSimWrap::~PHXSimWrap()
@@ -100,34 +95,24 @@ void PHXSimWrap::init()
 
 bool PHXSimWrap::recvTiming(PacketPtr pkt)
 {
-    static uint64_t id = 0;
     uint64_t addr    = pkt->getAddr();
-    bool     isWrite = pkt->isWrite();
-    bool     isRead = pkt->isRead();
 
     PRINTFN("%s: %s %#lx\n", __func__, pkt->cmdString().c_str(), (long)addr);
 
-    int link = (addr >> 6 ) & 0x3;
-
-    if ( ! m_memorySystem->WillAcceptTransaction( addr,
-            isWrite, link, 0 ) ) {
-        return false; 
-    } 
-
     pkt->dram_enter_time = curTick();
 
-    PHXSim::Transaction* trans = NULL;
-    PHXSim::TransactionType type;
-    if ( isRead ) { 
+    if ( pkt->isRead() ) { 
+        bool ret = m_memorySystem->AddTransaction( false, addr, 0 );
+        if ( ! ret ) return false;
         assert(m_rd_pktMap.find( addr ) == m_rd_pktMap.end());
         m_rd_pktMap[ addr ] = pkt;
-        trans = new PHXSim::Transaction( PHXSim::DATA_READ, 64, addr, id++ );
-    } else if ( isWrite ) {
+    } else if ( pkt->isWrite() ) {
+        bool ret = m_memorySystem->AddTransaction( true, addr, 0 );
+        if ( ! ret ) return false;
         std::multimap< uint64_t, PacketPtr >::iterator it;
         it = m_wr_pktMap.find( addr );
         assert( it == m_wr_pktMap.end());
         m_wr_pktMap.insert( pair<uint64_t, PacketPtr>(addr, pkt) );
-        trans = new PHXSim::Transaction( PHXSim::DATA_WRITE, 64, addr, id++ );
     } else {
         if ( pkt->needsResponse() ) {
             pkt->makeTimingResponse();
@@ -135,10 +120,6 @@ bool PHXSimWrap::recvTiming(PacketPtr pkt)
         } else {
             delete pkt;
         }
-    }
-    if ( trans ) {
-        bool ret = m_memorySystem->AddTransaction( trans, link );
-        assert( ret ); 
     }
     return true;
 }
@@ -220,14 +201,14 @@ void PHXSimWrap::regStats()
     m_rd_lat
         .init(0,250000,50000)
         .name(name() + ".rt_read_lat")
-        .desc("Round trip latency for a dram read req")
+        .desc("Round trip latency for a phx read req")
         .precision(2)
         ;
 
     m_wr_lat
         .init(0,250000,50000)
         .name(name() + ".rt_write_lat")
-        .desc("Round trip latency for a dram write req")
+        .desc("Round trip latency for a phx write req")
         .precision(2)
         ;
 }
@@ -244,7 +225,7 @@ void PHXSimWrap::recv(PHXSim::Transaction *t, uint64_t cycle) {
 
     if ( t->transactionType == PHXSim::RETURN_DATA ) {
         readData(0, t->address, cycle );
-//        delete t;
+        delete t;
     } else {
         writeData(0, t->address, cycle );
     }
