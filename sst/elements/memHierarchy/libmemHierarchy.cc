@@ -17,7 +17,6 @@
 #include "cache.h"
 #include "bus.h"
 #include "trivialCPU.h"
-#include "trivialMemory.h"
 #include "memController.h"
 
 using namespace SST;
@@ -46,13 +45,6 @@ create_trivialCPU(SST::ComponentId_t id,
 	return new trivialCPU( id, params );
 }
 
-
-static Component*
-create_trivialMemory(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
-{
-	return new trivialMemory( id, params );
-}
 
 static Component*
 create_MemController(SST::ComponentId_t id,
