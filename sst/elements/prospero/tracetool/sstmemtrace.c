@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include "pin.H"
 #include <cstring>
+#include <iostream>
+
+using namespace std;
 
 FILE * trace;
 
@@ -13,6 +16,11 @@ const char READ_OPERATION_CHAR = 0;
 const char WRITE_OPERATION_CHAR = 1;
 
 char RECORD_BUFFER[ sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(char) ];
+
+KNOB<string> KnobInsRoutine(KNOB_MODE_WRITEONCE, "pintool",
+    "r", "", "Instrument only a specific routine (if not specified all instructions are instrumented");
+KNOB<string> KnobTraceFile(KNOB_MODE_WRITEONCE, "pintool",
+    "o", "pinatrace.out", "Output analysis to trace file.");
 
 void copy(VOID* dest, const VOID* source, int destoffset, int count) {
 	char* dest_c = (char*) dest;
@@ -106,6 +114,21 @@ VOID Instruction(INS ins, VOID *v)
 	ins, IPOINT_BEFORE, (AFUNPTR) IncrementInstructionCount, IARG_END);
 }
 
+VOID InstrumentSpecificRoutine(RTN rtn, VOID* v) {
+	if(RTN_Name(rtn) == KnobInsRoutine.Value()) {
+		std::cout << "TRACE: Found routine: " << RTN_Name(rtn) << ", instrumenting for tracing..." << std::endl;
+
+		RTN_Open(rtn);
+
+		for(INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
+			Instruction(ins, v);
+		}
+
+		std::cout << "TRACE: Instrumentation completed." << std::endl;
+		RTN_Close(rtn);
+	}
+}
+
 VOID Fini(INT32 code, VOID *v)
 {
     fclose(trace);
@@ -129,16 +152,26 @@ INT32 Usage()
 int main(int argc, char *argv[])
 {
     if (PIN_Init(argc, argv)) return Usage();
+    PIN_InitSymbols();
 
 #ifdef TRACE_STDOUT
     trace = stdout;
 #else
-    trace = fopen("pinatrace.out", "wb");
+    trace = fopen(KnobTraceFile.Value().c_str(), "wb");
 #endif
 
     instruction_count = 0;
 
-    INS_AddInstrumentFunction(Instruction, 0);
+    std::cout << "TRACE: Checking for specific routine instrumentation...";
+
+    if(KnobInsRoutine.Value() == "") {
+	std::cout << "not found, instrument all routines." << std::endl;
+    	INS_AddInstrumentFunction(Instruction, 0);
+    } else {
+	std::cout << "found, instrumenting: " << KnobInsRoutine.Value() << std::endl;
+	RTN_AddInstrumentFunction(InstrumentSpecificRoutine, 0);
+    }
+
     PIN_AddFiniFunction(Fini, 0);
 
     // Never returns

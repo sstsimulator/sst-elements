@@ -160,8 +160,8 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 	else if (op_type == 1)
 		req->memory_op_type = WRITE;
 	else {
-		std::cerr << "TRACE:  Unknown memory operation type: " << ((char) op_type) << ", component will exit." << std::endl;
-		exit(-1);
+		std::cerr << "TRACE:  Unknown memory operation type (setting to read), request number: " << requests_generated << std::endl;
+		req->memory_op_type = READ;
 	}
 
         if(output_level > 0) {
