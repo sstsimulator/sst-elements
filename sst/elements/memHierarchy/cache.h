@@ -38,7 +38,7 @@ private:
 	class CacheBlock;
 	class SelfEvent;
 	struct LoadInfo_t;
-	typedef std::list<LoadInfo_t> LoadList_t;
+	typedef std::map<Addr, LoadInfo_t> LoadList_t;
 
 
 	class CacheBlock {

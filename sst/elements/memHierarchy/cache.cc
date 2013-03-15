@@ -176,6 +176,7 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
 		switch (ev->getCmd()) {
 		case BusClearToSend:
 			snoopBusQueue.clearToSend();
+            delete ev;
 			break;
 
 		case ReadReq:
@@ -186,18 +187,21 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
 		case RequestData:
 			handleCacheRequestEvent(ev, src, firstTimeProcessed);
 			break;
+
 		case SupplyData:
 			handleCacheSupplyEvent(ev, src);
 			break;
+
 		case Invalidate:
 			handleInvalidate(ev, src);
+            delete ev;
 			break;
 
 		default:
-			/* Ignore */
+            /* Ignore */
+            delete event;
 			break;
 		}
-		delete event;
 	} else {
 		printf("Cache:: Error Bad Event Type!\n");
 	}
@@ -238,11 +242,13 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 		if ( isRead ) {
 			if ( firstProcess ) num_read_hit++;
 			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), NULL, UPSTREAM));
+            delete ev;
 		} else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				updateBlock(ev, block);
 				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), NULL, UPSTREAM));
+                delete ev;
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
 				issueInvalidate(ev, block);
@@ -292,7 +298,7 @@ void Cache::issueInvalidate(MemEvent *ev, CacheBlock *block)
 {
 	if ( snoop_link ) {
 		BusFinishHandlerArgs args;
-		args.issueInvalidate.ev = new MemEvent(ev);
+		args.issueInvalidate.ev = ev;
 		args.issueInvalidate.block = block;
 		MemEvent *invEvent = new MemEvent(this, block->baseAddr, Invalidate);
 		block->currentEvent = invEvent;
@@ -300,7 +306,7 @@ void Cache::issueInvalidate(MemEvent *ev, CacheBlock *block)
 		snoopBusQueue.request( invEvent,
 				new BusFinishHandler(&Cache::finishIssueInvalidateVA, args));
 	} else {
-		finishIssueInvalidate(new MemEvent(ev), block);
+		finishIssueInvalidate(ev, block);
 	}
 }
 
@@ -329,29 +335,27 @@ void Cache::finishIssueInvalidate(MemEvent *ev, CacheBlock *block)
 	block->currentEvent = NULL;
 	// Only thing that can cause us to issue Invalidate is a WriteReq
 	handleCPURequest(ev, false);
-	delete ev;
 }
 
 
 
+/* Takes ownership of the event 'ev'. */
 void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 {
 
 	CacheBlock *block = NULL;
 	bool already_asked = false;
-	LoadList_t::iterator i = findWaitingLoad(addrToBlockAddr(ev->getAddr()), blocksize);
+    Addr blockAddr = addrToBlockAddr(ev->getAddr());
+	LoadList_t::iterator i = findWaitingLoad(blockAddr, blocksize);
 	LoadInfo_t *li;
 	if ( i != waitingLoads.end() ) {
 		DPRINTF("Adding to existing outstanding Load for this block.\n");
-		li = &(*i);
-		assert (li->addr == addrToBlockAddr(ev->getAddr()));
+		li = &(i->second);
+		assert (li->addr == blockAddr);
 	} else {
 		DPRINTF("No existing Load for this block.  Creating.\n");
-		waitingLoads.push_back(LoadInfo_t(addrToBlockAddr(ev->getAddr())));
-		i = findWaitingLoad(addrToBlockAddr(ev->getAddr()), blocksize);
-		assert ( i != waitingLoads.end() );
-		li = &(*i);
-		li->addr = addrToBlockAddr(ev->getAddr());
+        std::pair<LoadList_t::iterator, bool> res = waitingLoads.insert(std::make_pair(blockAddr, LoadInfo_t(blockAddr)));
+		li = &(res.first->second);
 	}
 
 
@@ -361,7 +365,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 	} else {
 		block = findRow(ev->getAddr())->getLRU();
 		if ( !block ) { // Row is full, wait for one to be available
-			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
+			self_link->Send(10, new SelfEvent(&Cache::retryEvent, ev, NULL, src));
 			return;
 		} else if ( block->status == CacheBlock::EXCLUSIVE ) {
 			DPRINTF("Need to evict block 0x%lx to satisfy load for 0x%lx\n",
@@ -371,7 +375,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 			block->status = CacheBlock::ASSIGNED; // We're kicking this out, don't allow additional reqs to keep it here.
 			writebackBlock(block, CacheBlock::INVALID); // We'll get it next time
 
-			self_link->Send(1, new SelfEvent(&Cache::retryEvent, new MemEvent(ev), NULL, src));
+			self_link->Send(2, new SelfEvent(&Cache::retryEvent, ev, NULL, src));
 			return;
 		}
 		block->activate(ev->getAddr());
@@ -380,7 +384,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 		li->targetBlock = block;
 	}
 
-	li->list.push_back(LoadInfo_t::LoadElement_t(new MemEvent(ev), src, getCurrentSimTime()));
+	li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
 	if ( !already_asked ) {
 		if ( snoop_link ) {
@@ -409,7 +413,10 @@ void Cache::finishLoadBlockBus(BusFinishHandlerArgs &args)
 
 void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess)
 {
-	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it, ignore
+	if ( src == SNOOP && ev->getSrc() == getName() ) {
+        delete ev;
+        return; // We sent it, ignore
+    }
 
 	CacheBlock *block = findBlock(ev->getAddr(), false);
 	DPRINTF("0x%lx %s %s (block 0x%lx)\n", ev->getAddr(),
@@ -425,11 +432,12 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 		if ( supMapI != supplyInProgress.end() && !supMapI->second.canceled ) {
 			// we're already working on this
 			DPRINTF("Detected that we're already working on this\n");
+            delete ev;
 			return;
 		}
 
 		supplyInProgress[supplyMapKey] = SupplyInfo(NULL);
-		self_link->Send(1, new SelfEvent(&Cache::supplyData, new MemEvent(ev), block, src));
+		self_link->Send(1, new SelfEvent(&Cache::supplyData, ev, block, src));
 		block->locked++;
 		block->last_touched = getCurrentSimTime();
 	} else {
@@ -437,7 +445,10 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 		if ( src != SNOOP || ev->getDst() == getName() ) {
 			if ( firstProcess) num_supply_miss++;
 			loadBlock(ev, src);
-		}
+		} else {
+            /* Ignore  - Snoop request, or not to us */
+            delete ev;
+        }
 	}
 }
 
@@ -452,6 +463,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 		DPRINTF("Request has been canceled!\n");
 		supplyInProgress.erase(supMapI);
 		block->locked--;
+        delete ev;
 		return;
 	}
 
@@ -491,7 +503,11 @@ void Cache::finishBusSupplyData(BusFinishHandlerArgs &args)
 
 void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 {
-	if ( src == SNOOP && ev->getSrc() == getName() ) return; // We sent it
+	if ( src == SNOOP && ev->getSrc() == getName() ) {
+        delete ev;
+        return; // We sent it
+    }
+
 	/*
 	 * If snoop, cancel any supplies we're trying to do
 	 * Check to see if we're trying to load this data, if so, handle
@@ -511,6 +527,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 						DPRINTF("Canceling Bus Request for Supply on 0x%lx\n", supMapI->second.busEvent->getAddr());
 						BusFinishHandler *handler = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
 						if ( handler ) {
+                            delete supMapI->second.busEvent;
 							handler->args.supplyData.block->locked--;
 							delete handler;
 						}
@@ -525,10 +542,11 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 	LoadList_t::iterator i = findWaitingLoad(ev->getAddr(), ev->getSize());
 	if ( i != waitingLoads.end() ) {
 		while ( i != waitingLoads.end() ) {
-			LoadInfo_t &li = *i;
+			LoadInfo_t &li = i->second;
 			if ( li.busEvent ) {
 				DPRINTF("Canceling Bus Request for Load on 0x%lx\n", li.busEvent->getAddr());
-				snoopBusQueue.cancelRequest(li.busEvent);
+				delete snoopBusQueue.cancelRequest(li.busEvent);
+                delete li.busEvent;
 			}
 
 			if ( !li.targetBlock ) {
@@ -568,12 +586,11 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 					 */
 					if ( src == SNOOP && oldEV.src == SNOOP ) {
 						delete oldEV.ev;
-						continue;
-					}
-
-					/* Make them be processed in order, so pass 'n' as a delay */
-					self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent,
+                    } else {
+                        /* Make them be processed in order, so pass 'n' as a delay */
+                        self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent,
 								oldEV.ev, li.targetBlock, oldEV.src));
+                    }
 				}
 			}
 			waitingLoads.erase(i);
@@ -589,7 +606,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 #endif
 		}
 	}
-
+    delete ev;
 }
 
 
@@ -629,6 +646,7 @@ void Cache::cancelInvalidate(CacheBlock *block)
 	assert( waitingForInvalidate(block) );
 	DPRINTF("Canceling Bus Request for Invalidate 0x%lx\n", block->baseAddr);
 	BusFinishHandler *handler = snoopBusQueue.cancelRequest(block->currentEvent);
+    delete block->currentEvent;
 	block->currentEvent = NULL;
 	handleCPURequest(handler->args.issueInvalidate.ev, false);
 	delete handler;
@@ -789,21 +807,19 @@ Cache::LoadList_t::iterator Cache::findWaitingLoad(Addr addr, uint32_t size)
 		// Check potentialls multiple blocks
 
 		Addr baddr = addrToBlockAddr(addr + offset);
+#if 0
 		LoadList_t::iterator i = waitingLoads.begin();
 		while ( i != waitingLoads.end() ) {
-#if 0
-			DPRINTF("Comparing [0x%lx]  to  [0x%lx] : %s\n",
-					i->addr, addr + offset, (addrToBlockAddr(i->addr) == baddr) ?
-					"TRUE" : "FALSE");
-#endif
-			if ( addrToBlockAddr(i->addr) == baddr ) {
-#if 0
-				DPRINTF("FOUND!\n");
-#endif
+			if ( i->addr == baddr ) {
 				return i;
 			}
 			++i;
 		}
+#else
+        LoadList_t::iterator i = waitingLoads.find(baddr);
+        if ( i != waitingLoads.end() )
+            return i;
+#endif
 		offset += blocksize;
 	}
 
@@ -835,8 +851,8 @@ void Cache::printCache(void)
 	ss << std::endl;
 	ss << "Waiting Loads\n";
 	for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
-		Addr addr = i->addr;
-		LoadInfo_t &li = *i;
+		Addr addr = i->first;
+		LoadInfo_t &li = i->second;
 
 		ss << "0x" << std::setw(4) << std::hex << addr << std:: dec;
 		if ( li.targetBlock != NULL )
