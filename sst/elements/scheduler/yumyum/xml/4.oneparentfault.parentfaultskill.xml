@@ -20,10 +20,9 @@
       <id>1.1</id>
       <type>node</type>
       <nodeNum>0</nodeNum>
-      <errorMessageProbability>
-        "fault_a", "1",
-        "fault_b", "0"
-      </errorMessageProbability>
+      <jobFailureProbability>
+        "fault_a", "1"
+      </jobFailureProbability>
     </params>
   </component>
   <component name="1.2" type="scheduler.nodeComponent">
@@ -65,13 +64,6 @@
       <id>2.1</id>
       <type>node</type>
       <nodeNum>4</nodeNum>
-      <errorMessageProbability>
-        "fault_a", "0"
-      </errorMessageProbability>
-      <faultActivationRate>
-        "fault_a", "100",
-        "fault_b", "100"
-      </faultActivationRate>
     </params>
   </component>
   <component name="2.2" type="scheduler.nodeComponent">
@@ -93,7 +85,13 @@
       <id>4.1</id>
       <type>node</type>
       <nodeNum>6</nodeNum>
-    </params>
+      <jobFailureProbability>
+        "fault_a", "0"
+      </jobFailureProbability>
+      <faultActivationRate>
+        "fault_a", "100"
+      </faultActivationRate>
+   </params>
   </component>
   <component name="scheduler" type="scheduler.schedComponent">
     <link name="builder-scheduler" latency="0 ns" port="builder" />

@@ -20,14 +20,14 @@
       <id>1.1</id>
       <type>node</type>
       <nodeNum>0</nodeNum>
-      <errorLogProb>
+      <errorMessageProbability>
         "fault_a", "1",
         "fault_b", "0"
-      </errorLogProb>
-      <faults>
+      </errorMessageProbability>
+      <faultActivationRate>
         "fault_a", "100",
         "fault_b", "100"
-      </faults>
+      </faultActivationRate>
     </params>
   </component>
   <component name="1.2" type="scheduler.nodeComponent">
@@ -99,13 +99,14 @@
     <link name="schedLink2" latency="0 ns" port="nodeLink2" />
     <link name="schedLink3" latency="0 ns" port="nodeLink3" />
     <params>
-      <traceName>joblist.csv</traceName>
+      <traceName>traces/10_4_nodes.csv</traceName>
       <jobLogFileName>job.log</jobLogFileName>
       <useYumYumTraceFormat>true</useYumYumTraceFormat>
       <printYumYumJobLog>true</printYumYumJobLog>
       <printJobLog>true</printJobLog>
       <useYumYumSimulationKill>true</useYumYumSimulationKill>
       <YumYumPollWait>250</YumYumPollWait>
+      <seed>42</seed>
     </params>
   </component>
   <component name="builder" type="scheduler.linkBuilder">

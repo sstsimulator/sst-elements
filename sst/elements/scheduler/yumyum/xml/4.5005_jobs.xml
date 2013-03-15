@@ -5,25 +5,28 @@
 <param_include>
 
     <node_logs>
-      <faultLogFileName>fault.log</faultLogFileName>
       <errorLogFileName>error.log</errorLogFileName>
+      <faultLogFileName>fault.log</faultLogFileName>
+      <errorMessageProbability>
+        "error_a", "0.015",
+        "error_b", "0.015"
+      </errorMessageProbability>
     </node_logs>
 
 </param_include>
 
 <sst>
   <component name="1.1" type="scheduler.nodeComponent">
-    <link name="1.1-2.1" latency="0 ns" port="Parent0" />
     <link name="schedLink0" latency="0 ns" port="Scheduler" />
     <link name="builder-1.1" latency="0 ns" port="Builder" />
     <params include="node_logs">
       <id>1.1</id>
       <type>node</type>
       <nodeNum>0</nodeNum>
-      <errorMessageProbability>
-        "fault_a", "1",
-        "fault_b", "0"
-      </errorMessageProbability>
+      <jobFailureProbability>
+        "error_a", "0",
+        "error_b", "0"
+      </jobFailureProbability>
     </params>
   </component>
   <component name="1.2" type="scheduler.nodeComponent">
@@ -58,19 +61,15 @@
   </component>
   <component name="2.1" type="scheduler.nodeComponent">
     <link name="1.2-2.1" latency="0 ns" port="Child0" />
-    <link name="1.1-2.1" latency="0 ns" port="Child1" />
     <link name="2.1-4.1" latency="0 ns" port="Parent0" />
     <link name="builder-2.1" latency="0 ns" port="Builder" />
     <params include="node_logs">
       <id>2.1</id>
       <type>node</type>
       <nodeNum>4</nodeNum>
-      <errorMessageProbability>
-        "fault_a", "0"
-      </errorMessageProbability>
       <faultActivationRate>
-        "fault_a", "100",
-        "fault_b", "100"
+        "error_a", "0.001",
+        "error_b", "0.001"
       </faultActivationRate>
     </params>
   </component>
@@ -102,13 +101,14 @@
     <link name="schedLink2" latency="0 ns" port="nodeLink2" />
     <link name="schedLink3" latency="0 ns" port="nodeLink3" />
     <params>
-      <traceName>traces/10_4_nodes.csv</traceName>
+      <traceName>traces/4999_4_nodes.csv</traceName>
       <jobLogFileName>job.log</jobLogFileName>
       <useYumYumTraceFormat>true</useYumYumTraceFormat>
       <printYumYumJobLog>true</printYumYumJobLog>
       <printJobLog>true</printJobLog>
       <useYumYumSimulationKill>true</useYumYumSimulationKill>
       <YumYumPollWait>250</YumYumPollWait>
+      <scheduler>easy[fifo]</scheduler>
       <seed>42</seed>
     </params>
   </component>

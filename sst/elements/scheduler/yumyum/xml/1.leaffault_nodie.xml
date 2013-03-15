@@ -18,24 +18,25 @@
       <id>1.1</id>
       <type>node</type>
       <nodeNum>0</nodeNum>
-      <jobKillProb>
+      <jobFailureProbability>
         "fault_a", "0"
-      </jobKillProb>
-      <faults>
+      </jobFailureProbability>
+      <faultActivationRate>
         "fault_a", "100"
-      </faults>
+      </faultActivationRate>
     </params>
   </component>
   <component name="scheduler" type="scheduler.schedComponent">
     <link name="schedLink0" latency="0 ns" port="nodeLink0" />
     <params>
-      <traceName>onejob.csv</traceName>
+      <traceName>traces/1_1_node.csv</traceName>
       <jobLogFileName>job.log</jobLogFileName>
       <useYumYumTraceFormat>true</useYumYumTraceFormat>
       <printYumYumJobLog>true</printYumYumJobLog>
       <printJobLog>true</printJobLog>
       <useYumYumSimulationKill>true</useYumYumSimulationKill>
       <YumYumPollWait>250</YumYumPollWait>
+      <seed>42</seed>
     </params>
   </component>
 </sst>

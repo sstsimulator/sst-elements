@@ -1,0 +1,190 @@
+<?xml version="1.0"?>
+<sdl version="2.0" />
+
+<param_include>
+  <node_logging>
+    <errorLogFileName>error.log</errorLogFileName>
+    <faultLogFileName>fault.log</faultLogFileName>
+  </node_logging>
+</param_include>
+
+
+<sst>
+  <component name="scheduler" type="scheduler.schedComponent">
+    <params>
+      <traceName>traces/300_8_nodes.csv</traceName>
+      <jobLogFileName>job.log</jobLogFileName>
+      <scheduler>easy[fifo]</scheduler>
+      <useYumYumTraceFormat>true</useYumYumTraceFormat>
+      <printYumYumJobLog>true</printYumYumJobLog>
+      <printJobLog>true</printJobLog>
+      <useYumYumSimulationKill>true</useYumYumSimulationKill>
+      <YumYumPollWait>250</YumYumPollWait>
+      <seed>42</seed>
+    </params>
+    <link latency="0 ns" name="sched-1.1" port="nodeLink0"/>
+    <link latency="0 ns" name="sched-1.2" port="nodeLink1"/>
+    <link latency="0 ns" name="sched-1.3" port="nodeLink2"/>
+    <link latency="0 ns" name="sched-1.4" port="nodeLink3"/>
+    <link latency="0 ns" name="sched-1.5" port="nodeLink4"/>
+    <link latency="0 ns" name="sched-1.6" port="nodeLink5"/>
+    <link latency="0 ns" name="sched-1.7" port="nodeLink6"/>
+    <link latency="0 ns" name="sched-1.8" port="nodeLink7"/>
+  </component>
+  <component name="1.1" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>0</nodeNum>
+      <faultActivationRate>"default","0.500000"</faultActivationRate>
+      <id>1.1</id>
+    </params>
+    <link latency="0 ns" name="1.1-2.1" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.1" port="Scheduler"/>
+  </component>
+  <component name="1.2" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>1</nodeNum>
+      <faultActivationRate>"default","0.500000"</faultActivationRate>
+      <id>1.2</id>
+    </params>
+    <link latency="0 ns" name="1.2-2.1" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.2" port="Scheduler"/>
+  </component>
+  <component name="1.3" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>2</nodeNum>
+      <faultActivationRate>"default","0.500000"</faultActivationRate>
+      <id>1.3</id>
+    </params>
+    <link latency="0 ns" name="1.3-2.2" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.3" port="Scheduler"/>
+  </component>
+  <component name="1.4" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>3</nodeNum>
+      <faultActivationRate>"default","5.000000"</faultActivationRate>
+      <id>1.4</id>
+    </params>
+    <link latency="0 ns" name="1.4-2.2" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.4" port="Scheduler"/>
+  </component>
+  <component name="1.5" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>4</nodeNum>
+      <faultActivationRate>"default","0.500000"</faultActivationRate>
+      <id>1.5</id>
+    </params>
+    <link latency="0 ns" name="1.5-2.3" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.5" port="Scheduler"/>
+  </component>
+  <component name="1.6" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>5</nodeNum>
+      <faultActivationRate>"default","0.500000"</faultActivationRate>
+      <id>1.6</id>
+    </params>
+    <link latency="0 ns" name="1.6-2.3" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.6" port="Scheduler"/>
+  </component>
+  <component name="1.7" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>6</nodeNum>
+      <faultActivationRate>"default","0.500000"</faultActivationRate>
+      <id>1.7</id>
+    </params>
+    <link latency="0 ns" name="1.7-2.4" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.7" port="Scheduler"/>
+  </component>
+  <component name="1.8" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>7</nodeNum>
+      <faultActivationRate>"default","3.000000"</faultActivationRate>
+      <id>1.8</id>
+    </params>
+    <link latency="0 ns" name="1.8-2.4" port="Parent0"/>
+    <link latency="0 ns" name="sched-1.8" port="Scheduler"/>
+  </component>
+  <component name="2.1" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>8</nodeNum>
+      <faultActivationRate>"default","0.300000"</faultActivationRate>
+      <id>2.1</id>
+    </params>
+    <link latency="0 ns" name="1.1-2.1" port="Child0"/>
+    <link latency="0 ns" name="1.2-2.1" port="Child1"/>
+    <link latency="0 ns" name="2.1-4.1" port="Parent0"/>
+  </component>
+  <component name="2.2" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>9</nodeNum>
+      <faultActivationRate>"default","0.300000"</faultActivationRate>
+      <id>2.2</id>
+    </params>
+    <link latency="0 ns" name="1.3-2.2" port="Child0"/>
+    <link latency="0 ns" name="1.4-2.2" port="Child1"/>
+    <link latency="0 ns" name="2.2-4.1" port="Parent0"/>
+  </component>
+  <component name="2.3" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>10</nodeNum>
+      <faultActivationRate>"default","0.300000"</faultActivationRate>
+      <id>2.3</id>
+    </params>
+    <link latency="0 ns" name="1.5-2.3" port="Child0"/>
+    <link latency="0 ns" name="1.6-2.3" port="Child1"/>
+    <link latency="0 ns" name="2.3-4.2" port="Parent0"/>
+  </component>
+  <component name="2.4" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>11</nodeNum>
+      <faultActivationRate>"default","0.300000"</faultActivationRate>
+      <id>2.4</id>
+    </params>
+    <link latency="0 ns" name="1.7-2.4" port="Child0"/>
+    <link latency="0 ns" name="1.8-2.4" port="Child1"/>
+    <link latency="0 ns" name="2.4-4.2" port="Parent0"/>
+  </component>
+  <component name="4.1" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>12</nodeNum>
+      <faultActivationRate>"default","2.000000"</faultActivationRate>
+      <id>4.1</id>
+    </params>
+    <link latency="0 ns" name="2.1-4.1" port="Child0"/>
+    <link latency="0 ns" name="2.2-4.1" port="Child1"/>
+    <link latency="0 ns" name="4.1-8.1" port="Parent0"/>
+  </component>
+  <component name="4.2" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>13</nodeNum>
+      <faultActivationRate>"default","0.200000"</faultActivationRate>
+      <id>4.2</id>
+    </params>
+    <link latency="0 ns" name="2.3-4.2" port="Child0"/>
+    <link latency="0 ns" name="2.4-4.2" port="Child1"/>
+    <link latency="0 ns" name="4.2-8.1" port="Parent0"/>
+  </component>
+  <component name="8.1" type="scheduler.nodeComponent">
+    <params include="node_logging">
+      <type>node</type>
+      <nodeNum>14</nodeNum>
+      <faultActivationRate>"default","0.100000"</faultActivationRate>
+      <id>8.1</id>
+    </params>
+    <link latency="0 ns" name="4.1-8.1" port="Child0"/>
+    <link latency="0 ns" name="4.2-8.1" port="Child1"/>
+  </component>
+</sst>
