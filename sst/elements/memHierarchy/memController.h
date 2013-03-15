@@ -63,6 +63,9 @@ private:
 			isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
 			size(ev->getSize()), amt_processed(0)
 		{ }
+        ~DRAMReq() {
+            delete reqEvent;
+        }
 	};
 
 
