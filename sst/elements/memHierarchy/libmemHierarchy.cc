@@ -70,11 +70,6 @@ static const ElementInfoComponent components[] = {
 		NULL,
 		create_trivialCPU
 	},
-	{"trivialMem",
-		"Simple Demo Component",
-		NULL,
-		create_trivialMemory
-	},
 	{"MemController",
 		"Simple Demo Component",
 		NULL,
