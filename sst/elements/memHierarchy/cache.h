@@ -83,15 +83,29 @@ private:
 			status = ASSIGNED;
 		}
 
-		bool isValid(void) { return (status != INVALID && status != ASSIGNED); }
-		bool isInvalid(void) { return (status == INVALID); }
-		bool isAssigned(void) { return (status == ASSIGNED); }
+		bool isValid(void) const { return (status != INVALID && status != ASSIGNED); }
+		bool isInvalid(void) const { return (status == INVALID); }
+		bool isAssigned(void) const { return (status == ASSIGNED); }
 
+        void lock() {
+            __DBG(DBG_CACHE, CacheBlock, "Locking block %p (%u, %u)\n", this, row, col);
+            assert(!locked);
+            locked++;
+        }
+        void unlock() {
+            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p (%u, %u)\n", this, row, col);
+            assert(locked);
+            locked--;
+        }
+        bool isLocked() const {
+            return locked > 0;
+        }
 	};
 
 	class CacheRow {
 	public:
 		std::vector<CacheBlock> blocks;
+		std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
 		Cache *cache;
 
 		CacheRow() {}
@@ -124,6 +138,11 @@ private:
 
 			return &blocks[lru];
 		}
+
+        void addWaitingEvent(MemEvent *ev, SourceType_t src)
+        {
+            waitingEvents.push_back(std::make_pair(ev, src));
+        }
 	};
 
 
@@ -297,6 +316,7 @@ private:
 
 	void busClear(SST::Link *busLink);
 
+    void handlePendingEvents(CacheRow *row);
 	void updateBlock(MemEvent *ev, CacheBlock *block);
 	SST::Link *getLink(SourceType_t type, int link_id);
 	int numBits(int x);
