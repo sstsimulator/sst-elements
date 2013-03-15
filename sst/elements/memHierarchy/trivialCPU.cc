@@ -46,6 +46,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 
 	do_write = (bool)params.find_integer("do_write", 1);
 
+    numLS = params.find_integer("num_loadstore", -1);
+
 	// init randomness
 	srand(1);
 
@@ -61,9 +63,8 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 
 	registerTimeBase("1 ns", true);
 	//set our clock
-	registerClock( "1GHz",
-			new Clock::Handler<trivialCPU>(this,
-				&trivialCPU::clockTic ) );
+    clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
+	clockTC = registerClock( "1GHz", clockHandler );
 	num_reads_issued = num_reads_returned = 0;
 
 }
@@ -114,25 +115,13 @@ void trivialCPU::handleEvent(Event *ev)
 // one of our neighbors.
 bool trivialCPU::clockTic( Cycle_t )
 {
-	// do work
-	// loop becomes:
-	/*  00001ab5        movl    0xe0(%ebp),%eax
-		00001ab8        incl    %eax
-		00001ab9        movl    %eax,0xe0(%ebp)
-		00001abc        incl    %edx
-		00001abd        cmpl    %ecx,%edx
-		00001abf        jne     0x00001ab5
-
-		6 instructions.
-		*/
-
 	volatile int v = 0;
 	for (int i = 0; i < workPerCycle; ++i) {
 		v++;
 	}
 
 	// communicate?
-	if ((rand() % commFreq) == 0) {
+	if ((numLS != 0) && ((rand() % commFreq) == 0)) {
 		if ( requests.size() > 10 ) {
 			printf("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
@@ -153,12 +142,19 @@ bool trivialCPU::clockTic( Cycle_t )
 			mem_link->Send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			printf("%s: Issued %s (%lu) for address 0x%lx\n",
-					getName().c_str(), doWrite ? "Write" : "Read", e->getID().first, addr);
+			printf("%s: %d Issued %s (%lu) for address 0x%lx\n",
+					getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, addr);
 			num_reads_issued++;
+
+            numLS--;
 		}
 
 	}
+
+    if ( numLS == 0 && requests.size() == 0 ) {
+        unregisterExit();
+        return true;
+    }
 
 	// return false so we keep going
 	return false;

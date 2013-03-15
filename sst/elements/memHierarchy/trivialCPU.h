@@ -44,6 +44,7 @@ private:
 	void handleEvent( SST::Event *ev );
 	virtual bool clockTic( SST::Cycle_t );
 
+    int numLS;
 	int workPerCycle;
 	int commFreq;
 	bool do_write;
@@ -53,6 +54,9 @@ private:
 	std::map<MemEvent::id_type, SimTime_t> requests;
 
 	SST::Link* mem_link;
+
+    TimeConverter *clockTC;
+    Clock::HandlerBase *clockHandler;
 
 	friend class boost::serialization::access;
 	template<class Archive>
