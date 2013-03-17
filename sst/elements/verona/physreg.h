@@ -3,13 +3,22 @@
 #define _physreg_H
 
 #include <cstdint>
+#include <cstring>
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <cmath>
 
 #define ALIGNED(a, b) ((a % b) == 0)
 
 class VeronaRegisterGroup {
 public:
 
-  VeronaRegisterGroup(int reg_count, int reg_width_bytes, bool reg_zero_is_zero);
+  VeronaRegisterGroup(unsigned int reg_count,
+	unsigned int reg_width_bytes, 
+	bool reg_zero_is_zero, string group_name);
+  void* GetRegisterContents(unsigned int reg_num);
+  void PrintRegisterGroup();
 
 private:
   VeronaRegisterGroup();  // for serialization only
@@ -18,8 +27,9 @@ private:
 
   void** register_group;
   bool zero_reg_is_zero;
-  int register_count;
-  int register_width_bytes;
+  unsigned int register_count;
+  unsigned int register_width_bytes;
+  string reg_group_name;
   
   void internal_copy(void* source, void* dest, int length);
 
