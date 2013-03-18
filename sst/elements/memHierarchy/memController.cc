@@ -281,6 +281,10 @@ bool MemController::clock(Cycle_t cycle)
 MemEvent* MemController::performRequest(DRAMReq *req)
 {
 	MemEvent *resp = req->reqEvent->makeResponse(this);
+	if ( ((req->addr - rangeStart) + req->size) > memSize ) {
+		_abort(MemController, "Request for address 0x%lx, and size 0x%lx is larger than the physical memory of size 0x%lx bytes\n",
+				req->addr, req->size, memSize);
+	}
 	if ( req->isWrite ) {
 		for ( size_t i = 0 ; i < req->size ; i++ ) {
 			memBuffer[req->addr + i - rangeStart] = req->reqEvent->getPayload()[i];
