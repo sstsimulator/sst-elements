@@ -159,6 +159,24 @@ int MemController::Finish(void)
 	if ( use_dramsim )
 		memSystem->printStats(true);
 #endif
+
+
+#if 0
+    /* TODO:  Toggle this based off of a parameter */
+    printf("--------------------------------------------------------\n");
+    printf("MemController: %s\n", getName().c_str());
+    printf("Outstanding Requests:  %zu\n", outstandingReqs.size());
+    for ( std::map<Addr, DRAMReq*>::iterator i = outstandingReqs.begin() ; i != outstandingReqs.end() ; ++i ) {
+        DRAMReq *req = i->second;
+        printf("\t0x%08lx\t%s (%lu, %lu)\t%zu bytes:  %zu/%zu\n",
+                i->first, CommandString[req->reqEvent->getCmd()],
+                req->reqEvent->getID().first, req->reqEvent->getID().second,
+                req->size, req->amt_in_process, req->amt_processed);
+    }
+    printf("Requests Queue:  %zu\n", requestQueue.size());
+    printf("--------------------------------------------------------\n");
+#endif
+
 	return 0;
 }
 
@@ -182,7 +200,8 @@ void MemController::handleEvent(SST::Event *event)
 			if ( ev->queryFlag(MemEvent::F_WRITEBACK) )
 				addRequest(ev);
 			else
-				cancelEvent(ev);
+                if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
+                    cancelEvent(ev);
 			break;
 		case BusClearToSend:
 			if ( to_me ) sendBusPacket();

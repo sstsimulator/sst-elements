@@ -61,7 +61,7 @@ private:
 		DRAMReq(MemEvent *ev) :
 			reqEvent(new MemEvent(ev)), canceled(false), addr(ev->getAddr()),
 			isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
-			size(ev->getSize()), amt_processed(0)
+			size(ev->getSize()), amt_in_process(0), amt_processed(0)
 		{ }
         ~DRAMReq() {
             delete reqEvent;
