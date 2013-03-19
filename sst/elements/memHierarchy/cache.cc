@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <assert.h>
+#include <signal.h>
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -26,6 +27,12 @@
 
 #define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Cache, "%s: " fmt, getName().c_str(), ## args )
 
+static volatile int signal_mask = 0x1;
+
+static void sighandler(int sig) {
+    signal_mask = -1;
+}
+
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
@@ -35,6 +42,11 @@ static const std::string NO_NEXT_LEVEL = "NONE";
 Cache::Cache(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
+    if ( signal_mask ) {
+        signal_mask = 0;
+        signal(SIGUSR2, sighandler);
+    }
+
 	// get parameters
 	n_ways = params.find_integer("num_ways", 0);
 	n_rows = params.find_integer("num_rows", 0);
@@ -102,8 +114,18 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	num_write_miss = 0;
 	num_upgrade_miss = 0;
 
+    registerClock("1GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
 }
 
+
+bool Cache::clockTick(Cycle_t)
+{
+    if ( signal_mask & (1<<getId()) ) {
+        printCache();
+        signal_mask ^= (1<<getId());
+    }
+    return false;
+}
 
 void Cache::init(unsigned int phase)
 {
@@ -241,17 +263,21 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 		/* HIT */
 		if ( isRead ) {
 			if ( firstProcess ) num_read_hit++;
-			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), NULL, UPSTREAM));
+			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
             delete ev;
 		} else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				updateBlock(ev, block);
-				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), NULL, UPSTREAM));
+				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
                 delete ev;
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
-				issueInvalidate(ev, block);
+                if ( waitingForInvalidate(block) ) {
+                    self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev, block, UPSTREAM));
+                } else {
+                    issueInvalidate(ev, block);
+                }
 			}
 		}
 		block->last_touched = getCurrentSimTime();
@@ -291,6 +317,10 @@ void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
 	/* CPU is always upstream link 0 */
 	upstream_links[0]->Send(ev);
+
+    /* release events pending on this row */
+    CacheRow *row = findRow(ev->getAddr());
+    handlePendingEvents(row, NULL);
 }
 
 
@@ -497,7 +527,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 void Cache::finishBusSupplyData(BusFinishHandlerArgs &args)
 {
-	DPRINTF("Supply Message sent for block 0x%zx\n", args.supplyData.block->baseAddr);
+	DPRINTF("Supply Message sent for block 0x%lx\n", args.supplyData.block->baseAddr);
 	args.supplyData.block->unlock();
 	supplyMap_t::key_type supplyMapKey = std::make_pair(args.supplyData.block->baseAddr, args.supplyData.src);
 
@@ -601,7 +631,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                     }
 				}
 			}
-            handlePendingEvents(findRow(li.targetBlock->baseAddr));
+            handlePendingEvents(findRow(li.targetBlock->baseAddr), li.targetBlock);
 			waitingLoads.erase(i);
 			i = findWaitingLoad(ev->getAddr(), ev->getSize());
 		}
@@ -638,7 +668,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src)
 	if ( block->status == CacheBlock::SHARED ) {
 		DPRINTF("Invalidating block 0x%lx\n", block->baseAddr);
 		block->status = CacheBlock::INVALID;
-        handlePendingEvents(findRow(block->baseAddr));
+        handlePendingEvents(findRow(block->baseAddr), NULL);
 	}
 	if ( block->status == CacheBlock::EXCLUSIVE ) {
 		DPRINTF("Invalidating EXCLUSIVE block 0x%lx\n", block->baseAddr);
@@ -713,19 +743,34 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
 	assert(!block->isLocked());
 	block->status = newStatus;
     CacheRow *row = findRow(block->baseAddr);
-    handlePendingEvents(row);
+    if ( newStatus == CacheBlock::INVALID ) block = NULL;
+    handlePendingEvents(row, block);
 }
 
 
 
 /**** Utility Functions ****/
 
-void Cache::handlePendingEvents(CacheRow *row)
+void Cache::handlePendingEvents(CacheRow *row, CacheBlock *block)
 {
-    while ( row->waitingEvents.size() > 0 ) {
-        std::pair<MemEvent*, SourceType_t> ev = row->waitingEvents.front();
-        row->waitingEvents.pop_front();
-        self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev.first, NULL, ev.second));
+    if ( row->waitingEvents.size() > 0 ) {
+
+        std::map<Addr, CacheRow::eventQueue_t>::iterator q;
+        if ( block ) {
+            q = row->waitingEvents.find(block->baseAddr);
+        } else {
+            /* Pick one. */
+            q = row->waitingEvents.begin();
+        }
+        if ( q != row->waitingEvents.end() ) {
+            CacheRow::eventQueue_t &queue = q->second;
+            while ( queue.size() ) {
+                std::pair<MemEvent*, SourceType_t> ev = queue.front();
+                queue.pop_front();
+                self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev.first, NULL, ev.second));
+            }
+            row->waitingEvents.erase(q);
+        }
     }
 
 }
@@ -864,30 +909,65 @@ void Cache::printCache(void)
 		for ( int c = 0 ; c < n_ways ; c++ ) {
 			CacheBlock &b = row.blocks[c];
 			ss << status[b.status] << " ";
-			ss << "0x" << std::setw(4) << std::hex << b.baseAddr << std::dec << " ";
-			ss << b.tag << " ";
+			ss << "0x" << std::setw(8) << std::hex << b.baseAddr << std::dec << " ";
+			ss << std::setw(4) << b.tag << " ";
 			ss << "| ";
 		}
 		ss << std::endl;
 	}
 
 	ss << std::endl;
-	ss << "Waiting Loads\n";
-	for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
-		Addr addr = i->first;
-		LoadInfo_t &li = i->second;
+    if ( waitingLoads.size() > 0 ) {
+        ss << "Waiting Loads\n";
+        for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
+            Addr addr = i->first;
+            LoadInfo_t &li = i->second;
 
-		ss << "0x" << std::setw(4) << std::hex << addr << std:: dec;
-		if ( li.targetBlock != NULL )
-			ss << " slated for [" << li.targetBlock->row << ", " << li.targetBlock->col << "]";
-		ss << "\n";
+            ss << "0x" << std::setw(4) << std::hex << addr << std::dec;
+            if ( li.targetBlock != NULL )
+                ss << " slated for [" << li.targetBlock->row << ", " << li.targetBlock->col << "]";
+            ss << "\n";
 
-		for ( std::vector<LoadInfo_t::LoadElement_t>::iterator j = li.list.begin() ; j != li.list.end() ; ++j ) {
-			MemEvent *ev = j->ev;
-			SimTime_t elapsed = getCurrentSimTime() - j->issueTime;
-			ss << "\t(" << ev->getID().first << ", " << ev->getID().second << ")  " << CommandString[ev->getCmd()] << "\t" << elapsed << "\n";
-		}
-	}
+            for ( std::vector<LoadInfo_t::LoadElement_t>::iterator j = li.list.begin() ; j != li.list.end() ; ++j ) {
+                MemEvent *ev = j->ev;
+                SimTime_t elapsed = getCurrentSimTime() - j->issueTime;
+                ss << "\t(" << ev->getID().first << ", " << ev->getID().second << ")  " << CommandString[ev->getCmd()] << "\t" << elapsed << "\n";
+            }
+        }
+    }
+
+    size_t num_pend = 0;
+    for ( int r = 0 ; r < n_rows ; r++ ) {
+        CacheRow *row = &database[r];
+        num_pend += row->waitingEvents.size();
+    }
+    if ( num_pend > 0 ) {
+        ss << "Pending Events\t" << num_pend << std::endl;
+        for ( int r = 0 ; r < n_rows ; r++ ) {
+            CacheRow *row = &database[r];
+            if ( row->waitingEvents.size() > 0 ) {
+                ss << "Row " << r << "\n";
+#if 0
+                for ( std::deque<std::pair<MemEvent*, SourceType_t> >::iterator i = row->waitingEvents.begin() ; i != row->waitingEvents.end() ; ++i ) {
+                    MemEvent *ev = i->first;
+                    ss << "\tEvent id (" <<  ev->getID().first << ", " << ev->getID().second << ") Command:  " << CommandString[ev->getCmd()] << "  0x" << std::hex << ev->getAddr() << std::dec << "\n";
+                }
+#else
+                for ( std::map<Addr, CacheRow::eventQueue_t>::iterator i = row->waitingEvents.begin () ; i != row->waitingEvents.end() ; ++i ) {
+                    ss << "\tBlock Address    0x" << std::hex << i->first << std::dec << "\n";
+                    for ( CacheRow::eventQueue_t::iterator j = i->second.begin() ; j != (i->second.end()) ; ++j ) {
+                        MemEvent *ev = j->first;
+                        ss << "\t\tEvent id (" <<  ev->getID().first << ", " << ev->getID().second << ") Command:  " << CommandString[ev->getCmd()] << "  0x" << std::hex << ev->getAddr() << std::dec << "\n";
+                    }
+                }
+#endif
+            }
+        }
+    }
+
+    if ( snoopBusQueue.size() ) {
+        ss << "Bus Queue Size:  " << snoopBusQueue.size() << "\n";
+    }
 
 	std::cout << ss.str();
 

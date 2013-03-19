@@ -105,7 +105,9 @@ private:
 	class CacheRow {
 	public:
 		std::vector<CacheBlock> blocks;
-		std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
+        typedef std::deque<std::pair<MemEvent*, SourceType_t> > eventQueue_t;
+        std::map<Addr, eventQueue_t> waitingEvents;
+		//std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
 		Cache *cache;
 
 		CacheRow() {}
@@ -141,7 +143,7 @@ private:
 
         void addWaitingEvent(MemEvent *ev, SourceType_t src)
         {
-            waitingEvents.push_back(std::make_pair(ev, src));
+            waitingEvents[cache->addrToBlockAddr(ev->getAddr())].push_back(std::make_pair(ev, src));
         }
 	};
 
@@ -281,6 +283,7 @@ private:
 public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
+    bool clockTick(Cycle_t);
 	void init(unsigned int);
 	int Finish();
 
@@ -316,7 +319,7 @@ private:
 
 	void busClear(SST::Link *busLink);
 
-    void handlePendingEvents(CacheRow *row);
+    void handlePendingEvents(CacheRow *row, CacheBlock *block);
 	void updateBlock(MemEvent *ev, CacheBlock *block);
 	SST::Link *getLink(SourceType_t type, int link_id);
 	int numBits(int x);
