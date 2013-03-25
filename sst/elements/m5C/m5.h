@@ -28,7 +28,6 @@ class M5 : public SST::IntrospectedComponent
 	void init(unsigned int);
     int Setup();
     int Finish();
-    bool catchup( );
 
     void registerExit();
     void exit( int status );
@@ -44,7 +43,6 @@ class M5 : public SST::IntrospectedComponent
     int                 m_numRegisterExits;
     BarrierAction*      m_barrier;
     int                 m_m5ticksPerSSTclock;
-    SST::Cycle_t        m_fooTicks;
     objectMap_t         m_objectMap;
 	std::string         m_init_link_name;
 

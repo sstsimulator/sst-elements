@@ -22,8 +22,7 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     IntrospectedComponent( id ),
     m_numRegisterExits( 0 ),
     m_barrier( NULL ),
-    params( params ),  //for power
-    m_m5ticksPerSSTclock( 1000000000 )
+    params( params )  //for power
 {
     libgem5::SetWantInfo( false );
     libgem5::SetRemoteGDBPort(0);
@@ -56,31 +55,23 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     m_statFile = params.find_string("statFile");
 	m_init_link_name = params.find_string("mem_initializer_port");
 
-    // It makes things easier if we match the m5 simulation clock with 
-    // the SST simulation clock. We don't have access to the SST clock but
-    // it is 1 ps.
-    unsigned long m5_freq = 1000000000000; 
+    /* Gem5's preferred resolution is 1ps */
+    unsigned long m5_freq = 1000000000000;
     libgem5::SetClockFrequency( m5_freq );
 
     INFO( "configFile `%s`\n", configFile.c_str() );
     m_objectMap = buildConfig( this, "m5", configFile, params );
 
-    TimeConverter *minPartTC = Simulation::getSimulation()->getMinPartTC();
-    if ( minPartTC ) {
-        m_m5ticksPerSSTclock = minPartTC->getFactor();
-    }
-    m_fooTicks = m_m5ticksPerSSTclock;
+    std::string clock_freq = params.find_string("frequency", "2 GHz");
+    TimeConverter *tc = registerClock( clock_freq, new SST::Clock::Handler< M5 >( this, &M5::clock ) );
 
-    float clockFreqKhz = (m5_freq / m_m5ticksPerSSTclock) / 1000; 
+    TimeConverter *g5tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1 ps");
 
-    std::string strBuf;
-    strBuf.resize(32);
-    snprintf( &strBuf[0], 32, "%.0f khz", clockFreqKhz );
+    SimTime_t scale = g5tc->convertFromCoreTime(tc->getFactor());
 
-    DBGX( 3, "SST sync factor %i, `%s`\n", 
-                        m_m5ticksPerSSTclock, strBuf.c_str() ); 
+    m_m5ticksPerSSTclock = scale;
+    INFO("m_m5ticksPerSSTClock = %d\n", m_m5ticksPerSSTclock);
 
-    registerClock( strBuf, new SST::Clock::Handler< M5 >( this, &M5::clock ) );
 
     if ( params.find( "registerExit" ) != params.end() ) {
         if( ! params["registerExit"].compare("yes") ) {
@@ -178,30 +169,12 @@ void SST::M5::M5::exit( int status )
     } 
 }
 
-bool SST::M5::M5::catchup()
-{
-    Cycle_t cycles = SST::Simulation::getSimulation()-> getCurrentSimCycle();
-    Cycle_t ticks = cycles - curTick();
-
-    DBGX(5,"m5 curTick()=%lu sst getCurrentSimCycle()=%lu\n", 
-						curTick(), cycles );
-
-    m_fooTicks -= ticks;
-
-    ::SimLoopExitEvent* exitEvent = simulate( ticks );
-    bool rc = exitEvent->getCode() != 256;
-    delete exitEvent;
-    return rc;  
-}
-
 bool SST::M5::M5::clock( SST::Cycle_t cycle )
 {
     DBGX( 5, "current_cycle=%lu\n", cycle * m_m5ticksPerSSTclock );
-    DBGX( 5, "call simulate M5 curTick()=%lu m_fooTicks=%lu\n", 
-						curTick(), m_fooTicks );
-    ::SimLoopExitEvent* exitEvent = simulate( m_fooTicks );
+    DBGX( 5, "call simulate M5 curTick()=%lu\n", curTick() );
+    ::SimLoopExitEvent* exitEvent = simulate( m_m5ticksPerSSTclock );
     DBGX( 5, "simulate returned M5 curTick() %lu\n", curTick() );
-    m_fooTicks = m_m5ticksPerSSTclock;
 
     if( exitEvent->getCode() != 256 )  {
         // for fast-forwarding to reache the ROI at a faster speed in real 
