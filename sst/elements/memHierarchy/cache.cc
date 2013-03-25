@@ -263,9 +263,13 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 		/* HIT */
 		if ( isRead ) {
 			if ( firstProcess ) num_read_hit++;
-			self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
-            delete ev;
-		} else {
+                if ( waitingForInvalidate(block) ) {
+                    block->blockedEvents.push_back(ev);
+                } else {
+                    self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
+                    delete ev;
+                }
+        } else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				updateBlock(ev, block);
@@ -274,7 +278,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
                 if ( waitingForInvalidate(block) ) {
-                    self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev, block, UPSTREAM));
+                    block->blockedEvents.push_back(ev);
                 } else {
                     issueInvalidate(ev, block);
                 }
@@ -363,8 +367,14 @@ void Cache::finishIssueInvalidate(MemEvent *ev, CacheBlock *block)
 	}
 	block->status = CacheBlock::EXCLUSIVE;
 	block->currentEvent = NULL;
+
 	// Only thing that can cause us to issue Invalidate is a WriteReq
 	handleCPURequest(ev, false);
+    while ( block->blockedEvents.size() > 0 ) {
+        MemEvent *ev2 = block->blockedEvents.front();
+        block->blockedEvents.pop_front();
+        handleCPURequest(ev2, false);
+    }
 }
 
 

@@ -54,6 +54,7 @@ private:
 		std::vector<uint8_t> data;
 		uint32_t locked;
 		MemEvent *currentEvent;
+        std::deque<MemEvent*> blockedEvents;
 		uint32_t row, col;
 
 		CacheBlock() {}
