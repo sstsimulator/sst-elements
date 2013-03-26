@@ -62,25 +62,7 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
 
   // configure links
-  bool done = 0;
-  int count = 0;
-  // connect links till we can't find any
-  printf("Scheduler looking for link...");
-  while (!done) {
-    char name[50];
-    snprintf(name, 50, "nodeLink%d", count);
-    printf(" %s", name);
-    SST::Link *l = configureLink( name, new Event::Handler<schedComponent,int>(this, &schedComponent::handleCompletionEvent, count) );
-    if (l) {
-      SST::Event * getID = new CommunicationEvent( ID );
-      l->Send( getID );
-      nodes.push_back(l);
-      count++;
-    } else {
-      printf("(no %s)", name);
-      done = 1;
-    }
-  }
+  // moved to Setup()
 
   printf("\n");
   Factory factory;
@@ -143,7 +125,31 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   jobLogFileName = params[ "jobLogFileName" ];
 }
 
-int schedComponent::Setup() {return 0;}
+int schedComponent::Setup() {
+
+  // configure links
+  bool done = 0;
+  int count = 0;
+  // connect links till we can't find any
+  printf("Scheduler looking for link...");
+  while (!done) {
+    char name[50];
+    snprintf(name, 50, "nodeLink%d", count);
+    printf(" %s", name);
+    SST::Link *l = configureLink( name, new Event::Handler<schedComponent,int>(this, &schedComponent::handleCompletionEvent, count) );
+    if (l) {
+      SST::Event * getID = new CommunicationEvent( ID );
+      l->Send( getID );
+      nodes.push_back(l);
+      count++;
+    } else {
+      printf("(no %s)", name);
+      done = 1;
+    }
+  }
+
+  return 0;
+}
 
 schedComponent::schedComponent() :
     Component(-1)
