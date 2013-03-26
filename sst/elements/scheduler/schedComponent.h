@@ -36,6 +36,7 @@ class schedComponent : public SST::Component {
 public:
 
   schedComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
+  void init(unsigned int phase);
   int Setup() {return 0;}
   int Finish();
   Machine* getMachine();

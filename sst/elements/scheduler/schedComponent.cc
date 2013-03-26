@@ -143,6 +143,9 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   jobLogFileName = params[ "jobLogFileName" ];
 }
 
+void schedComponent::init(unsigned int phase){
+}
+
 schedComponent::schedComponent() :
     Component(-1)
 {
