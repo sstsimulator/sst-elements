@@ -369,10 +369,16 @@ void Cache::finishIssueInvalidate(MemEvent *ev, CacheBlock *block)
 	block->currentEvent = NULL;
 
 	// Only thing that can cause us to issue Invalidate is a WriteReq
+    DPRINTF("Handling formerly blocked (initiating) event (%lu, %d) [%s: 0x%lx]\n",
+            ev->getID().first, ev->getID().second,
+            CommandString[ev->getCmd()], ev->getAddr());
 	handleCPURequest(ev, false);
     while ( block->blockedEvents.size() > 0 ) {
         MemEvent *ev2 = block->blockedEvents.front();
         block->blockedEvents.pop_front();
+        DPRINTF("Handling formerly blocked event (%lu, %d) [%s: 0x%lx]\n",
+                ev2->getID().first, ev2->getID().second,
+                CommandString[ev2->getCmd()], ev2->getAddr());
         handleCPURequest(ev2, false);
     }
 }
@@ -636,8 +642,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 						delete oldEV.ev;
                     } else {
                         /* Make them be processed in order, so pass 'n' as a delay */
-                        self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent,
-								oldEV.ev, li.targetBlock, oldEV.src));
+                        handleIncomingEvent(oldEV.ev, oldEV.src, false);
+                        //self_link->Send(n, new SelfEvent(&Cache::finishSupplyEvent, oldEV.ev, li.targetBlock, oldEV.src));
                     }
 				}
 			}
@@ -661,6 +667,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 
 void Cache::finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t origSrc)
 {
+    DPRINTF("\n");
 	handleIncomingEvent(origEV, origSrc, false);
 }
 
