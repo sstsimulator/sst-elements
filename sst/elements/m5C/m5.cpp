@@ -70,7 +70,7 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     SimTime_t scale = g5tc->convertFromCoreTime(tc->getFactor());
 
     m_m5ticksPerSSTclock = scale;
-    INFO("m_m5ticksPerSSTClock = %d\n", m_m5ticksPerSSTclock);
+    DBGX(3, "m_m5ticksPerSSTClock = %d\n", m_m5ticksPerSSTclock);
 
 
     if ( params.find( "registerExit" ) != params.end() ) {
