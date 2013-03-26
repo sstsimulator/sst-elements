@@ -195,7 +195,7 @@ void Syscall::finishFstat()
     free( m_dmaEvent.buf );
 }
 
-#if 0
+#if 1
 int64_t Syscall::startIoctl( int fd, int request, Addr buf )
 {
     DBGX(3, "fd=%d request=%#x buf=%#lx\n", fd, request ,buf ); 
