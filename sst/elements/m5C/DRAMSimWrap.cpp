@@ -245,14 +245,14 @@ void DRAMSimWrap::regStats()
     using namespace Stats;
 
     m_rd_lat
-        .init(0,250000,50000)
+        .init(0,250000,5000)
         .name(name() + ".rt_read_lat")
         .desc("Round trip latency for a dram read req")
         .precision(2)
         ;
 
     m_wr_lat
-        .init(0,250000,50000)
+        .init(0,250000,5000)
         .name(name() + ".rt_write_lat")
         .desc("Round trip latency for a dram write req")
         .precision(2)
