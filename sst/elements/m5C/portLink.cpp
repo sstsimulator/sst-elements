@@ -191,7 +191,7 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 		_abort(Gem5Converter, "Don't know how to conver command %d to SST\n",
 				pkt->cmd);
 	}
-	m_g5events.push_back(new MemPkt(*pkt));
+	m_g5events.push_back(pkt);
 	//fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
 	return ev;
 }
