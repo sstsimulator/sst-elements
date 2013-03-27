@@ -61,8 +61,7 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   selfLink = configureSelfLink("linkToSelf", new Event::Handler<schedComponent>(this, &schedComponent::handleJobArrivalEvent) );
   selfLink->setDefaultTimeBase(registerTimeBase("1 s"));
 
-  // configure links
-  // moved to Setup()
+  // configure links moved to Setup()
 
   printf("\n");
   Factory factory;
@@ -114,13 +113,9 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
 
   lastJobRead[ 0 ] = '\0';
 
-  readJobs();
+  // readJobs(); moved to Setup()
 
-  if( useYumYumTraceFormat ){
-    CommunicationEvent * CommEvent = new CommunicationEvent( START_FILE_WATCH );
-    CommEvent->payload = jobListFileName;
-    selfLink->Send( CommEvent );
-  }
+  // if(){} moved to Setup()
   
   jobLogFileName = params[ "jobLogFileName" ];
 }
@@ -148,6 +143,14 @@ int schedComponent::Setup() {
     }
   }
 
+  readJobs();
+
+  if( useYumYumTraceFormat ){
+    CommunicationEvent * CommEvent = new CommunicationEvent( START_FILE_WATCH );
+    CommEvent->payload = jobListFileName;
+    selfLink->Send( CommEvent );
+  }
+
   return 0;
 }
 
@@ -165,7 +168,7 @@ void schedComponent::readJobs(){
   input.open( jobListFileName.c_str() );
  
   if(!input.is_open())
-    input.open(trace.c_str());  //try without directory                     
+    input.open(trace.c_str());  //try without directory
   if(!input.is_open())
     error("Unable to open file " + trace);
  
