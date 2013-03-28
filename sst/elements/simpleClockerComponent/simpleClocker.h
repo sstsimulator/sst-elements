@@ -11,6 +11,9 @@
 #include <cstring>
 #include <string>
 
+namespace SST {
+namespace SimpleClockerComponent {
+
 class simpleClocker : public SST::Component {
 public:
 
@@ -44,9 +47,12 @@ private:
     ar & BOOST_SERIALIZATION_NVP(clock_frequency_str);
     ar & BOOST_SERIALIZATION_NVP(clock_count);
   }
-    
+
   BOOST_SERIALIZATION_SPLIT_MEMBER()
- 
+
 };
+
+}
+}
 
 #endif /* _SIMPLECLOCKER_H */

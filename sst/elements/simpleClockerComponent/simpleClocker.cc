@@ -8,14 +8,15 @@
 #include "simpleClocker.h"
 
 using namespace SST;
+using namespace SST::SimpleClockerComponent;
 
 simpleClocker::simpleClocker(ComponentId_t id, Params_t& params) :
   Component(id) {
 
   if( params.find("clock") == params.end() ) {
-  	clock_frequency_str = "1GHz";
+	  clock_frequency_str = "1GHz";
   } else {
-  	clock_frequency_str = params[ "clock" ];
+	  clock_frequency_str = params[ "clock" ];
   }
 
   std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
@@ -30,8 +31,8 @@ simpleClocker::simpleClocker(ComponentId_t id, Params_t& params) :
   registerExit();
 
   //set our clock
-  registerClock( clock_frequency_str, 
-		 new Clock::Handler<simpleClocker>(this, 
+  registerClock( clock_frequency_str,
+		 new Clock::Handler<simpleClocker>(this,
 			&simpleClocker::tick ) );
 }
 
@@ -44,21 +45,21 @@ simpleClocker::simpleClocker() :
 bool simpleClocker::tick( Cycle_t ) {
 	clock_count--;
 
-  	// return false so we keep going
-  	if(clock_count == 0) {
+	// return false so we keep going
+	if(clock_count == 0) {
 		unregisterExit();
-  		return true;
-  	} else {
-  		return false;
-  	}
+		return true;
+	} else {
+		return false;
+	}
 }
 
 // Element Libarary / Serialization stuff
-    
+
 BOOST_CLASS_EXPORT(simpleClocker)
 
 static Component*
-create_simpleClocker(SST::ComponentId_t id, 
+create_simpleClocker(SST::ComponentId_t id,
                   SST::Component::Params_t& params)
 {
     return new simpleClocker( id, params );
