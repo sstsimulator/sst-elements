@@ -19,6 +19,7 @@
 #include "simpleEvent.h"
 
 using namespace SST;
+using namespace SST::SimpleComponent;
 
 simpleComponent::simpleComponent(ComponentId_t id, Params_t& params) :
   Component(id) {

@@ -18,6 +18,9 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+namespace SST {
+namespace SimpleComponent {
+
 class simpleComponent : public SST::Component {
 public:
 
@@ -89,7 +92,10 @@ private:
   }
     
   BOOST_SERIALIZATION_SPLIT_MEMBER()
- 
+
 };
+
+}
+}
 
 #endif /* _SIMPLECOMPONENT_H */
