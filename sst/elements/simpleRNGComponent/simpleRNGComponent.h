@@ -12,6 +12,9 @@
 #include <cstring>
 #include <string>
 
+namespace SST {
+namespace SimpleRNGComponent {
+
 class simpleRNGComponent : public SST::Component {
 public:
 
@@ -39,14 +42,17 @@ private:
   }
 
   template<class Archive>
-  void load(Archive & ar, const unsigned int version) 
+  void load(Archive & ar, const unsigned int version)
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
     ar & BOOST_SERIALIZATION_NVP(rng_count);
   }
-    
+
   BOOST_SERIALIZATION_SPLIT_MEMBER()
- 
+
 };
+
+}
+}
 
 #endif /* _SIMPLERNGCOMPONENT_H */
