@@ -1,10 +1,10 @@
 // Copyright 2009-2010 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2010, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -17,7 +17,9 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-//#include <sst/core/eventFunctor.h>
+
+namespace SST {
+namespace EventTest {
 
 class event_test : public SST::Component {
 public:
@@ -26,7 +28,7 @@ public:
     void init(unsigned int phase);
     int Setup();
     int Finish();
-    
+
 private:
     event_test();  // for serialization only
     event_test(const event_test&); // do not implement
@@ -70,5 +72,8 @@ private:
 
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
+
+}
+}
 
 #endif

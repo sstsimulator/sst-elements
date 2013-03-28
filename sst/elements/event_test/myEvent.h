@@ -3,6 +3,9 @@
 
 #include <sst/core/event.h>
 
+namespace SST {
+namespace EventTest {
+
 class MyEvent : public SST::Event {
 public:
     MyEvent() : SST::Event() { }
@@ -17,6 +20,9 @@ private:
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
         ar & BOOST_SERIALIZATION_NVP(count);
     }
-}; 
-    
+};
+
+}
+}
+
 #endif
