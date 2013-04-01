@@ -62,7 +62,7 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     INFO( "configFile `%s`\n", configFile.c_str() );
     m_objectMap = buildConfig( this, "m5", configFile, params );
 
-    std::string clock_freq = params.find_string("frequency", "2 GHz");
+    std::string clock_freq = params.find_string("frequency", "1 GHz");
     TimeConverter *tc = registerClock( clock_freq, new SST::Clock::Handler< M5 >( this, &M5::clock ) );
 
     TimeConverter *g5tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1 ps");
