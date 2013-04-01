@@ -30,17 +30,12 @@ exit(-1); \
 }
 
 
-#if 1 
+#if 0
 #define DBGX_M5( x, fmt, args... ) \
 {\
     fprintf( stderr, "%7lu: %s: %s():%d: "fmt, curTick(), name().c_str(), \
                         __func__, __LINE__, ##args);\
 }
-
-#else
-
-#define DBGX_M5( x, fmt, args... ) 
-#endif
 
 #define DBGX( x, fmt, args... ) \
 {\
@@ -50,11 +45,19 @@ exit(-1); \
     if ( realname ) free(realname);\
 }
 
+#else
+
+#define DBGX_M5( x, fmt, args... ) do { } while(0)
+#define DBGX( x, fmt, args... ) do { } while(0)
+
+#endif
+
 #define DBGC( x, fmt, args... ) \
 	SST::M5::_dbg.write( x, "%s():%d: "fmt, __func__, __LINE__, ##args)
 
 #define INFO( fmt, args... ) \
     SST::M5::_info.write( 1, fmt, ##args)
+
 
 #define WHERE csprintf("%s::%s():%d", abi::__cxa_demangle(typeid(*this).name(),0,0,NULL) , __func__, __LINE__ )
 
