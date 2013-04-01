@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <iomanip>
 #include <assert.h>
-#include <signal.h>
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -27,12 +26,6 @@
 
 #define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Cache, "%s: " fmt, getName().c_str(), ## args )
 
-static volatile int signal_mask = 0x1;
-
-static void sighandler(int sig) {
-    signal_mask = -1;
-}
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
@@ -42,10 +35,6 @@ static const std::string NO_NEXT_LEVEL = "NONE";
 Cache::Cache(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
-    if ( signal_mask ) {
-        signal_mask = 0;
-        signal(SIGUSR2, sighandler);
-    }
 
 	// get parameters
 	n_ways = params.find_integer("num_ways", 0);
@@ -113,19 +102,8 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	num_write_hit = 0;
 	num_write_miss = 0;
 	num_upgrade_miss = 0;
-
-    registerClock("1GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
 }
 
-
-bool Cache::clockTick(Cycle_t)
-{
-    if ( signal_mask & (1<<getId()) ) {
-        printCache();
-        signal_mask ^= (1<<getId());
-    }
-    return false;
-}
 
 void Cache::init(unsigned int phase)
 {
