@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <portals4.h>
-#include <m5rt.h>
+#include <runtime.h>
 #include <assert.h>
 
 static void nid0( ptl_handle_ni_t, ptl_process_t* );
@@ -13,10 +13,10 @@ static void printEvent( ptl_event_t *event );
 
 #define ACK_REQ    PTL_ACK_REQ
 //#define ACK_REQ    PTL_NO_ACK_REQ
-#define NUM_PUT 4 
+#define NUM_PUT 2000 
 
 //#define MSG_SIZE 0x2000 
-#define MSG_SIZE  200
+#define MSG_SIZE  200000
 #define PTL_INDEX 11
 ptl_match_bits_t match_bits = 0xdeadbeef;
 
@@ -44,9 +44,6 @@ int main( int argc, char* argv[] )
                 PTL_PID_ANY,  
                 &ni_ask_limits,
                 &ni_got_limits,
-                0,
-                NULL,
-                NULL, 
                 &ni_handle ) ) != PTL_OK ) {
         printf("PtlNIInit() failed %d\n", retval ); abort();
     }
@@ -128,7 +125,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
         assert( event.type == PTL_EVENT_SEND );
         assert( event.user_ptr == &md ); 
         assert( event.ni_fail_type == PTL_NI_OK );
-        printf("got PTL_EVENT_SEND\n");
+        //printf("got PTL_EVENT_SEND\n");
 
         if ( ack_req == PTL_ACK_REQ ) {
             if ( ( retval = PtlEQWait( md.eq_handle, &event ) ) != PTL_OK ) {
@@ -140,7 +137,7 @@ static void nid0( ptl_handle_ni_t ni_handle, ptl_process_t* id )
             assert( event.user_ptr == &md ); 
             assert( event.ni_fail_type == PTL_NI_OK );
             assert( event.remote_offset == offset ); 
-            printf("got PTL_EVENT_ACK\n");
+            //printf("got PTL_EVENT_ACK\n");
         }
     }
 
@@ -252,7 +249,6 @@ static void printEvent( ptl_event_t *event )
                                 event->initiator.phys.pid);
     printf("pt_index=%d\n",event->pt_index);
     printf("uid=%d\n",event->uid);
-    printf("jid=%d\n",event->jid);
     printf("match_bits=%#lx\n",event->match_bits);
     printf("rlength=%lu\n",event->rlength);
     printf("mlength=%lu\n",event->mlength);

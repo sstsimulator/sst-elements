@@ -9,7 +9,7 @@ LDFLAGS += -L../usr_lib/runtime
 CPPFLAGS += -I../ptlNic/ 
 CPPFLAGS += -I../usr_lib/runtime
 
-apps: put 
+apps: put  put2
 
 DEPS = ../usr_lib/api/libportals.a\
 	../usr_lib/nic/libptlNic.a\
@@ -17,6 +17,9 @@ DEPS = ../usr_lib/api/libportals.a\
 
 put: put.o  ${DEPS}
 	${CXX} put.o -o $@ ${LDFLAGS}
+
+put2: put2.o  ${DEPS}
+	${CXX} put2.o -o $@ ${LDFLAGS}
 
 clean:
 	rm -rf put.o put 
