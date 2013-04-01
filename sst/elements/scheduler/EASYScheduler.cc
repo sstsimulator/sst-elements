@@ -126,7 +126,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
   if(time > guaranteedStart)
   {
     char errorstring[55];
-    sprintf(errorstring, "Failed to start job #%ld at guaranteed time", (*job)->getJobNum());
+    sprintf(errorstring, "Failed to start job #%ld at guaranteed time (time, guarantee) (%lu, %lu)", (*job)->getJobNum(), time, guaranteedStart);
     error(errorstring);
   }
   if (alloc -> canAllocate(*job)) 

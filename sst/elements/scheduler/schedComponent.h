@@ -103,6 +103,8 @@ private:
   bool printJobLog;
   bool printYumYumJobLog;       // should the Job Log use the YumYum format?
   bool useYumYumTraceFormat;    // should we expect the incoming job list to use the YumYum format?
+       // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
+
   bool useYumYumSimulationKill;         // should the simulation end on a special job (true), or just when the job list is exhausted (false)?
   bool YumYumSimulationKillFlag;        // this will signal the schedComponent to unregister itself iff useYumYumSimulationKill == true
   int YumYumPollWait;                   // this is the length of time in ms to wait between checks for new jobs

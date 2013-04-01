@@ -322,7 +322,11 @@ bool schedComponent::newYumYumJobLine( std::string line ){
   if( tokens.size() != 3 ){
     error( "Poorly formatted input line: " + line );
   }else{
-    jobs.push_back( Job( getCurrentSimTime() + 1, procs, duration, duration + 1, std::string( ID ) ) );
+    if( useYumYumTraceFormat ){
+      jobs.push_back( Job( getCurrentSimTime() + 1, procs, duration, duration + 1, std::string( ID ) ) );
+    }else{
+      jobs.push_back( Job( getCurrentSimTime(), procs, duration, duration, std::string( ID ) ) );
+    }
   }
 
   // validate the job to make sure that the specified machine can actually run it. 
@@ -402,7 +406,11 @@ void schedComponent::unregisterYourself(){
 
 void schedComponent::startNextJob(){
   CommunicationEvent * CommEvent = new CommunicationEvent( START_NEXT_JOB );
-  selfLink->Send( 1, CommEvent );
+  if( useYumYumTraceFormat ){
+    selfLink->Send( 1, CommEvent );
+  }else{
+    selfLink->Send( 0, CommEvent );
+  }
 //  while( scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats) );
 }
 
@@ -487,8 +495,13 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
 
       machine->deallocate(ai);
       theAllocator->deallocate(ai);
-      stats->jobFinishes(ai, getCurrentSimTime() + 1);
-      scheduler->jobFinishes(ai->job, getCurrentSimTime() + 1, machine);
+      if( useYumYumTraceFormat ){
+        stats->jobFinishes(ai, getCurrentSimTime() + 1);
+        scheduler->jobFinishes(ai->job, getCurrentSimTime() + 1, machine);
+      }else{
+        stats->jobFinishes(ai, getCurrentSimTime() );
+        scheduler->jobFinishes(ai->job, getCurrentSimTime() , machine);
+      }
       delete runningJobs.find( jobNum )->second.ai; //the job is done and deleted from our records; don't need
       runningJobs.erase(jobNum);
       //its allocinfo again
@@ -555,8 +568,13 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
         runningJobs.erase(finishedJobNum);
         machine->deallocate(ai);
         theAllocator->deallocate(ai);
-        stats->jobFinishes(ai, getCurrentSimTime() + 1);
-        scheduler->jobFinishes(ai->job, getCurrentSimTime() + 1, machine);
+        if( useYumYumTraceFormat ){
+          stats->jobFinishes(ai, getCurrentSimTime() + 1);
+          scheduler->jobFinishes(ai->job, getCurrentSimTime() + 1, machine);
+        }else{
+          stats->jobFinishes(ai, getCurrentSimTime() );
+          scheduler->jobFinishes(ai->job, getCurrentSimTime() , machine);
+        }
         delete ai;
 
 
