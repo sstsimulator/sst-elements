@@ -171,54 +171,46 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 
 void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed)
 {
-	MemEvent *ev = dynamic_cast<MemEvent*>(event);
-	if (event) {
-		DPRINTF("Received Event %p (to %s) %s 0x%lx\n", ev, ev->getDst().c_str(), CommandString[ev->getCmd()], ev->getAddr());
-		switch (ev->getCmd()) {
-		case BusClearToSend:
-			snoopBusQueue.clearToSend();
-            delete ev;
-			break;
+	MemEvent *ev = static_cast<MemEvent*>(event);
+    DPRINTF("Received Event %p (to %s) %s 0x%lx\n", ev, ev->getDst().c_str(), CommandString[ev->getCmd()], ev->getAddr());
+    switch (ev->getCmd()) {
+    case BusClearToSend:
+        snoopBusQueue.clearToSend();
+        delete ev;
+        break;
 
-		case ReadReq:
-		case WriteReq:
-			handleCPURequest(ev, firstTimeProcessed);
-			break;
+    case ReadReq:
+    case WriteReq:
+        handleCPURequest(ev, firstTimeProcessed);
+        break;
 
-		case RequestData:
-			handleCacheRequestEvent(ev, src, firstTimeProcessed);
-			break;
+    case RequestData:
+        handleCacheRequestEvent(ev, src, firstTimeProcessed);
+        break;
 
-		case SupplyData:
-			handleCacheSupplyEvent(ev, src);
-			break;
+    case SupplyData:
+        handleCacheSupplyEvent(ev, src);
+        break;
 
-		case Invalidate:
-			handleInvalidate(ev, src);
-            delete ev;
-			break;
+    case Invalidate:
+        handleInvalidate(ev, src);
+        delete ev;
+        break;
 
-		default:
-            /* Ignore */
-            delete event;
-			break;
-		}
-	} else {
-		printf("Cache:: Error Bad Event Type!\n");
-	}
+    default:
+        /* Ignore */
+        delete event;
+        break;
+    }
 }
 
 
 
 void Cache::handleSelfEvent(SST::Event *event)
 {
-	SelfEvent *ev = dynamic_cast<SelfEvent*>(event);
-	if ( ev ) {
-		(this->*(ev->handler))(ev->event, ev->block, ev->event_source);
-		delete ev;
-	} else {
-		_abort(Cache, "Cache::handleSelfEvent:  BAD TYPE!\n");
-	}
+	SelfEvent *ev = static_cast<SelfEvent*>(event);
+    (this->*(ev->handler))(ev->event, ev->block, ev->event_source);
+    delete ev;
 }
 
 void Cache::retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src)

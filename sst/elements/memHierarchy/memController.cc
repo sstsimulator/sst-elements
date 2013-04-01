@@ -183,43 +183,39 @@ int MemController::Finish(void)
 
 void MemController::handleEvent(SST::Event *event)
 {
-	MemEvent *ev = dynamic_cast<MemEvent*>(event);
-	if ( ev ) {
-		bool to_me = ( ev->getDst() == getName() || ev->getDst() == BROADCAST_TARGET );
-		switch ( ev->getCmd() ) {
-		case RequestData:
-		case ReadReq:
-			if ( to_me ) addRequest(ev);
-			break;
-		case ReadResp:
-			if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
-				cancelEvent(ev);
-			break;
-		case WriteReq:
-		case SupplyData:
-			if ( ev->queryFlag(MemEvent::F_WRITEBACK) )
-				addRequest(ev);
-			else
-                if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
-                    cancelEvent(ev);
-			break;
-		case BusClearToSend:
-			if ( to_me ) sendBusPacket();
-			break;
-		default:
-			/* Ignore */
-			break;
-		}
-		delete event;
-	} else {
-		printf("Error!  Bad Event Type!\n");
-	}
+	MemEvent *ev = static_cast<MemEvent*>(event);
+    bool to_me = ( ev->getDst() == getName() || ev->getDst() == BROADCAST_TARGET );
+    switch ( ev->getCmd() ) {
+    case RequestData:
+    case ReadReq:
+        if ( to_me ) addRequest(ev);
+        break;
+    case ReadResp:
+        if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
+            cancelEvent(ev);
+        break;
+    case WriteReq:
+    case SupplyData:
+        if ( ev->queryFlag(MemEvent::F_WRITEBACK) )
+            addRequest(ev);
+        else
+            if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
+                cancelEvent(ev);
+        break;
+    case BusClearToSend:
+        if ( to_me ) sendBusPacket();
+        break;
+    default:
+        /* Ignore */
+        break;
+    }
+    delete event;
 }
 
 
 void MemController::handleSelfEvent(SST::Event *event)
 {
-	MemEvent *ev = dynamic_cast<MemEvent*>(event);
+	MemEvent *ev = static_cast<MemEvent*>(event);
 	assert(ev);
 	if ( !isCanceled(ev) )
 		sendResponse(ev);

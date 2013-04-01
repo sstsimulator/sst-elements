@@ -160,26 +160,22 @@ LinkId_t Bus::arbitrateNext(void)
 // incoming events are scanned and deleted
 void Bus::handleEvent(Event *ev) {
 	//printf("recv\n");
-	MemEvent *event = dynamic_cast<MemEvent*>(ev);
-	if (event) {
-		LinkId_t link_id = event->getLinkId();
-		switch(event->getCmd())
-		{
-		case RequestBus:
-			requestPort(link_id);
-			break;
-		case CancelBusRequest:
-			cancelPortRequest(link_id);
-			break;
-		default:
-			// All other messages.  Send on bus
-			sendMessage(event, link_id);
-			break;
-		}
-		delete event;
-	} else {
-		printf("Error! Bad Event Type!\n");
-	}
+	MemEvent *event = static_cast<MemEvent*>(ev);
+    LinkId_t link_id = event->getLinkId();
+    switch(event->getCmd())
+    {
+    case RequestBus:
+        requestPort(link_id);
+        break;
+    case CancelBusRequest:
+        cancelPortRequest(link_id);
+        break;
+    default:
+        // All other messages.  Send on bus
+        sendMessage(event, link_id);
+        break;
+    }
+    delete event;
 }
 
 
