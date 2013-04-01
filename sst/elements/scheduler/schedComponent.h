@@ -12,6 +12,7 @@
 #ifndef _SCHEDCOMPONENT_H
 #define _SCHEDCOMPONENT_H
 
+#include <fstream>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -23,12 +24,14 @@
 #include "CompletionEvent.h"
 #include "JobStartEvent.h"
 #include "JobKillEvent.h"
-#include "JobFaultEvent.h"
+#include "FaultEvent.h"
 #include "FinalTimeEvent.h"
+#include "Scheduler.h"
 
 using namespace std;
 
 #define JobIDlength 16
+  // the maximum length of a job ID.  used primarily for job list parsing.
 
 struct IAI {int i; AllocInfo *ai;};
 
@@ -36,6 +39,10 @@ class schedComponent : public SST::Component {
 public:
 
   schedComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
+  ~schedComponent(){
+    delete stats;
+    delete scheduler;
+  }
   int Setup();
   int Finish();
   Machine* getMachine();
@@ -46,8 +53,14 @@ private:
   schedComponent();  // for serialization only
   schedComponent(const schedComponent&); // do not implement
   void operator=(const schedComponent&); // do not implement
-  
-  bool validateJob( Job * j, vector<Job> jobs, long runningTime );
+ 
+  bool validateJob( Job * j, vector<Job> * jobs, long runningTime );
+
+  void registerThis();
+  void unregisterThis();
+  bool isRegistered();
+
+  bool registrationStatus;
 
   std::string trace;
   std::string jobListFilename;
@@ -63,15 +76,17 @@ private:
   
   void unregisterYourself();
 
+  void startNextJob();
+
   void logJobStart( IAI iai );
   void logJobFinish( IAI iai );
-  void logJobFault( IAI iai, JobFaultEvent * faultEvent );
+  void logJobFault( IAI iai, FaultEvent * faultEvent );
 
   typedef vector<int> targetList_t;
 
   vector<Job> jobs;
-  vector<CompletionEvent*> finishingcomp;
-  vector<ArrivalEvent*> finishingarr;
+  list<CompletionEvent*> finishingcomp;
+  list<ArrivalEvent*> finishingarr;
   Machine* machine;
   Scheduler* scheduler;
   Allocator* theAllocator;
@@ -84,6 +99,7 @@ private:
   std::string jobListFileName;
   boost::filesystem::path jobListFileNamePath;
   std::string jobLogFileName;
+  std::ofstream jobLog;
   bool printJobLog;
   bool printYumYumJobLog;       // should the Job Log use the YumYum format?
   bool useYumYumTraceFormat;    // should we expect the incoming job list to use the YumYum format?

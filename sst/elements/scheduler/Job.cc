@@ -66,6 +66,7 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
   
   jobNum = nextJobNum;
   nextJobNum++;
+  hasRun = false;
 }
 
 unsigned long Job::getStartTime() {

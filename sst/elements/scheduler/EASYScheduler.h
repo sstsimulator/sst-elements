@@ -67,6 +67,7 @@ class EASYScheduler : public Scheduler {
     virtual ~EASYScheduler() {
       delete toRun;
       delete running;
+      delete comp;
     }
 
     class RunningInfo : public binary_function<RunningInfo*, RunningInfo*,bool> {
@@ -95,6 +96,7 @@ class EASYScheduler : public Scheduler {
   protected:
     //need to use a set instead of a priority queue to suppport iteration
     set<Job*, JobComparator>* toRun;  //jobs waiting to run
+    JobComparator * comp;
     multiset<RunningInfo*, RunningInfo>* running; //keeps track of running jobs in order based on their estimated completion time.  Must use multi in case jobs end at same time (careful not to erase jobs by key = finishing time)
 
 

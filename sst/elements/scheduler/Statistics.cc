@@ -127,7 +127,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
 }
 
 Statistics::~Statistics() {
-  delete record;
+  delete[] record;
 }
 
 void Statistics::jobArrives(unsigned long time) {   //called when a job has arrived

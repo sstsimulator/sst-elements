@@ -16,6 +16,8 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
+#define SCHEDULER_TIME_BASE "1 us"
+
 #include <string>
 using namespace std;
 

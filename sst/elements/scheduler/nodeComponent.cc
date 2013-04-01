@@ -11,10 +11,13 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization/element.h"
+#include <stdlib.h>
 #include <assert.h>
 
 #include <sstream>
 #include <fstream>
+#include <cmath>
+
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -23,7 +26,7 @@
 #include "ObjectRetrievalEvent.h"
 #include "CommunicationEvent.h"
 #include "nodeComponent.h"
-#include "JobFaultEvent.h"
+#include "FaultEvent.h"
 #include "JobKillEvent.h"
 
 #include "misc.h"
@@ -32,6 +35,45 @@ using namespace SST;
 
 static ofstream faultLog;
 static ofstream errorLog;
+
+unsigned short int * yumyumRand48State;
+
+void readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer, std::map<std::string, float> * Map ){
+  std::vector<std::string> tokens;
+  tokens.assign( Tokenizer.begin(), Tokenizer.end() );
+ 
+  for( unsigned int counter = 0; counter < tokens.size(); counter += 2 ){
+    boost::algorithm::trim( tokens.at( counter ) );
+    boost::algorithm::trim( tokens.at( counter + 1 ) );
+    Map->insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
+  }
+}
+
+
+
+void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer, std::map<std::string, std::pair<unsigned int, unsigned int> > * FaultLatencyBounds, int nodeNum ){
+  std::vector<std::string> tokens;
+  tokens.assign( Tokenizer.begin(), Tokenizer.end() );
+ 
+  for( unsigned int counter = 0; counter + 2 < tokens.size(); counter += 3 ){
+    boost::algorithm::trim( tokens.at( counter ) );
+    boost::algorithm::trim( tokens.at( counter + 1 ) );
+    boost::algorithm::trim( tokens.at( counter + 2 ) );
+    
+    std::string faultName = tokens.at( counter );
+    unsigned int lowerLatencyBound = atoi( tokens.at( counter + 1 ).c_str() );
+    unsigned int upperLatencyBound = atoi( tokens.at( counter + 2 ).c_str() );
+
+    if( upperLatencyBound < lowerLatencyBound ){
+      std::cerr << "nodeNum " << nodeNum << "'s fault delay upper bound is lower than its lower bound: " << tokens.at( counter ) << ", " << tokens.at( counter + 1 ) << ", " << tokens.at( counter + 2 ) <<  std::endl;
+      error( "Bad delay bounds" );
+    }
+
+    FaultLatencyBounds->insert( std::pair<std::string, std::pair<unsigned int, unsigned int> >( faultName, std::pair<unsigned int, unsigned int>(lowerLatencyBound, upperLatencyBound) ) );
+  }
+}
+
+
 
 nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
   Component(id), jobNum(-1) {
@@ -45,87 +87,56 @@ nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
   faultLogFileName = params[ "faultLogFileName" ];
   errorLogFileName = params[ "errorLogFileName" ];
 
-  Scheduler = configureLink( "Scheduler", new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent) );
-  Builder = configureLink( "Builder", new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ) );
-  SelfLink = configureSelfLink("linkToSelf", new Event::Handler<nodeComponent>(this, &nodeComponent::handleSelfEvent));
-  FaultLink = configureSelfLink("SelfFaultLink", new Event::Handler<nodeComponent>(this, &nodeComponent::handleFaultEvent));
-    
+  Scheduler = configureLink( "Scheduler", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent) );
+  Builder = configureLink( "Builder", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>( this, &nodeComponent::handleEvent ) );
+  SelfLink = configureSelfLink("linkToSelf", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleSelfEvent));
+  FaultLink = configureSelfLink("SelfFaultLink", SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleFaultEvent));
+
   SST::Link * tmp;
   char port[ 16 ];
 	
-	for( int counter = 0; counter == 0 || tmp != NULL; counter ++ ){
-	  sprintf( port, "Parent%d", counter );
-	  
-	  tmp = configureLink( port,
-		     new Event::Handler<nodeComponent>(this,
-							 &nodeComponent::
-							 handleEvent) );
-		
-		if( tmp ){
-		  ParentFaultLinks.push_back( tmp );
-		}
-	}
+  for( int counter = 0; counter == 0 || tmp != NULL; counter ++ ){
+    sprintf( port, "Parent%d", counter );
+  
+    tmp = configureLink( port, SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent) );
+    if( tmp ){
+      ParentFaultLinks.push_back( tmp );
+    }
+  }
 	
-	for( int counter = 0; counter == 0 || tmp != NULL; counter ++ ){
-	  sprintf( port, "Child%d", counter );
+  for( int counter = 0; counter == 0 || tmp != NULL; counter ++ ){
+    sprintf( port, "Child%d", counter );
 	  
-	  tmp = configureLink( port,
-		     new Event::Handler<nodeComponent>(this,
-							 &nodeComponent::
-							 handleEvent) );
-
-		
-		if( tmp ){
-		  ChildFaultLinks.push_back( tmp );
-		}
-	}
-							 
-							 
-  SelfLink->setDefaultTimeBase(registerTimeBase("1 s"));
-
-  assert( (((int) ChildFaultLinks.size()) > 0) || Scheduler);
-  assert(SelfLink);
-  
-  
-  
-  
-    // for reading in the Fault names and lambdas from the CSV in the XML
-  boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer( params[ "faults" ] );
-  vector<string> tokens;
-  tokens.assign( Tokenizer.begin(), Tokenizer.end() );
-
-  for( unsigned int counter = 0; counter < tokens.size(); counter += 2 ){
-    boost::algorithm::trim( tokens.at( counter ) );
-    boost::algorithm::trim( tokens.at( counter + 1 ) );
-    Faults.insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
-    
-    sendNextFault( tokens.at( counter ) );
+    tmp = configureLink( port, SCHEDULER_TIME_BASE, new Event::Handler<nodeComponent>(this, &nodeComponent::handleEvent) );
+    if( tmp ){
+      ChildFaultLinks.push_back( tmp );
+    }
   }
   
-  
-  
-  
-  Tokenizer = boost::tokenizer< boost::escaped_list_separator<char> >( params[ "symptomLogProb" ] );
-  tokens.assign( Tokenizer.begin(), Tokenizer.end() );
+  if(!( (((int) ChildFaultLinks.size()) > 0) || Scheduler) ){
+    std::cerr << "Node number " << nodeNum << " has neither children nor a link to the scheduler." << std::endl;
+    error( "Invalid node" );
+  }
+
+
+  SelfLink->setDefaultTimeBase(registerTimeBase( SCHEDULER_TIME_BASE ));
  
-  for( unsigned int counter = 0; counter < tokens.size(); counter += 2 ){
-    boost::algorithm::trim( tokens.at( counter ) );
-    boost::algorithm::trim( tokens.at( counter + 1 ) );
-    errorLogProbability.insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
-  }
+  readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> >( params[ "faultActivationRate" ] ), &Faults );
+  readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> >( params[ "errorPropagationDelay" ] ), &FaultLatencyBounds, nodeNum );
+  readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> >( params[ "errorCorrectionProbability" ] ), &errorCorrectionProbability );
+  readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> >( params[ "errorMessageProbability" ] ), &errorLogProbability );
+  readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> >( params[ "jobFailureProbability" ] ), &jobKillProbability );
 
-
-  Tokenizer = boost::tokenizer< boost::escaped_list_separator<char> >( params[ "jobKillProb" ] );
-  tokens.assign( Tokenizer.begin(), Tokenizer.end() );
-
-  for( unsigned int counter = 0; counter < tokens.size(); counter += 2 ){
-    boost::algorithm::trim( tokens.at( counter ) );
-    boost::algorithm::trim( tokens.at( counter + 1 ) );
-    jobKillProbability.insert( std::pair<std::string, float>( tokens.at( counter ), atof( tokens.at( counter + 1 ).c_str() ) ) );
-  }
 
   //set our clock
-  setDefaultTimeBase(registerTimeBase("1 s"));
+  setDefaultTimeBase(registerTimeBase( SCHEDULER_TIME_BASE ));
+}
+
+
+int nodeComponent::Setup(){
+  SelfLink->Send( new CommunicationEvent( START_FAULTING ) );
+
+  return 0;
 }
 
 
@@ -181,35 +192,94 @@ void nodeComponent::handleJobKillEvent( JobKillEvent * killEvent ){
 }
 
 
+/*
+ * finds the latency that should be used when passing a fault to a child node.
+ * if the user didn't specify a bound, it will be zero.
+ */
+unsigned int genFaultLatency( std::map<std::string, std::pair<unsigned int, unsigned int> > * FaultLatencyBounds, std::string faultName ){
+  unsigned int latency = 0;
+  if( FaultLatencyBounds->find( faultName ) != FaultLatencyBounds->end() ){
+    std::pair<unsigned int, unsigned int> bounds = (*FaultLatencyBounds->find( faultName )).second;
+    if( bounds.first == 0 && bounds.second == 0 ){    // bounds of [0, 0] were specified, so use latency of zero
+//      std::cout << "no bounds, using 0" << std::endl;
+    }else if( bounds.second == bounds.first ){    // no upper bound, so just use the lower bound as our latency
+//      std::cout << "same bounds" << std::endl;
+      latency = bounds.first;
+    }else{      // we have an upper bound, so find a random latency.
+//      std::cout << "both bounds, calculating: " << bounds.first << " --- " << bounds.second << std::endl;
+      latency = (((unsigned int)jrand48( yumyumRand48State )) % (bounds.second - bounds.first + 1)) + bounds.first;
+          // random number uniformly distributed between the bounds.
+    }
+  }
 
+//  std::cout << "sending fault type " << faultName << " in " << latency << " steps" << std::endl;
+
+  return latency;
+}
+
+
+
+/*
+ * Examines the fault in comparison to this node's correction probability to determine
+ * if the error should be corrected or not.
+ */
+bool nodeComponent::canCorrectError( FaultEvent * error ){
+  return errorCorrectionProbability.find( error->faultType ) != errorCorrectionProbability.end() &&
+           erand48( yumyumRand48State ) < (errorCorrectionProbability.find( error->faultType )->second);
+}
+
+
+
+/*
+ * handles faults for this node - propagation, correction, jobkills, etc
+ */
 void nodeComponent::handleFaultEvent( SST::Event * ev ){
-  if( dynamic_cast<JobFaultEvent*>(ev) ){
-    JobFaultEvent * faultEvent = dynamic_cast<JobFaultEvent*>(ev);
+  if( dynamic_cast<FaultEvent*>(ev) ){
+    FaultEvent * faultEvent = dynamic_cast<FaultEvent*>(ev);
 
 #ifdef JRSDEBUG
 	cerr << getCurrentSimTime() << ": in handleFaultEvent for node " << this->ID << endl;
 #endif
-    logFault( faultEvent );
+
+    logError( faultEvent );
     
-    if( Scheduler && jobNum != -1 ){
-      // Kill the job if there is a probability associated with it and a roll of the dice says to do so.
-      // Also kill the job if there is no probability associated with it.
-      if( jobKillProbability.find( faultEvent->faultType ) == jobKillProbability.end() ||
-          drand48() < jobKillProbability.find( faultEvent->faultType )->second ){
-        
-        //SelfLink->Send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) );
+    if( !canCorrectError( faultEvent ) ){
 
-        faultEvent->jobNum = jobNum;
-        faultEvent->nodeNumber = nodeNum;
-        Scheduler->Send( faultEvent );
-          // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
+      if( Scheduler && jobNum != -1 ){
+        /* Kill the job if:
+         * 
+         * - The fault event doesn't say to kill the job or let it live and EITHER
+         *   - there is no jobKillProbability associated with this fault type OR
+         *   - a random number is under the jobKillProbability
+         * - OR the fault event says to kill the job
+         */
+        if( faultEvent->shouldKillJob == FAULT_EVENT_SHOULDKILL
+            || (jobKillProbability.find( faultEvent->faultType ) == jobKillProbability.end()
+                || erand48( yumyumRand48State ) < jobKillProbability.find( faultEvent->faultType )->second) ){
+          
+          //SelfLink->Send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) );
 
-      }
-    }else{
-      for(std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
-        (*it)->Send( faultEvent->copy() );
+          faultEvent->jobNum = jobNum;
+          faultEvent->nodeNumber = nodeNum;
+          Scheduler->Send( (unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent->faultType ), faultEvent->copy() );
+            // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
+
+        }
+      }else{
+        if( faultEvent->shouldKillJob == FAULT_EVENT_UNDECIDED &&
+            jobKillProbability.find( faultEvent->faultType ) != jobKillProbability.end() ){
+          // undecided if fault should kill a job, and we have a JobKillProbability for this fault type
+          if( erand48( yumyumRand48State ) < jobKillProbability.find( faultEvent->faultType )->second ){
+            faultEvent->shouldKillJob = FAULT_EVENT_SHOULDKILL;
+          }
+        }
+        for(std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
+          (*it)->Send( (unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent->faultType ), faultEvent->copy() );
+        }
       }
     }
+
+    delete ev;
   }
 
 
@@ -223,11 +293,13 @@ void nodeComponent::handleEvent(Event *ev) {
   if( dynamic_cast<CommunicationEvent *>( ev ) ){
     CommunicationEvent * event = dynamic_cast<CommunicationEvent *>( ev );
 
-    event->payload = this->ID;
-    event->reply = true;
+    if( event->CommType == RETRIEVE_ID ){
+      event->payload = &this->ID;
+      event->reply = true;
 
-    Scheduler->Send( event );
-    return;
+      Scheduler->Send( event );
+      return;
+    }
   }else if( dynamic_cast<ObjectRetrievalEvent *>( ev ) ){
     ObjectRetrievalEvent * event = dynamic_cast<ObjectRetrievalEvent *>( ev );
 
@@ -246,39 +318,13 @@ void nodeComponent::handleEvent(Event *ev) {
     } else {
       internal_error("Error?! Already running a job, but given a new one!\n");
     }
-  }else if( dynamic_cast<JobFaultEvent*>(ev) ){
-#ifdef JRSDEBUG
-	cerr << getCurrentSimTime() << ": in handleEvent for node " << this->ID << endl;
-#endif
-    JobFaultEvent * faultEvent = dynamic_cast<JobFaultEvent*>(ev);
+  }else if( dynamic_cast<FaultEvent*>(ev) ){
 
-//    logFault( faultEvent );
-    
-    if( Scheduler && jobNum != -1 ){
-      // Kill the job if there is a probability associated with it and a roll of the dice says to do so.
-      // Also kill the job if there is no probability associated with it.
-      if( jobKillProbability.find( faultEvent->faultType ) == jobKillProbability.end() ||
-          drand48() < jobKillProbability.find( faultEvent->faultType )->second ){
-        
-        //SelfLink->Send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) );
+    handleFaultEvent( ev );
 
-        faultEvent->jobNum = jobNum;
-        faultEvent->nodeNumber = nodeNum;
-        Scheduler->Send( faultEvent );
-          // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
-
-      }
-    }else{
-      for(std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
-        (*it)->Send( faultEvent->copy() );
-      }
-    }
-
-    // log the symptom for the analysis tool
-    logError( faultEvent );
-   
   }else if( dynamic_cast<JobKillEvent*>(ev) ){
     handleJobKillEvent( dynamic_cast<JobKillEvent*>(ev) );
+    delete ev;
   }else{
     char errorMessage[ 1024 ];
     snprintf( errorMessage, 1023, "Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
@@ -287,7 +333,9 @@ void nodeComponent::handleEvent(Event *ev) {
 }
 
 
-// finish current job
+/*
+ *  Handle all events coming in on the self link
+ */
 void nodeComponent::handleSelfEvent(Event *ev) {
   JobStartEvent *event = dynamic_cast<JobStartEvent*>(ev);
   if (event) {
@@ -299,43 +347,25 @@ void nodeComponent::handleSelfEvent(Event *ev) {
     } else {
       internal_error("Error!! We are not running this job we're supposed to finish!\n");
     }
-  }else if( dynamic_cast<JobFaultEvent*>(ev) ){
 
-#ifdef JRSDEBUG
-	cerr << getCurrentSimTime() << ": in handleSelfEvent for node " << this->ID << endl;
-#endif
-    JobFaultEvent * faultEvent = dynamic_cast<JobFaultEvent*>(ev);
-    
-    sendNextFault( faultEvent->faultType );     // handled this fault, send another fault to the future
-    
-    for(std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
-      (*it)->Send( faultEvent->copy() );
-    }
-  
-    if( Scheduler && jobNum != 1 ){
-      if( jobKillProbability.find( faultEvent->faultType ) == jobKillProbability.end() ||
-          drand48() < jobKillProbability.find( faultEvent->faultType )->second ){
-  
-        //SelfLink->Send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) );
-        faultEvent->jobNum = jobNum;
-        faultEvent->nodeNumber = nodeNum;
-        Scheduler->Send( faultEvent );
-          // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
-      } 
-    }
-    
-    // log the symptom for the analysis tool
-    logError( faultEvent );
-    
-    
-    // last, write the fault to the Fault Log
-    if( this->faultLogFileName.length() > 0 ){
-      logFault( faultEvent );
-    }
-    
+    delete ev;
+  }else if( dynamic_cast<FaultEvent*>(ev) ){
+    FaultEvent * faultEvent = dynamic_cast<FaultEvent*>(ev);
 
+    logFault( faultEvent );
+    sendNextFault( string( faultEvent->faultType ) );     // handled this fault, send another fault to the future
+    handleFaultEvent( ev );
   }else if( dynamic_cast<JobKillEvent*>(ev) ){
     handleJobKillEvent( dynamic_cast<JobKillEvent*>(ev) );
+    delete ev;
+  }else if( dynamic_cast<CommunicationEvent *>( ev ) ){
+    CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *>( ev );
+    if( commEvent->CommType == START_FAULTING ){
+      // begin sending faults
+      for( std::map<std::string, float>::iterator faultIter = Faults.begin(); faultIter != Faults.end(); faultIter ++ ){
+        sendNextFault( (*faultIter).first );
+      }
+    }
   }else{
     char errorMessage[ 1024 ];
     snprintf( errorMessage, 1023, "Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
@@ -344,17 +374,19 @@ void nodeComponent::handleSelfEvent(Event *ev) {
 }
 
 
-double urand()
-{
-	return(rand() + 1.0)/(RAND_MAX + 1.0);
+double urand(){
+//	return(rand() + 1.0)/(RAND_MAX + 1.0);
+
+  return (((int)nrand48( yumyumRand48State )) + 1.0)/(pow(2.0, 31) + 1.0);
+
+  // using nrand48 which I can use to better control the seed.
 }
 
-unsigned genexp(double lambda)
-{
+SimTime_t genexp(double lambda){
 	double u,x;
 	u=urand();
 	x=(-1/lambda)*log(u);
-	return(x);
+	return llabs( x );
 }
 
 
@@ -362,12 +394,23 @@ void nodeComponent::sendNextFault( std::string faultType ){
   if( Faults.find( faultType.c_str() ) == Faults.end() ){
     internal_error( "Error, recieved a fault with a type that is unknown.\n" );
   }
+
+  uint32_t lambdaScale = 86400;     // lambda scaled from seconds to days
   
-  unsigned fail_time = genexp( Faults.find( faultType.c_str() )->second / 86400.0 );     // lambda scaled to one day
+  SimTime_t fail_time = genexp( Faults.find( faultType.c_str() )->second / lambdaScale );
+
 #ifdef JRSDEBUG
 	cerr << getCurrentSimTime() << ": in sendNextFault for node " << this->ID << " with lambda " << Faults.find( faultType.c_str() )->second << ", next faultTime is " << fail_time << endl;
 #endif
-  SelfLink->Send( fail_time, new JobFaultEvent( faultType ) );
+
+  /* A Lambda near zero causes the next time to be -Inf.  That doesn't translate well to integer types and we get a fault time of zero.
+   * Check for this (and any other floating point errors) and don't throw the fault if an error happened.
+   * Very large fail_times also appear to cause the core to send the fault back to us as though it were zero.
+   * Don't just check if the fault time is zero, the PRNG could be at fault for that one, and it would be OK.
+   */
+  if( std::isfinite( -1/(Faults.find( faultType.c_str() )->second / lambdaScale) ) ){
+    SelfLink->Send( fail_time, new FaultEvent( faultType ) );
+  }
 }
 
 
@@ -376,14 +419,14 @@ void nodeComponent::sendNextFault( std::string faultType ){
 Uses the probability in errorLogProbability to determine if a fault should be logged.
 If it should be logged, it is logged.
 */
-void nodeComponent::logError( JobFaultEvent * faultEvent ){
+void nodeComponent::logError( FaultEvent * faultEvent ){
   if (!errorLog.is_open()) {
 #ifdef JRSDEBUG
 	cerr << getCurrentSimTime() << ": in logError.open for node " << this->ID << endl;
 #endif
   	errorLog.open(this->errorLogFileName.c_str());
 	if (!errorLog.is_open()) {
-		cerr << "Failed to open " << this->errorLogFileName.c_str() << endl;
+		cerr << "Failed to open " << this->errorLogFileName << endl;
 		exit(1);
 	}
     errorLog << "time,host,type" << endl;
@@ -396,7 +439,7 @@ void nodeComponent::logError( JobFaultEvent * faultEvent ){
      * c) there is no probability associated with this type of fault
      */
     if( (this->errorLogProbability.find( faultEvent->faultType ) != this->errorLogProbability.end() &&
-          drand48() < this->errorLogProbability.find( faultEvent->faultType )->second) ||
+          erand48( yumyumRand48State ) < this->errorLogProbability.find( faultEvent->faultType )->second) ||
          this->errorLogProbability.find( faultEvent->faultType ) == this->errorLogProbability.end()){
   			errorLog << getCurrentSimTime() << "," << this->ID << "," << faultEvent->faultType << endl;
          }
@@ -406,19 +449,22 @@ void nodeComponent::logError( JobFaultEvent * faultEvent ){
 /*
 Logs the "ground truth" to the fault log.  This is used to measure the accuracy of the Analysis Tool
 */
-void nodeComponent::logFault( JobFaultEvent * faultEvent ){
-  if (!faultLog.is_open()) {
+void nodeComponent::logFault( FaultEvent * faultEvent ){
+  if( this->faultLogFileName.length() > 0 ){
+    if (!faultLog.is_open()) {
 #ifdef JRSDEBUG
-	cerr << getCurrentSimTime() << ": in logFault.open for node " << this->ID << endl;
+          cerr << getCurrentSimTime() << ": in logFault.open for node " << this->ID << endl;
 #endif
-  	faultLog.open(this->faultLogFileName.c_str());
-	if (!faultLog.is_open()) {
-		cerr << "Failed to open " << this->faultLogFileName.c_str() << endl;
-		exit(1);
-	}
-    faultLog << "time,host,type" << endl;
+          faultLog.open(this->faultLogFileName.c_str());
+          if (!faultLog.is_open()) {
+                  cerr << "Failed to open " << this->faultLogFileName << endl;
+                  exit(1);
+          }
+      faultLog << "time,host,type" << endl;
+    }
+
+    faultLog << getCurrentSimTime() << "," << this->ID << "," << faultEvent->faultType << endl;
   }
-  faultLog << getCurrentSimTime() << "," << this->ID << "," << faultEvent->faultType << endl;
 }
 
 

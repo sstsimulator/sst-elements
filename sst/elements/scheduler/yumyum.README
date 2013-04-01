@@ -5,7 +5,7 @@ remain unaffected.  Yumyum-specific functionality simply augments the
 capabilities of the Scheduler to add the ability to simulate fault and failure
 modes into SST simulations of systems, as well as a hierarchy of nodes that
 allows for cascading faults to affect the ability of the simulated system to
-function optimally.  This functionality is optional, and will not affect non-
+function optimally. This functionality is optional, and will not affect non-
 yumyum simulations.
 
 ---
@@ -22,14 +22,14 @@ connected to that node of a single given type.
 faults
 ---
 
-Faults are simulated by creating a "faults" element under the params for a
-nodeComponent.  This will contain CSV describing the faults and the fault
-rates:
+Faults are simulated by creating a "faultActivationRate" element under the
+params for a nodeComponent.  This will contain CSV describing the faults and
+the fault rates:
 
-<faults>
+<faultActivationRate>
   "fault type 1", "1337",
   "fault type 2", "42"
-</faults>
+</faultActivationRate>
 
 Where the fault rate (called lambda) occurs at a rate described in
 nodeComponent.cc in
@@ -41,24 +41,63 @@ These faults can be logged by Scheduler in two files:
 - fault.log - ground truth, this describes what faults have occured.
   Filename is described using the faultLogFileName param.
 
-- symptom.log - logs faults according the probabilities described using the
-  the symptomLogProb param:
+- error.log - logs faults according the probabilities described using the
+  the errorMessageProbability param:
 
   <params>
-    <symptomLogProb>
+    <errorMessageProbability>
       "fault type 1", "0.5",
       "fault type 2", "0.95"
-    </symptomLogProb>
+    </errorMessageProbability>
     ...
   </params>
 
-  Filename is described using the symptomLogFilename param
+  Filename is described using the errorLogFilename param
 
 These faults will travel down the hierarchy of nodes, from parent to child
-until they reach nodes connected to the schedComponent.  A this point, the
-nodes will end whatever job they are running by default whenever they recieve
-a fault, or according to some probability that can be defined using the
-jobKillProb param, in a similar fashion to symptomLogProb.
+until they reach nodes connected to the schedComponent.  By default, the
+nodes will end whatever job they are running by whenever they recieve a
+fault, or according to some probability that can be defined using the
+jobFailureProbability param, in a similar fashion to errorMessageProbability.
+
+  <jobFailureProbability>
+    "fault type 1", "0.5"
+  </jobFailureProbability>
+
+This jobFailureProbability parameter can be placed on any nodeComponent.  When
+an error travels through the node, the jobFailureProbability associated with
+that fault type is examined to determine if the job on the scheduled node the
+error will eventually arrive at should be killed.  If yes, then the any
+scheduled node the error eventually arrives at will kill the job.  If no, then
+the error is sent on normally.  This jobFailureProbability check will be done
+at every node that has the jobFailureProbability parameter.  Effectively, a job
+will be killed if any node between, and including, the initial node which
+causes the fault and the schedulable node which receives the error, has a
+jobFailureProbability parameter and passes the probability check.
+
+---
+fault propagation delays
+---
+
+The time taken by a fault to travel from node A to node B is by default zero.
+This can be adjusted using the errorPropagationDelay parameter on a
+nodeComponent:
+
+  <errorPropagationDelay>
+    "retransmit", "0", "2",
+    "thermal", "1", "1",
+    "lost connection", "2", 5"
+  </errorPropagationDelay>
+
+The columns in the dalay parameter are the fault name, min delay time, max
+delay time. If a fault has no specified time, it will always be transmitted
+to all children of a given node on the same timestep it is recieved, instantly
+propagating through the graph.  Otherwise, a uniformly-distributed random number
+is selected using the two specified numbers as bounds.  (inclusive)  The node
+then waits that length of time before transmitting the fault to its children.
+
+For each fault traveling through the graph, the delay is calculated
+independently for each link it traverses.
 
 ---
 yumyum jobs
@@ -129,16 +168,43 @@ where n is the number of ms for which schedComponent should sleep between
 checking the file for a new modification time.
 
 ---
+yumyum PRNG
+---
+
+The seed used for the PRNG used for the yumyum functionality discussed here can
+be specified as a param to the schedComponent in the XML, like so:
+
+  <params>
+    <seed>42</seed>
+  </params>
+
+If a seed is not specified, the PRNG will be seeded with the current time, with
+a one second resolution.
+
+This seed is used only for yumyum functionality; all other SST functionality
+remains the same, as does functionality in other elements.
+
+---
 yumyum functionality tests
 ---
 
-A set of tests have been created which test the essential functionality of the
-yumyum-specific functionality of these elements.  The tests are in the yumyum
+A set of tests have been created which can be used to verify that the yumyum
+functionality is working correctly.  These tests can be found in the yumyum
 subdirectory, and can be run (after building SST and Scheduler, of course)
 using the runtests.pl script:
 
 perl runtests.pl
 
-This will run a series of short simulations that will test basic functionality
-of nodeComponent and schedComponent, including yumyum functionality.
+This will run a series of simulations that will test nodeComponent and
+schedComponent, including yumyum functionality.  A few short simulations are
+run to test basic functionality, and many longer tests are run to test that the
+simulated results are statistically believable, as well as to test for
+regressions in code correctness and performance.
+
+---
+yumyum functionality example
+---
+
+An example of a small graph with a number of faults and errors can be found
+under yumyum/xml/example.xml.
 

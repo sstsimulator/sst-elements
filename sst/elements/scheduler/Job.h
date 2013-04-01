@@ -32,19 +32,30 @@ public:
   Job(long arrivalTime, int procsNeeded, long actualRunningTime,
       long estRunningTime, std::string ID );
 
+/*  ~Job(){
+    std::cout << "destructing job " << ID << " ";
+    if( hasRun ){
+      std::cout << "which has run" << std::endl;
+    }else{
+      std::cout << "which has not run" << std::endl;
+    }
+    print_stacktrace();
+  }*/
+
+  ~Job(){}
+
   unsigned long getArrivalTime() { return arrivalTime; }
   unsigned long getStartTime();
   int getProcsNeeded() { return procsNeeded; }
   long getJobNum() { return jobNum; }
-  
-  
-  std::string getID() {
+ 
+  std::string * getID() {
     if( ID.length() == 0 ){
       std::ostringstream jobNumStr;
       jobNumStr << jobNum;
-      return jobNumStr.str();
+      ID = string( jobNumStr.str() );
     }
-    return ID;
+    return & ID;
   }
 
   //two versions depending on whether allocation is considered:
@@ -63,6 +74,7 @@ private:
   unsigned long actualRunningTime;  //how long it runs
   unsigned long estRunningTime;     //user estimated running time
   unsigned long startTime;	     //when the job started (-1 if not running)
+  bool hasRun;
   
   long jobNum;             //ID number unique to this job
   

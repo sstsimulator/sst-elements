@@ -19,7 +19,7 @@
 #include <sst/core/timeConverter.h>
 #include "JobStartEvent.h"
 #include "CompletionEvent.h"
-#include "JobFaultEvent.h"
+#include "FaultEvent.h"
 #include "JobKillEvent.h"
 
 #include "linkBuilder.h"
@@ -33,7 +33,7 @@ class nodeComponent : public SST::Component, public virtual linkChanger {
 public:
 
   nodeComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
-  int Setup() {return 0;}
+  int Setup();
   int Finish() {return 0;}
 
   virtual void addLink( SST::Link * link, enum linkTypes type );
@@ -50,18 +50,19 @@ private:
   void handleEvent( SST::Event *ev );
   void handleSelfEvent( SST::Event *ev );
   void handleFaultEvent( SST::Event * ev );
+  bool canCorrectError( FaultEvent * error );
   
   void handleJobKillEvent( JobKillEvent * killEvent );
   
   void sendNextFault( std::string faultType );
-  void logError( JobFaultEvent * faultEvent );
-  void logFault( JobFaultEvent * faultEvent );
+  void logError( FaultEvent * faultEvent );
+  void logFault( FaultEvent * faultEvent );
 
   int jobNum;
   int nodeNum;
 
-  SST::Link* Scheduler;
-  SST::Link* SelfLink;
+  SST::Link * Scheduler;
+  SST::Link * SelfLink;
   SST::Link * FaultLink;
 
   std::vector<SST::Link *> ParentFaultLinks;
@@ -69,6 +70,8 @@ private:
   SST::Link * Builder;
   
   std::map<std::string, float> Faults;
+  std::map<std::string, std::pair<unsigned int, unsigned int> > FaultLatencyBounds;
+  std::map<std::string, float> errorCorrectionProbability;
   std::map<std::string, float> errorLogProbability;
   std::map<std::string, float> jobKillProbability;
   std::map<int, int> killedJobs;        // jobs that had to be killed, but haven't finished yet.  used to keep track of this node's state

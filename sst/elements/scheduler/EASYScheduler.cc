@@ -31,8 +31,7 @@ using namespace std;
 #include "misc.h"
 #include "Machine.h"
 
-
-#define DEBUG false
+#define DEBUG 0
 
 const EASYScheduler::compTableEntry EASYScheduler::compTable[6] = {
   { FIFO, "fifo"},
@@ -44,6 +43,7 @@ const EASYScheduler::compTableEntry EASYScheduler::compTable[6] = {
 const int EASYScheduler::numCompTableEntries = 6;
 
 EASYScheduler::EASYScheduler(JobComparator* comp) { 
+  this->comp = comp;
   toRun = new set< Job*,JobComparator, std::allocator<Job*> >(*comp);
   RunningInfo* RIComp = new RunningInfo();
   running = new multiset<RunningInfo*, RunningInfo>(*RIComp); //don't need to pass comp because compare longs
@@ -92,8 +92,10 @@ void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach){
   {  
     if((*it)->jobNum == j->getJobNum())
     {
+      delete *it;
       running->erase(it);
       success = true;
+      break;    // iterating the iterator after it's erased can crash on Macs, let's not do that.
     }
     it++;
   }
@@ -180,7 +182,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
       }
       printf("\n");
     }
-    
+   
     return allocInfo;
   }
   return NULL;
@@ -240,9 +242,9 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
   {
     if(DEBUG)
       printf("%ld: Giving %s guarantee of time %ld\n", time, (*firstJob)->toString().c_str(), guaranteedStart);
-    if((*firstJob)->getJobNum() == prevFirstJobNum && lastGuarantee < guaranteedStart && lastGuarantee > 0)
+    if((*firstJob)->getJobNum() == prevFirstJobNum && lastGuarantee + 1 < guaranteedStart && lastGuarantee > 0)
     {
-
+      std::cerr << "last guarantee: " << lastGuarantee << " new guarantee " << guaranteedStart << std::endl;
       error("EASY scheduler gave new guarantee worse than previous\n");
     }
     prevFirstJobNum = (*firstJob)->getJobNum();
@@ -260,9 +262,8 @@ AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* 
   if(!alloc->canAllocate(j))
     return NULL;
 
-  AllocInfo* retVal = alloc->allocate(j);
   if(time + j->getEstimatedRunningTime() <= guaranteedStart)
-    return retVal;
+    return alloc->allocate( j );
 
   int avail = mach->getNumFreeProcessors();
   multiset<RunningInfo*, RunningInfo>::iterator it  = running->begin();
@@ -273,10 +274,9 @@ AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* 
   }
   set<Job*, JobComparator>::iterator tempit = toRun->begin();
   if(avail - j->getProcsNeeded() >= (*tempit)->getProcsNeeded())
-    return retVal;
+    return alloc->allocate( j );
 
   //if we made it this far it disturbs the first job
-  alloc->deallocate(retVal);
   return NULL; 
 }
 

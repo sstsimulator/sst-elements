@@ -23,6 +23,11 @@ class CompletionEvent : public SST::Event {
     this -> jobNum = jobNum;
   }
 
+  CompletionEvent * copy(){
+    CompletionEvent * tmp = new CompletionEvent( this->jobNum );
+    return tmp;
+  }
+
   int jobNum;
 
   friend class boost::serialization::access;

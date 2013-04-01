@@ -9,11 +9,11 @@
 #include "nodeComponent.h"
 #include "CommunicationEvent.h"
 #include "ObjectRetrievalEvent.h"
+#include "misc.h"
 
 linkBuilder::linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & params ) : Component( id ){
-
-  selfLink = configureSelfLink( "linkToSelf", new SST::Event::Handler<linkBuilder>( this, &linkBuilder::initNodePtrRequests ) );
-  selfLink->setDefaultTimeBase( registerTimeBase( "1 s" ) );
+/*
+  selfLink = configureSelfLink( "linkToSelf", SCHEDULER_TIME_BASE, new SST::Event::Handler<linkBuilder>( this, &linkBuilder::initNodePtrRequests ) );
 
   SST::Link * newLink;
 
@@ -22,7 +22,7 @@ linkBuilder::linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & para
   for( int counter = 0; counter == 0 || newLink; counter ++ ){
     char newLinkName[ 16 ];
     snprintf( newLinkName, 15, "nodeLink%d", counter );
-    newLink = configureLink( newLinkName, new SST::Event::Handler<linkBuilder>( this, &linkBuilder::handleNewNodePtr ) );
+    newLink = configureLink( newLinkName, SCHEDULER_TIME_BASE, new SST::Event::Handler<linkBuilder>( this, &linkBuilder::handleNewNodePtr ) );
     if( newLink ){
       nodeLinks.push_back( newLink );
       std::cout << " " << newLinkName;
@@ -32,7 +32,7 @@ linkBuilder::linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & para
   std::cout << " done." << std::endl;
 
   selfLink->Send( new ObjectRetrievalEvent() );
-  selfLink->Send( 350000, new CommunicationEvent( ID ) );
+  selfLink->Send( 350000, new CommunicationEvent( RETRIEVE_ID ) );*/
 }
 
 
@@ -47,7 +47,7 @@ void linkBuilder::disconnectGraph( Job * job ){
 
 
 void linkBuilder::initNodePtrRequests( SST::Event * event ){
-  ObjectRetrievalEvent * objRetEvent = dynamic_cast<ObjectRetrievalEvent *>( event );
+/*  ObjectRetrievalEvent * objRetEvent = dynamic_cast<ObjectRetrievalEvent *>( event );
   if( objRetEvent ){
     for( std::vector<SST::Link *>::iterator linkIter = nodeLinks.begin(); linkIter < nodeLinks.end(); linkIter ++ ){
       (*linkIter)->Send( objRetEvent->copy() );
@@ -58,7 +58,7 @@ void linkBuilder::initNodePtrRequests( SST::Event * event ){
         nodes.find( "node" )->second.find( "1.1" ) != nodes.find( "node" )->second.end() &&
         nodes.find( "node" )->second.find( "2.1" ) != nodes.find( "node" )->second.end() &&
         dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "1.1" )->second ) &&
-        dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "2.1" )->second ) ){
+        dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "2.1" )->second ) ){*/
       //SST::Link * newLink1 = configureLink( "test", new SST::Event::Handler<nodeComponent>( dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "1.1" )->second ), &nodeComponent::handleEvent ) );
       //SST::Link * newLink2 = configureLink( "test", new SST::Event::Handler<nodeComponent>( dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "2.1" )->second ), &nodeComponent::handleEvent ) );
 
@@ -68,13 +68,13 @@ void linkBuilder::initNodePtrRequests( SST::Event * event ){
 //      dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "2.1" )->second )->addLink( dynamic_cast<nodeComponent *>( nodes.find( "node" )->second.find( "1.1" )->second )->FaultLink, CHILD );
 
 //      std::cout << "linkBuilder was able to send the new link" << std::endl;
-    }
-  }
+/*    }
+  }*/
 }
 
 
 void linkBuilder::handleNewNodePtr( SST::Event * event ){
-  if( dynamic_cast<ObjectRetrievalEvent *>( event ) ){
+/*  if( dynamic_cast<ObjectRetrievalEvent *>( event ) ){
     ObjectRetrievalEvent * objRetEvent = dynamic_cast<ObjectRetrievalEvent *>( event );
 
     if( dynamic_cast<linkChanger *>( objRetEvent->payload ) ){
@@ -90,5 +90,6 @@ void linkBuilder::handleNewNodePtr( SST::Event * event ){
       nodes.find( graphNode->getType() )->second.insert( std::pair<std::string, linkChanger *>( graphNode->getID(), graphNode ) );
     }
   }
+  delete event;*/
 }
 
