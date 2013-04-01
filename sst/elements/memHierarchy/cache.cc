@@ -725,10 +725,6 @@ void Cache::cancelInvalidate(CacheBlock *block)
 
 void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
 {
-	MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
-	ev->setFlag(MemEvent::F_WRITEBACK);
-	ev->setPayload(block->data);
-
 	if ( snoop_link ) {
 		block->lock();
 		BusHandlerArgs args;
@@ -736,13 +732,16 @@ void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
 		args.writebackBlock.newStatus = newStatus;
 		args.writebackBlock.decrementLock = true;
 		DPRINTF("Enqueuing request to writeback block 0x%lx\n", block->baseAddr);
-		snoopBusQueue.request(new MemEvent(ev),
+
+        MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
+        ev->setFlag(MemEvent::F_WRITEBACK);
+        ev->setPayload(block->data);
+		snoopBusQueue.request(ev,
 				new BusFinishHandler(&Cache::finishWritebackBlockVA, args),
                 new BusInitHandler(&Cache::prepWritebackBlock, args));
 	} else {
 		finishWritebackBlock(block, newStatus, false);
 	}
-	delete ev;
 }
 
 
@@ -763,19 +762,22 @@ void Cache::finishWritebackBlockVA(BusHandlerArgs& args)
 void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock)
 {
 
-	MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
-	ev->setFlag(MemEvent::F_WRITEBACK);
-	ev->setPayload(block->data);
-
 	if ( decrementLock ) /* AKA, sent on the Snoop Bus */
 		block->unlock();
 
-	if ( downstream_link )
-		downstream_link->Send(new MemEvent(ev));
-	if ( directory_link )
-		directory_link->Send(new MemEvent(ev));
+	if ( downstream_link ) {
+        MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
+        ev->setFlag(MemEvent::F_WRITEBACK);
+        ev->setPayload(block->data);
+		downstream_link->Send(ev);
+    }
+	if ( directory_link ) {
+        MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
+        ev->setFlag(MemEvent::F_WRITEBACK);
+        ev->setPayload(block->data);
+		directory_link->Send(ev);
+    }
 
-	delete ev;
 
     DPRINTF("Wrote Back Block 0x%lx\n", block->baseAddr);
 
