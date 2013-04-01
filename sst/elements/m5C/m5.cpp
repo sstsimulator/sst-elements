@@ -123,7 +123,7 @@ void SST::M5::M5::init(unsigned int phase)
 				memInitLink->sendInitData(ev);
 
 				/* Save memory */
-				delete i->data;
+				free(i->data);
 				i->data = NULL;
 				i->size = 0;
 			}
