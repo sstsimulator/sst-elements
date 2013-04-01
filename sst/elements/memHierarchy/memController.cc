@@ -308,10 +308,22 @@ MemEvent* MemController::performRequest(DRAMReq *req)
 		for ( size_t i = 0 ; i < req->size ; i++ ) {
 			memBuffer[req->addr + i - rangeStart] = req->reqEvent->getPayload()[i];
 		}
+        DPRINTF("Writing Memory: %zu bytes beginning at 0x%lx [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
+                req->size, req->addr,
+                memBuffer[req->addr - rangeStart + 0], memBuffer[req->addr - rangeStart + 1],
+                memBuffer[req->addr - rangeStart + 2], memBuffer[req->addr - rangeStart + 3],
+                memBuffer[req->addr - rangeStart + 4], memBuffer[req->addr - rangeStart + 5],
+                memBuffer[req->addr - rangeStart + 6], memBuffer[req->addr - rangeStart + 7]);
 	} else {
 		for ( size_t i = 0 ; i < req->size ; i++ ) {
 			resp->getPayload()[i] = memBuffer[req->addr + i - rangeStart];
 		}
+        DPRINTF("Reading Memory: %zu bytes beginning at 0x%lx [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
+                req->size, req->addr,
+                memBuffer[req->addr - rangeStart + 0], memBuffer[req->addr - rangeStart + 1],
+                memBuffer[req->addr - rangeStart + 2], memBuffer[req->addr - rangeStart + 3],
+                memBuffer[req->addr - rangeStart + 4], memBuffer[req->addr - rangeStart + 5],
+                memBuffer[req->addr - rangeStart + 6], memBuffer[req->addr - rangeStart + 7]);
 	}
 	return resp;
 }

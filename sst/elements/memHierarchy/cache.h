@@ -166,18 +166,33 @@ private:
 		struct {
 			LoadInfo_t *loadInfo;
 		} loadBlock;
-	} BusFinishHandlerArgs;
-	typedef void(Cache::*BusFinishHandlerFunc)(BusFinishHandlerArgs &args);
+	} BusHandlerArgs;
+	typedef void(Cache::*BusFinishHandlerFunc)(BusHandlerArgs &args);
 
 	class BusFinishHandler {
 	public:
-		BusFinishHandler(BusFinishHandlerFunc func, BusFinishHandlerArgs args) :
+		BusFinishHandler(BusFinishHandlerFunc func, BusHandlerArgs args) :
 			func(func), args(args)
 		{ }
 
 		BusFinishHandlerFunc func;
-		BusFinishHandlerArgs args;
+		BusHandlerArgs args;
 	};
+
+    typedef void(Cache::*BusInitHandlerFunc)(BusHandlerArgs &args, MemEvent *ev);
+	class BusInitHandler {
+	public:
+		BusInitHandler(BusInitHandlerFunc func, BusHandlerArgs args) :
+			func(func), args(args)
+		{ }
+
+		BusInitHandlerFunc func;
+		BusHandlerArgs args;
+	};
+    struct BusHandlers {
+        BusInitHandler *init;
+        BusFinishHandler *finish;
+    };
 
 	class BusQueue {
 	public:
@@ -197,13 +212,12 @@ private:
 		}
 
 		int size(void) const { return queue.size(); }
-		void request(MemEvent *event, BusFinishHandler *handler)
+		void request(MemEvent *event, BusFinishHandler *finishHandler = NULL, BusInitHandler *initHandler = NULL)
 		{
 			if ( event ) {
 				queue.push_back(event);
-				if ( handler != NULL ) {
-					map[event] = handler;
-				}
+                BusHandlers bh = {initHandler, finishHandler};
+                map[event] = bh;
 			}
 			if ( !requested ) {
 				link->Send(new MemEvent(comp, NULL, RequestBus));
@@ -211,11 +225,11 @@ private:
 			}
 		}
 
-		BusFinishHandler* cancelRequest(MemEvent *event)
+		BusHandlers cancelRequest(MemEvent *event)
 		{
-			BusFinishHandler *retval = NULL;
+			BusHandlers retval;
 			queue.remove(event);
-			std::map<MemEvent*, BusFinishHandler*>::iterator i = map.find(event);
+			std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
 			if ( i != map.end() ) {
 				retval = i->second;
 				map.erase(i);
@@ -236,17 +250,26 @@ private:
 				queue.pop_front();
 
 				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%lx)!\n", CommandString[ev->getCmd()], ev->getAddr());
+
+
+                BusHandlers bh = {NULL, NULL};
+				std::map<MemEvent*, BusHandlers>::iterator i = map.find(ev);
+                if ( i != map.end() ) {
+                    bh = i->second;
+					map.erase(i);
+                }
+
+                if ( bh.init ) {
+                    (comp->*(bh.init->func))(bh.init->args, ev);
+                    delete bh.init;
+                }
+
 				link->Send(ev);
 
-				std::map<MemEvent*, BusFinishHandler*>::iterator i = map.find(ev);
-				if ( i != map.end() ) {
-					BusFinishHandler *br = i->second;
-					if ( br ) {
-						(comp->*(br->func))(br->args);
-						delete br;
-					}
-					map.erase(i);
-				}
+                if ( bh.finish ) {
+                    (comp->*(bh.finish->func))(bh.finish->args);
+                    delete bh.finish;
+                }
 
 				requested = false;
 				if ( size() > 0 ) {
@@ -261,7 +284,7 @@ private:
 		Cache *comp;
 		SST::Link *link;
 		std::list<MemEvent*> queue;
-		std::map<MemEvent*, BusFinishHandler*> map;
+		std::map<MemEvent*, BusHandlers> map;
 
 	};
 
@@ -300,22 +323,23 @@ private:
 
 	void issueInvalidate(MemEvent *ev, CacheBlock *block);
 	void loadBlock(MemEvent *ev, SourceType_t src);
-	void finishLoadBlockBus(BusFinishHandlerArgs &args);
+	void finishLoadBlockBus(BusHandlerArgs &args);
 
 	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
 	void supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src);
-	void finishBusSupplyData(BusFinishHandlerArgs &args);
+	void finishBusSupplyData(BusHandlerArgs &args);
 	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
 	void finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t src);
 	void handleInvalidate(MemEvent *ev, SourceType_t src);
 
 	bool waitingForInvalidate(CacheBlock *block);
 	void cancelInvalidate(CacheBlock *block);
-	void finishIssueInvalidateVA(BusFinishHandlerArgs &args);
+	void finishIssueInvalidateVA(BusHandlerArgs &args);
 	void finishIssueInvalidate(MemEvent *ev, CacheBlock *block);
 
 	void writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus);
-	void finishWritebackBlockVA(BusFinishHandlerArgs &args);
+    void prepWritebackBlock(BusHandlerArgs &args, MemEvent *ev);
+	void finishWritebackBlockVA(BusHandlerArgs &args);
 	void finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock);
 
 	void busClear(SST::Link *busLink);
@@ -364,6 +388,7 @@ private:
 		Addr addr;
 		CacheBlock *targetBlock;
 		MemEvent *busEvent;
+        MemEvent::id_type initiatingEvent;
 		struct LoadElement_t {
 			MemEvent * ev;
 			SourceType_t src;
@@ -372,7 +397,7 @@ private:
 				ev(ev), src(src), issueTime(issueTime)
 			{ }
 		};
-		std::vector<LoadElement_t> list;
+		std::deque<LoadElement_t> list;
 		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL) { }
 		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL) { }
 	};
