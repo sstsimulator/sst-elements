@@ -201,7 +201,6 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
         }
         return true;
     }
-    delete exitEvent;
     return false;
 }
 
