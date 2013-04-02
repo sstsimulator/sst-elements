@@ -37,7 +37,7 @@ using std::vector;
 
 //#include "perf_cnt.h"           // Performance Counters data!
 //#include "inst_prob.h"          // Instruction Special Probabilities
-namespace McNiagara{
+using namespace McNiagara;
 	//
 	// Name strings for the parameters read in from files
 	//[NUM_INSTPROBS+1]
@@ -1004,7 +1004,16 @@ int McNiagara::fini(string outfile)
 
 
 }//end namespace McNiagara
-#ifndef SST
+//
+
+//#ifndef SST
+/* Correct way would be to have this McNiagara directory be a sub-library where
+ * -DSST is defined in it's CPPFLAGS.  For now, just disable it.  It's in the
+ * SST source repo, we won't be using this for non-SST, right?
+ */
+#if 0
+
+
 /// Dummy (empty) off-CPU interface class
 //class NullIF: public McNiagara::OffCpuIF
 //{

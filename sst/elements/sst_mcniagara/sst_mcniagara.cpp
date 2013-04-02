@@ -23,6 +23,8 @@ using std::endl;
 #include "sst_mcniagara.h"
 
 using namespace SST;
+using namespace SST::SST_McNiagara;
+
 SSTMcNiagara::SSTMcNiagara(ComponentId_t id, Params_t& params):Component(id){
 	//	the_cpu = new McNiagara();
 	//cout<<"SSTMcNiagara(ComponentId_t id, Params_t& params) Begin"<<endl;

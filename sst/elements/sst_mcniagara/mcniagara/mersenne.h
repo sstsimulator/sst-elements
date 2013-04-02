@@ -54,6 +54,7 @@
 #define MIXBITS(u,v) ( ((u) & UMASK) | ((v) & LMASK) )
 #define TWIST(u,v) ((MIXBITS(u,v) >> 1) ^ ((v)&1UL ? MATRIX_A : 0UL))
 
+namespace McNiagara {
 static unsigned long state[N]; /* the array for the state vector  */
 static int left = 1;
 static int initf = 0;
@@ -244,4 +245,5 @@ int main(void)
     return 0;
 }
 
+}
 #endif

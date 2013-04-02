@@ -28,6 +28,7 @@
 
 //extern int TraceTokens;
 using namespace SST;
+using namespace SST::SST_McOpteron;
 using std::cout;
 using std::endl;
 SSTMcOpteron::SSTMcOpteron(ComponentId_t id, Params_t& params):Component(id){

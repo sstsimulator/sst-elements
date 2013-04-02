@@ -18,7 +18,8 @@
 #include <sst/core/component.h>
 
 #include "mcniagara/McNiagara.h"
-//namespace std{
+namespace SST {
+namespace SST_McNiagara {
 class SSTMcNiagara : public SST::Component{
 public:
 	SSTMcNiagara(SST::ComponentId_t id, SST::Component::Params_t& params);
@@ -49,5 +50,6 @@ public:
 
 };
 
-//}
+}
+}
 #endif /* SST_MCOPTERON_H_ */

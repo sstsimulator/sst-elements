@@ -12,4 +12,5 @@ void seedRandom(unsigned long seed)
 {
    init_genrand(seed);
 }
-}//end namespace McOpteron
+}
+//end namespace McOpteron
