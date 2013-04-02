@@ -44,6 +44,8 @@
 #include "misc.h"
 
 
+using namespace SST::Scheduler;
+
 
 NearestAllocator::NearestAllocator(MachineMesh* m, CenterGenerator* cg,
     PointCollector* pc, Scorer* s,string name) {

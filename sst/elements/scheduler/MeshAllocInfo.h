@@ -28,12 +28,15 @@ using namespace std;
 #define MAX(X,Y) ((X)>(Y)?(X):(Y))
 #define ABS(X) ((X) >=0 ? (X) : (-(X)))
 
+namespace SST {
+namespace Scheduler {
+
 /**
  * The default ordering for MeshLocations is by the component: x, y, then z.
  * Comparator used to order free blocks in MBSAllocator.
  */
 
-class MeshLocation : public binary_function<MeshLocation*, MeshLocation*,bool>{
+class MeshLocation : public binary_function<SST::Scheduler::MeshLocation*, SST::Scheduler::MeshLocation*,bool>{
 
   public:
     int x;
@@ -131,5 +134,8 @@ class MeshAllocInfo : public AllocInfo {
     }
 
 };
+
+}
+}
 
 #endif

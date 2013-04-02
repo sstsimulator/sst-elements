@@ -26,6 +26,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class Factory{
   public:
     Scheduler* getScheduler(SST::Component::Params_t& params, int numProcs);
@@ -92,4 +95,6 @@ class Factory{
     static const int numMachTableEntries;
 };
 
+}
+}
 #endif

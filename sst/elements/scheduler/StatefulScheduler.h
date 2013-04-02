@@ -24,6 +24,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class SchedChange{
   protected:
     unsigned long time;
@@ -265,6 +268,6 @@ class StatefulScheduler : public Scheduler {
 };
 
 
-
-
+}
+}
 #endif

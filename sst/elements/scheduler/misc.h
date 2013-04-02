@@ -21,8 +21,13 @@
 #include <string>
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 void warning(string mesg);         //report warning (program continues)
 void error(string mesg);           //report user-caused error
 void internal_error(string mesg);  //report invalid program state
 
+}
+}
 #endif

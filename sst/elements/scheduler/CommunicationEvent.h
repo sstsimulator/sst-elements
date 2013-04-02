@@ -7,6 +7,9 @@
 
 #include <string>
 
+namespace SST {
+namespace Scheduler {
+
 enum CommunicationTypes { RETRIEVE_ID, START_FAULTING, LOG_JOB_START, UNREGISTER_YOURSELF, START_FILE_WATCH, START_NEXT_JOB };
 
 class CommunicationEvent : public SST::Event{
@@ -28,5 +31,7 @@ class CommunicationEvent : public SST::Event{
     void * payload;
 };
 
+}
+}
 #endif
 

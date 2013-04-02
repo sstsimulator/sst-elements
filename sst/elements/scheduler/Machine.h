@@ -20,6 +20,9 @@
 #include "schedComponent.h"
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class AllocInfo;
 
 class Machine {
@@ -52,4 +55,6 @@ class Machine {
 
 Machine* getMachine();     //defined in Main.cc
 
+}
+}
 #endif

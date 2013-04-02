@@ -24,6 +24,8 @@
 #include "misc.h"
 
 using namespace std;
+using namespace SST::Scheduler;
+
 
 struct logInfo {  //information about one type of log that can be created
   string logName;  //name and extension of log

@@ -26,8 +26,14 @@ using namespace std;
 #include "MeshAllocInfo.h"
 #include "misc.h"
 
+using namespace SST::Scheduler;
+
+namespace SST {
+namespace Scheduler {
 class MeshLocation;
 class MeshAllocInfo;
+}
+}
 
 
 MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc) {

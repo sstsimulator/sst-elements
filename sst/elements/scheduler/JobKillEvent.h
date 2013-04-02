@@ -2,6 +2,9 @@
 #ifndef __JOBKILLEVENT_H__
 #define __JOBKILLEVENT_H__
 
+namespace SST {
+namespace Scheduler {
+
 class JobKillEvent : public SST::Event{
   public:
 
@@ -31,5 +34,7 @@ class JobKillEvent : public SST::Event{
     }
 };
 
+}
+}
 #endif
 

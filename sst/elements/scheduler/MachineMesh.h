@@ -24,6 +24,9 @@ using namespace std;
 #include "Machine.h"
 //#include "sst/core/serialization/element.h"
 
+namespace SST {
+namespace Scheduler {
+
 class MeshLocation;
 
 
@@ -73,4 +76,6 @@ class MachineMesh : public Machine {
     //string toString();
 };
 
+}
+}
 #endif

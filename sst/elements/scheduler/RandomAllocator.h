@@ -23,6 +23,9 @@
 #include "MachineMesh.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 class RandomAllocator : public Allocator {
 
   public:
@@ -37,5 +40,7 @@ class RandomAllocator : public Allocator {
     AllocInfo* allocate(Job* job);
 };
 
+}
+}
 #endif
 

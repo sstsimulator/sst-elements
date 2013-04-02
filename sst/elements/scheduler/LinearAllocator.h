@@ -37,6 +37,9 @@
 #include "misc.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 class LinearAllocator : public Allocator {
 
 
@@ -73,5 +76,6 @@ class LinearAllocator : public Allocator {
     LinearAllocator(vector<string>* params, Machine* m);
 };
 
-
+}
+}
 #endif

@@ -31,6 +31,7 @@ using namespace std;
 #include "misc.h"
 #include "Machine.h"
 
+using namespace SST::Scheduler;
 #define DEBUG 0
 
 const EASYScheduler::compTableEntry EASYScheduler::compTable[6] = {

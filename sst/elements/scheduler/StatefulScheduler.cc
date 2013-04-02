@@ -29,6 +29,8 @@ using namespace std;
 #include "misc.h"
 #include "Machine.h"
 
+using namespace SST::Scheduler;
+
 const StatefulScheduler::compTableEntry StatefulScheduler::compTable[6] = {
   { FIFO, "fifo"},
   { LARGEFIRST, "largefirst"},

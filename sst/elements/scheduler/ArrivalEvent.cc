@@ -19,6 +19,8 @@
 #include "Statistics.h"
 #include "Job.h"
 
+using namespace SST::Scheduler;
+
 unsigned long ArrivalEvent::getTime() const {
   return time;
 }

@@ -39,6 +39,7 @@
 
 #define DEBUG false
 
+using namespace SST::Scheduler;
 
 LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool SORT = false) {
   //right now only the snake curve is implemented; that should be a

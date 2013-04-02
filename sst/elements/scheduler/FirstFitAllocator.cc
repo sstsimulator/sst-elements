@@ -35,6 +35,8 @@
 
 #define DEBUG false
 
+using namespace SST::Scheduler;
+
 /*
 FirstFitAllocator::FirstFitAllocator(MachineMesh* m, string filename) : LinearAllocator(m) {
   //takes machine to be allocated and file giving linear order

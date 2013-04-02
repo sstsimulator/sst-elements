@@ -18,6 +18,7 @@
 #include "Job.h"
 #include "misc.h"
 using namespace std;
+using namespace SST::Scheduler;
 
 AllocInfo::AllocInfo(Job* job) {
   this->job = job;

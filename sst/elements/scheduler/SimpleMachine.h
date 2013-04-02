@@ -21,6 +21,9 @@ using namespace std;
 
 #include "Machine.h"
 
+namespace SST {
+namespace Scheduler {
+
 class SimpleMachine : public Machine {
 
  public:
@@ -43,4 +46,6 @@ class SimpleMachine : public Machine {
   vector<int> freeNodes;       //indices of currently-free nodes
 };
 
+}
+}
 #endif

@@ -18,6 +18,9 @@
 #include "Scheduler.h"
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class PQScheduler : public Scheduler {
   private:
 
@@ -74,4 +77,6 @@ class PQScheduler : public Scheduler {
     priority_queue<Job*,vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
 };
 
+}
+}
 #endif

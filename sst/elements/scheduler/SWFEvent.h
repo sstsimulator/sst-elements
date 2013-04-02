@@ -14,6 +14,9 @@
 
 #include <sst/core/event.h>
 
+namespace SST {
+namespace Scheduler {
+
 // Based on the Standard Workload Format
 // http://www.cs.huji.ac.il/labs/parallel/workload/swf.html
 class SWFEvent : public SST::Event {
@@ -144,5 +147,7 @@ private:
 	ar & BOOST_SERIALIZATION_NVP( ThinkTimeFromPrecedingJob);
     }
 }; 
-    
+
+}
+}
 #endif /* _SWFEVENT_H */

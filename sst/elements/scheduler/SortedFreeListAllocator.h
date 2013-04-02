@@ -27,6 +27,9 @@
 #include "Job.h"
 #include "misc.h"
 
+namespace SST {
+namespace Scheduler {
+
 class SortedFreeListAllocator : public LinearAllocator {
   public:
     SortedFreeListAllocator(MachineMesh* m, string filename) ;
@@ -42,4 +45,6 @@ class SortedFreeListAllocator : public LinearAllocator {
 };
 
 
+}
+}
 #endif

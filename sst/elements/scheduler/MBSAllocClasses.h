@@ -46,6 +46,9 @@
 
 
 
+namespace SST {
+namespace Scheduler {
+
 class Block : public binary_function<Block*,Block*,bool>{
   public:
     set<Block*, Block>* children;
@@ -138,5 +141,6 @@ class Block : public binary_function<Block*,Block*,bool>{
     }
 };
 
-
+}
+}
 #endif

@@ -4,6 +4,9 @@
 
 #include <string>
 
+namespace SST {
+namespace Scheduler {
+
 #define FAULT_EVENT_SHOULDKILL 2 /* Scheduled nodes should kill the job */
 #define FAULT_EVENT_DONTKILL 1 /* Scheduled nodes should _NOT_ kill the job */
 #define FAULT_EVENT_UNDECIDED 0 /* Scheduled nodes should determine if the job should be killed.  Default. */
@@ -54,5 +57,7 @@ class FaultEvent : public SST::Event{
     }
 };
 
+}
+}
 #endif
 

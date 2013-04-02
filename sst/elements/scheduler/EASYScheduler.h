@@ -21,6 +21,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class EASYScheduler : public Scheduler {
   private:
 
@@ -102,4 +105,6 @@ class EASYScheduler : public Scheduler {
 
 };
 
+}
+}
 #endif

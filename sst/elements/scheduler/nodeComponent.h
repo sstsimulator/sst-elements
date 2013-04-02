@@ -27,6 +27,9 @@
 #include <vector>
 #include <fstream>
 
+namespace SST {
+namespace Scheduler {
+
 class nodeComponent : public SST::Component, public virtual linkChanger {
   friend class linkBuilder;
 
@@ -139,4 +142,6 @@ private:
  
 };
 
+}
+}
 #endif /* _NODECOMPONENT_H */

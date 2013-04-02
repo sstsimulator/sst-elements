@@ -37,8 +37,9 @@
 #include "FaultEvent.h"
 #include "CommunicationEvent.h"
 
-using namespace SST;
 using namespace std;
+using namespace SST;
+using namespace SST::Scheduler;
 
   // from nodeComponent.cc
 extern unsigned short int * yumyumRand48State;

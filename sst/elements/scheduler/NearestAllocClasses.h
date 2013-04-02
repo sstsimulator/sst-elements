@@ -43,6 +43,10 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 
+
+namespace SST {
+namespace Scheduler {
+
 class CenterGenerator;
 class PointCollector;
 class Scorer;
@@ -341,5 +345,6 @@ class L1DistFromCenterScorer : public Scorer {
 
 };
 
-
+}
+}
 #endif

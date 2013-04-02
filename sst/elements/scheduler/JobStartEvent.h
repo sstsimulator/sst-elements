@@ -16,6 +16,9 @@
 #ifndef __JOBSTARTEVENT_H__
 #define __JOBSTARTEVENT_H__
 
+namespace SST {
+namespace Scheduler {
+
 class JobStartEvent : public SST::Event {
  public:
 
@@ -41,5 +44,7 @@ class JobStartEvent : public SST::Event {
     }
 };
 
+}
+}
 #endif
 

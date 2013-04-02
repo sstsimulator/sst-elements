@@ -11,6 +11,9 @@
 #include "ObjectRetrievalEvent.h"
 #include "misc.h"
 
+using namespace SST::Scheduler;
+
+
 linkBuilder::linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & params ) : Component( id ){
 /*
   selfLink = configureSelfLink( "linkToSelf", SCHEDULER_TIME_BASE, new SST::Event::Handler<linkBuilder>( this, &linkBuilder::initNodePtrRequests ) );

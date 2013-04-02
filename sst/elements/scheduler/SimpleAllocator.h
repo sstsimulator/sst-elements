@@ -22,6 +22,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class SimpleMachine;
 class Job;
 
@@ -41,4 +44,6 @@ class SimpleAllocator : public Allocator {
   //(doesn't make allocation; merely returns info on possible allocation)
 };
 
+}
+}
 #endif

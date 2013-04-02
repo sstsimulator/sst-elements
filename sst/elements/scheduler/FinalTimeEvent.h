@@ -19,6 +19,9 @@
 #ifndef __FINALTIMEEVENT_H__
 #define __FINALTIMEEVENT_H__
 
+namespace SST {
+namespace Scheduler {
+
 class FinalTimeEvent : public SST::Event {
  public:
    bool forceExecute; //only one final time event is looked at at a given time.
@@ -40,5 +43,7 @@ class FinalTimeEvent : public SST::Event {
     }
 };
 
+}
+}
 #endif
 

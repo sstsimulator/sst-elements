@@ -43,6 +43,8 @@
  * 
  */
 
+using namespace SST::Scheduler;
+
 
 RoundUpMBSAllocator::RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z) : GranularMBSAllocator(m,x,y,z) {
 }

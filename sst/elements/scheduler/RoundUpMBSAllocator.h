@@ -33,6 +33,9 @@
 #include "Job.h"
 #include "misc.h"
 
+namespace SST {
+namespace Scheduler {
+
 /**
  * The Rounding Up MBS Allocator will do the same GranularMBS style allocation, except that
  * instead of preserving larger blocks like all of the other MBS algorithms, one
@@ -118,4 +121,6 @@ class RoundUpMBSAllocator : public GranularMBSAllocator {
 };
 
 
+}
+}
 #endif

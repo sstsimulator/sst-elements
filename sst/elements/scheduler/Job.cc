@@ -17,6 +17,8 @@
 #include "exceptions.h"
 #include "misc.h"
 
+using namespace SST::Scheduler;
+
 static long nextJobNum = 0;  //used setting jobNum
 
 Job::Job(istream& input, bool accurateEsts) {

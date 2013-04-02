@@ -35,6 +35,8 @@
 #define DEBUG false
 
 
+using namespace SST::Scheduler;
+
 
 MBSAllocator::MBSAllocator(Machine* mach){
   //this constructor doesn't call initialize() and is for derived classes

@@ -35,6 +35,8 @@
 
 #define DEBUG false
 
+using namespace SST::Scheduler;
+
 /* 
  * Factory file helps parse the parameters in the sdl file
  * returns correct type of machine, allocator, and scheduler

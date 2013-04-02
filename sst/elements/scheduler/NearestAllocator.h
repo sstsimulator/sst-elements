@@ -44,6 +44,9 @@
 #include "misc.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 class NearestAllocator : public Allocator {
 
   private:
@@ -81,4 +84,6 @@ class NearestAllocator : public Allocator {
     void MC1x1Allocator(MachineMesh* m); 
 };
 
+}
+}
 #endif

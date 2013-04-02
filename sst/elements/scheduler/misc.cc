@@ -27,6 +27,8 @@ using namespace std;
 #include "Machine.h"
 #include "Job.h"
 
+using namespace SST::Scheduler;
+
 bool Allocator::canAllocate(Job* j) {  //returns whether j can be allocated
   //default strategies are non-contig so "true" if enough free processors
   return (machine -> getNumFreeProcessors() >= j -> getProcsNeeded());
@@ -38,6 +40,8 @@ bool Allocator::canAllocate(Job* j, vector<MeshLocation*>* available) {  //retur
   return (available->size() >= (unsigned int)j -> getProcsNeeded());
 }
 
+namespace SST {
+namespace Scheduler {
 void warning(string mesg) {        //report warning (program continues)
   cerr << "WARNING: " << mesg << endl;
 }
@@ -50,4 +54,6 @@ void error(string mesg) {           //report user-caused error
 void internal_error(string mesg) {  //report invalid program state
   cerr << "INTERNAL ERROR: " << mesg << endl;
   exit(1);
+}
+}
 }

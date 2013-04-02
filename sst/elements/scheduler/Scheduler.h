@@ -21,6 +21,9 @@
 #include "Job.h"
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 //class Job;
 class AllocInfo;
 class Allocator;
@@ -55,4 +58,6 @@ class Scheduler {
     //tell scheduler that simulation is done so it can print information
 };
 
+}
+}
 #endif

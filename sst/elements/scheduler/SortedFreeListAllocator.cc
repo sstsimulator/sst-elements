@@ -31,6 +31,8 @@
 
 #define DEBUG false
 
+using namespace SST::Scheduler;
+
 
 SortedFreeListAllocator::SortedFreeListAllocator(vector<string>* params, Machine* mach) : LinearAllocator(params, mach){
   if(DEBUG)

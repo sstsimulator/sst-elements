@@ -15,6 +15,9 @@
 #include <exception>
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 //TODO: these should take arguments so the errors are more descriptive
 
 class InputFormatException : public exception {
@@ -33,4 +36,6 @@ class InternalErrorException : public exception {
   }
 };
 
+}
+}
 #endif

@@ -34,6 +34,8 @@
 
 #define DEBUG false
 
+using namespace SST::Scheduler;
+
 
 GranularMBSAllocator::GranularMBSAllocator(MachineMesh* m, int x, int y, int z)   : MBSAllocator(m){
 

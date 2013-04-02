@@ -30,6 +30,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 #define JobIDlength 16
   // the maximum length of a job ID.  used primarily for job list parsing.
 
@@ -141,4 +144,6 @@ private:
  
 };
 
+}
+}
 #endif /* _SCHEDCOMPONENT_H */

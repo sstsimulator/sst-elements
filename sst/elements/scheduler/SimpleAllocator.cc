@@ -20,6 +20,8 @@
 #include "Job.h"
 #include "misc.h"
 
+using namespace SST::Scheduler;
+
 SimpleAllocator::SimpleAllocator(SimpleMachine* m) {
   machine = m;
 }

@@ -21,6 +21,8 @@ using namespace std;
 #include "AllocInfo.h"
 #include "misc.h"
 
+using namespace SST::Scheduler;
+
 SimpleMachine::SimpleMachine(int procs, schedComponent* sc) {  //takes number of processors
   numProcs = procs;
   this->sc = sc;

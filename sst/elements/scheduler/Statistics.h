@@ -24,6 +24,9 @@
 #include <string>
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class Machine;
 class Scheduler;
 class Allocator;
@@ -93,4 +96,6 @@ class Statistics {
   string outputDirectory;  //directory for all output files
 };
 
+}
+}
 #endif

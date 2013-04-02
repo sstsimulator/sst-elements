@@ -24,6 +24,8 @@
 #include "misc.h"
 
 using namespace std;
+using namespace SST::Scheduler;
+
 
 RandomAllocator::RandomAllocator(Machine* mesh) {
   machine = dynamic_cast<MachineMesh*>(mesh);

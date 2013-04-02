@@ -18,6 +18,9 @@
 
 #include "Job.h"
 
+namespace SST {
+namespace Scheduler {
+
 class Job;
 class Machine;
 
@@ -34,4 +37,6 @@ class AllocInfo {
 };
 
 
+}
+}
 #endif

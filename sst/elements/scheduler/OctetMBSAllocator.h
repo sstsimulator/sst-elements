@@ -33,6 +33,9 @@
 #include "misc.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 class OctetMBSAllocator : public MBSAllocator {
   public:
 
@@ -49,4 +52,6 @@ class OctetMBSAllocator : public MBSAllocator {
 
 };
 
+}
+}
 #endif

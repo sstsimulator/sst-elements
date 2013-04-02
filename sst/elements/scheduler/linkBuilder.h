@@ -12,6 +12,9 @@
 
 #include <string>
 
+namespace SST {
+namespace Scheduler {
+
 enum linkTypes { PARENT, CHILD };
 
 
@@ -46,5 +49,7 @@ class linkBuilder : public SST::Component {
     std::vector<SST::Link *> nodeLinks;
 };
 
+}
+}
 #endif
 

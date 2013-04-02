@@ -32,6 +32,8 @@
 #include "misc.h"
 
 using namespace SST;
+using namespace SST::Scheduler;
+
 
 static ofstream faultLog;
 static ofstream errorLog;

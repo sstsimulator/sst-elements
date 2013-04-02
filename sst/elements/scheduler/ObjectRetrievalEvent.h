@@ -8,6 +8,9 @@
 
 #include <string>
 
+namespace SST {
+namespace Scheduler {
+
 class ObjectRetrievalEvent : public SST::Event{
   public:
     ObjectRetrievalEvent() : SST::Event(){}
@@ -21,5 +24,7 @@ class ObjectRetrievalEvent : public SST::Event{
     SST::Component * payload;
 };
 
+}
+}
 #endif
 

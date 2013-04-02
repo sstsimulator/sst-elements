@@ -28,6 +28,9 @@ using namespace std;
 #include "Job.h"
 #include "misc.h"
 
+using namespace SST::Scheduler;
+
+
 const PQScheduler::compTableEntry PQScheduler::compTable[] = {
   { FIFO, "fifo"},
   { LARGEFIRST, "largefirst"},

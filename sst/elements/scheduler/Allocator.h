@@ -17,6 +17,9 @@
 #include "MeshAllocInfo.h"
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class Machine;
 class Job;
 class AllocInfo;
@@ -46,5 +49,8 @@ class Allocator {
   Machine* machine;
 
 };
+
+}
+}
 
 #endif

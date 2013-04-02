@@ -35,6 +35,8 @@
 
 #define DEBUG true
 
+using namespace SST::Scheduler;
+
 
 OctetMBSAllocator::OctetMBSAllocator(MachineMesh* m, int x, int y, int z) : MBSAllocator(m){
   //we don't do anything special in construction

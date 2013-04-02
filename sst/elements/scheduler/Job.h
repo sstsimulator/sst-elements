@@ -21,6 +21,9 @@
 
 using namespace std;
 
+namespace SST {
+namespace Scheduler {
+
 class AllocInfo;
 class Machine;
 
@@ -106,4 +109,6 @@ private:
 };
 
 
+}
+}
 #endif

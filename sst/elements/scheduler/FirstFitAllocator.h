@@ -30,6 +30,9 @@
 #include "misc.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 
 class FirstFitAllocator : public LinearAllocator {
 
@@ -46,4 +49,6 @@ class FirstFitAllocator : public LinearAllocator {
     AllocInfo* allocate(Job* job) ;
 };
 
+}
+}
 #endif

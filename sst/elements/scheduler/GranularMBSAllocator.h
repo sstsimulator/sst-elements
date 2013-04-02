@@ -33,6 +33,9 @@
 #include "misc.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 class GranularMBSAllocator : public MBSAllocator {
   public: 
     GranularMBSAllocator(MachineMesh* m, int x, int y, int z);
@@ -74,5 +77,6 @@ class GranularMBSAllocator : public MBSAllocator {
 
 };
 
-
+}
+}
 #endif

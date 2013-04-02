@@ -28,6 +28,9 @@ using namespace std;
 #include "misc.h"
 #include "sst/core/serialization/element.h"
 
+namespace SST {
+namespace Scheduler {
+
 class MBSMeshAllocInfo : public MeshAllocInfo {
 
   public:
@@ -50,4 +53,6 @@ class MBSMeshAllocInfo : public MeshAllocInfo {
     }
 };
 
+}
+}
 #endif

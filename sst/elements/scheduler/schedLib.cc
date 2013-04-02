@@ -18,6 +18,8 @@
 #include "schedComponent.h"
 #include "linkBuilder.h"
 
+using namespace SST::Scheduler;
+
 static SST::Component*
 create_schedComponent(SST::ComponentId_t id, 
                   SST::Component::Params_t& params)

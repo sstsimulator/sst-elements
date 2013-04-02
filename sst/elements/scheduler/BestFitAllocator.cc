@@ -36,6 +36,7 @@
 
 #define DEBUG false
 
+using namespace SST::Scheduler;
 
 /*
    BestFitAllocator(MachineMesh* m, string filename) {

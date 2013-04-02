@@ -18,6 +18,9 @@
 
 #include <sst/core/event.h>
 
+namespace SST {
+namespace Scheduler {
+
 class Machine;
 class Allocator;
 class Scheduler;
@@ -59,5 +62,7 @@ class ArrivalEvent : public SST::Event {
     }
 };
 
+}
+}
 #endif
 

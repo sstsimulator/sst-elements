@@ -31,6 +31,9 @@
 
 
 
+namespace SST {
+namespace Scheduler {
+
 class BestFitAllocator : public LinearAllocator {
   public:
 
@@ -46,4 +49,7 @@ class BestFitAllocator : public LinearAllocator {
 
     AllocInfo* allocate(Job* job) ;
 };
+
+}
+}
 #endif

@@ -39,6 +39,8 @@
 
 #include "NearestAllocClasses.h"
 
+using namespace SST::Scheduler;
+
 //Center Generators: 
 
 vector<MeshLocation*>* FreeCenterGenerator::getCenters(vector<MeshLocation*>* available) {

@@ -32,6 +32,9 @@
 #include "misc.h"
 
 
+namespace SST {
+namespace Scheduler {
+
 class MBSAllocator : public Allocator {
 
   protected:
@@ -106,5 +109,6 @@ class MBSAllocator : public Allocator {
 
 };
 
-
+}
+}
 #endif

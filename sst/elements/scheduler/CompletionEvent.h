@@ -16,6 +16,9 @@
 #ifndef __COMPLETIONEVENT_H__
 #define __COMPLETIONEVENT_H__
 
+namespace SST {
+namespace Scheduler {
+
 class CompletionEvent : public SST::Event {
  public:
 
@@ -39,5 +42,7 @@ class CompletionEvent : public SST::Event {
     }
 };
 
+}
+}
 #endif
 
