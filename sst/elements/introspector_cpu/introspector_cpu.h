@@ -15,7 +15,8 @@
 #include <sst/core/introspector.h>
 
 
-using namespace SST;
+namespace SST {
+namespace Introspector_CPU {
 
 #if DBG_INTROSPECTOR_CPU
 #define _INTROSPECTOR_CPU_DBG( fmt, args...)\
@@ -107,5 +108,8 @@ class Introspector_cpu : public Introspector {
 	ar & BOOST_SERIALIZATION_NVP(model);
     }
 };
+
+}
+}
 
 #endif

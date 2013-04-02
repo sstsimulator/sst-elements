@@ -23,6 +23,7 @@
 
 
 namespace SST {
+namespace Power {
 
     static double Q= 4;
     static double Co= 1.52e-5;
@@ -56,6 +57,7 @@ namespace SST {
 
 
 
+}
 }
 #endif // SST_RELIABILITY_H
 

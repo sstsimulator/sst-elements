@@ -19,6 +19,7 @@
 #include "simpleEvent.h"
 
 using namespace SST;
+using namespace SST::CPU_data;
 
 Cpu_data::Cpu_data(ComponentId_t id, Params_t& params) :
   IntrospectedComponent(id) {

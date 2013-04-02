@@ -1,6 +1,8 @@
 
 #include "physreg.h"
 
+using namespace SST::Verona;
+
 VeronaRegisterGroup::VeronaRegisterGroup(unsigned int reg_count,
 	unsigned int reg_width_bytes, 
 	bool reg_zero_is_zero, string group_name) {

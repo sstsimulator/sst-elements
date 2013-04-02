@@ -18,6 +18,8 @@
 #include "sst/core/element.h"
 
 
+using namespace SST;
+using namespace SST::Introspector_CPU;
 
 bool Introspector_cpu::mpiCollectInt( Cycle_t current )
 {

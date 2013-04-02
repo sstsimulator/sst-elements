@@ -17,6 +17,7 @@
 
 
 namespace SST {
+namespace Power {
 IntSim_library::IntSim_library(parameters_tech_t device_tech, double area, double num_transistors)
 {
 
@@ -113,3 +114,4 @@ double IntSim_library::get_length(void)
 }*/
 
 }//end namespace
+}

@@ -2,6 +2,9 @@
 #ifndef _intalu_H
 #define _intalu_H
 
+namespace SST {
+namespace Verona {
+
 #define INT_OP_ADDI			0b0000010011
 #define INT_OP_SLLI			0b0010010011
 #define INT_OP_SLTI			0b0100010011
@@ -30,4 +33,6 @@
 #define INT_OP_REM			0b00000011100110011
 #define INT_OP_REMU			0b00000011110110011
 
+}
+}
 #endif // _intalu_H

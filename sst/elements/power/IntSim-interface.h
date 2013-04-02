@@ -23,6 +23,7 @@
 
 
 namespace SST {
+namespace Power {
 
 class IntSim_library 
 {
@@ -51,5 +52,6 @@ class IntSim_library
 
 };
 
+}
 }
 #endif

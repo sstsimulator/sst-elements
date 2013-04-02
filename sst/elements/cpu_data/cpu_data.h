@@ -18,6 +18,9 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+namespace SST {
+namespace CPU_data {
+
 class Cpu_data : public SST::IntrospectedComponent {
 public:
 
@@ -111,4 +114,6 @@ private:
  
 };
 
+}
+}
 #endif /* _SIMPLECOMPONENT_H */

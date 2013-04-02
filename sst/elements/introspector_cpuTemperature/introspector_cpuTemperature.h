@@ -16,7 +16,8 @@
 #include <sst/core/introspector.h>
 
 
-using namespace SST;
+namespace SST {
+namespace Introspector_CPUTemperature {
 
 #if DBG_INTROSPECTOR_CPUTEMPERATURE
 #define _INTROSPECTOR_CPUTEMPERATURE_DBG( fmt, args...)\
@@ -119,5 +120,8 @@ class Introspector_cpuTemperature : public Introspector {
 	ar & BOOST_SERIALIZATION_NVP(model);
     }
 };
+
+}
+}
 
 #endif

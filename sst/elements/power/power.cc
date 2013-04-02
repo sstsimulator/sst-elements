@@ -22,6 +22,7 @@
 #include <boost/mpi.hpp> 
 
 namespace SST {
+namespace Power {
 
 std::multimap<ptype,int> Power::subcompList;
 parameters_chip_t Power::chip;
@@ -13562,6 +13563,7 @@ void Power::calibrate_for_clovertown(IntrospectedComponent *c)
 }
 
 
+}  // namespace Power
 }  // namespace SST
 
 

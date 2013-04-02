@@ -19,7 +19,11 @@
 #include <sst/core/timeConverter.h>
 #include "../power/power.h"
 
-using namespace SST;
+using namespace SST::Power;
+
+namespace SST {
+namespace CPU_power {
+
 
 class Cpu_power : public IntrospectedComponent {
 public:
@@ -29,7 +33,7 @@ public:
   
 int Setup() { 
 	  // report/register power dissipation	    
-	    power = new Power(getId());
+	    power = new SST::Power::Power(getId());
 	    power->setChip(params);
             power->setTech(getId(), params, CACHE_IL1, McPAT);
 	    power->setTech(getId(), params, CACHE_DL1, McPAT);
@@ -121,7 +125,7 @@ public:
 
   Params_t    params;
   Pdissipation_t pdata, pstats;
-  Power *power;
+  SST::Power::Power *power;
   usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components
 
 
@@ -163,4 +167,6 @@ public:
  
 };
 
+}
+}
 #endif /* _SIMPLECOMPONENT_H */

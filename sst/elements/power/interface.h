@@ -30,6 +30,8 @@
 
 
 namespace SST {
+namespace Power {
+
 enum interconnect_type_t 
 { 
   /*aggressive interconection modeling*/AGGRESSIVE, /*conservative interconnect modeling*/CONSERVATIVE, NUM_INTERCONNECT_TYPES
@@ -351,6 +353,7 @@ class chip_t
 
 /*******end*****/ 
 
+}
 }
 #endif // SST_INTERFACE_H
 

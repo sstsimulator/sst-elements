@@ -17,6 +17,7 @@
 #include "HotSpot-interface.h"
 
 namespace SST {
+namespace Power {
 
 RC_model_t *HotSpot_library::model;
 flp_t *HotSpot_library::floorplan;
@@ -189,4 +190,5 @@ void HotSpot_library::compute(std::map<int,floorplan_t> *floorplan)
 }
 
 } //end namespace
+}
 

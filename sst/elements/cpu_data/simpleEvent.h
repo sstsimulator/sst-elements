@@ -14,6 +14,9 @@
 
 #include <sst/core/event.h>
 
+namespace SST {
+namespace CPU_data {
+
 class simpleEvent : public SST::Event {
 public:
   typedef std::vector<char> dataVec;
@@ -30,5 +33,7 @@ private:
         ar & BOOST_SERIALIZATION_NVP(payload);
     }
 }; 
-    
+
+}
+}
 #endif /* _SIMPLEEVENT_H */

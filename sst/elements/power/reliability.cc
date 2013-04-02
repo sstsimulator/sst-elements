@@ -17,6 +17,7 @@
 
 
 namespace SST {
+namespace Power {
 
 double Reliability::calc_EM(double t_in) {
         double lambdaEM;
@@ -120,4 +121,5 @@ double Reliability::compute_localMinTTF(double temp, double t_min, double t_max,
 }
 
 
+} // Namespace Power
 } // namespace SST

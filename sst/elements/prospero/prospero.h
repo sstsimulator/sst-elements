@@ -20,8 +20,10 @@
 #include <stdint.h>
 
 using namespace std;
-using namespace SST;
 using namespace SST::Interfaces;
+
+namespace SST {
+namespace Prospero {
 
 typedef enum {
 	READ_SUCCESS,
@@ -135,4 +137,6 @@ private:
  
 };
 
+}
+}
 #endif /* _prospero_H */

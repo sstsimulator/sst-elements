@@ -15,6 +15,9 @@
 #include "introspector_cpuTemperature.h"
 #include "sst/core/element.h"
 
+using namespace SST;
+using namespace SST::Introspector_CPUTemperature;
+
 bool Introspector_cpuTemperature::triggeredUpdate()
 {
 	for (std::list<IntrospectedComponent*>::iterator i = MyCompList.begin();

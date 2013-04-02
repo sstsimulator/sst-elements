@@ -6,6 +6,9 @@
 
 #include <boost/utility.hpp>
 
+namespace SST {
+namespace Verona {
+
 class Instruction {
 
 	private:
@@ -19,4 +22,6 @@ class Instruction {
 
 }
 
+}
+}
 #endif

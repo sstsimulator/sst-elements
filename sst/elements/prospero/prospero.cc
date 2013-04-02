@@ -8,6 +8,7 @@
 #include "prospero.h"
 
 using namespace SST;
+using namespace SST::Prospero;
 
 prospero::prospero(ComponentId_t id, Params_t& params) :
   Component(id) {

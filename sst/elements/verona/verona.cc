@@ -8,6 +8,7 @@
 #include "verona.h"
 
 using namespace SST;
+using namespace SST::Verona;
 
 VeronaCPU::VeronaCPU(ComponentId_t id, Params_t& params) :
   Component(id) {

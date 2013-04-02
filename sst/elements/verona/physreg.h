@@ -9,6 +9,9 @@
 #include <iostream>
 #include <cmath>
 
+namespace SST {
+namespace Verona {
+
 #define ALIGNED(a, b) ((a % b) == 0)
 
 class VeronaRegisterGroup {
@@ -49,4 +52,6 @@ private:
  
 };
 
+}
+}
 #endif /* _physreg_H */

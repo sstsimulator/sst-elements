@@ -20,8 +20,9 @@
 #include <stdint.h>
 
 using namespace std;
-using namespace SST;
 using namespace SST::Interfaces;
+namespace SST {
+namespace Verona {
 
 class VeronaCPU : public SST::Component {
 public:
@@ -56,4 +57,6 @@ private:
  
 };
 
+}
+}
 #endif /* _verona_H */

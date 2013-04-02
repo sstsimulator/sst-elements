@@ -108,9 +108,10 @@ extern "C"{
 
 
 namespace SST {
+namespace Power {
 
-        typedef int nm;
-        typedef int ns;
+    typedef int nm;
+    typedef int ns;
 
 	enum logic_style {STATIC, DYNAMIC};
 	enum clock_style{NORM_H, BALANCED_H};
@@ -1216,6 +1217,7 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	*/
 
 };
+}
 }
 #endif // POWER_H
 

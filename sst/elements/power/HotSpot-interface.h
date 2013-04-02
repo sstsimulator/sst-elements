@@ -31,6 +31,7 @@ extern "C"{
 
 
 namespace SST {
+namespace Power {
 
 class HotSpot_library : public thermal_library_t
 {
@@ -56,5 +57,6 @@ class HotSpot_library : public thermal_library_t
 
 };
 
+}
 }
 #endif //HotSpot_H
