@@ -21,8 +21,8 @@
 
 #include "sst/elements/merlin/router.h"
 
-using namespace SST;
-
+namespace SST {
+namespace Merlin {
 
 class topo_torus_event : public internal_router_event {
 
@@ -68,5 +68,8 @@ private:
     int get_dest_router(int dest_id) const;
     int get_dest_local_port(int dest_id) const;
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_TOPOLOGY_TORUS_H

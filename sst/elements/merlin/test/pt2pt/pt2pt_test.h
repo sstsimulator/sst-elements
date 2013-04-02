@@ -21,7 +21,8 @@
 #include <sst/core/timeConverter.h>
 
 
-using namespace SST;
+namespace SST {
+namespace Merlin {
 
 class LinkControl;
 
@@ -62,5 +63,8 @@ class pt2pt_test_event : public RtrEvent {
  public:
     SimTime_t start_time;
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_TEST_NIC_H

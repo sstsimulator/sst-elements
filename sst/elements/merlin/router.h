@@ -22,6 +22,9 @@
 
 using namespace SST;
 
+namespace SST {
+namespace Merlin {
+
 #define MERLIN_ENABLE_TRACE
 class RtrEvent : public Event {
     
@@ -117,5 +120,8 @@ public:
     virtual void dumpState(std::ostream& stream) {};
     
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_ROUTER_H

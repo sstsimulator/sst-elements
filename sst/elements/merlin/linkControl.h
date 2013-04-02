@@ -27,6 +27,9 @@
 
 using namespace SST;
 
+namespace SST {
+namespace Merlin {
+
 // Whole class definition needs to be in the header file so that other
 // libraries can use the class to talk with the merlin routers.
 
@@ -309,5 +312,8 @@ private:
     }
     
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_LINKCONTROL_H

@@ -20,6 +20,8 @@
 #include "sst/elements/merlin/linkControl.h"
 #include "sst/elements/merlin/test/nic.h"
 
+using namespace SST::Merlin;
+
 nic::nic(ComponentId_t cid, Params& params) :
     Component(cid),
     last_vc(0),

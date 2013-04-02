@@ -24,6 +24,9 @@
 
 using namespace SST;
 
+namespace SST {
+namespace Merlin {
+
 class PortControl;
 
 class hr_router : public Component {
@@ -60,5 +63,8 @@ public:
     void dumpState(std::ostream& stream);
 
 };
+
+}
+}
 
 #endif // COMPONENTS_HR_ROUTER_HR_ROUTER_H

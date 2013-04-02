@@ -19,6 +19,7 @@
 #include "sst/elements/merlin/test/pt2pt/pt2pt_test.h"
 
 using namespace std;
+using namespace SST::Merlin;
 
 pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     Component(cid),

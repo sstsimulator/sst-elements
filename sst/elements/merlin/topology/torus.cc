@@ -17,6 +17,7 @@
 
 #include "torus.h"
 
+using namespace SST::Merlin;
 
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_torus, fmt, ## args )
 

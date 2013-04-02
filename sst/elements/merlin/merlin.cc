@@ -23,6 +23,7 @@
 #include <stdarg.h>
 
 using namespace std;
+using namespace SST::Merlin;
 
 static Component* 
 create_portals_nic(SST::ComponentId_t id, 

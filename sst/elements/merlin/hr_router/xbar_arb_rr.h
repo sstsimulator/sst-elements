@@ -25,6 +25,9 @@
 
 using namespace SST;
 
+namespace SST {
+namespace Merlin {
+
 class xbar_arb_rr : public XbarArbitration {
 
 private:
@@ -111,5 +114,8 @@ public:
     }
 
 };
+
+}
+}
 
 #endif // COMPONENTS_HR_ROUTER_XBAR_ARB_RR_H

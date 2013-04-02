@@ -21,8 +21,8 @@
 
 #include "sst/elements/merlin/router.h"
 
-using namespace SST;
-
+namespace SST {
+namespace Merlin {
 
 class topo_dragonfly_event;
 
@@ -81,5 +81,8 @@ public:
     topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) : dest(dest) {}
     ~topo_dragonfly_event() { }
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H

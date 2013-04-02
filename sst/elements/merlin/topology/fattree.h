@@ -21,9 +21,8 @@
 
 #include "sst/elements/merlin/router.h"
 
-using namespace SST;
-
-
+namespace SST {
+namespace Merlin {
 
 class topo_fattree: public Topology {
 
@@ -62,5 +61,8 @@ public:
 
 private:
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_TOPOLOGY_FATTREE_H

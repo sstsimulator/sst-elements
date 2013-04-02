@@ -26,7 +26,7 @@
 #include "sst/elements/merlin/topology/dragonfly.h"
 #include "xbar_arb_rr.h"
 
-
+using namespace SST::Merlin;
 
 int hr_router::num_routers = 0;
 int hr_router::print_debug = 0;

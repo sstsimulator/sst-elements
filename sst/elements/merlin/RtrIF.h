@@ -25,9 +25,11 @@
 
 using namespace SST;
 
+namespace SST::Merlin {
+
 class RtrEvent : public Event {
 
-    
+
 public:
     typedef enum { credit, packet } msgType_t;
 
@@ -229,5 +231,7 @@ public:
     }
 
 };
+
+}
 
 #endif // COMPONENTS_MERLIN_RTRIF_H

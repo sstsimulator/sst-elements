@@ -21,7 +21,8 @@
 #include <sst/core/timeConverter.h>
 
 
-using namespace SST;
+namespace SST {
+namespace Merlin {
 
 class LinkControl;
 
@@ -66,5 +67,8 @@ private:
     int fattree_ID_to_IP(int id);
     int IP_to_fattree_ID(int id);
 };
+
+}
+}
 
 #endif // COMPONENTS_MERLIN_TEST_NIC_H

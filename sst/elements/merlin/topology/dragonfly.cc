@@ -17,6 +17,7 @@
 
 #include "dragonfly.h"
 
+using namespace SST::Merlin;
 
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_dragonfly, fmt, ## args )
 
@@ -66,7 +67,7 @@ void topo_dragonfly::route(int port, int vc, internal_router_event* ev)
 {
     topo_dragonfly_event *td_ev = static_cast<topo_dragonfly_event*>(ev);
 
-    if ( port >= (params.p + params.a-1) ) {
+    if ( (uint32_t)port >= (params.p + params.a-1) ) {
         /* Came in from another group.  Increment VC */
         td_ev->setVC(vc+1);
     }
@@ -123,7 +124,7 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
 
 Topology::PortState topo_dragonfly::getPortState(int port) const
 {
-    if ( port < params.p ) return R2N;
+    if ( (uint32_t)port < params.p ) return R2N;
     else return R2R;
 }
 
