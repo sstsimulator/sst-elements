@@ -9,6 +9,7 @@
 #include "simpleMessage.h"
 
 using namespace SST;
+using namespace SST::MessageGenerator;
 
 messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params_t& params) :
   Component(id) {

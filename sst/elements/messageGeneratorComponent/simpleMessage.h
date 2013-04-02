@@ -4,6 +4,9 @@
 
 #include <sst/core/event.h>
 
+namespace SST {
+namespace MessageGenerator {
+
 class simpleMessage : public SST::Event {
 public:
   simpleMessage() : SST::Event() { }
@@ -16,6 +19,9 @@ private:
     {
 	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
     }
-}; 
-    
+};
+
+}
+}
+
 #endif /* _SIMPLEMESSAGE_H */

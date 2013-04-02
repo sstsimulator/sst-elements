@@ -11,6 +11,9 @@
 #include <cstring>
 #include <string>
 
+namespace SST {
+namespace MessageGenerator {
+
 class messageGeneratorComponent : public SST::Component {
 public:
 
@@ -69,5 +72,8 @@ private:
   BOOST_SERIALIZATION_SPLIT_MEMBER()
  
 };
+
+}
+}
 
 #endif /* _MESSAGECOMPONENT_H */
