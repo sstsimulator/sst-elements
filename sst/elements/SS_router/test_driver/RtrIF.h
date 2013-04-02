@@ -29,6 +29,9 @@
 #define db_RtrIF(fmt,args...) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
+namespace SST {
+namespace SS_router {
+
 class RtrIF : public Component {
 
 private:
@@ -312,5 +315,8 @@ private:
         return ret;
     }
 };
+
+}
+}
 
 #endif

@@ -8,6 +8,8 @@
 
 #include	"genericSwa.h"
 
+using namespace SST::Iris;
+
 GenericSwa::GenericSwa()
 {
     resize();

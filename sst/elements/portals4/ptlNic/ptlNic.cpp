@@ -9,6 +9,8 @@
 #include "ptlNicEvent.h"
 #include "./debug.h"
 
+using namespace SST::Portals4;
+
 const char * PtlNic::m_cmdNames[] = CMD_NAMES;
 
 PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
@@ -261,4 +263,3 @@ bool PtlNic::sendMsg( ptl_nid_t nid, PtlHdr* hdr, Addr vaddr, ptl_size_t nbytes,
     return false;
 }
 
-BOOST_CLASS_EXPORT( RtrEvent );

@@ -8,6 +8,8 @@
 #include "recvEntry.h"
 #include "./debug.h"
 
+using namespace SST::Portals4;
+
 Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
         m_nic( nic ),
         m_uid( cmd.uid ),

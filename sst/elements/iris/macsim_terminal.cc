@@ -12,6 +12,8 @@
 //Include macsim main SST class here adding dummy for now
 #include        "ex_macsim_component.h"
 
+using namespace SST::Iris;
+
 mem_req_s* 
 MacsimTerminal::check_queue( void )
 {

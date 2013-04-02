@@ -18,6 +18,10 @@
 
 #define TEST_MPI_BUF_SIZE 32
 
+namespace SST {
+namespace Portals4_sm {
+
+
 class test_mpi :  public application {
 public:
     test_mpi(trig_cpu *cpu) : application(cpu)
@@ -119,5 +123,8 @@ private:
     SimTime_t start_time;
     
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_TEST_MPI_H

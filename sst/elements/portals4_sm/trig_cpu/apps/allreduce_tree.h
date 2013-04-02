@@ -16,6 +16,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class allreduce_tree :  public application {
 public:
     allreduce_tree(trig_cpu *cpu, bool nary) : application(cpu)
@@ -101,5 +104,8 @@ private:
     std::vector<int> my_children;
     int num_children;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_H

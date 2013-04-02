@@ -20,6 +20,9 @@
 #include	"genericHeader.h"
 #include	<sst/core/event.h>
 
+namespace SST {
+namespace Iris {
+
 const uint32_t HDR_SIZE =  8/sizeof(int);
 const uint32_t PKT_SIZE =  64/sizeof(int);
 /*
@@ -180,4 +183,6 @@ class irisRtrEvent : public SST::Event {
             }
 };
 
+}
+}
 #endif   /* ----- #ifndef SST_INTERFACE_H_INC  ----- */

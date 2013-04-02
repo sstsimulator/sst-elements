@@ -45,6 +45,9 @@
 #include        <sst/core/sst_types.h>
 
 
+namespace SST {
+namespace Iris {
+
 /*  Enums for router configurations.. if you change them modify the string in
  *  genericHeader.cc */
 enum message_class_t { INVALID_PKT=0, PROC_REQ, MC_RESP, PROC_READ_REQ, PROC_WRITE_REQ };
@@ -87,4 +90,6 @@ typedef class SST::Clock DES_Clock;
 #define iris_warn(...) \
   std::cerr << "warn"<< __FUNCTION__ <<  __FILE__<< __LINE__<< __VA_ARGS__ 
 
+}
+}
 #endif   /* ----- #ifndef _GENERICHEADER_H_INC  ----- */

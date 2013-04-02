@@ -13,6 +13,10 @@
 #include "sst/core/element.h"
 
 #include	"router.h"
+
+namespace SST {
+namespace Iris {
+
 const char* ROUTER_FREQ = "500MHz";
 
 // Move this include into irisComponent
@@ -27,6 +31,11 @@ const char* LinkNames[] = {
     "zPos",
     "zNeg",
 };
+
+}
+}
+
+using namespace SST::Iris;
 
 Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                 /*  Init stats */

@@ -23,6 +23,7 @@
 #define HEADER_SIZE 64
 
 using namespace SST;
+using namespace SST::Portals4_sm;
 
 trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
     RtrIF(id,params),

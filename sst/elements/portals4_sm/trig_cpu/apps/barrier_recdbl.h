@@ -16,6 +16,10 @@
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
+namespace SST {
+namespace Portals4_sm {
+
+
 class barrier_recdbl :  public application {
 public:
     barrier_recdbl(trig_cpu *cpu) : application(cpu)
@@ -69,5 +73,8 @@ private:
     int level;
     int remote;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_RECDBL_H

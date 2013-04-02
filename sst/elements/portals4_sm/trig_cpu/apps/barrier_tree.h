@@ -16,6 +16,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class barrier_tree :  public application {
 public:
     barrier_tree(trig_cpu *cpu) : application(cpu)
@@ -80,5 +83,8 @@ private:
     std::vector<int> my_children;
     int num_children;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_TREE_H

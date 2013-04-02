@@ -19,6 +19,9 @@
 #include        <sst/core/sst_types.h>
 #include	"router_params.h"
 #include        "SST_interface.h"
+
+namespace SST {
+namespace Iris {
 /*
  * =====================================================================================
  *        Class:  GenericBuffer
@@ -63,4 +66,6 @@ class GenericBuffer
 
 }; /* -----  end of class GenericBuffer  ----- */
 
+}
+}
 #endif   /* ----- #ifndef _GENERICBUFFER_H_INC  ----- */

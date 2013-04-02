@@ -30,7 +30,8 @@
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu_event.h"
 #include "portals.h"
 
-using namespace SST;
+namespace SST {
+namespace Portals4_sm {
 
 class portals;
 class application;
@@ -345,5 +346,8 @@ private:
 //     static int total_nodes;
 //     static int num_remaining;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_TRIG_CPU_H

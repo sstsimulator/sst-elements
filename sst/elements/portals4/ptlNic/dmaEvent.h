@@ -5,6 +5,9 @@
 
 #include "ptlNicTypes.h"
 
+namespace SST {
+namespace Portals4 {
+
 class DmaEvent : public SST::Event {
 
   public:
@@ -41,5 +44,8 @@ class DmaEvent : public SST::Event {
         ar & BOOST_SERIALIZATION_NVP(size);
     }
 };
+
+}
+}
 
 #endif

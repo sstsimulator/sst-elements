@@ -23,6 +23,7 @@
 #define HEADER_SIZE 64
 
 using namespace SST;
+using namespace SST::Iris;
 
 iris_trig_nic::iris_trig_nic( ComponentId_t id, Params_t& params ) :
     iris_RtrIF(id,params),

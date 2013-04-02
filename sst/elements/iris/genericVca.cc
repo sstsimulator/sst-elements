@@ -8,6 +8,8 @@
 
 #include	"genericVca.h"
 
+using namespace SST::Iris;
+
 GenericVca::GenericVca ()
 {
     resize();

@@ -16,6 +16,9 @@
     _PRINT_AT( Context, _tmp, fmt, ##args ); \
 }\
 
+namespace SST {
+namespace Portals4 {
+
 class PtlNic;
 class RecvEntry;
 class Context {
@@ -416,4 +419,8 @@ inline void Context::writeAutoUnlinkEvent( int eq_handle,
                 ni_fail_type
             );
 }
+
+}
+}
+
 #endif

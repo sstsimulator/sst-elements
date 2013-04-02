@@ -12,6 +12,9 @@
 #define MMU_DBG( fmt, args... )
 #endif
 
+namespace SST {
+namespace Portals4 {
+
 class NicMmu 
 {
     typedef uint64_t Addr;
@@ -207,5 +210,8 @@ class NicMmu
     Table*  m_table;
     int     m_l0_pfn;
 };
+
+}
+}
 
 #endif

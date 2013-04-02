@@ -9,6 +9,11 @@
 
 #include "sst/elements/SS_router/SS_router/RtrIF.h"
 
+using namespace SST::SS_router;
+
+namespace SST {
+namespace Portals4 {
+
 #define PtlNic_DBG( fmt, args... ) {\
     char _tmp[16]; \
     sprintf(_tmp,"%d:",m_nid); \
@@ -128,5 +133,8 @@ class PtlNic : public RtrIF
     nidRecvEntryM_t         m_nidRecvEntryM;
     static const char*  m_cmdNames[];
 };
+
+}
+}
 
 #endif

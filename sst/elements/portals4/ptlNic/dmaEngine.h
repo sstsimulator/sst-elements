@@ -15,6 +15,9 @@
 }\
 
 
+namespace SST {
+namespace Portals4 {
+
 class NicMmu;
 class DmaEngine {
 
@@ -56,5 +59,8 @@ class DmaEngine {
     double          m_bytesPerClock;
 #endif
 };
+
+}
+}
 
 #endif

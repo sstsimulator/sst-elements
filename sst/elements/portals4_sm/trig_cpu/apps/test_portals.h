@@ -19,6 +19,9 @@
 #include <vector>
 #include <string>
 
+namespace SST {
+namespace Portals4_sm {
+
 #define PT_BARRIER 0
 #define PT_XFER    1
 
@@ -437,5 +440,8 @@ private:
     std::vector<int> test_size;
 
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_TEST_PORTALS_H

@@ -21,6 +21,7 @@
 #define db_dummy(fmt,args...) \
     m_dummyDbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
+using namespace SST::SS_router;
 
 void RtrIF::dummyInit( Params_t params, std::string frequency )
 {

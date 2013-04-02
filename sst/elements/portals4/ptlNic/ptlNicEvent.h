@@ -5,6 +5,9 @@
 
 #include "cmdQueueEntry.h"
 
+namespace SST {
+namespace Portals4 {
+
 class PtlNicRespEvent : public SST::Event {
   public:
     PtlNicRespEvent( int _retval ) :
@@ -50,5 +53,8 @@ class PtlNicEvent : public SST::Event {
         ar & BOOST_SERIALIZATION_NVP( data );
     }
 };
+
+}
+}
 
 #endif

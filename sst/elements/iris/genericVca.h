@@ -19,6 +19,9 @@
 #include	"genericHeader.h"
 #include	"router_params.h"
 
+namespace SST {
+namespace Iris {
+
 extern Router_params* r_param; 
 struct VCA_unit
 {
@@ -83,4 +86,6 @@ class GenericVca
 
 }; /* -----  end of class GenericVca  ----- */
 
+}
+}
 #endif   /* ----- #ifndef _GENERICVCA_H_INC  ----- */

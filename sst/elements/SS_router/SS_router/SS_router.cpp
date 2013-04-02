@@ -31,8 +31,9 @@
 #include "SS_routerEvent.cpp"
 
 using namespace std;
+using namespace SST::SS_router;
 
-const char* LinkNames[] = {
+const char* SST::SS_router::LinkNames[] = {
     "xPos",
     "xNeg",
     "yPos",

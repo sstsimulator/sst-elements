@@ -21,6 +21,9 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
+namespace SST {
+namespace Portals4_sm {
+
 class barrier_action : public Action {
 public:
 
@@ -222,5 +225,8 @@ private:
 
     int job_size;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_ACTION_H

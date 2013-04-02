@@ -26,6 +26,9 @@
 #include	"genericSwa.h"
 #include	"genericVca.h"
 
+namespace SST {
+namespace Iris {
+
 enum Router_PS {
     INVALID = 0,
     EMPTY,
@@ -176,5 +179,8 @@ class Router : public DES_Component
 
 
 }; /* -----  end of class Router  ----- */
+
+}
+}
 
 #endif   /* ----- #ifndef _ROUTER_H_INC  ----- */

@@ -5,6 +5,8 @@
 #include "dmaEngine.h"
 #include "callback.h"
 
+using namespace SST::Portals4;
+
 RecvEntry::RecvEntry( DmaEngine const& dma, Addr vaddr,
                         size_t length, CallbackBase* callback ) :
     m_dma( const_cast<DmaEngine&>(dma) ),

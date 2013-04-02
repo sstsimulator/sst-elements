@@ -43,6 +43,7 @@
 #define RTR_2_NIC_VC(vcc) ( vcc/2 )
 
 namespace SST {
+namespace Iris {
 
 class iris_RtrIF : public Component {
 public:
@@ -274,5 +275,6 @@ private:
     uint64_t stat_total_pkts_recv;
 };
 
+}
 }
 #endif

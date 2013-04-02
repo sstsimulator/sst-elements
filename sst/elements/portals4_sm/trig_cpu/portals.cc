@@ -19,8 +19,9 @@
 
 #include <string.h>		       // for memcpy()
 
-using namespace SST;
 using namespace std;
+using namespace SST;
+using namespace SST::Portals4_sm;
 
 portals::portals(trig_cpu* my_cpu) {
     // For now initialize only one portal table entry
@@ -901,3 +902,4 @@ portals::PtlDisableCoalesce(void) {
 	cpu->busy += cpu->delay_sfence;
     }
 }
+

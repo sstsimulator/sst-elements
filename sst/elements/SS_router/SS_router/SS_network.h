@@ -36,7 +36,10 @@
 #include <sst_stdint.h>
 
 
-using namespace SST;
+using namespace std;
+namespace SST {
+namespace SS_router {
+
 typedef uint32_t uint32;
 typedef unsigned int uint;
 
@@ -45,7 +48,6 @@ const uint32 PKT_SIZE =  64/sizeof(int);
 
 const int MaxPacketSize = HDR_SIZE + PKT_SIZE;
 
-using namespace std;
 
 #define NIC_VC_0 0
 #define NIC_VC_1 2
@@ -195,5 +197,8 @@ private:
         ar & BOOST_SERIALIZATION_NVP(packet);
     }
 };
+
+}
+}
 
 #endif

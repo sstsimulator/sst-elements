@@ -9,6 +9,8 @@
 
 #include	"genericBuffer.h"
 
+using namespace SST::Iris;
+
 GenericBuffer::GenericBuffer ()
 {
     buffers.resize(r_param->vcs);

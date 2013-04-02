@@ -6,8 +6,8 @@
 #include "sst/elements/portals4_sm/trig_cpu/portals_types.h"
 
 namespace SST {
-    
-    
+namespace Portals4_sm {
+
     class trig_nic_event : public Event {
     public:
 	trig_nic_event() : Event() {
@@ -66,7 +66,8 @@ namespace SST {
         /*         } */
     };
 
-    
+
+}
 } //namespace SST
 
 #endif

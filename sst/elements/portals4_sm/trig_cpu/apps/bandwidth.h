@@ -18,6 +18,9 @@
 
 #define BW_BUF_SIZE (128*1024)
 
+namespace SST {
+namespace Portals4_sm {
+
 class bandwidth :  public application {
 public:
     bandwidth(trig_cpu *cpu) : application(cpu)
@@ -289,5 +292,8 @@ private:
     SimTime_t start_time;
     
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_TEST_PORTALS_H

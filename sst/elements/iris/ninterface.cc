@@ -15,7 +15,16 @@
 #include	<sstream>
 
 #include	"ninterface.h"
+
+namespace SST {
+namespace Iris {
 const char* NINTERFACE_FREQ = "500MHz";
+}
+}
+
+
+using namespace SST::Iris;
+
 /* *********** Arbiter Functions ************ */
 SimpleArbiter::SimpleArbiter()
 {

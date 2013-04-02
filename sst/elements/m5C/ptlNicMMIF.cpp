@@ -12,6 +12,7 @@
 #include "portals4/ptlNic/dmaEvent.h"
 
 using namespace SST::M5;
+using namespace SST::Portals4;
 
 extern "C" {
 SimObject* create_PtlNicMMIF( SST::Component*, string name,

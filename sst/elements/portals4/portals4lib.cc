@@ -12,7 +12,7 @@ using namespace SST;
 static Component*
 create_PtlNic(ComponentId_t id, Component::Params_t& params)
 {
-    return new PtlNic( id, params );
+    return new SST::Portals4::PtlNic( id, params );
 }
 
 static const ElementInfoComponent components[] = {

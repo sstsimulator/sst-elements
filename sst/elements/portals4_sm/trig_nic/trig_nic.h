@@ -20,7 +20,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/portals_types.h"
 #include "trig_nic_event.h"
 
-using namespace SST;
+using namespace SST::SS_router;
+namespace SST {
+namespace Portals4_sm {
 
 struct MessageStream {
     void* start;
@@ -166,5 +168,8 @@ private:
     ptl_int_me_t* match_header(me_list_t* list, ptl_header_t* header, ptl_size_t* offset, ptl_size_t* length);
     
 };
+
+}
+}
 
 #endif

@@ -17,6 +17,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 #include "sst/elements/portals4_sm/trig_cpu/portals.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class test_atomics :  public application {
 public:
     test_atomics(trig_cpu *cpu) : application(cpu), init(false)
@@ -108,4 +111,6 @@ private:
     static const int PT_DOWN = 1;
 };
 
+}
+}
 #endif // COMPONENTS_TRIG_CPU_TEST_ATOMICS_H

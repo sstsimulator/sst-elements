@@ -16,6 +16,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class allreduce_recdbl :  public application {
 public:
     allreduce_recdbl(trig_cpu *cpu) : application(cpu)
@@ -75,5 +78,8 @@ private:
     int adj, handle, remote;
     uint64_t in_buf, out_buf, tmp_buf;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_ALLREDUCE_RECDBL_H

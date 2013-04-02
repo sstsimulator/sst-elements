@@ -5,8 +5,8 @@
 #include <sst/core/event.h>
 
 namespace SST {
-    
-    
+namespace Portals4_sm {
+
     class trig_cpu_event : public Event {
     public:
 
@@ -17,9 +17,9 @@ namespace SST {
 
 	trig_cpu_event(bool timeout) : Event(), timeout(timeout) {
 	    canceled = false;
-	}
-	
-        ~trig_cpu_event() {}
+    }
+
+    ~trig_cpu_event() {}
 
 	void cancel() {
 	    if (timeout) {
@@ -38,14 +38,15 @@ namespace SST {
 	bool isTimeout() {
 	    return timeout;
 	}
-	
+
     private:
 	bool canceled;
 	bool timeout;
-	
+
     };
 
-    
+
+}
 } //namespace SST
 
 #endif

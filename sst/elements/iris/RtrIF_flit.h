@@ -43,6 +43,7 @@
 #define RTR_2_NIC_VC(vcc) ( vcc/2 )
 
 namespace SST {
+namespace Iris {
 
 class Flit_conv {
     public:
@@ -337,5 +338,6 @@ private:
     std::map<uint16_t, std::vector<Flit*> > flit_outq;
 };
 
+}
 }
 #endif

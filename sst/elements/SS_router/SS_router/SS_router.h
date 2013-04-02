@@ -39,7 +39,9 @@
 
 #include "SS_network.h"
 
-using namespace SST;
+using namespace std;
+namespace SST {
+namespace SS_router {
 
 #define SS_ROUTER_DBG 1 
 #ifndef SS_ROUTER_DBG
@@ -48,7 +50,6 @@ using namespace SST;
 
 #include "SS_network.h"
 
-using namespace std;
 
 #define DBprintf(fmt,args...) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
@@ -487,5 +488,8 @@ private:
 };
 
 #include "SS_router-inline.h"
+
+}
+}
 
 #endif

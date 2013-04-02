@@ -24,6 +24,9 @@
 #include <sst_config.h>
 
 #include "SS_router.h"
+
+using namespace SST::SS_router;
+
 //: Advance the event queue
 // The event queue is advanced while there are events ready for this cycles
 void SS_router::advanceEventQ () {

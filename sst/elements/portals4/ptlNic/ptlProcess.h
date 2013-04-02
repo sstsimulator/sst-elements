@@ -1,6 +1,9 @@
 
 #include "ptlNic.h"
 
+namespace SST {
+namespace Portals4 {
+
 class GetIdCmd : public PtlNic::Cmd 
 {
     enum { ArgId };
@@ -54,3 +57,6 @@ class GetIdCmd : public PtlNic::Cmd
 
     Callback< GetIdCmd >*  m_dmaCompletion;
 };
+
+}
+}

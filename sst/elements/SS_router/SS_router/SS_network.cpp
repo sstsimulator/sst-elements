@@ -28,6 +28,8 @@
 
 #include <sst/core/debug.h>
 
+using namespace SST::SS_router;
+
 Network::Network( SST::Component::Params_t params )
 {
     _xDimSize = params.find_integer("xDimSize");

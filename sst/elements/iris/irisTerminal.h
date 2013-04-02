@@ -17,6 +17,9 @@
 
 #include	"genericHeader.h"
 
+namespace SST {
+namespace Iris {
+
 /*
  * =====================================================================================
  *        Class:  IrisTerminal
@@ -34,5 +37,8 @@ class IrisTerminal
         virtual void handle_link_arrival(DES_Event* ev, int port_id);
 
 }; /* -----  end of class IrisTerminal  ----- */
+
+}
+}
 
 #endif   /* ----- #ifndef _IRISTERMINAL_H_INC  ----- */

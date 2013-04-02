@@ -19,6 +19,9 @@
 #include	"genericHeader.h"
 #include	"router_params.h"
 
+namespace SST {
+namespace Iris {
+
 extern Router_params* r_param; 
 struct SA_unit
 {
@@ -59,5 +62,8 @@ class GenericSwa
         std::vector < uint16_t> last_port_winner;
 
 };
+
+}
+}
 
 #endif   /* ----- #ifndef _GENERICSWA_H_INC  ----- */

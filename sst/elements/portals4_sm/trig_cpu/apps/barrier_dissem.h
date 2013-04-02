@@ -16,6 +16,10 @@
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 
+namespace SST {
+namespace Portals4_sm {
+
+
 class barrier_dissemination :  public application {
 public:
     barrier_dissemination(trig_cpu *cpu) : application(cpu)
@@ -66,5 +70,8 @@ private:
     int i;
     int level;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_BARRIER_DISSEMINATION_H

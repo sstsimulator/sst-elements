@@ -1,6 +1,9 @@
 #ifndef _callback_h
 #define _callback_h
 
+namespace SST {
+namespace Portals4 {
+
 class CallbackBase {
   public:
     virtual bool operator()() = 0;
@@ -28,5 +31,8 @@ template <class X, class Y = void > class Callback : public CallbackBase
     FuncPtr m_funcPtr;
     Y*      m_data;
 };
+
+}
+}
 
 #endif

@@ -17,6 +17,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/trig_cpu.h"
 #include "sst/elements/portals4_sm/trig_cpu/portals.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class eq_test :  public application {
 public:
     eq_test(trig_cpu *cpu) : application(cpu), init(false)
@@ -480,4 +483,6 @@ private:
     
 };
 
+}
+}
 #endif // COMPONENTS_TRIG_CPU_ALLREDUCE_TREE_TRIGGERED_H

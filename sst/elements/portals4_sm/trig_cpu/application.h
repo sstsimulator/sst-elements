@@ -21,6 +21,9 @@
 #include <sst/core/event.h>
 #include "trig_cpu.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class application {
 public:
     virtual bool operator()(SST::Event *ev) = 0;
@@ -116,5 +119,7 @@ private:
 #define crFuncEnd() do { state=callstack.top(); callstack.pop(); return false; } while (0)
 #define crFuncCall(name) do { callstack.push(__LINE__); goto name; case __LINE__:; } while (0)
 
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_APPLICATION_H

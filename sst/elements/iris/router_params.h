@@ -18,6 +18,9 @@
 
 #include	"genericHeader.h"
 
+namespace SST {
+namespace Iris {
+
 enum defaults { 
     DEFAULT_PORTS=5, 
     DEFAULT_VCS=6, 
@@ -140,5 +143,8 @@ class Router_params
 
 // Instance in genericHeader.cc
 //extern Router_params& r_param; 
+
+}
+}
 
 #endif   /* ----- #ifndef _ROUTER_PARAMS_H_INC  ----- */

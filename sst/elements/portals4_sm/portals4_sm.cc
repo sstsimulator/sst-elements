@@ -27,19 +27,21 @@
 #include <boost/foreach.hpp>
 
 using namespace std;
+using namespace SST;
+using namespace SST::Portals4_sm;
 
-static Component* 
-create_trig_cpu(SST::ComponentId_t id, 
+static SST::Component*
+create_trig_cpu(SST::ComponentId_t id,
                 SST::Component::Params_t& params)
 {
-    return new trig_cpu( id, params );
+    return new SST::Portals4_sm::trig_cpu( id, params );
 }
 
-static Component* 
-create_trig_nic(SST::ComponentId_t id, 
+static SST::Component*
+create_trig_nic(SST::ComponentId_t id,
                 SST::Component::Params_t& params)
 {
-    return new trig_nic( id, params );
+    return new SST::Portals4_sm::trig_nic( id, params );
 }
 
 

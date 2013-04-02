@@ -4,6 +4,8 @@
 #include "ptlNic.h"
 #include "./debug.h"
 
+using namespace SST::Portals4;
+
 PtlNic::VCInfo::VCInfo( PtlNic& nic ) :
     m_nic( nic ),
     m_rtrEvent( NULL )

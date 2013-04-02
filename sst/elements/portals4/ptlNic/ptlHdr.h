@@ -3,6 +3,9 @@
 
 #include "portals4.h"
 
+namespace SST {
+namespace Portals4 {
+
 union CtrlFlit {
     struct {
         unsigned nid : 32; 
@@ -30,4 +33,8 @@ struct PtlHdr {
     op_t                op       : 5;
     ptl_pt_index_t      pt_index : 6;
 };
+
+}
+}
+
 #endif

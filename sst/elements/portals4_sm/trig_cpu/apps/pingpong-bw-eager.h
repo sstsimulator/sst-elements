@@ -21,6 +21,9 @@
 #include <string.h>		       // for memcpy()
 #include <stdio.h>
 
+namespace SST {
+namespace Portals4_sm {
+
 #define MAX(a, b)  (a < b) ? b : a
 
 //#define DEBUG(a) printf a
@@ -988,4 +991,6 @@ private:
     char base_filename[100], cur_filename[100];
 };
 
+}
+}
 #endif // COMPONENTS_TRIG_CPU_PINGPONG_BW_H

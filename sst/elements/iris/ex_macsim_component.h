@@ -18,6 +18,9 @@
 
 #define MEM_NOC_DONE 1
 
+namespace SST {
+namespace Iris {
+
 struct mem_req_s
 {
     int m_addr;
@@ -35,3 +38,7 @@ class macsim_c: public IrisTerminal
         DES_Link* interface_link;
 
 };
+
+}
+}
+

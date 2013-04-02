@@ -16,6 +16,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/application.h"
 #include <string.h>		       // for memcpy()
 
+namespace SST {
+namespace Portals4_sm {
+
 class bcast_tree :  public application {
 public:
     bcast_tree(trig_cpu *cpu) : application(cpu)
@@ -95,5 +98,8 @@ private:
     std::vector<int> my_children;
     int num_children;
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_BCAST_TREE_H

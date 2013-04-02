@@ -50,6 +50,8 @@
 // SimTime_t trig_cpu::overall_total_time = 0;
 // int trig_cpu::overall_total_num = 0;
 
+using namespace SST::Portals4_sm;
+
 bool trig_cpu::rand_init = false;
 
 barrier_action* trig_cpu::barrier_act = NULL;

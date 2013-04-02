@@ -18,6 +18,9 @@
 #include "sst/sst_stdint.h"
 #include <stdio.h>
 
+namespace SST {
+namespace Portals4_sm {
+
 #define PACKET_SIZE 64
 
 typedef uint32_t  ptl_size_t;
@@ -439,5 +442,7 @@ typedef struct {
 #define PTL_HDR_STREAM_GET          0x40000000
 #define PTL_HDR_STREAM_TRIG_ATOMIC  0x50000000
 
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_PORTALS_TYPES_H

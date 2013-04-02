@@ -1,3 +1,7 @@
+
+namespace SST {
+namespace Iris {
+
 class RunningStat
 {
     public:
@@ -53,4 +57,8 @@ class RunningStat
         int m_n;
         double m_oldM, m_newM, m_oldS, m_newS;
 };
+
+
+}
+}
 

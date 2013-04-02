@@ -3,6 +3,12 @@
 
 #include <stdlib.h>
 
+namespace SST {
+namespace Portals4 {
+
 typedef uint64_t Addr;
+
+}
+}
 
 #endif

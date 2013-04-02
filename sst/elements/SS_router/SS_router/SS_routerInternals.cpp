@@ -24,6 +24,9 @@
 #include <sst_config.h>
 
 #include "SS_router.h"
+
+using namespace SST::SS_router;
+
 //: Parcel data to LCB
 // A parcel has arrived at the router via handle parcel function. Now
 // it is put into the in LCB for the appropriate link

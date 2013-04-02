@@ -3,6 +3,9 @@
 
 #include "cmdQueueEntry.h"
 
+namespace SST {
+namespace Portals4 {
+
 #define CMD_QUEUE_SIZE 16
 typedef struct {
     volatile int head; 
@@ -11,5 +14,8 @@ typedef struct {
 } cmdQueue_t ;    
 
 #define ME_UNLINKED_SIZE 64 
+
+}
+}
 
 #endif

@@ -6,6 +6,8 @@
 #include "nicMmu.h"
 #include "debug.h"
 
+using namespace SST::Portals4;
+
 DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_comp( comp ),
 #if USE_DMA_LIMIT_BW

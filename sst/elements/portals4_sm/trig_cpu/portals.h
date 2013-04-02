@@ -23,6 +23,9 @@
 
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
 
+namespace SST {
+namespace Portals4_sm {
+
 class trig_cpu;
 
 class portals {
@@ -120,7 +123,7 @@ public:
 
     void scheduleUpdateHostCT(ptl_handle_ct_t ct_handle);
 //     bool processMessage(int src, uint32_t* ptl_data);
-    bool processMessage(SST::trig_nic_event* ev);
+    bool processMessage(SST::Portals4_sm::trig_nic_event* ev);
 //     bool processNICOp(ptl_int_nic_op_t* op);
 
     bool progressPIO();
@@ -165,9 +168,12 @@ private:
 
     // Pointer to a trig_nic_event used for TriggeredPutV
     bool putv_active;
-    SST::trig_nic_event* putv_event;
+    SST::Portals4_sm::trig_nic_event* putv_event;
     int putv_curr;
     
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_PORTALS_H

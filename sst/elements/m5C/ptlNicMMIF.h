@@ -79,7 +79,7 @@ class PtlNicMMIF : public DmaDevice
     void ptlCmdRespHandler( SST::Event* );
     void dmaHandler( SST::Event* );
 
-    cmdQueue_t          m_cmdQueue;
+    Portals4::cmdQueue_t          m_cmdQueue;
     uint64_t            m_startAddr;
     uint64_t            m_endAddr;
     M5*                 m_comp;

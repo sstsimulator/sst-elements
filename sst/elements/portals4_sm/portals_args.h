@@ -16,7 +16,6 @@
 #include <libgen.h>
 #include <getopt.h>
 
-
 // This contains all the arguments needed by both the sdlgen and the
 // programatic generator function.  Some of them aren't used for the
 // generator function.

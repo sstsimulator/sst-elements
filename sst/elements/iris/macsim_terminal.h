@@ -22,6 +22,9 @@
 #include <vector>
 #include <queue>
 
+namespace SST {
+namespace Iris {
+
 class irisNPkt;
 class macsim_c;
 class mem_req_s;
@@ -60,4 +63,8 @@ class MacsimTerminal
 
     private:
 };
+
+}
+}
+
 #endif   /* ----- #ifndef _MACSIMTERMINAL_H_INC  ----- */

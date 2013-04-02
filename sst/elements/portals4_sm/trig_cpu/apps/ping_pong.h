@@ -18,6 +18,9 @@
 
 #define PP_BUF_SIZE 1
 
+namespace SST {
+namespace Portals4_sm {
+
 class ping_pong :  public application {
 public:
     ping_pong(trig_cpu *cpu) : application(cpu)
@@ -135,5 +138,8 @@ private:
     SimTime_t start_time;
     
 };
+
+}
+}
 
 #endif // COMPONENTS_TRIG_CPU_TEST_PORTALS_H

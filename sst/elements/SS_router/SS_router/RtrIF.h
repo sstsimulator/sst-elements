@@ -43,6 +43,7 @@
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 namespace SST {
+namespace SS_router {
 
 class RtrIF : public Component {
 public:
@@ -267,4 +268,6 @@ protected:
 };
 
 }
+}
+
 #endif

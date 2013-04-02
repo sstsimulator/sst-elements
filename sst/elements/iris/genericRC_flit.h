@@ -21,6 +21,9 @@
 #include "SST_interface.h"
 
 
+namespace SST {
+namespace Iris {
+
 extern Router_params* r_param; 
 /*
  * =====================================================================================
@@ -81,4 +84,6 @@ class GenericRC
 
 }; /* ----- end of class GenericRC ----- */
 
+}
+}
 #endif   /* ----- #ifndef _GENERICRC_H_INC  ----- */

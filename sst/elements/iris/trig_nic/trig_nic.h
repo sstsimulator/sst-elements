@@ -22,7 +22,10 @@
 #include "../../portals4_sm/trig_cpu/portals_types.h"
 #include "../../portals4_sm/trig_nic/trig_nic_event.h"
 
-using namespace SST;
+using namespace SST::Portals4_sm;
+
+namespace SST {
+namespace Iris {
 
 struct MessageStream {
     void* start;
@@ -171,5 +174,8 @@ private:
     ptl_int_me_t* match_header(me_list_t* list, ptl_header_t* header, ptl_size_t* offset, ptl_size_t* length);
     
 };
+
+}
+}
 
 #endif

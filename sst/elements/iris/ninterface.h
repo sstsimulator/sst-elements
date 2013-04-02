@@ -22,6 +22,9 @@
 #include	"router.h"
 #include        "irisTerminal.h"
 
+namespace SST {
+namespace Iris {
+
 /* Local arbiter for ninterface */
 class SimpleArbiter
 {
@@ -113,5 +116,8 @@ class NInterface : public DES_Component
         uint64_t avg_pkt_lat;
 
 }; /* -----  end of class NInterface  ----- */
+
+}
+}
 
 #endif   /* ----- #ifndef _NINTERFACE_H_INC  ----- */

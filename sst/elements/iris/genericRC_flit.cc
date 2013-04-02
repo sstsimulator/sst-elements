@@ -9,6 +9,8 @@
 
 #include "genericRC.h"
 
+using namespace SST::Iris;
+
 GenericRC::GenericRC ()
 {
     entries.resize(r_param->vcs);

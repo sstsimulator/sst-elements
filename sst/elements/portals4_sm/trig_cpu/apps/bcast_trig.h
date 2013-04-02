@@ -18,6 +18,9 @@
 #include "sst/elements/portals4_sm/trig_cpu/portals.h"
 #include <string.h>		       // for memcpy()
 
+namespace SST {
+namespace Portals4_sm {
+
 class bcast_tree_triggered :  public application {
 public:
     bcast_tree_triggered(trig_cpu *cpu) : application(cpu), init(false), algo_count(0)
@@ -239,4 +242,6 @@ private:
     uint64_t algo_count;
 };
 
+}
+}
 #endif // COMPONENTS_TRIG_CPU_BCAST_TREE_TRIGGERED_H

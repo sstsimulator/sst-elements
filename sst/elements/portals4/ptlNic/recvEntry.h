@@ -6,6 +6,9 @@
 #include "callback.h"
 #include "./debug.h"
 
+namespace SST {
+namespace Portals4 {
+
 class DmaEngine;
 class CallbackBase;
 
@@ -92,6 +95,9 @@ inline bool RecvEntry::DmaBuf::full() {
 inline unsigned char* RecvEntry::DmaBuf::bufPtr()
 {
     return &m_buf.at( 0 );
+}
+
+}
 }
 
 #endif

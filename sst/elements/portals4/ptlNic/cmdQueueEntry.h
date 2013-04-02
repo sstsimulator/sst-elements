@@ -7,6 +7,9 @@
 #include "portals4.h"
 #include "ptlEvent.h"
 
+namespace SST {
+namespace Portals4 {
+
 typedef enum {
     PtlNIInitCmd = 1,   
     PtlNIFiniCmd,
@@ -179,5 +182,8 @@ typedef struct {
     int ctx_id;
     cmdUnion_t u;
 } cmdQueueEntry_t;
+
+}
+}
 
 #endif
