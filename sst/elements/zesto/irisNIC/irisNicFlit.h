@@ -2,6 +2,7 @@
 #define  IRIS_NIC_FLIT_H
 
 #include <sst/elements/iris/SST_interface.h>
+using namespace SST::Iris;
 
 enum flit_type {UNK, HEAD, BODY, TAIL };
 

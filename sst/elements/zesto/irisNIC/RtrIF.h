@@ -42,6 +42,8 @@
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 #define RTR_2_NIC_VC(vcc) ( vcc/2 )
 
+using namespace SST::Iris;
+
 namespace SST {
 
 class RtrIF : public Component {
