@@ -13,19 +13,10 @@ using namespace SST::SimpleClockerComponent;
 simpleClocker::simpleClocker(ComponentId_t id, Params_t& params) :
   Component(id) {
 
-  if( params.find("clock") == params.end() ) {
-	  clock_frequency_str = "1GHz";
-  } else {
-	  clock_frequency_str = params[ "clock" ];
-  }
+  clock_frequency_str = params.find_string("clock", "1GHz");
+  clock_count = params.find_integer("clockcount", 1000);
 
   std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
-
-  if( params.find("clockcount") == params.end() ) {
-	clock_count = 1000;
-  } else {
-	clock_count = strtol( params[ "clockcount" ].c_str(), NULL, 0);
-  }
 
   // tell the simulator not to end without us
   registerExit();
@@ -65,11 +56,18 @@ create_simpleClocker(SST::ComponentId_t id,
     return new simpleClocker( id, params );
 }
 
+static const ElementInfoParam component_params[] = {
+    { "clock", "Clock frequency" },
+    { "clockcount", "Number of clock ticks to execute" },
+    { NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "simpleClockerComponent",
       "Clock benchmark component",
       NULL,
-      create_simpleClocker
+      create_simpleClocker,
+      component_params
     },
     { NULL, NULL, NULL, NULL }
 };

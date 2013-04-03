@@ -23,22 +23,23 @@ using namespace SST::SimpleComponent;
 
 simpleComponent::simpleComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
+  bool found;
 
   // get parameters
-  if ( params.find("workPerCycle") == params.end() ) {
+  workPerCycle = params.find_integer("workPerCycle", 0, found);
+  if (!found) {
     _abort(event_test,"couldn't find work per cycle\n");
   }
-  workPerCycle = strtol( params[ "workPerCycle" ].c_str(), NULL, 0 );
 
-  if ( params.find("commFreq") == params.end() ) {
+  commFreq = params.find_integer("commFreq", 0, found);
+  if (!found) {
     _abort(event_test,"couldn't find communication frequency\n");
   }
-  commFreq = strtol( params[ "commFreq" ].c_str(), NULL, 0 );
 
-  if ( params.find("commSize") == params.end() ) {
+  commSize = params.find_integer("commSize", 0, found);
+  if (!found) {
     _abort(event_test,"couldn't find communication size\n");
   }
-  commSize = strtol( params[ "commSize" ].c_str(), NULL, 0 );
   
   // init randomness
   srand(1);
@@ -166,11 +167,19 @@ create_simpleComponent(SST::ComponentId_t id,
     return new simpleComponent( id, params );
 }
 
+static const ElementInfoParam component_params[] = {
+    { "workPerCycle", "Count of busy work to do during a clock tick." },
+    { "comFreq", "Approximate frequency of sending an event during a clock tick." },
+    { "commSize", "Size of communication to send." },
+    { NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "simpleComponent",
       "Simple Demo Component",
       NULL,
-      create_simpleComponent
+      create_simpleComponent,
+      component_params
     },
     { NULL, NULL, NULL, NULL }
 };

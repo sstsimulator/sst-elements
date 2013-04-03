@@ -26,20 +26,22 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
     Component(id),
     done(false)
 {
-    if ( params.find("id") == params.end() ) {
+    bool found;
+
+    my_id = params.find_integer("id", -1, found);
+    if (!found) {
         _abort(event_test,"couldn't find node id\n");
     }
-    my_id = strtol( params[ "id" ].c_str(), NULL, 0 );
 
-    if ( params.find("count_to") == params.end() ) {
+    count_to = params.find_integer("count_to", 0, found);
+    if (!found) {
         _abort(event_test,"couldn't find count_to\n");
     }
-    count_to = strtol( params[ "count_to" ].c_str(), NULL, 0 );
-
-    if ( params.find("latency") == params.end() ) {
+        
+    latency = params.find_integer("latency", 0, found);
+    if (!found) {
         _abort(event_test,"couldn't find latency\n");
     }
-    latency = strtol( params[ "latency" ].c_str(), NULL, 0 );
     
     registerExit();
 
@@ -142,11 +144,19 @@ create_event_test(SST::ComponentId_t id,
     return new event_test( id, params );
 }
 
+static const ElementInfoParam component_params[] = {
+    { "id", "Node id" },
+    { "count_to", "Number of iterations of the test" },
+    { "latency", "Send latency for event" },
+    { NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "event_test",
       "Event test driver",
       NULL,
-      create_event_test
+      create_event_test,
+      component_params
     },
     { NULL, NULL, NULL, NULL }
 };

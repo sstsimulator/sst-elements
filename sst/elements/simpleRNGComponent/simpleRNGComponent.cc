@@ -16,18 +16,9 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
   unsigned int m_z = 0;
   unsigned int  m_w = 0;
 
-  if( params.find("seed_w") != params.end() ) {
-	m_w = (unsigned int) strtoul( params["seed_w"].c_str(), NULL, 10);
-  }
-
-  if( params.find("seed_z") != params.end() ) {
-	m_z = (unsigned int) strtoul( params["seed_z"].c_str(), NULL, 10);
-  }
-
-  rng_count = 1000;
-  if( params.find("count") != params.end() ) {
-	rng_count = (unsigned int) atoi( params["count"].c_str() );
-  }
+  m_w = params.find_integer("seed_w");
+  m_z = params.find_integer("seed_z");
+  rng_count = params.find_integer("count", 1000);
 
   if(m_w == 0 || m_z == 0) {
 	rng = new SSTRandom();
@@ -79,11 +70,19 @@ create_simpleRNGComponent(SST::ComponentId_t id,
     return new simpleRNGComponent( id, params );
 }
 
+static const ElementInfoParam component_params[] = {
+    { "seed_w", "" },
+    { "seed_z", "" },
+    { "count", "" },
+    { NULL, NULL}
+};
+
 static const ElementInfoComponent components[] = {
     { "simpleRNGComponent",
       "Random number generation component",
       NULL,
-      create_simpleRNGComponent
+      create_simpleRNGComponent,
+      component_params
     },
     { NULL, NULL, NULL, NULL }
 };
