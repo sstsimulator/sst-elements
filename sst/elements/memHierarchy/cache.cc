@@ -451,6 +451,13 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 			addrToBlockAddr(ev->getAddr()),
             (block && block->isLocked()) ? " LOCKED" : "");
 
+    if ( src == SNOOP && ev->getSize() > blocksize ) {
+        DPRINTF("SNOOP Request for block 0x%lx of size %d is larger than our blocksize (%d).  Ignoring.\n",
+                addrToBlockAddr(ev->getAddr()), ev->getSize(), blocksize);
+        delete ev;
+        return;
+    }
+
 	if ( block ) {
         if ( block->isLocked() ) {
             self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev, block, src));
@@ -696,6 +703,11 @@ void Cache::cancelInvalidate(CacheBlock *block)
 
 void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
 {
+    if ( block->wb_in_progress ) {
+		DPRINTF("Writeback already in progress for block 0x%lx\n", block->baseAddr);
+        return;
+    }
+    block->wb_in_progress = true;
 	if ( snoop_link ) {
 		block->lock();
 		BusHandlerArgs args;
@@ -733,6 +745,7 @@ void Cache::finishWritebackBlockVA(BusHandlerArgs& args)
 void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock)
 {
 
+    block->wb_in_progress = false;
 	if ( decrementLock ) /* AKA, sent on the Snoop Bus */
 		block->unlock();
 

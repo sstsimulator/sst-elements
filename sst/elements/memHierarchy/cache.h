@@ -56,6 +56,7 @@ private:
 		MemEvent *currentEvent;
         std::deque<MemEvent*> blockedEvents;
 		uint32_t row, col;
+        bool wb_in_progress;
 
 		CacheBlock() {}
 		CacheBlock(Cache *_cache)
@@ -68,6 +69,7 @@ private:
 			data = std::vector<uint8_t>(cache->blocksize);
 			locked = 0;
 			currentEvent = NULL;
+            wb_in_progress = false;
 		}
 
 		~CacheBlock()
@@ -89,12 +91,12 @@ private:
 		bool isAssigned(void) const { return (status == ASSIGNED); }
 
         void lock() {
-            __DBG(DBG_CACHE, CacheBlock, "Locking block %p (%u, %u)\n", this, row, col);
-            assert(!locked);
+            __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%lx] (%u, %u)\n", this, baseAddr, row, col);
+            //assert(!locked);
             locked++;
         }
         void unlock() {
-            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p (%u, %u)\n", this, row, col);
+            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p [0x%lx] (%u, %u)\n", this, baseAddr, row, col);
             assert(locked);
             locked--;
         }
