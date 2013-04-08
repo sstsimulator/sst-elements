@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
+<!--
 <config>
  stopAtCycle=5000ns
 </config>
+-->
 
 <variables>
 	<lat> 1ns </lat>
@@ -18,6 +20,7 @@
 			<commFreq> 100 </commFreq>
 			<memSize> 0x1000 </memSize>
 			<do_write> 1 </do_write>
+            <num_loadstore> 1000 </num_loadstore>
 		</params>
 		<link name=cpu_cache_link port=mem_link latency=$lat />
 	</component>

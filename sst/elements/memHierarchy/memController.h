@@ -109,7 +109,7 @@ private:
 
 	DRAMSim::MultiChannelMemorySystem *memSystem;
 
-	std::map<uint64_t, DRAMReq*> dramReqs;
+	std::map<uint64_t, std::vector<DRAMReq*> > dramReqs;
 #endif
 
 

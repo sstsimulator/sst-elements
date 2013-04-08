@@ -256,19 +256,27 @@ bool MemController::clock(Cycle_t cycle)
 
 				addr &= ~(JEDEC_DATA_BUS_BITS_local -1); // Round down to bus boundary
 
-				bool ok = memSystem->willAcceptTransaction(addr);
-				if ( !ok ) break;
-				ok = memSystem->addTransaction(req->isWrite, addr);
-				if ( !ok ) break;  // This *SHOULD* always be ok
-				DPRINTF("Issued transaction for address 0x%lx\n", addr);
-				req->amt_in_process += JEDEC_DATA_BUS_BITS_local;
-				assert(dramReqs.find(addr) == dramReqs.end());
-				dramReqs[addr] = req;
+                /* Don't bother if this block is already in progress. */
+                if ( dramReqs.find(addr) == dramReqs.end() ) {
 
-				if ( req->amt_in_process >= req->size ) {
-					// Sent all requests off
-					requestQueue.pop_front();
-				}
+                    bool ok = memSystem->willAcceptTransaction(addr);
+                    if ( !ok ) break;
+                    ok = memSystem->addTransaction(req->isWrite, addr);
+                    if ( !ok ) break;  // This *SHOULD* always be ok
+                    DPRINTF("Issued transaction for address 0x%lx\n", addr);
+                } else {
+                    DPRINTF("Added to existing transaction for address 0x%lx\n", addr);
+                }
+
+                req->amt_in_process += JEDEC_DATA_BUS_BITS_local;
+
+                dramReqs[addr].push_back(req);
+
+                if ( req->amt_in_process >= req->size ) {
+                    // Sent all requests off
+                    DPRINTF("Completed issue of request\n");
+                    requestQueue.pop_front();
+                }
 			}
 		}
 #endif
@@ -399,20 +407,24 @@ void MemController::cancelEvent(MemEvent* ev)
 
 void MemController::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
 {
-	DRAMReq *req = dramReqs[addr];
+    std::vector<DRAMReq *> reqs = dramReqs[addr];
 	dramReqs.erase(addr);
-	req->amt_processed += JEDEC_DATA_BUS_BITS_local;
-	if ( req->amt_processed >= req->size ) {
-		// This req is done
-		if ( !req->canceled ) {
-	DPRINTF("Memory Request for 0x%lx (%s) Finished\n", req->addr, req->isWrite ? "WRITE" : "READ");
-			MemEvent *resp = performRequest(req);
-			sendResponse(resp);
-		} else {
-			outstandingReqs.erase(req->addr);
-			delete req;
-		}
-	}
+    DPRINTF("Memory Request for 0x%lx Finished [%zu reqs]\n", addr, reqs.size());
+    for ( std::vector<DRAMReq*>::iterator i = reqs.begin(); i != reqs.end(); ++i ) {
+        DRAMReq *req = *i;
+        req->amt_processed += JEDEC_DATA_BUS_BITS_local;
+        if ( req->amt_processed >= req->size ) {
+            // This req is done
+            if ( !req->canceled ) {
+                DPRINTF("Memory Request for 0x%lx (%s) Finished\n", req->addr, req->isWrite ? "WRITE" : "READ");
+                MemEvent *resp = performRequest(req);
+                sendResponse(resp);
+            } else {
+                outstandingReqs.erase(req->addr);
+                delete req;
+            }
+        }
+    }
 }
 
 
