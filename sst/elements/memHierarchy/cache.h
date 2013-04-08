@@ -57,6 +57,8 @@ private:
         std::deque<MemEvent*> blockedEvents;
 		uint32_t row, col;
         bool wb_in_progress;
+        bool user_locked;
+        bool user_lock_needs_wb;
 
 		CacheBlock() {}
 		CacheBlock(Cache *_cache)
@@ -70,6 +72,8 @@ private:
 			locked = 0;
 			currentEvent = NULL;
             wb_in_progress = false;
+            user_locked = false;
+            user_lock_needs_wb = false;
 		}
 
 		~CacheBlock()
@@ -92,7 +96,6 @@ private:
 
         void lock() {
             __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%lx] (%u, %u)\n", this, baseAddr, row, col);
-            //assert(!locked);
             locked++;
         }
         void unlock() {

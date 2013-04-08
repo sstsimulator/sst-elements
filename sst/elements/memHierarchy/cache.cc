@@ -237,14 +237,30 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                 if ( waitingForInvalidate(block) ) {
                     block->blockedEvents.push_back(ev);
                 } else {
-                    self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
-                    delete ev;
+                    if ( ev->queryFlag(MemEvent::F_LOCKED) && (block->status != CacheBlock::EXCLUSIVE ) ) {
+                        issueInvalidate(ev, block);
+                    } else {
+                        if ( ev->queryFlag(MemEvent::F_LOCKED) ) {
+                            assert(!block->user_locked);
+                            block->user_locked = true;
+                            block->user_lock_needs_wb = false;
+                        }
+                        self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
+                        delete ev;
+                    }
                 }
         } else {
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				updateBlock(ev, block);
 				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
+                if ( block->user_locked && ev->queryFlag(MemEvent::F_LOCKED) ) {
+                    /* Unlock */
+                    block->user_locked = false;
+                    if ( block->user_lock_needs_wb ) {
+                        writebackBlock(block, CacheBlock::SHARED);
+                    }
+                }
                 delete ev;
 			} else {
 				if ( firstProcess ) num_upgrade_miss++;
@@ -451,6 +467,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 			addrToBlockAddr(ev->getAddr()),
             (block && block->isLocked()) ? " LOCKED" : "");
 
+
     if ( src == SNOOP && ev->getSize() > blocksize ) {
         DPRINTF("SNOOP Request for block 0x%lx of size %d is larger than our blocksize (%d).  Ignoring.\n",
                 addrToBlockAddr(ev->getAddr()), ev->getSize(), blocksize);
@@ -508,7 +525,12 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 
 	MemEvent *resp = new MemEvent(this, block->baseAddr, SupplyData);
-	resp->setPayload(block->data);
+    if ( block && block->user_locked ) {
+        block->user_lock_needs_wb = true;
+        resp->setFlag(MemEvent::F_DELAYED);
+    } else {
+        resp->setPayload(block->data);
+    }
 
 	if ( src != SNOOP ) {
 		SST::Link *link = getLink(src, ev->getLinkId());
@@ -580,6 +602,12 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 			}
 		}
 	}
+
+    /* If we're trying to load this, but this is locked elsewhere, we need to wait longer for the data. */
+    if ( ev->queryFlag(MemEvent::F_DELAYED) ) {
+        delete ev;
+        return;
+    }
 
 	/* Check to see if we're trying to load this data */
 	LoadList_t::iterator i = findWaitingLoad(ev->getAddr(), ev->getSize());
