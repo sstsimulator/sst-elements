@@ -124,7 +124,7 @@ void PtlNicMMIF::clock(  )
             m_dmaReadEventQ.pop_front();
         }
 
-        dmaRead( event->addr, size, foo, event->buf, 0 );
+        dmaRead( event->addr, size, foo, (uint8_t*) event->buf, 0 );
         event->addr += size;
         event->_size -= size;
         event->buf += size;
@@ -145,7 +145,7 @@ void PtlNicMMIF::clock(  )
             m_dmaWriteEventQ.pop_front();
         }
 
-        dmaWrite( event->addr, size, foo, event->buf, 0 );
+        dmaWrite( event->addr, size, foo, (uint8_t*) event->buf, 0 );
 
         event->addr += size;
         event->_size -= size;
