@@ -31,12 +31,12 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
   rng_count = params.find_integer("count", 1000);
 
   if(m_w == 0 || m_z == 0) {
-	rng = new SSTRandom();
+	rng = new MarsagliaRNG();
   } else {
-	rng = new SSTRandom(m_z, m_w);
+	rng = new MarsagliaRNG(m_z, m_w);
   }
 
-  rng_noseed = new SSTRandom();
+  rng_noseed = new MarsagliaRNG();
 
   // tell the simulator not to end without us
   registerExit();

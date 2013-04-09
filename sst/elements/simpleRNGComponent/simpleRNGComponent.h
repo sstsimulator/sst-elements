@@ -18,6 +18,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/rng/sstrand.h>
+#include <sst/core/rng/marsaglia.h>
 
 #include <cstring>
 #include <string>
