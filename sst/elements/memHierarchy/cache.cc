@@ -241,8 +241,8 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                         issueInvalidate(ev, block);
                     } else {
                         if ( ev->queryFlag(MemEvent::F_LOCKED) ) {
-                            assert(!block->user_locked);
-                            block->user_locked = true;
+                            /* TODO!   We lock on (bytes/words), but the line is locked! */
+                            block->user_locked++;
                             block->user_lock_needs_wb = false;
                         }
                         self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
@@ -256,8 +256,9 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 				self_link->Send(1, new SelfEvent(&Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
                 if ( block->user_locked && ev->queryFlag(MemEvent::F_LOCKED) ) {
                     /* Unlock */
-                    block->user_locked = false;
-                    if ( block->user_lock_needs_wb ) {
+                    assert(block->user_locked);
+                    block->user_locked--;
+                    if ( block->user_locked == 0 && block->user_lock_needs_wb ) {
                         writebackBlock(block, CacheBlock::SHARED);
                     }
                 }

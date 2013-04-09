@@ -57,7 +57,7 @@ private:
         std::deque<MemEvent*> blockedEvents;
 		uint32_t row, col;
         bool wb_in_progress;
-        bool user_locked;
+        uint32_t user_locked;
         bool user_lock_needs_wb;
 
 		CacheBlock() {}
@@ -72,7 +72,7 @@ private:
 			locked = 0;
 			currentEvent = NULL;
             wb_in_progress = false;
-            user_locked = false;
+            user_locked = 0;
             user_lock_needs_wb = false;
 		}
 
