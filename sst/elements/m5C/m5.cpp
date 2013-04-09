@@ -207,9 +207,9 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
             INFO( "exiting: curTick()=%lu cause=`%s` code=%d\n", curTick(),
                 exitEvent->getCause().c_str(), exitEvent->getCode() );
         }
-        if ( !m_statFile.empty() ) {
-            libgem5::DumpStats(m_statFile);
-        }
+//        if ( !m_statFile.empty() ) {
+//            libgem5::DumpStats(m_statFile);
+//        }
         return true;
     }
     return false;
@@ -220,7 +220,11 @@ int SST::M5::M5::Finish()
     #ifdef M5_WITH_POWER
     Finish_Power();
     #endif
-   
+
+    if ( !m_statFile.empty() ) {
+	libgem5::DumpStats(m_statFile);
+    }
+
     return 0;
 }
 
