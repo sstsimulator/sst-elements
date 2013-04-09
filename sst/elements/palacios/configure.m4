@@ -24,8 +24,8 @@ AC_DEFUN([SST_palacios_CONFIG], [
 
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([v3_user_host_dev.h], [], [happy="no"])
-  AC_CHECK_LIB([v3hostdev], [v3_user_host_dev_rendezvous], 
-    [PALACIOS_LIBS="-lv3hostdev"], [happy="no"])
+  AC_CHECK_LIB([v3_user_host_dev], [v3_user_host_dev_rendezvous], 
+    [PALACIOS_LIBS="-lv3_user_host_dev"], [happy="no"])
   AC_LANG_POP(C++)
 
   CPPFLAGS="$CPPFLAGS_saved"
