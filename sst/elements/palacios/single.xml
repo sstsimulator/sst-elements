@@ -15,6 +15,7 @@
         <params>
             <vm-dev> /dev/v3-vm0 </vm-dev>
             <dev> user:foo </dev>
+            <minCycles> 10000 </minCycles>
         </params>
 
     </component>
