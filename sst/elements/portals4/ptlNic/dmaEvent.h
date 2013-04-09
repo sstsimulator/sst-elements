@@ -28,21 +28,22 @@ class DmaEvent : public SST::Event {
                 size_t _size, void* _key ) :
         type( _type ),
         addr( _addr ),
-        buf( _buf ),
+        buf( (uint64_t) _buf ),
         size( _size ), // this is a hack, used by PtlNicMMIF
         key( _key )
     { 
     }
     Type        type; 
     Addr        addr;     
-    uint8_t*    buf;
+    uint64_t    buf;
     size_t      size;
     size_t      _size;
     void*       key;
-    
+
   private:
-        
+
     ~DmaEvent() {}
+    DmaEvent() {}
 
     friend class boost::serialization::access;
     template<class Archive>
