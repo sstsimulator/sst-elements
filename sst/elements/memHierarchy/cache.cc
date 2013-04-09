@@ -224,12 +224,13 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	assert(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
 	bool isRead = (ev->getCmd() == ReadReq);
 	CacheBlock *block = findBlock(ev->getAddr(), false);
-	DPRINTF("(%lu, %d) 0x%lx %s %s (block 0x%lx)\n",
+	DPRINTF("(%lu, %d) 0x%lx %s %s (block 0x%lx)%s\n",
 			ev->getID().first, ev->getID().second,
 			ev->getAddr(),
 			isRead ? "READ" : "WRITE",
 			(block) ? ((isRead || block->status == CacheBlock::EXCLUSIVE) ? "HIT" : "UPGRADE") : "MISS",
-			addrToBlockAddr(ev->getAddr()));
+			addrToBlockAddr(ev->getAddr()),
+            ev->queryFlag(MemEvent::F_LOCKED) ? " [LOCK]" : "");
 	if ( block ) {
 		/* HIT */
 		if ( isRead ) {
