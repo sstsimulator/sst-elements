@@ -18,7 +18,7 @@
 #define TRACE_ADD(...)
 #define TRACE_INIT(...)
 
-#if 1 
+#if 1
 #define PRINT_AT( x, fmt, args... )
 #define _PRINT_AT( x, prefix, fmt, args... )
 #else
