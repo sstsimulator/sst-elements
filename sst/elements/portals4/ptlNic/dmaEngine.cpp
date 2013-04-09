@@ -163,3 +163,5 @@ void DmaEngine::lookup( Addr vaddr, size_t length, xyzList_t& list )
         vaddr += item.length;
     }
 }
+
+BOOST_CLASS_EXPORT(DmaEvent);
