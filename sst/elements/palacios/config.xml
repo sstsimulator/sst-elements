@@ -7,7 +7,7 @@
 </config>
 
 <variables>
-    <foo_link_lat> 1ps </foo_link_lat>
+    <NicMMIF_link_lat> 1ps </NicMMIF_link_lat>
     <nic_link_lat> 1ps </nic_link_lat>
     <rtr_link_lat> 10ns </rtr_link_lat>
 </variables>
@@ -56,8 +56,8 @@
             <dev> user:foo </dev>
             <minCycles> 1000 </minCycles>
         </params>
-        <link name=0.ptlNicLink port=nic latency=$foo_link_lat />
-        <link name=0.dmaLink port=dma latency=$foo_link_lat />
+        <link name=0.ptlNicLink port=nic latency=$NicMMIF_link_lat />
+        <link name=0.dmaLink port=dma latency=$NicMMIF_link_lat />
 
     </component>
 
@@ -68,8 +68,8 @@
             <dma-virt2phys> false </dma-virt2phys>
             <clock> 500 Mhz </clock>
         </params>
-        <link name=0.ptlNicLink port=mmif latency=$foo_link_lat />
-        <link name=0.dmaLink port=dma latency=$foo_link_lat />
+        <link name=0.ptlNicLink port=mmif latency=$NicMMIF_link_lat />
+        <link name=0.dmaLink port=dma latency=$NicMMIF_link_lat />
         <link name=0.nic2rtr port=rtr latency=$nic_link_lat/>
     </component>
 
@@ -89,8 +89,8 @@
             <dev> user:foo </dev>
             <minCycles> 1000 </minCycles>
         </params>
-        <link name=1.ptlNicLink port=nic latency=$foo_link_lat />
-        <link name=1.dmaLink port=dma latency=$foo_link_lat />
+        <link name=1.ptlNicLink port=nic latency=$NicMMIF_link_lat />
+        <link name=1.dmaLink port=dma latency=$NicMMIF_link_lat />
 
     </component>
 
@@ -101,8 +101,8 @@
             <dma-virt2phys> false </dma-virt2phys>
             <clock> 500 Mhz </clock>
         </params>
-        <link name=1.ptlNicLink port=mmif latency=$foo_link_lat />
-        <link name=1.dmaLink port=dma latency=$foo_link_lat />
+        <link name=1.ptlNicLink port=mmif latency=$NicMMIF_link_lat />
+        <link name=1.dmaLink port=dma latency=$NicMMIF_link_lat />
         <link name=1.nic2rtr port=rtr latency=$nic_link_lat/>
     </component>
 
