@@ -53,12 +53,18 @@ private:
 		Cache *cache;
 		std::vector<uint8_t> data;
 		uint32_t locked;
-		MemEvent *currentEvent;
+
         std::deque<MemEvent*> blockedEvents;
-		uint32_t row, col;
+		uint16_t row, col;
         bool wb_in_progress;
-        uint32_t user_locked;
         bool user_lock_needs_wb;
+        uint16_t user_locked;
+        int16_t invalidate_acks;
+        std::pair<MemEvent*, MemEvent*> invalidateEvent;
+        /* ^^^^
+         * .first == event that caused the invalidation (retry event)
+         * .second = bus event to cause invalidate in others.
+         * */
 
 		CacheBlock() {}
 		CacheBlock(Cache *_cache)
@@ -70,10 +76,11 @@ private:
 			cache = _cache;
 			data = std::vector<uint8_t>(cache->blocksize);
 			locked = 0;
-			currentEvent = NULL;
             wb_in_progress = false;
-            user_locked = 0;
             user_lock_needs_wb = false;
+            user_locked = 0;
+            invalidate_acks = 0;
+			invalidateEvent = std::pair<MemEvent*, MemEvent*>(NULL, NULL);
 		}
 
 		~CacheBlock()
@@ -95,11 +102,11 @@ private:
 		bool isAssigned(void) const { return (status == ASSIGNED); }
 
         void lock() {
-            __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%lx] (%u, %u)\n", this, baseAddr, row, col);
+            __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%lx] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);
             locked++;
         }
         void unlock() {
-            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p [0x%lx] (%u, %u)\n", this, baseAddr, row, col);
+            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p [0x%lx] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked-1);
             assert(locked);
             locked--;
         }
@@ -162,11 +169,8 @@ private:
 		} writebackBlock;
 		struct {
 			CacheBlock *block;
-			MemEvent *ev;
-		} issueInvalidate;
-		struct {
-			CacheBlock *block;
 			SourceType_t src;
+            bool isFakeSupply;
 		} supplyData;
 		struct {
 			LoadInfo_t *loadInfo;
@@ -221,6 +225,7 @@ private:
 		{
 			if ( event ) {
 				queue.push_back(event);
+				__DBG( DBG_CACHE, BusQueue, "Queued event in position %zu!\n", queue.size());
                 BusHandlers bh = {initHandler, finishHandler};
                 map[event] = bh;
 			}
@@ -232,13 +237,15 @@ private:
 
 		BusHandlers cancelRequest(MemEvent *event)
 		{
-			BusHandlers retval;
+			BusHandlers retval = {0};
 			queue.remove(event);
 			std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
 			if ( i != map.end() ) {
 				retval = i->second;
 				map.erase(i);
-			}
+			} else {
+                __DBG( DBG_CACHE, BusQueue, "Unable to find a request to cancel!\n");
+            }
 			//delete event; // We have responsibility for this event, due to the contract of Link::Send()
 			return retval;
 		}
@@ -254,7 +261,7 @@ private:
 				MemEvent *ev = queue.front();
 				queue.pop_front();
 
-				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%lx)!\n", CommandString[ev->getCmd()], ev->getAddr());
+				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%lx) [Queue: %zu]!\n", CommandString[ev->getCmd()], ev->getAddr(), queue.size());
 
 
                 BusHandlers bh = {NULL, NULL};
@@ -339,8 +346,8 @@ private:
 
 	bool waitingForInvalidate(CacheBlock *block);
 	void cancelInvalidate(CacheBlock *block);
-	void finishIssueInvalidateVA(BusHandlerArgs &args);
-	void finishIssueInvalidate(MemEvent *ev, CacheBlock *block);
+    void ackInvalidate(MemEvent *ev);
+	void finishIssueInvalidate(CacheBlock *block);
 
 	void writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus);
     void prepWritebackBlock(BusHandlerArgs &args, MemEvent *ev);
@@ -357,7 +364,6 @@ private:
 	Addr addrToBlockAddr(Addr addr);
 	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
-	LoadList_t::iterator findWaitingLoad(Addr addr, uint32_t size);
 
 	void printCache(void);
 

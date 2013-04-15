@@ -51,7 +51,7 @@ private:
 
 	struct DRAMReq {
 		MemEvent *reqEvent;
-		bool canceled;
+		int req_count;
 		Addr addr;
 		bool isWrite;
 		size_t size;
@@ -59,7 +59,7 @@ private:
 		size_t amt_processed;
 
 		DRAMReq(MemEvent *ev) :
-			reqEvent(new MemEvent(ev)), canceled(false), addr(ev->getAddr()),
+			reqEvent(new MemEvent(ev)), req_count(1), addr(ev->getAddr()),
 			isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
 			size(ev->getSize()), amt_in_process(0), amt_processed(0)
 		{ }
@@ -94,8 +94,8 @@ private:
 	bool bus_requested;
 	std::deque<MemEvent*> busReqs;
 
+    std::map<Addr, DRAMReq*> outstandingReadReqs;
 	std::deque<DRAMReq*> requestQueue;
-	std::map<Addr, DRAMReq*> outstandingReqs;
 
 
 	int backing_fd;
@@ -105,11 +105,13 @@ private:
 	Addr rangeEnd;
 
 #if defined(HAVE_LIBDRAMSIM)
-	void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+	void dramSimReadDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+	void dramSimWriteDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
 	DRAMSim::MultiChannelMemorySystem *memSystem;
 
-	std::map<uint64_t, std::vector<DRAMReq*> > dramReqs;
+	std::map<uint64_t, std::vector<DRAMReq*> > dramReadReqs;
+	std::map<uint64_t, std::deque<DRAMReq*> > dramWriteReqs;
 #endif
 
 
