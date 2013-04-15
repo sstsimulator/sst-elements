@@ -1,7 +1,7 @@
 dnl -*- Autoconf -*-
 
 AC_DEFUN([SST_verona_CONFIG], [
-  AC_ARG_ENABLE([verona], [AS_HELP_STRING([--enable-verona], [Enable the Verona tracing component])],
+  AC_ARG_ENABLE([verona], [AS_HELP_STRING([--enable-verona], [Enable the Verona RISC processor core.])],
         [], [enable_verona="no"])
 
   happy="yes"
