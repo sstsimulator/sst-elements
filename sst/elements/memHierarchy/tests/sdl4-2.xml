@@ -26,7 +26,7 @@
 		<params>
 			<num_ways> 4 </num_ways>
 			<num_rows> 16 </num_rows>
-			<blocksize> 32 </blocksize>
+			<blocksize> 64 </blocksize>
 			<access_time> 2 ns </access_time>
 			<next_level> l2cache </next_level>
 			<num_upstream> 1 </num_upstream>
@@ -49,7 +49,7 @@
 		<params>
 			<num_ways> 4 </num_ways>
 			<num_rows> 16 </num_rows>
-			<blocksize> 32 </blocksize>
+			<blocksize> 64 </blocksize>
 			<access_time> 2 ns </access_time>
 			<next_level> l2cache </next_level>
 			<num_upstream> 1 </num_upstream>

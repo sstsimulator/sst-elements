@@ -255,7 +255,7 @@ bool MemController::clock(Cycle_t cycle)
 		// Send any new requests
 		while ( ! requestQueue.empty() ) {
 			DRAMReq *req = requestQueue.front();
-			if ( req->canceled ) {
+			if ( req->req_count <= 0 ) {
 				requestQueue.pop_front();
 				if ( req->amt_in_process == 0 ) {
 					// Haven't started.  get rid of it completely
@@ -435,7 +435,7 @@ void MemController::dramSimReadDone(unsigned int id, uint64_t addr, uint64_t clo
         req->amt_processed += JEDEC_DATA_BUS_BITS_local;
         if ( req->amt_processed >= req->size ) {
             // This req is done
-            if ( !req->canceled ) {
+            if ( req->req_count > 0 ) {
                 DPRINTF("Memory Request for 0x%lx (%s) Finished\n", req->addr, req->isWrite ? "WRITE" : "READ");
                 MemEvent *resp = performRequest(req);
                 sendResponse(resp);
@@ -453,15 +453,14 @@ void MemController::dramSimWriteDone(unsigned int id, uint64_t addr, uint64_t cl
 {
     std::deque<DRAMReq *> &reqs = dramWriteReqs[addr];
     DPRINTF("Memory Request for 0x%lx Finished [%zu reqs]\n", addr, reqs.size());
+    assert(reqs.size() > 0);
     DRAMReq *req = reqs.front();
     reqs.pop_front();
-    if ( reqs.size() == 0 )
-        dramWriteReqs.erase(addr);
 
     req->amt_processed += JEDEC_DATA_BUS_BITS_local;
     if ( req->amt_processed >= req->size ) {
         // This req is done
-        if ( !req->canceled ) {
+        if ( req->req_count > 0 ) {
             DPRINTF("Memory Request for 0x%lx (%s) Finished\n", req->addr, req->isWrite ? "WRITE" : "READ");
             MemEvent *resp = performRequest(req);
             sendResponse(resp);
@@ -469,6 +468,8 @@ void MemController::dramSimWriteDone(unsigned int id, uint64_t addr, uint64_t cl
             delete req;
         }
     }
+    if ( reqs.size() == 0 )
+        dramWriteReqs.erase(addr);
 }
 
 
