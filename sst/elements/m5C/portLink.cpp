@@ -178,7 +178,7 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 	ev->setPayload(pkt->size, pkt->data);
 
 	/* From ${GEM5}/src/mem/request.hh */
-    static const uint32_t LOCKED                      = 0x00100003;
+    static const uint32_t LOCKED                      = 0x00100000;
 
 	if ( pkt->req.flags & LOCKED ) {
 		ev->setFlags(SST::Interfaces::MemEvent::F_LOCKED);
