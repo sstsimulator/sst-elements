@@ -1,4 +1,5 @@
 
+CXX=g++
 
 LDFLAGS += -static -u ptlNic -lportals -lptlNic 
 LDFLAGS += -lruntime 
@@ -18,6 +19,9 @@ DEPS = ../usr_lib/api/libportals.a\
 put: put.o  ${DEPS}
 	${CXX} put.o -o $@ ${LDFLAGS}
 
+put.o: put.c
+	${CXX} -c ${CXXFLAGS} put.c
+	
 put2: put2.o  ${DEPS}
 	${CXX} put2.o -o $@ ${LDFLAGS}
 
