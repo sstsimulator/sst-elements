@@ -269,6 +269,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                                 /* We still have this in exclusive, but a writeback is in progress.
                                  * this will take us out of exclusive.  Let's punt and retry later.
                                  */
+                                DPRINTF("There's a WB or a Supply in progress.  Retry this locked event later.\n");
                                 self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev, block, UPSTREAM));
                                 return;
                             }

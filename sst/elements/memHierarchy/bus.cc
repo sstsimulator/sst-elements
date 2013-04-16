@@ -99,9 +99,9 @@ void Bus::init(unsigned int phase)
 
 void Bus::requestPort(LinkId_t link_id)
 {
-	DPRINTF("(%lu) [active = %lu]\n", link_id, activePort);
 
 	busRequests.push_back(link_id);
+	DPRINTF("(%lu) [active = %lu] queue depth = %zu \n", link_id, activePort, busRequests.size());
 
 	if ( activePort == BUS_INACTIVE ) {
 		// Nobody's active.  Schedule it.
@@ -113,21 +113,28 @@ void Bus::requestPort(LinkId_t link_id)
 void Bus::cancelPortRequest(LinkId_t link_id)
 {
 	DPRINTF("(%lu) [active = %lu]\n", link_id, activePort);
-	// You don't cancel a request until you're the owner
-	assert(activePort == link_id);
-	// You don't cancel a request if you're already sending a msg
-	assert(!busBusy);
 
-	activePort = BUS_INACTIVE;
-	// We're cleared now
-	selfLink->Send(new SelfEvent(SelfEvent::Schedule));
+    if ( activePort != link_id ) {
+        for ( std::deque<LinkId_t>::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
+            if ( *i == link_id ) {
+                busRequests.erase(i);
+                break;
+            }
+        }
+    } else {
+
+        activePort = BUS_INACTIVE;
+        // We're cleared now
+        selfLink->Send(new SelfEvent(SelfEvent::Schedule));
+    }
 }
 
 
 void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 {
-	DPRINTF("(%s -> %s: %s 0x%lx) [active = %lu]\n",
+	DPRINTF("(%s -> %s: (%lu, %d) %s 0x%lx) [active = %lu]\n",
 			ev->getSrc().c_str(), ev->getDst().c_str(),
+            ev->getID().first, ev->getID().second,
 			CommandString[ev->getCmd()], ev->getAddr(),
 			activePort);
 	// Only should be sending data if have clear-to-send

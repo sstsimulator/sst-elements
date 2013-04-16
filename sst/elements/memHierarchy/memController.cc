@@ -242,13 +242,21 @@ void MemController::addRequest(MemEvent *ev)
 void MemController::cancelEvent(MemEvent* ev)
 {
 	DPRINTF("Looking to cancel for (0x%lx)\n", ev->getAddr());
+    size_t  cancel_bus_count = 0;
     for ( size_t i = 0 ; i < requests.size() ; ++i ) {
         if ( requests[i]->isSatisfiedBy(ev) ) {
             if ( !requests[i]->isWrite ) {
                 requests[i]->canceled = true;
                 DPRINTF("Canceling request.\n");
+                if ( requests[i]->status == DRAMReq::RETURNED ) {
+                    cancel_bus_count++;
+                }
             }
         }
+    }
+    if ( cancel_bus_count >= busReqs.size() ) {
+        /* Cancel if we would cancel everything in the queue */
+        sendBusCancel();
     }
 }
 
@@ -373,6 +381,11 @@ void MemController::sendBusPacket(void)
             }
 		}
 	}
+}
+
+void MemController::sendBusCancel(void) {
+    snoop_link->Send(new MemEvent(this, NULL, CancelBusRequest));
+    bus_requested = false;
 }
 
 
