@@ -37,7 +37,7 @@ using namespace SST::Interfaces;
 
 
 namespace SST {
-	namespace MemHierarchy {
+namespace MemHierarchy {
 
 class MemController : public SST::Component {
 public:
@@ -50,68 +50,124 @@ public:
 private:
 
 	struct DRAMReq {
+        enum Status_t {NEW, PROCESSING, RETURNED, DONE};
+
 		MemEvent *reqEvent;
-		int req_count;
-		Addr addr;
+		MemEvent *respEvent;
 		bool isWrite;
+        bool canceled;
+
 		size_t size;
 		size_t amt_in_process;
 		size_t amt_processed;
+        Status_t status;
 
-		DRAMReq(MemEvent *ev) :
-			reqEvent(new MemEvent(ev)), req_count(1), addr(ev->getAddr()),
+		Addr addr;
+        uint32_t num_req; // size / bus width;
+
+		DRAMReq(MemEvent *ev, const size_t busWidth) :
+			reqEvent(new MemEvent(ev)), respEvent(NULL),
 			isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
-			size(ev->getSize()), amt_in_process(0), amt_processed(0)
-		{ }
+            canceled(false),
+			size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
+		{
+            Addr reqEndAddr = ev->getAddr() + ev->getSize();
+            addr = ev->getAddr() & ~(busWidth -1); // round down to bus alignment;
+
+            num_req = (reqEndAddr - addr) / busWidth;
+            if ( (reqEndAddr - addr) % busWidth ) num_req++;
+
+            size = num_req * busWidth;
+#if 0
+            printf(
+                    "***************************************************\n"
+                    "Buswidth = %zu\n"
+                    "Ev:   0x%08lx  + 0x%02x -> 0x%08lx\n"
+                    "Req:  0x%08lx  + 0x%02x   [%u count]\n"
+                    "***************************************************\n",
+                    busWidth, ev->getAddr(), ev->getSize(), reqEndAddr,
+                    addr, size, num_req);
+#endif
+        }
+
         ~DRAMReq() {
             delete reqEvent;
         }
+
+        bool canSatisfy(const MemEvent *ev)
+        {
+            return ((addr <= ev->getAddr()) &&
+                    (addr+size >= (ev->getAddr() + ev->getSize())));
+        }
+
+        bool isSatisfiedBy(const MemEvent *ev)
+        {
+            return ((addr >= ev->getAddr()) &&
+                    (addr+size <= (ev->getAddr() + ev->getSize())));
+        }
+
 	};
+
+    class MemCtrlEvent : public SST::Event {
+    public:
+        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
+        { }
+
+        DRAMReq *req;
+    private:
+        friend class boost::serialization::access;
+        template<class Archive>
+            void
+            serialize(Archive & ar, const unsigned int version )
+            {
+                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+                ar & BOOST_SERIALIZATION_NVP(req);
+            }
+    };
+
 
 
 	MemController();  // for serialization only
 
 	void handleEvent(SST::Event *event);
-	void handleSelfEvent(SST::Event *event);
 
 	void addRequest(MemEvent *ev);
+	void cancelEvent(MemEvent *ev);
 	bool clock(SST::Cycle_t cycle);
 
-	MemEvent* performRequest(DRAMReq *req);
+	void performRequest(DRAMReq *req);
 
 	void sendBusPacket(void);
 
-	void sendResponse(MemEvent *ev);
-	bool isCanceled(Addr addr);
-	bool isCanceled(MemEvent *ev);
-	void cancelEvent(MemEvent *ev);
+	void sendResponse(DRAMReq *req);
 
+    void handleMemResponse(DRAMReq *req);
+	void handleSelfEvent(SST::Event *event);
 
 	bool use_dramsim;
 
 	SST::Link *self_link;
 	SST::Link *snoop_link;
 	bool bus_requested;
-	std::deque<MemEvent*> busReqs;
+	std::deque<DRAMReq*> busReqs;
 
-    std::map<Addr, DRAMReq*> outstandingReadReqs;
 	std::deque<DRAMReq*> requestQueue;
+	std::deque<DRAMReq*> requests;
 
 
 	int backing_fd;
 	uint8_t *memBuffer;
 	size_t memSize;
+    size_t requestSize;
 	Addr rangeStart;
 	Addr rangeEnd;
 
 #if defined(HAVE_LIBDRAMSIM)
-	void dramSimReadDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
-	void dramSimWriteDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+	void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
 	DRAMSim::MultiChannelMemorySystem *memSystem;
 
-	std::map<uint64_t, std::vector<DRAMReq*> > dramReadReqs;
-	std::map<uint64_t, std::deque<DRAMReq*> > dramWriteReqs;
+    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
 #endif
 
 

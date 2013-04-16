@@ -68,14 +68,15 @@ static const ElementInfoParam bus_params[] = {
 };
 
 static const ElementInfoParam memctrl_params[] = {
-    {"mem_size",    "Size of physical memory in MB"},
-    {"rangeStart",  "Address Range where physical memory begins"},
-    {"memory_file", "Optional backing-store file to pre-load memory, or store resulting state"},
-    {"clock",       "Clock frequency of controller"},
-    {"use_dramsim", "0 to not use DRAMSim, 1 to use DRAMSim"},
-    {"device_ini",  "Name of DRAMSim Device config file"},
-    {"system_ini",  "Name of DRAMSim Device system file"},
-    {"access_time", "When not using DRAMSim, latency of memory operation."}
+    {"mem_size",        "Size of physical memory in MB"},
+    {"rangeStart",      "Address Range where physical memory begins"},
+    {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state"},
+    {"clock",           "Clock frequency of controller"},
+    {"use_dramsim",     "0 to not use DRAMSim, 1 to use DRAMSim"},
+    {"device_ini",      "Name of DRAMSim Device config file"},
+    {"system_ini",      "Name of DRAMSim Device system file"},
+    {"access_time",     "When not using DRAMSim, latency of memory operation."},
+    {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"}
 };
 
 static const ElementInfoParam cpu_params[] = {

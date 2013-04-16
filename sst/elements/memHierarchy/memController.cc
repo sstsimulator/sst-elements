@@ -26,11 +26,6 @@
 
 #include "memController.h"
 
-#if defined(HAVE_LIBDRAMSIM)
-// Our local copy of 'JEDEC_DATA_BUS_BITS', which has the comment // In bytes
-static unsigned JEDEC_DATA_BUS_BITS_local= 64;
-#endif
-
 #define DPRINTF( fmt, args...) __DBG( DBG_MEMORY, Memory, "%s: " fmt, getName().c_str(), ## args )
 
 #define NO_STRING_DEFINED "N/A"
@@ -51,6 +46,8 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	std::string memoryFile = params.find_string("memory_file", NO_STRING_DEFINED);
 
 	std::string clock_freq = params.find_string("clock", "");
+
+    requestSize = (size_t)params.find_integer("request_width", 64);
 
 	registerClock(clock_freq, new Clock::Handler<MemController>(this,
 				&MemController::clock));
@@ -79,9 +76,9 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 			*readDataCB, *writeDataCB;
 
 		readDataCB = new DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>(
-				this, &MemController::dramSimReadDone);
+				this, &MemController::dramSimDone);
 		writeDataCB = new DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>(
-				this, &MemController::dramSimWriteDone);
+				this, &MemController::dramSimDone);
 
 		memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 #endif
@@ -213,33 +210,48 @@ void MemController::handleEvent(SST::Event *event)
 }
 
 
-void MemController::handleSelfEvent(SST::Event *event)
-{
-	MemEvent *ev = static_cast<MemEvent*>(event);
-	assert(ev);
-	if ( !isCanceled(ev) )
-		sendResponse(ev);
-}
-
 
 void MemController::addRequest(MemEvent *ev)
 {
-	DRAMReq *req = new DRAMReq(ev);
-	DPRINTF("New Memory Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
+	DPRINTF("New Memory Request for 0x%lx\n", ev->getAddr());
 
-	requestQueue.push_back(req);
-    if ( req->isWrite ) {
-    } else {
-        std::map<Addr, DRAMReq*>::iterator i = outstandingReadReqs.find(ev->getAddr());
-        if ( i == outstandingReadReqs.end() ) {
-            outstandingReadReqs.insert(std::make_pair(ev->getAddr(), req));
-        } else {
-            i->second->req_count++;
-            /* If this has been "over-canceled", correct to allow this one to go on */
-            if ( i->second->req_count <= 0 ) i->second->req_count = 1;
+    bool satisified = false;
+    if ( ev->getCmd() == RequestData ) {
+        for ( int i = requests.size() ; i >= 1 ; --i ) {
+            int j = i-1;
+            if ( requests[j]->canSatisfy(ev) ) {
+                if ( !requests[j]->isWrite ) {
+                    satisified = true;
+                }
+                break;
+            }
+        }
+    }
+
+    if ( !satisified ) {
+        DRAMReq *req = new DRAMReq(ev, requestSize);
+        DPRINTF("Creating DRAM Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
+
+        requests.push_back(req);
+        requestQueue.push_back(req);
+    }
+
+}
+
+
+void MemController::cancelEvent(MemEvent* ev)
+{
+	DPRINTF("Looking to cancel for (0x%lx)\n", ev->getAddr());
+    for ( size_t i = 0 ; i < requests.size() ; ++i ) {
+        if ( requests[i]->isSatisfiedBy(ev) ) {
+            if ( !requests[i]->isWrite ) {
+                requests[i]->canceled = true;
+                DPRINTF("Canceling request.\n");
+            }
         }
     }
 }
+
 
 
 
@@ -250,71 +262,62 @@ bool MemController::clock(Cycle_t cycle)
 		memSystem->update();
 #endif
 
-	if ( use_dramsim ) {
+    while ( !requestQueue.empty() ) {
+        DRAMReq *req = requestQueue.front();
+        if ( req->canceled ) {
+            requestQueue.pop_front();
+            if ( req->status == DRAMReq::NEW ) // Haven't started processing
+                req->status = DRAMReq::DONE;
+            continue;
+        }
+
+        req->status = DRAMReq::PROCESSING;
+        uint64_t addr = req->addr + req->amt_in_process;
+        if ( use_dramsim ) {
 #if defined(HAVE_LIBDRAMSIM)
-		// Send any new requests
-		while ( ! requestQueue.empty() ) {
-			DRAMReq *req = requestQueue.front();
-			if ( req->req_count <= 0 ) {
-				requestQueue.pop_front();
-				if ( req->amt_in_process == 0 ) {
-					// Haven't started.  get rid of it completely
-					outstandingReadReqs.erase(req->addr);
-					delete req;
-				}
-			} else {
-				uint64_t addr = req->addr + req->amt_in_process;
 
-				addr &= ~(JEDEC_DATA_BUS_BITS_local -1); // Round down to bus boundary
-
-                /* Don't bother if this block is already in progress. */
-                if ( dramReadReqs.find(addr) == dramReadReqs.end() ) {
-
-                    bool ok = memSystem->willAcceptTransaction(addr);
-                    if ( !ok ) break;
-                    ok = memSystem->addTransaction(req->isWrite, addr);
-                    if ( !ok ) break;  // This *SHOULD* always be ok
-                    DPRINTF("Issued transaction for address 0x%lx\n", addr);
-                } else {
-                    DPRINTF("Added to existing transaction for address 0x%lx\n", addr);
-                }
-
-                req->amt_in_process += JEDEC_DATA_BUS_BITS_local;
-
-                dramReadReqs[addr].push_back(req);
-
-                if ( req->amt_in_process >= req->size ) {
-                    // Sent all requests off
-                    DPRINTF("Completed issue of request\n");
-                    requestQueue.pop_front();
-                }
-			}
-		}
+            bool ok = memSystem->willAcceptTransaction(addr);
+            if ( !ok ) break;
+            ok = memSystem->addTransaction(req->isWrite, addr);
+            if ( !ok ) break;  // This *SHOULD* always be ok
+            DPRINTF("Issued transaction for address 0x%lx\n", addr);
+            dramReqs[addr].push_back(req);
 #endif
-	} else {
-		while ( ! requestQueue.empty() ) {
-			DRAMReq *req = requestQueue.front();
-			/* Simple timing */
-			if ( req->req_count > 0 ) {
-				MemEvent *resp = performRequest(req);
-				if ( resp->getCmd() != NULLCMD ) {
-					self_link->Send(resp);
-				} else {
-					delete resp;
-				}
-			}
-			requestQueue.pop_front();
-		}
-	}
+        } else {
+            DPRINTF("Issued transaction for address 0x%lx\n", addr);
+            self_link->Send(new MemCtrlEvent(req));
+        }
+
+        req->amt_in_process += requestSize;
+
+        if ( req->amt_in_process >= req->size ) {
+            DPRINTF("Completed issue of request\n");
+            performRequest(req);
+            requestQueue.pop_front();
+        }
+    }
+
+    /* Clean out old requests */
+    while ( requests.size() ) {
+        DRAMReq *req = requests.front();
+        if ( req->status == DRAMReq::DONE ) {
+            requests.pop_front();
+        } else {
+            break;
+        }
+    }
 
 	return false;
 }
 
 
 
-MemEvent* MemController::performRequest(DRAMReq *req)
+void MemController::performRequest(DRAMReq *req)
 {
 	MemEvent *resp = req->reqEvent->makeResponse(this);
+    resp->setSize(req->size); // We will possibly return more than was asked for.
+
+    req->respEvent = resp;
 	if ( ((req->addr - rangeStart) + req->size) > memSize ) {
 		_abort(MemController, "Request for address 0x%lx, and size 0x%lx is larger than the physical memory of size 0x%lx bytes\n",
 				req->addr, req->size, memSize);
@@ -340,7 +343,6 @@ MemEvent* MemController::performRequest(DRAMReq *req)
                 memBuffer[req->addr - rangeStart + 4], memBuffer[req->addr - rangeStart + 5],
                 memBuffer[req->addr - rangeStart + 6], memBuffer[req->addr - rangeStart + 7]);
 	}
-	return resp;
 }
 
 
@@ -352,9 +354,11 @@ void MemController::sendBusPacket(void)
 			bus_requested = false;
 			break;
 		} else {
-			MemEvent *ev = busReqs.front();
+            DRAMReq *req = busReqs.front();
 			busReqs.pop_front();
-			if ( !isCanceled(ev) ) {
+            req->status = DRAMReq::DONE;
+			if ( !req->canceled ) {
+                MemEvent *ev = req->respEvent;
 				DPRINTF("Sending (%lu, %d) in response to (%lu, %d) 0x%lx\n",
 						ev->getID().first, ev->getID().second,
 						ev->getResponseToID().first, ev->getResponseToID().second,
@@ -365,25 +369,17 @@ void MemController::sendBusPacket(void)
 					// Re-request bus
 					sendResponse(NULL);
 				}
-                if ( ev->getCmd() == SupplyData ) {
-                    delete outstandingReadReqs[ev->getAddr()];
-                    outstandingReadReqs.erase(ev->getAddr());
-                }
 				break;
-			}
-            if ( ev->getCmd() == SupplyData ) {
-                delete outstandingReadReqs[ev->getAddr()];
-                outstandingReadReqs.erase(ev->getAddr());
             }
 		}
 	}
 }
 
 
-void MemController::sendResponse(MemEvent *ev)
+void MemController::sendResponse(DRAMReq *req)
 {
-	if ( ev != NULL ) {
-		busReqs.push_back(ev);
+	if ( req != NULL ) {
+		busReqs.push_back(req);
 	}
 	if (!bus_requested) {
 		snoop_link->Send(new MemEvent(this, NULL, RequestBus));
@@ -392,86 +388,51 @@ void MemController::sendResponse(MemEvent *ev)
 }
 
 
-bool MemController::isCanceled(Addr addr)
+void MemController::handleMemResponse(DRAMReq *req)
 {
-	std::map<Addr, DRAMReq*>::iterator i = outstandingReadReqs.find(addr);
-	if ( i == outstandingReadReqs.end() ) return false;
-	return (i->second->req_count <= 0);
-}
-
-bool MemController::isCanceled(MemEvent *ev)
-{
-	return isCanceled(ev->getAddr());
-}
-
-
-void MemController::cancelEvent(MemEvent* ev)
-{
-	std::map<Addr, DRAMReq*>::iterator i = outstandingReadReqs.find(ev->getAddr());
-	DPRINTF("Looking to cancel for (0x%lx)\n", ev->getAddr());
-	if ( i != outstandingReadReqs.end() ) {
-        if ( i->second->size <= ev->getSize() ) {
-            outstandingReadReqs[ev->getAddr()]->req_count--;
-            DPRINTF("Canceling request.  %d remaining requests.\n", outstandingReadReqs[ev->getAddr()]);
-        } else {
-            DPRINTF("Not Canceling. Size mismatch.\n");
-        }
-	} else {
-        DPRINTF("No matching read requests found.\n");
+    DPRINTF("Finishing processing for req 0x%lx\n", req->addr);
+    req->amt_processed += requestSize;
+    if ( req->amt_processed >= req->size ) {
+        req->status = DRAMReq::RETURNED;
     }
+
+    if ( req->status == DRAMReq::RETURNED ) {
+        if ( !req->canceled )
+            sendResponse(req);
+        else
+            req->status = DRAMReq::DONE;
+    } else {
+       if ( req->canceled ) {
+           if ( req->amt_processed >= req->amt_in_process )
+               req->status = DRAMReq::DONE;
+       }
+    }
+
 }
 
 
-
+void MemController::handleSelfEvent(SST::Event *event)
+{
+	MemCtrlEvent *ev = static_cast<MemCtrlEvent*>(event);
+    DRAMReq *req = ev->req;
+    handleMemResponse(req);
+    delete event;
+}
 
 #if defined(HAVE_LIBDRAMSIM)
 
-void MemController::dramSimReadDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
+void MemController::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
 {
-    std::vector<DRAMReq *> &reqs = dramReadReqs[addr];
+    std::deque<DRAMReq *> &reqs = dramReqs[addr];
     DPRINTF("Memory Request for 0x%lx Finished [%zu reqs]\n", addr, reqs.size());
-    for ( std::vector<DRAMReq*>::iterator i = reqs.begin(); i != reqs.end(); ++i ) {
-        DRAMReq *req = *i;
-        req->amt_processed += JEDEC_DATA_BUS_BITS_local;
-        if ( req->amt_processed >= req->size ) {
-            // This req is done
-            if ( req->req_count > 0 ) {
-                DPRINTF("Memory Request for 0x%lx (%s) Finished\n", req->addr, req->isWrite ? "WRITE" : "READ");
-                MemEvent *resp = performRequest(req);
-                sendResponse(resp);
-            } else {
-                outstandingReadReqs.erase(req->addr);
-                delete req;
-            }
-        }
-    }
-	dramReadReqs.erase(addr);
-}
-
-
-void MemController::dramSimWriteDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
-{
-    std::deque<DRAMReq *> &reqs = dramWriteReqs[addr];
-    DPRINTF("Memory Request for 0x%lx Finished [%zu reqs]\n", addr, reqs.size());
-    assert(reqs.size() > 0);
+    assert(reqs.size());
     DRAMReq *req = reqs.front();
     reqs.pop_front();
-
-    req->amt_processed += JEDEC_DATA_BUS_BITS_local;
-    if ( req->amt_processed >= req->size ) {
-        // This req is done
-        if ( req->req_count > 0 ) {
-            DPRINTF("Memory Request for 0x%lx (%s) Finished\n", req->addr, req->isWrite ? "WRITE" : "READ");
-            MemEvent *resp = performRequest(req);
-            sendResponse(resp);
-        } else {
-            delete req;
-        }
-    }
     if ( reqs.size() == 0 )
-        dramWriteReqs.erase(addr);
-}
+        dramReqs.erase(addr);
 
+    handleMemResponse(req);
+}
 
 
 #endif

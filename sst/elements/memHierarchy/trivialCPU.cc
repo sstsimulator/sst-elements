@@ -97,10 +97,11 @@ void trivialCPU::handleEvent(Event *ev)
 			_abort(trivialCPU, "Event (%lu, %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
-			printf("%s: Received MemEvent with command %d (response to %lu, addr 0x%lx) [Time: %lu]\n",
-					getName().c_str(),
-					event->getCmd(), event->getResponseToID().first, event->getAddr(), et);
 			requests.erase(i);
+			printf("%s: Received MemEvent with command %d (response to %lu, addr 0x%lx) [Time: %lu] [%zu outstanding requests]\n",
+					getName().c_str(),
+					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
+                    requests.size());
 			num_reads_returned++;
 		}
 

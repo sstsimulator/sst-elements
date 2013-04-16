@@ -92,8 +92,8 @@ private:
 			assert(locked == 0);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
-			__DBG( DBG_CACHE, CacheBlock, "Activating block (%u, %u) for Address 0x%lx.\t"
-					"baseAddr: 0x%lx  Tag: 0x%lx\n", row, col, addr, baseAddr, tag);
+			__DBG( DBG_CACHE, CacheBlock, "%s: Activating block (%u, %u) for Address 0x%lx.\t"
+					"baseAddr: 0x%lx  Tag: 0x%lx\n", cache->getName().c_str(), row, col, addr, baseAddr, tag);
 			status = ASSIGNED;
 		}
 
@@ -147,7 +147,7 @@ private:
 				}
 			}
 			if ( lru < 0 ) {
-				__DBG( DBG_CACHE, CacheRow, "No empy slot in this row.\n");
+				__DBG( DBG_CACHE, CacheRow, "No empty slot in this row.\n");
 				return NULL;
 			}
 
@@ -157,6 +157,19 @@ private:
         void addWaitingEvent(MemEvent *ev, SourceType_t src)
         {
             waitingEvents[cache->addrToBlockAddr(ev->getAddr())].push_back(std::make_pair(ev, src));
+            __DBG( DBG_CACHE, CacheRow, "Event is number %zu in queue for this row.\n",
+                    waitingEvents[cache->addrToBlockAddr(ev->getAddr())].size());
+			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
+                __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%lx] is: %s\n",
+                        blocks[i].baseAddr,
+                        blocks[i].isAssigned() ?
+                            "Assigned" :
+                            (blocks[i].locked>0) ?
+                                "Locked!":
+                                "Open."
+                     );
+            }
+
         }
 	};
 

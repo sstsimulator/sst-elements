@@ -251,6 +251,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 			addrToBlockAddr(ev->getAddr()),
             block ? block->status : -1,
             ev->queryFlag(MemEvent::F_LOCKED) ? " [LOCK]" : "");
+    if ( ev->queryFlag(MemEvent::F_LOCKED) && !isRead ) assert(block->status == CacheBlock::EXCLUSIVE);
 	if ( block ) {
 		/* HIT */
 		if ( isRead ) {
@@ -262,6 +263,15 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                         issueInvalidate(ev, block);
                     } else {
                         if ( ev->queryFlag(MemEvent::F_LOCKED) ) {
+                            supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, SNOOP);
+                            supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
+                            if ( block->wb_in_progress || supMapI != supplyInProgress.end()) {
+                                /* We still have this in exclusive, but a writeback is in progress.
+                                 * this will take us out of exclusive.  Let's punt and retry later.
+                                 */
+                                self_link->Send(1, new SelfEvent(&Cache::retryEvent, ev, block, UPSTREAM));
+                                return;
+                            }
                             /* TODO!   We lock on (bytes/words), but the line is locked! */
                             block->user_locked++;
                             block->user_lock_needs_wb = false;
@@ -493,11 +503,12 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
     }
 
 	CacheBlock *block = findBlock(ev->getAddr(), false);
-	DPRINTF("0x%lx %s %s (block 0x%lx [%d])%s\n", ev->getAddr(),
+	DPRINTF("0x%lx %s %s (block 0x%lx [%d.%d])%s\n", ev->getAddr(),
 			(src == SNOOP && ev->getDst() != getName()) ? "SNOOP" : "",
 			(block) ? "HIT" : "MISS",
 			addrToBlockAddr(ev->getAddr()),
             (block) ? block->status : -1,
+            (block) ? block->user_locked : -1,
             (block && block->isLocked()) ? " Block LOCKED" : "");
 
 
@@ -547,13 +558,14 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
 	ASSERT(supMapI != supplyInProgress.end());
 
+    block->unlock();
+
 	if ( supMapI->second.canceled ) {
 		DPRINTF("Request has been canceled!\n");
 		supplyInProgress.erase(supMapI);
         delete ev;
 		return;
 	}
-
 
 	MemEvent *resp = new MemEvent(this, block->baseAddr, SupplyData);
     if ( block && block->user_locked ) {
@@ -564,7 +576,6 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         resp->setPayload(block->data);
     }
 
-    block->unlock();
 
 	if ( src != SNOOP ) {
 		SST::Link *link = getLink(src, ev->getLinkId());
@@ -576,7 +587,9 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 		args.supplyData.src = src;
         args.supplyData.isFakeSupply = resp->queryFlag(MemEvent::F_DELAYED);
 		supMapI->second.busEvent = resp;
-		DPRINTF("Enqueuing request to supply block 0x%lx\n", block->baseAddr);
+		DPRINTF("Enqueuing request to supply%s block 0x%lx\n",
+                args.supplyData.isFakeSupply ? " delay" : "",
+                block->baseAddr);
 		snoopBusQueue.request( resp,
 				new BusFinishHandler(&Cache::finishBusSupplyData, args));
 	}
@@ -652,6 +665,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 if ( handlers.init ) delete handlers.init;
                 if ( handlers.finish ) delete handlers.finish;
                 delete li.busEvent;
+                li.busEvent = NULL;
 			}
 
 			if ( !li.targetBlock ) {
@@ -699,7 +713,10 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 					}
 				}
                 if ( deleted == li.list.size() ) {
+                    /* Deleted all reasons to load this block */
                     waitingLoads.erase(i);
+                    if ( targetBlock->isAssigned() ) targetBlock->status = CacheBlock::INVALID;
+                    targetBlock->unlock();
                 }
 
 			} else {
