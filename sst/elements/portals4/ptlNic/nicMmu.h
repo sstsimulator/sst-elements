@@ -11,10 +11,12 @@
 
 #ifndef _nicMmu_h
 #define _nicMmu_h
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #if 0
 #define MMU_DBG( fmt, args... ) \
