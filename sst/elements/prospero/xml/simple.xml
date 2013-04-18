@@ -3,7 +3,7 @@
 <timebase>1ns</timebase>
 
 <config>
- stopAtCycle=100000000ns
+ stopAtCycle=10000000ns
 </config>
 
 <variables>
@@ -13,20 +13,21 @@
 
 
 <sst>
-        <component name="cpu" type="prospero.prospero">
+        <component name="cpu" type="prospero.prospero" rank=0>
                 <params>
 			<outputlevel>0</outputlevel>
 			<tracetype>file</tracetype>
-			<trace>traces/pinatrace.out</trace>
-			<cache_line>64</cache_line>
+			<trace> traces/pinatrace.out </trace>
+			<cache_line> 64 </cache_line>
+			<physlimit> 512 </physlimit>
                 </params>
                 <link name=cpu_cache_link port=cache_link latency=$lat />
         </component>
 
-        <component name="l1cache" type="memHierarchy.Cache">
+        <component name="l1cache" type="memHierarchy.Cache" rank=0>
                 <params>
-                        <num_ways> 4 </num_ways>
-                        <num_rows> 16 </num_rows>
+                        <num_ways> 8 </num_ways>
+                        <num_rows> 128 </num_rows>
                         <blocksize> 64 </blocksize>
                         <access_time> 1ns </access_time>
                         <num_upstream> 1 </num_upstream>
@@ -36,7 +37,7 @@
         </component>
 
 
-        <component name="membus" type="memHierarchy.Bus">
+        <component name="membus" type="memHierarchy.Bus" rank=0>
                 <params>
                         <numPorts> 2 </numPorts>
                         <busDelay> 1ns </busDelay>
@@ -46,13 +47,16 @@
         </component>
 
 
-        <component name="memory" type="memHierarchy.MemController">
-                <params>
-                        <access_time> 30 ns </access_time>
-                        <mem_size> 512 </mem_size>
-                        <clock> 1GHz </clock>
-                </params>
-                <link name=mem_bus_link port=snoop_link latency=$buslat />
-        </component>
+	<component name="memory" type="memHierarchy.MemController" rank=1>
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+			<use_dramsim> 0 </use_dramsim>
+			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
+			<system_ini> system.ini </system_ini>
+		</params>
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
+	</component>
 
 </sst>
