@@ -71,9 +71,22 @@ public:
 
 	std::cout << "---------------------------------------------------------------------------" << std::endl;
 	std::cout << "TRACE Statistics:" << std::endl;
-	std::cout << "- Cycles not full:             " << cycles_pending_not_full << std::endl;
+	std::cout << "- Cycle/Queue Size Distribution: " << std::endl;
+	std::cout << "- Requests in Flight / Cycles Request Queue Spent in State:" << std::endl;
+	for(int i = 0; i < pending_request_limit; i++) {
+		std::cout << "- ";
+
+		const int digits = (i > 0) ? (int) log10( (double) i ) : 1;
+
+		for(int j = 0; j < (25 - digits); j++) {
+			std::cout << " ";
+		}
+
+		std::cout << "[" << i << "] " << queue_count_bins[i] << std::endl;
+	}
         std::cout << "- Total pages created:         " << new_page_creates << std::endl;
 	std::cout << "- Total page coverage (bytes): " << (new_page_creates * page_size) << std::endl;
+	std::cout << "- Total page coverage (MB):    " << ((new_page_creates * page_size) / (1024.0 * 1024.0)) << std::endl;
 	std::cout << "- Requests generated:          " << requests_generated << std::endl;
 	std::cout << "- Read req generated:          " << read_req_generated << std::endl;
 	std::cout << "- Write req generated:         " << write_req_generated << std::endl;
@@ -114,6 +127,7 @@ private:
   uint64_t requests_generated;
   uint64_t read_req_generated;
   uint64_t write_req_generated;
+  uint64_t* queue_count_bins;
   int output_level;
   int pending_request_limit;
   int page_size;
@@ -123,9 +137,9 @@ private:
   map<uint64_t, uint64_t> page_table;
   int new_page_creates;
   uint8_t* zero_buffer;
-  uint64_t cycles_pending_not_full;
   map<MemEvent::id_type, memory_request*> pending_requests;
   bool keep_generating;
+  uint64_t phys_limit;
 
   SST::Link* cache_link;
 
