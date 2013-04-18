@@ -38,7 +38,7 @@ private:
 	class CacheBlock;
 	class SelfEvent;
 	struct LoadInfo_t;
-	typedef std::map<Addr, LoadInfo_t> LoadList_t;
+	typedef std::map<Addr, LoadInfo_t*> LoadList_t;
 
 
 	class CacheBlock {
@@ -54,6 +54,7 @@ private:
 		std::vector<uint8_t> data;
 		uint32_t locked;
 
+        LoadInfo_t *loadInfo;
         std::deque<MemEvent*> blockedEvents;
 		uint16_t row, col;
         bool wb_in_progress;
@@ -219,14 +220,12 @@ private:
 	class BusQueue {
 	public:
 		BusQueue(void) :
-			requested(false), comp(NULL), link(NULL)
+			comp(NULL), link(NULL)
 		{ }
 
 		BusQueue(Cache *comp, SST::Link *link) :
-			requested(false), comp(comp), link(link)
+			comp(comp), link(link)
 		{ }
-
-		bool requested;
 
 		void setup(Cache *_comp, SST::Link *_link) {
 			comp = _comp;
@@ -242,10 +241,7 @@ private:
                 BusHandlers bh = {initHandler, finishHandler};
                 map[event] = bh;
 			}
-			if ( !requested ) {
 				link->Send(new MemEvent(comp, NULL, RequestBus));
-				requested = true;
-			}
 		}
 
 		BusHandlers cancelRequest(MemEvent *event)
@@ -269,7 +265,6 @@ private:
 				__DBG( DBG_CACHE, BusQueue, "No Requests to send!\n");
 				/* Must have canceled the request */
 				link->Send(new MemEvent(comp, NULL, CancelBusRequest));
-				requested = false;
 			} else {
 				MemEvent *ev = queue.front();
 				queue.pop_front();
@@ -295,12 +290,6 @@ private:
                     (comp->*(bh.finish->func))(bh.finish->args);
                     delete bh.finish;
                 }
-
-				requested = false;
-				if ( size() > 0 ) {
-					/* Re-request.  We have more to send */
-					request(NULL, NULL);
-				}
 			}
 		}
 
@@ -314,19 +303,41 @@ private:
 	};
 
 	typedef void (Cache::*SelfEventHandler)(MemEvent*, CacheBlock*, SourceType_t);
+	typedef void (Cache::*SelfEventHandler2)(LoadInfo_t*, Addr addr, CacheBlock*);
 	class SelfEvent : public SST::Event {
 	public:
 		SelfEvent() {} // For serialization
 
-		SelfEvent(SelfEventHandler handler, MemEvent *event, CacheBlock *block,
+		SelfEvent(Cache *cache, SelfEventHandler handler, MemEvent *event, CacheBlock *block,
 				SourceType_t event_source = SELF) :
-			handler(handler), event(event), block(block), event_source(event_source)
+			cache(cache), handler(handler), handler2(NULL),
+            event(event), block(block), event_source(event_source),
+            li(NULL), addr(0)
 		{ }
 
+		SelfEvent(Cache *cache, SelfEventHandler2 handler, LoadInfo_t *li, Addr addr, CacheBlock *block) :
+			cache(cache), handler(NULL), handler2(handler),
+            event(NULL), block(block), event_source(SELF),
+            li(li), addr(addr)
+		{ }
+
+
+        void fire(void) {
+            if ( handler ) {
+                (cache->*(handler))(event, block, event_source);
+            } else if ( handler2 ) {
+                (cache->*(handler2))(li, addr, block);
+            }
+        }
+
+        Cache *cache;
 		SelfEventHandler handler;
+		SelfEventHandler2 handler2;
 		MemEvent *event;
 		CacheBlock *block;
 		SourceType_t event_source;
+        LoadInfo_t *li;
+        Addr addr;
 	};
 
 public:
@@ -348,6 +359,8 @@ private:
 
 	void issueInvalidate(MemEvent *ev, CacheBlock *block);
 	void loadBlock(MemEvent *ev, SourceType_t src);
+    /* Note, this MemEvent* is actually a LoadInfo_t* */
+	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
 	void finishLoadBlockBus(BusHandlerArgs &args);
 
 	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
