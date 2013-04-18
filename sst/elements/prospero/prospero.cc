@@ -42,6 +42,17 @@ prospero::prospero(ComponentId_t id, Params_t& params) :
 	}
   }
 
+  if( params.find("physlimit") == params.end() ) {
+	// set to be 1GB
+	phys_limit = 1024 * 1024 * 1024;
+  } else {
+	phys_limit = atoi( params[ "physlimit" ].c_str() ) * 1024 * 1024;
+
+	if(output_level > 0) {
+		std::cout << "TRACE:  Set maximum address to be " << phys_limit << std::endl;
+	}
+  }
+
   if( params.find("trace") == params.end() ) {
 	std::cerr << "Could not find \'trace\' parameter in simulation SDL file." << std::endl;
 	exit(-1);
@@ -68,6 +79,11 @@ prospero::prospero(ComponentId_t id, Params_t& params) :
 	if(output_level > 0) {
 		std::cout << "TRACE:  Configuring traces for a pending request limit of " << pending_request_limit << std::endl;
 	}
+  }
+
+  queue_count_bins = (uint64_t*) malloc( sizeof(uint64_t) * pending_request_limit );
+  for(int i = 0; i < pending_request_limit; i++) {
+	queue_count_bins[i] = 0;
   }
 
   if( params.find("page_size") == params.end() ) {
@@ -188,6 +204,15 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		page_start = next_page_start;
 		next_page_start = next_page_start + page_size;
 		new_page_creates++;
+
+		if(page_start >= phys_limit) {
+			std::cerr << "TRACE:  Created a page to handle a memory request which exceeded the maximum address" << std::endl;
+			std::cerr << "TRACE:  Equivalent to a segmentation fault (11)" << std::endl;
+			std::cerr << "TRACE:  Maximum allowable address range < " << phys_limit << ", requested: " <<
+				page_start << std::endl;
+			std::cerr << "TRACE:  Increase maximum physical limit in configuration" << std::endl;
+			exit(-1);
+		}
 
 		if(output_level > 0) {
 			std::cout << "TRACE:  Page fault, " << page_lookup << " not found, created new page at: " <<
@@ -400,10 +425,7 @@ bool prospero::tick( Cycle_t ) {
 		}
 
 
-		if(pending_requests.size() < pending_request_limit) {
-			cycles_pending_not_full++;
-		}
-
+		queue_count_bins[pending_requests.size()]++;
 		return false;
 	} else {
 		if(pending_requests.size() == 0) {
