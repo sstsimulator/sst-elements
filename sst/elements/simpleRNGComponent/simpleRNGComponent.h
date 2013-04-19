@@ -23,6 +23,9 @@
 #include <cstring>
 #include <string>
 
+using namespace SST;
+using namespace SST::RNG;
+
 namespace SST {
 namespace SimpleRNGComponent {
 

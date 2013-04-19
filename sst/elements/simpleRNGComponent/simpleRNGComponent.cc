@@ -18,6 +18,7 @@
 #include "simpleRNGComponent.h"
 
 using namespace SST;
+using namespace SST::RNG;
 using namespace SST::SimpleRNGComponent;
 
 simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
