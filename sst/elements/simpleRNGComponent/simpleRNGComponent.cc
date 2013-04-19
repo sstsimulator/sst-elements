@@ -30,6 +30,7 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
         rng_type = params["rng"];
 
 	if( params["rng"] == "mersenne" ) {
+		std::cout << "Using Mersenne Random Number Generator..." << std::endl;
 		unsigned int seed = 1447;
 
 		if( params.find("seed") != params.end() ) {
@@ -38,11 +39,13 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
 
 	  	rng = new MersenneRNG(seed);
 	} else if ( params["rng"] == "marsaglia" ) {
+		std::cout << "Using Marsaglia Random Number Generator..." << std::endl;
+
   		unsigned int m_z = 0;
   		unsigned int  m_w = 0;
 
-  		m_w = params.find_integer("seed_w");
-  		m_z = params.find_integer("seed_z");
+  		m_w = params.find_integer("seed_w", 0);
+  		m_z = params.find_integer("seed_z", 0);
 
   		if(m_w == 0 || m_z == 0) {
 			rng = new MarsagliaRNG();
@@ -50,9 +53,11 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
 			rng = new MarsagliaRNG(m_z, m_w);
   		}
 	} else {
+		std::cout << "RNG provided but unknown " << params["rng"] << ", so using Mersenne..." << std::endl;
 		rng = new MersenneRNG(1447);
 	}
   } else {
+	std::cout << "No RNG provided, so using Mersenne..." << std::endl;
 	rng = new MersenneRNG(1447);
   }
 
