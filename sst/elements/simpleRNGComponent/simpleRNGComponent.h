@@ -18,6 +18,8 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/rng/sstrand.h>
+
+#include <sst/core/rng/mersenne.h>
 #include <sst/core/rng/marsaglia.h>
 
 #include <cstring>
@@ -44,7 +46,8 @@ private:
   virtual bool tick( SST::Cycle_t );
 
   SSTRandom* rng;
-  SSTRandom* rng_noseed;
+  string rng_type;
+  int rng_max_count;
   int rng_count;
 
   friend class boost::serialization::access;
@@ -53,6 +56,8 @@ private:
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
     ar & BOOST_SERIALIZATION_NVP(rng_count);
+    ar & BOOST_SERIALIZATION_NVP(rng_max_count);
+    ar & BOOST_SERIALIZATION_NVP(rng_type);
   }
 
   template<class Archive>
@@ -60,6 +65,8 @@ private:
   {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
     ar & BOOST_SERIALIZATION_NVP(rng_count);
+    ar & BOOST_SERIALIZATION_NVP(rng_max_count);
+    ar & BOOST_SERIALIZATION_NVP(rng_type);
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER()

@@ -24,20 +24,37 @@ using namespace SST::SimpleRNGComponent;
 simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
 
-  unsigned int m_z = 0;
-  unsigned int  m_w = 0;
+  rng_max_count = params.find_integer("count", 1000);
 
-  m_w = params.find_integer("seed_w");
-  m_z = params.find_integer("seed_z");
-  rng_count = params.find_integer("count", 1000);
+  if( params.find("rng") != params.end() ) {
+        rng_type = params["rng"];
 
-  if(m_w == 0 || m_z == 0) {
-	rng = new MarsagliaRNG();
+	if( params["rng"] == "mersenne" ) {
+		unsigned int seed = 1447;
+
+		if( params.find("seed") != params.end() ) {
+			seed = params.find_integer("seed");
+		}
+
+	  	rng = new MersenneRNG(seed);
+	} else if ( params["rng"] == "marsaglia" ) {
+  		unsigned int m_z = 0;
+  		unsigned int  m_w = 0;
+
+  		m_w = params.find_integer("seed_w");
+  		m_z = params.find_integer("seed_z");
+
+  		if(m_w == 0 || m_z == 0) {
+			rng = new MarsagliaRNG();
+  		} else {
+			rng = new MarsagliaRNG(m_z, m_w);
+  		}
+	} else {
+		rng = new MersenneRNG(1447);
+	}
   } else {
-	rng = new MarsagliaRNG(m_z, m_w);
+	rng = new MersenneRNG(1447);
   }
-
-  rng_noseed = new MarsagliaRNG();
 
   // tell the simulator not to end without us
   registerExit();
@@ -55,14 +72,16 @@ simpleRNGComponent::simpleRNGComponent() :
 }
 
 bool simpleRNGComponent::tick( Cycle_t ) {
-	rng_count--;
+	rng_count++;
 
-	std::cout << "Next uniform random: " <<
-		rng->nextUniform() << " / No seed=" <<
-		rng_noseed->nextUniform() << std::endl;
+	std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
+		rng->nextUniform() << ", " << rng->generateNextUInt32() << ", " <<
+		rng->generateNextUInt64() << ", " << rng->generateNextInt32() <<
+		", " << rng->generateNextInt64()
+		<< std::endl;
 
   	// return false so we keep going
-  	if(rng_count == 0) {
+  	if(rng_count == rng_max_count) {
 		unregisterExit();
   		return true;
   	} else {
@@ -71,7 +90,7 @@ bool simpleRNGComponent::tick( Cycle_t ) {
 }
 
 // Element Libarary / Serialization stuff
-    
+
 BOOST_CLASS_EXPORT(simpleRNGComponent)
 
 static Component*
@@ -84,6 +103,8 @@ create_simpleRNGComponent(SST::ComponentId_t id,
 static const ElementInfoParam component_params[] = {
     { "seed_w", "" },
     { "seed_z", "" },
+    { "seed", "" },
+    { "rng", "" },
     { "count", "" },
     { NULL, NULL}
 };

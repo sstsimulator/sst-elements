@@ -9,8 +9,8 @@
   <component name="clocker0" type=simpleRNGComponent.simpleRNGComponent rank=0>
       <params>
 	<count>1000</count>
-	<seed_w>10101</seed_w>
-	<seed_z>10303</seed_z>
+	<seed_w>1447</seed_w>
+	<seed_z>1053</seed_z>
       </params>
   </component>
 </sst>
