@@ -24,6 +24,7 @@ using namespace SST::SimpleRNGComponent;
 simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
 
+  rng_count = 0;
   rng_max_count = params.find_integer("count", 1000);
 
   if( params.find("rng") != params.end() ) {
