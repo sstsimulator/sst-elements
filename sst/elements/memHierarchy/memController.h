@@ -96,14 +96,14 @@ private:
 
         bool canSatisfy(const MemEvent *ev)
         {
-            return ((addr <= ev->getAddr()) &&
-                    (addr+size >= (ev->getAddr() + ev->getSize())));
+            return ((reqEvent->getAddr() <= ev->getAddr()) &&
+                    (reqEvent->getAddr()+reqEvent->getSize() >= (ev->getAddr() + ev->getSize())));
         }
 
         bool isSatisfiedBy(const MemEvent *ev)
         {
-            return ((addr >= ev->getAddr()) &&
-                    (addr+size <= (ev->getAddr() + ev->getSize())));
+            return ((reqEvent->getAddr() >= ev->getAddr()) &&
+                    (reqEvent->getAddr()+reqEvent->getSize() <= (ev->getAddr() + ev->getSize())));
         }
 
 	};
