@@ -7,6 +7,7 @@ LIB= libptlNic.a
 CPPFLAGS += -Wall 
 CPPFLAGS += -I../api/include -I.  -I../../ptlNic -I../../libc/
 CPPFLAGS += -I../../../M5/app/lib/libc
+CPPFLAGS += -D__NOT_SST__
 #CPPFLAGS += -DDEBUG
 #CPPFLAGS += -DUSE_PALACIOS_DEV
 

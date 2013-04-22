@@ -4,3 +4,7 @@ apps: libs
 
 libs:
 	cd usr_lib && $(MAKE)
+
+clean:
+	cd tests && $(MAKE) clean
+	cd usr_lib && $(MAKE) clean

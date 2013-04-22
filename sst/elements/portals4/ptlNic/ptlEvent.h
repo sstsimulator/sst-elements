@@ -14,8 +14,10 @@
 
 #include "portals4.h"
 
+#ifndef __NOT_SST__
 namespace SST {
 namespace Portals4 {
+#endif
 
 struct PtlEventInternal  {
     volatile long  count1;
@@ -23,7 +25,9 @@ struct PtlEventInternal  {
     volatile long  count2;
 };
 
+#ifndef __NOT_SST__
 }
 }
+#endif
 
 #endif

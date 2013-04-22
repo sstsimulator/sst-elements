@@ -21,8 +21,10 @@
 
 #include <stdint.h> /* assume C99, for uint64_t */
 
+#ifndef __NOT_SST__
 namespace SST {
 namespace Portals4 {
+#endif
 
 #define __ABC__ (128) 
 
@@ -3398,7 +3400,9 @@ int PtlHandleIsEqual(ptl_handle_any_t handle1,
                      ptl_handle_any_t handle2);
 /*! @} */
 
+#ifndef __NOT_SST__
 }
 }
+#endif
 #endif /* ifndef PORTALS4_H */
 /* vim:set expandtab: */
