@@ -95,7 +95,7 @@ bool simpleRNGComponent::tick( Cycle_t ) {
   	}
 }
 
-// Element Libarary / Serialization stuff
+// Element Library / Serialization stuff
 
 BOOST_CLASS_EXPORT(simpleRNGComponent)
 
