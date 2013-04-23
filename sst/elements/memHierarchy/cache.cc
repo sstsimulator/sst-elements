@@ -317,6 +317,21 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	}
 }
 
+static const char* printData(MemEvent *ev) {
+    static char buffer[1024] = {0};
+    memset(buffer, '\0', sizeof(buffer));
+    char *p = buffer;
+
+    p += sprintf(p, "0x");
+
+    size_t nb = ev->getSize();
+    std::vector<uint8_t> &data = ev->getPayload();
+    for ( size_t i = 0 ; i < nb ; i++ ) {
+        p += sprintf(p, "%02x", data[i]);
+    }
+
+    return buffer;
+}
 
 MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
@@ -330,18 +345,22 @@ MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t s
 	if ( ev->getCmd() == ReadReq)
 		resp->setPayload(ev->getSize(), &block->data[offset]);
 
-	DPRINTF("Sending Response to CPU: (%lu, %d) in Response To (%lu, %d) [%s: 0x%lx] [...0x%02x%02x%02x%02x]\n",
+	DPRINTF("Creating Response to CPU: (%lu, %d) in Response To (%lu, %d) [%s: 0x%lx] [%s]\n",
 			resp->getID().first, resp->getID().second,
 			resp->getResponseToID().first, resp->getResponseToID().second,
 			CommandString[resp->getCmd()], resp->getAddr(),
-            resp->getPayload()[resp->getPayload().size()-4], resp->getPayload()[resp->getPayload().size()-3],
-            resp->getPayload()[resp->getPayload().size()-2], resp->getPayload()[resp->getPayload().size()-1]);
+            printData((ev->getCmd() == ReadReq) ? resp : ev)
+           );
 
 	return resp;
 }
 
 void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
+    DPRINTF("Sending CPU Response %s 0x%lx  (%lu, %d)\n",
+            CommandString[ev->getCmd()], ev->getAddr(),
+            ev->getID().first, ev->getID().second);
+
 	/* CPU is always upstream link 0 */
 	upstream_links[0]->Send(ev);
 
@@ -553,6 +572,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
         DPRINTF("SNOOP Hit for 0x%lx, will supply data\n", block->baseAddr);
         if ( block->wb_in_progress ) {
             DPRINTF("There's a WB in progress.  That will suffice.\n");
+            delete ev;
         } else {
             supplyInProgress[supplyMapKey] = SupplyInfo(NULL);
             block->lock();
@@ -612,9 +632,15 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
                 args.supplyData.isFakeSupply ? " delay" : "",
                 block->baseAddr);
 		snoopBusQueue.request( resp,
-				new BusFinishHandler(&Cache::finishBusSupplyData, args));
+				new BusFinishHandler(&Cache::finishBusSupplyData, args),
+                new BusInitHandler(&Cache::prepBusSupplyData, args));
 	}
 	delete ev;
+}
+
+void Cache::prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev)
+{
+    ev->setPayload(args.supplyData.block->data);
 }
 
 

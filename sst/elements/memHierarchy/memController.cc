@@ -215,26 +215,11 @@ void MemController::addRequest(MemEvent *ev)
 {
 	DPRINTF("New Memory Request for 0x%lx\n", ev->getAddr());
 
-    bool satisified = false;
-    if ( ev->getCmd() == RequestData ) {
-        for ( int i = requests.size() ; i >= 1 ; --i ) {
-            int j = i-1;
-            if ( requests[j]->canSatisfy(ev) ) {
-                if ( !requests[j]->isWrite ) {
-                    satisified = true;
-                }
-                break;
-            }
-        }
-    }
+    DRAMReq *req = new DRAMReq(ev, requestSize);
+    DPRINTF("Creating DRAM Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
 
-    if ( !satisified ) {
-        DRAMReq *req = new DRAMReq(ev, requestSize);
-        DPRINTF("Creating DRAM Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
-
-        requests.push_back(req);
-        requestQueue.push_back(req);
-    }
+    requests.push_back(req);
+    requestQueue.push_back(req);
 
 }
 

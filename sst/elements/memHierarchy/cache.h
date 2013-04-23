@@ -365,6 +365,7 @@ private:
 
 	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
 	void supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src);
+    void prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev);
 	void finishBusSupplyData(BusHandlerArgs &args);
 	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
 	void finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t src);
