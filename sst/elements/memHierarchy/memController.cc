@@ -89,8 +89,6 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	}
 
 
-	bus_requested = false;
-
 
 	int mmap_flags = MAP_PRIVATE;
 	if ( memoryFile != NO_STRING_DEFINED ) {
@@ -227,21 +225,16 @@ void MemController::addRequest(MemEvent *ev)
 void MemController::cancelEvent(MemEvent* ev)
 {
 	DPRINTF("Looking to cancel for (0x%lx)\n", ev->getAddr());
-    size_t  cancel_bus_count = 0;
     for ( size_t i = 0 ; i < requests.size() ; ++i ) {
         if ( requests[i]->isSatisfiedBy(ev) ) {
-            if ( !requests[i]->isWrite ) {
+            if ( !requests[i]->isWrite && !requests[i]->canceled ) {
                 requests[i]->canceled = true;
                 DPRINTF("Canceling request.\n");
                 if ( requests[i]->status == DRAMReq::RETURNED ) {
-                    cancel_bus_count++;
+                    sendBusCancel(requests[i]->reqEvent->getAddr());
                 }
             }
         }
-    }
-    if ( cancel_bus_count >= busReqs.size() ) {
-        /* Cancel if we would cancel everything in the queue */
-        sendBusCancel();
     }
 }
 
@@ -342,8 +335,8 @@ void MemController::sendBusPacket(void)
 {
 	for (;;) {
 		if ( busReqs.size() == 0 ) {
+            DPRINTF("Sending cancelation, as we have nothing in the queue.\n");
 			snoop_link->Send(new MemEvent(this, NULL, CancelBusRequest));
-			bus_requested = false;
 			break;
 		} else {
             DRAMReq *req = busReqs.front();
@@ -356,20 +349,14 @@ void MemController::sendBusPacket(void)
 						ev->getResponseToID().first, ev->getResponseToID().second,
 						ev->getAddr());
 				snoop_link->Send(0, ev);
-				bus_requested = false;
-				if ( busReqs.size() > 0 ) {
-					// Re-request bus
-					sendResponse(NULL);
-				}
 				break;
             }
 		}
 	}
 }
 
-void MemController::sendBusCancel(void) {
-    snoop_link->Send(new MemEvent(this, NULL, CancelBusRequest));
-    bus_requested = false;
+void MemController::sendBusCancel(Addr addr) {
+    snoop_link->Send(new MemEvent(this, addr, CancelBusRequest));
 }
 
 
@@ -377,11 +364,8 @@ void MemController::sendResponse(DRAMReq *req)
 {
 	if ( req != NULL ) {
 		busReqs.push_back(req);
-	}
-	if (!bus_requested) {
-		snoop_link->Send(new MemEvent(this, NULL, RequestBus));
-		bus_requested = true;
-	}
+        snoop_link->Send(new MemEvent(this, req->reqEvent->getAddr(), RequestBus));
+    }
 }
 
 

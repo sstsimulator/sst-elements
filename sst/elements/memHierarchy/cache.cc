@@ -265,11 +265,11 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                         if ( ev->queryFlag(MemEvent::F_LOCKED) ) {
                             supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, SNOOP);
                             supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-                            if ( block->wb_in_progress || supMapI != supplyInProgress.end()) {
+                            if ( block->wb_in_progress || (supMapI != supplyInProgress.end() && supMapI->second.canceled == false)) {
                                 /* We still have this in exclusive, but a writeback is in progress.
                                  * this will take us out of exclusive.  Let's punt and retry later.
                                  */
-                                DPRINTF("There's a WB or a Supply in progress.  Retry this locked event later.\n");
+                                DPRINTF("There's a WB (%d) or a Supply in progress.  Retry this locked event later.\n", block->wb_in_progress);
                                 self_link->Send(1, new SelfEvent(this, &Cache::retryEvent, ev, block, UPSTREAM));
                                 return;
                             }

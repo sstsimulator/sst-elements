@@ -40,10 +40,10 @@ private:
 	Bus(const Bus&); // do not implement
 	void operator=(const Bus&); // do not implement
 
-	void requestPort(LinkId_t link_id);
-	void cancelPortRequest(LinkId_t link_id);
+	void requestPort(LinkId_t link_id, Addr key);
+	void cancelPortRequest(LinkId_t link_id, Addr key);
 	void sendMessage(MemEvent *ev, LinkId_t from_link);
-	LinkId_t arbitrateNext(void);
+    std::pair<LinkId_t, Addr>  arbitrateNext(void);
 
 	void handleEvent( SST::Event *ev );
 
@@ -63,13 +63,13 @@ private:
 
 
 	int numPorts;
-	LinkId_t activePort;
+    std::pair<LinkId_t, Addr> activePort;
 	bool busBusy;
 	TimeConverter *delayTC;
 	SimTime_t busDelay;
 	SST::Link** ports;
 	SST::Link *selfLink;
-	std::deque<LinkId_t> busRequests;
+	std::deque<std::pair<LinkId_t, Addr> > busRequests;
 	std::map<LinkId_t, SST::Link*> linkMap;
 
 

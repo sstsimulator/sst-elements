@@ -138,7 +138,7 @@ private:
 	void performRequest(DRAMReq *req);
 
 	void sendBusPacket(void);
-    void sendBusCancel(void);
+    void sendBusCancel(Addr addr);
 
 	void sendResponse(DRAMReq *req);
 
