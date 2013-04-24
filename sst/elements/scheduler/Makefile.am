@@ -19,12 +19,12 @@ Job.cc \
 linkBuilder.h		misc.h			nodeComponent.h		EASYScheduler.h 	PQScheduler.h		StatefulScheduler.h 	schedComponent.h \
 linkBuilder.cc		misc.cc			nodeComponent.cc	EASYScheduler.cc 	PQScheduler.cc		StatefulScheduler.cc 	schedComponent.cc \
 Scheduler.h 		SimpleAllocator.h	SimpleMachine.h		Statistics.h 	NearestAllocator.h 	NearestAllocClasses.h 	NearestAllocator.cc \
-schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc		RandomAllocator.cc 	RandomAllocator.h \
+schedLib.cc		SimpleAllocator.cc	SimpleMachine.cc	Statistics.cc		RandomAllocator.cc 	RandomAllocator.h ConstraintAllocator.h\
 MachineMesh.cc		MachineMesh.h		NearestAllocClasses.cc		MBSAllocator.cc		MBSAllocator.h		MBSAllocInfo.h \
 GranularMBSAllocator.cc		GranularMBSAllocator.h		OctetMBSAllocator.h		OctetMBSAllocator.cc		RoundUpMBSAllocator.h \
 RoundUpMBSAllocator.cc		Factory.h		Factory.cc \
 LinearAllocator.cc		LinearAllocator.h		FirstFitAllocator.cc		FirstFitAllocator.h		BestFitAllocator.cc \
-BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc
+BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc ConstraintAllocator.cc
 
 EXTRA_DIST = makeSDL.pl test.xml test30.xml
 

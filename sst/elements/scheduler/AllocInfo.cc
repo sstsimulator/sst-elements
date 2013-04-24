@@ -23,6 +23,7 @@ using namespace SST::Scheduler;
 AllocInfo::AllocInfo(Job* job) {
   this->job = job;
   nodeIndices = new int[job->getProcsNeeded()];
+  nodeIndices[0] = -1; // ConstraintAllocator puts allocation here
 }
 
 AllocInfo::~AllocInfo() {

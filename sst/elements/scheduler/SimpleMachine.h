@@ -41,6 +41,10 @@ class SimpleMachine : public Machine {
 
   void deallocate(AllocInfo* allocInfo);  //deallocate processors
 
+  //ConstraintAllocator needs these
+  vector<int>* freeProcessors();
+  string getNodeID(int i);
+
  private:
   static const int debug = 0;  //whether to include debugging printouts
   vector<int> freeNodes;       //indices of currently-free nodes

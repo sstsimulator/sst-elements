@@ -68,6 +68,7 @@ class Factory{
       FIRSTFIT = 10,
       BESTFIT = 11,
       SORTEDFREELIST = 12,
+      CONSTRAINT = 13,
     };
 
     struct schedTableEntry{
@@ -85,7 +86,7 @@ class Factory{
 
     static const schedTableEntry schedTable[6];
     static const machTableEntry machTable[2];
-    static const allocTableEntry allocTable[13];
+    static const allocTableEntry allocTable[14];
 
     SchedulerType schedulername(string inparam);
     MachineType machinename(string inparam);

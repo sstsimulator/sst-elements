@@ -75,10 +75,18 @@ void SimpleMachine::allocate(AllocInfo* allocInfo) {  //allocate processors
   }
   
   numAvail -= num;
-  for(int i=0; i<num; i++) {
-    allocInfo->nodeIndices[i] = freeNodes.back();
-    freeNodes.pop_back();
+  if (allocInfo->nodeIndices[0] == -1){ //default allocator
+      for(int i=0; i<num; i++) {
+          allocInfo->nodeIndices[i] = freeNodes.back();
+          freeNodes.pop_back();
+      }
   }
+  else { //ConstraintAllocator; remove the indices given by allocInfo
+      for(int i=0; i<num; i++){
+        freeNodes.erase( remove(freeNodes.begin(), freeNodes.end(), allocInfo->nodeIndices[i]) , freeNodes.end() );
+      }
+  }
+
   sc -> startJob(allocInfo);
 }
 
@@ -102,3 +110,16 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo) {  //deallocate processors
     freeNodes.push_back(allocInfo->nodeIndices[i]);
   }
 }
+
+vector<int>* SimpleMachine::freeProcessors(){
+    vector<int>* retVal = new vector<int>();
+    for (int i = 0; i < freeNodes.size(); i++)
+        retVal->push_back( freeNodes[i] );
+    return retVal;
+}
+
+std::string SimpleMachine::getNodeID(int i){
+    return sc->getNodeID(i);
+}
+
+

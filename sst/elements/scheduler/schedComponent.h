@@ -51,6 +51,12 @@ public:
   Machine* getMachine();
   void startJob(AllocInfo* ai);
 
+  //ConstraintAllocator needs this
+  std::string getNodeID(int nodeIndex){
+    return nodeIDs.at(nodeIndex);
+  }
+
+
 private:
   unsigned long lastfinaltime;
   schedComponent();  // for serialization only

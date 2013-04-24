@@ -35,6 +35,7 @@
 #include "BestFitAllocator.h"
 #include "LinearAllocator.h"
 #include "SortedFreeListAllocator.h"
+#include "ConstraintAllocator.h"
 #include "SimpleMachine.h"
 #include "MachineMesh.h"
 
@@ -75,10 +76,11 @@ const Factory::allocTableEntry Factory::allocTable[] = {
   {FIRSTFIT, "firstfit"},
   {BESTFIT, "bestfit"},
   {SORTEDFREELIST, "sortedfreelist"},
+  {CONSTRAINT, "constraint"},
 };
 
 const int Factory::numSchedTableEntries = 6;
-const int Factory::numAllocTableEntries = 13;
+const int Factory::numAllocTableEntries = 14;
 const int Factory::numMachTableEntries = 2;
 
 Scheduler* Factory::getScheduler(SST::Component::Params_t& params, int numProcs){
@@ -312,6 +314,16 @@ Allocator* Factory::getAllocator(SST::Component::Params_t& params, Machine* m){
         for(int x = 1; x < (int)schedparams->size(); x++)
           nearestparams->push_back(schedparams->at(x));
         return new SortedFreeListAllocator(nearestparams, m);
+
+    //Constraint Allocator tries to separate nodes whose estimated failure rates are close
+      case CONSTRAINT:
+        {SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
+        if(mach == NULL)
+            error("ConstraintAllocator requires SimpleMachine");
+        // will get these file names from schedparams eventually
+        return new ConstraintAllocator(mach, "/tmp/Dependencies.txt", "/tmp/Constraints.txt");
+        break;
+        }
       default:
         error("Could not parse name of allocator");
     }
