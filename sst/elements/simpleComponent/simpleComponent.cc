@@ -169,7 +169,7 @@ create_simpleComponent(SST::ComponentId_t id,
 
 static const ElementInfoParam component_params[] = {
     { "workPerCycle", "Count of busy work to do during a clock tick." },
-    { "comFreq", "Approximate frequency of sending an event during a clock tick." },
+    { "commFreq", "Approximate frequency of sending an event during a clock tick." },
     { "commSize", "Size of communication to send." },
     { NULL, NULL}
 };
