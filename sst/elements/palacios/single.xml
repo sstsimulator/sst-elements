@@ -14,8 +14,9 @@
     <component name=0.system type=palacios.PtlNicMMIF rank=0 >
         <params>
             <vm-dev> /dev/v3-vm0 </vm-dev>
+            <single> true </single>
             <dev> user:foo </dev>
-            <minCycles> 10000 </minCycles>
+            <minCycles> 1000 </minCycles>
         </params>
 
     </component>

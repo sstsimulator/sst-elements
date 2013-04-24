@@ -14,9 +14,10 @@
 
 #include <sst/core/element.h>
 
-using namespace SST;
-
 #include "ptlNicMMIF.h"
+
+using namespace SST;
+using namespace SST::Palacios;
 
 static Component*
 create_PtlNicMMIF(ComponentId_t id, Component::Params_t& params)

@@ -18,19 +18,26 @@
 #include "portals4/ptlNic/ptlNicEvent.h"
 #include "portals4/ptlNic/dmaEvent.h"
 
-BOOST_CLASS_EXPORT(PtlNicEvent);
-BOOST_CLASS_EXPORT(PtlNicRespEvent);
+using namespace SST;
+using namespace SST::Palacios;
+using namespace SST::Portals4;
 
 const char * PtlNicMMIF::m_cmdNames[] = CMD_NAMES;
 
-using namespace SST;
+#define INFO( fmt, args... ) \
+    fprintf( stderr, "INFO: "fmt, ##args)
 
 PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     Component( id ),
     m_barrierCallback( BarrierAction::Handler<PtlNicMMIF>(this,
                         &PtlNicMMIF::barrierLeave) ),
+#if USE_THREAD 
     m_threadRun( false ),
-    m_runCycles( 100 )
+#else
+    m_simulating( false ),
+#endif
+    m_runCycles( 100 ),
+    m_functor( DerivedFunctor<PtlNicMMIF>(this,&PtlNicMMIF::update) )
 {
     int ret;
 
@@ -38,14 +45,20 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
 
     registerExit();
 
-    m_cmdLink = configureLink( "nic", "1ps",
-        new SST::Event::Handler<PtlNicMMIF>( 
+    if( params.find_string("single","false").compare("true") )
+    {
+        
+        DBGX(1,"\n");
+        m_cmdLink = configureLink( "nic", "1ps",
+            new SST::Event::Handler<PtlNicMMIF>( 
                         this, &PtlNicMMIF::ptlCmdRespHandler ) );
-    assert( m_cmdLink );
+        assert( m_cmdLink );
 
-    m_dmaLink = configureLink( "dma", "1ps",
-        new SST::Event::Handler<PtlNicMMIF>( this, &PtlNicMMIF::dmaHandler ) );
-    assert( m_dmaLink );
+        m_dmaLink = configureLink( "dma", "1ps",
+            new SST::Event::Handler<PtlNicMMIF>( 
+                        this, &PtlNicMMIF::dmaHandler ) );
+        assert( m_dmaLink );
+    }
 
     m_devMemory.resize(4096);
     m_cmdQueue = (cmdQueue_t*) &m_devMemory[0];
@@ -55,7 +68,8 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
 
     m_barrier.add( &m_barrierCallback );
 
-    m_palaciosIF = new PalaciosIF( params.find_string("vm-dev"), 
+
+    m_palaciosIF = new PalaciosIF( m_functor, params.find_string("vm-dev"), 
                                     params.find_string("dev" ), 
                                     &m_devMemory[0],
                                     m_devMemory.size(),
@@ -65,40 +79,28 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     ret = m_palaciosIF->vm_launch();
     assert( ret == 0 );
 
-    TimeConverter *minPartTC = Simulation::getSimulation()->getMinPartTC();
-    assert ( minPartTC );
-
-    // getFactor returns number of ps between Sync's
-    float clockPeriod_ns = minPartTC->getFactor() / 1000.0;
     m_guestHz            = m_palaciosIF->getCpuFreq();
-    m_runCycles          = params.find_integer( "minCycles" );
+    m_runCycles          = params.find_integer( "minCycles", m_runCycles );
+    float runPeriod          = (1.0/m_guestHz) * m_runCycles;
 
-    printf("requested minCycles=%lu, guest CPU freq %lu hz\n",
-                            m_runCycles, m_guestHz);
+    INFO("minCycles=%lu, guest CPU freq %lu hz, runPeriod %.15f\n",
+                     m_runCycles, m_guestHz, runPeriod );
+#if USE_THREAD 
+    INFO("Using a thread to run palacios\n");
+#endif
 
-    float minSimPeriod_ns = (1.0 / (float) m_guestHz) * m_runCycles * 1000000000.0;
-
-    float adjustedPeriod_ns = adjustPeriod( clockPeriod_ns, minSimPeriod_ns );
-
-    printf("SST clock() period %.3f ns.\n", clockPeriod_ns );
-
-    m_mult = (int) round(adjustedPeriod_ns / clockPeriod_ns); 
-    m_runCycles = (uint64_t) round( (adjustedPeriod_ns / 1000000000.0 ) / 
-                        (1.0/(float)m_guestHz) );
-    printf("mult=%d runCycles=%d\n", m_mult, m_runCycles );
-    printf("requested simPeriod %.3f ns. adjusted to %.3f ns.\n", 
-                minSimPeriod_ns, m_mult * clockPeriod_ns );
-
-    std::string strBuf;
-    strBuf.resize(32);
-    snprintf( &strBuf[0], 32, "%.0f ns", clockPeriod_ns );
-
-    TimeConverter *tmp = registerClock( strBuf,
+    char buf[64];
+    snprintf( buf, 64, "%.15f s", runPeriod );
+    TimeConverter* tmp = registerClock( buf,
         new SST::Clock::Handler< PtlNicMMIF >( this, &PtlNicMMIF::clock ) );
     assert( tmp );
 
+    DBGX(1,"%lu\n",tmp->getFactor());
+
+#if USE_THREAD 
     ret = pthread_barrier_init( &m_threadBarrier, NULL, 2 );
     assert( ret == 0 ); 
+#endif
 }    
 
 PtlNicMMIF::~PtlNicMMIF()
@@ -111,37 +113,52 @@ bool PtlNicMMIF::Status() {
     return false;
 }
 
+void PtlNicMMIF::update( int offset )
+{
+    DBGX(1,"offet %#x\n",offset);
+    ptlCmd(offset);
+    barrierCmd(offset);
+}
+
 bool PtlNicMMIF::clock( Cycle_t cycle )
 {
     simCtrlCmd();
-    ptlCmd();
-    barrierCmd();
 
+#if USE_THREAD 
     if ( m_threadRun ) {
-        
-        if ( m_count == 0 ) {
-            int ret;
-            ret = pthread_barrier_wait( &m_threadBarrier );
-            assert (ret == 0 || ret == PTHREAD_BARRIER_SERIAL_THREAD );
-            m_count = m_mult;
-        }
-        --m_count;
+        int ret;
+        ret = pthread_barrier_wait( &m_threadBarrier );
+        assert (ret == 0 || ret == PTHREAD_BARRIER_SERIAL_THREAD );
     }
+#else
+    if ( m_simulating ) {
+        int ret =  m_palaciosIF->vm_run_cycles( m_runCycles );
+        assert( ret == 0 );
+    }
+#endif
+    
     return false;
 }
 
 void PtlNicMMIF::doSimCtrlCmd( int cmd )
 {
     DBGX(5,"cmd=%d\n",cmd);
+    int ret;
 
     switch ( cmd ) {
     case VM_SIM_START:
         m_simStartWallTime = time(NULL);
         fprintf(stderr,"Starting Palacios simulate\n");
+#if USE_THREAD 
         if ( ! sim_mode_start() ) {
             fprintf(stderr,"PtlNicMMIF::%s() already in simulation mode\n",
                                                         __func__);
         } 
+#else
+        ret = m_palaciosIF->vm_pause();
+        m_simulating = true;
+        assert( ret == 0 );
+#endif
         // record the starting times for both Palacios and SST so 
         // we can compare results with simulation stops
         m_guestStart = m_palaciosIF->rdtsc();
@@ -158,14 +175,27 @@ void PtlNicMMIF::doSimCtrlCmd( int cmd )
             (Simulation::getSimulation()->getCurrentSimCycle() - m_sstStart) *
                     (1.0/(float)1000000000000));
 
+#if USE_THREAD 
         if ( ! sim_mode_stop()  ) {
             fprintf(stderr,"PtlNicMMIF::%s() not in simulation mode \n",
                                                         __func__);
         } 
+#else
+        m_simulating = false;
+        ret = m_palaciosIF->vm_continue();
+        assert( ret == 0 );
+#endif
         break;
 
     case VM_SIM_TERM:
+#if USE_THREAD 
         sim_mode_stop();
+#else
+        if ( m_simulating ) {
+            ret = m_palaciosIF->vm_continue();
+            assert( ret == 0 );
+        }
+#endif
         m_palaciosIF->vm_stop();
         delete m_palaciosIF;
         unregisterExit();
@@ -183,6 +213,7 @@ int PtlNicMMIF::Setup()
     return 0;
 }
 
+#if USE_THREAD 
 void* PtlNicMMIF::thread1( void* ptr )
 {
     return ((PtlNicMMIF*)ptr)->thread2();
@@ -200,8 +231,9 @@ void* PtlNicMMIF::thread2( )
     } while ( m_threadRun );
     return NULL;
 }
+#endif
 
-void PtlNicMMIF::ptlCmd()
+void PtlNicMMIF::ptlCmd( int offset )
 {
     if ( m_cmdQueue->head != m_cmdQueue->tail ) {
         DBGX(2,"new command head=%d tail=%d\n",
@@ -222,8 +254,9 @@ void PtlNicMMIF::simCtrlCmd()
     }
 }    
 
-void PtlNicMMIF::barrierCmd()
+void PtlNicMMIF::barrierCmd( int offset )
 {
+    if ( offset != m_barrierOffset ) return;
     uint32_t* tmp = (uint32_t*) &m_devMemory[m_barrierOffset];   
     if ( *tmp == 1 ) {
         DBGX(2,"\n");
@@ -245,9 +278,11 @@ void PtlNicMMIF::dmaHandler( SST::Event* e )
     DBGX( 2, "addr=%#lx size=%lu type=%s\n", event->addr, event->size,
                 event->type == DmaEvent::Write ? "Write" : "Read" );
     if ( event->type == DmaEvent::Write ) {
-        m_palaciosIF->writeGuestMemVirt( event->addr, event->buf, event->size );
+        m_palaciosIF->writeGuestMemVirt( event->addr, 
+                    (uint8_t*)event->buf, event->size );
     } else {
-        m_palaciosIF->readGuestMemVirt( event->addr, event->buf, event->size );
+        m_palaciosIF->readGuestMemVirt( event->addr, 
+                    (uint8_t*)event->buf, event->size );
     }
 
     m_dmaLink->Send( event );
@@ -266,3 +301,7 @@ void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )
     delete e;
 #endif
 }
+
+BOOST_CLASS_EXPORT(PtlNicEvent);
+BOOST_CLASS_EXPORT(PtlNicRespEvent);
+

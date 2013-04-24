@@ -44,9 +44,37 @@
 
 #endif
 
+namespace SST {
+namespace Palacios {
+
+class AbstractFunctor 
+{
+  public:
+    virtual void operator()(int) = 0;
+};
+
+template <class Class> class DerivedFunctor : public AbstractFunctor
+{
+  private:
+    void ( Class::*m_fptr )( int );
+    Class* m_obj;
+    
+  public:
+    DerivedFunctor( Class* obj, void( Class::*fptr )( int ) ) :
+        m_obj( obj ),
+        m_fptr( fptr )
+    { }
+ 
+    virtual void operator()( int value ) {
+        (*m_obj.*m_fptr)( value );
+    }
+};
+
 class PalaciosIF {
 public:
-    PalaciosIF( std::string vm, std::string dev, 
+
+
+    PalaciosIF( AbstractFunctor& functor, std::string vm, std::string dev, 
                                 uint8_t* backing,
                                 uint64_t backingLen,
                                 uint64_t addr ) :
@@ -54,7 +82,8 @@ public:
         m_backing( backing ),
         m_backingLen( backingLen ),
         m_backingAddr( addr ),
-        m_vmName( vm )
+        m_vmName( vm ),
+        m_functor( functor )
     {
         int ret;
         DBGX(x,"this=%p\n", this ); 
@@ -125,6 +154,7 @@ private:
     uint64_t            m_backingLen;
     uint64_t            m_backingAddr;
     std::string         m_vmName;
+    AbstractFunctor&    m_functor;
 };
 
 int PalaciosIF::vm_launch( )
@@ -258,6 +288,7 @@ void PalaciosIF::writeMem( uint64_t gpa, void* data, int count )
     }
 
     memcpy( m_backing + offset, data, count );
+    m_functor( offset );
     
     //printData(offset, data, count );
 }
@@ -304,5 +335,7 @@ char* PalaciosIF::getType( int type )
     }    
     return "???? type";
 }
+
+}}
 
 #endif /* _PALACIOS_H */

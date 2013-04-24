@@ -21,6 +21,11 @@
 #include "portals4/ptlNic/cmdQueue.h"
 #include "barrier.h"
 
+#define USE_THREAD 0
+
+namespace SST {
+namespace Palacios {
+
 class PtlNicMMIF : public SST::Component
 {
   public:
@@ -38,6 +43,8 @@ class PtlNicMMIF : public SST::Component
     void writeFunc( unsigned long );
     void barrierLeave();
     bool clock( SST::Cycle_t );
+    void update(int);
+    DerivedFunctor<PtlNicMMIF> m_functor;
 
     void doSimCtrlCmd(int cmd);
     void simCtrlCmd();
@@ -48,6 +55,7 @@ class PtlNicMMIF : public SST::Component
         return tmp;
     }
 
+#if USE_THREAD 
     bool sim_mode_start() {
         if ( m_threadRun ) return false; 
 
@@ -58,7 +66,6 @@ class PtlNicMMIF : public SST::Component
         ret = pthread_create( &m_thread, NULL, thread1, this );
         assert( ret == 0 );
 
-        m_count = m_mult;
         return true;
     }
 
@@ -79,9 +86,10 @@ class PtlNicMMIF : public SST::Component
 
         return true;
     }
+#endif
 
-    void ptlCmd();
-    void barrierCmd();
+    void ptlCmd(int);
+    void barrierCmd(int);
 
     SST::Link*                  m_cmdLink;
     SST::Link*                  m_dmaLink;
@@ -91,21 +99,23 @@ class PtlNicMMIF : public SST::Component
     unsigned long               m_simulationCtrlCmd;
     
     std::vector<uint8_t>        m_devMemory;
-    cmdQueue_t*                 m_cmdQueue;
+    Portals4::cmdQueue_t*       m_cmdQueue;
 
     static const char          *m_cmdNames[];
 
     BarrierAction               m_barrier;
     BarrierAction::Handler<PtlNicMMIF> m_barrierCallback;
 
+#if USE_THREAD 
     static void* thread1( void* );
     void* thread2();
     bool                        m_threadRun;
     pthread_t                   m_thread;
     pthread_barrier_t           m_threadBarrier;
+#else
+    bool                        m_simulating;
+#endif
 
-    int         m_mult;
-    int         m_count;
     uint64_t    m_runCycles;
 
     uint64_t    m_sstStart;
@@ -113,5 +123,7 @@ class PtlNicMMIF : public SST::Component
     uint64_t    m_guestHz;
     time_t      m_simStartWallTime;
 };
+
+}}
 
 #endif

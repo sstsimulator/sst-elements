@@ -13,6 +13,9 @@
 
 #include <sys/select.h>
 
+using namespace SST;
+using namespace SST::Palacios;
+
 void PalaciosIF::sigHandler(int)
 {
 }

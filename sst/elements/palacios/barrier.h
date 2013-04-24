@@ -24,6 +24,10 @@
 #define BA_DBG(fmt,args...)
 #endif
 
+namespace SST {
+namespace Palacios {
+
+
 class BarrierAction : public SST::Action 
 {
      boost::mpi::communicator world; 
@@ -106,5 +110,5 @@ class BarrierAction : public SST::Action
     int m_numReporting;
     std::deque< HandlerBase* > m_localQ;
 };
-
+}}
 #endif
