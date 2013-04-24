@@ -129,7 +129,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // std::cout << "output_latency: " << output_latency << std::endl;
     
     std::string xbar_bw = params.find_string("xbar_bw");
-    if ( output_latency == "" ) {
+    if ( xbar_bw == "" ) {
 	std::cout << "ERROR: hr_router requires xbar_bw to be specified" << std::endl;
     }
     // std::cout << "xbar_bw: " << xbar_bw << std::endl;
