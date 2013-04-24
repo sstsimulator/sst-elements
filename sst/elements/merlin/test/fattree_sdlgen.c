@@ -31,6 +31,7 @@ typedef struct params {
     int peers;
     char link_bw[64];
     char link_lat[64];
+    char xbar_bw[64];
 } params_t;
 
 
@@ -57,6 +58,8 @@ int collect_parameters(FILE *f)
     fscanf(f, "%s", params.link_bw);
     fprintf(stderr, "Enter Link Latency  (ie:  10ns):  ");
     fscanf(f, "%s", params.link_lat);
+    fprintf(stderr, "Enter Xbar Bandwidth  (ie:  1GHz):  ");
+    fscanf(f, "%s", params.xbar_bw);
 
 
     // k Pods * (k/2) Edge Switches * numnodes  [numnodes <= k/2]
@@ -101,6 +104,7 @@ main(int argc, char **argv)
     fprintf(output, "    <num_ports> %d </num_ports>\n", params.k);
     fprintf(output, "    <num_vcs> 2 </num_vcs>\n");
     fprintf(output, "    <link_bw> %s </link_bw>\n", params.link_bw);
+    fprintf(output, "    <xbar_bw> %s </xbar_bw>\n", params.xbar_bw);
     fprintf(output, "    <topology> fattree </topology>\n");
     fprintf(output, "    <fattree:loading> %d </fattree:loading>\n",  params.numnodes);
     fprintf(output, "  </rtr_params>\n");
@@ -155,7 +159,7 @@ main(int argc, char **argv)
         fprintf(output, "\n\n\n");
         fprintf(output, "  <!-- POD %d -->\n", pod);
         myip.x[1] = pod;
-        fprintf(output, "  <!-- AGGREGATION ROUTERS -->\n", pod);
+        fprintf(output, "  <!-- AGGREGATION ROUTERS -->\n");
         for ( int r = 0 ; r < params.k/2 ; r++ ) {
             int router = params.k/2 + r;
             myip.x[2] = router;
@@ -183,7 +187,7 @@ main(int argc, char **argv)
         }
 
         fprintf(output, "\n");
-        fprintf(output, "  <!-- EDGE ROUTERS -->\n", pod);
+        fprintf(output, "  <!-- EDGE ROUTERS -->\n");
         for ( int r = 0 ; r < params.k/2 ; r++ ) {
             myip.x[2] = r;
             myip.x[3] = 1;
@@ -210,7 +214,7 @@ main(int argc, char **argv)
 
             fprintf(output, "  </component>\n");
             fprintf(output, "\n");
-            fprintf(output, "  <!-- NODES -->\n", pod);
+            fprintf(output, "  <!-- NODES -->\n");
             for ( int n = 0 ; n < params.numnodes ; n++ ) {
                 int node_id = pod * (params.k/2) * params.numnodes;
                 node_id += r * params.numnodes;

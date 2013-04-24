@@ -30,6 +30,7 @@ typedef struct params {
     uint32_t g;  /* # of Groups */
     char link_bw[64];
     char link_lat[64];
+    char xbar_bw[64];
 } params_t;
 
 static params_t params;
@@ -67,6 +68,8 @@ int collect_parameters(FILE *f)
     fscanf(f, "%s", params.link_bw);
     fprintf(stderr, "Enter Link Latency  (ie:  10ns):  ");
     fscanf(f, "%s", params.link_lat);
+    fprintf(stderr, "Enter Xbar Bandwidth  (ie:  1GHz):  ");
+    fscanf(f, "%s", params.xbar_bw);
 
     return 0;
 }
@@ -100,6 +103,7 @@ int main(int argc, char **argv)
     fprintf(output, "    <num_ports> %d </num_ports>\n", params.k);
     fprintf(output, "    <num_vcs> 3 </num_vcs>\n"); /* 3 VCs are sufficient */
     fprintf(output, "    <link_bw> %s </link_bw>\n", params.link_bw);
+    fprintf(output, "    <xbar_bw> %s </xbar_bw>\n", params.xbar_bw);
     fprintf(output, "    <topology> dragonfly </topology>\n");
     fprintf(output, "    <dragonfly:hosts_per_router> %u </dragonfly:hosts_per_router>\n", params.p);
     fprintf(output, "    <dragonfly:routers_per_group> %u </dragonfly:routers_per_group>\n", params.a);

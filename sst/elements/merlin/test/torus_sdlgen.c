@@ -25,6 +25,7 @@ typedef struct params {
     int peers;
     char link_bw[64];
     char link_lat[64];
+    char xbar_bw[64];
 } params_t;
 
 
@@ -51,6 +52,8 @@ int collect_parameters(FILE *f)
     fscanf(f, "%s", params.link_bw);
     fprintf(stderr, "Enter Link Latency  (ie:  10ns):  ");
     fscanf(f, "%s", params.link_lat);
+    fprintf(stderr, "Enter Xbar Bandwidth  (ie:  1GHz):  ");
+    fscanf(f, "%s", params.xbar_bw);
 
     return 0;
 }
@@ -115,6 +118,7 @@ main(int argc, char **argv)
     fprintf(output, "    <num_ports> %d </num_ports>\n", num_rtr_ports + params.numnodes);
     fprintf(output, "    <num_vcs> 2 </num_vcs>\n");
     fprintf(output, "    <link_bw> %s </link_bw>\n", params.link_bw);
+    fprintf(output, "    <xbar_bw> %s </xbar_bw>\n", params.xbar_bw);
     fprintf(output, "    <topology> torus </topology>\n");
 
     fprintf(output, "    <torus:shape> %d",  params.dims[0]);
