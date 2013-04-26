@@ -116,7 +116,8 @@ class PtlNicMMIF : public SST::Component
     bool                        m_simulating;
 #endif
 
-    uint64_t    m_runCycles;
+    int64_t    m_runCycles;
+    int64_t    m_runCyclesJitter;
 
     uint64_t    m_sstStart;
     uint64_t    m_guestStart;

@@ -37,6 +37,7 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     m_simulating( false ),
 #endif
     m_runCycles( 100 ),
+    m_runCyclesJitter( 0 ),
     m_functor( DerivedFunctor<PtlNicMMIF>(this,&PtlNicMMIF::update) )
 {
     int ret;
@@ -132,8 +133,16 @@ bool PtlNicMMIF::clock( Cycle_t cycle )
     }
 #else
     if ( m_simulating ) {
-        int ret =  m_palaciosIF->vm_run_cycles( m_runCycles );
-        assert( ret == 0 );
+        int64_t reqRunCycles = m_runCycles + m_runCyclesJitter;
+        if ( reqRunCycles <= 0 ) {
+                m_runCyclesJitter += m_runCycles;
+        } else {
+                int64_t start = m_palaciosIF->rdtsc();
+                int ret =  m_palaciosIF->vm_run_cycles( reqRunCycles );
+                assert( ret == 0 );
+                int64_t actual = m_palaciosIF->rdtsc() - start;
+                m_runCyclesJitter = reqRunCycles - actual;
+        }
     }
 #endif
     
