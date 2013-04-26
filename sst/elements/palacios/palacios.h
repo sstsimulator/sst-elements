@@ -104,6 +104,8 @@ public:
 
         ret = pthread_create( &m_thread, NULL, thread1, this ); 
         assert( ret == 0 );
+        ret = pthread_mutex_init( &m_thread_mutex, NULL );
+        assert( ret == 0 );
     }
     ~PalaciosIF(){
         int ret;
@@ -149,6 +151,7 @@ private:
 
     int                 m_fd;
     pthread_t           m_thread;
+    pthread_mutex_t     m_thread_mutex; 
     bool                m_threadRun;
     uint8_t*            m_backing;
     uint64_t            m_backingLen;
@@ -298,23 +301,45 @@ uint32_t PalaciosIF::virt2phys( uint64_t gva ) {
 }
 
 uint64_t PalaciosIF::rdtsc() {
-    return v3_user_host_dev_rdtsc( m_fd );
+    uint64_t ret;
+    pthread_mutex_lock(&m_thread_mutex);
+    
+    ret = v3_user_host_dev_rdtsc( m_fd );
+
+    pthread_mutex_unlock(&m_thread_mutex);
+    return ret;
 }
 
 uint64_t PalaciosIF::getCpuFreq() {
-    return v3_user_host_dev_getcpuhz( m_fd );
+    uint64_t ret;
+    pthread_mutex_lock(&m_thread_mutex);
+    
+    ret = v3_user_host_dev_getcpuhz( m_fd );
+
+    pthread_mutex_unlock(&m_thread_mutex);
+    return ret;
 }
 
 uint64_t  PalaciosIF::writeGuestMemVirt( uint64_t gva, void* data, int count )
 {
-    return v3_user_host_dev_write_guest_mem( m_fd, 
+    uint64_t ret;
+    pthread_mutex_lock(&m_thread_mutex);
+    
+    ret = v3_user_host_dev_write_guest_mem( m_fd, 
                     (void*) virt2phys(gva), data, count );
+    pthread_mutex_unlock(&m_thread_mutex);
+    return ret;
 }
 
 uint64_t  PalaciosIF::readGuestMemVirt( uint64_t gva, void* data, int count )
 {
-    return v3_user_host_dev_read_guest_mem( m_fd, 
+    uint64_t ret;
+    pthread_mutex_lock(&m_thread_mutex);
+    
+    ret = v3_user_host_dev_read_guest_mem( m_fd, 
                     (void*) virt2phys(gva), data, count );
+    pthread_mutex_unlock(&m_thread_mutex);
+    return ret;
 }
 
 char* PalaciosIF::getType( int type )

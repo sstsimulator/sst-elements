@@ -38,7 +38,8 @@ void* PalaciosIF::thread2( )
         FD_SET(m_fd,&readset);
         
         int ret = select(m_fd+1, &readset, 0, 0, 0);
-    
+
+        pthread_mutex_lock(&m_thread_mutex);
         if ( ret > 0 && FD_ISSET(m_fd,&readset) ) {
     
             int ret;
@@ -50,6 +51,7 @@ void* PalaciosIF::thread2( )
             free(resp);
             free(req);
         }
+        pthread_mutex_unlock(&m_thread_mutex);
     }   
     DBGX(x,"leave\n");
     return NULL;
