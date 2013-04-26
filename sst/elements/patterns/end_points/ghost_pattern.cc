@@ -400,7 +400,20 @@ Ghost_pattern::do_decomposition(void)
 
 
 
+/*
+// THIS SECTION MOVED TO patterns.cc FOR CONFIG CHANGE TO ONE LIBRARY FILE - ALEVINE
+
 eli(Ghost_pattern, ghost_pattern, "Ghost pattern")
+*/
+
+// ADDED FOR PROPER INITIALIZATION - ALEVINE
+// SST Startup and Shutdown
+int Ghost_pattern::Setup()
+{
+	// Call the initial State Transition
+	state_transition(E_START, STATE_INIT);
+	return 0;
+}
 
 #ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Ghost_pattern)

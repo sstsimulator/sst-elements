@@ -295,6 +295,9 @@ int64_t latency;
 
 
 
+/*
+// THIS SECTION MOVED TO patterns.cc FOR RELEASE 3.x OF SST - ALEVINE
+
 static Component*
 create_routermodel(SST::ComponentId_t id, 
                   SST::Component::Params_t& params)
@@ -344,5 +347,6 @@ extern "C" {
         components2,
     };
 }
+*/
 
 BOOST_CLASS_EXPORT(Routermodel)

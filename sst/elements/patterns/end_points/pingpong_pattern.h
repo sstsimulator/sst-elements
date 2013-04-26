@@ -91,7 +91,8 @@ class Pingpong_pattern : public Comm_pattern {
 	    SMpingpong= SM->SM_create((void *)this, Pingpong_pattern::wrapper_handle_events);
 
 	    // Kickstart ourselves
-	    state_transition(E_START, PP_INIT);
+	    // MOVED TO setup() FOR PROPER INITIALIZATION - ALEVINE
+//	    state_transition(E_START, PP_INIT);
         }
 
         ~Pingpong_pattern()
@@ -145,6 +146,11 @@ class Pingpong_pattern : public Comm_pattern {
 	int dest;
 	pingpong_state_t state;
 
+	// ADDED FOR PROPER INITIALIZATION - ALEVINE
+	// SST Startup and Shutdown
+	int Setup();
+
+	// Serialization
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version )

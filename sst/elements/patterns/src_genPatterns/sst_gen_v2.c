@@ -453,7 +453,7 @@ sst_gen_component(char *id, char *net_link_id, char *net_aggregator_id,
 	return;
     }
 
-    fprintf(sstfile, "\t<component name=%s type=%s rank=%d>\n", id, pattern_name(), mpi_rank);
+    fprintf(sstfile, "\t<component name=%s type=\"patterns.%s\" rank=%d>\n", id, pattern_name(), mpi_rank);
     fprintf(sstfile, "\t\t<params include=Gp>\n");
     fprintf(sstfile, "\t\t\t<rank> %d </rank>\n", core_num);
     fprintf(sstfile, "\t\t</params>\n");
@@ -490,7 +490,7 @@ sst_nvram_component(char *id, char *link_id, nvram_type_t type, int mpi_rank, FI
 	return;
     }
 
-    fprintf(sstfile, "\t<component name=\"%s\" type=bit_bucket rank=%d>\n", id, mpi_rank);
+    fprintf(sstfile, "\t<component name=\"%s\" type=\"patterns.bit_bucket\" rank=%d>\n", id, mpi_rank);
     if (type == LOCAL_NVRAM)   {
 	fprintf(sstfile, "\t\t<params include=NVRAMparams></params>\n");
     }
@@ -525,9 +525,9 @@ sst_router_component_start(char *id, char *cname, router_function_t role,
 
     fprintf(sstfile, "\t<component name=\"%s\" ", id);
     if (power_method == pwrNone)   {
-	fprintf(sstfile, "type=routermodel rank=%d>\n", mpi_rank);
+	fprintf(sstfile, "type=patterns.routermodel rank=%d>\n", mpi_rank);
     } else   {
-	fprintf(sstfile, "type=routermodel_power rank=%d>\n", mpi_rank);
+	fprintf(sstfile, "type=patterns.routermodel_power rank=%d>\n", mpi_rank);
     }
     switch (role)   {
 	case Rnet:
@@ -743,7 +743,7 @@ int mpi_rank;
 	}
 	/*
 	** We have to list the links in order in the params section, so the router
-	** componentn can get the names and create the appropriate links.
+	** component can get the names and create the appropriate links.
 	*/
 
 	/* Links to local NIC(s) */

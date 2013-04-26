@@ -23,6 +23,8 @@ typedef enum {Net= 0, NoC, Far} NIC_model_t;
 const char *type_name(NIC_model_t nic);		// Defined in NIC_model.cc
 
 
+/*
+// THIS SECTION REMOVED TO FORCE ELI STRUCTURES TO BE BUILD IN patterns.cc FOR RELEASE 3.x OF SST - ALEVINE
 
 // Macro to fill in eli structure needed in dynamic libraries
 // Required for all components loadable by SST. In this
@@ -31,6 +33,7 @@ const char *type_name(NIC_model_t nic);		// Defined in NIC_model.cc
 // where the first argument is the name of the Comm_pattern object, the second
 // argument is the name of the resulting library, and the last argument is
 // a brief description.
+
 #define eli(comp, lib, desc) \
 static SST::Component *create_##comp(SST::ComponentId_t id, SST::Component::Params_t& params) \
 { \
@@ -47,5 +50,6 @@ extern "C" { \
        #lib, "Trying to figure this out", components \
     }; \
 } \
+*/
 
 #endif  // _PATTERNS_H_

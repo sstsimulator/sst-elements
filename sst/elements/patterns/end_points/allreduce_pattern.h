@@ -146,7 +146,8 @@ class Allreduce_pattern : public Comm_pattern    {
 		}
 		printf("#  |||  nodes, min, mean, median, max, sd\n");
 	    }
-	    state_transition(E_START, STATE_INIT);
+	    // MOVED TO setup() FOR PROPER INITIALIZATION - ALEVINE
+//	    state_transition(E_START, STATE_INIT);
         }
 
 
@@ -210,6 +211,9 @@ class Allreduce_pattern : public Comm_pattern    {
 	int start_nnodes;
 	int end_nnodes;
 
+	// ADDED FOR PROPER INITIALIZATION - ALEVINE
+	// SST Startup and Shutdown
+	int Setup();
 
 	// Serialization
         friend class boost::serialization::access;

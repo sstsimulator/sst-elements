@@ -256,7 +256,20 @@ fft_events_t e= (fft_events_t)sm_event.event;
 
 
 
+/*
+// THIS SECTION MOVED TO patterns.cc FOR CONFIG CHANGE TO ONE LIBRARY FILE - ALEVINE
+
 eli(FFT_pattern, fft_pattern, "FFT pattern")
+*/
+
+// ADDED FOR PROPER INITIALIZATION - ALEVINE
+// SST Startup and Shutdown
+int FFT_pattern::Setup()
+{
+	// Call the initial State Transition
+	state_transition(E_START, STATE_INIT);
+	return 0;
+}
 
 #ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(FFT_pattern)

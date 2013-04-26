@@ -125,7 +125,8 @@ class FFT_pattern : public Comm_pattern    {
 		printf("#  |||      time_per_flop =        %d %s\n", time_per_flop, TIME_BASE);
 		printf("#\n");
 	    }
-	    state_transition(E_START, STATE_INIT);
+	    // MOVED TO setup() FOR PROPER INITIALIZATION - ALEVINE
+//	    state_transition(E_START, STATE_INIT);
         }
 
 
@@ -191,6 +192,9 @@ class FFT_pattern : public Comm_pattern    {
 	SimTime_t total_time;
 	int M;
 
+	// ADDED FOR PROPER INITIALIZATION - ALEVINE
+	// SST Startup and Shutdown
+	int Setup();
 
 	// Serialization
         friend class boost::serialization::access;

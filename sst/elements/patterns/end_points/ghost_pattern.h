@@ -178,7 +178,8 @@ class Ghost_pattern : public Comm_pattern    {
 		neighbor_cnt= 6;
 	    }
 	    t= -1;
-	    state_transition(E_START, STATE_INIT);
+	    // MOVED TO setup() FOR PROPER INITIALIZATION - ALEVINE
+//	    state_transition(E_START, STATE_INIT);
         }
 
 
@@ -261,6 +262,9 @@ class Ghost_pattern : public Comm_pattern    {
 	bool wait_last_receives;
 	int neighbor_cnt;
 
+	// ADDED FOR PROPER INITIALIZATION - ALEVINE
+	// SST Startup and Shutdown
+	int Setup();
 
 	// Serialization
         friend class boost::serialization::access;

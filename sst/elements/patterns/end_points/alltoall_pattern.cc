@@ -270,7 +270,20 @@ alltoall_events_t e= (alltoall_events_t)sm_event.event;
 
 
 
+/*
+// THIS SECTION MOVED TO patterns.cc FOR CONFIG CHANGE TO ONE LIBRARY FILE - ALEVINE
+
 eli(Alltoall_pattern, alltoall_pattern, "Alltoall pattern")
+*/
+
+// ADDED FOR PROPER INITIALIZATION - ALEVINE
+// SST Startup and Shutdown
+int Alltoall_pattern::Setup()
+{
+	// Call the initial State Transition
+	state_transition(E_START, STATE_INIT);
+	return 0;
+}
 
 #ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Alltoall_pattern)

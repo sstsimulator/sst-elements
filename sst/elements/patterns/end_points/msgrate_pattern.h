@@ -84,7 +84,8 @@ class Msgrate_pattern : public Comm_pattern    {
 
 	    // Kickstart ourselves
 	    done= false;
-	    state_transition(E_START_T1, STATE_INIT);
+	    // MOVED TO setup() FOR PROPER INITIALIZATION - ALEVINE
+//	    state_transition(E_START_T1, STATE_INIT);
         }
 
 
@@ -143,6 +144,9 @@ class Msgrate_pattern : public Comm_pattern    {
 	SimTime_t msg_wait_time_start;
 	double msg_wait_time;
 
+	// ADDED FOR PROPER INITIALIZATION - ALEVINE
+	// SST Startup and Shutdown
+	int Setup();
 
 	// Serialization
         friend class boost::serialization::access;

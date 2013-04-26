@@ -307,7 +307,20 @@ double check= 0.0;
 
 
 
+/*
+// THIS SECTION MOVED TO patterns.cc FOR CONFIG CHANGE TO ONE LIBRARY FILE - ALEVINE
+
 eli(Pingpong_pattern, pingpong_pattern, "Ping-pong pattern")
+*/
+
+// ADDED FOR PROPER INITIALIZATION - ALEVINE
+// SST Startup and Shutdown
+int Pingpong_pattern::Setup()
+{
+	// Call the initial State Transition
+	state_transition(E_START, PP_INIT);
+	return 0;
+}
 
 #ifdef SERIALIZATION_WORKS_NOW
 BOOST_CLASS_EXPORT(Pingpong_pattern)

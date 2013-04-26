@@ -108,7 +108,8 @@ class Alltoall_pattern : public Comm_pattern    {
 		    (int)(num_doubles * sizeof(double)));
 		printf("#  |||  nodes, min, mean, median, max, sd\n");
 	    }
-	    state_transition(E_START, STATE_INIT);
+	    // MOVED TO setup() FOR PROPER INITIALIZATION - ALEVINE
+//	    state_transition(E_START, STATE_INIT);
         }
 
 
@@ -171,6 +172,9 @@ class Alltoall_pattern : public Comm_pattern    {
 	SimTime_t duration;
 	std::list <double>times;
 
+	// ADDED FOR PROPER INITIALIZATION - ALEVINE
+	// SST Startup and Shutdown
+	int Setup();
 
 	// Serialization
         friend class boost::serialization::access;

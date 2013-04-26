@@ -123,6 +123,8 @@ SimTime_t read_time;
 
 
 
+/*
+// THIS SECTION MOVED TO patterns.cc FOR RELEASE 3.x OF SST - ALEVINE
 
 static SST::Component *
 create_bit_bucket(SST::ComponentId_t id, SST::Component::Params_t& params)
@@ -140,5 +142,6 @@ extern "C" {
         "bit_bucket", "Trying to figure this out", components
     };
 }
+*/
 
 BOOST_CLASS_EXPORT(Bit_bucket)
