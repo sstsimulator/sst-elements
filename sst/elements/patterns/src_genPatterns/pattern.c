@@ -98,7 +98,7 @@ set_defaults(void)
     _num_sets= NO_DEFAULT;
     _num_doubles= 1;
     _tree_type= TREE_DEEP;
-    _start_nnodes= 0;
+    _start_nnodes= 1;
 
     /* Ghost defaults */
     _time_steps= 1000;
