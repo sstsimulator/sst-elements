@@ -185,7 +185,7 @@ int MemController::Finish(void)
 void MemController::handleEvent(SST::Event *event)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    bool to_me = ( ev->getDst() == getName() || ev->getDst() == BROADCAST_TARGET );
+    bool to_me = (!use_bus || ( ev->getDst() == getName() || ev->getDst() == BROADCAST_TARGET ));
     switch ( ev->getCmd() ) {
     case RequestData:
     case ReadReq:
@@ -197,7 +197,7 @@ void MemController::handleEvent(SST::Event *event)
         break;
     case WriteReq:
     case SupplyData:
-        if ( ev->queryFlag(MemEvent::F_WRITEBACK) )
+        if ( !use_bus || ev->queryFlag(MemEvent::F_WRITEBACK) )
             addRequest(ev);
         else
             if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
