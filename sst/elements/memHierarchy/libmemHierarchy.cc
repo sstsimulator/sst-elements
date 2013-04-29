@@ -76,7 +76,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"device_ini",      "Name of DRAMSim Device config file"},
     {"system_ini",      "Name of DRAMSim Device system file"},
     {"access_time",     "When not using DRAMSim, latency of memory operation."},
-    {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"}
+    {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"},
+    {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"}
 };
 
 static const ElementInfoParam cpu_params[] = {
