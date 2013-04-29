@@ -41,36 +41,36 @@ namespace MemHierarchy {
 
 class MemController : public SST::Component {
 public:
-	MemController(ComponentId_t id, Params_t &params);
-	void init(unsigned int);
-	int Setup();
-	int Finish();
+    MemController(ComponentId_t id, Params_t &params);
+    void init(unsigned int);
+    int Setup();
+    int Finish();
 
 
 private:
 
-	struct DRAMReq {
+    struct DRAMReq {
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
-		MemEvent *reqEvent;
-		MemEvent *respEvent;
-		bool isWrite;
+        MemEvent *reqEvent;
+        MemEvent *respEvent;
+        bool isWrite;
         bool canceled;
 
-		size_t size;
-		size_t amt_in_process;
-		size_t amt_processed;
+        size_t size;
+        size_t amt_in_process;
+        size_t amt_processed;
         Status_t status;
 
-		Addr addr;
+        Addr addr;
         uint32_t num_req; // size / bus width;
 
-		DRAMReq(MemEvent *ev, const size_t busWidth) :
-			reqEvent(new MemEvent(ev)), respEvent(NULL),
-			isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
+        DRAMReq(MemEvent *ev, const size_t busWidth) :
+            reqEvent(new MemEvent(ev)), respEvent(NULL),
+            isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
             canceled(false),
-			size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
-		{
+            size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
+        {
             Addr reqEndAddr = ev->getAddr() + ev->getSize();
             addr = ev->getAddr() & ~(busWidth -1); // round down to bus alignment;
 
@@ -106,7 +106,7 @@ private:
                     (reqEvent->getAddr()+reqEvent->getSize() <= (ev->getAddr() + ev->getSize())));
         }
 
-	};
+    };
 
     class MemCtrlEvent : public SST::Event {
     public:
@@ -127,46 +127,47 @@ private:
 
 
 
-	MemController();  // for serialization only
+    MemController();  // for serialization only
 
-	void handleEvent(SST::Event *event);
+    void handleEvent(SST::Event *event);
 
-	void addRequest(MemEvent *ev);
-	void cancelEvent(MemEvent *ev);
-	bool clock(SST::Cycle_t cycle);
+    void addRequest(MemEvent *ev);
+    void cancelEvent(MemEvent *ev);
+    bool clock(SST::Cycle_t cycle);
 
-	void performRequest(DRAMReq *req);
+    void performRequest(DRAMReq *req);
 
-	void sendBusPacket(void);
+    void sendBusPacket(void);
     void sendBusCancel(Addr addr);
 
-	void sendResponse(DRAMReq *req);
+    void sendResponse(DRAMReq *req);
 
     void handleMemResponse(DRAMReq *req);
-	void handleSelfEvent(SST::Event *event);
+    void handleSelfEvent(SST::Event *event);
 
-	bool use_dramsim;
+    bool use_dramsim;
 
-	SST::Link *self_link;
-	SST::Link *snoop_link;
-	bool bus_requested;
-	std::deque<DRAMReq*> busReqs;
+    SST::Link *self_link;
+    SST::Link *upstream_link;
+    bool use_bus;
+    bool bus_requested;
+    std::deque<DRAMReq*> busReqs;
 
-	std::deque<DRAMReq*> requestQueue;
-	std::deque<DRAMReq*> requests;
+    std::deque<DRAMReq*> requestQueue;
+    std::deque<DRAMReq*> requests;
 
 
-	int backing_fd;
-	uint8_t *memBuffer;
-	size_t memSize;
+    int backing_fd;
+    uint8_t *memBuffer;
+    size_t memSize;
     size_t requestSize;
-	Addr rangeStart;
-	Addr rangeEnd;
+    Addr rangeStart;
+    Addr rangeEnd;
 
 #if defined(HAVE_LIBDRAMSIM)
-	void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
+    void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
-	DRAMSim::MultiChannelMemorySystem *memSystem;
+    DRAMSim::MultiChannelMemorySystem *memSystem;
 
     std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
 #endif

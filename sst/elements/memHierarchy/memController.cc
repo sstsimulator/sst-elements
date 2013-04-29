@@ -106,9 +106,15 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 		_abort(MemController, "Unable to MMAP backing store for Memory\n");
 	}
 
-	snoop_link = configureLink( "snoop_link", "50 ps",
+	upstream_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<MemController>(this, &MemController::handleEvent));
-	assert(snoop_link);
+    use_bus = (upstream_link != NULL);
+    if ( !upstream_link ) {
+
+        std::string link_lat = params.find_string("direct_link_latency", "100 ns");
+        upstream_link = configureLink( "direct_link", link_lat,
+                new Event::Handler<MemController>(this, &MemController::handleEvent));
+    }
 
 }
 
@@ -116,11 +122,11 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 void MemController::init(unsigned int phase)
 {
 	if ( !phase ) {
-		snoop_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+        upstream_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 	}
 
 	SST::Event *ev = NULL;
-	while ( (ev = snoop_link->recvInitData()) != NULL ) {
+	while ( (ev = upstream_link->recvInitData()) != NULL ) {
 		MemEvent *me = dynamic_cast<MemEvent*>(ev);
 		if ( me ) {
 			/* Push data to memory */
@@ -333,10 +339,11 @@ void MemController::performRequest(DRAMReq *req)
 
 void MemController::sendBusPacket(void)
 {
+    assert(use_bus);
 	for (;;) {
 		if ( busReqs.size() == 0 ) {
             DPRINTF("Sending cancelation, as we have nothing in the queue.\n");
-			snoop_link->Send(new MemEvent(this, NULL, CancelBusRequest));
+			upstream_link->Send(new MemEvent(this, NULL, CancelBusRequest));
 			break;
 		} else {
             DRAMReq *req = busReqs.front();
@@ -348,7 +355,7 @@ void MemController::sendBusPacket(void)
 						ev->getID().first, ev->getID().second,
 						ev->getResponseToID().first, ev->getResponseToID().second,
 						ev->getAddr());
-				snoop_link->Send(0, ev);
+				upstream_link->Send(0, ev);
 				break;
             }
 		}
@@ -356,15 +363,18 @@ void MemController::sendBusPacket(void)
 }
 
 void MemController::sendBusCancel(Addr addr) {
-    snoop_link->Send(new MemEvent(this, addr, CancelBusRequest));
+    upstream_link->Send(new MemEvent(this, addr, CancelBusRequest));
 }
 
 
 void MemController::sendResponse(DRAMReq *req)
 {
-	if ( req != NULL ) {
-		busReqs.push_back(req);
-        snoop_link->Send(new MemEvent(this, req->reqEvent->getAddr(), RequestBus));
+    if ( use_bus ) {
+        busReqs.push_back(req);
+        upstream_link->Send(new MemEvent(this, req->reqEvent->getAddr(), RequestBus));
+    } else {
+        upstream_link->Send(req->respEvent);
+        req->status = DRAMReq::DONE;
     }
 }
 
