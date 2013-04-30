@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<!--
+<config>
+ stopAtCycle=1000000ns
+</config>
+-->
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 10 ns </buslat>
+</variables>
+
+
+<sst>
+	<component name="cpu0" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 1000 </num_loadstore>
+		</params>
+		<link name=cpu0_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c0.l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<next_level> l2cache </next_level>
+			<num_upstream> 1 </num_upstream>
+		</params>
+		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
+		<link name=c0.l1cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+	<component name="cpu1" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 1000 </num_loadstore>
+		</params>
+		<link name=cpu1_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c1.l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<next_level> n0.l2cache </next_level>
+			<num_upstream> 1 </num_upstream>
+		</params>
+		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
+		<link name=c1.l1cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+	<component name="n0.l2cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 8 </num_ways>
+			<num_rows> 64 </num_rows>
+			<blocksize> 64 </blocksize>
+			<next_level> l3cache </next_level>
+			<access_time> 10 ns </access_time>
+		</params>
+		<link name=n0.l2cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="cpu2" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 1000 </num_loadstore>
+		</params>
+		<link name=cpu2_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c2.l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<next_level> n1.l2cache </next_level>
+			<num_upstream> 1 </num_upstream>
+		</params>
+		<link name=cpu2_l1cache_link port=upstream0 latency=$lat />
+		<link name=c2.l1cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+	<component name="cpu3" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 1000 </num_loadstore>
+		</params>
+		<link name=cpu3_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c3.l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<next_level> n1.l2cache </next_level>
+			<num_upstream> 1 </num_upstream>
+		</params>
+		<link name=cpu3_l1cache_link port=upstream0 latency=$lat />
+		<link name=c3.l1cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+	<component name="n1.l2cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 8 </num_ways>
+			<num_rows> 64 </num_rows>
+			<blocksize> 64 </blocksize>
+            <next_level> l3cache </next_level>
+			<access_time> 10 ns </access_time>
+		</params>
+		<link name=n1.l2cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="l3cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 8 </num_ways>
+			<num_rows> 128 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 100 ns </access_time>
+		</params>
+		<link name=l3cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 8 </numPorts>
+			<busDelay> 20 ns </busDelay>
+		</params>
+		<link name=c0.l1cache_bus_link port=port0 latency=$buslat />
+		<link name=c1.l1cache_bus_link port=port1 latency=$buslat />
+		<link name=n0.l2cache_bus_link port=port2 latency=$buslat />
+		<link name=c2.l1cache_bus_link port=port3 latency=$buslat />
+		<link name=c3.l1cache_bus_link port=port4 latency=$buslat />
+		<link name=n1.l2cache_bus_link port=port5 latency=$buslat />
+		<link name=l3cache_bus_link port=port6 latency=$buslat />
+		<link name=mem_bus_link port=port7 latency=$buslat />
+	</component>
+
+
+	<component name="memory" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+			<use_dramsim> 0 </use_dramsim>
+			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
+			<system_ini> system.ini </system_ini>
+		</params>
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+</sst>
