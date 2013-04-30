@@ -520,19 +520,19 @@ void SS_router::handleParcel( Event* e, int dir )
                  event->credit.vc, event->credit.num );
         updateToken_flits( dir, event->credit.vc, event->credit.num );
         delete event;
-        return;
+    } else {
+
+        int ilink, ivc, flits;
+        networkPacket *np = &event->packet;
+        flits = np->sizeInFlits;
+        ivc = NIC_2_RTR_VC(np->vc);
+        np->vc = ivc;
+
+        ilink = dir;
+
+        rxCount[ilink] += flits;
+        InLCB( event, ilink, ivc, flits);
     }
-
-    int ilink, ivc, flits;
-    networkPacket *np = &event->packet;
-    flits = np->sizeInFlits;
-    ivc = NIC_2_RTR_VC(np->vc);
-    np->vc = ivc;
-
-    ilink = dir;
-
-    rxCount[ilink] += flits;
-    InLCB( event, ilink, ivc, flits);
 
     if ( !currently_clocking ) {
 	registerClock(frequency,clock_handler);
