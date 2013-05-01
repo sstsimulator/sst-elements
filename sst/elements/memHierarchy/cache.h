@@ -370,6 +370,7 @@ private:
 	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
 	void finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t src);
 	void handleInvalidate(MemEvent *ev, SourceType_t src);
+    void sendInvalidateACK(MemEvent *ev, SourceType_t src);
 
 	bool waitingForInvalidate(CacheBlock *block);
 	void cancelInvalidate(CacheBlock *block);

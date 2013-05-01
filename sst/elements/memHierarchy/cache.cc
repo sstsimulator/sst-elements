@@ -152,9 +152,11 @@ void Cache::init(unsigned int phase)
 	}
 
 	/* Eat anything coming over snoopy */
-	SST::Event *ev = NULL;
-	while ( (ev = snoop_link->recvInitData()) != NULL )
-		delete ev;
+    if ( snoop_link ) {
+        SST::Event *ev = NULL;
+        while ( (ev = snoop_link->recvInitData()) != NULL )
+            delete ev;
+    }
 
 }
 
@@ -215,6 +217,9 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
         handleInvalidate(ev, src);
         delete ev;
         break;
+
+    case ACK:
+        ackInvalidate(ev);
 
     default:
         /* Ignore */
@@ -493,15 +498,13 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
     else
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
-    /* Note, we don't have event to send, but we need to send the LoadInfo_t.
-     * So we bundle the pointer through a "MemEvent*"
-     */
     self_link->Send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, block->baseAddr, block));
 }
 
 
 void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
 {
+    DPRINTF("Time to send load for 0x%lx\n", addr);
 
     /* Check to see if we're still in ASSIGNED state.  If not, we've probably
      * already been processed. */
@@ -523,7 +526,10 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
     }
     if ( downstream_link ) {
-        downstream_link->Send(new MemEvent(this, block->baseAddr, RequestData));
+        DPRINTF("Sending request to load block 0x%lx  [li = %p]\n", block->baseAddr, li);
+        MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+        req->setSize(blocksize);
+        downstream_link->Send(req);
     }
 }
 
@@ -857,15 +863,45 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src)
         }
 
 
+        if ( src != SNOOP ) {
+            /* We'll need to ACK this */
+            sendInvalidateACK(ev, src);
+        }
+
 		block->status = CacheBlock::INVALID;
         /* TODO:  Lock status? */
         handlePendingEvents(findRow(block->baseAddr), NULL);
 	}
 	if ( block->status == CacheBlock::EXCLUSIVE ) {
 		DPRINTF("Invalidating EXCLUSIVE block 0x%lx\n", block->baseAddr);
+        _abort(Cache, "Invaliding an Exclusive block needs more thought.");
 		writebackBlock(block, CacheBlock::INVALID);
 	}
 }
+
+
+void Cache::sendInvalidateACK(MemEvent *ev, SourceType_t src)
+{
+    MemEvent *resp = ev->makeResponse(this);
+    switch (src) {
+    case SNOOP:
+        _abort(Cache, "We don't ACK on SNOOPY!\n");
+        break;
+    case UPSTREAM:
+        upstream_links[0/* TODO */]->Send(resp);
+        break;
+    case DOWNSTREAM:
+        downstream_link->Send(resp);
+        break;
+    case DIRECTORY:
+        _abort(Cache, "Directory not yet implemented\n");
+        break;
+    case SELF:
+        _abort(Cache, "Why are we acking to ourselfs?\n");
+        break;
+    }
+}
+
 
 bool Cache::waitingForInvalidate(CacheBlock *block)
 {
