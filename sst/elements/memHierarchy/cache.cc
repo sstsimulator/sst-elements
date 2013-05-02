@@ -816,7 +816,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
             assert(ev->queryFlag(MemEvent::F_WRITEBACK));
             DPRINTF("Passing on writeback to next level\n");
             if ( downstream_link )
-                downstream_link->Send(new MemEvent(ev));
+                downstream_link->send(new MemEvent(ev));  // Renamed per Issue 70 - ALevine
             else
                 _abort(Cache, "Not sure where to send this.  Directory?\n");
         } else {
