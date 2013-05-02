@@ -31,7 +31,6 @@ class PtlNicMMIF : public SST::Component
   public:
     PtlNicMMIF( SST::ComponentId_t, Params_t& );
     virtual ~PtlNicMMIF();
-//    int Setup();  // Renamed per Issue 70 - ALevine
     void setup(); 
     virtual bool Status();
 

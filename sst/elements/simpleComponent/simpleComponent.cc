@@ -46,7 +46,6 @@ simpleComponent::simpleComponent(ComponentId_t id, Params_t& params) :
   neighbor = rand() % 4;
 
   // tell the simulator not to end without us
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
@@ -136,16 +135,16 @@ bool simpleComponent::clockTic( Cycle_t ) {
     // send
     switch (neighbor) {
     case 0:
-      N->send(e);   // Renamed per Issue 70 - ALevine
+      N->send(e); 
       break;
     case 1:
-      S->send(e);    // Renamed per Issue 70 - ALevine
+      S->send(e);  
       break;
     case 2:
-      E->send(e);    // Renamed per Issue 70 - ALevine
+      E->send(e);  
       break;
     case 3:
-      W->send(e);    // Renamed per Issue 70 - ALevine
+      W->send(e);  
       break;
     default:
       printf("bad neighbor\n");

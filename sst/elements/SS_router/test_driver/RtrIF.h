@@ -88,10 +88,8 @@ private:
 
 
 public:
-//        int Finish() {  // Renamed Per Issue 70 - ALevine
         void finish() {
 	    printf("%d: Messages recieved: %d\n",m_id,m_node_recvd);
-//	    return 0;
 	}
 
    RtrIF( ComponentId_t id, Params_t& params ) :
@@ -149,7 +147,6 @@ public:
         m_log.write("num_vc=%d num_tokens=%d\n",num_vcP,num_tokens);
         m_log.write("nic id=%d frequency=%s\n", m_id, frequency.c_str());
 
-//        registerExit();  // Renamed Per Issue 70 - ALevine
         registerAsPrimaryComponent();
         primaryComponentDoNotEndSim();
 
@@ -174,10 +171,8 @@ public:
         }
     }
 
-//    void setup() {}  // Renamed to avoid conflict with virtual function renaming in component.h; See Issue 70 - ALevine
     void newSetup() {}
 
-//    void finish() {}  // Renamed to resolve conflict with virtual function in component.h; See Issue 70 - ALevine
     void newFinish() {}
 
     bool toNicQ_empty(unsigned int vc)
@@ -296,7 +291,7 @@ private:
         event->type = RtrEvent::Credit;
         event->credit.num = numFlits;
         event->credit.vc = vc;
-        m_rtrLink->send( event );   // Renamed per Issue 70 - ALevine
+        m_rtrLink->send( event ); 
     }
 
     void sendPktToRtr( RtrEvent* event ) 
@@ -309,7 +304,7 @@ private:
         event->type = RtrEvent::Packet;
         event->packet = *pkt;
         int lat = reserveRtrLine(pkt->sizeInFlits);
-        m_rtrLink->send( lat, event );   // Renamed per Issue 70 - ALevine
+        m_rtrLink->send( lat, event ); 
     }
 
     int reserveRtrLine (int cyc)

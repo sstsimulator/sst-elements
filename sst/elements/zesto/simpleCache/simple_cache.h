@@ -18,16 +18,12 @@
 
 class simple_cache : public SST::Component {
 public:
-//    virtual int Setup() {  // Renamed per Issue 70 - ALevine
     virtual void setup() { 
         std::cout << "zesto simple cache " << node_id << " start" << std::endl; 
-//        return 0;
     }
-//    virtual int Finish() {  // Renamed per Issue 70 - ALevine
     virtual void finish() {
         std::cout << "Simple Cache " << node_id << " finished" << std::endl;
         print_stats(std::cout);
-//        return 0;
     }
         
 

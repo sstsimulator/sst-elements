@@ -127,7 +127,6 @@ class PtlNic : public RtrIF
     Context* findContext( ptl_pid_t pid );
     void processVCs();
     void processFromRtr();
-//    int Setup();  // Renamed per Issue 70 - ALevine
     void setup();
     bool clock( SST::Cycle_t cycle );
     void rtrHandler( SST::Event* );

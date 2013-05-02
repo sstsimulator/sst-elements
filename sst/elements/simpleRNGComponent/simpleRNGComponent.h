@@ -35,8 +35,6 @@ class simpleRNGComponent : public SST::Component {
 public:
 
   simpleRNGComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
-//  int Setup()  { return 0; }  // Renamed per Issue 70 - ALevine
-//  int Finish() { return 0; }
   void setup()  { }
   void finish() { }
 

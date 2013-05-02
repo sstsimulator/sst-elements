@@ -36,8 +36,6 @@ class nodeComponent : public SST::Component, public virtual linkChanger {
 public:
 
   nodeComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
-//  int Setup();               // Renamed per Issue 70 - ALevine
-//  int Finish() {return 0;}
   void setup();
   void finish() {}
 

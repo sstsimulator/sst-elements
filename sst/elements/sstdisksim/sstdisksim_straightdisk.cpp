@@ -258,12 +258,11 @@ sstdisksim_straightdisk::clock(Cycle_t current)
 
   if ( event->etype == DISKSIMEND )
   {
-//    unregisterExit();  // Renamed Per Issue 70 - ALevine
     primaryComponentOKToEndSim();
     _ended = true;
   }
   
-  link->send(0, event);   // Renamed per Issue 70 - ALevine
+  link->send(0, event); 
   return false;
 }
 
@@ -294,7 +293,6 @@ sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,
 
   printf("Starting disk controller plain disk up\n");
 
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 }
@@ -316,21 +314,15 @@ sstdisksim_straightdisk::handleEvent(Event* event)
 }
 
 /******************************************************************************/
-//int
-//sstdisksim_straightdisk::Setup()  // Renamed per Issue 70 - ALevine
 void sstdisksim_straightdisk::setup() 
 {
-//  return 0;
 }
 
 /******************************************************************************/
-//int 
-//sstdisksim_straightdisk::Finish()  // Renamed per Issue 70 - ALevine
 void sstdisksim_straightdisk::finish() 
 {
   DBG("Shutting sstdisksim_straightdisk down\n");
 
-//  return 0;
 }
 
 /******************************************************************************/

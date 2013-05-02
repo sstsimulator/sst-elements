@@ -129,14 +129,10 @@ private:
 public:
     iris_trig_nic( ComponentId_t id, Params_t& params );
 
-//    virtual int Finish() {  // Renamed per Issue 70 - ALevine
     virtual void finish() {
-//        return 0;
     }
 
-//    virtual int Setup() {  // Renamed per Issue 70 - ALevine
     virtual void setup() {
-//        return 0;
     }
 
 private:

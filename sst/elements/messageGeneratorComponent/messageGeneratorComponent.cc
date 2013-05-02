@@ -48,7 +48,6 @@ messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params_t&
   message_counter_sent = 0;
 
   // tell the simulator not to end without us
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
@@ -79,7 +78,6 @@ void messageGeneratorComponent::handleEvent(Event *event) {
 	delete event;
 
 	if(message_counter_recv == total_message_send_count) {
-//		unregisterExit();  // Renamed Per Issue 70 - ALevine
     primaryComponentOKToEndSim();
 	}
 }
@@ -90,7 +88,7 @@ void messageGeneratorComponent::handleEvent(Event *event) {
 bool messageGeneratorComponent::tick( Cycle_t ) {
 
 	simpleMessage* msg = new simpleMessage();
-	remote_component->send(msg);   // Renamed per Issue 70 - ALevine
+	remote_component->send(msg); 
 
 	if(output_message_info)
 		std::cout << "Sent message: " << message_counter_sent << " (time=" << getCurrentSimTimeMicro() << "us)" << std::endl;

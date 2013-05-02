@@ -46,8 +46,6 @@ public:
     delete stats;
     delete scheduler;
   }
-//  int Setup();               // Renamed per Issue 70 - ALevine
-//  int Finish();
   void setup();
   void finish();
   Machine* getMachine();

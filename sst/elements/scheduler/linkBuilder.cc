@@ -45,8 +45,8 @@ linkBuilder::linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & para
 
   std::cout << " done." << std::endl;
 
-  selfLink->send( new ObjectRetrievalEvent() );   // Renamed per Issue 70 - ALevine
-  selfLink->send( 350000, new CommunicationEvent( RETRIEVE_ID ) );*/   // Renamed per Issue 70 - ALevine
+  selfLink->send( new ObjectRetrievalEvent() ); 
+  selfLink->send( 350000, new CommunicationEvent( RETRIEVE_ID ) );*/ 
 }
 
 
@@ -64,7 +64,7 @@ void linkBuilder::initNodePtrRequests( SST::Event * event ){
 /*  ObjectRetrievalEvent * objRetEvent = dynamic_cast<ObjectRetrievalEvent *>( event );
   if( objRetEvent ){
     for( std::vector<SST::Link *>::iterator linkIter = nodeLinks.begin(); linkIter < nodeLinks.end(); linkIter ++ ){
-      (*linkIter)->send( objRetEvent->copy() );   // Renamed per Issue 70 - ALevine
+      (*linkIter)->send( objRetEvent->copy() ); 
     }
   }
   else{

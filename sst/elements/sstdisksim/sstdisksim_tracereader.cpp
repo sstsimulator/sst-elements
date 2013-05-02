@@ -47,7 +47,6 @@ sstdisksim_tracereader::clock(Cycle_t current)
   {
     if ( _ended == false )
     {
-//      unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
       _ended = true;
     }
@@ -55,7 +54,7 @@ sstdisksim_tracereader::clock(Cycle_t current)
     return false;
   }
 
-  diskmodel->send(0, event);   // Renamed per Issue 70 - ALevine
+  diskmodel->send(0, event); 
   return false;
 }
 
@@ -123,7 +122,6 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
 
   DBG("Starting sstdisksim_tracereader up\n");
 
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 }
@@ -135,21 +133,15 @@ sstdisksim_tracereader::~sstdisksim_tracereader()
 }
 
 /******************************************************************************/
-//int
-//sstdisksim_tracereader::Setup()  // Renamed per Issue 70 - ALevine
 void sstdisksim_tracereader::setup() 
 {
-//  return 0;
 }
 
 /******************************************************************************/
-//int 
-//sstdisksim_tracereader::Finish()  // Renamed per Issue 70 - ALevine
 void sstdisksim_tracereader::finish()  
 {
   DBG("Shutting sstdisksim_tracereader down\n");
 
-//  return 0;
 }
 
 /******************************************************************************/

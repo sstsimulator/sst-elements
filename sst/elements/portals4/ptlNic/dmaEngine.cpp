@@ -56,7 +56,7 @@ void DmaEngine::clock()
     if ( m_pendingBytes > 0 ) {
         m_pendingBytes -= m_bytesPerClock; 
     } else if ( ! m_dmaQ.empty() ) {
-        m_link->send( m_dmaQ.front() );   // Renamed per Issue 70 - ALevine
+        m_link->send( m_dmaQ.front() ); 
         m_pendingBytes = m_dmaQ.front()->size;
         m_dmaQ.pop_front();
     }
@@ -97,7 +97,7 @@ bool DmaEngine::xfer( DmaEvent::Type type, Addr vaddr,
 #if USE_DMA_LIMIT_BW
         m_dmaQ.push_back( new DmaEvent( type, item.addr, buf,
 #else
-        m_link->send( new DmaEvent( type, item.addr, buf,   // Renamed per Issue 70 - ALevine
+        m_link->send( new DmaEvent( type, item.addr, buf, 
                                             item.length, entry ) );
 #endif
 

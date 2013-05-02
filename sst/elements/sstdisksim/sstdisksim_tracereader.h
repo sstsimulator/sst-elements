@@ -41,8 +41,6 @@ class sstdisksim_tracereader : public Component {
 
   sstdisksim_tracereader( ComponentId_t id, Params_t& params );
   ~sstdisksim_tracereader();
-//  int Setup();  // Renamed per Issue 70 - ALevine
-//  int Finish();
   void setup(); 
   void finish();
 

@@ -48,8 +48,6 @@ public:
     ~pt2pt_test() {}
 
     void init(unsigned int phase);
-//    int Setup();  // Renamed per Issue 70 - ALevine
-//    int Finish();
     void setup(); 
     void finish();
 

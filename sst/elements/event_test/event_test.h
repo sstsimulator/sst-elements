@@ -26,8 +26,6 @@ public:
     event_test(SST::ComponentId_t id, SST::Component::Params_t& params);
 
     void init(unsigned int phase);
-//    int Setup();  // Renamed per Issue 70 - ALevine
-//    int Finish();
     void setup();
     void finish();
 

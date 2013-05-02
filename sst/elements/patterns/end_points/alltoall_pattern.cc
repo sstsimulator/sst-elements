@@ -39,7 +39,6 @@ Alltoall_pattern::handle_events(state_event sm_event)
     }
 
     if (done)   {
-//  unregisterExit();  // Renamed Per Issue 70 - ALevine
   primaryComponentOKToEndSim();
 	done= false;
     }
@@ -279,11 +278,10 @@ eli(Alltoall_pattern, alltoall_pattern, "Alltoall pattern")
 
 // ADDED FOR PROPER INITIALIZATION - ALEVINE
 // SST Startup and Shutdown
-void Alltoall_pattern::setup()  // Renamed per Issue 70 - ALevine
+void Alltoall_pattern::setup()
 {
 	// Call the initial State Transition
 	state_transition(E_START, STATE_INIT);
-//	return 0;
 }
 
 #ifdef SERIALIZATION_WORKS_NOW

@@ -155,7 +155,6 @@ PhoenixSim::PhoenixSim(SST::ComponentId_t id, SST::Component::Params_t& params) 
   if( params.find("G") != params.end())
     options["G"] = "true";
 
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
@@ -173,11 +172,10 @@ void PhoenixSim::sendMsg(cMessage* msg) {
   OmnetEvent* evt = new OmnetEvent();
 
   evt->payload = msg;
-  slink->send(delay, evt);   // Renamed per Issue 70 - ALevine
+  slink->send(delay, evt); 
   
 }
 
-//int PhoenixSim::Setup() {  // Renamed per Issue 70 - ALevine
 void PhoenixSim::setup() {
   
   printf("Setting up..");
@@ -222,11 +220,9 @@ void PhoenixSim::setup() {
   }
   printf("Done setup\n");
      
-//  return 0;
 }
 
-//int PhoenixSim::Finish() {  // Renamed per Issue 70 - ALevine
-void PhoenixSim::finish() {  // Renamed per Issue 70 - ALevine
+void PhoenixSim::finish() { 
   printf("Finishing simulation...\n");
 
   printf("Ending simulation time: %llu\n", (long long unsigned int)getCurrentSimTime("1GHz"));
@@ -241,7 +237,6 @@ void PhoenixSim::finish() {  // Renamed per Issue 70 - ALevine
   configOptions.clear();
   cSimulation::clearLoadedNedFiles();
   cStaticFlag::set(false);
-//  return 0;
 }
 
 PhoenixSim::~PhoenixSim() {
@@ -447,7 +442,6 @@ void OmnetSimulation::processSelfMsg(cMessage *msg) {
   if( envir->afterEvent(mod) ) { //****TO DO: CHECK IF THIS IS A VALID WAY TO STOP THE SIMULATION
     //time's up, simulation finished
     printf("OMNet Simulation Completed.  Waiting on other components.\n");
-//    ps->unregisterExit();  // Renamed Per Issue 70 - ALevine
     ps->primaryComponentOKToEndSim();
     omnetFinished = true;
   }

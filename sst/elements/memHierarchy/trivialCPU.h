@@ -29,7 +29,6 @@ public:
 
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init();
-//	int Finish() {  // Renamed per Issue 70 - ALevine
 	void finish() { 
 		printf("TrivialCPU Finished after %lu issued reads, %lu returned\n",
 				num_reads_issued, num_reads_returned);

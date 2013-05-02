@@ -39,7 +39,6 @@ Allreduce_pattern::handle_events(state_event sm_event)
     }
 
     if (done)   {
-//  unregisterExit();  // Renamed Per Issue 70 - ALevine
   primaryComponentOKToEndSim();
 	done= false;
     }
@@ -287,11 +286,10 @@ eli(Allreduce_pattern, allreduce_pattern, "Allreduce pattern")
 
 // ADDED FOR PROPER INITIALIZATION - ALEVINE
 // SST Startup and Shutdown
-void Allreduce_pattern::setup()  // Renamed per Issue 70 - ALevine
+void Allreduce_pattern::setup()
 {
 //	// Call the initial State Transition
 	state_transition(E_START, STATE_INIT);
-//	return 0;
 }
 
 #ifdef SERIALIZATION_WORKS_NOW

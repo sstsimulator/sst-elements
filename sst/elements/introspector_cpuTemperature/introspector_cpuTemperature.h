@@ -64,7 +64,6 @@ class Introspector_cpuTemperature : public Introspector {
 
             
         }
-//        int Setup() {  // Renamed per Issue 70 - ALevine
         void setup() {
 	    std::pair<bool, int> pdouble;
 
@@ -91,7 +90,6 @@ class Introspector_cpuTemperature : public Introspector {
             _INTROSPECTOR_CPUTEMPERATURE_DBG("\n");
 //            return 0;
         }
-//        int Finish() {  // Renamed per Issue 70 - ALevine
         void finish() { 
 	    triggeredUpdate();
             _INTROSPECTOR_CPUTEMPERATURE_DBG("\n");

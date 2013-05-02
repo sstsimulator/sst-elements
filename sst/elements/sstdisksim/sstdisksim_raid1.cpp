@@ -258,15 +258,14 @@ sstdisksim_raid1::clock(Cycle_t current)
 
   if ( event->etype == DISKSIMEND )
   {
-//    unregisterExit();  // Renamed Per Issue 70 - ALevine
     primaryComponentOKToEndSim();
     _ended = true;
   } 
   
   /* Sent to both because we are mirroring */
   sstdisksim_event* event2 = new sstdisksim_event(event);
-  disk0->send(0, event);   // Renamed per Issue 70 - ALevine
-  disk1->send(0, event2);   // Renamed per Issue 70 - ALevine
+  disk0->send(0, event); 
+  disk1->send(0, event2); 
 
   return false;
 }
@@ -300,7 +299,6 @@ sstdisksim_raid1::sstdisksim_raid1( ComponentId_t id,
 
   printf("Starting disk controller raid1 up\n");
 
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 }
@@ -322,21 +320,15 @@ sstdisksim_raid1::handleEvent(Event* event)
 }
 
 /******************************************************************************/
-//int
-//sstdisksim_raid1::Setup()  // Renamed per Issue 70 - ALevine
 void sstdisksim_raid1::setup()  
 {
-//  return 0;
 }
 
 /******************************************************************************/
-//int 
-//sstdisksim_raid1::Finish()  // Renamed per Issue 70 - ALevine
 void sstdisksim_raid1::finish() 
 {
   DBG("Shutting sstdisksim_raid1 down\n");
 
-//  return 0;
 }
 
 /******************************************************************************/

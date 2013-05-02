@@ -143,7 +143,7 @@ EVENTCHANNEL( inline bool )::VirtChan::clock( Cycle_t cycle )
         _EC_DBG("%s: cycle=%lu send, event=%p\n", m_name.c_str(),
                             cycle,m_outQ.front() );
 
-        m_link.send( 0, m_outQ.front() );   // Renamed per Issue 70 - ALevine
+        m_link.send( 0, m_outQ.front() );
         m_outQ.pop_front();
     }
 
@@ -159,7 +159,7 @@ EVENTCHANNEL( inline bool )::VirtChan::clock( Cycle_t cycle )
 
         _EC_DBG("%s: cycle=%lu send %d credits\n", 
                     m_name.c_str(), cycle, event->credit);
-        m_link.send( 0, event );   // Renamed per Issue 70 - ALevine
+        m_link.send( 0, event ); 
     }
     return false;
 }

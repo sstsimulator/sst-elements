@@ -43,7 +43,6 @@ event_test::event_test(ComponentId_t id, Params_t& params) :
         _abort(event_test,"couldn't find latency\n");
     }
     
-//    registerExit();  // Renamed Per Issue 70 - ALevine
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
@@ -67,8 +66,6 @@ event_test::event_test() :
     // for serialization only
 }
 
-//int
-//event_test::Setup()  // Renamed per Issue 70 - ALevine
 void event_test::setup()
 {
 
@@ -77,7 +74,6 @@ void event_test::setup()
 	if ( my_id == 0 ) {
 		Interfaces::TestEvent* event = new Interfaces::TestEvent();
 		event->count = 0;
-//		link->Send(latency,event);   // Renamed per Issue 70 - ALevine
 		link->send(latency,event);
 		printf("Sending initial event\n");
 	}
@@ -88,11 +84,8 @@ void event_test::setup()
 }
 
 
-//int
-//event_test::Finish()  // Renamed per Issue 70 - ALevine
 void event_test::finish() 
 {
-//    return 0;
 }
 
 
@@ -124,10 +117,8 @@ event_test::handleEvent(Event* ev)
     // back
     if (event->count > count_to) {
 	event->count++;
-//	link->Send(latency,event);   // Renamed per Issue 70 - ALevine
 	link->send(latency,event); 
 	if (!done) {
-//      unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
 	    done = true;
 	}
@@ -135,7 +126,6 @@ event_test::handleEvent(Event* ev)
     else {
 	printf("%d: %d\n",my_id,event->count);
 	event->count++;
-//	link->Send(latency,event);   // Renamed per Issue 70 - ALevine
 	link->send(latency,event); 
     }    
 }

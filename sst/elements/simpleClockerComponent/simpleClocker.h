@@ -28,8 +28,6 @@ class simpleClocker : public SST::Component {
 public:
 
   simpleClocker(SST::ComponentId_t id, SST::Component::Params_t& params);
-//  int Setup()  { return 0; }  // Renamed per Issue 70 - ALevine
-//  int Finish() { return 0; }
   void setup()  { }
   void finish() { }
 

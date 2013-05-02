@@ -36,7 +36,6 @@ Gather_op::handle_events(state_event sm_event)
 	    break;
     }
 
-//    // Don't call unregisterExit()  // Renamed per Issue 70 - ALevine
     // Don't call primaryComponentOKToEndSim()
     // Only "main" patterns should do that; i.e., patterns that use other
     // patterns like this one. Just return to our caller.

@@ -113,7 +113,6 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     registerMonitorInt("dram_refreshEnergy");*/
 }
 
-//int DRAMSimC::Finish() // Renamed per Issue 70 - ALevine
 void DRAMSimC::finish() 
 {
   /*vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;

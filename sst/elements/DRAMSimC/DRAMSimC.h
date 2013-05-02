@@ -32,7 +32,6 @@ class DRAMSimC : public IntrospectedComponent {
     public: // functions
 
         DRAMSimC( ComponentId_t id, Params_t& params );
-//        int Finish();  // Renamed per Issue 70 - ALevine
         void finish(); 
 
     private: // types

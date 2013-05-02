@@ -13,7 +13,6 @@ public:
     qsimlib_core_t(SST::ComponentId_t core_id, SST::Component::Params_t& params);
 	~qsimlib_core_t();
 
-//	virtual int Setup();  // Renamed per Issue 70 - ALevine
 	virtual void setup(); 
 
 

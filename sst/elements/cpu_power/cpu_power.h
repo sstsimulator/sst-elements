@@ -31,7 +31,6 @@ public:
   Cpu_power(ComponentId_t id, Params_t& params);
 
   
-//int Setup() {   // Renamed per Issue 70 - ALevine
 void setup() { 
 	  // report/register power dissipation	    
 	    power = new SST::Power::Power(getId());
@@ -47,7 +46,6 @@ void setup() {
 	    power->setTech(getId(), params, CLOCK, IntSim);
 	    power->setTech(getId(), params, ROUTER, ORION);  
 	   
-//           return 0;
 }
 
 /*int finish() {
@@ -91,7 +89,6 @@ void setup() {
       
             return 0;
         }*/
-// int Finish() {  // Renamed per Issue 70 - ALevine
  void finish() {
     static int n = 0;
     n++;
@@ -102,7 +99,6 @@ void setup() {
     } else {
       printf("Simple Component Finished\n");
     }
-//    return 0;
   }
 
 

@@ -58,8 +58,6 @@ public:
     ~nic();
 
     void init(unsigned int phase);
-//    int Setup();  // Renamed per Issue 70 - ALevine
-//    int Finish();
     void setup(); 
     void finish();
 

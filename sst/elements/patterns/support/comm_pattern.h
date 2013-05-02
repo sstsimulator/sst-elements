@@ -47,7 +47,6 @@ class Comm_pattern : public Component {
 	    NIC_model *NICmodel[NUM_NIC_MODELS];
 
 
-//      registerExit();  // Renamed Per Issue 70 - ALevine
       registerAsPrimaryComponent();
       primaryComponentDoNotEndSim();
 

@@ -268,8 +268,6 @@ hr_router::clock_handler(Cycle_t cycle)
     return false;
 }
 
-//int
-//hr_router::Setup()  // Renamed per Issue 70 - ALevine
 void hr_router::setup()
 {
     // for ( int i = 0; i < num_ports; i++ ) {

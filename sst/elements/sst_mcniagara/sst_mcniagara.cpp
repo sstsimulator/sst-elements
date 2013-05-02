@@ -40,7 +40,6 @@ SSTMcNiagara::SSTMcNiagara(ComponentId_t id, Params_t& params):Component(id){
 	//	the_cpu = new McNiagara();
 	//cout<<"SSTMcNiagara(ComponentId_t id, Params_t& params) Begin"<<endl;
 	the_cpu = new McNiagara::McNiagara();
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 	//Debug (default=100)
@@ -107,38 +106,31 @@ bool SSTMcNiagara::tic(Cycle_t){
 	converged=the_cpu->convergence;
 	if(untilConvergence)
 		if(converged)
-//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
 		
 	if(cyclecount<numSimCycles){
 		if(the_cpu->sim_cycle(cyclecount))
-//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
 	}
 	else
-//	  unregisterExit();  // Renamed Per Issue 70 - ALevine
     primaryComponentOKToEndSim();
 	++cyclecount;
 	return 0;
 }//SSTMcNiagara::tic(Cycle_t)
 
-//int SSTMcNiagara::Setup(){  // Renamed per Issue 70 - ALevine
-void SSTMcNiagara::setup(){  // Renamed per Issue 70 - ALevine
+void SSTMcNiagara::setup(){
 	McNiagara::NullIF* exitIf;
 	exitIf=new McNiagara::NullIF();
 	//external_if->memoryAccess(OffCpuIF::AM_READ, 0x1000, 9);
 	the_cpu->init(inputfile, exitIf, iprobfile, pcntfile, tracefile, seed);
 	cyclecount=0;
 	converged=false;
-//	return 0;
 }//SSTMcNiagara::setup()
 
-//int SSTMcNiagara::Finish(){  // Renamed per Issue 70 - ALevine
-void SSTMcNiagara::finish(){  // Renamed per Issue 70 - ALevine
+void SSTMcNiagara::finish(){ 
 	the_cpu->fini(outputfile);
 	delete the_cpu;
 	the_cpu=0;
-//	return 0;
 }//SSTMcNiagara::finish()
 
 

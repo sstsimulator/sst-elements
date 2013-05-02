@@ -53,17 +53,13 @@ class irisNic : public SST::RtrIF
     	unsigned get_id() { return m_id; }
 	    virtual void print_stats(std::ostream& out);
 
-//        int Setup() {  // Renamed per Issue 70 - ALevine
         void setup() {  
             std::cout << "irisNic " << m_id << " starts!" << std::endl;
-//            return 0;
         }
         
-//        int Finish() {  // Renamed per Issue 70 - ALevine
         void finish() { 
             std::cout << "irisNic " << m_id << " finished!" << std::endl;
             print_stats(std::cout);
-//            return 0;
         }
 
     private:
@@ -215,7 +211,7 @@ std::cout << "Interface " << id << " got flit from router: " << data->f->toStrin
 std::cout << "Interface " << id << " SEND Head/Body CREDIT vc " << ld->vc << std::endl;
 #endif
                     //send credit to router
-                    send(DATAOUT, ld);   // Renamed per Issue 70 - ALevine
+                    send(DATAOUT, ld); 
                 }
                 break;
             }
@@ -359,7 +355,7 @@ irisNic<T>::tick (SST::Cycle_t cycle)
     std::cout << "Interface " << id << " SEND FLIT to router on VC " << winner << " Flit is " << f->toString() << std::endl;
     #endif    
             //send data to router
-            send(DATAOUT, ld);   // Renamed per Issue 70 - ALevine
+            send(DATAOUT, ld); 
     #endif
     
             next_to_router = new irisRtrEvent(); 
@@ -483,8 +479,8 @@ irisNic<T>::tick (SST::Cycle_t cycle)
         T* np = from_flit_level_packet(&proc_in_buffer[last_inpkt_winner]);
     	assert(proc_in_buffer[last_inpkt_winner].size() == 0);
 
-//        send(DATATOTERMINAL, np);   // Renamed per Issue 70 - ALevine
-        terminal_link->send(np);   // Renamed per Issue 70 - ALevine
+//        send(DATATOTERMINAL, np); 
+        terminal_link->send(np); 
         
 	    stat_packets_out_to_terminal++;
           
@@ -501,7 +497,7 @@ irisNic<T>::tick (SST::Cycle_t cycle)
 std::cout << "Interface " << id << " SEND CREDIT to router on vc " << ld->vc << " after delivering packet to terminal." << std::endl;
 #endif
         //send credit for the tail flit to router
-        send(DATAOUT,ld);   // Renamed per Issue 70 - ALevine
+        send(DATAOUT,ld); 
 #endif
 
     }

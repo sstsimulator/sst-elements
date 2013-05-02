@@ -56,7 +56,6 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
   std::cout << "network size: " << num_ports_ << "\n";
 
   // tell the simulator not to end without us
-//  //registerExit();  // Renamed Per Issue 70 - ALevine
   //registerAsPrimaryComponent();
   //primaryComponentDoNotEndSim();
 

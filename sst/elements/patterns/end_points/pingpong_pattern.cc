@@ -52,7 +52,6 @@ Pingpong_pattern::handle_events(state_event sm_event)
     }
 
     if (done)   {
-//  unregisterExit();  // Renamed Per Issue 70 - ALevine
   primaryComponentOKToEndSim();
 	done= false;
     }
@@ -316,11 +315,10 @@ eli(Pingpong_pattern, pingpong_pattern, "Ping-pong pattern")
 
 // ADDED FOR PROPER INITIALIZATION - ALEVINE
 // SST Startup and Shutdown
-void Pingpong_pattern::setup()  // Renamed per Issue 70 - ALevine
+void Pingpong_pattern::setup() 
 {
 	// Call the initial State Transition
 	state_transition(E_START, PP_INIT);
-//	return 0;
 }
 
 #ifdef SERIALIZATION_WORKS_NOW

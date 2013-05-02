@@ -125,13 +125,11 @@ public:
         return retval;
     }
 
-//    int Finish()   // Renamed per Issue 70 - ALevine
     void finish()
     { 
         fprintf(stderr,"\n RtrIF Node %d\n", m_id );
         fprintf(stderr," Total no of pkts recv %lu \n",stat_total_pkts_recv); 
         fprintf(stderr," Avg pkt latency %0.2f \n",stat_avg_pkt_lat+0.0/stat_total_pkts_recv); 
-//        return 0; 
     }
 
 private:
@@ -205,7 +203,7 @@ private:
         event->type = irisRtrEvent::Credit;
         event->credit.num = numFlits;
         event->credit.vc = vc;
-        m_rtrLink->send( event );   // Renamed per Issue 70 - ALevine
+        m_rtrLink->send( event ); 
     }
 
     void sendPktToRtr( irisRtrEvent* event ) 
@@ -216,7 +214,7 @@ private:
         event->type = irisRtrEvent::Packet;
         event->packet = pkt;
         int lat = reserveRtrLine(pkt->sizeInFlits);
-        m_rtrLink->send( lat, event );   // Renamed per Issue 70 - ALevine
+        m_rtrLink->send( lat, event ); 
     }
 
     int reserveRtrLine (int cyc)

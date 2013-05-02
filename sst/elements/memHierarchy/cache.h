@@ -241,7 +241,7 @@ private:
                 BusHandlers bh = {initHandler, finishHandler};
                 map[event] = bh;
 			}
-				link->send(new MemEvent(comp, NULL, RequestBus));   // Renamed per Issue 70 - ALevine
+				link->send(new MemEvent(comp, NULL, RequestBus)); 
 		}
 
 		BusHandlers cancelRequest(MemEvent *event)
@@ -264,7 +264,7 @@ private:
 			if ( size() == 0 ) {
 				__DBG( DBG_CACHE, BusQueue, "No Requests to send!\n");
 				/* Must have canceled the request */
-				link->send(new MemEvent(comp, NULL, CancelBusRequest));   // Renamed per Issue 70 - ALevine
+				link->send(new MemEvent(comp, NULL, CancelBusRequest)); 
 			} else {
 				MemEvent *ev = queue.front();
 				queue.pop_front();
@@ -284,7 +284,7 @@ private:
                     delete bh.init;
                 }
 
-				link->send(ev);   // Renamed per Issue 70 - ALevine
+				link->send(ev); 
 
                 if ( bh.finish ) {
                     (comp->*(bh.finish->func))(bh.finish->args);
@@ -345,7 +345,6 @@ public:
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
     bool clockTick(Cycle_t);
 	void init(unsigned int);
-//	int Finish();  // Renamed per Issue 70 - ALevine
 	void finish();  
 
 private:

@@ -66,7 +66,6 @@ Msgrate_pattern::handle_events(state_event sm_event)
     }
 
     if (done)   {
-//  unregisterExit();  // Renamed Per Issue 70 - ALevine
   primaryComponentOKToEndSim();
 	done= false;
     }
@@ -522,11 +521,10 @@ eli(Msgrate_pattern, msgrate_pattern, "Message rate pattern")
 
 // ADDED FOR PROPER INITIALIZATION - ALEVINE
 // SST Startup and Shutdown
-void Msgrate_pattern::setup()  // Renamed per Issue 70 - ALevine
+void Msgrate_pattern::setup() 
 {
 	// Call the initial State Transition
 	state_transition(E_START_T1, STATE_INIT);
-//	return 0;
 }
 
 #ifdef SERIALIZATION_WORKS_NOW

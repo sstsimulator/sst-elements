@@ -28,8 +28,6 @@ class PhoenixSim : public SST::Component {
   
   virtual bool clockTic( SST::Cycle_t );
 
-//  int Finish();  // Renamed per Issue 70 - ALevine
-//  int Setup();
   void finish();
   void setup();
 

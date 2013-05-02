@@ -44,8 +44,6 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
   sstdisksim_straightdisk( ComponentId_t id, Params_t& params );
   ~sstdisksim_straightdisk();
 
-//  int Setup();  // Renamed per Issue 70 - ALevine
-//  int Finish();
   void setup();  
   void finish();
 

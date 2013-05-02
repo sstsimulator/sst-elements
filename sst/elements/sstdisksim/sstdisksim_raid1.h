@@ -49,8 +49,6 @@ class sstdisksim_raid1 : public sstdisksim_diskmodel, public Component {
   sstdisksim_raid1( ComponentId_t id, Params_t& params );
   ~sstdisksim_raid1();
 
-//  int Setup();  // Renamed per Issue 70 - ALevine
-//  int Finish();
   void setup();  
   void finish();
 

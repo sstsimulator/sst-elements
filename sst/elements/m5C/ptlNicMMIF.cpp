@@ -160,7 +160,7 @@ void PtlNicMMIF::process( void* key )
     ::DmaEvent* event = static_cast< ::DmaEvent* >(key);
     DBGX( 2, "addr=%#lx size=%lu type=%s\n", event->addr, event->size,
                 event->type == ::DmaEvent::Write ? "Write" : "Read" );
-    m_dmaLink->send( event );   // Renamed per Issue 70 - ALevine
+    m_dmaLink->send( event ); 
 }
 
 void PtlNicMMIF::addressRanges(AddrRangeList& resp)
@@ -182,7 +182,7 @@ Tick PtlNicMMIF::write(Packet* pkt)
 
     if ( ( pkt->getAddr() - m_startAddr ) == offsetof( cmdQueue_t, tail ) ) {
         if ( ! m_blocked ) {
-            m_cmdLink->send(    // Renamed per Issue 70 - ALevine
+            m_cmdLink->send(  
                     new ::PtlNicEvent( &m_cmdQueue.queue[ m_cmdQueue.head ] ) );  
             m_cmdQueue.head = ( m_cmdQueue.head + 1 ) % CMD_QUEUE_SIZE;
         }

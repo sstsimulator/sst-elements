@@ -135,9 +135,8 @@ nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
 }
 
 
-//int nodeComponent::Setup(){  // Renamed per Issue 70 - ALevine
 void nodeComponent::setup(){
-  SelfLink->send( new CommunicationEvent( START_FAULTING ) );   // Renamed per Issue 70 - ALevine
+  SelfLink->send( new CommunicationEvent( START_FAULTING ) ); 
 
 //  return 0;
 }
@@ -183,7 +182,7 @@ std::string nodeComponent::getID(){
 void nodeComponent::handleJobKillEvent( JobKillEvent * killEvent ){
   if( killEvent->jobNum == this->jobNum && Scheduler ){
     CompletionEvent *ec = new CompletionEvent(jobNum);
-    Scheduler->send(ec);   // Renamed per Issue 70 - ALevine
+    Scheduler->send(ec); 
   
     killedJobs.insert( std::pair<int, int>( jobNum, jobNum ) );
     jobNum = -1;
@@ -260,11 +259,11 @@ void nodeComponent::handleFaultEvent( SST::Event * ev ){
             || (jobKillProbability.find( faultEvent->faultType ) == jobKillProbability.end()
                 || erand48( yumyumRand48State ) < jobKillProbability.find( faultEvent->faultType )->second) ){
           
-          //SelfLink->send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) );   // Renamed per Issue 70 - ALevine
+          //SelfLink->send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) ); 
 
           faultEvent->jobNum = jobNum;
           faultEvent->nodeNumber = nodeNum;
-          Scheduler->send( (unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent->faultType ), faultEvent->copy() );   // Renamed per Issue 70 - ALevine
+          Scheduler->send( (unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent->faultType ), faultEvent->copy() ); 
             // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
 
         }
@@ -277,7 +276,7 @@ void nodeComponent::handleFaultEvent( SST::Event * ev ){
           }
         }
         for(std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
-          (*it)->send( (unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent->faultType ), faultEvent->copy() );   // Renamed per Issue 70 - ALevine
+          (*it)->send( (unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent->faultType ), faultEvent->copy() ); 
         }
       }
     }
@@ -300,7 +299,7 @@ void nodeComponent::handleEvent(Event *ev) {
       event->payload = &this->ID;
       event->reply = true;
 
-      Scheduler->send( event );   // Renamed per Issue 70 - ALevine
+      Scheduler->send( event ); 
       return;
     }
   }else if( dynamic_cast<ObjectRetrievalEvent *>( ev ) ){
@@ -308,7 +307,7 @@ void nodeComponent::handleEvent(Event *ev) {
 
     event->payload = this;
 
-    Builder->send( event );   // Renamed per Issue 70 - ALevine
+    Builder->send( event ); 
     return;
   }
 
@@ -317,7 +316,7 @@ void nodeComponent::handleEvent(Event *ev) {
   if (event) {  
     if (jobNum == -1) {
       jobNum = event->jobNum;
-      SelfLink->send(event->time, event);   // Renamed per Issue 70 - ALevine
+      SelfLink->send(event->time, event); 
     } else {
       internal_error("Error?! Already running a job, but given a new one!\n");
     }
@@ -345,7 +344,7 @@ void nodeComponent::handleSelfEvent(Event *ev) {
     if( killedJobs.erase( event->jobNum ) == 1 ){
     }else if (event->jobNum == jobNum) {
       CompletionEvent *ec = new CompletionEvent(jobNum);
-      Scheduler->send(ec);   // Renamed per Issue 70 - ALevine
+      Scheduler->send(ec); 
       jobNum = -1;
     } else {
       internal_error("Error!! We are not running this job we're supposed to finish!\n");
@@ -412,7 +411,7 @@ void nodeComponent::sendNextFault( std::string faultType ){
    * Don't just check if the fault time is zero, the PRNG could be at fault for that one, and it would be OK.
    */
   if( std::isfinite( -1/(Faults.find( faultType.c_str() )->second / lambdaScale) ) ){
-    SelfLink->send( fail_time, new FaultEvent( faultType ) );   // Renamed per Issue 70 - ALevine
+    SelfLink->send( fail_time, new FaultEvent( faultType ) ); 
   }
 }
 

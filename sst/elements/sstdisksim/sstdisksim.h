@@ -44,8 +44,6 @@ class sstdisksim : public Component {
 
   sstdisksim( ComponentId_t id, Params_t& params );
   ~sstdisksim();
-//  int Setup();  // Renamed per Issue 70 - ALevine
-//  int Finish();
   void setup(); 
   void finish();
 

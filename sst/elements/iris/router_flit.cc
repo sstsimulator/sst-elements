@@ -372,7 +372,6 @@ Router::do_st ( void )
                 f->vc = oc;
                 ev->type = irisRtrEvent::Flit;
                 ev->flit = f;
-//                links.at(op)->Send(ev);   // Renamed per Issue 70 - ALevine
                 links.at(op)->send(ev);   
 
                 /*  I have one slot in the next buffer less now. */
@@ -382,7 +381,6 @@ Router::do_st ( void )
                 cr_ev->type = irisRtrEvent::Credit;
                 cr_ev->credit.vc = oc;
                 cr_ev->credit.num = 1;
-//                links.at(ip)->Send(cr_ev); // Renamed per Issue 70 - ALevine
                 links.at(ip)->send(cr_ev);
 
                 //If the tail is going out then ib_state is cleared later

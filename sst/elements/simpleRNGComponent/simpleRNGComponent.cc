@@ -63,7 +63,6 @@ simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
   }
 
   // tell the simulator not to end without us
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
@@ -90,7 +89,6 @@ bool simpleRNGComponent::tick( Cycle_t ) {
 
   	// return false so we keep going
   	if(rng_count == rng_max_count) {
-//      unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
   		return true;
   	} else {

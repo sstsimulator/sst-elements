@@ -84,7 +84,7 @@ int out_port;
 	// Just send the event on: no delays, no queuing
 	e->hops++;
 	assert(port[out_port].link); // Trying to use an unused port. This is a routing error
-	port[out_port].link->send(0, e);   // Renamed per Issue 70 - ALevine
+	port[out_port].link->send(0, e); 
 	return;
     }
 
@@ -104,7 +104,7 @@ int out_port;
 
 	e->entry_port= in_port;
 	assert(self_link); // Trying to use an unused port. This is a routing error
-	self_link->send(arrival_delay, e);   // Renamed per Issue 70 - ALevine
+	self_link->send(arrival_delay, e); 
 
 	return;
     }
@@ -175,7 +175,7 @@ int out_port;
 
     e->hops++;
     assert(port[out_port].link); // Trying to use an unused port. This is a routing error
-    port[out_port].link->send(delay + blocked, e);   // Renamed per Issue 70 - ALevine
+    port[out_port].link->send(delay + blocked, e); 
     port[out_port].cnt_out++;
     msg_cnt++;
 

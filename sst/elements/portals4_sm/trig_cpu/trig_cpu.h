@@ -76,8 +76,6 @@ public:
     friend class portals;
   
     trig_cpu(ComponentId_t id, Params_t& params);
-//    int Setup();  // Renamed per Issue 70 - ALevine
-//    int Finish();
     void setup();
     void finish();
 
@@ -312,7 +310,7 @@ public:
 //             // Everyone has entered barrier, wake everyone up to start
 //             // over
 //             for ( int i = 0; i < total_nodes; i++ ) {
-//                 wake_up[i]->send(10,NULL);   // Renamed per Issue 70 - ALevine
+//                 wake_up[i]->send(10,NULL); 
 //             }
 //             resetBarrier();
 //             printStats();

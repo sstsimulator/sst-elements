@@ -942,7 +942,7 @@ void core_exec_atom_t::LDST_exec(void)
             FU->pipe[stage].load_received =false;
 
             /* Actually enqueueing the request to cache*/
-            core->cache_link->send(request);   // Renamed per Issue 70 - ALevine
+            core->cache_link->send(request); 
           }
         }
       }
@@ -1702,7 +1702,7 @@ void core_exec_atom_t::STQ_deallocate_senior(void)
 	    fprintf(stdout,"\n[%lld][Core%d]EXEC MOP=%d UOP=%d store_enqueue %llx in_fusion %d ",core->sim_cycle,core->id,uop->decode.Mop_seq,uop->decode.uop_seq,uop->oracle.phys_addr,uop->decode.in_fusion);
       #endif             
 	    /*Actually enqueueing the request to cache*/
-      core->cache_link->send(request); // sendtick?   // Renamed per Issue 70 - ALevine
+      core->cache_link->send(request); // sendtick? 
 
 
 #ifdef ZTRACE

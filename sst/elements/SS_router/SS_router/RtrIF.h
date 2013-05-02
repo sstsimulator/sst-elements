@@ -128,7 +128,6 @@ public:
         return retval;
     }
 
-//    int Finish() { return 0; }  // Renamed Per Issue 70 - ALevine
     void finish() { }
 
 
@@ -201,7 +200,7 @@ private:
         event->type = RtrEvent::Credit;
         event->credit.num = numFlits;
         event->credit.vc = vc;
-        m_rtrLink->send( event );   // Renamed per Issue 70 - ALevine
+        m_rtrLink->send( event ); 
     }
 
     void sendPktToRtr( RtrEvent* event ) 
@@ -212,7 +211,7 @@ private:
         event->type = RtrEvent::Packet;
         event->packet = *pkt;
         int lat = reserveRtrLine(pkt->sizeInFlits);
-        m_rtrLink->send( lat, event );   // Renamed per Issue 70 - ALevine
+        m_rtrLink->send( lat, event ); 
     }
 
     int reserveRtrLine (int cyc)

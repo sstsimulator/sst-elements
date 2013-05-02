@@ -136,7 +136,7 @@ public:
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
 	    if ( waiting ) {
-		output_timing->send(1,NULL);     // Renamed per Issue 70 - ALevine
+		output_timing->send(1,NULL);   
 		waiting = false;
 	    }
 	}
@@ -188,11 +188,11 @@ public:
 	    // First set the virtual channel.
 	    send_event->vc = vn2vc_map[vn_to_send];
 	    send_event->type = RtrEvent::packet;
-	    rtr_link->send(send_event);   // Renamed per Issue 70 - ALevine
+	    rtr_link->send(send_event); 
 	    
 	    // Send an event to wake up again after this packet is sent.
 	    int size = send_event->size_in_flits;
-	    output_timing->send(size,NULL);   // Renamed per Issue 70 - ALevine
+	    output_timing->send(size,NULL); 
 
 	    curr_out_vn = vn_to_send++;
 	    if ( curr_out_vn == num_vns ) curr_out_vn = 0;

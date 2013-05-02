@@ -70,7 +70,7 @@ assert(_m->get_LinkLatency(_nic) == 0); // For now
 	if (event_delay < 0)   {
 	    event_delay= 0;
 	}
-	send_link->send(event_delay, e);   // Renamed per Issue 70 - ALevine
+	send_link->send(event_delay, e); 
 	NextSendSlot= current_time + event_delay;
 
     } else   {
@@ -80,7 +80,7 @@ assert(_m->get_LinkLatency(_nic) == 0); // For now
 	if (event_delay < 0)   {
 	    event_delay= 0;
 	}
-	send_link->send(event_delay, e);   // Renamed per Issue 70 - ALevine
+	send_link->send(event_delay, e); 
 	nstats->record_busy(NextSendSlot - current_time);
 	NextSendSlot= current_time + event_delay;
     }
@@ -117,7 +117,7 @@ SST::SimTime_t current_time;
     } else   {
 	event_delay= NextRecvSlot - current_time + nic_delay;
     }
-    _self_link->send(event_delay, e);   // Renamed per Issue 70 - ALevine
+    _self_link->send(event_delay, e); 
     NextRecvSlot= current_time + event_delay;
 
 }  /* end of handle_rcv_events() */

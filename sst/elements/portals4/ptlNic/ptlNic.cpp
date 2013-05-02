@@ -57,10 +57,8 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     assert( m_mmifLink );
 }
 
-//int PtlNic::Setup()  // Renamed per Issue 70 - ALevine
 void PtlNic::setup()
 {
-//    return 0;
 }
 
 bool PtlNic::clock( SST::Cycle_t cycle )

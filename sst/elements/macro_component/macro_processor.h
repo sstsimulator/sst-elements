@@ -145,7 +145,7 @@ protected:
 			double d = (start_time - ts).psec();
 			SST::SimTime_t delay(d);
 						
-			parent_->outgate->send(delay, msg);   // Renamed per Issue 70 - ALevine
+			parent_->outgate->send(delay, msg); 
 			
 						
 		}
@@ -162,15 +162,10 @@ public:
   ~macro_processor()
   {
   }
-//  int
-//  Setup();  // Renamed per Issue 70 - ALevine
   void setup();
-//  int
-//  Finish()  // Renamed per Issue 70 - ALevine
   void finish()  
   {
 	  std::cout << "---proc finished \n";
-//    return 0;
   }
 
   virtual SST::Link*

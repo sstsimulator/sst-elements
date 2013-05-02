@@ -56,8 +56,6 @@ class sstdisksim_luascriptreader : public Component {
 
   sstdisksim_luascriptreader( ComponentId_t id, Params_t& params );
   ~sstdisksim_luascriptreader();
-//  int Setup();  // Renamed per Issue 70 - ALevine
-//  int Finish();
   void setup(); 
   void finish();
 

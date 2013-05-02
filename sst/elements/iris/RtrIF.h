@@ -124,7 +124,6 @@ public:
         return retval;
     }
 
-//    int Finish()  // Renamed per Issue 70 - ALevine
     void finish() 
     { 
         fprintf(stderr,"\n RtrIF Node %d\n", m_id );
@@ -204,7 +203,6 @@ private:
         event->type = irisRtrEvent::Credit;
         event->credit.num = numFlits;
         event->credit.vc = vc;
-//        m_rtrLink->Send( event );   // Renamed per Issue 70 - ALevine
         m_rtrLink->send( event ); 
     }
 
@@ -216,7 +214,6 @@ private:
         event->type = irisRtrEvent::Packet;
         event->packet = pkt;
         int lat = reserveRtrLine(pkt->sizeInFlits);
-//        m_rtrLink->Send( lat, event );   // Renamed per Issue 70 - ALevine
         m_rtrLink->send( lat, event ); 
     }
 

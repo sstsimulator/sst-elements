@@ -57,8 +57,6 @@ public:
     ~hr_router();
     
     void init(unsigned int phase);
-//    int Setup();                       // Renamed per Issue 70 - ALevine
-//    int Finish() {return false;}
     void setup();
     void finish() {}
 

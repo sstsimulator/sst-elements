@@ -423,8 +423,6 @@ class Routermodel : public IntrospectedComponent {
 	}
 
 
-//	int
-//	Setup()  // Renamed per Issue 70 - ALevine
 	void setup()
 	{
 #ifdef WITH_POWER
@@ -452,12 +450,9 @@ class Routermodel : public IntrospectedComponent {
 		}
 	    }
 #endif
-//	    return 0;
 	}
 
 
-//	int
-//	Finish()  // Renamed per issue 70 - ALevine
 	void finish()
 	{
 #ifdef WITH_POWER
@@ -468,7 +463,6 @@ class Routermodel : public IntrospectedComponent {
 		//power->printFloorplanThermalInfo();
 	    }
 #endif
-//	    return 0;
 	}
 
 

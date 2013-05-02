@@ -471,7 +471,7 @@ portals::PtlEQPoll(int* return_value, ptl_handle_eq_t eq_handle, ptl_time_t time
 	    // First time in and didn't find a match.  Need to set up
 	    // the timeout event
 	    cpu->poll_ev = new trig_cpu_event(true);
-	    cpu->self->send(timeout, cpu->poll_ev);   // Renamed per Issue 70 - ALevine
+	    cpu->self->send(timeout, cpu->poll_ev); 
 	    return false;
 	}
     }
@@ -697,7 +697,7 @@ portals::PtlTriggeredCTInc(ptl_handle_ct_t ct_handle, ptl_size_t increment,
 //     event->operation->data.trig = trig_op;
     event->ptl_op = PTL_NIC_TRIG;
     event->data.trig = trig_op;
-    cpu->nic->send(event);   // Renamed per Issue 70 - ALevine
+    cpu->nic->send(event); 
     
     // The processor is tied up for 1/msgrate
 //     cpu->busy += cpu->delay_host_pio_write;
@@ -868,7 +868,7 @@ portals::processMessage(trig_nic_event* ev) {
 	ev->head_packet = false;
 	
 	// Need to add latency to memory
-	cpu->dma_return_link->send(cpu->latency_dma_mem_access,ev);   // Renamed per Issue 70 - ALevine
+	cpu->dma_return_link->send(cpu->latency_dma_mem_access,ev); 
     }
     else {
       // In the case of send/recv (cpu->use_portals == false), we need

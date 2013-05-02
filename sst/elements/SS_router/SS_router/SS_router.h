@@ -401,10 +401,8 @@ protected:
     void arbitrateInToOut ();
     void iLCBtoIn ();
 
-//    void setup();  // Renamed to avoid conflict with virtual function renaming in component.h; See Issue 70 - ALevine
     void newSetup();
     void dumpStats(FILE *fp);
-//    int Finish();  // Renamed Per Issue 70 - ALevine
     void finish();
 
     void setupRoutingTable ( Params_t, int nodes, int xDim, int yDim, int zDim);

@@ -146,7 +146,7 @@ class Msgrate_pattern : public Comm_pattern    {
 
 	// ADDED FOR PROPER INITIALIZATION - ALEVINE
 	// SST Startup and Shutdown
-	void setup();  // Renamed per Issue 70 - ALevine
+	void setup();
 
 	// Serialization
         friend class boost::serialization::access;

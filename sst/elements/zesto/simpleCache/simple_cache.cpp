@@ -50,7 +50,6 @@ simple_cache::simple_cache (SST::ComponentId_t id, SST::Component::Params_t& par
   
   my_table = new hash_table(settings); 
 
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
@@ -93,7 +92,7 @@ void simple_cache::handle_request (SST::Event *ev)
     delete request;
     //Even though we need to check if the data is in cache and update it
     //if it is, the message to the downstream can be sent right away.
-    link_lower->send(mreq);   // Renamed per Issue 70 - ALevine
+    link_lower->send(mreq); 
   }
   else
   {
@@ -102,7 +101,7 @@ void simple_cache::handle_request (SST::Event *ev)
     {
        n_load_hits++;
        //Here the cache_req is reused, so we do not delete.
-       link_upper->send (my_table->get_hit_time(), request);   // Renamed per Issue 70 - ALevine
+       link_upper->send (my_table->get_hit_time(), request); 
     }
     else if (request->msg == CACHE_MISS)
     {
@@ -110,7 +109,7 @@ void simple_cache::handle_request (SST::Event *ev)
        mreq->source_id = node_id;
        mreq->dest_id = mc_map->lookup (request->addr);
        delete request;
-       link_lower->send (my_table->get_lookup_time(), mreq);   // Renamed per Issue 70 - ALevine
+       link_lower->send (my_table->get_lookup_time(), mreq); 
     }
     else
     {
@@ -143,13 +142,13 @@ void simple_cache::handle_response (SST::Event *ev)
 
       for(list<cache_req*>::iterator it=reqlist.begin(); it != reqlist.end(); ++it) {
           (*it)->msg = LD_RESPONSE;
-        link_upper->send(my_table->get_hit_time(), *it);   // Renamed per Issue 70 - ALevine
+        link_upper->send(my_table->get_hit_time(), *it); 
       }
   }
   else {
       // On a ST_COMPLETE we can send the response back to the processor immediately
       cache_req* creq = new cache_req (request, request->msg);
-      link_upper->send(creq);   // Renamed per Issue 70 - ALevine
+      link_upper->send(creq); 
   }
   delete request; //delete the mem_req
 

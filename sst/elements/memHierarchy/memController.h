@@ -43,8 +43,6 @@ class MemController : public SST::Component {
 public:
     MemController(ComponentId_t id, Params_t &params);
     void init(unsigned int);
-//    int Setup();  // Renamed per Issue 70 - ALevine
-//    int Finish();
     void setup();
     void finish();
 

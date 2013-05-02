@@ -146,7 +146,6 @@ prospero::prospero(ComponentId_t id, Params_t& params) :
   memset(zero_buffer, 0, sizeof(char) * 2048);
 
   // tell the simulator not to end without us
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
@@ -314,8 +313,8 @@ void prospero::createPendingRequest(memory_request mem_req) {
 			write_req_generated += 2;
 		}
 
-		cache_link->send(e_lower);   // Renamed per Issue 70 - ALevine
-		cache_link->send(e_upper);   // Renamed per Issue 70 - ALevine
+		cache_link->send(e_lower); 
+		cache_link->send(e_upper); 
 
 		memory_request* e_lower_req = (memory_request*) malloc(sizeof(memory_request));
 		memory_request* e_upper_req = (memory_request*) malloc(sizeof(memory_request));
@@ -353,7 +352,7 @@ void prospero::createPendingRequest(memory_request mem_req) {
 			write_req_generated++;
 		}
 
-		cache_link->send(e);   // Renamed per Issue 70 - ALevine
+		cache_link->send(e); 
 		pending_requests[e->getID()] = e_req;
 	}
 }

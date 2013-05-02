@@ -81,13 +81,11 @@ class NInterface : public DES_Component
         void print_stats ( std::string& stat_str ) const;
         void reset_stats ( void );
 
-//        int Finish()   // Renamed per Issue 70 - ALevine
         void finish()
         {
             std::string tmp;
             print_stats(tmp);
             fprintf(stderr,"\nNode%d Interface \n%s ",node_id, tmp.c_str());
-//            return 0;
         }
 
     private:

@@ -73,25 +73,18 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
 				      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
     }
     
-//    registerExit();  // Renamed Per Issue 70 - ALevine
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
 }
 
-//int
-//pt2pt_test::Finish()  // Renamed per Issue 70 - ALevine
-void pt2pt_test::finish()  // Renamed per Issue 70 - ALevine
+void pt2pt_test::finish()
 {
-//    return 0;
 }
 
-//int
-//pt2pt_test::Setup()  // Renamed per Issue 70 - ALevine
-void pt2pt_test::setup()  // Renamed per Issue 70 - ALevine
+void pt2pt_test::setup()
 {
     // return link_control->Setup();
-//    return 0;
 }
 
 void
@@ -108,7 +101,6 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 
 	// Do a bandwidth test
 	if ( packets_sent == packets_to_send ) {
-//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
 	    
 	    cout << "0: Done" << endl;
@@ -154,7 +146,6 @@ pt2pt_test::clock_handler(Cycle_t cycle)
     if ( id == 0 ) {
 	// Do a bandwidth test
 	if ( packets_sent == packets_to_send ) {
-//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
       primaryComponentOKToEndSim();
 	    cout << "0: Done @ " << getCurrentSimTimeNano() << endl;
 	    return true;  // Take myself off clock list
@@ -185,7 +176,7 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 		// Need to send this event to a self link to account
 		// for serialization latency.  This will trigger an
 		// event handler that will compute the BW.
-		self_link->send(packet_size,rec_ev);   // Renamed per Issue 70 - ALevine
+		self_link->send(packet_size,rec_ev); 
 		return true;
 	    }
 	    else {
@@ -203,7 +194,7 @@ pt2pt_test::clock_handler(Cycle_t cycle)
 		// Need to send this event to a self link to account
 		// for serialization latency.  This will trigger an
 		// event handler that will compute the BW.
-		self_link->send(packet_size,rec_ev);   // Renamed per Issue 70 - ALevine
+		self_link->send(packet_size,rec_ev); 
 		return true;
 	    }
 	    else {
@@ -233,7 +224,6 @@ pt2pt_test::handle_complete(Event* ev) {
     cout << "Total sent = " << total_sent << endl;
     
     cout << "BW = " << bw << " GFlits/sec" << endl;
-    //	    unregisterExit();  // Renamed Per Issue 70 - ALevine
-      primaryComponentOKToEndSim();
+    primaryComponentOKToEndSim();
 
 }

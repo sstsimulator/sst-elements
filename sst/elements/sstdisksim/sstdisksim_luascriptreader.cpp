@@ -129,7 +129,7 @@ sstdisksim_luascriptreader::luaRead(int count, int pos, int devno)
   event->etype = DISKSIMREAD;
   event->completed = false;
 
-  link->send(0, event);   // Renamed per Issue 70 - ALevine
+  link->send(0, event); 
 
   return 0;
 }
@@ -166,7 +166,7 @@ sstdisksim_luascriptreader::luaWrite(int count, int pos, int devno)
   event->etype = DISKSIMWRITE;
   event->completed = false;
 
-  link->send(0, event);   // Renamed per Issue 70 - ALevine
+  link->send(0, event); 
 
   return 0;
 }
@@ -242,7 +242,6 @@ sstdisksim_luascriptreader::sstdisksim_luascriptreader( ComponentId_t id,  Param
   lua_pushinteger(__L, id);
   lua_setglobal(__L, "sst_thread_id");
 
-//  registerExit();  // Renamed Per Issue 70 - ALevine
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 }
@@ -253,32 +252,25 @@ sstdisksim_luascriptreader::~sstdisksim_luascriptreader()
 }
 
 /******************************************************************************/
-//int
-//sstdisksim_luascriptreader::Setup()  // Renamed per Issue 70 - ALevine
 void sstdisksim_luascriptreader::setup() 
 {
   luaL_dofile(__L, traceFile.c_str());
 
   sstdisksim_event* event = new sstdisksim_event();
   event->etype = DISKSIMEND;
-  link->send(0, event);   // Renamed per Issue 70 - ALevine
+  link->send(0, event); 
 
-//  unregisterExit();  // Renamed Per Issue 70 - ALevine
   primaryComponentOKToEndSim();
 
-//  return 0;
 }
 
 /******************************************************************************/
-//int 
-//sstdisksim_luascriptreader::Finish()  // Renamed per Issue 70 - ALevine
 void sstdisksim_luascriptreader::finish() 
 {
   DBG("Shutting sstdisksim_luascriptreader down\n");
 
   lua_close(__L);
 
-//  return 0;
 }
 
 /******************************************************************************/

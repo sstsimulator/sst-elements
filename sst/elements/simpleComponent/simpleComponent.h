@@ -25,8 +25,6 @@ class simpleComponent : public SST::Component {
 public:
 
   simpleComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
-//  int Setup() {return 0;} // Renamed per Issue 70 - ALevine
-//  int Finish() {
   void setup() { }
   void finish() {
     static int n = 0;
