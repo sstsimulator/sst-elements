@@ -28,12 +28,14 @@ class messageGeneratorComponent : public SST::Component {
 public:
 
   messageGeneratorComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
-  int Setup()  { return 0; }
-  int Finish() 
+//  int Setup()  { return 0; }  // Renamed per Issue 70 - ALevine
+//  int Finish() 
+  void setup()  { }
+  void finish() 
   { 
 	std::cout << "Component completed at: " << getCurrentSimTimeMilli() 
 		<<  " milliseconds" << std::endl;
-	return 0; 
+//	return 0; 
   }
 
 private:

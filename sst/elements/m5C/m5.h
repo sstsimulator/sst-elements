@@ -37,8 +37,10 @@ class M5 : public SST::IntrospectedComponent
     M5( SST::ComponentId_t id, Params_t& params );
     ~M5();
 	void init(unsigned int);
-    int Setup();
-    int Finish();
+//    int Setup();  // Renamed per Issue 70 - ALevine
+//    int Finish();
+    void setup();
+    void finish();
 
     void registerExit();
     void exit( int status );

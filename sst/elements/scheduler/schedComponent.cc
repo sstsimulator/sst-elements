@@ -152,12 +152,13 @@ schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
 }
 
 
-int schedComponent::Setup(){
+//int schedComponent::Setup(){  // Renamed per Issue 70 - ALevine
+void schedComponent::setup(){
 
   for( vector<SST::Link *>::iterator nodeIter = nodes.begin(); nodeIter != nodes.end(); nodeIter ++ ){
           // ask the newly-connected node for its ID
       SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
-      (*nodeIter)->Send( getID );
+      (*nodeIter)->send( getID );   // Renamed per Issue 70 - ALevine
   }
 
   // done setting up the links, now read the job list
@@ -169,10 +170,10 @@ int schedComponent::Setup(){
   if( useYumYumTraceFormat ){
     CommunicationEvent * CommEvent = new CommunicationEvent( START_FILE_WATCH );
     CommEvent->payload = & jobListFileName;
-    selfLink->Send( CommEvent );
+    selfLink->send( CommEvent );   // Renamed per Issue 70 - ALevine
   }
 
-  return 0;
+//  return 0;
 }
 
 
@@ -261,7 +262,7 @@ bool schedComponent::validateJob( Job * j, vector<Job> * jobs, long runningTime 
   }
   if (ok) {
     ArrivalEvent* ae = new ArrivalEvent(j -> getArrivalTime(), jobs->size()-1);
-    selfLink->Send(0 , ae);
+    selfLink->send(0 , ae);   // Renamed per Issue 70 - ALevine
   }
   
   return ok;
@@ -363,13 +364,16 @@ bool schedComponent::newJobLine( std::string line ){
 
 
 void schedComponent::registerThis(){
-  registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
   registrationStatus = true;
 }
 
 
 void schedComponent::unregisterThis(){
-  unregisterExit();
+//  unregisterExit();  // Renamed Per Issue 70 - ALevine
+  primaryComponentOKToEndSim();
   registrationStatus = false;
 }
 
@@ -408,9 +412,9 @@ void schedComponent::unregisterYourself(){
 void schedComponent::startNextJob(){
   CommunicationEvent * CommEvent = new CommunicationEvent( START_NEXT_JOB );
   if( useYumYumTraceFormat ){
-    selfLink->Send( 1, CommEvent );
+    selfLink->send( 1, CommEvent );   // Renamed per Issue 70 - ALevine
   }else{
-    selfLink->Send( 0, CommEvent );
+    selfLink->send( 0, CommEvent );   // Renamed per Issue 70 - ALevine
   }
 //  while( scheduler -> tryToStart(theAllocator, getCurrentSimTime(), machine, stats) );
 }
@@ -445,7 +449,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       FinalTimeEvent *fte = new FinalTimeEvent();
       if(runningJobs[jobNum].ai->job->getStartTime() == getCurrentSimTime())
         fte->forceExecute = true;
-      selfLink->Send(0, fte); //send back an event at the same time so we know it finished
+      selfLink->send(0, fte); //send back an event at the same time so we know it finished   // Renamed per Issue 70 - ALevine
     }
     if(jobNum == jobs.back().jobNum)
     {
@@ -491,7 +495,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       for (int i = 0; i < ai->job->getProcsNeeded(); ++i) {
         JobKillEvent *ec = new JobKillEvent(ai->job->getJobNum());
 
-        nodes[ai->nodeIndices[i]]->Send(ec);
+        nodes[ai->nodeIndices[i]]->send(ec);   // Renamed per Issue 70 - ALevine
       }
 
       machine->deallocate(ai);
@@ -546,7 +550,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
   {
     finishingarr.push_back(arevent);
     FinalTimeEvent* fte = new FinalTimeEvent();
-    selfLink->Send(0, fte); //send back an event at the same time so we know it finished
+    selfLink->send(0, fte); //send back an event at the same time so we know it finished   // Renamed per Issue 70 - ALevine
   }
   else
   {
@@ -620,11 +624,12 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
   }
 }
 
-int schedComponent::Finish() {
+//int schedComponent::Finish() {  // Renamed per Issue 70 - ALevine
+void schedComponent::finish() {
   scheduler -> done();
   stats -> done();
   theAllocator -> done();
-  return 0;
+//  return 0;
 }
 
 
@@ -635,7 +640,7 @@ void schedComponent::startJob(AllocInfo* ai) {
   // send to each person in the node list
   for (int i = 0; i < j->getProcsNeeded(); ++i) {
     JobStartEvent *ec = new JobStartEvent(j->getActualTime(), j->getJobNum());
-    nodes[jobNodes[i]]->Send(ec);
+    nodes[jobNodes[i]]->send(ec);   // Renamed per Issue 70 - ALevine
   }
 
   IAI iai;
@@ -776,7 +781,9 @@ bool schedComponent::clockTic( Cycle_t ) {
 
   // end simulation after 1 hour of simulated time
   if (getCurrentSimTime() >= 3600) {
-    unregisterExit();
+//    unregisterExit();  // Renamed Per Issue 70 - ALevine
+    primaryComponentOKToEndSim();
+    
   }
 
   // return false so we keep going

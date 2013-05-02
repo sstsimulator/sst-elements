@@ -24,7 +24,9 @@ VeronaCPU::VeronaCPU(ComponentId_t id, Params_t& params) :
   Component(id) {
 
   // tell the simulator not to end without us
-  registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 }
 
 VeronaCPU::VeronaCPU() :

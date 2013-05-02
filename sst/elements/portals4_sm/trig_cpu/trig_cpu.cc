@@ -258,8 +258,10 @@ trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
         _abort(RtrIF, "Invalid application: %s\n", application.c_str());
     }
     
-    registerExit();
-    
+//    registerExit();  // Renamed Per Issue 70 - ALevine
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
+
     nic = configureLink("nic",new Event::Handler<trig_cpu>(this,&trig_cpu::processEventPortals));
 
     self = configureSelfLink("self", new Event::Handler<trig_cpu>(this,&trig_cpu::event_handler));
@@ -306,8 +308,9 @@ trig_cpu::initPortals() {
 //     ptl_link->setDefaultTimeBase(registerTimeBase("1ns",false));
 }
 
-int
-trig_cpu::Setup()
+//int
+//trig_cpu::Setup()  // Renamed per Issue 70 - ALevine
+void trig_cpu::setup() 
 {
     busy = 0;
     recv_handle = 0;
@@ -325,7 +328,7 @@ trig_cpu::Setup()
     noise_count = barrier_act->getRand(my_id,noise_interval);
 //     printf("%5d: %lu\n",my_id,noise_count);
     waiting = false;
-    self->Send(1,timing_ev);
+    self->send(1,timing_ev);   // Renamed per Issue 70 - ALevine
     count = 0;
     barrier_act->addWakeUp(self);
 
@@ -347,18 +350,19 @@ trig_cpu::Setup()
       event->src = my_id;
       event->ptl_op = PTL_NIC_INIT_FOR_SEND_RECV;
 
-      nic->Send(1,event);
+      nic->send(1,event);   // Renamed per Issue 70 - ALevine
 
       
     }
-    return 0;
+//    return 0;
 }
 
-int
-trig_cpu::Finish()
+//int
+//trig_cpu::Finish()  // Renamed per Issue 70 - ALevine
+void trig_cpu::finish()  
 {
     if (my_id == 0 ) barrier_act->printOverallStats();
-    return 0;    
+//    return 0;    
 }
 
 int
@@ -424,7 +428,7 @@ trig_cpu::event_pio_delay(Event* e)
   // If this is the only entry, then we need to wakeup the interface
   // to transfer the data.  Otherwise, it will wakeup itself
   if ( !nic_timing_wakeup_scheduled ) {
-    nic_timing_link->Send(1,NULL);
+    nic_timing_link->send(1,NULL);   // Renamed per Issue 70 - ALevine
     nic_timing_wakeup_scheduled = true;
   }
 }
@@ -441,7 +445,7 @@ trig_cpu::writeToNIC(trig_nic_event* ev)
     if ( nic_credits != 0 ) {
         // Put this through the delay link.  Only do host delay time,
         // not sfence time in delay.
-        pio_delay_link->Send(delay_host_pio_write+delay_bus_xfer,ev);
+        pio_delay_link->send(delay_host_pio_write+delay_bus_xfer,ev);   // Renamed per Issue 70 - ALevine
 // 	// Put the event into the write combining buffers
 // 	wc_buffers.push(ev);
 	nic_credits--;
@@ -487,7 +491,7 @@ trig_cpu::event_nic_timing(Event* e)
   // for the current sims
   
   if ( dma_buffers.size() != 0 ) {
-    nic->Send(0,dma_buffers.front());
+    nic->send(0,dma_buffers.front());   // Renamed per Issue 70 - ALevine
     dma_buffers.pop();
   }
   else if ( wc_buffers.size() != 0 ) {
@@ -495,13 +499,13 @@ trig_cpu::event_nic_timing(Event* e)
 //     if ( my_id == 0 )
 //       printf("%5d:  Writing event type %d from WCs to bus @ %llu\n",my_id,wc_buffers.front()->ptl_op,getCurrentSimTimeNano());
 
-    nic->Send(added_pio_latency,wc_buffers.front());
+    nic->send(added_pio_latency,wc_buffers.front());   // Renamed per Issue 70 - ALevine
     wc_buffers.pop();
   }
 
     // If there's still events left, make myself up again
   if ( wc_buffers.size() != 0 || dma_buffers.size() != 0 ) {
-    nic_timing_link->Send(delay_bus_xfer,NULL);
+    nic_timing_link->send(delay_bus_xfer,NULL);   // Renamed per Issue 70 - ALevine
     nic_timing_wakeup_scheduled = true;
   }
   else {
@@ -562,7 +566,8 @@ trig_cpu::event_handler(Event* ev)
 	    break;
 	case 1:
  	  // printf("Unregister exit 1\n");
-	    unregisterExit();
+//      unregisterExit();  // Renamed Per Issue 70 - ALevine
+      primaryComponentOKToEndSim();
 	    return;
 	case 2:
 	    // Noise runs, have to do the specified number
@@ -572,7 +577,8 @@ trig_cpu::event_handler(Event* ev)
 	    else {
 		// Done with runs
 // 	  printf("Unregister exit 2\n");
-		unregisterExit();
+//    unregisterExit();  // Renamed Per Issue 70 - ALevine
+		primaryComponentOKToEndSim();
 		return;
 	    }
 	case 3:
@@ -624,7 +630,7 @@ trig_cpu::event_handler(Event* ev)
         busy = 1;
     }
 //     printf("Busy for %d\n",busy);
-    self->Send(busy,timing_ev);
+    self->send(busy,timing_ev);   // Renamed per Issue 70 - ALevine
     busy = 0;
     if ( noise_interval != 0 ) noise_count = noise_rem;
     else noise_count = 0;
@@ -659,7 +665,7 @@ trig_cpu::wakeUp()
 	busy = 0;
 
 	if ( noise_interval == 0 || !do_noise ) {
-            self->Send(1,timing_ev);
+            self->send(1,timing_ev);   // Renamed per Issue 70 - ALevine
             return;
         }
         // See if we need to add any noise before we wake up the main
@@ -667,19 +673,19 @@ trig_cpu::wakeUp()
         SimTime_t elapsed_time = getCurrentSimTime() - wait_start_time;
         if ( elapsed_time < noise_count ) {
             noise_count -= elapsed_time;
-            self->Send(1,timing_ev);
+            self->send(1,timing_ev);   // Renamed per Issue 70 - ALevine
         }
         else if ( elapsed_time < (noise_count + noise_duration) ) {
             // This means we are in the middle of noise, figure out how much
             // is left
             SimTime_t noise_left = noise_count + noise_duration - elapsed_time;
             noise_count = noise_interval - noise_duration;
-            self->Send(noise_left,timing_ev);
+            self->send(noise_left,timing_ev);   // Renamed per Issue 70 - ALevine
         }
         else if ( elapsed_time < (noise_count + noise_interval) ) {
             // Noise happened, but is done
             noise_count = noise_count + noise_interval - elapsed_time;
-            self->Send(1,timing_ev);
+            self->send(1,timing_ev);   // Renamed per Issue 70 - ALevine
         }
         else {
             // Need to determin if we are in noise or not.  Figure out how
@@ -688,12 +694,12 @@ trig_cpu::wakeUp()
                 (elapsed_time - (noise_count + noise_interval)) % noise_interval;
             if ( from_interval_start < noise_duration ) {
                 // In noise
-                self->Send(noise_duration - from_interval_start, NULL);
+                self->send(noise_duration - from_interval_start, NULL);   // Renamed per Issue 70 - ALevine
                 noise_count = noise_interval - noise_duration;
             }
             else {
                 // Not in noise
-                self->Send(1,timing_ev);
+                self->send(1,timing_ev);   // Renamed per Issue 70 - ALevine
                 noise_count = noise_interval - from_interval_start;
             }
         }
@@ -709,7 +715,7 @@ trig_cpu::event_dma_return(Event *e)
   // Need to wake up the nic_timing handler if it is not already
   // scheduled to be
   if ( !nic_timing_wakeup_scheduled ) {
-    nic_timing_link->Send(delay_bus_xfer,NULL);
+    nic_timing_link->send(delay_bus_xfer,NULL);   // Renamed per Issue 70 - ALevine
     nic_timing_wakeup_scheduled = true;
   }
 }
@@ -742,7 +748,7 @@ trig_cpu::send(int dest, uint64_t data)
     event->src = my_id;
     event->dest = dest;
 
-    nic->Send(busy,event);
+    nic->send(busy,event);   // Renamed per Issue 70 - ALevine
     // We are busy for msg_rate_delay
     busy += msg_rate_delay;
 }

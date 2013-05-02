@@ -20,7 +20,8 @@ bool Cpu::clock( Cycle_t current )
 //     printf("In CPU::clock\n");
     MemEvent* event = NULL; 
 
-    if (current == 100 ) unregisterExit();
+//    if (current == 100 ) unregisterExit();  // Renamed Per Issue 70 - ALevine
+    if (current == 100 ) primaryComponentOKToEndSim();
 
     if ( state == SEND ) { 
         if ( ! event ) event = new MemEvent();
@@ -34,13 +35,13 @@ bool Cpu::clock( Cycle_t current )
         }
 
         _CPU_DBG("xxx: send a MEM event address=%#lx @ cycle %ld\n", event->address, current );
-// 	mem->Send( 3 * epoch, event );
-	mem->Send( (Cycle_t)3, event );
+// 	mem->send( 3 * epoch, event );   // Renamed per Issue 70 - ALevine
+	mem->send( (Cycle_t)3, event );   // Renamed per Issue 70 - ALevine
 // 	printf("CPU::clock -> setting state to WAIT\n");
         state = WAIT;
     } else {
 // 	printf("Entering state WAIT\n");
-        if ( ( event = static_cast< MemEvent* >( mem->Recv() ) ) ) {
+        if ( ( event = static_cast< MemEvent* >( mem->recv() ) ) ) {   // Renamed per Issue 70 - ALevine
 // 	    printf("Got a mem event\n");
 	  _CPU_DBG("xxx: got a MEM event address=%#lx @ cycle %ld\n", event->address, current );
 // 	  printf("CPU::clock -> setting state to SEND\n");
@@ -61,7 +62,7 @@ bool Cpu::memEvent( Event* event  )
      else
           _CPU_DBG( "id=%lu cycle=%lu\n", Id(),
                 getCurrentSimTime() );
-    //cpu->Send( 3 * (1.0/frequency), static_cast<CompEvent*>(event) );
+    //cpu->send( 3 * (1.0/frequency), static_cast<CompEvent*>(event) );   // Renamed per Issue 70 - ALevine
     delete event; // SHOULD I BE DOING THIS?? it seems to work...
     return false;
 }
@@ -80,7 +81,7 @@ void Cpu::memoryAccess(OffCpuIF::access_mode mode,
      else
         event->type = MemEvent::MEM_STORE;
      event->address = address + Id();
-     memLink->Send(getCurrentSimTime(), event);
+     memLink->send(getCurrentSimTime(), event);   // Renamed per Issue 70 - ALevine
 }
 
 void Cpu::NICAccess(OffCpuIF::access_mode mode, long unsigned int data_size)

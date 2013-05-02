@@ -25,8 +25,10 @@ class simpleComponent : public SST::Component {
 public:
 
   simpleComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
-  int Setup() {return 0;}
-  int Finish() {
+//  int Setup() {return 0;} // Renamed per Issue 70 - ALevine
+//  int Finish() {
+  void setup() { }
+  void finish() {
     static int n = 0;
     n++;
     if (n == 10) {
@@ -36,7 +38,7 @@ public:
     } else {
       printf("Simple Component Finished\n");
     }
-    return 0;
+//    return 0;
   }
 
 private:

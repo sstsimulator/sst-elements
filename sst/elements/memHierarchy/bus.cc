@@ -105,7 +105,7 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 
 	if ( activePort.first == BUS_INACTIVE ) {
 		// Nobody's active.  Schedule it.
-		selfLink->Send(new SelfEvent(SelfEvent::Schedule));
+		selfLink->send(new SelfEvent(SelfEvent::Schedule));   // Renamed per Issue 70 - ALevine
 	}
 }
 
@@ -117,7 +117,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
     if ( link_id == activePort.first && (key == activePort.second || key == NULL)) {
         DPRINTF("Canceling active.  Rescheduling\n");
         activePort.first = BUS_INACTIVE;
-        selfLink->Send(new SelfEvent(SelfEvent::Schedule));
+        selfLink->send(new SelfEvent(SelfEvent::Schedule));   // Renamed per Issue 70 - ALevine
     }
 
     for ( std::deque<std::pair<LinkId_t, Addr> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
@@ -147,9 +147,9 @@ void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 	// TODO:  Calcuate delay including message size
 
 	for ( int i = 0 ; i < numPorts ; i++ ) {
-		ports[i]->Send(busDelay, delayTC, new MemEvent(ev));
+		ports[i]->send(busDelay, delayTC, new MemEvent(ev));   // Renamed per Issue 70 - ALevine
 	}
-	selfLink->Send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));
+	selfLink->send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));   // Renamed per Issue 70 - ALevine
 	busBusy = true;
 }
 
@@ -200,7 +200,7 @@ void Bus::schedule(void)
 	if ( next_id.first != BUS_INACTIVE ) {
 		activePort = next_id;
 		DPRINTF("Setting activePort = (%lu, 0x%lx)\n", activePort.first, activePort.second);
-		linkMap[next_id.first]->Send(new MemEvent(this, next_id.second, BusClearToSend));
+		linkMap[next_id.first]->send(new MemEvent(this, next_id.second, BusClearToSend));   // Renamed per Issue 70 - ALevine
 	}
 }
 

@@ -129,10 +129,10 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 	delete event;
 
 	if (portals) {
-	    ptl_link->Send(ptl_unit_latency,nic_event);
+	    ptl_link->send(ptl_unit_latency,nic_event);   // Renamed per Issue 70 - ALevine
 	}
 	else {
-	    cpu_link->Send(portals ? 0 : msg_latency,nic_event);
+	    cpu_link->send(portals ? 0 : msg_latency,nic_event);   // Renamed per Issue 70 - ALevine
 	}
     }  
 
@@ -171,13 +171,13 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 		rtr_q_size++;
 		pio_q.pop();
 		
-		self_link->Send(ptl_msg_latency,ev);
+		self_link->send(ptl_msg_latency,ev);   // Renamed per Issue 70 - ALevine
 
 		// Need to return credits to the host
 		trig_nic_event* event = new trig_nic_event;
 		event->ptl_op = PTL_CREDIT_RETURN;
 		event->data_length = 1;
-		cpu_link->Send(10,event);
+		cpu_link->send(10,event);   // Renamed per Issue 70 - ALevine
 	    }
 // 	    else {
 // 		printf("qqq: %5d: no room in rtr queue, doing nothing\n",m_id);
@@ -199,7 +199,7 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 // 	    dma_req_q.push(ev->operation->data.dma);
  	    dma_req_q.push(ev->data.dma);
 	    if ( empty ) {
-		dma_link->Send(1,NULL);
+		dma_link->send(1,NULL);   // Renamed per Issue 70 - ALevine
 	    }
 //  	    delete ev->operation;
 	    
@@ -209,26 +209,26 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 
 	    dma_hdr_q.push(ev);
 	    
-// 		self_link->Send(ptl_msg_latency,ev);
+// 		self_link->send(ptl_msg_latency,ev);
 
 	    // Need to return credits to the host
 	    trig_nic_event* event = new trig_nic_event;
 	    event->ptl_op = PTL_CREDIT_RETURN;
 	    event->data_length = 1;
-	    cpu_link->Send(10,event);
+	    cpu_link->send(10,event);   // Renamed per Issue 70 - ALevine
 
 	}	    
 	else {
 	    // This is a portals command, send it to the "portals unit"
 	    // through the ptl_link
 	    pio_q.pop();
-	    ptl_link->Send(ptl_latency,ev);
+	    ptl_link->send(ptl_latency,ev);   // Renamed per Issue 70 - ALevine
 
 	    // Need to return credits to the host
 	    trig_nic_event* event = new trig_nic_event;
 	    event->ptl_op = PTL_CREDIT_RETURN;
 	    event->data_length = 1;
-	    cpu_link->Send(10,event);
+	    cpu_link->send(10,event);   // Renamed per Issue 70 - ALevine
 	}
 	
     }
@@ -261,11 +261,11 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 		trig_nic_event* ev2 = dma_q.front();
 		dma_q.pop();
 		memcpy(&ev->ptl_data[sizeof(ptl_header_t)],ev2->ptl_data,8);
-		self_link->Send(ptl_msg_latency,ev);
+		self_link->send(ptl_msg_latency,ev);   // Renamed per Issue 70 - ALevine
 		delete ev2;
 	    }
 	    else {
-		self_link->Send(ptl_msg_latency,ev);
+		self_link->send(ptl_msg_latency,ev);   // Renamed per Issue 70 - ALevine
 		new_dma = false;
 	    }
 	}
@@ -289,7 +289,7 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
 	    // Don't need the dma data structure any more
  	    delete ev->data.dma;
 
-	    self_link->Send(ptl_msg_latency,ev);
+	    self_link->send(ptl_msg_latency,ev);   // Renamed per Issue 70 - ALevine
 	}
 	
 // 	// If this is the end of the dma and there's a CT attached, we
@@ -306,7 +306,8 @@ bool iris_trig_nic::clock_handler ( Cycle_t cycle ) {
     // if there isn't an event left over because the buffer was full
     if ( nextToRtr == NULL ) {
         trig_nic_event* to_rtr;
-        if ( ( to_rtr = static_cast< trig_nic_event* >( self_link->Recv() ) ) ) {
+//        if ( ( to_rtr = static_cast< trig_nic_event* >( self_link->Recv() ) ) ) {   // Renamed per Issue 70 - ALevine
+        if ( ( to_rtr = static_cast< trig_nic_event* >( self_link->recv() ) ) ) {
 // 	    printf("%5d:  Got something on my self link\n",m_id);
             nextToRtr = new irisRtrEvent();
             nextToRtr->type = irisRtrEvent::Packet;
@@ -698,7 +699,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		    bool empty = dma_req_q.empty();
 		    dma_req_q.push(dma);
 		    if ( empty ) {
-			dma_link->Send(1,NULL);
+			dma_link->send(1,NULL);   // Renamed per Issue 70 - ALevine
 		    }
 		  
 		    delete ev;
@@ -740,7 +741,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		    ev->data_length = 8;
 		    ev->start = (void *)addr;
 		    // Need to add more latency, ask keith how much
-		    cpu_link->Send(ptl_msg_latency+additional_atomic_latency,ev);
+		    cpu_link->send(ptl_msg_latency+additional_atomic_latency,ev);   // Renamed per Issue 70 - ALevine
 
 		    scheduleCTInc( match_me->me.ct_handle, 1, latency_ct_post + additional_atomic_latency );
 
@@ -758,7 +759,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		    hdr->length = header.length;
 		    
 		    // Send ack back
-		    self_link->Send(ptl_msg_latency,ack_ev);
+		    self_link->send(ptl_msg_latency,ack_ev);   // Renamed per Issue 70 - ALevine
 		}
 		else { // PUTs
 	      
@@ -775,7 +776,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		    ev->start = (void*)((unsigned long)match_me->me.start+(unsigned long)moffset);
 		    // Fix up the data, i.e. move actual data to top
 		    if ( !send_recv ) memcpy(ev->ptl_data,&ev->ptl_data[sizeof(ptl_header_t)],copy_length);
-		    cpu_link->Send(ptl_msg_latency,ev);
+		    cpu_link->send(ptl_msg_latency,ev);   // Renamed per Issue 70 - ALevine
 
 		    // Need to prepare an internal ack message back to src
 		    trig_nic_event* ack_ev = new trig_nic_event;
@@ -857,7 +858,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		    }
 		    else {  // Single packet message
                         // Send ack back
-			self_link->Send(ptl_msg_latency,ack_ev);
+			self_link->send(ptl_msg_latency,ack_ev);   // Renamed per Issue 70 - ALevine
 
 			// If this is not multi-packet, then we need to
 			// update a CT if one is attached.			
@@ -899,7 +900,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		delete ev;
 	    }
 	    else {
-		cpu_link->Send(ptl_msg_latency,ev);
+		cpu_link->send(ptl_msg_latency,ev);   // Renamed per Issue 70 - ALevine
 
 		// Compute remaining mlength
 		if ( ms->remaining_mlength < copy_length ) {
@@ -919,7 +920,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		// Message is done, get rid of it.
 		streams.erase(map_key);
 		// Send ack back to src if this isn't a get
-		if ( ev->stream != PTL_HDR_STREAM_GET) self_link->Send(ptl_msg_latency, ms->ack_msg);
+		if ( ev->stream != PTL_HDR_STREAM_GET) self_link->send(ptl_msg_latency, ms->ack_msg);   // Renamed per Issue 70 - ALevine
 		scheduleCTInc( ms->ct_handle, ms->ct_increment, latency_ct_post );
 		scheduleEQ( ms->eq_handle, ms->event );
 		delete ms;
@@ -944,7 +945,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		// again to process event
 		ev->ptl_op = PTL_NIC_PROCESS_TRIG;
 // 		operation->op_type = PTL_NIC_PROCESS_TRIG;
-		ptl_link->Send(1,ev);
+		ptl_link->send(1,ev);   // Renamed per Issue 70 - ALevine
 	    }
 	    else {
 		// Done with the op passed into the function, so delete it
@@ -982,7 +983,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 	    // Repurpose the event we got.  Just need to wake up
 	    // again to process event
 	    ev->ptl_op = PTL_NIC_PROCESS_TRIG;
-	    ptl_link->Send(1,ev);
+	    ptl_link->send(1,ev);   // Renamed per Issue 70 - ALevine
 	}
 	else {
 	    // Done with the op passed into the function, so delete it
@@ -1044,12 +1045,12 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		    bool empty = dma_req_q.empty();
 		    dma_req_q.push(op->op->dma);
 		    if ( empty ) {
-			dma_link->Send(1,NULL);
+			dma_link->send(1,NULL);   // Renamed per Issue 70 - ALevine
 		    }
 		}
 		else {
 		    rtr_q_size++;
-		    self_link->Send(ptl_msg_latency,event);
+		    self_link->send(ptl_msg_latency,event);   // Renamed per Issue 70 - ALevine
 		    
 		    // If there's a CT attached to the MD, then we need
 		    // to update the CT.
@@ -1076,7 +1077,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 		// need to do sowething better (probably whatever I do
 		// to make zero put triggered put work.
 		rtr_q_size++;
- 		self_link->Send(ptl_msg_latency,event);
+ 		self_link->send(ptl_msg_latency,event);   // Renamed per Issue 70 - ALevine
 // 		dma_hdr_q.push(event);
 		
                 delete op->op;
@@ -1100,8 +1101,8 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
 //                 operation->op_type = PTL_NIC_PROCESS_TRIG;
                 ev->ptl_op = PTL_NIC_PROCESS_TRIG;
                 // Can process the next event in 8ns
-//                 cpu->ptl_link->Send(8,new ptl_nic_event(operation));
-		ptl_link->Send(1,ev);
+//                 cpu->ptl_link->send(8,new ptl_nic_event(operation));
+		ptl_link->send(1,ev);   // Renamed per Issue 70 - ALevine
             }
 	}
 	break;
@@ -1127,7 +1128,7 @@ void iris_trig_nic::processPtlEvent( Event *e ) {
                     already_triggered_q.push(op);
                     if (empty) {
 			ev->ptl_op = PTL_NIC_PROCESS_TRIG;
-			ptl_link->Send(1,ev);
+			ptl_link->send(1,ev);   // Renamed per Issue 70 - ALevine
                     }
 		    else {
 // 			delete operation;
@@ -1236,7 +1237,7 @@ iris_trig_nic::processDMAEvent( Event* e)
     request->stream = dma_req->stream;
 
 
-    cpu_link->Send(1,request);
+    cpu_link->send(1,request);   // Renamed per Issue 70 - ALevine
     
     if ( end ) {
       // Done with this DMA
@@ -1250,7 +1251,7 @@ iris_trig_nic::processDMAEvent( Event* e)
 
     if ( dma_in_progress || !dma_req_q.empty() ) {
       // Need to wake up again to process more DMAs
-      dma_link->Send(8,NULL);
+      dma_link->send(8,NULL);   // Renamed per Issue 70 - ALevine
     }
 }
 
@@ -1268,7 +1269,7 @@ iris_trig_nic::scheduleCTInc(ptl_handle_ct_t ct_handle, ptl_size_t increment, Si
 	trig_nic_event* event = new trig_nic_event;
 	event->ptl_op = PTL_NIC_CT_INC;
 	event->data.ct = ct_update;
-	ptl_link->Send(delay,event);
+	ptl_link->send(delay,event);   // Renamed per Issue 70 - ALevine
     }
 }
 
@@ -1288,7 +1289,7 @@ iris_trig_nic::scheduleUpdateHostCT(ptl_handle_ct_t ct_handle) {
 //     event->operation = update_event;
     event->data.ct = ct_update;
 
-    cpu_link->Send(latency_ct_host_update,event);    
+    cpu_link->send(latency_ct_host_update,event);       // Renamed per Issue 70 - ALevine
 }
 
 void
@@ -1298,7 +1299,7 @@ iris_trig_nic::scheduleEQ(ptl_handle_eq_t eq_handle, ptl_event_t* ptl_event) {
     event->ptl_op = PTL_NIC_EQ;
     event->data.event = ptl_event;
     event->eq_handle = eq_handle;
-    cpu_link->Send(latency_ct_post + latency_ct_host_update + 2, event);
+    cpu_link->send(latency_ct_post + latency_ct_host_update + 2, event);   // Renamed per Issue 70 - ALevine
 }
 
 

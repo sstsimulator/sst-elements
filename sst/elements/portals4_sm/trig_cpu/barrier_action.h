@@ -91,7 +91,7 @@ public:
             }
 	    resetStats();
             for ( unsigned int i = 0; i < wake_up.size(); i++ ) {
-                wake_up[i]->Send(10,new trig_cpu_event);
+                wake_up[i]->send(10,new trig_cpu_event);   // Renamed per Issue 70 - ALevine
             }
 	}
 	SimTime_t next = sim->getCurrentSimCycle() + 
@@ -109,7 +109,7 @@ public:
 //             // Everyone has entered barrier, wake everyone up to start
 //             // over
 //             for ( int i = 0; i < wake_up.size(); i++ ) {
-//                 wake_up[i]->Send(10,NULL);
+//                 wake_up[i]->send(10,NULL);   // Renamed per Issue 70 - ALevine
 //             }
 //             resetBarrier();
 //             printStats();

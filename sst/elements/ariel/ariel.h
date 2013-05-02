@@ -42,9 +42,11 @@ public:
 
   Ariel(SST::ComponentId_t id, SST::Component::Params_t& params);
 
-  int Setup()  { return 0; }
-  int Finish() {
-	return 0; 
+//  int Setup()  { return 0; }  // Renamed per issue 70 - ALevine
+//  int Finish() {
+  void setup()  { }
+  void finish() {
+//	return 0; 
   }
 
   void handleEvent(SST::Event* event);

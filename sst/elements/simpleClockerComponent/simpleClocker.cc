@@ -29,7 +29,9 @@ simpleClocker::simpleClocker(ComponentId_t id, Params_t& params) :
   std::cout << "Clock is configured for: " << clock_frequency_str << std::endl;
 
   // tell the simulator not to end without us
-  registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 
   //set our clock
   registerClock( clock_frequency_str,
@@ -48,7 +50,8 @@ bool simpleClocker::tick( Cycle_t ) {
 
 	// return false so we keep going
 	if(clock_count == 0) {
-		unregisterExit();
+//    unregisterExit();  // Renamed Per Issue 70 - ALevine
+    primaryComponentOKToEndSim();
 		return true;
 	} else {
 		return false;

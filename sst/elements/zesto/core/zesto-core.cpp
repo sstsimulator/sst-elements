@@ -107,7 +107,9 @@ core_t::core_t(SST::ComponentId_t cid, SST::Component::Params_t & params):
   exec(NULL), commit(NULL), global_action_id(0), request_id(0) 
 {
   //interface with SST simulator
-  registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 
   if (params.find("clockFreq") == params.end()) {
 	_abort(zesto_core, "clock frequency not specified\n");

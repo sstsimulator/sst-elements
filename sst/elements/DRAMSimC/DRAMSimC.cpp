@@ -113,7 +113,8 @@ DRAMSimC::DRAMSimC( ComponentId_t id, Params_t& params ) :
     registerMonitorInt("dram_refreshEnergy");*/
 }
 
-int DRAMSimC::Finish() 
+//int DRAMSimC::Finish() // Renamed per Issue 70 - ALevine
+void DRAMSimC::finish() 
 {
   /*vector< uint64_t > &v = m_memorySystem->memoryController->backgroundEnergy;
   for (int i = 0; i < v.size(); ++i) {
@@ -128,7 +129,7 @@ int DRAMSimC::Finish()
   }*/
   
   m_memorySystem->printStats();
-  return 0;
+//  return 0;
 }
 
 void DRAMSimC::readData(uint id, uint64_t addr, uint64_t clockcycle)

@@ -40,7 +40,8 @@ Ghost_pattern::handle_events(state_event sm_event)
 
     if (done)   {
 	done= false;
-	unregisterExit();
+//  unregisterExit();  // Renamed Per Issue 70 - ALevine
+  primaryComponentOKToEndSim();
     }
 
 }  /* end of handle_events() */
@@ -408,11 +409,11 @@ eli(Ghost_pattern, ghost_pattern, "Ghost pattern")
 
 // ADDED FOR PROPER INITIALIZATION - ALEVINE
 // SST Startup and Shutdown
-int Ghost_pattern::Setup()
+void Ghost_pattern::setup()  // Renamed per Issue 70 - ALevine
 {
 	// Call the initial State Transition
 	state_transition(E_START, STATE_INIT);
-	return 0;
+//	return 0;
 }
 
 #ifdef SERIALIZATION_WORKS_NOW

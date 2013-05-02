@@ -43,7 +43,8 @@ FFT_pattern::handle_events(state_event sm_event)
     }
 
     if (done)   {
-	unregisterExit();
+//  unregisterExit();  // Renamed Per Issue 70 - ALevine
+  primaryComponentOKToEndSim();
 	done= false;
     }
 
@@ -264,11 +265,11 @@ eli(FFT_pattern, fft_pattern, "FFT pattern")
 
 // ADDED FOR PROPER INITIALIZATION - ALEVINE
 // SST Startup and Shutdown
-int FFT_pattern::Setup()
+void FFT_pattern::setup()  // Renamed per Issue 70 - ALevine
 {
 	// Call the initial State Transition
 	state_transition(E_START, STATE_INIT);
-	return 0;
+//	return 0;
 }
 
 #ifdef SERIALIZATION_WORKS_NOW

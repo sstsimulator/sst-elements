@@ -38,7 +38,9 @@ class Cpu : public Component, OffCpuIF {
             iprobfile  = "./notavail_instprob.dat";
             perffile  = "./notavail_perfcnt.dat";
             outputfile = "./mc_output";
-            registerExit();
+//            registerExit();  // Renamed Per Issue 70 - ALevine
+            registerAsPrimaryComponent();
+            primaryComponentDoNotEndSim();
 
             Params_t::iterator it = params.begin(); 
             while( it != params.end() ) { 
@@ -79,18 +81,20 @@ class Cpu : public Component, OffCpuIF {
             printf("CPU period: %ld\n",tc->getFactor());
             _CPU_DBG("Done registering clock\n");            
         }
-        int Setup() {
+//        int Setup() {  // Renamed per Issue 70 - ALevine
+        void setup() { 
             _CPU_DBG(" (%s) (%s) (%s) (%s)\n", inputfile, iprobfile,
                      perffile, outputfile);
             mcCpu->init(inputfile, this, iprobfile, perffile, 0, 0);
-            return 0;
+//            return 0;
         }
-        int Finish() {
+//        int Finish() {  // Renamed per Issue 70 - ALevine
+        void finish() {
             char filename[128];
             _CPU_DBG("\n");
             sprintf(filename, "%s.%d", outputfile, Id());
             mcCpu->fini(filename);
-            return 0;
+//            return 0;
         }
 
     private:

@@ -26,7 +26,8 @@ public:
 
   Cpu_data(SST::ComponentId_t id, SST::Component::Params_t& params);
 
-  int Finish() {
+//  int Finish() {  // Renamed per Issue 70 - ALevine
+  void finish() {
     static int n = 0;
     n++;
     if (n == 10) {
@@ -36,15 +37,16 @@ public:
     } else {
       printf("Simple Component Finished\n");
     }
-    return 0;
+//    return 0;
   }
 
-int Setup() {   
+//int Setup() {  // Renamed per Issue 70 - ALevine   
+void setup() {   
 	   registerIntrospector(pushIntrospector);
 	   registerMonitor("totalCounts", new MonitorFunction<Cpu_data, uint64_t>(this, &Cpu_data::someCalculation));
 	   registerMonitor("temperature", new MonitorFunction<Cpu_data, double>(this, &Cpu_data::updateTemperature));
 	   registerMonitor("generalCounts", new MonitorPointer<int>(&counts));
-           return 0;
+//           return 0;
 }
 
 public:

@@ -87,7 +87,9 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     if ( params.find( "registerExit" ) != params.end() ) {
         if( ! params["registerExit"].compare("yes") ) {
             INFO("registering exit\n");
-            IntrospectedComponent::registerExit();
+//            IntrospectedComponent::registerExit();    // Renamed Per Issue 70 - ALevine
+            IntrospectedComponent::registerAsPrimaryComponent();
+            IntrospectedComponent::primaryComponentDoNotEndSim();
         }
     }
 
@@ -152,21 +154,24 @@ void SST::M5::M5::init(unsigned int phase)
 	}
 }
 
-int SST::M5::M5::Setup()
+//int SST::M5::M5::Setup()  // Renamed per Issue 70 - ALevine
+void SST::M5::M5::setup()
 {
 
     #ifdef M5_WITH_POWER
     Setup_Power();
     #endif
 
-    return 0;
+//    return 0;
 }
 
 void SST::M5::M5::registerExit(void)
 {
     DBGX(2,"m_numRegisterExits %d\n",m_numRegisterExits);
     if ( m_numRegisterExits == 0) {
-        IntrospectedComponent::registerExit();
+//      IntrospectedComponent::registerExit();  // Renamed Per Issue 70 - ALevine
+      IntrospectedComponent::registerAsPrimaryComponent();
+      IntrospectedComponent::primaryComponentDoNotEndSim();
     } 
     ++m_numRegisterExits;
 }
@@ -199,11 +204,13 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
 	        SimObject::SST_FF();
 #endif
 	        if(simulate()->getCode()>=0){
-		        unregisterExit();
+//            unregisterExit();  // Renamed Per Issue 70 - ALevine
+            primaryComponentOKToEndSim();
 	        }
         } else {
             // bug what if we didn't call registerExit()
-            unregisterExit();
+//            unregisterExit();  // Renamed Per Issue 70 - ALevine
+            primaryComponentOKToEndSim();
             INFO( "exiting: curTick()=%lu cause=`%s` code=%d\n", curTick(),
                 exitEvent->getCause().c_str(), exitEvent->getCode() );
         }
@@ -215,7 +222,8 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
     return false;
 }
 
-int SST::M5::M5::Finish()
+//int SST::M5::M5::Finish()  // Renamed per Issue 70 - ALevine
+void SST::M5::M5::finish()
 {
     #ifdef M5_WITH_POWER
     Finish_Power();
@@ -225,7 +233,7 @@ int SST::M5::M5::Finish()
 	libgem5::DumpStats(m_statFile);
     }
 
-    return 0;
+//    return 0;
 }
 
 

@@ -79,7 +79,7 @@ void SS_router::returnToken_flits (int dir, int flits, int vc) {
     event->credit.num = flits;
     event->credit.vc = vc;
 
-    linkV[dir]->Send( event );
+    linkV[dir]->send( event );   // Renamed per Issue 70 - ALevine
 }
 
 //: Constructor
@@ -327,13 +327,15 @@ SS_router::SS_router( ComponentId_t id, Params_t& params ) :
     currently_clocking = true;
 }
 
-void SS_router::setup() {
+//void SS_router::setup() {  // Renamed to avoid conflict with virtual function renaming in component.h; See Issue 70 - ALevine
+void SS_router::newSetup() {
 }
 
 
 //: Output statistics
-int SS_router::Finish () {
-#if 0 // finish() dumpTables
+//int SS_router::Finish () {  // Renamed Per Issue 70 - ALevine
+void SS_router::finish () {
+#if 0 // newFinish() dumpTables
     DBprintf("\n");
     if ( m_print_info )
         dumpStats(stdout);
@@ -347,7 +349,7 @@ int SS_router::Finish () {
         fclose(fp);
     }
 #endif
-    return 0;
+//    return 0;
 }
 
 void SS_router::dumpStats (FILE* fp) {

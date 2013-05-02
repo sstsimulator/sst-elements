@@ -63,7 +63,8 @@ class Introspector_cpu : public Introspector {
             _INTROSPECTOR_CPU_DBG("Done registering clock\n");
             
         }
-        int Setup() {
+//        int Setup() {  // Renamed per Issue 70 - ALevine
+        void setup() {
 	    std::pair<bool, int> pint;
 	    
 	    //get a list of relevant component. Must be done after all components are created 
@@ -73,12 +74,13 @@ class Introspector_cpu : public Introspector {
 	    ///oneTimeCollect(2000000, mpionetimehandler);
 	     
             _INTROSPECTOR_CPU_DBG("\n");
-            return 0;
+//            return 0;
         }
-        int Finish() {
+//        int Finish() {  // Renamed per Issue 70 - ALevine
+        void finish() {
 	    triggeredUpdate();
             _INTROSPECTOR_CPU_DBG("\n");
-            return 0;
+//            return 0;
         }
 
 

@@ -25,7 +25,9 @@ using namespace SST::SS_router;
 
 void RtrIF::dummyInit( Params_t params, std::string frequency )
 {
-    registerExit();
+//    registerExit();  // Renamed Per Issue 70 - ALevine
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
 //     ClockHandler_t*  clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
 //                                                 ( this, &RtrIF::dummyLoad );
@@ -121,7 +123,9 @@ bool::RtrIF::dummyLoad ( Cycle_t cycle ) {
 	printf("%d: Unregistering exit on cycle %lu\n",
                m_id, (unsigned long) cycle);
 	m_exit = true;
-        unregisterExit();
+//  	    unregisterExit();  // Renamed Per Issue 70 - ALevine
+        primaryComponentOKToEndSim();
+        
     }
     
     return false;
@@ -176,7 +180,9 @@ bool RtrIF::dummyLoad( Cycle_t cycle )
     //db_dummy("%ld %ld\n",m_dummySize,m_dummyOffset);
 
     if ( m_dummyOffset >= m_dummySize ) {
-        unregisterExit();
+//	      unregisterExit();  // Renamed Per Issue 70 - ALevine
+        primaryComponentOKToEndSim();
+        
     }
 
     return false;

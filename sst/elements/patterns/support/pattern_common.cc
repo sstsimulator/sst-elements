@@ -71,7 +71,7 @@ SST::CPUNicEvent *e;
     e->dest= _my_rank;
     e->msg_id= (msg_seq++ << RANK_FIELD) | _my_rank;
 
-    my_self_link->Send(delay, e);
+    my_self_link->send(delay, e);   // Renamed per Issue 70 - ALevine
 
 }  // end of self_event_send()
 
@@ -111,7 +111,7 @@ SST::SimTime_t delay;
 	// No need to go through the network for this
 	// FIXME: Shouldn't this involve some sort of delay?
 	fprintf(stderr, "Event send to my self!\n"); //  Does this get used?
-	my_self_link->Send(e);
+	my_self_link->send(e);   // Renamed per Issue 70 - ALevine
 	if (blocking >= 0)   {
 	    self_event_send(blocking, tag, 0);
 	}
@@ -181,7 +181,7 @@ uint64_t delay;
 
     // Send the write request
     delay= 0; // FIXME; Need to figure this out
-    my_storage_link->Send(delay, e);
+    my_storage_link->send(delay, e);   // Renamed per Issue 70 - ALevine
 
 }  /* end of storage_write() */
 
@@ -219,7 +219,7 @@ uint64_t delay;
 
     // Send the write request
     delay= 0; // FIXME; Need to figure this out
-    my_nvram_link->Send(delay, e);
+    my_nvram_link->send(delay, e);   // Renamed per Issue 70 - ALevine
 
 }  /* end of nvram_write() */
 

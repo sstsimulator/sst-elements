@@ -69,7 +69,7 @@ inline void Bounce::eventHandler( SST::Event* e, int port )
 {
 //    m_dbg.write("%7lu: Bounce::eventHandler() port=%d\n", (unsigned long)
 //                m_tc->convertToCoreTime(getCurrentSimTime(m_tc) ), port );
-    m_linkM[port == 0 ? 1 : 0]->Send( e );
+    m_linkM[port == 0 ? 1 : 0]->send( e );   // Renamed per Issue 70 - ALevine
 }
 
 }

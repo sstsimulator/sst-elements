@@ -59,7 +59,7 @@ class macro_network : public SST::Component, public eventmanager_interface
       int portnum = addr_->unique_id();
 
 	//	std::cout << "sending message to port " << portnum << "\n";
-      parent_->ports_[portnum]->Send(done);
+      parent_->ports_[portnum]->send(done);   // Renamed per Issue 70 - ALevine
     }
 
     virtual std::string
@@ -90,13 +90,15 @@ public:
   ~macro_network()
   {
   }
-  int
-  Setup()
+//  int
+//  Setup()  // Renamed per Issue 70 - ALevine
+  void setup()  
   {
-    return 0;
+//    return 0;
   }
-  int
-  Finish()
+//  int
+//  Finish()  // Renamed per Issue 70 - ALevine
+  void finish() 
   {
     static int n = 0;
     n++;
@@ -112,7 +114,7 @@ public:
       {
         printf("Simple Component Finished\n");
       }
-    return 0;
+//    return 0;
   }
 
   virtual const sstmac::timestamp&

@@ -52,7 +52,9 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 	srand(1);
 
 	// tell the simulator not to end without us
-	registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 
 	// configure out links
 	mem_link = configureLink( "mem_link",
@@ -140,7 +142,7 @@ bool trivialCPU::clockTic( Cycle_t )
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&addr);
 			}
-			mem_link->Send(e);
+			mem_link->send(e);   // Renamed per Issue 70 - ALevine
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
 			printf("%s: %d Issued %s (%lu) for address 0x%lx\n",
@@ -153,7 +155,8 @@ bool trivialCPU::clockTic( Cycle_t )
 	}
 
     if ( numLS == 0 && requests.size() == 0 ) {
-        unregisterExit();
+//        unregisterExit();  // Renamed Per Issue 70 - ALevine
+        primaryComponentOKToEndSim();
         return true;
     }
 

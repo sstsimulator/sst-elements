@@ -31,7 +31,8 @@ public:
   Cpu_power(ComponentId_t id, Params_t& params);
 
   
-int Setup() { 
+//int Setup() {   // Renamed per Issue 70 - ALevine
+void setup() { 
 	  // report/register power dissipation	    
 	    power = new SST::Power::Power(getId());
 	    power->setChip(params);
@@ -46,10 +47,10 @@ int Setup() {
 	    power->setTech(getId(), params, CLOCK, IntSim);
 	    power->setTech(getId(), params, ROUTER, ORION);  
 	   
-           return 0;
+//           return 0;
 }
 
-/*int Finish() {
+/*int finish() {
        std::pair<bool, Pdissipation_t> res = readPowerStats(this);
 	    if(res.first){ 
 	        using namespace io_interval; std::cout <<"ID " << getId() <<": current total power = " << res.second.currentPower << " W" << std::endl;
@@ -90,7 +91,8 @@ int Setup() {
       
             return 0;
         }*/
- int Finish() {
+// int Finish() {  // Renamed per Issue 70 - ALevine
+ void finish() {
     static int n = 0;
     n++;
     if (n == 10) {
@@ -100,7 +102,7 @@ int Setup() {
     } else {
       printf("Simple Component Finished\n");
     }
-    return 0;
+//    return 0;
   }
 
 

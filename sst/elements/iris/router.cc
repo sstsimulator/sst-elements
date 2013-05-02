@@ -375,7 +375,8 @@ Router::do_st ( void )
                 ev->type = irisRtrEvent::Packet;
                 ev->packet = f;
                 //printf("N%d:@%lu Rtr pkt out addr:0x%lx \n",node_id, _TICK_NOW,f->address );
-                links.at(op)->Send(ev);
+//                links.at(op)->Send(ev);   // Renamed per Issue 70 - ALevine
+                links.at(op)->send(ev); 
 
                 /*  I have one slot in the next buffer less now. */
                 downstream_credits.at(op).at(oc)--;
@@ -388,7 +389,8 @@ Router::do_st ( void )
                 // make sure to send back 8 credits to the interface because it
                 // assumes it sent out 8 flits 
                 if ( ip == 0 ) cr_ev->credit.num  = 8;
-                links.at(ip)->Send(cr_ev);
+//                links.at(ip)->Send(cr_ev);   // Renamed per Issue 70 - ALevine
+                links.at(ip)->send(cr_ev); 
 
                 /* Update packet stats */
                 stat_last_flit_cycle = _TICK_NOW;

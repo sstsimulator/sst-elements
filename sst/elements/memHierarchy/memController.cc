@@ -144,13 +144,15 @@ void MemController::init(unsigned int phase)
 
 }
 
-int MemController::Setup(void)
+//int MemController::Setup(void)  // Renamed per Issue 70 - ALevine
+void MemController::setup(void)  
 {
-	return 0;
+//	return 0;
 }
 
 
-int MemController::Finish(void)
+//int MemController::Finish(void)  // Renamed per Issue 70 - ALevine
+void MemController::finish(void) 
 {
 	munmap(memBuffer, memSize);
 	if ( backing_fd != -1 ) {
@@ -178,7 +180,7 @@ int MemController::Finish(void)
     printf("--------------------------------------------------------\n");
 #endif
 
-	return 0;
+//	return 0;
 }
 
 
@@ -277,7 +279,7 @@ bool MemController::clock(Cycle_t cycle)
 #endif
         } else {
             DPRINTF("Issued transaction for address 0x%lx\n", addr);
-            self_link->Send(new MemCtrlEvent(req));
+            self_link->send(new MemCtrlEvent(req));  // Renamed per Issue 70 - ALevine
         }
 
         req->amt_in_process += requestSize;
@@ -343,7 +345,7 @@ void MemController::sendBusPacket(void)
 	for (;;) {
 		if ( busReqs.size() == 0 ) {
             DPRINTF("Sending cancelation, as we have nothing in the queue.\n");
-			upstream_link->Send(new MemEvent(this, NULL, CancelBusRequest));
+			upstream_link->send(new MemEvent(this, NULL, CancelBusRequest));  // Renamed per Issue 70 - ALevine
 			break;
 		} else {
             DRAMReq *req = busReqs.front();
@@ -355,7 +357,7 @@ void MemController::sendBusPacket(void)
 						ev->getID().first, ev->getID().second,
 						ev->getResponseToID().first, ev->getResponseToID().second,
 						ev->getAddr());
-				upstream_link->Send(0, ev);
+				upstream_link->send(0, ev);  // Renamed per Issue 70 - ALevine
 				break;
             }
 		}
@@ -363,7 +365,7 @@ void MemController::sendBusPacket(void)
 }
 
 void MemController::sendBusCancel(Addr addr) {
-    upstream_link->Send(new MemEvent(this, addr, CancelBusRequest));
+    upstream_link->send(new MemEvent(this, addr, CancelBusRequest));  // Renamed per Issue 70 - ALevine
 }
 
 
@@ -371,9 +373,9 @@ void MemController::sendResponse(DRAMReq *req)
 {
     if ( use_bus ) {
         busReqs.push_back(req);
-        upstream_link->Send(new MemEvent(this, req->reqEvent->getAddr(), RequestBus));
+        upstream_link->send(new MemEvent(this, req->reqEvent->getAddr(), RequestBus));  // Renamed per Issue 70 - ALevine
     } else {
-        upstream_link->Send(req->respEvent);
+        upstream_link->send(req->respEvent);  // Renamed per Issue 70 - ALevine
         req->status = DRAMReq::DONE;
     }
 }

@@ -57,8 +57,10 @@ public:
 
   prospero(SST::ComponentId_t id, SST::Component::Params_t& params);
 
-  int Setup()  { return 0; }
-  int Finish() {
+//  int Setup()  { return 0; }  // Renamed per Issue 70 - ALevine
+//  int Finish() {
+  void setup()  { }
+  void finish() {
 	if(output_level > 0) 
 		std::cout << "TRACE:  Closing trace input..." << std::endl;
 
@@ -103,7 +105,7 @@ public:
         std::cout << "- Bandwidth (combined):        " << (((total_bytes_read + total_bytes_written) / (1024.0 * 1024.0)) / sim_seconds) << std::endl;
 	std::cout << "---------------------------------------------------------------------------" << std::endl;
 
-	return 0; 
+//	return 0; 
   }
 
   void handleEvent(SST::Event* event);

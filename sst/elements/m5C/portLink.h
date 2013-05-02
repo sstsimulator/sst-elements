@@ -59,9 +59,9 @@ class PortLink {
 
         // Note we are not throttling events
 		if ( m_doTranslate ) {
-			m_link->Send( convertGEM5toSST(static_cast<MemPkt*>(data)) );
+			m_link->send( convertGEM5toSST(static_cast<MemPkt*>(data)) );   // Renamed per Issue 70 - ALevine
 		} else {
-			m_link->Send( new RawEvent( data, len ) );
+			m_link->send( new RawEvent( data, len ) );   // Renamed per Issue 70 - ALevine
 		}
         return true;
     }

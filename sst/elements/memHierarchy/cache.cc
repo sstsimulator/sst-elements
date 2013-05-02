@@ -161,7 +161,8 @@ void Cache::init(unsigned int phase)
 }
 
 
-int Cache::Finish(void)
+//int Cache::Finish(void)  // Renamed per Issue 70 - ALevine
+void Cache::finish(void)  
 {
 	printf("Cache %s stats:\n"
 			"\t# Read    Hits:      %lu\n"
@@ -178,7 +179,7 @@ int Cache::Finish(void)
 			num_upgrade_miss);
     if ( DBG_CACHE & SST::_debug_flags )
         printCache();
-	return 0;
+//	return 0;
 }
 
 
@@ -275,14 +276,14 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                                  * this will take us out of exclusive.  Let's punt and retry later.
                                  */
                                 DPRINTF("There's a WB (%d) or a Supply in progress.  Retry this locked event later.\n", block->wb_in_progress);
-                                self_link->Send(1, new SelfEvent(this, &Cache::retryEvent, ev, block, UPSTREAM));
+                                self_link->send(1, new SelfEvent(this, &Cache::retryEvent, ev, block, UPSTREAM));  // Renamed per Issue 70 - ALevine
                                 return;
                             }
                             /* TODO!   We lock on (bytes/words), but the line is locked! */
                             block->user_locked++;
                             block->user_lock_needs_wb = false;
                         }
-                        self_link->Send(1, new SelfEvent(this, &Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
+                        self_link->send(1, new SelfEvent(this, &Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));  // Renamed per Issue 70 - ALevine
                         delete ev;
                     }
                 }
@@ -290,7 +291,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 			if ( block->status == CacheBlock::EXCLUSIVE ) {
 				if ( firstProcess ) num_write_hit++;
 				updateBlock(ev, block);
-				self_link->Send(1, new SelfEvent(this, &Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
+				self_link->send(1, new SelfEvent(this, &Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));  // Renamed per Issue 70 - ALevine
                 if ( block->user_locked && ev->queryFlag(MemEvent::F_LOCKED) ) {
                     /* Unlock */
                     ASSERT(block->user_locked);
@@ -367,7 +368,7 @@ void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
             ev->getID().first, ev->getID().second);
 
 	/* CPU is always upstream link 0 */
-	upstream_links[0]->Send(ev);
+	upstream_links[0]->send(ev);  // Renamed per Issue 70 - ALevine
 
     /* release events pending on this row */
     CacheRow *row = findRow(ev->getAddr());
@@ -390,16 +391,16 @@ void Cache::issueInvalidate(MemEvent *ev, CacheBlock *block)
         block->invalidateEvent.second = invEvent;
 	}
 	if ( downstream_link ) {
-		downstream_link->Send(new MemEvent(this, block->baseAddr, Invalidate));
+		downstream_link->send(new MemEvent(this, block->baseAddr, Invalidate));  // Renamed per Issue 70 - ALevine
         block->invalidate_acks++;
 	}
 	if ( directory_link ) {
-		directory_link->Send(new MemEvent(this, block->baseAddr, Invalidate));
+		directory_link->send(new MemEvent(this, block->baseAddr, Invalidate));  // Renamed per Issue 70 - ALevine
         block->invalidate_acks++;
 	}
 	for ( int i = 0 ; i < n_upstream ; i++ ) {
 		if ( upstream_links[i]->getId() != ev->getLinkId() ) {
-			upstream_links[i]->Send(new MemEvent(this, block->baseAddr, Invalidate));
+			upstream_links[i]->send(new MemEvent(this, block->baseAddr, Invalidate));  // Renamed per Issue 70 - ALevine
             block->invalidate_acks++;
 		}
 	}
@@ -498,7 +499,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
     else
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
-    self_link->Send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, block->baseAddr, block));
+    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, block->baseAddr, block));  // Renamed per Issue 70 - ALevine
 }
 
 
@@ -529,7 +530,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         DPRINTF("Sending request to load block 0x%lx  [li = %p]\n", block->baseAddr, li);
         MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
         req->setSize(blocksize);
-        downstream_link->Send(req);
+        downstream_link->send(req);  // Renamed per Issue 70 - ALevine
     }
 }
 
@@ -583,7 +584,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             supplyInProgress[supplyMapKey] = SupplyInfo(NULL);
             block->lock();
             block->last_touched = getCurrentSimTime();
-            self_link->Send(1, new SelfEvent(this, &Cache::supplyData, ev, block, src));
+            self_link->send(1, new SelfEvent(this, &Cache::supplyData, ev, block, src));  // Renamed per Issue 70 - ALevine
         }
 	} else {
 		/* Miss */
@@ -626,7 +627,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 	if ( src != SNOOP ) {
 		SST::Link *link = getLink(src, ev->getLinkId());
-		link->Send(resp);
+		link->send(resp);  // Renamed per Issue 70 - ALevine
 		supplyInProgress.erase(supMapI);
 	} else {
 		BusHandlerArgs args;
@@ -896,10 +897,10 @@ void Cache::sendInvalidateACK(MemEvent *ev, SourceType_t src)
         _abort(Cache, "We don't ACK on SNOOPY!\n");
         break;
     case UPSTREAM:
-        upstream_links[0/* TODO */]->Send(resp);
+        upstream_links[0/* TODO */]->send(resp);  // Renamed per Issue 70 - ALevine
         break;
     case DOWNSTREAM:
-        downstream_link->Send(resp);
+        downstream_link->send(resp);  // Renamed per Issue 70 - ALevine
         break;
     case DIRECTORY:
         _abort(Cache, "Directory not yet implemented\n");
@@ -924,7 +925,7 @@ void Cache::cancelInvalidate(CacheBlock *block)
     block->invalidateEvent = std::pair<MemEvent*,MemEvent*>(NULL, NULL);
     block->invalidate_acks = 0;
     block->unlock();
-    self_link->Send(1, new SelfEvent(this, &Cache::retryEvent, origEV, NULL, UPSTREAM));
+    self_link->send(1, new SelfEvent(this, &Cache::retryEvent, origEV, NULL, UPSTREAM));  // Renamed per Issue 70 - ALevine
 }
 
 
@@ -1000,13 +1001,13 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
         MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
         ev->setFlag(MemEvent::F_WRITEBACK);
         ev->setPayload(block->data);
-		downstream_link->Send(ev);
+		downstream_link->send(ev);  // Renamed per Issue 70 - ALevine
     }
 	if ( directory_link ) {
         MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
         ev->setFlag(MemEvent::F_WRITEBACK);
         ev->setPayload(block->data);
-		directory_link->Send(ev);
+		directory_link->send(ev);  // Renamed per Issue 70 - ALevine
     }
 
 
@@ -1045,7 +1046,7 @@ void Cache::handlePendingEvents(CacheRow *row, CacheBlock *block)
                 queue.pop_front();
                 DPRINTF("Issuing Retry for event (%lu, %d) %s [0x%lx]\n",
                         ev.first->getID().first, ev.first->getID().second, CommandString[ev.first->getCmd()], ev.first->getAddr());
-                self_link->Send(1, new SelfEvent(this, &Cache::retryEvent, ev.first, NULL, ev.second));
+                self_link->send(1, new SelfEvent(this, &Cache::retryEvent, ev.first, NULL, ev.second));  // Renamed per Issue 70 - ALevine
             }
             row->waitingEvents.erase(q);
         }

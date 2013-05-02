@@ -47,7 +47,9 @@ class Comm_pattern : public Component {
 	    NIC_model *NICmodel[NUM_NIC_MODELS];
 
 
-	    registerExit();
+//      registerExit();  // Renamed Per Issue 70 - ALevine
+      registerAsPrimaryComponent();
+      primaryComponentDoNotEndSim();
 
 	    // Figure out what the target machine looks like
 	    machine= new MachineInfo(params);

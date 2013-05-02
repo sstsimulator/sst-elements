@@ -47,7 +47,9 @@ Cpu_power::Cpu_power(ComponentId_t id, Params_t& params) :
   neighbor = rand() % 4;
 
   // tell the simulator not to end without us
-  registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 
   // configure out links
   N = configureLink( "Nlink", 
@@ -136,16 +138,20 @@ bool Cpu_power::clockTic( Cycle_t ) {
     // send
     switch (neighbor) {
     case 0:
-      N->Send(e);
+//      N->Send(e);   // Renamed per Issue 70 - ALevine
+      N->send(e); 
       break;
     case 1:
-      S->Send(e);
+//      S->Send(e);
+      S->send(e);
       break;
     case 2:
-      E->Send(e);
+//      E->Send(e);
+      E->send(e);
       break;
     case 3:
-      W->Send(e);
+//      W->Send(e);
+      W->send(e);
       break;
     default:
       printf("bad neighbor\n");

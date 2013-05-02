@@ -94,7 +94,7 @@ bool MemLink::send( SST::Event* event )
 {
     // Note that we are not throttling data on this link
     DBGX_M5(3, "enter\n");
-    m_link->Send( m_delay, event );
+    m_link->send( m_delay, event );   // Renamed per Issue 70 - ALevine
     DBGX_M5(3, "return\n");
     return true;
 }

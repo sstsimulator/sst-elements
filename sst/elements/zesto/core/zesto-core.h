@@ -444,14 +444,16 @@ class core_t : public SST::Component
   SST::Link * cache_link;
   void cache_response_handler(SST::Event *ev);
 
-  virtual int Setup() {
+//  virtual int Setup() {  // Renamed per Issue 70 - ALevine
+  virtual void setup() {  
     std::cout << "zesto core " << id << " start" << std::endl;
-    return 0;
+//    return 0;
   }
-  virtual int Finish() {
+//  virtual int Finish() {  // Renamed per Issue 70 - ALevine
+  virtual void finish() { 
     std::cout << "Zesto core " << id << " finished! Output file name is core" << id << ".out"  << std::endl; 
     print_stats();
-    return 0;
+//    return 0;
   }
 
   uint64_t request_id; //ID for request sent to cache, so when response comes back

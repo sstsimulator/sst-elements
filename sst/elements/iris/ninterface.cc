@@ -334,7 +334,8 @@ NInterface::tock (SST::Cycle_t cycle )
             irisRtrEvent* pkt_event = new irisRtrEvent;
             pkt_event->type = irisRtrEvent::Packet;
             pkt_event->packet = pkt;
-            router_link->Send(pkt_event);
+//            router_link->Send(pkt_event);   // Renamed per Issue 70 - ALevine
+            router_link->send(pkt_event); 
             router_credits.at(winner)--;
             total_pkts_out++;
             avg_pkt_lat += (_TICK_NOW - terminal_inPkt_time.at(winner)); 
@@ -349,7 +350,8 @@ NInterface::tock (SST::Cycle_t cycle )
             credit_event->type = irisRtrEvent::Credit;
             credit_event->credit.vc = winner;
             credit_event->credit.num = 1;      // if we do use flits then update this
-            terminal_link->Send(credit_event);
+//            terminal_link->Send(credit_event);   // Renamed per Issue 70 - ALevine
+            terminal_link->send(credit_event);  
 
         }
 
@@ -386,7 +388,8 @@ NInterface::tock (SST::Cycle_t cycle )
             irisRtrEvent* pkt_event = new irisRtrEvent;
             pkt_event->type = irisRtrEvent::Packet;
             pkt_event->packet = pkt;
-            terminal_link->Send(pkt_event);
+//            terminal_link->Send(pkt_event);   // Renamed per Issue 70 - ALevine
+            terminal_link->send(pkt_event); 
 
             //send the credit back to the router
             irisRtrEvent* credit_event = new irisRtrEvent; 
@@ -394,7 +397,8 @@ NInterface::tock (SST::Cycle_t cycle )
             credit_event->credit.vc = i;
             credit_event->credit.num = 1;      // if we do use flits then update this
             //credit_ev->src = this->GetComponentId();
-            router_link->Send(credit_event);
+//            router_link->Send(credit_event);   // Renamed per Issue 70 - ALevine
+            router_link->send(credit_event);  
 
         }
 

@@ -87,7 +87,7 @@ public:
 
 	output_buf[vc].push(ev);
 	if ( waiting ) {
-	    output_timing->Send(1,NULL);
+	    output_timing->send(1,NULL);
 	    waiting = false;
 	}
 
@@ -120,7 +120,7 @@ public:
 	// For now, we're just going to send the credits back to the
 	// other side.  The required BW to do this will not be taken
 	// into account.
-	rtr_link->Send(1,new credit_event(vc,in_ret_credits[vc]));
+	rtr_link->send(1,new credit_event(vc,in_ret_credits[vc]));   // Renamed per Issue 70 - ALevine
 	in_ret_credits[vc] = 0;
 	
 	if ( event->getTraceType() != RtrEvent::NONE ) {
@@ -214,7 +214,7 @@ private:
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
 	    if ( waiting ) {
-		output_timing->Send(1,NULL);
+		output_timing->send(1,NULL);   // Renamed per Issue 70 - ALevine
 		waiting = false;
 	    }	    
 	}
@@ -281,14 +281,14 @@ private:
 	    outbuf_credits[vc_to_send] += size;
 	    
 	    // Send an event to wake up again after this packet is sent.
-	    output_timing->Send(size,NULL);
+	    output_timing->send(size,NULL);   // Renamed per Issue 70 - ALevine
 
 	    curr_out_vc = vc_to_send + 1;
 	    if ( curr_out_vc == num_vcs ) curr_out_vc = 0;
 
 	    // Subtract credits
 	    rtr_credits[vc_to_send] -= size;
-	    rtr_link->Send(send_event);	    
+	    rtr_link->send(send_event);	       // Renamed per Issue 70 - ALevine
 	    // std::cout << "Sent packet on vc " << vc_to_send << std::endl;
 
 	    if ( send_event->getTraceType() == RtrEvent::FULL ) {

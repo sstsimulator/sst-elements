@@ -57,8 +57,10 @@ public:
     ~hr_router();
     
     void init(unsigned int phase);
-    int Setup();
-    int Finish() {return false;}
+//    int Setup();                       // Renamed per Issue 70 - ALevine
+//    int Finish() {return false;}
+    void setup();
+    void finish() {}
 
     void dumpState(std::ostream& stream);
 

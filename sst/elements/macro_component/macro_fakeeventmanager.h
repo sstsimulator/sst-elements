@@ -165,7 +165,7 @@ public:
 		
 		
 		
-		parent_->get_self_event_link()->Send(delay, evt);
+		parent_->get_self_event_link()->send(delay, evt);   // Renamed per Issue 70 - ALevine
 		
 	}
 
@@ -205,7 +205,7 @@ public:
 
    
 
-    parent_->get_self_event_link()->Send(delay, evt);
+    parent_->get_self_event_link()->send(delay, evt);   // Renamed per Issue 70 - ALevine
 
   }
 };

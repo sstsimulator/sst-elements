@@ -96,7 +96,7 @@ public:
 	output_buf[vc].push(ev);
 	if ( waiting ) {
 	    // std::cout << "waking up the output" << std::endl;
-	    output_timing->Send(1,NULL);
+	    output_timing->send(1,NULL);   // Renamed per Issue 70 - ALevine
 	    waiting = false;
 	}
 	return true;
@@ -123,7 +123,7 @@ public:
 	// For now, we're just going to send the credits back to the
 	// other side.  The required BW to do this will not be taken
 	// into account.
-	port_link->Send(1,new credit_event(vc,port_ret_credits[vc]));
+	port_link->send(1,new credit_event(vc,port_ret_credits[vc]));   // Renamed per Issue 70 - ALevine
 	port_ret_credits[vc] = 0;
 	
 	
@@ -290,7 +290,7 @@ private:
 	    // output queues
 	    if ( waiting ) {
 		// std::cout << output_timing << std::endl;
-		output_timing->Send(1,NULL);
+		output_timing->send(1,NULL);   // Renamed per Issue 70 - ALevine
 		waiting = false;
 	    }
 	}
@@ -325,7 +325,7 @@ private:
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
 	    if ( waiting ) {
-		output_timing->Send(1,NULL);
+		output_timing->send(1,NULL);   // Renamed per Issue 70 - ALevine
 		waiting = false;
 	    }	    
 	}
@@ -399,7 +399,7 @@ private:
 	    xbar_in_credits[vc_to_send] += size;
 	    
 	    // Send an event to wake up again after this packet is sent.
-	    output_timing->Send(size,NULL);
+	    output_timing->send(size,NULL);   // Renamed per Issue 70 - ALevine
 	    
 	    // Take care of the round variable
 	    curr_out_vc = vc_to_send + 1;
@@ -420,12 +420,12 @@ private:
 
 	    if ( host_port ) {
 		// std::cout << "Found an event to send on host port " << port_number << std::endl;
-		port_link->Send(1,send_event->getEncapsulatedEvent());
+		port_link->send(1,send_event->getEncapsulatedEvent());   // Renamed per Issue 70 - ALevine
 		send_event->setEncapsulatedEvent(NULL);
 		delete send_event;
 	    }
 	    else {
-		port_link->Send(1,send_event);
+		port_link->send(1,send_event);   // Renamed per Issue 70 - ALevine
 	    }
 
 	}

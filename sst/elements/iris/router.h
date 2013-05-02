@@ -148,13 +148,14 @@ class Router : public DES_Component
         void parse_config( std::map<std::string, std::string>& p); /* overwrite init config */
         void resize( void ); // Reconfigure the parameters for the router
 
-        int Finish()
+//        int Finish()   // Renamed per Issue 70 - ALevine
+        void finish()
         {
             std::string stat_string;
             print_stats(stat_string);
             fprintf(stdout,"\nNode %d Rtr %s \n",node_id, stat_string.c_str());
 //            fprintf(stderr,"\n\nempty_cycles-no of simulated cycles saved because the router had no work: %lu\n",empty_cycles);
-            return 0;
+//            return 0;
         }
 
     private:

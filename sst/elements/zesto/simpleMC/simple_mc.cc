@@ -16,7 +16,9 @@ SimpleMC::SimpleMC(SST::ComponentId_t id, SST::Component::Params_t &params) : SS
     m_latency = params.find_integer("latency");
 
 
-    registerExit();
+//    registerExit();  // Renamed Per Issue 70 - ALevine
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
     link_ni = configureLink("link_ni",
          new SST::Event::Handler<SimpleMC>(this,
@@ -47,7 +49,7 @@ cout << "mc received LD, src= " << req->source_id << " port= " <<req->source_por
 	req->dest_port = req->source_port;
 	req->source_id = m_nid;
 	req->source_port = 0;
-	link_ni->Send(m_latency, req);
+	link_ni->send(m_latency, req);   // Renamed per Issue 70 - ALevine
     }
     else {
 #ifdef DBG_SIMPLE_MC
@@ -64,7 +66,7 @@ cout << "mc received ST, src= " << req->source_id << " port= " <<req->source_por
 	    req->dest_port = req->source_port;
 	    req->source_id = m_nid;
 	    req->source_port = 0;
-	    link_ni->Send(m_latency, req);
+	    link_ni->send(m_latency, req);   // Renamed per Issue 70 - ALevine
 	}
     }
 }

@@ -44,7 +44,9 @@ PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
 
     DBGX(1,"\n");
 
-    registerExit();
+//    registerExit();  // Renamed Per Issue 70 - ALevine
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
     if( params.find_string("single","false").compare("true") )
     {
@@ -207,7 +209,8 @@ void PtlNicMMIF::doSimCtrlCmd( int cmd )
 #endif
         m_palaciosIF->vm_stop();
         delete m_palaciosIF;
-        unregisterExit();
+//        unregisterExit();  // Renamed Per Issue 70 - ALevine
+        primaryComponentOKToEndSim();
         break;
 
     default:
@@ -217,9 +220,10 @@ void PtlNicMMIF::doSimCtrlCmd( int cmd )
     DBGX(5,"return\n");
 }
 
-int PtlNicMMIF::Setup()
+//int PtlNicMMIF::Setup()  // Renamed per Issue 70 - ALevine
+void PtlNicMMIF::setup()
 {
-    return 0;
+//    return 0;
 }
 
 #if USE_THREAD 
@@ -247,7 +251,7 @@ void PtlNicMMIF::ptlCmd( int offset )
     if ( m_cmdQueue->head != m_cmdQueue->tail ) {
         DBGX(2,"new command head=%d tail=%d\n",
                                 m_cmdQueue->head, m_cmdQueue->tail );
-        m_cmdLink->Send( 
+        m_cmdLink->send(    // Renamed per Issue 70 - ALevine
                     new PtlNicEvent( &m_cmdQueue->queue[ m_cmdQueue->head ] ) );  
         m_cmdQueue->head = ( m_cmdQueue->head + 1 ) % CMD_QUEUE_SIZE;
     } 
@@ -294,7 +298,7 @@ void PtlNicMMIF::dmaHandler( SST::Event* e )
                     (uint8_t*)event->buf, event->size );
     }
 
-    m_dmaLink->Send( event );
+    m_dmaLink->send( event );   // Renamed per Issue 70 - ALevine
 }
 
 void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )

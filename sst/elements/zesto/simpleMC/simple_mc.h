@@ -26,15 +26,17 @@ public:
 
     SimpleMC(SST::ComponentId_t id, SST::Component::Params_t &params);
 
-    int Setup() {
+//    int Setup() {  // Renamed per Issue 70 - ALevine
+    void setup() { 
         std::cout << "Simple MC " << m_nid << " starts" << std::endl;
-        return 0;
+//        return 0;
     }
     
-    int Finish() {
+//    int Finish() {  // Renamed per Issue 70 - ALevine
+    void finish() {
         std::cout << "Simple MC " << m_nid << " finished" << std::endl;
         //print_stats(std::cout);
-        return 0;
+//        return 0;
     }
 
     int get_nid() { return m_nid; }

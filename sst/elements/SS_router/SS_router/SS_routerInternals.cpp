@@ -343,7 +343,7 @@ void SS_router::LCBxfer_start (int dir) {
                             dest_ilink, rp->ovc, LinkNames[dir] );
 
     //send event to the next router
-    dest->Send( iLCBLat, rp->event );    
+    dest->send( iLCBLat, rp->event );   // Renamed per Issue 70 - ALevine    
 
     DBprintf ("%lld: router %d start xfer parcel (from %d to %d), oLCB %d size %d, %d datum, %d vc_rr, %d tokens\n",
               cycle(), routerID, np->srcNum, np->destNum, rp->olink, oLCB->size_flits,

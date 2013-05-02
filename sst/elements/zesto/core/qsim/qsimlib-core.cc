@@ -46,10 +46,12 @@ qsimlib_core_t:: ~qsimlib_core_t()
 
 }
 
-int qsimlib_core_t::Setup() {
+//int qsimlib_core_t::Setup() {  // Renamed per Issue 70 - ALevine
+void qsimlib_core_t::setup() { 
 	create_queue();
 	get_first_pc();
-	return core_t::Setup();
+//	return core_t::Setup();  // Renamed per Issue 70 - ALevine
+	core_t::setup();  
 }
 
 //! Qsim queue should be created at app start.

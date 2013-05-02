@@ -68,7 +68,8 @@ MacsimTerminal::handle_interface_link_arrival ( DES_Event* ev ,int port_id )
                 credit_event->type = irisRtrEvent::Credit;
                 credit_event->credit.vc = event->credit.vc;
                 credit_event->credit.num = 1;      // if we do use flits then update this
-                owner->interface_link->Send(credit_event);
+//                owner->interface_link->Send(credit_event);   // Renamed per Issue 70 - ALevine
+                owner->interface_link->send(credit_event);   
 
                 // update macsim
                 // @ Genie FIXME: MEM_NOC_DONE and mem_req_s are types in macsim
@@ -126,7 +127,8 @@ MacsimTerminal::send_packet(mem_req_s *req)
         irisRtrEvent* pkt_event = new irisRtrEvent;
         pkt_event->type = irisRtrEvent::Packet;
         pkt_event->packet = np;
-        owner->interface_link->Send(pkt_event);
+//        owner->interface_link->Send(pkt_event);   // Renamed per Issue 70 - ALevine
+        owner->interface_link->send(pkt_event);  
 
         //FIXME: memory leaks check what np should do
         return true;

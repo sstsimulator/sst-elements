@@ -159,16 +159,19 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
   registerTimeBase("1 ps", true);
 	
 	// tell the simulator not to end without us
-	registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 }
 
-int
-macro_processor::Setup()
+//int
+//macro_processor::Setup()  // Renamed per Issue 70 - ALevine
+void macro_processor::setup()  
 {
 	fem_->update(timestamp(0));
   node_->initialize(fem_);
 
-  return 0;
+//  return 0;
 }
 
 void

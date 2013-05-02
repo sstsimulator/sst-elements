@@ -40,8 +40,10 @@ public:
 	McOpteron::McOpteron *the_cpu;
 //	int TraceTokens;
 	bool tic(SST::Cycle_t);
-	int Setup( );
-	int Finish( );
+//	int Setup( );  // Renamed per Issue 70 - ALevine
+//	int Finish( );
+	void setup( );
+	void finish( );
 	bool Status( );
 
 	//Simulation Parameters

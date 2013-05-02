@@ -69,7 +69,7 @@ SimTime_t read_time;
 		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
 
 	    e->SetRoutine(BIT_BUCKET_WRITE_DONE);
-	    self_link->Send(delay, e);
+	    self_link->send(delay, e);  // Renamed per Issue 70 - ALevine
 	    break;
 
 	case BIT_BUCKET_WRITE_DONE:
@@ -81,7 +81,7 @@ SimTime_t read_time;
 	    e->msg_len= 0;
 	    // e->dest= -1;
 	    e->SetRoutine(e->return_event);
-	    net->Send(e);
+	    net->send(e);  // Renamed per Issue 70 - ALevine
 	    break;
 
 	case BIT_BUCKET_READ_START:
@@ -102,7 +102,7 @@ SimTime_t read_time;
 	    _BIT_BUCKET_DBG(2, "%15.9fs Bit bucket: Starting read of %d bytes, delay %.9fs\n",
 		(double)current_time / 1000000000.0, e->msg_len, (float)delay / 1000000000.0);
 	    e->SetRoutine(BIT_BUCKET_READ_DONE);
-	    self_link->Send(delay, e);
+	    self_link->send(delay, e);  // Renamed per Issue 70 - ALevine
 	    break;
 
 	case BIT_BUCKET_READ_DONE:
@@ -115,7 +115,7 @@ SimTime_t read_time;
 	    e->hops= 0;
 	    // e->dest= -1;
 	    e->SetRoutine(e->return_event);
-	    net->Send(e);
+	    net->send(e);  // Renamed per Issue 70 - ALevine
 	    break;
     }
 

@@ -174,7 +174,7 @@ class Alltoall_pattern : public Comm_pattern    {
 
 	// ADDED FOR PROPER INITIALIZATION - ALEVINE
 	// SST Startup and Shutdown
-	int Setup();
+	void setup();  // Renamed per Issue 70 - ALevine
 
 	// Serialization
         friend class boost::serialization::access;

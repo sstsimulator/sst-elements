@@ -26,8 +26,10 @@ public:
     event_test(SST::ComponentId_t id, SST::Component::Params_t& params);
 
     void init(unsigned int phase);
-    int Setup();
-    int Finish();
+//    int Setup();  // Renamed per Issue 70 - ALevine
+//    int Finish();
+    void setup();
+    void finish();
 
 private:
     event_test();  // for serialization only

@@ -1506,7 +1506,7 @@ void core_exec_DPM_t::LDQ_schedule(void)
                 printf("sent from zesto LDQ, %#x\n", request->addr);
                 //printf("------------phy address is %#x ------------------from LDQ \n", uop->oracle.phys_addr);
 #endif
-                core->cache_link->Send(request);
+                core->cache_link->send(request);   // Renamed per Issue 70 - ALevine
 
     		/* we speculatively scheduled children assuming we'd hit in the
        		previous cache level, but we didn't... so put children back
@@ -2378,7 +2378,7 @@ bool core_exec_DPM_t::STQ_deallocate_std(struct uop_t * const uop)
     core->request_id++;
               
 	  /*Actually enqueueing the request to cache*/
-    core->cache_link->Send(request);
+    core->cache_link->send(request);   // Renamed per Issue 70 - ALevine
 #ifdef ZDEBUG
     printf("sent from zesto STQ, %#x \n", request->addr);
 #endif

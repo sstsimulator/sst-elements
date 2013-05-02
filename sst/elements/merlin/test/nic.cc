@@ -73,7 +73,9 @@ nic::nic(ComponentId_t cid, Params& params) :
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<nic>(this,&nic::clock_handler), false);
 
-    registerExit();
+//    registerExit();  // Renamed Per Issue 70 - ALevine
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
 }
 
@@ -84,17 +86,20 @@ nic::~nic()
     delete [] next_seq;
 }
 
-int
-nic::Finish()
+//int
+//nic::Finish()  // Renamed per Issue 70 - ALevine
+void nic::finish()
 {
     std::cout << "Nic " << id << " had " << stalled_cycles << " stalled cycles." << std::endl;
-    return 0;
+//    return 0;
 }
 
-int
-nic::Setup()
+//int
+//nic::Setup()  // Renamed per Issue 70 - ALevine
+void nic::setup() 
 {
-    return link_control->Setup();
+//    return link_control->Setup();
+    link_control->Setup();
 }
 
 void
@@ -117,7 +122,8 @@ nic::clock_handler(Cycle_t cycle)
 
     if ( !done && (packets_recd >= expected_recv_count) ) {
         std::cout << cycle << ": NIC " << id << " received all packets!" << std::endl;
-        unregisterExit();
+//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
+      primaryComponentOKToEndSim();
         done = true;
     }
     // Send packets

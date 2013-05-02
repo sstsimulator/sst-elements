@@ -46,7 +46,9 @@ SSTMcOpteron::SSTMcOpteron(ComponentId_t id, Params_t& params):Component(id){
 	//	the_cpu = new McOpteron();
 	//cout<<"SSTMcOpteron(ComponentId_t id, Params_t& params) Begin"<<endl;
 	the_cpu = new McOpteron::McOpteron();
-	registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
 	//debugLevel (default=0)
 	//cout<<"  Reading debugLevel"<<endl;
 	if ( params.find("debugLevel") == params.end() ) debug=0;
@@ -142,16 +144,19 @@ bool SSTMcOpteron::tic(Cycle_t){
 		if(!converged)
 			converged=the_cpu->simCycle();
 		else
-			unregisterExit();
+//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
+      primaryComponentOKToEndSim();
 	else
 		if(cyclecount<numSimCycles)
 			converged=the_cpu->simCycle();
 		else
-			unregisterExit();
+//	    unregisterExit();  // Renamed Per Issue 70 - ALevine
+      primaryComponentOKToEndSim();
 	return 0;
 }//SSTMcOpteron::tic(Cycle_t)
 
-int SSTMcOpteron::Setup(){
+//int SSTMcOpteron::Setup(){  // Renamed per Issue 70 - ALevine
+void SSTMcOpteron::setup(){  
 	the_cpu->local_debug=debug;
 	the_cpu->init(appDirectory, defFile, mixFile, traceFile, repeatTrace, newIMixFile, instrSizeFile, fetchSizeFile, transFile);
 	McOpteron::seedRandom(seed);
@@ -159,15 +164,16 @@ int SSTMcOpteron::Setup(){
 		the_cpu->printStaticIMix();
 	cyclecount=0;
 	converged=false;
-	return 0;
-}//SSTMcOpteron::Setup()
+//	return 0;
+}//SSTMcOpteron:sSetup()
 
-int SSTMcOpteron::Finish(){
+//int SSTMcOpteron::Finish(){  // Renamed per Issue 70 - ALevine
+void SSTMcOpteron::finish(){  
 	the_cpu->finish(printIMix);
 	delete the_cpu;
 	the_cpu=0;
-	return 0;
-}//SSTMcOpteron::Finish()
+//	return 0;
+}//SSTMcOpteron::finish()
 
 bool SSTMcOpteron::Status(){
 	return 0;

@@ -137,7 +137,9 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     ++it;
   }
 
-  registerExit();
+//  registerExit();  // Renamed Per Issue 70 - ALevine
+  registerAsPrimaryComponent();
+  primaryComponentDoNotEndSim();
  
   __disksim = disksim_interface_initialize(parameterFile.c_str(), 
 					   outputFile.c_str(),
@@ -178,21 +180,23 @@ sstdisksim::~sstdisksim()
 }
 
 /******************************************************************************/
-int
-sstdisksim::Setup()
+//int
+//sstdisksim::Setup()  // Renamed per Issue 70 - ALevine
+void sstdisksim::setup()  
 {
-  return 0;
+//  return 0;
 }
 
 /******************************************************************************/
-int 
-sstdisksim::Finish()
+//int 
+//sstdisksim::Finish()  // Renamed per Issue 70 - ALevine
+void sstdisksim::finish()  // Renamed per Issue 70 - ALevine
 {
   disksim_interface_shutdown(__disksim, __now);
 
   DBG("Shutting sstdisksim down\n");
 
-  return 0;
+//  return 0;
 }
 
 /******************************************************************************/
@@ -217,7 +221,7 @@ sstdisksim::handleEvent(Event* event)
     r.flags = DISKSIM_WRITE;
   else if ( ev->etype == DISKSIMEND)
   {
-    lockstep->Send(__cycle+100, ev);
+    lockstep->send(__cycle+100, ev);   // Renamed per Issue 70 - ALevine
     return;
   }
   else
@@ -253,7 +257,7 @@ sstdisksim::handleEvent(Event* event)
   
   __event_total++;
   __cycle += (long)((__now-tmp)*cyclespermillisec);
-  lockstep->Send(__cycle, ev);
+  lockstep->send(__cycle, ev);   // Renamed per Issue 70 - ALevine
   
   return;
 }
@@ -299,7 +303,8 @@ sstdisksim::lockstepEvent(Event* ev)
     if ( ! __done )
     {
       __done = true;
-      unregisterExit();
+//      unregisterExit();  // Renamed Per Issue 70 - ALevine
+      primaryComponentOKToEndSim();
       print_statistics(&__st, "response time");
       DBG("time: %f milliseconds\n", __now);
       printf("events processed: %d\n", event_count);
