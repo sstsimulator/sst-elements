@@ -707,49 +707,47 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 
 
 	/* Check to see if we're trying to load this data */
-    for ( uint32_t event_offset = 0 ; event_offset < ev->getSize() ; event_offset += blocksize ) {
-        LoadList_t::iterator i = waitingLoads.find(ev->getAddr() + event_offset);
-        if ( i != waitingLoads.end() ) {
-			LoadInfo_t* li = i->second;
-            DPRINTF("We were waiting for block 0x%lx.  Processing.  [li: %p]\n", ev->getAddr() + event_offset, li);
+    LoadList_t::iterator i = waitingLoads.find(ev->getAddr());
+    if ( i != waitingLoads.end() ) {
+        LoadInfo_t* li = i->second;
+        DPRINTF("We were waiting for block 0x%lx.  Processing.  [li: %p]\n", ev->getAddr(), li);
 
-			if ( li->busEvent ) {
-				DPRINTF("Canceling Bus Request for Load on 0x%lx\n", li->busEvent->getAddr());
-				BusHandlers handlers = snoopBusQueue.cancelRequest(li->busEvent);
-                if ( handlers.init ) delete handlers.init;
-                if ( handlers.finish ) delete handlers.finish;
-                delete li->busEvent;
-                li->busEvent = NULL;
-			}
+        if ( li->busEvent ) {
+            DPRINTF("Canceling Bus Request for Load on 0x%lx\n", li->busEvent->getAddr());
+            BusHandlers handlers = snoopBusQueue.cancelRequest(li->busEvent);
+            if ( handlers.init ) delete handlers.init;
+            if ( handlers.finish ) delete handlers.finish;
+            delete li->busEvent;
+            li->busEvent = NULL;
+        }
 
-			if ( !li->targetBlock ) {
-                DPRINTF("No block available yet.  We didn't ask for it.  Ignoring.\n");
-				/* We still don't have a block assigned, so we didn't ask for
-				 * this.  Must be a snoop that we can ignore.
-				 * (no room in the inn) */
-				ASSERT( src == SNOOP );
-				break;
-			}
+        if ( !li->targetBlock ) {
+            DPRINTF("No block available yet.  We didn't ask for it.  Ignoring.\n");
+            /* We still don't have a block assigned, so we didn't ask for
+             * this.  Must be a snoop that we can ignore.
+             * (no room in the inn) */
+            ASSERT( src == SNOOP );
+        } else {
 
             CacheBlock *targetBlock = li->targetBlock;
 
-			if ( ev->getSize() < blocksize ) {
-				// This isn't enough for us, but may satisfy others
-				DPRINTF("Not enough info in block (%u vs %u blocksize)\n",
-						ev->getSize(), blocksize);
-				li->targetBlock->status = CacheBlock::INVALID;
-				li->targetBlock->unlock();
+            if ( ev->getSize() < blocksize ) {
+                // This isn't enough for us, but may satisfy others
+                DPRINTF("Not enough info in block (%u vs %u blocksize)\n",
+                        ev->getSize(), blocksize);
+                li->targetBlock->status = CacheBlock::INVALID;
+                li->targetBlock->unlock();
 
-				// Delete events that we would be reprocessing
+                // Delete events that we would be reprocessing
                 uint32_t deleted = 0;
-				for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
-					LoadInfo_t::LoadElement_t &oldEV = li->list[n];
-					if ( src == SNOOP && oldEV.src == SNOOP ) {
-						delete oldEV.ev;
+                for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
+                    LoadInfo_t::LoadElement_t &oldEV = li->list[n];
+                    if ( src == SNOOP && oldEV.src == SNOOP ) {
+                        delete oldEV.ev;
                         oldEV.ev = NULL;
                         deleted++;
-					}
-				}
+                    }
+                }
                 if ( deleted == li->list.size() ) {
                     waitingLoads.erase(i);
                     li->targetBlock->loadInfo = NULL;
@@ -760,14 +758,14 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 /* If we're trying to load this, but this is locked elsewhere, we need to wait longer for the data. */
                 DPRINTF("Got a DELAYED Response.  Purge snoop work.\n");
                 uint32_t deleted = 0;
-				for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
-					LoadInfo_t::LoadElement_t &oldEV = li->list[n];
-					if ( src == SNOOP && oldEV.src == SNOOP ) {
-						delete oldEV.ev;
+                for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
+                    LoadInfo_t::LoadElement_t &oldEV = li->list[n];
+                    if ( src == SNOOP && oldEV.src == SNOOP ) {
+                        delete oldEV.ev;
                         oldEV.ev = NULL;
                         deleted++;
-					}
-				}
+                    }
+                }
                 if ( deleted == li->list.size() ) {
                     /* Deleted all reasons to load this block */
                     waitingLoads.erase(i);
@@ -777,34 +775,35 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                     targetBlock->unlock();
                 }
 
-			} else {
-				updateBlock(ev, li->targetBlock);
+            } else {
+                updateBlock(ev, li->targetBlock);
                 li->targetBlock->loadInfo = NULL;
-				li->targetBlock->status = CacheBlock::SHARED;
-				li->targetBlock->unlock();
+                li->targetBlock->status = CacheBlock::SHARED;
+                li->targetBlock->unlock();
 
-				for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
-					LoadInfo_t::LoadElement_t &oldEV = li->list[n];
-					/* If this was from the Snoop Bus, and we've got other cache's asking
-					 * for this data over the snoop bus, we can assume they saw it, and
-					 * we don't need to reprocess them.
-					 */
-					if ( src == SNOOP && oldEV.src == SNOOP ) {
-						delete oldEV.ev;
+                for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
+                    LoadInfo_t::LoadElement_t &oldEV = li->list[n];
+                    /* If this was from the Snoop Bus, and we've got other cache's asking
+                     * for this data over the snoop bus, we can assume they saw it, and
+                     * we don't need to reprocess them.
+                     */
+                    if ( src == SNOOP && oldEV.src == SNOOP ) {
+                        delete oldEV.ev;
                     } else {
                         if ( oldEV.ev != NULL ) // handled before?
                             handleIncomingEvent(oldEV.ev, oldEV.src, false);
                     }
-				}
+                }
                 waitingLoads.erase(i);
                 delete li;
-			}
+            }
 
             handlePendingEvents(findRow(targetBlock->baseAddr), targetBlock);
+        }
 
-        } else {
-            ASSERT ( src == SNOOP || event_offset );
-            DPRINTF("No matching waitingLoads for 0x%lx.\n", ev->getAddr() + event_offset);
+    } else {
+        if ( src == SNOOP ) {
+            DPRINTF("No matching waitingLoads for 0x%lx.\n", ev->getAddr());
             if ( ev->getDst() == getName() ) {
                 DPRINTF("WARNING:  Unmatched message.  Hopefully we recently just canceled this request, and our sender didn't get the memo.\n");
 #if 0
@@ -812,6 +811,15 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 _abort(Cache, "%s Received an unmatched message!\n", getName().c_str());
 #endif
             }
+        } else if ( src == UPSTREAM ) {
+            assert(ev->queryFlag(MemEvent::F_WRITEBACK));
+            DPRINTF("Passing on writeback to next level\n");
+            if ( downstream_link )
+                downstream_link->Send(new MemEvent(ev));
+            else
+                _abort(Cache, "Not sure where to send this.  Directory?\n");
+        } else {
+            _abort(Cache, "Unhandled case of unmatched SupplyData coming from non-SNOOP, non-UPSTREAM\n");
         }
     }
 
