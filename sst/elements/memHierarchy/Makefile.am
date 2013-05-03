@@ -24,8 +24,9 @@ libmemHierarchy_la_SOURCES = \
 EXTRA_DIST = makeSDL.pl
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
+
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD = $(DRAMSIM_LIB)
-AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS)
+AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 endif

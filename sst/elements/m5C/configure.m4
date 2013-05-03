@@ -99,35 +99,12 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AC_SUBST([M5_LDFLAGS])
   AC_SUBST([M5_LIB])
 
-  # DRAMSim configuration begin 
-  CPPFLAGS_saved="$CPPFLAGS"
-  LDFLAGS_saved="$LDFLAGS"
-  LIBS_saved="$LIBS"
-  AC_LANG_PUSH(C++)
+  happy_SAVED="$happy"
 
-  AS_IF([test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"],
-    [
-      DRAMSIM_CPPFLAGS="-I$with_dramsim" 
-      DRAMSIM_LDFLAGS="-L$with_dramsim"	
-      AC_CHECK_HEADERS([MemorySystem.h], [], [happy="no"])
-      AC_CHECK_LIB([dramsim], [libdramsim_is_present], [], [happy="no"])
-    ],
-    [DRAMSIM_CPPFLAGS=
-     DRAMSIM_LDFLAGS=]
-  )
+  # Now uses global DRAMSim check
+  SST_CHECK_DRAMSIM([have_dramsim=1],[have_dramsim=0],[AC_MSG_ERROR([DRAMSim requested but could not be found])])
 
-  AC_LANG_POP(C++)
-  CPPFLAGS="$CPPFLAGS_saved"
-  LDFLAGS="$LDFLAGS_saved"
-  LIBS="$LIBS_saved"
-
-  AM_CONDITIONAL([HAVE_DRAMSIM],
-		[test ! -z "$with_dramsim" -a "$with_dramsim" != "yes"])
-
-  AC_SUBST([DRAMSIM_CPPFLAGS])
-  AC_SUBST([DRAMSIM_LDFLAGS])
-  AC_SUBST([DRAMSIM_LIB])
-  # DRAMSim configuration end 
+  happy="$happy_SAVED"
 
   # PHXSim configuration begin 
   AC_ARG_WITH([phxsim],
