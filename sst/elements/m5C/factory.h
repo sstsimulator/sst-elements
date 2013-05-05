@@ -121,8 +121,6 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
     Gem5Object_t* obj = new Gem5Object_t;
     assert(obj);
 
-    std::cout << "Calling static GEM5 object construction." << std::endl;
-
     if (type == "Bus") {
 	obj->memObject = create_Bus( m_comp, name, params );
     } else if (type == "Bridge") {
