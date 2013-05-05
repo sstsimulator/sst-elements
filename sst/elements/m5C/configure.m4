@@ -148,6 +148,13 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AM_CONDITIONAL([ENABLE_GEM5_POWER_MODEL], 
 	[test -z "$enable-gem5-power-model" -a "$happy" = "yes"])
 
+  AS_IF([test "$enable_static" = "yes" -a "$enable_shared" = "no"],
+	[AC_MSG_NOTICE([GEM5 will be configured to support static object construction.])],
+	[AC_MSG_NOTICE([GEM5 will use dynamic object construction.])])
+
+  AM_CONDITIONAL([PERFORM_M5C_STATIC_OBJECT_CONSTRUCTION],
+	[test "$enable_static" = "yes" -a "$enable_shared" = "no"])
+
   AS_IF([test -n "$with_gem5" -a "$with_gem5" != "no" -a "$happy" = "no"],
 	[AC_MSG_ERROR(
 		[Unable to correctly determine requirements for GEM5, configure specifies to build GEM5 but cannot build successfully],

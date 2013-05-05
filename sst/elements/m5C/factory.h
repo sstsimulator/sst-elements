@@ -19,12 +19,27 @@
 
 #include <debug.h>
 
+using namespace std;
+
 namespace SST {
 namespace M5 {
 
 class M5;
 
 class SimObject;
+
+#ifdef M5C_STATIC_OBJECT_CONSTRUCTION
+
+extern "C" {
+	SimObject* create_Bus( M5* /*Component**/, string name, Params& params );
+	SimObject* create_Bridge( M5* /*Component**/, string name, Params& params );
+	SimObject* create_BaseCache( M5* /*Component**/, string name, Params& params );
+	SimObject* create_PhysicalMemory( M5* /*Component**/, string name, Params& params );
+	SimObject* create_Syscall( M5* /*Component**/, string name, Params& params );
+	SimObject* create_O3Cpu( M5* /*Component**/, string name, Params& params );
+}
+
+#endif
 
 class Factory {
   public:
@@ -38,7 +53,9 @@ class Factory {
             SST::Params&  );
     Gem5Object_t* createObject2( std::string name, std::string type, 
             SST::Params&  );
+#ifndef M5C_STATIC_OBJECT_CONSTRUCTION
     void *m_libm5C;
+#endif
     void *m_libgem5;
     M5* m_comp;
 };
@@ -51,12 +68,14 @@ class Factory {
 inline Factory::Factory( M5* comp ) :
     m_comp( comp )
 {
+#ifndef M5C_STATIC_OBJECT_CONSTRUCTION
     m_libm5C = dlopen("libm5C.so",RTLD_NOW);
 
     if ( ! m_libm5C ) {
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
     }
+#endif
 
 #ifdef USE_MACOSX_DYLIB
     m_libgem5 = dlopen("libgem5_"LIBTYPE".dylib",RTLD_NOW);
@@ -73,7 +92,9 @@ inline Factory::Factory( M5* comp ) :
 
 inline Factory::~Factory()
 {
+#ifndef M5C_STATIC_OBJECT_CONSTRUCTION
     dlclose(m_libm5C);
+#endif
     dlclose(m_libgem5);
 }
 
@@ -95,13 +116,38 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
     std::string tmp = "create_";
     tmp += type;
     DBGX(2,"type `%s`\n", tmp.c_str());
+
+    std::cout << "createObject1->" << tmp.c_str() << std::endl;
+
+#ifdef M5C_STATIC_OBJECT_CONSTRUCTION
+    Gem5Object_t* obj = new Gem5Object_t;
+    assert(obj);
+
+    if (type == "Bus") {
+	obj->memObject = create_Bus( m_comp, name, params );
+    } else if (type == "Bridge") {
+	obj->memObject = create_Bridge( m_comp, name, params );
+    } else if (type == "BaseCache") {
+	obj->memObject = create_BaseCache( m_comp, name, params );
+    } else if (type == "PhysicalMemory") {
+	obj->memObject = create_PhysicalMemory( m_comp, name, params );
+    } else if (type == "Syscall") {
+	obj->memObject = create_Syscall( m_comp, name, params );
+    } else if (type == "O3Cpu") {
+	obj->memObject = create_O3Cpu( m_comp, name, params);
+    } else {
+	std::cerr << "m5C attempted to create component: " << type <<
+		" in an entirely static build, the creation of this component is not supported"
+		<< std::endl;
+	exit(-1);
+    }
+#else
     createObjFunc_t ptr = (createObjFunc_t)(dlsym( m_libm5C, tmp.c_str() ));
     if ( ! ptr ) {
         printf("Factory::Factory() %s\n",dlerror());
         exit(-1);
     }
 
-    
     Gem5Object_t* obj = new Gem5Object_t;
     assert(obj);
     obj->memObject = (*ptr)( m_comp, name, params );
@@ -109,6 +155,7 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
         printf("Factory::Factory() failed to create %s\n", type.c_str() );
         exit(-1);
     }
+#endif
 
     return obj;
 }
