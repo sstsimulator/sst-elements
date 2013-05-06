@@ -3,7 +3,7 @@
 <timebase>1ns</timebase>
 
 <config>
- stopAtCycle=100000ns
+ stopAtCycle=1000000ns
 </config>
 
 <variables>
