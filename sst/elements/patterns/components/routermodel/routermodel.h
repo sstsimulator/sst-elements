@@ -471,7 +471,7 @@ class Routermodel : public IntrospectedComponent {
     private:
 
 
-        Routermodel(); // For serialization only
+        Routermodel() {}; // For serialization only
         Routermodel(const Routermodel &c);
 	int64_t get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len);
 

@@ -115,7 +115,7 @@ class Bit_bucket : public Component {
 
     private:
 
-        Bit_bucket(); // For serialization only
+        Bit_bucket() {}; // For serialization only
         Bit_bucket(const Bit_bucket &c);
 	void handle_events(Event *);
 

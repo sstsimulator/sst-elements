@@ -90,6 +90,13 @@ SimTime_t duration;
 
 
 void
+FFT_pattern::state_PHASE1(state_event sm_event)
+{
+  // DO NOTHING STATE; ADDED TO SOLVE STATIC LINKING ISSUE
+}
+
+
+void
 FFT_pattern::state_PHASE2(state_event sm_event)
 {
 

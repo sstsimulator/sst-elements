@@ -57,11 +57,17 @@ class Allreduce_pattern : public Comm_pattern    {
 		if (!it->first.compare("start_nnodes"))   {
 		    sscanf(it->second.c_str(), "%d", &start_nnodes);
 		    if ((start_nnodes < 0) || (start_nnodes >= num_ranks))   {
-			if (my_rank == 0)   {
-			    printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
-			}
-			exit(-2);
+          if (my_rank == 0)   {
+			      printf("#  |||  start_nnodes needs to be >= 0, < num_ranks!\n");
+			    }
+			    exit(-2);
 		    }
+// NEW CODE ADDED STARTING HERE		    
+		    if (start_nnodes <= 0){
+//			    printf("AARON DEBUG 1; my_rank = %d\n", my_rank);
+		      start_nnodes = 1;
+		    }
+// NEW CODE ADDED ENDING HERE		    
 		}
 
 
