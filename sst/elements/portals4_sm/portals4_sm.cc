@@ -325,8 +325,9 @@ extern "C" {
         "portals4_sm",
         "State-machine based processor/nic for Portals 4 research",
         components,
-	NULL,
-	NULL,
+	NULL,  // events
+	NULL,  // introspectors
+	NULL,  // modules
 	partitioners,
 	generators,
     };
