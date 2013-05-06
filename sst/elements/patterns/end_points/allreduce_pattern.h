@@ -62,12 +62,11 @@ class Allreduce_pattern : public Comm_pattern    {
 			    }
 			    exit(-2);
 		    }
-// NEW CODE ADDED STARTING HERE		    
+		    // Perform a check to see if we are setup for nnodes being 0
+		    // if yes, on allreduce start the nnodes at 1
 		    if (start_nnodes <= 0){
-//			    printf("AARON DEBUG 1; my_rank = %d\n", my_rank);
 		      start_nnodes = 1;
 		    }
-// NEW CODE ADDED ENDING HERE		    
 		}
 
 
