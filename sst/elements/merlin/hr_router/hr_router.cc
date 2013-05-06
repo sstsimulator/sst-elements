@@ -79,6 +79,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     if ( !topology.compare("torus") ) {
         // std::cout << "Creating new topology: torus" << std::endl;
         topo = new topo_torus(params);
+	// topo = dynamic_cast<Topology*>(loadModule("merlin.torus",params));
     } else if ( !topology.compare("fattree") ) {
         // std::cout << "Creating new topology: fattree" << std::endl;
         topo = new topo_fattree(params);
@@ -86,7 +87,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         // std::cout << "Creating new topology: dragonfly" << std::endl;
         topo = new topo_dragonfly(params);
     } else {
-        _abort(hr_router, "ERROR: hr_router unknown topology: ");
+	topo = dynamic_cast<Topology*>(loadModule(topology,params));
     }
 
     // Get the Xbar arbitration

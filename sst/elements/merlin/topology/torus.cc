@@ -53,11 +53,6 @@ topo_torus::topo_torus(Params& params) :
         parseDimString(width, dim_width);
     }
 
-    std::cout << "  dimensions: " << dimensions << "\n";
-    for ( int i = 0 ; i < dimensions ; i++ ) {
-        std::cout << "\tdim[" << i << "] = " << dim_size[i] << " x " << dim_width[i] << "\n";
-    }
-
     int next_port = 0;
     for ( int d = 0 ; d < dimensions ; d++ ) {
         for ( int i = 0 ; i < 2 ; i++ ) {
@@ -89,12 +84,8 @@ topo_torus::topo_torus(Params& params) :
 
     local_port_start = n_ports-num_local_ports;// Local delivery is on the last ports
 
-	id_loc = new int[dimensions];
-	idToLocation(router_id, id_loc);
-    std::cout << "  Coordinates:\t";
-    for ( int i = 0 ; i < dimensions ; i++ ) {
-        std::cout << id_loc[i] << "\t";
-    }
+    id_loc = new int[dimensions];
+    idToLocation(router_id, id_loc);
     std::cout << std::endl;
 }
 

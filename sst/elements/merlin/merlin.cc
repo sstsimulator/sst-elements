@@ -19,6 +19,8 @@
 #include "test/nic.h"
 #include "test/pt2pt/pt2pt_test.h"
 
+#include "topology/torus.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -64,6 +66,11 @@ create_pt2pt_test(SST::ComponentId_t id,
 //     return ret;
 // }
 
+static Module*
+load_torus_topology(Params& params)
+{
+    return new topo_torus(params);
+}
 
 static const ElementInfoComponent components[] = {
     { "portals_nic",
@@ -89,6 +96,16 @@ static const ElementInfoComponent components[] = {
     { NULL, NULL, NULL, NULL }
 };
 
+static const ElementInfoModule modules[] = {
+    { "torus",
+      "Torus topology object",
+      NULL,
+      load_torus_topology,
+      NULL,
+    },
+    { NULL, NULL, NULL, NULL, NULL }
+};
+      
 // static const ElementInfoPartitioner partitioners[] = {
 //     { "partitioner",
 //       "Partitioner for portals4_sm simulations",
@@ -112,10 +129,11 @@ static const ElementInfoComponent components[] = {
 extern "C" {
     ElementLibraryInfo merlin_eli = {
         "merlin",
-        "State-machine based processor/nic for Portals 4 research",
+        "Flexible network components",
         components,
 	NULL,
 	NULL,
+	modules,
 	// partitioners,
 	// generators,
 	NULL,

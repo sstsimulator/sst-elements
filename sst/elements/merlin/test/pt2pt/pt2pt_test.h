@@ -36,9 +36,11 @@ private:
     int packets_recd;
 
     SimTime_t start_time;
-
+    SimTime_t latency;
+    
     int packet_size;
     int packets_to_send;
+    int buffer_size;
     
     LinkControl* link_control;
     Link* self_link;

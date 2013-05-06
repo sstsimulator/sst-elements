@@ -18,6 +18,7 @@
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
+#include <sst/core/module.h>
 #include <sst/core/timeConverter.h>
 
 using namespace SST;
@@ -97,7 +98,7 @@ public:
     inline int getTraceID() {return encap_ev->getTraceID();}
 };
 
-class Topology {
+    class Topology : public Module {
 public:
     enum PortState {R2R, R2N, UNCONNECTED};
     Topology() {}
@@ -111,7 +112,7 @@ public:
 
 class PortControl;
 
-class XbarArbitration {
+    class XbarArbitration : public Module {
 public:
     XbarArbitration() {}
     virtual ~XbarArbitration() {}
