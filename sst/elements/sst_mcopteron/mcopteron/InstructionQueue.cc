@@ -243,7 +243,7 @@ bool InstructionQueue::canHandleInstruction(Token *token, CycleCount atCycle)
    else if (type == INTSP && token->getType()->getCategory() == SPECIALINT)
        return true;
    // float instructions need the float queue
-   else if (type == FLOAT && token->getType()->getCategory() == FLOAT)
+   else if (type == FLOAT && token->getType()->getCategory() == McOpteron::FLOAT)
        return true;
    else{
       if(Debug>=5)cerr<<"IQ: No Type Match"<<endl;
