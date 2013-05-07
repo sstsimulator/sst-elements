@@ -82,9 +82,7 @@ inline Gem5Object_t* Factory::createObject( std::string name,
 inline Gem5Object_t* Factory::createObject1( std::string name, 
                 std::string type, SST::Params& params )
 {
-    std::string tmp = "create_";
-    tmp += type;
-    DBGX(2,"type `%s`\n", tmp.c_str());
+    DBGX(2,"type `%s`\n", type.c_str());
 
     Gem5Object_t* obj = new Gem5Object_t;
     assert(obj);
@@ -126,46 +124,46 @@ inline char * make_copy( const std::string & str )
     return strcpy( tmp, str.c_str() );
 }
 
-inline Gem5Object_t* Factory::createObject2( const std::string name,
+inline Gem5Object_t* Factory::createObject2( const std::string name, 
                 std::string type, SST::Params& params )
 {
-
     xxx_t *xxx = (xxx_t*) malloc( (params.size() + 1) * sizeof( *xxx ) );
 
     SST::Params::iterator iter = params.begin();
     for ( int i=0; iter != params.end(); ++iter, i++ ){
 
-        xxx[i].key = make_copy( (*iter).first );
+        xxx[i].key   = make_copy( (*iter).first );
         xxx[i].value = make_copy( (*iter).second );
     }
-    xxx[params.size()].key = NULL;
+    xxx[params.size()].key   = NULL;
     xxx[params.size()].value = NULL;
 
-    Gem5Object_t *obj = NULL;
-    if ( type == "DerivO3CPU" )
-        obj = CreateDerivO3CPU(name.c_str(), xxx);
-    else if ( type == "Bus" )
-        obj = CreateBus(name.c_str(), xxx);
-    else if ( type == "Bridge" )
-        obj = CreateBridge(name.c_str(), xxx);
-    else if ( type == "BaseCache" )
-        obj = CreateBaseCache(name.c_str(), xxx);
-    else if ( type == "PhysicalMemory" )
-        obj = CreatePhysicalMemory(name.c_str(), xxx);
+    Gem5Object_t* obj = NULL;
 
+    if(type == "DerivO3CPU") {
+    	obj = CreateDerivO3CPU( name.c_str(), xxx );
+    } else if(type == "Bus") {
+    	obj = CreateBus( name.c_str(), xxx );
+    } else if(type == "Bridge") {
+    	obj = CreateBridge( name.c_str(), xxx );
+    } else if(type == "BaseCache") {
+    	obj = CreateBaseCache( name.c_str(), xxx );
+    } else if(type == "PhysicalMemory") {
+    	obj = CreatePhysicalMemory( name.c_str(), xxx );
+    }
+
+    /* check we actually did create what we needed to */
+    if ( ! obj ) {
+        printf("Factory::Factory() failed to create %s\n", type.c_str() );
+        exit(-1);
+    }
 
     for ( int i=0; i < params.size(); i++ ){
         free( xxx[i].key );
         free( xxx[i].value );
     }
+
     free( xxx );
-
-
-    if ( !obj ) {
-        printf("Factory::Factory() failed to create %s\n", type.c_str() );
-        exit(-1);
-    }
-
     return obj;
 }
 
@@ -173,3 +171,4 @@ inline Gem5Object_t* Factory::createObject2( const std::string name,
 }
 
 #endif
+
