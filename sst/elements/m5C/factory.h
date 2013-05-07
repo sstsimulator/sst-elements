@@ -37,6 +37,7 @@ extern "C" {
 	SimObject* create_PhysicalMemory( M5* /*Component**/, string name, Params& params );
 	SimObject* create_Syscall( M5* /*Component**/, string name, Params& params );
 	SimObject* create_O3Cpu( M5* /*Component**/, string name, Params& params );
+	SimObject* create_DRAMSimWrap( M5* /*Component**/, string name, Params& params );
 }
 
 #endif
@@ -133,6 +134,8 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
 	obj->memObject = create_Syscall( m_comp, name, params );
     } else if (type == "O3Cpu") {
 	obj->memObject = create_O3Cpu( m_comp, name, params);
+    } else if (type == "DRAMSimWrap") {
+	obj->memObject = create_DRAMSimWrap( m_comp, name, params);
     } else {
 	std::cerr << "m5C attempted to create component: " << type <<
 		" in an entirely static build, the creation of this component is not supported"
