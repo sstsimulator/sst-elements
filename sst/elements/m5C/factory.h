@@ -28,8 +28,6 @@ class M5;
 
 class SimObject;
 
-#ifdef M5C_STATIC_OBJECT_CONSTRUCTION
-
 extern "C" {
 	SimObject* create_Bus( M5* /*Component**/, string name, Params& params );
 	SimObject* create_Bridge( M5* /*Component**/, string name, Params& params );
@@ -37,10 +35,10 @@ extern "C" {
 	SimObject* create_PhysicalMemory( M5* /*Component**/, string name, Params& params );
 	SimObject* create_Syscall( M5* /*Component**/, string name, Params& params );
 	SimObject* create_O3Cpu( M5* /*Component**/, string name, Params& params );
+#ifdef HAVE_DRAMSIM
 	SimObject* create_DRAMSimWrap( M5* /*Component**/, string name, Params& params );
-}
-
 #endif
+}
 
 class Factory {
   public:
@@ -54,10 +52,6 @@ class Factory {
             SST::Params&  );
     Gem5Object_t* createObject2( std::string name, std::string type, 
             SST::Params&  );
-#ifndef M5C_STATIC_OBJECT_CONSTRUCTION
-    void *m_libm5C;
-#endif
-    void *m_libgem5;
     M5* m_comp;
 };
 
@@ -69,34 +63,10 @@ class Factory {
 inline Factory::Factory( M5* comp ) :
     m_comp( comp )
 {
-#ifndef M5C_STATIC_OBJECT_CONSTRUCTION
-    m_libm5C = dlopen("libm5C.so",RTLD_NOW);
-
-    if ( ! m_libm5C ) {
-        printf("Factory::Factory() %s\n",dlerror());
-        exit(-1);
-    }
-#endif
-
-#ifdef USE_MACOSX_DYLIB
-    m_libgem5 = dlopen("libgem5_"LIBTYPE".dylib",RTLD_NOW);
-#else
-    m_libgem5 = dlopen("libgem5_"LIBTYPE".so",RTLD_NOW);
-#endif
-
-    if ( ! m_libgem5 ) {
-        printf("Factory::Factory() %s\n",dlerror());
-	printf("SST was unable to find a GEM5 library to use. This may have happened because GEM5 is not referenced in your LD_LIBRARY_PATH. Please see the SST documentation.\n");
-        exit(-1);
-    }
 }
 
 inline Factory::~Factory()
 {
-#ifndef M5C_STATIC_OBJECT_CONSTRUCTION
-    dlclose(m_libm5C);
-#endif
-    dlclose(m_libgem5);
 }
 
 inline Gem5Object_t* Factory::createObject( std::string name, 
@@ -118,7 +88,6 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
     tmp += type;
     DBGX(2,"type `%s`\n", tmp.c_str());
 
-#ifdef M5C_STATIC_OBJECT_CONSTRUCTION
     Gem5Object_t* obj = new Gem5Object_t;
     assert(obj);
 
@@ -135,28 +104,19 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
     } else if (type == "O3Cpu") {
 	obj->memObject = create_O3Cpu( m_comp, name, params);
     } else if (type == "DRAMSimWrap") {
+#ifdef HAVE_DRAMSIM
 	obj->memObject = create_DRAMSimWrap( m_comp, name, params);
+#else
+	std::cerr << "m5C attempted to create a DRAMSim component in a build without DRAMSim support"
+		<< std::endl;
+	exit(-1);
+#endif
     } else {
 	std::cerr << "m5C attempted to create component: " << type <<
-		" in an entirely static build, the creation of this component is not supported"
+		", the creation of this component is not supported"
 		<< std::endl;
 	exit(-1);
     }
-#else
-    createObjFunc_t ptr = (createObjFunc_t)(dlsym( m_libm5C, tmp.c_str() ));
-    if ( ! ptr ) {
-        printf("Factory::Factory() %s\n",dlerror());
-        exit(-1);
-    }
-
-    Gem5Object_t* obj = new Gem5Object_t;
-    assert(obj);
-    obj->memObject = (*ptr)( m_comp, name, params );
-    if ( ! obj ) {
-        printf("Factory::Factory() failed to create %s\n", type.c_str() );
-        exit(-1);
-    }
-#endif
 
     return obj;
 }
@@ -171,40 +131,13 @@ inline char * make_copy( const std::string & str )
 inline Gem5Object_t* Factory::createObject2( const std::string name, 
                 std::string type, SST::Params& params )
 {
-    typedef Gem5Object_t* (*createObjFunc_t)( const char*, const xxx * );
-    std::string tmp = "Create";
-    tmp += type;
-    DBGX(2,"type `%s`\n", tmp.c_str());
-    createObjFunc_t ptr = (createObjFunc_t)(dlsym( m_libgem5, tmp.c_str() ));
-    if ( ! ptr ) {
-        printf("Factory::Factory() %s\n",dlerror());
-        exit(-1);
-    }
-
-    xxx_t *xxx = (xxx_t*) malloc( (params.size() + 1) * sizeof( *xxx ) );   
-
-    SST::Params::iterator iter = params.begin();
-    for ( int i=0; iter != params.end(); ++iter, i++ ){
-
-        xxx[i].key   = make_copy( (*iter).first );
-        xxx[i].value = make_copy( (*iter).second );
-    } 
-    xxx[params.size()].key   = NULL;  
-    xxx[params.size()].value = NULL;
-
-    Gem5Object_t* obj = (*ptr)( name.c_str(), xxx );
-    if ( ! obj ) {
-        printf("Factory::Factory() failed to create %s\n", type.c_str() );
-        exit(-1);
-    }
-
-    for ( int i=0; i < params.size(); i++ ){
-        free( xxx[i].key );
-        free( xxx[i].value );
-    }
-
-    free( xxx );
-    return obj;
+    /* Before the dlsym code was removed, this used to do something
+       mostly indistinguishable from what createObject1 did.  Since
+       it's undocumented how they were different, leave the error code
+       path and hopefully, one day, someone will discover what this
+       code was for and add some documentation to the factory. */
+    printf("Factory::Factory() failed to create %s\n", type.c_str() );
+    exit(-1);
 }
 
 }

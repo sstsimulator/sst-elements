@@ -99,12 +99,8 @@ AC_DEFUN([SST_m5C_CONFIG], [
   AC_SUBST([M5_LDFLAGS])
   AC_SUBST([M5_LIB])
 
-  happy_SAVED="$happy"
-
   # Now uses global DRAMSim check
-  SST_CHECK_DRAMSIM([have_dramsim=1],[have_dramsim=0],[AC_MSG_ERROR([DRAMSim requested but could not be found])])
-
-  happy="$happy_SAVED"
+  SST_CHECK_DRAMSIM([],[],[AC_MSG_ERROR([DRAMSim requested but could not be found])])
 
   # PHXSim configuration begin 
   AC_ARG_WITH([phxsim],
