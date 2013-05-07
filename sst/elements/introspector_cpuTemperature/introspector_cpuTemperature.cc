@@ -26,7 +26,7 @@ bool Introspector_cpuTemperature::triggeredUpdate()
 		std::cout << "Introspector_cpuTemperature pulls data from component ID " << (*i)->getId() << " and temperature = " << getData<double>(*i, "temperature") << std::endl;
 		
 	    }
-
+  return true;	    
 }
 
 /*bool Introspector_cpuTemperature::pullData( Cycle_t current )

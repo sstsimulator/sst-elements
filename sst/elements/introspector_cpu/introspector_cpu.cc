@@ -94,7 +94,7 @@ bool Introspector_cpu::triggeredUpdate()
 		std::cout << "introspector_cpu pulls data from component ID " << (*i)->getId() << " and some data = " << getData<int>(*i, "some data") << std::endl;
 	        ////intData = getData(*i, "totalCounts");
 	    }
-
+  return true;
 }
 
 static Introspector*
