@@ -1,10 +1,10 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -32,6 +32,8 @@ class Cache : public SST::Component {
 
 private:
 	typedef enum {DOWNSTREAM, SNOOP, DIRECTORY, UPSTREAM, SELF} SourceType_t;
+	typedef enum {INCLUSIVE, EXCLUSIVE, STANDARD} CacheMode_t;
+    typedef enum {SEND_DOWN, SEND_UP, SEND_BOTH} ForwardDir_t;
 
 	class Request;
 	class CacheRow;
@@ -44,7 +46,13 @@ private:
 	class CacheBlock {
 	public:
 		/* Flags */
-		typedef enum {INVALID, ASSIGNED, SHARED, EXCLUSIVE} BlockStatus;
+		typedef enum {
+            INVALID,        // Nothing is here
+            ASSIGNED,       // Reserved status, waiting on a load
+            SHARED,         // Others may have an up to date copy
+            EXCLUSIVE,      // Only in this cache, data dirty
+            DIRTY,          // for Inclusive mode, data not here, dirty/exclusive upstream
+        } BlockStatus;
 
 		Addr tag;
 		Addr baseAddr;
@@ -55,17 +63,10 @@ private:
 		uint32_t locked;
 
         LoadInfo_t *loadInfo;
-        std::deque<MemEvent*> blockedEvents;
 		uint16_t row, col;
         bool wb_in_progress;
         bool user_lock_needs_wb;
         uint16_t user_locked;
-        int16_t invalidate_acks;
-        std::pair<MemEvent*, MemEvent*> invalidateEvent;
-        /* ^^^^
-         * .first == event that caused the invalidation (retry event)
-         * .second = bus event to cause invalidate in others.
-         * */
 
 		CacheBlock() {}
 		CacheBlock(Cache *_cache)
@@ -80,8 +81,6 @@ private:
             wb_in_progress = false;
             user_lock_needs_wb = false;
             user_locked = 0;
-            invalidate_acks = 0;
-			invalidateEvent = std::pair<MemEvent*, MemEvent*>(NULL, NULL);
 		}
 
 		~CacheBlock()
@@ -175,6 +174,19 @@ private:
 	};
 
 
+    struct Invalidation {
+        int waitingACKs;
+        std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
+        MemEvent *busEvent; // Snoop Bus event
+        CacheBlock *block;  // Optional
+        CacheBlock::BlockStatus newStatus; // Optional
+
+        Invalidation() :
+            waitingACKs(0), busEvent(NULL), block(NULL)
+        { }
+    };
+
+
 	typedef union {
 		struct {
 			CacheBlock *block;
@@ -218,6 +230,10 @@ private:
     };
 
 	class BusQueue {
+        uint64_t makeBusKey(MemEvent *ev)
+        {
+            return ((ev->getID().first & 0xffffffff) << 32) | ev->getID().second;
+        }
 	public:
 		BusQueue(void) :
 			comp(NULL), link(NULL)
@@ -235,13 +251,11 @@ private:
 		int size(void) const { return queue.size(); }
 		void request(MemEvent *event, BusFinishHandler *finishHandler = NULL, BusInitHandler *initHandler = NULL)
 		{
-			if ( event ) {
-				queue.push_back(event);
-				__DBG( DBG_CACHE, BusQueue, "Queued event in position %zu!\n", queue.size());
-                BusHandlers bh = {initHandler, finishHandler};
-                map[event] = bh;
-			}
-				link->send(new MemEvent(comp, NULL, RequestBus)); 
+            queue.push_back(event);
+            __DBG( DBG_CACHE, BusQueue, "Queued event 0x%lx in position %zu!\n", makeBusKey(event), queue.size());
+            BusHandlers bh = {initHandler, finishHandler};
+            map[event] = bh;
+            link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
 		}
 
 		BusHandlers cancelRequest(MemEvent *event)
@@ -252,6 +266,8 @@ private:
 			if ( i != map.end() ) {
 				retval = i->second;
 				map.erase(i);
+                link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
+                __DBG( DBG_CACHE, BusQueue, "Sending cancel for req 0x%lx\n", makeBusKey(event));
 			} else {
                 __DBG( DBG_CACHE, BusQueue, "Unable to find a request to cancel!\n");
             }
@@ -259,7 +275,7 @@ private:
 			return retval;
 		}
 
-		void clearToSend(void)
+		void clearToSend(MemEvent *busEvent)
 		{
 			if ( size() == 0 ) {
 				__DBG( DBG_CACHE, BusQueue, "No Requests to send!\n");
@@ -267,6 +283,10 @@ private:
 				link->send(new MemEvent(comp, NULL, CancelBusRequest)); 
 			} else {
 				MemEvent *ev = queue.front();
+                if ( busEvent->getAddr() != makeBusKey(ev) ) {
+                    __DBG( DBG_CACHE, BusQueue, "Bus asking for event 0x%lx.  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", busEvent->getAddr());
+                    return;
+                }
 				queue.pop_front();
 
 				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%lx) [Queue: %zu]!\n", CommandString[ev->getCmd()], ev->getAddr(), queue.size());
@@ -284,7 +304,7 @@ private:
                     delete bh.init;
                 }
 
-				link->send(ev); 
+				link->send(ev);
 
                 if ( bh.finish ) {
                     (comp->*(bh.finish->func))(bh.finish->args);
@@ -345,7 +365,7 @@ public:
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
     bool clockTick(Cycle_t);
 	void init(unsigned int);
-	void finish();  
+	void finish();
 
 private:
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
@@ -357,7 +377,8 @@ private:
 	MemEvent* makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
-	void issueInvalidate(MemEvent *ev, CacheBlock *block);
+	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction);
+	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction);
 	void loadBlock(MemEvent *ev, SourceType_t src);
     /* Note, this MemEvent* is actually a LoadInfo_t* */
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
@@ -369,13 +390,13 @@ private:
 	void finishBusSupplyData(BusHandlerArgs &args);
 	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
 	void finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t src);
-	void handleInvalidate(MemEvent *ev, SourceType_t src);
+	void handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstream);
     void sendInvalidateACK(MemEvent *ev, SourceType_t src);
 
 	bool waitingForInvalidate(CacheBlock *block);
 	void cancelInvalidate(CacheBlock *block);
     void ackInvalidate(MemEvent *ev);
-	void finishIssueInvalidate(CacheBlock *block);
+	void finishIssueInvalidate(Addr addr);
 
 	void writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus);
     void prepWritebackBlock(BusHandlerArgs &args, MemEvent *ev);
@@ -401,10 +422,14 @@ private:
 	std::string access_time;
 	std::vector<CacheRow> database;
 	std::string next_level_name;
+    CacheMode_t cacheMode;
+    bool isL1;
 
 	int rowshift;
 	unsigned rowmask;
 	int tagshift;
+
+    std::map<Addr, Invalidation> invalidations;
 
 	int n_upstream;
 	SST::Link *snoop_link; // Points to a snoopy bus, or snoopy network (if any)
