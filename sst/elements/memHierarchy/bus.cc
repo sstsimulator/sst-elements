@@ -114,7 +114,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 {
 	DPRINTF("(%lu, 0x%lx) [active = %lu]\n", link_id, key, activePort.first);
 
-    if ( link_id == activePort.first && (key == activePort.second || key == NULL)) {
+    if ( link_id == activePort.first && (key == activePort.second || key == 0)) {
         DPRINTF("Canceling active.  Rescheduling\n");
         activePort.first = BUS_INACTIVE;
         selfLink->send(new SelfEvent(SelfEvent::Schedule)); 

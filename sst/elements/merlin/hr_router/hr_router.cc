@@ -202,7 +202,8 @@ hr_router::debug_clock_handler(Cycle_t cycle)
 {
     if ( print_debug > 0 ) {
         /* TODO:  PRINT DEBUGGING */
-        printf("Debug output for %s at cycle %llu\n", getName().c_str(), cycle);
+        // Change cycle to a long long unsigned int from a uint64_t (which is a unsigned long long int) to avoid a compile warning
+        printf("Debug output for %s at cycle %llu\n", getName().c_str(), (long long unsigned int)cycle);
         dumpState(std::cout);
         print_debug--;
     }
