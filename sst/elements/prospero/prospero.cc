@@ -154,6 +154,17 @@ prospero::prospero(ComponentId_t id, Params_t& params) :
   total_bytes_read = 0;
   total_bytes_written = 0;
   keep_generating = true;
+
+  total_bytes_read = 0;
+  total_bytes_written = 0;
+  tick_count = 0;
+  requests_generated = 0;
+  read_req_generated = 0;
+  write_req_generated = 0;
+  next_page_start = 0;
+  split_request_count = 0;
+  new_page_creates = 0;
+
 }
 
 void copy(void* dest, void* source, int source_offset, int length) {
