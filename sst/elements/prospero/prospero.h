@@ -20,6 +20,7 @@
 
 #include <sst/core/interfaces/memEvent.h>
 
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <fstream>
@@ -95,12 +96,22 @@ public:
         std::cout << "- Total bytes written:         " << total_bytes_written << std::endl;
         std::cout << "- Simulated Time (ns):         " << getCurrentSimTimeNano() << std::endl;
 	std::cout << "- Simulated Time (secs):       " << sim_seconds << std::endl;
-        std::cout << "- Read Bandwidth (B/s):        " << ((double)total_bytes_read / sim_seconds) << std::endl;
+        /*
+	std::cout << "- Read Bandwidth (B/s):        " << ((double)total_bytes_read / sim_seconds) << std::endl;
         std::cout << "- Write Bandwidth (B/s):       " << ((double)total_bytes_written / sim_seconds) << std::endl;
         std::cout << "- Bandwidth (combined):        " << ((total_bytes_read + total_bytes_written) / sim_seconds) << std::endl;
         std::cout << "- Read Bandwidth (MB/s):       " << (((double)total_bytes_read / (1024 * 1024)) / sim_seconds) << std::endl;
         std::cout << "- Write Bandwidth (MB/s):      " << (((double)total_bytes_written / (1024 * 1024)) / sim_seconds) << std::endl;
         std::cout << "- Bandwidth (combined):        " << (((total_bytes_read + total_bytes_written) / (1024.0 * 1024.0)) / sim_seconds) << std::endl;
+	*/
+
+//	printf("- Read Bandwidth (B/s):        %7.4ef\n", ((double)total_bytes_read / sim_seconds));
+//        std::cout << "- Write Bandwidth (B/s):       " << ((double)total_bytes_written / sim_seconds) << std::endl;
+//        std::cout << "- Bandwidth (combined):        " << ((total_bytes_read + total_bytes_written) / sim_seconds) << std::endl;
+        printf("- Read Bandwidth (MB/s):       %10.4f\n", (((double)total_bytes_read / (1024 * 1024)) / sim_seconds));
+        printf("- Write Bandwidth (MB/s):      %10.4f\n", (((double)total_bytes_written / (1024 * 1024)) / sim_seconds));
+        printf("- Bandwidth (combined):        %10.4f\n", (((total_bytes_read + total_bytes_written) / (1024.0 * 1024.0)) / sim_seconds));
+
 	std::cout << "---------------------------------------------------------------------------" << std::endl;
 
 //	return 0; 
