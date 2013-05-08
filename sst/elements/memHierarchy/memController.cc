@@ -144,12 +144,12 @@ void MemController::init(unsigned int phase)
 
 }
 
-void MemController::setup(void)  
+void MemController::setup(void)
 {
 }
 
 
-void MemController::finish(void) 
+void MemController::finish(void)
 {
 	munmap(memBuffer, memSize);
 	if ( backing_fd != -1 ) {
@@ -217,11 +217,17 @@ void MemController::addRequest(MemEvent *ev)
 {
 	DPRINTF("New Memory Request for 0x%lx\n", ev->getAddr());
 
-    DRAMReq *req = new DRAMReq(ev, requestSize);
-    DPRINTF("Creating DRAM Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
+    if ( isRequestAddressValid(ev) ) {
 
-    requests.push_back(req);
-    requestQueue.push_back(req);
+        DRAMReq *req = new DRAMReq(ev, requestSize);
+        DPRINTF("Creating DRAM Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
+
+        requests.push_back(req);
+        requestQueue.push_back(req);
+    } else {
+        DPRINTF("Ignoring request for 0x%lx as it isn't in our range. [0x%lx - 0x%lx]\n",
+                ev->getAddr(), rangeStart, rangeStart + memSize);
+    }
 
 }
 
@@ -300,6 +306,14 @@ bool MemController::clock(Cycle_t cycle)
 	return false;
 }
 
+
+bool MemController::isRequestAddressValid(MemEvent *ev)
+{
+    Addr addr = ev->getAddr();
+
+    return ( addr >= rangeStart && addr < (rangeStart + memSize) );
+
+}
 
 
 void MemController::performRequest(DRAMReq *req)

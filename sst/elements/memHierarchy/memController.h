@@ -135,6 +135,7 @@ private:
     void cancelEvent(MemEvent *ev);
     bool clock(SST::Cycle_t cycle);
 
+    bool isRequestAddressValid(MemEvent *ev);
     void performRequest(DRAMReq *req);
 
     void sendBusPacket(void);
