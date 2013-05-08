@@ -1,10 +1,10 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -136,6 +136,7 @@ private:
     bool clock(SST::Cycle_t cycle);
 
     bool isRequestAddressValid(MemEvent *ev);
+    Addr convertAddressToLocalAddress(Addr addr);
     void performRequest(DRAMReq *req);
 
     void sendBusPacket(void);
@@ -163,7 +164,9 @@ private:
     size_t memSize;
     size_t requestSize;
     Addr rangeStart;
-    Addr rangeEnd;
+    size_t numPages;
+    Addr interleaveSize;
+    Addr interleaveStep;
 
 #if defined(HAVE_LIBDRAMSIM)
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);

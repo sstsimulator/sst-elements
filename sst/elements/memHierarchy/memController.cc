@@ -1,10 +1,10 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -40,8 +40,17 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	if ( ramSize == 0 )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
 	memSize = ramSize * (1024*1024);
+
 	rangeStart = (Addr)params.find_integer("rangeStart", 0);
-	rangeEnd = rangeStart + memSize;
+	interleaveSize = (Addr)params.find_integer("interleaveSize", 0);
+    interleaveSize *= 1024;
+	interleaveStep = (Addr)params.find_integer("interleaveStep", 0);
+    interleaveStep *= 1024;
+    if ( interleaveStep > 0 && interleaveSize > 0 ) {
+        numPages = memSize / interleaveSize;
+    } else {
+        numPages = 0;
+    }
 
 	std::string memoryFile = params.find_string("memory_file", NO_STRING_DEFINED);
 
@@ -225,6 +234,7 @@ void MemController::addRequest(MemEvent *ev)
         requests.push_back(req);
         requestQueue.push_back(req);
     } else {
+        /* TODO:  Ideally, if this came over as a direct message, not over a bus, we should NAK this */
         DPRINTF("Ignoring request for 0x%lx as it isn't in our range. [0x%lx - 0x%lx]\n",
                 ev->getAddr(), rangeStart, rangeStart + memSize);
     }
@@ -311,40 +321,63 @@ bool MemController::isRequestAddressValid(MemEvent *ev)
 {
     Addr addr = ev->getAddr();
 
-    return ( addr >= rangeStart && addr < (rangeStart + memSize) );
+    if ( numPages == 0 ) {
+        return ( addr >= rangeStart && addr < (rangeStart + memSize) );
+    } else {
+        if ( addr < rangeStart ) return false;
 
+        addr = addr - rangeStart;
+        Addr step = addr / interleaveStep;
+        if ( step >= numPages ) return false;
+
+        Addr offset = addr % interleaveStep;
+        if ( offset >= interleaveSize ) return false;
+
+        return true;
+    }
+
+}
+
+
+Addr MemController::convertAddressToLocalAddress(Addr addr)
+{
+    if ( numPages == 0 ) {
+        return addr - rangeStart;
+    } else {
+        addr = addr - rangeStart;
+        Addr step = addr / interleaveStep;
+        Addr offset = addr % interleaveStep;
+        return (step * interleaveSize) + offset;
+    }
 }
 
 
 void MemController::performRequest(DRAMReq *req)
 {
 	MemEvent *resp = req->reqEvent->makeResponse(this);
+    Addr localAddr = convertAddressToLocalAddress(req->addr);
 
     req->respEvent = resp;
-	if ( ((req->addr - rangeStart) + req->size) > memSize ) {
-		_abort(MemController, "Request for address 0x%lx, and size 0x%lx is larger than the physical memory of size 0x%lx bytes\n",
-				req->addr, req->size, memSize);
-	}
 	if ( req->isWrite ) {
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
-			memBuffer[req->addr + i - rangeStart] = req->reqEvent->getPayload()[i];
+			memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
 		}
         DPRINTF("Writing Memory: %zu bytes beginning at 0x%lx [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
                 req->size, req->addr,
-                memBuffer[req->addr - rangeStart + 0], memBuffer[req->addr - rangeStart + 1],
-                memBuffer[req->addr - rangeStart + 2], memBuffer[req->addr - rangeStart + 3],
-                memBuffer[req->addr - rangeStart + 4], memBuffer[req->addr - rangeStart + 5],
-                memBuffer[req->addr - rangeStart + 6], memBuffer[req->addr - rangeStart + 7]);
+                memBuffer[localAddr + 0], memBuffer[localAddr + 1],
+                memBuffer[localAddr + 2], memBuffer[localAddr + 3],
+                memBuffer[localAddr + 4], memBuffer[localAddr + 5],
+                memBuffer[localAddr + 6], memBuffer[localAddr + 7]);
 	} else {
 		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) {
-			resp->getPayload()[i] = memBuffer[req->addr + i - rangeStart];
+			resp->getPayload()[i] = memBuffer[localAddr + i];
 		}
         DPRINTF("Reading Memory: %zu bytes beginning at 0x%lx [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
                 req->size, req->addr,
-                memBuffer[req->addr - rangeStart + 0], memBuffer[req->addr - rangeStart + 1],
-                memBuffer[req->addr - rangeStart + 2], memBuffer[req->addr - rangeStart + 3],
-                memBuffer[req->addr - rangeStart + 4], memBuffer[req->addr - rangeStart + 5],
-                memBuffer[req->addr - rangeStart + 6], memBuffer[req->addr - rangeStart + 7]);
+                memBuffer[localAddr + 0], memBuffer[localAddr + 1],
+                memBuffer[localAddr + 2], memBuffer[localAddr + 3],
+                memBuffer[localAddr + 4], memBuffer[localAddr + 5],
+                memBuffer[localAddr + 6], memBuffer[localAddr + 7]);
 	}
 }
 
