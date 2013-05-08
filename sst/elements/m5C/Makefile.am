@@ -25,6 +25,7 @@ libm5C_la_SOURCES = \
     dummyThreadContext.h \
     exeBackingMem.h \
     factory.h \
+    factory.cpp \
     loadMemory.cpp \
     loadMemory.h \
     m5.cpp \
