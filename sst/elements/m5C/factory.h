@@ -35,6 +35,7 @@ extern "C" {
 	SimObject* create_PhysicalMemory( M5* /*Component**/, string name, Params& params );
 	SimObject* create_Syscall( M5* /*Component**/, string name, Params& params );
 	SimObject* create_O3Cpu( M5* /*Component**/, string name, Params& params );
+	SimObject* create_PtlNicMMIF( M5* /*Component**/, string name, Params& params );
 #ifdef HAVE_DRAMSIM
 	SimObject* create_DRAMSimWrap( M5* /*Component**/, string name, Params& params );
 #endif
@@ -99,6 +100,8 @@ inline Gem5Object_t* Factory::createObject1( std::string name,
 	obj->memObject = create_Syscall( m_comp, name, params );
     } else if (type == "O3Cpu") {
 	obj->memObject = create_O3Cpu( m_comp, name, params);
+    } else if (type == "PtlNicMMIF") {
+	obj->memObject = create_PtlNicMMIF( m_comp, name, params);
     } else if (type == "DRAMSimWrap") {
 #ifdef HAVE_DRAMSIM
 	obj->memObject = create_DRAMSimWrap( m_comp, name, params);
