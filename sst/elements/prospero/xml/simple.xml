@@ -3,7 +3,7 @@
 <timebase>1ns</timebase>
 
 <config>
- stopAtCycle=10000000ns
+ stopAtCycle=1000000ns
 </config>
 
 <variables>
@@ -15,7 +15,7 @@
 <sst>
         <component name="cpu" type="prospero.prospero" rank=0>
                 <params>
-			<outputlevel>0</outputlevel>
+			<outputlevel>1</outputlevel>
 			<tracetype>file</tracetype>
 			<trace> traces/pinatrace.out </trace>
 			<cache_line> 64 </cache_line>
