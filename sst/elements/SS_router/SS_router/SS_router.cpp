@@ -85,10 +85,10 @@ void SS_router::returnToken_flits (int dir, int flits, int vc) {
 //: Constructor
 SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         Component( id ),
-	clock_count(0),
         overheadMultP(1.5),
         oLCB_maxSize_flits(512),
         dumpTables(false),
+        clock_count(0),
         m_cycle(0),
         m_dbg( *new Log< SS_ROUTER_DBG >( "SS_router::", false ) ),
         m_log( *new Log<>( "INFO SS_router: ", false ) )

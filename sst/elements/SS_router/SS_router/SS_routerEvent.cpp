@@ -241,7 +241,7 @@ void SS_router::arbitrateInToOut () {
 // a starvation situation
 void SS_router::arbitrateOutToLCB () {
 
-    int ovc, ilink;
+    int ovc = 0, ilink;
     rtrP *rp;
     oLCB_t *oLCB;
     int max_count;
