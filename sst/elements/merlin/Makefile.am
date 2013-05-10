@@ -24,7 +24,9 @@ libmerlin_la_SOURCES = \
 	topology/dragonfly.cc \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
-	hr_router/xbar_arb_rr.h
+	hr_router/xbar_arb_rr.h \
+	trafficgen/trafficgen.h \
+	trafficgen/trafficgen.cc
 
 
 libmerlin_la_LDFLAGS = -module -avoid-version
