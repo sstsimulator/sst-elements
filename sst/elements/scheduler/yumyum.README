@@ -2,14 +2,22 @@ This describes only the yumyum-specific functionality present in this element.
 
 When using yumyum functionality, the rest of the Scheduler functionality will
 remain unaffected.  Yumyum-specific functionality simply augments the
-capabilities of the Scheduler to add the ability to simulate fault and failure
-modes into SST simulations of systems, as well as a hierarchy of nodes that
-allows for cascading faults to affect the ability of the simulated system to
-function optimally. This functionality is optional, and will not affect non-
-yumyum simulations.
+capabilities of the Scheduler to add the ability to simulate fault, error,
+and failure modes into SST simulations of systems, as well as a hierarchy of
+nodes that allows for cascading faults to affect the ability of the simulated
+system to function optimally. This functionality is optional, and will not
+affect non-yumyum simulations.
+
+fault model - we follow the model described by Avizienis et al [TSDC 2004]:
+ fault - the cause of an error (eg a bug, stuck bit, alpha particle, etc)
+ error - the part of state that may lead to failure (eg a bad value in memory)
+ failure - incorrect service (eg, premature job termination)
+Nodes in the graph may experience a fault activation (resulting in an error),
+the error propagates (unless corrected), possibly getting logged as it goes,
+until it reaches schedulable nodes, where it may kill the job.
 
 ---
-node hierarcy
+node hierarchy
 ---
 
 To create a node hierarchy, simply create two nodeComponents, joined with a
@@ -23,8 +31,8 @@ faults
 ---
 
 Faults are simulated by creating a "faultActivationRate" element under the
-params for a nodeComponent.  This will contain CSV describing the faults and
-the fault rates:
+params for a nodeComponent.  This will contain CSV specifying the fault
+type and corresponding rate:
 
 <faultActivationRate>
   "fault type 1", "1337",
@@ -36,13 +44,16 @@ nodeComponent.cc in
 
 void nodeComponent::sendNextFault( std::string faultType )
 
-These faults can be logged by Scheduler in two files:
+Fault activations (and the corresponding error messages) are logged by
+Scheduler in two files:
 
-- fault.log - ground truth, this describes what faults have occured.
-  Filename is described using the faultLogFileName param.
+- fault.log - ground truth, this describes where and when fault activations
+  occur.  Filename is described using the faultLogFileName param.
 
-- error.log - logs faults according the probabilities described using the
-  the errorMessageProbability param:
+- error.log - an error log may also be written, as the error resulting
+  from the fault activation propagates through the graph.  At each
+  component where the error is seen, an error log will be written according to
+  the probability given in the errorMessageProbability param:
 
   <params>
     <errorMessageProbability>
@@ -54,7 +65,7 @@ These faults can be logged by Scheduler in two files:
 
   Filename is described using the errorLogFilename param
 
-These faults will travel down the hierarchy of nodes, from parent to child
+Errors will travel down the hierarchy of nodes, from parent to child
 until they reach nodes connected to the schedComponent.  By default, the
 nodes will end whatever job they are running by whenever they recieve a
 fault, or according to some probability that can be defined using the
@@ -89,14 +100,15 @@ nodeComponent:
     "lost connection", "2", 5"
   </errorPropagationDelay>
 
-The columns in the dalay parameter are the fault name, min delay time, max
-delay time. If a fault has no specified time, it will always be transmitted
-to all children of a given node on the same timestep it is recieved, instantly
-propagating through the graph.  Otherwise, a uniformly-distributed random number
-is selected using the two specified numbers as bounds.  (inclusive)  The node
-then waits that length of time before transmitting the fault to its children.
+The columns in the delay parameter are the fault name, min delay time, max
+delay time. If an error type has no configured delay on a node, it will be
+transmitted to all children of that node on the same timestep it is
+recieved, instantly propagating through that node.  Otherwise, a
+uniformly-distributed random number is selected using the two specified numbers
+as bounds.  (inclusive)  The node then waits that length of time before
+transmitting the error to its children.
 
-For each fault traveling through the graph, the delay is calculated
+For each error traveling through the graph, the delay is calculated
 independently for each link it traverses.
 
 ---
@@ -133,9 +145,9 @@ following format:
 
 If the end time and pass/fault value are -1, then the log entry is for the job
 start.  If the pass/fault value is 0, then the log entry is for a job
-finishing.  If the pass/fault value is 1, the a fault prevented the job from
-finishing, and the job end time is the second of the simulation in which a
-fault was simulated.
+finishing.  If the pass/fault value is 1, then the error resulting from a
+fault activation killed the job, and the job end time is the simulated second
+at which it was killed.
 
 "1","0","-1","-1","1.4 1.3 1.2 1.1"             # job start
 "1","0","100000","0","1.4 1.3 1.2 1.1"          # job finish
