@@ -208,7 +208,6 @@ void DRAMSimWrap::readData(uint id, uint64_t addr, uint64_t clockcycle)
 {
     PRINTFN("%s: id=%d addr=%#lx clock=%lu\n",__func__,id,addr,clockcycle);
 
-
     assert( m_rd_pktMap.find( addr ) != m_rd_pktMap.end() );
 
     PacketPtr    pkt   = m_rd_pktMap[addr];

@@ -19,6 +19,7 @@
 #include <mem/physical.hh>
 #include <debug.h>
 #include <deque>
+#include <map>
 
 #include <sst/core/timeConverter.h>
 
@@ -68,7 +69,7 @@ class DRAMSimWrap : public PhysicalMemory
                 return true;
             }
 
-            static_cast<DRAMSimWrap*>(owner)->recvTiming( pkt );
+            return static_cast<DRAMSimWrap*>(owner)->recvTiming( pkt );
         }
 
         virtual Tick recvAtomic(PacketPtr pkt) 
