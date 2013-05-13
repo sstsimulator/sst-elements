@@ -37,6 +37,7 @@ private:
     class Generator {
     public:
         virtual int getNextValue(void) = 0;
+        virtual void seed(uint32_t val) = 0;
     };
 
     class NearestNeighbor : public Generator {
@@ -70,6 +71,10 @@ private:
             int neighbor = dist->getNextValue();
             return neighbors[neighbor];
         }
+        virtual void seed(uint32_t val)
+        {
+            dist->seed(val);
+        }
     };
 
 
@@ -79,12 +84,14 @@ private:
     public:
         UniformDist(int min, int max) :
             dist(min, max)
-        {
-            gen.seed(0);
-        }
+        { }
         virtual int getNextValue(void)
         {
             return dist(gen);
+        }
+        virtual void seed(uint32_t val)
+        {
+            gen.seed(val);
         }
     };
 
@@ -104,11 +111,14 @@ private:
             }
             probs[target] = targetProb;
             dist = boost::random::discrete_distribution<>(probs.begin(), probs.end());
-            gen.seed(0);
         }
         virtual int getNextValue(void)
         {
             return dist(gen) + minValue;
+        }
+        virtual void seed(uint32_t val)
+        {
+            gen.seed(val);
         }
     };
 
@@ -135,6 +145,7 @@ private:
     int base_packet_size;
     int packets_to_send;
 
+    int base_packet_delay;
     int packet_delay;
 
     Generator *packetDestGen;
@@ -151,6 +162,7 @@ public:
 
 
 private:
+    Generator* buildGenerator(const std::string &prefix, Params& params);
     bool clock_handler(Cycle_t cycle);
     int fattree_ID_to_IP(int id);
     int IP_to_fattree_ID(int id);

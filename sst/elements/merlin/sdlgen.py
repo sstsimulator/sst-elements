@@ -418,12 +418,12 @@ class TrafficGenEndPoint:
         out.write("    <packets_to_send> %s </packets_to_send>\n"%params["num_pkts_to_send"])
         out.write("    <packet_size> %s </packet_size>\n"%params["packet_size"])
         out.write("    <message_rate> %s </message_rate>\n" % params["message_rate"])
-        out.write("    <pattern> %s </pattern>\n" % params["pattern"])
-        if params["pattern"] == "NearestNeighbor":
-            out.write("    <NearestNeighbor:3DSize> %s </NearestNeighbor:3DSize>\n" % (params["3D shape X"], params["3D shape Y"], params["3D shape Z"]))
-        elif params["pattern"] == "HotSpot":
-            out.write("    <HotSpot:target> %s </HotSpot:target>\n" % params["hotsopt_target"])
-            out.write("    <HotSpot:targetProbability> %s </HotSpot:targetProbability>\n" % params["hotsopt_target_probability"])
+        out.write("    <PacketDest:pattern> %s </PacketDest:pattern>\n" % params["PacketDest:pattern"])
+        if params["PacketDest:pattern"] == "NearestNeighbor":
+            out.write("    <PatcketDest:NearestNeighbor:3DSize> %s </PatcketDest:NearestNeighbor:3DSize>\n" % (params["PacketDest:3D shape X"], params["PacketDest:3D shape Y"], params["PacketDest:3D shape Z"]))
+        elif params["PacketDest:pattern"] == "HotSpot":
+            out.write("    <PatcketDest:HotSpot:target> %s </PatcketDest:HotSpot:target>\n" % params["PatcketDest:hotspot_target"])
+            out.write("    <PatcketDest:HotSpot:targetProbability> %s </PatcketDest:HotSpot:targetProbability>\n" % params["PatcketDest:hotspot_target_probability"])
         out.write("  </nic_params>\n")
 
     def formatComp(self, out, name, num, linkName, extraParams):

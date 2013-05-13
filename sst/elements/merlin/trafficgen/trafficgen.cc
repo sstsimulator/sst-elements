@@ -27,11 +27,11 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     last_vc(0),
     packets_sent(0),
     packets_recd(0),
+    done(false),
+    packet_delay(0),
     packetDestGen(NULL),
     packetSizeGen(NULL),
-    packetDelayGen(NULL),
-    packet_delay(0),
-    done(false)
+    packetDelayGen(NULL)
 {
     id = params.find_integer("id");
     if ( id == -1 ) {
@@ -75,38 +75,31 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     delete buf_size;
 
     packets_to_send = params.find_integer("packets_to_send", 1000);
-    base_packet_size = params.find_integer("packet_size", 5); // In Flits
-
-    // Register a clock
-    registerClock( params.find_string("message_rate", "1GHz"),
-            new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler), false);
-
-
-
 
     /* Distribution selection */
-    std::string pattern = params.find_string("pattern");
-    if ( !pattern.compare("NearestNeighbor") ) {
-        std::string shape = params.find_string("NearestNeighbor:3DSize");
-        int maxX, maxY, maxZ;
-        assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
-        packetDestGen = new NearestNeighbor(new UniformDist(0, num_peers), id, maxX, maxY, maxZ, 6);
-    } else if ( !pattern.compare("Uniform") ) {
-        packetDestGen = new UniformDist(0, num_peers-1);
-    } else if ( !pattern.compare("HotSpot") ) {
-        int target = params.find_integer("HotSpot:target");
-        float targetProb = params.find_floating("HotSpot:targetProbability");
-        packetDestGen = new DiscreteDist(0, num_peers, target, targetProb);
-    } else {
-        _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
-    }
+    packetDestGen = buildGenerator("PacketDest", params);
+    assert(packetDestGen);
+    packetDestGen->seed(id);
 
+
+    /* Packet size */
+    base_packet_size = params.find_integer("packet_size", 5); // In Flits
+    packetSizeGen = buildGenerator("PacketSize", params);
+    if ( packetSizeGen ) packetSizeGen->seed(id);
+
+
+    base_packet_delay = params.find_integer("delay_between_packets", 0);
+    packetDelayGen = buildGenerator("PacketDelay", params);
+    if ( packetDelayGen ) packetDelayGen->seed(id);
 
 
 
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
+    registerClock( params.find_string("message_rate", "1GHz"),
+            new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler), false);
+
 
 }
 
@@ -114,6 +107,28 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 TrafficGen::~TrafficGen()
 {
     delete link_control;
+}
+
+
+TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Params &params)
+{
+    Generator* gen = NULL;
+    std::string pattern = params.find_string(prefix + ":pattern");
+    if ( !pattern.compare("NearestNeighbor") ) {
+        std::string shape = params.find_string(prefix + ":NearestNeighbor:3DSize");
+        int maxX, maxY, maxZ;
+        assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
+        gen = new NearestNeighbor(new UniformDist(0, num_peers), id, maxX, maxY, maxZ, 6);
+    } else if ( !pattern.compare("Uniform") ) {
+        gen = new UniformDist(0, num_peers-1);
+    } else if ( !pattern.compare("HotSpot") ) {
+        int target = params.find_integer(prefix + ":HotSpot:target");
+        float targetProb = params.find_floating(prefix + ":HotSpot:targetProbability");
+        gen = new DiscreteDist(0, num_peers, target, targetProb);
+    } else if ( pattern.compare("") ) { // Allow none - non-pattern
+        _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
+    }
+    return gen;
 }
 
 void TrafficGen::finish()
@@ -162,8 +177,6 @@ TrafficGen::clock_handler(Cycle_t cycle)
                     ev->src = fattree_ID_to_IP(id);
                     break;
                 }
-                //ev->setTraceID((id<<16) | packets_sent);
-                //ev->setTraceType(RtrEvent::FULL);
                 ev->vc = 0;
                 ev->size_in_flits = packet_size;
 
@@ -258,7 +271,7 @@ int TrafficGen::getDelayNextPacket(void)
     if ( packetDelayGen ) {
         return packetDelayGen->getNextValue();
     } else {
-        return packet_delay;
+        return base_packet_delay;
     }
 }
 
