@@ -40,6 +40,7 @@ struct PHXSimWrapParams : public PhysicalMemoryParams
     SST::Params exeParams;
     std::string frequency;
     std::string megsOfMemory;
+    bool dumpStats;
 };
 
 class PHXSimWrap : public PhysicalMemory 
@@ -63,7 +64,7 @@ class PHXSimWrap : public PhysicalMemory
                 return true;
             }
 
-            static_cast<PHXSimWrap*>(owner)->recvTiming( pkt );
+            return static_cast<PHXSimWrap*>(owner)->recvTiming( pkt );
         }
 
         virtual Tick recvAtomic(PacketPtr pkt) 
