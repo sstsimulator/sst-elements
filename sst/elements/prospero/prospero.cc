@@ -289,7 +289,7 @@ void prospero::createPendingRequest(memory_request mem_req) {
 		is_read = false;
 	}
 
-	if((mem_req.memory_address % cache_line_size) + mem_req.size > cache_line_size) {
+	if((mem_req.memory_address % cache_line_size) + mem_req.size > (unsigned int)cache_line_size) {
 		// have to perform a split load, this needs TWO events
 		int e_lower_size = (cache_line_size) - (mem_req.memory_address % cache_line_size);
 		int e_upper_size = mem_req.size - e_lower_size;
@@ -396,7 +396,7 @@ bool prospero::tick( Cycle_t ) {
 				pending_requests.size() << std::endl;
 		}
 
-		if(pending_requests.size() < pending_request_limit) {
+		if(pending_requests.size() < (unsigned int)pending_request_limit) {
 			createPendingRequest(next_request);
 
 			int continue_processing = 1;
@@ -412,7 +412,7 @@ bool prospero::tick( Cycle_t ) {
 				} else if(result == READ_SUCCESS) {
 					if(next_request.instruction_count < tick_count) {
 					// Process the next request, if we have room put it in the queue
-						if(pending_requests.size() < pending_request_limit) {
+						if(pending_requests.size() < (unsigned int)pending_request_limit) {
 							createPendingRequest(next_request);
 						} else {
 							break;
@@ -443,6 +443,7 @@ bool prospero::tick( Cycle_t ) {
 		if(pending_requests.size() == 0) {
 			return true;
 		}
+		return false;
 	}
 }
 
