@@ -94,7 +94,7 @@ void topo_dragonfly::route(int port, int vc, internal_router_event* ev)
 
 internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
 {
-    dgnflyAddr dstAddr;
+    dgnflyAddr dstAddr = {0, 0, 0, 0};
     idToLocation(ev->dest, &dstAddr);
 
     switch (algorithm) {
