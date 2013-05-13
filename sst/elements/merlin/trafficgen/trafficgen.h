@@ -19,6 +19,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/discrete_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include <boost/random/binomial_distribution.hpp>
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
@@ -139,6 +140,25 @@ private:
                 int val = (int)dist(gen);
                 if ( val < maxValue && val >= minValue ) return val;
             }
+        }
+        virtual void seed(uint32_t val)
+        {
+            gen.seed(val);
+        }
+    };
+
+    class BinomialDist : public Generator {
+        boost::random::mt19937 gen;
+        boost::random::binomial_distribution<> dist;
+        int minValue;
+    public:
+        BinomialDist(int min, int max, int trials, float probability) : minValue(min)
+        {
+            dist = boost::random::binomial_distribution<>(trials, probability);
+        }
+        virtual int getNextValue(void)
+        {
+            return dist(gen) + minValue;
         }
         virtual void seed(uint32_t val)
         {

@@ -133,6 +133,10 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
         float mean = params.find_floating(prefix + ":Normal:Mean", range.second/2.0f);
         float sigma = params.find_floating(prefix + ":Normal:Sigma", 1.0f);
         gen = new NormalDist(range.first, range.second, mean, sigma);
+    } else if ( !pattern.compare("Binomial") ) {
+        int trials = params.find_floating(prefix + ":Binomial:Mean", range.second);
+        float probability = params.find_floating(prefix + ":Binomial:Sigma", 0.5f);
+        gen = new BinomialDist(range.first, range.second, trials, probability);
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
         _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
     }

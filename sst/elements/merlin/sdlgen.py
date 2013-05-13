@@ -20,6 +20,11 @@ class Params(dict):
         val = raw_input()
         self[key] = val
         return val
+    def emit(self, outfile, key, sdlkey = None):
+        if sdlkey:
+            outfile.write("    <%s> %s </%s>\n" % (sdlkey, self[key], sdlkey))
+        else:
+            outfile.write("    <%s> %s </%s>\n" % (key, self[key], key))
 
 params = Params()
 
@@ -60,23 +65,25 @@ class topoTorus(Topo):
             params["router_radix"] = params["router_radix"] + (2 * dw)
         params["dimsize"] = dims
         params["dimwidth"] = dimwidths
-        params["nodes_per_router"] = int(params["nodes_per_router"])
-        params["router_radix"] = params["router_radix"] + params["nodes_per_router"]
+        params["torus:local_ports"] = int(params["torus:local_ports"])
+        params["router_radix"] = params["router_radix"] + params["torus:local_ports"]
 
-        params["peers"] = params["peers"] * params["nodes_per_router"]
+        params["peers"] = params["peers"] * params["torus:local_ports"]
+        params["torus:shape"] = self.formatShape()
+        params["torus:width"] = self.formatWidth()
 
         foo = params["link_lat"]  # It makes more sense to ask here
         params["num_vcs"] = 2
         out.write("  <rtr_params>\n")
         out.write("    <debug> 0 </debug>\n")
-        out.write("    <num_ports> %d </num_ports>\n" % params["router_radix"])
-        out.write("    <link_bw> %s </link_bw>\n" % params["link_bw"])
-        out.write("    <xbar_bw> %s </xbar_bw>\n" % params["xbar_bw"])
-        out.write("    <num_vcs> %d </num_vcs>\n" % params["num_vcs"])
-        out.write("    <topology> torus </topology>\n")
-        out.write("    <torus:shape> %s </torus:shape>\n" % self.formatShape())
-        out.write("    <torus:width> %s </torus:width>\n" % self.formatWidth())
-        out.write("    <torus:local_ports> %s </torus:local_ports>\n" % params["nodes_per_router"])
+        params.emit(out, "router_radix", "num_ports")
+        params.emit(out, "num_vcs")
+        params.emit(out, "link_bw")
+        params.emit(out, "xbar_bw")
+        params.emit(out, "topology")
+        params.emit(out, "torus:shape")
+        params.emit(out, "torus:width")
+        params.emit(out, "torus:local_ports")
         out.write("  </rtr_params>\n")
 
 
@@ -85,6 +92,7 @@ class topoTorus(Topo):
         for x in xrange(1, params["num_dims"]):
             shape = "%sx%d" % (shape, params["dimsize"][x])
         return shape
+
     def formatWidth(self):
         shape = params["dimwidth"][0]
         for x in xrange(1, params["num_dims"]):
@@ -109,7 +117,7 @@ class topoTorus(Topo):
             return "x".join([str(x) for x in dims])
             
 
-        num_routers = params["peers"] / params["nodes_per_router"]
+        num_routers = params["peers"] / params["torus:local_ports"]
 
         for i in xrange(num_routers):
             # set up 'mydims'
@@ -139,14 +147,14 @@ class topoTorus(Topo):
                     out.write("    <link name=link.%s:%s:%d port=port%d latency=%s />\n" % (theirlocstr, mylocstr, num, port, params["link_lat"]))
                     port = port+1
 
-            for n in xrange(params["nodes_per_router"]):
+            for n in xrange(params["torus:local_ports"]):
                 out.write("    <link name=nic.%d:%d port=port%d latency=%s />\n" % (i, n, port, params["link_lat"]))
                 port = port+1
             out.write("  </component>\n\n")
 
 
-            for n in xrange(params["nodes_per_router"]):
-                nodeID = int(params["nodes_per_router"]) * i + n
+            for n in xrange(params["torus:local_ports"]):
+                nodeID = int(params["torus:local_ports"]) * i + n
                 linkName = "nic.%d:%d"%(i, n)
                 endPoint.formatComp(out, "nic.%s-%d"%(mylocstr, n), nodeID, linkName, dict())
 
@@ -160,24 +168,24 @@ class topoFatTree(Topo):
     def formatParams(self, out):
         params["topology"] = "fattree"
         params["router_radix"] = int(params["router_radix"])
-        params["hosts_per_edge_rtr"] = int(params["hosts_per_edge_rtr"])
-        params["fattree:loading"] = params["hosts_per_edge_rtr"]
+        params["fattree:hosts_per_edge_rtr"] = int(params["fattree:hosts_per_edge_rtr"])
+        params["fattree:loading"] = params["fattree:hosts_per_edge_rtr"]
         params["topoNICParams"] = dict()
         params["topoNICParams"]["fattree:loading"] = params["fattree:loading"]
         params["topoNICParams"]["fattree:radix"] = params["router_radix"]
 
-        params["peers"] = params["router_radix"] * (params["router_radix"]/2) * params["hosts_per_edge_rtr"]
+        params["peers"] = params["router_radix"] * (params["router_radix"]/2) * params["fattree:hosts_per_edge_rtr"]
         params["num_vcs"] = 2
 
         foo = params["link_lat"]  # It makes more sense to ask here
         out.write("  <rtr_params>\n")
         out.write("    <debug> 0 </debug>\n")
-        out.write("    <num_ports> %d </num_ports>\n" % params["router_radix"])
-        out.write("    <num_vcs> %d </num_vcs>\n" % params["num_vcs"])
-        out.write("    <link_bw> %s </link_bw>\n" % params["link_bw"])
-        out.write("    <xbar_bw> %s </xbar_bw>\n" % params["xbar_bw"])
-        out.write("    <topology> %s </topology>\n" % params["topology"])
-        out.write("    <fattree:loading> %s </fattree:loading>\n" % params["fattree:loading"])
+        params.emit(out, "router_radix", "num_ports")
+        params.emit(out, "num_vcs")
+        params.emit(out, "link_bw")
+        params.emit(out, "xbar_bw")
+        params.emit(out, "topology")
+        params.emit(out, "fattree:loading")
         out.write("  </rtr_params>\n")
 
 
@@ -249,9 +257,9 @@ class topoFatTree(Topo):
                 out.write("    </params>\n")
                 router_num = router_num +1
 
-                for l in xrange(params["hosts_per_edge_rtr"]):
-                    node_id = pod * (params["router_radix"]/2) * params["hosts_per_edge_rtr"]
-                    node_id = node_id + r * params["hosts_per_edge_rtr"]
+                for l in xrange(params["fattree:hosts_per_edge_rtr"]):
+                    node_id = pod * (params["router_radix"]/2) * params["fattree:hosts_per_edge_rtr"]
+                    node_id = node_id + r * params["fattree:hosts_per_edge_rtr"]
                     node_id = node_id + l
                     out.write("    <link name=link:pod%d_edge%d_node%d port=port%d latency=%s />\n"%(pod, r, node_id, l, params["link_lat"]))
 
@@ -260,9 +268,9 @@ class topoFatTree(Topo):
                 out.write("  </component>\n")
                 out.write("\n");
 
-                for n in range(params["hosts_per_edge_rtr"]):
-                    node_id = pod * (params["router_radix"]/2) * params["hosts_per_edge_rtr"]
-                    node_id = node_id + r * params["hosts_per_edge_rtr"]
+                for n in range(params["fattree:hosts_per_edge_rtr"]):
+                    node_id = pod * (params["router_radix"]/2) * params["fattree:hosts_per_edge_rtr"]
+                    node_id = node_id + r * params["fattree:hosts_per_edge_rtr"]
                     node_id = node_id + n
 
                     myip[3] = n+2
@@ -286,13 +294,13 @@ class topoDragonFly(Topo):
 
 
         params["router_radix"] = int(params["router_radix"])
-        params["hosts_per_router"] = int(params["hosts_per_router"])
-        params["routers_per_group"] = int(params["routers_per_group"])
-        params["intergroup_per_router"] = int(params["intergroup_per_router"])
-        params["num_groups"] = int(params["num_groups"])
-        params["peers"] = params["hosts_per_router"] * params["routers_per_group"] * params["num_groups"]
+        params["dragonfly:hosts_per_router"] = int(params["dragonfly:hosts_per_router"])
+        params["dragonfly:routers_per_group"] = int(params["dragonfly:routers_per_group"])
+        params["dragonfly:intergroup_per_router"] = int(params["dragonfly:intergroup_per_router"])
+        params["dragonfly:num_groups"] = int(params["dragonfly:num_groups"])
+        params["peers"] = params["dragonfly:hosts_per_router"] * params["dragonfly:routers_per_group"] * params["dragonfly:num_groups"]
 
-        if (params["routers_per_group"]-1 + params["hosts_per_router"] + params["intergroup_per_router"]) > params["router_radix"]:
+        if (params["dragonfly:routers_per_group"]-1 + params["dragonfly:hosts_per_router"] + params["dragonfly:intergroup_per_router"]) > params["router_radix"]:
             print "ERROR: # of ports per router is only %d\n" % params["router_radix"]
             sys.exit(1)
 
@@ -300,25 +308,25 @@ class topoDragonFly(Topo):
         params["num_vcs"] = 3
         out.write("  <rtr_params>\n")
         out.write("    <debug> 0 </debug>\n")
-        out.write("    <num_ports> %d </num_ports>\n" % params["router_radix"])
-        out.write("    <link_bw> %s </link_bw>\n" % params["link_bw"])
-        out.write("    <xbar_bw> %s </xbar_bw>\n" % params["xbar_bw"])
-        out.write("    <num_vcs> %d </num_vcs>\n" % params["num_vcs"])
-        out.write("    <topology> %s </topology>\n" % params["topology"])
-        out.write("    <dragonfly:hosts_per_router> %s </dragonfly:hosts_per_router>\n" % params["hosts_per_router"])
-        out.write("    <dragonfly:routers_per_group> %s </dragonfly:routers_per_group>\n" % params["routers_per_group"])
-        out.write("    <dragonfly:intergroup_per_router> %s </dragonfly:intergroup_per_router>\n" % params["intergroup_per_router"])
-        out.write("    <dragonfly:num_groups> %s </dragonfly:num_groups>\n" % params["num_groups"])
+        params.emit(out, "router_radix", "num_ports")
+        params.emit(out, "link_bw")
+        params.emit(out, "xbar_bw")
+        params.emit(out, "num_vcs")
+        params.emit(out, "topology")
+        params.emit(out, "dragonfly:hosts_per_router")
+        params.emit(out, "dragonfly:routers_per_group")
+        params.emit(out, "dragonfly:intergroup_per_router")
+        params.emit(out, "dragonfly:num_groups")
         out.write("  </rtr_params>\n")
 
     def formatSDL(self, out, endPoint):
         router_num = 0
         nic_num = 0
-        for g in xrange(params["num_groups"]):
+        for g in xrange(params["dragonfly:num_groups"]):
             out.write("  <!-- GROUP %d -->\n" % g)
             tgt_grp = 0
 
-            for r in xrange(params["routers_per_group"]):
+            for r in xrange(params["dragonfly:routers_per_group"]):
                 out.write("  <!-- GROUP %d, ROUTER %d -->\n" % (g, r))
 
                 out.write("  <component name=rtr:G%dR%d type=merlin.hr_router>\n" % (g, r))
@@ -327,21 +335,21 @@ class topoDragonFly(Topo):
                 out.write("    </params>\n")
 
                 port = 0
-                for p in xrange(params["hosts_per_router"]):
+                for p in xrange(params["dragonfly:hosts_per_router"]):
                     out.write("    <link name=link:g%dr%dh%d port=port%d latency=%s />\n" % (g, r, p, port, params["link_lat"]))
                     port = port + 1
 
-                for p in xrange(params["routers_per_group"]):
+                for p in xrange(params["dragonfly:routers_per_group"]):
                     if p != r:
                         src = min(p,r)
                         dst = max(p,r)
                         out.write("    <link name=link:g%dr%dr%d port=port%d latency=%s />\n" % (g, src, dst, port, params["link_lat"]))
                         port = port + 1
                 
-                for p in xrange(params["intergroup_per_router"]):
-                    tgt_grp = tgt_grp % params["num_groups"]
+                for p in xrange(params["dragonfly:intergroup_per_router"]):
+                    tgt_grp = tgt_grp % params["dragonfly:num_groups"]
                     if tgt_grp == g:
-                        tgt_grp = (tgt_grp +1) % params["num_groups"]
+                        tgt_grp = (tgt_grp +1) % params["dragonfly:num_groups"]
 
                     src_g = min(g, tgt_grp)
                     dst_g = max(g, tgt_grp)
@@ -353,7 +361,7 @@ class topoDragonFly(Topo):
                 out.write("  </component>\n")
                 out.write("\n")
 
-                for h in xrange(params["hosts_per_router"]):
+                for h in xrange(params["dragonfly:hosts_per_router"]):
                     out.write("  <!-- GROUP %d, ROUTER %d, HOST %d -->\n" % (g, r, h))
                     endPoint.formatComp(out, "nic:G%dR%dH%d"%(g,r,h), nic_num, "link:g%dr%dh%d"%(g,r,h), dict())
                     nic_num = nic_num+1
@@ -385,12 +393,12 @@ class TestEndPoint:
 
     def formatParams(self, out):
         out.write("  <nic_params>\n")
-        out.write("    <topology> %s </topology>\n" % params["topology"])
+        params.emit(out, "topology")
         for (n,v) in params["topoNICParams"].iteritems():
             out.write("    <%s> %d </%s>\n" % (n, v, n))
-        out.write("    <num_peers> %s </num_peers>\n" % params["peers"])
-        out.write("    <num_vcs> %d </num_vcs>\n" % params["num_vcs"])
-        out.write("    <link_bw> %s </link_bw>\n" % params["link_bw"])
+        params.emit(out, "peers", "num_peers")
+        params.emit(out, "num_vcs")
+        params.emit(out, "link_bw")
         out.write("  </nic_params>\n")
 
     def formatComp(self, out, name, num, linkName, extraParams):
@@ -412,23 +420,28 @@ class TrafficGenEndPoint:
         out.write("    <topology> %s </topology>\n" % params["topology"])
         for (n,v) in params["topoNICParams"].iteritems():
             out.write("    <%s> %d </%s>\n" % (n, v, n))
-        out.write("    <num_peers> %s </num_peers>\n" % params["peers"])
-        out.write("    <num_vcs> %d </num_vcs>\n" % params["num_vcs"])
-        out.write("    <link_bw> %s </link_bw>\n" % params["link_bw"])
-        out.write("    <packets_to_send> %s </packets_to_send>\n"%params["num_pkts_to_send"])
-        out.write("    <packet_size> %s </packet_size>\n"%params["packet_size"])
-        out.write("    <message_rate> %s </message_rate>\n" % params["message_rate"])
-        out.write("    <PacketDest:pattern> %s </PacketDest:pattern>\n" % params["PacketDest:pattern"])
+        params.emit(out, "peers", "num_peers")
+        params.emit(out, "num_vcs")
+        params.emit(out, "link_bw")
+        params.emit(out, "num_pkts_to_send", "packets_to_send")
+        params.emit(out, "packet_size")
+        params.emit(out, "message_rate")
+        params.emit(out, "PacketDest:pattern")
         out.write("    <PacketDest:RangeMin> 0 </PacketDest:RangeMin>\n")
         out.write("    <PacketDest:RangeMax> %d </PacketDest:RangeMax>\n" % params["peers"])
+
         if params["PacketDest:pattern"] == "NearestNeighbor":
             out.write("    <PatcketDest:NearestNeighbor:3DSize> %s </PatcketDest:NearestNeighbor:3DSize>\n" % (params["PacketDest:3D shape X"], params["PacketDest:3D shape Y"], params["PacketDest:3D shape Z"]))
         elif params["PacketDest:pattern"] == "HotSpot":
-            out.write("    <PatcketDest:HotSpot:target> %s </PatcketDest:HotSpot:target>\n" % params["PatcketDest:hotspot_target"])
-            out.write("    <PatcketDest:HotSpot:targetProbability> %s </PatcketDest:HotSpot:targetProbability>\n" % params["PatcketDest:hotspot_target_probability"])
+            params.emit(out, "PacketDest:HotSpot:target")
+            params.emit(out, "PacketDest:HotSpot:targetProbability")
         elif params["PacketDest:pattern"] == "Normal":
-            out.write("    <PacketDest:Uniform:Mean> %s </PacketDest:Uniform:Mean>\n" % params["PacketDest:Uniform:Mean"])
-            out.write("    <PacketDest:Uniform:Sigma> %s </PacketDest:Uniform:Sigma>\n" % params["PacketDest:Uniform:Sigma"])
+            params.emit(out, "PacketDest:Normal:Mean")
+            params.emit(out, "PacketDest:Normal:Sigma")
+        elif params["PacketDest:pattern"] == "Binomial":
+            params.emit(out, "PacketDest:Binomial:Mean")
+            params.emit(out, "PacketDest:Binomial:Sigma")
+
         out.write("  </nic_params>\n")
 
     def formatComp(self, out, name, num, linkName, extraParams):
