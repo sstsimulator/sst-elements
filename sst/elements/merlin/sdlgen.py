@@ -360,7 +360,6 @@ class topoDragonFly(Topo):
                 out.write("\n")
                 router_num = router_num +1
             out.write("\n")
-        out.write("</sst>\n")
 
 
 

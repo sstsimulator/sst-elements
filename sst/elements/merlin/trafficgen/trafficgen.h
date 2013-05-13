@@ -79,7 +79,9 @@ private:
     public:
         UniformDist(int min, int max) :
             dist(min, max)
-        { }
+        {
+            gen.seed(0);
+        }
         virtual int getNextValue(void)
         {
             return dist(gen);
@@ -102,6 +104,7 @@ private:
             }
             probs[target] = targetProb;
             dist = boost::random::discrete_distribution<>(probs.begin(), probs.end());
+            gen.seed(0);
         }
         virtual int getNextValue(void)
         {
@@ -128,9 +131,6 @@ private:
     bool done;
 
     LinkControl* link_control;
-
-    int last_target;
-    int *next_seq;
 
     int base_packet_size;
     int packets_to_send;

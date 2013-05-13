@@ -30,6 +30,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     packetDestGen(NULL),
     packetSizeGen(NULL),
     packetDelayGen(NULL),
+    packet_delay(0),
     done(false)
 {
     id = params.find_integer("id");
@@ -71,12 +72,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     }
 
     link_control = new LinkControl(this, "rtr", tc, num_vcs, buf_size, buf_size);
-
-    last_target = id;
-    next_seq = new int[num_peers];
-    for ( int i = 0 ; i < num_peers ; i++ )
-        next_seq[i] = 0;
-
+    delete buf_size;
 
     packets_to_send = params.find_integer("packets_to_send", 1000);
     base_packet_size = params.find_integer("packet_size", 5); // In Flits
@@ -96,7 +92,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
         assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
         packetDestGen = new NearestNeighbor(new UniformDist(0, num_peers), id, maxX, maxY, maxZ, 6);
     } else if ( !pattern.compare("Uniform") ) {
-        packetDestGen = new UniformDist(0, num_peers);
+        packetDestGen = new UniformDist(0, num_peers-1);
     } else if ( !pattern.compare("HotSpot") ) {
         int target = params.find_integer("HotSpot:target");
         float targetProb = params.find_floating("HotSpot:targetProbability");
@@ -118,7 +114,6 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 TrafficGen::~TrafficGen()
 {
     delete link_control;
-    delete [] next_seq;
 }
 
 void TrafficGen::finish()
@@ -167,6 +162,8 @@ TrafficGen::clock_handler(Cycle_t cycle)
                     ev->src = fattree_ID_to_IP(id);
                     break;
                 }
+                //ev->setTraceID((id<<16) | packets_sent);
+                //ev->setTraceType(RtrEvent::FULL);
                 ev->vc = 0;
                 ev->size_in_flits = packet_size;
 
