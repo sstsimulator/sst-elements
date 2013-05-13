@@ -419,11 +419,16 @@ class TrafficGenEndPoint:
         out.write("    <packet_size> %s </packet_size>\n"%params["packet_size"])
         out.write("    <message_rate> %s </message_rate>\n" % params["message_rate"])
         out.write("    <PacketDest:pattern> %s </PacketDest:pattern>\n" % params["PacketDest:pattern"])
+        out.write("    <PacketDest:RangeMin> 0 </PacketDest:RangeMin>\n")
+        out.write("    <PacketDest:RangeMax> %d </PacketDest:RangeMax>\n" % params["peers"])
         if params["PacketDest:pattern"] == "NearestNeighbor":
             out.write("    <PatcketDest:NearestNeighbor:3DSize> %s </PatcketDest:NearestNeighbor:3DSize>\n" % (params["PacketDest:3D shape X"], params["PacketDest:3D shape Y"], params["PacketDest:3D shape Z"]))
         elif params["PacketDest:pattern"] == "HotSpot":
             out.write("    <PatcketDest:HotSpot:target> %s </PatcketDest:HotSpot:target>\n" % params["PatcketDest:hotspot_target"])
             out.write("    <PatcketDest:HotSpot:targetProbability> %s </PatcketDest:HotSpot:targetProbability>\n" % params["PatcketDest:hotspot_target_probability"])
+        elif params["PacketDest:pattern"] == "Normal":
+            out.write("    <PacketDest:Uniform:Mean> %s </PacketDest:Uniform:Mean>\n" % params["PacketDest:Uniform:Mean"])
+            out.write("    <PacketDest:Uniform:Sigma> %s </PacketDest:Uniform:Sigma>\n" % params["PacketDest:Uniform:Sigma"])
         out.write("  </nic_params>\n")
 
     def formatComp(self, out, name, num, linkName, extraParams):

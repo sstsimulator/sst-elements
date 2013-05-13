@@ -114,17 +114,25 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
 {
     Generator* gen = NULL;
     std::string pattern = params.find_string(prefix + ":pattern");
+    std::pair<int, int> range = std::make_pair(
+            params.find_integer(prefix + ":RangeMin", 0),
+            params.find_integer(prefix + ":RangeMax", INT_MAX));
+
     if ( !pattern.compare("NearestNeighbor") ) {
         std::string shape = params.find_string(prefix + ":NearestNeighbor:3DSize");
         int maxX, maxY, maxZ;
         assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
-        gen = new NearestNeighbor(new UniformDist(0, num_peers), id, maxX, maxY, maxZ, 6);
+        gen = new NearestNeighbor(new UniformDist(range.first, range.second-1), id, maxX, maxY, maxZ, 6);
     } else if ( !pattern.compare("Uniform") ) {
-        gen = new UniformDist(0, num_peers-1);
+        gen = new UniformDist(range.first, range.second-1);
     } else if ( !pattern.compare("HotSpot") ) {
         int target = params.find_integer(prefix + ":HotSpot:target");
         float targetProb = params.find_floating(prefix + ":HotSpot:targetProbability");
-        gen = new DiscreteDist(0, num_peers, target, targetProb);
+        gen = new DiscreteDist(range.first, range.second, target, targetProb);
+    } else if ( !pattern.compare("Normal") ) {
+        float mean = params.find_floating(prefix + ":Normal:Mean", range.second/2.0f);
+        float sigma = params.find_floating(prefix + ":Normal:Sigma", 1.0f);
+        gen = new NormalDist(range.first, range.second, mean, sigma);
     } else if ( pattern.compare("") ) { // Allow none - non-pattern
         _abort(TrafficGen, "Unknown pattern '%s'\n", pattern.c_str());
     }

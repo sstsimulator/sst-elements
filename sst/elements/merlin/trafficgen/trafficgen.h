@@ -18,6 +18,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/discrete_distribution.hpp>
+#include <boost/random/normal_distribution.hpp>
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
@@ -115,6 +116,29 @@ private:
         virtual int getNextValue(void)
         {
             return dist(gen) + minValue;
+        }
+        virtual void seed(uint32_t val)
+        {
+            gen.seed(val);
+        }
+    };
+
+    class NormalDist : public Generator {
+        boost::random::mt19937 gen;
+        boost::random::normal_distribution<> dist;
+        int minValue;
+        int maxValue;
+    public:
+        NormalDist(int min, int max, float mean, float stddev) : minValue(min), maxValue(max)
+        {
+            dist = boost::random::normal_distribution<>(mean, stddev);
+        }
+        virtual int getNextValue(void)
+        {
+            for (;;) {
+                int val = (int)dist(gen);
+                if ( val < maxValue && val >= minValue ) return val;
+            }
         }
         virtual void seed(uint32_t val)
         {
