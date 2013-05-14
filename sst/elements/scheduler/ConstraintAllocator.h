@@ -1,3 +1,4 @@
+
 // Copyright 2011 Sandia Corporation. Under the terms                          
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.             
 // Government retains certain rights in this software.                         
@@ -14,10 +15,6 @@
  Presumably constraints designed to minimize uncertainty
  i.e. to maximize the amount of information that job failures
  will give about system parameters
-
- First pass just has simple constraint of "separate u,v";
- try to allocate job to depend on exactly one of these nodes
- Eventually seek to implement more general constraints
  */
 
 #ifndef __CONSTRAINTALLOCATOR_H__
@@ -50,14 +47,13 @@ class ConstraintAllocator : public Allocator {
 
   private:
     //constraints
-    //for now, only type of constraint is to separate u from v
+    //for now, only type of constraint is to separate one node from rest of cluster
     //check file for updates to parameter estimates and set constraints accordingly
     void GetConstraints();
 
     //map from internal node u to  set of dependent compute nodes D[u]
     map< std::string, set<std::string> > D;
-    set<std::string> Du; // D[u]
-    set<std::string> Dv; // D[v]
+    vector<std::string> Cluster; // current cluster of suspects to be separated
     std::string ConstraintsFileName;
 };
 
