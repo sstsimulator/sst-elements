@@ -36,7 +36,7 @@ struct LinkInfo {
 typedef std::pair< LinkInfo, LinkInfo>      link_t;
 typedef std::map< std::string, link_t >     linkMap_t;
 
-static void printLinkMap( linkMap_t& );
+//static void printLinkMap( linkMap_t& );
 static void connectAll( objectMap_t&, linkMap_t& );
 static void createLinks( M5&, Gem5Object_t&, SST::Params& );
 
@@ -121,14 +121,14 @@ static void createLinks( M5& comp,
 }
 
 
-static void printLinkMap( linkMap_t& map  )
-{
-    for ( linkMap_t::iterator iter=map.begin(); iter != map.end(); ++iter ) {
-        printf("link=%s %s<->%s\n",iter->first.c_str(),
-            iter->second.first.compName.c_str(), 
-            iter->second.second.compName.c_str());
-    }
-}
+//static void printLinkMap( linkMap_t& map  )
+//{
+//    for ( linkMap_t::iterator iter=map.begin(); iter != map.end(); ++iter ) {
+//        printf("link=%s %s<->%s\n",iter->first.c_str(),
+//            iter->second.first.compName.c_str(), 
+//            iter->second.second.compName.c_str());
+//    }
+//}
 
 static void connectAll( objectMap_t& objMap, linkMap_t& linkMap  )
 {
