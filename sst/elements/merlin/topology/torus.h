@@ -25,8 +25,6 @@ namespace SST {
 namespace Merlin {
 
 class topo_torus_event : public internal_router_event {
-
-
 public:
     int dimensions;
     int routing_dim;
@@ -35,6 +33,7 @@ public:
     topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
 };
+
 
 
 class topo_torus: public Topology {
@@ -57,6 +56,10 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
+
+    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+
     virtual PortState getPortState(int port) const;
 
 protected:

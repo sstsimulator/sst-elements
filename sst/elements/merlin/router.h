@@ -26,6 +26,8 @@ using namespace SST;
 namespace SST {
 namespace Merlin {
 
+const int INIT_BROADCAST_ADDR = -1;
+
 #define MERLIN_ENABLE_TRACE
 class RtrEvent : public Event {
     
@@ -106,6 +108,8 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
+    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts) = 0;
+    virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;
     virtual PortState getPortState(int port) const = 0;
     inline bool isHostPort(int port) const { return getPortState(port) == R2N; }
 };
@@ -119,7 +123,7 @@ public:
 
     virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
     virtual void dumpState(std::ostream& stream) {};
-    
+
 };
 
 }

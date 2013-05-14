@@ -116,10 +116,68 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
     DPRINTF("Init packet from %d to %d to %u:%u:%u:%u\n", ev->src, ev->dest, dstAddr.group, dstAddr.mid_group, dstAddr.router, dstAddr.host);
 
     topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
+    td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);
 
     return td_ev;
 }
+
+
+
+void topo_dragonfly::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+{
+    topo_dragonfly_event *td_ev = static_cast<topo_dragonfly_event*>(ev);
+    if ( td_ev->dest.host == (uint32_t)INIT_BROADCAST_ADDR ) {
+        if ( (uint32_t)port >= (params.p + params.a-1) ) {
+            /* Came in from another group.
+             * Send to locals, and other routers in group
+             */
+            for ( uint32_t p  = 0 ; p < (params.p + params.a-1) ; p++ ) {
+                outPorts.push_back((int)p);
+            }
+        } else if ( (uint32_t)port >= params.p ) {
+            /* Came in from another router in group.
+             * send to hosts
+             * if this is the source group, send to other groups
+             */
+            for ( uint32_t p = 0 ; p < params.p ; p++ ) {
+                outPorts.push_back((int)p);
+            }
+            if ( td_ev->src_group == group_id ) {
+                for ( uint32_t p = (params.p+params.a-1) ; p < params.k ; p++ ) {
+                    outPorts.push_back((int)p);
+                }
+            }
+        } else {
+            /* Came in from a host
+             * Send to all other hosts and routers in group, and all groups
+             */
+            for ( int p = 0 ; p < (int)params.k ; p++ ) {
+                if ( p != port )
+                    outPorts.push_back((int)p);
+            }
+        }
+    } else {
+        route(port, 0, ev);
+        outPorts.push_back(ev->getNextPort());
+    }
+
+}
+
+
+internal_router_event* topo_dragonfly::process_InitData_input(RtrEvent* ev)
+{
+    dgnflyAddr dstAddr;
+    idToLocation(ev->dest, &dstAddr);
+    topo_dragonfly_event *td_ev = new topo_dragonfly_event(dstAddr);
+    td_ev->src_group = group_id;
+    td_ev->setEncapsulatedEvent(ev);
+
+    return td_ev;
+}
+
+
+
 
 
 Topology::PortState topo_dragonfly::getPortState(int port) const
@@ -131,10 +189,17 @@ Topology::PortState topo_dragonfly::getPortState(int port) const
 
 void topo_dragonfly::idToLocation(int id, dgnflyAddr *location) const
 {
-    uint32_t hosts_per_group = params.p * params.a;
-    location->group = id / hosts_per_group;
-    location->router = (id % hosts_per_group) / params.p;
-    location->host = id % params.p;
+    if ( id == INIT_BROADCAST_ADDR) {
+        location->group = (uint32_t)INIT_BROADCAST_ADDR;
+        location->mid_group = (uint32_t)INIT_BROADCAST_ADDR;
+        location->router = (uint32_t)INIT_BROADCAST_ADDR;
+        location->host = (uint32_t)INIT_BROADCAST_ADDR;
+    } else {
+        uint32_t hosts_per_group = params.p * params.a;
+        location->group = id / hosts_per_group;
+        location->router = (id % hosts_per_group) / params.p;
+        location->host = id % params.p;
+    }
 }
 
 

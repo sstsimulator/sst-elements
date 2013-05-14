@@ -148,6 +148,53 @@ internal_router_event* topo_fattree::process_input(RtrEvent* ev)
     return new internal_router_event(ev);
 }
 
+void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vector<int> &outPorts)
+{
+    switch (rtr_level) {
+    case 1:
+        /* Downstream  - send to hosts*/
+        for ( int port = 0 ; port < edge_loading ; port++ ) {
+            if ( port != inPort )
+                outPorts.push_back(port);
+        }
+
+        /* Upstream  - send to 1 upper-level router*/
+        outPorts.push_back(num_ports/2);
+        break;
+    case 2:
+        if ( inPort < (num_ports/2) ) {
+            /* came from Downstream, send to 1 upper-level router */
+            outPorts.push_back(num_ports/2);
+            for ( int port = 0 ; port < num_ports/2 ; port++ ) {
+                /* also, send downstream withing this router */
+                if ( port != inPort )
+                        outPorts.push_back(port);
+            }
+        } else {
+            /* came from Upstream */
+            for ( int port = 0 ; port < num_ports/2 ; port++ ) {
+                outPorts.push_back(port);
+            }
+        }
+        break;
+    case 3:
+        /* Send to all Downstream (except from incoming port) */
+        for ( int port = 0 ; port < num_ports ; port++ ) {
+            if ( port != inPort )
+                outPorts.push_back(port);
+        }
+        break;
+    default:
+        _abort(topt_fattree, "Bad level %d\n", rtr_level);
+    }
+}
+
+
+internal_router_event* topo_fattree::process_InitData_input(RtrEvent* ev)
+{
+    return new internal_router_event(ev);
+}
+
 
 Topology::PortState topo_fattree::getPortState(int port) const
 {

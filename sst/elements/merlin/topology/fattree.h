@@ -56,6 +56,10 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
+
+    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+
     virtual PortState getPortState(int port) const;
 
 

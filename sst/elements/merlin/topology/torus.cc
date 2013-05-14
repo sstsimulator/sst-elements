@@ -161,6 +161,61 @@ topo_torus::process_input(RtrEvent* ev)
 }
 
 
+void topo_torus::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
+{
+    if ( ev->getSrc() == INIT_BROADCAST_ADDR ) {
+        /* For broadcast, use dest_loc as src_loc */
+        topo_torus_event *tt_ev = static_cast<topo_torus_event*>(ev);
+        /*
+         * Find dimension came in on
+         * Send in positive direction in all dimensions that level and higher (unless at end)
+         */
+        int inc_dim = 0;
+        for ( ; inc_dim < dimensions ; inc_dim++ ) {
+            if ( port == port_start[inc_dim][1] ) {
+                break;
+            }
+        }
+        assert(inc_dim < dimensions);
+
+        for ( int dim = inc_dim ; dim < dimensions ; dim++ ) {
+            if ( ((id_loc[dim] + 1) % dim_size[dim]) != tt_ev->dest_loc[dim] ) {
+                outPorts.push_back(port_start[dim][0]);
+            }
+        }
+
+        // Also, send to hosts
+        for ( int p = 0 ; p < num_local_ports ; p++ ) {
+            if ( (local_port_start + p) != port ) {
+                outPorts.push_back(local_port_start +p);
+            }
+        }
+
+
+    } else {
+        route(port, 0, ev);
+        outPorts.push_back(ev->getNextPort());
+    }
+}
+
+
+internal_router_event* topo_torus::process_InitData_input(RtrEvent* ev)
+{
+    topo_torus_event* tt_ev = new topo_torus_event(dimensions);
+    tt_ev->setEncapsulatedEvent(ev);
+    if ( tt_ev->getSrc() == INIT_BROADCAST_ADDR ) {
+        /* For broadcast, use dest_loc as src_loc */
+        for ( int i = 0 ; i < dimensions ; i++ ) {
+            tt_ev->dest_loc[i] = id_loc[i];
+        }
+    } else {
+        int rtr_id = get_dest_router(tt_ev->getDest());
+        idToLocation(rtr_id, tt_ev->dest_loc);
+    }
+    return tt_ev;
+}
+
+
 Topology::PortState
 topo_torus::getPortState(int port) const
 {

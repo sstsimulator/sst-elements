@@ -27,6 +27,11 @@ namespace Merlin {
 class topo_dragonfly_event;
 
 class topo_dragonfly: public Topology {
+    /* Assumed connectivity of each router:
+     * ports [0, p-1]:      Hosts
+     * ports [p, p+a-2]:    Intra-group
+     * ports [p+a-1, k-1]:  Inter-group
+     */
 
     struct dgnflyParams {
         uint32_t p;  /* # of hosts / router */
@@ -60,6 +65,10 @@ public:
 
     virtual void route(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
+
+    virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
+    virtual internal_router_event* process_InitData_input(RtrEvent* ev);
+
     virtual PortState getPortState(int port) const;
 
 private:
@@ -75,7 +84,7 @@ private:
 class topo_dragonfly_event : public internal_router_event {
 
 public:
-
+    uint32_t src_group;
     topo_dragonfly::dgnflyAddr dest;
 
     topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) : dest(dest) {}
