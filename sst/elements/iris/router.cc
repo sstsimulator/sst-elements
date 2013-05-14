@@ -99,7 +99,7 @@ Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
 
     //set our clock
     clock_handler = new SST::Clock::Handler<Router>(this, &Router::tock);
-//    SST::TimeConverter* tc = registerClock(ROUTER_FREQ,clock_handler);
+    registerClock(ROUTER_FREQ,clock_handler);
 //    printf(" Routers time conversion factor is %lu \n", tc->getFactor());
 
     resize();
