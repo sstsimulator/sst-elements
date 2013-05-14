@@ -46,6 +46,8 @@ private:
     // usage
     Link* output_timing;
 
+    std::deque<Event*> init_events;
+
     // Number of virtual channels
     int num_vcs;
 
@@ -62,7 +64,7 @@ private:
 
     int* rtr_credits;
     int* in_ret_credits;
-    
+
     // Doing a round robin on the output.  Need to keep track of the
     // current virtual channel.
     int curr_out_vc;
@@ -74,7 +76,7 @@ private:
     bool waiting;
 
     Component* parent;
-    
+
 public:
 
     // Returns true if there is space in the output buffer and false
@@ -131,7 +133,26 @@ public:
 
 	return event;
     }
-    
+
+
+    void sendInitData(RtrEvent *ev)
+    {
+        rtr_link->sendInitData(ev);
+    }
+
+    Event* recvInitData()
+    {
+        if ( init_events.size() ) {
+            Event *ev = init_events.front();
+            init_events.pop_front();
+            return ev;
+        } else {
+            return NULL;
+        }
+    }
+
+
+
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     LinkControl(Component* rif, std::string port_name, TimeConverter* time_base, int vcs, int* in_buf_size, int* out_buf_size) :
 	num_vcs(vcs),
@@ -174,31 +195,31 @@ public:
 
     int Setup() {
      	return 0;
+        while ( init_events.size() ) {
+            delete init_events.front();
+            init_events.pop_front();
+        }
     }
 
     void init(unsigned int phase) {
-	switch ( phase ) {
-	case 0:
+        if ( phase == 0 ) {
 	    // Need to send the available credits to the other side
 	    for ( int i = 0; i < num_vcs; i++ ) {
 		rtr_link->sendInitData(new credit_event(i,in_ret_credits[i]));
 		in_ret_credits[i] = 0;
 	    }
-	    break;
-	case 1:
-	    // Need to recv the credits send from the other side
-	    Event* ev;
-	    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
-		credit_event* ce = dynamic_cast<credit_event*>(ev);
-		if ( ce != NULL ) {
-		    rtr_credits[ce->vc] += ce->credits;
-		    delete ev;
-		}
-	    }
-	    break;
-	default:
-	    break;
-	}
+        }
+        // Need to recv the credits send from the other side
+        Event* ev;
+        while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+            credit_event* ce = dynamic_cast<credit_event*>(ev);
+            if ( ce != NULL ) {
+                rtr_credits[ce->vc] += ce->credits;
+                delete ev;
+            } else {
+                init_events.push_back(ev);
+            }
+        }
     }
 
 
