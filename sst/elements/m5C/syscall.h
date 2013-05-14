@@ -106,7 +106,7 @@ class Syscall : public DmaDevice
 
     M5*           m_comp;
 
-    char* syscallStr(int);
+    const char* syscallStr(int);
     void foo( int64_t retval ) {
         DBGX(3,"retval %d\n",retval);
         m_mailbox[0] = retval;

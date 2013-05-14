@@ -101,11 +101,11 @@ SimObject* create_Syscall( SST::Component* comp, string name,
 
 Syscall::Syscall( const Params* p ) :
     DmaDevice( p ),
+    m_barrierHandler( BarrierAction::Handler<Syscall>(this,
+                                        &Syscall::barrierReturn) ),
     m_dmaEvent( this ),
     m_syscallEvent( this ),
     m_startAddr( p->startAddr ),
-    m_barrierHandler( BarrierAction::Handler<Syscall>(this,
-                                        &Syscall::barrierReturn) ),
     m_comp( p->m5Comp )
 {
     m_endAddr = m_startAddr + sizeof(m_mailbox);
@@ -168,7 +168,7 @@ int64_t Syscall::startFstat( int fd, Addr bufAddr )
     DBGX(3, "fd=%d buf=%#lx\n", fd, bufAddr ); 
 
     struct stat host_stat;
-    uint64_t retval = ::fstat( fd, &host_stat );
+    int64_t retval = ::fstat( fd, &host_stat );
     if ( retval == -1 ) {
         return -errno;
     }
@@ -193,7 +193,7 @@ int64_t Syscall::startFstat64( int fd, Addr bufAddr )
     assert(0);
     
     struct stat64 buf;
-    uint64_t retval = ::fstat64( fd, &buf );
+    int64_t retval = ::fstat64( fd, &buf );
     if ( retval == -1 ) {
         return -errno;
     }
@@ -211,7 +211,7 @@ int64_t Syscall::startIoctl( int fd, int request, Addr buf )
 {
     DBGX(3, "fd=%d request=%#x buf=%#lx\n", fd, request ,buf ); 
     
-    assert( request == ISA_OS::TCGETS_ );
+    assert( (unsigned int)request == ISA_OS::TCGETS_ );
 
     return -ENOTTY;
 
@@ -339,7 +339,7 @@ int64_t Syscall::finishWrite( int fildes, size_t nbytes )
 
     time_t _time = time(NULL);
 
-    struct tm* tmp = localtime(&_time);
+//    struct tm* tmp = localtime(&_time);
      
     SST::Simulation *sim = SST::Simulation::getSimulation();
 
@@ -449,7 +449,7 @@ void Syscall::finishSyscall(void)
     foo ( retval );
 }
 
-char* Syscall::syscallStr( int num )
+const char* Syscall::syscallStr( int num )
 {
     switch( num ) {
         case __NR_open: return "open";
