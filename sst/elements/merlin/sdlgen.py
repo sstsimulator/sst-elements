@@ -354,7 +354,7 @@ class topoDragonFly(Topo):
                     src_g = min(g, tgt_grp)
                     dst_g = max(g, tgt_grp)
 
-                    out.write("    <link name=link:g%dg%d:%d port=port%d latency=%s />\n" % (src_g, dst_g, p/params["num_groups"], port, params["link_lat"]))
+                    out.write("    <link name=link:g%dg%d:%d port=port%d latency=%s />\n" % (src_g, dst_g, p/params["dragonfly:num_groups"], port, params["link_lat"]))
                     port = port +1
                     tgt_grp = tgt_grp +1
 

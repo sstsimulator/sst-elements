@@ -145,6 +145,7 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
 
 void TrafficGen::finish()
 {
+    printf("%d, %d, %d\n", id, packets_sent, packets_recd);
 }
 
 void TrafficGen::setup()
