@@ -22,6 +22,8 @@ libmerlin_la_SOURCES = \
 	topology/fattree.cc \
 	topology/dragonfly.h \
 	topology/dragonfly.cc \
+	topology/singlerouter.h \
+	topology/singlerouter.cc \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_rr.h \

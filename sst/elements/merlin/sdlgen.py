@@ -38,12 +38,48 @@ class Topo:
         pass
         
 
+class topoSimple:
+    def getName(self):
+        return "Simple"
+    def formatParams(self, out):
+        params["topology"] = "merlin.singlerouter"
+        params["topoNICParams"] = dict()
+        params["num_vcs"] = 1
+        params["router_radix"] = int(params["router_radix"])
+        params["peers"] = params["router_radix"]
+
+        out.write("  <rtr_params>\n")
+        out.write("    <debug> 0 </debug>\n")
+        params.emit(out, "router_radix", "num_ports")
+        params.emit(out, "num_vcs")
+        foo = params["link_lat"]  # It makes more sense to ask here
+        params.emit(out, "link_bw")
+        params.emit(out, "xbar_bw")
+        params.emit(out, "topology")
+        params.emit(out, "peers", "singlerouter:peers")
+        out.write("  </rtr_params>\n")
+
+    def formatSDL(self, out, endPoint):
+        out.write("  <component name=router type=merlin.hr_router>\n")
+        out.write("    <params include=rtr_params>\n")
+        out.write("      <id> 0 </id>\n")
+        out.write("    </params>\n")
+        for l in xrange(params["peers"]):
+            out.write("    <link name=link:%d port=port%d latency=%s />\n"%(l, l, params["link_lat"]))
+        out.write("  </component>\n")
+        out.write("\n\n")
+        for l in xrange(params["peers"]):
+            endPoint.formatComp(out, "nic:%d"%l, l, "link:%d"%l, dict())
+            out.write("\n")
+
+        
+
 
 class topoTorus(Topo):
     def getName(self):
         return "Torus"
     def formatParams(self, out):
-        params["topology"] = "torus"
+        params["topology"] = "merlin.torus"
         params["topoNICParams"] = dict()
 
 
@@ -487,7 +523,7 @@ def generateSDL(filename, topo, endpoint):
 
 
 if __name__ == "__main__":
-    topos = dict([(1,topoTorus()), (2,topoFatTree()), (3,topoDragonFly())])
+    topos = dict([(1,topoTorus()), (2,topoFatTree()), (3,topoDragonFly()), (4,topoSimple())])
     endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint())])
 
 

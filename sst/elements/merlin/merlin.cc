@@ -20,6 +20,7 @@
 #include "test/pt2pt/pt2pt_test.h"
 
 #include "topology/torus.h"
+#include "topology/singlerouter.h"
 
 #include "trafficgen/trafficgen.h"
 
@@ -82,6 +83,12 @@ load_torus_topology(Params& params)
     return new topo_torus(params);
 }
 
+static Module*
+load_singlerouter_topology(Params& params)
+{
+    return new topo_singlerouter(params);
+}
+
 static const ElementInfoComponent components[] = {
     { "portals_nic",
       "NIC with offloaded Portals4 implementation.",
@@ -117,6 +124,12 @@ static const ElementInfoModule modules[] = {
       "Torus topology object",
       NULL,
       load_torus_topology,
+      NULL,
+    },
+    { "singlerouter",
+      "Simple, single-router topology object",
+      NULL,
+      load_singlerouter_topology,
       NULL,
     },
     { NULL, NULL, NULL, NULL, NULL }
