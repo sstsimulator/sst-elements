@@ -135,21 +135,24 @@ void MemController::init(unsigned int phase)
 	}
 
 	SST::Event *ev = NULL;
-	while ( (ev = upstream_link->recvInitData()) != NULL ) {
-		MemEvent *me = dynamic_cast<MemEvent*>(ev);
-		if ( me ) {
-			/* Push data to memory */
-			if ( me->getCmd() == WriteReq ) {
-				//printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
-				for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
-					memBuffer[me->getAddr() + i - rangeStart] = me->getPayload()[i];
-				}
-			} else {
-				printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
-			}
-		}
-		delete ev;
-	}
+    while ( (ev = upstream_link->recvInitData()) != NULL ) {
+        MemEvent *me = dynamic_cast<MemEvent*>(ev);
+        if ( me ) {
+            /* Push data to memory */
+            if ( me->getCmd() == WriteReq ) {
+                //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
+                if ( isRequestAddressValid(me) ) {
+                    Addr localAddr = convertAddressToLocalAddress(me->getAddr());
+                    for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
+                        memBuffer[localAddr + i] = me->getPayload()[i];
+                    }
+                }
+            } else {
+                printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+            }
+        }
+        delete ev;
+    }
 
 }
 
