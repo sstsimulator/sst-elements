@@ -46,6 +46,9 @@ public:
 
     inline void setTraceID(int id) {traceID = id;}
     inline void setTraceType(TraceType type) {trace = type;}
+    virtual RtrEvent* clone(void) {
+        return new RtrEvent(*this);
+    }
 
     inline TraceType getTraceType() {return trace;}
     inline int getTraceID() {return traceID;}
@@ -81,6 +84,11 @@ public:
     virtual ~internal_router_event() {
 	if ( encap_ev != NULL ) delete encap_ev;
     }
+
+    virtual internal_router_event* clone(void)
+    {
+        return new internal_router_event(*this);
+    };
 
     inline void setNextPort(int np) {next_port = np; return;}
     inline int getNextPort() {return next_port;}

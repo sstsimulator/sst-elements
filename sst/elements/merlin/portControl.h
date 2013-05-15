@@ -46,6 +46,8 @@ private:
     // usage
     Link* output_timing;
 
+    std::deque<Event*> init_events;
+
     int rtr_id;
     // Number of virtual channels
     int num_vcs;
@@ -216,34 +218,49 @@ public:
         delete [] port_out_credits;
     }
 
-    int Setup() {
-    	return 0;
+    void setup() {
+        while ( init_events.size() ) {
+            delete init_events.front();
+            init_events.pop_front();
+        }
     }
 
     void init(unsigned int phase) {
 	if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
-	switch ( phase ) {
-	case 0:
+        if ( phase == 0 ) {
 	    // Need to send the available credits to the other side
 	    for ( int i = 0; i < num_vcs; i++ ) {
 		port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
 		port_ret_credits[i] = 0;
 	    }
-	    break;
-	case 1:
-	    // Need to recv the credits send from the other side
-	    Event* ev;
-	    while ( ( ev = port_link->recvInitData() ) != NULL ) {
-		credit_event* ce = dynamic_cast<credit_event*>(ev);
-		if ( ce != NULL ) {
-		    port_out_credits[ce->vc] += ce->credits;
-		    delete ev;
-		}
-	    }
-	    break;
-	default:
-	    break;
-	}
+        }
+        // Need to recv the credits send from the other side
+        Event* ev;
+        while ( ( ev = port_link->recvInitData() ) != NULL ) {
+            credit_event* ce = dynamic_cast<credit_event*>(ev);
+            if ( ce != NULL ) {
+                port_out_credits[ce->vc] += ce->credits;
+                delete ev;
+            } else {
+                init_events.push_back(ev);
+            }
+        }
+    }
+
+    void sendInitData(internal_router_event *ev)
+    {
+        port_link->sendInitData(ev);
+    }
+
+    Event* recvInitData()
+    {
+        if ( init_events.size() ) {
+            Event *ev = init_events.front();
+            init_events.pop_front();
+            return ev;
+        } else {
+            return NULL;
+        }
     }
 
     void dumpState(std::ostream& stream) {

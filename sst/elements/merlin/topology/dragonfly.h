@@ -89,6 +89,11 @@ public:
 
     topo_dragonfly_event(const topo_dragonfly::dgnflyAddr &dest) : dest(dest) {}
     ~topo_dragonfly_event() { }
+
+    virtual internal_router_event *clone(void)
+    {
+        return new topo_dragonfly_event(*this);
+    }
 };
 
 }

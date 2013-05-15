@@ -193,8 +193,7 @@ public:
         delete [] outbuf_credits;
     }
 
-    int Setup() {
-     	return 0;
+    void setup() {
         while ( init_events.size() ) {
             delete init_events.front();
             init_events.pop_front();

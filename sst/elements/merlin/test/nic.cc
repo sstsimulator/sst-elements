@@ -90,14 +90,25 @@ void nic::finish()
     std::cout << "Nic " << id << " had " << stalled_cycles << " stalled cycles." << std::endl;
 }
 
-void nic::setup() 
+void nic::setup()
 {
-    link_control->Setup();
+    link_control->setup();
 }
 
 void
 nic::init(unsigned int phase) {
-    return link_control->init(phase);
+    link_control->init(phase);
+    if ( id == 0 && phase == 0 ) {
+        RtrEvent *re = new RtrEvent();
+        re->src = id;
+        re->dest = INIT_BROADCAST_ADDR;
+
+        link_control->sendInitData(re);
+    }
+    while ( Event*ev = link_control->recvInitData() ) {
+        std::cout << "NIC " << id << "Received an init event in phase " << phase << "!" << std::endl;
+        delete ev;
+    }
 }
 
 class MyRtrEvent : public RtrEvent {
@@ -105,6 +116,10 @@ public:
     int seq;
     MyRtrEvent(int seq) : seq(seq)
     {}
+    virtual RtrEvent* clone(void)
+    {
+        return new MyRtrEvent(*this);
+    }
 };
 
 bool

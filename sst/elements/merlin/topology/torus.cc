@@ -163,7 +163,7 @@ topo_torus::process_input(RtrEvent* ev)
 
 void topo_torus::routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts)
 {
-    if ( ev->getSrc() == INIT_BROADCAST_ADDR ) {
+    if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
         /* For broadcast, use dest_loc as src_loc */
         topo_torus_event *tt_ev = static_cast<topo_torus_event*>(ev);
         /*
@@ -176,7 +176,7 @@ void topo_torus::routeInitData(int port, internal_router_event* ev, std::vector<
                 break;
             }
         }
-        assert(inc_dim < dimensions);
+        if (inc_dim >= dimensions) inc_dim = 0; // A new message
 
         for ( int dim = inc_dim ; dim < dimensions ; dim++ ) {
             if ( ((id_loc[dim] + 1) % dim_size[dim]) != tt_ev->dest_loc[dim] ) {
@@ -203,7 +203,7 @@ internal_router_event* topo_torus::process_InitData_input(RtrEvent* ev)
 {
     topo_torus_event* tt_ev = new topo_torus_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    if ( tt_ev->getSrc() == INIT_BROADCAST_ADDR ) {
+    if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
         /* For broadcast, use dest_loc as src_loc */
         for ( int i = 0 ; i < dimensions ; i++ ) {
             tt_ev->dest_loc[i] = id_loc[i];

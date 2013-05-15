@@ -150,7 +150,7 @@ void TrafficGen::finish()
 
 void TrafficGen::setup()
 {
-    link_control->Setup();
+    link_control->setup();
 }
 
 void

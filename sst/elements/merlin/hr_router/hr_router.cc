@@ -283,6 +283,26 @@ hr_router::init(unsigned int phase)
 {
     for ( int i = 0; i < num_ports; i++ ) {
 	ports[i]->init(phase);
+        Event *ev = NULL;
+        while ( (ev = ports[i]->recvInitData()) != NULL ) {
+            internal_router_event *ire = dynamic_cast<internal_router_event*>(ev);
+            if ( ire == NULL ) {
+                ire = topo->process_InitData_input(static_cast<RtrEvent*>(ev));
+            }
+            std::vector<int> outPorts;
+	    topo->routeInitData(i, ire, outPorts);
+            for ( std::vector<int>::iterator j = outPorts.begin() ; j != outPorts.end() ; ++j ) {
+                /* Little tricky here.  Need to clone both the event, and the
+                 * encapsulated event.
+                 */
+                if ( ports[*j] ) {
+                    internal_router_event *new_ire = ire->clone();
+                    new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
+                    ports[*j]->sendInitData(new_ire);
+                }
+            }
+            delete ire;
+        }
     }
 }
 
