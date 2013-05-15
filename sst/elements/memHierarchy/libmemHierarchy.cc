@@ -59,12 +59,14 @@ static const ElementInfoParam cache_params[] = {
     {"blocksize",       "Size of a cache block in bytes."},
     {"num_upstream",    "How many upstream ports there are. Typically 1 or 0."},
     {"next_level",      "Name of the next level cache"},
-    {"access_time",     "Time taken to lookup data in the cache."}
+    {"access_time",     "Time taken to lookup data in the cache."},
+    {NULL, NULL}
 };
 
 static const ElementInfoParam bus_params[] = {
     {"numPorts",    "Number of Ports on the bus."},
-    {"busDelay",    "Delay time for the bus."}
+    {"busDelay",    "Delay time for the bus."},
+    {NULL, NULL}
 };
 
 static const ElementInfoParam memctrl_params[] = {
@@ -79,7 +81,8 @@ static const ElementInfoParam memctrl_params[] = {
     {"system_ini",      "Name of DRAMSim Device system file"},
     {"access_time",     "When not using DRAMSim, latency of memory operation."},
     {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"},
-    {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"}
+    {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"},
+    {NULL, NULL}
 };
 
 static const ElementInfoParam cpu_params[] = {
@@ -87,7 +90,8 @@ static const ElementInfoParam cpu_params[] = {
     {"commFreq",        "How often to do a memory operation."},
     {"memSize",         "Size of physical memory."},
     {"do_write",        "Enable writes to memory (versus just reads)."},
-    {"num_loadstore",   "Stop after this many reads and writes."}
+    {"num_loadstore",   "Stop after this many reads and writes."},
+    {NULL, NULL}
 };
 
 
