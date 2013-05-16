@@ -21,6 +21,8 @@
 
 #include "topology/torus.h"
 #include "topology/singlerouter.h"
+#include "topology/fattree.h"
+#include "topology/dragonfly.h"
 
 #include "trafficgen/trafficgen.h"
 
@@ -89,6 +91,18 @@ load_singlerouter_topology(Params& params)
     return new topo_singlerouter(params);
 }
 
+static Module*
+load_fattree_topology(Params& params)
+{
+    return new topo_fattree(params);
+}
+
+static Module*
+load_dragonfly_topology(Params& params)
+{
+    return new topo_dragonfly(params);
+}
+
 static const ElementInfoComponent components[] = {
     { "portals_nic",
       "NIC with offloaded Portals4 implementation.",
@@ -110,11 +124,10 @@ static const ElementInfoComponent components[] = {
       NULL,
       create_pt2pt_test,
     },
-    {
-        "trafficgen",
-        "Pattern-based traffic generator.",
-        NULL,
-        create_traffic_generator,
+    { "trafficgen",
+      "Pattern-based traffic generator.",
+      NULL,
+      create_traffic_generator,
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -130,6 +143,18 @@ static const ElementInfoModule modules[] = {
       "Simple, single-router topology object",
       NULL,
       load_singlerouter_topology,
+      NULL,
+    },
+    { "fattree",
+      "Fattree topology object",
+      NULL,
+      load_fattree_topology,
+      NULL,
+    },
+    { "dragonfly",
+      "Dragonfly topology object",
+      NULL,
+      load_dragonfly_topology,
       NULL,
     },
     { NULL, NULL, NULL, NULL, NULL }

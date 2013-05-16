@@ -21,9 +21,6 @@
 
 #include "hr_router.h"
 #include "portControl.h"
-#include "sst/elements/merlin/topology/torus.h"
-#include "sst/elements/merlin/topology/fattree.h"
-#include "sst/elements/merlin/topology/dragonfly.h"
 #include "xbar_arb_rr.h"
 
 using namespace SST::Merlin;
@@ -76,19 +73,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         _abort(hr_router, "ERROR: hr_router requires topology to be specified");
     }
 
-    if ( !topology.compare("torus") ) {
-        // std::cout << "Creating new topology: torus" << std::endl;
-        topo = new topo_torus(params);
-	// topo = dynamic_cast<Topology*>(loadModule("merlin.torus",params));
-    } else if ( !topology.compare("fattree") ) {
-        // std::cout << "Creating new topology: fattree" << std::endl;
-        topo = new topo_fattree(params);
-    } else if ( !topology.compare("dragonfly") ) {
-        // std::cout << "Creating new topology: dragonfly" << std::endl;
-        topo = new topo_dragonfly(params);
-    } else {
-	topo = dynamic_cast<Topology*>(loadModule(topology,params));
-    }
+    topo = dynamic_cast<Topology*>(loadModule(topology,params));
+    if ( !topo )
+        _abort(hr_router, "ERROR:  Unable to find topology '%s'\n", topology.c_str());
 
     // Get the Xbar arbitration
     arb = new xbar_arb_rr(num_ports,num_vcs);

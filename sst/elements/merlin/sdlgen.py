@@ -202,7 +202,7 @@ class topoFatTree(Topo):
     def getName(self):
         return "Fat Tree"
     def formatParams(self, out):
-        params["topology"] = "fattree"
+        params["topology"] = "merlin.fattree"
         params["router_radix"] = int(params["router_radix"])
         params["fattree:hosts_per_edge_rtr"] = int(params["fattree:hosts_per_edge_rtr"])
         params["fattree:loading"] = params["fattree:hosts_per_edge_rtr"]
@@ -325,7 +325,7 @@ class topoDragonFly(Topo):
         return "Dragonfly"
 
     def formatParams(self, out):
-        params["topology"] = "dragonfly"
+        params["topology"] = "merlin.dragonfly"
         params["topoNICParams"] = dict()
 
 

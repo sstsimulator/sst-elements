@@ -56,7 +56,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     addressMode = SEQUENTIAL;
 
-    if ( !params.find_string("topology").compare("fattree") ) {
+    if ( !params.find_string("topology").compare("merlin.fattree") ) {
         addressMode = FATTREE_IP;
         ft_loading = params.find_integer("fattree:loading");
         ft_radix = params.find_integer("fattree:radix");
