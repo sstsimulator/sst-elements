@@ -80,29 +80,6 @@
             <id> 0 </id>
         </params>
         <link name=0.nic2rtr port=nic latency=$nic_link_lat/>
-        <link name=xr2r.0.0.1 port=xPos latency=$rtr_link_lat/>
-        <link name=xr2r.0.0.0 port=xNeg latency=$rtr_link_lat/>
-    </component>
-
-
-    <component name=1.nic type=portals4.PtlNic rank=1 >
-        <params include=nic_params1,nic_params2>
-            <id> 1 </id>
-            <nid> 1 </nid>
-            <deviceFile> /tmp/p4nic.0  </deviceFile>
-        </params>
-        <link name=1.cpu2nic port=mmif latency=$nicCmd_link_lat/>
-        <link name=1.dmaLink port=dma latency=$nicDma_link_lat/>
-        <link name=1.nic2rtr port=rtr latency=$nic_link_lat/>
-    </component>
-
-    <component name=1.rtr type=SS_router.SS_router rank=1 >
-        <params include=rtr_params>
-            <id> 1 </id>
-        </params>
-        <link name=1.nic2rtr port=nic latency=$nic_link_lat/>
-        <link name=xr2r.0.0.0 port=xPos latency=$rtr_link_lat/>
-        <link name=xr2r.0.0.1 port=xNeg latency=$rtr_link_lat/>
     </component>
 
 
@@ -114,7 +91,7 @@
             <nid0.cpu0.base.process.cmd.2> ${ARG2} </nid0.cpu0.base.process.cmd.2>
             <nid0.cpu0.base.process.cmd.3> ${ARG3} </nid0.cpu0.base.process.cmd.3>
             <nid0.cpu0.base.process.env.0> RT_RANK=0 </nid0.cpu0.base.process.env.0>
-            <nid0.cpu0.base.process.env.1> RT_SIZE=2 </nid0.cpu0.base.process.env.1>
+            <nid0.cpu0.base.process.env.1> RT_SIZE=1 </nid0.cpu0.base.process.env.1>
             <nid0.cpu0.base.process.env.2> P4_DEVICE=/tmp/p4nic.0 </nid0.cpu0.base.process.env.2>
             <nid0.cpu0.base.process.env.3> BARRIER_UNIQUE=0       </nid0.cpu0.base.process.env.3>
             <nid0.cpu0.base.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.cpu0.base.process.env.4>
@@ -124,40 +101,13 @@
             <nid0.physmem.exe0.process.cmd.2> ${ARG2} </nid0.physmem.exe0.process.cmd.2>
             <nid0.physmem.exe0.process.cmd.3> ${ARG3} </nid0.physmem.exe0.process.cmd.3>
             <nid0.physmem.exe0.process.env.0> RT_RANK=0 </nid0.physmem.exe0.process.env.0>
-            <nid0.physmem.exe0.process.env.1> RT_SIZE=2 </nid0.physmem.exe0.process.env.1>
+            <nid0.physmem.exe0.process.env.1> RT_SIZE=1 </nid0.physmem.exe0.process.env.1>
             <nid0.physmem.exe0.process.env.2> P4_DEVICE=/tmp/p4nic.0 </nid0.physmem.exe0.process.env.2>
             <nid0.physmem.exe0.process.env.3> BARRIER_UNIQUE=0 </nid0.physmem.exe0.process.env.3>
             <nid0.physmem.exe0.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.physmem.exe0.process.env.4>
         </params>
         <link name=0.cpu2nic port=nic0 latency=$nicCmd_link_lat/>
         <link name=0.dmaLink port=dma0 latency=$nicDma_link_lat/>
-    </component>
-
-    <component name=1.cpu type=m5C.M5 rank=1 >
-        <params include=cpu_params>
-            <nid0.cpu0.base.process.nid> 1 </nid0.cpu0.base.process.nid>
-            <nid0.cpu0.base.process.cmd.0> ${M5_EXE} </nid0.cpu0.base.process.cmd.0>
-            <nid0.cpu0.base.process.cmd.1> ${ARG1} </nid0.cpu0.base.process.cmd.1>
-            <nid0.cpu0.base.process.cmd.2> ${ARG2} </nid0.cpu0.base.process.cmd.2>
-            <nid0.cpu0.base.process.cmd.3> ${ARG3} </nid0.cpu0.base.process.cmd.3>
-            <nid0.cpu0.base.process.env.0> RT_RANK=1 </nid0.cpu0.base.process.env.0>
-            <nid0.cpu0.base.process.env.1> RT_SIZE=2 </nid0.cpu0.base.process.env.1>
-            <nid0.cpu0.base.process.env.2> P4_DEVICE=/tmp/p4nic.0</nid0.cpu0.base.process.env.2>
-            <nid0.cpu0.base.process.env.3> BARRIER_UNIQUE=0</nid0.cpu0.base.process.env.3>
-            <nid0.cpu0.base.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.cpu0.base.process.env.4>
-            <nid0.cpu0.base.process.deviceFile> /tmp/p4nic.0 </nid0.cpu0.base.process.deviceFile>
-            <nid0.physmem.exe0.process.cmd.0> ${M5_EXE} </nid0.physmem.exe0.process.cmd.0>
-            <nid0.physmem.exe0.process.cmd.1> ${ARG1} </nid0.physmem.exe0.process.cmd.1>
-            <nid0.physmem.exe0.process.cmd.2> ${ARG2} </nid0.physmem.exe0.process.cmd.2>
-            <nid0.physmem.exe0.process.cmd.3> ${ARG3} </nid0.physmem.exe0.process.cmd.3>
-            <nid0.physmem.exe0.process.env.0> RT_RANK=1 </nid0.physmem.exe0.process.env.0>
-            <nid0.physmem.exe0.process.env.1> RT_SIZE=2 </nid0.physmem.exe0.process.env.1>
-            <nid0.physmem.exe0.process.env.2> P4_DEVICE=/tmp/p4nic.0 </nid0.physmem.exe0.process.env.2>
-            <nid0.physmem.exe0.process.env.3> BARRIER_UNIQUE=0 </nid0.physmem.exe0.process.env.3>
-            <nid0.physmem.exe0.process.env.4> OMPI_MCA_mtl_portals4_long_proto=rndv </nid0.physmem.exe0.process.env.4>
-        </params>
-        <link name=1.cpu2nic port=nic0 latency=$nicCmd_link_lat/>
-        <link name=1.dmaLink port=dma0 latency=$nicDma_link_lat/>
     </component>
 
 </sst>
