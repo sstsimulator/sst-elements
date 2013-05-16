@@ -41,6 +41,7 @@ DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
 #if USE_DMA_LIMIT_BW
     m_bytesPerClock = params.find_floating( "dmaEngine.bytesPerClock", -1.0 );
     assert( m_bytesPerClock > 0 ); 
+    printf("DMA_LIMIT_BW bytesPerClock %f\n",m_bytesPerClock);
 #endif
 
     assert( m_nid != -1 );
@@ -96,6 +97,7 @@ bool DmaEngine::xfer( DmaEvent::Type type, Addr vaddr,
                                         vaddr, item.addr, buf, item.length );
 #if USE_DMA_LIMIT_BW
         m_dmaQ.push_back( new DmaEvent( type, item.addr, buf,
+                                            item.length, entry ) );
 #else
         m_link->send( new DmaEvent( type, item.addr, buf, 
                                             item.length, entry ) );

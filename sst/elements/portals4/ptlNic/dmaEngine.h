@@ -19,6 +19,8 @@
 #include "ptlNicTypes.h"
 #include "dmaEvent.h"
 
+#define USE_DMA_LIMIT_BW 1
+
 #define DmaEngine_DBG( fmt, args... ) {\
     char _tmp[16]; \
     sprintf(_tmp,"%d:",m_nid); \
