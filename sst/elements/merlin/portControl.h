@@ -247,7 +247,7 @@ public:
         }
     }
 
-    void sendInitData(internal_router_event *ev)
+    void sendInitData(Event *ev)
     {
         port_link->sendInitData(ev);
     }
