@@ -31,7 +31,7 @@
         <InputQSize_flits>        96  </InputQSize_flits>
         <Router2NodeQSize_flits>  1024 </Router2NodeQSize_flits>
 
-        <network.xDimSize> 2 </network.xDimSize>
+        <network.xDimSize> 1 </network.xDimSize>
         <network.yDimSize> 1 </network.yDimSize>
         <network.zDimSize> 1 </network.zDimSize>
 

@@ -31,7 +31,7 @@
         <InputQSize_flits>        96  </InputQSize_flits>
         <Router2NodeQSize_flits>  1024 </Router2NodeQSize_flits>
 
-        <network.xDimSize> 2 </network.xDimSize>
+        <network.xDimSize> 4 </network.xDimSize>
         <network.yDimSize> 1 </network.yDimSize>
         <network.zDimSize> 1 </network.zDimSize>
 
@@ -58,7 +58,7 @@
         <info> yes </info>
         <registerExit> yes </registerExit>
         <configFile> common-M5.xml </configFile>
-        <numBarrier> 3 </numBarrier>
+        <numBarrier> 1 </numBarrier>
     </cpu_params>
 
 </param_include>

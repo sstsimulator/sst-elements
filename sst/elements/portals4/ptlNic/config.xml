@@ -43,6 +43,7 @@
 
     <nic_params1>
         <clock>500Mhz</clock>
+        <dmaEngine.bytesPerClock> 6 </dmaEngine.bytesPerClock>
     </nic_params1>
 
     <nic_params2>
