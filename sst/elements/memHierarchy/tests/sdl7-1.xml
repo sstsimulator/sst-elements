@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+
+<!--
+     Test for two mem controllers, sequential layout
+-->
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 50 ps </buslat>
+</variables>
+
+
+<sst>
+	<component name="cpu" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 10000 </num_loadstore>
+		</params>
+		<link name=cpu_cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 32 </blocksize>
+			<access_time> 2 ns</access_time>
+			<num_upstream> 1 </num_upstream>
+		</params>
+		<link name=cpu_cache_link port=upstream0 latency=$lat />
+		<link name=cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 3 </numPorts>
+			<busDelay> 20 ns </busDelay>
+		</params>
+		<link name=cache_bus_link port=port0 latency=$buslat />
+		<link name=mem1_bus_link port=port1 latency=$buslat />
+		<link name=mem2_bus_link port=port2 latency=$buslat />
+	</component>
+
+
+	<component name="memory1" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 8 </mem_size>
+            <rangeStart> 0x0000000 </rangeStart> <!-- Start at 0MB -->
+			<clock> 1GHz </clock>
+			<use_dramsim> 0 </use_dramsim>
+			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
+			<system_ini> system.ini </system_ini>
+		</params>
+		<link name=mem1_bus_link port=snoop_link latency=$buslat />
+	</component>
+   
+	<component name="memory2" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 8 </mem_size>
+            <rangeStart> 0x800000 </rangeStart> <!-- Start at 8MB -->
+			<clock> 1GHz </clock>
+			<use_dramsim> 0 </use_dramsim>
+			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
+			<system_ini> system.ini </system_ini>
+		</params>
+		<link name=mem2_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+</sst>
