@@ -113,7 +113,7 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo) {  //deallocate processors
 
 vector<int>* SimpleMachine::freeProcessors(){
     vector<int>* retVal = new vector<int>();
-    for (int i = 0; i < freeNodes.size(); i++)
+    for (unsigned int i = 0; i < freeNodes.size(); i++)
         retVal->push_back( freeNodes[i] );
     return retVal;
 }

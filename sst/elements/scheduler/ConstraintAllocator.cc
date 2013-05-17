@@ -114,7 +114,7 @@ AllocInfo* ConstraintAllocator::allocate(Job* job) {
 // and try again until cluster is down to just two nodes
 
     
- int i,j;
+  unsigned int i,j;
   int depcount;
   std::string suspect; // this will be set to a node u such that a \in D[u]
   vector<int> FreeNodes; // not dependent on any node in Cluster
