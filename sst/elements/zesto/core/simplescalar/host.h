@@ -95,7 +95,7 @@ typedef unsigned char byte_t;		/* byte - 8 bits */
 typedef signed char sbyte_t;
 typedef unsigned short word_t;		/* word - 16 bits */
 typedef signed short sword_t;
-typedef unsigned int dword_t;		/* double word - 32 bits */
+typedef unsigned int __attribute__((__may_alias__)) dword_t;		/* double word - 32 bits */
 typedef signed int sdword_t;
 typedef float sfloat_t;			/* single-precision float - 32 bits */
 typedef double dfloat_t;		/* double-precision float - 64 bits */

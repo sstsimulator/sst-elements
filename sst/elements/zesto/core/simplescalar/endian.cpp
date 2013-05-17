@@ -72,7 +72,9 @@ endian_host_byte_order(void)
 enum endian_t
 endian_host_word_order(void)
 {
-  int *p;
+  typedef int __attribute__((__may_alias__)) int_a;  // Workaround for "warning: dereferencing pointer p does break strict-aliasing rules"
+  int_a *p;
+//  int *p;
   double x = 1.0;
 
   /* NOTE: this check assumes IEEE floating point format */
