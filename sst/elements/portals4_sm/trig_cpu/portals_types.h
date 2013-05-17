@@ -337,7 +337,7 @@ typedef struct {
     ptl_size_t       remote_offset;  // 4 bytes
 //     void *           get_start;      // 8 bytes
     uint64_t         header_data;    // 8 bytes
-} ptl_header_t;
+} __attribute__((__may_alias__)) ptl_header_t;
 
 typedef struct {
     ptl_header_t header;

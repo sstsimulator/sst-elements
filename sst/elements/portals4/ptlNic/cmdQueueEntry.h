@@ -194,7 +194,7 @@ typedef struct {
     int type; 
     int ctx_id;
     cmdUnion_t u;
-} cmdQueueEntry_t;
+} __attribute__((__may_alias__)) cmdQueueEntry_t;
 
 #ifndef __NOT_SST__
 }
