@@ -135,7 +135,7 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
 
  // std::cout << "self_proc_link is " << self_proc_link_ << "\n";
 	
-	long nodenum = macroparams->get_long_param("node_num");
+//	long nodenum = macroparams->get_long_param("node_num");
 
 	node_ = SSTNodeFactory::get_node(macroparams->get_param("node_name"), macroparams);
 	node_ = node_->clone(myid_);
