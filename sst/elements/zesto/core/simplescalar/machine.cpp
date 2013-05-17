@@ -994,48 +994,48 @@ const struct md_reg_names_t md_reg_names[] =
   /* name */	/* file */	/* reg */
 
   /* integer register file */
-  { "EAX",	rt_gpr,		0 },
-  { "ECX",	rt_gpr,		1 },
-  { "EDX",	rt_gpr,		2 },
-  { "EBX",	rt_gpr,		3 },
-  { "ESP",	rt_gpr,		4 },
-  { "EBP",	rt_gpr,		5 },
-  { "ESI",	rt_gpr,		6 },
-  { "EDI",	rt_gpr,		7 },
-  { "TMP0",	rt_gpr,		8 },
-  { "TMP1",	rt_gpr,		9 },
-  { "TMP2",	rt_gpr,		10 },
-  { "TMP3",	rt_gpr,		11 },
-  { "TMP4",	rt_gpr,		12 },
-  { "TMP5",	rt_gpr,		13 },
-  { "TMP6",	rt_gpr,		14 },
-  { "ZERO",	rt_gpr,		15 },
+  { (char*)"EAX",	rt_gpr,		0 },
+  { (char*)"ECX",	rt_gpr,		1 },
+  { (char*)"EDX",	rt_gpr,		2 },
+  { (char*)"EBX",	rt_gpr,		3 },
+  { (char*)"ESP",	rt_gpr,		4 },
+  { (char*)"EBP",	rt_gpr,		5 },
+  { (char*)"ESI",	rt_gpr,		6 },
+  { (char*)"EDI",	rt_gpr,		7 },
+  { (char*)"TMP0",	rt_gpr,		8 },
+  { (char*)"TMP1",	rt_gpr,		9 },
+  { (char*)"TMP2",	rt_gpr,		10 },
+  { (char*)"TMP3",	rt_gpr,		11 },
+  { (char*)"TMP4",	rt_gpr,		12 },
+  { (char*)"TMP5",	rt_gpr,		13 },
+  { (char*)"TMP6",	rt_gpr,		14 },
+  { (char*)"ZERO",	rt_gpr,		15 },
 
   /* floating point register file - double precision */
-  { "ST(0)",	rt_fpr,		0 },
-  { "ST(1)",	rt_fpr,		1 },
-  { "ST(2)",	rt_fpr,		2 },
-  { "ST(3)",	rt_fpr,		3 },
-  { "ST(4)",	rt_fpr,		4 },
-  { "ST(5)",	rt_fpr,		5 },
-  { "ST(6)",	rt_fpr,		6 },
-  { "ST(7)",	rt_fpr,		7 },
-  { "FTMP0",	rt_fpr,		8 },
-  { "FTMP1",	rt_fpr,		9 },
-  { "FTMP2",	rt_fpr,		10 },
-  { "FTMP3",	rt_fpr,		11 },
-  { "FTMP4",	rt_fpr,		12 },
-  { "FTMP5",	rt_fpr,		13 },
-  { "FTMP6",	rt_fpr,		14 },
-  { "FTMP7",	rt_fpr,		15 },
+  { (char*)"ST(0)",	rt_fpr,		0 },
+  { (char*)"ST(1)",	rt_fpr,		1 },
+  { (char*)"ST(2)",	rt_fpr,		2 },
+  { (char*)"ST(3)",	rt_fpr,		3 },
+  { (char*)"ST(4)",	rt_fpr,		4 },
+  { (char*)"ST(5)",	rt_fpr,		5 },
+  { (char*)"ST(6)",	rt_fpr,		6 },
+  { (char*)"ST(7)",	rt_fpr,		7 },
+  { (char*)"FTMP0",	rt_fpr,		8 },
+  { (char*)"FTMP1",	rt_fpr,		9 },
+  { (char*)"FTMP2",	rt_fpr,		10 },
+  { (char*)"FTMP3",	rt_fpr,		11 },
+  { (char*)"FTMP4",	rt_fpr,		12 },
+  { (char*)"FTMP5",	rt_fpr,		13 },
+  { (char*)"FTMP6",	rt_fpr,		14 },
+  { (char*)"FTMP7",	rt_fpr,		15 },
 
   /* miscellaneous registers */
-  { "AFLAGS",	rt_ctrl,	0 },
-  { "FSW",	rt_ctrl,	1 },
+  { (char*)"AFLAGS",	rt_ctrl,	0 },
+  { (char*)"FSW",	rt_ctrl,	1 },
 
   /* program counters */
-  { "$pc",	rt_PC,		0 },
-  { "$npc",	rt_NPC,		0 },
+  { (char*)"$pc",	rt_PC,		0 },
+  { (char*)"$npc",	rt_NPC,		0 },
 
   /* sentinel */
   { NULL,	rt_gpr,		0 }
@@ -1068,7 +1068,7 @@ md_reg_obj(struct regs_t *regs,			/* registers to access */
   {
     case rt_gpr:
       if (reg < 0 || reg >= MD_NUM_IREGS)
-        return "register number out of range";
+        return (char*)"register number out of range";
 
       if (!is_write)
       {
@@ -1081,7 +1081,7 @@ md_reg_obj(struct regs_t *regs,			/* registers to access */
 
     case rt_lpr:
       if (reg < 0 || reg >= MD_NUM_FREGS)
-        return "register number out of range";
+        return (char*)"register number out of range";
 
       if (!is_write)
       {
@@ -1094,7 +1094,7 @@ md_reg_obj(struct regs_t *regs,			/* registers to access */
 
     case rt_fpr:
       if (reg < 0 || reg >= MD_NUM_FREGS)
-        return "register number out of range";
+        return (char*)"register number out of range";
 
       if (!is_write)
       {
@@ -1263,7 +1263,7 @@ const unsigned int md_op2flags[OP_MAX] = {
 
 
   static unsigned long
-md_set_decoder(char *name,
+md_set_decoder(const char *name,
     unsigned long mskbits, unsigned long offset,
     enum md_opcode op, unsigned long max_offset)
 {

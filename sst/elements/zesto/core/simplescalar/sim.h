@@ -263,7 +263,7 @@ static inline void SYMCAT(OP,_IMPL_FUNC)(struct thread_t * thread, struct Mop_t 
 
 extern jmp_buf sim_exit_buf;
 
-static int orphan_fn(int i, int argc, char **argv)
+static int __attribute__ ((unused)) orphan_fn(int i, int argc, char **argv)
 {
   return /* done */FALSE;
 }
