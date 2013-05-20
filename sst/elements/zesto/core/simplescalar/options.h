@@ -170,24 +170,24 @@ opt_reg_long_long(struct opt_odb_t *odb,	/* option database */
 /* register an integer option variable */
 void
 opt_reg_int(struct opt_odb_t *odb,	/* option database */
-	    const char *name,			/* option name */
-	    const char *desc,			/* option description */
+	    char *name,			/* option name */
+	    char *desc,			/* option description */
 	    int *var,			/* pointer to option variable */
 	    int def_val,		/* default value of option variable */
 	    int print,			/* print during `-dumpconfig' */
-	    const char *format);		/* optional user print format */
+	    char *format);		/* optional user print format */
 
 /* register an integer option list */
 void
 opt_reg_int_list(struct opt_odb_t *odb,	/* option database */
-		 const char *name,		/* option name */
-		 const char *desc,		/* option description */
+		 char *name,		/* option name */
+		 char *desc,		/* option description */
 		 int *vars,		/* pointer to option array */
 		 int nvars,		/* total entries in option array */
 		 int *nelt,		/* number of entries parsed */
 		 int *def_val,		/* default value of option array */
 		 int print,		/* print during `-dumpconfig'? */
-		 const char *format,		/* optional user print format */
+		 char *format,		/* optional user print format */
 		 int accrue);		/* accrue list across uses */
 
 /* register an unsigned integer option variable */
@@ -295,12 +295,12 @@ opt_reg_enum_list(struct opt_odb_t *odb,/* option data base */
 /* register a boolean flag option variable */
 void
 opt_reg_flag(struct opt_odb_t *odb,	/* option data base */
-	     const char *name,		/* option name */
-	     const char *desc,		/* option description */
+	     char *name,		/* option name */
+	     char *desc,		/* option description */
 	     bool *var,			/* target variable */
 	     bool def_val,		/* default variable value */
 	     int print,			/* print during `-dumpconfig'? */
-	     const char *format);		/* optional value print format */
+	     char *format);		/* optional value print format */
 
 /* register a boolean flag option array */
 void
@@ -318,12 +318,12 @@ opt_reg_flag_list(struct opt_odb_t *odb,/* option database */
 /* register a string option variable */
 void
 opt_reg_string(struct opt_odb_t *odb,	/* option data base */
-	       const char *name,		/* option name */
-	       const char *desc,		/* option description */
+	       char *name,		/* option name */
+	       char *desc,		/* option description */
 	       char **var,		/* pointer to string option variable */
-	       const char *def_val,		/* default variable value */
+	       char *def_val,		/* default variable value */
 	       int print,		/* print during `-dumpconfig'? */
-	       const char *format);		/* optional value print format */
+	       char *format);		/* optional value print format */
 
 /* register a string option array */
 void
