@@ -14,7 +14,7 @@
 
 #include "cmdQueueEntry.h"
 
-#ifndef __NOT_SST__
+#ifdef __SST__
 namespace SST {
 namespace Portals4 {
 #endif
@@ -28,7 +28,7 @@ typedef struct {
 
 #define ME_UNLINKED_SIZE 64 
 
-#ifndef __NOT_SST__
+#ifdef __SST__
 }
 }
 #endif
