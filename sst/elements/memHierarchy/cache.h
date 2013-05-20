@@ -16,6 +16,8 @@
 #include <map>
 #include <list>
 
+#include <inttypes.h>
+
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -92,8 +94,8 @@ private:
 			assert(locked == 0);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
-			__DBG( DBG_CACHE, CacheBlock, "%s: Activating block (%u, %u) for Address 0x%lx.\t"
-					"baseAddr: 0x%lx  Tag: 0x%lx\n", cache->getName().c_str(), row, col, addr, baseAddr, tag);
+			__DBG( DBG_CACHE, CacheBlock, "%s: Activating block (%u, %u) for Address 0x%"PRIx64".\t"
+					"baseAddr: 0x%"PRIx64"  Tag: 0x%"PRIx64"\n", cache->getName().c_str(), row, col, addr, baseAddr, tag);
 			status = ASSIGNED;
 		}
 
@@ -102,11 +104,11 @@ private:
 		bool isAssigned(void) const { return (status == ASSIGNED); }
 
         void lock() {
-            __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%lx] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);
+            __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);
             locked++;
         }
         void unlock() {
-            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p [0x%lx] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked-1);
+            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked-1);
             assert(locked);
             locked--;
         }
@@ -160,7 +162,7 @@ private:
             __DBG( DBG_CACHE, CacheRow, "Event is number %zu in queue for this row.\n",
                     waitingEvents[cache->addrToBlockAddr(ev->getAddr())].size());
 			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-                __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%lx] is: %s\n",
+                __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%"PRIx64"] is: %s\n",
                         blocks[i].baseAddr,
                         blocks[i].isAssigned() ?
                             "Assigned" :
@@ -252,7 +254,7 @@ private:
 		void request(MemEvent *event, BusFinishHandler *finishHandler = NULL, BusInitHandler *initHandler = NULL)
 		{
             queue.push_back(event);
-            __DBG( DBG_CACHE, BusQueue, "Queued event 0x%lx in position %zu!\n", makeBusKey(event), queue.size());
+            __DBG( DBG_CACHE, BusQueue, "Queued event 0x%"PRIx64" in position %zu!\n", makeBusKey(event), queue.size());
             BusHandlers bh = {initHandler, finishHandler};
             map[event] = bh;
             link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
@@ -267,7 +269,7 @@ private:
 				retval = i->second;
 				map.erase(i);
                 link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
-                __DBG( DBG_CACHE, BusQueue, "Sending cancel for req 0x%lx\n", makeBusKey(event));
+                __DBG( DBG_CACHE, BusQueue, "Sending cancel for req 0x%"PRIx64"\n", makeBusKey(event));
 			} else {
                 __DBG( DBG_CACHE, BusQueue, "Unable to find a request to cancel!\n");
             }
@@ -284,12 +286,12 @@ private:
 			} else {
 				MemEvent *ev = queue.front();
                 if ( busEvent->getAddr() != makeBusKey(ev) ) {
-                    __DBG( DBG_CACHE, BusQueue, "Bus asking for event 0x%lx.  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", busEvent->getAddr());
+                    __DBG( DBG_CACHE, BusQueue, "Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", busEvent->getAddr());
                     return;
                 }
 				queue.pop_front();
 
-				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%lx) [Queue: %zu]!\n", CommandString[ev->getCmd()], ev->getAddr(), queue.size());
+				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%"PRIx64") [Queue: %zu]!\n", CommandString[ev->getCmd()], ev->getAddr(), queue.size());
 
 
                 BusHandlers bh = {NULL, NULL};

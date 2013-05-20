@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -140,7 +141,7 @@ void MemController::init(unsigned int phase)
         if ( me ) {
             /* Push data to memory */
             if ( me->getCmd() == WriteReq ) {
-                //printf("Memory received Init Command: of size 0x%x at addr 0x%lx\n", me->getSize(), me->getAddr() );
+                //printf("Memory received Init Command: of size 0x%x at addr 0x%"PRIx64"\n", me->getSize(), me->getAddr() );
                 if ( isRequestAddressValid(me) ) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
@@ -227,18 +228,18 @@ void MemController::handleEvent(SST::Event *event)
 
 void MemController::addRequest(MemEvent *ev)
 {
-	DPRINTF("New Memory Request for 0x%lx\n", ev->getAddr());
+	DPRINTF("New Memory Request for 0x%"PRIx64"\n", ev->getAddr());
 
     if ( isRequestAddressValid(ev) ) {
 
         DRAMReq *req = new DRAMReq(ev, requestSize);
-        DPRINTF("Creating DRAM Request for 0x%lx (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
+        DPRINTF("Creating DRAM Request for 0x%"PRIx64" (%s)\n", req->addr, req->isWrite ? "WRITE" : "READ");
 
         requests.push_back(req);
         requestQueue.push_back(req);
     } else {
         /* TODO:  Ideally, if this came over as a direct message, not over a bus, we should NAK this */
-        DPRINTF("Ignoring request for 0x%lx as it isn't in our range. [0x%lx - 0x%lx]\n",
+        DPRINTF("Ignoring request for 0x%"PRIx64" as it isn't in our range. [0x%"PRIx64" - 0x%"PRIx64"]\n",
                 ev->getAddr(), rangeStart, rangeStart + memSize);
     }
 
@@ -247,7 +248,7 @@ void MemController::addRequest(MemEvent *ev)
 
 void MemController::cancelEvent(MemEvent* ev)
 {
-	DPRINTF("Looking to cancel for (0x%lx)\n", ev->getAddr());
+	DPRINTF("Looking to cancel for (0x%"PRIx64")\n", ev->getAddr());
     for ( size_t i = 0 ; i < requests.size() ; ++i ) {
         if ( requests[i]->isSatisfiedBy(ev) ) {
             if ( !requests[i]->isWrite && !requests[i]->canceled ) {
@@ -289,11 +290,11 @@ bool MemController::clock(Cycle_t cycle)
             if ( !ok ) break;
             ok = memSystem->addTransaction(req->isWrite, addr);
             if ( !ok ) break;  // This *SHOULD* always be ok
-            DPRINTF("Issued transaction for address 0x%lx\n", addr);
+            DPRINTF("Issued transaction for address 0x%"PRIx64"\n", addr);
             dramReqs[addr].push_back(req);
 #endif
         } else {
-            DPRINTF("Issued transaction for address 0x%lx\n", addr);
+            DPRINTF("Issued transaction for address 0x%"PRIx64"\n", addr);
             self_link->send(new MemCtrlEvent(req));
         }
 
@@ -365,7 +366,7 @@ void MemController::performRequest(DRAMReq *req)
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
 			memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
 		}
-        DPRINTF("Writing Memory: %zu bytes beginning at 0x%lx [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
+        DPRINTF("Writing Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
                 req->size, req->addr,
                 memBuffer[localAddr + 0], memBuffer[localAddr + 1],
                 memBuffer[localAddr + 2], memBuffer[localAddr + 3],
@@ -375,7 +376,7 @@ void MemController::performRequest(DRAMReq *req)
 		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) {
 			resp->getPayload()[i] = memBuffer[localAddr + i];
 		}
-        DPRINTF("Reading Memory: %zu bytes beginning at 0x%lx [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
+        DPRINTF("Reading Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
                 req->size, req->addr,
                 memBuffer[localAddr + 0], memBuffer[localAddr + 1],
                 memBuffer[localAddr + 2], memBuffer[localAddr + 3],
@@ -399,7 +400,7 @@ void MemController::sendBusPacket(void)
             req->status = DRAMReq::DONE;
 			if ( !req->canceled ) {
                 MemEvent *ev = req->respEvent;
-				DPRINTF("Sending (%lu, %d) in response to (%lu, %d) 0x%lx\n",
+				DPRINTF("Sending (%"PRIu64", %d) in response to (%"PRIu64", %d) 0x%"PRIx64"\n",
 						ev->getID().first, ev->getID().second,
 						ev->getResponseToID().first, ev->getResponseToID().second,
 						ev->getAddr());
@@ -429,7 +430,7 @@ void MemController::sendResponse(DRAMReq *req)
 
 void MemController::handleMemResponse(DRAMReq *req)
 {
-    DPRINTF("Finishing processing for req 0x%lx\n", req->addr);
+    DPRINTF("Finishing processing for req 0x%"PRIx64"\n", req->addr);
     req->amt_processed += requestSize;
     if ( req->amt_processed >= req->size ) {
         req->status = DRAMReq::RETURNED;
@@ -463,7 +464,7 @@ void MemController::handleSelfEvent(SST::Event *event)
 void MemController::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
 {
     std::deque<DRAMReq *> &reqs = dramReqs[addr];
-    DPRINTF("Memory Request for 0x%lx Finished [%zu reqs]\n", addr, reqs.size());
+    DPRINTF("Memory Request for 0x%"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
     assert(reqs.size());
     DRAMReq *req = reqs.front();
     reqs.pop_front();

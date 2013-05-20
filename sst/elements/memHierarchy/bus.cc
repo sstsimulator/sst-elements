@@ -1,16 +1,17 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 #include <sstream>
 #include <assert.h>
+#include <inttypes.h>
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -101,7 +102,7 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 {
 
 	busRequests.push_back(std::make_pair(link_id, key));
-	DPRINTF("(%lu, 0x%lx) [active = %lu] queue depth = %zu \n", link_id, key, activePort.first, busRequests.size());
+	DPRINTF("(%lu, 0x%"PRIx64") [active = %lu] queue depth = %zu \n", link_id, key, activePort.first, busRequests.size());
 
 	if ( activePort.first == BUS_INACTIVE ) {
 		// Nobody's active.  Schedule it.
@@ -112,7 +113,7 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 
 void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 {
-	DPRINTF("(%lu, 0x%lx) [active = %lu]\n", link_id, key, activePort.first);
+	DPRINTF("(%lu, 0x%"PRIx64") [active = %lu]\n", link_id, key, activePort.first);
 
     if ( link_id == activePort.first && (key == activePort.second || key == 0)) {
         DPRINTF("Canceling active.  Rescheduling\n");
@@ -123,7 +124,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
     for ( std::deque<std::pair<LinkId_t, Addr> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
         if ( i->first == link_id && i->second == key) {
             busRequests.erase(i);
-            DPRINTF("Canceling (%lu, 0x%lx\n", link_id, key);
+            DPRINTF("Canceling (%lu, 0x%"PRIx64"\n", link_id, key);
             break;
         }
     }
@@ -134,7 +135,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 
 void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 {
-	DPRINTF("(%s -> %s: (%lu, %d) %s 0x%lx) [active = %lu]\n",
+	DPRINTF("(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
 			ev->getSrc().c_str(), ev->getDst().c_str(),
             ev->getID().first, ev->getID().second,
 			CommandString[ev->getCmd()], ev->getAddr(),
@@ -199,7 +200,7 @@ void Bus::schedule(void)
     std::pair<LinkId_t, Addr> next_id = arbitrateNext();
 	if ( next_id.first != BUS_INACTIVE ) {
 		activePort = next_id;
-		DPRINTF("Setting activePort = (%lu, 0x%lx)\n", activePort.first, activePort.second);
+		DPRINTF("Setting activePort = (%lu, 0x%"PRIx64")\n", activePort.first, activePort.second);
 		linkMap[next_id.first]->send(new MemEvent(this, next_id.second, BusClearToSend));
 	}
 }

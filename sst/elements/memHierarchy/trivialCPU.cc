@@ -1,13 +1,15 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+
+#include <inttypes.h>
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -95,11 +97,11 @@ void trivialCPU::handleEvent(Event *ev)
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
 		if ( i == requests.end() ) {
-			_abort(trivialCPU, "Event (%lu, %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
+			_abort(trivialCPU, "Event (%"PRIu64", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			printf("%s: Received MemEvent with command %d (response to %lu, addr 0x%lx) [Time: %lu] [%zu outstanding requests]\n",
+			printf("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
 					getName().c_str(),
 					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
                     requests.size());
@@ -141,10 +143,10 @@ bool trivialCPU::clockTic( Cycle_t )
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&addr);
 			}
-			mem_link->send(e); 
+			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			printf("%s: %d Issued %s (%lu) for address 0x%lx\n",
+			printf("%s: %d Issued %s (%"PRIu64") for address 0x%"PRIx64"\n",
 					getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, addr);
 			num_reads_issued++;
 

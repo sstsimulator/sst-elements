@@ -1,16 +1,18 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
 #ifndef _TRIVIALCPU_H
 #define _TRIVIALCPU_H
+
+#include <inttypes.h>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -29,10 +31,9 @@ public:
 
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init();
-	void finish() { 
-		printf("TrivialCPU Finished after %lu issued reads, %lu returned\n",
+	void finish() {
+		printf("TrivialCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned\n",
 				num_reads_issued, num_reads_returned);
-//		return 0;
 	}
 
 private:
