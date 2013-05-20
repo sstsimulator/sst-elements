@@ -167,6 +167,12 @@ void schedComponent::setup(){
   readJobs();
 
   if( useYumYumTraceFormat ){
+
+      // in case there were no jobs in the joblist
+    if( jobs.empty() ){
+      unregisterYourself();
+    }
+
     CommunicationEvent * CommEvent = new CommunicationEvent( START_FILE_WATCH );
     CommEvent->payload = & jobListFileName;
     selfLink->send( CommEvent ); 
