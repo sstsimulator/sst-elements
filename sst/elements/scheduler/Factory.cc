@@ -317,11 +317,15 @@ Allocator* Factory::getAllocator(SST::Component::Params_t& params, Machine* m){
 
     //Constraint Allocator tries to separate nodes whose estimated failure rates are close
       case CONSTRAINT:
+        if( params.find( "ConstraintAllocatorDependencies" ) == params.end() )
+	  error( "Constraint Allocator requires ConstraintAllocatorDependencies scheduler parameter" );
+	if( params.find( "ConstraintAllocatorConstraints" ) == params.end() )
+	  error( "Constraint Allocator requires ConstraintAllocatorConstraints scheduler parameter" );
         {SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
         if(mach == NULL)
             error("ConstraintAllocator requires SimpleMachine");
         // will get these file names from schedparams eventually
-        return new ConstraintAllocator(mach, "/tmp/Dependencies.txt", "/tmp/Constraints.txt");
+        return new ConstraintAllocator(mach, params.find( "ConstraintAllocatorDependencies" ).second, params.find( "ConstraintAllocatorConstraints" ).second );
         break;
         }
       default:
