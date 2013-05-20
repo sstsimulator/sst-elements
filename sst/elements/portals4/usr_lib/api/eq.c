@@ -14,6 +14,9 @@
  */
 #include <portals4.h>
 #include <ptl_internal_netIf.h>
+#include <ptl_internal_debug.h>
+#include <assert.h>
+#include <stdlib.h>
 
 int PtlEQAlloc(ptl_handle_ni_t      ni_handle,
                ptl_size_t           count,
@@ -58,6 +61,8 @@ int PtlEQGet(ptl_handle_eq_t    eq_handle,
     ptl_handle_ni_t ni_handle;
     PtlNIHandle( eq_handle, &ni_handle );
 
+    PTL_DBG("\n");
+
     const ptl_internal_handle_converter_t ni = { ni_handle };
     const ptl_internal_handle_converter_t eq = { eq_handle };
 
@@ -74,6 +79,8 @@ int PtlEQWait(ptl_handle_eq_t   eq_handle,
 {
     ptl_handle_ni_t ni_handle;
     PtlNIHandle( eq_handle, &ni_handle );
+
+    PTL_DBG("\n");
 
     const ptl_internal_handle_converter_t ni = { ni_handle };
     const ptl_internal_handle_converter_t eq = { eq_handle };
@@ -92,5 +99,34 @@ int PtlEQPoll(const ptl_handle_eq_t *eq_handles,
               ptl_event_t *         event,
               unsigned int *        which)
 {
-    return PTL_FAIL;
+    ptl_handle_ni_t ni_handle;
+    int i;
+
+    PTL_DBG("\n");
+
+    if ( size <= 0 ) return PTL_ARG_INVALID;
+
+    PtlNIHandle( eq_handles[0], &ni_handle );
+
+    ptl_handle_eq_t* xx = (ptl_handle_eq_t*)
+                        malloc( sizeof(ptl_handle_eq_t ) * size );
+
+    for ( i = 0; i < size; i++ ) {
+        ptl_handle_ni_t tmp;
+        PtlNIHandle( eq_handles[i], &tmp );
+        assert ( tmp == ni_handle );
+
+        const ptl_internal_handle_converter_t eq = { eq_handles[i] };
+        xx[i] = eq.s.code; 
+    }
+
+    const ptl_internal_handle_converter_t ni = { ni_handle };
+
+    struct PtlAPI* api = GetPtlAPI( ni );
+
+    int retval = api->PtlEQPoll( api, xx, size, timeout, event, which );
+    free( xx );
+    if ( retval < 0 )  return -retval;
+
+    return PTL_OK;
 }

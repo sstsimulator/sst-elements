@@ -191,6 +191,14 @@ static int ptlEQGet( struct ::PtlAPI* obj, ptl_handle_eq_t   eq_handle,
     return ((PtlAPI*) obj->data)->ptlEQGet( eq_handle, event ); 
 }
 
+static int ptlEQPoll( struct ::PtlAPI* obj, ptl_handle_eq_t*   eq_handles,
+        unsigned int size, ptl_time_t timeout, 
+        ptl_event_t* event, unsigned int *which)
+{
+    return ((PtlAPI*) obj->data)->ptlEQPoll( eq_handles, size, timeout, 
+                            event, which );
+}
+
 static struct ::PtlAPI* initPtlIF( struct ::PtlIF* obj )
 {
     struct ::PtlAPI*  ptlAPI = (struct ::PtlAPI*)malloc( sizeof(*ptlAPI) );
@@ -214,6 +222,7 @@ static struct ::PtlAPI* initPtlIF( struct ::PtlIF* obj )
     ptlAPI->PtlEQFree   = ptlEQFree;
     ptlAPI->PtlEQWait   = ptlEQWait;
     ptlAPI->PtlEQGet    = ptlEQGet;
+    ptlAPI->PtlEQPoll    = ptlEQPoll;
     ptlAPI->data = new PtlAPI( *(PtlIF*) obj->data );
     return ptlAPI;
 }

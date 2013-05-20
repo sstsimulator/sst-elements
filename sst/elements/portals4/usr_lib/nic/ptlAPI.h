@@ -310,6 +310,24 @@ class PtlAPI {
         ++foo->count;
         return PTL_OK;
     }
+    int ptlEQPoll(ptl_handle_eq_t* eq_handles, unsigned int size, 
+                ptl_time_t timeout, ptl_event_t* event, unsigned int* which )
+    {
+        int retval;
+        // timeout not supported
+        if ( timeout != 0 ) return -PTL_ARG_INVALID;
+
+        for ( unsigned int i = 0; i < size; i++ ) {
+            retval = ptlEQGet( eq_handles[i], event );
+
+            *which = i;
+        
+            if ( retval != -PTL_EQ_EMPTY)  {
+                break;
+            }
+        }
+        return retval;
+    }
 
     int ptlPut(ptl_handle_md_t  md_handle,
            ptl_size_t       local_offset,
