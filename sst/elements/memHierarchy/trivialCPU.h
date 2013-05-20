@@ -12,6 +12,9 @@
 #ifndef _TRIVIALCPU_H
 #define _TRIVIALCPU_H
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
 
 #include <sst/core/event.h>

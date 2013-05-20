@@ -9,6 +9,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
 
 #include <sst_config.h>
