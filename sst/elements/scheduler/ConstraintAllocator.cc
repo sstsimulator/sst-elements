@@ -177,7 +177,7 @@ while((Cluster.size() > 1) && !sepAllocExists){
   // this is lower priority; current heuristic of 'use up Only[u] first'
   // is reasonable
   if (sepAllocExists) { // allocate to depend on u only
-    cout << "Found Allocation Separating " << u << std::endl;
+    cout << "Found Allocation Separating " << u << " for job "  << job->getJobNum() << std::endl;
     i=0;
     while((i<Only[u].size()) && (Alloc.size() < numProcs))
         Alloc.push_back(Only[u][i++]);
@@ -188,7 +188,7 @@ while((Cluster.size() > 1) && !sepAllocExists){
         retVal->nodeIndices[i] = Alloc[i];
   }
   else {
-      cout << "Failed to find separating allocation\n";
+      //cout << "Failed to find separating allocation for job " << job.getJobNum() << std:endl;
       // return 'empty' allocation to SimpleMachine;
       // this will produce default allocation
       retVal->nodeIndices[0] = -1;

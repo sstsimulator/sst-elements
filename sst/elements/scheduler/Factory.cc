@@ -325,7 +325,7 @@ Allocator* Factory::getAllocator(SST::Component::Params_t& params, Machine* m){
         if(mach == NULL)
             error("ConstraintAllocator requires SimpleMachine");
         // will get these file names from schedparams eventually
-        return new ConstraintAllocator(mach, params.find( "ConstraintAllocatorDependencies" ).second, params.find( "ConstraintAllocatorConstraints" ).second );
+        return new ConstraintAllocator(mach, params.find( "ConstraintAllocatorDependencies" )->second, params.find( "ConstraintAllocatorConstraints" )->second );
         break;
         }
       default:
