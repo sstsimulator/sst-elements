@@ -21,7 +21,7 @@
 
 #include <stdint.h> /* assume C99, for uint64_t */
 
-#ifndef __NOT_SST__
+#ifdef __SST__
 namespace SST {
 namespace Portals4 {
 #endif
@@ -409,6 +409,7 @@ typedef enum {
     PTL_NI_UNDELIVERABLE,  /*!< Indicates a system failure that prevents message
                             * delivery. */
     PTL_NI_DROPPED,        /*!< Indicates that a message was dropped for some reason. */
+    PTL_NI_PT_DISABLED,
     PTL_NI_FLOW_CTRL,      /*!< Indicates that the remote node has exhausted its
                             * resources, enabled flow control, and dropped this
                             * message. */
@@ -2735,6 +2736,10 @@ typedef struct {
     /*! Indicates the type of the event. */
     ptl_event_kind_t type;
 
+    /*! The list entry or match list entry list in which the operation
+     * was delivered */
+    ptl_list_t ptl_list;
+
     /*! The portal table index where the message arrived. */
     ptl_pt_index_t pt_index;
 
@@ -3400,7 +3405,7 @@ int PtlHandleIsEqual(ptl_handle_any_t handle1,
                      ptl_handle_any_t handle2);
 /*! @} */
 
-#ifndef __NOT_SST__
+#ifdef __SST__
 }
 }
 #endif

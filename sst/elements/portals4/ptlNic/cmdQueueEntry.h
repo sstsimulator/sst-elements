@@ -18,7 +18,7 @@
 #include "portals4.h"
 #include "ptlEvent.h"
 
-#ifndef __NOT_SST__
+#ifdef __SST__
 namespace SST {
 namespace Portals4 {
 #endif
@@ -196,7 +196,7 @@ typedef struct {
     cmdUnion_t u;
 } __attribute__((__may_alias__)) cmdQueueEntry_t;
 
-#ifndef __NOT_SST__
+#ifdef __SST__
 }
 }
 #endif

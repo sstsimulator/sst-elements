@@ -12,6 +12,8 @@
 #ifndef _ptlNicMMIF_h
 #define _ptlNicMMIF_h
 
+#define __SST__ 1
+
 #include <dev/io_device.hh>
 #include "portals4/ptlNic/cmdQueue.h"
 

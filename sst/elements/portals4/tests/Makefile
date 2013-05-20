@@ -10,7 +10,6 @@ LDFLAGS += -L../usr_lib/runtime
 
 CPPFLAGS += -I../ptlNic/ 
 CPPFLAGS += -I../usr_lib/runtime
-CPPFLAGS += -D__NOT_SST__
 
 apps: put  put2
 
