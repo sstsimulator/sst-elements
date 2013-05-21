@@ -19,9 +19,12 @@ libmemHierarchy_la_SOURCES = \
 	trivialCPU.cc \
 	memController.h \
 	memController.cc \
+	dircontroller.h \
+	dircontroller.cc \
+	memNIC.h \
+	memNIC.cc \
 	libmemHierarchy.cc
 
-EXTRA_DIST = makeSDL.pl
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
 

@@ -71,7 +71,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
         _abort(Cache, "Cache 'mode' must be one of 'INCLUSIVE', 'EXCLUSIVE' or 'STANDARD' (default)\n");
 
 
-	//  Is this right?
+	//  TODO:  Is this right?
 	registerTimeBase("2 ns", true);
 
 	n_upstream = params.find_integer("num_upstream", 0);
@@ -100,9 +100,23 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 		snoopBusQueue.setup(this, snoop_link);
 	}
 
-	directory_link = configureLink( "directory_link",
-			new Event::Handler<Cache, SourceType_t>(this,
-				&Cache::handleIncomingEvent, DIRECTORY) );
+    /* TODO:  Check to see if 'directory_link' exists */
+    if ( isPortConnected("directory_link") ) {
+        MemNIC::ComponentInfo myInfo;
+        myInfo.link_port = "directory_link";
+        myInfo.link_bandwidth = "2 ns"; // Time base as registered earlier
+        myInfo.name = getName();
+        myInfo.network_addr = params.find_integer("net_addr");
+        myInfo.type = MemNIC::TypeCache;
+        myInfo.typeInfo.cache.blocksize = blocksize;
+        myInfo.typeInfo.cache.num_blocks = n_ways * n_rows;
+
+        directory_link = new MemNIC(this, myInfo,
+                new Event::Handler<Cache, SourceType_t>(this,
+                    &Cache::handleIncomingEvent, DIRECTORY) );
+    } else {
+        directory_link = NULL;
+    }
 
 	self_link = configureSelfLink("Self", params.find_string("access_time", ""),
 				new Event::Handler<Cache>(this, &Cache::handleSelfEvent));
@@ -138,17 +152,20 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
 
 bool Cache::clockTick(Cycle_t) {
+    if ( directory_link ) {
+        directory_link->clock();
+    }
     return false;
 }
 
 
 void Cache::init(unsigned int phase)
 {
+    if ( directory_link ) directory_link->init(phase);
 	if ( !phase ) {
 		for ( int i = 0 ; i < n_upstream ; i++ ) {
 			upstream_links[i]->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 		}
-		if ( directory_link ) directory_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 		if ( downstream_link ) downstream_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 		if ( snoop_link ) snoop_link->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
 	}
@@ -187,6 +204,23 @@ void Cache::init(unsigned int phase)
         }
     }
 
+}
+
+
+void Cache::setup(void)
+{
+    if ( directory_link ) {
+        directory_link->setup();
+        const std::vector<MemNIC::ComponentInfo> &peers = directory_link->getPeerInfo();
+        for ( std::vector<MemNIC::ComponentInfo>::const_iterator i = peers.begin() ; i != peers.end() ; ++i ) {
+            if ( i->type == MemNIC::TypeDirectoryCtrl ) {
+                /* Record directory controller info */
+                directories.push_back(*i);
+            }
+        }
+        // Save some memory
+        directory_link->clearPeerInfo();
+    }
 }
 
 
@@ -290,7 +324,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
         /* HIT */
         if ( isRead ) {
             if ( firstProcess ) num_read_hit++;
-            if ( waitingForInvalidate(block) ) {
+            if ( waitingForInvalidate(block->baseAddr) ) {
                 DPRINTF("Invalidation for this in progress.  Putting into queue.\n");
                 invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, UPSTREAM));
             } else {
@@ -332,7 +366,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                 delete ev;
             } else {
                 if ( firstProcess ) num_upgrade_miss++;
-                if ( waitingForInvalidate(block) ) {
+                if ( waitingForInvalidate(block->baseAddr) ) {
                     DPRINTF("Invalidation for this in progress.  Putting into queue.\n");
                     invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, UPSTREAM));
                 } else {
@@ -421,7 +455,9 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
 
     Invalidation &inv = invalidations[addr];
     inv.waitingEvents.push_back(std::make_pair(ev, src));
-    inv.waitingACKs = 0;
+    // Don't reset waitingACKs, as we're just glomming on to an existing Invalidate
+    // Optimization here:  Keep track of *WHERE* invalidates have been sent, and don't bother re-sending
+    //inv.waitingACKs = 0;
 
 	if ( snoop_link ) {
 		MemEvent *invEvent = new MemEvent(this, addr, Invalidate);
@@ -594,6 +630,12 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
         req->setSize(blocksize);
         downstream_link->send(req);
+    } else if ( directory_link ) {
+        DPRINTF("Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+        MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+        req->setSize(blocksize);
+        req->setDst(findTargetDirectory(block->baseAddr));
+        directory_link->send(req);
     } else if ( snoop_link ) {
         MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
         req->setSize(blocksize);
@@ -706,11 +748,12 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
     }
 
 
-	if ( src != SNOOP ) {
-		SST::Link *link = getLink(src, ev->getLinkId());
-		link->send(resp);
-		supplyInProgress.erase(supMapI);
-	} else {
+	switch (src) {
+	case DOWNSTREAM:
+		downstream_link->send(resp);
+        supplyInProgress.erase(supMapI);
+        break;
+	case SNOOP: {
 		BusHandlerArgs args;
 		args.supplyData.block = block;
 		args.supplyData.src = src;
@@ -722,7 +765,19 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 		snoopBusQueue.request( resp,
 				new BusFinishHandler(&Cache::finishBusSupplyData, args),
                 new BusInitHandler(&Cache::prepBusSupplyData, args));
-	}
+        break;
+    }
+	case DIRECTORY:
+		directory_link->send(resp);
+        supplyInProgress.erase(supMapI);
+        break;
+	case UPSTREAM:
+		upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(resp);
+        supplyInProgress.erase(supMapI);
+        break;
+    default:
+        break;
+    }
 	delete ev;
 }
 
@@ -909,10 +964,13 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
         } else if ( src == UPSTREAM ) {
             assert(ev->queryFlag(MemEvent::F_WRITEBACK));
             DPRINTF("Passing on writeback to next level\n");
-            if ( downstream_link )
+            if ( downstream_link ) {
                 downstream_link->send(new MemEvent(ev));
-            else
+            } else if ( directory_link ) {
+                directory_link->send(new MemEvent(ev));
+            } else {
                 _abort(Cache, "Not sure where to send this.  Directory?\n");
+            }
         } else {
             //_abort(Cache, "Unhandled case of unmatched SupplyData coming from non-SNOOP, non-UPSTREAM\n");
         }
@@ -953,7 +1011,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
 	CacheBlock *block = findBlock(ev->getAddr());
     if ( block ) {
 
-        if ( waitingForInvalidate(block) ) {
+        if ( waitingForInvalidate(block->baseAddr) ) {
             cancelInvalidate(block); /* Should cause a re-issue of the write */
         }
 
@@ -979,7 +1037,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
             }
 
 
-            block->status = (cacheMode == INCLUSIVE ) ? CacheBlock::DIRTY : CacheBlock::INVALID;
+            block->status = ((cacheMode == INCLUSIVE) && src != DOWNSTREAM && src != DIRECTORY ) ? CacheBlock::DIRTY : CacheBlock::INVALID;
             /* TODO:  Lock status? */
             handlePendingEvents(findRow(block->baseAddr), NULL);
         }
@@ -1015,7 +1073,7 @@ void Cache::sendInvalidateACK(MemEvent *ev, SourceType_t src)
         downstream_link->send(resp);
         break;
     case DIRECTORY:
-        _abort(Cache, "Directory not yet implemented\n");
+        directory_link->send(resp);
         break;
     case SELF:
         _abort(Cache, "Why are we acking to ourselfs?\n");
@@ -1024,9 +1082,9 @@ void Cache::sendInvalidateACK(MemEvent *ev, SourceType_t src)
 }
 
 
-bool Cache::waitingForInvalidate(CacheBlock *block)
+bool Cache::waitingForInvalidate(Addr addr)
 {
-    std::map<Addr, Invalidation>::iterator i = invalidations.find(block->baseAddr);
+    std::map<Addr, Invalidation>::iterator i = invalidations.find(addr);
 	return ( i != invalidations.end() );
 }
 
@@ -1211,24 +1269,6 @@ void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 
 
 
-SST::Link* Cache::getLink(SourceType_t type, int link_id)
-{
-	switch (type) {
-	case DOWNSTREAM:
-		return downstream_link;
-	case SNOOP:
-		return snoop_link;
-	case DIRECTORY:
-		return directory_link;
-	case UPSTREAM:
-		return upstream_links[upstreamLinkMap[link_id]];
-	case SELF:
-		return self_link;
-	}
-	return NULL;
-}
-
-
 int Cache::numBits(int x)
 {
 	return (int)(log(x)/log(2));
@@ -1276,6 +1316,29 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 	ASSERT(row < (Addr)n_rows);
 	return &database[row];
 }
+
+
+
+std::string Cache::findTargetDirectory(Addr addr)
+{
+    for ( std::vector<MemNIC::ComponentInfo>::iterator i = directories.begin() ; i != directories.end() ; ++i ) {
+        MemNIC::ComponentTypeInfo &di = i->typeInfo;
+        if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
+            if ( di.dirctrl.interleaveSize == 0 ) {
+                return i->name;
+            } else {
+                Addr temp = addr - di.dirctrl.rangeStart;
+                Addr offset = temp % di.dirctrl.interleaveStep;
+                if ( offset < di.dirctrl.interleaveSize ) {
+                    return i->name;
+                }
+            }
+        }
+    }
+    _abort(Cache, "Unable to find directory for address 0x%"PRIx64"\n", addr);
+    return "";
+}
+
 
 
 void Cache::printCache(void)

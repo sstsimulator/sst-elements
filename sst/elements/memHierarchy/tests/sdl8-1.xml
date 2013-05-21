@@ -2,12 +2,15 @@
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
 <!-- This SDL file represents a single cpu with 3 layers of cache,
-     avoiding coherency, directly linked
+     avoiding coherency, directly linked.
+     L3 Cache is INCLUSIVE
+     Uses Directory out to memory
 -->
 
 <variables>
 	<lat> 1ns </lat>
 	<buslat> 10ns </buslat>
+	<netlat> 2ns </netlat>
 </variables>
 
 
@@ -56,12 +59,39 @@
 			<blocksize> 64 </blocksize>
 			<access_time> 10 ns </access_time>
             <num_upstream> 1 </num_upstream>
+            <net_addr> 1 </net_addr>
+            <mode> INCLUSIVE </mode>
 		</params>
 		<link name=l2l3cache_link port=upstream0 latency=$buslat />
-		<link name=mem_link port=downstream latency=$buslat />
+		<link name=cache_net_0 port=directory_link latency=$netlat />
 	</component>
 
 
+    <component name="chiprtr" type="merlin.hr_router">
+        <params>
+            <num_ports> 2 </num_ports>
+            <num_vcs> 1 </num_vcs>
+            <link_bw> 5GHz </link_bw>
+            <xbar_bw> 5GHz </xbar_bw>
+            <topology> merlin.singlerouter </topology>
+            <id> 0 </id>
+        </params>
+        <link name=dir_net_0 port=port0 latency=$netlat />
+        <link name=cache_net_0 port=port1 latency=$netlat />
+    </component>
+
+
+    <component name="dirctrl" type="memHierarchy.DirectoryController">
+        <params>
+            <network_addr> 0 </network_addr>
+            <network_bw> 1GHz </network_bw>
+            <addrRangeStart> 0x0 </addrRangeStart>
+            <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
+            <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
+        </params>
+        <link name=dir_mem_link port=memory latency=$buslat />
+        <link name=dir_net_0 port=network latency=$netlat />
+    </component>
 
 	<component name="memory" type="memHierarchy.MemController">
 		<params>
@@ -69,7 +99,7 @@
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
 		</params>
-		<link name=mem_link port=direct_link latency=$buslat />
+		<link name=dir_mem_link port=direct_link latency=$buslat />
 	</component>
 
 

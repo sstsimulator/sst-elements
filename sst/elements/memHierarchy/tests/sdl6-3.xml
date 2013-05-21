@@ -2,7 +2,8 @@
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
 <!-- This SDL file represents a single cpu with 3 layers of cache,
-     avoiding coherency, directly linked
+     avoiding coherency, directly linked.
+     L3 Cache is INCLUSIVE
 -->
 
 <variables>
@@ -56,6 +57,7 @@
 			<blocksize> 64 </blocksize>
 			<access_time> 10 ns </access_time>
             <num_upstream> 1 </num_upstream>
+            <mode> INCLUSIVE </mode>
 		</params>
 		<link name=l2l3cache_link port=upstream0 latency=$buslat />
 		<link name=mem_link port=downstream latency=$buslat />

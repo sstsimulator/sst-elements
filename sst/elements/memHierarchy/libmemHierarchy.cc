@@ -18,6 +18,7 @@
 #include "bus.h"
 #include "trivialCPU.h"
 #include "memController.h"
+#include "dircontroller.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -53,13 +54,22 @@ create_MemController(SST::ComponentId_t id,
 	return new MemController( id, params );
 }
 
+static Component*
+create_DirectoryController(SST::ComponentId_t id,
+		SST::Component::Params_t& params)
+{
+	return new DirectoryController( id, params );
+}
+
 static const ElementInfoParam cache_params[] = {
     {"num_ways",        "Associativity of the cache."},
     {"num_rows",        "How many cache rows."},
     {"blocksize",       "Size of a cache block in bytes."},
     {"num_upstream",    "How many upstream ports there are. Typically 1 or 0."},
     {"next_level",      "Name of the next level cache"},
+    {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
     {"access_time",     "Time taken to lookup data in the cache."},
+    {"net_addr",        "When using a directory controller, the network address of this cache."},
     {NULL, NULL}
 };
 
@@ -95,6 +105,20 @@ static const ElementInfoParam cpu_params[] = {
 };
 
 
+static const ElementInfoParam dirctrl_params[] = {
+    {"network_addr",        "Network address of component."},
+    {"network_bw",          "Network link bandwidth."},
+    {"backingStoreSize",    "Space reserved in backing store for controller information (default = 0x1000000 (16MB))."},
+    {"addrRangeStart",      "Start of Address Range, for this controller."},
+    {"addrRangeEnd",        "End of Address Range, for this controller."},
+    {"interleaveSize",      "(optional) Size of interleaved pages in KB."},
+    {"interleaveStep",      "(optional) Distance between sucessive interleaved pages on this controller in KB."},
+    {"clock",               "Clock rate of controller."},
+    {NULL, NULL}
+};
+
+
+
 static const ElementInfoComponent components[] = {
 	{ "Cache",
 		"Cache Component",
@@ -113,6 +137,12 @@ static const ElementInfoComponent components[] = {
 		NULL,
 		create_MemController,
         memctrl_params
+	},
+	{"DirectoryController",
+		"Coherencey Directory Controller Component",
+		NULL,
+		create_DirectoryController,
+        dirctrl_params
 	},
 	{"trivialCPU",
 		"Simple Demo CPU for testing",

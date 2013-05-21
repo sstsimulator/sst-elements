@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<!-- This SDL file represents two cpu with 2 layers of cache each,
+     directly linked.
+     L2's are INCLUSIVE
+     Uses Directory out to memory
+-->
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 10ns </buslat>
+	<netlat> 2ns </netlat>
+</variables>
+
+
+<sst>
+	<component name="cpu0" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x10000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 10000 </num_loadstore>
+		</params>
+		<link name=cpu0_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c0.l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<num_upstream> 1 </num_upstream>
+			<next_level> c0.l2cache </next_level>
+		</params>
+		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
+		<link name=c0.l1l2cache_link port=downstream latency=$buslat />
+	</component>
+
+	<component name="c0.l2cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 8 </num_ways>
+			<num_rows> 64 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 10 ns </access_time>
+            <num_upstream> 1 </num_upstream>
+            <net_addr> 1 </net_addr>
+            <mode> INCLUSIVE </mode>
+		</params>
+		<link name=c0.l1l2cache_link port=upstream0 latency=$buslat />
+        <link name=cache_net_0 port=directory_link latency=$netlat />
+	</component>
+
+
+	<component name="cpu1" type="memHierarchy.trivialCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x10000 </memSize>
+			<do_write> 1 </do_write>
+            <num_loadstore> 10000 </num_loadstore>
+		</params>
+		<link name=cpu1_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c1.l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<num_upstream> 1 </num_upstream>
+			<next_level> c1.l2cache </next_level>
+		</params>
+		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
+		<link name=c1.l1l2cache_link port=downstream latency=$buslat />
+	</component>
+
+	<component name="c1.l2cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 8 </num_ways>
+			<num_rows> 64 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 10 ns </access_time>
+            <num_upstream> 1 </num_upstream>
+            <net_addr> 2 </net_addr>
+            <mode> INCLUSIVE </mode>
+		</params>
+		<link name=c1.l1l2cache_link port=upstream0 latency=$buslat />
+        <link name=cache_net_1 port=directory_link latency=$netlat />
+	</component>
+
+
+
+
+    <component name="chiprtr" type="merlin.hr_router">
+        <params>
+            <num_ports> 3 </num_ports>
+            <num_vcs> 1 </num_vcs>
+            <link_bw> 5GHz </link_bw>
+            <xbar_bw> 5GHz </xbar_bw>
+            <topology> merlin.singlerouter </topology>
+            <id> 0 </id>
+        </params>
+        <link name=dir_net_0 port=port0 latency=$netlat />
+        <link name=cache_net_0 port=port1 latency=$netlat />
+        <link name=cache_net_1 port=port2 latency=$netlat />
+    </component>
+
+
+    <component name="dirctrl" type="memHierarchy.DirectoryController">
+        <params>
+            <network_addr> 0 </network_addr>
+            <network_bw> 1GHz </network_bw>
+            <addrRangeStart> 0x0 </addrRangeStart>
+            <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
+            <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
+        </params>
+        <link name=dir_mem_link port=memory latency=$buslat />
+        <link name=dir_net_0 port=network latency=$netlat />
+    </component>
+
+	<component name="memory" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+		</params>
+		<link name=dir_mem_link port=direct_link latency=$buslat />
+	</component>
+
+
+</sst>

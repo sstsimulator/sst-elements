@@ -28,6 +28,10 @@
 #include <sst/core/timeConverter.h>
 
 #include <sst/core/interfaces/memEvent.h>
+
+#include "memNIC.h"
+
+
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -369,8 +373,9 @@ public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
     bool clockTick(Cycle_t);
-	void init(unsigned int);
-	void finish();
+	virtual void init(unsigned int);
+	virtual void setup();
+	virtual void finish();
 
 private:
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
@@ -398,7 +403,7 @@ private:
 	void handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstream);
     void sendInvalidateACK(MemEvent *ev, SourceType_t src);
 
-	bool waitingForInvalidate(CacheBlock *block);
+	bool waitingForInvalidate(Addr addr);
 	void cancelInvalidate(CacheBlock *block);
     void ackInvalidate(MemEvent *ev);
 	void finishIssueInvalidate(Addr addr);
@@ -412,12 +417,13 @@ private:
 
     void handlePendingEvents(CacheRow *row, CacheBlock *block);
 	void updateBlock(MemEvent *ev, CacheBlock *block);
-	SST::Link *getLink(SourceType_t type, int link_id);
 	int numBits(int x);
 	Addr addrToTag(Addr addr);
 	Addr addrToBlockAddr(Addr addr);
 	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
+
+    std::string findTargetDirectory(Addr addr);
 
 	void printCache(void);
 
@@ -438,11 +444,12 @@ private:
 
 	int n_upstream;
 	SST::Link *snoop_link; // Points to a snoopy bus, or snoopy network (if any)
-	SST::Link *directory_link; // Points to a network for directory lookups (if any)
+	MemNIC *directory_link; // Points to a network for directory lookups (if any)
 	SST::Link **upstream_links; // Points to directly upstream caches or cpus (if any) [no snooping]
 	SST::Link *downstream_link; // Points to directly downstream cache (if any)
 	SST::Link *self_link; // Used for scheduling access
 	std::map<LinkId_t, int> upstreamLinkMap;
+    std::vector<MemNIC::ComponentInfo> directories;
 
 	/* Stats */
 	uint64_t num_read_hit;
