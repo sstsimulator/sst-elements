@@ -30,7 +30,8 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
+trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) :
+    Component(id), rng(id, 13)
 {
 
 	// get parameters
@@ -53,12 +54,10 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) : Component(id)
 
     numLS = params.find_integer("num_loadstore", -1);
 
-	// init randomness
-	srand(1);
 
 	// tell the simulator not to end without us
-  registerAsPrimaryComponent();
-  primaryComponentDoNotEndSim();
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 
 	// configure out links
 	mem_link = configureLink( "mem_link",
@@ -128,7 +127,7 @@ bool trivialCPU::clockTic( Cycle_t )
 	}
 
 	// communicate?
-	if ((numLS != 0) && ((rand() % commFreq) == 0)) {
+	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
 		if ( requests.size() > 10 ) {
 			printf("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
@@ -137,9 +136,9 @@ bool trivialCPU::clockTic( Cycle_t )
 			// yes, communicate
 			// create event
 			// x4 to prevent splitting blocks
-			Addr addr = ((((Addr) rand()) % maxAddr)>>2) << 2;
+			Addr addr = ((((Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
 
-			bool doWrite = do_write && (((rand() % 10) == 0));
+			bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
 
 			MemEvent *e = new MemEvent(this, addr, doWrite ? WriteReq : ReadReq);
 			e->setSize(4); // Load 4 bytes

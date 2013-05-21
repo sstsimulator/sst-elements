@@ -23,6 +23,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+#include <sst/core/rng/marsaglia.h>
 #include <sst/core/interfaces/memEvent.h>
 using namespace SST::Interfaces;
 
@@ -58,6 +59,8 @@ private:
 	std::map<MemEvent::id_type, SimTime_t> requests;
 
 	SST::Link* mem_link;
+
+    SST::RNG::MarsagliaRNG rng;
 
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
