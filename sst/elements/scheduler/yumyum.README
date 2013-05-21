@@ -67,7 +67,7 @@ Scheduler in two files:
 
 Errors will travel down the hierarchy of nodes, from parent to child
 until they reach nodes connected to the schedComponent.  By default, the
-nodes will end whatever job they are running by whenever they recieve a
+nodes will end whatever job they are running by whenever they receive a
 fault, or according to some probability that can be defined using the
 jobFailureProbability param, in a similar fashion to errorMessageProbability.
 
@@ -90,7 +90,7 @@ jobFailureProbability parameter and passes the probability check.
 error correction
 ---
 
-When a node recieves an error, either beucause it suffered a fault activation
+When a node receives an error, either because it suffered a fault activation
 event, or because a parent sent it an error event, it may be given the
 opportunity to correct the error according to a given probability:
 
@@ -126,7 +126,7 @@ nodeComponent:
 The columns in the delay parameter are the fault name, min delay time, max
 delay time. If an error type has no configured delay on a node, it will be
 transmitted to all children of that node on the same timestep it is
-recieved, instantly propagating through that node.  Otherwise, a
+received, instantly propagating through that node.  Otherwise, a
 uniformly-distributed random number is selected using the two specified numbers
 as bounds.  (inclusive)  The node then waits that length of time before
 transmitting the error to its children.
@@ -161,7 +161,7 @@ this, add the following to the schedComponent's params:
 <printYumYumJobLog>true</printYumYumJobLog>
 <printJobLog>true</printJobLog>
 
-Where job.log is the deired file to print the log.  The log will have the
+Where job.log is the desired file to print the log.  The log will have the
 following format:
 
 [job ID], [start time], [end time], [pass/fault], [nodes used]
@@ -189,7 +189,7 @@ simulated.  This behavior can be adjusted using the schedComponent param:
 If this param is used, then the simulation will not end when the last job is
 finished, but the scheduler will block while waiting for the job trace to be
 modified.  When the job log is modified, all new jobs are read out of it, and
-these are simulated.  This behavior will contimue.  The only way to end the
+these are simulated.  This behavior will continue.  The only way to end the
 simulation will be to either kill SST, or write "YYKILL" to the job list. This
 will cause the schedComponent to unregister itself from SST, and the
 simulation will end.
