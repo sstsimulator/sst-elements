@@ -159,6 +159,7 @@ void core_alloc_atom_t::step(void)
           {
             /* is the RS full? -- don't need to alloc for NOP's */
 	    if(!uop->decode.is_nop && !uop->Mop->decode.is_trap  )
+	    {  
 	    if(uop->decode.is_load || uop->decode.is_sta || uop->decode.is_std) 
             {
 		/* For inorder cores there is no separate functional unit for load/stores. the adder functional 
@@ -233,6 +234,7 @@ void core_alloc_atom_t::step(void)
         	      	break;
 		      }
         	}
+	    }
 	    }
             /* ALL ALLOC STALL CONDITIONS PASSED */
 

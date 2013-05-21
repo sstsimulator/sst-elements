@@ -360,8 +360,8 @@ void core_commit_atom_t::step(void)
     }
     else
     {
-      struct Mop_t * Mop = ROB[ROB_head]->Mop;
 #ifdef ZDEBUG
+      struct Mop_t * Mop = ROB[ROB_head]->Mop;
       fprintf(stdout,"\n[%d][Core%d]COMMIT deadlock ",core->sim_cycle,core->current_thread->id,core->sim_cycle);
       md_print_insn(Mop,stdout);
       fprintf(stdout," MOP=%d last_Mop_seq= %d \n",Mop->oracle.seq,core->exec->last_Mop_seq);
@@ -419,9 +419,9 @@ void core_commit_atom_t::step(void)
 
     if(Mop->oracle.spec_mode)
     {
-      fprintf(stdout,"\n[%lld][Core%d]",core->sim_cycle,core->id );
+      fprintf(stdout,"\n[%lld][Core%d]",(long long int)core->sim_cycle,core->id );
       md_print_insn(Mop,stdout);
-      fprintf(stdout,"  %lld \n\n",core->sim_cycle);
+      fprintf(stdout,"  %lld \n\n",(long long int)core->sim_cycle);
       fflush(stdout);
       fflush(stderr);
       zesto_fatal("oldest instruction in processor is on wrong-path",(void)0);
@@ -691,12 +691,12 @@ void core_commit_atom_t::step(void)
     /*****************/
     if(core->current_thread->active)
     {
-      if ((core->sim.max_cycles && core->sim_cycle >= core->sim.max_cycles)||
+      if ((core->sim.max_cycles && core->sim_cycle >= (uint64_t)core->sim.max_cycles)||
         (core->sim.max_insts && core->stat.commit_insn >= core->sim.max_insts)||
         (core->sim.max_uops && core->stat.commit_uops >= core->sim.max_uops))
       {
         core->stat.final_sim_cycle = core->sim_cycle; /* make note of when this core stopped simulating */
-        if(core->sim.max_cycles && core->sim_cycle >= core->sim.max_cycles)
+        if(core->sim.max_cycles && core->sim_cycle >= (uint64_t)core->sim.max_cycles)
           fprintf(stderr,"# Simulation cycle ");
         else if(core->sim.max_insts && core->sim.max_uops)
           fprintf(stderr,"# Committed instruction/uop ");

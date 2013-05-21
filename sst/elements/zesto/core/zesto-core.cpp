@@ -104,7 +104,7 @@ core_t::core_t(SST::ComponentId_t cid, SST::Component::Params_t & params):
   current_thread(NULL),
   num_emergency_recoveries(0), last_emergency_recovery_count(0),
   oracle(NULL), fetch(NULL), decode(NULL), alloc(NULL),
-  exec(NULL), commit(NULL), global_action_id(0), request_id(0) 
+  exec(NULL), commit(NULL), request_id(0), global_action_id(0)  
 {
   //interface with SST simulator
   registerAsPrimaryComponent();
@@ -138,7 +138,7 @@ core_t::core_t(SST::ComponentId_t cid, SST::Component::Params_t & params):
   }
   
   /* input config */
-  sim.config[1] = "-config";
+  sim.config[1] = (char*)"-config";
   sim.config[2] = new char[params["configFile"].length()+1];
   strcpy(sim.config[2], params[ "configFile" ].c_str());
 
@@ -868,9 +868,9 @@ bool core_t::tick(tick_t Cycle)
 
 void core_t::core_reg_stats(void)
 {
-  unsigned int i;
-  char buf[4096];
-  char buf2[4096];
+//  unsigned int i;
+//  char buf[4096];
+//  char buf2[4096];
 
   bool is_DPM = strcasecmp(knobs->model,"DPM") == 0;
 

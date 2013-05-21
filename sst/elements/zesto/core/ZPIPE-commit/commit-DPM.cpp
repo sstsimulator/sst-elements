@@ -359,8 +359,8 @@ void core_commit_DPM_t::step(void)
     }
     else
     {
-      struct Mop_t * Mop = ROB[ROB_head]->Mop;
 #ifdef ZDEBUG
+      struct Mop_t * Mop = ROB[ROB_head]->Mop;
       md_print_insn(Mop,stdout);
       fprintf(stdout,"  %d \n",core->sim_cycle);
 #endif
@@ -415,9 +415,9 @@ void core_commit_DPM_t::step(void)
 
     if(Mop->oracle.spec_mode)
     {
-          fprintf(stdout,"\n[%lld][Core%d]",core->sim_cycle,core->id );
+          fprintf(stdout,"\n[%lld][Core%d]",(long long int)core->sim_cycle,core->id );
           md_print_insn(Mop,stdout);
-          fprintf(stdout,"  %lld \n\n",core->sim_cycle);
+          fprintf(stdout,"  %lld \n\n",(long long int)core->sim_cycle);
           fflush(stdout);
           fflush(stderr);
 	  zesto_fatal("oldest instruction in processor is on wrong-path",(void)0);
@@ -437,7 +437,7 @@ void core_commit_DPM_t::step(void)
           {
 	    if( (core->exec->get_load_latency(uop->alloc.LDQ_index) >= 0) && uop->decode.is_load)
 	    {
-              unsigned long long int stall_length = core->sim_cycle - stall_start_time;
+//              unsigned long long int stall_length = core->sim_cycle - stall_start_time;
               stall_start_time= TICK_T_MAX;
             }		
             load_stall_on = false;
@@ -684,12 +684,12 @@ void core_commit_DPM_t::step(void)
     /*****************/
     if(core->current_thread->active)
     {
-      if ( (core->sim.max_cycles && core->sim_cycle >= core->sim.max_cycles ) ||
+      if ( (core->sim.max_cycles && core->sim_cycle >= (uint64_t)core->sim.max_cycles ) ||
            (core->sim.max_insts && core->stat.commit_insn >= core->sim.max_insts) ||
            (core->sim.max_uops && core->stat.commit_uops >= core->sim.max_uops)  )
       {
         core->stat.final_sim_cycle = core->sim_cycle; /* make note of when this core stopped simulating */
-        if(core->sim.max_cycles && core->sim_cycle >= core->sim.max_cycles)
+        if(core->sim.max_cycles && core->sim_cycle >= (uint64_t)core->sim.max_cycles)
           fprintf(stderr,"\n# Simulation cycle ");
         else if(core->sim.max_insts && core->sim.max_uops)
           fprintf(stderr,"\n# Committed instruction/uop ");

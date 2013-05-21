@@ -310,7 +310,7 @@ bool myisspace(char c)
 
 bool myisprint(char c)
 {
-  return (myisspace(c) || (c >= 32) && (c <= 126));
+  return (myisspace(c) || ((c >= 32) && (c <= 126)));
 }
 
 
@@ -1356,10 +1356,10 @@ void clear_page(void * base)
    reduce memory operations by about 33%. */
 void memswap(void * p1, void * p2, size_t num_bytes)
 {
-  int i;
   char * addr1 = (char*) p1;
   char * addr2 = (char*) p2;
 #ifdef USE_SSE_MOVE
+  int i;
   int iter = num_bytes >> 4; // div by 16
   int rem = num_bytes & 0x0f; // mod 16
   char tmp[16];
