@@ -87,6 +87,29 @@ causes the fault and the schedulable node which receives the error, has a
 jobFailureProbability parameter and passes the probability check.
 
 ---
+error correction
+---
+
+When a node recieves an error, either beucause it suffered a fault activation
+event, or because a parent sent it an error event, it may be given the
+opportunity to correct the error according to a given probability:
+
+  <errorCorrectionProbability>
+    "error type 1", "0.5",
+    "error type 2", "1"
+  </errorCorrectionProbability>
+
+In this example, "error type 1" has a 50/50 chance of being corrected, and
+"error type 2" will always be corrected.
+
+If the node corrects the error, the error event will not propagate to any
+children of the node, nor will any dependent jobs be killed.  The
+jobFailureProbability attribute will not be examined.
+
+Error logs are still be created normally, and the errorMessageProbability will
+be examined normally.
+
+---
 fault propagation delays
 ---
 
