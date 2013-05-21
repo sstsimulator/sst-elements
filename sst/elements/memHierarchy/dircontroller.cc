@@ -31,7 +31,7 @@ using namespace SST::MemHierarchy;
 
 
 DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
-    Component(id)
+    Component(id), blocksize(0)
 {
     targetCount = 0;
 
