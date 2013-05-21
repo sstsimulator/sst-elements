@@ -89,38 +89,38 @@ void decode_reg_options(struct opt_odb_t * odb, struct core_knobs_t * knobs)
 {
 
   /* decode pipe */
-  opt_reg_int(odb, "-decode:depth","decode pipeline depth (stages) [DS]",
+  opt_reg_int(odb, (char*)"-decode:depth",(char*)"decode pipeline depth (stages) [DS]",
       &knobs->decode.depth, /*default*/ knobs->decode.depth, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-decode:width","decode pipeline width (Macro-ops) [DS]",
+  opt_reg_int(odb, (char*)"-decode:width",(char*)"decode pipeline width (Macro-ops) [DS]",
       &knobs->decode.width, /*default*/ knobs->decode.width, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-decode:targetstage","decode pipeline stage of branch address calculator [DS]",
+  opt_reg_int(odb, (char*)"-decode:targetstage",(char*)"decode pipeline stage of branch address calculator [DS]",
       &knobs->decode.target_stage, /*default*/ knobs->decode.target_stage, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-decode:branches","maximum branches decoded per cycle [D]",
+  opt_reg_int(odb, (char*)"-decode:branches",(char*)"maximum branches decoded per cycle [D]",
       &knobs->decode.branch_decode_limit, /*default*/ knobs->decode.branch_decode_limit, /*print*/true,/*format*/NULL);
 
   /* actual decoders */
-  opt_reg_int_list(odb, "-decoders", "maximum uops generated for each decoder (e.g., 4 1 1) [D]",
+  opt_reg_int_list(odb, (char*)"-decoders", (char*)"maximum uops generated for each decoder (e.g., 4 1 1) [D]",
       knobs->decode.decoders, MAX_DECODE_WIDTH, &knobs->decode.num_decoder_specs, knobs->decode.decoders, /* print */true, /* format */NULL, /* !accrue */false);
 
-  opt_reg_int(odb, "-MS:latency","additional latency for accessing ucode sequencer (cycles) [D]",
+  opt_reg_int(odb, (char*)"-MS:latency",(char*)"additional latency for accessing ucode sequencer (cycles) [D]",
       &knobs->decode.MS_latency, /*default*/ knobs->decode.MS_latency, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-uopQ:size","number of entries in uopQ [D]",
+  opt_reg_int(odb, (char*)"-uopQ:size",(char*)"number of entries in uopQ [D]",
       &knobs->decode.uopQ_size, /*default*/ knobs->decode.uopQ_size, /*print*/true,/*format*/NULL);
 
   /* fusion options */
-  opt_reg_flag(odb, "-fuse:none","disable all uop fusion rules [DS]",
+  opt_reg_flag(odb, (char*)"-fuse:none",(char*)"disable all uop fusion rules [DS]",
       &knobs->decode.fusion_none, /*default*/ false, /*print*/true,/*format*/NULL);
-  opt_reg_flag(odb, "-fuse:all","enable all uop fusion rules [D]",
+  opt_reg_flag(odb, (char*)"-fuse:all",(char*)"enable all uop fusion rules [D]",
       &knobs->decode.fusion_all, /*default*/ false, /*print*/true,/*format*/NULL);
-  opt_reg_flag(odb, "-fuse:loadop","enable load-op uop fusion [D]",
+  opt_reg_flag(odb, (char*)"-fuse:loadop",(char*)"enable load-op uop fusion [D]",
       &knobs->decode.fusion_load_op, /*default*/ false, /*print*/true,/*format*/NULL);
-  opt_reg_flag(odb, "-fuse:stastd","enable sta-std uop fusion [D]",
+  opt_reg_flag(odb, (char*)"-fuse:stastd",(char*)"enable sta-std uop fusion [D]",
       &knobs->decode.fusion_sta_std, /*default*/ false, /*print*/true,/*format*/NULL);
-  opt_reg_flag(odb, "-fuse:partial","enable uop-fusion of partial register write combining uops [D]",
+  opt_reg_flag(odb, (char*)"-fuse:partial",(char*)"enable uop-fusion of partial register write combining uops [D]",
       &knobs->decode.fusion_partial, /*default*/ false, /*print*/true,/*format*/NULL);
 }
 

@@ -88,11 +88,11 @@
 
 void commit_reg_options(struct opt_odb_t * odb, struct core_knobs_t * knobs)
 {
-  opt_reg_int(odb, "-rob:size","number of reorder buffer entries [DS]",
+  opt_reg_int(odb, (char*)"-rob:size",(char*)"number of reorder buffer entries [DS]",
       &knobs->commit.ROB_size, /*default*/ knobs->commit.ROB_size, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-commit:width","maximum number of uops committed per cycle [DS]",
+  opt_reg_int(odb, (char*)"-commit:width",(char*)"maximum number of uops committed per cycle [DS]",
       &knobs->commit.width, /*default*/ knobs->commit.width, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-commit:branches","maximum number of branches committed per cycle [D]",
+  opt_reg_int(odb, (char*)"-commit:branches",(char*)"maximum number of branches committed per cycle [D]",
       &knobs->commit.branch_limit, /*default*/ knobs->commit.branch_limit, /*print*/true,/*format*/NULL);
 }
 

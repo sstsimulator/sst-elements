@@ -91,117 +91,117 @@ void exec_reg_options(struct opt_odb_t * odb, struct core_knobs_t * knobs)
   /**********************/
   /* buffer/queue sizes */
   /**********************/
-  opt_reg_int(odb, "-rs:size","number of reservation station entries [DS]",
+  opt_reg_int(odb, (char*)"-rs:size",(char*)"number of reservation station entries [DS]",
       &knobs->exec.RS_size, /*default*/ knobs->exec.RS_size, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-ldq:size","number of load queue entries [DS]",
+  opt_reg_int(odb, (char*)"-ldq:size",(char*)"number of load queue entries [DS]",
       &knobs->exec.LDQ_size, /*default*/ knobs->exec.LDQ_size, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-stq:size","number of store queue entries [DS]",
+  opt_reg_int(odb, (char*)"-stq:size",(char*)"number of store queue entries [DS]",
       &knobs->exec.STQ_size, /*default*/ knobs->exec.STQ_size, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-exec:width","maximum issues from RS per cycle (equal to num exec ports) [DS]",
+  opt_reg_int(odb, (char*)"-exec:width",(char*)"maximum issues from RS per cycle (equal to num exec ports) [DS]",
       &knobs->exec.num_exec_ports, /*default*/ knobs->exec.num_exec_ports, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-payload:depth","number of cycles for payload RAM access (schedule-to-exec delay) [D]",
+  opt_reg_int(odb, (char*)"-payload:depth",(char*)"number of cycles for payload RAM access (schedule-to-exec delay) [D]",
       &knobs->exec.payload_depth, /*default*/ knobs->exec.payload_depth, /*print*/true,/*format*/NULL);
-  opt_reg_flag(odb, "-exec:tornado_breaker","enable heuristic tornado breaker [D]",
+  opt_reg_flag(odb, (char*)"-exec:tornado_breaker",(char*)"enable heuristic tornado breaker [D]",
       &knobs->exec.tornado_breaker, /*default*/ false, /*print*/true,/*format*/NULL);
-  opt_reg_flag(odb, "-exec:partial_throttle","enable load-issue throttling on partial matches [D]",
+  opt_reg_flag(odb, (char*)"-exec:partial_throttle",(char*)"enable load-issue throttling on partial matches [D]",
       &knobs->exec.throttle_partial, /*default*/ false, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fp:penalty","extra cycle(s) to forward results to FP cluster [D]",
+  opt_reg_int(odb, (char*)"-fp:penalty",(char*)"extra cycle(s) to forward results to FP cluster [D]",
       &knobs->exec.fp_penalty, /*default*/ knobs->exec.fp_penalty, /*print*/true,/*format*/NULL);
 
   /*****************************************************************/
   /* functional units (number of bindings implies number of units) */
   /*****************************************************************/
-  opt_reg_int_list(odb, "-pb:ieu", "IEU port binding [DS]", knobs->exec.fu_bindings[FU_IEU],
+  opt_reg_int_list(odb, (char*)"-pb:ieu", (char*)"IEU port binding [DS]", knobs->exec.fu_bindings[FU_IEU],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_IEU].num_FUs, knobs->exec.fu_bindings[FU_IEU], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:jeu", "JEU port binding [DS]", knobs->exec.fu_bindings[FU_JEU],
+  opt_reg_int_list(odb, (char*)"-pb:jeu", (char*)"JEU port binding [DS]", knobs->exec.fu_bindings[FU_JEU],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_JEU].num_FUs, knobs->exec.fu_bindings[FU_JEU], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:imul", "IMUL port binding [DS]", knobs->exec.fu_bindings[FU_IMUL],
+  opt_reg_int_list(odb, (char*)"-pb:imul", (char*)"IMUL port binding [DS]", knobs->exec.fu_bindings[FU_IMUL],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_IMUL].num_FUs, knobs->exec.fu_bindings[FU_IMUL], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:idiv", "IDIV port binding [DS]", knobs->exec.fu_bindings[FU_IDIV],
+  opt_reg_int_list(odb, (char*)"-pb:idiv", (char*)"IDIV port binding [DS]", knobs->exec.fu_bindings[FU_IDIV],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_IDIV].num_FUs, knobs->exec.fu_bindings[FU_IDIV], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:shift", "SHIFT port binding [DS]", knobs->exec.fu_bindings[FU_SHIFT],
+  opt_reg_int_list(odb, (char*)"-pb:shift", (char*)"SHIFT port binding [DS]", knobs->exec.fu_bindings[FU_SHIFT],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_SHIFT].num_FUs, knobs->exec.fu_bindings[FU_SHIFT], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:fadd", "FADD port binding [DS]", knobs->exec.fu_bindings[FU_FADD],
+  opt_reg_int_list(odb, (char*)"-pb:fadd", (char*)"FADD port binding [DS]", knobs->exec.fu_bindings[FU_FADD],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_FADD].num_FUs, knobs->exec.fu_bindings[FU_FADD], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:fmul", "FMUL port binding [DS]", knobs->exec.fu_bindings[FU_FMUL],
+  opt_reg_int_list(odb, (char*)"-pb:fmul", (char*)"FMUL port binding [DS]", knobs->exec.fu_bindings[FU_FMUL],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_FMUL].num_FUs, knobs->exec.fu_bindings[FU_FMUL], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:fdiv", "FDIV port binding [DS]", knobs->exec.fu_bindings[FU_FDIV],
+  opt_reg_int_list(odb, (char*)"-pb:fdiv", (char*)"FDIV port binding [DS]", knobs->exec.fu_bindings[FU_FDIV],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_FDIV].num_FUs, knobs->exec.fu_bindings[FU_FDIV], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:fcplx", "FCPLX port binding [DS]", knobs->exec.fu_bindings[FU_FCPLX],
+  opt_reg_int_list(odb, (char*)"-pb:fcplx", (char*)"FCPLX port binding [DS]", knobs->exec.fu_bindings[FU_FCPLX],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_FCPLX].num_FUs, knobs->exec.fu_bindings[FU_FCPLX], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:lda", "LD port binding [DS]", knobs->exec.fu_bindings[FU_LD],
+  opt_reg_int_list(odb, (char*)"-pb:lda", (char*)"LD port binding [DS]", knobs->exec.fu_bindings[FU_LD],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_LD].num_FUs, knobs->exec.fu_bindings[FU_LD], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:sta", "STA port binding [DS]", knobs->exec.fu_bindings[FU_STA],
+  opt_reg_int_list(odb, (char*)"-pb:sta", (char*)"STA port binding [DS]", knobs->exec.fu_bindings[FU_STA],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_STA].num_FUs, knobs->exec.fu_bindings[FU_STA], /* print */true, /* format */NULL, /* !accrue */false);
-  opt_reg_int_list(odb, "-pb:std", "STD port binding [DS]", knobs->exec.fu_bindings[FU_STD],
+  opt_reg_int_list(odb, (char*)"-pb:std", (char*)"STD port binding [DS]", knobs->exec.fu_bindings[FU_STD],
       MAX_EXEC_WIDTH, &knobs->exec.port_binding[FU_STD].num_FUs, knobs->exec.fu_bindings[FU_STD], /* print */true, /* format */NULL, /* !accrue */false);
 
   /*****************************/
   /* functional unit latencies */
   /*****************************/
 
-  opt_reg_int(odb, "-ieu:lat","IEU execution latency [DS]",
+  opt_reg_int(odb, (char*)"-ieu:lat",(char*)"IEU execution latency [DS]",
       &knobs->exec.latency[FU_IEU], /*default*/ knobs->exec.latency[FU_IEU], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-jeu:lat","JEU execution latency [DS]",
+  opt_reg_int(odb, (char*)"-jeu:lat",(char*)"JEU execution latency [DS]",
       &knobs->exec.latency[FU_JEU], /*default*/ knobs->exec.latency[FU_JEU], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-imul:lat","IMUL execution latency [DS]",
+  opt_reg_int(odb, (char*)"-imul:lat",(char*)"IMUL execution latency [DS]",
       &knobs->exec.latency[FU_IMUL], /*default*/ knobs->exec.latency[FU_IMUL], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-idiv:lat","IDIV execution latency [DS]",
+  opt_reg_int(odb, (char*)"-idiv:lat",(char*)"IDIV execution latency [DS]",
       &knobs->exec.latency[FU_IDIV], /*default*/ knobs->exec.latency[FU_IDIV], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-shift:lat","SHIFT execution latency [DS]",
+  opt_reg_int(odb, (char*)"-shift:lat",(char*)"SHIFT execution latency [DS]",
       &knobs->exec.latency[FU_SHIFT], /*default*/ knobs->exec.latency[FU_SHIFT], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fadd:lat","FADD execution latency [DS]",
+  opt_reg_int(odb, (char*)"-fadd:lat",(char*)"FADD execution latency [DS]",
       &knobs->exec.latency[FU_FADD], /*default*/ knobs->exec.latency[FU_FADD], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fmul:lat","FMUL execution latency [DS]",
+  opt_reg_int(odb, (char*)"-fmul:lat",(char*)"FMUL execution latency [DS]",
       &knobs->exec.latency[FU_FMUL], /*default*/ knobs->exec.latency[FU_FMUL], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fdiv:lat","FDIV execution latency [DS]",
+  opt_reg_int(odb, (char*)"-fdiv:lat",(char*)"FDIV execution latency [DS]",
       &knobs->exec.latency[FU_FDIV], /*default*/ knobs->exec.latency[FU_FDIV], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fcplx:lat","FCPLX execution latency [DS]",
+  opt_reg_int(odb, (char*)"-fcplx:lat",(char*)"FCPLX execution latency [DS]",
       &knobs->exec.latency[FU_FCPLX], /*default*/ knobs->exec.latency[FU_FCPLX], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-lda:lat","LD-agen execution latency [DS]",
+  opt_reg_int(odb, (char*)"-lda:lat",(char*)"LD-agen execution latency [DS]",
       &knobs->exec.latency[FU_LD], /*default*/ knobs->exec.latency[FU_LD], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-sta:lat","ST-agen execution latency [DS]",
+  opt_reg_int(odb, (char*)"-sta:lat",(char*)"ST-agen execution latency [DS]",
       &knobs->exec.latency[FU_STA], /*default*/ knobs->exec.latency[FU_STA], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-std:lat","ST-data execution latency [DS]",
+  opt_reg_int(odb, (char*)"-std:lat",(char*)"ST-data execution latency [DS]",
       &knobs->exec.latency[FU_STD], /*default*/ knobs->exec.latency[FU_STD], /*print*/true,/*format*/NULL);
 
   /*******************************/
   /* functional unit issue rates */
   /*******************************/
 
-  opt_reg_int(odb, "-ieu:rate","IEU execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-ieu:rate",(char*)"IEU execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_IEU], /*default*/ knobs->exec.issue_rate[FU_IEU], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-jeu:rate","JEU execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-jeu:rate",(char*)"JEU execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_JEU], /*default*/ knobs->exec.issue_rate[FU_JEU], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-imul:rate","IMUL execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-imul:rate",(char*)"IMUL execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_IMUL], /*default*/ knobs->exec.issue_rate[FU_IMUL], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-idiv:rate","IDIV execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-idiv:rate",(char*)"IDIV execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_IDIV], /*default*/ knobs->exec.issue_rate[FU_IDIV], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-shift:rate","SHIFT execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-shift:rate",(char*)"SHIFT execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_SHIFT], /*default*/ knobs->exec.issue_rate[FU_SHIFT], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fadd:rate","FADD execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-fadd:rate",(char*)"FADD execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_FADD], /*default*/ knobs->exec.issue_rate[FU_FADD], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fmul:rate","FMUL execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-fmul:rate",(char*)"FMUL execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_FMUL], /*default*/ knobs->exec.issue_rate[FU_FMUL], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fdiv:rate","FDIV execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-fdiv:rate",(char*)"FDIV execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_FDIV], /*default*/ knobs->exec.issue_rate[FU_FDIV], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-fcplx:rate","FCPLX execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-fcplx:rate",(char*)"FCPLX execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_FCPLX], /*default*/ knobs->exec.issue_rate[FU_FCPLX], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-lda:rate","LD-agen execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-lda:rate",(char*)"LD-agen execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_LD], /*default*/ knobs->exec.issue_rate[FU_LD], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-sta:rate","ST-agen execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-sta:rate",(char*)"ST-agen execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_STA], /*default*/ knobs->exec.issue_rate[FU_STA], /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-std:rate","ST-data execution issue rate [DS]",
+  opt_reg_int(odb, (char*)"-std:rate",(char*)"ST-data execution issue rate [DS]",
       &knobs->exec.issue_rate[FU_STD], /*default*/ knobs->exec.issue_rate[FU_STD], /*print*/true,/*format*/NULL);
 
-  opt_reg_flag(odb, "-warm:caches","warm caches during functional fast-forwarding [DS]",
+  opt_reg_flag(odb, (char*)"-warm:caches",(char*)"warm caches during functional fast-forwarding [DS]",
       &knobs->memory.warm_caches, /*default*/ false, /*print*/true,/*format*/NULL);
 
   /*******************************/
   /* memory dependence predictor */
   /*******************************/
-  opt_reg_string(odb, "-memdep","memory dependence predictor configuration string [D]",
+  opt_reg_string(odb, (char*)"-memdep",(char*)"memory dependence predictor configuration string [D]",
       &knobs->exec.memdep_opt_str, /*default*/ "lwt:LWT:4096:131072", /*print*/true,/*format*/NULL);
 }
 

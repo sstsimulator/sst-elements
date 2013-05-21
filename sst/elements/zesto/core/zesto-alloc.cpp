@@ -89,13 +89,13 @@
 
 void alloc_reg_options(struct opt_odb_t * odb, struct core_knobs_t * knobs)
 {
-  opt_reg_int(odb, "-alloc:depth","alloc pipeline depth (stages) [D]",
+  opt_reg_int(odb, (char*)"-alloc:depth",(char*)"alloc pipeline depth (stages) [D]",
       &knobs->alloc.depth, /*default*/ knobs->alloc.depth, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-alloc:width","alloc pipeline width (uops) [DS]",
+  opt_reg_int(odb, (char*)"-alloc:width",(char*)"alloc pipeline width (uops) [DS]",
       &knobs->alloc.width, /*default*/ knobs->alloc.width, /*print*/true,/*format*/NULL);
 
-  opt_reg_flag(odb, "-flush:drain","use drain-flush after misprediction [DS]",
+  opt_reg_flag(odb, (char*)"-flush:drain",(char*)"use drain-flush after misprediction [DS]",
       &knobs->alloc.drain_flush, /*default*/ false, /*print*/true,/*format*/NULL);
 }
 

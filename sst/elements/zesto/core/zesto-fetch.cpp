@@ -88,38 +88,38 @@
 void fetch_reg_options(struct opt_odb_t * odb, struct core_knobs_t * knobs)
 {
   /* branch prediction */
-  opt_reg_string_list(odb, "-bpred", "bpred configuration string(s) [DS]",
+  opt_reg_string_list(odb, (char*)"-bpred", (char*)"bpred configuration string(s) [DS]",
       knobs->fetch.bpred_opt_str, MAX_HYBRID_BPRED, &knobs->fetch.num_bpred_components, knobs->fetch.bpred_opt_str, /* print */true, /* format */NULL, /* !accrue */false);
 
-  opt_reg_string(odb, "-bpred:fusion","fusion/meta-prediction algorithm configurations string [DS]",
-      &knobs->fetch.fusion_opt_str, /*default*/ "none", /*print*/true,/*format*/NULL);
+  opt_reg_string(odb, (char*)"-bpred:fusion",(char*)"fusion/meta-prediction algorithm configurations string [DS]",
+      &knobs->fetch.fusion_opt_str, /*default*/ (char*)"none", /*print*/true,/*format*/NULL);
 
-  opt_reg_string(odb, "-bpred:btb","branch target buffer configuration configuration string [DS]",
-      &knobs->fetch.dirjmpbtb_opt_str, /*default*/ "btac:BTB:512:4:8:l", /*print*/true,/*format*/NULL);
+  opt_reg_string(odb, (char*)"-bpred:btb",(char*)"branch target buffer configuration configuration string [DS]",
+      &knobs->fetch.dirjmpbtb_opt_str, /*default*/ (char*)"btac:BTB:512:4:8:l", /*print*/true,/*format*/NULL);
 
-  opt_reg_string(odb, "-bpred:ibtb","indirect branch target buffer configuration string [DS]",
-      &knobs->fetch.indirjmpbtb_opt_str, /*default*/ "2levbtac:iBTB:1:8:1:128:4:8:l", /*print*/true,/*format*/NULL);
+  opt_reg_string(odb, (char*)"-bpred:ibtb",(char*)"indirect branch target buffer configuration string [DS]",
+      &knobs->fetch.indirjmpbtb_opt_str, /*default*/ (char*)"2levbtac:iBTB:1:8:1:128:4:8:l", /*print*/true,/*format*/NULL);
 
-  opt_reg_string(odb, "-bpred:ras","return address stack predictor configuration string [DS]",
-      &knobs->fetch.ras_opt_str, /*default*/ "stack:RAS:16", /*print*/true,/*format*/NULL);
+  opt_reg_string(odb, (char*)"-bpred:ras",(char*)"return address stack predictor configuration string [DS]",
+      &knobs->fetch.ras_opt_str, /*default*/ (char*)"stack:RAS:16", /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-jeclear:delay","additional latency from branch-exec to jeclear [D]",
+  opt_reg_int(odb, (char*)"-jeclear:delay",(char*)"additional latency from branch-exec to jeclear [D]",
       &knobs->fetch.jeclear_delay, /*default*/ 1, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-byteQ:size","number of entries in byteQ [DS]",
+  opt_reg_int(odb, (char*)"-byteQ:size",(char*)"number of entries in byteQ [DS]",
       &knobs->fetch.byteQ_size, /*default*/ knobs->fetch.byteQ_size, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-byteQ:linesize","linesize of byteQ (bytes) [DS]",
+  opt_reg_int(odb, (char*)"-byteQ:linesize",(char*)"linesize of byteQ (bytes) [DS]",
       &knobs->fetch.byteQ_linesize, /*default*/ knobs->fetch.byteQ_linesize, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-predecode:depth","number of stages in predecode pipe [D]",
+  opt_reg_int(odb, (char*)"-predecode:depth",(char*)"number of stages in predecode pipe [D]",
       &knobs->fetch.depth, /*default*/ knobs->fetch.depth, /*print*/true,/*format*/NULL);
-  opt_reg_int(odb, "-predecode:width","width of predecode pipe (Macro-ops) [D]",
+  opt_reg_int(odb, (char*)"-predecode:width",(char*)"width of predecode pipe (Macro-ops) [D]",
       &knobs->fetch.width, /*default*/ knobs->fetch.width, /*print*/true,/*format*/NULL);
 
-  opt_reg_int(odb, "-IQ:size","size of instruction queue (Macro-ops - placed between predecode and decode) [D]",
+  opt_reg_int(odb, (char*)"-IQ:size",(char*)"size of instruction queue (Macro-ops - placed between predecode and decode) [D]",
       &knobs->fetch.IQ_size, /*default*/ knobs->fetch.IQ_size, /*print*/true,/*format*/NULL);
 
-  opt_reg_flag(odb, "-warm:bpred","warm branch predictors during functional fast-forwarding [DS]",
+  opt_reg_flag(odb, (char*)"-warm:bpred",(char*)"warm branch predictors during functional fast-forwarding [DS]",
       &knobs->fetch.warm_bpred, /*default*/ false, /*print*/true,/*format*/NULL);
 }
 
