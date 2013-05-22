@@ -121,9 +121,9 @@ core_fetch_atom_t::core_fetch_atom_t(struct core_t * const arg_core):
   core = arg_core;
 
   /* must come after exec_init()! */
-  char name[256];
-  int sets, assoc, linesize, latency, banks, bank_width, MSHR_entries;
-  char rp;
+//  char name[256];
+//  int sets, assoc, linesize, latency, banks, bank_width, MSHR_entries;
+//  char rp;
   int i;
 
   /* bpred */
@@ -636,10 +636,10 @@ void core_fetch_atom_t::step(void)
          For those instructions, targetPC has to be the same as NextPC (execute at fetch system). */
       Mop->decode.targetPC = Mop->oracle.NextPC;	
 
+#ifdef ZDEBUG
       bool pred_taken = (Mop->fetch.pred_NPC != (Mop->fetch.PC+Mop->fetch.inst.len));
       bool taken = (Mop->oracle.NextPC != (Mop->fetch.PC+Mop->fetch.inst.len));
 
-#ifdef ZDEBUG
     if(core->sim_cycle > PRINT_CYCLE )
       fprintf(stdout,"\n[%lld][Core%d]Fetch f|pred_dir= 0x%llx|direction %s ",core->sim_cycle,core->id,pred_taken,(pred_taken==taken)?"correct":"mispred");
     if(core->sim_cycle > PRINT_CYCLE )

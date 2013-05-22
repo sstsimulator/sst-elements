@@ -110,7 +110,7 @@ fprintf(stdout,"\n[%lld][Core%d]Interrupt seen in md_fetch_next_PC",core->sim_cy
 	}
         else { //queue empty
 	    core->m_Qsim_osd->run(core->m_Qsim_cpuid, 1);
-	    if(m_Qsim_cpuid == Procs.size() - 1) { //processor with largest cpuid calls timer_interrupt
+	    if((unsigned int)m_Qsim_cpuid == Procs.size() - 1) { //processor with largest cpuid calls timer_interrupt
 		Count += 1;
 		if(Count >= 1000000) {
 		    m_Qsim_osd->timer_interrupt(); //this is called after the designated proc has advanced 1M instructions
@@ -134,7 +134,7 @@ void qsimlib_core_t::fetch_inst(md_inst_t *inst, struct mem_t *mem, const md_add
     while(true) {
 	if(q_ptr->empty()) {
 	    core->m_Qsim_osd->run(core->m_Qsim_cpuid, 1);
-	    if(m_Qsim_cpuid == Procs.size() - 1) { //processor with largest cpuid calls timer_interrupt
+	    if((unsigned int)m_Qsim_cpuid == Procs.size() - 1) { //processor with largest cpuid calls timer_interrupt
 		Count += 1;
 		if(Count >= 1000000) {
 		    m_Qsim_osd->timer_interrupt(); //this is called after the designated proc has advanced 1M instructions

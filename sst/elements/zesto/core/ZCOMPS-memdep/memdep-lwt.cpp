@@ -77,7 +77,7 @@ class memdep_lwt_t:public memdep_t
 
     MEMDEP_STAT(lookups++;)
 
-    if((core->sim_cycle - last_reset) >= reset_interval)
+    if((core->sim_cycle - last_reset) >= (unsigned int)reset_interval)
     {
       memset(array,0,num_entries*sizeof(*array));
       last_reset = core->sim_cycle - (core->sim_cycle % reset_interval);
@@ -94,7 +94,7 @@ class memdep_lwt_t:public memdep_t
   {
     MEMDEP_STAT(updates++;)
 
-    if((core->sim_cycle - last_reset) >= reset_interval)
+    if((core->sim_cycle - last_reset) >= (unsigned int)reset_interval)
     {
       memset(array,0,num_entries*sizeof(*array));
       last_reset = core->sim_cycle - (core->sim_cycle % reset_interval);

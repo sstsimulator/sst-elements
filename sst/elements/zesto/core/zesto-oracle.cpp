@@ -677,7 +677,7 @@ refetch_nextPC:
     md_print_insn(Mop,stdout);
     fprintf(stdout,"\n");
 #endif
-    md_addr_t nextPC,PC;
+    md_addr_t nextPC/*,PC*/;
     Mop->decode.is_intr = core->fetch_next_pc(&nextPC,core);
     if(nextPC==0)
     {

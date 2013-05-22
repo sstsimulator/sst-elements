@@ -264,11 +264,11 @@ irisNic<T>::from_flit_level_packet(FlitLevelPacket* flp)
         Flit* f = flp->pop_next_flit ();
         if (f->type == BODY)
         {
-            uint8_t * data = static_cast<BodyFlit*>(f)->data;
-        	assert(byte_count < message->get_pack_size());
+//            uint8_t * data = static_cast<BodyFlit*>(f)->data;
+        	assert(byte_count < (uint)message->get_pack_size());
             for (unsigned j = 0; j < link_width/8; j++)
             {
-                if(byte_count < message->get_pack_size()) {
+                if(byte_count < (uint)message->get_pack_size()) {
     	    	    *ptr = static_cast<BodyFlit*>(f)->data[j];
 	        	    ptr++;
 		            byte_count++;
@@ -362,7 +362,7 @@ irisNic<T>::tick (SST::Cycle_t cycle)
             next_to_router->type = irisRtrEvent::Packet;
             next_to_router->packet = new irisNPkt();
             next_to_router->packet->vc = 0;
-            assert(f->src_id == m_id);
+            assert(f->src_id == (unsigned int)m_id);
             next_to_router->packet->srcNum = f->src_id;
             next_to_router->packet->destNum = f->dst_id;
             next_to_router->packet->sizeInFlits = f->pkt_length;
@@ -589,7 +589,7 @@ irisNic<T>::to_flit_level_packet(FlitLevelPacket* flp, uint lw, T* data)
         
         for (uint j = 0; j < link_width/8; j++)
         {
-            if (byte_count < data->get_pack_size())
+            if (byte_count < (uint)data->get_pack_size())
             {
                 bf->data[j] = *ptr;
                 ptr++;

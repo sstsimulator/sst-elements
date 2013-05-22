@@ -142,9 +142,12 @@ ostream& operator<<(ostream& stream, const cache_req& creq)
     case LD_RESPONSE:
         mstr = "LD_RESPONSE";
 	break;
+	  case ST_COMPLETE:
+	  case CACHE_MISS_DUPLICATE:
+	break;	
     }
 
-    const char* pstr;
+    const char* pstr =0;
     switch (creq.op_type) {
     case OpMemNoOp:
         pstr = "OpMemNoOp";
@@ -159,6 +162,8 @@ ostream& operator<<(ostream& stream, const cache_req& creq)
 
     stream << "cache_req: req_id= " << creq.req_id << " src_id= " << creq.source_id << " addr= 0x" <<hex<< creq.addr <<dec
            << " " << mstr << " " << pstr;
+  
+  return stream;
 }
 
 ostream& operator<<(ostream& stream, const mem_req& mreq)
@@ -177,6 +182,9 @@ ostream& operator<<(ostream& stream, const mem_req& mreq)
     case LD_RESPONSE:
         mstr = "LD_RESPONSE";
 	break;
+	  case ST_COMPLETE:
+	  case CACHE_MISS_DUPLICATE:
+	break;	
     }
 
     const char* pstr = 0;
@@ -195,6 +203,8 @@ ostream& operator<<(ostream& stream, const mem_req& mreq)
     stream << "mem_req: req_id= " << mreq.req_id << " org_id= " << mreq.originator_id << " src_id= " << mreq.source_id << " src_port= " << mreq.source_port
            << " dst_id= " << mreq.dest_id << " dst_port= " << mreq.dest_port<< " addr= 0x" <<hex<< mreq.addr <<dec
            << " " << mstr << " " << pstr;
+
+  return stream;
 }
 
 

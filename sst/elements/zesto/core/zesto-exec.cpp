@@ -202,7 +202,7 @@ void exec_reg_options(struct opt_odb_t * odb, struct core_knobs_t * knobs)
   /* memory dependence predictor */
   /*******************************/
   opt_reg_string(odb, (char*)"-memdep",(char*)"memory dependence predictor configuration string [D]",
-      &knobs->exec.memdep_opt_str, /*default*/ "lwt:LWT:4096:131072", /*print*/true,/*format*/NULL);
+      &knobs->exec.memdep_opt_str, /*default*/ (char*)"lwt:LWT:4096:131072", /*print*/true,/*format*/NULL);
 }
 
 

@@ -356,7 +356,7 @@ void hash_table::free_mshr_entry (cache_req *request, std::list<cache_req*>& req
 cache_msg_t hash_table::process_request (cache_req *request)
 {
    hash_set *set;
-   bool created_mshr = false;
+//   bool created_mshr = false;
 
    assert (request != NULL);
 

@@ -573,7 +573,7 @@ void core_exec_atom_t::RS_schedule(void) /* for uops in the RS */
 #endif
           if(uop->decode.is_load)
           {
-            int fp_penalty = REG_IS_FPR(uop->decode.odep_name)?knobs->exec.fp_penalty:0;
+//            int fp_penalty = REG_IS_FPR(uop->decode.odep_name)?knobs->exec.fp_penalty:0;
             //TODO caffein-sim add memlatency uop->timing.when_otag_ready = core->sim_cycle + port[i].FU[uop->decode.FU_class]->latency + core->memory.DL1->latency + fp_penalty;
             // uop->timing.when_otag_ready = core->sim_cycle + port[i].FU[uop->decode.FU_class]->latency + 3 + fp_penalty;
             uop->timing.when_otag_ready = TICK_T_MAX;
@@ -1523,7 +1523,7 @@ void core_exec_atom_t::recover(void)
 
 bool core_exec_atom_t::RS_available(int port)
 {
-  struct core_knobs_t * knobs = core->knobs;
+//  struct core_knobs_t * knobs = core->knobs;
   //return RS_num < knobs->exec.RS_size;
   return(RS[port]==NULL);
 }
@@ -1532,7 +1532,7 @@ bool core_exec_atom_t::RS_available(int port)
    an entry is available */
 void core_exec_atom_t::RS_insert(struct uop_t * const uop)
 {
-  struct core_knobs_t * knobs = core->knobs;
+//  struct core_knobs_t * knobs = core->knobs;
  
   zesto_assert(RS[uop->alloc.port_assignment] == NULL ,(void)0);
   RS[uop->alloc.port_assignment] = uop;
@@ -1666,7 +1666,7 @@ void core_exec_atom_t::STQ_deallocate_sta(void)
 /* returns true if successful */
 bool core_exec_atom_t::STQ_deallocate_std(struct uop_t * const uop)
 {
-  struct core_knobs_t * knobs = core->knobs;
+//  struct core_knobs_t * knobs = core->knobs;
   return true;
 }
 

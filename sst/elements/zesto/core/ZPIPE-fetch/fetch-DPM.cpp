@@ -120,9 +120,9 @@ core_fetch_DPM_t::core_fetch_DPM_t(struct core_t * const arg_core):
   core = arg_core;
 
   /* must come after exec_init()! */
-  char name[256];
-  int sets, assoc, linesize, latency, banks, bank_width, MSHR_entries;
-  char rp;
+//  char name[256];
+//  int sets, assoc, linesize, latency, banks, bank_width, MSHR_entries;
+//  char rp;
   int i;
 
   /* bpred */
@@ -635,10 +635,10 @@ void core_fetch_DPM_t::step(void)
          For those instructions, targetPC has to be the same as NextPC (execute at fetch system). */
        Mop->decode.targetPC = Mop->oracle.NextPC;	
 
+#ifdef ZDEBUG
       bool pred_taken = (Mop->fetch.pred_NPC != (Mop->fetch.PC+Mop->fetch.inst.len));
       bool taken = (Mop->oracle.NextPC != (Mop->fetch.PC+Mop->fetch.inst.len));
 
-#ifdef ZDEBUG
       fprintf(stdout,"\n[%lld][Core%d]Fetch f|pred_dir= 0x%llx|direction %s ",core->sim_cycle,core->id,pred_taken,(pred_taken==taken)?"correct":"mispred");
       fprintf(stdout," f|pred_targ= 0x%llx|target %s, NextPC= 0x%llx ",Mop->fetch.pred_NPC,(Mop->fetch.pred_NPC==Mop->oracle.NextPC)?"correct":"mispred",Mop->oracle.NextPC);
 #endif

@@ -33,7 +33,7 @@ Flit::toString ( ) const
 	    }
 	    break;
         case TAIL:
-	    { const TailFlit* tf = static_cast<const TailFlit*>(this);
+	    { //const TailFlit* tf = static_cast<const TailFlit*>(this);
 	      str << " TAIL ";
 	    }
 	    break;

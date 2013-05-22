@@ -594,7 +594,7 @@ void core_exec_DPM_t::RS_schedule(void) /* for uops in the RS */
 
           if(uop->decode.is_load)
           {
-            int fp_penalty = REG_IS_FPR(uop->decode.odep_name)?knobs->exec.fp_penalty:0;
+//            int fp_penalty = REG_IS_FPR(uop->decode.odep_name)?knobs->exec.fp_penalty:0;
            //TODO cacffein-sim add memlatency uop->timing.when_otag_ready = core->sim_cycle + port[i].FU[uop->decode.FU_class]->latency + core->memory.DL1->latency + fp_penalty;
            // uop->timing.when_otag_ready = core->sim_cycle + port[i].FU[uop->decode.FU_class]->latency + 2 + fp_penalty;
            uop->timing.when_otag_ready = TICK_T_MAX;

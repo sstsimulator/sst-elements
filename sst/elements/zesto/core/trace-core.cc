@@ -47,7 +47,7 @@ bool trace_core_t::fetch_next_pc(md_addr_t *nextPC, struct core_t * core)
     if(!feof(tcore->current_thread->pin_trace))
     {
       unsigned long nextPC64;
-      fscanf(tcore->current_thread->pin_trace,"%llx", &nextPC64);
+      fscanf(tcore->current_thread->pin_trace,"%llx", (long long unsigned int*)&nextPC64);
       *nextPC = nextPC64;
       tcore->store_nextPC = *nextPC;
     }
@@ -98,7 +98,7 @@ void trace_core_t::fetch_inst(md_inst_t *inst, struct mem_t *mem, const md_addr_
       tcore->exec->freeze_stats();
       tcore->print_stats();
     }
-    fscanf(tcore->current_thread->pin_trace,"%x ",&(inst->code[i]));
+    fscanf(tcore->current_thread->pin_trace,"%x ",(unsigned int*)&(inst->code[i]));
 #ifdef ZDEBUG
     fprintf(stdout," %x", inst->code[i]);
 #endif
@@ -132,14 +132,14 @@ void trace_core_t::fetch_inst(md_inst_t *inst, struct mem_t *mem, const md_addr_
       {
         if(inst->mem_ops.mem_vaddr_ld[0]==0)
         {
-          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_ld[0]), &(inst->mem_ops.ld_size[0]) );
+          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_ld[0]), (int*)&(inst->mem_ops.ld_size[0]) );
           inst->mem_ops.mem_paddr_ld[0]= inst->mem_ops.mem_vaddr_ld[0];
           inst->mem_ops.ld_dequeued[0]=false;
           inst->mem_ops.memops++;
         }
         else
         {
-          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_ld[1]), &(inst->mem_ops.ld_size[1]) );
+          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_ld[1]), (int*)&(inst->mem_ops.ld_size[1]) );
           inst->mem_ops.mem_paddr_ld[1]= inst->mem_ops.mem_vaddr_ld[1];
           inst->mem_ops.ld_dequeued[1]=false;
           inst->mem_ops.memops++;
@@ -149,14 +149,14 @@ void trace_core_t::fetch_inst(md_inst_t *inst, struct mem_t *mem, const md_addr_
       {
         if(inst->mem_ops.mem_vaddr_str[0] == 0)
         {
-          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_str[0]), &(inst->mem_ops.str_size[0]) );
+          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_str[0]), (int*)&(inst->mem_ops.str_size[0]) );
           inst->mem_ops.mem_paddr_str[0]= inst->mem_ops.mem_vaddr_str[0];
           inst->mem_ops.str_dequeued[0]=false;
           inst->mem_ops.memops++;	
         }
         else
         {
-          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_str[1]), &(inst->mem_ops.str_size[1]) );
+          fscanf(tcore->current_thread->pin_trace,"%llx %d",&(inst->mem_ops.mem_vaddr_str[1]), (int*)&(inst->mem_ops.str_size[1]) );
           inst->mem_ops.mem_paddr_str[1]= inst->mem_ops.mem_vaddr_str[1];
           inst->mem_ops.str_dequeued[1]=false;
           inst->mem_ops.memops++;
