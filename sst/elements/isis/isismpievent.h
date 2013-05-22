@@ -27,9 +27,9 @@ namespace IsisMPI {
 	
 	typedef uint32_t IsisMPICommGroup
 
-
 	class IsisMPIEvent : IsisEvent {
 		public:
+			IsisMPIEvent(IsisMPIOperationType the_mpi_function);
 			virtual IsisMPIOperationType getMPIOperationType();
 			
 		protected:

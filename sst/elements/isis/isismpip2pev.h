@@ -8,8 +8,9 @@ namespace IsisMPI {
 
 	class IsisMPIPt2PtEvent : IsisMPIEvent {
 		public:
-			IsisMPIPt2PtEvent(int count, IsisMPIDataType type, int tag,
-				IsisMPICommGroup group);
+			IsisMPIPt2PtEvent(IsisMPIOperationType the_mpi_function,
+				int count_, IsisMPIDataType type_, int tag_,
+				IsisMPICommGroup group_);
 
 			int 				getCount();
 			IsisMPIDataType 	getDataType();
