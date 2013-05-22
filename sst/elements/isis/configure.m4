@@ -1,9 +1,10 @@
 dnl -*- Autoconf -*-
 
 AC_DEFUN([SST_isis_CONFIG], [
-  AC_ARG_ENABLE([isis], [AS_HELP_STRING([--enable-isis], [Enable the Isis MPI trace component])],
-        [], [enable_isis="no"])
+  SST_CHECK_DUMPI([isis_have_dumpi=1],
+              [isis_have_dumpi=0],
+              [AC_MSG_ERROR([DUMPI requested but not found])])
+  AS_IF([test "$isis_have_dumpi" = "1"], [AC_DEFINE([HAVE_DUMPI], [1], [Define if DUMPI can be used for builds])])
 
-  AS_IF( [ test -z "$test_isis" -a "$enable_isis" = "yes" ], [ happy = "yes" ] )
-  AS_IF([test "$happy" = "yes"], [$1], [$2])
+  AS_IF([test "$isis_have_dumpi" = "1"], [$1], [$2])
 ])
