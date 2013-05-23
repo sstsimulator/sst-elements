@@ -111,7 +111,7 @@ public:
 	    
 	    crFuncCall(barrier);
 
-	    for ( i = 0; i < test_desc.size(); ++i ) {
+	    for ( i = 0; (unsigned int)i < test_desc.size(); ++i ) {
 		if ( my_id == 0 ) {
 		    printf("  %s\n",test_desc[i].c_str());
 		    crFuncCall(barrier);

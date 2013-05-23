@@ -313,6 +313,7 @@ portals::PtlAtomic(ptl_handle_md_t md_handle, ptl_size_t local_offset,
     header.remote_offset = remote_offset;
     header.atomic_op = operation;
 //     header.atomic_datatype = datatype;
+    header.header_data = 0;
     
     // Copy the header into the first half of the packet payload
     memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
@@ -467,7 +468,7 @@ portals::PtlEQPoll(int* return_value, ptl_handle_eq_t eq_handle, ptl_time_t time
     if ( !cpu->waiting ) {
 	cpu->waiting = true;
 	cpu->timed_out = false;
-	if ( timeout != PTL_TIME_FOREVER ) {
+	if ( (int64_t)timeout != PTL_TIME_FOREVER ) {
 	    // First time in and didn't find a match.  Need to set up
 	    // the timeout event
 	    cpu->poll_ev = new trig_cpu_event(true);
@@ -744,7 +745,8 @@ portals::PtlGet ( ptl_handle_md_t md_handle, ptl_size_t local_offset,
     header.remote_offset = remote_offset;
 //     header.get_ct_handle = md_handle->ct_handle;
 //     header.get_start = (void*)((unsigned long)md_handle->start+(unsigned long)local_offset);
-    
+    header.header_data = 0;
+
     // Copy the header into the first half of the packet payload
     memcpy(event->ptl_data,&header,sizeof(ptl_header_t));
 

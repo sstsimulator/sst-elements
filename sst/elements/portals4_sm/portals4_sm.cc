@@ -57,7 +57,7 @@ static string str(const char* format, ...) {
 
 
 static void partition(ConfigGraph* graph, int ranks) {
-    int sx, sy, sz;
+    int sx=0, sy=0, sz=0;
 
         
     // Need to look through components until we find a router so we
@@ -144,7 +144,7 @@ static void generate(ConfigGraph* graph, string options, int ranks) {
 
     char** argv = new char*[count];
     int loop = 1;
-    argv[0] = "portals4_sm.generate";
+    argv[0] = (char*)"portals4_sm.generate";
     
     BOOST_FOREACH(string t, tok) {
 	char* new_str = (char*)malloc((t.length() + 1) * sizeof(char));
@@ -169,8 +169,8 @@ static void generate(ConfigGraph* graph, string options, int ranks) {
     }
 
     /* clean up so SDL file looks nice */
-    if (NULL == args.noise_interval) args.noise_interval = "1kHz";
-    if (NULL == args.noise_duration) args.noise_duration = "25us";
+    if (NULL == args.noise_interval) args.noise_interval = (char*)"1kHz";
+    if (NULL == args.noise_duration) args.noise_duration = (char*)"25us";
 
     string rtr_link_lat = "10ns";
     string nic_link_lat;

@@ -335,7 +335,7 @@ void trig_cpu::setup()
     pio_in_progress = false;
 
     
-    if ( sizeof(ptl_header_t) & 8 != 0 ) {
+    if ( (sizeof(ptl_header_t) & 8) != 0 ) {
 	fprintf(stderr,
 		"Portals header (ptl_header_t) must be a multiple of 8-bytes (actual = %d), aborting...\n",
 		(int) sizeof(ptl_header_t));

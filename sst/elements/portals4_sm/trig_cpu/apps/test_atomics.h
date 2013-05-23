@@ -72,7 +72,7 @@ public:
 	while (!ptl->PtlCTWait(ct_h, 2)) { crReturn(); }
 	crReturn();
 
-	printf("%d: %lld\n",my_id,accum);
+	printf("%d: %lld\n",my_id,(long long int)accum);
 
 
         trig_cpu::addTimeToStats(cpu->getCurrentSimTimeNano()-start_time);

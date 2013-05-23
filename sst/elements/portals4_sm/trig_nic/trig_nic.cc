@@ -648,7 +648,12 @@ void trig_nic::processPtlEvent( Event *e ) {
 		    ret_header.op = PTL_OP_GET_RESP;
 		    ret_header.length = header.length;
 		    ret_header.out_msg_index = header.out_msg_index;
-		    
+
+		    ret_header.header_data = 0;
+		    ret_header.remote_offset = 0;
+		    ret_header.match_bits = 0;
+		    ret_header.options = 0;
+
 		    trig_nic_event* event = new trig_nic_event;
 		    event->src = m_id;
 		    event->dest = ev->src;

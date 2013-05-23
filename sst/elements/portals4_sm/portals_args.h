@@ -105,6 +105,7 @@ static struct option longopts[] = {
 };
 
 
+void parse_partals_args(int argc, char** argv, struct portals_args* args); // To get rid of gcc warning
 void parse_partals_args(int argc, char** argv, struct portals_args* args)
 {
     int ch;
@@ -117,7 +118,7 @@ void parse_partals_args(int argc, char** argv, struct portals_args* args)
     args->noise_runs = 0;
     args->noise_interval = NULL;
     args->noise_duration = NULL;
-    args->msg_rate = "5MHz";
+    args->msg_rate = (char*)"5MHz";
     args->latency = 500;
     args->msg_size = 1 * 1024 * 1024;
     args->chunk_size = 16 * 1024;
@@ -128,7 +129,7 @@ void parse_partals_args(int argc, char** argv, struct portals_args* args)
     args->ranks = 1;
     args->new_format = 0;
     args->self_partition = 0;
-
+    
     while ((ch = getopt_long(argc, argv, "hx:y:z:r:", longopts, NULL)) != -1) {
         switch (ch) {
         case 'x':
