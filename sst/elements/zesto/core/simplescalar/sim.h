@@ -70,7 +70,9 @@
  */
 
 /* next program counter */
+#ifndef ZESTO_ORACLE_C
 #define SET_NPC(EXPR)		(thread->regs.regs_NPC = (EXPR))
+#endif
 
 /* current program counter */
 #define CPC			(thread->regs.regs_PC)
@@ -81,7 +83,9 @@
 
 /* next program counter */
 #define NPC			(thread->regs.regs_NPC)
+#ifndef ZESTO_ORACLE_C
 #define SET_NPC(EXPR)		(thread->regs.regs_NPC = (EXPR))
+#endif
 #define SET_NPC_D(EXPR)         SET_NPC(EXPR)
 #define SET_NPC_V(EXPR)							\
   ((Mop->fetch.inst.mode & MODE_OPER32) ? SET_NPC((EXPR)) : SET_NPC((EXPR) & 0xffff))
@@ -195,6 +199,7 @@
                                                  /* precise architected memory state accessor macros */
 #ifdef TARGET_X86
 
+#ifndef ZESTO_ORACLE_C
 #define READ_BYTE(SRC, FAULT)						\
                                                    ((FAULT) = md_fault_none, MEM_READ_BYTE(thread->mem, *addr = (SRC)))
 #define READ_WORD(SRC, FAULT)						\
@@ -212,7 +217,7 @@
                                                    ((FAULT) = md_fault_none, XMEM_WRITE_DWORD(thread->mem, *addr = (DST), (SRC)))
 #define WRITE_QWORD(SRC, DST, FAULT)					\
                                                    ((FAULT) = md_fault_none, XMEM_WRITE_QWORD(thread->mem, *addr = (DST), (SRC)))
-
+#endif
 #else /* !TARGET_X86 */
 
 #define READ_BYTE(SRC, FAULT)						\
