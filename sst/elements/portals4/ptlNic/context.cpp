@@ -724,9 +724,9 @@ RecvEntry* Context::processMatch( ptl_nid_t nid, PtlHdr* hdr, int me_handle,
 {
     Context_DBG("found match me=%d list=%d\n", me_handle, list );
     if ( hdr->op == ::Get ) {
-        processGet( nid, hdr, me_handle, list );
+        return processGet( nid, hdr, me_handle, list );
     } else {
-        processPut( nid, hdr, me_handle, list );
+        return processPut( nid, hdr, me_handle, list );
     }
 }
 
