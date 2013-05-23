@@ -390,7 +390,7 @@ private:
 	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction);
 	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction);
 	void loadBlock(MemEvent *ev, SourceType_t src);
-    /* Note, this MemEvent* is actually a LoadInfo_t* */
+    std::pair<LoadInfo_t*, bool> initLoad(MemEvent *ev, SourceType_t src);
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
 	void finishLoadBlockBus(BusHandlerArgs &args);
 
@@ -412,6 +412,10 @@ private:
     void prepWritebackBlock(BusHandlerArgs &args, MemEvent *ev);
 	void finishWritebackBlockVA(BusHandlerArgs &args);
 	void finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock);
+
+    void handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated);
+    void fetchBlock(MemEvent *ev, CacheBlock *block);
+
 
 	void busClear(SST::Link *busLink);
 
@@ -465,6 +469,7 @@ private:
 		CacheBlock *targetBlock;
 		MemEvent *busEvent;
         MemEvent::id_type initiatingEvent;
+        ForwardDir_t loadDirection;
 		struct LoadElement_t {
 			MemEvent * ev;
 			SourceType_t src;

@@ -41,6 +41,8 @@ class DirectoryController : public Component {
 		/* First 3 items are bookkeeping for in-progress commands */
 		MemEvent *activeReq;
 		ProcessFunc nextFunc;
+        std::string waitingOn; // waiting to hear from this source
+        Command nextCommand;  // Command which we're waiting for
 		uint32_t waitingAcks;
 
 		Addr baseAddr;
@@ -65,6 +67,16 @@ class DirectoryController : public Component {
 			}
 			return count;
 		}
+
+        uint32_t findOwner(void) {
+            assert(dirty);
+            for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
+                if ( sharers[i] ) return i;
+            }
+            // SHOULD NEVER GET HERE
+            assert(false);
+            return 0;
+        }
 
 		bool inProgress(void) { return activeReq != NULL; }
 	};

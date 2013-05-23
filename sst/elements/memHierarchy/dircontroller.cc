@@ -126,58 +126,55 @@ void DirectoryController::handlePacket(SST::Event *event)
     assert(isRequestAddressValid(ev));
     DPRINTF("Received %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
 
-    /* Make sure we know about the sender */
-    registerSender(ev->getSrc());
-    switch(ev->getCmd()) {
-    case ACK:
+    if ( ev->getCmd() == ACK ) {
         handleACK(ev);
         delete ev;
-        break;
+        return;
+    }
+
+
+    DirEntry *entry = getDirEntry(ev->getAddr());
+    if ( entry && entry->inProgress() ) {
+        DPRINTF("Entry 0x%"PRIx64" in progress.\n", entry->baseAddr);
+        if ( entry->nextCommand == ev->getCmd() &&
+            ( entry->waitingOn == "N/A" ||
+              !entry->waitingOn.compare(ev->getSrc()) ) ) {
+            DPRINTF("Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
+            advanceEntry(entry, ev);
+        } else {
+            DPRINTF("Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.  Re-enqueuing.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
+            workQueue.push_back(ev);
+        }
+        return;
+    }
+
+    switch(ev->getCmd()) {
     case SupplyData: {
         /* May be a response to a Fetch/FetchInvalidate
          * May be a writeback
          */
-        DirEntry *entry = getDirEntry(ev->getAddr());
         assert(entry);
-        if ( entry->inProgress() ) {
-            // Message should only be coming from the exclusive owner
-            /* TODO:  Handle potential race of owner doing an eviction at same time */
-            DPRINTF("Entry 0x%"PRIx64" in progress.  Advancing.\n", entry->baseAddr);
-            advanceEntry(entry, ev);
-        } else {
-            DPRINTF("Entry 0x%"PRIx64" not in progress.  Requesting from memory.\n", entry->baseAddr);
-            entry->activeReq = ev;
-            entry->nextFunc = &DirectoryController::handleExclusiveEviction;
-            requestDirEntryFromMemory(entry);
-        }
+        DPRINTF("Entry 0x%"PRIx64" not in progress.  Requesting from memory.\n", entry->baseAddr);
+        entry->activeReq = ev;
+        entry->nextFunc = &DirectoryController::handleExclusiveEviction;
+        requestDirEntryFromMemory(entry);
         break;
     }
     case RequestData: {
-        DirEntry *entry = getDirEntry(ev->getAddr());
         if ( !entry ) {
             entry = createDirEntry(ev->getAddr());
         }
-        if ( entry->inProgress() ) {
-            workQueue.push_back(ev);
-        } else {
-            DPRINTF("Entry 0x%"PRIx64" not in progress.  Requesting from memory.\n", entry->baseAddr);
-            entry->activeReq = ev;
-            entry->nextFunc = &DirectoryController::handleRequestData;
-            requestDirEntryFromMemory(entry);
-        }
+        DPRINTF("Entry 0x%"PRIx64" not in progress.  Requesting from memory.\n", entry->baseAddr);
+        entry->activeReq = ev;
+        entry->nextFunc = &DirectoryController::handleRequestData;
+        requestDirEntryFromMemory(entry);
         break;
     }
     case Invalidate: {
-        DirEntry *entry = getDirEntry(ev->getAddr());
         assert(entry);
-        if ( entry->inProgress() ) {
-            // Put it on the queue;
-            workQueue.push_back(ev);
-        } else {
-            entry->activeReq = ev;
-            entry->nextFunc = &DirectoryController::handleInvalidate;
-            requestDirEntryFromMemory(entry);
-        }
+        entry->activeReq = ev;
+        entry->nextFunc = &DirectoryController::handleInvalidate;
+        requestDirEntryFromMemory(entry);
         break;
     }
     default:
@@ -293,6 +290,9 @@ void DirectoryController::handleInvalidate(DirEntry *entry, MemEvent *new_ev)
 	}
 	if ( entry->waitingAcks > 0 ) {
 		entry->nextFunc = &DirectoryController::finishInvalidate;
+        entry->nextCommand = ACK;
+        entry->waitingOn = "N/A";
+        DPRINTF("Sending invalidates to allow exclusive access for 0x%"PRIx64".\n", entry->baseAddr);
 	} else {
 		finishInvalidate(entry, NULL);
 	}
@@ -310,6 +310,8 @@ void DirectoryController::finishInvalidate(DirEntry *entry, MemEvent *new_ev)
 	entry->sharers[target_id] = true;
 	entry->dirty = true;
 
+    DPRINTF("Setting dirty, with owner %s for 0x%"PRIx64".\n", nodeid_to_name[target_id].c_str(), entry->baseAddr);
+
 	MemEvent *ev = entry->activeReq->makeResponse(this);
 	sendResponse(ev);
 
@@ -320,6 +322,7 @@ void DirectoryController::finishInvalidate(DirEntry *entry, MemEvent *new_ev)
 void DirectoryController::sendInvalidate(int target, Addr addr)
 {
     MemEvent *me = new MemEvent(this, addr, Invalidate);
+    me->setSize(blocksize);
     me->setDst(nodeid_to_name[target]);
     network->send(me);
 }
@@ -336,9 +339,16 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
 			cmd = FetchInvalidate;
 		}
 		MemEvent *ev = new MemEvent(this, entry->baseAddr, cmd);
+        std::string &dest = nodeid_to_name[entry->findOwner()];
+        ev->setSize(blocksize);
+        ev->setDst(dest);
 		sendResponse(ev);
 
 		entry->nextFunc = &DirectoryController::finishFetch;
+        entry->nextCommand = SupplyData;
+        entry->waitingOn = dest;
+        DPRINTF("Sending %s to %s to fulfill request for data for 0x%"PRIx64".\n",
+                CommandString[ev->getCmd()], dest.c_str(), entry->baseAddr);
 
 	} else if ( entry->activeReq->queryFlag(MemEvent::F_EXCLUSIVE) ) {
 		// Must send invalidates
@@ -352,6 +362,9 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
 		}
 		if ( entry->waitingAcks > 0 ) {
 			entry->nextFunc = &DirectoryController::getExclusiveDataForRequest;
+            entry->nextCommand = ACK;
+            entry->waitingOn = "N/A";
+            DPRINTF("Sending Invalidates to fulfill request for exclusive 0x%"PRIx64".\n", entry->baseAddr);
 		} else {
 			getExclusiveDataForRequest(entry, NULL);
 		}
@@ -380,6 +393,7 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev)
 	ev->setPayload(new_ev->getPayload());
 	sendResponse(ev);
 	writebackData(new_ev);
+
 	updateEntryToMemory(entry);
 }
 
@@ -389,6 +403,7 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev)
 {
 	MemEvent *ev = entry->activeReq->makeResponse(this);
 	ev->setPayload(new_ev->getPayload());
+    DPRINTF("Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());
 	sendResponse(ev);
 	updateEntryToMemory(entry);
 }
@@ -417,6 +432,7 @@ void DirectoryController::handleExclusiveEviction(DirEntry *entry, MemEvent *ev)
 	entry->dirty = false;
 	entry->sharers[node_id(ev->getSrc())] = false;
     writebackData(entry->activeReq);
+
 	updateEntryToMemory(entry);
 }
 
@@ -457,6 +473,8 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry)
 	MemEvent *me = new MemEvent(this, entryAddr, RequestData);
 	me->setSize((numTargets+1)/8 +1);
     memReqs[me->getID()] = entry->baseAddr;
+    entry->nextCommand = SupplyData;
+    entry->waitingOn = "memory";
 	memLink->send(me);
 }
 
@@ -467,6 +485,8 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry)
     MemEvent *ev = new MemEvent(this, convertAddressToLocalAddress(entry->baseAddr), RequestData);
     ev->setSize(blocksize);
     memReqs[ev->getID()] = entry->baseAddr;
+    entry->nextCommand = SupplyData;
+    entry->waitingOn = "memory";
     memLink->send(ev);
 }
 
@@ -477,6 +497,8 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry)
 	MemEvent *me = new MemEvent(this, entryAddr, SupplyData);
 	me->setSize((numTargets+1)/8 +1);
     memReqs[me->getID()] = entry->baseAddr;
+    entry->nextCommand = WriteResp;
+    entry->waitingOn = "memory";
 
 	memLink->send(me);
 }
@@ -498,6 +520,8 @@ void DirectoryController::resetEntry(DirEntry *entry)
 	delete entry->activeReq;
 	entry->activeReq = NULL;
 	entry->nextFunc = NULL;
+    entry->nextCommand = NULLCMD;
+    entry->waitingOn = "N/A";
 }
 
 

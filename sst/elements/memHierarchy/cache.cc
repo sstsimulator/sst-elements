@@ -283,6 +283,13 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
         ackInvalidate(ev);
         break;
 
+    case Fetch:
+        handleFetch(ev, false, !firstTimeProcessed);
+        break;
+    case FetchInvalidate:
+        handleFetch(ev, true, !firstTimeProcessed);
+        break;
+
     default:
         /* Ignore */
         delete event;
@@ -533,33 +540,18 @@ void Cache::finishIssueInvalidate(Addr addr)
 void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 {
 
-	CacheBlock *block = NULL;
-    Addr blockAddr = addrToBlockAddr(ev->getAddr());
-	LoadList_t::iterator i = waitingLoads.find(blockAddr);
-	LoadInfo_t *li;
-    bool reprocess = false;
-	if ( i != waitingLoads.end() ) {
-		li = i->second;
-		ASSERT (li->addr == blockAddr);
+    std::pair<LoadInfo_t*, bool> initRes = initLoad(ev, src);
+    LoadInfo_t *li = initRes.first;
+    bool reprocess = !initRes.second;
 
-        /* Check to see if this a reprocess of the head event */
-        if ( li->initiatingEvent != ev->getID() ) {
-            DPRINTF("Adding to existing outstanding Load for this block.\n");
-            li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
-            return;
-        }
-        DPRINTF("Reprocessing existing Load for this block.\n");
-        reprocess = true;
-
-    } else {
-        li = new LoadInfo_t(blockAddr);
-        DPRINTF("No existing Load for this block.  Creating.  [li: %p]\n", li);
-        std::pair<LoadList_t::iterator, bool> res = waitingLoads.insert(std::make_pair(blockAddr, li));
-        li->initiatingEvent = ev->getID();
+    /* Check to see if this a reprocess of the head event */
+    if ( reprocess && li->initiatingEvent != ev->getID() ) {
+        DPRINTF("Adding to existing outstanding Load for this block.\n");
+        li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
+        return;
     }
-
     CacheRow *row = findRow(ev->getAddr());
-    block = row->getLRU();
+    CacheBlock *block = row->getLRU();
 
     if ( !block ) { // Row is full, wait for one to be available
         row->addWaitingEvent(ev, src);
@@ -597,6 +589,7 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
     block->activate(ev->getAddr());
     block->lock();
 
+    li->loadDirection = SEND_DOWN;
     li->targetBlock = block;
     block->loadInfo = li;
     if ( reprocess )
@@ -608,18 +601,64 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
 }
 
 
+std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(MemEvent *ev, SourceType_t src)
+{
+    bool initialEvent = false;
+
+    Addr blockAddr = addrToBlockAddr(ev->getAddr());
+	LoadList_t::iterator i = waitingLoads.find(blockAddr);
+    LoadInfo_t *li = NULL;
+	if ( i != waitingLoads.end() ) {
+		li = i->second;
+		ASSERT (li->addr == blockAddr);
+        initialEvent = false;
+
+    } else {
+        li = new LoadInfo_t(blockAddr);
+        DPRINTF("No existing Load for this block.  Creating.  [li: %p]\n", li);
+        std::pair<LoadList_t::iterator, bool> res = waitingLoads.insert(std::make_pair(blockAddr, li));
+        li->initiatingEvent = ev->getID();
+        initialEvent = true;
+    }
+
+    return std::make_pair(li, initialEvent);
+
+}
+
+
 void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
 {
     DPRINTF("Time to send load for 0x%"PRIx64"\n", addr);
 
     /* Check to see if we're still in ASSIGNED state.  If not, we've probably
-     * already been processed. */
-    if ( block->status != CacheBlock::ASSIGNED || block->baseAddr != addr || li != block->loadInfo) {
+     * already been processed.
+     * Unless this is a SEND_UP fetch, and we're DIRTY.
+     */
+    if ( !(block->status == CacheBlock::DIRTY && li->loadDirection == SEND_UP) &&
+            block->status != CacheBlock::ASSIGNED || block->baseAddr != addr || li != block->loadInfo) {
         DPRINTF("Not going to bother loading.  Somebody else has moved block 0x%"PRIx64" to state [%d]\n",
                 block->baseAddr, block->status);
         return;
     }
 
+    if ( li->loadDirection == SEND_UP ) {
+        if ( n_upstream > 0 && !isL1 ) {
+            for ( int i = 0 ; i < n_upstream ; i++ ) {
+                MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+                req->setSize(blocksize);
+                upstream_links[i]->send(req);
+            }
+        } else if ( snoop_link ) {
+            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            req->setSize(blocksize);
+            if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
+            DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+            BusHandlerArgs args;
+            args.loadBlock.loadInfo = li;
+            li->busEvent = req;
+            snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
+        }
+    } else {
 
     /* Ordering here...  If you have both downstream & snoop, you're probably
      * at the end of the line.  You don't need to issue on snoop, somebody else
@@ -645,6 +684,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         args.loadBlock.loadInfo = li;
         li->busEvent = req;
         snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
+    }
     }
 }
 
@@ -678,11 +718,14 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 
 	if ( block ) {
         if ( block->status == CacheBlock::DIRTY ) {
-            /* TODO  - maybe? */
-            assert( src == SNOOP );
-            /* Pretend we don't have it.  Somebody else will supply it. */
-            delete ev;
-            return;
+            if ( src == SNOOP ) {
+                /* Pretend we don't have it.  Somebody else will supply it. */
+                delete ev;
+                return;
+            } else {
+                /* TODO  - maybe? */
+                assert(false);
+            }
         }
 
 		if ( firstProcess ) num_supply_hit++;
@@ -752,6 +795,8 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	case DOWNSTREAM:
 		downstream_link->send(resp);
         supplyInProgress.erase(supMapI);
+        if ( !resp->queryFlag(MemEvent::F_DELAYED) )
+            block->status = CacheBlock::SHARED;
         break;
 	case SNOOP: {
 		BusHandlerArgs args;
@@ -770,6 +815,8 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	case DIRECTORY:
 		directory_link->send(resp);
         supplyInProgress.erase(supMapI);
+        if ( !resp->queryFlag(MemEvent::F_DELAYED) )
+            block->status = CacheBlock::SHARED;
         break;
 	case UPSTREAM:
 		upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(resp);
@@ -868,30 +915,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 
             CacheBlock *targetBlock = li->targetBlock;
 
-            if ( ev->getSize() < blocksize ) {
-                // This isn't enough for us, but may satisfy others
-                DPRINTF("Not enough info in block (%u vs %u blocksize)\n",
-                        ev->getSize(), blocksize);
-                li->targetBlock->status = CacheBlock::INVALID;
-                li->targetBlock->unlock();
-
-                // Delete events that we would be reprocessing
-                uint32_t deleted = 0;
-                for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
-                    LoadInfo_t::LoadElement_t &oldEV = li->list[n];
-                    if ( src == SNOOP && oldEV.src == SNOOP ) {
-                        delete oldEV.ev;
-                        oldEV.ev = NULL;
-                        deleted++;
-                    }
-                }
-                if ( deleted == li->list.size() ) {
-                    waitingLoads.erase(i);
-                    li->targetBlock->loadInfo = NULL;
-                    delete li;
-                }
-
-            } else if ( ev->queryFlag(MemEvent::F_DELAYED) ) {
+            if ( ev->queryFlag(MemEvent::F_DELAYED) ) {
                 /* If we're trying to load this, but this is locked elsewhere, we need to wait longer for the data. */
                 DPRINTF("Got a DELAYED Response.  Purge snoop work.\n");
                 uint32_t deleted = 0;
@@ -967,7 +991,10 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
             if ( downstream_link ) {
                 downstream_link->send(new MemEvent(ev));
             } else if ( directory_link ) {
-                directory_link->send(new MemEvent(ev));
+                // Need to set src properly for the network.
+                MemEvent *newev = new MemEvent(ev);
+                newev->setSrc(getName());
+                directory_link->send(newev);
             } else {
                 _abort(Cache, "Not sure where to send this.  Directory?\n");
             }
@@ -1201,6 +1228,71 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
     handlePendingEvents(row, block);
 }
 
+
+
+
+
+void Cache::handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated)
+{
+    CacheBlock *block = findBlock(ev->getAddr(), false);
+    /* Fetches should only come from directory controllers that know we have the block */
+    assert(directory_link);
+    if ( !block ) {
+        DPRINTF("We were asked for 0x%"PRIx64", but we don't have it.  Punting.  Hope we recently did a return of it.\n", ev->getAddr());
+        delete ev;
+        return;
+    }
+
+    DPRINTF("0x%"PRIx64" block status: %d\n", block->baseAddr, block->status);
+
+    if ( invalidate && !hasInvalidated ) {
+        DPRINTF("Issuing invalidation for 0x%"PRIx64" upstream.\n", block->baseAddr);
+        issueInvalidate(ev, DIRECTORY, block, CacheBlock::SHARED, SEND_UP);
+        return;
+    }
+
+    switch ( block->status ) {
+    case CacheBlock::SHARED: {
+        MemEvent *me = new MemEvent(this, block->baseAddr, SupplyData);
+        me->setDst(ev->getSrc());
+        me->setPayload(block->data);
+        directory_link->send(me);
+        delete ev;
+        break;
+    }
+    case CacheBlock::DIRTY:
+        fetchBlock(ev, block);
+        break;
+    default:
+        _abort(Cache, "%d Not a legal status in a Fetch situation.\n", block->status);
+    }
+
+    if ( invalidate ) {
+        block->status = CacheBlock::INVALID;
+    }
+
+}
+
+
+/* Fetch a dirty block from upstream */
+void Cache::fetchBlock(MemEvent *ev, CacheBlock *block)
+{
+    std::pair<LoadInfo_t*, bool> initRes = initLoad(ev, DIRECTORY);
+    LoadInfo_t *li = initRes.first;
+    bool reprocess = !initRes.second;
+
+    li->targetBlock = block;
+    li->loadDirection = SEND_UP;
+    block->loadInfo = li;
+    block->lock();
+
+    if ( reprocess )
+        li->list.push_front(LoadInfo_t::LoadElement_t(ev, DIRECTORY, getCurrentSimTime()));
+    else
+        li->list.push_back(LoadInfo_t::LoadElement_t(ev, DIRECTORY, getCurrentSimTime()));
+
+    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, block->baseAddr, block));
+}
 
 
 /**** Utility Functions ****/
