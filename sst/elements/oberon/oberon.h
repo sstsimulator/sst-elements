@@ -34,6 +34,8 @@ private:
   OberonComponent(const OberonComponent&); // do not implement
   void operator=(const OberonComponent&); // do not implement
 
+  OberonEngine engine;
+
   void handleEvent( SST::Event *ev );
   virtual bool clockTic( SST::Cycle_t );
 

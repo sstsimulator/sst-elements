@@ -16,6 +16,7 @@
 #include "sst/core/element.h"
 
 #include "oberon.h"
+#include "oberonengine.h"
 
 using namespace SST;
 using namespace SST::Oberon;
@@ -25,7 +26,12 @@ void OberonComponent::handleEvent( SST::Event *ev ) {
 }
 
 bool OberonComponent::clockTic( SST::Cycle_t ) {
-	return true;
+	OberonEvent ev;
+	
+	do {
+		ev = engine.generateNextEvent();
+	} while(ev.getEventType() != HALT);
+	
 }
 
 BOOST_CLASS_EXPORT(OberonComponent)

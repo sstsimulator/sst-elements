@@ -59,17 +59,17 @@ void processPopInstruction(uint32_t target_var_offset) {
 	switch(value.getExpressionType()) {
 		case DOUBLE:
 			double real_value = val.getDoubleValue();
-			memcpy(&real_value, stack + target_var_offset, sizeof(real_value));
+			memcpy(stack + target_var_offset, &real_value, sizeof(real_value));
 			break;
 			
 		case INTEGER:
 			int64_t real_value = val.getIntegerValue();
-			memcpy(&real_value, stack + target_var_offset, sizeof(real_value));
+			memcpy(stack + target_var_offset, &real_value, sizeof(real_value));
 			break;
 			
 		case BOOLEAN:
 			bool real_value = val.getBooleanValue();
-			memcpy(&real_value, stack + target_var_offset, sizeof(real_value));
+			memcpy(stack + target_var_offset, &real_value, sizeof(real_value));
 			break;
 			
 		case STRING:
@@ -79,8 +79,12 @@ void processPopInstruction(uint32_t target_var_offset) {
 	}
 }
 
-void processPushInstruction() {
-
+void processPushIntegerInstruction(uint32_t target_var_offset) {
+	int64_t the_value;
+	memcpy(&the_value, stack + target_var_offset, sizeof(the_value);
+	
+	OberonIntegerStackValue ob_value(the_value);
+	stack.push(ob_value);	
 }
 
 void processBuildInCallInstruction(uint32_t func) {
@@ -127,8 +131,28 @@ OberonEvent generateNextEvent() {
 				processPopInstruction(target_var_offset);
 				break;
 				
-			case OBERON_INS_PUSH:
-				processPushInstruction();
+			case OBERON_INS_PUSH_INT:
+				uint32_t target_var_offset;
+				memcpy(&target_var_offset, pc, ins_width);
+				pc += ins_width;
+			
+				processPushIntegerInstruction();
+				break;
+				
+			case OBERON_INS_PUSH_DBL:
+				uint32_t target_var_offset;
+				memcpy(&target_var_offset, pc, ins_width);
+				pc += ins_width;
+			
+				processPushDoubleInstruction();
+				break;
+				
+			case OBERON_INS_PUSH_BOOL:
+				uint32_t target_var_offset;
+				memcpy(&target_var_offset, pc, ins_width);
+				pc += ins_width;
+			
+				processPushBoolInstruction();
 				break;
 				
 			case OBERON_INS_MUL:
