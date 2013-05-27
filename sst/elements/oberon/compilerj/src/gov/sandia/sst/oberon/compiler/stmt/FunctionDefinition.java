@@ -82,7 +82,7 @@ public class FunctionDefinition implements StatementBlock {
 	}
 
 	public void visit(OberonStatementBodyVisitor visit) throws 
-	OberonStatementException, OberonExpressionException {
+		OberonStatementException, OberonExpressionException {
 		visit.visit(this);
 	}
 
