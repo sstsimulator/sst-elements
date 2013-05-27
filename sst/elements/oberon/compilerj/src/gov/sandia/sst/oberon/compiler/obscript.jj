@@ -163,13 +163,13 @@ void StatementBlock():
 {
 	(
 		(
-			DeclarationStatement()
-		|	AssignmentOrCallStatement()
+			DeclarationStatement()			";"
+		|	AssignmentOrCallStatement()		";"
 		|	IfElseStatement()
 		|	ForStatement()
-		|	ReturnStatement()
+		|	ReturnStatement()				";"
 		)
-	";"
+	
 	)*
 }
 

@@ -1,5 +1,6 @@
 package gov.sandia.sst.oberon.compiler.stmt;
 
+import gov.sandia.sst.oberon.compiler.OberonCompilerOptions;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpression;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
 import gov.sandia.sst.oberon.compiler.exp.OberonVariableType;
@@ -42,7 +43,7 @@ public class DeclarationStatement extends OberonStatement {
 			incSize = 8;
 			break;
 		case BOOLEAN:
-			incSize = 4;
+			incSize = OberonCompilerOptions.getInstance().getBytesPerBoolean();
 			break;
 		case STRING:
 			// need to do something here
@@ -52,8 +53,8 @@ public class DeclarationStatement extends OberonStatement {
 		return incSize;
 	}
 
-	public void processVisitor(OberonVisitor visit)
-			throws OberonStatementException, OberonExpressionException {
+	public void processVisitor(OberonVisitor visit) throws 
+	OberonStatementException, OberonExpressionException {
 
 		visit.visit(this);
 	}

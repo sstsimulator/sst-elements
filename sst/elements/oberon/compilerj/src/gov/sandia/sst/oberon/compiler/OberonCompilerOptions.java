@@ -51,6 +51,10 @@ public final class OberonCompilerOptions {
 		return outputPath;
 	}
 	
+	public int getBytesPerBoolean() {
+		return bytesPerBoolean;
+	}
+	
 	public Vector<String> getFilesForCompile() {
 		return processFiles;
 	}
