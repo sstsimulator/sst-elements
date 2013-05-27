@@ -1,0 +1,205 @@
+
+PARSER_BEGIN(OberonParser)
+
+import java.util.*;
+
+public class OberonParser {
+
+}
+
+PARSER_END(OberonParser)
+
+SKIP : {
+ " "
+|  "\t"
+|  "\n"
+|  "\r"
+|  <"//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>
+|  <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/">
+}
+
+TOKEN : {
+ <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])? | <HEX_LITERAL> (["l","L"])? | <OCTAL_LITERAL> (["l","L"])?>
+|  <#DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])*>
+|  <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+>
+|  <#OCTAL_LITERAL: "0" (["0"-"7"])*>
+|  <FLOATING_POINT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["f","F","d","D"])? | "." (["0"-"9"])+ (<EXPONENT>)? (["f","F","d","D"])? | (["0"-"9"])+ <EXPONENT> (["f","F","d","D"])? | (["0"-"9"])+ (<EXPONENT>)? ["f","F","d","D"]>
+|  <#EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+|  <STRING_LITERAL: "\"" ( ~["\"","\\","\n","\r"] | "\\" ( ["n","t","b","r","f","\\","\'","\""] | ["0"-"7"] (["0"-"7"])?  | ["0"-"3"] ["0"-"7"] ["0"-"7"] | ( ["\n","\r"] | "\r\n")))* "\"">
+}
+
+TOKEN : {
+ 	<FOR: 	  "for">
+  |	<IF:	  "if">
+  |	<ELSE:	  "else">
+  |	<INTEGER: "int">
+  |	<DOUBLE:  "double">
+  |	<VOID:    "void">
+  |	<RETURN:  "return">
+}
+
+TOKEN : {
+ <IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
+|  <#LETTER: ["A"-"Z","_","a"-"z"]>
+|  <#DIGIT: ["0"-"9"]>
+}
+
+TOKEN : {
+ <FUNCNAME: (["A"-"Z","a"-"z","0"-"9"])+ >
+}
+
+void ParseMultiFunctionFile():
+{}
+{
+	( <INTEGER> | <DOUBLE> | <VOID> )
+	<FUNCNAME>
+	"("
+		( <INTEGER> | <DOUBLE> )
+		<IDENTIFIER>
+		(
+			","
+			( <INTEGER> | <DOUBLE> )
+			<IDENTIFIER>
+		)*
+	")"
+	"{"
+
+	"}"
+}
+
+void StatementBlock():
+{}
+{
+	(
+		(
+			DeclarationStatement()
+		|	AssignmentOrCallStatement()
+		|	IfElseStatement()
+		|	ForStatement()
+		|	ReturnStatement()
+		)
+	";"
+	)*
+}
+
+void DeclarationStatement():
+{}
+{
+	(
+		<INTEGER>
+	|	<DOUBLE>
+	)
+
+	<IDENTIFIER>
+
+	(
+		"="
+	)?
+}
+
+void AssignmentOrCallStatement():
+{}
+{
+	<IDENTIFIER> 
+	(
+		"="
+	|	"(" ")"
+	)
+}
+
+void IfElseStatement():
+{}
+{
+	<IF>
+	"("
+
+	")"
+	"{"
+		StatementBlock()
+	"}"
+
+	(
+		<ELSE>
+		"{"
+			StatementBlock()
+		"}"
+	)?
+}
+
+void ForStatement():
+{}
+{
+	<FOR>
+	"("
+
+	")"
+	"{"
+		StatementBlock()
+	"}"
+}
+
+void ReturnStatement():
+{}
+{
+	<RETURN>
+}
+
+void Expression():
+{}
+{
+	OrExpression()
+}
+
+void OrExpression():
+{}
+{
+	AndExpression() ( "||" OrExpression() )?
+}
+
+void AndExpression():
+{}
+{
+	EqualExpression() ( "&&" AndExpression() )?
+}
+
+void EqualExpression():
+{}
+{
+	RelationalExpression() ( ("==" | "!=") EqualExpression() )?
+}
+
+void RelationalExpression():
+{}
+{
+	AdditiveExpression() ( ("<" | "<=" | ">" | ">=") RelationalExpression() )?
+}
+
+void AdditiveExpression():
+{}
+{
+	MultiplyExpression() ( ("+" | "-") AdditiveExpression() )?
+}
+
+void MultiplyExpression():
+{}
+{
+	BracketedExpression() ( ("*" | "/") MultiplyExpression() )?
+}
+
+void BracketedExpression():
+{}
+{
+	( "(" Expression() ")" )
+   |	<IDENTIFIER>
+   |	Literal()
+}
+
+void Literal():
+{}
+{
+	<INTEGER_LITERAL>
+   |    <FLOATING_POINT_LITERAL>
+   |    <STRING_LITERAL>
+}
+
+

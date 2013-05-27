@@ -1,0 +1,32 @@
+package gov.sandia.sst.oberon.compiler.exp;
+
+import gov.sandia.sst.oberon.compiler.stmt.OberonStatementException;
+import gov.sandia.sst.oberon.compiler.visitor.OberonExpressionVisitor;
+
+public class OberonStringLiteral extends OberonLiteralExpression {
+
+	protected String value;
+	
+	public OberonStringLiteral(String val,
+			String fileName, int lineNo, int colNo,
+			OberonExpression expr) {
+		super(fileName, lineNo, colNo, expr);
+		
+		value = val;
+	}
+
+	public String getStringValue() {
+		return value;
+	}
+	
+	public OberonVariableType getExpressionType()
+			throws OberonIncompatibleTypeException {
+		return OberonVariableType.STRING;
+	}
+
+	public void processVisitorTarget(OberonExpressionVisitor expVisit)
+			throws OberonStatementException, OberonExpressionException {
+		expVisit.visit(this);
+	}
+
+}

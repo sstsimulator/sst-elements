@@ -1,0 +1,41 @@
+package gov.sandia.sst.oberon.compiler.stmt;
+
+import java.util.Vector;
+
+import gov.sandia.sst.oberon.compiler.exp.*;
+
+public abstract class ForStatement extends OberonStatement implements StatementBlock {
+
+	protected OberonExpression loopCondition;
+	protected AssignmentStatement incrStmt;
+	protected Vector<OberonStatement> statements;
+
+	public ForStatement(int lineno, int colno,
+			OberonExpression loopCondition,
+			AssignmentStatement incrStmt) {
+		super(lineno, colno);
+		
+		statements = new Vector<OberonStatement>();
+		this.loopCondition = loopCondition;
+		this.incrStmt = incrStmt;
+	}
+	
+	public abstract ForStatementType getForStatementType();
+	
+	public AssignmentStatement getIncrementStatement() {
+		return incrStmt;
+	}
+	
+	public abstract int increaseAllocationByBytes();
+
+	public void addStatement(OberonStatement stmt) {
+		statements.add(stmt);
+	}
+
+	public Vector<OberonStatement> getStatements() {
+		return statements;
+	}
+
+	public abstract int getDeclaredVariableSize();
+
+}
