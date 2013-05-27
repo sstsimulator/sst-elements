@@ -10,10 +10,10 @@ public abstract class ForStatement extends OberonStatement implements StatementB
 	protected AssignmentStatement incrStmt;
 	protected Vector<OberonStatement> statements;
 
-	public ForStatement(int lineno, int colno,
+	public ForStatement(String fileName, int lineno, int colno,
 			OberonExpression loopCondition,
 			AssignmentStatement incrStmt) {
-		super(lineno, colno);
+		super(fileName, lineno, colno);
 		
 		statements = new Vector<OberonStatement>();
 		this.loopCondition = loopCondition;
@@ -28,6 +28,10 @@ public abstract class ForStatement extends OberonStatement implements StatementB
 	
 	public abstract int increaseAllocationByBytes();
 
+	public StatementBlock getStatementBody() {
+		return this;
+	}
+	
 	public void addStatement(OberonStatement stmt) {
 		statements.add(stmt);
 	}

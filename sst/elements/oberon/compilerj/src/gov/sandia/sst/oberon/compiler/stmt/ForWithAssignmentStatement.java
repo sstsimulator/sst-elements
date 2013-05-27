@@ -8,10 +8,10 @@ public class ForWithAssignmentStatement extends ForStatement {
 
 	protected AssignmentStatement assignStmt;
 	
-	public ForWithAssignmentStatement(int lineno, int colno,
+	public ForWithAssignmentStatement(String fileName, int lineno, int colno,
 			AssignmentStatement assignStmt,
 			OberonExpression loopCondition, AssignmentStatement incrStmt) {
-		super(lineno, colno, loopCondition, incrStmt);
+		super(fileName, lineno, colno, loopCondition, incrStmt);
 		
 		this.assignStmt = assignStmt;
 	}

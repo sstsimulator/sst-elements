@@ -5,6 +5,7 @@ public enum OberonVariableType {
 	INTEGER,
 	DOUBLE,
 	BOOLEAN,
-	STRING
+	STRING,
+	VOID
 	
 }

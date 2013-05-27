@@ -9,10 +9,10 @@ public class AssignmentStatement extends OberonStatement {
 	protected String variableName;
 	protected OberonExpression assignmentValue;
 	
-	public AssignmentStatement(int lineno, int colno,
+	public AssignmentStatement(String fileName, int lineno, int colno,
 			String variableName, 
 			OberonExpression assignVal) {
-		super(lineno, colno);
+		super(fileName, lineno, colno);
 		
 		this.variableName = variableName;
 		this.assignmentValue = assignVal;

@@ -7,10 +7,10 @@ public class OberonBooleanLiteral extends OberonLiteralExpression {
 
 	protected boolean value;
 	
-	public OberonBooleanLiteral(boolean val,
+	public OberonBooleanLiteral(
 			String fileName, int lineNo, int colNo,
-			OberonExpression expr) {
-		super(fileName, lineNo, colNo, expr);
+			boolean val) {
+		super(fileName, lineNo, colNo);
 	
 		value = val;
 	}

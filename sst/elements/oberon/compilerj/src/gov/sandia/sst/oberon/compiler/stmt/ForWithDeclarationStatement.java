@@ -8,10 +8,10 @@ public class ForWithDeclarationStatement extends ForStatement {
 
 	protected DeclarationStatement declStmt;
 	
-	public ForWithDeclarationStatement(int lineno, int colno,
+	public ForWithDeclarationStatement(String fileName, int lineno, int colno,
 			DeclarationStatement declStmt,
 			OberonExpression loopCondition, AssignmentStatement incrStmt) {
-		super(lineno, colno, loopCondition, incrStmt);
+		super(fileName, lineno, colno, loopCondition, incrStmt);
 		
 		this.declStmt = declStmt;
 	}

@@ -7,10 +7,9 @@ public class OberonIntegerLiteral extends OberonLiteralExpression {
 
 	protected long value;
 	
-	public OberonIntegerLiteral(long value,
-			String fileName, int lineNo, int colNo,
-			OberonExpression expr) {
-		super(fileName, lineNo, colNo, expr);
+	public OberonIntegerLiteral(String fileName, int lineNo, int colNo,
+			long value) {
+		super(fileName, lineNo, colNo);
 		
 		this.value = value;
 	}

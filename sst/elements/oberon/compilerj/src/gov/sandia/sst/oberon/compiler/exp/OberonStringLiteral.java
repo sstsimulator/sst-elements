@@ -8,9 +8,8 @@ public class OberonStringLiteral extends OberonLiteralExpression {
 	protected String value;
 	
 	public OberonStringLiteral(String val,
-			String fileName, int lineNo, int colNo,
-			OberonExpression expr) {
-		super(fileName, lineNo, colNo, expr);
+			String fileName, int lineNo, int colNo) {
+		super(fileName, lineNo, colNo);
 		
 		value = val;
 	}

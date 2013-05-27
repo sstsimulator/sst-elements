@@ -11,12 +11,11 @@ public class DeclarationStatement extends OberonStatement {
 	protected OberonVariableType varType;
 	protected String variableName;
 	
-	public DeclarationStatement(int lineno, int colno,
+	public DeclarationStatement(String fileName, int lineno, int colno,
 			String varName, OberonVariableType theType,
 			OberonExpression initAssignment) {
-		super(lineno, colno);
-		
-		initialAssignment = null;
+		super(fileName, lineno, colno);
+
 		varType = theType;
 		variableName = varName;
 		initialAssignment = initAssignment;

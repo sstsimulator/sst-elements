@@ -19,5 +19,8 @@ public interface OberonExpressionVisitor {
 	void visit(OberonStringLiteral oberonStringLiteral);
 	void visit(OberonSubExpression oberonSubExpression);
 	void visit(OberonVariableExpression oberonVariableExpression);
+	void visit(OberonOrExpression oberonOrExpression);
+	void visit(OberonAndExpression oberonAndExpression);
+	void visit(OberonBracketedExpression oberonBracketedExpression);
 
 }

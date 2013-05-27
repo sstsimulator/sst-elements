@@ -1,15 +1,33 @@
 package gov.sandia.sst.oberon.compiler.stmt;
 
+import gov.sandia.sst.oberon.compiler.exp.OberonVariableType;
+
 import java.util.Vector;
 
 public class FunctionDefinition implements StatementBlock {
 
+	protected OberonVariableType funcType;
 	protected String functionName;
 	protected Vector<OberonStatement> statements;
+	protected Vector<TypeNamePair> parameters;
 	
-	public FunctionDefinition(String name) {
+	public FunctionDefinition(OberonVariableType type, String name) {
+		funcType = type;
 		functionName = name;
 		statements = new Vector<OberonStatement>();
+		parameters = new Vector<TypeNamePair>();
+	}
+	
+	public OberonVariableType getFunctionType() {
+		return funcType;
+	}
+	
+	public void addParameter(OberonVariableType type, String name) {
+		parameters.add(new TypeNamePair(type, name));
+	}
+	
+	public Vector<TypeNamePair> getParameters() {
+		return parameters;
 	}
 	
 	public void addStatement(OberonStatement stmt) {

@@ -9,11 +9,13 @@ public class IfElseStatement extends OberonStatement {
 	protected StatementBlock elseStatements;
 	protected OberonExpression condition;
 	
-	public IfElseStatement(int lineno, int colno,
+	public IfElseStatement(String fileName, int lineno, int colno,
 			OberonExpression condition) {
-		super(lineno, colno);
-		
+		super(fileName, lineno, colno);
 		this.condition = condition;
+		
+		ifStatements = new OberonStatementBody();
+		elseStatements = new OberonStatementBody();
 	}
 
 	public int increaseAllocationByBytes() {

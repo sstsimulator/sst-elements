@@ -9,5 +9,7 @@ public interface OberonVisitor {
 	void visit(ForWithAssignmentStatement forWithAssignmentStatement);
 	void visit(ForWithDeclarationStatement forWithDeclarationStatement);
 	void visit(IfElseStatement ifElseStatement);
+	void visit(ReturnStatement returnStatement);
+	void visit(CallStatement callStatement);
 	
 }
