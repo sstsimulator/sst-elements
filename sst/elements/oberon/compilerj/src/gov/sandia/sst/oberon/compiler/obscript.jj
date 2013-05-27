@@ -106,7 +106,11 @@ Vector<FunctionDefinition> MultiFunctionFile():
 		)
 		funcName = <IDENTIFIER>
 		{
-			funcDef = new FunctionDefinition(funcType, funcName.image);
+			funcDef = new FunctionDefinition(
+				getFileName(),
+				funcName.beginLine,
+				funcName.beginColumn,
+				funcType, funcName.image);
 		}
 		"("
 			(

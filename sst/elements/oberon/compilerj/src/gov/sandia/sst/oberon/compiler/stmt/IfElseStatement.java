@@ -39,8 +39,8 @@ public class IfElseStatement extends OberonStatement {
 		return condition;
 	}
 
-	public void processVisitor(OberonVisitor visit)
-			throws OberonStatementException, OberonExpressionException {
+	public void processVisitor(OberonVisitor visit) throws 
+	OberonStatementException, OberonExpressionException {
 		visit.visit(this);
 	}
 

@@ -12,12 +12,35 @@ public class FunctionDefinition implements StatementBlock {
 	protected String functionName;
 	protected Vector<OberonStatement> statements;
 	protected Vector<TypeNamePair> parameters;
+	protected String fileName;
+	protected int lineNo;
+	protected int colNo;
 	
-	public FunctionDefinition(OberonVariableType type, String name) {
+	public FunctionDefinition(String fileName,
+			int lineNo,
+			int colNo,
+			OberonVariableType type, String name) {
+		
+		this.fileName = fileName;
+		this.lineNo = lineNo;
+		this.colNo = colNo;
+		
 		funcType = type;
 		functionName = name;
 		statements = new Vector<OberonStatement>();
 		parameters = new Vector<TypeNamePair>();
+	}
+	
+	public String getFileName() {
+		return fileName;
+	}
+	
+	public int getLineNumber() {
+		return lineNo;
+	}
+	
+	public int getColumnNumber() {
+		return colNo;
 	}
 	
 	public OberonVariableType getFunctionType() {
@@ -58,8 +81,8 @@ public class FunctionDefinition implements StatementBlock {
 		return functionName;
 	}
 
-	public void visit(OberonStatementBodyVisitor visit)
-			throws OberonStatementException, OberonExpressionException {
+	public void visit(OberonStatementBodyVisitor visit) throws 
+	OberonStatementException, OberonExpressionException {
 		visit.visit(this);
 	}
 

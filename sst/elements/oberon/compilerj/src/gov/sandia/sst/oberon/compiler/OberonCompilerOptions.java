@@ -7,13 +7,15 @@ public final class OberonCompilerOptions {
 	private static OberonCompilerOptions instance = null;
 	private String outputPath;
 	private boolean dumpASTToScreen;
+	private int bytesPerBoolean;
 	
 	private Vector<String> processFiles;
 	
 	private OberonCompilerOptions() {
-		outputPath = "output.obn";
+		outputPath = "a.oba";
 		dumpASTToScreen = false;
 		processFiles = new Vector<String>();
+		bytesPerBoolean = 8;
 	}
 	
 	public static OberonCompilerOptions getInstance() {
@@ -32,6 +34,9 @@ public final class OberonCompilerOptions {
 					i++;
 				} else if (args[i].equals("-fdump")) {
 					dumpASTToScreen = true;
+				} else if (args[i].equals("-fbool-byte-alloc")) {
+					bytesPerBoolean = Integer.parseInt(args[i+1]);
+					i++;
 				}
 			} else {
 				// if not an option then we will try to compile it :)
