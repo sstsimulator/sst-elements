@@ -30,7 +30,7 @@ public abstract class ForStatement extends OberonStatement implements StatementB
 		return incrStmt;
 	}
 	
-	public abstract int increaseAllocationByBytes();
+	public abstract int increaseAllocationByBytes() throws OberonIncompatibleTypeException;
 
 	public StatementBlock getStatementBody() {
 		return this;
@@ -44,6 +44,6 @@ public abstract class ForStatement extends OberonStatement implements StatementB
 		return statements;
 	}
 
-	public abstract int getDeclaredVariableSize();
+	public abstract int getDeclaredVariableSize() throws OberonIncompatibleTypeException;
 
 }

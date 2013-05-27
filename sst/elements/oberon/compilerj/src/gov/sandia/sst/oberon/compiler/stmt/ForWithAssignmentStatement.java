@@ -2,6 +2,7 @@ package gov.sandia.sst.oberon.compiler.stmt;
 
 import gov.sandia.sst.oberon.compiler.exp.OberonExpression;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
+import gov.sandia.sst.oberon.compiler.exp.OberonIncompatibleTypeException;
 import gov.sandia.sst.oberon.compiler.visitor.OberonStatementBodyVisitor;
 import gov.sandia.sst.oberon.compiler.visitor.OberonVisitor;
 
@@ -25,7 +26,7 @@ public class ForWithAssignmentStatement extends ForStatement {
 		return ForStatementType.ASSIGNMENT;
 	}
 
-	public int increaseAllocationByBytes() {
+	public int increaseAllocationByBytes() throws OberonIncompatibleTypeException {
 		int incSize = 0;
 		
 		for(OberonStatement stmt : statements) {
@@ -35,17 +36,17 @@ public class ForWithAssignmentStatement extends ForStatement {
 		return incSize;
 	}
 
-	public int getDeclaredVariableSize() {
+	public int getDeclaredVariableSize() throws OberonIncompatibleTypeException {
 		return increaseAllocationByBytes();
 	}
 
-	public void processVisitor(OberonVisitor visit)
-			throws OberonStatementException, OberonExpressionException {
+	public void processVisitor(OberonVisitor visit) throws 
+	OberonStatementException, OberonExpressionException {
 		visit.visit(this);
 	}
 
-	public void visit(OberonStatementBodyVisitor visit)
-			throws OberonStatementException, OberonExpressionException {
+	public void visit(OberonStatementBodyVisitor visit) throws 
+	OberonStatementException, OberonExpressionException {
 		visit.visit(this);
 	}
 

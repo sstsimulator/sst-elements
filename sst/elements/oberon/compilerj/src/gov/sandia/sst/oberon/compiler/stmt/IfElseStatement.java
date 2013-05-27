@@ -18,7 +18,7 @@ public class IfElseStatement extends OberonStatement {
 		elseStatements = new OberonStatementBody();
 	}
 
-	public int increaseAllocationByBytes() {
+	public int increaseAllocationByBytes() throws OberonIncompatibleTypeException {
 		int totalAllocation = 0;
 		
 		totalAllocation += ifStatements.getDeclaredVariableSize();

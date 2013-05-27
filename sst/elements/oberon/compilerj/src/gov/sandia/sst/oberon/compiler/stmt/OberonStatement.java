@@ -1,5 +1,6 @@
 package gov.sandia.sst.oberon.compiler.stmt;
 
+import gov.sandia.sst.oberon.compiler.exp.OberonIncompatibleTypeException;
 import gov.sandia.sst.oberon.compiler.visitor.*;
 
 public abstract class OberonStatement implements OberonVisitorTarget {
@@ -26,6 +27,6 @@ public abstract class OberonStatement implements OberonVisitorTarget {
 		return colno;
 	}
 	
-	public abstract int increaseAllocationByBytes();
+	public abstract int increaseAllocationByBytes() throws OberonIncompatibleTypeException;
 	
 }

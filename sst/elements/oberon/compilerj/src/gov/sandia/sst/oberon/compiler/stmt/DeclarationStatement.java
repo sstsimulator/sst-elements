@@ -1,8 +1,10 @@
 package gov.sandia.sst.oberon.compiler.stmt;
 
 import gov.sandia.sst.oberon.compiler.OberonCompilerOptions;
+import gov.sandia.sst.oberon.compiler.OberonVariableSizeEstimator;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpression;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
+import gov.sandia.sst.oberon.compiler.exp.OberonIncompatibleTypeException;
 import gov.sandia.sst.oberon.compiler.exp.OberonVariableType;
 import gov.sandia.sst.oberon.compiler.visitor.OberonVisitor;
 
@@ -34,23 +36,9 @@ public class DeclarationStatement extends OberonStatement {
 		return varType;
 	}
 
-	public int increaseAllocationByBytes() {
-		int incSize = 0;
-		
-		switch( varType ) {
-		case INTEGER:
-		case DOUBLE:
-			incSize = 8;
-			break;
-		case BOOLEAN:
-			incSize = OberonCompilerOptions.getInstance().getBytesPerBoolean();
-			break;
-		case STRING:
-			// need to do something here
-			break;
-		}
-		
-		return incSize;
+	public int increaseAllocationByBytes() throws OberonIncompatibleTypeException {
+		return OberonVariableSizeEstimator.OberonVariableSizeEstimator(fileName,
+				lineno, colno, varType);
 	}
 
 	public void processVisitor(OberonVisitor visit) throws 

@@ -1,6 +1,8 @@
 package gov.sandia.sst.oberon.compiler.stmt;
 
+import gov.sandia.sst.oberon.compiler.OberonVariableSizeEstimator;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
+import gov.sandia.sst.oberon.compiler.exp.OberonIncompatibleTypeException;
 import gov.sandia.sst.oberon.compiler.exp.OberonVariableType;
 import gov.sandia.sst.oberon.compiler.visitor.OberonStatementBodyVisitor;
 
@@ -63,8 +65,13 @@ public class FunctionDefinition implements StatementBlock {
 		return statements;
 	}
 
-	public int getDeclaredVariableSize() {
+	public int getDeclaredVariableSize() throws OberonIncompatibleTypeException {
 		int allocationSize = 0;
+		
+		for(TypeNamePair nxtPair : parameters) {
+			allocationSize += OberonVariableSizeEstimator.OberonVariableSizeEstimator(
+					fileName, lineNo, colNo, nxtPair.getType());
+		}
 		
 		for(OberonStatement nxtStmt : statements) {
 			allocationSize += nxtStmt.increaseAllocationByBytes();
