@@ -2,6 +2,7 @@ package gov.sandia.sst.oberon.compiler.stmt;
 
 import gov.sandia.sst.oberon.compiler.exp.OberonExpression;
 import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
+import gov.sandia.sst.oberon.compiler.visitor.OberonStatementBodyVisitor;
 import gov.sandia.sst.oberon.compiler.visitor.OberonVisitor;
 
 public class ForWithAssignmentStatement extends ForStatement {
@@ -39,6 +40,11 @@ public class ForWithAssignmentStatement extends ForStatement {
 	}
 
 	public void processVisitor(OberonVisitor visit)
+			throws OberonStatementException, OberonExpressionException {
+		visit.visit(this);
+	}
+
+	public void visit(OberonStatementBodyVisitor visit)
 			throws OberonStatementException, OberonExpressionException {
 		visit.visit(this);
 	}

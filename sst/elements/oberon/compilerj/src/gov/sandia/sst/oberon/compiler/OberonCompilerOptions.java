@@ -6,11 +6,13 @@ public final class OberonCompilerOptions {
 
 	private static OberonCompilerOptions instance = null;
 	private String outputPath;
+	private boolean dumpASTToScreen;
 	
 	private Vector<String> processFiles;
 	
 	private OberonCompilerOptions() {
 		outputPath = "output.obn";
+		dumpASTToScreen = false;
 		processFiles = new Vector<String>();
 	}
 	
@@ -28,6 +30,8 @@ public final class OberonCompilerOptions {
 				if(args[i].equals("-o")) {
 					outputPath = args[i+1];
 					i++;
+				} else if (args[i].equals("-fdump")) {
+					dumpASTToScreen = true;
 				}
 			} else {
 				// if not an option then we will try to compile it :)
@@ -44,5 +48,9 @@ public final class OberonCompilerOptions {
 	
 	public Vector<String> getFilesForCompile() {
 		return processFiles;
+	}
+	
+	public boolean dumpASTToConsole() {
+		return dumpASTToScreen;
 	}
 }

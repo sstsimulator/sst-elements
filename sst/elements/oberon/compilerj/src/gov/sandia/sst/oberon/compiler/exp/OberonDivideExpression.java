@@ -10,8 +10,8 @@ public class OberonDivideExpression extends OberonBinaryMathematicalExpression {
 		super(fileName, lineNo, colNo, onLeft, onRight);
 	}
 
-	public void processVisitorTarget(OberonExpressionVisitor expVisit)
-			throws OberonStatementException, OberonExpressionException {
+	public void processVisitorTarget(OberonExpressionVisitor expVisit) throws 
+	OberonStatementException, OberonExpressionException {
 		expVisit.visit(this);
 	}
 

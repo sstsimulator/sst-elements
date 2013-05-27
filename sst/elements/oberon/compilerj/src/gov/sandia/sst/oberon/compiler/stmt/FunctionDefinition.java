@@ -1,6 +1,8 @@
 package gov.sandia.sst.oberon.compiler.stmt;
 
+import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
 import gov.sandia.sst.oberon.compiler.exp.OberonVariableType;
+import gov.sandia.sst.oberon.compiler.visitor.OberonStatementBodyVisitor;
 
 import java.util.Vector;
 
@@ -54,6 +56,11 @@ public class FunctionDefinition implements StatementBlock {
 	
 	public String getFunctionName() {
 		return functionName;
+	}
+
+	public void visit(OberonStatementBodyVisitor visit)
+			throws OberonStatementException, OberonExpressionException {
+		visit.visit(this);
 	}
 
 }

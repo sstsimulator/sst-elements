@@ -1,15 +1,23 @@
 package gov.sandia.sst.oberon.compiler.visitor;
 
+import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
 import gov.sandia.sst.oberon.compiler.stmt.*;
 
 public interface OberonVisitor {
 
-	void visit(AssignmentStatement assignmentStatement);
-	void visit(DeclarationStatement declarationStatement);
-	void visit(ForWithAssignmentStatement forWithAssignmentStatement);
-	void visit(ForWithDeclarationStatement forWithDeclarationStatement);
-	void visit(IfElseStatement ifElseStatement);
-	void visit(ReturnStatement returnStatement);
-	void visit(CallStatement callStatement);
+	void visit(AssignmentStatement assignmentStatement) throws 
+		OberonStatementException, OberonExpressionException;
+	void visit(DeclarationStatement declarationStatement) throws 
+	OberonStatementException, OberonExpressionException;
+	void visit(ForWithAssignmentStatement forWithAssignmentStatement) throws 
+	OberonStatementException, OberonExpressionException;
+	void visit(ForWithDeclarationStatement forWithDeclarationStatement) throws 
+	OberonStatementException, OberonExpressionException;
+	void visit(IfElseStatement ifElseStatement) throws 
+	OberonStatementException, OberonExpressionException;
+	void visit(ReturnStatement returnStatement) throws 
+		OberonStatementException, OberonExpressionException;
+	void visit(CallStatement callStatement)  throws 
+	OberonStatementException, OberonExpressionException;
 	
 }

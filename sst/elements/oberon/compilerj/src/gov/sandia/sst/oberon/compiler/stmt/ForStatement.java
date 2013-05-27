@@ -20,6 +20,10 @@ public abstract class ForStatement extends OberonStatement implements StatementB
 		this.incrStmt = incrStmt;
 	}
 	
+	public OberonExpression getLoopCondition() {
+		return loopCondition;
+	}
+	
 	public abstract ForStatementType getForStatementType();
 	
 	public AssignmentStatement getIncrementStatement() {
