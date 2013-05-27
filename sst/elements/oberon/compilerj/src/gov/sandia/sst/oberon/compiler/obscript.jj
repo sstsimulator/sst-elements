@@ -1,16 +1,53 @@
 
+options {
+	STATIC = false;
+}
+
 PARSER_BEGIN(OberonParser)
+
+package gov.sandia.sst.oberon.compiler;
+
+import gov.sandia.sst.oberon.compiler.*;
+import gov.sandia.sst.oberon.compiler.exp.*;
+import gov.sandia.sst.oberon.compiler.stmt.*;
 
 import java.util.*;
 
 public class OberonParser {
+
+	protected Stack<StatementBlock> blockStack;
+	protected String fileName;
+	
+	public void setFileName(String name) {
+		fileName = name;
+	}
+	
+	public String getFileName() {
+		if(fileName == null) {
+			return "";
+		} else {
+			return fileName;
+		}
+	}
+	
+	public StatementBlock getCurrentBlock() {
+		return blockStack.peek();
+	}
+	
+	public Stack<StatementBlock> getBlockStack() {
+		if(blockStack == null) {
+			blockStack = new Stack<StatementBlock>();
+		}
+		
+		return blockStack;
+	}
 
 }
 
 PARSER_END(OberonParser)
 
 SKIP : {
- " "
+   " "
 |  "\t"
 |  "\n"
 |  "\r"
@@ -36,6 +73,10 @@ TOKEN : {
   |	<DOUBLE:  "double">
   |	<VOID:    "void">
   |	<RETURN:  "return">
+  | <TRUE:	  "true">
+  | <FALSE:	  "false">
+  | <BOOL:	  "bool">
+  | <STRING:  "string">
 }
 
 TOKEN : {
@@ -44,27 +85,73 @@ TOKEN : {
 |  <#DIGIT: ["0"-"9"]>
 }
 
-TOKEN : {
- <FUNCNAME: (["A"-"Z","a"-"z","0"-"9"])+ >
-}
-
-void ParseMultiFunctionFile():
-{}
+Vector<FunctionDefinition> MultiFunctionFile():
 {
-	( <INTEGER> | <DOUBLE> | <VOID> )
-	<FUNCNAME>
-	"("
-		( <INTEGER> | <DOUBLE> )
-		<IDENTIFIER>
-		(
-			","
-			( <INTEGER> | <DOUBLE> )
-			<IDENTIFIER>
-		)*
-	")"
-	"{"
-
-	"}"
+	OberonVariableType funcType;
+	Token funcName;
+	OberonVariableType paramType;
+	Token varName;
+	
+	Vector<FunctionDefinition> functions = new Vector<FunctionDefinition>();
+	FunctionDefinition funcDef;
+}
+{
+	(
+		( 
+			<INTEGER>	{ 	funcType = OberonVariableType.INTEGER;	}
+		| 	<DOUBLE> 	{	funcType = OberonVariableType.DOUBLE;	}
+		| 	<VOID> 		{	funcType = OberonVariableType.VOID;		}
+		|	<BOOL>		{	funcType = OberonVariableType.BOOLEAN;	}
+		|	<STRING>	{	funcType = OberonVariableType.STRING;	}
+		)
+		funcName = <IDENTIFIER>
+		{
+			funcDef = new FunctionDefinition(funcType, funcName.image);
+		}
+		"("
+			(
+				( 
+					<INTEGER>	{	paramType = OberonVariableType.INTEGER;	}
+				| 	<DOUBLE> 	{ 	paramType = OberonVariableType.DOUBLE;	}
+				|	<BOOL>		{	paramType = OberonVariableType.BOOLEAN;	}
+				|	<STRING>	{	paramType = OberonVariableType.STRING;	}
+				)
+				varName = <IDENTIFIER>
+				{
+					funcDef.addParameter(paramType, varName.image);	
+				}
+			
+				(
+					","
+					( 
+						<INTEGER>	{	paramType = OberonVariableType.INTEGER;	}
+					| 	<DOUBLE> 	{ 	paramType = OberonVariableType.DOUBLE;	}
+					|	<BOOL>		{	paramType = OberonVariableType.BOOLEAN;	}
+					|	<STRING>	{	paramType = OberonVariableType.STRING;	}
+					)
+					varName = <IDENTIFIER>
+				
+					{
+						funcDef.addParameter(paramType, varName.image);	
+					}
+				)*
+			)?
+		")"
+	
+		"{"
+			{	getBlockStack().push(funcDef);	}
+			StatementBlock()
+			{	getBlockStack().pop();			}
+		"}"
+		
+		{
+			functions.add(funcDef);
+		}
+	)*
+	
+	{
+		return functions;
+	}
 }
 
 void StatementBlock():
@@ -83,123 +170,594 @@ void StatementBlock():
 }
 
 void DeclarationStatement():
-{}
+{
+	OberonVariableType varType;
+	OberonExpression expr;
+	DeclarationStatement declStmt = null;
+	Token varName;
+}
 {
 	(
-		<INTEGER>
-	|	<DOUBLE>
+		<INTEGER>	{	varType = OberonVariableType.INTEGER; 	}
+	|	<DOUBLE>	{	varType = OberonVariableType.DOUBLE;	}
 	)
 
-	<IDENTIFIER>
+	varName = <IDENTIFIER>
+	{	
+		declStmt = new DeclarationStatement(
+			getFileName(),
+			varName.beginLine,
+			varName.beginColumn,
+			varName.image,
+			varType,
+			null);
+	}
 
 	(
 		"="
+		
+		expr = Expression() {	
+			declStmt = new DeclarationStatement(
+				getFileName(),
+				varName.beginLine,
+				varName.beginColumn,
+				varName.image,
+				varType,
+				expr);
+		}
 	)?
+	
+	{
+		getCurrentBlock().addStatement(declStmt);
+	}
+}
+
+DeclarationStatement ReturnableDeclarationStatement():
+{
+	OberonVariableType varType;
+	OberonExpression expr;
+	DeclarationStatement declStmt = null;
+	Token varName;
+}
+{
+	(
+		<INTEGER>	{	varType = OberonVariableType.INTEGER; 	}
+	|	<DOUBLE>	{	varType = OberonVariableType.DOUBLE;	}
+	)
+
+	varName = <IDENTIFIER>
+	{	
+		declStmt = new DeclarationStatement(
+			getFileName(),
+			varName.beginLine,
+			varName.beginColumn,
+			varName.image,
+			varType,
+			null);
+	}
+
+	(
+		"="
+		
+		expr = Expression() {	
+			declStmt = new DeclarationStatement(
+				getFileName(),
+				varName.beginLine,
+				varName.beginColumn,
+				varName.image,
+				varType,
+				expr);
+		}
+	)?
+	
+	{
+		return declStmt;
+	}
+}
+
+AssignmentStatement ReturnableAssignmentStatement():
+{
+	Token id;
+	OberonExpression expr;
+}
+{
+	id = <IDENTIFIER>
+	"="
+	expr = Expression()
+	
+	{
+		return new AssignmentStatement(getFileName(),
+				id.beginLine,
+				id.beginColumn,
+				id.image,
+				expr);
+	}
 }
 
 void AssignmentOrCallStatement():
-{}
 {
-	<IDENTIFIER> 
+	Token id;
+	OberonExpression expr;
+	OberonStatement stmt = null;
+	Vector<OberonExpression> funcExpr = new Vector<OberonExpression>();
+}
+{
+	id = <IDENTIFIER> 
 	(
-		"="
-	|	"(" ")"
+		"=" expr = Expression() {
+			stmt = new AssignmentStatement(getFileName(),
+				id.beginLine,
+				id.beginColumn,
+				id.image,
+				expr);
+		}
+	|	"(" ( expr = Expression() { funcExpr.add(expr); } 
+			("," expr = Expression() { funcExpr.add(expr); } )* )? {
+		
+			stmt = new CallStatement(getFileName(),
+				id.beginLine,
+				id.beginColumn,
+				id.image,
+				funcExpr);
+		} ")" 
 	)
+	
+	{
+		getCurrentBlock().addStatement(stmt);
+	}
 }
 
 void IfElseStatement():
-{}
 {
-	<IF>
+	IfElseStatement stmt;
+	OberonExpression expr;
+	Token ifToken;
+}
+{
+	ifToken = <IF>
 	"("
-
+		expr = Expression() {
+			stmt = new IfElseStatement(getFileName(),
+				ifToken.beginLine,
+				ifToken.beginColumn,
+				expr);
+		}
 	")"
 	"{"
+		{
+			getBlockStack().push(stmt.getIfStatements());
+		}
 		StatementBlock()
+		{
+			getBlockStack().pop();
+		}
 	"}"
 
 	(
 		<ELSE>
 		"{"
+			{
+				getBlockStack().push(stmt.getElseStatements());
+			}
 			StatementBlock()
+			{
+				getBlockStack().pop();
+			}
 		"}"
 	)?
+	
+	{
+		getCurrentBlock().addStatement(stmt);
+	}
 }
 
 void ForStatement():
-{}
 {
-	<FOR>
+	DeclarationStatement declStmt = null;
+	AssignmentStatement assignStmt = null;
+	AssignmentStatement iterStmt = null;
+	OberonExpression condExpr;
+	ForStatement forStmt = null;
+	Token forToken;
+}
+{
+	forToken = <FOR>
 	"("
-
+		(	
+			declStmt = ReturnableDeclarationStatement()
+		|	assignStmt = ReturnableAssignmentStatement()
+		)
+		";"
+		condExpr = Expression()
+		";"
+		(	iterStmt = ReturnableAssignmentStatement()	)?
+		
+		{
+			if(declStmt != null) {
+				forStmt = new ForWithDeclarationStatement(
+						getFileName(),
+						forToken.beginLine,
+						forToken.beginColumn,
+						declStmt,
+						condExpr,
+						iterStmt
+					);
+			} else {
+				forStmt = new ForWithAssignmentStatement(
+						getFileName(),
+						forToken.beginLine,
+						forToken.beginColumn,
+						assignStmt,
+						condExpr,
+						iterStmt
+					);
+			}
+		}
 	")"
 	"{"
+		{	getBlockStack().push(forStmt.getStatementBody());	}
 		StatementBlock()
+		{	getBlockStack().pop();	}
 	"}"
+	
+	{
+		getCurrentBlock().addStatement(forStmt);
+	}
 }
 
 void ReturnStatement():
-{}
 {
-	<RETURN>
+	OberonExpression expr;
+	Token retToken;
+}
+{
+	retToken = <RETURN> 
+	expr = Expression()
+	
+	{
+		getCurrentBlock().addStatement(new ReturnStatement(getFileName(),
+						retToken.beginLine,
+						retToken.beginColumn,
+						expr));
+	}
 }
 
-void Expression():
-{}
+OberonExpression Expression():
 {
-	OrExpression()
+	OberonExpression expr;
+}
+{
+	expr = OrExpression()
+	{
+		return expr;
+	}
 }
 
-void OrExpression():
-{}
+OberonExpression OrExpression():
 {
-	AndExpression() ( "||" OrExpression() )?
+	OberonExpression left;
+	OberonExpression right;
+}
+{
+	left = AndExpression() 
+	( 
+		"||" right = OrExpression() 
+		{	
+			return new OberonOrExpression(getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left, right);
+		}
+	)?
+	
+	{
+		return left;
+	}
 }
 
-void AndExpression():
-{}
+OberonExpression AndExpression():
 {
-	EqualExpression() ( "&&" AndExpression() )?
+	OberonExpression left;
+	OberonExpression right;
+}
+{
+	left = EqualExpression() 
+	( 
+		"&&" right = AndExpression() 
+		{	
+			return new OberonAndExpression(getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left, right);
+		}	
+	)?
+	
+	{
+		return left;
+	}
 }
 
-void EqualExpression():
-{}
+OberonExpression EqualExpression():
 {
-	RelationalExpression() ( ("==" | "!=") EqualExpression() )?
+	OberonExpression left;
+	OberonExpression right;
+	OberonEqualityType eqType;
+}
+{
+	left = RelationalExpression() 
+	( 
+		(	"==" { eqType = OberonEqualityType.EQUALITY; } 
+		| 	"!=" { eqType = OberonEqualityType.NOTEQUALITY; }
+		) 
+		
+		right = EqualExpression() 
+	
+		{	
+			switch(eqType) {
+			case EQUALITY:
+				return new OberonEqualityExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+					break;
+			case NOTEQUALITY:
+				return new OberonNotEqualityExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+			}
+		}	
+	)?
+	
+	{
+		return left;
+	}
 }
 
-void RelationalExpression():
-{}
+OberonExpression RelationalExpression():
 {
-	AdditiveExpression() ( ("<" | "<=" | ">" | ">=") RelationalExpression() )?
+	OberonExpression left;
+	OberonExpression right;
+	OberonRelationalType expType;	
+}
+{
+	left = AdditiveExpression() 
+	( 
+		(	"<" 	{	expType = OberonRelationalType.LESSTHAN;			}
+		| 	"<=" 	{	expType = OberonRelationalType.LESSTHANEQUAL;		}
+		| 	">" 	{	expType = OberonRelationalType.GREATERTHAN;			}
+		| 	">="	{	expType = OberonRelationalType.GREATERTHANEQUAL;	}
+		) 
+		
+		right = RelationalExpression() 
+		{
+			switch(expType) {
+			case LESSTHAN:
+				return new OberonLessThanExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			case LESSTHANEQUAL:
+				return new OberonLessThanEqualExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			case GREATERTHAN:
+				return new OberonGreaterThanExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			case GREATERTHANEQUAL:
+				return new OberonGreaterThanEqualExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+				
+			}
+		}
+	)?
+	
+	{
+		return left;
+	}
 }
 
-void AdditiveExpression():
-{}
+OberonExpression AdditiveExpression():
 {
-	MultiplyExpression() ( ("+" | "-") AdditiveExpression() )?
+	OberonExpression left;
+	OberonExpression right;
+	OberonAdditionType addType;
+}
+{
+	left = MultiplyExpression() 
+	
+	( 
+		(	"+" 	{	addType = OberonAdditionType.ADDITION;		}
+		| 	"-"		{	addType = OberonAdditionType.SUBTRACTION;	}
+		) 
+		
+		right = AdditiveExpression() 
+		
+		{
+			switch(addType) {
+			case ADDITION:
+				return new OberonAddExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			case SUBTRACTION:
+				return new OberonSubExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			}
+		}
+	)?
+	
+	{
+		return left;
+	}
 }
 
-void MultiplyExpression():
-{}
+OberonExpression MultiplyExpression():
 {
-	BracketedExpression() ( ("*" | "/") MultiplyExpression() )?
+	OberonExpression left;
+	OberonExpression right;
+	OberonMultiplyType mulType;
+}
+{
+	left = BracketedExpression() 
+	( 
+		(	"*" 	{	mulType = OberonMultiplyType.MULTIPLY;		}
+		| 	"/"		{	mulType = OberonMultiplyType.DIVIDE;		}
+		) 
+		
+		right = MultiplyExpression() 
+		
+		{
+			switch(mulType) {
+			case MULTIPLY:
+				return new OberonMultiplyExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			case DIVIDE:
+				return new OberonDivideExpression(
+						getFileName(),
+						left.getLineNumber(),
+						left.getColumnNumber(),
+						left,
+						right
+					);
+				break;
+			}
+		}
+	)?
+
+	{
+		return left;
+	}
 }
 
-void BracketedExpression():
-{}
+OberonExpression BracketedExpression():
 {
-	( "(" Expression() ")" )
-   |	<IDENTIFIER>
-   |	Literal()
+	OberonExpression expr;
+	Token id;
+	OberonExpression literal;
+}
+{
+	( 	
+		"(" 
+			expr = Expression()
+			{	
+				return new OberonBracketedExpression(
+					getFileName(),
+					expr.getLineNumber(),
+					expr.getColumnNumber(),
+					expr);
+			}
+		")" 
+	)
+   	|	id = <IDENTIFIER>			
+   		{	
+   			return new OberonVariableExpression(
+   				getFileName(),
+				id.beginLine,
+				id.beginColumn,
+				id.image,
+				OberonVariableType.DOUBLE);
+   		}
+   	|	literal = Literal()		
+   		{	
+   			return literal;
+   		}
 }
 
-void Literal():
-{}
+OberonExpression Literal():
 {
-	<INTEGER_LITERAL>
-   |    <FLOATING_POINT_LITERAL>
-   |    <STRING_LITERAL>
+	Token lit;
+}
+{
+		lit = <INTEGER_LITERAL>			
+			{
+				return new OberonIntegerLiteral(
+						getFileName(),
+						lit.beginLine,
+						lit.beginColumn,
+						Long.parseLong(lit.image)
+					);
+			}
+   |    lit = <FLOATING_POINT_LITERAL>
+   			{
+				return new OberonDoubleLiteral(
+						getFileName(),
+						lit.beginLine,
+						lit.beginColumn,
+						Double.parseDouble(lit.image)
+					);
+			}
+   |    lit = <STRING_LITERAL>
+   			{
+				return new OberonStringLiteral(
+						getFileName(),
+						lit.beginLine,
+						lit.beginColumn,
+						lit.image
+					);
+			}
+	|	lit = <TRUE>
+			{
+				return new OberonBooleanLiteral(
+						getFileName(),
+						lit.beginLine,
+						lit.beginColumn,
+						true
+					);
+			}
+	|	lit = <FALSE>
+			{
+				return new OberonBooleanLiteral(
+						getFileName(),
+						lit.beginLine,
+						lit.beginColumn,
+						false
+					);
+			}
+	
 }
 
 

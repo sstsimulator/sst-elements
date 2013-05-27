@@ -7,8 +7,9 @@ public class OberonDoubleLiteral extends OberonLiteralExpression {
 
 	protected double literalValue;
 	
-	public OberonDoubleLiteral(double value,
-			String fileName, int lineNo, int colNo) {
+	public OberonDoubleLiteral(
+			String fileName, int lineNo, int colNo,
+			double value) {
 		super(fileName, lineNo, colNo);
 		literalValue = value;
 	}
