@@ -7,6 +7,7 @@ public final class OberonCompilerOptions {
 	private static OberonCompilerOptions instance = null;
 	private String outputPath;
 	private boolean dumpASTToScreen;
+	private boolean useMangledNames;
 	private int bytesPerBoolean;
 	
 	private Vector<String> processFiles;
@@ -14,6 +15,7 @@ public final class OberonCompilerOptions {
 	private OberonCompilerOptions() {
 		outputPath = "a.oba";
 		dumpASTToScreen = false;
+		useMangledNames = false;
 		processFiles = new Vector<String>();
 		bytesPerBoolean = 8;
 	}
@@ -37,6 +39,8 @@ public final class OberonCompilerOptions {
 				} else if (args[i].equals("-fbool-byte-alloc")) {
 					bytesPerBoolean = Integer.parseInt(args[i+1]);
 					i++;
+				} else if (args[i].equals("-fuse-mangled-names")) {
+					useMangledNames = true;
 				}
 			} else {
 				// if not an option then we will try to compile it :)
@@ -61,5 +65,9 @@ public final class OberonCompilerOptions {
 	
 	public boolean dumpASTToConsole() {
 		return dumpASTToScreen;
+	}
+	
+	public boolean useMangledNames() {
+		return useMangledNames;
 	}
 }

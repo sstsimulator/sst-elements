@@ -1,5 +1,6 @@
 package gov.sandia.sst.oberon.compiler.visitor;
 
+import gov.sandia.sst.oberon.compiler.*;
 import gov.sandia.sst.oberon.compiler.exp.*;
 import gov.sandia.sst.oberon.compiler.stmt.*;
 
@@ -56,11 +57,24 @@ public class OberonASTPrinter implements OberonExpressionVisitor,
 		printCurrentLineIndent();
 		
 		os.print("for(");
-		forWithAssignmentStatement.getAssignmentStatement().processVisitor(this);
+		
+		AssignmentStatement initialAssign = forWithAssignmentStatement.getAssignmentStatement();
+		
+		if(initialAssign != null) {
+			os.print(initialAssign.getVariableName() + " = ");
+			initialAssign.getAssignmentValue().processVisitorTarget(this);
+		}
+		
 		os.print("; ");
 		forWithAssignmentStatement.getLoopCondition().processVisitorTarget(this);
 		os.print("; ");
-		forWithAssignmentStatement.getIncrementStatement().processVisitor(this);
+		
+		AssignmentStatement assignStmt = forWithAssignmentStatement.getIncrementStatement();
+		if(assignStmt != null) {
+			os.print(assignStmt.getVariableName() + " = ");
+			assignStmt.getAssignmentValue().processVisitorTarget(this);
+		}
+		
 		os.println(") {");
 		
 		currentLevel++;
@@ -77,19 +91,24 @@ public class OberonASTPrinter implements OberonExpressionVisitor,
 		printCurrentLineIndent();
 		
 		os.print("for(");
-		//forWithDeclarationStatement.getDeclarationStatement().processVisitor(this);
+		
 		DeclarationStatement forDecl = forWithDeclarationStatement.getDeclarationStatement();
 		os.print(this.convertTypeToString(forDecl.getVariableType()) + " " + 
 				forDecl.getVariableName() + " = ");
 		forDecl.getInitialAssignmentExpression().processVisitorTarget(this);
+
 		os.print("; ");
+		
 		forWithDeclarationStatement.getLoopCondition().processVisitorTarget(this);
+		
 		os.print("; ");
+		
 		AssignmentStatement assignStmt = forWithDeclarationStatement.getIncrementStatement();
 		if(assignStmt != null) {
 			os.print(assignStmt.getVariableName() + " = ");
 			assignStmt.getAssignmentValue().processVisitorTarget(this);
 		}
+		
 		os.println(") {");
 		
 		currentLevel++;
@@ -278,7 +297,16 @@ public class OberonASTPrinter implements OberonExpressionVisitor,
 		os.println("// Stack: " + functionDefinition.getDeclaredVariableSize() + " bytes");
 		os.print(convertTypeToString(functionDefinition.getFunctionType()));
 		os.print(" ");
-		os.print(functionDefinition.getFunctionName());
+		
+		if(OberonCompilerOptions.getInstance().useMangledNames()) {
+			os.print(functionDefinition.getFunctionName());
+			os.print(OberonNameMangler.getMangleAdditionByTypes(functionDefinition.getFileName(),
+					functionDefinition.getLineNumber(),
+					functionDefinition.getColumnNumber(),
+					functionDefinition.getParameters()));
+		} else {
+			os.print(functionDefinition.getFunctionName());
+		}
 		os.print("(");
 		
 		Vector<TypeNamePair> params = functionDefinition.getParameters();
@@ -324,6 +352,29 @@ public class OberonASTPrinter implements OberonExpressionVisitor,
 		}
 		
 		return "Unknown";
+	}
+
+	public void visit(OberonCallExpression oberonCallExpression)
+			throws OberonStatementException, OberonExpressionException {
+		
+		if( OberonCompilerOptions.getInstance().useMangledNames() ) {
+			os.print(oberonCallExpression.getCalleeMangledName());
+		} else {
+			os.print(oberonCallExpression.getCalleeName());
+		}
+		
+		os.print("(");
+		
+		Vector<OberonExpression> params = oberonCallExpression.getParameters();
+		for(int i = 0; i < params.size(); i++) {
+			params.get(i).processVisitorTarget(this);
+			
+			if(i < params.size() - 1) {
+				os.print(", ");
+			}
+		}
+		
+		os.print(")");
 	}
 	
 }

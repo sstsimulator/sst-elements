@@ -17,35 +17,35 @@ public interface OberonExpressionVisitor {
 	void visit(OberonDoubleLiteral oberonDoubleLiteral)
 			 throws 
 				OberonStatementException, OberonExpressionException;
-	void visit(OberonEqualityExpression oberonEqualityExpression)
-			 throws 
-				OberonStatementException, OberonExpressionException;
-	void visit(OberonGreaterThanEqualExpression oberonGreaterThanEqualExpression)
-			 throws 
-				OberonStatementException, OberonExpressionException;
+	void visit(OberonEqualityExpression oberonEqualityExpression) throws 
+		OberonStatementException, OberonExpressionException;
+	void visit(OberonGreaterThanEqualExpression oberonGreaterThanEqualExpression) throws 
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonGreaterThanExpression oberonGreaterThanExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonIntegerLiteral oberonIntegerLiteral) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonLessThanEqualExpression oberonLessThanEqualExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonLessThanExpression oberonLessThanExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonMultiplyExpression oberonMultiplyExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonNotEqualityExpression oberonNotEqualityExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonStringLiteral oberonStringLiteral) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonSubExpression oberonSubExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonVariableExpression oberonVariableExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonOrExpression oberonOrExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonAndExpression oberonAndExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
 	void visit(OberonBracketedExpression oberonBracketedExpression) throws 
-	OberonStatementException, OberonExpressionException;
+		OberonStatementException, OberonExpressionException;
+	void visit(OberonCallExpression oberonCallExpression) throws 
+		OberonStatementException, OberonExpressionException;
 
 }

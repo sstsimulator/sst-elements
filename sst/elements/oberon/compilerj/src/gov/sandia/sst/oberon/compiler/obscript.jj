@@ -682,6 +682,7 @@ OberonExpression BracketedExpression():
 	OberonExpression expr;
 	Token id;
 	OberonExpression literal;
+	Vector<OberonExpression> callExpr = new Vector<OberonExpression>();
 }
 {
 	( 	
@@ -696,7 +697,36 @@ OberonExpression BracketedExpression():
 			}
 		")" 
 	)
-   	|	id = <IDENTIFIER>			
+   	|	
+   	(
+   		id = <IDENTIFIER>
+   		(
+   			"("
+   				(
+   					expr = Expression()
+   					{
+   						callExpr.add(expr);
+   					}
+   					(
+   						","
+   						expr = Expression()
+   						{
+   							callExpr.add(expr);
+   						}
+   					)*
+   				)?
+   			")"
+   			
+   			{
+   				return new OberonCallExpression(
+   					getFileName(),
+					id.beginLine,
+					id.beginColumn,
+					id.image,
+					callExpr
+   				);
+   			}
+   		)?
    		{	
    			return new OberonVariableExpression(
    				getFileName(),
@@ -705,10 +735,14 @@ OberonExpression BracketedExpression():
 				id.image,
 				OberonVariableType.DOUBLE);
    		}
-   	|	literal = Literal()		
+   	)
+   	|	
+   	(
+   		literal = Literal()		
    		{	
    			return literal;
    		}
+   	)
 }
 
 OberonExpression Literal():

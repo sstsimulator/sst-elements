@@ -1,6 +1,7 @@
 package gov.sandia.sst.oberon.compiler;
 
 import gov.sandia.sst.oberon.compiler.exp.OberonExpressionException;
+import gov.sandia.sst.oberon.compiler.exp.OberonIncompatibleTypeException;
 import gov.sandia.sst.oberon.compiler.stmt.FunctionDefinition;
 import gov.sandia.sst.oberon.compiler.stmt.OberonStatementException;
 import gov.sandia.sst.oberon.compiler.visitor.OberonASTPrinter;
@@ -14,7 +15,7 @@ public class OberonCompiler {
 		OberonCompilerOptions.getInstance().processOptions(args);
 		
 		Vector<String> compileThese = OberonCompilerOptions.getInstance().getFilesForCompile();
-		Vector<FunctionDefinition> functions = new Vector<FunctionDefinition>();
+		//Vector<FunctionDefinition> functions = new Vector<FunctionDefinition>();
 		Vector<FunctionDefinition> thisUnitFunctions;
 		
 		for(String nextFile : compileThese) {
@@ -24,7 +25,24 @@ public class OberonCompiler {
 				parser.setFileName(nextFile);
 				thisUnitFunctions = parser.MultiFunctionFile();
 				
-				functions.addAll(thisUnitFunctions);
+				for(FunctionDefinition nxtFunc : thisUnitFunctions) {
+					String mangledName = nxtFunc.getFunctionName() +
+							OberonNameMangler.getMangleAdditionByTypes(
+									nxtFunc.getFileName(), nxtFunc.getLineNumber(),
+									nxtFunc.getColumnNumber(), nxtFunc.getParameters());
+					if(OberonFunctionTable.getInstance().containsFunctionByMangledName(mangledName)) {
+						System.err.println("Error: " + nxtFunc.getFileName() +
+								", Line: " + nxtFunc.getLineNumber() + ", Col: " +
+								nxtFunc.getColumnNumber());
+						System.err.println("Function: " + nxtFunc.getFunctionName() +
+								" is already defined.");
+						System.exit(-1);
+					} else {
+						OberonFunctionTable.getInstance().addFunction(nxtFunc);
+					}
+				}
+				
+				//functions.addAll(thisUnitFunctions);
 			} catch (FileNotFoundException e) {
 				System.err.println("File: " + nextFile + " not found.");
 				e.printStackTrace();
@@ -34,19 +52,23 @@ public class OberonCompiler {
 				System.err.println(e.getMessage());
 				e.printStackTrace();
 				System.exit(-1);
+			} catch (OberonIncompatibleTypeException e) {
+				System.err.println("Compile failed for: " + nextFile);
+				System.err.println("Error: " + e.getFileName() + ", Line: " +
+						e.getLineNumber() + ", Col: " + e.getColumnNumber() +
+						", " + e.getMessage());
+				e.printStackTrace();
+				System.exit(-1);
 			}
 		}
 		
-		System.out.println("Found: " + functions.size() + " functions during compile");
-		
-		for(FunctionDefinition nextFunc : functions) {
-			System.out.println("> " + nextFunc.getFunctionName() + " (w/" +
-				nextFunc.getParameters().size() + " parameters)");
-		}
-		
+		System.out.println("Found: " + OberonFunctionTable.getInstance().countFunctions()
+				+ " functions during compile");
+	
 		if(OberonCompilerOptions.getInstance().dumpASTToConsole()) {
 			OberonASTPrinter printer = new OberonASTPrinter(System.out);
 			
+			Vector<FunctionDefinition> functions = OberonFunctionTable.getInstance().getFunctionList();
 			for(FunctionDefinition nextFunc : functions) {
 				try {
 					printer.visit(nextFunc);
