@@ -98,7 +98,7 @@
     <component name="chiprtr" type="merlin.hr_router">
         <params>
             <num_ports> 3 </num_ports>
-            <num_vcs> 1 </num_vcs>
+            <num_vcs> 3 </num_vcs>
             <link_bw> 5GHz </link_bw>
             <xbar_bw> 5GHz </xbar_bw>
             <topology> merlin.singlerouter </topology>

@@ -298,7 +298,7 @@ bool MemController::clock(Cycle_t cycle)
 #endif
         } else {
             DPRINTF("Issued transaction for address 0x%"PRIx64"\n", addr);
-            self_link->send(new MemCtrlEvent(req));
+            self_link->send(1, new MemCtrlEvent(req));
         }
 
         req->amt_in_process += requestSize;
