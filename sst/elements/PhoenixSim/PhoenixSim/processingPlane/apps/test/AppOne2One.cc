@@ -107,7 +107,7 @@ ApplicationData* AppOne2One::getFirstMsg() {
 
 ApplicationData* AppOne2One::dataArrive(ApplicationData* pdata) {
 
-	int type = pdata->getType();
+//	int type = pdata->getType();
 
 	bytesTransferred += pdata->getPayloadSize();
 

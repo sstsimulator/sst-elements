@@ -295,7 +295,7 @@ void BIU::release_biu_slot(  int sid){
   if(biu_debug()){
 	fprintf(stdout,"BIU: release sid [%2d] rid [%3d] access_type[", sid, slot[sid].rid);
 	print_access_type(slot[sid].access_type,stdout);
-	fprintf(stdout,"] addr [0x%8X]\n", slot[sid].address.physical_address);
+	fprintf(stdout,"] addr [0x%8X]\n", (unsigned int)slot[sid].address.physical_address);
   }
 
   slot[sid].status = MEM_STATE_INVALID;
@@ -339,10 +339,10 @@ int BIU::next_RBRR_RAS_in_biu( int rank_id, int bank_id){
 int BIU::get_next_request_from_biu(){
   int 	i,found,candidate_id = MEM_STATE_INVALID;
   tick_t	candidate_time = 0;
-  int	candidate_priority;
+  int	candidate_priority = 0;
   int	bus_queue_depth = this->get_biu_depth();
   int 	priority_scheme;
-  int	last_transaction_type;
+  int	last_transaction_type = 0;
 
   priority_scheme = dram_system_config->get_transaction_selection_policy();
   last_transaction_type = last_transaction_type;
@@ -411,10 +411,10 @@ int BIU::get_next_request_from_biu(){
 int BIU::get_next_request_from_biu_chan(int chan_id){
   int 	i,found,candidate_id = MEM_STATE_INVALID;
   tick_t	candidate_time = 0;
-  int	candidate_priority;
+  int	candidate_priority = 0;
   int	bus_queue_depth = this->get_biu_depth();
   int 	priority_scheme;
-  int	last_transaction_type;
+  int	last_transaction_type = 0;
 
   priority_scheme = dram_system_config->get_transaction_selection_policy();
   last_transaction_type = last_transaction_type;
@@ -551,7 +551,7 @@ int BIU::find_critical_word_ready_slot( int thread_id){
 			  slot[i].rid);
 		  print_access_type(slot[i].access_type,stdout);
 		  fprintf(stdout,"] addr [0x%8X] Now[%d] Latency[%4d]\n",
-			  slot[i].address.physical_address,
+			  (unsigned int)slot[i].address.physical_address,
 			  (int)current_cpu_time,
 			  (int)(current_cpu_time-slot[i].start_time));
 		}
@@ -726,7 +726,7 @@ void BIU::print_biu(){
 	  fprintf(stdout,"Entry[%2d] Status[%2d] Rid[%8d] Start_time[%8d] Addr[0x%8X] ",
 		  i, slot[i].status, slot[i].rid,
 		  (int)slot[i].start_time,
-		  slot[i].address.physical_address);
+		  (unsigned int)slot[i].address.physical_address);
 	  print_access_type(slot[i].access_type,stdout);
 	  fprintf(stdout,"\n");
 	}

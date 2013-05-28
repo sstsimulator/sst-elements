@@ -219,13 +219,13 @@ bool Memory_Controller::can_issue_cas(int tran_index, Command *this_c,
 			if ((config->dram_type == SDRAM) || (config->dram_type == DDRSDRAM)
 					|| (config->dram_type == DDR2)) {
 				if (rank[this_c->rank_id].bank[this_c->bank_id].twr_done_time
-						> (current_dram_time + config->t_cmd)) {
+						> (unsigned int)(current_dram_time + config->t_cmd)) {
 #ifdef DEBUG
 					if (config->get_tran_watch(this_c->tran_id)) {
 						fprintf(
 								stdout,"[%llu]CAS(%llu) t_wr conflict  [%llu] \n",
-								current_dram_time,
-								this_c->tran_id,
+								(long long unsigned int)current_dram_time,
+								(long long unsigned int)this_c->tran_id,
 								rank[this_c->rank_id].bank[this_c->bank_id].twr_done_time);
 					}
 #endif
@@ -241,7 +241,7 @@ bool Memory_Controller::can_issue_cas(int tran_index, Command *this_c,
 			if (config->get_tran_watch(this_c->tran_id)) {
 				fprintf(
 						stdout," [%llu] Seting data bus reqd time to %llu + t_cwd %d\n",
-						current_dram_time, current_dram_time, config->t_cwd);
+						(long long unsigned int)current_dram_time, (long long unsigned int)current_dram_time, config->t_cwd);
 			}
 			if (config->t_cwd >= 0)
 				data_bus_reqd_time = current_dram_time + config->t_cwd;
@@ -258,7 +258,7 @@ bool Memory_Controller::can_issue_cas(int tran_index, Command *this_c,
 			if (config->get_tran_watch(this_c->tran_id)) {
 				fprintf(
 						stdout,"[%llu]CAS(%llu) Data Bus Not Free  till [%llu] reqd [%llu]\n",
-						current_dram_time, this_c->tran_id, data_bus_free_time,
+						(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id, data_bus_free_time,
 						data_bus_reqd_time);
 			}
 #endif
@@ -276,7 +276,7 @@ bool Memory_Controller::can_issue_cas(int tran_index, Command *this_c,
 					if (config->get_tran_watch(this_c->tran_id)) {
 						fprintf(
 								stdout,"[%llu]CAS(%llu) Strict Ordering In force \n",
-								current_dram_time, this_c->tran_id);
+								(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 					}
 #endif
 					return false;
@@ -291,7 +291,7 @@ bool Memory_Controller::can_issue_cas(int tran_index, Command *this_c,
 #ifdef DEBUG
 				if (config->get_tran_watch(this_c->tran_id)) {
 					fprintf(stdout,"[%llu]CAS(%llu) Refresh conflict  \n",
-							current_dram_time, this_c->tran_id);
+							(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 				}
 #endif
 				return false;
@@ -321,7 +321,7 @@ bool Memory_Controller::can_issue_cas(int tran_index, Command *this_c,
 			if (config->get_tran_watch(this_c->tran_id)) {
 				fprintf(
 						stdout,"[%llu]CAS(%llu) Bank Not Open: rcd_done [%llu] rp_done[%llu] ras_done[%llu] Status (%d) row_id(%x) my row_id (%x)\n",
-						current_dram_time, this_c->tran_id,
+						(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 						rank[rank_id].bank[bank_id].rcd_done_time,
 						rank[rank_id].bank[bank_id].rp_done_time,
 						rank[rank_id].bank[bank_id].ras_done_time,
@@ -380,7 +380,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 		if (config->get_tran_watch(this_c->tran_id))
 			fprintf(
 					stdout,"[%llu]RAS(%llu) Data still not started to be issued ",
-					current_dram_time, this_c->tran_id);
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 #endif
 		return false;
 	}
@@ -391,7 +391,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 #ifdef DEBUG
 			if (config->get_tran_watch(this_c->tran_id))
 				fprintf(stdout,"[%llu]RAS(%lu) Refresh Conflict\n",
-						current_dram_time, this_c->tran_id);
+						(long long unsigned int)current_dram_time, this_c->tran_id);
 #endif
 			return false;
 		}
@@ -406,7 +406,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 		if (config->get_tran_watch(this_c->tran_id))
 			fprintf(
 					stdout,"[%llu]RAS(%llu) Bank Conflict RP Done Time %llu Ras done time %llu \n",
-					current_dram_time, this_c->tran_id,
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 					rank[rank_id].bank[bank_id].rp_done_time,
 					rank[rank_id].bank[bank_id].ras_done_time);
 #endif
@@ -416,8 +416,8 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 	if (check_cmd_bus_required_time(this_c, cmd_bus_reqd_time) == FALSE) {
 #ifdef DEBUG
 		if (config->get_tran_watch(this_c->tran_id))
-			printf("[%llu]RAS(%llu) DIMM Bus Busy \n", current_dram_time,
-					this_c->tran_id);
+			printf("[%llu]RAS(%llu) DIMM Bus Busy \n", (long long unsigned int)current_dram_time,
+					(long long unsigned int)this_c->tran_id);
 #endif
 		return false;
 	}
@@ -430,7 +430,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 #ifdef DEBUG
 			if (config->get_tran_watch(this_c->tran_id)) {
 				fprintf(stdout,"[%llu]RAS(%llu) t_RRD violated \n",
-						current_dram_time, this_c->tran_id);
+						(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 			}
 #endif
 			return false; /* violates t_RRD */
@@ -443,7 +443,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 #ifdef DEBUG
 			if (config->get_tran_watch(this_c->tran_id)) {
 				fprintf(stdout,"[%llu]RAS(%llu) t_FAW violated \n",
-						current_dram_time, this_c->tran_id);
+						(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 			}
 #endif
 			return false; /* violates t_FAW */
@@ -468,7 +468,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 				if (config->get_tran_watch(this_c->tran_id))
 					fprintf(
 							stdout,"[%llu]RAS(%llu) !issued cmd Tran[%d] Issued command-staus[%d]  \n",
-							current_dram_time, this_c->tran_id, i,
+							(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id, i,
 							transaction_queue->entry[i].status);
 #endif
 				return false;
@@ -484,7 +484,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 						if (config->get_tran_watch(this_c->tran_id))
 							fprintf(
 									stdout,"[%llu]RAS(%llu) !issued cmd Tran[%d] Issued command-staus[%d]  \n",
-									current_dram_time, this_c->tran_id, i,
+									(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id, i,
 									transaction_queue->entry[i].status);
 #endif
 						return false;
@@ -501,7 +501,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 				if (config->get_tran_watch(this_c->tran_id))
 					fprintf(
 							stdout,"[%lu]RAS(%lu) Bank open to row reqd by [%lu] \n",
-							current_dram_time, this_c->tran_id, temp_c->tran_id);
+							(long unsigned int)current_dram_time, this_c->tran_id, temp_c->tran_id);
 #endif
 				return false;
 			}
@@ -534,7 +534,7 @@ bool Memory_Controller::can_issue_ras(int tran_index, Command *this_c,
 				if (config->get_tran_watch(this_c->tran_id)) {
 					fprintf(
 							stdout,"[%lu]RAS -> posted CAS(%lu) Data Bus Conflict: Bus not free \n",
-							current_dram_time, this_c->tran_id);
+							(long unsigned int)current_dram_time, this_c->tran_id);
 				}
 #endif
 				return false;
@@ -571,7 +571,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 #ifdef DEBUG
 		if (config->get_tran_watch(this_c->tran_id))
 			fprintf(stdout,"[%llu]PREC(%llu) Cmd bus not available \n",
-					current_dram_time, this_c->tran_id);
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 #endif
 		return false;
 	}
@@ -584,7 +584,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 		if (config->get_tran_watch(this_c->tran_id)) {
 			fprintf(
 					stdout,"[%llu]CAS(%llu) t_wr conflict  [%llu] || cas_done time conflict [%llu] \n",
-					current_dram_time, this_c->tran_id,
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 					rank[this_c->rank_id].bank[this_c->bank_id].twr_done_time,
 					rank[this_c->rank_id].bank[this_c->bank_id].cas_done_time);
 		}
@@ -604,7 +604,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 		if (config->get_tran_watch(this_c->tran_id)) {
 			fprintf(
 					stdout,"PREC [%llu] Bank does not need precharge(%llu) ras done [%llu] rp done[%llu] row_id[%x] my row id[%x]\n",
-					current_dram_time, this_c->tran_id,
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 					rank[this_c->rank_id].bank[this_c->bank_id].ras_done_time,
 					rank[this_c->rank_id].bank[this_c->bank_id].rp_done_time,
 					rank[this_c->rank_id].bank[this_c->bank_id].row_id,
@@ -620,7 +620,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 #ifdef DEBUG
 		if (config->get_tran_watch(this_c->tran_id))
 			printf("[%llu]PREC(%llu) Data still not started to be issued ",
-					current_dram_time, this_c->tran_id);
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 #endif
 		return false;
 	}
@@ -633,7 +633,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 #ifdef DEBUG
 			if (config->get_tran_watch(this_c->tran_id))
 				fprintf(stdout,"[%llu]PREC(%llu) Conflict with Refresh \n",
-						current_dram_time, this_c->tran_id);
+						(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 #endif
 			return false;
 		}
@@ -649,7 +649,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 					if (config->get_tran_watch(this_c->tran_id)) {
 						fprintf(
 								stdout,"[%llu]PREC(%llu) Command still in queue ",
-								current_dram_time, this_c->tran_id);
+								(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 						temp_c->print_command(current_dram_time);
 					}
 #endif
@@ -665,7 +665,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 #ifdef DEBUG
 		if (config->get_tran_watch(this_c->tran_id)) {
 			fprintf(stdout,"[%llu]PREC (%llu) RAS Done conflict {%lld]\n",
-					current_dram_time, this_c->tran_id,
+					(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 					rank[this_c->rank_id].bank[this_c->bank_id].ras_done_time);
 		}
 #endif
@@ -688,7 +688,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 				if (config->get_tran_watch(this_c->tran_id))
 					fprintf(
 							stdout,"[%llu]PREC (%llu) Conflict with earlier transaction to same row [%llu]  \n",
-							current_dram_time, this_c->tran_id, temp_c->tran_id);
+							(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id, (long long unsigned int)temp_c->tran_id);
 #endif
 				return false;
 			}
@@ -708,8 +708,8 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 						if (config->get_tran_watch(this_c->tran_id))
 							fprintf(
 									stdout,"[%llu]PREC (%llu) Bank open to row reqd by [%llu] %d \n",
-									current_dram_time, this_c->tran_id,
-									temp_c->tran_id,
+									(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
+									(long long unsigned int)temp_c->tran_id,
 									transaction_queue->entry[j].status);
 #endif
 						return false;
@@ -721,8 +721,8 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 						if (config->get_tran_watch(this_c->tran_id))
 							fprintf(
 									stdout,"[%llu]PREC (%llu) Same row[%llu] waiting for it to get done\n",
-									current_dram_time, this_c->tran_id,
-									temp_c->tran_id);
+									(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
+									(long long unsigned int)temp_c->tran_id);
 #endif
 						return false;
 					}
@@ -732,8 +732,8 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 					if (config->get_tran_watch(this_c->tran_id))
 						fprintf(
 								stdout,"[%llu]PREC (%llu) Bank open to row reqd by [%llu] \n",
-								current_dram_time, this_c->tran_id,
-								temp_c->tran_id);
+								(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
+								(long long unsigned int)temp_c->tran_id);
 #endif
 					return false;
 				}
@@ -749,7 +749,7 @@ bool Memory_Controller::can_issue_prec(int tran_index, Command *this_c,
 							if (config->get_tran_watch(this_c->tran_id)) {
 								printf(
 										"[%llu]PREC(%llu) Trans status (%d) Conflict with command ",
-										current_dram_time, this_c->tran_id,
+										(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 										transaction_queue->entry[j].status);
 								temp_c->print_command(current_dram_time);
 							}
@@ -789,7 +789,7 @@ bool Memory_Controller::can_issue_cas_with_precharge(int tran_index,
 #ifdef DEBUG
 				if (config->get_tran_watch(this_c->tran_id)) {
 					fprintf(stdout,"[%llu]PREC(%llu) Transaction not started ",
-							current_dram_time, this_c->tran_id);
+							(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id);
 				}
 #endif
 				return false;
@@ -803,8 +803,8 @@ bool Memory_Controller::can_issue_cas_with_precharge(int tran_index,
 			if (config->get_tran_watch(this_c->tran_id)) {
 				fprintf(
 						stdout,"[%llu]PREC (%llu) RAS Done conflict [%lld] > [%llu]\n",
-						current_dram_time,
-						this_c->tran_id,
+						(long long unsigned int)current_dram_time,
+						(long long unsigned int)this_c->tran_id,
 						rank[this_c->rank_id].bank[this_c->bank_id].ras_done_time,
 						dram_reqd_time);
 			}
@@ -829,8 +829,8 @@ bool Memory_Controller::can_issue_cas_with_precharge(int tran_index,
 						if (config->get_tran_watch(this_c->tran_id))
 							fprintf(
 									stdout,"[%llu]CAS_WITH_PREC (%llu) Conflict with earlier transaction to same row [%llu]  \n",
-									current_dram_time, this_c->tran_id,
-									temp_c->tran_id);
+									(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
+									(long long unsigned int)temp_c->tran_id);
 #endif
 						return false;
 					}
@@ -841,8 +841,8 @@ bool Memory_Controller::can_issue_cas_with_precharge(int tran_index,
 					if (config->get_tran_watch(this_c->tran_id))
 						fprintf(
 								stdout,"[%llu]CAS_WITH_PREC (%llu) Bank open to row reqd by [%llu] \n",
-								current_dram_time, this_c->tran_id,
-								temp_c->tran_id);
+								(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
+								(long long unsigned int)temp_c->tran_id);
 #endif
 					return false;
 				}
@@ -855,7 +855,7 @@ bool Memory_Controller::can_issue_cas_with_precharge(int tran_index,
 								if (config->get_tran_watch(this_c->tran_id)) {
 									printf(
 											"[%llu]CAS_WITH_PREC(%llu) Trans status (%d) Conflict with command ",
-											current_dram_time, this_c->tran_id,
+											(long long unsigned int)current_dram_time, (long long unsigned int)this_c->tran_id,
 											transaction_queue->entry[j].status);
 									temp_c->print_command(current_dram_time);
 								}
@@ -919,9 +919,9 @@ bool Memory_Controller::check_for_refresh(Command * this_c, int tran_index,
 									fprintf(stdout, "----------------------\n");
 									fprintf(
 											stdout,"[%llu]CMD (%d) (%llu) Refresh Conflict tstatus(%d) tindex(%d) ",
-											current_dram_time,
+											(long long unsigned int)current_dram_time,
 											this_c->command,
-											this_c->tran_id,
+											(long long unsigned int)this_c->tran_id,
 											transaction_queue->entry[tran_index].status,
 											tran_index);
 									temp_c->print_command(current_dram_time);
@@ -1161,7 +1161,7 @@ void Memory_Controller::cas_transition(Command *this_c, int tran_index,
 		///fbd_cas_transition(this_c,  tran_index, chan_id,  rank_id, bank_id,row_id,debug_string);
 	} else {
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			command_bus.status = IDLE;
 			col_command_bus.status = IDLE;
 			this_c->status = DRAM_PROCESSING;
@@ -1181,7 +1181,7 @@ void Memory_Controller::cas_transition(Command *this_c, int tran_index,
 			}
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 			this_c->status = LINK_DATA_TRANSMISSION;
 			data_bus.status = BUS_BUSY;
 #ifdef DEBUG
@@ -1189,7 +1189,7 @@ void Memory_Controller::cas_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, PROC2DATA);
 #endif
 		} else if ((this_c->status == LINK_DATA_TRANSMISSION)
-				&& (this_c->link_data_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_data_tran_comp_time <= (unsigned int)current_dram_time)) {
 			//rank[rank_id].bank[bank_id].cas_count_since_ras++;
 			rank[rank_id].bank[bank_id].last_command = CAS;
 			data_bus.status = IDLE;
@@ -1209,7 +1209,7 @@ void Memory_Controller::cas_transition(Command *this_c, int tran_index,
 #endif
 			}
 		} else if ((this_c->status == DIMM_PRECHARGING)
-				&& (this_c->rank_done_time <= current_dram_time)) {
+				&& (this_c->rank_done_time <= (unsigned int)current_dram_time)) {
 			this_c->status = MEM_STATE_COMPLETED;
 #ifdef DEBUG
 			if (config->wave_debug() || config->cas_wave_debug())
@@ -1230,7 +1230,7 @@ void Memory_Controller::cas_write_transition(Command *this_c, int tran_index,
 
 	else {
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			command_bus.status = IDLE;
 			col_command_bus.status = IDLE;
 
@@ -1261,7 +1261,7 @@ void Memory_Controller::cas_write_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) { /* rdram or DDR II */
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) { /* rdram or DDR II */
 			data_bus.status = BUS_BUSY;
 			this_c->status = LINK_DATA_TRANSMISSION;
 			/** FIXME **/
@@ -1280,7 +1280,7 @@ void Memory_Controller::cas_write_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, PROC2DATA);
 #endif
 		} else if ((this_c->status == LINK_DATA_TRANSMISSION)
-				&& (this_c->link_data_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_data_tran_comp_time <= (unsigned int)current_dram_time)) {
 			//rank[rank_id].bank[bank_id].cas_count_since_ras++;
 			rank[rank_id].bank[bank_id].last_command = CAS_WRITE;
 			data_bus.status = IDLE;
@@ -1300,7 +1300,7 @@ void Memory_Controller::cas_write_transition(Command *this_c, int tran_index,
 #endif
 			}
 		} else if ((this_c->status == DIMM_PRECHARGING)
-				&& (this_c->rank_done_time <= current_dram_time)) {
+				&& (this_c->rank_done_time <= (unsigned int)current_dram_time)) {
 			this_c->status = MEM_STATE_COMPLETED;
 #ifdef DEBUG
 			if (config->wave_debug() || config->cas_wave_debug())
@@ -1321,7 +1321,7 @@ void Memory_Controller::ras_transition(Command *this_c, int tran_index,
 	} else {
 
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			this_c->status = DRAM_PROCESSING;
 			rank[rank_id].bank[bank_id].status = ACTIVATING;
 			rank[rank_id].bank[bank_id].row_id = this_c->row_id;
@@ -1343,7 +1343,7 @@ void Memory_Controller::ras_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 			rank[rank_id].bank[bank_id].status = ACTIVE;
 			rank[rank_id].bank[bank_id].last_command = RAS;
 			this_c->status = MEM_STATE_COMPLETED;
@@ -1371,7 +1371,7 @@ void Memory_Controller::precharge_transition(Command *this_c, int tran_index,
 
 	}
 	if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-			&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+			&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 		rank[rank_id].bank[bank_id].status = PRECHARGING;
 		//	rank[rank_id].bank[bank_id].rp_done_time = current_dram_time +
 		//	  config->t_rp;
@@ -1383,7 +1383,7 @@ void Memory_Controller::precharge_transition(Command *this_c, int tran_index,
 			build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 	} else if ((this_c->status == DRAM_PROCESSING)
-			&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+			&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 		rank[rank_id].bank[bank_id].status = IDLE;
 		rank[rank_id].bank[bank_id].last_command = PRECHARGE;
 		/*
@@ -1408,7 +1408,7 @@ void Memory_Controller::precharge_all_transition(Command *this_c,
 		///fbd_precharge_all_transition(this_c,  tran_index, chan_id,  rank_id, bank_id,row_id,debug_string);
 	} else {
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			for (i = 0; i < config->rank_count; i++) {
 				for (j = 0; j < config->bank_count; j++) {
 					rank[i].bank[j].status = PRECHARGING;
@@ -1425,7 +1425,7 @@ void Memory_Controller::precharge_all_transition(Command *this_c,
 				build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 			for (i = 0; i < config->rank_count; i++) {
 				for (j = 0; j < config->bank_count; j++) {
 					rank[i].bank[j].status = IDLE;
@@ -1455,7 +1455,7 @@ void Memory_Controller::ras_all_transition(Command *this_c, int tran_index,
 		///fbd_ras_all_transition(this_c,  tran_index, chan_id,  rank_id, bank_id,row_id,debug_string);
 	} else {
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			for (i = 0; i < config->rank_count; i++) {
 				for (j = 0; j < config->bank_count; j++) {
 					rank[i].bank[j].status = ACTIVATING;
@@ -1472,7 +1472,7 @@ void Memory_Controller::ras_all_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 			for (i = 0; i < config->rank_count; i++) {
 				for (j = 0; j < config->bank_count; j++) {
 					rank[i].bank[j].status = ACTIVE;
@@ -1498,7 +1498,7 @@ void Memory_Controller::refresh_all_transition(Command *this_c, int tran_index,
 		///fbd_refresh_all_transition(this_c,  tran_index, chan_id,  rank_id, bank_id,row_id,debug_string);
 	} else {
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			if (config->refresh_policy == REFRESH_ONE_CHAN_ONE_RANK_ALL_BANK) {
 				for (j = 0; j < config->bank_count; j++) {
 					rank[rank_id].bank[j].row_id = this_c->row_id;
@@ -1535,7 +1535,7 @@ void Memory_Controller::refresh_all_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 			if (config->refresh_policy == REFRESH_ONE_CHAN_ONE_RANK_ALL_BANK) {
 				for (j = 0; j < config->bank_count; j++) {
 					rank[this_c->rank_id].bank[j].status = IDLE;
@@ -1580,7 +1580,7 @@ void Memory_Controller::refresh_transition(Command *this_c, int tran_index,
 	} else {
 
 		if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-				&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+				&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 			this_c->status = DRAM_PROCESSING;
 			rank[rank_id].bank[bank_id].status = ACTIVATING;
 			rank[rank_id].bank[bank_id].row_id = this_c->row_id;
@@ -1596,7 +1596,7 @@ void Memory_Controller::refresh_transition(Command *this_c, int tran_index,
 				build_wave(&debug_string[0], tran_index, this_c, XMIT2PROC);
 #endif
 		} else if ((this_c->status == DRAM_PROCESSING)
-				&& (this_c->dram_proc_comp_time <= current_dram_time)) {
+				&& (this_c->dram_proc_comp_time <= (unsigned int)current_dram_time)) {
 			rank[rank_id].bank[bank_id].status = IDLE;
 			rank[rank_id].bank[bank_id].last_command = REFRESH;
 			this_c->status = MEM_STATE_COMPLETED;
@@ -1615,7 +1615,7 @@ void Memory_Controller::remove_refresh_transaction(Command *prev_rq_c,
 #ifdef DEBUG
 	if (config->tq_info.get_transaction_debug()) {
 		fprintf(stdout, "[%llu] Removing Refresh Transaction %llu\n",
-				current_dram_time, this_rq_c->tran_id);
+				(long long unsigned int)current_dram_time, (long long unsigned int)this_rq_c->tran_id);
 	}
 #endif
 	if (prev_rq_c == NULL) {/* First item in the queue */
@@ -1638,11 +1638,11 @@ void Memory_Controller::remove_refresh_transaction(Command *prev_rq_c,
 
 void Memory_Controller::update_bus_link_status(int current_dram_time) {
 	if (config->dram_type == FBD_DDR2) {
-		if (up_bus.completion_time <= current_dram_time) {
+		if (up_bus.completion_time <= (unsigned int)current_dram_time) {
 			up_bus.status = IDLE;
 		}
 	} else {
-		if (command_bus.completion_time <= current_dram_time) {
+		if (command_bus.completion_time <= (unsigned int)current_dram_time) {
 			command_bus.status = IDLE;
 		}
 	}
@@ -1666,7 +1666,7 @@ void Memory_Controller::update_refresh_missing_cycles(tick_t now,
 				now, num_refresh_missed, refresh_queue.last_refresh_cycle);
 		fprintf(
 				stdout, "config->refresh_cycle_count = %d, refresh_queue.last_refresh_cycle = %d, config->t_rfc = %d\n",
-				config->refresh_cycle_count, refresh_queue.last_refresh_cycle,
+				config->refresh_cycle_count, (int)refresh_queue.last_refresh_cycle,
 				config->t_rfc);
 		///print_transaction_queue(now);
 		exit(0);
@@ -1819,7 +1819,7 @@ void Memory_Controller::insert_refresh_transaction(int current_dram_time) {
 	Command * rq_temp_c = NULL;
 	/** Check if the time for refresh has passed and t_rfc after it has gone by***/
 	//fprintf(stdout, "Insert refresh: current_dram_time = %d, refresh_queue.size = %d\n", current_dram_time, refresh_queue.size);
-	if (current_dram_time > (config->refresh_cycle_count
+	if ((unsigned int)current_dram_time > (config->refresh_cycle_count
 			+ refresh_queue.last_refresh_cycle) && (refresh_queue.size
 			< MAX_REFRESH_QUEUE_DEPTH)) {
 		//fprintf(stdout, "boom, inside\n");
@@ -1844,7 +1844,7 @@ void Memory_Controller::insert_refresh_transaction(int current_dram_time) {
 		if (config->tq_info.get_transaction_debug()) {
 			fprintf(
 					stdout,"[%llu] Inserting Refresh Transaction %d Chan[%d] Rank [%d] Bank[%d] Row[%d]\n",
-					current_dram_time, refresh_queue.refresh_counter - 1, id,
+					(long long unsigned int)current_dram_time, (int)refresh_queue.refresh_counter - 1, id,
 					refresh_address.rank_id, refresh_address.bank_id,
 					refresh_address.row_id);
 			Command* temp_c = command_queue;
@@ -2066,7 +2066,7 @@ void Memory_Controller::data_transition(Command *this_c, int tran_index,
 	Transaction *this_t;
 	this_t = &(transaction_queue->entry[tran_index]);
 	if ((this_c->status == LINK_COMMAND_TRANSMISSION)
-			&& (this_c->link_comm_tran_comp_time <= current_dram_time)) {
+			&& (this_c->link_comm_tran_comp_time <= (unsigned int)current_dram_time)) {
 		this_c->status = AMB_PROCESSING;
 #ifdef DEBUG
 		if (config->cas_wave_debug() || config->wave_debug())
@@ -2074,7 +2074,7 @@ void Memory_Controller::data_transition(Command *this_c, int tran_index,
 #endif
 
 	} else if ((this_c->status == AMB_PROCESSING)
-			&& (this_c->amb_proc_comp_time <= current_dram_time)) {
+			&& (this_c->amb_proc_comp_time <= (unsigned int)current_dram_time)) {
 		this_c->status = MEM_STATE_COMPLETED;
 #ifdef DEBUG
 		if (config->cas_wave_debug() || config->wave_debug())
@@ -2259,7 +2259,7 @@ int Memory_Controller::can_issue_refresh_refresh(tick_t now,
 					if (config->get_ref_tran_watch(this_c->tran_id)) {
 						fprintf(
 								stdout,"%llu  Failed to issue refresh due to conflict with issued transaction %llu \n",
-								now, temp_c->tran_id);
+								now, (long long unsigned int)temp_c->tran_id);
 					}
 					return FALSE;
 				}
@@ -3514,7 +3514,7 @@ void Memory_Controller::issue_cmd(tick_t now, Command *this_c,
 //
 void Memory_Controller::update_power_stats(tick_t now, Command *this_c) {
 
-	int chan_id = this_c->chan_id;
+//	int chan_id = this_c->chan_id;
 	int rank_id = this_c->rank_id;
 	tick_t CAS_carry_cycle = 0;
 	tick_t CAW_carry_cycle = 0;

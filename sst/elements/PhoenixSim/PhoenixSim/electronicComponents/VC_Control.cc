@@ -82,7 +82,7 @@ int VC_Control_DRAMreadWrite::getVC(int msgType, ProcessorData* pdata) {
 		return 0;
 	}
 
-	ApplicationData* app = (ApplicationData*) pdata->getEncapsulatedMsg();
+	ApplicationData* app = (ApplicationData*) pdata->getEncapsulatedPacket();
 
 	if (numVC == 3 && app->getType() == DM_writeLocal) {
 		return 2;

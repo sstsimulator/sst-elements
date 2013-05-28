@@ -16,7 +16,7 @@ AppBitreverse::AppBitreverse(int i, int n,  double arr, int s) : Application(i, 
 	numMessages = param3;
 	progress = numMessages / 10;
 
-	int mask;
+	int mask = 0;
 
 	if(numOfProcs == 16){
 		mask = 0xF;

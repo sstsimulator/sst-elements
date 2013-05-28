@@ -274,6 +274,8 @@ YYLTYPE NEDFileBuffer::getBannerCommentPos(YYLTYPE pos)
     commentPos.first_column = 0;
     commentPos.last_line = pos.first_line;
     commentPos.last_column = 0;
+    commentPos.text = NULL;
+    commentPos.dummy = 0;
     return commentPos;
 }
 
@@ -320,6 +322,8 @@ YYLTYPE NEDFileBuffer::getTrailingCommentPos(YYLTYPE pos)
     commentPos.first_column = pos.last_column;
     commentPos.last_line = lineAfter;
     commentPos.last_column = 0;
+    commentPos.text = NULL;
+    commentPos.dummy = 0;
     return commentPos;
 }
 

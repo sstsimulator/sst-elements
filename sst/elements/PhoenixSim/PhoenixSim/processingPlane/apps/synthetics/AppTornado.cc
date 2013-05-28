@@ -81,7 +81,7 @@ ApplicationData* AppTornado::msgCreated(ApplicationData* pdata) {
 	int destRow = start / sqrt(numOfProcs);
 	int destCol = start % (int)sqrt(numOfProcs);
 
-	int dest;
+	int dest = 0;
 
 	if (destRow > row) {
 		dest = toId(destRow + intuniform(0, sqrt(numOfProcs) - destRow - 1), destCol);

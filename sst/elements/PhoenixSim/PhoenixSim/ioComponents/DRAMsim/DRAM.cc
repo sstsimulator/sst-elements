@@ -77,9 +77,9 @@ void DRAM::print_transaction_queue() {
 					i,
 					dram_controller[chan_id]->transaction_queue->entry[i].status,
 					(int) dram_controller[chan_id]->transaction_queue->entry[i].arrival_time,
-					dram_controller[chan_id]->transaction_queue->entry[i].transaction_id,
+					(unsigned int)dram_controller[chan_id]->transaction_queue->entry[i].transaction_id,
 					dram_controller[chan_id]->transaction_queue->entry[i].transaction_type,
-					dram_controller[chan_id]->transaction_queue->entry[i].address.physical_address,
+					(unsigned int)dram_controller[chan_id]->transaction_queue->entry[i].address.physical_address,
 					dram_controller[chan_id]->transaction_queue->entry[i].address.chan_id);
 			this_c
 					= dram_controller[chan_id]->transaction_queue->entry[i].next_c;
@@ -178,8 +178,8 @@ int DRAM::update_dram(tick_t current_cpu_time) { /* This code should work for SD
 							fprintf(
 									stdout,"Completed @ [%llu] Duration [%llu] :",
 									current_dram_time,
-									current_dram_time,
-									dram_controller[chan_id]->transaction_queue->entry[i].arrival_time);
+									current_dram_time );
+//									dram_controller[chan_id]->transaction_queue->entry[i].arrival_time);
 							///trans->print_transaction_index(current_dram_time, biu->get_rid(trans->slot_id));
 						}
 #endif
@@ -375,7 +375,7 @@ void DRAM::retire_transactions() {
 	 This option is current disabled as of 9/20/2002.  Problem with Mase generation non-unique req_id's.
 	 out of order data return creates havoc there. This should be investigated and fixed.
 	 */
-	int rank_id, bank_id, row_id, tran_id;
+	int rank_id = 0, bank_id, row_id, tran_id;
 	int i;
 	Transaction * this_t = NULL;
 	int chan_id;
@@ -437,8 +437,8 @@ void DRAM::retire_transactions() {
 				int trans_id = this_t->request_id;
 				fprintf(
 						stdout,
-						" completed transaction %d, request_id %d, thread_id %d, count %d\n",
-						this_t->transaction_id,
+						" completed transaction %llu, request_id %d, thread_id %d, count %d\n",
+						(long long unsigned int)this_t->transaction_id,
 						trans_id,
 						thread_id,
 						dram_controller[chan_id]->transaction_queue->transaction_count);
@@ -499,9 +499,9 @@ void DRAM::retire_transactions() {
 						config->tq_info.num_write_tran++;
 						break;
 					default:
-						fprintf(stdout, "unknown transaction type %d ID %d\n",
+						fprintf(stdout, "unknown transaction type %d ID %llu\n",
 								this_t->transaction_type,
-								this_t->transaction_id);
+								(long long unsigned int)this_t->transaction_id);
 						break;
 					}
 					//---------------------end small stat counter----------------------
@@ -515,7 +515,7 @@ void DRAM::retire_transactions() {
 
 					int thread_id = this_t->thread_id;
 					int req_id = this_t->request_id;
-					int trans_id = this_t->transaction_id;
+//					int trans_id = this_t->transaction_id;
 
 					//std::cout << "my callback: " << callback << std::endl;
 
@@ -551,7 +551,7 @@ void DRAM::gather_biu_slot_stats() {
 bool DRAM::schedule_new_transaction(int thread_id, uint64_t address,
 		int trans_type, uint64_t request_id) {
 	int transaction_index;
-	int next_slot_id;
+//	int next_slot_id;
 	Transaction *this_t = NULL;
 	///uint64_t    address = 0;
 	DRAMaddress this_a;

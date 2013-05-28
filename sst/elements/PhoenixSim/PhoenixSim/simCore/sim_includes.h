@@ -19,7 +19,7 @@
 
 using namespace std;
 
-static int globalMsgId = 0;
+static int __attribute__ ((unused)) globalMsgId = 0;
 
 
 #define FDBG1 ev<<"FDBG1 ("<<simTime()*1e9<<" ns): "

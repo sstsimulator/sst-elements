@@ -108,4 +108,5 @@ int AddressTranslator::convertLevel(string l) {
 
 	opp_error("invalid level identifier");
 
+	return 0;  // added to avoid compile warning
 }

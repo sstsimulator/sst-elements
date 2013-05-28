@@ -1723,7 +1723,7 @@ void SimEnv::dumpComponentList(const char *category)
                                  !key->isPerObject() ? "addPerRunOption" :
                                  "addPerObjectOption";
             #define CASE(X)  case cConfigOption::X: typestring = #X; break;
-            const char *typestring;
+            const char *typestring = NULL;
             switch (key->getType()) {
                 CASE(CFG_BOOL)
                 CASE(CFG_INT)

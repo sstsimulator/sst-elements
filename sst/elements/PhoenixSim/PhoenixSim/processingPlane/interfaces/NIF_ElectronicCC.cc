@@ -81,7 +81,7 @@ simtime_t NIF_ElectronicCC::send() {
 		int p = adr->id[AddressTranslator::convertLevel("PROC")];
 		msgSent->setMsgId(p);
 		msgSent->setData(
-				(long) (((ApplicationData*) currData->getEncapsulatedMsg())->dup()));
+				(long) (((ApplicationData*) currData->getEncapsulatedPacket())->dup()));
 		sendDelayed(msgSent, 0, procReqOut);
 	}
 

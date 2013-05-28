@@ -489,7 +489,7 @@ void DRAMaddress::print_address(){
 	fprintf(stdout,"thread_id[%d] physical[0x%llx] chan[%d] rank[%d] bank[%d] row[%x] col[%x]\n",
 				thread_id,
 				//->virtual_address,
-				physical_address,
+				(long long unsigned int)physical_address,
 				chan_id,
 				rank_id,
 				bank_id,

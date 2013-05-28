@@ -176,7 +176,7 @@ void Processor::initialize(int stage) {
 
 
 	//size dist
-	SizeDistribution *sizedist;
+	SizeDistribution *sizedist = NULL;
 
 	string sd = par("appSizeDist");
 

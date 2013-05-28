@@ -60,7 +60,7 @@ void NIF_Circuit::netPortMsgArrived(cMessage* msg) {
 simtime_t NIF_Circuit::getRetryTime() {
 
 	int ran = intrand(3);
-	double delay;
+	double delay = 0;
 	if (ran == 0) {
 		delay = 0;
 	} else if (ran == 1) {
@@ -93,7 +93,7 @@ void NIF_Circuit::packetPortMsgArrived(cMessage* cmsg) {
 
 		} else if (type == pathBlocked) {
 
-			PathSetupMsg* p = check_and_cast<PathSetupMsg*> (emsg);
+			PathSetupMsg* __attribute__ ((unused)) p = check_and_cast<PathSetupMsg*> (emsg);
 
 			simtime_t ret = getRetryTime();
 			blockTime += ((simTime() - setupSent) + ret);

@@ -95,7 +95,7 @@ void DomainChanger::handlePhotonicMessage(PhotonicMessage *pmsg)
 		}
 		inPmsg = true;
 	}
-	else if(pmsg->getMsgType() == TXstop && pmsg->getEncapsulatedMsg() != NULL)
+	else if(pmsg->getMsgType() == TXstop && pmsg->getEncapsulatedPacket() != NULL)
 	{
 
 		if(!inPmsg)

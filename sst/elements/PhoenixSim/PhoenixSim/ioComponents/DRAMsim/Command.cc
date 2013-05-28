@@ -85,7 +85,7 @@ void Command::print_command(tick_t now){
 	    bank_id,
 	    row_id,
 	    col_id,
-	    tran_id,
+	    (long long unsigned int)tran_id,
 		cmd_id,
         refresh);
 

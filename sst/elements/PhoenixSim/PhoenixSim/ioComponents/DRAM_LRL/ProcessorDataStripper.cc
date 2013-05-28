@@ -30,7 +30,7 @@ void PhotonicToProcessorMsg::handleMessage(cMessage* msg) {
 			sendDelayed(proc, 0, procOut);
 
 		} else if (pmsg->getMsgType() == TXstart) {
-			if (pmsg->getEncapsulatedMsg() != NULL)
+			if (pmsg->getEncapsulatedPacket() != NULL)
 				delete pmsg->decapsulate();
 		}
 

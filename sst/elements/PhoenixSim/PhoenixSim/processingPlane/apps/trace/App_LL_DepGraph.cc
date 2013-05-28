@@ -108,6 +108,7 @@ simtime_t App_LL_DepGraph::process(ApplicationData* pdata) {
 	else {
 		return 0;
 	}
+	return 0; // Added to avoid compile warning
 }
 
 ApplicationData* App_LL_DepGraph::getFirstMsg() {

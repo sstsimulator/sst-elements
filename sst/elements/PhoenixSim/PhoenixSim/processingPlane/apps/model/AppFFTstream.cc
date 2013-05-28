@@ -100,7 +100,7 @@ ApplicationData* AppFFTstream::sending(ApplicationData* pdata) {
 		if (stage != 0) //a read message, nothing
 			busy = false;
 	//}
-
+  return NULL; // Added to avoid compile warning
 }
 
 ApplicationData* AppFFTstream::getFirstMsg() {

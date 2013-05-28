@@ -12,7 +12,7 @@ DRAM_config::DRAM_config(){
 
 void DRAM_config::init_dram_system_configuration(){
 
-	int i;
+//	int i;
 
 
 
@@ -71,7 +71,7 @@ void DRAM_config::dump_config(FILE *stream)
   fprintf(stream, "  dram_frequency: %d MHz\n", dram_type != FBD_DDR2 ? memory_frequency : dram_frequency );
   fprintf(stream, "  memory_frequency: %d MHz\n", memory_frequency);
   fprintf(stream, "  cpu_frequency: %d MHz\n", get_cpu_frequency());
-  fprintf(stream, "  dram_clock_granularity: %d\n", dram_clock_granularity);
+  fprintf(stream, "  dram_clock_granularity: %llu\n", (long long unsigned int)dram_clock_granularity);
   fprintf(stream, "  memfreq2cpufreq ration: %f \n", (float)mem2cpu_clock_ratio);
   fprintf(stream, "  memfreq2dramfreq ration: %f \n", memory2dram_freq_ratio);
   fprintf(stream, "  critical_word_first_flag: %d\n", critical_word_first_flag);
@@ -103,7 +103,7 @@ void DRAM_config::dump_config(FILE *stream)
   // FBDIMM RELATED
   fprintf(stream, "  t_amb_up: %d\n", t_amb_up);
   fprintf(stream, "  t_amb_down: %d\n", t_amb_down);
-  fprintf(stream, "  t_bundle: %d\n", t_bundle);
+  fprintf(stream, "  t_bundle: %llu\n", (long long unsigned int)t_bundle);
   fprintf(stream, "  t_bus: %d\n", t_bus);
 
   fprintf(stream, "  posted_cas: %d\n", posted_cas_flag);

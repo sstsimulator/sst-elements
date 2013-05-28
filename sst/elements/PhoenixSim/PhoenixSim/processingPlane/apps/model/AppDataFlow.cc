@@ -83,7 +83,7 @@ ApplicationData* AppDataFlow::dataArrive(ApplicationData* pdata) {
 
 		if (pdata->getType() == M_readResponse) {
 
-			int dest;
+			int dest = 0;
 
 			if (id < numX) { //top
 				dest = id + numX;
@@ -109,7 +109,7 @@ ApplicationData* AppDataFlow::dataArrive(ApplicationData* pdata) {
 		} else {
 
 			int src = pdata->getSrcId();
-			int dest;
+			int dest = 0;
 
 			if (src == id - 1) {
 				dest = id + 1;

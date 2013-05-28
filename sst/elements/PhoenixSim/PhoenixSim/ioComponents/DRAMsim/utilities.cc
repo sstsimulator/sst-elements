@@ -60,7 +60,7 @@ void build_wave(char *buffer_string, int transaction_id, Command *this_c, int ac
   buffer_len += 4;
   if(print_detail){
     sprintf(&buffer_string[buffer_len],"tid[%llu] ch[%d] ra[%d] ba[%d] ro[%X] co[%X] ref[%d] ",
-	    this_c->tran_id,
+	    (long long unsigned int)this_c->tran_id,
 	    this_c->chan_id,
 	    this_c->rank_id,
 	    this_c->bank_id,

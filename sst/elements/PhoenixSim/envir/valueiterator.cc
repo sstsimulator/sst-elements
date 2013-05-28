@@ -144,6 +144,7 @@ std::string ValueIterator::get(int index) const
         }
     }
     Assert(false);
+    return "";  // extra return to avoid compile warning;
 }
 
 void ValueIterator::restart()

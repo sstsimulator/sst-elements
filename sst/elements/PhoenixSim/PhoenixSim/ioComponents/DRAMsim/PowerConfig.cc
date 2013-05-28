@@ -435,7 +435,7 @@ void PowerConfig::print_power_stats(tick_t now) {
 	//FILE *fp;
 	int chan_id, rank_id;
 
-	int chip_count = (system_config->channel_width * 8) / DQ; //number of chips per rank FIXME
+//	int chip_count = (system_config->channel_width * 8) / DQ; //number of chips per rank FIXME
 
 	if (now < last_print_time + print_period || power_file_ptr == NULL) {
 		return;
@@ -460,7 +460,7 @@ void PowerConfig::print_power_stats(tick_t now) {
 
 			fprintf(
 					power_file_ptr,
-					"ch[%d] ra[%d] p_PRE_PDN[%5.2f] p_PRE_STBY[%5.2f] p_ACT_PDN[%5.2f]  p_ACT_STBY[%5.2f] p_ACT[%5.2f] p_WR[%5.2f] p_RD[%5.2f]  p_REF[%5.2f] p_AMB_IDLE[%5.2f] p_AMB_ACT[%5.2f] p_AMB_PASS_THROUGH[%5.2f] p_AMB[%5.2f] p_TOT[%5.2f] P_TOT_MAX[%5.2f] access[%d] \n",
+					"ch[%d] ra[%d] p_PRE_PDN[%5.2f] p_PRE_STBY[%5.2f] p_ACT_PDN[%5.2f]  p_ACT_STBY[%5.2f] p_ACT[%5.2f] p_WR[%5.2f] p_RD[%5.2f]  p_REF[%5.2f] p_AMB_IDLE[%5.2f] p_AMB_ACT[%5.2f] p_AMB_PASS_THROUGH[%5.2f] p_AMB[%5.2f] p_TOT[%5.2f] P_TOT_MAX[%5.2f] access[%llu] \n",
 					chan_id,
 					rank_id,
 					meas_tmp.p_PRE_PDN,
@@ -477,7 +477,7 @@ void PowerConfig::print_power_stats(tick_t now) {
 					meas_tmp.p_AMB,
 					meas_tmp.p_TOT,
 					meas_tmp.p_TOT_MAX,
-					dram_controller[chan_id]->rank[rank_id].r_p_info.dram_access);
+					(long long unsigned int)dram_controller[chan_id]->rank[rank_id].r_p_info.dram_access);
 
 		}
 		fprintf(power_file_ptr, "\n");
@@ -610,7 +610,7 @@ void PowerConfig::print_global_power_stats(FILE *fileout, int dram_current_time)
 
 			fprintf(
 					fileout,
-					"ch[%d] ra[%d] p_PRE_PDN[%5.2f] p_PRE_STBY[%5.2f] p_ACT_PDN[%5.2f]  p_ACT_STBY[%5.2f] p_ACT[%5.2f] p_WR[%5.2f] p_RD[%5.2f] p_REF[%5.2f] p_AMB_IDLE[%5.2f] p_AMB_ACT[%5.2f] p_AMB_PASS_THROUGH[%5.2f] p_AMB[%5.2f] p_TOT[%5.2f] P_TOT_MAX[%5.2f] access[%d]\n",
+					"ch[%d] ra[%d] p_PRE_PDN[%5.2f] p_PRE_STBY[%5.2f] p_ACT_PDN[%5.2f]  p_ACT_STBY[%5.2f] p_ACT[%5.2f] p_WR[%5.2f] p_RD[%5.2f] p_REF[%5.2f] p_AMB_IDLE[%5.2f] p_AMB_ACT[%5.2f] p_AMB_PASS_THROUGH[%5.2f] p_AMB[%5.2f] p_TOT[%5.2f] P_TOT_MAX[%5.2f] access[%llu]\n",
 					chan_id,
 					rank_id,
 					meas_tmp.p_PRE_PDN,
@@ -627,7 +627,7 @@ void PowerConfig::print_global_power_stats(FILE *fileout, int dram_current_time)
 					meas_tmp.p_AMB,
 					meas_tmp.p_TOT,
 					meas_tmp.p_TOT_MAX,
-					dram_controller[chan_id]->rank[rank_id].r_p_gblinfo.dram_access);
+					(long long unsigned int)dram_controller[chan_id]->rank[rank_id].r_p_gblinfo.dram_access);
 
 		}
 		fprintf(fileout, "\n");

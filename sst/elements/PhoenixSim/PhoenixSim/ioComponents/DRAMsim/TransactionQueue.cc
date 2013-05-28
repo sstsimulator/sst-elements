@@ -13,7 +13,7 @@ TransactionQueue::TransactionQueue(Global_TQ_info* inf, DRAM_config* cfg, Aux_St
 
 void TransactionQueue::init_transaction_queue(){
   int i;
-  int j;
+//  int j;
   /* initialize entries in the transaction queue */
 
 
@@ -241,10 +241,10 @@ void TransactionQueue::remove_transaction(int tindex, int current_dram_time){
 	if(get_transaction_debug()){
 	  if ( entry[tindex].transaction_type != MEMORY_WRITE_COMMAND) {
          fprintf(stdout,"[%llu]Removing transaction %llu at [%d] Time in Queue %llu Memory Latency %llu\n",
-             current_dram_time, entry[tindex].transaction_id,tindex, current_dram_time - entry[tindex].arrival_time,entry[tindex].critical_word_ready_time - entry[tindex].arrival_time );
+             (long long unsigned int)current_dram_time, (long long unsigned int)entry[tindex].transaction_id,tindex, current_dram_time - entry[tindex].arrival_time,entry[tindex].critical_word_ready_time - entry[tindex].arrival_time );
                } else {
                              fprintf(stdout,"[%llu] Removing transaction %llu at [%d] Time in Queue %llu \n",
-             current_dram_time,entry[tindex].transaction_id, tindex, current_dram_time - entry[tindex].arrival_time );
+             (long long unsigned int)current_dram_time,(long long unsigned int)entry[tindex].transaction_id, tindex, current_dram_time - entry[tindex].arrival_time );
 
 
 

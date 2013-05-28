@@ -127,9 +127,9 @@ DRAM_Sim_TRACE::~DRAM_Sim_TRACE() {
 
 void DRAM_Sim_TRACE::start() {
 
-	int fake_rid;
+//	int fake_rid;
 
-	int slot_id;
+//	int slot_id;
 	int thread_id;
 	int get_next_event_flag = FALSE;
 	fprintf(stdout, "here\n");
@@ -186,7 +186,7 @@ BusEvent *DRAM_Sim_TRACE::get_next_bus_event(const int num_trace) {
 	for (i = 0; i < num_trace; i++) {
 		if (current_bus_event[i].already_run == TRUE) {
 			if ((fscanf(trace_fileptr[i], "%s", input) != EOF)) {
-				sscanf(input, "%X", &(current_bus_event[i].address)); /* found starting Hex address */
+				sscanf(input, "%X", (unsigned int*)&(current_bus_event[i].address)); /* found starting Hex address */
 				if (fscanf(trace_fileptr[i], "%s", input) == EOF) {
 					fprintf(stdout,
 					"Unexpected EOF, Please fix input trace file \n");
@@ -313,7 +313,7 @@ void DRAM_Sim_RAND::start() {
 	int fake_rid;
 	int fake_v_address; /* virtual address */
 	int fake_p_address; /* physical address */
-	int thread_id;
+//	int thread_id;
 
 	while (current_cpu_time < max_cpu_time) {
 		/* check and see if we need to create a new memory reference request */
@@ -517,11 +517,11 @@ DRAM_Sim *DRAM_Sim::read_config(double penis, int argc, char *argv[],
 	unsigned int debug_tran_id_threshold; /* tran id at which to start debug output */
 	unsigned int debug_tran_id; /* tran id  which to print out why commands are not being output*/
 	unsigned int debug_ref_tran_id; /* tran id  which to print out why commands are not being output*/
-	int get_next_event_flag = FALSE;
+//	int get_next_event_flag = FALSE;
 
 	char *power_stats_fileout = NULL;
 	char *common_stats_fileout = NULL;
-	char *trace_filein[MAX_TRACES];
+//	char *trace_filein[MAX_TRACES];
 
 	bool biu_stats = false;
 	bool biu_slot_stats = false;
@@ -533,25 +533,25 @@ DRAM_Sim *DRAM_Sim::read_config(double penis, int argc, char *argv[],
 	bool cas_per_ras_stats = false;
 
 	double average_interarrival_cycle_count; /* every X cycles, a transaction arrives */
-	double arrival_thresh_hold; /* if drand48() exceed this thresh_hold. */
+//	double arrival_thresh_hold; /* if drand48() exceed this thresh_hold. */
 	int arrival_distribution_model;
-	int slot_id;
-	int fake_access_type;
-	int fake_rid;
-	int fake_v_address; /* virtual address */
-	int fake_p_address; /* physical address */
-	int thread_id;
+//	int slot_id;
+//	int fake_access_type;
+//	int fake_rid;
+//	int fake_v_address; /* virtual address */
+//	int fake_p_address; /* physical address */
+//	int thread_id;
 	char spd_filein[MAX_FILENAME_LENGTH];
 	char power_filein[MAX_FILENAME_LENGTH] = "\0";
 	FILE *spd_fileptr;
 	FILE *power_fileptr;
 	float access_distribution[4]; /* used to set distribution precentages of access types */
 	int num_trace = 0;
-	int transaction_total = 0;
-	int transaction_retd_total = 0;
-	int last_retd_total = 0;
+//	int transaction_total = 0;
+//	int transaction_retd_total = 0;
+//	int last_retd_total = 0;
 	char *trace_files[MAX_TRACES];
-	int i;
+//	int i;
 	/* set defaults */
 
 	max_inst = 1000000; /* actually "cycle count" in this tester */
@@ -1280,7 +1280,7 @@ void DRAM_Sim::read_dram_config_from_file(FILE *fin, DRAM_config *this_c) {
 			this_c->set_dram_frequency(input_int);
 			break;
 		case dram_clock_granularity_token:
-			fscanf(fin, "%d", &(this_c->dram_clock_granularity));
+			fscanf(fin, "%d", (int*)&(this_c->dram_clock_granularity));
 			break;
 		case critical_word_token:
 			fscanf(fin, "%s", &input_string[0]);
