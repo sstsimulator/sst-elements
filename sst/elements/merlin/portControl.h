@@ -239,6 +239,9 @@ public:
         while ( ( ev = port_link->recvInitData() ) != NULL ) {
             credit_event* ce = dynamic_cast<credit_event*>(ev);
             if ( ce != NULL ) {
+                if ( ce->vc >= num_vcs ) {
+                    _abort(PortControl, "Received Credit Event for VC %d.  I only know of VCS[0-%d]\n", ce->vc, num_vcs-1);
+                }
                 port_out_credits[ce->vc] += ce->credits;
                 delete ev;
             } else {
