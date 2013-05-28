@@ -21,10 +21,11 @@ using namespace SST::Portals4;
 
 DmaEngine::DmaEngine( SST::Component& comp, SST::Params& params) :
     m_comp( comp ),
-#if USE_DMA_LIMIT_BW
-    m_pendingBytes( 0.0 ),
-#endif
     m_nicMmu( NULL )
+#if USE_DMA_LIMIT_BW
+    ,
+    m_pendingBytes( 0.0 )
+#endif
 {
 
     m_nid = params.find_integer( "nid" );

@@ -22,8 +22,8 @@
 using namespace SST::Portals4;
 
 Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
-        m_nic( nic ),
         m_uid( cmd.uid ),
+        m_nic( nic ),
         m_meUnlinkedHostPtr( (int*) cmd.meUnlinkedPtr ),
         m_meUnlinkedPos( 0 )
 {
@@ -43,15 +43,15 @@ Context::Context( PtlNic* nic, cmdContextInit_t& cmd ) :
     m_meV.resize( m_limits.max_entries );
     m_eqV.resize( m_limits.max_eqs );
 
-    for ( int i = 0; i < m_ptV.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_ptV.size(); i++ ) {
         m_ptV[i].used = false;
     }
 
-    for ( int i = 0; i < m_meV.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_meV.size(); i++ ) {
         m_meV[i].used = false;
     }
 
-    for ( int i = 0; i < m_mdV.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_mdV.size(); i++ ) {
         m_mdV[i].used = false;
     }
 
@@ -146,7 +146,7 @@ void Context::doMEOverflow( XXX* entry )
 
     PtlHdr& hdr = entry->origHdr;
     cmdPtlMEAppend_t& cmd = *entry->cmd; 
-    if ( cmd.me.ct_handle != -1 ) {
+    if ( (int32_t)cmd.me.ct_handle != -1 ) {
         if ( cmd.me.options & PTL_ME_EVENT_CT_BYTES )  { 
             addCT( cmd.me.ct_handle, entry->mlength );
         } else {
@@ -400,7 +400,7 @@ bool Context::getCallback( GetSendEntry* entry )
 {
     ptl_md_t& md =  m_mdV[entry->md_handle].md;
     Context_DBG("\n");
-    if ( md.ct_handle != -1  ) {
+    if ( (int32_t)md.ct_handle != -1  ) {
         if ( md.options & PTL_MD_EVENT_CT_BYTES ) { 
             assert(0);
             //addCT( md.ct_handle, entry-> );
@@ -410,7 +410,7 @@ bool Context::getCallback( GetSendEntry* entry )
         writeCtEvent( md.ct_handle, *findCTEvent( md.ct_handle) );
     }
 
-    if ( md.eq_handle != -1  ) {
+    if ( (int32_t)md.eq_handle != -1  ) {
         writeReplyEvent( md.eq_handle,
                         entry->hdr.length,
                         entry->hdr.offset,
@@ -445,11 +445,11 @@ bool Context::putCallback( PutSendEntry* entry )
         }
 
         Context_DBG("Send complete\n");
-        if ( md.eq_handle != -1  ) {
+        if ( (int32_t)md.eq_handle != -1  ) {
             writeSendEvent( md.eq_handle, entry->user_ptr, PTL_NI_OK);
         }
 
-        if ( md.ct_handle != -1  ) {
+        if ( (int32_t)md.ct_handle != -1  ) {
             if ( md.options & PTL_MD_EVENT_CT_BYTES )  { 
                 assert(0);
             } else {
@@ -470,7 +470,7 @@ bool Context::putCallback( PutSendEntry* entry )
         } else { 
 
             Context_DBG("Got Ack\n");
-            if ( md.eq_handle != -1  ) {
+            if ( (int32_t)md.eq_handle != -1  ) {
                 writeAckEvent( md.eq_handle,
                             entry->hdr.length,
                             entry->hdr.offset,
@@ -479,7 +479,7 @@ bool Context::putCallback( PutSendEntry* entry )
                 );
             }
 
-            if ( md.ct_handle != -1  ) {
+            if ( (int32_t)md.ct_handle != -1  ) {
                 if ( md.options & PTL_MD_EVENT_CT_BYTES )  { 
                     assert(0);
                 } else {

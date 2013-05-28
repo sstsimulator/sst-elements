@@ -26,8 +26,8 @@ const char * PtlNic::m_cmdNames[] = CMD_NAMES;
 
 PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
     RtrIF( id, params ),
-    m_dmaEngine( *this, params ),
     m_nid( params.find_integer("nid") ),
+    m_dmaEngine( *this, params ),
     m_vcInfoV( 2, *this )
 {
     TRACE_ADD( PtlNic );
@@ -39,7 +39,7 @@ PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
 
     PtlNic_DBG("\n");
 
-    for ( int i=0; i < m_vcInfoV.size(); i++ ) {
+    for ( unsigned int i=0; i < m_vcInfoV.size(); i++ ) {
         m_vcInfoV[ i ].setVC( i );
     }
 
@@ -256,7 +256,7 @@ Context* PtlNic::getContext( ctx_id_t ctx )
 
 void PtlNic::processVCs()
 {
-    for ( int i = 0; i < m_vcInfoV.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_vcInfoV.size(); i++ ) {
         m_vcInfoV[i].process();
     } 
 }

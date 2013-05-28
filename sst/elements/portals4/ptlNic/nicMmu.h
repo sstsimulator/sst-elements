@@ -114,7 +114,7 @@ class NicMmu
         Entry* entry = find_L3_entry( vaddr, true ); 
         MMU_DBG("vaddr=%#lx paddr %#lx pfn=%d %d\n", vaddr, paddr,
                         (int) paddr >> PageSizeBits, entry->pfn );
-        if ( entry->pfn == paddr >> PageSizeBits ) return;  
+        if ( (unsigned int)entry->pfn == paddr >> PageSizeBits ) return;  
         assert( entry->pfn == 0 );
         entry->pfn = paddr >> PageSizeBits; 
     }

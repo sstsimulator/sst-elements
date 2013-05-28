@@ -20,13 +20,13 @@ using namespace SST::Portals4;
 
 RecvEntry::RecvEntry( DmaEngine const& dma, Addr vaddr,
                         size_t length, CallbackBase* callback ) :
-    m_dma( const_cast<DmaEngine&>(dma) ),
     m_vaddr( vaddr ),
     m_length( length ),
-    m_callback( callback ),
-    m_curDma( NULL ),
     m_offset( 0 ),
-    m_dmaed( 0 )
+    m_dmaed( 0 ),
+    m_callback( callback ),
+    m_dma( const_cast<DmaEngine&>(dma) ),
+    m_curDma( NULL )
 {
 }
 

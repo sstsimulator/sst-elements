@@ -125,7 +125,7 @@ void PtlNic::VCInfo::processRtrQ()
         m_rtrEvent->packet.destNum = xxx->destNid;
 
         int nbytes = xxx->buf.size() - xxx->offset;
-        if ( nbytes >  PKT_SIZE * sizeof(int) ) {
+        if ( (unsigned int)nbytes >  PKT_SIZE * sizeof(int) ) {
             nbytes = PKT_SIZE * sizeof(int);
         }
 

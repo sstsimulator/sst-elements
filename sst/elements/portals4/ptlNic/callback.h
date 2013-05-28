@@ -27,10 +27,10 @@ template <class X, class Y = void > class Callback : public CallbackBase
 
   public:
     Callback( X* object, FuncPtr funcPtr, Y* data = 0 ) :
+        done( false ),
         m_object( object ),
         m_funcPtr( funcPtr ),
-        m_data( data ),
-        done( false )
+        m_data( data )
     {
     }
     virtual bool operator()() {
