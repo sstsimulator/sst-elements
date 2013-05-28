@@ -11,7 +11,7 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 
 	protected PrintStream os;
 	protected int currentLevel;
-	protected static int currentLabel = 0;
+	protected static int currentLabel = 1;
 	
 	public OberonAssemblyPrinter(PrintStream output) {
 		os = output;
@@ -51,6 +51,11 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 	public void visit(DeclarationStatement declarationStatement)
 			throws OberonStatementException, OberonExpressionException {
 		
+		if(declarationStatement.getInitialAssignmentExpression() != null) {
+			declarationStatement.getInitialAssignmentExpression().processVisitorTarget(this);
+			printLevelIndent();
+			os.println("pop " + declarationStatement.getVariableName());
+		}
 	}
 
 	
@@ -106,10 +111,15 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 	public void visit(ForWithAssignmentStatement forWithAssignmentStatement)
 			throws OberonStatementException, OberonExpressionException {
 		
+		int loop_jump = getCurrentLabelAndIncrement();
+		int exit_loop = getCurrentLabelAndIncrement();
+		
 		forWithAssignmentStatement.getAssignmentStatement().processVisitor(this);
-		os.println("L" + getCurrentLabelAndIncrement() + ":");
+		os.println("L" + loop_jump + ":");
 		
 		forWithAssignmentStatement.getLoopCondition().processVisitorTarget(this);
+		printLevelIndent();
+		os.println("jf L" + exit_loop);
 		
 		for(OberonStatement nxtStmt : forWithAssignmentStatement.getStatementBody().getStatements()) {
 			nxtStmt.processVisitor(this);
@@ -117,7 +127,9 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 		
 		forWithAssignmentStatement.getIncrementStatement().processVisitor(this);
 		
-		// need a jump here.
+		printLevelIndent();
+		os.println("jump L" + loop_jump);
+		os.println("L" + exit_loop + ":");
 	}
 
 	public void visit(ForWithDeclarationStatement forWithDeclarationStatement)
@@ -174,9 +186,8 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 			throws OberonStatementException, OberonExpressionException {
 		
 		printLevelIndent();
-		os.println("push_boolean");
-		printLevelIndent();
-		
+		os.print("push_boolean ");
+
 		if(oberonBooleanLiteral.getBooleanValue()) {
 			os.println("true");
 		} else {
@@ -197,8 +208,7 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 			throws OberonStatementException, OberonExpressionException {
 		
 		printLevelIndent();
-		os.println("push_double");
-		printLevelIndent();
+		os.print("push_double ");
 		os.println("" + oberonDoubleLiteral.getDoubleValue());
 	}
 
@@ -234,8 +244,7 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 			throws OberonStatementException, OberonExpressionException {
 		
 		printLevelIndent();
-		os.println("push_integer");
-		printLevelIndent();
+		os.print("push_integer ");
 		os.println("" + oberonIntegerLiteral.getIntegerValue());
 	}
 
@@ -280,9 +289,8 @@ public class OberonAssemblyPrinter implements OberonExpressionVisitor,
 			throws OberonStatementException, OberonExpressionException {
 		
 		printLevelIndent();
-		os.println("push_string " + (oberonStringLiteral.getStringValue().length() + 1));
-		printLevelIndent();
-		os.println("\"" + oberonStringLiteral.getStringValue() + "\"");
+		os.print("push_string " + (oberonStringLiteral.getStringValue().length() + 1));
+		os.println(" \"" + oberonStringLiteral.getStringValue() + "\"");
 	}
 
 	public void visit(OberonSubExpression oberonSubExpression)
