@@ -5,6 +5,7 @@ import gov.sandia.sst.oberon.compiler.exp.OberonIncompatibleTypeException;
 import gov.sandia.sst.oberon.compiler.stmt.FunctionDefinition;
 import gov.sandia.sst.oberon.compiler.stmt.OberonStatementException;
 import gov.sandia.sst.oberon.compiler.visitor.OberonASTPrinter;
+import gov.sandia.sst.oberon.compiler.visitor.OberonAssemblyPrinter;
 
 import java.io.*;
 import java.util.*;
@@ -65,6 +66,8 @@ public class OberonCompiler {
 		System.out.println("Found: " + OberonFunctionTable.getInstance().countFunctions()
 				+ " functions during compile");
 	
+		OberonAssemblyPrinter asmPrint = new OberonAssemblyPrinter(System.out);
+		
 		if(OberonCompilerOptions.getInstance().dumpASTToConsole()) {
 			OberonASTPrinter printer = new OberonASTPrinter(System.out);
 			
@@ -72,6 +75,7 @@ public class OberonCompiler {
 			for(FunctionDefinition nextFunc : functions) {
 				try {
 					printer.visit(nextFunc);
+					asmPrint.visit(nextFunc);
 				} catch (OberonStatementException e) {
 					System.err.println("Error (Statement Parsing): " +
 							e.getFileName() + " at: " +

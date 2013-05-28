@@ -179,22 +179,45 @@ void DeclarationStatement():
 	OberonExpression expr;
 	DeclarationStatement declStmt = null;
 	Token varName;
+	OberonExpression defaultInit = null;
 }
 {
 	(
 		<INTEGER>	{	varType = OberonVariableType.INTEGER; 	}
 	|	<DOUBLE>	{	varType = OberonVariableType.DOUBLE;	}
+	|	<BOOL>		{ 	varType = OberonVariableType.BOOLEAN;	}
 	)
 
 	varName = <IDENTIFIER>
 	{	
+		switch(varType) {
+		case DOUBLE:
+			defaultInit = new OberonDoubleLiteral(getFileName(),
+				varName.beginLine,
+				varName.beginColumn,
+				0.0);
+			break;
+		case INTEGER:
+			defaultInit = new OberonIntegerLiteral(getFileName(),
+				varName.beginLine,
+				varName.beginColumn,
+				0);
+			break;
+		case BOOLEAN:
+			defaultInit = new OberonBooleanLiteral(getFileName(),
+				varName.beginLine,
+				varName.beginColumn,
+				false);
+			break;
+		}
+	
 		declStmt = new DeclarationStatement(
 			getFileName(),
 			varName.beginLine,
 			varName.beginColumn,
 			varName.image,
 			varType,
-			null);
+			defaultInit);
 	}
 
 	(
