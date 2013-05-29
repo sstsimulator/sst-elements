@@ -13,7 +13,9 @@ libSS_router_la_SOURCES = \
 	SS_router/SS_network.h \
 	SS_router/SS_router-inline.h \
 	SS_router/SS_router.h \
-	SS_router/SS_router.cpp
+	SS_router/SS_router.cpp \
+	test_driver/RtrIF.h \
+	test_driver/dummy.cc
 
 sstdir = $(includedir)/sst/elements/SS_router
 nobase_sst_HEADERS = \
