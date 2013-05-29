@@ -2,6 +2,8 @@
 #ifndef _H_SST_NEXT_BLOCK_PREFETCH
 #define _H_SST_NEXT_BLOCK_PREFETCH
 
+#include <vector>
+
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -11,6 +13,7 @@
 
 using namespace SST;
 using namespace SST::Interfaces;
+using namespace std;
 
 namespace SST {
 namespace Cassini {

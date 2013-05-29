@@ -1,4 +1,6 @@
 
+#include <vector>
+
 #include "sst_config.h"
 #include "sst/core/serialization/element.h"
 #include "sst/core/element.h"
@@ -11,7 +13,7 @@ using namespace SST::Cassini;
 
 NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params_t& params) :
 	Component(id) {
-	
+
 	cpuLink = configureLink( "cpuLink", "1ns",
 		new Event::Handler<NextBlockPrefetcher>(this, &NextBlockPrefetcher::handleCPULinkEvent));
 	memoryLink = configureLink( "memoryLink", "1ns",
@@ -25,27 +27,34 @@ NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params_t& params) :
 void NextBlockPrefetcher::handleCPULinkEvent(SST::Event* event) {
 	std::cout << "NextBlockPrefetcher: recv event from CPU at: " <<
 		getCurrentSimTimeNano() << "ns, sending to the cache..." << std::endl;
-		
+
 	cacheCPULink->send(event);
 }
-		
+
 void NextBlockPrefetcher::handleMemoryLinkEvent(SST::Event* event) {
 	std::cout << "NextBlockPrefetcher: recv event from memory at: " <<
 		getCurrentSimTimeNano() << "ns, sending to the cache..." << std::endl;
 
-	vector<MemEvent*>::iterator pendingItr;
-	bool found = false;
+	MemEvent* memEvent = dynamic_cast<MemEvent*>(event);
 
-	for(pendingItr = pendingPrefetchReq.begin();
-		pendingItr != pendingPrefetchReq.end(); pendingPrefetchReq++) {
+	if(memEvent) {
+		vector<MemEvent*>::iterator pendingItr;
+		bool found = false;
 
-		if((*pendingItr)->getID() == event->getID()) {
-			found = true;
+		for(pendingItr = pendingPrefetchReq.begin();
+			pendingItr != pendingPrefetchReq.end(); pendingItr++) {
+
+			if((*pendingItr)->getID() == memEvent->getID()) {
+				found = true;
+			}
+		}
+
+		if(!found) {
+			cacheMemoryLink->send(event);
+		} else {
 			delete (*pendingItr);
 		}
-	}
-
-	if(!found) {
+	} else {
 		cacheMemoryLink->send(event);
 	}
 }
@@ -63,20 +72,24 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 	// this means that this was a cache miss by this stage, we need to trap this memory
 	// address and then request the next block.
 	MemEvent* memEvent = dynamic_cast<MemEvent*>(event);
-	
+
 	if(memEvent) {
+		std::cout << "NextBlockPrefetcher: Converted to memory event successfully." <<
+			std::endl;
 		if(ReadReq == memEvent->getCmd()) {
 			// We have a read (miss) request from the cache which means we can prefetch
 			Addr requestedAddr = memEvent->getAddr();
 			Addr nextBlockAddr = (requestedAddr - (requestedAddr % 64)) + 64;
-			
+
+			std::cout << "NextBlockPrefetcher: created prefetch address: " <<
+				nextBlockAddr << " (orig-miss: " << requestedAddr << std::endl;
 			MemEvent *prefReq = new MemEvent(this, nextBlockAddr, ReadReq);
 			cacheCPULink->send(prefReq);
 
 			pendingPrefetchReq.push_back(prefReq);
 		}
 	}
-	
+
 	memoryLink->send(event);
 }
 
