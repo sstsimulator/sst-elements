@@ -18,30 +18,36 @@ using namespace std;
 namespace SST {
 namespace Cassini {
 
+typedef struct {
+	Addr memAddr;
+	int size;
+	int evID;
+} RequestEntry;
+
 class NextBlockPrefetcher : public SST::Component {
 
 	public:
 		NextBlockPrefetcher(SST::ComponentId_t id, SST::Component::Params_t& params);
 		NextBlockPrefetcher(const NextBlockPrefetcher&);
 		void operator=(const NextBlockPrefetcher&);
-		
+
 		bool clockTick(Cycle_t curCycle);
 		void finish();
 
 	private:
 		SST::Link* cpuLink;
 		SST::Link* memoryLink;
-		
+
 		SST::Link* cacheCPULink;
 		SST::Link* cacheMemoryLink;
-		
+
+		std::vector<RequestEntry> pendingReq;
+
 		void handleCPULinkEvent(SST::Event* event);
 		void handleMemoryLinkEvent(SST::Event* event);
-		
+
 		void handleCacheToCPUEvent(SST::Event* event);
 		void handleCacheToMemoryEvent(SST::Event* event);
-		
-		std::vector<MemEvent*> pendingPrefetchReq;
 
   		friend class boost::serialization::access;
   		template<class Archive>
@@ -55,10 +61,10 @@ class NextBlockPrefetcher : public SST::Component {
   		{
             		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
   		}
-  		
+
   		BOOST_SERIALIZATION_SPLIT_MEMBER()
 	};
-	
+
 }
 }
 
