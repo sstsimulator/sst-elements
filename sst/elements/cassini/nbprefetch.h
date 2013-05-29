@@ -37,6 +37,8 @@ class NextBlockPrefetcher : public SST::Component {
 		
 		void handleCacheToCPUEvent(SST::Event* event);
 		void handleCacheToMemoryEvent(SST::Event* event);
+		
+		std::vector<MemEvent*> pendingPrefetchReq;
 
   		friend class boost::serialization::access;
   		template<class Archive>

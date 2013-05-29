@@ -25,6 +25,7 @@ NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params_t& params) :
 void NextBlockPrefetcher::handleCPULinkEvent(SST::Event* event) {
 	std::cout << "NextBlockPrefetcher: recv event from CPU at: " <<
 		getCurrentSimTimeNano() << "ns, sending to the cache..." << std::endl;
+		
 	cacheCPULink->send(event);
 }
 		
@@ -43,6 +44,21 @@ void NextBlockPrefetcher::handleCacheToCPUEvent(SST::Event* event) {
 void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 	std::cout << "NextBlockPrefetcher: recv event from cache (to go to the memory) at: " <<
 		getCurrentSimTimeNano() << "ns, sending to the memory..." << std::endl;
+
+	// this means that this was a cache miss by this stage, we need to trap this memory
+	// address and then request the next block.
+	/*MemEvent* memEvent = dynamic_cast<MemEvent*>(event);
+	
+	if(memEvent) {
+		if(ReadReq == memEvent->getCmd()) {
+			// We have a read (miss) request from the cache which means we can prefetch
+			Addr requestedAddr = memEvent->getAddr();
+			Addr nextBlockAddr = (requestedAddr - (requestedAddr % 64)) + 64;
+			
+			
+		}
+	}*/
+	
 	memoryLink->send(event);
 }
 
