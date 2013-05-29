@@ -99,7 +99,7 @@ void PtlNicMMIF::dmaHandler( SST::Event* e )
 
 void PtlNicMMIF::ptlCmdRespHandler( SST::Event* e )
 {
-    PtlNicRespEvent* event = static_cast<PtlNicRespEvent*>(e);
+    PtlNicRespEvent* __attribute__ ((unused)) event = static_cast<PtlNicRespEvent*>(e);
     DBGX(2,"retval %#x\n",event->retval);
     //m_cmdQueue.queue[ m_cmdQueue.head ].retval = event->retval;
     //m_cmdQueue.queue[ m_cmdQueue.head ].cmd = 0;
