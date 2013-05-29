@@ -21,7 +21,7 @@ double PhyLayer::LineartodB(double val)
 
 double PhyLayer::AbsorptionCoefficient(double wavelength, string material)
 {
-
+  return 0; // Added to avoid Compile Warning
 }
 
 

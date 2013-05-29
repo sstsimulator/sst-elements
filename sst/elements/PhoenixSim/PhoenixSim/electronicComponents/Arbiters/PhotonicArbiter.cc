@@ -119,6 +119,7 @@ int PhotonicArbiter::pathStatus(ArbiterRequestMsg* rmsg, int outport) {
 		}
 
 	}
+	return 0; // Added to avoid Compile Warning
 }
 
 list<RouterCntrlMsg*>* PhotonicArbiter::setupPath(ArbiterRequestMsg* rmsg,

@@ -85,6 +85,8 @@ bool PacketStat::resetWavelengthNoisePower(double wavelengh)
 	{
 		wavelengthNoisePower.erase(it);
 	}
+
+	return false; // Added to avoid Compile Warning
 }
 
 double PacketStat::getWavelengthNoisePower(double wavelength)

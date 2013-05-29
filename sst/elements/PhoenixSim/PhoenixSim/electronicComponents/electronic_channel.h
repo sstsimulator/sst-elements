@@ -32,6 +32,7 @@ protected:
 		if (msg->isPacket()) {
 			return ((cPacket*) msg)->getBitLength() / datarate;
 		}
+		return 0; // Added to avoid Compile Warning
 	}
 	virtual simtime_t getTransmissionFinishTime() const {
 		return txfinishtime;

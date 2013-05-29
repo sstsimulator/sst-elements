@@ -59,7 +59,7 @@ void Serializer::initialize() {
 
 		P_static->track(numWiresOut * power->report_static_power());
 
-		StatObject *E_count = Statistics::registerStat("Deserializer",
+		StatObject __attribute__ ((unused)) *E_count = Statistics::registerStat("Deserializer",
 				StatObject::COUNT, "electronic");
 
 #endif
@@ -172,7 +172,7 @@ void Parallelizer::initialize() {
 
 		P_static->track(numWiresIn * power->report_static_power());
 
-		StatObject *E_count = Statistics::registerStat("Serializer",
+		StatObject __attribute__ ((unused)) *E_count = Statistics::registerStat("Serializer",
 				StatObject::COUNT, "electronic");
 
 #endif

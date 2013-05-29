@@ -174,7 +174,7 @@ list<RouterCntrlMsg*>* Arbiter::grant(double time) {
 					RouterCntrlMsg* r = tempLst->front();
 					r->setData(1);
 				}
-				done: delete *iter;
+				/*done:*/ delete *iter;
 				iter = lst->erase(iter);
 			} else {
 				if (tempLst->size() > 0) {

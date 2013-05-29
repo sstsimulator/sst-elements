@@ -106,7 +106,7 @@ void ElectronicChannel::initialize(int stage) {
 	E_dynamic = Statistics::registerStat(statName, StatObject::ENERGY_EVENT,
 			"electronic");
 
-	StatObject *E_count = Statistics::registerStat(statName, StatObject::COUNT,
+	StatObject __attribute__ ((unused)) *E_count = Statistics::registerStat(statName, StatObject::COUNT,
 			"electronic");
 
 	debug(getFullPath(), "INIT: done", UNIT_INIT);

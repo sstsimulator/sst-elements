@@ -89,8 +89,8 @@ int Arbiter_SR_Middle::route(ArbiterRequestMsg* rmsg) {
 
 int Arbiter_SR_Middle::getUpPort(ArbiterRequestMsg* rmsg, int lev) {
 
-	NetworkAddress* addr = (NetworkAddress*) rmsg->getDest();
-	int destId = addr->id[level];
+	NetworkAddress* __attribute__ ((unused)) addr = (NetworkAddress*) rmsg->getDest();
+//	int destId = addr->id[level];
 
 	//if (adjacent(destId, myUp)) {
 

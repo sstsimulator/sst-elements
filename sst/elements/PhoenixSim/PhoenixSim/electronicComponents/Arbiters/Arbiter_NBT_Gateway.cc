@@ -52,7 +52,7 @@ int Arbiter_NBT_Gateway::route(ArbiterRequestMsg* rmsg)
 		// use knowledge of torus, even rows on one side, odd rows on other side
 		if (destRow % 2 == nodeRow % 2)
 		{
-			if (swIsN && destRow == nodeRow || destRow < nodeRow)
+			if ((swIsN && destRow == nodeRow) || (destRow < nodeRow))
 			{
 				return NBMGR_InjectionN;
 			}
@@ -90,7 +90,7 @@ int Arbiter_NBT_Gateway::route(ArbiterRequestMsg* rmsg)
 
 		}
 	}
-	else if (inport == NBMGR_InjectionN && swIsN || inport == NBMGR_InjectionS && !swIsN)
+	else if ((inport == NBMGR_InjectionN && swIsN) || (inport == NBMGR_InjectionS && !swIsN))
 	{
 		return NBMGR_Gateway;
 	}
@@ -98,6 +98,7 @@ int Arbiter_NBT_Gateway::route(ArbiterRequestMsg* rmsg)
 	{
 		opp_error("Should only be able to come into this switch through gateway or ejection port");
 	}
+	return 0; // Added to avoid Compile Warning
 }
 
 void Arbiter_NBT_Gateway::PSEsetup(int inport, int outport, PSE_STATE st) {

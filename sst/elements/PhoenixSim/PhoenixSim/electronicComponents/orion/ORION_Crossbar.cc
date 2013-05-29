@@ -6,7 +6,7 @@
 
 double ORION_Crossbar::in_cap(double wire_cap, u_int n_out, double n_seg,
 		int connect_type, int trans_type, double *Nsize) {
-	double Ctotal = 0, Ctrans, psize, nsize;
+	double Ctotal = 0, Ctrans = 0, psize, nsize;
 
 	/* part 1: wire cap */
 	Ctotal += wire_cap;
@@ -51,7 +51,7 @@ double ORION_Crossbar::in_cap(double wire_cap, u_int n_out, double n_seg,
 
 double ORION_Crossbar::out_cap(double length, u_int n_in, double n_seg,
 		int connect_type, int trans_type, double *Nsize) {
-	double Ctotal = 0, Ctrans, psize, nsize;
+	double Ctotal = 0, Ctrans = 0, psize, nsize;
 
 	/* part 1: wire cap */
 	Ctotal += conf->PARM("CC3metal") * length;
@@ -160,7 +160,7 @@ double ORION_Crossbar::int_cap(u_int degree, int connect_type, int trans_type) {
 			/* FIXME: segment control signals are not handled yet */
 double ORION_Crossbar::ctr_cap(double length, u_int data_width, int prev_ctr,
 		int next_ctr, u_int degree, int connect_type, int trans_type) {
-	double Ctotal = 0, Cgate;
+	double Ctotal = 0, Cgate = 0;
 
 	/* part 1: wire cap */
 	Ctotal = conf->PARM("Cmetal") * length;
@@ -226,10 +226,10 @@ int ORION_Crossbar::init(int m, u_int in, u_int out, u_int in_s, u_int out_s,
 				* n_out);
 		out_ports = (u_int*) malloc(sizeof(u_int) * n_out);
 
-		for (int i = 0; i < n_in; i++)
+		for (unsigned int i = 0; i < n_in; i++)
 			in_data[i] = 0;
 
-		for (int i = 0; i < n_out; i++) {
+		for (unsigned int i = 0; i < n_out; i++) {
 			out_data[i] = 0;
 			out_ports[i] = 300000;
 		}
@@ -459,8 +459,8 @@ double ORION_Crossbar::report_static_power() {
 
 double ORION_Crossbar::stat_energy(int max_avg) {
 	double Eavg = 0, Eatomic, Estatic;
-	int next_depth;
-	u_int path_len;
+//	int next_depth;
+//	u_int path_len;
 
 	/* if (n_data > n_out) {
 	 fprintf(stderr, "%s: overflow\n", path);

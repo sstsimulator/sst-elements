@@ -45,7 +45,7 @@ int Arbiter_PM_Node::route(ArbiterRequestMsg* rmsg) {
 	int destId = addr->id[level];
 	int destx;
 	int desty;
-	int inport = rmsg->getPortIn();
+	int __attribute__ ((unused)) inport = rmsg->getPortIn();
 	destx = destId % numX;
 	desty = destId / numX;
 
@@ -578,4 +578,5 @@ int Arbiter_PM_Node::pathStatus(ArbiterRequestMsg* rmsg, int outport) {
 		}
 
 	}
+	return 0; // Added to avoid Compile Warning
 }

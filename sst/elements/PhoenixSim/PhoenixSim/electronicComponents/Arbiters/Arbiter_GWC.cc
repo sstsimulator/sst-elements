@@ -37,7 +37,7 @@ int Arbiter_GWC::route(ArbiterRequestMsg* rmsg) {
 	} else {
 		opp_error("ERROR: something screwy in GatewayControl routing logic");
 	}
-
+  return 0; // Added to avoid Compile Warning
 }
 
 int Arbiter_GWC::getUpPort(ArbiterRequestMsg* rmsg, int lev) {

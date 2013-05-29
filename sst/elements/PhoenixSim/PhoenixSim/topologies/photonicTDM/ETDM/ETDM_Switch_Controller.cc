@@ -104,11 +104,11 @@ double ETDM_Switch_Controller::getClockPower() {
 	double nmosLeakage = 0;
 	double H_tree_clockcap = 0;
 	double H_tree_resistance = 0;
-	double pipereg_clockcap = 0;
+//	double pipereg_clockcap = 0;
 	double ClockEnergy = 0;
 	double ClockBufferCap = 0;
 	double Ctotal = 0;
-	int pipeline_regs = 0;
+//	int pipeline_regs = 0;
 	double energy = 0;
 
 	double area = 0;
@@ -340,7 +340,7 @@ void ETDM_Switch_Controller::handleMessage(cMessage* cmsg) {
 			scheduleAt(simTime() + clockPeriod, clockMsg);
 	} else { //if its not a clockmsg, assume its a schedule message
 
-		ApplicationData* appMsg = check_and_cast<ApplicationData*> (cmsg);
+		ApplicationData* __attribute__ ((unused)) appMsg = check_and_cast<ApplicationData*> (cmsg);
 		//write new values in time slot array
 
 	}

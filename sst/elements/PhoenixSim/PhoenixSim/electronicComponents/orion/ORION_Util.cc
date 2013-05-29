@@ -113,7 +113,7 @@ u_int ORION_Util_logtwo(LIB_Type_max_uint x) {
 
 	while (x >> rval && rval < sizeof(LIB_Type_max_uint) << 3)
 		rval++;
-	if (x == (BIGONE << rval - 1))
+	if (x == (BIGONE << (rval - 1)))
 		rval--;
 
 	return rval;
@@ -157,6 +157,7 @@ int ORION_Util_squarify(int rows, int cols) {
 
 		scale_factor++;
 	}
+	return 0; // Added to avoid compile warning
 }
 
 double ORION_Util_driver_size(double driving_cap, double desiredrisetime, ORION_Tech_Config *conf) {
@@ -182,9 +183,9 @@ double ORION_Util_gatecap(double width, double wirelength, ORION_Tech_Config *co
 //double wirelength;	/* poly wire length going to gate in lambda */
 {
 
-	double overlapCap;
-	double gateCap;
-	double l = 0.1525;
+//	double overlapCap;
+//	double gateCap;
+//	double l = 0.1525;
 
 
 	return (width * conf->PARM("Leff") * conf->PARM("Cgate") + wirelength * conf->PARM("Cpolywire") * conf->PARM("Leff")
@@ -212,9 +213,9 @@ double ORION_Util_draincap(double width, int nchannel, int stack, ORION_Tech_Con
 {
 	double Cdiffside, Cdiffarea, Coverlap, cap;
 
-	double overlapCap;
-	double swAreaUnderGate;
-	double area_peri;
+//	double overlapCap;
+//	double swAreaUnderGate;
+//	double area_peri;
 	double diffArea;
 	double diffPeri;
 	double l = 0.4 * conf->PARM("LSCALE");
@@ -459,6 +460,7 @@ int ORION_Bus::bitwidth(int encoding, u_int data_width, u_int grp_width) {
 		}
 	else
 		return -1;
+	return -1; // Added to avoid compile warning
 }
 
 /*
@@ -485,11 +487,11 @@ LIB_Type_max_uint ORION_Bus::state(LIB_Type_max_uint new_data) {
 		while (data_width > done_width) {
 			if (ORION_Util_Hamming(old_state & mask_bus, new_data & mask_data,
 					mask_bus) > grp_width / 2)
-				new_state += (~(new_data & mask_data) & mask_bus) << done_width
-						+ done_width / grp_width;
+				new_state += (~(new_data & mask_data) & mask_bus) << (done_width
+						+ done_width / grp_width);
 			else
-				new_state += (new_data & mask_data) << done_width + done_width
-						/ grp_width;
+				new_state += (new_data & mask_data) << (done_width + done_width
+						/ grp_width);
 
 			done_width += grp_width;
 			old_state >>= grp_width + 1;
@@ -501,6 +503,8 @@ LIB_Type_max_uint ORION_Bus::state(LIB_Type_max_uint new_data) {
 	default: /* some error handler */
 		break;
 	}
+	return 0; // Added to avoid compile warning
+
 }
 
 double ORION_Bus::resultbus_cap() {

@@ -155,5 +155,6 @@ int Arbiter_MITUCB_MeshNode::route(ArbiterRequestMsg* rmsg)
 			throw cRuntimeError("Wrong group");
 		}
 	}
+	return 0; // Added to avoid Compile Warning
 }
 

@@ -125,4 +125,5 @@ int Arbiter_EM::getDownPort(ArbiterRequestMsg* rmsg, int lev) {
 		return EM_Node + p;
 
 	}
+	return 0; // Added to avoid Compile Warning
 }

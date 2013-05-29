@@ -99,7 +99,7 @@ double Detector::GetPassByRingLoss(int indexIn, int indexOut, double wavelength)
 {
 	if(useWDM)
 	{
-		if(indexIn == 0 && indexOut == 2 || indexIn == 2 && indexOut == 0)
+		if((indexIn == 0 && indexOut == 2) || (indexIn == 2 && indexOut == 0))
 		{
 			if(IsInResonance(wavelength))
 			{

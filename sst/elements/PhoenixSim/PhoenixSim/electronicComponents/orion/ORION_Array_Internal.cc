@@ -339,7 +339,7 @@ int O_wordline::init( int m, int s_rw, u_int cols, double wire_cap, u_int end, O
     switch ( model ) {
       case CAM_RW_WORDLINE:
   	   e_read = cam_cap( cols * end, wire_cap, conf->PARM("Wmemcellr") ) * conf->PARM("EnergyFactor");
-           if ( share_rw = s_rw )
+           if ( (share_rw = s_rw) )
              e_write = e_read;
            else
              /* write bitlines are always double-ended */
@@ -360,7 +360,7 @@ int O_wordline::init( int m, int s_rw, u_int cols, double wire_cap, u_int end, O
 
       case CACHE_RW_WORDLINE:
 	   e_read = cap( cols * end, wire_cap, conf->PARM("Wmemcellr") ) * conf->PARM("EnergyFactor");
-           if ( share_rw = s_rw )
+           if ( (share_rw = s_rw) )
              e_write = e_read;
            else
              e_write = cap( cols * 2, wire_cap, conf->PARM("Wmemcellw") ) * conf->PARM("EnergyFactor");
@@ -624,7 +624,7 @@ int O_bitline::init( int m, int s_rw, u_int e, u_int rows, double wire_cap,
 	   else		/* end == 1 implies register file */
              e_col_sel = 0;
 
-           if ( share_rw = s_rw ) {
+           if ( (share_rw = s_rw) ) {
 	     /* shared bitlines are double-ended, so SenseEnergyFactor */
              e_col_read = share_column_read_cap( rows, wire_cap, n_share_amp, n_bitline_pre, n_colsel_pre, pre_size )
              * conf->PARM("SenseEnergyFactor");
@@ -953,7 +953,7 @@ int O_comp::local_record(  LIB_Type_max_uint prev_tag, LIB_Type_max_uint curr_ta
   u_int H_dist;
   int mismatch;
 
-  if ( mismatch = ( curr_tag != input )) n_mismatch ++;
+  if ( (mismatch = ( curr_tag != input ))) n_mismatch ++;
 
   /* for cam, input changes are reflected in memory cells */
   if ( model == CACHE_COMP ) {

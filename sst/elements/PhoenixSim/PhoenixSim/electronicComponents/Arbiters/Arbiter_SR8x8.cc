@@ -571,7 +571,7 @@ int Arbiter_SR8x8::getUpPort(ArbiterRequestMsg* rmsg, int lev) {
 			return routeLevelUp[myGrid][myQuad][myUnit];
 		}
 	}
-
+  return 0; // Added to avoid Compile Warning
 }
 
 int Arbiter_SR8x8::getDownPort(ArbiterRequestMsg* rmsg, int lev) {

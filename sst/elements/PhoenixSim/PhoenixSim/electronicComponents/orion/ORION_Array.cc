@@ -79,7 +79,7 @@ int ORION_Array::init(ORION_Array_Info *i) {
 		info->tag_arr_height = 0;
 
 		/* BEGIN: data array power initialization */
-		if (dec_width = ORION_Util_logtwo(info->n_set)) {
+		if ((dec_width = ORION_Util_logtwo(info->n_set))) {
 			/* row decoder power initialization */
 			row_dec.init(info->row_dec_model, dec_width, info->conf);
 
@@ -171,7 +171,7 @@ int ORION_Array::init(ORION_Array_Info *i) {
 
 		//std::cout << "after wordline: " << I_static << endl;
 
-		if (dec_width = ORION_Util_logtwo(info->n_item)) {
+		if ((dec_width = ORION_Util_logtwo(info->n_item))) {
 			/* multiplexor power initialization */
 			mux.init(info->mux_model, info->n_item, info->assoc, info->conf);
 
@@ -630,7 +630,7 @@ int ORION_Array::tag_read(SetState *set) {
 /* port only used by fully-associative array */
 int ORION_Array::tag_update(PortState *port, SetState *set) {
 	u_int i;
-	LIB_Type_max_uint curr_tag;
+	LIB_Type_max_uint curr_tag = 0;
 	O_mem *tag_attach;
 
 	/* get current tag */
@@ -774,7 +774,7 @@ int ORION_Array::output(u_int data_size, u_int length, void *data_out,
 }
 
 double ORION_Array::stat_energy(double n_read, double n_write, int max_avg) {
-	double Eavg = 0, Eatomic, Estruct = 0, Estatic;
+	double Eavg = 0, Eatomic, Estruct = 0 /*, Estatic*/;
 
 	/* hack to mimic central buffer */
 	/* packet header probability */

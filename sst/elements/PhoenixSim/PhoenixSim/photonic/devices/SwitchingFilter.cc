@@ -150,8 +150,8 @@ void  SwitchingFilter::finish()
 
 	opp_error("switching filter needs to update to new statistics model");
 
-	double stat = SIMTIME_DBL(cumulativeTime[PSE_POWER_STATE]) * Power_Switch_Static;
-	double swit =  switchCount[0][1] * Power_Off_to_On + switchCount[1][0] * Power_On_to_Off;
+	double __attribute__ ((unused)) stat = SIMTIME_DBL(cumulativeTime[PSE_POWER_STATE]) * Power_Switch_Static;
+	double __attribute__ ((unused)) swit =  switchCount[0][1] * Power_Off_to_On + switchCount[1][0] * Power_On_to_Off;
 
 
 
@@ -164,7 +164,7 @@ void SwitchingFilter::HandleControlMessage(ElementControlMessage *msg)
 
 	opp_error("switching filter needs to update to new statistics model");
 	double StaticEnergy = SIMTIME_DBL(simTime() - lastSwitchTimestamp) * Power_Switch_Static;
-	double SwitchingEnergy;
+	double SwitchingEnergy = 0;
 
 	switch(msg->getState())
 	{

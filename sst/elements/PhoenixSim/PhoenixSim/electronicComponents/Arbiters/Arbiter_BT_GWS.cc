@@ -29,8 +29,8 @@ bool Arbiter_BT_GWS::isDimensionChange(int inport, int outport){
 }
 
 int Arbiter_BT_GWS::route(ArbiterRequestMsg* rmsg) {
-	NetworkAddress* addr = (NetworkAddress*)rmsg->getDest();
-		int destId = addr->id[level];
+	NetworkAddress* __attribute__ ((unused)) addr = (NetworkAddress*)rmsg->getDest();
+//		int destId = addr->id[level];
 	// To Do: make a smarter choice on which direction to inject packet
 	int inport = rmsg->getPortIn();
 

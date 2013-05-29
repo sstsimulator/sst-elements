@@ -29,10 +29,16 @@ StatObject::~StatObject() {
 
 bool StatObject::operator<(const StatObject &s1)
 {
-
+  
 	std::cout<<type;
 	std::cout<<" is ";
-	std::cout<<(type < (s1.type))?("less than "):("greater than ");
+//	std::cout<<(type < (s1.type))?("less than "):("greater than ");  // NOTE: RECODED TO AVOID COMPILE WARNINGS
+	if (type < s1.type){
+	  std::cout<<"less than ";
+	}
+	else{
+	  std::cout<<"greater than ";
+	}
 	std::cout<<(s1.type)<<endl;
 	return type < s1.type;
 
@@ -73,4 +79,5 @@ double StatObject::getValue() {
 	std::cout << "******name: " << name << ", type: " << type << endl;
 	opp_error("StatObject: getValue() not implemented");
 
+  return 0; // Added to avoid Compile Warning
 }

@@ -289,22 +289,22 @@ double PSE2x2R2::GetEnergyDissipation(int stateBefore, int stateAfter)
 
 	if(stateBefore != stateAfter)
 	{
-		if(stateBefore&1 == 0 && stateAfter&1 == 1)
+		if((stateBefore&1) == 0 && (stateAfter&1) == 1)
 		{
 			energyTotal += RingDynamicOffOn*2;
 		}
 
-		if(stateBefore&1 == 1 && stateAfter&1 == 0)
+		if((stateBefore&1) == 1 && (stateAfter&1) == 0)
 		{
 			energyTotal += RingDynamicOffOn*2;
 		}
 
-		if((stateBefore>>1)&1 == 0 && (stateAfter>>1)&1 == 1)
+		if(((stateBefore>>1)&1) == 0 && ((stateAfter>>1)&1) == 1)
 		{
 			energyTotal += RingDynamicOffOn*2;
 		}
 
-		if((stateBefore>>1)&1 == 1 && (stateAfter>>1)&1 == 0)
+		if(((stateBefore>>1)&1) == 1 && ((stateAfter>>1)&1) == 0)
 		{
 			energyTotal += RingDynamicOffOn*2;
 		}

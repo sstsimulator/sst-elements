@@ -281,7 +281,7 @@ void NIF_MemGW::packetPortMsgArrived(cMessage* cmsg) {
 
 
 		} else if (type == pathBlocked) {
-			PathSetupMsg* psm = check_and_cast<PathSetupMsg*> (emsg);
+			PathSetupMsg* __attribute__ ((unused)) psm = check_and_cast<PathSetupMsg*> (emsg);
 
 
 			ProcessorData* p = (ProcessorData*) emsg->decapsulate();

@@ -59,8 +59,8 @@ int Arbiter_PC::route(ArbiterRequestMsg* rmsg) {
 
 int Arbiter_PC::getDownPort(ArbiterRequestMsg* rmsg, int lev) {
 
-	NetworkAddress* addr = (NetworkAddress*) rmsg->getDest();
-	int destId = addr->id[lev];
+	NetworkAddress* __attribute__ ((unused)) addr = (NetworkAddress*) rmsg->getDest();
+//	int destId = addr->id[lev];
 
 	int portToNode = numX*numY-1;
 
@@ -73,4 +73,5 @@ int Arbiter_PC::getDownPort(ArbiterRequestMsg* rmsg, int lev) {
 		int p = addr->id[translator->convertLevel("PROC")];
 		return portToNode + p;
 	}
+	return 0; // Added to avoid Compile Warning
 }

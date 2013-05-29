@@ -95,11 +95,11 @@ double TDM_Switch_Controller::getClockPower() {
 		double nmosLeakage = 0;
 		double H_tree_clockcap = 0;
 		double H_tree_resistance = 0;
-		double pipereg_clockcap = 0;
+//		double pipereg_clockcap = 0;
 		double ClockEnergy = 0;
 		double ClockBufferCap = 0;
 		double Ctotal = 0;
-		int pipeline_regs = 0;
+//		int pipeline_regs = 0;
 		double energy = 0;
 
 		double area = 0;

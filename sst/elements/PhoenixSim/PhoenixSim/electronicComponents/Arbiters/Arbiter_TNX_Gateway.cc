@@ -27,7 +27,7 @@ int Arbiter_TNX_Gateway::route(ArbiterRequestMsg* rmsg)
 	destx = destId % numX;
 	desty = destId / numY;
 	int hopsleft, hopsright;
-	int path;
+//	int path;
 
 	if(inport == GW_Out)
 	{

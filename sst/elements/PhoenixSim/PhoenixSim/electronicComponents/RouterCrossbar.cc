@@ -89,7 +89,7 @@ void RouterCrossbar::initialize() {
 
 	P_static->track(power->report_static_power());
 
-	StatObject *E_count = Statistics::registerStat("Electronic Crossbar",
+	StatObject __attribute__ ((unused)) *E_count = Statistics::registerStat("Electronic Crossbar",
 			StatObject::COUNT, "electronic");
 
 #endif

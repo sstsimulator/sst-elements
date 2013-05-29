@@ -70,7 +70,7 @@ int Arbiter_OM4x4::route(ArbiterRequestMsg* rmsg) {
 
 
 	}
-
+	return 0; // Added to avoid Compile Warning 
 }
 
 void Arbiter_OM4x4::PSEsetup(int inport, int outport, PSE_STATE st){
@@ -106,7 +106,7 @@ void Arbiter_OM4x4::PSEsetup(int inport, int outport, PSE_STATE st){
 		}else if(inport == 3){
 			nextPSEState[PSE_2_3] = st;
 		}
-	}else if(outport = 3){
+	}else if(outport == 3){
 		if(inport == 0){
 			nextPSEState[PSE_3_0] = st;
 		}else if(inport == 1){

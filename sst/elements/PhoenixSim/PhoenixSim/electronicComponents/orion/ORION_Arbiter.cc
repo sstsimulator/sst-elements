@@ -271,7 +271,7 @@ int ORION_Arbiter::record(LIB_Type_max_uint new_req, u_int new_grant) {
 		break;
 	}
 
-	double busE = arb_bus.report();
+	double __attribute__ ((unused)) busE = arb_bus.report();
 	arb_bus.record(new_grant);
 
 	curr_req = new_req;

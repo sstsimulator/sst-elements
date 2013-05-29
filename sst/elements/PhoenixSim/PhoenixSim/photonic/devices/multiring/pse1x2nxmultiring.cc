@@ -207,22 +207,22 @@ double PSE1x2NXMultiRing::GetEnergyDissipation(int stateBefore, int stateAfter)
 
 	if(stateBefore != stateAfter)
 	{
-		if(stateBefore&1 == 0 && stateAfter&1 == 1)
+		if((stateBefore&1) == 0 && (stateAfter&1) == 1)
 		{
 			energyTotal += RingDynamicOffOn;
 		}
 
-		if(stateBefore&1 == 1 && stateAfter&1 == 0)
+		if((stateBefore&1) == 1 && (stateAfter&1) == 0)
 		{
 			energyTotal += RingDynamicOnOff;
 		}
 
-		if((stateBefore>>1)&1 == 0 && (stateAfter>>1)&1 == 1)
+		if(((stateBefore>>1)&1) == 0 && ((stateAfter>>1)&1) == 1)
 		{
 			energyTotal += RingDynamicOffOn;
 		}
 
-		if((stateBefore>>1)&1 == 1 && (stateAfter>>1)&1 == 0)
+		if(((stateBefore>>1)&1) == 1 && ((stateAfter>>1)&1) == 0)
 		{
 			energyTotal += RingDynamicOnOff;
 		}
@@ -264,4 +264,5 @@ int PSE1x2NXMultiRing::GetMultiRingRoutingTable(int index, int ringSet)
 	{
 		return routingTable[index];
 	}
+	return 0; // Added to avoid Compile Warning
 }

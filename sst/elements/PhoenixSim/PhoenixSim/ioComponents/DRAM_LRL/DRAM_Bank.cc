@@ -158,7 +158,7 @@ void DRAM_Bank::handleMessage(cMessage* msg) {
 						data->setType(M_readResponse);
 
 						data->setPayloadArraySize(memA->getPayloadArraySize());
-						for(int i = 0; i < memA->getPayloadArraySize(); i++){
+						for(unsigned int i = 0; i < memA->getPayloadArraySize(); i++){
 							data->setPayload(i, memA->getPayload(i));
 						}
 

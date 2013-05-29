@@ -27,7 +27,7 @@ Arbiter_FT_GWC::~Arbiter_FT_GWC() {
 int Arbiter_FT_GWC::route(ArbiterRequestMsg* rmsg) {
 
 	getUpPort(rmsg, level);
-
+  return 0; // Added to avoid Compile Warning
 }
 
 int Arbiter_FT_GWC::getUpPort(ArbiterRequestMsg* rmsg, int lev) {

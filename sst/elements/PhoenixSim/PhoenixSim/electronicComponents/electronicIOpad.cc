@@ -47,7 +47,7 @@ void ElectronicIOpad::initialize(int stage) {
 	//	datarate *= 2;
 	//}
 
-	bool low = par("lowSwing");
+	bool __attribute__ ((unused)) low = par("lowSwing");
 
 	//if (low)
 	//	ePerBit = 500e-15; //got this from some paper, in darpa1/refs.  it's for a 10 cm wire, so the length is included.
@@ -59,7 +59,7 @@ void ElectronicIOpad::initialize(int stage) {
 	E_dynamic = Statistics::registerStat(statName, StatObject::ENERGY_EVENT,
 			"electronic");
 
-	StatObject *E_count = Statistics::registerStat("Electronic IO Wire",
+	StatObject __attribute__ ((unused)) *E_count = Statistics::registerStat("Electronic IO Wire",
 			StatObject::COUNT, "electronic");
 
 	debug(getFullPath(), "INIT: done", UNIT_INIT);

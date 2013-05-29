@@ -28,7 +28,7 @@ void MultiRingElement::InitializeMultiRingElement()
 	numOfRingSets = par("numOfRingSets");
 	useRingModel = par("useRingModel").boolValue();
 
-	char buf[10];
+//	char buf[10];
 	string fullParamName, value;
 	double wavelengthSpacing;
 
@@ -119,9 +119,9 @@ int MultiRingElement::AccessRoutingTable(int index, PacketStat *ps)
 
 bool MultiRingElement::IsInResonance(double wavelength, int &ringSet)
 {
-	double n = PhyLayer::RefractiveIndex("Si");
-	double K;
-	int near1, near2;
+	double __attribute__ ((unused)) n = PhyLayer::RefractiveIndex("Si");
+//	double K;
+//	int near1, near2;
 
 	if(useRingModel)
 	{

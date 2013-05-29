@@ -315,7 +315,7 @@ void RouterArbiter::initialize(int stage) {
 		P_static->track(power_out[i]->report_static_power());
 	}
 
-	StatObject *E_count = Statistics::registerStat("Electronic Arbiter",
+	StatObject __attribute__ ((unused)) *E_count = Statistics::registerStat("Electronic Arbiter",
 			StatObject::COUNT, "electronic");
 
 #endif

@@ -115,11 +115,11 @@ void cDramModule::initialize(int stage) {
 	const char* temp = DRAMfile.c_str();
 	string powerFile = DRAMfile.substr(0, DRAMfile.find_last_of(".")) + ".dsh";
 
-	args[0] = "DRAMsim";
-	args[1] = "-sim:MONET";
-	args[2] = "-cpu:frequency";
+	args[0] = (char*)"DRAMsim";
+	args[1] = (char*)"-sim:MONET";
+	args[2] = (char*)"-cpu:frequency";
 	args[3] = str;
-	args[4] = "-dram:spd_input";
+	args[4] = (char*)"-dram:spd_input";
 	args[5] = (char*) temp;
 	//args[6] = "-dram:power_input";
 	//args[7] = (char*) powerFile.c_str();

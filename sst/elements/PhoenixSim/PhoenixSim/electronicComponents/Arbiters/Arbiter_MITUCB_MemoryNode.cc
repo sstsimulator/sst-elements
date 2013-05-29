@@ -80,5 +80,6 @@ int Arbiter_MITUCB_MemoryNode::route(ArbiterRequestMsg* rmsg)
 		std::cout<<"exiting: "<<destId<<" myid"<<this->myAddr->id[level]<<endl;;
 		opp_error("haltmemory");
 	}
+	return 0; // Added to avoid Compile Warnings
 }
 

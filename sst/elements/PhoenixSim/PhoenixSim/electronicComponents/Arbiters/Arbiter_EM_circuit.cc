@@ -58,6 +58,7 @@ int Arbiter_EM_Circuit::getDownPort(ArbiterRequestMsg* rmsg, int lev) {
 		return Node_Out + p;
 
 	}
+	return 0; // Added to avoid Compile Warning
 }
 
 int Arbiter_EM_Circuit::route(ArbiterRequestMsg* rmsg) {

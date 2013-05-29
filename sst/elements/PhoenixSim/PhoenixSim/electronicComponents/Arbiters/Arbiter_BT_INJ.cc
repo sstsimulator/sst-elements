@@ -60,7 +60,7 @@ int Arbiter_BT_INJ::route(ArbiterRequestMsg* rmsg) {
 	if (inport == I_N || inport == I_S)
 	{
 		//specific to folded torus topology
-		if (myX % 2 == 0 && destx % 2 == 1 || myX % 2 == 1 && destx % 2 == 0)
+		if ((myX % 2 == 0 && destx % 2 == 1) || (myX % 2 == 1 && destx % 2 == 0))
 		{
 			// if the intermediate switch is on the same side of the loop as the injection point
 			if (destx < myX)

@@ -20,6 +20,7 @@ PhotonicMessage* EtoO(ElectronicMessage *msg)
 	return pmsg;*/
 
 	opp_error("don't use EtoO");
+	return NULL; // Added to avoid Compile Warning
 }
 
 ElectronicMessage *OtoE(PhotonicMessage *msg)
@@ -42,6 +43,7 @@ ElectronicMessage *OtoE(PhotonicMessage *msg)
 	return emsg;*/
 
 	opp_error("don't use OtoE");
+	return NULL; // Added to avoid Compile Warning
 }
 
 

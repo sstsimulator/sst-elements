@@ -193,7 +193,7 @@ void BasicElement::ApplyCrosstalk(PacketStat *frontps, int indexIn, int indexOut
 {
 	map<double, PacketStat*>::iterator it, it2, it3, it4;
 	int wavelengthDestination;
-	bool found;
+//	bool found;
 	double crosstalkedPower;
 
 	//iterate through input ports

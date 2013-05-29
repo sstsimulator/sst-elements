@@ -46,7 +46,7 @@ void Arbiter_SR_Quad::init(string id, int level, int numX, int numY, int vc,
 		gw[3] = 6;
 	}
 
-	int middlePort;
+	int middlePort = 0;
 
 	//myQuad, myUnit
 	if (myQuad == 0) {
@@ -142,7 +142,7 @@ int Arbiter_SR_Quad::getUpPort(ArbiterRequestMsg* rmsg, int lev) {
 	debug(name, "calling upPort.. ", UNIT_ROUTER);
 
 	NetworkAddress* addr = (NetworkAddress*) rmsg->getDest();
-	int destId = addr->id[lev];
+//	int destId = addr->id[lev];
 
 	int destEight = addr->id[translator->convertLevel("NET4")];
 	int destGrid = addr->id[translator->convertLevel("NET3")];
