@@ -41,7 +41,7 @@ class NextBlockPrefetcher : public SST::Component {
 		SST::Link* cacheCPULink;
 		SST::Link* cacheMemoryLink;
 
-		std::vector<RequestEntry> pendingReq;
+		set<Addr> pendingPrefAddr;
 
 		void handleCPULinkEvent(SST::Event* event);
 		void handleMemoryLinkEvent(SST::Event* event);

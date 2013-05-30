@@ -20,7 +20,7 @@
 			<commFreq> 100 </commFreq>
 			<memSize> 0x1000 </memSize>
 			<do_write> 1 </do_write>
-            <num_loadstore> 10000 </num_loadstore>
+            <num_loadstore> 1000 </num_loadstore>
 		</params>
 		<link name=cpu_cache_link port=mem_link latency=$lat />
 	</component>
