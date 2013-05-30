@@ -14,7 +14,6 @@
 
 #include "sst/core/element.h"
 #include "sst/elements/SS_router/SS_router/SS_router.h"
-#include "sst/elements/SS_router/test_driver/RtrIF.h"
 
 using namespace SST;
 using namespace SST::SS_router;
@@ -26,23 +25,12 @@ create_router(SST::ComponentId_t id,
     return new SST::SS_router::SS_router( id, params );
 }
 
-static Component* 
-create_test_driver(SST::ComponentId_t id, 
-                SST::Component::Params_t& params)
-{
-    return new SST::SS_router::RtrIF( id, params );
-}
 
 static const ElementInfoComponent components[] = {
     { "SS_router",
       "Cycle-accurate 3D torus network router",
       NULL,
       create_router
-    },
-    { "test_driver",
-      "test driver for the SS_router",
-      NULL,
-      create_test_driver
     },
     { NULL, NULL, NULL, NULL }
 };
