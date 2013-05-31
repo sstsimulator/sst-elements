@@ -17,6 +17,7 @@
 #include "cache.h"
 #include "bus.h"
 #include "trivialCPU.h"
+#include "streamCPU.h"
 #include "memController.h"
 #include "dircontroller.h"
 
@@ -44,6 +45,13 @@ create_trivialCPU(SST::ComponentId_t id,
 		SST::Component::Params_t& params)
 {
 	return new trivialCPU( id, params );
+}
+
+static Component*
+create_streamCPU(SST::ComponentId_t id,
+		SST::Component::Params_t& params)
+{
+	return new streamCPU( id, params );
 }
 
 
@@ -148,6 +156,13 @@ static const ElementInfoComponent components[] = {
 		"Simple Demo CPU for testing",
 		NULL,
 		create_trivialCPU,
+        cpu_params
+	},
+	{ NULL, NULL, NULL, NULL },
+	{"streamCPU",
+		"Simple Demo STREAM CPU for testing",
+		NULL,
+		create_streamCPU,
         cpu_params
 	},
 	{ NULL, NULL, NULL, NULL }

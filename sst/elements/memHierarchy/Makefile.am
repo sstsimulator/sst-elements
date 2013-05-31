@@ -17,6 +17,8 @@ libmemHierarchy_la_SOURCES = \
 	memTypes.h \
 	trivialCPU.h \
 	trivialCPU.cc \
+	streamCPU.h \
+	streamCPU.cc \
 	memController.h \
 	memController.cc \
 	dircontroller.h \
