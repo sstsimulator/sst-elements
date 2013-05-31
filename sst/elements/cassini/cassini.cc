@@ -17,6 +17,7 @@ create_NextBlockPrefetcher(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam component_params[] = {
+    {"pending", "Maximum pending prefetch requests which can be in flight."},
     { NULL, NULL}
 };
 

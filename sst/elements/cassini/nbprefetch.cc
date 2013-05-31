@@ -22,6 +22,11 @@ NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params_t& params) :
 		new Event::Handler<NextBlockPrefetcher>(this, &NextBlockPrefetcher::handleCacheToCPUEvent));
 	cacheMemoryLink = configureLink( "cacheMemoryLink", "1ns",
 		new Event::Handler<NextBlockPrefetcher>(this, &NextBlockPrefetcher::handleCacheToMemoryEvent));
+
+	maximumPending = 4;
+	if ( params.find("pending") != params.end() ) {
+		maximumPending = strtol( params[ "pending" ].c_str(), NULL, 0 );
+        }
 }
 
 void NextBlockPrefetcher::handleCPULinkEvent(SST::Event* event) {
@@ -86,37 +91,7 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 			", Flags=" << memEvent->getFlags() << 
 			", getRespToID=" << memEvent->getResponseToID().first <<
 			", getRespToCompID=" << memEvent->getResponseToID().second << std::endl;
-		/*if(memEvent->getResponseToID().second != this->getId() &&
-			memEvent->getID().second != this->getId()) {
 
-			if(memEvent->getCmd() == RequestData) {
-				//if(memEvent->getSize() == 0) {
-				// We have a read (miss) request from the cache which means we can prefetch
-				Addr requestedAddr = memEvent->getAddr();
-				Addr nextBlockAddr = (requestedAddr - (requestedAddr % 64)) + 64;
-				MemEvent *prefReq = new MemEvent(this, nextBlockAddr, ReadReq);
-				prefReq->setSrc("PREFETCH" + this->getId());
-				prefReq->setFlags(11);
-
-				std::cout << "NextBlockPrefetcher: created prefetch address: " <<
-					nextBlockAddr << " (orig-miss: " << requestedAddr << 
-					", prefReqID=" << prefReq->getID().second << std::endl;
-				cacheCPULink->send(prefReq);
-				//}
-			}
-		}*/
-
-		/*bool createReq = memEvent->getCmd() == RequestData;
-		vector<RequestEntry>::iterator req_itr;
-
-		for(req_itr = pendingReq.begin(); req_itr != pendingReq.end(); req_itr++) {
-			if(memEvent->getAddr() == req_itr->memAddr &&
-				memEvent->getSize() == req_itr->size) {
-				createReq = false;
-			}
-		}*/
-
-		//if(createReq) {
 		if(memEvent->getCmd() == RequestData) {
 			Addr requestedAddr = memEvent->getAddr();
 			Addr nextBlockAddr = (requestedAddr - (requestedAddr % 64)) + 64;
@@ -129,16 +104,17 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 			}
 
 			if(pendingPrefAddr.find(requestedAddr) == pendingPrefAddr.end()) {
-				MemEvent *prefReq = new MemEvent(this, nextBlockAddr, ReadReq);
+				if(pendingPrefAddr.size() < maximumPending) {
+					MemEvent *prefReq = new MemEvent(this, nextBlockAddr, ReadReq);
 
-				std::cout << "NextBlockPrefetcher: created prefetch address: " <<
-					nextBlockAddr << " (orig-miss: " << requestedAddr << 
-					", prefReqID=" << prefReq->getID().second << ", myCompID()=" << getId() << std::endl;
-				pendingPrefAddr.insert(prefReq->getAddr());
-				cacheCPULink->send(prefReq);
+					std::cout << "NextBlockPrefetcher: created prefetch address: " <<
+						nextBlockAddr << " (orig-miss: " << requestedAddr << 
+						", prefReqID=" << prefReq->getID().second << ", myCompID()=" << getId() << std::endl;
+					pendingPrefAddr.insert(prefReq->getAddr());
+					cacheCPULink->send(prefReq);
+				}
 			}
 		}
-		//}
 	}
 }
 

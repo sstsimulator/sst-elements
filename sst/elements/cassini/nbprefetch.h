@@ -42,6 +42,7 @@ class NextBlockPrefetcher : public SST::Component {
 		SST::Link* cacheMemoryLink;
 
 		set<Addr> pendingPrefAddr;
+		uint32_t maximumPending;
 
 		void handleCPULinkEvent(SST::Event* event);
 		void handleMemoryLinkEvent(SST::Event* event);
