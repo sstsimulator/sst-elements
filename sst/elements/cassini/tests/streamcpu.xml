@@ -32,7 +32,7 @@
 		<link name=cache_bus_link port=memoryLink latency=$lat />
 
 		<params>
-			<pending>4</pending>
+			<pending>16</pending>
 		</params>
 	</component>
 

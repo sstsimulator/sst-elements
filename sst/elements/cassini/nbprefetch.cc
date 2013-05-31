@@ -90,7 +90,8 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 			", Dst=" << memEvent->getDst() <<
 			", Flags=" << memEvent->getFlags() << 
 			", getRespToID=" << memEvent->getResponseToID().first <<
-			", getRespToCompID=" << memEvent->getResponseToID().second << std::endl;
+			", getRespToCompID=" << memEvent->getResponseToID().second <<
+			", currentReqCount=" << pendingPrefAddr.size() << std::endl;
 
 		if(memEvent->getCmd() == RequestData) {
 			Addr requestedAddr = memEvent->getAddr();
