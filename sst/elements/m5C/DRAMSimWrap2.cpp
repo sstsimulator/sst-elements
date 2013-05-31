@@ -50,9 +50,9 @@ SimObject* create_DRAMSimWrap2( SST::Component* comp, string name,
 
 DRAMSimWrap2::DRAMSimWrap2( const Params* p ) :
     DRAMSimWrap( p ),
-    m_backdoor( NULL ),
     m_rank( p->rank ),
-    m_sharedRange( p->backdoorRange )
+    m_sharedRange( p->backdoorRange ),
+    m_backdoor( NULL )
 {
     int m_numRanks = 2;
     Addr size = m_sharedRange.end - m_sharedRange.start;

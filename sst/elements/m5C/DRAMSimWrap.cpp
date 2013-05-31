@@ -57,8 +57,8 @@ SimObject* create_DRAMSimWrap( SST::Component* comp, string name,
 
 DRAMSimWrap::DRAMSimWrap( const Params* p ) :
     PhysicalMemory( p ),
-    m_waitRetry( false ),
     m_port( NULL ),
+    m_waitRetry( false ),
     m_comp( p->m5Comp ),
     m_dbg( *new Log< DRAMSIMC_DBG >( cerr, "DRAMSimC::", false ) ),
     m_log( *new Log< >( cout, "INFO DRAMSimC: ", false ) )
