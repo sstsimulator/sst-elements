@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<!--
+<config>
+ stopAtCycle=10000000ns
+</config>
+-->
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 50 ps </buslat>
+</variables>
+
+
+<sst>
+	<component name="cpu" type="memHierarchy.streamCPU">
+		<params>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000 </memSize>
+			<do_write> 1 </do_write>
+            		<num_loadstore> 100000 </num_loadstore>
+		</params>
+		<link name=cpu_cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="l1pref" type="cassini.NextBlockPrefetcher">
+		<link name=cpu_cache_link port=cpuLink latency=$lat />
+		<link name=pref_cpu_cache_link port=cacheCPULink latency=$lat />
+		<link name=pref_cache_bus_link port=cacheMemoryLink latency=$lat />
+		<link name=cache_bus_link port=memoryLink latency=$lat />
+
+		<params>
+			<pending>4</pending>
+		</params>
+	</component>
+
+	<component name="l1cache" type="memHierarchy.Cache">
+		<params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns</access_time>
+			<num_upstream> 1 </num_upstream>
+		</params>
+		<link name=pref_cpu_cache_link port=upstream0 latency=$lat />
+		<link name=pref_cache_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 2 </numPorts>
+			<busDelay> 20 ns </busDelay>
+		</params>
+		<link name=cache_bus_link port=port0 latency=$buslat />
+		<link name=mem_bus_link port=port1 latency=$buslat />
+	</component>
+
+
+	<component name="memory" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+		</params>
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+</sst>
