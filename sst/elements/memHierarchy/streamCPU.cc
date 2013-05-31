@@ -71,7 +71,7 @@ streamCPU::streamCPU(ComponentId_t id, Params_t& params) :
     clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
 	clockTC = registerClock( "1GHz", clockHandler );
 	num_reads_issued = num_reads_returned = 0;
-
+	nextAddr = 0;
 }
 
 streamCPU::streamCPU() :
@@ -137,23 +137,30 @@ bool streamCPU::clockTic( Cycle_t )
 			// create event
 			// x4 to prevent splitting blocks
 			//Addr addr = ((((Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
-			Addr addr = (Addr) ((num_reads_issued * 4) % maxAddr);
 
 			bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
 
-			MemEvent *e = new MemEvent(this, addr, doWrite ? WriteReq : ReadReq);
+			MemEvent *e = new MemEvent(this, nextAddr, doWrite ? WriteReq : ReadReq);
 			e->setSize(4); // Load 4 bytes
 			if ( doWrite ) {
-				e->setPayload(4, (uint8_t*)&addr);
+				e->setPayload(4, (uint8_t*)&nextAddr);
 			}
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			printf("%s: %d Issued %s (%"PRIu64") for address 0x%"PRIx64"\n",
-					getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, addr);
+			//printf("%s: %d Issued %s (%"PRIu64") for address 0x%""\n",
+			//		getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, nextAddr);
+			std::cout << getName() << " " << numLS << " issued: " <<
+				(doWrite ? "write" : "read") << " (id=" << e->getID().first << ", Addr=" << nextAddr <<
+				std::endl;
 			num_reads_issued++;
+			nextAddr = (nextAddr + 8);
 
-            numLS--;
+			if(nextAddr > maxAddr) {
+				nextAddr = 0;
+			}
+
+	        	numLS--;
 		}
 
 	}

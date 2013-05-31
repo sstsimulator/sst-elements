@@ -55,6 +55,7 @@ private:
 	int commFreq;
 	bool do_write;
 	uint32_t maxAddr;
+	uint32_t nextAddr;
 	uint64_t num_reads_issued, num_reads_returned;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
