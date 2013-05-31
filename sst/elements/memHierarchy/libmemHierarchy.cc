@@ -158,7 +158,6 @@ static const ElementInfoComponent components[] = {
 		create_trivialCPU,
         cpu_params
 	},
-	{ NULL, NULL, NULL, NULL },
 	{"streamCPU",
 		"Simple Demo STREAM CPU for testing",
 		NULL,
