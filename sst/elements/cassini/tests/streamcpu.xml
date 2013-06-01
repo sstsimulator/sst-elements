@@ -33,6 +33,7 @@
 
 		<params>
 			<pending>16</pending>
+			<debug>1</debug>
 		</params>
 	</component>
 

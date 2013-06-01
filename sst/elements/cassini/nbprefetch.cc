@@ -36,12 +36,17 @@ NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params_t& params) :
 
 	blocksAhead = 1;
 	if ( params.find("blocksAhead") != params.end() ) {
-		maximumPending = strtol( params[ "blocksAhead" ].c_str(), NULL, 0 );
+		blocksAhead = strtol( params[ "blocksAhead" ].c_str(), NULL, 0 );
         }
 
 	maxAddr = 0xffffffffffffffff;
 	if ( params.find("maxAddr") != params.end() ) {
 		maxAddr = strtol( params[ "maxAddr" ].c_str(), NULL, 0 );
+        }
+
+	debugLevel = 0;
+	if ( params.find("debug") != params.end() ) {
+		debugLevel = strtol( params[ "debug" ].c_str(), NULL, 0 );
         }
 	
 }
@@ -126,9 +131,12 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 				   (nextBlockAddr < maxAddr)) {
 					MemEvent *prefReq = new MemEvent(this, nextBlockAddr, ReadReq);
 
-					std::cout << "NextBlockPrefetcher: created prefetch address: " <<
+					if(debugLevel > 0) {
+					   std::cout << "NextBlockPrefetcher: created prefetch address: " <<
 						nextBlockAddr << " (orig-miss: " << requestedAddr << 
 						", prefReqID=" << prefReq->getID().second << ", myCompID()=" << getId() << std::endl;
+					}
+
 					pendingPrefAddr.insert(prefReq->getAddr());
 					cacheCPULink->send(prefReq);
 				}
