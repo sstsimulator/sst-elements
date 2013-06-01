@@ -6,6 +6,7 @@
 #include "sst/core/element.h"
 
 #include "nbprefetch.h"
+#include <stdint.h>
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -27,6 +28,22 @@ NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params_t& params) :
 	if ( params.find("pending") != params.end() ) {
 		maximumPending = strtol( params[ "pending" ].c_str(), NULL, 0 );
         }
+
+	blockSize = 64;
+	if ( params.find("blockSize") != params.end() ) {
+		blockSize = strtol( params[ "blockSize" ].c_str(), NULL, 0 );
+        }
+
+	blocksAhead = 1;
+	if ( params.find("blocksAhead") != params.end() ) {
+		maximumPending = strtol( params[ "blocksAhead" ].c_str(), NULL, 0 );
+        }
+
+	maxAddr = 0xffffffffffffffff;
+	if ( params.find("maxAddr") != params.end() ) {
+		maxAddr = strtol( params[ "maxAddr" ].c_str(), NULL, 0 );
+        }
+	
 }
 
 void NextBlockPrefetcher::handleCPULinkEvent(SST::Event* event) {
@@ -95,7 +112,7 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 
 		if(memEvent->getCmd() == RequestData) {
 			Addr requestedAddr = memEvent->getAddr();
-			Addr nextBlockAddr = (requestedAddr - (requestedAddr % 64)) + 64;
+			Addr nextBlockAddr = (requestedAddr - (requestedAddr % blockSize)) + (blockSize * blocksAhead);
 
 			std::cout << "NextBlockPrefetcher: Considering requestedAddr=" << requestedAddr << std::endl;
 			set<Addr>::iterator addr_itr;
@@ -105,7 +122,8 @@ void NextBlockPrefetcher::handleCacheToMemoryEvent(SST::Event* event) {
 			}
 
 			if(pendingPrefAddr.find(requestedAddr) == pendingPrefAddr.end()) {
-				if(pendingPrefAddr.size() < maximumPending) {
+				if((pendingPrefAddr.size() < maximumPending) &&
+				   (nextBlockAddr < maxAddr)) {
 					MemEvent *prefReq = new MemEvent(this, nextBlockAddr, ReadReq);
 
 					std::cout << "NextBlockPrefetcher: created prefetch address: " <<

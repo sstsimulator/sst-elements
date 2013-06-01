@@ -43,6 +43,9 @@ class NextBlockPrefetcher : public SST::Component {
 
 		set<Addr> pendingPrefAddr;
 		uint32_t maximumPending;
+		uint32_t blockSize;
+		uint32_t blocksAhead;
+		uint64_t maxAddr;
 
 		void handleCPULinkEvent(SST::Event* event);
 		void handleMemoryLinkEvent(SST::Event* event);
