@@ -5,6 +5,8 @@
 namespace SST {
 namespace Vanadis {
 
+
+
 enum MicroOpType {
 	LOAD,
 	STORE,
@@ -17,10 +19,25 @@ enum MicroOpType {
 
 enum MicroOpInsClass {
 	R,
-	I
+	R4,
+	I,
+	B,
+	L,
+	J
 }
 
 enum MicroOpInstruction {
+	LB,
+	LH,
+	LW,
+	LD,
+	LBU,
+	LHU,
+	LWU,
+	SB,
+	SH,
+	SW,
+	SD,
 	IADD,
 	ISUB,
 	IMUL,
@@ -29,14 +46,22 @@ enum MicroOpInstruction {
 	FSUB,
 	FMUL,
 	FDIV,
-	EQ,
 	AND,
 	OR,
-	LT,
-	LTE,
-	GT,
-	GTE,
-	SYSCALL
+	BLT,
+	BGTE,
+	BLTU,
+	BGTEU,
+	BEQ,
+	BNE,
+	JUMP,
+	JUMPAL,
+	JUMPALRC,
+	JUMPALRR,
+	JUMPALRJ,
+	RDNPC,
+	SYSCALL,
+	DECODEERROR
 }
 
 class VanadisMicroOp 
@@ -44,14 +69,16 @@ class VanadisMicroOp
 	private:
 		uint64_t macroOpID;
 		uint64_t microOpSeq;
-		MicroOpInstruction insCode;		
+		uint32_t ins;
 
 	public:
-		VanadisMicroOp();
-		
+		VanadisMicroOp(uint32_t ins);
+
+		uint32_t getInstruction();		
 		MicroOpType getMicroOpType();
 		MicroOpInstruction getMicroOpIns();
 		virtual MicroOpInsClass getMicroOpInsClass();
+
 }
 
 }
