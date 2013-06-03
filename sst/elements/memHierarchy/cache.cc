@@ -1382,7 +1382,7 @@ void Cache::handleNACK(MemEvent *ev, SourceType_t src)
                     CacheBlock *block = findBlock(ev->getAddr(), false);
                     if ( block && block->isLocked() ) block->unlock();
                     DPRINTF("Rescheduling event (%"PRIu64", %d) %s 0x%"PRIx64".\n",
-                            oldEV.first->getID().first, oldEV.first->getID().first,
+                            oldEV.first->getID().first, oldEV.first->getID().second,
                             CommandString[oldEV.first->getCmd()], oldEV.first->getAddr());
                     self_link->send(1, new SelfEvent(this, &Cache::retryEvent, oldEV.first, NULL, oldEV.second));
                 } else {
