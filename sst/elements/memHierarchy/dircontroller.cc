@@ -80,6 +80,20 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
 }
 
 
+DirectoryController::~DirectoryController()
+{
+    for ( std::map<Addr, DirEntry*>::iterator i = directory.begin(); i != directory.end() ; ++i ) {
+        delete i->second;
+    }
+    directory.clear();
+    while ( workQueue.size() ) {
+        MemEvent *front = workQueue.front();
+        workQueue.pop_front();
+        delete front;
+    }
+}
+
+
 void DirectoryController::handleMemoryResponse(SST::Event *event)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
@@ -92,8 +106,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event)
             // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
             assert(entry);
-            assert(entry->nextFunc);
-            (this->*(entry->nextFunc))(entry, ev);
+            advanceEntry(entry, ev);
         } else if ( ev->getCmd() == WriteResp ) {
             // Final update complete.  Clear our status
             DirEntry *entry = getDirEntry(targetBlock);
@@ -158,6 +171,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
                 ignorableResponses.insert(entry->lastRequest);
             }
             advanceEntry(entry, ev);
+            delete ev;
         } else {
             DPRINTF("Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
 #if 0
@@ -476,7 +490,6 @@ void DirectoryController::handleExclusiveEviction(DirEntry *entry, MemEvent *ev)
 	entry->dirty = false;
 	entry->sharers[node_id(ev->getSrc())] = false;
     writebackData(entry->activeReq);
-
 	updateEntryToMemory(entry);
 }
 

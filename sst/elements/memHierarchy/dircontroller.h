@@ -157,6 +157,7 @@ class DirectoryController : public Component {
 
 public:
 	DirectoryController(ComponentId_t id, Params_t &params);
+    ~DirectoryController();
 	void setup(void);
     void init(unsigned int phase);
 	int Finish(void) { return 0; }

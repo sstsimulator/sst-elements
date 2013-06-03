@@ -132,6 +132,16 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 }
 
 
+MemController::~MemController()
+{
+    while ( requests.size() ) {
+        DRAMReq *req = requests.front();
+        requests.pop_front();
+        delete req;
+    }
+}
+
+
 void MemController::init(unsigned int phase)
 {
 	if ( !phase ) {

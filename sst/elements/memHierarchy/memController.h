@@ -128,6 +128,7 @@ private:
 
 
     MemController();  // for serialization only
+    ~MemController();
 
     void handleEvent(SST::Event *event);
 
