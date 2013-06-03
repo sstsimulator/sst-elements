@@ -2,6 +2,8 @@
 #ifndef _H_VANADIS_MICRO_OP
 #define _H_VANADIS_MICRO_OP
 
+#include <stdlib.h>
+
 namespace SST {
 namespace Vanadis {
 
@@ -89,6 +91,12 @@ MicroOpType decodeToInstructionGroup(uint32_t ins) {
 	} else if(category == VANADIS_SYSTEM_MASK) {
 		return SYSTEM;
 	}
+}
+
+void printInstructionAsBinary(uint32_t value) {
+	char buffer[33];
+	itoa(value, buffer, 2);
+	print("%s", buffer);
 }
 
 enum MicroOpInsClass {
