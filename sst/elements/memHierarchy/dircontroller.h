@@ -13,6 +13,7 @@
 #define _MEMHIERARCHY_DIRCONTROLLER_H_
 
 #include <map>
+#include <set>
 #include <list>
 #include <vector>
 
@@ -43,6 +44,8 @@ class DirectoryController : public Component {
 		ProcessFunc nextFunc;
         std::string waitingOn; // waiting to hear from this source
         Command nextCommand;  // Command which we're waiting for
+        MemEvent::id_type lastRequest;  // ID of message we're wanting a response to
+        static const MemEvent::id_type NO_LAST_REQUEST;
 		uint32_t waitingAcks;
 
 		Addr baseAddr;
@@ -54,6 +57,7 @@ class DirectoryController : public Component {
 		DirEntry(Addr address, uint32_t bitlength) {
 			activeReq = NULL;
 			nextFunc = NULL;
+            lastRequest = NO_LAST_REQUEST;
 			waitingAcks = 0;
 			baseAddr = address;
 			dirty = false;
@@ -82,6 +86,8 @@ class DirectoryController : public Component {
 	};
 
 	uint64_t lookupBaseAddr;
+
+    std::set<MemEvent::id_type> ignorableResponses;
 
 	/* Range of addresses supported by this directory */
 	Addr addrRangeStart;
@@ -147,6 +153,8 @@ class DirectoryController : public Component {
     bool isRequestAddressValid(MemEvent *ev);
     Addr convertAddressToLocalAddress(Addr addr);
 
+    const char* printDirectoryEntryStatus(Addr addr);
+
 public:
 	DirectoryController(ComponentId_t id, Params_t &params);
 	void setup(void);
@@ -154,6 +162,7 @@ public:
 	int Finish(void) { return 0; }
 
 	void handlePacket(SST::Event *event);
+	bool processPacket(MemEvent *ev);
 	void handleMemoryResponse(SST::Event *event);
 	bool clock(SST::Cycle_t cycle);
 

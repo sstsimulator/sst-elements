@@ -30,6 +30,8 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
+const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::make_pair((uint64_t)-1, -1);
+
 DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
     Component(id), blocksize(0)
 {
@@ -80,73 +82,110 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
 
 void DirectoryController::handleMemoryResponse(SST::Event *event)
 {
-	MemEvent *ev = dynamic_cast<MemEvent*>(event);
-	if ( ev ) {
-        DPRINTF("Memory response for address 0x%"PRIx64"\n", ev->getAddr());
+	MemEvent *ev = static_cast<MemEvent*>(event);
+    DPRINTF("Memory response for address 0x%"PRIx64" (Response to (%"PRIu64", %d))\n", ev->getAddr(), ev->getResponseToID().first, ev->getResponseToID().second);
 
-        if ( memReqs.find(ev->getResponseToID()) != memReqs.end() ) {
-            Addr targetBlock = memReqs[ev->getResponseToID()];
-            memReqs.erase(ev->getResponseToID());
-            if ( ev->getCmd() == SupplyData ) {
-                // Lookup complete, perform our work
-                DirEntry *entry = getDirEntry(targetBlock);
-                assert(entry);
-                assert(entry->nextFunc);
-                (this->*(entry->nextFunc))(entry, ev);
-            } else if ( ev->getCmd() == WriteResp ) {
-                // Final update complete.  Clear our status
-                DirEntry *entry = getDirEntry(targetBlock);
-                assert(entry);
-                if ( entry->activeReq ) {
-                    resetEntry(entry);
-                }
-                if ( entry->countRefs() == 0 ) {
-                    // Is empty, let's purge
-                    DPRINTF("Entry for 0x%"PRIx64" has no referenes - purging\n", targetBlock);
-                    delete entry;
-                }
-            } else {
-                _abort(DirectoryController, "Received unexpected message from Memory!\n");
+    if ( memReqs.find(ev->getResponseToID()) != memReqs.end() ) {
+        Addr targetBlock = memReqs[ev->getResponseToID()];
+        memReqs.erase(ev->getResponseToID());
+        if ( ev->getCmd() == SupplyData ) {
+            // Lookup complete, perform our work
+            DirEntry *entry = getDirEntry(targetBlock);
+            assert(entry);
+            assert(entry->nextFunc);
+            (this->*(entry->nextFunc))(entry, ev);
+        } else if ( ev->getCmd() == WriteResp ) {
+            // Final update complete.  Clear our status
+            DirEntry *entry = getDirEntry(targetBlock);
+            assert(entry);
+            if ( entry->activeReq ) {
+                resetEntry(entry);
+            }
+            if ( entry->countRefs() == 0 ) {
+                // Is empty, let's purge
+                DPRINTF("Entry for 0x%"PRIx64" has no referenes - purging\n", targetBlock);
+                delete entry;
             }
         } else {
-            /* Don't have this req recorded */
+            _abort(DirectoryController, "Received unexpected message from Memory!\n");
         }
+    } else {
+        /* Don't have this req recorded */
+    }
 
 
-		delete ev;
-	} else {
-		_abort(DirectoryController, "Received unknown packet!\n");
-	}
+    delete ev;
 }
-
 
 void DirectoryController::handlePacket(SST::Event *event)
 {
     MemEvent *ev = static_cast<MemEvent*>(event);
+    workQueue.push_back(ev);
+    DPRINTF("Received (%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Position %zu in queue.\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), workQueue.size());
+}
+
+
+bool DirectoryController::processPacket(MemEvent *ev)
+{
     assert(isRequestAddressValid(ev));
-    DPRINTF("Received %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
+    DPRINTF("Processing (%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Status: %s\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), printDirectoryEntryStatus(ev->getAddr()));
+
+    std::set<MemEvent::id_type>::iterator ign = ignorableResponses.find(ev->getResponseToID());
+    if ( ign != ignorableResponses.end() ) {
+        DPRINTF("Command (%"PRIu64", %d) is a response to (%"PRIu64", %d), which is ignorable.\n",
+                ev->getID().first, ev->getID().second, ev->getResponseToID().first, ev->getResponseToID().second);
+        ignorableResponses.erase(ign);
+        delete ev;
+        return true;
+    }
 
     if ( ev->getCmd() == ACK ) {
         handleACK(ev);
         delete ev;
-        return;
+        return true;
     }
 
 
     DirEntry *entry = getDirEntry(ev->getAddr());
+
     if ( entry && entry->inProgress() ) {
-        DPRINTF("Entry 0x%"PRIx64" in progress.\n", entry->baseAddr);
         if ( entry->nextCommand == ev->getCmd() &&
             ( entry->waitingOn == "N/A" ||
               !entry->waitingOn.compare(ev->getSrc()) ) ) {
             DPRINTF("Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
+            if ( ev->getResponseToID() != entry->lastRequest ) {
+                DPRINTF("This isn't a response to our request, but it fulfills the need.  Placing (%"PRIu64", %d) into list of ignorable responses.\n", entry->lastRequest.first, entry->lastRequest.second);
+                ignorableResponses.insert(entry->lastRequest);
+            }
             advanceEntry(entry, ev);
         } else {
-            DPRINTF("Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.  Re-enqueuing.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
+            DPRINTF("Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
+#if 0
             workQueue.push_back(ev);
+#else
+            switch ( ev->getCmd() ) {
+            case Invalidate:
+            case RequestData: {
+                //printf("Sending NACK for [%s,%s 0x%"PRIx64" (%"PRIu64",%d)]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, ev->getID().first, ev->getID().second); fflush(stdout);
+                DPRINTF("Sending NACK for [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
+                MemEvent *nack = ev->makeResponse(this);
+                nack->setCmd(NACK);
+                nack->setSize(0);
+                sendResponse(nack);
+                delete ev;
+                break;
+            }
+            default:
+                DPRINTF("Re-enqueuing for  [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
+                return false;
+            }
+#endif
         }
-        return;
+        return true;
     }
+
+
+    /* New Request */
 
     switch(ev->getCmd()) {
     case SupplyData: {
@@ -181,6 +220,7 @@ void DirectoryController::handlePacket(SST::Event *event)
         /* Ignore unexpected */
         delete ev;
     }
+    return true;
 }
 
 
@@ -189,13 +229,12 @@ void DirectoryController::init(unsigned int phase)
     network->init(phase);
 
     /* Pass data on to memory */
-    while ( SST::Event *ev = network->recvInitData() ) {
-        MemEvent *me = dynamic_cast<MemEvent*>(ev);
-        if ( me ) {
-            if ( isRequestAddressValid(me) ) {
-                me->setAddr(convertAddressToLocalAddress(me->getAddr()));
-                memLink->sendInitData(me);
-            }
+    while ( MemEvent *ev = network->recvInitData() ) {
+        DPRINTF("Found Init Info for address 0x%"PRIx64"\n", ev->getAddr());
+        if ( isRequestAddressValid(ev) ) {
+            ev->setAddr(convertAddressToLocalAddress(ev->getAddr()));
+            DPRINTF("Sending Init Data for address 0x%"PRIx64" to memory\n", ev->getAddr());
+            memLink->sendInitData(ev);
         } else {
             delete ev;
         }
@@ -231,16 +270,14 @@ void DirectoryController::setup(void)
 bool DirectoryController::clock(SST::Cycle_t cycle)
 {
     network->clock();
-	for ( std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i ) {
-		DirEntry *entry = getDirEntry((*i)->getAddr());
-		if ( !entry || entry->activeReq == NULL ) {
-			// This one can now be processed.
-			handlePacket(*i);
-			workQueue.erase(i);
 
-			// Let's only process one per cycle
-			break;
-		}
+	for ( std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i ) {
+        if ( processPacket(*i) ) {
+            workQueue.erase(i);
+
+            // Let's only process one per cycle
+            break;
+        }
 	}
 
 	return false;
@@ -280,6 +317,7 @@ void DirectoryController::handleACK(MemEvent *ev)
 
 void DirectoryController::handleInvalidate(DirEntry *entry, MemEvent *new_ev)
 {
+    assert(!entry->dirty);
 	uint32_t id = node_id(entry->activeReq->getSrc());
 	for ( uint32_t i = 0 ; i < numTargets ; i++ ) {
 		if ( i == id ) continue;
@@ -292,6 +330,7 @@ void DirectoryController::handleInvalidate(DirEntry *entry, MemEvent *new_ev)
 		entry->nextFunc = &DirectoryController::finishInvalidate;
         entry->nextCommand = ACK;
         entry->waitingOn = "N/A";
+        entry->lastRequest = DirEntry::NO_LAST_REQUEST;
         DPRINTF("Sending invalidates to allow exclusive access for 0x%"PRIx64".\n", entry->baseAddr);
 	} else {
 		finishInvalidate(entry, NULL);
@@ -342,13 +381,15 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
         std::string &dest = nodeid_to_name[entry->findOwner()];
         ev->setSize(blocksize);
         ev->setDst(dest);
-		sendResponse(ev);
 
 		entry->nextFunc = &DirectoryController::finishFetch;
         entry->nextCommand = SupplyData;
         entry->waitingOn = dest;
+        entry->lastRequest = ev->getID();
+
+		sendResponse(ev);
         DPRINTF("Sending %s to %s to fulfill request for data for 0x%"PRIx64".\n",
-                CommandString[ev->getCmd()], dest.c_str(), entry->baseAddr);
+                CommandString[cmd], dest.c_str(), entry->baseAddr);
 
 	} else if ( entry->activeReq->queryFlag(MemEvent::F_EXCLUSIVE) ) {
 		// Must send invalidates
@@ -364,6 +405,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
 			entry->nextFunc = &DirectoryController::getExclusiveDataForRequest;
             entry->nextCommand = ACK;
             entry->waitingOn = "N/A";
+            entry->lastRequest = DirEntry::NO_LAST_REQUEST;
             DPRINTF("Sending Invalidates to fulfill request for exclusive 0x%"PRIx64".\n", entry->baseAddr);
 		} else {
 			getExclusiveDataForRequest(entry, NULL);
@@ -428,7 +470,9 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 
 void DirectoryController::handleExclusiveEviction(DirEntry *entry, MemEvent *ev)
 {
-    DPRINTF("Entry 0x%"PRIx64" loaded.  Performing writeback of 0x%"PRIx64"\n", entry->baseAddr, entry->activeReq->getAddr());
+    DPRINTF("Entry 0x%"PRIx64" loaded.  Performing writeback of 0x%"PRIx64" for %s\n", entry->baseAddr, entry->activeReq->getAddr(), entry->activeReq->getSrc().c_str());
+    assert(entry->dirty);
+    assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
 	entry->dirty = false;
 	entry->sharers[node_id(ev->getSrc())] = false;
     writebackData(entry->activeReq);
@@ -475,18 +519,21 @@ void DirectoryController::requestDirEntryFromMemory(DirEntry *entry)
     memReqs[me->getID()] = entry->baseAddr;
     entry->nextCommand = SupplyData;
     entry->waitingOn = "memory";
+    entry->lastRequest = me->getID();
+    DPRINTF("Requesting Entry from memory for 0x%"PRIx64" (%"PRIu64", %d)\n", entry->baseAddr, me->getID().first, me->getID().second);
 	memLink->send(me);
 }
 
 
 void DirectoryController::requestDataFromMemory(DirEntry *entry)
 {
-    DPRINTF("Requesting data from memory at 0x%"PRIx64"\n", entry->baseAddr);
     MemEvent *ev = new MemEvent(this, convertAddressToLocalAddress(entry->baseAddr), RequestData);
     ev->setSize(blocksize);
     memReqs[ev->getID()] = entry->baseAddr;
     entry->nextCommand = SupplyData;
     entry->waitingOn = "memory";
+    entry->lastRequest = ev->getID();
+    DPRINTF("Requesting data from memory at 0x%"PRIx64" (%"PRIu64", %d)\n", entry->baseAddr, ev->getID().first, ev->getID().second);
     memLink->send(ev);
 }
 
@@ -495,10 +542,12 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry)
 {
 	Addr entryAddr = 0; /*  Offset into our buffer? */
 	MemEvent *me = new MemEvent(this, entryAddr, SupplyData);
+    DPRINTF("Updating entry for 0x%"PRIx64" to memory (%"PRIu64", %d)\n", entry->baseAddr, me->getID().first, me->getID().second);
 	me->setSize((numTargets+1)/8 +1);
     memReqs[me->getID()] = entry->baseAddr;
     entry->nextCommand = WriteResp;
     entry->waitingOn = "memory";
+    entry->lastRequest = me->getID();
 
 	memLink->send(me);
 }
@@ -506,10 +555,10 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry)
 
 void DirectoryController::writebackData(MemEvent *data_event)
 {
-    DPRINTF("Writing back data to 0x%"PRIx64"\n", data_event->getAddr());
 	MemEvent *ev = new MemEvent(this, convertAddressToLocalAddress(data_event->getAddr()), SupplyData);
 	ev->setFlag(MemEvent::F_WRITEBACK);
 	ev->setPayload(data_event->getPayload());
+    DPRINTF("Writing back data to 0x%"PRIx64" (%"PRIu64", %d)\n", data_event->getAddr(), ev->getID().first, ev->getID().second);
 
 	memLink->send(ev);
 }
@@ -521,6 +570,7 @@ void DirectoryController::resetEntry(DirEntry *entry)
 	entry->activeReq = NULL;
 	entry->nextFunc = NULL;
     entry->nextCommand = NULLCMD;
+    entry->lastRequest = DirEntry::NO_LAST_REQUEST;
     entry->waitingOn = "N/A";
 }
 
@@ -565,4 +615,26 @@ Addr DirectoryController::convertAddressToLocalAddress(Addr addr)
     }
     DPRINTF("Converted physical address 0x%"PRIx64" to ACTUAL memory address 0x%"PRIx64"\n", addr, res);
     return res;
+}
+
+static char dirEntStatus[1024] = {0};
+const char* DirectoryController::printDirectoryEntryStatus(Addr addr)
+{
+    DirEntry *entry = getDirEntry(addr);
+    if ( !entry ) {
+        sprintf(dirEntStatus, "[Not Created]");
+    } else {
+        uint32_t refs = entry->countRefs();
+
+        if ( refs == 0 ) {
+            sprintf(dirEntStatus, "[Uncached]");
+        } else if ( entry->dirty ) {
+            uint32_t owner = entry->findOwner();
+            sprintf(dirEntStatus, "[owned by %s]", nodeid_to_name[owner].c_str());
+        } else {
+            sprintf(dirEntStatus, "[Shared by %u]", refs);
+        }
+
+    }
+    return dirEntStatus;
 }

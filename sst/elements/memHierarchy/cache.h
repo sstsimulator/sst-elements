@@ -186,12 +186,14 @@ private:
     struct Invalidation {
         int waitingACKs;
         std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
-        MemEvent *busEvent; // Snoop Bus event
+        MemEvent::id_type issuingEvent;
+        MemEvent *busEvent; // Snoop Bus event (for cancelation)
         CacheBlock *block;  // Optional
         CacheBlock::BlockStatus newStatus; // Optional
+        bool canCancel;
 
         Invalidation() :
-            waitingACKs(0), busEvent(NULL), block(NULL)
+            waitingACKs(0), busEvent(NULL), block(NULL), canCancel(true)
         { }
     };
 
@@ -379,7 +381,7 @@ public:
 
 private:
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
-	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed);
+	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete = false);
 	void handleSelfEvent(SST::Event *event);
 	void retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
@@ -387,8 +389,8 @@ private:
 	MemEvent* makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
-	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction);
-	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction);
+	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction, bool cancelable = true);
+	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction, bool cancelable = true);
 	void loadBlock(MemEvent *ev, SourceType_t src);
     std::pair<LoadInfo_t*, bool> initLoad(MemEvent *ev, SourceType_t src);
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
@@ -404,7 +406,7 @@ private:
     void sendInvalidateACK(MemEvent *ev, SourceType_t src);
 
 	bool waitingForInvalidate(Addr addr);
-	void cancelInvalidate(CacheBlock *block);
+	bool cancelInvalidate(CacheBlock *block);
     void ackInvalidate(MemEvent *ev);
 	void finishIssueInvalidate(Addr addr);
 
@@ -416,8 +418,7 @@ private:
     void handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated);
     void fetchBlock(MemEvent *ev, CacheBlock *block);
 
-
-	void busClear(SST::Link *busLink);
+    void handleNACK(MemEvent *ev, SourceType_t src);
 
     void handlePendingEvents(CacheRow *row, CacheBlock *block);
 	void updateBlock(MemEvent *ev, CacheBlock *block);

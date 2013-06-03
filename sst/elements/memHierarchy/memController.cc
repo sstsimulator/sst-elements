@@ -315,6 +315,7 @@ bool MemController::clock(Cycle_t cycle)
         DRAMReq *req = requests.front();
         if ( req->status == DRAMReq::DONE ) {
             requests.pop_front();
+            delete req;
         } else {
             break;
         }

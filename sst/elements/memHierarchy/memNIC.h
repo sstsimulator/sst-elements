@@ -100,7 +100,7 @@ private:
     Event::HandlerBase *recvHandler;
     Merlin::LinkControl *link_control;
 
-    std::deque<Event*> initQueue;
+    std::deque<MemRtrEvent*> initQueue;
     std::deque<MemRtrEvent *> sendQueue;
     int last_recv_vc;
     std::map<std::string, int> addrMap;
@@ -127,7 +127,7 @@ public:
 
     void send(MemEvent *ev);
     void sendInitData(MemEvent *ev);
-    SST::Event* recvInitData(void);
+    MemEvent* recvInitData(void);
     const std::vector<ComponentInfo>& getPeerInfo(void) const { return peers; }
     void clearPeerInfo(void) { peers.clear(); }
 
