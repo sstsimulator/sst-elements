@@ -29,6 +29,7 @@
 
 #include <sst/core/interfaces/memEvent.h>
 
+#include "cacheListener.h"
 #include "memNIC.h"
 
 
@@ -432,6 +433,7 @@ private:
 
 	void printCache(void);
 
+        CacheListener* listener;
 	int n_ways;
 	int n_rows;
 	uint32_t blocksize;

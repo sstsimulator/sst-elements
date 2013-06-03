@@ -150,6 +150,17 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
     registerClock("1 GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
 
+    std::string prefetcher = params.find_string("prefetcher");
+    if ( prefetcher == "" ) {
+	listener = new CacheListener();
+    } else {
+	listener = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
+
+	if(NULL == listener) {
+	    _abort(Cache, "Prefetcher could not be loaded.\n");
+	}
+    }
+
     /* L1 status will be detected by seeing CPU requests come in. */
     isL1 = false;
 }
