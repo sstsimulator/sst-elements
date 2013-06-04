@@ -78,6 +78,7 @@ static const ElementInfoParam cache_params[] = {
     {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
     {"access_time",     "Time taken to lookup data in the cache."},
     {"net_addr",        "When using a directory controller, the network address of this cache."},
+    {"prefetcher",       "Prefetcher to use with cache (loaded as a module)"},
     {NULL, NULL}
 };
 
