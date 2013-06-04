@@ -152,14 +152,15 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
     std::string prefetcher = params.find_string("prefetcher");
     if ( prefetcher == "" ) {
-	listener = new CacheListener();
+        listener = new CacheListener();
     } else {
-	listener = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
+        listener = dynamic_cast<CacheListener*>(loadModule(prefetcher, params));
 
-	if(NULL == listener) {
-	    _abort(Cache, "Prefetcher could not be loaded.\n");
-	}
+        if(NULL == listener) {
+            _abort(Cache, "Prefetcher could not be loaded.\n");
+        }
     }
+    listener->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     /* L1 status will be detected by seeing CPU requests come in. */
     isL1 = false;
@@ -331,6 +332,14 @@ void Cache::retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src)
 }
 
 
+void Cache::handlePrefetchEvent(SST::Event *event)
+{
+    DPRINTF("Incoming PREFETCHER Event!\n");
+    handleIncomingEvent(event, PREFETCHER, true, false);
+}
+
+
+
 void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 {
     isL1 = true;
@@ -346,6 +355,12 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 			addrToBlockAddr(ev->getAddr()),
             block ? block->status : -1
             );
+
+    if ( firstProcess)
+        listener->notifyAccess(isRead ? CacheListener::READ : CacheListener::WRITE,
+                (block != NULL) ? CacheListener::HIT : CacheListener::MISS,
+                ev->getAddr());
+
     if ( ev->queryFlag(MemEvent::F_LOCKED) && !isRead ) assert(block->status == CacheBlock::EXCLUSIVE);
     if ( block ) {
         /* HIT */
@@ -757,7 +772,10 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             }
         }
 
-		if ( firstProcess ) num_supply_hit++;
+		if ( firstProcess ) {
+            listener->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr());
+            num_supply_hit++;
+        }
 		supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
 		/* Hit */
 
@@ -792,7 +810,11 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             /* TODO:  May need to request upstream of us */
             delete ev;
         } else if ( src != SNOOP || ev->getDst() == getName() ) {
-			if ( firstProcess) num_supply_miss++;
+
+			if ( firstProcess) {
+                listener->notifyAccess(CacheListener::READ, CacheListener::MISS, ev->getAddr());
+                num_supply_miss++;
+            }
 			loadBlock(ev, src);
 		} else {
             /* Ignore  - Snoop request, or not to us */
@@ -1165,6 +1187,9 @@ void Cache::sendInvalidateACK(MemEvent *ev, SourceType_t src)
     case SELF:
         _abort(Cache, "Why are we acking to ourselfs?\n");
         break;
+    case PREFETCHER:
+        _abort(Cache, "Check this:  Sending Invalidate ACK to the prefetcher?\n");
+        break;
     }
 }
 
@@ -1415,6 +1440,10 @@ void Cache::handleNACK(MemEvent *ev, SourceType_t src)
                         break;
                     case SELF:
                         _abort(Cache, "Shouldn't happen... NACK'ing an event we sent ourself?\n");
+                        break;
+                    case PREFETCHER:
+                        _abort(Cache, "Check this:  Trying to send NACK to PREFETCHER.\n");
+                        break;
                     }
                     delete oldEV.first;
                 }

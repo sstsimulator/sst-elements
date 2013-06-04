@@ -41,7 +41,7 @@ namespace MemHierarchy {
 class Cache : public SST::Component {
 
 private:
-	typedef enum {DOWNSTREAM, SNOOP, DIRECTORY, UPSTREAM, SELF} SourceType_t;
+	typedef enum {DOWNSTREAM, SNOOP, DIRECTORY, UPSTREAM, SELF, PREFETCHER} SourceType_t;
 	typedef enum {INCLUSIVE, EXCLUSIVE, STANDARD} CacheMode_t;
     typedef enum {SEND_DOWN, SEND_UP, SEND_BOTH} ForwardDir_t;
 
@@ -386,6 +386,8 @@ private:
 	void handleSelfEvent(SST::Event *event);
 	void retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
+    void handlePrefetchEvent(SST::Event *event);
+
 	void handleCPURequest(MemEvent *ev, bool firstProcess);
 	MemEvent* makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
 	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
@@ -433,7 +435,7 @@ private:
 
 	void printCache(void);
 
-        CacheListener* listener;
+    CacheListener* listener;
 	int n_ways;
 	int n_rows;
 	uint32_t blocksize;

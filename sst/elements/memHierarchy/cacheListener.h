@@ -6,8 +6,7 @@
 #include <sst/core/serialization/element.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
-#include <sst/core/interfaces/memEvent.h>
-#include <sst/core/interfaces/stringEvent.h>
+#include <sst/core/event.h>
 #include <sst/core/module.h>
 
 using namespace SST;
@@ -16,23 +15,24 @@ using namespace SST::Interfaces;
 namespace SST {
 namespace MemHierarchy {
 
-enum NotifyAccessType {
-	READ,
-	WRITE
-};
-
-enum NotifyResultType {
-	HIT,
-	MISS
-};
-
 class CacheListener : public Module {
-    public:
-	CacheListener() {}
-	virtual ~CacheListener() {}
+public:
+    enum NotifyAccessType {
+        READ,
+        WRITE
+    };
 
-	virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
-	virtual void registerResponseCallback(const SST::Component* owner, void (*callee)(MemEvent* memEvent)) { }
+    enum NotifyResultType {
+        HIT,
+        MISS
+    };
+
+
+    CacheListener() {}
+    virtual ~CacheListener() {}
+
+    virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
+    virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 
 }
