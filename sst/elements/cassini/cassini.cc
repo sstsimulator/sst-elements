@@ -25,7 +25,7 @@ create_StridePrefetcher(SST::ComponentId_t id,
 
 static const ElementInfoParam component_params[] = {
     {"pending", "Maximum pending prefetch requests which can be in flight."},
-    { NULL, NULL}
+    { NULL, NULL }
 };
 
 static const ElementInfoModule modules[] = {
@@ -45,13 +45,28 @@ static const ElementInfoComponent components[] = {
       create_StridePrefetcher,
       component_params
     },
-    { NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL }
 };
 
-extern "C" {
+/*extern "C" {
     ElementLibraryInfo cassini_eli = {
         "cassini",
         "Cassini Uncore Components",
         components,
+    };
+}*/
+
+extern "C" {
+    ElementLibraryInfo cassini_eli = {
+        "Cassini",
+        "Cassini Uncore Processor Components",
+        components,
+        NULL,
+	NULL,
+	modules,
+        // partitioners,
+        // generators,
+        NULL,
+	NULL,
     };
 }
