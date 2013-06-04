@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
 libmemHierarchy_la_SOURCES = \
+	cacheListener.h \
 	bus.h \
 	bus.cc \
 	cache.h \

@@ -10,8 +10,6 @@
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/module.h>
 
-#include "cache.h"
-
 using namespace SST;
 using namespace SST::Interfaces;
 
@@ -34,7 +32,7 @@ class CacheListener : public Module {
 	virtual ~CacheListener() {}
 
 	virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
-	virtual void registerResponseCallback(void (*callee)(MemEvent* memEvent)) { }
+	virtual void registerResponseCallback(const SST::Component* owner, void (*callee)(MemEvent* memEvent)) { }
 };
 
 }
