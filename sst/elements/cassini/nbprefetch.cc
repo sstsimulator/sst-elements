@@ -31,7 +31,8 @@ void NextBlockPrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResult
 		for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
 			// Create a new read request, we cannot issue a write because the data will get
 			// overwritten and corrupt memory (even if we really do want to do a write)
-			MemEvent* newEv = new MemEvent(owner, nextBlockAddr, ReadReq);
+			MemEvent* newEv = new MemEvent(owner, nextBlockAddr, RequestData);
+            newEv->setSize(blockSize);
 
 			(*(*callbackItr))(newEv);
 		}

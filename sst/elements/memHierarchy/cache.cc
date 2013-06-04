@@ -337,7 +337,7 @@ void Cache::retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src)
 void Cache::handlePrefetchEvent(SST::Event *event)
 {
     DPRINTF("Incoming PREFETCHER Event!\n");
-    handleIncomingEvent(event, PREFETCHER, true, false);
+    self_link->send(1, new SelfEvent(this, &Cache::retryEvent, static_cast<MemEvent*>(event), NULL, PREFETCHER));
 }
 
 
@@ -358,7 +358,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
             block ? block->status : -1
             );
 
-    if ( firstProcess)
+    if ( firstProcess )
         listener->notifyAccess(isRead ? CacheListener::READ : CacheListener::WRITE,
                 (block != NULL) ? CacheListener::HIT : CacheListener::MISS,
                 ev->getAddr());
@@ -774,7 +774,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             }
         }
 
-		if ( firstProcess ) {
+		if ( firstProcess && src != PREFETCHER ) {
             listener->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr());
             num_supply_hit++;
         }
@@ -813,7 +813,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             delete ev;
         } else if ( src != SNOOP || ev->getDst() == getName() ) {
 
-			if ( firstProcess) {
+			if ( firstProcess && src != PREFETCHER ) {
                 listener->notifyAccess(CacheListener::READ, CacheListener::MISS, ev->getAddr());
                 num_supply_miss++;
             }
