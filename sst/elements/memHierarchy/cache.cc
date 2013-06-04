@@ -778,6 +778,13 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             listener->notifyAccess(CacheListener::READ, CacheListener::HIT, ev->getAddr());
             num_supply_hit++;
         }
+
+        if ( src == PREFETCHER ) {
+            DPRINTF("Prefetcher wants us to load what we already have.  Return.\n");
+            delete ev;
+            return;
+        }
+
 		supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
 		/* Hit */
 
