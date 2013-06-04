@@ -25,7 +25,7 @@ void NextBlockPrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResult
 {
 	if(notifyResType == MISS) {
 		Addr nextBlockAddr = (addr - (addr % blockSize)) + blockSize;
-		std::vector<std::pair<const SST::Component*,  void (*)(MemEvent*)> >::iterator callbackItr;
+		std::vector<std::pair<const SST::Component*, Event::HandlerBase*> >::iterator callbackItr;
 
 		// Cycle over each registered call back and notify them that we want to issue a prefetch request
 		for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
@@ -33,13 +33,13 @@ void NextBlockPrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResult
 			// overwritten and corrupt memory (even if we really do want to do a write)
 			MemEvent* newEv = new MemEvent(callbackItr->first, nextBlockAddr, ReadReq);
 
-			void (*callee)(MemEvent*) = callbackItr->second;
-			callee(newEv);
+			Event::HandlerBase* callee = callbackItr->second;
+			(*callee)(newEv);
 		}
 	}
 }
 
-void NextBlockPrefetcher::registerResponseCallback(const SST::Component* owner, void (*callee)(MemEvent* memEvent)) 
+void NextBlockPrefetcher::registerResponseCallback(const SST::Component* owner, Event::HandlerBase *handler)  
 {
-	registeredCallbacks.push_back(std::make_pair(owner, callee));
+	registeredCallbacks.push_back(std::make_pair(owner, handler));
 }

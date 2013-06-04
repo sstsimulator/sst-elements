@@ -160,7 +160,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
             _abort(Cache, "Prefetcher could not be loaded.\n");
         }
     }
-    listener->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+    listener->registerResponseCallback(this, new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
 
     /* L1 status will be detected by seeing CPU requests come in. */
     isL1 = false;

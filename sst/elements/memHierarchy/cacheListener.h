@@ -32,7 +32,7 @@ public:
     virtual ~CacheListener() {}
 
     virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
-    virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
+    virtual void registerResponseCallback(const SST::Component* owner, Event::HandlerBase *handler) { delete handler; }
 };
 
 }
