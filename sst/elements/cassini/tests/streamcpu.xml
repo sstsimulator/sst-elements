@@ -20,21 +20,9 @@
 			<commFreq> 100 </commFreq>
 			<memSize> 0x1000 </memSize>
 			<do_write> 1 </do_write>
-            		<num_loadstore> 100000 </num_loadstore>
+	                <num_loadstore> 100000 </num_loadstore>
 		</params>
 		<link name=cpu_cache_link port=mem_link latency=$lat />
-	</component>
-
-	<component name="l1pref" type="cassini.NextBlockPrefetcher">
-		<link name=cpu_cache_link port=cpuLink latency=$lat />
-		<link name=pref_cpu_cache_link port=cacheCPULink latency=$lat />
-		<link name=pref_cache_bus_link port=cacheMemoryLink latency=$lat />
-		<link name=cache_bus_link port=memoryLink latency=$lat />
-
-		<params>
-			<pending>16</pending>
-			<debug>1</debug>
-		</params>
 	</component>
 
 	<component name="l1cache" type="memHierarchy.Cache">
@@ -44,9 +32,10 @@
 			<blocksize> 64 </blocksize>
 			<access_time> 2 ns</access_time>
 			<num_upstream> 1 </num_upstream>
+			<prefetcher> cassini.NextBlockPrefetcher </prefetcher>
 		</params>
-		<link name=pref_cpu_cache_link port=upstream0 latency=$lat />
-		<link name=pref_cache_bus_link port=snoop_link latency=$buslat />
+		<link name=cpu_cache_link port=upstream0 latency=$lat />
+		<link name=cache_bus_link port=snoop_link latency=$buslat />
 	</component>
 
 

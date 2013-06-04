@@ -50,7 +50,7 @@ static const ElementInfoComponent components[] = {
 
 extern "C" {
     ElementLibraryInfo cassini_eli = {
-        "Cassini",
+        "cassini",
         "Cassini Uncore Components",
         components,
     };
