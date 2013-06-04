@@ -10,66 +10,28 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/memEvent.h>
+#include <sst/elements/memHierarchy/cacheListener.h>
 
 using namespace SST;
 using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 using namespace std;
 
 namespace SST {
 namespace Cassini {
 
-typedef struct {
-	Addr memAddr;
-	int size;
-	int evID;
-} RequestEntry;
+class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
+    public:
+	NextBlockPrefetcher(Params& params);
+        ~NextBlockPrefetcher();
 
-class NextBlockPrefetcher : public SST::Component {
+        void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr);
+        void registerResponseCallback(const SST::Component* owner, void (*callee)(MemEvent* memEvent));
 
-	public:
-		NextBlockPrefetcher(SST::ComponentId_t id, SST::Component::Params_t& params);
-		NextBlockPrefetcher(const NextBlockPrefetcher&);
-		void operator=(const NextBlockPrefetcher&);
-
-		bool clockTick(Cycle_t curCycle);
-		void finish();
-
-	private:
-		SST::Link* cpuLink;
-		SST::Link* memoryLink;
-
-		SST::Link* cacheCPULink;
-		SST::Link* cacheMemoryLink;
-
-		set<Addr> pendingPrefAddr;
-		uint32_t maximumPending;
-		uint32_t blockSize;
-		uint32_t blocksAhead;
-		uint64_t maxAddr;
-
-		int debugLevel;
-
-		void handleCPULinkEvent(SST::Event* event);
-		void handleMemoryLinkEvent(SST::Event* event);
-
-		void handleCacheToCPUEvent(SST::Event* event);
-		void handleCacheToMemoryEvent(SST::Event* event);
-
-  		friend class boost::serialization::access;
-  		template<class Archive>
-  		void save(Archive & ar, const unsigned int version) const
-  		{
-	            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-        	}
-
-  		template<class Archive>
-  		void load(Archive & ar, const unsigned int version) 
-  		{
-            		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
-  		}
-
-  		BOOST_SERIALIZATION_SPLIT_MEMBER()
-	};
+    private:
+	std::vector<std::pair<const SST::Component*, void (*)(MemEvent*)> > registeredCallbacks;
+	uint64_t blockSize;
+};
 
 }
 }

@@ -10,6 +10,8 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcassini.la
 libcassini_la_SOURCES = \
 	cassini.cc \
+	strideprefetch.cc \
+	strideprefetch.h \
 	nbprefetch.cc \
 	nbprefetch.h 
 
