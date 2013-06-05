@@ -552,7 +552,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
   {
     finishingarr.push_back(arevent);
     FinalTimeEvent* fte = new FinalTimeEvent();
-    fte->forceExecute = true;
+    fte->forceExecute = useYumYumSimulationKill;	// due to a race condition, we may need to force this FTE if we're still expecting jobs
     selfLink->send(0, fte); //send back an event at the same time so we know it finished 
   }
   else
