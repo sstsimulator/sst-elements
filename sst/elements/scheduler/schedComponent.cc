@@ -191,7 +191,6 @@ schedComponent::schedComponent() :
 
 void schedComponent::readJobs(){
   ifstream input;
- 
   input.open( jobListFileName.c_str() );
  
   if(!input.is_open())
@@ -214,6 +213,7 @@ void schedComponent::readJobs(){
       newJobLine( line );
     }
   }
+
   input.close();
 
 }
@@ -552,6 +552,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev) {
   {
     finishingarr.push_back(arevent);
     FinalTimeEvent* fte = new FinalTimeEvent();
+    fte->forceExecute = true;
     selfLink->send(0, fte); //send back an event at the same time so we know it finished 
   }
   else
