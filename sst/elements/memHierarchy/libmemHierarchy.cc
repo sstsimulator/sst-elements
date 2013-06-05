@@ -83,8 +83,9 @@ static const ElementInfoParam cache_params[] = {
 };
 
 static const ElementInfoParam bus_params[] = {
-    {"numPorts",    "Number of Ports on the bus."},
-    {"busDelay",    "Delay time for the bus."},
+    {"numPorts",        "Number of Ports on the bus."},
+    {"busDelay",        "Delay time for the bus."},
+    {"atomicDelivery",  "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy."},
     {NULL, NULL}
 };
 

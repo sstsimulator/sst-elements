@@ -34,6 +34,7 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 static const LinkId_t BUS_INACTIVE = (LinkId_t)(-2);
+const char Bus::BUS_INFO_STR[] = "SST::MemHierarchy::Bus::Info:";
 
 Bus::Bus(ComponentId_t id, Params_t& params) :
 	Component(id)
@@ -48,6 +49,8 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	std::string delay = params.find_string("busDelay", "100 ns");
 	delayTC = registerTimeBase(delay, false);
 	busDelay = 1;
+
+    atomicDelivery = params.find_integer("atomicDelivery", 0) != 0;
 
 	ports = new SST::Link*[numPorts];
 
@@ -78,8 +81,12 @@ Bus::Bus() :
 void Bus::init(unsigned int phase)
 {
 	if ( !phase ) {
+        char buf[512];
+        sprintf(buf, "%s\tNumACKPeers: %d", BUS_INFO_STR, atomicDelivery ? 1 : numPorts);
+        std::string busInfo(buf);
 		for ( int i = 0 ; i < numPorts ; i++ ) {
 			ports[i]->sendInitData(new StringEvent("SST::Interfaces::MemEvent"));
+            ports[i]->sendInitData(new StringEvent(busInfo));
 		}
 	}
 

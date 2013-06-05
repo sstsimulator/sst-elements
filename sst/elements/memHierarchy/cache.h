@@ -12,6 +12,7 @@
 #ifndef _CACHE_H
 #define _CACHE_H
 
+#include <sstream>
 #include <deque>
 #include <map>
 #include <list>
@@ -31,6 +32,7 @@
 
 #include "cacheListener.h"
 #include "memNIC.h"
+#include "bus.h"
 
 
 using namespace SST::Interfaces;
@@ -194,7 +196,7 @@ private:
         bool canCancel;
 
         Invalidation() :
-            waitingACKs(0), busEvent(NULL), block(NULL), canCancel(true)
+            waitingACKs(0), issuingEvent(0,-1), busEvent(NULL), block(NULL), canCancel(true)
         { }
     };
 
@@ -246,16 +248,35 @@ private:
         {
             return ((ev->getID().first & 0xffffffff) << 32) | ev->getID().second;
         }
+
 	public:
 		BusQueue(void) :
-			comp(NULL), link(NULL)
+			comp(NULL), link(NULL), numPeers(0)
 		{ }
 
 		BusQueue(Cache *comp, SST::Link *link) :
-			comp(comp), link(link)
+			comp(comp), link(link), numPeers(0)
 		{ }
 
-		void setup(Cache *_comp, SST::Link *_link) {
+        void init(const std::string &infoStr)
+        {
+            std::istringstream is(infoStr);
+            std::string header;
+            is >> header;
+            assert(!header.compare(Bus::BUS_INFO_STR));
+            std::string tag;
+            is >> tag;
+            if ( !tag.compare("NumACKPeers:") ) {
+                is >> numPeers;
+            } else {
+                numPeers = 1;
+            }
+        }
+
+        int getNumPeers(void) const { return numPeers; }
+
+		void setup(Cache *_comp, SST::Link *_link)
+        {
 			comp = _comp;
 			link = _link;
 		}
@@ -331,6 +352,7 @@ private:
 		SST::Link *link;
 		std::list<MemEvent*> queue;
 		std::map<MemEvent*, BusHandlers> map;
+        int numPeers;
 
 	};
 
@@ -395,7 +417,7 @@ private:
 	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction, bool cancelable = true);
 	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction, bool cancelable = true);
 	void loadBlock(MemEvent *ev, SourceType_t src);
-    std::pair<LoadInfo_t*, bool> initLoad(MemEvent *ev, SourceType_t src);
+    std::pair<LoadInfo_t*, bool> initLoad(Addr addr, MemEvent *ev, SourceType_t src);
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
 	void finishLoadBlockBus(BusHandlerArgs &args);
 
@@ -404,7 +426,6 @@ private:
     void prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev);
 	void finishBusSupplyData(BusHandlerArgs &args);
 	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
-	void finishSupplyEvent(MemEvent *origEV, CacheBlock *block, SourceType_t src);
 	void handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstream);
     void sendInvalidateACK(MemEvent *ev, SourceType_t src);
 
@@ -419,9 +440,10 @@ private:
 	void finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock);
 
     void handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated);
-    void fetchBlock(MemEvent *ev, CacheBlock *block);
+    void fetchBlock(MemEvent *ev, CacheBlock *block, SourceType_t src);
 
     void handleNACK(MemEvent *ev, SourceType_t src);
+    void respondNACK(MemEvent *ev, SourceType_t src);
 
     void handlePendingEvents(CacheRow *row, CacheBlock *block);
 	void updateBlock(MemEvent *ev, CacheBlock *block);

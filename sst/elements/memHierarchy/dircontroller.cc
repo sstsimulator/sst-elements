@@ -67,6 +67,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
     myInfo.type = MemNIC::TypeDirectoryCtrl;
     myInfo.typeInfo.dirctrl.rangeStart = addrRangeStart;
     myInfo.typeInfo.dirctrl.rangeEnd = addrRangeEnd;
+    myInfo.typeInfo.dirctrl.interleaveSize = interleaveSize;
+    myInfo.typeInfo.dirctrl.interleaveStep = interleaveStep;
     network = new MemNIC(this, myInfo,
             new Event::Handler<DirectoryController>(this,
                 &DirectoryController::handlePacket));
@@ -102,22 +104,24 @@ void DirectoryController::handleMemoryResponse(SST::Event *event)
     if ( memReqs.find(ev->getResponseToID()) != memReqs.end() ) {
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
+
         if ( ev->getCmd() == SupplyData ) {
             // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
             assert(entry);
+            entry->inController = true;
             advanceEntry(entry, ev);
         } else if ( ev->getCmd() == WriteResp ) {
             // Final update complete.  Clear our status
             DirEntry *entry = getDirEntry(targetBlock);
-            assert(entry);
-            if ( entry->activeReq ) {
-                resetEntry(entry);
-            }
-            if ( entry->countRefs() == 0 ) {
-                // Is empty, let's purge
-                DPRINTF("Entry for 0x%"PRIx64" has no referenes - purging\n", targetBlock);
-                delete entry;
+            if ( entry && !entry->activeReq ) {
+                entry->inController = false;
+                if ( entry->countRefs() == 0 ) {
+                    // Is empty, let's purge
+                    DPRINTF("Entry for 0x%"PRIx64" has no referenes - purging\n", targetBlock);
+                    directory.erase(entry->baseAddr);
+                    delete entry;
+                }
             }
         } else {
             _abort(DirectoryController, "Received unexpected message from Memory!\n");
@@ -201,33 +205,49 @@ bool DirectoryController::processPacket(MemEvent *ev)
 
     /* New Request */
 
+    DPRINTF("Entry 0x%"PRIx64" not in progress.\n", ev->getAddr());
     switch(ev->getCmd()) {
     case SupplyData: {
         /* May be a response to a Fetch/FetchInvalidate
          * May be a writeback
          */
         assert(entry);
-        DPRINTF("Entry 0x%"PRIx64" not in progress.  Requesting from memory.\n", entry->baseAddr);
         entry->activeReq = ev;
-        entry->nextFunc = &DirectoryController::handleExclusiveEviction;
-        requestDirEntryFromMemory(entry);
+        if ( entry->inController ) {
+            handleWriteback(entry, ev);
+        } else {
+            DPRINTF("Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
+            entry->nextFunc = &DirectoryController::handleWriteback;
+            requestDirEntryFromMemory(entry);
+        }
         break;
     }
     case RequestData: {
         if ( !entry ) {
             entry = createDirEntry(ev->getAddr());
+            entry->inController = true;
         }
-        DPRINTF("Entry 0x%"PRIx64" not in progress.  Requesting from memory.\n", entry->baseAddr);
         entry->activeReq = ev;
-        entry->nextFunc = &DirectoryController::handleRequestData;
-        requestDirEntryFromMemory(entry);
+        if ( entry->inController ) {
+            handleRequestData(entry, ev);
+        } else {
+            DPRINTF("Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
+            entry->nextFunc = &DirectoryController::handleRequestData;
+            requestDirEntryFromMemory(entry);
+        }
         break;
     }
     case Invalidate: {
         assert(entry);
+        assert(!entry->dirty);
         entry->activeReq = ev;
-        entry->nextFunc = &DirectoryController::handleInvalidate;
-        requestDirEntryFromMemory(entry);
+        if ( entry->inController ) {
+            handleInvalidate(entry, ev);
+        } else {
+            DPRINTF("Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
+            entry->nextFunc = &DirectoryController::handleInvalidate;
+            requestDirEntryFromMemory(entry);
+        }
         break;
     }
     default:
@@ -482,13 +502,13 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 
 
 
-void DirectoryController::handleExclusiveEviction(DirEntry *entry, MemEvent *ev)
+void DirectoryController::handleWriteback(DirEntry *entry, MemEvent *ev)
 {
     DPRINTF("Entry 0x%"PRIx64" loaded.  Performing writeback of 0x%"PRIx64" for %s\n", entry->baseAddr, entry->activeReq->getAddr(), entry->activeReq->getSrc().c_str());
     assert(entry->dirty);
     assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
 	entry->dirty = false;
-	entry->sharers[node_id(ev->getSrc())] = false;
+	entry->sharers[node_id(ev->getSrc())] = true;
     writebackData(entry->activeReq);
 	updateEntryToMemory(entry);
 }
@@ -558,9 +578,8 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry)
     DPRINTF("Updating entry for 0x%"PRIx64" to memory (%"PRIu64", %d)\n", entry->baseAddr, me->getID().first, me->getID().second);
 	me->setSize((numTargets+1)/8 +1);
     memReqs[me->getID()] = entry->baseAddr;
-    entry->nextCommand = WriteResp;
-    entry->waitingOn = "memory";
-    entry->lastRequest = me->getID();
+
+    resetEntry(entry);
 
 	memLink->send(me);
 }

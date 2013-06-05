@@ -39,7 +39,7 @@ class DirectoryController : public Component {
 	typedef void(DirectoryController::*ProcessFunc)(DirEntry *entry, MemEvent *new_ev);
 
 	struct DirEntry {
-		/* First 3 items are bookkeeping for in-progress commands */
+		/* These items are bookkeeping for in-progress commands */
 		MemEvent *activeReq;
 		ProcessFunc nextFunc;
         std::string waitingOn; // waiting to hear from this source
@@ -47,6 +47,7 @@ class DirectoryController : public Component {
         MemEvent::id_type lastRequest;  // ID of message we're wanting a response to
         static const MemEvent::id_type NO_LAST_REQUEST;
 		uint32_t waitingAcks;
+        bool inController; // Whether this is present in the controller, or needs to be fetched
 
 		Addr baseAddr;
 
@@ -59,6 +60,7 @@ class DirectoryController : public Component {
 			nextFunc = NULL;
             lastRequest = NO_LAST_REQUEST;
 			waitingAcks = 0;
+            inController = true;
 			baseAddr = address;
 			dirty = false;
 			sharers.resize(bitlength);
@@ -129,7 +131,7 @@ class DirectoryController : public Component {
 	void sendRequestedData(DirEntry* entry, MemEvent *new_ev);
 	void getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev);
 
-	void handleExclusiveEviction(DirEntry *entry, MemEvent *ev);
+	void handleWriteback(DirEntry *entry, MemEvent *ev);
 
 	void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 

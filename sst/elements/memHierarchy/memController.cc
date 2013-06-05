@@ -9,6 +9,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sstream>
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -29,6 +30,7 @@
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "memController.h"
+#include "bus.h"
 
 #define DPRINTF( fmt, args...) __DBG( DBG_MEMORY, Memory, "%s: " fmt, getName().c_str(), ## args )
 
@@ -129,6 +131,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
                 new Event::Handler<MemController>(this, &MemController::handleEvent));
     }
 
+    respondToInvalidates = false;
 }
 
 
@@ -163,6 +166,25 @@ void MemController::init(unsigned int phase)
                 }
             } else {
                 printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+            }
+        } else {
+            StringEvent *se = dynamic_cast<StringEvent*>(ev);
+            if ( se ) {
+                if ( se->getString().find(Bus::BUS_INFO_STR) != std::string::npos ) {
+                    /* Determine if we are to participate in ACK'ing Invalidates */
+                    std::istringstream is(se->getString());
+                    std::string header;
+                    is >> header;
+                    assert(!header.compare(Bus::BUS_INFO_STR));
+                    std::string tag;
+                    is >> tag;
+                    int numPeers = 1;
+                    if ( !tag.compare("NumACKPeers:") ) {
+                        is >> numPeers;
+                    }
+
+                    respondToInvalidates = (numPeers > 1);
+                }
             }
         }
         delete ev;
@@ -229,6 +251,17 @@ void MemController::handleEvent(SST::Event *event)
         break;
     case BusClearToSend:
         if ( to_me ) sendBusPacket();
+        break;
+    case Invalidate:
+        if ( respondToInvalidates ) {
+            /* We participate, but only by acknoweldging the request */
+            DRAMReq *ackReq = new DRAMReq(ev, requestSize);
+            requests.push_back(ackReq);
+            ackReq->respEvent = ev->makeResponse(this);
+            ackReq->isACK = true;
+            ackReq->status = DRAMReq::RETURNED;
+            sendResponse(ackReq);
+        }
         break;
     default:
         /* Ignore */

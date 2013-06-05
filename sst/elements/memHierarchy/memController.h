@@ -56,6 +56,7 @@ private:
         MemEvent *respEvent;
         bool isWrite;
         bool canceled;
+        bool isACK;
 
         size_t size;
         size_t amt_in_process;
@@ -94,14 +95,9 @@ private:
             delete reqEvent;
         }
 
-        bool canSatisfy(const MemEvent *ev)
-        {
-            return ((reqEvent->getAddr() <= ev->getAddr()) &&
-                    (reqEvent->getAddr()+reqEvent->getSize() >= (ev->getAddr() + ev->getSize())));
-        }
-
         bool isSatisfiedBy(const MemEvent *ev)
         {
+            if ( isACK ) return false;
             return ((reqEvent->getAddr() >= ev->getAddr()) &&
                     (reqEvent->getAddr()+reqEvent->getSize() <= (ev->getAddr() + ev->getSize())));
         }
@@ -168,6 +164,7 @@ private:
     size_t numPages;
     Addr interleaveSize;
     Addr interleaveStep;
+    bool respondToInvalidates;
 
 #if defined(HAVE_LIBDRAMSIM)
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);

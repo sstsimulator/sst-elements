@@ -32,6 +32,8 @@ namespace MemHierarchy {
 class Bus : public SST::Component {
 public:
 
+    static const char BUS_INFO_STR[];
+
 	Bus(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init(unsigned int phase);
 
@@ -63,6 +65,7 @@ private:
 
 
 	int numPorts;
+    bool atomicDelivery;
     std::pair<LinkId_t, Addr> activePort;
 	bool busBusy;
 	TimeConverter *delayTC;

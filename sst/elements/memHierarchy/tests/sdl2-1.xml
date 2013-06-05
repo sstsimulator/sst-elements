@@ -49,6 +49,7 @@
 		<params>
 			<numPorts> 3 </numPorts>
 			<busDelay> 20 ns </busDelay>
+            <atomicDelivery> 1 </atomicDelivery>
 		</params>
 		<link name=l1cache_bus_link port=port0 latency=$buslat />
 		<link name=l2cache_bus_link port=port1 latency=$buslat />
