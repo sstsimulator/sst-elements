@@ -16,17 +16,16 @@ load_NextBlockPrefetcher(Params& params)
     return new NextBlockPrefetcher(params);
 }
 
-static Component*
-create_StridePrefetcher(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+static Module*
+load_StridePrefetcher(Params& params)
 {
-    return new StridePrefetcher( id, params );
+    return new StridePrefetcher(params);
 }
 
-static const ElementInfoParam component_params[] = {
+/*static const ElementInfoParam component_params[] = {
     {"pending", "Maximum pending prefetch requests which can be in flight."},
     { NULL, NULL }
-};
+};*/
 
 static const ElementInfoModule modules[] = {
     { "NextBlockPrefetcher",
@@ -35,15 +34,11 @@ static const ElementInfoModule modules[] = {
       load_NextBlockPrefetcher,
       NULL,
     },
-    { NULL, NULL, NULL, NULL, NULL }
-};
-
-static const ElementInfoComponent components[] = {
     { "StridePrefetcher",
-      "Prefetches blocks based on stride accesses",
+      "Creates a prefetch engine which automatically recognizes strides and pre-loads blocks of data",
       NULL,
-      create_StridePrefetcher,
-      component_params
+      load_StridePrefetcher,
+      NULL,
     },
     { NULL, NULL, NULL, NULL, NULL }
 };
@@ -60,7 +55,7 @@ extern "C" {
     ElementLibraryInfo cassini_eli = {
         "Cassini",
         "Cassini Uncore Processor Components",
-        components,
+        NULL, //components,
         NULL,
 	NULL,
 	modules,
