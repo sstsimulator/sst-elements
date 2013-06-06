@@ -32,6 +32,10 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 	const SST::Component* owner;
         std::vector<Event::HandlerBase*> registeredCallbacks;
         uint64_t blockSize;
+	Addr* recentAddrList;
+	uint32_t recentAddrListCount;
+	uint32_t nextRecentAddressIndex;
+
 };
 
 }
