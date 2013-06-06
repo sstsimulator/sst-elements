@@ -34,49 +34,49 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class GranularMBSAllocator : public MBSAllocator {
-  public: 
-    GranularMBSAllocator(MachineMesh* m, int x, int y, int z);
+        class GranularMBSAllocator : public MBSAllocator {
+            public: 
+                GranularMBSAllocator(MachineMesh* m, int x, int y, int z);
 
-    string getSetupInfo(bool comment);
+                string getSetupInfo(bool comment);
 
-    GranularMBSAllocator(vector<string>* params, Machine* mach);
+                GranularMBSAllocator(vector<string>* params, Machine* mach);
 
-    void initialize(MeshLocation* dim, MeshLocation* off);
+                void initialize(MeshLocation* dim, MeshLocation* off);
 
-    /**
-     * The new mergeAll, with start with the given rank, and scan all the ranks below it (descending).
-     * mergeAll with make 3 passes for each rank
-     */
-    bool mergeAll();
+                /**
+                 * The new mergeAll, with start with the given rank, and scan all the ranks below it (descending).
+                 * mergeAll with make 3 passes for each rank
+                 */
+                bool mergeAll();
 
-    /**
-     * returns the next block, by looking in x,y,z directions in the order depending on a given d
-     */
-    Block* nextBlock(int d, Block* first);
+                /**
+                 * returns the next block, by looking in x,y,z directions in the order depending on a given d
+                 */
+                Block* nextBlock(int d, Block* first);
 
-    /**
-     * Return a block that is the given blocks partner in the x direction.
-     */
-    Block* lookX(Block* b);
+                /**
+                 * Return a block that is the given blocks partner in the x direction.
+                 */
+                Block* lookX(Block* b);
 
-    Block* lookY(Block* b);
+                Block* lookY(Block* b);
 
-    Block* lookZ(Block* b);
+                Block* lookZ(Block* b);
 
-    /**
-     * Attempts to perform a get operation on a set. Returns null if the block is not found
-     * This method is needed because Block.equals() is not really equals, but really similarEnough()
-     * We need to get the block from the FBR because it comes with the parent/children hierarchy.
-     */
-    Block* FBRGet(Block* needle);
+                /**
+                 * Attempts to perform a get operation on a set. Returns null if the block is not found
+                 * This method is needed because Block.equals() is not really equals, but really similarEnough()
+                 * We need to get the block from the FBR because it comes with the parent/children hierarchy.
+                 */
+                Block* FBRGet(Block* needle);
 
-    Block* mergeBlocks(Block* first, Block* second);
+                Block* mergeBlocks(Block* first, Block* second);
 
-};
+        };
 
-}
+    }
 }
 #endif

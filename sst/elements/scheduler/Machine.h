@@ -21,40 +21,42 @@
 using namespace std;
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class AllocInfo;
+        class AllocInfo;
 
-class Machine {
- public:
+        class Machine{
+            public:
 
-  virtual ~Machine() {}
+                virtual ~Machine() {}
 
-  virtual string getSetupInfo(bool comment) = 0;
+                virtual string getSetupInfo(bool comment) = 0;
 
-  int getNumFreeProcessors() {
-    return numAvail;
-  }
+                int getNumFreeProcessors() 
+                {
+                    return numAvail;
+                }
 
-  int getNumProcs() {
-    return numProcs;
-  }
+                int getNumProcs() 
+                {
+                    return numProcs;
+                }
 
-  virtual void reset() = 0;
+                virtual void reset() = 0;
 
-  virtual void allocate(AllocInfo* allocInfo) = 0;
+                virtual void allocate(AllocInfo* allocInfo) = 0;
 
-  virtual void deallocate(AllocInfo* allocInfo) = 0;
+                virtual void deallocate(AllocInfo* allocInfo) = 0;
 
- protected:
-    int numProcs;          //total number of processors
-    int numAvail;          //number of available processors
+            protected:
+                int numProcs;          //total number of processors
+                int numAvail;          //number of available processors
 
-    schedComponent* sc;    //interface to rest of simulator
-};
+                schedComponent* sc;    //interface to rest of simulator
+        };
 
-Machine* getMachine();     //defined in Main.cc
+        Machine* getMachine();     //defined in Main.cc
 
-}
+    }
 }
 #endif

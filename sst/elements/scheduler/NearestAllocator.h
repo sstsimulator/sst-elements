@@ -45,45 +45,45 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class NearestAllocator : public Allocator {
+        class NearestAllocator : public Allocator {
 
-  private:
-    //way to generate list of possible centers:
-    CenterGenerator* centerGenerator;
+            private:
+                //way to generate list of possible centers:
+                CenterGenerator* centerGenerator;
 
-    //how to find candidate points from a center:
-    PointCollector* pointCollector;
+                //how to find candidate points from a center:
+                PointCollector* pointCollector;
 
-    //how we evaluate a possible allocation:
-    Scorer* scorer;
+                //how we evaluate a possible allocation:
+                Scorer* scorer;
 
-    string configName;
+                string configName;
 
-  public:
-    NearestAllocator(MachineMesh* m, CenterGenerator* cg,
-        PointCollector* pc, Scorer* s,string name); 
+            public:
+                NearestAllocator(MachineMesh* m, CenterGenerator* cg,
+                                 PointCollector* pc, Scorer* s,string name); 
 
-    NearestAllocator(vector<string>* params, Machine* mach);
+                NearestAllocator(vector<string>* params, Machine* mach);
 
-    string getParamHelp();
+                string getParamHelp();
 
-    string getSetupInfo(bool comment);
+                string getSetupInfo(bool comment);
 
-    AllocInfo* allocate(Job* job);
+                AllocInfo* allocate(Job* job);
 
-    AllocInfo* allocate(Job* job, vector<MeshLocation*>* available); 
+                AllocInfo* allocate(Job* job, vector<MeshLocation*>* available); 
 
-    void genAlgAllocator(MachineMesh* m);
+                void genAlgAllocator(MachineMesh* m);
 
-    void MMAllocator(MachineMesh* m); 
+                void MMAllocator(MachineMesh* m); 
 
-    void OldMC1x1Allocator(MachineMesh* m); 
+                void OldMC1x1Allocator(MachineMesh* m); 
 
-    void MC1x1Allocator(MachineMesh* m); 
-};
+                void MC1x1Allocator(MachineMesh* m); 
+        };
 
-}
+    }
 }
 #endif

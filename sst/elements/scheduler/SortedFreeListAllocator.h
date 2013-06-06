@@ -28,23 +28,24 @@
 #include "misc.h"
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class SortedFreeListAllocator : public LinearAllocator {
-  public:
-    SortedFreeListAllocator(MachineMesh* m, string filename) ;
+        class SortedFreeListAllocator : public LinearAllocator {
+            public:
+                SortedFreeListAllocator(MachineMesh* m, string filename);
 
-    SortedFreeListAllocator(vector<string>* params, Machine* mach);
+                SortedFreeListAllocator(vector<string>* params, Machine* mach);
 
-    string getParamHelp(){
-      return "[<file>]\n\tfile: Path to file giving the curve";
+                string getParamHelp()
+                {
+                    return "[<file>]\n\tfile: Path to file giving the curve";
+                }
+                string getSetupInfo(bool comment);
+
+                AllocInfo* allocate(Job* job);
+        };
+
+
     }
-    string getSetupInfo(bool comment);
-
-    AllocInfo* allocate(Job* job) ;
-};
-
-
-}
 }
 #endif

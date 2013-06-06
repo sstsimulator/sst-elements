@@ -33,82 +33,82 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class MBSAllocator : public Allocator {
+        class MBSAllocator : public Allocator {
 
-  protected:
-    vector<set<Block*, Block>*>* FBR;
-    vector<int>* ordering;
+            protected:
+                vector<set<Block*, Block>*>* FBR;
+                vector<int>* ordering;
 
-    //We know it must be a mesh, so make it one so we can access the goods.
-    MachineMesh* meshMachine;
+                //We know it must be a mesh, so make it one so we can access the goods.
+                MachineMesh* meshMachine;
 
 
-  public:
-    MBSAllocator(Machine* mach);
-    MBSAllocator(MachineMesh* m, int x, int y, int z);
+            public:
+                MBSAllocator(Machine* mach);
+                MBSAllocator(MachineMesh* m, int x, int y, int z);
 
-    MBSAllocator(vector<string>* params, Machine* mach);
+                MBSAllocator(vector<string>* params, Machine* mach);
 
-    string getSetupInfo(bool comment);
+                string getSetupInfo(bool comment);
 
-    string getParamHelp();
+                string getParamHelp();
 
-    /**
-     * Initialize will fill in the FBR with z number of blocks (1 for
-     * each layer) that fit into the given x,y dimensions.  It is
-     * assumed that those dimensions are non-zero.
-     */
-    void initialize(MeshLocation* dim, MeshLocation* off);
+                /**
+                 * Initialize will fill in the FBR with z number of blocks (1 for
+                 * each layer) that fit into the given x,y dimensions.  It is
+                 * assumed that those dimensions are non-zero.
+                 */
+                void initialize(MeshLocation* dim, MeshLocation* off);
 
-    /**
-     * Creates a rank in both the FBR, and in the ordering.
-     * If a rank already exists, it does not create a new rank,
-     * it just returns the one already there
-     */
-    int createRank(int size);
+                /**
+                 * Creates a rank in both the FBR, and in the ordering.
+                 * If a rank already exists, it does not create a new rank,
+                 * it just returns the one already there
+                 */
+                int createRank(int size);
 
-    /**
-     *  Essentially this will reinitialize a block, except add the
-     *  children to the b.children, then recurse
-     */
-    void createChildren(Block* b);
+                /**
+                 *  Essentially this will reinitialize a block, except add the
+                 *  children to the b.children, then recurse
+                 */
+                void createChildren(Block* b);
 
-    set<Block*, Block>* splitBlock (Block* b) ;
+                set<Block*, Block>* splitBlock (Block* b) ;
 
-    MBSMeshAllocInfo* allocate(Job* job);
+                MBSMeshAllocInfo* allocate(Job* job);
 
-    /**
-     * Calculates the RBR, which is a map of ranks to number of blocks at that rank
-     */
-    map<int,int>* factorRequest(Job* j);
+                /**
+                 * Calculates the RBR, which is a map of ranks to number of blocks at that rank
+                 */
+                map<int,int>* factorRequest(Job* j);
 
-    /**
-     * Breaks up a request for a block with a given rank into smaller request if able.
-     */
-    void splitRequest(map<int,int>* RBR, int rank);
+                /**
+                 * Breaks up a request for a block with a given rank into smaller request if able.
+                 */
+                void splitRequest(map<int,int>* RBR, int rank);
 
-    /**
-     * Determines whether a split up of a possible larger block was
-     * successful.  It begins looking at one larger than rank.
-     */
-    bool splitLarger(int rank);
+                /**
+                 * Determines whether a split up of a possible larger block was
+                 * successful.  It begins looking at one larger than rank.
+                 */
+                bool splitLarger(int rank);
 
-    void deallocate(AllocInfo* alloc);
+                void deallocate(AllocInfo* alloc);
 
-    void unallocate(MBSMeshAllocInfo* info);
+                void unallocate(MBSMeshAllocInfo* info);
 
-    void mergeBlock(Block* p);
+                void mergeBlock(Block* p);
 
-    void printRBR(map<int,int>* RBR);
+                void printRBR(map<int,int>* RBR);
 
-    void printFBR(string msg);
+                void printFBR(string msg);
 
-    string stringFBR();
+                string stringFBR();
 
-};
+        };
 
-}
+    }
 }
 #endif

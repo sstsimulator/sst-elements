@@ -32,24 +32,24 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
 
-class FirstFitAllocator : public LinearAllocator {
+        class FirstFitAllocator : public LinearAllocator {
 
-  public:
+            public:
 
-    FirstFitAllocator(vector<string>* params, Machine* mach);
+                FirstFitAllocator(vector<string>* params, Machine* mach);
 
-    string getParamHelp(){
-      return "[<file>]\n\tfile: Path to file giving the curve";
+                string getParamHelp(){
+                    return "[<file>]\n\tfile: Path to file giving the curve";
+                }
+
+                string getSetupInfo(bool comment);
+
+                AllocInfo* allocate(Job* job) ;
+        };
+
     }
-
-    string getSetupInfo(bool comment);
-
-    AllocInfo* allocate(Job* job) ;
-};
-
-}
 }
 #endif

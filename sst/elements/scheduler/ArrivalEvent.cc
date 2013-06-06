@@ -8,7 +8,7 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
-         
+
 #include "sst/core/serialization/element.h"
 
 #include "ArrivalEvent.h"
@@ -22,26 +22,26 @@
 using namespace SST::Scheduler;
 
 unsigned long ArrivalEvent::getTime() const {
-  return time;
+    return time;
 }
 
 int ArrivalEvent::getJobIndex() const {
-  return jobIndex;
+    return jobIndex;
 }
 
 void ArrivalEvent::happen(Machine* mach, Allocator* alloc, Scheduler* sched,
-			  Statistics* stats, Job* arrivingJob) {
-  sched -> jobArrives(arrivingJob, time, mach);
-  stats -> jobArrives(time);
+                          Statistics* stats, Job* arrivingJob) {
+    sched -> jobArrives(arrivingJob, time, mach);
+    stats -> jobArrives(time);
 
-  /* no longer tries to start job as we only try to start once all events that
-happen at the same time have been received and handled successfully.
-Only schedComponent knows this, so it is responsible for calling tryToStart
-for both arrival and completion events
+    /* no longer tries to start job as we only try to start once all events that
+       happen at the same time have been received and handled successfully.
+       Only schedComponent knows this, so it is responsible for calling tryToStart
+       for both arrival and completion events
 
-  AllocInfo* allocInfo;
-  do {
-    allocInfo = sched -> tryToStart(alloc, time, mach, stats);
-  } while(allocInfo != NULL);
-  */
+       AllocInfo* allocInfo;
+       do {
+       allocInfo = sched -> tryToStart(alloc, time, mach, stats);
+       } while(allocInfo != NULL);
+       */
 }

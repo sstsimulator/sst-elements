@@ -19,30 +19,30 @@
 #include <string>
 
 namespace SST {
-namespace Scheduler {
-
-enum CommunicationTypes { RETRIEVE_ID, START_FAULTING, LOG_JOB_START, UNREGISTER_YOURSELF, START_FILE_WATCH, START_NEXT_JOB };
-
-class CommunicationEvent : public SST::Event{
-  public:
-
-    CommunicationEvent( enum CommunicationTypes type ) : SST::Event(){
-      CommType = type;
-      reply = false;
+    namespace Scheduler {
+        
+            enum CommunicationTypes { RETRIEVE_ID, START_FAULTING, LOG_JOB_START, UNREGISTER_YOURSELF, START_FILE_WATCH, START_NEXT_JOB };
+            
+            class CommunicationEvent : public SST::Event{
+                public:
+                       
+                           CommunicationEvent( enum CommunicationTypes type ) : SST::Event(){
+                               CommType = type;
+                                   reply = false;
+                           }
+                       
+                           CommunicationEvent( enum CommunicationTypes type, void * payload ) : SST::Event(){
+                               CommType = type;
+                                   reply = false;
+                                   this->payload = payload;
+                           }
+                       
+                           enum CommunicationTypes CommType;
+                           bool reply;
+                           void * payload;
+            };
+        
     }
-
-    CommunicationEvent( enum CommunicationTypes type, void * payload ) : SST::Event(){
-      CommType = type;
-      reply = false;
-      this->payload = payload;
-    }
-
-    enum CommunicationTypes CommType;
-    bool reply;
-    void * payload;
-};
-
-}
 }
 #endif
 

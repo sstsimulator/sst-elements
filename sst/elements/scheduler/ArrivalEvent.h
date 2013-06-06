@@ -19,50 +19,50 @@
 #include <sst/core/event.h>
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class Machine;
-class Allocator;
-class Scheduler;
-class Statistics;
-class Job;
+        class Machine;
+        class Allocator;
+        class Scheduler;
+        class Statistics;
+        class Job;
 
-class ArrivalEvent : public SST::Event {
- public:
+        class ArrivalEvent : public SST::Event {
+            public:
 
-  ArrivalEvent(unsigned long time, int jobIndex) : SST::Event() {
-    this -> time = time;
-    this -> jobIndex = jobIndex;
-  }
+                ArrivalEvent(unsigned long time, int jobIndex) : SST::Event() {
+                    this -> time = time;
+                    this -> jobIndex = jobIndex;
+                }
 
-  virtual ~ArrivalEvent() {}
+                virtual ~ArrivalEvent() {}
 
-  virtual void happen(Machine* mach, Allocator* alloc, Scheduler* sched,
-		      Statistics* stats, Job* arrivingJob);
+                virtual void happen(Machine* mach, Allocator* alloc, Scheduler* sched,
+                                    Statistics* stats, Job* arrivingJob);
 
-  unsigned long getTime() const;
+                unsigned long getTime() const;
 
-  int getJobIndex() const;
+                int getJobIndex() const;
 
- protected:
+            protected:
 
-  unsigned long time;   //when the event occurs
+                unsigned long time;   //when the event occurs
 
- private:
+            private:
 
-  int jobIndex;
+                int jobIndex;
 
-  friend class boost::serialization::access;
-  template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
-    {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-      ar & BOOST_SERIALIZATION_NVP(time);
-      ar & BOOST_SERIALIZATION_NVP(jobIndex);
+                friend class boost::serialization::access;
+                template<class Archive>
+                    void serialize(Archive & ar, const unsigned int version )
+                    {
+                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+                        ar & BOOST_SERIALIZATION_NVP(time);
+                        ar & BOOST_SERIALIZATION_NVP(jobIndex);
+                    }
+        };
+
     }
-};
-
-}
 }
 #endif
 

@@ -46,36 +46,41 @@
 using namespace SST::Scheduler;
 
 
-RoundUpMBSAllocator::RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z) : GranularMBSAllocator(m,x,y,z) {
+RoundUpMBSAllocator::RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z) : GranularMBSAllocator(m, x, y, z) 
+{
 }
 
 string RoundUpMBSAllocator::getSetupInfo(bool comment){
-  string com;
-  if(comment) com="# ";
-  else com="";
-  return com+"Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
+    string com;
+    if (comment)  {
+        com="# ";
+    } else  {
+        com="";
+    }
+    return com + "Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
 }
 
-RoundUpMBSAllocator::RoundUpMBSAllocator(vector<string>* params, MachineMesh* mach) : GranularMBSAllocator(params, mach){
-
-//constructor is the same
+RoundUpMBSAllocator::RoundUpMBSAllocator(vector<string>* params, MachineMesh* mach) : GranularMBSAllocator(params, mach)
+{
+    //constructor is the same
 }
 
-MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job){
-  if (DEBUG) printf("Allocating %s\n",job->toString().c_str());
+MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job)
+{
+    if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
 
-  //a map of dimensions to numbers
-  map<int,int>* RBR = generateIdealRequest(job->getProcsNeeded());
-  if (DEBUG) printRBR(RBR);
+    //a map of dimensions to numbers
+    map<int,int>* RBR = generateIdealRequest(job -> getProcsNeeded());
+    if (DEBUG) printRBR(RBR);
 
-  //process the request, split stuff, and allocate stuff
-  MBSMeshAllocInfo* retVal = processRequest(RBR, job);
+    //process the request, split stuff, and allocate stuff
+    MBSMeshAllocInfo* retVal = processRequest(RBR, job);
 
-  if (DEBUG){
-    printFBR("all done");
-    printf("%s\n", retVal->toString().c_str());
-  }
-  return retVal;
+    if (DEBUG) {
+        printFBR("all done");
+        printf("%s\n", retVal -> toString().c_str());
+    }
+    return retVal;
 }
 
 /**
@@ -85,24 +90,24 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job){
  * @param procs the number of processors we are trying to allocate
  * @return an RBR which represents the ideal request for system.
  */
-map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs){
-  //make return value
-  map<int,int>* retVal = new map<int,int>();
+map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs)
+{
+    //make return value
+    map<int,int>* retVal = new map<int,int>();
 
-  //construct ideal request (round up)
-  int roundedIndex = 0;
-  while (roundedIndex <  (int)ordering->size() && ordering->at(roundedIndex) < procs){
-    roundedIndex++;
-  };
-  if (ordering->at(roundedIndex) < procs){
-    retVal->insert(pair<int,int>(
-          roundedIndex, 
-          (int) ceil(((double) procs)/((double) ordering->at(roundedIndex) )) ));
-  } else {
-    retVal->insert(pair<int,int>(roundedIndex, 1));
-  }
+    //construct ideal request (round up)
+    int roundedIndex = 0;
+    while (roundedIndex <  (int)ordering -> size() && ordering -> at(roundedIndex) < procs) {
+        roundedIndex++;
+    };
+    if (ordering -> at(roundedIndex) < procs){
+        retVal -> insert(pair<int,int>(roundedIndex, 
+                                       (int)ceil(((double) procs)/((double)ordering -> at(roundedIndex)))));
+    } else {
+        retVal -> insert(pair<int,int>(roundedIndex, 1));
+    }
 
-  return retVal;
+    return retVal;
 }
 
 /**
@@ -112,91 +117,95 @@ map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs){
  * @param job the job the request is for
  * @return what you need to send the Mesh object, to actually allocate the processors
  */
- MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* job){
-  //construct what we will eventually return
-  //TreeMap<int,int> retVal = new TreeMap<int,int>();
-  MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job);
+MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* job)
+{
+    //construct what we will eventually return
+    //TreeMap<int,int> retVal = new TreeMap<int,int>();
+    MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job);
 
-  int procs = 0;
+    int procs = 0;
 
-  //process all of the RBR
-  while (RBR->size() > 0){
-    //get the largest key entry in the RBR
-    int key = RBR->end()->first;
-    int value = RBR->find(key)->second;
+    //process all of the RBR
+    while (RBR -> size() > 0) {
+        //get the largest key entry in the RBR
+        int key = RBR -> end() -> first;
+        int value = RBR -> find(key) -> second;
 
-    if(DEBUG) printFBR("  trying to fit size blocks");
-    printf("RBR size %d\n", (int)RBR->size());
+        if (DEBUG) printFBR("  trying to fit size blocks");
+        printf("RBR size %d\n", (int)RBR -> size());
 
-    //if there exists blocks in FBR to support, add it
-    if (key >= (int)FBR->size())
-      error("key in RBR does not correspond to FBR");
+        //if there exists blocks in FBR to support, add it
+        if (key >= (int)FBR -> size())
+            error("key in RBR does not correspond to FBR");
 
-    int numberAvailable = FBR->at(key)->size();
+        int numberAvailable = FBR -> at(key) -> size();
 
-    //either make one available, by splitting a larger block
-    //or reduces the block sizes requested
-    if (numberAvailable == 0){
-      if (DEBUG) printf("Didn't find any available blocks of rank %d\n",key);
-      //try splitting a larger block
-      //but make sure that the larger block isn't already accounted for
-      if (splitLarger(key)){
-        numberAvailable = FBR->at(key)->size();
+        //either make one available, by splitting a larger block
+        //or reduces the block sizes requested
+        if (numberAvailable == 0) {
+            if (DEBUG) printf("Didn't find any available blocks of rank %d\n",key);
+            //try splitting a larger block
+            //but make sure that the larger block isn't already accounted for
+            if (splitLarger(key)) {
+                numberAvailable = FBR -> at(key) -> size();
 
-        if (DEBUG) printf("There are now %dblocks of rank %d\n", numberAvailable, key);
-      } else {
-        //reduce request
-        map<int,int>* reduced = reduceRequest(key, value);
-        //merge reduced back into RBR
-        for(map<int,int>::iterator entry = reduced->begin(); entry != reduced->end(); entry++){
-          if(RBR->count((entry->first)) == 0)
-            RBR->insert(pair<int,int>(entry->first, entry->second));
-          else
-            RBR->find(entry->first)->second += entry->second;
+                if (DEBUG)  {
+                    printf("There are now %dblocks of rank %d\n", numberAvailable, key);
+                }
+            } else {
+                //reduce request
+                map<int,int>* reduced = reduceRequest(key, value);
+                //merge reduced back into RBR
+                for (map<int,int>::iterator entry = reduced -> begin(); entry != reduced -> end(); entry++) {
+                    if (RBR -> count((entry -> first)) == 0) {
+                        RBR -> insert(pair<int,int>(entry -> first, entry -> second));
+                    } else {
+                        RBR -> find(entry -> first) -> second += entry -> second;
+                    }
+                }
+                //we've just eliminated all current blocks (because they have been reduced)
+                value = 0;
+                RBR -> erase(key);
+                RBR -> insert(pair<int,int>(key, 0)); //also zero out the RBR
+            }
         }
-        //we've just eliminated all current blocks (because they have been reduced)
-        value = 0;
-        RBR->erase(key);
-        RBR->insert(pair<int,int>(key, 0)); //also zero out the RBR
-      }
-    }
-    //since splitting may not have worked, we check again
-    if (numberAvailable > 0){
-      //add all you can
-      int toAssign = 0;
-      if (numberAvailable < value){
-        toAssign = numberAvailable;
-      } else {
-        toAssign = value;
-      }
-      //add if necessary
-      for(int assigned = 0; assigned < toAssign && value > 0; assigned++){
-        vector<Block*>* toAllocate = makeBlockAllocation(*(FBR->at(key)->begin()), job->getProcsNeeded()- procs);
+        //since splitting may not have worked, we check again
+        if (numberAvailable > 0) {
+            //add all you can
+            int toAssign = 0;
+            if (numberAvailable < value){
+                toAssign = numberAvailable;
+            } else {
+                toAssign = value;
+            }
+            //add if necessary
+            for (int assigned = 0; assigned < toAssign && value > 0; assigned++)
+            {
+                vector<Block*>* toAllocate = makeBlockAllocation(*(FBR -> at(key) -> begin()), job -> getProcsNeeded() - procs);
 
-        retVal = allocateBlocks(retVal, toAllocate, procs);
+                retVal = allocateBlocks(retVal, toAllocate, procs);
 
-        procs = tallyAllocated(retVal);
+                procs = tallyAllocated(retVal);
 
-        //update our value
-        value--;
+                //update our value
+                value--;
 
-        //end the entire loop if we have not allocated enough blocks
-        if (procs >= job->getProcsNeeded()){
-          RBR->clear();
-          value = 0;
+                //end the entire loop if we have not allocated enough blocks
+                if (procs >= job -> getProcsNeeded()){
+                    RBR -> clear();
+                    value = 0;
+                }
+            }
+            RBR -> erase(key);
+            RBR -> insert(pair<int,int>(key, value));
         }
-      }
-      RBR->erase(key);
-      RBR->insert(pair<int,int>(key, value));
+
+        //remove key from RBR, since we should be all done with it
+        //make progress in the loop
+        if (0 == value) RBR -> erase(key);
     }
 
-    //remove key from RBR, since we should be all done with it
-    //make progress in the loop
-    if (value == 0)
-      RBR->erase(key);
-  }
-
-  return retVal;
+    return retVal;
 }
 
 /**
@@ -207,48 +216,49 @@ map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs){
  * @param procs The number of processors we are trying to allocate
  * @return which blocks, out of those remaining from the given block's break up, are we going to use?
  */
- vector<Block*>* RoundUpMBSAllocator::partiallyAllocate(Block* block, int procs){
-  vector<Block*>* retVal = new vector<Block*>();
+vector<Block*>* RoundUpMBSAllocator::partiallyAllocate(Block* block, int procs)
+{
+    vector<Block*>* retVal = new vector<Block*>();
 
-  //keep track of the remaining procs after 
-  int procsLeft = procs;
+    //keep track of the remaining procs after 
+    int procsLeft = procs;
 
-  //remove the given block from the FBR
-  int blockRank = distance(ordering->begin(), find(ordering->begin(), ordering->end(), (block->size())));
-  FBR->at(blockRank)->erase(block);
-  //add its children to the FBR
-  set<Block*, Block>::iterator children = block->children->begin();
-  while (children != block->children->end()){
-    Block* next = *children;
-    children++;
-    int nextRank = distance(ordering->begin(), find(ordering->begin(), ordering->end(), next->size()));
-    FBR->at(nextRank)->insert(next);
-  }
-
-  //use children of the given block
-  children = block->children->begin();
-  while (children != block->children->end() && procsLeft > 0){
-    Block* child = *children;
-    children++;
-    if (child->size() > procsLeft){
-      vector<Block*>* newBlocks = partiallyAllocate(child, procsLeft);
-      //iterate over newBlocks adding to retVal
-      vector<Block*>::iterator it = newBlocks->begin();
-      while(it != newBlocks->end()){
-        Block* next = *it;
-        it++;
-        retVal->push_back(next);
-        //decreasing procsLeft
-        procsLeft -= next->size();
-      }
-    } else {
-      retVal->push_back(child); //TODO do I need to remove block from FBR here?
-      procsLeft -= child->size();
+    //remove the given block from the FBR
+    int blockRank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), (block -> size())));
+    FBR -> at(blockRank) -> erase(block);
+    //add its children to the FBR
+    set<Block*, Block>::iterator children = block -> children -> begin();
+    while (children != block -> children -> end()){
+        Block* next = *children;
+        children++;
+        int nextRank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), next -> size()));
+        FBR -> at(nextRank) -> insert(next);
     }
-  }
-  //if a smaller size of child is needed, recurse!
 
-  return retVal;
+    //use children of the given block
+    children = block -> children -> begin();
+    while (children != block -> children -> end() && procsLeft > 0) {
+        Block* child = *children;
+        children++;
+        if (child -> size() > procsLeft){
+            vector<Block*>* newBlocks = partiallyAllocate(child, procsLeft);
+            //iterate over newBlocks adding to retVal
+            vector<Block*>::iterator it = newBlocks -> begin();
+            while (it != newBlocks -> end()) {
+                Block* next = *it;
+                it++;
+                retVal -> push_back(next);
+                //decreasing procsLeft
+                procsLeft  -= next-> size();
+            }
+        } else {
+            retVal -> push_back(child); //TODO do I need to remove block from FBR here?
+            procsLeft  -= child-> size();
+        }
+    }
+    //if a smaller size of child is needed, recurse!
+
+    return retVal;
 }
 
 /**
@@ -257,13 +267,13 @@ map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs){
  * @param procsLeft how many processors we have left to allocate
  * @return a list of blocks (may be size 1) which we will allocate->
  */
- vector<Block*>* RoundUpMBSAllocator::makeBlockAllocation(Block* block, int procsLeft) {
-  if (block->size() > procsLeft){
-    return partiallyAllocate(block, procsLeft);
-  }
-  vector<Block*>* retVal = new vector<Block*>();
-  retVal->push_back(block);
-  return retVal;
+vector<Block*>* RoundUpMBSAllocator::makeBlockAllocation(Block* block, int procsLeft) {
+    if (block -> size() > procsLeft){
+        return partiallyAllocate(block, procsLeft);
+    }
+    vector<Block*>* retVal = new vector<Block*>();
+    retVal -> push_back(block);
+    return retVal;
 }
 
 /**
@@ -274,22 +284,23 @@ map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs){
  * @param allocated the number of processors allocated so far
  * @return the AllocInfo with the given blocks added in->
  */
- MBSMeshAllocInfo* RoundUpMBSAllocator::allocateBlocks(MBSMeshAllocInfo* retVal, vector<Block*>* blocks, int allocated){
-  for(vector<Block*>::iterator block = blocks->begin(); block != blocks->end(); block++){
-    int blockRank = distance(ordering->begin(), find(ordering->begin(), ordering->end(), (*block)->size()));
+MBSMeshAllocInfo* RoundUpMBSAllocator::allocateBlocks(MBSMeshAllocInfo* retVal, vector<Block*>* blocks, int allocated)
+{
+    for (vector<Block*>::iterator block = blocks -> begin(); block != blocks -> end(); block++) {
+        int blockRank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), (*block) -> size()));
 
-    retVal->blocks->insert(*block);
-    FBR->at(blockRank)->erase(*block);
+        retVal -> blocks -> insert(*block);
+        FBR -> at(blockRank) -> erase(*block);
 
-    set<MeshLocation*, MeshLocation>* blockprocs = (*block)->processors();
-    set<MeshLocation*, MeshLocation>::iterator procs = blockprocs->begin();
-    for (int i=allocated;procs != blockprocs->end();i++){
-      retVal->processors->at(i) = *procs;
-      ++procs;
-      allocated++;
+        set<MeshLocation*, MeshLocation>* blockprocs = (*block) -> processors();
+        set<MeshLocation*, MeshLocation>::iterator procs = blockprocs -> begin();
+        for (int i = allocated;procs != blockprocs -> end(); i++) {
+            retVal -> processors -> at(i) = *procs;
+            ++procs;
+            allocated++;
+        }
     }
-  }
-  return retVal;
+    return retVal;
 }
 
 /**
@@ -298,52 +309,57 @@ map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs){
  * @param value the number of blocks of rank key
  * @return a new RBR which the reduced blocks
  */
-  map<int,int>* RoundUpMBSAllocator::reduceRequest(int key, int value){
-    if (key <= 0)
-      error("can't factor a requested block of rank 0");
+map<int,int>* RoundUpMBSAllocator::reduceRequest(int key, int value)
+{
+    if (key <= 0) error("can't factor a requested block of rank 0");
 
     map<int,int>* retVal = new map<int,int>();
-    double size = ordering->at(key);
-    double smallerSize = ordering->at(key-1);
+    double size = ordering -> at(key);
+    double smallerSize = ordering -> at(key-1);
 
     //figure out how many smallerSizes go into the number of a regular sizes given
-    int numberOfSmaller = (int) (((double)size*value)/smallerSize);
-    if(retVal->count(key-1) == 0)
-      retVal->insert(pair<int,int>(key-1,numberOfSmaller));
-    else
-      retVal->find(key-1)->second += numberOfSmaller;
-        
-    if(retVal->count(key - 1) == 0)
-      retVal->insert(pair<int,int>(key - 1,numberOfSmaller));
-    else
-      retVal->find(key - 1)->second += numberOfSmaller;
+    int numberOfSmaller = (int) (((double)size * value) / smallerSize);
+    if (retVal -> count(key - 1) == 0) {
+        retVal->insert(pair<int,int>(key-1,numberOfSmaller));
+    } else {
+        retVal -> find(key - 1) -> second += numberOfSmaller;
+    }
+
+    if (0 == retVal -> count(key - 1)) {
+        retVal -> insert(pair<int,int>(key - 1,numberOfSmaller));
+    } else {
+        retVal -> find(key - 1) -> second += numberOfSmaller;
+    }
 
     //check if there is extra
     int remainder = (int) (size - (numberOfSmaller*smallerSize));
-    if (remainder > 0){
-      int smallerIndex = distance(ordering->begin(), find(ordering->begin(), ordering->end(), remainder));
-      if (smallerIndex == -1)
-        error("The remainder is not a block size! Oh No!");
-      if(retVal->count(smallerIndex) == 0)
-        retVal->insert(pair<int,int>(smallerIndex,1));
-      else
-        retVal->find(smallerIndex)->second += 1;
+    if (remainder > 0) {
+        int smallerIndex = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), remainder));
+        if (smallerIndex == -1) {
+            error("The remainder is not a block size!");
+        }
+        if (0 == retVal -> count(smallerIndex)) {
+            retVal -> insert(pair<int,int>(smallerIndex,1));
+        } else {
+            retVal -> find(smallerIndex) -> second += 1;
+        }
     }
 
     return retVal;
-  }
+}
 
 /**
  * Figure out how many processors we have allocate thus far
  * @param info the allocation we want to tally
  * @return the number of processors
  */
- int RoundUpMBSAllocator::tallyAllocated(MBSMeshAllocInfo* info){
-  int procs = 0;
-  set<Block*, Block>::iterator it = info->blocks->begin();
-  while (it != info->blocks->end()){
-    procs += (*it)->size();
-    ++it;
-  }
-  return procs;
+int RoundUpMBSAllocator::tallyAllocated(MBSMeshAllocInfo* info)
+{
+    int procs = 0;
+    set<Block*, Block>::iterator it = info -> blocks -> begin();
+    while (it != info -> blocks -> end()) {
+        procs += (*it) -> size();
+        ++it;
+    }
+    return procs;
 }

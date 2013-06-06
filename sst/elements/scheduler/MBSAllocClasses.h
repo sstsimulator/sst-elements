@@ -47,100 +47,109 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class Block : public binary_function<Block*,Block*,bool>{
-  public:
-    set<Block*, Block>* children;
-    Block* parent;
-    MeshLocation* dimension;
-    MeshLocation* location;
+        class Block : public binary_function<Block*,Block*,bool>{
+            public:
+                set<Block*, Block>* children;
+                Block* parent;
+                MeshLocation* dimension;
+                MeshLocation* location;
 
-    Block(){
-      //empty constructor, only to be used for comparator
+                Block()
+                {
+                    //empty constructor, only to be used for comparator
+                }
+
+                Block (MeshLocation* l, MeshLocation* d) 
+                {
+                    dimension = d;
+                    location = l;
+                    Block* BComp = new Block();
+                    children = new set<Block*, Block>(*BComp);
+                    parent = NULL;
+                }
+                Block (MeshLocation* l, MeshLocation* d, Block* p) 
+                {
+                    dimension = d;
+                    location = l;
+                    Block* BComp = new Block();
+                    children = new set<Block*, Block>(*BComp);
+                    parent = p;
+                }
+
+                /**
+                 * Returns all processors in this block
+                 */
+                set<MeshLocation*, MeshLocation>* processors()
+                {
+                    MeshLocation* MLComp = new MeshLocation(0,0,0);
+                    set<MeshLocation*, MeshLocation>* processors = new set<MeshLocation*, MeshLocation>(*MLComp);
+                    for (int i = 0;i < dimension -> x;i++) {
+                        for (int j = 0;j < dimension -> y;j++) {
+                            for (int k = 0;k < dimension -> z;k++) {
+                                processors -> insert(new MeshLocation(location -> x+i,
+                                                                      location -> y+j,
+                                                                      location -> z+k));
+                            }
+                        }
+                    }
+                    return processors;
+                }
+
+                /**
+                 * Calculate the number of processors in this block
+                 */
+                int size()
+                {
+                    return dimension -> x*dimension -> y*dimension -> z;
+                }
+
+                set<Block*, Block>* getChildren()
+                {
+                    return children;
+                }
+
+                void addChild(Block* b)
+                {
+                    children -> insert(b);
+                }
+
+                /**
+                 * Below are standard class methods: equals, toString()
+                 */
+
+                bool operator()(Block*  b1, Block*  b2) const
+                {
+                    if (b1 -> size() == b2 -> size()){
+                        if (b1 -> location -> equals(b2 -> location)){
+                            return (*b1 -> dimension)(b1 -> dimension, b2 -> dimension);
+                        }
+                        return (*b1 -> location)(b1 -> location, b2 -> location);
+                    }
+                    return b1 -> size() < b2 -> size();
+                }
+
+                /**
+                 * This equals method is not truly equals.  It is more of similar enough to
+                 * fool their mother
+                 * The reason for this is the fact that most collections of blocks are TreeSets  To test for contains
+                 * it would be almost unreasonably difficult to have to construct a tree of parent/children when
+                 * checking location and dimension is enough
+                 */
+                bool equals (Block* b)
+                {
+                    return dimension -> equals(b -> dimension) && location -> equals(b -> location);
+                }
+
+                string toString()
+                {
+                    stringstream ret;
+                    ret << "Block[" << dimension -> x << "x" <<dimension -> y << "x" << dimension -> z << "]@" << location -> toString();
+                    return ret.str();
+                }
+        };
+
     }
-
-    Block (MeshLocation* l, MeshLocation* d) {
-      dimension = d;
-      location = l;
-      Block* BComp = new Block();
-      children = new set<Block*, Block>(*BComp);
-      parent = NULL;
-    }
-    Block (MeshLocation* l, MeshLocation* d, Block* p) {
-      dimension = d;
-      location = l;
-      Block* BComp = new Block();
-      children = new set<Block*, Block>(*BComp);
-      parent = p;
-    }
-
-    /**
-     * Returns all processors in this block
-     */
-    set<MeshLocation*, MeshLocation>* processors(){
-      MeshLocation* MLComp = new MeshLocation(0,0,0);
-      set<MeshLocation*, MeshLocation>* processors = new set<MeshLocation*, MeshLocation>(*MLComp);
-      for (int i=0;i<dimension->x;i++){
-        for(int j=0;j<dimension->y;j++){
-          for(int k=0;k<dimension->z;k++){
-            processors->insert(new MeshLocation(location->x+i,
-                  location->y+j,
-                  location->z+k));
-          }
-        }
-      }
-      return processors;
-    }
-
-    /**
-     * Calculate the number of processors in this block
-     */
-    int size(){
-      return dimension->x*dimension->y*dimension->z;
-    }
-
-    set<Block*, Block>* getChildren(){
-      return children;
-    }
-
-    void addChild(Block* b){
-      children->insert(b);
-    }
-
-    /**
-     * Below are standard class methods: equals, toString()
-     */
-
-    bool operator()(Block*  b1, Block*  b2) const
-    {
-      if(b1->size() == b2->size()){
-        if(b1->location->equals(b2->location)){
-          return (*b1->dimension)(b1->dimension, b2->dimension);
-        }
-        return (*b1->location)(b1->location, b2->location);
-      }
-      return b1->size() < b2->size();
-    }
-
-    /**
-     * This equals method is not truly equals->  It is more of similar enough to fool their mother
-     * The reason for this is the fact that most collections of blocks are TreeSets  To test for contains
-     * it would be almost unreasonably difficult to have to construct a tree of parent/children when
-     * checking location and dimension is enough
-     */
-    bool equals (Block* b){
-      return dimension->equals(b->dimension)
-        && location->equals(b->location);
-    }
-
-    string toString(){
-      stringstream ret;
-      ret << "Block["<<dimension->x<<"x"<<dimension->y<<"x"<<dimension->z<<"]@"<<location->toString();
-      return ret.str();
-    }
-};
-
-}
 }
 #endif

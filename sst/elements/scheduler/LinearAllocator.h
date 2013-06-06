@@ -38,44 +38,44 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class LinearAllocator : public Allocator {
+        class LinearAllocator : public Allocator {
 
 
-  protected:
-    class MeshLocationOrdering : public binary_function<MeshLocation*, MeshLocation*, bool>{
-      //represent linear ordering
+            protected:
+                class MeshLocationOrdering : public binary_function<MeshLocation*, MeshLocation*, bool>{
+                    //represent linear ordering
 
-      private:
-        int xpos,ypos,zpos; //helps because we don't know which is largest
-        int xdim;     //size of mesh in each dimension
-        int ydim;
-        int zdim;
+                    private:
+                        int xpos,ypos,zpos; //helps because we don't know which is largest
+                        int xdim;     //size of mesh in each dimension
+                        int ydim;
+                        int zdim;
 
-        int* rank;   //way to store ordering
-        //(x,y,z) has position rank[x+y*xdim+z*xdim*ydim] in ordering
+                        int* rank;   //way to store ordering
+                        //(x,y,z) has position rank[x+y*xdim+z*xdim*ydim] in ordering
 
-      public:
-        MeshLocationOrdering(Machine* m, bool SORT);
+                    public:
+                        MeshLocationOrdering(Machine* m, bool SORT);
 
-        int rankOf(MeshLocation* L);
+                        int rankOf(MeshLocation* L);
 
-        //MeshLocation* locationOf(int Rank);
+                        //MeshLocation* locationOf(int Rank);
 
-        bool operator()(MeshLocation* L1, MeshLocation* L2){
-          return rankOf(L1) < rankOf(L2);
-        }
-    };
+                        bool operator()(MeshLocation* L1, MeshLocation* L2){
+                            return rankOf(L1) < rankOf(L2);
+                        }
+                };
 
-    vector<vector<MeshLocation*>*>* getIntervals();
-    AllocInfo* minSpanAllocate(Job* job);
-    MeshLocationOrdering* ordering;
+                vector<vector<MeshLocation*>*>* getIntervals();
+                AllocInfo* minSpanAllocate(Job* job);
+                MeshLocationOrdering* ordering;
 
-  public:
-    LinearAllocator(vector<string>* params, Machine* m);
-};
+            public:
+                LinearAllocator(vector<string>* params, Machine* m);
+        };
 
-}
+    }
 }
 #endif

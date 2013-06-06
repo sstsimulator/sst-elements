@@ -44,81 +44,81 @@ using namespace SST::Scheduler;
 //(file format described at head of LinearAllocator->java)
 super(m, filename);
 }
- */
+*/
 
 BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): LinearAllocator(params, mach) {
-    if(DEBUG)
-      printf("Constructing BestFitAllocator\n");
-    if(dynamic_cast<MachineMesh*>(mach) == NULL)
-      error("Linear allocators require a mesh");
-  }
-
-string BestFitAllocator::getSetupInfo(bool comment){
-  string com;
-  if(comment) com="# ";
-  else com="";
-  return com+"Linear Allocator (Best Fit)";
+    if (DEBUG) printf("Constructing BestFitAllocator\n");
+    if (NULL == dynamic_cast<MachineMesh*>(mach)) error("Linear allocators require a mesh");
 }
 
+string BestFitAllocator::getSetupInfo(bool comment){
+    string com;
+    if (comment) {
+        com="# ";
+    } else {
+        com="";
+    }
+    return com + "Linear Allocator (Best Fit)";
+}
+
+//This function allocates a job if possible, or
+//returns information on the allocation or NULL if it wasn't possible.
+//(It doesn't make the allocation; merely returns info on a possible
+//allocation)
 AllocInfo* BestFitAllocator::allocate(Job* job) {
-  //allocates job if possible
-  //returns information on the allocation or NULL if it wasn't possible
-  //(doesn't make allocation; merely returns info on possible allocation)
-  if(DEBUG)
-    printf("Allocating %s procs: \n", job->toString().c_str());
+    if (DEBUG)
+        printf("Allocating %s procs: \n", job->toString().c_str());
 
-  if(!canAllocate(job))   //check if we have enough free processors
-    return NULL;
+    if (!canAllocate(job))   //check if we have enough free processors
+        return NULL;
 
-  vector<vector<MeshLocation*>*>* intervals = getIntervals();
+    vector<vector<MeshLocation*>*>* intervals = getIntervals();
 
-  int num = job->getProcsNeeded();  //number of processors for job
+    int num = job->getProcsNeeded();  //number of processors for job
 
-  int bestInterval = -1;  //index of best interval found so far
-  //(-1 = none)
-  int bestSize = INT_MAX;  //its size
+    int bestInterval = -1;  //index of best interval found so far
+    //(-1 = none)
+    int bestSize = INT_MAX;  //its size
 
-  //look for smallest sufficiently-large interval
-  for(int i=0; i<(int)intervals->size(); i++) {
-    int size = (int)intervals->at(i)->size();
-    if((size >= num) && (size < bestSize)) {
-      if(bestInterval !=  -1)
-      {
-        for(int j = 0; j < (int)intervals->at(bestInterval)->size(); j++)
-          delete intervals->at(bestInterval)->at(j);
-        intervals->at(bestInterval)->clear();
-        delete intervals->at(bestInterval);
-      }
-      bestInterval = i;
-      bestSize = size;
+    //look for smallest sufficiently-large interval
+    for (int i = 0; i < (int)intervals -> size(); i++) {
+        int size = (int)intervals -> at(i)-> size();
+        if ((size >= num) && (size < bestSize)) {
+            if (-1 != bestInterval) {
+                for (int j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
+                    delete intervals -> at(bestInterval) -> at(j);
+                }
+                intervals ->at(bestInterval) ->clear();
+                delete intervals ->at(bestInterval);
+            }
+            bestInterval = i;
+            bestSize = size;
+        } else {
+            for (int j = 0; j < size; j++) {
+                delete intervals -> at(i) -> at(j);
+            }
+            intervals -> at(i) -> clear();
+            delete intervals -> at(i);
+        }
     }
-    else{
-      for(int j = 0; j < size; j++)
-        delete intervals->at(i)->at(j);
-      intervals->at(i)->clear();
-      delete intervals->at(i);
-    }
-  }
 
-  if(bestInterval == -1) {
-    //no single interval is big enough; minimize the span
-    return minSpanAllocate(job);
-  } else {
-    MeshAllocInfo* retVal = new MeshAllocInfo(job);
-    int j;
-    for(j=0; j<(int)intervals->at(bestInterval)->size(); j++)
-    {
-      if(j < num)
-      {
-        retVal->processors->at(j) = intervals->at(bestInterval)->at(j);
-        retVal->nodeIndices[j] = intervals->at(bestInterval)->at(j)->toInt((MachineMesh*)machine);
-      }
-      else
-        delete intervals->at(bestInterval)->at(j);
+    if (bestInterval == -1) {
+        //no single interval is big enough; minimize the span
+        return minSpanAllocate(job);
+    } else {
+        MeshAllocInfo* retVal = new MeshAllocInfo(job);
+        int j;
+        for (j = 0; j<(int)intervals -> at(bestInterval) -> size(); j++) {
+            if (j < num) {
+                retVal -> processors -> at(j) = intervals -> at(bestInterval) -> at(j);
+                retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt((MachineMesh*)machine);
+            } else {
+                delete intervals -> at(bestInterval) -> at(j);
+            }
+        }
+        delete intervals -> at(bestInterval);
+        intervals -> clear();
+        delete intervals;
+        return retVal;
     }
-    delete intervals->at(bestInterval);
-    intervals->clear();
-    delete intervals;
-    return retVal;
-  }
 }

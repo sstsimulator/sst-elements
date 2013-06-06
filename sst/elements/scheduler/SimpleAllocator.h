@@ -23,27 +23,27 @@
 using namespace std;
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class SimpleMachine;
-class Job;
+        class SimpleMachine;
+        class Job;
 
-class SimpleAllocator : public Allocator {
- public:
+        class SimpleAllocator : public Allocator {
+            public:
 
-  SimpleAllocator(SimpleMachine* m);
+                SimpleAllocator(SimpleMachine* m);
 
-  ~SimpleAllocator() {}
+                ~SimpleAllocator() {}
 
-  //static Allocator* Make(vector<string>* params);
-  //static string getParamHelp();
-  string getSetupInfo(bool comment);
+                //static Allocator* Make(vector<string>* params);
+                //static string getParamHelp();
+                string getSetupInfo(bool comment);
 
-  AllocInfo* allocate(Job* j);  //allocates j if possible
-  //returns information on the allocation or NULL if it wasn't possible
-  //(doesn't make allocation; merely returns info on possible allocation)
-};
+                AllocInfo* allocate(Job* j);  //allocates j if possible
+                //returns information on the allocation or NULL if it wasn't possible
+                //(doesn't make allocation; merely returns info on possible allocation)
+        };
 
-}
+    }
 }
 #endif

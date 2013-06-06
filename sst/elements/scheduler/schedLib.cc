@@ -20,45 +20,45 @@
 
 using namespace SST::Scheduler;
 
-static SST::Component*
+    static SST::Component*
 create_schedComponent(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                      SST::Component::Params_t& params)
 {
     return new schedComponent( id, params );
 }
 
-static SST::Component*
+    static SST::Component*
 create_nodeComponent(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                     SST::Component::Params_t& params)
 {
     return new nodeComponent( id, params );
 }
 
 static SST::Component * create_linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & params ){
-  return new linkBuilder( id, params );
+    return new linkBuilder(id, params);
 }
 
 static const SST::ElementInfoComponent components[] = {
     { "schedComponent",
-      "Schedular Component",
-      NULL,
-      create_schedComponent
+        "Schedular Component",
+        NULL,
+        create_schedComponent
     },
     { "nodeComponent",
-      "Component for use with Scheduler",
-      NULL,
-      create_nodeComponent
+        "Component for use with Scheduler",
+        NULL,
+        create_nodeComponent
     },
     { "linkBuilder",
-      "Graph Link Modifier",
-      NULL,
-      create_linkBuilder
+        "Graph Link Modifier",
+        NULL,
+        create_linkBuilder
     },
     { NULL, NULL, NULL, NULL }
 };
 
 extern "C" {
-  SST::ElementLibraryInfo scheduler_eli = {
+    SST::ElementLibraryInfo scheduler_eli = {
         "scheduler",
         "High Level Schedular Components",
         components,

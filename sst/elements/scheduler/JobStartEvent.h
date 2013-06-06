@@ -17,34 +17,34 @@
 #define __JOBSTARTEVENT_H__
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class JobStartEvent : public SST::Event {
- public:
+        class JobStartEvent : public SST::Event {
+            public:
 
-  JobStartEvent(unsigned long time, int jobNum) : SST::Event() {
-    this -> time = time;
-    this -> jobNum = jobNum;
-  }
+                JobStartEvent(unsigned long time, int jobNum) : SST::Event() {
+                    this -> time = time;
+                    this -> jobNum = jobNum;
+                }
 
-  unsigned long time;   //the length of the started job
+                unsigned long time;   //the length of the started job
 
-  int jobNum;
+                int jobNum;
 
- private:
- JobStartEvent() { }  // for serialization only
+            private:
+                JobStartEvent() { }  // for serialization only
 
-  friend class boost::serialization::access;
-  template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
-    {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-      ar & BOOST_SERIALIZATION_NVP(time);
-      ar & BOOST_SERIALIZATION_NVP(jobNum);
+                friend class boost::serialization::access;
+                template<class Archive>
+                    void serialize(Archive & ar, const unsigned int version )
+                    {
+                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+                        ar & BOOST_SERIALIZATION_NVP(time);
+                        ar & BOOST_SERIALIZATION_NVP(jobNum);
+                    }
+        };
+
     }
-};
-
-}
 }
 #endif
 

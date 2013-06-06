@@ -17,32 +17,32 @@
 #define __COMPLETIONEVENT_H__
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class CompletionEvent : public SST::Event {
- public:
+        class CompletionEvent : public SST::Event {
+            public:
 
-  CompletionEvent(int jobNum) : SST::Event() {
-    this -> jobNum = jobNum;
-  }
+                CompletionEvent(int jobNum) : SST::Event() {
+                    this -> jobNum = jobNum;
+                }
 
-  CompletionEvent * copy(){
-    CompletionEvent * tmp = new CompletionEvent( this->jobNum );
-    return tmp;
-  }
+                CompletionEvent* copy(){
+                    CompletionEvent* tmp = new CompletionEvent(this -> jobNum);
+                    return tmp;
+                }
 
-  int jobNum;
+                int jobNum;
 
-  friend class boost::serialization::access;
-  template<class Archive>
-    void serialize(Archive & ar, const unsigned int version )
-    {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-      ar & BOOST_SERIALIZATION_NVP(jobNum);
+                friend class boost::serialization::access;
+                template<class Archive>
+                    void serialize(Archive & ar, const unsigned int version )
+                    {
+                        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+                        ar & BOOST_SERIALIZATION_NVP(jobNum);
+                    }
+        };
+
     }
-};
-
-}
 }
 #endif
 

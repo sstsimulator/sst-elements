@@ -34,46 +34,54 @@
 using namespace SST::Scheduler;
 
 
-SortedFreeListAllocator::SortedFreeListAllocator(vector<string>* params, Machine* mach) : LinearAllocator(params, mach){
-  if(DEBUG)
-    printf("Constructing SortedFreeListAllocator\n");
-  if(dynamic_cast<MachineMesh*>(mach) == NULL)
-    error("Linear allocators require a mesh");
-}
-
-string SortedFreeListAllocator::getSetupInfo(bool comment){
-  string com;
-  if(comment) com="# ";
-  else com="";
-  return com+"Linear Allocator (Sorted Free List)";
-}
-
-AllocInfo* SortedFreeListAllocator::allocate(Job* job) {
-  //allocates j if possible
-  //returns information on the allocation or NULL if it wasn't possible
-  //(doesn't make allocation; merely returns info on possible allocation)
-  if(DEBUG)
-    printf("Allocating %s \n", job->toString().c_str());
-
-  if(!canAllocate(job))
-    return NULL;
-
-  vector<MeshLocation*>* freeprocs = ((MachineMesh*)machine)->freeProcessors();
-  stable_sort(freeprocs->begin(), freeprocs->end(), *ordering);
-
-  int num = job->getProcsNeeded();  //number of processors for job
-
-  MeshAllocInfo* retVal = new MeshAllocInfo(job);
-  for(int i=0; i<(int)freeprocs->size(); i++)
-  {
-    if(i < num)
-    {
-      retVal->processors->at(i) = freeprocs->at(i);
-      retVal->nodeIndices[i] = freeprocs->at(i)->toInt((MachineMesh*)machine);
+SortedFreeListAllocator::SortedFreeListAllocator(vector<string>* params, Machine* mach) : LinearAllocator(params, mach)
+{
+    if (DEBUG) {
+        printf("Constructing SortedFreeListAllocator\n");
     }
-    else
-      delete freeprocs->at(i);
-  }
-  delete freeprocs;
-  return retVal;
+    if (NULL == dynamic_cast<MachineMesh*>(mach)) {
+        error("Linear allocators require a mesh");
+    }
+}
+
+string SortedFreeListAllocator::getSetupInfo(bool comment)
+{
+    string com;
+    if (comment)  {
+        com = "# ";
+    } else  {
+        com = "";
+    }
+    return com + "Linear Allocator (Sorted Free List)";
+}
+
+AllocInfo* SortedFreeListAllocator::allocate(Job* job) 
+{
+    //allocates j if possible
+    //returns information on the allocation or NULL if it wasn't possible
+    //(doesn't make allocation; merely returns info on possible allocation)
+    if (DEBUG) {
+        printf("Allocating %s \n", job -> toString().c_str());
+    }
+
+    if (!canAllocate(job)) {
+        return NULL;
+    }
+
+    vector<MeshLocation*>* freeprocs = ((MachineMesh*)machine) -> freeProcessors();
+    stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);
+
+    int num = job -> getProcsNeeded();  //number of processors for job
+
+    MeshAllocInfo* retVal = new MeshAllocInfo(job);
+    for (int i = 0; i < (int)freeprocs -> size(); i++) {
+        if (i < num) {
+            retVal -> processors -> at(i) = freeprocs->at(i);
+            retVal -> nodeIndices[i] = freeprocs -> at(i) -> toInt((MachineMesh*)machine);
+        } else {
+            delete freeprocs -> at(i);
+        }
+    }
+    delete freeprocs;
+    return retVal;
 }

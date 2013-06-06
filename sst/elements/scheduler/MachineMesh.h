@@ -25,57 +25,57 @@ using namespace std;
 //#include "sst/core/serialization/element.h"
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class MeshLocation;
+        class MeshLocation;
 
 
-class MachineMesh : public Machine {
+        class MachineMesh : public Machine {
 
-  private:
-    int xdim;              //size of mesh in each dimension
-    int ydim;
-    int zdim;  
-    schedComponent* sc;
+            private:
+                int xdim;              //size of mesh in each dimension
+                int ydim;
+                int zdim;  
+                schedComponent* sc;
 
-    vector<vector<vector<bool> > > isFree;  //whether each processor is free
-  public:
+                vector<vector<vector<bool> > > isFree;  //whether each processor is free
+            public:
 
-    MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc);
+                MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc);
 
-    MachineMesh(MachineMesh* inmesh);
+                MachineMesh(MachineMesh* inmesh);
 
-    //static Mesh Make(vector<String> params);
+                //static Mesh Make(vector<String> params);
 
-    static string getParamHelp();
+                static string getParamHelp();
 
-    string getSetupInfo(bool comment);
+                string getSetupInfo(bool comment);
 
-    int getXDim();
+                int getXDim();
 
-    int getYDim();
+                int getYDim();
 
-    int getZDim();
+                int getZDim();
 
-    int getMachSize();
+                int getMachSize();
 
-    void reset();
+                void reset();
 
-    vector<MeshLocation*>* freeProcessors();
+                vector<MeshLocation*>* freeProcessors();
 
-    vector<MeshLocation*>* usedProcessors();
+                vector<MeshLocation*>* usedProcessors();
 
-    void allocate(AllocInfo* allocInfo);
+                void allocate(AllocInfo* allocInfo);
 
-    void deallocate(AllocInfo* allocInfo);
+                void deallocate(AllocInfo* allocInfo);
 
-    long pairwiseL1Distance(vector<MeshLocation*>* locs);
+                long pairwiseL1Distance(vector<MeshLocation*>* locs);
 
-    long pairwiseL1Distance(vector<MeshLocation*>* locs, int num);
+                long pairwiseL1Distance(vector<MeshLocation*>* locs, int num);
 
-    //string toString();
-};
+                //string toString();
+        };
 
-}
+    }
 }
 #endif

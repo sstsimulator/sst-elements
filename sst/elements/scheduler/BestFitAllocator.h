@@ -32,24 +32,24 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class BestFitAllocator : public LinearAllocator {
-  public:
+        class BestFitAllocator : public LinearAllocator {
+            public:
 
-    BestFitAllocator(MachineMesh* m, string filename) ;
+                BestFitAllocator(MachineMesh* m, string filename) ;
 
-    BestFitAllocator(vector<string>* params, Machine* mach) ;
+                BestFitAllocator(vector<string>* params, Machine* mach) ;
 
-    string getParamHelp(){
-      return "[<file>]\n\tfile: Path to file giving the curve";
+                string getParamHelp(){
+                    return "[<file>]\n\tfile: Path to file giving the curve";
+                }
+
+                string getSetupInfo(bool comment);
+
+                AllocInfo* allocate(Job* job) ;
+        };
+
     }
-
-    string getSetupInfo(bool comment);
-
-    AllocInfo* allocate(Job* job) ;
-};
-
-}
 }
 #endif

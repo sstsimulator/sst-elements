@@ -23,41 +23,42 @@
 using namespace SST::Scheduler;
 
 SimpleAllocator::SimpleAllocator(SimpleMachine* m) {
-  machine = m;
+    machine = m;
 }
 
 string SimpleAllocator::getSetupInfo(bool comment) {
-  string com;
-  if(comment)
-    com="# ";
-  else
-    com="";
-  return com+"Simple Allocator";
+    string com;
+    if (comment) {
+        com="# ";
+    } else {
+        com="";
+    }
+    return com + "Simple Allocator";
 }
 
 /*
-Allocator* SimpleAllocator::Make(vector<string>* params) {
-  argsAtMost(0, params);
-  Machine* m = getMachine();
-  SimpleMachine* sm = dynamic_cast<SimpleMachine*>(m);
-  if(sm != NULL)
-    return new SimpleAllocator(sm);
-  
-  error("You cannot use SimpleAllocator with anything but SimpleMachine");
-  return NULL;
-}
+   Allocator* SimpleAllocator::Make(vector<string>* params) {
+   argsAtMost(0, params);
+   Machine* m = getMachine();
+   SimpleMachine* sm = dynamic_cast<SimpleMachine*>(m);
+   if(sm != NULL)
+   return new SimpleAllocator(sm);
 
-string SimpleAllocator::getParamHelp() {
-  return "";
-}
-*/
+   error("You cannot use SimpleAllocator with anything but SimpleMachine");
+   return NULL;
+   }
 
-AllocInfo* SimpleAllocator::allocate(Job* j) {  //allocates j if possible
-  //returns information on the allocation or NULL if it wasn't possible
-  //(doesn't make allocation; merely returns info on possible allocation)
+   string SimpleAllocator::getParamHelp() {
+   return "";
+   }
+   */
 
-  if(canAllocate(j)) {
-    return new AllocInfo(j);
-  }
-  return NULL;
+//allocates j if possible
+//returns information on the allocation or NULL if it wasn't possible
+//(doesn't make allocation; merely returns info on possible allocation)
+AllocInfo* SimpleAllocator::allocate(Job* j) {  
+    if (canAllocate(j)) {
+        return new AllocInfo(j);
+    }
+    return NULL;
 }

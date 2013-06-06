@@ -29,31 +29,35 @@ using namespace std;
 
 using namespace SST::Scheduler;
 
-bool Allocator::canAllocate(Job* j) {  //returns whether j can be allocated
-  //default strategies are non-contig so "true" if enough free processors
-  return (machine -> getNumFreeProcessors() >= j -> getProcsNeeded());
+//returns whether j can be allocated
+//default strategies are non-contig so "true" if enough free processors
+bool Allocator::canAllocate(Job* j) 
+{  
+    return (machine -> getNumFreeProcessors() >= j -> getProcsNeeded());
 }
 
 
-bool Allocator::canAllocate(Job* j, vector<MeshLocation*>* available) {  //returns whether j can be allocated
-  //default strategies are non-contig so "true" if enough free processors
-  return (available->size() >= (unsigned int)j -> getProcsNeeded());
+//returns whether j can be allocated
+//default strategies are non-contig so "true" if enough free processors
+bool Allocator::canAllocate(Job* j, vector<MeshLocation*>* available) 
+{  
+    return (available -> size() >= (unsigned int)j -> getProcsNeeded());
 }
 
 namespace SST {
-namespace Scheduler {
-void warning(string mesg) {        //report warning (program continues)
-  cerr << "WARNING: " << mesg << endl;
-}
+    namespace Scheduler {
+        void warning(string mesg) {        //report warning (program continues)
+            cerr << "WARNING: " << mesg << endl;
+        }
 
-void error(string mesg) {           //report user-caused error
-  cerr << "ERROR: " << mesg << endl;
-  exit(1);
-}
+        void error(string mesg) {           //report user-caused error
+            cerr << "ERROR: " << mesg << endl;
+            exit(1);
+        }
 
-void internal_error(string mesg) {  //report invalid program state
-  cerr << "INTERNAL ERROR: " << mesg << endl;
-  exit(1);
-}
-}
+        void internal_error(string mesg) {  //report invalid program state
+            cerr << "INTERNAL ERROR: " << mesg << endl;
+            exit(1);
+        }
+    }
 }

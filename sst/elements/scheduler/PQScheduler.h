@@ -19,64 +19,70 @@
 using namespace std;
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class PQScheduler : public Scheduler {
-  private:
+        class PQScheduler : public Scheduler{
+            private:
 
-    enum ComparatorType {  //to represent type of JobComparator
-      FIFO = 0,
-      LARGEFIRST = 1,
-      SMALLFIRST = 2,
-      LONGFIRST = 3,
-      SHORTFIRST = 4,
-      BETTERFIT = 5
-    };
+                enum ComparatorType{  //to represent type of JobComparator
+                    FIFO = 0,
+                    LARGEFIRST = 1,
+                    SMALLFIRST = 2,
+                    LONGFIRST = 3,
+                    SHORTFIRST = 4,
+                    BETTERFIT = 5
+                };
 
-    struct compTableEntry {
-      ComparatorType val;
-      string name;
-    };
+                struct compTableEntry{
+                    ComparatorType val;
+                    string name;
+                };
 
-    static const compTableEntry compTable[6] ;
+                static const compTableEntry compTable[6];
 
 
-    static const int numCompTableEntries;
+                static const int numCompTableEntries;
 
-    string compSetupInfo;
-  public:
-    virtual ~PQScheduler() { delete toRun;}
+                string compSetupInfo;
 
-    class JobComparator : public binary_function<Job*,Job*,bool> {
-      public:
-        static JobComparator* Make(string typeName);  //return NULL if name is invalid
-        static void printComparatorList(ostream& out);  //print list of possible comparators
-        bool operator()(Job*& j1, Job*& j2);
-        bool operator()(Job* const& j1, Job* const& j2);
-        string toString();
-      private:
-        JobComparator(ComparatorType type);
-        ComparatorType type;
-    };
+            public:
+                virtual ~PQScheduler() 
+                {
+                    delete toRun;
+                }
 
-    PQScheduler(JobComparator* comp);
+                class JobComparator : public binary_function<Job*,Job*,bool>
+            {
+                public:
+                    static JobComparator* Make(string typeName);  //return NULL if name is invalid
+                    static void printComparatorList(ostream& out);  //print list of possible comparators
+                    bool operator()(Job*& j1, Job*& j2);
+                    bool operator()(Job* const& j1, Job* const& j2);
+                    string toString();
+                private:
+                    JobComparator(ComparatorType type);
+                    ComparatorType type;
+            };
 
-    //static Scheduler* Make(vector<string>* params);
-    //static string getParamHelp();
-    string getSetupInfo(bool comment);
+                PQScheduler(JobComparator* comp);
 
-    void jobArrives(Job* j, unsigned long time, Machine* mach);
+                //static Scheduler* Make(vector<string>* params);
+                //static string getParamHelp();
+                string getSetupInfo(bool comment);
 
-    void jobFinishes(Job* j, unsigned long time, Machine* mach){}
+                void jobArrives(Job* j, unsigned long time, Machine* mach);
 
-    AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach,
-        Statistics* stats);
+                void jobFinishes(Job* j, unsigned long time, Machine* mach)
+                {
+                }
 
-    void reset();
-  protected:
-    priority_queue<Job*,vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
-};
+                AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach, Statistics* stats);
 
-}
+                void reset();
+            protected:
+                priority_queue<Job*,vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
+        };
+
+    }
 }
 #endif

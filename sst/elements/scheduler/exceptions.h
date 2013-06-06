@@ -16,26 +16,26 @@
 using namespace std;
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-//TODO: these should take arguments so the errors are more descriptive
+        //TODO: these should take arguments so the errors are more descriptive
 
-class InputFormatException : public exception {
-  //thrown when the input (trace) is mis-formatted
+        class InputFormatException : public exception {
+            //thrown when the input (trace) is mis-formatted
 
-  virtual const char* what() const throw() {
-    return "Invalidly formatted input: ";
-  }
-};
+            virtual const char* what() const throw() {
+                return "Invalidly formatted input: ";
+            }
+        };
 
-class InternalErrorException : public exception {
-  //called whenever the simulator detects an invalid state
+        class InternalErrorException : public exception {
+            //called whenever the simulator detects an invalid state
 
-  virtual const char* what() const throw() {
-    return "Internal error";
-  }
-};
+            virtual const char* what() const throw() {
+                return "Internal error";
+            }
+        };
 
-}
+    }
 }
 #endif

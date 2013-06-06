@@ -24,23 +24,23 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class RandomAllocator : public Allocator {
+        class RandomAllocator : public Allocator {
 
-  public:
-    RandomAllocator(Machine* mesh);
+            public:
+                RandomAllocator(Machine* mesh);
 
-    RandomAllocator Make(vector<string*>* params);
+                RandomAllocator Make(vector<string*>* params);
 
-    string getParamHelp();
+                string getParamHelp();
 
-    string getSetupInfo(bool comment);
+                string getSetupInfo(bool comment);
 
-    AllocInfo* allocate(Job* job);
-};
+                AllocInfo* allocate(Job* job);
+        };
 
-}
+    }
 }
 #endif
 

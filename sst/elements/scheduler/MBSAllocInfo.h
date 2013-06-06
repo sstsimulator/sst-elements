@@ -29,30 +29,30 @@ using namespace std;
 #include "sst/core/serialization/element.h"
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class MBSMeshAllocInfo : public MeshAllocInfo {
+        class MBSMeshAllocInfo : public MeshAllocInfo {
 
-  public:
-    set<Block*, Block>* blocks;
+            public:
+                set<Block*, Block>* blocks;
 
-    MBSMeshAllocInfo(Job* j) : MeshAllocInfo(j){
-	//Keep track of the blocks allocated
-      Block* BComp = new Block(NULL,NULL);
-      blocks = new set<Block*, Block>(*BComp);
-      delete BComp;
+                MBSMeshAllocInfo(Job* j) : MeshAllocInfo(j){
+                    //Keep track of the blocks allocated
+                    Block* BComp = new Block(NULL,NULL);
+                    blocks = new set<Block*, Block>(*BComp);
+                    delete BComp;
+                }
+
+
+                string toString(){
+                    string retVal = job -> toString() + "\n  ";
+                    for (set<Block*, Block>::iterator block = blocks -> begin(); block != blocks -> end(); block++){
+                        retVal = retVal + (*block) -> toString();
+                    }
+                    return retVal;
+                }
+        };
+
     }
-
-
-    string toString(){
-	string retVal = job->toString()+"\n  ";
-	for(set<Block*, Block>::iterator block = blocks->begin(); block != blocks->end(); block++){
-	    retVal = retVal + (*block)->toString();
-	}
-	return retVal;
-    }
-};
-
-}
 }
 #endif

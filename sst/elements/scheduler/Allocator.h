@@ -18,39 +18,39 @@
 using namespace std;
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class Machine;
-class Job;
-class AllocInfo;
+        class Machine;
+        class Job;
+        class AllocInfo;
 
-class Allocator {
- public:
-  virtual ~Allocator() {}
+        class Allocator {
+            public:
+                virtual ~Allocator() {}
 
-  virtual string getSetupInfo(bool comment) = 0;
+                virtual string getSetupInfo(bool comment) = 0;
 
-  virtual bool canAllocate(Job* j);
-  virtual bool canAllocate(Job* j, vector<MeshLocation*>* available);
+                virtual bool canAllocate(Job* j);
+                virtual bool canAllocate(Job* j, vector<MeshLocation*>* available);
 
-  virtual AllocInfo* allocate(Job* job) = 0;
-    //allocates job if possible
-    //returns information on the allocation or NULL if it wasn't possible
-    //(doesn't make allocation; merely returns info on possible allocation)
-  
-  virtual void deallocate(AllocInfo* aInfo) { }
-  //in case Allocator wants to know when a job is deallocated
-  //added for MBS, which wants to update its data structures
+                virtual AllocInfo* allocate(Job* job) = 0;
+                //allocates job if possible
+                //returns information on the allocation or NULL if it wasn't possible
+                //(doesn't make allocation; merely returns info on possible allocation)
 
-  virtual void done() { }
-  //called at end of simulation so allocator can report statistics
-  
- protected:
-  Machine* machine;
+                virtual void deallocate(AllocInfo* aInfo) { }
+                //in case Allocator wants to know when a job is deallocated
+                //added for MBS, which wants to update its data structures
 
-};
+                virtual void done() { }
+                //called at end of simulation so allocator can report statistics
 
-}
+            protected:
+                Machine* machine;
+
+        };
+
+    }
 }
 
 #endif

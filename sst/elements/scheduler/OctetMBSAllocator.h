@@ -34,24 +34,24 @@
 
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class OctetMBSAllocator : public MBSAllocator {
-  public:
+        class OctetMBSAllocator : public MBSAllocator {
+            public:
 
-    OctetMBSAllocator(MachineMesh* m, int x, int y, int z);
-    OctetMBSAllocator(vector<string>* params, Machine* m);
+                OctetMBSAllocator(MachineMesh* m, int x, int y, int z);
+                OctetMBSAllocator(vector<string>* params, Machine* m);
 
-    string getSetupInfo(bool comment);
+                string getSetupInfo(bool comment);
 
-    static OctetMBSAllocator Make(vector<string>* params, MachineMesh* mach);
+                static OctetMBSAllocator Make(vector<string>* params, MachineMesh* mach);
 
-    void initialize(MeshLocation* dim, MeshLocation* off);
+                void initialize(MeshLocation* dim, MeshLocation* off);
 
-    set<Block*, Block>* splitBlock(Block* b);
+                set<Block*, Block>* splitBlock(Block* b);
 
-};
+        };
 
-}
+    }
 }
 #endif
