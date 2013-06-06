@@ -19,6 +19,10 @@ StridePrefetcher::StridePrefetcher(Params& params) {
         blockSize = (uint64_t) params.find_integer("prefetcher:blocksize", 64);
 }
 
+StridePrefetcher::~StridePrefetcher() {
+	
+}
+
 void StridePrefetcher::setOwningComponent(const SST::Component* own) {
 	owner = own;
 }
