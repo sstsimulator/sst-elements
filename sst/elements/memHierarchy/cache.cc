@@ -304,8 +304,11 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
         break;
 
     case ACK:
-        if ( src != SNOOP || ev->getDst() == getName() )
+        if ( src != SNOOP || ev->getDst() == getName() ) {
             ackInvalidate(ev);
+        } else {
+            delete event;
+        }
         break;
 
     case NACK:
@@ -318,6 +321,7 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
     case FetchInvalidate:
         handleFetch(ev, true, firstPhaseComplete);
         break;
+
 
     default:
         /* Ignore */
@@ -410,7 +414,13 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                     /* Unlock */
                     ASSERT(block->user_locked);
                     block->user_locked--;
-                    if ( block->user_locked == 0 && block->user_lock_needs_wb ) {
+                    /* If we're no longer locked, and we've tagged that we need
+                     * to send a writeback, do so, unless we haven't yet sent
+                     * the 'SENT_DELAYED' flag.  If the F_DELAYED message is
+                     * still pending, it will get promoted to a full SupplyData
+                     * when it sends.
+                     */
+                    if ( block->user_locked == 0 && block->user_lock_needs_wb && block->user_lock_sent_delayed ) {
                         writebackBlock(block, CacheBlock::SHARED);
                     }
                 }
@@ -517,7 +527,7 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
 
 	if ( ((ev->getAddr() != addr) || (src != SNOOP)) && snoop_link ) {
 		MemEvent *invEvent = new MemEvent(invalidateEvent);
-		snoopBusQueue.request( invEvent, NULL);
+		snoopBusQueue.request(invEvent);
         inv.waitingACKs += snoopBusQueue.getNumPeers();
         inv.busEvent = invEvent;
 	}
@@ -566,6 +576,7 @@ void Cache::finishIssueInvalidate(Addr addr)
     if ( block ) {
         block->unlock();
         block->status = invalidations[addr].newStatus;
+        block->last_touched = getCurrentSimTime();
         DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
     }
 
@@ -587,6 +598,8 @@ void Cache::finishIssueInvalidate(Addr addr)
         first = false;
     }
 
+    handlePendingEvents(findRow(addr), NULL);
+
 }
 
 
@@ -606,21 +619,20 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
         return;
     }
     CacheRow *row = findRow(ev->getAddr());
+    row->printRow();
     CacheBlock *block = row->getLRU();
 
     if ( !block ) { // Row is full, wait for one to be available
         row->addWaitingEvent(ev, src);
         return;
     } else {
-        if ( cacheMode == INCLUSIVE ) {
-            if ( block->status == CacheBlock::DIRTY ) {
-                DPRINTF("Replacing a block to handle load.  Need to fetch DIRTY upstream copies of old cache block 0x%"PRIx64".\n", block->baseAddr);
-                issueInvalidate(ev, src, block, CacheBlock::INVALID, SEND_UP, false);
-                //fetchBlock(ev, block, src);
+        if ( cacheMode == INCLUSIVE && block->status != CacheBlock::EXCLUSIVE ) {
+            if ( block->status == CacheBlock::DIRTY_PRESENT || block->status == CacheBlock::DIRTY_UPSTREAM ) {
+                DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
+                issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
                 return;
-
             } else if ( block->status != CacheBlock::INVALID ) {
-                DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64".\n", block->baseAddr);
+                DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
                 /* We can go straight to INVALID...
                  *  INCLUSIVE cache's aren't L1 (why bother?)
                  *  Upstream caches either don't have it, have it in SHARED (clean)
@@ -698,8 +710,8 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
      * already been processed.
      * Unless this is a SEND_UP fetch, and we're DIRTY.
      */
-    if ( !(block->status == CacheBlock::DIRTY && li->loadDirection == SEND_UP) &&
-            block->status != CacheBlock::ASSIGNED || block->baseAddr != addr || li != block->loadInfo) {
+    if ( !((block->status == CacheBlock::DIRTY_UPSTREAM) && (li->loadDirection == SEND_UP)) &&
+            (block->status != CacheBlock::ASSIGNED) || (block->baseAddr != addr) || (li != block->loadInfo)) {
         DPRINTF("Not going to bother loading.  Somebody else has moved block 0x%"PRIx64" to state [%d]\n",
                 block->baseAddr, block->status);
         return;
@@ -720,7 +732,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
             BusHandlerArgs args;
             args.loadBlock.loadInfo = li;
             li->busEvent = req;
-            snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
+            snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
         }
     } else {
 
@@ -747,7 +759,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         BusHandlerArgs args;
         args.loadBlock.loadInfo = li;
         li->busEvent = req;
-        snoopBusQueue.request( req, new BusFinishHandler(&Cache::finishLoadBlockBus, args));
+        snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
     }
     }
 }
@@ -781,7 +793,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
     }
 
 	if ( block ) {
-        if ( block->status == CacheBlock::DIRTY ) {
+        if ( block->status == CacheBlock::DIRTY_UPSTREAM ) {
             if ( src == SNOOP ) {
                 /* Pretend we don't have it.  Somebody else will supply it. */
                 delete ev;
@@ -816,7 +828,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 
         if ( waitingForInvalidate(block->baseAddr) ) {
             DPRINTF("Invalidation (%"PRIu64", %d) for this in progress.  Putting into queue.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second);
-            if ( isL1 ) {
+            if ( isL1 || src == DIRECTORY ) {
                 invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, src));
             } else {
                 respondNACK(ev, src);
@@ -869,7 +881,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         DPRINTF("Invalidation (%"PRIu64", %d) for this now in progress.  Not Supplying now.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second);
 
         supplyInProgress.erase(supMapI);
-        if ( isL1 ) {
+        if ( isL1 || src == DIRECTORY ) {
             invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, src));
         } else {
             respondNACK(ev, src);
@@ -889,6 +901,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	MemEvent *resp = new MemEvent(this, block->baseAddr, SupplyData);
     if ( block->user_locked ) {
         block->user_lock_needs_wb = true;
+        block->user_lock_sent_delayed = false;
         resp->setFlag(MemEvent::F_DELAYED);
         resp->setSize(blocksize);
     } else {
@@ -905,6 +918,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         supplyInProgress.erase(supMapI);
         if ( !resp->queryFlag(MemEvent::F_DELAYED) ) {
             block->status = CacheBlock::SHARED;
+            block->last_touched = getCurrentSimTime();
             handlePendingEvents(findRow(block->baseAddr), NULL);
             DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
         }
@@ -918,9 +932,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 		DPRINTF("Enqueuing request to supply%s block 0x%"PRIx64"\n",
                 args.supplyData.isFakeSupply ? " delay" : "",
                 block->baseAddr);
-		snoopBusQueue.request( resp,
-				new BusFinishHandler(&Cache::finishBusSupplyData, args),
-                new BusInitHandler(&Cache::prepBusSupplyData, args));
+		snoopBusQueue.request( resp, BusHandlers(&Cache::prepBusSupplyData, &Cache::finishBusSupplyData, args));
         break;
     }
 	case DIRECTORY:
@@ -928,6 +940,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 		directory_link->send(resp);
         supplyInProgress.erase(supMapI);
         assert( !resp->queryFlag(MemEvent::F_DELAYED) );
+        block->last_touched = getCurrentSimTime();
         block->status = CacheBlock::SHARED;
         DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
         handlePendingEvents(findRow(block->baseAddr), NULL);
@@ -936,6 +949,8 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         DPRINTF("Sending Supply of 0x%"PRIx64" upstream.\n", block->baseAddr);
 		upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(resp);
         supplyInProgress.erase(supMapI);
+        block->status = (block->isDirty()) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
+        DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
         handlePendingEvents(findRow(block->baseAddr), NULL);
         break;
     default:
@@ -946,25 +961,44 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 void Cache::prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev)
 {
-    ev->setPayload(args.supplyData.block->data);
+    CacheBlock *block = args.supplyData.block;
+    /* Chance to recover from sending a DELAYED packet */
+    if ( args.supplyData.isFakeSupply && !block->user_locked ) {
+        DPRINTF("Changing writeback 0x%"PRIx64" from a DELAYED response to a real one.\n", ev->getAddr());
+        args.supplyData.isFakeSupply = false;
+        block->user_lock_needs_wb = false;
+
+        ev->clearFlag(MemEvent::F_DELAYED);
+        ev->setFlag(MemEvent::F_WRITEBACK);
+
+        /* Need to check to see if we've already enqueued the actual writeback as well */
+
+    }
+    ev->setPayload(block->data);
 }
 
 
 void Cache::finishBusSupplyData(BusHandlerArgs &args)
 {
-	DPRINTF("Supply Message sent for block 0x%"PRIx64"\n", args.supplyData.block->baseAddr);
+    CacheBlock *block = args.supplyData.block;
+	DPRINTF("Supply Message sent for block 0x%"PRIx64"\n", block->baseAddr);
 	if ( !args.supplyData.isFakeSupply ) {
-        args.supplyData.block->status = CacheBlock::SHARED;
-        DPRINTF("Marking block 0x%"PRIx64" with status %d\n", args.supplyData.block->baseAddr, args.supplyData.block->status);
+        block->status = (cacheMode == INCLUSIVE && block->isDirty() ) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
+        block->last_touched = getCurrentSimTime();
+        DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
+    } else {
+        DPRINTF("Sent F_DELAYED for 0x%"PRIx64"\n", block->baseAddr);
+        block->user_lock_sent_delayed = true;
     }
 
-	supplyMap_t::key_type supplyMapKey = std::make_pair(args.supplyData.block->baseAddr, args.supplyData.src);
+	supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, args.supplyData.src);
 
 	supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
 	ASSERT(supMapI != supplyInProgress.end());
 	supplyInProgress.erase(supMapI);
+
 	if ( !args.supplyData.isFakeSupply ) {
-        handlePendingEvents(findRow(args.supplyData.block->baseAddr), NULL);
+        handlePendingEvents(findRow(block->baseAddr), NULL);
     }
 }
 
@@ -1000,9 +1034,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 						if ( handlers.finish ) {
                             delete supMapI->second.busEvent;
 							supMapI->second.busEvent = NULL;
-							delete handlers.finish;
 						}
-                        if ( handlers.init ) delete handlers.init;
 					}
 				}
 				blkAddr += blocksize;
@@ -1019,9 +1051,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 
         if ( li->busEvent ) {
             DPRINTF("Canceling Bus Request for Load on 0x%"PRIx64"\n", li->busEvent->getAddr());
-            BusHandlers handlers = snoopBusQueue.cancelRequest(li->busEvent);
-            if ( handlers.init ) delete handlers.init;
-            if ( handlers.finish ) delete handlers.finish;
+            snoopBusQueue.cancelRequest(li->busEvent);
             delete li->busEvent;
             li->busEvent = NULL;
         }
@@ -1063,7 +1093,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
             } else {
                 updateBlock(ev, li->targetBlock);
                 li->targetBlock->loadInfo = NULL;
-                li->targetBlock->status = CacheBlock::SHARED;
+                li->targetBlock->status = (cacheMode == INCLUSIVE && ev->queryFlag(MemEvent::F_WRITEBACK)) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
+                li->targetBlock->last_touched = getCurrentSimTime();
                 DPRINTF("Marking block 0x%"PRIx64" with status %d\n", li->targetBlock->baseAddr, li->targetBlock->status);
                 li->targetBlock->unlock();
 
@@ -1092,33 +1123,36 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
         }
 
     } else {
+        bool forwardDownstream = true;
         if ( cacheMode == INCLUSIVE ) {
             /* Not waiting for this load, and we're INCLUSIVE -> Must be a writeback. */
             CacheBlock *block = findBlock(ev->getAddr(), false);
             assert(block != NULL);
-            assert(block->status == CacheBlock::DIRTY || src == SNOOP);
+            DPRINTF("Current block status for 0x%"PRIx64" is [%d.%d]\n", block->baseAddr, block->status, block->user_locked);
+            assert(block->status == CacheBlock::DIRTY_UPSTREAM || src == SNOOP);
             updateBlock(ev, block);
-            block->status = CacheBlock::SHARED;
+            block->status = (block->isDirty() ) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
+            block->last_touched = getCurrentSimTime();
+            forwardDownstream = false;
             DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
-
         }
         if ( src == SNOOP ) {
             DPRINTF("No matching waitingLoads for 0x%"PRIx64"%s.\n", ev->getAddr(), ev->queryFlag(MemEvent::F_WRITEBACK) ? " [WRITEBACK]" : "");
             if ( ev->getDst() == getName() ) {
                 DPRINTF("WARNING:  Unmatched message.  Hopefully we recently just canceled this request, and our sender didn't get the memo.\n");
-            } else if ( downstream_link && ev->queryFlag(MemEvent::F_WRITEBACK) ) {
+            } else if ( forwardDownstream && downstream_link && ev->queryFlag(MemEvent::F_WRITEBACK) ) {
                 // We're on snoop, but have a downstream, and this is a writeback.
                 // We should probably pass it on.
                 DPRINTF("Forwarding writeback of 0x%"PRIx64" downstream.\n", ev->getAddr());
                 downstream_link->send(new MemEvent(ev));
-            } else if ( directory_link && ev->queryFlag(MemEvent::F_WRITEBACK) ) {
+            } else if ( forwardDownstream && directory_link && ev->queryFlag(MemEvent::F_WRITEBACK) ) {
                 // Need to set src properly for the network.
                 DPRINTF("Forwarding writeback of 0x%"PRIx64" to directory.\n", ev->getAddr());
                 MemEvent *newev = new MemEvent(ev);
                 newev->setSrc(getName());
                 directory_link->send(newev);
             }
-        } else if ( src == UPSTREAM ) {
+        } else if ( forwardDownstream && src == UPSTREAM ) {
             assert(ev->queryFlag(MemEvent::F_WRITEBACK));
             DPRINTF("Passing on writeback to next level\n");
             if ( downstream_link ) {
@@ -1134,6 +1168,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
         } else {
             //_abort(Cache, "Unhandled case of unmatched SupplyData coming from non-SNOOP, non-UPSTREAM\n");
         }
+        handlePendingEvents(findRow(ev->getAddr()), NULL);
     }
 
     delete ev;
@@ -1166,9 +1201,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
                 if ( handlers.finish ) {
                     delete supMapI->second.busEvent;
                     supMapI->second.busEvent = NULL;
-                    delete handlers.finish;
                 }
-                if ( handlers.init ) delete handlers.init;
             }
             MemEvent *supplyEV = new MemEvent(this, supMapI->first.first, RequestData);
             supplyEV->setSize(blocksize);
@@ -1181,18 +1214,28 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
             bool ok = cancelInvalidate(block); /* Should cause a re-issue of the write */
             if ( !ok ) {
                 /* This was an un-cancelable invalidate that is in progress.
-                 * Let's just retry later
+                 * NACK this
                  */
-                self_link->send(2, new SelfEvent(this, &Cache::retryEvent, ev, NULL, src));
-                return;
+                if ( src == DIRECTORY ) {
+                     invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, src));
+                     return;
+                } else  {
+                    respondNACK(ev, src);
+                    delete ev;
+                    return;
+                }
             }
         }
 
         /* If we're inclusive, the block is already dirty, and the request came from upstream,
          * we don't need to pass this down, or anything like that.  Just ack, and return.
          */
-        if ( cacheMode == INCLUSIVE && block->status == CacheBlock::DIRTY && (src == UPSTREAM || src == SNOOP) ) {
-            goto done;
+        if ( cacheMode == INCLUSIVE && (src == UPSTREAM || src == SNOOP) ) {
+            if ( block->status == CacheBlock::DIRTY_UPSTREAM ) {
+                goto done;
+            } else if ( block->status == CacheBlock::DIRTY_PRESENT ) {
+                finishedUpstream = true; // Don't need to ask downstream, we already own it.
+            }
         }
 
     }
@@ -1210,7 +1253,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
         //printf("Forwarding invalidate 0x%"PRIx64" downstream\n", ev->getAddr()); fflush(stdout);
         DPRINTF("Forwarding invalidate 0x%"PRIx64" downstream\n", ev->getAddr());
         if ( block ) {
-            issueInvalidate(ev, src, block, (cacheMode == INCLUSIVE) ? CacheBlock::DIRTY : CacheBlock::INVALID, SEND_DOWN, true);
+            issueInvalidate(ev, src, block, (cacheMode == INCLUSIVE) ? CacheBlock::DIRTY_UPSTREAM : CacheBlock::INVALID, SEND_DOWN, true);
         } else {
             issueInvalidate(ev, src, ev->getAddr(), SEND_DOWN, true);
         }
@@ -1218,7 +1261,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
     }
 
     if ( block ) {
-        if ( block->status == CacheBlock::SHARED ) {
+        if ( block->status == CacheBlock::SHARED || block->status == CacheBlock::DIRTY_PRESENT ) {
             DPRINTF("Invalidating block 0x%"PRIx64"\n", block->baseAddr);
             /* If we're trying to supply this block, cancel that. */
 
@@ -1233,18 +1276,18 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
                     if ( handlers.finish ) {
                         delete supMapI->second.busEvent;
                         supMapI->second.busEvent = NULL;
-                        delete handlers.finish;
                     }
-                    if ( handlers.init ) delete handlers.init;
                 }
             }
 
 
             if ( (cacheMode == INCLUSIVE) && (src != DOWNSTREAM) && (src != DIRECTORY) ) {
-                block->status = CacheBlock::DIRTY;
+                block->status = CacheBlock::DIRTY_UPSTREAM;
+                block->last_touched = getCurrentSimTime();
                 DPRINTF("Marking block 0x%"PRIx64" as DIRTY.\n", block->baseAddr);
             } else {
                 block->status = CacheBlock::INVALID;
+                block->last_touched = getCurrentSimTime();
                 DPRINTF("Marking block 0x%"PRIx64" as INVALID.\n", block->baseAddr);
                 /* TODO:  Lock status? */
                 handlePendingEvents(findRow(block->baseAddr), NULL);
@@ -1310,6 +1353,7 @@ bool Cache::cancelInvalidate(CacheBlock *block)
         DPRINTF("Attempting cancel for Invalidate 0x%"PRIx64" (%"PRIu64", %d)\n", block->baseAddr, i->second.issuingEvent.first, i->second.issuingEvent.second);
 
         snoopBusQueue.cancelRequest(i->second.busEvent);
+        delete i->second.busEvent;
 
         std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents = i->second.waitingEvents;
         /* Only unlock if we locked it before */
@@ -1364,7 +1408,7 @@ void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
         return;
     }
     block->wb_in_progress = true;
-	if ( snoop_link ) {
+    if ( !(downstream_link || directory_link) && snoop_link) {
 		block->lock();
 		BusHandlerArgs args;
 		args.writebackBlock.block = block;
@@ -1375,9 +1419,7 @@ void Cache::writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus)
         MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
         ev->setFlag(MemEvent::F_WRITEBACK);
         ev->setPayload(block->data);
-		snoopBusQueue.request(ev,
-				new BusFinishHandler(&Cache::finishWritebackBlockVA, args),
-                new BusInitHandler(&Cache::prepWritebackBlock, args));
+		snoopBusQueue.request(ev, BusHandlers(&Cache::prepWritebackBlock, &Cache::finishWritebackBlockVA, args));
 	} else {
 		finishWritebackBlock(block, newStatus, false);
 	}
@@ -1425,6 +1467,7 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
 
     CacheRow *row = findRow(block->baseAddr);
 	block->status = newStatus;
+    block->last_touched = getCurrentSimTime();
     DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
 
     if ( newStatus == CacheBlock::INVALID ) {
@@ -1459,15 +1502,20 @@ void Cache::handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated)
     }
 
     switch ( block->status ) {
+    case CacheBlock::EXCLUSIVE:
+    case CacheBlock::DIRTY_PRESENT:
+        block->status = CacheBlock::SHARED;
+        /* Fall through to shared state. */
     case CacheBlock::SHARED: {
         MemEvent *me = ev->makeResponse(this);
         me->setDst(ev->getSrc());
         me->setPayload(block->data);
         directory_link->send(me);
+        block->last_touched = getCurrentSimTime();
         delete ev;
         break;
     }
-    case CacheBlock::DIRTY:
+    case CacheBlock::DIRTY_UPSTREAM:
         fetchBlock(ev, block, DIRECTORY);
         return; // Can't invalidate yet.
         break;
@@ -1585,8 +1633,7 @@ void Cache::respondNACK(MemEvent *ev, SourceType_t src)
         downstream_link->send(nack);
         break;
     case DIRECTORY:
-        DPRINTF("Sending NACK for %s 0x%"PRIx64" to Directory", CommandString[ev->getCmd()], ev->getAddr());
-        directory_link->send(nack);
+        assert(false); // Don't send to directory
         break;
     case SELF:
         _abort(Cache, "Shouldn't happen... NACK'ing an event we sent ourself?\n");

@@ -63,7 +63,8 @@ private:
             ASSIGNED,       // Reserved status, waiting on a load
             SHARED,         // Others may have an up to date copy
             EXCLUSIVE,      // Only in this cache, data dirty
-            DIRTY,          // for Inclusive mode, data not here, dirty/exclusive upstream
+            DIRTY_UPSTREAM, // for Inclusive mode, data not here, dirty/exclusive upstream
+            DIRTY_PRESENT,  // for Inclusive mode, data here, modified
         } BlockStatus;
 
 		Addr tag;
@@ -78,6 +79,7 @@ private:
 		uint16_t row, col;
         bool wb_in_progress;
         bool user_lock_needs_wb;
+        bool user_lock_sent_delayed;
         uint16_t user_locked;
 
 		CacheBlock() {}
@@ -112,6 +114,7 @@ private:
 		bool isValid(void) const { return (status != INVALID && status != ASSIGNED); }
 		bool isInvalid(void) const { return (status == INVALID); }
 		bool isAssigned(void) const { return (status == ASSIGNED); }
+        bool isDirty(void) const { return (status == DIRTY_UPSTREAM || status == DIRTY_PRESENT || status == EXCLUSIVE); }
 
         void lock() {
             __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);
@@ -171,9 +174,15 @@ private:
             waitingEvents[cache->addrToBlockAddr(ev->getAddr())].push_back(std::make_pair(ev, src));
             __DBG( DBG_CACHE, CacheRow, "Event is number %zu in queue for this row.\n",
                     waitingEvents[cache->addrToBlockAddr(ev->getAddr())].size());
+            printRow();
+        }
+
+        void printRow(void)
+        {
 			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-                __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%"PRIx64"] is: %s\n",
+                __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%"PRIx64" [%d.%d]] is: %s\n",
                         blocks[i].baseAddr,
+                        blocks[i].status, blocks[i].user_locked,
                         blocks[i].isAssigned() ?
                             "Assigned" :
                             (blocks[i].locked>0) ?
@@ -181,7 +190,6 @@ private:
                                 "Open."
                      );
             }
-
         }
 	};
 
@@ -216,31 +224,20 @@ private:
 			LoadInfo_t *loadInfo;
 		} loadBlock;
 	} BusHandlerArgs;
+
 	typedef void(Cache::*BusFinishHandlerFunc)(BusHandlerArgs &args);
-
-	class BusFinishHandler {
-	public:
-		BusFinishHandler(BusFinishHandlerFunc func, BusHandlerArgs args) :
-			func(func), args(args)
-		{ }
-
-		BusFinishHandlerFunc func;
-		BusHandlerArgs args;
-	};
-
     typedef void(Cache::*BusInitHandlerFunc)(BusHandlerArgs &args, MemEvent *ev);
-	class BusInitHandler {
-	public:
-		BusInitHandler(BusInitHandlerFunc func, BusHandlerArgs args) :
-			func(func), args(args)
-		{ }
 
-		BusInitHandlerFunc func;
-		BusHandlerArgs args;
-	};
     struct BusHandlers {
-        BusInitHandler *init;
-        BusFinishHandler *finish;
+        BusInitHandlerFunc init;
+        BusFinishHandlerFunc finish;
+        BusHandlerArgs args;
+        BusHandlers(void) :
+            init(NULL), finish(NULL)
+        { }
+        BusHandlers(BusInitHandlerFunc bihf, BusFinishHandlerFunc bfhf, BusHandlerArgs & args) :
+            init(bihf), finish(bfhf), args(args)
+        { }
     };
 
 	class BusQueue {
@@ -282,27 +279,26 @@ private:
 		}
 
 		int size(void) const { return queue.size(); }
-		void request(MemEvent *event, BusFinishHandler *finishHandler = NULL, BusInitHandler *initHandler = NULL)
+		void request(MemEvent *event, BusHandlers handlers = BusHandlers())
 		{
             queue.push_back(event);
-            __DBG( DBG_CACHE, BusQueue, "Queued event 0x%"PRIx64" in position %zu!\n", makeBusKey(event), queue.size());
-            BusHandlers bh = {initHandler, finishHandler};
-            map[event] = bh;
+            __DBG( DBG_CACHE, BusQueue, "%s: Queued event (%"PRIu64", %d)  0x%"PRIx64" in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, makeBusKey(event), queue.size());
+            map[event] = handlers;
             link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
 		}
 
 		BusHandlers cancelRequest(MemEvent *event)
 		{
-			BusHandlers retval = {0};
+			BusHandlers retval;
 			queue.remove(event);
 			std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
 			if ( i != map.end() ) {
 				retval = i->second;
 				map.erase(i);
                 link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
-                __DBG( DBG_CACHE, BusQueue, "Sending cancel for req 0x%"PRIx64"\n", makeBusKey(event));
+                __DBG( DBG_CACHE, BusQueue, "%s: Sending cancel for req 0x%"PRIx64"\n", comp->getName().c_str(), makeBusKey(event));
 			} else {
-                __DBG( DBG_CACHE, BusQueue, "Unable to find a request to cancel!\n");
+                __DBG( DBG_CACHE, BusQueue, "%s: Unable to find a request to cancel!\n", comp->getName().c_str());
             }
 			//delete event; // We have responsibility for this event, due to the contract of Link::send()
 			return retval;
@@ -311,21 +307,21 @@ private:
 		void clearToSend(MemEvent *busEvent)
 		{
 			if ( size() == 0 ) {
-				__DBG( DBG_CACHE, BusQueue, "No Requests to send!\n");
+				__DBG( DBG_CACHE, BusQueue, "%s: No Requests to send!\n", comp->getName().c_str());
 				/* Must have canceled the request */
-				link->send(new MemEvent(comp, NULL, CancelBusRequest)); 
+				link->send(new MemEvent(comp, 0x0, CancelBusRequest)); 
 			} else {
 				MemEvent *ev = queue.front();
                 if ( busEvent->getAddr() != makeBusKey(ev) ) {
-                    __DBG( DBG_CACHE, BusQueue, "Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", busEvent->getAddr());
+                    __DBG( DBG_CACHE, BusQueue, "%s: Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getAddr());
                     return;
                 }
 				queue.pop_front();
 
-				__DBG( DBG_CACHE, BusQueue, "Sending Event (%s, 0x%"PRIx64") [Queue: %zu]!\n", CommandString[ev->getCmd()], ev->getAddr(), queue.size());
+				__DBG( DBG_CACHE, BusQueue, "%s: Sending Event (%s, 0x%"PRIx64" (%"PRIu64", %d)) [Queue: %zu]!\n", comp->getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getID().first, ev->getID().second, queue.size());
 
 
-                BusHandlers bh = {NULL, NULL};
+                BusHandlers bh;
 				std::map<MemEvent*, BusHandlers>::iterator i = map.find(ev);
                 if ( i != map.end() ) {
                     bh = i->second;
@@ -333,15 +329,13 @@ private:
                 }
 
                 if ( bh.init ) {
-                    (comp->*(bh.init->func))(bh.init->args, ev);
-                    delete bh.init;
+                    (comp->*(bh.init))(bh.args, ev);
                 }
 
 				link->send(ev);
 
                 if ( bh.finish ) {
-                    (comp->*(bh.finish->func))(bh.finish->args);
-                    delete bh.finish;
+                    (comp->*(bh.finish))(bh.args);
                 }
 			}
 		}

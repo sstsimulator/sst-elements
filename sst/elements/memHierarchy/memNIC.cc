@@ -58,7 +58,7 @@ MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) 
     int *buf_size = new int[num_vcs];
     for ( int i = 0 ; i < num_vcs ; i++ ) buf_size[i] = 100;
     link_control = new Merlin::LinkControl(comp, ci.link_port, tc, num_vcs, buf_size, buf_size);
-    delete buf_size;
+    delete [] buf_size;
 
 }
 

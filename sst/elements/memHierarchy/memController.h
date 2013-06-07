@@ -69,7 +69,7 @@ private:
         DRAMReq(MemEvent *ev, const size_t busWidth) :
             reqEvent(new MemEvent(ev)), respEvent(NULL),
             isWrite(ev->getCmd() == SupplyData || ev->getCmd() == WriteReq),
-            canceled(false),
+            canceled(false), isACK(false),
             size(ev->getSize()), amt_in_process(0), amt_processed(0), status(NEW)
         {
             Addr reqEndAddr = ev->getAddr() + ev->getSize();
