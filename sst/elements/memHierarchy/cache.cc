@@ -387,9 +387,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                     issueInvalidate(ev, UPSTREAM, block, CacheBlock::EXCLUSIVE, SEND_BOTH);
                 } else {
                     if ( ev->queryFlag(MemEvent::F_LOCKED) ) {
-                        supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, SNOOP);
-                        supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-                        if ( block->wb_in_progress || (supMapI != supplyInProgress.end() && supMapI->second.canceled == false)) {
+                        if ( block->wb_in_progress || ( supplyInProgress(block->baseAddr, SNOOP)) ) {
                             /* We still have this in exclusive, but a writeback is in progress.
                              * this will take us out of exclusive.  Let's punt and retry later.
                              */
@@ -618,18 +616,29 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
         return;
     }
-    CacheRow *row = findRow(ev->getAddr());
-    row->printRow();
-    CacheBlock *block = row->getLRU();
 
-    if ( !block ) { // Row is full, wait for one to be available
+    CacheRow *row = findRow(ev->getAddr());
+
+    if ( li->targetBlock == NULL ) {
+        row->printRow();
+        li->targetBlock = row->getLRU();
+    }
+
+    if ( !li->targetBlock ) { // Row is full, wait for one to be available
         row->addWaitingEvent(ev, src);
         return;
     } else {
+        CacheBlock *block = li->targetBlock;
+        block->loadInfo = li;
         if ( cacheMode == INCLUSIVE && block->status != CacheBlock::EXCLUSIVE ) {
-            if ( block->status == CacheBlock::DIRTY_PRESENT || block->status == CacheBlock::DIRTY_UPSTREAM ) {
+            if ( block->status == CacheBlock::DIRTY_PRESENT ) {
                 DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
                 issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
+                return;
+            } else if ( block->status == CacheBlock::DIRTY_UPSTREAM ) {
+                DPRINTF("Replacing a block to handle load.  Need to fetch upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
+                //issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
+                fetchBlock(ev, block, src);
                 return;
             } else if ( block->status != CacheBlock::INVALID ) {
                 DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
@@ -662,18 +671,17 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
     }
 
     /* Simple Load */
-    block->activate(ev->getAddr());
-    block->lock();
+    li->targetBlock->activate(ev->getAddr());
+    li->targetBlock->lock();
 
     li->loadDirection = SEND_DOWN;
-    li->targetBlock = block;
-    block->loadInfo = li;
+
     if ( reprocess )
         li->list.push_front(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
     else
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
-    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, block->baseAddr, block));
+    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, li->targetBlock->baseAddr, li->targetBlock));
 }
 
 
@@ -711,7 +719,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
      * Unless this is a SEND_UP fetch, and we're DIRTY.
      */
     if ( !((block->status == CacheBlock::DIRTY_UPSTREAM) && (li->loadDirection == SEND_UP)) &&
-            (block->status != CacheBlock::ASSIGNED) || (block->baseAddr != addr) || (li != block->loadInfo)) {
+            ((block->status != CacheBlock::ASSIGNED) || (block->baseAddr != addr) || (li != block->loadInfo))) {
         DPRINTF("Not going to bother loading.  Somebody else has moved block 0x%"PRIx64" to state [%d]\n",
                 block->baseAddr, block->status);
         return;
@@ -727,7 +735,6 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         } else if ( snoop_link ) {
             MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
             req->setSize(blocksize);
-            if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
             DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
             BusHandlerArgs args;
             args.loadBlock.loadInfo = li;
@@ -736,31 +743,31 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         }
     } else {
 
-    /* Ordering here...  If you have both downstream & snoop, you're probably
-     * at the end of the line.  You don't need to issue on snoop, somebody else
-     * probably did.  Just send the load down the line to memory.
-     */
-    if ( downstream_link ) {
-        DPRINTF("Sending request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
-        MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
-        req->setSize(blocksize);
-        downstream_link->send(req);
-    } else if ( directory_link ) {
-        DPRINTF("Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
-        MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
-        req->setSize(blocksize);
-        req->setDst(findTargetDirectory(block->baseAddr));
-        directory_link->send(req);
-    } else if ( snoop_link ) {
-        MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
-        req->setSize(blocksize);
-        if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
-        DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
-        BusHandlerArgs args;
-        args.loadBlock.loadInfo = li;
-        li->busEvent = req;
-        snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
-    }
+        /* Ordering here...  If you have both downstream & snoop, you're probably
+         * at the end of the line.  You don't need to issue on snoop, somebody else
+         * probably did.  Just send the load down the line to memory.
+         */
+        if ( downstream_link ) {
+            DPRINTF("Sending request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            req->setSize(blocksize);
+            downstream_link->send(req);
+        } else if ( directory_link ) {
+            DPRINTF("Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            req->setSize(blocksize);
+            req->setDst(findTargetDirectory(block->baseAddr));
+            directory_link->send(req);
+        } else if ( snoop_link ) {
+            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            req->setSize(blocksize);
+            if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
+            DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+            BusHandlerArgs args;
+            args.loadBlock.loadInfo = li;
+            li->busEvent = req;
+            snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
+        }
     }
 }
 
@@ -815,11 +822,8 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             return;
         }
 
-		supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
 		/* Hit */
-
-		supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-		if ( supMapI != supplyInProgress.end() && !supMapI->second.canceled ) {
+		if ( supplyInProgress(block->baseAddr, src) ) {
 			// we're already working on this
 			DPRINTF("Detected that we're already working on this\n");
             delete ev;
@@ -842,7 +846,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
             DPRINTF("There's a WB in progress.  That will suffice.\n");
             delete ev;
         } else {
-            supplyInProgress[supplyMapKey] = SupplyInfo(NULL);
+            suppliesInProgress.insert(std::make_pair(std::make_pair(block->baseAddr, src), SupplyInfo(ev)));
             block->lock();
             block->last_touched = getCurrentSimTime();
             self_link->send(1, new SelfEvent(this, &Cache::supplyData, ev, block, src));
@@ -870,17 +874,16 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 
 void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
-
-	supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, src);
-	supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-	ASSERT(supMapI != supplyInProgress.end());
+    DPRINTF("Time to supply data from block 0x%"PRIx64" [%d.%d]\n", block->baseAddr, block->status, block->user_locked);
+	supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, src, ev->getID());
+	ASSERT(supMapI != suppliesInProgress.end());
 
     block->unlock();
 
     if ( waitingForInvalidate(block->baseAddr) ) {
         DPRINTF("Invalidation (%"PRIu64", %d) for this now in progress.  Not Supplying now.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second);
 
-        supplyInProgress.erase(supMapI);
+        suppliesInProgress.erase(supMapI);
         if ( isL1 || src == DIRECTORY ) {
             invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, src));
         } else {
@@ -893,7 +896,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 	if ( supMapI->second.canceled ) {
 		DPRINTF("Request has been canceled!\n");
-		supplyInProgress.erase(supMapI);
+		suppliesInProgress.erase(supMapI);
         delete ev;
 		return;
 	}
@@ -915,7 +918,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	case DOWNSTREAM:
         DPRINTF("Sending Supply of 0x%"PRIx64" downstream.\n", block->baseAddr);
 		downstream_link->send(resp);
-        supplyInProgress.erase(supMapI);
+        suppliesInProgress.erase(supMapI);
         if ( !resp->queryFlag(MemEvent::F_DELAYED) ) {
             block->status = CacheBlock::SHARED;
             block->last_touched = getCurrentSimTime();
@@ -925,6 +928,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         break;
 	case SNOOP: {
 		BusHandlerArgs args;
+        args.supplyData.initiatingEvent = ev;
 		args.supplyData.block = block;
 		args.supplyData.src = src;
         args.supplyData.isFakeSupply = resp->queryFlag(MemEvent::F_DELAYED);
@@ -933,12 +937,13 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
                 args.supplyData.isFakeSupply ? " delay" : "",
                 block->baseAddr);
 		snoopBusQueue.request( resp, BusHandlers(&Cache::prepBusSupplyData, &Cache::finishBusSupplyData, args));
-        break;
+        /* Don't just break, we don't want to delete the event yet */
+        return;
     }
 	case DIRECTORY:
         DPRINTF("Sending Supply of 0x%"PRIx64" to Directory.\n", block->baseAddr);
 		directory_link->send(resp);
-        supplyInProgress.erase(supMapI);
+        suppliesInProgress.erase(supMapI);
         assert( !resp->queryFlag(MemEvent::F_DELAYED) );
         block->last_touched = getCurrentSimTime();
         block->status = CacheBlock::SHARED;
@@ -948,7 +953,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	case UPSTREAM:
         DPRINTF("Sending Supply of 0x%"PRIx64" upstream.\n", block->baseAddr);
 		upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(resp);
-        supplyInProgress.erase(supMapI);
+        suppliesInProgress.erase(supMapI);
         block->status = (block->isDirty()) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
         DPRINTF("Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
         handlePendingEvents(findRow(block->baseAddr), NULL);
@@ -991,11 +996,10 @@ void Cache::finishBusSupplyData(BusHandlerArgs &args)
         block->user_lock_sent_delayed = true;
     }
 
-	supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, args.supplyData.src);
 
-	supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-	ASSERT(supMapI != supplyInProgress.end());
-	supplyInProgress.erase(supMapI);
+	supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, args.supplyData.src, args.supplyData.initiatingEvent->getID());
+	ASSERT(supMapI != suppliesInProgress.end());
+	suppliesInProgress.erase(supMapI);
 
 	if ( !args.supplyData.isFakeSupply ) {
         handlePendingEvents(findRow(block->baseAddr), NULL);
@@ -1022,8 +1026,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 CacheBlock *b = findBlock(blkAddr);
                 assert ( !b || b->status != CacheBlock::EXCLUSIVE );
 				supplyMap_t::key_type supplyMapKey = std::make_pair(blkAddr, src);
-				supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-				if ( supMapI != supplyInProgress.end() ) {
+				supplyMap_t::iterator supMapI = suppliesInProgress.find(supplyMapKey);
+				if ( supMapI != suppliesInProgress.end() ) {
 					// Mark it canceled
 					DPRINTF("Marking request for 0x%"PRIx64" as canceled\n", ev->getAddr());
 					supMapI->second.canceled = true;
@@ -1189,9 +1193,8 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
     DPRINTF("Received Invalidate Event 0x%"PRIx64"  (%"PRIu64", %d) [Block status: %d] \n", ev->getAddr(), ev->getID().first, ev->getID().second, block ? block->status : -1);
 
     if ( block ) {
-        supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, SNOOP);
-        supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-        if ( (supMapI != supplyInProgress.end() && supMapI->second.canceled == false)) {
+        supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, SNOOP);
+        if ( supMapI != suppliesInProgress.end() ) {
             DPRINTF("Supply is in progress for 0x%"PRIx64".  Cancel supply and re-issue.\n", ev->getAddr());
             supMapI->second.canceled = true;
             if ( supMapI->second.busEvent != NULL ) {
@@ -1265,9 +1268,8 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
             DPRINTF("Invalidating block 0x%"PRIx64"\n", block->baseAddr);
             /* If we're trying to supply this block, cancel that. */
 
-            supplyMap_t::key_type supplyMapKey = std::make_pair(block->baseAddr, SNOOP);
-            supplyMap_t::iterator supMapI = supplyInProgress.find(supplyMapKey);
-            if ( supMapI != supplyInProgress.end() ) {
+            supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, SNOOP);
+            if ( supMapI != suppliesInProgress.end() ) {
                 supMapI->second.canceled = true;
                 if ( supMapI->second.busEvent != NULL ) {
                     // Bus requested.  Cancel it, too
@@ -1757,6 +1759,46 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 	Addr row = (addr >> rowshift) & rowmask;
 	ASSERT(row < (Addr)n_rows);
 	return &database[row];
+}
+
+
+bool Cache::supplyInProgress(Addr addr, SourceType_t src)
+{
+    uint32_t numInProgress = 0;
+    supplyMap_t::key_type supplyMapKey = std::make_pair(addr, src);
+    std::pair<supplyMap_t::iterator, supplyMap_t::iterator> range = suppliesInProgress.equal_range(supplyMapKey);
+    for ( supplyMap_t::iterator i = range.first ; i != range.second ; ++i ) {
+        if ( false == i->second.canceled ) numInProgress++;
+    }
+
+    /* Safety check:  Should only ever have 0 or 1 in progress. */
+    assert(numInProgress <= 1);
+
+    return (numInProgress == 1);
+}
+
+
+Cache::supplyMap_t::iterator Cache::getSupplyInProgress(Addr addr, SourceType_t src)
+{
+    supplyMap_t::key_type supplyMapKey = std::make_pair(addr, src);
+    std::pair<supplyMap_t::iterator, supplyMap_t::iterator> range = suppliesInProgress.equal_range(supplyMapKey);
+    for ( supplyMap_t::iterator i = range.first ; i != range.second ; ++i ) {
+        if ( false == i->second.canceled ) return i;
+    }
+
+    return suppliesInProgress.end();
+}
+
+
+Cache::supplyMap_t::iterator Cache::getSupplyInProgress(Addr addr, SourceType_t src, MemEvent::id_type id)
+{
+    supplyMap_t::key_type supplyMapKey = std::make_pair(addr, src);
+    std::pair<supplyMap_t::iterator, supplyMap_t::iterator> range = suppliesInProgress.equal_range(supplyMapKey);
+    for ( supplyMap_t::iterator i = range.first ; i != range.second ; ++i ) {
+        if ( i->second.initiatingEvent->getID() == id ) return i;
+    }
+
+    return suppliesInProgress.end();
 }
 
 

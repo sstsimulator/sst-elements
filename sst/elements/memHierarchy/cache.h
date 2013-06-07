@@ -92,6 +92,7 @@ private:
 			cache = _cache;
 			data = std::vector<uint8_t>(cache->blocksize);
 			locked = 0;
+            loadInfo = NULL;
             wb_in_progress = false;
             user_lock_needs_wb = false;
             user_locked = 0;
@@ -151,6 +152,7 @@ private:
 			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
 				if ( blocks[i].isAssigned() ) continue; // Assigned, waiting for incoming
 				if ( blocks[i].locked > 0 ) continue; // Currently in use
+                if ( blocks[i].loadInfo != NULL ) continue; // Assigned, but other work is being done
 
 				if ( !blocks[i].isValid() ) {
 					lru = i;
@@ -166,6 +168,7 @@ private:
 				return NULL;
 			}
 
+            __DBG( DBG_CACHE, CacheRow, "Row LRU is block %p [0x%"PRIx64", [%d.%d]].\n", &blocks[lru], blocks[lru].baseAddr, blocks[lru].status, blocks[lru].user_locked);
 			return &blocks[lru];
 		}
 
@@ -216,6 +219,7 @@ private:
 			bool decrementLock;
 		} writebackBlock;
 		struct {
+            MemEvent *initiatingEvent;
 			CacheBlock *block;
 			SourceType_t src;
             bool isFakeSupply;
@@ -388,6 +392,36 @@ private:
         Addr addr;
 	};
 
+	struct LoadInfo_t {
+		Addr addr;
+		CacheBlock *targetBlock;
+		MemEvent *busEvent;
+        MemEvent::id_type initiatingEvent;
+        ForwardDir_t loadDirection;
+		struct LoadElement_t {
+			MemEvent * ev;
+			SourceType_t src;
+			SimTime_t issueTime;
+			LoadElement_t(MemEvent *ev, SourceType_t src, SimTime_t issueTime) :
+				ev(ev), src(src), issueTime(issueTime)
+			{ }
+		};
+		std::deque<LoadElement_t> list;
+		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL) { }
+		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL) { }
+	};
+
+	struct SupplyInfo {
+        MemEvent *initiatingEvent;
+		MemEvent *busEvent;
+		bool canceled;
+		SupplyInfo(MemEvent *id) : initiatingEvent(id), busEvent(NULL), canceled(false) { }
+	};
+	// Map from <addr, from where req came> to SupplyInfo
+	typedef std::multimap<std::pair<Addr, SourceType_t>, SupplyInfo> supplyMap_t;
+
+
+
 public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
@@ -447,6 +481,10 @@ private:
 	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
 
+    bool supplyInProgress(Addr addr, SourceType_t src);
+    supplyMap_t::iterator getSupplyInProgress(Addr addr, SourceType_t src);
+    supplyMap_t::iterator getSupplyInProgress(Addr addr, SourceType_t src, MemEvent::id_type id);
+
     std::string findTargetDirectory(Addr addr);
 
 	void printCache(void);
@@ -485,36 +523,9 @@ private:
 	uint64_t num_write_miss;
 	uint64_t num_upgrade_miss;
 
-	struct LoadInfo_t {
-		Addr addr;
-		CacheBlock *targetBlock;
-		MemEvent *busEvent;
-        MemEvent::id_type initiatingEvent;
-        ForwardDir_t loadDirection;
-		struct LoadElement_t {
-			MemEvent * ev;
-			SourceType_t src;
-			SimTime_t issueTime;
-			LoadElement_t(MemEvent *ev, SourceType_t src, SimTime_t issueTime) :
-				ev(ev), src(src), issueTime(issueTime)
-			{ }
-		};
-		std::deque<LoadElement_t> list;
-		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL) { }
-		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL) { }
-	};
 	LoadList_t waitingLoads;
 
-
-	struct SupplyInfo {
-		MemEvent *busEvent;
-		bool canceled;
-		SupplyInfo() : busEvent(NULL), canceled(false) { }
-		SupplyInfo(MemEvent *event) : busEvent(event), canceled(false) { }
-	};
-	// Map from <addr, from where req came> to SupplyInfo
-	typedef std::map<std::pair<Addr, SourceType_t>, SupplyInfo> supplyMap_t;
-	supplyMap_t supplyInProgress;
+	supplyMap_t suppliesInProgress;
 
 	BusQueue snoopBusQueue;
 

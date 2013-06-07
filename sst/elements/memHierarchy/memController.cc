@@ -243,11 +243,10 @@ void MemController::handleEvent(SST::Event *event)
         break;
     case WriteReq:
     case SupplyData:
+        if ( use_bus && (ev->getSrc() != getName()) ) // don't cancel from what we sent.
+            cancelEvent(ev);
         if ( !use_bus || ev->queryFlag(MemEvent::F_WRITEBACK) )
             addRequest(ev);
-        else
-            if ( ev->getSrc() != getName() ) // don't cancel from what we sent.
-                cancelEvent(ev);
         break;
     case BusClearToSend:
         if ( to_me ) sendBusPacket();
@@ -439,7 +438,7 @@ void MemController::sendBusPacket(void)
 	for (;;) {
 		if ( busReqs.size() == 0 ) {
             DPRINTF("Sending cancelation, as we have nothing in the queue.\n");
-			upstream_link->send(new MemEvent(this, NULL, CancelBusRequest));
+			upstream_link->send(new MemEvent(this, 0x0, CancelBusRequest));
 			break;
 		} else {
             DRAMReq *req = busReqs.front();
@@ -459,6 +458,7 @@ void MemController::sendBusPacket(void)
 }
 
 void MemController::sendBusCancel(Addr addr) {
+    assert(use_bus);
     upstream_link->send(new MemEvent(this, addr, CancelBusRequest));
 }
 
