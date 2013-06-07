@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef __APPLE__
   //#ifdef __MACH__
