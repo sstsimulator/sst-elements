@@ -134,7 +134,7 @@ static const ElementInfoComponent components[] = {
 		"Cache Component",
 		NULL,
 		create_Cache,
-        cache_params
+        cache_params,
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",
