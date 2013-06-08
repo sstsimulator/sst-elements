@@ -35,7 +35,9 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 	Addr* recentAddrList;
 	uint32_t recentAddrListCount;
 	uint32_t nextRecentAddressIndex;
-
+	void DetectStride();
+	uint32_t strideDetectionRange;
+	Addr getAddressByIndex(uint32_t index);
 };
 
 }
