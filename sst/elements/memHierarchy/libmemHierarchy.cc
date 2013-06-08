@@ -70,6 +70,7 @@ create_DirectoryController(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam cache_params[] = {
+    {"prefetcher",      "Prefetcher to use with cache (loaded as a module)"},
     {"num_ways",        "Associativity of the cache."},
     {"num_rows",        "How many cache rows."},
     {"blocksize",       "Size of a cache block in bytes."},
@@ -78,7 +79,6 @@ static const ElementInfoParam cache_params[] = {
     {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
     {"access_time",     "Time taken to lookup data in the cache."},
     {"net_addr",        "When using a directory controller, the network address of this cache."},
-    {"prefetcher",       "Prefetcher to use with cache (loaded as a module)"},
     {NULL, NULL}
 };
 
@@ -134,37 +134,37 @@ static const ElementInfoComponent components[] = {
 		"Cache Component",
 		NULL,
 		create_Cache,
-        cache_params,
+        	cache_params
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",
 		NULL,
 		create_Bus,
-        bus_params
+        	bus_params
 	},
 	{"MemController",
 		"Memory Controller Component",
 		NULL,
 		create_MemController,
-        memctrl_params
+        	memctrl_params
 	},
 	{"DirectoryController",
 		"Coherencey Directory Controller Component",
 		NULL,
 		create_DirectoryController,
-        dirctrl_params
+        	dirctrl_params
 	},
 	{"trivialCPU",
 		"Simple Demo CPU for testing",
 		NULL,
 		create_trivialCPU,
-        cpu_params
+        	cpu_params
 	},
 	{"streamCPU",
 		"Simple Demo STREAM CPU for testing",
 		NULL,
 		create_streamCPU,
-        cpu_params
+        	cpu_params
 	},
 	{ NULL, NULL, NULL, NULL }
 };

@@ -30,9 +30,9 @@
 			<num_ways> 4 </num_ways>
 			<num_rows> 16 </num_rows>
 			<blocksize> 64 </blocksize>
+			<prefetcher> cassini.NextBlockPrefetcher </prefetcher>
 			<access_time> 2 ns</access_time>
 			<num_upstream> 1 </num_upstream>
-			<prefetcher> cassini.NextBlockPrefetcher </prefetcher>
 		</params>
 		<link name=cpu_cache_link port=upstream0 latency=$lat />
 		<link name=cache_bus_link port=snoop_link latency=$buslat />
