@@ -19,7 +19,10 @@ void StridePrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResultTyp
 	recentAddrList[nextRecentAddressIndex] = addr;
 	nextRecentAddressIndex = (nextRecentAddressIndex + 1) % recentAddrListCount;
 
-	DetectStride();
+	recheckCountdown = (recheckCountdown + 1) % strideDetectionRange;
+
+	if(recheckCountdown == 0)
+		DetectStride();
 }
 
 Addr StridePrefetcher::getAddressByIndex(uint32_t index) {
@@ -51,7 +54,7 @@ void StridePrefetcher::DetectStride() {
 			}
 
 			if(foundStride) {
-				targetAddress += stride;
+				targetAddress += strideReach * stride;
 				ev = new MemEvent(owner, targetAddress, RequestData);
 				break;
 			}
@@ -81,8 +84,10 @@ void StridePrefetcher::DetectStride() {
 }
 
 StridePrefetcher::StridePrefetcher(Params& params) {
+	recheckCountdown = 0;
         blockSize = (uint64_t) params.find_integer("prefetcher:blocksize", 64);
 
+	strideReach = (uint32_t) params.find_integer("strideprefetcher:reach", 2);
         strideDetectionRange = (uint64_t) params.find_integer("strideprefetcher:detectrange", 4);
 	recentAddrListCount = (uint32_t) params.find_integer("strideprefetcher:addresscount", 64);
 	nextRecentAddressIndex = 0;
