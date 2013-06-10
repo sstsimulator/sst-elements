@@ -666,7 +666,6 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
             DPRINTF("Replacing block (old status is [%d], 0x%"PRIx64" [%s]\n",
                     block->status, block->baseAddr,
                     block->locked ? "LOCKED" : "unlocked");
-
         }
     }
 
@@ -878,7 +877,14 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, src, ev->getID());
 	ASSERT(supMapI != suppliesInProgress.end());
 
-    block->unlock();
+
+	if ( supMapI->second.canceled ) {
+		DPRINTF("Request has been canceled!\n");
+		suppliesInProgress.erase(supMapI);
+        delete ev;
+        block->unlock();
+		return;
+	}
 
     if ( waitingForInvalidate(block->baseAddr) ) {
         DPRINTF("Invalidation (%"PRIu64", %d) for this now in progress.  Not Supplying now.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second);
@@ -890,16 +896,10 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
             respondNACK(ev, src);
             delete ev;
         }
+        block->unlock();
         return;
     }
 
-
-	if ( supMapI->second.canceled ) {
-		DPRINTF("Request has been canceled!\n");
-		suppliesInProgress.erase(supMapI);
-        delete ev;
-		return;
-	}
 
 	MemEvent *resp = new MemEvent(this, block->baseAddr, SupplyData);
     if ( block->user_locked ) {
@@ -917,6 +917,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 	switch (src) {
 	case DOWNSTREAM:
         DPRINTF("Sending Supply of 0x%"PRIx64" downstream.\n", block->baseAddr);
+        block->unlock();
 		downstream_link->send(resp);
         suppliesInProgress.erase(supMapI);
         if ( !resp->queryFlag(MemEvent::F_DELAYED) ) {
@@ -942,6 +943,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
     }
 	case DIRECTORY:
         DPRINTF("Sending Supply of 0x%"PRIx64" to Directory.\n", block->baseAddr);
+        block->unlock();
 		directory_link->send(resp);
         suppliesInProgress.erase(supMapI);
         assert( !resp->queryFlag(MemEvent::F_DELAYED) );
@@ -952,6 +954,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         break;
 	case UPSTREAM:
         DPRINTF("Sending Supply of 0x%"PRIx64" upstream.\n", block->baseAddr);
+        block->unlock();
 		upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(resp);
         suppliesInProgress.erase(supMapI);
         block->status = (block->isDirty()) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
@@ -959,6 +962,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
         handlePendingEvents(findRow(block->baseAddr), NULL);
         break;
     default:
+        block->unlock();
         break;
     }
 	delete ev;
@@ -967,6 +971,9 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 void Cache::prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev)
 {
     CacheBlock *block = args.supplyData.block;
+    if (block->baseAddr != addrToBlockAddr(args.supplyData.initiatingEvent->getAddr())) {
+        _abort(Cache, "0x%"PRIx64" != 0x%"PRIx64"\n", block->baseAddr, args.supplyData.initiatingEvent->getAddr());
+    }
     /* Chance to recover from sending a DELAYED packet */
     if ( args.supplyData.isFakeSupply && !block->user_locked ) {
         DPRINTF("Changing writeback 0x%"PRIx64" from a DELAYED response to a real one.\n", ev->getAddr());
@@ -986,6 +993,7 @@ void Cache::prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev)
 void Cache::finishBusSupplyData(BusHandlerArgs &args)
 {
     CacheBlock *block = args.supplyData.block;
+    assert(block->baseAddr == args.supplyData.initiatingEvent->getAddr());
 	DPRINTF("Supply Message sent for block 0x%"PRIx64"\n", block->baseAddr);
 	if ( !args.supplyData.isFakeSupply ) {
         block->status = (cacheMode == INCLUSIVE && block->isDirty() ) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
@@ -996,8 +1004,10 @@ void Cache::finishBusSupplyData(BusHandlerArgs &args)
         block->user_lock_sent_delayed = true;
     }
 
+    block->unlock();
 
-	supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, args.supplyData.src, args.supplyData.initiatingEvent->getID());
+
+	supplyMap_t::iterator supMapI = getSupplyInProgress(args.supplyData.initiatingEvent->getAddr(), args.supplyData.src, args.supplyData.initiatingEvent->getID());
 	ASSERT(supMapI != suppliesInProgress.end());
 	suppliesInProgress.erase(supMapI);
 
@@ -1036,6 +1046,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 						DPRINTF("Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
 						BusHandlers handlers = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
 						if ( handlers.finish ) {
+                            b->unlock();
                             delete supMapI->second.busEvent;
 							supMapI->second.busEvent = NULL;
 						}
@@ -1053,20 +1064,21 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
         LoadInfo_t* li = i->second;
         DPRINTF("We were waiting for block 0x%"PRIx64".  Processing.  [li: %p]\n", ev->getAddr(), li);
 
-        if ( li->busEvent ) {
-            DPRINTF("Canceling Bus Request for Load on 0x%"PRIx64"\n", li->busEvent->getAddr());
-            snoopBusQueue.cancelRequest(li->busEvent);
-            delete li->busEvent;
-            li->busEvent = NULL;
-        }
-
-        if ( !li->targetBlock ) {
+        if ( (NULL == li->targetBlock) || (li->targetBlock->baseAddr != ev->getAddr()) ) {
             DPRINTF("No block available yet.  We didn't ask for it.  Ignoring.\n");
             /* We still don't have a block assigned, so we didn't ask for
              * this.  Must be a snoop that we can ignore.
              * (no room in the inn) */
             ASSERT( src == SNOOP );
         } else {
+
+            if ( li->busEvent ) {
+                DPRINTF("Canceling Bus Request for Load on 0x%"PRIx64"\n", li->busEvent->getAddr());
+                snoopBusQueue.cancelRequest(li->busEvent);
+                delete li->busEvent;
+                li->busEvent = NULL;
+            }
+
 
             CacheBlock *targetBlock = li->targetBlock;
 
@@ -1202,13 +1214,16 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
                 DPRINTF("Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
                 BusHandlers handlers = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
                 if ( handlers.finish ) {
+                    block->unlock();
                     delete supMapI->second.busEvent;
                     supMapI->second.busEvent = NULL;
                 }
             }
-            MemEvent *supplyEV = new MemEvent(this, supMapI->first.first, RequestData);
-            supplyEV->setSize(blocksize);
-            self_link->send(1, new SelfEvent(this, &Cache::retryEvent, supplyEV, block, supMapI->first.second));
+            /* TODO::: XXX:::  SupplyInfo->initiating Event... */
+            //MemEvent *supplyEV = new MemEvent(this, supMapI->first.first, RequestData);
+            //supplyEV->setSize(blocksize);
+            //self_link->send(1, new SelfEvent(this, &Cache::retryEvent, supplyEV, block, supMapI->first.second));
+            self_link->send(1, new SelfEvent(this, &Cache::retryEvent, new MemEvent(supMapI->second.initiatingEvent), block, supMapI->first.second));
         }
 
 
@@ -1276,6 +1291,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
                     DPRINTF("Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
                     BusHandlers handlers = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
                     if ( handlers.finish ) {
+                        block->unlock();
                         delete supMapI->second.busEvent;
                         supMapI->second.busEvent = NULL;
                     }

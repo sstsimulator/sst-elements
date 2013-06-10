@@ -145,23 +145,25 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 
 void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 {
-	DPRINTF("(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
-			ev->getSrc().c_str(), ev->getDst().c_str(),
+    DPRINTF("(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
+            ev->getSrc().c_str(), ev->getDst().c_str(),
             ev->getID().first, ev->getID().second,
-			CommandString[ev->getCmd()], ev->getAddr(),
-			activePort.first);
-	// Only should be sending data if have clear-to-send
-	assert(from_link == activePort.first);
-	// Can't send while already busy
-	assert(!busBusy);
+            CommandString[ev->getCmd()], ev->getAddr(),
+            activePort.first);
+    // Only should be sending data if have clear-to-send
+    if ( from_link != activePort.first ) {
+        _abort(Bus, "Port %ld tried talking, but %ld is active.\n", from_link, activePort.first);
+    }
+    // Can't send while already busy
+    assert(!busBusy);
 
-	// TODO:  Calcuate delay including message size
+    // TODO:  Calcuate delay including message size
 
-	for ( int i = 0 ; i < numPorts ; i++ ) {
-		ports[i]->send(busDelay, delayTC, new MemEvent(ev));
-	}
-	selfLink->send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));
-	busBusy = true;
+    for ( int i = 0 ; i < numPorts ; i++ ) {
+        ports[i]->send(busDelay, delayTC, new MemEvent(ev));
+    }
+    selfLink->send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));
+    busBusy = true;
 }
 
 

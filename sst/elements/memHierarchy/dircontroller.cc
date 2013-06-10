@@ -609,6 +609,7 @@ void DirectoryController::resetEntry(DirEntry *entry)
 
 void DirectoryController::sendResponse(MemEvent *ev)
 {
+    DPRINTF("Sending %s 0x%"PRIx64" to %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getDst().c_str());
 	network->send(ev);
 }
 
