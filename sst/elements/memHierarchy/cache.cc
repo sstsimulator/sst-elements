@@ -263,6 +263,9 @@ void Cache::finish(void)
 			num_supply_hit, num_supply_miss,
 			num_write_hit, num_write_miss,
 			num_upgrade_miss);
+
+    listener->printStats();
+
     if ( DBG_CACHE & SST::_debug_flags )
         printCache();
 }

@@ -31,6 +31,7 @@ public:
     CacheListener() {}
     virtual ~CacheListener() {}
 
+    virtual void printStats() {}
     virtual void setOwningComponent(const SST::Component* owner) {}
     virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
