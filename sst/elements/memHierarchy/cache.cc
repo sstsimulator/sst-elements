@@ -1044,8 +1044,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 					if ( supMapI->second.busEvent != NULL ) {
 						// Bus requested.  Cancel it, too
 						DPRINTF("Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
-						BusHandlers handlers = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
-						if ( handlers.finish ) {
+                        bool canceled = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
+						if ( canceled ) {
                             b->unlock();
                             delete supMapI->second.busEvent;
 							supMapI->second.busEvent = NULL;
@@ -1074,8 +1074,9 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 
             if ( li->busEvent ) {
                 DPRINTF("Canceling Bus Request for Load on 0x%"PRIx64"\n", li->busEvent->getAddr());
-                snoopBusQueue.cancelRequest(li->busEvent);
-                delete li->busEvent;
+                if ( snoopBusQueue.cancelRequest(li->busEvent) ) {
+                    delete li->busEvent;
+                }
                 li->busEvent = NULL;
             }
 
@@ -1212,8 +1213,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
             if ( supMapI->second.busEvent != NULL ) {
                 // Bus requested.  Cancel it, too
                 DPRINTF("Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
-                BusHandlers handlers = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
-                if ( handlers.finish ) {
+                if ( snoopBusQueue.cancelRequest(supMapI->second.busEvent) ) {
                     block->unlock();
                     delete supMapI->second.busEvent;
                     supMapI->second.busEvent = NULL;
@@ -1289,8 +1289,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
                 if ( supMapI->second.busEvent != NULL ) {
                     // Bus requested.  Cancel it, too
                     DPRINTF("Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
-                    BusHandlers handlers = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
-                    if ( handlers.finish ) {
+                    if ( snoopBusQueue.cancelRequest(supMapI->second.busEvent) ) {
                         block->unlock();
                         delete supMapI->second.busEvent;
                         supMapI->second.busEvent = NULL;
@@ -1370,8 +1369,9 @@ bool Cache::cancelInvalidate(CacheBlock *block)
     if ( i->second.canCancel ) {
         DPRINTF("Attempting cancel for Invalidate 0x%"PRIx64" (%"PRIu64", %d)\n", block->baseAddr, i->second.issuingEvent.first, i->second.issuingEvent.second);
 
-        snoopBusQueue.cancelRequest(i->second.busEvent);
-        delete i->second.busEvent;
+        if ( snoopBusQueue.cancelRequest(i->second.busEvent) ) {
+            delete i->second.busEvent;
+        }
 
         std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents = i->second.waitingEvents;
         /* Only unlock if we locked it before */

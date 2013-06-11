@@ -291,20 +291,19 @@ private:
             link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
 		}
 
-		BusHandlers cancelRequest(MemEvent *event)
+		bool cancelRequest(MemEvent *event)
 		{
-			BusHandlers retval;
+            bool retval = false;
 			queue.remove(event);
 			std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
 			if ( i != map.end() ) {
-				retval = i->second;
 				map.erase(i);
                 link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
                 __DBG( DBG_CACHE, BusQueue, "%s: Sending cancel for req 0x%"PRIx64"\n", comp->getName().c_str(), makeBusKey(event));
+                retval = true;
 			} else {
                 __DBG( DBG_CACHE, BusQueue, "%s: Unable to find a request to cancel!\n", comp->getName().c_str());
             }
-			//delete event; // We have responsibility for this event, due to the contract of Link::send()
 			return retval;
 		}
 
