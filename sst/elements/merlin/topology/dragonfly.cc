@@ -241,3 +241,6 @@ uint32_t topo_dragonfly::port_for_router(uint32_t router) const
     if ( router > router_id ) tgt--;
     return tgt;
 }
+
+BOOST_CLASS_EXPORT(topo_dragonfly_event)
+

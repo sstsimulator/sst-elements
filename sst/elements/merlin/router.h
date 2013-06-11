@@ -30,7 +30,7 @@ const int INIT_BROADCAST_ADDR = -1;
 
 #define MERLIN_ENABLE_TRACE
 class RtrEvent : public Event {
-    
+
 public:
     int dest;
     int src;
@@ -40,8 +40,8 @@ public:
     enum TraceType {NONE, ROUTE, FULL};
 
     RtrEvent() :
-	Event(),
-	trace(NONE)
+        Event(),
+        trace(NONE)
     {}
 
     inline void setTraceID(int id) {traceID = id;}
@@ -52,12 +52,25 @@ public:
 
     inline TraceType getTraceType() {return trace;}
     inline int getTraceID() {return traceID;}
-    
+
 private:
     TraceType trace;
     int traceID;
-    
-    
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+		ar & BOOST_SERIALIZATION_NVP(dest);
+		ar & BOOST_SERIALIZATION_NVP(src);
+		ar & BOOST_SERIALIZATION_NVP(vc);
+		ar & BOOST_SERIALIZATION_NVP(size_in_flits);
+		ar & BOOST_SERIALIZATION_NVP(trace);
+		ar & BOOST_SERIALIZATION_NVP(traceID);
+	}
+
 };
 
 
@@ -71,6 +84,19 @@ public:
 	vc(vc),
 	credits(credits)
     {}
+
+private:
+    credit_event() {}
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+		ar & BOOST_SERIALIZATION_NVP(vc);
+		ar & BOOST_SERIALIZATION_NVP(credits);
+	}
 };
 
 class internal_router_event : public Event {
@@ -106,6 +132,19 @@ public:
 
     inline RtrEvent::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
+
+
+private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+		ar & BOOST_SERIALIZATION_NVP(next_port);
+		ar & BOOST_SERIALIZATION_NVP(next_vc);
+		ar & BOOST_SERIALIZATION_NVP(encap_ev);
+	}
 };
 
     class Topology : public Module {
@@ -120,6 +159,7 @@ public:
     virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;
     virtual PortState getPortState(int port) const = 0;
     inline bool isHostPort(int port) const { return getPortState(port) == R2N; }
+
 };
 
 class PortControl;

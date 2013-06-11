@@ -94,6 +94,21 @@ public:
     {
         return new topo_dragonfly_event(*this);
     }
+
+private:
+    topo_dragonfly_event() { }
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SST::Merlin::internal_router_event);
+		ar & BOOST_SERIALIZATION_NVP(src_group);
+		ar & BOOST_SERIALIZATION_NVP(dest.group);
+		ar & BOOST_SERIALIZATION_NVP(dest.mid_group);
+		ar & BOOST_SERIALIZATION_NVP(dest.router);
+		ar & BOOST_SERIALIZATION_NVP(dest.host);
+    }
 };
 
 }

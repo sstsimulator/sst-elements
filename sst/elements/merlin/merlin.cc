@@ -194,3 +194,8 @@ extern "C" {
 	NULL,
     };
 }
+
+BOOST_CLASS_EXPORT(RtrEvent)
+BOOST_CLASS_EXPORT(credit_event)
+BOOST_CLASS_EXPORT(internal_router_event)
+

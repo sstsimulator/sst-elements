@@ -107,7 +107,6 @@ void MemNIC::sendInitData(MemEvent *ev)
     /* TODO:  Better addressing */
     mre->dest = Merlin::INIT_BROADCAST_ADDR;
     link_control->sendInitData(mre);
-    delete ev;
 }
 
 MemEvent* MemNIC::recvInitData(void)
@@ -115,7 +114,7 @@ MemEvent* MemNIC::recvInitData(void)
     if ( initQueue.size() ) {
         MemRtrEvent *mre = initQueue.front();
         initQueue.pop_front();
-        MemEvent *ev = new MemEvent(mre->event);
+        MemEvent *ev = mre->event;
         delete mre;
         return ev;
     }
@@ -132,7 +131,7 @@ void MemNIC::clock(void)
         if ( link_control->spaceToSend(0, head->size_in_flits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
-                DPRINTF("Sent message ((%"PRIu64", %d) %s 0x%"PRIx64") to (%d) [%s]\n", head->event.getID().first, head->event.getID().second, CommandString[head->event.getCmd()], head->event.getAddr(), head->dest, head->event.getDst().c_str());
+                DPRINTF("Sent message ((%"PRIu64", %d) %s 0x%"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
                 sendQueue.pop_front();
             }
         }
@@ -145,7 +144,7 @@ void MemNIC::clock(void)
 
         MemRtrEvent *mre = (MemRtrEvent*)link_control->recv(last_recv_vc);
         if ( mre != NULL ) {
-            MemEvent *deliverEvent = new MemEvent(mre->event);
+            MemEvent *deliverEvent = mre->event;
             deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
             (*recvHandler)(deliverEvent);
 
@@ -165,9 +164,11 @@ void MemNIC::send(MemEvent *ev)
     mre->dest = addrForDest(ev->getDst());
     mre->size_in_flits = getFlitSize(ev);
     mre->vc = 0;
-    delete ev;
 
     sendQueue.push_back(mre);
 }
 
+
+BOOST_CLASS_EXPORT(MemNIC::MemRtrEvent)
+BOOST_CLASS_EXPORT(MemNIC::InitMemRtrEvent)
 

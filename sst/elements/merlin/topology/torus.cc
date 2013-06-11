@@ -276,3 +276,6 @@ topo_torus::choose_multipath(int start_port, int num_ports, int dest_dist)
         return start_port + (dest_dist % num_ports);
     }
 }
+
+BOOST_CLASS_EXPORT(topo_torus_event)
+

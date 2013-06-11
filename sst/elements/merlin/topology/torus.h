@@ -39,6 +39,37 @@ public:
         memcpy(tte->dest_loc, dest_loc, dimensions*sizeof(int));
         return tte;
     }
+private:
+    topo_torus_event() {}
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void save(Archive & ar, const unsigned int version) const
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(internal_router_event);
+        ar & BOOST_SERIALIZATION_NVP(dimensions);
+        ar & BOOST_SERIALIZATION_NVP(routing_dim);
+        for ( int i = 0 ; i < dimensions ; i++ ) {
+            ar & BOOST_SERIALIZATION_NVP(dest_loc[i]);
+        }
+    }
+
+    template<class Archive>
+    void load(Archive & ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(internal_router_event);
+        ar & BOOST_SERIALIZATION_NVP(dimensions);
+        ar & BOOST_SERIALIZATION_NVP(routing_dim);
+
+        dest_loc = new int[dimensions];
+        for ( int i = 0 ; i < dimensions ; i++ ) {
+            ar & BOOST_SERIALIZATION_NVP(dest_loc[i]);
+        }
+
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
+
 };
 
 

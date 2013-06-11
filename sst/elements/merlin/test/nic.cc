@@ -120,7 +120,22 @@ public:
     {
         return new MyRtrEvent(*this);
     }
+private:
+    MyRtrEvent() {}
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(RtrEvent);
+		ar & BOOST_SERIALIZATION_NVP(seq);
+    }
 };
+
+
+BOOST_CLASS_EXPORT(MyRtrEvent)
+
 
 bool
 nic::clock_handler(Cycle_t cycle)

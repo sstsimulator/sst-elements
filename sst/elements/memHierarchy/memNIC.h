@@ -59,18 +59,27 @@ public:
     };
 
 
-private:
+public:
     class MemRtrEvent : public Merlin::RtrEvent {
     public:
-        MemEvent event;
+        MemEvent *event;
 
+        MemRtrEvent() {}
         MemRtrEvent(MemEvent *ev) :
-            Merlin::RtrEvent(), event(*ev)
+            Merlin::RtrEvent(), event(ev)
         { }
 
         virtual RtrEvent* clone(void) {
             return new MemRtrEvent(*this);
         }
+        friend class boost::serialization::access;
+        template<class Archive>
+            void
+            serialize(Archive & ar, const unsigned int version )
+            {
+                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
+                ar & BOOST_SERIALIZATION_NVP(event);
+            }
     };
 
     class InitMemRtrEvent : public Merlin::RtrEvent {
@@ -80,6 +89,7 @@ private:
         ComponentType compType;
         ComponentTypeInfo compInfo;
 
+        InitMemRtrEvent() {}
         InitMemRtrEvent(const std::string &name, int addr, ComponentType type, ComponentTypeInfo info) :
             Merlin::RtrEvent(), name(name), address(addr), compType(type), compInfo(info)
         {
@@ -89,8 +99,33 @@ private:
         virtual RtrEvent* clone(void) {
             return new InitMemRtrEvent(*this);
         }
+        friend class boost::serialization::access;
+        template<class Archive>
+            void
+            serialize(Archive & ar, const unsigned int version )
+            {
+                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Merlin::RtrEvent);
+                ar & BOOST_SERIALIZATION_NVP(name);
+                ar & BOOST_SERIALIZATION_NVP(address);
+                ar & BOOST_SERIALIZATION_NVP(compType);
+                switch ( compType ) {
+                case TypeCache:
+                    ar & BOOST_SERIALIZATION_NVP(compInfo.cache.blocksize);
+                    ar & BOOST_SERIALIZATION_NVP(compInfo.cache.num_blocks);
+                    break;
+                case TypeDirectoryCtrl:
+                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeStart);
+                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.rangeEnd);
+                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveSize);
+                    ar & BOOST_SERIALIZATION_NVP(compInfo.dirctrl.interleaveStep);
+                    break;
+                default:
+                    _abort(MemNIC, "Don't know how to serialize this type.\n");
+                }
+            }
     };
 
+private:
 
     static const int num_vcs;
     size_t flitSize;
