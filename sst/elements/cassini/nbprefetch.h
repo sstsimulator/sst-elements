@@ -28,10 +28,15 @@ class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
 	void setOwningComponent(const SST::Component* owner);
         void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr);
 	void registerResponseCallback(Event::HandlerBase *handler);
+	void printStats();
+
     private:
 	const SST::Component* owner;
 	std::vector<Event::HandlerBase*> registeredCallbacks;
 	uint64_t blockSize;
+	uint64_t prefetchEventsIssued;
+	uint64_t missEventsProcessed;
+	uint64_t hitEventsProcessed;
 };
 
 }

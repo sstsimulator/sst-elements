@@ -21,6 +21,8 @@ void StridePrefetcher::notifyAccess(NotifyAccessType notifyType, NotifyResultTyp
 
 	recheckCountdown = (recheckCountdown + 1) % strideDetectionRange;
 
+	notifyResType == MISS ? missEventsProcessed++ : hitEventsProcessed++;
+
 	if(recheckCountdown == 0)
 		DetectStride();
 }
@@ -70,6 +72,7 @@ void StridePrefetcher::DetectStride() {
 
 		std::cout << "StridePrefetcher: created prefetch for address " <<
 			ev->getAddr() << std::endl;
+		prefetchEventsIssued++;
 
                 // Cycle over each registered call back and notify them that we want to issue a prefet$
                 for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
@@ -96,6 +99,10 @@ StridePrefetcher::StridePrefetcher(Params& params) {
 	for(uint32_t i = 0; i < recentAddrListCount; ++i) {
 		recentAddrList[i] = (Addr) 0;
 	}
+
+        prefetchEventsIssued = 0;
+        missEventsProcessed = 0;
+        hitEventsProcessed = 0;
 }
 
 StridePrefetcher::~StridePrefetcher() {
@@ -110,3 +117,13 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 	registeredCallbacks.push_back(handler);
 }
 
+void StridePrefetcher::printStats() {
+	std::cout << "--------------------------------------------------------------------" << std::endl;
+        std::cout << "Stride Prefetch Engine:" << std::endl;
+        std::cout << "Cache Miss Events:         " << missEventsProcessed << std::endl;
+        std::cout << "Cache Hit Events:          " << hitEventsProcessed << std::endl;
+        std::cout << "Cache Miss Rate (%):       " << ((missEventsProcessed / ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0) << std::endl;
+        std::cout << "Cache Hit Rate (%):        " << ((hitEventsProcessed / ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0) << std::endl;
+        std::cout << "Prefetches Issued:         " << prefetchEventsIssued << std::endl;
+        std::cout << "--------------------------------------------------------------------" << std::endl;
+}
