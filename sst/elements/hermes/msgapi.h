@@ -15,6 +15,7 @@ namespace SST {
 namespace Hermes {
 
 typedef uint32_t HermesCommunicator;
+typedef uint32_t HermesRankID;
 
 typedef struct MessageResponse {
 };
@@ -30,15 +31,24 @@ class MessageInterface : public Module {
 	COMPLEX
     };
 
+    enum ReductionOperation {
+	SUM,
+	MIN,
+	MAX
+    };
+
     MessageInterface() {}
     virtual ~MessageInterface() {}
 
     virtual void init() {}
     virtual void rank(HermesCommunicator group, int* rank) {}
     virtual void size(HermesCommunicator group) {}
-    virtual void send(void* payload, uint32_t count, PayloadDataType dtype, uint32_t dest, uint32_t tag, HermesCommunicator group) {}
-    virtual void recv(void* target, uint32_t count, PayloadDataType dtype, uint32_t source, uint32_t tag, HermesCommunicator group, MessageResponse& resp) {}
+    virtual void send(void* payload, uint32_t count, PayloadDataType dtype, HermesRankID dest, uint32_t tag, HermesCommunicator group) {}
+    virtual void recv(void* target, uint32_t count, PayloadDataType dtype, HermesRankID source, uint32_t tag, HermesCommunicator group, MessageResponse& resp) {}
 
+    virtual void allreduce(void* mydata, void* result, uint32_t count, PayloadDataType dtype, ReductionOperation op, HermesCommunicator group) {}
+    virtual void reduce(void* mydata, void* result, uint32_t count, PayloadDataType dtype, ReductionOperation op, HermesRankID root, HermesCommunicator group) {}
+    virtual void barrier(HermesCommunicator group) {}
 };
 
 }
