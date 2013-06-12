@@ -8,6 +8,7 @@
 #include <stdarg.h>
 
 #include "ztrace.h"
+#include "zdumpi.h"
 
 using namespace std;
 using namespace SST;
@@ -20,12 +21,25 @@ create_ZodiacTraceReader(SST::ComponentId_t id,
     return new ZodiacTraceReader( id, params );
 }
 
+static Component*
+create_ZodiacDUMPITraceReader(SST::ComponentId_t id,
+                  SST::Component::Params_t& params)
+{
+    return new ZodiacDUMPITraceReader( id, params );
+}
+
 static const ElementInfoComponent components[] = {
     {
 	"ZodiacTraceReader",
 	"Application Communication Trace Reader",
 	NULL,
 	create_ZodiacTraceReader,
+    },
+    {
+	"ZodiacDUMPITraceReader",
+	"Application Communication DUMPI Trace Reader",
+	NULL,
+	create_ZodiacDUMPITraceReader,
     },
     { NULL, NULL, NULL, NULL }
 };
