@@ -9,6 +9,8 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzodiac.la
 libzodiac_la_SOURCES = \
-	zodiac.cc
+	zodiac.cc \
+	ztrace.cc \
+	ztrace.h
 
 libzodiac_la_LDFLAGS = -module -avoid-version
