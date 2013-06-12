@@ -10,6 +10,8 @@
 
 #include <sst/elements/hermes/msgapi.h>
 
+#include <dumpi/libundumpi/libundumpi.h>
+
 using namespace SST::Hermes;
 
 namespace SST {
