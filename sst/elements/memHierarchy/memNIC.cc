@@ -55,9 +55,11 @@ MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) 
     TimeConverter *tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(ci.link_bandwidth);
 
 
+    Params params; // LinkControl doesn't actually use the params
+    link_control = (Merlin::LinkControl*)comp->loadModule("merlin.linkcontrol", params);
     int *buf_size = new int[num_vcs];
     for ( int i = 0 ; i < num_vcs ; i++ ) buf_size[i] = 100;
-    link_control = new Merlin::LinkControl(comp, ci.link_port, tc, num_vcs, buf_size, buf_size);
+    link_control->configureLink(comp, ci.link_port, tc, num_vcs, buf_size, buf_size);
     delete [] buf_size;
 
 }

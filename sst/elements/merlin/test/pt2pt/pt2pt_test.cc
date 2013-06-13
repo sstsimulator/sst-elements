@@ -53,7 +53,8 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
     
     // Create a LinkControl object
     int buf_size[2] = {buffer_size, buffer_size};
-    link_control = new LinkControl(this, "rtr", tc, num_vcs, buf_size, buf_size);
+    link_control = (Merlin::LinkControl*)loadModule("merlin.linkcontrol", params);
+    link_control->configureLink(this, "rtr", tc, num_vcs, buf_size, buf_size);
 
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<pt2pt_test>(this,&pt2pt_test::clock_handler), false);

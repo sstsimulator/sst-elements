@@ -15,6 +15,8 @@
 #include <sst/core/element.h>
 #include <sst/core/configGraph.h>
 
+#include "linkControl.h"
+
 #include "hr_router/hr_router.h"
 #include "test/nic.h"
 #include "test/pt2pt/pt2pt_test.h"
@@ -103,6 +105,12 @@ load_dragonfly_topology(Params& params)
     return new topo_dragonfly(params);
 }
 
+static Module*
+load_linkcontrol(Params& params)
+{
+    return new LinkControl(params);
+}
+
 static const ElementInfoComponent components[] = {
     { "portals_nic",
       "NIC with offloaded Portals4 implementation.",
@@ -155,6 +163,12 @@ static const ElementInfoModule modules[] = {
       "Dragonfly topology object",
       NULL,
       load_dragonfly_topology,
+      NULL,
+    },
+    { "linkcontrol",
+      "Link Control module for building Merlin-enabled NICs",
+      NULL,
+      load_linkcontrol,
       NULL,
     },
     { NULL, NULL, NULL, NULL, NULL }
