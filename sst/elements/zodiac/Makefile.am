@@ -18,6 +18,9 @@ libzodiac_la_SOURCES = \
 	ztrace.cc \
 	ztrace.h \
 	zdumpi.cc \
-	zdumpi.h
+	zdumpi.h \
+	dumpireader.h \
+	dumpireader.cc \
+	dumpifunc.h
 
-libzodiac_la_LDFLAGS = -module -avoid-version $(DUMPI_LDFLAGS)
+libzodiac_la_LDFLAGS = -module -avoid-version $(DUMPI_LDFLAGS) -lundumpi

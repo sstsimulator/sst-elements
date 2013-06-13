@@ -8,9 +8,12 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
+#include "stdio.h"
+#include "stdlib.h"
 #include <sst/elements/hermes/msgapi.h>
 
-#include <dumpi/libundumpi/libundumpi.h>
+//#include <dumpi/libundumpi/libundumpi.h>
+#include "dumpireader.h"
 
 using namespace SST::Hermes;
 
@@ -22,9 +25,12 @@ public:
 
   ZodiacDUMPITraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup() { }
-  void finish() { }
+  void finish() { 
+	trace->close();
+  }
 
 private:
+  ~ZodiacDUMPITraceReader();
   ZodiacDUMPITraceReader();  // for serialization only
   ZodiacDUMPITraceReader(const ZodiacDUMPITraceReader&); // do not implement
   void operator=(const ZodiacDUMPITraceReader&); // do not implement
@@ -32,7 +38,12 @@ private:
   void handleEvent( SST::Event *ev );
   virtual bool clockTic( SST::Cycle_t );
 
+  ////////////////////////////////////////////////////////
+
   MessageInterface* msgapi;
+  DUMPIReader* trace;
+
+  ////////////////////////////////////////////////////////
 
   friend class boost::serialization::access;
   template<class Archive>
