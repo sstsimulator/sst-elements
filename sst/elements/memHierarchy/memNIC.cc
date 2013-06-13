@@ -35,6 +35,7 @@ const int MemNIC::num_vcs = 3;
 /* Translates a MemEvent string destination to an integer */
 int MemNIC::addrForDest(const std::string &target)
 {
+    DPRINTF("Translated address %s to %d\n", target.c_str(), addrMap[target]);
     return addrMap[target];
 }
 

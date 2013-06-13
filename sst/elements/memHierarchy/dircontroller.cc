@@ -622,7 +622,7 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev)
         return ( addr >= addrRangeStart && addr < addrRangeEnd );
     } else {
         if ( addr < addrRangeStart ) return false;
-        if ( addr > addrRangeEnd ) return false;
+        if ( addr >= addrRangeEnd ) return false;
 
         addr = addr - addrRangeStart;
 

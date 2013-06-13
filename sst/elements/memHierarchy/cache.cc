@@ -540,7 +540,9 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
         }
         if ( directory_link ) {
             //printf("%s: issuing Invalidate (%lu, %d) to Directory for 0x%"PRIx64"\n", getName().c_str(), invalidateEvent->getID().first, invalidateEvent->getID().second, invalidateEvent->getAddr()); fflush(stdout);
-            directory_link->send(new MemEvent(invalidateEvent));
+            MemEvent *dirInvEvent = new MemEvent(invalidateEvent);
+            dirInvEvent->setDst(findTargetDirectory(addr));
+            directory_link->send(dirInvEvent);
             inv.waitingACKs++;
         }
     }
@@ -1170,6 +1172,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 DPRINTF("Forwarding writeback of 0x%"PRIx64" to directory.\n", ev->getAddr());
                 MemEvent *newev = new MemEvent(ev);
                 newev->setSrc(getName());
+                newev->setDst(findTargetDirectory(ev->getAddr()));
                 directory_link->send(newev);
             }
         } else if ( forwardDownstream && src == UPSTREAM ) {
@@ -1181,6 +1184,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 // Need to set src properly for the network.
                 MemEvent *newev = new MemEvent(ev);
                 newev->setSrc(getName());
+                newev->setDst(findTargetDirectory(ev->getAddr()));
                 directory_link->send(newev);
             } else {
                 _abort(Cache, "Not sure where to send this.  Directory?\n");
@@ -1479,6 +1483,7 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
 	if ( directory_link ) {
         MemEvent *ev = new MemEvent(this, block->baseAddr, SupplyData);
         ev->setFlag(MemEvent::F_WRITEBACK);
+        ev->setDst(findTargetDirectory(block->baseAddr));
         ev->setPayload(block->data);
 		directory_link->send(ev);
     }
@@ -1826,6 +1831,8 @@ std::string Cache::findTargetDirectory(Addr addr)
 {
     for ( std::vector<MemNIC::ComponentInfo>::iterator i = directories.begin() ; i != directories.end() ; ++i ) {
         MemNIC::ComponentTypeInfo &di = i->typeInfo;
+        DPRINTF("Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
+                addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
         if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
             if ( di.dirctrl.interleaveSize == 0 ) {
                 return i->name;

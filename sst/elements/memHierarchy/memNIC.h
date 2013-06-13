@@ -70,7 +70,9 @@ public:
         { }
 
         virtual RtrEvent* clone(void) {
-            return new MemRtrEvent(*this);
+            MemRtrEvent *mre = new MemRtrEvent(*this);
+            mre->event = new MemEvent(event);
+            return mre;
         }
         friend class boost::serialization::access;
         template<class Archive>
