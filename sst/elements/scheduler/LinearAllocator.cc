@@ -696,7 +696,7 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
 
     bool sort, hilbert;
     sort = false;
-    hilbert = true;
+    hilbert = false;
     switch (params -> size()) {
     case 0:
         break;
