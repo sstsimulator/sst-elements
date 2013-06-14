@@ -4,11 +4,11 @@ $sdlname = "TempSdl.sdl";
 $sstdir = "../../../core/";
 $testoutdir = "tests";
 @simfiles = ("LCG.sim");
-@numprocs = (24515);
+@numprocs = (4008);
 @schedulers = ("pqueue");
 @comparators = ("fifo");
-@machines = ("mesh[5,4903]");
-@allocators = ("mbs", "sortedfreelist", "bestfit", "firstfit", "random");
+@machines = ("mesh[167,4,6]");
+@allocators = ("sortedfreelist[sort]", "sortedfreelist[nosort]","sortedfreelist","sortedfreelist[hilbert]","sortedfreelist[snake]","sortedfreelist[sort,hilbert]","sortedfreelist[sort,snake]","sortedfreelist[nosort,hilbert]","sortedfreelist[nosort,snake]");
 
 foreach $sim (@simfiles)
 {

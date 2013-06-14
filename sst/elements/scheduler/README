@@ -56,11 +56,11 @@ running
 ./runtests.pl
 
 It can run several tests in a loop (among different simulations, schedulers,
-etc), and generates output files that concatenate the scheduler, machine,
-and allocator info in the file name so each output file can be identified.
-These output files are stored in a subdirectory tests/ to avoid cluttering
-the current directory.  (Do note that if a test is run twice the output will
-be overwritten without warning).  
+etc), and generates output files that concatenate the scheduler, machine, and
+allocator info in the file name so each output file can be identified.  These
+output files are stored in a subdirectory tests/ to avoid cluttering the
+current directory.  Note that if a test is run twice the output will be
+overwritten without warning.  
 
 --------------------------------------------------
     Arguments to the Scheduler Component
@@ -202,6 +202,23 @@ square blocks of nodes into smaller parts
 
 octetmbs - very similar to MBS but uses Octet divisions when splitting blocks
 into smaller parts
+
+
+Linear allocators - the next three allocators are based on the Linear paradigm,
+which gives each node a rank based on is position along a space-filling curve.
+The first argument, which is optional, specifies whether the shortest dimension
+should be followed first (sort) or whether the dimensions should be followed in
+the order they are given (nosort). If no argument is given the default is
+nosort.  The second argument, also optional, specifies whether the curve should
+be a Hilbert space-filling curve (hilbert) or a snake through the mesh (snake).
+If no argument is given the default is the Hilbert curve.  The Hilbert curve
+works in both two and three dimensions regardless of size, but it works best on
+a square or cube with side lengths of power 2.  In two dimensions, rectangular
+and different-length meshes work fairly well; there will only be a few
+discontinuities along the right border of the mesh and the successive points
+will be close if not adjacent.  In three dimensions there are more
+discontinuities and they are more serious.  Allocators sortedfreelist, bestfit,
+and firstfit distinguish how the allocator acts once the ranks are assiged.
 
 sortedfreelist - based on the Linear paradigm, which gives each node a rank
 based on its position along a space-filling curve.  The curve must currently be
