@@ -13,6 +13,10 @@ libcassini_la_SOURCES = \
 	strideprefetch.cc \
 	strideprefetch.h \
 	nbprefetch.cc \
-	nbprefetch.h 
+	nbprefetch.h \
+	simpletlb.h \
+	simpletlb.cc \
+	pageentry.h \
+	pageentry.cc
 
 libcassini_la_LDFLAGS = -module -avoid-version
