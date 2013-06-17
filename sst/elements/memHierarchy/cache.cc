@@ -127,6 +127,9 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
 	rowshift = numBits(blocksize);
 	rowmask = n_rows - 1;  // Assumption => n_rows is power of 2
+    if ( (n_rows & (n_rows - 1)) != 0 ) {
+        _abort(Cache, "Cache:%s:  Parameter num_rows must be a power of two.\n", getName().c_str());
+    }
 	tagshift = numBits(blocksize) + numBits(n_rows);
 
 

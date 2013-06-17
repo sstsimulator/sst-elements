@@ -72,7 +72,7 @@ create_DirectoryController(SST::ComponentId_t id,
 static const ElementInfoParam cache_params[] = {
     {"prefetcher",      "Prefetcher to use with cache (loaded as a module)"},
     {"num_ways",        "Associativity of the cache."},
-    {"num_rows",        "How many cache rows."},
+    {"num_rows",        "How many cache rows. (Must be a power of 2)"},
     {"blocksize",       "Size of a cache block in bytes."},
     {"num_upstream",    "How many upstream ports there are. Typically 1 or 0."},
     {"next_level",      "Name of the next level cache"},
