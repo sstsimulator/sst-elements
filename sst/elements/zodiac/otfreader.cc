@@ -7,12 +7,14 @@ using namespace SST::Zodiac;
 int handleOTFEnter(void* data, uint64_t time, uint32_t func, uint32_t proc, uint32_t src) {
 	OTFReader* reader = (OTFReader*) data;
 	std::cout << "Entered function: " << func << std::endl;
+
 	return OTF_RETURN_OK;
 }
 
 int handleOTFExit(void* data, uint64_t time, uint32_t func, uint32_t proc, uint32_t src) {
 	OTFReader* reader = (OTFReader*) data;
 	std::cout << "Exited function: " << func << std::endl;
+
 	return OTF_RETURN_OK;
 }
 
@@ -54,6 +56,10 @@ OTFReader::OTFReader(string file, uint32_t focusRank) {
 	// These initialize the reading logic
 	OTF_Reader_setRecordLimit(reader, 0);
 	OTF_Reader_readEvents(reader, handlers);
+
+#ifdef __SST_DEBUG_OUTPUT__
+	#pragma message "COMPILED WITH ADDITIONAL DEBUG SUPPORT"
+#endif
 }
 
 void OTFReader::close() {
