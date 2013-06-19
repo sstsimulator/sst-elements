@@ -42,10 +42,10 @@ using namespace SST::Interfaces;
 
 MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 {
-	unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
+        unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
 	if ( ramSize == 0 )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
-	memSize = ramSize * (1024*1024);
+	memSize = ramSize * (1024*1024ul);
 
 	rangeStart = (Addr)params.find_integer("rangeStart", 0);
 	interleaveSize = (Addr)params.find_integer("interleaveSize", 0);
