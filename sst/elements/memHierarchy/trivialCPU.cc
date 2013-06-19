@@ -54,6 +54,9 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) :
 
     numLS = params.find_integer("num_loadstore", -1);
 
+    uncachedRangeStart = (uint64_t)params.find_integer("uncachedRangeStart", 0);
+    uncachedRangeEnd = (uint64_t)params.find_integer("uncachedRangeEnd", 0);
+
 
 	// tell the simulator not to end without us
     registerAsPrimaryComponent();
@@ -145,11 +148,16 @@ bool trivialCPU::clockTic( Cycle_t )
 			if ( doWrite ) {
 				e->setPayload(4, (uint8_t*)&addr);
 			}
+
+            bool uncached = ( addr >= uncachedRangeStart && addr < uncachedRangeEnd );
+            if ( uncached )
+                e->setFlag(MemEvent::F_UNCACHED);
+
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			printf("%s: %d Issued %s (%"PRIu64") for address 0x%"PRIx64"\n",
-					getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, addr);
+			printf("%s: %d Issued %s%s (%"PRIu64") for address 0x%"PRIx64"\n",
+					getName().c_str(), numLS, uncached ? "Uncached " : "" , doWrite ? "Write" : "Read", e->getID().first, addr);
 			num_reads_issued++;
 
             numLS--;

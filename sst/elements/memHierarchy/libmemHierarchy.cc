@@ -106,11 +106,13 @@ static const ElementInfoParam memctrl_params[] = {
 };
 
 static const ElementInfoParam cpu_params[] = {
-    {"workPerCycle",    "How much work to do per cycle."},
-    {"commFreq",        "How often to do a memory operation."},
-    {"memSize",         "Size of physical memory."},
-    {"do_write",        "Enable writes to memory (versus just reads)."},
-    {"num_loadstore",   "Stop after this many reads and writes."},
+    {"workPerCycle",        "How much work to do per cycle."},
+    {"commFreq",            "How often to do a memory operation."},
+    {"memSize",             "Size of physical memory."},
+    {"do_write",            "Enable writes to memory (versus just reads)."},
+    {"num_loadstore",       "Stop after this many reads and writes."},
+    {"uncachedRangeStart",  "Beginning of range of addresses that are uncacheable."},
+    {"uncachedRangeEnd",    "End of range of addresses that are uncacheable."},
     {NULL, NULL}
 };
 
@@ -133,38 +135,38 @@ static const ElementInfoComponent components[] = {
 	{ "Cache",
 		"Cache Component",
 		NULL,
-		create_Cache,
-        	cache_params
+        create_Cache,
+        cache_params
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",
 		NULL,
 		create_Bus,
-        	bus_params
+        bus_params
 	},
 	{"MemController",
 		"Memory Controller Component",
 		NULL,
 		create_MemController,
-        	memctrl_params
+        memctrl_params
 	},
 	{"DirectoryController",
 		"Coherencey Directory Controller Component",
 		NULL,
 		create_DirectoryController,
-        	dirctrl_params
+        dirctrl_params
 	},
 	{"trivialCPU",
 		"Simple Demo CPU for testing",
 		NULL,
 		create_trivialCPU,
-        	cpu_params
+        cpu_params
 	},
 	{"streamCPU",
 		"Simple Demo STREAM CPU for testing",
 		NULL,
 		create_streamCPU,
-        	cpu_params
+        cpu_params
 	},
 	{ NULL, NULL, NULL, NULL }
 };

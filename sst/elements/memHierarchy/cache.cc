@@ -365,10 +365,11 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	ASSERT(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
 	bool isRead = (ev->getCmd() == ReadReq);
 	CacheBlock *block = findBlock(ev->getAddr(), false);
-	DPRINTF("(%"PRIu64", %d) 0x%"PRIx64"%s %s %s (block 0x%"PRIx64" [%d])\n",
+	DPRINTF("(%"PRIu64", %d) 0x%"PRIx64"%s %s%s %s (block 0x%"PRIx64" [%d])\n",
 			ev->getID().first, ev->getID().second,
 			ev->getAddr(),
             ev->queryFlag(MemEvent::F_LOCKED) ? " [LOCKED]" : "",
+            ev->queryFlag(MemEvent::F_UNCACHED) ? "Uncached " : "",
 			isRead ? "READ" : "WRITE",
 			(block) ? ((isRead || block->status == CacheBlock::EXCLUSIVE) ? "HIT" : "UPGRADE") : "MISS",
 			addrToBlockAddr(ev->getAddr()),
@@ -1100,7 +1101,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
         LoadInfo_t* li = i->second;
         DPRINTF("We were waiting for block 0x%"PRIx64".  Processing.  [li: %p]\n", ev->getAddr(), li);
 
-        if ( (NULL == li->targetBlock) || (li->targetBlock->baseAddr != ev->getAddr()) ) {
+        if ( (!li->uncached) &&  ((NULL == li->targetBlock) || (li->targetBlock->baseAddr != ev->getAddr())) ) {
             DPRINTF("No block available yet.  We didn't ask for it.  Ignoring.\n");
             /* We still don't have a block assigned, so we didn't ask for
              * this.  Must be a snoop that we can ignore.
@@ -1210,7 +1211,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 }
             }
 
-            handlePendingEvents(findRow(targetBlock->baseAddr), targetBlock);
+            if ( targetBlock ) // Wont be set if we're handling an uncached request
+                handlePendingEvents(findRow(targetBlock->baseAddr), targetBlock);
         }
 
     } else {

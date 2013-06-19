@@ -55,6 +55,7 @@ private:
 	bool do_write;
 	uint32_t maxAddr;
 	uint64_t num_reads_issued, num_reads_returned;
+    uint64_t uncachedRangeStart, uncachedRangeEnd;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
 
