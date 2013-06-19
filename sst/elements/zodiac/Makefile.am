@@ -10,7 +10,7 @@ libzodiac_la_CPPFLAGS = \
 	$(DUMPI_CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS) \
-	$(shell $(SSTMACRO_CONFIG_TOOL) --includes)
+	$(shell $(OTF_CONFIG_TOOL) --includes)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzodiac.la
@@ -22,7 +22,9 @@ libzodiac_la_SOURCES = \
 	zdumpi.h \
 	dumpireader.h \
 	dumpireader.cc \
-	dumpifunc.h
+	dumpifunc.h \
+	otfreader.h \
+	otfreader.cc
 
 libzodiac_la_LDFLAGS = -module -avoid-version \
-	$(shell $(SSTMACRO_CONFIG_TOOL) --libs)
+	$(shell $(OTF_CONFIG_TOOL) --libs)
