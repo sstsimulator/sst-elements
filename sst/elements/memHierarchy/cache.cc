@@ -375,6 +375,12 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
             block ? block->status : -1
             );
 
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
+        if ( isRead ) loadBlock(ev, UPSTREAM);
+        else assert(false);
+        return;
+    }
+
     if ( firstProcess )
         listener->notifyAccess(isRead ? CacheListener::READ : CacheListener::WRITE,
                 (block != NULL) ? CacheListener::HIT : CacheListener::MISS,
@@ -625,61 +631,63 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
         return;
     }
 
-    CacheRow *row = findRow(ev->getAddr());
+    /* Don't bother messing with the cache if this is an uncached operation */
+    if ( !li->uncached ) {
+        CacheRow *row = findRow(ev->getAddr());
 
-    if ( li->targetBlock == NULL ) {
-        row->printRow();
-        li->targetBlock = row->getLRU();
-    }
-
-    if ( !li->targetBlock ) { // Row is full, wait for one to be available
-        row->addWaitingEvent(ev, src);
-        return;
-    } else {
-        CacheBlock *block = li->targetBlock;
-        block->loadInfo = li;
-        if ( cacheMode == INCLUSIVE && block->status != CacheBlock::EXCLUSIVE ) {
-            if ( block->status == CacheBlock::DIRTY_PRESENT ) {
-                DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
-                return;
-            } else if ( block->status == CacheBlock::DIRTY_UPSTREAM ) {
-                DPRINTF("Replacing a block to handle load.  Need to fetch upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                //issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
-                fetchBlock(ev, block, src);
-                return;
-            } else if ( block->status != CacheBlock::INVALID ) {
-                DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                /* We can go straight to INVALID...
-                 *  INCLUSIVE cache's aren't L1 (why bother?)
-                 *  Upstream caches either don't have it, have it in SHARED (clean)
-                 *  Or EXCLUSIVE, in which case they'll write back before ack'ing.
-                 */
-                if ( waitingForInvalidate(block->baseAddr) ) {
-                    // Already working to invalidate this
-                }
-                issueInvalidate(ev, src, block, CacheBlock::INVALID, SEND_UP, false);
-                return;
-            }
+        if ( li->targetBlock == NULL ) {
+            li->targetBlock = row->getLRU();
         }
-        if ( block->status == CacheBlock::EXCLUSIVE ) {
-            DPRINTF("Need to evict block 0x%"PRIx64" to satisfy load for 0x%"PRIx64"\n",
-                    block->baseAddr, ev->getAddr());
 
+        if ( !li->targetBlock ) { // Row is full, wait for one to be available
             row->addWaitingEvent(ev, src);
-            writebackBlock(block, CacheBlock::INVALID); // We'll get it next time
-
             return;
         } else {
-            DPRINTF("Replacing block (old status is [%d], 0x%"PRIx64" [%s]\n",
-                    block->status, block->baseAddr,
-                    block->locked ? "LOCKED" : "unlocked");
-        }
-    }
+            CacheBlock *block = li->targetBlock;
+            block->loadInfo = li;
+            if ( cacheMode == INCLUSIVE && block->status != CacheBlock::EXCLUSIVE ) {
+                if ( block->status == CacheBlock::DIRTY_PRESENT ) {
+                    DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
+                    issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
+                    return;
+                } else if ( block->status == CacheBlock::DIRTY_UPSTREAM ) {
+                    DPRINTF("Replacing a block to handle load.  Need to fetch upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
+                    //issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
+                    fetchBlock(ev, block, src);
+                    return;
+                } else if ( block->status != CacheBlock::INVALID ) {
+                    DPRINTF("Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
+                    /* We can go straight to INVALID...
+                     *  INCLUSIVE cache's aren't L1 (why bother?)
+                     *  Upstream caches either don't have it, have it in SHARED (clean)
+                     *  Or EXCLUSIVE, in which case they'll write back before ack'ing.
+                     */
+                    if ( waitingForInvalidate(block->baseAddr) ) {
+                        // Already working to invalidate this
+                    }
+                    issueInvalidate(ev, src, block, CacheBlock::INVALID, SEND_UP, false);
+                    return;
+                }
+            }
+            if ( block->status == CacheBlock::EXCLUSIVE ) {
+                DPRINTF("Need to evict block 0x%"PRIx64" to satisfy load for 0x%"PRIx64"\n",
+                        block->baseAddr, ev->getAddr());
 
-    /* Simple Load */
-    li->targetBlock->activate(ev->getAddr());
-    li->targetBlock->lock();
+                row->addWaitingEvent(ev, src);
+                writebackBlock(block, CacheBlock::INVALID); // We'll get it next time
+
+                return;
+            } else {
+                DPRINTF("Replacing block (old status is [%d], 0x%"PRIx64" [%s]\n",
+                        block->status, block->baseAddr,
+                        block->locked ? "LOCKED" : "unlocked");
+            }
+        }
+
+        /* Simple Load */
+        li->targetBlock->activate(ev->getAddr());
+        li->targetBlock->lock();
+    }
 
     li->loadDirection = SEND_DOWN;
 
@@ -688,7 +696,8 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
     else
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
-    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, li->targetBlock->baseAddr, li->targetBlock));
+    li->eventScheduled = true;
+    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, li->addr, li->targetBlock));
 }
 
 
@@ -709,6 +718,7 @@ std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(Addr addr, MemEvent *ev, Sour
         DPRINTF("No existing Load for this block.  Creating.  [li: %p]\n", li);
         std::pair<LoadList_t::iterator, bool> res = waitingLoads.insert(std::make_pair(blockAddr, li));
         li->initiatingEvent = ev->getID();
+        li->uncached = ev->queryFlag(MemEvent::F_UNCACHED);
         initialEvent = true;
     }
 
@@ -719,14 +729,21 @@ std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(Addr addr, MemEvent *ev, Sour
 
 void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
 {
+    li->eventScheduled = false;
+    if ( li->satisfied ) {
+        delete li;
+        return;
+    }
+
     DPRINTF("Time to send load for 0x%"PRIx64"\n", addr);
 
     /* Check to see if we're still in ASSIGNED state.  If not, we've probably
      * already been processed.
      * Unless this is a SEND_UP fetch, and we're DIRTY.
      */
-    if ( !((block->status == CacheBlock::DIRTY_UPSTREAM) && (li->loadDirection == SEND_UP)) &&
-            ((block->status != CacheBlock::ASSIGNED) || (block->baseAddr != addr) || (li != block->loadInfo))) {
+    if ( (!li->uncached) &&
+             !((block->status == CacheBlock::DIRTY_UPSTREAM) && (li->loadDirection == SEND_UP)) &&
+             ((block->status != CacheBlock::ASSIGNED) || (block->baseAddr != addr) || (li != block->loadInfo))) {
         DPRINTF("Not going to bother loading.  Somebody else has moved block 0x%"PRIx64" to state [%d]\n",
                 block->baseAddr, block->status);
         return;
@@ -735,14 +752,14 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
     if ( li->loadDirection == SEND_UP ) {
         if ( n_upstream > 0 && !isL1 ) {
             for ( int i = 0 ; i < n_upstream ; i++ ) {
-                MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+                MemEvent *req = new MemEvent(this, li->addr, RequestData);
                 req->setSize(blocksize);
                 upstream_links[i]->send(req);
             }
         } else if ( snoop_link ) {
-            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            MemEvent *req = new MemEvent(this, li->addr, RequestData);
             req->setSize(blocksize);
-            DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+            DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             BusHandlerArgs args;
             args.loadBlock.loadInfo = li;
             li->busEvent = req;
@@ -755,21 +772,21 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
          * probably did.  Just send the load down the line to memory.
          */
         if ( downstream_link ) {
-            DPRINTF("Sending request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
-            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            DPRINTF("Sending request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
+            MemEvent *req = new MemEvent(this, li->addr, RequestData);
             req->setSize(blocksize);
             downstream_link->send(req);
         } else if ( directory_link ) {
-            DPRINTF("Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
-            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            DPRINTF("Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
+            MemEvent *req = new MemEvent(this, li->addr, RequestData);
             req->setSize(blocksize);
-            req->setDst(findTargetDirectory(block->baseAddr));
+            req->setDst(findTargetDirectory(li->addr));
             directory_link->send(req);
         } else if ( snoop_link ) {
-            MemEvent *req = new MemEvent(this, block->baseAddr, RequestData);
+            MemEvent *req = new MemEvent(this, li->addr, RequestData);
             req->setSize(blocksize);
             if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
-            DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", block->baseAddr, li);
+            DPRINTF("Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             BusHandlerArgs args;
             args.loadBlock.loadInfo = li;
             li->busEvent = req;
@@ -804,6 +821,11 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 
     if ( ev->getSize() != blocksize ) {
         _abort(Cache, "It appears that not all cache line/block sizes are equal.  Unsupported!\n");
+    }
+
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
+        loadBlock(ev, src);
+        return;
     }
 
 	if ( block ) {
@@ -910,6 +932,8 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 
 	MemEvent *resp = new MemEvent(this, block->baseAddr, SupplyData);
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) resp->setFlag(MemEvent::F_UNCACHED);
+
     if ( block->user_locked ) {
         block->user_lock_needs_wb = true;
         block->user_lock_sent_delayed = false;
@@ -1014,6 +1038,10 @@ void Cache::finishBusSupplyData(BusHandlerArgs &args)
 
     block->unlock();
 
+    if ( args.supplyData.initiatingEvent->queryFlag(MemEvent::F_UNCACHED) ) {
+        /* This is a fake block... delete it */
+        delete block;
+    }
 
 	supplyMap_t::iterator supMapI = getSupplyInProgress(args.supplyData.initiatingEvent->getAddr(), args.supplyData.src, args.supplyData.initiatingEvent->getID());
 	ASSERT(supMapI != suppliesInProgress.end());
@@ -1107,7 +1135,10 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                     /* Deleted all reasons to load this block */
                     waitingLoads.erase(i);
                     li->targetBlock->loadInfo = NULL;
-                    delete li;
+                    if ( li->eventScheduled )
+                        li->satisfied = true;
+                    else
+                        delete li;
                     if ( targetBlock->isAssigned() ){
                         targetBlock->status = CacheBlock::INVALID;
                         DPRINTF("Marking block 0x%"PRIx64" with status %d\n", targetBlock->baseAddr, targetBlock->status);
@@ -1116,16 +1147,24 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 }
 
             } else {
-                updateBlock(ev, li->targetBlock);
-                li->targetBlock->loadInfo = NULL;
-                li->targetBlock->status = (cacheMode == INCLUSIVE && ev->queryFlag(MemEvent::F_WRITEBACK)) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
-                li->targetBlock->last_touched = getCurrentSimTime();
-                DPRINTF("Marking block 0x%"PRIx64" with status %d\n", li->targetBlock->baseAddr, li->targetBlock->status);
-                li->targetBlock->unlock();
+                bool use_cache = !li->uncached;
+                if ( use_cache ) {
+                    updateBlock(ev, li->targetBlock);
+                    li->targetBlock->loadInfo = NULL;
+                    li->targetBlock->status = (cacheMode == INCLUSIVE && ev->queryFlag(MemEvent::F_WRITEBACK)) ? CacheBlock::DIRTY_PRESENT : CacheBlock::SHARED;
+                    li->targetBlock->last_touched = getCurrentSimTime();
+                    DPRINTF("Marking block 0x%"PRIx64" with status %d\n", li->targetBlock->baseAddr, li->targetBlock->status);
+                    li->targetBlock->unlock();
+                }
 
                 std::deque<LoadInfo_t::LoadElement_t> list = li->list;
                 waitingLoads.erase(i);
-                delete li;
+
+                if ( li->eventScheduled )
+                    li->satisfied = true;
+                else
+                    delete li;
+
                 for ( uint32_t n = 0 ; n < list.size() ; n++ ) {
                     LoadInfo_t::LoadElement_t &oldEV = list[n];
                     /* If this was from the Snoop Bus, and we've got other cache's asking
@@ -1136,10 +1175,37 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                         DPRINTF("Ignoring old event because it came over snoop.\n");
                         delete oldEV.ev;
                     } else {
-                        if ( oldEV.ev != NULL ) // handled before?
-                            handleIncomingEvent(oldEV.ev, oldEV.src, false, true);
-                        else
+                        if ( oldEV.ev != NULL ) { // handled before?
+                            if ( use_cache ) {
+                                handleIncomingEvent(oldEV.ev, oldEV.src, false, true);
+                            } else {
+                                assert(oldEV.ev->queryFlag(MemEvent::F_UNCACHED));
+
+                                /* We need to send upstream the data that came in, without loading into our cache. */
+                                CacheBlock* fakeBlock = new CacheBlock(this);
+                                fakeBlock->baseAddr = ev->getAddr();
+                                updateBlock(ev, fakeBlock);
+                                switch ( oldEV.ev->getCmd() ) {
+                                case ReadReq: {
+                                    MemEvent *ev = makeCPUResponse(oldEV.ev, fakeBlock, UPSTREAM);
+                                    sendCPUResponse(ev, NULL, UPSTREAM);
+                                    delete fakeBlock;
+                                    break;
+                                }
+                                case RequestData: {
+                                    suppliesInProgress.insert(std::make_pair(std::make_pair(fakeBlock->baseAddr, src), SupplyInfo(oldEV.ev)));
+                                    fakeBlock->lock();
+                                    supplyData(oldEV.ev, fakeBlock, oldEV.src);
+                                    if ( oldEV.src != SNOOP ) delete fakeBlock;
+                                    break;
+                                }
+                                default:
+                                    _abort(Cache, "Unexpected command uncached command %s\n", CommandString[oldEV.ev->getCmd()]);
+                                }
+                            }
+                        } else {
                             DPRINTF("Ignoring old event as it appears to have been handled.\n");
+                        }
                     }
                 }
             }
@@ -1577,6 +1643,7 @@ void Cache::fetchBlock(MemEvent *ev, CacheBlock *block, SourceType_t src)
     else
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
+    li->eventScheduled = true;
     self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, block->baseAddr, block));
 }
 
@@ -1632,6 +1699,7 @@ void Cache::handleNACK(MemEvent *ev, SourceType_t src)
         DPRINTF("NACK for RequestData of 0x%"PRIx64"\n", ev->getAddr());
         CacheBlock *block = li->second->targetBlock;
         //block->unlock();
+        li->second->eventScheduled = true;
         self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
         delete ev;
         return;

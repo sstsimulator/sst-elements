@@ -396,6 +396,9 @@ private:
 		CacheBlock *targetBlock;
 		MemEvent *busEvent;
         MemEvent::id_type initiatingEvent;
+        bool uncached;
+        bool satisfied;
+        bool eventScheduled; // True if a self-event has been scheduled that will need this (finishLoadBlock)
         ForwardDir_t loadDirection;
 		struct LoadElement_t {
 			MemEvent * ev;
@@ -406,8 +409,8 @@ private:
 			{ }
 		};
 		std::deque<LoadElement_t> list;
-		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL) { }
-		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL) { }
+		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false) { }
+		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false) { }
 	};
 
 	struct SupplyInfo {
