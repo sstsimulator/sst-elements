@@ -15,20 +15,20 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR->
  */
 
+#include "sst_config.h"
+#include "OctetMBSAllocator.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
 #include <time.h>
 #include <math.h>
 
-#include "sst/core/serialization/element.h"
-
-#include "OctetMBSAllocator.h"
+#include "AllocInfo.h"
+#include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
 #include "MBSAllocInfo.h"
-#include "Job.h"
 #include "misc.h"
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -36,7 +36,7 @@
 #define DEBUG true
 
 using namespace SST::Scheduler;
-
+using namespace std;
 
 OctetMBSAllocator::OctetMBSAllocator(MachineMesh* m, int x, int y, int z) : MBSAllocator(m)
 {
@@ -51,9 +51,9 @@ string OctetMBSAllocator::getSetupInfo(bool comment)
 {
     string com;
     if (comment)  {
-        com="# ";
+        com = "# ";
     } else  {
-        com="";
+        com = "";
     }
     return com + "Multiple Buddy Strategy (MBS) Allocator using Octet divisions";
 }

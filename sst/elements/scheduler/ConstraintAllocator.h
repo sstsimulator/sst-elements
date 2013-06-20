@@ -17,8 +17,8 @@
  will give about system parameters
  */
 
-#ifndef __CONSTRAINTALLOCATOR_H__
-#define __CONSTRAINTALLOCATOR_H__
+#ifndef SST_SCHEDULER_CONSTRAINTALLOCATOR_H__
+#define SST_SCHEDULER_CONSTRAINTALLOCATOR_H__
 
 #include <string>
 #include <vector>
@@ -27,37 +27,37 @@
 #include "Allocator.h"
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class SimpleMachine;
-class Job;
+        class SimpleMachine;
+        class Job;
 
-class ConstraintAllocator : public Allocator {
+        class ConstraintAllocator : public Allocator {
 
-  public:
-    ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile);
+            public:
+                ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile);
 
-    //ConstraintAllocator Make(vector<string*>* params);
+                //ConstraintAllocator Make(vector<string*>* params);
 
-    string getParamHelp();
+                std::string getParamHelp();
 
-    string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
-    AllocInfo* allocate(Job* job);
+                AllocInfo* allocate(Job* job);
 
-  private:
-    //constraints
-    //for now, only type of constraint is to separate one node from rest of cluster
-    //check file for updates to parameter estimates and set constraints accordingly
-    void GetConstraints();
+            private:
+                //constraints
+                //for now, only type of constraint is to separate one node from rest of cluster
+                //check file for updates to parameter estimates and set constraints accordingly
+                void GetConstraints();
 
-    //map from internal node u to  set of dependent compute nodes D[u]
-    map< std::string, set<std::string> > D;
-    vector<std::string> Cluster; // current cluster of suspects to be separated
-    std::string ConstraintsFileName;
-};
+                //map from internal node u to  set of dependent compute nodes D[u]
+                std::map< std::string, std::set<std::string> > D;
+                std::vector<std::string> Cluster; // current cluster of suspects to be separated
+                std::string ConstraintsFileName;
+        };
 
 #endif
 
-}
+    }
 }

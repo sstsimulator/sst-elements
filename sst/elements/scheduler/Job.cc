@@ -9,20 +9,18 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst/core/serialization/element.h"
-
+#include "exceptions.h"
 #include "Job.h"
 #include "Machine.h"
-#include "Statistics.h"
-#include "exceptions.h"
 #include "misc.h"
+#include "Statistics.h"
 
 using namespace SST::Scheduler;
 
 static long nextJobNum = 0;  //used setting jobNum
 
-Job::Job(istream& input, bool accurateEsts) {
-    string line;  
+Job::Job(std::istream& input, bool accurateEsts) {
+    std::string line;  
     getline(input, line);
 
     unsigned long arrivalTime;
@@ -82,7 +80,7 @@ unsigned long Job::getStartTime()
     return startTime;
 }
 
-string Job::toString() 
+std::string Job::toString() 
 {
     char retVal[100];
     snprintf(retVal, 100, "Job #%ld (%ld, %d, %ld, %ld, null)", jobNum,
@@ -95,7 +93,7 @@ void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
 {
     //start the job
     if ((unsigned long)-1 != startTime) {
-        string mesg = "attempt to start an already-running job: ";
+        std::string mesg = "attempt to start an already-running job: ";
         mesg += toString();
         internal_error(mesg);
     }

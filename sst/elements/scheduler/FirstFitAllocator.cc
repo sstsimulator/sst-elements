@@ -17,20 +17,24 @@
  * (maximum distance along linear order between assigned processors)->
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <math.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <sstream>
+//#include <time.h>
+//#include <math.h>
 
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "FirstFitAllocator.h"
+
+#include <vector>
+#include <string>
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
-#include "Job.h"
+#include "MeshAllocInfo.h"
 #include "misc.h"
 
 #define DEBUG false
@@ -43,7 +47,8 @@ using namespace SST::Scheduler;
 //(file format described at head of LinearAllocator)
 }
 */
-FirstFitAllocator::FirstFitAllocator(vector<string>* params, Machine* mach): LinearAllocator(params, mach) {
+FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* mach): LinearAllocator(params, mach) 
+{
     if (DEBUG) {
         printf("Constructing FirstFitAllocator\n");
     }
@@ -53,17 +58,19 @@ FirstFitAllocator::FirstFitAllocator(vector<string>* params, Machine* mach): Lin
     }
 }
 
-string FirstFitAllocator::getSetupInfo(bool comment){
-    string com;
+std::string FirstFitAllocator::getSetupInfo(bool comment)
+{
+    std::string com;
     if (comment)  {
-        com="# ";
+        com = "# ";
     } else {
-        com="";
+        com = "";
     }
-    return com+"Linear Allocator (First Fit)";
+    return com + "Linear Allocator (First Fit)";
 }
 
-AllocInfo* FirstFitAllocator::allocate(Job* job) {
+AllocInfo* FirstFitAllocator::allocate(Job* job) 
+{
     if (DEBUG) {
         printf("Allocating %s procs: ", job -> toString().c_str());
     }
@@ -75,18 +82,18 @@ AllocInfo* FirstFitAllocator::allocate(Job* job) {
         return NULL;
     }
 
-    vector<vector<MeshLocation*>*>* intervals = getIntervals();
+    std::vector<std::vector<MeshLocation*>*>* intervals = getIntervals();
 
     int num = job -> getProcsNeeded();  //number of processors for job
 
     //find an interval to use if one exists
-    for (int i=0; i < (int)intervals -> size(); i++) {
+    for (int i = 0; i < (int)intervals -> size(); i++) {
         if ((int)intervals -> at(i) -> size() >= num) {
             MeshAllocInfo* retVal = new MeshAllocInfo(job);
             int j;
-            for (j=0; j<num; j++) {
+            for (j = 0; j<num; j++) {
                 if (DEBUG) {
-                    printf("%d ", intervals->at(i)->at(j)->toInt((MachineMesh*)machine));
+                    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine));
                 }
                 retVal -> processors -> at(j) = intervals -> at(i) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine);

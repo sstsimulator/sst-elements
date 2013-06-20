@@ -17,8 +17,8 @@
 
 #include "linkBuilder.h"
 
-#include "nodeComponent.h"
 #include "CommunicationEvent.h"
+#include "nodeComponent.h"
 #include "ObjectRetrievalEvent.h"
 #include "misc.h"
 

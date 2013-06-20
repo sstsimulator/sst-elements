@@ -9,6 +9,7 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+
 /*
  * Class that tells the scheduler there are no more events at this time
  * (otherwise the scheduler handles each event individually when they come,
@@ -16,8 +17,8 @@
  * Has high priority value so that SST puts it at the end of its event queue
  */
 
-#ifndef __FINALTIMEEVENT_H__
-#define __FINALTIMEEVENT_H__
+#ifndef SST_SCHEDULER_FINALTIMEEVENT_H__
+#define SST_SCHEDULER_FINALTIMEEVENT_H__
 
 namespace SST {
     namespace Scheduler {

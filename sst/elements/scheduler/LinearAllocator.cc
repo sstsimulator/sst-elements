@@ -22,19 +22,18 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <math.h>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "LinearAllocator.h"
-#include "Machine.h"
-#include "MachineMesh.h"
+
+#include <set>
+#include <vector>
+#include <string>
+
 #include "AllocInfo.h"
 #include "Job.h"
+#include "Machine.h"
+#include "MachineMesh.h"
+#include "MeshAllocInfo.h"
 #include "misc.h"
 
 #define DEBUG false
@@ -45,6 +44,7 @@
 #define INVERSE(point1) 32 + point1
 
 using namespace SST::Scheduler;
+using namespace std;
 
 
 //takes coordinate (x,y), offsets it by (xoff,yoff) where the offset is rotated

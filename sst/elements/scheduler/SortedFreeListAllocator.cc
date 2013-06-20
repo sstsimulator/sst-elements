@@ -13,20 +13,18 @@
  * Allocator that assigns the first available processors (according to
  * order specified when allocator is created).
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <math.h>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "SortedFreeListAllocator.h"
+
+#include <vector>
+#include <string>
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
-#include "Job.h"
+#include "MeshAllocInfo.h"
 #include "misc.h"
 
 #define DEBUG false
@@ -34,7 +32,7 @@
 using namespace SST::Scheduler;
 
 
-SortedFreeListAllocator::SortedFreeListAllocator(vector<string>* params, Machine* mach) : LinearAllocator(params, mach)
+SortedFreeListAllocator::SortedFreeListAllocator(std::vector<std::string>* params, Machine* mach) : LinearAllocator(params, mach)
 {
     if (DEBUG) {
         printf("Constructing SortedFreeListAllocator\n");
@@ -44,9 +42,9 @@ SortedFreeListAllocator::SortedFreeListAllocator(vector<string>* params, Machine
     }
 }
 
-string SortedFreeListAllocator::getSetupInfo(bool comment)
+std::string SortedFreeListAllocator::getSetupInfo(bool comment)
 {
-    string com;
+    std::string com;
     if (comment)  {
         com = "# ";
     } else  {
@@ -68,7 +66,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
         return NULL;
     }
 
-    vector<MeshLocation*>* freeprocs = ((MachineMesh*)machine) -> freeProcessors();
+    std::vector<MeshLocation*>* freeprocs = ((MachineMesh*)machine) -> freeProcessors();
     stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);
 
     int num = job -> getProcsNeeded();  //number of processors for job

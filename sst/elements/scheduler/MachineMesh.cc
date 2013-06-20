@@ -16,7 +16,6 @@
 #include <vector>
 #include <string>
 #include <sstream>
-using namespace std;
 
 #include "sst/core/serialization/element.h"
 
@@ -25,6 +24,7 @@ using namespace std;
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
+#include "schedComponent.h"
 
 using namespace SST::Scheduler;
 
@@ -80,17 +80,17 @@ MachineMesh::MachineMesh(MachineMesh* inmesh)
     }
 }
 
-string MachineMesh::getParamHelp() 
+std::string MachineMesh::getParamHelp() 
 {
     return "[<x dim>,<y dim>,<z dim>]\n\t3D Mesh with specified dimensions";
 }
 
-string MachineMesh::getSetupInfo(bool comment)
+std::string MachineMesh::getSetupInfo(bool comment)
 {
-    string com;
+    std::string com;
     if (comment) com="# ";
     else com="";
-    stringstream ret;
+    std::stringstream ret;
     ret << com<<xdim<<"x"<<ydim<<"x"<<zdim<<" Mesh";
     return ret.str();
 }
@@ -128,9 +128,9 @@ void MachineMesh::reset()
 }
 
 //returns list of free processors
-vector<MeshLocation*>* MachineMesh::freeProcessors() 
+std::vector<MeshLocation*>* MachineMesh::freeProcessors() 
 {
-    vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
+    std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
         for (int j = 0; j < ydim; j++) {
             for (int k = 0; k < zdim; k++) {
@@ -144,9 +144,9 @@ vector<MeshLocation*>* MachineMesh::freeProcessors()
 }
 
 //returns list of used processors
-vector<MeshLocation*>* MachineMesh::usedProcessors() 
+std::vector<MeshLocation*>* MachineMesh::usedProcessors() 
 {
-    vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
+    std::vector<MeshLocation*>* retVal = new std::vector<MeshLocation*>();
     for (int i = 0; i < xdim; i++) {
         for (int j = 0; j < ydim; j++) {
             for (int k = 0; k < zdim; k++) {
@@ -162,7 +162,7 @@ vector<MeshLocation*>* MachineMesh::usedProcessors()
 //allocate list of processors in allocInfo
 void MachineMesh::allocate(AllocInfo* allocInfo) 
 {
-    vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
+    std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
     //machinemesh (unlike simplemachine) is not responsible for setting
     //which processors are used in allocInfo as it's been set by the
     //allocator already
@@ -180,7 +180,7 @@ void MachineMesh::allocate(AllocInfo* allocInfo)
 void MachineMesh::deallocate(AllocInfo* allocInfo) {
     //deallocate list of processors in allocInfo
 
-    vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
+    std::vector<MeshLocation*>* procs = ((MeshAllocInfo*)allocInfo) -> processors;
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
@@ -191,12 +191,12 @@ void MachineMesh::deallocate(AllocInfo* allocInfo) {
     numAvail += procs -> size();
 }
 
-long MachineMesh::pairwiseL1Distance(vector<MeshLocation*>* locs) {
+long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs) {
     //returns total pairwise L_1 distance between all array members
     return pairwiseL1Distance(locs, locs -> size());
 }
 
-long MachineMesh::pairwiseL1Distance(vector<MeshLocation*>* locs, int num) {
+long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) {
     //returns total pairwise L_1 distance between 1st num members of array
     long retVal = 0;
     for (int i = 0; i < num; i++) {
@@ -207,13 +207,13 @@ long MachineMesh::pairwiseL1Distance(vector<MeshLocation*>* locs, int num) {
     return retVal;
 }
 /*
-   string MachineMesh::toString(){
+   std::string MachineMesh::tostd::string(){
 //returns human readable view of which processors are free
 //presented in layers by z-coordinate (0 first), with the
 //  (0,0) position of each layer in the bottom left
 //uses "X" and "." to denote free and busy processors respectively
 
-string retVal = "";
+std::string retVal = "";
 for(int k=0; k<isFree[0][0].size(); k++) {
 for(int j=isFree[0].length-1; j>=0; j--) {
 for(int i=0; i<isFree.length; i++)

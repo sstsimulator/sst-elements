@@ -9,13 +9,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef __ALLOCATOR_H__
-#define __ALLOCATOR_H__
+#ifndef SST_SCHEDULER_ALLOCATOR_H__
+#define SST_SCHEDULER_ALLOCATOR_H__
 
 #include <vector>
 #include <string>
-#include "MeshAllocInfo.h"
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
@@ -23,15 +21,16 @@ namespace SST {
         class Machine;
         class Job;
         class AllocInfo;
+        class MeshLocation;
 
         class Allocator {
             public:
                 virtual ~Allocator() {}
 
-                virtual string getSetupInfo(bool comment) = 0;
+                virtual std::string getSetupInfo(bool comment) = 0;
 
                 virtual bool canAllocate(Job* j);
-                virtual bool canAllocate(Job* j, vector<MeshLocation*>* available);
+                virtual bool canAllocate(Job* j, std::vector<MeshLocation*>* available);
 
                 virtual AllocInfo* allocate(Job* job) = 0;
                 //allocates job if possible

@@ -24,7 +24,7 @@ MachineMesh.cc		MachineMesh.h		NearestAllocClasses.cc		MBSAllocator.cc		MBSAlloc
 GranularMBSAllocator.cc		GranularMBSAllocator.h		OctetMBSAllocator.h		OctetMBSAllocator.cc		RoundUpMBSAllocator.h \
 RoundUpMBSAllocator.cc		Factory.h		Factory.cc \
 LinearAllocator.cc		LinearAllocator.h		FirstFitAllocator.cc		FirstFitAllocator.h		BestFitAllocator.cc \
-BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc ConstraintAllocator.cc
+BestFitAllocator.h		SortedFreeListAllocator.h		SortedFreeListAllocator.cc ConstraintAllocator.cc 	MeshAllocInfo.cc 	MeshAllocInfo.h
 
 EXTRA_DIST = makeSDL.pl test.xml test30.xml
 

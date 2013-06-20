@@ -14,10 +14,8 @@
  * is required between two Components to organize some meta-simulation event.
  */
 
-#ifndef __OBJECTRETRIEVALEVENT_H__
-#define __OBJECTRETRIEVALEVENT_H__
-
-#include <string>
+#ifndef SST_SCHEDULER_OBJECTRETRIEVALEVENT_H__
+#define SST_SCHEDULER_OBJECTRETRIEVALEVENT_H__
 
 namespace SST {
     namespace Scheduler {
@@ -27,7 +25,7 @@ namespace SST {
                        ObjectRetrievalEvent() : SST::Event(){}
                            ObjectRetrievalEvent * copy(){
                                ObjectRetrievalEvent * newEvent = new ObjectRetrievalEvent();
-                                   newEvent->payload = payload;
+                                   newEvent -> payload = payload;
                                    
                                    return newEvent;
                            }

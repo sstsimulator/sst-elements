@@ -30,14 +30,19 @@
  generators, and scorers for use with the nearest allocators
  */
 
+#include "sst_config.h"
+#include "NearestAllocClasses.h"
 
 #include <string>
 #include <sstream>
 #include <vector>
+#include <set>
+#include <algorithm>  //for std::stable_sort
 
-#include "sst/core/serialization/element.h"
+#include "MachineMesh.h"
+#include "MeshAllocInfo.h"
 
-#include "NearestAllocClasses.h"
+using namespace std;
 
 using namespace SST::Scheduler;
 
@@ -450,7 +455,7 @@ pair<long,long>* LInfDistFromCenterScorer::valueOf(MeshLocation* center, vector<
 
 LInfDistFromCenterScorer::LInfDistFromCenterScorer(Tiebreaker* tb)
 {
-    tiebreaker=tb;
+    tiebreaker = tb;
 }
 
 
@@ -459,9 +464,9 @@ string  LInfDistFromCenterScorer::getSetupInfo(bool comment)
     string com;
     stringstream ret;
     if (comment)  {
-        com="# ";
+        com = "# ";
     } else  {
-        com="";
+        com = "";
     }
     ret << com << "LInfDistFromCenterScorer (Tiebreaker: " << tiebreaker -> getInfo() << ")";
     return ret.str();

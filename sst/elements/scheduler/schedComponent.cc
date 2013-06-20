@@ -10,10 +10,10 @@
 // distribution.
 
 #include "sst_config.h"
+
 #include "sst/core/serialization/element.h"
 #include <assert.h>
 #include <fstream>
-#include <iostream>
 
 #include <boost/tokenizer.hpp>        // for reading YumYum jobs
 #include <boost/algorithm/string.hpp>
@@ -24,18 +24,31 @@
 //#include <QFileSystemWatcher>
 
 #include "sst/core/element.h"
+#include "schedComponent.h" 
+
 
 #include "unistd.h"             // for sleep
 #include <stdlib.h>
 
-#include "misc.h"
-#include "Factory.h"
-#include "MachineMesh.h"
-#include "MachineMesh.h"
+#include <sst/core/event.h>
 
-#include "JobKillEvent.h"
-#include "FaultEvent.h"
+#include "Allocator.h"
+#include "AllocInfo.h"
+#include "ArrivalEvent.h"
+#include "CompletionEvent.h"
 #include "CommunicationEvent.h"
+#include "Factory.h"
+#include "FaultEvent.h"
+#include "FinalTimeEvent.h"
+#include "Job.h"
+#include "JobKillEvent.h"
+#include "JobStartEvent.h"
+#include "Machine.h"
+#include "MachineMesh.h"
+#include "misc.h"
+#include "Scheduler.h"
+#include "Statistics.h"
+
 
 using namespace std;
 using namespace SST;
@@ -47,7 +60,11 @@ extern unsigned short int * yumyumRand48State;
 Machine* schedComponent::getMachine() {
   return machine;
 }
-
+schedComponent::~schedComponent()
+{
+    delete stats;
+    delete scheduler;
+}
 schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
   Component(id) {
     lastfinaltime = ~0;
@@ -442,8 +459,8 @@ void schedComponent::handleCompletionEvent(Event *ev, int node) {
       return; //this event has already stopped (probably faulted)
     }
 
-    if ((--(runningJobs[jobNum].i)) == 0) {
-      runningJobs[ jobNum ].ai->job->hasRun = true;
+    if (0 == (--(runningJobs[jobNum].i))) {
+      runningJobs[jobNum].ai -> job -> hasRun = true;
        if( printJobLog ){
         logJobFinish( runningJobs[ jobNum ] );
        }

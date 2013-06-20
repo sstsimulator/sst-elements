@@ -21,31 +21,33 @@
  *   the second member of each pair gives its rank in the desired order
  *
  */
-#ifndef __LINEARALLOCATOR_H__
-#define __LINEARALLOCATOR_H__
+#ifndef SST_SCHEDULER__LINEARALLOCATOR_H__
+#define SST_SCHEDULER__LINEARALLOCATOR_H__
 
+#include <vector>
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 
-#include "sst/core/serialization/element.h"
 
-#include "MachineMesh.h"
-#include "MeshAllocInfo.h"
-#include "Allocator.h"
-#include "Job.h"
-#include "misc.h"
-
+#include "Allocator.h"  //include parent
 
 namespace SST {
     namespace Scheduler {
+
+        //forward declared classes
+        class Machine;
+        class Job;
+        class MeshLocation;
+
+
+
+
 
         class LinearAllocator : public Allocator {
 
 
 
             protected:
-                class MeshLocationOrdering : public binary_function<MeshLocation*, MeshLocation*, bool>{
+                class MeshLocationOrdering : public std::binary_function<MeshLocation*, MeshLocation*, bool>{
                     //represent linear ordering
 
                     private:
@@ -122,12 +124,12 @@ namespace SST {
                         }
                 };
 
-                vector<vector<MeshLocation*>*>* getIntervals();
+                std::vector<std::vector<MeshLocation*>*>* getIntervals();
                 AllocInfo* minSpanAllocate(Job* job);
                 MeshLocationOrdering* ordering;
 
             public:
-                LinearAllocator(vector<string>* params, Machine* m);
+                LinearAllocator(std::vector<std::string>* params, Machine* m);
         };
 
     }

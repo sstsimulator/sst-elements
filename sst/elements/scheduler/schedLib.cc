@@ -10,13 +10,10 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
 
-#include <sst/core/element.h>
-
+#include "linkBuilder.h"
 #include "nodeComponent.h"
 #include "schedComponent.h"
-#include "linkBuilder.h"
 
 using namespace SST::Scheduler;
 

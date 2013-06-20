@@ -16,40 +16,36 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR.
  */
 
-#ifndef __OCTETMBSALLOCATOR_H__
-#define __OCTETMBSALLOCATOR_H__
+#ifndef SST_SCHEDULER__OCTETMBSALLOCATOR_H__
+#define SST_SCHEDULER__OCTETMBSALLOCATOR_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <set>
+#include <string>
+#include <vector>
 
-#include "sst/core/serialization/element.h"
-
-#include "MBSAllocClasses.h" 
 #include "MBSAllocator.h"
-#include "MachineMesh.h"
-#include "MBSAllocInfo.h"
-#include "Job.h"
-#include "misc.h"
-
 
 namespace SST {
     namespace Scheduler {
+        class MachineMesh;
+        class Machine;
+        class Block;
+        class MeshLocation;
+
 
         class OctetMBSAllocator : public MBSAllocator {
             public:
 
                 OctetMBSAllocator(MachineMesh* m, int x, int y, int z);
-                OctetMBSAllocator(vector<string>* params, Machine* m);
+                OctetMBSAllocator(std::vector<std::string>* params, Machine* m);
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
-                static OctetMBSAllocator Make(vector<string>* params, MachineMesh* mach);
+                static OctetMBSAllocator Make(std::vector<std::string>* params, MachineMesh* mach);
 
                 void initialize(MeshLocation* dim, MeshLocation* off);
 
-                set<Block*, Block>* splitBlock(Block* b);
-
+                std::set<Block*, Block>* splitBlock(Block* b);
         };
 
     }

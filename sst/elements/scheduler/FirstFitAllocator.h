@@ -16,36 +16,31 @@
  * none are big enough, chooses the one that minimizes the span
  * (maximum distance along linear order between assigned processors).
  */
-#ifndef __FIRSTFITALLOCATOR_H__
-#define __FIRSTFITALLOCATOR_H__
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#include "sst/core/serialization/element.h"
+#ifndef SST_SCHEDULER_FIRSTFITALLOCATOR_H__
+#define SST_SCHEDULER_FIRSTFITALLOCATOR_H__
 
 #include "LinearAllocator.h"
-#include "MachineMesh.h"
-#include "Job.h"
-#include "misc.h"
 
 
 namespace SST {
     namespace Scheduler {
+        class Machine;
+        class AllocInfo;
+        class Job;
+
 
 
         class FirstFitAllocator : public LinearAllocator {
 
             public:
 
-                FirstFitAllocator(vector<string>* params, Machine* mach);
+                FirstFitAllocator(std::vector<std::string>* params, Machine* mach);
 
-                string getParamHelp(){
+                std::string getParamHelp(){
                     return "[<file>]\n\tfile: Path to file giving the curve";
                 }
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job) ;
         };

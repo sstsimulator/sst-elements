@@ -21,18 +21,15 @@
 #include <time.h>
 #include <math.h>
 
-#include "sst/core/serialization/element.h"
-
-#include "RoundUpMBSAllocator.h"
+#include "AllocInfo.h"
+#include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
 #include "MBSAllocInfo.h"
-#include "Job.h"
 #include "misc.h"
+#include "RoundUpMBSAllocator.h"
 
-
-#define DEBUG true
+#define DEBUG false
 
 /**
  * The Rounding Up MBS Allocator will do the same GranularMBS style allocation, except that
@@ -44,13 +41,14 @@
  */
 
 using namespace SST::Scheduler;
+using namespace std;
 
 
 RoundUpMBSAllocator::RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z) : GranularMBSAllocator(m, x, y, z) 
 {
 }
 
-string RoundUpMBSAllocator::getSetupInfo(bool comment){
+std::string RoundUpMBSAllocator::getSetupInfo(bool comment){
     string com;
     if (comment)  {
         com="# ";

@@ -13,18 +13,14 @@
  * Miscellaneous code (outside a class or too small a class for its own file)
  */
 
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <iostream>
 
-using namespace std;
-
-#include "sst/core/serialization/element.h"
-
-#include "misc.h"
 #include "Allocator.h"
 #include "Machine.h"
+#include "misc.h"
 #include "Job.h"
 
 using namespace SST::Scheduler;
@@ -39,24 +35,24 @@ bool Allocator::canAllocate(Job* j)
 
 //returns whether j can be allocated
 //default strategies are non-contig so "true" if enough free processors
-bool Allocator::canAllocate(Job* j, vector<MeshLocation*>* available) 
+bool Allocator::canAllocate(Job* j, std::vector<MeshLocation*>* available) 
 {  
     return (available -> size() >= (unsigned int)j -> getProcsNeeded());
 }
 
 namespace SST {
     namespace Scheduler {
-        void warning(string mesg) {        //report warning (program continues)
-            cerr << "WARNING: " << mesg << endl;
+        void warning(std::string mesg) {        //report warning (program continues)
+            std::cerr << "WARNING: " << mesg << std::endl;
         }
 
-        void error(string mesg) {           //report user-caused error
-            cerr << "ERROR: " << mesg << endl;
+        void error(std::string mesg) {           //report user-caused error
+            std::cerr << "ERROR: " << mesg << std::endl;
             exit(1);
         }
 
-        void internal_error(string mesg) {  //report invalid program state
-            cerr << "INTERNAL ERROR: " << mesg << endl;
+        void internal_error(std::string mesg) {  //report invalid program state
+            std::cerr << "INTERNAL ERROR: " << mesg << std::endl;
             exit(1);
         }
     }

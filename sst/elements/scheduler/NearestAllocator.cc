@@ -27,28 +27,26 @@
  eval with L_inf distance from center
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <limits>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "NearestAllocator.h"
+
+#include <sstream>
+#include <limits>
+#include <vector>
+#include <string>
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
 #include "MeshAllocInfo.h"
-#include "Job.h"
 #include "misc.h"
-
+#include "NearestAllocClasses.h"
 
 using namespace SST::Scheduler;
 
-
 NearestAllocator::NearestAllocator(MachineMesh* m, CenterGenerator* cg,
-                                   PointCollector* pc, Scorer* s,string name) 
+                                   PointCollector* pc, Scorer* s, std::string name) 
 {
     machine = m;
     centerGenerator = cg;
@@ -57,7 +55,7 @@ NearestAllocator::NearestAllocator(MachineMesh* m, CenterGenerator* cg,
     configName = name;
 }
 
-NearestAllocator::NearestAllocator(vector<string>* params, Machine* mach)
+NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* mach)
 {
 
     MachineMesh* m = (MachineMesh*) mach;
@@ -81,7 +79,7 @@ NearestAllocator::NearestAllocator(vector<string>* params, Machine* mach)
         Scorer* sc = NULL;
         machine = m;
 
-        string cgstr = params -> at(1);
+        std::string cgstr = params -> at(1);
 
         if (cgstr == ("all")) {
             cg = new AllCenterGenerator(m);
@@ -93,7 +91,7 @@ NearestAllocator::NearestAllocator(vector<string>* params, Machine* mach)
             error("Unknown center generator " + cgstr);
         }
 
-        string pcstr=params -> at(2);
+        std::string pcstr=params -> at(2);
 
         if (pcstr == ("l1")) {
             pc = new L1PointCollector();
@@ -164,9 +162,9 @@ NearestAllocator::NearestAllocator(vector<string>* params, Machine* mach)
     }
 }
 
-string NearestAllocator::getParamHelp()
+std::string NearestAllocator::getParamHelp()
 {
-    stringstream ret;
+    std::stringstream ret;
     ret << "[<center_gen>,<point_col>,<scorer>]\n"<<
         "\tcenter_gen: Choose center generator (all, free, intersect)\n"<<
         "\tpoint_col: Choose point collector (L1, LInf, GreedyLInf)\n"<<
@@ -174,15 +172,15 @@ string NearestAllocator::getParamHelp()
     return ret.str();
 }
 
-string NearestAllocator::getSetupInfo(bool comment)
+std::string NearestAllocator::getSetupInfo(bool comment)
 {
-    string com;
+    std::string com;
     if (comment) {
         com="# ";
     } else  {
         com="";
     }
-    stringstream ret;
+    std::stringstream ret;
     ret <<com<<"Nearest Allocator ("<<configName<<")\n"<<com<<
         "\tCenterGenerator: "<<centerGenerator -> getSetupInfo(false)<<"\n"<<com<<
         "\tPointCollector: "<<pointCollector -> getSetupInfo(false)<<"\n"<<com<<
@@ -195,7 +193,7 @@ AllocInfo* NearestAllocator::allocate(Job* job)
     return allocate(job,((MachineMesh*)machine) -> freeProcessors());
 }
 
-AllocInfo* NearestAllocator::allocate(Job* job, vector<MeshLocation*>* available) 
+AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
     //allocates job if possible
     //returns information on the allocation or null if it wasn't possible
@@ -219,20 +217,20 @@ AllocInfo* NearestAllocator::allocate(Job* job, vector<MeshLocation*>* available
     }
 
     //score of best value found so far with it tie-break score:
-    pair<long,long>* bestVal = new pair<long,long>(LONG_MAX,LONG_MAX);
+    std::pair<long,long>* bestVal = new std::pair<long,long>(LONG_MAX,LONG_MAX);
 
     bool recordingTies = false;//Statistics.recordingTies();
     //stores allocations w/ best score (no tiebreaking) if ties being recorded:
     //(actual best value w/ tiebreaking stored in retVal.processors)
-    vector<vector<MeshLocation*>*>* bestAllocs = NULL;
+    std::vector<std::vector<MeshLocation*>*>* bestAllocs = NULL;
     if (recordingTies) {
-        bestAllocs = new vector<vector<MeshLocation*> *>(); 
+        bestAllocs = new std::vector<std::vector<MeshLocation*> *>(); 
     }
-    vector<MeshLocation*>* possCenters = centerGenerator -> getCenters(available);
-    for (vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
-        vector<MeshLocation*>* nearest = pointCollector -> getNearest(*center, numProcs, available);
+    std::vector<MeshLocation*>* possCenters = centerGenerator -> getCenters(available);
+    for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
+        std::vector<MeshLocation*>* nearest = pointCollector -> getNearest(*center, numProcs, available);
 
-        pair<long,long>* val = scorer -> valueOf(*center, nearest, numProcs, (MachineMesh*) machine); 
+        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, numProcs, (MachineMesh*) machine); 
         if (val -> first < bestVal -> first || 
             (val -> first == bestVal -> first && val -> second < bestVal -> second) ) {
             delete bestVal;
@@ -249,7 +247,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, vector<MeshLocation*>* available
         *center = NULL;
 
         if (recordingTies && val -> first == bestVal -> first) {
-            vector<MeshLocation*>* alloc = new vector<MeshLocation*>();
+            std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
             for (int i = 0; i < numProcs; i++)
                 alloc -> push_back((*nearest)[i]);
             bestAllocs -> push_back(alloc);

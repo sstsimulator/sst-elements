@@ -15,20 +15,17 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR->
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <math.h>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "MBSAllocator.h"
+
+#include <sstream>
+#include <string>
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
 #include "MBSAllocInfo.h"
-#include "Job.h"
 #include "misc.h"
 
 #define MIN(a,b)  ((a)<(b)?(a):(b))
@@ -47,23 +44,23 @@ MBSAllocator::MBSAllocator(Machine* mach)
     }
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
-    FBR = new vector<set<Block*,Block>*>();
-    ordering = new vector<int>();
+    FBR = new std::vector<std::set<Block*,Block>*>();
+    ordering = new std::vector<int>();
 }
 
 MBSAllocator::MBSAllocator(MachineMesh* m, int x, int y, int z)
 {
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
-    FBR = new vector<set<Block*,Block>*>();
-    ordering = new vector<int>();
+    FBR = new std::vector<std::set<Block*,Block>*>();
+    ordering = new std::vector<int>();
 
     //create the starting blocks
     initialize(new MeshLocation(x,y,z),new MeshLocation(0,0,0));
     if (DEBUG) printFBR("Post Initialize:");
 }
 
-MBSAllocator::MBSAllocator(vector<string>* params, Machine* mach)
+MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
 { 
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
@@ -71,8 +68,8 @@ MBSAllocator::MBSAllocator(vector<string>* params, Machine* mach)
     }
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
-    FBR = new vector<set<Block*,Block>*>();
-    ordering = new vector<int>();
+    FBR = new std::vector<std::set<Block*,Block>*>();
+    ordering = new std::vector<int>();
 
     //create the starting blocks
     initialize(
@@ -82,9 +79,9 @@ MBSAllocator::MBSAllocator(vector<string>* params, Machine* mach)
     if (DEBUG) printFBR("Post Initialize:");
 }
 
-string MBSAllocator::getSetupInfo(bool comment)
+std::string MBSAllocator::getSetupInfo(bool comment)
 {
-    string com;
+    std::string com;
     if (comment) {
         com = "# ";
     } else {
@@ -93,7 +90,7 @@ string MBSAllocator::getSetupInfo(bool comment)
     return com + "Multiple Buddy Strategy (MBS) Allocator";
 }
 
-string MBSAllocator::getParamHelp()
+std::string MBSAllocator::getParamHelp()
 {
     return "";
 }
@@ -150,14 +147,14 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 
 int MBSAllocator::createRank(int size)
 {
-    vector<int>::iterator it = find(ordering -> begin(), ordering -> end(), size);
+    std::vector<int>::iterator it = find(ordering -> begin(), ordering -> end(), size);
     int i = distance(ordering -> begin(),it); 
     if (it != ordering -> end()) {
         return i;
     }
 
 
-    vector<set<Block*,Block>*>::iterator FBRit = FBR -> begin();
+    std::vector<std::set<Block*,Block>*>::iterator FBRit = FBR -> begin();
     i = 0;
     for (it = ordering -> begin();it != ordering -> end() && *it < size; it++){
         i++;
@@ -169,7 +166,7 @@ int MBSAllocator::createRank(int size)
 
     //make our corresponding set
     Block* BComp = new Block();
-    FBR -> insert(FBRit, new set<Block*, Block>(*BComp));
+    FBR -> insert(FBRit, new std::set<Block*, Block>(*BComp));
     delete BComp;
 
     if (DEBUG) printf("Added a rank %d for size %d\n", i, size);
@@ -181,8 +178,8 @@ int MBSAllocator::createRank(int size)
  *  children to the b->children, then recurse
  */
 void MBSAllocator::createChildren(Block* b){
-    set<Block*, Block>* childrenset = splitBlock(b);
-    set<Block*, Block>::iterator children = childrenset -> begin();
+    std::set<Block*, Block>* childrenset = splitBlock(b);
+    std::set<Block*, Block>::iterator children = childrenset -> begin();
     Block* next;
 
     if (DEBUG) printf("Creating children for %s :: ", b -> toString().c_str());
@@ -206,11 +203,11 @@ void MBSAllocator::createChildren(Block* b){
     if (DEBUG) printf("\n");
 }
 
-set<Block*, Block>* MBSAllocator::splitBlock (Block* b) 
+std::set<Block*, Block>* MBSAllocator::splitBlock (Block* b) 
 {
     //create the set to iterate over
     Block* BCComp = new Block();
-    set<Block*, Block>* children = new set<Block*, Block>(*BCComp);
+    std::set<Block*, Block>* children = new std::set<Block*, Block>(*BCComp);
     delete BCComp;
 
     //determine the size (blocks should be cubes, thus dimension->x=dimension->y)
@@ -237,7 +234,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
     int allocated = 0;
 
     //a map of dimensions to numbers
-    map<int,int>* RBR = factorRequest(job);
+    std::map<int,int>* RBR = factorRequest(job);
 
     while (allocated < job -> getProcsNeeded()){
         //Start trying allocate the largest blocks
@@ -255,8 +252,8 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
 
             //add all the processors to retVal, and make progress
             //in the loop
-            set<MeshLocation*, MeshLocation>* newBlockprocs = newBlock -> processors();
-            set<MeshLocation*, MeshLocation>::iterator it = newBlockprocs -> begin();
+            std::set<MeshLocation*, MeshLocation>* newBlockprocs = newBlock -> processors();
+            std::set<MeshLocation*, MeshLocation>::iterator it = newBlockprocs -> begin();
             //processors() is sorted by MeshLocation comparator
             for (int i = allocated; it != newBlockprocs -> end();i++){
                 retVal -> processors -> at(i) = *(it);
@@ -268,7 +265,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
             //also be sure to remove the allocated block from the RBR
             if (currentval - 1 > 0){
                 RBR -> erase(currentRank);
-                RBR -> insert(pair<int, int>(currentRank,currentval-1));
+                RBR -> insert(std::pair<int, int>(currentRank,currentval-1));
             } else {
                 RBR -> erase(currentRank);
             }
@@ -298,14 +295,14 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
 /**
  * Calculates the RBR, which is a map of ranks to number of blocks at that rank
  */
-map<int,int>* MBSAllocator::factorRequest(Job* j)
+std::map<int,int>* MBSAllocator::factorRequest(Job* j)
 {
-    map<int,int>* retVal = new map<int,int>();
+    std::map<int,int>* retVal = new std::map<int,int>();
     int procs = 0;
 
     while (procs < j -> getProcsNeeded()){
         //begin our search
-        vector<int>::iterator sizes = ordering -> begin();
+        std::vector<int>::iterator sizes = ordering -> begin();
 
         //look for the largest size block that fits the procs needed
         int size = -1;
@@ -333,7 +330,7 @@ map<int,int>* MBSAllocator::factorRequest(Job* j)
         //get the rank
         int rank = distance(ordering -> begin(), find(ordering -> begin(),ordering -> end(), size));
         if (retVal -> find(rank) == retVal -> end()){
-            retVal -> insert(pair<int,int>(rank,0));
+            retVal -> insert(std::pair<int,int>(rank,0));
         }
 
         //increment that value of the map
@@ -354,7 +351,7 @@ map<int,int>* MBSAllocator::factorRequest(Job* j)
  * Breaks up a request for a block with a given rank into smaller request if able
  */
 
-void MBSAllocator::splitRequest(map<int,int>* RBR, int rank){
+void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
     if (RBR -> count(rank) == 0)
         error("Out of bounds in MBSAllocator::splitRequest()");
     if (rank <= 0)
@@ -375,7 +372,7 @@ void MBSAllocator::splitRequest(map<int,int>* RBR, int rank){
     if (RBR -> find(rank - 1) != RBR-> end()) {
         RBR -> find(rank - 1) -> second += count;
     } else {
-        RBR -> insert(pair<int,int>(rank - 1,count));
+        RBR -> insert(std::pair<int,int>(rank - 1,count));
     }
 
 
@@ -409,7 +406,7 @@ bool MBSAllocator::splitLarger(int rank)
 
     //split a block since by this point in the method we have guaranteed its existence
     Block* toSplit = *(FBR -> at(rank + 1) -> begin());
-    set<Block*, Block>::iterator spawn = toSplit -> getChildren() -> begin();
+    std::set<Block*, Block>::iterator spawn = toSplit -> getChildren() -> begin();
 
     //add children to the FBR
     while (spawn != toSplit -> getChildren() -> end()) {
@@ -422,7 +419,6 @@ bool MBSAllocator::splitLarger(int rank)
 
     return true;
 }
-
 void MBSAllocator::deallocate(AllocInfo* alloc)
 {
     if (DEBUG) printf("Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
@@ -436,12 +432,12 @@ void MBSAllocator::deallocate(AllocInfo* alloc)
 
 void MBSAllocator::unallocate(MBSMeshAllocInfo* info){
     //add all blocks back into the FBR
-    for (set<Block*,Block>::iterator b = info -> blocks -> begin(); b != info -> blocks -> end(); b++){
+    for (std::set<Block*,Block>::iterator b = info -> blocks -> begin(); b != info -> blocks -> end(); b++){
         int rank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), (*b) -> size()));
         FBR -> at(rank) -> insert(*b);
     }
     //for each block see if its parent is all free
-    for (set<Block*,Block>::iterator b = info -> blocks -> begin(); b != info -> blocks -> end(); b++){
+    for (std::set<Block*,Block>::iterator b = info -> blocks -> begin(); b != info -> blocks -> end(); b++){
         mergeBlock((*b) -> parent);
     }
     //delete info;
@@ -459,14 +455,14 @@ void MBSAllocator::mergeBlock(Block* p){
     }
 
     //see if children are in the FBR
-    for (set<Block*, Block>::iterator child = p -> children -> begin(); child != p -> children -> end(); child++){
+    for (std::set<Block*, Block>::iterator child = p -> children -> begin(); child != p -> children -> end(); child++){
         rank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), (*child) -> size()));
         if (0 == FBR -> at(rank) -> count(*child)) {
             return;
         }
     }
     //by this point in the code they all are
-    for (set<Block*, Block>::iterator child = p -> children -> begin(); child != p -> children -> end(); child++){
+    for (std::set<Block*, Block>::iterator child = p -> children -> begin(); child != p -> children -> end(); child++){
         rank = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), (*child) -> size()));
         FBR -> at(rank) -> erase(*child);
     }
@@ -476,14 +472,14 @@ void MBSAllocator::mergeBlock(Block* p){
     mergeBlock(p -> parent);
 }
 
-void MBSAllocator::printRBR(map<int,int>* RBR)
+void MBSAllocator::printRBR(std::map<int,int>* RBR)
 {
-    for (map<int,int>::iterator key = RBR -> begin(); key != RBR -> end(); key++) {
+    for (std::map<int,int>::iterator key = RBR -> begin(); key != RBR -> end(); key++) {
         printf("Rank %d has %d requested blocks\n", key -> first, key -> second);
     }
 }
 
-void MBSAllocator::printFBR(string msg)
+void MBSAllocator::printFBR(std::string msg)
 {
     printf("%s\n",msg.c_str());
     if (ordering -> size() != FBR -> size()) {
@@ -491,7 +487,7 @@ void MBSAllocator::printFBR(string msg)
     }
     for (int i = 0;i < (int)ordering -> size(); i++) { 
         printf("Rank: %d for size %d\n", i, ordering -> at(i));
-        set<Block*, Block>::iterator it = FBR -> at(i) -> begin();
+        std::set<Block*, Block>::iterator it = FBR -> at(i) -> begin();
         while (it != FBR -> at(i)->end()) {
             printf("  %s\n", (*it) -> toString().c_str()); 
             it++;
@@ -499,15 +495,15 @@ void MBSAllocator::printFBR(string msg)
     }
 }
 
-string MBSAllocator::stringFBR()
+std::string MBSAllocator::stringFBR()
 {
-    stringstream retVal;
+    std::stringstream retVal;
     if (ordering -> size() != FBR -> size()) {
         error("Ordering vs FBR size mismatch");
     }
     for (int i = 0;i < (int)ordering->size();i++) {
-        retVal << "Rank: "<< i <<" for size "<< ordering -> at(i) <<"\n";
-        set<Block*, Block>::iterator it = FBR -> at(i) -> begin();
+        retVal << "Rank: " << i << " for size " << ordering -> at(i) << "\n";
+        std::set<Block*, Block>::iterator it = FBR -> at(i) -> begin();
         while (it != FBR -> at(i) -> end()){
             retVal << "  " << (*it) -> toString() << "\n";
             ++it;

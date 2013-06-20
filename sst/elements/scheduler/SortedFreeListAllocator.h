@@ -13,34 +13,32 @@
  * order specified when allocator is created).
  */
 
-#ifndef __SORTEDFREELISTALLOCATOR_H__
-#define __SORTEDFREELISTALLOCATOR_H__
+#ifndef SST_SCHEDULER_SORTEDFREELISTALLOCATOR_H__
+#define SST_SCHEDULER_SORTEDFREELISTALLOCATOR_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#include "sst/core/serialization/element.h"
+#include <string>
+#include <vector>
 
 #include "LinearAllocator.h"
-#include "MachineMesh.h"
-#include "Job.h"
-#include "misc.h"
 
 namespace SST {
     namespace Scheduler {
+        class MachineMesh;
+        class Machine;
+        class Job;
+        class AllocInfo;
 
         class SortedFreeListAllocator : public LinearAllocator {
             public:
-                SortedFreeListAllocator(MachineMesh* m, string filename);
+                SortedFreeListAllocator(MachineMesh* m, std::string filename);
 
-                SortedFreeListAllocator(vector<string>* params, Machine* mach);
+                SortedFreeListAllocator(std::vector<std::string>* params, Machine* mach);
 
-                string getParamHelp()
+                std::string getParamHelp()
                 {
                     return "[<file>]\n\tfile: Path to file giving the curve";
                 }
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job);
         };

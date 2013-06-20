@@ -30,28 +30,21 @@
  generators, and scorers for use with the nearest allocators
  */
 
-#ifndef __MBSALLOCCLASSES_H__
-#define __MBSALLOCCLASSES_H__
+#ifndef SST_SCHEDULER_MBSALLOCCLASSES_H__
+#define SST_SCHEDULER_MBSALLOCCLASSES_H__
 
-#include <string>
+#include <set>
 #include <sstream>
-#include <vector>
 
-#include "sst/core/serialization/element.h"
-
-#include "Allocator.h"
-#include "MachineMesh.h"
-#include "MeshAllocInfo.h"
-
-
-
+//#include "sst/core/serialization/element.h"
 
 namespace SST {
     namespace Scheduler {
+        class MeshLocation;
 
-        class Block : public binary_function<Block*,Block*,bool>{
+        class Block : public std::binary_function<Block*,Block*,bool>{
             public:
-                set<Block*, Block>* children;
+                std::set<Block*, Block>* children;
                 Block* parent;
                 MeshLocation* dimension;
                 MeshLocation* location;
@@ -66,7 +59,7 @@ namespace SST {
                     dimension = d;
                     location = l;
                     Block* BComp = new Block();
-                    children = new set<Block*, Block>(*BComp);
+                    children = new std::set<Block*, Block>(*BComp);
                     parent = NULL;
                 }
                 Block (MeshLocation* l, MeshLocation* d, Block* p) 
@@ -74,17 +67,17 @@ namespace SST {
                     dimension = d;
                     location = l;
                     Block* BComp = new Block();
-                    children = new set<Block*, Block>(*BComp);
+                    children = new std::set<Block*, Block>(*BComp);
                     parent = p;
                 }
 
                 /**
                  * Returns all processors in this block
                  */
-                set<MeshLocation*, MeshLocation>* processors()
+                std::set<MeshLocation*, MeshLocation>* processors()
                 {
                     MeshLocation* MLComp = new MeshLocation(0,0,0);
-                    set<MeshLocation*, MeshLocation>* processors = new set<MeshLocation*, MeshLocation>(*MLComp);
+                    std::set<MeshLocation*, MeshLocation>* processors = new std::set<MeshLocation*, MeshLocation>(*MLComp);
                     for (int i = 0;i < dimension -> x;i++) {
                         for (int j = 0;j < dimension -> y;j++) {
                             for (int k = 0;k < dimension -> z;k++) {
@@ -105,7 +98,7 @@ namespace SST {
                     return dimension -> x*dimension -> y*dimension -> z;
                 }
 
-                set<Block*, Block>* getChildren()
+                std::set<Block*, Block>* getChildren()
                 {
                     return children;
                 }
@@ -142,9 +135,9 @@ namespace SST {
                     return dimension -> equals(b -> dimension) && location -> equals(b -> location);
                 }
 
-                string toString()
+                std::string toString()
                 {
-                    stringstream ret;
+                    std::stringstream ret;
                     ret << "Block[" << dimension -> x << "x" <<dimension -> y << "x" << dimension -> z << "]@" << location -> toString();
                     return ret.str();
                 }

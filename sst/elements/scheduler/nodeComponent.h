@@ -9,9 +9,11 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _NODECOMPONENT_H
-#define _NODECOMPONENT_H
+#ifndef SST_SCHEDULER_NODECOMPONENT_H
+#define SST_SCHEDULER_NODECOMPONENT_H
 
+#include "sst/core/serialization/element.h"
+#include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

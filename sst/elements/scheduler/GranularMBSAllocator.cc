@@ -16,46 +16,47 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR->
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <math.h>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "GranularMBSAllocator.h"
+
+//#include "sst/core/serialization/element.h"
+
+#include <vector>
+#include <string>
+#include <set>
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
 #include "MBSAllocInfo.h"
-#include "Job.h"
 #include "misc.h"
-
 
 #define DEBUG false
 
 using namespace SST::Scheduler;
 
-
 GranularMBSAllocator::GranularMBSAllocator(MachineMesh* m, int x, int y, int z)   : MBSAllocator(m)
 {
 
     //create the starting blocks
-    initialize(new MeshLocation(x,y,z),new MeshLocation(0,0,0));
+    initialize(new MeshLocation(x,y,z), new MeshLocation(0,0,0));
     if (DEBUG) printFBR("Post Initialize:");
 
 }
 
-string GranularMBSAllocator::getSetupInfo(bool comment)
+std::string GranularMBSAllocator::getSetupInfo(bool comment)
 {
-    string com;
-    if(comment) com="# ";
-    else com="";
-    return com+"Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
+    std::string com;
+    if (comment) {
+        com ="# ";
+    } else { 
+        com = "";
+    }
+    return com + "Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
 }
 
-GranularMBSAllocator::GranularMBSAllocator(vector<string>* params, Machine* mach) : MBSAllocator(mach)
+GranularMBSAllocator::GranularMBSAllocator(std::vector<std::string>* params, Machine* mach) : MBSAllocator(mach)
 {
 
     //create the starting blocks
@@ -69,13 +70,13 @@ GranularMBSAllocator::GranularMBSAllocator(vector<string>* params, Machine* mach
 
 void GranularMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 {
-    //add all the 1x1x1's so the set of blocks
+    //add all the 1x1x1's so the std::set of blocks
     int rank = createRank(1);
     MeshLocation* sizeOneDim = new MeshLocation(1,1,1);
     for (int i = 0;i < dim -> x; i++){
         for (int j = 0;j < dim -> y; j++){
-            for (int k=0;k < dim -> z; k++){
-                this -> FBR -> at(rank) -> insert(new Block(new MeshLocation(i,j,k),sizeOneDim));
+            for (int k = 0;k < dim -> z; k++){
+                this -> FBR -> at(rank) -> insert(new Block(new MeshLocation(i,j,k), sizeOneDim));
             }
         }
     }
@@ -98,14 +99,14 @@ bool GranularMBSAllocator::mergeAll()
 
     //workaround to delete during iteration
     Block* BComp = new Block();
-    set<Block*, Block>* toRemove = new set<Block*, Block>(*BComp);
+    std::set<Block*, Block>* toRemove = new std::set<Block*, Block>(*BComp);
 
     //we will be scanning 3 times, for each dimension
     for (int d = 0;d < 3;d++) {		
         //scan through and try to merge everything
         for (int i = (ordering->size()-1); i >= 0; i--) {
-            set<Block*, Block>* blocks = FBR -> at(i);
-            set<Block*, Block>::iterator it = blocks -> begin();
+            std::set<Block*, Block>* blocks = FBR -> at(i);
+            std::set<Block*, Block>::iterator it = blocks -> begin();
 
             while (blocks -> size() > 0 && it != blocks -> end()) {
                 //get the first block
@@ -191,7 +192,7 @@ Block* GranularMBSAllocator::lookZ(Block* b)
 }
 
 /**
- * Attempts to perform a get operation on a set. Returns NULL if the block is not found
+ * Attempts to perform a get operation on a std::set. Returns NULL if the block is not found
  * This method is needed because Block*.equals() is not really equals, but really similarEnough()
  * We need to get the block from the FBR because it comes with the parent/children hierarchy.
  */
@@ -201,7 +202,7 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
 
     //Figure out where too look
     //TODO: error checking?
-    set<Block*, Block>* haystack = FBR -> at(distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(),needle -> size())));
+    std::set<Block*, Block>* haystack = FBR -> at(distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(),needle -> size())));
 
     if (haystack -> count(needle) == 0){
         error("nextBlock not currently in FBR");
@@ -209,7 +210,7 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
     }
 
     //Locate it, and return
-    set<Block*, Block>::iterator it = haystack -> begin();
+    std::set<Block*, Block>::iterator it = haystack -> begin();
     if (it == haystack -> end()) {
         error("no blocks of correct rank in FBR when searching for nextBlock");
         return NULL;
@@ -231,7 +232,7 @@ Block* GranularMBSAllocator::mergeBlocks(Block* first, Block* second)
     if (first -> equals(second) || !first -> dimension -> equals(second -> dimension)){
         error("merging two idential blocks, or blocks of different sizes");
     }
-    //do some setup
+    //do some std::setup
     MeshLocation* dimension = new MeshLocation(0,0,0);
     MeshLocation* location = second->location;
     if ((*dimension)(first -> location,second -> location))  {

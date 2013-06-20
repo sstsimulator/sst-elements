@@ -17,41 +17,34 @@
  * (maximum distance along linear order between assigned processors)->
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sstream>
-#include <time.h>
-#include <math.h>
-#include <limits>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "BestFitAllocator.h"
+
+#include <vector>
+#include <string>
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "LinearAllocator.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
-#include "Job.h"
+#include "MeshAllocInfo.h"
 #include "misc.h"
 
 #define DEBUG false
 
 using namespace SST::Scheduler;
+using namespace std;
 
-/*
-   BestFitAllocator(MachineMesh* m, string filename) {
-//takes machine to be allocated and file giving linear order
-//(file format described at head of LinearAllocator->java)
-super(m, filename);
-}
-*/
 
-BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): LinearAllocator(params, mach) {
+BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): LinearAllocator(params, mach) 
+{
     if (DEBUG) printf("Constructing BestFitAllocator\n");
     if (NULL == dynamic_cast<MachineMesh*>(mach)) error("Linear allocators require a mesh");
 }
 
-string BestFitAllocator::getSetupInfo(bool comment){
+string BestFitAllocator::getSetupInfo(bool comment)
+{
     string com;
     if (comment) {
         com="# ";
@@ -65,7 +58,8 @@ string BestFitAllocator::getSetupInfo(bool comment){
 //returns information on the allocation or NULL if it wasn't possible.
 //(It doesn't make the allocation; merely returns info on a possible
 //allocation)
-AllocInfo* BestFitAllocator::allocate(Job* job) {
+AllocInfo* BestFitAllocator::allocate(Job* job) 
+{
     if (DEBUG)
         printf("Allocating %s procs: \n", job->toString().c_str());
 
@@ -88,8 +82,8 @@ AllocInfo* BestFitAllocator::allocate(Job* job) {
                 for (int j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
                     delete intervals -> at(bestInterval) -> at(j);
                 }
-                intervals ->at(bestInterval) ->clear();
-                delete intervals ->at(bestInterval);
+                intervals -> at(bestInterval) -> clear();
+                delete intervals -> at(bestInterval);
             }
             bestInterval = i;
             bestSize = size;
@@ -108,7 +102,7 @@ AllocInfo* BestFitAllocator::allocate(Job* job) {
     } else {
         MeshAllocInfo* retVal = new MeshAllocInfo(job);
         int j;
-        for (j = 0; j<(int)intervals -> at(bestInterval) -> size(); j++) {
+        for (j = 0; j < (int)intervals -> at(bestInterval) -> size(); j++) {
             if (j < num) {
                 retVal -> processors -> at(j) = intervals -> at(bestInterval) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(bestInterval) -> at(j) -> toInt((MachineMesh*)machine);

@@ -9,21 +9,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "RandomAllocator.h"
+
+#include "AllocInfo.h"
+#include "Job.h"
 #include "Machine.h"
 #include "MachineMesh.h"
-#include "AllocInfo.h"
 #include "MeshAllocInfo.h"
-#include "Job.h"
 #include "misc.h"
 
-using namespace std;
 using namespace SST::Scheduler;
 
 
@@ -36,7 +31,7 @@ RandomAllocator::RandomAllocator(Machine* mesh)
     srand(0);
 }
 /*
-   RandomAllocator RandomAllocator::Make(vector<string*>* params){
+   RandomAllocator RandomAllocator::Make(std::vector<std::string*>* params){
    Factory.argsAtLeast(0,params);
    Factory.argsAtMost(0,params);
 
@@ -49,14 +44,14 @@ RandomAllocator::RandomAllocator(Machine* mesh)
    }
    */
 
-string RandomAllocator::getParamHelp()
+std::string RandomAllocator::getParamHelp()
 {
     return "";
 }
 
-string RandomAllocator::getSetupInfo(bool comment)
+std::string RandomAllocator::getSetupInfo(bool comment)
 {
-    string com;
+    std::string com;
     if(comment)  {
         com = "# ";
     } else  {
@@ -76,7 +71,7 @@ AllocInfo* RandomAllocator::allocate(Job* job){
 
     //figure out which processors to use
     int numProcs = job -> getProcsNeeded();
-    vector<MeshLocation*>* available = ((MachineMesh*)machine) -> freeProcessors();
+    std::vector<MeshLocation*>* available = ((MachineMesh*)machine) -> freeProcessors();
     for (int i = 0; i < numProcs; i++) {
         int num = rand() % available -> size();
         (*retVal -> processors)[i] = (*available)[num];

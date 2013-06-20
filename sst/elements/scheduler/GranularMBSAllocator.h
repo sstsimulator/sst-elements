@@ -16,33 +16,27 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR.
  */
 
-#ifndef __GRANULARMBSALLOCATOR_H__
-#define __GRANULARMBSALLOCATOR_H__
+#ifndef SST_SCHEDULER_GRANULARMBSALLOCATOR_H__
+#define SST_SCHEDULER_GRANULARMBSALLOCATOR_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <vector>
 
-#include "sst/core/serialization/element.h"
-
-#include "MBSAllocClasses.h" 
 #include "MBSAllocator.h"
-#include "MachineMesh.h"
-#include "MBSAllocInfo.h"
-#include "Job.h"
-#include "misc.h"
-
 
 namespace SST {
     namespace Scheduler {
+        class MachineMesh;
+        class Machine;
+        class MeshLocation;
+        class Block;
 
         class GranularMBSAllocator : public MBSAllocator {
             public: 
                 GranularMBSAllocator(MachineMesh* m, int x, int y, int z);
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
-                GranularMBSAllocator(vector<string>* params, Machine* mach);
+                GranularMBSAllocator(std::vector<std::string>* params, Machine* mach);
 
                 void initialize(MeshLocation* dim, MeshLocation* off);
 

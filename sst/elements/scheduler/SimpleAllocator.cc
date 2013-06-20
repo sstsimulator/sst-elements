@@ -9,25 +9,29 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <stdlib.h>
+#include "sst_config.h"
+#include "SimpleAllocator.h"
+
+#include <string> 
 
 #include "sst/core/serialization/element.h"
 
-#include "SimpleAllocator.h"
-#include "Machine.h"
-#include "SimpleMachine.h"
 #include "AllocInfo.h"
 #include "Job.h"
+#include "Machine.h"
 #include "misc.h"
+#include "SimpleMachine.h"
 
 using namespace SST::Scheduler;
 
-SimpleAllocator::SimpleAllocator(SimpleMachine* m) {
+SimpleAllocator::SimpleAllocator(SimpleMachine* m) 
+{
     machine = m;
 }
 
-string SimpleAllocator::getSetupInfo(bool comment) {
-    string com;
+std::string SimpleAllocator::getSetupInfo(bool comment) 
+{
+    std::string com;
     if (comment) {
         com="# ";
     } else {
@@ -36,27 +40,13 @@ string SimpleAllocator::getSetupInfo(bool comment) {
     return com + "Simple Allocator";
 }
 
-/*
-   Allocator* SimpleAllocator::Make(vector<string>* params) {
-   argsAtMost(0, params);
-   Machine* m = getMachine();
-   SimpleMachine* sm = dynamic_cast<SimpleMachine*>(m);
-   if(sm != NULL)
-   return new SimpleAllocator(sm);
 
-   error("You cannot use SimpleAllocator with anything but SimpleMachine");
-   return NULL;
-   }
-
-   string SimpleAllocator::getParamHelp() {
-   return "";
-   }
-   */
 
 //allocates j if possible
 //returns information on the allocation or NULL if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation)
-AllocInfo* SimpleAllocator::allocate(Job* j) {  
+AllocInfo* SimpleAllocator::allocate(Job* j) 
+{  
     if (canAllocate(j)) {
         return new AllocInfo(j);
     }

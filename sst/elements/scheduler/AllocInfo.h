@@ -13,30 +13,30 @@
  * Classes representing information about an allocation
  */
 
-#ifndef __ALLOCINFO_H__
-#define __ALLOCINFO_H__
+#include <string>
 
-#include "Job.h"
+#ifndef SST_SCHEDULER_ALLOCINFO_H__
+#define SST_SCHEDULER_ALLOCINFO_H__
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
 
-class Job;
-class Machine;
+        class Job;
+        class Machine;
 
-class AllocInfo {
- public:
-  Job* job;
-  int* nodeIndices;
+        class AllocInfo {
+            public:
+                Job* job;
+                int* nodeIndices;
 
-  AllocInfo(Job* job);
+                AllocInfo(Job* job);
 
-  virtual ~AllocInfo();
+                virtual ~AllocInfo();
 
-  virtual string getProcList();
-};
+                virtual std::string getProcList();
+        };
 
 
-}
+    }
 }
 #endif

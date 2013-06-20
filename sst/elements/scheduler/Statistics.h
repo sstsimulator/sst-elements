@@ -18,11 +18,10 @@
  * end of the simulation).
  */
 
-#ifndef __STATISTICS_H__
-#define __STATISTICS_H__
+#ifndef SST_SCHEDULER_STATISTICS_H__
+#define SST_SCHEDULER_STATISTICS_H__
 
 #include <string>
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
@@ -35,11 +34,11 @@ namespace SST {
         class Statistics {
             public:
                 Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
-                           string baseName, char* logList);
+                           std::string baseName, char* logList);
 
                 virtual ~Statistics();
 
-                static void printLogList(ostream& out);  //print list of possible logs
+                static void printLogList(std::ostream& out);  //print list of possible logs
 
                 void jobArrives(unsigned long time);  //called when a job has arrived
 
@@ -59,7 +58,7 @@ namespace SST {
                 void writeAlloc(AllocInfo* allocInfo);
                 //write allocation information to file
 
-                void writeVisual(string mesg);
+                void writeVisual(std::string mesg);
                 //write to log for visualization
 
 
@@ -72,10 +71,10 @@ namespace SST {
                 //  (only prints 1 line per time: #waiting jobs after all events at that time)
                 //argument is current time or -1 at end of trace
 
-                void initializeLog(string extension);
-                void appendToLog(string mesg, string extension);
+                void initializeLog(std::string extension);
+                void appendToLog(std::string mesg, std::string extension);
 
-                string baseName;  //part of name used as base of output files (i.e. baseName.time)
+                std::string baseName;  //part of name used as base of output files (i.e. baseName.time)
                 Machine* machine;
                 unsigned long currentTime;
                 int procsUsed;    //#processors used at currentTime
@@ -91,9 +90,9 @@ namespace SST {
                 int waitingJobs;    //current guess of what to record for that time
                 int tempWaiting;    //actual number of waiting jobs right now
 
-                string fileHeader;  //commented out header for all log files
+                std::string fileHeader;  //commented out header for all log files
 
-                string outputDirectory;  //directory for all output files
+                std::string outputDirectory;  //directory for all output files
         };
 
     }

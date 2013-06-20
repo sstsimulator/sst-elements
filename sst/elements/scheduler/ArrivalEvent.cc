@@ -9,15 +9,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "ArrivalEvent.h"
-#include "Machine.h"
+
 #include "Allocator.h"
 #include "AllocInfo.h"
+#include "Job.h"
+#include "Machine.h"
 #include "Scheduler.h"
 #include "Statistics.h"
-#include "Job.h"
 
 using namespace SST::Scheduler;
 

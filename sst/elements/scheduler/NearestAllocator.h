@@ -28,24 +28,26 @@
  */
 
 
-#ifndef __NEARESTALLOCATOR_H__
-#define __NEARESTALLOCATOR_H__
+#ifndef SST_SCHEDULER_NEARESTALLOCATOR_H__
+#define SST_SCHEDULER_NEARESTALLOCATOR_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <vector>
+#include <string>
 
 #include "sst/core/serialization/element.h"
 
-#include "NearestAllocClasses.h" 
-#include "MachineMesh.h"
-#include "MeshAllocInfo.h"
-#include "Job.h"
-#include "misc.h"
+#include "Allocator.h"
 
 
 namespace SST {
     namespace Scheduler {
+        class Job;
+        class Machine;
+        class CenterGenerator;
+        class PointCollector;
+        class Scorer;
+        class MachineMesh;
+
 
         class NearestAllocator : public Allocator {
 
@@ -59,21 +61,21 @@ namespace SST {
                 //how we evaluate a possible allocation:
                 Scorer* scorer;
 
-                string configName;
+                std::string configName;
 
             public:
                 NearestAllocator(MachineMesh* m, CenterGenerator* cg,
-                                 PointCollector* pc, Scorer* s,string name); 
+                                 PointCollector* pc, Scorer* s,std::string name); 
 
-                NearestAllocator(vector<string>* params, Machine* mach);
+                NearestAllocator(std::vector<std::string>* params, Machine* mach);
 
-                string getParamHelp();
+                std::string getParamHelp();
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job);
 
-                AllocInfo* allocate(Job* job, vector<MeshLocation*>* available); 
+                AllocInfo* allocate(Job* job, std::vector<MeshLocation*>* available); 
 
                 void genAlgAllocator(MachineMesh* m);
 

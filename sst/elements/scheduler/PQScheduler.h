@@ -9,19 +9,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef __PQSCHEDULER_H__
-#define __PQSCHEDULER_H__
+#ifndef SST_SCHEDULER_PQSCHEDULER_H__
+#define SST_SCHEDULER_PQSCHEDULER_H__
 
 #include <string>
 #include <vector>
-#include <functional>
+
 #include "Scheduler.h"
-using namespace std;
+
 
 namespace SST {
     namespace Scheduler {
+        class Job;
 
-        class PQScheduler : public Scheduler{
+        class PQScheduler : public Scheduler {
             private:
 
                 enum ComparatorType{  //to represent type of JobComparator
@@ -35,7 +36,7 @@ namespace SST {
 
                 struct compTableEntry{
                     ComparatorType val;
-                    string name;
+                    std::string name;
                 };
 
                 static const compTableEntry compTable[6];
@@ -43,7 +44,7 @@ namespace SST {
 
                 static const int numCompTableEntries;
 
-                string compSetupInfo;
+                std::string compSetupInfo;
 
             public:
                 virtual ~PQScheduler() 
@@ -51,24 +52,22 @@ namespace SST {
                     delete toRun;
                 }
 
-                class JobComparator : public binary_function<Job*,Job*,bool>
-            {
+                class JobComparator : public std::binary_function<Job*,Job*,bool> {
                 public:
-                    static JobComparator* Make(string typeName);  //return NULL if name is invalid
-                    static void printComparatorList(ostream& out);  //print list of possible comparators
+                    static JobComparator* Make(std::string typeName);  //return NULL if name is invalid
+                    static void printComparatorList(std::ostream& out);  //print list of possible comparators
                     bool operator()(Job*& j1, Job*& j2);
                     bool operator()(Job* const& j1, Job* const& j2);
-                    string toString();
+                    std::string toString();
+
                 private:
                     JobComparator(ComparatorType type);
                     ComparatorType type;
-            };
+                };
 
                 PQScheduler(JobComparator* comp);
 
-                //static Scheduler* Make(vector<string>* params);
-                //static string getParamHelp();
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 void jobArrives(Job* j, unsigned long time, Machine* mach);
 
@@ -80,7 +79,7 @@ namespace SST {
 
                 void reset();
             protected:
-                priority_queue<Job*,vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
+                std::priority_queue<Job*,std::vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
         };
 
     }

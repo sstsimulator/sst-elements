@@ -9,17 +9,17 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef __JOB_H__
-#define __JOB_H__
+#ifndef SST_SCHEDULER_JOB_H__
+#define SST_SCHEDULER_JOB_H__
 
-#include <iostream>
+#include "sst/core/serialization/element.h"
+
 #include <string>
-#include <queue>
-#include "Statistics.h"  //needed for friend declaration
-
 #include <sstream>
 
-using namespace std;
+#include "Statistics.h"  //needed for friend declaration
+
+
 
 namespace SST {
     namespace Scheduler {
@@ -29,7 +29,7 @@ namespace SST {
 
         class Job {
             public:
-                Job(istream& input, bool accurateEsts);
+                Job(std::istream& input, bool accurateEsts);
                 Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime,
                     unsigned long estRunningTime);
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
@@ -56,7 +56,7 @@ namespace SST {
                     if (0 == ID.length()) {
                         std::ostringstream jobNumStr;
                         jobNumStr << jobNum;
-                        ID = string( jobNumStr.str() );
+                        ID = std::string( jobNumStr.str() );
                     }
                     return & ID;
                 }
@@ -68,7 +68,7 @@ namespace SST {
                 }
                 unsigned long getEstimatedRunningTime(AllocInfo* allocInfo);
 
-                string toString();
+                std::string toString();
 
                 void start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
                            Statistics* stats);

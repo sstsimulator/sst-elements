@@ -10,17 +10,17 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <iostream>
+#include "sst_config.h"
+#include "SimpleMachine.h"
+
 #include <vector>
 #include <string>
-using namespace std;
 
-#include "sst/core/serialization/element.h"
-
-#include "Machine.h"
-#include "SimpleMachine.h"
 #include "AllocInfo.h"
+#include "Job.h"
+#include "Machine.h"
 #include "misc.h"
+#include "schedComponent.h"
 
 using namespace SST::Scheduler;
 
@@ -33,25 +33,25 @@ SimpleMachine::SimpleMachine(int procs, schedComponent* sc) {  //takes number of
 void SimpleMachine::reset() {  //return to beginning-of-simulation state
   numAvail = numProcs;
   freeNodes.clear();
-  for(int i=0; i<numProcs; i++)
+  for(int i = 0; i < numProcs; i++)
     freeNodes.push_back(i);
 }
 
 /*
-Machine* SimpleMachine::Make(vector<string>* params) { //Factory creation method
+Machine* SimpleMachine::Make(std::vector<std::string>* params) { //Factory creation method
   argsAtMost(1, params);
   argsAtLeast(1, params);
 
   return new SimpleMachine(atoi((*params)[1].c_str()));
 }
 
-string SimpleMachine::getParamHelp() {
+std::string SimpleMachine::getParamHelp() {
   return "[<num procs>]";
 }
 */
 
-string SimpleMachine::getSetupInfo(bool comment){
-  string com;
+std::string SimpleMachine::getSetupInfo(bool comment){
+  std::string com;
   if(comment)
     com="# ";
   else
@@ -65,13 +65,13 @@ void SimpleMachine::allocate(AllocInfo* allocInfo) {  //allocate processors
   int num = allocInfo -> job -> getProcsNeeded();  //number of processors
   
   if(debug)
-    cerr << "allocate(" << allocInfo -> job -> toString() << "); "
-	 << (numAvail - num) << " processors free" << endl;
+    std::cerr << "allocate(" << allocInfo -> job -> toString() << "); "
+	 << (numAvail - num) << " processors free" << std::endl;
   
   if(num > numAvail) {
     char mesg[100];
     sprintf(mesg, "Attempt to allocate %d processors when only %d are available", num, numAvail);
-    internal_error(string(mesg));
+    internal_error(std::string(mesg));
   }
   
   numAvail -= num;
@@ -95,14 +95,14 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo) {  //deallocate processors
   int num = allocInfo ->job -> getProcsNeeded();  //number of processors
   
   if(debug)
-    cerr << "deallocate(" << allocInfo -> job << "); " 
-	 << (numAvail + num) << " processors free" << endl;
+    std::cerr << "deallocate(" << allocInfo -> job << "); " 
+	 << (numAvail + num) << " processors free" << std::endl;
   
   if(num > (numProcs - numAvail)) {
     char mesg[100];
     sprintf(mesg, "Attempt to deallocate %d processors when only %d are busy",
 	    num, (numProcs-numAvail));
-    internal_error(string(mesg));
+    internal_error(std::string(mesg));
   }
 
   numAvail += num;
@@ -111,8 +111,8 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo) {  //deallocate processors
   }
 }
 
-vector<int>* SimpleMachine::freeProcessors(){
-    vector<int>* retVal = new vector<int>();
+std::vector<int>* SimpleMachine::freeProcessors(){
+    std::vector<int>* retVal = new std::vector<int>();
     for (unsigned int i = 0; i < freeNodes.size(); i++)
         retVal->push_back( freeNodes[i] );
     return retVal;

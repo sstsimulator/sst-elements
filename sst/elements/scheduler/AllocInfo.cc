@@ -9,28 +9,29 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
         
-#include "sst/core/serialization/element.h"
-#include <string>
+#include "sst_config.h"
 #include "AllocInfo.h"
-//#include "Mesh.h"
-//#include "MeshLocation.h"
-#include "Machine.h"
+
+#include <string>
+
 #include "Job.h"
-#include "misc.h"
-using namespace std;
+
 using namespace SST::Scheduler;
 
-AllocInfo::AllocInfo(Job* job) {
-  this->job = job;
-  nodeIndices = new int[job->getProcsNeeded()];
+AllocInfo::AllocInfo(Job* job) 
+{
+  this -> job = job;
+  nodeIndices = new int[job -> getProcsNeeded()];
   nodeIndices[0] = -1; // ConstraintAllocator puts allocation here
 }
 
-AllocInfo::~AllocInfo() {
-  delete[] nodeIndices;
+AllocInfo::~AllocInfo() 
+{
+  delete [] nodeIndices;
 }
 
-string AllocInfo::getProcList() {
+std::string AllocInfo::getProcList() 
+{
   return "";
 }
 

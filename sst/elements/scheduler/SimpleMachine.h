@@ -13,43 +13,45 @@
  * Class that represents machine as a bag of processors (no locations)
  */
 
-#ifndef __SIMPLEMACHINE_H__
-#define __SIMPLEMACHINE_H__
+#ifndef SST_SCHEDULER_SIMPLEMACHINE_H__
+#define SST_SCHEDULER_SIMPLEMACHINE_H__
 
 #include <string>
-using namespace std;
+#include <vector>
 
 #include "Machine.h"
 
 namespace SST {
-namespace Scheduler {
+    namespace Scheduler {
+        class SchedComponent;
+        class AllocInfo;
 
-class SimpleMachine : public Machine {
+        class SimpleMachine : public Machine {
 
- public:
-  SimpleMachine(int procs, schedComponent* sc);  //takes number of processors
+            public:
+                SimpleMachine(int procs, schedComponent* sc);  //takes number of processors
 
-  virtual ~SimpleMachine() {}
+                virtual ~SimpleMachine() {}
 
-  //static Machine* Make(vector<string>* params); //Factory creation method
-  //static string getParamHelp();
-  string getSetupInfo(bool comment);
+                //static Machine* Make(vector<string>* params); //Factory creation method
+                //static string getParamHelp();
+                std::string getSetupInfo(bool comment);
 
-  void reset();  //return to beginning-of-simulation state
+                void reset();  //return to beginning-of-simulation state
 
-  void allocate(AllocInfo* allocInfo);
+                void allocate(AllocInfo* allocInfo);
 
-  void deallocate(AllocInfo* allocInfo);  //deallocate processors
+                void deallocate(AllocInfo* allocInfo);  //deallocate processors
 
-  //ConstraintAllocator needs these
-  vector<int>* freeProcessors();
-  string getNodeID(int i);
+                //ConstraintAllocator needs these
+                std::vector<int>* freeProcessors();
+                std::string getNodeID(int i);
 
- private:
-  static const int debug = 0;  //whether to include debugging printouts
-  vector<int> freeNodes;       //indices of currently-free nodes
-};
+            private:
+                static const int debug = 0;  //whether to include debugging printouts
+                std::vector<int> freeNodes;       //indices of currently-free nodes
+        };
 
-}
+    }
 }
 #endif

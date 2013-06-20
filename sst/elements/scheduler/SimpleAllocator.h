@@ -14,13 +14,10 @@
  * keep track of the number of free processors
  */
 
-#ifndef __SIMPLEALLOCATOR_H__
-#define  __SIMPLEALLOCATOR_H__
+#ifndef SST_SCHEDULER_SIMPLEALLOCATOR_H__
+#define SST_SCHEDULER_SIMPLEALLOCATOR_H__
 
-#include <vector>
 #include "Allocator.h"
-
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
@@ -35,9 +32,7 @@ namespace SST {
 
                 ~SimpleAllocator() {}
 
-                //static Allocator* Make(vector<string>* params);
-                //static string getParamHelp();
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* j);  //allocates j if possible
                 //returns information on the allocation or NULL if it wasn't possible

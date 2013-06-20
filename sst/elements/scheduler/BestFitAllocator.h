@@ -15,37 +15,33 @@
  * none are big enough, chooses the one that minimizes the span
  * (maximum distance along linear order between assigned processors).
  */
-#ifndef __BESTFITALLOCATOR_H__
-#define __BESTFITALLOCATOR_H__
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#ifndef SST_SCHEDULER_BESTFITALLOCATOR_H__
+#define SST_SCHEDULER_BESTFITALLOCATOR_H__
 
 #include "sst/core/serialization/element.h"
 
 #include "LinearAllocator.h"
-#include "MachineMesh.h"
-#include "Job.h"
-#include "misc.h"
-
-
 
 namespace SST {
     namespace Scheduler {
 
+        class MachineMesh;
+        class Machine;
+        class Job;
+        class AllocInfo;
+
         class BestFitAllocator : public LinearAllocator {
             public:
 
-                BestFitAllocator(MachineMesh* m, string filename) ;
+                BestFitAllocator(MachineMesh* m, std::string filename) ;
 
-                BestFitAllocator(vector<string>* params, Machine* mach) ;
+                BestFitAllocator(std::vector<std::string>* params, Machine* mach) ;
 
-                string getParamHelp(){
+                std::string getParamHelp(){
                     return "[<file>]\n\tfile: Path to file giving the curve";
                 }
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job) ;
         };

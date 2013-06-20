@@ -14,38 +14,39 @@
  * some comparator without any backfilling.
  */
 
-#include <functional>
-#include <string>
-#include <queue>
-#include <vector>
-#include <set>
-#include <iostream>
-using namespace std;
-
-#include "sst/core/serialization/element.h"
-
+#include "sst_config.h"
 #include "EASYScheduler.h"
-//#include "Factory.h"
+
+#include <functional>
+#include <queue>
+#include <set>
+#include <string>
+#include <vector>
+
 #include "Allocator.h"
 #include "Job.h"
-#include "misc.h"
 #include "Machine.h"
+#include "misc.h"
 
+using namespace std;
 using namespace SST::Scheduler;
-#define DEBUG 0
+
+#define DEBUG false
 
 const EASYScheduler::compTableEntry EASYScheduler::compTable[6] = {
-    { FIFO, "fifo"},
-    { LARGEFIRST, "largefirst"},
-    { SMALLFIRST, "smallfirst"},
-    { LONGFIRST, "longfirst"},
-    { SHORTFIRST, "shortfirst"},
-    { BETTERFIT, "betterfit"}
+    {FIFO, "fifo"},
+    {LARGEFIRST, "largefirst"},
+    {SMALLFIRST, "smallfirst"},
+    {LONGFIRST, "longfirst"},
+    {SHORTFIRST, "shortfirst"},
+    {BETTERFIT, "betterfit"}
 };
+
 const int EASYScheduler::numCompTableEntries = 6;
 
-EASYScheduler::EASYScheduler(JobComparator* comp) { 
-    this->comp = comp;
+EASYScheduler::EASYScheduler(JobComparator* comp) 
+{ 
+    this -> comp = comp;
     toRun = new set<Job*, JobComparator, std::allocator<Job*> >(*comp);
     RunningInfo* RIComp = new RunningInfo();
     running = new multiset<RunningInfo*, RunningInfo>(*RIComp); //don't need to pass comp because compare longs
@@ -61,10 +62,11 @@ void usage();
 string EASYScheduler::getSetupInfo(bool comment) 
 {
     string com;
-    if (comment)
-        com="# ";
-    else
-        com="";
+    if (comment) {
+        com = "# ";
+    } else {
+        com = "";
+    }
     return com + "EASY Scheduler (" + compSetupInfo + ")"; 
 }
 
@@ -114,7 +116,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
                                      Machine* mach,
                                      Statistics* stats) 
 {
-if (!running -> empty() && (*(running -> begin())) -> estComp == time) {
+    if (!running -> empty() && (*(running -> begin())) -> estComp == time) {
         return NULL;  //don't backfill if another job is about to finish
     }
 
@@ -160,10 +162,10 @@ if (!running -> empty() && (*(running -> begin())) -> estComp == time) {
         //pair<long, Job*> temp = pair<long, Job*>(time + (*job)->getEstimatedRunningTime(),*job);
         multiset<RunningInfo*, RunningInfo>::iterator justinserted = running -> insert(started); //add to running list       
         temp -> start(time, mach, allocInfo, stats);
-        if(first) {//update the guarantee if starting the first job
+        if (first) {//update the guarantee if starting the first job
             giveGuarantee(time, mach);      
         }
-        if(DEBUG) {
+        if (DEBUG) {
             multiset<RunningInfo*, RunningInfo>::iterator dit = running -> begin();
             printf("Currently running jobs: ");
             while(dit != running -> end()) {

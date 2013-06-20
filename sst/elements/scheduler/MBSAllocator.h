@@ -16,30 +16,32 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR.
  */
 
-#ifndef __MBSALLOCATOR_H__
-#define __MBSALLOCATOR_H__
+#ifndef SST_SCHEDULER_MBSALLOCATOR_H__
+#define SST_SCHEDULER_MBSALLOCATOR_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <vector>
+#include <string>
+#include <map>
 
-#include "sst/core/serialization/element.h"
+//#include "sst/core/serialization/element.h"
 
-#include "MBSAllocClasses.h" 
-#include "MachineMesh.h"
-#include "MBSAllocInfo.h"
-#include "Job.h"
-#include "misc.h"
+#include "Allocator.h" 
+#include "MBSAllocInfo.h" //necessary due to virtual class
 
 
 namespace SST {
     namespace Scheduler {
+        class Block;
+        class MachineMesh;
+        class MBSMeshAllocInfo;
+        class MeshLocation;
+        class Job;
 
         class MBSAllocator : public Allocator {
 
             protected:
-                vector<set<Block*, Block>*>* FBR;
-                vector<int>* ordering;
+                std::vector<std::set<Block*, Block>*>* FBR;
+                std::vector<int>* ordering;
 
                 //We know it must be a mesh, so make it one so we can access the goods.
                 MachineMesh* meshMachine;
@@ -49,11 +51,11 @@ namespace SST {
                 MBSAllocator(Machine* mach);
                 MBSAllocator(MachineMesh* m, int x, int y, int z);
 
-                MBSAllocator(vector<string>* params, Machine* mach);
+                MBSAllocator(std::vector<std::string>* params, Machine* mach);
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
-                string getParamHelp();
+                std::string getParamHelp();
 
                 /**
                  * Initialize will fill in the FBR with z number of blocks (1 for
@@ -75,19 +77,19 @@ namespace SST {
                  */
                 void createChildren(Block* b);
 
-                set<Block*, Block>* splitBlock (Block* b) ;
+                std::set<Block*, Block>* splitBlock (Block* b) ;
 
                 MBSMeshAllocInfo* allocate(Job* job);
 
                 /**
                  * Calculates the RBR, which is a map of ranks to number of blocks at that rank
                  */
-                map<int,int>* factorRequest(Job* j);
+                std::map<int,int>* factorRequest(Job* j);
 
                 /**
                  * Breaks up a request for a block with a given rank into smaller request if able.
                  */
-                void splitRequest(map<int,int>* RBR, int rank);
+                void splitRequest(std::map<int,int>* RBR, int rank);
 
                 /**
                  * Determines whether a split up of a possible larger block was
@@ -101,11 +103,11 @@ namespace SST {
 
                 void mergeBlock(Block* p);
 
-                void printRBR(map<int,int>* RBR);
+                void printRBR(std::map<int,int>* RBR);
 
-                void printFBR(string msg);
+                void printFBR(std::string msg);
 
-                string stringFBR();
+                std::string stringFBR();
 
         };
 

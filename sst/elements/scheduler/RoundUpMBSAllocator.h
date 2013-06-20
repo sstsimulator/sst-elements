@@ -19,30 +19,26 @@
 #ifndef __ROUNDUPMBSALLOCATOR_H__
 #define __ROUNDUPMBSALLOCATOR_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <vector>
+#include <string>
+#include <map>
 
 #include "sst/core/serialization/element.h"
 
 #include "GranularMBSAllocator.h" 
-#include "MBSAllocClasses.h" 
-#include "MBSAllocator.h"
-#include "MachineMesh.h"
-#include "MBSAllocInfo.h"
-#include "Job.h"
-#include "misc.h"
 
 namespace SST {
     namespace Scheduler {
+        class MachineMesh;
+        class Job;
+        class MBSMeshAllocInfo;
+        class Block;
+
 
         /**
          * The Rounding Up MBS Allocator will do the same GranularMBS style allocation, except that
          * instead of preserving larger blocks like all of the other MBS algorithms, one
          * will default to breaking up a large block, by rounding up the request size.
-         * 
-         * @author Peter Walker
-         * 
          */
 
         class RoundUpMBSAllocator : public GranularMBSAllocator {
@@ -50,9 +46,9 @@ namespace SST {
 
                 RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z);
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
-                RoundUpMBSAllocator(vector<string>* params, MachineMesh* mach);
+                RoundUpMBSAllocator(std::vector<std::string>* params, MachineMesh* mach);
 
                 MBSMeshAllocInfo* allocate(Job* job);
 
@@ -63,7 +59,7 @@ namespace SST {
                  * @param procs the number of processors we are trying to allocate
                  * @return an RBR which represents the ideal request for system.
                  */
-                map<int,int>* generateIdealRequest(int procs);
+                std::map<int,int>* generateIdealRequest(int procs);
 
                 /**
                  * method does the work of processing a request, and fitting it
@@ -73,7 +69,7 @@ namespace SST {
                  * @return what you need to send the Mesh object, to actually allocate the processors
                  */
             private:
-                MBSMeshAllocInfo* processRequest(map<int,int>* RBR, Job* job);
+                MBSMeshAllocInfo* processRequest(std::map<int,int>* RBR, Job* job);
 
                 /**
                  * Controller method for whether or not to partially allocate, or fully allocate a block
@@ -81,7 +77,7 @@ namespace SST {
                  * @param procsLeft how many processors we have left to allocate
                  * @return a list of blocks (may be size 1) which we will allocate.
                  */
-                vector<Block*>* makeBlockAllocation(Block* block, int procsLeft) ;
+                std::vector<Block*>* makeBlockAllocation(Block* block, int procsLeft) ;
 
                 /**
                  * Perform the allocation, in terms of adding the MeshLocations contained in each block
@@ -91,7 +87,7 @@ namespace SST {
                  * @param allocated the number of processors allocated so far
                  * @return the AllocInfo with the given blocks added in.
                  */
-                MBSMeshAllocInfo* allocateBlocks(MBSMeshAllocInfo* retVal, vector<Block*>* blocks, int allocated);
+                MBSMeshAllocInfo* allocateBlocks(MBSMeshAllocInfo* retVal, std::vector<Block*>* blocks, int allocated);
 
                 /**
                  * Turns a request for value key size blocks, into a number of the next highest block size.
@@ -99,7 +95,7 @@ namespace SST {
                  * @param value the number of blocks of rank key
                  * @return a new RBR which the reduced blocks
                  */
-                map<int,int>* reduceRequest(int key, int value);
+                std::map<int,int>* reduceRequest(int key, int value);
 
                 /**
                  * Figure out how many processors we have allocate thus far
@@ -117,7 +113,7 @@ namespace SST {
                  * @return which blocks, out of those remaining from the given block's break up, are we going to use?
                  */
             protected:
-                vector<Block*>* partiallyAllocate(Block* block, int procs);
+                std::vector<Block*>* partiallyAllocate(Block* block, int procs);
         };
 
 

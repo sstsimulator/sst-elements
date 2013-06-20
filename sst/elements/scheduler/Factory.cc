@@ -10,38 +10,38 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include "Factory.h"
+
 #include <fstream>
 #include <sstream>
-#include <iostream>
 
 //#include <QFileSystemWatcher>
 
-#include "sst/core/element.h"
-
-#include "Factory.h"
-#include "PQScheduler.h"
+#include "BestFitAllocator.h"
+#include "ConstraintAllocator.h"
 #include "EASYScheduler.h"
-#include "StatefulScheduler.h"
+#include "FirstFitAllocator.h"
+#include "GranularMBSAllocator.h"
+#include "LinearAllocator.h"
+#include "MBSAllocator.h"
+#include "Machine.h"
+#include "MachineMesh.h"
+#include "NearestAllocator.h"
+#include "OctetMBSAllocator.h"
+#include "PQScheduler.h"
+#include "RandomAllocator.h"
+#include "RoundUpMBSAllocator.h"
 #include "schedComponent.h"
 #include "SimpleAllocator.h"
-#include "RandomAllocator.h"
-#include "NearestAllocator.h"
-#include "MBSAllocator.h"
-#include "GranularMBSAllocator.h"
-#include "RoundUpMBSAllocator.h"
-#include "OctetMBSAllocator.h"
-#include "FirstFitAllocator.h"
-#include "BestFitAllocator.h"
-#include "LinearAllocator.h"
-#include "SortedFreeListAllocator.h"
-#include "ConstraintAllocator.h"
 #include "SimpleMachine.h"
-#include "MachineMesh.h"
+#include "SortedFreeListAllocator.h"
+#include "StatefulScheduler.h"
+#include "misc.h"
 
 #define DEBUG false
 
 using namespace SST::Scheduler;
+using namespace std;
 
 /* 
  * Factory file helps parse the parameters in the sdl file

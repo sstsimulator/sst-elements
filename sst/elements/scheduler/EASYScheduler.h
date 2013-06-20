@@ -9,17 +9,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef __EASYSCHEDULER_H__
-#define __EASYSCHEDULER_H__
+#ifndef SST_SCHEDULER_EASYSCHEDULER_H__
+#define SST_SCHEDULER_EASYSCHEDULER_H__
 
-#include <string>
-#include <vector>
 #include <functional>
 #include <map>
 #include <set>
+#include <string>
+
 #include "Scheduler.h"
 
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
@@ -39,13 +38,13 @@ namespace SST {
 
                 struct compTableEntry {
                     ComparatorType val;
-                    string name;
+                    std::string name;
                 };
 
                 static const compTableEntry compTable[6];
 
 
-                string compSetupInfo;
+                std::string compSetupInfo;
                 void giveGuarantee(unsigned long time, Machine* mach);
                 unsigned long lastGuarantee;
                 unsigned long guaranteedStart;
@@ -54,13 +53,13 @@ namespace SST {
 
             public:
 
-                class JobComparator : public binary_function<Job*,Job*,bool> {
+                class JobComparator : public std::binary_function<Job*,Job*,bool> {
                     public:
-                        static JobComparator* Make(string typeName);  //return NULL if name is invalid
-                        static void printComparatorList(ostream& out);  //print list of possible comparators
+                        static JobComparator* Make(std::string typeName);  //return NULL if name is invalid
+                        static void printComparatorList(std::ostream& out);  //print list of possible comparators
                         bool operator()(Job*& j1, Job*& j2);
                         bool operator()(Job* const& j1, Job* const& j2);
-                        string toString();
+                        std::string toString();
                     private:
                         JobComparator(ComparatorType type);
                         ComparatorType type;
@@ -73,7 +72,7 @@ namespace SST {
                     delete comp;
                 }
 
-                class RunningInfo : public binary_function<RunningInfo*, RunningInfo*,bool> {
+                class RunningInfo : public std::binary_function<RunningInfo*, RunningInfo*,bool> {
                     public:
                         long jobNum;
                         int numProcs;
@@ -87,7 +86,7 @@ namespace SST {
                         }
                 };
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 void jobArrives(Job* j, unsigned long time, Machine* mach);
                 void jobFinishes(Job* j, unsigned long time, Machine* mach);
@@ -99,9 +98,13 @@ namespace SST {
 
             protected:
                 //need to use a set instead of a priority queue to suppport iteration
-                set<Job*, JobComparator>* toRun;  //jobs waiting to run
+                std::set<Job*, JobComparator>* toRun;  //jobs waiting to run
                 JobComparator * comp;
-                multiset<RunningInfo*, RunningInfo>* running; //keeps track of running jobs in order based on their estimated completion time.  Must use multi in case jobs end at same time (careful not to erase jobs by key = finishing time)
+                
+                //keeps track of running jobs in order based on their estimated
+                //completion time.  Must use multi in case jobs end at same
+                //time (careful not to erase jobs by key = finishing time)
+                std::multiset<RunningInfo*, RunningInfo>* running; 
 
 
         };

@@ -9,18 +9,17 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef __EXCEPTIONS_H__
-#define __EXCEPTIONS_H__
+#ifndef SST_SCHEDULER_EXCEPTIONS_H__
+#define SST_SCHEDULER_EXCEPTIONS_H__
 
 #include <exception>
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
 
-        //TODO: these should take arguments so the errors are more descriptive
+        //FIXME: these should take arguments so the errors are more descriptive
 
-        class InputFormatException : public exception {
+        class InputFormatException : public std::exception {
             //thrown when the input (trace) is mis-formatted
 
             virtual const char* what() const throw() {
@@ -28,7 +27,7 @@ namespace SST {
             }
         };
 
-        class InternalErrorException : public exception {
+        class InternalErrorException : public std::exception {
             //called whenever the simulator detects an invalid state
 
             virtual const char* what() const throw() {

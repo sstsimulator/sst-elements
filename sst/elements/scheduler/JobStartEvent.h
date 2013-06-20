@@ -13,8 +13,8 @@
  * Classes representing system events
  */
 
-#ifndef __JOBSTARTEVENT_H__
-#define __JOBSTARTEVENT_H__
+#ifndef SST_SCHEDULER_JOBSTARTEVENT_H__
+#define SST_SCHEDULER_JOBSTARTEVENT_H__
 
 namespace SST {
     namespace Scheduler {

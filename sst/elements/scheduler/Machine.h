@@ -13,16 +13,14 @@
  * Abstract base class for machines
  */
 
-#ifndef __MACHINE_H__
-#define __MACHINE_H__
+#ifndef SST_SCHEDULER_MACHINE_H__
+#define SST_SCHEDULER_MACHINE_H__
 
-#include <string>
-#include "schedComponent.h"
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
-
+        class schedComponent;
+        class AllocInfo;
         class AllocInfo;
 
         class Machine{
@@ -30,7 +28,7 @@ namespace SST {
 
                 virtual ~Machine() {}
 
-                virtual string getSetupInfo(bool comment) = 0;
+                virtual std::string getSetupInfo(bool comment) = 0;
 
                 int getNumFreeProcessors() 
                 {

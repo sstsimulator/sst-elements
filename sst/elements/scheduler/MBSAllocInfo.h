@@ -14,19 +14,18 @@
  * Machines
  */
 
-#ifndef __MBSALLOCINFO_H__
-#define __MBSALLOCINFO_H__
+#ifndef SST_SCHEDULER_MBSALLOCINFO_H__
+#define SST_SCHEDULER_MBSALLOCINFO_H__
 
-#include <vector>
 #include <sstream>
 #include <string>
-using namespace std;
+#include <set>
 
-#include "MachineMesh.h"
-#include "MeshAllocInfo.h"
-#include "MBSAllocClasses.h" //for Block
-#include "misc.h"
 #include "sst/core/serialization/element.h"
+
+#include "Job.h"
+#include "MeshAllocInfo.h"
+#include "MBSAllocClasses.h"
 
 namespace SST {
     namespace Scheduler {
@@ -34,19 +33,19 @@ namespace SST {
         class MBSMeshAllocInfo : public MeshAllocInfo {
 
             public:
-                set<Block*, Block>* blocks;
+                std::set<Block*, Block>* blocks;
 
                 MBSMeshAllocInfo(Job* j) : MeshAllocInfo(j){
                     //Keep track of the blocks allocated
                     Block* BComp = new Block(NULL,NULL);
-                    blocks = new set<Block*, Block>(*BComp);
+                    blocks = new std::set<Block*, Block>(*BComp);
                     delete BComp;
                 }
 
 
-                string toString(){
-                    string retVal = job -> toString() + "\n  ";
-                    for (set<Block*, Block>::iterator block = blocks -> begin(); block != blocks -> end(); block++){
+                std::string toString(){
+                    std::string retVal = job -> toString() + "\n  ";
+                    for (std::set<Block*, Block>::iterator block = blocks -> begin(); block != blocks -> end(); block++){
                         retVal = retVal + (*block) -> toString();
                     }
                     return retVal;

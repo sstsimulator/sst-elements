@@ -14,19 +14,18 @@
  * some comparator without any backfilling.
  */
 
+#include "sst_config.h"
+#include "PQScheduler.h"
+
 #include <functional>
 #include <string>
-#include <queue>
 #include <vector>
-using namespace std;
 
-#include "sst/core/serialization/element.h"
-
-#include "PQScheduler.h"
-//#include "Factory.h"
 #include "Allocator.h"
 #include "Job.h"
 #include "misc.h"
+
+using namespace std;
 
 using namespace SST::Scheduler;
 
@@ -50,26 +49,6 @@ PQScheduler::PQScheduler(JobComparator* comp)
 
 void usage();
 
-/*
-   Scheduler* PQScheduler::Make(vector<string>* params) {
-   argsAtLeast(0, params);
-   argsAtMost(1, params);
-
-   if(params -> size() == 1)
-   return new PQScheduler(JobComparator::Make("fifo"));
-   else {
-   JobComparator* comp = JobComparator::Make((*params)[1]);
-   if(comp == NULL)
-   usage();
-   return new PQScheduler(comp);
-   }
-   }
-
-   string PQScheduler::getParamHelp(){
-   return "[<opt_comp>]\n\topt_comp: Comparator to use, defaults to fifo";
-   }
-   */
-
 string PQScheduler::getSetupInfo(bool comment) 
 {
     string com;
@@ -84,26 +63,28 @@ string PQScheduler::getSetupInfo(bool comment)
 
 //called when j arrives; time is current time
 //tryToStart should be called after each job arrives
-void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) {
+void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) 
+{
     toRun -> push(j);
 }
 
 AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
-                                   Machine* mach, Statistics* stats) {
+                                   Machine* mach, Statistics* stats) 
+{
     //allows the scheduler to start a job if desired; time is current time
     //called after calls to jobArrives and jobFinishes
     //(either after each call or after each call occuring at same time)
     //returns first job to start, NULL if none
     //(if not NULL, should call tryToStart again)
 
-    if (toRun -> size() == 0) return NULL;
+    if (0 == toRun -> size()) return NULL;
 
     AllocInfo* allocInfo = NULL;
     Job* job = toRun -> top();
     if (alloc -> canAllocate(job))  {
         allocInfo = alloc -> allocate(job);
     }
-    if (allocInfo != NULL) {
+    if (NULL != allocInfo) {
         toRun -> pop();  //remove the job we just allocated
         job -> start(time, mach, allocInfo, stats);
     }
@@ -122,6 +103,7 @@ PQScheduler::JobComparator::JobComparator(ComparatorType type)
 {
     this -> type = type;
 }
+
 void PQScheduler::JobComparator::printComparatorList(ostream& out) 
 {
     for (int i = 0; i < numCompTableEntries; i++) {
@@ -217,7 +199,8 @@ bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2)
     }
 }
 
-string PQScheduler::JobComparator::toString() {
+string PQScheduler::JobComparator::toString() 
+{
     switch(type){
     case FIFO:
         return "FIFOComparator";

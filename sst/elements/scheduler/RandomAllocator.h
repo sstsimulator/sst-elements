@@ -14,28 +14,32 @@
  * keep track of the number of free processors
  */
 
-#ifndef __RANDOMALLOCATOR_H__
-#define __RANDOMALLOCATOR_H__
+#ifndef SST_SCHEDULER_RANDOMALLOCATOR_H__
+#define SST_SCHEDULER_RANDOMALLOCATOR_H__
 
 #include <string>
 #include <vector>
+
+#include "sst/core/serialization/element.h"
+
 #include "Allocator.h"
-#include "MachineMesh.h"
 
 
 namespace SST {
     namespace Scheduler {
+        class Machine;
+        class Job;
 
         class RandomAllocator : public Allocator {
 
             public:
                 RandomAllocator(Machine* mesh);
 
-                RandomAllocator Make(vector<string*>* params);
+                RandomAllocator Make(std::vector<std::string*>* params);
 
-                string getParamHelp();
+                std::string getParamHelp();
 
-                string getSetupInfo(bool comment);
+                std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job);
         };

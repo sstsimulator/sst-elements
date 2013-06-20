@@ -13,20 +13,19 @@
  * Utility functions
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
+#ifndef SST_SCHEDULER_MISC_H__
+#define SST_SCHEDULER_MISC_H__
 
 #define SCHEDULER_TIME_BASE "1 us"
 
 #include <string>
-using namespace std;
 
 namespace SST {
     namespace Scheduler {
 
-        void warning(string mesg);         //report warning (program continues)
-        void error(string mesg);           //report user-caused error
-        void internal_error(string mesg);  //report invalid program state
+        void warning(std::string mesg);         //report warning (program continues)
+        void error(std::string mesg);           //report user-caused error
+        void internal_error(std::string mesg);  //report invalid program state
 
     }
 }

@@ -13,18 +13,17 @@
  * Abstract base class for schedulers
  */
 
-#ifndef __SCHEDULER_H__
-#define __SCHEDULER_H__
+#ifndef SST_SCHEDULER_SCHEDULER_H__
+#define SST_SCHEDULER_SCHEDULER_H__
 
 #include <string>
 #include <queue>
-#include "Job.h"
-using namespace std;
+
 
 namespace SST {
     namespace Scheduler {
 
-        //class Job;
+        class Job;
         class AllocInfo;
         class Allocator;
         class Machine;
@@ -34,7 +33,7 @@ namespace SST {
             public:
                 virtual ~Scheduler() {}
 
-                virtual string getSetupInfo(bool comment) = 0;
+                virtual std::string getSetupInfo(bool comment) = 0;
 
                 virtual void jobArrives(Job* j, unsigned long time, Machine* mach) = 0;
                 //called when j arrives; time is current time

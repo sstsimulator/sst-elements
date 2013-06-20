@@ -10,10 +10,10 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include "nodeComponent.h"
+
 #include <stdlib.h>
 #include <assert.h>
-
 #include <sstream>
 #include <fstream>
 #include <cmath>
@@ -23,20 +23,19 @@
 
 #include "sst/core/element.h"
 
-#include "ObjectRetrievalEvent.h"
 #include "CommunicationEvent.h"
-#include "nodeComponent.h"
 #include "FaultEvent.h"
 #include "JobKillEvent.h"
-
+#include "ObjectRetrievalEvent.h"
 #include "misc.h"
 
 using namespace SST;
 using namespace SST::Scheduler;
+using namespace std;
 
 
-static ofstream faultLog;
-static ofstream errorLog;
+static std::ofstream faultLog;
+static std::ofstream errorLog;
 
 unsigned short int * yumyumRand48State;
 
@@ -358,7 +357,7 @@ void nodeComponent::handleSelfEvent(Event *ev)
         FaultEvent * faultEvent = dynamic_cast<FaultEvent*>(ev);
 
         logFault(faultEvent);
-        sendNextFault(string(faultEvent -> faultType));     // handled this fault, send another fault to the future
+        sendNextFault(std::string(faultEvent -> faultType));     // handled this fault, send another fault to the future
         handleFaultEvent(ev);
     } else if (dynamic_cast<JobKillEvent*>(ev)) {
         handleJobKillEvent(dynamic_cast<JobKillEvent*>(ev));

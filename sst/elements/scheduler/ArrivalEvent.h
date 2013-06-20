@@ -13,9 +13,10 @@
  * Classes representing system events
  */
 
-#ifndef __ARRIVALEVENT_H__
-#define __ARRIVALEVENT_H__
+#ifndef SST_SCHEDULER_ARRIVALEVENT_H__
+#define SST_SCHEDULER_ARRIVALEVENT_H__
 
+#include "sst/core/serialization/element.h"
 #include <sst/core/event.h>
 
 namespace SST {
