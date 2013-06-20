@@ -35,7 +35,15 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params_t& params) :
 
     uint32_t rank = params.find_integer("rank", 0);
 
+    // Create a new reader and set it so that we only process one record per call
     reader = new OTFReader(trace_file, rank);
+
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
+
+    registerClock( "1GHz",
+                 new Clock::Handler<ZodiacOTFTraceReader>(this,
+                                                     &ZodiacOTFTraceReader::clockTic ) );
 }
 
 ZodiacOTFTraceReader::~ZodiacOTFTraceReader() {
@@ -54,8 +62,14 @@ void ZodiacOTFTraceReader::handleEvent(Event *ev) {
 }
 
 bool ZodiacOTFTraceReader::clockTic( Cycle_t ) {
-  // return false so we keep going
-  return false;
+  uint64_t eventCount = 0;
+  if(0 != (eventCount = reader->generateNextEvent())) {
+	std::cout << "generated: " << eventCount << " events." << std::endl;
+  	return false;
+  } else {
+	std::cout << "Generating next event caused a stop." << std::endl;
+	return true;
+  }
 }
 
 BOOST_CLASS_EXPORT(ZodiacOTFTraceReader)

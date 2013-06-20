@@ -33,6 +33,7 @@ static Component*
 create_ZodiacOTFTraceReader(SST::ComponentId_t id,
                   SST::Component::Params_t& params)
 {
+    std::cout << "Constructing a Zodiac OTF Reader..." << std::endl;
     return new ZodiacOTFTraceReader( id, params );
 }
 
