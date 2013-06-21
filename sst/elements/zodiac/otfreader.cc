@@ -17,24 +17,49 @@ int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t re
 }
 
 int handleOTFRecvMsg(void *userData, uint64_t time, uint32_t recvProc, uint32_t sendProc, uint32_t group, uint32_t type, uint32_t length, uint32_t source, OTF_KeyValueList *list) {
-	std::cout << "OTF: Recv message from " << sendProc << " (recv'd by: " << recvProc << ")" << std::endl;
+	std::cout << "OTF: Recv message from " << sendProc << " (recv'd by: " << recvProc << ") at time: " << time << std::endl;
 
 	return OTF_RETURN_OK;
 }
 
 int handleOTFEnter(void* data, uint64_t time, uint32_t func, uint32_t proc, uint32_t src) {
-	std::cout << "OTF: Entered function: " << func << " on process: " << proc << std::endl;
+	std::cout << "OTF: Entered function: " << func << " on process: " << proc << " at time: " << time << std::endl;
 
 	return OTF_RETURN_OK;
 }
 
 int handleOTFExit(void* data, uint64_t time, uint32_t func, uint32_t proc, uint32_t src) {
-	std::cout << "OTF: Exited function: " << func << " on process: " << proc << std::endl;
+	std::cout << "OTF: Exited function: " << func << " on process: " << proc << " at time: " << time << std::endl;
 
 	return OTF_RETURN_OK;
 }
 
-OTFReader::OTFReader(string file, uint32_t focusRank) {
+int handleOTFCollectiveOperation(void *userData, uint64_t time, uint32_t process, uint32_t collective, uint32_t procGroup, uint32_t rootProc, uint32_t sent, 
+	uint32_t received, uint64_t duration, uint32_t source, OTF_KeyValueList *list) {
+
+	std::cout << "OTF: Performed a collective operation on process: " << process << ", collective: " << 
+		collective << " at time: " << time << std::endl;
+
+	return OTF_RETURN_OK;
+}
+
+int handleOTFBeginCollective(void *userData, uint64_t time, uint32_t process, uint32_t collOp, uint64_t matchingId, uint32_t procGroup, 
+	uint32_t rootProc, uint64_t sent, uint64_t received, uint32_t scltoken, OTF_KeyValueList *list) {
+
+	std::cout << "OTF: Began a collective on process: " << process << " collective: " << collOp 
+		<< " at time: " << time << std::endl;
+
+	return OTF_RETURN_OK;
+}
+
+int handleOTFEndCollective(void *userData, uint64_t time, uint32_t process, uint64_t matchingId, OTF_KeyValueList *list) {
+	std::cout << "OTF: Ended a collective on process: " << process << std::endl;
+
+
+	return OTF_RETURN_OK;
+}
+
+OTFReader::OTFReader(string file, uint32_t focusRank, uint32_t maxQLength, std::queue<ZodiacEvent>* evQ) {
 	// Open a maximum of 5 files concurrently
 	fileMgr = OTF_FileManager_open(5);
 
@@ -66,6 +91,17 @@ OTFReader::OTFReader(string file, uint32_t focusRank) {
 	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_LEAVE_RECORD);
 	OTF_HandlerArray_setHandler(handlers, (OTF_FunctionPointer*) handleOTFDefineProcess, OTF_DEFPROCESS_RECORD);
 	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_DEFPROCESS_RECORD);
+	OTF_HandlerArray_setHandler(handlers, (OTF_FunctionPointer*) handleOTFRecvMsg, OTF_RECEIVE_RECORD);
+	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_RECEIVE_RECORD);
+	OTF_HandlerArray_setHandler(handlers, (OTF_FunctionPointer*) handleOTFSendMsg, OTF_SEND_RECORD);
+	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_SEND_RECORD);
+	OTF_HandlerArray_setHandler(handlers, (OTF_FunctionPointer*) handleOTFCollectiveOperation, OTF_COLLOP_RECORD);
+	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_COLLOP_RECORD);
+	OTF_HandlerArray_setHandler(handlers, (OTF_FunctionPointer*) handleOTFBeginCollective, OTF_BEGINCOLLOP_RECORD);
+	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_BEGINCOLLOP_RECORD);
+	OTF_HandlerArray_setHandler(handlers, (OTF_FunctionPointer*) handleOTFEndCollective, OTF_ENDCOLLOP_RECORD);
+	OTF_HandlerArray_setFirstHandlerArg(handlers, this, OTF_ENDCOLLOP_RECORD);
+
 
 	// Read in the definitions from the trace(s)
 	OTF_Reader_readDefinitions(reader, handlers);
@@ -81,6 +117,10 @@ OTFReader::OTFReader(string file, uint32_t focusRank) {
 
 	std::cout << "Constructing an OTF Reader, setting event count to 1..." << std::endl;
         OTF_Reader_setRecordLimit(reader, 1);
+
+	eventQ = evQ;
+	qLimit = maxQLength;
+	foundFinalize = false;
 }
 
 void OTFReader::close() {
@@ -89,7 +129,16 @@ void OTFReader::close() {
 	OTF_Reader_close(reader);
 }
 
-uint64_t OTFReader::generateNextEvent() {
-	std::cout << "Generating next event..." << std::endl;
-	return OTF_Reader_readEvents(reader, handlers);
+uint32_t OTFReader::generateNextEvents() {
+	std::cout << "Generating next event set..." << std::endl;
+
+	while((eventQ->size() < qLimit) && (!foundFinalize)) {
+		OTF_Reader_readEvents(reader, handlers);
+	}
+
+	// Return the size of the queue back to the caller, they
+	// may want to know that we consumed fewer events than 
+	// the queue limit - this happens if we encounter an MPI
+	// finalize statement
+	return (uint32_t) eventQ->size();
 }

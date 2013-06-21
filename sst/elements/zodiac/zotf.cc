@@ -5,6 +5,7 @@
 
 #include "sst/core/element.h"
 
+#include <queue>
 #include "zotf.h"
 
 using namespace std;
@@ -14,6 +15,7 @@ using namespace SST::Zodiac;
 ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params_t& params) :
   Component(id) {
 
+    std::cout << "Creating a new ZOTFTrace Reader..." << std::endl;
     string msgiface = params.find_string("msgapi");
 
     if ( msgiface == "" ) {
@@ -35,8 +37,12 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params_t& params) :
 
     uint32_t rank = params.find_integer("rank", 0);
 
+    std::cout << "Creating a new event queue..." << std::endl;
+    eventQ = new std::queue<ZodiacEvent>();
+
     // Create a new reader and set it so that we only process one record per call
-    reader = new OTFReader(trace_file, rank);
+    std::cout << "Creating a new OTF Reader..." << std::endl;
+    reader = new OTFReader(trace_file, rank, 64, eventQ);
 
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -63,7 +69,7 @@ void ZodiacOTFTraceReader::handleEvent(Event *ev) {
 
 bool ZodiacOTFTraceReader::clockTic( Cycle_t ) {
   uint64_t eventCount = 0;
-  if(0 != (eventCount = reader->generateNextEvent())) {
+  if(0 != (eventCount = reader->generateNextEvents())) {
 	std::cout << "generated: " << eventCount << " events." << std::endl;
   	return false;
   } else {
