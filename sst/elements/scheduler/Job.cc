@@ -9,6 +9,9 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <string>
+#include <stdio.h>
+
 #include "exceptions.h"
 #include "Job.h"
 #include "Machine.h"
