@@ -13,6 +13,7 @@
 #include "Statistics.h"
 
 #include <fstream>
+#include <stdio.h>
 #include <string>
 #include <time.h>
 

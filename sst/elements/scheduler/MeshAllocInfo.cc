@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <stdio.h>
 
 #include "AllocInfo.h"
 #include "Job.h"

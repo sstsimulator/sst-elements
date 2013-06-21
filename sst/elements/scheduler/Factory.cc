@@ -14,6 +14,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <stdio.h>
 
 //#include <QFileSystemWatcher>
 

@@ -17,9 +17,9 @@
 #include "StatefulScheduler.h"
 
 #include <functional>
-#include <string>
 #include <set>
-
+#include <stdio.h>
+#include <string>
 
 #include "Allocator.h"
 #include "Job.h"

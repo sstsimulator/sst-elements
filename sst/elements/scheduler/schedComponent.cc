@@ -20,6 +20,7 @@
 #include <cstring>
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
+#include <stdio.h>
 
 //#include <QFileSystemWatcher>
 

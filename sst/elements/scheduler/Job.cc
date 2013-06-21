@@ -9,11 +9,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <string>
+#include "sst_config.h"
+#include "Job.h"
+
 #include <stdio.h>
+#include <string>
 
 #include "exceptions.h"
-#include "Job.h"
 #include "Machine.h"
 #include "misc.h"
 #include "Statistics.h"

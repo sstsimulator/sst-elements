@@ -17,6 +17,7 @@
 #include <sstream>
 #include <fstream>
 #include <cmath>
+#include <stdio.h>
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>

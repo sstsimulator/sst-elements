@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <stdio.h>
 
 #include "Allocator.h"
 #include "Job.h"

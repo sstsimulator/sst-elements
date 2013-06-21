@@ -28,6 +28,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <stdio.h>
 
 #include "AllocInfo.h"
 #include "Job.h"

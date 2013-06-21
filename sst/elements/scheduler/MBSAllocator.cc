@@ -19,6 +19,7 @@
 #include "MBSAllocator.h"
 
 #include <sstream>
+#include <stdio.h>
 #include <string>
 
 #include "AllocInfo.h"
