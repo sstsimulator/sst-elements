@@ -133,7 +133,11 @@ uint32_t OTFReader::generateNextEvents() {
 	std::cout << "Generating next event set..." << std::endl;
 
 	while((eventQ->size() < qLimit) && (!foundFinalize)) {
-		OTF_Reader_readEvents(reader, handlers);
+		std::cout << "Reading next event, queue size: " << eventQ->size() << std::endl;
+		if(OTF_READ_ERROR == OTF_Reader_readEvents(reader, handlers)) {
+			// We read zero events from the file, exit the loop
+			break;
+		}
 	}
 
 	// Return the size of the queue back to the caller, they

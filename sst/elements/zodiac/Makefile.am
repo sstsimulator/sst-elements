@@ -26,7 +26,9 @@ libzodiac_la_SOURCES = \
 	otfreader.h \
 	otfreader.cc \
 	zotf.h \
-	zotf.cc
+	zotf.cc \
+	zevent.h \
+	zevent.cc
 
 libzodiac_la_LDFLAGS = -module -avoid-version \
 	$(shell $(OTF_CONFIG_TOOL) --libs)

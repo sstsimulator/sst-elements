@@ -1,17 +1,19 @@
 
+#ifndef _H_ZODIAC_EVENT_BASE
+#define _H_ZODIAC_EVENT_BASE
 
 namespace SST {
 namespace Zodiac {
 
-class ZodiacEvent {
+enum ZodiacEventType {
+	SKIP,
+	COMPUTE,
+	SEND,
+	RECV,
+	COLLECTIVE
+};
 
-	enum ZodiacEventType {
-		SKIP,
-		COMPUTE,
-		SEND,
-		RECV,
-		COLLECTIVE
-	};
+class ZodiacEvent {
 
 	public:
 		ZodiacEvent(ZodiacEventType t);
@@ -24,3 +26,5 @@ class ZodiacEvent {
 
 }
 }
+
+#endif

@@ -1,10 +1,13 @@
 
 #include "zevent.h"
 
-ZodaicEvent::ZodiacEvent(ZodiacEventType t) {
+using namespace SST;
+using namespace SST::Zodiac;
+
+ZodiacEvent::ZodiacEvent(ZodiacEventType t) {
 	evType = t;
 }
 
-ZodiacEventType getEventType() {
+ZodiacEventType ZodiacEvent::getEventType() {
 	return evType;
 }
