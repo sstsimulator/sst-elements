@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<!--
+<config>
+ stopAtCycle=10000000ns
+</config>
+-->
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 50 ps </buslat>
+</variables>
+
+
+<sst>
+	<component name="dumpi0" type="zodiac.ZodiacDUMPITraceReader">
+		<params>
+			<tracefile>/home/sdhammo/dumpi-output/dumpi-2013.05.20.16.21.32-0000.bin</tracefile>
+		</params>
+	</component>
+</sst>

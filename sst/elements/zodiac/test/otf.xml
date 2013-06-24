@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<config>
+stopAtCycle=10000000ns
+</config>
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 50 ps </buslat>
+</variables>
+
+
+<sst>
+	<component name="z0" type="zodiac.ZodiacOTFTraceReader">
+		<params>
+			<trace>/home/sdhammo/subversion/sst-simulator/sst/elements/zodiac/test/pingpong/pingpong.otf</trace>
+			<rank>1</rank>
+		</params>
+	</component>
+</sst>
