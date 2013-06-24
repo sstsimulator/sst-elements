@@ -101,7 +101,18 @@ void DirectoryController::handleMemoryResponse(SST::Event *event)
 	MemEvent *ev = static_cast<MemEvent*>(event);
     DPRINTF("Memory response for address 0x%"PRIx64" (Response to (%"PRIu64", %d))\n", ev->getAddr(), ev->getResponseToID().first, ev->getResponseToID().second);
 
-    if ( memReqs.find(ev->getResponseToID()) != memReqs.end() ) {
+    if ( uncachedWrites.find(ev->getResponseToID()) != uncachedWrites.end() ) {
+        MemEvent *origEV = uncachedWrites[ev->getResponseToID()];
+        uncachedWrites.erase(ev->getResponseToID());
+
+        // TODO:  Send response on upstream
+
+        MemEvent *resp = origEV->makeResponse(this);
+        sendResponse(resp);
+
+        delete origEV;
+
+    } else if ( memReqs.find(ev->getResponseToID()) != memReqs.end() ) {
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
 
@@ -163,6 +174,13 @@ bool DirectoryController::processPacket(MemEvent *ev)
     }
 
 
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
+        MemEvent::id_type sentID = writebackData(ev);
+        uncachedWrites[sentID] = ev;
+        return true;
+    }
+
+
     DirEntry *entry = getDirEntry(ev->getAddr());
 
     if ( entry && entry->inProgress() ) {
@@ -178,13 +196,9 @@ bool DirectoryController::processPacket(MemEvent *ev)
             delete ev;
         } else {
             DPRINTF("Incoming command [%s,%s] doesn't match for 0x%"PRIx64" [%s,%s] in progress.\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, CommandString[entry->nextCommand], entry->waitingOn.c_str());
-#if 0
-            workQueue.push_back(ev);
-#else
             switch ( ev->getCmd() ) {
             case Invalidate:
             case RequestData: {
-                //printf("Sending NACK for [%s,%s 0x%"PRIx64" (%"PRIu64",%d)]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr, ev->getID().first, ev->getID().second); fflush(stdout);
                 DPRINTF("Sending NACK for [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
                 MemEvent *nack = ev->makeResponse(this);
                 nack->setCmd(NACK);
@@ -197,7 +211,6 @@ bool DirectoryController::processPacket(MemEvent *ev)
                 DPRINTF("Re-enqueuing for  [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
                 return false;
             }
-#endif
         }
         return true;
     }
@@ -377,9 +390,7 @@ void DirectoryController::finishInvalidate(DirEntry *entry, MemEvent *new_ev)
 	assert(entry->waitingAcks == 0);
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
-	for ( uint32_t i = 0 ; i < numTargets ; i++ ) {
-		entry->sharers[i] = false;
-	}
+    entry->clearSharers();
 	entry->sharers[target_id] = true;
 	entry->dirty = true;
 
@@ -456,9 +467,7 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev)
 {
 	if ( entry->activeReq->queryFlag(MemEvent::F_EXCLUSIVE) ) {
 		entry->dirty = true;
-		for ( uint32_t i = 0 ; i < numTargets ; i++ ) {
-			entry->sharers[i] = false;
-		}
+        entry->clearSharers();
 	} else {
 		entry->dirty = false;
 	}
@@ -490,9 +499,7 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 	assert(entry->waitingAcks == 0);
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
-	for ( uint32_t i = 0 ; i < numTargets ; i++ ) {
-		entry->sharers[i] = false;
-	}
+    entry->clearSharers();
 	entry->sharers[target_id] = true;
 	entry->dirty = true;
 
@@ -507,8 +514,8 @@ void DirectoryController::handleWriteback(DirEntry *entry, MemEvent *ev)
     DPRINTF("Entry 0x%"PRIx64" loaded.  Performing writeback of 0x%"PRIx64" for %s\n", entry->baseAddr, entry->activeReq->getAddr(), entry->activeReq->getSrc().c_str());
     assert(entry->dirty);
     assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
-	entry->dirty = false;
-	entry->sharers[node_id(ev->getSrc())] = true;
+    entry->dirty = false;
+    entry->sharers[node_id(ev->getSrc())] = true;
     writebackData(entry->activeReq);
 	updateEntryToMemory(entry);
 }
@@ -585,20 +592,24 @@ void DirectoryController::updateEntryToMemory(DirEntry *entry)
 }
 
 
-void DirectoryController::writebackData(MemEvent *data_event)
+MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
 {
 	MemEvent *ev = new MemEvent(this, convertAddressToLocalAddress(data_event->getAddr()), SupplyData);
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) ev->setFlag(MemEvent::F_UNCACHED);
 	ev->setFlag(MemEvent::F_WRITEBACK);
 	ev->setPayload(data_event->getPayload());
     DPRINTF("Writing back data to 0x%"PRIx64" (%"PRIu64", %d)\n", data_event->getAddr(), ev->getID().first, ev->getID().second);
 
 	memLink->send(ev);
+
+    return ev->getID();
 }
 
 
 void DirectoryController::resetEntry(DirEntry *entry)
 {
-	delete entry->activeReq;
+	if ( entry->activeReq )
+        delete entry->activeReq;
 	entry->activeReq = NULL;
 	entry->nextFunc = NULL;
     entry->nextCommand = NULLCMD;

@@ -55,7 +55,8 @@ class DirectoryController : public Component {
 		bool dirty;
 		std::vector<bool> sharers;
 
-		DirEntry(Addr address, uint32_t bitlength) {
+		DirEntry(Addr address, uint32_t bitlength)
+        {
 			activeReq = NULL;
 			nextFunc = NULL;
             lastRequest = NO_LAST_REQUEST;
@@ -66,7 +67,8 @@ class DirectoryController : public Component {
 			sharers.resize(bitlength);
 		}
 
-		uint32_t countRefs(void) {
+		uint32_t countRefs(void)
+        {
 			uint32_t count = 0;
 			for ( std::vector<bool>::iterator i = sharers.begin() ; i != sharers.end() ; ++i ) {
 				if ( *i ) count++;
@@ -74,7 +76,15 @@ class DirectoryController : public Component {
 			return count;
 		}
 
-        uint32_t findOwner(void) {
+        void clearSharers(void)
+        {
+			for ( std::vector<bool>::iterator i = sharers.begin() ; i != sharers.end() ; ++i ) {
+				*i = false;
+			}
+        }
+
+        uint32_t findOwner(void)
+        {
             assert(dirty);
             for ( uint32_t i = 0 ; i < sharers.size() ; i++ ) {
                 if ( sharers[i] ) return i;
@@ -112,6 +122,7 @@ class DirectoryController : public Component {
 	std::list<MemEvent*> workQueue;
     std::map<MemEvent::id_type, Addr> memReqs;
 
+    std::map<MemEvent::id_type, MemEvent*> uncachedWrites;
 
 	SST::Link *memLink;
     MemNIC *network;
@@ -139,6 +150,7 @@ class DirectoryController : public Component {
 	uint32_t node_id(const std::string &name);
 
 	void requestDirEntryFromMemory(DirEntry *entry);
+    /* Requests data from Memory */
     void requestDataFromMemory(DirEntry *entry);
 	/* Write updated entry to memory */
 	void updateEntryToMemory(DirEntry *entry);
@@ -148,9 +160,9 @@ class DirectoryController : public Component {
 	/* Sends MemEvent to a target */
 	void sendResponse(MemEvent *ev);
 
-	/* Writes data packet to Memory */
-	void writebackData(MemEvent *data_event);
-    /* Requests data from Memory */
+	/* Writes data packet to Memory
+     * Returns the MemEvent ID of the data written to memory */
+    MemEvent::id_type writebackData(MemEvent *data_event);
 
     bool isRequestAddressValid(MemEvent *ev);
     Addr convertAddressToLocalAddress(Addr addr);

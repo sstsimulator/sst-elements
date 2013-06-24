@@ -282,7 +282,8 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    DPRINTF("Received Event %p (%"PRIu64", %d) (%s to %s (link %ld)) %s 0x%"PRIx64"\n", ev,
+    DPRINTF("Received Event on %d %p (%"PRIu64", %d) (%s to %s (link %ld)) %s 0x%"PRIx64"\n",
+            src, ev,
             ev->getID().first, ev->getID().second,
             ev->getSrc().c_str(), ev->getDst().c_str(), ev->getLinkId(),
             CommandString[ev->getCmd()], ev->getAddr());
@@ -1066,7 +1067,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
     }
 
     if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
-        handleUncachedWrite(ev, UPSTREAM);
+        DPRINTF("Received UNCACHED SupplyEvent 0x%"PRIx64"\n", ev->getAddr());
+        handleUncachedWrite(ev, src);
         return;
     }
 
@@ -1764,11 +1766,14 @@ void Cache::handleUncachedWrite(MemEvent *ev, SourceType_t src)
     switch (src) {
     case UPSTREAM:
         if ( downstream_link ) {
+            DPRINTF("UNCACHED Write 0x%"PRIx64" from UPSTREAM forwarding DOWNSTREAM\n", ev->getAddr());
             downstream_link->send(newev);
         } else if ( directory_link ) {
+            DPRINTF("UNCACHED Write 0x%"PRIx64" from UPSTREAM forwarding DIRECTORY\n", ev->getAddr());
             newev->setDst(findTargetDirectory(ev->getAddr()));
             directory_link->send(newev);
         } else if ( snoop_link ) {
+            DPRINTF("UNCACHED Write 0x%"PRIx64" from UPSTREAM forwarding SNOOP\n", ev->getAddr());
             snoopBusQueue.request(newev);
         } else {
             _abort(Cache, "Don't know where to send Uncached Write.\n");
@@ -1776,11 +1781,14 @@ void Cache::handleUncachedWrite(MemEvent *ev, SourceType_t src)
         break;
     case SNOOP:
         if ( downstream_link ) {
+            DPRINTF("UNCACHED Write 0x%"PRIx64" from SNOOP forwarding DOWNSTREAM\n", ev->getAddr());
             downstream_link->send(newev);
         } else if ( directory_link ) {
+            DPRINTF("UNCACHED Write 0x%"PRIx64" from SNOOP forwarding DIRECTORY\n", ev->getAddr());
             newev->setDst(findTargetDirectory(ev->getAddr()));
             directory_link->send(newev);
         } else {
+            DPRINTF("UNCACHED Write 0x%"PRIx64" from SNOOP discarding\n", ev->getAddr());
             // We can't forward this on.  Exit early.
             delete newev;
             return;
@@ -1803,8 +1811,8 @@ void Cache::handleWriteResp(MemEvent *ev, SourceType_t src)
         SourceType_t origSrc = i->second.second;
         outstandingWrites.erase(i);
 
-        DPRINTF("Matched WriteResp to orig event %s 0x%"PRIx64" (%"PRIu64", %d)\n",
-                CommandString[origEv->getCmd()], origEv->getAddr(), origEv->getID().first, origEv->getID().second);
+        DPRINTF("Matched WriteResp to orig event %s 0x%"PRIx64" (%"PRIu64", %d) [from %d]\n",
+                CommandString[origEv->getCmd()], origEv->getAddr(), origEv->getID().first, origEv->getID().second, origSrc);
 
 
         MemEvent *resp = origEv->makeResponse(this);
