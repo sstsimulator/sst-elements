@@ -136,7 +136,6 @@ private:
 		std::vector<CacheBlock> blocks;
         typedef std::deque<std::pair<MemEvent*, SourceType_t> > eventQueue_t;
         std::map<Addr, eventQueue_t> waitingEvents;
-		//std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
 		Cache *cache;
 
 		CacheRow() {}
@@ -475,6 +474,10 @@ private:
     void handleNACK(MemEvent *ev, SourceType_t src);
     void respondNACK(MemEvent *ev, SourceType_t src);
 
+    void handleUncachedWrite(MemEvent *ev, SourceType_t src);
+    void handleWriteResp(MemEvent *ev, SourceType_t src);
+
+
     void handlePendingEvents(CacheRow *row, CacheBlock *block);
 	void updateBlock(MemEvent *ev, CacheBlock *block);
 	int numBits(int x);
@@ -491,6 +494,10 @@ private:
 
 	void printCache(void);
 
+
+
+
+
     CacheListener* listener;
 	int n_ways;
 	int n_rows;
@@ -506,6 +513,11 @@ private:
 	int tagshift;
 
     std::map<Addr, Invalidation> invalidations;
+	LoadList_t waitingLoads;
+	supplyMap_t suppliesInProgress;
+    std::map<MemEvent::id_type, std::pair<MemEvent*, SourceType_t> > outstandingWrites;
+
+	BusQueue snoopBusQueue;
 
 	int n_upstream;
 	SST::Link *snoop_link; // Points to a snoopy bus, or snoopy network (if any)
@@ -525,11 +537,6 @@ private:
 	uint64_t num_write_miss;
 	uint64_t num_upgrade_miss;
 
-	LoadList_t waitingLoads;
-
-	supplyMap_t suppliesInProgress;
-
-	BusQueue snoopBusQueue;
 
 };
 

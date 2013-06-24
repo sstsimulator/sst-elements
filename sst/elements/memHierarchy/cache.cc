@@ -328,6 +328,9 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstT
         handleFetch(ev, true, firstPhaseComplete);
         break;
 
+    case WriteResp:
+        handleWriteResp(ev, src);
+        break;
 
     default:
         /* Ignore */
@@ -378,7 +381,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 
     if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
         if ( isRead ) loadBlock(ev, UPSTREAM);
-        else assert(false);
+        else handleUncachedWrite(ev, UPSTREAM);
         return;
     }
 
@@ -1062,6 +1065,11 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
         return; // We sent it
     }
 
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
+        handleUncachedWrite(ev, UPSTREAM);
+        return;
+    }
+
 	/*
 	 * If snoop, cancel any supplies we're trying to do
 	 * Check to see if we're trying to load this data, if so, handle
@@ -1741,6 +1749,80 @@ void Cache::respondNACK(MemEvent *ev, SourceType_t src)
         _abort(Cache, "Check this:  Trying to send NACK to PREFETCHER.\n");
         break;
     }
+}
+
+
+
+void Cache::handleUncachedWrite(MemEvent *ev, SourceType_t src)
+{
+    MemEvent *newev = new MemEvent(this, ev->getAddr(), SupplyData);
+    newev->setPayload(ev->getPayload());
+    newev->setFlag(MemEvent::F_UNCACHED);
+    newev->setFlag(MemEvent::F_WRITEBACK);
+
+    // Send on towards destination
+    switch (src) {
+    case UPSTREAM:
+        if ( downstream_link ) {
+            downstream_link->send(newev);
+        } else if ( directory_link ) {
+            newev->setDst(findTargetDirectory(ev->getAddr()));
+            directory_link->send(newev);
+        } else if ( snoop_link ) {
+            snoopBusQueue.request(newev);
+        } else {
+            _abort(Cache, "Don't know where to send Uncached Write.\n");
+        }
+        break;
+    case SNOOP:
+        if ( downstream_link ) {
+            downstream_link->send(newev);
+        } else if ( directory_link ) {
+            newev->setDst(findTargetDirectory(ev->getAddr()));
+            directory_link->send(newev);
+        } else {
+            // We can't forward this on.  Exit early.
+            delete newev;
+            return;
+        }
+        break;
+    default:
+        _abort(Cache, "Unexpected Uncached %s coming over %d\n", CommandString[ev->getCmd()], src);
+    }
+
+    outstandingWrites[newev->getID()] = std::make_pair(ev, src);
+}
+
+
+void Cache::handleWriteResp(MemEvent *ev, SourceType_t src)
+{
+    MemEvent::id_type srcID = ev->getResponseToID();
+    std::map<MemEvent::id_type, std::pair<MemEvent*, SourceType_t> >::iterator i = outstandingWrites.find(srcID);
+    if ( i != outstandingWrites.end() ) {
+        MemEvent *origEv = i->second.first;
+        SourceType_t origSrc = i->second.second;
+        outstandingWrites.erase(i);
+
+        DPRINTF("Matched WriteResp to orig event %s 0x%"PRIx64" (%"PRIu64", %d)\n",
+                CommandString[origEv->getCmd()], origEv->getAddr(), origEv->getID().first, origEv->getID().second);
+
+
+        MemEvent *resp = origEv->makeResponse(this);
+        switch (origSrc) {
+        case UPSTREAM:
+            upstream_links[upstreamLinkMap[origEv->getLinkId()]]->send(resp);
+            break;
+        case SNOOP:
+            snoopBusQueue.request(resp);
+            break;
+        default:
+            _abort(Cache, "Expected WriteResp for command coming from %d, which is unexpected\n", origSrc);
+        }
+
+        delete origEv;
+    }
+
+    delete ev;
 }
 
 
