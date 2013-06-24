@@ -6,7 +6,7 @@ AC_DEFUN([SST_zodiac_CONFIG], [
 	[have_zodiac_otf=0],
 	[AC_MSG_ERROR([Open Trace Format was requested but was not found])])
   SST_CHECK_DUMPI([have_zodiac_dumpi=1],
-	[have_zodiac_dumpi=1],
+	[have_zodiac_dumpi=0],
 	[AC_MSG_ERROR([DUMPI Trace Format was requested but was not found])])
 
   AS_IF([test "$have_zodiac_otf" = 1],
