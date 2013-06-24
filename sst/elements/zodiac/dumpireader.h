@@ -11,9 +11,12 @@
 #include <queue>
 
 #include "sst/elements/hermes/msgapi.h"
+
 #include "zevent.h"
 #include "zsendevent.h"
 #include "zrecvevent.h"
+
+#include "dumpi/libundumpi/libundumpi.h"
 
 using namespace std;
 using namespace SST::Hermes;
@@ -51,6 +54,7 @@ class DUMPIReader {
 	uint32_t qLimit;
 	bool foundFinalize;
 	std::queue<ZodiacEvent*>* eventQ;
+	dumpi_profile* trace;
 
 };
 

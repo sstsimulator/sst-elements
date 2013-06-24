@@ -25,7 +25,7 @@ libzodiac_la_SOURCES = \
 
 libzodiac_la_LDFLAGS = -module -avoid-version
 
-if HAVE_OTF
+if USE_OTF
 libzodiac_la_SOURCES += \
 	otfreader.h \
 	otfreader.cc \
@@ -39,7 +39,7 @@ libzodiac_la_LDFLAGS +=
 	$(shell $(OTF_CONFIG_TOOL) --libs)
 endif
 
-if HAVE_DUMPI
+if USE_DUMPI
 libzodiac_la_SOURCES += \
 	zdumpi.cc \
 	zdumpi.h \

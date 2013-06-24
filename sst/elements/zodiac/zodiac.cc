@@ -8,8 +8,14 @@
 #include <stdarg.h>
 
 #include "ztrace.h"
+
+#ifdef HAVE_ZODIAC_DUMPI
 #include "zdumpi.h"
+#endif
+
+#ifdef HAVE_ZODIAC_OTF
 #include "zotf.h"
+#endif
 
 using namespace std;
 using namespace SST;
@@ -22,13 +28,16 @@ create_ZodiacTraceReader(SST::ComponentId_t id,
     return new ZodiacTraceReader( id, params );
 }
 
+#ifdef HAVE_ZODIAC_DUMPI
 static Component*
 create_ZodiacDUMPITraceReader(SST::ComponentId_t id,
                   SST::Component::Params_t& params)
 {
     return new ZodiacDUMPITraceReader( id, params );
 }
+#endif
 
+#ifdef HAVE_ZODIAC_OTF
 static Component*
 create_ZodiacOTFTraceReader(SST::ComponentId_t id,
                   SST::Component::Params_t& params)
@@ -36,6 +45,7 @@ create_ZodiacOTFTraceReader(SST::ComponentId_t id,
     std::cout << "Constructing a Zodiac OTF Reader..." << std::endl;
     return new ZodiacOTFTraceReader( id, params );
 }
+#endif
 
 static const ElementInfoComponent components[] = {
     {
@@ -44,18 +54,22 @@ static const ElementInfoComponent components[] = {
 	NULL,
 	create_ZodiacTraceReader,
     },
+#ifdef HAVE_ZODIAC_DUMPI
     {
 	"ZodiacDUMPITraceReader",
 	"Application Communication DUMPI Trace Reader",
 	NULL,
 	create_ZodiacDUMPITraceReader,
     },
+#endif
+#ifdef HAVE_ZODIAC_OTF
     {
 	"ZodiacOTFTraceReader",
 	"Application Communication OTF Trace Reader",
 	NULL,
 	create_ZodiacOTFTraceReader,
     },
+#endif
     { NULL, NULL, NULL, NULL }
 };
 

@@ -9,9 +9,15 @@ DUMPIReader::DUMPIReader(string file, uint32_t focusOnRank, uint32_t maxQLen, st
 	eventQ = evQ;
 	qLimit = maxQLen;
 	foundFinalize = false;
+
+	trace = undumpi_open(file.c_str());
+	if(NULL == trace) {
+		std::cerr << "Error: unable to open DUMPI trace: " << file << std::endl;
+	}
 }
 
 void DUMPIReader::close() {
+	undumpi_close(trace);
 }
 
 uint32_t DUMPIReader::generateNextEvents() {
