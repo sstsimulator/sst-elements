@@ -39,41 +39,43 @@ typedef struct MessageRequest {
     HermesRankID src; 
 } MessageRequest;
 
+enum PayloadDataType {
+        HERMES_CHAR,
+	HERMES_INT,
+	HERMES_LONG,
+	HERMES_DOUBLE,
+	HERMES_FLOAT,
+	HERMES_COMPLEX
+};
+
+enum ReductionOperation {
+	HERMES_SUM,
+	HERMES_MIN,
+	HERMES_MAX
+};
+
 class MessageInterface : public Module {
     public:
 
     typedef Arg_FunctorBase< int > AbstractFunctor; 
 
-    enum PayloadDataType {
-        CHAR,
-	INT,
-	LONG,
-	DOUBLE,
-	FLOAT,
-	COMPLEX
-    };
 
     unsigned sizeofDataType( PayloadDataType type ) {
         switch( type ) {
-            case CHAR:
+            case HERMES_CHAR:
                 return sizeof( char ); 
-            case INT:
+            case HERMES_INT:
                 return sizeof( int ); 
-            case LONG:
+            case HERMES_LONG:
                 return sizeof( long ); 
-            case DOUBLE:
+            case HERMES_DOUBLE:
                 return sizeof( double); 
-            case FLOAT:
+            case HERMES_FLOAT:
                 return sizeof( float ); 
         }
         assert( 0 );
     }
 
-    enum ReductionOperation {
-	SUM,
-	MIN,
-	MAX
-    };
 
     static const uint32_t AnyTag = -1;
     static const uint32_t AnySrc = -1;
