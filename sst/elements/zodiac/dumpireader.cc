@@ -1,10 +1,23 @@
 
-#include "DUMPIReader.h"
+#include "dumpireader.h"
 
 using namespace std;
 using namespace SST::Zodiac;
 
-DUMPIReader::DUMPIReader(string file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent>*>* evQ) {
+int handleDUMPISend(const dumpi_send *prm, uint16_t thread, const dumpi_time *cpu, const dumpi_time *wall, const dumpi_perfinfo *perf, void *userarg) {
+
+}
+
+int handleDUMPINullFunction(const void *prm, uint16_t thread, const dumpi_time *cpu, const dumpi_time *wall, const dumpi_perfinfo *perf, void *userarg) {
+	// Don't do anything
+}
+
+int handleDUMPIInit(const void* prm, uint16_t thread, const dumpi_time* cpu, const dumpi_time *wall,
+                            const dumpi_perfinfo* perf, void* userarg) {
+	std::cout << "Called: DUMPI Init" << std::endl;
+}
+
+DUMPIReader::DUMPIReader(string file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ) {
 	rank = focusOnRank;
 	eventQ = evQ;
 	qLimit = maxQLen;
@@ -13,7 +26,24 @@ DUMPIReader::DUMPIReader(string file, uint32_t focusOnRank, uint32_t maxQLen, st
 	trace = undumpi_open(file.c_str());
 	if(NULL == trace) {
 		std::cerr << "Error: unable to open DUMPI trace: " << file << std::endl;
+		exit(-1);
 	}
+
+	dumpi_header* trace_header = undumpi_read_header(trace);
+	dumpi_free_header(trace_header);
+
+	/*
+	callbacks = (libundumpi_callbacks*) malloc(sizeof(libundumpi_callbacks));
+	libundumpi_clear_callbacks(callbacks);
+	callbacks->on_send = (dumpi_send_call) handleDUMPISend;
+	*/
+
+	callbacks = new libundumpi_callbacks;
+	libundumpi_clear_callbacks(callbacks);
+
+	callbacks->on_init = (dumpi_init_call) handleDUMPIInit;
+	callbacks->on_send = handleDUMPISend;
+
 }
 
 void DUMPIReader::close() {
@@ -21,6 +51,23 @@ void DUMPIReader::close() {
 }
 
 uint32_t DUMPIReader::generateNextEvents() {
+	int finalized_reached = 0;
+
+/*	while((finalized_reached == 0) && (eventQ->size() < qLimit)) {
+		int active = undumpi_read_single_call(
+			trace,
+			callbacks,
+			this,
+			&finalized_reached);
+
+		if(active != 1) {
+			// the stream for reading has become
+			// inactive, so we need to exit
+			break;
+		}
+	}*/
+	undumpi_read_stream(trace, callbacks, this);
+
 	return (uint32_t) eventQ->size();
 }
 

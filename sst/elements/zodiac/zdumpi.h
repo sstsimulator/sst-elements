@@ -14,6 +14,7 @@
 
 //#include <dumpi/libundumpi/libundumpi.h>
 #include "dumpireader.h"
+#include "zevent.h"
 
 using namespace SST::Hermes;
 
@@ -42,6 +43,7 @@ private:
 
   MessageInterface* msgapi;
   DUMPIReader* trace;
+  std::queue<ZodiacEvent*>* eventQ;
 
   ////////////////////////////////////////////////////////
 

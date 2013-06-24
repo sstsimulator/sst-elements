@@ -8,7 +8,8 @@ AM_CPPFLAGS = \
 
 libzodiac_la_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS) \
+	$(DUMPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzodiac.la
