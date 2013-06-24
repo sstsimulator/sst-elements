@@ -5,7 +5,7 @@ import sys;
 
 
 reqPattern = re.compile('\A0:Cache::handleCPURequest\(\):[0-9]+: ([^ ]+) (\([0-9]+, [0-9]+\))')
-respPattern = re.compile('\A0:Cache::makeCPUResponse\(\):[0-9]+: ([^ ]+) Creating Response to CPU: \([^)]+\) in Response To (\([0-9+, [0-9]+\))')
+respPattern = re.compile('\A0:Cache::(?:makeCPUResponse\(\):[0-9]+: ([^ ]+) Creating Response to CPU: \([^)]+\) in Response To (\([0-9+, [0-9]+\))|handleWriteResp\(\):[0-9]+: ([^ ]+) Matched WriteResp to orig event WriteReq 0x[0-9a-f]+ (\([0-9]+, [0-9]+\)))')
 
 
 reqs = set()
@@ -22,6 +22,8 @@ with open(sys.argv[1]) as f:
             if respMap:
                 #print "resp Matched", line
                 key = respMap.group(1, 2)
+                if key == (None, None):
+                    key = respMap.group(3, 4)
                 if key not in reqs:
                     print "Found response for missing request:", key
                 else:
