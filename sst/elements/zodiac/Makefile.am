@@ -7,10 +7,8 @@ AM_CPPFLAGS = \
 	$(MPI_CPPFLAGS)
 
 libzodiac_la_CPPFLAGS = \
-	$(DUMPI_CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) \
-	$(shell $(OTF_CONFIG_TOOL) --includes)
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libzodiac.la
@@ -18,17 +16,39 @@ libzodiac_la_SOURCES = \
 	zodiac.cc \
 	ztrace.cc \
 	ztrace.h \
+	zevent.h \
+	zevent.cc \
+	zsendevent.h \
+	zsendevent.cc \
+	zrecvevent.h \
+	zrecvevent.cc
+
+libzodiac_la_LDFLAGS = -module -avoid-version
+
+if HAVE_OTF
+libzodiac_la_SOURCES += \
+	otfreader.h \
+	otfreader.cc \
+	zotf.h \
+	zotf.cc
+
+libzodiac_la_CPPFLAGS +=
+	$(shell $(OTF_CONFIG_TOOL) --includes)
+
+libzodiac_la_LDFLAGS +=
+	$(shell $(OTF_CONFIG_TOOL) --libs)
+endif
+
+if HAVE_DUMPI
+libzodiac_la_SOURCES += \
 	zdumpi.cc \
 	zdumpi.h \
 	dumpireader.h \
 	dumpireader.cc \
-	dumpifunc.h \
-	otfreader.h \
-	otfreader.cc \
-	zotf.h \
-	zotf.cc \
-	zevent.h \
-	zevent.cc
+	dumpifunc.h
 
-libzodiac_la_LDFLAGS = -module -avoid-version \
-	$(shell $(OTF_CONFIG_TOOL) --libs)
+libzodiac_la_CPPFLAGS +=
+	$(DUMPI_CPPFLAGS)
+libzodiac_la_LDFLAGS +=
+	$(DUMPI_LDFLAGS)
+endif

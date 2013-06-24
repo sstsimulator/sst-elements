@@ -10,10 +10,14 @@
 #include <iostream>
 #include <queue>
 
+#include "sst/elements/hermes/msgapi.h"
 #include "zevent.h"
+#include "zsendevent.h"
+#include "zrecvevent.h"
 #include "otf.h"
 
 using namespace std;
+using namespace SST::Hermes;
 
 extern "C" {
 int handleOTFDefineProcess(void *userData, uint32_t stream, uint32_t process, const char *name, uint32_t parent);
@@ -36,9 +40,12 @@ namespace Zodiac {
 
 class OTFReader {
     public:
-	OTFReader(string file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent>* eventQueue);
+	OTFReader(string file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue);
         void close();
 	uint32_t generateNextEvents();
+	uint32_t getQueueLimit();
+	uint32_t getCurrentQueueSize();
+	void enqueueEvent(ZodiacEvent* ev);
 
     private:
 	OTF_Reader* reader;
@@ -47,7 +54,7 @@ class OTFReader {
 	uint32_t rank;
 	uint32_t qLimit;
 	bool foundFinalize;
-	std::queue<ZodiacEvent>* eventQ;
+	std::queue<ZodiacEvent*>* eventQ;
 
 };
 

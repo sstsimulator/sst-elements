@@ -2,6 +2,8 @@
 #ifndef _H_ZODIAC_EVENT_BASE
 #define _H_ZODIAC_EVENT_BASE
 
+#include "sst/elements/hermes/msgapi.h"
+
 namespace SST {
 namespace Zodiac {
 
@@ -16,11 +18,8 @@ enum ZodiacEventType {
 class ZodiacEvent {
 
 	public:
-		ZodiacEvent(ZodiacEventType t);
-		virtual ZodiacEventType getEventType();
-
-	protected:
-		ZodiacEventType evType;
+		ZodiacEvent();
+		virtual ZodiacEventType getEventType() = 0;
 
 };
 

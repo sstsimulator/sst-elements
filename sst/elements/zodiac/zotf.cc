@@ -38,7 +38,7 @@ ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params_t& params) :
     uint32_t rank = params.find_integer("rank", 0);
 
     std::cout << "Creating a new event queue..." << std::endl;
-    eventQ = new std::queue<ZodiacEvent>();
+    eventQ = new std::queue<ZodiacEvent*>();
 
     // Create a new reader and set it so that we only process one record per call
     std::cout << "Creating a new OTF Reader..." << std::endl;

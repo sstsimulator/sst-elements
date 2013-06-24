@@ -41,7 +41,7 @@ private:
 
   MessageInterface* msgapi;
   OTFReader* reader;
-  std::queue<ZodiacEvent>* eventQ;
+  std::queue<ZodiacEvent*>* eventQ;
 
   ////////////////////////////////////////////////////////
 

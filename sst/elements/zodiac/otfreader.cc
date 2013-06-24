@@ -10,14 +10,26 @@ int handleOTFDefineProcess(void *userData, uint32_t stream, uint32_t process, co
 	return OTF_RETURN_OK;
 }
 
-int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t receiver, uint32_t group, uint32_t type, uint32_t length, uint32_t source, OTF_KeyValueList *list) {
-	std::cout << "OTF: Send message from " << sender << " to " << receiver << std::endl;
+int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t receiver, uint32_t group, uint32_t type, 
+	uint32_t length, uint32_t source, OTF_KeyValueList *list) {
+
+	OTFReader* reader = (OTFReader*) userData;
+	std::cout << "OTF: Send message from " << sender << " to " << receiver << " qSize=" << reader->getCurrentQueueSize() << std::endl;
+
+	ZodiacSendEvent* sendEv = new ZodiacSendEvent(receiver, length, HERMES_DOUBLE, 0, group);
+	reader->enqueueEvent(sendEv);
 
 	return OTF_RETURN_OK;
 }
 
-int handleOTFRecvMsg(void *userData, uint64_t time, uint32_t recvProc, uint32_t sendProc, uint32_t group, uint32_t type, uint32_t length, uint32_t source, OTF_KeyValueList *list) {
-	std::cout << "OTF: Recv message from " << sendProc << " (recv'd by: " << recvProc << ") at time: " << time << std::endl;
+int handleOTFRecvMsg(void *userData, uint64_t time, uint32_t recvProc, uint32_t sendProc, uint32_t group, uint32_t type, 
+	uint32_t length, uint32_t source, OTF_KeyValueList *list) {
+
+	OTFReader* reader = (OTFReader*) userData;
+	std::cout << "OTF: Recv message from " << sendProc << " to " << recvProc << " qSize=" << reader->getCurrentQueueSize() << std::endl;
+
+	ZodiacRecvEvent* recvEv = new ZodiacRecvEvent(recvProc, length, HERMES_DOUBLE, 0, group);
+	reader->enqueueEvent(recvEv);
 
 	return OTF_RETURN_OK;
 }
@@ -34,16 +46,16 @@ int handleOTFExit(void* data, uint64_t time, uint32_t func, uint32_t proc, uint3
 	return OTF_RETURN_OK;
 }
 
-int handleOTFCollectiveOperation(void *userData, uint64_t time, uint32_t process, uint32_t collective, uint32_t procGroup, uint32_t rootProc, uint32_t sent, 
-	uint32_t received, uint64_t duration, uint32_t source, OTF_KeyValueList *list) {
+int handleOTFCollectiveOperation(void *userData, uint64_t time, uint32_t process, uint32_t collective, uint32_t procGroup,
+	uint32_t rootProc, uint32_t sent, uint32_t received, uint64_t duration, uint32_t source, OTF_KeyValueList *list) {
 
-	std::cout << "OTF: Performed a collective operation on process: " << process << ", collective: " << 
+	std::cout << "OTF: Performed a collective operation on process: " << process << ", collective: " <<
 		collective << " at time: " << time << std::endl;
 
 	return OTF_RETURN_OK;
 }
 
-int handleOTFBeginCollective(void *userData, uint64_t time, uint32_t process, uint32_t collOp, uint64_t matchingId, uint32_t procGroup, 
+int handleOTFBeginCollective(void *userData, uint64_t time, uint32_t process, uint32_t collOp, uint64_t matchingId, uint32_t procGroup,
 	uint32_t rootProc, uint64_t sent, uint64_t received, uint32_t scltoken, OTF_KeyValueList *list) {
 
 	std::cout << "OTF: Began a collective on process: " << process << " collective: " << collOp 
@@ -59,7 +71,7 @@ int handleOTFEndCollective(void *userData, uint64_t time, uint32_t process, uint
 	return OTF_RETURN_OK;
 }
 
-OTFReader::OTFReader(string file, uint32_t focusRank, uint32_t maxQLength, std::queue<ZodiacEvent>* evQ) {
+OTFReader::OTFReader(string file, uint32_t focusRank, uint32_t maxQLength, std::queue<ZodiacEvent*>* evQ) {
 	// Open a maximum of 5 files concurrently
 	fileMgr = OTF_FileManager_open(5);
 
@@ -145,4 +157,17 @@ uint32_t OTFReader::generateNextEvents() {
 	// the queue limit - this happens if we encounter an MPI
 	// finalize statement
 	return (uint32_t) eventQ->size();
+}
+
+uint32_t OTFReader::getQueueLimit() {
+	return qLimit;
+}
+
+uint32_t OTFReader::getCurrentQueueSize() {
+	return eventQ->size();
+}
+
+void OTFReader::enqueueEvent(ZodiacEvent* ev) {
+	assert(eventQ->size() < qLimit);
+	eventQ->push(ev);
 }

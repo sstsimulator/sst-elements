@@ -4,10 +4,6 @@
 using namespace SST;
 using namespace SST::Zodiac;
 
-ZodiacEvent::ZodiacEvent(ZodiacEventType t) {
-	evType = t;
-}
+ZodiacEvent::ZodiacEvent() {
 
-ZodiacEventType ZodiacEvent::getEventType() {
-	return evType;
 }

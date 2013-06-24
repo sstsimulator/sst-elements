@@ -1,55 +1,32 @@
 
-#include "dumpireader.h"
+#include "DUMPIReader.h"
 
 using namespace std;
 using namespace SST::Zodiac;
 
-DUMPIReader::DUMPIReader(string file) {
-	trace = fopen(file.c_str(), "rb");
-
-	if(NULL == trace) {
-		std::cerr << "Error opening: " << file << std::endl;
-		exit(-1);
-	}
+DUMPIReader::DUMPIReader(string file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent>*>* evQ) {
+	rank = focusOnRank;
+	eventQ = evQ;
+	qLimit = maxQLen;
+	foundFinalize = false;
 }
 
 void DUMPIReader::close() {
-	fclose(trace);
 }
 
-void DUMPIReader::readTrace(uint16_t* val) {
-	fread(&val, sizeof(uint16_t), 1, trace);
+uint32_t DUMPIReader::generateNextEvents() {
+	return (uint32_t) eventQ->size();
 }
 
-void DUMPIReader::readTrace(uint32_t* val) {
-	fread(&val, sizeof(uint32_t), 1, trace);
+uint32_t DUMPIReader::getQueueLimit() {
+	return qLimit;
 }
 
-void DUMPIReader::readTrace(uint64_t* val) {
-	fread(&val, sizeof(uint64_t), 1, trace);
+uint32_t DUMPIReader::getCurrentQueueSize() {
+	return eventQ->size();
 }
 
-void DUMPIReader::readArrayTrace(uint16_t* values, int count) {
-	fread(values, sizeof(uint16_t), count, trace);
-}
-
-void DUMPIReader::readArrayTrace(uint32_t* values, int count) {
-	fread(values, sizeof(uint32_t), count, trace);
-}
-
-void DUMPIReader::readArrayTrace(char** str, uint32_t* count) {
-	readTrace(count);
-
-	char* the_string = (char*) malloc(sizeof(char) * ((*count) + 1));
-	fread(the_string, sizeof(char), *count, trace);
-	the_string[(*count)] = '\0';
-
-	*str = the_string;
-}
-
-DUMPIFunction DUMPIReader::readNextFunction() {
-	uint16_t func = 0;
-	readTrace(&func);
-
-	return (DUMPIFunction) func;
+void DUMPIReader::enqueueEvent(ZodiacEvent* ev) {
+	assert(eventQ->size() < qLimit);
+	eventQ->push(ev);
 }
