@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
-<!-- This SDL file represents two cpu with 2 layers of cache each,
-     directly linked.
-     L2's are INCLUSIVE
-     Uses Directory out to memory
+<!-- This SDL represents a dual-socket quad-core (n0, n1),
+     each socket containing 4 cores, each with private L1 I&D
+     Two L2's per socket (each backing 2 cores), and one
+     INCLUSIVE L3.  All caches per node connected via SNOOPY bus.
+     Uses Directory out to memory / between nodes.
 -->
 
 <variables>
