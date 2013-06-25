@@ -12,7 +12,6 @@
 #ifndef _CACHE_H
 #define _CACHE_H
 
-#include <sstream>
 #include <deque>
 #include <map>
 #include <list>
@@ -31,7 +30,6 @@
 #include <sst/core/interfaces/memEvent.h>
 
 #include "memNIC.h"
-#include "bus.h"
 
 
 using namespace SST::Interfaces;
@@ -145,55 +143,11 @@ private:
 			blocks = std::vector<CacheBlock>(cache->n_ways, CacheBlock(cache));
 		}
 
-		CacheBlock* getLRU(void)
-		{
-			SimTime_t t = (SimTime_t)-1;
-			int lru = -1;
-			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-				if ( blocks[i].isAssigned() ) continue; // Assigned, waiting for incoming
-				if ( blocks[i].locked > 0 ) continue; // Currently in use
-                if ( blocks[i].loadInfo != NULL ) continue; // Assigned, but other work is being done
+		CacheBlock* getLRU(void);
 
-				if ( !blocks[i].isValid() ) {
-					lru = i;
-					break;
-				}
-				if ( blocks[i].last_touched <= t ) {
-					t = blocks[i].last_touched;
-					lru = i;
-				}
-			}
-			if ( lru < 0 ) {
-				__DBG( DBG_CACHE, CacheRow, "No empty slot in this row.\n");
-				return NULL;
-			}
+        void addWaitingEvent(MemEvent *ev, SourceType_t src);
 
-            __DBG( DBG_CACHE, CacheRow, "Row LRU is block %p [0x%"PRIx64", [%d.%d]].\n", &blocks[lru], blocks[lru].baseAddr, blocks[lru].status, blocks[lru].user_locked);
-			return &blocks[lru];
-		}
-
-        void addWaitingEvent(MemEvent *ev, SourceType_t src)
-        {
-            waitingEvents[cache->addrToBlockAddr(ev->getAddr())].push_back(std::make_pair(ev, src));
-            __DBG( DBG_CACHE, CacheRow, "Event is number %zu in queue for this row.\n",
-                    waitingEvents[cache->addrToBlockAddr(ev->getAddr())].size());
-            printRow();
-        }
-
-        void printRow(void)
-        {
-			for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-                __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%"PRIx64" [%d.%d]] is: %s\n",
-                        blocks[i].baseAddr,
-                        blocks[i].status, blocks[i].user_locked,
-                        blocks[i].isAssigned() ?
-                            "Assigned" :
-                            (blocks[i].locked>0) ?
-                                "Locked!":
-                                "Open."
-                     );
-            }
-        }
+        void printRow(void);
 	};
 
 
@@ -259,89 +213,16 @@ private:
 			comp(comp), link(link), numPeers(0)
 		{ }
 
-        void init(const std::string &infoStr)
-        {
-            std::istringstream is(infoStr);
-            std::string header;
-            is >> header;
-            assert(!header.compare(Bus::BUS_INFO_STR));
-            std::string tag;
-            is >> tag;
-            if ( !tag.compare("NumACKPeers:") ) {
-                is >> numPeers;
-            } else {
-                numPeers = 1;
-            }
-        }
+
+        void init(const std::string &infoStr);
+		void setup(Cache *_comp, SST::Link *_link);
 
         int getNumPeers(void) const { return numPeers; }
-
-		void setup(Cache *_comp, SST::Link *_link)
-        {
-			comp = _comp;
-			link = _link;
-		}
-
 		int size(void) const { return queue.size(); }
-		void request(MemEvent *event, BusHandlers handlers = BusHandlers())
-		{
-            queue.push_back(event);
-            __DBG( DBG_CACHE, BusQueue, "%s: Queued event (%"PRIu64", %d)  0x%"PRIx64" in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, makeBusKey(event), queue.size());
-            map[event] = handlers;
-            link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
-		}
 
-		bool cancelRequest(MemEvent *event)
-		{
-            bool retval = false;
-			queue.remove(event);
-			std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
-			if ( i != map.end() ) {
-				map.erase(i);
-                link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
-                __DBG( DBG_CACHE, BusQueue, "%s: Sending cancel for req 0x%"PRIx64"\n", comp->getName().c_str(), makeBusKey(event));
-                retval = true;
-			} else {
-                __DBG( DBG_CACHE, BusQueue, "%s: Unable to find a request to cancel!\n", comp->getName().c_str());
-            }
-			return retval;
-		}
-
-		void clearToSend(MemEvent *busEvent)
-		{
-			if ( size() == 0 ) {
-				__DBG( DBG_CACHE, BusQueue, "%s: No Requests to send!\n", comp->getName().c_str());
-				/* Must have canceled the request */
-				link->send(new MemEvent(comp, 0x0, CancelBusRequest)); 
-			} else {
-				MemEvent *ev = queue.front();
-                if ( busEvent->getAddr() != makeBusKey(ev) ) {
-                    __DBG( DBG_CACHE, BusQueue, "%s: Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getAddr());
-                    return;
-                }
-				queue.pop_front();
-
-				__DBG( DBG_CACHE, BusQueue, "%s: Sending Event (%s, 0x%"PRIx64" (%"PRIu64", %d)) [Queue: %zu]!\n", comp->getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getID().first, ev->getID().second, queue.size());
-
-
-                BusHandlers bh;
-				std::map<MemEvent*, BusHandlers>::iterator i = map.find(ev);
-                if ( i != map.end() ) {
-                    bh = i->second;
-					map.erase(i);
-                }
-
-                if ( bh.init ) {
-                    (comp->*(bh.init))(bh.args, ev);
-                }
-
-				link->send(ev);
-
-                if ( bh.finish ) {
-                    (comp->*(bh.finish))(bh.args);
-                }
-			}
-		}
+		void request(MemEvent *event, BusHandlers handlers = BusHandlers());
+		bool cancelRequest(MemEvent *event);
+		void clearToSend(MemEvent *busEvent);
 
 
 	private:
