@@ -35,6 +35,7 @@
 #include <sst/core/interfaces/stringEvent.h>
 
 #include "cache.h"
+#include "cacheListener.h"
 
 
 

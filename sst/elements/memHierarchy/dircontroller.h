@@ -24,12 +24,12 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/memEvent.h>
 
-#include "memNIC.h"
-
 using namespace SST::Interfaces;
 
 namespace SST {
 namespace MemHierarchy {
+
+class MemNIC;
 
 class DirectoryController : public Component {
 

@@ -30,7 +30,6 @@
 
 #include <sst/core/interfaces/memEvent.h>
 
-#include "cacheListener.h"
 #include "memNIC.h"
 #include "bus.h"
 
@@ -39,6 +38,8 @@ using namespace SST::Interfaces;
 
 namespace SST {
 namespace MemHierarchy {
+
+class CacheListener;
 
 class Cache : public SST::Component {
 

@@ -22,6 +22,7 @@
 #include "sst/core/element.h"
 
 #include "dircontroller.h"
+#include "memNIC.h"
 
 
 #define DPRINTF( fmt, args...) __DBG( DBG_CACHE, DirectoryController, "%s: " fmt, getName().c_str(), ## args )
