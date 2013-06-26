@@ -24,7 +24,7 @@ AC_DEFUN([SST_PhoenixSim_CONFIG], [
      happy="no"])
 
   AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([omnetpp.h],[OMNETPP_LIB="-loppsim $PHOENIXSIM_LDFLAGS "],[happy="no"])
+  AC_CHECK_HEADERS([omnetpp.h],[OMNETPP_LIB="-loppsim -loppcommon -loppnedxml $PHOENIXSIM_LDFLAGS "],[happy="no"])
 
   AC_LANG_POP(C++)
 
