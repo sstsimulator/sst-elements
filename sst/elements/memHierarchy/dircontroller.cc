@@ -264,6 +264,18 @@ bool DirectoryController::processPacket(MemEvent *ev)
         }
         break;
     }
+    case Evicted: {
+        assert(entry);
+        entry->activeReq = ev;
+        if ( entry->inController ) {
+            handleEviction(entry, ev);
+        } else {
+            DPRINTF("Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
+            entry->nextFunc = &DirectoryController::handleEviction;
+            requestDirEntryFromMemory(entry);
+        }
+        break;
+    }
     default:
         /* Ignore unexpected */
         delete ev;
@@ -516,10 +528,23 @@ void DirectoryController::handleWriteback(DirEntry *entry, MemEvent *ev)
     assert(entry->dirty);
     assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
     entry->dirty = false;
-    entry->sharers[node_id(ev->getSrc())] = true;
+    entry->sharers[node_id(entry->activeReq->getSrc())] = true;
     writebackData(entry->activeReq);
 	updateEntryToMemory(entry);
 }
+
+
+/** This is an eviction of a block that is clean */
+void DirectoryController::handleEviction(DirEntry *entry, MemEvent *ev)
+{
+    DPRINTF("Entry 0x%"PRIx64" loaded.  Handling eviction of 0x%"PRIx64" from %s\n", entry->baseAddr, entry->activeReq->getAddr(), entry->activeReq->getSrc().c_str());
+    assert(!entry->dirty);
+    entry->sharers[node_id(entry->activeReq->getSrc())] = false;
+
+    updateEntryToMemory(entry);
+}
+
+
 
 
 /* Advance the processing of this directory entry */

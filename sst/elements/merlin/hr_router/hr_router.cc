@@ -37,7 +37,7 @@ hr_router::~hr_router()
     for ( int i = 0 ; i < num_ports ; i++ ) {
         delete ports[i];
     }
-    delete ports;
+    delete [] ports;
 
     delete topo;
     delete arb;

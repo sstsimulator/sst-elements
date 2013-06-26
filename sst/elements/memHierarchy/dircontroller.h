@@ -144,6 +144,8 @@ class DirectoryController : public Component {
 
 	void handleWriteback(DirEntry *entry, MemEvent *ev);
 
+    void handleEviction(DirEntry *entry, MemEvent *ev);
+
 	void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 
 	uint32_t node_id(const std::string &name);

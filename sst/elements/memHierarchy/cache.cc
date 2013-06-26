@@ -688,6 +688,13 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
                 DPRINTF("Replacing block (old status is [%d], 0x%"PRIx64" [%s]\n",
                         block->status, block->baseAddr,
                         block->locked ? "LOCKED" : "unlocked");
+                if ( block->isValid() && directory_link ) {
+                    // Send Eviction notification
+                    DPRINTF("Sending eviction notification of 0x%"PRIx64" to directory.\n", block->baseAddr);
+                    MemEvent *evict = new MemEvent(this, block->baseAddr, Evicted);
+                    evict->setDst(findTargetDirectory(block->baseAddr));
+                    directory_link->send(evict);
+                }
             }
         }
 
@@ -1053,6 +1060,8 @@ void Cache::finishBusSupplyData(BusHandlerArgs &args)
 	supplyMap_t::iterator supMapI = getSupplyInProgress(args.supplyData.initiatingEvent->getAddr(), args.supplyData.src, args.supplyData.initiatingEvent->getID());
 	ASSERT(supMapI != suppliesInProgress.end());
 	suppliesInProgress.erase(supMapI);
+
+    delete args.supplyData.initiatingEvent;
 
 	if ( !args.supplyData.isFakeSupply ) {
         handlePendingEvents(findRow(block->baseAddr), NULL);

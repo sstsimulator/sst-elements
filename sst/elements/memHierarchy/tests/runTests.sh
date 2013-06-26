@@ -21,7 +21,7 @@ runCmd() {
 
 export -f runCmd
 
-find . -depth 1 -name sdl\*.xml -print0 | xargs -0 -n 1 -P 4 bash -c 'runCmd "$0"'
+find . -maxdepth 1 -name sdl\*.xml -print0 | xargs -0 -n 1 -P 4 bash -c 'runCmd "$0"'
 
 
 
