@@ -723,7 +723,7 @@ std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(Addr addr, MemEvent *ev, Sour
     } else {
         li = new LoadInfo_t(blockAddr);
         DPRINTF("No existing Load for this block.  Creating.  [li: %p]\n", li);
-        std::pair<LoadList_t::iterator, bool> res = waitingLoads.insert(std::make_pair(blockAddr, li));
+        waitingLoads.insert(std::make_pair(blockAddr, li));
         li->initiatingEvent = ev->getID();
         li->uncached = ev->queryFlag(MemEvent::F_UNCACHED);
         initialEvent = true;
@@ -2038,7 +2038,7 @@ void Cache::printCache(void)
 	}
 
 	ss << std::endl;
-    if ( waitingLoads.size() > 0 ) {
+    if ( !waitingLoads.empty() ) {
         ss << "Waiting Loads\n";
         for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
             Addr addr = i->first;

@@ -530,13 +530,6 @@ void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev)
 }
 
 
-void DirectoryController::registerSender(const std::string &name)
-{
-    node_id(name);
-}
-
-
-
 uint32_t DirectoryController::node_id(const std::string &name)
 {
 	uint32_t id;

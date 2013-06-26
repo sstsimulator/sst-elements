@@ -146,7 +146,6 @@ class DirectoryController : public Component {
 
 	void advanceEntry(DirEntry *entry, MemEvent *ev = NULL);
 
-	void registerSender(const std::string &name);
 	uint32_t node_id(const std::string &name);
 
 	void requestDirEntryFromMemory(DirEntry *entry);

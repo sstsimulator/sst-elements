@@ -82,20 +82,13 @@ private:
         uint16_t user_locked;
 
 		CacheBlock() {}
-		CacheBlock(Cache *_cache)
-		{
-			tag = 0;
-			baseAddr = 0;
-			last_touched = 0;
-			status = INVALID;
-			cache = _cache;
-			data = std::vector<uint8_t>(cache->blocksize);
-			locked = 0;
-            loadInfo = NULL;
-            wb_in_progress = false;
-            user_lock_needs_wb = false;
-            user_locked = 0;
-		}
+		CacheBlock(Cache *_cache) :
+            tag(0), baseAddr(0), last_touched(0), status(INVALID),
+            cache(_cache), data(std::vector<uint8_t>(cache->blocksize)),
+            locked(0), loadInfo(NULL), wb_in_progress(false),
+            user_lock_needs_wb(false), user_lock_sent_delayed(false),
+            user_locked(0)
+		{ }
 
 		~CacheBlock()
 		{ }
@@ -161,7 +154,8 @@ private:
         bool canCancel;
 
         Invalidation() :
-            waitingACKs(0), issuingEvent(0,-1), busEvent(NULL), block(NULL), canCancel(true)
+            waitingACKs(0), issuingEvent(0,-1), busEvent(NULL), block(NULL),
+            canCancel(true), newStatus(CacheBlock::INVALID)
         { }
     };
 
@@ -290,8 +284,8 @@ private:
 			{ }
 		};
 		std::deque<LoadElement_t> list;
-		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false) { }
-		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false) { }
+		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), loadDirection(SEND_BOTH) { }
+		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), loadDirection(SEND_BOTH) { }
 	};
 
 	struct SupplyInfo {

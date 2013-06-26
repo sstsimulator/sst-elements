@@ -231,8 +231,8 @@ void Bus::busFinish(void)
 void Bus::handleSelfEvent(Event *ev) {
 	//printf("recv\n");
 	SelfEvent *event = dynamic_cast<SelfEvent*>(ev);
-    DPRINTF("Received selfEvent type %d\n", event->type);
 	if (event) {
+        DPRINTF("Received selfEvent type %d\n", event->type);
 		switch(event->type)
 		{
 		case SelfEvent::Schedule:

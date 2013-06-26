@@ -165,7 +165,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
 	}
 
-    if ( numLS == 0 && requests.size() == 0 ) {
+    if ( numLS == 0 && requests.empty() ) {
         primaryComponentOKToEndSim();
         return true;
     }
