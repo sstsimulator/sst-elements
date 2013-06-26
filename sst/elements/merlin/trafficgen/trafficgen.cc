@@ -73,7 +73,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 
     link_control = (Merlin::LinkControl*)loadModule("merlin.linkcontrol", params);
     link_control->configureLink(this, "rtr", tc, num_vcs, buf_size, buf_size);
-    delete buf_size;
+    delete [] buf_size;
 
     packets_to_send = params.find_integer("packets_to_send", 1000);
 

@@ -207,6 +207,8 @@ main(int argc, char **argv)
     fprintf(output, "\n");
     fprintf(output, "</sst>\n");
 
+    free(mydims);
+    free(theirdims);
     return 0;
 }
 
