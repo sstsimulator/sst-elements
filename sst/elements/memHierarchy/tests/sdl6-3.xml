@@ -32,6 +32,7 @@
 			<access_time> 2 ns </access_time>
 			<num_upstream> 1 </num_upstream>
 			<next_level> l2cache </next_level>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cpu_l1cache_link port=upstream0 latency=$lat />
 		<link name=l1l2cache_link port=downstream latency=$buslat />
@@ -45,6 +46,7 @@
 			<access_time> 10 ns </access_time>
             <num_upstream> 1 </num_upstream>
             <next_level> l3cache </next_level>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=l1l2cache_link port=upstream0 latency=$buslat />
 		<link name=l2l3cache_link port=downstream latency=$buslat />
@@ -58,6 +60,7 @@
 			<access_time> 10 ns </access_time>
             <num_upstream> 1 </num_upstream>
             <mode> INCLUSIVE </mode>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=l2l3cache_link port=upstream0 latency=$buslat />
 		<link name=mem_link port=downstream latency=$buslat />
@@ -70,6 +73,7 @@
 			<access_time> 1000 ns </access_time>
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=mem_link port=direct_link latency=$buslat />
 	</component>

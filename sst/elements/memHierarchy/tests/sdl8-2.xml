@@ -34,6 +34,7 @@
 			<access_time> 2 ns </access_time>
 			<num_upstream> 1 </num_upstream>
 			<next_level> c0.l2cache </next_level>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
 		<link name=c0.l1l2cache_link port=downstream latency=$buslat />
@@ -48,6 +49,7 @@
             <num_upstream> 1 </num_upstream>
             <net_addr> 1 </net_addr>
             <mode> INCLUSIVE </mode>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=c0.l1l2cache_link port=upstream0 latency=$buslat />
         <link name=cache_net_0 port=directory_link latency=$netlat />
@@ -73,6 +75,7 @@
 			<access_time> 2 ns </access_time>
 			<num_upstream> 1 </num_upstream>
 			<next_level> c1.l2cache </next_level>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
 		<link name=c1.l1l2cache_link port=downstream latency=$buslat />
@@ -87,6 +90,7 @@
             <num_upstream> 1 </num_upstream>
             <net_addr> 2 </net_addr>
             <mode> INCLUSIVE </mode>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=c1.l1l2cache_link port=upstream0 latency=$buslat />
         <link name=cache_net_1 port=directory_link latency=$netlat />
@@ -117,6 +121,7 @@
             <addrRangeStart> 0x0 </addrRangeStart>
             <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
             <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
+            <debug> ${MEM_DEBUG} </debug>
         </params>
         <link name=dir_mem_link port=memory latency=$buslat />
         <link name=dir_net_0 port=network latency=$netlat />
@@ -127,6 +132,7 @@
 			<access_time> 1000 ns </access_time>
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=dir_mem_link port=direct_link latency=$buslat />
 	</component>

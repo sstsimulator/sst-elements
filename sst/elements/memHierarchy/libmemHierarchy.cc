@@ -79,6 +79,7 @@ static const ElementInfoParam cache_params[] = {
     {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
     {"access_time",     "Time taken to lookup data in the cache."},
     {"net_addr",        "When using a directory controller, the network address of this cache."},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 
@@ -86,6 +87,7 @@ static const ElementInfoParam bus_params[] = {
     {"numPorts",        "Number of Ports on the bus."},
     {"busDelay",        "Delay time for the bus."},
     {"atomicDelivery",  "0 (default) or 1.  If true, delivery to this bus is atomic to ALL members of a coherency strategy."},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 
@@ -102,6 +104,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"access_time",     "When not using DRAMSim, latency of memory operation."},
     {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"},
     {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 
@@ -126,6 +129,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"interleaveSize",      "(optional) Size of interleaved pages in KB."},
     {"interleaveStep",      "(optional) Distance between sucessive interleaved pages on this controller in KB."},
     {"clock",               "Clock rate of controller."},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 

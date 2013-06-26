@@ -26,6 +26,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/output.h>
 
 #include <sst/core/interfaces/memEvent.h>
 
@@ -99,7 +100,7 @@ private:
 			assert(locked == 0);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
-			__DBG( DBG_CACHE, CacheBlock, "%s: Activating block (%u, %u) for Address 0x%"PRIx64".\t"
+            cache->dbg.output(CALL_INFO, "CacheBlock:  %s: Activating block (%u, %u) for Address 1x%"PRIx64".\t"
 					"baseAddr: 0x%"PRIx64"  Tag: 0x%"PRIx64"\n", cache->getName().c_str(), row, col, addr, baseAddr, tag);
 			status = ASSIGNED;
 		}
@@ -110,11 +111,11 @@ private:
         bool isDirty(void) const { return (status == DIRTY_UPSTREAM || status == DIRTY_PRESENT || status == EXCLUSIVE); }
 
         void lock() {
-            __DBG(DBG_CACHE, CacheBlock, "Locking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);
+            cache->dbg.output(CALL_INFO, "CacheBlock:  Locking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);
             locked++;
         }
         void unlock() {
-            __DBG(DBG_CACHE, CacheBlock, "UNLocking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked-1);
+            cache->dbg.output(CALL_INFO, "CacheBlock:  UNLocking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked-1);
             assert(locked);
             locked--;
         }
@@ -373,7 +374,7 @@ private:
 
 
 
-
+    Output dbg;
     CacheListener* listener;
 	int n_ways;
 	int n_rows;

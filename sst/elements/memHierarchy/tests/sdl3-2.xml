@@ -30,6 +30,7 @@
 			<access_time> 2 ns </access_time>
 			<next_level> l2cache </next_level>
 			<num_upstream> 1 </num_upstream>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
 		<link name=c0.l1cache_bus_link port=snoop_link latency=$buslat />
@@ -53,6 +54,7 @@
 			<access_time> 2 ns </access_time>
 			<next_level> l2cache </next_level>
 			<num_upstream> 1 </num_upstream>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
 		<link name=c1.l1cache_bus_link port=snoop_link latency=$buslat />
@@ -64,6 +66,7 @@
 			<num_rows> 64 </num_rows>
 			<blocksize> 64 </blocksize>
 			<access_time> 10 ns </access_time>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=l2cache_bus_link port=snoop_link latency=$buslat />
 	</component>
@@ -74,6 +77,7 @@
 			<numPorts> 4 </numPorts>
 			<busDelay> 20 ns </busDelay>
             <atomicDelivery> 1 </atomicDelivery>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=c0.l1cache_bus_link port=port0 latency=$buslat />
 		<link name=c1.l1cache_bus_link port=port1 latency=$buslat />
@@ -90,6 +94,7 @@
 			<use_dramsim> 1 </use_dramsim>
 			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
 			<system_ini> system.ini </system_ini>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=mem_bus_link port=snoop_link latency=$buslat />
 	</component>

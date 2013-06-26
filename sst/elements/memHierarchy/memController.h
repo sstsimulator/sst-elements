@@ -18,6 +18,7 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/output.h>
 
 #include <sst/core/interfaces/memEvent.h>
 using namespace SST::Interfaces;
@@ -146,6 +147,7 @@ private:
 
     bool use_dramsim;
 
+    Output dbg;
     SST::Link *self_link;
     SST::Link *upstream_link;
     bool use_bus;

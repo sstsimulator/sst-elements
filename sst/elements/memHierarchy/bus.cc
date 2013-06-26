@@ -27,8 +27,6 @@
 
 #include "bus.h"
 
-#define DPRINTF( fmt, args...) __DBG( DBG_CACHE, Bus, fmt, ## args )
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
@@ -40,6 +38,7 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
 	// get parameters
+    dbg.init("@R:Bus::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
 	numPorts = params.find_integer("numPorts", 0);
 	if ( numPorts < 1 ) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
 	activePort.first = BUS_INACTIVE;
@@ -63,7 +62,7 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 		//ports[i]->setDefaultTimeBase(registerTimeBase("1 ns"));
 		assert(ports[i]);
 		linkMap[ports[i]->getId()] = ports[i];
-		DPRINTF("Port %lu = Link %d\n", ports[i]->getId(), i);
+		dbg.output(CALL_INFO, "Port %lu = Link %d\n", ports[i]->getId(), i);
 	}
 
 	selfLink = configureSelfLink("Self", "50 ps",
@@ -112,7 +111,7 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 {
 
 	busRequests.push_back(std::make_pair(link_id, key));
-	DPRINTF("(%lu, 0x%"PRIx64") [active = %lu] queue depth = %zu \n", link_id, key, activePort.first, busRequests.size());
+	dbg.output(CALL_INFO, "(%lu, 0x%"PRIx64") [active = %lu] queue depth = %zu \n", link_id, key, activePort.first, busRequests.size());
 
 	if ( activePort.first == BUS_INACTIVE ) {
 		// Nobody's active.  Schedule it.
@@ -123,10 +122,10 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 
 void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 {
-	DPRINTF("(%lu, 0x%"PRIx64") [active = %lu]\n", link_id, key, activePort.first);
+	dbg.output(CALL_INFO, "(%lu, 0x%"PRIx64") [active = %lu]\n", link_id, key, activePort.first);
 
     if ( link_id == activePort.first && (key == activePort.second || key == 0)) {
-        DPRINTF("Canceling active.  Rescheduling\n");
+        dbg.output(CALL_INFO, "Canceling active.  Rescheduling\n");
         activePort.first = BUS_INACTIVE;
         selfLink->send(new SelfEvent(SelfEvent::Schedule));
     }
@@ -134,7 +133,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
     for ( std::deque<std::pair<LinkId_t, Addr> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
         if ( i->first == link_id && i->second == key) {
             busRequests.erase(i);
-            DPRINTF("Canceling (%lu, 0x%"PRIx64"\n", link_id, key);
+            dbg.output(CALL_INFO, "Canceling (%lu, 0x%"PRIx64"\n", link_id, key);
             break;
         }
     }
@@ -145,7 +144,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 
 void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
 {
-    DPRINTF("(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
+    dbg.output(CALL_INFO, "(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
             ev->getSrc().c_str(), ev->getDst().c_str(),
             ev->getID().first, ev->getID().second,
             CommandString[ev->getCmd()], ev->getAddr(),
@@ -212,7 +211,7 @@ void Bus::schedule(void)
     std::pair<LinkId_t, Addr> next_id = arbitrateNext();
 	if ( next_id.first != BUS_INACTIVE ) {
 		activePort = next_id;
-		DPRINTF("Setting activePort = (%lu, 0x%"PRIx64")\n", activePort.first, activePort.second);
+		dbg.output(CALL_INFO, "Setting activePort = (%lu, 0x%"PRIx64")\n", activePort.first, activePort.second);
 		linkMap[next_id.first]->send(new MemEvent(this, next_id.second, BusClearToSend));
 	}
 }
@@ -220,7 +219,7 @@ void Bus::schedule(void)
 
 void Bus::busFinish(void)
 {
-	DPRINTF("\n");
+	dbg.output(CALL_INFO, "\n");
 	busBusy = false;
 	activePort.first = BUS_INACTIVE;
 	schedule();
@@ -232,7 +231,7 @@ void Bus::handleSelfEvent(Event *ev) {
 	//printf("recv\n");
 	SelfEvent *event = dynamic_cast<SelfEvent*>(ev);
 	if (event) {
-        DPRINTF("Received selfEvent type %d\n", event->type);
+        dbg.output(CALL_INFO, "Received selfEvent type %d\n", event->type);
 		switch(event->type)
 		{
 		case SelfEvent::Schedule:

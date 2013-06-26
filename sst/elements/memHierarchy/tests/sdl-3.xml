@@ -29,6 +29,7 @@
 			<blocksize> 64 </blocksize>
 			<access_time> 2 ns</access_time>
 			<num_upstream> 1 </num_upstream>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cpu_cache_link port=upstream0 latency=$lat />
 		<link name=cache_bus_link port=snoop_link latency=$buslat />
@@ -40,6 +41,7 @@
 			<numPorts> 2 </numPorts>
 			<busDelay> 20 ns </busDelay>
             <atomicDelivery> 1 </atomicDelivery>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=cache_bus_link port=port0 latency=$buslat />
 		<link name=mem_bus_link port=port1 latency=$buslat />
@@ -54,6 +56,7 @@
 			<use_dramsim> 1 </use_dramsim>
 			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
 			<system_ini> system.ini </system_ini>
+            <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=mem_bus_link port=snoop_link latency=$buslat />
 	</component>
