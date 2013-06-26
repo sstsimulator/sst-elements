@@ -1106,6 +1106,9 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                             b->unlock();
                             delete supMapI->second.busEvent;
 							supMapI->second.busEvent = NULL;
+                            delete supMapI->second.initiatingEvent;
+                            suppliesInProgress.erase(supMapI);
+
 						}
 					}
 				}
