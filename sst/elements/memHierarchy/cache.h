@@ -155,7 +155,7 @@ private:
 
         Invalidation() :
             waitingACKs(0), issuingEvent(0,-1), busEvent(NULL), block(NULL),
-            canCancel(true), newStatus(CacheBlock::INVALID)
+            newStatus(CacheBlock::INVALID), canCancel(true)
         { }
     };
 

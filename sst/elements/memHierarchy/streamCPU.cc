@@ -165,7 +165,7 @@ bool streamCPU::clockTic( Cycle_t )
 
 	}
 
-    if ( numLS == 0 && requests.emtpy() ) {
+    if ( numLS == 0 && requests.size() == 0 ) {
         primaryComponentOKToEndSim();
         return true;
     }
