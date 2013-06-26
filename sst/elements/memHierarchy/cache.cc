@@ -924,8 +924,8 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 
 	if ( supMapI->second.canceled ) {
 		DPRINTF("Request has been canceled!\n");
+        delete supMapI->second.initiatingEvent;
 		suppliesInProgress.erase(supMapI);
-        delete ev;
         block->unlock();
 		return;
 	}
@@ -1093,8 +1093,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 			while ( blkAddr < (ev->getAddr() + ev->getSize()) ) {
                 CacheBlock *b = findBlock(blkAddr);
                 assert ( !b || b->status != CacheBlock::EXCLUSIVE );
-				supplyMap_t::key_type supplyMapKey = std::make_pair(blkAddr, src);
-				supplyMap_t::iterator supMapI = suppliesInProgress.find(supplyMapKey);
+				supplyMap_t::iterator supMapI = getSupplyInProgress(blkAddr, src);
 				if ( supMapI != suppliesInProgress.end() ) {
 					// Mark it canceled
 					DPRINTF("Marking request for 0x%"PRIx64" as canceled\n", ev->getAddr());

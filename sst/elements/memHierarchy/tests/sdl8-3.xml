@@ -20,7 +20,7 @@
         <commFreq> 100 </commFreq>
         <memSize> 0x10000 </memSize>
         <do_write> 1 </do_write>
-        <num_loadstore> 1000 </num_loadstore>
+        <num_loadstore> 200 </num_loadstore>
     </cpuParams>
     <l1CacheParams>
         <num_ways> 4 </num_ways>
