@@ -1,0 +1,68 @@
+// Copyright 2013 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2013, Sandia Corporation
+// All rights reserved.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+
+#include <sst_config.h>
+#include "sst/core/serialization/element.h"
+
+#include "funcCtx/send.h"
+#include "hades.h"
+
+#include <cxxabi.h>
+
+#define DBGX( fmt, args... ) \
+{\
+    char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
+    fprintf( stderr, "%s::%s():%d: "fmt, realname ? realname : "?????????", \
+                        __func__, __LINE__, ##args);\
+    if ( realname ) free(realname);\
+}
+
+using namespace SST::Firefly;
+using namespace Hermes;
+
+SendCtx::SendCtx( Addr target, uint32_t count, PayloadDataType dtype,
+        RankID source, uint32_t tag, Communicator group,
+        MessageRequest* req, 
+        Functor* retFunc, FunctionType type, Hades* obj ) :
+    FunctionCtx( retFunc, type, obj ),
+    m_target( target ),
+    m_count( count ),
+    m_dtype( dtype ),
+    m_source( source ),
+    m_tag( tag ),
+    m_group( group ),
+    m_req( req ),
+    m_posted( false )
+{ 
+}
+
+void SendCtx::runPre( ) 
+{
+    DBGX("\n");
+    if ( m_obj->canPostSend() ) {
+        m_obj->postSendEntry( m_target, m_count, m_dtype, m_source,
+                    m_tag, m_group, m_req, m_retFunc );
+
+        m_posted = true;
+    }
+}
+
+bool SendCtx::runPost( ) 
+{
+    DBGX("\n");
+    if ( m_posted ) { // && m_type == Isend 
+        // who deletes the entry
+        return false;
+    } else {
+        return true;
+    }
+}

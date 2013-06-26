@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+
+<config>
+  run-mode=both
+</config>
+
+<param_include>
+
+  <nic_params>
+  </nic_params>
+
+</param_include>
+
+<sst>
+
+    <component name="0.driver" type=firefly.testDriver >
+        <params>
+            <hermes> firefly.hades </hermes>
+            <traceFile> trace.out </traceFile>
+            <id> 0 </id>
+        </params>
+        <link name=link.0 port=link latency=1ns />
+    </component>
+
+    <component name="1.driver" type=firefly.testDriver >
+        <params>
+            <hermes> firefly.hades </hermes>
+            <traceFile> trace.out </traceFile>
+            <id> 1 </id>
+        </params>
+        <link name=link.1 port=link latency=1ns />
+    </component>
+
+    <component name="ioSwitch" type=firefly.ioSwitch >
+        <params>
+            <numPorts> 2 </numPorts>
+        </params>
+        <link name=link.0 port=port0 latency=1ns />
+        <link name=link.1 port=port1 latency=1ns />
+    </component>
+
+
+</sst>
