@@ -56,6 +56,7 @@ class Arg_Functor : public Arg_FunctorBase< TArg, TRetval >
         m_obj( obj ),
         m_fptr( fptr )
     { }
+    Arg_Functor() {}
 
     virtual TRetval operator()( TArg arg ) {
         return (*m_obj.*m_fptr)(arg );
