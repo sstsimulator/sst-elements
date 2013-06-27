@@ -80,6 +80,11 @@ void SiriusReader::generateNextEvent() {
 	}
 
 	prevEventTime = callTime;
+
+	// Read the profiled MPI time
+	readTime();
+	// read the MPI function result
+	readINT32();
 }
 
 void SiriusReader::readSend() {
