@@ -5,16 +5,21 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <string>
 #include <iostream>
 #include <queue>
 
+#include <sst_config.h>
+#include "sst/core/serialization/element.h"
+#include "sst/core/output.h"
 #include "sst/elements/hermes/msgapi.h"
 
 #include "siriusconst.h"
 
 #include "zevent.h"
+#include "zinitevent.h"
 #include "zsendevent.h"
 #include "zrecvevent.h"
 #include "zbarrierevent.h"
@@ -28,7 +33,7 @@ namespace Zodiac {
 
 class SiriusReader {
     public:
-	SiriusReader(string file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue);
+	SiriusReader(string file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue, int verbLevel);
         void close();
 	uint32_t generateNextEvents();
 	uint32_t getQueueLimit();
@@ -36,6 +41,7 @@ class SiriusReader {
 	bool hasReachedFinalize();
 
     private:
+	Output* output;
 	uint32_t rank;
 	uint32_t qLimit;
 	bool foundFinalize;

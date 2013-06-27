@@ -31,7 +31,9 @@ libzodiac_la_SOURCES = \
 	zbarrierevent.h \
 	zbarrierevent.cc \
 	zcomputeevent.h \
-	zcomputeevent.cc
+	zcomputeevent.cc \
+	zinitevent.h \
+	zinitevent.cc
 
 libzodiac_la_LDFLAGS = -module -avoid-version
 

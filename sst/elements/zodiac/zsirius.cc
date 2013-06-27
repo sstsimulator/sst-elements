@@ -12,7 +12,9 @@ using namespace SST;
 using namespace SST::Zodiac;
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& params) :
-  Component(id) {
+  Component(id),
+  retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction))
+{
 
     string msgiface = params.find_string("msgapi");
 
@@ -34,14 +36,38 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& par
     }
 
     uint32_t rank = (uint32_t) params.find_integer("rank", 0);
+    //msgapi->setOwningComponent(this, (int) rank);
+
     eventQ = new std::queue<ZodiacEvent*>();
 
-    trace = new SiriusReader(trace_file, rank, 64, eventQ);
+    int verbosityLevel = params.find_integer("verbose", 0);
+    std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
+
+    trace = new SiriusReader(trace_file, rank, 64, eventQ, verbosityLevel);
     int count = trace->generateNextEvents();
     std::cout << "Obtained: " << count << " events" << std::endl;
+
+    selfLink = configureSelfLink("Self", "1ns", 
+	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
+
+    tConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");
+
+    emptyBufferSize = (uint32_t) params.find_integer("buffer", 4096);
+    emptyBuffer = (char*) malloc(sizeof(char) * emptyBufferSize);
+}
+
+void ZodiacSiriusTraceReader::setup() {
+    if(eventQ->size() > 0) {
+	selfLink->send(eventQ->front());
+    }
+}
+
+void ZodiacSiriusTraceReader::finish() {
+	trace->close();
 }
 
 ZodiacSiriusTraceReader::~ZodiacSiriusTraceReader() {
+
 }
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader() :
@@ -50,8 +76,67 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader() :
     // for serialization only
 }
 
-void ZodiacSiriusTraceReader::handleEvent(Event *ev) {
+void ZodiacSiriusTraceReader::handleEvent(Event* ev)
+{
 
+}
+
+void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
+{
+	ZodiacEvent* zEv = static_cast<ZodiacEvent*>(ev);
+
+	if(zEv) {
+		switch(zEv->getEventType()) {
+		case COMPUTE:
+			handleComputeEvent(zEv);
+			break;
+
+		case SEND:
+			handleSendEvent(zEv);
+			break;
+
+		case BARRIER:
+			break;
+
+		case INIT:
+			break;
+
+		case SKIP:
+			break;
+		}
+	} else {
+		std::cerr << "Unknown event type received by Zodiac engine" << std::endl;
+		exit(-1);
+	}
+}
+
+void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {
+	// Just initialize the library nothing fancy to do here
+	msgapi->init(&retFunctor);
+}
+
+void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
+	ZodiacSendEvent* zSEv = static_cast<ZodiacSendEvent*>(zEv);
+	assert(zSEv);
+	assert(zSEv->getLength() < emptyBufferSize);
+
+	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
+		zSEv->getDataType(), (RankID) zSEv->getDestination(),
+		zSEv->getMessageTag(), zSEv->getCommunicatorGroup(), &retFunctor);
+}
+
+void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
+	ZodiacComputeEvent* zCEv = static_cast<ZodiacComputeEvent*>(zEv);
+	assert(zCEv);
+
+	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
+		trace->generateNextEvents();
+	}
+
+	if(eventQ->size() > 0) {
+		ZodiacEvent* nextEv = eventQ->front();
+		selfLink->send(zCEv->getComputeDuration(), tConv, nextEv);
+	}
 }
 
 bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
@@ -59,6 +144,17 @@ bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
 
   // return false so we keep going
   return false;
+}
+
+void ZodiacSiriusTraceReader::completedFunction(int retVal) {
+	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
+		trace->generateNextEvents();
+	}
+
+	if(eventQ->size() > 0) {
+		ZodiacEvent* nextEv = eventQ->front();
+		selfLink->send(nextEv);
+	}
 }
 
 BOOST_CLASS_EXPORT(ZodiacSiriusTraceReader)

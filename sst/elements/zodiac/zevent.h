@@ -13,10 +13,12 @@ enum ZodiacEventType {
 	SEND,
 	RECV,
 	BARRIER,
-	COLLECTIVE
+	COLLECTIVE,
+	INIT,
+	FINALIZE
 };
 
-class ZodiacEvent {
+class ZodiacEvent : public SST::Event {
 
 	public:
 		ZodiacEvent();

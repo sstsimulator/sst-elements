@@ -7,12 +7,12 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/timeLord.h>
 
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <sst/elements/hermes/msgapi.h>
 
-//#include <dumpi/libundumpi/libundumpi.h>
 #include "siriusreader.h"
 #include "zevent.h"
 
@@ -25,10 +25,8 @@ class ZodiacSiriusTraceReader : public SST::Component {
 public:
 
   ZodiacSiriusTraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
-  void setup() { }
-  void finish() {
-	trace->close();
-  }
+  void setup();
+  void finish();
 
 private:
   ~ZodiacSiriusTraceReader();
@@ -37,13 +35,25 @@ private:
   void operator=(const ZodiacSiriusTraceReader&); // do not implement
 
   void handleEvent( SST::Event *ev );
+  void handleSelfEvent(SST::Event *ev);
   virtual bool clockTic( SST::Cycle_t );
+  void handleComputeEvent(ZodiacEvent* zEv);
+  void handleSendEvent(ZodiacEvent* zEv);
+  void handleInitEvent(ZodiacEvent* zEv);
+  void completedFunction(int val);
 
   ////////////////////////////////////////////////////////
+
+  typedef Arg_Functor<ZodiacSiriusTraceReader, int> DerivedFunctor;
 
   MessageInterface* msgapi;
   SiriusReader* trace;
   std::queue<ZodiacEvent*>* eventQ;
+  SST::Link* selfLink;
+  SST::TimeConverter* tConv;
+  char* emptyBuffer;
+  uint32_t emptyBufferSize;
+  DerivedFunctor retFunctor;
 
   ////////////////////////////////////////////////////////
 

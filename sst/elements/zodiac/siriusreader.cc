@@ -4,7 +4,10 @@
 using namespace std;
 using namespace SST::Zodiac;
 
-SiriusReader::SiriusReader(string file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ) {
+SiriusReader::SiriusReader(string file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ,
+	int verbosityLevel) 
+{
+
 	rank = focusOnRank;
 	eventQ = evQ;
 	qLimit = maxQLen;
@@ -16,7 +19,8 @@ SiriusReader::SiriusReader(string file, uint32_t focusOnRank, uint32_t maxQLen, 
 		exit(-1);
 	}
 
-	prevEventTime = readTime();
+	prevEventTime = 0;
+	output = new Output("SiriusReader", verbosityLevel, 0, Output::STDOUT);
 }
 
 void SiriusReader::close() {
@@ -52,8 +56,13 @@ void SiriusReader::generateNextEvent() {
 	double evTimeDiff = callTime - prevEventTime;
 
 	if(evTimeDiff > 0) {
+		output->verbose(__LINE__, __FILE__, "generateNextEvent", 8, 0, "Generated a compute event (length=%f)\n", evTimeDiff);
 		ZodiacComputeEvent* ev = new ZodiacComputeEvent(evTimeDiff);
 		eventQ->push(ev);
+	} else {
+		output->verbose(__LINE__, __FILE__, "generateNextEvent", 8, 0, 
+			"Did not generate next event timing prevTime=%f, callTime=%f, diff=%f\n",
+			prevEventTime, callTime, evTimeDiff);
 	}
 
 	switch(call_type) {
@@ -84,10 +93,9 @@ void SiriusReader::generateNextEvent() {
 		break;
 	}
 
-	prevEventTime = callTime;
 
 	// Read the profiled MPI time
-	readTime();
+	prevEventTime = readTime();
 	// read the MPI function result
 	readINT32();
 }
@@ -99,6 +107,8 @@ void SiriusReader::readSend() {
 	int32_t  dest   = readINT32();
 	int32_t  tag    = readINT32();
 	uint32_t comm   = readUINT32();
+
+	output->verbose(__LINE__, __FILE__, "readSend", 8, 0, "Read an MPI_Send\n");
 
 	ZodiacSendEvent* ev = new ZodiacSendEvent((uint32_t) dest, count,
 		convertToHermesType(dtype), tag, comm);
@@ -113,21 +123,29 @@ void SiriusReader::readRecv() {
 	int32_t  tag    = readINT32();
 	uint32_t comm   = readUINT32();
 
+	output->verbose(__LINE__, __FILE__, "readRecv", 8, 0, "Read an MPI_Recv\n");
+
 	ZodiacRecvEvent* ev = new ZodiacRecvEvent((uint32_t) src, count,
 		convertToHermesType(dtype), tag, comm);
 	eventQ->push(ev);
 }
 
 void SiriusReader::readInit() {
-
+	output->verbose(__LINE__, __FILE__, "readInit", 8, 0, "Read an MPI_Init\n");
+	ZodiacInitEvent* ev = new ZodiacInitEvent();
+	eventQ->push(ev);
 }
 
 void SiriusReader::readFinalize() {
+	output->verbose(__LINE__, __FILE__, "readRecv", 8, 0, "Read an MPI_Finalize\n");
+
 	foundFinalize = true;
 }
 
 void SiriusReader::readBarrier() {
 	uint32_t comm = readUINT32();
+
+	output->verbose(__LINE__, __FILE__, "readRecv", 8, 0, "Read an MPI_Barrier\n");
 
 	ZodiacBarrierEvent* ev = new ZodiacBarrierEvent(comm);
 	eventQ->push(ev);
