@@ -42,7 +42,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 {
     dbg.init("@R:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
-	if ( ramSize == 0 )
+	if ( 0 == ramSize )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
 	memSize = ramSize * (1024*1024ul);
 
@@ -75,11 +75,11 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 
 		std::string deviceIniFilename = params.find_string("device_ini",
 				NO_STRING_DEFINED);
-		if ( deviceIniFilename == NO_STRING_DEFINED )
+		if ( NO_STRING_DEFINED == deviceIniFilename )
 			_abort(MemController, "XML must define a 'device_ini' file parameter\n");
 		std::string systemIniFilename = params.find_string("system_ini",
 				NO_STRING_DEFINED);
-		if ( systemIniFilename == NO_STRING_DEFINED )
+		if ( NO_STRING_DEFINED == systemIniFilename )
 			_abort(MemController, "XML must define a 'system_ini' file parameter\n");
 
 
@@ -105,7 +105,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 
 
 	int mmap_flags = MAP_PRIVATE;
-	if ( memoryFile != NO_STRING_DEFINED ) {
+	if ( NO_STRING_DEFINED != memoryFile ) {
 		backing_fd = open(memoryFile.c_str(), O_RDWR);
 		if ( backing_fd < 0 ) {
 			_abort(MemController, "Unable to open backing file!\n");
@@ -122,7 +122,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 
 	upstream_link = configureLink( "snoop_link", "50 ps",
 			new Event::Handler<MemController>(this, &MemController::handleEvent));
-    use_bus = (upstream_link != NULL);
+    use_bus = (NULL != upstream_link );
     if ( !upstream_link ) {
 
         std::string link_lat = params.find_string("direct_link_latency", "100 ns");
@@ -151,11 +151,11 @@ void MemController::init(unsigned int phase)
 	}
 
 	SST::Event *ev = NULL;
-    while ( (ev = upstream_link->recvInitData()) != NULL ) {
+    while ( NULL != (ev = upstream_link->recvInitData()) ) {
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
         if ( me ) {
             /* Push data to memory */
-            if ( me->getCmd() == WriteReq ) {
+            if ( WriteReq == me->getCmd() ) {
                 if ( isRequestAddressValid(me) ) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
@@ -169,7 +169,7 @@ void MemController::init(unsigned int phase)
         } else {
             StringEvent *se = dynamic_cast<StringEvent*>(ev);
             if ( se ) {
-                if ( se->getString().find(Bus::BUS_INFO_STR) != std::string::npos ) {
+                if ( std::string::npos != se->getString().find(Bus::BUS_INFO_STR) ) {
                     /* Determine if we are to participate in ACK'ing Invalidates */
                     std::istringstream is(se->getString());
                     std::string header;
@@ -199,7 +199,7 @@ void MemController::setup(void)
 void MemController::finish(void)
 {
 	munmap(memBuffer, memSize);
-	if ( backing_fd != -1 ) {
+	if ( -1 != backing_fd ) {
 		close(backing_fd);
 	}
 #if defined(HAVE_LIBDRAMSIM)
@@ -231,7 +231,7 @@ void MemController::finish(void)
 void MemController::handleEvent(SST::Event *event)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    bool to_me = (!use_bus || ( ev->getDst() == getName() || ev->getDst() == BROADCAST_TARGET ));
+    bool to_me = (!use_bus || ( ev->getDst() == getName() || BROADCAST_TARGET == ev->getDst() ));
     switch ( ev->getCmd() ) {
     case RequestData:
     case ReadReq:
@@ -299,7 +299,7 @@ void MemController::cancelEvent(MemEvent* ev)
             if ( !requests[i]->isWrite && !requests[i]->canceled ) {
                 requests[i]->canceled = true;
                 dbg.output(CALL_INFO, "Canceling request.\n");
-                if ( requests[i]->status == DRAMReq::RETURNED ) {
+                if ( DRAMReq::RETURNED == requests[i]->status ) {
                     sendBusCancel(requests[i]->reqEvent->getAddr());
                 }
             }
@@ -321,7 +321,7 @@ bool MemController::clock(Cycle_t cycle)
         DRAMReq *req = requestQueue.front();
         if ( req->canceled ) {
             requestQueue.pop_front();
-            if ( req->status == DRAMReq::NEW ) // Haven't started processing
+            if ( DRAMReq::NEW == req->status ) // Haven't started processing
                 req->status = DRAMReq::DONE;
             continue;
         }
@@ -355,7 +355,7 @@ bool MemController::clock(Cycle_t cycle)
     /* Clean out old requests */
     while ( requests.size() ) {
         DRAMReq *req = requests.front();
-        if ( req->status == DRAMReq::DONE ) {
+        if ( DRAMReq::DONE == req->status ) {
             requests.pop_front();
             delete req;
         } else {
@@ -371,7 +371,7 @@ bool MemController::isRequestAddressValid(MemEvent *ev)
 {
     Addr addr = ev->getAddr();
 
-    if ( numPages == 0 ) {
+    if ( 0 == numPages ) {
         return ( addr >= rangeStart && addr < (rangeStart + memSize) );
     } else {
         if ( addr < rangeStart ) return false;
@@ -391,7 +391,7 @@ bool MemController::isRequestAddressValid(MemEvent *ev)
 
 Addr MemController::convertAddressToLocalAddress(Addr addr)
 {
-    if ( numPages == 0 ) {
+    if ( 0 == numPages ) {
         return addr - rangeStart;
     } else {
         addr = addr - rangeStart;
@@ -436,7 +436,7 @@ void MemController::sendBusPacket(void)
 {
     assert(use_bus);
 	for (;;) {
-		if ( busReqs.size() == 0 ) {
+		if ( 0 == busReqs.size() ) {
             dbg.output(CALL_INFO, "Sending cancelation, as we have nothing in the queue.\n");
 			upstream_link->send(new MemEvent(this, 0x0, CancelBusRequest));
 			break;
@@ -483,7 +483,7 @@ void MemController::handleMemResponse(DRAMReq *req)
         req->status = DRAMReq::RETURNED;
     }
 
-    if ( req->status == DRAMReq::RETURNED ) {
+    if ( DRAMReq::RETURNED == req->status ) {
         if ( !req->canceled )
             sendResponse(req);
         else
@@ -515,7 +515,7 @@ void MemController::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
     assert(reqs.size());
     DRAMReq *req = reqs.front();
     reqs.pop_front();
-    if ( reqs.size() == 0 )
+    if ( 0 == reqs.size() )
         dramReqs.erase(addr);
 
     handleMemResponse(req);

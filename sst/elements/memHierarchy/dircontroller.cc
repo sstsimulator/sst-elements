@@ -51,7 +51,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
 
 	addrRangeStart = (uint64_t)params.find_integer("addrRangeStart", 0);
 	addrRangeEnd = (uint64_t)params.find_integer("addrRangeEnd", 0);
-	if ( addrRangeEnd == 0 ) addrRangeEnd = (uint64_t)-1;
+	if ( 0 == addrRangeEnd ) addrRangeEnd = (uint64_t)-1;
 	interleaveSize = (Addr)params.find_integer("interleaveSize", 0);
     interleaveSize *= 1024;
 	interleaveStep = (Addr)params.find_integer("interleaveStep", 0);
@@ -117,18 +117,18 @@ void DirectoryController::handleMemoryResponse(SST::Event *event)
         Addr targetBlock = memReqs[ev->getResponseToID()];
         memReqs.erase(ev->getResponseToID());
 
-        if ( ev->getCmd() == SupplyData ) {
+        if ( SupplyData == ev->getCmd() ) {
             // Lookup complete, perform our work
             DirEntry *entry = getDirEntry(targetBlock);
             assert(entry);
             entry->inController = true;
             advanceEntry(entry, ev);
-        } else if ( ev->getCmd() == WriteResp ) {
+        } else if ( WriteResp == ev->getCmd() ) {
             // Final update complete.  Clear our status
             DirEntry *entry = getDirEntry(targetBlock);
             if ( entry && !entry->activeReq ) {
                 entry->inController = false;
-                if ( entry->countRefs() == 0 ) {
+                if ( 0 == entry->countRefs() ) {
                     // Is empty, let's purge
                     dbg.output(CALL_INFO, "Entry for 0x%"PRIx64" has no referenes - purging\n", targetBlock);
                     directory.erase(entry->baseAddr);
@@ -168,7 +168,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
         return true;
     }
 
-    if ( ev->getCmd() == ACK ) {
+    if ( ACK == ev->getCmd() ) {
         handleACK(ev);
         delete ev;
         return true;
@@ -186,7 +186,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
 
     if ( entry && entry->inProgress() ) {
         if ( entry->nextCommand == ev->getCmd() &&
-            ( entry->waitingOn == "N/A" ||
+            ( "N/A" == entry->waitingOn  ||
               !entry->waitingOn.compare(ev->getSrc()) ) ) {
             dbg.output(CALL_INFO, "Incoming command matches for 0x%"PRIx64" in progress.\n", entry->baseAddr);
             if ( ev->getResponseToID() != entry->lastRequest ) {
@@ -310,7 +310,7 @@ void DirectoryController::setup(void)
     const std::vector<MemNIC::ComponentInfo> &ci = network->getPeerInfo();
     for ( std::vector<MemNIC::ComponentInfo>::const_iterator i = ci.begin() ; i != ci.end() ; ++i ) {
         dbg.output(CALL_INFO, "DC found peer %d (%s) of type %d.\n", i->network_addr, i->name.c_str(), i->type);
-        if ( i->type == MemNIC::TypeCache ) {
+        if ( MemNIC::TypeCache == i->type ) {
             numTargets++;
             if ( blocksize ) {
                 assert(blocksize == i->typeInfo.cache.blocksize);
@@ -319,7 +319,7 @@ void DirectoryController::setup(void)
             }
         }
     }
-    if ( numTargets == 0 ) {
+    if ( 0 == numTargets ) {
         _abort(DirectoryController, "Directory Controller %s unable to see any caches.\n", getName().c_str());
     }
 
@@ -348,7 +348,7 @@ bool DirectoryController::clock(SST::Cycle_t cycle)
 DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr addr)
 {
 	std::map<Addr, DirEntry*>::iterator i = directory.find(addr);
-	if ( i == directory.end() ) return NULL;
+	if ( directory.end() == i ) return NULL;
 	return i->second;
 }
 
@@ -369,7 +369,7 @@ void DirectoryController::handleACK(MemEvent *ev)
 	assert(entry);
 	assert(entry->waitingAcks > 0);
 	entry->waitingAcks--;
-	if ( entry->waitingAcks == 0 ) {
+	if ( 0 == entry->waitingAcks ) {
 		advanceEntry(entry);
 	}
 }
@@ -400,7 +400,7 @@ void DirectoryController::handleInvalidate(DirEntry *entry, MemEvent *new_ev)
 
 void DirectoryController::finishInvalidate(DirEntry *entry, MemEvent *new_ev)
 {
-	assert(entry->waitingAcks == 0);
+	assert(0 == entry->waitingAcks);
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
     entry->clearSharers();
@@ -451,7 +451,7 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
 
 	} else if ( entry->activeReq->queryFlag(MemEvent::F_EXCLUSIVE) ) {
 		// Must send invalidates
-		assert(entry->waitingAcks == 0);
+		assert(0 == entry->waitingAcks);
 		for ( uint32_t i = 0 ; i < numTargets ; i++ ) {
 			if ( i == requesting_node ) continue;
 			if ( entry->sharers[i] ) {
@@ -509,7 +509,7 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev)
 
 void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *new_ev)
 {
-	assert(entry->waitingAcks == 0);
+	assert(0 == entry->waitingAcks);
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
     entry->clearSharers();
@@ -550,7 +550,7 @@ void DirectoryController::handleEviction(DirEntry *entry, MemEvent *ev)
 /* Advance the processing of this directory entry */
 void DirectoryController::advanceEntry(DirEntry *entry, MemEvent *ev)
 {
-	assert(entry->nextFunc != NULL);
+	assert(NULL != entry->nextFunc);
 	(this->*(entry->nextFunc))(entry, ev);
 }
 
@@ -559,7 +559,7 @@ uint32_t DirectoryController::node_id(const std::string &name)
 {
 	uint32_t id;
 	std::map<std::string, uint32_t>::iterator i = node_lookup.find(name);
-	if ( i == node_lookup.end() ) {
+	if ( node_lookup.end() == i ) {
 		node_lookup[name] = id = targetCount++;
         nodeid_to_name.resize(targetCount);
         nodeid_to_name[id] = name;
@@ -648,7 +648,7 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev)
 {
     Addr addr = ev->getAddr();
 
-    if ( interleaveSize == 0 ) {
+    if ( 0 == interleaveSize ) {
         return ( addr >= addrRangeStart && addr < addrRangeEnd );
     } else {
         if ( addr < addrRangeStart ) return false;
@@ -668,7 +668,7 @@ bool DirectoryController::isRequestAddressValid(MemEvent *ev)
 Addr DirectoryController::convertAddressToLocalAddress(Addr addr)
 {
     Addr res = 0;
-    if ( interleaveSize == 0 ) {
+    if ( 0 == interleaveSize ) {
         res = lookupBaseAddr + addr - addrRangeStart;
     } else {
         addr = addr - addrRangeStart;
@@ -689,7 +689,7 @@ const char* DirectoryController::printDirectoryEntryStatus(Addr addr)
     } else {
         uint32_t refs = entry->countRefs();
 
-        if ( refs == 0 ) {
+        if ( 0 == refs ) {
             sprintf(dirEntStatus, "[Uncached]");
         } else if ( entry->dirty ) {
             uint32_t owner = entry->findOwner();

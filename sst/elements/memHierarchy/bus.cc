@@ -49,7 +49,7 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	delayTC = registerTimeBase(delay, false);
 	busDelay = 1;
 
-    atomicDelivery = params.find_integer("atomicDelivery", 0) != 0;
+    atomicDelivery = (0 != params.find_integer("atomicDelivery", 0));
 
 	ports = new SST::Link*[numPorts];
 
@@ -92,7 +92,7 @@ void Bus::init(unsigned int phase)
 	/* Pass on any messages */
 	for ( int i = 0 ; i < numPorts ; i++ ) {
 		SST::Event *ev = NULL;
-		while ( (ev = ports[i]->recvInitData()) != NULL ) {
+		while ( NULL != (ev = ports[i]->recvInitData()) ) {
 			MemEvent *me = dynamic_cast<MemEvent*>(ev);
 			if ( me ) {
 				for ( int j = 0 ; j < numPorts ; j++ ) {
@@ -113,7 +113,7 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 	busRequests.push_back(std::make_pair(link_id, key));
 	dbg.output(CALL_INFO, "(%lu, 0x%"PRIx64") [active = %lu] queue depth = %zu \n", link_id, key, activePort.first, busRequests.size());
 
-	if ( activePort.first == BUS_INACTIVE ) {
+	if ( BUS_INACTIVE == activePort.first ) {
 		// Nobody's active.  Schedule it.
 		selfLink->send(new SelfEvent(SelfEvent::Schedule));
 	}
@@ -124,7 +124,7 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 {
 	dbg.output(CALL_INFO, "(%lu, 0x%"PRIx64") [active = %lu]\n", link_id, key, activePort.first);
 
-    if ( link_id == activePort.first && (key == activePort.second || key == 0)) {
+    if ( link_id == activePort.first && (key == activePort.second || 0 == key )) {
         dbg.output(CALL_INFO, "Canceling active.  Rescheduling\n");
         activePort.first = BUS_INACTIVE;
         selfLink->send(new SelfEvent(SelfEvent::Schedule));
@@ -202,13 +202,13 @@ void Bus::handleEvent(Event *ev) {
 
 void Bus::schedule(void)
 {
-	if ( activePort.first != BUS_INACTIVE || busBusy ) {
+	if ( BUS_INACTIVE != activePort.first || busBusy ) {
 		// Most likely, two people asked to schedule in the same cycle.
 		return;
 	}
 
     std::pair<LinkId_t, Addr> next_id = arbitrateNext();
-	if ( next_id.first != BUS_INACTIVE ) {
+	if ( BUS_INACTIVE != next_id.first ) {
 		activePort = next_id;
 		dbg.output(CALL_INFO, "Setting activePort = (%lu, 0x%"PRIx64")\n", activePort.first, activePort.second);
 		linkMap[next_id.first]->send(new MemEvent(this, next_id.second, BusClearToSend));

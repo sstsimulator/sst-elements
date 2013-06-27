@@ -146,7 +146,7 @@ void MemNIC::clock(void)
         last_recv_vc = (last_recv_vc+1) % num_vcs;
 
         MemRtrEvent *mre = (MemRtrEvent*)link_control->recv(last_recv_vc);
-        if ( mre != NULL ) {
+        if ( NULL != mre ) {
             MemEvent *deliverEvent = mre->event;
             deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
             (*recvHandler)(deliverEvent);

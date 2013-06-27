@@ -96,8 +96,8 @@ private:
 
 		void activate(Addr addr)
 		{
-			assert(status != ASSIGNED);
-			assert(locked == 0);
+			assert(ASSIGNED != status);
+			assert(0 == locked);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
             cache->dbg.output(CALL_INFO, "CacheBlock:  %s: Activating block (%u, %u) for Address 1x%"PRIx64".\t"
@@ -105,10 +105,10 @@ private:
 			status = ASSIGNED;
 		}
 
-		bool isValid(void) const { return (status != INVALID && status != ASSIGNED); }
-		bool isInvalid(void) const { return (status == INVALID); }
-		bool isAssigned(void) const { return (status == ASSIGNED); }
-        bool isDirty(void) const { return (status == DIRTY_UPSTREAM || status == DIRTY_PRESENT || status == EXCLUSIVE); }
+		bool isValid(void) const { return (INVALID != status && ASSIGNED != status); }
+		bool isInvalid(void) const { return (INVALID == status); }
+		bool isAssigned(void) const { return (ASSIGNED == status); }
+        bool isDirty(void) const { return (DIRTY_UPSTREAM == status || DIRTY_PRESENT == status || EXCLUSIVE == status); }
 
         void lock() {
             cache->dbg.output(CALL_INFO, "CacheBlock:  Locking block %p [0x%"PRIx64"] (%u, %u) {%d -> %d}\n", this, baseAddr, row, col, locked, locked+1);

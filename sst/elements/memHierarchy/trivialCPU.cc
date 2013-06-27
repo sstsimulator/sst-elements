@@ -98,10 +98,10 @@ void trivialCPU::handleEvent(Event *ev)
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
 		// May receive invalidates.  Just ignore 'em.
-		if ( event->getCmd() == Invalidate ) return;
+		if ( Invalidate == event->getCmd() ) return;
 
 		std::map<MemEvent::id_type, SimTime_t>::iterator i = requests.find(event->getResponseToID());
-		if ( i == requests.end() ) {
+		if ( requests.end() == i ) {
 			_abort(trivialCPU, "Event (%"PRIu64", %d) not found!\n", event->getResponseToID().first, event->getResponseToID().second);
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
@@ -130,7 +130,7 @@ bool trivialCPU::clockTic( Cycle_t )
 	}
 
 	// communicate?
-	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
+	if ((0 != numLS) && (0 == (rng.generateNextUInt32() % commFreq))) {
 		if ( requests.size() > 10 ) {
 			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
@@ -141,7 +141,7 @@ bool trivialCPU::clockTic( Cycle_t )
 			// x4 to prevent splitting blocks
 			Addr addr = ((((Addr) rng.generateNextUInt64()) % maxAddr)>>2) << 2;
 
-			bool doWrite = do_write && (((rng.generateNextUInt32() % 10) == 0));
+			bool doWrite = do_write && ((0 == (rng.generateNextUInt32() % 10)));
 
 			MemEvent *e = new MemEvent(this, addr, doWrite ? WriteReq : ReadReq);
 			e->setSize(4); // Load 4 bytes
@@ -165,7 +165,7 @@ bool trivialCPU::clockTic( Cycle_t )
 
 	}
 
-    if ( numLS == 0 && requests.empty() ) {
+    if ( 0 == numLS && requests.empty() ) {
         primaryComponentOKToEndSim();
         return true;
     }
