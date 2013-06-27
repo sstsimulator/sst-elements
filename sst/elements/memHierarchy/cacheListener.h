@@ -13,6 +13,8 @@ using namespace SST;
 using namespace SST::Interfaces;
 
 namespace SST {
+class Output;
+
 namespace MemHierarchy {
 
 class CacheListener : public Module {
@@ -31,7 +33,7 @@ public:
     CacheListener() {}
     virtual ~CacheListener() {}
 
-    virtual void printStats() {}
+    virtual void printStats(Output &out) {}
     virtual void setOwningComponent(const SST::Component* owner) {}
     virtual void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr) { }
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }

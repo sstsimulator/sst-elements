@@ -18,14 +18,6 @@
 #endif
 #include <inttypes.h>
 
-#define ASSERT(x) \
-    do { \
-        if (!(x) ) { \
-            fflush(stdout); \
-            fprintf(stderr, "%s:%d  Assert failed: '%s'\n", __FILE__, __LINE__, #x); \
-            abort(); \
-        } \
-    } while(0)
 
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -85,7 +77,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 			upstream_links[i] = configureLink( ln, "50 ps",
 					new Event::Handler<Cache, SourceType_t>(this,
 						&Cache::handleIncomingEvent, UPSTREAM) );
-			ASSERT(upstream_links[i]);
+			assert(upstream_links[i]);
 			upstreamLinkMap[upstream_links[i]->getId()] = i;
             dbg.output(CALL_INFO, "upstream_links[%d]->getId() = %ld\n", i, upstream_links[i]->getId());
 		}
@@ -254,7 +246,8 @@ void Cache::setup(void)
 
 void Cache::finish(void)
 {
-	printf("Cache %s stats:\n"
+    Output out("", 0, 0, Output::STDOUT);
+	out.output("Cache %s stats:\n"
 			"\t# Read    Hits:      %"PRIu64"\n"
 			"\t# Read    Misses:    %"PRIu64"\n"
 			"\t# Supply  Hits:      %"PRIu64"\n"
@@ -268,10 +261,10 @@ void Cache::finish(void)
 			num_write_hit, num_write_miss,
 			num_upgrade_miss);
 
-    listener->printStats();
+    listener->printStats(out);
 
     if ( DBG_CACHE & SST::_debug_flags )
-        printCache();
+        printCache(out);
 }
 
 
@@ -367,7 +360,7 @@ void Cache::handlePrefetchEvent(SST::Event *event)
 void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 {
     isL1 = true;
-	ASSERT(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
+	assert(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
 	bool isRead = (ev->getCmd() == ReadReq);
 	CacheBlock *block = findBlock(ev->getAddr(), false);
 	dbg.output(CALL_INFO, "(%"PRIu64", %d) 0x%"PRIx64"%s %s%s %s (block 0x%"PRIx64" [%d])\n",
@@ -428,7 +421,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
                 self_link->send(1, new SelfEvent(this, &Cache::sendCPUResponse, makeCPUResponse(ev, block, UPSTREAM), block, UPSTREAM));
                 if ( block->user_locked && ev->queryFlag(MemEvent::F_LOCKED) ) {
                     /* Unlock */
-                    ASSERT(block->user_locked);
+                    assert(block->user_locked);
                     block->user_locked--;
                     /* If we're no longer locked, and we've tagged that we need
                      * to send a writeback, do so, unless we haven't yet sent
@@ -554,7 +547,6 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
             inv.waitingACKs++;
         }
         if ( directory_link ) {
-            //printf("%s: issuing Invalidate (%lu, %d) to Directory for 0x%"PRIx64"\n", getName().c_str(), invalidateEvent->getID().first, invalidateEvent->getID().second, invalidateEvent->getAddr()); fflush(stdout);
             MemEvent *dirInvEvent = new MemEvent(invalidateEvent);
             dirInvEvent->setDst(findTargetDirectory(addr));
             directory_link->send(dirInvEvent);
@@ -588,7 +580,7 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
 
 void Cache::finishIssueInvalidate(Addr addr)
 {
-    ASSERT(invalidations[addr].waitingACKs == 0);
+    assert(invalidations[addr].waitingACKs == 0);
 
     CacheBlock *block = invalidations[addr].block;
     if ( block ) {
@@ -604,7 +596,6 @@ void Cache::finishIssueInvalidate(Addr addr)
     std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents = invalidations[addr].waitingEvents;
     /* Erase before processing, otherwise, we'll think we're still waiting for invalidations */
     invalidations.erase(addr);
-    //printf("%s: Erased Invalidation for 0x%"PRIx64"\n", getName().c_str(), addr); fflush(stdout);
     bool first = true;
     while ( waitingEvents.size() > 0 ) {
         std::pair<MemEvent*, SourceType_t> ev2 = waitingEvents.front();
@@ -723,7 +714,7 @@ std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(Addr addr, MemEvent *ev, Sour
     LoadInfo_t *li = NULL;
 	if ( i != waitingLoads.end() ) {
 		li = i->second;
-		ASSERT (li->addr == blockAddr);
+		assert(li->addr == blockAddr);
         initialEvent = false;
 
     } else {
@@ -918,7 +909,7 @@ void Cache::supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
     dbg.output(CALL_INFO, "Time to supply data from block 0x%"PRIx64" [%d.%d]\n", block->baseAddr, block->status, block->user_locked);
 	supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, src, ev->getID());
-	ASSERT(supMapI != suppliesInProgress.end());
+	assert(supMapI != suppliesInProgress.end());
 
 
 	if ( supMapI->second.canceled ) {
@@ -1057,7 +1048,7 @@ void Cache::finishBusSupplyData(BusHandlerArgs &args)
     }
 
 	supplyMap_t::iterator supMapI = getSupplyInProgress(args.supplyData.initiatingEvent->getAddr(), args.supplyData.src, args.supplyData.initiatingEvent->getID());
-	ASSERT(supMapI != suppliesInProgress.end());
+	assert(supMapI != suppliesInProgress.end());
 	suppliesInProgress.erase(supMapI);
 
     delete args.supplyData.initiatingEvent;
@@ -1128,7 +1119,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
             /* We still don't have a block assigned, so we didn't ask for
              * this.  Must be a snoop that we can ignore.
              * (no room in the inn) */
-            ASSERT( src == SNOOP );
+            assert( src == SNOOP );
         } else {
 
             if ( li->busEvent ) {
@@ -1328,7 +1319,6 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
 
 
         if ( waitingForInvalidate(block->baseAddr) ) {
-            //printf("%s: Recevied another invalidate for 0x%"PRIx64" from %s.  Canceling existing.\n", getName().c_str(), ev->getAddr(), ev->getSrc().c_str()); fflush(stdout);
             bool ok = cancelInvalidate(block); /* Should cause a re-issue of the write */
             if ( !ok ) {
                 /* This was an un-cancelable invalidate that is in progress.
@@ -1361,14 +1351,12 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
 
 
     if ( !finishedUpstream && (src == DOWNSTREAM || src == DIRECTORY) && !isL1 ) {
-        //printf("Forwarding invalidate 0x%"PRIx64" on upstream.\n", ev->getAddr()); fflush(stdout);
         dbg.output(CALL_INFO, "Forwarding invalidate 0x%"PRIx64" on upstream.\n", ev->getAddr());
         issueInvalidate(ev, src, ev->getAddr(), SEND_UP, false);
         return;
     }
 
     if ( !finishedUpstream && ((src == UPSTREAM) || (src == SNOOP && directory_link != NULL ))) {
-        //printf("Forwarding invalidate 0x%"PRIx64" downstream\n", ev->getAddr()); fflush(stdout);
         dbg.output(CALL_INFO, "Forwarding invalidate 0x%"PRIx64" downstream\n", ev->getAddr());
         if ( block ) {
             issueInvalidate(ev, src, block, (cacheMode == INCLUSIVE) ? CacheBlock::DIRTY_UPSTREAM : CacheBlock::INVALID, SEND_DOWN, true);
@@ -1505,7 +1493,7 @@ void Cache::ackInvalidate(MemEvent *ev)
             int remaining = --invalidations[addr].waitingACKs;
             dbg.output(CALL_INFO, "Acknoweldging an Invalidate (%"PRIx64", %d).  [%d remain]\n", invalidations[addr].issuingEvent.first, invalidations[addr].issuingEvent.second, remaining);
 
-            ASSERT(remaining >= 0);
+            assert(remaining >= 0);
             if ( remaining == 0 )
                 finishIssueInvalidate(addr);
         } else {
@@ -1590,7 +1578,7 @@ void Cache::finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newS
     dbg.output(CALL_INFO, "Marking block 0x%"PRIx64" with status %d\n", block->baseAddr, block->status);
 
     if ( newStatus == CacheBlock::INVALID ) {
-        ASSERT(!block->isLocked());
+        assert(!block->isLocked());
         block = NULL;
     }
 
@@ -1891,7 +1879,7 @@ void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 			block->baseAddr - ev->getAddr();
 
 		for ( uint32_t i = 0 ; i < std::min(blocksize,ev->getSize()) ; i++ ) {
-			ASSERT(blockoffset+i < blocksize);
+			assert(blockoffset+i < blocksize);
 			block->data[blockoffset+i] = ev->getPayload()[payloadoffset+i];
 		}
 	}
@@ -1956,7 +1944,7 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 {
 	/* Calculate Row number */
 	Addr row = (addr >> rowshift) & rowmask;
-	ASSERT(row < (Addr)n_rows);
+	assert(row < (Addr)n_rows);
 	return &database[row];
 }
 
@@ -2026,7 +2014,7 @@ std::string Cache::findTargetDirectory(Addr addr)
 
 
 
-void Cache::printCache(void)
+void Cache::printCache(Output &out)
 {
 	static const char *status[] = {"I", "A", "S", "E"};
 	std::ostringstream ss;
@@ -2100,8 +2088,7 @@ void Cache::printCache(void)
         ss << "Bus Queue Size:  " << snoopBusQueue.size() << "\n";
     }
 
-	std::cout << ss.str();
-
+    out.output(ss.str().c_str());
 }
 
 

@@ -33,6 +33,7 @@ using namespace SST::Interfaces;
 streamCPU::streamCPU(ComponentId_t id, Params_t& params) :
     Component(id), rng(id, 13)
 {
+    out.init("", 0, 0, Output::STDOUT);
 
 	// get parameters
 	if ( params.find("workPerCycle") == params.end() ) {
@@ -91,7 +92,7 @@ void streamCPU::init(unsigned int phase)
 // incoming events are scanned and deleted
 void streamCPU::handleEvent(Event *ev)
 {
-	//printf("recv\n");
+	//out.output("recv\n");
 	MemEvent *event = dynamic_cast<MemEvent*>(ev);
 	if (event) {
 		// May receive invalidates.  Just ignore 'em.
@@ -103,7 +104,7 @@ void streamCPU::handleEvent(Event *ev)
 		} else {
 			SimTime_t et = getCurrentSimTime() - i->second;
 			requests.erase(i);
-			printf("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
+			out.output("%s: Received MemEvent with command %d (response to %"PRIu64", addr 0x%"PRIx64") [Time: %"PRIu64"] [%zu outstanding requests]\n",
 					getName().c_str(),
 					event->getCmd(), event->getResponseToID().first, event->getAddr(), et,
                     requests.size());
@@ -112,7 +113,7 @@ void streamCPU::handleEvent(Event *ev)
 
 		delete event;
 	} else {
-		printf("Error! Bad Event Type!\n");
+		out.output("Error! Bad Event Type!\n");
 	}
 }
 
@@ -129,7 +130,7 @@ bool streamCPU::clockTic( Cycle_t )
 	// communicate?
 	if ((numLS != 0) && ((rng.generateNextUInt32() % commFreq) == 0)) {
 		if ( requests.size() > 10 ) {
-			printf("%s: Not issuing read.  Too many outstanding requests.\n",
+			out.output("%s: Not issuing read.  Too many outstanding requests.\n",
 					getName().c_str());
 		} else {
 
@@ -148,7 +149,7 @@ bool streamCPU::clockTic( Cycle_t )
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));
 
-			//printf("%s: %d Issued %s (%"PRIu64") for address 0x%""\n",
+			//out.output("%s: %d Issued %s (%"PRIu64") for address 0x%""\n",
 			//		getName().c_str(), numLS, doWrite ? "Write" : "Read", e->getID().first, nextAddr);
 			std::cout << getName() << " " << numLS << " issued: " <<
 				(doWrite ? "write" : "read") << " (id=" << e->getID().first << ", Addr=" << nextAddr <<

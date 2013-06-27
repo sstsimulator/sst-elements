@@ -369,7 +369,7 @@ private:
 
     std::string findTargetDirectory(Addr addr);
 
-	void printCache(void);
+	void printCache(Output &out);
 
 
 

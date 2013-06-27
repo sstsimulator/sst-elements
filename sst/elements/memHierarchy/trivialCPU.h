@@ -22,6 +22,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/output.h>
 
 #include <sst/core/rng/marsaglia.h>
 #include <sst/core/interfaces/memEvent.h>
@@ -36,7 +37,7 @@ public:
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init();
 	void finish() {
-		printf("TrivialCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned\n",
+		out.output("TrivialCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned\n",
 				num_reads_issued, num_reads_returned);
 	}
 
@@ -49,6 +50,7 @@ private:
 	void handleEvent( SST::Event *ev );
 	virtual bool clockTic( SST::Cycle_t );
 
+    Output out;
     int numLS;
 	int workPerCycle;
 	int commFreq;

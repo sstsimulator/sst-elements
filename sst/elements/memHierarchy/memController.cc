@@ -156,7 +156,6 @@ void MemController::init(unsigned int phase)
         if ( me ) {
             /* Push data to memory */
             if ( me->getCmd() == WriteReq ) {
-                //printf("Memory received Init Command: of size 0x%x at addr 0x%"PRIx64"\n", me->getSize(), me->getAddr() );
                 if ( isRequestAddressValid(me) ) {
                     Addr localAddr = convertAddressToLocalAddress(me->getAddr());
                     for ( size_t i = 0 ; i < me->getSize() ; i++ ) {
@@ -164,7 +163,8 @@ void MemController::init(unsigned int phase)
                     }
                 }
             } else {
-                printf("Memory received unexpected Init Command: %d\n", me->getCmd() );
+                Output out("", 0, 0, Output::STDERR);
+                out.output("Memory received unexpected Init Command: %d\n", me->getCmd() );
             }
         } else {
             StringEvent *se = dynamic_cast<StringEvent*>(ev);
@@ -209,19 +209,20 @@ void MemController::finish(void)
 
 
 #if 0
+    Output out("MemController "+getName()+": ", 0, 0, Output::STDOUT);
+    out.output("Memory received unexpected Init Command: %d\n", me->getCmd() );
     /* TODO:  Toggle this based off of a parameter */
-    printf("--------------------------------------------------------\n");
-    printf("MemController: %s\n", getName().c_str());
-    printf("Outstanding Requests:  %zu\n", outstandingReadReqs.size());
+    out.output("--------------------------------------------------------\n");
+    out.output("Outstanding Requests:  %zu\n", outstandingReadReqs.size());
     for ( std::map<Addr, DRAMReq*>::iterator i = outstandingReadReqs.begin() ; i != outstandingReadReqs.end() ; ++i ) {
         DRAMReq *req = i->second;
-        printf("\t0x%08lx\t%s (%lu, %lu)\t%zu bytes:  %zu/%zu\n",
+        out.output("\t0x%08lx\t%s (%lu, %lu)\t%zu bytes:  %zu/%zu\n",
                 i->first, CommandString[req->reqEvent->getCmd()],
                 req->reqEvent->getID().first, req->reqEvent->getID().second,
                 req->size, req->amt_in_process, req->amt_processed);
     }
-    printf("Requests Queue:  %zu\n", requestQueue.size());
-    printf("--------------------------------------------------------\n");
+    out.output("Requests Queue:  %zu\n", requestQueue.size());
+    out.output("--------------------------------------------------------\n");
 #endif
 
 }
