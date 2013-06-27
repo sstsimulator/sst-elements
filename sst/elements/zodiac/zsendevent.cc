@@ -5,9 +5,12 @@ using namespace SST::Hermes;
 using namespace SST::Zodiac;
 using namespace SST;
 
-ZodiacSendEvent::ZodiacSendEvent(uint32_t dest, uint32_t length,
-                        PayloadDataType dataType,
-                        uint32_t tag, HermesCommunicator group) {
+ZodiacSendEvent::ZodiacSendEvent(
+	uint32_t dest,
+	uint32_t length,
+        PayloadDataType dataType,
+        uint32_t tag,
+	Communicator group) {
 
 	msgDest = dest;
 	msgLength = length;
@@ -36,6 +39,6 @@ PayloadDataType ZodiacSendEvent::getDataType() {
 	return msgType;
 }
 
-HermesCommunicator ZodiacSendEvent::getCommunicatorGroup() {
+Communicator ZodiacSendEvent::getCommunicatorGroup() {
 	return msgComm;
 }

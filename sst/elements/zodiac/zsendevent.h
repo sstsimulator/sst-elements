@@ -14,21 +14,21 @@ class ZodiacSendEvent : public ZodiacEvent {
 	public:
 		ZodiacSendEvent(uint32_t dest, uint32_t length, 
 			PayloadDataType dataType,
-			uint32_t tag, HermesCommunicator group);
+			uint32_t tag, Communicator group);
 		ZodiacEventType getEventType();
 
 		uint32_t getDestination();
 		uint32_t getLength();
 		uint32_t getMessageTag();
 		PayloadDataType getDataType();
-		HermesCommunicator getCommunicatorGroup();
+		Communicator getCommunicatorGroup();
 
 	private:
 		uint32_t msgDest;
 		uint32_t msgLength;
 		uint32_t msgTag;
 		PayloadDataType msgType;
-		HermesCommunicator msgComm;
+		Communicator msgComm;
 
 };
 

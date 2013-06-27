@@ -8,6 +8,7 @@
 #include <stdarg.h>
 
 #include "ztrace.h"
+#include "zsirius.h"
 
 #ifdef HAVE_ZODIAC_DUMPI
 #include "zdumpi.h"
@@ -26,6 +27,13 @@ create_ZodiacTraceReader(SST::ComponentId_t id,
                   SST::Component::Params_t& params)
 {
     return new ZodiacTraceReader( id, params );
+}
+
+static Component*
+create_ZodiacSiriusTraceReader(SST::ComponentId_t id,
+                  SST::Component::Params_t& params)
+{
+    return new ZodiacSiriusTraceReader( id, params );
 }
 
 #ifdef HAVE_ZODIAC_DUMPI
@@ -53,6 +61,12 @@ static const ElementInfoComponent components[] = {
 	"Application Communication Trace Reader",
 	NULL,
 	create_ZodiacTraceReader,
+    },
+    {
+	"ZodiacSiriusTraceReader",
+	"Application Communication Sirius Trace Reader",
+	NULL,
+	create_ZodiacSiriusTraceReader,
     },
 #ifdef HAVE_ZODIAC_DUMPI
     {

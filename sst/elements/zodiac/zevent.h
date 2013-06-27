@@ -12,6 +12,7 @@ enum ZodiacEventType {
 	COMPUTE,
 	SEND,
 	RECV,
+	BARRIER,
 	COLLECTIVE
 };
 

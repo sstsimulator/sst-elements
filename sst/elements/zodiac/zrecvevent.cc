@@ -7,7 +7,7 @@ using namespace SST;
 
 ZodiacRecvEvent::ZodiacRecvEvent(uint32_t src, uint32_t length,
                         PayloadDataType dataType,
-                        uint32_t tag, HermesCommunicator group) {
+                        uint32_t tag, Communicator group) {
 
 	msgSrc = src;
 	msgLength = length;
@@ -36,6 +36,6 @@ PayloadDataType ZodiacRecvEvent::getDataType() {
 	return msgType;
 }
 
-HermesCommunicator ZodiacRecvEvent::getCommunicatorGroup() {
+Communicator ZodiacRecvEvent::getCommunicatorGroup() {
 	return msgComm;
 }

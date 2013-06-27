@@ -22,7 +22,16 @@ libzodiac_la_SOURCES = \
 	zsendevent.h \
 	zsendevent.cc \
 	zrecvevent.h \
-	zrecvevent.cc
+	zrecvevent.cc \
+	siriusreader.h \
+	siriusreader.cc \
+	siriusconst.h \
+	zsirius.h \
+	zsirius.cc \
+	zbarrierevent.h \
+	zbarrierevent.cc \
+	zcomputeevent.h \
+	zcomputeevent.cc
 
 libzodiac_la_LDFLAGS = -module -avoid-version
 
