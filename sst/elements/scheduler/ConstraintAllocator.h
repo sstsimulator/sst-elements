@@ -44,6 +44,7 @@ namespace SST {
                 std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job);
+                AllocInfo* allocate(Job* job, std::vector<std::string> Cluster);
 
             private:
                 //constraints
@@ -53,7 +54,6 @@ namespace SST {
 
                 //map from internal node u to  set of dependent compute nodes D[u]
                 std::map< std::string, std::set<std::string> > D;
-                std::vector<std::string> Cluster; // current cluster of suspects to be separated
                 std::string ConstraintsFileName;
         };
 
