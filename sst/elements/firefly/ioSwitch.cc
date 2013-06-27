@@ -34,7 +34,6 @@ using namespace SST::Firefly;
 IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
     Component( id )
 {
-    DBGX("\n");
     int numPorts = params.find_integer("numPorts");
 
     if ( -1 == numPorts ) {
@@ -49,10 +48,9 @@ IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
     for ( int i = 0; i< m_links.size(); i++ ) {
         std::ostringstream linkName;
         linkName << "port" << i;
-        std::string ln = linkName.str();
 
-        DBGX("%d %s\n",i,ln.c_str());
-        m_links[i] = configureLink( ln,
+        DBGX("%d %s\n",i,linkName.str().c_str());
+        m_links[i] = configureLink( linkName.str().c_str(),
             new SST::Event::Handler<IOSwitch,int>(this, &IOSwitch::handleEvent,i));
         if ( NULL == m_links[i] ) {
             _abort(IOSwitch, "configureLink failed\n");
@@ -67,18 +65,18 @@ IOSwitch::~IOSwitch()
 
 void IOSwitch::init( unsigned int phase )
 {
-#if 0
-    if ( ! phase ) {
+    if ( 0 == phase ) {
         for ( int i = 0; i < m_links.size(); i++ ) {
             std::ostringstream portName;
             portName << i;
             std::string port = portName.str();
 
+            DBGX("send event to port %d `%s`\n",i, port.c_str());
+
             SST::Event* event = new SST::Interfaces::StringEvent( port ); 
             m_links[i]->sendInitData( event ); 
         }     
     }
-#endif
 }
 
 void IOSwitch::handleEvent( SST::Event* e, int src )

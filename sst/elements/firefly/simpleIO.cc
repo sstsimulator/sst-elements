@@ -21,7 +21,7 @@
 #define DBGX( fmt, args... ) \
 {\
     char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%s::%s():%d: "fmt, realname ? realname : "?????????", \
+    fprintf( stderr, "%d:%s::%s():%d: "fmt, getNodeId(), realname ? realname : "?????????", \
                         __func__, __LINE__, ##args);\
     if ( realname ) free(realname);\
 }
@@ -31,9 +31,26 @@ using namespace SST::Firefly::IO;
 
 SimpleIO::SimpleIO( Params& params ) :
     Interface(),
-    m_dataReadyFunc( NULL )
+    m_dataReadyFunc( NULL ),
+    m_myNodeId( AnyId )
 {
-    DBGX("\n");
+    SST::Component* owner = (SST::Component*) params.find_integer( "owner" );
+
+    m_link = owner->configureLink( "link", "50 ps",
+            new Event::Handler<SimpleIO>(this, &SimpleIO::handleEvent));
+    if ( NULL == m_link ) {
+        _abort(SimpleIO,"configureLink failed\n");
+    } 
+}
+
+void SimpleIO::_componentInit(unsigned int phase )
+{
+    SST::Interfaces::StringEvent* event = 
+        static_cast<SST::Interfaces::StringEvent*>( m_link->recvInitData() );
+    if ( event ) {
+        m_myNodeId = atoi( event->getString().c_str() );
+        DBGX("set node id to %d\n", m_myNodeId );
+    } 
 }
 
 void SimpleIO::setDataReadyFunc( Functor2* dataReadyFunc )
@@ -41,19 +58,6 @@ void SimpleIO::setDataReadyFunc( Functor2* dataReadyFunc )
     m_dataReadyFunc = dataReadyFunc; 
 }
 
-void SimpleIO::setOwningComponent(SST::Component* owner, NodeId nodeId)
-{
-    m_owner = owner;
-    m_myNodeId = nodeId;
-
-    DBGX("my nodeId %d\n",nodeId)
-
-    m_link = m_owner->configureLink( "link", "50 ps",
-            new Event::Handler<SimpleIO>(this, &SimpleIO::handleEvent));
-    if ( NULL == m_link ) {
-        _abort(SimpleIO,"configureLink failed\n");
-    } 
-}
 
 void SimpleIO::handleEvent(SST::Event* e){
     DBGX("\n");

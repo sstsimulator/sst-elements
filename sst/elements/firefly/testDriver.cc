@@ -37,50 +37,60 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     Component( id ),
     m_functor( DerivedFunctor( this, &TestDriver::funcDone ) )
 {
-    DBGX("\n");
-
     // this has to come first 
     registerTimeBase( "100 ns", true);
 
-    std::string name = params.find_string("hermes");
+    int rank = params.find_integer("rank");
+    if ( rank < 0 ) {
+        _abort(TestDriver, "ERROR:  What Hermes rank?\n");
+    } 
+    DBGX("I'm rank %d\n",rank);
+
+    std::string name = params.find_string("hermesModule");
     if ( name == "" ) {
         _abort(TestDriver, "ERROR:  What Hermes module? '%s'\n", name.c_str());
     } 
     DBGX("loading module `%s`\n",name.c_str());
 
-    m_hermes = dynamic_cast<MessageInterface*>(loadModule(name,params));
+    std::ostringstream ownerName;
+    ownerName << this;
+    Params_t hermesParams = params.find_prefix_params("hermesParams." ); 
+    hermesParams.insert( 
+        std::pair<std::string,std::string>("owner", ownerName.str()));
+
+    m_hermes = dynamic_cast<MessageInterface*>(loadModule(name,hermesParams));
     if ( !m_hermes ) {
         _abort(TestDriver, "ERROR:  Unable to find Hermes '%s'\n",
                                         name.c_str());
     }
-    m_hermes->setOwningComponent( this, params.find_integer("id") );
+    
+    std::ostringstream traceFile;
+    traceFile << params.find_string("traceFile") << rank;
 
-    std::string traceFile = params.find_string("traceFile");
+    DBGX("traceFile `%s`\n",traceFile.str().c_str());
 
-    DBGX("traceFile `%s`\n",traceFile.c_str());
-
-    m_traceFile.open( traceFile.c_str() );
-
+    m_traceFile.open( traceFile.str().c_str() );
+    if ( ! m_traceFile.is_open() ) {
+        _abort(TestDriver, "ERROR:  Unable to open trace file '%s'\n",
+                                        traceFile.str().c_str() );
+    }
 
     m_selfLink = configureSelfLink("Self", "100 ns",
         new Event::Handler<TestDriver>(this,&TestDriver::handle_event));
-
-    DBGX("\n");
 }
     
 TestDriver::~TestDriver()
 {
-    DBGX("\n");
 }
 
 void TestDriver::init( unsigned int phase )
 {
+    m_hermes->_componentInit( phase );
 }
 
 void TestDriver::setup() 
 { 
     m_selfLink->send(1,NULL);
-    DBGX("\n");
 }
 
 void TestDriver::handle_event( Event* ev )

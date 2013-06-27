@@ -35,9 +35,9 @@ using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( Params& params ) :
-    MessageInterface()
+    MessageInterface(),
+    m_io( NULL )
 {
-    DBGX("\n");
     m_funcLat.resize(FunctionCtx::NumFunctions);
     m_funcLat[FunctionCtx::Init] = 10;
     m_funcLat[FunctionCtx::Fini] = 10;
@@ -49,36 +49,46 @@ Hades::Hades( Params& params ) :
     m_funcLat[FunctionCtx::Send] = 1;
     m_funcLat[FunctionCtx::Recv] = 1;
     m_funcLat[FunctionCtx::Wait] = 1;
-}
 
-void Hades::setOwningComponent(SST::Component* owner, int nodeId)
-{
-    m_owner = owner;
-    m_funcReturnDelayLink = m_owner->configureSelfLink("Hades.X", "1 ns",
+    SST::Component*     owner;
+
+    owner = (SST::Component*) params.find_integer( "owner" );
+
+    m_funcReturnDelayLink = owner->configureSelfLink("Hades.X", "1 ns",
         new Event::Handler<Hades>(this,&Hades::handle_event));
 
-    m_matchDelayLink = m_owner->configureSelfLink("Hades.Y", "1 ns",
+    m_matchDelayLink = owner->configureSelfLink("Hades.Y", "1 ns",
         new Event::Handler<Hades>(this,&Hades::handleMatchDelay));
 
-    Params params;
-    std::string name = "firefly.testIO";
-    m_io = dynamic_cast<IO::Interface*>(m_owner->loadModule(name,params));
+    Params ioParams = params.find_prefix_params("ioParams." );
+
+    std::ostringstream ownerName;
+    ownerName << owner;
+    ioParams.insert(
+        std::pair<std::string,std::string>("owner", ownerName.str()));
+
+    std::string moduleName = params.find_string("ioModule"); 
+    m_io = dynamic_cast<IO::Interface*>(owner->loadModule( moduleName,
+                        ioParams));
     if ( !m_io ) {
         _abort(TestDriver, "ERROR:  Unable to find Hermes '%s'\n",
-                                        name.c_str());
+                                        moduleName.c_str());
     }
 
-    m_myNodeId = nodeId;
-    m_io->setOwningComponent( owner, nodeId );
     if ( 0 ) {
         setIOCallback();
     }
 
     int size = 2;
-    Group group( size, nodeId );
+    Group group( size, myNodeId() );
     group.mapRank( 0, 0 );
     group.mapRank( 1, 1 );
     m_groupMap[0] = group; 
+}
+
+void Hades::_componentInit(unsigned int phase )
+{
+    m_io->_componentInit(phase);
 }
 
 void Hades::setIOCallback()

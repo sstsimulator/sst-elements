@@ -16,18 +16,20 @@
 
     <component name="0.driver" type=firefly.testDriver >
         <params>
-            <hermes> firefly.hades </hermes>
+            <rank> 0 </rank>
+            <hermesModule> firefly.hades </hermesModule>
             <traceFile> trace.out </traceFile>
-            <id> 0 </id>
+            <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
         </params>
         <link name=link.0 port=link latency=1ns />
     </component>
 
     <component name="1.driver" type=firefly.testDriver >
         <params>
-            <hermes> firefly.hades </hermes>
+            <rank> 1 </rank>
+            <hermesModule> firefly.hades </hermesModule>
             <traceFile> trace.out </traceFile>
-            <id> 1 </id>
+            <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
         </params>
         <link name=link.1 port=link latency=1ns />
     </component>
