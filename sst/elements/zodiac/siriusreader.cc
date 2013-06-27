@@ -20,6 +20,11 @@ SiriusReader::SiriusReader(string file, uint32_t focusOnRank, uint32_t maxQLen, 
 }
 
 void SiriusReader::close() {
+	if(NULL == trace) {
+		std::cerr << "Error: trace file is NULL" << std::endl;
+	} else {
+		std::cout << "Closing trace file" << std::endl;
+	}
 	fclose(trace);
 }
 

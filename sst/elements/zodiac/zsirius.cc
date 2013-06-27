@@ -37,11 +37,11 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& par
     eventQ = new std::queue<ZodiacEvent*>();
 
     trace = new SiriusReader(trace_file, rank, 64, eventQ);
-    trace->generateNextEvents();
+    int count = trace->generateNextEvents();
+    std::cout << "Obtained: " << count << " events" << std::endl;
 }
 
 ZodiacSiriusTraceReader::~ZodiacSiriusTraceReader() {
-	trace->close();
 }
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader() :
