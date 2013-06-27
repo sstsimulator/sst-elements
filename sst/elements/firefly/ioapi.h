@@ -47,9 +47,9 @@ class Interface : public SST::Module {
 
     Interface() { }
     virtual ~Interface() { }
+     virtual void _componentInit(unsigned int phase ) {}
 
     virtual NodeId getNodeId() {};
-    virtual void setOwningComponent(SST::Component* owner, NodeId = AnyId) { };
     virtual void setDataReadyFunc(Functor2*) { };
     virtual size_t peek(NodeId& src) { }
     virtual bool isReady(NodeId dest) { } 

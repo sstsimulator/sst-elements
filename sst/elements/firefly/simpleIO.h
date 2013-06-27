@@ -28,9 +28,10 @@ class SimpleIO : public IO::Interface {
   public:
     SimpleIO(Params&);
 
+     virtual void _componentInit(unsigned int phase );
+
     virtual IO::NodeId getNodeId() { return m_myNodeId; }
     virtual void setDataReadyFunc(IO::Functor2*);
-    virtual void setOwningComponent(SST::Component* owner, IO::NodeId nodeId);
 
     virtual size_t peek(IO::NodeId& src);
     virtual bool isReady(IO::NodeId src);
@@ -42,7 +43,6 @@ class SimpleIO : public IO::Interface {
 
     IO::Functor2*           m_dataReadyFunc;
     SST::Link*              m_link;
-    SST::Component*         m_owner;
     std::deque<IOEvent*>    m_recvQ;
     
     IO::NodeId              m_myNodeId;

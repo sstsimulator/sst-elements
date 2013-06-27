@@ -89,8 +89,7 @@ class MessageInterface : public Module {
     MessageInterface() {}
     virtual ~MessageInterface() {}
 
-    virtual void setOwningComponent(SST::Component* owner, int) {}
-
+    virtual void _componentInit(unsigned int phase ) {}
     virtual void init(Functor*) {}
     virtual void fini(Functor*) {}
     virtual void rank(Communicator group, int* rank, Functor*) {}

@@ -69,7 +69,7 @@ class Hades : public Hermes::MessageInterface
 
   public:
     Hades(Params&);
-    virtual void setOwningComponent(SST::Component* owner, int );
+    virtual void _componentInit(unsigned int phase );
     virtual void init(Hermes::Functor*);
     virtual void fini(Hermes::Functor*);
     virtual void rank(Hermes::Communicator group, int* rank, Hermes::Functor*);
@@ -164,7 +164,6 @@ class Hades : public Hermes::MessageInterface
     IncomingEntry* searchUnexpected(RecvEntry*); 
 
     FunctionCtx*        m_ctx;
-    SST::Component*     m_owner;
     SST::Link*          m_funcReturnDelayLink;  
     SST::Link*          m_matchDelayLink;  
     RetFuncEvent        m_retFuncEvent; 
@@ -177,8 +176,13 @@ class Hades : public Hermes::MessageInterface
 
     void setIOCallback();
     
-    int m_myNodeId; // for debug
-    int myNodeId() { return m_myNodeId; }
+    int myNodeId() { 
+        if ( m_io ) {
+            return m_io->getNodeId();
+        } else {
+            return -1;
+        }
+    }
 };
 
 } // namesapce Firefly 
