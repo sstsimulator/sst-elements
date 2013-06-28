@@ -62,6 +62,17 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
         new Event::Handler<TestDriver>(this,&TestDriver::handle_event));
 
     m_traceFileName = params.find_string("traceFile");
+
+    int bufLen = params.find_integer( "bufLen" );
+    assert( bufLen != -1 ); 
+
+    DBGX("bufLen=%d\n",bufLen);
+    m_recvBuf.resize(bufLen);
+    m_sendBuf.resize(bufLen);
+    
+    for ( int i = 0; i < m_sendBuf.size(); i++ ) {
+        m_sendBuf[i] = i;
+    } 
 }
     
 TestDriver::~TestDriver()
@@ -105,7 +116,7 @@ void TestDriver::handle_event( Event* ev )
     } else if ( line.compare( "irecv" ) == 0 ) {
 
         printf("my_size=%d my_rank=%d\n",my_size, my_rank);
-        m_hermes->irecv( NULL, 0, CHAR, 
+        m_hermes->irecv( &m_recvBuf[0], m_recvBuf.size(), CHAR, 
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
                                     GroupWorld, 
@@ -114,7 +125,7 @@ void TestDriver::handle_event( Event* ev )
 
     } else if ( line.compare( "send" ) == 0 ) {
 
-        m_hermes->send( NULL, 0, CHAR,
+        m_hermes->send( &m_sendBuf[0], m_sendBuf.size(), CHAR,
                                 (my_rank + 1 ) % 2,
                                 0xdead, 
                                 GroupWorld, 
@@ -126,6 +137,11 @@ void TestDriver::handle_event( Event* ev )
         int flag;
         m_hermes->wait( &my_req, &my_resp, &m_functor );
     } else if ( line.compare( "fini" ) == 0 ) {
+        for ( int i = 0; i < m_recvBuf.size(); i++ ) {
+            if ( m_recvBuf[i] != i ) {
+                DBGX("ERROR %d != %d\n",i,m_recvBuf[i]);
+            }
+        }
         m_hermes->fini( &m_functor );
     }
 

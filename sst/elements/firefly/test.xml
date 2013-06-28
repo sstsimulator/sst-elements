@@ -10,36 +10,30 @@
   <nic_params>
   </nic_params>
 
+  <driverParams>
+     <bufLen> 10 </bufLen>
+     <hermesModule> firefly.hades </hermesModule>
+     <traceFile> trace.out </traceFile>
+     <hermesParams.numRanks> 2 </hermesParams.numRanks>
+     <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
+     <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
+     <hermesParams.policy> adjacent </hermesParams.policy>
+     <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
+     <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
+  </driverParams>
+
 </param_include>
 
 <sst>
 
     <component name="0.driver" type=firefly.testDriver >
-        <params>
-            <hermesModule> firefly.hades </hermesModule>
-            <traceFile> trace.out </traceFile>
-            <hermesParams.numRanks> 2 </hermesParams.numRanks>
-            <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
-            <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
-            <hermesParams.policy> adjacent </hermesParams.policy>
-            <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
-            <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
+        <params include=driverParams>
         </params>
         <link name=link.0 port=link latency=1ns />
     </component>
 
     <component name="1.driver" type=firefly.testDriver >
-        <params>
-            <rank> 1 </rank>
-            <hermesModule> firefly.hades </hermesModule>
-            <traceFile> trace.out </traceFile>
-            <nodeParams.numCores> 1 </nodeParams.numCores>
-            <hermesParams.numRanks> 2 </hermesParams.numRanks>
-            <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
-            <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
-            <hermesParams.policy> adjacent </hermesParams.policy>
-            <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
-            <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
+        <params include=driverParams>
         </params>
         <link name=link.1 port=link latency=1ns />
     </component>

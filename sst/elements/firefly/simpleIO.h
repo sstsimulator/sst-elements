@@ -43,9 +43,8 @@ class SimpleIO : public IO::Interface {
 
     IO::Functor2*           m_dataReadyFunc;
     SST::Link*              m_link;
-    std::deque<IOEvent*>    m_recvQ;
-    
     IO::NodeId              m_myNodeId;
+    std::map<IO::NodeId, std::string > m_streamMap;
 };
 
 }

@@ -30,7 +30,7 @@
 #define DBGX( fmt, args... ) \
 {\
     char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%d:%d:%s::%s():%d: "fmt, myNodeId(), myWorldRank(),realname ? realname : "?????????", \
+    fprintf( stderr, "%d:%d:%s::%s():%d: "fmt, myNodeId(), _myWorldRank(),realname ? realname : "?????????", \
                         __func__, __LINE__, ##args);\
     if ( realname ) free(realname);\
 }
@@ -75,7 +75,7 @@ Hades::Hades( Params& params ) :
     m_io = dynamic_cast<IO::Interface*>(owner->loadModule( moduleName,
                         ioParams));
     if ( !m_io ) {
-        _abort(TestDriver, "ERROR:  Unable to find Hermes '%s'\n",
+        _abort(Hades, "ERROR:  Unable to find Hermes '%s'\n",
                                         moduleName.c_str());
     }
 
@@ -89,7 +89,7 @@ Hades::Hades( Params& params ) :
 
     int numRanks = params.find_integer("numRanks");
     if ( numRanks <= 0 ) {
-        _abort(TestDriver, "ERROR:  How many global ranks?\n");
+        _abort(Hades, "ERROR:  How many global ranks?\n");
     }
     DBGX("numRanks %d\n", numRanks);
 
@@ -99,7 +99,7 @@ Hades::Hades( Params& params ) :
 
     std::ifstream nidListFile( nidListFileName.c_str());
     if ( ! nidListFile.is_open() ) {
-        _abort(TestDriver, "ERROR:  Unable to open nid list '%s'\n",
+        _abort(Hades, "ERROR:  Unable to open nid list '%s'\n",
                                         nidListFileName.c_str() );
     }
 
@@ -115,13 +115,24 @@ Hades::Hades( Params& params ) :
         group = initRoundRobinMap(numRanks, m_nodeInfo->numCores(), nidListFile); 
 #endif
     } else {
-        _abort(TestDriver, "ERROR: unknown load policy `j%s` ",
+        _abort(Hades, "ERROR: unknown load policy `j%s` ",
                                             policy.c_str() );
     }
     m_groupMap[Hermes::GroupWorld] = group;
 
     nidListFile.close();
 }
+
+Hermes::RankID Hades::myWorldRank() 
+{
+    int rank = m_groupMap[Hermes::GroupWorld]->getMyRank();
+    if ( -1 == rank ) {
+        _abort(Hades,"%s() rank not set yet\n",__func__);
+    } else {
+        return rank;
+    }
+}
+
 
 void Hades::_componentSetup()
 {

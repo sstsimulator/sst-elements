@@ -60,8 +60,19 @@ void SimpleIO::setDataReadyFunc( Functor2* dataReadyFunc )
 
 
 void SimpleIO::handleEvent(SST::Event* e){
-    DBGX("\n");
-    m_recvQ.push_back( static_cast<IOEvent*>(e) );
+    IOEvent* event = static_cast<IOEvent*>(e);
+    
+    NodeId srcNode = event->getNodeId(); 
+
+    if ( m_streamMap.find( srcNode ) == m_streamMap.end() ) {
+        DBGX("srcNode %d new src\n",srcNode);
+        m_streamMap[ srcNode ] = event->getString();
+    } else {
+        DBGX("srcNode %d append\n",srcNode);
+        m_streamMap[ srcNode ].insert( m_streamMap[ srcNode ].size(), 
+                                    event->getString() ); 
+    }
+    delete e;
 }
 
 bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec, Functor* functor )
@@ -69,11 +80,25 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec, Functor* functor )
     size_t len = 0;
     DBGX("dest=%d ioVec.size()=%d\n", dest, ioVec.size() );
 
-    std::string buffer;
+    
     for ( int i = 0; i < ioVec.size(); i++ ) {
-        buffer.resize( buffer.size() + ioVec[i].len );
-        memcpy( &buffer[ 0 ] + len,  ioVec[i].ptr, ioVec[i].len );
+        len += ioVec[i].len;
     }
+
+    std::string buffer;
+    buffer.resize( len );
+
+    len = 0;
+    for ( int i = 0; i < ioVec.size(); i++ ) {
+        memcpy( &buffer[ 0 ] + len,  ioVec[i].ptr, ioVec[i].len );
+        len += ioVec[i].len; 
+    }
+
+#if 0
+    for ( int j = 0; j < buffer.size(); j++ ) {
+        DBGX("%x\n",buffer[j]);
+    }
+#endif
 
     if ( m_dataReadyFunc ) {
         (*m_dataReadyFunc)( 0 );
@@ -94,32 +119,23 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec, Functor* functor )
 
 bool SimpleIO::recvv( NodeId src, std::vector<IoVec>& ioVec, Functor* functor )
 {
-    size_t len = 0;
     DBGX("src=%d ioVec.size()=%d\n", src, ioVec.size() );
 
-    for ( int i = 0; i < ioVec.size(); i++ ) {
-        len += ioVec[i].len;
-    }
+    assert( m_streamMap.find( src ) != m_streamMap.end() ); 
 
-    if ( 0 == len ) {
-        goto done;
-    }
-
-    assert( ! m_recvQ.empty() );
-    len = 0;
+    std::string& buf = m_streamMap[src ];
 
     for ( int i = 0; i < ioVec.size(); i++ ) {
-        if ( ioVec[i].len ) {
-            memcpy( ioVec[i].ptr, 
-                    &m_recvQ.front()->getString()[0] + len, ioVec[i].len );
-            len += ioVec[i].len; 
-        }
+        assert( buf.size() >= ioVec[i].len );
+    //    DBGX("copied %d bytes\n",ioVec[i].len );
+        memcpy( ioVec[i].ptr, &buf[0], ioVec[i].len );
+        buf.erase(0, ioVec[i].len );
+    //    DBGX("%d bytes left\n",buf.size() );
     }
 
-    delete m_recvQ.front();
-    m_recvQ.pop_front();
-
-done:
+    if ( buf.empty() ) {
+        m_streamMap.erase( src );
+    }
 
     if ( functor ) {
         Entry* tmp = (*functor)();
@@ -138,9 +154,20 @@ bool SimpleIO::isReady( NodeId dest )
 
 size_t SimpleIO::peek( NodeId& src )
 {
-    DBGX("\n");
-    if ( m_recvQ.empty() ) return 0;
+    DBGX("src %d\n",src);
+    if ( src == IO::AnyId ) {
+        if ( m_streamMap.empty() ) {
+            return 0;
+        } else {
+            std::map<NodeId,std::string>::iterator it = m_streamMap.begin();
+            src = it->first;
+        } 
+    } else {
+        if ( m_streamMap.find( src ) == m_streamMap.end() ) {
+            return 0;
+        } 
+    }
+    DBGX("src OK %d\n",src);
     
-    src =  m_recvQ.front()->getNodeId();
-    return m_recvQ.front()->getString().length();
+    return m_streamMap[src].size();
 }

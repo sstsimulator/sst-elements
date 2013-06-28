@@ -189,11 +189,13 @@ class Hades : public Hermes::MessageInterface
         }
     }
 
-    Hermes::RankID myWorldRank() {
-        if ( ! m_groupMap.empty() ) { 
-            return m_groupMap[Hermes::GroupWorld]->getMyRank();
+    Hermes::RankID myWorldRank();
+
+    Hermes::RankID _myWorldRank() {
+        if ( m_groupMap.empty() ) {
+            return -1; 
         } else {
-            return -1;
+            return myWorldRank();
         }
     }
 };

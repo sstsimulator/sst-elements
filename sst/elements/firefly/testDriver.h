@@ -48,6 +48,9 @@ class TestDriver : public SST::Component {
     int                     my_rank;
     int                     my_size;
 
+    std::vector<unsigned char> m_recvBuf;
+    std::vector<unsigned char> m_sendBuf;
+
 };
 
 } // namesapce Firefly 

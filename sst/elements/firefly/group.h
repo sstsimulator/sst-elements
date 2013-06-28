@@ -22,8 +22,11 @@ class Group
     static const int coreShift = 26;
     static const int nidMask = (1 << coreShift) - 1;  
   public:
-    Group() {}
-    Group( int size ) 
+    Group() : 
+        m_rank( -1 ) 
+    {}
+    Group( int size ) :
+        m_rank( -1 ) 
     {
         m_rankMap.resize(size);
     }
