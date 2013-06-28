@@ -61,6 +61,9 @@ private:
   DerivedFunctor recvFunctor;
   std::map<uint64_t, MessageRequest*> reqMap;
   MessageResponse* currentRecv;
+  int rank;
+  string trace_file;
+  int verbosityLevel;
 
   ////////////////////////////////////////////////////////
 

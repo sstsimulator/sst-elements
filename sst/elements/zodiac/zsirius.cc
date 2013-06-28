@@ -30,23 +30,18 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& par
         }
     }
 
-    string trace_file = params.find_string("trace");
+    trace_file = params.find_string("trace");
     if("" == trace_file) {
 	std::cerr << "Error: could not find a file contain a trace to simulate!" << std::endl;
 	exit(-1);
-    }
-
-    uint32_t rank = (uint32_t) params.find_integer("rank", 0);
-    //msgapi->setOwningComponent(this, (int) rank);
+    } else {
+	std::cout << "Trace prefix: " << trace_file << std::endl;
+     }
 
     eventQ = new std::queue<ZodiacEvent*>();
 
-    int verbosityLevel = params.find_integer("verbose", 0);
+    verbosityLevel = params.find_integer("verbose", 0);
     std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
-
-    trace = new SiriusReader(trace_file, rank, 64, eventQ, verbosityLevel);
-    int count = trace->generateNextEvents();
-    std::cout << "Obtained: " << count << " events" << std::endl;
 
     selfLink = configureSelfLink("Self", "1ns", 
 	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
@@ -58,6 +53,16 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& par
 }
 
 void ZodiacSiriusTraceReader::setup() {
+    rank = msgapi->myWorldRank();
+    eventQ = new std::queue<ZodiacEvent*>();
+
+    char trace_name[trace_file.length() + 20];
+    sprintf(trace_name, "%s.%d", trace_file.c_str(), rank);
+
+    trace = new SiriusReader(trace_name, rank, 64, eventQ, verbosityLevel);
+    int count = trace->generateNextEvents();
+    std::cout << "Obtained: " << count << " events" << std::endl;
+
     if(eventQ->size() > 0) {
 	selfLink->send(eventQ->front());
     }

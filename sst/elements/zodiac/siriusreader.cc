@@ -4,7 +4,7 @@
 using namespace std;
 using namespace SST::Zodiac;
 
-SiriusReader::SiriusReader(string file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ,
+SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ,
 	int verbosityLevel) 
 {
 
@@ -13,7 +13,7 @@ SiriusReader::SiriusReader(string file, uint32_t focusOnRank, uint32_t maxQLen, 
 	qLimit = maxQLen;
 	foundFinalize = false;
 
-	trace = fopen(file.c_str(), "rb");
+	trace = fopen(file, "rb");
 	if(NULL == trace) {
 		std::cerr << "Error opening the Sirius trace file: " << file << std::endl;
 		exit(-1);
