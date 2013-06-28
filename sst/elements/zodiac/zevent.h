@@ -16,7 +16,8 @@ enum ZodiacEventType {
 	BARRIER,
 	COLLECTIVE,
 	INIT,
-	FINALIZE
+	FINALIZE,
+	WAIT
 };
 
 class ZodiacEvent : public SST::Event {

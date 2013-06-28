@@ -42,6 +42,7 @@ private:
   void handleRecvEvent(ZodiacEvent* zEv);
   void handleIRecvEvent(ZodiacEvent* zEv);
   void handleInitEvent(ZodiacEvent* zEv);
+  void handleWaitEvent(ZodiacEvent* zEv);
   void completedFunction(int val);
   void completedRecvFunction(int val);
 

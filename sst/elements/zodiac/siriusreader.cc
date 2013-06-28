@@ -146,6 +146,16 @@ void SiriusReader::readIrecv() {
 	eventQ->push(ev);
 }
 
+void SiriusReader::readWait() {
+	uint64_t reqID = readUINT64();
+	uint64_t status = readUINT64();
+
+	output->verbose(__LINE__, __FILE__, "readIrecv", 8, 0, "Read an MPI_Irecv\n");
+
+	ZodiacWaitEvent* ev = new ZodiacWaitEvent(reqID);
+	eventQ->push(ev);
+}
+
 void SiriusReader::readInit() {
 	output->verbose(__LINE__, __FILE__, "readInit", 8, 0, "Read an MPI_Init\n");
 	ZodiacInitEvent* ev = new ZodiacInitEvent();

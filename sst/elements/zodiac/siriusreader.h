@@ -25,6 +25,7 @@
 #include "zrecvevent.h"
 #include "zbarrierevent.h"
 #include "zcomputeevent.h"
+#include "zwaitevent.h"
 
 using namespace std;
 using namespace SST::Hermes;
@@ -61,6 +62,7 @@ class SiriusReader {
 	void readInit();
 	void readFinalize();
 	void readBarrier();
+	void readWait();
 
 	PayloadDataType convertToHermesType(uint32_t dtype);
 

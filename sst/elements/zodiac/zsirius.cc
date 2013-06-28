@@ -100,6 +100,14 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 			handleRecvEvent(zEv);
 			break;
 
+		case IRECV:
+			handleIRecvEvent(zEv);
+			break;
+
+		case WAIT:
+			handleWaitEvent(zEv);
+			break;
+
 		case BARRIER:
 			break;
 
@@ -142,6 +150,17 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
 		currentRecv, &recvFunctor);
+}
+
+void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
+	ZodiacWaitEvent* zWEv = static_cast<ZodiacWaitEvent*>(zEv);
+	assert(zWEv);
+
+	MessageRequest* msgReq = reqMap[zWEv->getRequestID()];
+	currentRecv = (MessageResponse*) malloc(sizeof(MessageResponse));
+	memset(currentRecv, 1, sizeof(MessageResponse));
+
+	msgapi->wait(msgReq, currentRecv, &recvFunctor);
 }
 
 void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
