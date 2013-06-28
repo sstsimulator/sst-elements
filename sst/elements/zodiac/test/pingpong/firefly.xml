@@ -12,14 +12,6 @@
 
 </param_include>
 
-     	<component name="z0" type="zodiac.ZodiacSiriusTraceReader">
-                <params>
-                        <trace>/home/sdhammo/subversion/sst-simulator/sst/elements/zodiac/test/hello-0-2.stf</trace>
-                        <rank>1</rank>
-                        <verbose>0</verbose>
-                </params>
-        </component>
-
 <sst>
 
     <component name="0.driver" type=zodiac.ZodiacSiriusTraceReader >
