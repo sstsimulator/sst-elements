@@ -37,6 +37,7 @@ class TestDriver : public SST::Component {
     void handle_event(SST::Event*);
     void funcDone(int retval);
 
+    std::string                 m_traceFileName;
     std::ifstream               m_traceFile;
     DerivedFunctor              m_functor;
     Hermes::MessageInterface*   m_hermes;

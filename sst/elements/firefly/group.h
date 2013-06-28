@@ -17,30 +17,39 @@
 namespace SST {
 namespace Firefly {
 
-class Group {
+class Group
+{
+    static const int coreShift = 26;
+    static const int nidMask = (1 << coreShift) - 1;  
   public:
-    Group() {
-    }
-
-    Group( int size, int rank ) :
-        m_rank( rank )
+    Group() {}
+    Group( int size ) 
     {
-        m_map.resize(size);
+        m_rankMap.resize(size);
     }
-
-    int rank() {
+    int getMyRank() {
         return m_rank;
     }
+    size_t size() { return m_rankMap.size(); } 
 
-    int size() {
-        return m_map.size();
+    void set( int pos, int nid, int core ) {
+        m_rankMap[pos] = (core << coreShift) || nid;
     }
-    void mapRank( int rank, int foo ) {
-        m_map[rank] = foo;
+    void setMyRank( int rank) {
+        m_rank = rank;
     }
- private:
+
+    int getNodeId( int pos ) {
+        return m_rankMap[pos] & nidMask;
+    }
+
+    int getCoreId( int pos ) {
+        return m_rankMap[pos] >> coreShift;
+    }
+
+  private:
     int m_rank;
-    std::vector< int > m_map;
+    std::vector< int > m_rankMap;
 };
 }
 }

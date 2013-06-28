@@ -16,17 +16,21 @@
 
 #include <stdlib.h>
 
+#include <iostream>
+#include <fstream>
+
 #include "hades.h"
 #include "ioapi.h"
 #include "functionCtx.h"
 #include "entry.h"
+#include "nodeInfo.h"
 
 #include <cxxabi.h>
 
 #define DBGX( fmt, args... ) \
 {\
     char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%d:%s::%s():%d: "fmt, myNodeId(), realname ? realname : "?????????", \
+    fprintf( stderr, "%d:%d:%s::%s():%d: "fmt, myNodeId(), myWorldRank(),realname ? realname : "?????????", \
                         __func__, __LINE__, ##args);\
     if ( realname ) free(realname);\
 }
@@ -75,15 +79,94 @@ Hades::Hades( Params& params ) :
                                         moduleName.c_str());
     }
 
-    if ( 0 ) {
-        setIOCallback();
+    Params nodeParams = params.find_prefix_params("nodeParams.");
+    
+    m_nodeInfo = new NodeInfo( nodeParams );
+    assert( m_nodeInfo );
+
+    DBGX("numCores %d, coreNum %d\n", m_nodeInfo->numCores(),
+                                            m_nodeInfo->coreNum());
+
+    int numRanks = params.find_integer("numRanks");
+    if ( numRanks <= 0 ) {
+        _abort(TestDriver, "ERROR:  How many global ranks?\n");
+    }
+    DBGX("numRanks %d\n", numRanks);
+
+    std::string nidListFileName = params.find_string("nidListFile");
+
+    DBGX("nidListFile `%s`\n",nidListFileName.c_str());
+
+    std::ifstream nidListFile( nidListFileName.c_str());
+    if ( ! nidListFile.is_open() ) {
+        _abort(TestDriver, "ERROR:  Unable to open nid list '%s'\n",
+                                        nidListFileName.c_str() );
     }
 
-    int size = 2;
-    Group group( size, myNodeId() );
-    group.mapRank( 0, 0 );
-    group.mapRank( 1, 1 );
-    m_groupMap[0] = group; 
+    Group* group;
+
+    std::string policy = params.find_string("policy");
+    DBGX("load policy `%s`\n",policy.c_str());
+
+    if ( 0 == policy.compare("adjacent") ) {
+        group = initAdjacentMap(numRanks, m_nodeInfo->numCores(), nidListFile);
+#if 0
+    } else if ( 0 == policy.compare("roundRobin") ) {
+        group = initRoundRobinMap(numRanks, m_nodeInfo->numCores(), nidListFile); 
+#endif
+    } else {
+        _abort(TestDriver, "ERROR: unknown load policy `j%s` ",
+                                            policy.c_str() );
+    }
+    m_groupMap[Hermes::GroupWorld] = group;
+
+    nidListFile.close();
+}
+
+void Hades::_componentSetup()
+{
+    Group* group = m_groupMap[Hermes::GroupWorld];
+    for ( int i = 0; i < group->size(); i++ ) {
+        if ( group->getNodeId( i ) == myNodeId() && 
+                group->getCoreId( i ) == m_nodeInfo->coreNum() ) 
+        {
+            group->setMyRank( i );
+            break;
+        }
+    } 
+
+    DBGX( "myRank %d\n", m_groupMap[Hermes::GroupWorld]->getMyRank() );
+}
+
+Group* Hades::initAdjacentMap( int numRanks, 
+            int numCores, std::ifstream& nidFile )
+{
+    Group* group = new Group( numRanks );
+    assert( group );
+
+    DBGX("numRanks=%d numCores=%d\n", numRanks, numCores);
+    for ( int node = 0; node < numRanks/numCores; node++ ) {
+        int nid;
+        std::string line;
+        getline( nidFile, line );
+        sscanf( line.c_str(), "%d", &nid ); 
+
+        for ( int core = 0; core < numCores; core++ ) {
+            group->set( node * numCores + core, nid, core );
+            DBGX("rank %d is on nid %d\n", node * numCores + core , nid);
+        }
+    }
+    return group;
+}
+
+Group* Hades::initRoundRobinMap( int numRanks, 
+            int numCores, std::ifstream& nidFile )
+{
+    Group* group = new Group( numRanks );
+    assert( group );
+    DBGX("numRanks=%d numCores=%d\n", numRanks, numCores);
+
+    return group;
 }
 
 void Hades::_componentInit(unsigned int phase )
@@ -188,7 +271,7 @@ void Hades::readHdr( IO::NodeId src )
     DBGX("src=%d\n", src );
 
     IncomingEntry* incoming = new IncomingEntry; 
-    incoming->src = src;
+    incoming->srcNodeId = src;
     incoming->callback = new IO_Functor( this, &Hades::ioRecvHdrDone, incoming );
 
     incoming->vec.resize(1);
@@ -201,8 +284,8 @@ void Hades::readHdr( IO::NodeId src )
 IO::Entry* Hades::ioRecvHdrDone( IO::Entry* e )
 {
     IncomingEntry* incoming = static_cast<IncomingEntry*>(e);
-    DBGX("src=%d count=%d dtype=%d tag=%#x\n",
-            incoming->src,
+    DBGX("srcNodeId=%d count=%d dtype=%d tag=%#x\n",
+            incoming->srcNodeId,
             incoming->hdr.count,
             incoming->hdr.dtype,
             incoming->hdr.tag );
@@ -241,15 +324,20 @@ RecvEntry* Hades::findMatch( IncomingEntry* incoming )
             continue;
         } 
 
-        DBGX("tag %d %d\n",incoming->hdr.tag,(*iter)->tag);
+        DBGX("tag incoming=%d %d\n",incoming->hdr.tag,(*iter)->tag);
         if ( (*iter)->tag != Hermes::AnyTag && 
                 (*iter)->tag !=  incoming->hdr.tag ) {
             continue;
         } 
 
-        DBGX("from %d want %d\n", incoming->src, (*iter)->rank);
+        DBGX("group incoming=%d %d\n", incoming->hdr.group, (*iter)->group);
+        if ( (*iter)->group !=  incoming->hdr.group ) {
+            continue;
+        } 
+
+        DBGX("rank incoming=%d %d\n", incoming->hdr.rank, (*iter)->rank);
         if ( (*iter)->rank != Hermes::AnySrc &&
-                    incoming->src != (*iter)->rank ) {
+                    incoming->hdr.rank != (*iter)->rank ) {
             continue;
         } 
 
@@ -284,7 +372,7 @@ void Hades::handleMatchDelay( Event *e )
     incoming->callback = new IO_Functor( 
                             this, &Hades::ioRecvBodyDone, incoming );
     
-    m_io->recvv( incoming->src, incoming->vec, incoming->callback );
+    m_io->recvv( incoming->srcNodeId, incoming->vec, incoming->callback );
 }
 
 IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
@@ -305,7 +393,7 @@ IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
             DBGX("update request for nonblockig recv\n");
             // update the request info for functions like wait()
             recvEntry->req->tag = incoming->hdr.tag;  
-            recvEntry->req->src = incoming->src;  
+            recvEntry->req->src = incoming->hdr.rank;  
         }
 
         // we are done with the recvEntry
@@ -351,9 +439,11 @@ void Hades::postSendEntry( Hermes::Addr buf, uint32_t count,
     entry->req      = req;
     entry->retFunc  = retFunc;
 
-    entry->hdr.tag = tag;
+    entry->hdr.tag   = tag;
     entry->hdr.count = count;
     entry->hdr.dtype = dtype;
+    entry->hdr.rank  = m_groupMap[group]->getMyRank();
+    entry->hdr.group = group;
 
     entry->vec.resize(2);
     entry->vec[0].ptr = &entry->hdr;

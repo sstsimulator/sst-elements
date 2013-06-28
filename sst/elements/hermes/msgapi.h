@@ -91,6 +91,7 @@ class MessageInterface : public Module {
 
     virtual void _componentInit(unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
+    virtual RankID myWorldRank() {}
     virtual void init(Functor*) {}
     virtual void fini(Functor*) {}
     virtual void rank(Communicator group, int* rank, Functor*) {}

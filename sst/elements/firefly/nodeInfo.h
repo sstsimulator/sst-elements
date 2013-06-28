@@ -9,23 +9,31 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_MSGHDR_H
-#define COMPONENTS_FIREFLY_MSGHDR_H
+#ifndef COMPONENTS_FIREFLY_NODEINFO_H
+#define COMPONENTS_FIREFLY_NONEINFO_H
 
-#include <stdint.h>
-#include "sst/elements/hermes/msgapi.h"
+#include <vector>
 
 namespace SST {
 namespace Firefly {
 
-struct Hdr {
-    uint32_t                count;
-    Hermes::PayloadDataType dtype;
-    uint32_t                tag;
-    uint32_t                group;
-    uint32_t                rank;
+class NodeInfo
+{
+  public:
+    NodeInfo( SST::Params& params) {
+        m_coreNum = params.find_integer( "coreNum" );
+        m_numCores = params.find_integer( "numCores" );
+    }
+    int coreNum() {
+        return m_coreNum;
+    }
+    int numCores() {
+        return m_numCores;
+    }
+  private:
+    int m_coreNum;
+    int m_numCores;
 };
-
 }
 }
 #endif

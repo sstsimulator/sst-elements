@@ -25,6 +25,7 @@ class FunctionCtx;
 class BaseEntry;
 class SendEntry;
 class RecvEntry;
+class NodeInfo;
 
 class Hades : public Hermes::MessageInterface
 {
@@ -48,7 +49,7 @@ class Hades : public Hermes::MessageInterface
         IncomingEntry() : callback(NULL)  { }
         ~IncomingEntry() { if ( callback ) delete callback; }
 
-        uint32_t                    src;
+        uint32_t                    srcNodeId;
         Hdr                         hdr;
         std::vector<IO::IoVec>      vec; 
         std::vector<unsigned char>  buffer;
@@ -70,6 +71,7 @@ class Hades : public Hermes::MessageInterface
   public:
     Hades(Params&);
     virtual void _componentInit(unsigned int phase );
+    virtual void _componentSetup();
     virtual void init(Hermes::Functor*);
     virtual void fini(Hermes::Functor*);
     virtual void rank(Hermes::Communicator group, int* rank, Hermes::Functor*);
@@ -133,7 +135,7 @@ class Hades : public Hermes::MessageInterface
         Hermes::Communicator group, Hermes::MessageResponse* resp,
         Hermes::MessageRequest* req, Hermes::Functor* retFunc);
 
-    std::map<Hermes::Communicator, Group> m_groupMap;
+    std::map<Hermes::Communicator, Group*> m_groupMap;
 
   private:
     void run();
@@ -151,8 +153,7 @@ class Hades : public Hermes::MessageInterface
     IO::Entry* ioRecvHdrDone(IO::Entry*);
 
     IO::NodeId rankToNodeId(Hermes::Communicator group, Hermes::RankID rank) {
-        //return m_groupMap[group];
-        return rank;
+        return m_groupMap[group]->getNodeId(rank);
     }
 
     void handle_event(SST::Event*);
@@ -163,12 +164,16 @@ class Hades : public Hermes::MessageInterface
     RecvEntry* findMatch(IncomingEntry*);
     IncomingEntry* searchUnexpected(RecvEntry*); 
 
+    Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
+    Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
+
     FunctionCtx*        m_ctx;
     SST::Link*          m_funcReturnDelayLink;  
     SST::Link*          m_matchDelayLink;  
     RetFuncEvent        m_retFuncEvent; 
     std::vector<int>    m_funcLat;
     IO::Interface*      m_io;
+    NodeInfo*           m_nodeInfo;
 
     std::deque<IncomingEntry*>  m_unexpectedQ;
     std::deque<RecvEntry*>      m_postedQ;
@@ -179,6 +184,14 @@ class Hades : public Hermes::MessageInterface
     int myNodeId() { 
         if ( m_io ) {
             return m_io->getNodeId();
+        } else {
+            return -1;
+        }
+    }
+
+    Hermes::RankID myWorldRank() {
+        if ( ! m_groupMap.empty() ) { 
+            return m_groupMap[Hermes::GroupWorld]->getMyRank();
         } else {
             return -1;
         }

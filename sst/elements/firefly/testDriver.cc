@@ -40,12 +40,6 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     // this has to come first 
     registerTimeBase( "100 ns", true);
 
-    int rank = params.find_integer("rank");
-    if ( rank < 0 ) {
-        _abort(TestDriver, "ERROR:  What Hermes rank?\n");
-    } 
-    DBGX("I'm rank %d\n",rank);
-
     std::string name = params.find_string("hermesModule");
     if ( name == "" ) {
         _abort(TestDriver, "ERROR:  What Hermes module? '%s'\n", name.c_str());
@@ -64,19 +58,10 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
                                         name.c_str());
     }
     
-    std::ostringstream traceFile;
-    traceFile << params.find_string("traceFile") << rank;
-
-    DBGX("traceFile `%s`\n",traceFile.str().c_str());
-
-    m_traceFile.open( traceFile.str().c_str() );
-    if ( ! m_traceFile.is_open() ) {
-        _abort(TestDriver, "ERROR:  Unable to open trace file '%s'\n",
-                                        traceFile.str().c_str() );
-    }
-
     m_selfLink = configureSelfLink("Self", "100 ns",
         new Event::Handler<TestDriver>(this,&TestDriver::handle_event));
+
+    m_traceFileName = params.find_string("traceFile");
 }
     
 TestDriver::~TestDriver()
@@ -91,6 +76,18 @@ void TestDriver::init( unsigned int phase )
 void TestDriver::setup() 
 { 
     m_selfLink->send(1,NULL);
+    m_hermes->_componentSetup( );
+
+    std::ostringstream tmp;
+
+    tmp << m_traceFileName.c_str() << m_hermes->myWorldRank();
+
+    m_traceFile.open( tmp.str().c_str() );
+    DBGX("traceFile `%s`\n",tmp.str().c_str());
+    if ( ! m_traceFile.is_open() ) {
+        _abort(TestDriver, "ERROR:  Unable to open trace file '%s'\n",
+                                        tmp.str().c_str() );
+    }
 }
 
 void TestDriver::handle_event( Event* ev )
