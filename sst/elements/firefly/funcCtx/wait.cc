@@ -42,7 +42,6 @@ bool WaitCtx::runPost( )
     DBGX("src=%d\n",m_req->src);
     
     if ( m_req->src != AnySrc ) { 
-        // who deletes the entry
         return false;
     } else {
         return true;

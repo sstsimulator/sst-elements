@@ -41,6 +41,6 @@ bool SizeCtx::runPost( )
 {
     DBGX("\n");
     
-    *m_size = m_obj->m_groupMap[m_group].size(); 
+    *m_size = m_obj->m_groupMap[m_group]->size(); 
     return false;
 }

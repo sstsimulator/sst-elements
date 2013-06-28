@@ -60,7 +60,6 @@ bool SendCtx::runPost( )
 {
     DBGX("\n");
     if ( m_posted ) { // && m_type == Isend 
-        // who deletes the entry
         return false;
     } else {
         return true;
