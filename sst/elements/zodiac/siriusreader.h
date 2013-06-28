@@ -21,6 +21,7 @@
 #include "zevent.h"
 #include "zinitevent.h"
 #include "zsendevent.h"
+#include "zirecvevent.h"
 #include "zrecvevent.h"
 #include "zbarrierevent.h"
 #include "zcomputeevent.h"
@@ -55,10 +56,12 @@ class SiriusReader {
 	inline int32_t readINT32();
 	inline int64_t readINT64();
 	void readSend();
+	void readIrecv();
 	void readRecv();
 	void readInit();
 	void readFinalize();
 	void readBarrier();
+
 	PayloadDataType convertToHermesType(uint32_t dtype);
 
 };

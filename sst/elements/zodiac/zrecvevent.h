@@ -15,7 +15,7 @@ class ZodiacRecvEvent : public ZodiacEvent {
 		ZodiacRecvEvent(uint32_t src, uint32_t length, 
 			PayloadDataType dataType,
 			uint32_t tag, Communicator group);
-		ZodiacEventType getEventType();
+		virtual ZodiacEventType getEventType();
 
 		uint32_t getSource();
 		uint32_t getLength();
@@ -23,7 +23,7 @@ class ZodiacRecvEvent : public ZodiacEvent {
 		PayloadDataType getDataType();
 		Communicator getCommunicatorGroup();
 
-	private:
+	protected:
 		uint32_t msgSrc;
 		uint32_t msgLength;
 		uint32_t msgTag;

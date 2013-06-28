@@ -39,8 +39,11 @@ private:
   virtual bool clockTic( SST::Cycle_t );
   void handleComputeEvent(ZodiacEvent* zEv);
   void handleSendEvent(ZodiacEvent* zEv);
+  void handleRecvEvent(ZodiacEvent* zEv);
+  void handleIRecvEvent(ZodiacEvent* zEv);
   void handleInitEvent(ZodiacEvent* zEv);
   void completedFunction(int val);
+  void completedRecvFunction(int val);
 
   ////////////////////////////////////////////////////////
 
@@ -54,6 +57,9 @@ private:
   char* emptyBuffer;
   uint32_t emptyBufferSize;
   DerivedFunctor retFunctor;
+  DerivedFunctor recvFunctor;
+  std::map<uint64_t, MessageRequest*> reqMap;
+  MessageResponse* currentRecv;
 
   ////////////////////////////////////////////////////////
 

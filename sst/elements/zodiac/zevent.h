@@ -11,6 +11,7 @@ enum ZodiacEventType {
 	SKIP,
 	COMPUTE,
 	SEND,
+	IRECV,
 	RECV,
 	BARRIER,
 	COLLECTIVE,

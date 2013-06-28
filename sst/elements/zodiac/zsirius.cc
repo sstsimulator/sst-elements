@@ -13,7 +13,8 @@ using namespace SST::Zodiac;
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& params) :
   Component(id),
-  retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction))
+  retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction)),
+  recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction))
 {
 
     string msgiface = params.find_string("msgapi");
@@ -95,6 +96,10 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 			handleSendEvent(zEv);
 			break;
 
+		case RECV:
+			handleRecvEvent(zEv);
+			break;
+
 		case BARRIER:
 			break;
 
@@ -125,6 +130,34 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 		zSEv->getMessageTag(), zSEv->getCommunicatorGroup(), &retFunctor);
 }
 
+void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
+	ZodiacRecvEvent* zREv = static_cast<ZodiacRecvEvent*>(zEv);
+	assert(zREv);
+	assert(zREv->getLength() < emptyBufferSize);
+
+	currentRecv = (MessageResponse*) malloc(sizeof(MessageResponse));
+	memset(currentRecv, 1, sizeof(MessageResponse));
+
+	msgapi->recv((Addr) emptyBuffer, zREv->getLength(),
+		zREv->getDataType(), (RankID) zREv->getSource(),
+		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
+		currentRecv, &recvFunctor);
+}
+
+void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
+	ZodiacIRecvEvent* zREv = static_cast<ZodiacIRecvEvent*>(zEv);
+	assert(zREv);
+	assert(zREv->getLength() < emptyBufferSize);
+
+	MessageRequest* msgReq = (MessageRequest*) malloc(sizeof(MessageRequest));
+	reqMap.insert(std::pair<uint64_t, MessageRequest*>(zREv->getRequestID(), msgReq));
+
+	msgapi->irecv((Addr) emptyBuffer, zREv->getLength(),
+		zREv->getDataType(), (RankID) zREv->getSource(),
+		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
+		msgReq, &recvFunctor);
+}
+
 void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 	ZodiacComputeEvent* zCEv = static_cast<ZodiacComputeEvent*>(zEv);
 	assert(zCEv);
@@ -147,6 +180,19 @@ bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
 }
 
 void ZodiacSiriusTraceReader::completedFunction(int retVal) {
+	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
+		trace->generateNextEvents();
+	}
+
+	if(eventQ->size() > 0) {
+		ZodiacEvent* nextEv = eventQ->front();
+		selfLink->send(nextEv);
+	}
+}
+
+void ZodiacSiriusTraceReader::completedRecvFunction(int retVal) {
+	free(currentRecv);
+
 	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
 		trace->generateNextEvents();
 	}

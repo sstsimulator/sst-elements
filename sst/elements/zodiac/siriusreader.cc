@@ -130,6 +130,22 @@ void SiriusReader::readRecv() {
 	eventQ->push(ev);
 }
 
+void SiriusReader::readIrecv() {
+	uint64_t buffer = readUINT64();
+	uint32_t count  = readUINT32();
+	uint32_t dtype  = readUINT32();
+	int32_t  src   = readINT32();
+	int32_t  tag    = readINT32();
+	uint32_t comm   = readUINT32();
+	uint64_t req    = readUINT64();
+
+	output->verbose(__LINE__, __FILE__, "readIrecv", 8, 0, "Read an MPI_Irecv\n");
+
+	ZodiacIRecvEvent* ev = new ZodiacIRecvEvent((uint32_t) src, count,
+		convertToHermesType(dtype), tag, comm, req);
+	eventQ->push(ev);
+}
+
 void SiriusReader::readInit() {
 	output->verbose(__LINE__, __FILE__, "readInit", 8, 0, "Read an MPI_Init\n");
 	ZodiacInitEvent* ev = new ZodiacInitEvent();
