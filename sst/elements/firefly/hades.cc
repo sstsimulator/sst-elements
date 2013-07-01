@@ -368,22 +368,28 @@ void Hades::handleMatchDelay( Event *e )
 
     Hdr& hdr = event->incomingEntry->hdr;
    
-    incoming->vec.resize(1);
-    incoming->vec[0].len = hdr.count * sizeofDataType(hdr.dtype); 
+    if ( hdr.count ) {
+        incoming->vec.resize(1);
+        incoming->vec[0].len = hdr.count * sizeofDataType(hdr.dtype); 
 
-    DBGX("%d \n",incoming->vec[0].len);
-    if ( ! event->incomingEntry->recvEntry ) {
-        incoming->buffer.resize( incoming->vec[0].len );
-        incoming->vec[0].ptr = &incoming->buffer;
-    } else {
-        incoming->vec[0].ptr = event->incomingEntry->recvEntry->buf;
-    }
+        DBGX("%d \n",incoming->vec[0].len);
+        if ( ! event->incomingEntry->recvEntry ) {
+            incoming->buffer.resize( incoming->vec[0].len );
+            incoming->vec[0].ptr = &incoming->buffer;
+        } else {
+            incoming->vec[0].ptr = event->incomingEntry->recvEntry->buf;
+        }
     
-    delete incoming->callback;
-    incoming->callback = new IO_Functor( 
+        delete incoming->callback;
+        incoming->callback = new IO_Functor( 
                             this, &Hades::ioRecvBodyDone, incoming );
     
-    m_io->recvv( incoming->srcNodeId, incoming->vec, incoming->callback );
+        m_io->recvv( incoming->srcNodeId, incoming->vec, incoming->callback );
+    } else {
+        if ( ioRecvBodyDone( incoming ) ) {
+            delete incoming;
+        } 
+    }
 }
 
 IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
