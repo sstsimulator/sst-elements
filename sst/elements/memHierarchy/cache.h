@@ -413,6 +413,7 @@ private:
 	uint64_t num_write_hit;
 	uint64_t num_write_miss;
 	uint64_t num_upgrade_miss;
+    uint64_t num_invalidates;
 
 
 };

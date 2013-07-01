@@ -143,6 +143,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	num_write_hit = 0;
 	num_write_miss = 0;
 	num_upgrade_miss = 0;
+    num_invalidates = 0;
 
     registerClock("1 GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
 
@@ -254,12 +255,14 @@ void Cache::finish(void)
 			"\t# Supply  Misses:    %"PRIu64"\n"
 			"\t# Write   Hits:      %"PRIu64"\n"
 			"\t# Write   Misses:    %"PRIu64"\n"
-			"\t# Upgrade Misses:    %"PRIu64"\n",
+			"\t# Upgrade Misses:    %"PRIu64"\n"
+			"\t# Invalidations:     %"PRIu64"\n",
 			getName().c_str(),
 			num_read_hit, num_read_miss,
 			num_supply_hit, num_supply_miss,
 			num_write_hit, num_write_miss,
-			num_upgrade_miss);
+			num_upgrade_miss,
+            num_invalidates);
 
     listener->printStats(out);
 
@@ -1388,6 +1391,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
             } else {
                 block->status = CacheBlock::INVALID;
                 block->last_touched = getCurrentSimTime();
+                ++num_invalidates;
                 dbg.output(CALL_INFO, "Marking block 0x%"PRIx64" as INVALID.\n", block->baseAddr);
                 /* TODO:  Lock status? */
                 handlePendingEvents(findRow(block->baseAddr), NULL);
@@ -1397,6 +1401,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
             CacheRow *row = findRow(block->baseAddr);
             row->addWaitingEvent(ev, src);
             writebackBlock(block, CacheBlock::INVALID);
+            ++num_invalidates;
             return;
         }
 
