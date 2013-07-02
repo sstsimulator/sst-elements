@@ -23,7 +23,7 @@
 #include "sst/core/simulation.h"
 #include "sst/core/timeLord.h"
 
-#include <sstmac/common/factories/network_factory.h>
+#include <sstmac/common/factories/factory.h>
 
 #include <sstmac/backends/native/nodeid.h>
 
@@ -42,9 +42,9 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
 
 
   macro_parameters::ptr macroparams = macro_parameters::construct(params);
-	intercon_ = SSTNetworkFactory::get_network(macroparams->get_param("network_name"), macroparams);
+	intercon_ = interconnect_factory::get_param(macroparams->get_param("network_name"), macroparams);
 
-  num_ports_ = intercon_->slots();
+  num_ports_ = intercon_->num_nodes();
 
   fem_ = fakeeventmanager::construct(this);
   intercon_->set_eventmanager(fem_);
@@ -72,7 +72,7 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
 	//sstmac::eventhandler::ptr sent = message_sent_handler::construct(this);
 	//recv_ = message_recv_handler::construct(this);
 	
-  for (int i = 0; i < num_ports_; i++)
+/*  for (int i = 0; i < num_ports_; i++)
     {
       stringstream ss;
       ss << "port" << i;
@@ -80,12 +80,7 @@ macro_network::macro_network(ComponentId_t id, Params_t& params) :
 
       assert(ports_[i]);
 		
-		//intercon_->set_endpoint(macro_address::construct(SST::ComponentId_t(i)), recv);
-		//nodeaddress::ptr n = nodeaddress::convert_from_uniqueid(i);
-		//std::cout << "interconnect setting endpoint for " << n->to_string() << "\n";
-		//intercon_->set_endpoint(n, recv);
-
-    }
+    }*/
 
   registerTimeBase("1 ps", true);
 	
@@ -116,7 +111,7 @@ macro_network::handleEvent(Event *ev)
 	fem_->update(now());
   sstMessageEvent *event = dynamic_cast<sstMessageEvent*>(ev);
 	//std::cout << "macro_network::handleEvent - from " << event->fromaddr_->to_string() << " message going to " << event->toaddr_->to_string() << "\n";
-	if(recvhandlers_.find(event->toaddr_->unique_id()) == recvhandlers_.end()){
+	/*if(recvhandlers_.find(event->toaddr_->unique_id()) == recvhandlers_.end()){
 		recvhandlers_[event->toaddr_->unique_id()] = message_recv_handler::construct(this, event->toaddr_);
 		intercon_->set_endpoint(event->toaddr_, recvhandlers_[event->toaddr_->unique_id()]);
 	}
@@ -124,11 +119,11 @@ macro_network::handleEvent(Event *ev)
 	if(recvhandlers_.find(event->fromaddr_->unique_id()) == recvhandlers_.end()){
 		recvhandlers_[event->fromaddr_->unique_id()] = message_recv_handler::construct(this, event->fromaddr_);
 		intercon_->set_endpoint(event->fromaddr_, recvhandlers_[event->fromaddr_->unique_id()]);
-	}
+	}*/
   if (event)
     {
-      intercon_->send(now(), event->data_);
-
+      //intercon_->send(now(), event->data_);
+	intercon_->handle(event->data_);
       delete event;
     }
   else

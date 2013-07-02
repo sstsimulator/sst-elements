@@ -18,7 +18,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 
-#include <sstmac/hardware/network/congestion/interconnect.h>
+#include <sstmac/hardware/network/interconnect/interconnect.h>
 #include <sstmac/hardware/network/topology/topology.h>
 #include <sstmac/common/messages/sst_message.h>
 
@@ -29,7 +29,7 @@
 class macro_network : public SST::Component, public eventmanager_interface
 {
 
-  friend class message_recv_handler;
+/*  friend class message_recv_handler;
 
   class message_recv_handler : public sstmac::eventhandler
   {
@@ -75,9 +75,9 @@ class macro_network : public SST::Component, public eventmanager_interface
       return ret;
     }
 
-  };
+  };*/
 	
-	boost::unordered_map<long, message_recv_handler::ptr> recvhandlers_;
+//	boost::unordered_map<long, message_recv_handler::ptr> recvhandlers_;
 
 //  sstmac::eventhandler::ptr sent_handler_;
 //  sstmac::eventhandler::ptr recv_handler_;
@@ -139,10 +139,10 @@ private:
 
   int num_ports_;
 
-  std::map<int, SST::Link*> ports_;
+  //std::map<int, SST::Link*> ports_;
 
   sstmac::hw::interconnect::ptr intercon_;
-  sstmac::hw::topology::ptr topology_;
+  //sstmac::hw::topology::ptr topology_;
 
   SST::Link* self_proc_link_;
 	

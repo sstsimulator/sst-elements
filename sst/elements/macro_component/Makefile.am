@@ -14,16 +14,22 @@ libmacro_component_la_CPPFLAGS = $(BOOST_CPPFLAGS) \
 	$(MPI_CPPFLAGS)
 
 libmacro_component_la_SOURCES = \
-	macro_component.cc \
-	macro_processor.h \
-	macro_processor.cc \
-	macro_address.h \
-	macro_address.cc \
-	sstMessageEvent.h \
-	macro_network.h \
 	macro_network.cc \
+	macro_network.h \
+	macro_fakeeventmanager.h \
 	macro_parameters.h \
-	macro_fakeeventmanager.h
+	sstMessageEvent.h
+
+#	macro_component.cc \
+#	macro_processor.h \
+#	macro_processor.cc \
+#	macro_address.h \
+#	macro_address.cc \
+#	sstMessageEvent.h \
+#	macro_network.h \
+#	macro_network.cc \
+#	macro_parameters.h \
+#	macro_fakeeventmanager.h
 
 EXTRA_DIST = makeSDL.pl
 

@@ -24,8 +24,8 @@
 #include <sstmac/common/driver_util.h>
 #include <sstmac/software/services/launch/instantlaunch.h>
 //#include <sstmac/software/libraries/mpi/mpi_queue/mpiqueue.h>
-#include <sstmac/common/factories/nic_factory.h>
-#include <sstmac/common/factories/node_factory.h>
+#include <sstmac/common/factories/factory.h>
+//#include <sstmac/common/factories/node_factory.h>
 
 #include "sstMessageEvent.h"
 #include "macro_network.h"
@@ -140,8 +140,8 @@ macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
 	node_ = SSTNodeFactory::get_node(macroparams->get_param("node_name"), macroparams);
 	node_ = node_->clone(myid_);
 	fake_interconnect::ptr fi = fake_interconnect::construct(this);
-	sstmac::hw::networkinterface::ptr nic = SSTNicFactory::get_nic(macroparams->get_param("nic_name"), macroparams, node_, fi);
-	//nic = nic->clone(newnode, fi, macroparams);
+	sstmac::hw::networkinterface::ptr nic = networkinterface_factory::get_nic(macroparams->get_param("nic_name"), macroparams, node_, fi);
+//nic = nic->clone(newnode, fi, macroparams);
 
 //  macro_fakenic::ptr nic = macro_fakenic::construct(node_, this,
 //      sstmac::hw::interconnect::ptr(), nodenum);

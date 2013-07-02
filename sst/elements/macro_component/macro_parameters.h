@@ -17,6 +17,8 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 
+#include <sstmac/common/errors.h>
+
 class macro_parameters : public sstmac::sim_parameters
 {
 protected:
@@ -25,6 +27,8 @@ protected:
   {
 
   }
+
+  macro_parameters() { }
 
 public:
   typedef boost::intrusive_ptr<macro_parameters> ptr;
@@ -36,7 +40,7 @@ public:
   }
 
   virtual std::string
-  get_param(std::string key) const
+  get_param(const std::string &key) const
   {
     SST::Component::Params_t::const_iterator it = params_.find(key.c_str());
     return it->second;
@@ -44,20 +48,20 @@ public:
   }
 
   virtual bool
-  has_param(std::string key) const
+  has_param(const std::string &key) const
   {
     bool has = params_.find(key.c_str()) != params_.end();
     return has;
   }
 
   virtual void
-  add_param(std::string key, std::string val)
+  add_param(const std::string &key, const std::string &val)
   {
     params_[key.c_str()] = val;
   }
 
   virtual void
-  add_param_override(std::string key, std::string val)
+  add_param_override(const std::string &key, const std::string &val)
   {
     params_[key.c_str()] = val;
 
@@ -92,6 +96,18 @@ public:
 		}
 		
 	}
+
+	
+   virtual sstmac::sim_parameters::ptr 
+   subspace_clone(){
+     return ptr(new macro_parameters());
+   }
+
+   virtual void 
+   remove_param(const std::string&){
+     sst_throw(sstmac::ssterror, "macro_component::macro_parameters::remove_param - don't call this");
+   }
+
 
 protected:
   SST::Component::Params_t params_;

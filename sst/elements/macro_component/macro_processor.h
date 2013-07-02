@@ -28,7 +28,7 @@
 
 #include <sstmac/hardware/node/node.h>
 
-#include <sstmac/hardware/network/congestion/interconnect.h>
+#include <sstmac/hardware/network/interconnect/interconnect.h>
 
 #include "sstMessageEvent.h"
 
