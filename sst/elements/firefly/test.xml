@@ -11,9 +11,9 @@
   </nic_params>
 
   <driverParams>
-     <bufLen> 10 </bufLen>
+     <bufLen> 0 </bufLen>
      <hermesModule> firefly.hades </hermesModule>
-     <traceFile> trace.out </traceFile>
+     <traceFile> prepostedTrace.out </traceFile>
      <hermesParams.numRanks> 2 </hermesParams.numRanks>
      <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
      <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
