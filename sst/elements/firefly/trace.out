@@ -1,8 +1,0 @@
-init
-rank
-size
-irecv
-barrier
-send
-wait
-fini
