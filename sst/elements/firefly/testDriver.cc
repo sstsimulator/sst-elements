@@ -113,6 +113,16 @@ void TestDriver::handle_event( Event* ev )
         m_hermes->size( GroupWorld, &my_size, &m_functor );
     } else if ( line.compare( "rank" ) == 0 ) {
         m_hermes->rank( GroupWorld, &my_rank, &m_functor );
+    } else if ( line.compare( "recv" ) == 0 ) {
+
+        printf("my_size=%d my_rank=%d\n",my_size, my_rank);
+        m_hermes->recv( &m_recvBuf[0], m_recvBuf.size(), CHAR, 
+                                    (my_rank + 1) % 2, 
+                                    AnyTag, 
+                                    GroupWorld, 
+                                    &my_resp, 
+                                    &m_functor);
+
     } else if ( line.compare( "irecv" ) == 0 ) {
 
         printf("my_size=%d my_rank=%d\n",my_size, my_rank);
@@ -137,6 +147,9 @@ void TestDriver::handle_event( Event* ev )
         int flag;
         m_hermes->wait( &my_req, &my_resp, &m_functor );
     } else if ( line.compare( "fini" ) == 0 ) {
+        DBGX("src=%d tag=%#x\n",my_req.src,my_req.tag);
+        DBGX("src=%d tag=%#x\n",my_resp.src,my_resp.tag);
+
         for ( int i = 0; i < m_recvBuf.size(); i++ ) {
             if ( m_recvBuf[i] != i ) {
                 DBGX("ERROR %d != %d\n",i,m_recvBuf[i]);

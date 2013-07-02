@@ -35,8 +35,10 @@ class SimpleIO : public IO::Interface {
 
     virtual size_t peek(IO::NodeId& src);
     virtual bool isReady(IO::NodeId src);
-    virtual bool sendv(IO::NodeId dest, std::vector<IO::IoVec>&, IO::Functor*);
-    virtual bool recvv(IO::NodeId src, std::vector<IO::IoVec>&, IO::Functor*);
+    virtual bool sendv(IO::NodeId dest, std::vector<IO::IoVec>&,
+                                                        IO::Entry::Functor*);
+    virtual bool recvv(IO::NodeId src, std::vector<IO::IoVec>&,
+                                                        IO::Entry::Functor*);
 
   private:
     void handleEvent(SST::Event*);

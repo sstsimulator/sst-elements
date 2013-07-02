@@ -72,14 +72,15 @@ void SimpleIO::handleEvent(SST::Event* e){
         m_streamMap[ srcNode ].insert( m_streamMap[ srcNode ].size(), 
                                     event->getString() ); 
     }
+    DBGX("%d bytes avail from %d\n", m_streamMap[ srcNode ].size(), srcNode );
     delete e;
 }
 
-bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec, Functor* functor )
+bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
+                                                    Entry::Functor* functor )
 {
     size_t len = 0;
     DBGX("dest=%d ioVec.size()=%d\n", dest, ioVec.size() );
-
     
     for ( int i = 0; i < ioVec.size(); i++ ) {
         len += ioVec[i].len;
@@ -90,7 +91,7 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec, Functor* functor )
 
     len = 0;
     for ( int i = 0; i < ioVec.size(); i++ ) {
-        memcpy( &buffer[ 0 ] + len,  ioVec[i].ptr, ioVec[i].len );
+        memcpy( &buffer[ len ],  ioVec[i].ptr, ioVec[i].len );
         len += ioVec[i].len; 
     }
 
@@ -111,13 +112,16 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec, Functor* functor )
             delete tmp;
         }
     }
+
+    DBGX(" sending %d bytes\n", buffer.size() );
     
     m_link->send( 0, new IOEvent( dest, buffer ) );
 
     return true;
 }
 
-bool SimpleIO::recvv( NodeId src, std::vector<IoVec>& ioVec, Functor* functor )
+bool SimpleIO::recvv( NodeId src, std::vector<IoVec>& ioVec, 
+                                                    Entry::Functor* functor )
 {
     DBGX("src=%d ioVec.size()=%d\n", src, ioVec.size() );
 

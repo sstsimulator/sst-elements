@@ -43,11 +43,9 @@ class FunctionCtx {
                             Hades* obj, int latency = 1 );
     ~FunctionCtx();
 
-    virtual void runPre( ) { } 
-    virtual bool runPost( ) { 
-        printf("%s() %s\n",__func__, functionName[m_type]); 
+    virtual bool run( ) { 
         // tell the caller to delete us (we are done) 
-        return false;
+        return true;
     }
     const char* name() { 
         return functionName[m_type]; 

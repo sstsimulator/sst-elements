@@ -35,10 +35,13 @@ struct IoVec {
 
 class Entry {
   public:
-    virtual ~Entry() {};
+    typedef VoidArg_FunctorBase< Entry* > Functor;
+    Entry() : callback(NULL) {}
+    virtual ~Entry() { if ( callback ) delete callback; }
+
+    Functor* callback; 
 };
 
-typedef VoidArg_FunctorBase< Entry* > Functor;
 typedef Arg_FunctorBase< NodeId >     Functor2;
 
 class Interface : public SST::Module {
@@ -53,8 +56,8 @@ class Interface : public SST::Module {
     virtual void setDataReadyFunc(Functor2*) { };
     virtual size_t peek(NodeId& src) { }
     virtual bool isReady(NodeId dest) { } 
-    virtual bool sendv(NodeId dest, std::vector<IoVec>&, Functor*) { }
-    virtual bool recvv(NodeId src, std::vector<IoVec>&, Functor*) { }
+    virtual bool sendv(NodeId dest, std::vector<IoVec>&, Entry::Functor*) { }
+    virtual bool recvv(NodeId src, std::vector<IoVec>&, Entry::Functor*) { }
 };
 
 }

@@ -22,6 +22,11 @@ namespace Firefly {
 
 class BaseEntry {
   public:
+    BaseEntry(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageResponse* resp,
+        Hermes::MessageRequest* req, Hermes::Functor* retFunc );
+
     Hermes::Addr                buf;
     uint32_t                    count;
     Hermes::PayloadDataType     dtype;
@@ -33,13 +38,48 @@ class BaseEntry {
     Hermes::Functor*            retFunc;
 };
 
+class RecvEntry;
+
+class MsgEntry : public IO::Entry {
+  public:
+    uint32_t                    srcNodeId;
+    Hdr                         hdr;
+    std::vector<IO::IoVec>      vec; 
+    std::vector<unsigned char>  buffer;
+    RecvEntry*                  recvEntry;
+};
+
+class UnexpectedMsgEntry : public MsgEntry {
+};
+class IncomingMsgEntry : public MsgEntry {
+};
+
+
 class RecvEntry : public BaseEntry {
+  public:
+    RecvEntry(Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageResponse* resp,
+        Hermes::MessageRequest* req, Hermes::Functor* retFunc );
+
+    UnexpectedMsgEntry*              msgEntry;
 };
 
 class SendEntry : public BaseEntry {
   public:
+    SendEntry( Hermes::Addr buf, uint32_t count,
+        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
+        Hermes::Communicator group, Hermes::MessageRequest* req,
+        Hermes::RankID srcRank, Hermes::Functor* retFunc, int dtypeSize );
+
+
     Hdr                         hdr;
     std::vector< IO::IoVec >    vec;
+};
+
+class IOEntry : public IO::Entry {
+  public:
+    BaseEntry*                  entry;
 };
 
 }

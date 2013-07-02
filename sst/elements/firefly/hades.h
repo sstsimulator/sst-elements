@@ -17,14 +17,18 @@
 #include "ioapi.h"
 #include "msgHdr.h"
 #include "group.h"
+#include "functionCtx.h"
 
 namespace SST {
 namespace Firefly {
 
-class FunctionCtx;
+
 class BaseEntry;
 class SendEntry;
 class RecvEntry;
+class MsgEntry;
+class IncomingMsgEntry;
+class UnexpectedMsgEntry;
 class NodeInfo;
 
 class Hades : public Hermes::MessageInterface
@@ -33,39 +37,27 @@ class Hades : public Hermes::MessageInterface
     static const uint32_t MaxNumSends = 32;
     typedef StaticArg_Functor<Hades, IO::Entry*, IO::Entry*>   IO_Functor;
     typedef Arg_Functor<Hades, IO::NodeId>                     IO_Functor2;
-    enum { RunFunctionPre, RunRecv, RunSend, RunFunctionPost } m_state;
+    enum { RunRecv, RunSend, RunCtx } m_state;
 
-    class IOEntry : public IO::Entry {
+    class SelfEvent : public SST::Event {
       public:
-        IOEntry() : callback(NULL)  { }
-        ~IOEntry() { if ( callback ) delete callback; }
-
-        BaseEntry*  entry;
-        IO_Functor* callback; 
+        enum { Return, Match, CtxDelay } type;
     };
 
-    class IncomingEntry : public IO::Entry {
-      public:
-        IncomingEntry() : callback(NULL)  { }
-        ~IncomingEntry() { if ( callback ) delete callback; }
-
-        uint32_t                    srcNodeId;
-        Hdr                         hdr;
-        std::vector<IO::IoVec>      vec; 
-        std::vector<unsigned char>  buffer;
-        RecvEntry*                  recvEntry;
-        IO_Functor*                 callback; 
-    };
-
-    class RetFuncEvent : public SST::Event {
+    class RetFuncEvent : public SelfEvent {
       public:
         Hermes::Functor*    m_retFunc;
         int                 m_retval;
     };
 
-    class MatchEvent : public SST::Event {
+    class MatchEvent : public SelfEvent {
       public:
-        IncomingEntry* incomingEntry;
+        IncomingMsgEntry* incomingEntry;
+    };
+
+    class CtxDelayEvent : public SelfEvent {
+      public:
+        FunctionCtx*    ctx;
     };
 
   public:
@@ -117,32 +109,44 @@ class Hades : public Hermes::MessageInterface
     virtual int test(Hermes::MessageRequest* req, int& flag, 
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
+
     void sendReturn(int delay, Hermes::Functor* retFunc, int retval ) {
-        m_retFuncEvent.m_retFunc = retFunc;
-        m_retFuncEvent.m_retval = retval;
-        m_funcReturnDelayLink->send(delay, &m_retFuncEvent);
+        m_selfEvent.type = SelfEvent::Return;
+        RetFuncEvent& event = *static_cast<RetFuncEvent*>(&m_selfEvent);  
+        event.m_retFunc = retFunc;
+        event.m_retval = retval;
+        m_selfLink->send(delay, &event);
     }
 
+
+    void sendCtxDelay(int delay, FunctionCtx* ctx ) {
+        m_selfEvent.type = SelfEvent::CtxDelay;
+        CtxDelayEvent& event = *static_cast<CtxDelayEvent*>(&m_selfEvent);  
+        event.ctx = ctx;
+        m_selfLink->send(delay, &event);
+    }
+
+    UnexpectedMsgEntry* searchUnexpected(RecvEntry*); 
+
     bool canPostSend();
-    void postSendEntry(Hermes::Addr target, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
-        Hermes::Functor* retFunc);
+    void postSendEntry(SendEntry*);
 
     bool canPostRecv();
-    void postRecvEntry(Hermes::Addr target, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
-        Hermes::MessageRequest* req, Hermes::Functor* retFunc);
+    void postRecvEntry(RecvEntry*);
+
+    void setIOCallback();
 
     std::map<Hermes::Communicator, Group*> m_groupMap;
 
+    void runProgress( FunctionCtx* );
+
   private:
     void run();
+
     void setCtx( FunctionCtx* ctx ) { 
-        m_ctx = ctx;
-        m_state = RunFunctionPre;
-        run();
+        if ( ctx->run() ) {
+            delete ctx;
+        }
     }
 
     bool runRecv( );
@@ -156,30 +160,28 @@ class Hades : public Hermes::MessageInterface
         return m_groupMap[group]->getNodeId(rank);
     }
 
-    void handle_event(SST::Event*);
+    void handleSelfLink(SST::Event*);
     void handleMatchDelay(SST::Event*);
+    void handleCtxDelay(SST::Event*);
+    void handleCtxReturn(SST::Event*);
     void dataReady(IO::NodeId);
 
     void readHdr(IO::NodeId);
-    RecvEntry* findMatch(IncomingEntry*);
-    IncomingEntry* searchUnexpected(RecvEntry*); 
+    RecvEntry* findMatch( IncomingMsgEntry*);
 
     Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
 
     FunctionCtx*        m_ctx;
-    SST::Link*          m_funcReturnDelayLink;  
-    SST::Link*          m_matchDelayLink;  
-    RetFuncEvent        m_retFuncEvent; 
+    SST::Link*          m_selfLink;  
+    SelfEvent           m_selfEvent; 
     std::vector<int>    m_funcLat;
     IO::Interface*      m_io;
     NodeInfo*           m_nodeInfo;
 
-    std::deque<IncomingEntry*>  m_unexpectedQ;
-    std::deque<RecvEntry*>      m_postedQ;
-    std::deque<SendEntry*>      m_sendQ;
-
-    void setIOCallback();
+    std::deque<MsgEntry*>   m_unexpectedMsgQ;
+    std::deque<RecvEntry*>  m_postedQ;
+    std::deque<SendEntry*>  m_sendQ;
     
     int myNodeId() { 
         if ( m_io ) {

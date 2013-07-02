@@ -58,11 +58,8 @@ Hades::Hades( Params& params ) :
 
     owner = (SST::Component*) params.find_integer( "owner" );
 
-    m_funcReturnDelayLink = owner->configureSelfLink("Hades.X", "1 ns",
-        new Event::Handler<Hades>(this,&Hades::handle_event));
-
-    m_matchDelayLink = owner->configureSelfLink("Hades.Y", "1 ns",
-        new Event::Handler<Hades>(this,&Hades::handleMatchDelay));
+    m_selfLink = owner->configureSelfLink("Hades", "1 ps",
+        new Event::Handler<Hades>(this,&Hades::handleSelfLink));
 
     Params ioParams = params.find_prefix_params("ioParams." );
 
@@ -191,33 +188,33 @@ void Hades::setIOCallback()
     m_io->setDataReadyFunc ( new IO_Functor2(this,&Hades::dataReady) );
 }
 
+void Hades::runProgress( FunctionCtx * ctx )
+{
+    m_state = RunRecv;
+    m_ctx = ctx;
+    DBGX("call run()\n");
+    run();
+}
+
 void Hades::run()
 {
-    DBGX("\n");
     switch ( m_state ) {
-      case RunFunctionPre:
-        m_ctx->runPre();
-        m_state = RunRecv;
 
       case RunRecv:
+        m_state = RunSend;
         if ( runRecv() ) {
             break;
         }
-        m_state = RunSend;
 
       case RunSend:
+        m_state = RunCtx;
         if ( runSend() ) {
             break;
         }
-        m_state = RunFunctionPost;
 
-      case RunFunctionPost:
-        if ( m_ctx->runPost() ) { 
-            m_state = RunRecv; 
-            setIOCallback();
-        } else {
-            delete m_ctx;
-        }
+      case RunCtx:
+        DBGX("RunCtx\n");
+        sendCtxDelay(0,m_ctx); 
         break;
     } 
 }
@@ -233,7 +230,8 @@ bool Hades::runSend( )
         IOEntry* ioEntry = new IOEntry;
         ioEntry->callback = new IO_Functor( this, &Hades::sendIODone, ioEntry );
              
-        m_io->sendv( rankToNodeId( entry->group, entry->rank), entry->vec, ioEntry->callback ); 
+        m_io->sendv( rankToNodeId( entry->group, entry->rank),
+                                    entry->vec, ioEntry->callback ); 
 
         return true;  
     }
@@ -255,25 +253,48 @@ bool Hades::runRecv( )
     return true;
 }
 
-
-#if 0
-bool Hades::runUnexpectedv( )
+UnexpectedMsgEntry* Hades::searchUnexpected( RecvEntry* entry )
 {
-    IncomingEntry* incoming = searchUnexpected( entry );
-    if ( ! incoming ) {
-        m_postedQ.push_back( entry );
-    } else {
+    DBGX("unexpected size %d\n", m_unexpectedMsgQ.size() );
+    std::deque< MsgEntry* >::iterator iter = m_unexpectedMsgQ.begin();
+    for ( ; iter != m_unexpectedMsgQ.end(); ++iter  ) {
+
+        DBGX("dtype %d %d\n",entry->dtype,(*iter)->hdr.dtype);
+        if ( entry->dtype != (*iter)->hdr.dtype ) {
+            continue;
+        } 
+
+        DBGX("count %d %d\n",entry->count,(*iter)->hdr.count);
+        if ( entry->count != (*iter)->hdr.count ) { 
+            continue;
+        } 
+
+        DBGX("tag want %d, incoming %d\n",entry->tag,(*iter)->hdr.tag);
+        if ( entry->tag != Hermes::AnyTag && 
+                entry->tag != (*iter)->hdr.tag ) {
+            continue;
+        } 
+
+        DBGX("group want %d, incoming %d\n", entry->group, (*iter)->hdr.group);
+        if ( entry->group != (*iter)->hdr.group ) { 
+            continue;
+        } 
+
+        DBGX("rank want %d, incoming %d\n", entry->rank, (*iter)->hdr.srcRank);
+        if ( entry->rank != Hermes::AnySrc &&
+                    entry->rank != (*iter)->hdr.srcRank ) {
+            continue;
+        } 
+        m_unexpectedMsgQ.erase( iter );
+        return static_cast<UnexpectedMsgEntry*>(*iter);
     }
+    
     return false;
 }
-Hades::IncomingEntry* Hades::searchUnexpected( RecvEntry* entry )
-{
-    return NULL;
-}
-#endif
 
 void Hades::dataReady( IO::NodeId src )
 {
+    DBGX("call run()\n");
     run();
 }
 
@@ -281,9 +302,9 @@ void Hades::readHdr( IO::NodeId src )
 {
     DBGX("src=%d\n", src );
 
-    IncomingEntry* incoming = new IncomingEntry; 
+    IncomingMsgEntry* incoming = new IncomingMsgEntry; 
     incoming->srcNodeId = src;
-    incoming->callback = new IO_Functor( this, &Hades::ioRecvHdrDone, incoming );
+    incoming->callback = new IO_Functor(this, &Hades::ioRecvHdrDone, incoming);
 
     incoming->vec.resize(1);
     incoming->vec[0].ptr = &incoming->hdr;
@@ -294,35 +315,35 @@ void Hades::readHdr( IO::NodeId src )
 
 IO::Entry* Hades::ioRecvHdrDone( IO::Entry* e )
 {
-    IncomingEntry* incoming = static_cast<IncomingEntry*>(e);
+    IncomingMsgEntry* incoming = static_cast<IncomingMsgEntry*>(e);
     DBGX("srcNodeId=%d count=%d dtype=%d tag=%#x\n",
             incoming->srcNodeId,
             incoming->hdr.count,
             incoming->hdr.dtype,
             incoming->hdr.tag );
 
-    MatchEvent* event = new MatchEvent; 
+    MatchEvent* event = static_cast<MatchEvent*>(&m_selfEvent);
+    event->type = SelfEvent::Match;
     event->incomingEntry = incoming;
 
     event->incomingEntry->recvEntry = findMatch( incoming );
 
-    m_matchDelayLink->send( 10, event );
+    m_selfLink->send( 10, event );
     return NULL;
 }
 
 
 IO::Entry* Hades::sendIODone( IO::Entry* e )
 {
-    DBGX("\n");
-    //IOEntry* entry = static_cast<IOEntry*>( e );
+    DBGX("call run()\n");
     run();
     return e;
 }
 
 
-RecvEntry* Hades::findMatch( IncomingEntry* incoming )
+RecvEntry* Hades::findMatch( IncomingMsgEntry* incoming )
 {
-    DBGX("unexpected size %d\n", m_postedQ.size() );
+    DBGX("posted size %d\n", m_postedQ.size() );
     std::deque< RecvEntry* >::iterator iter = m_postedQ.begin(); 
     for ( ; iter != m_postedQ.end(); ++iter  ) {
         DBGX("dtype %d %d\n",incoming->hdr.dtype,(*iter)->dtype);
@@ -346,9 +367,9 @@ RecvEntry* Hades::findMatch( IncomingEntry* incoming )
             continue;
         } 
 
-        DBGX("rank incoming=%d %d\n", incoming->hdr.rank, (*iter)->rank);
+        DBGX("rank incoming=%d %d\n", incoming->hdr.srcRank, (*iter)->rank);
         if ( (*iter)->rank != Hermes::AnySrc &&
-                    incoming->hdr.rank != (*iter)->rank ) {
+                    incoming->hdr.srcRank != (*iter)->rank ) {
             continue;
         } 
 
@@ -360,11 +381,44 @@ RecvEntry* Hades::findMatch( IncomingEntry* incoming )
     return NULL;
 }
 
+void Hades::handleSelfLink( Event* e )
+{
+    SelfEvent* event = static_cast<SelfEvent*>(e);
+    switch( event->type )
+    {
+    case SelfEvent::Return:
+        handleCtxReturn(e);
+        break;
+    case SelfEvent::Match:
+        handleMatchDelay(e);
+        break;
+    case SelfEvent::CtxDelay:
+        handleCtxDelay(e);
+        break;
+    }
+}
+
+void Hades::handleCtxDelay( Event *e )
+{
+    DBGX("call ctx->run()\n");
+    CtxDelayEvent& event = *static_cast<CtxDelayEvent*>(e);
+    if ( event.ctx->run() ) {
+        delete event.ctx;
+    }
+}
+
+void Hades::handleCtxReturn( Event *e )
+{
+    RetFuncEvent* event = static_cast<RetFuncEvent*>(e);
+    DBGX("call return function  retval %d\n", event->m_retval);
+    (*event->m_retFunc)(event->m_retval);
+}
+
+
 void Hades::handleMatchDelay( Event *e )
 {
-    DBGX("\n");
     MatchEvent* event = static_cast<MatchEvent*>(e);
-    IncomingEntry* incoming = event->incomingEntry;
+    IncomingMsgEntry* incoming = event->incomingEntry;
 
     Hdr& hdr = event->incomingEntry->hdr;
    
@@ -372,10 +426,10 @@ void Hades::handleMatchDelay( Event *e )
         incoming->vec.resize(1);
         incoming->vec[0].len = hdr.count * sizeofDataType(hdr.dtype); 
 
-        DBGX("%d \n",incoming->vec[0].len);
+        DBGX("incoming body %d\n",incoming->vec[0].len);
         if ( ! event->incomingEntry->recvEntry ) {
             incoming->buffer.resize( incoming->vec[0].len );
-            incoming->vec[0].ptr = &incoming->buffer;
+            incoming->vec[0].ptr = &incoming->buffer[0];
         } else {
             incoming->vec[0].ptr = event->incomingEntry->recvEntry->buf;
         }
@@ -386,6 +440,7 @@ void Hades::handleMatchDelay( Event *e )
     
         m_io->recvv( incoming->srcNodeId, incoming->vec, incoming->callback );
     } else {
+        DBGX("no body\n");
         if ( ioRecvBodyDone( incoming ) ) {
             delete incoming;
         } 
@@ -394,23 +449,22 @@ void Hades::handleMatchDelay( Event *e )
 
 IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
 {
-    DBGX("\n");
-    IncomingEntry* incoming = static_cast<IncomingEntry*>(e);
+    IncomingMsgEntry* incoming = static_cast<IncomingMsgEntry*>(e);
     RecvEntry* recvEntry = incoming->recvEntry;
 
     // if the IncomingEntry has a recvEntry it means there was a match
     if (  recvEntry )  {
+        DBGX("finish up match\n")
         // if the RecvEntry does not have a req it means this was a blocking
         // recv and calling the retFunc will let the recv return 
         if ( ! recvEntry->req ) {
             DBGX("free blocking recv\n");
             assert( recvEntry->retFunc );
-            //sendReturn( Size, recvEntry->retFunc );
         } else {
             DBGX("update request for nonblockig recv\n");
             // update the request info for functions like wait()
             recvEntry->req->tag = incoming->hdr.tag;  
-            recvEntry->req->src = incoming->hdr.rank;  
+            recvEntry->req->src = incoming->hdr.srcRank;  
         }
 
         // we are done with the recvEntry
@@ -422,7 +476,7 @@ IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
         DBGX("added to unexpected Q\n");
         // no match push on the unexpected Q
         // XXXXXXXXXXXXXXXX  where do limit the size of the unexpected Q
-        m_unexpectedQ.push_back( incoming );
+        m_unexpectedMsgQ.push_back( incoming );
         e = NULL;
     }
     run();
@@ -430,74 +484,22 @@ IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
     return e;
 }
 
-void Hades::handle_event( Event *e )
-{
-    RetFuncEvent* event = static_cast<RetFuncEvent*>(e);
-    DBGX("call return function  retval %d\n", event->m_retval);
-    (*event->m_retFunc)(event->m_retval);
-}
-
-void Hades::postSendEntry( Hermes::Addr buf, uint32_t count,
-    Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-    Hermes::Communicator group, Hermes::MessageRequest* req,
-    Hermes::Functor* retFunc )
-{
-    SendEntry* entry = new SendEntry;
-
-    DBGX("buf=%p count=%d dtype=%d dest=%d tag=%#x group=%d\n",
-                        buf,count,dtype,dest,tag,group);
-
-    entry->buf      = buf; 
-    entry->count    = count;
-    entry->dtype    = dtype;
-    entry->group    = group;
-    entry->rank     = dest;
-    entry->tag      = tag;
-    entry->req      = req;
-    entry->retFunc  = retFunc;
-
-    entry->hdr.tag   = tag;
-    entry->hdr.count = count;
-    entry->hdr.dtype = dtype;
-    entry->hdr.rank  = m_groupMap[group]->getMyRank();
-    entry->hdr.group = group;
-
-    entry->vec.resize(2);
-    entry->vec[0].ptr = &entry->hdr;
-    entry->vec[0].len = sizeof(entry->hdr);
-    entry->vec[1].ptr = buf;
-    entry->vec[1].len = count * sizeofDataType( dtype );
-    m_sendQ.push_back( entry );
-}
-
 bool Hades::canPostSend()
 {
     return ( m_sendQ.size() < MaxNumSends );
 }
+
+void Hades::postSendEntry( SendEntry* entry )
+{
+    m_sendQ.push_back( entry );
+}
+
 bool Hades::canPostRecv()
 {
     return ( m_postedQ.size() < MaxNumPostedRecvs );
 }
 
-void Hades::postRecvEntry(Hermes::Addr buf, uint32_t count,
-    Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-    Hermes::Communicator group, Hermes::MessageResponse* resp,
-    Hermes::MessageRequest* req, Hermes::Functor* retFunc )
+void Hades::postRecvEntry( RecvEntry* entry )
 {
-    RecvEntry* entry = new RecvEntry;
-    DBGX("buf=%p count=%d dtype=%d dest=%d tag=%#x group=%d\n",
-                    buf,count,dtype,source,tag,group);
-
-    entry->buf      = buf; 
-    entry->count    = count;
-    entry->dtype    = dtype;
-    entry->group    = group;
-    entry->rank     = source;
-    entry->tag      = tag;
-    entry->req      = req;
-    entry->resp     = resp;
-    entry->retFunc  = retFunc;
     m_postedQ.push_back( entry );
 }
-    
-

@@ -23,7 +23,7 @@ struct Hdr {
     Hermes::PayloadDataType dtype;
     uint32_t                tag;
     uint32_t                group;
-    uint32_t                rank;
+    uint32_t                srcRank;
 };
 
 }
