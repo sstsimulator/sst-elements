@@ -25,7 +25,7 @@ class RankCtx : public FunctionCtx
             Hermes::Functor*        retFunc,
             FunctionType            type,
             Hades*                  obj);
-    bool runPost();
+    bool run();
   private:
     int*                    m_rank;
     Hermes::Communicator    m_group;

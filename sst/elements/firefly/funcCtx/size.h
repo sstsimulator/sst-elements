@@ -25,7 +25,7 @@ class SizeCtx : public FunctionCtx
             Hermes::Functor*    retFunc,
             FunctionType        type,
             Hades*              obj);
-    bool runPost();
+    bool run();
   private:
     int*                  m_size;
     Hermes::Communicator  m_group;

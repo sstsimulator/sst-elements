@@ -25,8 +25,11 @@ class WaitCtx : public FunctionCtx
             Hermes::Functor*        retFunc,
             FunctionType            type,
             Hades*                  obj); 
-    bool runPost();
+    bool run();
+
   private:
+
+    enum { RunProgress, Wait } m_state;
     Hermes::MessageResponse*    m_resp;
     Hermes::MessageRequest*     m_req;
 };

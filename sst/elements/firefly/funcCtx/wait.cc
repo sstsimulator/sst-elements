@@ -34,16 +34,30 @@ WaitCtx::WaitCtx( MessageRequest* req,  MessageResponse* resp,
             Functor* retFunc, FunctionType type, Hades* obj ) : 
     FunctionCtx( retFunc, type, obj ),
     m_req( req ),
-    m_resp( resp )
+    m_resp( resp ),
+    m_state( RunProgress )
 { }
 
-bool WaitCtx::runPost( ) 
+bool WaitCtx::run( ) 
 {
-    DBGX("src=%d\n",m_req->src);
+    bool retval = false;
     
-    if ( m_req->src != AnySrc ) { 
-        return false;
-    } else {
-        return true;
+    switch( m_state ) {
+    case RunProgress:
+        DBGX( "RunProgress\n" );
+        m_obj->runProgress( this );
+        m_state = Wait; 
+        break;
+    case Wait:
+        DBGX("Wait\n");
+        if ( m_req->src != AnySrc ) { 
+            return true;
+        } else {
+            _abort(WaitCtx,"%s() can't wait\n",__func__);
+            m_obj->setIOCallback();
+            return false;
+        }
+        break;
     }
+    return retval;
 }

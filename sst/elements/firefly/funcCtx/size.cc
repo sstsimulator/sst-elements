@@ -37,10 +37,10 @@ SizeCtx::SizeCtx( Communicator group, int* size,
     m_size( size )
 { }
 
-bool SizeCtx::runPost( ) 
+bool SizeCtx::run( ) 
 {
     DBGX("\n");
     
     *m_size = m_obj->m_groupMap[m_group]->size(); 
-    return false;
+    return true; 
 }

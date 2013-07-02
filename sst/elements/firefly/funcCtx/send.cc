@@ -13,6 +13,7 @@
 #include <sst_config.h>
 #include "sst/core/serialization/element.h"
 
+#include "entry.h"
 #include "funcCtx/send.h"
 #include "hades.h"
 
@@ -41,27 +42,50 @@ SendCtx::SendCtx( Addr target, uint32_t count, PayloadDataType dtype,
     m_tag( tag ),
     m_group( group ),
     m_req( req ),
-    m_posted( false )
+    m_state( RunProgress )
 { 
+    DBGX("target=%p count=%d dtype=%d source=%d tag=%d group=%d %p %p\n",
+        m_target, m_count, m_dtype, m_source, m_tag, m_group, m_req, m_resp );
+
+    m_sendEntry = new SendEntry( m_target, m_count, m_dtype, m_source,
+           m_tag, m_group, m_req, m_obj->m_groupMap[m_group]->getMyRank(),
+            m_retFunc, obj->sizeofDataType( dtype) );
 }
 
-void SendCtx::runPre( ) 
+SendCtx::~SendCtx()
 {
-    DBGX("\n");
-    if ( m_obj->canPostSend() ) {
-        m_obj->postSendEntry( m_target, m_count, m_dtype, m_source,
-                    m_tag, m_group, m_req, m_retFunc );
-
-        m_posted = true;
-    }
+    delete m_sendEntry;
 }
 
-bool SendCtx::runPost( ) 
+bool SendCtx::run( ) 
 {
-    DBGX("\n");
-    if ( m_posted ) { // && m_type == Isend 
-        return false;
-    } else {
-        return true;
+    bool retval = false;
+
+    switch ( m_state ) {
+    case RunProgress:
+        DBGX( "RunProgress\n" );
+        m_obj->runProgress(this);
+        m_state = PrePost;
+        break;
+
+    case PrePost:
+        DBGX( "PrePost\n" );
+        if ( ! m_obj->canPostSend() ) {
+            // need to implement blocked on full Q
+            _abort( SendCtx, "send Q is full\n" );
+        }
+        m_obj->postSendEntry( m_sendEntry );
+        m_obj->runProgress( this );
+
+        // there is no such thing as an Isend, send ctx must block will send
+        // happens
+        m_state = Wait;
+        break;
+
+    case Wait:
+        DBGX( "Wait\n" );
+        retval = true;
+        break;
     }
+    return retval;
 }

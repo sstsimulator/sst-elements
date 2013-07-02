@@ -37,9 +37,9 @@ RankCtx::RankCtx( Communicator group, int* rank,
     m_group( group )
 { }
 
-bool RankCtx::runPost( ) 
+bool RankCtx::run( ) 
 {
     DBGX("\n");
     *m_rank = m_obj->m_groupMap[m_group]->getMyRank(); 
-    return false;
+    return true;
 }

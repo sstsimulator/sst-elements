@@ -30,9 +30,11 @@ class SendCtx : public FunctionCtx
             Hermes::Functor*        retFunc,
             FunctionType            type,
             Hades*                  obj); 
+    ~SendCtx();
 
-    void runPre();
-    bool runPost();
+    bool run();
+
+    enum { RunProgress, PrePost, Wait } m_state;
 
   private:
     Hermes::Addr            m_target;
@@ -43,7 +45,7 @@ class SendCtx : public FunctionCtx
     Hermes::Communicator    m_group;
     Hermes::MessageResponse* m_resp;
     Hermes::MessageRequest* m_req;
-    bool                    m_posted;
+    SendEntry*              m_sendEntry;
 };
 
 }

@@ -31,10 +31,14 @@ class RecvCtx : public FunctionCtx
             Hermes::Functor*        retFunc,
             FunctionType            type,
             Hades*                  obj); 
-    void runPre();
-    bool runPost();
+    ~RecvCtx();
+
+    bool run();
 
   private:
+
+    enum { RunProgress, PrePost, WaitMatch, WaitCopy } m_state;
+
     Hermes::Addr            m_target;
     uint32_t                m_count;
     Hermes::PayloadDataType m_dtype;
@@ -43,7 +47,7 @@ class RecvCtx : public FunctionCtx
     Hermes::Communicator    m_group;
     Hermes::MessageResponse* m_resp;
     Hermes::MessageRequest* m_req;
-    bool                    m_posted;
+    RecvEntry*              m_recvEntry;
 };
 
 }
