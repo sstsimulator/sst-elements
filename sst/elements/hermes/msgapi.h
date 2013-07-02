@@ -32,11 +32,13 @@ typedef uint32_t Communicator;
 typedef uint32_t RankID;
 
 typedef struct MessageResponse {
+    uint32_t    tag;  
+    RankID      src; 
 } MessageResponse;
 
 typedef struct MessageRequest {
-    uint32_t     tag;  
-    RankID src; 
+    uint32_t    tag;  
+    RankID      src; 
 } MessageRequest;
 
 enum PayloadDataType {
@@ -83,8 +85,6 @@ class MessageInterface : public Module {
         }
         assert( 0 );
     }
-
-
 
     MessageInterface() {}
     virtual ~MessageInterface() {}
