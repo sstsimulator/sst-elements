@@ -1457,7 +1457,7 @@ bool Cache::cancelInvalidate(CacheBlock *block)
     if ( i->second.canCancel ) {
         dbg.output(CALL_INFO, "Attempting cancel for Invalidate 0x%"PRIx64" (%"PRIu64", %d)\n", block->baseAddr, i->second.issuingEvent.first, i->second.issuingEvent.second);
 
-        if ( snoopBusQueue.cancelRequest(i->second.busEvent) ) {
+        if ( snoop_link && snoopBusQueue.cancelRequest(i->second.busEvent) ) {
             delete i->second.busEvent;
         }
 
@@ -1840,13 +1840,16 @@ void Cache::handlePendingEvents(CacheRow *row, CacheBlock *block)
 {
     if ( row->waitingEvents.size() > 0 ) {
 
-        std::map<Addr, CacheRow::eventQueue_t>::iterator q;
+        std::map<Addr, CacheRow::eventQueue_t>::iterator q = row->waitingEvents.end();
         if ( block ) {
             q = row->waitingEvents.find(block->baseAddr);
-        } else {
-            /* Pick one. */
+        }
+
+        /* Pick one, if we don't have a specific queue. */
+        if ( row->waitingEvents.end() == q ) {
             q = row->waitingEvents.begin();
         }
+
         if ( row->waitingEvents.end() != q ) {
             CacheRow::eventQueue_t &queue = q->second;
             while ( queue.size() ) {
@@ -2116,20 +2119,21 @@ Cache::CacheBlock* Cache::CacheRow::getLRU(void)
         }
     }
     if ( lru < 0 ) {
-        __DBG( DBG_CACHE, CacheRow, "No empty slot in this row.\n");
+        cache->dbg.output(CALL_INFO, "No empty slot in this row.\n");
         return NULL;
     }
 
-    __DBG( DBG_CACHE, CacheRow, "Row LRU is block %p [0x%"PRIx64", [%d.%d]].\n", &blocks[lru], blocks[lru].baseAddr, blocks[lru].status, blocks[lru].user_locked);
+    cache->dbg.output(CALL_INFO, "Row LRU is block %p [0x%"PRIx64", [%d.%d]].\n", &blocks[lru], blocks[lru].baseAddr, blocks[lru].status, blocks[lru].user_locked);
     return &blocks[lru];
 }
 
 
 void Cache::CacheRow::addWaitingEvent(MemEvent *ev, SourceType_t src)
 {
-    waitingEvents[cache->addrToBlockAddr(ev->getAddr())].push_back(std::make_pair(ev, src));
-    __DBG( DBG_CACHE, CacheRow, "Event is number %zu in queue for this row.\n",
-            waitingEvents[cache->addrToBlockAddr(ev->getAddr())].size());
+    Addr blockaddr = cache->addrToBlockAddr(ev->getAddr());
+    waitingEvents[blockaddr].push_back(std::make_pair(ev, src));
+    cache->dbg.output(CALL_INFO, "Event is number %zu in queue for this row.\n",
+            waitingEvents[blockaddr].size());
     printRow();
 }
 
@@ -2137,7 +2141,7 @@ void Cache::CacheRow::addWaitingEvent(MemEvent *ev, SourceType_t src)
 void Cache::CacheRow::printRow(void)
 {
     for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-        __DBG( DBG_CACHE, CacheRow, "\t\tBlock [0x%"PRIx64" [%d.%d]] is: %s\n",
+        cache->dbg.output(CALL_INFO, "\t\tBlock [0x%"PRIx64" [%d.%d]] is: %s\n",
                 blocks[i].baseAddr,
                 blocks[i].status, blocks[i].user_locked,
                 blocks[i].isAssigned() ?
@@ -2178,7 +2182,7 @@ void Cache::BusQueue::setup(Cache *_comp, SST::Link *_link)
 void Cache::BusQueue::request(MemEvent *event, BusHandlers handlers)
 {
     queue.push_back(event);
-    __DBG( DBG_CACHE, BusQueue, "%s: Queued event (%"PRIu64", %d)  0x%"PRIx64" in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, makeBusKey(event), queue.size());
+    comp->dbg.output(CALL_INFO, "%s: Queued event (%"PRIu64", %d)  0x%"PRIx64" in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, makeBusKey(event), queue.size());
     map[event] = handlers;
     link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
 }
@@ -2192,10 +2196,10 @@ bool Cache::BusQueue::cancelRequest(MemEvent *event)
     if ( map.end() != i ) {
         map.erase(i);
         link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
-        __DBG( DBG_CACHE, BusQueue, "%s: Sending cancel for req 0x%"PRIx64"\n", comp->getName().c_str(), makeBusKey(event));
+        comp->dbg.output(CALL_INFO, "%s: Sending cancel for req 0x%"PRIx64"\n", comp->getName().c_str(), makeBusKey(event));
         retval = true;
     } else {
-        __DBG( DBG_CACHE, BusQueue, "%s: Unable to find a request to cancel!\n", comp->getName().c_str());
+        comp->dbg.output(CALL_INFO, "%s: Unable to find a request to cancel!\n", comp->getName().c_str());
     }
     return retval;
 }
@@ -2203,18 +2207,18 @@ bool Cache::BusQueue::cancelRequest(MemEvent *event)
 void Cache::BusQueue::clearToSend(MemEvent *busEvent)
 {
     if ( 0 == size() ) {
-        __DBG( DBG_CACHE, BusQueue, "%s: No Requests to send!\n", comp->getName().c_str());
+        comp->dbg.output(CALL_INFO, "%s: No Requests to send!\n", comp->getName().c_str());
         /* Must have canceled the request */
         link->send(new MemEvent(comp, 0x0, CancelBusRequest)); 
     } else {
         MemEvent *ev = queue.front();
         if ( busEvent->getAddr() != makeBusKey(ev) ) {
-            __DBG( DBG_CACHE, BusQueue, "%s: Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getAddr());
+            comp->dbg.output(CALL_INFO, "%s: Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getAddr());
             return;
         }
         queue.pop_front();
 
-        __DBG( DBG_CACHE, BusQueue, "%s: Sending Event (%s, 0x%"PRIx64" (%"PRIu64", %d)) [Queue: %zu]!\n", comp->getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getID().first, ev->getID().second, queue.size());
+        comp->dbg.output(CALL_INFO, "%s: Sending Event (%s, 0x%"PRIx64" (%"PRIu64", %d)) [Queue: %zu]!\n", comp->getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getID().first, ev->getID().second, queue.size());
 
 
         BusHandlers bh;

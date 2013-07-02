@@ -51,6 +51,9 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     if ( params.find( "M5debug" ) != params.end() ) {
         enableDebug( params[ "M5debug" ] );
     }
+    if ( params.find( "M5debugFile" ) != params.end() ) {
+        libgem5::SetLogFile( params[ "M5debugFile" ] );
+    }
 
     if ( params.find( "info" ) != params.end() ) {
         if ( params["info"].compare("yes") == 0 ) {
