@@ -80,32 +80,10 @@ printf(OUT "<param_include>\n".
 printf(OUT "<sst>\n");
 
 
-for ($xi = 0; $xi < $x; ++$xi) {
-	
-
-	print OUT<<EOT
-  <component name=c$xi type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port$xi port=nic latency=100ns/>
-  </component>
-
-EOT
-    }
-
-
 
 printf(OUT "  <component name=\"network\" type=macro_component.macro_network>\n");
 
 printf(OUT "      <params include=net_params> \n");
-printf(OUT "      </params> \n");
-
-
-for ($xi = 0; $xi < $x; ++$xi) {
-
-printf(OUT "	<link name=port$xi port=port$xi latency=$commLat /> \n");
-
-}
 
 
 printf(OUT "  </component> \n");

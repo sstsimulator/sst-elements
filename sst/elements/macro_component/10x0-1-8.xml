@@ -32,78 +32,7 @@ run-mode=both
 	</app_params>
 </param_include>
 <sst>
-  <component name=c0 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port0 port=nic latency=100ns/>
-  </component>
-
-  <component name=c1 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port1 port=nic latency=100ns/>
-  </component>
-
-  <component name=c2 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port2 port=nic latency=100ns/>
-  </component>
-
-  <component name=c3 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port3 port=nic latency=100ns/>
-  </component>
-
-  <component name=c4 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port4 port=nic latency=100ns/>
-  </component>
-
-  <component name=c5 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port5 port=nic latency=100ns/>
-  </component>
-
-  <component name=c6 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port6 port=nic latency=100ns/>
-  </component>
-
-  <component name=c7 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port7 port=nic latency=100ns/>
-  </component>
-
-  <component name=c8 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port8 port=nic latency=100ns/>
-  </component>
-
-  <component name=c9 type=macro_component.macro_processor>
-      <params include=node_params,app_params>
-      </params>
-	<link name=port9 port=nic latency=100ns/>
-  </component>
-
   <component name="network" type=macro_component.macro_network>
       <params include=net_params> 
-      </params> 
-	<link name=port0 port=port0 latency=100ns /> 
-	<link name=port1 port=port1 latency=100ns /> 
-	<link name=port2 port=port2 latency=100ns /> 
-	<link name=port3 port=port3 latency=100ns /> 
-	<link name=port4 port=port4 latency=100ns /> 
-	<link name=port5 port=port5 latency=100ns /> 
-	<link name=port6 port=port6 latency=100ns /> 
-	<link name=port7 port=port7 latency=100ns /> 
-	<link name=port8 port=port8 latency=100ns /> 
-	<link name=port9 port=port9 latency=100ns /> 
   </component> 
 </sst>
