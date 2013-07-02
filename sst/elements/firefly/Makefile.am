@@ -8,6 +8,8 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libfirefly.la
 
 libfirefly_la_SOURCES = \
+	entry.cc \
+	entry.h \
 	libfirefly.cc \
 	functionCtx.cc \
 	functionCtx.h \
