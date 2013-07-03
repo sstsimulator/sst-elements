@@ -88,7 +88,7 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
-	std::cout << "Sirius finishes: " << getCurrentSimTimeNano() << std::endl;
+	std::cout << "Sirius finishes: " << getCurrentSimTimeNano() << "ns" << std::endl;
 	trace->close();
 }
 
@@ -230,7 +230,7 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 		ZodiacEvent* nextEv = eventQ->front();
 		std::cout << "ZSirius: enqueuing next event after duration of: " << zCEv->getComputeDuration() << std::endl;
 		eventQ->pop();
-		selfLink->send(zCEv->getComputeDuration(), tConv, nextEv);
+		selfLink->send(zCEv->getComputeDurationNano(), tConv, nextEv);
 	} else {
 		std::cout << "ZSirius: Has no more events to process" << std::endl;
 

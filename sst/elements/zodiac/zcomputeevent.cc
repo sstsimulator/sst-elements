@@ -16,3 +16,7 @@ ZodiacEventType ZodiacComputeEvent::getEventType() {
 double ZodiacComputeEvent::getComputeDuration() {
 	return computeTime;
 }
+
+double ZodiacComputeEvent::getComputeDurationNano() {
+	return computeTime * 1000000000.0;
+}

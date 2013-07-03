@@ -14,6 +14,7 @@ class ZodiacComputeEvent : public ZodiacEvent {
 	public:
 		ZodiacComputeEvent(double timeSeconds);
 		double getComputeDuration();
+		double getComputeDurationNano();
 		ZodiacEventType getEventType();
 
 	private:
