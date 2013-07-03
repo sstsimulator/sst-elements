@@ -243,7 +243,7 @@ void MemController::handleEvent(SST::Event *event)
         break;
     case WriteReq:
     case SupplyData:
-        if ( use_bus && (ev->getSrc() != getName()) ) // don't cancel from what we sent.
+        if ( use_bus ) // don't cancel from what we sent.
             cancelEvent(ev);
         if ( !use_bus || ev->queryFlag(MemEvent::F_WRITEBACK) )
             addRequest(ev);

@@ -5,7 +5,7 @@
 #    echo ${sdl}
 #    rm -f ${sdl}.new
 #    sst.x $sdl > ${sdl}.new 2>&1
-#    diff -q ${sdl}.out ${sdl}.new && rm -f ${sdl}.new
+#    diff -q ${sdl}.ref ${sdl}.new && rm -f ${sdl}.new
 #done
 
 runCmd() {
@@ -16,7 +16,7 @@ runCmd() {
     fi
     rm -f ${1}.new
     echo ${1}
-    sst.x ${1} > ${1}.new 2>&1 && diff -q ${1}.out ${1}.new && rm -f ${1}.new
+    sst.x ${1} > ${1}.new 2>&1 && diff -q ${1}.ref ${1}.new && rm -f ${1}.new
 }
 
 export -f runCmd
