@@ -27,6 +27,7 @@ public:
   ZodiacSiriusTraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup();
   void finish();
+  void init(unsigned int phase);
 
 private:
   ~ZodiacSiriusTraceReader();

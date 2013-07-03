@@ -25,7 +25,7 @@ libzodiac_la_SOURCES = \
 	zrecvevent.cc \
 	siriusreader.h \
 	siriusreader.cc \
-	siriusconst.h \
+	sirius/siriusconst.h \
 	zsirius.h \
 	zsirius.cc \
 	zbarrierevent.h \

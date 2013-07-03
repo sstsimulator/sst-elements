@@ -16,7 +16,7 @@
 #include "sst/core/output.h"
 #include "sst/elements/hermes/msgapi.h"
 
-#include "siriusconst.h"
+#include "sirius/siriusconst.h"
 
 #include "zevent.h"
 #include "zinitevent.h"

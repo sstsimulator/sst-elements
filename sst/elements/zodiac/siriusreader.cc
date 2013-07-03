@@ -66,14 +66,6 @@ void SiriusReader::generateNextEvent() {
 	}
 
 	switch(call_type) {
-	case SIRIUS_MPI_INIT:
-		readInit();
-		break;
-
-	case SIRIUS_MPI_FINALIZE:
-		readFinalize();
-		break;
-
 	case SIRIUS_MPI_SEND:
 		readSend();
 		break;
@@ -82,8 +74,24 @@ void SiriusReader::generateNextEvent() {
 		readRecv();
 		break;
 
+	case SIRIUS_MPI_IRECV:
+		readIrecv();
+		break;
+
 	case SIRIUS_MPI_BARRIER:
 		readBarrier();
+		break;
+
+	case SIRIUS_MPI_WAIT:
+		readWait();
+		break;
+
+	case SIRIUS_MPI_INIT:
+		readInit();
+		break;
+
+	case SIRIUS_MPI_FINALIZE:
+		readFinalize();
 		break;
 
 	default:
