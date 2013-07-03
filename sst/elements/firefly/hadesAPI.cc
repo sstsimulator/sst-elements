@@ -94,7 +94,7 @@ void Hades::reduce(void* mydata, void* result, uint32_t count,
 
 void Hades::barrier(Communicator group, Functor* retFunc)
 {
-    setCtx( new FunctionCtx(retFunc, FunctionCtx::Barrier, this) ); 
+    setCtx( new FunctionCtx(retFunc, FunctionCtx::Barrier, this) );
 }
 
 int Hades::probe(RankID source, uint32_t tag,

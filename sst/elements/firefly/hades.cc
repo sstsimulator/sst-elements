@@ -182,22 +182,24 @@ void Hades::_componentInit(unsigned int phase )
     m_io->_componentInit(phase);
 }
 
+void Hades::clearIOCallback()
+{
+    m_io->setDataReadyFunc( NULL );
+}
+
 void Hades::setIOCallback()
 {
     DBGX("\n");
-    m_io->setDataReadyFunc ( new IO_Functor2(this,&Hades::dataReady) );
+    m_io->setDataReadyFunc( new IO_Functor2(this,&Hades::dataReady) );
 }
 
 void Hades::runProgress( FunctionCtx * ctx )
 {
-    m_state = RunRecv;
-    m_ctx = ctx;
-    DBGX("call run()\n");
-    run();
-}
+    if ( ctx ) {
+        m_state = RunRecv;
+        m_ctx = ctx;
+    }
 
-void Hades::run()
-{
     switch ( m_state ) {
 
       case RunRecv:
@@ -295,7 +297,7 @@ UnexpectedMsgEntry* Hades::searchUnexpected( RecvEntry* entry )
 void Hades::dataReady( IO::NodeId src )
 {
     DBGX("call run()\n");
-    run();
+    runProgress(m_ctx);
 }
 
 void Hades::readHdr( IO::NodeId src )
@@ -336,7 +338,7 @@ IO::Entry* Hades::ioRecvHdrDone( IO::Entry* e )
 IO::Entry* Hades::sendIODone( IO::Entry* e )
 {
     DBGX("call run()\n");
-    run();
+    runProgress(NULL);
     return e;
 }
 
@@ -479,7 +481,7 @@ IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
         m_unexpectedMsgQ.push_back( incoming );
         e = NULL;
     }
-    run();
+    runProgress(NULL);
     
     return e;
 }

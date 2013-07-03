@@ -106,6 +106,8 @@ void TestDriver::handle_event( Event* ev )
     std::string line;
     getline( m_traceFile, line );
 
+    DBGX( "%lu\n" ,Simulation::getSimulation()->getCurrentSimCycle());
+
     DBGX("`%s`\n",line.c_str());
     if ( line.compare( "init" ) == 0 ) {
         m_hermes->init( &m_functor );
@@ -115,7 +117,7 @@ void TestDriver::handle_event( Event* ev )
         m_hermes->rank( GroupWorld, &my_rank, &m_functor );
     } else if ( line.compare( "recv" ) == 0 ) {
 
-        printf("my_size=%d my_rank=%d\n",my_size, my_rank);
+        DBGX("my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->recv( &m_recvBuf[0], m_recvBuf.size(), CHAR, 
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
@@ -125,7 +127,7 @@ void TestDriver::handle_event( Event* ev )
 
     } else if ( line.compare( "irecv" ) == 0 ) {
 
-        printf("my_size=%d my_rank=%d\n",my_size, my_rank);
+        DBGX("my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->irecv( &m_recvBuf[0], m_recvBuf.size(), CHAR, 
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
@@ -135,6 +137,7 @@ void TestDriver::handle_event( Event* ev )
 
     } else if ( line.compare( "send" ) == 0 ) {
 
+        DBGX("my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->send( &m_sendBuf[0], m_sendBuf.size(), CHAR,
                                 (my_rank + 1 ) % 2,
                                 0xdead, 
@@ -164,5 +167,6 @@ void TestDriver::handle_event( Event* ev )
 void TestDriver::funcDone( int retval )
 {
     DBGX("retval %d\n", retval );
+    DBGX( "%lu\n" ,Simulation::getSimulation()->getCurrentSimCycle());
     m_selfLink->send(1,NULL);
 }

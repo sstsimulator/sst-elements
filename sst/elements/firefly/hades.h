@@ -135,13 +135,13 @@ class Hades : public Hermes::MessageInterface
     void postRecvEntry(RecvEntry*);
 
     void setIOCallback();
+    void clearIOCallback();
 
     std::map<Hermes::Communicator, Group*> m_groupMap;
 
     void runProgress( FunctionCtx* );
 
   private:
-    void run();
 
     void setCtx( FunctionCtx* ctx ) { 
         if ( ctx->run() ) {

@@ -73,6 +73,11 @@ void SimpleIO::handleEvent(SST::Event* e){
                                     event->getString() ); 
     }
     DBGX("%d bytes avail from %d\n", m_streamMap[ srcNode ].size(), srcNode );
+
+    if ( m_dataReadyFunc ) {
+        (*m_dataReadyFunc)( 0 );
+    }
+
     delete e;
 }
 
@@ -100,10 +105,6 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
         DBGX("%x\n",buffer[j]);
     }
 #endif
-
-    if ( m_dataReadyFunc ) {
-        (*m_dataReadyFunc)( 0 );
-    }
 
     if ( functor ) {
         Entry* tmp = (*functor)();

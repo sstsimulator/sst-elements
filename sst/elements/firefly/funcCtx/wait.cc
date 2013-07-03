@@ -51,11 +51,10 @@ bool WaitCtx::run( )
     case Wait:
         DBGX("Wait\n");
         if ( m_req->src != AnySrc ) { 
-            return true;
+            retval =  true;
+            m_obj->clearIOCallback();
         } else {
-            _abort(WaitCtx,"%s() can't wait\n",__func__);
             m_obj->setIOCallback();
-            return false;
         }
         break;
     }
