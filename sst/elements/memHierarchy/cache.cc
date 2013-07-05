@@ -90,8 +90,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
     if ( downstream_link )
         dbg.output(CALL_INFO, "Downstream Link id = %ld\n", downstream_link->getId());
 	snoop_link = configureLink( "snoop_link", "50 ps",
-			new Event::Handler<Cache, SourceType_t>(this,
-				&Cache::handleIncomingEvent, SNOOP) );
+			new Event::Handler<Cache>(this, &Cache::handleBusEvent) );
 	if ( NULL != snoop_link ) { // Snoop is a bus.
 		snoopBusQueue.setup(this, snoop_link);
         dbg.output(CALL_INFO, "SNOOP Link id = %ld\n", snoop_link->getId());
@@ -271,6 +270,24 @@ void Cache::finish(void)
 }
 
 
+void Cache::handleBusEvent(SST::Event *event)
+{
+    BusEvent *be = static_cast<BusEvent*>(event);
+    switch ( be->getCmd() ) {
+    case BusEvent::SendData:
+        handleIncomingEvent(be->getPayload(), SNOOP);
+        break;
+    case BusEvent::ClearToSend:
+        snoopBusQueue.clearToSend(be);
+        break;
+    default:
+        _abort(Cache, "Bus Client shouldn't be receiving this event (%d).\n", be->getCmd());
+    }
+
+    delete be;
+}
+
+
 void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 {
 	handleIncomingEvent(event, src, true);
@@ -279,17 +296,12 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    dbg.output(CALL_INFO, "Received Event on %d %p (%"PRIu64", %d) (%s to %s (link %ld)) %s 0x%"PRIx64"\n",
+    dbg.output(CALL_INFO, "Received Event on %d %p (%"PRIu64", %d) (%s to %s) %s 0x%"PRIx64"\n",
             src, ev,
             ev->getID().first, ev->getID().second,
-            ev->getSrc().c_str(), ev->getDst().c_str(), ev->getLinkId(),
+            ev->getSrc().c_str(), ev->getDst().c_str(),
             CommandString[ev->getCmd()], ev->getAddr());
     switch (ev->getCmd()) {
-    case BusClearToSend:
-        snoopBusQueue.clearToSend(ev);
-        delete ev;
-        break;
-
     case ReadReq:
     case WriteReq:
         handleCPURequest(ev, firstTimeProcessed);
@@ -1093,7 +1105,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
 					supMapI->second.canceled = true;
 					if ( NULL != supMapI->second.busEvent ) {
 						// Bus requested.  Cancel it, too
-						dbg.output(CALL_INFO, "Canceling Bus Request for Supply on 0x%"PRIx64" (%p)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent);
+						dbg.output(CALL_INFO, "Canceling Bus Request for Supply on 0x%"PRIx64" (%p) (%"PRIu64", %d)\n", supMapI->second.busEvent->getAddr(), supMapI->second.busEvent, supMapI->second.busEvent->getID().first, supMapI->second.busEvent->getID().second);
                         bool canceled = snoopBusQueue.cancelRequest(supMapI->second.busEvent);
 						if ( canceled ) {
                             b->unlock();
@@ -2182,9 +2194,9 @@ void Cache::BusQueue::setup(Cache *_comp, SST::Link *_link)
 void Cache::BusQueue::request(MemEvent *event, BusHandlers handlers)
 {
     queue.push_back(event);
-    comp->dbg.output(CALL_INFO, "%s: Queued event (%"PRIu64", %d)  0x%"PRIx64" in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, makeBusKey(event), queue.size());
+    comp->dbg.output(CALL_INFO, "%s: Queued event (%"PRIu64", %d) in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, queue.size());
     map[event] = handlers;
-    link->send(new MemEvent(comp, makeBusKey(event), RequestBus));
+    link->send(new BusEvent(BusEvent::RequestBus, makeBusKey(event)));
 }
 
 
@@ -2195,8 +2207,8 @@ bool Cache::BusQueue::cancelRequest(MemEvent *event)
     std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
     if ( map.end() != i ) {
         map.erase(i);
-        link->send(new MemEvent(comp, makeBusKey(event), CancelBusRequest));
-        comp->dbg.output(CALL_INFO, "%s: Sending cancel for req 0x%"PRIx64"\n", comp->getName().c_str(), makeBusKey(event));
+        link->send(new BusEvent(BusEvent::CancelRequest, makeBusKey(event)));
+        comp->dbg.output(CALL_INFO, "%s: Sending cancel for req (%"PRIu64", %d)\n", comp->getName().c_str(), event->getID().first, event->getID().second);
         retval = true;
     } else {
         comp->dbg.output(CALL_INFO, "%s: Unable to find a request to cancel!\n", comp->getName().c_str());
@@ -2204,16 +2216,16 @@ bool Cache::BusQueue::cancelRequest(MemEvent *event)
     return retval;
 }
 
-void Cache::BusQueue::clearToSend(MemEvent *busEvent)
+void Cache::BusQueue::clearToSend(BusEvent *busEvent)
 {
     if ( 0 == size() ) {
         comp->dbg.output(CALL_INFO, "%s: No Requests to send!\n", comp->getName().c_str());
         /* Must have canceled the request */
-        link->send(new MemEvent(comp, 0x0, CancelBusRequest)); 
+        link->send(new BusEvent(BusEvent::CancelRequest, busEvent->getKey()));
     } else {
         MemEvent *ev = queue.front();
-        if ( busEvent->getAddr() != makeBusKey(ev) ) {
-            comp->dbg.output(CALL_INFO, "%s: Bus asking for event 0x%"PRIx64".  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getAddr());
+        if ( busEvent->getKey() != makeBusKey(ev) ) {
+            comp->dbg.output(CALL_INFO, "%s: Bus asking for event (%"PRIu64", %d).  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getKey().first, busEvent->getKey().second);
             return;
         }
         queue.pop_front();
@@ -2232,10 +2244,11 @@ void Cache::BusQueue::clearToSend(MemEvent *busEvent)
             (comp->*(bh.init))(bh.args, ev);
         }
 
-        link->send(ev);
+        link->send(new BusEvent(ev));
 
         if ( bh.finish ) {
             (comp->*(bh.finish))(bh.args);
         }
     }
 }
+

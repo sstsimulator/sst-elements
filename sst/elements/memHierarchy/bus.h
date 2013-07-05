@@ -30,9 +30,13 @@ using namespace SST::Interfaces;
 namespace SST {
 namespace MemHierarchy {
 
+class BusEvent;
+
 class Bus : public SST::Component {
 public:
 
+    typedef MemEvent::id_type key_t;
+    static const key_t ANY_KEY;
     static const char BUS_INFO_STR[];
 
 	Bus(SST::ComponentId_t id, SST::Component::Params_t& params);
@@ -43,10 +47,10 @@ private:
 	Bus(const Bus&); // do not implement
 	void operator=(const Bus&); // do not implement
 
-	void requestPort(LinkId_t link_id, Addr key);
-	void cancelPortRequest(LinkId_t link_id, Addr key);
-	void sendMessage(MemEvent *ev, LinkId_t from_link);
-    std::pair<LinkId_t, Addr>  arbitrateNext(void);
+	void requestPort(LinkId_t link_id, key_t key);
+	void cancelPortRequest(LinkId_t link_id, key_t key);
+	void sendMessage(BusEvent *ev, LinkId_t from_link);
+    std::pair<LinkId_t, key_t>  arbitrateNext(void);
 
 	void handleEvent( SST::Event *ev );
 
@@ -68,13 +72,13 @@ private:
     Output dbg;
 	int numPorts;
     bool atomicDelivery;
-    std::pair<LinkId_t, Addr> activePort;
+    std::pair<LinkId_t, key_t> activePort;
 	bool busBusy;
 	TimeConverter *delayTC;
 	SimTime_t busDelay;
 	SST::Link** ports;
 	SST::Link *selfLink;
-	std::deque<std::pair<LinkId_t, Addr> > busRequests;
+	std::deque<std::pair<LinkId_t, key_t> > busRequests;
 	std::map<LinkId_t, SST::Link*> linkMap;
 
 
@@ -116,6 +120,51 @@ private:
 	BOOST_SERIALIZATION_SPLIT_MEMBER()
 
 };
+
+
+class BusEvent : public SST::Event {
+public:
+    typedef enum { RequestBus, CancelRequest, SendData, ClearToSend } BusCommand;
+
+    BusEvent(BusCommand cmd, Bus::key_t key) :
+        cmd(cmd), key(key), payload(NULL)
+    { }
+
+    BusEvent(MemEvent *payload) :
+        cmd(SendData), key(payload->getID()), payload(payload)
+    { }
+
+    BusEvent(BusEvent *be) :
+        cmd(be->cmd), key(be->key), payload(be->payload)
+    { }
+
+    Bus::key_t getKey() const { return key; }
+    BusCommand getCmd() const { return cmd; }
+    MemEvent* getPayload() const { return payload; }
+
+
+private:
+    BusCommand cmd;
+    Bus::key_t key;
+    MemEvent *payload;
+
+
+    BusEvent() {} // Serialization only
+
+    friend class Bus;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void
+	serialize(Archive & ar, const unsigned int version )
+	{
+		ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(cmd);
+        ar & BOOST_SERIALIZATION_NVP(key);
+        ar & BOOST_SERIALIZATION_NVP(payload);
+    }
+};
+
 
 };
 };

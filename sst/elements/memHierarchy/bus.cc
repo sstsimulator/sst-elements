@@ -33,6 +33,7 @@ using namespace SST::Interfaces;
 
 static const LinkId_t BUS_INACTIVE = (LinkId_t)(-2);
 const char Bus::BUS_INFO_STR[] = "SST::MemHierarchy::Bus::Info:";
+const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
 Bus::Bus(ComponentId_t id, Params_t& params) :
 	Component(id)
@@ -107,11 +108,11 @@ void Bus::init(unsigned int phase)
 }
 
 
-void Bus::requestPort(LinkId_t link_id, Addr key)
+void Bus::requestPort(LinkId_t link_id, key_t key)
 {
 
 	busRequests.push_back(std::make_pair(link_id, key));
-	dbg.output(CALL_INFO, "(%lu, 0x%"PRIx64") [active = %lu] queue depth = %zu \n", link_id, key, activePort.first, busRequests.size());
+	dbg.output(CALL_INFO, "(%lu, (%"PRIu64", %d)) [active = %lu] queue depth = %zu \n", link_id, key.first, key.second, activePort.first, busRequests.size());
 
 	if ( BUS_INACTIVE == activePort.first ) {
 		// Nobody's active.  Schedule it.
@@ -120,20 +121,20 @@ void Bus::requestPort(LinkId_t link_id, Addr key)
 }
 
 
-void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
+void Bus::cancelPortRequest(LinkId_t link_id, key_t key)
 {
-	dbg.output(CALL_INFO, "(%lu, 0x%"PRIx64") [active = %lu]\n", link_id, key, activePort.first);
+	dbg.output(CALL_INFO, "(%lu, (%"PRIu64", %d)) [active = %lu]\n", link_id, key.first, key.second, activePort.first);
 
-    if ( link_id == activePort.first && (key == activePort.second || 0 == key )) {
+    if ( link_id == activePort.first && (key == activePort.second || ANY_KEY == key )) {
         dbg.output(CALL_INFO, "Canceling active.  Rescheduling\n");
         activePort.first = BUS_INACTIVE;
         selfLink->send(new SelfEvent(SelfEvent::Schedule));
     }
 
-    for ( std::deque<std::pair<LinkId_t, Addr> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
+    for ( std::deque<std::pair<LinkId_t, key_t> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
         if ( i->first == link_id && i->second == key) {
             busRequests.erase(i);
-            dbg.output(CALL_INFO, "Canceling (%lu, 0x%"PRIx64"\n", link_id, key);
+            dbg.output(CALL_INFO, "Canceling (%lu, (%"PRIu64", %d)\n", link_id, key.first, key.second);
             break;
         }
     }
@@ -142,12 +143,12 @@ void Bus::cancelPortRequest(LinkId_t link_id, Addr key)
 }
 
 
-void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
+void Bus::sendMessage(BusEvent *ev, LinkId_t from_link)
 {
     dbg.output(CALL_INFO, "(%s -> %s: (%"PRIu64", %d) %s 0x%"PRIx64") [active = %lu]\n",
-            ev->getSrc().c_str(), ev->getDst().c_str(),
-            ev->getID().first, ev->getID().second,
-            CommandString[ev->getCmd()], ev->getAddr(),
+            ev->payload->getSrc().c_str(), ev->payload->getDst().c_str(),
+            ev->payload->getID().first, ev->payload->getID().second,
+            CommandString[ev->payload->getCmd()], ev->payload->getAddr(),
             activePort.first);
     // Only should be sending data if have clear-to-send
     if ( from_link != activePort.first ) {
@@ -156,44 +157,52 @@ void Bus::sendMessage(MemEvent *ev, LinkId_t from_link)
     // Can't send while already busy
     assert(!busBusy);
 
-    // TODO:  Calcuate delay including message size
-
-    for ( int i = 0 ; i < numPorts ; i++ ) {
-        ports[i]->send(busDelay, delayTC, new MemEvent(ev));
+    if ( ev->key != activePort.second ) {
+        _abort(Bus, "Port %ld sent us key (%"PRIu64", %d), but key (%"PRIu64", %d) is active.\n",
+                from_link, ev->key.first, ev->key.second, activePort.second.first, activePort.second.second);
     }
+
+    // TODO:  Calcuate delay including message size
+    for ( int i = 0 ; i < numPorts ; i++ ) {
+        ports[i]->send(busDelay, delayTC, new BusEvent(new MemEvent(ev->payload)));
+    }
+    //delete ev->payload;
     selfLink->send(busDelay, delayTC, new SelfEvent(SelfEvent::BusFinish));
     busBusy = true;
 }
 
 
-std::pair<LinkId_t, Addr> Bus::arbitrateNext(void)
+std::pair<LinkId_t, Bus::key_t> Bus::arbitrateNext(void)
 {
 	if ( busRequests.size() > 0 ) {
-        std::pair<LinkId_t, Addr> id = busRequests.front();
+        std::pair<LinkId_t, key_t> id = busRequests.front();
 		busRequests.pop_front();
 		return id;
 	}
-	return std::make_pair(BUS_INACTIVE, 0);
+	return std::make_pair(BUS_INACTIVE, ANY_KEY);
 }
 
 
 
 // incoming events are scanned and deleted
 void Bus::handleEvent(Event *ev) {
-	MemEvent *event = static_cast<MemEvent*>(ev);
+	BusEvent *event = static_cast<BusEvent*>(ev);
     LinkId_t link_id = event->getLinkId();
-    switch(event->getCmd())
+    switch(event->cmd)
     {
-    case RequestBus:
-        requestPort(link_id, event->getAddr());
+    case BusEvent::RequestBus:
+        requestPort(link_id, event->key);
         break;
-    case CancelBusRequest:
-        cancelPortRequest(link_id, event->getAddr());
+    case BusEvent::CancelRequest:
+        cancelPortRequest(link_id, event->key);
+        break;
+    case BusEvent::SendData:
+        sendMessage(event, link_id);
+        delete event->payload;
+        event->payload = NULL;
         break;
     default:
-        // All other messages.  Send on bus
-        sendMessage(event, link_id);
-        break;
+        _abort(Bus, "Bus should never receive a ClearToSend.\n");
     }
     delete event;
 }
@@ -207,11 +216,11 @@ void Bus::schedule(void)
 		return;
 	}
 
-    std::pair<LinkId_t, Addr> next_id = arbitrateNext();
+    std::pair<LinkId_t, key_t> next_id = arbitrateNext();
 	if ( BUS_INACTIVE != next_id.first ) {
 		activePort = next_id;
-		dbg.output(CALL_INFO, "Setting activePort = (%lu, 0x%"PRIx64")\n", activePort.first, activePort.second);
-		linkMap[next_id.first]->send(new MemEvent(this, next_id.second, BusClearToSend));
+		dbg.output(CALL_INFO, "Setting activePort = (%lu, (%"PRIu64", %d))\n", activePort.first, activePort.second.first, activePort.second.second);
+		linkMap[next_id.first]->send(new BusEvent(BusEvent::ClearToSend, activePort.second));
 	}
 }
 
@@ -249,4 +258,5 @@ void Bus::handleSelfEvent(Event *ev) {
 // Element Libarary / Serialization stuff
 
 BOOST_CLASS_EXPORT(Bus)
+BOOST_CLASS_EXPORT(BusEvent)
 

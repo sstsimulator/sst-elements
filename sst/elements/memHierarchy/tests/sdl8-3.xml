@@ -133,7 +133,7 @@
 		<params>
 			<numPorts> 7 </numPorts>
 			<busDelay> 5 ns </busDelay>
-            <debug> ${MEM_DEBUG} </debug>
+            <debug> ${_DEBUG} </debug>
 		</params>
 		<link name=n0c0l1_bus_link port=port0 latency=$buslat />
 		<link name=n0c1l1_bus_link port=port1 latency=$buslat />
@@ -233,7 +233,7 @@
 		<params>
 			<numPorts> 7 </numPorts>
 			<busDelay> 5 ns </busDelay>
-            <debug> ${MEM_DEBUG} </debug>
+            <debug> ${BUS_DEBUG} </debug>
 		</params>
 		<link name=n1c0l1_bus_link port=port0 latency=$buslat />
 		<link name=n1c1l1_bus_link port=port1 latency=$buslat />
@@ -272,7 +272,7 @@
             <addrRangeStart> 0x0 </addrRangeStart>
             <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
             <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
-            <debug> ${MEM_DEBUG} </debug>
+            <debug> ${DIRECTORY_DEBUG} </debug>
         </params>
         <link name=dir0_mem_link port=memory latency=$buslat />
         <link name=dir0_net_link port=network latency=$netlat />
@@ -286,7 +286,7 @@
 			<use_dramsim> 0 </use_dramsim>
 			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
 			<system_ini> system.ini </system_ini>
-            <debug> ${MEM_DEBUG} </debug>
+            <debug> ${MEMORY_DEBUG} </debug>
 		</params>
 		<link name=dir0_mem_link port=direct_link latency=$buslat />
 	</component>

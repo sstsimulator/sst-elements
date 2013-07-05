@@ -31,6 +31,7 @@
 #include <sst/core/interfaces/memEvent.h>
 
 #include "memNIC.h"
+#include "bus.h"
 
 
 using namespace SST::Interfaces;
@@ -194,9 +195,9 @@ private:
     };
 
 	class BusQueue {
-        uint64_t makeBusKey(MemEvent *ev)
+        Bus::key_t makeBusKey(MemEvent *ev)
         {
-            return ((ev->getID().first & 0xffffffff) << 32) | ev->getID().second;
+            return ev->getID();
         }
 
 	public:
@@ -217,7 +218,7 @@ private:
 
 		void request(MemEvent *event, BusHandlers handlers = BusHandlers());
 		bool cancelRequest(MemEvent *event);
-		void clearToSend(MemEvent *busEvent);
+		void clearToSend(BusEvent *busEvent);
 
 
 	private:
@@ -309,6 +310,7 @@ public:
 	virtual void finish();
 
 private:
+    void handleBusEvent(SST::Event *event);
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
 	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete = false);
 	void handleSelfEvent(SST::Event *event);

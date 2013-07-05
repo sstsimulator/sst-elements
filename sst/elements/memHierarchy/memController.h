@@ -23,6 +23,8 @@
 #include <sst/core/interfaces/memEvent.h>
 using namespace SST::Interfaces;
 
+#include "bus.h"
+
 #if defined(HAVE_LIBDRAMSIM)
 // DRAMSim uses DEBUG
 #ifdef DEBUG
@@ -128,6 +130,7 @@ private:
     ~MemController();
 
     void handleEvent(SST::Event *event);
+    void handleBusEvent(SST::Event *event);
 
     void addRequest(MemEvent *ev);
     void cancelEvent(MemEvent *ev);
@@ -137,8 +140,8 @@ private:
     Addr convertAddressToLocalAddress(Addr addr);
     void performRequest(DRAMReq *req);
 
-    void sendBusPacket(void);
-    void sendBusCancel(Addr addr);
+    void sendBusPacket(Bus::key_t key);
+    void sendBusCancel(Bus::key_t key);
 
     void sendResponse(DRAMReq *req);
 
