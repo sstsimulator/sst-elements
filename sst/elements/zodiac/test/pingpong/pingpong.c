@@ -11,6 +11,11 @@ int main(int argc, char* argv[]) {
 	MPI_Comm_size(MPI_COMM_WORLD, &npes);
 
 	double my_value = 5;
+
+	int messages_per_size = 1000;
+	//unsigned int message_
+
+
 	if(rank % 2 == 0) {
 		MPI_Send(&my_value, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
 	} else {
