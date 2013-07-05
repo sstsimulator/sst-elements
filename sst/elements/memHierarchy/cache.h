@@ -177,6 +177,9 @@ private:
 		struct {
 			LoadInfo_t *loadInfo;
 		} loadBlock;
+        struct {
+            Invalidation *inv;
+        } invalidation;
 	} BusHandlerArgs;
 
 	typedef void(Cache::*BusFinishHandlerFunc)(BusHandlerArgs &args);
@@ -324,6 +327,10 @@ private:
 
 	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction, bool cancelable = true);
 	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction, bool cancelable = true);
+    void finishBusSendInvalidation(BusHandlerArgs &args);
+	void finishIssueInvalidate(Addr addr);
+
+
 	void loadBlock(MemEvent *ev, SourceType_t src);
     std::pair<LoadInfo_t*, bool> initLoad(Addr addr, MemEvent *ev, SourceType_t src);
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
@@ -340,7 +347,6 @@ private:
 	bool waitingForInvalidate(Addr addr);
 	bool cancelInvalidate(CacheBlock *block);
     void ackInvalidate(MemEvent *ev);
-	void finishIssueInvalidate(Addr addr);
 
 	void writebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus);
     void prepWritebackBlock(BusHandlerArgs &args, MemEvent *ev);

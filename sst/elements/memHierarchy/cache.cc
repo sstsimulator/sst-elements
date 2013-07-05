@@ -551,7 +551,9 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
 
 	if ( ((ev->getAddr() != addr) || (SNOOP != src)) && snoop_link ) {
 		MemEvent *invEvent = new MemEvent(invalidateEvent);
-		snoopBusQueue.request(invEvent);
+        BusHandlerArgs args;
+        args.invalidation.inv = &invalidations[addr];
+		snoopBusQueue.request(invEvent, BusHandlers(NULL, &Cache::finishBusSendInvalidation, args));
         inv.waitingACKs += snoopBusQueue.getNumPeers();
         inv.busEvent = invEvent;
 	}
@@ -590,6 +592,12 @@ void Cache::issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDi
     }
     delete invalidateEvent;
 
+}
+
+
+void Cache::finishBusSendInvalidation(BusHandlerArgs &args)
+{
+    args.invalidation.inv->busEvent = NULL;
 }
 
 
@@ -1307,6 +1315,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstre
     }
 
 	CacheBlock *block = findBlock(ev->getAddr());
+    assert( !block || block->baseAddr == addrToBlockAddr(ev->getAddr()) );
 
     dbg.output(CALL_INFO, "Received Invalidate Event 0x%"PRIx64"  (%"PRIu64", %d) [Block status: %d] \n", ev->getAddr(), ev->getID().first, ev->getID().second, block ? block->status : -1);
 
@@ -1742,15 +1751,15 @@ void Cache::respondNACK(MemEvent *ev, SourceType_t src)
     nack->setSize(0);
     switch ( src ) {
     case  SNOOP:
-        dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" on bus to %s", CommandString[ev->getCmd()], ev->getAddr(), nack->getDst().c_str());
+        dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" on bus to %s\n", CommandString[ev->getCmd()], ev->getAddr(), nack->getDst().c_str());
         snoopBusQueue.request(nack);
         break;
     case UPSTREAM:
-        dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" upstream", CommandString[ev->getCmd()], ev->getAddr());
+        dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" upstream\n", CommandString[ev->getCmd()], ev->getAddr());
         upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(nack);
         break;
     case DOWNSTREAM:
-        dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" downstream", CommandString[ev->getCmd()], ev->getAddr());
+        dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" downstream\n", CommandString[ev->getCmd()], ev->getAddr());
         downstream_link->send(nack);
         break;
     case DIRECTORY:
