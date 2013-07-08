@@ -99,12 +99,15 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
-	zOut.output("Completed at %"PRIu64"ns", getCurrentSimTimeNano());
-	trace->close();
+	zOut.output("Completed at %"PRIu64"ns\n", getCurrentSimTimeNano());
 }
 
 ZodiacSiriusTraceReader::~ZodiacSiriusTraceReader() {
+	if(! trace->hasReachedFinalize()) {
+		zOut.output("WARNING: Component did not reach a finalize event, yet the component destructor has been called.\n");
+	}
 
+	trace->close();
 }
 
 ZodiacSiriusTraceReader::ZodiacSiriusTraceReader() :
@@ -275,7 +278,7 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 		eventQ->pop();
 		selfLink->send(zCEv->getComputeDurationNano(), tConv, nextEv);
 	} else {
-		zOut.output("No more events to process.");
+		zOut.output("No more events to process.\n");
 		std::cout << "ZSirius: Has no more events to process" << std::endl;
 
 		// We have run out of events
@@ -301,7 +304,7 @@ void ZodiacSiriusTraceReader::completedFunction(int retVal) {
 		eventQ->pop();
 		selfLink->send(nextEv);
 	} else {
-		zOut.output("No more events to process.");
+		zOut.output("No more events to process.\n");
 
 		// We have run out of events
 		primaryComponentOKToEndSim();
@@ -323,7 +326,7 @@ void ZodiacSiriusTraceReader::completedRecvFunction(int retVal) {
 		eventQ->pop();
 		selfLink->send(nextEv);
 	} else {
-		zOut.output("No more events to process.");
+		zOut.output("No more events to process.\n");
 
 		// We have run out of events
 		primaryComponentOKToEndSim();
