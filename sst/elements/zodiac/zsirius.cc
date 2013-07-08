@@ -236,7 +236,7 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 	assert(zCEv);
 
 	zOut.verbose(__LINE__, __FILE__, "handleComputeEvent",
-		2, 1, "Processing a compute event (duration=%d seconds)\n",
+		2, 1, "Processing a compute event (duration=%f seconds)\n",
 		zCEv->getComputeDuration());
 
 	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
@@ -246,11 +246,12 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 	if(eventQ->size() > 0) {
 		ZodiacEvent* nextEv = eventQ->front();
 		zOut.verbose(__LINE__, __FILE__, "handleComputeEvent",
-			2, 1, "Enqueuing next event at a delay of %d seconds)\n",
+			2, 1, "Enqueuing next event at a delay of %f seconds)\n",
 			zCEv->getComputeDuration());
 		eventQ->pop();
 		selfLink->send(zCEv->getComputeDurationNano(), tConv, nextEv);
 	} else {
+		zOut.output("No more events to process.");
 		std::cout << "ZSirius: Has no more events to process" << std::endl;
 
 		// We have run out of events
@@ -259,8 +260,6 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 }
 
 bool ZodiacSiriusTraceReader::clockTic( Cycle_t ) {
-  std::cout << "Generated: " << eventQ->size() << " events." << std::endl;
-
   // return false so we keep going
   return false;
 }
