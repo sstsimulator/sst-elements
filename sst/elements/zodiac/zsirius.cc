@@ -77,7 +77,9 @@ void ZodiacSiriusTraceReader::setup() {
     sprintf(trace_name, "%s.%d", trace_file.c_str(), rank);
 
     printf("Opening trace file: %s\n", trace_name);
-    trace = new SiriusReader(trace_name, rank, 64, eventQ, verbosityLevel);
+    trace = new SiriusReader(trace_name, rank, 64, eventQ);
+    trace->setOutput(&zOut);
+
     int count = trace->generateNextEvents();
     std::cout << "Obtained: " << count << " events" << std::endl;
 
@@ -145,14 +147,22 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 			handleWaitEvent(zEv);
 			break;
 
-		case BARRIER:
-			break;
-
 		case INIT:
 			handleInitEvent(zEv);
 			break;
 
+		case FINALIZE:
+			handleFinalizeEvent(zEv);
+			break;
+
 		case SKIP:
+			break;
+
+		case BARRIER:
+		default:
+			zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
+				0, 1, "Attempted to process an ZodiacEvent which is not included in the event decoding step.\n");
+			exit(-1);
 			break;
 		}
 	} else {
@@ -165,8 +175,20 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 }
 
 void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {
+	zOut.verbose(__LINE__, __FILE__, "handleInitEvent",
+		2, 1, "Processing a Init event.\n");
+
 	// Just initialize the library nothing fancy to do here
 	msgapi->init(&retFunctor);
+}
+
+void ZodiacSiriusTraceReader::handleFinalizeEvent(ZodiacEvent* zEv) {
+
+	zOut.verbose(__LINE__, __FILE__, "handleFinalizeEvent",
+		2, 1, "Processing a Finalize event.\n");
+
+	// Just finalize the library nothing fancy to do here
+	msgapi->fini(&retFunctor);
 }
 
 void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {

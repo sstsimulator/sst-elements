@@ -4,8 +4,7 @@
 using namespace std;
 using namespace SST::Zodiac;
 
-SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ,
-	int verbosityLevel) 
+SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, std::queue<ZodiacEvent*>* evQ)
 {
 
 	rank = focusOnRank;
@@ -20,7 +19,7 @@ SiriusReader::SiriusReader(char* file, uint32_t focusOnRank, uint32_t maxQLen, s
 	}
 
 	prevEventTime = 0;
-	output = new Output("SiriusReader", verbosityLevel, 0, Output::STDOUT);
+	output = new Output("SiriusReader", 0, 0, Output::STDOUT);
 }
 
 void SiriusReader::close() {
@@ -158,7 +157,7 @@ void SiriusReader::readWait() {
 	uint64_t reqID = readUINT64();
 	uint64_t status = readUINT64();
 
-	output->verbose(__LINE__, __FILE__, "readIrecv", 8, 0, "Read an MPI_Irecv\n");
+	output->verbose(__LINE__, __FILE__, "readWait", 8, 0, "Read an MPI_Wait\n");
 
 	ZodiacWaitEvent* ev = new ZodiacWaitEvent(reqID);
 	eventQ->push(ev);
@@ -171,7 +170,10 @@ void SiriusReader::readInit() {
 }
 
 void SiriusReader::readFinalize() {
-	output->verbose(__LINE__, __FILE__, "readRecv", 8, 0, "Read an MPI_Finalize\n");
+	output->verbose(__LINE__, __FILE__, "readFinalize", 8, 0, "Read an MPI_Finalize\n");
+
+	ZodiacFinalizeEvent* ev = new ZodiacFinalizeEvent();
+	eventQ->push(ev);
 
 	foundFinalize = true;
 }
@@ -229,4 +231,11 @@ PayloadDataType SiriusReader::convertToHermesType(uint32_t dtype) {
 
 bool SiriusReader::hasReachedFinalize() {
 	return foundFinalize;
+}
+
+void SiriusReader::setOutput(Output* oput) {
+	if(output != NULL)
+		delete output;
+
+	output = oput;
 }

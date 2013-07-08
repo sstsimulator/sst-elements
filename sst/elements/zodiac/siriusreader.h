@@ -26,6 +26,7 @@
 #include "zbarrierevent.h"
 #include "zcomputeevent.h"
 #include "zwaitevent.h"
+#include "zfinalizeevent.h"
 
 using namespace std;
 using namespace SST::Hermes;
@@ -35,8 +36,9 @@ namespace Zodiac {
 
 class SiriusReader {
     public:
-	SiriusReader(char* file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue, int verbLevel);
+	SiriusReader(char* file, uint32_t rank, uint32_t qLimit, std::queue<ZodiacEvent*>* eventQueue);
         void close();
+	void setOutput(Output* oput);
 	uint32_t generateNextEvents();
 	uint32_t getQueueLimit();
 	uint32_t getCurrentQueueSize();
