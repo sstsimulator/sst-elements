@@ -14,5 +14,4 @@ AC_DEFUN([SST_zodiac_CONFIG], [
   AS_IF([test "$have_zodiac_dumpi" = 1],
 	[AC_DEFINE([HAVE_ZODIAC_DUMPI], [1], [Define if you have an UNDUMPI compatible library.])])
 
-  AS_IF([test "$have_zodiac_otf" = "1" -o "$have_zodiac_dumpi" = "1"], [$1], [$2])
 ])
