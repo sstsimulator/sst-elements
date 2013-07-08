@@ -83,9 +83,11 @@ void ZodiacSiriusTraceReader::setup() {
     }
 
     char logPrefix[512];
-    sprintf(logPrefix, "ZSirius::Rank[%d]", rank);
+    sprintf(logPrefix, "ZSirius::SimulatedRank[%d]: ", rank);
     string logPrefixStr = logPrefix;
-    zOut.init(logPrefixStr, 0, 0, Output::STDOUT);
+
+    zOut.init(logPrefixStr, (uint32_t) 0, (uint32_t) 1, Output::STDOUT);
+
 }
 
 void ZodiacSiriusTraceReader::init(unsigned int phase) {
@@ -116,7 +118,8 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 {
 	ZodiacEvent* zEv = static_cast<ZodiacEvent*>(ev);
 
-	std::cout << "ZSirius: Handling next event..." << std::endl;
+	zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
+		3, 1, "Generating the next event...\n");
 
 	if(zEv) {
 		switch(zEv->getEventType()) {
@@ -151,7 +154,8 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 			break;
 		}
 	} else {
-		std::cerr << "Unknown event type received by Zodiac engine" << std::endl;
+		zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
+			0, 1, "Attempted to process an event which is not supported by the Zodiac engine.\n");
 		exit(-1);
 	}
 
@@ -168,7 +172,9 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 	assert(zSEv);
 	assert(zSEv->getLength() < emptyBufferSize);
 
-	std::cout << "ZSirius: processing a send event (of length: " << zSEv->getLength() << ")" << std::endl;
+	zOut.verbose(__LINE__, __FILE__, "handleSendEvent",
+		2, 1, "Processing a Send event (length=%"PRIu32", tag=%d, dest=%"PRIu32")\n",
+		zSEv->getLength(), zSEv->getMessageTag(), zSEv->getDestination());
 
 	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
 		zSEv->getDataType(), (RankID) zSEv->getDestination(),
@@ -183,7 +189,9 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 	currentRecv = (MessageResponse*) malloc(sizeof(MessageResponse));
 	memset(currentRecv, 1, sizeof(MessageResponse));
 
-	std::cout << "ZSirius: processing a recv event..." << std::endl;
+	zOut.verbose(__LINE__, __FILE__, "handleRecvEvent",
+		2, 1, "Processing a Recv event (length=%"PRIu32", tag=%d, source=%"PRIu32")\n",
+		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
 	msgapi->recv((Addr) emptyBuffer, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
@@ -199,7 +207,8 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 	currentRecv = (MessageResponse*) malloc(sizeof(MessageResponse));
 	memset(currentRecv, 1, sizeof(MessageResponse));
 
-	std::cout << "ZSirius: processing a wait event..." << std::endl;
+	zOut.verbose(__LINE__, __FILE__, "handleWaitEvent",
+		2, 1, "Processing a Wait event.\n");
 
 	msgapi->wait(msgReq, currentRecv, &recvFunctor);
 }
@@ -212,7 +221,9 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 	MessageRequest* msgReq = (MessageRequest*) malloc(sizeof(MessageRequest));
 	reqMap.insert(std::pair<uint64_t, MessageRequest*>(zREv->getRequestID(), msgReq));
 
-	std::cout << "ZSirius: processing an irecv event..." << std::endl;
+	zOut.verbose(__LINE__, __FILE__, "handleIrecvEvent",
+		2, 1, "Processing a Irecv event (length=%"PRIu32", tag=%d, source=%"PRIu32")\n",
+		zREv->getLength(), zREv->getMessageTag(), zREv->getSource());
 
 	msgapi->irecv((Addr) emptyBuffer, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
@@ -224,8 +235,9 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 	ZodiacComputeEvent* zCEv = static_cast<ZodiacComputeEvent*>(zEv);
 	assert(zCEv);
 
-	std::cout << "ZSirius: processing a compute event (duration is: " <<
-		zCEv->getComputeDuration() << ")" << std::endl;
+	zOut.verbose(__LINE__, __FILE__, "handleComputeEvent",
+		2, 1, "Processing a compute event (duration=%d seconds)\n",
+		zCEv->getComputeDuration());
 
 	if((0 == eventQ->size()) && (!trace->hasReachedFinalize())) {
 		trace->generateNextEvents();
@@ -233,7 +245,9 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 
 	if(eventQ->size() > 0) {
 		ZodiacEvent* nextEv = eventQ->front();
-		std::cout << "ZSirius: enqueuing next event after duration of: " << zCEv->getComputeDuration() << std::endl;
+		zOut.verbose(__LINE__, __FILE__, "handleComputeEvent",
+			2, 1, "Enqueuing next event at a delay of %d seconds)\n",
+			zCEv->getComputeDuration());
 		eventQ->pop();
 		selfLink->send(zCEv->getComputeDurationNano(), tConv, nextEv);
 	} else {
