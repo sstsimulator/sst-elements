@@ -71,11 +71,17 @@ bool RecvCtx::run( )
             m_obj->sendCtxDelay( 10, this ); 
         } else if ( m_obj->canPostRecv() ) {
             m_obj->postRecvEntry(m_recvEntry);
-            retval = true;
+            if ( m_type == Irecv ) {
+                retval = true;
+            } else {
+                m_state = WaitMessage;
+                m_obj->setIOCallback();
+            }
         } else {
             _abort(RecvCtc,"receive Q is full\n");
         }
         break; 
+
     case WaitMatch:
         DBGX("WaitMatch\n");
 
@@ -92,9 +98,18 @@ bool RecvCtx::run( )
         m_obj->sendCtxDelay( 10, this ); 
         m_state = WaitCopy;
         break;
+
     case WaitCopy:
         DBGX("WaitCopy\n");
         retval = true;
+        break;
+
+    case WaitMessage:
+        DBGX("WaitMessage\n");
+        if ( m_req->src != AnySrc ) {
+            retval = true;
+            m_obj->clearIOCallback();
+        }
         break;
     }
     return retval;

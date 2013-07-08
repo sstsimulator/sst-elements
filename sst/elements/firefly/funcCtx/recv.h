@@ -39,7 +39,7 @@ class RecvCtx : public FunctionCtx
 
   private:
 
-    enum { RunProgress, PrePost, WaitMatch, WaitCopy } m_state;
+    enum { RunProgress, PrePost, WaitMatch, WaitCopy, WaitMessage } m_state;
 
     Hermes::Addr            m_target;
     uint32_t                m_count;
