@@ -278,7 +278,8 @@ private:
         MemEvent::id_type initiatingEvent;
         bool uncached;
         bool satisfied;
-        bool eventScheduled; // True if a self-event has been scheduled that will need this (finishLoadBlock)
+        bool eventScheduled; // True if a self-event has been scheduled that will need this (finishLoadBlock, finishLoadBlockBus)
+        bool nackRescheduled; // True if a NACK caused a reschedule, and we haven't yet reached finishLoadBlock
         ForwardDir_t loadDirection;
 		struct LoadElement_t {
 			MemEvent * ev;
@@ -289,8 +290,8 @@ private:
 			{ }
 		};
 		std::deque<LoadElement_t> list;
-		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), loadDirection(SEND_BOTH) { }
-		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), loadDirection(SEND_BOTH) { }
+		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), nackRescheduled(false), loadDirection(SEND_BOTH) { }
+		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), nackRescheduled(false), loadDirection(SEND_BOTH) { }
 	};
 
 	struct SupplyInfo {

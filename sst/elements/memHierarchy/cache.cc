@@ -757,8 +757,10 @@ std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(Addr addr, MemEvent *ev, Sour
 
 void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
 {
+    li->nackRescheduled = false;
     li->eventScheduled = false;
     if ( li->satisfied ) {
+        assert(NULL == li->busEvent);
         delete li;
         return;
     }
@@ -790,6 +792,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
             dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             BusHandlerArgs args;
             args.loadBlock.loadInfo = li;
+            li->eventScheduled = true;
             li->busEvent = req;
             snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
         }
@@ -817,6 +820,7 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
             dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             BusHandlerArgs args;
             args.loadBlock.loadInfo = li;
+            li->eventScheduled = true;
             li->busEvent = req;
             snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
         }
@@ -888,10 +892,11 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 		}
 
         if ( waitingForInvalidate(block->baseAddr) ) {
-            dbg.output(CALL_INFO, "Invalidation (%"PRIu64", %d) for this in progress.  Putting into queue.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second);
-            if ( isL1 || DIRECTORY == src ) {
+            if ( /*isL1 ||*/ DIRECTORY == src ) {
+                dbg.output(CALL_INFO, "Invalidation (%"PRIu64", %d) for 0x%"PRIx64" in progress.  Putting into queue.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second, block->baseAddr);
                 invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, src));
             } else {
+                dbg.output(CALL_INFO, "Invalidation (%"PRIu64", %d) for 0x%"PRIx64" in progress.  Responding NACK.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second, block->baseAddr);
                 respondNACK(ev, src);
                 delete ev;
             }
@@ -1730,13 +1735,19 @@ void Cache::handleNACK(MemEvent *ev, SourceType_t src)
 
 	LoadList_t::iterator li = waitingLoads.find(ev->getAddr());
     if ( waitingLoads.end() != li ) {
-        dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64"\n", ev->getAddr());
-        CacheBlock *block = li->second->targetBlock;
-        //block->unlock();
-        li->second->eventScheduled = true;
-        self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
+        if ( !li->second->nackRescheduled ) {
+            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  Rescheduling load.\n", ev->getAddr());
+            CacheBlock *block = li->second->targetBlock;
+            //block->unlock();
+            li->second->eventScheduled = true;
+            li->second->nackRescheduled = true;
+            self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
+        } else {
+            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  NACK already rescheduled.\n", ev->getAddr());
+        }
         delete ev;
         return;
+
     }
 
     dbg.output(CALL_INFO, "Unexpected NACK for 0x%"PRIx64" received.  Ignoring.\n", ev->getAddr());
