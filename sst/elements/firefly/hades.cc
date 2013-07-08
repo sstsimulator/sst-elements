@@ -134,7 +134,7 @@ Hermes::RankID Hades::myWorldRank()
 void Hades::_componentSetup()
 {
     Group* group = m_groupMap[Hermes::GroupWorld];
-    for ( int i = 0; i < group->size(); i++ ) {
+    for ( unsigned int i = 0; i < group->size(); i++ ) {
         if ( group->getNodeId( i ) == myNodeId() && 
                 group->getCoreId( i ) == m_nodeInfo->coreNum() ) 
         {
@@ -249,7 +249,7 @@ bool Hades::runRecv( )
     if ( len == 0 ) {
         return false;
     } 
-    DBGX("%d bytes avail from %d\n",len, src);
+    DBGX("%lu bytes avail from %d\n",len, src);
 
     readHdr( src );
     return true;
@@ -257,7 +257,7 @@ bool Hades::runRecv( )
 
 UnexpectedMsgEntry* Hades::searchUnexpected( RecvEntry* entry )
 {
-    DBGX("unexpected size %d\n", m_unexpectedMsgQ.size() );
+    DBGX("unexpected size %lu\n", m_unexpectedMsgQ.size() );
     std::deque< MsgEntry* >::iterator iter = m_unexpectedMsgQ.begin();
     for ( ; iter != m_unexpectedMsgQ.end(); ++iter  ) {
 
@@ -345,7 +345,7 @@ IO::Entry* Hades::sendIODone( IO::Entry* e )
 
 RecvEntry* Hades::findMatch( IncomingMsgEntry* incoming )
 {
-    DBGX("posted size %d\n", m_postedQ.size() );
+    DBGX("posted size %lu\n", m_postedQ.size() );
     std::deque< RecvEntry* >::iterator iter = m_postedQ.begin(); 
     for ( ; iter != m_postedQ.end(); ++iter  ) {
         DBGX("dtype %d %d\n",incoming->hdr.dtype,(*iter)->dtype);
@@ -428,7 +428,7 @@ void Hades::handleMatchDelay( Event *e )
         incoming->vec.resize(1);
         incoming->vec[0].len = hdr.count * sizeofDataType(hdr.dtype); 
 
-        DBGX("incoming body %d\n",incoming->vec[0].len);
+        DBGX("incoming body %lu\n",incoming->vec[0].len);
         if ( ! event->incomingEntry->recvEntry ) {
             incoming->buffer.resize( incoming->vec[0].len );
             incoming->vec[0].ptr = &incoming->buffer[0];

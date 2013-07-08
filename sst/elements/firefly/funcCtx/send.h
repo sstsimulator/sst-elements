@@ -43,7 +43,6 @@ class SendCtx : public FunctionCtx
     Hermes::RankID          m_source;
     uint32_t                m_tag;
     Hermes::Communicator    m_group;
-    Hermes::MessageResponse* m_resp;
     Hermes::MessageRequest* m_req;
     SendEntry*              m_sendEntry;
 };

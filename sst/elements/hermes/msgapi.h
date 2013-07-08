@@ -82,6 +82,8 @@ class MessageInterface : public Module {
                 return sizeof( double); 
             case FLOAT:
                 return sizeof( float ); 
+            default:
+                assert(0);
         }
         assert( 0 );
     }
@@ -91,7 +93,7 @@ class MessageInterface : public Module {
 
     virtual void _componentInit(unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
-    virtual RankID myWorldRank() {}
+    virtual RankID myWorldRank() { assert(0); }
     virtual void init(Functor*) {}
     virtual void fini(Functor*) {}
     virtual void rank(Communicator group, int* rank, Functor*) {}
@@ -123,13 +125,13 @@ class MessageInterface : public Module {
 
     virtual void barrier(Communicator group, Functor*) {}
 
-    virtual int probe( RankID source, uint32_t tag, 
+    virtual void probe( RankID source, uint32_t tag, 
         Communicator group, MessageResponse* resp, Functor* ) {} 
 
-    virtual int wait( MessageRequest* req, MessageResponse* resp,
+    virtual void wait( MessageRequest* req, MessageResponse* resp,
         Functor* ) {};
 
-    virtual int test( MessageRequest* req, int& flag, MessageResponse* resp,
+    virtual void test( MessageRequest* req, int& flag, MessageResponse* resp,
         Functor* ) {};
     
 };

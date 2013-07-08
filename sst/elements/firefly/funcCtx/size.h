@@ -27,8 +27,8 @@ class SizeCtx : public FunctionCtx
             Hades*              obj);
     bool run();
   private:
-    int*                  m_size;
     Hermes::Communicator  m_group;
+    int*                  m_size;
  };
 
 }

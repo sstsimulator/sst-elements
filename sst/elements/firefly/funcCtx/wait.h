@@ -30,8 +30,8 @@ class WaitCtx : public FunctionCtx
   private:
 
     enum { RunProgress, Wait } m_state;
-    Hermes::MessageResponse*    m_resp;
     Hermes::MessageRequest*     m_req;
+    Hermes::MessageResponse*    m_resp;
 };
 
 }

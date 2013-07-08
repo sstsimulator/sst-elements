@@ -35,6 +35,7 @@ RecvCtx::RecvCtx( Addr target, uint32_t count, PayloadDataType dtype,
                 MessageResponse* resp, MessageRequest* req,
                 Functor* retFunc, FunctionType type, Hades* obj ) :
     FunctionCtx( retFunc, type, obj ),
+    m_state( RunProgress ),
     m_target( target ),
     m_count( count ),
     m_dtype( dtype ),
@@ -42,8 +43,7 @@ RecvCtx::RecvCtx( Addr target, uint32_t count, PayloadDataType dtype,
     m_tag( tag ),
     m_group( group ),
     m_resp( resp ),
-    m_req( req ),
-    m_state( RunProgress )
+    m_req( req )
 { 
     DBGX("target=%p count=%d dtype=%d source=%d tag=%d group=%d %p %p\n",
         m_target, m_count, m_dtype, m_source, m_tag, m_group, m_req, m_resp );

@@ -33,9 +33,9 @@ using namespace Hermes;
 WaitCtx::WaitCtx( MessageRequest* req,  MessageResponse* resp, 
             Functor* retFunc, FunctionType type, Hades* obj ) : 
     FunctionCtx( retFunc, type, obj ),
+    m_state( RunProgress ),
     m_req( req ),
-    m_resp( resp ),
-    m_state( RunProgress )
+    m_resp( resp )
 { }
 
 bool WaitCtx::run( ) 

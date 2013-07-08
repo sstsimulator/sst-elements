@@ -22,8 +22,8 @@ template <class TClass, class TArg, class TRetval = void >
 class StaticArg_Functor : public VoidArg_FunctorBase< TRetval >
 {
   private:
-    TRetval ( TClass::*m_fptr )( TArg );
     TClass* m_obj;
+    TRetval ( TClass::*m_fptr )( TArg );
     TArg m_arg;
 
   public:
@@ -48,8 +48,8 @@ template <class TClass, class TArg, class TRetval = void >
 class Arg_Functor : public Arg_FunctorBase< TArg, TRetval >
 {
   private:
-    TRetval ( TClass::*m_fptr )( TArg );
     TClass* m_obj;
+    TRetval ( TClass::*m_fptr )( TArg );
 
   public:
     Arg_Functor( TClass* obj, TRetval ( TClass::*fptr )( TArg )) :

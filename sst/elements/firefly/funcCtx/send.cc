@@ -35,17 +35,17 @@ SendCtx::SendCtx( Addr target, uint32_t count, PayloadDataType dtype,
         MessageRequest* req, 
         Functor* retFunc, FunctionType type, Hades* obj ) :
     FunctionCtx( retFunc, type, obj ),
+    m_state( RunProgress ),
     m_target( target ),
     m_count( count ),
     m_dtype( dtype ),
     m_source( source ),
     m_tag( tag ),
     m_group( group ),
-    m_req( req ),
-    m_state( RunProgress )
+    m_req( req )
 { 
-    DBGX("target=%p count=%d dtype=%d source=%d tag=%d group=%d %p %p\n",
-        m_target, m_count, m_dtype, m_source, m_tag, m_group, m_req, m_resp );
+    DBGX("target=%p count=%d dtype=%d source=%d tag=%d group=%d %p\n",
+        m_target, m_count, m_dtype, m_source, m_tag, m_group, m_req );
 
     m_sendEntry = new SendEntry( m_target, m_count, m_dtype, m_source,
            m_tag, m_group, m_req, m_obj->m_groupMap[m_group]->getMyRank(),

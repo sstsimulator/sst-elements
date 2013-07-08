@@ -70,7 +70,7 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     m_recvBuf.resize(bufLen);
     m_sendBuf.resize(bufLen);
     
-    for ( int i = 0; i < m_sendBuf.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_sendBuf.size(); i++ ) {
         m_sendBuf[i] = i;
     } 
 }
@@ -147,13 +147,12 @@ void TestDriver::handle_event( Event* ev )
     } else if ( line.compare( "barrier" ) == 0 ) {
         m_hermes->barrier( 0, &m_functor );
     } else if ( line.compare( "wait" ) == 0 ) {
-        int flag;
         m_hermes->wait( &my_req, &my_resp, &m_functor );
     } else if ( line.compare( "fini" ) == 0 ) {
         DBGX("src=%d tag=%#x\n",my_req.src,my_req.tag);
         DBGX("src=%d tag=%#x\n",my_resp.src,my_resp.tag);
 
-        for ( int i = 0; i < m_recvBuf.size(); i++ ) {
+        for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
             if ( m_recvBuf[i] != i ) {
                 DBGX("ERROR %d != %d\n",i,m_recvBuf[i]);
             }

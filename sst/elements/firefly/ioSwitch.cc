@@ -45,7 +45,7 @@ IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
 
     registerTimeBase( "10 ps", true);
 
-    for ( int i = 0; i< m_links.size(); i++ ) {
+    for ( unsigned int i = 0; i< m_links.size(); i++ ) {
         std::ostringstream linkName;
         linkName << "port" << i;
 
@@ -66,7 +66,7 @@ IOSwitch::~IOSwitch()
 void IOSwitch::init( unsigned int phase )
 {
     if ( 0 == phase ) {
-        for ( int i = 0; i < m_links.size(); i++ ) {
+        for ( unsigned int i = 0; i < m_links.size(); i++ ) {
             std::ostringstream portName;
             portName << i;
             std::string port = portName.str();

@@ -99,14 +99,14 @@ class Hades : public Hermes::MessageInterface
 
     virtual void barrier(Hermes::Communicator group, Hermes::Functor*);
 
-    virtual int probe(Hermes::RankID source, uint32_t tag,
+    virtual void probe(Hermes::RankID source, uint32_t tag,
         Hermes::Communicator group, Hermes::MessageResponse* resp,
         Hermes::Functor*);
 
-    virtual int wait(Hermes::MessageRequest* req,
+    virtual void wait(Hermes::MessageRequest* req,
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
-    virtual int test(Hermes::MessageRequest* req, int& flag, 
+    virtual void test(Hermes::MessageRequest* req, int& flag, 
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
 

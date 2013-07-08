@@ -97,18 +97,19 @@ void Hades::barrier(Communicator group, Functor* retFunc)
     setCtx( new FunctionCtx(retFunc, FunctionCtx::Barrier, this) );
 }
 
-int Hades::probe(RankID source, uint32_t tag,
+void Hades::probe(RankID source, uint32_t tag,
         Communicator group, MessageResponse* resp, Functor* retFunc )
 {
+    
 }
 
-int Hades::wait(MessageRequest* req, MessageResponse* resp,
+void Hades::wait(MessageRequest* req, MessageResponse* resp,
         Functor* retFunc )
 {
     setCtx( new WaitCtx( req, resp, retFunc, FunctionCtx::Wait, this) ); 
 }
 
-int Hades::test(MessageRequest* req, int& flag, MessageResponse* resp,
+void Hades::test(MessageRequest* req, int& flag, MessageResponse* resp,
         Functor* retFunc)
 {
 }

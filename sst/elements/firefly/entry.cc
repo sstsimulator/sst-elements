@@ -52,11 +52,11 @@ BaseEntry::BaseEntry(Hermes::Addr _buf, uint32_t _count,
     buf( _buf ),
     count( _count ),
     dtype( _dtype ),      
-    rank( _source ),
     tag( _tag ),
     group( _group ),
-    resp( _resp ),
+    rank( _source ),
     req( _req ),
+    resp( _resp ),
     retFunc( _retFunc ) 
 {
 }

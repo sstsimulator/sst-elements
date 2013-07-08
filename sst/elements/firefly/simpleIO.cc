@@ -72,7 +72,7 @@ void SimpleIO::handleEvent(SST::Event* e){
         m_streamMap[ srcNode ].insert( m_streamMap[ srcNode ].size(), 
                                     event->getString() ); 
     }
-    DBGX("%d bytes avail from %d\n", m_streamMap[ srcNode ].size(), srcNode );
+    DBGX("%lu bytes avail from %d\n", m_streamMap[ srcNode ].size(), srcNode );
 
     if ( m_dataReadyFunc ) {
         (*m_dataReadyFunc)( 0 );
@@ -85,9 +85,9 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
                                                     Entry::Functor* functor )
 {
     size_t len = 0;
-    DBGX("dest=%d ioVec.size()=%d\n", dest, ioVec.size() );
+    DBGX("dest=%d ioVec.size()=%lu\n", dest, ioVec.size() );
     
-    for ( int i = 0; i < ioVec.size(); i++ ) {
+    for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         len += ioVec[i].len;
     }
 
@@ -95,7 +95,7 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
     buffer.resize( len );
 
     len = 0;
-    for ( int i = 0; i < ioVec.size(); i++ ) {
+    for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         memcpy( &buffer[ len ],  ioVec[i].ptr, ioVec[i].len );
         len += ioVec[i].len; 
     }
@@ -114,7 +114,7 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
         }
     }
 
-    DBGX(" sending %d bytes\n", buffer.size() );
+    DBGX(" sending %lu bytes\n", buffer.size() );
     
     m_link->send( 0, new IOEvent( dest, buffer ) );
 
@@ -124,13 +124,13 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
 bool SimpleIO::recvv( NodeId src, std::vector<IoVec>& ioVec, 
                                                     Entry::Functor* functor )
 {
-    DBGX("src=%d ioVec.size()=%d\n", src, ioVec.size() );
+    DBGX("src=%d ioVec.size()=%lu\n", src, ioVec.size() );
 
     assert( m_streamMap.find( src ) != m_streamMap.end() ); 
 
     std::string& buf = m_streamMap[src ];
 
-    for ( int i = 0; i < ioVec.size(); i++ ) {
+    for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         assert( buf.size() >= ioVec[i].len );
     //    DBGX("copied %d bytes\n",ioVec[i].len );
         memcpy( ioVec[i].ptr, &buf[0], ioVec[i].len );

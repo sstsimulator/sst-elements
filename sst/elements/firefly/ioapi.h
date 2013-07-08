@@ -52,12 +52,14 @@ class Interface : public SST::Module {
     virtual ~Interface() { }
      virtual void _componentInit(unsigned int phase ) {}
 
-    virtual NodeId getNodeId() {};
-    virtual void setDataReadyFunc(Functor2*) { };
-    virtual size_t peek(NodeId& src) { }
-    virtual bool isReady(NodeId dest) { } 
-    virtual bool sendv(NodeId dest, std::vector<IoVec>&, Entry::Functor*) { }
-    virtual bool recvv(NodeId src, std::vector<IoVec>&, Entry::Functor*) { }
+    virtual NodeId getNodeId() { assert(0); };
+    virtual void setDataReadyFunc(Functor2*) { assert(0); };
+    virtual size_t peek(NodeId& src) { assert(0); }
+    virtual bool isReady(NodeId dest) { assert(0); } 
+    virtual bool sendv(NodeId dest, std::vector<IoVec>&, Entry::Functor*) 
+    { assert(0); }
+    virtual bool recvv(NodeId src, std::vector<IoVec>&, Entry::Functor*) 
+    { assert(0); }
 };
 
 }
