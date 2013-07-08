@@ -81,6 +81,11 @@ void ZodiacSiriusTraceReader::setup() {
 	selfLink->send(eventQ->front());
 	eventQ->pop();
     }
+
+    char logPrefix[512];
+    sprintf(logPrefix, "ZSirius::Rank[%d]", rank);
+    string logPrefixStr = logPrefix;
+    zOut.init(logPrefixStr, 0, 0, Output::STDOUT);
 }
 
 void ZodiacSiriusTraceReader::init(unsigned int phase) {
@@ -88,7 +93,7 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
-	std::cout << "Sirius finishes: " << getCurrentSimTimeNano() << "ns" << std::endl;
+	zOut.output("Completed at %"PRIu64"ns", getCurrentSimTimeNano());
 	trace->close();
 }
 
@@ -163,7 +168,7 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 	assert(zSEv);
 	assert(zSEv->getLength() < emptyBufferSize);
 
-	std::cout << "ZSirius: processing a send event..." << std::endl;
+	std::cout << "ZSirius: processing a send event (of length: " << zSEv->getLength() << ")" << std::endl;
 
 	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
 		zSEv->getDataType(), (RankID) zSEv->getDestination(),

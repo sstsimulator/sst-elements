@@ -8,6 +8,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/timeLord.h>
+#include <sst/core/output.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,7 @@ private:
 
   typedef Arg_Functor<ZodiacSiriusTraceReader, int> DerivedFunctor;
 
+  Output zOut;
   MessageInterface* msgapi;
   SiriusReader* trace;
   std::queue<ZodiacEvent*>* eventQ;
