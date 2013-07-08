@@ -61,6 +61,10 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& par
     // Make sure we don't stop the simulation until we are ready
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
+
+    // Allow the user to control verbosity from the log file.
+    uint32_t verbosityLevel = params.find_integer("verbose", 2);
+    zOut.init("ZSirius", (uint32_t) verbosityLevel, (uint32_t) 1, Output::STDOUT);
 }
 
 void ZodiacSiriusTraceReader::setup() {
@@ -85,9 +89,7 @@ void ZodiacSiriusTraceReader::setup() {
     char logPrefix[512];
     sprintf(logPrefix, "ZSirius::SimulatedRank[%d]: ", rank);
     string logPrefixStr = logPrefix;
-
-    zOut.init(logPrefixStr, (uint32_t) 0, (uint32_t) 1, Output::STDOUT);
-
+    zOut.setPrefix(logPrefixStr);
 }
 
 void ZodiacSiriusTraceReader::init(unsigned int phase) {
@@ -270,12 +272,14 @@ void ZodiacSiriusTraceReader::completedFunction(int retVal) {
 	}
 
 	if(eventQ->size() > 0) {
-		std::cout << "ZSirius: Posting the next event..." << std::endl;
+		zOut.verbose(__LINE__, __FILE__, "completedFunction",
+			2, 1, "Returned from a call to the message API, posting the next event...\n");
+
 		ZodiacEvent* nextEv = eventQ->front();
 		eventQ->pop();
 		selfLink->send(nextEv);
 	} else {
-		std::cout << "ZSirius: Has no more events to process" << std::endl;
+		zOut.output("No more events to process.");
 
 		// We have run out of events
 		primaryComponentOKToEndSim();
@@ -290,12 +294,14 @@ void ZodiacSiriusTraceReader::completedRecvFunction(int retVal) {
 	}
 
 	if(eventQ->size() > 0) {
-		std::cout << "ZSirius: Posting the next event..." << std::endl;
+		zOut.verbose(__LINE__, __FILE__, "completedRecvFunction",
+			2, 1, "Returned from a call to the message API, posting the next event...\n");
+
 		ZodiacEvent* nextEv = eventQ->front();
 		eventQ->pop();
 		selfLink->send(nextEv);
 	} else {
-		std::cout << "ZSirius: Has no more events to process" << std::endl;
+		zOut.output("No more events to process.");
 
 		// We have run out of events
 		primaryComponentOKToEndSim();
