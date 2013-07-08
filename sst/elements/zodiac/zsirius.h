@@ -69,6 +69,15 @@ private:
   string trace_file;
   int verbosityLevel;
 
+  uint64_t zSendCount;
+  uint64_t zRecvCount;
+  uint64_t zIRecvCount;
+  uint64_t zWaitCount;
+
+  uint64_t zSendBytes;
+  uint64_t zRecvBytes;
+  uint64_t zIRecvBytes; 
+
   ////////////////////////////////////////////////////////
 
   friend class boost::serialization::access;

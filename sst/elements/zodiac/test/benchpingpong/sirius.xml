@@ -15,6 +15,7 @@
      <trace> /home/sdhammo/subversion/sst-simulator/sst/elements/zodiac/test/benchpingpong/pingpong-2.stf </trace>
      <buffer> 524288 </buffer>
      <bufLen> 10 </bufLen>
+     <verbose>0</verbose>
      <hermesModule> firefly.hades </hermesModule>
      <hermesParams.numRanks> 2 </hermesParams.numRanks>
      <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>

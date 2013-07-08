@@ -92,6 +92,15 @@ void ZodiacSiriusTraceReader::setup() {
     sprintf(logPrefix, "ZSirius::SimulatedRank[%d]: ", rank);
     string logPrefixStr = logPrefix;
     zOut.setPrefix(logPrefixStr);
+
+    // Clear counters
+    zSendCount = 0;
+    zRecvCount = 0;
+    zIRecvCount = 0;
+    zWaitCount = 0;
+    zSendBytes = 0;
+    zRecvBytes = 0;
+    zIRecvBytes = 0;
 }
 
 void ZodiacSiriusTraceReader::init(unsigned int phase) {
@@ -99,6 +108,17 @@ void ZodiacSiriusTraceReader::init(unsigned int phase) {
 }
 
 void ZodiacSiriusTraceReader::finish() {
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "Completed simulation at: %"PRIu64"ns\n",
+		getCurrentSimTimeNano());
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "Statistics for run are:\n");
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Send Count:         %"PRIu64"\n", zSendCount);
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Recv Count:         %"PRIu64"\n", zRecvCount);
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total IRecv Count:        %"PRIu64"\n", zIRecvCount);
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Wait Count:         %"PRIu64"\n", zWaitCount);
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Send Bytes:         %"PRIu64"\n", zSendBytes);
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Recv Bytes:         %"PRIu64"\n", zRecvBytes);
+	zOut.verbose(__LINE__, __FILE__, "Finish", 1, 1, "- Total Posted-IRecv Bytes: %"PRIu64"\n", zIRecvBytes);
+
 	zOut.output("Completed at %"PRIu64"ns\n", getCurrentSimTimeNano());
 }
 
@@ -206,6 +226,9 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 	msgapi->send((Addr) emptyBuffer, zSEv->getLength(),
 		zSEv->getDataType(), (RankID) zSEv->getDestination(),
 		zSEv->getMessageTag(), zSEv->getCommunicatorGroup(), &retFunctor);
+
+	zSendBytes += (msgapi->sizeofDataType(zSEv->getDataType()) * zSEv->getLength());
+	zSendCount++;
 }
 
 void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
@@ -224,6 +247,9 @@ void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
 		currentRecv, &recvFunctor);
+
+	zRecvBytes += (msgapi->sizeofDataType(zREv->getDataType()) * zREv->getLength());
+	zRecvCount++;
 }
 
 void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
@@ -238,6 +264,7 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 		2, 1, "Processing a Wait event.\n");
 
 	msgapi->wait(msgReq, currentRecv, &recvFunctor);
+	zWaitCount++;
 }
 
 void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
@@ -256,6 +283,9 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
 		msgReq, &recvFunctor);
+
+	zIRecvBytes += (msgapi->sizeofDataType(zREv->getDataType()) * zREv->getLength());
+	zIRecvCount++;
 }
 
 void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
