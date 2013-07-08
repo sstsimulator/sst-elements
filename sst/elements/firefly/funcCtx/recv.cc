@@ -43,6 +43,10 @@ RecvCtx::RecvCtx( Addr target, uint32_t count, PayloadDataType dtype,
         m_req->src = AnySrc; 
     }
 
+    if ( m_resp ) {
+        m_resp->src = AnySrc; 
+    }
+
     m_recvEntry = new RecvEntry(m_target, m_count, m_dtype, m_source,
                 m_tag, m_group, m_resp, m_req, m_retFunc);
 }
@@ -106,7 +110,7 @@ bool RecvCtx::run( )
 
     case WaitMessage:
         DBGX("WaitMessage\n");
-        if ( m_req->src != AnySrc ) {
+        if ( m_resp->src != AnySrc ) {
             retval = true;
             m_obj->clearIOCallback();
         }

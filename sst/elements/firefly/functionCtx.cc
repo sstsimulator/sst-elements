@@ -15,6 +15,7 @@
 #include "sst/elements/hermes/msgapi.h"
 
 #include "functionCtx.h"
+#include "funcCtx/debug.h"
 #include "hades.h"
 
 using namespace SST::Firefly;
@@ -43,11 +44,11 @@ FunctionCtx::FunctionCtx( Functor* retFunc, FunctionType type,
         m_retval( SUCCESS ),
         m_latency( latency )
 {
-    printf("FunctionCtx::%s() %s\n",__func__, functionName[m_type]);
+    DBGX("%s\n", functionName[m_type]);
 }
 
 FunctionCtx::~FunctionCtx() 
 {
-    printf("FunctionCtx::%s() %s\n",__func__, functionName[m_type]);
+    DBGX("%s\n", functionName[m_type]);
     m_obj->sendReturn( m_latency, m_retFunc, m_retval );
 }

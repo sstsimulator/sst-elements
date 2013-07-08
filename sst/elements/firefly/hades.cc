@@ -456,21 +456,20 @@ IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
 
     // if the IncomingEntry has a recvEntry it means there was a match
     if (  recvEntry )  {
-        DBGX("finish up match\n")
-        // if the RecvEntry does not have a req it means this was a blocking
-        // recv and calling the retFunc will let the recv return 
-        if ( ! recvEntry->req ) {
-            DBGX("free blocking recv\n");
-            assert( recvEntry->retFunc );
-        } else {
-            DBGX("update request for nonblockig recv\n");
-            // update the request info for functions like wait()
+
+        if ( recvEntry->req ) {
+            DBGX("finish up non blocking match\n")
             recvEntry->req->tag = incoming->hdr.tag;  
             recvEntry->req->src = incoming->hdr.srcRank;  
+        } else if ( recvEntry->resp ) {
+            DBGX("finish up blocking match\n")
+            recvEntry->resp->tag = incoming->hdr.tag;  
+            recvEntry->resp->src = incoming->hdr.srcRank;  
+        } else {
+            assert( recvEntry->retFunc );
         }
 
         // we are done with the recvEntry
-        // XXXXXXXXXXXXXXXXXXX make sure it's not in the recv Q
         delete recvEntry; 
 
         // we are done with the IncomingEntry return it and it will be deleted
