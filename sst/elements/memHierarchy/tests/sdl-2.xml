@@ -33,6 +33,7 @@
 			<access_time> 2 ns</access_time>
 			<num_upstream> 1 </num_upstream>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=cpu_cache_link port=upstream0 latency=$lat />
 		<link name=cache_bus_link port=snoop_link latency=$buslat />

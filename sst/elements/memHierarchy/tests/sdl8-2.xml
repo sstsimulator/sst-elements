@@ -35,6 +35,7 @@
 			<num_upstream> 1 </num_upstream>
 			<next_level> c0.l2cache </next_level>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
 		<link name=c0.l1l2cache_link port=downstream latency=$buslat />
@@ -50,6 +51,7 @@
             <net_addr> 1 </net_addr>
             <mode> INCLUSIVE </mode>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=c0.l1l2cache_link port=upstream0 latency=$buslat />
         <link name=cache_net_0 port=directory_link latency=$netlat />
@@ -76,6 +78,7 @@
 			<num_upstream> 1 </num_upstream>
 			<next_level> c1.l2cache </next_level>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
 		<link name=c1.l1l2cache_link port=downstream latency=$buslat />
@@ -91,6 +94,7 @@
             <net_addr> 2 </net_addr>
             <mode> INCLUSIVE </mode>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=c1.l1l2cache_link port=upstream0 latency=$buslat />
         <link name=cache_net_1 port=directory_link latency=$netlat />

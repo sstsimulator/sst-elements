@@ -42,6 +42,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
     dbg.init("@R:Cache::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
 	// get parameters
 	n_ways = params.find_integer("num_ways", 0);
@@ -246,7 +247,7 @@ void Cache::setup(void)
 
 void Cache::finish(void)
 {
-    Output out("", 0, 0, Output::STDOUT);
+    Output out("", 0, 0, statsOutputTarget);
 	out.output("Cache %s stats:\n"
 			"\t# Read    Hits:      %"PRIu64"\n"
 			"\t# Read    Misses:    %"PRIu64"\n"

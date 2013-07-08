@@ -32,6 +32,7 @@
         <access_time> 2 ns</access_time>
         <num_upstream> 1 </num_upstream>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
     </l1CacheParams>
     <l2CacheParams>
         <num_ways> 4 </num_ways>
@@ -39,6 +40,7 @@
         <blocksize> 64 </blocksize>
         <access_time> 20 ns</access_time>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
     </l2CacheParams>
     <l3CacheParams>
         <num_ways> 8 </num_ways>
@@ -47,6 +49,7 @@
         <access_time> 50 ns</access_time>
         <mode> INCLUSIVE </mode>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
     </l3CacheParams>
 </param_include>
 

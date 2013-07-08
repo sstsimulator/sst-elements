@@ -383,6 +383,7 @@ private:
 
 
     Output dbg;
+    Output::output_location_t statsOutputTarget;
     CacheListener* listener;
 	int n_ways;
 	int n_rows;

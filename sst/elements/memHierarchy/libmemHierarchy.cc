@@ -80,6 +80,7 @@ static const ElementInfoParam cache_params[] = {
     {"access_time",     "Time taken to lookup data in the cache."},
     {"net_addr",        "When using a directory controller, the network address of this cache."},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 
