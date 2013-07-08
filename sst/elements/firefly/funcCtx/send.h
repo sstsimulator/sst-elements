@@ -17,6 +17,8 @@
 namespace SST {
 namespace Firefly {
 
+class SendEntry;
+
 class SendCtx : public FunctionCtx 
 {
   public:

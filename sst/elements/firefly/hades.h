@@ -141,6 +141,21 @@ class Hades : public Hermes::MessageInterface
 
     void runProgress( FunctionCtx* );
 
+    int myNodeId() { 
+        if ( m_io ) {
+            return m_io->getNodeId();
+        } else {
+            return -1;
+        }
+    }
+    Hermes::RankID _myWorldRank() {
+        if ( m_groupMap.empty() ) {
+            return -1; 
+        } else {
+            return myWorldRank();
+        }
+    }
+
   private:
 
     void setCtx( FunctionCtx* ctx ) { 
@@ -183,23 +198,9 @@ class Hades : public Hermes::MessageInterface
     std::deque<RecvEntry*>  m_postedQ;
     std::deque<SendEntry*>  m_sendQ;
     
-    int myNodeId() { 
-        if ( m_io ) {
-            return m_io->getNodeId();
-        } else {
-            return -1;
-        }
-    }
 
     Hermes::RankID myWorldRank();
 
-    Hermes::RankID _myWorldRank() {
-        if ( m_groupMap.empty() ) {
-            return -1; 
-        } else {
-            return myWorldRank();
-        }
-    }
 };
 
 } // namesapce Firefly 

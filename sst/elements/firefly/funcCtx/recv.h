@@ -17,6 +17,8 @@
 namespace SST {
 namespace Firefly {
 
+class RecvEntry;
+
 class RecvCtx : public FunctionCtx 
 {
   public:

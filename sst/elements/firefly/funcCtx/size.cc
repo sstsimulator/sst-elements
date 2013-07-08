@@ -14,18 +14,8 @@
 #include "sst/core/serialization/element.h"
 
 #include "funcCtx/size.h"
+#include "funcCtx/debug.h"
 #include "hades.h"
-
-#include <cxxabi.h>
-
-#define DBGX( fmt, args... ) \
-{\
-    char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%s::%s():%d: "fmt, realname ? realname : "?????????", \
-                        __func__, __LINE__, ##args);\
-    if ( realname ) free(realname);\
-}
-
 
 using namespace SST::Firefly;
 using namespace Hermes;
