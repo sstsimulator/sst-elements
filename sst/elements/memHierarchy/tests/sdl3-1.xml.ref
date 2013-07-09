@@ -3963,8 +3963,8 @@ Cache c1.l1cache stats:
 	# Write   Misses:    14
 	# Upgrade Misses:    84
 	# Invalidations:     90
-TrivialCPU Finished after 944 issued reads, 944 returned
-TrivialCPU Finished after 1017 issued reads, 1017 returned
+TrivialCPU Finished after 944 issued reads, 944 returned (99999 clocks)
+TrivialCPU Finished after 1017 issued reads, 1017 returned (99999 clocks)
 Cache l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

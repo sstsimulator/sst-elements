@@ -1998,7 +1998,7 @@ cpu: 2 Issued Read (2399) for address 0x998
 cpu: Received MemEvent with command 1 (response to 2399, addr 0x998) [Time: 4] [0 outstanding requests]
 cpu: 1 Issued Write (2401) for address 0x164
 cpu: Received MemEvent with command 3 (response to 2401, addr 0x164) [Time: 4] [0 outstanding requests]
-TrivialCPU Finished after 1000 issued reads, 1000 returned
+TrivialCPU Finished after 1000 issued reads, 1000 returned (105801 clocks)
 Cache l1cache stats:
 	# Read    Hits:      819
 	# Read    Misses:    66

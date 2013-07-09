@@ -8791,10 +8791,10 @@ Cache c3.l1cache stats:
 	# Write   Misses:    29
 	# Upgrade Misses:    63
 	# Invalidations:     242
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
+TrivialCPU Finished after 1000 issued reads, 1000 returned (126730 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (120788 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (115448 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (122953 clocks)
 Cache l3cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

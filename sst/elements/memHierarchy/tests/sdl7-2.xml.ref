@@ -22216,7 +22216,7 @@ cpu: Received MemEvent with command 1 (response to 43042, addr 0xbd03f8) [Time: 
 cpu: Received MemEvent with command 3 (response to 43048, addr 0x77d064) [Time: 1067] [2 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 43051, addr 0x9e25ac) [Time: 1056] [1 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 43054, addr 0xefc618) [Time: 1059] [0 outstanding requests]
-TrivialCPU Finished after 10000 issued reads, 10000 returned
+TrivialCPU Finished after 10000 issued reads, 10000 returned (1247141 clocks)
 Cache l1cache stats:
 	# Read    Hits:      2
 	# Read    Misses:    8972

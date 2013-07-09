@@ -56023,11 +56023,11 @@ Cache c7.l1cache stats:
 	# Write   Misses:    53
 	# Upgrade Misses:    60
 	# Invalidations:     376
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
-TrivialCPU Finished after 1000 issued reads, 1000 returned
+TrivialCPU Finished after 1000 issued reads, 1000 returned (602108 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (585268 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (622348 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (559408 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (632368 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (616828 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (640288 clocks)
+TrivialCPU Finished after 1000 issued reads, 1000 returned (643449 clocks)

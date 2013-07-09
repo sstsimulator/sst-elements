@@ -75,6 +75,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) :
     clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
 	clockTC = registerClock( "1GHz", clockHandler );
 	num_reads_issued = num_reads_returned = 0;
+    clock_ticks = 0;
 
 }
 
@@ -124,6 +125,8 @@ void trivialCPU::handleEvent(Event *ev)
 // one of our neighbors.
 bool trivialCPU::clockTic( Cycle_t )
 {
+    ++clock_ticks;
+
 	volatile int v = 0;
 	for (int i = 0; i < workPerCycle; ++i) {
 		v++;

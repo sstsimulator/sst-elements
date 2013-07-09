@@ -2006,7 +2006,7 @@ cpu: Received MemEvent with command 1 (response to 3306, addr 0xe48) [Time: 128]
 cpu: Received MemEvent with command 1 (response to 3312, addr 0x998) [Time: 4] [0 outstanding requests]
 cpu: 1 Issued Write (3314) for address 0x164
 cpu: Received MemEvent with command 3 (response to 3314, addr 0x164) [Time: 24] [0 outstanding requests]
-TrivialCPU Finished after 1000 issued reads, 1000 returned
+TrivialCPU Finished after 1000 issued reads, 1000 returned (105821 clocks)
 Cache l1cache stats:
 	# Read    Hits:      431
 	# Read    Misses:    454

@@ -37,8 +37,8 @@ public:
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init();
 	void finish() {
-		out.output("TrivialCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned\n",
-				num_reads_issued, num_reads_returned);
+		out.output("TrivialCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
+				num_reads_issued, num_reads_returned, clock_ticks);
 	}
 
 private:
@@ -58,6 +58,7 @@ private:
 	uint32_t maxAddr;
 	uint64_t num_reads_issued, num_reads_returned;
     uint64_t uncachedRangeStart, uncachedRangeEnd;
+    uint64_t clock_ticks;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
 

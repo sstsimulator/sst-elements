@@ -2003,7 +2003,7 @@ cpu: Received MemEvent with command 3 (response to 3499, addr 0x3c8) [Time: 424]
 cpu: Received MemEvent with command 1 (response to 3457, addr 0x55c) [Time: 1399] [2 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 3462, addr 0xcac) [Time: 1419] [1 outstanding requests]
 cpu: Received MemEvent with command 1 (response to 3466, addr 0x128) [Time: 1556] [0 outstanding requests]
-TrivialCPU Finished after 1000 issued reads, 1000 returned
+TrivialCPU Finished after 1000 issued reads, 1000 returned (106766 clocks)
 Cache l1cache stats:
 	# Read    Hits:      412
 	# Read    Misses:    473

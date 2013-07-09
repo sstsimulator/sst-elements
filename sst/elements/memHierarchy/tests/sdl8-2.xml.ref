@@ -44652,5 +44652,5 @@ Cache c1.l2cache stats:
 	# Write   Misses:    0
 	# Upgrade Misses:    0
 	# Invalidations:     486
-TrivialCPU Finished after 10000 issued reads, 10000 returned
-TrivialCPU Finished after 10000 issued reads, 10000 returned
+TrivialCPU Finished after 10000 issued reads, 10000 returned (1257132 clocks)
+TrivialCPU Finished after 10000 issued reads, 10000 returned (1242077 clocks)
