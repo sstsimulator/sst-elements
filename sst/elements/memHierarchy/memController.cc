@@ -258,6 +258,13 @@ void MemController::handleEvent(SST::Event *event)
             sendResponse(ackReq);
         }
         break;
+    case NACK:
+        /* If somebody sent a NACK, that implies that any ReadRequest for the
+         * same thing will need to be re-tried.  Let's cancel any action we
+         * might be taking, and wait for the re-try.
+         */
+        if ( use_bus ) cancelEvent(ev);
+        break;
     default:
         /* Ignore */
         break;

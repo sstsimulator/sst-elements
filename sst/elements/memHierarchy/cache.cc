@@ -1760,7 +1760,6 @@ void Cache::respondNACK(MemEvent *ev, SourceType_t src)
 {
     MemEvent *nack = ev->makeResponse(this);
     nack->setCmd(NACK);
-    nack->setSize(0);
     switch ( src ) {
     case  SNOOP:
         dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" on bus to %s\n", CommandString[ev->getCmd()], ev->getAddr(), nack->getDst().c_str());
