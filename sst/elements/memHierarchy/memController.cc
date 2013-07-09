@@ -41,6 +41,8 @@ using namespace SST::Interfaces;
 MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 {
     dbg.init("@R:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
+
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
 	if ( 0 == ramSize )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
@@ -131,6 +133,10 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
     }
 
     respondToInvalidates = false;
+
+    numReadsSupplied = 0;
+    numReadsCanceled = 0;
+    numWrites = 0;
 }
 
 
@@ -207,23 +213,15 @@ void MemController::finish(void)
 		memSystem->printStats(true);
 #endif
 
-
-#if 0
-    Output out("MemController "+getName()+": ", 0, 0, Output::STDOUT);
-    out.output("Memory received unexpected Init Command: %d\n", me->getCmd() );
-    /* TODO:  Toggle this based off of a parameter */
-    out.output("--------------------------------------------------------\n");
-    out.output("Outstanding Requests:  %zu\n", outstandingReadReqs.size());
-    for ( std::map<Addr, DRAMReq*>::iterator i = outstandingReadReqs.begin() ; i != outstandingReadReqs.end() ; ++i ) {
-        DRAMReq *req = i->second;
-        out.output("\t0x%08lx\t%s (%lu, %lu)\t%zu bytes:  %zu/%zu\n",
-                i->first, CommandString[req->reqEvent->getCmd()],
-                req->reqEvent->getID().first, req->reqEvent->getID().second,
-                req->size, req->amt_in_process, req->amt_processed);
-    }
-    out.output("Requests Queue:  %zu\n", requestQueue.size());
-    out.output("--------------------------------------------------------\n");
-#endif
+    Output out("", 0, 0, statsOutputTarget);
+    out.output("Memory %s stats:\n"
+            "\t # Reads:             %"PRIu64"\n"
+            "\t # Writes:            %"PRIu64"\n"
+            "\t # Canceled Reads:    %"PRIu64"\n",
+            getName().c_str(),
+            numReadsSupplied,
+            numWrites,
+            numReadsCanceled);
 
 }
 
@@ -317,6 +315,7 @@ void MemController::cancelEvent(MemEvent* ev)
         if ( requests[i]->isSatisfiedBy(ev) ) {
             if ( !requests[i]->isWrite && !requests[i]->canceled ) {
                 requests[i]->canceled = true;
+                numReadsCanceled++;
                 dbg.output(CALL_INFO, "Canceling request 0x%"PRIx64" (%"PRIu64", %d).\n", requests[i]->addr, requests[i]->respEvent->getID().first, requests[i]->respEvent->getID().second);
                 if ( DRAMReq::RETURNED == requests[i]->status ) {
                     sendBusCancel(requests[i]->respEvent->getID());
@@ -470,6 +469,8 @@ void MemController::sendBusPacket(Bus::key_t key)
 						ev->getResponseToID().first, ev->getResponseToID().second,
 						ev->getAddr());
                 assert(ev->getID() == key);
+                if ( req->respEvent->getCmd() == WriteResp ) numWrites++;
+                else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
 				upstream_link->send(0, new BusEvent(ev));
 				break;
             } else {
@@ -507,6 +508,8 @@ void MemController::sendResponse(DRAMReq *req)
     } else {
         upstream_link->send(req->respEvent);
         req->status = DRAMReq::DONE;
+        if ( req->respEvent->getCmd() == WriteResp ) numWrites++;
+        else if ( req->respEvent->getCmd() == SupplyData ) numReadsSupplied++;
     }
 }
 

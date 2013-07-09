@@ -171,6 +171,11 @@ private:
     Addr interleaveStep;
     bool respondToInvalidates;
 
+    Output::output_location_t statsOutputTarget;
+    uint64_t numReadsSupplied;
+    uint64_t numReadsCanceled;
+    uint64_t numWrites;
+
 #if defined(HAVE_LIBDRAMSIM)
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 

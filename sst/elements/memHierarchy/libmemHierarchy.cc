@@ -106,6 +106,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"},
     {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 
