@@ -42,6 +42,7 @@
 			<num_upstream> 1 </num_upstream>
 			<next_level> l2cache </next_level>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=core0-dcache port=upstream0 latency=$lat />
 		<link name=dcache_bus_link port=snoop_link latency=$buslat />
@@ -56,6 +57,7 @@
 			<num_upstream> 1 </num_upstream>
 			<next_level> l2cache </next_level>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=core0-icache port=upstream0 latency=$lat />
 		<link name=icache_bus_link port=snoop_link latency=$buslat />
@@ -68,6 +70,7 @@
 			<blocksize> 64 </blocksize>
 			<access_time> 20 ns</access_time>
             <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
 		</params>
 		<link name=l2cache_bus_link port=snoop_link latency=$buslat />
 	</component>
