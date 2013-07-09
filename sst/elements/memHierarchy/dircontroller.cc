@@ -46,6 +46,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
 	assert(memLink);
 
 
+    entryCacheSize = (size_t)params.find_integer("entryCacheSize", 0);
     int addr = params.find_integer("network_addr");
     std::string net_bw = params.find_string("network_bw");
 
@@ -595,17 +596,47 @@ void DirectoryController::requestDataFromMemory(DirEntry *entry)
     memLink->send(ev);
 }
 
+void DirectoryController::updateCacheEntry(DirEntry *entry)
+{
+    if ( 0 == entryCacheSize ) {
+        sendEntryToMemory(entry);
+    } else {
+        /* Find if we're in the cache */
+        for ( std::list<DirEntry*>::iterator i = entryCache.begin() ; i != entryCache.end() ; ++i ) {
+            if ( *i == entry ) {
+                entryCache.erase(i);
+                break;
+            }
+        }
+        entryCache.push_front(entry);
+
+        while ( entryCache.size() > entryCacheSize ) {
+            DirEntry *oldEntry = entryCache.back();
+            // If the oldest entry is still in progress, everything is in progress
+            if ( oldEntry->inProgress() ) break;
+
+            dbg.output(CALL_INFO, "entryCache too large.  Evicting entry for 0x%"PRIx64"\n", oldEntry->baseAddr);
+            entryCache.pop_back();
+            sendEntryToMemory(oldEntry);
+        }
+    }
+}
+
 
 void DirectoryController::updateEntryToMemory(DirEntry *entry)
+{
+    updateCacheEntry(entry);
+    resetEntry(entry);
+}
+
+
+void DirectoryController::sendEntryToMemory(DirEntry *entry)
 {
 	Addr entryAddr = 0; /*  Offset into our buffer? */
 	MemEvent *me = new MemEvent(this, entryAddr, SupplyData);
     dbg.output(CALL_INFO, "Updating entry for 0x%"PRIx64" to memory (%"PRIu64", %d)\n", entry->baseAddr, me->getID().first, me->getID().second);
 	me->setSize((numTargets+1)/8 +1);
     memReqs[me->getID()] = entry->baseAddr;
-
-    resetEntry(entry);
-
 	memLink->send(me);
 }
 

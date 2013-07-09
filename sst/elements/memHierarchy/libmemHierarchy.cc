@@ -131,6 +131,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"interleaveSize",      "(optional) Size of interleaved pages in KB."},
     {"interleaveStep",      "(optional) Distance between sucessive interleaved pages on this controller in KB."},
     {"clock",               "Clock rate of controller."},
+    {"entryCacheSize",      "Size (in # of entries) the controller will cache."},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };

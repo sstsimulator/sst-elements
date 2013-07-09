@@ -130,6 +130,9 @@ class DirectoryController : public Component {
 	SST::Link *memLink;
     MemNIC *network;
 
+    size_t entryCacheSize;
+    std::list<DirEntry*> entryCache;
+
 
 	DirEntry* getDirEntry(Addr target);
 	DirEntry* createDirEntry(Addr target);
@@ -153,11 +156,13 @@ class DirectoryController : public Component {
 
 	uint32_t node_id(const std::string &name);
 
+    void updateCacheEntry(DirEntry *entry);
 	void requestDirEntryFromMemory(DirEntry *entry);
     /* Requests data from Memory */
     void requestDataFromMemory(DirEntry *entry);
 	/* Write updated entry to memory */
 	void updateEntryToMemory(DirEntry *entry);
+    void sendEntryToMemory(DirEntry *entry);
 	/* Called to clear "active items" from an entry */
 	void resetEntry(DirEntry *entry);
 

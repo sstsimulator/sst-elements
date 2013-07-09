@@ -1,0 +1,300 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+<!-- This SDL represents a dual-socket quad-core (n0, n1),
+     each socket containing 4 cores, each with private L1 I&D
+     Two L2's per socket (each backing 2 cores), and one
+     INCLUSIVE L3.  All caches per node connected via SNOOPY bus.
+     Uses Directory out to memory / between nodes.
+     Difference from sdl8-3:  Dir Controller have an Entry cache.
+-->
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 10ns </buslat>
+	<netlat> 2ns </netlat>
+</variables>
+
+<param_include>
+    <cpuParams>
+        <workPerCycle> 1000 </workPerCycle>
+        <commFreq> 100 </commFreq>
+        <memSize> 0x10000 </memSize>
+        <do_write> 1 </do_write>
+        <num_loadstore> 1000 </num_loadstore>
+    </cpuParams>
+    <l1CacheParams>
+        <num_ways> 4 </num_ways>
+        <num_rows> 16 </num_rows>
+        <blocksize> 64 </blocksize>
+        <access_time> 2 ns</access_time>
+        <num_upstream> 1 </num_upstream>
+            <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
+    </l1CacheParams>
+    <l2CacheParams>
+        <num_ways> 4 </num_ways>
+        <num_rows> 64 </num_rows>
+        <blocksize> 64 </blocksize>
+        <access_time> 20 ns</access_time>
+            <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
+    </l2CacheParams>
+    <l3CacheParams>
+        <num_ways> 8 </num_ways>
+        <num_rows> 256 </num_rows>
+        <blocksize> 64 </blocksize>
+        <access_time> 50 ns</access_time>
+        <mode> INCLUSIVE </mode>
+            <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
+    </l3CacheParams>
+</param_include>
+
+<sst>
+	<component name="n0c0" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n0c0l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n0c0.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n0c01l2</next_level>
+        </params>
+		<link name=n0c0l1_link port=upstream0 latency=$lat />
+		<link name=n0c0l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n0c1" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n0c1l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n0c1.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n0c01l2</next_level>
+        </params>
+		<link name=n0c1l1_link port=upstream0 latency=$lat />
+		<link name=n0c1l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n0c01l2" type="memHierarchy.Cache">
+        <params include=l2CacheParams >
+            <next_level> n0l3 </next_level>
+		</params>
+        <link name=n0c01l2_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+
+	<component name="n0c2" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n0c2l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n0c2.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n0c23l2</next_level>
+        </params>
+		<link name=n0c2l1_link port=upstream0 latency=$lat />
+		<link name=n0c2l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n0c3" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n0c3l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n0c3.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n0c23l2</next_level>
+        </params>
+		<link name=n0c3l1_link port=upstream0 latency=$lat />
+		<link name=n0c3l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n0c23l2" type="memHierarchy.Cache">
+        <params include=l2CacheParams >
+            <next_level> n0l3 </next_level>
+		</params>
+        <link name=n0c23l2_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n0l3" type="memHierarchy.Cache">
+        <params include=l3CacheParams>
+            <net_addr> 1 </net_addr>
+        </params>
+		<link name=n0l3_bus_link port=snoop_link latency=$buslat />
+        <link name=n0l3_net_link port=directory_link latency=$netlat />
+	</component>
+
+	<component name="n0.membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 7 </numPorts>
+			<busDelay> 5 ns </busDelay>
+            <debug> ${_DEBUG} </debug>
+		</params>
+		<link name=n0c0l1_bus_link port=port0 latency=$buslat />
+		<link name=n0c1l1_bus_link port=port1 latency=$buslat />
+		<link name=n0c2l1_bus_link port=port2 latency=$buslat />
+		<link name=n0c3l1_bus_link port=port3 latency=$buslat />
+		<link name=n0c01l2_bus_link port=port4 latency=$buslat />
+		<link name=n0c23l2_bus_link port=port5 latency=$buslat />
+		<link name=n0l3_bus_link port=port6 latency=$buslat />
+	</component>
+
+
+
+    <!-- ************************************************** -->
+
+	<component name="n1c0" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n1c0l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n1c0.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n1c01l2 </next_level>
+        </params>
+		<link name=n1c0l1_link port=upstream0 latency=$lat />
+		<link name=n1c0l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n1c1" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n1c1l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n1c1.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n1c01l2</next_level>
+        </params>
+		<link name=n1c1l1_link port=upstream0 latency=$lat />
+		<link name=n1c1l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n1c01l2" type="memHierarchy.Cache">
+        <params include=l2CacheParams >
+            <next_level> n1l3 </next_level>
+		</params>
+        <link name=n1c01l2_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+
+	<component name="n1c2" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n1c2l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n1c2.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n1c23l2 </next_level>
+        </params>
+		<link name=n1c2l1_link port=upstream0 latency=$lat />
+		<link name=n1c2l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n1c3" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=n1c3l1_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="n1c3.l1" type="memHierarchy.Cache">
+        <params include=l1CacheParams >
+			<next_level> n1c23l2 </next_level>
+        </params>
+		<link name=n1c3l1_link port=upstream0 latency=$lat />
+		<link name=n1c3l1_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n1c23l2" type="memHierarchy.Cache">
+        <params include=l2CacheParams >
+            <next_level> n1l3 </next_level>
+		</params>
+        <link name=n1c23l2_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+	<component name="n1l3" type="memHierarchy.Cache">
+        <params include=l3CacheParams>
+            <net_addr> 2 </net_addr>
+        </params>
+		<link name=n1l3_bus_link port=snoop_link latency=$buslat />
+        <link name=n1l3_net_link port=directory_link latency=$netlat />
+	</component>
+
+	<component name="n1.membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 7 </numPorts>
+			<busDelay> 5 ns </busDelay>
+            <debug> ${BUS_DEBUG} </debug>
+		</params>
+		<link name=n1c0l1_bus_link port=port0 latency=$buslat />
+		<link name=n1c1l1_bus_link port=port1 latency=$buslat />
+		<link name=n1c2l1_bus_link port=port2 latency=$buslat />
+		<link name=n1c3l1_bus_link port=port3 latency=$buslat />
+		<link name=n1c01l2_bus_link port=port4 latency=$buslat />
+		<link name=n1c23l2_bus_link port=port5 latency=$buslat />
+		<link name=n1l3_bus_link port=port6 latency=$buslat />
+	</component>
+
+
+
+    <!-- ************************************************** -->
+
+
+
+    <component name="chiprtr" type="merlin.hr_router">
+        <params>
+            <num_ports> 3 </num_ports>
+            <num_vcs> 3 </num_vcs>
+            <link_bw> 5GHz </link_bw>
+            <xbar_bw> 5GHz </xbar_bw>
+            <topology> merlin.singlerouter </topology>
+            <id> 0 </id>
+        </params>
+        <link name=dir0_net_link port=port0 latency=$netlat />
+        <link name=n0l3_net_link port=port1 latency=$netlat />
+        <link name=n1l3_net_link port=port2 latency=$netlat />
+    </component>
+
+
+    <component name="dirctrl0" type="memHierarchy.DirectoryController">
+        <params>
+            <network_addr> 0 </network_addr>
+            <network_bw> 1GHz </network_bw>
+            <addrRangeStart> 0x0 </addrRangeStart>
+            <addrRangeEnd> 0x1F000000 </addrRangeEnd> <!-- 512MB - 16MB for backingStoreSize -->
+            <backingStoreSize> 0x1000000 </backingStoreSize> <!-- 16 MB -->
+            <entryCacheSize> 1024 </entryCacheSize>
+            <debug> ${DIRECTORY_DEBUG} </debug>
+        </params>
+        <link name=dir0_mem_link port=memory latency=$buslat />
+        <link name=dir0_net_link port=network latency=$netlat />
+    </component>
+
+	<component name="memory0" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+			<use_dramsim> 0 </use_dramsim>
+			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
+			<system_ini> system.ini </system_ini>
+            <debug> ${MEMORY_DEBUG} </debug>
+		</params>
+		<link name=dir0_mem_link port=direct_link latency=$buslat />
+	</component>
+
+
+</sst>
