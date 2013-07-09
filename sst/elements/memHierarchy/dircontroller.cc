@@ -203,7 +203,6 @@ bool DirectoryController::processPacket(MemEvent *ev)
                 dbg.output(CALL_INFO, "Sending NACK for [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
                 MemEvent *nack = ev->makeResponse(this);
                 nack->setCmd(NACK);
-                nack->setSize(0);
                 sendResponse(nack);
                 delete ev;
                 break;

@@ -2567,11 +2567,11 @@ n0c1: Not issuing read.  Too many outstanding requests.
 n1c2: 926 Issued Read (6666) for address 0x3af8
 n0c0: Not issuing read.  Too many outstanding requests.
 n1c2: Not issuing read.  Too many outstanding requests.
-n1c0: Received MemEvent with command 1 (response to 5574, addr 0x33f4) [Time: 4334] [10 outstanding requests]
 n0c3: Not issuing read.  Too many outstanding requests.
 n1c1: Not issuing read.  Too many outstanding requests.
 n0c3: Not issuing read.  Too many outstanding requests.
 n0c2: Not issuing read.  Too many outstanding requests.
+n1c0: Received MemEvent with command 1 (response to 5574, addr 0x33f4) [Time: 4359] [10 outstanding requests]
 n1c1: Not issuing read.  Too many outstanding requests.
 n0c1: Not issuing read.  Too many outstanding requests.
 n0c2: Not issuing read.  Too many outstanding requests.
