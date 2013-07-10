@@ -20,7 +20,6 @@
 #include "streamCPU.h"
 #include "memController.h"
 #include "dircontroller.h"
-#include "inclusiveCache.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -29,8 +28,7 @@ static Component*
 create_Cache(SST::ComponentId_t id,
 		SST::Component::Params_t& params)
 {
-	Cache * newCache = new SST::MemHierarchy::InclusiveCache( id, params );
-	return newCache;
+	return new Cache( id, params );
 }
 
 
@@ -72,19 +70,17 @@ create_DirectoryController(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam cache_params[] = {
-    {"prefetcher",      	"Prefetcher to use with cache (loaded as a module)"},
-    {"frequency",           "Clock speed driving the cache (usually same as CPU speed)"},
-    {"num_ways",        	"Associativity of the cache."},
-    {"num_rows",        	"How many cache rows. (Must be a power of 2)"},
-    {"blocksize",       	"Size of a cache block in bytes."},
-    {"num_upstream",    	"How many upstream ports there are. Typically 1 or 0."},
-    {"next_level",      	"Name of the next level cache"},
-    {"replacement_policy",  "LRU (default), MRU, Random, RoundRobin"},
-    {"mode",  				"INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
-    {"access_time",     	"Time taken to lookup data in the cache."},
-    {"net_addr",        	"When using a directory controller, the network address of this cache."},
-    {"debug",           	"0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-    {"printStats",      	"0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"prefetcher",      "Prefetcher to use with cache (loaded as a module)"},
+    {"num_ways",        "Associativity of the cache."},
+    {"num_rows",        "How many cache rows. (Must be a power of 2)"},
+    {"blocksize",       "Size of a cache block in bytes."},
+    {"num_upstream",    "How many upstream ports there are. Typically 1 or 0."},
+    {"next_level",      "Name of the next level cache"},
+    {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
+    {"access_time",     "Time taken to lookup data in the cache."},
+    {"net_addr",        "When using a directory controller, the network address of this cache."},
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 

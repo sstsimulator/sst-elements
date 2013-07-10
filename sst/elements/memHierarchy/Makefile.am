@@ -14,9 +14,6 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	cache.h \
 	cache.cc \
-	cacheRow.cc \
-	inclusiveCache.cc \
-	inclusiveCache.h  \
 	memEvent.h \
 	memTypes.h \
 	trivialCPU.h \
