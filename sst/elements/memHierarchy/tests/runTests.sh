@@ -16,12 +16,15 @@ runCmd() {
     fi
     rm -f ${1}.new
     echo ${1}
-    sst.x ${1} > ${1}.new 2>&1 && diff -q ${1}.ref ${1}.new && rm -f ${1}.new
+    sst.x ${1} > ${1}.new 2>&1
+    diff -q ${1}.ref ${1}.new 
+    echo "finished with ${1}"
+    #&& rm -f ${1}.new
 }
 
 export -f runCmd
 
-find . -maxdepth 1 -name sdl\*.xml -print0 | xargs -0 -n 1 -P 4 bash -c 'runCmd "$0"'
+find . -maxdepth 1 -name sdl\*.xml -print0 | xargs -0 -n 1 -P 20 bash -c 'runCmd "$0"'
 
 
 

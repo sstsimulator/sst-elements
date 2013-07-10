@@ -45,6 +45,8 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
 	// get parameters
+    frequency = params.find_string("frequency", "1 Ghz");
+    replacement_policy = params.find_string("replacement_policy", "LRU");
 	n_ways = params.find_integer("num_ways", 0);
 	n_rows = params.find_integer("num_rows", 0);
 	blocksize = params.find_integer("blocksize", 0);
@@ -127,25 +129,31 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
 
 
-	database = std::vector<CacheRow>(n_rows, CacheRow(this));
+	if(replacement_policy == "lru")             for (int i = 0; i < n_rows; i++) database.push_back(new LRUCacheRow(this));
+	else if(replacement_policy == "mru")        for (int i = 0; i < n_rows; i++) database.push_back(new MRUCacheRow(this));
+	else if(replacement_policy == "random")     for (int i = 0; i < n_rows; i++) database.push_back(new RandomCacheRow(this));
+	else if(replacement_policy == "roundrobin") for (int i = 0; i < n_rows; i++) database.push_back(new RRCacheRow(this));
+	//database = std::vector<LRUCacheRow*>(n_rows,  new LRUCacheRow(this));
+
+	for (int i = 0; i < n_rows; i++) database.push_back(new LRUCacheRow(this));
 	for ( int r = 0 ; r < n_rows ; r++ ) {
 		for ( int c = 0 ; c < n_ways ; c++ ) {
-			database[r].blocks[c].row = r;
-			database[r].blocks[c].col = c;
+			database[r]->blocks[c].row = r;
+			database[r]->blocks[c].col = c;
 		}
 	}
 
 
-	num_read_hit = 0;
-	num_read_miss = 0;
-	num_supply_hit = 0;
-	num_supply_miss = 0;
-	num_write_hit = 0;
-	num_write_miss = 0;
+	num_read_hit     = 0;
+	num_read_miss    = 0;
+	num_supply_hit   = 0;
+	num_supply_miss  = 0;
+	num_write_hit    = 0;
+	num_write_miss   = 0;
 	num_upgrade_miss = 0;
-    num_invalidates = 0;
+    num_invalidates  = 0;
 
-    registerClock("1 GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
+    registerClock(frequency, new Clock::Handler<Cache>(this, &Cache::clockTick));
 
     std::string prefetcher = params.find_string("prefetcher");
     if ( prefetcher == "" ) {
@@ -167,9 +175,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 
 
 bool Cache::clockTick(Cycle_t) {
-    if ( directory_link ) {
-        directory_link->clock();
-    }
+    if ( directory_link ) directory_link->clock();
     return false;
 }
 
@@ -638,12 +644,13 @@ void Cache::finishIssueInvalidate(Addr addr)
 
 
 /* Takes ownership of the event 'ev'. */
-void Cache::loadBlock(MemEvent *ev, SourceType_t src)
-{
+void Cache::loadBlock(MemEvent *ev, SourceType_t src){
 
     std::pair<LoadInfo_t*, bool> initRes = initLoad(ev->getAddr(), ev, src);
     LoadInfo_t *li = initRes.first;
     bool reprocess = !initRes.second;
+	CacheBlock *blockTBR;
+	CacheRow *row = findRow(ev->getAddr());
 
     /* Check to see if this a reprocess of the head event */
     if ( reprocess && li->initiatingEvent != ev->getID() ) {
@@ -652,80 +659,78 @@ void Cache::loadBlock(MemEvent *ev, SourceType_t src)
         return;
     }
 
-    /* Don't bother messing with the cache if this is an uncached operation */
-    if ( !li->uncached ) {
-        CacheRow *row = findRow(ev->getAddr());
+	/* Don't bother messing with the cache if this is an uncached operation */
+	if ( !li->uncached){
+		if(confirmBlockIsReplacable(ev, src, li, row, &blockTBR) == 0) return;
+		dbg.output(CALL_INFO, "Replacing block (old status is [%d], 0x%"PRIx64" [%s]\n", blockTBR->status, blockTBR->baseAddr, blockTBR->locked ? "LOCKED" : "unlocked");
+		if (directory_link) sendEvictToDirectory(blockTBR);					/* Send Directory Eviction notification */
 
-        if ( NULL == li->targetBlock ) {
-            li->targetBlock = row->getLRU();
-        }
-
-        if ( !li->targetBlock ) { // Row is full, wait for one to be available
-            row->addWaitingEvent(ev, src);
-            return;
-        } else {
-            CacheBlock *block = li->targetBlock;
-            block->loadInfo = li;
-            if ( INCLUSIVE == cacheMode && CacheBlock::EXCLUSIVE != block->status ) {
-                if ( CacheBlock::DIRTY_PRESENT == block->status ) {
-                    dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to invalidate any upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                    issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
-                    return;
-                } else if ( CacheBlock::DIRTY_UPSTREAM == block->status ) {
-                    dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to fetch upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                    //issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
-                    fetchBlock(ev, block, src);
-                    return;
-                } else if ( CacheBlock::INVALID != block->status ) {
-                    dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                    /* We can go straight to INVALID...
-                     *  INCLUSIVE cache's aren't L1 (why bother?)
-                     *  Upstream caches either don't have it, have it in SHARED (clean)
-                     *  Or EXCLUSIVE, in which case they'll write back before ack'ing.
-                     */
-                    if ( waitingForInvalidate(block->baseAddr) ) {
-                        // Already working to invalidate this
-                    }
-                    issueInvalidate(ev, src, block, CacheBlock::INVALID, SEND_UP, false);
-                    return;
-                }
-            }
-            if ( CacheBlock::EXCLUSIVE == block->status ) {
-                dbg.output(CALL_INFO, "Need to evict block 0x%"PRIx64" to satisfy load for 0x%"PRIx64"\n",
-                        block->baseAddr, ev->getAddr());
-
-                row->addWaitingEvent(ev, src);
-                writebackBlock(block, CacheBlock::INVALID); // We'll get it next time
-
-                return;
-            } else {
-                dbg.output(CALL_INFO, "Replacing block (old status is [%d], 0x%"PRIx64" [%s]\n",
-                        block->status, block->baseAddr,
-                        block->locked ? "LOCKED" : "unlocked");
-                if ( block->isValid() && directory_link ) {
-                    // Send Eviction notification
-                    dbg.output(CALL_INFO, "Sending eviction notification of 0x%"PRIx64" to directory.\n", block->baseAddr);
-                    MemEvent *evict = new MemEvent(this, block->baseAddr, Evicted);
-                    evict->setDst(findTargetDirectory(block->baseAddr));
-                    directory_link->send(evict);
-                }
-            }
-        }
-
-        /* Simple Load */
-        li->targetBlock->activate(ev->getAddr());
-        li->targetBlock->lock();
-    }
+		/* Simple Load */
+		li->targetBlock->activate(ev->getAddr());
+		li->targetBlock->lock();
+	}
 
     li->loadDirection = SEND_DOWN;
-
-    if ( reprocess )
-        li->list.push_front(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
-    else
-        li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
-
     li->eventScheduled = true;
+
+    if ( reprocess )  li->list.push_front(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
+    else              li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
     self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, li->addr, li->targetBlock));
+}
+
+
+
+void Cache::sendEvictToDirectory(CacheBlock *blockTBR){
+	if(blockTBR->isValid()) {
+		dbg.output(CALL_INFO, "Sending eviction notification of 0x%"PRIx64" to directory.\n", blockTBR->baseAddr);
+		MemEvent *evict = new MemEvent(this, blockTBR->baseAddr, Evicted);
+		evict->setDst(findTargetDirectory(blockTBR->baseAddr));
+		directory_link->send(evict);
+	}
+}
+
+int Cache::confirmBlockIsReplacable(MemEvent *ev, SourceType_t src, LoadInfo_t *li, CacheRow *row, CacheBlock **blockToBeReplaced){
+
+	if ( NULL == li->targetBlock ) li->targetBlock = row->getNext();
+
+	if ( !li->targetBlock ) { // Row is full, wait for one to be available
+			row->addWaitingEvent(ev, src);
+			return 0;
+	}
+
+	(*blockToBeReplaced) = li->targetBlock;
+	(*blockToBeReplaced)->loadInfo = li;
+	CacheBlock * blockTBR = (*blockToBeReplaced);
+
+	if ( INCLUSIVE == cacheMode ){
+		if( CacheBlock::EXCLUSIVE != blockTBR->status && CacheBlock::INVALID != blockTBR->status) {
+			if ( CacheBlock::DIRTY_PRESENT == blockTBR->status ) {
+				dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to invalidate any upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", blockTBR->baseAddr, blockTBR->status, blockTBR->user_locked);
+				issueInvalidate(ev, src, blockTBR, CacheBlock::EXCLUSIVE, SEND_UP, false);
+			} else if ( CacheBlock::DIRTY_UPSTREAM == blockTBR->status ) {
+				dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to fetch upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", blockTBR->baseAddr, blockTBR->status, blockTBR->user_locked);
+				fetchBlock(ev, blockTBR, src);
+			} else if ( CacheBlock::INVALID != blockTBR->status ) {
+				dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to invalidate any upstream copies of old cache block 0x%"PRIx64" [%d.%d].\n", blockTBR->baseAddr, blockTBR->status, blockTBR->user_locked);
+				/*  We can go straight to INVALID...INCLUSIVE cache's aren't L1 (why bother?).. Upstream caches either don't have it, have it in SHARED (clean)
+				 *  Or EXCLUSIVE, in which case they'll write back before ack'ing.*/
+				if ( !waitingForInvalidate(blockTBR->baseAddr) ){}
+				issueInvalidate(ev, src, blockTBR, CacheBlock::INVALID, SEND_UP, false);
+			}
+			return 0;
+		}
+	}
+
+	/*  Does block need to be written back? */
+	if ( CacheBlock::EXCLUSIVE == blockTBR->status ) {
+		dbg.output(CALL_INFO, "Need to evict block 0x%"PRIx64" to satisfy load for 0x%"PRIx64"\n",
+				blockTBR->baseAddr, ev->getAddr());
+
+		row->addWaitingEvent(ev, src);
+		writebackBlock(blockTBR, CacheBlock::INVALID); // We'll get it next time
+		return 0;
+	}
+	return 1;
 }
 
 
@@ -754,78 +759,88 @@ std::pair<Cache::LoadInfo_t*,bool> Cache::initLoad(Addr addr, MemEvent *ev, Sour
 
 }
 
+void Cache::finishLoadBlock2(LoadInfo_t *li, Addr addr, CacheBlock *block){
+	if(sendRequestInit(li, block, addr) == 0) return;
+	//assert( SEND_DOWN == li->loadDirection);
+    if ( SEND_UP == li->loadDirection )   sendRequestUp(li);
+    if ( SEND_DOWN == li->loadDirection ) sendRequestDown(li);
+
+}
 
 void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
 {
-    li->nackRescheduled = false;
-    li->eventScheduled = false;
-    if ( li->satisfied ) {
-        assert(NULL == li->busEvent);
-        delete li;
-        return;
-    }
+	if(sendRequestInit(li, block, addr) == 0) return;
 
-    dbg.output(CALL_INFO, "Time to send load for 0x%"PRIx64"\n", addr);
-
-    /* Check to see if we're still in ASSIGNED state.  If not, we've probably
-     * already been processed.
-     * Unless this is a SEND_UP fetch, and we're DIRTY.
-     */
-    if ( (!li->uncached) &&
-             !((CacheBlock::DIRTY_UPSTREAM == block->status) && (SEND_UP == li->loadDirection)) &&
-             ((CacheBlock::ASSIGNED != block->status) || (block->baseAddr != addr) || (li != block->loadInfo))) {
-        dbg.output(CALL_INFO, "Not going to bother loading.  Somebody else has moved block 0x%"PRIx64" to state [%d]\n",
-                block->baseAddr, block->status);
-        return;
-    }
-
-    if ( SEND_UP == li->loadDirection ) {
-        if ( n_upstream > 0 && !isL1 ) {
-            for ( int i = 0 ; i < n_upstream ; i++ ) {
-                MemEvent *req = new MemEvent(this, li->addr, RequestData);
-                req->setSize(blocksize);
-                upstream_links[i]->send(req);
-            }
-        } else if ( snoop_link ) {
-            MemEvent *req = new MemEvent(this, li->addr, RequestData);
-            req->setSize(blocksize);
-            dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
-            BusHandlerArgs args;
-            args.loadBlock.loadInfo = li;
-            li->eventScheduled = true;
-            li->busEvent = req;
-            snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
-        }
-    } else {
-
-        /* Ordering here...  If you have both downstream & snoop, you're probably
-         * at the end of the line.  You don't need to issue on snoop, somebody else
-         * probably did.  Just send the load down the line to memory.
-         */
-        if ( downstream_link ) {
-            dbg.output(CALL_INFO, "Sending request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
-            MemEvent *req = new MemEvent(this, li->addr, RequestData);
-            req->setSize(blocksize);
-            downstream_link->send(req);
-        } else if ( directory_link ) {
-            dbg.output(CALL_INFO, "Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
-            MemEvent *req = new MemEvent(this, li->addr, RequestData);
-            req->setSize(blocksize);
-            req->setDst(findTargetDirectory(li->addr));
-            directory_link->send(req);
-        } else if ( snoop_link ) {
-            MemEvent *req = new MemEvent(this, li->addr, RequestData);
-            req->setSize(blocksize);
-            if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
-            dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
-            BusHandlerArgs args;
-            args.loadBlock.loadInfo = li;
-            li->eventScheduled = true;
-            li->busEvent = req;
-            snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
-        }
-    }
+	if ( SEND_UP == li->loadDirection )       sendRequestUp(li);
+    else                                      sendRequestDown(li);
 }
+
+
+int Cache::sendRequestInit(LoadInfo_t *li, CacheBlock *block, Addr addr){
+	li->nackRescheduled = false;
+	li->eventScheduled = false;
+	if ( li->satisfied ) {
+		delete li;
+		return 0;
+	}
+	dbg.output(CALL_INFO, "Time to send load for 0x%"PRIx64"\n", addr);
+
+	/* Check to see if we're still in ASSIGNED state.  If not, we've probably
+	 * already been processed. Unless this is a SEND_UP fetch, and we're DIRTY.
+	 */
+	if ( (!li->uncached) &&
+			 !((CacheBlock::DIRTY_UPSTREAM == block->status) && (SEND_UP == li->loadDirection)) &&
+			 ((CacheBlock::ASSIGNED != block->status) || (block->baseAddr != addr) || (li != block->loadInfo))) {
+		dbg.output(CALL_INFO, "Not going to bother loading.  Somebody else has moved block 0x%"PRIx64" to state [%d]\n",
+				block->baseAddr, block->status);
+		return 0;
+	}
+	return 1;
+}
+
+void Cache::sendRequestUp(LoadInfo_t *li){
+	if ( n_upstream > 0 && !isL1 ) {
+		for ( int i = 0 ; i < n_upstream ; i++ ) {
+			MemEvent *req = new MemEvent(this, li->addr, RequestData);
+			req->setSize(blocksize);
+			upstream_links[i]->send(req);
+		}
+	} else if ( snoop_link ) sendRequestToSnoopLink(li);
+}
+
+
+/* Ordering here...  If you have both downstream & snoop, you're probably
+ * at the end of the line.  You don't need to issue on snoop, somebody else
+ * probably did.  Just send the load down the line to memory.
+ */
+void Cache::sendRequestDown(LoadInfo_t *li){
+	if ( downstream_link ) {
+		dbg.output(CALL_INFO, "Sending request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
+		MemEvent *req = new MemEvent(this, li->addr, RequestData);
+		req->setSize(blocksize);
+		downstream_link->send(req);
+	} else if ( directory_link ) {
+		dbg.output(CALL_INFO, "Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
+		MemEvent *req = new MemEvent(this, li->addr, RequestData);
+		req->setSize(blocksize);
+		req->setDst(findTargetDirectory(li->addr));
+		directory_link->send(req);
+	}
+	else if ( snoop_link ) sendRequestToSnoopLink(li);
+}
+
+
+void Cache::sendRequestToSnoopLink(LoadInfo_t *li){
+	MemEvent *req = new MemEvent(this, li->addr, RequestData);
+	req->setSize(blocksize);
+	if ((li->loadDirection == SEND_DOWN || li->loadDirection == SEND_BOTH) && next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
+	dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
+	BusHandlerArgs args;
+	args.loadBlock.loadInfo = li;
+	li->busEvent = req;
+	snoopBusQueue.request( req, BusHandlers(NULL, &Cache::finishLoadBlockBus, args));
+}
+
 
 
 void Cache::finishLoadBlockBus(BusHandlerArgs &args)
@@ -892,11 +907,10 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstPr
 		}
 
         if ( waitingForInvalidate(block->baseAddr) ) {
-            if ( /*isL1 ||*/ DIRECTORY == src ) {
-                dbg.output(CALL_INFO, "Invalidation (%"PRIu64", %d) for 0x%"PRIx64" in progress.  Putting into queue.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second, block->baseAddr);
+            dbg.output(CALL_INFO, "Invalidation (%"PRIu64", %d) for this in progress.  Putting into queue.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second);
+            if ( isL1 || DIRECTORY == src ) {
                 invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, src));
             } else {
-                dbg.output(CALL_INFO, "Invalidation (%"PRIu64", %d) for 0x%"PRIx64" in progress.  Responding NACK.\n", invalidations[block->baseAddr].issuingEvent.first, invalidations[block->baseAddr].issuingEvent.second, block->baseAddr);
                 respondNACK(ev, src);
                 delete ev;
             }
@@ -1735,19 +1749,13 @@ void Cache::handleNACK(MemEvent *ev, SourceType_t src)
 
 	LoadList_t::iterator li = waitingLoads.find(ev->getAddr());
     if ( waitingLoads.end() != li ) {
-        if ( !li->second->nackRescheduled ) {
-            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  Rescheduling load.\n", ev->getAddr());
-            CacheBlock *block = li->second->targetBlock;
-            //block->unlock();
-            li->second->eventScheduled = true;
-            li->second->nackRescheduled = true;
-            self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
-        } else {
-            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  NACK already rescheduled.\n", ev->getAddr());
-        }
+        dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64"\n", ev->getAddr());
+        CacheBlock *block = li->second->targetBlock;
+        //block->unlock();
+        li->second->eventScheduled = true;
+        self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
         delete ev;
         return;
-
     }
 
     dbg.output(CALL_INFO, "Unexpected NACK for 0x%"PRIx64" received.  Ignoring.\n", ev->getAddr());
@@ -1760,6 +1768,7 @@ void Cache::respondNACK(MemEvent *ev, SourceType_t src)
 {
     MemEvent *nack = ev->makeResponse(this);
     nack->setCmd(NACK);
+    nack->setSize(0);
     switch ( src ) {
     case  SNOOP:
         dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" on bus to %s\n", CommandString[ev->getCmd()], ev->getAddr(), nack->getDst().c_str());
@@ -1979,8 +1988,9 @@ Cache::CacheRow* Cache::findRow(Addr addr)
 {
 	/* Calculate Row number */
 	Addr row = (addr >> rowshift) & rowmask;
+	this->last_row_visited = row;
 	assert(row < (Addr)n_rows);
-	return &database[row];
+	return database[row];
 }
 
 
@@ -2045,144 +2055,6 @@ std::string Cache::findTargetDirectory(Addr addr)
     }
     _abort(Cache, "Unable to find directory for address 0x%"PRIx64"\n", addr);
     return "";
-}
-
-
-
-void Cache::printCache(Output &out)
-{
-	static const char *status[] = {"I", "A", "S", "E"};
-	std::ostringstream ss;
-
-	ss << getName() << std::endl;
-	ss << std::setfill('0');
-
-	for ( int r = 0 ; r < n_rows; r++ ) {
-		ss << std::setw(2) << r << " | ";
-		CacheRow &row = database[r];
-		for ( int c = 0 ; c < n_ways ; c++ ) {
-			CacheBlock &b = row.blocks[c];
-			ss << status[b.status] << " ";
-			ss << "0x" << std::setw(8) << std::hex << b.baseAddr << std::dec << " ";
-			ss << std::setw(4) << b.tag << " ";
-			ss << "| ";
-		}
-		ss << std::endl;
-	}
-
-	ss << std::endl;
-    if ( !waitingLoads.empty() ) {
-        ss << "Waiting Loads\n";
-        for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
-            Addr addr = i->first;
-            LoadInfo_t* li = i->second;
-
-            ss << "0x" << std::setw(4) << std::hex << addr << std::dec;
-            if ( NULL != li->targetBlock )
-                ss << " slated for [" << li->targetBlock->row << ", " << li->targetBlock->col << "]";
-            ss << "\n";
-
-            for ( std::deque<LoadInfo_t::LoadElement_t>::iterator j = li->list.begin() ; j != li->list.end() ; ++j ) {
-                MemEvent *ev = j->ev;
-                SimTime_t elapsed = getCurrentSimTime() - j->issueTime;
-                ss << "\t(" << ev->getID().first << ", " << ev->getID().second << ")  " << CommandString[ev->getCmd()] << "\t" << elapsed << "\n";
-            }
-        }
-    }
-
-    size_t num_pend = 0;
-    for ( int r = 0 ; r < n_rows ; r++ ) {
-        CacheRow *row = &database[r];
-        num_pend += row->waitingEvents.size();
-    }
-    if ( num_pend > 0 ) {
-        ss << "Pending Events\t" << num_pend << std::endl;
-        for ( int r = 0 ; r < n_rows ; r++ ) {
-            CacheRow *row = &database[r];
-            if ( row->waitingEvents.size() > 0 ) {
-                ss << "Row " << r << "\n";
-#if 0
-                for ( std::deque<std::pair<MemEvent*, SourceType_t> >::iterator i = row->waitingEvents.begin() ; i != row->waitingEvents.end() ; ++i ) {
-                    MemEvent *ev = i->first;
-                    ss << "\tEvent id (" <<  ev->getID().first << ", " << ev->getID().second << ") Command:  " << CommandString[ev->getCmd()] << "  0x" << std::hex << ev->getAddr() << std::dec << "\n";
-                }
-#else
-                for ( std::map<Addr, CacheRow::eventQueue_t>::iterator i = row->waitingEvents.begin () ; i != row->waitingEvents.end() ; ++i ) {
-                    ss << "\tBlock Address    0x" << std::hex << i->first << std::dec << "\n";
-                    for ( CacheRow::eventQueue_t::iterator j = i->second.begin() ; j != (i->second.end()) ; ++j ) {
-                        MemEvent *ev = j->first;
-                        ss << "\t\tEvent id (" <<  ev->getID().first << ", " << ev->getID().second << ") Command:  " << CommandString[ev->getCmd()] << "  0x" << std::hex << ev->getAddr() << std::dec << "\n";
-                    }
-                }
-#endif
-            }
-        }
-    }
-
-    if ( snoopBusQueue.size() ) {
-        ss << "Bus Queue Size:  " << snoopBusQueue.size() << "\n";
-    }
-
-    out.output(ss.str().c_str());
-}
-
-
-
-
-
-/************************ Cache::CacheRow ************************/
-
-Cache::CacheBlock* Cache::CacheRow::getLRU(void)
-{
-    SimTime_t t = (SimTime_t)-1;
-    int lru = -1;
-    for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-        if ( blocks[i].isAssigned() ) continue; // Assigned, waiting for incoming
-        if (  0 < blocks[i].locked ) continue; // Currently in use
-        if ( NULL != blocks[i].loadInfo ) continue; // Assigned, but other work is being done
-
-        if ( !blocks[i].isValid() ) {
-            lru = i;
-            break;
-        }
-        if ( blocks[i].last_touched <= t ) {
-            t = blocks[i].last_touched;
-            lru = i;
-        }
-    }
-    if ( lru < 0 ) {
-        cache->dbg.output(CALL_INFO, "No empty slot in this row.\n");
-        return NULL;
-    }
-
-    cache->dbg.output(CALL_INFO, "Row LRU is block %p [0x%"PRIx64", [%d.%d]].\n", &blocks[lru], blocks[lru].baseAddr, blocks[lru].status, blocks[lru].user_locked);
-    return &blocks[lru];
-}
-
-
-void Cache::CacheRow::addWaitingEvent(MemEvent *ev, SourceType_t src)
-{
-    Addr blockaddr = cache->addrToBlockAddr(ev->getAddr());
-    waitingEvents[blockaddr].push_back(std::make_pair(ev, src));
-    cache->dbg.output(CALL_INFO, "Event is number %zu in queue for this row.\n",
-            waitingEvents[blockaddr].size());
-    printRow();
-}
-
-
-void Cache::CacheRow::printRow(void)
-{
-    for ( int i = 0 ; i < cache->n_ways ; i++ ) {
-        cache->dbg.output(CALL_INFO, "\t\tBlock [0x%"PRIx64" [%d.%d]] is: %s\n",
-                blocks[i].baseAddr,
-                blocks[i].status, blocks[i].user_locked,
-                blocks[i].isAssigned() ?
-                "Assigned" :
-                (blocks[i].locked>0) ?
-                "Locked!":
-                "Open."
-             );
-    }
 }
 
 
@@ -2271,4 +2143,84 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
         }
     }
 }
+
+
+
+void Cache::printCache(Output &out)
+{
+	static const char *status[] = {"I", "A", "S", "E"};
+	std::ostringstream ss;
+
+	ss << getName() << std::endl;
+	ss << std::setfill('0');
+
+	for ( int r = 0 ; r < n_rows; r++ ) {
+		ss << std::setw(2) << r << " | ";
+		CacheRow &row = *database[r];
+		for ( int c = 0 ; c < n_ways ; c++ ) {
+			CacheBlock &b = row.blocks[c];
+			ss << status[b.status] << " ";
+			ss << "0x" << std::setw(8) << std::hex << b.baseAddr << std::dec << " ";
+			ss << std::setw(4) << b.tag << " ";
+			ss << "| ";
+		}
+		ss << std::endl;
+	}
+
+	ss << std::endl;
+    if ( !waitingLoads.empty() ) {
+        ss << "Waiting Loads\n";
+        for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
+            Addr addr = i->first;
+            LoadInfo_t* li = i->second;
+
+            ss << "0x" << std::setw(4) << std::hex << addr << std::dec;
+            if ( NULL != li->targetBlock )
+                ss << " slated for [" << li->targetBlock->row << ", " << li->targetBlock->col << "]";
+            ss << "\n";
+
+            for ( std::deque<LoadInfo_t::LoadElement_t>::iterator j = li->list.begin() ; j != li->list.end() ; ++j ) {
+                MemEvent *ev = j->ev;
+                SimTime_t elapsed = getCurrentSimTime() - j->issueTime;
+                ss << "\t(" << ev->getID().first << ", " << ev->getID().second << ")  " << CommandString[ev->getCmd()] << "\t" << elapsed << "\n";
+            }
+        }
+    }
+
+    size_t num_pend = 0;
+    for ( int r = 0 ; r < n_rows ; r++ ) {
+        CacheRow *row = database[r];
+        num_pend += row->waitingEvents.size();
+    }
+    if ( num_pend > 0 ) {
+        ss << "Pending Events\t" << num_pend << std::endl;
+        for ( int r = 0 ; r < n_rows ; r++ ) {
+            CacheRow *row = database[r];
+            if ( row->waitingEvents.size() > 0 ) {
+                ss << "Row " << r << "\n";
+#if 0
+                for ( std::deque<std::pair<MemEvent*, SourceType_t> >::iterator i = row->waitingEvents.begin() ; i != row->waitingEvents.end() ; ++i ) {
+                    MemEvent *ev = i->first;
+                    ss << "\tEvent id (" <<  ev->getID().first << ", " << ev->getID().second << ") Command:  " << CommandString[ev->getCmd()] << "  0x" << std::hex << ev->getAddr() << std::dec << "\n";
+                }
+#else
+                for ( std::map<Addr, CacheRow::eventQueue_t>::iterator i = row->waitingEvents.begin () ; i != row->waitingEvents.end() ; ++i ) {
+                    ss << "\tBlock Address    0x" << std::hex << i->first << std::dec << "\n";
+                    for ( CacheRow::eventQueue_t::iterator j = i->second.begin() ; j != (i->second.end()) ; ++j ) {
+                        MemEvent *ev = j->first;
+                        ss << "\t\tEvent id (" <<  ev->getID().first << ", " << ev->getID().second << ") Command:  " << CommandString[ev->getCmd()] << "  0x" << std::hex << ev->getAddr() << std::dec << "\n";
+                    }
+                }
+#endif
+            }
+        }
+    }
+
+    if ( snoopBusQueue.size() ) {
+        ss << "Bus Queue Size:  " << snoopBusQueue.size() << "\n";
+    }
+
+    out.output(ss.str().c_str());
+}
+
 

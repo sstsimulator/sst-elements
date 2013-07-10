@@ -23,7 +23,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
-#include <sst/core/component.h>
+#include "sst/core/component.h"
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
@@ -32,6 +32,7 @@
 
 #include "memNIC.h"
 #include "bus.h"
+//#include "cacheRow.h"
 
 
 using namespace SST::Interfaces;
@@ -48,13 +49,16 @@ private:
 	typedef enum {INCLUSIVE, EXCLUSIVE, STANDARD} CacheMode_t;
     typedef enum {SEND_DOWN, SEND_UP, SEND_BOTH} ForwardDir_t;
 
+public:
+    unsigned hash( const char *s );
+
+protected:
+
 	class Request;
-	class CacheRow;
 	class CacheBlock;
 	class SelfEvent;
 	struct LoadInfo_t;
 	typedef std::map<Addr, LoadInfo_t*> LoadList_t;
-
 
 	class CacheBlock {
 	public:
@@ -126,25 +130,69 @@ private:
 	};
 
 	class CacheRow {
+		public:
+			std::vector<CacheBlock> blocks;
+	        typedef std::deque<std::pair<MemEvent*, SourceType_t> > eventQueue_t;
+	        std::map<Addr, eventQueue_t> waitingEvents;
+			Cache *cache;
+
+			typedef enum {LRU, MRU, RANDOM, LFU} BlockStatus;
+
+			CacheRow() { cache = NULL;}
+			CacheRow(Cache *_cache) : cache(_cache)
+			{
+				blocks = std::vector<CacheBlock>(cache->n_ways, CacheBlock(cache));
+			}
+			~CacheRow(){}
+
+			virtual CacheBlock* getNext(void);
+
+	        void addWaitingEvent(MemEvent *ev, SourceType_t src);
+
+	        void printRow(void);
+	};
+	class LRUCacheRow : public CacheRow {
 	public:
-		std::vector<CacheBlock> blocks;
-        typedef std::deque<std::pair<MemEvent*, SourceType_t> > eventQueue_t;
-        std::map<Addr, eventQueue_t> waitingEvents;
-		Cache *cache;
-
-		CacheRow() {}
-		CacheRow(Cache *_cache) : cache(_cache)
-		{
-			blocks = std::vector<CacheBlock>(cache->n_ways, CacheBlock(cache));
-		}
-
-		CacheBlock* getLRU(void);
-
-        void addWaitingEvent(MemEvent *ev, SourceType_t src);
-
-        void printRow(void);
+		LRUCacheRow(Cache *_cache) : CacheRow(_cache){}
+		~LRUCacheRow(){}
+		CacheBlock* getNext(void);
 	};
 
+	class MRUCacheRow : public CacheRow {
+	public:
+		MRUCacheRow(Cache *_cache) : CacheRow(_cache){}
+		~MRUCacheRow(){}
+		CacheBlock* getNext(void);
+	};
+	class RandomCacheRow : public CacheRow {
+	public:
+		RandomCacheRow(Cache *_cache) : CacheRow(_cache){}
+		~RandomCacheRow(){}
+		CacheBlock* getNext(void);
+	};
+
+	//Round Robing Replacement
+	class RRCacheRow : public CacheRow {
+	private:
+		int tracker;
+	public:
+		RRCacheRow(Cache *_cache) : CacheRow(_cache){
+			this->tracker = 0;
+		}
+		~RRCacheRow(){}
+		CacheBlock* getNext(void);
+	};
+
+	class SkewedAssociativeCacheRow : public CacheRow {
+		private:
+			int tracker;
+		public:
+			SkewedAssociativeCacheRow(Cache *_cache) : CacheRow(_cache){
+				this->tracker = 0;
+			}
+			~SkewedAssociativeCacheRow(){}
+			CacheBlock* getNext(void);
+		};
 
     struct Invalidation {
         int waitingACKs;
@@ -307,6 +355,8 @@ private:
 
 public:
 
+
+
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
     bool clockTick(Cycle_t);
 	virtual void init(unsigned int);
@@ -314,6 +364,14 @@ public:
 	virtual void finish();
 
 private:
+	int confirmBlockIsReplacable(MemEvent *ev, SourceType_t src, LoadInfo_t *li, CacheRow *row, CacheBlock **blockToBeReplaced);
+	void sendEvictToDirectory(CacheBlock *blockTBR);
+	void sendRequestToSnoopLink(LoadInfo_t *li);
+	void sendRequestDown(LoadInfo_t *li);
+	void sendRequestUp(LoadInfo_t *li);
+	int  sendRequestInit(LoadInfo_t *li, CacheBlock *block, Addr addr);
+	void finishFetchBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
+
     void handleBusEvent(SST::Event *event);
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
 	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete = false);
@@ -335,6 +393,8 @@ private:
 	void loadBlock(MemEvent *ev, SourceType_t src);
     std::pair<LoadInfo_t*, bool> initLoad(Addr addr, MemEvent *ev, SourceType_t src);
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
+	void finishLoadBlock2(LoadInfo_t *li, Addr addr, CacheBlock *block);
+
 	void finishLoadBlockBus(BusHandlerArgs &args);
 
 	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
@@ -390,7 +450,9 @@ private:
 	int n_rows;
 	uint32_t blocksize;
 	std::string access_time;
-	std::vector<CacheRow> database;
+	std::string replacement_policy;
+	std::string frequency;
+	std::vector<CacheRow*> database;
 	std::string next_level_name;
     CacheMode_t cacheMode;
     bool isL1;
@@ -414,7 +476,7 @@ private:
 	SST::Link *self_link; // Used for scheduling access
 	std::map<LinkId_t, int> upstreamLinkMap;
     std::vector<MemNIC::ComponentInfo> directories;
-
+    Addr last_row_visited;
 	/* Stats */
 	uint64_t num_read_hit;
 	uint64_t num_read_miss;
