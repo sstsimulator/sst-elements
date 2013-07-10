@@ -39702,7 +39702,7 @@ n1c1: Received MemEvent with command 1 (response to 65529, addr 0x7e04) [Time: 5
 n1c1: Received MemEvent with command 1 (response to 65496, addr 0x9e50) [Time: 1279] [2 outstanding requests]
 n1c1: Received MemEvent with command 1 (response to 65522, addr 0x402c) [Time: 779] [1 outstanding requests]
 n1c1: Received MemEvent with command 3 (response to 65532, addr 0xa360) [Time: 970] [0 outstanding requests]
-TrivialCPU Finished after 1000 issued reads, 1000 returned (406013 clocks)
+TrivialCPU n0c0 Finished after 1000 issued reads, 1000 returned (406013 clocks)
 Cache n0c0.l1 stats:
 	# Read    Hits:      39
 	# Read    Misses:    861
@@ -39721,7 +39721,7 @@ Cache n0c01l2 stats:
 	# Write   Misses:    0
 	# Upgrade Misses:    0
 	# Invalidations:     349
-TrivialCPU Finished after 1000 issued reads, 1000 returned (404628 clocks)
+TrivialCPU n0c1 Finished after 1000 issued reads, 1000 returned (404628 clocks)
 Cache n0c1.l1 stats:
 	# Read    Hits:      59
 	# Read    Misses:    831
@@ -39731,7 +39731,7 @@ Cache n0c1.l1 stats:
 	# Write   Misses:    104
 	# Upgrade Misses:    6
 	# Invalidations:     28
-TrivialCPU Finished after 1000 issued reads, 1000 returned (387568 clocks)
+TrivialCPU n0c2 Finished after 1000 issued reads, 1000 returned (387568 clocks)
 Cache n0c2.l1 stats:
 	# Read    Hits:      47
 	# Read    Misses:    866
@@ -39750,7 +39750,7 @@ Cache n0c23l2 stats:
 	# Write   Misses:    0
 	# Upgrade Misses:    0
 	# Invalidations:     338
-TrivialCPU Finished after 1000 issued reads, 1000 returned (407701 clocks)
+TrivialCPU n0c3 Finished after 1000 issued reads, 1000 returned (407701 clocks)
 Cache n0c3.l1 stats:
 	# Read    Hits:      43
 	# Read    Misses:    829
@@ -39769,7 +39769,7 @@ Cache n0l3 stats:
 	# Write   Misses:    0
 	# Upgrade Misses:    0
 	# Invalidations:     297
-TrivialCPU Finished after 1000 issued reads, 1000 returned (399146 clocks)
+TrivialCPU n1c0 Finished after 1000 issued reads, 1000 returned (399146 clocks)
 Cache n1c0.l1 stats:
 	# Read    Hits:      37
 	# Read    Misses:    860
@@ -39788,7 +39788,7 @@ Cache n1c01l2 stats:
 	# Write   Misses:    0
 	# Upgrade Misses:    0
 	# Invalidations:     327
-TrivialCPU Finished after 1000 issued reads, 1000 returned (408826 clocks)
+TrivialCPU n1c1 Finished after 1000 issued reads, 1000 returned (408826 clocks)
 Cache n1c1.l1 stats:
 	# Read    Hits:      31
 	# Read    Misses:    859
@@ -39798,7 +39798,7 @@ Cache n1c1.l1 stats:
 	# Write   Misses:    107
 	# Upgrade Misses:    2
 	# Invalidations:     32
-TrivialCPU Finished after 1000 issued reads, 1000 returned (406671 clocks)
+TrivialCPU n1c2 Finished after 1000 issued reads, 1000 returned (406671 clocks)
 Cache n1c2.l1 stats:
 	# Read    Hits:      40
 	# Read    Misses:    855
@@ -39817,7 +39817,7 @@ Cache n1c23l2 stats:
 	# Write   Misses:    0
 	# Upgrade Misses:    0
 	# Invalidations:     352
-TrivialCPU Finished after 1000 issued reads, 1000 returned (405926 clocks)
+TrivialCPU n1c3 Finished after 1000 issued reads, 1000 returned (405926 clocks)
 Cache n1c3.l1 stats:
 	# Read    Hits:      33
 	# Read    Misses:    865

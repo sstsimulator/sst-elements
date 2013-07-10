@@ -35,6 +35,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
     Component(id), blocksize(0)
 {
     dbg.init("@R:DirectoryController::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    printStatsLoc = (Output::output_location_t)params.find_integer("printStats", 0);
 
     targetCount = 0;
 
@@ -81,6 +82,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
 			new Clock::Handler<DirectoryController>(this, &DirectoryController::clock));
 
     lookupBaseAddr = params.find_integer("backingStoreSize", 0x1000000); // 16MB
+
+    numReqsProcessed = 0;
+    totalReqProcessTime = 0;
+    numCacheHits = 0;
 }
 
 
@@ -150,6 +155,7 @@ void DirectoryController::handleMemoryResponse(SST::Event *event)
 void DirectoryController::handlePacket(SST::Event *event)
 {
     MemEvent *ev = static_cast<MemEvent*>(event);
+    ev->setDeliveryTime(getCurrentSimTimeNano());
     workQueue.push_back(ev);
     dbg.output(CALL_INFO, "Received (%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Position %zu in queue.\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), workQueue.size());
 }
@@ -228,6 +234,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
         assert(entry);
         entry->activeReq = ev;
         if ( entry->inController ) {
+            ++numCacheHits;
             handleWriteback(entry, ev);
         } else {
             dbg.output(CALL_INFO, "Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
@@ -243,6 +250,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
         }
         entry->activeReq = ev;
         if ( entry->inController ) {
+            ++numCacheHits;
             handleRequestData(entry, ev);
         } else {
             dbg.output(CALL_INFO, "Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
@@ -256,6 +264,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
         assert(!entry->dirty);
         entry->activeReq = ev;
         if ( entry->inController ) {
+            ++numCacheHits;
             handleInvalidate(entry, ev);
         } else {
             dbg.output(CALL_INFO, "Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
@@ -268,6 +277,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
         assert(entry);
         entry->activeReq = ev;
         if ( entry->inController ) {
+            ++numCacheHits;
             handleEviction(entry, ev);
         } else {
             dbg.output(CALL_INFO, "Entry 0x%"PRIx64" not in cache.  Requesting from memory.\n", entry->baseAddr);
@@ -300,6 +310,19 @@ void DirectoryController::init(unsigned int phase)
         }
     }
 
+}
+
+void DirectoryController::finish(void)
+{
+    Output out("", 0, 0, printStatsLoc);
+    out.output("Directory %s stats:\n"
+            "\t# Requests:        %"PRIu64"\n"
+            "\tAvg Req Time:      %"PRIu64" ns\n"
+            "\tEntry Cache Hits:  %"PRIu64"\n",
+            getName().c_str(),
+            numReqsProcessed,
+            totalReqProcessTime / numReqsProcessed,
+            numCacheHits);
 }
 
 
@@ -657,8 +680,17 @@ MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
 
 void DirectoryController::resetEntry(DirEntry *entry)
 {
-	if ( entry->activeReq )
+	if ( entry->activeReq ) {
+        dbg.output(CALL_INFO, "Resetting entry after event (%"PRIu64", %d) %s 0x%"PRIx64".  Processing time: %"PRIu64"\n",
+                entry->activeReq->getID().first, entry->activeReq->getID().second,
+                CommandString[entry->activeReq->getCmd()], entry->activeReq->getAddr(),
+                getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
+
+        ++numReqsProcessed;
+        totalReqProcessTime += (getCurrentSimTimeNano() - entry->activeReq->getDeliveryTime());
+
         delete entry->activeReq;
+    }
 	entry->activeReq = NULL;
 	entry->nextFunc = NULL;
     entry->nextCommand = NULLCMD;

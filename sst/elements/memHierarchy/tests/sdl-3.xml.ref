@@ -85,7 +85,7 @@ cpu: -38 Issued Read (131) for address 0xca4
 cpu: Received MemEvent with command 1 (response to 131, addr 0xca4) [Time: 4] [0 outstanding requests]
 cpu: -39 Issued Read (133) for address 0x748
 cpu: Received MemEvent with command 1 (response to 133, addr 0x748) [Time: 4] [0 outstanding requests]
-TrivialCPU Finished after 39 issued reads, 39 returned (4999 clocks)
+TrivialCPU cpu Finished after 39 issued reads, 39 returned (4999 clocks)
 Cache l1cache stats:
 	# Read    Hits:      9
 	# Read    Misses:    26

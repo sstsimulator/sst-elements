@@ -133,6 +133,12 @@ class DirectoryController : public Component {
     size_t entryCacheSize;
     std::list<DirEntry*> entryCache;
 
+    uint64_t numReqsProcessed;
+    uint64_t totalReqProcessTime;
+    uint64_t numCacheHits;
+    Output::output_location_t printStatsLoc;
+
+
 
 	DirEntry* getDirEntry(Addr target);
 	DirEntry* createDirEntry(Addr target);
@@ -183,7 +189,7 @@ public:
     ~DirectoryController();
 	void setup(void);
     void init(unsigned int phase);
-	int Finish(void) { return 0; }
+	void finish(void);
 
 	void handlePacket(SST::Event *event);
 	bool processPacket(MemEvent *ev);

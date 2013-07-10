@@ -133,6 +133,7 @@ static const ElementInfoParam dirctrl_params[] = {
     {"clock",               "Clock rate of controller."},
     {"entryCacheSize",      "Size (in # of entries) the controller will cache."},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 

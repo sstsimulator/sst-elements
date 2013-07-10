@@ -37,8 +37,8 @@ public:
 	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init();
 	void finish() {
-		out.output("TrivialCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
-				num_reads_issued, num_reads_returned, clock_ticks);
+		out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
+				getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
 	}
 
 private:
