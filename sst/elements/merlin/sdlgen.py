@@ -469,7 +469,7 @@ class TrafficGenEndPoint:
         out.write("    <PacketDest:RangeMax> %d </PacketDest:RangeMax>\n" % params["peers"])
 
         if params["PacketDest:pattern"] == "NearestNeighbor":
-            out.write("    <PatcketDest:NearestNeighbor:3DSize> %s </PatcketDest:NearestNeighbor:3DSize>\n" % (params["PacketDest:3D shape X"], params["PacketDest:3D shape Y"], params["PacketDest:3D shape Z"]))
+            out.write("    <PatcketDest:NearestNeighbor:3DSize> %s %s %s </PatcketDest:NearestNeighbor:3DSize>\n" % (params["PacketDest:3D shape X"], params["PacketDest:3D shape Y"], params["PacketDest:3D shape Z"]))
         elif params["PacketDest:pattern"] == "HotSpot":
             params.emit(out, "PacketDest:HotSpot:target")
             params.emit(out, "PacketDest:HotSpot:targetProbability")
