@@ -386,14 +386,13 @@ class topoDragonFly(Topo):
                         port = port + 1
                 
                 for p in xrange(params["dragonfly:intergroup_per_router"]):
-                    tgt_grp = tgt_grp % params["dragonfly:num_groups"]
-                    if tgt_grp == g:
-                        tgt_grp = (tgt_grp +1) % params["dragonfly:num_groups"]
+                    if (tgt_grp%params["dragonfly:num_groups"]) == g:
+                        tgt_grp = tgt_grp +1
 
-                    src_g = min(g, tgt_grp)
-                    dst_g = max(g, tgt_grp)
+                    src_g = min(g, tgt_grp%params["dragonfly:num_groups"])
+                    dst_g = max(g, tgt_grp%params["dragonfly:num_groups"])
 
-                    out.write("    <link name=link:g%dg%d:%d port=port%d latency=%s />\n" % (src_g, dst_g, p/params["dragonfly:num_groups"], port, params["link_lat"]))
+                    out.write("    <link name=link:g%dg%d:%d port=port%d latency=%s />\n" % (src_g, dst_g, tgt_grp/params["dragonfly:num_groups"], port, params["link_lat"]))
                     port = port +1
                     tgt_grp = tgt_grp +1
 

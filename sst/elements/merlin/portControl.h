@@ -196,7 +196,7 @@ public:
         }
 
 
-	if ( input_latency_timebase != "" ) {
+	if ( port_link && input_latency_timebase != "" ) {
 	    // std::cout << "Adding extra latency" << std::endl;
 	    port_link->addOutputLatency(input_latency_cycles,input_latency_timebase);
 	}

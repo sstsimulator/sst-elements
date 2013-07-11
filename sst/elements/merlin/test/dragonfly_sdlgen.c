@@ -2,10 +2,10 @@
 // Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -154,15 +154,14 @@ int main(int argc, char **argv)
                 }
             }
             for ( uint32_t p = 0 ; p < params.h ; p++ ) {
-                tgt_grp %= params.g;
-                if ( tgt_grp == g ) {
-                    tgt_grp = (tgt_grp + 1) % params.g;
+                if ( (tgt_grp%params.g) == g ) {
+                    tgt_grp++;
                 }
-                uint32_t src_g = (g < tgt_grp) ? g : tgt_grp;
-                uint32_t dst_g = (g < tgt_grp) ? tgt_grp : g;
+                uint32_t src_g = (g < (tgt_grp%params.g)) ? g : (tgt_grp%params.g);
+                uint32_t dst_g = (g < (tgt_grp%params.g)) ? (tgt_grp%params.g) : g;
 
                 fprintf(output, "    <link name=link:g%ug%u:%u port=port%u latency=%s />\n",
-                        src_g, dst_g, p / params.g, port++, params.link_lat);
+                        src_g, dst_g, tgt_grp / params.g, port++, params.link_lat);
                 tgt_grp++;
             }
 
