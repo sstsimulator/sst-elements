@@ -25,6 +25,7 @@
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/output.h>
 
 
 namespace SST {
@@ -172,6 +173,7 @@ private:
 
     AddressMode addressMode;
 
+    Output out;
     int id;
     int ft_loading;
     int ft_radix;
@@ -179,15 +181,15 @@ private:
     int num_vcs;
     int last_vc;
 
-    int packets_sent;
-    int packets_recd;
+    uint64_t packets_sent;
+    uint64_t packets_recd;
 
     bool done;
 
     LinkControl* link_control;
 
     int base_packet_size;
-    int packets_to_send;
+    uint64_t packets_to_send;
 
     int base_packet_delay;
     int packet_delay;

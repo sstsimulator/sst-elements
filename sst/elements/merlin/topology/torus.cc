@@ -86,7 +86,6 @@ topo_torus::topo_torus(Params& params) :
 
     id_loc = new int[dimensions];
     idToLocation(router_id, id_loc);
-    std::cout << std::endl;
 }
 
 topo_torus::~topo_torus()

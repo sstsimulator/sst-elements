@@ -8,6 +8,11 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sst_config.h>
@@ -33,25 +38,28 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     packetSizeGen(NULL),
     packetDelayGen(NULL)
 {
+
+    out.init(getName() + ": ", 0, 0, Output::STDOUT);
+
     id = params.find_integer("id");
     if ( id == -1 ) {
+        _abort(TrafficGen, "id must be set!\n");
     }
-    std::cout << "id: " << id << "\n";
 
     num_peers = params.find_integer("num_peers");
     if ( num_peers == -1 ) {
+        _abort(TrafficGen, "num_peers must be set!\n");
     }
-    std::cout << "num_peers: " << num_peers << "\n";
 
     num_vcs = params.find_integer("num_vcs");
     if ( num_vcs == -1 ) {
+        _abort(TrafficGen, "num_vcs must be set!\n");
     }
-    std::cout << "num_vcs: " << num_vcs << "\n";
 
     std::string link_bw = params.find_string("link_bw");
     if ( link_bw == "" ) {
+        _abort(TrafficGen, "link_bw must be set!\n");
     }
-    std::cout << "link_bw: " << link_bw << std::endl;
     TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
 
     addressMode = SEQUENTIAL;
@@ -75,7 +83,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     link_control->configureLink(this, "rtr", tc, num_vcs, buf_size, buf_size);
     delete [] buf_size;
 
-    packets_to_send = params.find_integer("packets_to_send", 1000);
+    packets_to_send = (uint64_t)params.find_integer("packets_to_send", 1000);
 
     /* Distribution selection */
     packetDestGen = buildGenerator("PacketDest", params);
@@ -146,7 +154,7 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
 
 void TrafficGen::finish()
 {
-    printf("%d, %d, %d\n", id, packets_sent, packets_recd);
+    out.output("%d, %"PRIu64", %"PRIu64"\n", id, packets_sent, packets_recd);
 }
 
 void TrafficGen::setup()
@@ -164,7 +172,7 @@ bool
 TrafficGen::clock_handler(Cycle_t cycle)
 {
     if ( !done && (packets_sent >= packets_to_send) ) {
-        printf("Node %d done sending.\n", id);
+        out.output("Node %d done sending.\n", id);
         primaryComponentOKToEndSim();
         done = true;
     }
@@ -197,8 +205,7 @@ TrafficGen::clock_handler(Cycle_t cycle)
                 bool sent = link_control->send(ev,0);
                 assert( sent );
 
-                //std::cout << cycle << ": " << id << " sent packet " << ev->seq << " to " << ev->dest << std::endl;
-                packets_sent++;
+                ++packets_sent;
             }
         }
     }
@@ -208,7 +215,6 @@ TrafficGen::clock_handler(Cycle_t cycle)
         RtrEvent* ev = link_control->recv(last_vc);
         if ( ev != NULL ) {
             packets_recd++;
-            //std::cout << cycle << ": " << id << " Received an event on vc " << rec_ev->vc << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             break;
         }
@@ -237,7 +243,7 @@ int TrafficGen::fattree_ID_to_IP(int id)
     addr.x[3] = 2 + (id % ft_loading);
 
 #if 0
-    printf("Converted NIC id %d to %u.%u.%u.%u.\n", id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]\n);
+    out.output("Converted NIC id %d to %u.%u.%u.%u.\n", id, addr.x[0], addr.x[1], addr.x[2], addr.x[3]\n);
 #endif
 
     return addr.s;

@@ -86,25 +86,26 @@ class topoTorus(Topo):
 
         nd = int(params["num_dims"])
         params["num_dims"] = nd # converts it to an int
-        params["peers"] = 1
-        params["router_radix"] = 0
-        dims = []
-        dimwidths = []
-        for x in xrange(nd):
-            print "Dim %d size:" % x
-            ds = int(raw_input())
-            dims.append(ds)
-            print "Dim %d width (# of links in this dimension):" % x
-            dw = int(raw_input())
-            dimwidths.append(dw)
-            params["peers"] = params["peers"] * ds
-            params["router_radix"] = params["router_radix"] + (2 * dw)
-        params["dimsize"] = dims
-        params["dimwidth"] = dimwidths
-        params["torus:local_ports"] = int(params["torus:local_ports"])
-        params["router_radix"] = params["router_radix"] + params["torus:local_ports"]
+        if "dimsize" not in params or "dimwidth" not in params:
+            params["peers"] = 1
+            params["router_radix"] = 0
+            dims = []
+            dimwidths = []
+            for x in xrange(nd):
+                print "Dim %d size:" % x
+                ds = int(raw_input())
+                dims.append(ds)
+                print "Dim %d width (# of links in this dimension):" % x
+                dw = int(raw_input())
+                dimwidths.append(dw)
+                params["peers"] = params["peers"] * ds
+                params["router_radix"] = params["router_radix"] + (2 * dw)
+            params["dimsize"] = dims
+            params["dimwidth"] = dimwidths
+            params["torus:local_ports"] = int(params["torus:local_ports"])
+            params["router_radix"] = params["router_radix"] + params["torus:local_ports"]
+            params["peers"] = params["peers"] * params["torus:local_ports"]
 
-        params["peers"] = params["peers"] * params["torus:local_ports"]
         params["torus:shape"] = self.formatShape()
         params["torus:width"] = self.formatWidth()
 
@@ -339,6 +340,8 @@ class topoDragonFly(Topo):
         if (params["dragonfly:routers_per_group"]-1 + params["dragonfly:hosts_per_router"] + params["dragonfly:intergroup_per_router"]) > params["router_radix"]:
             print "ERROR: # of ports per router is only %d\n" % params["router_radix"]
             sys.exit(1)
+        if params["dragonfly:num_groups"] > 2:
+            foo = params["dragonfly:algorithm"]
 
         foo = params["link_lat"]  # It makes more sense to ask here
         params["num_vcs"] = 3
@@ -504,6 +507,8 @@ def generateSDL(filename, topo, endpoint):
         out.write( "\n")
         out.write( "<config>\n")
         out.write( "  run-mode=both\n")
+        if "config:runtime" in params:
+            out.write( "  stopAtCycle=%s\n"%params["config:runtime"])
         out.write( "</config>\n")
         out.write( "\n")
         out.write( "<param_include>\n")
@@ -516,6 +521,11 @@ def generateSDL(filename, topo, endpoint):
         out.write( "<sst>\n")
         topo.formatSDL(out, endpoint)
         out.write( "</sst>\n")
+        out.write( "\n\n\n")
+        out.write( "<!-- \n\tParameters\n")
+        for key in params:
+            out.write("%s = %s\n" % (key, params[key]))
+        out.write("\n-->\n\n")
 
 
 
