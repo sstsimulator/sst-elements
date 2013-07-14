@@ -131,7 +131,7 @@ TrafficGen::Generator* TrafficGen::buildGenerator(const std::string &prefix, Par
         std::string shape = params.find_string(prefix + ":NearestNeighbor:3DSize");
         int maxX, maxY, maxZ;
         assert (sscanf(shape.c_str(), "%d %d %d", &maxX, &maxY, &maxZ) == 3);
-        gen = new NearestNeighbor(new UniformDist(range.first, range.second-1), id, maxX, maxY, maxZ, 6);
+        gen = new NearestNeighbor(new UniformDist(0, 5), id, maxX, maxY, maxZ, 6);
     } else if ( !pattern.compare("Uniform") ) {
         gen = new UniformDist(range.first, range.second-1);
     } else if ( !pattern.compare("HotSpot") ) {
@@ -272,7 +272,9 @@ int TrafficGen::IP_to_fattree_ID(int ip)
 
 int TrafficGen::getPacketDest(void)
 {
-    return packetDestGen->getNextValue();
+    int dest = packetDestGen->getNextValue();
+    assert ( dest >= 0 );
+    return dest;
 }
 
 
