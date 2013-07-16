@@ -142,8 +142,9 @@ void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
   }
   MemEvent *parentEvent = mi->second;
   MemEvent *event = parentEvent->makeResponse(this);
-  printf("Burst length is %d. is that 64?: %s %d",bp.burstLength, __FILE__, __LINE__);
-  assert(bp.burstLength == parentEvent->getSize());
+  printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
+  //assert(bp.burstLength == parentEvent->getSize());
+  
   // copy data from backing store to event
   event->setSize(bp.burstLength);
   for ( size_t i = 0 ; i < event->getSize() ; i++ ) {
@@ -170,8 +171,8 @@ void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
   }
   MemEvent *parentEvent = mi->second;
   MemEvent *event = parentEvent->makeResponse(this);
-  printf("Burst length is %d. is that 64?: %s %d",bp.burstLength, __FILE__, __LINE__);
-  assert(bp.burstLength == parentEvent->getSize());
+  printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
+  //assert(bp.burstLength == parentEvent->getSize());
 
   // write the data to the backing store
   for ( size_t i = 0 ; i < bp.burstLength ; i++ ) {
@@ -201,11 +202,11 @@ bool VaultSimC::clock( Cycle_t current )
       _abort(VaultSimC::clock, "vault got bad event\n");
     }
     
-    printf(" Vault %d got a req for %p\n", vaultID, event->getAddr());
+    printf(" Vault %d got a req for %p (%d %d)\n", vaultID, event->getAddr(), event->getID().first, event->getID().second);
     DBG("got an event %x\n", event);
     
     TransactionType transType = convertType( event->getCmd() );
-    DBG("transType=%d addr=%#lx\n", transType, event->getAddr() );
+    printf("transType=%d addr=%#lx\n", transType, event->getAddr() );
     static unsigned id=0; 
     unsigned thisTransactionID = id++;
 

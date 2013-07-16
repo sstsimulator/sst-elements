@@ -2,7 +2,7 @@
 <sdl version="2.0"/>
 <timebase>1ns</timebase>
 <config>
- stopAtCycle=5us
+ stopAtCycle=150us
  partitioner=self
 </config>
 

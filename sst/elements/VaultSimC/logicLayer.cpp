@@ -174,7 +174,7 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the CPU
   while((e = toCPU->recv()) && tc[0] < bwlimit) {
     MemEvent *event  = dynamic_cast<MemEvent*>(e);
-    printf("LL%d got req for %p\n", llID, event->getAddr());
+    printf("LL%d got req for %p (%d %d)\n", llID, event->getAddr(), event->getID().first, event->getID().second);
     if (event == NULL) {
       _abort(logicLayer::clock, "logic layer got bad event\n");
     }
@@ -207,7 +207,7 @@ bool logicLayer::clock( Cycle_t current )
 
       tm[0]++;
       // pass along to the CPU
-      printf("ll%d sends %p towards cpu\n", llID, event);
+      printf("ll%d sends %p towards cpu (%d %d)\n", llID, event, event->getID().first, event->getID().second);
       toCPU->send( event );
       tc[1]++;
     }

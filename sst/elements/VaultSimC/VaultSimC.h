@@ -80,10 +80,13 @@ inline PHXSim::TransactionType VaultSimC::convertType( SST::Interfaces::Command 
     switch( type ) 
       {
       case SST::Interfaces::ReadReq:
+      case SST::Interfaces::RequestData:
 	return PHXSim::DATA_READ;
+      case SST::Interfaces::SupplyData:
       case SST::Interfaces::WriteReq:
 	return PHXSim::DATA_WRITE;
-      default: ;
+      default: 
+	_abort(VaultSimC,"Tried to convert unknown memEvent request type (%d) to PHXSim transaction type \n", type);
     }
     return (PHXSim::TransactionType)-1;
 }

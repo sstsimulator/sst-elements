@@ -371,8 +371,10 @@ bool MemController::clock(Cycle_t cycle)
 #endif
 	} else if ( use_vaultSim ) {
 	  dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
+	  printf("Recording %d %d\n", req->reqEvent->getID().first, req->reqEvent->getID().second);
 	  outToCubes[req->reqEvent->getID()] = req; // associate the memEvent w/ the DRAMReq
-	  cube_link->send(1, req->reqEvent); // send the event off
+	  MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
+	  cube_link->send(1, outgoingEvent); // send the event off
         } else {
             dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
             self_link->send(1, new MemCtrlEvent(req));
@@ -557,7 +559,8 @@ void MemController::handleCubeEvent(SST::Event *event)
 {
   MemEvent *ev = dynamic_cast<MemEvent*>(event);
   if (ev) {
-    memEventToDRAMMap_t::iterator ri = outToCubes.find(ev->getID());
+    printf("Looking for %d %d\n", ev->getResponseToID().first, ev->getResponseToID().second);
+    memEventToDRAMMap_t::iterator ri = outToCubes.find(ev->getResponseToID());
     if (ri != outToCubes.end()) {
       handleMemResponse(ri->second);
       outToCubes.erase(ri);
