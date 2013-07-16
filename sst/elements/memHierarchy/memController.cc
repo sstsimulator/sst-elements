@@ -69,6 +69,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 				&MemController::clock));
 	registerTimeBase("1 ns", true);
 
+	// check for and initialize dramsim
 	use_dramsim = (bool)params.find_integer("use_dramsim", 0);
 	if ( use_dramsim ) {
 #if !defined(HAVE_LIBDRAMSIM)
@@ -99,9 +100,21 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 		memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 #endif
 	} else {
-		std::string access_time = params.find_string("access_time", "1000 ns");
-		self_link = configureSelfLink("Self", access_time,
-				new Event::Handler<MemController>(this, &MemController::handleSelfEvent));
+	  std::string access_time = params.find_string("access_time", "1000 ns");
+
+	  // check for vaultsim
+	  use_vaultSim = (bool)params.find_integer("use_vaultSim", 0);
+	  if ( use_vaultSim && use_dramsim ) {
+	    _abort(MemController, "Controller configured to use dramsim & vaultSim. Choose one\n");
+	  }
+
+	  if ( use_vaultSim ) {
+	    cube_link = configureLink( "cube_link", access_time,
+				       new Event::Handler<MemController>(this, &MemController::handleCubeEvent));
+	  }
+
+	  self_link = configureSelfLink("Self", access_time,
+					new Event::Handler<MemController>(this, &MemController::handleSelfEvent));
 	}
 
 
@@ -356,6 +369,10 @@ bool MemController::clock(Cycle_t cycle)
             dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
             dramReqs[addr].push_back(req);
 #endif
+	} else if ( use_vaultSim ) {
+	  dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
+	  outToCubes[req->reqEvent->getID()] = req; // associate the memEvent w/ the DRAMReq
+	  cube_link->send(1, req->reqEvent); // send the event off
         } else {
             dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
             self_link->send(1, new MemCtrlEvent(req));
@@ -536,6 +553,22 @@ void MemController::handleMemResponse(DRAMReq *req)
 
 }
 
+void MemController::handleCubeEvent(SST::Event *event)
+{
+  MemEvent *ev = dynamic_cast<MemEvent*>(event);
+  if (ev) {
+    memEventToDRAMMap_t::iterator ri = outToCubes.find(ev->getID());
+    if (ri != outToCubes.end()) {
+      handleMemResponse(ri->second);
+      outToCubes.erase(ri);
+      delete event;
+    } else {
+      _abort(MemController, "Could not match incoming request from cubes\n");
+    }
+  } else {
+    _abort(MemController, "Recived wrong event type from cubes\n");
+  }
+}
 
 void MemController::handleSelfEvent(SST::Event *event)
 {

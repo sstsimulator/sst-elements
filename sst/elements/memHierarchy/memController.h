@@ -19,6 +19,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
+#include <map>
 
 #include <sst/core/interfaces/memEvent.h>
 using namespace SST::Interfaces;
@@ -147,11 +148,14 @@ private:
 
     void handleMemResponse(DRAMReq *req);
     void handleSelfEvent(SST::Event *event);
+    void handleCubeEvent(SST::Event *event);
 
     bool use_dramsim;
+    bool use_vaultSim;
 
     Output dbg;
     SST::Link *self_link;
+    SST::Link *cube_link; // link to chain of cubes
     SST::Link *upstream_link;
     bool use_bus;
     bool bus_requested;
@@ -160,6 +164,8 @@ private:
     std::deque<DRAMReq*> requestQueue;
     std::deque<DRAMReq*> requests;
 
+    typedef std::map<SST::Interfaces::MemEvent::id_type,DRAMReq*> memEventToDRAMMap_t;
+    memEventToDRAMMap_t outToCubes; // map of events sent out to the cubes
 
     int backing_fd;
     uint8_t *memBuffer;

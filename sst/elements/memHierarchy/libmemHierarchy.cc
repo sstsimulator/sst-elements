@@ -100,6 +100,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state"},
     {"clock",           "Clock frequency of controller"},
     {"use_dramsim",     "0 to not use DRAMSim, 1 to use DRAMSim"},
+    {"use_vaultSim",    "0 to not use vaults, 1 to use a connected chain of vaultSim components"},
     {"device_ini",      "Name of DRAMSim Device config file"},
     {"system_ini",      "Name of DRAMSim Device system file"},
     {"access_time",     "When not using DRAMSim, latency of memory operation."},

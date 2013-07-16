@@ -1,0 +1,63 @@
+// Copyright 2009-2010 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+// 
+// Copyright (c) 2009-2010, Sandia Corporation
+// All rights reserved.
+// 
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+
+#ifndef _LOGICLAYER_H
+#define _LOGICLAYER_H
+
+#include <sst/core/log.h>
+#include <sst/core/event.h>
+#include <sst/core/introspectedComponent.h>
+#include "vaultGlobals.h"
+
+using namespace std;
+using namespace SST;
+
+#ifndef VAULTSIMC_DBG
+#define VAULTSIMC_DBG 0
+#endif
+
+//#define STUPID_DEBUG 
+
+class logicLayer : public IntrospectedComponent {
+  
+public: // functions
+  
+  logicLayer( ComponentId_t id, Params_t& params );
+  int Finish();
+  void init(unsigned int phase);
+  
+private: // types
+  
+  typedef SST::Link memChan_t;
+  typedef vector<memChan_t*> memChans_t;
+  
+private: 
+  
+  logicLayer( const logicLayer& c );
+  bool clock( Cycle_t );
+  // determine if we 'own' a given address
+  bool isOurs(unsigned int addr) {
+    return ((((addr >> LL_SHIFT) & LL_MASK) == llID)
+	    || (LL_MASK == 0));
+  }
+
+  
+  memChans_t m_memChans;
+  SST::Link *toMem;
+  SST::Link *toCPU;
+  int bwlimit;
+  unsigned int LL_MASK;
+  unsigned int llID;
+  unsigned long long memOps;
+};
+
+#endif
