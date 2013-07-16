@@ -297,11 +297,11 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src)
 void Cache::handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete)
 {
 	MemEvent *ev = static_cast<MemEvent*>(event);
-    dbg.output(CALL_INFO, "Received Event on %d %p (%"PRIu64", %d) (%s to %s) %s 0x%"PRIx64"\n",
+    dbg.output(CALL_INFO, "Received Event on %d %p (%"PRIu64", %d) (%s to %s) %s 0x%"PRIx64" [Size: %u]\n",
             src, ev,
             ev->getID().first, ev->getID().second,
             ev->getSrc().c_str(), ev->getDst().c_str(),
-            CommandString[ev->getCmd()], ev->getAddr());
+            CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
     switch (ev->getCmd()) {
     case ReadReq:
     case WriteReq:
@@ -1947,7 +1947,7 @@ Addr Cache::addrToTag(Addr addr)
 
 Addr Cache::addrToBlockAddr(Addr addr)
 {
-	return addr & ~(blocksize-1);
+	return addr & ~((uint64_t)blocksize-1);
 }
 
 Cache::CacheBlock* Cache::findBlock(Addr addr, bool emptyOK)
