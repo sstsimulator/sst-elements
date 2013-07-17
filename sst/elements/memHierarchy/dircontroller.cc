@@ -321,7 +321,7 @@ void DirectoryController::finish(void)
             "\tEntry Cache Hits:  %"PRIu64"\n",
             getName().c_str(),
             numReqsProcessed,
-            totalReqProcessTime / numReqsProcessed,
+            (numReqsProcessed > 0) ? totalReqProcessTime / numReqsProcessed : 0,
             numCacheHits);
 }
 
