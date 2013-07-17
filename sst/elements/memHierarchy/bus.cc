@@ -39,7 +39,7 @@ Bus::Bus(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
 	// get parameters
-    dbg.init("@R:Bus::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("@t:Bus::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
 	numPorts = params.find_integer("numPorts", 0);
 	if ( numPorts < 1 ) _abort(Bus,"couldn't find number of Ports (numPorts)\n");
 	activePort.first = BUS_INACTIVE;

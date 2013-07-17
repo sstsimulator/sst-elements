@@ -24,8 +24,6 @@
 #include "memNIC.h"
 
 
-#define DPRINTF( fmt, args...) __DBG( DBG_CACHE, MemNIC, "%s: " fmt, comp->getName().c_str(), ## args )
-
 using namespace SST;
 using namespace SST::MemHierarchy;
 
@@ -35,7 +33,7 @@ const int MemNIC::num_vcs = 3;
 /* Translates a MemEvent string destination to an integer */
 int MemNIC::addrForDest(const std::string &target)
 {
-    DPRINTF("Translated address %s to %d\n", target.c_str(), addrMap[target]);
+    dbg.output(CALL_INFO, "Translated address %s to %d\n", target.c_str(), addrMap[target]);
     return addrMap[target];
 }
 
@@ -50,6 +48,8 @@ int MemNIC::getFlitSize(MemEvent *ev)
 MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) :
     comp(comp), ci(ci), recvHandler(handler)
 {
+    dbg.init("@t:MemNIC::@p():@l " + comp->getName() + ": ", 0, 0, Output::NONE); //TODO: Parameter
+
     flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
 
@@ -84,12 +84,12 @@ void MemNIC::init(unsigned int phase)
                 ci.network_addr, ci.type, ci.typeInfo);
         ev->dest = SST::Merlin::INIT_BROADCAST_ADDR;
         link_control->sendInitData(ev);
-        DPRINTF("Sent init data!\n");
+        dbg.output(CALL_INFO, "Sent init data!\n");
     }
     while ( SST::Event *ev = link_control->recvInitData() ) {
         InitMemRtrEvent *imre = dynamic_cast<InitMemRtrEvent*>(ev);
         if ( imre ) {
-            DPRINTF("Creating IMRE for %d (%s)\n", imre->address, imre->name.c_str());
+            dbg.output(CALL_INFO, "Creating IMRE for %d (%s)\n", imre->address, imre->name.c_str());
             addrMap[imre->name] = imre->address;
             ComponentInfo ci;
             ci.name = imre->name;
@@ -129,12 +129,12 @@ void MemNIC::clock(void)
 {
     /* If stuff to send, and space to send it, send */
     if ( !sendQueue.empty() ) {
-        DPRINTF("SendQueue has %zu elements in it.\n", sendQueue.size());
+        dbg.output(CALL_INFO, "SendQueue has %zu elements in it.\n", sendQueue.size());
         MemRtrEvent *head = sendQueue.front();
         if ( link_control->spaceToSend(0, head->size_in_flits) ) {
             bool sent = link_control->send(head, 0);
             if ( sent ) {
-                DPRINTF("Sent message ((%"PRIu64", %d) %s 0x%"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
+                dbg.output(CALL_INFO, "Sent message ((%"PRIu64", %d) %s 0x%"PRIx64") to (%d) [%s]\n", head->event->getID().first, head->event->getID().second, CommandString[head->event->getCmd()], head->event->getAddr(), head->dest, head->event->getDst().c_str());
                 sendQueue.pop_front();
             }
         }
@@ -161,7 +161,7 @@ void MemNIC::clock(void)
 
 void MemNIC::send(MemEvent *ev)
 {
-    DPRINTF("Adding event (%"PRIu64", %d) to send queue\n", ev->getID().first, ev->getID().second);
+    dbg.output(CALL_INFO, "Adding event (%"PRIu64", %d) to send queue\n", ev->getID().first, ev->getID().second);
     MemRtrEvent *mre = new MemRtrEvent(ev);
     mre->src = ci.network_addr;
     mre->dest = addrForDest(ev->getDst());

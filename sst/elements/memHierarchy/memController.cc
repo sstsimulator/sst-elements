@@ -40,7 +40,7 @@ using namespace SST::Interfaces;
 
 MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 {
-    dbg.init("@R:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);

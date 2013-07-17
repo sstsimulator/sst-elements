@@ -18,6 +18,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/component.h>
+#include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 
 #include <sst/elements/merlin/linkControl.h>
@@ -129,6 +130,7 @@ public:
 
 private:
 
+    Output dbg;
     static const int num_vcs;
     size_t flitSize;
 

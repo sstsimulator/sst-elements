@@ -276,6 +276,7 @@ private:
 		CacheBlock *targetBlock;
 		MemEvent *busEvent;
         MemEvent::id_type initiatingEvent;
+        MemEvent::id_type loadingEvent;
         bool uncached;
         bool satisfied;
         bool eventScheduled; // True if a self-event has been scheduled that will need this (finishLoadBlock, finishLoadBlockBus)

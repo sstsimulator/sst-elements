@@ -41,7 +41,7 @@ static const std::string NO_NEXT_LEVEL = "NONE";
 Cache::Cache(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
-    dbg.init("@R:Cache::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("@t:Cache::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
 	// get parameters
@@ -783,11 +783,13 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         if ( n_upstream > 0 && !isL1 ) {
             for ( int i = 0 ; i < n_upstream ; i++ ) {
                 MemEvent *req = new MemEvent(this, li->addr, RequestData);
+                li->loadingEvent = req->getID();
                 req->setSize(blocksize);
                 upstream_links[i]->send(req);
             }
         } else if ( snoop_link ) {
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
+            li->loadingEvent = req->getID();
             req->setSize(blocksize);
             dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             BusHandlerArgs args;
@@ -805,16 +807,19 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
         if ( downstream_link ) {
             dbg.output(CALL_INFO, "Sending request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
+            li->loadingEvent = req->getID();
             req->setSize(blocksize);
             downstream_link->send(req);
         } else if ( directory_link ) {
-            dbg.output(CALL_INFO, "Sending request to Directory to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
+            li->loadingEvent = req->getID();
+            dbg.output(CALL_INFO, "Sending request (%"PRIu64", %d) to Directory to load block 0x%"PRIx64"  [li = %p]\n", req->getID().first, req->getID().second, li->addr, li);
             req->setSize(blocksize);
             req->setDst(findTargetDirectory(li->addr));
             directory_link->send(req);
         } else if ( snoop_link ) {
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
+            li->loadingEvent = req->getID();
             req->setSize(blocksize);
             if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
             dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
@@ -1484,7 +1489,7 @@ bool Cache::cancelInvalidate(CacheBlock *block)
     if ( i->second.canCancel ) {
         dbg.output(CALL_INFO, "Attempting cancel for Invalidate 0x%"PRIx64" (%"PRIu64", %d)\n", block->baseAddr, i->second.issuingEvent.first, i->second.issuingEvent.second);
 
-        if ( snoop_link && snoopBusQueue.cancelRequest(i->second.busEvent) ) {
+        if ( NULL != i->second.busEvent && snoop_link && snoopBusQueue.cancelRequest(i->second.busEvent) ) {
             delete i->second.busEvent;
         }
 
@@ -1747,18 +1752,24 @@ void Cache::handleNACK(MemEvent *ev, SourceType_t src)
 
 	LoadList_t::iterator li = waitingLoads.find(ev->getAddr());
     if ( waitingLoads.end() != li ) {
-        if ( !li->second->nackRescheduled ) {
-            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  Rescheduling load.\n", ev->getAddr());
-            CacheBlock *block = li->second->targetBlock;
-            //block->unlock();
-            li->second->eventScheduled = true;
-            li->second->nackRescheduled = true;
-            self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
+        if ( li->second->loadingEvent == ev->getResponseToID() ) {
+            if ( !li->second->nackRescheduled ) {
+                dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  Rescheduling load.\n", ev->getAddr());
+                CacheBlock *block = li->second->targetBlock;
+                //block->unlock();
+                li->second->eventScheduled = true;
+                li->second->nackRescheduled = true;
+                self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li->second, block->baseAddr, block));
+            } else {
+                dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  NACK already rescheduled.\n", ev->getAddr());
+            }
+            delete ev;
+            return;
         } else {
-            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64".  NACK already rescheduled.\n", ev->getAddr());
+            dbg.output(CALL_INFO, "NACK for RequestData of 0x%"PRIx64" is for request (%"PRIu64", %d).  Our request is (%"PRIu64", %d).  Ignorning.\n",
+                    ev->getAddr(), ev->getResponseToID().first, ev->getResponseToID().second,
+                    li->second->loadingEvent.first, li->second->loadingEvent.second);
         }
-        delete ev;
-        return;
 
     }
 

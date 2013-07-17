@@ -34,7 +34,7 @@ const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::ma
 DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
     Component(id), blocksize(0)
 {
-    dbg.init("@R:DirectoryController::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("@t:DirectoryController::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
     printStatsLoc = (Output::output_location_t)params.find_integer("printStats", 0);
 
     targetCount = 0;
@@ -207,8 +207,8 @@ bool DirectoryController::processPacket(MemEvent *ev)
             switch ( ev->getCmd() ) {
             case Invalidate:
             case RequestData: {
-                dbg.output(CALL_INFO, "Sending NACK for [%s,%s 0x%"PRIx64"]\n", CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
                 MemEvent *nack = ev->makeResponse(this);
+                dbg.output(CALL_INFO, "Sending NACK (%"PRIu64", %d) for [%s,%s 0x%"PRIx64"]\n", nack->getID().first, nack->getID().second, CommandString[ev->getCmd()], ev->getSrc().c_str(), entry->baseAddr);
                 nack->setCmd(NACK);
                 sendResponse(nack);
                 delete ev;
