@@ -1629,6 +1629,18 @@ void Cache::handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated)
 
     dbg.output(CALL_INFO, "0x%"PRIx64" block status: %d\n", block->baseAddr, block->status);
 
+    if ( waitingForInvalidate(block->baseAddr) ) {
+        dbg.output(CALL_INFO, "Fetch for 0x%"PRIx64", but Invalidation in progress.\n", ev->getAddr());
+        invalidations[block->baseAddr].waitingEvents.push_back(std::make_pair(ev, DIRECTORY));
+        return;
+    }
+
+    if ( block->wb_in_progress || supplyInProgress(block->baseAddr, DIRECTORY) ) {
+        dbg.output(CALL_INFO, "Fetch for 0x%"PRIx64", but WB or supply already in progress.\n", ev->getAddr());
+        delete ev;
+        return;
+    }
+
     if ( invalidate && !hasInvalidated ) {
         dbg.output(CALL_INFO, "Issuing invalidation for 0x%"PRIx64" upstream.\n", block->baseAddr);
         issueInvalidate(ev, DIRECTORY, block, CacheBlock::SHARED, SEND_UP);
