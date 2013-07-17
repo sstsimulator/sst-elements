@@ -1,8 +1,8 @@
-// Copyright 2009-2010 Sandia Corporation. Under the terms
+// Copyright 2009-2013 Sandia Corporation. Under the terms
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2010, Sandia Corporation
+// Copyright (c) 2009-2013, Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -16,14 +16,11 @@
 #include <sst/core/log.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
+#include <sst/core/output.h>
 #include "vaultGlobals.h"
 
 using namespace std;
 using namespace SST;
-
-#ifndef VAULTSIMC_DBG
-#define VAULTSIMC_DBG 0
-#endif
 
 //#define STUPID_DEBUG 
 
@@ -50,7 +47,7 @@ private:
 	    || (LL_MASK == 0));
   }
 
-  
+  Output dbg;
   memChans_t m_memChans;
   SST::Link *toMem;
   SST::Link *toCPU;

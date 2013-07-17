@@ -13,22 +13,18 @@
 #ifndef _VAULTSIMC_H
 #define _VAULTSIMC_H
 
-#include <sst/core/log.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <Vault.h>
 #include <BusPacket.h>
+#include <sst/core/output.h>
 #include "vaultGlobals.h"
 
 
 using namespace std;
 using namespace SST;
 using namespace PHXSim; 
-
-#ifndef VAULTSIMC_DBG
-#define VAULTSIMC_DBG 0
-#endif
 
 //#define STUPID_DEBUG 
 
@@ -61,9 +57,7 @@ class VaultSimC : public IntrospectedComponent {
 	Vault* m_memorySystem;
         memChan_t* m_memChan;
 	size_t numVaults2;
-        std::string m_printStats;
-        Log< VAULTSIMC_DBG >& m_dbg;
-        Log<>& m_log;
+        Output dbg;
 
 	unsigned vaultID;
 	size_t getInternalAddress(Interfaces::Addr in) {

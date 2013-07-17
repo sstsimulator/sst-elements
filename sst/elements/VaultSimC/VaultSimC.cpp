@@ -16,7 +16,6 @@
 #include <sys/mman.h>
 #include <sstream> // for stringstream() so I don't have to use atoi()
 
-#define DBG( fmt, args... )m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
 
 static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
@@ -24,24 +23,13 @@ static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 using namespace SST::Interfaces;
 
 VaultSimC::VaultSimC( ComponentId_t id, Params_t& params ) :
-	IntrospectedComponent( id ),
-	m_printStats("no"),
-	m_dbg( *new Log< VAULTSIMC_DBG >( "VaultSimC::", false ) ),
-	m_log( *new Log< >( "INFO VaultSimC: ", false ) )
+	IntrospectedComponent( id )
 {
   std::string frequency = "2.2 GHz";
-  if ( params.find( "info" ) != params.end() ) {
-    if ( params[ "info" ].compare( "yes" ) == 0 ) {
-      m_log.enable();
-    }
-  }
   
-  if ( params.find( "debug" ) != params.end() ) {
-    if ( params[ "debug" ].compare( "yes" ) == 0 ) {
-      m_dbg.enable();
-    }
-  }
-  
+  dbg.init("@R:Vault::@p():@l " + getName() + ": ", 0, 0, 
+	   (Output::output_location_t)params.find_integer("debug", 0));  
+
   if ( params.find( "clock" ) != params.end() ) {
     frequency = params["clock"];
   }
@@ -53,13 +41,13 @@ VaultSimC::VaultSimC( ComponentId_t id, Params_t& params ) :
     _abort(VaultSimC,"numVaults2 (number of bits to determine vault address) not set! Should be log2(number of vaults per cube)\n");
   }
 
-  DBG("new id=%lu\n",id);
+  //DBG("new id=%lu\n",id);
   
   m_memChan = configureLink( "bus", "1 ns" );
   
   Params_t::iterator it = params.begin();
   while( it != params.end() ) {
-    DBG("key=%s value=%s\n", it->first.c_str(),it->second.c_str());
+    //DBG("key=%s value=%s\n", it->first.c_str(),it->second.c_str());
     
     if ( ! it->first.compare("VaultID") ) {
       stringstream(it->second) >> vaultID;
@@ -67,8 +55,8 @@ VaultSimC::VaultSimC( ComponentId_t id, Params_t& params ) :
     ++it;
   }
   
-  TimeConverter* tc = registerClock( frequency, new Clock::Handler<VaultSimC>(this, &VaultSimC::clock) );
-  m_log.write("period %ld\n",tc->getFactor());
+  registerClock( frequency, 
+		 new Clock::Handler<VaultSimC>(this, &VaultSimC::clock) );
   
   m_memorySystem = new Vault(vaultID);
   if ( ! m_memorySystem ) 
@@ -79,7 +67,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params_t& params ) :
   PHXSim::VaultCompleteCB* readDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::readData);
   PHXSim::VaultCompleteCB* writeDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::writeData);
   
-  printf("made vault %u\n", vaultID);
+  //printf("made vault %u\n", vaultID);
   
   m_memorySystem->RegisterCallback(readDataCB, writeDataCB);
 
@@ -127,7 +115,7 @@ void VaultSimC::init(unsigned int phase)
 
 void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
 {
-  printf(" readData() id=%d addr=%#lx clock=%lu\n",bp.transactionID,bp.physicalAddress,clockcycle);
+  //printf(" readData() id=%d addr=%#lx clock=%lu\n",bp.transactionID,bp.physicalAddress,clockcycle);
   
 #ifdef STUPID_DEBUG
   static unsigned long reads_returned=0; 
@@ -157,11 +145,13 @@ void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
 
 void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
 {
-  DBG("id=%d addr=%#lx clock=%lu\n",bp.transactionID, bp.physicalAddress, clockcycle);
+  dbg.output(CALL_INFO, "id=%d addr=%p clock=%u\n", bp.transactionID, 
+	     (void*)bp.physicalAddress, clockcycle);
 #ifdef STUPID_DEBUG
   static unsigned long writes_returned=0; 
   writes_returned++; 
-  printf("write %lu: id=%d addr=%#lx clock=%lu\n",writes_returned, bp.transactionID, bp.physicalAddress, clockcycle);
+  dbg.output(CALL_INFO, "write %lu: id=%d addr=%#lx clock=%lu\n",
+	     writes_returned, bp.transactionID, bp.physicalAddress, clockcycle);
 #endif
   
   // create response
@@ -202,11 +192,13 @@ bool VaultSimC::clock( Cycle_t current )
       _abort(VaultSimC::clock, "vault got bad event\n");
     }
     
-    printf(" Vault %d got a req for %p (%d %d)\n", vaultID, event->getAddr(), event->getID().first, event->getID().second);
-    DBG("got an event %x\n", event);
+    dbg.output(CALL_INFO, " Vault %d got a req for %p (%lld %d)\n",
+	       vaultID, (void*)event->getAddr(), event->getID().first, 
+	       event->getID().second);
     
     TransactionType transType = convertType( event->getCmd() );
-    printf("transType=%d addr=%#lx\n", transType, event->getAddr() );
+    dbg.output(CALL_INFO, "transType=%d addr=%p\n", transType, 
+	       (void*)event->getAddr() );
     static unsigned id=0; 
     unsigned thisTransactionID = id++;
 
@@ -219,7 +211,8 @@ bool VaultSimC::clock( Cycle_t current )
   int ret = 1; 
   while ( ! m_transQ.empty() && ret ) {
     if (  ( ret = m_memorySystem->AddTransaction( m_transQ.front() ) ) ) {
-      printf(" addTransaction succeeded %#x\n", m_transQ.front().address);
+      dbg.output(CALL_INFO, " addTransaction succeeded %p\n",
+		 (void*)m_transQ.front().address);
       
 #ifdef STUPID_DEBUG
       if (m_transQ.front().transactionType == PHXSim::DATA_WRITE)

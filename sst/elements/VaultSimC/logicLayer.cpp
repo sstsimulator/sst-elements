@@ -25,7 +25,8 @@ using namespace SST::Interfaces;
 logicLayer::logicLayer( ComponentId_t id, Params_t& params ) :
   IntrospectedComponent( id ), memOps(0)
 {
-  printf("making logicLayer\n");
+  dbg.init("@R:LogicLayer::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+  dbg.output(CALL_INFO, "making logicLayer\n");
 
   std::string frequency = "2.2 GHz";
   if ( params.find( "clock" ) != params.end() ) {
@@ -65,7 +66,7 @@ logicLayer::logicLayer( ComponentId_t id, Params_t& params ) :
       memChan_t *chan = configureLink( bus_name, "1 ns" );
       if (chan) {
 	m_memChans.push_back(chan);
-	printf(" connected %s\n", bus_name);
+	dbg.output(" connected %s\n", bus_name);
       } else {
 	printf(" could not find %s\n", bus_name);
 	exit(-1);
@@ -87,12 +88,12 @@ logicLayer::logicLayer( ComponentId_t id, Params_t& params ) :
 
   registerClock( frequency, new Clock::Handler<logicLayer>(this, &logicLayer::clock) );
 
-  printf("made logicLayer %d %p %p\n", llID, toMem, toCPU);
+  dbg.output(CALL_INFO, "made logicLayer %d %p %p\n", llID, toMem, toCPU);
 }
 
 int logicLayer::Finish() 
 {
-  printf("ll%d completed %lld ops\n", llID, memOps);
+  printf("Logic Layer %d completed %lld ops\n", llID, memOps);
   return 0;
 }
 
@@ -174,7 +175,8 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the CPU
   while((e = toCPU->recv()) && tc[0] < bwlimit) {
     MemEvent *event  = dynamic_cast<MemEvent*>(e);
-    printf("LL%d got req for %p (%d %d)\n", llID, event->getAddr(), event->getID().first, event->getID().second);
+    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
+	       (void*)event->getAddr(), event->getID().first, event->getID().second);
     if (event == NULL) {
       _abort(logicLayer::clock, "logic layer got bad event\n");
     }
@@ -183,14 +185,15 @@ bool logicLayer::clock( Cycle_t current )
     if (isOurs(event->getAddr())) {
       // it is ours!
       unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-      printf("ll%d sends %p to vault @ %lld\n", llID, event, current);
+      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %lld\n", llID, event, 
+		 current);
       m_memChans[vaultID]->send(event);      
     } else {
       // it is not ours
       if (toMem) {
 	toMem->send( event );
 	tm[1]++;
-	printf("ll%d sends %p to next\n", llID, event);
+	dbg.output(CALL_INFO, "ll%d sends %p to next\n", llID, event);
       } else {
 	//printf("ll%d not sure what to do with %p...\n", llID, event);
       }
@@ -207,7 +210,8 @@ bool logicLayer::clock( Cycle_t current )
 
       tm[0]++;
       // pass along to the CPU
-      printf("ll%d sends %p towards cpu (%d %d)\n", llID, event, event->getID().first, event->getID().second);
+      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%lld %d)\n", 
+		 llID, event, event->getID().first, event->getID().second);
       toCPU->send( event );
       tc[1]++;
     }
@@ -222,7 +226,8 @@ bool logicLayer::clock( Cycle_t current )
       if (event == NULL) {
         _abort(logicLayer::clock, "logic layer got bad event from vaults\n");
       }
-      printf("ll%d got an event %p from vault @ %lld, sends towards cpu\n", llID, event, current);
+      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %lld, sends "
+		 "towards cpu\n", llID, event, current);
       
       // send to CPU
       memOps++;
@@ -231,12 +236,12 @@ bool logicLayer::clock( Cycle_t current )
     }    
   }
 
-  //printf("ll%d: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
   if (tm[0] > bwlimit || 
       tm[1] > bwlimit || 
       tc[0] > bwlimit || 
       tc[1] > bwlimit) {
-    printf("ll%d: %d %d %d %d\n", llID, tm[0], tm[1], tc[0], tc[1]);
+    dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n", 
+	       llID, tm[0], tm[1], tc[0], tc[1]);
   }
 
   return false;
