@@ -247,6 +247,10 @@ void Cache::setup(void)
 
 void Cache::finish(void)
 {
+    if ( directory_link ) {
+        directory_link->finish();
+    }
+
     Output out("", 0, 0, statsOutputTarget);
 	out.output("Cache %s stats:\n"
 			"\t# Read    Hits:      %"PRIu64"\n"

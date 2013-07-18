@@ -88,6 +88,7 @@ nic::~nic()
 
 void nic::finish()
 {
+    link_control->finish();
     std::cout << "Nic " << id << " had " << stalled_cycles << " stalled cycles." << std::endl;
 }
 

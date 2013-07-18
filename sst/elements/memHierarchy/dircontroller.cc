@@ -314,6 +314,8 @@ void DirectoryController::init(unsigned int phase)
 
 void DirectoryController::finish(void)
 {
+    network->finish();
+
     Output out("", 0, 0, printStatsLoc);
     out.output("Directory %s stats:\n"
             "\t# Requests:        %"PRIu64"\n"

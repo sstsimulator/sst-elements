@@ -161,6 +161,7 @@ public:
     /* Call these from their respective calls in the component */
     void setup(void);
     void init(unsigned int phase);
+    void finish(void);
     void clock(void);
 
 

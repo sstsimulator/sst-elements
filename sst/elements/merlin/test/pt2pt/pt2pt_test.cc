@@ -71,11 +71,12 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
 
 void pt2pt_test::finish()
 {
+    link_control->finish();
 }
 
 void pt2pt_test::setup()
 {
-    // return link_control->Setup();
+    link_control->setup();
 }
 
 void

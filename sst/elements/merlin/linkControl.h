@@ -41,6 +41,25 @@ typedef std::queue<RtrEvent*> network_queue_t;
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
 class LinkControl : public Module {
+public:
+    class PacketStats {
+    private:
+        uint64_t numPkts;
+        SimTime_t minLat;
+        SimTime_t maxLat;
+        double m_n, m_old, s_n, s_old;
+    public:
+        PacketStats() : numPkts(0), minLat(0), maxLat(0), m_n(0.0), m_old(0.0), s_n(0.0), s_old(0.0)
+        { }
+        void insertPacketLatency(SimTime_t lat);
+        uint64_t getNumPkts(void) const { return numPkts; }
+        SimTime_t getMinLatency(void) const { return minLat; }
+        SimTime_t getMaxLatency(void) const { return maxLat; }
+        double getMeanLatency(void) const { return m_n; }
+        double getVarianceLatency(void) const { return (m_n>1.0) ? (s_n/(m_n-1.0)) : 0.0; }
+        double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
+    };
+
 private:
     // Link to router
     Link* rtr_link;
@@ -79,6 +98,7 @@ private:
 
     Component* parent;
 
+    PacketStats stats;
 
 public:
     LinkControl(Params &params);
@@ -91,6 +111,7 @@ public:
     void configureLink(Component* rif, std::string port_name, TimeConverter* time_base, int vcs, int* in_buf_size, int* out_buf_size);
     void setup();
     void init(unsigned int phase);
+    void finish();
 
     // Returns true if there is space in the output buffer and false
     // otherwise.
@@ -107,7 +128,7 @@ public:
     void sendInitData(RtrEvent *ev);
     Event* recvInitData();
 
-
+    const PacketStats& getPacketStats(void) const { return stats; }
 
 
 private:

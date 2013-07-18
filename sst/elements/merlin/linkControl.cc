@@ -62,7 +62,8 @@ void LinkControl::configureLink(Component* rif, std::string port_name, TimeConve
 }
 
 
-LinkControl::~LinkControl() {
+LinkControl::~LinkControl()
+{
     delete [] input_buf;
     delete [] output_buf;
     delete [] rtr_credits;
@@ -70,14 +71,16 @@ LinkControl::~LinkControl() {
     delete [] outbuf_credits;
 }
 
-void LinkControl::setup() {
+void LinkControl::setup()
+{
     while ( init_events.size() ) {
         delete init_events.front();
         init_events.pop_front();
     }
 }
 
-void LinkControl::init(unsigned int phase) {
+void LinkControl::init(unsigned int phase)
+{
     if ( phase == 0 ) {
         // Need to send the available credits to the other side
         for ( int i = 0; i < num_vcs; i++ ) {
@@ -99,6 +102,12 @@ void LinkControl::init(unsigned int phase) {
 }
 
 
+void LinkControl::finish(void)
+{
+
+}
+
+
 // Returns true if there is space in the output buffer and false
 // otherwise.
 bool LinkControl::send(RtrEvent* ev, int vc) {
@@ -112,6 +121,8 @@ bool LinkControl::send(RtrEvent* ev, int vc) {
         output_timing->send(1,NULL);
         waiting = false;
     }
+
+    ev->setInjectionTime(parent->getCurrentSimTimeNano());
 
     if ( ev->getTraceType() != RtrEvent::NONE ) {
         std::cout << "TRACE(" << ev->getTraceID() << "): " << parent->getCurrentSimTimeNano()
@@ -174,7 +185,8 @@ Event* LinkControl::recvInitData()
 
 
 
-void LinkControl::handle_input(Event* ev) {
+void LinkControl::handle_input(Event* ev)
+{
     // Check to see if this is a credit or data packet
     credit_event* ce = dynamic_cast<credit_event*>(ev);
     if ( ce != NULL ) {
@@ -200,10 +212,14 @@ void LinkControl::handle_input(Event* ev) {
                                                                      << parent->getName() << " on VC " << event->vc << " from src " << event->src
                                                                      << "." << std::endl;
         }
+        SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
+        stats.insertPacketLatency(lat);
     }
 }
 
-void LinkControl::handle_output(Event* ev) {
+
+void LinkControl::handle_output(Event* ev)
+{
     // The event is an empty event used just for timing.
 
     // ***** Need to add in logic for when to return credits *****
@@ -279,6 +295,26 @@ void LinkControl::handle_output(Event* ev) {
         // to know that we got to this state.
         // std::cout << "Waiting ..." << std::endl;
         waiting = true;
+    }
+}
+
+
+void LinkControl::PacketStats::insertPacketLatency(SimTime_t lat)
+{
+    numPkts++;
+    if ( 1 == numPkts ) {
+        minLat = lat;
+        maxLat = lat;
+        m_n = m_old = lat;
+        s_old = 0.0;
+    } else {
+        minLat = std::min(minLat, lat);
+        maxLat = std::max(maxLat, lat);
+        m_n = m_old + (lat - m_old) / numPkts;
+        s_n = s_old + (lat - m_old) * (lat - m_n);
+
+        m_old = m_n;
+        s_old = s_n;
     }
 }
 

@@ -41,21 +41,24 @@ public:
 
     RtrEvent() :
         Event(),
-        trace(NONE)
+        trace(NONE), injectionTime(0)
     {}
 
+    inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
     inline void setTraceID(int id) {traceID = id;}
     inline void setTraceType(TraceType type) {trace = type;}
     virtual RtrEvent* clone(void) {
         return new RtrEvent(*this);
     }
 
-    inline TraceType getTraceType() {return trace;}
-    inline int getTraceID() {return traceID;}
+    inline SimTime_t getInjectionTime(void) const { return injectionTime; }
+    inline TraceType getTraceType() const {return trace;}
+    inline int getTraceID() const {return traceID;}
 
 private:
     TraceType trace;
     int traceID;
+    SimTime_t injectionTime;
 
 	friend class boost::serialization::access;
 	template<class Archive>

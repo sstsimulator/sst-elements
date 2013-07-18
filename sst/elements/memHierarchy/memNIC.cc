@@ -104,6 +104,13 @@ void MemNIC::init(unsigned int phase)
 
 }
 
+
+void MemNIC::finish(void)
+{
+    link_control->finish();
+}
+
+
 void MemNIC::sendInitData(MemEvent *ev)
 {
     MemRtrEvent *mre = new MemRtrEvent(ev);
