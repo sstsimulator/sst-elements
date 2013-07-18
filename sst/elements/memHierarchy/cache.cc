@@ -477,6 +477,8 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	}
 }
 
+// #define CACHE_PRINT_DATA
+#ifdef CACHE_PRINT_DATA
 static const char* printData(MemEvent *ev) {
     static char buffer[1024] = {0};
     memset(buffer, '\0', sizeof(buffer));
@@ -492,6 +494,7 @@ static const char* printData(MemEvent *ev) {
 
     return buffer;
 }
+#endif
 
 MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
@@ -509,7 +512,11 @@ MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t s
 			resp->getID().first, resp->getID().second,
 			resp->getResponseToID().first, resp->getResponseToID().second,
 			CommandString[resp->getCmd()], resp->getAddr(),
+#ifdef CACHE_PRINT_DATA
             printData((ev->getCmd() == ReadReq) ? resp : ev)
+#else
+            "DATA HIDDEN"
+#endif
            );
 
 	return resp;
