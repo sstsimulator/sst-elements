@@ -21,58 +21,50 @@
 
 #include "hades.h"
 #include "ioapi.h"
-#include "functionCtx.h"
+#include "functionSM.h"
 #include "entry.h"
 #include "nodeInfo.h"
 
-#include <cxxabi.h>
+#include "funcSM/api.h"
 
-#define DBGX( fmt, args... ) \
-{\
-    char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%d:%d:%s::%s():%d: "fmt, myNodeId(), _myWorldRank(),realname ? realname : "?????????", \
-                        __func__, __LINE__, ##args);\
-    if ( realname ) free(realname);\
-}
+#include "dataMovement.h"
+#include "ctrlMsg.h"
 
 using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( Params& params ) :
     MessageInterface(),
+    m_progState( RunRecv ),
     m_io( NULL )
 {
-    m_funcLat.resize(FunctionCtx::NumFunctions);
-    m_funcLat[FunctionCtx::Init] = 10;
-    m_funcLat[FunctionCtx::Fini] = 10;
-    m_funcLat[FunctionCtx::Rank] = 1;
-    m_funcLat[FunctionCtx::Size] = 1;
-    m_funcLat[FunctionCtx::Barrier] = 100;
-    m_funcLat[FunctionCtx::Irecv] = 1;
-    m_funcLat[FunctionCtx::Isend] = 1;
-    m_funcLat[FunctionCtx::Send] = 1;
-    m_funcLat[FunctionCtx::Recv] = 1;
-    m_funcLat[FunctionCtx::Wait] = 1;
+    m_loc = (Output::output_location_t)params.find_integer("debug", 0);
+    m_verboseLevel = params.find_integer("verboseLevel",0);
+    m_dbg.init("@t:Hades::@p():@l ", m_verboseLevel, 0, m_loc );
 
-    SST::Component*     owner;
+    m_owner = (SST::Component*) params.find_integer( "owner" );
 
-    owner = (SST::Component*) params.find_integer( "owner" );
-
-    m_selfLink = owner->configureSelfLink("Hades", "1 ps",
+    m_selfLink = m_owner->configureSelfLink("Hades", "1 ps",
         new Event::Handler<Hades>(this,&Hades::handleSelfLink));
+
+    m_toDriverLink = m_owner->configureSelfLink("ToDriver", "1 ps",
+        new Event::Handler<Hades>(this,&Hades::handleToDriver));
+
+    m_toProgressLink = m_owner->configureSelfLink("ToProgress", "1 ps",
+        new Event::Handler<Hades>(this,&Hades::handleProgress));
 
     Params ioParams = params.find_prefix_params("ioParams." );
 
-    std::ostringstream ownerName;
-    ownerName << owner;
+    std::ostringstream m_ownerName;
+    m_ownerName << m_owner;
     ioParams.insert(
-        std::pair<std::string,std::string>("owner", ownerName.str()));
+        std::pair<std::string,std::string>("owner", m_ownerName.str()));
 
     std::string moduleName = params.find_string("ioModule"); 
-    m_io = dynamic_cast<IO::Interface*>(owner->loadModule( moduleName,
+    m_io = dynamic_cast<IO::Interface*>(m_owner->loadModule( moduleName,
                         ioParams));
     if ( !m_io ) {
-        _abort(Hades, "ERROR:  Unable to find Hermes '%s'\n",
+        m_dbg.fatal(CALL_INFO,0,1,0," Unable to find Hermes '%s'\n",
                                         moduleName.c_str());
     }
 
@@ -81,29 +73,29 @@ Hades::Hades( Params& params ) :
     m_nodeInfo = new NodeInfo( nodeParams );
     assert( m_nodeInfo );
 
-    DBGX("numCores %d, coreNum %d\n", m_nodeInfo->numCores(),
-                                            m_nodeInfo->coreNum());
+    m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
+                        m_nodeInfo->numCores(), m_nodeInfo->coreNum());
 
     int numRanks = params.find_integer("numRanks");
     if ( numRanks <= 0 ) {
-        _abort(Hades, "ERROR:  How many global ranks?\n");
+        m_dbg.fatal(CALL_INFO,0,1,0,"How many global ranks?\n");
     }
-    DBGX("numRanks %d\n", numRanks);
+    m_dbg.verbose(CALL_INFO,1,0,"numRanks %d\n", numRanks);
 
     std::string nidListFileName = params.find_string("nidListFile");
 
-    DBGX("nidListFile `%s`\n",nidListFileName.c_str());
+    m_dbg.verbose(CALL_INFO,1,0,"nidListFile `%s`\n",nidListFileName.c_str());
 
     std::ifstream nidListFile( nidListFileName.c_str());
     if ( ! nidListFile.is_open() ) {
-        _abort(Hades, "ERROR:  Unable to open nid list '%s'\n",
+        m_dbg.fatal(CALL_INFO,0,1,0,"Unable to open nid list '%s'\n",
                                         nidListFileName.c_str() );
     }
 
     Group* group;
 
     std::string policy = params.find_string("policy");
-    DBGX("load policy `%s`\n",policy.c_str());
+    m_dbg.verbose(CALL_INFO,1,0,"load policy `%s`\n",policy.c_str());
 
     if ( 0 == policy.compare("adjacent") ) {
         group = initAdjacentMap(numRanks, m_nodeInfo->numCores(), nidListFile);
@@ -112,38 +104,65 @@ Hades::Hades( Params& params ) :
         group = initRoundRobinMap(numRanks, m_nodeInfo->numCores(), nidListFile); 
 #endif
     } else {
-        _abort(Hades, "ERROR: unknown load policy `j%s` ",
+        group = NULL; // get rid of compiler warning
+        m_dbg.fatal(CALL_INFO,0,1,0,"unknown load policy `j%s` ",
                                             policy.c_str() );
     }
-    m_groupMap[Hermes::GroupWorld] = group;
+    m_info.addGroup( Hermes::GroupWorld, group);
 
     nidListFile.close();
+
+    m_protocolM[0] = new DataMovement( m_verboseLevel, m_loc, &m_info);
+    m_protocolM[1] = new CtrlMsg( m_verboseLevel, m_loc, &m_info);
+    m_sendIter = m_protocolM.begin();
+
+    m_functionSM = new FunctionSM( m_verboseLevel, m_loc, m_owner, m_info,
+                    m_protocolM[0], m_io, m_protocolM[1] );
+    m_functionSM->setProgressLink( m_toProgressLink );
+}
+
+void Hades::handleToDriver( Event* e )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    DriverEvent* event = static_cast<DriverEvent*>(e); 
+    (*event->retFunc)( event->retval );
+    delete e;
 }
 
 Hermes::RankID Hades::myWorldRank() 
 {
-    int rank = m_groupMap[Hermes::GroupWorld]->getMyRank();
+    int rank = _myWorldRank();
+    m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);
     if ( -1 == rank ) {
-        _abort(Hades,"%s() rank not set yet\n",__func__);
+        m_dbg.fatal(CALL_INFO,0,1,0,"%s() rank not set yet\n",__func__);
+        return -1; 
     } else {
         return rank;
     }
 }
 
-
 void Hades::_componentSetup()
 {
-    Group* group = m_groupMap[Hermes::GroupWorld];
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    Group* group = m_info.getGroup(Hermes::GroupWorld);
     for ( unsigned int i = 0; i < group->size(); i++ ) {
+        m_dbg.verbose(CALL_INFO,1,0,"group rank %d, %d %d\n",
+                                    i,group->getNodeId( i ),myNodeId() );
         if ( group->getNodeId( i ) == myNodeId() && 
                 group->getCoreId( i ) == m_nodeInfo->coreNum() ) 
         {
+            m_dbg.verbose(CALL_INFO,1,0,"set rank to %d\n",i);
             group->setMyRank( i );
             break;
         }
     } 
 
-    DBGX( "myRank %d\n", m_groupMap[Hermes::GroupWorld]->getMyRank() );
+    char buffer[100];
+    snprintf(buffer,100,"@t:%d:%d:Hades::@p():@l ",myNodeId(), myWorldRank());
+    m_dbg.setPrefix(buffer);
+
+    m_dbg.verbose(CALL_INFO,1,0, "myRank %d\n",
+                m_info.getGroup(Hermes::GroupWorld)->getMyRank() );
 }
 
 Group* Hades::initAdjacentMap( int numRanks, 
@@ -152,7 +171,8 @@ Group* Hades::initAdjacentMap( int numRanks,
     Group* group = new Group( numRanks );
     assert( group );
 
-    DBGX("numRanks=%d numCores=%d\n", numRanks, numCores);
+    m_dbg.verbose(CALL_INFO,1,0,"numRanks=%d numCores=%d\n",
+                                                numRanks, numCores);
     for ( int node = 0; node < numRanks/numCores; node++ ) {
         int nid;
         std::string line;
@@ -161,7 +181,8 @@ Group* Hades::initAdjacentMap( int numRanks,
 
         for ( int core = 0; core < numCores; core++ ) {
             group->set( node * numCores + core, nid, core );
-            DBGX("rank %d is on nid %d\n", node * numCores + core , nid);
+            m_dbg.verbose(CALL_INFO,1,0,"rank %d is on nid %d\n",
+                                            node * numCores + core , nid);
         }
     }
     return group;
@@ -172,13 +193,15 @@ Group* Hades::initRoundRobinMap( int numRanks,
 {
     Group* group = new Group( numRanks );
     assert( group );
-    DBGX("numRanks=%d numCores=%d\n", numRanks, numCores);
+    m_dbg.verbose(CALL_INFO,1,0,"numRanks=%d numCores=%d\n",
+                            numRanks, numCores);
 
     return group;
 }
 
 void Hades::_componentInit(unsigned int phase )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
     m_io->_componentInit(phase);
 }
 
@@ -189,318 +212,190 @@ void Hades::clearIOCallback()
 
 void Hades::setIOCallback()
 {
-    DBGX("\n");
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
     m_io->setDataReadyFunc( new IO_Functor2(this,&Hades::dataReady) );
 }
 
-void Hades::runProgress( FunctionCtx * ctx )
+void Hades::handleProgress( Event* e )
 {
-    if ( ctx ) {
-        m_state = RunRecv;
-        m_ctx = ctx;
-    }
-
-    switch ( m_state ) {
-
-      case RunRecv:
-        m_state = RunSend;
-        if ( runRecv() ) {
-            break;
-        }
-
-      case RunSend:
-        m_state = RunCtx;
-        if ( runSend() ) {
-            break;
-        }
-
-      case RunCtx:
-        DBGX("RunCtx\n");
-        sendCtxDelay(0,m_ctx); 
-        break;
-    } 
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_progState = RunRecv;
+    handleSelfLink( NULL ); 
 }
 
 bool Hades::runSend( )
 {
-    DBGX("\n");
-    if ( ! m_sendQ.empty() ) {
-        SendEntry* entry = m_sendQ.front(); 
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-        m_sendQ.pop_front();
+here:
+    ProtocolAPI::Request* req = m_sendIter->second->getSendReq();
 
-        IOEntry* ioEntry = new IOEntry;
-        ioEntry->callback = new IO_Functor( this, &Hades::sendIODone, ioEntry );
-             
-        m_io->sendv( rankToNodeId( entry->group, entry->rank),
-                                    entry->vec, ioEntry->callback ); 
+    if ( req ) {
+        // have something to send, configure and send the protocol type
+        AAA* aaa = new AAA;
 
-        return true;  
-    }
+        aaa->type    = m_sendIter->first;
+        aaa->request = req;
+
+        std::vector<IO::IoVec> ioVec; 
+        ioVec.resize(1);
+        ioVec[0].ptr = &aaa->type;
+        ioVec[0].len = sizeof(aaa->type); 
+
+        aaa->callback = new IO_Functor( this, &Hades::sendWireHdrDone, aaa );
+
+        m_io->sendv( req->nodeId, ioVec, aaa->callback );
+        return true;
+    } else {
+        ++m_sendIter;
+        if ( m_sendIter != m_protocolM.end() ) {
+            goto here;
+        } else {
+            m_sendIter = m_protocolM.begin();
+        }  
+    } 
+
     return false;
 }
 
+IO::Entry* Hades::sendWireHdrDone( IO::Entry* e )
+{
+    AAA* aaa = static_cast<AAA*>(e);
+    m_dbg.verbose(CALL_INFO,1,0,"return\n");
+
+    delete aaa->callback;
+    aaa->callback = new IO_Functor( this, &Hades::sendIODone, aaa );
+    m_io->sendv( aaa->request->nodeId, aaa->request->ioVec, aaa->callback );
+    
+    return NULL;
+}
+
+IO::Entry* Hades::sendIODone( IO::Entry* e )
+{
+    AAA* aaa = static_cast<AAA*>(e);
+    m_dbg.verbose(CALL_INFO,1,0,"return\n");
+
+    m_protocolM[ aaa->type ]->sendIODone( aaa->request ); 
+
+    m_selfLink->send(0, NULL );
+
+    return e;
+}
+     
 bool Hades::runRecv( )
 {
-    DBGX("\n");
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
     IO::NodeId src = IO::AnyId;
     size_t len = m_io->peek( src ); 
 
-    if ( len == 0 ) {
+    if ( src == IO::AnyId  ) {
         return false;
     } 
-    DBGX("%lu bytes avail from %d\n",len, src);
+    m_dbg.verbose(CALL_INFO,1,0,"%lu bytes avail from %d\n",len, src);
 
     readHdr( src );
     return true;
 }
 
-UnexpectedMsgEntry* Hades::searchUnexpected( RecvEntry* entry )
-{
-    DBGX("unexpected size %lu\n", m_unexpectedMsgQ.size() );
-    std::deque< MsgEntry* >::iterator iter = m_unexpectedMsgQ.begin();
-    for ( ; iter != m_unexpectedMsgQ.end(); ++iter  ) {
-
-        DBGX("dtype %d %d\n",entry->dtype,(*iter)->hdr.dtype);
-        if ( entry->dtype != (*iter)->hdr.dtype ) {
-            continue;
-        } 
-
-        DBGX("count %d %d\n",entry->count,(*iter)->hdr.count);
-        if ( entry->count != (*iter)->hdr.count ) { 
-            continue;
-        } 
-
-        DBGX("tag want %d, incoming %d\n",entry->tag,(*iter)->hdr.tag);
-        if ( entry->tag != Hermes::AnyTag && 
-                entry->tag != (*iter)->hdr.tag ) {
-            continue;
-        } 
-
-        DBGX("group want %d, incoming %d\n", entry->group, (*iter)->hdr.group);
-        if ( entry->group != (*iter)->hdr.group ) { 
-            continue;
-        } 
-
-        DBGX("rank want %d, incoming %d\n", entry->rank, (*iter)->hdr.srcRank);
-        if ( entry->rank != Hermes::AnySrc &&
-                    entry->rank != (*iter)->hdr.srcRank ) {
-            continue;
-        } 
-        m_unexpectedMsgQ.erase( iter );
-        return static_cast<UnexpectedMsgEntry*>(*iter);
-    }
-    
-    return false;
-}
-
 void Hades::dataReady( IO::NodeId src )
 {
-    DBGX("call run()\n");
-    runProgress(m_ctx);
+    m_dbg.verbose(CALL_INFO,1,0,"call run()\n");
+    handleSelfLink( NULL );
 }
 
 void Hades::readHdr( IO::NodeId src )
 {
-    DBGX("src=%d\n", src );
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d\n", src );
+    
+    AAA* aaa = new AAA; 
+    aaa->srcNodeId = src;
+    aaa->type      = -1;
+    aaa->callback  = new IO_Functor(this, &Hades::recvWireHdrDone, aaa);
 
-    IncomingMsgEntry* incoming = new IncomingMsgEntry; 
-    incoming->srcNodeId = src;
-    incoming->callback = new IO_Functor(this, &Hades::ioRecvHdrDone, incoming);
+    std::vector<IO::IoVec> vec; 
 
-    incoming->vec.resize(1);
-    incoming->vec[0].ptr = &incoming->hdr;
-    incoming->vec[0].len = sizeof(incoming->hdr);
+    vec.resize(1);
+    vec[0].ptr = &aaa->type;
+    vec[0].len = sizeof(aaa->type);
 
-    m_io->recvv( src, incoming->vec, incoming->callback );
+    m_io->recvv( aaa->srcNodeId, vec, aaa->callback );
 }
 
-IO::Entry* Hades::ioRecvHdrDone( IO::Entry* e )
+IO::Entry* Hades::recvWireHdrDone( IO::Entry* e )
 {
-    IncomingMsgEntry* incoming = static_cast<IncomingMsgEntry*>(e);
-    DBGX("srcNodeId=%d count=%d dtype=%d tag=%#x\n",
-            incoming->srcNodeId,
-            incoming->hdr.count,
-            incoming->hdr.dtype,
-            incoming->hdr.tag );
+    AAA* aaa = static_cast<AAA*>(e);
 
-    MatchEvent* event = static_cast<MatchEvent*>(&m_selfEvent);
-    event->type = SelfEvent::Match;
-    event->incomingEntry = incoming;
+    m_dbg.verbose(CALL_INFO,1,0,"type=%d\n", aaa->type );
 
-    event->incomingEntry->recvEntry = findMatch( incoming );
-
-    m_selfLink->send( 10, event );
+    delete aaa->callback;
+    aaa->callback = new IO_Functor(this, &Hades::recvIODone, aaa);
+    aaa->request = m_protocolM[aaa->type]->getRecvReq( aaa->srcNodeId );
+    assert( aaa->request );
+    
+    m_io->recvv( aaa->srcNodeId, aaa->request->ioVec, aaa->callback );
+   
     return NULL;
 }
 
-
-IO::Entry* Hades::sendIODone( IO::Entry* e )
+IO::Entry* Hades::recvIODone( IO::Entry* e )
 {
-    DBGX("call run()\n");
-    runProgress(NULL);
+    AAA* aaa = static_cast<AAA*>(e);
+
+    m_dbg.verbose(CALL_INFO,1,0,"type=%d\n", aaa->type );
+
+    aaa->request = m_protocolM[ aaa->type ]->recvIODone( aaa->request );
+
+    if ( aaa->request ) {
+        if ( aaa->request->delay ) {
+            SelfEvent* ee = new SelfEvent;
+            ee->aaa = aaa;
+            m_selfLink->send(aaa->request->delay, ee );
+        } else {
+            m_io->recvv( aaa->srcNodeId, aaa->request->ioVec, aaa->callback );
+        }
+        e = NULL;
+    
+    } else {
+        m_dbg.verbose(CALL_INFO,1,0,"receive stream finished\n");
+        m_selfLink->send(0, NULL );
+    }
+    m_dbg.verbose(CALL_INFO,1,0,"return\n");
     return e;
 }
-
-
-RecvEntry* Hades::findMatch( IncomingMsgEntry* incoming )
+void Hades::delayDone(AAA* aaa)
 {
-    DBGX("posted size %lu\n", m_postedQ.size() );
-    std::deque< RecvEntry* >::iterator iter = m_postedQ.begin(); 
-    for ( ; iter != m_postedQ.end(); ++iter  ) {
-        DBGX("dtype %d %d\n",incoming->hdr.dtype,(*iter)->dtype);
-        if ( incoming->hdr.dtype != (*iter)->dtype ) {
-            continue;
-        } 
-
-        DBGX("count %d %d\n",incoming->hdr.count,(*iter)->count);
-        if ( (*iter)->count !=  incoming->hdr.count ) {
-            continue;
-        } 
-
-        DBGX("tag incoming=%d %d\n",incoming->hdr.tag,(*iter)->tag);
-        if ( (*iter)->tag != Hermes::AnyTag && 
-                (*iter)->tag !=  incoming->hdr.tag ) {
-            continue;
-        } 
-
-        DBGX("group incoming=%d %d\n", incoming->hdr.group, (*iter)->group);
-        if ( (*iter)->group !=  incoming->hdr.group ) {
-            continue;
-        } 
-
-        DBGX("rank incoming=%d %d\n", incoming->hdr.srcRank, (*iter)->rank);
-        if ( (*iter)->rank != Hermes::AnySrc &&
-                    incoming->hdr.srcRank != (*iter)->rank ) {
-            continue;
-        } 
-
-        RecvEntry* entry = *iter;
-        m_postedQ.erase(iter);
-        return entry;
+    aaa->request = m_protocolM[ aaa->type ]->delayDone(aaa->request);
+    if ( aaa->request ) {
+        m_io->recvv( aaa->srcNodeId, aaa->request->ioVec, aaa->callback );
+    } else {
+        delete aaa;
+        m_selfLink->send(0, NULL );
     }
-    
-    return NULL;
 }
 
 void Hades::handleSelfLink( Event* e )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
     SelfEvent* event = static_cast<SelfEvent*>(e);
-    switch( event->type )
-    {
-    case SelfEvent::Return:
-        handleCtxReturn(e);
-        break;
-    case SelfEvent::Match:
-        handleMatchDelay(e);
-        break;
-    case SelfEvent::CtxDelay:
-        handleCtxDelay(e);
-        break;
+    if ( event ) {
+        delayDone( event->aaa );
+        delete event;
+        return;
     }
-}
 
-void Hades::handleCtxDelay( Event *e )
-{
-    DBGX("call ctx->run()\n");
-    CtxDelayEvent& event = *static_cast<CtxDelayEvent*>(e);
-    if ( event.ctx->run() ) {
-        delete event.ctx;
-    }
-}
-
-void Hades::handleCtxReturn( Event *e )
-{
-    RetFuncEvent* event = static_cast<RetFuncEvent*>(e);
-    DBGX("call return function  retval %d\n", event->m_retval);
-    (*event->m_retFunc)(event->m_retval);
-}
-
-
-void Hades::handleMatchDelay( Event *e )
-{
-    MatchEvent* event = static_cast<MatchEvent*>(e);
-    IncomingMsgEntry* incoming = event->incomingEntry;
-
-    Hdr& hdr = event->incomingEntry->hdr;
-   
-    if ( hdr.count ) {
-        incoming->vec.resize(1);
-        incoming->vec[0].len = hdr.count * sizeofDataType(hdr.dtype); 
-
-        DBGX("incoming body %lu\n",incoming->vec[0].len);
-        if ( ! event->incomingEntry->recvEntry ) {
-            incoming->buffer.resize( incoming->vec[0].len );
-            incoming->vec[0].ptr = &incoming->buffer[0];
-        } else {
-            incoming->vec[0].ptr = event->incomingEntry->recvEntry->buf;
+    switch ( m_progState ) {
+      case RunRecv:
+        if ( runRecv() ) {
+            break;
         }
-    
-        delete incoming->callback;
-        incoming->callback = new IO_Functor( 
-                            this, &Hades::ioRecvBodyDone, incoming );
-    
-        m_io->recvv( incoming->srcNodeId, incoming->vec, incoming->callback );
-    } else {
-        DBGX("no body\n");
-        if ( ioRecvBodyDone( incoming ) ) {
-            delete incoming;
-        } 
-    }
-}
-
-IO::Entry* Hades::ioRecvBodyDone( IO::Entry* e )
-{
-    IncomingMsgEntry* incoming = static_cast<IncomingMsgEntry*>(e);
-    RecvEntry* recvEntry = incoming->recvEntry;
-
-    // if the IncomingEntry has a recvEntry it means there was a match
-    if (  recvEntry )  {
-
-        if ( recvEntry->req ) {
-            DBGX("finish up non blocking match\n")
-            recvEntry->req->tag = incoming->hdr.tag;  
-            recvEntry->req->src = incoming->hdr.srcRank;  
-        } else if ( recvEntry->resp ) {
-            DBGX("finish up blocking match\n")
-            recvEntry->resp->tag = incoming->hdr.tag;  
-            recvEntry->resp->src = incoming->hdr.srcRank;  
-        } else {
-            assert( recvEntry->retFunc );
+        m_progState = RunSend;
+      case RunSend:
+        if ( runSend() ) {
+            break;
         }
-
-        // we are done with the recvEntry
-        delete recvEntry; 
-
-        // we are done with the IncomingEntry return it and it will be deleted
-    }  else {
-        DBGX("added to unexpected Q\n");
-        // no match push on the unexpected Q
-        // XXXXXXXXXXXXXXXX  where do limit the size of the unexpected Q
-        m_unexpectedMsgQ.push_back( incoming );
-        e = NULL;
+        m_progState = Return;
+      case Return: 
+        m_dbg.verbose(CALL_INFO,1,0,"\n");
+        m_functionSM->sendProgressEvent( NULL );
     }
-    runProgress(NULL);
-    
-    return e;
-}
-
-bool Hades::canPostSend()
-{
-    return ( m_sendQ.size() < MaxNumSends );
-}
-
-void Hades::postSendEntry( SendEntry* entry )
-{
-    m_sendQ.push_back( entry );
-}
-
-bool Hades::canPostRecv()
-{
-    return ( m_postedQ.size() < MaxNumPostedRecvs );
-}
-
-void Hades::postRecvEntry( RecvEntry* entry )
-{
-    m_postedQ.push_back( entry );
 }

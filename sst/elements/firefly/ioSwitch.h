@@ -15,6 +15,7 @@
 
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/output.h>
 
 namespace SST {
 namespace Firefly {
@@ -30,6 +31,8 @@ class IOSwitch : public SST::Component {
     void handleEvent(SST::Event*,int);
 
     std::vector<SST::Link*> m_links;
+    
+    Output  m_dbg;
 };
 
 } // namesapce Firefly 

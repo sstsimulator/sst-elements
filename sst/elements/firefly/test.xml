@@ -11,15 +11,22 @@
   </nic_params>
 
   <driverParams>
-     <bufLen> 0 </bufLen>
+     <debug> 0 </debug>
+     <verboseLevel> 1 </verboseLevel>
+     <bufLen> 100 </bufLen>
      <hermesModule> firefly.hades </hermesModule>
-     <traceFile> prepostedTrace.out </traceFile>
+     <traceFile> barrier.out </traceFile>
+     <hermesParams.debug> 0 </hermesParams.debug>
+     <hermesParams.verboseLevel> 1 </hermesParams.verboseLevel>
      <hermesParams.numRanks> 2 </hermesParams.numRanks>
      <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
      <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
      <hermesParams.policy> adjacent </hermesParams.policy>
      <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
      <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
+
+     <hermesParams.ioParams.debug> 0 </hermesParams.ioParams.debug>
+     <hermesParams.ioParams.verboseLevel> 1 </hermesParams.ioParams.verboseLevel>
   </driverParams>
 
 </param_include>
@@ -40,6 +47,8 @@
 
     <component name="ioSwitch" type=firefly.ioSwitch >
         <params>
+            <debug> 0 </debug> 
+            <verboseLevel> 1 </verboseLevel>
             <numPorts> 2 </numPorts>
         </params>
         <link name=link.0 port=port0 latency=1ns />

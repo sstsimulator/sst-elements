@@ -20,66 +20,63 @@
 namespace SST {
 namespace Firefly {
 
-class BaseEntry {
+class SendEntry {
   public:
-    BaseEntry(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
-        Hermes::MessageRequest* req, Hermes::Functor* retFunc );
+    SendEntry() {}
+
+    SendEntry(Hermes::Addr _buf, uint32_t _count,
+        Hermes::PayloadDataType _dtype, Hermes::RankID _dest, uint32_t _tag,
+        Hermes::Communicator _group, Hermes::MessageRequest* _req ) : 
+    buf( _buf ),
+    count( _count ),
+    dtype( _dtype ),      
+    dest( _dest ),
+    tag( _tag ),
+    group( _group ),
+    req( _req )
+    {}
 
     Hermes::Addr                buf;
     uint32_t                    count;
     Hermes::PayloadDataType     dtype;
+    Hermes::RankID              dest;
     uint32_t                    tag;
     Hermes::Communicator        group;
-    Hermes::RankID              rank;
     Hermes::MessageRequest*     req;
-    Hermes::MessageResponse*    resp;
-    Hermes::Functor*            retFunc;
 };
 
-class RecvEntry;
+class RecvEntry {
+  public:
+    RecvEntry() {}
+    RecvEntry(Hermes::Addr _buf, uint32_t _count,
+        Hermes::PayloadDataType _dtype, Hermes::RankID _src, uint32_t _tag,
+        Hermes::Communicator _group, Hermes::MessageResponse* _resp,
+        Hermes::MessageRequest* _req ) :
+    buf( _buf ),
+    count( _count ),
+    dtype( _dtype ),      
+    src( _src ),
+    tag( _tag ),
+    group( _group ),
+    resp( _resp ),
+    req( _req )
+    {}
+
+    Hermes::Addr                buf;
+    uint32_t                    count;
+    Hermes::PayloadDataType     dtype;
+    Hermes::RankID              src;
+    uint32_t                    tag;
+    Hermes::Communicator        group;
+    Hermes::MessageResponse*    resp;
+    Hermes::MessageRequest*     req;
+};
 
 class MsgEntry : public IO::Entry {
   public:
     uint32_t                    srcNodeId;
     Hdr                         hdr;
-    std::vector<IO::IoVec>      vec; 
     std::vector<unsigned char>  buffer;
-    RecvEntry*                  recvEntry;
-};
-
-class UnexpectedMsgEntry : public MsgEntry {
-};
-class IncomingMsgEntry : public MsgEntry {
-};
-
-
-class RecvEntry : public BaseEntry {
-  public:
-    RecvEntry(Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID source, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageResponse* resp,
-        Hermes::MessageRequest* req, Hermes::Functor* retFunc );
-
-    UnexpectedMsgEntry*              msgEntry;
-};
-
-class SendEntry : public BaseEntry {
-  public:
-    SendEntry( Hermes::Addr buf, uint32_t count,
-        Hermes::PayloadDataType dtype, Hermes::RankID dest, uint32_t tag,
-        Hermes::Communicator group, Hermes::MessageRequest* req,
-        Hermes::RankID srcRank, Hermes::Functor* retFunc, int dtypeSize );
-
-
-    Hdr                         hdr;
-    std::vector< IO::IoVec >    vec;
-};
-
-class IOEntry : public IO::Entry {
-  public:
-    BaseEntry*                  entry;
 };
 
 }

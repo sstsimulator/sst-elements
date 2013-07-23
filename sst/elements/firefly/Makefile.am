@@ -8,21 +8,30 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libfirefly.la
 
 libfirefly_la_SOURCES = \
-	entry.cc \
+	ctrlMsg.cc \
+	ctrlMsg.h \
+	dataMovement.cc \
+	dataMovement.h \
 	entry.h \
 	libfirefly.cc \
-	functionCtx.cc \
-	functionCtx.h \
-	funcCtx/recv.cc \
-	funcCtx/recv.h \
-	funcCtx/send.cc \
-	funcCtx/send.h \
-	funcCtx/wait.cc \
-	funcCtx/wait.h \
-	funcCtx/rank.cc \
-	funcCtx/rank.h \
-	funcCtx/size.cc \
-	funcCtx/size.h \
+	functionSM.cc \
+	functionSM.h \
+	funcSM/fini.cc \
+	funcSM/fini.h \
+	funcSM/allreduce.cc \
+	funcSM/allreduce.h \
+	funcSM/collectiveOps.cc \
+	funcSM/collectiveOps.h \
+	funcSM/collectiveTree.cc \
+	funcSM/collectiveTree.h \
+	funcSM/barrier.cc \
+	funcSM/barrier.h \
+	funcSM/recv.cc \
+	funcSM/recv.h \
+	funcSM/send.cc \
+	funcSM/send.h \
+	funcSM/wait.cc \
+	funcSM/wait.h \
 	hades.h \
 	hades.cc \
 	hadesAPI.cc \

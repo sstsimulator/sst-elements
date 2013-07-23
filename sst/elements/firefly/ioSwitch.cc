@@ -18,16 +18,6 @@
 #include "ioSwitch.h"
 #include "ioEvent.h"
 
-#include <cxxabi.h>
-
-#define DBGX( fmt, args... ) \
-{\
-    char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%s::%s():%d: "fmt, realname ? realname : "?????????", \
-                        __func__, __LINE__, ##args);\
-    if ( realname ) free(realname);\
-}
-
 using namespace SST;
 using namespace SST::Firefly;
 
@@ -36,11 +26,15 @@ IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
 {
     int numPorts = params.find_integer("numPorts");
 
+    m_dbg.init("@t:IOSwitch::@p():@l " + getName() + ": ",
+            params.find_integer("verboseLevel",0),0,
+            (Output::output_location_t)params.find_integer("debug", 0));
+
     if ( -1 == numPorts ) {
         _abort(IOSwitch, "invalid number of ports %d\n", numPorts);
     }
 
-    DBGX("numPorts %d\n", numPorts);
+    m_dbg.verbose(CALL_INFO,1,0,"numPorts %d\n", numPorts);
     m_links.resize( numPorts );
 
     registerTimeBase( "10 ps", true);
@@ -49,7 +43,7 @@ IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
         std::ostringstream linkName;
         linkName << "port" << i;
 
-        DBGX("%d %s\n",i,linkName.str().c_str());
+        m_dbg.verbose(CALL_INFO,1,0,"%d %s\n",i,linkName.str().c_str());
         m_links[i] = configureLink( linkName.str().c_str(),
             new SST::Event::Handler<IOSwitch,int>(this, &IOSwitch::handleEvent,i));
         if ( NULL == m_links[i] ) {
@@ -60,7 +54,7 @@ IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
 
 IOSwitch::~IOSwitch()
 {
-    DBGX("\n");
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
 }
 
 void IOSwitch::init( unsigned int phase )
@@ -71,7 +65,7 @@ void IOSwitch::init( unsigned int phase )
             portName << i;
             std::string port = portName.str();
 
-            DBGX("send event to port %d `%s`\n",i, port.c_str());
+            m_dbg.verbose(CALL_INFO,1,0,"send event to port %d `%s`\n",i, port.c_str());
 
             SST::Event* event = new SST::Interfaces::StringEvent( port ); 
             m_links[i]->sendInitData( event ); 
@@ -84,6 +78,6 @@ void IOSwitch::handleEvent( SST::Event* e, int src )
     IOEvent* event = static_cast<IOEvent*>(e);
     IO::NodeId dest = event->getNodeId();
     event->setNodeId( src );
-    DBGX("src %d dest %d\n", src, dest );
+    m_dbg.verbose(CALL_INFO,1,0,"src %d dest %d\n", src, dest );
     m_links[dest]->send(0,e);
 }

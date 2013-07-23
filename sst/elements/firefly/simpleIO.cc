@@ -16,16 +16,6 @@
 
 #include "simpleIO.h"
 
-#include <cxxabi.h>
-
-#define DBGX( fmt, args... ) \
-{\
-    char* realname = abi::__cxa_demangle(typeid(*this).name(),0,0,NULL);\
-    fprintf( stderr, "%d:%s::%s():%d: "fmt, getNodeId(), realname ? realname : "?????????", \
-                        __func__, __LINE__, ##args);\
-    if ( realname ) free(realname);\
-}
-
 using namespace SST::Firefly;
 using namespace SST::Firefly::IO;
 
@@ -36,25 +26,39 @@ SimpleIO::SimpleIO( Params& params ) :
 {
     SST::Component* owner = (SST::Component*) params.find_integer( "owner" );
 
+    m_dbg.init("@t:SimpleIO::@p():@l ",
+       params.find_integer("verboseLevel",0),0,
+       (Output::output_location_t)params.find_integer("debug", 0));
+
     m_link = owner->configureLink( "link", "50 ps",
             new Event::Handler<SimpleIO>(this, &SimpleIO::handleEvent));
     if ( NULL == m_link ) {
-        _abort(SimpleIO,"configureLink failed\n");
+        m_dbg.fatal(CALL_INFO,0,0,0,"configureLink failed\n");
+    } 
+
+    m_selfLink = owner->configureSelfLink("SimpleIO", "1 ps",
+        new Event::Handler<SimpleIO>(this,&SimpleIO::handleSelfLink));
+
+    if ( NULL == m_selfLink ) {
+        m_dbg.fatal(CALL_INFO,0,0,0,"configureLink failed\n");
     } 
 }
 
 void SimpleIO::_componentInit(unsigned int phase )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"phase=%d\n",phase);
+    if ( 0 == phase ) return;
     SST::Interfaces::StringEvent* event = 
         static_cast<SST::Interfaces::StringEvent*>( m_link->recvInitData() );
     if ( event ) {
         m_myNodeId = atoi( event->getString().c_str() );
-        DBGX("set node id to %d\n", m_myNodeId );
+        m_dbg.verbose(CALL_INFO,1,0,"set node id to %d\n", m_myNodeId );
     } 
 }
 
 void SimpleIO::setDataReadyFunc( Functor2* dataReadyFunc )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"dataReadyFunc %p\n",dataReadyFunc);
     m_dataReadyFunc = dataReadyFunc; 
 }
 
@@ -65,14 +69,15 @@ void SimpleIO::handleEvent(SST::Event* e){
     NodeId srcNode = event->getNodeId(); 
 
     if ( m_streamMap.find( srcNode ) == m_streamMap.end() ) {
-        DBGX("srcNode %d new src\n",srcNode);
+        m_dbg.verbose(CALL_INFO,2,0,"srcNode %d new src\n",srcNode);
         m_streamMap[ srcNode ] = event->getString();
     } else {
-        DBGX("srcNode %d append\n",srcNode);
+        m_dbg.verbose(CALL_INFO,2,0,"srcNode %d append\n",srcNode);
         m_streamMap[ srcNode ].insert( m_streamMap[ srcNode ].size(), 
                                     event->getString() ); 
     }
-    DBGX("%lu bytes avail from %d\n", m_streamMap[ srcNode ].size(), srcNode );
+    m_dbg.verbose(CALL_INFO,1,0,"%lu bytes avail from %d\n",
+                            m_streamMap[ srcNode ].size(), srcNode );
 
     if ( m_dataReadyFunc ) {
         (*m_dataReadyFunc)( 0 );
@@ -81,11 +86,50 @@ void SimpleIO::handleEvent(SST::Event* e){
     delete e;
 }
 
+class XXX : public SST::Event {
+  public: 
+    enum { Send, Recv } type;
+    XXX(): Event() { }
+    NodeId node;
+    std::vector<IoVec> ioVec;
+    Entry::Functor* functor;
+    
+};
+
 bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
                                                     Entry::Functor* functor )
 {
+    m_dbg.verbose(CALL_INFO,2,0,"dest=%d ioVec.size()=%lu\n",
+                                                dest, ioVec.size() );
+    XXX* xxx = new XXX;
+    xxx->node = dest;
+    xxx->ioVec = ioVec;
+    xxx->functor = functor;
+    xxx->type = XXX::Send;
+    m_selfLink->send(0,xxx);
+    return true;
+}
+
+
+void SimpleIO::handleSelfLink(SST::Event* e)
+{
+    XXX* xxx = static_cast<XXX*>(e);
+    switch ( xxx->type)  {
+    case XXX::Send:
+        _sendv( xxx->node, xxx->ioVec, xxx->functor );
+        break;
+    case XXX::Recv:
+        _recvv( xxx->node, xxx->ioVec, xxx->functor );
+        break;
+    }  
+}
+
+bool SimpleIO::_sendv( NodeId dest, std::vector<IoVec>& ioVec,
+                                                    Entry::Functor* functor )
+{
     size_t len = 0;
-    DBGX("dest=%d ioVec.size()=%lu\n", dest, ioVec.size() );
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu\n",
+                                                    dest, ioVec.size() );
     
     for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         len += ioVec[i].len;
@@ -100,11 +144,9 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
         len += ioVec[i].len; 
     }
 
-#if 0
-    for ( int j = 0; j < buffer.size(); j++ ) {
-        DBGX("%x\n",buffer[j]);
+    for ( unsigned int j = 0; j < buffer.size(); j++ ) {
+        m_dbg.verbose(CALL_INFO,2,0,"%x\n",(unsigned char)buffer[j]);
     }
-#endif
 
     if ( functor ) {
         Entry* tmp = (*functor)();
@@ -114,7 +156,7 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
         }
     }
 
-    DBGX(" sending %lu bytes\n", buffer.size() );
+    m_dbg.verbose(CALL_INFO,2,0," sending %lu bytes\n", buffer.size() );
     
     m_link->send( 0, new IOEvent( dest, buffer ) );
 
@@ -124,18 +166,31 @@ bool SimpleIO::sendv( NodeId dest, std::vector<IoVec>& ioVec,
 bool SimpleIO::recvv( NodeId src, std::vector<IoVec>& ioVec, 
                                                     Entry::Functor* functor )
 {
-    DBGX("src=%d ioVec.size()=%lu\n", src, ioVec.size() );
+    m_dbg.verbose(CALL_INFO,2,0,"src=%d ioVec.size()=%lu\n", src, ioVec.size());
+    XXX* xxx = new XXX;
+    xxx->node = src;
+    xxx->ioVec = ioVec;
+    xxx->functor = functor;
+    xxx->type = XXX::Recv;
+    m_selfLink->send(0,xxx);
+    return true;
+}
 
+
+bool SimpleIO::_recvv( NodeId src, std::vector<IoVec>& ioVec, 
+                                                    Entry::Functor* functor )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d ioVec.size()=%lu\n", src, ioVec.size());
     assert( m_streamMap.find( src ) != m_streamMap.end() ); 
 
     std::string& buf = m_streamMap[src ];
 
     for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         assert( buf.size() >= ioVec[i].len );
-    //    DBGX("copied %d bytes\n",ioVec[i].len );
+        m_dbg.verbose(CALL_INFO,1,0,"copied %lu bytes\n",ioVec[i].len );
         memcpy( ioVec[i].ptr, &buf[0], ioVec[i].len );
         buf.erase(0, ioVec[i].len );
-    //    DBGX("%d bytes left\n",buf.size() );
+        m_dbg.verbose(CALL_INFO,1,0,"%lu bytes left\n",buf.size() );
     }
 
     if ( buf.empty() ) {
@@ -159,7 +214,7 @@ bool SimpleIO::isReady( NodeId dest )
 
 size_t SimpleIO::peek( NodeId& src )
 {
-    DBGX("src %d\n",src);
+    m_dbg.verbose(CALL_INFO,1,0,"src %d\n",src);
     if ( src == IO::AnyId ) {
         if ( m_streamMap.empty() ) {
             return 0;
@@ -172,7 +227,7 @@ size_t SimpleIO::peek( NodeId& src )
             return 0;
         } 
     }
-    DBGX("src OK %d\n",src);
+    m_dbg.verbose(CALL_INFO,1,0,"src OK %d\n",src);
     
     return m_streamMap[src].size();
 }

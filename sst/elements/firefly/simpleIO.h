@@ -16,6 +16,7 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
+#include <sst/core/output.h>
 
 #include "ioapi.h"
 #include "ioEvent.h"
@@ -39,14 +40,20 @@ class SimpleIO : public IO::Interface {
                                                         IO::Entry::Functor*);
     virtual bool recvv(IO::NodeId src, std::vector<IO::IoVec>&,
                                                         IO::Entry::Functor*);
+    bool _sendv(IO::NodeId dest, std::vector<IO::IoVec>&, IO::Entry::Functor*);
+    bool _recvv(IO::NodeId src, std::vector<IO::IoVec>&, IO::Entry::Functor*);
 
   private:
     void handleEvent(SST::Event*);
+    void handleSelfLink(SST::Event*);
+
+    std::map<IO::NodeId, std::string > m_streamMap;
 
     IO::Functor2*           m_dataReadyFunc;
     SST::Link*              m_link;
     IO::NodeId              m_myNodeId;
-    std::map<IO::NodeId, std::string > m_streamMap;
+    SST::Link*              m_selfLink;
+    Output                  m_dbg;
 };
 
 }

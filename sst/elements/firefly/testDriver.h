@@ -14,6 +14,7 @@
 
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/output.h>
 
 #include <iostream>
 #include <fstream>
@@ -42,11 +43,17 @@ class TestDriver : public SST::Component {
     DerivedFunctor              m_functor;
     Hermes::MessageInterface*   m_hermes;
     SST::Link*                  m_selfLink;
+    std::string                 m_funcName;
 
     Hermes::MessageRequest  my_req;
     Hermes::MessageResponse my_resp;
     int                     my_rank;
     int                     my_size;
+    Hermes::RankID          m_root;
+    int                     m_collectiveIn;
+    int                     m_collectiveOut;
+    bool                    m_irecv;
+    Output                  m_dbg;
 
     std::vector<unsigned char> m_recvBuf;
     std::vector<unsigned char> m_sendBuf;

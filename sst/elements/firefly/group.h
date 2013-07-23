@@ -36,7 +36,7 @@ class Group
     size_t size() { return m_rankMap.size(); } 
 
     void set( int pos, int nid, int core ) {
-        m_rankMap[pos] = (core << coreShift) || nid;
+        m_rankMap[pos] = (core << coreShift) | nid;
     }
     void setMyRank( int rank) {
         m_rank = rank;
