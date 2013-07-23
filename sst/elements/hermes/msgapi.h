@@ -42,7 +42,7 @@ typedef struct MessageRequest {
 } MessageRequest;
 
 enum PayloadDataType {
-        CHAR,
+    CHAR,
 	INT,
 	LONG,
 	DOUBLE,
@@ -70,30 +70,13 @@ enum Retval {
 class MessageInterface : public Module {
     public:
 
-    unsigned sizeofDataType( PayloadDataType type ) {
-        switch( type ) {
-            case CHAR:
-                return sizeof( char ); 
-            case INT:
-                return sizeof( int ); 
-            case LONG:
-                return sizeof( long ); 
-            case DOUBLE:
-                return sizeof( double); 
-            case FLOAT:
-                return sizeof( float ); 
-            default:
-                assert(0);
-        }
-        assert( 0 );
-    }
-
     MessageInterface() {}
     virtual ~MessageInterface() {}
 
+    virtual int sizeofDataType( PayloadDataType ) { assert(0); }
     virtual void _componentInit(unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
-    virtual RankID myWorldRank() { assert(0); }
+    virtual RankID myWorldRank() { assert(0); } 
     virtual void init(Functor*) {}
     virtual void fini(Functor*) {}
     virtual void rank(Communicator group, int* rank, Functor*) {}
