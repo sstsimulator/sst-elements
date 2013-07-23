@@ -96,9 +96,11 @@ void CollectiveTreeFuncSM::run()
                 break;
             } else {
                 m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
-                if ( m_event->count )
-                EEE( m_bufV, m_yyy->numChildren() + 1, m_event->result, 
-                        m_event->count, m_event->dtype, m_event->op );  
+                if ( m_event->count ) {
+                    collectiveOp( &m_bufV[0], m_yyy->numChildren() + 1,
+                        m_event->result, m_event->count,
+                        m_event->dtype, m_event->op );  
+                }
             }
         } 
         m_pending = false;

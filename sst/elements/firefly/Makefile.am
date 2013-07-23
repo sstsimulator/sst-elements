@@ -20,7 +20,6 @@ libfirefly_la_SOURCES = \
 	funcSM/fini.h \
 	funcSM/allreduce.cc \
 	funcSM/allreduce.h \
-	funcSM/collectiveOps.cc \
 	funcSM/collectiveOps.h \
 	funcSM/collectiveTree.cc \
 	funcSM/collectiveTree.h \

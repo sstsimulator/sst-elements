@@ -119,11 +119,10 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     CtrlMsg*                m_ctrlMsg;
     std::vector<CtrlMsg::MsgReq>  m_recvReqV;
     std::vector<void*>  m_bufV;
-    CtrlMsg::MsgReq         m_sendReq; 
+    CtrlMsg::MsgReq     m_sendReq; 
     unsigned int        m_count;
     IO::Interface*      m_io;
     size_t              m_bufLen;
-
     YYY*                m_yyy;
 };
         

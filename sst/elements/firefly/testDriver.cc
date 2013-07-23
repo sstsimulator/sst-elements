@@ -154,7 +154,7 @@ void TestDriver::handle_event( Event* ev )
     } else if ( m_funcName.compare( "reduce" ) == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->reduce( &m_collectiveIn, &m_collectiveOut, 1, INT,
-                                MAX, m_root, GroupWorld, &m_functor );
+                                MIN, m_root, GroupWorld, &m_functor );
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->allreduce( &m_collectiveIn, &m_collectiveOut, 1, INT,
