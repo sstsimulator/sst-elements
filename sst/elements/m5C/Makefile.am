@@ -79,20 +79,11 @@ if HAVE_PHXSIM
 libm5C_la_SOURCES += PHXSimWrap.cpp PHXSimWrap.h
 endif
 
-if USE_OSX_DYLIB
-libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
-            $(DRAMSIM_CPPFLAGS) \
-            $(PHXSIM_CPPFLAGS) \
-            -I$(top_srcdir)/sst/elements/include \
-            -I$(top_srcdir)/sst/elements \
-	    -DUSE_MACOSX_DYLIB
-else
 libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
             $(DRAMSIM_CPPFLAGS) \
             $(PHXSIM_CPPFLAGS) \
             -I$(top_srcdir)/sst/elements/include \
             -I$(top_srcdir)/sst/elements
-endif 
 
 libm5C_la_LDFLAGS = -module -avoid-version $(M5_LDFLAGS) $(DRAMSIM_LDFLAGS) $(PHXSIM_LDFLAGS)
 libm5C_la_LIBADD = $(M5_LIB) $(DRAMSIM_LIB) $(PHXSIM_LIB)

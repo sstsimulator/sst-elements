@@ -93,7 +93,6 @@ AC_DEFUN([SST_m5C_CONFIG], [
   M5_LDFLAGS="-L$with_gem5"
 
   AM_CONDITIONAL([USE_M5_O3], [test x$use_gem5_o3 = xtrue])
-  AM_CONDITIONAL([USE_OSX_DYLIB], [test `uname` = "Darwin"])
 
   AC_SUBST([M5_CPPFLAGS])
   AC_SUBST([M5_LDFLAGS])
