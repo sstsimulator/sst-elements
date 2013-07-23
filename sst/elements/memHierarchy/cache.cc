@@ -847,6 +847,10 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
 void Cache::finishLoadBlockBus(BusHandlerArgs &args)
 {
 	args.loadBlock.loadInfo->busEvent = NULL;
+    args.loadBlock.loadInfo->eventScheduled = false;
+    if ( args.loadBlock.loadInfo->satisfied ) {
+        delete args.loadBlock.loadInfo;
+    }
 }
 
 
