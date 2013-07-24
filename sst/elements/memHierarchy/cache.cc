@@ -145,6 +145,7 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 	num_upgrade_miss = 0;
     num_invalidates = 0;
 
+    maxResponseTimeAllowed = params.find_integer("maxL1ResponseTime", 0);
     registerClock("1 GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
 
     std::string prefetcher = params.find_string("prefetcher");
@@ -170,6 +171,17 @@ bool Cache::clockTick(Cycle_t) {
     if ( directory_link ) {
         directory_link->clock();
     }
+
+    if ( 0 < maxResponseTimeAllowed && !responseTimes.empty() ) {
+        SimTime_t now = getCurrentSimTimeNano();
+        for ( std::map<MemEvent::id_type, SimTime_t>::iterator i = responseTimes.begin() ; i != responseTimes.end() ; ++i ) {
+            if ( (now - i->second) > maxResponseTimeAllowed ) {
+                _abort(Cache, "CPU Request (%"PRIu64", %d) has taken %"PRIu64" ns, which is greater than allowed (%"PRIu64")\n",
+                        i->first.first, i->first.second, (now - i->second), maxResponseTimeAllowed);
+            }
+        }
+    }
+
     return false;
 }
 

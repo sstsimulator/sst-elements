@@ -79,6 +79,7 @@ static const ElementInfoParam cache_params[] = {
     {"mode",            "INCLUSIVE, EXCLUSIVE, STANDARD (default)"},
     {"access_time",     "Time taken to lookup data in the cache."},
     {"net_addr",        "When using a directory controller, the network address of this cache."},
+    {"maxL1ResponseTime","Maximum allowed response to CPU from L1.  (Useful only on L1 caches, and useful only for debugging.)"},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}

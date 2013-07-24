@@ -400,9 +400,6 @@ private:
 
     void registerNewCPURequest(MemEvent::id_type id);
     void clearCPURequest(MemEvent::id_type id);
-    std::map<MemEvent::id_type, SimTime_t> responseTimes;
-
-
 
     Output dbg;
     Output::output_location_t statsOutputTarget;
@@ -426,6 +423,9 @@ private:
     std::map<MemEvent::id_type, std::pair<MemEvent*, SourceType_t> > outstandingWrites;
 
 	BusQueue snoopBusQueue;
+
+    std::map<MemEvent::id_type, SimTime_t> responseTimes;
+    SimTime_t maxResponseTimeAllowed;
 
 	int n_upstream;
 	SST::Link *snoop_link; // Points to a snoopy bus, or snoopy network (if any)
