@@ -39081,6 +39081,10 @@ Cache n0c0.l1 stats:
 	# Write   Misses:    83
 	# Upgrade Misses:    13
 	# Invalidations:     37
+	Avg Response Time:  4129.81 ns
+	Min Response Time:      2 ns
+	Max Response Time:      17049 ns
+	Response Time StdDev:   1187.99
 Cache n0c01l2 stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -39100,6 +39104,10 @@ Cache n0c1.l1 stats:
 	# Write   Misses:    89
 	# Upgrade Misses:    2
 	# Invalidations:     36
+	Avg Response Time:  4169.12 ns
+	Min Response Time:      2 ns
+	Max Response Time:      25290 ns
+	Response Time StdDev:   1286.46
 TrivialCPU n0c2 Finished after 1000 issued reads, 1000 returned (383733 clocks)
 Cache n0c2.l1 stats:
 	# Read    Hits:      55
@@ -39110,6 +39118,10 @@ Cache n0c2.l1 stats:
 	# Write   Misses:    82
 	# Upgrade Misses:    5
 	# Invalidations:     49
+	Avg Response Time:  4043.14 ns
+	Min Response Time:      2 ns
+	Max Response Time:      25398 ns
+	Response Time StdDev:   1284.42
 Cache n0c23l2 stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -39129,6 +39141,10 @@ Cache n0c3.l1 stats:
 	# Write   Misses:    113
 	# Upgrade Misses:    4
 	# Invalidations:     43
+	Avg Response Time:  4214.01 ns
+	Min Response Time:      2 ns
+	Max Response Time:      22454 ns
+	Response Time StdDev:   1324.11
 Cache n0l3 stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -39148,6 +39164,10 @@ Cache n1c0.l1 stats:
 	# Write   Misses:    99
 	# Upgrade Misses:    4
 	# Invalidations:     37
+	Avg Response Time:  4200.46 ns
+	Min Response Time:      2 ns
+	Max Response Time:      16424 ns
+	Response Time StdDev:   1286.07
 Cache n1c01l2 stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -39167,6 +39187,10 @@ Cache n1c1.l1 stats:
 	# Write   Misses:    98
 	# Upgrade Misses:    6
 	# Invalidations:     35
+	Avg Response Time:  4246.37 ns
+	Min Response Time:      2 ns
+	Max Response Time:      17101 ns
+	Response Time StdDev:   1233.7
 TrivialCPU n1c2 Finished after 1000 issued reads, 1000 returned (403188 clocks)
 Cache n1c2.l1 stats:
 	# Read    Hits:      36
@@ -39177,6 +39201,10 @@ Cache n1c2.l1 stats:
 	# Write   Misses:    115
 	# Upgrade Misses:    5
 	# Invalidations:     58
+	Avg Response Time:  4284.51 ns
+	Min Response Time:      2 ns
+	Max Response Time:      15018 ns
+	Response Time StdDev:   1218.4
 Cache n1c23l2 stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -39196,6 +39224,10 @@ Cache n1c3.l1 stats:
 	# Write   Misses:    98
 	# Upgrade Misses:    6
 	# Invalidations:     44
+	Avg Response Time:  4237.85 ns
+	Min Response Time:      2 ns
+	Max Response Time:      17165 ns
+	Response Time StdDev:   1255.74
 Cache n1l3 stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

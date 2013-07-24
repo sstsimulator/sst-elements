@@ -22148,6 +22148,10 @@ Cache l1cache stats:
 	# Write   Misses:    1027
 	# Upgrade Misses:    1
 	# Invalidations:     0
+	Avg Response Time:  1049.32 ns
+	Min Response Time:      2 ns
+	Max Response Time:      1654 ns
+	Response Time StdDev:   755.273
 Cache l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

@@ -27745,6 +27745,10 @@ Cache c0.l1cache stats:
 	# Write   Misses:    61
 	# Upgrade Misses:    50
 	# Invalidations:     399
+	Avg Response Time:  2471.87 ns
+	Min Response Time:      2 ns
+	Max Response Time:      15841 ns
+	Response Time StdDev:   1755.15
 Cache c0c1.l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -27763,6 +27767,10 @@ Cache c1.l1cache stats:
 	# Write   Misses:    52
 	# Upgrade Misses:    41
 	# Invalidations:     411
+	Avg Response Time:  2451.49 ns
+	Min Response Time:      2 ns
+	Max Response Time:      14171 ns
+	Response Time StdDev:   1744.79
 Cache c2.l1cache stats:
 	# Read    Hits:      449
 	# Read    Misses:    435
@@ -27772,6 +27780,10 @@ Cache c2.l1cache stats:
 	# Write   Misses:    56
 	# Upgrade Misses:    54
 	# Invalidations:     387
+	Avg Response Time:  2487.5 ns
+	Min Response Time:      2 ns
+	Max Response Time:      24047 ns
+	Response Time StdDev:   1939.31
 Cache c2c3.l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -27790,6 +27802,10 @@ Cache c3.l1cache stats:
 	# Write   Misses:    53
 	# Upgrade Misses:    46
 	# Invalidations:     389
+	Avg Response Time:  2457.63 ns
+	Min Response Time:      2 ns
+	Max Response Time:      17587 ns
+	Response Time StdDev:   1894.35
 Cache c4.l1cache stats:
 	# Read    Hits:      446
 	# Read    Misses:    454
@@ -27799,6 +27815,10 @@ Cache c4.l1cache stats:
 	# Write   Misses:    47
 	# Upgrade Misses:    49
 	# Invalidations:     401
+	Avg Response Time:  2578.77 ns
+	Min Response Time:      2 ns
+	Max Response Time:      30718 ns
+	Response Time StdDev:   2172.82
 Cache c4c5.l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -27817,6 +27837,10 @@ Cache c5.l1cache stats:
 	# Write   Misses:    58
 	# Upgrade Misses:    42
 	# Invalidations:     417
+	Avg Response Time:  2636.19 ns
+	Min Response Time:      2 ns
+	Max Response Time:      34065 ns
+	Response Time StdDev:   2240.21
 Cache c6.l1cache stats:
 	# Read    Hits:      446
 	# Read    Misses:    451
@@ -27826,6 +27850,10 @@ Cache c6.l1cache stats:
 	# Write   Misses:    51
 	# Upgrade Misses:    49
 	# Invalidations:     373
+	Avg Response Time:  2632.83 ns
+	Min Response Time:      2 ns
+	Max Response Time:      37054 ns
+	Response Time StdDev:   2440.77
 Cache c6c7.l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -27844,6 +27872,10 @@ Cache c7.l1cache stats:
 	# Write   Misses:    48
 	# Upgrade Misses:    56
 	# Invalidations:     409
+	Avg Response Time:  2649.64 ns
+	Min Response Time:      2 ns
+	Max Response Time:      43224 ns
+	Response Time StdDev:   2596.06
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (244168 clocks)
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (244008 clocks)
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (244768 clocks)

@@ -267,6 +267,16 @@ void Cache::finish(void)
 			num_write_hit, num_write_miss,
 			num_upgrade_miss,
             num_invalidates);
+    if ( latStats.getNumPkts() > 0 ) {
+        out.output( "\tAvg Response Time:  %lg ns\n"
+                "\tMin Response Time:      %"PRIu64" ns\n"
+                "\tMax Response Time:      %"PRIu64" ns\n"
+                "\tResponse Time StdDev:   %lg\n",
+                latStats.getMeanLatency(),
+                latStats.getMinLatency(),
+                latStats.getMaxLatency(),
+                latStats.getStdDevLatency());
+    }
 
     listener->printStats(out);
 
@@ -393,6 +403,8 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 			addrToBlockAddr(ev->getAddr()),
             block ? block->status : -1
             );
+
+    if ( firstProcess ) registerNewCPURequest(ev->getID());
 
     if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
         if ( isRead ) loadBlock(ev, UPSTREAM);
@@ -527,6 +539,8 @@ void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
     dbg.output(CALL_INFO, "Sending CPU Response %s 0x%"PRIx64"  (%"PRIu64", %d)\n",
             CommandString[ev->getCmd()], ev->getAddr(),
             ev->getID().first, ev->getID().second);
+
+    clearCPURequest(ev->getResponseToID());
 
 	/* CPU is always upstream link 0 */
 	upstream_links[0]->send(ev);
@@ -2310,3 +2324,40 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
     }
 }
 
+
+void Cache::registerNewCPURequest(MemEvent::id_type id)
+{
+    responseTimes[id] = getCurrentSimTimeNano();
+}
+
+
+void Cache::clearCPURequest(MemEvent::id_type id)
+{
+    std::map<MemEvent::id_type, SimTime_t>::iterator i = responseTimes.find(id);
+    if ( responseTimes.end() == i ) {
+        _abort(Cache, "Responding to event (%"PRIu64", %d), which isn't in the queue.\n", id.first, id.second);
+    }
+    SimTime_t elapsed = getCurrentSimTimeNano() - i->second;
+    latStats.insertLatency(elapsed);
+    responseTimes.erase(i);
+}
+
+
+void Cache::LatencyStats::insertLatency(SimTime_t lat)
+{
+    numPkts++;
+    if ( 1 == numPkts ) {
+        minLat = lat;
+        maxLat = lat;
+        m_n = m_old = lat;
+        s_old = 0.0;
+    } else {
+        minLat = std::min(minLat, lat);
+        maxLat = std::max(maxLat, lat);
+        m_n = m_old + (lat - m_old) / numPkts;
+        s_n = s_old + (lat - m_old) * (lat - m_n);
+
+        m_old = m_n;
+        s_old = s_n;
+    }
+}

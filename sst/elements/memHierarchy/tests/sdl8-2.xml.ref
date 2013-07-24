@@ -44625,6 +44625,10 @@ Cache c0.l1cache stats:
 	# Write   Misses:    995
 	# Upgrade Misses:    52
 	# Invalidations:     55
+	Avg Response Time:  1075.09 ns
+	Min Response Time:      2 ns
+	Max Response Time:      3204 ns
+	Response Time StdDev:   2955.21
 Cache c0.l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0
@@ -44643,6 +44647,10 @@ Cache c1.l1cache stats:
 	# Write   Misses:    907
 	# Upgrade Misses:    34
 	# Invalidations:     62
+	Avg Response Time:  1056.31 ns
+	Min Response Time:      2 ns
+	Max Response Time:      3194 ns
+	Response Time StdDev:   2972.73
 Cache c1.l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

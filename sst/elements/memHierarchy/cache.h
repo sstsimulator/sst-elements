@@ -304,6 +304,23 @@ private:
 	// Map from <addr, from where req came> to SupplyInfo
 	typedef std::multimap<std::pair<Addr, SourceType_t>, SupplyInfo> supplyMap_t;
 
+    class LatencyStats {
+    private:
+        uint64_t numPkts;
+        SimTime_t minLat;
+        SimTime_t maxLat;
+        double m_n, m_old, s_n, s_old;
+    public:
+        LatencyStats() : numPkts(0), minLat(0), maxLat(0), m_n(0.0), m_old(0.0), s_n(0.0), s_old(0.0)
+        { }
+        void insertLatency(SimTime_t lat);
+        uint64_t getNumPkts(void) const { return numPkts; }
+        SimTime_t getMinLatency(void) const { return minLat; }
+        SimTime_t getMaxLatency(void) const { return maxLat; }
+        double getMeanLatency(void) const { return m_n; }
+        double getVarianceLatency(void) const { return (m_n>1.0) ? (s_n/(m_n-1.0)) : 0.0; }
+        double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
+    };
 
 
 public:
@@ -381,6 +398,9 @@ private:
 
 	void printCache(Output &out);
 
+    void registerNewCPURequest(MemEvent::id_type id);
+    void clearCPURequest(MemEvent::id_type id);
+    std::map<MemEvent::id_type, SimTime_t> responseTimes;
 
 
 
@@ -425,6 +445,7 @@ private:
 	uint64_t num_write_miss;
 	uint64_t num_upgrade_miss;
     uint64_t num_invalidates;
+    LatencyStats latStats;
 
 
 };

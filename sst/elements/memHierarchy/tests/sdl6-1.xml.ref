@@ -2008,6 +2008,10 @@ Cache l1cache stats:
 	# Write   Misses:    6
 	# Upgrade Misses:    43
 	# Invalidations:     0
+	Avg Response Time:  75.504 ns
+	Min Response Time:      2 ns
+	Max Response Time:      1085 ns
+	Response Time StdDev:   968.93
 Cache l2cache stats:
 	# Read    Hits:      0
 	# Read    Misses:    0

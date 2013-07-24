@@ -2013,3 +2013,7 @@ Cache l1cache stats:
 	# Write   Misses:    67
 	# Upgrade Misses:    38
 	# Invalidations:     0
+	Avg Response Time:  565.289 ns
+	Min Response Time:      2 ns
+	Max Response Time:      1158 ns
+	Response Time StdDev:   690.882
