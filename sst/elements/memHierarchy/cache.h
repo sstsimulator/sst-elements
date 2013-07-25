@@ -223,6 +223,8 @@ private:
 		bool cancelRequest(MemEvent *event);
 		void clearToSend(BusEvent *busEvent);
 
+        void printStatus(Output &out);
+
 
 	private:
 		Cache *comp;
@@ -330,6 +332,7 @@ public:
 	virtual void init(unsigned int);
 	virtual void setup();
 	virtual void finish();
+    virtual void printStatus(Output &out);
 
 private:
     void handleBusEvent(SST::Event *event);

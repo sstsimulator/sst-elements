@@ -190,6 +190,7 @@ public:
 	void setup(void);
     void init(unsigned int phase);
 	void finish(void);
+    void printStatus(Output &out);
 
 	void handlePacket(SST::Event *event);
 	bool processPacket(MemEvent *ev);

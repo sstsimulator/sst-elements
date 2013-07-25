@@ -352,6 +352,27 @@ void DirectoryController::setup(void)
 }
 
 
+void DirectoryController::printStatus(Output &out)
+{
+    out.output("MemHierarchy::DirectoryController %s\n", getName().c_str());
+    out.output("\t# Entries in cache:  %zu\n", entryCache.size());
+    out.output("\t# Requests in queue:  %zu\n", workQueue.size());
+    for ( std::list<MemEvent*>::iterator i = workQueue.begin() ; i != workQueue.end() ; ++i ) {
+        out.output("\t\t(%"PRIu64", %d)\n", (*i)->getID().first, (*i)->getID().second);
+    }
+    out.output("\tRequests in Progress:\n");
+    for ( std::map<Addr, DirEntry*>::iterator i = directory.begin() ; i != directory.end() ; ++i ) {
+        if ( i->second->inProgress() ) {
+            out.output("\t\t0x%"PRIx64"\t\t(%"PRIu64", %d)\n",
+                    i->first,
+                    i->second->activeReq->getID().first,
+                    i->second->activeReq->getID().second);
+        }
+    }
+
+}
+
+
 bool DirectoryController::clock(SST::Cycle_t cycle)
 {
     network->clock();

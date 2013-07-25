@@ -297,6 +297,63 @@ void Cache::finish(void)
 }
 
 
+void Cache::printStatus(Output &out)
+{
+    out.output("MemHierarchy::Cache %s\n", getName().c_str());
+    out.output("\t# Accesses:  %"PRIu64"\n",
+            num_read_hit + num_read_miss + num_write_hit + num_write_miss + num_supply_hit + num_supply_miss);
+    out.output("\t# Invalidations:  %"PRIu64"\n", num_invalidates);
+    if ( isL1 )
+        out.output("\tMax Response Latency:  %"PRIu64"\n", latStats.getMaxLatency());
+
+    out.output("\tInvalidations in progress:  %zu\n", invalidations.size());
+    for ( std::map<Addr, Invalidation>::iterator i = invalidations.begin() ; i != invalidations.end() ; ++i ) {
+        out.output("\t\t0x%"PRIx64":\n", i->first);
+        Invalidation &inv = i->second;
+        out.output("\t\t\tIssued via (%"PRIu64", %d)\n", inv.issuingEvent.first, inv.issuingEvent.second);
+        out.output("\t\t\tBus Event: %p\n", inv.busEvent);
+        out.output("\t\t\tTarget Block: %p\n", inv.block);
+        out.output("\t\t\tIs Cancelable: %s\n", inv.canCancel ? "Yes" : "No");
+        out.output("\t\t\t# Waiting Events: %zu\n", inv.waitingEvents.size());
+        for ( std::deque<std::pair<MemEvent*, SourceType_t> >::iterator j = inv.waitingEvents.begin() ; j != inv.waitingEvents.end() ; ++j ) {
+            out.output("\t\t\t\t(%"PRIu64", %d)\n", j->first->getID().first, j->first->getID().second);
+        }
+    }
+
+    out.output("\tWaiting Loads:  %zu\n", waitingLoads.size());
+    for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
+        out.output("\t\tAddr:\t0x%"PRIx64"\n", i->first);
+        out.output("\t\tWaiting: %zu\n", i->second->list.size());
+        for ( std::deque<LoadInfo_t::LoadElement_t>::iterator j = i->second->list.begin() ; j != i->second->list.end() ; ++j ) {
+            out.output("\t\t\t(%"PRIu64", %d)\t\t[%"PRIu64" ns]\n", j->ev->getID().first, j->ev->getID().second, getCurrentSimTimeNano() - j->issueTime);
+        }
+    }
+
+    out.output("\tSupplies in Progress:  %zu\n", suppliesInProgress.size());
+    for ( supplyMap_t::iterator i = suppliesInProgress.begin() ; i != suppliesInProgress.end() ; ++i ) {
+        out.output("\t\t0x%"PRIx64"  (Caused by: (%"PRIu64", %d), busEvent: (%"PRIu64", %d), status: %s\n",
+                i->first.first,
+                i->second.initiatingEvent->getID().first, i->second.initiatingEvent->getID().second,
+                (NULL == i->second.busEvent) ? 0 : i->second.busEvent->getID().first,
+                (NULL == i->second.busEvent) ? -1 : i->second.busEvent->getID().second,
+                i->second.canceled ? "CANCELED" : "In Progress");
+    }
+
+    out.output("\tOutstanding Writes:  %zu\n", outstandingWrites.size());
+    for ( std::map<MemEvent::id_type, std::pair<MemEvent*, SourceType_t> >::iterator i = outstandingWrites.begin() ; i != outstandingWrites.end() ; ++i ) {
+        out.output("\t\t0x%"PRIx64"\t caused by (%"PRIu64", %d).  Write Event: (%"PRIu64", %d)\n",
+                i->second.first->getAddr(),
+                i->second.first->getID().first, i->second.first->getID().second,
+                i->first.first, i->first.second);
+    }
+
+    if ( NULL != snoop_link ) {
+        snoopBusQueue.printStatus(out);
+    }
+
+}
+
+
 void Cache::handleBusEvent(SST::Event *event)
 {
     BusEvent *be = static_cast<BusEvent*>(event);
@@ -2333,6 +2390,15 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
         if ( bh.finish ) {
             (comp->*(bh.finish))(bh.args);
         }
+    }
+}
+
+
+void Cache::BusQueue::printStatus(Output &out)
+{
+    out.output("\tBus Queue Size: %zu\n", queue.size());
+    for ( std::list<MemEvent*>::iterator i = queue.begin() ; i != queue.end() ; ++i ) {
+        out.output("\t\t(%"PRIu64", %d)\n", (*i)->getID().first, (*i)->getID().second);
     }
 }
 

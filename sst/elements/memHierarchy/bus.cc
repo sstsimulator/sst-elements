@@ -108,6 +108,22 @@ void Bus::init(unsigned int phase)
 }
 
 
+void Bus::printStatus(Output &out)
+{
+    out.output("MemHierarchy::Bus %s\n", getName().c_str());
+    out.output("\tStatus: %s\n", busBusy ? "BUSY" : "IDLE");
+    if ( busBusy ) {
+        out.output("\tCurrent Message:\tLink %ld,  key:  (%"PRIu64", %d)\n",
+                activePort.first, activePort.second.first, activePort.second.second);
+    }
+    out.output("\tQueue Depth:\t%zu\n", busRequests.size());
+    for ( std::deque<std::pair<LinkId_t, key_t> >::iterator i = busRequests.begin() ; i != busRequests.end() ; ++i ) {
+        out.output("\t\tLink %ld,  key:  (%"PRIu64", %d)\n", i->first, i->second.first, i->second.second);
+    }
+
+
+}
+
 void Bus::requestPort(LinkId_t link_id, key_t key)
 {
 
