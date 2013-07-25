@@ -10,12 +10,12 @@
 // distribution.
 
 #include <loadMemory.h>
+#include <debug.h>
+#include <process.h>
 
 #include <mem/physical.hh>
 #include <dummySystem.h>
 
-#include <debug.h>
-#include <process.h>
 
 namespace SST {
 namespace M5 {

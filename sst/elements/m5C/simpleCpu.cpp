@@ -12,6 +12,7 @@
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
 #include <sst/core/params.h>
+#include <sst/core/output.h> // Must be loaded before any Gem5 includes (overwrites 'fatal')
 
 #include <cpu/simple/timing.hh>
 #include <cpu/exetrace.hh>

@@ -11,10 +11,10 @@
 
 #ifndef __M5_PROCESS_H__
 #define __M5_PROCESS_H__
-#include <sim/system.hh>
-#include <sim/process.hh>
 #include <sst/core/params.h>
 #include <sst/core/component.h>
+#include <sim/system.hh>
+#include <sim/process.hh>
 #include <params/LiveProcess.hh>
 #include <m5.h>
 #include <util.h>

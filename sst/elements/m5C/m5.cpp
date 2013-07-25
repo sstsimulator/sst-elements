@@ -66,7 +66,7 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
       configFile = params["configFile"];
     }
 
-    m_statFile = params.find_string("statFile");
+    m_statFile = params.find_string("statFile", "");
 	m_init_link_name = params.find_string("mem_initializer_port");
 
     /* Gem5's preferred resolution is 1ps */
@@ -211,9 +211,9 @@ bool SST::M5::M5::clock( SST::Cycle_t cycle )
             INFO( "exiting: curTick()=%lu cause=`%s` code=%d\n", curTick(),
                 exitEvent->getCause().c_str(), exitEvent->getCode() );
         }
-//        if ( !m_statFile.empty() ) {
-//            libgem5::DumpStats(m_statFile);
-//        }
+        if ( !m_statFile.empty() ) {
+            libgem5::DumpStats(m_statFile);
+        }
         return true;
     }
     return false;
