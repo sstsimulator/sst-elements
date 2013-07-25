@@ -111,6 +111,9 @@ void TestDriver::handle_event( Event* ev )
     m_dbg.verbose(CALL_INFO,1,0, "function `%s`\n" , m_funcName.c_str());
 
     m_funcName = m_funcName.c_str();
+    if ( ! m_funcName.empty() ) {
+        printf("%d: %s\n",my_rank, m_funcName.c_str());
+    }
     if ( m_funcName.compare( "init" ) == 0 ) {
         m_hermes->init( &m_functor );
     } else if ( m_funcName.compare( "size" ) == 0 ) {
@@ -162,16 +165,18 @@ void TestDriver::handle_event( Event* ev )
     } else if ( m_funcName.compare( "wait" ) == 0 ) {
         m_hermes->wait( &my_req, &my_resp, &m_functor );
     } else if ( m_funcName.compare( "fini" ) == 0 ) {
-        printf("collective result %#x\n",m_collectiveOut);
+        printf("%d: collective result %#x\n",my_rank, m_collectiveOut);
         if ( m_irecv ) {
-        printf("src=%d tag=%#x\n",my_req.src,my_req.tag);
+        printf("%d: src=%d tag=%#x len=%lu\n",my_rank, my_req.src,
+                                            my_req.tag,m_recvBuf.size());
         } else {
-        printf("src=%d tag=%#x\n",my_resp.src,my_resp.tag);
+        printf("%d: src=%d tag=%#x len=%lu\n",my_rank, my_resp.src,
+                                            my_resp.tag,m_recvBuf.size());
         }
 
         for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
-            if ( m_recvBuf[i] != i ) {
-                m_dbg.verbose(CALL_INFO,1,0,"ERROR %d != %d\n",i,m_recvBuf[i]);
+            if ( m_recvBuf[i] != (i&0xff) ) {
+                printf("ERROR %d != %d\n",i,m_recvBuf[i]);
             }
         }
         m_hermes->fini( &m_functor );

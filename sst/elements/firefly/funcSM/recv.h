@@ -27,7 +27,7 @@ class ProtocolAPI;
 class RecvFuncSM :  public FunctionSMInterface
 {
     typedef Arg_Functor<RecvFuncSM, IO::NodeId>             IO_Functor;
-    enum { WaitMatch, WaitCopy  } m_state;
+    enum { WaitMatch, WaitCopy } m_state;
   public:
 
     RecvFuncSM( int verboseLevel, Output::output_location_t loc,
@@ -43,6 +43,7 @@ class RecvFuncSM :  public FunctionSMInterface
 
   private:
     void dataReady( IO::NodeId src );
+    void finish( RecvEntry*, MsgEntry* );
     
     IO_Functor      m_dataReadyFunctor;
     SST::Link*&     m_toProgressLink;

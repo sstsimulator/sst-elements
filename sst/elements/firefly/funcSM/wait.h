@@ -27,6 +27,8 @@ class DataMovement;
 
 class WaitFuncSM :  public FunctionSMInterface
 {
+    typedef Arg_Functor<WaitFuncSM, IO::NodeId>             IO_Functor;
+
   public:
     WaitFuncSM( int verboseLevel, Output::output_location_t loc,
         Info*, SST::Link*&, ProtocolAPI*, IO::Interface* );
@@ -39,6 +41,9 @@ class WaitFuncSM :  public FunctionSMInterface
     }
 
   private:
+
+    void dataReady( IO::NodeId src );
+    IO_Functor      m_dataReadyFunctor;
 
     DataMovement*    m_dm;
     SST::Link*& m_toProgressLink;

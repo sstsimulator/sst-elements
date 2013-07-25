@@ -114,6 +114,7 @@ Hades::Hades( Params& params ) :
 
     m_protocolM[0] = new DataMovement( m_verboseLevel, m_loc, &m_info);
     m_protocolM[1] = new CtrlMsg( m_verboseLevel, m_loc, &m_info);
+
     m_sendIter = m_protocolM.begin();
 
     m_functionSM = new FunctionSM( m_verboseLevel, m_loc, m_owner, m_info,

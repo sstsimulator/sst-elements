@@ -24,7 +24,9 @@ using namespace SST;
 DataMovement::DataMovement(int verboseLevel, Output::output_location_t loc,
         Info* info ) :
     ProtocolAPI(verboseLevel,loc),
-    m_info(info)
+    m_info(info),
+    m_sendReqKey( 0 ),
+    m_recvReqKey( 0 )
 {
     m_dbg.setPrefix("@t:DataMovement::@p():@l ");
 }
@@ -48,25 +50,73 @@ DataMovement::RecvReq* DataMovement::getRecvReq( IO::NodeId src )
 
 DataMovement::SendReq* DataMovement::getSendReq(  )
 {
+    if ( ! m_longMsgReqQ.empty() ) {
+        RecvReq* recvReq = m_longMsgReqQ.front();
+        m_longMsgReqQ.pop_front();
+        SendReq* sendReq = new SendReq;
+        m_dbg.verbose(CALL_INFO,1,0,"send LongMsgReq to %d\n",
+                                        recvReq->nodeId);
+        sendReq->ioVec.resize(1);
+        sendReq->ioVec[0].ptr = &sendReq->hdr;
+        sendReq->ioVec[0].len = sizeof(sendReq->hdr);
+        sendReq->nodeId = recvReq->nodeId;   
+
+        sendReq->hdr.msgType = Hdr::LongMsgReq;
+        sendReq->hdr.sendKey = recvReq->hdr.sendKey;
+        sendReq->hdr.recvKey = saveRecvReq( recvReq );
+        return sendReq;
+    }
+
+    if ( ! m_longMsgRespQ.empty() ) {
+        RecvReq* recvReq = m_longMsgRespQ.front();
+        m_longMsgRespQ.pop_front();
+        
+        SendReq* sendReq = findSendReq( recvReq->hdr.sendKey );
+
+        m_dbg.verbose(CALL_INFO,1,0,"send LongMsgResp to %d\n",
+                                                        recvReq->nodeId);
+        sendReq->hdr.msgType = Hdr::LongMsgResp;
+        sendReq->hdr.recvKey = recvReq->hdr.recvKey;
+        sendReq->ioVec.resize(2);
+        
+        sendReq->ioVec[0].ptr = &sendReq->hdr;
+        sendReq->ioVec[0].len = sizeof(sendReq->hdr);
+        sendReq->ioVec[1].ptr = sendReq->entry->buf; 
+        sendReq->ioVec[1].len = sendReq->entry->count * 
+                    m_info->sizeofDataType( sendReq->entry->dtype );
+        delete recvReq;
+        return sendReq;
+    }
+
     if ( ! m_sendQ.empty() ) {
+        m_dbg.verbose(CALL_INFO,1,0,"send Match msg\n");
         SendReq* req = new SendReq;
+        req->hdr.msgType = Hdr::MatchMsg;
         req->entry = m_sendQ.front(); 
         m_sendQ.pop_front();
 
         Hdr& hdr = req->hdr;
         
-        hdr.tag     = req->entry->tag;
-        hdr.count   = req->entry->count;
-        hdr.dtype   = req->entry->dtype;
-        hdr.srcRank = m_info->getGroup(req->entry->group)->getMyRank();
-        hdr.group   = req->entry->group;
+        hdr.mHdr.tag     = req->entry->tag;
+        hdr.mHdr.count   = req->entry->count;
+        hdr.mHdr.dtype   = req->entry->dtype;
+        hdr.mHdr.srcRank = m_info->getGroup(req->entry->group)->getMyRank();
+        hdr.mHdr.group   = req->entry->group;
 
-        req->ioVec.resize(2);
+        size_t len = req->entry->count * 
+                    m_info->sizeofDataType(req->entry->dtype);
+
+        if ( len <= ShortMsgLength ) {
+            req->ioVec.resize(2);
+            req->ioVec[1].ptr = req->entry->buf;
+            req->ioVec[1].len = req->entry->count * 
+                        m_info->sizeofDataType(req->entry->dtype);
+        } else {
+            req->ioVec.resize(1);
+            hdr.sendKey = saveSendReq( req );
+        }
         req->ioVec[0].ptr = &hdr;
         req->ioVec[0].len = sizeof(hdr);
-        req->ioVec[1].ptr = req->entry->buf;
-        req->ioVec[1].len = req->entry->count * 
-                        m_info->sizeofDataType(req->entry->dtype);
 
         req->nodeId = m_info->rankToNodeId(req->entry->group, req->entry->dest);
  
@@ -77,10 +127,18 @@ DataMovement::SendReq* DataMovement::getSendReq(  )
     return NULL;
 }
 
-DataMovement::SendReq* DataMovement::sendIODone( Request *req )
+DataMovement::SendReq* DataMovement::sendIODone( Request *r )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    delete req;
+#if 0
+    SendReq* req = static_cast<SendReq*>(r);
+    size_t len = req->entry->count * 
+                    m_info->sizeofDataType(req->entry->dtype);
+
+    if ( len <= ShortMsgLength ) {
+        delete req;
+    }
+#endif
     return NULL;
 }
 
@@ -90,21 +148,47 @@ DataMovement::RecvReq* DataMovement::recvIODone( Request *r )
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
     if ( RecvReq::RecvHdr == req->state ) { 
-        m_dbg.verbose(CALL_INFO,1,0,"srcNodeId=%d count=%d dtype=%d tag=%#x\n",
-            req->nodeId,
-            req->hdr.count,
-            req->hdr.dtype,
-            req->hdr.tag );
 
-        req->recvEntry = findMatch( req->hdr );
+        m_dbg.verbose(CALL_INFO,1,0,"srcNodeId=%d msgType=%d\n",
+                req->nodeId, req->hdr.msgType );
+
+        if ( req->hdr.msgType == Hdr::MatchMsg ) {
+
+            m_dbg.verbose(CALL_INFO,1,0,"count=%d dtype=%d tag=%#x\n",
+                req->hdr.mHdr.count,
+                req->hdr.mHdr.dtype,
+                req->hdr.mHdr.tag );
+
+            req->recvEntry = findMatch( req->hdr.mHdr );
     
-        if ( req->recvEntry ) {
-            m_dbg.verbose(CALL_INFO,1,0,"found a posted receive\n");
+            if ( req->recvEntry ) {
+                m_dbg.verbose(CALL_INFO,1,0,"found a posted receive\n");
+            }
+
+            req->delay = 10;
+            req->state = RecvReq::RecvBody;
+        } else if ( req->hdr.msgType == Hdr::LongMsgReq ) {
+            m_dbg.verbose(CALL_INFO,1,0,"LongMsgReq\n");
+            m_longMsgRespQ.push_back( req );
+            req = NULL;
+        } else if ( req->hdr.msgType == Hdr::LongMsgResp ) {
+            m_dbg.verbose(CALL_INFO,1,0,"LongMsgResp\n");
+            RecvReq* oldReq  = findRecvReq( req->hdr.recvKey );
+            delete req;
+            req = oldReq;
+            req->delay = 0;
+            req->state = RecvReq::RecvBody;
+            req->ioVec.resize(1);
+            req->ioVec[0].ptr = req->recvEntry->buf;  
+            req->ioVec[0].len =req->hdr.mHdr.count * 
+                    m_info->sizeofDataType(req->hdr.mHdr.dtype);
+        } else {
+            assert(0);
         }
-        req->delay = 10;
-        req->state = RecvReq::RecvBody;
     } else {
-        finishRecv(r);
+        if ( req->recvEntry ) {
+            finishRecv(r);
+        }
         req = NULL;
     }
 
@@ -114,58 +198,79 @@ DataMovement::RecvReq* DataMovement::recvIODone( Request *r )
 DataMovement::Request* DataMovement::delayDone( Request *r )
 {
     RecvReq* req = static_cast<RecvReq*>(r);
-    if ( 0 == req->hdr.count ) {
-        m_dbg.verbose(CALL_INFO,1,0,"no body\n");
-        req->msgEntry = new MsgEntry;
-        req->msgEntry->hdr       = req->hdr;
-        req->msgEntry->srcNodeId = req->nodeId;
-        finishRecv( r );
-        req = NULL;
-    } else {
 
-        req->ioVec.resize(1);
-        if ( req->recvEntry ) {
-            req->ioVec[0].len = req->recvEntry->count *     
-                        m_info->sizeofDataType(req->recvEntry->dtype);
-            req->ioVec[0].ptr = req->recvEntry->buf;
-        } else {
-            req->ioVec[0].len = req->hdr.count * 
-                        m_info->sizeofDataType(req->hdr.dtype);
-    
-            req->msgEntry = new MsgEntry;
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    size_t len = req->hdr.mHdr.count * 
+                    m_info->sizeofDataType(req->hdr.mHdr.dtype);
+
+    if ( ! req->recvEntry ) {
+        m_dbg.verbose(CALL_INFO,1,0,"no match save unexpected MsgEntry\n");
+        req->msgEntry = new MsgEntry;
+        req->msgEntry->hdr       = req->hdr.mHdr;
+        req->msgEntry->srcNodeId = req->nodeId;
+
+        m_unexpectedMsgQ.push_back( req->msgEntry );
+
+        if ( len && len <= ShortMsgLength ) {
+            m_dbg.verbose(CALL_INFO,1,0,"unexpected body %lu bytes\n",len); 
+            req->ioVec.resize(1);
+            req->ioVec[0].len = len;
             req->msgEntry->buffer.resize( req->ioVec[0].len );
             req->ioVec[0].ptr = &req->msgEntry->buffer[0];
-            req->msgEntry->hdr = req->hdr;
-            req->msgEntry->srcNodeId = req->nodeId;
+        } else {
+            m_dbg.verbose(CALL_INFO,1,0,"zero length or long unexpected\n"); 
+            req = NULL;
+        }
+    } else {
+        m_dbg.verbose(CALL_INFO,1,0,"setup match\n");
+
+        if ( len > ShortMsgLength ) {
+            m_dbg.verbose(CALL_INFO,1,0,"queue LongMsgReq\n");
+            m_longMsgReqQ.push_back( req );
+            req = NULL;
+        } else if ( len ) {
+            m_dbg.verbose(CALL_INFO,1,0,"match body %lu bytes\n", len);
+            req->ioVec.resize(1);
+            req->ioVec[0].len = len;
+            req->ioVec[0].ptr = req->recvEntry->buf;
+        } else {
+            m_dbg.verbose(CALL_INFO,1,0,"zero length match\n");
+            finishRecv( r );
+            req = NULL;
         }
     }
+
     return req;
+}
+
+void DataMovement::completeLongMsg( MsgEntry* msgEntry, RecvEntry* recvEntry )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"queue LongMsgReq\n");
+    
+    RecvReq* req = new RecvReq;
+    req->recvEntry = recvEntry;
+    req->nodeId = msgEntry->srcNodeId;   
+    req->hdr.mHdr = msgEntry->hdr;
+    req->hdr.sendKey = msgEntry->sendKey;
+    req->hdr.recvKey = saveRecvReq( req );
+    m_longMsgReqQ.push_back( req );
 }
 
 void  DataMovement::finishRecv( Request* r )
 {
     RecvReq* req = static_cast<RecvReq*>(r);
 
-    if (  req->recvEntry )  {
-
-        if ( req->recvEntry->req ) {
-            m_dbg.verbose(CALL_INFO,1,0,"finish up non blocking match\n");
-            req->recvEntry->req->tag = req->hdr.tag;  
-            req->recvEntry->req->src = req->hdr.srcRank;  
-        } else if ( req->recvEntry->resp ) {
-            m_dbg.verbose(CALL_INFO,1,0,"finish up blocking match\n");
-            req->recvEntry->resp->tag = req->hdr.tag;  
-            req->recvEntry->resp->src = req->hdr.srcRank;  
-        } 
-
-        delete req; 
-
-    }  else {
-        m_dbg.verbose(CALL_INFO,1,0,"added to unexpected Q\n");
-        // no match push on the unexpected Q
-        // XXXXXXXXXXXXXXXX  where do limit the size of the unexpected Q
-        m_unexpectedMsgQ.push_back( req->msgEntry );
+    if ( req->recvEntry->req ) {
+        m_dbg.verbose(CALL_INFO,1,0,"finish up non blocking match\n");
+        req->recvEntry->req->tag = req->hdr.mHdr.tag;  
+        req->recvEntry->req->src = req->hdr.mHdr.srcRank;  
+    } else if ( req->recvEntry->resp ) {
+        m_dbg.verbose(CALL_INFO,1,0,"finish up blocking match\n");
+        req->recvEntry->resp->tag = req->hdr.mHdr.tag;  
+        req->recvEntry->resp->src = req->hdr.mHdr.srcRank;  
     }
+    delete req; 
 }
 
 bool DataMovement::canPostSend()
@@ -236,7 +341,7 @@ MsgEntry* DataMovement::searchUnexpected( RecvEntry* entry )
     return NULL;
 }
 
-RecvEntry* DataMovement::findMatch( Hdr& hdr )
+RecvEntry* DataMovement::findMatch( MatchHdr& hdr )
 {
     m_dbg.verbose(CALL_INFO,1,0,"posted size %lu\n", m_postedQ.size() );
     std::deque< RecvEntry* >::iterator iter = m_postedQ.begin(); 

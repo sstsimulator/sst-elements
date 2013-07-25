@@ -21,6 +21,7 @@ WaitFuncSM::WaitFuncSM( int verboseLevel, Output::output_location_t loc,
                  Info* info, SST::Link*& progressLink,
                  ProtocolAPI* dm, IO::Interface* io ) :
     FunctionSMInterface(verboseLevel,loc,info),
+    m_dataReadyFunctor( IO_Functor(this,&WaitFuncSM::dataReady) ),
     m_dm( static_cast<DataMovement*>( dm ) ),
     m_toProgressLink( progressLink ),
     m_io( io )
@@ -52,6 +53,15 @@ void WaitFuncSM::handleProgressEvent( SST::Event *e )
         delete m_event;
         return;
     } else {
-        assert(0);
+        m_io->setDataReadyFunc( &m_dataReadyFunctor );
     }
 }
+
+void WaitFuncSM::dataReady( IO::NodeId src )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    assert( m_event );
+    m_io->setDataReadyFunc( NULL );
+    m_toProgressLink->send(0, NULL );
+}
+

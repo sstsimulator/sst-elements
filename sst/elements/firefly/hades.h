@@ -17,7 +17,6 @@
 
 #include "sst/elements/hermes/msgapi.h"
 #include "ioapi.h"
-#include "msgHdr.h"
 #include "group.h"
 #include "info.h"
 #include "functionCtx.h"

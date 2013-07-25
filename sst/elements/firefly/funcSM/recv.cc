@@ -53,30 +53,44 @@ void RecvFuncSM::handleEnterEvent( SST::Event *e )
     m_selfLink->send(10,NULL);
 }
 
+void RecvFuncSM::finish( RecvEntry* rEntry, MsgEntry* mEntry )
+{
+    if ( rEntry->req ) {
+        rEntry->req->src = mEntry->hdr.srcRank;
+        rEntry->req->tag = mEntry->hdr.tag;
+    } else {
+        rEntry->resp->src = mEntry->hdr.srcRank;
+        rEntry->resp->tag = mEntry->hdr.tag;
+    }
+    delete m_entry;
+}
+
 void RecvFuncSM::handleSelfEvent( SST::Event *e )
 {
     if ( m_state == WaitMatch ) {
         if ( m_entry ) {
-            memcpy( m_event->entry.buf, &m_entry->buffer[0],
+            if (!  m_entry->buffer.empty() ) { 
+                memcpy( m_event->entry.buf, &m_entry->buffer[0],
                         m_entry->buffer.size() );
-            if ( m_event->entry.req ) {
-                m_event->entry.req->src = m_entry->hdr.srcRank;
-                m_event->entry.req->tag = m_entry->hdr.tag;
+                m_state = WaitCopy;
+                m_selfLink->send(10,NULL);
+                return;
+            } else if ( 0 == m_entry->hdr.count ) {
+                finish( &m_event->entry, m_entry );
             } else {
-                m_event->entry.resp->src = m_entry->hdr.srcRank;
-                m_event->entry.resp->tag = m_entry->hdr.tag;
+                m_dm->completeLongMsg( m_entry, &m_event->entry );
             }
 
-            delete m_entry; 
-            m_state = WaitCopy;
-            m_selfLink->send(10,NULL);
-            return;
         } else if ( m_dm->canPostRecv() ) {
             m_dm->postRecvEntry( m_event->entry );
         } else {
             assert(0);
         }    
 
+    } else if ( m_state == WaitCopy ) {
+        finish( &m_event->entry, m_entry );
+    } else {
+        assert(0);
     }
     m_toProgressLink->send(0, NULL );
 }

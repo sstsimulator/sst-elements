@@ -14,7 +14,6 @@
 
 #include <vector>
 #include "ioapi.h"
-#include "msgHdr.h"
 #include "sst/elements/hermes/msgapi.h"
 
 namespace SST {
@@ -70,13 +69,6 @@ class RecvEntry {
     Hermes::Communicator        group;
     Hermes::MessageResponse*    resp;
     Hermes::MessageRequest*     req;
-};
-
-class MsgEntry : public IO::Entry {
-  public:
-    uint32_t                    srcNodeId;
-    Hdr                         hdr;
-    std::vector<unsigned char>  buffer;
 };
 
 }
