@@ -23,23 +23,23 @@ namespace Firefly {
 
 class InitEnterEvent : public SMEnterEvent {
   public:
-    InitEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc ) :
-        SMEnterEvent( type, retLink, retFunc )
+    InitEnterEvent( int type, Hermes::Functor* retFunc ) :
+        SMEnterEvent( type, retFunc )
     { }
 };
 
 class FiniEnterEvent : public SMEnterEvent {
   public:
-    FiniEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc ) :
-        SMEnterEvent( type, retLink, retFunc )
+    FiniEnterEvent( int type, Hermes::Functor* retFunc ) :
+        SMEnterEvent( type, retFunc )
     { }
 };
 
 class RankEnterEvent : public SMEnterEvent {
   public:
-    RankEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    RankEnterEvent( int type, Hermes::Functor* retFunc,
         Hermes::Communicator _group, int* _rank ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         group( _group ),
         rank( _rank )
     { }
@@ -50,9 +50,9 @@ class RankEnterEvent : public SMEnterEvent {
 
 class SizeEnterEvent : public SMEnterEvent {
   public:
-    SizeEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    SizeEnterEvent( int type, Hermes::Functor* retFunc,
         Hermes::Communicator _group, int* _size ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         group( _group ),
         size( _size )
     { }
@@ -63,9 +63,9 @@ class SizeEnterEvent : public SMEnterEvent {
 
 class BarrierEnterEvent : public SMEnterEvent {
   public:
-    BarrierEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    BarrierEnterEvent( int type, Hermes::Functor* retFunc,
         Hermes::Communicator _group ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         group( _group )
     { }
 
@@ -75,12 +75,12 @@ class BarrierEnterEvent : public SMEnterEvent {
 class RecvEnterEvent : public SMEnterEvent {
 
   public:
-    RecvEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    RecvEnterEvent( int type, Hermes::Functor* retFunc,
             Hermes::Addr buf, uint32_t count,
             Hermes::PayloadDataType dtype, Hermes::RankID src,
             uint32_t tag, Hermes::Communicator group, 
             Hermes::MessageRequest* req, Hermes::MessageResponse* resp ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         entry( buf, count, dtype, src, tag, group, resp, req )  
     {}
 
@@ -91,12 +91,12 @@ class RecvEnterEvent : public SMEnterEvent {
 class SendEnterEvent : public SMEnterEvent {
 
   public:
-    SendEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    SendEnterEvent( int type, Hermes::Functor* retFunc,
                 Hermes::Addr buf, uint32_t count,
                 Hermes::PayloadDataType dtype, Hermes::RankID dest,
                 uint32_t tag, Hermes::Communicator group, 
                 Hermes::MessageRequest* req ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         entry( buf, count, dtype, dest, tag, group, req )  
     {}
 
@@ -106,12 +106,12 @@ class SendEnterEvent : public SMEnterEvent {
 class CollectiveEnterEvent : public SMEnterEvent {
 
   public:
-    CollectiveEnterEvent(int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    CollectiveEnterEvent(int type, Hermes::Functor* retFunc,
                 Hermes::Addr _mydata, Hermes::Addr _result, uint32_t _count,
                 Hermes::PayloadDataType _dtype, Hermes::ReductionOperation _op,
                 Hermes::RankID _root, Hermes::Communicator _group,
                 bool _all ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         mydata(_mydata),
         result(_result),
         count(_count),
@@ -134,9 +134,9 @@ class CollectiveEnterEvent : public SMEnterEvent {
 
 class WaitEnterEvent : public SMEnterEvent {
   public:
-    WaitEnterEvent( int type, SST::Link* retLink, Hermes::Functor* retFunc,
+    WaitEnterEvent( int type, Hermes::Functor* retFunc,
         Hermes::MessageRequest* _req, Hermes::MessageResponse* _resp ) :
-        SMEnterEvent( type, retLink, retFunc ),
+        SMEnterEvent( type, retFunc ),
         req(_req),
         resp(_resp)
     { }

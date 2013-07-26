@@ -31,8 +31,12 @@ void BarrierFuncSM::handleEnterEvent( SST::Event *e)
     BarrierEnterEvent* event = static_cast<BarrierEnterEvent*>(e);
 
     CollectiveEnterEvent* tmp = new CollectiveEnterEvent( 0,
-                event->retLink, event->retFunc, NULL, NULL, 0,
+                event->retFunc, NULL, NULL, 0,
                 Hermes::CHAR, Hermes::MAX, 0, Hermes::GroupWorld, true );
+
+    delete event;
+
+    tmp->retLink = event->retLink;
 
     CollectiveTreeFuncSM::handleEnterEvent(static_cast<SST::Event*>(tmp));
 }

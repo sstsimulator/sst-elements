@@ -21,26 +21,24 @@ using namespace Hermes;
 
 void Hades::init(Functor* retFunc )
 {
-    m_functionSM->start( new InitEnterEvent( FunctionSM::Init,
-                                        m_toDriverLink, retFunc) );
+    m_functionSM->start( new InitEnterEvent( FunctionSM::Init, retFunc) );
 }
 
 void Hades::fini(Functor* retFunc)
 {
-    m_functionSM->start( new FiniEnterEvent( FunctionSM::Fini,
-                                        m_toDriverLink, retFunc) );
+    m_functionSM->start( new FiniEnterEvent( FunctionSM::Fini, retFunc) );
 }
 
 void Hades::rank(Communicator group, int* rank, Functor* retFunc)
 {
-    m_functionSM->start( new RankEnterEvent(FunctionSM::Rank, 
-                                    m_toDriverLink, retFunc, group, rank) );
+    m_functionSM->start( new RankEnterEvent(FunctionSM::Rank,
+                                        retFunc, group, rank) );
 }
 
 void Hades::size(Communicator group, int* size, Functor* retFunc )
 {
     m_functionSM->start( new SizeEnterEvent(FunctionSM::Size, 
-                                    m_toDriverLink, retFunc, group, size) );
+                                        retFunc, group, size) );
 }
 
 void Hades::send(Addr buf, uint32_t count, 
@@ -50,7 +48,7 @@ void Hades::send(Addr buf, uint32_t count,
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p count=%d dtype=%d dest=%d tag=%d \
             group=%d\n", buf,count,dtype,dest,tag,group);
     m_functionSM->start( new SendEnterEvent( FunctionSM::Send, 
-        m_toDriverLink, retFunc, buf, count, dtype, dest, tag, group, NULL) ); 
+         retFunc, buf, count, dtype, dest, tag, group, NULL) ); 
 }
 
 void Hades::isend(Addr buf, uint32_t count, PayloadDataType dtype,
@@ -60,7 +58,7 @@ void Hades::isend(Addr buf, uint32_t count, PayloadDataType dtype,
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p count=%d dtype=%d dest=%d tag=%d \
             group=%d\n", buf,count,dtype,dest,tag,group);
     m_functionSM->start( new SendEnterEvent( FunctionSM::Send, 
-        m_toDriverLink, retFunc, buf, count, dtype, dest, tag, group, req ) );
+         retFunc, buf, count, dtype, dest, tag, group, req ) );
 }
 
 void Hades::recv(Addr target, uint32_t count, PayloadDataType dtype,
@@ -69,7 +67,7 @@ void Hades::recv(Addr target, uint32_t count, PayloadDataType dtype,
 {
     m_dbg.verbose(CALL_INFO,1,0,"target=%p count=%d dtype=%d source=%d tag=%d \
             group=%d\n", target,count,dtype,source,tag,group);
-    m_functionSM->start( new RecvEnterEvent( FunctionSM::Recv, m_toDriverLink,
+    m_functionSM->start( new RecvEnterEvent( FunctionSM::Recv, 
             retFunc, target, count, dtype, source, tag, group, NULL, resp ) );
 }
 
@@ -79,7 +77,7 @@ void Hades::irecv(Addr target, uint32_t count, PayloadDataType dtype,
 {
     m_dbg.verbose(CALL_INFO,1,0,"target=%p count=%d dtype=%d source=%d tag=%d \
             group=%d\n", target,count,dtype,source,tag,group);
-    m_functionSM->start( new RecvEnterEvent( FunctionSM::Recv, m_toDriverLink,
+    m_functionSM->start( new RecvEnterEvent( FunctionSM::Recv, 
         retFunc, target, count, dtype, source, tag, group, req, NULL ) );
 }
 
@@ -90,7 +88,7 @@ void Hades::allreduce(Addr mydata, Addr result, uint32_t count,
     m_dbg.verbose(CALL_INFO,1,0,"in=%p out=%p count=%d dtype=%d \n",
                 mydata,result,count,dtype);
     m_functionSM->start( new CollectiveEnterEvent(FunctionSM::Allreduce,
-                        m_toDriverLink, retFunc, mydata, result, count, 
+                         retFunc, mydata, result, count, 
                         dtype, op, 0, group, true) );
 }
 
@@ -99,14 +97,14 @@ void Hades::reduce(void* mydata, void* result, uint32_t count,
         Communicator group, Functor* retFunc)
 {
     m_functionSM->start( new CollectiveEnterEvent(FunctionSM::Reduce,
-                        m_toDriverLink, retFunc, mydata, result, count, 
+                         retFunc, mydata, result, count, 
                         dtype, op, root, group, false) );
 }
 
 void Hades::barrier(Communicator group, Functor* retFunc)
 {
     m_functionSM->start( new BarrierEnterEvent(FunctionSM::Barrier,
-                        m_toDriverLink, retFunc, group) );
+                         retFunc, group) );
 }
 
 void Hades::probe(RankID source, uint32_t tag,
@@ -117,7 +115,7 @@ void Hades::probe(RankID source, uint32_t tag,
 void Hades::wait(MessageRequest* req, MessageResponse* resp,
         Functor* retFunc )
 {
-    m_functionSM->start( new WaitEnterEvent( FunctionSM::Wait, m_toDriverLink,
+    m_functionSM->start( new WaitEnterEvent( FunctionSM::Wait, 
                     retFunc, req, resp) );
 }
 

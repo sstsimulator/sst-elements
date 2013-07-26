@@ -59,6 +59,7 @@ class FunctionSM {
   private:
     void handleSelfEvent( SST::Event* );
     void handleDriverEvent( SST::Event* );
+    void handleToDriver(SST::Event*);
     void handleProgressEvent( SST::Event* );
     int myNodeId() { return m_info.nodeId(); }
     int myWorldRank() { return m_info.worldRank(); }
@@ -67,6 +68,7 @@ class FunctionSM {
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*  m_sm; 
     SST::Link*          m_fromDriverLink;    
+    SST::Link*          m_toDriverLink;    
     SST::Link*          m_selfLink;
     SST::Link*          m_fromProgressLink;
     SST::Link*          m_toProgressLink;

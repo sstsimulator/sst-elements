@@ -53,6 +53,7 @@ void SimpleIO::_componentInit(unsigned int phase )
     if ( event ) {
         m_myNodeId = atoi( event->getString().c_str() );
         m_dbg.verbose(CALL_INFO,1,0,"set node id to %d\n", m_myNodeId );
+        delete event;
     } 
 }
 
@@ -122,6 +123,7 @@ void SimpleIO::handleSelfLink(SST::Event* e)
         _recvv( xxx->node, xxx->ioVec, xxx->functor );
         break;
     }  
+    delete e;
 }
 
 bool SimpleIO::_sendv( NodeId dest, std::vector<IoVec>& ioVec,

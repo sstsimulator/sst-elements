@@ -82,7 +82,8 @@ CtrlMsg::SendReq* CtrlMsg::sendIODone( Request* r   )
     SendReq* req = static_cast<SendReq*>(r);
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     req->entry->done = true;
-    return  req;
+    delete req;
+    return  NULL;
 }
 
 CtrlMsg::MsgReq* CtrlMsg::findMatch( Hdr& hdr )
@@ -184,10 +185,9 @@ CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
                 req->buf.resize(req->hdr.len);
                 req->ioVec[0].len = req->buf.size();
                 req->ioVec[0].ptr = &req->buf[0];
-            } else {
-                req = NULL;
             }
             m_unexpectedQ.push_back( req ); 
+            req = NULL;
         }
 
     } else {

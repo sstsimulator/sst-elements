@@ -58,12 +58,14 @@ class DataMovement : public ProtocolAPI
 
     class SendReq: public Request {
       public:
+        SendReq() : entry(NULL) {}
         Hdr    hdr;
         SendEntry*  entry;
     };
 
     class RecvReq: public Request {
       public:
+        RecvReq() : recvEntry(NULL), msgEntry(NULL) {}
         enum { RecvHdr, RecvBody } state; 
         Hdr         hdr;
         RecvEntry*  recvEntry;

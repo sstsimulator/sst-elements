@@ -29,7 +29,11 @@ void FiniFuncSM::handleEnterEvent( SST::Event *e)
 {
     FiniEnterEvent* event = static_cast<FiniEnterEvent*>(e);
     BarrierEnterEvent* tmp = new BarrierEnterEvent( 0,
-                event->retLink, event->retFunc, Hermes::GroupWorld  );
+                            event->retFunc, Hermes::GroupWorld  );
+
+    tmp->retLink = event->retLink;
+
+    delete event;
 
     BarrierFuncSM::handleEnterEvent(static_cast<SST::Event*>(tmp));
 }

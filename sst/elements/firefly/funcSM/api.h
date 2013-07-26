@@ -37,10 +37,9 @@ class DriverEvent : public SST::Event {
 
 class SMEnterEvent : public SST::Event {
   public:
-    SMEnterEvent(int _type, SST::Link* _retLink, Hermes::Functor* _retFunc ) :
+    SMEnterEvent(int _type, Hermes::Functor* _retFunc ) :
         Event(),
         type( _type ),
-        retLink( _retLink ),
         retFunc( _retFunc )
     {}
 

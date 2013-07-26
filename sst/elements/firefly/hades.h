@@ -131,7 +131,6 @@ class Hades : public Hermes::MessageInterface
     IO::Entry* recvIODone(IO::Entry*);
     void delayDone(AAA*);
 
-    void handleToDriver(SST::Event*);
     void handleProgress(SST::Event*);
     void handleSelfLink(SST::Event*);
 
@@ -142,7 +141,6 @@ class Hades : public Hermes::MessageInterface
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
 
     SST::Link*          m_selfLink;  
-    SST::Link*          m_toDriverLink;  
     SST::Link*          m_toProgressLink;  
     IO::Interface*      m_io;
     NodeInfo*           m_nodeInfo;

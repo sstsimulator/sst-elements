@@ -54,13 +54,16 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
     m_funcLat[FunctionCtx::Wait] = 1;
 #endif
 
-    m_fromProgressLink = obj->configureSelfLink("FromProgress", "1 ps",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleProgressEvent));
-    assert( m_fromProgressLink );
+    m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
+        new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
 
     m_fromDriverLink = obj->configureSelfLink("FromDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleDriverEvent));
     assert( m_fromDriverLink );
+
+    m_fromProgressLink = obj->configureSelfLink("FromProgress", "1 ps",
+        new Event::Handler<FunctionSM>(this,&FunctionSM::handleProgressEvent));
+    assert( m_fromProgressLink );
 
     m_selfLink = obj->configureSelfLink("funtionSMselfLink", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleSelfEvent));
@@ -103,6 +106,7 @@ void FunctionSM::sendProgressEvent( SST::Event* e  )
 void FunctionSM::start( SST::Event* e  )
 {
     SMEnterEvent* event =  static_cast<SMEnterEvent*>(e);
+    event->retLink = m_toDriverLink;
     m_sm = m_smV[ event->type ];
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
     m_fromDriverLink->send( e );
@@ -130,3 +134,12 @@ void FunctionSM::handleProgressEvent( SST::Event* e )
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
     m_sm->handleProgressEvent( e );
 }
+
+void FunctionSM::handleToDriver( Event* e )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    DriverEvent* event = static_cast<DriverEvent*>(e);
+    (*event->retFunc)( event->retval );
+    delete e;
+}
+

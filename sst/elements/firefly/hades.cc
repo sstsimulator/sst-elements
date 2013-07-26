@@ -47,9 +47,6 @@ Hades::Hades( Params& params ) :
     m_selfLink = m_owner->configureSelfLink("Hades", "1 ps",
         new Event::Handler<Hades>(this,&Hades::handleSelfLink));
 
-    m_toDriverLink = m_owner->configureSelfLink("ToDriver", "1 ps",
-        new Event::Handler<Hades>(this,&Hades::handleToDriver));
-
     m_toProgressLink = m_owner->configureSelfLink("ToProgress", "1 ps",
         new Event::Handler<Hades>(this,&Hades::handleProgress));
 
@@ -120,14 +117,6 @@ Hades::Hades( Params& params ) :
     m_functionSM = new FunctionSM( m_verboseLevel, m_loc, m_owner, m_info,
                     m_protocolM[0], m_io, m_protocolM[1] );
     m_functionSM->setProgressLink( m_toProgressLink );
-}
-
-void Hades::handleToDriver( Event* e )
-{
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    DriverEvent* event = static_cast<DriverEvent*>(e); 
-    (*event->retFunc)( event->retval );
-    delete e;
 }
 
 Hermes::RankID Hades::myWorldRank() 

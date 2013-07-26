@@ -38,6 +38,7 @@ void WaitFuncSM::handleEnterEvent( SST::Event *e)
     if ( m_event->req->src != Hermes::AnyTag ) {
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
         delete m_event;
+        m_event = NULL;
         return;
     }
 
@@ -51,6 +52,7 @@ void WaitFuncSM::handleProgressEvent( SST::Event *e )
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
         // remove entry from m_dm 
         delete m_event;
+        m_event = NULL;
         return;
     } else {
         m_io->setDataReadyFunc( &m_dataReadyFunctor );

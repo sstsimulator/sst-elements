@@ -60,6 +60,7 @@ DataMovement::SendReq* DataMovement::getSendReq(  )
         sendReq->ioVec[0].ptr = &sendReq->hdr;
         sendReq->ioVec[0].len = sizeof(sendReq->hdr);
         sendReq->nodeId = recvReq->nodeId;   
+        sendReq->entry = NULL;
 
         sendReq->hdr.msgType = Hdr::LongMsgReq;
         sendReq->hdr.sendKey = recvReq->hdr.sendKey;
@@ -130,15 +131,22 @@ DataMovement::SendReq* DataMovement::getSendReq(  )
 DataMovement::SendReq* DataMovement::sendIODone( Request *r )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-#if 0
     SendReq* req = static_cast<SendReq*>(r);
-    size_t len = req->entry->count * 
+
+    if ( req->hdr.msgType == Hdr::MatchMsg ) { 
+        size_t len = req->entry->count * 
                     m_info->sizeofDataType(req->entry->dtype);
 
-    if ( len <= ShortMsgLength ) {
+        if ( len <= ShortMsgLength ) {
+            delete req->entry;
+            delete req;
+        }
+    } else {
+        if ( req->entry ) {
+            delete req->entry;
+        }
         delete req;
     }
-#endif
     return NULL;
 }
 
@@ -249,7 +257,8 @@ void DataMovement::completeLongMsg( MsgEntry* msgEntry, RecvEntry* recvEntry )
     m_dbg.verbose(CALL_INFO,1,0,"queue LongMsgReq\n");
     
     RecvReq* req = new RecvReq;
-    req->recvEntry = recvEntry;
+    req->recvEntry = new RecvEntry;
+    *req->recvEntry = *recvEntry;
     req->nodeId = msgEntry->srcNodeId;   
     req->hdr.mHdr = msgEntry->hdr;
     req->hdr.sendKey = msgEntry->sendKey;
@@ -270,6 +279,7 @@ void  DataMovement::finishRecv( Request* r )
         req->recvEntry->resp->tag = req->hdr.mHdr.tag;  
         req->recvEntry->resp->src = req->hdr.mHdr.srcRank;  
     }
+    delete req->recvEntry;
     delete req; 
 }
 
