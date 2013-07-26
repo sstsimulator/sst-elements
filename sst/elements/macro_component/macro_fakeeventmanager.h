@@ -16,7 +16,7 @@
 #include <sstmac/common/eventmanager.h>
 
 #include <sst/core/sst_types.h>
-//#include        <sst/core/serialization/element.h>
+//#include        <sst/core/serialization.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>

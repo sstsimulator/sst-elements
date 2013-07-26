@@ -2,7 +2,7 @@
 #define SIMPLE_CACHE_SIMPLE_CACHE_H_
 
 #include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include <sst/core/serialization.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>

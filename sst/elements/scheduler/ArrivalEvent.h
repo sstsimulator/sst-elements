@@ -16,7 +16,7 @@
 #ifndef SST_SCHEDULER_ARRIVALEVENT_H__
 #define SST_SCHEDULER_ARRIVALEVENT_H__
 
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include <sst/core/event.h>
 
 namespace SST {

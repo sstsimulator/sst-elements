@@ -14,7 +14,7 @@
 
 // Everybody needs those
 #include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include <sst/core/serialization.h>
 
 
 // Our system has three different kind of "NICs"

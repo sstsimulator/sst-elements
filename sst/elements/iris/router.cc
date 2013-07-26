@@ -23,7 +23,7 @@
 #define  _ROUTER_CC_INC
 
 #include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "sst/core/element.h"
 

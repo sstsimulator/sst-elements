@@ -23,7 +23,7 @@
 #include <string>
 #include <map>
 
-//#include "sst/core/serialization/element.h"
+//#include "sst/core/serialization.h"
 
 #include "Allocator.h" 
 #include "MBSAllocInfo.h" //necessary due to virtual class

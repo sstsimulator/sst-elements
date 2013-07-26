@@ -36,7 +36,7 @@
 #include <set>
 #include <sstream>
 
-//#include "sst/core/serialization/element.h"
+//#include "sst/core/serialization.h"
 
 namespace SST {
     namespace Scheduler {

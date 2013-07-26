@@ -10,7 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "hades.h"
 #include "functionSM.h"

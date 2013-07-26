@@ -12,7 +12,7 @@
 #include <sstmac/common/driver_util.h>
 
 #include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include <assert.h>
 
 #include "sst/core/element.h"

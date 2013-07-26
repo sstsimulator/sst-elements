@@ -13,7 +13,7 @@
 // #include <sys/stat.h>
 // #include <fcntl.h>
 #include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "trig_nic.h"
 #include <string.h>		       // for memcpy()

@@ -18,7 +18,7 @@
 #ifndef SST_SCHEDULER_BESTFITALLOCATOR_H__
 #define SST_SCHEDULER_BESTFITALLOCATOR_H__
 
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "LinearAllocator.h"
 

@@ -16,7 +16,7 @@
 #include <stdio.h>
 #define __STDC_FORMAT_MACROS		(1)
 #include <inttypes.h>			// For PRId64
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>

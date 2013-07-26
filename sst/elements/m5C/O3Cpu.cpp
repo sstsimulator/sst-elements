@@ -10,7 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include <sst/core/serialization.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h> // Must be loaded before any Gem5 includes (overwrites 'fatal')
 

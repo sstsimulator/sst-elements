@@ -21,7 +21,7 @@
 #define __STDC_FORMAT_MACROS	(1)
 #include <inttypes.h>		// For PRIu64
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include <sst/core/element.h>
 
 #include <sst/core/component.h>

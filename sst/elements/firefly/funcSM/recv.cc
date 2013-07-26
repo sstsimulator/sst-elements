@@ -11,7 +11,7 @@
 
 
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "funcSM/recv.h"
 #include "dataMovement.h"

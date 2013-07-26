@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 
-//#include "sst/core/serialization/element.h"
+//#include "sst/core/serialization.h"
 
 #include "AllocInfo.h"
 

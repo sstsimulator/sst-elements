@@ -12,7 +12,7 @@
 #include <sst_config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include <cpu.h>
 #include <sstream> // for stringstream() so I don't have to use atoi()
 

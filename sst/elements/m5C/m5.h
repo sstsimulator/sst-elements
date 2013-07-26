@@ -13,7 +13,7 @@
 #define _m5_h
 
 #include <sst_config.h>
-#include <sst/core/serialization/element.h>
+#include <sst/core/serialization.h>
 #include <sst/core/introspectedComponent.h>
 #include "barrier.h"
 

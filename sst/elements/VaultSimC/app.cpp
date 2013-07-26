@@ -1,7 +1,7 @@
 #include <sst_config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include "cpu.h"
 #include <stdlib.h>
 

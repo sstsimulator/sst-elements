@@ -21,7 +21,7 @@
 #include <string>
 #include <set>
 
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "Job.h"
 #include "MeshAllocInfo.h"

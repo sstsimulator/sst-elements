@@ -19,7 +19,7 @@
 #include "sst_config.h"
 #include "GranularMBSAllocator.h"
 
-//#include "sst/core/serialization/element.h"
+//#include "sst/core/serialization.h"
 
 #include <vector>
 #include <string>

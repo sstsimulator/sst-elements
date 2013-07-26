@@ -16,7 +16,7 @@
 #ifndef  IRIS_SST_LIB_CC_INC
 #define  IRIS_SST_LIB_CC_INC
 #include <sst_config.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include <sst/core/element.h>
 #include "router.h"

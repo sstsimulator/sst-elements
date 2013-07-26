@@ -13,7 +13,7 @@
 #define _SSTDISKSIM_POSIX_CALL_H_
 
 #include <stdlib.h>
-#include <sst/core/serialization/element.h>
+#include <sst/core/serialization.h>
 #include <sst/core/event.h>
 
 union __argument 

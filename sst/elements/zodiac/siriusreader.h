@@ -11,7 +11,7 @@
 #include <iostream>
 #include <queue>
 
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include "sst/core/output.h"
 #include "sst/elements/hermes/msgapi.h"
 

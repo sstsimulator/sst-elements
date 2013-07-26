@@ -25,7 +25,7 @@
 #define DEBUG_NODE 4
 
 #include "sst_config.h"
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "sst/core/element.h"
 

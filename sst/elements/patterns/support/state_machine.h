@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/vector.hpp>
-#include <sst/core/serialization/element.h>
+#include <sst/core/serialization.h>
 #include "patterns.h"
 
 const int SM_START_EVENT= 0;

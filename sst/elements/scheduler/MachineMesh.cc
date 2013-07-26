@@ -19,7 +19,7 @@
 #include <string>
 #include <sstream>
 
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 
 #include "Allocator.h"
 #include "Machine.h"

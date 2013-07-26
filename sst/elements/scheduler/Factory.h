@@ -17,7 +17,7 @@
 #ifndef SST_SCHEDULER_FACTORY_H__
 #define SST_SCHEDULER_FACTORY_H__
 
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include "sst/core/element.h"
 #include <string>
 

@@ -11,7 +11,7 @@
 
 #include <sst_config.h>
 #include <stdio.h>
-#include "sst/core/serialization/element.h"
+#include "sst/core/serialization.h"
 #include <logicLayer.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/interfaces/memEvent.h>
