@@ -15,13 +15,18 @@
      <verboseLevel> 1 </verboseLevel>
      <bufLen> 100 </bufLen>
      <hermesModule> firefly.hades </hermesModule>
-     <traceFile> barrier.out </traceFile>
+     <traceFile> unexpectedTrace.out </traceFile>
      <hermesParams.debug> 0 </hermesParams.debug>
      <hermesParams.verboseLevel> 1 </hermesParams.verboseLevel>
      <hermesParams.numRanks> 2 </hermesParams.numRanks>
      <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
      <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
      <hermesParams.policy> adjacent </hermesParams.policy>
+     <hermesParams.functionSM.times.default> 10 </hermesParams.functionSM.times.default>
+     <hermesParams.functionSM.times.Rank> 100 </hermesParams.functionSM.times.Rank>
+     <hermesParams.dataMovement.matchTime> 10000 </hermesParams.dataMovement.matchTime>
+     <hermesParams.dataMovement.copyTime> 1 </hermesParams.dataMovement.copyTime>
+     <hermesParams.functionSM.times.Barrier> 23 </hermesParams.functionSM.times.Barrier>
      <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
      <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
 

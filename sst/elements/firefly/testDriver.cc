@@ -167,11 +167,14 @@ void TestDriver::handle_event( Event* ev )
     } else if ( m_funcName.compare( "fini" ) == 0 ) {
         printf("%d: collective result %#x\n",my_rank, m_collectiveOut);
         if ( m_irecv ) {
-        printf("%d: src=%d tag=%#x len=%lu\n",my_rank, my_req.src,
-                                            my_req.tag,m_recvBuf.size());
+
+            printf("%lu:%d: src=%d tag=%#x len=%lu\n",
+                Simulation::getSimulation()->getCurrentSimCycle(),
+                my_rank, my_req.src, my_req.tag,m_recvBuf.size());
         } else {
-        printf("%d: src=%d tag=%#x len=%lu\n",my_rank, my_resp.src,
-                                            my_resp.tag,m_recvBuf.size());
+            printf("%lu:%d: src=%d tag=%#x len=%lu\n",
+                Simulation::getSimulation()->getCurrentSimCycle(),
+                my_rank, my_resp.src, my_resp.tag,m_recvBuf.size());
         }
 
         for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {

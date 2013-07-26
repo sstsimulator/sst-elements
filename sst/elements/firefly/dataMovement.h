@@ -96,23 +96,28 @@ class DataMovement : public ProtocolAPI
 
 
   public:
-    DataMovement( int verboseLevel, Output::output_location_t loc, Info* info );
+    DataMovement( int verboseLevel, Output::output_location_t loc, 
+            SST::Params& params, Info* info );
  
-    virtual SendReq* getSendReq( );
-    virtual RecvReq* getRecvReq( IO::NodeId src );
-    virtual SendReq* sendIODone( Request* );
-    virtual RecvReq* recvIODone( Request* );
+    virtual Request* getSendReq( );
+    virtual Request* getRecvReq( IO::NodeId src );
+    virtual Request* sendIODone( Request* );
+    virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
 
-    MsgEntry* searchUnexpected(RecvEntry*);
+    MsgEntry* searchUnexpected(RecvEntry*,int& delay);
     bool canPostSend();
     void postSendEntry(SendEntry);
     bool canPostRecv();
     void postRecvEntry(RecvEntry);
     void completeLongMsg( MsgEntry*, RecvEntry* );
 
+    int getCopyDelay( int nbytes ) {
+        return m_copyTime * nbytes;
+    }
+
   private:
-    RecvEntry* findMatch( MatchHdr& );
+    RecvEntry* findMatch( MatchHdr&, int& delay );
     void handleMatchDelay( SST::Event* );
     void finishRecv( Request* );
 
@@ -122,12 +127,14 @@ class DataMovement : public ProtocolAPI
     std::deque<SendEntry*>  m_sendQ;
     std::deque<RecvReq*>    m_longMsgReqQ;
     std::deque<RecvReq*>    m_longMsgRespQ;
+    int                     m_matchTime;
+    int                     m_copyTime;
 
-    std::map<unsigned char,SendReq*>      m_sendReqM;
-    unsigned char m_sendReqKey;
+    std::map<unsigned char,SendReq*>    m_sendReqM;
+    unsigned char                       m_sendReqKey;
 
-    std::map<unsigned char,RecvReq*>      m_recvReqM;
-    unsigned char m_recvReqKey;
+    std::map<unsigned char,RecvReq*>    m_recvReqM;
+    unsigned char                       m_recvReqKey;
 };
 
 }

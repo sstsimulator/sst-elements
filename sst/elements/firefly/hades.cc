@@ -109,13 +109,19 @@ Hades::Hades( Params& params ) :
 
     nidListFile.close();
 
-    m_protocolM[0] = new DataMovement( m_verboseLevel, m_loc, &m_info);
+    Params dmParams = params.find_prefix_params("dataMovement.");
+
+    m_protocolM[0] = new DataMovement( m_verboseLevel, m_loc, dmParams,
+                                         &m_info );
     m_protocolM[1] = new CtrlMsg( m_verboseLevel, m_loc, &m_info);
 
     m_sendIter = m_protocolM.begin();
 
-    m_functionSM = new FunctionSM( m_verboseLevel, m_loc, m_owner, m_info,
-                    m_protocolM[0], m_io, m_protocolM[1] );
+    Params funcParams = params.find_prefix_params("functionSM.");
+
+    m_functionSM = new FunctionSM( m_verboseLevel, m_loc, funcParams,
+                m_owner, m_info, m_protocolM[0], m_io, m_protocolM[1] );
+
     m_functionSM->setProgressLink( m_toProgressLink );
 }
 

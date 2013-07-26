@@ -53,6 +53,10 @@ void SimpleIO::_componentInit(unsigned int phase )
     if ( event ) {
         m_myNodeId = atoi( event->getString().c_str() );
         m_dbg.verbose(CALL_INFO,1,0,"set node id to %d\n", m_myNodeId );
+        char buffer[100];
+        snprintf(buffer,100,"@t:%d:SimpleIO::@p():@l ",m_myNodeId);
+        m_dbg.setPrefix(buffer);
+
         delete event;
     } 
 }

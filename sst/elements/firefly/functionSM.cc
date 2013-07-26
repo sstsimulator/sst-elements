@@ -29,6 +29,7 @@ using namespace SST::Firefly;
 using namespace Hermes;
 
 FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
+                    SST::Params& params,
                     SST::Component* obj, Info& info, ProtocolAPI* dm,
                      IO::Interface* io, ProtocolAPI* ctrlMsg ) :
     m_sm( NULL ),
@@ -40,19 +41,22 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
 
     m_smV.resize( NumFunctions );
 
-#if 0
-    m_funcLat.resize(FunctionCtx::NumFunctions);
-    m_funcLat[FunctionCtx::Init] = 10;
-    m_funcLat[FunctionCtx::Fini] = 10;
-    m_funcLat[FunctionCtx::Rank] = 1;
-    m_funcLat[FunctionCtx::Size] = 1;
-    m_funcLat[FunctionCtx::Barrier] = 100;
-    m_funcLat[FunctionCtx::Irecv] = 1;
-    m_funcLat[FunctionCtx::Isend] = 1;
-    m_funcLat[FunctionCtx::Send] = 1;
-    m_funcLat[FunctionCtx::Recv] = 1;
-    m_funcLat[FunctionCtx::Wait] = 1;
-#endif
+    m_funcLat.resize(NumFunctions);
+
+    Params timeParams = params.find_prefix_params("times.");
+    
+    int defaultTime = timeParams.find_integer("default",0);
+
+    setFunctionTimes( Init, timeParams.find_integer("Init", defaultTime ) );
+    setFunctionTimes( Fini, timeParams.find_integer("Fini", defaultTime ) );
+    setFunctionTimes( Rank, timeParams.find_integer("Rank", defaultTime ) );
+    setFunctionTimes( Size, timeParams.find_integer("Size", defaultTime ) );
+    setFunctionTimes( Send, timeParams.find_integer("Send", defaultTime ));
+    setFunctionTimes( Recv, timeParams.find_integer("Recv", defaultTime ) );
+    setFunctionTimes( Wait, timeParams.find_integer("Wait", defaultTime ) );
+    setFunctionTimes( Barrier, timeParams.find_integer("Barrier", defaultTime ) );
+    setFunctionTimes( Allreduce, timeParams.find_integer("Allreduce", defaultTime ) );
+    setFunctionTimes( Reduce, timeParams.find_integer("Reduce", defaultTime ) );
 
     m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
@@ -109,7 +113,7 @@ void FunctionSM::start( SST::Event* e  )
     event->retLink = m_toDriverLink;
     m_sm = m_smV[ event->type ];
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
-    m_fromDriverLink->send( e );
+    m_fromDriverLink->send( m_funcLat[event->type].enterTime, e );
 }
 
 void FunctionSM::handleSelfEvent( SST::Event* e  )

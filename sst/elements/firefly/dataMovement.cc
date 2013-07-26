@@ -22,16 +22,18 @@ using namespace SST::Firefly;
 using namespace SST;
 
 DataMovement::DataMovement(int verboseLevel, Output::output_location_t loc,
-        Info* info ) :
+        SST::Params& params, Info* info ) :
     ProtocolAPI(verboseLevel,loc),
     m_info(info),
     m_sendReqKey( 0 ),
     m_recvReqKey( 0 )
 {
     m_dbg.setPrefix("@t:DataMovement::@p():@l ");
+    m_matchTime = params.find_integer("matchTime",0);
+    m_copyTime = params.find_integer("copyTime",0);
 }
 
-DataMovement::RecvReq* DataMovement::getRecvReq( IO::NodeId src )
+DataMovement::Request* DataMovement::getRecvReq( IO::NodeId src )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     RecvReq* req = new RecvReq;
@@ -48,7 +50,7 @@ DataMovement::RecvReq* DataMovement::getRecvReq( IO::NodeId src )
     return req;
 }
 
-DataMovement::SendReq* DataMovement::getSendReq(  )
+DataMovement::Request* DataMovement::getSendReq(  )
 {
     if ( ! m_longMsgReqQ.empty() ) {
         RecvReq* recvReq = m_longMsgReqQ.front();
@@ -128,7 +130,7 @@ DataMovement::SendReq* DataMovement::getSendReq(  )
     return NULL;
 }
 
-DataMovement::SendReq* DataMovement::sendIODone( Request *r )
+DataMovement::Request* DataMovement::sendIODone( Request *r )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     SendReq* req = static_cast<SendReq*>(r);
@@ -150,7 +152,7 @@ DataMovement::SendReq* DataMovement::sendIODone( Request *r )
     return NULL;
 }
 
-DataMovement::RecvReq* DataMovement::recvIODone( Request *r )
+DataMovement::Request* DataMovement::recvIODone( Request *r )
 {
     RecvReq* req = static_cast<RecvReq*>(r);
     m_dbg.verbose(CALL_INFO,1,0,"\n");
@@ -167,14 +169,16 @@ DataMovement::RecvReq* DataMovement::recvIODone( Request *r )
                 req->hdr.mHdr.dtype,
                 req->hdr.mHdr.tag );
 
-            req->recvEntry = findMatch( req->hdr.mHdr );
+            req->recvEntry = findMatch( req->hdr.mHdr, req->delay );
+            req->state = RecvReq::RecvBody;
     
             if ( req->recvEntry ) {
                 m_dbg.verbose(CALL_INFO,1,0,"found a posted receive\n");
             }
 
-            req->delay = 10;
-            req->state = RecvReq::RecvBody;
+            if ( 0 == req->delay ) {
+                return delayDone( r );
+            }
         } else if ( req->hdr.msgType == Hdr::LongMsgReq ) {
             m_dbg.verbose(CALL_INFO,1,0,"LongMsgReq\n");
             m_longMsgRespQ.push_back( req );
@@ -306,12 +310,15 @@ void DataMovement::postRecvEntry( RecvEntry entry )
     *tmp = entry;
     m_postedQ.push_back( tmp );
 }
-MsgEntry* DataMovement::searchUnexpected( RecvEntry* entry )
+MsgEntry* DataMovement::searchUnexpected( RecvEntry* entry, int& delay )
 {
+    delay = 0;
     m_dbg.verbose(CALL_INFO,1,0,"unexpected size %lu\n",
                                             m_unexpectedMsgQ.size() );
     std::deque< MsgEntry* >::iterator iter = m_unexpectedMsgQ.begin();
     for ( ; iter != m_unexpectedMsgQ.end(); ++iter  ) {
+
+        delay += m_matchTime;
 
         m_dbg.verbose(CALL_INFO,1,0,"dtype %d %d\n",
                                     entry->dtype,(*iter)->hdr.dtype);
@@ -351,11 +358,15 @@ MsgEntry* DataMovement::searchUnexpected( RecvEntry* entry )
     return NULL;
 }
 
-RecvEntry* DataMovement::findMatch( MatchHdr& hdr )
+RecvEntry* DataMovement::findMatch( MatchHdr& hdr, int& delay )
 {
+    delay = 0;
     m_dbg.verbose(CALL_INFO,1,0,"posted size %lu\n", m_postedQ.size() );
     std::deque< RecvEntry* >::iterator iter = m_postedQ.begin(); 
     for ( ; iter != m_postedQ.end(); ++iter  ) {
+
+        delay += m_matchTime;
+
         m_dbg.verbose(CALL_INFO,1,0,"dtype %d %d\n",
                                                 hdr.dtype, (*iter)->dtype );
         if ( hdr.dtype != (*iter)->dtype ) {

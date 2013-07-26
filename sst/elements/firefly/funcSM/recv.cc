@@ -47,10 +47,11 @@ void RecvFuncSM::handleEnterEvent( SST::Event *e )
         m_event->entry.resp->src = Hermes::AnySrc;
     }
     
-    m_entry = m_dm->searchUnexpected( &m_event->entry );
+    int delay;
+    m_entry = m_dm->searchUnexpected( &m_event->entry, delay );
 
     m_state = WaitMatch;
-    m_selfLink->send(10,NULL);
+    m_selfLink->send(delay,NULL);
 }
 
 void RecvFuncSM::finish( RecvEntry* rEntry, MsgEntry* mEntry )
@@ -73,7 +74,7 @@ void RecvFuncSM::handleSelfEvent( SST::Event *e )
                 memcpy( m_event->entry.buf, &m_entry->buffer[0],
                         m_entry->buffer.size() );
                 m_state = WaitCopy;
-                m_selfLink->send(10,NULL);
+                m_selfLink->send( m_dm->getCopyDelay(m_entry->buffer.size()), NULL );
                 return;
             } else if ( 0 == m_entry->hdr.count ) {
                 finish( &m_event->entry, m_entry );

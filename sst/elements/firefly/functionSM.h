@@ -45,6 +45,7 @@ class FunctionSM {
     };
 
     FunctionSM( int verboseLevel, Output::output_location_t loc, 
+                SST::Params& params,
                 SST::Component*, Info&, ProtocolAPI*, IO::Interface*,
                 ProtocolAPI* ); 
     ~FunctionSM();
@@ -77,9 +78,20 @@ class FunctionSM {
 
     Info&               m_info;
 
-    std::vector<int>    m_funcLat;
 
     Output              m_dbg;
+
+    struct FunctionTimes {
+        int enterTime;
+    };
+
+    std::vector<FunctionTimes>    m_funcLat;
+
+    void setFunctionTimes( FunctionType type, int enterTime ) {
+        FunctionTimes tmp;
+        tmp.enterTime = enterTime;
+        m_funcLat[type] = tmp;
+    }
 };
 
 }
