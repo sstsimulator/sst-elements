@@ -9,23 +9,18 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include <sstream>
-#include <assert.h>
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
-
 #include <sst_config.h>
 #include <sst/core/serialization.h>
+#include "bus.h"
+
+#include <sstream>
+#include <assert.h>
 
 #include <sst/core/component.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/interfaces/memEvent.h>
-
-#include "bus.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;

@@ -9,13 +9,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
-
 #include <sst_config.h>
 #include <sst/core/serialization.h>
+#include "streamCPU.h"
+
 #include <assert.h>
 
 #include <sst/core/element.h>
@@ -23,7 +20,6 @@
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
-#include "streamCPU.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;

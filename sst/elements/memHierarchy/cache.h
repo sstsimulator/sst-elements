@@ -9,17 +9,12 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _CACHE_H
-#define _CACHE_H
+#ifndef SST_MEMHIERARCHY_CACHE_H
+#define SST_MEMHIERARCHY_CACHE_H
 
 #include <deque>
 #include <map>
 #include <list>
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
@@ -456,4 +451,4 @@ private:
 }
 }
 
-#endif
+#endif  /* SST_MEMHIERARCHY_CACHE_H */

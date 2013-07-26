@@ -9,24 +9,20 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst_config.h>
+#include <sst/core/serialization.h>
+#include "cache.h"
+
 #include <sstream>
 #include <string>
 #include <algorithm>
 #include <iomanip>
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
 
-
-#include <sst_config.h>
-#include <sst/core/serialization.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
-#include "cache.h"
 #include "cacheListener.h"
 #include "bus.h"
 
@@ -462,8 +458,9 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	assert(ev->getCmd() == ReadReq || ev->getCmd() == WriteReq);
 	bool isRead = (ev->getCmd() == ReadReq);
 	CacheBlock *block = findBlock(ev->getAddr(), false);
-	dbg.output(CALL_INFO, "(%"PRIu64", %d) 0x%"PRIx64"%s %s%s %s (block 0x%"PRIx64" [%d])\n",
+	dbg.output(CALL_INFO, "(%"PRIu64", %d) %u bytes @ 0x%"PRIx64"%s %s%s %s (block 0x%"PRIx64" [%d])\n",
 			ev->getID().first, ev->getID().second,
+            ev->getSize(),
 			ev->getAddr(),
             ev->queryFlag(MemEvent::F_LOCKED) ? " [LOCKED]" : "",
             ev->queryFlag(MemEvent::F_UNCACHED) ? "Uncached " : "",
@@ -558,7 +555,7 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	}
 }
 
-// #define CACHE_PRINT_DATA
+// #define CACHE_PRINT_DATA 1
 #ifdef CACHE_PRINT_DATA
 static const char* printData(MemEvent *ev) {
     static char buffer[1024] = {0};
@@ -589,8 +586,8 @@ MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t s
 	if ( ev->getCmd() == ReadReq)
 		resp->setPayload(ev->getSize(), &block->data[offset]);
 
-	dbg.output(CALL_INFO, "Creating Response to CPU: (%"PRIu64", %d) in Response To (%"PRIu64", %d) [%s: 0x%"PRIx64"] [%s]\n",
-			resp->getID().first, resp->getID().second,
+	dbg.output(CALL_INFO, "Creating %u byte Response to CPU: (%"PRIu64", %d) in Response To (%"PRIu64", %d) [%s: 0x%"PRIx64"] [%s]\n",
+			resp->getSize(), resp->getID().first, resp->getID().second,
 			resp->getResponseToID().first, resp->getResponseToID().second,
 			CommandString[resp->getCmd()], resp->getAddr(),
 #ifdef CACHE_PRINT_DATA

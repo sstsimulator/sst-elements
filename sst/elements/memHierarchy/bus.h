@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _BUS_H
-#define _BUS_H
+#ifndef SST_MEMHIERARCHY_BUS_H
+#define SST_MEMHIERARCHY_BUS_H
 
 #include <boost/serialization/deque.hpp>
 #include <boost/serialization/map.hpp>
@@ -169,4 +169,4 @@ private:
 
 };
 };
-#endif /* _BUS_H */
+#endif /* SST_MEMHIERARHCY__BUS_H */

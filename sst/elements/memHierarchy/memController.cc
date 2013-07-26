@@ -9,6 +9,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst_config.h>
+#include <sst/core/serialization.h>
+#include "memController.h"
+
 #include <sstream>
 #include <assert.h>
 #include <fcntl.h>
@@ -17,19 +21,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#include <inttypes.h>
 
-#include <sst_config.h>
-#include <sst/core/serialization.h>
 #include <sst/core/simulation.h>
 #include <sst/core/element.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
-#include "memController.h"
 #include "bus.h"
 
 #define NO_STRING_DEFINED "N/A"
