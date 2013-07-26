@@ -136,12 +136,6 @@
  *
  */
 
-//std c++ libs
-#include <list>
-
-//std c libs
-#include <stdint.h>
-
 //SST libs
 #include <sst_config.h>
 #include <sst/core/serialization/element.h>
@@ -151,6 +145,13 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+
+//std c++ libs
+#include <list>
+
+//std c libs
+#include <stdint.h>
+
 
 #include "simpleCache/simple_cache.h"
 
