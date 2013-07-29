@@ -555,9 +555,9 @@ void Cache::handleCPURequest(MemEvent *ev, bool firstProcess)
 	}
 }
 
-// #define CACHE_PRINT_DATA 1
-#ifdef CACHE_PRINT_DATA
+//#define CACHE_PRINT_DATA 1
 static const char* printData(MemEvent *ev) {
+#ifdef CACHE_PRINT_DATA
     static char buffer[1024] = {0};
     memset(buffer, '\0', sizeof(buffer));
     char *p = buffer;
@@ -571,8 +571,10 @@ static const char* printData(MemEvent *ev) {
     }
 
     return buffer;
-}
+#else
+    return "DATA HIDDEN";
 #endif
+}
 
 MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src)
 {
@@ -590,11 +592,7 @@ MemEvent* Cache::makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t s
 			resp->getSize(), resp->getID().first, resp->getID().second,
 			resp->getResponseToID().first, resp->getResponseToID().second,
 			CommandString[resp->getCmd()], resp->getAddr(),
-#ifdef CACHE_PRINT_DATA
             printData((ev->getCmd() == ReadReq) ? resp : ev)
-#else
-            "DATA HIDDEN"
-#endif
            );
 
 	return resp;
@@ -1356,6 +1354,8 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceType_t src)
                 handlePendingEvents(findRow(targetBlock->baseAddr), targetBlock);
         }
 
+    } else if ( ev->queryFlag(MemEvent::F_DELAYED) ) {
+        dbg.output(CALL_INFO, "This is a DELAYED response.  Ignore it.  Don't pass downstream.\n");
     } else {
         bool forwardDownstream = true;
         if ( cacheMode == INCLUSIVE ) {
@@ -2037,14 +2037,14 @@ void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 		}
 	}
 #if 0
-    char buffer[2*64 + 8] = {0};
+    char buffer[2*blocksize + 8];
     char *b = buffer;
-    b += sprintf(b, " [0x");
+    b += sprintf(b, "[0x");
     for ( uint32_t i = 0 ; i < blocksize ; i++ ) {
         b += sprintf(b, "%02x", block->data[i]);
     }
     b += sprintf(b, "]");
-    dbg.output(CALL_INFO, "Updating block 0x%"PRIx64" %s\n", block->baseAddr, buffer);
+    dbg.output(CALL_INFO, "Updating block 0x%"PRIx64" with %u bytes @ 0x%"PRIx64".  %s\n", block->baseAddr, ev->getSize(), ev->getAddr(), buffer);
 #else
     dbg.output(CALL_INFO, "Updating block 0x%"PRIx64"\n", block->baseAddr);
 #endif
