@@ -1,5 +1,0 @@
-Please note that it is no longer necessary to make any changes to the
-Makefile.am in order to use QSim.
-
-This information should be reflected in the other document in this directory,
-but its sources are not immediately available.
