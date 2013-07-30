@@ -221,17 +221,16 @@ void CtrlMsg::recv( void* buf, size_t len, int src, int group, MsgReq* req )
 
     m_dbg.verbose(CALL_INFO,1,0,"%lu\n", m_unexpectedQ.size());
     if ( ! m_unexpectedQ.empty() ) {
-        assert(0);
         RecvReq *xxx = searchUnexpected( req );
         if ( xxx ) {
             m_dbg.verbose(CALL_INFO,1,0,"found unexpected\n");
-            assert(0);
             memcpy( req->buf, &xxx->buf[0], req->len );
             req->done = true;
             delete xxx;
         }
-    } 
-    m_postedQ.push_back( req );
+    } else {
+        m_postedQ.push_back( req );
+    }
 }
 
 void CtrlMsg::send( void* buf, size_t len, int dest, int group, MsgReq* req )

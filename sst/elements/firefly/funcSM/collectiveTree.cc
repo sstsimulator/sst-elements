@@ -63,7 +63,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
     m_pending = false;
     m_state = WaitUp;
     m_count = 0;
-    run();
+    m_toProgressLink->send(0, NULL );
 }
 
 void CollectiveTreeFuncSM::run()
