@@ -39,7 +39,11 @@ libzodiac_la_SOURCES = \
 	zwaitevent.h \
 	zwaitevent.cc \
 	zfinalizeevent.h \
-	zfinalizeevent.cc
+	zfinalizeevent.cc \
+	zallredevent.h \
+	zallredevent.cc \
+	zcollective.h \
+	zcollective.cc
 
 libzodiac_la_LDFLAGS = -module -avoid-version
 

@@ -1,9 +1,9 @@
 
-#include "zevent.h"
+#include "zcollective.h"
 
 using namespace SST;
 using namespace SST::Zodiac;
 
-ZodiacEvent::ZodiacEvent() {
+ZodiacCollectiveEvent::ZodiacCollectiveEvent() : ZodiacEvent() {
 
 }

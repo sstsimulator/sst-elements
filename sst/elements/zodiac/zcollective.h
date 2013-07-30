@@ -3,6 +3,7 @@
 #define _H_ZODIAC_COLLECTIVE_EVENT_BASE
 
 #include "sst/elements/hermes/msgapi.h"
+#include "zevent.h"
 
 namespace SST {
 namespace Zodiac {

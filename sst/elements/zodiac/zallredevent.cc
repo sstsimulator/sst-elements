@@ -5,7 +5,7 @@ using namespace SST::Hermes;
 using namespace SST::Zodiac;
 using namespace SST;
 
-ZodiacAllreduceEvent::ZodaicAllreduceEvent(
+ZodiacAllreduceEvent::ZodiacAllreduceEvent(
 	uint32_t length,
 	PayloadDataType dataType,
 	ReductionOperation op,
