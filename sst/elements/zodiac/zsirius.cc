@@ -174,6 +174,10 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 			handleAllreduceEvent(zEv);
 			break;
 
+		case Z_BARRIER:
+			handleBarrierEvent(zEv);
+			break;
+
 		case Z_INIT:
 			handleInitEvent(zEv);
 			break;
@@ -185,7 +189,6 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 		case Z_SKIP:
 			break;
 
-		case Z_BARRIER:
 		default:
 			zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
 				0, 1, "Attempted to process an ZodiacEvent which is not included in the event decoding step.\n");
@@ -199,6 +202,16 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 	}
 
 	delete zEv;
+}
+
+void ZodiacSiriusTraceReader::handleBarrierEvent(ZodiacEvent* zEv) {
+	ZodiacBarrierEvent* zBEv = static_cast<ZodiacBarrierEvent*>(zEv);
+	assert(zBEv);
+
+	zOut.verbose(__LINE__, __FILE__, "handleBarrierEvent",
+		2, 1, "Processing an Barrier event.\n");
+
+	msgapi->barrier(zBEv->getCommunicatorGroup(), &retFunctor);
 }
 
 void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
