@@ -50,6 +50,33 @@ private:
 	struct LoadInfo_t;
 	typedef std::map<Addr, LoadInfo_t*> LoadList_t;
 
+    struct SourceInfo_t {
+        SourceType_t type;
+        LinkId_t id; // -1 is a WildCard
+
+        inline bool operator!=(const SourceInfo_t &o) const
+        {
+            return !(*this == o);
+        }
+
+        inline bool operator==(const SourceInfo_t &o) const
+        {
+            if ( type == o.type ) {
+                if ( id == -1 || o.id == -1 ) return true;
+                return (id == o.id);
+            }
+            return false;
+        }
+        inline bool operator<(const SourceInfo_t &o) const
+        {
+
+            if ( type == o.type ) {
+                if ( id == -1 || o.id == -1 ) return false; // They're never less
+                return (id < o.id);
+            }
+            return (type < o.type);
+        }
+    };
 
 	class CacheBlock {
 	public:
@@ -123,7 +150,7 @@ private:
 	class CacheRow {
 	public:
 		std::vector<CacheBlock> blocks;
-        typedef std::deque<std::pair<MemEvent*, SourceType_t> > eventQueue_t;
+        typedef std::deque<std::pair<MemEvent*, SourceInfo_t> > eventQueue_t;
         std::map<Addr, eventQueue_t> waitingEvents;
 		Cache *cache;
 
@@ -135,7 +162,7 @@ private:
 
 		CacheBlock* getLRU(void);
 
-        void addWaitingEvent(MemEvent *ev, SourceType_t src);
+        void addWaitingEvent(MemEvent *ev, SourceInfo_t src);
 
         void printRow(void);
 	};
@@ -143,7 +170,7 @@ private:
 
     struct Invalidation {
         int waitingACKs;
-        std::deque<std::pair<MemEvent*, SourceType_t> > waitingEvents;
+        std::deque<std::pair<MemEvent*, SourceInfo_t> > waitingEvents;
         MemEvent::id_type issuingEvent;
         MemEvent *busEvent; // Snoop Bus event (for cancelation)
         CacheBlock *block;  // Optional
@@ -166,7 +193,7 @@ private:
 		struct {
             MemEvent *initiatingEvent;
 			CacheBlock *block;
-			SourceType_t src;
+			SourceInfo_t src;
             bool isFakeSupply;
 		} supplyData;
 		struct {
@@ -230,14 +257,14 @@ private:
 
 	};
 
-	typedef void (Cache::*SelfEventHandler)(MemEvent*, CacheBlock*, SourceType_t);
+	typedef void (Cache::*SelfEventHandler)(MemEvent*, CacheBlock*, SourceInfo_t);
 	typedef void (Cache::*SelfEventHandler2)(LoadInfo_t*, Addr addr, CacheBlock*);
 	class SelfEvent : public SST::Event {
 	public:
 		SelfEvent() {} // For serialization
 
 		SelfEvent(Cache *cache, SelfEventHandler handler, MemEvent *event, CacheBlock *block,
-				SourceType_t event_source = SELF) :
+				SourceInfo_t event_source = (SourceInfo_t){SELF, -1}) :
 			cache(cache), handler(handler), handler2(NULL),
             event(event), block(block), event_source(event_source),
             li(NULL), addr(0)
@@ -245,7 +272,7 @@ private:
 
 		SelfEvent(Cache *cache, SelfEventHandler2 handler, LoadInfo_t *li, Addr addr, CacheBlock *block) :
 			cache(cache), handler(NULL), handler2(handler),
-            event(NULL), block(block), event_source(SELF),
+            event(NULL), block(block), event_source((SourceInfo_t){SELF,-1}),
             li(li), addr(addr)
 		{ }
 
@@ -263,7 +290,7 @@ private:
 		SelfEventHandler2 handler2;
 		MemEvent *event;
 		CacheBlock *block;
-		SourceType_t event_source;
+		SourceInfo_t event_source;
         LoadInfo_t *li;
         Addr addr;
 	};
@@ -281,9 +308,9 @@ private:
         ForwardDir_t loadDirection;
 		struct LoadElement_t {
 			MemEvent * ev;
-			SourceType_t src;
+			SourceInfo_t src;
 			SimTime_t issueTime;
-			LoadElement_t(MemEvent *ev, SourceType_t src, SimTime_t issueTime) :
+			LoadElement_t(MemEvent *ev, SourceInfo_t src, SimTime_t issueTime) :
 				ev(ev), src(src), issueTime(issueTime)
 			{ }
 		};
@@ -299,7 +326,7 @@ private:
 		SupplyInfo(MemEvent *id) : initiatingEvent(id), busEvent(NULL), canceled(false) { }
 	};
 	// Map from <addr, from where req came> to SupplyInfo
-	typedef std::multimap<std::pair<Addr, SourceType_t>, SupplyInfo> supplyMap_t;
+	typedef std::multimap<std::pair<Addr, SourceInfo_t>, SupplyInfo> supplyMap_t;
 
     class LatencyStats {
     private:
@@ -332,34 +359,34 @@ public:
 private:
     void handleBusEvent(SST::Event *event);
 	void handleIncomingEvent(SST::Event *event, SourceType_t src);
-	void handleIncomingEvent(SST::Event *event, SourceType_t src, bool firstTimeProcessed, bool firstPhaseComplete = false);
+	void handleIncomingEvent(SST::Event *event, SourceInfo_t src, bool firstTimeProcessed, bool firstPhaseComplete = false);
 	void handleSelfEvent(SST::Event *event);
-	void retryEvent(MemEvent *ev, CacheBlock *block, SourceType_t src);
+	void retryEvent(MemEvent *ev, CacheBlock *block, SourceInfo_t src);
 
     void handlePrefetchEvent(SST::Event *event);
 
-	void handleCPURequest(MemEvent *ev, bool firstProcess);
-	MemEvent* makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
-	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceType_t src);
+	void handleCPURequest(MemEvent *ev, SourceInfo_t src, bool firstProcess);
+	MemEvent* makeCPUResponse(MemEvent *ev, CacheBlock *block, SourceInfo_t src);
+	void sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceInfo_t src);
 
-	void issueInvalidate(MemEvent *ev, SourceType_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction, bool cancelable = true);
-	void issueInvalidate(MemEvent *ev, SourceType_t src, Addr addr, ForwardDir_t direction, bool cancelable = true);
+	void issueInvalidate(MemEvent *ev, SourceInfo_t src, CacheBlock *block, CacheBlock::BlockStatus newStatus, ForwardDir_t direction, bool cancelable = true);
+	void issueInvalidate(MemEvent *ev, SourceInfo_t src, Addr addr, ForwardDir_t direction, bool cancelable = true);
     void finishBusSendInvalidation(BusHandlerArgs &args);
 	void finishIssueInvalidate(Addr addr);
 
 
-	void loadBlock(MemEvent *ev, SourceType_t src);
-    std::pair<LoadInfo_t*, bool> initLoad(Addr addr, MemEvent *ev, SourceType_t src);
+	void loadBlock(MemEvent *ev, SourceInfo_t src);
+    std::pair<LoadInfo_t*, bool> initLoad(Addr addr, MemEvent *ev, SourceInfo_t src);
 	void finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block);
 	void finishLoadBlockBus(BusHandlerArgs &args);
 
-	void handleCacheRequestEvent(MemEvent *ev, SourceType_t src, bool firstProcess);
-	void supplyData(MemEvent *ev, CacheBlock *block, SourceType_t src);
+	void handleCacheRequestEvent(MemEvent *ev, SourceInfo_t src, bool firstProcess);
+	void supplyData(MemEvent *ev, CacheBlock *block, SourceInfo_t src);
     void prepBusSupplyData(BusHandlerArgs &args, MemEvent *ev);
 	void finishBusSupplyData(BusHandlerArgs &args);
-	void handleCacheSupplyEvent(MemEvent *ev, SourceType_t src);
-	void handleInvalidate(MemEvent *ev, SourceType_t src, bool finishedUpstream);
-    void sendInvalidateACK(MemEvent *ev, SourceType_t src);
+	void handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src);
+	void handleInvalidate(MemEvent *ev, SourceInfo_t src, bool finishedUpstream);
+    void sendInvalidateACK(MemEvent *ev, SourceInfo_t src);
 
 	bool waitingForInvalidate(Addr addr);
 	bool cancelInvalidate(CacheBlock *block);
@@ -370,14 +397,14 @@ private:
 	void finishWritebackBlockVA(BusHandlerArgs &args);
 	void finishWritebackBlock(CacheBlock *block, CacheBlock::BlockStatus newStatus, bool decrementLock);
 
-    void handleFetch(MemEvent *ev, bool invalidate, bool hasInvalidated);
-    void fetchBlock(MemEvent *ev, CacheBlock *block, SourceType_t src);
+    void handleFetch(MemEvent *ev, SourceInfo_t src, bool invalidate, bool hasInvalidated);
+    void fetchBlock(MemEvent *ev, CacheBlock *block, SourceInfo_t src);
 
-    void handleNACK(MemEvent *ev, SourceType_t src);
-    void respondNACK(MemEvent *ev, SourceType_t src);
+    void handleNACK(MemEvent *ev, SourceInfo_t src);
+    void respondNACK(MemEvent *ev, SourceInfo_t src);
 
-    void handleUncachedWrite(MemEvent *ev, SourceType_t src);
-    void handleWriteResp(MemEvent *ev, SourceType_t src);
+    void handleUncachedWrite(MemEvent *ev, SourceInfo_t src);
+    void handleWriteResp(MemEvent *ev, SourceInfo_t src);
 
 
     void handlePendingEvents(CacheRow *row, CacheBlock *block);
@@ -388,9 +415,9 @@ private:
 	CacheBlock* findBlock(Addr addr, bool emptyOK = false);
 	CacheRow* findRow(Addr addr);
 
-    bool supplyInProgress(Addr addr, SourceType_t src);
-    supplyMap_t::iterator getSupplyInProgress(Addr addr, SourceType_t src);
-    supplyMap_t::iterator getSupplyInProgress(Addr addr, SourceType_t src, MemEvent::id_type id);
+    bool supplyInProgress(Addr addr, SourceInfo_t src);
+    supplyMap_t::iterator getSupplyInProgress(Addr addr, SourceInfo_t src);
+    supplyMap_t::iterator getSupplyInProgress(Addr addr, SourceInfo_t src, MemEvent::id_type id);
 
     std::string findTargetDirectory(Addr addr);
 
@@ -418,7 +445,7 @@ private:
     std::map<Addr, Invalidation> invalidations;
 	LoadList_t waitingLoads;
 	supplyMap_t suppliesInProgress;
-    std::map<MemEvent::id_type, std::pair<MemEvent*, SourceType_t> > outstandingWrites;
+    std::map<MemEvent::id_type, std::pair<MemEvent*, SourceInfo_t> > outstandingWrites;
 
 	BusQueue snoopBusQueue;
 

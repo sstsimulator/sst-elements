@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+
+<variables>
+	<lat> 1ns </lat>
+	<buslat> 10 ns </buslat>
+</variables>
+
+<param_include>
+    <cpuParams>
+			<workPerCycle> 1000 </workPerCycle>
+			<commFreq> 100 </commFreq>
+			<memSize> 0x1000 </memSize>
+            <num_loadstore> 1000 </num_loadstore>
+			<do_write> 1 </do_write>
+    </cpuParams>
+    <l1Params>
+			<num_ways> 2 </num_ways>
+			<num_rows> 16 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 2 ns </access_time>
+			<next_level> l2cache </next_level>
+			<num_upstream> 1 </num_upstream>
+            <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
+    </l1Params>
+    <l2Params>
+			<num_ways> 4 </num_ways>
+			<num_rows> 32 </num_rows>
+			<blocksize> 64 </blocksize>
+			<access_time> 10 ns </access_time>
+            <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
+            <num_upstream> 2 </num_upstream>
+    </l2Params>
+</param_include>
+
+
+<sst>
+	<component name="cpu0" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=cpu0_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c0.l1cache" type="memHierarchy.Cache">
+        <params include=l1Params />
+		<link name=cpu0_l1cache_link port=upstream0 latency=$lat />
+		<link name=c0.l1_l2_link port=downstream latency=$lat />
+	</component>
+
+	<component name="cpu1" type="memHierarchy.trivialCPU">
+        <params include=cpuParams />
+		<link name=cpu1_l1cache_link port=mem_link latency=$lat />
+	</component>
+
+	<component name="c1.l1cache" type="memHierarchy.Cache">
+        <params include=l1Params />
+		<link name=cpu1_l1cache_link port=upstream0 latency=$lat />
+		<link name=c1.l1_l2_link port=downstream latency=$lat />
+	</component>
+
+	<component name="l2cache" type="memHierarchy.Cache">
+        <params include=l2Params />
+		<link name=l2cache_bus_link port=snoop_link latency=$buslat />
+		<link name=c0.l1_l2_link port=upstream0 latency=$lat />
+		<link name=c1.l1_l2_link port=upstream1 latency=$lat />
+	</component>
+
+
+	<component name="membus" type="memHierarchy.Bus">
+		<params>
+			<numPorts> 2 </numPorts>
+			<busDelay> 20 ns </busDelay>
+            <atomicDelivery> 1 </atomicDelivery>
+            <debug> ${MEM_DEBUG} </debug>
+		</params>
+		<link name=l2cache_bus_link port=port0 latency=$buslat />
+		<link name=mem_bus_link port=port1 latency=$buslat />
+	</component>
+
+
+	<component name="memory" type="memHierarchy.MemController">
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+			<use_dramsim> 0 </use_dramsim>
+            <debug> ${MEM_DEBUG} </debug>
+            <printStats> 1 </printStats>
+		</params>
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+
+</sst>
