@@ -78,6 +78,10 @@ void SiriusReader::generateNextEvent() {
 		readIrecv();
 		break;
 
+	case SIRIUS_MPI_ALLREDUCE:
+		readAllreduce();
+		break;
+
 	case SIRIUS_MPI_BARRIER:
 		readBarrier();
 		break;
@@ -106,6 +110,24 @@ void SiriusReader::generateNextEvent() {
 	prevEventTime = readTime();
 	// read the MPI function result
 	readINT32();
+}
+
+void SiriusReader::readAllreduce() {
+	uint64_t sbuff = readUINT64();
+	uint64_t rbuff = readUINT64();
+	uint32_t length = readUINT32();
+	uint32_t dtype = readUINT32();
+	uint32_t op    = readUINT32();
+	uint32_t comm  = readUINT32();
+
+	output->verbose(__LINE__, __FILE__, "readAllreduce", 8, 0, "Read an MPI_Allreduce\n");
+
+	ZodiacAllreduceEvent* ev = new ZodiacAllreduceEvent(
+			length,
+			convertToHermesType(dtype),
+			convertToHermesOp(op),
+			comm);
+	eventQ->push(ev);
 }
 
 void SiriusReader::readSend() {
@@ -228,6 +250,27 @@ PayloadDataType SiriusReader::convertToHermesType(uint32_t dtype) {
 	}
 
 	return hType;
+}
+
+ReductionOperation SiriusReader::convertToHermesOp(uint32_t op) {
+	ReductionOperation h_op = SUM;
+
+	switch(op) {
+	case SIRIUS_MPI_SUM:
+		h_op = SUM;
+		break;
+	case SIRIUS_MPI_MAX:
+		h_op = MAX;
+		break;
+	case SIRIUS_MPI_MIN:
+		h_op = MIN;
+		break;
+	default:
+		std::cout << "Unknown MPI operation, cannot convert to Hermes." << std::endl;
+		exit(-1);
+	}
+
+	return h_op;
 }
 
 bool SiriusReader::hasReachedFinalize() {

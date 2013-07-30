@@ -10,6 +10,6 @@ ZodiacInitEvent::ZodiacInitEvent()
 }
 
 ZodiacEventType ZodiacInitEvent::getEventType() {
-	return INIT;
+	return Z_INIT;
 }
 

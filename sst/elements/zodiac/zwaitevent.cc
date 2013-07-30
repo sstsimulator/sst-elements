@@ -10,7 +10,7 @@ ZodiacWaitEvent::ZodiacWaitEvent(uint64_t rID) {
 }
 
 ZodiacEventType ZodiacWaitEvent::getEventType() {
-	return WAIT;
+	return Z_WAIT;
 }
 
 uint64_t ZodiacWaitEvent::getRequestID() {

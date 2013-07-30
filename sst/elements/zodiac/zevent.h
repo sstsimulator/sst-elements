@@ -8,16 +8,17 @@ namespace SST {
 namespace Zodiac {
 
 enum ZodiacEventType {
-	SKIP,
-	COMPUTE,
-	SEND,
-	IRECV,
-	RECV,
-	BARRIER,
-	COLLECTIVE,
-	INIT,
-	FINALIZE,
-	WAIT
+	Z_SKIP,
+	Z_COMPUTE,
+	Z_SEND,
+	Z_IRECV,
+	Z_RECV,
+	Z_BARRIER,
+	Z_ALLREDUCE,
+	Z_COLLECTIVE,
+	Z_INIT,
+	Z_FINALIZE,
+	Z_WAIT
 };
 
 class ZodiacEvent : public SST::Event {

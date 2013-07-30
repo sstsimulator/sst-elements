@@ -150,38 +150,42 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 
 	if(zEv) {
 		switch(zEv->getEventType()) {
-		case COMPUTE:
+		case Z_COMPUTE:
 			handleComputeEvent(zEv);
 			break;
 
-		case SEND:
+		case Z_SEND:
 			handleSendEvent(zEv);
 			break;
 
-		case RECV:
+		case Z_RECV:
 			handleRecvEvent(zEv);
 			break;
 
-		case IRECV:
+		case Z_IRECV:
 			handleIRecvEvent(zEv);
 			break;
 
-		case WAIT:
+		case Z_WAIT:
 			handleWaitEvent(zEv);
 			break;
 
-		case INIT:
+		case Z_ALLREDUCE:
+			handleAllreduceEvent(zEv);
+			break;
+
+		case Z_INIT:
 			handleInitEvent(zEv);
 			break;
 
-		case FINALIZE:
+		case Z_FINALIZE:
 			handleFinalizeEvent(zEv);
 			break;
 
-		case SKIP:
+		case Z_SKIP:
 			break;
 
-		case BARRIER:
+		case Z_BARRIER:
 		default:
 			zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
 				0, 1, "Attempted to process an ZodiacEvent which is not included in the event decoding step.\n");
@@ -195,6 +199,22 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 	}
 
 	delete zEv;
+}
+
+void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
+	ZodiacAllreduceEvent* zAEv = static_cast<ZodiacAllreduceEvent*>(zEv);
+	assert(zAEv);
+	assert((zAEv->getLength() * 2) < emptyBufferSize);
+
+	zOut.verbose(__LINE__, __FILE__, "handleAllreduceEvent",
+		2, 1, "Processing an Allreduce event.\n");
+
+	msgapi->allreduce((Addr) emptyBuffer,
+		(Addr) (&emptyBuffer[zAEv->getLength()]),
+		zAEv->getLength(),
+		zAEv->getDataType(),
+		zAEv->getOp(),
+		zAEv->getCommunicatorGroup(), &retFunctor);
 }
 
 void ZodiacSiriusTraceReader::handleInitEvent(ZodiacEvent* zEv) {

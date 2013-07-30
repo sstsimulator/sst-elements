@@ -20,7 +20,7 @@ ZodiacSendEvent::ZodiacSendEvent(
 }
 
 ZodiacEventType ZodiacSendEvent::getEventType() {
-	return SEND;
+	return Z_SEND;
 }
 
 uint32_t ZodiacSendEvent::getDestination() {

@@ -12,7 +12,7 @@ ZodiacBarrierEvent::ZodiacBarrierEvent(
 }
 
 ZodiacEventType ZodiacBarrierEvent::getEventType() {
-	return BARRIER;
+	return Z_BARRIER;
 }
 
 Communicator ZodiacBarrierEvent::getCommunicatorGroup() {

@@ -10,7 +10,7 @@ ZodiacComputeEvent::ZodiacComputeEvent(double time) {
 }
 
 ZodiacEventType ZodiacComputeEvent::getEventType() {
-	return COMPUTE;
+	return Z_COMPUTE;
 }
 
 double ZodiacComputeEvent::getComputeDuration() {

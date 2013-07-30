@@ -17,7 +17,7 @@ ZodiacRecvEvent::ZodiacRecvEvent(uint32_t src, uint32_t length,
 }
 
 ZodiacEventType ZodiacRecvEvent::getEventType() {
-	return RECV;
+	return Z_RECV;
 }
 
 uint32_t ZodiacRecvEvent::getSource() {

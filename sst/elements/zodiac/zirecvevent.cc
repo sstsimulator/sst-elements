@@ -14,7 +14,7 @@ ZodiacRecvEvent(src, length, dataType, tag, group) {
 }
 
 ZodiacEventType ZodiacIRecvEvent::getEventType() {
-	return IRECV;
+	return Z_IRECV;
 }
 
 uint64_t ZodiacIRecvEvent::getRequestID() {
