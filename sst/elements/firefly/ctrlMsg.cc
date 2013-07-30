@@ -180,14 +180,15 @@ CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
                 req = NULL;
             }
         } else {
-            m_dbg.verbose(CALL_INFO,1,0, "unexpected\n" );
+            m_dbg.verbose(CALL_INFO,1,0, "unexpected %lu bytes\n",req->hdr.len);
+            m_unexpectedQ.push_back( req ); 
             if ( req->hdr.len ) {
                 req->buf.resize(req->hdr.len);
                 req->ioVec[0].len = req->buf.size();
                 req->ioVec[0].ptr = &req->buf[0];
-            }
-            m_unexpectedQ.push_back( req ); 
-            req = NULL;
+            } else {
+                req = NULL;
+            } 
         }
 
     } else {
