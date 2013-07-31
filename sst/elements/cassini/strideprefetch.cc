@@ -67,22 +67,23 @@ void StridePrefetcher::DetectStride() {
 		}
 	}
 
-	if(ev != NULL) {
-		std::vector<Event::HandlerBase*>::iterator callbackItr;
+    if(ev != NULL) {
+        std::vector<Event::HandlerBase*>::iterator callbackItr;
 
-		//std::cout << "StridePrefetcher: created prefetch for address " << ev->getAddr() << std::endl;
-		prefetchEventsIssued++;
+        //std::cout << "StridePrefetcher: created prefetch for address " << ev->getAddr() << std::endl;
+        prefetchEventsIssued++;
 
-                // Cycle over each registered call back and notify them that we want to issue a prefet$
-                for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
-                        // Create a new read request, we cannot issue a write because the data will get
-                        // overwritten and corrupt memory (even if we really do want to do a write)
-                        MemEvent* newEv = new MemEvent(owner, ev->getAddr(), RequestData);
-            		newEv->setSize(blockSize);
+        // Cycle over each registered call back and notify them that we want to issue a prefet$
+        for(callbackItr = registeredCallbacks.begin(); callbackItr != registeredCallbacks.end(); callbackItr++) {
+            // Create a new read request, we cannot issue a write because the data will get
+            // overwritten and corrupt memory (even if we really do want to do a write)
+            MemEvent* newEv = new MemEvent(owner, ev->getAddr(), RequestData);
+            newEv->setSize(blockSize);
 
-                        (*(*callbackItr))(newEv);
-                }
-	}
+            (*(*callbackItr))(newEv);
+        }
+        delete ev;
+    }
 }
 
 StridePrefetcher::StridePrefetcher(Params& params) {
