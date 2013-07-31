@@ -762,7 +762,6 @@ void Cache::loadBlock(MemEvent *ev, SourceInfo_t src)
                     return;
                 } else if ( CacheBlock::DIRTY_UPSTREAM == block->status ) {
                     dbg.output(CALL_INFO, "Replacing a block to handle load.  Need to fetch upstream DIRTY copies of old cache block 0x%"PRIx64" [%d.%d].\n", block->baseAddr, block->status, block->user_locked);
-                    //issueInvalidate(ev, src, block, CacheBlock::EXCLUSIVE, SEND_UP, false);
                     fetchBlock(ev, block, src);
                     return;
                 } else if ( CacheBlock::INVALID != block->status ) {
@@ -960,7 +959,7 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceInfo_t src, bool firstPr
 
 	if ( block ) {
         if ( CacheBlock::DIRTY_UPSTREAM == block->status ) {
-            if ( src.type == SNOOP ) {
+            if ( src.type == SNOOP || src.type == PREFETCHER ) {
                 /* Pretend we don't have it.  Somebody else will supply it. */
                 delete ev;
                 return;
@@ -1265,7 +1264,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
                 uint32_t deleted = 0;
                 for ( uint32_t n = 0 ; n < li->list.size() ; n++ ) {
                     LoadInfo_t::LoadElement_t &oldEV = li->list[n];
-                    if ( src.type == SNOOP && oldEV.src.type == SNOOP ) {
+                    if ( src.type == SNOOP && oldEV.src.type == SNOOP && oldEV.ev->getAddr() == ev->getAddr() ) {
                         delete oldEV.ev;
                         oldEV.ev = NULL;
                         deleted++;

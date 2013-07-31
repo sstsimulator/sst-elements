@@ -70,8 +70,7 @@ void StridePrefetcher::DetectStride() {
 	if(ev != NULL) {
 		std::vector<Event::HandlerBase*>::iterator callbackItr;
 
-		std::cout << "StridePrefetcher: created prefetch for address " <<
-			ev->getAddr() << std::endl;
+		//std::cout << "StridePrefetcher: created prefetch for address " << ev->getAddr() << std::endl;
 		prefetchEventsIssued++;
 
                 // Cycle over each registered call back and notify them that we want to issue a prefet$
