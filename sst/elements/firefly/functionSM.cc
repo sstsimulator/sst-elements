@@ -22,6 +22,7 @@
 #include "funcSM/wait.h"
 #include "funcSM/barrier.h"
 #include "funcSM/allreduce.h"
+#include "funcSM/gatherv.h"
 
 #include "ctrlMsg.h"
 
@@ -57,6 +58,8 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
     setFunctionTimes( Barrier, timeParams.find_integer("Barrier", defaultTime ) );
     setFunctionTimes( Allreduce, timeParams.find_integer("Allreduce", defaultTime ) );
     setFunctionTimes( Reduce, timeParams.find_integer("Reduce", defaultTime ) );
+    setFunctionTimes( Gather, timeParams.find_integer("Gather", defaultTime ) );
+    setFunctionTimes( Gatherv, timeParams.find_integer("Gatherv",defaultTime ));
 
     m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
@@ -89,6 +92,10 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
     m_smV[Allreduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
                                         m_toProgressLink, ctrlMsg, io );
     m_smV[Reduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
+                                        m_toProgressLink, ctrlMsg, io );
+    m_smV[Gather] = new GathervFuncSM( verboseLevel, loc, &info,
+                                        m_toProgressLink, ctrlMsg, io );
+    m_smV[Gatherv] = new GathervFuncSM( verboseLevel, loc, &info,
                                         m_toProgressLink, ctrlMsg, io );
 }
 

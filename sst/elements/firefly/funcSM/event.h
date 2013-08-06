@@ -132,6 +132,67 @@ class CollectiveEnterEvent : public SMEnterEvent {
     bool  all;
 };
 
+class GatherBaseEnterEvent : public SMEnterEvent {
+
+  public:
+    GatherBaseEnterEvent(int type, Hermes::Functor* retFunc,
+        Hermes::Addr _sendbuf, uint32_t _sendcnt,
+        Hermes::PayloadDataType _sendtype,
+        Hermes::Addr _recvbuf,
+        Hermes::PayloadDataType _recvtype,
+        Hermes::RankID _root, Hermes::Communicator _group ) :
+
+        SMEnterEvent( type, retFunc ),
+        sendbuf(_sendbuf),
+        recvbuf(_recvbuf),
+        sendcnt(_sendcnt),
+        sendtype(_sendtype),
+        recvtype(_recvtype),
+        root(_root),
+        group(_group)
+    {}
+    
+    Hermes::Addr sendbuf;
+    Hermes::Addr recvbuf;
+    uint32_t sendcnt;
+    Hermes::PayloadDataType sendtype;
+    Hermes::PayloadDataType recvtype;
+    Hermes::RankID  root;
+    Hermes::Communicator group;
+};
+
+class GathervEnterEvent : public GatherBaseEnterEvent {
+  public:
+    GathervEnterEvent(int type, Hermes::Functor* retFunc,
+            Hermes::Addr sendbuf, uint32_t sendcnt,
+            Hermes::PayloadDataType sendtype,
+            Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
+            Hermes::PayloadDataType recvtype,
+            Hermes::RankID root, Hermes::Communicator group ) :
+        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+            recvbuf, recvtype, root, group ),
+            recvcntPtr( _recvcnt),
+            displsPtr( _displs ) 
+    { }
+
+    GathervEnterEvent(int type, Hermes::Functor* retFunc,
+            Hermes::Addr sendbuf, uint32_t sendcnt,
+            Hermes::PayloadDataType sendtype,
+            Hermes::Addr recvbuf, uint32_t _recvcnt,
+            Hermes::PayloadDataType recvtype,
+            Hermes::RankID root, Hermes::Communicator group ) :
+        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+            recvbuf, recvtype, root, group ),
+            recvcntPtr( 0 ),
+            displsPtr( 0 ),
+            recvcnt( _recvcnt) 
+    { }
+
+    Hermes::Addr recvcntPtr;
+    Hermes::Addr displsPtr;
+    uint32_t recvcnt;
+};
+
 class WaitEnterEvent : public SMEnterEvent {
   public:
     WaitEnterEvent( int type, Hermes::Functor* retFunc,

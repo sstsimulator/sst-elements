@@ -37,6 +37,12 @@ class TestDriver : public SST::Component {
 
     void handle_event(SST::Event*);
     void funcDone(int retval);
+    void gathervEnter();
+    void gathervReturn();
+    void gatherEnter();
+    void gatherReturn();
+    void recvReturn();
+    void waitReturn();
 
     std::string                 m_traceFileName;
     std::ifstream               m_traceFile;
@@ -47,17 +53,22 @@ class TestDriver : public SST::Component {
 
     Hermes::MessageRequest  my_req;
     Hermes::MessageResponse my_resp;
-    int                     my_rank;
+    Hermes::RankID          my_rank;
     int                     my_size;
     Hermes::RankID          m_root;
     int                     m_collectiveIn;
     int                     m_collectiveOut;
-    bool                    m_irecv;
     Output                  m_dbg;
 
+    size_t                  m_bufLen;
     std::vector<unsigned char> m_recvBuf;
     std::vector<unsigned char> m_sendBuf;
 
+    std::vector<unsigned int> m_gatherSendBuf;
+    std::vector<unsigned int> m_gatherRecvBuf;
+
+    std::vector<unsigned int> m_displs;
+    std::vector<unsigned int> m_recvcnt;
 };
 
 } // namesapce Firefly 

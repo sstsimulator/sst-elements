@@ -52,7 +52,8 @@ class FunctionSMInterface : public Module {
   public:
     FunctionSMInterface( int verboseLevel, Output::output_location_t loc,
                 Info* info ) :
-        m_info(info)
+        m_info(info),
+        m_setPrefix( true )
     {
         m_dbg.init("@t:XXXFuncSM::@p():@l ", verboseLevel, 0, loc );
     }
@@ -75,6 +76,7 @@ class FunctionSMInterface : public Module {
     Info*   m_info;
     Output  m_dbg;
     std::string m_xxx; 
+    bool    m_setPrefix;
 };
 
 }

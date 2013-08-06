@@ -79,7 +79,7 @@ class MessageInterface : public Module {
     virtual RankID myWorldRank() { assert(0); } 
     virtual void init(Functor*) {}
     virtual void fini(Functor*) {}
-    virtual void rank(Communicator group, int* rank, Functor*) {}
+    virtual void rank(Communicator group, RankID* rank, Functor*) {}
     virtual void size(Communicator group, int* size, Functor*) {}
 
     virtual void send(Addr payload, uint32_t count, PayloadDataType dtype, 
@@ -106,9 +106,20 @@ class MessageInterface : public Module {
         PayloadDataType dtype, ReductionOperation op, RankID root, 
         Communicator group, Functor*) {}
 
+    virtual void gather(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        RankID root, Communicator group, Functor*) {}
+
+    virtual void gatherv(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnt, Addr displs,
+        PayloadDataType recvtype,
+        RankID root, Communicator group, Functor*) {}
+
     virtual void barrier(Communicator group, Functor*) {}
 
-    virtual void probe( RankID source, uint32_t tag, 
+    virtual void probe( int source, uint32_t tag, 
         Communicator group, MessageResponse* resp, Functor* ) {} 
 
     virtual void wait( MessageRequest* req, MessageResponse* resp,

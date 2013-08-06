@@ -76,7 +76,7 @@ void CollectiveTreeFuncSM::run()
                 for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
                     m_dbg.verbose(CALL_INFO,1,0,"post recv for %d\n",i);
                     m_ctrlMsg->recv( m_bufV[i+1], m_bufLen, m_yyy->calcChild(i), 
-                                m_event->group, &m_recvReqV[i+1] );
+                            CollectiveTag, m_event->group, &m_recvReqV[i+1] );
                 }
                 m_count = 0;
                 m_pending = true;
@@ -114,15 +114,17 @@ void CollectiveTreeFuncSM::run()
                                                             m_yyy->parent());
                 if ( m_yyy->numChildren() ) {
                     m_ctrlMsg->send( m_event->result, m_bufLen, m_yyy->parent(),
-                                                m_event->group, &m_sendReq );
+                            CollectiveTag, m_event->group, &m_sendReq );
                 } else {
                     m_ctrlMsg->send( m_event->mydata, m_bufLen, m_yyy->parent(),
-                                                m_event->group, &m_sendReq );
+                            CollectiveTag, m_event->group, &m_sendReq );
                 }
                 m_toProgressLink->send(0, NULL );
                 m_pending = true;
                 break;
-            } 
+            } else {
+                // do we need to wait for the send to complete? 
+            }
         }
         m_pending = false;
         m_state = WaitDown;
@@ -132,7 +134,7 @@ void CollectiveTreeFuncSM::run()
             m_dbg.verbose(CALL_INFO,1,0,"WaitDown\n");
             if ( ! m_pending ) {
                 m_ctrlMsg->recv( m_event->result, m_bufLen, m_yyy->parent(),
-                                    m_event->group, &m_recvReqV[0] );
+                    CollectiveTag, m_event->group, &m_recvReqV[0] );
                 m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
                                                             m_yyy->parent());
                 m_pending = true;
@@ -158,16 +160,17 @@ void CollectiveTreeFuncSM::run()
             m_dbg.verbose(CALL_INFO,1,0,"SendDown\n");
             if ( m_count < m_yyy->numChildren() ) {
                 m_ctrlMsg->send( m_event->result, m_bufLen,
-                    m_yyy->calcChild(m_count++), m_event->group, &m_sendReq );
+                    m_yyy->calcChild(m_count++), 
+                    CollectiveTag, m_event->group, &m_sendReq );
                 m_toProgressLink->send(0, NULL );
                 break;
             } 
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
-        m_event = NULL;
         delete m_yyy;
         delete m_event;
+        m_event = NULL;
     }
 }
 

@@ -29,10 +29,10 @@ void Hades::fini(Functor* retFunc)
     m_functionSM->start( new FiniEnterEvent( FunctionSM::Fini, retFunc) );
 }
 
-void Hades::rank(Communicator group, int* rank, Functor* retFunc)
+void Hades::rank(Communicator group, RankID* rank, Functor* retFunc)
 {
     m_functionSM->start( new RankEnterEvent(FunctionSM::Rank,
-                                        retFunc, group, rank) );
+                                        retFunc, group, (int*) rank) );
 }
 
 void Hades::size(Communicator group, int* size, Functor* retFunc )
@@ -92,13 +92,34 @@ void Hades::allreduce(Addr mydata, Addr result, uint32_t count,
                         dtype, op, 0, group, true) );
 }
 
-void Hades::reduce(void* mydata, void* result, uint32_t count,
+void Hades::reduce(Addr mydata, Addr result, uint32_t count,
         PayloadDataType dtype, ReductionOperation op, RankID root,
         Communicator group, Functor* retFunc)
 {
     m_functionSM->start( new CollectiveEnterEvent(FunctionSM::Reduce,
                          retFunc, mydata, result, count, 
                         dtype, op, root, group, false) );
+}
+
+void Hades::gather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        RankID root, Communicator group, Functor* retFunc)
+{
+    m_functionSM->start( new GathervEnterEvent(FunctionSM::Gather, retFunc,
+            sendbuf, sendcnt, sendtype,
+            recvbuf, recvcnt, recvtype, root, group ) );
+}
+
+void Hades::gatherv( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnt, Addr displs,
+        PayloadDataType recvtype,
+        RankID root, Communicator group, Functor* retFunc)
+{
+    m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d recvcnt=%p\n",
+                sendbuf,recvbuf,sendcnt,recvcnt);
+    m_functionSM->start( new GathervEnterEvent(FunctionSM::Gatherv, retFunc,
+            sendbuf, sendcnt, sendtype,
+            recvbuf, recvcnt, displs, recvtype, root, group ) );
 }
 
 void Hades::barrier(Communicator group, Functor* retFunc)

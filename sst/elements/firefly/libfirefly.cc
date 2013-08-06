@@ -20,6 +20,9 @@
 #include <testDriver.h>
 #include <hades.h>
 #include <simpleIO.h>
+#if 0
+#include <merlinIO.h>
+#endif
 
 using namespace Firefly;
 
@@ -53,6 +56,14 @@ load_simpleIO(Params& params)
     return new SimpleIO(params);
 }
 
+#if 0
+static Module*
+load_merlinIO(Params& params)
+{
+    return new MerlinIO(params);
+}
+#endif
+
 static const ElementInfoComponent components[] = {
     { "nic",
       "Firefly NIC",
@@ -85,6 +96,14 @@ static const ElementInfoModule modules[] = {
       load_simpleIO,
       NULL,
     },
+#if 0
+    { "merlinIO",
+      "Merlin IO module",
+      NULL,
+      load_merlinIO,
+      NULL,
+    },
+#endif
     { NULL, NULL, NULL, NULL, NULL }
 };
 

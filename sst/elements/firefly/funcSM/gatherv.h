@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_FUNCSM_COLLECTIVE_H
-#define COMPONENTS_FIREFLY_FUNCSM_COLLECTIVE_H
+#ifndef COMPONENTS_FIREFLY_FUNCSM_GATHERV_H
+#define COMPONENTS_FIREFLY_FUNCSM_GATHERV_H
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
@@ -20,10 +20,10 @@
 namespace SST {
 namespace Firefly {
 
-class YYY {
+class QQQ {
 
   public:
-    YYY( int degree, int myRank, int size, int root  ) :
+    QQQ( int degree, int myRank, int size, int root  ) :
         m_degree( degree ),
         m_myRank( myRank ),
         m_size( size ),
@@ -59,8 +59,34 @@ class YYY {
         }
     }
 
-    int myRank() { return m_myRank; }
+    void foo( int x, std::vector<int>& map ) {
+        if ( m_root ) {
+            if ( x == m_root ) {
+                map.push_back(0);
+            } else if ( 0 == x )  {
+                map.push_back( m_root);
+            } else { 
+                map.push_back(x);
+            }
+        } else { 
+            map.push_back(x);
+        }
 
+        for ( int i = 0; i < m_degree; i++ ) {
+            int child = (x * m_degree) + i + 1; 
+            if ( child < m_size ) {
+                foo( child, map );
+            }
+        }
+    }
+
+    std::vector<int> getMap() {
+        std::vector<int> map;
+        foo( 0, map ); 
+        return map;
+    }
+
+    int myRank() { return m_myRank; }
     int size() { return m_size; }
 
     int parent() { return m_parent; }
@@ -70,11 +96,11 @@ class YYY {
     int calcChild( int i ) {
         int child = (m_myVirtRank * m_degree) + i + 1;
         if ( child == 0 ) {
-            child = m_root; 
+            child = m_root;
         }  else if ( child == m_root ) {
             child = 0;
         }
-        return child; 
+        return child;
     }
 
   private:
@@ -88,17 +114,21 @@ class YYY {
     int m_parent;
 };
 
-class CollectiveTreeFuncSM :  public FunctionSMInterface
+
+class GathervFuncSM :  public FunctionSMInterface
 {
-    enum { WaitUp, SendUp, WaitDown, SendDown } m_state;
+    enum { WaitUp, SendUp } m_state;
 
-    typedef Arg_Functor<CollectiveTreeFuncSM, IO::NodeId>             IO_Functor;
+    enum { WaitUpRecv, WaitUpSend, WaitUpRecvBody } m_waitUpState;
+    enum { SendUpSend, SendUpWait, SendUpSendBody } m_sendUpState;
 
-    static const int CollectiveTag = 0xdead0002;
+    typedef Arg_Functor<GathervFuncSM, IO::NodeId>             IO_Functor;
 
+    static const int GathervTag = 0xdead0001;
+    static const int MaxBuffSize = 256;
 
   public:
-    CollectiveTreeFuncSM( int verboseLevel, Output::output_location_t loc,
+    GathervFuncSM( int verboseLevel, Output::output_location_t loc,
             Info* info, SST::Link*& progressLink,
             ProtocolAPI*, IO::Interface* );
 
@@ -106,27 +136,36 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     virtual void handleProgressEvent( SST::Event *e );
 
     virtual const char* name() {
-       return "CollectiveTree"; 
+       return "Gatherv"; 
     }
 
   private:
 
-    void run();
     void dataReady( IO::NodeId src );
+    bool waitUp();
+    bool sendUp();
+    void doRoot();
 
-    IO_Functor              m_dataReadyFunctor;
+    IO_Functor          m_dataReadyFunctor;
 
-    bool                    m_pending;
-    CollectiveEnterEvent*   m_event;
-    SST::Link*&             m_toProgressLink;
-    CtrlMsg*                m_ctrlMsg;
-    std::vector<CtrlMsg::CommReq>  m_recvReqV;
-    std::vector<void*>  m_bufV;
-    CtrlMsg::CommReq    m_sendReq; 
-    unsigned int        m_count;
+    SST::Link*&         m_toProgressLink;
+    CtrlMsg*            m_ctrlMsg;
+    GathervEnterEvent*  m_event;
     IO::Interface*      m_io;
-    size_t              m_bufLen;
-    YYY*                m_yyy;
+    QQQ*                m_qqq;
+    bool                m_pending;
+    CtrlMsg::CommReq    m_sendReq; 
+    CtrlMsg::CommReq    m_recvReq; 
+    std::vector<CtrlMsg::CommReq>  m_recvReqV;
+
+    bool                m_waitUpPending;
+    std::vector<int>    m_waitUpSize;
+    
+    std::vector<unsigned char>  m_recvBuf;
+    int                         m_intBuf;
+
+    unsigned int        m_count; 
+    bool                m_sendUpPending;
 };
         
 }

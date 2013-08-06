@@ -38,23 +38,25 @@ CtrlMsg::SendReq* CtrlMsg::getSendReq( )
         assert( req );
         m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-        req->entry = m_sendQ.front();
+        req->commReq = m_sendQ.front();
+        SendInfo& info = *static_cast<SendInfo*>(req->commReq->info);
         m_sendQ.pop_front();
 
         Hdr& hdr = req->hdr;
 
-        hdr.type = 0xf00d;
-        hdr.srcRank = m_info->getGroup(req->entry->group)->getMyRank();
-        hdr.group   = req->entry->group;
-        hdr.len     = req->entry->len;
+        hdr.len = info.len;
+        hdr.tag = info.tag;
+        hdr.src = m_info->getGroup( info.group )->getMyRank();
+        hdr.group = info.group;
 
         req->ioVec.resize(2);
         req->ioVec[0].ptr = &hdr;
         req->ioVec[0].len = sizeof(hdr);
-        req->ioVec[1].ptr = req->entry->buf;
-        req->ioVec[1].len = req->entry->len;
+        req->ioVec[1].ptr = info.buf;
+        req->ioVec[1].len = info.len;
 
-        req->nodeId = m_info->rankToNodeId(req->entry->group, req->entry->node);
+        m_dbg.verbose(CALL_INFO,1,0,"\n");
+        req->nodeId = m_info->rankToNodeId( info.group, info.dest );
         return req;
     }
     return NULL;
@@ -77,79 +79,83 @@ CtrlMsg::RecvReq* CtrlMsg::getRecvReq( IO::NodeId src )
     return req;
 }
 
-CtrlMsg::SendReq* CtrlMsg::sendIODone( Request* r   )
+CtrlMsg::SendReq* CtrlMsg::sendIODone( Request* r )
 {
     SendReq* req = static_cast<SendReq*>(r);
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    req->entry->done = true;
+    req->commReq->done = true;
     delete req;
     return  NULL;
 }
 
-CtrlMsg::MsgReq* CtrlMsg::findMatch( Hdr& hdr )
+CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr )
 {
     m_dbg.verbose(CALL_INFO,1,0,"posted size %lu\n",m_postedQ.size());
-    std::deque< MsgReq* >:: iterator iter = m_postedQ.begin();
+
+    std::deque< CommReq* >:: iterator iter = m_postedQ.begin();
     for ( ; iter != m_postedQ.end(); ++iter ) {
-        MsgReq* req = *iter;
-        m_dbg.verbose(CALL_INFO,1,0,"type %d %d\n", hdr.type, (*iter)->type);
-        if ( hdr.type != (*iter)->type ) {
+
+        RecvInfo& info = *static_cast<RecvInfo*>( (*iter)->info );
+
+        m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", info.tag, hdr.tag );
+        if ( ( -1 != info.tag ) && ( hdr.tag != info.tag ) ) {
             continue;
         }
-        m_dbg.verbose(CALL_INFO,1,0,"rank %d %d\n",hdr.srcRank,(*iter)->node);
-        if ( hdr.srcRank != (*iter)->node ) {
+
+        m_dbg.verbose(CALL_INFO,1,0,"rank %d %d\n", info.src, hdr.src );
+        if ( ( -1 != info.src ) && ( hdr.src != info.src ) ) {
             continue;
         }
-        m_dbg.verbose(CALL_INFO,1,0,"group %d %d\n",hdr.group, (*iter)->group);
-        if ( hdr.group != (*iter)->group ) {
+
+        m_dbg.verbose(CALL_INFO,1,0,"len %lu %lu\n", info.len, hdr.len );
+        if ( hdr.len != info.len ) {
             continue;
         }
-        m_dbg.verbose(CALL_INFO,1,0,"type %d %d\n",hdr.type, (*iter)->type);
-        if ( hdr.type != (*iter)->type ) {
+
+        m_dbg.verbose(CALL_INFO,1,0,"group %d %d\n", info.group, hdr.group );
+        if ( hdr.group != info.group ) {
             continue;
         }
-        m_dbg.verbose(CALL_INFO,1,0,"len %lu %lu\n",hdr.len, (*iter)->len);
-        if ( hdr.len != (*iter)->len ) {
-            continue;
-        }
+
+        CommReq* req = *iter;
         m_postedQ.erase(iter);
         return req;
     }
     return NULL;
 }
 
-CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( MsgReq* req )
+CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( RecvInfo& info )
 {
     m_dbg.verbose(CALL_INFO,1,0,"unexpected size %lu\n", m_unexpectedQ.size() );
+
     std::deque< RecvReq* >::iterator iter = m_unexpectedQ.begin();
     for ( ; iter != m_unexpectedQ.end(); ++iter  ) {
 
-        m_dbg.verbose(CALL_INFO,1,0,"type want %d, incoming %d\n",
-                                            req->type, (*iter)->hdr.type );
-        if ( req->type != (*iter)->hdr.type ) {
+        Hdr& tmpHdr = (*iter)->hdr; 
+
+        m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", tmpHdr.tag, info.tag );
+        if ( ( -1 != info.tag ) && (  tmpHdr.tag != info.tag ) ) {
             continue;
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"rank want %d, incoming %d\n",
-                                            req->node, (*iter)->hdr.srcRank);
-        if ( req->node != (*iter)->hdr.srcRank ) {
+        m_dbg.verbose(CALL_INFO,1,0,"node %d %d\n", tmpHdr.src, info.src );
+        if ( ( -1 != info.src ) && ( tmpHdr.src != info.src ) ) {
             continue;
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"group want %d, incoming %d\n",
-                                            req->group, (*iter)->hdr.group);
-        if ( req->group != (*iter)->hdr.group ) {
+        m_dbg.verbose(CALL_INFO,1,0,"len %lu %lu\n", tmpHdr.len, info.len );
+        if ( ( (size_t) -1 != info.len ) && ( tmpHdr.len != info.len ) ) {
             continue;
         }
 
-        m_dbg.verbose(CALL_INFO,1,0,"len %lu %lu\n",
-                                            req->len, (*iter)->hdr.len );
-        if ( req->len != (*iter)->hdr.len ) {
+        m_dbg.verbose(CALL_INFO,1,0,"group %d %d\n", tmpHdr.group, info.group );
+        if ( tmpHdr.group != info.group ) {
             continue;
         }
 
+        RecvReq* req = *iter;
         m_unexpectedQ.erase( iter );
-        return *iter;
+        return req;
     }
 
     return NULL;
@@ -162,20 +168,20 @@ CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
     if ( RecvReq::RecvHdr == req->state ) {
 
         m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n",req->nodeId);
-        req->entry = findMatch( req->hdr );    
+        req->commReq = findMatch( req->hdr );    
         req->state = RecvReq::RecvBody;
 
-        if ( req->entry ) {
+        if ( req->commReq ) {
             m_dbg.verbose(CALL_INFO,1,0,"found match\n" );
-            if ( req->entry->len ) {
+            if ( req->commReq->info->len ) {
                 m_dbg.verbose(CALL_INFO,1,0,"getBody %lu bytes\n",
-                                            req->entry->len );
+                                            req->commReq->info->len );
                 m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
-                                            req->entry->len,req->entry->buf);
-                req->ioVec[0].len = req->entry->len;
-                req->ioVec[0].ptr = req->entry->buf;
+                         req->commReq->info->len, req->commReq->info->buf);
+                req->ioVec[0].len = req->commReq->info->len;
+                req->ioVec[0].ptr = req->commReq->info->buf;
             } else {
-                req->entry->done = true;
+                req->commReq->done = true;
                 delete req;
                 req = NULL;
             }
@@ -192,8 +198,8 @@ CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
         }
 
     } else {
-        if ( req->entry ) {
-            req->entry->done = true;
+        if ( req->commReq ) {
+            req->commReq->done = true;
             delete req;
         }
         req = NULL;
@@ -208,24 +214,20 @@ CtrlMsg::Request* CtrlMsg::delayDone( Request* )
     return NULL;
 }
 
-void CtrlMsg::recv( void* buf, size_t len, int src, int group, MsgReq* req )
+void CtrlMsg::recv( void* buf, size_t len, int src, int tag, int group, 
+                                    CommReq* req )
 {
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu src=%d\n",buf,len,src);
     
+    req->info = new RecvInfo( buf, len, src, tag, group );
     req->done = false;
-
-    req->buf = buf;
-    req->len = len;
-    req->node = src;
-    req->group = group;
-    req->type = 0xf00d;
 
     m_dbg.verbose(CALL_INFO,1,0,"%lu\n", m_unexpectedQ.size());
     if ( ! m_unexpectedQ.empty() ) {
-        RecvReq *xxx = searchUnexpected( req );
+        RecvReq *xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) );
         if ( xxx ) {
             m_dbg.verbose(CALL_INFO,1,0,"found unexpected\n");
-            memcpy( req->buf, &xxx->buf[0], req->len );
+            memcpy( req->info->buf, &xxx->buf[0], req->info->len );
             req->done = true;
             delete xxx;
         }
@@ -234,21 +236,21 @@ void CtrlMsg::recv( void* buf, size_t len, int src, int group, MsgReq* req )
     }
 }
 
-void CtrlMsg::send( void* buf, size_t len, int dest, int group, MsgReq* req )
+void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group, 
+                                    CommReq* req )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu dest=%d\n",buf,len,dest);
-    req->done = false;
+    m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu dest=%d tag=%d group=%d\n",
+                                        buf,len,dest,tag,group);
 
-    req->buf = buf;
-    req->len = len;
-    req->node = dest;
-    req->group = group;
-    req->type = 0xf00d;
+    req->info = new SendInfo( buf, len, dest, tag, group );
+    req->done = false;
 
     m_sendQ.push_back( req );
 }
-bool CtrlMsg::test( MsgReq * req )
+
+bool CtrlMsg::test( CommReq * req )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
+    assert( req->info );
     return req->done;
 }

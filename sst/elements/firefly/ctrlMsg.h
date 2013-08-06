@@ -23,36 +23,65 @@ class Info;
 
 class CtrlMsg : public ProtocolAPI {
 
-  public:
-    struct MsgReq {
-        void* buf;
-        size_t len;
-        int node;
-        int group;
-        bool done;
-        int type;
+    struct Hdr {
+        size_t  len;
+        int     tag;
+        int     src;
+        int     group;
     };
 
-    struct Hdr {
-        int type;
-        int group;
-        int srcRank;
-        size_t len;
+    struct BaseInfo {
+        BaseInfo( void* _buf, size_t _len, int _tag, int _group) : 
+            buf( _buf ),
+            len( _len ),
+            tag( _tag ),
+            group( _group )
+        {}
+
+        virtual ~BaseInfo() {} 
+        void*   buf;
+        size_t  len;
+        int     tag;
+        int     group;
+    };
+
+    struct RecvInfo : public BaseInfo {
+        RecvInfo( void* _buf, size_t _len, int _src, int _tag, int _group) : 
+            BaseInfo( _buf, _len, _tag, _group ),
+            src( _src ) 
+        {}
+        int     src;
+    };
+
+    struct SendInfo : public BaseInfo {
+        SendInfo( void* _buf, size_t _len, int _dest, int _tag, int _group) : 
+            BaseInfo( _buf, _len, _tag, _group ),
+            dest( _dest ) 
+        {}
+        int     dest;
+    };
+
+  public:
+
+    struct CommReq {
+        CommReq() : info( NULL ) {}
+        BaseInfo*    info;
+        bool done;
     };
 
   private:
 
     class SendReq: public Request {
       public:
-        Hdr hdr;
-        MsgReq* entry;
+        Hdr         hdr;
+        CommReq*    commReq;
     };
 
     class RecvReq: public Request {
       public:
         enum { RecvHdr, RecvBody } state;
-        Hdr hdr;
-        MsgReq* entry;
+        Hdr         hdr;
+        CommReq*    commReq;
         std::vector<unsigned char> buf;
     };
 
@@ -66,18 +95,19 @@ class CtrlMsg : public ProtocolAPI {
     virtual RecvReq* recvIODone( Request* );
     virtual Request* delayDone( Request* );
 
-    void recv( void* buf, size_t len, int src,  int group, MsgReq* );
-    void send( void* buf, size_t len, int dest, int group, MsgReq* );
-    bool test( MsgReq * );
+    void recv( void* buf, size_t len, int src,  int tag, int group, CommReq* );
+    void send( void* buf, size_t len, int dest, int tag, int group, CommReq* );
+    bool test( CommReq*  );
+
 
   private:
 
-    MsgReq* findMatch( Hdr& );
-    RecvReq* searchUnexpected( MsgReq* entry );
+    CommReq* findMatch( Hdr& );
+    RecvReq* searchUnexpected( RecvInfo& info );
 
     Info* m_info;
-    std::deque< MsgReq* > m_sendQ;
-    std::deque< MsgReq* > m_postedQ;
+    std::deque< CommReq* > m_sendQ;
+    std::deque< CommReq* > m_postedQ;
     std::deque< RecvReq* > m_unexpectedQ;
 };
 

@@ -36,6 +36,8 @@ class FunctionSM {
         Barrier,
         Allreduce,
         Reduce,
+        Gather,
+        Gatherv,
         Irecv,
         Isend,
         Send,
