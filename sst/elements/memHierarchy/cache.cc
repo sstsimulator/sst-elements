@@ -1942,6 +1942,7 @@ void Cache::handleUncachedWrite(MemEvent *ev, SourceInfo_t src)
             dbg.output(CALL_INFO, "UNCACHED Write 0x%"PRIx64" from SNOOP discarding\n", ev->getAddr());
             // We can't forward this on.  Exit early.
             delete newev;
+            delete ev;
             return;
         }
         break;
