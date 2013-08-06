@@ -179,11 +179,17 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 
 	/* From ${GEM5}/src/mem/request.hh */
     static const uint32_t LOCKED                      = 0x00100000;
+    static const uint32_t UNCACHED                    = 0x00001000;
 
 	if ( pkt->req.flags & LOCKED ) {
 		ev->setFlags(SST::Interfaces::MemEvent::F_LOCKED);
 		ev->setLockID(((uint64_t)(pkt->req.contextId) <<32) | (uint64_t)(pkt->req.threadId));
 	}
+
+    if ( pkt->req.flags & UNCACHED ) {
+        ev->setFlags(SST::Interfaces::MemEvent::F_UNCACHED);
+    }
+
 
 	switch ( (::MemCmd::Command)pkt->cmd) {
 	case ::MemCmd::ReadReq:

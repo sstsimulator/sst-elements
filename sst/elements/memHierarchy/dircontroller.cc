@@ -686,7 +686,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry)
 MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event)
 {
 	MemEvent *ev = new MemEvent(this, convertAddressToLocalAddress(data_event->getAddr()), SupplyData);
-    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) ev->setFlag(MemEvent::F_UNCACHED);
+    if ( data_event->queryFlag(MemEvent::F_UNCACHED) ) ev->setFlag(MemEvent::F_UNCACHED);
 	ev->setFlag(MemEvent::F_WRITEBACK);
 	ev->setPayload(data_event->getPayload());
     dbg.output(CALL_INFO, "Writing back data to 0x%"PRIx64" (%"PRIu64", %d)\n", data_event->getAddr(), ev->getID().first, ev->getID().second);
