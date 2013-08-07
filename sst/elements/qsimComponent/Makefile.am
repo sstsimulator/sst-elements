@@ -4,7 +4,8 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) 
+	$(MPI_CPPFLAGS) \
+	$(QSIM_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libqsimComponent.la
@@ -14,5 +15,5 @@ libqsimComponent_la_SOURCES = \
 
 EXTRA_DIST = gen_sdl.sh README
 
-libqsimComponent_la_LDFLAGS = -module -avoid-version
+libqsimComponent_la_LDFLAGS = -module -avoid-version $(QSIM_LDFLAGS)
 libqsimComponent_la_LIBADD = -lqsim
