@@ -239,7 +239,8 @@ private:
 		void setup(Cache *_comp, SST::Link *_link);
 
         int getNumPeers(void) const { return numPeers; }
-		int size(void) const { return queue.size(); }
+		int size(void) const { return map.size(); /* Don't use queue.size() -> that's an O(n) vs O(1) tradeoff */ }
+		bool empty(void) const { return map.empty(); }
 
 		void request(MemEvent *event, BusHandlers handlers = BusHandlers());
 		bool cancelRequest(MemEvent *event);

@@ -710,7 +710,7 @@ void Cache::finishIssueInvalidate(Addr addr)
     /* Erase before processing, otherwise, we'll think we're still waiting for invalidations */
     invalidations.erase(addr);
     bool first = true;
-    while ( waitingEvents.size() > 0 ) {
+    while ( !waitingEvents.empty() ) {
         std::pair<MemEvent*, SourceInfo_t> ev2 = waitingEvents.front();
         waitingEvents.pop_front();
         dbg.output(CALL_INFO, "Handling formerly blocked event (%"PRIu64", %d) [%s: 0x%"PRIx64"]\n",
@@ -1596,7 +1596,7 @@ bool Cache::cancelInvalidate(CacheBlock *block)
         invalidations.erase(i);
 
         dbg.output(CALL_INFO, "Due to cancel of Invalidate 0x%"PRIx64", re-issuing %zu events.\n", block->baseAddr, waitingEvents.size());
-        while ( waitingEvents.size() > 0 ) {
+        while ( !waitingEvents.empty() ) {
             MemEvent *origEV = waitingEvents.front().first;
             SourceInfo_t origSRC = waitingEvents.front().second;
             waitingEvents.pop_front();
@@ -2358,7 +2358,7 @@ bool Cache::BusQueue::cancelRequest(MemEvent *event)
 
 void Cache::BusQueue::clearToSend(BusEvent *busEvent)
 {
-    if ( 0 == size() ) {
+    if ( empty() ) {
         comp->dbg.output(CALL_INFO, "%s: No Requests to send!\n", comp->getName().c_str());
         /* Must have canceled the request */
         link->send(new BusEvent(BusEvent::CancelRequest, busEvent->getKey()));
