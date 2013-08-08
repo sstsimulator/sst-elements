@@ -37,6 +37,10 @@ class TestDriver : public SST::Component {
 
     void handle_event(SST::Event*);
     void funcDone(int retval);
+    void allgatherEnter();
+    void allgatherReturn();
+    void allgathervEnter();
+    void allgathervReturn();
     void gathervEnter();
     void gathervReturn();
     void gatherEnter();

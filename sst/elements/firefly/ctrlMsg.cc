@@ -44,16 +44,20 @@ CtrlMsg::SendReq* CtrlMsg::getSendReq( )
 
         Hdr& hdr = req->hdr;
 
-        hdr.len = info.len;
         hdr.tag = info.tag;
         hdr.src = m_info->getGroup( info.group )->getMyRank();
         hdr.group = info.group;
 
-        req->ioVec.resize(2);
+        req->ioVec.resize(1 + info.ioVec.size());
         req->ioVec[0].ptr = &hdr;
         req->ioVec[0].len = sizeof(hdr);
-        req->ioVec[1].ptr = info.buf;
-        req->ioVec[1].len = info.len;
+
+        hdr.len = 0;
+        for ( unsigned int i = 0; i < info.ioVec.size(); i++ ) {
+            req->ioVec[i + 1].ptr = info.ioVec[i].ptr;
+            req->ioVec[i + 1].len = info.ioVec[i].len;
+            hdr.len += info.ioVec[i].len;
+        }
 
         m_dbg.verbose(CALL_INFO,1,0,"\n");
         req->nodeId = m_info->rankToNodeId( info.group, info.dest );
@@ -97,7 +101,8 @@ CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr )
 
         RecvInfo& info = *static_cast<RecvInfo*>( (*iter)->info );
 
-        m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", info.tag, hdr.tag );
+        //m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", info.tag, hdr.tag );
+        m_dbg.verbose(CALL_INFO,1,0,"tag %#x %#x\n", info.tag, hdr.tag );
         if ( ( -1 != info.tag ) && ( hdr.tag != info.tag ) ) {
             continue;
         }
@@ -176,10 +181,14 @@ CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
             if ( req->commReq->info->len ) {
                 m_dbg.verbose(CALL_INFO,1,0,"getBody %lu bytes\n",
                                             req->commReq->info->len );
-                m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
-                         req->commReq->info->len, req->commReq->info->buf);
-                req->ioVec[0].len = req->commReq->info->len;
-                req->ioVec[0].ptr = req->commReq->info->buf;
+                req->ioVec.resize( req->commReq->info->ioVec.size() );
+                for ( unsigned int i = 0; i < req->ioVec.size(); i++ ) {
+                    m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
+                                        req->commReq->info->ioVec[i].len, 
+                                        req->commReq->info->ioVec[i].ptr);
+                    req->ioVec[i].len = req->commReq->info->ioVec[i].len;
+                    req->ioVec[i].ptr = req->commReq->info->ioVec[i].ptr;
+                }
             } else {
                 req->commReq->done = true;
                 delete req;
@@ -219,21 +228,11 @@ void CtrlMsg::recv( void* buf, size_t len, int src, int tag, int group,
 {
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu src=%d\n",buf,len,src);
     
-    req->info = new RecvInfo( buf, len, src, tag, group );
-    req->done = false;
+    std::vector<IoVec> ioVec(1);
+    ioVec[0].ptr = buf;
+    ioVec[0].len = len;
 
-    m_dbg.verbose(CALL_INFO,1,0,"%lu\n", m_unexpectedQ.size());
-    if ( ! m_unexpectedQ.empty() ) {
-        RecvReq *xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) );
-        if ( xxx ) {
-            m_dbg.verbose(CALL_INFO,1,0,"found unexpected\n");
-            memcpy( req->info->buf, &xxx->buf[0], req->info->len );
-            req->done = true;
-            delete xxx;
-        }
-    } else {
-        m_postedQ.push_back( req );
-    }
+    recvv( ioVec, src, tag, group, req );
 }
 
 void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group, 
@@ -242,7 +241,42 @@ void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group,
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu dest=%d tag=%d group=%d\n",
                                         buf,len,dest,tag,group);
 
-    req->info = new SendInfo( buf, len, dest, tag, group );
+    std::vector<IoVec> ioVec(1);
+    ioVec[0].ptr = buf;
+    ioVec[0].len = len;
+    sendv( ioVec, dest, tag, group, req );
+}
+
+void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
+                                                        int group, CommReq* req)
+{
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%d group=%d\n", src,tag,group);
+
+    req->info = new RecvInfo( ioVec, src, tag, group );
+    req->done = false;
+
+    if ( ! m_unexpectedQ.empty() ) {
+        RecvReq *xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) );
+        if ( xxx ) {
+            size_t offset = 0;
+            for ( unsigned int i; i < req->info->ioVec.size(); i++ ) {
+                memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
+                        req->info->ioVec[i].len );
+                offset += req->info->ioVec[i].len;
+            }
+            req->done = true;
+            delete xxx;
+        }
+    } else {
+        m_postedQ.push_back( req );
+    }
+}
+
+void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag, 
+                                                        int group, CommReq* req)
+{
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%d group=%d\n", dest,tag,group);
+    req->info = new SendInfo( ioVec, dest, tag, group );
     req->done = false;
 
     m_sendQ.push_back( req );

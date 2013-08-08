@@ -42,7 +42,7 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
     }
 
     assert( NULL == m_event );
-    m_event = static_cast< GathervEnterEvent* >(e);
+    m_event = static_cast< GatherEnterEvent* >(e);
 
     m_qqq = new QQQ( 2, m_info->getGroup(m_event->group)->getMyRank(),
                 m_info->getGroup(m_event->group)->size(), m_event->root );

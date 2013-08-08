@@ -22,6 +22,13 @@ namespace Firefly {
 class Info;
 
 class CtrlMsg : public ProtocolAPI {
+  public: 
+    struct IoVec {
+        void*  ptr;
+        size_t len;
+    };
+
+  private:
 
     struct Hdr {
         size_t  len;
@@ -31,37 +38,42 @@ class CtrlMsg : public ProtocolAPI {
     };
 
     struct BaseInfo {
-        BaseInfo( void* _buf, size_t _len, int _tag, int _group) : 
-            buf( _buf ),
-            len( _len ),
+        BaseInfo( std::vector<IoVec> _ioVec, int _tag, int _group) : 
+            ioVec( _ioVec ),
             tag( _tag ),
-            group( _group )
-        {}
+            group( _group ),
+            len( 0 )
+        {
+            for ( unsigned int i; i < ioVec.size(); i++ ) {
+                len += ioVec[i].len;
+            }
+        }
 
         virtual ~BaseInfo() {} 
-        void*   buf;
-        size_t  len;
+        std::vector<IoVec> ioVec;
         int     tag;
         int     group;
+        size_t  len;
     };
 
     struct RecvInfo : public BaseInfo {
-        RecvInfo( void* _buf, size_t _len, int _src, int _tag, int _group) : 
-            BaseInfo( _buf, _len, _tag, _group ),
+        RecvInfo( std::vector<IoVec> _ioVec, int _src, int _tag, int _group) : 
+            BaseInfo( _ioVec, _tag, _group ),
             src( _src ) 
         {}
         int     src;
     };
 
     struct SendInfo : public BaseInfo {
-        SendInfo( void* _buf, size_t _len, int _dest, int _tag, int _group) : 
-            BaseInfo( _buf, _len, _tag, _group ),
+        SendInfo( std::vector<IoVec> ioVec, int _dest, int _tag, int _group) : 
+            BaseInfo( ioVec, _tag, _group ),
             dest( _dest ) 
         {}
         int     dest;
     };
 
   public:
+
 
     struct CommReq {
         CommReq() : info( NULL ) {}
@@ -96,7 +108,9 @@ class CtrlMsg : public ProtocolAPI {
     virtual Request* delayDone( Request* );
 
     void recv( void* buf, size_t len, int src,  int tag, int group, CommReq* );
+    void recvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq* );
     void send( void* buf, size_t len, int dest, int tag, int group, CommReq* );
+    void sendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq* );
     bool test( CommReq*  );
 
 

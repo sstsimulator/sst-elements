@@ -16,7 +16,7 @@
      <bufLen> 8 </bufLen>
      <hermesModule> firefly.hades </hermesModule>
      <traceFile> barrier.out </traceFile>
-     <hermesParams.debug> 1 </hermesParams.debug>
+     <hermesParams.debug> 0 </hermesParams.debug>
      <hermesParams.verboseLevel> 1 </hermesParams.verboseLevel>
      <hermesParams.numRanks> 2 </hermesParams.numRanks>
      <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>

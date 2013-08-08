@@ -101,11 +101,32 @@ void Hades::reduce(Addr mydata, Addr result, uint32_t count,
                         dtype, op, root, group, false) );
 }
 
+void Hades::allgather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        Communicator group, Functor* retFunc)
+{
+    m_functionSM->start( new GatherEnterEvent(FunctionSM::Allgather, retFunc,
+            sendbuf, sendcnt, sendtype,
+            recvbuf, recvcnt, recvtype, group ) );
+}
+
+void Hades::allgatherv(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
+        Communicator group, Functor* retFunc)
+{
+    m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d "
+        "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnt,recvcnt);
+    m_functionSM->start( new GatherEnterEvent(FunctionSM::Allgatherv, retFunc,
+            sendbuf, sendcnt, sendtype,
+            recvbuf, recvcnt, displs, recvtype, group ) );
+}
+
 void Hades::gather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
         RankID root, Communicator group, Functor* retFunc)
 {
-    m_functionSM->start( new GathervEnterEvent(FunctionSM::Gather, retFunc,
+    m_functionSM->start( new GatherEnterEvent(FunctionSM::Gather, retFunc,
             sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, recvtype, root, group ) );
 }
@@ -115,9 +136,9 @@ void Hades::gatherv( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         PayloadDataType recvtype,
         RankID root, Communicator group, Functor* retFunc)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d recvcnt=%p\n",
-                sendbuf,recvbuf,sendcnt,recvcnt);
-    m_functionSM->start( new GathervEnterEvent(FunctionSM::Gatherv, retFunc,
+    m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d "
+        "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnt,recvcnt);
+    m_functionSM->start( new GatherEnterEvent(FunctionSM::Gatherv, retFunc,
             sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, displs, recvtype, root, group ) );
 }

@@ -87,6 +87,18 @@ class Hades : public Hermes::MessageInterface
         Hermes::ReductionOperation op, Hermes::RankID root,
         Hermes::Communicator group, Hermes::Functor*);
 
+    virtual void allgather( Hermes::Addr sendbuf, uint32_t sendcnt, 
+        Hermes::PayloadDataType sendtype,
+        Hermes::Addr recvbuf, uint32_t recvcnt, 
+        Hermes::PayloadDataType recvtype,
+        Hermes::Communicator group, Hermes::Functor*);
+
+    virtual void allgatherv( Hermes::Addr sendbuf, uint32_t sendcnt,
+        Hermes::PayloadDataType sendtype,
+        Hermes::Addr recvbuf, Hermes::Addr recvcnt, Hermes::Addr displs,
+        Hermes::PayloadDataType recvtype,
+        Hermes::Communicator group, Hermes::Functor*);
+
     virtual void gather( Hermes::Addr sendbuf, uint32_t sendcnt, 
         Hermes::PayloadDataType sendtype,
         Hermes::Addr recvbuf, uint32_t recvcnt, 

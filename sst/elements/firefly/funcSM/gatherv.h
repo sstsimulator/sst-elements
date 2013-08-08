@@ -125,7 +125,6 @@ class GathervFuncSM :  public FunctionSMInterface
     typedef Arg_Functor<GathervFuncSM, IO::NodeId>             IO_Functor;
 
     static const int GathervTag = 0xdead0001;
-    static const int MaxBuffSize = 256;
 
   public:
     GathervFuncSM( int verboseLevel, Output::output_location_t loc,
@@ -150,7 +149,7 @@ class GathervFuncSM :  public FunctionSMInterface
 
     SST::Link*&         m_toProgressLink;
     CtrlMsg*            m_ctrlMsg;
-    GathervEnterEvent*  m_event;
+    GatherEnterEvent*  m_event;
     IO::Interface*      m_io;
     QQQ*                m_qqq;
     bool                m_pending;

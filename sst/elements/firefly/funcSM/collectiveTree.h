@@ -69,6 +69,7 @@ class YYY {
 
     int calcChild( int i ) {
         int child = (m_myVirtRank * m_degree) + i + 1;
+        // ummm, child can never be 0
         if ( child == 0 ) {
             child = m_root; 
         }  else if ( child == m_root ) {

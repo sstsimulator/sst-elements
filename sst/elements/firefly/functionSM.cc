@@ -23,6 +23,7 @@
 #include "funcSM/barrier.h"
 #include "funcSM/allreduce.h"
 #include "funcSM/gatherv.h"
+#include "funcSM/allgather.h"
 
 #include "ctrlMsg.h"
 
@@ -58,6 +59,8 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
     setFunctionTimes( Barrier, timeParams.find_integer("Barrier", defaultTime ) );
     setFunctionTimes( Allreduce, timeParams.find_integer("Allreduce", defaultTime ) );
     setFunctionTimes( Reduce, timeParams.find_integer("Reduce", defaultTime ) );
+    setFunctionTimes( Allgather, timeParams.find_integer("Allgather", defaultTime ) );
+    setFunctionTimes( Allgatherv, timeParams.find_integer("Allgatherv", defaultTime ) );
     setFunctionTimes( Gather, timeParams.find_integer("Gather", defaultTime ) );
     setFunctionTimes( Gatherv, timeParams.find_integer("Gatherv",defaultTime ));
 
@@ -92,6 +95,10 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
     m_smV[Allreduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
                                         m_toProgressLink, ctrlMsg, io );
     m_smV[Reduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
+                                        m_toProgressLink, ctrlMsg, io );
+    m_smV[Allgather] = new AllgatherFuncSM( verboseLevel, loc, &info,
+                                        m_toProgressLink, ctrlMsg, io );
+    m_smV[Allgatherv] = new AllgatherFuncSM( verboseLevel, loc, &info,
                                         m_toProgressLink, ctrlMsg, io );
     m_smV[Gather] = new GathervFuncSM( verboseLevel, loc, &info,
                                         m_toProgressLink, ctrlMsg, io );

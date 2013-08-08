@@ -106,6 +106,16 @@ class MessageInterface : public Module {
         PayloadDataType dtype, ReductionOperation op, RankID root, 
         Communicator group, Functor*) {}
 
+    virtual void allgather(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        Communicator group, Functor*) {}
+
+    virtual void allgatherv(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
+        Communicator group, Functor*) {}
+
     virtual void gather(
         Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
@@ -113,8 +123,7 @@ class MessageInterface : public Module {
 
     virtual void gatherv(
         Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
-        Addr recvbuf, Addr recvcnt, Addr displs,
-        PayloadDataType recvtype,
+        Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
         RankID root, Communicator group, Functor*) {}
 
     virtual void barrier(Communicator group, Functor*) {}

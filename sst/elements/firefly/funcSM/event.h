@@ -161,9 +161,9 @@ class GatherBaseEnterEvent : public SMEnterEvent {
     Hermes::Communicator group;
 };
 
-class GathervEnterEvent : public GatherBaseEnterEvent {
+class GatherEnterEvent : public GatherBaseEnterEvent {
   public:
-    GathervEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherEnterEvent(int type, Hermes::Functor* retFunc,
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
@@ -175,7 +175,7 @@ class GathervEnterEvent : public GatherBaseEnterEvent {
             displsPtr( _displs ) 
     { }
 
-    GathervEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherEnterEvent(int type, Hermes::Functor* retFunc,
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, uint32_t _recvcnt,
@@ -187,6 +187,31 @@ class GathervEnterEvent : public GatherBaseEnterEvent {
             displsPtr( 0 ),
             recvcnt( _recvcnt) 
     { }
+
+    GatherEnterEvent(int type, Hermes::Functor* retFunc,
+            Hermes::Addr sendbuf, uint32_t sendcnt,
+            Hermes::PayloadDataType sendtype,
+            Hermes::Addr recvbuf, uint32_t _recvcnt,
+            Hermes::PayloadDataType recvtype,
+            Hermes::Communicator group ) :
+        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+            recvbuf, recvtype, 0, group ),
+            recvcntPtr( 0 ),
+            displsPtr( 0 ),
+            recvcnt( _recvcnt) 
+    { }
+
+    GatherEnterEvent(int type, Hermes::Functor* retFunc,
+            Hermes::Addr sendbuf, uint32_t sendcnt,
+            Hermes::PayloadDataType sendtype,
+            Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
+            Hermes::PayloadDataType recvtype, Hermes::Communicator group ) :
+        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+            recvbuf, recvtype, 0, group ),
+            recvcntPtr( _recvcnt),
+            displsPtr( _displs )
+    { }
+
 
     Hermes::Addr recvcntPtr;
     Hermes::Addr displsPtr;
