@@ -2004,7 +2004,7 @@ void Cache::handlePendingEvents(CacheRow *row, CacheBlock *block)
 
         if ( row->waitingEvents.end() != q ) {
             CacheRow::eventQueue_t &queue = q->second;
-            while ( queue.size() ) {
+            while ( !queue.empty() ) {
                 std::pair<MemEvent*, SourceInfo_t> ev = queue.front();
                 queue.pop_front();
                 dbg.output(CALL_INFO, "Issuing Retry for event (%"PRIu64", %d) %s [0x%"PRIx64"]\n",
@@ -2334,7 +2334,7 @@ void Cache::BusQueue::setup(Cache *_comp, SST::Link *_link)
 void Cache::BusQueue::request(MemEvent *event, BusHandlers handlers)
 {
     queue.push_back(event);
-    comp->dbg.output(CALL_INFO, "%s: Queued event (%"PRIu64", %d) in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, queue.size());
+    comp->dbg.output(CALL_INFO, "%s: Queued event (%"PRIu64", %d) in position %zu!\n", comp->getName().c_str(), event->getID().first, event->getID().second, size());
     map[event] = handlers;
     link->send(new BusEvent(BusEvent::RequestBus, makeBusKey(event)));
 }
@@ -2370,7 +2370,7 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
         }
         queue.pop_front();
 
-        comp->dbg.output(CALL_INFO, "%s: Sending Event (%s, 0x%"PRIx64" (%"PRIu64", %d)) [Queue: %zu]!\n", comp->getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getID().first, ev->getID().second, queue.size());
+        comp->dbg.output(CALL_INFO, "%s: Sending Event (%s, 0x%"PRIx64" (%"PRIu64", %d)) [Queue: %zu]!\n", comp->getName().c_str(), CommandString[ev->getCmd()], ev->getAddr(), ev->getID().first, ev->getID().second, size());
 
 
         BusHandlers bh;
@@ -2395,7 +2395,7 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
 
 void Cache::BusQueue::printStatus(Output &out)
 {
-    out.output("\tBus Queue Size: %zu\n", queue.size());
+    out.output("\tBus Queue Size: %zu\n", size());
     for ( std::list<MemEvent*>::iterator i = queue.begin() ; i != queue.end() ; ++i ) {
         out.output("\t\t(%"PRIu64", %d)\n", (*i)->getID().first, (*i)->getID().second);
     }
