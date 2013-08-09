@@ -130,7 +130,7 @@ void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
   }
   MemEvent *parentEvent = mi->second;
   MemEvent *event = parentEvent->makeResponse(this);
-  printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
+  //printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
   //assert(bp.burstLength == parentEvent->getSize());
   
   // copy data from backing store to event
@@ -161,7 +161,7 @@ void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
   }
   MemEvent *parentEvent = mi->second;
   MemEvent *event = parentEvent->makeResponse(this);
-  printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
+  //printf("Burst length is %d. is that 64?: %s %d\n",bp.burstLength, __FILE__, __LINE__);
   //assert(bp.burstLength == parentEvent->getSize());
 
   // write the data to the backing store
