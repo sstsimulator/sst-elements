@@ -66,7 +66,7 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     m_recvBuf.resize(m_bufLen);
     m_sendBuf.resize(m_bufLen);
     
-    m_root = 3;
+    m_root = 0;
     for ( unsigned int i = 0; i < m_sendBuf.size(); i++ ) {
         m_sendBuf[i] = i;
     } 
@@ -277,15 +277,32 @@ void TestDriver::gathervEnter( )
     m_recvcnt.resize( my_size );
     m_displs.resize( my_size );
 
+#define FOO 1 
+#if FOO  
+    m_gatherSendBuf.resize(my_rank + 1);
+    int tmp = 0;
     for ( int i = 0; i < my_size; i++ ) {
-        m_recvcnt[i] = m_bufLen; 
-        m_displs[i] = (m_bufLen * m_hermes->sizeofDataType(INT)) * i; 
+        tmp += (i + 1);
     }
+    m_gatherRecvBuf.resize(tmp);
+#else
     m_gatherRecvBuf.resize(m_bufLen * my_size);
     m_gatherSendBuf.resize(m_bufLen);
+#endif
+
+    for ( int next=0, i = 0; i < my_size; i++ ) {
+#if FOO 
+        m_recvcnt[i] = i + 1; 
+        m_displs[i] = next; 
+        next += m_recvcnt[i] * m_hermes->sizeofDataType(INT); 
+#else
+        m_recvcnt[i] = m_bufLen; 
+        m_displs[i] = (m_bufLen * m_hermes->sizeofDataType(INT)) * i; 
+#endif
+    }
 
     for ( unsigned int i = 0; i < m_gatherSendBuf.size(); i++ ) {
-        m_gatherSendBuf[ i ] = my_rank + 0xbeef0000; 
+        m_gatherSendBuf[ i ] = ((my_rank + 1) )<< 16 | (i+1); 
     }
 
     m_hermes->gatherv( &m_gatherSendBuf[0],  m_gatherSendBuf.size(), INT,
@@ -354,7 +371,6 @@ void TestDriver::allgathervEnter( )
              &m_gatherSendBuf[0],&m_gatherRecvBuf[0]);
     for ( int next = 0, i = 0; i < my_size; i++ ) {
         m_recvcnt[i] = i + 1; 
-; 
         m_displs[i] = next; 
         next += m_recvcnt[i] * m_hermes->sizeofDataType(INT); 
 #if 0

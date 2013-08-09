@@ -234,18 +234,20 @@ void GathervFuncSM::doRoot()
         
         int rank = map[i];
 
+        int len;
         if ( m_event->recvcntPtr ) {
             int recvcnt = ((int*)m_event->recvcntPtr)[rank];
             int displs = ((int*)m_event->displsPtr)[rank];
         
-            m_dbg.verbose(CALL_INFO,1,0,"rank %d, recvcnt %d, displs %d\n",
-                                    rank, recvcnt, displs);
 
-            int len = m_info->sizeofDataType( m_event->recvtype ) * recvcnt;
+            len = m_info->sizeofDataType( m_event->recvtype ) * recvcnt;
+
+            m_dbg.verbose(CALL_INFO,1,0,"rank %d, recvcnt %d, displs %d, "
+                                "len=%u\n", rank, recvcnt, displs, len);
             memcpy( (unsigned char*) m_event->recvbuf + displs, 
                             &m_recvBuf[offset], len);
         } else {
-            int len = m_info->sizeofDataType( m_event->recvtype ) * 
+            len = m_info->sizeofDataType( m_event->recvtype ) * 
                                     m_event->recvcnt;
             memcpy( (unsigned char*) m_event->recvbuf + len * rank, 
                             &m_recvBuf[offset], len);
