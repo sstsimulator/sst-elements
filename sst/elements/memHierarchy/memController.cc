@@ -439,6 +439,9 @@ void MemController::performRequest(DRAMReq *req)
 {
 	MemEvent *resp = req->reqEvent->makeResponse(this);
     Addr localAddr = convertAddressToLocalAddress(req->addr);
+    if ((localAddr + req->reqEvent->getSize()) >= memSize) {
+        _abort(MemController, "Attempting to access past the end of Memory.\n");
+    }
 
     req->respEvent = resp;
 	if ( req->isWrite ) {
