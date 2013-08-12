@@ -121,6 +121,7 @@ private:
 		{
 			assert(ASSIGNED != status);
 			assert(0 == locked);
+			assert(0 == user_locked);
 			tag = cache->addrToTag(addr);
 			baseAddr = cache->addrToBlockAddr(addr);
             cache->dbg.output(CALL_INFO, "CacheBlock:  %s: Activating block (%u, %u) for Address 1x%"PRIx64".\t"
@@ -316,8 +317,8 @@ private:
 			{ }
 		};
 		std::deque<LoadElement_t> list;
-		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), nackRescheduled(false), loadDirection(SEND_BOTH) { }
-		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), uncached(false), satisfied(false), eventScheduled(false), nackRescheduled(false), loadDirection(SEND_BOTH) { }
+		LoadInfo_t() : addr(0), targetBlock(NULL), busEvent(NULL), initiatingEvent(0,0), loadingEvent(0,0), uncached(false), satisfied(false), eventScheduled(false), nackRescheduled(false), loadDirection(SEND_BOTH) { }
+		LoadInfo_t(Addr addr) : addr(addr), targetBlock(NULL), busEvent(NULL), initiatingEvent(0,0), loadingEvent(0,0), uncached(false), satisfied(false), eventScheduled(false), nackRescheduled(false), loadDirection(SEND_BOTH) { }
 	};
 
 	struct SupplyInfo {
