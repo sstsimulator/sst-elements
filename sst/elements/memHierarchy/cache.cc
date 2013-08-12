@@ -1438,6 +1438,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceInfo_t src, bool finishedUpstre
                     block->unlock();
                     delete supMapI->second.busEvent;
                     supMapI->second.busEvent = NULL;
+                    suppliesInProgress.erase(supMapI);
                 }
             }
             self_link->send(1, new SelfEvent(this, &Cache::retryEvent, new MemEvent(supMapI->second.initiatingEvent), block, supMapI->first.second));
