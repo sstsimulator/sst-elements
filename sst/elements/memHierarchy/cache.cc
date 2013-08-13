@@ -163,7 +163,18 @@ Cache::Cache(ComponentId_t id, Params_t& params) :
 }
 
 
-bool Cache::clockTick(Cycle_t) {
+Cache::~Cache(void)
+{
+    for ( LoadList_t::iterator i = waitingLoads.begin() ; i != waitingLoads.end() ; ++i ) {
+        LoadInfo_t *x = i->second;
+        delete x;
+    }
+    waitingLoads.clear();
+}
+
+
+bool Cache::clockTick(Cycle_t)
+{
     if ( directory_link ) {
         directory_link->clock();
     }
@@ -1251,6 +1262,7 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
                 dbg.output(CALL_INFO, "Canceling Bus Request for Load on 0x%"PRIx64"\n", li->busEvent->getAddr());
                 if ( snoopBusQueue.cancelRequest(li->busEvent) ) {
                     delete li->busEvent;
+                    li->eventScheduled = false;
                 }
                 li->busEvent = NULL;
             }
@@ -1274,10 +1286,11 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
                     /* Deleted all reasons to load this block */
                     waitingLoads.erase(i);
                     li->targetBlock->loadInfo = NULL;
-                    if ( li->eventScheduled )
+                    if ( li->eventScheduled ) {
                         li->satisfied = true;
-                    else
+                    } else
                         delete li;
+
                     if ( targetBlock->isAssigned() ){
                         targetBlock->status = CacheBlock::INVALID;
                         dbg.output(CALL_INFO, "Marking block 0x%"PRIx64" with status %d\n", targetBlock->baseAddr, targetBlock->status);
@@ -1297,11 +1310,11 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
                 }
 
                 std::deque<LoadInfo_t::LoadElement_t> list = li->list;
-                waitingLoads.erase(i);
 
-                if ( li->eventScheduled )
+                waitingLoads.erase(i);
+                if ( li->eventScheduled ) {
                     li->satisfied = true;
-                else
+                } else
                     delete li;
 
                 for ( uint32_t n = 0 ; n < list.size() ; n++ ) {
@@ -1429,6 +1442,7 @@ void Cache::handleInvalidate(MemEvent *ev, SourceInfo_t src, bool finishedUpstre
     if ( block ) {
         supplyMap_t::iterator supMapI = getSupplyInProgress(block->baseAddr, (SourceInfo_t){SNOOP, -1});
         if ( supMapI != suppliesInProgress.end() ) {
+            bool doErase = false;
             dbg.output(CALL_INFO, "Supply is in progress for 0x%"PRIx64".  Cancel supply and re-issue.\n", ev->getAddr());
             supMapI->second.canceled = true;
             if ( NULL != supMapI->second.busEvent ) {
@@ -1438,10 +1452,13 @@ void Cache::handleInvalidate(MemEvent *ev, SourceInfo_t src, bool finishedUpstre
                     block->unlock();
                     delete supMapI->second.busEvent;
                     supMapI->second.busEvent = NULL;
-                    suppliesInProgress.erase(supMapI);
+                    doErase = true;
                 }
             }
             self_link->send(1, new SelfEvent(this, &Cache::retryEvent, new MemEvent(supMapI->second.initiatingEvent), block, supMapI->first.second));
+            if ( doErase ) {
+                    suppliesInProgress.erase(supMapI);
+            }
         }
 
 

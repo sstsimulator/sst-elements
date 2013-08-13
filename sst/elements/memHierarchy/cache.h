@@ -352,6 +352,7 @@ private:
 public:
 
 	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
+    ~Cache();
     bool clockTick(Cycle_t);
 	virtual void init(unsigned int);
 	virtual void setup();
@@ -408,9 +409,9 @@ private:
     void handleUncachedWrite(MemEvent *ev, SourceInfo_t src);
     void handleWriteResp(MemEvent *ev, SourceInfo_t src);
 
-
     void handlePendingEvents(CacheRow *row, CacheBlock *block);
 	void updateBlock(MemEvent *ev, CacheBlock *block);
+
 	int numBits(int x);
 	Addr addrToTag(Addr addr);
 	Addr addrToBlockAddr(Addr addr);
@@ -427,6 +428,11 @@ private:
 
     void registerNewCPURequest(MemEvent::id_type id);
     void clearCPURequest(MemEvent::id_type id);
+
+
+
+
+
 
     Output dbg;
     Output::output_location_t statsOutputTarget;
