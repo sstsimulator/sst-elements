@@ -79,9 +79,9 @@ logicLayer::logicLayer( ComponentId_t id, Params_t& params ) :
   }
 
   // connect chain
-  toCPU = configureLink( "toCPU", "50 ps");
+  toCPU = configureLink( "toCPU");
   if (!terminal) {
-    toMem = configureLink( "toMem", "50 ps");
+    toMem = configureLink( "toMem");
   } else {
     toMem = 0;
   }
@@ -173,7 +173,7 @@ bool logicLayer::clock( Cycle_t current )
   int tc[2] = {0,0};
 
   // check for events from the CPU
-  while((e = toCPU->recv()) && tc[0] < bwlimit) {
+  while((tc[0] < bwlimit) && (e = toCPU->recv())) {
     MemEvent *event  = dynamic_cast<MemEvent*>(e);
     dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
 	       (void*)event->getAddr(), event->getID().first, event->getID().second);
@@ -202,7 +202,7 @@ bool logicLayer::clock( Cycle_t current )
 
   // check for events from the memory chain
   if (toMem) {
-    while((e = toMem->recv()) && tm[0] < bwlimit) {
+    while((tm[0] < bwlimit) && (e = toMem->recv())) {
       MemEvent *event  = dynamic_cast<MemEvent*>(e);
       if (event == NULL) {
 	_abort(logicLayer::clock, "logic layer got bad event\n");
