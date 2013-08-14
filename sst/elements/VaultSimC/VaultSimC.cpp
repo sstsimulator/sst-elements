@@ -2,7 +2,7 @@
 // of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2010, Sandia Corporation
+// Copyright (c) 2009-2010,2013 Sandia Corporation
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -134,9 +134,9 @@ void VaultSimC::readData(BusPacket bp, unsigned clockcycle)
   //assert(bp.burstLength == parentEvent->getSize());
   
   // copy data from backing store to event
-  event->setSize(bp.burstLength);
+  //event->setSize(bp.burstLength);
   for ( size_t i = 0 ; i < event->getSize() ; i++ ) {
-    event->getPayload()[i] = memBuffer[getInternalAddress(bp.physicalAddress + i)];
+    //event->getPayload()[i] = memBuffer[getInternalAddress(bp.physicalAddress + i)];
   }
   m_memChan->send(event);
   delete parentEvent;
@@ -166,13 +166,14 @@ void VaultSimC::writeData(BusPacket bp, unsigned clockcycle)
 
   // write the data to the backing store
   for ( size_t i = 0 ; i < bp.burstLength ; i++ ) {
-    memBuffer[getInternalAddress(bp.physicalAddress + i)] = parentEvent->getPayload()[i];
+    //memBuffer[getInternalAddress(bp.physicalAddress + i)] = parentEvent->getPayload()[i];
   }
 
   // send event
   m_memChan->send(event);
   // delete old event
   delete parentEvent;
+  transactionToMemEventMap.erase(mi);
 }
 
 bool VaultSimC::clock( Cycle_t current )
@@ -184,7 +185,7 @@ bool VaultSimC::clock( Cycle_t current )
 #endif
   
   m_memorySystem->Update();
-  
+
   SST::Event *e = 0;
   while ((e = m_memChan->recv())) {
     MemEvent *event  = dynamic_cast<MemEvent*>(e);
@@ -224,7 +225,9 @@ bool VaultSimC::clock( Cycle_t current )
       
       m_transQ.pop_front();
     } else {
-      printf("addTransaction failed\n");
+      //_abort(VaultSimC, "addTransaction failed\n");
+      dbg.output(CALL_INFO, " addTransaction failed\n");
+      ret = 0;
     }
   }
   return false;
