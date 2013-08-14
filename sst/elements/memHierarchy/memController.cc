@@ -107,7 +107,8 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 
 	  if ( use_vaultSim ) {
 	    cube_link = configureLink( "cube_link", access_time,
-				       new Event::Handler<MemController>(this, &MemController::handleCubeEvent));
+				       new Event::Handler<MemController>(this,
+									 &MemController::handleCubeEvent));
 	  }
 
 	  self_link = configureSelfLink("Self", access_time,
@@ -147,6 +148,8 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
     numReadsSupplied = 0;
     numReadsCanceled = 0;
     numWrites = 0;
+    numReqOutstanding = 0;
+    numCycles = 0;
 }
 
 
@@ -225,13 +228,16 @@ void MemController::finish(void)
 
     Output out("", 0, 0, statsOutputTarget);
     out.output("Memory %s stats:\n"
-            "\t # Reads:             %"PRIu64"\n"
-            "\t # Writes:            %"PRIu64"\n"
-            "\t # Canceled Reads:    %"PRIu64"\n",
+	       "\t # Reads:             %"PRIu64"\n"
+	       "\t # Writes:            %"PRIu64"\n"
+	       "\t # Canceled Reads:    %"PRIu64"\n"
+	       "\t # Avg. Requests out: %.3f\n",	       
             getName().c_str(),
             numReadsSupplied,
             numWrites,
-            numReadsCanceled);
+	       numReadsCanceled,
+	       float(numReqOutstanding)/float(numCycles)
+);
 
 }
 
@@ -335,9 +341,6 @@ void MemController::cancelEvent(MemEvent* ev)
     }
 }
 
-
-
-
 bool MemController::clock(Cycle_t cycle)
 {
 #if defined(HAVE_LIBDRAMSIM)
@@ -368,7 +371,14 @@ bool MemController::clock(Cycle_t cycle)
 #endif
 	} else if ( use_vaultSim ) {
 	  dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
-	  outToCubes[req->reqEvent->getID()] = req; // associate the memEvent w/ the DRAMReq
+	  // ugly hardcoded limit on outstanding requests
+	  if (outToCubes.size() > 255) {
+	    req->status = DRAMReq::NEW;
+	    break;
+	  }
+	  SST::Interfaces::MemEvent::id_type reqID = req->reqEvent->getID();
+	  assert(outToCubes.find(reqID) == outToCubes.end());
+	  outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
 	  MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
 	  cube_link->send(1, outgoingEvent); // send the event off
         } else {
@@ -386,15 +396,25 @@ bool MemController::clock(Cycle_t cycle)
     }
 
     /* Clean out old requests */
+#if 1
     while ( requests.size() ) {
-        DRAMReq *req = requests.front();
-        if ( DRAMReq::DONE == req->status ) {
-            requests.pop_front();
-            delete req;
-        } else {
-            break;
-        }
+      DRAMReq *req = requests.front();
+      if ( DRAMReq::DONE == req->status ) {
+	requests.pop_front();
+	delete req;
+      } else {
+	break;
+      }
     }
+#else
+    // may be faster if you have a lot of things retiring each cycle
+    dramReq_t::iterator new_end = 
+      remove_if(requests.begin(), requests.end(), isDone());
+    requests.erase(new_end, requests.end());
+#endif
+
+    numReqOutstanding += requests.size();
+    numCycles++;
 
 	return false;
 }

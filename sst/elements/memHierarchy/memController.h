@@ -108,6 +108,12 @@ private:
 
     };
 
+    struct isDone {
+      bool operator() (DRAMReq *req) const {
+	return (DRAMReq::DONE == req->status);
+      }
+    };
+
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
@@ -161,8 +167,9 @@ private:
     bool bus_requested;
     std::deque<DRAMReq*> busReqs;
 
-    std::deque<DRAMReq*> requestQueue;
-    std::deque<DRAMReq*> requests;
+    typedef std::deque<DRAMReq*> dramReq_t;
+    dramReq_t requestQueue;
+    dramReq_t requests;
 
     typedef std::map<SST::Interfaces::MemEvent::id_type,DRAMReq*> memEventToDRAMMap_t;
     memEventToDRAMMap_t outToCubes; // map of events sent out to the cubes
@@ -181,6 +188,8 @@ private:
     uint64_t numReadsSupplied;
     uint64_t numReadsCanceled;
     uint64_t numWrites;
+    uint64_t numReqOutstanding;    
+    uint64_t numCycles;
 
 #if defined(HAVE_LIBDRAMSIM)
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
