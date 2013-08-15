@@ -38,6 +38,8 @@ libfirefly_la_SOURCES = \
 	hades.h \
 	hades.cc \
 	hadesAPI.cc \
+	merlinIO.h \
+	merlinIO.cc \
 	simpleIO.h \
 	simpleIO.cc \
 	testDriver.h \

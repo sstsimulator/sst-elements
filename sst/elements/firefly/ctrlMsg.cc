@@ -22,13 +22,14 @@ CtrlMsg::CtrlMsg(int verboseLevel, Output::output_location_t loc, Info* info ) :
     ProtocolAPI(verboseLevel,loc),
     m_info(info)
 {
-#if 0
+}
+
+void CtrlMsg::setup() 
+{
     char buffer[100];
-    snprintf(buffer,100,"@t:%d:%d:CtrlMsg::@p():@l ",info->nodeId(), 
-                                                info->worldRank());
+    snprintf(buffer,100,"@t:%d:%d:CtrlMsg::@p():@l ",m_info->nodeId(), 
+                                                m_info->worldRank());
     m_dbg.setPrefix(buffer);
-#endif
-    m_dbg.setPrefix("@t:CtrlMsg::@p():@l ");
 }
 
 CtrlMsg::SendReq* CtrlMsg::getSendReq( ) 
@@ -102,7 +103,8 @@ CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr )
         RecvInfo& info = *static_cast<RecvInfo*>( (*iter)->info );
 
         //m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", info.tag, hdr.tag );
-        m_dbg.verbose(CALL_INFO,1,0,"tag %#x %#x\n", info.tag, hdr.tag );
+        m_dbg.verbose(CALL_INFO,1,0,"tag: list %#x, hdr %#x\n", 
+                                                    info.tag, hdr.tag );
         if ( ( -1 != info.tag ) && ( hdr.tag != info.tag ) ) {
             continue;
         }
@@ -244,6 +246,7 @@ void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group,
     std::vector<IoVec> ioVec(1);
     ioVec[0].ptr = buf;
     ioVec[0].len = len;
+
     sendv( ioVec, dest, tag, group, req );
 }
 
@@ -259,7 +262,7 @@ void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
         RecvReq *xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) );
         if ( xxx ) {
             size_t offset = 0;
-            for ( unsigned int i; i < req->info->ioVec.size(); i++ ) {
+            for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
                 memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
                         req->info->ioVec[i].len );
                 offset += req->info->ioVec[i].len;

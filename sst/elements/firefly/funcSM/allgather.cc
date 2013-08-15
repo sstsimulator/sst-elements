@@ -31,6 +31,7 @@ AllgatherFuncSM::AllgatherFuncSM(
     m_dataReadyFunctor( IO_Functor(this,&AllgatherFuncSM::dataReady) ),
     m_toProgressLink( progressLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
+    m_event( NULL ),
     m_io( io )
 {
     m_dbg.setPrefix("@t:AllgatherFuncSM::@p():@l ");
@@ -113,6 +114,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
     memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
     m_currentStage = 0;
 
+    m_dbg.verbose(CALL_INFO,1,0,"send ready\n");
     m_ctrlMsg->send( NULL, 0, m_dest[0], AllgatherTag,
                                         m_event->group, &m_sendReq );
 
@@ -132,6 +134,8 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitRecvStart\n");
         m_state = WaitRecvStart;
+        m_pending = false;
+
     case WaitRecvStart:
         if ( ! m_ctrlMsg->test( &m_recvReq ) ) {
             m_dbg.verbose(CALL_INFO,1,0,"call setDataReadyFunc\n");
@@ -140,6 +144,8 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitSendData\n");
         m_state = WaitSendData;
+        m_pending = false;
+
     case WaitSendData:
         if ( ! m_pending ) {
             std::vector<CtrlMsg::IoVec> ioVec;
@@ -150,6 +156,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
                 ioVec[j].ptr = chunkPtr( chunk );
                 ioVec[j].len = chunkSize( chunk ); 
             }
+            m_dbg.verbose(CALL_INFO,1,0,"send data\n");
             m_ctrlMsg->sendv( ioVec, m_dest[m_currentStage], 
                 AllgatherTag + m_currentStage + 1, m_event->group, &m_sendReq );
             m_pending = true;
@@ -164,6 +171,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitRecvData\n");
         m_state = WaitRecvData;
+        m_pending = false;
 
     case WaitRecvData:
         if ( m_ctrlMsg->test( &m_recvReqV[m_currentStage] ) ) {
@@ -184,6 +192,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
+        m_pending = false;
     }
 }
 

@@ -27,6 +27,15 @@ FiniFuncSM::FiniFuncSM( int verboseLevel, Output::output_location_t loc,
 
 void FiniFuncSM::handleEnterEvent( SST::Event *e) 
 {
+    if ( m_setPrefix ) {
+        char buffer[100];
+        snprintf(buffer,100,"@t:%d:%d:FiniFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+        m_dbg.setPrefix(buffer);
+
+        m_setPrefix = false;
+    }
+
     FiniEnterEvent* event = static_cast<FiniEnterEvent*>(e);
     BarrierEnterEvent* tmp = new BarrierEnterEvent( 0,
                             event->retFunc, Hermes::GroupWorld  );

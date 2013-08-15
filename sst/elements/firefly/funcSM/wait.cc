@@ -31,6 +31,15 @@ WaitFuncSM::WaitFuncSM( int verboseLevel, Output::output_location_t loc,
 
 void WaitFuncSM::handleEnterEvent( SST::Event *e) 
 {
+    if ( m_setPrefix ) {
+        char buffer[100];
+        snprintf(buffer,100,"@t:%d:%d:WaitFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+        m_dbg.setPrefix(buffer);
+
+        m_setPrefix = false;
+    }
+
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
     m_event = static_cast< WaitEnterEvent* >(e);

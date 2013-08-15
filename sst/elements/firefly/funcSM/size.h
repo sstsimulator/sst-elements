@@ -27,6 +27,15 @@ class SizeFuncSM :  public FunctionSMInterface
     }
 
     virtual void handleEnterEvent( SST::Event *e) {
+        if ( m_setPrefix ) {
+            char buffer[100];
+            snprintf(buffer,100,"@t:%d:%d:SizeFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+            m_dbg.setPrefix(buffer);
+
+            m_setPrefix = false;
+        }
+
         m_event = static_cast< SizeEnterEvent* >(e);
 
         m_dbg.verbose(CALL_INFO,1,0,"\n");

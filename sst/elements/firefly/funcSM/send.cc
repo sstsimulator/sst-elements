@@ -32,6 +32,15 @@ SendFuncSM::SendFuncSM( int verboseLevel, Output::output_location_t loc,
 
 void SendFuncSM::handleEnterEvent( SST::Event *e) 
 {
+    if ( m_setPrefix ) {
+        char buffer[100];
+        snprintf(buffer,100,"@t:%d:%d:SendFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+        m_dbg.setPrefix(buffer);
+
+        m_setPrefix = false;
+    }
+
     assert( NULL == m_event );
     m_event = static_cast< SendEnterEvent* >(e);
 

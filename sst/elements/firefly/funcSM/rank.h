@@ -31,6 +31,15 @@ class RankFuncSM :  public FunctionSMInterface
 
     virtual void handleEnterEvent( SST::Event *e) {
 
+        if ( m_setPrefix ) {
+            char buffer[100];
+            snprintf(buffer,100,"@t:%d:%d:RankFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+            m_dbg.setPrefix(buffer);
+
+            m_setPrefix = false;
+        }
+
         RankEnterEvent* event = static_cast< RankEnterEvent* >(e);
         *event->rank = m_info->getGroup(event->group)->getMyRank();
         

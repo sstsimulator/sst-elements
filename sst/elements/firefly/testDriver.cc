@@ -70,6 +70,9 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     for ( unsigned int i = 0; i < m_sendBuf.size(); i++ ) {
         m_sendBuf[i] = i;
     } 
+
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
 }
     
 TestDriver::~TestDriver()
@@ -116,11 +119,11 @@ void TestDriver::handle_event( Event* ev )
 {
     getline( m_traceFile, m_funcName );
 
-    m_dbg.verbose(CALL_INFO,1,0, "function `%s`\n" , m_funcName.c_str());
+    m_dbg.verbose(CALL_INFO,1,0, "calling `%s`\n" , m_funcName.c_str());
 
     m_funcName = m_funcName.c_str();
-    if ( ! m_funcName.empty() ) {
-        m_dbg.verbose(CALL_INFO,1,0,"%d: %s\n",my_rank, m_funcName.c_str());
+    if ( m_funcName.empty() ) {
+        primaryComponentOKToEndSim();
     }
     if ( m_funcName.compare( "init" ) == 0 ) {
         m_hermes->init( &m_functor );
@@ -129,7 +132,6 @@ void TestDriver::handle_event( Event* ev )
     } else if ( m_funcName.compare( "rank" ) == 0 ) {
         m_hermes->rank( GroupWorld, &my_rank, &m_functor );
     } else if ( m_funcName.compare( "recv" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->recv( &m_recvBuf[0], m_recvBuf.size(), CHAR, 
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
@@ -138,7 +140,6 @@ void TestDriver::handle_event( Event* ev )
                                     &m_functor);
 
     } else if ( m_funcName.compare( "irecv" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->irecv( &m_recvBuf[0], m_recvBuf.size(), CHAR, 
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
@@ -147,7 +148,6 @@ void TestDriver::handle_event( Event* ev )
                                     &m_functor);
 
     } else if ( m_funcName.compare( "send" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->send( &m_sendBuf[0], m_sendBuf.size(), CHAR,
                                 (my_rank + 1 ) % 2,
                                 0xdead, 
@@ -155,7 +155,6 @@ void TestDriver::handle_event( Event* ev )
                                 &m_functor);
 
     } else if ( m_funcName.compare( "barrier" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->barrier( GroupWorld, &m_functor );
     } else if ( m_funcName.compare( "allgather" ) == 0 ) {
         allgatherEnter();
@@ -166,11 +165,9 @@ void TestDriver::handle_event( Event* ev )
     } else if ( m_funcName.compare( "gatherv" ) == 0 ) {
         gathervEnter();
     } else if ( m_funcName.compare( "reduce" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->reduce( &m_collectiveIn, &m_collectiveOut, 1, INT,
                                 SUM, m_root, GroupWorld, &m_functor );
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"my_size=%d my_rank=%d\n",my_size, my_rank);
         m_hermes->allreduce( &m_collectiveIn, &m_collectiveOut, 1, INT,
                                 SUM, GroupWorld, &m_functor );
     } else if ( m_funcName.compare( "wait" ) == 0 ) {
@@ -204,10 +201,11 @@ void TestDriver::funcDone( int retval )
     } else if ( m_funcName.compare( "gatherv" ) == 0 ) {
         gathervReturn();
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
-        printf("%d: collective result %#x\n",my_rank, m_collectiveOut);
+        m_dbg.verbose(CALL_INFO,1,0,"collective result %#x\n",m_collectiveOut);
     } else if ( m_funcName.compare( "reduce" ) == 0 ) {
         if ( m_root == my_rank ) {
-            printf("%d: collective result %#x\n",my_rank, m_collectiveOut);
+            m_dbg.verbose(CALL_INFO,1,0,"collective result %#x\n",
+                                                        m_collectiveOut);
         }
     } else {
         m_dbg.verbose(CALL_INFO,1,0,"`%s` retval=%d\n" ,
@@ -217,9 +215,8 @@ void TestDriver::funcDone( int retval )
 
 void TestDriver::recvReturn( )
 {
-    printf("%lu:%d: src=%d tag=%#x len=%lu\n",
-            Simulation::getSimulation()->getCurrentSimCycle(),
-                my_rank, my_resp.src, my_resp.tag,m_recvBuf.size());
+    m_dbg.verbose(CALL_INFO,1,0," src=%d tag=%#x len=%lu\n",
+                my_resp.src, my_resp.tag,m_recvBuf.size());
     for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
         if ( m_recvBuf[i] != (i&0xff) ) {
             printf("ERROR %d != %d\n",i,m_recvBuf[i]);
@@ -229,9 +226,8 @@ void TestDriver::recvReturn( )
 
 void TestDriver::waitReturn( )
 {
-    printf("%lu:%d: src=%d tag=%#x len=%lu\n",
-            Simulation::getSimulation()->getCurrentSimCycle(),
-                my_rank, my_req.src, my_req.tag,m_recvBuf.size());
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu\n",
+                my_req.src, my_req.tag,m_recvBuf.size());
     for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
         if ( m_recvBuf[i] != (i&0xff) ) {
             printf("ERROR %d != %d\n",i,m_recvBuf[i]);

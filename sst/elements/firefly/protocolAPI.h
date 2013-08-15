@@ -42,6 +42,7 @@ class ProtocolAPI
     virtual Request* sendIODone( Request* ) = 0;
     virtual Request* recvIODone( Request* ) = 0;
     virtual Request* delayDone( Request* ) = 0;
+    virtual void setup() = 0;
 
     Output m_dbg;
 };

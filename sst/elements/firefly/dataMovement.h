@@ -105,6 +105,8 @@ class DataMovement : public ProtocolAPI
     virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
 
+    virtual void setup();
+
     MsgEntry* searchUnexpected(RecvEntry*,int& delay);
     bool canPostSend();
     void postSendEntry(SendEntry);

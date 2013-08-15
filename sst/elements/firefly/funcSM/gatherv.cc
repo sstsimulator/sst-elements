@@ -25,6 +25,7 @@ GathervFuncSM::GathervFuncSM(
     m_dataReadyFunctor( IO_Functor(this,&GathervFuncSM::dataReady) ),
     m_toProgressLink( progressLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
+    m_event( NULL ),
     m_io( io )
 {
     m_dbg.setPrefix("@t:GathervFuncSM::@p():@l ");

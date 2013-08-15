@@ -112,6 +112,7 @@ class CtrlMsg : public ProtocolAPI {
     void send( void* buf, size_t len, int dest, int tag, int group, CommReq* );
     void sendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq* );
     bool test( CommReq*  );
+    void setup();
 
 
   private:

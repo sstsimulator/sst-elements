@@ -159,6 +159,9 @@ void Hades::_componentSetup()
 
     m_dbg.verbose(CALL_INFO,1,0, "myRank %d\n",
                 m_info.getGroup(Hermes::GroupWorld)->getMyRank() );
+
+    m_protocolM[0]->setup();
+    m_protocolM[1]->setup();
 }
 
 Group* Hades::initAdjacentMap( int numRanks, 
@@ -293,7 +296,7 @@ bool Hades::runRecv( )
     return true;
 }
 
-void Hades::dataReady( IO::NodeId src )
+void Hades::dataReady( IO::NodeId notUsed )
 {
     m_dbg.verbose(CALL_INFO,1,0,"call run()\n");
     handleSelfLink( NULL );
@@ -346,7 +349,10 @@ IO::Entry* Hades::recvIODone( IO::Entry* e )
             SelfEvent* ee = new SelfEvent;
             ee->aaa = aaa;
             m_selfLink->send(aaa->request->delay, ee );
+            m_dbg.verbose(CALL_INFO,1,0,"schedule delay %d\n",
+                                aaa->request->delay);
         } else {
+            m_dbg.verbose(CALL_INFO,1,0,"post recv\n");
             m_io->recvv( aaa->srcNodeId, aaa->request->ioVec, aaa->callback );
         }
         e = NULL;

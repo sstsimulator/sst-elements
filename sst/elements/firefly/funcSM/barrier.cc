@@ -28,6 +28,16 @@ BarrierFuncSM::BarrierFuncSM(
 
 void BarrierFuncSM::handleEnterEvent( SST::Event *e) 
 {
+
+    if ( m_setPrefix ) {
+        char buffer[100];
+        snprintf(buffer,100,"@t:%d:%d:BarrierFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+        m_dbg.setPrefix(buffer);
+
+        m_setPrefix = false;
+    }
+
     BarrierEnterEvent* event = static_cast<BarrierEnterEvent*>(e);
 
     CollectiveEnterEvent* tmp = new CollectiveEnterEvent( 0,

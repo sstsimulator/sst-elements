@@ -28,10 +28,18 @@ DataMovement::DataMovement(int verboseLevel, Output::output_location_t loc,
     m_sendReqKey( 0 ),
     m_recvReqKey( 0 )
 {
-    m_dbg.setPrefix("@t:DataMovement::@p():@l ");
     m_matchTime = params.find_integer("matchTime",0);
     m_copyTime = params.find_integer("copyTime",0);
 }
+
+void DataMovement::setup() 
+{
+    char buffer[100];
+    snprintf(buffer,100,"@t:%d:%d:DataMovement::@p():@l ",m_info->nodeId(),
+                                                m_info->worldRank());
+    m_dbg.setPrefix(buffer);
+}
+
 
 DataMovement::Request* DataMovement::getRecvReq( IO::NodeId src )
 {

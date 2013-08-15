@@ -26,6 +26,15 @@ AllreduceFuncSM::AllreduceFuncSM(
 
 void AllreduceFuncSM::handleEnterEvent( SST::Event *e) 
 {
+    if ( m_setPrefix ) {
+        char buffer[100];
+        snprintf(buffer,100,"@t:%d:%d:AllreduceFuncSM::@p():@l ",
+                    m_info->nodeId(), m_info->worldRank());
+        m_dbg.setPrefix(buffer);
+
+        m_setPrefix = false;
+    }
+
     CollectiveTreeFuncSM::handleEnterEvent(e);
 }
 
