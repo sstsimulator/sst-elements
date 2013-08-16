@@ -191,18 +191,6 @@ MerlinIO::MerlinIO( Params& params ) :
 void MerlinIO::_componentInit(unsigned int phase )
 {
     m_linkControl->init(phase);
-    if ( m_myNodeId == 0 && phase == 0 ) {
-        Merlin::RtrEvent *re = new Merlin::RtrEvent();
-        re->src = m_myNodeId;
-        re->dest = Merlin::INIT_BROADCAST_ADDR;
-
-        m_linkControl->sendInitData(re);
-    }
-    while ( Event*ev = m_linkControl->recvInitData() ) {
-        std::cout << "NIC " << m_myNodeId << "Received an init event in phase " << phase << "!" << std::endl;
-        delete ev;
-    }
-
 }
 
 void MerlinIO::setDataReadyFunc( IO::Functor2* dataReadyFunc )

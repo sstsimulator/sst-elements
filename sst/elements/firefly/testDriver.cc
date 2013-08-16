@@ -25,6 +25,7 @@ using namespace SST::Firefly;
 
 TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     Component( id ),
+    m_sharedTraceFile(false),
     m_functor( DerivedFunctor( this, &TestDriver::funcDone ) ),
     my_rank( AnySrc ),
     my_size(0)
@@ -57,12 +58,12 @@ TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     m_selfLink = configureSelfLink("Self", "100 ns",
         new Event::Handler<TestDriver>(this,&TestDriver::handle_event));
 
+    m_sharedTraceFile = params.find_integer("sharedTraceFile",0);
     m_traceFileName = params.find_string("traceFile");
 
     m_bufLen = params.find_integer( "bufLen" );
     assert( m_bufLen != (size_t)-1 ); 
 
-    m_dbg.output(CALL_INFO,"bufLen=%lu\n",m_bufLen);
     m_recvBuf.resize(m_bufLen);
     m_sendBuf.resize(m_bufLen);
     
@@ -91,7 +92,10 @@ void TestDriver::setup()
 
     std::ostringstream tmp;
 
-    tmp << m_traceFileName.c_str() << m_hermes->myWorldRank();
+    tmp << m_traceFileName.c_str();
+    if ( ! m_sharedTraceFile ) {
+        tmp << m_hermes->myWorldRank();
+    }
 
     if ( m_hermes->myWorldRank() == 0 ) {
 //        m_selfLink->send(10000,NULL);
@@ -101,11 +105,26 @@ void TestDriver::setup()
     }
 
     m_traceFile.open( tmp.str().c_str() );
-    m_dbg.verbose(CALL_INFO,1,0,"traceFile `%s`\n",tmp.str().c_str());
+
+
+    if ( m_hermes->myWorldRank() == 0 ) {
+        m_dbg.verbose(CALL_INFO,1,0,"traceFile `%s`\n",tmp.str().c_str());
+    }
+#if 0
     if ( ! m_traceFile.is_open() ) {
+        m_dbg.verbose(CALL_INFO,1,0,"traceFile `%s`\n",tmp.str().c_str());
         _abort(TestDriver, "ERROR:  Unable to open trace file '%s'\n",
                                         tmp.str().c_str() );
     }
+
+#else
+    std::string line;
+    while  ( ! getline( m_traceFile, line ).eof() ) {
+        m_fileBuffer.push_back(line);
+    }
+
+    m_traceFile.close();
+#endif
 
     char buffer[100];
     snprintf(buffer,100,"@t:%d:TestDriver::@p():@l ",m_hermes->myWorldRank()); 
@@ -117,14 +136,25 @@ void TestDriver::setup()
 
 void TestDriver::handle_event( Event* ev )
 {
+#if 0 
     getline( m_traceFile, m_funcName );
+
+    if ( m_funcName.empty() ) {
+        primaryComponentOKToEndSim();
+        return;
+    }
+#else
+    if ( m_fileBuffer.empty() ) {
+        primaryComponentOKToEndSim();
+        return;
+    } 
+    m_funcName = m_fileBuffer.front();
+    m_fileBuffer.pop_front();
+
+#endif
 
     m_dbg.verbose(CALL_INFO,1,0, "calling `%s`\n" , m_funcName.c_str());
 
-    m_funcName = m_funcName.c_str();
-    if ( m_funcName.empty() ) {
-        primaryComponentOKToEndSim();
-    }
     if ( m_funcName.compare( "init" ) == 0 ) {
         m_hermes->init( &m_functor );
     } else if ( m_funcName.compare( "size" ) == 0 ) {

@@ -48,12 +48,15 @@ class TestDriver : public SST::Component {
     void recvReturn();
     void waitReturn();
 
+    bool                        m_sharedTraceFile;
     std::string                 m_traceFileName;
     std::ifstream               m_traceFile;
     DerivedFunctor              m_functor;
     Hermes::MessageInterface*   m_hermes;
     SST::Link*                  m_selfLink;
     std::string                 m_funcName;
+
+    std::deque<std::string>     m_fileBuffer;
 
     Hermes::MessageRequest  my_req;
     Hermes::MessageResponse my_resp;

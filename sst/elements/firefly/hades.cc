@@ -85,7 +85,7 @@ Hades::Hades( Params& params ) :
 
     std::ifstream nidListFile( nidListFileName.c_str());
     if ( ! nidListFile.is_open() ) {
-        m_dbg.fatal(CALL_INFO,0,1,0,"Unable to open nid list '%s'\n",
+        m_dbg.verbose(CALL_INFO,0,1,"Unable to open nid list '%s'\n",
                                         nidListFileName.c_str() );
     }
 
@@ -172,11 +172,19 @@ Group* Hades::initAdjacentMap( int numRanks,
 
     m_dbg.verbose(CALL_INFO,1,0,"numRanks=%d numCores=%d\n",
                                                 numRanks, numCores);
+    int nid = -1;
     for ( int node = 0; node < numRanks/numCores; node++ ) {
-        int nid;
-        std::string line;
-        getline( nidFile, line );
-        sscanf( line.c_str(), "%d", &nid ); 
+
+        if ( ! nidFile.is_open()  ) { 
+            ++nid;
+        } else {
+            std::string line;
+            getline( nidFile, line );
+            int ret = sscanf( line.c_str(), "%d", &nid ); 
+            if( ret != 1 ) {
+                _abort(Hades, "ERROR: nidList is not long enough, want %d %d\n", numRanks, ret);
+            }
+        }
 
         for ( int core = 0; core < numCores; core++ ) {
             group->set( node * numCores + core, nid, core );
