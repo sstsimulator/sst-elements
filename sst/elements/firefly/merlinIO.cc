@@ -20,14 +20,14 @@
 
 using namespace SST::Firefly;
 
-class MyRtrEvent : public Merlin::RtrEvent {
+class MerlinFireflyEvent : public Merlin::RtrEvent {
     static const int BufLen = 56;
 public:
     uint16_t seq;
     std::string             buf;
     virtual RtrEvent* clone(void)
     {
-        return new MyRtrEvent(*this);
+        return new MerlinFireflyEvent(*this);
     }
     void setNumFlits( size_t len ) {
         size_in_flits = len / 8;
@@ -57,7 +57,7 @@ private:
     }
 };
 
-BOOST_CLASS_EXPORT(MyRtrEvent)
+BOOST_CLASS_EXPORT(MerlinFireflyEvent)
 
 #define MIN(X,Y) ((X) < (Y) ? : (X) : (Y))
 
@@ -69,7 +69,7 @@ void print( Output& dbg, char* buf, int len )
     }
 }
 
-size_t copyIn( Output& dbg, MerlinIO::Entry& entry, MyRtrEvent& event )
+size_t copyIn( Output& dbg, MerlinIO::Entry& entry, MerlinFireflyEvent& event )
 {
     dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu\n",
                                             entry.node, entry.ioVec.size() );
@@ -108,7 +108,7 @@ size_t copyIn( Output& dbg, MerlinIO::Entry& entry, MyRtrEvent& event )
     return ( entry.currentVec == entry.ioVec.size() ) ;
 }
 
-bool copyOut( Output& dbg, MyRtrEvent& event, MerlinIO::Entry& entry )
+bool copyOut( Output& dbg, MerlinFireflyEvent& event, MerlinIO::Entry& entry )
 {
     dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu\n",
                                             entry.node, entry.ioVec.size() );
@@ -203,7 +203,7 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
 {
     while ( ! m_sendQ.empty() && m_linkControl->spaceToSend(0,8) ) { 
 
-        MyRtrEvent* ev = new MyRtrEvent;
+        MerlinFireflyEvent* ev = new MerlinFireflyEvent;
         ev->setDest( m_sendQ.front()->node );
         if ( copyOut( m_dbg, *ev, *m_sendQ.front() ) ){
             m_dbg.verbose(CALL_INFO,1,0,"pop send Entry\n");
@@ -232,7 +232,7 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
     
     for ( int vc = 0; vc < m_numVC; vc++ ) {
         m_lastVC = (m_lastVC + 1) % m_numVC;
-        MyRtrEvent* ev = static_cast<MyRtrEvent*>(m_linkControl->recv( m_lastVC ));
+        MerlinFireflyEvent* ev = static_cast<MerlinFireflyEvent*>(m_linkControl->recv( m_lastVC ));
         if ( ev ) {
             
             if ( m_eventMap.find( ev->src ) == m_eventMap.end() ) {
@@ -262,16 +262,16 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
         IN& in = m_eventMap[ src ]; 
 
         while ( ! in.queue.empty() ) {
-            size_t tmp = static_cast<MyRtrEvent*>(in.queue.front())->buf.size();
+            size_t tmp = static_cast<MerlinFireflyEvent*>(in.queue.front())->buf.size();
             bool done = copyIn( m_dbg, *m_recvQ.front(),
-                    *static_cast<MyRtrEvent*>(in.queue.front() ));
+                    *static_cast<MerlinFireflyEvent*>(in.queue.front() ));
 
             in.nbytes -= 
-                (tmp - static_cast<MyRtrEvent*>(in.queue.front())->buf.size());
+                (tmp - static_cast<MerlinFireflyEvent*>(in.queue.front())->buf.size());
             m_dbg.verbose(CALL_INFO,1,0,"%lu bytes avail from src %d\n",
                 in.nbytes, src );
 
-            if ( static_cast<MyRtrEvent*>(in.queue.front())->buf.empty() ) { 
+            if ( static_cast<MerlinFireflyEvent*>(in.queue.front())->buf.empty() ) { 
                 in.queue.pop_front();
                 m_dbg.verbose(CALL_INFO,1,0,"pop event\n");
                 if ( in.queue.empty() ) {
