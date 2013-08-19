@@ -117,13 +117,15 @@ void StridePrefetcher::registerResponseCallback(Event::HandlerBase* handler) {
 	registeredCallbacks.push_back(handler);
 }
 
-void StridePrefetcher::printStats() {
-	std::cout << "--------------------------------------------------------------------" << std::endl;
-        std::cout << "Stride Prefetch Engine:" << std::endl;
-        std::cout << "Cache Miss Events:         " << missEventsProcessed << std::endl;
-        std::cout << "Cache Hit Events:          " << hitEventsProcessed << std::endl;
-        std::cout << "Cache Miss Rate (%):       " << ((missEventsProcessed / ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0) << std::endl;
-        std::cout << "Cache Hit Rate (%):        " << ((hitEventsProcessed / ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0) << std::endl;
-        std::cout << "Prefetches Issued:         " << prefetchEventsIssued << std::endl;
-        std::cout << "--------------------------------------------------------------------" << std::endl;
+void StridePrefetcher::printStats(Output &out) {
+	out.output("Stride Prefetch Engine Statistics:\n");
+	out.output("--------------------------------------------------------------------\n");
+	out.output("Cache Miss Events:     %"PRIu64"\n", missEventsProcessed);
+	out.output("Cache Hit Events :     %"PRIu64"\n", hitEventsProcessed);
+	out.output("Cache Miss Rate (%%): %f\n", ((missEventsProcessed
+               	/ ((double) (missEventsProcessed + hitEventsProcessed))) * 100.0));
+	out.output("Cache Hit Rate (%%):  %f\n", ((hitEventsProcessed / ((double) (missEventsProcessed +
+                       	hitEventsProcessed))) * 100.0));
+        out.output("Prefetches Issued:     %"PRIu64"\n", prefetchEventsIssued);
+	out.output("--------------------------------------------------------------------\n");
 }

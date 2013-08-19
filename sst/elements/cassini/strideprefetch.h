@@ -28,7 +28,7 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
         void setOwningComponent(const SST::Component* owner);
         void notifyAccess(NotifyAccessType notifyType, NotifyResultType notifyResType, Addr addr);
         void registerResponseCallback(Event::HandlerBase *handler);
-	void printStats();
+	void printStats(Output &out);
 
     private:
 	const SST::Component* owner;

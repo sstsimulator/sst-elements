@@ -56,7 +56,7 @@ void NextBlockPrefetcher::setOwningComponent(const SST::Component* own)
 	owner = own;
 }
 
-void NextBlockPrefetcher::printStats() {
+void NextBlockPrefetcher::printStats(Output &out) {
 	std::cout << "--------------------------------------------------------------------" << std::endl;
 	std::cout << "Next Block Prefetch Engine:" << std::endl;
 	std::cout << "Cache Miss Events:         " << missEventsProcessed << std::endl;
