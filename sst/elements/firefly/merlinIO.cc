@@ -134,6 +134,10 @@ bool copyOut( Output& dbg, MerlinFireflyEvent& event, MerlinIO::Entry& entry )
 
             event.buf.insert( event.buf.size(), from, len );
             entry.currentPos += len;
+            if ( event.buf.size() == event.getMaxLength() &&
+                    entry.currentPos != entry.ioVec[entry.currentVec].len ) {
+                break;
+            }
         }
     }
     dbg.verbose(CALL_INFO,1,0,"currentVec=%lu, currentPos=%lu\n",
@@ -241,19 +245,30 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
             }
             m_eventMap[ev->src].queue.push_back(ev);
             m_eventMap[ev->src].nbytes += ev->buf.size();
-            m_dbg.verbose(CALL_INFO,1,0,"got event with %lu bytes, %lu total"
-            " avail\n", ev->buf.size(), m_eventMap[ev->src].nbytes);
+            m_dbg.verbose(CALL_INFO,1,0,"got event from %d with %lu bytes,"
+            " %lu total avail\n", ev->src, ev->buf.size(),
+                    m_eventMap[ev->src].nbytes);
+#if 0
             if ( m_dataReadyFunc ) {
                 (*m_dataReadyFunc)( 0 );
                 m_dataReadyFunc = NULL;
             }
+#endif
         }
     } 
+
+    if ( ! m_eventMap.empty() ) {
+        if ( m_dataReadyFunc ) {
+            (*m_dataReadyFunc)( 0 );
+            m_dataReadyFunc = NULL;
+        }
+    }
 
     while ( ! m_recvQ.empty() ) { 
         
         int src = m_recvQ.front()->node; 
-        m_dbg.verbose(CALL_INFO,1,0,"have recv entry for src %d\n",src);
+        m_dbg.verbose(CALL_INFO,1,0,"have recv entry for src %d, Q size %lu\n",
+                            src, m_recvQ.size());
         if ( m_eventMap.find( src ) == m_eventMap.end() )  {
             break;
         } 
@@ -276,7 +291,8 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
                 m_dbg.verbose(CALL_INFO,1,0,"pop event\n");
                 if ( in.queue.empty() ) {
                 
-                    m_dbg.verbose(CALL_INFO,1,0,"no more event from src %d\n",src);
+                    m_dbg.verbose(CALL_INFO,1,0,"no more events from src %d\n",
+                                                    src);
                     m_eventMap.erase( src );
                 }
             }
@@ -304,7 +320,7 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
 bool MerlinIO::sendv( IO::NodeId dest, std::vector<IO::IoVec>& ioVec,
                                                IO::Entry::Functor* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu\n",
+    m_dbg.verbose(CALL_INFO,2,0,"dest=%d ioVec.size()=%lu\n",
                                                 dest, ioVec.size() );
     m_sendQ.push_back( new Entry( dest, ioVec, functor ) );
     return true;

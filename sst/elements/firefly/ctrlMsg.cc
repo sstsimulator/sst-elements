@@ -240,7 +240,7 @@ void CtrlMsg::recv( void* buf, size_t len, int src, int tag, int group,
 void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group, 
                                     CommReq* req )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu dest=%d tag=%d group=%d\n",
+    m_dbg.verbose(CALL_INFO,1,0,"buf=%p len=%lu dest=%d tag=%#x group=%d\n",
                                         buf,len,dest,tag,group);
 
     std::vector<IoVec> ioVec(1);
@@ -253,7 +253,7 @@ void CtrlMsg::send( void* buf, size_t len, int dest, int tag, int group,
 void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
                                                         int group, CommReq* req)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%d group=%d\n", src,tag,group);
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x group=%d\n", src,tag,group);
 
     req->info = new RecvInfo( ioVec, src, tag, group );
     req->done = false;
@@ -278,7 +278,7 @@ void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
 void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag, 
                                                         int group, CommReq* req)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%d group=%d\n", dest,tag,group);
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%#x group=%d\n", dest,tag,group);
     req->info = new SendInfo( ioVec, dest, tag, group );
     req->done = false;
 

@@ -87,6 +87,9 @@ class AllgatherFuncSM :  public FunctionSMInterface
     int        m_size; 
 
     unsigned int        m_currentStage;
+
+    void initIoVec(std::vector<CtrlMsg::IoVec>& ioVec,
+                                    int startChunk, int numChunks);
 };
         
 }
