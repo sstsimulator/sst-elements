@@ -27,11 +27,11 @@ void OberonComponent::handleEvent( SST::Event *ev ) {
 
 bool OberonComponent::clockTic( SST::Cycle_t ) {
 	OberonEvent ev;
-	
+
 	do {
 		ev = engine.generateNextEvent();
 	} while(ev.getEventType() != HALT);
-	
+
 }
 
 BOOST_CLASS_EXPORT(OberonComponent)
