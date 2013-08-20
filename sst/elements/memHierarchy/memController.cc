@@ -66,6 +66,9 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 				&MemController::clock));
 	registerTimeBase("1 ns", true);
 
+	// default access time
+	std::string access_time = params.find_string("access_time", "10 ns");
+
 	// check for and initialize dramsim
 	use_dramsim = (bool)params.find_integer("use_dramsim", 0);
 	if ( use_dramsim ) {
@@ -97,7 +100,6 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 		memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 #endif
 	} else {
-	  std::string access_time = params.find_string("access_time", "1000 ns");
 
 	  // check for vaultsim
 	  use_vaultSim = (bool)params.find_integer("use_vaultSim", 0);
@@ -110,11 +112,11 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 				       new Event::Handler<MemController>(this,
 									 &MemController::handleCubeEvent));
 	  }
-
-	  self_link = configureSelfLink("Self", access_time,
-					new Event::Handler<MemController>(this, &MemController::handleSelfEvent));
 	}
 
+	self_link = configureSelfLink("Self", access_time,
+				      new Event::Handler<MemController>(this,
+ &MemController::handleSelfEvent));
 
 
 	int mmap_flags = MAP_PRIVATE;
@@ -359,17 +361,24 @@ bool MemController::clock(Cycle_t cycle)
 
         req->status = DRAMReq::PROCESSING;
         uint64_t addr = req->addr + req->amt_in_process;
-        if ( use_dramsim ) {
+	bool isDCLookup = (0 == req->addr);
+        if ( use_dramsim && !isDCLookup) {
 #if defined(HAVE_LIBDRAMSIM)
 
-            bool ok = memSystem->willAcceptTransaction(addr);
-            if ( !ok ) break;
-            ok = memSystem->addTransaction(req->isWrite, addr);
-            if ( !ok ) break;  // This *SHOULD* always be ok
-            dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
-            dramReqs[addr].push_back(req);
+	  // ugly hardcoded limit on outstanding requests
+	  if (dramReqs.size() > 64) {
+	    req->status = DRAMReq::NEW;
+	    break;
+	  }
+
+	  bool ok = memSystem->willAcceptTransaction(addr);
+	  if ( !ok ) break;
+	  ok = memSystem->addTransaction(req->isWrite, addr);
+	  if ( !ok ) break;  // This *SHOULD* always be ok
+	  dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
+	  dramReqs[addr].push_back(req);
 #endif
-	} else if ( use_vaultSim ) {
+	} else if ( use_vaultSim && !isDCLookup) {
 	  dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
 	  // ugly hardcoded limit on outstanding requests
 	  if (outToCubes.size() > 255) {
@@ -380,10 +389,10 @@ bool MemController::clock(Cycle_t cycle)
 	  assert(outToCubes.find(reqID) == outToCubes.end());
 	  outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
 	  MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
-	  cube_link->send(1, outgoingEvent); // send the event off
+	  cube_link->send(outgoingEvent); // send the event off
         } else {
             dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
-            self_link->send(1, new MemCtrlEvent(req));
+            self_link->send(new MemCtrlEvent(req));
         }
 
         req->amt_in_process += requestSize;
