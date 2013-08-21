@@ -287,6 +287,7 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
                 in.nbytes, src );
 
             if ( static_cast<MerlinFireflyEvent*>(in.queue.front())->buf.empty() ) { 
+                delete in.queue.front();
                 in.queue.pop_front();
                 m_dbg.verbose(CALL_INFO,1,0,"pop event\n");
                 if ( in.queue.empty() ) {

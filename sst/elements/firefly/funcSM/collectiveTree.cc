@@ -170,6 +170,9 @@ void CollectiveTreeFuncSM::run()
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
         delete m_yyy;
         delete m_event;
+        for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
+            free( m_bufV[i+1] );
+        }
         m_event = NULL;
     }
 }
