@@ -14,6 +14,7 @@
 
 #include <sst_config.h>
 #include <sst/core/component.h>
+#include <sst/core/params.h>
 #include <mem/bus.hh>
 
 namespace SST {
