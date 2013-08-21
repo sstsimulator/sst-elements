@@ -41,7 +41,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
 
  public:
 
-  sstdisksim_straightdisk( ComponentId_t id, Params& params );
+  sstdisksim_straightdisk( ComponentId_t id, Params_t& params );
   ~sstdisksim_straightdisk();
 
   void setup();  
@@ -51,7 +51,7 @@ class sstdisksim_straightdisk : public sstdisksim_diskmodel, public Component {
 
  private:
 
-  Params __params;
+  Params_t __params;
   ComponentId_t __id;
 
   sstdisksim_event* getNextEvent();

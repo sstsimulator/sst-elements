@@ -27,7 +27,7 @@ namespace MessageGenerator {
 class messageGeneratorComponent : public SST::Component {
 public:
 
-  messageGeneratorComponent(SST::ComponentId_t id, SST::Params& params);
+  messageGeneratorComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup()  { }
   void finish() 
   { 

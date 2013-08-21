@@ -11,7 +11,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::Zodiac;
 
-ZodiacDUMPITraceReader::ZodiacDUMPITraceReader(ComponentId_t id, Params& params) :
+ZodiacDUMPITraceReader::ZodiacDUMPITraceReader(ComponentId_t id, Params_t& params) :
   Component(id) {
 
     string msgiface = params.find_string("msgapi");

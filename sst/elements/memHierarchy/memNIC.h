@@ -16,9 +16,8 @@
 #include <deque>
 
 
-#include <sst/core/component.h>
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
+#include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/memEvent.h>
 
@@ -174,7 +173,7 @@ public:
 
 };
 
-} //namespace memHierarchy
-} //namespace SST
+}
+}
 
 #endif

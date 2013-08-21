@@ -40,7 +40,7 @@ namespace ArielComponent {
 class Ariel : public SST::Component {
 public:
 
-  Ariel(SST::ComponentId_t id, SST::Params& params);
+  Ariel(SST::ComponentId_t id, SST::Component::Params_t& params);
 
   void setup()  { }
   void finish() { }

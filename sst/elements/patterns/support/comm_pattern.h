@@ -12,12 +12,9 @@
 
 
 #include "patterns.h"
-
-#include <sst/core/cpunicEvent.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/params.h>
-
+#include <sst/core/cpunicEvent.h>
 #include "state_machine.h"
 #include "machine_info.h"
 #include "pattern_common.h"
@@ -42,7 +39,7 @@ using namespace SST;
 class Comm_pattern : public Component {
     public:
 	// The constructor
-        Comm_pattern(ComponentId_t id, Params& params) :
+        Comm_pattern(ComponentId_t id, Params_t& params) :
 	    // constructor initializer list
             Component(id), params(params)
         {
@@ -185,7 +182,7 @@ class Comm_pattern : public Component {
 
 
 	// Interfacing with SST
-        Params params;
+        Params_t params;
 	Link *self_link;
 	Link *nvram;
 	Link *storage;

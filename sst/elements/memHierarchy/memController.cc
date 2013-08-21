@@ -13,18 +13,17 @@
 #include <sst/core/serialization.h>
 #include "memController.h"
 
+#include <sstream>
 #include <assert.h>
 #include <fcntl.h>
-#include <sstream>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <sst/core/element.h>
-#include <sst/core/params.h>
 #include <sst/core/simulation.h>
+#include <sst/core/element.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
@@ -36,7 +35,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
-MemController::MemController(ComponentId_t id, Params &params) : Component(id)
+MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 {
     dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);

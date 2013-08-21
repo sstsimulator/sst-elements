@@ -11,17 +11,15 @@
 
 #include <sst_config.h>
 #include "sst/core/serialization.h"
-#include "hades.h"
 
-#include "sst/core/debug.h"
 #include "sst/core/component.h"
-#include "sst/core/params.h"
 
 #include <stdlib.h>
 
 #include <iostream>
 #include <fstream>
 
+#include "hades.h"
 #include "ioapi.h"
 #include "functionSM.h"
 #include "entry.h"

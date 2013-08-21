@@ -56,7 +56,7 @@ typedef struct {
 class prospero : public SST::Component {
 public:
 
-  prospero(SST::ComponentId_t id, SST::Params& params);
+  prospero(SST::ComponentId_t id, SST::Component::Params_t& params);
 
   void setup()  { }
   void finish() {

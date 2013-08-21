@@ -25,7 +25,7 @@ namespace Zodiac {
 class ZodiacSiriusTraceReader : public SST::Component {
 public:
 
-  ZodiacSiriusTraceReader(SST::ComponentId_t id, SST::Params& params);
+  ZodiacSiriusTraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup();
   void finish();
   void init(unsigned int phase);

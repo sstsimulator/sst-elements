@@ -24,13 +24,11 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include	"ninterface.h"
-
-#include	<sstream>
 
 #include "sst/core/element.h"
-#include "sst/core/link.h"
-#include "sst/core/params.h"
+#include	<sstream>
+
+#include	"ninterface.h"
 
 namespace SST {
 namespace Iris {
@@ -108,7 +106,7 @@ SimpleArbiter::pick_winner ( void )
 }
 
 /* *********** Network Interface Functions ************ */
-NInterface::NInterface (SST::ComponentId_t id, Params& params): DES_Component(id), no_vcs(2)
+NInterface::NInterface (SST::ComponentId_t id, Params_t& params): DES_Component(id), no_vcs(2)
 {
 
     // get configuration parameters

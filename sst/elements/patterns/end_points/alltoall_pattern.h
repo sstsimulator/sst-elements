@@ -20,8 +20,6 @@
 #ifndef _ALLTOALL_PATTERN_H
 #define _ALLTOALL_PATTERN_H
 
-#include <sst/core/params.h>
-
 #include <boost/serialization/list.hpp>
 #include "patterns.h"
 #include "support/state_machine.h"
@@ -38,7 +36,7 @@
 
 class Alltoall_pattern : public Comm_pattern    {
     public:
-        Alltoall_pattern(ComponentId_t id, Params& params) :
+        Alltoall_pattern(ComponentId_t id, Params_t& params) :
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
@@ -48,7 +46,7 @@ class Alltoall_pattern : public Comm_pattern    {
 
 
 	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
+            Params_t::iterator it= params.begin();
             while (it != params.end())   {
 		if (!it->first.compare("num_sets"))   {
 		    sscanf(it->second.c_str(), "%d", &num_sets);
@@ -146,7 +144,7 @@ class Alltoall_pattern : public Comm_pattern    {
 	void state_COLLECT_RESULT(state_event sm_event);
 	void state_DONE(state_event sm_event);
 
-	Params params;
+	Params_t params;
 	int allreduce_msglen;
 	int alltoall_msglen;
 

@@ -29,7 +29,7 @@
 using namespace SST;
 using namespace SST::M5;
 
-SST::M5::M5::M5( ComponentId_t id, Params& params ) :
+SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
     IntrospectedComponent( id ),
     m_numRegisterExits( 0 ),
     m_barrier( NULL ),

@@ -11,20 +11,17 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include "cpu_data.h"
-
 #include <assert.h>
 
-#include "sst/core/debug.h"
 #include "sst/core/element.h"
-#include "sst/core/params.h"
 
+#include "cpu_data.h"
 #include "simpleEvent.h"
 
 using namespace SST;
 using namespace SST::CPU_data;
 
-Cpu_data::Cpu_data(ComponentId_t id, Params& params) :
+Cpu_data::Cpu_data(ComponentId_t id, Params_t& params) :
   IntrospectedComponent(id) {
 
   // get parameters
@@ -207,7 +204,7 @@ BOOST_CLASS_EXPORT(Cpu_data)
 
 static Component*
 create_cpu_data(SST::ComponentId_t id, 
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
     return new Cpu_data( id, params );
 }

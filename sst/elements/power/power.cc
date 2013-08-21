@@ -61,9 +61,9 @@ void Power::test()
 }
 
 /************************************************************************
-* Decouple the power-related parameters from Params params *
+* Decouple the power-related parameters from Component::Params_t params *
 *************************************************************************/
-void Power::setTech(ComponentId_t compID, Params params, ptype power_type, pmodel power_model)
+void Power::setTech(ComponentId_t compID, Component::Params_t params, ptype power_type, pmodel power_model)
 {
     #ifdef PANALYZER_H
     #ifdef LV2_PANALYZER_H
@@ -100,7 +100,7 @@ void Power::setTech(ComponentId_t compID, Params params, ptype power_type, pmode
     // are set up during the 1st setTech call. So there is no need to read the XML again if it has done so.
  
     //set up architecture parameter values
-    Params::iterator it= params.begin();
+    Component::Params_t::iterator it= params.begin();
 
     while (it != params.end()){
 	//NOTE: params are NOT read in order as they apprears in XML
@@ -9414,11 +9414,11 @@ I Power::getExecutionTime(IntrospectedComponent *c)
 }
 
 /************************************************************************
-* Decouple the power-related parameters from Params params *
+* Decouple the power-related parameters from Component::Params_t params *
 *************************************************************************/
-void Power::setTech(Params deviceParams)
+void Power::setTech(Component::Params_t deviceParams)
 {
-    Params::iterator it= deviceParams.begin();
+    Component::Params_t::iterator it= deviceParams.begin();
     unsigned int i, n;
     char chtmp[60];
     char chtmp1[60];
@@ -11437,7 +11437,7 @@ void Power::McPAT05Setup()
 * tiles are created for silicon, interface, spreader, and heatsink      *
 * layers. Codes are from W Song's power interface.			*
 ************************************************************************/
-void Power::setChip(Params deviceParams)
+void Power::setChip(Component::Params_t deviceParams)
 {
     //First, set up device parameter values
     setTech(deviceParams);

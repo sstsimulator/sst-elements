@@ -114,7 +114,7 @@ class PtlNic : public RtrIF
     typedef int ctx_id_t; 
 
   public:
-    PtlNic( SST::ComponentId_t id, Params& params );
+    PtlNic( SST::ComponentId_t id, Params_t& params );
     ptl_pid_t allocPid( ptl_pid_t );
     DmaEngine& dmaEngine() { return m_dmaEngine; }
     int& nid() { return m_nid; }

@@ -44,7 +44,7 @@ class EventChannel
     public: // functions
 
         virtual ~EventChannel() {;}
-        EventChannel( Component&, Params, 
+        EventChannel( Component&, Component::Params_t, 
                                     std::string name, int numVC = 1 );
 
         virtual bool ready( int credits, int vc = 0 );

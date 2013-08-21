@@ -36,7 +36,7 @@ you want power analyzed. (cpu_power.h under trunk/components/cpu_power is a good
 4.1 //First, create a power object
 power = new Power(Id());  
 
-4.2 //Then, call setTech(ComponentId_t compID, Params params, ptype power_type) 
+4.2 //Then, call setTech(ComponentId_t compID, Component::Params_t params, ptype power_type) 
 //if you want power analysis on the sub-component, power_type.
 //The setTech() function decouples power related parameters of the sub-component from the 
 //configuration file and have the selected power model estimate power per usage of the subcomponent.

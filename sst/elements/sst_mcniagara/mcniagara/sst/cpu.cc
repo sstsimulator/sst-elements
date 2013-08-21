@@ -91,7 +91,7 @@ void Cpu::NICAccess(OffCpuIF::access_mode mode, long unsigned int data_size)
 
 extern "C" {
 Cpu* cpuMcNiagaraAllocComponent( SST::ComponentId_t id, SST::Simulation* sim,
-                                    SST::Params& params )
+                                    SST::Component::Params_t& params )
 {
 //     printf("cpuAllocComponent--> sim = %p\n",sim);
     return new Cpu( id, sim, params );

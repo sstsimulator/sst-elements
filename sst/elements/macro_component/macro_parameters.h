@@ -22,7 +22,7 @@
 class macro_parameters : public sstmac::sim_parameters
 {
 protected:
-  macro_parameters(SST::Params& params) :
+  macro_parameters(SST::Component::Params_t& params) :
       params_(params)
   {
 
@@ -34,7 +34,7 @@ public:
   typedef boost::intrusive_ptr<macro_parameters> ptr;
 
   static ptr
-  construct(SST::Params& params)
+  construct(SST::Component::Params_t& params)
   {
     return ptr(new macro_parameters(params));
   }
@@ -42,7 +42,7 @@ public:
   virtual std::string
   get_param(const std::string &key) const
   {
-    SST::Params::const_iterator it = params_.find(key.c_str());
+    SST::Component::Params_t::const_iterator it = params_.find(key.c_str());
     return it->second;
 
   }
@@ -70,7 +70,7 @@ public:
   virtual void
   combine_into(sim_parameters::ptr sp)
   {
-    SST::Params::iterator it, end = params_.end();
+    SST::Component::Params_t::iterator it, end = params_.end();
   }
 
   virtual std::string
@@ -90,7 +90,7 @@ public:
 	}
 	
 	virtual void print_params(std::ostream& os = std::cerr) const {
-		SST::Params::const_iterator it, end = params_.end();
+		SST::Component::Params_t::const_iterator it, end = params_.end();
 		for(it = params_.begin(); it != end; it++){
 				os << it->first << " = " << it->second << "\n";
 		}
@@ -110,7 +110,7 @@ public:
 
 
 protected:
-  SST::Params params_;
+  SST::Component::Params_t params_;
 
 
 };

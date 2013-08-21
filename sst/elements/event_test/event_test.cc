@@ -12,19 +12,17 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include "event_test.h"
 
-#include "sst/core/debug.h"
 #include "sst/core/element.h"
-#include "sst/core/params.h"
 #include "sst/core/simulation.h"
 #include "sst/core/interfaces/TestEvent.h"
 
+#include "event_test.h"
 
 using namespace SST;
 using namespace SST::EventTest;
 
-event_test::event_test(ComponentId_t id, Params& params) :
+event_test::event_test(ComponentId_t id, Params_t& params) :
     Component(id),
     done(false)
 {
@@ -139,7 +137,7 @@ BOOST_CLASS_EXPORT(event_test)
 
 static Component*
 create_event_test(SST::ComponentId_t id, 
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
     return new event_test( id, params );
 }

@@ -51,7 +51,7 @@ const char* SST::Isis::LinkNames[] = {
 
 using namespace SST::Iris;
 
-Router::Router (SST::ComponentId_t id, Params& params): DES_Component(id) ,
+Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                 /*  Init stats */
                 stat_flits_in(0), stat_flits_out(0), stat_last_flit_time_nano(0), 
                 stat_last_flit_cycle(0), stat_packets_in(0),stat_packets_out(0),

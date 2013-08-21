@@ -19,7 +19,7 @@ using namespace SST;
 
 static SST::Component*
 create_portals4_driver(SST::ComponentId_t id,
-                       SST::Params& params)
+                       SST::Component::Params_t& params)
 {
     printf("driver called\n");
     return NULL;

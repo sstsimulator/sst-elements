@@ -34,9 +34,8 @@
 
 #include <queue>
 #include <sst/core/component.h>
-#include <sst/core/link.h>
 #include <sst/core/log.h>
-#include <sst/core/params.h>
+#include <sst/core/link.h>
 
 #include "SS_network.h"
 
@@ -406,7 +405,7 @@ protected:
     void dumpStats(FILE *fp);
     void finish();
 
-    void setupRoutingTable ( Params, int nodes, int xDim, int yDim, int zDim);
+    void setupRoutingTable ( Params_t, int nodes, int xDim, int yDim, int zDim);
 
     void advanceEventQ();
     void DebugEvent ();
@@ -416,7 +415,7 @@ protected:
 
 public:
 
-    SS_router ( ComponentId_t id, Params& params );
+    SS_router ( ComponentId_t id, Params_t& params );
 
 private:
     SS_router();

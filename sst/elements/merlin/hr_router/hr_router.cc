@@ -10,11 +10,8 @@
 // distribution.
 #include <sst_config.h>
 #include "sst/core/serialization.h"
-#include "hr_router.h"
 
-#include <sst/core/debug.h>
 #include <sst/core/element.h>
-#include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
@@ -22,6 +19,7 @@
 
 #include <signal.h>
 
+#include "hr_router.h"
 #include "portControl.h"
 #include "xbar_arb_rr.h"
 

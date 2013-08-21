@@ -25,19 +25,19 @@
 using namespace Firefly;
 
 static SST::Component*
-create_ioSwitch(SST::ComponentId_t id, SST::Params& params)
+create_ioSwitch(SST::ComponentId_t id, SST::Component::Params_t& params)
 {
     return new IOSwitch( id, params );
 }
 
 static SST::Component*
-create_nic(SST::ComponentId_t id, SST::Params& params)
+create_nic(SST::ComponentId_t id, SST::Component::Params_t& params)
 {
     return new Nic( id, params );
 }
 
 static SST::Component*
-create_testDriver(SST::ComponentId_t id, SST::Params& params)
+create_testDriver(SST::ComponentId_t id, SST::Component::Params_t& params)
 {
     return new TestDriver(id, params);
 }

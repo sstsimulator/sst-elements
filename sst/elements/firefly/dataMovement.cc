@@ -11,13 +11,12 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include "dataMovement.h"
 
 #include "ioapi.h"
+#include "dataMovement.h"
 #include "entry.h"
 #include "info.h"
 #include "sst/elements/hermes/msgapi.h"
-#include "sst/core/params.h"
 
 using namespace SST::Firefly;
 using namespace SST;

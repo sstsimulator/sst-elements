@@ -38,7 +38,7 @@ BOOST_CLASS_EXPORT(OberonComponent)
 
 static Component*
 create_oberon(SST::ComponentId_t id,
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
     return new OberonComponent( id, params );
 }

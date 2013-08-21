@@ -127,7 +127,7 @@ SimTime_t read_time;
 // THIS SECTION MOVED TO patterns.cc FOR RELEASE 3.x OF SST - ALEVINE
 
 static SST::Component *
-create_bit_bucket(SST::ComponentId_t id, SST::Params& params)
+create_bit_bucket(SST::ComponentId_t id, SST::Component::Params_t& params)
 {
     return new Bit_bucket(id, params);
 }

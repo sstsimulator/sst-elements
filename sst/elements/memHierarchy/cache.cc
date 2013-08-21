@@ -13,14 +13,13 @@
 #include <sst/core/serialization.h>
 #include "cache.h"
 
-#include <algorithm>
-#include <iomanip>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <iomanip>
 
-#include <sst/core/element.h>
-#include <sst/core/params.h>
 #include <sst/core/simulation.h>
+#include <sst/core/element.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
 
@@ -35,7 +34,7 @@ using namespace SST::Interfaces;
 
 static const std::string NO_NEXT_LEVEL = "NONE";
 
-Cache::Cache(ComponentId_t id, Params& params) :
+Cache::Cache(ComponentId_t id, Params_t& params) :
 	Component(id)
 {
     dbg.init("@t:Cache::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));

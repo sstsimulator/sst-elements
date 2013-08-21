@@ -85,7 +85,7 @@ class macro_network : public SST::Component, public eventmanager_interface
 
 public:
 
-  macro_network(SST::ComponentId_t id, SST::Params& params);
+  macro_network(SST::ComponentId_t id, SST::Component::Params_t& params);
   virtual
   ~macro_network()
   {

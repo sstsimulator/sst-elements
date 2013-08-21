@@ -33,7 +33,7 @@ namespace SST {
 namespace SST_McNiagara {
 class SSTMcNiagara : public SST::Component{
 public:
-	SSTMcNiagara(SST::ComponentId_t id, SST::Params& params);
+	SSTMcNiagara(SST::ComponentId_t id, SST::Component::Params_t& params);
 	SSTMcNiagara();
 	~SSTMcNiagara();
 	McNiagara::McNiagara *the_cpu;

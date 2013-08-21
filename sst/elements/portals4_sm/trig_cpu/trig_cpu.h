@@ -24,7 +24,6 @@
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
-#include <sst/core/params.h>
 #include <sst/core/timeConverter.h>
 
 #include "sst/elements/portals4_sm/trig_nic/trig_nic_event.h"
@@ -76,7 +75,7 @@ class trig_cpu : public Component {
 public:
     friend class portals;
   
-    trig_cpu(ComponentId_t id, Params& params);
+    trig_cpu(ComponentId_t id, Params_t& params);
     void setup();
     void finish();
 
@@ -199,7 +198,7 @@ private:
     int current_run;
     bool do_noise;
     
-    Params    params;
+    Params_t    params;
     Link*       nic;
     Link*       self;
     Link*       ptl_link;

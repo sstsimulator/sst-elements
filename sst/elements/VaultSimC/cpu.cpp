@@ -10,16 +10,14 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
-#include <cpu.h>
-
-#include <sstream> // for stringstream() so I don't have to use atoi()
 #include <stdio.h>
 #include <stdlib.h>
+#include "sst/core/serialization.h"
+#include <cpu.h>
+#include <sstream> // for stringstream() so I don't have to use atoi()
 
-#include <sst/core/params.h>
 
-cpu::cpu( ComponentId_t id, Params& params ) :
+cpu::cpu( ComponentId_t id, Params_t& params ) :
   IntrospectedComponent( id ), outstanding(0), memOps(0), inst(0)
 {
   printf("making cpu\n");
@@ -124,7 +122,7 @@ bool cpu::clock( Cycle_t current )
 }
 
 extern "C" {
-	Component* create_cpu( SST::ComponentId_t id,  SST::Params& params )
+	Component* create_cpu( SST::ComponentId_t id,  SST::Component::Params_t& params )
 	{
 		return new cpu( id, params );
 	}

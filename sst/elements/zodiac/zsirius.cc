@@ -1,19 +1,17 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include "zsirius.h"
-
 #include <assert.h>
 
 #include "sst/core/element.h"
-#include "sst/core/params.h"
 
+#include "zsirius.h"
 
 using namespace std;
 using namespace SST;
 using namespace SST::Zodiac;
 
-ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& params) :
+ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params_t& params) :
   Component(id),
   retFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedFunction)),
   recvFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedRecvFunction))
@@ -27,7 +25,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 	// Took code from Mike, Scott is going to fix.
 	std::ostringstream ownerName;
     	ownerName << this;
-    	Params hermesParams = params.find_prefix_params("hermesParams." );
+    	Params_t hermesParams = params.find_prefix_params("hermesParams." );
     	hermesParams.insert(
         	std::pair<std::string,std::string>("owner", ownerName.str()));
 

@@ -39,7 +39,7 @@ public:
     static const key_t ANY_KEY;
     static const char BUS_INFO_STR[];
 
-	Bus(SST::ComponentId_t id, SST::Params& params);
+	Bus(SST::ComponentId_t id, SST::Component::Params_t& params);
 	void init(unsigned int phase);
     void printStatus(Output &out);
 

@@ -9,14 +9,13 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 //
+#include <stdlib.h>
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
+
+
 #include "dragonfly.h"
-
-#include <stdlib.h>
-
-#include <sst/core/debug.h>
 
 using namespace SST::Merlin;
 

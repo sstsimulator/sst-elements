@@ -24,11 +24,10 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include	"router.h"
 
 #include "sst/core/element.h"
-#include "sst/core/link.h"
-#include "sst/core/params.h"
+
+#include	"router.h"
 
 namespace SST {
 namespace Iris {
@@ -48,12 +47,12 @@ const char* LinkNames[] = {
     "zNeg",
 };
 
-} //namespace Iris
-} //namespace SST
+}
+}
 
 using namespace SST::Iris;
 
-Router::Router (SST::ComponentId_t id, Params& params): DES_Component(id) ,
+Router::Router (SST::ComponentId_t id, Params_t& params): DES_Component(id) ,
                 /*  Init stats */
                 stat_flits_in(0), stat_flits_out(0), stat_last_flit_cycle(0), 
                 heartbeat_interval(500)/* in cycles */, stat_avg_buffer_occ(0.0),

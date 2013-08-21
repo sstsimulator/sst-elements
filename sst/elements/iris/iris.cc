@@ -25,21 +25,21 @@
 
 static SST::Component* 
 create_router(SST::ComponentId_t id, 
-                SST::Params& params)
+                SST::Component::Params_t& params)
 {
     return new SST::Iris::Router( id, params );
 }
 
 static SST::Component* 
 create_ninterface(SST::ComponentId_t id, 
-                SST::Params& params)
+                SST::Component::Params_t& params)
 {
     return new SST::Iris::NInterface( id, params );
 }
 
 static SST::Component* 
 create_trig_nic(SST::ComponentId_t id, 
-                SST::Params& params)
+                SST::Component::Params_t& params)
 {
     return new SST::Iris::iris_trig_nic( id, params );
 }
