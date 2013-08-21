@@ -16,6 +16,8 @@
 #include <memLink.h>
 #include <paramHelp.h>
 
+#include <sst/core/params.h>
+
 using namespace SST::M5;
 
 extern "C" {
