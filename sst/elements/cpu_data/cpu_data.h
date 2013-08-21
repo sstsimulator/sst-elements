@@ -24,7 +24,7 @@ namespace CPU_data {
 class Cpu_data : public SST::IntrospectedComponent {
 public:
 
-  Cpu_data(SST::ComponentId_t id, SST::Component::Params_t& params);
+  Cpu_data(SST::ComponentId_t id, SST::Params& params);
 
   void finish() {
     static int n = 0;

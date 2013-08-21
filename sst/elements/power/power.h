@@ -1131,7 +1131,7 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	//Destructor
 	virtual ~Power() {}
 
-	void setTech(ComponentId_t compID, Component::Params_t params, ptype power_type, pmodel power_model);
+	void setTech(ComponentId_t compID, Params params, ptype power_type, pmodel power_model);
 	void getUnitPower(ptype power_type, int user_data, pmodel power_model);
 	//Pdissipation_t& getPower(Cycle_t current, ptype power_type, char *user_parms, int total_cycles);
 	//Pdissipation_t& getPower(Cycle_t current, ptype power_type, usagecounts_t counts, int total_cycles);
@@ -1143,8 +1143,8 @@ cache_l2dir_tech.output_width.push_back(0.0); cache_l2dir_tech.cache_policy.push
 	double estimateAreaMcPAT(){return p_areaMcPAT*1e-6;};
 	void resetCounts(usagecounts_t *counts);
   	I getExecutionTime(IntrospectedComponent *c);
-	void setTech(Component::Params_t deviceParams); // called by setTech to set up device params values and store subcomp floorplan id information
-	void setChip(Component::Params_t deviceParams);
+	void setTech(Params deviceParams); // called by setTech to set up device params values and store subcomp floorplan id information
+	void setChip(Params deviceParams);
 	void floorParamInitialize();
 	void updateFloorplanAreaInfo(int fid, double area);
 	void compute_temperature(ComponentId_t compID);

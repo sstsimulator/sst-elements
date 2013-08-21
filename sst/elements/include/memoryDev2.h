@@ -14,7 +14,7 @@
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 MEMORYDEV()::MemoryDev( Component& comp,
-                Component::Params_t params, std::string name )  :
+                Params params, std::string name )  :
     dev_t( comp, params, name ),
     m_dbg( *new Log< MEMORYDEV_DBG >( "MemoryDev::", false ) )
 {

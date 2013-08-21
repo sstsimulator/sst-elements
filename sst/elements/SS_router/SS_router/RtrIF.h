@@ -23,15 +23,18 @@
 
 #ifndef ED_RTRIF_H
 #define ED_RTRIF_H
-
-#include <sstream>
+#include <sst/core/sst_types.h>
 
 #include <deque>
+#include <sstream>
 
-#include <sst/core/sst_types.h>
+#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/params.h>
+
+
 #include "SS_network.h"
 
 #define RTRIF_DBG 1 
@@ -47,7 +50,7 @@ namespace SS_router {
 
 class RtrIF : public Component {
 public:
-    RtrIF( ComponentId_t id, Params_t& params ) :
+    RtrIF( ComponentId_t id, Params& params ) :
         Component(id),
         rtrCountP(0),
         num_vcP(2)

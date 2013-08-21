@@ -34,7 +34,7 @@ namespace M5 {
 class M5 : public SST::IntrospectedComponent
 {
   public:
-    M5( SST::ComponentId_t id, Params_t& params );
+    M5( SST::ComponentId_t id, Params& params );
     ~M5();
 	void init(unsigned int);
     void setup();
@@ -63,7 +63,7 @@ class M5 : public SST::IntrospectedComponent
     std::string m_statFile;
 
     // parameters for power modeling
-   Params_t params;
+   Params params;
    #ifdef M5_WITH_POWER
 	// For power & introspection
  	SST::Pdissipation_t pdata, pstats;

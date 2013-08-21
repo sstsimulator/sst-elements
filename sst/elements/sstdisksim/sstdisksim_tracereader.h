@@ -39,7 +39,7 @@ class sstdisksim_tracereader : public Component {
 
  public:
 
-  sstdisksim_tracereader( ComponentId_t id, Params_t& params );
+  sstdisksim_tracereader( ComponentId_t id, Params& params );
   ~sstdisksim_tracereader();
   void setup(); 
   void finish();
@@ -51,7 +51,7 @@ class sstdisksim_tracereader : public Component {
   std::string traceFile;
   std::string edfFile;
 
-  Params_t __params;
+  Params __params;
   ComponentId_t __id;
   sstdisksim_tau_parser* __parser;
 

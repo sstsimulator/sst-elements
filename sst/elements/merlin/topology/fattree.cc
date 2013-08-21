@@ -10,12 +10,12 @@
 // distribution.
 #include <sst_config.h>
 #include "sst/core/serialization.h"
-
-#include <stdlib.h>
+#include "fattree.h"
 
 #include <algorithm>
+#include <stdlib.h>
 
-#include "fattree.h"
+#include <sst/core/debug.h>
 
 using namespace SST::Merlin;
 

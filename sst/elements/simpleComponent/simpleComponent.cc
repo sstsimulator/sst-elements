@@ -11,17 +11,20 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "simpleComponent.h"
+
 #include <assert.h>
 
+#include "sst/core/debug.h"
 #include "sst/core/element.h"
+#include "sst/core/params.h"
 
-#include "simpleComponent.h"
 #include "simpleEvent.h"
 
 using namespace SST;
 using namespace SST::SimpleComponent;
 
-simpleComponent::simpleComponent(ComponentId_t id, Params_t& params) :
+simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
   Component(id) {
   bool found;
 
@@ -163,7 +166,7 @@ BOOST_CLASS_EXPORT(simpleComponent)
 
 static Component*
 create_simpleComponent(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new simpleComponent( id, params );
 }

@@ -42,7 +42,7 @@ class sstdisksim : public Component {
 
  public:
 
-  sstdisksim( ComponentId_t id, Params_t& params );
+  sstdisksim( ComponentId_t id, Params& params );
   ~sstdisksim();
   void setup(); 
   void finish();
@@ -58,7 +58,7 @@ class sstdisksim : public Component {
   sstdisksim_stat __disksim_stat;
   struct disksim_interface* __disksim;
   Simulation* __sim;
-  Params_t __params;
+  Params __params;
   ComponentId_t __id;
   TimeConverter* __tc;
   Cycle_t __cycle;

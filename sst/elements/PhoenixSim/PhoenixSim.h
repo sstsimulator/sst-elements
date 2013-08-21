@@ -20,7 +20,7 @@ class OmnetSimulation;
 class PhoenixSim : public SST::Component {
  public:
 
-  PhoenixSim(SST::ComponentId_t id, SST::Component::Params_t& params);
+  PhoenixSim(SST::ComponentId_t id, SST::Params& params);
   ~PhoenixSim();
 
   void handleSelfEvent(SST::Event *evt);

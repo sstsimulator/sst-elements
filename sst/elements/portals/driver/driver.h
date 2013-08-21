@@ -18,7 +18,7 @@ namespace portals {
 
 class driver : public Component {
 public:
-    driver(ComponentId_t id, Params_t& params);
+    driver(ComponentId_t id, Params& params);
 };
 
 }

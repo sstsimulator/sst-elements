@@ -43,7 +43,7 @@ namespace SST {
 
         class linkBuilder : public SST::Component {
             public:
-                linkBuilder(SST::ComponentId_t id, SST::Component::Params_t & params);
+                linkBuilder(SST::ComponentId_t id, SST::Params & params);
                 void connectGraph(Job* job);
                 void disconnectGraph(Job* job);
 

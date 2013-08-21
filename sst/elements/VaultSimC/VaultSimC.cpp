@@ -12,9 +12,14 @@
 #include <sst_config.h>
 #include "sst/core/serialization.h"
 #include <VaultSimC.h>
-#include <vaultGlobals.h>
+
 #include <sys/mman.h>
 #include <sstream> // for stringstream() so I don't have to use atoi()
+
+#include <sst/core/link.h>
+#include <sst/core/params.h>
+
+#include <vaultGlobals.h>
 
 //typedef  VaultCompleteFn; 
 
@@ -22,7 +27,7 @@ static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 
 using namespace SST::Interfaces;
 
-VaultSimC::VaultSimC( ComponentId_t id, Params_t& params ) :
+VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
 	IntrospectedComponent( id )
 {
   std::string frequency = "2.2 GHz";
@@ -45,7 +50,7 @@ VaultSimC::VaultSimC( ComponentId_t id, Params_t& params ) :
   
   m_memChan = configureLink( "bus", "1 ns" );
   
-  Params_t::iterator it = params.begin();
+  Params::iterator it = params.begin();
   while( it != params.end() ) {
     //DBG("key=%s value=%s\n", it->first.c_str(),it->second.c_str());
     
@@ -234,7 +239,7 @@ bool VaultSimC::clock( Cycle_t current )
 }
 
 extern "C" {
-	VaultSimC* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Component::Params_t& params )
+	VaultSimC* VaultSimCAllocComponent( SST::ComponentId_t id,  SST::Params& params )
 	{
 		return new VaultSimC( id, params );
 	}

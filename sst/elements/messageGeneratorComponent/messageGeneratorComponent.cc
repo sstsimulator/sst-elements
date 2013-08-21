@@ -11,17 +11,19 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "messageGeneratorComponent.h"
+
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include "sst/core/params.h"
 
-#include "messageGeneratorComponent.h"
 #include "simpleMessage.h"
 
 using namespace SST;
 using namespace SST::MessageGenerator;
 
-messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params_t& params) :
+messageGeneratorComponent::messageGeneratorComponent(ComponentId_t id, Params& params) :
   Component(id) {
 
   if( params.find("clock") == params.end() ) {
@@ -110,7 +112,7 @@ BOOST_CLASS_EXPORT(messageGeneratorComponent)
 
 static Component*
 create_messageGeneratorComponent(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new messageGeneratorComponent( id, params );
 }

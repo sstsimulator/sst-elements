@@ -28,7 +28,7 @@ class logicLayer : public IntrospectedComponent {
   
 public: // functions
   
-  logicLayer( ComponentId_t id, Params_t& params );
+  logicLayer( ComponentId_t id, Params& params );
   int Finish();
   void init(unsigned int phase);
   

@@ -54,7 +54,7 @@ class sstdisksim_luascriptreader : public Component {
 
  public:
 
-  sstdisksim_luascriptreader( ComponentId_t id, Params_t& params );
+  sstdisksim_luascriptreader( ComponentId_t id, Params& params );
   ~sstdisksim_luascriptreader();
   void setup(); 
   void finish();
@@ -69,7 +69,7 @@ class sstdisksim_luascriptreader : public Component {
   std::string traceFile;
 
   bool __done;
-  Params_t __params;
+  Params __params;
   ComponentId_t __id;
 
   Log< DISKSIM_DBG >&  __dbg;

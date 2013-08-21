@@ -37,7 +37,7 @@ namespace SST {
 
             public:
 
-            nodeComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
+            nodeComponent(SST::ComponentId_t id, SST::Params& params);
             void setup();
             void finish() {}
 

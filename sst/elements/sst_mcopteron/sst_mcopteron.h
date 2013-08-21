@@ -34,7 +34,7 @@ namespace SST {
 namespace SST_McOpteron {
 class SSTMcOpteron : public SST::Component{
 public:
-	SSTMcOpteron(SST::ComponentId_t id, SST::Component::Params_t& params);
+	SSTMcOpteron(SST::ComponentId_t id, SST::Params& params);
 	SSTMcOpteron();
 	~SSTMcOpteron();
 	McOpteron::McOpteron *the_cpu;

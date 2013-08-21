@@ -46,7 +46,7 @@ struct raid1_link_list
 class sstdisksim_raid1 : public sstdisksim_diskmodel, public Component {
  public:
 
-  sstdisksim_raid1( ComponentId_t id, Params_t& params );
+  sstdisksim_raid1( ComponentId_t id, Params& params );
   ~sstdisksim_raid1();
 
   void setup();  
@@ -56,7 +56,7 @@ class sstdisksim_raid1 : public sstdisksim_diskmodel, public Component {
 
  private:
 
-  Params_t __params;
+  Params __params;
   ComponentId_t __id;
 
   sstdisksim_event* getNextEvent();

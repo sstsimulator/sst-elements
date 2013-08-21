@@ -157,7 +157,7 @@ protected:
 
 public:
 
-  macro_processor(SST::ComponentId_t id, SST::Component::Params_t& params);
+  macro_processor(SST::ComponentId_t id, SST::Params& params);
   virtual
   ~macro_processor()
   {

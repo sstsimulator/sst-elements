@@ -1,12 +1,13 @@
+#include "sst_config.h"
+#include "strideprefetch.h"
 
 #include <vector>
 #include "stdlib.h"
 
-#include "sst_config.h"
-#include "sst/core/serialization.h"
 #include "sst/core/element.h"
+#include "sst/core/params.h"
+#include "sst/core/serialization.h"
 
-#include "strideprefetch.h"
 
 #define CASSINI_MIN(a,b) (((a)<(b)) ? a : b)
 

@@ -22,7 +22,7 @@
 #include <sst/core/rng/mersenne.h>
 #include <sst/core/rng/marsaglia.h>
 
-#include <cstring>
+//#include <cstring>
 #include <string>
 
 using namespace SST;
@@ -34,7 +34,7 @@ namespace SimpleRNGComponent {
 class simpleRNGComponent : public SST::Component {
 public:
 
-  simpleRNGComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
+  simpleRNGComponent(SST::ComponentId_t id, SST::Params& params);
   void setup()  { }
   void finish() { }
 
@@ -46,7 +46,7 @@ private:
   virtual bool tick( SST::Cycle_t );
 
   SSTRandom* rng;
-  string rng_type;
+  std::string rng_type;
   int rng_max_count;
   int rng_count;
 

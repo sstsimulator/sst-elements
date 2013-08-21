@@ -98,7 +98,7 @@ bool Introspector_cpu::triggeredUpdate()
 }
 
 static Introspector*
-create_introspector_cpu(SST::Component::Params_t &params)
+create_introspector_cpu(SST::Params &params)
 {
     return new Introspector_cpu(params);
 }

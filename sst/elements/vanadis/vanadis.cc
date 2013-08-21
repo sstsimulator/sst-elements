@@ -11,7 +11,7 @@ using namespace SST::Vanadis;
 
 static Component*
 create_NextBlockPrefetcher(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new NextBlockPrefetcher( id, params );
 }

@@ -24,7 +24,7 @@ namespace Oberon {
 class OberonComponent : public SST::Component {
 public:
 
-  OberonComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
+  OberonComponent(SST::ComponentId_t id, SST::Params& params);
   void setup() { }
   void finish() {
   }

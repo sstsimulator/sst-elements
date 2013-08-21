@@ -28,7 +28,7 @@ namespace CPU_power {
 class Cpu_power : public IntrospectedComponent {
 public:
 
-  Cpu_power(ComponentId_t id, Params_t& params);
+  Cpu_power(ComponentId_t id, Params& params);
 
   
 void setup() { 
@@ -121,7 +121,7 @@ public:
   Link* E;
   Link* W;
 
-  Params_t    params;
+  Params    params;
   Pdissipation_t pdata, pstats;
   SST::Power::Power *power;
   usagecounts_t mycounts;  //over-specified struct that holds usage counts of its sub-components

@@ -15,8 +15,9 @@
 
 #include <assert.h>
 
-#include <sst/core/simulation.h>
 #include <sst/core/element.h>
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
 
 #include "memNIC.h"
 
@@ -27,7 +28,7 @@ using namespace SST::MemHierarchy;
 
 const MemEvent::id_type DirectoryController::DirEntry::NO_LAST_REQUEST = std::make_pair((uint64_t)-1, -1);
 
-DirectoryController::DirectoryController(ComponentId_t id, Params_t &params) :
+DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     Component(id), blocksize(0)
 {
     dbg.init("@t:DirectoryController::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));

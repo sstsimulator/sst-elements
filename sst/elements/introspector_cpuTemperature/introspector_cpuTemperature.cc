@@ -56,7 +56,7 @@ bool Introspector_cpuTemperature::triggeredUpdate()
 
 
 static Introspector*
-create_introspector_cpuTemperature(SST::Component::Params_t &params)
+create_introspector_cpuTemperature(SST::Params &params)
 {
     return new Introspector_cpuTemperature(params);
 }

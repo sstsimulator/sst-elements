@@ -16,6 +16,7 @@
 #include <assert.h>
 
 #include <sst/core/element.h>
+#include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/interfaces/stringEvent.h>
@@ -26,7 +27,7 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
-trivialCPU::trivialCPU(ComponentId_t id, Params_t& params) :
+trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     Component(id), rng(id, 13)
 {
     out.init("", 0, 0, Output::STDOUT);

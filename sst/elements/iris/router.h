@@ -118,7 +118,7 @@ struct IB_state
 class Router : public DES_Component
 {
     public:
-        Router (SST::ComponentId_t id, Params_t& params);
+        Router (SST::ComponentId_t id, Params& params);
         ~Router ();  
 
         /* Event handlers from external components. Prioritize such that all

@@ -11,10 +11,11 @@
 
 #include <sst_config.h>
 #include "sst/core/serialization.h"
+#include "simpleIO.h"
+
 #include "sst/core/component.h"
 #include "sst/core/interfaces/stringEvent.h"
-
-#include "simpleIO.h"
+#include "sst/core/link.h"
 
 using namespace SST::Firefly;
 using namespace SST::Firefly::IO;

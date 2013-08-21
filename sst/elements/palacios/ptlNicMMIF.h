@@ -29,7 +29,7 @@ namespace Palacios {
 class PtlNicMMIF : public SST::Component
 {
   public:
-    PtlNicMMIF( SST::ComponentId_t, Params_t& );
+    PtlNicMMIF( SST::ComponentId_t, Params& );
     virtual ~PtlNicMMIF();
     void setup(); 
     virtual bool Status();

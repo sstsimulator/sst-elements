@@ -185,7 +185,7 @@ class DirectoryController : public Component {
     const char* printDirectoryEntryStatus(Addr addr);
 
 public:
-	DirectoryController(ComponentId_t id, Params_t &params);
+	DirectoryController(ComponentId_t id, Params &params);
     ~DirectoryController();
 	void setup(void);
     void init(unsigned int phase);
