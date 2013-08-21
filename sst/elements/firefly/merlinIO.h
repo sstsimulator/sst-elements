@@ -31,9 +31,9 @@ class MerlinIO : public IO::Interface {
   public:
     MerlinIO(Params&);
 
-    static const int FlitSize = 8;
+    static const int MaxPendingEvents = 1024;
 
-     virtual void _componentInit(unsigned int phase );
+    virtual void _componentInit(unsigned int phase );
 
     virtual IO::NodeId getNodeId() { return m_myNodeId; }
     virtual void setDataReadyFunc(IO::Functor2*);
@@ -83,6 +83,7 @@ class MerlinIO : public IO::Interface {
     std::deque<Entry*>      m_sendQ;
     int                     m_numVC;
     int                     m_lastVC;
+    int                     m_numPendingEvents;
 };
 
 }

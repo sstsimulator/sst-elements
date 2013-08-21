@@ -21,25 +21,51 @@
 using namespace SST::Firefly;
 
 class MerlinFireflyEvent : public Merlin::RtrEvent {
+
     static const int BufLen = 56;
+
 public:
-    uint16_t seq;
-    std::string             buf;
+    uint16_t        seq;
+    std::string     buf;
+
+    MerlinFireflyEvent() {} 
+
+    MerlinFireflyEvent(const MerlinFireflyEvent *me) : 
+        Merlin::RtrEvent() 
+    {
+        buf = me->buf;
+        seq = me->seq;
+    }
+
+    MerlinFireflyEvent(const MerlinFireflyEvent &me) : 
+        Merlin::RtrEvent() 
+    {
+        buf = me.buf;
+        seq = me.seq;
+    }
+
     virtual RtrEvent* clone(void)
     {
         return new MerlinFireflyEvent(*this);
     }
+
     void setNumFlits( size_t len ) {
         size_in_flits = len / 8;
         if ( len % 8 ) 
         ++size_in_flits;
+
+        // add flit for 8 bytes of packet header info 
+        ++size_in_flits;
     }
+
     void setDest( int _dest ) {
         dest = _dest;
     }
+
     void setSrc( int _src ) {
         src = _src;
     }
+
     size_t getMaxLength(){
         return BufLen;
     }
@@ -150,7 +176,8 @@ MerlinIO::MerlinIO( Params& params ) :
     m_dataReadyFunc( NULL ),
     m_myNodeId( IO::AnyId ),
     m_numVC( 2 ),
-    m_lastVC( 0 )
+    m_lastVC( 0 ),
+    m_numPendingEvents( 0 )
 {
     SST::Component* owner = (SST::Component*) params.find_integer( "owner" );
 
@@ -234,28 +261,26 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
     }
 
     
-    for ( int vc = 0; vc < m_numVC; vc++ ) {
-        m_lastVC = (m_lastVC + 1) % m_numVC;
-        MerlinFireflyEvent* ev = static_cast<MerlinFireflyEvent*>(m_linkControl->recv( m_lastVC ));
-        if ( ev ) {
+    if ( m_numPendingEvents < MaxPendingEvents ) {
+        for ( int vc = 0; vc < m_numVC; vc++ ) {
+            m_lastVC = (m_lastVC + 1) % m_numVC;
+            MerlinFireflyEvent* ev = 
+                static_cast<MerlinFireflyEvent*>(m_linkControl->recv(m_lastVC));
+            if ( ev ) {
             
-            if ( m_eventMap.find( ev->src ) == m_eventMap.end() ) {
-                IN in;
-                m_eventMap[ev->src] = in; 
+                ++m_numPendingEvents;
+                if ( m_eventMap.find( ev->src ) == m_eventMap.end() ) {
+                    IN in;
+                    m_eventMap[ev->src] = in; 
+                }
+                m_eventMap[ev->src].queue.push_back(ev);
+                m_eventMap[ev->src].nbytes += ev->buf.size();
+                m_dbg.verbose(CALL_INFO,1,0,"got event from %d with %lu bytes,"
+                        " %lu total avail\n", ev->src, ev->buf.size(),
+                                    m_eventMap[ev->src].nbytes);
             }
-            m_eventMap[ev->src].queue.push_back(ev);
-            m_eventMap[ev->src].nbytes += ev->buf.size();
-            m_dbg.verbose(CALL_INFO,1,0,"got event from %d with %lu bytes,"
-            " %lu total avail\n", ev->src, ev->buf.size(),
-                    m_eventMap[ev->src].nbytes);
-#if 0
-            if ( m_dataReadyFunc ) {
-                (*m_dataReadyFunc)( 0 );
-                m_dataReadyFunc = NULL;
-            }
-#endif
-        }
-    } 
+        } 
+    }
 
     if ( ! m_eventMap.empty() ) {
         if ( m_dataReadyFunc ) {
@@ -287,6 +312,7 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
                 in.nbytes, src );
 
             if ( static_cast<MerlinFireflyEvent*>(in.queue.front())->buf.empty() ) { 
+                --m_numPendingEvents;
                 delete in.queue.front();
                 in.queue.pop_front();
                 m_dbg.verbose(CALL_INFO,1,0,"pop event\n");

@@ -60,6 +60,10 @@ load_merlinIO(Params& params)
     return new MerlinIO(params);
 }
 
+static void init_MerlinFireflyEvent()
+{
+}
+
 static const ElementInfoComponent components[] = {
     { "nic",
       "Firefly NIC",
@@ -101,12 +105,21 @@ static const ElementInfoModule modules[] = {
     { NULL, NULL, NULL, NULL, NULL }
 };
 
+static const ElementInfoEvent events[] = { 
+    { "MerlinFireflyEvent",
+      "MerlinFireflyEvent",
+        NULL,
+        init_MerlinFireflyEvent 
+    },
+    { NULL, NULL, NULL, NULL}
+};
+
 extern "C" {
     ElementLibraryInfo firefly_eli = {
         "nic",
         "Firefly NIC",
         components,
-        NULL,
+        events,
         NULL,
         modules,
         NULL,
