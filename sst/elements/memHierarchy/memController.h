@@ -156,6 +156,7 @@ private:
     void handleSelfEvent(SST::Event *event);
     void handleCubeEvent(SST::Event *event);
 
+    bool divert_DC_lookups;
     bool use_dramsim;
     bool use_vaultSim;
 

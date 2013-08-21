@@ -101,6 +101,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"interleaveStep",  "Distance between sucessive interleaved pages on this controller in KB."},
     {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state"},
     {"clock",           "Clock frequency of controller"},
+    {"divert_DC_lookups",  "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0"},
     {"use_dramsim",     "0 to not use DRAMSim, 1 to use DRAMSim"},
     {"use_vaultSim",    "0 to not use vaults, 1 to use a connected chain of vaultSim components"},
     {"device_ini",      "Name of DRAMSim Device config file"},

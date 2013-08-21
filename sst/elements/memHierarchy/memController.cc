@@ -67,7 +67,10 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	registerTimeBase("1 ns", true);
 
 	// default access time
-	std::string access_time = params.find_string("access_time", "10 ns");
+	std::string access_time = params.find_string("access_time", "1000 ns");
+
+	// do we divert directory to the self-link?
+	divert_DC_lookups = params.find_integer("divert_DC_lookups", 0);
 
 	// check for and initialize dramsim
 	use_dramsim = (bool)params.find_integer("use_dramsim", 0);
@@ -115,8 +118,7 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 	}
 
 	self_link = configureSelfLink("Self", access_time,
-				      new Event::Handler<MemController>(this,
- &MemController::handleSelfEvent));
+				      new Event::Handler<MemController>(this, &MemController::handleSelfEvent));
 
 
 	int mmap_flags = MAP_PRIVATE;
@@ -361,7 +363,8 @@ bool MemController::clock(Cycle_t cycle)
 
         req->status = DRAMReq::PROCESSING;
         uint64_t addr = req->addr + req->amt_in_process;
-	bool isDCLookup = (0 == req->addr);
+	// is this a directory controller lookup, and do we care?
+	bool isDCLookup = (0 == req->addr) && divert_DC_lookups;
         if ( use_dramsim && !isDCLookup) {
 #if defined(HAVE_LIBDRAMSIM)
 
