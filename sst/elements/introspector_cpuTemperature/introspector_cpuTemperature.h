@@ -14,7 +14,7 @@
 
 //#include <sst/core/component.h>
 #include <sst/core/introspector.h>
-
+#include <sst/core/params.h>
 
 namespace SST {
 namespace Introspector_CPUTemperature {
@@ -31,14 +31,14 @@ namespace Introspector_CPUTemperature {
 class Introspector_cpuTemperature : public Introspector {
        
     public:
-	Introspector_cpuTemperature(Component::Params_t& params) :
+	Introspector_cpuTemperature(Params& params) :
             Introspector(),
             params( params ),
             frequency( "1ns" )
         {
             _INTROSPECTOR_CPUTEMPERATURE_DBG( "new id=%lu\n", id );
 
-            Component::Params_t::iterator it = params.begin(); 
+            Params::iterator it = params.begin(); 
             while( it != params.end() ) { 
                 _INTROSPECTOR_CPUTEMPERATURE_DBG("key=%s value=%s\n",
                             it->first.c_str(),it->second.c_str());
@@ -106,7 +106,7 @@ class Introspector_cpuTemperature : public Introspector {
         bool pullData( Cycle_t );
 	bool triggeredUpdate();	
 
-        Component::Params_t    params;        
+        Params    params;        
 	std::string frequency;
 	std::string model;
 
@@ -121,7 +121,7 @@ class Introspector_cpuTemperature : public Introspector {
     }
 };
 
-}
-}
+} //namespace introspector_cpuTemperature
+} //namespace SST
 
 #endif

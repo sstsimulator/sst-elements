@@ -20,7 +20,7 @@
 using namespace SST;
 
 static Component*
-create_PtlNic(ComponentId_t id, Component::Params_t& params)
+create_PtlNic(ComponentId_t id, Params& params)
 {
     return new SST::Portals4::PtlNic( id, params );
 }

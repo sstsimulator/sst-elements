@@ -268,7 +268,7 @@ sstdisksim_straightdisk::clock(Cycle_t current)
 
 /******************************************************************************/
 sstdisksim_straightdisk::sstdisksim_straightdisk( ComponentId_t id,  
-						  Params_t& params ) :
+						  Params& params ) :
   Component( id ),
   __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
 {
@@ -328,7 +328,7 @@ void sstdisksim_straightdisk::finish()
 /******************************************************************************/
 static Component*
 create_sstdisksim_straightdisk(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new sstdisksim_straightdisk( id, params );
 }

@@ -10,9 +10,10 @@
 
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/set.hpp>
+
+#include <sst/core/debug.h>
 #include <sst/core/element.h>
-
-
+#include <sst/core/params.h>
 
 // Storage for NIC parameters
 typedef struct   {
@@ -57,7 +58,7 @@ struct _FLcompare   {
 
 class MachineInfo   {
     public:
-	MachineInfo(SST::Component::Params_t& params)   {
+	MachineInfo(SST::Params& params)   {
 	    if (!init(params))   {
 		_ABORT(MachineInfo, "Machine info initialization failed!\n");
 	    }
@@ -124,7 +125,7 @@ class MachineInfo   {
 
 
     private:
-	bool init(SST::Component::Params_t& params);
+	bool init(SST::Params& params);
 	void insert_inflection_point(NIC_model_t nic, int index, int64_t point);
 	void insert_inflection_latency(NIC_model_t nic, int index, int64_t latency);
 	bool error_check(void);

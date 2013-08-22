@@ -281,7 +281,7 @@ sstdisksim_raid0::clock(Cycle_t current)
 
 /******************************************************************************/
 sstdisksim_raid0::sstdisksim_raid0( ComponentId_t id,  
-						  Params_t& params ) :
+						  Params& params ) :
   Component( id ),
   __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
 {
@@ -383,7 +383,7 @@ void sstdisksim_raid0::finish()
 /******************************************************************************/
 static Component*
 create_sstdisksim_raid0(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new sstdisksim_raid0( id, params );
 }

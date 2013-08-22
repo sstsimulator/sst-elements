@@ -60,7 +60,7 @@ sstdisksim_tracereader::clock(Cycle_t current)
 
 /******************************************************************************/
 sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,  
-						Params_t& params ) :
+						Params& params ) :
   Component( id ),
   __dbg( *new Log< DISKSIM_DBG >( "DisksimTracereader::", false ) )
 {
@@ -76,7 +76,7 @@ sstdisksim_tracereader::sstdisksim_tracereader( ComponentId_t id,
     }
   } 
 
-  Params_t::iterator it = params.begin();
+  Params::iterator it = params.begin();
   while( it != params.end() ) 
   {
     DBG("key=%s value=%s\n",
@@ -147,7 +147,7 @@ void sstdisksim_tracereader::finish()
 /******************************************************************************/
 static Component*
 create_sstdisksim_tracereader(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new sstdisksim_tracereader( id, params );
 }

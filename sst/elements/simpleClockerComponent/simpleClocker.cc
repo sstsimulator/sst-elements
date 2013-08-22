@@ -11,16 +11,18 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "simpleClocker.h"
+
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include "sst/core/params.h"
 
-#include "simpleClocker.h"
 
 using namespace SST;
 using namespace SST::SimpleClockerComponent;
 
-simpleClocker::simpleClocker(ComponentId_t id, Params_t& params) :
+simpleClocker::simpleClocker(ComponentId_t id, Params& params) :
   Component(id) {
 
   clock_frequency_str = params.find_string("clock", "1GHz");
@@ -62,7 +64,7 @@ BOOST_CLASS_EXPORT(simpleClocker)
 
 static Component*
 create_simpleClocker(SST::ComponentId_t id,
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new simpleClocker( id, params );
 }

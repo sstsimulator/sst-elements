@@ -14,13 +14,14 @@
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include <sst/core/params.h>
 
 #include "ariel.h"
 
 using namespace SST;
 using namespace SST::ArielComponent;
 
-Ariel::Ariel(ComponentId_t id, Params_t& params) :
+Ariel::Ariel(ComponentId_t id, Params& params) :
   Component(id) {
 
   DPRINTF("Constructing Ariel.");
@@ -49,7 +50,7 @@ BOOST_CLASS_EXPORT(Ariel)
 
 static Component*
 create_ariel(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new Ariel( id, params );
 }

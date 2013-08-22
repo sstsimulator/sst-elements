@@ -11,17 +11,19 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "simpleRNGComponent.h"
+
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include "sst/core/params.h"
 
-#include "simpleRNGComponent.h"
 
 using namespace SST;
 using namespace SST::RNG;
 using namespace SST::SimpleRNGComponent;
 
-simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params_t& params) :
+simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
   Component(id) {
 
   rng_count = 0;
@@ -102,7 +104,7 @@ BOOST_CLASS_EXPORT(simpleRNGComponent)
 
 static Component*
 create_simpleRNGComponent(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new simpleRNGComponent( id, params );
 }

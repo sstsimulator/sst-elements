@@ -7,11 +7,17 @@
 // distribution.
 
 
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS	(1)
+#endif
 #include <inttypes.h>		// For PRIx64
+
 #include "comm_pattern.h"
-#include <sst/core/element.h>
+
 #include <assert.h>
+
+#include <sst/core/element.h>
+
 #include "state_machine.h"
 
 

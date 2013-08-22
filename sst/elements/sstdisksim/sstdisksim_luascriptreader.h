@@ -14,11 +14,14 @@
 
 #include "sstdisksim_event.h"
 
-#include <sst/core/log.h>
-#include <sst/core/component.h>
-#include <sst/core/simulation.h>
 #include <stdlib.h>
 #include <stddef.h>
+
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/log.h>
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
 
 #include "syssim_driver.h"
 #include <disksim_interface.h>
@@ -54,7 +57,7 @@ class sstdisksim_luascriptreader : public Component {
 
  public:
 
-  sstdisksim_luascriptreader( ComponentId_t id, Params_t& params );
+  sstdisksim_luascriptreader( ComponentId_t id, Params& params );
   ~sstdisksim_luascriptreader();
   void setup(); 
   void finish();
@@ -69,7 +72,7 @@ class sstdisksim_luascriptreader : public Component {
   std::string traceFile;
 
   bool __done;
-  Params_t __params;
+  Params __params;
   ComponentId_t __id;
 
   Log< DISKSIM_DBG >&  __dbg;

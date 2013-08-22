@@ -30,52 +30,52 @@
 using namespace SST;
 
 // THE CREATE ROUTINES FOR THE VARIOUS COMPONENTS WITHIN THE PATTERNS LIBRRY
-static Component* create_routermodel(SST::ComponentId_t id, SST::Component::Params_t& params)
+static Component* create_routermodel(SST::ComponentId_t id, SST::Params& params)
 {
     return new Routermodel( id, params );
 }
 
-static Component* create_routermodel_power(SST::ComponentId_t id, SST::Component::Params_t& params)
+static Component* create_routermodel_power(SST::ComponentId_t id, SST::Params& params)
 {
     return new Routermodel( id, params );
 }
 
-static SST::Component* create_bit_bucket(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_bit_bucket(SST::ComponentId_t id, SST::Params& params)
 {
     return new Bit_bucket(id, params);
 }
 
-static SST::Component* create_allreduce_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_allreduce_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new Allreduce_pattern(id, params);
 }
 
-static SST::Component* create_fft_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_fft_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new FFT_pattern(id, params);
 }
 
-static SST::Component* create_msgrate_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_msgrate_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new Msgrate_pattern(id, params);
 }
 
-static SST::Component* create_ghost_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_ghost_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new Ghost_pattern(id, params);
 }
 
-static SST::Component* create_alltoall_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_alltoall_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new Alltoall_pattern(id, params);
 }
 
-static SST::Component* create_pingpong_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_pingpong_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new Pingpong_pattern(id, params);
 }
 
-static SST::Component* create_comm_pattern(SST::ComponentId_t id, SST::Component::Params_t& params)
+static SST::Component* create_comm_pattern(SST::ComponentId_t id, SST::Params& params)
 {
     return new Comm_pattern(id, params);
 }

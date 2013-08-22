@@ -92,7 +92,7 @@ syssim_report_completion(SysTime t, struct disksim_request *r, void *ctx)
 }
 
 /******************************************************************************/
-sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
+sstdisksim::sstdisksim( ComponentId_t id,  Params& params ) :
   Component( id ),
   __dbg( *new Log< DISKSIM_DBG >( "Disksim::", false ) )
 {
@@ -115,7 +115,7 @@ sstdisksim::sstdisksim( ComponentId_t id,  Params_t& params ) :
     }
   } 
 
-  Params_t::iterator it = params.begin();
+  Params::iterator it = params.begin();
   while( it != params.end() ) 
   {
     DBG("key=%s value=%s\n",
@@ -310,7 +310,7 @@ sstdisksim::lockstepEvent(Event* ev)
 /******************************************************************************/
 static Component*
 create_sstdisksim(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new sstdisksim( id, params );
 }

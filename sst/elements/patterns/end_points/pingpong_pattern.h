@@ -10,6 +10,8 @@
 #ifndef _PINGPONG_PATTERN_H
 #define _PINGPONG_PATTERN_H
 
+#include <sst/core/params.h>
+
 #include "patterns.h"
 #include "support/state_machine.h"
 #include "support/comm_pattern.h"
@@ -21,7 +23,7 @@
 
 class Pingpong_pattern : public Comm_pattern {
     public:
-        Pingpong_pattern(ComponentId_t id, Params_t& params) :
+        Pingpong_pattern(ComponentId_t id, Params& params) :
 	    // constructor initializer list                                                                   
 	    Comm_pattern(id, params)
 	{
@@ -42,7 +44,7 @@ class Pingpong_pattern : public Comm_pattern {
 
 
 	    // Process the ping/pong pattern specific parameters
-	    Params_t::iterator it= params.begin();
+	    Params::iterator it= params.begin();
 
 	    while (it != params.end())   {
 		if (!it->first.compare("destination"))   {
@@ -125,7 +127,7 @@ class Pingpong_pattern : public Comm_pattern {
 	void state_RECEIVING(state_event sm_event);
 	void state_BARRIER(state_event sm_event);
 	void state_ALLREDUCE(state_event sm_event);
-	Params_t params;
+	Params params;
 	int allreduce_msglen;
 
 	// State machine identifiers

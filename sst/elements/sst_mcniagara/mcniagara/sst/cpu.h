@@ -26,7 +26,7 @@ class Cpu : public Component, OffCpuIF {
                                    unsigned long long address,
                                    unsigned long data_size);
         virtual void  NICAccess(OffCpuIF::access_mode mode, unsigned long data_size);
-        Cpu( ComponentId_t id, Simulation* sim, Params_t& params ) :
+        Cpu( ComponentId_t id, Simulation* sim, Params& params ) :
             Component( id, sim ),
             params( params ),
             state(SEND),
@@ -41,7 +41,7 @@ class Cpu : public Component, OffCpuIF {
             registerAsPrimaryComponent();
             primaryComponentDoNotEndSim();
 
-            Params_t::iterator it = params.begin(); 
+            Params::iterator it = params.begin(); 
             while( it != params.end() ) { 
                 _CPU_DBG("key=%s value=%s\n",
                             it->first.c_str(),it->second.c_str());
@@ -105,7 +105,7 @@ class Cpu : public Component, OffCpuIF {
         McNiagara *mcCpu;
         unsigned long cyclesAtLastClock;
 
-        Params_t    params;
+        Params    params;
         Link*       memLink;
         state_t     state;
         who_t       who;
@@ -136,7 +136,7 @@ class Cpu : public Component, OffCpuIF {
             ComponentId_t   id     = t->_id;
 /*             Clock*          clock  = t->_clock; */
             Simulation*     sim  = t->simulation;
-            Params_t        params = t->params;
+            Params        params = t->params;
 
             ar << BOOST_SERIALIZATION_NVP( id );
             ar << BOOST_SERIALIZATION_NVP( sim );
@@ -148,7 +148,7 @@ class Cpu : public Component, OffCpuIF {
 
             ComponentId_t   id;
             Simulation*     sim;
-            Params_t        params;
+            Params        params;
 
             ar >> BOOST_SERIALIZATION_NVP( id );
             ar >> BOOST_SERIALIZATION_NVP( sim );

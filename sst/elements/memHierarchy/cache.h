@@ -351,7 +351,7 @@ private:
 
 public:
 
-	Cache(SST::ComponentId_t id, SST::Component::Params_t& params);
+	Cache(SST::ComponentId_t id, SST::Params& params);
     ~Cache();
     bool clockTick(Cycle_t);
 	virtual void init(unsigned int);

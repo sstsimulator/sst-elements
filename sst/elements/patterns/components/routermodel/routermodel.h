@@ -13,14 +13,20 @@
 #ifndef _ROUTERMODEL_H
 #define _ROUTERMODEL_H
 
-#include <stdio.h>
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS		(1)
+#endif
 #include <inttypes.h>			// For PRId64
 #include "sst/core/serialization.h"
+
+#include <stdio.h>
+
+#include <sst/core/debug.h>
 #include <sst/core/element.h>
 #include <sst/core/event.h>
-#include <sst/core/link.h>
 #include <sst/core/introspectedComponent.h>
+#include <sst/core/link.h>
+#include <sst/core/params.h>
 #ifdef WITH_POWER
 #include "../power/power.h"
 #endif
@@ -85,12 +91,12 @@ compare_Rtrparams(Rtrparams_t first, Rtrparams_t second)
 
 class Routermodel : public IntrospectedComponent {
     public:
-        Routermodel(ComponentId_t id, Params_t& params) :
+        Routermodel(ComponentId_t id, Params& params) :
             IntrospectedComponent(id),
             params(params),
             frequency("1ns")
         {
-            Params_t::iterator it= params.begin();
+            Params::iterator it= params.begin();
 	    // Defaults
 	    router_model_debug= 0;
 	    num_ports= -1;
@@ -475,7 +481,7 @@ class Routermodel : public IntrospectedComponent {
         Routermodel(const Routermodel &c);
 	int64_t get_Rtrparams(std::list<Rtrparams_t> params, int64_t msg_len);
 
-        Params_t params;
+        Params params;
 	void handle_port_events(Event *, int in_port);
 	void handle_self_events(Event *);
 	Link *initPort(int port, char *link_name);

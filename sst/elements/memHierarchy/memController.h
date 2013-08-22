@@ -45,7 +45,7 @@ namespace MemHierarchy {
 
 class MemController : public SST::Component {
 public:
-    MemController(ComponentId_t id, Params_t &params);
+    MemController(ComponentId_t id, Params &params);
     void init(unsigned int);
     void setup();
     void finish();

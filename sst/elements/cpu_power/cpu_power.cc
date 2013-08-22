@@ -14,6 +14,7 @@
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include "sst/core/params.h"
 
 #include "cpu_power.h"
 #include "simpleEvent.h"
@@ -21,7 +22,7 @@
 using namespace SST;
 using namespace SST::CPU_power;
 
-Cpu_power::Cpu_power(ComponentId_t id, Params_t& params) :
+Cpu_power::Cpu_power(ComponentId_t id, Params& params) :
   IntrospectedComponent(id),
   params(params) {
 
@@ -221,7 +222,7 @@ BOOST_CLASS_EXPORT(Cpu_power)
 
 static Component*
 create_cpu_power(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new Cpu_power( id, params );
 }

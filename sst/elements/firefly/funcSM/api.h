@@ -14,6 +14,7 @@
 
 #include <sst_config.h>
 #include <sst/core/event.h>
+#include <sst/core/link.h>
 #include <sst/core/module.h>
 #include <sst/core/output.h>
 

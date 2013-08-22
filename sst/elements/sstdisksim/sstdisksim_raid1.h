@@ -14,11 +14,14 @@
 
 #include "sstdisksim_event.h"
 
-#include <sst/core/log.h>
-#include <sst/core/component.h>
-#include <sst/core/simulation.h>
 #include <stdlib.h>
 #include <stddef.h>
+
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/log.h>
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
 
 #include "syssim_driver.h"
 #include <disksim_interface.h>
@@ -46,7 +49,7 @@ struct raid1_link_list
 class sstdisksim_raid1 : public sstdisksim_diskmodel, public Component {
  public:
 
-  sstdisksim_raid1( ComponentId_t id, Params_t& params );
+  sstdisksim_raid1( ComponentId_t id, Params& params );
   ~sstdisksim_raid1();
 
   void setup();  
@@ -56,7 +59,7 @@ class sstdisksim_raid1 : public sstdisksim_diskmodel, public Component {
 
  private:
 
-  Params_t __params;
+  Params __params;
   ComponentId_t __id;
 
   sstdisksim_event* getNextEvent();

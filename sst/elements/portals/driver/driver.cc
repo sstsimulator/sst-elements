@@ -19,7 +19,7 @@
 
 using namespace SST::portals;
 
-driver::driver(ComponentId_t id, Params_t& params) :
+driver::driver(ComponentId_t id, Params& params) :
     Component( id )
 {
 }

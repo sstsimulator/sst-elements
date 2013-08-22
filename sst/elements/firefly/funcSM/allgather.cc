@@ -90,8 +90,14 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
                     recvStartChunk, m_numChunks[i] );
 
         std::vector<CtrlMsg::IoVec> ioVec;
-
-        initIoVec(ioVec,recvStartChunk,m_numChunks[i]);
+        ioVec.resize( m_numChunks[i] );
+        for ( unsigned int j = 0; j < ioVec.size(); j++ ) {
+            int chunk = ( recvStartChunk + j ) % m_size;
+            ioVec[j].ptr = chunkPtr( chunk ); 
+            ioVec[j].len = chunkSize( chunk ); 
+            m_dbg.verbose(CALL_INFO,1,0,"ioVec[%d] ptr=%p len=%lu\n",
+                                    j,ioVec[j].ptr,ioVec[j].len); 
+        }
 
         m_ctrlMsg->recvv( ioVec, src, AllgatherTag + i + 1, 
                             m_event->group, &m_recvReqV[i] );
@@ -102,6 +108,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
         }
 
         offset *= 2;
+    
     }
 
     memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
@@ -114,49 +121,6 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
     m_toProgressLink->send(0, NULL );
 
     m_state = WaitSendStart;
-}
-
-void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
-                    int startChunk, int numChunks  )
-{
-    int currentChunk = startChunk;
-    int nextChunk = ( currentChunk + 1 ) % m_size; 
-    int countDown = numChunks;
-
-    m_dbg.verbose(CALL_INFO,1,0,"startChunk=%d numChunks=%d\n",
-                                            startChunk,numChunks);
-
-    while ( countDown ) {  
-        --countDown;
-        CtrlMsg::IoVec jjj;
-        jjj.ptr = chunkPtr( currentChunk ); 
-        jjj.len = chunkSize( currentChunk );
-        
-        m_dbg.verbose(CALL_INFO,1,0,"currentChunk=%d ptr=%p len=%lu\n",
-                    currentChunk, jjj.ptr,jjj.len);
-    
-        while ( countDown &&
-                (unsigned char*) jjj.ptr + jjj.len == chunkPtr( nextChunk ) )
-        {
-            jjj.len += chunkSize( nextChunk );
-            m_dbg.verbose(CALL_INFO,1,0,"len=%lu\n", jjj.len );
-            currentChunk = nextChunk;
-            nextChunk = ( currentChunk + 1 ) % m_size; 
-            --countDown;
-        }
-        if ( 0 == countDown || 
-                (unsigned char*) jjj.ptr + jjj.len != chunkPtr( nextChunk ) )
-        {
-
-            ioVec.push_back( jjj );
-            m_dbg.verbose(CALL_INFO,1,0,"ioVec[%lu] ptr=%p len=%lu\n",
-                                ioVec.size()-1,
-                                ioVec[ioVec.size()-1].ptr,
-                                ioVec[ioVec.size()-1].len); 
-        }
-        currentChunk = nextChunk;
-        nextChunk = ( currentChunk + 1 ) % m_size; 
-    }
 }
 
 void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
@@ -185,10 +149,13 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
     case WaitSendData:
         if ( ! m_pending ) {
             std::vector<CtrlMsg::IoVec> ioVec;
+            ioVec.resize( m_numChunks[m_currentStage] );
 
-            initIoVec( ioVec, m_sendStartChunk[m_currentStage],
-                            m_numChunks[m_currentStage] );
-
+            for ( unsigned int j = 0; j < ioVec.size(); j++ ) {
+                int chunk = (m_sendStartChunk[m_currentStage] + j) % m_size;
+                ioVec[j].ptr = chunkPtr( chunk );
+                ioVec[j].len = chunkSize( chunk ); 
+            }
             m_dbg.verbose(CALL_INFO,1,0,"send data\n");
             m_ctrlMsg->sendv( ioVec, m_dest[m_currentStage], 
                 AllgatherTag + m_currentStage + 1, m_event->group, &m_sendReq );

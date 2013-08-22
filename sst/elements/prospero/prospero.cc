@@ -11,16 +11,17 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "prospero.h"
+
 #include <assert.h>
 
 #include "sst/core/element.h"
-
-#include "prospero.h"
+#include <sst/core/params.h>
 
 using namespace SST;
 using namespace SST::Prospero;
 
-prospero::prospero(ComponentId_t id, Params_t& params) :
+prospero::prospero(ComponentId_t id, Params& params) :
   Component(id) {
 
   // Work out how much we're supposed to be reporting.
@@ -452,7 +453,7 @@ BOOST_CLASS_EXPORT(prospero)
 
 static Component*
 create_prospero(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new prospero( id, params );
 }

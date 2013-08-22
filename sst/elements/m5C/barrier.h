@@ -15,6 +15,7 @@
 #include <sst/core/action.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
+#include <sst/core/timeConverter.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

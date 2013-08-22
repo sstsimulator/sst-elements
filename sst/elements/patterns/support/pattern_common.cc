@@ -26,7 +26,7 @@
 
 
 void
-Patterns::init(SST::Component::Params_t& params, SST::Link *self_link,
+Patterns::init(SST::Params& params, SST::Link *self_link,
 	NIC_model *model[NUM_NIC_MODELS],
 	SST::Link *nvram_link, SST::Link *storage_link, MachineInfo *m,
 	int my_rank)

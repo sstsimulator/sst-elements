@@ -17,6 +17,8 @@
 #include <sst/core/log.h>
 
 #include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/params.h>
 
 #define BOUNCE_DBG 1
 
@@ -29,7 +31,7 @@ namespace M5 {
 class Bounce : public SST::Component
 {
     public:
-        Bounce( SST::ComponentId_t id, Params_t& params );
+        Bounce( SST::ComponentId_t id, Params& params );
 
     private:
         void eventHandler( SST::Event* e, int port );
@@ -39,7 +41,7 @@ class Bounce : public SST::Component
         SST::Log<BOUNCE_DBG>     m_dbg;
 };
 
-inline Bounce::Bounce( SST::ComponentId_t id, Params_t& params ) :
+inline Bounce::Bounce( SST::ComponentId_t id, Params& params ) :
     Component( id ),
     m_dbg( "Bounce::", false )
 {

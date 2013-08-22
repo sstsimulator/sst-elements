@@ -33,9 +33,9 @@ namespace SST {
 
         class Factory{
             public:
-                Scheduler* getScheduler(SST::Component::Params_t& params, int numProcs);
-                Machine* getMachine(SST::Component::Params_t& params, int numProcs, schedComponent* sc);
-                Allocator* getAllocator(SST::Component::Params_t& params, Machine* m);
+                Scheduler* getScheduler(SST::Params& params, int numProcs);
+                Machine* getMachine(SST::Params& params, int numProcs, schedComponent* sc);
+                Allocator* getAllocator(SST::Params& params, Machine* m);
             private:
                 std::vector<std::string>* parseparams(std::string inparam);
 

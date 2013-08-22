@@ -110,7 +110,7 @@ unsigned long long n_pipe_flushes=0, n_icache_misses = 0, n_stb_full = 0, n_stb_
 
 
 
-        Cpu( ComponentId_t id, Clock* clock, Params_t& params ) :
+        Cpu( ComponentId_t id, Clock* clock, Params& params ) :
             Component( id, clock ),
             params( params ),
             state(SEND),
@@ -121,7 +121,7 @@ unsigned long long n_pipe_flushes=0, n_icache_misses = 0, n_stb_full = 0, n_stb_
             inputfile="./MC_INPUT";
             outputfile="./MC_OUTPUT";
 
-            Params_t::iterator it = params.begin(); 
+            Params::iterator it = params.begin(); 
             while( it != params.end() ) { 
                 _CPU_DBG("key=%s value=%s\n",
                             it->first.c_str(),it->second.c_str());
@@ -168,7 +168,7 @@ unsigned long long n_pipe_flushes=0, n_icache_misses = 0, n_stb_full = 0, n_stb_
         Event::Handler_t* xbhandler;
         bool xbevent( Time_t, Event*  );
 
-        Params_t    params;
+        Params    params;
         Link*       mem;
 	Link*       xbar;
         state_t     state;
@@ -190,7 +190,7 @@ unsigned long long n_pipe_flushes=0, n_icache_misses = 0, n_stb_full = 0, n_stb_
 
             ComponentId_t   id     = t->_id;
             Clock*          clock  = t->_clock;
-            Params_t        params = t->params;
+            Params        params = t->params;
 
             ar << BOOST_SERIALIZATION_NVP( id );
             ar << BOOST_SERIALIZATION_NVP( clock );
@@ -201,7 +201,7 @@ unsigned long long n_pipe_flushes=0, n_icache_misses = 0, n_stb_full = 0, n_stb_
 
             ComponentId_t   id;
             Clock*          clock;
-            Params_t        params;
+            Params        params;
 
             ar >> BOOST_SERIALIZATION_NVP( id );
             ar >> BOOST_SERIALIZATION_NVP( clock );

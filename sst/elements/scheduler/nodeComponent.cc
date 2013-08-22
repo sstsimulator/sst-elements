@@ -22,7 +22,9 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <sst/core/debug.h>
 #include "sst/core/element.h"
+#include <sst/core/params.h>
 
 #include "CommunicationEvent.h"
 #include "FaultEvent.h"
@@ -78,7 +80,7 @@ void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > 
 
 
 
-nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
+nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     Component(id), jobNum(-1) 
 {
 
