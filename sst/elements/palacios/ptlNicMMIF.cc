@@ -11,7 +11,6 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 
@@ -28,7 +27,7 @@ const char * PtlNicMMIF::m_cmdNames[] = CMD_NAMES;
 #define INFO( fmt, args... ) \
     fprintf( stderr, "INFO: "fmt, ##args)
 
-PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params& params ) :
+PtlNicMMIF::PtlNicMMIF( SST::ComponentId_t id, Params_t& params ) :
     Component( id ),
     m_barrierCallback( BarrierAction::Handler<PtlNicMMIF>(this,
                         &PtlNicMMIF::barrierLeave) ),

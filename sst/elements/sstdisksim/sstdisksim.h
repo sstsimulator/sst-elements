@@ -14,14 +14,11 @@
 
 #include "sstdisksim_event.h"
 
-#include <stdlib.h>
-#include <stddef.h>
-
 #include <sst/core/log.h>
 #include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/params.h>
 #include <sst/core/simulation.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include <sst/core/timeConverter.h>
 
 #include "syssim_driver.h"
@@ -45,7 +42,7 @@ class sstdisksim : public Component {
 
  public:
 
-  sstdisksim( ComponentId_t id, Params& params );
+  sstdisksim( ComponentId_t id, Params_t& params );
   ~sstdisksim();
   void setup(); 
   void finish();
@@ -61,7 +58,7 @@ class sstdisksim : public Component {
   sstdisksim_stat __disksim_stat;
   struct disksim_interface* __disksim;
   Simulation* __sim;
-  Params __params;
+  Params_t __params;
   ComponentId_t __id;
   TimeConverter* __tc;
   Cycle_t __cycle;

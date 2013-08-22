@@ -13,7 +13,6 @@
 #include <sst/core/serialization.h>
 
 #include <sst/core/element.h>
-#include <sst/core/params.h>
 
 #include "ptlNicMMIF.h"
 
@@ -21,7 +20,7 @@ using namespace SST;
 using namespace SST::Palacios;
 
 static Component*
-create_PtlNicMMIF(ComponentId_t id, Params& params)
+create_PtlNicMMIF(ComponentId_t id, Component::Params_t& params)
 {
     return new PtlNicMMIF( id, params );
 }

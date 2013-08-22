@@ -61,7 +61,7 @@ class MemoryChannel :
     public: // functions
 
   virtual ~MemoryChannel() {;}
-        MemoryChannel( Component& comp, Params params,
+        MemoryChannel( Component& comp, Component::Params_t params,
                                                         std::string name )  :
             eventChannel_t( comp, params, name, 2 ),
             m_readReqCredit( 0 ),

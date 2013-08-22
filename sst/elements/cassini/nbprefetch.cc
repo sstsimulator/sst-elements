@@ -1,13 +1,12 @@
-#include "sst_config.h"
-#include "nbprefetch.h"
 
-#include <stdint.h>
 #include <vector>
 
-#include "sst/core/element.h"
-#include "sst/core/params.h"
+#include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "sst/core/element.h"
 
+#include "nbprefetch.h"
+#include <stdint.h>
 
 using namespace SST;
 using namespace SST::Interfaces;

@@ -47,7 +47,7 @@ namespace Iris {
 
 class iris_RtrIF : public Component {
 public:
-    iris_RtrIF( ComponentId_t id, Params& params ) :
+    iris_RtrIF( ComponentId_t id, Params_t& params ) :
         Component(id),
         rtrCountP(0),
         num_vcP(2),

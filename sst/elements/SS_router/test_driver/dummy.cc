@@ -23,7 +23,7 @@
 
 using namespace SST::SS_router;
 
-void RtrIF::dummyInit( Params params, std::string frequency )
+void RtrIF::dummyInit( Params_t params, std::string frequency )
 {
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();

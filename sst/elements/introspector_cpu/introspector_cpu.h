@@ -13,7 +13,7 @@
 #define _INTROSPECTOR_CPU_H
 
 #include <sst/core/introspector.h>
-#include <sst/core/params.h>
+
 
 namespace SST {
 namespace Introspector_CPU {
@@ -30,14 +30,14 @@ namespace Introspector_CPU {
 class Introspector_cpu : public Introspector {
        
     public:
-	Introspector_cpu(Params& params ) :
+	Introspector_cpu(Component::Params_t& params ) :
             Introspector(),
             params( params ),
             frequency( "1ns" )
         {
             _INTROSPECTOR_CPU_DBG( "new id=%lu\n", id );
 
-            Params::iterator it = params.begin(); 
+            Component::Params_t::iterator it = params.begin(); 
             while( it != params.end() ) { 
                 _INTROSPECTOR_CPU_DBG("key=%s value=%s\n",
                             it->first.c_str(),it->second.c_str());
@@ -91,7 +91,7 @@ class Introspector_cpu : public Introspector {
 	bool triggeredUpdate();
 
 	Event::Handler< Introspector_cpu > *mpionetimehandler;
-        Params    params;        
+        Component::Params_t    params;        
 	std::string frequency;
 	std::string model;
 	uint64_t intData;
@@ -107,7 +107,7 @@ class Introspector_cpu : public Introspector {
     }
 };
 
-} //namespace Introspector_CPU
-} //namespace SST
+}
+}
 
 #endif

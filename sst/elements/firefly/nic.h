@@ -21,7 +21,7 @@ namespace Firefly {
 
 class Nic : public SST::Component {
   public:
-    Nic(SST::ComponentId_t id, SST::Params &params);
+    Nic(SST::ComponentId_t id, SST::Component::Params_t &params);
     ~Nic();
     void setup(void) { }
     void init(unsigned int phase) { }

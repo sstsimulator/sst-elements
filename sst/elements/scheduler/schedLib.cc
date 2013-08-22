@@ -19,19 +19,19 @@ using namespace SST::Scheduler;
 
     static SST::Component*
 create_schedComponent(SST::ComponentId_t id, 
-                      SST::Params& params)
+                      SST::Component::Params_t& params)
 {
     return new schedComponent( id, params );
 }
 
     static SST::Component*
 create_nodeComponent(SST::ComponentId_t id, 
-                     SST::Params& params)
+                     SST::Component::Params_t& params)
 {
     return new nodeComponent( id, params );
 }
 
-static SST::Component * create_linkBuilder( SST::ComponentId_t id, SST::Params & params ){
+static SST::Component * create_linkBuilder( SST::ComponentId_t id, SST::Component::Params_t & params ){
     return new linkBuilder(id, params);
 }
 

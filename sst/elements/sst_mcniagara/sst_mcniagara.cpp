@@ -25,24 +25,20 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "sst_mcniagara.h"
-
-#include <iostream>
-
 #include <sst/core/element.h>
 #include <sst/core/component.h>
-#include <sst/core/params.h>
-
+#include <iostream>
 using std::cout;
 using std::endl;
 
+#include "sst_mcniagara.h"
 
 using namespace SST;
 using namespace SST::SST_McNiagara;
 
-SSTMcNiagara::SSTMcNiagara(ComponentId_t id, Params& params):Component(id){
+SSTMcNiagara::SSTMcNiagara(ComponentId_t id, Params_t& params):Component(id){
 	//	the_cpu = new McNiagara();
-	//cout<<"SSTMcNiagara(ComponentId_t id, Params& params) Begin"<<endl;
+	//cout<<"SSTMcNiagara(ComponentId_t id, Params_t& params) Begin"<<endl;
 	the_cpu = new McNiagara::McNiagara();
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
@@ -99,7 +95,7 @@ SSTMcNiagara::SSTMcNiagara(ComponentId_t id, Params& params):Component(id){
 	//cout<<" Creating Clock"<<endl;
 	registerClock( "1GHz",
 			new Clock::Handler<SSTMcNiagara>(this, &SSTMcNiagara::tic ) );
-	//cout<<"SSTMcNiagara(ComponentId_t id, Params& params) End"<<endl;
+	//cout<<"SSTMcNiagara(ComponentId_t id, Params_t& params) End"<<endl;
 
 }//SSTMcNiagara::SSTMcNiagara()
 
@@ -142,7 +138,7 @@ bool SSTMcNiagara::Status(){
 	return 0;
 }
 
-static Component* create_SSTMcNiagara(SST::ComponentId_t id,SST::Params& params){
+static Component* create_SSTMcNiagara(SST::ComponentId_t id,SST::Component::Params_t& params){
 	return new SSTMcNiagara(id,params);
 }
 

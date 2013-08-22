@@ -24,7 +24,7 @@ namespace Zodiac {
 class ZodiacDUMPITraceReader : public SST::Component {
 public:
 
-  ZodiacDUMPITraceReader(SST::ComponentId_t id, SST::Params& params);
+  ZodiacDUMPITraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup() { }
   void finish() { 
 	trace->close();

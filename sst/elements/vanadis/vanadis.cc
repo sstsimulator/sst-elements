@@ -4,8 +4,6 @@
 #include <assert.h>
 
 #include "sst/core/element.h"
-#include "sst/core/params.h"
-
 #include "nbprefetch.h"
 
 using namespace SST;
@@ -13,7 +11,7 @@ using namespace SST::Vanadis;
 
 static Component*
 create_NextBlockPrefetcher(SST::ComponentId_t id, 
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
     return new NextBlockPrefetcher( id, params );
 }

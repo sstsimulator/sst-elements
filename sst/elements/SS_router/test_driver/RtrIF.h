@@ -92,7 +92,7 @@ public:
 	    printf("%d: Messages recieved: %d\n",m_id,m_node_recvd);
 	}
 
-   RtrIF( ComponentId_t id, Params& params ) :
+   RtrIF( ComponentId_t id, Params_t& params ) :
         Component(id),
         rtrCountP(0),
         num_vcP(2),
@@ -152,7 +152,7 @@ public:
 
 	m_rtrLink = configureLink( "rtr", new Event::Handler<RtrIF>(this, &RtrIF::processEvent));
 
-        Params tmp_params = params.find_prefix_params( "dummy." );
+        Params_t tmp_params = params.find_prefix_params( "dummy." );
         dummyInit( tmp_params, frequency );
 
 //         ClockHandler_t* clockHandler = new EventHandler< RtrIF, bool, Cycle_t >
@@ -213,7 +213,7 @@ public:
 
 private:
 
-    void dummyInit( Params, std::string );
+    void dummyInit( Params_t, std::string );
     bool dummyLoad( Cycle_t cycle );
     int   m_dummyFd_in;
     int   m_dummyFd_out;

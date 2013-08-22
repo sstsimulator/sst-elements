@@ -11,13 +11,11 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "dmaEngine.h"
 
+#include "dmaEngine.h"
 #include "dmaEvent.h"
 #include "nicMmu.h"
 #include "debug.h"
-
-#include <sst/core/link.h>
 
 using namespace SST::Portals4;
 

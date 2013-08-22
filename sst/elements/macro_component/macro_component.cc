@@ -14,7 +14,6 @@
 #include <sst/core/serialization.h>
 
 #include <sst/core/element.h>
-#include <sst/core/params.h>
 
 #include <sst/elements/macro_component/macro_processor.h>
 #include <sst/elements/macro_component/macro_network.h>
@@ -29,13 +28,13 @@ using namespace SST;
 
 static SST::Component*
 create_macro_network(SST::ComponentId_t id,
-    SST::Params& params)
+    SST::Component::Params_t& params)
 {
   return new macro_network( id, params );
 }
 
 static SST::Component*
- create_macro_processor(SST::ComponentId_t id, SST::Params& params)
+ create_macro_processor(SST::ComponentId_t id, SST::Component::Params_t& params)
  {
    return new macro_processor(id, params);
  }

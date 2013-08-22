@@ -21,7 +21,7 @@ static bool compare_NICparams(NICparams_t first, NICparams_t second);
 
 
 bool
-MachineInfo::init(SST::Params& params)
+MachineInfo::init(SST::Component::Params_t& params)
 {
 
 int index;
@@ -65,7 +65,7 @@ FarLink_t fl;
 
 
     // Pre processing the parameter list
-    SST::Params::iterator it= params.begin();
+    SST::Component::Params_t::iterator it= params.begin();
     while (it != params.end())   {
 	if (!it->first.compare("rank"))   {
 	    sscanf(it->second.c_str(), "%d", &_my_rank);

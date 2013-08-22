@@ -20,8 +20,6 @@
 #ifndef _MSGRATE_PATTERN_H
 #define _MSGRATE_PATTERN_H
 
-#include <sst/core/params.h>
-
 #include "patterns.h"
 #include "support/state_machine.h"
 #include "support/comm_pattern.h"
@@ -32,7 +30,7 @@
 
 class Msgrate_pattern : public Comm_pattern    {
     public:
-        Msgrate_pattern(ComponentId_t id, Params& params) :
+        Msgrate_pattern(ComponentId_t id, Params_t& params) :
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
@@ -43,7 +41,7 @@ class Msgrate_pattern : public Comm_pattern    {
 
 
 	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
+            Params_t::iterator it= params.begin();
             while (it != params.end())   {
 		if (!it->first.compare("num_msgs"))   {
 		    sscanf(it->second.c_str(), "%d", &num_msgs);
@@ -128,7 +126,7 @@ class Msgrate_pattern : public Comm_pattern    {
 	void state_T3_RECEIVING(state_event sm_event);
 	void state_ALLREDUCE_T3(state_event sm_event);
 
-	Params params;
+	Params_t params;
 	int allreduce_msglen;
 	int rank_stride;
 	int start_rank;

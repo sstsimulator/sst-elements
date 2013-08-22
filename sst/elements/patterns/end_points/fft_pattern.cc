@@ -19,16 +19,11 @@
 
 /*
 */
-#include "fft_pattern.h"
-
-#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS			(1)
-#endif
 #include <inttypes.h>				/* For PRId64 */
 #include <math.h>				/* For llrint() */
-
+#include "fft_pattern.h"
 #include <sst/core/element.h>
-
 #include "util/stats.h"
 
 

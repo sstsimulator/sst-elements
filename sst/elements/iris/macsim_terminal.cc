@@ -26,7 +26,6 @@
 
 //Include macsim main SST class here adding dummy for now
 #include        "ex_macsim_component.h"
-#include <sst/core/link.h>
 
 using namespace SST::Iris;
 

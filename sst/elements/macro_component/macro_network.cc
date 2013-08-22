@@ -34,7 +34,7 @@ using namespace sstmac::hw;
 using namespace sstmac::sw;
 using namespace sstmac;
 
-macro_network::macro_network(ComponentId_t id, Params& params) :
+macro_network::macro_network(ComponentId_t id, Params_t& params) :
     Component(id)
 {
 	

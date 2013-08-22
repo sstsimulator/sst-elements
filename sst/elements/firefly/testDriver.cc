@@ -11,22 +11,19 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-#include "testDriver.h"
 
-#include "sst/core/component.h"
-#include "sst/core/debug.h"
 #include "sst/core/element.h"
-#include "sst/core/link.h"
+#include "sst/core/component.h"
 #include "sst/core/module.h"
-#include "sst/core/params.h"
 #include "sst/core/timeLord.h"
 
+#include "testDriver.h"
 
 using namespace Hermes;
 using namespace SST;
 using namespace SST::Firefly;
 
-TestDriver::TestDriver(ComponentId_t id, Params &params) :
+TestDriver::TestDriver(ComponentId_t id, Params_t &params) :
     Component( id ),
     m_sharedTraceFile(false),
     m_functor( DerivedFunctor( this, &TestDriver::funcDone ) ),
@@ -48,7 +45,7 @@ TestDriver::TestDriver(ComponentId_t id, Params &params) :
 
     std::ostringstream ownerName;
     ownerName << this;
-    Params hermesParams = params.find_prefix_params("hermesParams." ); 
+    Params_t hermesParams = params.find_prefix_params("hermesParams." ); 
     hermesParams.insert( 
         std::pair<std::string,std::string>("owner", ownerName.str()));
 

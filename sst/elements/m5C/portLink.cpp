@@ -11,8 +11,6 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "portLink.h"
-
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stringEvent.h>
 
@@ -23,6 +21,7 @@
 #include <rawEvent.h>
 //#include <sst/elements/interfaces/memEvent.h>
 
+#include "portLink.h"
 
 namespace SST {
 namespace M5 {

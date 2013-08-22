@@ -12,9 +12,8 @@
 #ifndef _SST_OberonComponent_H
 #define _SST_OberonComponent_H
 
-#include <sst/core/sst_types.h>
-
 #include <sst/core/event.h>
+#include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -23,13 +22,12 @@
 #include "oberonengine.h"
 
 namespace SST {
-class Params;
 namespace Oberon {
 
 class OberonComponent : public SST::Component {
 public:
 
-  OberonComponent(SST::ComponentId_t id, SST::Params& params);
+  OberonComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup() { }
   void finish() {
   }

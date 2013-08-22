@@ -32,14 +32,14 @@ using namespace SST::Portals4_sm;
 
 static SST::Component*
 create_trig_cpu(SST::ComponentId_t id,
-                SST::Params& params)
+                SST::Component::Params_t& params)
 {
     return new SST::Portals4_sm::trig_cpu( id, params );
 }
 
 static SST::Component*
 create_trig_nic(SST::ComponentId_t id,
-                SST::Params& params)
+                SST::Component::Params_t& params)
 {
     return new SST::Portals4_sm::trig_nic( id, params );
 }

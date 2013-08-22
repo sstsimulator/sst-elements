@@ -27,9 +27,6 @@
 
 #include "ctrlMsg.h"
 
-#include "sst/core/link.h"
-#include "sst/core/params.h"
-
 using namespace SST::Firefly;
 using namespace Hermes;
 

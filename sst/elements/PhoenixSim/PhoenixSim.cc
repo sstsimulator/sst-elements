@@ -44,7 +44,7 @@ static void verifyIntTypes()
 #undef LL
 }
 
-PhoenixSim::PhoenixSim(SST::ComponentId_t id, SST::Params& params) : Component(id) {
+PhoenixSim::PhoenixSim(SST::ComponentId_t id, SST::Component::Params_t& params) : Component(id) {
   printf("constructing....\n");
   cStaticFlag::set(true);  
   
@@ -451,7 +451,7 @@ void OmnetSimulation::processSelfMsg(cMessage *msg) {
 
 static Component*
 create_PhoenixSim(SST::ComponentId_t id, 
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
   return new PhoenixSim( id, params );
 }

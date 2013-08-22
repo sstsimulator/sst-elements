@@ -20,7 +20,7 @@ using namespace SST::SS_router;
 
 static Component* 
 create_router(SST::ComponentId_t id, 
-                SST::Params& params)
+                SST::Component::Params_t& params)
 {
     return new SST::SS_router::SS_router( id, params );
 }

@@ -26,8 +26,6 @@
 
 #include <sstream>
 
-#include "sst/core/debug.h"
-
 #include "SS_router.h"
 #include "SS_routerInternals.cpp"
 #include "SS_routerEvent.cpp"
@@ -85,7 +83,7 @@ void SS_router::returnToken_flits (int dir, int flits, int vc) {
 }
 
 //: Constructor
-SS_router::SS_router( ComponentId_t id, Params& params ) :
+SS_router::SS_router( ComponentId_t id, Params_t& params ) :
         Component( id ),
         overheadMultP(1.5),
         oLCB_maxSize_flits(512),
@@ -267,7 +265,7 @@ SS_router::SS_router( ComponentId_t id, Params& params ) :
     ready_oLCB = false;
     ready_iLCB = false;
 
-    Params tmp_params; 
+    Params_t tmp_params; 
 
     m_datelineV.resize( 3 );
     for ( int i = 0; i < 3; i++ ) {
@@ -435,7 +433,7 @@ void SS_router::dumpTable (FILE *fp) {
 
 
 //: Build the routing table
-void SS_router::setupRoutingTable( Params params, int nodes,
+void SS_router::setupRoutingTable( Params_t params, int nodes,
                                    int xDim, int yDim, int zDim) {
 
     DBprintf("\n");

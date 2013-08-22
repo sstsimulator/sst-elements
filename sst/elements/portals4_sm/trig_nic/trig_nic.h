@@ -121,7 +121,7 @@ private:
     }
     
 public:
-    trig_nic( ComponentId_t id, Params& params );
+    trig_nic( ComponentId_t id, Params_t& params );
 
     virtual void finish() {  
     }

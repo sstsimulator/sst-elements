@@ -14,7 +14,7 @@
 
 #include "debug.h"
 #include "factory.h"
-//#include "sst/core/sdl.h"
+#include "sst/core/sdl.h"
 
 #include <dll/gem5dll.hh>
 

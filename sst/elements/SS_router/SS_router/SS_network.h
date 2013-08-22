@@ -111,7 +111,7 @@ class Network {
     int _size;
 
 public:
-    Network( Params );
+    Network( Component::Params_t );
     int xDimSize () {
         return _xDimSize;
     }

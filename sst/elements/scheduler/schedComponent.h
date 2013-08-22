@@ -17,7 +17,6 @@
 #include <boost/filesystem.hpp>
 
 #include <sst/core/component.h>
-#include <sst/core/link.h>
 
 namespace SST {
     class Event;
@@ -43,7 +42,7 @@ namespace SST {
         class schedComponent : public SST::Component {
             public:
 
-                schedComponent(SST::ComponentId_t id, SST::Params& params);
+                schedComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
                 ~schedComponent(); 
                 void setup();
                 void finish();

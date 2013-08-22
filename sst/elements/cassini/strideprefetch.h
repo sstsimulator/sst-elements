@@ -47,7 +47,7 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
         uint64_t hitEventsProcessed;
 };
 
-} //namespace Cassini
-} //namespace SST
+}
+}
 
 #endif

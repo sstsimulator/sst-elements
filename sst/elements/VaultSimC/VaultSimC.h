@@ -13,14 +13,12 @@
 #ifndef _VAULTSIMC_H
 #define _VAULTSIMC_H
 
-#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/interfaces/memEvent.h>
-#include <sst/core/output.h>
-
 #include <Vault.h>
 #include <BusPacket.h>
+#include <sst/core/output.h>
 #include "vaultGlobals.h"
 
 
@@ -34,7 +32,7 @@ class VaultSimC : public IntrospectedComponent {
 
     public: // functions
 
-        VaultSimC( ComponentId_t id, Params& params );
+        VaultSimC( ComponentId_t id, Params_t& params );
         int Finish();
 	void init(unsigned int phase);
 

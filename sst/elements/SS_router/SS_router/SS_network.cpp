@@ -27,11 +27,10 @@
 #include "SS_network.h"
 
 #include <sst/core/debug.h>
-#include <sst/core/params.h>
 
 using namespace SST::SS_router;
 
-Network::Network( SST::Params params )
+Network::Network( SST::Component::Params_t params )
 {
     _xDimSize = params.find_integer("xDimSize");
     if ( _xDimSize == -1 ) {

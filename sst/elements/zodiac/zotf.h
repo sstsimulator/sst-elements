@@ -23,7 +23,7 @@ namespace Zodiac {
 class ZodiacOTFTraceReader : public SST::Component {
 public:
 
-  ZodiacOTFTraceReader(SST::ComponentId_t id, SST::Params& params);
+  ZodiacOTFTraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup() { }
   void finish() { 
   }

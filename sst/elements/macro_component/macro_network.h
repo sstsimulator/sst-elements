@@ -12,12 +12,10 @@
 #ifndef _macro_network_H
 #define _macro_network_H
 
-#include <sst/core/sst_types.h>
-
-#include <sst/core/component.h>
 #include <sst/core/event.h>
+#include <sst/core/sst_types.h>
+#include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/params.h>
 #include <sst/core/timeConverter.h>
 
 #include <sstmac/hardware/network/interconnect/interconnect.h>
@@ -87,7 +85,7 @@ class macro_network : public SST::Component, public eventmanager_interface
 
 public:
 
-  macro_network(SST::ComponentId_t id, SST::Params& params);
+  macro_network(SST::ComponentId_t id, SST::Component::Params_t& params);
   virtual
   ~macro_network()
   {

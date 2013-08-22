@@ -12,7 +12,7 @@ using namespace std;
 using namespace SST;
 using namespace SST::Zodiac;
 
-ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params& params) :
+ZodiacOTFTraceReader::ZodiacOTFTraceReader(ComponentId_t id, Params_t& params) :
   Component(id) {
 
     std::cout << "Creating a new ZOTFTrace Reader..." << std::endl;

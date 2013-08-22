@@ -15,7 +15,6 @@
 #include <sst_config.h>
 #include <sst/core/serialization.h>
 #include <sst/core/component.h>
-#include <sst/core/link.h>
 
 #include <pthread.h>
 #include "palacios.h"
@@ -25,14 +24,12 @@
 #define USE_THREAD 0
 
 namespace SST {
-class Params;
-
 namespace Palacios {
 
 class PtlNicMMIF : public SST::Component
 {
   public:
-    PtlNicMMIF( SST::ComponentId_t, Params& );
+    PtlNicMMIF( SST::ComponentId_t, Params_t& );
     virtual ~PtlNicMMIF();
     void setup(); 
     virtual bool Status();

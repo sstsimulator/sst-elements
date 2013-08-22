@@ -12,12 +12,12 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "routermodel.h"
-
-#include <assert.h>
-
 #include "sst/core/element.h"
 #include <sst/core/cpunicEvent.h>
+#include <assert.h>
+#include "routermodel.h"
+
+
 
 // The lower 27 bits of the event ID are the rank number, high order bits are sequence
 #define RANK_FIELD              (27)
@@ -300,7 +300,7 @@ int64_t latency;
 
 static Component*
 create_routermodel(SST::ComponentId_t id, 
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
     return new Routermodel( id, params );
 }
@@ -326,7 +326,7 @@ extern "C" {
 
 static Component*
 create_routermodel_power(SST::ComponentId_t id, 
-                  SST::Params& params)
+                  SST::Component::Params_t& params)
 {
     return new Routermodel( id, params );
 }

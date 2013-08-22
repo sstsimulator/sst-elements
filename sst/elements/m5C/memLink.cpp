@@ -17,8 +17,6 @@
 #include <m5.h>
 #include <memEvent.h>
 #include <paramHelp.h>
-#include <sst/core/link.h>
-#include <sst/core/params.h>
 
 using namespace SST::M5;
 

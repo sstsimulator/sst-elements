@@ -13,13 +13,11 @@
 #define _ptlNicMMIF_h
 
 #define __SST__ 1
-#include <sst/core/output.h> //must come before gem5 includes, overwrites fatal
+
 #include <dev/io_device.hh>
 #include "portals4/ptlNic/cmdQueue.h"
 
 #include <debug.h>
-#include <sst/core/event.h>
-#include <sst/core/link.h>
 
 using namespace std;
 

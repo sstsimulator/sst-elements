@@ -36,7 +36,7 @@ using namespace SST::Merlin;
 
 static Component*
 create_portals_nic(SST::ComponentId_t id,
-		   SST::Params& params)
+		   SST::Component::Params_t& params)
 {
     // return new portals_nic( id, params );
     return NULL;
@@ -44,7 +44,7 @@ create_portals_nic(SST::ComponentId_t id,
 
 static Component*
 create_hr_router(SST::ComponentId_t id,
-	      SST::Params& params)
+	      SST::Component::Params_t& params)
 {
     return new hr_router( id, params );
 }

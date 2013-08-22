@@ -20,8 +20,6 @@
 #ifndef _GHOST_PATTERN_H
 #define _GHOST_PATTERN_H
 
-#include <sst/core/params.h>
-
 #include "patterns.h"
 #include "support/state_machine.h"
 #include "support/comm_pattern.h"
@@ -38,7 +36,7 @@ extern "C" {
 
 class Ghost_pattern : public Comm_pattern    {
     public:
-        Ghost_pattern(ComponentId_t id, Params& params) :
+        Ghost_pattern(ComponentId_t id, Params_t& params) :
             Comm_pattern(id, params),
 	    decomposition_only(0)
         {
@@ -56,7 +54,7 @@ class Ghost_pattern : public Comm_pattern    {
 
 
 	    // Process the message rate specific paramaters
-            Params::iterator it= params.begin();
+            Params_t::iterator it= params.begin();
             while (it != params.end())   {
 		if (!it->first.compare("time_steps"))   {
 		    sscanf(it->second.c_str(), "%d", &time_steps);
@@ -218,7 +216,7 @@ class Ghost_pattern : public Comm_pattern    {
 	// Other functions
 	void do_decomposition(void);
 
-	Params params;
+	Params_t params;
 
 	// State machine identifiers
 	uint32_t SMghost;

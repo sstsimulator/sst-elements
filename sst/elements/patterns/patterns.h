@@ -35,7 +35,7 @@ const char *type_name(NIC_model_t nic);		// Defined in NIC_model.cc
 // a brief description.
 
 #define eli(comp, lib, desc) \
-static SST::Component *create_##comp(SST::ComponentId_t id, SST::Params& params) \
+static SST::Component *create_##comp(SST::ComponentId_t id, SST::Component::Params_t& params) \
 { \
     return new comp(id, params); \
 } \

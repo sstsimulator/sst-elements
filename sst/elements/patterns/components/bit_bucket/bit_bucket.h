@@ -18,19 +18,14 @@
 #ifndef _BIT_BUCKET_H
 #define _BIT_BUCKET_H
 
-#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS	(1)
-#endif
 #include <inttypes.h>		// For PRIu64
-
 #include <sst_config.h>
+#include "sst/core/serialization.h"
+#include <sst/core/element.h>
 
 #include <sst/core/component.h>
-#include <sst/core/element.h>
 #include <sst/core/link.h>
-#include <sst/core/params.h>
-#include "sst/core/serialization.h"
-
 
 
 using namespace SST;
@@ -55,11 +50,11 @@ typedef enum {BIT_BUCKET_WRITE_START= 200, BIT_BUCKET_WRITE_DONE, BIT_BUCKET_REA
 
 class Bit_bucket : public Component {
     public:
-        Bit_bucket(ComponentId_t id, Params& params) :
+        Bit_bucket(ComponentId_t id, Params_t& params) :
 	    Component(id),
             params(params)
         {
-            Params::iterator it= params.begin();
+            Params_t::iterator it= params.begin();
 	    bit_bucket_debug= 0;
 	    read_pipe= 0;
 	    write_pipe= 0;
@@ -124,7 +119,7 @@ class Bit_bucket : public Component {
         Bit_bucket(const Bit_bucket &c);
 	void handle_events(Event *);
 
-        Params params;
+        Params_t params;
 	Link *net;
 	Link *self_link;
 	int bit_bucket_debug;

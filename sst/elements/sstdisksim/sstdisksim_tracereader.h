@@ -14,14 +14,11 @@
 
 #include "sstdisksim_event.h"
 
+#include <sst/core/log.h>
+#include <sst/core/component.h>
+#include <sst/core/simulation.h>
 #include <stdlib.h>
 #include <stddef.h>
-
-#include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/log.h>
-#include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "syssim_driver.h"
 #include <disksim_interface.h>
@@ -42,7 +39,7 @@ class sstdisksim_tracereader : public Component {
 
  public:
 
-  sstdisksim_tracereader( ComponentId_t id, Params& params );
+  sstdisksim_tracereader( ComponentId_t id, Params_t& params );
   ~sstdisksim_tracereader();
   void setup(); 
   void finish();
@@ -54,7 +51,7 @@ class sstdisksim_tracereader : public Component {
   std::string traceFile;
   std::string edfFile;
 
-  Params __params;
+  Params_t __params;
   ComponentId_t __id;
   sstdisksim_tau_parser* __parser;
 

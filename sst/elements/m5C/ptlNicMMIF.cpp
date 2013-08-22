@@ -11,13 +11,13 @@
 
 #include <sst_config.h>
 #include <sst/core/serialization.h>
-#include "ptlNicMMIF.h"
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 
 #include <debug.h>
 #include <paramHelp.h>
 #include <m5.h>
+#include "ptlNicMMIF.h"
 #include <system.h>
 #include "portals4/ptlNic/ptlNicEvent.h"
 #include "portals4/ptlNic/dmaEvent.h"

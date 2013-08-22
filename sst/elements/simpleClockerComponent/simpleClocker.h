@@ -27,7 +27,7 @@ namespace SimpleClockerComponent {
 class simpleClocker : public SST::Component {
 public:
 
-  simpleClocker(SST::ComponentId_t id, SST::Params& params);
+  simpleClocker(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup()  { }
   void finish() { }
 
