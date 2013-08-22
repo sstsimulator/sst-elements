@@ -2,6 +2,13 @@
 #ifndef SST_OBERON_I64_VALUE
 #define SST_OBERON_I64_VALUE
 
+#include <stdint.h>
+
+#include "obexprval.h"
+
+namespace SST {
+namespace Oberon {
+
 class OberonI64ExprValue : public OberonExpressionValue {
 
 	private:
@@ -12,6 +19,9 @@ class OberonI64ExprValue : public OberonExpressionValue {
 		int64_t getAsInt64();
 		double  getAsFP64();
 
+};
+
+}
 }
 
 #endif

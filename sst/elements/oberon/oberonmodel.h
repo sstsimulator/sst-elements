@@ -2,6 +2,11 @@
 #ifndef _SST_OBERON_MODEL
 #define _SST_OBERON_MODEL
 
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
 namespace SST {
 namespace Oberon {
 
@@ -26,7 +31,8 @@ class OberonModel {
 	private:
 		char* memory;
 		uint32_t memorySize;
-}
+
+};
 
 }
 }

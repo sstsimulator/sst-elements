@@ -1,5 +1,7 @@
 #include "obexprstack.h"
 
+using namespace SST;
+using namespace SST::Oberon;
 
 OberonExpressionStack::OberonExpressionStack() :
 	exprStack() {
@@ -24,10 +26,15 @@ void OberonExpressionStack::push(OberonExpressionValue* v) {
 }
 
 void OberonExpressionStack::push(int64_t v) {
-	OberonExpressionValue* v = new OberonI64ExprValue(v);
-	exprStack.push(v);
+	OberonI64ExprValue* stackVal = new OberonI64ExprValue(v);
+	exprStack.push(stackVal);
 }
 
 void OberonExpressionStack::push(double v) {
+	OberonFP64ExprValue* stackVal = new OberonFP64ExprValue(v);
+	exprStack.push(stackVal);
+}
+
+void OberonExpressionStack::push(uint32_t v) {
 	assert(0);
 }

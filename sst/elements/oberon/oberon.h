@@ -9,14 +9,17 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _OberonComponent_H
-#define _OberonComponent_H
+#ifndef _SST_OberonComponent_H
+#define _SST_OberonComponent_H
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+
+#include "oberonmodel.h"
+#include "oberonengine.h"
 
 namespace SST {
 namespace Oberon {
