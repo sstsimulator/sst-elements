@@ -132,7 +132,8 @@ int McNiagara::generate_instruction(Token *token)
        case 3: token->type = I_BRANCH; token->category.v =0; break;
        case 4: token->type = I_FLOAT; token->category.f = OTHER_FLOAT; break;
        case 5: token->type = I_GRPROD; token->category.i = OTHER_INT; break;
-       default: break;
+       default: token->type = I_NOP; fprintf(stderr, 
+                      "Undefined Token type %d in trace file\n", type); break;
       }
       switch (cat) {
        case 1: token->category.l = PB_6_MEM; break;
