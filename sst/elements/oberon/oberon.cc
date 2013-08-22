@@ -22,6 +22,29 @@
 using namespace SST;
 using namespace SST::Oberon;
 
+OberonComponent::OberonComponent(SST::ComponentId_t id,
+	SST::Component::Params_t& params) {
+
+	uint32_t memory_size = params.find_integer("memorysize", 32768);
+	string model_exe = params.find_string("model", "");
+
+	// check user has specified a model to be run.
+	if(model_exe == "") {
+		std::cerr << "Oberon: you did not specify a model to execute." << std::endl;
+		exit(-1);
+	}
+
+	model = new OberonModel(memory_size);
+
+	char* prefix = (char*) malloc(sizeof(char) * 1024);
+	sprintf(prefix, "oberon-%lld", (long long int) id);
+	string prefixStr = prefix;
+
+	engine = new OberonEngine(prefixStr, model);
+
+	free(prefix);
+}
+
 void OberonComponent::handleEvent( SST::Event *ev ) {
 
 }
@@ -29,8 +52,8 @@ void OberonComponent::handleEvent( SST::Event *ev ) {
 bool OberonComponent::clockTic( SST::Cycle_t ) {
 	OberonEvent* ev;
 
-	while(! engine.instanceHalted()) {
-		ev = engine.generateNextEvent();
+	while(! engine->instanceHalted()) {
+		ev = engine->generateNextEvent();
 
 		delete ev;
 	}
@@ -46,6 +69,8 @@ create_oberon(SST::ComponentId_t id,
 }
 
 static const ElementInfoParam component_params[] = {
+    { "memorysize", "Size of memory for this instance." },
+    { "model", "Model code to be interpreted." },
     { NULL, NULL}
 };
 
