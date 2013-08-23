@@ -19,7 +19,7 @@ OberonEvent* OberonEngine::generateNextEvent() {
 	while(continueProcessing) {
 		const uint32_t thisInst = model->getInstructionAt(pc);
 
-		output->verbose(CALL_INFO, 1, 0, "Read instruction at: %" PRIu32 ", instruction is: %" PRIu32 "\n", pc, thisInst);
+		output->verbose(CALL_INFO, 4, 0, "Read instruction at: %" PRIu32 ", instruction is: %" PRIu32 "\n", pc, thisInst);
 
 		switch(thisInst) {
 
@@ -78,6 +78,11 @@ OberonEvent* OberonEngine::generateNextEvent() {
 			processI64Div();
 			break;
 
+		case OBERON_INST_IPOW:
+			incPC = 4;
+			processI64Pow();
+			break;
+
 		case OBERON_INST_IMOD:
                 	incPC = 4;
 			processI64Mod();
@@ -106,7 +111,6 @@ OberonEvent* OberonEngine::generateNextEvent() {
 			incPC = 4;
 			continueProcessing = false;
 			processHalt();
-
 			break;
 
 		case OBERON_INST_DUMP_MEM:
@@ -115,7 +119,7 @@ OberonEvent* OberonEngine::generateNextEvent() {
 
 		}
 
-		output->verbose(CALL_INFO, 1, 0, "Incrementing instruction program counter from: %" PRIu32 " by: %" PRIu32 " = %" PRIu32 "\n", pc, incPC, (pc + incPC));
+		output->verbose(CALL_INFO, 4, 0, "Incrementing instruction program counter from: %" PRIu32 " by: %" PRIu32 " = %" PRIu32 "\n", pc, incPC, (pc + incPC));
 
 		pc += incPC;
 	}
@@ -135,13 +139,13 @@ void OberonEngine::processPrintI64() {
 
 uint32_t OberonEngine::processUnconditionalJump(uint32_t pc) {
 	uint32_t jumpTo = model->getUInt32At(pc);
-	output->verbose(CALL_INFO, 1, 0, "Unconditional Jump to %" PRIu32 "\n", jumpTo);
+	output->verbose(CALL_INFO, 2, 0, "Unconditional Jump to %" PRIu32 "\n", jumpTo);
 	return jumpTo;
 }
 
 uint32_t OberonEngine::processUnconditionalJumpRelative(uint32_t pc) {
 	uint32_t jumpTo = pc + model->getUInt32At(pc);
-	output->verbose(CALL_INFO, 1, 0, "Unconditional Relative Jump to %" PRIu32 "\n", jumpTo);
+	output->verbose(CALL_INFO, 2, 0, "Unconditional Relative Jump to %" PRIu32 "\n", jumpTo);
 	return jumpTo;
 }
 
@@ -155,7 +159,7 @@ void OberonEngine::processPopFP64(uint32_t pc) {
 	OberonExpressionValue* v = exprStack->pop();
 	model->setFP64At(indexToStoreAt, v->getAsFP64());
 
-	output->verbose(CALL_INFO, 1, 0, "Pop FP64 %f to index %" PRIu32 "\n", v->getAsFP64(), indexToStoreAt);
+	output->verbose(CALL_INFO, 2, 0, "Pop FP64 %f to index %" PRIu32 "\n", v->getAsFP64(), indexToStoreAt);
 
 	delete v;
 }
@@ -166,7 +170,7 @@ void OberonEngine::processPopI64(uint32_t pc) {
 	OberonExpressionValue* v = exprStack->pop();
 	model->setInt64At(indexToStoreAt, v->getAsInt64());
 
-	output->verbose(CALL_INFO, 1, 0, "Pop Int64 %" PRIu64 " to index %" PRIu32 "\n", v->getAsInt64(), indexToStoreAt);
+	output->verbose(CALL_INFO, 2, 0, "Pop Int64 %" PRId64 " to index %" PRIu32 "\n", v->getAsInt64(), indexToStoreAt);
 
 	delete v;
 }
@@ -174,7 +178,7 @@ void OberonEngine::processPopI64(uint32_t pc) {
 void OberonEngine::processPushI64Literal(uint32_t pc) {
 	int64_t value = model->getInt64At(pc);
 
-	output->verbose(CALL_INFO, 1, 0, "Push Literal Int64 %" PRIu64 " (from PC+4: %" PRIu32 ")\n", value, pc);
+	output->verbose(CALL_INFO, 2, 0, "Push Literal Int64 %" PRId64 " (from PC+4: %" PRIu32 ")\n", value, pc);
 
 	exprStack->push(value);
 }
@@ -182,7 +186,7 @@ void OberonEngine::processPushI64Literal(uint32_t pc) {
 void OberonEngine::processPushFP64Literal(uint32_t pc) {
 	double value = model->getFP64At(pc);
 
-	output->verbose(CALL_INFO, 1, 0, "Push Literal FP64 %f (from PC+4: %" PRIu32 ")\n", value, pc);
+	output->verbose(CALL_INFO, 2, 0, "Push Literal FP64 %f (from PC+4: %" PRIu32 ")\n", value, pc);
 
 	exprStack->push(value);
 }
@@ -190,7 +194,7 @@ void OberonEngine::processPushFP64Literal(uint32_t pc) {
 void OberonEngine::processPushUI32Literal(uint32_t pc) {
 	uint32_t value = model->getUInt32At(pc);
 
-	output->verbose(CALL_INFO, 1, 0, "Push Literal Int32 %" PRIu32 " (from PC+4: %" PRIu32 ")\n", value, pc);
+	output->verbose(CALL_INFO, 2, 0, "Push Literal Int32 %" PRIu32 " (from PC+4: %" PRIu32 ")\n", value, pc);
 
 	exprStack->push(value);
 }
@@ -199,7 +203,7 @@ void OberonEngine::processPushFP64(uint32_t pc) {
 	uint32_t index = model->getUInt32At(pc);
 	double value = model->getFP64At(index);
 
-	output->verbose(CALL_INFO, 1, 0, "Push FP64 Value=%f (from index: %" PRIu32 " at pc %" PRIu32 ")\n", value, index, pc);
+	output->verbose(CALL_INFO, 2, 0, "Push FP64 Value=%f (from index: %" PRIu32 " at pc %" PRIu32 ")\n", value, index, pc);
 
 	exprStack->push(value);
 }
@@ -208,7 +212,7 @@ void OberonEngine::processPushI64(uint32_t pc) {
 	uint32_t index = model->getUInt32At(pc);
 	int64_t value = model->getInt64At(index);
 
-	output->verbose(CALL_INFO, 1, 0, "Push Int64 Value=%" PRIu64 " (from index: %" PRIu32 " at pc %" PRIu32 ")\n", value, index, pc);
+	output->verbose(CALL_INFO, 2, 0, "Push Int64 Value=%" PRId64 " (from index: %" PRIu32 " at pc %" PRIu32 ")\n", value, index, pc);
 
 	exprStack->push(value);
 }
@@ -217,6 +221,32 @@ void OberonEngine::processI64Add() {
 	OberonExpressionValue* r = exprStack->pop();
 	OberonExpressionValue* l = exprStack->pop();
 	int64_t result = l->getAsInt64() + r->getAsInt64();
+
+	output->verbose(CALL_INFO, 2, 0, "Add Int64 Left=%" PRId64 " + Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), result);
+
+	exprStack->push(result);
+
+	delete r;
+	delete l;
+}
+
+void OberonEngine::processI64Pow() {
+	OberonExpressionValue* r = exprStack->pop();
+	OberonExpressionValue* l = exprStack->pop();
+
+	int64_t right_v = r->getAsInt64();
+	int64_t left_v  = l->getAsInt64();
+
+	assert(right_v >= 0);
+
+	int64_t result = 1;
+	for(int64_t i = 0; i < right_v; ++i) {
+		result = result * left_v;
+	}
+
+	output->verbose(CALL_INFO, 2, 0, "Pow Int64 Left=%" PRId64 " ** Right=%" PRId64 " Result=%" PRId64 "\n",
+		left_v, right_v, result);
 
 	exprStack->push(result);
 
@@ -229,6 +259,9 @@ void OberonEngine::processI64Sub() {
 	OberonExpressionValue* l = exprStack->pop();
 	int64_t result = l->getAsInt64() - r->getAsInt64();
 
+	output->verbose(CALL_INFO, 2, 0, "Sub Int64 Left=%" PRId64 " - Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), result);
+
 	exprStack->push(result);
 
 	delete r;
@@ -239,6 +272,9 @@ void OberonEngine::processI64Mul() {
 	OberonExpressionValue* r = exprStack->pop();
 	OberonExpressionValue* l = exprStack->pop();
 	int64_t result = l->getAsInt64() * r->getAsInt64();
+
+	output->verbose(CALL_INFO, 2, 0, "Multiply Int64 Left=%" PRId64 " * Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), result);
 
 	exprStack->push(result);
 
@@ -251,6 +287,9 @@ void OberonEngine::processI64Div() {
 	OberonExpressionValue* l = exprStack->pop();
 	int64_t result = l->getAsInt64() / r->getAsInt64();
 
+	output->verbose(CALL_INFO, 2, 0, "Divide Int64 Left=%" PRId64 " / Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), result);
+
 	exprStack->push(result);
 
 	delete r;
@@ -261,6 +300,9 @@ void OberonEngine::processI64Mod() {
 	OberonExpressionValue* r = exprStack->pop();
 	OberonExpressionValue* l = exprStack->pop();
 	int64_t result = l->getAsInt64() % r->getAsInt64();
+
+	output->verbose(CALL_INFO, 2, 0, "Modulo Int64 Left=%" PRId64 " %% Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), result);
 
 	exprStack->push(result);
 

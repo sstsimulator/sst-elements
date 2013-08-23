@@ -41,6 +41,7 @@ class OberonEngine {
 		void processI64Mul();
 		void processI64Div();
 		void processI64Mod();
+		void processI64Pow();
 
 		void processPushI64(uint32_t currentPC);
 		void processPushFP64(uint32_t currentPC);

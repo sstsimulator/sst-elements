@@ -26,10 +26,10 @@ OberonComponent::OberonComponent(SST::ComponentId_t id,
 	SST::Component::Params_t& params) {
 
 	char* prefix = (char*) malloc(sizeof(char) * 1024);
-	sprintf(prefix, "oberon-%lld", (long long int) id);
+	sprintf(prefix, "oberon-%010lld", (long long int) id);
 
 	char* prefixOut = (char*) malloc(sizeof(char) * (1024));
-	sprintf(prefixOut, "oberon-%lld ", (long long int) id);
+	sprintf(prefixOut, "ObrE-[%10lld] ", (long long int) id);
 
 	string prefixStr = prefix;
 
