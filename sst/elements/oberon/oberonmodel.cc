@@ -141,8 +141,9 @@ void OberonModel::dumpMemory() {
 	free(dump_file_name);
 
 	for(uint32_t i = 0; i < memorySize; i = i + 8) {
-		fprintf(dump_file, "%20" PRIu32 " | %10.5f | %20" PRIu64 "\n",
-			i, getFP64At(i), getInt64At(i));
+		fprintf(dump_file, "%20" PRIu32 " | %20.10f | %20" PRId64 " | %20" PRIu32 " / %20" PRIu32 "\n",
+			i, getFP64At(i), getInt64At(i),
+			getUInt32At(i), getUInt32At(i+4));
 	}
 
 	fclose(dump_file);
