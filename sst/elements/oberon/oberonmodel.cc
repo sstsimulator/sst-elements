@@ -19,8 +19,8 @@ OberonModel::OberonModel(uint32_t mSize, char* dumpPfx, Output* out) :
 
 void OberonModel::copyToMemory(uint32_t index, const char* source, uint32_t length) {
 	output->verbose(CALL_INFO, 2, 0, "Memory byte copier - copy to memory at index: %" PRIu32 " bytecount=%" PRIu32 "\n", index, length);
-	for(uint32_t i = index; i < index + length; i++) {
-		memory[i] = source[i];
+	for(uint32_t i = 0; i < length; i++) {
+		memory[index + i] = source[i];
 	}
 }
 
