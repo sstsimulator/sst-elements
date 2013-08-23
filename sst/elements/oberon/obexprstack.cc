@@ -17,8 +17,8 @@ OberonExpressionValue* OberonExpressionStack::pop() {
 	return v;
 }
 
-uint32_t OberonExpressionStack::size() {
-	return (uint32_t) exprStack.size();
+int32_t OberonExpressionStack::size() {
+	return (int32_t) exprStack.size();
 }
 
 void OberonExpressionStack::push(OberonExpressionValue* v) {
@@ -35,6 +35,6 @@ void OberonExpressionStack::push(double v) {
 	exprStack.push(stackVal);
 }
 
-void OberonExpressionStack::push(uint32_t v) {
+void OberonExpressionStack::push(int32_t v) {
 	assert(0);
 }

@@ -5,8 +5,8 @@ using namespace std;
 using namespace SST;
 using namespace SST::Oberon;
 
-OberonModel::OberonModel(uint32_t mSize, char* dumpPfx, Output* out) :
-	SIZE_FP64(8), SIZE_INT64(8), SIZE_UINT32(4) {
+OberonModel::OberonModel(int32_t mSize, char* dumpPfx, Output* out) :
+	SIZE_FP64(8), SIZE_INT64(8), SIZE_INT32(4) {
 	memorySize = mSize;
 	memory = (char*) malloc(sizeof(char) * mSize);
 
@@ -17,38 +17,38 @@ OberonModel::OberonModel(uint32_t mSize, char* dumpPfx, Output* out) :
 	output = out;
 }
 
-void OberonModel::copyToMemory(uint32_t index, const char* source, uint32_t length) {
+void OberonModel::copyToMemory(int32_t index, const char* source, int32_t length) {
 	output->verbose(CALL_INFO, 9, 0, "Memory byte copier - copy to memory at index: %" PRIu32 " bytecount=%" PRIu32 "\n", index, length);
-	for(uint32_t i = 0; i < length; i++) {
+	for(int32_t i = 0; i < length; i++) {
 		memory[index + i] = source[i];
 	}
 }
 
-void OberonModel::copyToMemory(uint32_t index, double* source, uint32_t length) {
+void OberonModel::copyToMemory(int32_t index, double* source, int32_t length) {
 	copyToMemory(index, (const char*) source, length);
 }
 
-void OberonModel::copyToMemory(uint32_t index, int64_t* source, uint32_t length) {
+void OberonModel::copyToMemory(int32_t index, int64_t* source, int32_t length) {
 	copyToMemory(index, (const char*) source, length);
 }
 
-void OberonModel::copyToMemory(uint32_t index, uint32_t* source, uint32_t length) {
+void OberonModel::copyToMemory(int32_t index, int32_t* source, int32_t length) {
 	copyToMemory(index, (const char*) source, length);
 }
 
-uint32_t OberonModel::getUInt32At(uint32_t index) {
-	output->verbose(CALL_INFO, 8, 0, "Memory read UInt32 from index %" PRIu32 "\n", index);
-	assert(index <= (memorySize - sizeof(uint32_t)));
+int32_t OberonModel::getInt32At(int32_t index) {
+	output->verbose(CALL_INFO, 8, 0, "Memory read Int32 from index %" PRIu32 "\n", index);
+	assert(index <= (memorySize - (int32_t) sizeof(int32_t)));
 
-	uint32_t val = 0;
-	memcpy(&val, &memory[index], sizeof(uint32_t));
+	int32_t val = 0;
+	memcpy(&val, &memory[index], sizeof(int32_t));
 
 	return val;
 }
 
-int64_t OberonModel::getInt64At(uint32_t index) {
+int64_t OberonModel::getInt64At(int32_t index) {
 	output->verbose(CALL_INFO, 8, 0, "Memory read Int64 from index %" PRIu32 "\n", index);
-	assert(index <= (memorySize - sizeof(int64_t)));
+	assert(index <= (memorySize - (int32_t) sizeof(int64_t)));
 
 	int64_t val = 0;
 	memcpy(&val, &memory[index], sizeof(int64_t));
@@ -56,9 +56,9 @@ int64_t OberonModel::getInt64At(uint32_t index) {
 	return val;
 }
 
-double OberonModel::getFP64At(uint32_t index) {
+double OberonModel::getFP64At(int32_t index) {
 	output->verbose(CALL_INFO, 8, 0, "Memory read FP64 from index %" PRIu32 "\n", index);
-	assert(index <= (memorySize - sizeof(double)));
+	assert(index <= (memorySize - (int32_t) sizeof(double)));
 
 	double val = 0;
 	memcpy(&val, &memory[index], sizeof(double));
@@ -66,36 +66,36 @@ double OberonModel::getFP64At(uint32_t index) {
 	return val;
 }
 
-void OberonModel::setInt64At(uint32_t index, int64_t value) {
+void OberonModel::setInt64At(int32_t index, int64_t value) {
 	assert(index <= (memorySize - SIZE_INT64));
 	output->verbose(CALL_INFO, 8, 0, "Memory write Int64 index %" PRIu32 ", Value=%" PRIu64 "\n", index, value);
 	copyToMemory(index, &value, SIZE_INT64);
 }
 
-void OberonModel::setFP64At(uint32_t index, double value) {
+void OberonModel::setFP64At(int32_t index, double value) {
 	assert(index <= (memorySize - SIZE_FP64));
 	output->verbose(CALL_INFO, 8, 0, "Memory write FP64 index %" PRIu32 ", Value=%f\n", index, value);
 	copyToMemory(index, &value, SIZE_FP64);
 }
 
-void OberonModel::setUInt32At(uint32_t index, uint32_t value) {
-	assert(index <= (memorySize - SIZE_UINT32));
-	copyToMemory(index, &value, SIZE_UINT32);
+void OberonModel::setInt32At(int32_t index, int32_t value) {
+	assert(index <= (memorySize - SIZE_INT32));
+	copyToMemory(index, &value, SIZE_INT32);
 }
 
-uint32_t OberonModel::getInstructionAt(uint32_t index) {
+int32_t OberonModel::getInstructionAt(int32_t index) {
 	// Make sure we do not access an index which is out of bounds
-	assert(index <= (memorySize - sizeof(index)));
+	assert(index <= (memorySize - (int32_t) sizeof(index)));
 
 	// Return the instruciton at the index we want
 	// Instructions are regarded as unsigned 32-bit integers
-	uint32_t instructionCopy = 0;
-	memcpy(&instructionCopy, &memory[index], sizeof(uint32_t));
+	int32_t instructionCopy = 0;
+	memcpy(&instructionCopy, &memory[index], sizeof(int32_t));
 
 	return instructionCopy;
 }
 
-void OberonModel::setMemoryContents(char* copyFrom, uint32_t length) {
+void OberonModel::setMemoryContents(char* copyFrom, int32_t length) {
 	assert(memorySize >= length);
 
 	// Copy over the instruction bytes from the input into
@@ -124,7 +124,7 @@ void OberonModel::setMemoryContentsFromFile(const char* file) {
 	fclose(model_file);
 }
 
-uint32_t OberonModel::getMemorySize() {
+int32_t OberonModel::getMemorySize() {
 	return memorySize;
 }
 
@@ -140,10 +140,10 @@ void OberonModel::dumpMemory() {
 	FILE* dump_file = fopen(dump_file_name, "wt");
 	free(dump_file_name);
 
-	for(uint32_t i = 0; i < memorySize; i = i + 8) {
+	for(int32_t i = 0; i < memorySize; i = i + 8) {
 		fprintf(dump_file, "%20" PRIu32 " | %20.10f | %20" PRId64 " | %20" PRIu32 " / %20" PRIu32 "\n",
 			i, getFP64At(i), getInt64At(i),
-			getUInt32At(i), getUInt32At(i+4));
+			getInt32At(i), getInt32At(i+4));
 	}
 
 	fclose(dump_file);

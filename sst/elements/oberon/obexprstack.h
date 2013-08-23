@@ -26,8 +26,8 @@ class OberonExpressionStack {
 		void push(OberonExpressionValue* v);
 		void push(int64_t v);
 		void push(double v);
-		void push(uint32_t v);
-		uint32_t size();
+		void push(int32_t v);
+		int32_t size();
 
 };
 

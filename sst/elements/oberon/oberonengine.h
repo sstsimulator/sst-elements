@@ -30,7 +30,7 @@ class OberonEngine {
 		bool instanceHalted();
 
 	private:
-		uint32_t pc;
+		int32_t pc;
 		OberonModel* model;
 		OberonExpressionStack* exprStack;
 		bool isHalted;
@@ -43,19 +43,19 @@ class OberonEngine {
 		void processI64Mod();
 		void processI64Pow();
 
-		void processPushI64(uint32_t currentPC);
-		void processPushFP64(uint32_t currentPC);
+		void processPushI64(int32_t currentPC);
+		void processPushFP64(int32_t currentPC);
 
-		void processPushUI32Literal(uint32_t currentPC);
-		void processPushI64Literal(uint32_t currentPC);
-		void processPushFP64Literal(uint32_t currentPC);
+		void processPushUI32Literal(int32_t currentPC);
+		void processPushI64Literal(int32_t currentPC);
+		void processPushFP64Literal(int32_t currentPC);
 
-		void processPopI64(uint32_t currentPC);
+		void processPopI64(int32_t currentPC);
 //		void popUI32();
-		void processPopFP64(uint32_t currentPC);
+		void processPopFP64(int32_t currentPC);
 
-		uint32_t processUnconditionalJump(uint32_t currentPC);
-		uint32_t processUnconditionalJumpRelative(uint32_t currentPC);
+		int32_t processUnconditionalJump(int32_t currentPC);
+		int32_t processUnconditionalJumpRelative(int32_t currentPC);
 
 		void processPrintI64();
 

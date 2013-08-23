@@ -20,39 +20,39 @@ namespace Oberon {
 class OberonModel {
 
 	public:
-		OberonModel(uint32_t memorySize, char* dumpPrefix, Output* out);
-		uint32_t getInstructionAt(uint32_t index);
+		OberonModel(int32_t memorySize, char* dumpPrefix, Output* out);
+		int32_t getInstructionAt(int32_t index);
 
-		int64_t getInt64At(uint32_t index);
-		double getFP64At(uint32_t index);
-		uint32_t getUInt32At(uint32_t index);
+		int64_t getInt64At(int32_t index);
+		double getFP64At(int32_t index);
+		int32_t getInt32At(int32_t index);
 
-		void setInt64At(uint32_t index, int64_t value);
-		void setFP64At(uint32_t index, double value);
-		void setUInt32At(uint32_t index, uint32_t value);
+		void setInt64At(int32_t index, int64_t value);
+		void setFP64At(int32_t index, double value);
+		void setInt32At(int32_t index, int32_t value);
 
-		void setMemoryContents(char* copyFrom, uint32_t length);
+		void setMemoryContents(char* copyFrom, int32_t length);
 		void setMemoryContentsFromFile(const char* filePath);
 
 		void zeroMemory();
-		uint32_t getMemorySize();
+		int32_t getMemorySize();
 
 		void dumpMemory();
-		void copyToMemory(uint32_t index, const char* source, uint32_t length);
-		void copyToMemory(uint32_t index, double* source, uint32_t length);
-		void copyToMemory(uint32_t index, int64_t* source, uint32_t length);
-		void copyToMemory(uint32_t index, uint32_t* source, uint32_t length);
+		void copyToMemory(int32_t index, const char* source, int32_t length);
+		void copyToMemory(int32_t index, double* source, int32_t length);
+		void copyToMemory(int32_t index, int64_t* source, int32_t length);
+		void copyToMemory(int32_t index, int32_t* source, int32_t length);
 
 	private:
 		char* memory;
-		uint32_t memorySize;
-		uint32_t dumpNumber;
+		int32_t memorySize;
+		int32_t dumpNumber;
 		char* dumpPrefix;
 		Output* output;
 
-		const uint32_t SIZE_FP64;
-		const uint32_t SIZE_INT64;
-		const uint32_t SIZE_UINT32;
+		const int32_t SIZE_FP64;
+		const int32_t SIZE_INT64;
+		const int32_t SIZE_INT32;
 
 };
 

@@ -33,13 +33,13 @@ OberonComponent::OberonComponent(SST::ComponentId_t id,
 
 	string prefixStr = prefix;
 
-	uint32_t verbose = (uint32_t) params.find_integer("verbose", 1);
+	int32_t verbose = (int32_t) params.find_integer("verbose", 1);
 	Output::output_location_t goto_stdout = (Output::output_location_t) 1;
 
 	string prefixOutStr = prefixOut;
 	output = new Output(prefixOutStr, verbose, 0, goto_stdout);
 
-	uint32_t memory_size = (uint32_t) params.find_integer("memorysize", 32768);
+	int32_t memory_size = (int32_t) params.find_integer("memorysize", 32768);
 	string model_exe = params.find_string("model", "");
 
 	// check user has specified a model to be run.

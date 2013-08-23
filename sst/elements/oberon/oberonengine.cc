@@ -13,11 +13,11 @@ OberonEngine::OberonEngine(OberonModel* m, Output* out) {
 }
 
 OberonEvent* OberonEngine::generateNextEvent() {
-	uint32_t incPC = 0;
+	int32_t incPC = 0;
 	bool continueProcessing = true;
 
 	while(continueProcessing) {
-		const uint32_t thisInst = model->getInstructionAt(pc);
+		const int32_t thisInst = model->getInstructionAt(pc);
 
 		output->verbose(CALL_INFO, 4, 0, "Read instruction at: %" PRIu32 ", instruction is: %" PRIu32 "\n", pc, thisInst);
 
@@ -137,14 +137,14 @@ void OberonEngine::processPrintI64() {
 	delete v;
 }
 
-uint32_t OberonEngine::processUnconditionalJump(uint32_t pc) {
-	uint32_t jumpTo = model->getUInt32At(pc);
+int32_t OberonEngine::processUnconditionalJump(int32_t pc) {
+	int32_t jumpTo = model->getInt32At(pc);
 	output->verbose(CALL_INFO, 2, 0, "Unconditional Jump to %" PRIu32 "\n", jumpTo);
 	return jumpTo;
 }
 
-uint32_t OberonEngine::processUnconditionalJumpRelative(uint32_t pc) {
-	uint32_t jumpTo = pc + model->getUInt32At(pc);
+int32_t OberonEngine::processUnconditionalJumpRelative(int32_t pc) {
+	int32_t jumpTo = pc + model->getInt32At(pc);
 	output->verbose(CALL_INFO, 2, 0, "Unconditional Relative Jump to %" PRIu32 "\n", jumpTo);
 	return jumpTo;
 }
@@ -153,8 +153,8 @@ void OberonEngine::processHalt() {
 	isHalted = true;
 }
 
-void OberonEngine::processPopFP64(uint32_t pc) {
-	uint32_t indexToStoreAt = model->getUInt32At(pc);
+void OberonEngine::processPopFP64(int32_t pc) {
+	int32_t indexToStoreAt = model->getInt32At(pc);
 
 	OberonExpressionValue* v = exprStack->pop();
 	model->setFP64At(indexToStoreAt, v->getAsFP64());
@@ -164,8 +164,8 @@ void OberonEngine::processPopFP64(uint32_t pc) {
 	delete v;
 }
 
-void OberonEngine::processPopI64(uint32_t pc) {
-	uint32_t indexToStoreAt = model->getUInt32At(pc);
+void OberonEngine::processPopI64(int32_t pc) {
+	int32_t indexToStoreAt = model->getInt32At(pc);
 
 	OberonExpressionValue* v = exprStack->pop();
 	model->setInt64At(indexToStoreAt, v->getAsInt64());
@@ -175,7 +175,7 @@ void OberonEngine::processPopI64(uint32_t pc) {
 	delete v;
 }
 
-void OberonEngine::processPushI64Literal(uint32_t pc) {
+void OberonEngine::processPushI64Literal(int32_t pc) {
 	int64_t value = model->getInt64At(pc);
 
 	output->verbose(CALL_INFO, 2, 0, "Push Literal Int64 %" PRId64 " (from PC+4: %" PRIu32 ")\n", value, pc);
@@ -183,7 +183,7 @@ void OberonEngine::processPushI64Literal(uint32_t pc) {
 	exprStack->push(value);
 }
 
-void OberonEngine::processPushFP64Literal(uint32_t pc) {
+void OberonEngine::processPushFP64Literal(int32_t pc) {
 	double value = model->getFP64At(pc);
 
 	output->verbose(CALL_INFO, 2, 0, "Push Literal FP64 %f (from PC+4: %" PRIu32 ")\n", value, pc);
@@ -191,16 +191,16 @@ void OberonEngine::processPushFP64Literal(uint32_t pc) {
 	exprStack->push(value);
 }
 
-void OberonEngine::processPushUI32Literal(uint32_t pc) {
-	uint32_t value = model->getUInt32At(pc);
+void OberonEngine::processPushUI32Literal(int32_t pc) {
+	int32_t value = model->getInt32At(pc);
 
 	output->verbose(CALL_INFO, 2, 0, "Push Literal Int32 %" PRIu32 " (from PC+4: %" PRIu32 ")\n", value, pc);
 
 	exprStack->push(value);
 }
 
-void OberonEngine::processPushFP64(uint32_t pc) {
-	uint32_t index = model->getUInt32At(pc);
+void OberonEngine::processPushFP64(int32_t pc) {
+	int32_t index = model->getInt32At(pc);
 	double value = model->getFP64At(index);
 
 	output->verbose(CALL_INFO, 2, 0, "Push FP64 Value=%f (from index: %" PRIu32 " at pc %" PRIu32 ")\n", value, index, pc);
@@ -208,8 +208,8 @@ void OberonEngine::processPushFP64(uint32_t pc) {
 	exprStack->push(value);
 }
 
-void OberonEngine::processPushI64(uint32_t pc) {
-	uint32_t index = model->getUInt32At(pc);
+void OberonEngine::processPushI64(int32_t pc) {
+	int32_t index = model->getInt32At(pc);
 	int64_t value = model->getInt64At(index);
 
 	output->verbose(CALL_INFO, 2, 0, "Push Int64 Value=%" PRId64 " (from index: %" PRIu32 " at pc %" PRIu32 ")\n", value, index, pc);
