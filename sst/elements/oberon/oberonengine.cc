@@ -3,6 +3,67 @@
 
 using namespace SST::Oberon;
 
+/*
+
+#define OBERON_INST_NOP         0
+
+#define OBERON_INST_PUSH_I64    1
+#define OBERON_INST_POP_I64     2
+
+#define OBERON_INST_PUSH_FP64   3
+#define OBERON_INST_POP_FP64    4
+
+#define OBERON_INST_PUSH_LIT_I64        5
+#define OBERON_INST_PUSH_LIT_U32        6
+#define OBERON_INST_PUSH_LIT_FP64	7
+
+#define OBERON_INST_IADD        16
+#define OBERON_INST_ISUB        17
+#define OBERON_INST_IMUL        18
+#define OBERON_INST_IDIV        19
+#define OBERON_INST_IMOD        20
+#define OBERON_INST_IPOW        21
+#define OBERON_INST_ILOG10	22
+#define OBERON_INST_ILN         23
+#define OBERON_INST_ILOG2	24
+#define OBERON_INST_IEXP        25
+
+#define OBERON_INST_FP64ADD     64
+#define OBERON_INST_FP64SUB     65
+#define OBERON_INST_FP64MUL     66
+#define OBERON_INST_FP64DIV     67
+#define OBERON_INST_FP64MOD     68
+
+#define OBERON_INST_CMP_I64LT   128
+#define OBERON_INST_CMP_I64LTE  129
+#define OBERON_INST_CMP_I64EQ   130
+#define OBERON_INST_CMP_I64GTE  131
+#define OBERON_INST_CMP_I64GT   132
+
+#define OBERON_INST_CMP_FP64LT  256
+#define OBERON_INST_CMP_FP64LTE 257
+#define OBERON_INST_CMP_FP64EQ  258
+#define OBERON_INST_CMP_FP64GTE 259
+#define OBERON_INST_CMP_FP64GT  260
+
+#define OBERON_INST_JUMP        512
+#define OBERON_INST_JUMPREL     513
+#define OBERON_INST_CJUMP_ZERO  514
+#define OBERON_INST_CJUMP_NZERO 515
+#define OBERON_INST_CRELJUMP_ZERO  516
+#define OBERON_INST_CRELJUMP_NZERO 517
+
+#define OBERON_INST_AND         1024
+#define OBERON_INST_OR          1025
+#define OBERON_INST_NOT         1026
+
+#define OBERON_INST_HALT        65536
+#define OBERON_INST_DUMP_MEM    65537
+
+#define OBERON_INST_PRINT_I64   131072
+
+*/
+
 OberonEngine::OberonEngine(OberonModel* m, Output* out) {
 	pc = 0;
 	model = m;
@@ -71,6 +132,41 @@ OberonEvent* OberonEngine::generateNextEvent() {
 		case OBERON_INST_IMUL:
                 	incPC = 4;
 			processI64Mul();
+			break;
+
+		case OBERON_INST_CMP_I64EQ:
+			incPC = 4;
+			processI64EQ();
+			break;
+
+		case OBERON_INST_CMP_I64LT:
+			incPC = 4;
+			processI64LT();
+			break;
+
+		case OBERON_INST_CMP_I64LTE:
+			incPC = 4;
+			processI64LTE();
+			break;
+
+		case OBERON_INST_CMP_I64GT:
+			incPC = 4;
+			processI64GT();
+			break;
+
+		case OBERON_INST_CMP_I64GTE:
+			incPC = 4;
+			processI64GTE();
+			break;
+
+		case OBERON_INST_CRELJUMP_ZERO:
+			incPC = 0;
+			pc = processConditionalJumpRelativeOnZero(pc + 4);
+			break;
+
+		case OBERON_INST_CRELJUMP_NZERO:
+			incPC = 0;
+			pc = processConditionalJumpRelativeOnNonZero(pc + 4);
 			break;
 
 		case OBERON_INST_IDIV:
@@ -231,6 +327,86 @@ void OberonEngine::processI64Add() {
 	delete l;
 }
 
+void OberonEngine::processI64LT() {
+	OberonExpressionValue* r = exprStack->pop();
+	OberonExpressionValue* l = exprStack->pop();
+	bool result = l->getAsInt64() < r->getAsInt64();
+
+	int64_t i64result = result ? 1 : 0;
+
+	output->verbose(CALL_INFO, 2, 0, "Less Than Int64 Left=%" PRId64 " + Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), i64result);
+
+	exprStack->push(result);
+
+	delete r;
+	delete l;
+}
+
+void OberonEngine::processI64LTE() {
+	OberonExpressionValue* r = exprStack->pop();
+	OberonExpressionValue* l = exprStack->pop();
+	bool result = l->getAsInt64() <= r->getAsInt64();
+
+	int64_t i64result = result ? 1 : 0;
+
+	output->verbose(CALL_INFO, 2, 0, "Less Than Equal Int64 Left=%" PRId64 " + Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), i64result);
+
+	exprStack->push(result);
+
+	delete r;
+	delete l;
+}
+
+void OberonEngine::processI64EQ() {
+	OberonExpressionValue* r = exprStack->pop();
+	OberonExpressionValue* l = exprStack->pop();
+	bool result = l->getAsInt64() == r->getAsInt64();
+
+	int64_t i64result = result ? 1 : 0;
+
+	output->verbose(CALL_INFO, 2, 0, "Equality Int64 Left=%" PRId64 " + Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), i64result);
+
+	exprStack->push(result);
+
+	delete r;
+	delete l;
+}
+
+void OberonEngine::processI64GT() {
+	OberonExpressionValue* r = exprStack->pop();
+	OberonExpressionValue* l = exprStack->pop();
+	bool result = l->getAsInt64() > r->getAsInt64();
+
+	int64_t i64result = result ? 1 : 0;
+
+	output->verbose(CALL_INFO, 2, 0, "Greater Than Int64 Left=%" PRId64 " + Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), i64result);
+
+	exprStack->push(result);
+
+	delete r;
+	delete l;
+}
+
+void OberonEngine::processI64GTE() {
+	OberonExpressionValue* r = exprStack->pop();
+	OberonExpressionValue* l = exprStack->pop();
+	bool result = l->getAsInt64() >= r->getAsInt64();
+
+	int64_t i64result = result ? 1 : 0;
+
+	output->verbose(CALL_INFO, 2, 0, "Greater Than Equal Int64 Left=%" PRId64 " + Right=%" PRId64 " Result=%" PRId64 "\n",
+		l->getAsInt64(), r->getAsInt64(), i64result);
+
+	exprStack->push(result);
+
+	delete r;
+	delete l;
+}
+
 void OberonEngine::processI64Pow() {
 	OberonExpressionValue* r = exprStack->pop();
 	OberonExpressionValue* l = exprStack->pop();
@@ -308,6 +484,31 @@ void OberonEngine::processI64Mod() {
 
 	delete r;
 	delete l;
+}
+
+int32_t OberonEngine::processConditionalJumpRelativeOnZero(int32_t currentPC) {
+	OberonExpressionValue* branch = exprStack->pop();
+	int32_t pcDelta = model->getInt32At(currentPC);
+	bool shouldBranch = (branch->getAsInt64() == 0);
+
+	output->verbose(CALL_INFO, 2, 0, "Conditional Relative Jump Int64 on Zero: %" PRId64 " Result=%s, PC Delta=%" PRId32 ", PC=%" PRId32 "= %" PRId32" \n",
+		branch->getAsInt64(), shouldBranch ? "true" : "false", pcDelta, currentPC, currentPC + pcDelta);
+
+	// Return a +4 if we do not take jump (to skip over the pcDelta) otherwise return what we
+	// want the pc to be when we have finished
+	return (shouldBranch ? currentPC + pcDelta : currentPC + 4);
+}
+
+int32_t OberonEngine::processConditionalJumpRelativeOnNonZero(int32_t currentPC) {
+	OberonExpressionValue* branch = exprStack->pop();
+	int32_t pcDelta = model->getInt32At(currentPC);
+	bool shouldBranch = (branch->getAsInt64() != 0);
+
+	output->verbose(CALL_INFO, 2, 0, "Conditional Relative Jump Int64 on Non Zero: %" PRId64 " Result=%s, PC Delta=%" PRId32 ", PC=%" PRId32 "= %" PRId32" \n",
+		branch->getAsInt64(), shouldBranch ? "true" : "false", pcDelta, currentPC, currentPC + pcDelta);
+
+	// Return 0 if no branch is needed (we hit a false (non-zero) case)
+	return (shouldBranch ? currentPC + pcDelta : currentPC + 4);
 }
 
 bool OberonEngine::instanceHalted() {

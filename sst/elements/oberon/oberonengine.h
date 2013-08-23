@@ -43,6 +43,12 @@ class OberonEngine {
 		void processI64Mod();
 		void processI64Pow();
 
+		void processI64LT();
+		void processI64LTE();
+		void processI64EQ();
+		void processI64GT();
+		void processI64GTE();
+
 		void processPushI64(int32_t currentPC);
 		void processPushFP64(int32_t currentPC);
 
@@ -56,6 +62,8 @@ class OberonEngine {
 
 		int32_t processUnconditionalJump(int32_t currentPC);
 		int32_t processUnconditionalJumpRelative(int32_t currentPC);
+		int32_t processConditionalJumpRelativeOnZero(int32_t currentPC);
+		int32_t processConditionalJumpRelativeOnNonZero(int32_t currentPC);
 
 		void processPrintI64();
 
