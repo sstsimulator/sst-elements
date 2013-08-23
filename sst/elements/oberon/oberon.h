@@ -17,6 +17,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/output.h>
 
 #include "oberonmodel.h"
 #include "oberonengine.h"
@@ -30,6 +31,11 @@ public:
   OberonComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
   void setup() { }
   void finish() {
+	if(dumpAtEnd)
+		model->dumpMemory();
+
+	delete model;
+	delete engine;
   }
 
 private:
@@ -39,6 +45,8 @@ private:
 
   OberonEngine* engine;
   OberonModel* model;
+  Output* output;
+  bool dumpAtEnd;
 
   void handleEvent( SST::Event *ev );
   virtual bool clockTic( SST::Cycle_t );

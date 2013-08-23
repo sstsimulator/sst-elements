@@ -25,7 +25,21 @@ using namespace SST::Oberon;
 OberonComponent::OberonComponent(SST::ComponentId_t id,
 	SST::Component::Params_t& params) {
 
-	uint32_t memory_size = params.find_integer("memorysize", 32768);
+	char* prefix = (char*) malloc(sizeof(char) * 1024);
+	sprintf(prefix, "oberon-%lld", (long long int) id);
+
+	char* prefixOut = (char*) malloc(sizeof(char) * (1024));
+	sprintf(prefixOut, "oberon-%lld ", (long long int) id);
+
+	string prefixStr = prefix;
+
+	uint32_t verbose = (uint32_t) params.find_integer("verbose", 1);
+	Output::output_location_t goto_stdout = (Output::output_location_t) 1;
+
+	string prefixOutStr = prefixOut;
+	output = new Output(prefixOutStr, verbose, 0, goto_stdout);
+
+	uint32_t memory_size = (uint32_t) params.find_integer("memorysize", 32768);
 	string model_exe = params.find_string("model", "");
 
 	// check user has specified a model to be run.
@@ -34,15 +48,22 @@ OberonComponent::OberonComponent(SST::ComponentId_t id,
 		exit(-1);
 	}
 
-	model = new OberonModel(memory_size);
+	model = new OberonModel(memory_size, prefix, output);
+	engine = new OberonEngine(model, output);
 
-	char* prefix = (char*) malloc(sizeof(char) * 1024);
-	sprintf(prefix, "oberon-%lld", (long long int) id);
-	string prefixStr = prefix;
+	model->setMemoryContentsFromFile(model_exe.c_str());
 
-	engine = new OberonEngine(prefixStr, model);
+	if(params.find_string("dumpatend", "no") == "yes")
+		dumpAtEnd = true;
 
 	free(prefix);
+	free(prefixOut);
+
+	registerAsPrimaryComponent();
+  	primaryComponentDoNotEndSim();
+
+	registerClock( "1GHz", new Clock::Handler<OberonComponent>(this,
+                     &OberonComponent::clockTic ) );
 }
 
 void OberonComponent::handleEvent( SST::Event *ev ) {
@@ -55,8 +76,15 @@ bool OberonComponent::clockTic( SST::Cycle_t ) {
 	while(! engine->instanceHalted()) {
 		ev = engine->generateNextEvent();
 
-		delete ev;
+		if(ev != NULL) {
+			delete ev;
+		} else {
+			primaryComponentOKToEndSim();
+			break;
+		}
 	}
+
+	return true;
 }
 
 BOOST_CLASS_EXPORT(OberonComponent)
@@ -71,6 +99,8 @@ create_oberon(SST::ComponentId_t id,
 static const ElementInfoParam component_params[] = {
     { "memorysize", "Size of memory for this instance." },
     { "model", "Model code to be interpreted." },
+    { "dumpatend", "Tells the engine to dump memory at the end of execution (yes=dump)" },
+    { "verbose", "Sets the level of verbosity for Oberon interpreter output." },
     { NULL, NULL}
 };
 

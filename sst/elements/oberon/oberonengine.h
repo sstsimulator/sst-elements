@@ -3,6 +3,7 @@
 #define _SST_OBERON_ENGINE
 
 #include <sst/sst_config.h>
+#include <sst/core/output.h>
 
 #include <string>
 #include <stdio.h>
@@ -24,8 +25,7 @@ namespace Oberon {
 class OberonEngine {
 
 	public:
-		OberonEngine(OberonModel* model);
-		OberonEngine(string memPrefix, OberonModel* model);
+		OberonEngine(OberonModel* model, Output* out);
 		OberonEvent* generateNextEvent();
 		bool instanceHalted();
 
@@ -34,8 +34,7 @@ class OberonEngine {
 		OberonModel* model;
 		OberonExpressionStack* exprStack;
 		bool isHalted;
-		string memoryDumpPrefix;
-		uint32_t memoryDumpNumber;
+		Output* output;
 
 		void processI64Add();
 		void processI64Sub();
@@ -53,6 +52,11 @@ class OberonEngine {
 		void processPopI64(uint32_t currentPC);
 //		void popUI32();
 		void processPopFP64(uint32_t currentPC);
+
+		uint32_t processUnconditionalJump(uint32_t currentPC);
+		uint32_t processUnconditionalJumpRelative(uint32_t currentPC);
+
+		void processPrintI64();
 
 		void processHalt();
 
