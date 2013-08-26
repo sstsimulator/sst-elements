@@ -13,7 +13,7 @@ libqsimComponent_la_SOURCES = \
 	qsimComponent.h \
 	qsimComponent.cc
 
-EXTRA_DIST = gen_sdl.sh README
+EXTRA_DIST = gen_sdl.sh README test/Makefile test/runme.sh test/state.4.bz2 test/test-app.c
 
 libqsimComponent_la_LDFLAGS = -module -avoid-version $(QSIM_LDFLAGS)
 libqsimComponent_la_LIBADD = -lqsim
