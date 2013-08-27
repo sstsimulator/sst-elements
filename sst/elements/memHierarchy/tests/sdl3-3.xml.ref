@@ -4047,3 +4047,4 @@ Memory memory stats:
 	 # Reads:             238
 	 # Writes:            174
 	 # Canceled Reads:    0
+	 # Avg. Requests out: 4.018

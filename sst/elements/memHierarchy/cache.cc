@@ -2056,7 +2056,7 @@ void Cache::updateBlock(MemEvent *ev, CacheBlock *block)
 			block->data[blockoffset+i] = ev->getPayload()[payloadoffset+i];
 		}
 	}
-#if 0
+#ifdef CACHE_PRINT_DATA
     char buffer[2*blocksize + 8];
     char *b = buffer;
     b += sprintf(b, "[0x");

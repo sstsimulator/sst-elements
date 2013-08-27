@@ -66,59 +66,54 @@ MemController::MemController(ComponentId_t id, Params_t &params) : Component(id)
 				&MemController::clock));
 	registerTimeBase("1 ns", true);
 
-	// default access time
-	std::string access_time = params.find_string("access_time", "1000 ns");
-
 	// do we divert directory to the self-link?
 	divert_DC_lookups = params.find_integer("divert_DC_lookups", 0);
 
 	// check for and initialize dramsim
 	use_dramsim = (bool)params.find_integer("use_dramsim", 0);
-	if ( use_dramsim ) {
+    use_vaultSim = (bool)params.find_integer("use_vaultSim", 0);
+    if ( use_dramsim && use_vaultSim ) {
+        _abort(MemController, "Controller configured to use dramsim & vaultSim. Choose one\n");
+    }
+
+    if ( use_dramsim ) {
 #if !defined(HAVE_LIBDRAMSIM)
-		_abort(MemController, "This version of SST not compiled with DRAMSim.\n");
+        _abort(MemController, "This version of SST not compiled with DRAMSim.\n");
 #else
 
-		std::string deviceIniFilename = params.find_string("device_ini",
-				NO_STRING_DEFINED);
-		if ( NO_STRING_DEFINED == deviceIniFilename )
-			_abort(MemController, "XML must define a 'device_ini' file parameter\n");
-		std::string systemIniFilename = params.find_string("system_ini",
-				NO_STRING_DEFINED);
-		if ( NO_STRING_DEFINED == systemIniFilename )
-			_abort(MemController, "XML must define a 'system_ini' file parameter\n");
+        std::string deviceIniFilename = params.find_string("device_ini",
+                NO_STRING_DEFINED);
+        if ( NO_STRING_DEFINED == deviceIniFilename )
+            _abort(MemController, "XML must define a 'device_ini' file parameter\n");
+        std::string systemIniFilename = params.find_string("system_ini",
+                NO_STRING_DEFINED);
+        if ( NO_STRING_DEFINED == systemIniFilename )
+            _abort(MemController, "XML must define a 'system_ini' file parameter\n");
 
 
-		memSystem = DRAMSim::getMemorySystemInstance(
-				deviceIniFilename, systemIniFilename, "", "", ramSize);
+        memSystem = DRAMSim::getMemorySystemInstance(
+                deviceIniFilename, systemIniFilename, "", "", ramSize);
 
-		DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>
-			*readDataCB, *writeDataCB;
+        DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>
+            *readDataCB, *writeDataCB;
 
-		readDataCB = new DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>(
-				this, &MemController::dramSimDone);
-		writeDataCB = new DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>(
-				this, &MemController::dramSimDone);
+        readDataCB = new DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>(
+                this, &MemController::dramSimDone);
+        writeDataCB = new DRAMSim::Callback<MemController, void, unsigned int, uint64_t, uint64_t>(
+                this, &MemController::dramSimDone);
 
-		memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
+        memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
 #endif
-	} else {
-
-	  // check for vaultsim
-	  use_vaultSim = (bool)params.find_integer("use_vaultSim", 0);
-	  if ( use_vaultSim && use_dramsim ) {
-	    _abort(MemController, "Controller configured to use dramsim & vaultSim. Choose one\n");
-	  }
-
-	  if ( use_vaultSim ) {
-	    cube_link = configureLink( "cube_link", access_time,
-				       new Event::Handler<MemController>(this,
-									 &MemController::handleCubeEvent));
-	  }
-	}
-
-	self_link = configureSelfLink("Self", access_time,
-				      new Event::Handler<MemController>(this, &MemController::handleSelfEvent));
+    } else if ( use_vaultSim ) {
+        // TODO:  VaultSim shouldn't use 'access_time'
+        std::string access_time = params.find_string("access_time", "100 ns");
+        cube_link = configureLink( "cube_link", access_time,
+                new Event::Handler<MemController>(this, &MemController::handleCubeEvent));
+    } else {
+        std::string access_time = params.find_string("access_time", "100 ns");
+        self_link = configureSelfLink("Self", access_time,
+                new Event::Handler<MemController>(this, &MemController::handleSelfEvent));
+    }
 
 
 	int mmap_flags = MAP_PRIVATE;
@@ -232,15 +227,15 @@ void MemController::finish(void)
 
     Output out("", 0, 0, statsOutputTarget);
     out.output("Memory %s stats:\n"
-	       "\t # Reads:             %"PRIu64"\n"
-	       "\t # Writes:            %"PRIu64"\n"
-	       "\t # Canceled Reads:    %"PRIu64"\n"
-	       "\t # Avg. Requests out: %.3f\n",	       
+            "\t # Reads:             %"PRIu64"\n"
+            "\t # Writes:            %"PRIu64"\n"
+            "\t # Canceled Reads:    %"PRIu64"\n"
+            "\t # Avg. Requests out: %.3f\n",
             getName().c_str(),
             numReadsSupplied,
             numWrites,
-	       numReadsCanceled,
-	       float(numReqOutstanding)/float(numCycles)
+            numReadsCanceled,
+            float(numReqOutstanding)/float(numCycles)
 );
 
 }
@@ -363,39 +358,30 @@ bool MemController::clock(Cycle_t cycle)
 
         req->status = DRAMReq::PROCESSING;
         uint64_t addr = req->addr + req->amt_in_process;
-	// is this a directory controller lookup, and do we care?
-	bool isDCLookup = (0 == req->addr) && divert_DC_lookups;
-        if ( use_dramsim && !isDCLookup) {
+        if ( use_dramsim ) {
 #if defined(HAVE_LIBDRAMSIM)
-
-	  // ugly hardcoded limit on outstanding requests
-	  if (dramReqs.size() > 64) {
-	    req->status = DRAMReq::NEW;
-	    break;
-	  }
-
-	  bool ok = memSystem->willAcceptTransaction(addr);
-	  if ( !ok ) break;
-	  ok = memSystem->addTransaction(req->isWrite, addr);
-	  if ( !ok ) break;  // This *SHOULD* always be ok
-	  dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
-	  dramReqs[addr].push_back(req);
+            bool ok = memSystem->willAcceptTransaction(addr);
+            if ( !ok ) break;
+            ok = memSystem->addTransaction(req->isWrite, addr);
+            if ( !ok ) break;  // This *SHOULD* always be ok
+            dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
+            dramReqs[addr].push_back(req);
 #endif
-	} else if ( use_vaultSim && !isDCLookup) {
-	  dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
-	  // ugly hardcoded limit on outstanding requests
-	  if (outToCubes.size() > 255) {
-	    req->status = DRAMReq::NEW;
-	    break;
-	  }
-	  SST::Interfaces::MemEvent::id_type reqID = req->reqEvent->getID();
-	  assert(outToCubes.find(reqID) == outToCubes.end());
-	  outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
-	  MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
-	  cube_link->send(outgoingEvent); // send the event off
+        } else if ( use_vaultSim ) {
+            dbg.output(CALL_INFO, "Issued transaction to Cube Chain for address 0x%"PRIx64"\n", addr);
+            // TODO:  FIX THIS:  ugly hardcoded limit on outstanding requests
+            if (outToCubes.size() > 255) {
+                req->status = DRAMReq::NEW;
+                break;
+            }
+            SST::Interfaces::MemEvent::id_type reqID = req->reqEvent->getID();
+            assert(outToCubes.find(reqID) == outToCubes.end());
+            outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
+            MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
+            cube_link->send(outgoingEvent); // send the event off
         } else {
             dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
-            self_link->send(new MemCtrlEvent(req));
+            self_link->send(1, new MemCtrlEvent(req));
         }
 
         req->amt_in_process += requestSize;
@@ -408,22 +394,15 @@ bool MemController::clock(Cycle_t cycle)
     }
 
     /* Clean out old requests */
-#if 1
     while ( requests.size() ) {
-      DRAMReq *req = requests.front();
-      if ( DRAMReq::DONE == req->status ) {
-	requests.pop_front();
-	delete req;
-      } else {
-	break;
-      }
+        DRAMReq *req = requests.front();
+        if ( DRAMReq::DONE == req->status ) {
+            requests.pop_front();
+            delete req;
+        } else {
+            break;
+        }
     }
-#else
-    // may be faster if you have a lot of things retiring each cycle
-    dramReq_t::iterator new_end = 
-      remove_if(requests.begin(), requests.end(), isDone());
-    requests.erase(new_end, requests.end());
-#endif
 
     numReqOutstanding += requests.size();
     numCycles++;
