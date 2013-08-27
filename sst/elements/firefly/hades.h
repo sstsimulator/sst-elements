@@ -34,13 +34,17 @@ class Hades : public Hermes::MessageInterface
     typedef StaticArg_Functor<Hades, IO::Entry*, IO::Entry*>   IO_Functor;
     typedef Arg_Functor<Hades, IO::NodeId>                     IO_Functor2;
 
-    enum Type { RunRecv, RunSend, Return } m_progState;
-
     class AAA : public IO::Entry {
+    
       public:
-        int type;
-        ProtocolAPI::Request* request;
-        IO::NodeId srcNodeId;
+        enum {  SendWireHdrDone,
+                SendIODone,
+                RecvWireHdrDone,
+                RecvIODone}     ioType;
+        int                     protoType;
+        ProtocolAPI::Request*   request;
+        IO_Functor*             functor;
+        IO::NodeId              srcNodeId;
     };
 
     class SelfEvent : public SST::Event {
@@ -123,9 +127,6 @@ class Hades : public Hermes::MessageInterface
     virtual void test(Hermes::MessageRequest* req, int& flag, 
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
-    void setIOCallback();
-    void clearIOCallback();
-
     Hermes::RankID myWorldRank();
 
   private:
@@ -146,40 +147,43 @@ class Hades : public Hermes::MessageInterface
         return m_info.sizeofDataType(type); 
     }
 
-    bool runRecv( );
-    bool runSend( );
+    int m_pendingSends;
+    bool runSend();
+    void runRecv();
+    bool pendingSend() { return m_pendingSends > 0; }
+    bool functionIsBlocked();
 
     IO::Entry* recvWireHdrDone(IO::Entry*);
     IO::Entry* sendWireHdrDone(IO::Entry*);
 
+    IO::Entry* ioDone(IO::Entry*);
+
     IO::Entry* sendIODone(IO::Entry*);
     IO::Entry* recvIODone(IO::Entry*);
-    void delayDone(AAA*);
+    IO::Entry* delayDone(AAA*);
 
-    void handleProgress(SST::Event*);
-    void handleSelfLink(SST::Event*);
+    void enterEventHandler(SST::Event*);
+    void leaveEventHandler(SST::Event*);
 
-    void dataReady(IO::NodeId);
-    void readHdr(IO::NodeId);
+    void completedIO();
+    void completedDelay();
 
     Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
 
-    SST::Link*          m_selfLink;  
-    SST::Link*          m_toProgressLink;  
+    SST::Component*     m_owner;
+    SST::Link*          m_enterLink;  
     IO::Interface*      m_io;
     NodeInfo*           m_nodeInfo;
     Info                m_info;
     FunctionSM*         m_functionSM;
-    XXX*                m_xxx;
-    std::map<int,ProtocolAPI*>      m_protocolM;
-
-    std::map<int,ProtocolAPI*>::iterator m_sendIter;
-
     Output              m_dbg;
-    SST::Component*     m_owner;
-    int                 m_verboseLevel;
-    Output::output_location_t m_loc;
+
+    AAA*                m_completedIO;
+    AAA*                m_delay;
+
+    std::map<int,ProtocolAPI*>           m_protocolM;
+    std::map<int,ProtocolAPI*>::iterator m_sendIter;
 };
 
 } // namesapce Firefly 

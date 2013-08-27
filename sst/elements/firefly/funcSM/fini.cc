@@ -18,9 +18,8 @@
 using namespace SST::Firefly;
 
 FiniFuncSM::FiniFuncSM( int verboseLevel, Output::output_location_t loc,
-                    Info* info, SST::Link*& progressLink, 
-                    ProtocolAPI* xxx, IO::Interface*  io ) :
-    BarrierFuncSM(verboseLevel,loc,info,progressLink,xxx,io) 
+                    Info* info, SST::Link*& progressLink, ProtocolAPI* xxx ) :
+    BarrierFuncSM(verboseLevel,loc,info,progressLink,xxx) 
 {
     m_dbg.setPrefix("@t:FiniFuncSM::@p():@l ");
 }

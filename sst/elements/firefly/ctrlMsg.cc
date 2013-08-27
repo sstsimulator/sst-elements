@@ -20,7 +20,8 @@ using namespace SST;
 
 CtrlMsg::CtrlMsg(int verboseLevel, Output::output_location_t loc, Info* info ) :
     ProtocolAPI(verboseLevel,loc),
-    m_info(info)
+    m_info(info),
+    m_sleep(false)
 {
 }
 
@@ -81,6 +82,7 @@ CtrlMsg::RecvReq* CtrlMsg::getRecvReq( IO::NodeId src )
     req->ioVec[0].len = sizeof(hdr);
     req->state = RecvReq::RecvHdr;
  
+    m_sleep = false;
     return req;
 }
 
@@ -161,6 +163,7 @@ CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( RecvInfo& info )
         }
 
         RecvReq* req = *iter;
+        m_dbg.verbose(CALL_INFO,1,0,"matched unexpected\n");
         m_unexpectedQ.erase( iter );
         return req;
     }
@@ -258,19 +261,22 @@ void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
     req->info = new RecvInfo( ioVec, src, tag, group );
     req->done = false;
 
-    if ( ! m_unexpectedQ.empty() ) {
-        RecvReq *xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) );
-        if ( xxx ) {
-            size_t offset = 0;
-            for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
-                memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
-                        req->info->ioVec[i].len );
-                offset += req->info->ioVec[i].len;
-            }
-            req->done = true;
-            delete xxx;
+    RecvReq* xxx;
+    if ( ! m_unexpectedQ.empty() &&
+         ( xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) ) ) ) 
+    {
+        m_dbg.verbose(CALL_INFO,1,0,"found match\n");
+        size_t offset = 0;
+            
+        for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
+            memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
+                    req->info->ioVec[i].len );
+            offset += req->info->ioVec[i].len;
         }
+        req->done = true;
+        delete xxx;
     } else {
+        m_dbg.verbose(CALL_INFO,1,0,"post recv\n");
         m_postedQ.push_back( req );
     }
 }
@@ -283,6 +289,19 @@ void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag,
     req->done = false;
 
     m_sendQ.push_back( req );
+}
+
+
+
+void CtrlMsg::sleep()
+{
+    m_dbg.verbose(CALL_INFO,1,0,"sleep\n");
+    m_sleep = true;
+}
+
+bool CtrlMsg::blocked()
+{
+    return m_sleep;
 }
 
 bool CtrlMsg::test( CommReq * req )

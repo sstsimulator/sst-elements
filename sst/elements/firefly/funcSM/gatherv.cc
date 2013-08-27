@@ -20,13 +20,12 @@ using namespace SST::Firefly;
 GathervFuncSM::GathervFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
                     Info* info, SST::Link*& progressLink, 
-                    ProtocolAPI* ctrlMsg, IO::Interface*  io ) :
+                    ProtocolAPI* ctrlMsg ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_dataReadyFunctor( IO_Functor(this,&GathervFuncSM::dataReady) ),
     m_toProgressLink( progressLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
-    m_io( io )
+    m_seq( 0 )
 {
     m_dbg.setPrefix("@t:GathervFuncSM::@p():@l ");
 }
@@ -41,6 +40,7 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
 
         m_setPrefix = false;
     }
+    ++m_seq;
 
     assert( NULL == m_event );
     m_event = static_cast< GatherEnterEvent* >(e);
@@ -107,7 +107,7 @@ bool GathervFuncSM::waitUp()
                                  i, m_qqq->calcChild(i) );
                 m_ctrlMsg->recv( &m_waitUpSize[i], sizeof(m_waitUpSize[i]),
                         m_qqq->calcChild(i),
-                        GathervTag, m_event->group, &m_recvReqV[i] );
+                        genTag(), m_event->group, &m_recvReqV[i] );
             }    
             m_waitUpPending = true;
             m_toProgressLink->send(0, NULL );
@@ -120,8 +120,8 @@ bool GathervFuncSM::waitUp()
                                  m_count, m_qqq->calcChild(m_count) );
                 ++m_count;
             } else {
-                m_dbg.verbose(CALL_INFO,1,0,"call setDataReadyFunc\n");
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -146,7 +146,7 @@ bool GathervFuncSM::waitUp()
                                i, m_qqq->calcChild(i) );
                 m_ctrlMsg->recv( &m_recvBuf[len], m_waitUpSize[i],
                         m_qqq->calcChild(i),
-                        GathervTag, m_event->group, &m_recvReqV[i] );
+                        genTag(), m_event->group, &m_recvReqV[i] );
                 len += m_waitUpSize[i];
             }
         }
@@ -162,7 +162,7 @@ bool GathervFuncSM::waitUp()
                                     m_count, m_qqq->calcChild( m_count ) );
             m_ctrlMsg->send( &m_intBuf, sizeof(m_intBuf), 
                             m_qqq->calcChild( m_count ),
-                            GathervTag, m_event->group, &m_sendReq );
+                            genTag(), m_event->group, &m_sendReq );
             m_toProgressLink->send(0, NULL );
             m_waitUpPending = true;
             return true;
@@ -173,7 +173,8 @@ bool GathervFuncSM::waitUp()
                                     m_count, m_qqq->calcChild( m_count ) );
                 ++m_count;
             } else {
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 return true;
             }
             if ( m_count < m_qqq->numChildren() ) {
@@ -194,7 +195,8 @@ bool GathervFuncSM::waitUp()
                 m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n", m_count);
                 ++m_count;
             } else {
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 return true;
             }
             if ( m_count < m_qqq->numChildren() ) {
@@ -223,7 +225,7 @@ void GathervFuncSM::doRoot()
 
     memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
 
-#if 0
+#if 0 // print debug
     for ( unsigned int i = 0; i < m_recvBuf.size()/4; i++ ) {
         printf("%#03x\n", ((unsigned int*) &m_recvBuf[0])[i]);
     }
@@ -257,7 +259,7 @@ void GathervFuncSM::doRoot()
         offset += len;
     }
 
-#if 0
+#if 0 // print debug
     for ( unsigned int i = 0; i < m_recvBuf.size()/4; i++ ) {
         printf("%#03x\n", ((unsigned int*) m_event->recvbuf)[i]);
     }
@@ -279,10 +281,10 @@ bool GathervFuncSM::sendUp()
             memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
             m_intBuf = m_recvBuf.size();
             m_dbg.verbose(CALL_INFO,1,0,"send size %d message to %d\n", 
-                                m_intBuf, m_qqq->parent());
+                                sizeof(m_intBuf), m_qqq->parent());
             m_ctrlMsg->send( &m_intBuf, sizeof(m_intBuf), 
                             m_qqq->parent(),
-                            GathervTag, m_event->group, &m_sendReq );
+                            genTag(), m_event->group, &m_sendReq );
             
             m_sendUpPending = true;
             m_toProgressLink->send(0, NULL );
@@ -292,7 +294,8 @@ bool GathervFuncSM::sendUp()
             if ( ret ) {
                 m_dbg.verbose(CALL_INFO,1,0,"send completed\n");
             } else {
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -308,7 +311,7 @@ bool GathervFuncSM::sendUp()
                                         m_qqq->parent());
             m_ctrlMsg->recv( &m_intBuf, sizeof(m_intBuf),
                         m_qqq->parent(),
-                        GathervTag, m_event->group, &m_recvReq );
+                        genTag(), m_event->group, &m_recvReq );
             m_sendUpPending = true;
             m_toProgressLink->send(0, NULL );
             return true;
@@ -318,8 +321,8 @@ bool GathervFuncSM::sendUp()
                 m_dbg.verbose(CALL_INFO,1,0,"got message from parent %d\n", 
                                         m_qqq->parent());
             } else {
-                m_dbg.verbose(CALL_INFO,1,0,"setDataReadyFunc\n");
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -333,8 +336,8 @@ bool GathervFuncSM::sendUp()
             m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
             m_ctrlMsg->send( &m_recvBuf[0], m_recvBuf.size(), m_qqq->parent(),
-                            GathervTag, m_event->group, &m_sendReq );
-#if 0
+                            genTag(), m_event->group, &m_sendReq );
+#if 0 // print debug 
             for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
                 printf("%#03x\n", m_recvBuf[i]);
             }
@@ -348,7 +351,8 @@ bool GathervFuncSM::sendUp()
                 m_dbg.verbose(CALL_INFO,1,0,"sent body to parent %d\n", 
                                             m_qqq->parent());
             } else {
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -357,12 +361,3 @@ bool GathervFuncSM::sendUp()
     }
     return false;
 }
-
-void GathervFuncSM::dataReady( IO::NodeId src )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    assert( m_event );
-    m_io->setDataReadyFunc( NULL );
-    m_toProgressLink->send(0, NULL );
-}
-

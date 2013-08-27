@@ -22,17 +22,13 @@ inline long mod( long a, long b )
     return (a % b + b) % b;
 }
 
-
 AllgatherFuncSM::AllgatherFuncSM( 
             int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink, 
-            ProtocolAPI* ctrlMsg, IO::Interface* io ) :
+            Info* info, SST::Link*& progressLink, ProtocolAPI* ctrlMsg ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_dataReadyFunctor( IO_Functor(this,&AllgatherFuncSM::dataReady) ),
     m_toProgressLink( progressLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
-    m_event( NULL ),
-    m_io( io )
+    m_event( NULL )
 {
     m_dbg.setPrefix("@t:AllgatherFuncSM::@p():@l ");
 }
@@ -123,7 +119,7 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
     int nextChunk = ( currentChunk + 1 ) % m_size; 
     int countDown = numChunks;
 
-    m_dbg.verbose(CALL_INFO,1,0,"startChunk=%d numChunks=%d\n",
+    m_dbg.verbose(CALL_INFO,2,0,"startChunk=%d numChunks=%d\n",
                                             startChunk,numChunks);
 
     while ( countDown ) {  
@@ -132,14 +128,14 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
         jjj.ptr = chunkPtr( currentChunk ); 
         jjj.len = chunkSize( currentChunk );
         
-        m_dbg.verbose(CALL_INFO,1,0,"currentChunk=%d ptr=%p len=%lu\n",
+        m_dbg.verbose(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
                     currentChunk, jjj.ptr,jjj.len);
     
         while ( countDown &&
                 (unsigned char*) jjj.ptr + jjj.len == chunkPtr( nextChunk ) )
         {
             jjj.len += chunkSize( nextChunk );
-            m_dbg.verbose(CALL_INFO,1,0,"len=%lu\n", jjj.len );
+            m_dbg.verbose(CALL_INFO,2,0,"len=%lu\n", jjj.len );
             currentChunk = nextChunk;
             nextChunk = ( currentChunk + 1 ) % m_size; 
             --countDown;
@@ -149,7 +145,7 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
         {
 
             ioVec.push_back( jjj );
-            m_dbg.verbose(CALL_INFO,1,0,"ioVec[%lu] ptr=%p len=%lu\n",
+            m_dbg.verbose(CALL_INFO,2,0,"ioVec[%lu] ptr=%p len=%lu\n",
                                 ioVec.size()-1,
                                 ioVec[ioVec.size()-1].ptr,
                                 ioVec[ioVec.size()-1].len); 
@@ -164,8 +160,8 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
     switch( m_state ) {
     case WaitSendStart:
         if ( ! m_ctrlMsg->test( &m_sendReq ) ) {
-            m_dbg.verbose(CALL_INFO,1,0,"call setDataReadyFunc\n");
-            m_io->setDataReadyFunc( &m_dataReadyFunctor );
+            m_ctrlMsg->sleep();
+            m_toProgressLink->send(0, NULL );
             break;
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitRecvStart\n");
@@ -174,8 +170,8 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
 
     case WaitRecvStart:
         if ( ! m_ctrlMsg->test( &m_recvReq ) ) {
-            m_dbg.verbose(CALL_INFO,1,0,"call setDataReadyFunc\n");
-            m_io->setDataReadyFunc( &m_dataReadyFunctor );
+            m_ctrlMsg->sleep();
+            m_toProgressLink->send(0, NULL );
             break;
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitSendData\n");
@@ -197,8 +193,8 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             break;
         } else {
             if ( ! m_ctrlMsg->test( & m_sendReq ) ) {
-                m_dbg.verbose(CALL_INFO,1,0,"call setDataReadyFunc\n");
-                m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                m_ctrlMsg->sleep();
+                m_toProgressLink->send(0, NULL );
                 break;
             } 
         }
@@ -211,14 +207,16 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             m_dbg.verbose(CALL_INFO,1,0,"stage %d complete\n", m_currentStage);
             ++m_currentStage;
             if ( m_currentStage < m_dest.size() ) {
-                m_toProgressLink->send(0, NULL );
+//                m_toProgressLink->send(0, NULL );
                 m_state = WaitSendData;
                 m_pending = false;
+                handleProgressEvent( NULL );
+                
                 break;
             }  
         } else {
-            m_dbg.verbose(CALL_INFO,1,0,"call setDataReadyFunc\n");
-            m_io->setDataReadyFunc( &m_dataReadyFunctor );
+            m_ctrlMsg->sleep();
+            m_toProgressLink->send(0, NULL );
             break;
         } 
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
@@ -228,12 +226,3 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         m_pending = false;
     }
 }
-
-void AllgatherFuncSM::dataReady( IO::NodeId src )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    assert( m_event );
-    m_io->setDataReadyFunc( NULL );
-    m_toProgressLink->send(0, NULL );
-}
-

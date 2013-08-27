@@ -106,6 +106,7 @@ class CtrlMsg : public ProtocolAPI {
     virtual SendReq* sendIODone( Request* );
     virtual RecvReq* recvIODone( Request* );
     virtual Request* delayDone( Request* );
+    virtual bool blocked();
 
     void recv( void* buf, size_t len, int src,  int tag, int group, CommReq* );
     void recvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq* );
@@ -113,7 +114,7 @@ class CtrlMsg : public ProtocolAPI {
     void sendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq* );
     bool test( CommReq*  );
     void setup();
-
+    void sleep();
 
   private:
 
@@ -124,6 +125,7 @@ class CtrlMsg : public ProtocolAPI {
     std::deque< CommReq* > m_sendQ;
     std::deque< CommReq* > m_postedQ;
     std::deque< RecvReq* > m_unexpectedQ;
+    bool m_sleep;
 };
 
 }

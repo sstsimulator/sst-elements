@@ -14,7 +14,6 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "ioapi.h"
 
 namespace SST {
 namespace Firefly {
@@ -26,12 +25,11 @@ class ProtocolAPI;
 
 class RecvFuncSM :  public FunctionSMInterface
 {
-    typedef Arg_Functor<RecvFuncSM, IO::NodeId>             IO_Functor;
     enum { WaitMatch, WaitCopy } m_state;
   public:
 
     RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info*, SST::Link*&, ProtocolAPI*, IO::Interface*, SST::Link* );
+        Info*, SST::Link*&, ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event* );
     virtual void handleProgressEvent( SST::Event* );
@@ -42,14 +40,11 @@ class RecvFuncSM :  public FunctionSMInterface
     }
 
   private:
-    void dataReady( IO::NodeId src );
     void finish( RecvEntry*, MsgEntry* );
     
-    IO_Functor      m_dataReadyFunctor;
     SST::Link*&     m_toProgressLink;
     SST::Link*      m_selfLink;
     DataMovement*   m_dm;
-    IO::Interface*  m_io;
     RecvEnterEvent* m_event;
     MsgEntry*       m_entry;
 };

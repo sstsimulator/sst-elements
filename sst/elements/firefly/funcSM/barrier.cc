@@ -20,8 +20,8 @@ using namespace SST::Firefly;
 BarrierFuncSM::BarrierFuncSM( 
             int verboseLevel, Output::output_location_t loc,
             Info* info, SST::Link*& progressLink, 
-            ProtocolAPI* xxx, IO::Interface*  io ) :
-    CollectiveTreeFuncSM(verboseLevel,loc,info,progressLink, xxx, io ) 
+            ProtocolAPI* xxx ) :
+    CollectiveTreeFuncSM(verboseLevel,loc,info,progressLink, xxx ) 
 {
     m_dbg.setPrefix("@t:BarrierFuncSM::@p():@l ");
 }

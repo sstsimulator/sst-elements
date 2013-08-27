@@ -25,6 +25,7 @@ DataMovement::DataMovement(int verboseLevel, Output::output_location_t loc,
         SST::Params& params, Info* info ) :
     ProtocolAPI(verboseLevel,loc),
     m_info(info),
+    m_sleep( false ),
     m_sendReqKey( 0 ),
     m_recvReqKey( 0 )
 {
@@ -55,6 +56,7 @@ DataMovement::Request* DataMovement::getRecvReq( IO::NodeId src )
     req->ioVec[0].len = sizeof(hdr);
     req->state = RecvReq::RecvHdr;
     
+    m_sleep = false;
     return req;
 }
 
@@ -134,7 +136,6 @@ DataMovement::Request* DataMovement::getSendReq(  )
         return req;  
     }
 
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     return NULL;
 }
 
@@ -293,6 +294,17 @@ void  DataMovement::finishRecv( Request* r )
     }
     delete req->recvEntry;
     delete req; 
+}
+
+bool DataMovement::blocked()
+{
+    return m_sleep; 
+}
+
+void DataMovement::sleep()
+{
+    m_dbg.verbose(CALL_INFO,1,0,"sleep\n");
+    m_sleep = true;
 }
 
 bool DataMovement::canPostSend()

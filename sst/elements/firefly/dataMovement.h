@@ -104,7 +104,7 @@ class DataMovement : public ProtocolAPI
     virtual Request* sendIODone( Request* );
     virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
-
+    virtual bool blocked();
     virtual void setup();
 
     MsgEntry* searchUnexpected(RecvEntry*,int& delay);
@@ -113,6 +113,7 @@ class DataMovement : public ProtocolAPI
     bool canPostRecv();
     void postRecvEntry(RecvEntry);
     void completeLongMsg( MsgEntry*, RecvEntry* );
+    void sleep();
 
     int getCopyDelay( int nbytes ) {
         return m_copyTime * nbytes;
@@ -131,12 +132,14 @@ class DataMovement : public ProtocolAPI
     std::deque<RecvReq*>    m_longMsgRespQ;
     int                     m_matchTime;
     int                     m_copyTime;
+    bool                    m_sleep;
 
     std::map<unsigned char,SendReq*>    m_sendReqM;
     unsigned char                       m_sendReqKey;
 
     std::map<unsigned char,RecvReq*>    m_recvReqM;
     unsigned char                       m_recvReqKey;
+
 };
 
 }

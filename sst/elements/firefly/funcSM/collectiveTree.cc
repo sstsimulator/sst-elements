@@ -21,13 +21,11 @@ using namespace SST::Firefly;
 CollectiveTreeFuncSM::CollectiveTreeFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
                     Info* info, SST::Link*& progressLink, 
-                    ProtocolAPI* ctrlMsg, IO::Interface*  io ) :
+                    ProtocolAPI* ctrlMsg ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_dataReadyFunctor( IO_Functor(this,&CollectiveTreeFuncSM::dataReady) ),
     m_event( NULL ),
     m_toProgressLink( progressLink ),
-    m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
-    m_io( io )
+    m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) )
 {
     m_dbg.setPrefix("@t:CollectiveTreeFuncSM::@p():@l ");
 }
@@ -66,7 +64,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
     m_toProgressLink->send(0, NULL );
 }
 
-void CollectiveTreeFuncSM::run()
+void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
 {
     switch ( m_state ) {
     case WaitUp:
@@ -87,7 +85,8 @@ void CollectiveTreeFuncSM::run()
                                                                     m_count);
                     ++m_count;
                 } else {
-                    m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                    m_ctrlMsg->sleep();
+                    m_toProgressLink->send(0, NULL );
                     break;
                 }
             }
@@ -146,7 +145,8 @@ void CollectiveTreeFuncSM::run()
                     m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n",
                                                             m_yyy->parent());
                 } else {
-                    m_io->setDataReadyFunc( &m_dataReadyFunctor );
+                    m_ctrlMsg->sleep();
+                    m_toProgressLink->send(0, NULL );
                     break;
                 }
             }
@@ -176,18 +176,3 @@ void CollectiveTreeFuncSM::run()
         m_event = NULL;
     }
 }
-
-void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    run();
-}
-
-void CollectiveTreeFuncSM::dataReady( IO::NodeId src )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    assert( m_event );
-    m_io->setDataReadyFunc( NULL );
-    m_toProgressLink->send(0, NULL );
-}
-

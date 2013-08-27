@@ -23,8 +23,7 @@ class AllreduceFuncSM :  public CollectiveTreeFuncSM
 {
   public:
     AllreduceFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink,
-            ProtocolAPI* api, IO::Interface* io );
+            Info* info, SST::Link*& progressLink, ProtocolAPI* api );
 
     virtual void handleEnterEvent( SST::Event *e);
     void handleProgressEvent( SST::Event *e );

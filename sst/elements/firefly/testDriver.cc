@@ -231,7 +231,7 @@ void TestDriver::funcDone( int retval )
     } else if ( m_funcName.compare( "gatherv" ) == 0 ) {
         gathervReturn();
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
-        m_dbg.verbose(CALL_INFO,1,0,"reduce %s\n", 
+        m_dbg.verbose(CALL_INFO,1,0,"allreduce %s\n", 
           m_collectiveOut== ((my_size*(my_size+1))/2) - my_size ? "passed": "failed" );
     } else if ( m_funcName.compare( "reduce" ) == 0 ) {
         if ( m_root == my_rank ) {

@@ -30,16 +30,19 @@
 using namespace SST::Firefly;
 using namespace Hermes;
 
-FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
-                    SST::Params& params,
-                    SST::Component* obj, Info& info, ProtocolAPI* dm,
-                     IO::Interface* io, ProtocolAPI* ctrlMsg ) :
+FunctionSM::FunctionSM( SST::Params& params,
+                        SST::Component* obj, Info& info, ProtocolAPI* dm,
+                        IO::Interface* io, ProtocolAPI* ctrlMsg ) :
     m_sm( NULL ),
     m_nodeId( -1 ),
     m_worldRank( -1 ),
     m_info( info )
 {
-    m_dbg.init("@t:FunctionSM::@p():@l ", verboseLevel,0, loc );
+    int verboseLevel = params.find_integer("verboseLevel",0);
+    Output::output_location_t loc = 
+            (Output::output_location_t)params.find_integer("debug", 0);
+
+    m_dbg.init("@t:FunctionSM::@p():@l ", verboseLevel, 0, loc );
 
     m_smV.resize( NumFunctions );
 
@@ -81,29 +84,29 @@ FunctionSM::FunctionSM( int verboseLevel, Output::output_location_t loc,
 
     m_smV[Init] = new InitFuncSM( verboseLevel, loc, &info );
     m_smV[Fini] = new FiniFuncSM( verboseLevel, loc, &info, 
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg);
     m_smV[Rank] = new RankFuncSM( verboseLevel, loc, &info );
     m_smV[Size] = new SizeFuncSM( verboseLevel, loc, &info );
     m_smV[Send] = new SendFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, dm, io );
+                                        m_toProgressLink, dm );
     m_smV[Wait] = new WaitFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, dm, io );
+                                        m_toProgressLink, dm );
     m_smV[Recv] = new RecvFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, dm, io, m_selfLink );
+                                        m_toProgressLink, dm, m_selfLink );
     m_smV[Barrier] = new BarrierFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
     m_smV[Allreduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
     m_smV[Reduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
     m_smV[Allgather] = new AllgatherFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
     m_smV[Allgatherv] = new AllgatherFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
     m_smV[Gather] = new GathervFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
     m_smV[Gatherv] = new GathervFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, io );
+                                        m_toProgressLink, ctrlMsg );
 }
 
 FunctionSM::~FunctionSM()
@@ -117,7 +120,7 @@ FunctionSM::~FunctionSM()
 
 void FunctionSM::sendProgressEvent( SST::Event* e  )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
     m_fromProgressLink->send( e );
 }
 
@@ -126,15 +129,15 @@ void FunctionSM::start( SST::Event* e  )
     SMEnterEvent* event =  static_cast<SMEnterEvent*>(e);
     event->retLink = m_toDriverLink;
     m_sm = m_smV[ event->type ];
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
     m_fromDriverLink->send( m_funcLat[event->type].enterTime, e );
 }
 
 void FunctionSM::handleSelfEvent( SST::Event* e  )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,3,0,"\n");
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
     m_sm->handleSelfEvent( e );
 }
 
@@ -142,20 +145,20 @@ void FunctionSM::handleSelfEvent( SST::Event* e  )
 void FunctionSM::handleDriverEvent( SST::Event* e )
 {
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
     m_sm->handleEnterEvent( e );
 }
 
 void FunctionSM::handleProgressEvent( SST::Event* e )
 {
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
     m_sm->handleProgressEvent( e );
 }
 
 void FunctionSM::handleToDriver( Event* e )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.verbose(CALL_INFO,3,0,"\n");
     DriverEvent* event = static_cast<DriverEvent*>(e);
     (*event->retFunc)( event->retval );
     delete e;

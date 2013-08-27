@@ -31,19 +31,20 @@ class MerlinIO : public IO::Interface {
   public:
     MerlinIO(Params&);
 
-    static const int MaxPendingEvents = 1024;
+    static const size_t MaxPendingEvents = 2;
 
     virtual void _componentInit(unsigned int phase );
 
     virtual IO::NodeId getNodeId() { return m_myNodeId; }
-    virtual void setDataReadyFunc(IO::Functor2*);
 
-    virtual size_t peek(IO::NodeId& src);
-    virtual bool isReady(IO::NodeId src);
+    virtual IO::NodeId peek();
     virtual bool sendv(IO::NodeId dest, std::vector<IO::IoVec>&,
                                                         IO::Entry::Functor*);
     virtual bool recvv(IO::NodeId src, std::vector<IO::IoVec>&,
                                                         IO::Entry::Functor*);
+
+    virtual void enter( SST::Link* );
+    virtual bool pending();
 
     struct Entry { 
         Entry( IO::NodeId _node, std::vector<IO::IoVec> _ioVec, 
@@ -55,6 +56,14 @@ class MerlinIO : public IO::Interface {
             currentPos(0) 
         { 
         } 
+        ~Entry() {
+            if ( functor ) {
+                IO::Entry* tmp = (*functor)();
+                if ( tmp ) {
+                    delete tmp;
+                }
+            }
+        }
 
         IO::NodeId              node;
         std::vector<IO::IoVec>  ioVec;
@@ -62,28 +71,27 @@ class MerlinIO : public IO::Interface {
         size_t                  currentVec;    
         size_t                  currentPos;
     };
+
   private:
 
     bool clockHandler( Cycle_t cycle );
 
-    struct IN {
-        IN() : nbytes(0) {}
-        std::deque<Event*>  queue;
-        size_t              nbytes;
-    };
-    std::map<IO::NodeId, IN >       m_eventMap;
-    
+    bool processRecv();
+    bool processSend();
+    void leave();
 
-    IO::Functor2*           m_dataReadyFunc;
+    SST::Link*              m_leaveLink;
+    std::deque<Event*>      m_eventQ;
+
+    std::map< IO::NodeId, Entry* > m_recvEntryM;
+    Entry*                  m_sendEntry;
+    
     IO::NodeId              m_myNodeId;
     Output                  m_dbg;
     Merlin::LinkControl*    m_linkControl;
 
-    std::deque<Entry*>      m_recvQ;
-    std::deque<Entry*>      m_sendQ;
     int                     m_numVC;
     int                     m_lastVC;
-    int                     m_numPendingEvents;
 };
 
 }

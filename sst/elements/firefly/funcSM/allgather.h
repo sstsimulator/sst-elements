@@ -24,14 +24,11 @@ class AllgatherFuncSM :  public FunctionSMInterface
 {
     enum { WaitSendStart, WaitRecvStart, WaitSendData, WaitRecvData } m_state;
 
-    typedef Arg_Functor<AllgatherFuncSM, IO::NodeId>             IO_Functor;
-
     static const int AllgatherTag = 0xf00d0000;
 
   public:
     AllgatherFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink,
-            ProtocolAPI*, IO::Interface* );
+            Info* info, SST::Link*& progressLink, ProtocolAPI* );
 
     virtual void handleEnterEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
@@ -42,14 +39,9 @@ class AllgatherFuncSM :  public FunctionSMInterface
 
   private:
 
-    void dataReady( IO::NodeId src );
-
-    IO_Functor          m_dataReadyFunctor;
-
     SST::Link*&         m_toProgressLink;
     CtrlMsg*            m_ctrlMsg;
     GatherEnterEvent*   m_event;
-    IO::Interface*      m_io;
     bool                m_pending;
     CtrlMsg::CommReq    m_sendReq; 
     CtrlMsg::CommReq    m_recvReq; 
@@ -62,10 +54,11 @@ class AllgatherFuncSM :  public FunctionSMInterface
         } else {
             ptr += rank * chunkSize( rank );
         }
-        m_dbg.verbose(CALL_INFO,1,0,"rank %d, ptr %p\n", rank, ptr);
+        m_dbg.verbose(CALL_INFO,2,0,"rank %d, ptr %p\n", rank, ptr);
  
         return ptr;
     }
+
     size_t  chunkSize( int rank ) {
         size_t size;
         if ( m_event->recvcntPtr ) {
@@ -75,17 +68,15 @@ class AllgatherFuncSM :  public FunctionSMInterface
             size = m_info->sizeofDataType( m_event->recvtype ) *
                                                 m_event->recvcnt;
         } 
-        m_dbg.verbose(CALL_INFO,1,0,"rank %d, size %lu\n",rank,size);
+        m_dbg.verbose(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
         return size;
     }
 
     std::vector<int>    m_numChunks;
     std::vector<int>    m_sendStartChunk;
     std::vector<int>    m_dest;
-
-    int        m_rank; 
-    int        m_size; 
-
+    int                 m_rank; 
+    int                 m_size; 
     unsigned int        m_currentStage;
 
     void initIoVec(std::vector<CtrlMsg::IoVec>& ioVec,

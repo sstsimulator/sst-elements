@@ -18,13 +18,10 @@
 using namespace SST::Firefly;
 
 WaitFuncSM::WaitFuncSM( int verboseLevel, Output::output_location_t loc,
-                 Info* info, SST::Link*& progressLink,
-                 ProtocolAPI* dm, IO::Interface* io ) :
+                 Info* info, SST::Link*& progressLink, ProtocolAPI* dm ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_dataReadyFunctor( IO_Functor(this,&WaitFuncSM::dataReady) ),
     m_dm( static_cast<DataMovement*>( dm ) ),
-    m_toProgressLink( progressLink ),
-    m_io( io )
+    m_toProgressLink( progressLink )
 {
     m_dbg.setPrefix("@t:WaitFuncSM::@p():@l ");
 }
@@ -64,15 +61,7 @@ void WaitFuncSM::handleProgressEvent( SST::Event *e )
         m_event = NULL;
         return;
     } else {
-        m_io->setDataReadyFunc( &m_dataReadyFunctor );
+        m_dm->sleep();
+        m_toProgressLink->send(0, NULL );
     }
 }
-
-void WaitFuncSM::dataReady( IO::NodeId src )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    assert( m_event );
-    m_io->setDataReadyFunc( NULL );
-    m_toProgressLink->send(0, NULL );
-}
-

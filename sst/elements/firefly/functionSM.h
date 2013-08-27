@@ -48,8 +48,7 @@ class FunctionSM {
         NumFunctions
     };
 
-    FunctionSM( int verboseLevel, Output::output_location_t loc, 
-                SST::Params& params,
+    FunctionSM( SST::Params& params,
                 SST::Component*, Info&, ProtocolAPI*, IO::Interface*,
                 ProtocolAPI* ); 
     ~FunctionSM();
@@ -81,7 +80,6 @@ class FunctionSM {
     int                 m_worldRank;
 
     Info&               m_info;
-
 
     Output              m_dbg;
 

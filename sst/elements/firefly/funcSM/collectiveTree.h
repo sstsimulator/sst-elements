@@ -93,15 +93,11 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
 {
     enum { WaitUp, SendUp, WaitDown, SendDown } m_state;
 
-    typedef Arg_Functor<CollectiveTreeFuncSM, IO::NodeId>             IO_Functor;
-
     static const int CollectiveTag = 0xdead0002;
-
 
   public:
     CollectiveTreeFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink,
-            ProtocolAPI*, IO::Interface* );
+            Info* info, SST::Link*& progressLink, ProtocolAPI* );
 
     virtual void handleEnterEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
@@ -112,11 +108,6 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
 
   private:
 
-    void run();
-    void dataReady( IO::NodeId src );
-
-    IO_Functor              m_dataReadyFunctor;
-
     bool                    m_pending;
     CollectiveEnterEvent*   m_event;
     SST::Link*&             m_toProgressLink;
@@ -125,7 +116,6 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     std::vector<void*>  m_bufV;
     CtrlMsg::CommReq    m_sendReq; 
     unsigned int        m_count;
-    IO::Interface*      m_io;
     size_t              m_bufLen;
     YYY*                m_yyy;
 };

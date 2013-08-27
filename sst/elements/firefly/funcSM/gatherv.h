@@ -122,14 +122,13 @@ class GathervFuncSM :  public FunctionSMInterface
     enum { WaitUpRecv, WaitUpSend, WaitUpRecvBody } m_waitUpState;
     enum { SendUpSend, SendUpWait, SendUpSendBody } m_sendUpState;
 
-    typedef Arg_Functor<GathervFuncSM, IO::NodeId>             IO_Functor;
+    static const int GathervTag = 0xf00d0000;
 
-    static const int GathervTag = 0xdead0001;
 
   public:
     GathervFuncSM( int verboseLevel, Output::output_location_t loc,
             Info* info, SST::Link*& progressLink,
-            ProtocolAPI*, IO::Interface* );
+            ProtocolAPI* );
 
     virtual void handleEnterEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
@@ -140,17 +139,16 @@ class GathervFuncSM :  public FunctionSMInterface
 
   private:
 
-    void dataReady( IO::NodeId src );
     bool waitUp();
     bool sendUp();
     void doRoot();
-
-    IO_Functor          m_dataReadyFunctor;
+    uint32_t    genTag() {
+        return GathervTag | (m_seq & 0xffff);
+    } 
 
     SST::Link*&         m_toProgressLink;
     CtrlMsg*            m_ctrlMsg;
     GatherEnterEvent*  m_event;
-    IO::Interface*      m_io;
     QQQ*                m_qqq;
     bool                m_pending;
     CtrlMsg::CommReq    m_sendReq; 
@@ -165,6 +163,7 @@ class GathervFuncSM :  public FunctionSMInterface
 
     unsigned int        m_count; 
     bool                m_sendUpPending;
+    int                 m_seq;
 };
         
 }

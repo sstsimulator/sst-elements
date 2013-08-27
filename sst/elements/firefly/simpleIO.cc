@@ -61,13 +61,6 @@ void SimpleIO::_componentInit(unsigned int phase )
     } 
 }
 
-void SimpleIO::setDataReadyFunc( Functor2* dataReadyFunc )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"dataReadyFunc %p\n",dataReadyFunc);
-    m_dataReadyFunc = dataReadyFunc; 
-}
-
-
 void SimpleIO::handleEvent(SST::Event* e){
     IOEvent* event = static_cast<IOEvent*>(e);
     
@@ -211,11 +204,6 @@ bool SimpleIO::_recvv( NodeId src, std::vector<IoVec>& ioVec,
         }
     }
     return true;
-}
-
-bool SimpleIO::isReady( NodeId dest )
-{
-    return false;
 }
 
 size_t SimpleIO::peek( NodeId& src )

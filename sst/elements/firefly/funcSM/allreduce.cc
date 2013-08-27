@@ -20,8 +20,8 @@ using namespace SST::Firefly;
 AllreduceFuncSM::AllreduceFuncSM( 
             int verboseLevel, Output::output_location_t loc,
             Info* info, SST::Link*& progressLink, 
-            ProtocolAPI* xxx, IO::Interface* io ) :
-    CollectiveTreeFuncSM( verboseLevel,loc,info,progressLink,xxx,io  ) 
+            ProtocolAPI* xxx  ) :
+    CollectiveTreeFuncSM( verboseLevel,loc,info,progressLink,xxx ) 
 {}
 
 void AllreduceFuncSM::handleEnterEvent( SST::Event *e) 

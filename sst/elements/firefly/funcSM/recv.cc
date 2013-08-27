@@ -20,13 +20,11 @@ using namespace SST::Firefly;
 
 RecvFuncSM::RecvFuncSM( int verboseLevel, Output::output_location_t loc,
             Info* info, SST::Link*& progressLink,   
-            ProtocolAPI* dm, IO::Interface* io, SST::Link* selfLink ) :
+            ProtocolAPI* dm, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_dataReadyFunctor( IO_Functor(this,&RecvFuncSM::dataReady) ),
     m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),
     m_dm( static_cast<DataMovement*>(dm) ),
-    m_io( io ),
     m_event( NULL )
 { 
     m_dbg.setPrefix("@t:RecvFuncSM::@p():@l ");
@@ -110,19 +108,11 @@ void RecvFuncSM::handleProgressEvent( SST::Event *e )
     assert( m_event );
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_event->entry.req ? "Irecv":"Recv");
     if ( m_event->entry.resp && m_event->entry.resp->src == Hermes::AnySrc  ) {
-        m_io->setDataReadyFunc( &m_dataReadyFunctor );
+        m_dm->sleep();
+        m_toProgressLink->send(0, NULL );
     } else {
-        m_io->setDataReadyFunc( NULL );
         exit( static_cast< SMEnterEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
     }
-}
-
-void RecvFuncSM::dataReady( IO::NodeId src )
-{
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    assert( m_event );
-    m_io->setDataReadyFunc( NULL );
-    m_toProgressLink->send(0, NULL );
 }
