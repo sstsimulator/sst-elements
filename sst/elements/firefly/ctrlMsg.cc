@@ -18,11 +18,14 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-CtrlMsg::CtrlMsg(int verboseLevel, Output::output_location_t loc, Info* info ) :
+CtrlMsg::CtrlMsg(int verboseLevel, Output::output_location_t loc, 
+                SST::Params& params, Info* info ) :
     ProtocolAPI(verboseLevel,loc),
     m_info(info),
     m_sleep(false)
 {
+    m_matchTime = params.find_integer("matchTime",0);
+    m_copyTime = params.find_integer("copyTime",0);
 }
 
 void CtrlMsg::setup() 
@@ -33,7 +36,7 @@ void CtrlMsg::setup()
     m_dbg.setPrefix(buffer);
 }
 
-CtrlMsg::SendReq* CtrlMsg::getSendReq( ) 
+CtrlMsg::Request* CtrlMsg::getSendReq( ) 
 {
     if ( ! m_sendQ.empty() ) {
         SendReq* req = new SendReq;  
@@ -68,7 +71,7 @@ CtrlMsg::SendReq* CtrlMsg::getSendReq( )
     return NULL;
 }
 
-CtrlMsg::RecvReq* CtrlMsg::getRecvReq( IO::NodeId src )
+CtrlMsg::Request* CtrlMsg::getRecvReq( IO::NodeId src )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     RecvReq* req = new RecvReq;
@@ -86,7 +89,7 @@ CtrlMsg::RecvReq* CtrlMsg::getRecvReq( IO::NodeId src )
     return req;
 }
 
-CtrlMsg::SendReq* CtrlMsg::sendIODone( Request* r )
+CtrlMsg::Request* CtrlMsg::sendIODone( Request* r )
 {
     SendReq* req = static_cast<SendReq*>(r);
     m_dbg.verbose(CALL_INFO,1,0,"\n");
@@ -95,8 +98,9 @@ CtrlMsg::SendReq* CtrlMsg::sendIODone( Request* r )
     return  NULL;
 }
 
-CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr )
+CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr, int& delay )
 {
+    delay = 0;
     m_dbg.verbose(CALL_INFO,1,0,"posted size %lu\n",m_postedQ.size());
 
     std::deque< CommReq* >:: iterator iter = m_postedQ.begin();
@@ -107,6 +111,7 @@ CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr )
         //m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", info.tag, hdr.tag );
         m_dbg.verbose(CALL_INFO,1,0,"tag: list %#x, hdr %#x\n", 
                                                     info.tag, hdr.tag );
+        delay += m_matchTime;
         if ( ( -1 != info.tag ) && ( hdr.tag != info.tag ) ) {
             continue;
         }
@@ -133,16 +138,19 @@ CtrlMsg::CommReq* CtrlMsg::findMatch( Hdr& hdr )
     return NULL;
 }
 
-CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( RecvInfo& info )
+CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( RecvInfo& info, int& delay )
 {
+    delay = 0;
     m_dbg.verbose(CALL_INFO,1,0,"unexpected size %lu\n", m_unexpectedQ.size() );
 
     std::deque< RecvReq* >::iterator iter = m_unexpectedQ.begin();
     for ( ; iter != m_unexpectedQ.end(); ++iter  ) {
 
+        delay += m_matchTime;
+
         Hdr& tmpHdr = (*iter)->hdr; 
 
-        m_dbg.verbose(CALL_INFO,1,0,"tag %d %d\n", tmpHdr.tag, info.tag );
+        m_dbg.verbose(CALL_INFO,1,0,"tag %#x %#x\n", tmpHdr.tag, info.tag );
         if ( ( -1 != info.tag ) && (  tmpHdr.tag != info.tag ) ) {
             continue;
         }
@@ -163,7 +171,7 @@ CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( RecvInfo& info )
         }
 
         RecvReq* req = *iter;
-        m_dbg.verbose(CALL_INFO,1,0,"matched unexpected\n");
+        m_dbg.verbose(CALL_INFO,1,0,"matched unexpected, delay=%d\n",delay);
         m_unexpectedQ.erase( iter );
         return req;
     }
@@ -171,44 +179,21 @@ CtrlMsg::RecvReq* CtrlMsg::searchUnexpected( RecvInfo& info )
     return NULL;
 }
 
-CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
+CtrlMsg::Request* CtrlMsg::recvIODone( Request* r )
 {
     RecvReq* req = static_cast<RecvReq*>(r);
     
     if ( RecvReq::RecvHdr == req->state ) {
 
         m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n",req->nodeId);
-        req->commReq = findMatch( req->hdr );    
+        req->commReq = findMatch( req->hdr, req->delay );    
         req->state = RecvReq::RecvBody;
 
         if ( req->commReq ) {
-            m_dbg.verbose(CALL_INFO,1,0,"found match\n" );
-            if ( req->commReq->info->len ) {
-                m_dbg.verbose(CALL_INFO,1,0,"getBody %lu bytes\n",
-                                            req->commReq->info->len );
-                req->ioVec.resize( req->commReq->info->ioVec.size() );
-                for ( unsigned int i = 0; i < req->ioVec.size(); i++ ) {
-                    m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
-                                        req->commReq->info->ioVec[i].len, 
-                                        req->commReq->info->ioVec[i].ptr);
-                    req->ioVec[i].len = req->commReq->info->ioVec[i].len;
-                    req->ioVec[i].ptr = req->commReq->info->ioVec[i].ptr;
-                }
-            } else {
-                req->commReq->done = true;
-                delete req;
-                req = NULL;
-            }
-        } else {
-            m_dbg.verbose(CALL_INFO,1,0, "unexpected %lu bytes\n",req->hdr.len);
-            m_unexpectedQ.push_back( req ); 
-            if ( req->hdr.len ) {
-                req->buf.resize(req->hdr.len);
-                req->ioVec[0].len = req->buf.size();
-                req->ioVec[0].ptr = &req->buf[0];
-            } else {
-                req = NULL;
-            } 
+            m_dbg.verbose(CALL_INFO,1,0,"found a posted receive\n");
+        }
+        if ( 0 == req->delay ) {
+            return delayDone( r );
         }
 
     } else {
@@ -222,10 +207,40 @@ CtrlMsg::RecvReq* CtrlMsg::recvIODone( Request* r )
     return req;
 }
 
-CtrlMsg::Request* CtrlMsg::delayDone( Request* )
+CtrlMsg::Request* CtrlMsg::delayDone( Request* r )
 {
+    RecvReq* req = static_cast<RecvReq*>(r);
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    return NULL;
+    if ( req->commReq ) {
+        m_dbg.verbose(CALL_INFO,1,0,"found match\n" );
+        if ( req->commReq->info->len ) {
+            m_dbg.verbose(CALL_INFO,1,0,"getBody %lu bytes\n",
+                                        req->commReq->info->len );
+            req->ioVec.resize( req->commReq->info->ioVec.size() );
+            for ( unsigned int i = 0; i < req->ioVec.size(); i++ ) {
+                m_dbg.verbose(CALL_INFO,1,0,"%lu %p\n",
+                                    req->commReq->info->ioVec[i].len, 
+                                    req->commReq->info->ioVec[i].ptr);
+                req->ioVec[i].len = req->commReq->info->ioVec[i].len;
+                req->ioVec[i].ptr = req->commReq->info->ioVec[i].ptr;
+            }
+        } else {
+            req->commReq->done = true;
+            delete req;
+            req = NULL;
+        }
+    } else {
+        m_dbg.verbose(CALL_INFO,1,0, "unexpected %lu bytes\n",req->hdr.len);
+        m_unexpectedQ.push_back( req ); 
+        if ( req->hdr.len ) {
+            req->buf.resize(req->hdr.len);
+            req->ioVec[0].len = req->buf.size();
+            req->ioVec[0].ptr = &req->buf[0];
+        } else {
+            req = NULL;
+        } 
+    }
+    return req;
 }
 
 void CtrlMsg::recv( void* buf, size_t len, int src, int tag, int group, 
@@ -261,24 +276,7 @@ void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
     req->info = new RecvInfo( ioVec, src, tag, group );
     req->done = false;
 
-    RecvReq* xxx;
-    if ( ! m_unexpectedQ.empty() &&
-         ( xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info) ) ) ) 
-    {
-        m_dbg.verbose(CALL_INFO,1,0,"found match\n");
-        size_t offset = 0;
-            
-        for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
-            memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
-                    req->info->ioVec[i].len );
-            offset += req->info->ioVec[i].len;
-        }
-        req->done = true;
-        delete xxx;
-    } else {
-        m_dbg.verbose(CALL_INFO,1,0,"post recv\n");
-        m_postedQ.push_back( req );
-    }
+    m_postedQ.push_back( req );
 }
 
 void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag, 
@@ -304,9 +302,35 @@ bool CtrlMsg::blocked()
     return m_sleep;
 }
 
-bool CtrlMsg::test( CommReq * req )
+bool CtrlMsg::test( CommReq * req, int& delay )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     assert( req->info );
+
+    delay = 0;
+
+    RecvReq* xxx;
+    if (( xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info), delay ) ))
+    {
+        m_dbg.verbose(CALL_INFO,1,0,"found match, delay=%d\n",delay);
+        size_t offset = 0;
+            
+        for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
+            memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
+                    req->info->ioVec[i].len );
+            offset += req->info->ioVec[i].len;
+        }
+        req->done = true;
+        
+        std::deque<CommReq*>::iterator iter;
+        for ( iter = m_postedQ.begin(); iter != m_postedQ.end(); ++iter ) {
+            if ( *iter == req ) {
+                m_postedQ.erase( iter );
+                break; 
+            }
+        }
+        delete xxx;
+    }
+
     return req->done;
 }

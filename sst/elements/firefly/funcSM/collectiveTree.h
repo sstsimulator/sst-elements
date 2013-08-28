@@ -93,13 +93,14 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
 {
     enum { WaitUp, SendUp, WaitDown, SendDown } m_state;
 
-    static const int CollectiveTag = 0xdead0002;
+    static const int CollectiveTag = 0xf0000000;
 
   public:
     CollectiveTreeFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink, ProtocolAPI* );
+            Info* info, SST::Link*& progressLink, ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event *e);
+    virtual void handleSelfEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
 
     virtual const char* name() {
@@ -108,9 +109,16 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
 
   private:
 
+    uint32_t    genTag() {
+        return CollectiveTag | (m_seq & 0xffff);
+    }
+
+    bool                    m_test;
+    int                     m_delay;
     bool                    m_pending;
     CollectiveEnterEvent*   m_event;
     SST::Link*&             m_toProgressLink;
+    SST::Link*              m_selfLink;
     CtrlMsg*                m_ctrlMsg;
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
     std::vector<void*>  m_bufV;
@@ -118,6 +126,7 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     unsigned int        m_count;
     size_t              m_bufLen;
     YYY*                m_yyy;
+    int                 m_seq;
 };
         
 }

@@ -23,10 +23,11 @@ inline long mod( long a, long b )
 }
 
 AllgatherFuncSM::AllgatherFuncSM( 
-            int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink, ProtocolAPI* ctrlMsg ) :
+        int verboseLevel, Output::output_location_t loc, Info* info,
+        SST::Link*& progressLink, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_toProgressLink( progressLink ),
+    m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL )
 {
@@ -110,6 +111,8 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
     m_toProgressLink->send(0, NULL );
 
     m_state = WaitSendStart;
+
+    m_delay = 0;
 }
 
 void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
@@ -159,7 +162,17 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
 {
     switch( m_state ) {
     case WaitSendStart:
-        if ( ! m_ctrlMsg->test( &m_sendReq ) ) {
+        if ( ! m_delay ) {
+            m_test = m_ctrlMsg->test( &m_sendReq, m_delay );
+            if ( m_delay ) {
+                m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                m_selfLink->send( m_delay, NULL );
+                break;
+            }
+        } else {
+            m_delay = 0;
+        }
+        if ( ! m_test ) {
             m_ctrlMsg->sleep();
             m_toProgressLink->send(0, NULL );
             break;
@@ -169,7 +182,18 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         m_pending = false;
 
     case WaitRecvStart:
-        if ( ! m_ctrlMsg->test( &m_recvReq ) ) {
+
+        if ( ! m_delay ) {
+            m_test = m_ctrlMsg->test( &m_recvReq, m_delay );
+            if ( m_delay ) {
+                m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                m_selfLink->send( m_delay, NULL );
+                break;
+            }
+        } else {
+            m_delay = 0;
+        }
+        if ( ! m_test ) {
             m_ctrlMsg->sleep();
             m_toProgressLink->send(0, NULL );
             break;
@@ -192,7 +216,17 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             m_toProgressLink->send(0, NULL );
             break;
         } else {
-            if ( ! m_ctrlMsg->test( & m_sendReq ) ) {
+            if ( ! m_delay ) {
+                m_test = m_ctrlMsg->test( & m_sendReq, m_delay );
+                if ( m_delay ) {
+                    m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                    m_selfLink->send( m_delay, NULL );
+                    break;
+                }
+            } else {
+                m_delay = 0;
+            }
+            if ( ! m_test ) {
                 m_ctrlMsg->sleep();
                 m_toProgressLink->send(0, NULL );
                 break;
@@ -203,7 +237,17 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         m_pending = false;
 
     case WaitRecvData:
-        if ( m_ctrlMsg->test( &m_recvReqV[m_currentStage] ) ) {
+        if ( ! m_delay ) {
+            m_test = m_ctrlMsg->test( &m_recvReqV[m_currentStage], m_delay );
+            if ( m_delay ) {
+                m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                m_selfLink->send( m_delay, NULL );
+                break;
+            }
+        } else {
+            m_delay = 0;
+        }
+        if ( m_test ) {
             m_dbg.verbose(CALL_INFO,1,0,"stage %d complete\n", m_currentStage);
             ++m_currentStage;
             if ( m_currentStage < m_dest.size() ) {

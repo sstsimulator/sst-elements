@@ -20,9 +20,10 @@ using namespace SST::Firefly;
 GathervFuncSM::GathervFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
                     Info* info, SST::Link*& progressLink, 
-                    ProtocolAPI* ctrlMsg ) :
+                    ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_toProgressLink( progressLink ),
+    m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
     m_seq( 0 )
@@ -63,11 +64,18 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
     m_sendUpState = SendUpSend;
     m_state = WaitUp;
     m_pending = true;
+    m_waitUpDelay = 0;
+    m_sendUpDelay = 0;
 
     m_recvReqV.resize(m_qqq->numChildren());
     m_waitUpSize.resize(m_qqq->numChildren());
 
     m_toProgressLink->send(0, NULL );
+}
+
+void GathervFuncSM::handleSelfEvent( SST::Event *e )
+{
+    handleProgressEvent( e );
 }
 
 void GathervFuncSM::handleProgressEvent( SST::Event *e )
@@ -114,8 +122,17 @@ bool GathervFuncSM::waitUp()
             m_count = 0;
             return true;
         } else {
-            bool ret = m_ctrlMsg->test( &m_recvReqV[m_count] );
-            if ( ret ) {
+            if ( ! m_waitUpDelay ) {
+                m_waitUpTest = m_ctrlMsg->test( &m_recvReqV[m_count], 
+                                        m_waitUpDelay );
+                if ( m_waitUpDelay ) {
+                    m_selfLink->send( m_waitUpDelay, NULL );
+                    return true;
+                }
+            } else {
+                m_waitUpDelay = 0;
+            }
+            if ( m_waitUpTest) {
                 m_dbg.verbose(CALL_INFO,1,0,"got message from child %d[%d]\n", 
                                  m_count, m_qqq->calcChild(m_count) );
                 ++m_count;
@@ -167,8 +184,16 @@ bool GathervFuncSM::waitUp()
             m_waitUpPending = true;
             return true;
         } else {
-            bool ret = m_ctrlMsg->test( &m_sendReq );
-            if ( ret ) {
+            if ( ! m_waitUpDelay ) { 
+                m_waitUpTest = m_ctrlMsg->test( &m_sendReq, m_waitUpDelay );
+                if ( m_waitUpDelay ) {
+                    m_selfLink->send(m_waitUpDelay, NULL );
+                    return true;
+                }
+            } else {
+                m_waitUpDelay = 0;
+            }
+            if ( m_waitUpTest ) {
                 m_dbg.verbose(CALL_INFO,1,0,"send completed %d[%d]\n",
                                     m_count, m_qqq->calcChild( m_count ) );
                 ++m_count;
@@ -190,8 +215,17 @@ bool GathervFuncSM::waitUp()
 
     case WaitUpRecvBody:
         if ( m_count < m_qqq->numChildren() ) {
-            bool ret = m_ctrlMsg->test( &m_recvReqV[m_count] );
-            if ( ret ) {
+            if ( ! m_waitUpDelay ) {
+                m_waitUpTest = 
+                        m_ctrlMsg->test( &m_recvReqV[m_count], m_waitUpDelay );
+                if ( m_waitUpDelay ) {
+                    m_selfLink->send(m_waitUpDelay, NULL);
+                    return true;
+                }
+            } else {
+                m_waitUpDelay = 0;
+            }
+            if ( m_waitUpTest ) {
                 m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n", m_count);
                 ++m_count;
             } else {
@@ -280,8 +314,8 @@ bool GathervFuncSM::sendUp()
             }
             memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
             m_intBuf = m_recvBuf.size();
-            m_dbg.verbose(CALL_INFO,1,0,"send size %d message to %d\n", 
-                                sizeof(m_intBuf), m_qqq->parent());
+            m_dbg.verbose(CALL_INFO,1,0,"send size message to %d\n", 
+                                                m_qqq->parent());
             m_ctrlMsg->send( &m_intBuf, sizeof(m_intBuf), 
                             m_qqq->parent(),
                             genTag(), m_event->group, &m_sendReq );
@@ -290,8 +324,16 @@ bool GathervFuncSM::sendUp()
             m_toProgressLink->send(0, NULL );
             return true;
         } else {
-            bool ret = m_ctrlMsg->test( &m_sendReq );
-            if ( ret ) {
+            if ( ! m_sendUpDelay ) {
+                m_sendUpTest = m_ctrlMsg->test( &m_sendReq, m_sendUpDelay );
+                if ( m_sendUpDelay ) {
+                    m_selfLink->send(m_sendUpDelay,NULL);
+                    return true;
+                }
+            } else {
+                m_sendUpDelay = 0;
+            }
+            if ( m_sendUpTest ) {
                 m_dbg.verbose(CALL_INFO,1,0,"send completed\n");
             } else {
                 m_ctrlMsg->sleep();
@@ -316,8 +358,16 @@ bool GathervFuncSM::sendUp()
             m_toProgressLink->send(0, NULL );
             return true;
         } else {
-            bool ret = m_ctrlMsg->test( &m_recvReq );
-            if ( ret ) {
+            if ( ! m_sendUpDelay ) {
+                m_sendUpTest = m_ctrlMsg->test( &m_recvReq, m_sendUpDelay );
+                if ( m_sendUpDelay ) {
+                    m_selfLink->send(m_sendUpDelay,NULL);
+                    return true;
+                }
+            } else {
+                m_sendUpDelay = 0;
+            }
+            if ( m_sendUpTest ) {
                 m_dbg.verbose(CALL_INFO,1,0,"got message from parent %d\n", 
                                         m_qqq->parent());
             } else {
@@ -346,8 +396,16 @@ bool GathervFuncSM::sendUp()
             m_toProgressLink->send(0, NULL );
             return true;
         }  else {
-            bool ret = m_ctrlMsg->test( &m_sendReq );
-            if ( ret ) {
+            if ( ! m_sendUpDelay ) {
+                m_sendUpTest = m_ctrlMsg->test( &m_sendReq, m_sendUpDelay );
+                if ( m_sendUpDelay ) {
+                    m_selfLink->send( m_sendUpDelay, NULL );
+                    return true;
+                }
+            } else {
+                m_sendUpDelay = 0;
+            }
+            if ( m_sendUpTest ) {
                 m_dbg.verbose(CALL_INFO,1,0,"sent body to parent %d\n", 
                                             m_qqq->parent());
             } else {

@@ -21,11 +21,13 @@ using namespace SST::Firefly;
 CollectiveTreeFuncSM::CollectiveTreeFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
                     Info* info, SST::Link*& progressLink, 
-                    ProtocolAPI* ctrlMsg ) :
+                    ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_event( NULL ),
     m_toProgressLink( progressLink ),
-    m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) )
+    m_selfLink( selfLink ),
+    m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
+    m_seq( 0 )
 {
     m_dbg.setPrefix("@t:CollectiveTreeFuncSM::@p():@l ");
 }
@@ -34,6 +36,8 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
 {
     assert( NULL == m_event );
     m_event = static_cast< CollectiveEnterEvent* >(e);
+
+    ++m_seq;
 
     m_yyy = new YYY( 2, m_info->getGroup(m_event->group)->getMyRank(),
                 m_info->getGroup(m_event->group)->size(), m_event->root ); 
@@ -60,8 +64,14 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
 
     m_pending = false;
     m_state = WaitUp;
+    m_delay = 0;
     m_count = 0;
     m_toProgressLink->send(0, NULL );
+}
+
+void CollectiveTreeFuncSM::handleSelfEvent( SST::Event *e )
+{
+    handleProgressEvent( e );
 }
 
 void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
@@ -74,18 +84,27 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
                 for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
                     m_dbg.verbose(CALL_INFO,1,0,"post recv for %d\n",i);
                     m_ctrlMsg->recv( m_bufV[i+1], m_bufLen, m_yyy->calcChild(i), 
-                            CollectiveTag, m_event->group, &m_recvReqV[i+1] );
+                            genTag(), m_event->group, &m_recvReqV[i+1] );
                 }
                 m_count = 0;
                 m_pending = true;
             } else {
-                bool ret = m_ctrlMsg->test( &m_recvReqV[m_count+1] );  
-                if ( ret ) {
+                if ( ! m_delay ) {
+                    m_test = m_ctrlMsg->test(&m_recvReqV[m_count+1], m_delay);  
+                    if ( m_delay ) {
+                        m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                        m_selfLink->send( m_delay, NULL );
+                        break;
+                    }
+                } else {
+                    m_delay = 0;
+                }
+                if ( m_test ) {
                     m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n",
                                                                     m_count);
-                    ++m_count;
+                     ++m_count;
                 } else {
-                    m_ctrlMsg->sleep();
+                     m_ctrlMsg->sleep();
                     m_toProgressLink->send(0, NULL );
                     break;
                 }
@@ -113,10 +132,10 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
                                                             m_yyy->parent());
                 if ( m_yyy->numChildren() ) {
                     m_ctrlMsg->send( m_event->result, m_bufLen, m_yyy->parent(),
-                            CollectiveTag, m_event->group, &m_sendReq );
+                            genTag(), m_event->group, &m_sendReq );
                 } else {
                     m_ctrlMsg->send( m_event->mydata, m_bufLen, m_yyy->parent(),
-                            CollectiveTag, m_event->group, &m_sendReq );
+                            genTag(), m_event->group, &m_sendReq );
                 }
                 m_toProgressLink->send(0, NULL );
                 m_pending = true;
@@ -133,15 +152,24 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
             m_dbg.verbose(CALL_INFO,1,0,"WaitDown\n");
             if ( ! m_pending ) {
                 m_ctrlMsg->recv( m_event->result, m_bufLen, m_yyy->parent(),
-                    CollectiveTag, m_event->group, &m_recvReqV[0] );
+                    genTag(), m_event->group, &m_recvReqV[0] );
                 m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
                                                             m_yyy->parent());
                 m_pending = true;
                 m_toProgressLink->send(0, NULL );
                 break;
             } else {
-                bool ret = m_ctrlMsg->test( &m_recvReqV[0]);
-                if ( ret ) {
+                if ( ! m_delay ) {
+                    m_test = m_ctrlMsg->test( &m_recvReqV[0], m_delay );
+                    if ( m_delay ) {
+                        m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                        m_selfLink->send( m_delay, NULL );
+                        break;
+                    }
+                } else {
+                    m_delay = 0;
+                }
+                if ( m_test ) {
                     m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n",
                                                             m_yyy->parent());
                 } else {
@@ -161,7 +189,7 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
             if ( m_count < m_yyy->numChildren() ) {
                 m_ctrlMsg->send( m_event->result, m_bufLen,
                     m_yyy->calcChild(m_count++), 
-                    CollectiveTag, m_event->group, &m_sendReq );
+                    genTag(), m_event->group, &m_sendReq );
                 m_toProgressLink->send(0, NULL );
                 break;
             } 

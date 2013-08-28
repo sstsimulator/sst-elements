@@ -114,7 +114,8 @@ Hades::Hades( Params& params ) :
 
     m_protocolM[0] = new DataMovement( verboseLevel, loc, dmParams,
                                          &m_info );
-    m_protocolM[1] = new CtrlMsg( verboseLevel, loc, &m_info);
+    Params ctrlParams = params.find_prefix_params("ctrlMsg.");
+    m_protocolM[1] = new CtrlMsg( verboseLevel, loc, ctrlParams, &m_info);
 
     m_sendIter = m_protocolM.begin();
 

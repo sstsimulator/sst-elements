@@ -41,7 +41,6 @@ void DataMovement::setup()
     m_dbg.setPrefix(buffer);
 }
 
-
 DataMovement::Request* DataMovement::getRecvReq( IO::NodeId src )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");

@@ -99,12 +99,13 @@ class CtrlMsg : public ProtocolAPI {
 
   public:
 
-    CtrlMsg( int verboseLevel, Output::output_location_t loc, Info* );
+    CtrlMsg( int verboseLevel, Output::output_location_t loc, 
+            SST::Params& params, Info* );
 
-    virtual SendReq* getSendReq( );
-    virtual RecvReq* getRecvReq( IO::NodeId src );
-    virtual SendReq* sendIODone( Request* );
-    virtual RecvReq* recvIODone( Request* );
+    virtual Request* getSendReq( );
+    virtual Request* getRecvReq( IO::NodeId src );
+    virtual Request* sendIODone( Request* );
+    virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
     virtual bool blocked();
 
@@ -112,20 +113,22 @@ class CtrlMsg : public ProtocolAPI {
     void recvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq* );
     void send( void* buf, size_t len, int dest, int tag, int group, CommReq* );
     void sendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq* );
-    bool test( CommReq*  );
+    bool test( CommReq*, int& delay  );
     void setup();
     void sleep();
 
   private:
 
-    CommReq* findMatch( Hdr& );
-    RecvReq* searchUnexpected( RecvInfo& info );
+    CommReq* findMatch( Hdr&, int& delay );
+    RecvReq* searchUnexpected( RecvInfo& info, int& delay );
 
     Info* m_info;
     std::deque< CommReq* > m_sendQ;
     std::deque< CommReq* > m_postedQ;
     std::deque< RecvReq* > m_unexpectedQ;
     bool m_sleep;
+    int m_matchTime;
+    int m_copyTime;
 };
 
 }

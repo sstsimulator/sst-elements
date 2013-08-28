@@ -122,15 +122,16 @@ class GathervFuncSM :  public FunctionSMInterface
     enum { WaitUpRecv, WaitUpSend, WaitUpRecvBody } m_waitUpState;
     enum { SendUpSend, SendUpWait, SendUpSendBody } m_sendUpState;
 
-    static const int GathervTag = 0xf00d0000;
+    static const int GathervTag = 0xf0020000;
 
 
   public:
     GathervFuncSM( int verboseLevel, Output::output_location_t loc,
             Info* info, SST::Link*& progressLink,
-            ProtocolAPI* );
+            ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event *e);
+    virtual void handleSelfEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
 
     virtual const char* name() {
@@ -147,6 +148,7 @@ class GathervFuncSM :  public FunctionSMInterface
     } 
 
     SST::Link*&         m_toProgressLink;
+    SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
     GatherEnterEvent*  m_event;
     QQQ*                m_qqq;
@@ -164,6 +166,11 @@ class GathervFuncSM :  public FunctionSMInterface
     unsigned int        m_count; 
     bool                m_sendUpPending;
     int                 m_seq;
+    int                 m_waitUpDelay;
+    bool                m_waitUpTest;
+
+    int                 m_sendUpDelay;
+    bool                m_sendUpTest;
 };
         
 }

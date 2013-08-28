@@ -158,6 +158,7 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
         } 
     }
 
+    // if m_leaveLink is not NULL it means we are in control
     if ( m_leaveLink ) {
         if ( processSend() ) {
             leave(); 
@@ -172,12 +173,14 @@ bool MerlinIO::pending( )
 {
     m_dbg.verbose(CALL_INFO,2,0,"%s\n",
     ( ( NULL != m_sendEntry ) || ! m_recvEntryM.empty() ) ? "true" : "false" );
+
     return ( ( NULL != m_sendEntry ) || ! m_recvEntryM.empty() );
 }
 
 void MerlinIO::enter( SST::Link* link  )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
+    assert( ! m_leaveLink );
     // the clockHandler will use m_leaveLink as a flag to start processing
     m_leaveLink = link;
 }
@@ -198,10 +201,11 @@ bool MerlinIO::processSend()
         ev->setDest( m_sendEntry->node );
         ret = copyOut( m_dbg, *ev, *m_sendEntry );
 
-
         ev->setSrc( m_myNodeId );
         ev->setNumFlits( ev->buf.size() );
-        //ev->setTraceType( Merlin::RtrEvent::FULL );
+#if 0 
+        ev->setTraceType( Merlin::RtrEvent::FULL );
+#endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes %p\n",
                                                         ev->buf.size(), ev);
         assert( ev->buf.size() );

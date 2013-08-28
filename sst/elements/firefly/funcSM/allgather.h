@@ -24,11 +24,11 @@ class AllgatherFuncSM :  public FunctionSMInterface
 {
     enum { WaitSendStart, WaitRecvStart, WaitSendData, WaitRecvData } m_state;
 
-    static const int AllgatherTag = 0xf00d0000;
+    static const int AllgatherTag = 0xf0010000;
 
   public:
     AllgatherFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink, ProtocolAPI* );
+            Info* info, SST::Link*& progressLink, ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
@@ -40,6 +40,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
   private:
 
     SST::Link*&         m_toProgressLink;
+    SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
     GatherEnterEvent*   m_event;
     bool                m_pending;
@@ -78,6 +79,8 @@ class AllgatherFuncSM :  public FunctionSMInterface
     int                 m_rank; 
     int                 m_size; 
     unsigned int        m_currentStage;
+    int                 m_delay;
+    bool                m_test;
 
     void initIoVec(std::vector<CtrlMsg::IoVec>& ioVec,
                                     int startChunk, int numChunks);
