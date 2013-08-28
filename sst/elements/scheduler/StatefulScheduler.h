@@ -27,11 +27,11 @@ namespace SST {
         class SchedChange{
             protected:
                 unsigned long time;
-                SchedChange* partner;
 
             public:
                 bool isEnd;
                 Job* j;
+                SchedChange* partner;
 
                 //need to implement some sort of comparison function for SchedChange
 
@@ -49,7 +49,7 @@ namespace SST {
                 char* toString();
                 void print();
                 SchedChange(unsigned long intime, Job* inj, bool end, SchedChange* inpartner = NULL);
-
+                SchedChange(SchedChange* insc);
         };
 
         class SCComparator {
@@ -97,6 +97,8 @@ namespace SST {
                     heart -> done(); 
                 }
                 void removeJob(Job* j, unsigned long time);
+                StatefulScheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun);
+
 
                 class JobComparator : public std::binary_function<Job*,Job*,bool> {
                     public:
@@ -111,10 +113,10 @@ namespace SST {
                 };
 
                 //MANAGERS:******************************************************
-                class Manager{
-                    protected:
-                        StatefulScheduler* scheduler;
+                class Manager {
                     public:
+                        StatefulScheduler* scheduler;
+                        JobComparator* origcomp;
                         virtual void arrival(Job* j, unsigned long time) = 0;
                         virtual void start(Job* j, unsigned long time) = 0;
                         virtual void tryToStart(unsigned long time) = 0;
@@ -126,6 +128,7 @@ namespace SST {
                         virtual void removeJob(Job* j, unsigned long time) = 0;
                         virtual std::string getString() = 0;
                         void compress(unsigned long time) ;
+                        virtual Manager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun) = 0;
                 };
 
                 class ConservativeManager : public Manager{
@@ -150,6 +153,10 @@ namespace SST {
                         void reset() { }
                         void done() { }
                         std::string getString();
+                        Manager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun) 
+                        { 
+                            return new ConservativeManager(scheduler); 
+                        }
                 };
 
                 class PrioritizeCompressionManager : public Manager{
@@ -159,11 +166,14 @@ namespace SST {
                         int* numSBF;
                     public:
                         PrioritizeCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes);
+                        PrioritizeCompressionManager(PrioritizeCompressionManager* inmanager, std::set<Job*, JobComparator>* inbackfill);
                         void reset();
-                        void arrival(Job* j, unsigned long time) {
+                        void arrival(Job* j, unsigned long time) 
+                        {
                             backfill -> insert(j);
                         }
-                        void start(Job *j, unsigned long time) {
+                        void start(Job *j, unsigned long time) 
+                        {
                             backfill -> erase(j);
                         }
                         void printPlan();
@@ -173,6 +183,7 @@ namespace SST {
                         void removeJob(Job* j, unsigned long time);
                         void onTimeFinish(Job* j, unsigned long time);
                         std::string getString();
+                        PrioritizeCompressionManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
                 };
 
                 class DelayedCompressionManager : public Manager {
@@ -180,9 +191,11 @@ namespace SST {
                         std::set<Job*, JobComparator>* backfill;
                     public:
                         DelayedCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp);
+                        DelayedCompressionManager(DelayedCompressionManager* inmanager, std::set<Job*, JobComparator>* inbackfill);
                         void reset();
                         void arrival(Job* j, unsigned long time);
-                        void start(Job* j, unsigned long time){
+                        void start(Job* j, unsigned long time)
+                        {
                             backfill -> erase(j);
                         }
                         void tryToStart(unsigned long time);
@@ -193,6 +206,7 @@ namespace SST {
                         void removeJob(Job* j, unsigned long time);
                         void onTimeFinish(Job* j, unsigned long time);
                         std::string getString();
+                        DelayedCompressionManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
                     private:
                         int results;
                 };
@@ -205,6 +219,7 @@ namespace SST {
                         int bftimes;
                     public:
                         EvenLessManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes);
+                        EvenLessManager(EvenLessManager* inmanager, std::set<Job*, JobComparator>* inbackfill);
                         void deepCopy(std::set<SchedChange*, SCComparator> *from, std::set<SchedChange*, SCComparator> *to, std::map<Job*, SchedChange*, JobComparator> *toJ);
                         void backfillfunc(unsigned long time);
                         void arrival(Job* j, unsigned long time);
@@ -218,18 +233,21 @@ namespace SST {
                         void removeJob(Job* j, unsigned long time);
                         void reset();
                         std::string getString();
+                        EvenLessManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
                     private:
                         int results;
                 };
                 //MANAGERS OVER***************************************************************
 
                 std::map<Job*, SchedChange*, JobComparator>* jobToEvents;
+                JobComparator* origcomp;
 
                 StatefulScheduler(int numprocs, JobComparator* comp, bool dummy);
                 StatefulScheduler(int numprocs, JobComparator* comp, int fillTimes);
                 StatefulScheduler(int numprocs, JobComparator* comp);
                 StatefulScheduler(int numprocs, JobComparator* comp, int fillTimes, bool dummy);
                 StatefulScheduler(JobComparator* comp);
+                StatefulScheduler(StatefulScheduler* insched, std::set<SchedChange*, SCComparator>* inestSched, Manager* inheart, std::map<Job*, SchedChange*, StatefulScheduler::JobComparator>* inJobToEvents);
 
             protected:
                 Manager *heart;

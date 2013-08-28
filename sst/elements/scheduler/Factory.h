@@ -30,12 +30,15 @@ namespace SST {
         class Machine;
         class Scheduler;
         class Allocator;
+        class FST;
 
         class Factory{
             public:
+                Factory(); //only sets up the output class
                 Scheduler* getScheduler(SST::Component::Params_t& params, int numProcs);
                 Machine* getMachine(SST::Component::Params_t& params, int numProcs, schedComponent* sc);
                 Allocator* getAllocator(SST::Component::Params_t& params, Machine* m);
+                int getFST(SST::Component::Params_t& params);
             private:
                 std::vector<std::string>* parseparams(std::string inparam);
 
@@ -72,6 +75,11 @@ namespace SST {
                     SORTEDFREELIST = 12,
                     CONSTRAINT = 13,
                 };
+                enum FSTType{
+                    NONE = 0,
+                    STRICT = 1,
+                    RELAXED = 2,
+                };
 
                 struct schedTableEntry{
                     SchedulerType val;
@@ -86,16 +94,24 @@ namespace SST {
                     std::string name;
                 };
 
+                struct FSTTableEntry{
+                    FSTType val;
+                    std::string name;
+                };
+
                 static const schedTableEntry schedTable[6];
                 static const machTableEntry machTable[2];
                 static const allocTableEntry allocTable[14];
+                static const FSTTableEntry FSTTable[3];
 
                 SchedulerType schedulername(std::string inparam);
                 MachineType machinename(std::string inparam);
                 AllocatorType allocatorname(std::string inparam);
+                FSTType FSTname(std::string inparam);
                 static const int numSchedTableEntries;
                 static const int numAllocTableEntries;
                 static const int numMachTableEntries;
+                static const int numFSTTableEntries;
         };
 
     }

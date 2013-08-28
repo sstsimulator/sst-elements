@@ -24,6 +24,7 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 #define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
 #define ABS(X) ((X) >= 0 ? (X) : (-(X)))
@@ -37,6 +38,7 @@ using namespace SST::Scheduler;
 
 MeshLocation::MeshLocation(int X, int Y, int Z) 
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     x = X;
     y = Y;
     z = Z;
@@ -44,6 +46,7 @@ MeshLocation::MeshLocation(int X, int Y, int Z)
 
 MeshLocation::MeshLocation(MeshLocation* in)
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     //copy constructor
     x = in -> x;
     y = in -> y;
@@ -76,7 +79,8 @@ bool MeshLocation::equals(MeshLocation* other) {
 }
 
 void MeshLocation::print() {
-    printf("(%d,%d,%d)\n",x,y,z);
+    //printf("(%d,%d,%d)\n",x,y,z);
+    schedout.output("(%d,%d,%d)\n", x, y, z);
 }
 
 
@@ -104,6 +108,7 @@ MeshAllocInfo::MeshAllocInfo(Job* j) : AllocInfo(j)
         processors -> push_back(NULL);
     }
 }
+
 MeshAllocInfo::~MeshAllocInfo()
 {
     /*
@@ -123,9 +128,9 @@ std::string MeshAllocInfo::getProcList(Machine* m)
 {
     std::string ret="";
     MachineMesh* mesh = (MachineMesh*) m;
-    if (NULL == m) {
-        error("MeshAllocInfo requires Mesh machine");
-    }
+    //if (NULL == m) {
+    //    error("MeshAllocInfo requires Mesh machine");
+    //}
     for (std::vector<MeshLocation*>::iterator ml = processors -> begin(); ml != processors->end(); ++ml) {
         ret += (*ml) -> x + mesh -> getXDim() * (*ml) -> y + mesh -> getXDim() * mesh -> getYDim()*(*ml) -> z + ",";
     }

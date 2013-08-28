@@ -30,10 +30,10 @@
 #include "MachineMesh.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
 
-#define DEBUG true
 
 using namespace SST::Scheduler;
 using namespace std;
@@ -43,8 +43,9 @@ OctetMBSAllocator::OctetMBSAllocator(MachineMesh* m, int x, int y, int z) : MBSA
     //we don't do anything special in construction
 
     //create the starting blocks
+    schedout.debug(CALL_INFO, 1, 0, "Initializing OctetMBSAllocator\n");
     initialize(new MeshLocation(x,y,z), new MeshLocation(0,0,0));
-    if (DEBUG) printFBR("Post Initialize:");
+    //if (DEBUG) printFBR("Post Initialize:");
 }
 
 string OctetMBSAllocator::getSetupInfo(bool comment)
@@ -61,11 +62,12 @@ string OctetMBSAllocator::getSetupInfo(bool comment)
 OctetMBSAllocator::OctetMBSAllocator(vector<string>* params, Machine *mach) : MBSAllocator(mach)
 {
     //create the starting blocks
+    schedout.debug(CALL_INFO, 1, 0, "Initializing OctetMBSAllocator\n");
     initialize(
                new MeshLocation(meshMachine -> getXDim(),meshMachine -> getYDim(),meshMachine -> getZDim()), 
                new MeshLocation(0,0,0));
 
-    if (DEBUG) printFBR("Post Initialize:");
+    //if (DEBUG) printFBR("Post Initialize:");
 }
 
 
@@ -121,18 +123,18 @@ set<Block*, Block>* OctetMBSAllocator::splitBlock(Block* b)
         MeshLocation* dim = new MeshLocation(sideLen,sideLen,sideLen);
 
         //Bottom layer of the cube
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z),dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y+sideLen, b -> location -> z),dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x+sideLen, b -> location -> y+sideLen, b -> location -> z), dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x+sideLen, b -> location -> y, b -> location -> z), dim,b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z), dim, b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y + sideLen, b -> location -> z),dim,b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y+sideLen, b -> location -> z), dim, b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y, b -> location -> z), dim, b));
         //Top layer of the cube
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z + sideLen),dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y + sideLen, b -> location -> z + sideLen),dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y + sideLen, b -> location -> z + sideLen), dim,b));
-        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y, b -> location -> z + sideLen), dim,b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y, b -> location -> z + sideLen),dim, b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x, b -> location -> y + sideLen, b -> location -> z + sideLen), dim, b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y + sideLen, b -> location -> z + sideLen), dim, b));
+        children -> insert(new Block(new MeshLocation(b -> location -> x + sideLen, b -> location -> y, b -> location -> z + sideLen), dim, b));
     }
 
-    if (DEBUG) printf("Made blocks for splitBlock(%s)\n", b -> toString().c_str());
+    //if (DEBUG) printf("Made blocks for splitBlock(%s)\n", b -> toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Made blocks for splitBlock(%s)\n", b -> toString().c_str());
     return children;
-}
-
+} 

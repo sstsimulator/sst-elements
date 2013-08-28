@@ -28,6 +28,7 @@
 #include "FaultEvent.h"
 #include "JobKillEvent.h"
 #include "ObjectRetrievalEvent.h"
+#include "output.h"
 #include "misc.h"
 
 using namespace SST;
@@ -68,8 +69,9 @@ void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > 
         unsigned int upperLatencyBound = atoi(tokens.at(counter + 2).c_str());
 
         if (upperLatencyBound < lowerLatencyBound){
-            std::cerr << "nodeNum " << nodeNum << "'s fault delay upper bound is lower than its lower bound: " << tokens.at(counter) << ", " << tokens.at(counter + 1) << ", " << tokens.at(counter + 2) <<  std::endl;
-            error("Bad delay bounds");
+            //std::cerr << "nodeNum " << nodeNum << "'s fault delay upper bound is lower than its lower bound: " << tokens.at(counter) << ", " << tokens.at(counter + 1) << ", " << tokens.at(counter + 2) <<  std::endl;
+            //error("Bad delay bounds");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "nodeNum %d's fault delay upper bound is lower than its lower bound: %s, %s, %s\nBad delay bounds", nodeNum, tokens.at(counter).c_str(), tokens.at(counter + 1).c_str(), tokens.at(counter + 2).c_str());
         }
 
         FaultLatencyBounds -> insert(std::pair<std::string, std::pair<unsigned int, unsigned int> >(faultName, std::pair<unsigned int, unsigned int>(lowerLatencyBound, upperLatencyBound)));
@@ -81,6 +83,7 @@ void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > 
 nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
     Component(id), jobNum(-1) 
 {
+    schedout.init("", 8, ~0, Output::STDOUT);
 
     if (params.find("nodeNum") == params.end()) {
         _abort(event_test,"couldn't find the nodeNum param for this node\n");
@@ -118,8 +121,9 @@ nodeComponent::nodeComponent(ComponentId_t id, Params_t& params) :
     }
 
     if(!( (((int) ChildFaultLinks.size()) > 0) || Scheduler) ){
-        std::cerr << "Node number " << nodeNum << " has neither children nor a link to the scheduler." << std::endl;
-        error("Invalid node");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Node number %d has neither children nor a link to the scheduler.\nInvalid node", nodeNum);
+        //std::cerr << "Node number " << nodeNum << " has neither children nor a link to the scheduler." << std::endl;
+        //error("Invalid node");
     }
 
 
@@ -161,7 +165,8 @@ void nodeComponent::addLink(SST::Link * link, enum linkTypes type){
 
 void nodeComponent::rmLink(SST::Link * link, enum linkTypes type)
 {
-    internal_error("Can't remove links just yet\n");
+    schedout.fatal(CALL_INFO, 1, 0, 0, "Can't remove links just yet\n");
+    //internal_error("Can't remove links just yet\n");
 }
 
 
@@ -321,7 +326,8 @@ void nodeComponent::handleEvent(Event *ev) {
             jobNum = event -> jobNum;
             SelfLink -> send(event -> time, event); 
         } else {
-            internal_error("Error?! Already running a job, but given a new one!\n");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Error?! Already running a job, but given a new one!\n");
+            //internal_error("Error?! Already running a job, but given a new one!\n");
         }
     } else if(dynamic_cast<FaultEvent*>(ev)){
 
@@ -331,9 +337,10 @@ void nodeComponent::handleEvent(Event *ev) {
         handleJobKillEvent(dynamic_cast<JobKillEvent*>(ev));
         delete ev;
     } else {
-        char errorMessage[1024];
-        snprintf(errorMessage, 1023,"Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
-        internal_error(errorMessage);
+        //char errorMessage[1024];
+        //snprintf(errorMessage, 1023,"Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
+        //internal_error(errorMessage);
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Error! Bad Event Type %s\n", typeid( *ev ).name());
     }
 }
 
@@ -351,7 +358,8 @@ void nodeComponent::handleSelfEvent(Event *ev)
             Scheduler -> send(ec); 
             jobNum = -1;
         } else {
-            internal_error("Error!! We are not running this job we're supposed to finish!\n");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Error!! We are not running this job we're supposed to finish!\n");
+            //internal_error("Error!! We are not running this job we're supposed to finish!\n");
         }
         delete ev;
     } else if (dynamic_cast<FaultEvent*>(ev)) {
@@ -372,9 +380,10 @@ void nodeComponent::handleSelfEvent(Event *ev)
             }
         }
     } else {
-        char errorMessage[1024];
-        snprintf(errorMessage, 1023, "Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
-        internal_error(errorMessage);
+        //char errorMessage[1024];
+        //snprintf(errorMessage, 1023, "Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
+        //internal_error(errorMessage);
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Error! Bad Event Type %s\n", typeid( *ev ).name());
     }
 }
 
@@ -398,7 +407,8 @@ SimTime_t genexp(double lambda)
 void nodeComponent::sendNextFault(std::string faultType)
 {
     if (Faults.find( faultType.c_str() ) == Faults.end()) {
-        internal_error("Error, recieved a fault with a type that is unknown.\n");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Error, recieved a fault with a type that is unknown.\n");
+        //internal_error("Error, recieved a fault with a type that is unknown.\n");
     }
 
     uint32_t lambdaScale = 86400;     // lambda scaled from seconds to days

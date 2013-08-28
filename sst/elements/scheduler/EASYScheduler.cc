@@ -28,11 +28,10 @@
 #include "Job.h"
 #include "Machine.h"
 #include "misc.h"
+#include "output.h"
 
 using namespace std;
 using namespace SST::Scheduler;
-
-#define DEBUG false
 
 const EASYScheduler::compTableEntry EASYScheduler::compTable[6] = {
     {FIFO, "fifo"},
@@ -47,6 +46,7 @@ const int EASYScheduler::numCompTableEntries = 6;
 
 EASYScheduler::EASYScheduler(JobComparator* comp) 
 { 
+    schedout.init("", 10, 0, Output::STDOUT);
     this -> comp = comp;
     toRun = new set<Job*, JobComparator, std::allocator<Job*> >(*comp);
     RunningInfo* RIComp = new RunningInfo();
@@ -56,6 +56,18 @@ EASYScheduler::EASYScheduler(JobComparator* comp)
     prevFirstJobNum = -1;
     guaranteedStart = 0;
     lastGuarantee = 0;
+}
+
+EASYScheduler::EASYScheduler(EASYScheduler* insched, std::set<Job*, JobComparator>* newtoRun, std::multiset<RunningInfo*, RunningInfo>* newrunning)
+{ 
+    schedout.init("", 8, 0, Output::STDOUT);
+    comp = new JobComparator(insched -> comp);
+    toRun = newtoRun;
+    running = newrunning;
+    compSetupInfo = comp -> toString();
+    prevFirstJobNum = insched -> prevFirstJobNum;
+    guaranteedStart = insched -> guaranteedStart;
+    lastGuarantee = insched -> lastGuarantee;
 }
 
 void usage();
@@ -75,9 +87,7 @@ string EASYScheduler::getSetupInfo(bool comment)
 //tryToStart should be called after each job arrives.
 void EASYScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) 
 {
-    if (DEBUG) {
-        printf("%ld: Job #%ld arrives\n", time, j -> getJobNum());
-    }
+    schedout.debug(CALL_INFO, 7, 0, "%ld: Job #%ld arrives\n", time, j -> getJobNum());
     toRun -> insert(j);
 
 
@@ -91,7 +101,7 @@ void EASYScheduler::jobArrives(Job* j, unsigned long time, Machine* mach)
 //Remove j from the list of running jobs and update start.
 void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
 {
-    if (DEBUG) printf("%ld: Job #%ld completes\n", time, j -> getJobNum());
+    schedout.debug(CALL_INFO, 7, 0, "%ld: Job #%ld completes\n", time, j -> getJobNum());
     multiset<RunningInfo*, RunningInfo>::iterator it = running -> begin();
     bool success = false;
     while (!success && it != running -> end()) {  
@@ -99,12 +109,11 @@ void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
             delete *it;
             running -> erase(it);
             success = true;
-            break;    // iterating the iterator after it's erased can crash on Macs, let's not do that.
+            break;    
         }
         it++;
     }
-    if (!success)
-        error("Could not find finishing job in running list");
+    if (!success) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find finishing job in running list\n%s\n", j -> toString().c_str());
     giveGuarantee(time, mach);
 }
 
@@ -117,6 +126,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
                                      Machine* mach,
                                      Statistics* stats) 
 {
+    schedout.debug(CALL_INFO, 10, 0, "trying to start at %lu\n", time);
     if (!running -> empty() && (*(running -> begin())) -> estComp == time) {
         return NULL;  //don't backfill if another job is about to finish
     }
@@ -129,9 +139,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
     AllocInfo* allocInfo = NULL;
     set<Job*, JobComparator>::iterator job = toRun -> begin();
     if (time > guaranteedStart) {
-        char errorstring[55];
-        sprintf(errorstring, "Failed to start job #%ld at guaranteed time (time, guarantee) (%lu, %lu)", (*job)->getJobNum(), time, guaranteedStart);
-        error(errorstring);
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Failed to start job #%ld at guaranteed time \nTime: %lu Guarantee: %lu\n", (*job)->getJobNum(), time, guaranteedStart);
     }
     if (alloc -> canAllocate(*job)) {
         succeeded = true;
@@ -150,9 +158,10 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
         }
         if (!succeeded) job++;
     }
+
     //allocate job if found
     if (succeeded) {
-        if (DEBUG) printf("%ld: %s starts\n", time, (*job) -> toString().c_str());
+        schedout.debug(CALL_INFO, 7, 0, "%ld: %s starts\n", time, (*job) -> toString().c_str());
         if (allocInfo == NULL) allocInfo = alloc -> allocate(*job);
         RunningInfo* started = new RunningInfo();
         started -> jobNum = (*job) -> getJobNum();
@@ -160,21 +169,20 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
         started -> estComp = time + (*job) -> getEstimatedRunningTime();
         Job* temp = *job;
         toRun -> erase(job); //remove the job from toRun list
-        //pair<long, Job*> temp = pair<long, Job*>(time + (*job)->getEstimatedRunningTime(),*job);
         multiset<RunningInfo*, RunningInfo>::iterator justinserted = running -> insert(started); //add to running list       
         temp -> start(time, mach, allocInfo, stats);
-        if (first) {//update the guarantee if starting the first job
+
+        if (first) { //update the guarantee if starting the first job
             giveGuarantee(time, mach);      
         }
-        if (DEBUG) {
-            multiset<RunningInfo*, RunningInfo>::iterator dit = running -> begin();
-            printf("Currently running jobs: ");
-            while(dit != running -> end()) {
-                printf("%ld ", (*dit) -> jobNum);
-                ++dit;
-            }
-            printf("\n");
+
+        multiset<RunningInfo*, RunningInfo>::iterator dit = running -> begin();
+        schedout.debug(CALL_INFO, 10, 0, "Currently running jobs: ");
+        while(dit != running -> end()) {
+            schedout.debug(CALL_INFO, 10, 0, "%ld (%ld)", (*dit) -> jobNum, (*dit) -> estComp);
+            ++dit;
         }
+        schedout.debug(CALL_INFO, 10, 0, "\n");
         return allocInfo;
     }
     return NULL;
@@ -183,22 +191,20 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
 void EASYScheduler::reset() 
 {
     toRun -> clear();
+    running -> clear();
 }
 
 //gives a guaranteed start time for a job.  The first job in the queue cannot
 //be delayed past this guarantee
 void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
 {
-    if (DEBUG) {
-        printf("%ld: giveGuarantee ( ", time);
-        set<Job*, JobComparator>::iterator it2 = toRun -> begin();
-        while (it2 != toRun -> end()) {
-            printf("%ld ", (*it2) -> getJobNum());
-            ++it2;
-        }
-        printf(")\n");
+    schedout.debug(CALL_INFO, 10, 0, "%ld: giveGuarantee ( ", time);
+    set<Job*, JobComparator>::iterator it2 = toRun -> begin();
+    while (it2 != toRun -> end()) {
+        schedout.debug(CALL_INFO, 10, 0, "%ld ", (*it2) -> getJobNum());
+        ++it2;
     }
-
+    schedout.debug(CALL_INFO, 10, 0, ")\n");
 
     if(toRun -> empty())
         return;
@@ -228,37 +234,45 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
     }
     if (succeeded)
     {
-        if (DEBUG)
-            printf("%ld: Giving %s guarantee of time %ld\n", time, (*firstJob) -> toString().c_str(), guaranteedStart);
+        schedout.debug(CALL_INFO, 7, 0, "%ld: Giving %s guarantee of time %ld\n", time, (*firstJob) -> toString().c_str(), guaranteedStart);
         if ((*firstJob) -> getJobNum() == prevFirstJobNum && lastGuarantee + 1 < guaranteedStart && lastGuarantee > 0) {
-            std::cerr << "last guarantee: " << lastGuarantee << " new guarantee " << guaranteedStart << std::endl;
-            error("EASY scheduler gave new guarantee worse than previous\n");
+            schedout.output("EASY scheduler gave new guarantee worse than previous\n");
+            schedout.output("Time: %lu\n", time);
+            schedout.output("Running: ");
+            for (multiset<RunningInfo*, RunningInfo>::iterator it3 = running -> begin(); it3 != running -> end(); it3++) {
+                schedout.output("%ld %d %ld \n", (*it3) -> jobNum, (*it3) -> numProcs, (*it3) -> estComp);
+            }
+            schedout.output("toRun: ");
+            for (set<Job*, JobComparator>::iterator it3 = toRun->begin(); it3 != toRun -> end(); it3++) {
+                schedout.output("%ld ", (*it3) -> getJobNum());
+            }
+            schedout.output("\n");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "last guarantee: %ld new guarantee %ld\n EASY scheduler gave new guarantee worse than previous\nFor %s", lastGuarantee, guaranteedStart, (*firstJob)->toString().c_str()); 
+
         }
         prevFirstJobNum = (*firstJob) -> getJobNum();
     } else {
-        char errorstring[70];
-        sprintf(errorstring, "EASY unable to make reservation for first job (%ld)",(*firstJob)->getJobNum());
-        error(errorstring); 
+        schedout.fatal(CALL_INFO, 1, 0, 0, "EASY unable to make reservation for first job (%ld)",(*firstJob)->getJobNum());
     }
 }
 
+//returns if j would delay the first job if it started now
 AllocInfo* EASYScheduler::doesntDisturbFirst(Allocator* alloc, Job* j, Machine* mach, unsigned long time)
 { 
-    //returns if j would delay the first job by starting now
     if (!alloc->canAllocate(j)) return NULL;
 
     if (time + j -> getEstimatedRunningTime() <= guaranteedStart)
-        return alloc -> allocate( j );
+        return alloc -> allocate (j);
 
     int avail = mach -> getNumFreeProcessors();
     multiset<RunningInfo*, RunningInfo>::iterator it  = running -> begin();
     while (it != running -> end() && (*it) -> estComp <= guaranteedStart) {
-        avail += (*it)->numProcs;
+        avail += (*it) -> numProcs;
         it++;
     }
     set<Job*, JobComparator>::iterator tempit = toRun -> begin();
-    if (avail  - j-> getProcsNeeded() >= (*tempit) -> getProcsNeeded()) {
-        return alloc->allocate( j );
+    if (avail  - j -> getProcsNeeded() >= (*tempit) -> getProcsNeeded()) {
+        return alloc -> allocate (j);
     }
 
     //if we made it this far it disturbs the first job
@@ -287,7 +301,42 @@ EASYScheduler::JobComparator* EASYScheduler::JobComparator::Make(string typeName
     return NULL;
 }
 
-void internal_error(string mesg);
+//for FST, creates an exact copy of the scheduler if running and/or toRun are
+//given. inrunning and intoRun contain (deep) copies of the jobs in EASYScheduler's running and
+//toRun.  We don't want to mess these jobs up for our simulation, so the copy
+//we return will replace all our pointers with pointers to the given deep copies.
+//For the case of the EASY scheduler, running does not store a pointer to the
+//job, so we ignore the running jobs and just deep copy it manually
+
+EASYScheduler* EASYScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job*>* intoRun)
+{
+    //we'll pass these versions to the next scheduler
+    set<Job*, JobComparator, std::allocator<Job*> >* newtoRun = new set<Job*, JobComparator, std::allocator<Job*> >(*comp);
+
+    RunningInfo* RIComp = new RunningInfo();
+    multiset<RunningInfo*, RunningInfo>* newrunning = new multiset<RunningInfo*, RunningInfo>(*RIComp); 
+    delete RIComp;
+
+    //copy running
+    for (multiset<RunningInfo*, RunningInfo>::iterator it = running -> begin(); it != running -> end(); it++) {
+        newrunning -> insert(new RunningInfo(*it));
+    }
+
+    //replace pointers in toRun
+    for (set<Job*, JobComparator, std::allocator<Job*> >::iterator it = toRun -> begin(); it != toRun -> end(); it++) {
+        bool found = false;
+        for (vector<Job*>::iterator it2 = intoRun -> begin(); !found && it2 != intoRun -> end(); it2++) {
+            if ((*it2) -> getJobNum() == (*it) -> getJobNum()) {
+                newtoRun -> insert(*it2);
+                found = true;
+            }
+        }
+        if (!found) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find deep copy for %s\nwhen copying EASYScheduler for FST\n", (*it) -> toString().c_str());
+    } 
+
+    //call the constructor and return
+    return new EASYScheduler(this, newtoRun, newrunning); 
+}
 
 //for this to work correctly, it returns the reverse of what it would
 //in the comparators for the PQscheduler (because this uses sets and maps
@@ -376,7 +425,8 @@ bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
         return j2 -> getJobNum() > j1 -> getJobNum();
 
     default:
-        internal_error("operator() called on JobComparator w/ invalid type");
+        //internal_error("operator() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "operator() called on JobComparator w/ invalid type");
         return true;  //never reach here
     }
 }
@@ -397,7 +447,7 @@ string EASYScheduler::JobComparator::toString()
     case BETTERFIT:
         return "BetterFitComparator";
     default:
-        internal_error("toString() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "toString() called on JobComparator w/ invalid type %d", (int)type);
     }
     return "";  //never reach here...
 }

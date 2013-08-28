@@ -46,11 +46,13 @@ namespace SST {
 
                 std::string compSetupInfo;
 
+
             public:
                 virtual ~PQScheduler() 
                 {
                     delete toRun;
                 }
+                PQScheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun);
 
                 class JobComparator : public std::binary_function<Job*,Job*,bool> {
                 public:
@@ -64,8 +66,10 @@ namespace SST {
                     JobComparator(ComparatorType type);
                     ComparatorType type;
                 };
+                JobComparator* origcomp;
 
                 PQScheduler(JobComparator* comp);
+                PQScheduler(PQScheduler* insched, std::priority_queue<Job*,std::vector<Job*>,JobComparator>* intoRun);
 
                 std::string getSetupInfo(bool comment);
 
@@ -78,6 +82,7 @@ namespace SST {
                 AllocInfo* tryToStart(Allocator* alloc, unsigned long time, Machine* mach, Statistics* stats);
 
                 void reset();
+
             protected:
                 std::priority_queue<Job*,std::vector<Job*>,JobComparator>* toRun;  //jobs waiting to run
         };

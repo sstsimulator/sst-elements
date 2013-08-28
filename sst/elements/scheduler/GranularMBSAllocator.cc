@@ -32,18 +32,19 @@
 #include "MachineMesh.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 #define DEBUG false
 
 using namespace SST::Scheduler;
 
-GranularMBSAllocator::GranularMBSAllocator(MachineMesh* m, int x, int y, int z)   : MBSAllocator(m)
+GranularMBSAllocator::GranularMBSAllocator(MachineMesh* m, int x, int y, int z) : MBSAllocator(m)
 {
-
+    schedout.init("", 8, 0, Output::STDOUT);
     //create the starting blocks
+    schedout.debug(CALL_INFO, 1, 0, "Initializing GranularMBSAllocator\n");
     initialize(new MeshLocation(x,y,z), new MeshLocation(0,0,0));
-    if (DEBUG) printFBR("Post Initialize:");
-
+    //if (DEBUG) printFBR("Post Initialize:");
 }
 
 std::string GranularMBSAllocator::getSetupInfo(bool comment)
@@ -65,13 +66,13 @@ GranularMBSAllocator::GranularMBSAllocator(std::vector<std::string>* params, Mac
                new MeshLocation(meshMachine -> getXDim(),meshMachine -> getYDim(),meshMachine -> getZDim()), 
                new MeshLocation(0,0,0));
 
-    if (DEBUG) printFBR("Post Initialize:");
+    //if (DEBUG) printFBR("Post Initialize:");
 
 }
 
 void GranularMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 {
-    //add all the 1x1x1's so the std::set of blocks
+    //add all the 1x1x1's to the std::set of blocks
     int rank = createRank(1);
     MeshLocation* sizeOneDim = new MeshLocation(1,1,1);
     for (int i = 0;i < dim -> x; i++){
@@ -86,7 +87,7 @@ void GranularMBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     while(mergeAll()){
     }
 
-    printf("\n");
+    //printf("\n");
 }
 
 /**
@@ -159,7 +160,8 @@ bool GranularMBSAllocator::mergeAll()
 Block* GranularMBSAllocator::nextBlock(int d, Block* first)
 {
     if (d < 0 || d > 2) {
-        error("Index out of bounds in nextBlock");
+        //error("Index out of bounds in nextBlock");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Index out of bounds in nextBlock");
     }
     if (d == 0) {
         return lookX(first);
@@ -170,7 +172,8 @@ Block* GranularMBSAllocator::nextBlock(int d, Block* first)
     if (d == 2) {
         return lookZ(first);
     }
-    error("nextBlock returning NULL!");
+    //error("nextBlock returning NULL!");
+    schedout.fatal(CALL_INFO, 1, 0, 0, "nextBlock returning NULL!");
     return NULL;
 }
 
@@ -202,24 +205,26 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
     Block* retVal;
 
     //Figure out where too look
-    //TODO: error checking?
     std::set<Block*, Block>* haystack = FBR -> at(distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(),needle -> size())));
 
     if (haystack -> count(needle) == 0){
-        error("nextBlock not currently in FBR");
+        //error("nextBlock not currently in FBR");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "nextBlock not currently in FBR");
         return NULL;
     }
 
     //Locate it, and return
     std::set<Block*, Block>::iterator it = haystack -> begin();
     if (it == haystack -> end()) {
-        error("no blocks of correct rank in FBR when searching for nextBlock");
+        //error("no blocks of correct rank in FBR when searching for nextBlock");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "no blocks of correct rank in FBR when searching for nextBlock");
         return NULL;
     }
     retVal = *it;
     while (!needle -> equals(retVal)) {
         if (it == haystack -> end()) {
-            error("nextBlock not found in correct rank of FBR");
+            //error("nextBlock not found in correct rank of FBR");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "nextBlock not found in correct rank of FBR");
             return NULL;
         }
         ++it;
@@ -228,10 +233,12 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
     return retVal;
 }
 
+//Merges two blocks
 Block* GranularMBSAllocator::mergeBlocks(Block* first, Block* second)
 {
     if (first -> equals(second) || !first -> dimension -> equals(second -> dimension)){
-        error("merging two idential blocks, or blocks of different sizes");
+        //error("merging two idential blocks, or blocks of different sizes");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "merging two idential blocks, or blocks of different sizes");
     }
     //do some std::setup
     MeshLocation* dimension = new MeshLocation(0,0,0);

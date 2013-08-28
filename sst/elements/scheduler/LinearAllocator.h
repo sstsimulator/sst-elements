@@ -29,6 +29,7 @@
 
 
 #include "Allocator.h"  //include parent
+#include "output.h"
 
 namespace SST {
     namespace Scheduler {
@@ -72,7 +73,8 @@ namespace SST {
                             }
                             void print()
                             {
-                                printf("(%d, %d, %d)\n", d[0], d[1], d[2]);
+                                //printf("(%d, %d, %d)\n", d[0], d[1], d[2]);
+                                schedout.output("(%d, %d, %d)\n", d[0], d[1], d[2]);
                             }
                         };
                         struct rotation{
@@ -99,7 +101,8 @@ namespace SST {
                             } 
                             void print()
                             {
-                                printf("[%2d %2d %2d\n %2d %2d %2d\n %2d %2d %2d]\n", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]);
+                                //printf("[%2d %2d %2d\n %2d %2d %2d\n %2d %2d %2d]\n", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]);
+                                schedout.output("[%2d %2d %2d\n %2d %2d %2d\n %2d %2d %2d]\n", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]);
                             }
                         };
                         int tripletoint(triple in) 
@@ -120,7 +123,8 @@ namespace SST {
                         }
 
                         void print(){
-                            printf("%d %d %d", xpos, ypos, zpos);
+                            //printf("%d %d %d", xpos, ypos, zpos);
+                            schedout.output("%d %d %d", xpos, ypos, zpos);
                         }
                 };
 

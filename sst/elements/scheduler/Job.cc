@@ -18,13 +18,16 @@
 #include "exceptions.h"
 #include "Machine.h"
 #include "misc.h"
+#include "output.h"
 #include "Statistics.h"
 
 using namespace SST::Scheduler;
 
 static long nextJobNum = 0;  //used setting jobNum
 
-Job::Job(std::istream& input, bool accurateEsts) {
+Job::Job(std::istream& input, bool accurateEsts) 
+{
+    schedout.init("", 8, 0, Output::STDOUT);
     std::string line;  
     getline(input, line);
 
@@ -34,17 +37,15 @@ Job::Job(std::istream& input, bool accurateEsts) {
     unsigned long estRunningTime;
     int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime, &procsNeeded,
                      &actualRunningTime, &estRunningTime);
-    if((num != 3) && (num != 4))
-        throw InputFormatException();
-    if(accurateEsts || (num == 3))
-        estRunningTime = actualRunningTime;
+    if ((num != 3) && (num != 4)) throw InputFormatException();
+    if (accurateEsts || (num == 3)) estRunningTime = actualRunningTime;
 
-    initialize(arrivalTime, procsNeeded, actualRunningTime,
-               estRunningTime);
+    initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
 }
 
 Job::Job(unsigned long arrivalTime, int procsNeeded, unsigned long actualRunningTime, unsigned long estRunningTime) 
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     initialize(arrivalTime, procsNeeded, actualRunningTime, estRunningTime);
 }
 
@@ -55,13 +56,27 @@ Job::Job(long arrivalTime, int procsNeeded, long actualRunningTime,
     this -> ID = ID;
 }
 
+//copy constructor
+Job::Job(Job* j)
+{
+    arrivalTime = j -> arrivalTime;
+    procsNeeded = j -> procsNeeded;
+    actualRunningTime = j -> actualRunningTime;
+    estRunningTime = j -> estRunningTime;
+    jobNum = j -> jobNum;
+    ID = j -> ID;
+    startTime = j -> startTime;
+    hasRun = j -> hasRun;
+    started = j -> started;
+}
+
+//Helper for constructors
 void Job::initialize(unsigned long arrivalTime, int procsNeeded,
                      unsigned long actualRunningTime, unsigned long estRunningTime) 
 {
-    //helper for constructors
 
     //make sure estimate is valid; workload log uses -1 for "no estimate"
-    if (estRunningTime < actualRunningTime || (unsigned long)-1 == estRunningTime ) {
+    if (estRunningTime < actualRunningTime || (unsigned long)-1 == estRunningTime) {
         estRunningTime = actualRunningTime;
     }
 
@@ -75,13 +90,23 @@ void Job::initialize(unsigned long arrivalTime, int procsNeeded,
     jobNum = nextJobNum;
     nextJobNum++;
     hasRun = false;
+    started = false;
 }
+
+//void Job::setFST(unsigned long FST) {
+//    jobFST = FST;
+//}
+//unsigned long Job::getFST() {
+//    return jobFST;
+//}
 
 unsigned long Job::getStartTime() 
 {
-    if ((unsigned long)-1 == startTime) {
+    /*
+    if (!started || (unsigned long)-1 == startTime) {
         throw InternalErrorException();
     }
+    */
     return startTime;
 }
 
@@ -93,21 +118,38 @@ std::string Job::toString()
     return retVal;
 }
 
+//starts a job
 void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
                 Statistics* stats) 
 {
-    //start the job
     if ((unsigned long)-1 != startTime) {
-        std::string mesg = "attempt to start an already-running job: ";
-        mesg += toString();
-        internal_error(mesg);
+        schedout.fatal(CALL_INFO, 1, 0, 0, "attempt to start an already-running job: %s\n", toString().c_str());
+        //std::string mesg = "attempt to start an already-running job: ";
+        //mesg += toString();
+        //internal_error(mesg);
     }
+    started = true; 
 
-    machine -> allocate(allocInfo);
     startTime = time;
+    machine -> allocate(allocInfo);
     stats -> jobStarts(allocInfo, time);
+}
 
-    //Event* retVal = new DepartureEvent(time+actualRunningTime, allocInfo);
-    //events -> push(retVal);
+void Job::reset()
+{
+    startTime = -1;
+    hasRun = false;
+    started = false;
+}
+
+void Job::startsAtTime(unsigned long time)
+{
+    startTime = time;
+    hasRun = true; 
+    started = true; 
+}
+
+bool Job::hasStarted() {
+    return started;
 }
 

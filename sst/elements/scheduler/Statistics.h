@@ -26,15 +26,16 @@
 namespace SST {
     namespace Scheduler {
 
+        class AllocInfo;
+        class Allocator;
+        class FST;
         class Machine;
         class Scheduler;
-        class Allocator;
-        class AllocInfo;
 
         class Statistics {
             public:
                 Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
-                           std::string baseName, char* logList);
+                           std::string baseName, char* logList, bool simulation, FST* incalcFST);
 
                 virtual ~Statistics();
 
@@ -93,6 +94,8 @@ namespace SST {
                 std::string fileHeader;  //commented out header for all log files
 
                 std::string outputDirectory;  //directory for all output files
+                bool simulation; //if we're running a fake copy of the schedule (for calculating FST for example), we don't want to actually write to the file
+                FST* calcFST;
         };
 
     }

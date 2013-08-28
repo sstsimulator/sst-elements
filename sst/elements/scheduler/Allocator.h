@@ -32,17 +32,17 @@ namespace SST {
                 virtual bool canAllocate(Job* j);
                 virtual bool canAllocate(Job* j, std::vector<MeshLocation*>* available);
 
-                virtual AllocInfo* allocate(Job* job) = 0;
                 //allocates job if possible
                 //returns information on the allocation or NULL if it wasn't possible
                 //(doesn't make allocation; merely returns info on possible allocation)
+                virtual AllocInfo* allocate(Job* job) = 0;
 
-                virtual void deallocate(AllocInfo* aInfo) { }
                 //in case Allocator wants to know when a job is deallocated
                 //added for MBS, which wants to update its data structures
+                virtual void deallocate(AllocInfo* aInfo) { }
 
-                virtual void done() { }
                 //called at end of simulation so allocator can report statistics
+                virtual void done() { }
 
             protected:
                 Machine* machine;

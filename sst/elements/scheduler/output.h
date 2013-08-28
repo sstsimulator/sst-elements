@@ -9,30 +9,19 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst_config.h"
-#include "AllocInfo.h"
+/*
+ * Holds the output class; makes it easier for other classes to reference
+ */
 
-#include <string>
+#ifndef SST_SCHEDULER_OUTPUT_H__
+#define SST_SCHEDULER_OUTPUT_H__
 
-#include "Job.h"
+#include "sst/core/serialization/element.h"
+#include <sst/core/output.h>
 
-using namespace SST::Scheduler;
-
-AllocInfo::AllocInfo(Job* job) 
-{
-    this -> job = job;
-    nodeIndices = new int[job -> getProcsNeeded()];
-    nodeIndices[0] = -1; // ConstraintAllocator puts allocation here
+namespace SST {
+    namespace Scheduler {
+        static Output schedout;
+    }
 }
-
-AllocInfo::~AllocInfo() 
-{
-    delete [] nodeIndices;
-}
-
-std::string AllocInfo::getProcList() 
-{
-    return "";
-}
-
-
+#endif

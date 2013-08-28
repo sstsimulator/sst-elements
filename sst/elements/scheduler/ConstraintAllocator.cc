@@ -27,6 +27,7 @@
 #include "Job.h"
 #include "Machine.h"
 #include "misc.h"
+#include "output.h"
 #include "SimpleMachine.h"
 
 #define DEBUG false
@@ -35,6 +36,7 @@ using namespace SST::Scheduler;
 
 ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile) 
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     machine = m;
     ConstraintsFileName = ConstFile;
     // read Dependencies
@@ -47,10 +49,12 @@ ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile,
     while (std::getline(DepsStream, curline)) { //for each line in file
         lineStream << curline;
         lineStream >> u; // line is u followed by elements of D[u]
-        if( DEBUG ) std::cout << "------------------Dependencies of " << u << std::endl;
+        //if( DEBUG ) std::cout << "------------------Dependencies of " << u << std::endl;
+        schedout.debug(CALL_INFO, 7, 0, "------------------Dependencies of %s", u.c_str());
         while (lineStream >> v) {
             D[u].insert(v);
-            if( DEBUG ) std::cout << v << " ";
+            //if( DEBUG ) std::cout << v << " ";
+            schedout.debug(CALL_INFO, 7, 0, "%s ", v.c_str());
         }
         if( DEBUG ) std::cout << std::endl;
         lineStream.clear(); //so we can write to it again
@@ -85,9 +89,11 @@ std::string ConstraintAllocator::getSetupInfo(bool comment)
     return com + "Constraint Allocator";
 }
 
+//allocates job if possible
+//returns info on the allocation or NULL if it wasn't possible
 AllocInfo* ConstraintAllocator::allocate(Job* job){
     AllocInfo * allocation = NULL;
-    
+
     boost::char_separator<char> space_separator( " " );
 
     std::string u;
@@ -98,35 +104,35 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
     //for now just read first line
 
     do{
-        if( allocation ){
+        if (allocation) {
             delete allocation;
-                // we had a failed allocation hanging around from last time
+            // we had a failed allocation hanging around from last time
         }
-        
+
         CurrentCluster.clear();
 
         getline(ConstraintsStream, curline);
         boost::tokenizer< boost::char_separator<char> > tok( curline, space_separator );
-        for( boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter ){
-            CurrentCluster.push_back( *iter );
+        for (boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
+            CurrentCluster.push_back(*iter);
         }
 
-        allocation = allocate( job, CurrentCluster );
-        if( -1 != allocation->nodeIndices[0] ){
+        allocation = allocate(job, CurrentCluster);
+        if (-1 != allocation -> nodeIndices[0]) {
             // the allocation succeeded, we're done!
             break;
         }
-    }while( !ConstraintsStream.eof() and ConstraintsStream.is_open() );
-        // yes, we check it the file is open *after* we read it.
-        // The original code relied on the fact that getline gives you an empty string if you read a file that isn't there.
+    }while(!ConstraintsStream.eof() and ConstraintsStream.is_open());
+    // yes, we check it the file is open *after* we read it.
+    // The original code relied on the fact that getline gives you an empty string if you read a file that isn't there.
 
     return allocation;
 }
 
-AllocInfo* ConstraintAllocator::allocate(Job* job, std::vector<std::string> Cluster){
-    //allocates job if possible
-    //returns information on the allocation or null if it wasn't possible
-
+//allocates job if possible
+//returns information on the allocation or null if it wasn't possible
+AllocInfo* ConstraintAllocator::allocate(Job* job, std::vector<std::string> Cluster)
+{
     if (!canAllocate(job)) return NULL;
 
     AllocInfo* retVal = new AllocInfo(job);
@@ -194,7 +200,7 @@ AllocInfo* ConstraintAllocator::allocate(Job* job, std::vector<std::string> Clus
         }
         if (!sepAllocExists) //Relax constraints by dropping a node from Cluster
             Cluster.pop_back();
-        }
+    }
 
     //TODO: split two clusters simultaneously
     //////////////////////////
@@ -207,15 +213,19 @@ AllocInfo* ConstraintAllocator::allocate(Job* job, std::vector<std::string> Clus
     // this is lower priority; current heuristic of 'use up Only[u] first'
     // is reasonable
     if (sepAllocExists) { // allocate to depend on u only
-        if( DEBUG ) std::cout << "Found Allocation Separating " << u << " for job "  << job -> getJobNum() << std::endl;
+        //if (DEBUG) std::cout << "Found Allocation Separating " << u << " for job "  << job -> getJobNum() << std::endl;
+        schedout.debug(CALL_INFO, 7, 0, "Found Allocation Separating %s for job %ld\n", u.c_str(), job -> getJobNum());
         i = 0;
-        while((i<Only[u].size()) && (Alloc.size() < numProcs))
+        while ((i < Only[u].size()) && (Alloc.size() < numProcs)) {
             Alloc.push_back(Only[u][i++]);
-        i=0;
-        while((i<FreeNodes.size()) && (Alloc.size() < numProcs))
+        }
+        i = 0;
+        while ((i < FreeNodes.size()) && (Alloc.size() < numProcs)) {
             Alloc.push_back(FreeNodes[i++]);
-        for(i=0; i<numProcs; i++) 
+        }
+        for (i = 0; i<numProcs; i++) {
             retVal -> nodeIndices[i] = Alloc[i];
+        }
     }
     else {
         //std::cout << "Failed to find separating allocation for job " << job.getJobNum() << std:endl;

@@ -23,9 +23,9 @@
 namespace SST {
     namespace Scheduler {
 
-        void warning(std::string mesg);         //report warning (program continues)
-        void error(std::string mesg);           //report user-caused error
-        void internal_error(std::string mesg);  //report invalid program state
+        //void warning(std::string mesg);         //report warning (program continues)
+        //void error(std::string mesg);           //report user-caused error
+        //void internal_error(std::string mesg);  //report invalid program state
 
     }
 }

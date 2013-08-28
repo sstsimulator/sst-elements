@@ -60,24 +60,31 @@ namespace SST {
                         bool operator()(Job*& j1, Job*& j2);
                         bool operator()(Job* const& j1, Job* const& j2);
                         std::string toString();
+                        JobComparator(JobComparator* incomp) { 
+                           type = incomp -> type;
+                        }
                     private:
                         JobComparator(ComparatorType type);
                         ComparatorType type;
                 };
-                EASYScheduler(JobComparator* comp);
 
-                virtual ~EASYScheduler() {
-                    delete toRun;
-                    delete running;
-                    delete comp;
-                }
 
                 class RunningInfo : public std::binary_function<RunningInfo*, RunningInfo*,bool> {
                     public:
                         long jobNum;
                         int numProcs;
                         unsigned long estComp;
-                        bool operator()(RunningInfo* r1, RunningInfo* r2){
+                        RunningInfo(RunningInfo* inRI) 
+                        {
+                            jobNum = inRI -> jobNum;
+                            numProcs = inRI -> numProcs;
+                            estComp = inRI -> estComp;
+                        }
+                        RunningInfo() 
+                        {
+                        } 
+                        bool operator()(RunningInfo* r1, RunningInfo* r2)
+                        {
                             if(r1->estComp != r2->estComp) {
                                 return r1->estComp < r2->estComp;
                             } else {
@@ -85,6 +92,15 @@ namespace SST {
                             }
                         }
                 };
+
+                virtual ~EASYScheduler() {
+                    delete toRun;
+                    delete running;
+                    delete comp;
+                }
+
+                EASYScheduler(JobComparator* comp);
+                EASYScheduler(EASYScheduler* insched, std::set<Job*, JobComparator>* newrunning, std::multiset<RunningInfo*, RunningInfo>* newtoRun);
 
                 std::string getSetupInfo(bool comment);
 
@@ -95,6 +111,10 @@ namespace SST {
                                       Statistics* stats);
 
                 void reset();
+
+                EASYScheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun);
+
+                
 
             protected:
                 //need to use a set instead of a priority queue to suppport iteration

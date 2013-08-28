@@ -37,25 +37,19 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
-
-#define DEBUG false
+#include "output.h"
 
 using namespace SST::Scheduler;
 
-/*
-   FirstFitAllocator::FirstFitAllocator(MachineMesh* m, string filename) : LinearAllocator(m) {
-//takes machine to be allocated and file giving linear order
-//(file format described at head of LinearAllocator)
-}
-*/
 FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* mach): LinearAllocator(params, mach) 
 {
-    if (DEBUG) {
-        printf("Constructing FirstFitAllocator\n");
-    }
+    schedout.init("", 8, 0, Output::STDOUT);
+    //if (DEBUG) printf("Constructing FirstFitAllocator\n");
+    schedout.debug(CALL_INFO, 1, 0, "Constructing FirstFitAllocator\n");
 
     if (dynamic_cast<MachineMesh*>(mach) == NULL) {
-        error("Linear allocators require a MachineMesh* machine");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a MachineMesh* machine");
+        //error("Linear allocators require a MachineMesh* machine");
     }
 }
 
@@ -70,14 +64,15 @@ std::string FirstFitAllocator::getSetupInfo(bool comment)
     return com + "Linear Allocator (First Fit)";
 }
 
+//allocates job if possible
+//returns information on the allocation or NULL if it wasn't possible
+//(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* FirstFitAllocator::allocate(Job* job) 
 {
-    if (DEBUG) {
-        printf("Allocating %s procs: ", job -> toString().c_str());
-    }
-    //allocates job if possible
-    //returns information on the allocation or NULL if it wasn't possible
-    //(doesn't make allocation; merely returns info on possible allocation)
+    //if (DEBUG) {
+    //    printf("Allocating %s procs: ", job -> toString().c_str());
+    //}
+    schedout.fatal(CALL_INFO, 1, 0, 0, "Allocating %s procs: ", job -> toString().c_str());
 
     if (!canAllocate(job)) {  //check if we have enough free processors
         return NULL;
@@ -93,9 +88,10 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
             MeshAllocInfo* retVal = new MeshAllocInfo(job);
             int j;
             for (j = 0; j<num; j++) {
-                if (DEBUG) {
-                    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine));
-                }
+                //if (DEBUG) {
+                //    printf("%d ", intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine));
+                //}
+                schedout.debug(CALL_INFO, 7, 0, "%d ", intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine));
                 retVal -> processors -> at(j) = intervals -> at(i) -> at(j);
                 retVal -> nodeIndices[j] = intervals -> at(i) -> at(j) -> toInt((MachineMesh*)machine);
             }
@@ -105,9 +101,10 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
             }
             intervals -> at(i) -> clear();
             delete intervals -> at(i);
-            if (DEBUG) {
-                printf("\n");
-            }
+            //if (DEBUG) {
+            //    printf("\n");
+            //}
+            schedout.debug(CALL_INFO, 7, 0, "\n");
             i++;
             while (i < (int)intervals -> size()) {
                 for (int j = 0; j < (int)intervals -> at(i) -> size(); j++) {
@@ -132,8 +129,9 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
     delete intervals;
 
     //no single interval is big enough; minimize the span
-    if (DEBUG) {
-        printf("No interval large enough, minimizing span\n");
-    }
+    //if (DEBUG) {
+    //    printf("No interval large enough, minimizing span\n");
+    //}
+    schedout.debug(CALL_INFO, 7, 0, "No interval large enough, minimizing span\n");
     return minSpanAllocate(job);
 }

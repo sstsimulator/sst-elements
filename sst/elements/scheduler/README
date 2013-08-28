@@ -211,7 +211,7 @@ should be followed first (sort) or whether the dimensions should be followed in
 the order they are given (nosort). If no argument is given the default is
 nosort.  The second argument, also optional, specifies whether the curve should
 be a Hilbert space-filling curve (hilbert) or a snake through the mesh (snake).
-If no argument is given the default is the Hilbert curve.  The Hilbert curve
+If no argument is given the default is the snake curve.  The Hilbert curve
 works in both two and three dimensions regardless of size, but it works best on
 a square or cube with side lengths of power 2.  In two dimensions, rectangular
 and different-length meshes work fairly well; there will only be a few
@@ -252,3 +252,33 @@ the number of needed nodes, and allocates those processors in order.  If no
 single interval is found that is large enough, it minimizes the span of
 processors returned.
 
+        Fair Start Time:
+
+The scheduler component can calculate the Fair Start Time for each job, which
+analyzes the scheduling policy in terms of social justice (in short, how much
+the start time of a job is affected by later arriving jobs).  A full summary
+can be found in:
+
+Avinab Rajbhandary, David P. Bunde, and Vitus J. Leung. "Variations of
+Conservative to improve fairness".
+
+G. Sabin and P. Sadayappan. "Unfairness metrics for space-sharing parallel job
+schedulers". In Proc. 11th Workshop Job Scheduling Strategies for Parallel
+Processing, number 3834 in LNCS, pages 238–256, 2005.
+
+There are two kinds of FST, strict and relaxed.  Strict FST runs a simulation
+of the scheduler when a given job arrives and makes note of when the job starts
+(note that no later jobs are considered in this simulation since they have not
+arrived yet).  Relaxed FST does the same, but does not allow the arriving job
+to be scheduled until all other jobs have already been scheduled.  The
+advantage of relaxed FST is that strict FST may give start times that are not
+feasible when considering the entire schedule.
+
+Thus, the three options for FST in the sdl are strict, relaxed, or none.  If
+there is no specified value the scheduler defaults to none.  If a value is
+specified, the FST for each job is stored in *.sim.time.  No overall
+calculations (i.e. average or maximum (actualStartTime - FST)) are performed.
+
+An example of the sdl file with strict FST calculations would be
+
+./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random strict > testsdl.sdl 

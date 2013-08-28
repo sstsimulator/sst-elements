@@ -34,23 +34,22 @@ namespace SST {
                     unsigned long estRunningTime);
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
                     long estRunningTime, std::string ID );
-
-                /*  ~Job(){
-                    std::cout << "destructing job " << ID << " ";
-                    if( hasRun ){
-                    std::cout << "which has run" << std::endl;
-                    }else{
-                    std::cout << "which has not run" << std::endl;
-                    }
-                    print_stacktrace();
-                    }*/
+                Job(Job* j);
 
                 ~Job(){}
 
-                unsigned long getArrivalTime() { return arrivalTime; }
                 unsigned long getStartTime();
+                unsigned long getArrivalTime() 
+                { 
+                    return arrivalTime; 
+                }
+                unsigned long getActualTime() 
+                { 
+                    return actualRunningTime; 
+                }
                 int getProcsNeeded() { return procsNeeded; }
                 long getJobNum() { return jobNum; }
+                void reset();
 
                 std::string * getID() {
                     if (0 == ID.length()) {
@@ -73,22 +72,25 @@ namespace SST {
                 void start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
                            Statistics* stats);
 
+                void setFST(unsigned long FST);
+                unsigned long getFST();
+                void startsAtTime(unsigned long time);
+                bool hasStarted();
+
             private:
                 unsigned long arrivalTime;        //when the job arrived
                 int procsNeeded;         //how many processors it uses
                 unsigned long actualRunningTime;  //how long it runs
                 unsigned long estRunningTime;     //user estimated running time
                 unsigned long startTime;	     //when the job started (-1 if not running)
+                //unsigned long jobFST;           //FST value for job
                 bool hasRun;
+                bool started;
 
                 long jobNum;             //ID number unique to this job
 
                 std::string ID;       // alternate ID not used by SST
 
-                unsigned long getActualTime() 
-                { 
-                    return actualRunningTime; 
-                }
 
                 //helper for constructors:
                 void initialize(unsigned long arrivalTime, int procsNeeded,

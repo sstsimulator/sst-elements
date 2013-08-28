@@ -27,19 +27,19 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
-
-#define DEBUG false
+#include "output.h"
 
 using namespace SST::Scheduler;
 
-
 SortedFreeListAllocator::SortedFreeListAllocator(std::vector<std::string>* params, Machine* mach) : LinearAllocator(params, mach)
 {
-    if (DEBUG) {
-        printf("Constructing SortedFreeListAllocator\n");
-    }
+    schedout.init("", 8, ~0, Output::STDOUT);
+    //if (DEBUG) {
+    //    printf("Constructing SortedFreeListAllocator\n");
+    //}
+    schedout.debug(CALL_INFO, 1, 0, "Constructing SortedFreeListAllocator\n");
     if (NULL == dynamic_cast<MachineMesh*>(mach)) {
-        error("Linear allocators require a mesh");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a mesh");
     }
 }
 
@@ -54,14 +54,16 @@ std::string SortedFreeListAllocator::getSetupInfo(bool comment)
     return com + "Linear Allocator (Sorted Free List)";
 }
 
+//allocates j if possible
+//returns information on the allocation or NULL if it wasn't possible
+//(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* SortedFreeListAllocator::allocate(Job* job) 
 {
-    //allocates j if possible
-    //returns information on the allocation or NULL if it wasn't possible
-    //(doesn't make allocation; merely returns info on possible allocation)
-    if (DEBUG) {
-        printf("Allocating %s \n", job -> toString().c_str());
-    }
+    //if (DEBUG) {
+    //    printf("Allocating %s \n", job -> toString().c_str());
+    //}
+
+    schedout.debug(CALL_INFO, 7, 0, "Allocating %s \n", job -> toString().c_str());
 
     if (!canAllocate(job)) {
         return NULL;

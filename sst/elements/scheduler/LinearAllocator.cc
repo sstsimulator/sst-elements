@@ -36,6 +36,7 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 #define DEBUG false
 #define XROTS(point1) point1
@@ -47,7 +48,6 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-
 //takes coordinate (x,y), offsets it by (xoff,yoff) where the offset is rotated
 //by rotate*90 degrees, and the offset may or may not be mirrored.  Used for
 //2D Hilbert curve generation
@@ -58,11 +58,12 @@ int LinearAllocator::MeshLocationOrdering::valtox(int x, int xoff, int y, int yo
     case 1: return x - mirror * yoff;
     case 2: return x - mirror * xoff;
     case 3: return x + mirror * yoff;
-    default: error("rotate value too large in LinearAllocator.cc:" + rotate);
+            //default: error("rotate value too large in LinearAllocator.cc:" + rotate);
+    default: schedout.fatal(CALL_INFO, 1, 0, 0, "rotate value too large in LinearAllocator.cc: %d", rotate);
              return 0;
     } 
-
 }
+
 int LinearAllocator::MeshLocationOrdering::valtoy(int x, int xoff, int y, int yoff, int rotate, int mirror)
 {
     switch (rotate) {
@@ -70,7 +71,8 @@ int LinearAllocator::MeshLocationOrdering::valtoy(int x, int xoff, int y, int yo
     case 1: return y - mirror * xoff;
     case 2: return y - mirror * yoff;
     case 3: return y + mirror * xoff;
-    default: error("rotate value too large in LinearAllocator.cc:" + rotate);
+            //default: error("rotate value too large in LinearAllocator.cc:" + rotate);
+    default: schedout.fatal(CALL_INFO, 1, 0, 0, "rotate value too large in LinearAllocator.cc: %d", rotate);
              return 0;
     } 
 }
@@ -244,7 +246,8 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
 LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool SORT = false, bool hilbert = true) 
 {
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
-    if (NULL == m) error("Linear Allocators Require Mesh Machine");
+    //if (NULL == m) error("Linear Allocators Require Mesh Machine");
+    if (NULL == m) schedout.fatal(CALL_INFO, 1, 0, 0, "Linear Allocators Require Mesh Machine");
 
     if (SORT) {
         set<int> dimordering;
@@ -315,7 +318,8 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
 
             while(curxd > 1 && curyd > 1) {
                 if ((curxd % 2 != 0 && 1 != curxd) || (curyd % 2 != 0 && 1 != curyd))
-                    error("Hilbert Curve requires dimensions to be powers of two currently");
+                    schedout.fatal(CALL_INFO, 1, 0, 0, "Hilbert Curve requires dimensions to be powers of two currently");
+                //error("Hilbert Curve requires dimensions to be powers of two currently");
 
                 //mark the four points appropriately
 
@@ -414,23 +418,39 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                     curxd /= 2;
                     curyd /= 2;
 
-                    if (DEBUG) {
-                        //print the current rankhings
-                        printf("\n");
-                        for(int y = ydimh - 1; y >= 0; y--) {
-                            for(int x = 0; x < xdimh; x++) {
-                                printf("%3d ", rankh[x + y * xdimh]);
-                                if((x+1) % curxd == 0)
-                                    printf("|");
+                    //print (debug) the current rankhings
+                    //printf("\n");
+                    schedout.debug(CALL_INFO, 4, 0, "\n");
+                    for(int y = ydimh - 1; y >= 0; y--) {
+                        for(int x = 0; x < xdimh; x++) {
+                            schedout.debug(CALL_INFO, 4, 0, "%3d ", rankh[x + y * xdimh]);
+                            if ((x + 1) % curxd == 0) schedout.debug(CALL_INFO, 4, 0, "|");
+                        }
+                        schedout.debug(CALL_INFO, 4, 0, "\n");
+                        if(y % curyd == 0) {
+                            for(int z = 0; z < 4 * xdimh + xdimh / curxd; z++) {
+                                schedout.debug(CALL_INFO, 4, 0, "-");
                             }
-                            printf("\n");
-                            if(y % curyd == 0) {
-                                for(int z = 0; z < 4 * xdimh + xdimh / curxd; z++)
-                                    printf("-");
-                                printf("\n");
-                            }
+                            schedout.debug(CALL_INFO, 4, 0, "\n");
                         }
                     }
+                    //if (DEBUG) {
+                    //    //print the current rankhings
+                    //    printf("\n");
+                    //    for(int y = ydimh - 1; y >= 0; y--) {
+                    //        for(int x = 0; x < xdimh; x++) {
+                    //            printf("%3d ", rankh[x + y * xdimh]);
+                    //            if((x+1) % curxd == 0)
+                    //                printf("|");
+                    //        }
+                    //        printf("\n");
+                    //        if(y % curyd == 0) {
+                    //            for(int z = 0; z < 4 * xdimh + xdimh / curxd; z++)
+                    //                printf("-");
+                    //            printf("\n");
+                    //        }
+                    //    }
+                    //}
                 }
             }
             delete [] rotate;
@@ -462,17 +482,14 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             delete [] exists;
             delete [] rankh;
 
-            if (DEBUG) {
-                //print rank
-                printf("\n");
-                for(int y = ydim - 1; y >= 0; y--) {
-                    for(int x = 0; x < xdim; x++) {
-                        printf("%3d ", rank[x + y * xdim]);
-                    }
-                    printf("\n");
+            //print rank
+            schedout.debug(CALL_INFO, 4, 0, "\n");
+            for(int y = ydim - 1; y >= 0; y--) {
+                for(int x = 0; x < xdim; x++) {
+                    schedout.debug(CALL_INFO, 4, 0, "%3d ", rank[x + y * xdim]);
                 }
+                schedout.debug(CALL_INFO, 4, 0, "\n");
             }
-            exit(0);
         } else { 
 
             //a 3D Hilbert curve. There are many ways to extend a Hilbert curve
@@ -485,7 +502,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             //difficult due to its mirrors and rotations, and does not give a
             //Hilbert curve when limited to a 2D mesh.
 
-            printf("making 3D Hilbert curve\n");
+            schedout.debug(CALL_INFO, 1, 0, "making 3D Hilbert curve\n");
 
             rank = new int[xdim * ydim * zdim];
 
@@ -577,32 +594,56 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             ydim = realydim;
             zdim = realzdim;
 
-            if (DEBUG) {
-                //print out the points we assigned by rank
-                //(can't really print out a 3D map like we did for 2D)
-                printf("resulting indices, in order:\n");
-                bool flag;
-                for (int rankin = 0; rankin < xdim * ydim * zdim; rankin++) {
-                    //find the point
-                    flag = false;
-                    for (int index = 0; index < xdim * ydim * zdim; index++) {
-                        if(rank[index] == rankin) {
-                            if (flag) {
-                                printf("error: double");
-                                exit(1);
-                            }
-                            printf("(%d,%d,%d),  ", index % xdim, (index % (xdim * ydim)) / xdim, index / (xdim * ydim));
-                            if ((rankin + 1) % xdim == 0) printf("\n");
+            //if (DEBUG) {
+            //    //print out the points we assigned by rank
+            //    //(can't really print out a 3D map like we did for 2D)
+            //    printf("resulting indices, in order:\n");
+            //    bool flag;
+            //    for (int rankin = 0; rankin < xdim * ydim * zdim; rankin++) {
+            //        //find the point
+            //        flag = false;
+            //        for (int index = 0; index < xdim * ydim * zdim; index++) {
+            //            if(rank[index] == rankin) {
+            //                if (flag) {
+            //                    printf("error: double");
+            //                    exit(1);
+            //                }
+            //                printf("(%d,%d,%d),  ", index % xdim, (index % (xdim * ydim)) / xdim, index / (xdim * ydim));
+            //                if ((rankin + 1) % xdim == 0) printf("\n");
 
-                            flag = true;
+            //                flag = true;
+            //            }
+            //        }
+            //        if (!flag) {
+            //            printf("error: %d not found", rankin);
+            //            exit(1);
+            //        }
+            //    } 
+            //}
+
+            //print out the points we assigned by rank
+            //(can't really print out a 3D map like we did for 2D)
+            schedout.debug(CALL_INFO, 4, 0, "resulting indices, in order:\n");
+            bool flag;
+            for (int rankin = 0; rankin < xdim * ydim * zdim; rankin++) {
+                //find the point
+                flag = false;
+                for (int index = 0; index < xdim * ydim * zdim; index++) {
+                    if(rank[index] == rankin) {
+                        if (flag) {
+                            schedout.fatal(CALL_INFO, 1, 0, 0, "error: double");
                         }
+                        schedout.debug(CALL_INFO, 4, 0, "(%d,%d,%d),  ", index % xdim, (index % (xdim * ydim)) / xdim, index / (xdim * ydim));
+                        if ((rankin + 1) % xdim == 0) schedout.debug(CALL_INFO, 4, 0, "\n");
+
+                        flag = true;
                     }
-                    if (!flag) {
-                        printf("error: %d not found", rankin);
-                        exit(1);
-                    }
-                } 
-            }
+                }
+                if (!flag) {
+                    schedout.fatal(CALL_INFO, 1, 0, 0, "error: %d not found", rankin);
+                }
+            } 
+
             //int* exists = new int[xdim * ydim * zdim];
             //for(int x = 0; x < xdim * ydim * zdim; x++)
             //    exists[x] = 0;
@@ -646,15 +687,14 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
     }
 }
 
+//returns the rank of a given location
+//have to mix which coordinate is which in case x was not smallest
 int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L) 
 {
-    //returns the rank of a given location
-    //have to mix which coordinate is which in case x was not smallest
     int coordinates[3];
     coordinates[xpos] = L->x;
     coordinates[ypos] = L->y;
     coordinates[zpos] = L->z;
-    //printf("returning %d", rank[coordinates[0] + coordinates[1] * xdim + coordinates[2] * xdim * ydim]);
     return rank[coordinates[0] + coordinates[1] * xdim + coordinates[2] * xdim * ydim];
 }
 
@@ -684,13 +724,15 @@ return new MeshLocation(x, y, z);
 }
 */
 
+//Takes in a set of parameters and passes them on to MeshLocationOrdering,
+//which will give us an ordering on the mesh.  This ordering is the returned.
 LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach) 
 {
-    //takes machine to be allocated and name of the file with ordering
-    //file format is as described in comment at top of this file
+    schedout.init("", 8, 0, Output::STDOUT);
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
-        error("Linear allocators require a MachineMesh* machine");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a MachineMesh* machine");
+        //error("Linear allocators require a MachineMesh* machine");
     }
 
     machine = m;
@@ -711,7 +753,7 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
         } else if ("snake" == params -> at (0)) {
             hilbert = false;
         } else {
-            error("Argument to Linear Allocator must be sort, nosort, hilbert, or snake:" + params -> at(0));
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Argument to Linear Allocator must be sort, nosort, hilbert, or snake:%s", params -> at(0).c_str());
         }
         break;
     case 2:
@@ -720,14 +762,14 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
         } else if ("nosort" == params -> at(0)) {
             sort = false;
         } else {
-            error("First argument to Linear Allocator must be sort or nosort:" + params -> at(0));
+            schedout.fatal(CALL_INFO, 1, 0, 0, "First argument to Linear Allocator must be sort or nosort:%s", params -> at(0).c_str());
         }
         if ("hilbert" == params -> at (1)) {
             hilbert = true;
         } else if ("snake" == params -> at (1)) {
             hilbert = false;
         } else {
-            error("Second argument to Linear Allocator must be hilbert or snake:" + params -> at(1));
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Second argument to Linear Allocator must be hilbert or snake:%s", params -> at(1).c_str());
         }
         break;
     }
@@ -736,8 +778,8 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
 
 //returns list of intervals of free processors
 //each interval represented by a list of its locations
-vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals() {
-
+vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals() 
+{
     set<MeshLocation*, MeshLocationOrdering>* avail = new set<MeshLocation*,MeshLocationOrdering>(*ordering);
     //add all from machine->freeProcessors() to avail
     vector<MeshLocation*>* machfree = ((MachineMesh*)machine) -> freeProcessors();
@@ -770,16 +812,25 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals() {
         delete curr;
     }
 
-    if (DEBUG) {
-        printf("getIntervals:");
-        for (vector<vector<MeshLocation*>*>::iterator ar = retVal -> begin(); ar != retVal -> end(); ar++) {
-            printf("Interval: ");
-            for (int x = 0; x < (int)(*ar) -> size(); x++) {
-                (*ar) -> at(x) -> print();
-                printf(" ");
-            }
-            printf("\n");
+    //if (DEBUG) {
+    //    printf("getIntervals:");
+    //    for (vector<vector<MeshLocation*>*>::iterator ar = retVal -> begin(); ar != retVal -> end(); ar++) {
+    //        printf("Interval: ");
+    //        for (int x = 0; x < (int)(*ar) -> size(); x++) {
+    //            (*ar) -> at(x) -> print();
+    //            printf(" ");
+    //        }
+    //        printf("\n");
+    //    }
+    //}
+    schedout.debug(CALL_INFO, 7, 0, "getIntervals:");
+    for (vector<vector<MeshLocation*>*>::iterator ar = retVal -> begin(); ar != retVal -> end(); ar++) {
+        schedout.debug(CALL_INFO, 7, 0, "Interval: ");
+        for (int x = 0; x < (int)(*ar) -> size(); x++) {
+            (*ar) -> at(x) -> print();
+            schedout.debug(CALL_INFO, 7, 0, " ");
         }
+        schedout.debug(CALL_INFO, 7, 0, "\n");
     }
     avail -> clear();
     machfree -> clear();
@@ -791,7 +842,6 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals() {
 
 //Version of allocate that just minimizes the span.
 AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
-
     vector<MeshLocation*>* avail = ((MachineMesh*)machine) -> freeProcessors();
     sort(avail -> begin(), avail -> end(), *ordering);
     int num = job -> getProcsNeeded();

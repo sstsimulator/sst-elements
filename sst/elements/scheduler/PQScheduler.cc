@@ -24,6 +24,7 @@
 #include "Allocator.h"
 #include "Job.h"
 #include "misc.h"
+#include "output.h"
 
 using namespace std;
 
@@ -43,9 +44,71 @@ const int PQScheduler::numCompTableEntries = 6;
 
 PQScheduler::PQScheduler(JobComparator* comp) 
 {
+    schedout.init("", 8, ~0, Output::STDOUT);
     toRun = new priority_queue<Job*, vector<Job*>, JobComparator>(*comp);
     compSetupInfo = comp -> toString();
+    origcomp = comp;
 }
+
+//constructor only used in copy()
+PQScheduler::PQScheduler(PQScheduler* insched, priority_queue<Job*,std::vector<Job*>,JobComparator>* intoRun) 
+{
+    schedout.init("", 8, ~0, Output::STDOUT);
+    toRun = intoRun;
+    compSetupInfo = insched -> compSetupInfo;
+    origcomp = insched -> origcomp;
+}
+
+//copy for FST
+//there is no running so we ignore it.
+//Have to deep copy toRun to match FST's pointers given in intoRun
+PQScheduler* PQScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job*>* intoRun)
+{
+    //the toRun with correct pointers for our new scheduler
+    priority_queue<Job*,std::vector<Job*>,JobComparator>* newtoRun = new priority_queue<Job*, vector<Job*>, JobComparator>(*origcomp);
+
+    //to copy toRun, we have to pop each element off individually, then add them to copyToRun. We must add them
+    //back to toRun as we pop them off copyToRun
+    priority_queue<Job*,std::vector<Job*>,JobComparator>* copyToRun = new priority_queue<Job*, vector<Job*>, JobComparator>(*origcomp); 
+    while(!toRun -> empty()) {
+        copyToRun -> push(toRun -> top());
+        toRun -> pop();
+    }
+
+    int notfound = 0;
+    while (!copyToRun -> empty()) {
+        bool found = false;
+        Job* it = copyToRun -> top();
+        toRun -> push(it); //add the element back to toRun
+        copyToRun -> pop();
+        for (vector<Job*>::iterator it2 = intoRun -> begin(); !found && it2 != intoRun -> end(); it2++) {
+            if ((*it2) -> getJobNum() == it -> getJobNum()) {
+                newtoRun -> push(*it2);
+                found = true;
+            }
+        }
+        if (!found) {
+            schedout.debug(CALL_INFO, 7, 0, "Cannot find %s in toRun\n", it -> toString().c_str());
+            notfound++;
+        }
+    }
+    //we can not find one element, as if the schedule is relaxed the
+    //scheduler will have the job we're calculating the FST for already in
+    //toRun.  However, FST won't tell the scheduler about the job until all
+    //other jobs are started.
+    if (notfound > 1) {
+        schedout.output("toRun:\n");
+        for (vector<Job*>::iterator it2 = intoRun -> begin(); it2 != intoRun -> end(); it2++) {
+            schedout.output("%s\n", (*it2) -> toString().c_str());
+        }
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find %d jobs when copying toRun for FST\n", notfound);
+    }
+    delete copyToRun;
+
+    //make the new scheduler
+    return new PQScheduler(this, newtoRun); 
+}
+
 
 void usage();
 
@@ -66,24 +129,27 @@ string PQScheduler::getSetupInfo(bool comment)
 void PQScheduler::jobArrives(Job* j, unsigned long time, Machine* mach) 
 {
     toRun -> push(j);
+    schedout.debug(CALL_INFO, 7, 0, "%s arrives\n", j -> toString().c_str());
 }
 
+//allows the scheduler to start a job if desired; time is current time
+//called after calls to jobArrives and jobFinishes
+//(either after each call or after each call occuring at same time)
+//returns first job to start, NULL if none
+//(if not NULL, should call tryToStart again)
 AllocInfo* PQScheduler::tryToStart(Allocator* alloc, unsigned long time,
                                    Machine* mach, Statistics* stats) 
 {
-    //allows the scheduler to start a job if desired; time is current time
-    //called after calls to jobArrives and jobFinishes
-    //(either after each call or after each call occuring at same time)
-    //returns first job to start, NULL if none
-    //(if not NULL, should call tryToStart again)
 
     if (0 == toRun -> size()) return NULL;
 
     AllocInfo* allocInfo = NULL;
     Job* job = toRun -> top();
+
     if (alloc -> canAllocate(job))  {
         allocInfo = alloc -> allocate(job);
     }
+
     if (NULL != allocInfo) {
         toRun -> pop();  //remove the job we just allocated
         job -> start(time, mach, allocInfo, stats);

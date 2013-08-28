@@ -29,7 +29,7 @@ namespace SST {
         class SimpleMachine : public Machine {
 
             public:
-                SimpleMachine(int procs, schedComponent* sc);  //takes number of processors
+                SimpleMachine(int procs, schedComponent* sc, bool);  //takes number of processors
 
                 virtual ~SimpleMachine() {}
 
@@ -50,6 +50,7 @@ namespace SST {
             private:
                 static const int debug = 0;  //whether to include debugging printouts
                 std::vector<int> freeNodes;       //indices of currently-free nodes
+                bool simulationmachine;
         };
 
     }

@@ -28,6 +28,7 @@
 #include "MachineMesh.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 #define MIN(a,b)  ((a)<(b)?(a):(b))
 #define DEBUG false
@@ -36,12 +37,13 @@
 using namespace SST::Scheduler;
 
 
+//this constructor doesn't call initialize() and is for derived classes
 MBSAllocator::MBSAllocator(Machine* mach)
 {
-    //this constructor doesn't call initialize() and is for derived classes
+    schedout.init("", 8, 0, Output::STDOUT);
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
-        error("MBS Allocator requires a mesh machine");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "MBS Allocator requires a mesh machine");
     }
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
@@ -51,21 +53,23 @@ MBSAllocator::MBSAllocator(Machine* mach)
 
 MBSAllocator::MBSAllocator(MachineMesh* m, int x, int y, int z)
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
     FBR = new std::vector<std::set<Block*,Block>*>();
     ordering = new std::vector<int>();
 
     //create the starting blocks
+    schedout.debug(CALL_INFO, 1, 0, "Initializing MBSAllocator:");
     initialize(new MeshLocation(x,y,z),new MeshLocation(0,0,0));
-    if (DEBUG) printFBR("Post Initialize:");
+    //if (DEBUG) printFBR("Post Initialize:");
 }
 
 MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
 { 
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
-        error("MBS Allocator requires a mesh machine");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "MBS Allocator requires a mesh machine");
     }
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
@@ -73,11 +77,11 @@ MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
     ordering = new std::vector<int>();
 
     //create the starting blocks
+    schedout.debug(CALL_INFO, 1, 0, "Initializing MBSAllocator:");
     initialize(
                new MeshLocation(m -> getXDim(),m -> getYDim(),m -> getZDim()), 
                new MeshLocation(0,0,0));
 
-    if (DEBUG) printFBR("Post Initialize:");
 }
 
 std::string MBSAllocator::getSetupInfo(bool comment)
@@ -103,7 +107,8 @@ std::string MBSAllocator::getParamHelp()
  */
 void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 {
-    if (DEBUG) printf("Initializing a %dx%dx%d region at %s\n", dim -> x, dim -> y, dim -> z, off -> toString().c_str());
+    //if (DEBUG) printf("Initializing a %dx%dx%d region at %s\n", dim -> x, dim -> y, dim -> z, off -> toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Initializing a %dx%dx%d region at %s\n", dim -> x, dim -> y, dim -> z, off -> toString().c_str());
 
     //Figure out the largest possible block possible
     int maxSize = (int) (log((double) MIN(dim -> x,dim -> y)) / log(2.0));
@@ -145,7 +150,6 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
  * If a rank already exists, it does not create a new rank,
  * it just returns the one already there
  */
-
 int MBSAllocator::createRank(int size)
 {
     std::vector<int>::iterator it = find(ordering -> begin(), ordering -> end(), size);
@@ -170,7 +174,8 @@ int MBSAllocator::createRank(int size)
     FBR -> insert(FBRit, new std::set<Block*, Block>(*BComp));
     delete BComp;
 
-    if (DEBUG) printf("Added a rank %d for size %d\n", i, size);
+    //if (DEBUG) printf("Added a rank %d for size %d\n", i, size);
+    schedout.debug(CALL_INFO, 7, 0, "Added a rank %d for size %d\n", i, size);
     return i;
 }
 
@@ -183,12 +188,14 @@ void MBSAllocator::createChildren(Block* b){
     std::set<Block*, Block>::iterator children = childrenset -> begin();
     Block* next;
 
-    if (DEBUG) printf("Creating children for %s :: ", b -> toString().c_str());
+    //if (DEBUG) printf("Creating children for %s :: ", b -> toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Creating children for %s :: ", b -> toString().c_str());
 
     while (children != childrenset -> end()){
         next = *children;
 
-        if (DEBUG) printf("%s ", next->toString().c_str());
+        //if (DEBUG) printf("%s ", next->toString().c_str());
+        schedout.debug(CALL_INFO, 7, 0, "%s ", next->toString().c_str());
 
         b -> addChild(next);
 
@@ -201,7 +208,8 @@ void MBSAllocator::createChildren(Block* b){
         }
         children++;
     }
-    if (DEBUG) printf("\n");
+    //if (DEBUG) printf("\n");
+    schedout.debug(CALL_INFO, 7, 0, "\n");
 }
 
 std::set<Block*, Block>* MBSAllocator::splitBlock (Block* b) 
@@ -223,13 +231,15 @@ std::set<Block*, Block>* MBSAllocator::splitBlock (Block* b)
         children -> insert(new Block(new MeshLocation(b -> location -> x+sideLen, b -> location -> y+sideLen, b -> location -> z), dim,b));
         children -> insert(new Block(new MeshLocation(b -> location -> x+sideLen, b -> location -> y, b -> location -> z), dim,b));
     }
-    if (DEBUG) printf("Made blocks for splitBlock(%s)\n", b -> toString().c_str());
+    //if (DEBUG) printf("Made blocks for splitBlock(%s)\n", b -> toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Made blocks for splitBlock(%s)\n", b -> toString().c_str());
     return children;
 }
 
 MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
 {
-    if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
+    //if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Allocating %s\n",job -> toString().c_str());
 
     MBSMeshAllocInfo* retVal = new MBSMeshAllocInfo(job);
     int allocated = 0;
@@ -240,7 +250,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
     while (allocated < job -> getProcsNeeded()){
         //Start trying allocate the largest blocks
         if (RBR -> empty()) {
-            error("RBR empty in allocate()");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "RBR empty in allocate()");
         }
         int currentRank = RBR -> rbegin() -> first; //this gives us the largest key in RBR
 
@@ -285,7 +295,8 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
                 }
 
             }
-            if (DEBUG) printFBR("After all splitting");
+            //if (DEBUG) printFBR("After all splitting");
+            schedout.debug(CALL_INFO, 7, 0, "After all splitting");
         }
     }
     RBR -> clear();
@@ -324,7 +335,7 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
             if (ordering -> size() == 1) {
                 size = ordering -> at(0);
             } else {
-                error("while loop never ran in MBSAllocator");
+                schedout.fatal(CALL_INFO, 1, 0, 0, "while loop never ran in MBSAllocator");
             }
         }
 
@@ -341,10 +352,12 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
         procs += ordering -> at(rank);
     }
 
-    if (DEBUG) {
-        printf("Factored request: \n");
-        printRBR(retVal);
-    }
+    //if (DEBUG) {
+    //    printf("Factored request: \n");
+    //    printRBR(retVal);
+    //}
+    schedout.debug(CALL_INFO, 7, 0, "Factored request: \n");
+    printRBR(retVal);
     return retVal;
 }
 
@@ -354,12 +367,12 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
 
 void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
     if (RBR -> count(rank) == 0)
-        error("Out of bounds in MBSAllocator::splitRequest()");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Out of bounds in MBSAllocator::splitRequest()");
     if (rank <= 0)
-        error("Cannot split a request of size 0");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Cannot split a request of size 0");
     if (RBR -> find(rank) -> second == 0){
         //throw new UnsupportedOperationException("Cannot split a block of size 0");
-        error("Cannot split a block of size 0");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Cannot split a block of size 0");
         return;
     }
 
@@ -377,10 +390,12 @@ void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
     }
 
 
-    if (DEBUG) {
-        printf("Split a request up\n");
-        printRBR(RBR);
-    }
+    //if (DEBUG) {
+    //    printf("Split a request up\n");
+    //    printRBR(RBR);
+    //}
+    schedout.debug(CALL_INFO, 7, 0, "Split a request up\n");
+    printRBR(RBR);
 }
 
 /**
@@ -389,7 +404,8 @@ void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
  */
 bool MBSAllocator::splitLarger(int rank)
 {
-    if (DEBUG) printf("Splitting a block at rank %d\n",rank);
+    //if (DEBUG) printf("Splitting a block at rank %d\n",rank);
+    schedout.debug(CALL_INFO, 7, 0, "Splitting a block at rank %d\n",rank);
 
     //make sure that we can search in rank+1
     //FBR has same size as ordering
@@ -420,12 +436,14 @@ bool MBSAllocator::splitLarger(int rank)
 
     return true;
 }
+
 void MBSAllocator::deallocate(AllocInfo* alloc)
 {
-    if (DEBUG) printf("Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
+    //if (DEBUG) printf("Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
+    schedout.debug(CALL_INFO, 7, 0, "Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
     //check to make sure it is a MBSMeshAllocInfo->->->                        
     if (NULL == dynamic_cast<MBSMeshAllocInfo*>(alloc)) {
-        error("MBS allocator can only deallocate instances of MBSMeshAllocInfo");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "MBS allocator can only deallocate instances of MBSMeshAllocInfo");
     } else {
         unallocate((MBSMeshAllocInfo*) alloc);
     }
@@ -476,21 +494,21 @@ void MBSAllocator::mergeBlock(Block* p){
 void MBSAllocator::printRBR(std::map<int,int>* RBR)
 {
     for (std::map<int,int>::iterator key = RBR -> begin(); key != RBR -> end(); key++) {
-        printf("Rank %d has %d requested blocks\n", key -> first, key -> second);
+        schedout.debug(CALL_INFO, 7, 0, "Rank %d has %d requested blocks\n", key -> first, key -> second);
     }
 }
 
 void MBSAllocator::printFBR(std::string msg)
 {
-    printf("%s\n",msg.c_str());
+    schedout.debug(CALL_INFO, 7, 0, "%s\n",msg.c_str());
     if (ordering -> size() != FBR -> size()) {
-        error("Ordering vs FBR size mismatch");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Ordering vs FBR size mismatch");
     }
     for (int i = 0;i < (int)ordering -> size(); i++) { 
-        printf("Rank: %d for size %d\n", i, ordering -> at(i));
+        schedout.debug(CALL_INFO, 7, 0, "Rank: %d for size %d\n", i, ordering -> at(i));
         std::set<Block*, Block>::iterator it = FBR -> at(i) -> begin();
         while (it != FBR -> at(i)->end()) {
-            printf("  %s\n", (*it) -> toString().c_str()); 
+            schedout.debug(CALL_INFO, 7, 0, "  %s\n", (*it) -> toString().c_str()); 
             it++;
         }
     }
@@ -500,7 +518,7 @@ std::string MBSAllocator::stringFBR()
 {
     std::stringstream retVal;
     if (ordering -> size() != FBR -> size()) {
-        error("Ordering vs FBR size mismatch");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Ordering vs FBR size mismatch");
     }
     for (int i = 0;i < (int)ordering->size();i++) {
         retVal << "Rank: " << i << " for size " << ordering -> at(i) << "\n";

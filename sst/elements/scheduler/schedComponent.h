@@ -18,6 +18,8 @@
 
 #include <sst/core/component.h>
 
+#include "output.h"
+
 namespace SST {
     class Event;
     class Link;
@@ -32,6 +34,7 @@ namespace SST {
         class Allocator;
         class Statistics;
         class AllocInfo;
+        class FST;
 
 
         // the maximum length of a job ID.  used primarily for job list parsing.
@@ -96,8 +99,11 @@ namespace SST {
                 std::list<ArrivalEvent*> finishingarr;
                 Machine* machine;
                 Scheduler* scheduler;
+                Scheduler* FSTscheduler;
                 Allocator* theAllocator;
                 Statistics* stats;
+                int FSTtype;
+                FST* calcFST;
                 std::vector<SST::Link*> nodes;
                 std::vector<std::string> nodeIDs;
                 SST::Link* selfLink;

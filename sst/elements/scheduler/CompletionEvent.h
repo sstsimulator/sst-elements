@@ -41,7 +41,6 @@ namespace SST {
                         ar & BOOST_SERIALIZATION_NVP(jobNum);
                     }
         };
-
     }
 }
 #endif

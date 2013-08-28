@@ -3,12 +3,14 @@
 $sdlname = "TempSdl.sdl";
 $sstdir = "../../../core/";
 $testoutdir = "tests";
-@simfiles = ("LCG.sim");
-@numprocs = (4008);
-@schedulers = ("pqueue");
-@comparators = ("fifo");
-@machines = ("mesh[167,4,6]");
-@allocators = ("sortedfreelist[sort]", "sortedfreelist[nosort]","sortedfreelist","sortedfreelist[hilbert]","sortedfreelist[snake]","sortedfreelist[sort,hilbert]","sortedfreelist[sort,snake]","sortedfreelist[nosort,hilbert]","sortedfreelist[nosort,snake]");
+@simfiles = ("LLNLshort.sim");
+@numprocs = (4096);
+@schedulers = ("cons[fifo]", "prioritize[1,fifo]", "delayed[fifo]", "elc[1,fifo]");
+#@comparators = ("fifo");
+@machines = ("simple[4096]");
+#@allocators = ("sortedfreelist[sort]", "sortedfreelist[nosort]","sortedfreelist","sortedfreelist[hilbert]","sortedfreelist[snake]","sortedfreelist[sort,hilbert]","sortedfreelist[sort,snake]","sortedfreelist[nosort,hilbert]","sortedfreelist[nosort,snake]");
+@allocators = ("simple");
+@fst = ("strict", "relaxed");
 
 foreach $sim (@simfiles)
 {
@@ -16,21 +18,24 @@ foreach $n (@numprocs)
 {
   foreach $scheduler (@schedulers)
   {
-    foreach $comparator (@comparators)
-    {
+      #foreach $comparator (@comparators)
+      #{
       foreach $machine (@machines)
       {
         foreach $allocator (@allocators)
         {
-          if(!(-d $testoutdir))
-          {
-            system("mkdir", $testoutdir);
-          }
-	  $schedulername = $scheduler."[".$comparator."]";
-          $tracename = $sim.$schedulername.$machine.$allocator;
-          $tracelocation = $testoutdir."/".$tracename;
-          system("cp", $sim, $tracelocation);
-	  system("rm", $sdlname);
+            foreach $fst (@fst)
+            {
+                if(!(-d $testoutdir))
+                {
+                    system("mkdir", $testoutdir);
+                }
+                #$schedulername = $scheduler."[".$comparator."]";
+                $schedulername = $scheduler;
+                $tracename = $sim.$schedulername.$machine.$allocator.$fst;
+                $tracelocation = $testoutdir."/".$tracename;
+                system("cp", $sim, $tracelocation);
+                system("rm", $sdlname);
 open(MYOUTFILE,">>".$sdlname);
 {
     print MYOUTFILE <<EOT
@@ -50,6 +55,7 @@ open(MYOUTFILE,">>".$sdlname);
 	<scheduler>$schedulername</scheduler>
 	<machine>$machine</machine>
 	<allocator>$allocator</allocator>
+        <FST>$fst</FST>
     </params>
 EOT
 }
@@ -80,6 +86,7 @@ system("mv",$tracename.".time", $tracelocation.".time");
 }
 }
 }
+#}
 }
 }
 }

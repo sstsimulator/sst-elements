@@ -18,18 +18,21 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 using namespace SST::Scheduler;
 
 
 RandomAllocator::RandomAllocator(Machine* mesh) 
 {
+    schedout.init("", 8, ~0, Output::STDOUT);
     machine = dynamic_cast<MachineMesh*>(mesh);
     if (machine == NULL) {
-        error("Random Allocator requires Mesh");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Random Allocator requires Mesh");
     }
     srand(0);
 }
+
 /*
    RandomAllocator RandomAllocator::Make(std::vector<std::string*>* params){
    Factory.argsAtLeast(0,params);
@@ -60,11 +63,10 @@ std::string RandomAllocator::getSetupInfo(bool comment)
     return com + "Random Allocator";
 }
 
+//allocates job if possible
+//returns information on the allocation or null if it wasn't possible
+//(doesn't make allocation; merely returns info on possible allocation)
 AllocInfo* RandomAllocator::allocate(Job* job){
-    //allocates job if possible
-    //returns information on the allocation or null if it wasn't possible
-    //(doesn't make allocation; merely returns info on possible allocation)
-
     if(!canAllocate(job)) return NULL;
 
     MeshAllocInfo* retVal = new MeshAllocInfo(job);

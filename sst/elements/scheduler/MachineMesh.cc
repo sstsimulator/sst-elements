@@ -12,6 +12,8 @@
 /*
  * Machine based on a mesh structure
  */
+#include "sst_config.h"
+#include "MachineMesh.h"
 
 #include <sst_config.h>
 
@@ -23,7 +25,6 @@
 
 #include "Allocator.h"
 #include "Machine.h"
-#include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
 #include "schedComponent.h"
@@ -38,9 +39,10 @@ namespace SST {
 }
 
 
-MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc) {
-    //constructor that takes mesh dimensions
-
+//constructor that takes mesh dimensions
+MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc) 
+{
+    schedout.init("", 8, 0, Output::STDOUT);
     xdim = Xdim;
     ydim = Ydim;
     zdim = Zdim;
@@ -58,6 +60,7 @@ MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc) {
     }
     this -> sc = sc;
     reset();
+    //set up output
 }
 
 
@@ -65,6 +68,7 @@ MachineMesh::MachineMesh(int Xdim, int Ydim, int Zdim, schedComponent* sc) {
 //takes array telling which processors are free
 MachineMesh::MachineMesh(MachineMesh* inmesh) 
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     isFree = inmesh -> isFree;
     xdim = inmesh -> getXDim();
     ydim = inmesh -> getYDim();
@@ -171,7 +175,7 @@ void MachineMesh::allocate(AllocInfo* allocInfo)
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (!isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            error("Attempt to allocate a busy processor: " );
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate a busy processor: " );
         }
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = false;
     }
@@ -186,7 +190,7 @@ void MachineMesh::deallocate(AllocInfo* allocInfo) {
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            error("Attempt to allocate a busy processor: " );
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate a busy processor: " );
         }
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = true;
     }

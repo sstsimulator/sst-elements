@@ -31,6 +31,7 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 
 #define DEBUG false
 
@@ -40,17 +41,18 @@ using namespace std;
 
 BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): LinearAllocator(params, mach) 
 {
-    if (DEBUG) printf("Constructing BestFitAllocator\n");
-    if (NULL == dynamic_cast<MachineMesh*>(mach)) error("Linear allocators require a mesh");
+    schedout.init("", 8, 0, Output::STDOUT);
+    schedout.debug(CALL_INFO, 0, 0, "Constructing BestFitAllocator\n");
+    if (NULL == dynamic_cast<MachineMesh*>(mach)) schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a mesh");
 }
 
 string BestFitAllocator::getSetupInfo(bool comment)
 {
     string com;
     if (comment) {
-        com="# ";
+        com = "# ";
     } else {
-        com="";
+        com = "";
     }
     return com + "Linear Allocator (Best Fit)";
 }
@@ -61,15 +63,14 @@ string BestFitAllocator::getSetupInfo(bool comment)
 //allocation)
 AllocInfo* BestFitAllocator::allocate(Job* job) 
 {
-    if (DEBUG)
-        printf("Allocating %s procs: \n", job->toString().c_str());
+    schedout.debug(CALL_INFO, 7, 0, "Allocating %s procs: \n", job -> toString().c_str());
 
-    if (!canAllocate(job))   //check if we have enough free processors
-        return NULL;
+    //check if we have enough free processors
+    if (!canAllocate(job)) return NULL;
 
     vector<vector<MeshLocation*>*>* intervals = getIntervals();
 
-    int num = job->getProcsNeeded();  //number of processors for job
+    int num = job -> getProcsNeeded();  //number of processors for job
 
     int bestInterval = -1;  //index of best interval found so far
     //(-1 = none)

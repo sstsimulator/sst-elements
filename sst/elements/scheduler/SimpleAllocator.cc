@@ -20,6 +20,7 @@
 #include "Job.h"
 #include "Machine.h"
 #include "misc.h"
+#include "output.h"
 #include "SimpleMachine.h"
 
 using namespace SST::Scheduler;
@@ -33,9 +34,9 @@ std::string SimpleAllocator::getSetupInfo(bool comment)
 {
     std::string com;
     if (comment) {
-        com="# ";
+        com = "# ";
     } else {
-        com="";
+        com = "";
     }
     return com + "Simple Allocator";
 }

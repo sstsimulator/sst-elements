@@ -2,6 +2,13 @@
 
 $n = $ARGV[0];
 
+if(scalar @ARGV == 5) {
+    $FST = 'none'; 
+}
+else {
+    $FST = $ARGV[5];
+}
+
 {
     print <<EOT
 <?xml version="1.0"?>
@@ -19,6 +26,7 @@ $n = $ARGV[0];
 	<scheduler>$ARGV[2]</scheduler>
 	<machine>$ARGV[3]</machine>
 	<allocator>$ARGV[4]</allocator>
+        <FST>$FST</FST>
     </params>
 EOT
 }

@@ -21,16 +21,19 @@
 
 using namespace SST::Scheduler;
 
-unsigned long ArrivalEvent::getTime() const {
+unsigned long ArrivalEvent::getTime() const 
+{
     return time;
 }
 
-int ArrivalEvent::getJobIndex() const {
+int ArrivalEvent::getJobIndex() const 
+{
     return jobIndex;
 }
 
 void ArrivalEvent::happen(Machine* mach, Allocator* alloc, Scheduler* sched,
-                          Statistics* stats, Job* arrivingJob) {
+                          Statistics* stats, Job* arrivingJob) 
+{
     sched -> jobArrives(arrivingJob, time, mach);
     stats -> jobArrives(time);
 

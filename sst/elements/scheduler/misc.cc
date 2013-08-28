@@ -16,7 +16,6 @@
 //#include <stdlib.h>
 #include <vector>
 #include <string>
-#include <iostream>
 
 #include "Allocator.h"
 #include "Machine.h"
@@ -39,7 +38,7 @@ bool Allocator::canAllocate(Job* j, std::vector<MeshLocation*>* available)
 {  
     return (available -> size() >= (unsigned int)j -> getProcsNeeded());
 }
-
+/*
 namespace SST {
     namespace Scheduler {
         void warning(std::string mesg) {        //report warning (program continues)
@@ -57,3 +56,5 @@ namespace SST {
         }
     }
 }
+*/
+

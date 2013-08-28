@@ -127,8 +127,8 @@ string IntersectionCenterGen::getSetupInfo(bool comment)
 }
 
 
+//returns List containing all locations in mesh
 vector<MeshLocation*>* AllCenterGenerator::getCenters(vector<MeshLocation*>* available) {
-    //returns List containing all locations in mesh
     vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
 
     int xdim = machine -> getXDim();
@@ -196,7 +196,7 @@ bool GreedyLInfPointCollector::PointInfo::operator()(PointInfo* const& pi1, Poin
 {
     if (pi1 -> L1toGroup == pi2 -> L1toGroup) {
         if (pi1 -> tieBreaker == pi2 -> tieBreaker) {
-            return (*pi2 -> point)(pi1 -> point, pi2 -> point);   //TODO how does using pi2 location in the ordering add bias to the final result?
+            return (*pi2 -> point)(pi1 -> point, pi2 -> point);   //TODO: how does using pi2 location in the ordering add bias to the final result?
         }
         return (pi2 -> tieBreaker > pi1 -> tieBreaker);
     }

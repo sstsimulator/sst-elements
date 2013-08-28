@@ -15,6 +15,9 @@
  * create complete blocks, and make sure the "root" blocks are in the FBR->
  */
 
+#include "sst_config.h"
+#include "RoundUpMBSAllocator.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
@@ -27,9 +30,7 @@
 #include "MachineMesh.h"
 #include "MBSAllocInfo.h"
 #include "misc.h"
-#include "RoundUpMBSAllocator.h"
-
-#define DEBUG false
+#include "output.h"
 
 /**
  * The Rounding Up MBS Allocator will do the same GranularMBS style allocation, except that
@@ -46,38 +47,44 @@ using namespace std;
 
 RoundUpMBSAllocator::RoundUpMBSAllocator(MachineMesh* m, int x, int y, int z) : GranularMBSAllocator(m, x, y, z) 
 {
+    schedout.init("", 8, ~0, Output::STDOUT);
 }
 
 std::string RoundUpMBSAllocator::getSetupInfo(bool comment){
     string com;
     if (comment)  {
-        com="# ";
+        com = "# ";
     } else  {
-        com="";
+        com = "";
     }
     return com + "Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
 }
 
 RoundUpMBSAllocator::RoundUpMBSAllocator(vector<string>* params, MachineMesh* mach) : GranularMBSAllocator(params, mach)
 {
-    //constructor is the same
+    schedout.init("", 8, ~0, Output::STDOUT);
+    //constructor is the same as GranularMBSAllocator
 }
 
 MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job)
 {
-    if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
+    //if (DEBUG) printf("Allocating %s\n",job -> toString().c_str());
+    schedout.debug(CALL_INFO, 1, 0, "Allocating %s\n",job -> toString().c_str());
 
     //a map of dimensions to numbers
     map<int,int>* RBR = generateIdealRequest(job -> getProcsNeeded());
-    if (DEBUG) printRBR(RBR);
+    //if (DEBUG) printRBR(RBR);
+    printRBR(RBR);
 
     //process the request, split stuff, and allocate stuff
     MBSMeshAllocInfo* retVal = processRequest(RBR, job);
 
-    if (DEBUG) {
-        printFBR("all done");
-        printf("%s\n", retVal -> toString().c_str());
-    }
+    printFBR("all done");
+    schedout.debug(CALL_INFO, 7, 0, "%s\n", retVal -> toString().c_str());
+    //if (DEBUG) {
+    //    printFBR("all done");
+    //    printf("%s\n", retVal -> toString().c_str());
+    //}
     return retVal;
 }
 
@@ -129,27 +136,30 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
         int key = RBR -> end() -> first;
         int value = RBR -> find(key) -> second;
 
-        if (DEBUG) printFBR("  trying to fit size blocks");
-        printf("RBR size %d\n", (int)RBR -> size());
+        //if (DEBUG) printFBR("  trying to fit size blocks");
+        printFBR("  trying to fit size blocks");
+        schedout.debug(CALL_INFO, 7, 0, "RBR size %d\n", (int)RBR -> size());
 
         //if there exists blocks in FBR to support, add it
         if (key >= (int)FBR -> size())
-            error("key in RBR does not correspond to FBR");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "key in RBR does not correspond to FBR");
 
         int numberAvailable = FBR -> at(key) -> size();
 
         //either make one available, by splitting a larger block
         //or reduces the block sizes requested
         if (numberAvailable == 0) {
-            if (DEBUG) printf("Didn't find any available blocks of rank %d\n",key);
+            //if (DEBUG) printf("Didn't find any available blocks of rank %d\n",key);
+            schedout.debug(CALL_INFO, 7, 0, "Didn't find any available blocks of rank %d\n",key);
             //try splitting a larger block
             //but make sure that the larger block isn't already accounted for
             if (splitLarger(key)) {
                 numberAvailable = FBR -> at(key) -> size();
 
-                if (DEBUG)  {
-                    printf("There are now %dblocks of rank %d\n", numberAvailable, key);
-                }
+                //if (DEBUG)  {
+                //    printf("There are now %dblocks of rank %d\n", numberAvailable, key);
+                //}
+                schedout.debug(CALL_INFO, 7, 0, "There are now %dblocks of rank %d\n", numberAvailable, key);
             } else {
                 //reduce request
                 map<int,int>* reduced = reduceRequest(key, value);
@@ -309,7 +319,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocateBlocks(MBSMeshAllocInfo* retVal, 
  */
 map<int,int>* RoundUpMBSAllocator::reduceRequest(int key, int value)
 {
-    if (key <= 0) error("can't factor a requested block of rank 0");
+    if (key <= 0) schedout.fatal(CALL_INFO, 1, 0, 0, "can't factor a requested block of rank 0");
 
     map<int,int>* retVal = new map<int,int>();
     double size = ordering -> at(key);
@@ -334,7 +344,7 @@ map<int,int>* RoundUpMBSAllocator::reduceRequest(int key, int value)
     if (remainder > 0) {
         int smallerIndex = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), remainder));
         if (smallerIndex == -1) {
-            error("The remainder is not a block size!");
+            schedout.fatal(CALL_INFO, 1, 0, 0, "The remainder is not a block size!");
         }
         if (0 == retVal -> count(smallerIndex)) {
             retVal -> insert(pair<int,int>(smallerIndex,1));

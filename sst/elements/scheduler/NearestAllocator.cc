@@ -41,6 +41,7 @@
 #include "MachineMesh.h"
 #include "MeshAllocInfo.h"
 #include "misc.h"
+#include "output.h"
 #include "NearestAllocClasses.h"
 
 using namespace SST::Scheduler;
@@ -48,6 +49,7 @@ using namespace SST::Scheduler;
 NearestAllocator::NearestAllocator(MachineMesh* m, CenterGenerator* cg,
                                    PointCollector* pc, Scorer* s, std::string name) 
 {
+    schedout.init("", 8, 0, Output::STDOUT);
     machine = m;
     centerGenerator = cg;
     pointCollector = pc;
@@ -57,10 +59,11 @@ NearestAllocator::NearestAllocator(MachineMesh* m, CenterGenerator* cg,
 
 NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* mach)
 {
-
+    schedout.init("", 8, 0, Output::STDOUT);
     MachineMesh* m = (MachineMesh*) mach;
     if (NULL == m) {
-        error("Nearest allocators require a Mesh machine");
+        //error("Nearest allocators require a Mesh machine");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Nearest allocators require a Mesh machine");
     }
 
     if (params -> at(0) == "MM") {
@@ -88,7 +91,8 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         } else if (cgstr == ("intersect")) {
             cg = new IntersectionCenterGen(m);
         } else {
-            error("Unknown center generator " + cgstr);
+            //error("Unknown center generator " + cgstr);
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Unknown center generator %s", cgstr.c_str());
         }
 
         std::string pcstr=params -> at(2);
@@ -100,7 +104,8 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         } else if (pcstr == ("greedylinf")) {
             pc = new GreedyLInfPointCollector();
         } else {
-            error("Unknown point collector " + pcstr);
+            //error("Unknown point collector " + pcstr);
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Unknown point collector %s", pcstr.c_str());
         }
 
 
@@ -110,7 +115,8 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
             sc = new L1DistFromCenterScorer();
         } else if(pcstr == ("linf")) {
             if (m -> getXDim() > 1 && m -> getYDim() > 1 && m -> getZDim() > 1) {
-                error("\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
+                //error("\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
+                schedout.fatal(CALL_INFO, 1, 0, 0, "\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
             }
             long TB = 0;
             long af = 1;
@@ -148,7 +154,8 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         } else if(pcstr==("pairwise")) {
             sc = new PairwiseL1DistScorer();
         } else {
-            error("Unknown scorer " + pcstr);
+            //error("Unknown scorer " + pcstr);
+            schedout.fatal(CALL_INFO, 1, 0, 0, "Unknown scorer %s", pcstr.c_str());
         }
 
         centerGenerator = cg;
@@ -158,7 +165,8 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
     delete params;
     params = NULL;
     if(NULL == centerGenerator || NULL == pointCollector || NULL == scorer) {
-        error("Nearest input not correctly parsed");
+        //error("Nearest input not correctly parsed");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Nearest input not correctly parsed");
     }
 }
 
@@ -193,12 +201,11 @@ AllocInfo* NearestAllocator::allocate(Job* job)
     return allocate(job,((MachineMesh*)machine) -> freeProcessors());
 }
 
+//Allocates job if possible.
+//Returns information on the allocation or null if it wasn't possible
+//(doesn't make allocation; merely returns info on possible allocation).
 AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
 {
-    //allocates job if possible
-    //returns information on the allocation or null if it wasn't possible
-    //(doesn't make allocation; merely returns info on possible allocation)
-
     if (!canAllocate(job, available)) {
         return NULL;
     }
