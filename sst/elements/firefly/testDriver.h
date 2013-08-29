@@ -73,6 +73,11 @@ class TestDriver : public SST::Component {
 
     std::vector<unsigned int> m_gatherSendBuf;
     std::vector<unsigned int> m_gatherRecvBuf;
+    std::vector<unsigned int> m_gathervSendBuf;
+    std::vector<unsigned int> m_gathervRecvBuf;
+
+    std::vector<unsigned int> m_allgatherSendBuf;
+    std::vector<unsigned int> m_allgatherRecvBuf;
 
     std::vector<unsigned int> m_displs;
     std::vector<unsigned int> m_recvcnt;

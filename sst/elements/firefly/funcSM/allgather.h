@@ -24,7 +24,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
 {
     enum { WaitSendStart, WaitRecvStart, WaitSendData, WaitRecvData } m_state;
 
-    static const int AllgatherTag = 0xf0010000;
+    static const unsigned int AllgatherTag = 0xf0010000;
 
   public:
     AllgatherFuncSM( int verboseLevel, Output::output_location_t loc,
@@ -47,6 +47,11 @@ class AllgatherFuncSM :  public FunctionSMInterface
     CtrlMsg::CommReq    m_sendReq; 
     CtrlMsg::CommReq    m_recvReq; 
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
+    int                 m_seq;
+
+    uint32_t    genTag() {
+        return AllgatherTag | (( m_seq & 0xff) << 8 );
+    }
 
     unsigned char* chunkPtr( int rank ) {
         unsigned char* ptr = (unsigned char*) m_event->recvbuf;

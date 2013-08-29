@@ -115,7 +115,7 @@ bool GathervFuncSM::waitUp()
                                  i, m_qqq->calcChild(i) );
                 m_ctrlMsg->recv( &m_waitUpSize[i], sizeof(m_waitUpSize[i]),
                         m_qqq->calcChild(i),
-                        genTag(), m_event->group, &m_recvReqV[i] );
+                        genTag(1), m_event->group, &m_recvReqV[i] );
             }    
             m_waitUpPending = true;
             m_toProgressLink->send(0, NULL );
@@ -163,7 +163,7 @@ bool GathervFuncSM::waitUp()
                                i, m_qqq->calcChild(i) );
                 m_ctrlMsg->recv( &m_recvBuf[len], m_waitUpSize[i],
                         m_qqq->calcChild(i),
-                        genTag(), m_event->group, &m_recvReqV[i] );
+                        genTag(2), m_event->group, &m_recvReqV[i] );
                 len += m_waitUpSize[i];
             }
         }
@@ -175,11 +175,11 @@ bool GathervFuncSM::waitUp()
             
     case WaitUpSend:
         if ( ! m_waitUpPending ) {
-            m_dbg.verbose(CALL_INFO,1,0,"send message to child %d[%d]\n",
-                                    m_count, m_qqq->calcChild( m_count ) );
-            m_ctrlMsg->send( &m_intBuf, sizeof(m_intBuf), 
+            m_dbg.verbose(CALL_INFO,1,0,"send I'm ready message to"
+                " child %d[%d]\n", m_count, m_qqq->calcChild( m_count ) );
+            m_ctrlMsg->send( NULL, 0, 
                             m_qqq->calcChild( m_count ),
-                            genTag(), m_event->group, &m_sendReq );
+                            genTag(3), m_event->group, &m_sendReq );
             m_toProgressLink->send(0, NULL );
             m_waitUpPending = true;
             return true;
@@ -314,11 +314,11 @@ bool GathervFuncSM::sendUp()
             }
             memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
             m_intBuf = m_recvBuf.size();
-            m_dbg.verbose(CALL_INFO,1,0,"send size message to %d\n", 
-                                                m_qqq->parent());
+            m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
+                                                m_intBuf, m_qqq->parent());
             m_ctrlMsg->send( &m_intBuf, sizeof(m_intBuf), 
                             m_qqq->parent(),
-                            genTag(), m_event->group, &m_sendReq );
+                            genTag(1), m_event->group, &m_sendReq );
             
             m_sendUpPending = true;
             m_toProgressLink->send(0, NULL );
@@ -349,11 +349,10 @@ bool GathervFuncSM::sendUp()
 
     case SendUpWait:
         if ( ! m_sendUpPending ) {
-            m_dbg.verbose(CALL_INFO,1,0,"post receive for parent %d\n", 
+            m_dbg.verbose(CALL_INFO,1,0,"post Go Msg receive for parent %d\n", 
                                         m_qqq->parent());
-            m_ctrlMsg->recv( &m_intBuf, sizeof(m_intBuf),
-                        m_qqq->parent(),
-                        genTag(), m_event->group, &m_recvReq );
+            m_ctrlMsg->recv( NULL, 0, m_qqq->parent(),
+                        genTag(3), m_event->group, &m_recvReq );
             m_sendUpPending = true;
             m_toProgressLink->send(0, NULL );
             return true;
@@ -386,7 +385,7 @@ bool GathervFuncSM::sendUp()
             m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
             m_ctrlMsg->send( &m_recvBuf[0], m_recvBuf.size(), m_qqq->parent(),
-                            genTag(), m_event->group, &m_sendReq );
+                            genTag(2), m_event->group, &m_sendReq );
 #if 0 // print debug 
             for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
                 printf("%#03x\n", m_recvBuf[i]);

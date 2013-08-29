@@ -143,8 +143,8 @@ class GathervFuncSM :  public FunctionSMInterface
     bool waitUp();
     bool sendUp();
     void doRoot();
-    uint32_t    genTag() {
-        return GathervTag | (m_seq & 0xffff);
+    uint32_t    genTag( int i = 0 ) {
+        return GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
     SST::Link*&         m_toProgressLink;
@@ -159,9 +159,8 @@ class GathervFuncSM :  public FunctionSMInterface
 
     bool                m_waitUpPending;
     std::vector<int>    m_waitUpSize;
-    
     std::vector<unsigned char>  m_recvBuf;
-    int                         m_intBuf;
+    int                 m_intBuf;
 
     unsigned int        m_count; 
     bool                m_sendUpPending;

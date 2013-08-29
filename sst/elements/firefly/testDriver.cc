@@ -106,7 +106,6 @@ void TestDriver::setup()
 
     m_traceFile.open( tmp.str().c_str() );
 
-
     if ( m_hermes->myWorldRank() == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"traceFile `%s`\n",tmp.str().c_str());
     }
@@ -144,12 +143,14 @@ void TestDriver::handle_event( Event* ev )
         return;
     }
 #else
-    if ( m_fileBuffer.empty() ) {
-        primaryComponentOKToEndSim();
-        return;
-    } 
-    m_funcName = m_fileBuffer.front();
-    m_fileBuffer.pop_front();
+    do {
+        if ( m_fileBuffer.empty() ) {
+            primaryComponentOKToEndSim();
+            return;
+        } 
+        m_funcName = m_fileBuffer.front();
+        m_fileBuffer.pop_front();
+    } while ( m_funcName[0] == '#' );
 
 #endif
 
@@ -270,7 +271,9 @@ void TestDriver::waitReturn( )
 // GATHER
 void TestDriver::gatherEnter( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
+    if ( my_rank == m_root ) {
+        m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
+    }
     assert( my_size != 0 ); 
 
     m_gatherRecvBuf.resize(m_bufLen * my_size);
@@ -307,29 +310,31 @@ void TestDriver::gatherReturn( )
 // GATHERV 
 void TestDriver::gathervEnter( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
+    if ( my_rank == m_root ) {
+        m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
+    }
     assert( my_size != 0 ); 
 
-    m_gatherSendBuf.resize( m_bufLen );
+    m_gathervSendBuf.resize( m_bufLen );
 
-    for ( unsigned int i = 0; i < m_gatherSendBuf.size(); i++ ) {
-        m_gatherSendBuf[ i ] = my_rank;
+    for ( unsigned int i = 0; i < m_gathervSendBuf.size(); i++ ) {
+        m_gathervSendBuf[ i ] = my_rank;
     }
 
     if ( my_rank == m_root ) {
         m_recvcnt.resize( my_size );
         m_displs.resize( my_size );
 
-        m_gatherRecvBuf.resize( my_size * m_gatherSendBuf.size() );
+        m_gathervRecvBuf.resize( my_size * m_gathervSendBuf.size() );
 
         for ( int i = 0; i < my_size; i++ ) {
-            m_recvcnt[i] =  m_gatherSendBuf.size();
-            m_displs[i] = i* m_gatherSendBuf.size() * m_hermes->sizeofDataType(INT); 
+            m_recvcnt[i] =  m_gathervSendBuf.size();
+            m_displs[i] = i* m_gathervSendBuf.size() * m_hermes->sizeofDataType(INT); 
         }
     }
 
-    m_hermes->gatherv( &m_gatherSendBuf[0],  m_gatherSendBuf.size(), INT,
-                        &m_gatherRecvBuf[0],  &m_recvcnt[0], &m_displs[0], INT,
+    m_hermes->gatherv( &m_gathervSendBuf[0],  m_gathervSendBuf.size(), INT,
+                        &m_gathervRecvBuf[0],  &m_recvcnt[0], &m_displs[0], INT,
                         m_root, GroupWorld, &m_functor );
 }
 
@@ -339,16 +344,16 @@ void TestDriver::gathervReturn( )
         m_dbg.verbose(CALL_INFO,1,0,"\n");
         bool passed = true;
         for ( int i = 0; i < my_size; i++ ) { 
-            for ( unsigned int j = 0; j < m_gatherRecvBuf.size()/my_size; j++ ) { 
-                if ( (int) m_gatherRecvBuf[i * m_gatherRecvBuf.size()/my_size] != i ) {
+            for ( unsigned int j = 0; j < m_gathervRecvBuf.size()/my_size; j++ ) { 
+                if ( (int) m_gathervRecvBuf[i * m_gathervRecvBuf.size()/my_size] != i ) {
                     m_dbg.verbose(CALL_INFO,1,0,"failed, want %d  %d\n",i, 
-                                m_gatherRecvBuf[i * m_gatherRecvBuf.size()/my_size]);
+                                m_gathervRecvBuf[i * m_gathervRecvBuf.size()/my_size]);
                     passed = false;
                 }
             }
         }
         if ( passed ) {
-            m_dbg.verbose(CALL_INFO,1,0,"gather passed\n");
+            m_dbg.verbose(CALL_INFO,1,0,"gatherv passed\n");
         }
     }
 }
@@ -359,33 +364,33 @@ void TestDriver::allgatherEnter( )
     m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
     assert( my_size != 0 ); 
 
-    m_gatherSendBuf.resize( m_bufLen );
+    m_allgatherSendBuf.resize( m_bufLen );
 
-    for ( unsigned int i = 0; i < m_gatherSendBuf.size(); i++ ) {
-        m_gatherSendBuf[ i ] = my_rank;
+    for ( unsigned int i = 0; i < m_allgatherSendBuf.size(); i++ ) {
+        m_allgatherSendBuf[ i ] = my_rank;
     }
 
-    m_gatherRecvBuf.resize( my_size * m_gatherSendBuf.size() );
+    m_allgatherRecvBuf.resize( my_size * m_allgatherSendBuf.size() );
 
-    m_hermes->allgather( &m_gatherSendBuf[0],  m_gatherSendBuf.size(), INT,
-                    &m_gatherRecvBuf[0],  m_gatherRecvBuf.size()/my_size, INT,
-                    GroupWorld, &m_functor );
+    m_hermes->allgather( &m_allgatherSendBuf[0],m_allgatherSendBuf.size(), INT,
+                &m_allgatherRecvBuf[0], m_allgatherRecvBuf.size()/my_size, INT,
+                GroupWorld, &m_functor );
 }
 
 void TestDriver::allgatherReturn( )
 {
     bool passed = true;
     for ( int i = 0; i < my_size; i++ ) { 
-        for ( unsigned int j = 0; j < m_gatherRecvBuf.size()/my_size; j++ ) { 
-            if ( (int) m_gatherRecvBuf[i * m_gatherRecvBuf.size()/my_size] != i ) {
+        for ( unsigned int j = 0; j < m_allgatherRecvBuf.size()/my_size; j++ ) { 
+            if ( (int) m_allgatherRecvBuf[i * m_allgatherRecvBuf.size()/my_size] != i ) {
                 m_dbg.verbose(CALL_INFO,1,0,"failed, want %d  %d\n",i, 
-                            m_gatherRecvBuf[i * m_gatherRecvBuf.size()/my_size]);
+                            m_allgatherRecvBuf[i * m_allgatherRecvBuf.size()/my_size]);
                 passed = false;
             }
         }
     }
     if ( passed ) {
-        m_dbg.verbose(CALL_INFO,1,0,"gather passed\n");
+        m_dbg.verbose(CALL_INFO,1,0,"allgather passed\n");
     }
 }
 
@@ -394,43 +399,43 @@ void TestDriver::allgathervEnter( )
 {
     assert( my_size != 0 ); 
 
-    m_gatherSendBuf.resize( m_bufLen );
+    m_allgatherSendBuf.resize( m_bufLen );
 
-    for ( unsigned int i = 0; i < m_gatherSendBuf.size(); i++ ) {
+    for ( unsigned int i = 0; i < m_allgatherSendBuf.size(); i++ ) {
         m_gatherSendBuf[ i ] = my_rank;
     }
 
     m_recvcnt.resize( my_size );
     m_displs.resize( my_size );
 
-    m_gatherRecvBuf.resize( my_size * m_gatherSendBuf.size() );
+    m_allgatherRecvBuf.resize( my_size * m_allgatherSendBuf.size() );
 
     for ( int i = 0; i < my_size; i++ ) {
-        m_recvcnt[i] =  m_gatherSendBuf.size();
-        m_displs[i] = i* m_gatherSendBuf.size() * m_hermes->sizeofDataType(INT); 
+        m_recvcnt[i] =  m_allgatherSendBuf.size();
+        m_displs[i] = i* m_allgatherSendBuf.size() * m_hermes->sizeofDataType(INT); 
     }
 
     m_recvcnt.resize( my_size );
     m_displs.resize( my_size );
 
-    m_hermes->allgatherv( &m_gatherSendBuf[0],  m_gatherSendBuf.size(), INT,
-                        &m_gatherRecvBuf[0],  &m_recvcnt[0], &m_displs[0], INT,
-                        GroupWorld, &m_functor );
+    m_hermes->allgatherv(&m_allgatherSendBuf[0], m_allgatherSendBuf.size(), INT,
+                &m_allgatherRecvBuf[0],  &m_recvcnt[0], &m_displs[0], INT,
+                GroupWorld, &m_functor );
 }
 
 void TestDriver::allgathervReturn( )
 {
     bool passed = true;
     for ( int i = 0; i < my_size; i++ ) { 
-        for ( unsigned int j = 0; j < m_gatherRecvBuf.size()/my_size; j++ ) { 
-            if ( (int) m_gatherRecvBuf[i * m_gatherRecvBuf.size()/my_size] != i ) {
+        for ( unsigned int j = 0; j < m_allgatherRecvBuf.size()/my_size; j++ ) { 
+            if ( (int) m_allgatherRecvBuf[i * m_allgatherRecvBuf.size()/my_size] != i ) {
                 m_dbg.verbose(CALL_INFO,1,0,"failed, want %d  %d\n",i, 
-                            m_gatherRecvBuf[i * m_gatherRecvBuf.size()/my_size]);
+                            m_allgatherRecvBuf[i * m_allgatherRecvBuf.size()/my_size]);
                 passed = false;
             }
         }
     }
     if ( passed ) {
-        m_dbg.verbose(CALL_INFO,1,0,"gather passed\n");
+        m_dbg.verbose(CALL_INFO,1,0,"allgatherv passed\n");
     }
 }

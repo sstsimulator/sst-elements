@@ -29,7 +29,8 @@ AllgatherFuncSM::AllgatherFuncSM(
     m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
-    m_event( NULL )
+    m_event( NULL ),
+    m_seq( 0 )
 {
     m_dbg.setPrefix("@t:AllgatherFuncSM::@p():@l ");
 }
@@ -44,6 +45,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
 
         m_setPrefix = false;
     }
+    ++m_seq;
 
     assert( NULL == m_event );
     m_event = static_cast< GatherEnterEvent* >(e);
@@ -90,11 +92,11 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
 
         initIoVec(ioVec,recvStartChunk,m_numChunks[i]);
 
-        m_ctrlMsg->recvv( ioVec, src, AllgatherTag + i + 1, 
+        m_ctrlMsg->recvv( ioVec, src, genTag() + i + 1, 
                             m_event->group, &m_recvReqV[i] );
 
         if ( i == 0 ) {
-            m_ctrlMsg->recv( NULL, 0, src, AllgatherTag,
+            m_ctrlMsg->recv( NULL, 0, src, genTag(),
                                         m_event->group, &m_recvReq );
         }
 
@@ -105,7 +107,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
     m_currentStage = 0;
 
     m_dbg.verbose(CALL_INFO,1,0,"send ready\n");
-    m_ctrlMsg->send( NULL, 0, m_dest[0], AllgatherTag,
+    m_ctrlMsg->send( NULL, 0, m_dest[0], genTag(),
                                         m_event->group, &m_sendReq );
 
     m_toProgressLink->send(0, NULL );
@@ -211,7 +213,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
 
             m_dbg.verbose(CALL_INFO,1,0,"send data\n");
             m_ctrlMsg->sendv( ioVec, m_dest[m_currentStage], 
-                AllgatherTag + m_currentStage + 1, m_event->group, &m_sendReq );
+                genTag() + m_currentStage + 1, m_event->group, &m_sendReq );
             m_pending = true;
             m_toProgressLink->send(0, NULL );
             break;
