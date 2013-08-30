@@ -319,6 +319,8 @@ bool CtrlMsg::test( CommReq * req, int& delay )
             memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
                     req->info->ioVec[i].len );
             offset += req->info->ioVec[i].len;
+
+            delay += getCopyDelay( req->info->ioVec[i].len );
         }
         req->done = true;
         

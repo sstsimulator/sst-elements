@@ -119,6 +119,10 @@ class CtrlMsg : public ProtocolAPI {
 
   private:
 
+    int getCopyDelay( int nbytes ) {
+        return m_copyTime * nbytes;
+    }
+
     CommReq* findMatch( Hdr&, int& delay );
     RecvReq* searchUnexpected( RecvInfo& info, int& delay );
 
