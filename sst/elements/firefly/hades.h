@@ -19,7 +19,6 @@
 #include "ioapi.h"
 #include "group.h"
 #include "info.h"
-#include "functionCtx.h"
 #include "protocolAPI.h"
 
 namespace SST {

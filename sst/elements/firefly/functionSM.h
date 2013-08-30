@@ -68,7 +68,6 @@ class FunctionSM {
     int myNodeId() { return m_info.nodeId(); }
     int myWorldRank() { return m_info.worldRank(); }
 
-    enum Direction { Out, In };
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*  m_sm; 
     SST::Link*          m_fromDriverLink;    
