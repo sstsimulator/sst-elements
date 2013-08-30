@@ -19,7 +19,7 @@
 using namespace SST::Firefly;
 
 SendFuncSM::SendFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink, ProtocolAPI* dm ) :
+            Info* info, SST::Link* progressLink, ProtocolAPI* dm ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_dm( static_cast<DataMovement*>(dm) ),
     m_toProgressLink( progressLink ),

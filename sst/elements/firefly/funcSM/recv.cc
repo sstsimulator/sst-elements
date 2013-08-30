@@ -19,7 +19,7 @@
 using namespace SST::Firefly;
 
 RecvFuncSM::RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink,   
+            Info* info, SST::Link* progressLink,   
             ProtocolAPI* dm, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_toProgressLink( progressLink ),

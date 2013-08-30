@@ -30,9 +30,8 @@
 using namespace SST::Firefly;
 using namespace Hermes;
 
-FunctionSM::FunctionSM( SST::Params& params,
-                        SST::Component* obj, Info& info, ProtocolAPI* dm,
-                        IO::Interface* io, ProtocolAPI* ctrlMsg ) :
+FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 
+        SST::Link* toProgressLink, ProtocolAPI* dm, ProtocolAPI* ctrlMsg ) :
     m_sm( NULL ),
     m_nodeId( -1 ),
     m_worldRank( -1 ),
@@ -60,12 +59,16 @@ FunctionSM::FunctionSM( SST::Params& params,
     setFunctionTimes( Recv, timeParams.find_integer("Recv", defaultTime ) );
     setFunctionTimes( Wait, timeParams.find_integer("Wait", defaultTime ) );
     setFunctionTimes( Barrier, timeParams.find_integer("Barrier", defaultTime ) );
-    setFunctionTimes( Allreduce, timeParams.find_integer("Allreduce", defaultTime ) );
+    setFunctionTimes( Allreduce, timeParams.find_integer("Allreduce",
+                                                        defaultTime ) );
     setFunctionTimes( Reduce, timeParams.find_integer("Reduce", defaultTime ) );
-    setFunctionTimes( Allgather, timeParams.find_integer("Allgather", defaultTime ) );
-    setFunctionTimes( Allgatherv, timeParams.find_integer("Allgatherv", defaultTime ) );
+    setFunctionTimes( Allgather, timeParams.find_integer("Allgather",
+                                                        defaultTime ) );
+    setFunctionTimes( Allgatherv, timeParams.find_integer("Allgatherv",
+                                                        defaultTime ) );
     setFunctionTimes( Gather, timeParams.find_integer("Gather", defaultTime ) );
-    setFunctionTimes( Gatherv, timeParams.find_integer("Gatherv",defaultTime ));
+    setFunctionTimes( Gatherv, timeParams.find_integer("Gatherv",
+                                                        defaultTime ));
 
     m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
@@ -84,29 +87,31 @@ FunctionSM::FunctionSM( SST::Params& params,
 
     m_smV[Init] = new InitFuncSM( verboseLevel, loc, &info );
     m_smV[Fini] = new FiniFuncSM( verboseLevel, loc, &info, 
-                                        m_toProgressLink, ctrlMsg, m_selfLink);
+                                        toProgressLink, ctrlMsg, m_selfLink);
     m_smV[Rank] = new RankFuncSM( verboseLevel, loc, &info );
     m_smV[Size] = new SizeFuncSM( verboseLevel, loc, &info );
     m_smV[Send] = new SendFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, dm );
+                                        toProgressLink, dm );
     m_smV[Wait] = new WaitFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, dm );
+                                        toProgressLink, dm );
     m_smV[Recv] = new RecvFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, dm, m_selfLink );
+                                        toProgressLink, dm, m_selfLink );
     m_smV[Barrier] = new BarrierFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
     m_smV[Allreduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
     m_smV[Reduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
+    
     m_smV[Allgather] = new AllgatherFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
     m_smV[Allgatherv] = new AllgatherFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
     m_smV[Gather] = new GathervFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
     m_smV[Gatherv] = new GathervFuncSM( verboseLevel, loc, &info,
-                                        m_toProgressLink, ctrlMsg, m_selfLink );
+                                        toProgressLink, ctrlMsg, m_selfLink );
+
 }
 
 FunctionSM::~FunctionSM()
@@ -116,6 +121,14 @@ FunctionSM::~FunctionSM()
         delete m_smV[i];
     }
     delete m_fromDriverLink;
+}
+
+void FunctionSM::setup()
+{
+    char buffer[100];
+    snprintf(buffer,100,"@t:%d:%d:FunctionSM::@p():@l ",m_info.nodeId(),
+                                                m_info.worldRank());
+    m_dbg.setPrefix(buffer);
 }
 
 void FunctionSM::sendProgressEvent( SST::Event* e  )

@@ -19,7 +19,7 @@ using namespace SST::Firefly;
 
 BarrierFuncSM::BarrierFuncSM( 
             int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link*& progressLink, 
+            Info* info, SST::Link* progressLink, 
             ProtocolAPI* xxx, SST::Link* selfLink ) :
     CollectiveTreeFuncSM(verboseLevel,loc,info,progressLink, xxx, selfLink ) 
 {

@@ -18,7 +18,7 @@
 using namespace SST::Firefly;
 
 FiniFuncSM::FiniFuncSM( int verboseLevel, Output::output_location_t loc,
-                Info* info, SST::Link*& progressLink, 
+                Info* info, SST::Link* progressLink, 
                 ProtocolAPI* xxx, SST::Link* selfLink ) :
     BarrierFuncSM(verboseLevel,loc,info,progressLink,xxx,selfLink) 
 {

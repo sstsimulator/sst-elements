@@ -121,10 +121,8 @@ Hades::Hades( Params& params ) :
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
-    m_functionSM = new FunctionSM( funcParams,
-                m_owner, m_info, m_protocolM[0], m_io, m_protocolM[1] );
-
-    m_functionSM->setProgressLink( m_enterLink );
+    m_functionSM = new FunctionSM( funcParams, m_owner, m_info, m_enterLink,
+                                    m_protocolM[0], m_protocolM[1] );
 }
 
 void Hades::enterEventHandler(SST::Event* )
@@ -232,6 +230,8 @@ void Hades::_componentSetup()
 
     m_protocolM[0]->setup();
     m_protocolM[1]->setup();
+
+    m_functionSM->setup();
 }
 
 Group* Hades::initAdjacentMap( int numRanks, 

@@ -96,6 +96,8 @@ void Hades::reduce(Addr mydata, Addr result, uint32_t count,
         PayloadDataType dtype, ReductionOperation op, RankID root,
         Communicator group, Functor* retFunc)
 {
+    m_dbg.verbose(CALL_INFO,1,0,"in=%p out=%p count=%d dtype=%d \n",
+                mydata,result,count,dtype);
     m_functionSM->start( new CollectiveEnterEvent(FunctionSM::Reduce,
                          retFunc, mydata, result, count, 
                         dtype, op, root, group, false) );

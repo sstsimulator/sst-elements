@@ -29,7 +29,7 @@ class RecvFuncSM :  public FunctionSMInterface
   public:
 
     RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info*, SST::Link*&, ProtocolAPI*, SST::Link* );
+        Info*, SST::Link*, ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event* );
     virtual void handleProgressEvent( SST::Event* );
@@ -42,7 +42,7 @@ class RecvFuncSM :  public FunctionSMInterface
   private:
     void finish( RecvEntry*, MsgEntry* );
     
-    SST::Link*&     m_toProgressLink;
+    SST::Link*      m_toProgressLink;
     SST::Link*      m_selfLink;
     DataMovement*   m_dm;
     RecvEnterEvent* m_event;

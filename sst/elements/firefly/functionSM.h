@@ -48,17 +48,13 @@ class FunctionSM {
         NumFunctions
     };
 
-    FunctionSM( SST::Params& params,
-                SST::Component*, Info&, ProtocolAPI*, IO::Interface*,
-                ProtocolAPI* ); 
+    FunctionSM( SST::Params& params, SST::Component*, Info&, SST::Link*, 
+                                        ProtocolAPI*, ProtocolAPI* ); 
     ~FunctionSM();
 
     void start( SST::Event* );
     void sendProgressEvent( SST::Event* );
-
-    void setProgressLink( SST::Link* link ) {
-        m_toProgressLink = link;
-    }
+    void setup();
 
   private:
     void handleSelfEvent( SST::Event* );
@@ -74,7 +70,6 @@ class FunctionSM {
     SST::Link*          m_toDriverLink;    
     SST::Link*          m_selfLink;
     SST::Link*          m_fromProgressLink;
-    SST::Link*          m_toProgressLink;
     int                 m_nodeId;
     int                 m_worldRank;
 

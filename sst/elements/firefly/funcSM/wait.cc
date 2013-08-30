@@ -18,7 +18,7 @@
 using namespace SST::Firefly;
 
 WaitFuncSM::WaitFuncSM( int verboseLevel, Output::output_location_t loc,
-                 Info* info, SST::Link*& progressLink, ProtocolAPI* dm ) :
+                 Info* info, SST::Link* progressLink, ProtocolAPI* dm ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_dm( static_cast<DataMovement*>( dm ) ),
     m_toProgressLink( progressLink )

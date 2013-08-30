@@ -26,7 +26,7 @@ class SendFuncSM :  public FunctionSMInterface
     enum { } m_state;
   public:
     SendFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info* info, SST::Link*&, ProtocolAPI* );
+        Info* info, SST::Link*, ProtocolAPI* );
 
     virtual void  handleEnterEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event* );
@@ -37,7 +37,7 @@ class SendFuncSM :  public FunctionSMInterface
 
   private:
     DataMovement*   m_dm;
-    SST::Link*&     m_toProgressLink;
+    SST::Link*      m_toProgressLink;
     SendEnterEvent* m_event;
 };
 

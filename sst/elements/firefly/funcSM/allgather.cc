@@ -24,7 +24,7 @@ inline long mod( long a, long b )
 
 AllgatherFuncSM::AllgatherFuncSM( 
         int verboseLevel, Output::output_location_t loc, Info* info,
-        SST::Link*& progressLink, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+        SST::Link* progressLink, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),

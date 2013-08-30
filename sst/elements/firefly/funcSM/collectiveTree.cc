@@ -20,7 +20,7 @@ using namespace SST::Firefly;
 
 CollectiveTreeFuncSM::CollectiveTreeFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
-                    Info* info, SST::Link*& progressLink, 
+                    Info* info, SST::Link* progressLink, 
                     ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_event( NULL ),
@@ -66,7 +66,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
     m_state = WaitUp;
     m_delay = 0;
     m_count = 0;
-    m_toProgressLink->send(0, NULL );
+    m_toProgressLink->send( 0, NULL );
 }
 
 void CollectiveTreeFuncSM::handleSelfEvent( SST::Event *e )
@@ -104,7 +104,7 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
                                                                     m_count);
                      ++m_count;
                 } else {
-                     m_ctrlMsg->sleep();
+                    m_ctrlMsg->sleep();
                     m_toProgressLink->send(0, NULL );
                     break;
                 }
@@ -141,7 +141,8 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
                 m_pending = true;
                 break;
             } else {
-                // do we need to wait for the send to complete? 
+                // we don't need to wait for the send to complete as  
+                // hades will not return until the send is complete 
             }
         }
         m_pending = false;
