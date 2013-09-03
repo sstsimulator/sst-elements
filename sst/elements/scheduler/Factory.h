@@ -22,6 +22,7 @@
 #include <string>
 
 namespace SST {
+    class Params;
     namespace Scheduler {
 
 
@@ -35,10 +36,10 @@ namespace SST {
         class Factory{
             public:
                 Factory(); //only sets up the output class
-                Scheduler* getScheduler(SST::Component::Params_t& params, int numProcs);
-                Machine* getMachine(SST::Component::Params_t& params, int numProcs, schedComponent* sc);
-                Allocator* getAllocator(SST::Component::Params_t& params, Machine* m);
-                int getFST(SST::Component::Params_t& params);
+                Scheduler* getScheduler(SST::Params& params, int numProcs);
+                Machine* getMachine(SST::Params& params, int numProcs, schedComponent* sc);
+                Allocator* getAllocator(SST::Params& params, Machine* m);
+                int getFST(SST::Params& params);
             private:
                 std::vector<std::string>* parseparams(std::string inparam);
 

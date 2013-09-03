@@ -18,6 +18,8 @@
 
 //#include <QFileSystemWatcher>
 
+#include <sst/core/params.h>
+
 #include "BestFitAllocator.h"
 #include "ConstraintAllocator.h"
 #include "EASYScheduler.h"
@@ -94,7 +96,7 @@ Factory::Factory()
     schedout.init("", 8, 0, Output::STDOUT);
 }
 
-Scheduler* Factory::getScheduler(SST::Component::Params_t& params, int numProcs)
+Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
 {
     if(params.find("scheduler") == params.end()){
         schedout.verbose(CALL_INFO, 1, 0, "Defaulting to Priority Scheduler with FIFO queue\n");
@@ -193,7 +195,7 @@ Scheduler* Factory::getScheduler(SST::Component::Params_t& params, int numProcs)
 }
 
 //returns the correct machine based on the parameters
-Machine* Factory::getMachine(SST::Component::Params_t& params, int numProcs, schedComponent* sc)
+Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* sc)
 {
     if (params.find("machine") == params.end()) {
         //default: FIFO queue priority scheduler
@@ -244,7 +246,7 @@ Machine* Factory::getMachine(SST::Component::Params_t& params, int numProcs, sch
 
 
 //returns the correct allocator based on the parameters
-Allocator* Factory::getAllocator(SST::Component::Params_t& params, Machine* m)
+Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
 {
     if (params.find("allocator") == params.end()) {
         //default: FIFO queue priority scheduler
@@ -384,7 +386,7 @@ Allocator* Factory::getAllocator(SST::Component::Params_t& params, Machine* m)
     return NULL; //control never reaches here
 }
 
-int Factory::getFST(SST::Component::Params_t& params)
+int Factory::getFST(SST::Params& params)
 {
     if(params.find("FST") == params.end()){
         //default: FIFO queue priority scheduler

@@ -10,28 +10,27 @@
 // distribution.
 
 #include "sst_config.h"
-
 #include "sst/core/serialization.h"
-#include <assert.h>
-#include <fstream>
+#include "schedComponent.h" 
 
-#include <boost/tokenizer.hpp>        // for reading YumYum jobs
+#include <assert.h>
 #include <boost/algorithm/string.hpp>
-#include <cstring>
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
+#include <boost/tokenizer.hpp>        // for reading YumYum jobs
+#include <cstring>
+#include <fstream>
 #include <stdio.h>
+#include <stdlib.h>
 
 //#include <QFileSystemWatcher>
 
-#include "sst/core/element.h"
-#include "schedComponent.h" 
-
+#include <sst/core/debug.h>
+#include <sst/core/element.h>
+#include <sst/core/event.h>
+#include <sst/core/params.h>
 
 #include "unistd.h"             // for sleep
-#include <stdlib.h>
-
-#include <sst/core/event.h>
 
 #include "Allocator.h"
 #include "AllocInfo.h"
@@ -75,7 +74,7 @@ schedComponent::~schedComponent()
     delete scheduler;
     if (FSTtype > 0) delete calcFST;
 }
-schedComponent::schedComponent(ComponentId_t id, Params_t& params) :
+schedComponent::schedComponent(ComponentId_t id, Params& params) :
     Component(id) 
 {
     lastfinaltime = ~0;
