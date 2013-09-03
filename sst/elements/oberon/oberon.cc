@@ -14,6 +14,7 @@
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include <sst/core/params.h>
 
 #include "oberon.h"
 #include "oberonev.h"
@@ -91,7 +92,7 @@ BOOST_CLASS_EXPORT(OberonComponent)
 
 static Component*
 create_oberon(SST::ComponentId_t id,
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new OberonComponent( id, params );
 }

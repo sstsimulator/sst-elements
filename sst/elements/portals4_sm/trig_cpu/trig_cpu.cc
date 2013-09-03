@@ -13,6 +13,7 @@
 #include <sst_config.h>
 #include "sst/core/serialization.h"
 
+#include <sst/core/debug.h>
 #include <sst/core/element.h>
 
 #include "trig_cpu.h"
@@ -63,7 +64,7 @@ barrier_action* trig_cpu::barrier_act = NULL;
 // int trig_cpu::total_nodes;
 // int trig_cpu::num_remaining;
 
-trig_cpu::trig_cpu(ComponentId_t id, Params_t& params) :
+trig_cpu::trig_cpu(ComponentId_t id, Params& params) :
     Component( id ),
     delay_host_pio_write(8),
     delay_bus_xfer(16),

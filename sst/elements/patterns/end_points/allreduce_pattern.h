@@ -20,6 +20,8 @@
 #ifndef _ALLREDUCE_PATTERN_H
 #define _ALLREDUCE_PATTERN_H
 
+#include <sst/core/params.h>
+
 #include <boost/serialization/list.hpp>
 #include "patterns.h"
 #include "support/comm_pattern.h"
@@ -36,7 +38,7 @@
 
 class Allreduce_pattern : public Comm_pattern    {
     public:
-        Allreduce_pattern(ComponentId_t id, Params_t& params) :
+        Allreduce_pattern(ComponentId_t id, Params& params) :
             Comm_pattern(id, params)
         {
 	    // Defaults for paramters
@@ -48,7 +50,7 @@ class Allreduce_pattern : public Comm_pattern    {
 
 
 	    // Process the message rate specific paramaters
-            Params_t::iterator it= params.begin();
+            Params::iterator it= params.begin();
             while (it != params.end())   {
 		if (!it->first.compare("num_sets"))   {
 		    sscanf(it->second.c_str(), "%d", &num_sets);
@@ -187,7 +189,7 @@ class Allreduce_pattern : public Comm_pattern    {
 	void state_COLLECT_RESULT(state_event sm_event);
 	void state_DONE(state_event sm_event);
 
-	Params_t params;
+	Params params;
 	int allreduce_msglen;
 
 	// State machine identifiers

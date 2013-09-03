@@ -24,7 +24,7 @@ using namespace SST::Portals4;
 
 const char * PtlNic::m_cmdNames[] = CMD_NAMES;
 
-PtlNic::PtlNic( SST::ComponentId_t id, Params_t& params ) :
+PtlNic::PtlNic( SST::ComponentId_t id, Params& params ) :
     RtrIF( id, params ),
     m_nid( params.find_integer("nid") ),
     m_dmaEngine( *this, params ),

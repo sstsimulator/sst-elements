@@ -10,11 +10,13 @@
 // distribution.
 
 #include <sst_config.h>
+#include "m5.h"
+
 #include <sst/core/serialization.h>
-#include <sst/core/params.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/linkMap.h>
+#include <sst/core/params.h>
 
 #include <dll/gem5dll.hh>
 #include <sim/simulate.hh>
@@ -22,14 +24,13 @@
 #include "util.h"
 #include "debug.h"
 
-#include "m5.h"
 
 #define curTick libgem5::CurTick
 
 using namespace SST;
 using namespace SST::M5;
 
-SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
+SST::M5::M5::M5( ComponentId_t id, Params& params ) :
     IntrospectedComponent( id ),
     m_numRegisterExits( 0 ),
     m_barrier( NULL ),
@@ -52,7 +53,7 @@ SST::M5::M5::M5( ComponentId_t id, Params_t& params ) :
         enableDebug( params[ "M5debug" ] );
     }
     if ( params.find( "M5debugFile" ) != params.end() ) {
-        libgem5::SetLogFile( params[ "M5debugFile" ] );
+//        libgem5::SetLogFile( params[ "M5debugFile" ] );
     }
 
     if ( params.find( "info" ) != params.end() ) {

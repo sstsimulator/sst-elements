@@ -34,7 +34,7 @@ namespace MemHierarchy {
 class streamCPU : public SST::Component {
 public:
 
-	streamCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
+	streamCPU(SST::ComponentId_t id, SST::Params& params);
 	void init();
 	void finish() {
 		out.output("streamCPU Finished after %"PRIu64" issued reads, %"PRIu64" returned\n",

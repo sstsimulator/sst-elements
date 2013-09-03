@@ -12,16 +12,19 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include "ioSwitch.h"
+
 #include "sst/core/component.h"
 #include "sst/core/element.h"
+#include "sst/core/link.h"
+#include "sst/core/params.h"
 
-#include "ioSwitch.h"
 #include "ioEvent.h"
 
 using namespace SST;
 using namespace SST::Firefly;
 
-IOSwitch::IOSwitch(ComponentId_t id, Params_t &params) :
+IOSwitch::IOSwitch(ComponentId_t id, Params &params) :
     Component( id )
 {
     int numPorts = params.find_integer("numPorts");

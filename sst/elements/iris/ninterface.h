@@ -61,7 +61,7 @@ class SimpleArbiter
 class NInterface : public DES_Component
 {
     public:
-        NInterface (SST::ComponentId_t id, Params_t& params);
+        NInterface (SST::ComponentId_t id, Params& params);
         ~NInterface ();  
 
         //link to macsim object

@@ -17,8 +17,9 @@
 #include <assert.h>
 
 #include <sst/core/component.h>
-#include <sst/core/simulation.h>
 #include <sst/core/element.h>
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/interfaces/memEvent.h>
 
@@ -30,7 +31,7 @@ static const LinkId_t BUS_INACTIVE = (LinkId_t)(-2);
 const char Bus::BUS_INFO_STR[] = "SST::MemHierarchy::Bus::Info:";
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 
-Bus::Bus(ComponentId_t id, Params_t& params) :
+Bus::Bus(ComponentId_t id, Params& params) :
 	Component(id)
 {
 	// get parameters

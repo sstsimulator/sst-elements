@@ -16,6 +16,7 @@
 #include <queue>
 #include <map>
 
+#include <sst/core/params.h>
 #include "../RtrIF.h"
 #include "../SST_interface.h"
 
@@ -127,7 +128,7 @@ private:
     }
     
 public:
-    iris_trig_nic( ComponentId_t id, Params_t& params );
+    iris_trig_nic( ComponentId_t id, Params& params );
 
     virtual void finish() {
     }

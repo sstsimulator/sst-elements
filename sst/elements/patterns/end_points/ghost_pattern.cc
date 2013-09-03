@@ -19,12 +19,14 @@
 
 /*
 */
-#define __STDC_FORMAT_MACROS	(1)
-#include <inttypes.h>		/* For PRId64 */
 #include "ghost_pattern.h"
+
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS	(1)
+#endif
+#include <inttypes.h>		/* For PRId64 */
+
 #include <sst/core/element.h>
-
-
 
 void
 Ghost_pattern::handle_events(state_event sm_event)

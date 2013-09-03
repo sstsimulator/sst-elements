@@ -24,14 +24,14 @@ using namespace SST::Zodiac;
 
 static Component*
 create_ZodiacTraceReader(SST::ComponentId_t id,
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new ZodiacTraceReader( id, params );
 }
 
 static Component*
 create_ZodiacSiriusTraceReader(SST::ComponentId_t id,
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new ZodiacSiriusTraceReader( id, params );
 }
@@ -39,7 +39,7 @@ create_ZodiacSiriusTraceReader(SST::ComponentId_t id,
 #ifdef HAVE_ZODIAC_DUMPI
 static Component*
 create_ZodiacDUMPITraceReader(SST::ComponentId_t id,
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     return new ZodiacDUMPITraceReader( id, params );
 }
@@ -48,7 +48,7 @@ create_ZodiacDUMPITraceReader(SST::ComponentId_t id,
 #ifdef HAVE_ZODIAC_OTF
 static Component*
 create_ZodiacOTFTraceReader(SST::ComponentId_t id,
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
     std::cout << "Constructing a Zodiac OTF Reader..." << std::endl;
     return new ZodiacOTFTraceReader( id, params );

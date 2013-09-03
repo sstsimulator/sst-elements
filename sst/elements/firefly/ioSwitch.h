@@ -22,7 +22,7 @@ namespace Firefly {
 
 class IOSwitch : public SST::Component {
   public:
-    IOSwitch(SST::ComponentId_t id, SST::Component::Params_t &params);
+    IOSwitch(SST::ComponentId_t id, SST::Params &params);
     ~IOSwitch();
     void setup(void) { }
     void init(unsigned int phase);

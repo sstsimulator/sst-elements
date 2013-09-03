@@ -2,18 +2,20 @@
 
 #include "../../sst_config.h"
 #include "sst/core/serialization.h"
+#include "PhoenixSim.h"
+
+#include <assert.h>
+#include <string>
 
 #include "omnetEvent.h"
 #include "common/fileutil.h"
 #include "envir/inifilereader.h"
 #include "omnetconfiguration.h"
 
-#include "PhoenixSim.h"
+#include <sst/core/debug.h>
 #include "sst/core/element.h"
 #include <sst/core/link.h>
 #include <sst/core/stopAction.h>
-#include <assert.h>
-#include <string>
 
 using namespace SST;
 using namespace std;
@@ -44,7 +46,7 @@ static void verifyIntTypes()
 #undef LL
 }
 
-PhoenixSim::PhoenixSim(SST::ComponentId_t id, SST::Component::Params_t& params) : Component(id) {
+PhoenixSim::PhoenixSim(SST::ComponentId_t id, SST::Params& params) : Component(id) {
   printf("constructing....\n");
   cStaticFlag::set(true);  
   
@@ -451,7 +453,7 @@ void OmnetSimulation::processSelfMsg(cMessage *msg) {
 
 static Component*
 create_PhoenixSim(SST::ComponentId_t id, 
-                  SST::Component::Params_t& params)
+                  SST::Params& params)
 {
   return new PhoenixSim( id, params );
 }

@@ -23,7 +23,7 @@ namespace EventTest {
 
 class event_test : public SST::Component {
 public:
-    event_test(SST::ComponentId_t id, SST::Component::Params_t& params);
+    event_test(SST::ComponentId_t id, SST::Params& params);
 
     void init(unsigned int phase);
     void setup();

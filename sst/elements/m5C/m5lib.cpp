@@ -24,13 +24,13 @@
 using namespace SST;
 
 static Component*
-create_M5(ComponentId_t id, Component::Params_t& params)
+create_M5(ComponentId_t id, Params& params)
 {
     return new SST::M5::M5( id, params );
 }
 
 static Component*
-create_Bounce(ComponentId_t id, Component::Params_t& params)
+create_Bounce(ComponentId_t id, Params& params)
 {
     return new SST::M5::Bounce( id, params );
 }

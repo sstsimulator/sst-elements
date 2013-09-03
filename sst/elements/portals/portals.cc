@@ -14,12 +14,13 @@
 #include <sst/core/serialization.h>
 
 #include <sst/core/element.h>
+#include <sst/core/params.h>
 
 using namespace SST;
 
 static SST::Component*
 create_portals4_driver(SST::ComponentId_t id,
-                       SST::Component::Params_t& params)
+                       SST::Params& params)
 {
     printf("driver called\n");
     return NULL;

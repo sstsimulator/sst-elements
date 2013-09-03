@@ -13,14 +13,17 @@
 #define __portLink_h
 
 #include <sst_config.h>
-#include <sst/core/component.h>
 
 #include <debug.h>
 #include <m5.h>
 #include <dll/gem5dll.hh>
 #include <dll/memEvent.hh>
 #include <rawEvent.h>
+
+#include <sst/core/component.h>
 #include <sst/core/interfaces/memEvent.h>
+#include <sst/core/link.h>
+#include <sst/core/params.h>
 
 namespace SST {
 namespace M5 {

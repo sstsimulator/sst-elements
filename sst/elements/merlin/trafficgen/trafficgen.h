@@ -22,6 +22,7 @@
 #include <boost/random/binomial_distribution.hpp>
 
 #include <sst/core/component.h>
+#include <sst/core/debug.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -220,7 +221,7 @@ protected:
 
 };
 
-}
-}
+} //namespace Merlin
+} //namespace SST
 
 #endif

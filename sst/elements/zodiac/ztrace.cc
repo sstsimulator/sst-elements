@@ -4,13 +4,14 @@
 #include <assert.h>
 
 #include "sst/core/element.h"
+#include "sst/core/params.h"
 
 #include "ztrace.h"
 
 using namespace SST;
 using namespace SST::Zodiac;
 
-ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params_t& params) :
+ZodiacTraceReader::ZodiacTraceReader(ComponentId_t id, Params& params) :
   Component(id) {
 
     std::string msgiface = params.find_string("msgapi");

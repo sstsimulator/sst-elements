@@ -8,17 +8,20 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
-#include <unistd.h>
-#include <signal.h>
 #include <sst_config.h>
 #include "sst/core/serialization.h"
+#include "sst/elements/merlin/test/nic.h"
 
+#include <unistd.h>
+#include <signal.h>
+
+#include <sst/core/debug.h>
 #include <sst/core/element.h>
+#include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
 #include "sst/elements/merlin/linkControl.h"
-#include "sst/elements/merlin/test/nic.h"
 
 using namespace SST::Merlin;
 

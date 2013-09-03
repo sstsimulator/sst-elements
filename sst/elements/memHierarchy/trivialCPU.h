@@ -34,7 +34,7 @@ namespace MemHierarchy {
 class trivialCPU : public SST::Component {
 public:
 
-	trivialCPU(SST::ComponentId_t id, SST::Component::Params_t& params);
+	trivialCPU(SST::ComponentId_t id, SST::Params& params);
 	void init();
 	void finish() {
 		out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",

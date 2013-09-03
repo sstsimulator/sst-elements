@@ -12,26 +12,28 @@
 #ifndef QSIM_COMPONENT_H
 #define QSIM_COMPONENT_H
 
-#include <sst_config.h>
-#include <sst/core/serialization/element.h>
-#include <sst/core/element.h>
+#include <sst/core/sst_types.h>
+//#include <sst_config.h>
+//#include <sst/core/serialization/element.h>
 #include <assert.h>
 
-#include <sst/core/event.h>
-#include <sst/core/sst_types.h>
 #include <sst/core/component.h>
+#include <sst/core/element.h>
+#include <sst/core/event.h>
 #include <sst/core/link.h>
+#include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
 
 #include <sst/core/interfaces/memEvent.h>
 
-#include <sst/core/output.h>
 
 #include <qsim.h>
 
 #include <string>
 
-namespace SST { namespace QsimComponent {
+namespace SST { 
+class Params;
+namespace QsimComponent {
   class qsimComponent : public Component {
   public:
     qsimComponent(ComponentId_t id, Params &p);

@@ -14,9 +14,11 @@
 // #include <fcntl.h>
 #include "sst_config.h"
 #include "sst/core/serialization.h"
-
 #include "trig_nic.h"
+
 #include <string.h>		       // for memcpy()
+
+#include <sst/core/params.h>
 
 // Need to find a better place to put this (this duplicates what is in
 // portals_types.h).
@@ -25,7 +27,7 @@
 using namespace SST;
 using namespace SST::Portals4_sm;
 
-trig_nic::trig_nic( ComponentId_t id, Params_t& params ) :
+trig_nic::trig_nic( ComponentId_t id, Params& params ) :
     RtrIF(id,params),
     msg_latency(40),
     ptl_latency(20),

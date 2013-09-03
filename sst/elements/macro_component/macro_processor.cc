@@ -45,7 +45,7 @@ bool macro_processor::debug_init_ = false;
 bool macro_processor::timeinit_ = false;
 bool macro_processor::nodeid_init_ = false;
 
-macro_processor::macro_processor(ComponentId_t id, Params_t& params) :
+macro_processor::macro_processor(ComponentId_t id, Params& params) :
     Component(id)
 {
 

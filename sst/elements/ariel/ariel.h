@@ -12,8 +12,8 @@
 #ifndef _ariel_H
 #define _ariel_H
 
-#include <sst/core/event.h>
 #include <sst/core/sst_types.h>
+#include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
@@ -35,12 +35,14 @@ using namespace std;
 using namespace SST::Interfaces;
 
 namespace SST {
+class Event;
+
 namespace ArielComponent {
 
 class Ariel : public SST::Component {
 public:
 
-  Ariel(SST::ComponentId_t id, SST::Component::Params_t& params);
+  Ariel(SST::ComponentId_t id, SST::Params& params);
 
   void setup()  { }
   void finish() { }

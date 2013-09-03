@@ -43,7 +43,7 @@ class MemoryDev :
     
     public: // functions 
 
-        MemoryDev( Component& comp, Component::Params_t params,
+        MemoryDev( Component& comp, Params params,
                                                         std::string name );
         virtual bool read( addr_t, cookie_t cookie = NULL);
         virtual bool write( addr_t, cookie_t cookie = NULL);

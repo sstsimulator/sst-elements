@@ -15,6 +15,8 @@
 #include "ctrlMsg.h"
 #include "info.h"
 
+#include "sst/core/params.h"
+
 using namespace SST::Firefly;
 using namespace SST;
 

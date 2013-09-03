@@ -18,7 +18,7 @@ namespace Zodiac {
 class ZodiacTraceReader : public SST::Component {
 public:
 
-  ZodiacTraceReader(SST::ComponentId_t id, SST::Component::Params_t& params);
+  ZodiacTraceReader(SST::ComponentId_t id, SST::Params& params);
   void setup() { }
   void finish() { }
 

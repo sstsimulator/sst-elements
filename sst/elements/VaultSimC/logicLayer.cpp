@@ -10,19 +10,23 @@
 // distribution.
 
 #include <sst_config.h>
-#include <stdio.h>
 #include "sst/core/serialization.h"
 #include <logicLayer.h>
+
+#include <sstream> // for stringstream() so I don't have to use atoi()
+#include <stdio.h>
+
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/interfaces/memEvent.h>
-#include <sstream> // for stringstream() so I don't have to use atoi()
+#include <sst/core/link.h>
+#include <sst/core/params.h>
 
 using namespace SST::Interfaces;
 
 #define DBG( fmt, args... )m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 //typedef  VaultCompleteFn; 
 
-logicLayer::logicLayer( ComponentId_t id, Params_t& params ) :
+logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   IntrospectedComponent( id ), memOps(0)
 {
   dbg.init("@R:LogicLayer::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
@@ -248,7 +252,7 @@ bool logicLayer::clock( Cycle_t current )
 }
 
 extern "C" {
-	Component* create_logicLayer( SST::ComponentId_t id,  SST::Component::Params_t& params )
+	Component* create_logicLayer( SST::ComponentId_t id,  SST::Params& params )
 	{
 		return new logicLayer( id, params );
 	}

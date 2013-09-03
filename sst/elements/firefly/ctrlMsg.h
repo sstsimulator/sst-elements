@@ -17,6 +17,7 @@
 #include "protocolAPI.h"
 
 namespace SST {
+class Params;
 namespace Firefly {
 
 class Info;

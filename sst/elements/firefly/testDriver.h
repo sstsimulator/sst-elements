@@ -27,7 +27,7 @@ namespace Firefly {
 class TestDriver : public SST::Component {
 
   public:
-    TestDriver(SST::ComponentId_t id, SST::Component::Params_t &params);
+    TestDriver(SST::ComponentId_t id, SST::Params &params);
     ~TestDriver();
     void setup(void); 
     void init(unsigned int phase);

@@ -33,7 +33,7 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::Nic(ComponentId_t id, Params_t &params)
+Nic::Nic(ComponentId_t id, Params &params)
 {
     DBGX("\n");
 }

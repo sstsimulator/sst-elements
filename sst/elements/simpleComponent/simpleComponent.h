@@ -24,7 +24,7 @@ namespace SimpleComponent {
 class simpleComponent : public SST::Component {
 public:
 
-  simpleComponent(SST::ComponentId_t id, SST::Component::Params_t& params);
+  simpleComponent(SST::ComponentId_t id, SST::Params& params);
   void setup() { }
   void finish() {
     static int n = 0;

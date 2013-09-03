@@ -10,13 +10,16 @@
 // distribution.
 
 
+#include <sst/core/debug.h>
 #include "sst/core/event.h"
+#include <sst/core/params.h>
+
 
 #define _EC_DBG( fmt, args... ) \
     m_dbg.write( "%s():%d: "fmt, __FUNCTION__, __LINE__, ##args)
 
 EVENTCHANNEL()::EventChannel( Component& comp, 
-            Component::Params_t params, std::string name, int numVC ) :
+            Params params, std::string name, int numVC ) :
     m_component( comp ),
     m_log( *new Log<  >( "INFO EventChannel: ", false ) ),
     m_dbg( *new Log< EVENTCHANNEL_DBG >( "EventChannel::", false ) )

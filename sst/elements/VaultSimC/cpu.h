@@ -29,7 +29,7 @@ class cpu : public IntrospectedComponent {
   
 public: // functions
   
-  cpu( ComponentId_t id, Params_t& params );
+  cpu( ComponentId_t id, Params& params );
   int Finish();
   
 private: // types

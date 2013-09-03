@@ -21,6 +21,7 @@
 #include <deque>
 #include <map>
 
+#include <sst/core/params.h>
 #include <sst/core/timeConverter.h>
 
 #ifndef DRAMSIMC_DBG

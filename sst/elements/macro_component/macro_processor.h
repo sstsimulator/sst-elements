@@ -36,12 +36,13 @@
 #include <sst/core/sst_types.h>
 //#include        <sst/core/serialization.h>
 #include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
-
-#include <sst/core/simulation.h>
-#include <sst/core/timeLord.h>
 #include <sst/core/element.h>
+#include <sst/core/link.h>
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
+#include <sst/core/timeConverter.h>
+#include <sst/core/timeLord.h>
+
 
 #include <queue>
 
@@ -157,7 +158,7 @@ protected:
 
 public:
 
-  macro_processor(SST::ComponentId_t id, SST::Component::Params_t& params);
+  macro_processor(SST::ComponentId_t id, SST::Params& params);
   virtual
   ~macro_processor()
   {

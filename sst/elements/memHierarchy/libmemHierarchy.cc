@@ -27,7 +27,7 @@ using namespace SST::MemHierarchy;
 
 static Component*
 create_Cache(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
+		SST::Params& params)
 {
 	return new Cache( id, params );
 }
@@ -35,7 +35,7 @@ create_Cache(SST::ComponentId_t id,
 
 static Component*
 create_Bus(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
+		SST::Params& params)
 {
 	return new Bus( id, params );
 }
@@ -43,14 +43,14 @@ create_Bus(SST::ComponentId_t id,
 
 static Component*
 create_trivialCPU(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
+		SST::Params& params)
 {
 	return new trivialCPU( id, params );
 }
 
 static Component*
 create_streamCPU(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
+		SST::Params& params)
 {
 	return new streamCPU( id, params );
 }
@@ -58,14 +58,14 @@ create_streamCPU(SST::ComponentId_t id,
 
 static Component*
 create_MemController(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
+		SST::Params& params)
 {
 	return new MemController( id, params );
 }
 
 static Component*
 create_DirectoryController(SST::ComponentId_t id,
-		SST::Component::Params_t& params)
+		SST::Params& params)
 {
 	return new DirectoryController( id, params );
 }

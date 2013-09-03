@@ -17,7 +17,7 @@
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/set.hpp>
 #include "patterns.h"
-#include <sst/core/component.h>		// For SST::Component::Params_t
+#include <sst/core/component.h>		// For SST::Params
 #include <sst/core/sst_types.h>
 #include <sst/core/link.h>
 #include <sst/core/cpunicEvent.h>
@@ -43,7 +43,7 @@ class Patterns   {
 	~Patterns()   {
 	}
 
-	void init(SST::Component::Params_t& params, SST::Link *self_link,
+	void init(SST::Params& params, SST::Link *self_link,
 		NIC_model *model[NUM_NIC_MODELS],
 		SST::Link *nvram_link, SST::Link *storage_link,
 		MachineInfo *m, int my_rank);
