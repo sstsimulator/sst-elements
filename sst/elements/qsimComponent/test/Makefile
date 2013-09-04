@@ -6,8 +6,8 @@ test.xml: ../gen_sdl.sh
 test-app.tar: test-app runme.sh
 	tar -cf test-app.tar test-app runme.sh
 
-test-app: test-app.c
-	gcc -O2 -m32 -static -o test-app test-app.c
+## test-app: test-app.c
+##	gcc -O2 -m32 -static -o test-app test-app.c
 
 state.4: state.4.bz2
 	bunzip2 -k state.4.bz2
