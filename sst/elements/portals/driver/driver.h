@@ -13,6 +13,8 @@
 #ifndef COMPONENTS_PORTALS_DRIVER_H
 #define COMPONENTS_PORTALS_DRIVER_H
 
+#include <sst/core/component.h>
+
 namespace SST {
 namespace portals {
 
