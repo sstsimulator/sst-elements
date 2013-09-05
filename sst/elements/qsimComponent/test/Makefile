@@ -3,7 +3,8 @@ all: test.xml test-app.tar state.4
 test.xml: ../gen_sdl.sh
 	N=4 STATE=`pwd`/state.4 APP=`pwd`/test-app.tar ../gen_sdl.sh > test.xml
 
-test-app.tar: test-app runme.sh
+## test-app.tar: test-app runme.sh
+test-app.tar: runme.sh
 	tar -cf test-app.tar test-app runme.sh
 
 ## test-app: test-app.c
