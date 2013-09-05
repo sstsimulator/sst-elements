@@ -24,7 +24,7 @@ using namespace SST;
 using namespace SST::Oberon;
 
 OberonComponent::OberonComponent(SST::ComponentId_t id,
-	SST::Component::Params_t& params) {
+	Params& params) {
 
 	char* prefix = (char*) malloc(sizeof(char) * 1024);
 	sprintf(prefix, "oberon-%010lld", (long long int) id);
