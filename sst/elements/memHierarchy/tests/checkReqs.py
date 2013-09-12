@@ -4,8 +4,8 @@ import re
 import sys;
 
 
-reqPattern = re.compile('\A0:Cache::handleCPURequest\(\):[0-9]+ ([^:]+): (\([0-9]+, [0-9]+\))')
-respPattern = re.compile('\A0:Cache::(?:makeCPUResponse\(\):[0-9]+ ([^:]+): Creating Response to CPU: \([^)]+\) in Response To (\([0-9+, [0-9]+\))|handleWriteResp\(\):[0-9]+: ([^ ]+) Matched WriteResp to orig event WriteReq 0x[0-9a-f]+ (\([0-9]+, [0-9]+\)))')
+reqPattern = re.compile('\A\d+:Cache::handleCPURequest\(\):[0-9]+ ([^:]+): (\([0-9]+, [0-9]+\))')
+respPattern = re.compile('\A\d+:Cache::(?:makeCPUResponse\(\):[0-9]+ ([^:]+): Creating \d+ byte Response to CPU: \([^)]+\) in Response To (\([0-9+, [0-9]+\))|handleWriteResp\(\):[0-9]+: ([^ ]+) Matched WriteResp to orig event WriteReq 0x[0-9a-f]+ (\([0-9]+, [0-9]+\)))')
 
 
 reqs = set()

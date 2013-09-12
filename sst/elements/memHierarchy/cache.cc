@@ -2385,6 +2385,17 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
         MemEvent *ev = queue.front();
         if ( busEvent->getKey() != makeBusKey(ev) ) {
             comp->dbg.output(CALL_INFO, "%s: Bus asking for event (%"PRIu64", %d).  That's not top of queue.  Perhaps we canceled it, and the cancels crossed in mid-flight.\n", comp->getName().c_str(), busEvent->getKey().first, busEvent->getKey().second);
+
+            /* Check to see if it is in the queue somewhere */
+            for ( std::list<MemEvent*>::iterator i = queue.begin() ; i != queue.end() ; ++i ) {
+                Bus::key_t key = makeBusKey(*i);
+                comp->dbg.output(CALL_INFO, "%s:  Bus Queue:  (%"PRIu64", %d)\n", comp->getName().c_str(), key.first, key.second);
+                if (busEvent->getKey() == key) {
+                    comp->dbg.fatal(CALL_INFO, 0, 0, 0,  "%s: Bus asked for event (%"PRIu64", %d), which is in the queue, but not at the top.  This should not happen.\n",
+                            comp->getName().c_str(), busEvent->getKey().first, busEvent->getKey().second);
+                }
+            }
+
             return;
         }
         queue.pop_front();
