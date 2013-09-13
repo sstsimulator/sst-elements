@@ -10,14 +10,18 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include <cpu.h>
 
-#include <sstream> // for stringstream() so I don't have to use atoi()
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "sst/core/serialization.h"
+#include <sst/core/link.h>
 #include <sst/core/params.h>
+#include <sst/core/log.h>
+#include <sst/core/debug.h>
+
+using namespace SST;
 
 cpu::cpu( ComponentId_t id, Params& params ) :
   IntrospectedComponent( id ), outstanding(0), memOps(0), inst(0)
@@ -29,60 +33,66 @@ cpu::cpu( ComponentId_t id, Params& params ) :
     frequency = params["clock"];
   }
 
-  if ( params.find( "threads" ) != params.end() ) {
-    stringstream(params["threads"]) >> threads;
+  threads = params.find_integer( "threads", 0 );
+  if (0 == threads) {
+    _abort(cpu::cpu, "no <threads> tag defined for cpu\n");
+  } else {
     memSet_t blank;
     for (int i = 0; i < threads; ++i) {
       thrOutstanding.push_back(blank);
       coreAddr.push_back(10000+i*100);
     }
-  } else {
-    printf(" no <threads> tag defined for cpu\n");
-    exit(-1);
   }
 
-  if ( params.find( "app" ) != params.end() ) {
-    stringstream(params["app"]) >> app;
-  } else {
-    printf(" no <app> tag defined for cpu\n");
-    exit(-1);
+  app = params.find_integer( "app", -1 );
+  if ( -1 == app ) {
+    _abort(cpu::cpu, " no <app> tag defined for cpu\n");
   }
 
-  if ( params.find( "bwlimit" ) != params.end() ) {
-    stringstream(params["bwlimit"]) >> bwlimit;
-  } else {
-    printf(" no <bwlimit> tag defined for cpu\n");
-    exit(-1);
+  bwlimit = params.find_integer( "bwlimit", 0 );
+  if (0 == bwlimit) {
+    _abort(cpu::cpu, " no <bwlimit> tag defined for cpu\n");
   }
 
   // connect chain
-  toMem = new memChan_t( *this, params, "toMem" );
+  toMem = configureLink( "toMem", frequency);
 
   registerClock( frequency, new Clock::Handler<cpu>(this, &cpu::clock) );
 
-  printf("made cpu %p\n", toMem);
-  //srandomdev();
+  //printf("made cpu %p\n", toMem);
+
+  // init random number generator
+  unsigned seed = params.find_integer("seed", 0);
+  if (seed != 0) {
+    srandom(seed);
+  } else {
+    srandomdev();
+  } 
 }
 
-int cpu::Finish() 
+void cpu::finish() 
 {
   printf("CPU completed %lld memOps\n", memOps);
   printf("CPU issued %lld inst\n", inst);
-  return 0;
 }
 
 bool cpu::clock( Cycle_t current )
 {
-  memChan_t::event_t* event;
+  SST::Event* e;
 
   // check for events from the memory chain
-  while(toMem->recv( &event )) {
+  while((e = toMem->recv())) {
+    SST::Interfaces::MemEvent *event = 
+      dynamic_cast<SST::Interfaces::MemEvent*>(e);
+    if (event == NULL) {
+      _abort(cpu::clock, "CPU got bad event\n");
+    }
     //printf("CPU got event %lld\n", current);
     memOps++;
     outstanding--;
     const thrSet_t::iterator e = thrOutstanding.end();
     for (thrSet_t::iterator i = thrOutstanding.begin(); i != e; ++i) {
-      i->erase(event->addr);
+      i->erase(event->getAddr());
     }
     delete event;
   }
@@ -95,17 +105,15 @@ bool cpu::clock( Cycle_t current )
   for (int w = 0; w < 4; ++w) { //issue width
     for (int c = 0; c < threads; ++c) {
       if (outstanding < MAX_OUT && Missued <= bwlimit) {    
-	if (thrOutstanding[c].size() < MAX_OUT_THR) {
-	  memChan_t::event_t *event = getInst(1,app,c); // L1
+	if (thrOutstanding[c].size() <= MAX_OUT_THR) {
+	  SST::Interfaces::MemEvent *event = getInst(1,app,c); // L1
 	  inst++;
 	  if (event) {
-	    if ( ! toMem->send( event ) ) {
-	      _abort(cpu::clock,"cpu send failed\n");
-	    }
+	    toMem->send( event );
 	    outstanding++;
 	    Missued++;
-	    if (event->reqType == memChan_t::event_t::READ) {
-	      thrOutstanding[c].insert(event->addr);
+	    if (event->getCmd() == SST::Interfaces::ReadReq) {
+	      thrOutstanding[c].insert(event->getAddr());
 	    }
 	  }
 	}

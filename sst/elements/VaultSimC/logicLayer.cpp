@@ -13,9 +13,6 @@
 #include "sst/core/serialization.h"
 #include <logicLayer.h>
 
-#include <sstream> // for stringstream() so I don't have to use atoi()
-#include <stdio.h>
-
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/link.h>
@@ -33,36 +30,31 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   dbg.output(CALL_INFO, "making logicLayer\n");
 
   std::string frequency = "2.2 GHz";
-  if ( params.find( "clock" ) != params.end() ) {
-    frequency = params["clock"];
+  frequency = params.find_string("clock", "2.2 Ghz");
+
+  int ident = params.find_integer("llID", -1);
+  if (-1 == ident) {
+    _abort(logicLayer::logicLayer, "no llID defined\n");
+  }
+  llID = ident;
+
+  bwlimit = params.find_integer( "bwlimit", -1 );
+  if (-1 == bwlimit ) {
+    _abort(logicLayer::logicLayer, 
+	   " no <bwlimit> tag defined for logiclayer\n");
   }
 
-  if ( params.find( "llID" ) != params.end() ) {
-    stringstream(params["llID"]) >> llID;
+  int mask = params.find_integer( "LL_MASK", -1 );
+  if ( -1 == mask ) {
+    _abort(logicLayer::logicLayer, 
+	   " no <LL_MASK> tag defined for logiclayer\n");
   }
+  LL_MASK = mask;
 
-  if ( params.find( "bwlimit" ) != params.end() ) {
-    stringstream(params["bwlimit"]) >> bwlimit;
-  } else {
-    printf(" no <bwlimit> tag defined for logiclayer\n");
-    exit(-1);
-  }
+  bool terminal = params.find_integer("terminal", 0);
 
-  if ( params.find( "LL_MASK" ) != params.end() ) {
-    stringstream(params["LL_MASK"]) >> LL_MASK;
-  } else {
-    printf(" no <LL_MASK> tag defined for logiclayer\n");
-    exit(-1);
-  }
-
-  bool terminal = 0;
-  if ( params.find( "terminal" ) != params.end() ) {
-    stringstream(params["terminal"]) >> terminal;
-  }
-
-  if ( params.find( "vaults" ) != params.end() ) {
-    int numVaults;
-    stringstream(params["vaults"]) >> numVaults;
+  int numVaults = params.find_integer("vaults", -1);
+  if ( -1 != numVaults) {
     // connect up our vaults
     for (int i = 0; i < numVaults; ++i) {
       char bus_name[50];
@@ -72,14 +64,14 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
 	m_memChans.push_back(chan);
 	dbg.output(" connected %s\n", bus_name);
       } else {
-	printf(" could not find %s\n", bus_name);
-	exit(-1);
+	_abort(logicLayer::logicLayer, 
+	       " could not find %s\n", bus_name);
       }
     }
     printf(" Connected %d Vaults\n", numVaults);
   } else {
-    printf(" no <vaults> tag defined for LogicLayer\n");
-    exit(-1);
+    _abort(logicLayer::logicLayer, 
+	   " no <vaults> tag defined for LogicLayer\n");
   }
 
   // connect chain

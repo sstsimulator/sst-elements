@@ -1,0 +1,67 @@
+M5:configFile `stream-8coreVault_1.6GHz-M5.xml`
+M5:registering exit
+ Connected 16 Vaults
+ Connected 16 Vaults
+warn: instruction 'fnstcw_Mw' unimplemented
+warn: instruction 'fldcw_Mw' unimplemented
+-------------------------------------------------------------
+STREAM version $Revision: 5.10 $
+-------------------------------------------------------------
+This system uses 8 bytes per array element.
+-------------------------------------------------------------
+Array size = 10000 (elements), Offset = 0 (elements)
+warn: instruction 'emms' unimplemented
+Memory per array = 0.1 MiB (= 0.0 GiB).
+Total memory required = 0.2 MiB (= 0.0 GiB).
+Each kernel will be executed 2 times.
+ The *best* time for each kernel (excluding the first iteration)
+ will be used to compute the reported bandwidth.
+-------------------------------------------------------------
+Your clock granularity/precision appears to be 1 microseconds.
+Each test below will take on the order of 120 microseconds.
+   (= 120 clock ticks)
+Increase the size of the arrays if this shows that
+you are not getting at least 20 clock ticks per test.
+-------------------------------------------------------------
+WARNING -- The above is only a rough guideline.
+For best results, please be sure you know the
+precision of your system timer.
+-------------------------------------------------------------
+Starting loop 0
+Starting loop 1
+Function    Best Rate MB/s  Avg time     Min time     Max time
+Copy:            1441.7     0.000111     0.000111     0.000111
+Scale:           1441.7     0.000111     0.000111     0.000111
+Add:             1831.9     0.000131     0.000131     0.000131
+Triad:           1860.7     0.000129     0.000129     0.000129
+-------------------------------------------------------------
+Solution Validates: avg error less than 1.000000e-13 on all three arrays
+-------------------------------------------------------------
+hack: be nice to actually delete the event here
+M5:exiting: curTick()=1705204216 cause=`target called exit()` code=0
+Memory memory0 stats:
+	 # Reads:             17225
+	 # Writes:            8448
+	 # Canceled Reads:    0
+	 # Avg. Requests out: 1.220
+Memory memory1 stats:
+	 # Reads:             17689
+	 # Writes:            8701
+	 # Canceled Reads:    0
+	 # Avg. Requests out: 1.261
+--------------------------------------------------------------------
+Next Block Prefetch Engine:
+Cache Miss Events:         31641
+Cache Hit Events:          4929
+Cache Miss Rate (%):       86.5217
+Cache Hit Rate (%):        13.4783
+Prefetches Issued:         31641
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+Next Block Prefetch Engine:
+Cache Miss Events:         0
+Cache Hit Events:          0
+Cache Miss Rate (%):       nan
+Cache Hit Rate (%):        nan
+Prefetches Issued:         0
+--------------------------------------------------------------------

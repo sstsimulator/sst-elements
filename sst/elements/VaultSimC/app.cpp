@@ -1,15 +1,19 @@
 #include <sst_config.h>
+#include "cpu.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include "sst/core/serialization.h"
-#include "cpu.h"
 #include <stdlib.h>
+
+#include "sst/core/serialization.h"
 
 static unsigned int missRate[][3] = {{0,51,32},   //app 0
 				     {0,18,15}};  //app 1
 static unsigned int isLoad[] = {3,32}; // out of 64
 
-cpu::memChan_t::event_t *cpu::getInst(int cacheLevel, int app, int core) {
+using namespace SST::Interfaces;
+
+MemEvent *cpu::getInst(int cacheLevel, int app, int core) {
   /*
 app: 		MD(0)	PHD(1)
 l/s ratio	21:1	1:1
@@ -24,22 +28,23 @@ L2 miss/inst	32	15
     unsigned int roll = random();
     unsigned int memRoll = roll & 0x3f;
 
-    memChan_t::event_t *event = new memChan_t::event_t;
+    Addr addr;
+    Command command;
     if ((memRoll & 0x1) == 0) {
       // stride
-      event->addr = coreAddr[core] + (1 << 6);  
-      event->addr = (event->addr >> 6) << 6;    
+      addr = coreAddr[core] + (1 << 6);  
+      addr = (addr >> 6) << 6;    
     } else {
       //random
-      event->addr = (roll >> 6) << 6;    
+      addr = (roll >> 6) << 6;    
     }
-    coreAddr[core] = event->addr;
+    coreAddr[core] = addr;
     if (memRoll <= isLoad[app]) {
-      event->reqType = memChan_t::event_t::WRITE; 
+      command = SST::Interfaces::ReadReq;
     } else {
-      event->reqType = memChan_t::event_t::READ; 
+      command = SST::Interfaces::WriteReq;
     }
-    event->msgType = memChan_t::event_t::REQUEST; 
+    MemEvent *event = new MemEvent(this, addr, command);
 
     return event;
   } else {

@@ -10,15 +10,15 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include <VaultSimC.h>
 
 #include <sys/mman.h>
-#include <sstream> // for stringstream() so I don't have to use atoi()
 
+#include "sst/core/serialization.h"
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 
+#include "libphx/Globals.h"
 #include <vaultGlobals.h>
 
 //typedef  VaultCompleteFn; 
@@ -28,46 +28,37 @@ static size_t MEMSIZE = size_t(4096)*size_t(1024*1024);
 using namespace SST::Interfaces;
 
 VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
-	IntrospectedComponent( id )
+  IntrospectedComponent( id )
 {
-  std::string frequency = "2.2 GHz";
-  
   dbg.init("@R:Vault::@p():@l " + getName() + ": ", 0, 0, 
 	   (Output::output_location_t)params.find_integer("debug", 0));  
-
-  if ( params.find( "clock" ) != params.end() ) {
-    frequency = params["clock"];
-  }
+  
+  std::string frequency = "2.2 GHz";
+  frequency = params.find_string("clock", "2.2 Ghz");
   
   // number of bits to determin vault address
-  if ( params.find( "numVaults2" ) != params.end() ) {
-    stringstream(params["numVaults2"]) >> numVaults2;
-  } else {
-    _abort(VaultSimC,"numVaults2 (number of bits to determine vault address) not set! Should be log2(number of vaults per cube)\n");
+  numVaults2 = params.find_integer( "numVaults2", -1 );
+  if ( -1 == numVaults2) {
+    _abort(VaultSimC,"numVaults2 (number of bits to determine vault "
+	   "address) not set! Should be log2(number of vaults per cube)\n");
   }
 
   //DBG("new id=%lu\n",id);
   
   m_memChan = configureLink( "bus", "1 ns" );
   
-  Params::iterator it = params.begin();
-  while( it != params.end() ) {
-    //DBG("key=%s value=%s\n", it->first.c_str(),it->second.c_str());
-    
-    if ( ! it->first.compare("VaultID") ) {
-      stringstream(it->second) >> vaultID;
-    }
-    ++it;
+  vaultID = params.find_integer("VaultID", -1);
+  if ( -1 == vaultID) {
+    _abort(VaultSimC,"not VaultID Set\n");
   }
-  
+
   registerClock( frequency, 
 		 new Clock::Handler<VaultSimC>(this, &VaultSimC::clock) );
   
   m_memorySystem = new Vault(vaultID);
-  if ( ! m_memorySystem ) 
-    {
-      _abort(VaultSimC,"MemorySystem() failed\n");
-    }
+  if ( ! m_memorySystem ) {
+    _abort(VaultSimC,"MemorySystem() failed\n");
+  }
   
   PHXSim::VaultCompleteCB* readDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::readData);
   PHXSim::VaultCompleteCB* writeDataCB = new PHXSim::Callback< VaultSimC, void, BusPacket, unsigned > (this, &VaultSimC::writeData);

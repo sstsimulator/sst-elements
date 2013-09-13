@@ -14,7 +14,8 @@
 #define _CPU_H
 
 #include <sst/core/introspectedComponent.h>
-#include <memoryChannel.h>
+#include <sst/core/interfaces/memEvent.h>
+#include <sst/core/output.h>
 
 using namespace std;
 using namespace SST;
@@ -26,15 +27,15 @@ using namespace SST;
 //#define STUPID_DEBUG 
 
 class cpu : public IntrospectedComponent {
-  
+
 public: // functions
-  
+
   cpu( ComponentId_t id, Params& params );
-  int Finish();
+  void finish();
   
 private: // types
   
-  typedef MemoryChannel<uint64_t> memChan_t;
+  typedef SST::Link memChan_t;
   typedef set<uint64_t> memSet_t;
   typedef vector<memSet_t> thrSet_t;
   typedef vector<int> coreVec_t;
@@ -54,7 +55,7 @@ private:
   thrSet_t thrOutstanding;
   coreVec_t coreAddr;
 
-  memChan_t::event_t *getInst(int cacheLevel, int app, int core);
+  SST::Interfaces::MemEvent *getInst(int cacheLevel, int app, int core);
 };
 
 #endif
