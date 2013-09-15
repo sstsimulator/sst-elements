@@ -17,7 +17,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
     [with_gem5_build=opt])
 
   AC_ARG_WITH([python-inc-dir],		
-	  [AS_HELP_STRING([--with-python-inc-dir[[=DIR@]]],		
+	  [AS_HELP_STRING([--with-python-inc-dir[[=DIR]]],		
 		  [Expect Python headers in the specified DIR])])
 
   AC_ARG_ENABLE([gem5-power-model], [AS_HELP_STRING([--enable-gem5-power-model], [Enable power modeling in SST-GEM5])])
