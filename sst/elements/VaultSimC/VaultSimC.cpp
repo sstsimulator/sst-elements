@@ -37,19 +37,23 @@ VaultSimC::VaultSimC( ComponentId_t id, Params& params ) :
   frequency = params.find_string("clock", "2.2 Ghz");
   
   // number of bits to determin vault address
-  numVaults2 = params.find_integer( "numVaults2", -1 );
-  if ( -1 == numVaults2) {
+  int nv2 = params.find_integer( "numVaults2", -1 );
+  if ( -1 == nv2) {
     _abort(VaultSimC,"numVaults2 (number of bits to determine vault "
 	   "address) not set! Should be log2(number of vaults per cube)\n");
+  } else {
+    numVaults2 = nv2;
   }
 
   //DBG("new id=%lu\n",id);
   
   m_memChan = configureLink( "bus", "1 ns" );
   
-  vaultID = params.find_integer("VaultID", -1);
-  if ( -1 == vaultID) {
+  int vid = params.find_integer("VaultID", -1);
+  if ( -1 == vid) {
     _abort(VaultSimC,"not VaultID Set\n");
+  } else {
+    vaultID = vid;
   }
 
   registerClock( frequency, 

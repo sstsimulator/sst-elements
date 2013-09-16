@@ -2,9 +2,9 @@ Inserting stop event at cycle 50us
 making cpu
  Connected 8 Vaults
  Connected 8 Vaults
-1024: out:2048 ops/cycle:1.04
+1024: out:2048 ops/cycle:1.05
 2048: out:2048 ops/cycle:1.05
-3072: out:2048 ops/cycle:1.05
+3072: out:2048 ops/cycle:1.06
 4096: out:2048 ops/cycle:1.05
 5120: out:2048 ops/cycle:1.06
 6144: out:2048 ops/cycle:1.06
@@ -26,5 +26,5 @@ making cpu
 22528: out:2048 ops/cycle:1.06
 23552: out:2048 ops/cycle:1.06
 24576: out:2048 ops/cycle:1.06
-CPU completed 26403 memOps
-CPU issued 559448 inst
+CPU completed 26425 memOps
+CPU issued 564214 inst

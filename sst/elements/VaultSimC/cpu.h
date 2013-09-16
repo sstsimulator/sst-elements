@@ -15,6 +15,7 @@
 
 #include <sst/core/introspectedComponent.h>
 #include <sst/core/interfaces/memEvent.h>
+#include <sst/core/rng/sstrand.h>
 #include <sst/core/output.h>
 
 using namespace std;
@@ -45,6 +46,7 @@ private:
   cpu( const cpu& c );
   bool clock( Cycle_t );
   
+  SST::RNG::SSTRandom* rng;
   memChan_t *toMem;
   unsigned int outstanding;
   unsigned long long memOps;

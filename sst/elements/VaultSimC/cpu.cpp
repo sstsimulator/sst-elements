@@ -20,8 +20,10 @@
 #include <sst/core/params.h>
 #include <sst/core/log.h>
 #include <sst/core/debug.h>
+#include <sst/core/rng/mersenne.h>
 
 using namespace SST;
+using namespace SST::RNG;
 
 cpu::cpu( ComponentId_t id, Params& params ) :
   IntrospectedComponent( id ), outstanding(0), memOps(0), inst(0)
@@ -63,10 +65,10 @@ cpu::cpu( ComponentId_t id, Params& params ) :
 
   // init random number generator
   unsigned seed = params.find_integer("seed", 0);
-  if (seed != 0) {
-    srandom(seed);
+  if (0 != seed) {
+    rng = new MersenneRNG(seed);
   } else {
-    srandomdev();
+    rng = new MersenneRNG();
   } 
 }
 

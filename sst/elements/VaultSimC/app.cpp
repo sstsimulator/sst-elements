@@ -22,10 +22,10 @@ L2 miss/inst	32	15
   */
   //printf("using missrate %d\n", missRate[app][cacheLevel]);
 
-  unsigned int roll1K = random() & 0x3ff;
+  unsigned int roll1K = rng->generateNextUInt32() & 0x3ff;
   if (roll1K <= missRate[app][cacheLevel]) {
     //is a memory access
-    unsigned int roll = random();
+    unsigned int roll = rng->generateNextUInt32();
     unsigned int memRoll = roll & 0x3f;
 
     Addr addr;
