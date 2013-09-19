@@ -469,6 +469,51 @@ class TestEndPoint:
         out.write("    <link name=%s port=rtr latency=%s />\n" % (linkName, params["link_lat"]))
         out.write("  </component>\n\n")
 
+class SiriusEndPoint:
+    def getName(self):
+        return "Sirius End Point"
+
+    def formatParams(self, out):
+        out.write("  <ioParams>\n")
+        out.write("    <hermesParams.ioParams.debug> 0 </hermesParams.ioParams.debug>\n")
+        out.write("    <hermesParams.ioParams.verboseLevel> 2 </hermesParams.ioParams.verboseLevel>\n")
+        out.write("    <hermesParams.ioParams.module> merlin.linkcontrol </hermesParams.ioParams.module>\n")
+        params.emit(out, "topology","hermesParams.ioParams.topology")
+        for (n,v) in params["topoNICParams"].iteritems():
+            out.write("    <%s> %d </%s>\n" % (n, v, n))
+        params.emit(out, "num_vcs","hermesParams.ioParams.num_vcs")
+        params.emit(out, "link_bw","hermesParams.ioParams.link_bw")
+        out.write("  </ioParams>\n")
+        out.write("\n")
+
+        out.write("  <driverParams>\n")
+        out.write("    <debug> 1 </debug>\n")
+        out.write("    <verboseLevel> 1 </verboseLevel>\n")
+        out.write("    <bufLen> 8 </bufLen>\n")
+        out.write("    <hermesModule> firefly.hades </hermesModule>\n")
+        params.emit(out, "traceFile")
+        params.emit(out, "sharedTraceFile")
+        out.write("    <hermesParams.debug> 0 </hermesParams.debug>\n")
+        out.write("    <hermesParams.verboseLevel> 1 </hermesParams.verboseLevel>\n")
+        params.emit(out, "peers", "hermesParams.numRanks")
+        params.emit(out, "nidlist", "hermesParams.nidListFile")
+        out.write("    <hermesParams.ioModule> firefly.merlinIO </hermesParams.ioModule>\n")
+        out.write("    <hermesParams.policy> adjacent </hermesParams.policy>\n")
+        out.write("    <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>\n")
+        out.write("    <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>\n")
+        out.write("  </driverParams>\n")
+
+    def formatComp(self, out, name, num, linkName, extraParams):
+        out.write("  <component name=%s type=firefly.zodiac.ZodiacSiriusTraceReader >\n" % name)
+        out.write("    <params include=driverParams,ioParams>\n")
+        out.write("      <hermesParams.ioParams.nid> %d </hermesParams.ioParams.nid>\n"% num)
+        for (k,v) in extraParams.iteritems():
+            out.write("      <%s> %d </%s>\n"% (k,v,k))
+        out.write("    </params>\n")
+        out.write("    <link name=%s port=link latency=%s />\n" % (linkName, params["link_lat"]))
+        out.write("  </component>\n\n")
+
+
 
 class TrafficGenEndPoint:
     def getName(self):
@@ -553,7 +598,7 @@ def generateSDL(filename, topo, endpoint):
 
 if __name__ == "__main__":
     topos = dict([(1,topoTorus()), (2,topoFatTree()), (3,topoDragonFly()), (4,topoSimple())])
-    endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint())])
+    endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint()), (3, SiriusEndPoint())])
 
 
     print "Merlin SDL Generator\n"
