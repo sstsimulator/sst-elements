@@ -18,7 +18,20 @@ int main(int argc, char* argv[]) {
 	double my_value = 5.0;
 	double total = 0;
 
-	MPI_Allreduce(&my_value, &total, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	int bench_count = 1;
+	int counter;
+
+	if(argc > 1) {
+		bench_count = atoi(argv[1]);
+	}
+
+	if(rank == 0) {
+		printf("Performing: %d all reductions.\n", bench_count);
+	}
+
+	for(counter = 0; counter < bench_count; ++counter) {
+		MPI_Allreduce(&my_value, &total, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	}
 
 	if(rank == 0) {
 		printf("Value should be: %f\n", (my_value * npes));
