@@ -20,6 +20,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
 {
 
     string msgiface = params.find_string("msgapi");
+    scaleCompute = params.find_floating("scalecompute", 1.0);
 
     if ( msgiface == "" ) {
         msgapi = new MessageInterface();
@@ -338,10 +339,10 @@ void ZodiacSiriusTraceReader::handleComputeEvent(ZodiacEvent* zEv) {
 	if(eventQ->size() > 0) {
 		ZodiacEvent* nextEv = eventQ->front();
 		zOut.verbose(__LINE__, __FILE__, "handleComputeEvent",
-			2, 1, "Enqueuing next event at a delay of %f seconds)\n",
-			zCEv->getComputeDuration());
+			2, 1, "Enqueuing next event at a delay of %f seconds, scaled by %f = %f seconds)\n",
+			zCEv->getComputeDuration(), scaleCompute, scaleCompute * zCEv->getComputeDuration());
 		eventQ->pop();
-		selfLink->send(zCEv->getComputeDurationNano(), tConv, nextEv);
+		selfLink->send(scaleCompute * zCEv->getComputeDurationNano(), tConv, nextEv);
 	} else {
 		zOut.output("No more events to process.\n");
 		std::cout << "ZSirius: Has no more events to process" << std::endl;
