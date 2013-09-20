@@ -16,10 +16,6 @@ AC_DEFUN([SST_m5C_CONFIG], [
     [],
     [with_gem5_build=opt])
 
-  AC_ARG_WITH([python-inc-dir],		
-	  [AS_HELP_STRING([--with-python-inc-dir[[=DIR]]],		
-		  [Expect Python headers in the specified DIR])])
-
   AC_ARG_ENABLE([gem5-power-model], [AS_HELP_STRING([--enable-gem5-power-model], [Enable power modeling in SST-GEM5])])
 
   isa=
@@ -33,32 +29,12 @@ AC_DEFUN([SST_m5C_CONFIG], [
       LDFLAGS="-L$with_gem5 $LDFLAGS "],
     [])
 
-  FOUND_PYTHON="no"
-  PYTHON_CONFIG_EXE=""
-  AC_PATH_PROG([PYTHON_CONFIG_EXE], ["python-config"], ["NOTFOUND"])
+  SST_CHECK_PYTHON([have_python=1],
+	[have_python=0],
+	[AC_MSG_ERROR([Python is needed for GEM5])])
 
-  AS_IF([test -n "$with_python_inc_dir"],
-	[PYTHON_CPPFLAGS="-I$with_python_inc_dir"],
-	[AS_IF([test "$PYTHON_CONFIG_EXE" != "NOTFOUND"],
-		[PYTHON_CPPFLAGS=`$PYTHON_CONFIG_EXE --includes`])])
-
-  CPPFLAGS="$PYTHON_CPPFLAGS $CPPFLAGS"
-
-  AC_LANG_PUSH(C++)
-  AC_CHECK_HEADERS([Python.h], [FOUND_PYTHON="yes"], [FOUND_PYTHON="no"])
-  AC_LANG_POP(C++)
-
-  AS_IF([test ! -z "$with_gem5" -a "$with_gem5" != "no" -a "$FOUND_PYTHON" = "no"],
+  AS_IF([test ! -z "$with_gem5" -a "$with_gem5" != "no" -a "$have_python" = "no"],
 	[AC_MSG_ERROR(["Cannot find Python.h, this is required for M5 component to build."])])
-  AC_SUBST([PYTHON_CPPFLAGS])
-  AC_SUBST([PYTHON_CONFIG_EXE])  
-
-#  AS_IF([test "x$with_python_includes" != "x"],
-#		  [PYTHON_CPPFLAGS="-I$with_python_includes"],
-#		  [AS_IF([test ! -z "$with_python" -a "$with_python" != "yes"],
-#			  [PYTHON_CPPFLAGS="-I$with_python"],
-#			  [PYTHON_CPPFLAGS="-DALL_FAIL"])])
-#  CPPFLAGS="$PYTHON_CPPFLAGS $CPPFLAGS"	
 
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS([sim/system.hh], [], [happy="no"])
@@ -89,7 +65,7 @@ AC_DEFUN([SST_m5C_CONFIG], [
   esac
 
 
-  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra} ${M5PYTHON_CPPFLAGS} $M5_CPPFLAGS"
+  M5_CPPFLAGS="-I$with_gem5 -DTHE_ISA=${isa}_ISA ${cpp_extra} $M5_CPPFLAGS"
   M5_LDFLAGS="-L$with_gem5"
 
   AM_CONDITIONAL([USE_M5_O3], [test x$use_gem5_o3 = xtrue])
