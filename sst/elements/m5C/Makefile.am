@@ -7,7 +7,6 @@ EXTRA_DIST = m5.xml
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libm5C.la
 
-
 libm5C_la_SOURCES = \
     barrier.h \
     baseCache.cpp \
@@ -82,6 +81,7 @@ endif
 libm5C_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) $(M5_CPPFLAGS) \
             $(DRAMSIM_CPPFLAGS) \
             $(PHXSIM_CPPFLAGS) \
+	    $(PYTHON_CPPFLAGS) \
             -I$(top_srcdir)/sst/elements/include \
             -I$(top_srcdir)/sst/elements
 

@@ -15,7 +15,7 @@
 #include <sst/core/component.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/configGraph.h>
-#include <sst/core/sdl.h>
+#include <sst/core/model/sdlmodel.h>
 
 #include <dll/gem5dll.hh>
 
@@ -47,7 +47,7 @@ objectMap_t buildConfig( SST::M5::M5* comp, std::string name, std::string config
 
     DBGC( 2, "name=`%s` file=`%s`\n", name.c_str(), configFile.c_str() );
 
-    SST::sdl_parser sdl = SST::sdl_parser( configFile );
+    SST::SSTSDLModelDefinition sdl = SST::SSTSDLModelDefinition( configFile );
     SST::ConfigGraph& graph = *sdl.createConfigGraph();
 
     Factory factory( comp );
