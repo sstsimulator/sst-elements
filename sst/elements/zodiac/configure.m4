@@ -4,7 +4,7 @@ AC_DEFUN([SST_zodiac_CONFIG], [
 
   zodiac_happy="yes"
 
-  SST_CHECK_OTF([have_zodaic_otf=1],
+  SST_CHECK_OTF([have_zodiac_otf=1],
 	[have_zodiac_otf=0],
 	[AC_MSG_ERROR([Open Trace Format was requested but was not found])])
   SST_CHECK_DUMPI([have_zodiac_dumpi=1],
