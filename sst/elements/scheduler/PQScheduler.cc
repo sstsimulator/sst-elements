@@ -187,7 +187,7 @@ PQScheduler::JobComparator* PQScheduler::JobComparator::Make(string typeName)
     return NULL;
 }
 
-void internal_error(string mesg);
+//void internal_error(string mesg);
 
 bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2) 
 {
@@ -260,7 +260,8 @@ bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2)
         return j2 -> getJobNum() < j1 -> getJobNum();
 
     default:
-        internal_error("operator() called on JobComparator w/ invalid type");
+        //internal_error("operator() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "operator() called on JobComparator w/ invalid type");
         return true;  //never reach here
     }
 }
@@ -281,7 +282,7 @@ string PQScheduler::JobComparator::toString()
     case BETTERFIT:
         return "BetterFitComparator";     
     default:
-        internal_error("toString() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, 0, 0, "toString() called on JobComparator w/ invalid type");
     }
     return "";  //never reach here...
 }
