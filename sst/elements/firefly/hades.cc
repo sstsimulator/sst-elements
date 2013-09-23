@@ -71,7 +71,6 @@ Hades::Hades( Params& params ) :
     Params nodeParams = params.find_prefix_params("nodeParams.");
     
     m_nodeInfo = new NodeInfo( nodeParams );
-    assert( m_nodeInfo );
 
     m_dbg.verbose(CALL_INFO,1,0,"numCores %d, coreNum %d\n",
                         m_nodeInfo->numCores(), m_nodeInfo->coreNum());
@@ -240,7 +239,6 @@ Group* Hades::initAdjacentMap( int numRanks,
             int numCores, std::ifstream& nidFile )
 {
     Group* group = new Group( numRanks );
-    assert( group );
 
     m_dbg.verbose(CALL_INFO,2,0,"numRanks=%d numCores=%d\n",numRanks,numCores);
 
@@ -271,7 +269,6 @@ Group* Hades::initRoundRobinMap( int numRanks,
             int numCores, std::ifstream& nidFile )
 {
     Group* group = new Group( numRanks );
-    assert( group );
     m_dbg.verbose(CALL_INFO,1,0,"numRanks=%d numCores=%d\n",
                             numRanks, numCores);
 

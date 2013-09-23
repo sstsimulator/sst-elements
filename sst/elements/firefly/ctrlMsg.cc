@@ -42,7 +42,6 @@ CtrlMsg::Request* CtrlMsg::getSendReq( )
 {
     if ( ! m_sendQ.empty() ) {
         SendReq* req = new SendReq;  
-        assert( req );
         m_dbg.verbose(CALL_INFO,1,0,"\n");
 
         req->commReq = m_sendQ.front();
