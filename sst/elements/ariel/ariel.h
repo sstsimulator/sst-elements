@@ -19,6 +19,7 @@
 #include <sst/core/timeConverter.h>
 
 #include <sst/core/interfaces/memEvent.h>
+#include <sst/core/output.h>
 
 #include <cstring>
 #include <string>
@@ -48,13 +49,19 @@ public:
   void finish() { }
 
   void handleEvent(SST::Event* event);
-
 private:
   Ariel();  // for serialization only
   Ariel(const Ariel&); // do not implement
   void operator=(const Ariel&); // do not implement
 
   virtual bool tick( SST::Cycle_t );
+  int create_pinchild(char* prog_binary, char** arg_list);
+
+  uint64_t max_inst;
+  char* named_pipe;
+  int pipe_id;
+  std::string user_binary;
+  Output* output;
 
   friend class boost::serialization::access;
   template<class Archive>
