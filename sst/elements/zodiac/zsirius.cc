@@ -204,7 +204,14 @@ void ZodiacSiriusTraceReader::handleSelfEvent(Event* ev)
 		exit(-1);
 	}
 
+	zOut.verbose(__LINE__, __FILE__, "handleSelfEvent", 0, 16,
+		"Attempting to delete processed event...");
 	delete zEv;
+	zOut.verbose(__LINE__, __FILE__, "handleSelfEvent", 0, 16,
+		"Successfully deleted event.");
+
+	zOut.verbose(__LINE__, __FILE__, "handleSelfEvent",
+		3, 1, "Finished event processing cycle.\n");
 }
 
 void ZodiacSiriusTraceReader::handleBarrierEvent(ZodiacEvent* zEv) {
@@ -220,7 +227,7 @@ void ZodiacSiriusTraceReader::handleBarrierEvent(ZodiacEvent* zEv) {
 void ZodiacSiriusTraceReader::handleAllreduceEvent(ZodiacEvent* zEv) {
 	ZodiacAllreduceEvent* zAEv = static_cast<ZodiacAllreduceEvent*>(zEv);
 	assert(zAEv);
-	assert((zAEv->getLength() * 2) < emptyBufferSize);
+	assert((zAEv->getLength() * 2 * 8) < emptyBufferSize);
 
 	zOut.verbose(__LINE__, __FILE__, "handleAllreduceEvent",
 		2, 1, "Processing an Allreduce event.\n");
@@ -253,7 +260,7 @@ void ZodiacSiriusTraceReader::handleFinalizeEvent(ZodiacEvent* zEv) {
 void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 	ZodiacSendEvent* zSEv = static_cast<ZodiacSendEvent*>(zEv);
 	assert(zSEv);
-	assert(zSEv->getLength() < emptyBufferSize);
+	assert((zSEv->getLength() * 8) < emptyBufferSize);
 
 	zOut.verbose(__LINE__, __FILE__, "handleSendEvent",
 		2, 1, "Processing a Send event (length=%"PRIu32", tag=%d, dest=%"PRIu32")\n",
@@ -270,7 +277,7 @@ void ZodiacSiriusTraceReader::handleSendEvent(ZodiacEvent* zEv) {
 void ZodiacSiriusTraceReader::handleRecvEvent(ZodiacEvent* zEv) {
 	ZodiacRecvEvent* zREv = static_cast<ZodiacRecvEvent*>(zEv);
 	assert(zREv);
-	assert(zREv->getLength() < emptyBufferSize);
+	assert((zREv->getLength() * 8) < emptyBufferSize);
 
 	currentRecv = (MessageResponse*) malloc(sizeof(MessageResponse));
 	memset(currentRecv, 1, sizeof(MessageResponse));
@@ -299,14 +306,14 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 	zOut.verbose(__LINE__, __FILE__, "handleWaitEvent",
 		2, 1, "Processing a Wait event.\n");
 
-	msgapi->wait(msgReq, currentRecv, &recvFunctor);
+	msgapi->wait(msgReq, currentRecv, &retFunctor);
 	zWaitCount++;
 }
 
 void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 	ZodiacIRecvEvent* zREv = static_cast<ZodiacIRecvEvent*>(zEv);
 	assert(zREv);
-	assert(zREv->getLength() < emptyBufferSize);
+	assert((zREv->getLength() * 8) < emptyBufferSize);
 
 	MessageRequest* msgReq = (MessageRequest*) malloc(sizeof(MessageRequest));
 	reqMap.insert(std::pair<uint64_t, MessageRequest*>(zREv->getRequestID(), msgReq));
@@ -318,7 +325,10 @@ void ZodiacSiriusTraceReader::handleIRecvEvent(ZodiacEvent* zEv) {
 	msgapi->irecv((Addr) emptyBuffer, zREv->getLength(),
 		zREv->getDataType(), (RankID) zREv->getSource(),
 		zREv->getMessageTag(), zREv->getCommunicatorGroup(),
-		msgReq, &recvFunctor);
+		msgReq, &retFunctor);
+
+	zOut.verbose(__LINE__, __FILE__, "handleIrecvEvent",
+		2, 1, "IRecv handover to Msg-API completed.\n");
 
 	zIRecvBytes += (msgapi->sizeofDataType(zREv->getDataType()) * zREv->getLength());
 	zIRecvCount++;
