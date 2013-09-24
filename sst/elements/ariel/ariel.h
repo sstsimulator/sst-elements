@@ -61,6 +61,11 @@ private:
   std::string user_binary;
   Output* output;
 
+  uint64_t memory_ops;
+  uint64_t read_ops;
+  uint64_t write_ops;
+  uint64_t instructions;
+
   friend class boost::serialization::access;
   template<class Archive>
   void save(Archive & ar, const unsigned int version) const

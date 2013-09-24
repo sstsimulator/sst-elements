@@ -26,6 +26,12 @@
 using namespace SST;
 using namespace SST::ArielComponent;
 
+#define PERFORM_EXIT 1
+#define PERFORM_READ 2
+#define PERFORM_WRITE 4
+#define START_INSTRUCTION 32
+#define END_INSTRUCTION 64
+
 int Ariel::create_pinchild(char* prog_binary, char** arg_list) {
 	pid_t the_child;
 
@@ -123,6 +129,12 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   // tell the simulator not to end without us
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
+
+  memory_ops = 0;
+  read_ops = 0;
+  write_ops = 0;
+  instructions = 0;
+
 }
 
 void Ariel::finish() {
@@ -134,6 +146,11 @@ void Ariel::finish() {
   remove(named_pipe);
 
   output->verbose(CALL_INFO, 2, 0, "Component finish completed.\n");
+  output->verbose(CALL_INFO, 0, 0, "Insts:      %" PRIu64 "\n", instructions);
+  output->verbose(CALL_INFO, 0, 0, "Memory ops: %" PRIu64 "\n", memory_ops);
+  output->verbose(CALL_INFO, 0, 0, "Read ops:   %" PRIu64 "\n", read_ops);
+  output->verbose(CALL_INFO, 0, 0, "Write ops:  %" PRIu64 "\n", write_ops);
+
 }
 
 Ariel::Ariel() :
@@ -153,19 +170,50 @@ bool Ariel::tick( Cycle_t ) {
 	uint8_t command = 0;
 	read(pipe_id, &command, sizeof(command));
 
-	output->verbose(CALL_INFO, 2, 0, "Read: %" PRIu8 " from pipe\n",
-		command);
-
-	if(command == 1) {
+	if(command == PERFORM_EXIT) {
 		output->verbose(CALL_INFO, 1, 0,
 			"Read an exit command from pipe stream\n");
 
 		// Exit
 		primaryComponentOKToEndSim();
 		return true;
-	} else {
-		return false;
 	}
+
+	if(command == START_INSTRUCTION) {
+		output->verbose(CALL_INFO, 1, 0,
+			"Read a start instruction\n");
+		instructions++;
+	}
+
+	// Read the next instruction
+	read(pipe_id, &command, sizeof(command));
+
+	while(command != END_INSTRUCTION) {
+		if(command == PERFORM_READ) {
+			uint64_t addr;
+			read(pipe_id, &addr, sizeof(addr));
+
+			output->verbose(CALL_INFO, 2, 0,
+				"Perform read: %" PRIu64 "\n", addr);
+			memory_ops++;
+			read_ops++;
+		} else if (command == PERFORM_WRITE) {
+			uint64_t addr;
+			read(pipe_id, &addr, sizeof(addr));
+
+			output->verbose(CALL_INFO, 2, 0,
+				"Perform write: %" PRIu64 "\n", addr);
+			memory_ops++;
+			write_ops++;
+		} else {
+			output->fatal(CALL_INFO, -1, 0, 0,
+				"Error: unknown type of operation: %d\n", command);
+		}
+
+		read(pipe_id, &command, sizeof(command));
+	}
+
+	return false;
 }
 
 // Element Libarary / Serialization stuff
