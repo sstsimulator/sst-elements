@@ -28,6 +28,7 @@
   </ioParams>
 
   <driverParams>
+    <scalecompute> 0.000001 </scalecompute> 
     <debug> 1 </debug>
     <verboseLevel> 1 </verboseLevel>
     <bufLen> 8 </bufLen>

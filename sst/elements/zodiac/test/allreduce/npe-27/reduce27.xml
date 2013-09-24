@@ -28,11 +28,13 @@
   </ioParams>
 
   <driverParams>
+    <scalecompute>0.0001</scalecompute>
     <debug> 1 </debug>
-    <verbose> 1 </verbose>
+    <verbose> 16 </verbose>
     <bufLen> 8 </bufLen>
     <msgapi> firefly.hades </msgapi>
     <hermesModule> firefly.hades </hermesModule>
+    <trace> allred-27.stf </trace>
     <traceFile> allred-27.stf </traceFile>
     <sharedTraceFile> allred-27.stf </sharedTraceFile>
     <hermesParams.debug> 0 </hermesParams.debug>
