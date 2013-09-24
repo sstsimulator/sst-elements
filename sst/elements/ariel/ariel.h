@@ -30,8 +30,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define DPRINTF( fmt, args...) printf("ARIEL:  "); printf(fmt, ##args);
-
 using namespace std;
 using namespace SST::Interfaces;
 
@@ -46,7 +44,7 @@ public:
   Ariel(SST::ComponentId_t id, SST::Params& params);
 
   void setup()  { }
-  void finish() { }
+  void finish();
 
   void handleEvent(SST::Event* event);
 private:

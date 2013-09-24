@@ -56,7 +56,7 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   Component(id) {
 
   int verbose = params.find_integer("verbose", 0);
-  output = new Output("Ariel ", verbose, 0, SST::Output::STDOUT);
+  output = new Output("SSTArielComponent: ", verbose, 0, SST::Output::STDOUT);
 
   // get the maximum number of instructions we can run using Ariel
   max_inst = (uint64_t) atol(params.find_string("maxinst", "10000000000").c_str());
@@ -125,6 +125,17 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   primaryComponentDoNotEndSim();
 }
 
+void Ariel::finish() {
+  output->verbose(CALL_INFO, 2, 0, "Component is finishing.\n");
+  close(pipe_id);
+
+  output->verbose(CALL_INFO, 2, 0, "Removing named pipe: %s\n", named_pipe);
+  // Attempt to remove the pipe
+  remove(named_pipe);
+
+  output->verbose(CALL_INFO, 2, 0, "Component finish completed.\n");
+}
+
 Ariel::Ariel() :
     Component(-1)
 {
@@ -139,7 +150,22 @@ void Ariel::handleEvent(Event *ev)
 bool Ariel::tick( Cycle_t ) {
 	output->verbose(CALL_INFO, 2, 0, "Clock tick.\n");
 
-	return false;
+	uint8_t command = 0;
+	read(pipe_id, &command, sizeof(command));
+
+	output->verbose(CALL_INFO, 2, 0, "Read: %" PRIu8 " from pipe\n",
+		command);
+
+	if(command == 1) {
+		output->verbose(CALL_INFO, 1, 0,
+			"Read an exit command from pipe stream\n");
+
+		// Exit
+		primaryComponentOKToEndSim();
+		return true;
+	} else {
+		return false;
+	}
 }
 
 // Element Libarary / Serialization stuff
