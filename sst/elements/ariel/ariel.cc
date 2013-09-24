@@ -61,6 +61,22 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 			phys_cache_left_addr / cache_line_size,
 			phys_cache_right_addr / cache_line_size,
 			isRead ? "READ" : "WRITE");
+
+		// Produce operations for the lower and upper halves of the transaction
+		MemEvent *e_lower = new MemEvent(this, phys_cache_left_addr, isRead ? ReadReq : WriteReq);
+               	e_lower->setSize(cache_left_size);
+
+               	MemEvent *e_upper = new MemEvent(this, phys_cache_right_addr, isRead ? ReadReq : WriteReq);
+                e_upper->setSize(cache_right_size);
+
+		cache_link->send(e_lower);
+		cache_link->send(e_upper);
+
+		if(isRead) {
+			split_read_ops++;
+		} else {
+			split_write_ops++;
+		}
 	} else {
 		uint64_t physical_addr = translateAddress(addr);
 
@@ -69,6 +85,11 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 			", PhysA=%" PRIu64 ", W/R=%s\n",
 			addr, length, physical_addr,
 			isRead ? "READ" : "WRITE" );
+
+		MemEvent *ev = new MemEvent(this, physical_addr, isRead ? ReadReq : WriteReq);
+		ev->setSize(length);
+
+		cache_link->send(ev);
 	}
 }
 
@@ -206,7 +227,12 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   read_ops = 0;
   write_ops = 0;
   instructions = 0;
+  split_read_ops = 0;
+  split_write_ops = 0;
 
+  cache_link = configureLink( "cache_link", new Event::Handler<Ariel>(this,
+                                &Ariel::handleEvent) );
+  assert(cache_link);
 }
 
 void Ariel::finish() {
@@ -218,10 +244,12 @@ void Ariel::finish() {
   remove(named_pipe);
 
   output->verbose(CALL_INFO, 2, 0, "Component finish completed.\n");
-  output->verbose(CALL_INFO, 0, 0, "Insts:      %" PRIu64 "\n", instructions);
-  output->verbose(CALL_INFO, 0, 0, "Memory ops: %" PRIu64 "\n", memory_ops);
-  output->verbose(CALL_INFO, 0, 0, "Read ops:   %" PRIu64 "\n", read_ops);
-  output->verbose(CALL_INFO, 0, 0, "Write ops:  %" PRIu64 "\n", write_ops);
+  output->verbose(CALL_INFO, 0, 0, "Insts:            %" PRIu64 "\n", instructions);
+  output->verbose(CALL_INFO, 0, 0, "Memory ops:       %" PRIu64 "\n", memory_ops);
+  output->verbose(CALL_INFO, 0, 0, "Read ops:         %" PRIu64 "\n", read_ops);
+  output->verbose(CALL_INFO, 0, 0, "Split-Read ops:   %" PRIu64 "\n", split_read_ops);
+  output->verbose(CALL_INFO, 0, 0, "Write ops:        %" PRIu64 "\n", write_ops);
+  output->verbose(CALL_INFO, 0, 0, "Split-Write ops:  %" PRIu64 "\n", split_write_ops);
 
 }
 
@@ -233,7 +261,7 @@ Ariel::Ariel() :
 
 void Ariel::handleEvent(Event *ev)
 {
-
+	output->verbose(CALL_INFO, 2, 0, "Recv event in Ariel\n");
 }
 
 bool Ariel::tick( Cycle_t ) {
