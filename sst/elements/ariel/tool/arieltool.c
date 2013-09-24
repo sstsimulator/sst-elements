@@ -41,20 +41,22 @@ VOID Fini(INT32 code, VOID *v)
 	close(pipe_id);
 }
 
-VOID WriteInstructionRead(ADDRINT* address) {
+VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize) {
 	const uint8_t read_marker = PERFORM_READ;
 	uint64_t addr64 = (uint64_t) address;
 
 	write(pipe_id, &read_marker, sizeof(read_marker));
 	write(pipe_id, &addr64, sizeof(addr64));
+	write(pipe_id, &readSize, sizeof(readSize));
 }
 
-VOID WriteInstructionWrite(ADDRINT* address) {
+VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize) {
 	const uint8_t writer_marker = PERFORM_WRITE;
 	uint64_t addr64 = (uint64_t) address;
 
 	write(pipe_id, &writer_marker, sizeof(writer_marker));
 	write(pipe_id, &addr64, sizeof(addr64));
+	write(pipe_id, &writeSize, sizeof(writeSize));
 }
 
 VOID WriteStartInstructionMarker() {
@@ -69,20 +71,22 @@ VOID WriteEndInstructionMarker() {
 
 VOID InstrumentInstruction(INS ins, VOID *v)
 {
-	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)
+	INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
 		WriteStartInstructionMarker, IARG_END);
 
 	if(INS_IsMemoryRead(ins)) {
-		INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionRead, IARG_MEMORYREAD_EA, IARG_END);
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+			WriteInstructionRead, IARG_MEMORYREAD_EA, 
+			IARG_UINT32, INS_MemoryReadSize(ins), IARG_END);
 	}
 
 	if(INS_IsMemoryWrite(ins)) {
-		INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionWrite, IARG_MEMORYWRITE_EA, IARG_END);
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+			WriteInstructionWrite, IARG_MEMORYWRITE_EA, 
+			IARG_UINT32, INS_MemoryWriteSize(ins), IARG_END);
 	}
 
-	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)
+	INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
 		WriteEndInstructionMarker, IARG_END);
 }
 

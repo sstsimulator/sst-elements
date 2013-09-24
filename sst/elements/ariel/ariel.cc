@@ -32,6 +32,46 @@ using namespace SST::ArielComponent;
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
+void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
+	uint64_t cache_offset = addr % cache_line_size;
+
+	if((cache_offset + length) > cache_line_size) {
+		uint64_t cache_left_address = addr;
+		uint32_t cache_left_size = cache_line_size - cache_offset;
+
+		// We need data from the next cache line along
+		uint64_t cache_right_address = (addr - cache_offset) + cache_line_size;
+		uint32_t cache_right_size = (addr + length) % cache_line_size;
+
+		assert((cache_left_size + cache_right_size) == length);
+
+		uint64_t phys_cache_left_addr = translateAddress(cache_left_address);
+		uint64_t phys_cache_right_addr = translateAddress(cache_right_address);
+
+		output->verbose(CALL_INFO, 1, 0,
+			"Issue split-cache line operation A=%" PRIu64 ", Length=%" PRIu32
+			", A_L=%" PRIu64 ", S_L=%" PRIu32 ", A_R=%" PRIu64 ", S_R=%" PRIu32
+			", PhysA_L=%" PRIu64 ", PhysA_R=%" PRIu64 ", P_L=%" PRIu64 ", P_R=%" PRIu64 
+			", C_L=%" PRIu64 ", C_R=%" PRIu64 ", W/R=%s\n",
+			addr, length, cache_left_address, cache_left_size,
+			cache_right_address, cache_right_size,
+			phys_cache_left_addr, phys_cache_right_addr,
+			phys_cache_left_addr / page_size,
+			phys_cache_right_addr / page_size,
+			phys_cache_left_addr / cache_line_size,
+			phys_cache_right_addr / cache_line_size,
+			isRead ? "READ" : "WRITE");
+	} else {
+		uint64_t physical_addr = translateAddress(addr);
+
+		output->verbose(CALL_INFO, 1, 0,
+			"Issue non-split cache line operation: A=%" PRIu64 ", Length=%" PRIu32
+			", PhysA=%" PRIu64 ", W/R=%s\n",
+			addr, length, physical_addr,
+			isRead ? "READ" : "WRITE" );
+	}
+}
+
 int Ariel::create_pinchild(char* prog_binary, char** arg_list) {
 	pid_t the_child;
 
@@ -56,6 +96,29 @@ int Ariel::create_pinchild(char* prog_binary, char** arg_list) {
 			"Error executing: %s under a PIN fork\n",
 			prog_binary);
 	}
+}
+
+uint64_t Ariel::translateAddress(uint64_t addr) {
+	// Get address offset for this page.
+	uint64_t addr_offset = addr % page_size;
+
+	// Get the start of the virtual page for this address.
+	uint64_t addr_vpage_start = (addr - (addr_offset));
+
+	std::map<uint64_t, uint64_t>::iterator addr_entry = page_table->find(addr_vpage_start);
+
+	if(addr_entry == page_table->end()) {
+		output->verbose(CALL_INFO, 2, 0, "Allocating virtual page: %" PRIu64 " to physical page: %" PRIu64 "\n",
+			addr_vpage_start, next_free_page_start);
+		page_table->insert( std::pair<uint64_t, uint64_t>(addr_vpage_start, next_free_page_start) );
+		next_free_page_start += page_size;
+
+		addr_entry = page_table->find(addr_vpage_start);
+	}
+
+	output->verbose(CALL_INFO, 4, 0, "Mapped: %" PRIu64 " virtual to physical %" PRIu64 "\n", addr, 
+		(addr_entry->second + addr_offset));
+	return (addr_entry->second + addr_offset);
 }
 
 Ariel::Ariel(ComponentId_t id, Params& params) :
@@ -83,6 +146,15 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   if(arieltool == "") {
 	output->fatal(CALL_INFO, -1, 0, 0, "Model input did not specify a location of a tool to run against Ariel\n");
   }
+
+  page_size = (uint64_t) atol(params.find_string("pagesize", "4096").c_str());
+  output->verbose(CALL_INFO, 1, 0, "Page size configured for: %" PRIu64 "bytes.\n", page_size);
+
+  cache_line_size = (uint64_t) atol(params.find_string("cachelinsize", "64").c_str());
+  output->verbose(CALL_INFO, 1, 0, "Cache line size configured for: %" PRIu64 "bytes.\n", cache_line_size);
+
+  page_table = new std::map<uint64_t, uint64_t>();
+  next_free_page_start = page_size;
 
   char* execute_binary = PINTOOL_EXECUTABLE;
   char** execute_args = (char**) malloc(sizeof(char*) * 12);
@@ -192,17 +264,21 @@ bool Ariel::tick( Cycle_t ) {
 		if(command == PERFORM_READ) {
 			uint64_t addr;
 			read(pipe_id, &addr, sizeof(addr));
+			uint32_t read_size;
+			read(pipe_id, &read_size, sizeof(read_size));
 
-			output->verbose(CALL_INFO, 2, 0,
-				"Perform read: %" PRIu64 "\n", addr);
+			issue(addr, read_size, true);
+
 			memory_ops++;
 			read_ops++;
 		} else if (command == PERFORM_WRITE) {
 			uint64_t addr;
 			read(pipe_id, &addr, sizeof(addr));
+			uint32_t write_size;
+			read(pipe_id, &write_size, sizeof(write_size));
 
-			output->verbose(CALL_INFO, 2, 0,
-				"Perform write: %" PRIu64 "\n", addr);
+			issue(addr, write_size, false);
+
 			memory_ops++;
 			write_ops++;
 		} else {

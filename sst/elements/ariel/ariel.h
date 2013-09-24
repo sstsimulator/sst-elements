@@ -66,6 +66,14 @@ private:
   uint64_t write_ops;
   uint64_t instructions;
 
+  uint64_t cache_line_size;
+  uint64_t page_size;
+  uint64_t next_free_page_start;
+  std::map<uint64_t, uint64_t>* page_table;
+
+  uint64_t translateAddress(uint64_t addr);
+  void issue(uint64_t addr, uint32_t length, bool isRead);
+
   friend class boost::serialization::access;
   template<class Archive>
   void save(Archive & ar, const unsigned int version) const
