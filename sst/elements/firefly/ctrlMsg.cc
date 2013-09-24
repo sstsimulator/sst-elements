@@ -20,12 +20,16 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-CtrlMsg::CtrlMsg(int verboseLevel, Output::output_location_t loc, 
-                SST::Params& params, Info* info ) :
-    ProtocolAPI(verboseLevel,loc),
+CtrlMsg::CtrlMsg( SST::Params params, Info* info ) :
     m_info(info),
     m_sleep(false)
 {
+    int verboseLevel = params.find_integer("verboseLevel",0);
+    Output::output_location_t loc =
+            (Output::output_location_t)params.find_integer("debug", 0);
+
+    m_dbg.init("@t:CtrlMsg::@p():@l ", verboseLevel, 0, loc );
+
     m_matchTime = params.find_integer("matchTime",0);
     m_copyTime = params.find_integer("copyTime",0);
 }

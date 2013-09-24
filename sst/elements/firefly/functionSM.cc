@@ -142,10 +142,12 @@ void FunctionSM::sendProgressEvent( SST::Event* e  )
 
 void FunctionSM::start( SST::Event* e  )
 {
+    assert( e );
     SMEnterEvent* event =  static_cast<SMEnterEvent*>(e);
     event->retLink = m_toDriverLink;
+    assert( ! m_sm );
     m_sm = m_smV[ event->type ];
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s enter\n",m_sm->name());
     m_fromDriverLink->send( m_funcLat[event->type].enterTime, e );
 }
 
@@ -160,6 +162,7 @@ void FunctionSM::handleSelfEvent( SST::Event* e  )
 
 void FunctionSM::handleDriverEvent( SST::Event* e )
 {
+    assert( e );
     assert( m_sm );
     m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
     m_sm->handleEnterEvent( e );
@@ -174,9 +177,11 @@ void FunctionSM::handleProgressEvent( SST::Event* e )
 
 void FunctionSM::handleToDriver( Event* e )
 {
-    m_dbg.verbose(CALL_INFO,3,0,"\n");
+    assert( e );
+    m_dbg.verbose(CALL_INFO,3,0," returning\n");
     DriverEvent* event = static_cast<DriverEvent*>(e);
     (*event->retFunc)( event->retval );
+    m_sm = NULL;
     delete e;
 }
 

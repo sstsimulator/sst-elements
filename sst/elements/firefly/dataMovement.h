@@ -44,7 +44,6 @@ class MsgEntry {
   public:
     uint32_t                    srcNodeId;
     unsigned char               sendKey;
-    unsigned char               recvKey;
     MatchHdr                    hdr;
     std::vector<unsigned char>  buffer;
 };
@@ -52,9 +51,9 @@ class MsgEntry {
 class DataMovement : public ProtocolAPI 
 {
 
-    static const uint32_t MaxNumPostedRecvs = 32;
-    static const uint32_t MaxNumSends = 32;
-    static const uint32_t ShortMsgLength = 100;
+    static const uint32_t MaxNumPostedRecvs = 512;
+    static const uint32_t MaxNumSends = 512;
+    static const uint32_t ShortMsgLength = 4096;
 
     class SendReq: public Request {
       public:
@@ -73,22 +72,26 @@ class DataMovement : public ProtocolAPI
     };
 
     unsigned char saveSendReq( SendReq* req) {
+        m_dbg.verbose(CALL_INFO,1,0,"key=%d\n",m_sendReqKey);
         m_sendReqM[ m_sendReqKey ] = req;
         return m_sendReqKey++;
     }
 
     SendReq* findSendReq( unsigned char key ) {
+        m_dbg.verbose(CALL_INFO,1,0,"key=%d\n",key);
         SendReq* tmp = m_sendReqM[key];
         m_sendReqM.erase(key);
         return tmp;
     }
 
     unsigned char saveRecvReq( RecvReq* req) {
+        m_dbg.verbose(CALL_INFO,1,0,"key=%d\n",m_recvReqKey);
         m_recvReqM[ m_recvReqKey ] = req;
         return m_recvReqKey++;
     }
 
     RecvReq* findRecvReq( unsigned char key ) {
+        m_dbg.verbose(CALL_INFO,1,0,"key=%d\n",key);
         RecvReq* tmp = m_recvReqM[key];
         m_recvReqM.erase(key);
         return tmp;
@@ -96,8 +99,7 @@ class DataMovement : public ProtocolAPI
 
 
   public:
-    DataMovement( int verboseLevel, Output::output_location_t loc, 
-            SST::Params& params, Info* info );
+    DataMovement( SST::Params, Info* info );
  
     virtual Request* getSendReq( );
     virtual Request* getRecvReq( IO::NodeId src );

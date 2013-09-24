@@ -39,6 +39,7 @@ class SendFuncSM :  public FunctionSMInterface
     DataMovement*   m_dm;
     SST::Link*      m_toProgressLink;
     SendEnterEvent* m_event;
+    Hermes::MessageRequest m_req; 
 };
 
 }

@@ -44,7 +44,13 @@ void RecvFuncSM::handleEnterEvent( SST::Event *e )
     assert( NULL == m_event ); 
     m_event = static_cast< RecvEnterEvent* >(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_event->entry.req ? "Irecv":"Recv");
+    m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
+                m_event->entry.req ? "Irecv":"Recv", 
+                m_event->entry.buf,
+                m_event->entry.count,
+                m_event->entry.dtype,
+                m_event->entry.src,
+                m_event->entry.tag );
 
     if ( m_event->entry.req ) {
         m_event->entry.req->src = Hermes::AnySrc;
@@ -57,6 +63,8 @@ void RecvFuncSM::handleEnterEvent( SST::Event *e )
     int delay;
     m_entry = m_dm->searchUnexpected( &m_event->entry, delay );
 
+    m_dbg.verbose(CALL_INFO,1,0,"%s, match delay %d\n",
+                        m_entry?"found match":"no match", delay);
     m_state = WaitMatch;
     m_selfLink->send(delay,NULL);
 }
@@ -71,6 +79,7 @@ void RecvFuncSM::finish( RecvEntry* rEntry, MsgEntry* mEntry )
         rEntry->resp->tag = mEntry->hdr.tag;
     }
     delete m_entry;
+    m_entry = NULL;
 }
 
 void RecvFuncSM::handleSelfEvent( SST::Event *e )

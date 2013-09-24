@@ -22,14 +22,18 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-DataMovement::DataMovement(int verboseLevel, Output::output_location_t loc,
-        SST::Params& params, Info* info ) :
-    ProtocolAPI(verboseLevel,loc),
+DataMovement::DataMovement( SST::Params params, Info* info ) :
     m_info(info),
     m_sleep( false ),
     m_sendReqKey( 0 ),
     m_recvReqKey( 0 )
 {
+    int verboseLevel = params.find_integer("verboseLevel",0);
+    Output::output_location_t loc =
+            (Output::output_location_t)params.find_integer("debug", 0);
+
+    m_dbg.init("@t:DataMovement::@p():@l ", verboseLevel, 0, loc );
+
     m_matchTime = params.find_integer("matchTime",0);
     m_copyTime = params.find_integer("copyTime",0);
 }
@@ -85,11 +89,13 @@ DataMovement::Request* DataMovement::getSendReq(  )
         m_longMsgRespQ.pop_front();
         
         SendReq* sendReq = findSendReq( recvReq->hdr.sendKey );
+        assert(sendReq);
 
         m_dbg.verbose(CALL_INFO,1,0,"send LongMsgResp to %d\n",
                                                         recvReq->nodeId);
         sendReq->hdr.msgType = Hdr::LongMsgResp;
         sendReq->hdr.recvKey = recvReq->hdr.recvKey;
+        sendReq->hdr.sendKey = -1;
         sendReq->ioVec.resize(2);
         
         sendReq->ioVec[0].ptr = &sendReq->hdr;
@@ -127,6 +133,7 @@ DataMovement::Request* DataMovement::getSendReq(  )
         } else {
             req->ioVec.resize(1);
             hdr.sendKey = saveSendReq( req );
+            hdr.recvKey = -1;
         }
         req->ioVec[0].ptr = &hdr;
         req->ioVec[0].len = sizeof(hdr);
@@ -149,11 +156,15 @@ DataMovement::Request* DataMovement::sendIODone( Request *r )
                     m_info->sizeofDataType(req->entry->dtype);
 
         if ( len <= ShortMsgLength ) {
+            // this is just a flag to tell that the send has completed
+            req->entry->req->src = 1;  
             delete req->entry;
             delete req;
         }
     } else {
         if ( req->entry ) {
+            // this is just a flag to tell that the send has completed
+            req->entry->req->src = 1;  
             delete req->entry;
         }
         delete req;
@@ -195,6 +206,7 @@ DataMovement::Request* DataMovement::recvIODone( Request *r )
         } else if ( req->hdr.msgType == Hdr::LongMsgResp ) {
             m_dbg.verbose(CALL_INFO,1,0,"LongMsgResp\n");
             RecvReq* oldReq  = findRecvReq( req->hdr.recvKey );
+            assert(oldReq);
             delete req;
             req = oldReq;
             req->delay = 0;
@@ -230,6 +242,7 @@ DataMovement::Request* DataMovement::delayDone( Request *r )
         req->msgEntry = new MsgEntry;
         req->msgEntry->hdr       = req->hdr.mHdr;
         req->msgEntry->srcNodeId = req->nodeId;
+        req->msgEntry->sendKey = req->hdr.sendKey;
 
         m_unexpectedMsgQ.push_back( req->msgEntry );
 
@@ -371,8 +384,9 @@ MsgEntry* DataMovement::searchUnexpected( RecvEntry* entry, int& delay )
                     entry->src != (*iter)->hdr.srcRank ) {
             continue;
         } 
+        MsgEntry* tmp = *iter;
         m_unexpectedMsgQ.erase( iter );
-        return *iter;
+        return tmp;
     }
     
     return NULL;

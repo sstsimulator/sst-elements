@@ -42,9 +42,21 @@ void SendFuncSM::handleEnterEvent( SST::Event *e)
     assert( NULL == m_event );
     m_event = static_cast< SendEnterEvent* >(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d dest=%d tag=%#x\n",
+                m_event->entry.req ? "Isend":"Send",
+                m_event->entry.buf,
+                m_event->entry.count,
+                m_event->entry.dtype,
+                m_event->entry.dest,
+                m_event->entry.tag );
+
     // isend not supported
     assert ( m_event->entry.req == NULL ); 
+
+    if ( m_event->entry.req == NULL ) {
+        m_event->entry.req = &m_req;
+        m_req.src = Hermes::AnySrc;
+    }
 
     if ( ! m_dm->canPostSend() ) {
         // make progress
@@ -60,9 +72,15 @@ void SendFuncSM::handleEnterEvent( SST::Event *e)
 
 void SendFuncSM::handleProgressEvent( SST::Event *e )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     assert( m_event );
-    exit( static_cast<SMEnterEvent*>(m_event), 0 );
-    delete m_event;
-    m_event = NULL;
+    if (  m_event->entry.req == NULL && m_req.src == Hermes::AnySrc ) {
+        m_dbg.verbose(CALL_INFO,1,0,"not ready\n");
+        m_dm->sleep();
+        m_toProgressLink->send(0, NULL ); 
+    } else {
+        m_dbg.verbose(CALL_INFO,1,0,"done\n");
+        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        delete m_event;
+        m_event = NULL;
+    }
 }

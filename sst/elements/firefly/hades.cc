@@ -111,12 +111,11 @@ Hades::Hades( Params& params ) :
 
     nidListFile.close();
 
-    Params dmParams = params.find_prefix_params("dataMovement.");
+    m_protocolM[0] = 
+        new DataMovement( params.find_prefix_params("dataMovement."), &m_info );
 
-    m_protocolM[0] = new DataMovement( verboseLevel, loc, dmParams,
-                                         &m_info );
-    Params ctrlParams = params.find_prefix_params("ctrlMsg.");
-    m_protocolM[1] = new CtrlMsg( verboseLevel, loc, ctrlParams, &m_info);
+    m_protocolM[1] = 
+        new CtrlMsg( params.find_prefix_params("ctrlMsg."), &m_info);
 
     m_sendIter = m_protocolM.begin();
 

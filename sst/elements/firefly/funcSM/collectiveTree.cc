@@ -60,6 +60,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
     m_bufV[0] = m_event->mydata;
     for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
         m_bufV[i+1] = malloc( m_bufLen );
+        assert( m_bufV[i+1] );
     }
 
     m_pending = false;

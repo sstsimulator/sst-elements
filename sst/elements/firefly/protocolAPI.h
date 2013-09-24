@@ -33,9 +33,6 @@ class ProtocolAPI
         IO::NodeId              nodeId; 
     }; 
 
-    ProtocolAPI(int verboseLevel, Output::output_location_t loc) {
-        m_dbg.init("@t:ProtocolAPI::@p():@l ", verboseLevel, 0, loc );
-    }
     virtual ~ProtocolAPI() {}
     virtual Request* getSendReq( ) = 0;
     virtual Request* getRecvReq( IO::NodeId src ) = 0;

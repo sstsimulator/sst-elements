@@ -41,7 +41,7 @@ void WaitFuncSM::handleEnterEvent( SST::Event *e)
 
     m_event = static_cast< WaitEnterEvent* >(e);
 
-    if ( m_event->req->src != Hermes::AnyTag ) {
+    if ( m_event->req->src != Hermes::AnySrc ) {
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
@@ -54,7 +54,9 @@ void WaitFuncSM::handleEnterEvent( SST::Event *e)
 void WaitFuncSM::handleProgressEvent( SST::Event *e )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    if ( m_event->req->src != Hermes::AnyTag ) {
+    if ( m_event->req->src != Hermes::AnySrc ) {
+        m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x\n",
+                    m_event->req->src, m_event->req->tag);
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
         // remove entry from m_dm 
         delete m_event;

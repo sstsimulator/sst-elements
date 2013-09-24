@@ -100,8 +100,7 @@ class CtrlMsg : public ProtocolAPI {
 
   public:
 
-    CtrlMsg( int verboseLevel, Output::output_location_t loc, 
-            SST::Params& params, Info* );
+    CtrlMsg( SST::Params, Info* );
 
     virtual Request* getSendReq( );
     virtual Request* getRecvReq( IO::NodeId src );
