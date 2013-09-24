@@ -43,7 +43,6 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 		uint64_t cache_right_address = (addr - cache_offset) + cache_line_size;
 		uint32_t cache_right_size = (addr + length) % cache_line_size;
 
-		assert((cache_left_size + cache_right_size) == length);
 
 		uint64_t phys_cache_left_addr = translateAddress(cache_left_address);
 		uint64_t phys_cache_right_addr = translateAddress(cache_right_address);
@@ -62,12 +61,18 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 			phys_cache_right_addr / cache_line_size,
 			isRead ? "READ" : "WRITE");
 
+		assert((cache_left_size + cache_right_size) == length);
+
 		// Produce operations for the lower and upper halves of the transaction
 		MemEvent *e_lower = new MemEvent(this, phys_cache_left_addr, isRead ? ReadReq : WriteReq);
                	e_lower->setSize(cache_left_size);
 
                	MemEvent *e_upper = new MemEvent(this, phys_cache_right_addr, isRead ? ReadReq : WriteReq);
                 e_upper->setSize(cache_right_size);
+
+		// Add transactions to our pending list for matching later
+		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_lower->getID(), e_lower) );
+		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_upper->getID(), e_upper) );
 
 		cache_link->send(e_lower);
 		cache_link->send(e_upper);
@@ -88,6 +93,8 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 
 		MemEvent *ev = new MemEvent(this, physical_addr, isRead ? ReadReq : WriteReq);
 		ev->setSize(length);
+
+		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(ev->getID(), ev) );
 
 		cache_link->send(ev);
 	}
@@ -215,6 +222,9 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   output->verbose(CALL_INFO, 2, 0, "Passed the pipe opening, register clock and then will continue.\n");
 
+  max_transactions = (uint32_t) params.find_integer("maxtransactions", 32);
+  pending_transaction = NULL;
+
   // Register a clock for ourselves
   registerClock( "1GHz",
                  new Clock::Handler<Ariel>(this, &Ariel::tick ) );
@@ -261,60 +271,104 @@ Ariel::Ariel() :
 
 void Ariel::handleEvent(Event *ev)
 {
-	output->verbose(CALL_INFO, 2, 0, "Recv event in Ariel\n");
+	output->verbose(CALL_INFO, 4, 0, "Event being handled in Ariel component.\n");
+
+	MemEvent *event = dynamic_cast<MemEvent*>(ev);
+        if (event) {
+		output->verbose(CALL_INFO, 4, 0, "Event successfully cast into memory event type.\n");
+
+                // Branden says to ignore invalidates
+               	if ( event->getCmd() == Invalidate ) {
+                       	delete event;
+                       	return;
+               	}
+
+		// Get the ID the event responds to.
+		MemEvent::id_type ev_id = event->getResponseToID();
+		std::map<MemEvent::id_type, MemEvent*>::iterator pending_itr = pending_requests.find(ev_id);
+
+		if(pending_itr != pending_requests.end()) {
+			output->verbose(CALL_INFO, 2, 0, "Memory event to address %" PRIu64 " located in pending transactions, will be removed from list.\n",
+				(uint64_t) event->getAddr());
+			pending_requests.erase(ev_id);
+
+			// Delete the event so we free up memory, we are done processing this one.
+			delete event;
+		}
+	} else {
+		output->fatal(CALL_INFO, -1, 0, 0, "Unknown event type received by Ariel.\n");
+	}
 }
 
 bool Ariel::tick( Cycle_t ) {
-	output->verbose(CALL_INFO, 2, 0, "Clock tick.\n");
+	output->verbose(CALL_INFO, 2, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
+	output->verbose(CALL_INFO, 2, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
 
-	uint8_t command = 0;
-	read(pipe_id, &command, sizeof(command));
+	if(pending_transaction != NULL) {
+		if(pending_requests.size() < max_transactions) {
+			// Push pending transaction into the queue and then reset so
+			// we can read another next cycle round.
+			cache_link->send(pending_transaction);
+			pending_transaction = NULL;
+		}
+        } else if( pending_requests.size() >= max_transactions) {
+		output->verbose(CALL_INFO, 2, 0, "Pending transactions has reached limit of %" PRIu32 "\n", max_transactions);
+	} else if( pending_requests.size() < max_transactions) {
+		uint8_t command = 0;
+		read(pipe_id, &command, sizeof(command));
 
-	if(command == PERFORM_EXIT) {
-		output->verbose(CALL_INFO, 1, 0,
-			"Read an exit command from pipe stream\n");
+		if(command == PERFORM_EXIT) {
+			output->verbose(CALL_INFO, 1, 0,
+				"Read an exit command from pipe stream\n");
 
-		// Exit
-		primaryComponentOKToEndSim();
-		return true;
-	}
-
-	if(command == START_INSTRUCTION) {
-		output->verbose(CALL_INFO, 1, 0,
-			"Read a start instruction\n");
-		instructions++;
-	}
-
-	// Read the next instruction
-	read(pipe_id, &command, sizeof(command));
-
-	while(command != END_INSTRUCTION) {
-		if(command == PERFORM_READ) {
-			uint64_t addr;
-			read(pipe_id, &addr, sizeof(addr));
-			uint32_t read_size;
-			read(pipe_id, &read_size, sizeof(read_size));
-
-			issue(addr, read_size, true);
-
-			memory_ops++;
-			read_ops++;
-		} else if (command == PERFORM_WRITE) {
-			uint64_t addr;
-			read(pipe_id, &addr, sizeof(addr));
-			uint32_t write_size;
-			read(pipe_id, &write_size, sizeof(write_size));
-
-			issue(addr, write_size, false);
-
-			memory_ops++;
-			write_ops++;
-		} else {
-			output->fatal(CALL_INFO, -1, 0, 0,
-				"Error: unknown type of operation: %d\n", command);
+			// Exit
+			primaryComponentOKToEndSim();
+			return true;
 		}
 
+		if(command == START_INSTRUCTION) {
+			output->verbose(CALL_INFO, 1, 0,
+				"Read a start instruction\n");
+			instructions++;
+		}
+
+		// Read the next instruction
 		read(pipe_id, &command, sizeof(command));
+
+		while(command != END_INSTRUCTION) {
+			if(command == PERFORM_READ) {
+				uint64_t addr;
+				read(pipe_id, &addr, sizeof(addr));
+				uint32_t read_size;
+				read(pipe_id, &read_size, sizeof(read_size));
+
+				issue(addr, read_size, true);
+
+				memory_ops++;
+			read_ops++;
+			} else if (command == PERFORM_WRITE) {
+				uint64_t addr;
+				read(pipe_id, &addr, sizeof(addr));
+				uint32_t write_size;
+				read(pipe_id, &write_size, sizeof(write_size));
+
+				issue(addr, write_size, false);
+
+				memory_ops++;
+				write_ops++;
+			} else {
+				// So PIN may occassionally not get instrumentation correct and we get
+				// instruction records nested inside each other :(.
+				if(command == START_INSTRUCTION) {
+					instructions++;
+				} else {
+					output->fatal(CALL_INFO, -1, 0, 0,
+						"Error: unknown type of operation: %d\n", command);
+				}
+			}
+
+			read(pipe_id, &command, sizeof(command));
+		}
 	}
 
 	return false;

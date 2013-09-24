@@ -73,8 +73,11 @@ private:
   uint64_t page_size;
   uint64_t next_free_page_start;
   std::map<uint64_t, uint64_t>* page_table;
+  std::map<MemEvent::id_type, MemEvent*> pending_requests;
 
+  uint32_t max_transactions;
   SST::Link* cache_link;
+  MemEvent* pending_transaction;
 
   uint64_t translateAddress(uint64_t addr);
   void issue(uint64_t addr, uint32_t length, bool isRead);
