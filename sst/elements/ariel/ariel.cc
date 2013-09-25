@@ -74,8 +74,9 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_lower->getID(), e_lower) );
 		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_upper->getID(), e_upper) );
 
-		cache_link->send(e_lower);
-		cache_link->send(e_upper);
+		assert(thrID < core_count);
+		cache_link[thrID]->send(e_lower);
+		cache_link[thrID]->send(e_upper);
 
 		if(isRead) {
 			split_read_ops++;
@@ -96,7 +97,7 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 
 		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(ev->getID(), ev) );
 
-		cache_link->send(ev);
+		cache_link[thrID]->send(ev);
 	}
 }
 
@@ -222,8 +223,12 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   output->verbose(CALL_INFO, 2, 0, "Passed the pipe opening, register clock and then will continue.\n");
 
-  max_transactions = (uint32_t) params.find_integer("maxtransactions", 32);
   pending_transaction = NULL;
+
+  // Get the number of virtual cores, defaults to 1 = serial, allow up to 32 entries per core (these
+  // are shared across the processor as a whole.
+  core_count = (uint32_t) params.find_integer("corecount", 1);
+  max_transactions = (uint32_t) params.find_integer("maxtransactions", core_count * 32);
 
   // Register a clock for ourselves
   registerClock( "1GHz",
@@ -240,9 +245,17 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   split_read_ops = 0;
   split_write_ops = 0;
 
-  cache_link = configureLink( "cache_link", new Event::Handler<Ariel>(this,
+  cache_link = (SST::Link**) malloc(sizeof(SST::Link*) * core_count);
+
+  for(int core_counter = 0; core_counter < core_count; ++core_counter) {
+	char name_buffer[256];
+	sprintf(name_buffer, "cache_link_%d", core_counter);
+
+	output->verbose(CALL_INFO, 2, 0, "Creating a link: %s\n", name_buffer);
+  	cache_link[core_counter] = configureLink(name_buffer, new Event::Handler<Ariel>(this,
                                 &Ariel::handleEvent) );
-  assert(cache_link);
+  	assert(cache_link);
+  }
 }
 
 void Ariel::finish() {
@@ -306,9 +319,12 @@ bool Ariel::tick( Cycle_t ) {
 
 	if(pending_transaction != NULL) {
 		if(pending_requests.size() < max_transactions) {
+			assert(pending_transaction_core < core_count);
+			output->verbose(CALL_INFO, 4, 0, "Found a pending transaction on core %" PRIu32 " pushing to cache.", pending_transaction_core);
+
 			// Push pending transaction into the queue and then reset so
 			// we can read another next cycle round.
-			cache_link->send(pending_transaction);
+			cache_link[pending_transaction_core]->send(pending_transaction);
 			pending_transaction = NULL;
 		}
         } else if( pending_requests.size() >= max_transactions) {

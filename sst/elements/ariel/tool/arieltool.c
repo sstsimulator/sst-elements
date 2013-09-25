@@ -50,12 +50,10 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
 	uint64_t addr64 = (uint64_t) address;
 	uint32_t thrID = (uint32_t) thr;
 
-	GetLock(&pipe_lock, (INT32) thr);
 	write(pipe_id, &read_marker, sizeof(read_marker));
 	write(pipe_id, &addr64, sizeof(addr64));
 	write(pipe_id, &readSize, sizeof(readSize));
 	write(pipe_id, &thrID, sizeof(thrID));
-	ReleaseLock(&pipe_lock);
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
@@ -63,52 +61,80 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
 	uint64_t addr64 = (uint64_t) address;
 	uint32_t thrID = (uint32_t) thr;
 
-	GetLock(&pipe_lock, (INT32) thr);
 	write(pipe_id, &writer_marker, sizeof(writer_marker));
 	write(pipe_id, &addr64, sizeof(addr64));
 	write(pipe_id, &writeSize, sizeof(writeSize));
 	write(pipe_id, &thrID, sizeof(thrID));
-	ReleaseLock(&pipe_lock);
 }
 
 VOID WriteStartInstructionMarker() {
 	const uint8_t inst_marker = START_INSTRUCTION;
-
-	GetLock(&pipe_lock, (INT32) 0);
 	write(pipe_id, &inst_marker, sizeof(inst_marker));
-	ReleaseLock(&pipe_lock);
-
 }
 
 VOID WriteEndInstructionMarker() {
 	const uint8_t inst_marker = END_INSTRUCTION;
+	write(pipe_id, &inst_marker, sizeof(inst_marker));
+}
+
+VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
+	ADDRINT* writeAddr, UINT32 writeSize) {
 
 	GetLock(&pipe_lock, (INT32) 0);
-	write(pipe_id, &inst_marker, sizeof(inst_marker));
+
+	WriteStartInstructionMarker();
+	WriteInstructionRead(readAddr, readSize, thr);
+	WriteInstructionWrite(writeAddr, writeSize, thr);
+	WriteEndInstructionMarker();
+
+	ReleaseLock(&pipe_lock);
+}
+
+VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) {
+
+	GetLock(&pipe_lock, (INT32) 0);
+
+	WriteStartInstructionMarker();
+	WriteInstructionRead(readAddr, readSize, thr);
+	WriteEndInstructionMarker();
+
+	ReleaseLock(&pipe_lock);
+}
+
+VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
+
+	GetLock(&pipe_lock, (INT32) 0);
+
+	WriteStartInstructionMarker();
+	WriteInstructionWrite(writeAddr, writeSize, thr);
+	WriteEndInstructionMarker();
+
 	ReleaseLock(&pipe_lock);
 }
 
 VOID InstrumentInstruction(INS ins, VOID *v)
 {
-	INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-		WriteStartInstructionMarker, IARG_END);
-
-	if(INS_IsMemoryRead(ins)) {
+	if( INS_IsMemoryRead(ins) && INS_IsMemoryWrite(ins) ) {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionRead, IARG_MEMORYREAD_EA,
-			IARG_UINT32, INS_MemoryReadSize(ins),
-			IARG_THREAD_ID, IARG_END);
+			WriteInstructionReadWrite,
+			IARG_THREAD_ID,
+			IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
+			IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+			IARG_END);
+	} else if( INS_IsMemoryRead(ins) ) {
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+			WriteInstructionReadOnly,
+			IARG_THREAD_ID,
+			IARG_MEMORYREAD_EA, IARG_UINT32, INS_MemoryReadSize(ins),
+			IARG_END);
+	} else if( INS_IsMemoryWrite(ins) ) {
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+			WriteInstructionWriteOnly,
+			IARG_THREAD_ID,
+			IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+			IARG_END);
 	}
 
-	if(INS_IsMemoryWrite(ins)) {
-		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionWrite, IARG_MEMORYWRITE_EA,
-			IARG_UINT32, INS_MemoryWriteSize(ins),
-			IARG_THREAD_ID, IARG_END);
-	}
-
-	INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-		WriteEndInstructionMarker, IARG_END);
 }
 
 /* ===================================================================== */
