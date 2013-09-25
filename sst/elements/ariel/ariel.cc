@@ -32,7 +32,7 @@ using namespace SST::ArielComponent;
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
-void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
+void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 	uint64_t cache_offset = addr % cache_line_size;
 
 	if((cache_offset + length) > cache_line_size) {
@@ -51,7 +51,7 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 			"Issue split-cache line operation A=%" PRIu64 ", Length=%" PRIu32
 			", A_L=%" PRIu64 ", S_L=%" PRIu32 ", A_R=%" PRIu64 ", S_R=%" PRIu32
 			", PhysA_L=%" PRIu64 ", PhysA_R=%" PRIu64 ", P_L=%" PRIu64 ", P_R=%" PRIu64 
-			", C_L=%" PRIu64 ", C_R=%" PRIu64 ", W/R=%s\n",
+			", C_L=%" PRIu64 ", C_R=%" PRIu64 ", W/R=%s, TID=%" PRIu32 "\n",
 			addr, length, cache_left_address, cache_left_size,
 			cache_right_address, cache_right_size,
 			phys_cache_left_addr, phys_cache_right_addr,
@@ -59,7 +59,7 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 			phys_cache_right_addr / page_size,
 			phys_cache_left_addr / cache_line_size,
 			phys_cache_right_addr / cache_line_size,
-			isRead ? "READ" : "WRITE");
+			isRead ? "READ" : "WRITE", thrID);
 
 		assert((cache_left_size + cache_right_size) == length);
 
@@ -87,9 +87,9 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead) {
 
 		output->verbose(CALL_INFO, 1, 0,
 			"Issue non-split cache line operation: A=%" PRIu64 ", Length=%" PRIu32
-			", PhysA=%" PRIu64 ", W/R=%s\n",
+			", PhysA=%" PRIu64 ", W/R=%s, TID=%" PRIu32 "\n",
 			addr, length, physical_addr,
-			isRead ? "READ" : "WRITE" );
+			isRead ? "READ" : "WRITE", thrID);
 
 		MemEvent *ev = new MemEvent(this, physical_addr, isRead ? ReadReq : WriteReq);
 		ev->setSize(length);
@@ -341,8 +341,10 @@ bool Ariel::tick( Cycle_t ) {
 				read(pipe_id, &addr, sizeof(addr));
 				uint32_t read_size;
 				read(pipe_id, &read_size, sizeof(read_size));
+				uint32_t thrID;
+				read(pipe_id, &thrID, sizeof(thrID));
 
-				issue(addr, read_size, true);
+				issue(addr, read_size, true, thrID);
 
 				memory_ops++;
 			read_ops++;
@@ -351,8 +353,10 @@ bool Ariel::tick( Cycle_t ) {
 				read(pipe_id, &addr, sizeof(addr));
 				uint32_t write_size;
 				read(pipe_id, &write_size, sizeof(write_size));
+				uint32_t thrID;
+				read(pipe_id, &thrID, sizeof(thrID));
 
-				issue(addr, write_size, false);
+				issue(addr, write_size, false, thrID);
 
 				memory_ops++;
 				write_ops++;

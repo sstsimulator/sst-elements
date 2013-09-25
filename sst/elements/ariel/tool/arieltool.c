@@ -20,6 +20,7 @@ KNOB<UINT64> MaxInstructions(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool",
     "v", "0", "SST verbosity level");
 
+PIN_LOCK pipe_lock;
 int pipe_id;
 
 #define PERFORM_EXIT 1
@@ -35,38 +36,56 @@ VOID Fini(INT32 code, VOID *v)
 	}
 
 	uint8_t command = PERFORM_EXIT;
+
+	GetLock(&pipe_lock, (INT32) 0);
 	write(pipe_id, &command, sizeof(command));
+	ReleaseLock(&pipe_lock);
 
 	// Close the pipe and clean up
 	close(pipe_id);
 }
 
-VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize) {
+VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
 	const uint8_t read_marker = PERFORM_READ;
 	uint64_t addr64 = (uint64_t) address;
+	uint32_t thrID = (uint32_t) thr;
 
+	GetLock(&pipe_lock, (INT32) thr);
 	write(pipe_id, &read_marker, sizeof(read_marker));
 	write(pipe_id, &addr64, sizeof(addr64));
 	write(pipe_id, &readSize, sizeof(readSize));
+	write(pipe_id, &thrID, sizeof(thrID));
+	ReleaseLock(&pipe_lock);
 }
 
-VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize) {
+VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
 	const uint8_t writer_marker = PERFORM_WRITE;
 	uint64_t addr64 = (uint64_t) address;
+	uint32_t thrID = (uint32_t) thr;
 
+	GetLock(&pipe_lock, (INT32) thr);
 	write(pipe_id, &writer_marker, sizeof(writer_marker));
 	write(pipe_id, &addr64, sizeof(addr64));
 	write(pipe_id, &writeSize, sizeof(writeSize));
+	write(pipe_id, &thrID, sizeof(thrID));
+	ReleaseLock(&pipe_lock);
 }
 
 VOID WriteStartInstructionMarker() {
 	const uint8_t inst_marker = START_INSTRUCTION;
+
+	GetLock(&pipe_lock, (INT32) 0);
 	write(pipe_id, &inst_marker, sizeof(inst_marker));
+	ReleaseLock(&pipe_lock);
+
 }
 
 VOID WriteEndInstructionMarker() {
 	const uint8_t inst_marker = END_INSTRUCTION;
+
+	GetLock(&pipe_lock, (INT32) 0);
 	write(pipe_id, &inst_marker, sizeof(inst_marker));
+	ReleaseLock(&pipe_lock);
 }
 
 VOID InstrumentInstruction(INS ins, VOID *v)
@@ -76,14 +95,16 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 	if(INS_IsMemoryRead(ins)) {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionRead, IARG_MEMORYREAD_EA, 
-			IARG_UINT32, INS_MemoryReadSize(ins), IARG_END);
+			WriteInstructionRead, IARG_MEMORYREAD_EA,
+			IARG_UINT32, INS_MemoryReadSize(ins),
+			IARG_THREAD_ID, IARG_END);
 	}
 
 	if(INS_IsMemoryWrite(ins)) {
 		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionWrite, IARG_MEMORYWRITE_EA, 
-			IARG_UINT32, INS_MemoryWriteSize(ins), IARG_END);
+			WriteInstructionWrite, IARG_MEMORYWRITE_EA,
+			IARG_UINT32, INS_MemoryWriteSize(ins),
+			IARG_THREAD_ID, IARG_END);
 	}
 
 	INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
@@ -128,6 +149,7 @@ int main(int argc, char *argv[])
 	exit(-1);
     }
 
+    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     PIN_StartProgram();
 

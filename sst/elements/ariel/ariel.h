@@ -80,7 +80,7 @@ private:
   MemEvent* pending_transaction;
 
   uint64_t translateAddress(uint64_t addr);
-  void issue(uint64_t addr, uint32_t length, bool isRead);
+  void issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thr);
 
   friend class boost::serialization::access;
   template<class Archive>
