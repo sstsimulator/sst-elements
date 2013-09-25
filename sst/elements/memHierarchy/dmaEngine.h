@@ -1,0 +1,107 @@
+// Copyright 2013 Sandia Corporation. Under the terms
+// of Contract DE-AC04-94AL85000 with Sandia Corporation, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2013, Sandia Corporation
+// All rights reserved.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
+
+#ifndef _MEMHIERARCHY_DMAENGINE_H_
+#define _MEMHIERARCHY_DMAENGINE_H_
+
+
+#include <sst/core/serialization.h>
+
+#include <vector>
+
+#include <sst/core/event.h>
+#include <sst/core/component.h>
+#include <sst/core/link.h>
+#include <sst/core/output.h>
+#include <sst/core/interfaces/memEvent.h>
+
+#include "memNIC.h"
+
+
+namespace SST {
+namespace MemHierarchy {
+
+/* Send this to the DMAEngine to cause a DMA.  Retrurned when complete. */
+class DMACommand : public Event {
+public:
+    Addr dst;
+    Addr src;
+    size_t size;
+    DMACommand(Addr dst, Addr src, size_t size) :
+        Event(), dst(dst), src(src), size(size)
+    { }
+
+private:
+    DMACommand() {} // For serialization
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(dst);
+        ar & BOOST_SERIALIZATION_NVP(src);
+        ar & BOOST_SERIALIZATION_NVP(size);
+    }
+};
+
+
+class DMAEngine : public Component {
+
+    struct Request {
+        DMACommand *command;
+        std::set<MemEvent::id_type> loadKeys;
+        std::set<MemEvent::id_type> storeKeys;
+
+        Addr getDst() const { return command->dst; }
+        Addr getSrc() const { return command->src; }
+        size_t getSize() const { return command->size; }
+
+        Request(DMACommand *cmd) :
+            command(cmd)
+        { }
+    };
+
+    std::deque<DMACommand*> commandQueue;
+    std::set<Request*> activeRequests;
+
+    Output dbg;
+    std::vector<MemNIC::ComponentInfo> directories;
+    uint64_t blocksize;
+
+    Link *commandLink;
+    MemNIC *networkLink;
+
+public:
+    DMAEngine(ComponentId_t id, Params& params);
+    ~DMAEngine() {}
+    virtual void init(unsigned int phase);
+    virtual void setup();
+
+private:
+    DMAEngine() {}; // For serialization
+
+    bool clock(Cycle_t cycle);
+
+    bool isIssuable(DMACommand *cmd) const;
+    void startRequest(Request *req);
+    void processPacket(Request *req, MemEvent *ev);
+
+    bool findOverlap(DMACommand *c1, DMACommand *c2) const;
+    bool findOverlap(Addr a1, size_t s1, Addr a2, size_t s2) const;
+    Request* findRequest(MemEvent::id_type id);
+    std::string findTargetDirectory(Addr addr);
+};
+
+}
+}
+
+#endif
+

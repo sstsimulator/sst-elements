@@ -109,8 +109,6 @@ void DirectoryController::handleMemoryResponse(SST::Event *event)
         MemEvent *origEV = uncachedWrites[ev->getResponseToID()];
         uncachedWrites.erase(ev->getResponseToID());
 
-        // TODO:  Send response on upstream
-
         MemEvent *resp = origEV->makeResponse(this);
         sendResponse(resp);
 
@@ -154,7 +152,7 @@ void DirectoryController::handlePacket(SST::Event *event)
     MemEvent *ev = static_cast<MemEvent*>(event);
     ev->setDeliveryTime(getCurrentSimTimeNano());
     workQueue.push_back(ev);
-    dbg.output(CALL_INFO, "Received (%"PRIu64", %d) %s 0x%"PRIx64" from %s.  Position %zu in queue.\n", ev->getID().first, ev->getID().second, CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), workQueue.size());
+    dbg.output(CALL_INFO, "Received (%"PRIu64", %d) %s%s 0x%"PRIx64" from %s.  Position %zu in queue.\n", ev->getID().first, ev->getID().second,  ev->queryFlag(MemEvent::F_UNCACHED) ? "Uncached " : "", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str(), workQueue.size());
 }
 
 
@@ -179,7 +177,7 @@ bool DirectoryController::processPacket(MemEvent *ev)
     }
 
 
-    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
+    if ( ev->queryFlag(MemEvent::F_UNCACHED) && SupplyData == ev->getCmd() ) {
         MemEvent::id_type sentID = writebackData(ev);
         uncachedWrites[sentID] = ev;
         return true;
@@ -511,7 +509,11 @@ void DirectoryController::handleRequestData(DirEntry* entry, MemEvent *new_ev)
 		} else {
 			getExclusiveDataForRequest(entry, NULL);
 		}
-	} else {
+	} else if ( entry->activeReq->queryFlag(MemEvent::F_UNCACHED) ) {
+        // Don't set as a sharer whne dealing with uncached
+		entry->nextFunc = &DirectoryController::sendRequestedData;
+		requestDataFromMemory(entry);
+    } else {
 		// Just a simple share
 		entry->sharers[requesting_node]= true;
 		entry->nextFunc = &DirectoryController::sendRequestedData;
@@ -546,7 +548,13 @@ void DirectoryController::sendRequestedData(DirEntry* entry, MemEvent *new_ev)
 	ev->setPayload(new_ev->getPayload());
     dbg.output(CALL_INFO, "Sending requested data for 0x%"PRIx64" to %s\n", entry->baseAddr, ev->getDst().c_str());
 	sendResponse(ev);
-	updateEntryToMemory(entry);
+    if ( entry->activeReq->queryFlag(MemEvent::F_UNCACHED) &&
+            0 == entry->countRefs() ) {
+        // Uncached request, entry not cached anywhere.  Delete
+        directory.erase(entry->baseAddr);
+    } else {
+        updateEntryToMemory(entry);
+    }
 }
 
 

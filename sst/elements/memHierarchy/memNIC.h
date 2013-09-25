@@ -35,6 +35,7 @@ public:
     enum ComponentType {
         TypeCache,
         TypeDirectoryCtrl,
+        TypeDMAEngine,
         TypeOther
     };
 
@@ -53,11 +54,17 @@ public:
 
     struct ComponentInfo {
         std::string link_port;
+        TimeConverter *link_tc;  // Optional, if link_bandwidth specified
         std::string link_bandwidth;
         std::string name;
         int network_addr;
         ComponentType type;
         ComponentTypeInfo typeInfo;
+        
+        ComponentInfo() :
+            link_port(""), link_tc(NULL), link_bandwidth(""), name(""),
+            network_addr(0)
+        { }
     };
 
 
@@ -156,7 +163,7 @@ private:
 
 
 public:
-    MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler);
+    MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler = NULL);
 
 
     /* Call these from their respective calls in the component */
@@ -167,6 +174,7 @@ public:
 
 
     void send(MemEvent *ev);
+    MemEvent* recv(void);
     void sendInitData(MemEvent *ev);
     MemEvent* recvInitData(void);
     const std::vector<ComponentInfo>& getPeerInfo(void) const { return peers; }

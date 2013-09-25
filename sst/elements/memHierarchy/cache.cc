@@ -825,7 +825,8 @@ void Cache::loadBlock(MemEvent *ev, SourceInfo_t src)
         li->list.push_back(LoadInfo_t::LoadElement_t(ev, src, getCurrentSimTime()));
 
     li->eventScheduled = true;
-    self_link->send(1, new SelfEvent(this, &Cache::finishLoadBlock, li, li->addr, li->targetBlock));
+    self_link->send(li->uncached ? 0 : 1, /* Don't delay on uncached accesses */
+            new SelfEvent(this, &Cache::finishLoadBlock, li, li->addr, li->targetBlock));
 }
 
 
@@ -885,11 +886,13 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
                 MemEvent *req = new MemEvent(this, li->addr, RequestData);
                 li->loadingEvent = req->getID();
                 req->setSize(blocksize);
+                if ( li->uncached ) req->setFlag(MemEvent::F_UNCACHED);
                 upstream_links[i]->send(req);
             }
         } else if ( snoop_link ) {
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
             li->loadingEvent = req->getID();
+            if ( li->uncached ) req->setFlag(MemEvent::F_UNCACHED);
             req->setSize(blocksize);
             dbg.output(CALL_INFO, "Enqueuing request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             BusHandlerArgs args;
@@ -908,17 +911,20 @@ void Cache::finishLoadBlock(LoadInfo_t *li, Addr addr, CacheBlock *block)
             dbg.output(CALL_INFO, "Sending request to load block 0x%"PRIx64"  [li = %p]\n", li->addr, li);
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
             li->loadingEvent = req->getID();
+            if ( li->uncached ) req->setFlag(MemEvent::F_UNCACHED);
             req->setSize(blocksize);
             downstream_link->send(req);
         } else if ( directory_link ) {
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
             li->loadingEvent = req->getID();
             dbg.output(CALL_INFO, "Sending request (%"PRIu64", %d) to Directory to load block 0x%"PRIx64"  [li = %p]\n", req->getID().first, req->getID().second, li->addr, li);
+            if ( li->uncached ) req->setFlag(MemEvent::F_UNCACHED);
             req->setSize(blocksize);
             req->setDst(findTargetDirectory(li->addr));
             directory_link->send(req);
         } else if ( snoop_link ) {
             MemEvent *req = new MemEvent(this, li->addr, RequestData);
+            if ( li->uncached ) req->setFlag(MemEvent::F_UNCACHED);
             li->loadingEvent = req->getID();
             req->setSize(blocksize);
             if ( next_level_name != NO_NEXT_LEVEL ) req->setDst(next_level_name);
@@ -964,8 +970,10 @@ void Cache::handleCacheRequestEvent(MemEvent *ev, SourceInfo_t src, bool firstPr
         _abort(Cache, "It appears that not all cache line/block sizes are equal.  Unsupported!\n");
     }
 
+    // TODO:  Don't issue load if not to us
     if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
-        loadBlock(ev, src);
+        if ( src.type != SNOOP || ev->getDst() == getName() )
+            loadBlock(ev, src);
         return;
     }
 
@@ -1205,12 +1213,6 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
         return; // We sent it
     }
 
-    if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
-        dbg.output(CALL_INFO, "Received UNCACHED SupplyEvent 0x%"PRIx64"\n", ev->getAddr());
-        handleUncachedWrite(ev, src);
-        return;
-    }
-
 	/*
 	 * If snoop, cancel any supplies we're trying to do
 	 * Check to see if we're trying to load this data, if so, handle
@@ -1346,7 +1348,9 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
                                     break;
                                 }
                                 case RequestData: {
-                                    suppliesInProgress.insert(std::make_pair(std::make_pair(fakeBlock->baseAddr, src), SupplyInfo(oldEV.ev)));
+                                    dbg.output("Responding to uncached load.  suppliesInProgress[<%"PRIx64", %d>] = SuppliInfo(id = (%"PRIu64", %d))\n",
+                                            fakeBlock->baseAddr, oldEV.src.type, oldEV.ev->getID().first, oldEV.ev->getID().second);
+                                    suppliesInProgress.insert(std::make_pair(std::make_pair(fakeBlock->baseAddr, oldEV.src), SupplyInfo(oldEV.ev)));
                                     fakeBlock->lock();
                                     supplyData(oldEV.ev, fakeBlock, oldEV.src);
                                     if ( SNOOP != oldEV.src.type ) delete fakeBlock;
@@ -1367,6 +1371,10 @@ void Cache::handleCacheSupplyEvent(MemEvent *ev, SourceInfo_t src)
                 handlePendingEvents(findRow(targetBlock->baseAddr), targetBlock);
         }
 
+    } else if ( ev->queryFlag(MemEvent::F_UNCACHED) ) {
+        dbg.output(CALL_INFO, "Received UNCACHED SupplyEvent 0x%"PRIx64"\n", ev->getAddr());
+        handleUncachedWrite(ev, src);
+        return;
     } else if ( ev->queryFlag(MemEvent::F_DELAYED) ) {
         dbg.output(CALL_INFO, "This is a DELAYED response.  Ignore it.  Don't pass downstream.\n");
     } else {

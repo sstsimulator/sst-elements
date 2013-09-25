@@ -39,6 +39,8 @@ public:
 	void finish() {
 		out.output("TrivialCPU %s Finished after %"PRIu64" issued reads, %"PRIu64" returned (%"PRIu64" clocks)\n",
 				getName().c_str(), num_reads_issued, num_reads_returned, clock_ticks);
+        if ( uncachedReads || uncachedWrites )
+            out.output("\t%zu Uncached Reads\n\t%zu Uncached Writes\n", uncachedReads, uncachedWrites);
 	}
 
 private:
@@ -59,6 +61,7 @@ private:
 	uint64_t num_reads_issued, num_reads_returned;
     uint64_t uncachedRangeStart, uncachedRangeEnd;
     uint64_t clock_ticks;
+    size_t uncachedReads, uncachedWrites;
 
 	std::map<MemEvent::id_type, SimTime_t> requests;
 

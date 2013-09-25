@@ -26,6 +26,8 @@ libmemHierarchy_la_SOURCES = \
 	dircontroller.cc \
 	memNIC.h \
 	memNIC.cc \
+	dmaEngine.h \
+	dmaEngine.cc \
 	libmemHierarchy.cc
 
 

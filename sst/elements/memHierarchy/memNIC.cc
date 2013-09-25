@@ -50,14 +50,15 @@ MemNIC::MemNIC(Component *comp, ComponentInfo &ci, Event::HandlerBase *handler) 
     flitSize = 16; // 16 Bytes as a default:  TODO: Parameterize this
     last_recv_vc = 0;
 
-    TimeConverter *tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(ci.link_bandwidth);
+    if ( ci.link_tc == NULL )
+        ci.link_tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(ci.link_bandwidth);
 
 
     Params params; // LinkControl doesn't actually use the params
     link_control = (Merlin::LinkControl*)comp->loadModule("merlin.linkcontrol", params);
     int *buf_size = new int[num_vcs];
     for ( int i = 0 ; i < num_vcs ; i++ ) buf_size[i] = 100;
-    link_control->configureLink(comp, ci.link_port, tc, num_vcs, buf_size, buf_size);
+    link_control->configureLink(comp, ci.link_port, ci.link_tc, num_vcs, buf_size, buf_size);
     delete [] buf_size;
 
 }
@@ -144,6 +145,16 @@ void MemNIC::clock(void)
         }
     }
 
+    if ( NULL != recvHandler ) {
+        MemEvent *me = recv();
+        if ( me ) {
+            (*recvHandler)(me);
+        }
+    }
+}
+
+MemEvent* MemNIC::recv(void)
+{
     /* Check for received stuff */
     for ( int vc = 0; vc < num_vcs ; vc++ ) {
         // round-robin
@@ -153,13 +164,11 @@ void MemNIC::clock(void)
         if ( NULL != mre ) {
             MemEvent *deliverEvent = mre->event;
             deliverEvent->setDeliveryLink(mre->getLinkId(), NULL);
-            (*recvHandler)(deliverEvent);
-
             delete mre;
-            break; // Only do one delivery per clock
+            return deliverEvent;
         }
     }
-
+    return NULL;
 }
 
 

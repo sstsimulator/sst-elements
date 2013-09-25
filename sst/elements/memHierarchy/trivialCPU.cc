@@ -73,7 +73,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 	clockTC = registerClock( "1GHz", clockHandler );
 	num_reads_issued = num_reads_returned = 0;
     clock_ticks = 0;
-
+    uncachedReads = uncachedWrites = 0;
 }
 
 trivialCPU::trivialCPU() :
@@ -117,6 +117,7 @@ void trivialCPU::handleEvent(Event *ev)
 	}
 }
 
+
 // each clock tick we do 'workPerCycle' iterations of a simple loop.
 // We have a 1/commFreq chance of sending an event of size commSize to
 // one of our neighbors.
@@ -150,8 +151,10 @@ bool trivialCPU::clockTic( Cycle_t )
 			}
 
             bool uncached = ( addr >= uncachedRangeStart && addr < uncachedRangeEnd );
-            if ( uncached )
+            if ( uncached ) {
                 e->setFlag(MemEvent::F_UNCACHED);
+                if ( doWrite ) { ++uncachedWrites; } else { ++uncachedReads; }
+            }
 
 			mem_link->send(e);
 			requests.insert(std::make_pair(e->getID(), getCurrentSimTime()));

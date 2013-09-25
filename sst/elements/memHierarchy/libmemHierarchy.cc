@@ -21,6 +21,7 @@
 #include "streamCPU.h"
 #include "memController.h"
 #include "dircontroller.h"
+#include "dmaEngine.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -68,6 +69,12 @@ create_DirectoryController(SST::ComponentId_t id,
 		SST::Params& params)
 {
 	return new DirectoryController( id, params );
+}
+
+static Component*
+create_DMAEngine(SST::ComponentId_t id, SST::Params& params)
+{
+	return new DMAEngine( id, params );
 }
 
 static const ElementInfoParam cache_params[] = {
@@ -142,6 +149,14 @@ static const ElementInfoParam dirctrl_params[] = {
 };
 
 
+static const ElementInfoParam dmaengine_params[] = {
+    {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"clockRate",       "Clock Rate for processing DMAs."},
+    {"netAddr",         "Network address of component."},
+    {NULL, NULL}
+};
+
+
 
 static const ElementInfoComponent components[] = {
 	{ "Cache",
@@ -167,6 +182,12 @@ static const ElementInfoComponent components[] = {
 		NULL,
 		create_DirectoryController,
         dirctrl_params
+	},
+	{"DMAEngine",
+		"DMA Engine Component",
+		NULL,
+		create_DMAEngine,
+        dmaengine_params
 	},
 	{"trivialCPU",
 		"Simple Demo CPU for testing",
