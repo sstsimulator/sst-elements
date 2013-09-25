@@ -176,7 +176,6 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         }
         if ( ! m_test ) {
             m_ctrlMsg->sleep();
-            m_toProgressLink->send(0, NULL );
             break;
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitRecvStart\n");
@@ -197,7 +196,6 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
         }
         if ( ! m_test ) {
             m_ctrlMsg->sleep();
-            m_toProgressLink->send(0, NULL );
             break;
         }
         m_dbg.verbose(CALL_INFO,1,0,"switch to WaitSendData\n");
@@ -230,7 +228,6 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             }
             if ( ! m_test ) {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 break;
             } 
         }
@@ -253,7 +250,6 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             m_dbg.verbose(CALL_INFO,1,0,"stage %d complete\n", m_currentStage);
             ++m_currentStage;
             if ( m_currentStage < m_dest.size() ) {
-//                m_toProgressLink->send(0, NULL );
                 m_state = WaitSendData;
                 m_pending = false;
                 handleProgressEvent( NULL );
@@ -262,7 +258,6 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             }  
         } else {
             m_ctrlMsg->sleep();
-            m_toProgressLink->send(0, NULL );
             break;
         } 
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");

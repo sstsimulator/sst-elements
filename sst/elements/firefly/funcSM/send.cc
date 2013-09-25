@@ -76,7 +76,6 @@ void SendFuncSM::handleProgressEvent( SST::Event *e )
     if (  m_event->entry.req == NULL && m_req.src == Hermes::AnySrc ) {
         m_dbg.verbose(CALL_INFO,1,0,"not ready\n");
         m_dm->sleep();
-        m_toProgressLink->send(0, NULL ); 
     } else {
         m_dbg.verbose(CALL_INFO,1,0,"done\n");
         exit( static_cast<SMEnterEvent*>(m_event), 0 );

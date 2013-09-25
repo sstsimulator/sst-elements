@@ -10,6 +10,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <sst/core/link.h>
 #include "sst/core/serialization.h"
 
 #include "ctrlMsg.h"
@@ -20,9 +21,10 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-CtrlMsg::CtrlMsg( SST::Params params, Info* info ) :
+CtrlMsg::CtrlMsg( SST::Params params, Info* info, SST::Link* link ) :
     m_info(info),
-    m_sleep(false)
+    m_sleep(false),
+    m_link( link ) 
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc =
@@ -300,6 +302,7 @@ void CtrlMsg::sleep()
 {
     m_dbg.verbose(CALL_INFO,1,0,"sleep\n");
     m_sleep = true;
+    m_link->send(0,NULL);
 }
 
 bool CtrlMsg::blocked()

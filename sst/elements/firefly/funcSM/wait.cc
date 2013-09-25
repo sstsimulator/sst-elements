@@ -64,6 +64,5 @@ void WaitFuncSM::handleProgressEvent( SST::Event *e )
         return;
     } else {
         m_dm->sleep();
-        m_toProgressLink->send(0, NULL );
     }
 }

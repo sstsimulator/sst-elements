@@ -106,7 +106,6 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
                      ++m_count;
                 } else {
                     m_ctrlMsg->sleep();
-                    m_toProgressLink->send(0, NULL );
                     break;
                 }
             }
@@ -176,7 +175,6 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
                                                             m_yyy->parent());
                 } else {
                     m_ctrlMsg->sleep();
-                    m_toProgressLink->send(0, NULL );
                     break;
                 }
             }

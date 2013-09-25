@@ -138,7 +138,6 @@ bool GathervFuncSM::waitUp()
                 ++m_count;
             } else {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -199,7 +198,6 @@ bool GathervFuncSM::waitUp()
                 ++m_count;
             } else {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 return true;
             }
             if ( m_count < m_qqq->numChildren() ) {
@@ -230,7 +228,6 @@ bool GathervFuncSM::waitUp()
                 ++m_count;
             } else {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 return true;
             }
             if ( m_count < m_qqq->numChildren() ) {
@@ -337,7 +334,6 @@ bool GathervFuncSM::sendUp()
                 m_dbg.verbose(CALL_INFO,1,0,"send completed\n");
             } else {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -371,7 +367,6 @@ bool GathervFuncSM::sendUp()
                                         m_qqq->parent());
             } else {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }
@@ -409,7 +404,6 @@ bool GathervFuncSM::sendUp()
                                             m_qqq->parent());
             } else {
                 m_ctrlMsg->sleep();
-                m_toProgressLink->send(0, NULL );
                 return true;
             }
         }

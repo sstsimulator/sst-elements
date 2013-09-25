@@ -100,7 +100,7 @@ class CtrlMsg : public ProtocolAPI {
 
   public:
 
-    CtrlMsg( SST::Params, Info* );
+    CtrlMsg( SST::Params, Info*, SST::Link* );
 
     virtual Request* getSendReq( );
     virtual Request* getRecvReq( IO::NodeId src );
@@ -133,6 +133,7 @@ class CtrlMsg : public ProtocolAPI {
     bool m_sleep;
     int m_matchTime;
     int m_copyTime;
+    SST::Link* m_link;
 };
 
 }

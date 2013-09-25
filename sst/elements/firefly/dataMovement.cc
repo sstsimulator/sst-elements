@@ -11,6 +11,7 @@
 
 #include "sst_config.h"
 #include "sst/core/serialization.h"
+#include <sst/core/link.h>
 #include "dataMovement.h"
 
 #include "ioapi.h"
@@ -22,11 +23,12 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-DataMovement::DataMovement( SST::Params params, Info* info ) :
+DataMovement::DataMovement( SST::Params params, Info* info, SST::Link* link ) :
     m_info(info),
     m_sleep( false ),
     m_sendReqKey( 0 ),
-    m_recvReqKey( 0 )
+    m_recvReqKey( 0 ),
+    m_link( link )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc =
@@ -318,6 +320,7 @@ void DataMovement::sleep()
 {
     m_dbg.verbose(CALL_INFO,1,0,"sleep\n");
     m_sleep = true;
+    m_link->send(0,NULL);
 }
 
 bool DataMovement::canPostSend()

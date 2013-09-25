@@ -99,7 +99,7 @@ class DataMovement : public ProtocolAPI
 
 
   public:
-    DataMovement( SST::Params, Info* info );
+    DataMovement( SST::Params, Info* info, SST::Link* );
  
     virtual Request* getSendReq( );
     virtual Request* getRecvReq( IO::NodeId src );
@@ -142,6 +142,7 @@ class DataMovement : public ProtocolAPI
     std::map<unsigned char,RecvReq*>    m_recvReqM;
     unsigned char                       m_recvReqKey;
 
+    SST::Link*              m_link;
 };
 
 }

@@ -118,7 +118,6 @@ void RecvFuncSM::handleProgressEvent( SST::Event *e )
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_event->entry.req ? "Irecv":"Recv");
     if ( m_event->entry.resp && m_event->entry.resp->src == Hermes::AnySrc  ) {
         m_dm->sleep();
-        m_toProgressLink->send(0, NULL );
     } else {
         exit( static_cast< SMEnterEvent*>(m_event), 0 );
         delete m_event;

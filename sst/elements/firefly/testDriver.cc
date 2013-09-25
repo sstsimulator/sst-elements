@@ -400,12 +400,13 @@ void TestDriver::allgatherReturn( )
 // ALLGATHERV
 void TestDriver::allgathervEnter( )
 {
+    m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
     assert( my_size != 0 ); 
 
     m_allgatherSendBuf.resize( m_bufLen );
 
     for ( unsigned int i = 0; i < m_allgatherSendBuf.size(); i++ ) {
-        m_gatherSendBuf[ i ] = my_rank;
+        m_allgatherSendBuf[ i ] = my_rank;
     }
 
     m_recvcnt.resize( my_size );

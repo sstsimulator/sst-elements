@@ -61,8 +61,8 @@ class FunctionSMInterface : public Module {
     virtual ~FunctionSMInterface() {} 
 
     virtual void  handleEnterEvent( SST::Event* ) = 0; 
-    virtual void  handleProgressEvent( SST::Event* ) {}
-    virtual void  handleSelfEvent( SST::Event* ) {}
+    virtual void  handleProgressEvent( SST::Event* ) { assert(0); }
+    virtual void  handleSelfEvent( SST::Event* ) { assert(0); }
     virtual const char* name() { return "No Name"; }
 
     virtual void exit( SMEnterEvent* event, int retval ) {
@@ -76,7 +76,6 @@ class FunctionSMInterface : public Module {
   protected:
     Info*   m_info;
     Output  m_dbg;
-    std::string m_xxx; 
     bool    m_setPrefix;
 };
 
