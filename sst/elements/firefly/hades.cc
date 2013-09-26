@@ -363,6 +363,7 @@ IO::Entry* Hades::sendIODone( IO::Entry* e )
 
 void Hades::runRecv()
 {
+    m_dbg.verbose(CALL_INFO,1,0,"\n" );
     IO::NodeId src = m_io->peek( ); 
     if ( src == IO::AnyId ) {
         return;

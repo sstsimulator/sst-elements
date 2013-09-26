@@ -12,8 +12,6 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_BARRIER_H
 #define COMPONENTS_FIREFLY_FUNCSM_BARRIER_H
 
-#include <sst_config.h>
-
 #include "funcSM/collectiveTree.h"
 
 namespace SST {

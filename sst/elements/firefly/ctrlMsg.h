@@ -45,7 +45,7 @@ class CtrlMsg : public ProtocolAPI {
             group( _group ),
             len( 0 )
         {
-            for ( unsigned int i; i < ioVec.size(); i++ ) {
+            for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
                 len += ioVec[i].len;
             }
         }

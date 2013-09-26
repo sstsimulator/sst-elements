@@ -12,7 +12,6 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_API_H 
 #define COMPONENTS_FIREFLY_FUNCSM_API_H 
 
-#include <sst_config.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/module.h>

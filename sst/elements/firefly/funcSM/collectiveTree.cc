@@ -196,11 +196,11 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
         exit( static_cast<SMEnterEvent*>(m_event), 0 );
-        delete m_yyy;
-        delete m_event;
         for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
             free( m_bufV[i+1] );
         }
+        delete m_yyy;
+        delete m_event;
         m_event = NULL;
     }
 }
