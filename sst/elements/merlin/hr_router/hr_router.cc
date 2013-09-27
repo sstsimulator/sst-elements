@@ -46,7 +46,7 @@ hr_router::~hr_router()
 }
 
 hr_router::hr_router(ComponentId_t cid, Params& params) :
-    Component(cid)
+    Router(cid)
 {
     // Get the options for the router
     id = params.find_integer("id");
@@ -79,12 +79,6 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     if ( !topo )
         _abort(hr_router, "ERROR:  Unable to find topology '%s'\n", topology.c_str());
 
-    // Get the Xbar arbitration
-    arb = new xbar_arb_rr(num_ports,num_vcs);
-
-    int input_buf_size = params.find_integer("input_buf_size", 100);
-    int output_buf_size = params.find_integer("output_buf_size", 100);
-
 
     // Parse all the timing parameters
     std::string link_bw = params.find_string("link_bw");
@@ -102,7 +96,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     std::string output_latency = params.find_string("output_latency", "0ns");
     // std::cout << "output_latency: " << output_latency << std::endl;
 
-    std::string xbar_bw = params.find_string("xbar_bw");
+    xbar_bw = params.find_string("xbar_bw");
     if ( xbar_bw == "" ) {
         _abort(hr_router, "ERROR: hr_router requires xbar_bw to be specified");
     }
@@ -110,6 +104,10 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 
     // Create all the PortControl blocks
     ports = new PortControl*[num_ports];
+
+
+    int input_buf_size = params.find_integer("input_buf_size", 100);
+    int output_buf_size = params.find_integer("output_buf_size", 100);
 
 
     int in_buf_sizes[num_vcs];
@@ -131,7 +129,8 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     for ( int i = 0; i < num_ports; i++ ) {
 	in_port_busy[i] = 0;
 	out_port_busy[i] = 0;
-
+	progress_vcs[i] = -1;
+	
 	std::stringstream port_name;
 	port_name << "port";
 	port_name << i;
@@ -139,20 +138,22 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 
 	ports[i] = new PortControl(this, id, port_name.str(), i, link_tc, topo, num_vcs, in_buf_sizes, out_buf_sizes, 1, input_latency, 1, output_latency);
 
-	// links[i] = configureLink(port_name.str(), "1ns", new Event::Handler<hr_router,int>(this,&hr_router::port_handler,i));
     }
 
-
-    TimeConverter* xbar_tc;
-
+    // Get the Xbar arbitration
+    // arb = new xbar_arb_rr(num_ports,num_vcs);
+    arb = new xbar_arb_rr();
+    arb->setPorts(num_ports,num_vcs);
+    
     if ( params.find_integer("debug", 0) ) {
         if ( num_routers == 0 ) {
             signal(SIGUSR2, &hr_router::sigHandler);
         }
-        xbar_tc = registerClock( xbar_bw, new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler), false);
+	my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::debug_clock_handler);
     } else {
-        xbar_tc = registerClock( xbar_bw, new Clock::Handler<hr_router>(this,&hr_router::clock_handler), false);
+        my_clock_handler = new Clock::Handler<hr_router>(this,&hr_router::clock_handler);
     }
+    xbar_tc = registerClock( xbar_bw, my_clock_handler);
     num_routers++;
 
     // Check to make sure that the xbar BW is equal to or greater than
@@ -162,10 +163,34 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         std::cout << "  xbar_bw = " << xbar_bw << ", link_bw = " << link_bw << std::endl;
         abort();
     }
-
-
 }
 
+
+void
+hr_router::notifyEvent()
+{
+    setRequestNotifyOnEvent(false);
+    // std::cout << "Inserting self into clock queue: " << xbar_bw << std::endl;
+    Cycle_t next_cycle = reregisterClock( xbar_tc, my_clock_handler); 
+    // registerClock( xbar_bw, my_clock_handler); 
+
+    int elapsed_cycles = next_cycle - unclocked_cycle;
+
+    // Fix up the busy variables
+    for ( int i = 0; i < num_ports; i++ ) {
+    	// Should stop at zero, need to find a clean way to do this
+    	// with no branch.  For now it should work.
+    	in_port_busy[i] -= elapsed_cycles;
+    	out_port_busy[i] -= elapsed_cycles;
+    	if ( in_port_busy[i] < 0 ) in_port_busy[i] = 0;
+    	if ( out_port_busy[i] < 0 ) out_port_busy[i] = 0;
+    }
+    // Report skipped cycles to arbitration unit.  This is one less
+    // than for busy because the arbitration unit executes before we
+    // declock, whereas busy variables are decremented after (and
+    // therefore not decremented on the last cycle before declocking.
+    arb->reportSkippedCycles(elapsed_cycles - 1);
+}
 
 void
 hr_router::sigHandler(int signal)
@@ -204,36 +229,20 @@ bool
 hr_router::clock_handler(Cycle_t cycle)
 {
     // All we need to do is arbitrate the crossbar
-    arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
+    bool found_event = arb->arbitrate(ports,in_port_busy,out_port_busy,progress_vcs);
+    // bool found_event = arb->arbitrate();
 
-#if 0
-    // Do a quick check on results of arbitrate to see if the results are valid
-    int* dest_ports = new int[num_ports];
-    internal_router_event** events = new internal_router_event*[num_vcs];
-    for ( int i = 0; i < num_ports; i++ ) {
-	if ( progress_vcs[i] == -1 ) {
-	    dest_ports[i] = -(i+1);  // So I don't have to check for -1 later
-	    continue;
-	}
-	ports[i]->getVCHeads(events);
-	dest_ports[i] = events[progress_vcs[i]]->getNextPort();
-    }    
-    delete events;
-    
-    for ( int i = 0; i < num_ports; i++ ) {
-	for ( int j = i+1; j < num_ports; j++ ) {
-	    if ( dest_ports[i] == dest_ports[j] ) {
-		std::cout << "ERROR two ports trying to write to same output over xbar: "
-			  << dest_ports[i] << ", " << dest_ports[j] << std::endl;
-	    }
-	}
+    // If there are no events in the input queues, then we can remove
+    // ourselves from the clock queue.
+    if ( !found_event ) {
+	setRequestNotifyOnEvent(true);
+	unclocked_cycle = cycle;
+	return true;
     }
-    delete dest_ports;
-#endif
     
     // Move the events and decrement the busy values
     for ( int i = 0; i < num_ports; i++ ) {
-	if ( progress_vcs[i] != -1 ) {
+ 	if ( progress_vcs[i] != -1 ) {
 	    internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
 	    ports[ev->getNextPort()]->send(ev,ev->getVC());
 	    // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<

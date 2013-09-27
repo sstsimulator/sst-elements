@@ -82,7 +82,7 @@ private:
     // is: 1 - adding new data to output buffers, or 2 - getting
     // credits back from the router.
     bool waiting;
-    Component* parent;
+    Router* parent;
 
 public:
 
@@ -132,15 +132,21 @@ public:
 	return event;
     }
 
-    void getVCHeads(internal_router_event** heads) {
+    // Return true if it finds events and false otherwise
+    bool getVCHeads(internal_router_event** heads) {
+	bool found_event = false;
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    if ( input_buf[i].size() == 0 ) heads[i] = NULL;
-	    else heads[i] = input_buf[i].front();
+	    else {
+		heads[i] = input_buf[i].front();
+		found_event = true;
+	    }
 	}
+	return found_event;
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    PortControl(Component* rif, int rtr_id, std::string link_port_name, int port_number, TimeConverter* time_base,
+    PortControl(Router* rif, int rtr_id, std::string link_port_name, int port_number, TimeConverter* time_base,
 		Topology *topo, int vcs, int* in_buf_size, int* out_buf_size,
 		SimTime_t input_latency_cycles, std::string input_latency_timebase,
 		SimTime_t output_latency_cycles, std::string output_latency_timebase) :
@@ -315,6 +321,7 @@ private:
 	    }
 	}
 	else {
+
 	    RtrEvent* event = static_cast<RtrEvent*>(ev);
 	    // Simply put the event into the right virtual network queue
 
@@ -332,6 +339,9 @@ private:
 			  << parent->getName() << ") on VC " << curr_vc << " from src " << event->src
 			  << " to dest " << event->dest << "." << std::endl;
 	    }
+
+	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
+
 	}
     }
     
@@ -366,6 +376,8 @@ private:
 			  << parent->getName() << ") on VC " << curr_vc << " from src " << event->getSrc()
 			  << " to dest " << event->getDest() << "." << std::endl;
 	    }
+
+	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
 	}
     }
     

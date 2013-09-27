@@ -28,6 +28,33 @@ namespace Merlin {
 
 const int INIT_BROADCAST_ADDR = -1;
 
+class Router : public Component {
+private:
+    bool requestNotifyOnEvent;
+
+protected:
+    inline void setRequestNotifyOnEvent(bool state)
+    { requestNotifyOnEvent = state; }
+    
+public:
+    Router() :
+	Component(),
+	requestNotifyOnEvent(false)
+    {}
+
+    Router(ComponentId_t id) :
+	Component(id),
+	requestNotifyOnEvent(false)
+    {}
+
+    virtual ~Router() {}
+    
+    inline bool getRequestNotifyOnEvent() { return requestNotifyOnEvent; }
+   
+    virtual void notifyEvent() {}
+
+};
+
 #define MERLIN_ENABLE_TRACE
 class RtrEvent : public Event {
 
@@ -172,9 +199,11 @@ public:
     XbarArbitration() {}
     virtual ~XbarArbitration() {}
 
-    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
+    virtual void setPorts(int num_ports, int num_vcs) = 0;
+    virtual bool arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
+    virtual void reportSkippedCycles(Cycle_t cycles) {};
     virtual void dumpState(std::ostream& stream) {};
-
+	
 };
 
 }

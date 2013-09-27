@@ -15,7 +15,6 @@
 #ifndef COMPONENTS_MERLIN_LINKCONTROL_H
 #define COMPONENTS_MERLIN_LINKCONTROL_H
 
-#include <sst_config.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>

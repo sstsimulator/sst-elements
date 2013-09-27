@@ -13,6 +13,7 @@
 #ifndef COMPONENTS_HR_ROUTER_HR_ROUTER_H
 #define COMPONENTS_HR_ROUTER_HR_ROUTER_H
 
+#include <sst/core/clock.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
@@ -29,7 +30,7 @@ namespace Merlin {
 
 class PortControl;
 
-class hr_router : public Component {
+class hr_router : public Router {
 
 private:
     static int num_routers;
@@ -46,11 +47,15 @@ private:
     int* in_port_busy;
     int* out_port_busy;
     int* progress_vcs;
-    
+
+    Cycle_t unclocked_cycle;
+    std::string xbar_bw;
+    TimeConverter* xbar_tc;
+    Clock::Handler<hr_router>* my_clock_handler;
+
     bool clock_handler(Cycle_t cycle);
     bool debug_clock_handler(Cycle_t cycle);
     static void sigHandler(int signal);
-
 
 public:
     hr_router(ComponentId_t cid, Params& params);
@@ -60,6 +65,7 @@ public:
     void setup();
     void finish() {}
 
+    void notifyEvent();
     void dumpState(std::ostream& stream);
 
 };
