@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <boost/tokenizer.hpp>
 
@@ -94,14 +95,19 @@ std::string ConstraintAllocator::getSetupInfo(bool comment)
 AllocInfo* ConstraintAllocator::allocate(Job* job){
 	AllocInfo * allocation = NULL;
 
+	static int count = 0;
+
 	if( (unsigned) job->getProcsNeeded() <= ((SimpleMachine*)machine)->freeProcessors()->size() ){
 		read_constraints();
+
+		++ count;
 
 		std::list<ConstrainedAllocation *> possible_allocations;
 
 		for( std::list<std::set<std::string> * >::iterator constraint_iter = constraint_leaves.begin();
 		     constraint_iter != constraint_leaves.end(); ++ constraint_iter ){
-			possible_allocations.push_back( allocate_constrained( job, *constraint_iter ) );
+			ConstrainedAllocation * tmp = allocate_constrained( job, *constraint_iter ); 
+			possible_allocations.push_back( tmp );
 		}
 
 		ConstrainedAllocation * top_allocation = get_top_allocation( possible_allocations );
@@ -121,13 +127,13 @@ AllocInfo * ConstraintAllocator::generate_AllocInfo( ConstrainedAllocation * con
 	int node_counter = 0;
 
 	for( std::set<int>::iterator unconstrained_node_iter = constrained_alloc->unconstrained_nodes.begin();
-	     unconstrained_node_iter != constrained_alloc->unconstrained_nodes.end(); unconstrained_node_iter ++ ){
+	     unconstrained_node_iter != constrained_alloc->unconstrained_nodes.end(); ++ unconstrained_node_iter ){
 		alloc->nodeIndices[ node_counter ] = *unconstrained_node_iter;
 		++ node_counter;
 	}
 
 	for( std::set<int>::iterator constrained_node_iter = constrained_alloc->constrained_nodes.begin();
-	     constrained_node_iter != constrained_alloc->constrained_nodes.end(); constrained_node_iter ++ ){
+	     constrained_node_iter != constrained_alloc->constrained_nodes.end(); ++ constrained_node_iter ){
 		alloc->nodeIndices[ node_counter ] = *constrained_node_iter;
 		++ node_counter;
 	}
@@ -167,6 +173,8 @@ void ConstraintAllocator::read_constraints(){
 
 		this->constraint_leaves.push_back( get_constrained_leaves( CurrentCluster ) );
 	}
+
+	ConstraintsStream.close();
 }
 
 
@@ -199,6 +207,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 	int nodes_needed = job->getProcsNeeded();
 
 	ConstrainedAllocation * new_allocation = new ConstrainedAllocation();
+	new_allocation->job = job;
 
 	for( std::vector<int>::iterator comp_node_iter = free_comp_nodes->begin();
 	     comp_node_iter != free_comp_nodes->end(); ++ comp_node_iter ){
@@ -210,14 +219,20 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		}
 	}
 
+	int unconstrained_nodes_needed = std::min( nodes_needed - 1, (int) free_unconstrained_nodes.size() );
+	int constrained_nodes_needed = std::min( nodes_needed - unconstrained_nodes_needed, (int) free_constrained_nodes.size() );
+	unconstrained_nodes_needed = nodes_needed - constrained_nodes_needed;
+
 	for( std::set<int>::iterator unconstrained_node_iter = free_unconstrained_nodes.begin();
-	     unconstrained_node_iter != free_unconstrained_nodes.end() and -- nodes_needed > 1; ++ unconstrained_node_iter ){
+	     unconstrained_node_iter != free_unconstrained_nodes.end() and unconstrained_nodes_needed > 0; ++ unconstrained_node_iter ){
 		new_allocation->unconstrained_nodes.insert( *unconstrained_node_iter );
+		-- unconstrained_nodes_needed;
 	}
 
 	for( std::set<int>::iterator constrained_node_iter = free_constrained_nodes.begin();
-	     constrained_node_iter != free_constrained_nodes.end() and -- nodes_needed > 0; ++ constrained_node_iter ){
+	     constrained_node_iter != free_constrained_nodes.end() and constrained_nodes_needed > 0; ++ constrained_node_iter ){
 		new_allocation->constrained_nodes.insert( *constrained_node_iter );
+		-- constrained_nodes_needed;
 	}
 
 	return new_allocation;
