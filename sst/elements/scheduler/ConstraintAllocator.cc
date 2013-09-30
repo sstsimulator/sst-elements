@@ -92,149 +92,133 @@ std::string ConstraintAllocator::getSetupInfo(bool comment)
 //allocates job if possible
 //returns info on the allocation or NULL if it wasn't possible
 AllocInfo* ConstraintAllocator::allocate(Job* job){
-    AllocInfo * allocation = NULL;
+	AllocInfo * allocation = NULL;
 
-    boost::char_separator<char> space_separator( " " );
+	if( (unsigned) job->getProcsNeeded() <= ((SimpleMachine*)machine)->freeProcessors()->size() ){
+		read_constraints();
 
-    std::string u;
-    std::ifstream ConstraintsStream(ConstraintsFileName.c_str(), std::ifstream::in );
-    std::string curline;
-    std::stringstream lineStream;
-    std::vector<std::string> CurrentCluster;
-    //for now just read first line
+		std::list<ConstrainedAllocation *> possible_allocations;
 
-    do{
-        if (allocation) {
-            delete allocation;
-            // we had a failed allocation hanging around from last time
-        }
+		for( std::list<std::set<std::string> * >::iterator constraint_iter = constraint_leaves.begin();
+		     constraint_iter != constraint_leaves.end(); ++ constraint_iter ){
+			possible_allocations.push_back( allocate_constrained( job, *constraint_iter ) );
+		}
 
-        CurrentCluster.clear();
+		ConstrainedAllocation * top_allocation = get_top_allocation( possible_allocations );
 
-        getline(ConstraintsStream, curline);
-        boost::tokenizer< boost::char_separator<char> > tok( curline, space_separator );
-        for (boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
-            CurrentCluster.push_back(*iter);
-        }
+		allocation = generate_AllocInfo( top_allocation );
 
-        allocation = allocate(job, CurrentCluster);
-        if (-1 != allocation -> nodeIndices[0]) {
-            // the allocation succeeded, we're done!
-            break;
-        }
-    }while(!ConstraintsStream.eof() and ConstraintsStream.is_open());
-    // yes, we check it the file is open *after* we read it.
-    // The original code relied on the fact that getline gives you an empty string if you read a file that isn't there.
+		possible_allocations.clear();
+	}
 
-    return allocation;
+	return allocation;
 }
+
+
+AllocInfo * ConstraintAllocator::generate_AllocInfo( ConstrainedAllocation * constrained_alloc ){
+	AllocInfo * alloc = new AllocInfo( constrained_alloc->job );
+
+	int node_counter = 0;
+
+	for( std::set<int>::iterator unconstrained_node_iter = constrained_alloc->unconstrained_nodes.begin();
+	     unconstrained_node_iter != constrained_alloc->unconstrained_nodes.end(); unconstrained_node_iter ++ ){
+		alloc->nodeIndices[ node_counter ] = *unconstrained_node_iter;
+		++ node_counter;
+	}
+
+	for( std::set<int>::iterator constrained_node_iter = constrained_alloc->constrained_nodes.begin();
+	     constrained_node_iter != constrained_alloc->constrained_nodes.end(); constrained_node_iter ++ ){
+		alloc->nodeIndices[ node_counter ] = *constrained_node_iter;
+		++ node_counter;
+	}
+
+	return alloc;
+}
+
+
+ConstrainedAllocation * ConstraintAllocator::get_top_allocation( std::list<ConstrainedAllocation *> possible_allocations ){
+	ConstrainedAllocation * top_allocation = NULL;
+
+	for( std::list<ConstrainedAllocation *>::iterator allocation_iter = possible_allocations.begin();
+	     allocation_iter != possible_allocations.end(); ++ allocation_iter ){
+		if( top_allocation == NULL or
+		    top_allocation->constrained_nodes.size() > (*allocation_iter)->constrained_nodes.size() ){
+			top_allocation = *allocation_iter;
+		}
+	}
+
+	return top_allocation;
+}
+
+
+void ConstraintAllocator::read_constraints(){
+	boost::char_separator<char> space_separator( " " );
+	std::ifstream ConstraintsStream(ConstraintsFileName.c_str(), std::ifstream::in );
+
+	while(!ConstraintsStream.eof() and ConstraintsStream.is_open()){
+		std::string curline;
+		std::vector<std::string> CurrentCluster;
+
+		getline(ConstraintsStream, curline);
+		boost::tokenizer< boost::char_separator<char> > tok( curline, space_separator );
+		for (boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
+			CurrentCluster.push_back(*iter);
+		}
+
+		this->constraint_leaves.push_back( get_constrained_leaves( CurrentCluster ) );
+	}
+}
+
+
+std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::vector<std::string> constraint ){
+	std::set< std::string > * leaves = new std::set<std::string>;
+
+	for( std::vector<std::string>::iterator constraint_iter = constraint.begin();
+	     constraint_iter != constraint.end(); ++ constraint_iter ){
+		std::set<std::string> constraint_children = D[ *constraint_iter ];
+		for( std::set<std::string>::iterator constraint_child_iter = constraint_children.begin();
+		     constraint_child_iter != constraint_children.end(); ++ constraint_child_iter ){
+			if( 1 == D[ *constraint_child_iter ].size() ){
+				leaves->insert( *constraint_child_iter );
+			}
+		}
+	}
+
+	return leaves;
+}
+
 
 //allocates job if possible
 //returns information on the allocation or null if it wasn't possible
-AllocInfo* ConstraintAllocator::allocate(Job* job, std::vector<std::string> Cluster)
-{
-    if (!canAllocate(job)) return NULL;
+ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::set<std::string> * constrained_leaves ){
+	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->freeProcessors();
 
-    AllocInfo* retVal = new AllocInfo(job);
-    unsigned int numProcs = job -> getProcsNeeded();
-    std::vector<int>* available = ((SimpleMachine*)machine) -> freeProcessors(); 
-    // the allocation we will return
-    std::vector<int> Alloc;
-    std::string u;
-    std::map <std::string, std::vector<int> > Only; // Only[u] = avail nodes that depend on u
-    // but on no other node of Cluster
+	std::set<int> free_constrained_nodes;
+	std::set<int> free_unconstrained_nodes;
 
-    int curIdx;
-    std::string curNode;
-    // true iff a cluster-separating allocation exists
-    bool sepAllocExists = false;
+	int nodes_needed = job->getProcsNeeded();
 
-    // Try to find an allocation that depends upon *exactly* one node of Cluster
-    // if this is impossible, remove last (i.e. least important) node of Cluster
-    // and try again until cluster is down to just two nodes
+	ConstrainedAllocation * new_allocation = new ConstrainedAllocation();
 
+	for( std::vector<int>::iterator comp_node_iter = free_comp_nodes->begin();
+	     comp_node_iter != free_comp_nodes->end(); ++ comp_node_iter ){
+		if( constrained_leaves->find( ((SimpleMachine*)machine)->getNodeID( *comp_node_iter ) ) !=
+		    constrained_leaves->end() ){
+			free_constrained_nodes.insert( *comp_node_iter );
+		}else{
+			free_unconstrained_nodes.insert( *comp_node_iter );
+		}
+	}
 
-    unsigned int i,j;
-    int depcount;
-    std::string suspect; // this will be set to a node u such that a \in D[u]
-    std::vector<int> FreeNodes; // not dependent on any node in Cluster
+	for( std::set<int>::iterator unconstrained_node_iter = free_unconstrained_nodes.begin();
+	     unconstrained_node_iter != free_unconstrained_nodes.end() and -- nodes_needed > 1; ++ unconstrained_node_iter ){
+		new_allocation->unconstrained_nodes.insert( *unconstrained_node_iter );
+	}
 
+	for( std::set<int>::iterator constrained_node_iter = free_constrained_nodes.begin();
+	     constrained_node_iter != free_constrained_nodes.end() and -- nodes_needed > 0; ++ constrained_node_iter ){
+		new_allocation->constrained_nodes.insert( *constrained_node_iter );
+	}
 
-    // We assume that suspect list is ordered by importance.
-    // if we cannot get separating allocation for Cluster = {u_1 ... u_k} then try to get
-    // separating allocation for {u_1 ... u_{k-1}} and so on.
-    // TODO: is there a more efficient way to do this?
-    // there is a lot of redundant computation here
-    while ((Cluster.size() > 1) && !sepAllocExists) {
-
-        // classify available nodes
-        // for i in Cluster
-        // find sets D[u_i] \minus \union_{j \in Cluster and j \neq i} D[u_j]
-        // along with 'free set'
-        Only.clear();
-        FreeNodes.clear();
-        for (i = 0; i < available -> size(); i++) {
-            curIdx  = (*available)[i];
-            curNode = ((SimpleMachine*)machine) -> getNodeID(curIdx);
-            depcount = 0; //how many D[u] contain current available compute node
-            for (j = 0; j < Cluster.size(); j++) {
-                if (D[Cluster[j]].count(curNode)) {
-                    depcount++;
-                    suspect = Cluster[j];
-                }
-            }
-            if (depcount == 0) // curNode is a 'free' node 
-                FreeNodes.push_back(curIdx);
-            if (depcount == 1) // curNode depends on exactly one node in cluster
-                Only[suspect].push_back(curIdx); // add curNode to appropriate set       
-        }
-
-        // find a separating allocation if it exists
-        for (j = 0; j < Cluster.size(); j++){
-            if ((Only[Cluster[j]].size() > 0) && (Only[Cluster[j]].size() + FreeNodes.size() > numProcs)){
-                //generate allocation separating u = Cluster[j] from all other nodes
-                u = Cluster[j];
-                sepAllocExists = true;
-                break; // Cluster is ordered so that we prefer to separate the first one we find
-            }
-        }
-        if (!sepAllocExists) //Relax constraints by dropping a node from Cluster
-            Cluster.pop_back();
-    }
-
-    //TODO: split two clusters simultaneously
-    //////////////////////////
-
-
-    // TODO:There are other choices here; 
-    // can use one node from D[u] \minus \union_{v \neq u} D[v]
-    // then use as many free nodes as possible, or might try to use
-    // both sets eaually, or in porportion to their relative sizes.
-    // this is lower priority; current heuristic of 'use up Only[u] first'
-    // is reasonable
-    if (sepAllocExists) { // allocate to depend on u only
-        //if (DEBUG) std::cout << "Found Allocation Separating " << u << " for job "  << job -> getJobNum() << std::endl;
-        schedout.debug(CALL_INFO, 7, 0, "Found Allocation Separating %s for job %ld\n", u.c_str(), job -> getJobNum());
-        i = 0;
-        while ((i < Only[u].size()) && (Alloc.size() < numProcs)) {
-            Alloc.push_back(Only[u][i++]);
-        }
-        i = 0;
-        while ((i < FreeNodes.size()) && (Alloc.size() < numProcs)) {
-            Alloc.push_back(FreeNodes[i++]);
-        }
-        for (i = 0; i<numProcs; i++) {
-            retVal -> nodeIndices[i] = Alloc[i];
-        }
-    }
-    else {
-        //std::cout << "Failed to find separating allocation for job " << job.getJobNum() << std:endl;
-        // return 'empty' allocation to SimpleMachine;
-        // this will produce default allocation
-        retVal -> nodeIndices[0] = -1;
-    }
-
-    available -> clear();
-    delete available;
-    return retVal;
+	return new_allocation;
 }

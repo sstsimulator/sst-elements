@@ -22,6 +22,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <map>
 #include <set>
 #include "Allocator.h"
@@ -31,6 +32,16 @@ namespace SST {
 
         class SimpleMachine;
         class Job;
+
+
+	class ConstrainedAllocation{
+		public:
+			Job * job;
+			std::set<int> constrained_nodes;
+			std::set<int> unconstrained_nodes;
+	};
+
+
 
         class ConstraintAllocator : public Allocator {
 
@@ -44,7 +55,7 @@ namespace SST {
                 std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job);
-                AllocInfo* allocate(Job* job, std::vector<std::string> Cluster);
+                ConstrainedAllocation * allocate_constrained(Job* job, std::set<std::string> * constrained_leaves );
 
             private:
                 //constraints
@@ -52,9 +63,16 @@ namespace SST {
                 //check file for updates to parameter estimates and set constraints accordingly
                 void GetConstraints();
 
+		AllocInfo * generate_AllocInfo( ConstrainedAllocation * constrained_alloc );
+		ConstrainedAllocation * get_top_allocation( std::list<ConstrainedAllocation *> possible_allocations );
+		std::set< std::string > * get_constrained_leaves( std::vector<std::string> constraint );
+		void read_constraints();
+
                 //map from internal node u to  set of dependent compute nodes D[u]
                 std::map< std::string, std::set<std::string> > D;
                 std::string ConstraintsFileName;
+
+		std::list< std::set< std::string > * > constraint_leaves;
         };
 
 #endif
