@@ -53,7 +53,7 @@ class Hades : public Hermes::MessageInterface
     };
 
   public:
-    Hades(Params&);
+    Hades(Component*, Params&);
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
     virtual void init(Hermes::Functor*);
@@ -184,7 +184,6 @@ class Hades : public Hermes::MessageInterface
     Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
 
-    SST::Component*     m_owner;
     SST::Link*          m_enterLink;  
     IO::Interface*      m_io;
     NodeInfo*           m_nodeInfo;

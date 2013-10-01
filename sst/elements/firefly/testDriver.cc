@@ -46,13 +46,11 @@ TestDriver::TestDriver(ComponentId_t id, Params &params) :
             (Output::output_location_t)params.find_integer("debug", 0));
     //m_dbg.output(CALL_INFO,"loading module `%s`\n",name.c_str());
 
-    std::ostringstream ownerName;
-    ownerName << this;
-    Params hermesParams = params.find_prefix_params("hermesParams." ); 
-    hermesParams.insert( 
-        std::pair<std::string,std::string>("owner", ownerName.str()));
+    Params hermesParams = params.find_prefix_params("hermesParams." );
 
-    m_hermes = dynamic_cast<MessageInterface*>(loadModule(name,hermesParams));
+    m_hermes = dynamic_cast<MessageInterface*>(
+                loadModuleWithComponent( name, this, hermesParams )); 
+
     if ( !m_hermes ) {
         _abort(TestDriver, "ERROR:  Unable to find Hermes '%s'\n",
                                         name.c_str());

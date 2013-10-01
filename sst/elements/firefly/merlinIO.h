@@ -29,7 +29,7 @@ namespace Firefly {
 class MerlinIO : public IO::Interface {
 
   public:
-    MerlinIO(Params&);
+    MerlinIO(Component*, Params&);
 
     static const size_t MaxPendingEvents = 1024;
 

@@ -35,7 +35,7 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-Hades::Hades( Params& params ) :
+Hades::Hades( Component* owner, Params& params ) :
     MessageInterface(),
     m_pendingSends( 0 ),
     m_io( NULL ),
@@ -48,21 +48,14 @@ Hades::Hades( Params& params ) :
 
     m_dbg.init("@t:Hades::@p():@l ", verboseLevel, 0, loc );
 
-    m_owner = (SST::Component*) params.find_integer( "owner" );
-
-    m_enterLink = m_owner->configureSelfLink("HadesEnterLink", "1 ps",
+    m_enterLink = owner->configureSelfLink("HadesEnterLink", "1 ps",
         new Event::Handler<Hades>(this,&Hades::enterEventHandler));
 
     Params ioParams = params.find_prefix_params("ioParams." );
 
-    std::ostringstream m_ownerName;
-    m_ownerName << m_owner;
-    ioParams.insert(
-        std::pair<std::string,std::string>("owner", m_ownerName.str()));
-
     std::string moduleName = params.find_string("ioModule"); 
-    m_io = dynamic_cast<IO::Interface*>(m_owner->loadModule( moduleName,
-                        ioParams));
+    m_io = dynamic_cast<IO::Interface*>(owner->loadModuleWithComponent( 
+                        moduleName, owner, ioParams ) );
     if ( !m_io ) {
         m_dbg.fatal(CALL_INFO,0,1,0," Unable to find Hermes '%s'\n",
                                         moduleName.c_str());
@@ -125,7 +118,7 @@ Hades::Hades( Params& params ) :
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
-    m_functionSM = new FunctionSM( funcParams, m_owner, m_info, m_enterLink,
+    m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
                                     m_protocolM[0], m_protocolM[1] );
 }
 

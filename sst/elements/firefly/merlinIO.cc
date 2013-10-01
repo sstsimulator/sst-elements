@@ -91,7 +91,7 @@ copyIn( Output& dbg, MerlinIO::Entry& entry, MerlinFireflyEvent& event );
 static bool
 copyOut( Output& dbg, MerlinFireflyEvent& event, MerlinIO::Entry& entry );
 
-MerlinIO::MerlinIO( Params& params ) :
+MerlinIO::MerlinIO( Component* owner, Params& params ) :
     Interface(),
     m_leaveLink( NULL ),
     m_sendEntry( NULL ),
@@ -99,8 +99,6 @@ MerlinIO::MerlinIO( Params& params ) :
     m_numVC( 2 ),
     m_lastVC( 0 )
 {
-    SST::Component* owner = (SST::Component*) params.find_integer( "owner" );
-
     m_myNodeId = params.find_integer("nid", IO::AnyId);
     assert( m_myNodeId != IO::AnyId );
 

@@ -43,9 +43,9 @@ create_testDriver(SST::ComponentId_t id, SST::Params& params)
 }
 
 static Module*
-load_hades(Params& params)
+load_hades(Component* comp, Params& params)
 {
-    return new Hades(params);
+    return new Hades(comp, params);
 }
 
 static Module*
@@ -55,9 +55,9 @@ load_simpleIO(Params& params)
 }
 
 static Module*
-load_merlinIO(Params& params)
+load_merlinIO(Component* comp, Params& params)
 {
-    return new MerlinIO(params);
+    return new MerlinIO(comp, params);
 }
 
 static void init_MerlinFireflyEvent()
@@ -87,6 +87,7 @@ static const ElementInfoModule modules[] = {
     { "hades",
       "Firefly Hermes module",
       NULL,
+      NULL,
       load_hades,
       NULL,
     },
@@ -98,6 +99,7 @@ static const ElementInfoModule modules[] = {
     },
     { "merlinIO",
       "Merlin IO module",
+      NULL,
       NULL,
       load_merlinIO,
       NULL,
