@@ -279,7 +279,9 @@ void TestDriver::waitReturn( )
 
 void TestDriver::alltoallEnter( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    if ( my_rank == m_root ) {
+        m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
+    }
 
     m_intSendBuf.resize( m_bufLen * my_size );
     m_intRecvBuf.resize( m_bufLen * my_size );
@@ -298,7 +300,6 @@ void TestDriver::alltoallEnter( )
 
 void TestDriver::alltoallReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     bool passed = true;
 
     for ( int i = 0; i < my_size; i++ ) {
@@ -315,14 +316,15 @@ void TestDriver::alltoallReturn( )
         }
     }
     if ( passed ) {
-        m_dbg.verbose(CALL_INFO,1,0,"alltoall passed\n");
+        m_dbg.verbose(CALL_INFO,1,0,"alltoall[v] passed\n");
     }
 }
 
 void TestDriver::alltoallvEnter( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    if ( my_rank == m_root ) {
+        m_dbg.verbose(CALL_INFO,1,0,"my_rank=%d\n", my_rank);
+    }
 
     m_intSendBuf.resize( m_bufLen * my_size );
     m_intRecvBuf.resize( m_bufLen * my_size );
@@ -353,7 +355,6 @@ void TestDriver::alltoallvEnter( )
 
 void TestDriver::alltoallvReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
     TestDriver::alltoallReturn( );
 }
 
