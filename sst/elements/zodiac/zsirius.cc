@@ -25,14 +25,10 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     if ( msgiface == "" ) {
         msgapi = new MessageInterface();
     } else {
-	// Took code from Mike, Scott is going to fix.
-	std::ostringstream ownerName;
-    	ownerName << this;
     	Params hermesParams = params.find_prefix_params("hermesParams." );
-    	hermesParams.insert(
-        	std::pair<std::string,std::string>("owner", ownerName.str()));
 
-	msgapi = dynamic_cast<MessageInterface*>(loadModule(msgiface, hermesParams));
+	msgapi = dynamic_cast<MessageInterface*>(loadModuleWithComponent(
+                            msgiface, this, hermesParams));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;
