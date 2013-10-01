@@ -116,6 +116,20 @@ class Hades : public Hermes::MessageInterface
 
     virtual void barrier(Hermes::Communicator group, Hermes::Functor*);
 
+    virtual void alltoall(
+        Hermes::Addr sendbuf, uint32_t sendcnt, 
+                        Hermes::PayloadDataType sendtype,
+        Hermes::Addr recvbuf, uint32_t 
+                        recvcnt, Hermes::PayloadDataType recvtype,
+        Hermes::Communicator group, Hermes::Functor*);
+
+    virtual void alltoallv(
+        Hermes::Addr sendbuf, Hermes::Addr sendcnts, 
+            Hermes::Addr senddispls, Hermes::PayloadDataType sendtype,
+        Hermes::Addr recvbuf, Hermes::Addr recvcnts, 
+            Hermes::Addr recvdispls, Hermes::PayloadDataType recvtype,
+        Hermes::Communicator group, Hermes::Functor*);
+
     virtual void probe(Hermes::RankID source, uint32_t tag,
         Hermes::Communicator group, Hermes::MessageResponse* resp,
         Hermes::Functor*);

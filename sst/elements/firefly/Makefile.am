@@ -18,6 +18,8 @@ libfirefly_la_SOURCES = \
 	functionSM.h \
 	funcSM/fini.cc \
 	funcSM/fini.h \
+	funcSM/alltoallv.h \
+	funcSM/alltoallv.cc \
 	funcSM/gatherv.h \
 	funcSM/gatherv.cc \
 	funcSM/allgather.cc \

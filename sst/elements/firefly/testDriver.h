@@ -45,6 +45,10 @@ class TestDriver : public SST::Component {
     void gathervReturn();
     void gatherEnter();
     void gatherReturn();
+    void alltoallvEnter();
+    void alltoallvReturn();
+    void alltoallEnter();
+    void alltoallReturn();
     void recvReturn();
     void waitReturn();
 
@@ -71,6 +75,9 @@ class TestDriver : public SST::Component {
     std::vector<unsigned char> m_recvBuf;
     std::vector<unsigned char> m_sendBuf;
 
+    std::vector<unsigned int> m_intRecvBuf;
+    std::vector<unsigned int> m_intSendBuf;
+
     std::vector<unsigned int> m_gatherSendBuf;
     std::vector<unsigned int> m_gatherRecvBuf;
     std::vector<unsigned int> m_gathervSendBuf;
@@ -79,8 +86,10 @@ class TestDriver : public SST::Component {
     std::vector<unsigned int> m_allgatherSendBuf;
     std::vector<unsigned int> m_allgatherRecvBuf;
 
-    std::vector<unsigned int> m_displs;
-    std::vector<unsigned int> m_recvcnt;
+    std::vector<unsigned int> m_recvdispls;
+    std::vector<unsigned int> m_recvcnts;
+    std::vector<unsigned int> m_senddispls;
+    std::vector<unsigned int> m_sendcnts;
 };
 
 } // namesapce Firefly 

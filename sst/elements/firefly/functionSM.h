@@ -40,6 +40,8 @@ class FunctionSM {
         Allgatherv,
         Gather,
         Gatherv,
+        Alltoall,
+        Alltoallv,
         Irecv,
         Isend,
         Send,

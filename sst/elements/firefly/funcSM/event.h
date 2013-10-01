@@ -212,10 +212,62 @@ class GatherEnterEvent : public GatherBaseEnterEvent {
             displsPtr( _displs )
     { }
 
-
     Hermes::Addr recvcntPtr;
     Hermes::Addr displsPtr;
     uint32_t recvcnt;
+};
+
+class AlltoallEnterEvent: public SMEnterEvent {
+  public:
+    AlltoallEnterEvent( int type, Hermes::Functor* retFunc,
+            Hermes::Addr _sendbuf, uint32_t _sendcnt, 
+            Hermes::PayloadDataType _sendtype, 
+            Hermes::Addr _recvbuf, uint32_t _recvcnt, 
+            Hermes::PayloadDataType _recvtype, 
+            Hermes::Communicator _group  ) :
+        SMEnterEvent( type, retFunc ),
+        sendbuf( _sendbuf ),
+        sendcnt( _sendcnt ),
+        sendcnts( NULL ),
+        sendtype( _sendtype ),
+        recvbuf( _recvbuf ),
+        recvcnt( _recvcnt ),
+        recvcnts( NULL ),
+        recvtype( _recvtype ),
+        group( _group )
+    { } 
+
+    AlltoallEnterEvent( int type, Hermes::Functor* retFunc,
+            Hermes::Addr _sendbuf, Hermes::Addr _sendcnts,  
+            Hermes::Addr _senddispls,
+            Hermes::PayloadDataType _sendtype, 
+            Hermes::Addr _recvbuf, Hermes::Addr _recvcnts, 
+            Hermes::Addr _recvdispls,
+            Hermes::PayloadDataType _recvtype, 
+            Hermes::Communicator _group ) :
+        SMEnterEvent( type, retFunc ),
+        sendbuf( _sendbuf ),
+        sendcnts( _sendcnts ),
+        senddispls( _senddispls ),
+        sendtype( _sendtype ),
+        recvbuf( _recvbuf ),
+        recvcnts( _recvcnts ),
+        recvdispls( _recvdispls ),
+        recvtype( _recvtype ),
+        group( _group )
+    { } 
+
+    Hermes::Addr            sendbuf;
+    uint32_t                sendcnt;
+    Hermes::Addr            sendcnts;
+    Hermes::Addr            senddispls;
+    Hermes::PayloadDataType sendtype;
+    Hermes::Addr            recvbuf;
+    uint32_t                recvcnt;
+    Hermes::Addr            recvcnts;
+    Hermes::Addr            recvdispls;
+    Hermes::PayloadDataType recvtype;
+    Hermes::Communicator    group;
 };
 
 class WaitEnterEvent : public SMEnterEvent {

@@ -24,6 +24,7 @@
 #include "funcSM/allreduce.h"
 #include "funcSM/gatherv.h"
 #include "funcSM/allgather.h"
+#include "funcSM/alltoallv.h"
 
 #include "ctrlMsg.h"
 
@@ -72,6 +73,10 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
     setFunctionTimes( Gather, timeParams.find_integer("Gather", defaultTime ) );
     setFunctionTimes( Gatherv, timeParams.find_integer("Gatherv",
                                                         defaultTime ));
+    setFunctionTimes( Alltoall, timeParams.find_integer("Alltoall",
+                                                        defaultTime ) );
+    setFunctionTimes( Alltoallv, timeParams.find_integer("Alltoallv",
+                                                        defaultTime ));
 
     m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
@@ -114,7 +119,10 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
                                         toProgressLink, ctrlMsg, m_selfLink );
     m_smV[Gatherv] = new GathervFuncSM( verboseLevel, loc, &info,
                                         toProgressLink, ctrlMsg, m_selfLink );
-
+    m_smV[Alltoall] = new AlltoallvFuncSM( verboseLevel, loc, &info,
+                                        toProgressLink, ctrlMsg, m_selfLink );
+    m_smV[Alltoallv] = new AlltoallvFuncSM( verboseLevel, loc, &info,
+                                        toProgressLink, ctrlMsg, m_selfLink );
 }
 
 FunctionSM::~FunctionSM()

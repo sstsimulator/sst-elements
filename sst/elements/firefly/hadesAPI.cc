@@ -145,6 +145,30 @@ void Hades::gatherv( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
             recvbuf, recvcnt, displs, recvtype, root, group ) );
 }
 
+void Hades::alltoall(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        Communicator group, Functor* retFunc) 
+{
+    m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d "
+        "recvcnt=%d\n", sendbuf,recvbuf,sendcnt,recvcnt);
+    m_functionSM->start( new AlltoallEnterEvent( FunctionSM::Alltoall, retFunc,
+            sendbuf,sendcnt, sendtype, recvbuf, recvcnt, recvtype, group) );
+}
+
+void Hades::alltoallv(
+        Addr sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
+        Communicator group, Functor* retFunc ) 
+{
+    m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcntPtr=%p "
+        "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnts,recvcnts);
+    m_functionSM->start( new AlltoallEnterEvent( FunctionSM::Alltoallv, retFunc,
+            sendbuf, sendcnts, senddispls, sendtype, 
+            recvbuf, recvcnts, recvdispls, recvtype,
+            group) );
+}
+
 void Hades::barrier(Communicator group, Functor* retFunc)
 {
     m_functionSM->start( new BarrierEnterEvent(FunctionSM::Barrier,

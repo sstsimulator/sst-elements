@@ -126,6 +126,16 @@ class MessageInterface : public Module {
         Addr recvbuf, Addr recvcnt, Addr displs, PayloadDataType recvtype,
         RankID root, Communicator group, Functor*) {}
 
+    virtual void alltoall(
+        Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
+        Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+        Communicator group, Functor*) {}
+
+    virtual void alltoallv(
+        Addr sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
+        Addr recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
+        Communicator group, Functor*) {}
+
     virtual void barrier(Communicator group, Functor*) {}
 
     virtual void probe( int source, uint32_t tag, 

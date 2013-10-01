@@ -198,6 +198,10 @@ void TestDriver::handle_event( Event* ev )
         gatherEnter();
     } else if ( m_funcName.compare( "gatherv" ) == 0 ) {
         gathervEnter();
+    } else if ( m_funcName.compare( "alltoall" ) == 0 ) {
+        alltoallEnter();
+    } else if ( m_funcName.compare( "alltoallv" ) == 0 ) {
+        alltoallvEnter();
     } else if ( m_funcName.compare( "reduce" ) == 0 ) {
         m_hermes->reduce( &m_collectiveIn, &m_collectiveOut, 1, INT,
                                 SUM, m_root, GroupWorld, &m_functor );
@@ -234,6 +238,10 @@ void TestDriver::funcDone( int retval )
         gatherReturn();
     } else if ( m_funcName.compare( "gatherv" ) == 0 ) {
         gathervReturn();
+    } else if ( m_funcName.compare( "alltoall" ) == 0 ) {
+        alltoallReturn();
+    } else if ( m_funcName.compare( "alltoallv" ) == 0 ) {
+        alltoallvReturn();
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"allreduce %s\n", 
           m_collectiveOut== ((my_size*(my_size+1))/2) - my_size ? "passed": "failed" );
@@ -270,6 +278,86 @@ void TestDriver::waitReturn( )
     }
 }
 
+
+void TestDriver::alltoallEnter( )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    m_intSendBuf.resize( m_bufLen * my_size );
+    m_intRecvBuf.resize( m_bufLen * my_size );
+
+    for ( int i = 0; i < my_size; i++ ) {
+        for ( unsigned int j = 0; j < m_bufLen; j++ ) {
+            m_intSendBuf[ i * m_bufLen + j ] = (my_rank << 16) | (j  + 1); 
+            m_intRecvBuf[ i * m_bufLen + j ] = 0;
+        }
+    } 
+
+    m_hermes->alltoall( &m_intSendBuf[0],  m_intSendBuf.size()/my_size, INT,
+                    &m_intRecvBuf[0],  m_intRecvBuf.size()/my_size, INT,
+                    GroupWorld, &m_functor );
+}
+
+void TestDriver::alltoallReturn( )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    bool passed = true;
+
+    for ( int i = 0; i < my_size; i++ ) {
+        for ( unsigned int j = 0; j < m_bufLen; j++ ) {
+            int pos = i * m_bufLen + j;
+            if ( (unsigned ) m_intRecvBuf[ pos ] != 
+                                    ( ( i << 16 ) | (j + 1)) ) 
+            {
+                m_dbg.verbose(CALL_INFO,1,0,"%d, failed, want %#010x %#010x\n",
+                                i, (i << 16 ) | (j + 1), 
+                                m_intRecvBuf[pos]);
+                passed = false;
+            } 
+        }
+    }
+    if ( passed ) {
+        m_dbg.verbose(CALL_INFO,1,0,"alltoall passed\n");
+    }
+}
+
+void TestDriver::alltoallvEnter( )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    m_intSendBuf.resize( m_bufLen * my_size );
+    m_intRecvBuf.resize( m_bufLen * my_size );
+
+    m_sendcnts.resize(my_size);
+    m_senddispls.resize(my_size);
+    m_recvcnts.resize(my_size);
+    m_recvdispls.resize(my_size);
+
+    for ( int i = 0; i < my_size; i++ ) {
+        for ( unsigned int j = 0; j < m_bufLen; j++ ) {
+            m_intSendBuf[ i * m_bufLen + j ] = (my_rank << 16) | (j  + 1); 
+            m_intRecvBuf[ i * m_bufLen + j ] = 0;
+        }
+    } 
+
+    for ( int i = 0; i < my_size; i++ ) {
+        m_recvcnts[i] = m_bufLen;
+        m_recvdispls[i] = i * m_bufLen * m_hermes->sizeofDataType(INT); 
+        m_sendcnts[i] = m_bufLen;
+        m_senddispls[i] = i * m_bufLen * m_hermes->sizeofDataType(INT); 
+    }
+
+    m_hermes->alltoallv( &m_intSendBuf[0], &m_sendcnts[0], &m_senddispls[0],INT,
+                    &m_intRecvBuf[0], &m_recvcnts[0], &m_recvdispls[0], INT,
+                    GroupWorld, &m_functor );
+}
+
+void TestDriver::alltoallvReturn( )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    TestDriver::alltoallReturn( );
+}
 
 // GATHER
 void TestDriver::gatherEnter( )
@@ -325,19 +413,21 @@ void TestDriver::gathervEnter( )
     }
 
     if ( my_rank == m_root ) {
-        m_recvcnt.resize( my_size );
-        m_displs.resize( my_size );
+        m_recvcnts.resize( my_size );
+        m_recvdispls.resize( my_size );
 
         m_gathervRecvBuf.resize( my_size * m_gathervSendBuf.size() );
 
         for ( int i = 0; i < my_size; i++ ) {
-            m_recvcnt[i] =  m_gathervSendBuf.size();
-            m_displs[i] = i* m_gathervSendBuf.size() * m_hermes->sizeofDataType(INT); 
+            m_recvcnts[i] =  m_gathervSendBuf.size();
+            m_recvdispls[i] = 
+                i* m_gathervSendBuf.size() * m_hermes->sizeofDataType(INT); 
         }
     }
 
     m_hermes->gatherv( &m_gathervSendBuf[0],  m_gathervSendBuf.size(), INT,
-                        &m_gathervRecvBuf[0],  &m_recvcnt[0], &m_displs[0], INT,
+                        &m_gathervRecvBuf[0],  &m_recvcnts[0],
+                        &m_recvdispls[0], INT,
                         m_root, GroupWorld, &m_functor );
 }
 
@@ -409,21 +499,19 @@ void TestDriver::allgathervEnter( )
         m_allgatherSendBuf[ i ] = my_rank;
     }
 
-    m_recvcnt.resize( my_size );
-    m_displs.resize( my_size );
+    m_recvcnts.resize( my_size );
+    m_recvdispls.resize( my_size );
 
     m_allgatherRecvBuf.resize( my_size * m_allgatherSendBuf.size() );
 
     for ( int i = 0; i < my_size; i++ ) {
-        m_recvcnt[i] =  m_allgatherSendBuf.size();
-        m_displs[i] = i* m_allgatherSendBuf.size() * m_hermes->sizeofDataType(INT); 
+        m_recvcnts[i] =  m_allgatherSendBuf.size();
+        m_recvdispls[i] = 
+                i* m_allgatherSendBuf.size() * m_hermes->sizeofDataType(INT); 
     }
 
-    m_recvcnt.resize( my_size );
-    m_displs.resize( my_size );
-
     m_hermes->allgatherv(&m_allgatherSendBuf[0], m_allgatherSendBuf.size(), INT,
-                &m_allgatherRecvBuf[0],  &m_recvcnt[0], &m_displs[0], INT,
+                &m_allgatherRecvBuf[0],  &m_recvcnts[0], &m_recvdispls[0], INT,
                 GroupWorld, &m_functor );
 }
 
