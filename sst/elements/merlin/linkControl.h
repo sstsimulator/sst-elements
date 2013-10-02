@@ -59,6 +59,54 @@ public:
         double getStdDevLatency(void) const { return sqrt(getVarianceLatency()); }
     };
 
+
+    // Functor classes for handling callbacks
+    class HandlerBase {
+    public:
+	virtual bool operator()(int) = 0;
+	virtual ~HandlerBase() {}
+    };
+    
+
+    template <typename classT, typename argT = void>
+    class Handler : public HandlerBase {
+    private:
+	typedef bool (classT::*PtrMember)(int, argT);
+	classT* object;
+	const PtrMember member;
+	argT data;
+	
+    public:
+	Handler( classT* const object, PtrMember member, argT data ) :
+	    object(object),
+	    member(member),
+	    data(data)
+	{}
+
+        bool operator()(int vc) {
+	    return (object->*member)(vc,data);
+	}
+    };
+    
+    template <typename classT>
+    class Handler<classT, void> : public HandlerBase {
+    private:
+	typedef bool (classT::*PtrMember)(int);
+	classT* object;
+	const PtrMember member;
+	
+    public:
+	Handler( classT* const object, PtrMember member ) :
+	    object(object),
+	    member(member)
+	{}
+
+	bool operator()(int vc) {
+	    return (object->*member)(vc);
+	}
+    };
+    
+    
 private:
     // Link to router
     Link* rtr_link;
@@ -95,6 +143,11 @@ private:
     // credits back from the router.
     bool waiting;
 
+    // Functors for notifying the parent when there is more space in
+    // output queue or when a new packet arrives
+    HandlerBase* receiveFunctor;
+    HandlerBase* sendFunctor;
+    
     Component* parent;
 
     PacketStats stats;
@@ -129,6 +182,8 @@ public:
 
     const PacketStats& getPacketStats(void) const { return stats; }
 
+    inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
+    inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
 
 private:
     void handle_input(Event* ev);

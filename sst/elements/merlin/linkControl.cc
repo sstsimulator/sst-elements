@@ -25,6 +25,7 @@ LinkControl::LinkControl(Params &params) :
     input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vc(0), waiting(true),
+    receiveFunctor(NULL), sendFunctor(NULL),
     parent(NULL)
 {
 }
@@ -212,6 +213,10 @@ void LinkControl::handle_input(Event* ev)
                                                                      << parent->getName() << " on VC " << event->vc << " from src " << event->src
                                                                      << "." << std::endl;
         }
+	if ( receiveFunctor != NULL ) {
+	    bool keep = (*receiveFunctor)(event->vc);
+	    if ( !keep) receiveFunctor = NULL;
+	}
         SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
         stats.insertPacketLatency(lat);
     }
@@ -284,6 +289,10 @@ void LinkControl::handle_output(Event* ev)
                                                                           << parent->getName() << " on VC " << send_event->vc << " to dest " << send_event->dest
                                                                           << "." << std::endl;
         }
+	if (sendFunctor != NULL ) {
+	    bool keep = (*sendFunctor)(vc_to_send);
+	    if ( !keep ) sendFunctor = NULL;
+	}
     }
     else {
         // What do we do if there's nothing to send??  It could be
