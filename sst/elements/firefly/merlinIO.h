@@ -74,7 +74,9 @@ class MerlinIO : public IO::Interface {
 
   private:
 
-    bool clockHandler( Cycle_t cycle );
+    bool sendNotify(int); 
+    bool recvNotify(int); 
+    bool process();
 
     bool processRecv();
     bool processSend();
@@ -92,6 +94,8 @@ class MerlinIO : public IO::Interface {
 
     int                     m_numVC;
     int                     m_lastVC;
+    Merlin::LinkControl::Handler<MerlinIO> * m_recvNotifyFunctor;
+    Merlin::LinkControl::Handler<MerlinIO> * m_sendNotifyFunctor;
 };
 
 }

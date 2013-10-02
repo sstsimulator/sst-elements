@@ -133,8 +133,27 @@ MerlinIO::MerlinIO( Component* owner, Params& params ) :
     m_linkControl->configureLink(owner, "rtr", tc, num_vcs,
                         &buf_size[0], &buf_size[0]);
 
-    owner->registerClock( "1GHz", 
-        new Clock::Handler<MerlinIO>(this,&MerlinIO::clockHandler), false);
+    m_recvNotifyFunctor = 
+        new Merlin::LinkControl::Handler<MerlinIO>(this,&MerlinIO::recvNotify );
+
+    m_sendNotifyFunctor = 
+        new Merlin::LinkControl::Handler<MerlinIO>(this,&MerlinIO::sendNotify );
+}
+
+bool MerlinIO::recvNotify( int vc )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"vc=%d\n", vc );
+    if ( ! m_leaveLink )  return false;
+    process();
+    return true;
+}
+
+bool MerlinIO::sendNotify( int vc )
+{
+    m_dbg.verbose(CALL_INFO,2,0,"vc=%d\n", vc );
+    if ( ! m_leaveLink )  return false;
+    process();
+    return true;
 }
 
 void MerlinIO::_componentInit(unsigned int phase )
@@ -142,7 +161,7 @@ void MerlinIO::_componentInit(unsigned int phase )
     m_linkControl->init(phase);
 }
 
-bool MerlinIO::clockHandler( Cycle_t cycle )
+bool MerlinIO::process()
 {
     if ( m_eventQ.size() < MaxPendingEvents ) {
         for ( int vc = 0; vc < m_numVC; vc++ ) {
@@ -160,8 +179,10 @@ bool MerlinIO::clockHandler( Cycle_t cycle )
     if ( m_leaveLink ) {
         if ( processSend() ) {
             leave(); 
+            return true;
         } else if ( processRecv() ) {
             leave();
+            return true;
         }
     } 
     return false; 
@@ -181,6 +202,11 @@ void MerlinIO::enter( SST::Link* link  )
     assert( ! m_leaveLink );
     // the clockHandler will use m_leaveLink as a flag to start processing
     m_leaveLink = link;
+
+    if ( ! process() ) {
+        m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
+        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    }
 }
 
 void MerlinIO::leave()
