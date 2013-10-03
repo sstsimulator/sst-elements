@@ -81,13 +81,16 @@ simpleRNGComponent::simpleRNGComponent() :
 }
 
 bool simpleRNGComponent::tick( Cycle_t ) {
-	rng_count++;
+        double nU = rng->nextUniform();
+        uint32_t U32 = rng->generateNextUInt32();
+        uint64_t U64 = rng->generateNextUInt64();
+        int32_t I32 = rng->generateNextInt32();
+        int64_t I64 = rng->generateNextInt64();
+        rng_count++;
 
-	std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
-		rng->nextUniform() << ", " << rng->generateNextUInt32() << ", " <<
-		rng->generateNextUInt64() << ", " << rng->generateNextInt32() <<
-		", " << rng->generateNextInt64()
-		<< std::endl;
+        std::cout << "Random: " << rng_count << " of " << rng_max_count << ": " <<
+		nU << ", " << U32 << ", " << U64 << ", " << I32 <<
+		", " << I64 << std::endl;
 
   	// return false so we keep going
   	if(rng_count == rng_max_count) {
