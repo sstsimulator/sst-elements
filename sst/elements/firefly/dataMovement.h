@@ -116,6 +116,7 @@ class DataMovement : public ProtocolAPI
     void postRecvEntry(RecvEntry);
     void completeLongMsg( MsgEntry*, RecvEntry* );
     void sleep();
+    void enter();
 
     int getCopyDelay( int nbytes ) {
         return m_copyTime * nbytes;

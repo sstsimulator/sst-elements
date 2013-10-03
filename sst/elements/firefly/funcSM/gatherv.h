@@ -127,8 +127,7 @@ class GathervFuncSM :  public FunctionSMInterface
 
   public:
     GathervFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link* progressLink,
-            ProtocolAPI*, SST::Link* );
+            Info* info, ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event *e);
     virtual void handleSelfEvent( SST::Event *e);
@@ -147,7 +146,6 @@ class GathervFuncSM :  public FunctionSMInterface
         return GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
-    SST::Link*          m_toProgressLink;
     SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
     GatherEnterEvent*  m_event;

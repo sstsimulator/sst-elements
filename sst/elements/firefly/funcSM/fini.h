@@ -21,7 +21,7 @@ class FiniFuncSM :  public BarrierFuncSM
 {
   public:
     FiniFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info* info, SST::Link* progressLink, ProtocolAPI* api, SST::Link* );
+        Info* info, ProtocolAPI* api, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event *e);
     void handleProgressEvent( SST::Event *e );

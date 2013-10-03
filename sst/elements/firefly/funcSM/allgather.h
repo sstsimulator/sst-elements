@@ -28,7 +28,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
 
   public:
     AllgatherFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link* progressLink, ProtocolAPI*, SST::Link* );
+            Info* info, ProtocolAPI*, SST::Link* );
 
     virtual void handleEnterEvent( SST::Event *e);
     virtual void handleProgressEvent( SST::Event *e );
@@ -39,7 +39,6 @@ class AllgatherFuncSM :  public FunctionSMInterface
 
   private:
 
-    SST::Link*          m_toProgressLink;
     SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
     GatherEnterEvent*   m_event;

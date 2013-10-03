@@ -28,7 +28,7 @@ class WaitFuncSM :  public FunctionSMInterface
 {
   public:
     WaitFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info*, SST::Link*, ProtocolAPI* );
+        Info*, ProtocolAPI* );
 
     virtual void handleEnterEvent( SST::Event *e );
     virtual void handleProgressEvent( SST::Event* );
@@ -40,7 +40,6 @@ class WaitFuncSM :  public FunctionSMInterface
   private:
 
     DataMovement*    m_dm;
-    SST::Link* m_toProgressLink;
     WaitEnterEvent* m_event;
 };
 

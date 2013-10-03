@@ -316,6 +316,11 @@ bool DataMovement::blocked()
     return m_sleep; 
 }
 
+void DataMovement::enter()
+{
+    m_link->send(0,NULL);
+}
+
 void DataMovement::sleep()
 {
     m_dbg.verbose(CALL_INFO,1,0,"sleep\n");

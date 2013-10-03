@@ -19,10 +19,8 @@
 using namespace SST::Firefly;
 
 RecvFuncSM::RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link* progressLink,   
-            ProtocolAPI* dm, SST::Link* selfLink ) :
+            Info* info, ProtocolAPI* dm, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),
     m_dm( static_cast<DataMovement*>(dm) ),
     m_event( NULL )
@@ -109,7 +107,7 @@ void RecvFuncSM::handleSelfEvent( SST::Event *e )
     } else {
         assert(0);
     }
-    m_toProgressLink->send(0, NULL );
+    m_dm->enter();
 }
 
 void RecvFuncSM::handleProgressEvent( SST::Event *e )

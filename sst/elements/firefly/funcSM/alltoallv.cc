@@ -26,10 +26,8 @@ inline long mod( long a, long b )
 
 AlltoallvFuncSM::AlltoallvFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
-                    Info* info, SST::Link* progressLink, 
-                    ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+                    Info* info, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
@@ -58,9 +56,9 @@ void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
     m_size = m_info->getGroup( m_event->group )->size();
     m_rank = m_info->getGroup( m_event->group )->getMyRank();
 
-    m_toProgressLink->send(0, NULL );
-
     memcpy( recvChunkPtr(m_rank), sendChunkPtr(m_rank),recvChunkSize(m_rank));
+
+    m_ctrlMsg->enter();
 }
 
 void AlltoallvFuncSM::handleSelfEvent( SST::Event *e )
@@ -90,7 +88,7 @@ void AlltoallvFuncSM::handleProgressEvent( SST::Event *e )
     
         m_dbg.verbose(CALL_INFO,1,0,"count=%d recvNode=%d sendNode=%d\n",
                             m_count, rNode, sNode);
-        m_toProgressLink->send(0, NULL );
+        m_ctrlMsg->enter();
         m_pending = true;
         m_waitSend = true;
         m_delay = 0;
@@ -137,6 +135,6 @@ void AlltoallvFuncSM::handleProgressEvent( SST::Event *e )
         m_dbg.verbose(CALL_INFO,1,0,"bump count\n");
         m_pending = false;
         ++m_count;
-        m_toProgressLink->send(0, NULL );
+        m_ctrlMsg->enter();
     }
 }

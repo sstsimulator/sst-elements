@@ -19,10 +19,9 @@
 using namespace SST::Firefly;
 
 SendFuncSM::SendFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, SST::Link* progressLink, ProtocolAPI* dm ) :
+            Info* info, ProtocolAPI* dm ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_dm( static_cast<DataMovement*>(dm) ),
-    m_toProgressLink( progressLink ),
     m_event( NULL )
 { 
     m_dbg.setPrefix("@t:SendFuncSM::@p():@l ");
@@ -67,7 +66,7 @@ void SendFuncSM::handleEnterEvent( SST::Event *e)
         m_event->entry.req->src = Hermes::AnySrc;
     }
     m_dm->postSendEntry( m_event->entry );
-    m_toProgressLink->send( 0, NULL );
+    m_dm->enter();
 }
 
 void SendFuncSM::handleProgressEvent( SST::Event *e )

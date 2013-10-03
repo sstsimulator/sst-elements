@@ -108,6 +108,7 @@ class CtrlMsg : public ProtocolAPI {
     virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
     virtual bool blocked();
+    virtual void enter();
 
     void recv( void* buf, size_t len, int src,  int tag, int group, CommReq* );
     void recvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq* );

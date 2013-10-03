@@ -41,6 +41,7 @@ class ProtocolAPI
     virtual Request* delayDone( Request* ) = 0;
     virtual void setup() = 0;
     virtual bool blocked() = 0;
+    virtual void enter() = 0;
 
     Output m_dbg;
 };

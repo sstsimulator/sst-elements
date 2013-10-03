@@ -19,10 +19,8 @@ using namespace SST::Firefly;
 
 GathervFuncSM::GathervFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
-                    Info* info, SST::Link* progressLink, 
-                    ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+                    Info* info, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
@@ -70,7 +68,7 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
     m_recvReqV.resize(m_qqq->numChildren());
     m_waitUpSize.resize(m_qqq->numChildren());
 
-    m_toProgressLink->send(0, NULL );
+    m_ctrlMsg->enter();
 }
 
 void GathervFuncSM::handleSelfEvent( SST::Event *e )
@@ -118,7 +116,7 @@ bool GathervFuncSM::waitUp()
                         genTag(1), m_event->group, &m_recvReqV[i] );
             }    
             m_waitUpPending = true;
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             m_count = 0;
             return true;
         } else {
@@ -142,7 +140,7 @@ bool GathervFuncSM::waitUp()
             }
         }
         if ( m_count < m_qqq->numChildren() ) {
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             return true;
         } else {
             m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
@@ -179,7 +177,7 @@ bool GathervFuncSM::waitUp()
             m_ctrlMsg->send( NULL, 0, 
                             m_qqq->calcChild( m_count ),
                             genTag(3), m_event->group, &m_sendReq );
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             m_waitUpPending = true;
             return true;
         } else {
@@ -201,7 +199,7 @@ bool GathervFuncSM::waitUp()
                 return true;
             }
             if ( m_count < m_qqq->numChildren() ) {
-                m_toProgressLink->send(0, NULL );
+                m_ctrlMsg->enter();
                 m_waitUpPending = false;
                 return true;
             }
@@ -231,7 +229,7 @@ bool GathervFuncSM::waitUp()
                 return true;
             }
             if ( m_count < m_qqq->numChildren() ) {
-                m_toProgressLink->send(0, NULL );
+                m_ctrlMsg->enter();
                 return true;
             } else {
                 m_dbg.verbose(CALL_INFO,1,0,"got all messages\n");
@@ -318,7 +316,7 @@ bool GathervFuncSM::sendUp()
                             genTag(1), m_event->group, &m_sendReq );
             
             m_sendUpPending = true;
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             return true;
         } else {
             if ( ! m_sendUpDelay ) {
@@ -350,7 +348,7 @@ bool GathervFuncSM::sendUp()
             m_ctrlMsg->recv( NULL, 0, m_qqq->parent(),
                         genTag(3), m_event->group, &m_recvReq );
             m_sendUpPending = true;
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             return true;
         } else {
             if ( ! m_sendUpDelay ) {
@@ -387,7 +385,7 @@ bool GathervFuncSM::sendUp()
             }
 #endif
             m_sendUpPending = true;
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             return true;
         }  else {
             if ( ! m_sendUpDelay ) {

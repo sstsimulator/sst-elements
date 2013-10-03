@@ -24,9 +24,8 @@ inline long mod( long a, long b )
 
 AllgatherFuncSM::AllgatherFuncSM( 
         int verboseLevel, Output::output_location_t loc, Info* info,
-        SST::Link* progressLink, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+        ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_toProgressLink( progressLink ),
     m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
@@ -110,7 +109,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
     m_ctrlMsg->send( NULL, 0, m_dest[0], genTag(),
                                         m_event->group, &m_sendReq );
 
-    m_toProgressLink->send(0, NULL );
+    m_ctrlMsg->enter();
 
     m_state = WaitSendStart;
 
@@ -213,7 +212,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             m_ctrlMsg->sendv( ioVec, m_dest[m_currentStage], 
                 genTag() + m_currentStage + 1, m_event->group, &m_sendReq );
             m_pending = true;
-            m_toProgressLink->send(0, NULL );
+            m_ctrlMsg->enter();
             break;
         } else {
             if ( ! m_delay ) {

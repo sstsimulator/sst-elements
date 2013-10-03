@@ -95,34 +95,30 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
 
     m_smV[Init] = new InitFuncSM( verboseLevel, loc, &info );
     m_smV[Fini] = new FiniFuncSM( verboseLevel, loc, &info, 
-                                        toProgressLink, ctrlMsg, m_selfLink);
+                                        ctrlMsg, m_selfLink);
     m_smV[Rank] = new RankFuncSM( verboseLevel, loc, &info );
     m_smV[Size] = new SizeFuncSM( verboseLevel, loc, &info );
-    m_smV[Send] = new SendFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, dm );
-    m_smV[Wait] = new WaitFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, dm );
-    m_smV[Recv] = new RecvFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, dm, m_selfLink );
+    m_smV[Send] = new SendFuncSM( verboseLevel, loc, &info, dm );
+    m_smV[Wait] = new WaitFuncSM( verboseLevel, loc, &info, dm );
+    m_smV[Recv] = new RecvFuncSM( verboseLevel, loc, &info, dm, m_selfLink );
     m_smV[Barrier] = new BarrierFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Allreduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Reduce] = new AllreduceFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
-    
+                                        ctrlMsg, m_selfLink );
     m_smV[Allgather] = new AllgatherFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Allgatherv] = new AllgatherFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Gather] = new GathervFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Gatherv] = new GathervFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Alltoall] = new AlltoallvFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
     m_smV[Alltoallv] = new AlltoallvFuncSM( verboseLevel, loc, &info,
-                                        toProgressLink, ctrlMsg, m_selfLink );
+                                        ctrlMsg, m_selfLink );
 }
 
 FunctionSM::~FunctionSM()

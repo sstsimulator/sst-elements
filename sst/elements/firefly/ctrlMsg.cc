@@ -298,6 +298,11 @@ void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag,
 
 
 
+void CtrlMsg::enter()
+{
+    m_link->send(0,NULL);
+}
+
 void CtrlMsg::sleep()
 {
     m_dbg.verbose(CALL_INFO,1,0,"sleep\n");
