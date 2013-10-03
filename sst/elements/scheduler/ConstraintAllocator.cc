@@ -114,7 +114,10 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 		allocation = generate_AllocInfo( top_allocation );
 
-		possible_allocations.clear();
+		while( ! possible_allocations.empty() ){
+			delete possible_allocations.back();
+			possible_allocations.pop_back();
+		}
 	}
 
 	return allocation;
