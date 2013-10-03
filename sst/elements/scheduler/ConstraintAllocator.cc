@@ -118,17 +118,34 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 		if( top_allocation != NULL ){
 			allocation = generate_AllocInfo( top_allocation );
-
-			while( ! possible_allocations.empty() ){
-				delete possible_allocations.back();
-				possible_allocations.pop_back();
-			}
+		}else{
+			allocation = generate_LinearAllocInfo( job );
 		}
+
+		while( ! possible_allocations.empty() ){
+			delete possible_allocations.back();
+			possible_allocations.pop_back();
+		}
+
 	}
 
 	delete freeProcs;
 
 	return allocation;
+}
+
+
+AllocInfo * ConstraintAllocator::generate_LinearAllocInfo( Job * job ){
+	AllocInfo * alloc = new AllocInfo( job );
+	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->freeProcessors();
+
+	for( int node_counter = 0; node_counter < job->getProcsNeeded(); node_counter ++ ){
+		alloc->nodeIndices[ node_counter ] = (*free_comp_nodes)[ node_counter ];
+	}
+
+	delete free_comp_nodes;
+
+	return alloc;
 }
 
 

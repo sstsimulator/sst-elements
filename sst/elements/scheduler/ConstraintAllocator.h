@@ -63,6 +63,7 @@ namespace SST {
                 //check file for updates to parameter estimates and set constraints accordingly
                 void GetConstraints();
 
+		AllocInfo * generate_LinearAllocInfo( Job * job );
 		AllocInfo * generate_AllocInfo( ConstrainedAllocation * constrained_alloc );
 		ConstrainedAllocation * get_top_allocation( std::list<ConstrainedAllocation *> possible_allocations );
 		std::set< std::string > * get_constrained_leaves( std::vector<std::string> constraint );
