@@ -97,8 +97,12 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 	static int count = 0;
 
-	if( (unsigned) job->getProcsNeeded() <= ((SimpleMachine*)machine)->freeProcessors()->size() ){
-		read_constraints();
+	std::vector<int> * freeProcs = ((SimpleMachine*)machine)->freeProcessors();
+
+	if( (unsigned) job->getProcsNeeded() <= freeProcs->size() ){
+		if( constraints_changed() ){
+			read_constraints();
+		}
 
 		++ count;
 
@@ -112,13 +116,17 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 		ConstrainedAllocation * top_allocation = get_top_allocation( possible_allocations );
 
-		allocation = generate_AllocInfo( top_allocation );
+		if( top_allocation != NULL ){
+			allocation = generate_AllocInfo( top_allocation );
 
-		while( ! possible_allocations.empty() ){
-			delete possible_allocations.back();
-			possible_allocations.pop_back();
+			while( ! possible_allocations.empty() ){
+				delete possible_allocations.back();
+				possible_allocations.pop_back();
+			}
 		}
 	}
+
+	delete freeProcs;
 
 	return allocation;
 }
@@ -160,9 +168,19 @@ ConstrainedAllocation * ConstraintAllocator::get_top_allocation( std::list<Const
 }
 
 
+bool ConstraintAllocator::constraints_changed(){
+	return true;
+}
+
+
 void ConstraintAllocator::read_constraints(){
 	boost::char_separator<char> space_separator( " " );
 	std::ifstream ConstraintsStream(ConstraintsFileName.c_str(), std::ifstream::in );
+
+	while( !constraint_leaves.empty() ){
+		delete constraint_leaves.back();
+		constraint_leaves.pop_back();
+	}
 
 	while(!ConstraintsStream.eof() and ConstraintsStream.is_open()){
 		std::string curline;
@@ -237,6 +255,8 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		new_allocation->constrained_nodes.insert( *constrained_node_iter );
 		-- constrained_nodes_needed;
 	}
+
+	delete free_comp_nodes;
 
 	return new_allocation;
 }

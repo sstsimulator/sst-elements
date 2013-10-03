@@ -66,6 +66,7 @@ namespace SST {
 		AllocInfo * generate_AllocInfo( ConstrainedAllocation * constrained_alloc );
 		ConstrainedAllocation * get_top_allocation( std::list<ConstrainedAllocation *> possible_allocations );
 		std::set< std::string > * get_constrained_leaves( std::vector<std::string> constraint );
+		bool constraints_changed();
 		void read_constraints();
 
                 //map from internal node u to  set of dependent compute nodes D[u]
