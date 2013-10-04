@@ -36,7 +36,7 @@ AlltoallvFuncSM::AlltoallvFuncSM(
     m_dbg.setPrefix("@t:AlltoallvFuncSM::@p():@l ");
 }
 
-void AlltoallvFuncSM::handleEnterEvent( SST::Event *e ) 
+void AlltoallvFuncSM::handleStartEvent( SST::Event *e ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -48,7 +48,7 @@ void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
     }
 
     assert( NULL == m_event );
-    m_event = static_cast< AlltoallEnterEvent* >(e);
+    m_event = static_cast< AlltoallStartEvent* >(e);
 
     ++m_seq;
     m_count = 1;
@@ -63,15 +63,15 @@ void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
 
 void AlltoallvFuncSM::handleSelfEvent( SST::Event *e )
 {
-    handleProgressEvent( e );
+    handleEnterEvent( e );
 }
 
-void AlltoallvFuncSM::handleProgressEvent( SST::Event *e )
+void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
 {
     m_dbg.verbose(CALL_INFO,1,0,"m_count=%d\n",m_count);
     if ( m_count == m_size ) {
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        exit( static_cast<SMStartEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
         return;
@@ -111,7 +111,7 @@ void AlltoallvFuncSM::handleProgressEvent( SST::Event *e )
             m_dbg.verbose(CALL_INFO,1,0,"send %d complete\n", m_count );
             m_waitSend = false;
             m_delay = 0;
-            handleProgressEvent(NULL);
+            handleEnterEvent(NULL);
             return;
             
         } else {

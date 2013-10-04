@@ -28,17 +28,17 @@ class SendFuncSM :  public FunctionSMInterface
     SendFuncSM( int verboseLevel, Output::output_location_t loc,
         Info* info, ProtocolAPI* );
 
-    virtual void  handleEnterEvent( SST::Event *e);
-    virtual void handleProgressEvent( SST::Event* );
+    virtual void handleStartEvent( SST::Event* );
+    virtual void handleEnterEvent( SST::Event* );
 
     virtual const char* name() {
        return "Send"; 
     }
 
   private:
-    DataMovement*   m_dm;
-    SendEnterEvent* m_event;
-    Hermes::MessageRequest m_req; 
+    DataMovement*           m_dm;
+    SendStartEvent*         m_event;
+    Hermes::MessageRequest  m_req; 
 };
 
 }

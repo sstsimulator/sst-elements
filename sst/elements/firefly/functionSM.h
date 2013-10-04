@@ -60,9 +60,9 @@ class FunctionSM {
 
   private:
     void handleSelfEvent( SST::Event* );
-    void handleDriverEvent( SST::Event* );
+    void handleStartEvent( SST::Event* );
     void handleToDriver(SST::Event*);
-    void handleProgressEvent( SST::Event* );
+    void handleEnterEvent( SST::Event* );
     int myNodeId() { return m_info.nodeId(); }
     int myWorldRank() { return m_info.worldRank(); }
 

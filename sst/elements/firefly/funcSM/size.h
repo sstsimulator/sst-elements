@@ -26,7 +26,7 @@ class SizeFuncSM :  public FunctionSMInterface
         m_dbg.setPrefix("@t:SizeFuncSM::@p():@l ");
     }
 
-    virtual void handleEnterEvent( SST::Event *e) {
+    virtual void handleStartEvent( SST::Event *e) {
         if ( m_setPrefix ) {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:%d:SizeFuncSM::@p():@l ",
@@ -36,12 +36,12 @@ class SizeFuncSM :  public FunctionSMInterface
             m_setPrefix = false;
         }
 
-        m_event = static_cast< SizeEnterEvent* >(e);
+        m_event = static_cast< SizeStartEvent* >(e);
 
         m_dbg.verbose(CALL_INFO,1,0,"\n");
 
         *m_event->size = m_info->getGroup(m_event->group)->size();
-        exit( static_cast<SMEnterEvent*>(e), 0 );
+        exit( static_cast<SMStartEvent*>(e), 0 );
         delete m_event;
     }
 
@@ -50,7 +50,7 @@ class SizeFuncSM :  public FunctionSMInterface
     }
 
   private:
-    SizeEnterEvent* m_event;
+    SizeStartEvent* m_event;
 };
 
 }

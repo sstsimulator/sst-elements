@@ -23,8 +23,8 @@ class FiniFuncSM :  public BarrierFuncSM
     FiniFuncSM( int verboseLevel, Output::output_location_t loc,
         Info* info, ProtocolAPI* api, SST::Link* );
 
-    virtual void handleEnterEvent( SST::Event *e);
-    void handleProgressEvent( SST::Event *e );
+    virtual void handleStartEvent( SST::Event* );
+    virtual void handleEnterEvent( SST::Event* );
 
     virtual const char* name() {
        return "Fini"; 

@@ -34,7 +34,7 @@ AllgatherFuncSM::AllgatherFuncSM(
     m_dbg.setPrefix("@t:AllgatherFuncSM::@p():@l ");
 }
 
-void AllgatherFuncSM::handleEnterEvent( SST::Event *e) 
+void AllgatherFuncSM::handleStartEvent( SST::Event *e) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -47,7 +47,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e)
     ++m_seq;
 
     assert( NULL == m_event );
-    m_event = static_cast< GatherEnterEvent* >(e);
+    m_event = static_cast< GatherStartEvent* >(e);
 
     m_rank = m_info->getGroup(m_event->group)->getMyRank();
     m_size = m_info->getGroup(m_event->group)->size();
@@ -159,7 +159,7 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
     }
 }
 
-void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
+void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
 {
     switch( m_state ) {
     case WaitSendStart:
@@ -251,7 +251,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             if ( m_currentStage < m_dest.size() ) {
                 m_state = WaitSendData;
                 m_pending = false;
-                handleProgressEvent( NULL );
+                handleEnterEvent( NULL );
                 
                 break;
             }  
@@ -260,7 +260,7 @@ void AllgatherFuncSM::handleProgressEvent( SST::Event *e )
             break;
         } 
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        exit( static_cast<SMStartEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
         m_pending = false;

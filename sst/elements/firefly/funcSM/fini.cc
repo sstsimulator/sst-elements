@@ -24,7 +24,7 @@ FiniFuncSM::FiniFuncSM( int verboseLevel, Output::output_location_t loc,
     m_dbg.setPrefix("@t:FiniFuncSM::@p():@l ");
 }
 
-void FiniFuncSM::handleEnterEvent( SST::Event *e) 
+void FiniFuncSM::handleStartEvent( SST::Event *e) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -35,18 +35,18 @@ void FiniFuncSM::handleEnterEvent( SST::Event *e)
         m_setPrefix = false;
     }
 
-    FiniEnterEvent* event = static_cast<FiniEnterEvent*>(e);
-    BarrierEnterEvent* tmp = new BarrierEnterEvent( 0,
+    FiniStartEvent* event = static_cast<FiniStartEvent*>(e);
+    BarrierStartEvent* tmp = new BarrierStartEvent( 0,
                             event->retFunc, Hermes::GroupWorld  );
 
     tmp->retLink = event->retLink;
 
     delete event;
 
-    BarrierFuncSM::handleEnterEvent(static_cast<SST::Event*>(tmp));
+    BarrierFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp));
 }
 
-void FiniFuncSM::handleProgressEvent( SST::Event *e )
+void FiniFuncSM::handleEnterEvent( SST::Event *e )
 {
-    BarrierFuncSM::handleProgressEvent(e);
+    BarrierFuncSM::handleEnterEvent(e);
 }

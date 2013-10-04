@@ -29,7 +29,7 @@ GathervFuncSM::GathervFuncSM(
     m_dbg.setPrefix("@t:GathervFuncSM::@p():@l ");
 }
 
-void GathervFuncSM::handleEnterEvent( SST::Event *e ) 
+void GathervFuncSM::handleStartEvent( SST::Event *e ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -42,7 +42,7 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
     ++m_seq;
 
     assert( NULL == m_event );
-    m_event = static_cast< GatherEnterEvent* >(e);
+    m_event = static_cast< GatherStartEvent* >(e);
 
     m_qqq = new QQQ( 2, m_info->getGroup(m_event->group)->getMyRank(),
                 m_info->getGroup(m_event->group)->size(), m_event->root );
@@ -73,10 +73,10 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
 
 void GathervFuncSM::handleSelfEvent( SST::Event *e )
 {
-    handleProgressEvent( e );
+    handleEnterEvent( e );
 }
 
-void GathervFuncSM::handleProgressEvent( SST::Event *e )
+void GathervFuncSM::handleEnterEvent( SST::Event *e )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     switch( m_state ) {
@@ -95,7 +95,7 @@ void GathervFuncSM::handleProgressEvent( SST::Event *e )
             }
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        exit( static_cast<SMStartEvent*>(m_event), 0 );
         delete m_qqq;
         delete m_event;
         m_event = NULL;

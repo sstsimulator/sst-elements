@@ -35,9 +35,9 @@ class DriverEvent : public SST::Event {
   private:
 };
 
-class SMEnterEvent : public SST::Event {
+class SMStartEvent : public SST::Event {
   public:
-    SMEnterEvent(int _type, Hermes::Functor* _retFunc ) :
+    SMStartEvent(int _type, Hermes::Functor* _retFunc ) :
         Event(),
         type( _type ),
         retFunc( _retFunc )
@@ -59,12 +59,12 @@ class FunctionSMInterface : public Module {
     }
     virtual ~FunctionSMInterface() {} 
 
-    virtual void  handleEnterEvent( SST::Event* ) = 0; 
-    virtual void  handleProgressEvent( SST::Event* ) { assert(0); }
+    virtual void  handleStartEvent( SST::Event* ) = 0; 
+    virtual void  handleEnterEvent( SST::Event* ) { assert(0); }
     virtual void  handleSelfEvent( SST::Event* ) { assert(0); }
     virtual const char* name() { return "No Name"; }
 
-    virtual void exit( SMEnterEvent* event, int retval ) {
+    virtual void exit( SMStartEvent* event, int retval ) {
         DriverEvent* x = new DriverEvent( event->retFunc, retval );
         event->retLink->send( 0,  x);
     }

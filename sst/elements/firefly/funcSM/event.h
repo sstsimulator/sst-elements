@@ -21,25 +21,25 @@
 namespace SST {
 namespace Firefly {
 
-class InitEnterEvent : public SMEnterEvent {
+class InitStartEvent : public SMStartEvent {
   public:
-    InitEnterEvent( int type, Hermes::Functor* retFunc ) :
-        SMEnterEvent( type, retFunc )
+    InitStartEvent( int type, Hermes::Functor* retFunc ) :
+        SMStartEvent( type, retFunc )
     { }
 };
 
-class FiniEnterEvent : public SMEnterEvent {
+class FiniStartEvent : public SMStartEvent {
   public:
-    FiniEnterEvent( int type, Hermes::Functor* retFunc ) :
-        SMEnterEvent( type, retFunc )
+    FiniStartEvent( int type, Hermes::Functor* retFunc ) :
+        SMStartEvent( type, retFunc )
     { }
 };
 
-class RankEnterEvent : public SMEnterEvent {
+class RankStartEvent : public SMStartEvent {
   public:
-    RankEnterEvent( int type, Hermes::Functor* retFunc,
+    RankStartEvent( int type, Hermes::Functor* retFunc,
         Hermes::Communicator _group, int* _rank ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         group( _group ),
         rank( _rank )
     { }
@@ -48,11 +48,11 @@ class RankEnterEvent : public SMEnterEvent {
     int* rank;
 };
 
-class SizeEnterEvent : public SMEnterEvent {
+class SizeStartEvent : public SMStartEvent {
   public:
-    SizeEnterEvent( int type, Hermes::Functor* retFunc,
+    SizeStartEvent( int type, Hermes::Functor* retFunc,
         Hermes::Communicator _group, int* _size ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         group( _group ),
         size( _size )
     { }
@@ -61,26 +61,26 @@ class SizeEnterEvent : public SMEnterEvent {
     int* size;
 };
 
-class BarrierEnterEvent : public SMEnterEvent {
+class BarrierStartEvent : public SMStartEvent {
   public:
-    BarrierEnterEvent( int type, Hermes::Functor* retFunc,
+    BarrierStartEvent( int type, Hermes::Functor* retFunc,
         Hermes::Communicator _group ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         group( _group )
     { }
 
     Hermes::Communicator group;
 };
 
-class RecvEnterEvent : public SMEnterEvent {
+class RecvStartEvent : public SMStartEvent {
 
   public:
-    RecvEnterEvent( int type, Hermes::Functor* retFunc,
+    RecvStartEvent( int type, Hermes::Functor* retFunc,
             Hermes::Addr buf, uint32_t count,
             Hermes::PayloadDataType dtype, Hermes::RankID src,
             uint32_t tag, Hermes::Communicator group, 
             Hermes::MessageRequest* req, Hermes::MessageResponse* resp ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         entry( buf, count, dtype, src, tag, group, resp, req )  
     {}
 
@@ -88,30 +88,30 @@ class RecvEnterEvent : public SMEnterEvent {
 };
 
 
-class SendEnterEvent : public SMEnterEvent {
+class SendStartEvent : public SMStartEvent {
 
   public:
-    SendEnterEvent( int type, Hermes::Functor* retFunc,
+    SendStartEvent( int type, Hermes::Functor* retFunc,
                 Hermes::Addr buf, uint32_t count,
                 Hermes::PayloadDataType dtype, Hermes::RankID dest,
                 uint32_t tag, Hermes::Communicator group, 
                 Hermes::MessageRequest* req ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         entry( buf, count, dtype, dest, tag, group, req )  
     {}
 
     SendEntry   entry;
 };
 
-class CollectiveEnterEvent : public SMEnterEvent {
+class CollectiveStartEvent : public SMStartEvent {
 
   public:
-    CollectiveEnterEvent(int type, Hermes::Functor* retFunc,
+    CollectiveStartEvent(int type, Hermes::Functor* retFunc,
                 Hermes::Addr _mydata, Hermes::Addr _result, uint32_t _count,
                 Hermes::PayloadDataType _dtype, Hermes::ReductionOperation _op,
                 Hermes::RankID _root, Hermes::Communicator _group,
                 bool _all ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         mydata(_mydata),
         result(_result),
         count(_count),
@@ -132,17 +132,17 @@ class CollectiveEnterEvent : public SMEnterEvent {
     bool  all;
 };
 
-class GatherBaseEnterEvent : public SMEnterEvent {
+class GatherBaseStartEvent : public SMStartEvent {
 
   public:
-    GatherBaseEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherBaseStartEvent(int type, Hermes::Functor* retFunc,
         Hermes::Addr _sendbuf, uint32_t _sendcnt,
         Hermes::PayloadDataType _sendtype,
         Hermes::Addr _recvbuf,
         Hermes::PayloadDataType _recvtype,
         Hermes::RankID _root, Hermes::Communicator _group ) :
 
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         sendbuf(_sendbuf),
         recvbuf(_recvbuf),
         sendcnt(_sendcnt),
@@ -161,52 +161,52 @@ class GatherBaseEnterEvent : public SMEnterEvent {
     Hermes::Communicator group;
 };
 
-class GatherEnterEvent : public GatherBaseEnterEvent {
+class GatherStartEvent : public GatherBaseStartEvent {
   public:
-    GatherEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(int type, Hermes::Functor* retFunc,
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
             Hermes::PayloadDataType recvtype,
             Hermes::RankID root, Hermes::Communicator group ) :
-        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, root, group ),
             recvcntPtr( _recvcnt),
             displsPtr( _displs ) 
     { }
 
-    GatherEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(int type, Hermes::Functor* retFunc,
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, uint32_t _recvcnt,
             Hermes::PayloadDataType recvtype,
             Hermes::RankID root, Hermes::Communicator group ) :
-        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, root, group ),
             recvcntPtr( 0 ),
             displsPtr( 0 ),
             recvcnt( _recvcnt) 
     { }
 
-    GatherEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(int type, Hermes::Functor* retFunc,
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, uint32_t _recvcnt,
             Hermes::PayloadDataType recvtype,
             Hermes::Communicator group ) :
-        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, 0, group ),
             recvcntPtr( 0 ),
             displsPtr( 0 ),
             recvcnt( _recvcnt) 
     { }
 
-    GatherEnterEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(int type, Hermes::Functor* retFunc,
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
             Hermes::PayloadDataType recvtype, Hermes::Communicator group ) :
-        GatherBaseEnterEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, 0, group ),
             recvcntPtr( _recvcnt),
             displsPtr( _displs )
@@ -217,15 +217,15 @@ class GatherEnterEvent : public GatherBaseEnterEvent {
     uint32_t recvcnt;
 };
 
-class AlltoallEnterEvent: public SMEnterEvent {
+class AlltoallStartEvent: public SMStartEvent {
   public:
-    AlltoallEnterEvent( int type, Hermes::Functor* retFunc,
+    AlltoallStartEvent( int type, Hermes::Functor* retFunc,
             Hermes::Addr _sendbuf, uint32_t _sendcnt, 
             Hermes::PayloadDataType _sendtype, 
             Hermes::Addr _recvbuf, uint32_t _recvcnt, 
             Hermes::PayloadDataType _recvtype, 
             Hermes::Communicator _group  ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         sendbuf( _sendbuf ),
         sendcnt( _sendcnt ),
         sendcnts( NULL ),
@@ -237,7 +237,7 @@ class AlltoallEnterEvent: public SMEnterEvent {
         group( _group )
     { } 
 
-    AlltoallEnterEvent( int type, Hermes::Functor* retFunc,
+    AlltoallStartEvent( int type, Hermes::Functor* retFunc,
             Hermes::Addr _sendbuf, Hermes::Addr _sendcnts,  
             Hermes::Addr _senddispls,
             Hermes::PayloadDataType _sendtype, 
@@ -245,7 +245,7 @@ class AlltoallEnterEvent: public SMEnterEvent {
             Hermes::Addr _recvdispls,
             Hermes::PayloadDataType _recvtype, 
             Hermes::Communicator _group ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         sendbuf( _sendbuf ),
         sendcnts( _sendcnts ),
         senddispls( _senddispls ),
@@ -270,11 +270,11 @@ class AlltoallEnterEvent: public SMEnterEvent {
     Hermes::Communicator    group;
 };
 
-class WaitEnterEvent : public SMEnterEvent {
+class WaitStartEvent : public SMStartEvent {
   public:
-    WaitEnterEvent( int type, Hermes::Functor* retFunc,
+    WaitStartEvent( int type, Hermes::Functor* retFunc,
         Hermes::MessageRequest* _req, Hermes::MessageResponse* _resp ) :
-        SMEnterEvent( type, retFunc ),
+        SMStartEvent( type, retFunc ),
         req(_req),
         resp(_resp)
     { }

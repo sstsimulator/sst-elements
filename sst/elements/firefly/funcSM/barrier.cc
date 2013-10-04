@@ -25,7 +25,7 @@ BarrierFuncSM::BarrierFuncSM(
     m_dbg.setPrefix("@t:BarrierFuncSM::@p():@l ");
 }
 
-void BarrierFuncSM::handleEnterEvent( SST::Event *e) 
+void BarrierFuncSM::handleStartEvent( SST::Event *e) 
 {
 
     if ( m_setPrefix ) {
@@ -37,9 +37,9 @@ void BarrierFuncSM::handleEnterEvent( SST::Event *e)
         m_setPrefix = false;
     }
 
-    BarrierEnterEvent* event = static_cast<BarrierEnterEvent*>(e);
+    BarrierStartEvent* event = static_cast<BarrierStartEvent*>(e);
 
-    CollectiveEnterEvent* tmp = new CollectiveEnterEvent( 0,
+    CollectiveStartEvent* tmp = new CollectiveStartEvent( 0,
                 event->retFunc, NULL, NULL, 0,
                 Hermes::CHAR, Hermes::MAX, 0, Hermes::GroupWorld, true );
 
@@ -47,10 +47,10 @@ void BarrierFuncSM::handleEnterEvent( SST::Event *e)
 
     tmp->retLink = event->retLink;
 
-    CollectiveTreeFuncSM::handleEnterEvent(static_cast<SST::Event*>(tmp));
+    CollectiveTreeFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp));
 }
 
-void BarrierFuncSM::handleProgressEvent( SST::Event *e )
+void BarrierFuncSM::handleEnterEvent( SST::Event *e )
 {
-    CollectiveTreeFuncSM::handleProgressEvent(e);
+    CollectiveTreeFuncSM::handleEnterEvent(e);
 }

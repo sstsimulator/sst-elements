@@ -30,10 +30,10 @@ CollectiveTreeFuncSM::CollectiveTreeFuncSM(
     m_dbg.setPrefix("@t:CollectiveTreeFuncSM::@p():@l ");
 }
 
-void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e) 
+void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e) 
 {
     assert( NULL == m_event );
-    m_event = static_cast< CollectiveEnterEvent* >(e);
+    m_event = static_cast< CollectiveStartEvent* >(e);
 
     ++m_seq;
 
@@ -70,10 +70,10 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e)
 
 void CollectiveTreeFuncSM::handleSelfEvent( SST::Event *e )
 {
-    handleProgressEvent( e );
+    handleEnterEvent( e );
 }
 
-void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
+void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
 {
     switch ( m_state ) {
     case WaitUp:
@@ -193,7 +193,7 @@ void CollectiveTreeFuncSM::handleProgressEvent( SST::Event *e )
             } 
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        exit( static_cast<SMStartEvent*>(m_event), 0 );
         for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
             free( m_bufV[i+1] );
         }

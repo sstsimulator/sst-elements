@@ -28,7 +28,7 @@ RecvFuncSM::RecvFuncSM( int verboseLevel, Output::output_location_t loc,
     m_dbg.setPrefix("@t:RecvFuncSM::@p():@l ");
 }
 
-void RecvFuncSM::handleEnterEvent( SST::Event *e ) 
+void RecvFuncSM::handleStartEvent( SST::Event *e ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -40,7 +40,7 @@ void RecvFuncSM::handleEnterEvent( SST::Event *e )
     }
 
     assert( NULL == m_event ); 
-    m_event = static_cast< RecvEnterEvent* >(e);
+    m_event = static_cast< RecvStartEvent* >(e);
 
     m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
                 m_event->entry.req ? "Irecv":"Recv", 
@@ -110,14 +110,14 @@ void RecvFuncSM::handleSelfEvent( SST::Event *e )
     m_dm->enter();
 }
 
-void RecvFuncSM::handleProgressEvent( SST::Event *e )
+void RecvFuncSM::handleEnterEvent( SST::Event *e )
 {
     assert( m_event );
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_event->entry.req ? "Irecv":"Recv");
     if ( m_event->entry.resp && m_event->entry.resp->src == Hermes::AnySrc  ) {
         m_dm->sleep();
     } else {
-        exit( static_cast< SMEnterEvent*>(m_event), 0 );
+        exit( static_cast< SMStartEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
     }

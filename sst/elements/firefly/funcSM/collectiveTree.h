@@ -99,9 +99,9 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     CollectiveTreeFuncSM( int verboseLevel, Output::output_location_t loc,
             Info* info, ProtocolAPI*, SST::Link* );
 
-    virtual void handleEnterEvent( SST::Event *e);
-    virtual void handleSelfEvent( SST::Event *e);
-    virtual void handleProgressEvent( SST::Event *e );
+    virtual void handleStartEvent( SST::Event* );
+    virtual void handleEnterEvent( SST::Event* );
+    virtual void handleSelfEvent( SST::Event* );
 
     virtual const char* name() {
        return "CollectiveTree"; 
@@ -116,7 +116,7 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     bool                    m_test;
     int                     m_delay;
     bool                    m_pending;
-    CollectiveEnterEvent*   m_event;
+    CollectiveStartEvent*   m_event;
     SST::Link*              m_selfLink;
     CtrlMsg*                m_ctrlMsg;
     std::vector<CtrlMsg::CommReq>  m_recvReqV;

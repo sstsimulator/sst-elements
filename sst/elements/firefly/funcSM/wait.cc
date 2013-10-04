@@ -25,7 +25,7 @@ WaitFuncSM::WaitFuncSM( int verboseLevel, Output::output_location_t loc,
     m_dbg.setPrefix("@t:WaitFuncSM::@p():@l ");
 }
 
-void WaitFuncSM::handleEnterEvent( SST::Event *e) 
+void WaitFuncSM::handleStartEvent( SST::Event *e) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -38,10 +38,10 @@ void WaitFuncSM::handleEnterEvent( SST::Event *e)
 
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-    m_event = static_cast< WaitEnterEvent* >(e);
+    m_event = static_cast< WaitStartEvent* >(e);
 
     if ( m_event->req->src != Hermes::AnySrc ) {
-        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        exit( static_cast<SMStartEvent*>(m_event), 0 );
         delete m_event;
         m_event = NULL;
         return;
@@ -50,13 +50,13 @@ void WaitFuncSM::handleEnterEvent( SST::Event *e)
     m_dm->enter();
 }
 
-void WaitFuncSM::handleProgressEvent( SST::Event *e )
+void WaitFuncSM::handleEnterEvent( SST::Event *e )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     if ( m_event->req->src != Hermes::AnySrc ) {
         m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x\n",
                     m_event->req->src, m_event->req->tag);
-        exit( static_cast<SMEnterEvent*>(m_event), 0 );
+        exit( static_cast<SMStartEvent*>(m_event), 0 );
         // remove entry from m_dm 
         delete m_event;
         m_event = NULL;

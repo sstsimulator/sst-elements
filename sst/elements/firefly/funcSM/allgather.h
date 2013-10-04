@@ -30,8 +30,8 @@ class AllgatherFuncSM :  public FunctionSMInterface
     AllgatherFuncSM( int verboseLevel, Output::output_location_t loc,
             Info* info, ProtocolAPI*, SST::Link* );
 
-    virtual void handleEnterEvent( SST::Event *e);
-    virtual void handleProgressEvent( SST::Event *e );
+    virtual void handleStartEvent( SST::Event* );
+    virtual void handleEnterEvent( SST::Event* );
 
     virtual const char* name() {
        return "Allgather"; 
@@ -41,7 +41,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
 
     SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
-    GatherEnterEvent*   m_event;
+    GatherStartEvent*   m_event;
     bool                m_pending;
     CtrlMsg::CommReq    m_sendReq; 
     CtrlMsg::CommReq    m_recvReq; 

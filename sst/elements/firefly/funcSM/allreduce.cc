@@ -23,7 +23,7 @@ AllreduceFuncSM::AllreduceFuncSM(
     CollectiveTreeFuncSM( verboseLevel, loc, info, xxx, selfLink ) 
 {}
 
-void AllreduceFuncSM::handleEnterEvent( SST::Event *e) 
+void AllreduceFuncSM::handleStartEvent( SST::Event *e) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -34,10 +34,10 @@ void AllreduceFuncSM::handleEnterEvent( SST::Event *e)
         m_setPrefix = false;
     }
 
-    CollectiveTreeFuncSM::handleEnterEvent(e);
+    CollectiveTreeFuncSM::handleStartEvent(e);
 }
 
-void AllreduceFuncSM::handleProgressEvent( SST::Event *e )
+void AllreduceFuncSM::handleEnterEvent( SST::Event *e )
 {
-    CollectiveTreeFuncSM::handleProgressEvent(e);
+    CollectiveTreeFuncSM::handleEnterEvent(e);
 }

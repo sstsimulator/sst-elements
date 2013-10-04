@@ -30,8 +30,8 @@ class WaitFuncSM :  public FunctionSMInterface
     WaitFuncSM( int verboseLevel, Output::output_location_t loc,
         Info*, ProtocolAPI* );
 
-    virtual void handleEnterEvent( SST::Event *e );
-    virtual void handleProgressEvent( SST::Event* );
+    virtual void handleStartEvent( SST::Event* );
+    virtual void handleEnterEvent( SST::Event* );
     
     virtual const char* name() {
        return "Wait"; 
@@ -39,8 +39,8 @@ class WaitFuncSM :  public FunctionSMInterface
 
   private:
 
-    DataMovement*    m_dm;
-    WaitEnterEvent* m_event;
+    DataMovement*   m_dm;
+    WaitStartEvent* m_event;
 };
 
 }

@@ -21,23 +21,23 @@ using namespace Hermes;
 
 void Hades::init(Functor* retFunc )
 {
-    m_functionSM->start( new InitEnterEvent( FunctionSM::Init, retFunc) );
+    m_functionSM->start( new InitStartEvent( FunctionSM::Init, retFunc) );
 }
 
 void Hades::fini(Functor* retFunc)
 {
-    m_functionSM->start( new FiniEnterEvent( FunctionSM::Fini, retFunc) );
+    m_functionSM->start( new FiniStartEvent( FunctionSM::Fini, retFunc) );
 }
 
 void Hades::rank(Communicator group, RankID* rank, Functor* retFunc)
 {
-    m_functionSM->start( new RankEnterEvent(FunctionSM::Rank,
+    m_functionSM->start( new RankStartEvent(FunctionSM::Rank,
                                         retFunc, group, (int*) rank) );
 }
 
 void Hades::size(Communicator group, int* size, Functor* retFunc )
 {
-    m_functionSM->start( new SizeEnterEvent(FunctionSM::Size, 
+    m_functionSM->start( new SizeStartEvent(FunctionSM::Size, 
                                         retFunc, group, size) );
 }
 
@@ -47,7 +47,7 @@ void Hades::send(Addr buf, uint32_t count,
 {
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p count=%d dtype=%d dest=%d tag=%d \
             group=%d\n", buf,count,dtype,dest,tag,group);
-    m_functionSM->start( new SendEnterEvent( FunctionSM::Send, 
+    m_functionSM->start( new SendStartEvent( FunctionSM::Send, 
          retFunc, buf, count, dtype, dest, tag, group, NULL) ); 
 }
 
@@ -57,7 +57,7 @@ void Hades::isend(Addr buf, uint32_t count, PayloadDataType dtype,
 {
     m_dbg.verbose(CALL_INFO,1,0,"buf=%p count=%d dtype=%d dest=%d tag=%d \
             group=%d\n", buf,count,dtype,dest,tag,group);
-    m_functionSM->start( new SendEnterEvent( FunctionSM::Send, 
+    m_functionSM->start( new SendStartEvent( FunctionSM::Send, 
          retFunc, buf, count, dtype, dest, tag, group, req ) );
 }
 
@@ -67,7 +67,7 @@ void Hades::recv(Addr target, uint32_t count, PayloadDataType dtype,
 {
     m_dbg.verbose(CALL_INFO,1,0,"target=%p count=%d dtype=%d source=%d tag=%d \
             group=%d\n", target,count,dtype,source,tag,group);
-    m_functionSM->start( new RecvEnterEvent( FunctionSM::Recv, 
+    m_functionSM->start( new RecvStartEvent( FunctionSM::Recv, 
             retFunc, target, count, dtype, source, tag, group, NULL, resp ) );
 }
 
@@ -77,7 +77,7 @@ void Hades::irecv(Addr target, uint32_t count, PayloadDataType dtype,
 {
     m_dbg.verbose(CALL_INFO,1,0,"target=%p count=%d dtype=%d source=%d tag=%d \
             group=%d\n", target,count,dtype,source,tag,group);
-    m_functionSM->start( new RecvEnterEvent( FunctionSM::Recv, 
+    m_functionSM->start( new RecvStartEvent( FunctionSM::Recv, 
         retFunc, target, count, dtype, source, tag, group, req, NULL ) );
 }
 
@@ -87,7 +87,7 @@ void Hades::allreduce(Addr mydata, Addr result, uint32_t count,
 {
     m_dbg.verbose(CALL_INFO,1,0,"in=%p out=%p count=%d dtype=%d \n",
                 mydata,result,count,dtype);
-    m_functionSM->start( new CollectiveEnterEvent(FunctionSM::Allreduce,
+    m_functionSM->start( new CollectiveStartEvent(FunctionSM::Allreduce,
                          retFunc, mydata, result, count, 
                         dtype, op, 0, group, true) );
 }
@@ -98,7 +98,7 @@ void Hades::reduce(Addr mydata, Addr result, uint32_t count,
 {
     m_dbg.verbose(CALL_INFO,1,0,"in=%p out=%p count=%d dtype=%d \n",
                 mydata,result,count,dtype);
-    m_functionSM->start( new CollectiveEnterEvent(FunctionSM::Reduce,
+    m_functionSM->start( new CollectiveStartEvent(FunctionSM::Reduce,
                          retFunc, mydata, result, count, 
                         dtype, op, root, group, false) );
 }
@@ -107,7 +107,7 @@ void Hades::allgather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
         Communicator group, Functor* retFunc)
 {
-    m_functionSM->start( new GatherEnterEvent(FunctionSM::Allgather, retFunc,
+    m_functionSM->start( new GatherStartEvent(FunctionSM::Allgather, retFunc,
             sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, recvtype, group ) );
 }
@@ -119,7 +119,7 @@ void Hades::allgatherv(
 {
     m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d "
         "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnt,recvcnt);
-    m_functionSM->start( new GatherEnterEvent(FunctionSM::Allgatherv, retFunc,
+    m_functionSM->start( new GatherStartEvent(FunctionSM::Allgatherv, retFunc,
             sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, displs, recvtype, group ) );
 }
@@ -128,7 +128,7 @@ void Hades::gather( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
         RankID root, Communicator group, Functor* retFunc)
 {
-    m_functionSM->start( new GatherEnterEvent(FunctionSM::Gather, retFunc,
+    m_functionSM->start( new GatherStartEvent(FunctionSM::Gather, retFunc,
             sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, recvtype, root, group ) );
 }
@@ -140,7 +140,7 @@ void Hades::gatherv( Addr sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
 {
     m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d "
         "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnt,recvcnt);
-    m_functionSM->start( new GatherEnterEvent(FunctionSM::Gatherv, retFunc,
+    m_functionSM->start( new GatherStartEvent(FunctionSM::Gatherv, retFunc,
             sendbuf, sendcnt, sendtype,
             recvbuf, recvcnt, displs, recvtype, root, group ) );
 }
@@ -152,7 +152,7 @@ void Hades::alltoall(
 {
     m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcnt=%d "
         "recvcnt=%d\n", sendbuf,recvbuf,sendcnt,recvcnt);
-    m_functionSM->start( new AlltoallEnterEvent( FunctionSM::Alltoall, retFunc,
+    m_functionSM->start( new AlltoallStartEvent( FunctionSM::Alltoall, retFunc,
             sendbuf,sendcnt, sendtype, recvbuf, recvcnt, recvtype, group) );
 }
 
@@ -163,7 +163,7 @@ void Hades::alltoallv(
 {
     m_dbg.verbose(CALL_INFO,1,0,"sendbuf=%p recvbuf=%p sendcntPtr=%p "
         "recvcntPtr=%p\n", sendbuf,recvbuf,sendcnts,recvcnts);
-    m_functionSM->start( new AlltoallEnterEvent( FunctionSM::Alltoallv, retFunc,
+    m_functionSM->start( new AlltoallStartEvent( FunctionSM::Alltoallv, retFunc,
             sendbuf, sendcnts, senddispls, sendtype, 
             recvbuf, recvcnts, recvdispls, recvtype,
             group) );
@@ -171,7 +171,7 @@ void Hades::alltoallv(
 
 void Hades::barrier(Communicator group, Functor* retFunc)
 {
-    m_functionSM->start( new BarrierEnterEvent(FunctionSM::Barrier,
+    m_functionSM->start( new BarrierStartEvent(FunctionSM::Barrier,
                          retFunc, group) );
 }
 
@@ -183,7 +183,7 @@ void Hades::probe(RankID source, uint32_t tag,
 void Hades::wait(MessageRequest* req, MessageResponse* resp,
         Functor* retFunc )
 {
-    m_functionSM->start( new WaitEnterEvent( FunctionSM::Wait, 
+    m_functionSM->start( new WaitStartEvent( FunctionSM::Wait, 
                     retFunc, req, resp) );
 }
 
