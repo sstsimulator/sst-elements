@@ -55,7 +55,6 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
 	write(pipe_id[thr], &read_marker, sizeof(read_marker));
 	write(pipe_id[thr], &addr64, sizeof(addr64));
 	write(pipe_id[thr], &readSize, sizeof(readSize));
-	write(pipe_id[thr], &thrID, sizeof(thrID));
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
@@ -66,18 +65,8 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
 	size_t write_size;
 
 	write_size = write(pipe_id[thr], &writer_marker, sizeof(writer_marker));
-
-	if(write_size == -1) {
-		perror("Write error to pipe.");
-		printf("Error writing to file for thread: %d\n", thr);
-		exit(-1);
-	} else {
-		printf("SUCCESSFULLY wrote to the pipe for thread: %d\n", thr);
-	}
-
 	write(pipe_id[thr], &addr64, sizeof(addr64));
 	write(pipe_id[thr], &writeSize, sizeof(writeSize));
-	write(pipe_id[thr], &thrID, sizeof(thrID));
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr) {
@@ -95,7 +84,7 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 
 //	GetLock(&pipe_lock, (INT32) 0);
 
-	std::cout << "Issuing an instruction R/W for thread: " << thr << std::endl;
+//	std::cout << "Issuing an instruction R/W for thread: " << thr << std::endl;
 
 	WriteStartInstructionMarker(thr);
 	WriteInstructionRead(readAddr, readSize, thr);
@@ -111,7 +100,7 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) 
 
 //	GetLock(&pipe_lock, (INT32) 0);
 
-	std::cout << "Issuing an instruction R for thread: " << thr << std::endl;
+//	std::cout << "Issuing an instruction R for thread: " << thr << std::endl;
 
 	WriteStartInstructionMarker(thr);
 	WriteInstructionRead(readAddr, readSize, thr);
@@ -126,7 +115,7 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 
 //	GetLock(&pipe_lock, (INT32) 0);
 
-	std::cout << "Issuing an instruction W for thread: " << thr << std::endl;
+//	std::cout << "Issuing an instruction W for thread: " << thr << std::endl;
 
 	WriteStartInstructionMarker(thr);
 	WriteInstructionWrite(writeAddr, writeSize, thr);
@@ -210,6 +199,8 @@ int main(int argc, char *argv[])
 		printf("Successfully created write pipe for: %s\n", named_pipe_path_core);
             }
     }
+
+    sleep(5);
 
 //    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);

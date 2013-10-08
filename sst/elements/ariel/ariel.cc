@@ -33,7 +33,7 @@ using namespace SST::ArielComponent;
 #define END_INSTRUCTION 64
 
 void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
-	uint64_t cache_offset = addr % cache_line_size;
+	const uint64_t cache_offset = addr % ((uint64_t) cache_line_size);
 
 	if((cache_offset + length) > cache_line_size) {
 		uint64_t cache_left_address = addr;
@@ -42,7 +42,6 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 		// We need data from the next cache line along
 		uint64_t cache_right_address = (addr - cache_offset) + cache_line_size;
 		uint32_t cache_right_size = (addr + length) % cache_line_size;
-
 
 		uint64_t phys_cache_left_addr = translateAddress(cache_left_address);
 		uint64_t phys_cache_right_addr = translateAddress(cache_right_address);
@@ -61,7 +60,13 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 			phys_cache_right_addr / cache_line_size,
 			isRead ? "READ" : "WRITE", thrID);
 
-		assert((cache_left_size + cache_right_size) == length);
+		if((cache_left_size + cache_right_size) != length) {
+			std::cout << "cache length=" << length << " left=" << cache_left_size << " right=" << cache_right_size <<
+				" addr=" << addr << ", cache_offset=" << cache_offset << std::endl;
+			output->fatal(CALL_INFO, -4, 0, 0,
+			"Error issuing a cache operation, cache size left %" PRIu32 " != cache size right %" PRIu32 ", length=%" PRIu32 "\n",
+			cache_left_size, cache_right_size, length);
+		}
 
 		// Produce operations for the lower and upper halves of the transaction
 		MemEvent *e_lower = new MemEvent(this, phys_cache_left_addr, isRead ? ReadReq : WriteReq);
@@ -96,6 +101,13 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 		ev->setSize(length);
 
 		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(ev->getID(), ev) );
+
+		// Check we are not issuing to a random core.
+		if(thrID > core_count) {
+			output->fatal(CALL_INFO, -4, 0, 0,
+			"Error: threadID %" PRIu32 " is greater than number of cores: %" PRIu32 "\n",
+			thrID, core_count);
+		}
 
 		cache_link[thrID]->send(ev);
 	}
@@ -219,11 +231,11 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   output->verbose(CALL_INFO, 2, 0, "Found %d application arguments in model description\n", app_arg_count);
 
-  for(int app_arg_index = 11; app_arg_index < (12 + app_arg_count - 1); ++app_arg_index) {
-	sprintf(arg_name_buffer, "apparg%d", app_arg_index - 11);
+  for(int app_arg_index = 13; app_arg_index < 13 + app_arg_count; ++app_arg_index) {
+	sprintf(arg_name_buffer, "apparg%d", app_arg_index - 13);
 	std::string app_arg_i = params.find_string(arg_name_buffer);
 
-	output->verbose(CALL_INFO, 4, 0, "Found new application argument: %s\n", app_arg_i.c_str());
+	output->verbose(CALL_INFO, 4, 0, "Found new application argument: [%s]\n", app_arg_i.c_str());
 
 	execute_args[app_arg_index] = (char*) malloc(sizeof(char) * (app_arg_i.size() + 1));
         strcpy(execute_args[app_arg_index], app_arg_i.c_str());
@@ -232,10 +244,11 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   execute_args[13 + app_arg_count] = NULL;
 
   output->verbose(CALL_INFO, 1, 0, "Starting executable: %s\n", execute_binary);
-  output->verbose(CALL_INFO, 1, 0, "Call Arguments: %s %s %s %s %s %s %s %s %s %s %s\n",
+  output->verbose(CALL_INFO, 1, 0, "Call Arguments: %s %s %s %s %s %s %s %s %s %s %s %s %s (and application arguments)\n",
 	execute_args[0], execute_args[1], execute_args[2], execute_args[3],
 	execute_args[4], execute_args[5], execute_args[6], execute_args[7],
-	execute_args[8], execute_args[9], execute_args[10]);
+	execute_args[8], execute_args[9], execute_args[10], execute_args[11],
+	execute_args[12]);
 
   max_transactions = (uint32_t) params.find_integer("maxtransactions", core_count * 32);
   output->verbose(CALL_INFO, 1, 0, "Configuring maximum transactions for %" PRIu32 ".\n", max_transactions);
@@ -245,10 +258,11 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   create_pinchild(execute_binary, execute_args);
 
   pipe_id = (int*) malloc(sizeof(int) * core_count);
-  for(int pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
-	char* named_pipe_core = (char*) malloc(sizeof(char*) * FILENAME_MAX);
-	sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
+  char* named_pipe_core = (char*) malloc(sizeof(char) * 255);
 
+  for(int pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
+	output->verbose(CALL_INFO, 1, 0, "Generating name for pipe (thread %d)...\n", pipe_counter);
+	sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
 	output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", named_pipe_core);
 
   	// We will create a pipe to talk to the PIN child.
@@ -263,9 +277,6 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 		output->verbose(CALL_INFO, 2, 0, "Successfully created pipe: %s on file ID: %d (for core: %d)\n",
 			named_pipe_core, pipe_id[pipe_counter], pipe_counter);
 	}
-
-	// Free the temp space
-	free(named_pipe_core);
   }
 
   output->verbose(CALL_INFO, 2, 0, "Completed pipe opening, register clock and then will continue.\n");
@@ -408,7 +419,7 @@ bool Ariel::tick( Cycle_t ) {
 				read(pipe_id[core_counter], &command, sizeof(command));
 
 				if(command == PERFORM_EXIT) {
-					output->verbose(CALL_INFO, 1, 0,
+					output->verbose(CALL_INFO, 8, 0,
 						"Read an exit command from pipe stream\n");
 
 					// Exit
@@ -417,7 +428,7 @@ bool Ariel::tick( Cycle_t ) {
 				}
 
 				if(command == START_INSTRUCTION) {
-					output->verbose(CALL_INFO, 1, 0,
+					output->verbose(CALL_INFO, 8, 0,
 						"Read a start instruction\n");
 					instructions++;
 				}
@@ -431,10 +442,13 @@ bool Ariel::tick( Cycle_t ) {
 						read(pipe_id[core_counter], &addr, sizeof(addr));
 						uint32_t read_size;
 						read(pipe_id[core_counter], &read_size, sizeof(read_size));
-						uint32_t thrID;
-						read(pipe_id[core_counter], &thrID, sizeof(thrID));
 
-						issue(addr, read_size, true, thrID);
+						if(read_size > (uint32_t) cache_line_size) {
+							output->verbose(CALL_INFO, 2, 0, "Length of a read is larger than a cache line: %" PRIu32 "\n",
+								read_size);
+						}
+
+						issue(addr, read_size, true, (uint32_t) core_counter);
 
 						memory_ops++;
 						read_ops++;
@@ -443,10 +457,13 @@ bool Ariel::tick( Cycle_t ) {
 						read(pipe_id[core_counter], &addr, sizeof(addr));
 						uint32_t write_size;
 						read(pipe_id[core_counter], &write_size, sizeof(write_size));
-						uint32_t thrID;
-						read(pipe_id[core_counter], &thrID, sizeof(thrID));
 
-						issue(addr, write_size, false, thrID);
+						if(write_size > (uint32_t) cache_line_size) {
+							output->verbose(CALL_INFO, 2, 0, "Length of write is larger than a cache line: %" PRIu32 "\n",
+								write_size);
+						}
+
+						issue(addr, write_size, false, (uint32_t) core_counter);
 
 						memory_ops++;
 						write_ops++;
