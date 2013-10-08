@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <poll.h>
 
 using namespace std;
 using namespace SST::Interfaces;
@@ -57,7 +58,7 @@ private:
 
   uint64_t max_inst;
   char* named_pipe;
-  int pipe_id;
+  int* pipe_id;
   std::string user_binary;
   Output* output;
 

@@ -19,9 +19,12 @@ KNOB<UINT64> MaxInstructions(KNOB_MODE_WRITEONCE, "pintool",
     "i", "10000000000", "Maximum number of instructions to run");
 KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool",
     "v", "0", "SST verbosity level");
+KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool",
+    "c", "1", "Maximum core count to use for data pipes.");
 
-PIN_LOCK pipe_lock;
-int pipe_id;
+//PIN_LOCK pipe_lock;
+UINT32 core_count;
+int* pipe_id;
 
 #define PERFORM_EXIT 1
 #define PERFORM_READ 2
@@ -36,13 +39,12 @@ VOID Fini(INT32 code, VOID *v)
 	}
 
 	uint8_t command = PERFORM_EXIT;
+	write(pipe_id[0], &command, sizeof(command));
 
-	GetLock(&pipe_lock, (INT32) 0);
-	write(pipe_id, &command, sizeof(command));
-	ReleaseLock(&pipe_lock);
-
-	// Close the pipe and clean up
-	close(pipe_id);
+	for(int i = 0; i < core_count; ++i) {
+		// Close the pipe and clean up
+		close(pipe_id[i]);
+	}
 }
 
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
@@ -50,10 +52,10 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
 	uint64_t addr64 = (uint64_t) address;
 	uint32_t thrID = (uint32_t) thr;
 
-	write(pipe_id, &read_marker, sizeof(read_marker));
-	write(pipe_id, &addr64, sizeof(addr64));
-	write(pipe_id, &readSize, sizeof(readSize));
-	write(pipe_id, &thrID, sizeof(thrID));
+	write(pipe_id[thr], &read_marker, sizeof(read_marker));
+	write(pipe_id[thr], &addr64, sizeof(addr64));
+	write(pipe_id[thr], &readSize, sizeof(readSize));
+	write(pipe_id[thr], &thrID, sizeof(thrID));
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
@@ -61,55 +63,78 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
 	uint64_t addr64 = (uint64_t) address;
 	uint32_t thrID = (uint32_t) thr;
 
-	write(pipe_id, &writer_marker, sizeof(writer_marker));
-	write(pipe_id, &addr64, sizeof(addr64));
-	write(pipe_id, &writeSize, sizeof(writeSize));
-	write(pipe_id, &thrID, sizeof(thrID));
+	size_t write_size;
+
+	write_size = write(pipe_id[thr], &writer_marker, sizeof(writer_marker));
+
+	if(write_size == -1) {
+		perror("Write error to pipe.");
+		printf("Error writing to file for thread: %d\n", thr);
+		exit(-1);
+	} else {
+		printf("SUCCESSFULLY wrote to the pipe for thread: %d\n", thr);
+	}
+
+	write(pipe_id[thr], &addr64, sizeof(addr64));
+	write(pipe_id[thr], &writeSize, sizeof(writeSize));
+	write(pipe_id[thr], &thrID, sizeof(thrID));
 }
 
-VOID WriteStartInstructionMarker() {
+VOID WriteStartInstructionMarker(UINT32 thr) {
 	const uint8_t inst_marker = START_INSTRUCTION;
-	write(pipe_id, &inst_marker, sizeof(inst_marker));
+	write(pipe_id[thr], &inst_marker, sizeof(inst_marker));
 }
 
-VOID WriteEndInstructionMarker() {
+VOID WriteEndInstructionMarker(UINT32 thr) {
 	const uint8_t inst_marker = END_INSTRUCTION;
-	write(pipe_id, &inst_marker, sizeof(inst_marker));
+	write(pipe_id[thr], &inst_marker, sizeof(inst_marker));
 }
 
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 	ADDRINT* writeAddr, UINT32 writeSize) {
 
-	GetLock(&pipe_lock, (INT32) 0);
+//	GetLock(&pipe_lock, (INT32) 0);
 
-	WriteStartInstructionMarker();
+	std::cout << "Issuing an instruction R/W for thread: " << thr << std::endl;
+
+	WriteStartInstructionMarker(thr);
 	WriteInstructionRead(readAddr, readSize, thr);
 	WriteInstructionWrite(writeAddr, writeSize, thr);
-	WriteEndInstructionMarker();
+	WriteEndInstructionMarker(thr);
 
-	ReleaseLock(&pipe_lock);
+//	sync();
+
+//	ReleaseLock(&pipe_lock);
 }
 
 VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) {
 
-	GetLock(&pipe_lock, (INT32) 0);
+//	GetLock(&pipe_lock, (INT32) 0);
 
-	WriteStartInstructionMarker();
+	std::cout << "Issuing an instruction R for thread: " << thr << std::endl;
+
+	WriteStartInstructionMarker(thr);
 	WriteInstructionRead(readAddr, readSize, thr);
-	WriteEndInstructionMarker();
+	WriteEndInstructionMarker(thr);
 
-	ReleaseLock(&pipe_lock);
+//	sync();
+
+//	ReleaseLock(&pipe_lock);
 }
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
-	GetLock(&pipe_lock, (INT32) 0);
+//	GetLock(&pipe_lock, (INT32) 0);
 
-	WriteStartInstructionMarker();
+	std::cout << "Issuing an instruction W for thread: " << thr << std::endl;
+
+	WriteStartInstructionMarker(thr);
 	WriteInstructionWrite(writeAddr, writeSize, thr);
-	WriteEndInstructionMarker();
+	WriteEndInstructionMarker(thr);
 
-	ReleaseLock(&pipe_lock);
+//	sync();
+
+//	ReleaseLock(&pipe_lock);
 }
 
 VOID InstrumentInstruction(INS ins, VOID *v)
@@ -163,19 +188,30 @@ int main(int argc, char *argv[])
     if(SSTVerbosity.Value() > 0) {
 	std::cout << "SSTARIEL: Loading Ariel Tool to connect to SST on pipe: " <<
 		SSTNamedPipe.Value() << " max instruction count: " <<
-		MaxInstructions.Value() << std::endl;
+		MaxInstructions.Value() <<
+		" max core count: " << MaxCoreCount.Value() << std::endl;
     }
 
-    const char* named_pipe_path = SSTNamedPipe.Value().c_str();
-    pipe_id = open(named_pipe_path, O_WRONLY);
+    core_count = MaxCoreCount.Value();
+    pipe_id = (int*) malloc(sizeof(int) * core_count);
 
-    if(pipe_id < 0) {
-	fprintf(stderr, "ERROR: Unable to connect to pipe: %s from ARIEL\n",
-		named_pipe_path);
-	exit(-1);
+    for(int i = 0; i < core_count; ++i) {
+	    const char* named_pipe_path = SSTNamedPipe.Value().c_str();
+	    char* named_pipe_path_core = (char*) malloc(sizeof(char) * FILENAME_MAX);
+	    sprintf(named_pipe_path_core, "%s-%d", named_pipe_path, i);
+
+	    pipe_id[i] = open(named_pipe_path_core, O_WRONLY);
+
+	    if(pipe_id[i] < 0) {
+		fprintf(stderr, "ERROR: Unable to connect to pipe: %s from ARIEL\n",
+			named_pipe_path_core);
+		exit(-1);
+    	    } else {
+		printf("Successfully created write pipe for: %s\n", named_pipe_path_core);
+            }
     }
 
-    InitLock(&pipe_lock);
+//    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
     PIN_StartProgram();
 

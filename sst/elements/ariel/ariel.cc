@@ -185,8 +185,15 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   page_table = new std::map<uint64_t, uint64_t>();
   next_free_page_start = page_size;
 
+  int app_arg_count = params.find_integer("appargcount", 0);
+
+  // Get the number of virtual cores, defaults to 1 = serial, allow up to 32 entries per core (these
+  // are shared across the processor as a whole.
+  core_count = (uint32_t) params.find_integer("corecount", 1);
+  output->verbose(CALL_INFO, 1, 0, "Creating processing for %" PRIu32 " cores.\n", core_count);
+
   char* execute_binary = PINTOOL_EXECUTABLE;
-  char** execute_args = (char**) malloc(sizeof(char*) * 12);
+  char** execute_args = (char**) malloc(sizeof(char*) * 14 + app_arg_count);
 
   execute_args[0] = "pintool";
   execute_args[1] = "-t";
@@ -201,10 +208,28 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   execute_args[7] = "-i";
   execute_args[8] = (char*) malloc(sizeof(char) * 30);
   sprintf(execute_args[8], "%" PRIu64, max_inst);
-  execute_args[9] = "--";
-  execute_args[10] = (char*) malloc(sizeof(char) * (user_binary.size() + 1));
-  strcpy(execute_args[10], user_binary.c_str());
-  execute_args[11] = NULL;
+  execute_args[9] = "-c";
+  execute_args[10] = (char*) malloc(sizeof(char) * 8);
+  sprintf(execute_args[10], "%" PRIu32, core_count);
+  execute_args[11] = "--";
+  execute_args[12] = (char*) malloc(sizeof(char) * (user_binary.size() + 1));
+  strcpy(execute_args[12], user_binary.c_str());
+
+  char arg_name_buffer[64];
+
+  output->verbose(CALL_INFO, 2, 0, "Found %d application arguments in model description\n", app_arg_count);
+
+  for(int app_arg_index = 11; app_arg_index < (12 + app_arg_count - 1); ++app_arg_index) {
+	sprintf(arg_name_buffer, "apparg%d", app_arg_index - 11);
+	std::string app_arg_i = params.find_string(arg_name_buffer);
+
+	output->verbose(CALL_INFO, 4, 0, "Found new application argument: %s\n", app_arg_i.c_str());
+
+	execute_args[app_arg_index] = (char*) malloc(sizeof(char) * (app_arg_i.size() + 1));
+        strcpy(execute_args[app_arg_index], app_arg_i.c_str());
+  }
+
+  execute_args[13 + app_arg_count] = NULL;
 
   output->verbose(CALL_INFO, 1, 0, "Starting executable: %s\n", execute_binary);
   output->verbose(CALL_INFO, 1, 0, "Call Arguments: %s %s %s %s %s %s %s %s %s %s %s\n",
@@ -212,23 +237,40 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 	execute_args[4], execute_args[5], execute_args[6], execute_args[7],
 	execute_args[8], execute_args[9], execute_args[10]);
 
+  max_transactions = (uint32_t) params.find_integer("maxtransactions", core_count * 32);
+  output->verbose(CALL_INFO, 1, 0, "Configuring maximum transactions for %" PRIu32 ".\n", max_transactions);
+
+  output->verbose(CALL_INFO, 1, 0, "Launched child PIN process, will connect to PIPE...\n");
   // Spawn the PIN process
   create_pinchild(execute_binary, execute_args);
 
-  output->verbose(CALL_INFO, 1, 0, "Launched child PIN process, will connect to PIPE...\n");
+  pipe_id = (int*) malloc(sizeof(int) * core_count);
+  for(int pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
+	char* named_pipe_core = (char*) malloc(sizeof(char*) * FILENAME_MAX);
+	sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
 
-  // We will create a pipe to talk to the PIN child.
-  mkfifo(named_pipe, 0666);
-  pipe_id = open(named_pipe, O_RDONLY);
+	output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", named_pipe_core);
 
-  output->verbose(CALL_INFO, 2, 0, "Passed the pipe opening, register clock and then will continue.\n");
+  	// We will create a pipe to talk to the PIN child.
+  	mkfifo(named_pipe_core, 0666);
+  	pipe_id[pipe_counter] = open(named_pipe_core, O_RDONLY | O_NONBLOCK);
+
+	if(pipe_id[pipe_counter] == -1) {
+		// File creation failed.
+		perror("Unable to create pipe\n");
+		output->fatal(CALL_INFO, -1, 0, 0, "Failed to create pipe: %s\n", named_pipe_core);
+	} else {
+		output->verbose(CALL_INFO, 2, 0, "Successfully created pipe: %s on file ID: %d (for core: %d)\n",
+			named_pipe_core, pipe_id[pipe_counter], pipe_counter);
+	}
+
+	// Free the temp space
+	free(named_pipe_core);
+  }
+
+  output->verbose(CALL_INFO, 2, 0, "Completed pipe opening, register clock and then will continue.\n");
 
   pending_transaction = NULL;
-
-  // Get the number of virtual cores, defaults to 1 = serial, allow up to 32 entries per core (these
-  // are shared across the processor as a whole.
-  core_count = (uint32_t) params.find_integer("corecount", 1);
-  max_transactions = (uint32_t) params.find_integer("maxtransactions", core_count * 32);
 
   // Register a clock for ourselves
   registerClock( "1GHz",
@@ -260,11 +302,25 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
 void Ariel::finish() {
   output->verbose(CALL_INFO, 2, 0, "Component is finishing.\n");
-  close(pipe_id);
 
-  output->verbose(CALL_INFO, 2, 0, "Removing named pipe: %s\n", named_pipe);
-  // Attempt to remove the pipe
-  remove(named_pipe);
+  for(int i = 0; i < core_count; ++i) {
+  	close(pipe_id[i]);
+  }
+
+  output->verbose(CALL_INFO, 2, 0, "Pipes have been closed, attempting to free resources...\n");
+
+  for(int i = 0; i < core_count; ++i) {
+	char* named_pipe_core = (char*) malloc(sizeof(char) * FILENAME_MAX);
+	sprintf(named_pipe_core, "%s-%d", named_pipe, i);
+
+  	output->verbose(CALL_INFO, 2, 0, "Removing named pipe: %s\n", named_pipe_core);
+
+  	// Attempt to remove the pipe
+  	remove(named_pipe_core);
+
+	// Free the space we allocated for the name
+	free(named_pipe_core);
+  }
 
   output->verbose(CALL_INFO, 2, 0, "Component finish completed.\n");
   output->verbose(CALL_INFO, 0, 0, "Insts:            %" PRIu64 "\n", instructions);
@@ -330,64 +386,87 @@ bool Ariel::tick( Cycle_t ) {
         } else if( pending_requests.size() >= max_transactions) {
 		output->verbose(CALL_INFO, 2, 0, "Pending transactions has reached limit of %" PRIu32 "\n", max_transactions);
 	} else if( pending_requests.size() < max_transactions) {
-		uint8_t command = 0;
-		read(pipe_id, &command, sizeof(command));
-
-		if(command == PERFORM_EXIT) {
-			output->verbose(CALL_INFO, 1, 0,
-				"Read an exit command from pipe stream\n");
-
-			// Exit
-			primaryComponentOKToEndSim();
-			return true;
+		// Configure the polling set to read from the many thread pipes we have.
+		struct pollfd pipe_pollfd[core_count];
+		for(int core_counter = 0; core_counter < core_count; ++core_counter) {
+			pipe_pollfd[core_counter].fd = pipe_id[core_counter];
+			pipe_pollfd[core_counter].events = POLLIN;
 		}
 
-		if(command == START_INSTRUCTION) {
-			output->verbose(CALL_INFO, 1, 0,
-				"Read a start instruction\n");
-			instructions++;
-		}
+		output->verbose(CALL_INFO, 4, 0, "Polling for new data from the PIN tools...\n");
+		// Poll on the files remembering we wait
+		poll(pipe_pollfd, (unsigned int) core_count, 10);
 
-		// Read the next instruction
-		read(pipe_id, &command, sizeof(command));
+		output->verbose(CALL_INFO, 4, 0, "Poll operation has completed.\n");
 
-		while(command != END_INSTRUCTION) {
-			if(command == PERFORM_READ) {
-				uint64_t addr;
-				read(pipe_id, &addr, sizeof(addr));
-				uint32_t read_size;
-				read(pipe_id, &read_size, sizeof(read_size));
-				uint32_t thrID;
-				read(pipe_id, &thrID, sizeof(thrID));
+		for(int core_counter = 0; core_counter < core_count; ++core_counter) {
+			uint8_t command = 0;
 
-				issue(addr, read_size, true, thrID);
+			if(pipe_pollfd[core_counter].revents & POLLIN) {
+				output->verbose(CALL_INFO, 4, 0, "Data available for core: %d\n", core_counter);
 
-				memory_ops++;
-			read_ops++;
-			} else if (command == PERFORM_WRITE) {
-				uint64_t addr;
-				read(pipe_id, &addr, sizeof(addr));
-				uint32_t write_size;
-				read(pipe_id, &write_size, sizeof(write_size));
-				uint32_t thrID;
-				read(pipe_id, &thrID, sizeof(thrID));
+				read(pipe_id[core_counter], &command, sizeof(command));
 
-				issue(addr, write_size, false, thrID);
+				if(command == PERFORM_EXIT) {
+					output->verbose(CALL_INFO, 1, 0,
+						"Read an exit command from pipe stream\n");
 
-				memory_ops++;
-				write_ops++;
-			} else {
-				// So PIN may occassionally not get instrumentation correct and we get
-				// instruction records nested inside each other :(.
-				if(command == START_INSTRUCTION) {
-					instructions++;
-				} else {
-					output->fatal(CALL_INFO, -1, 0, 0,
-						"Error: unknown type of operation: %d\n", command);
+					// Exit
+					primaryComponentOKToEndSim();
+					return true;
 				}
-			}
 
-			read(pipe_id, &command, sizeof(command));
+				if(command == START_INSTRUCTION) {
+					output->verbose(CALL_INFO, 1, 0,
+						"Read a start instruction\n");
+					instructions++;
+				}
+
+				// Read the next instruction
+				read(pipe_id[core_counter], &command, sizeof(command));
+
+				while(command != END_INSTRUCTION) {
+					if(command == PERFORM_READ) {
+						uint64_t addr;
+						read(pipe_id[core_counter], &addr, sizeof(addr));
+						uint32_t read_size;
+						read(pipe_id[core_counter], &read_size, sizeof(read_size));
+						uint32_t thrID;
+						read(pipe_id[core_counter], &thrID, sizeof(thrID));
+
+						issue(addr, read_size, true, thrID);
+
+						memory_ops++;
+						read_ops++;
+					} else if (command == PERFORM_WRITE) {
+						uint64_t addr;
+						read(pipe_id[core_counter], &addr, sizeof(addr));
+						uint32_t write_size;
+						read(pipe_id[core_counter], &write_size, sizeof(write_size));
+						uint32_t thrID;
+						read(pipe_id[core_counter], &thrID, sizeof(thrID));
+
+						issue(addr, write_size, false, thrID);
+
+						memory_ops++;
+						write_ops++;
+					} else {
+						// So PIN may occassionally not get instrumentation correct and we get
+						// instruction records nested inside each other :(.
+						if(command == START_INSTRUCTION) {
+							instructions++;
+						} else {
+							output->fatal(CALL_INFO, -1, 0, 0,
+								"Error: unknown type of operation: %d\n", command);
+						}
+					}
+
+					read(pipe_id[core_counter], &command, sizeof(command));
+				}
+			} else {
+				output->verbose(CALL_INFO, 2, 0, "No data is available for core %" PRIu32 "\n",
+					core_counter);
+			}
 		}
 	}
 
