@@ -78,6 +78,9 @@ class CtrlMsg : public ProtocolAPI {
 
     struct CommReq {
         CommReq() : info( NULL ) {}
+        ~CommReq() {
+            if ( info ) delete info;
+        }
         BaseInfo*    info;
         bool done;
     };

@@ -346,6 +346,10 @@ bool CtrlMsg::test( CommReq * req, int& delay )
         }
         delete xxx;
     }
+    if ( req->done ) {
+        delete req->info;
+        req->info = NULL;
+    }
 
     return req->done;
 }
