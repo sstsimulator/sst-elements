@@ -63,17 +63,19 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 
     requestSize = (size_t)params.find_integer("request_width", 64);
 
-	registerClock(clock_freq, new Clock::Handler<MemController>(this,
+    registerClock(clock_freq, new Clock::Handler<MemController>(this,
 				&MemController::clock));
-	registerTimeBase("1 ns", true);
+    registerTimeBase("1 ns", true);
 
-	// do we divert directory to the self-link?
-	divert_DC_lookups = params.find_integer("divert_DC_lookups", 0);
+    // do we divert directory to the self-link?
+    divert_DC_lookups = params.find_integer("divert_DC_lookups", 0);
 
-	// check for and initialize dramsim
-	use_dramsim = (bool)params.find_integer("use_dramsim", 0);
+    // check for and initialize dramsim
+    use_dramsim = (bool)params.find_integer("use_dramsim", 0);
     use_vaultSim = (bool)params.find_integer("use_vaultSim", 0);
-    if ( use_dramsim && use_vaultSim ) {
+    use_hybridsim = (bool)params.find_integer("use_hybridsim", 0);
+
+    if ( use_dramsim && use_vaultSim) {
         _abort(MemController, "Controller configured to use dramsim & vaultSim. Choose one\n");
     }
 
@@ -110,6 +112,25 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
         std::string access_time = params.find_string("access_time", "100 ns");
         cube_link = configureLink( "cube_link", access_time,
                 new Event::Handler<MemController>(this, &MemController::handleCubeEvent));
+    } else if ( use_hybridsim ) {
+	//MARYLAND CHANGES
+	// NOTE: If use_dramsim and use_hybridsim are both enabled no error will be issued, instead the system will default to dramsim and use only that
+#if !defined(HAVE_LIBHYBRIDSIM)
+	_abort(MemController, "This version of SST not compiled with HybridSim.\n");
+#else
+	std::string hybridIniFilename = params.find_string("system_ini",
+							   NO_STRING_DEFINED);
+	if ( hybridIniFilename == NO_STRING_DEFINED )
+	    _abort(MemController, "XML must define a 'system_ini' file parameter\n");
+	
+	memSystem = HybridSim::getMemorySystemInstance(
+	    1, hybridIniFilename);
+
+	typedef HybridSim::Callback <MemController, void, uint, uint64_t, uint64_t> hybridsim_callback_t;
+	HybridSim::TransactionCompleteCB *read_cb = new hybridsim_callback_t(this, &MemController::hybridSimDone);
+	HybridSim::TransactionCompleteCB *write_cb = new hybridsim_callback_t(this, &MemController::hybridSimDone);
+	memSystem->RegisterCallbacks(read_cb, write_cb);
+#endif
     } else {
         std::string access_time = params.find_string("access_time", "100 ns");
         self_link = configureSelfLink("Self", access_time,
@@ -224,6 +245,9 @@ void MemController::finish(void)
 #if defined(HAVE_LIBDRAMSIM)
 	if ( use_dramsim )
 		memSystem->printStats(true);
+#elif defined(HAVE_LIBHYBRIDSIM)
+	if ( use_hybridsim )
+	    memSystem->printLogfile();
 #endif
 
     Output out("", 0, 0, statsOutputTarget);
@@ -345,7 +369,10 @@ bool MemController::clock(Cycle_t cycle)
 {
 #if defined(HAVE_LIBDRAMSIM)
 	if ( use_dramsim )
-		memSystem->update();
+	    memSystem->update();
+#elif defined(HAVE_LIBHYBRIDSIM)
+	if( use_hybridsim )
+	    memSystem->update();
 #endif
 
     while ( !requestQueue.empty() ) {
@@ -380,6 +407,16 @@ bool MemController::clock(Cycle_t cycle)
             outToCubes[reqID] = req; // associate the memEvent w/ the DRAMReq
             MemEvent *outgoingEvent = new MemEvent(req->reqEvent); // we make a copy, because the dramreq keeps to 'original'
             cube_link->send(outgoingEvent); // send the event off
+	} else if ( use_hybridsim ) {
+#if defined(HAVE_LIBHYBRIDSIM)
+
+            bool ok = memSystem->WillAcceptTransaction();
+            if ( !ok ) break;
+            ok = memSystem->addTransaction(req->isWrite, addr);
+            if ( !ok ) break;  // This *SHOULD* always be ok
+	    dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
+            dramReqs[addr].push_back(req);
+#endif
         } else {
             dbg.output(CALL_INFO, "Issued transaction for address 0x%"PRIx64"\n", addr);
             self_link->send(1, new MemCtrlEvent(req));
@@ -609,3 +646,19 @@ void MemController::dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcy
 
 #endif
 
+#if defined(HAVE_LIBHYBRIDSIM)
+
+void MemController::hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle)
+{
+    std::deque<DRAMReq *> &reqs = dramReqs[addr];
+    dbg.output(CALL_INFO, "Memory Request for 0x%"PRIx64" Finished [%zu reqs]\n", addr, reqs.size());
+    assert(reqs.size());
+    DRAMReq *req = reqs.front();
+    reqs.pop_front();
+    if ( reqs.size() == 0 )
+        dramReqs.erase(addr);
+
+    handleMemResponse(req);
+}
+
+#endif

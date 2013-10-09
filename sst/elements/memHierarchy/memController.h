@@ -39,6 +39,20 @@ using namespace SST::Interfaces;
 #endif
 #endif
 
+// MARYLAND CHANGES
+#if defined(HAVE_LIBHYBRIDSIM)
+// HybridSim also uses DEBUG
+#ifdef DEBUG
+# define OLD_DEBUG DEBUG
+# undef DEBUG
+#endif
+#include <HybridSim.h>
+#ifdef OLD_DEBUG
+# define DEBUG OLD_DEBUG
+# undef OLD_DEBUG
+#endif
+#endif
+
 
 namespace SST {
 namespace MemHierarchy {
@@ -159,6 +173,7 @@ private:
     bool divert_DC_lookups;
     bool use_dramsim;
     bool use_vaultSim;
+    bool use_hybridsim;
 
     Output dbg;
     SST::Link *self_link;
@@ -200,7 +215,13 @@ private:
     std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
 #endif
 
+ // MARYLAND CHANGES
+#if defined(HAVE_LIBHYBRIDSIM)
+    void hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
+    HybridSim::HybridSystem *memSystem;
+    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+#endif
 };
 
 
