@@ -29,15 +29,21 @@
 namespace SST {
 namespace MemHierarchy {
 
-/* Send this to the DMAEngine to cause a DMA.  Retrurned when complete. */
+/* Send this to the DMAEngine to cause a DMA.  Returned when complete. */
 class DMACommand : public Event {
+private:
+    static uint64_t main_id;
+    MemEvent::id_type event_id;
 public:
     Addr dst;
     Addr src;
     size_t size;
-    DMACommand(Addr dst, Addr src, size_t size) :
+    DMACommand(const Component *origin, Addr dst, Addr src, size_t size) :
         Event(), dst(dst), src(src), size(size)
-    { }
+    {
+      event_id = std::make_pair(main_id++, origin->getId());
+    }
+    MemEvent::id_type getID(void) const { return event_id; }
 
 private:
     DMACommand() {} // For serialization
@@ -46,6 +52,7 @@ private:
     void serialize(Archive & ar, const unsigned int version)
     {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+        ar & BOOST_SERIALIZATION_NVP(event_id);
         ar & BOOST_SERIALIZATION_NVP(dst);
         ar & BOOST_SERIALIZATION_NVP(src);
         ar & BOOST_SERIALIZATION_NVP(size);

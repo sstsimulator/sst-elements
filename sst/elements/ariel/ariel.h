@@ -20,6 +20,7 @@
 
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
+#include <sst/elements/memHierarchy/dmaEngine.h>
 
 #include <cstring>
 #include <string>
@@ -76,9 +77,15 @@ private:
   std::map<uint64_t, uint64_t>* page_table;
   std::map<MemEvent::id_type, MemEvent*> pending_requests;
 
+  typedef std::map<uint32_t, MemEvent::id_type> tagToIDMap_t;
+  tagToIDMap_t outstandingDMATags;
+  typedef std::map<MemEvent::id_type, uint32_t> IDToTagMap_t;
+  IDToTagMap_t outstandingDMACmds;
+
   uint32_t core_count;
   uint32_t max_transactions;
   SST::Link** cache_link;
+  SST::Link* dmaLink;
   MemEvent* pending_transaction;
   uint32_t pending_transaction_core;
 

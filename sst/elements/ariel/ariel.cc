@@ -29,6 +29,8 @@ using namespace SST::ArielComponent;
 #define PERFORM_EXIT 1
 #define PERFORM_READ 2
 #define PERFORM_WRITE 4
+#define START_DMA 8  // Format: Destination:64 Source:64 Size:32 Tag:32
+#define WAIT_DMA 16  // Format: Tag:32
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
@@ -262,7 +264,7 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   pipe_id = (int*) malloc(sizeof(int) * core_count);
   char* named_pipe_core = (char*) malloc(sizeof(char) * 255);
 
-  for(int pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
+  for(uint pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
 	output->verbose(CALL_INFO, 1, 0, "Generating name for pipe (thread %d)...\n", pipe_counter);
 	sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
 	output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", named_pipe_core);
@@ -302,7 +304,7 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   cache_link = (SST::Link**) malloc(sizeof(SST::Link*) * core_count);
 
-  for(int core_counter = 0; core_counter < core_count; ++core_counter) {
+  for(uint core_counter = 0; core_counter < core_count; ++core_counter) {
 	char name_buffer[256];
 	sprintf(name_buffer, "cache_link_%d", core_counter);
 
@@ -311,18 +313,26 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
                                 &Ariel::handleEvent) );
   	assert(cache_link);
   }
+
+  // Configure optional link to DMA engine
+  dmaLink = configureLink("dmaLink");
+  if ( NULL != dmaLink ) {
+    output->verbose(CALL_INFO, 2, 0, "DMA Attached\n");
+  } else {
+    output->verbose(CALL_INFO, 2, 0, "NO DMA Attached\n");
+  }
 }
 
 void Ariel::finish() {
   output->verbose(CALL_INFO, 2, 0, "Component is finishing.\n");
 
-  for(int i = 0; i < core_count; ++i) {
+  for(uint i = 0; i < core_count; ++i) {
   	close(pipe_id[i]);
   }
 
   output->verbose(CALL_INFO, 2, 0, "Pipes have been closed, attempting to free resources...\n");
 
-  for(int i = 0; i < core_count; ++i) {
+  for(uint i = 0; i < core_count; ++i) {
 	char* named_pipe_core = (char*) malloc(sizeof(char) * FILENAME_MAX);
 	sprintf(named_pipe_core, "%s-%d", named_pipe, i);
 
@@ -386,6 +396,27 @@ bool Ariel::tick( Cycle_t ) {
 	output->verbose(CALL_INFO, 2, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
 	output->verbose(CALL_INFO, 2, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
 
+	// Check for events from the optional DMA unit
+	if (NULL != dmaLink) {
+	  Event *e;
+	  while ( NULL != (e = dmaLink->recv()) ) {
+	    MemHierarchy::DMACommand *cmd = dynamic_cast<MemHierarchy::DMACommand *>(e);
+	    if (NULL != cmd) {
+	      MemEvent::id_type cmdID = cmd->getID();
+	      IDToTagMap_t::iterator outI = outstandingDMACmds.find(cmdID);
+	      if (outI != outstandingDMACmds.end()) {
+		uint32_t tag = outI->second;
+		outstandingDMACmds.erase(outI);
+		outstandingDMATags.erase(tag);
+	      } else {
+		output->fatal(CALL_INFO, -1, 0, 0, "Error: Recienved a DMA command completion for a DMA command we never issued\n");
+	      }
+	    } else {
+	      output->fatal(CALL_INFO, -1, 0, 0, "Error: Unexpected Event Type on DMA Command Link.\n");
+	    }
+	  }
+	}
+
 	if(pending_transaction != NULL) {
 		if(pending_requests.size() < max_transactions) {
 			assert(pending_transaction_core < core_count);
@@ -401,7 +432,7 @@ bool Ariel::tick( Cycle_t ) {
 	} else if( pending_requests.size() < max_transactions) {
 		// Configure the polling set to read from the many thread pipes we have.
 		struct pollfd pipe_pollfd[core_count];
-		for(int core_counter = 0; core_counter < core_count; ++core_counter) {
+		for(uint core_counter = 0; core_counter < core_count; ++core_counter) {
 			pipe_pollfd[core_counter].fd = pipe_id[core_counter];
 			pipe_pollfd[core_counter].events = POLLIN;
 		}
@@ -412,7 +443,7 @@ bool Ariel::tick( Cycle_t ) {
 
 		output->verbose(CALL_INFO, 4, 0, "Poll operation has completed.\n");
 
-		for(int core_counter = 0; core_counter < core_count; ++core_counter) {
+		for(uint core_counter = 0; core_counter < core_count; ++core_counter) {
 			uint8_t command = 0;
 
 			if(pipe_pollfd[core_counter].revents & POLLIN) {
@@ -469,6 +500,43 @@ bool Ariel::tick( Cycle_t ) {
 
 						memory_ops++;
 						write_ops++;
+					} else if (command == START_DMA) {
+					  if (NULL != dmaLink) {
+					    // collect arguments
+					    uint64_t dst, src;
+					    read(pipe_id[core_counter], &dst, sizeof(dst));
+					    read(pipe_id[core_counter], &src, sizeof(src));
+					    uint32_t size;
+					    read(pipe_id[core_counter], &size, sizeof(size));
+					    uint32_t tag;
+					    read(pipe_id[core_counter], &tag, sizeof(tag));
+
+					    // construct and send DMA command
+					    MemHierarchy::DMACommand *cmd = new MemHierarchy::DMACommand(this, dst, src, size);
+					    MemEvent::id_type cmdID = cmd->getID();
+					    if (outstandingDMATags.find(tag) == outstandingDMATags.end()) {
+					      outstandingDMATags.insert(tagToIDMap_t::value_type(tag, cmdID));
+					      outstandingDMACmds.insert(IDToTagMap_t::value_type(cmdID, tag));
+					    } else {
+					      output->fatal(CALL_INFO, -1, 0, 0, "Error: Trying to start DMA for existing tag (%d)", tag);
+					    }
+					    dmaLink->send(cmd);
+					  } else {
+					    output->fatal(CALL_INFO, -1, 0, 0, "Error: no DMA unit configured / connected");
+					  }
+					} else if (command == WAIT_DMA) {
+					  if (NULL != dmaLink) {
+					    uint32_t tag;
+					    read(pipe_id[core_counter], &tag, sizeof(tag));
+					    // search for tag. 
+					    if (outstandingDMATags.find(tag) == outstandingDMATags.end()) {
+					      // couldn't find tag. Ergo, the DMA has finished (or was never started)
+					    } else {
+					      // Tag found. Ergo, the DMA has NOT finished
+					    }
+					  } else {
+					    output->fatal(CALL_INFO, -1, 0, 0, "Error: no DMA unit configured / connected");
+					  }
 					} else {
 						// So PIN may occassionally not get instrumentation correct and we get
 						// instruction records nested inside each other :(.
