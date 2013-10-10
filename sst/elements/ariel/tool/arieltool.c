@@ -47,14 +47,25 @@ VOID Fini(INT32 code, VOID *v)
 	}
 }
 
+VOID copy(void* dest, const void* input, UINT32 length) {
+	for(UINT32 i = 0; i < length; ++i) {
+		((char*) dest)[i] = ((char*) input)[i];
+	}
+}
+
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
 	const uint8_t read_marker = PERFORM_READ;
 	uint64_t addr64 = (uint64_t) address;
 	uint32_t thrID = (uint32_t) thr;
 
-	write(pipe_id[thr], &read_marker, sizeof(read_marker));
-	write(pipe_id[thr], &addr64, sizeof(addr64));
-	write(pipe_id[thr], &readSize, sizeof(readSize));
+	const UINT32 BUFFER_LENGTH = sizeof(read_marker) + sizeof(addr64) + sizeof(readSize);
+
+	char buffer[BUFFER_LENGTH];
+	copy(&buffer[0], &read_marker, sizeof(read_marker));
+	copy(&buffer[sizeof(read_marker)], &addr64, sizeof(addr64));
+	copy(&buffer[sizeof(read_marker) + sizeof(addr64)], &readSize, sizeof(readSize));
+
+	write(pipe_id[thr], buffer, BUFFER_LENGTH);
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
@@ -64,9 +75,14 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
 
 	size_t write_size;
 
-	write_size = write(pipe_id[thr], &writer_marker, sizeof(writer_marker));
-	write(pipe_id[thr], &addr64, sizeof(addr64));
-	write(pipe_id[thr], &writeSize, sizeof(writeSize));
+	const UINT32 BUFFER_LENGTH = sizeof(writer_marker) + sizeof(addr64) + sizeof(writeSize);
+	char buffer[BUFFER_LENGTH];
+
+	copy(&buffer[0], &writer_marker, sizeof(writer_marker));
+	copy(&buffer[sizeof(writer_marker)], &addr64, sizeof(addr64));
+	copy(&buffer[sizeof(writer_marker) + sizeof(addr64)], &writeSize, sizeof(writeSize));
+
+	write(pipe_id[thr], buffer, BUFFER_LENGTH);
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr) {
@@ -151,6 +167,13 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 }
 
+VOID InstrumentRoutine(RTN rtn, VOID* args) {
+	if(RTN_Name(rtn) == "malloc") {
+		// We need to replace with something here
+		std::cout << "Identified a malloc replacement function." << std::endl;
+	}
+}
+
 /* ===================================================================== */
 /* Print Help Message                                                    */
 /* ===================================================================== */
@@ -204,6 +227,8 @@ int main(int argc, char *argv[])
 
 //    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
+    RTN_AddInstrumentFunction(InstrumentRoutine, 0);
+
     PIN_StartProgram();
 
     return 0;

@@ -60,15 +60,16 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 			phys_cache_right_addr / cache_line_size,
 			isRead ? "READ" : "WRITE", thrID);
 
-		if((cache_left_size + cache_right_size) != length) {
+/*		if((cache_left_size + cache_right_size) != length) {
 			std::cout << "cache length=" << length << " left=" << cache_left_size << " right=" << cache_right_size <<
 				" addr=" << addr << ", cache_offset=" << cache_offset << std::endl;
 			output->fatal(CALL_INFO, -4, 0, 0,
 			"Error issuing a cache operation, cache size left %" PRIu32 " != cache size right %" PRIu32 ", length=%" PRIu32 "\n",
 			cache_left_size, cache_right_size, length);
 		}
-
+*/
 		// Produce operations for the lower and upper halves of the transaction
+		if((cache_left_size + cache_right_size) == length) {
 		MemEvent *e_lower = new MemEvent(this, phys_cache_left_addr, isRead ? ReadReq : WriteReq);
                	e_lower->setSize(cache_left_size);
 
@@ -87,6 +88,7 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 			split_read_ops++;
 		} else {
 			split_write_ops++;
+		}
 		}
 	} else {
 		uint64_t physical_addr = translateAddress(addr);
