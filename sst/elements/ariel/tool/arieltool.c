@@ -167,10 +167,40 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 }
 
+void* ariel_tlvl_malloc(size_t size) {
+	printf("Perform a tlvl_malloc from Ariel %llu\n", size);
+
+	size_t page_diff = (4096 - (size % ((size_t) 4096)));
+	size_t real_req_size = size;
+
+	if(page_diff > 0) {
+		real_req_size = size + page_diff;
+	}
+
+	printf("Requested: %llu, but expanded to: %llu\n", size, real_req_size);
+
+	void* real_ptr = malloc(real_req_size);
+	return real_ptr;
+}
+
+void ariel_tlvl_free(void* ptr) {
+	printf("Perform a tlvl_free from Ariel (pointer = %p)\n", ptr);
+	free(ptr);
+}
+
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
 	if(RTN_Name(rtn) == "malloc") {
 		// We need to replace with something here
 		std::cout << "Identified a malloc replacement function." << std::endl;
+	} else if (RTN_Name(rtn) == "tlvl_malloc") {
+		// This means malloc far away.
+		printf("Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
+		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_malloc);
+		printf("Replacement complete.\n");
+	} else if (RTN_Name(rtn) == "tlvl_free") {
+		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
+		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
+		printf("Replacement complete.\n");
 	}
 }
 
