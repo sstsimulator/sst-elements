@@ -77,10 +77,10 @@ private:
   std::map<uint64_t, uint64_t>* page_table;
   std::map<MemEvent::id_type, MemEvent*> pending_requests;
 
-  typedef std::map<uint32_t, MemEvent::id_type> tagToIDMap_t;
-  tagToIDMap_t outstandingDMATags;
-  typedef std::map<MemEvent::id_type, uint32_t> IDToTagMap_t;
-  IDToTagMap_t outstandingDMACmds;
+//  typedef std::map<uint32_t, MemEvent::id_type> tagToIDMap_t;
+//  tagToIDMap_t outstandingDMATags;
+//  typedef std::map<MemEvent::id_type, uint32_t> IDToTagMap_t;
+//  IDToTagMap_t outstandingDMACmds;
 
   uint32_t core_count;
   uint32_t max_transactions;

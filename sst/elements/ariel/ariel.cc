@@ -168,7 +168,7 @@ uint64_t Ariel::translateAddress(uint64_t addr) {
 
 Ariel::Ariel(ComponentId_t id, Params& params) :
   Component(id) {
-
+  printf("In Ariel creating output...\n");
   int verbose = params.find_integer("verbose", 0);
   output = new Output("SSTArielComponent: ", verbose, 0, SST::Output::STDOUT);
 
@@ -396,7 +396,7 @@ bool Ariel::tick( Cycle_t ) {
 	output->verbose(CALL_INFO, 2, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
 	output->verbose(CALL_INFO, 2, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
 
-	// Check for events from the optional DMA unit
+/*	// Check for events from the optional DMA unit
 	if (NULL != dmaLink) {
 	  Event *e;
 	  while ( NULL != (e = dmaLink->recv()) ) {
@@ -416,7 +416,7 @@ bool Ariel::tick( Cycle_t ) {
 	    }
 	  }
 	}
-
+*/
 	if(pending_transaction != NULL) {
 		if(pending_requests.size() < max_transactions) {
 			assert(pending_transaction_core < core_count);
@@ -501,7 +501,7 @@ bool Ariel::tick( Cycle_t ) {
 						memory_ops++;
 						write_ops++;
 					} else if (command == START_DMA) {
-					  if (NULL != dmaLink) {
+/*					  if (NULL != dmaLink) {
 					    // collect arguments
 					    uint64_t dst, src;
 					    read(pipe_id[core_counter], &dst, sizeof(dst));
@@ -524,8 +524,9 @@ bool Ariel::tick( Cycle_t ) {
 					  } else {
 					    output->fatal(CALL_INFO, -1, 0, 0, "Error: no DMA unit configured / connected");
 					  }
+*/
 					} else if (command == WAIT_DMA) {
-					  if (NULL != dmaLink) {
+/*					  if (NULL != dmaLink) {
 					    uint32_t tag;
 					    read(pipe_id[core_counter], &tag, sizeof(tag));
 					    // search for tag. 
@@ -537,6 +538,7 @@ bool Ariel::tick( Cycle_t ) {
 					  } else {
 					    output->fatal(CALL_INFO, -1, 0, 0, "Error: no DMA unit configured / connected");
 					  }
+*/
 					} else {
 						// So PIN may occassionally not get instrumentation correct and we get
 						// instruction records nested inside each other :(.
@@ -564,9 +566,10 @@ bool Ariel::tick( Cycle_t ) {
 BOOST_CLASS_EXPORT(Ariel)
 
 static Component*
-create_ariel(SST::ComponentId_t id, 
+create_ariel(SST::ComponentId_t id,
                   SST::Params& params)
 {
+    printf("Creating ariel..\n");
     return new Ariel( id, params );
 }
 
