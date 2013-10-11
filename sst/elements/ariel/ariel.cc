@@ -31,6 +31,7 @@ using namespace SST::ArielComponent;
 #define PERFORM_WRITE 4
 #define START_DMA 8  // Format: Destination:64 Source:64 Size:32 Tag:32
 #define WAIT_DMA 16  // Format: Tag:32
+#define ISSUE_TLM_MAP 80 // issue a Two level memory allocation
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
@@ -48,7 +49,7 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 		uint64_t phys_cache_left_addr = translateAddress(cache_left_address);
 		uint64_t phys_cache_right_addr = translateAddress(cache_right_address);
 
-		output->verbose(CALL_INFO, 1, 0,
+		output->verbose(CALL_INFO, 2, 0,
 			"Issue split-cache line operation A=%" PRIu64 ", Length=%" PRIu32
 			", A_L=%" PRIu64 ", S_L=%" PRIu32 ", A_R=%" PRIu64 ", S_R=%" PRIu32
 			", PhysA_L=%" PRIu64 ", PhysA_R=%" PRIu64 ", P_L=%" PRIu64 ", P_R=%" PRIu64 
@@ -95,7 +96,7 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 	} else {
 		uint64_t physical_addr = translateAddress(addr);
 
-		output->verbose(CALL_INFO, 1, 0,
+		output->verbose(CALL_INFO, 2, 0,
 			"Issue non-split cache line operation: A=%" PRIu64 ", Length=%" PRIu32
 			", PhysA=%" PRIu64 ", W/R=%s, TID=%" PRIu32 "\n",
 			addr, length, physical_addr,
@@ -152,7 +153,17 @@ uint64_t Ariel::translateAddress(uint64_t addr) {
 	// Get the start of the virtual page for this address.
 	uint64_t addr_vpage_start = (addr - (addr_offset));
 
+	std::map<uint64_t, uint64_t>::iterator fastaddr_entry = page_table_fastmem->find(addr_vpage_start);
 	std::map<uint64_t, uint64_t>::iterator addr_entry = page_table->find(addr_vpage_start);
+
+	if(fastaddr_entry != page_table_fastmem->end()) {
+		// We found this page in fast memory
+		output->verbose(CALL_INFO, 2, 0, "Fast memory mapped: %" PRIu64 " to physical: %" PRIu64 "\n",
+			addr, (fastaddr_entry->second + addr_offset));
+
+		// Return the fast address map
+		return (fastaddr_entry->second + addr_offset);
+	}
 
 	if(addr_entry == page_table->end()) {
 		output->verbose(CALL_INFO, 2, 0, "Allocating virtual page: %" PRIu64 " to physical page: %" PRIu64 "\n",
@@ -197,11 +208,26 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   page_size = (uint64_t) atol(params.find_string("pagesize", "4096").c_str());
   output->verbose(CALL_INFO, 1, 0, "Page size configured for: %" PRIu64 "bytes.\n", page_size);
 
+  fastmem_size = (uint64_t) atol(params.find_string("fastmempagecount", "1048576").c_str());
+  output->verbose(CALL_INFO, 1, 0, "Mapping fast memory size to %" PRIu64 " page entries.\n", fastmem_size);
+
   cache_line_size = (uint64_t) atol(params.find_string("cachelinsize", "64").c_str());
   output->verbose(CALL_INFO, 1, 0, "Cache line size configured for: %" PRIu64 "bytes.\n", cache_line_size);
 
+  // Allocate free pages into the fast memory set, these are going to be used as a free pool
+  free_pages_fastmem = new std::vector<uint64_t>();
+  for(uint32_t page_counter = 0; page_counter < fastmem_size; page_counter++) {
+	free_pages_fastmem->push_back((uint64_t)(page_counter * page_size));
+  }
+
+  // Record the mallocs so we can free later (remember two level memory is precious)
+  fastmem_alloc_to_size = new std::map<uint64_t, uint64_t>();
+
+  // Allocate the (empty) page tables
+  page_table_fastmem = new std::map<uint64_t, uint64_t>();
   page_table = new std::map<uint64_t, uint64_t>();
-  next_free_page_start = page_size;
+  // Set the default pool (in DDR) to come from address space beyond the fast memory size
+  next_free_page_start = (fastmem_size + 1) * page_size;
 
   int app_arg_count = params.find_integer("appargcount", 0);
 
@@ -323,6 +349,43 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   } else {
     output->verbose(CALL_INFO, 2, 0, "NO DMA Attached\n");
   }
+}
+
+void Ariel::allocateInFastMemory(uint64_t vAddr, uint64_t length) {
+	// We need to map a physical address range into fast memory.
+	uint64_t page_count = length / page_size;
+
+	// Catch a nonaligned page allocation, what a horrible mess.
+	if(page_count * page_size != length) {
+		page_count = page_count + 1;
+	}
+
+	output->verbose(CALL_INFO, 1, 0, "Allocation request to allocator (fast mem): address=%" PRIu64 ", length=%" PRIu64 ", pages=%" PRIu64 "\n",
+		vAddr, length, page_count);
+
+	if(free_pages_fastmem->size() < page_count) {
+		// We do not have enough memory, this is a fault
+		output->fatal(CALL_INFO, -8, 0, 0,
+			"Error - run out of fast memory space for a request\n");
+		exit(-8);
+	}
+
+	// Keep track of our allocations as we will want to free them at some point
+	fastmem_alloc_to_size->insert( std::pair<uint64_t, uint64_t>(vAddr, length) );
+
+	std::vector<uint64_t>::iterator fast_mem_free_page_itr = free_pages_fastmem->begin();
+	for(uint64_t page_counter = 0; page_counter < page_count; page_counter++) {
+		output->verbose(CALL_INFO, 4, 0, "Mapping virtual %" PRIu64 " to physical: %" PRIu64 "\n",
+			(vAddr + page_counter * page_size), *fast_mem_free_page_itr);
+
+		// Allocate into the table to a new address and then remove from our free list
+		page_table_fastmem->insert( std::pair<uint64_t, uint64_t>(vAddr + (page_counter * page_size), *fast_mem_free_page_itr) );
+		free_pages_fastmem->erase(fast_mem_free_page_itr);
+		++fast_mem_free_page_itr;
+	}
+
+	output->verbose(CALL_INFO, 2, 0, "Fast memory allocation is complete, pages remaining: %" PRIu32 "\n",
+		(uint32_t) free_pages_fastmem->size());
 }
 
 void Ariel::finish() {
@@ -460,6 +523,21 @@ bool Ariel::tick( Cycle_t ) {
 					// Exit
 					primaryComponentOKToEndSim();
 					return true;
+				}
+
+				if(command == ISSUE_TLM_MAP) {
+					uint64_t virtualAddress = 0;
+					uint64_t allocationLength = 0;
+
+					read(pipe_id[core_counter], &virtualAddress, sizeof(virtualAddress));
+					read(pipe_id[core_counter], &allocationLength, sizeof(allocationLength));
+
+					output->verbose(CALL_INFO, 1, 0, "Request to perform a two-level memory mapping from: %" PRIu64 " of length: %" PRIu64 "\n", virtualAddress, allocationLength);
+
+					allocateInFastMemory(virtualAddress, allocationLength);
+
+					// We are done with this cycle
+					break;
 				}
 
 				if(command == START_INSTRUCTION) {

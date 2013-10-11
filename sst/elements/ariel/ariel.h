@@ -56,6 +56,7 @@ private:
 
   virtual bool tick( SST::Cycle_t );
   int create_pinchild(char* prog_binary, char** arg_list);
+  void allocateInFastMemory(uint64_t vAddr, uint64_t length);
 
   uint64_t max_inst;
   char* named_pipe;
@@ -74,7 +75,11 @@ private:
   uint64_t cache_line_size;
   uint64_t page_size;
   uint64_t next_free_page_start;
+  uint64_t fastmem_size;
+  std::vector<uint64_t>* free_pages_fastmem;
+  std::map<uint64_t, uint64_t>* fastmem_alloc_to_size;
   std::map<uint64_t, uint64_t>* page_table;
+  std::map<uint64_t, uint64_t>* page_table_fastmem;
   std::map<MemEvent::id_type, MemEvent*> pending_requests;
 
 //  typedef std::map<uint32_t, MemEvent::id_type> tagToIDMap_t;

@@ -29,6 +29,7 @@ int* pipe_id;
 #define PERFORM_EXIT 1
 #define PERFORM_READ 2
 #define PERFORM_WRITE 4
+#define ISSUE_TLM_MAP 80
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
@@ -177,9 +178,28 @@ void* ariel_tlvl_malloc(size_t size) {
 		real_req_size = size + page_diff;
 	}
 
-	printf("Requested: %llu, but expanded to: %llu\n", size, real_req_size);
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+
+	printf("Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
+		thr);
 
 	void* real_ptr = malloc(real_req_size);
+	const uint8_t  issueTLMMarker = (uint8_t) ISSUE_TLM_MAP;
+	const uint64_t virtualAddress = (uint64_t) real_ptr;
+	const uint64_t allocationLength = (uint64_t) real_req_size;
+
+	const int BUFFER_LENGTH = sizeof(issueTLMMarker) +
+		sizeof(virtualAddress) + sizeof(allocationLength);
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+
+	copy(&buffer[0], &issueTLMMarker, sizeof(issueTLMMarker));
+	copy(&buffer[sizeof(issueTLMMarker)], &virtualAddress, sizeof(virtualAddress));
+	copy(&buffer[sizeof(issueTLMMarker) + sizeof(virtualAddress)], &allocationLength,
+		sizeof(allocationLength));
+
+        write(pipe_id[thr], buffer, BUFFER_LENGTH);
+
 	return real_ptr;
 }
 
