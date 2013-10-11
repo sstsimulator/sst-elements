@@ -168,6 +168,29 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 }
 
+void* ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
+	printf("Perform a tlvl_memcpy from Ariel from %p to %p length %llu\n",
+		source, dest, size);
+
+	char* dest_c = (char*) dest;
+	char* src_c  = (char*) source;
+
+	// Perform the memory copy on behalf of the application
+	for(size_t i = 0; i < size; ++i) {
+		dest_c[i] = src_c[i];
+	}
+
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+
+	if(thr >= core_count) {
+		printf("Thread ID: %lu is greater than core count.\n", thr);
+		exit(-4);
+	}
+
+	printf("Done with ariel memcpy.\n");
+}
+
 void* ariel_tlvl_malloc(size_t size) {
 	printf("Perform a tlvl_malloc from Ariel %llu\n", size);
 
@@ -184,7 +207,9 @@ void* ariel_tlvl_malloc(size_t size) {
 	printf("Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
 		thr);
 
-	void* real_ptr = malloc(real_req_size);
+	void* real_ptr = 0;
+	posix_memalign(&real_ptr, 4096, real_req_size);
+
 	const uint8_t  issueTLMMarker = (uint8_t) ISSUE_TLM_MAP;
 	const uint64_t virtualAddress = (uint64_t) real_ptr;
 	const uint64_t allocationLength = (uint64_t) real_req_size;
@@ -199,6 +224,9 @@ void* ariel_tlvl_malloc(size_t size) {
 		sizeof(allocationLength));
 
         write(pipe_id[thr], buffer, BUFFER_LENGTH);
+
+	printf("Ariel tlvl_malloc call allocates data at address: %llu\n",
+		(uint64_t) real_ptr);
 
 	return real_ptr;
 }
@@ -220,6 +248,10 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 	} else if (RTN_Name(rtn) == "tlvl_free") {
 		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
+		printf("Replacement complete.\n");
+	} else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
+		printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
+		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
 		printf("Replacement complete.\n");
 	}
 }

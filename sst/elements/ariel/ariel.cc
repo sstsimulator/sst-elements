@@ -84,6 +84,19 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_upper->getID(), e_upper) );
 
 		assert(thrID < core_count);
+
+		if(phys_cache_left_addr < (uint64_t) (fastmem_size * page_size)) {
+			fastmem_access_count++;
+		} else {
+			mem_access_count++;
+		}
+
+		if(phys_cache_right_addr < (uint64_t) (fastmem_size * page_size)) {
+			fastmem_access_count++;
+		} else {
+			mem_access_count++;
+		}
+
 		cache_link[thrID]->send(e_lower);
 		cache_link[thrID]->send(e_upper);
 
@@ -112,6 +125,12 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 			output->fatal(CALL_INFO, -4, 0, 0,
 			"Error: threadID %" PRIu32 " is greater than number of cores: %" PRIu32 "\n",
 			thrID, core_count);
+		}
+
+		if(physical_addr < (uint64_t) (fastmem_size * page_size)) {
+			fastmem_access_count++;
+		} else {
+			mem_access_count++;
 		}
 
 		cache_link[thrID]->send(ev);
@@ -161,6 +180,8 @@ uint64_t Ariel::translateAddress(uint64_t addr) {
 		output->verbose(CALL_INFO, 2, 0, "Fast memory mapped: %" PRIu64 " to physical: %" PRIu64 "\n",
 			addr, (fastaddr_entry->second + addr_offset));
 
+		fastpage_translation_count++;
+
 		// Return the fast address map
 		return (fastaddr_entry->second + addr_offset);
 	}
@@ -174,6 +195,7 @@ uint64_t Ariel::translateAddress(uint64_t addr) {
 		addr_entry = page_table->find(addr_vpage_start);
 	}
 
+	page_translation_count++;
 	output->verbose(CALL_INFO, 4, 0, "Mapped: %" PRIu64 " virtual to physical %" PRIu64 "\n", addr, 
 		(addr_entry->second + addr_offset));
 	return (addr_entry->second + addr_offset);
@@ -204,6 +226,11 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   if(arieltool == "") {
 	output->fatal(CALL_INFO, -1, 0, 0, "Model input did not specify a location of a tool to run against Ariel\n");
   }
+
+  fastpage_translation_count = 0;
+  page_translation_count = 0;
+  fastmem_access_count = 0;
+  mem_access_count = 0;
 
   page_size = (uint64_t) atol(params.find_string("pagesize", "4096").c_str());
   output->verbose(CALL_INFO, 1, 0, "Page size configured for: %" PRIu64 "bytes.\n", page_size);
@@ -384,8 +411,16 @@ void Ariel::allocateInFastMemory(uint64_t vAddr, uint64_t length) {
 		++fast_mem_free_page_itr;
 	}
 
-	output->verbose(CALL_INFO, 2, 0, "Fast memory allocation is complete, pages remaining: %" PRIu32 "\n",
-		(uint32_t) free_pages_fastmem->size());
+	output->verbose(CALL_INFO, 2, 0, "Fast memory allocation is complete, pages remaining: %" PRIu32 " fast_page size: %" PRIu32 "\n",
+		(uint32_t) free_pages_fastmem->size(), (uint32_t) page_table_fastmem->size());
+	std::map<uint64_t, uint64_t>::iterator fast_tbl_itr;
+
+	output->verbose(CALL_INFO, 2, 0, "Page allocation (for fast memory):\n");
+	for(fast_tbl_itr = page_table_fastmem->begin() ; fast_tbl_itr != page_table_fastmem->end(); fast_tbl_itr++) {
+		output->verbose(CALL_INFO, 2, 0, "Entry: %" PRIu64 " -> %" PRIu64 "\n",
+			fast_tbl_itr->first, fast_tbl_itr->second);
+	}
+	output->verbose(CALL_INFO, 2, 0, "End of fast memory page table\n");
 }
 
 void Ariel::finish() {
@@ -417,6 +452,10 @@ void Ariel::finish() {
   output->verbose(CALL_INFO, 0, 0, "Split-Read ops:   %" PRIu64 "\n", split_read_ops);
   output->verbose(CALL_INFO, 0, 0, "Write ops:        %" PRIu64 "\n", write_ops);
   output->verbose(CALL_INFO, 0, 0, "Split-Write ops:  %" PRIu64 "\n", split_write_ops);
+  output->verbose(CALL_INFO, 0, 0, "Fast mem ops:     %" PRIu64 "\n", fastmem_access_count);
+  output->verbose(CALL_INFO, 0, 0, "Std mem ops:      %" PRIu64 "\n", mem_access_count);
+  output->verbose(CALL_INFO, 0, 0, "FPge Translates:  %" PRIu64 "\n", fastpage_translation_count);
+  output->verbose(CALL_INFO, 0, 0, "Pge Translates:   %" PRIu64 "\n", page_translation_count);
 
 }
 
@@ -458,8 +497,8 @@ void Ariel::handleEvent(Event *ev)
 }
 
 bool Ariel::tick( Cycle_t ) {
-	output->verbose(CALL_INFO, 4, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
-	output->verbose(CALL_INFO, 4, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
+	output->verbose(CALL_INFO, 64, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
+	output->verbose(CALL_INFO, 64, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
 
 /*	// Check for events from the optional DMA unit
 	if (NULL != dmaLink) {
@@ -493,7 +532,7 @@ bool Ariel::tick( Cycle_t ) {
 			pending_transaction = NULL;
 		}
         } else if( pending_requests.size() >= max_transactions) {
-		output->verbose(CALL_INFO, 4, 0, "Pending transactions has reached limit of %" PRIu32 "\n", max_transactions);
+		output->verbose(CALL_INFO, 64, 0, "Pending transactions has reached limit of %" PRIu32 "\n", max_transactions);
 	} else if( pending_requests.size() < max_transactions) {
 		// Configure the polling set to read from the many thread pipes we have.
 		struct pollfd pipe_pollfd[core_count];
@@ -502,17 +541,17 @@ bool Ariel::tick( Cycle_t ) {
 			pipe_pollfd[core_counter].events = POLLIN;
 		}
 
-		output->verbose(CALL_INFO, 8, 0, "Polling for new data from the PIN tools...\n");
+		output->verbose(CALL_INFO, 64, 0, "Polling for new data from the PIN tools...\n");
 		// Poll on the files remembering we wait
 		poll(pipe_pollfd, (unsigned int) core_count, 10);
 
-		output->verbose(CALL_INFO, 8, 0, "Poll operation has completed.\n");
+		output->verbose(CALL_INFO, 64, 0, "Poll operation has completed.\n");
 
 		for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
 			uint8_t command = 0;
 
 			if(pipe_pollfd[core_counter].revents & POLLIN) {
-				output->verbose(CALL_INFO, 4, 0, "Data available for core: %d\n", core_counter);
+				output->verbose(CALL_INFO, 64, 0, "Data available for core: %d\n", core_counter);
 
 				read(pipe_id[core_counter], &command, sizeof(command));
 
@@ -633,7 +672,7 @@ bool Ariel::tick( Cycle_t ) {
 					read(pipe_id[core_counter], &command, sizeof(command));
 				}
 			} else {
-				output->verbose(CALL_INFO, 8, 0, "No data is available for core %" PRIu32 "\n",
+				output->verbose(CALL_INFO, 64, 0, "No data is available for core %" PRIu32 "\n",
 					core_counter);
 			}
 		}

@@ -94,6 +94,12 @@ private:
   MemEvent* pending_transaction;
   uint32_t pending_transaction_core;
 
+  uint64_t fastmem_access_count;
+  uint64_t mem_access_count;
+
+  uint64_t fastpage_translation_count;
+  uint64_t page_translation_count;
+
   uint64_t translateAddress(uint64_t addr);
   void issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thr);
 
