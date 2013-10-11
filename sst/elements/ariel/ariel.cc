@@ -141,6 +141,8 @@ int Ariel::create_pinchild(char* prog_binary, char** arg_list) {
 			"Error executing: %s under a PIN fork\n",
 			prog_binary);
 	}
+
+	return 0;
 }
 
 uint64_t Ariel::translateAddress(uint64_t addr) {
@@ -264,7 +266,7 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   pipe_id = (int*) malloc(sizeof(int) * core_count);
   char* named_pipe_core = (char*) malloc(sizeof(char) * 255);
 
-  for(uint pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
+  for(uint32_t pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
 	output->verbose(CALL_INFO, 1, 0, "Generating name for pipe (thread %d)...\n", pipe_counter);
 	sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
 	output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", named_pipe_core);
@@ -304,7 +306,7 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   cache_link = (SST::Link**) malloc(sizeof(SST::Link*) * core_count);
 
-  for(uint core_counter = 0; core_counter < core_count; ++core_counter) {
+  for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
 	char name_buffer[256];
 	sprintf(name_buffer, "cache_link_%d", core_counter);
 
@@ -326,13 +328,13 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 void Ariel::finish() {
   output->verbose(CALL_INFO, 2, 0, "Component is finishing.\n");
 
-  for(uint i = 0; i < core_count; ++i) {
+  for(uint32_t i = 0; i < core_count; ++i) {
   	close(pipe_id[i]);
   }
 
   output->verbose(CALL_INFO, 2, 0, "Pipes have been closed, attempting to free resources...\n");
 
-  for(uint i = 0; i < core_count; ++i) {
+  for(uint32_t i = 0; i < core_count; ++i) {
 	char* named_pipe_core = (char*) malloc(sizeof(char) * FILENAME_MAX);
 	sprintf(named_pipe_core, "%s-%d", named_pipe, i);
 
@@ -432,7 +434,7 @@ bool Ariel::tick( Cycle_t ) {
 	} else if( pending_requests.size() < max_transactions) {
 		// Configure the polling set to read from the many thread pipes we have.
 		struct pollfd pipe_pollfd[core_count];
-		for(uint core_counter = 0; core_counter < core_count; ++core_counter) {
+		for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
 			pipe_pollfd[core_counter].fd = pipe_id[core_counter];
 			pipe_pollfd[core_counter].events = POLLIN;
 		}
@@ -443,7 +445,7 @@ bool Ariel::tick( Cycle_t ) {
 
 		output->verbose(CALL_INFO, 4, 0, "Poll operation has completed.\n");
 
-		for(uint core_counter = 0; core_counter < core_count; ++core_counter) {
+		for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
 			uint8_t command = 0;
 
 			if(pipe_pollfd[core_counter].revents & POLLIN) {
