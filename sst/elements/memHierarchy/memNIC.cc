@@ -38,7 +38,7 @@ int MemNIC::addrForDest(const std::string &target)
 int MemNIC::getFlitSize(MemEvent *ev)
 {
     /* addr (8B) + cmd (1B) + size */
-    return std::max((9 + ev->getSize()) / flitSize, 1UL);
+    return std::max((unsigned long)((9 + ev->getSize()) / flitSize), 1UL);
 }
 
 
