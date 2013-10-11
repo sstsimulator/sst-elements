@@ -8,7 +8,7 @@ def sstcreatemodel():
         print "Verbose Model"
 
     id = sst.createcomponent("a0", "ariel.ariel")
-    sst.addcompparam(id, "verbose", "1")
+    sst.addcompparam(id, "verbose", "2")
     sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/test/tlvlstream/ministream")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
     sst.addcompparam(id, "fastmempagecount", "1024")
