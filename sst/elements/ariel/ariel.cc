@@ -263,8 +263,10 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   core_count = (uint32_t) params.find_integer("corecount", 1);
   output->verbose(CALL_INFO, 1, 0, "Creating processing for %" PRIu32 " cores.\n", core_count);
 
+  output->verbose(CALL_INFO, 1, 0, "User model wants application to have %d arguments.\n", app_arg_count);
+
   char* execute_binary = PINTOOL_EXECUTABLE;
-  char** execute_args = (char**) malloc(sizeof(char*) * 14 + app_arg_count);
+  char** execute_args = (char**) malloc(sizeof(char*) * (14 + app_arg_count));
 
   execute_args[0] = "pintool";
   execute_args[1] = "-t";
@@ -292,12 +294,17 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   for(int app_arg_index = 13; app_arg_index < 13 + app_arg_count; ++app_arg_index) {
 	sprintf(arg_name_buffer, "apparg%d", app_arg_index - 13);
+        output->verbose(CALL_INFO, 2, 0, "Searching for application argument in input: %s ... \n", arg_name_buffer);
 	std::string app_arg_i = params.find_string(arg_name_buffer);
+        output->verbose(CALL_INFO, 2, 0, "Result is: %s\n", app_arg_i.c_str());
 
-	output->verbose(CALL_INFO, 4, 0, "Found new application argument: [%s]\n", app_arg_i.c_str());
+	const int arg_string_size = (int) (app_arg_i.size() + 4);
+	output->verbose(CALL_INFO, 4, 0, "Found new application argument: [%s]=[%s], Length=%d, Tool command entry: %d\n", arg_name_buffer, app_arg_i.c_str(),
+		arg_string_size, app_arg_index);
 
-	execute_args[app_arg_index] = (char*) malloc(sizeof(char) * (app_arg_i.size() + 1));
+	execute_args[app_arg_index] = (char*) malloc(sizeof(char) * (arg_string_size));
         strcpy(execute_args[app_arg_index], app_arg_i.c_str());
+	output->verbose(CALL_INFO, 2, 0, "Completed processing this argument\n");
   }
 
   execute_args[13 + app_arg_count] = NULL;

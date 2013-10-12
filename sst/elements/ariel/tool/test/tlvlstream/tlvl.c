@@ -12,7 +12,7 @@ void  tlvl_free(void* ptr) {
 	free(ptr);
 }
 
-void tlvl_memcpy(void* dest, void* src, size_t length) {
+tlvl_Tag tlvl_memcpy(void* dest, void* src, size_t length) {
 	printf("Performing a TLVL memcpy...\n");
 	size_t i;
 
@@ -22,4 +22,10 @@ void tlvl_memcpy(void* dest, void* src, size_t length) {
 	for(i = 0; i < length; i++) {
 		dest_c[i] = src_c[i];
 	}
+
+	return 0;
+}
+
+void tlvl_waitComplete(tlvl_Tag in) {
+	return;
 }

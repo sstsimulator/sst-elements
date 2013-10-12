@@ -29,6 +29,7 @@ int* pipe_id;
 #define PERFORM_EXIT 1
 #define PERFORM_READ 2
 #define PERFORM_WRITE 4
+#define START_DMA 8
 #define ISSUE_TLM_MAP 80
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
@@ -168,7 +169,7 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
 }
 
-void* ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
+int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 	printf("Perform a tlvl_memcpy from Ariel from %p to %p length %llu\n",
 		source, dest, size);
 
@@ -188,7 +189,17 @@ void* ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 		exit(-4);
 	}
 
+	const uint8_t issueDMAMarker = (uint8_t) START_DMA;
+	const uint64_t ariel_src     = (uint64_t) source;
+        const uint64_t ariel_dest    = (uint64_t) dest;
+        const uint64_t length        = (uint64_t) size;
+
+        const int BUFFER_LENGTH = sizeof(issueDMAMarker) + sizeof(ariel_src) +
+		sizeof(ariel_dest) + sizeof(length);
+
 	printf("Done with ariel memcpy.\n");
+
+	return 0;
 }
 
 void* ariel_tlvl_malloc(size_t size) {
