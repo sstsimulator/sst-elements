@@ -263,6 +263,13 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   core_count = (uint32_t) params.find_integer("corecount", 1);
   output->verbose(CALL_INFO, 1, 0, "Creating processing for %" PRIu32 " cores.\n", core_count);
 
+  output->verbose(CALL_INFO, 1, 0, "Creating processor core masks...\n");
+  core_masks = (int*) malloc(sizeof(int) * core_count);
+  for(uint32_t core_mask_counter = 0; core_mask_counter < core_count; ++core_mask_counter) {
+	core_masks[core_mask_counter] = 1;
+  }
+  output->verbose(CALL_INFO, 1, 0, "Processor masks created.\n");
+
   output->verbose(CALL_INFO, 1, 0, "User model wants application to have %d arguments.\n", app_arg_count);
 
   char* execute_binary = PINTOOL_EXECUTABLE;
@@ -557,7 +564,11 @@ bool Ariel::tick( Cycle_t ) {
 		for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
 			uint8_t command = 0;
 
-			if(pipe_pollfd[core_counter].revents & POLLIN) {
+			output->verbose(CALL_INFO, 64, 0, "Core: %" PRIu32 " masks is: %d\n", core_counter, core_masks[core_counter]);
+
+			if((pipe_pollfd[core_counter].revents & POLLIN) &&
+				(core_masks[core_counter] > 0)) {
+
 				output->verbose(CALL_INFO, 64, 0, "Data available for core: %d\n", core_counter);
 
 				read(pipe_id[core_counter], &command, sizeof(command));

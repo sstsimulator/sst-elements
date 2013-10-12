@@ -87,6 +87,8 @@ private:
 //  typedef std::map<MemEvent::id_type, uint32_t> IDToTagMap_t;
 //  IDToTagMap_t outstandingDMACmds;
 
+  int* core_masks;
+
   uint32_t core_count;
   uint32_t max_transactions;
   SST::Link** cache_link;
