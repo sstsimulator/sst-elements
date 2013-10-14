@@ -14,7 +14,7 @@ def sstcreatemodel():
     sst.addcompparam(id, "fastmempagecount", "131072")
 
     sst.addcompparam(id, "appargcount", "6")
-    sst.addcompparam(id, "apparg0", "1000000")
+    sst.addcompparam(id, "apparg0", "10000")
     sst.addcompparam(id, "apparg1", "1")
     sst.addcompparam(id, "apparg2", "1048576")
     sst.addcompparam(id, "apparg3", "512")

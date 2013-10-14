@@ -597,6 +597,21 @@ bool Ariel::tick( Cycle_t ) {
 					break;
 				}
 
+				if(command == START_DMA) {
+					uint64_t startFromAddress = 0;
+					uint64_t startToAddress = 0;
+					uint32_t copyLength = 0;
+
+					read(pipe_id[core_counter], &startFromAddress, sizeof(startFromAddress));
+					read(pipe_id[core_counter], &startToAddress, sizeof(startToAddress));
+					read(pipe_id[core_counter], &copyLength, sizeof(copyLength));
+
+					output->verbose(CALL_INFO, 1, 0, "Request to perform a DMA from: %" PRIu64 " to %" PRIu64 " length of: %" PRIu32 " bytes on thread: %" PRIu32 "\n",
+						startFromAddress, startToAddress, copyLength, core_counter);
+
+					break;
+				}
+
 				if(command == START_INSTRUCTION) {
 					output->verbose(CALL_INFO, 8, 0,
 						"Read a start instruction\n");

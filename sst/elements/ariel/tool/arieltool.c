@@ -170,8 +170,10 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 }
 
 int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
+#ifdef ARIEL_DEBUG
 	printf("Perform a tlvl_memcpy from Ariel from %p to %p length %llu\n",
 		source, dest, size);
+#endif
 
 	char* dest_c = (char*) dest;
 	char* src_c  = (char*) source;
@@ -192,19 +194,34 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 	const uint8_t issueDMAMarker = (uint8_t) START_DMA;
 	const uint64_t ariel_src     = (uint64_t) source;
         const uint64_t ariel_dest    = (uint64_t) dest;
-        const uint64_t length        = (uint64_t) size;
+        const uint32_t length        = (uint32_t) size;
 
         const int BUFFER_LENGTH = sizeof(issueDMAMarker) + sizeof(ariel_src) +
 		sizeof(ariel_dest) + sizeof(length);
 
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+
+	copy(&buffer[0], &issueDMAMarker, sizeof(issueDMAMarker));
+	copy(&buffer[sizeof(issueDMAMarker)], &ariel_src, sizeof(ariel_src));
+	copy(&buffer[sizeof(issueDMAMarker) + sizeof(ariel_src)], &ariel_dest, sizeof(ariel_dest));
+	copy(&buffer[sizeof(issueDMAMarker) + sizeof(ariel_src) + sizeof(ariel_dest)],
+		&length, sizeof(length));
+
+	write(pipe_id[thr], buffer, BUFFER_LENGTH);
+
+	free(buffer);
+
+#ifdef ARIEL_DEBUG
 	printf("Done with ariel memcpy.\n");
+#endif
 
 	return 0;
 }
 
 void* ariel_tlvl_malloc(size_t size) {
+#ifdef ARIEL_DEBUG
 	printf("Perform a tlvl_malloc from Ariel %llu\n", size);
-
+#endif
 	size_t page_diff = (4096 - (size % ((size_t) 4096)));
 	size_t real_req_size = size;
 
@@ -215,8 +232,10 @@ void* ariel_tlvl_malloc(size_t size) {
 	THREADID currentThread = PIN_ThreadId();
 	UINT32 thr = (UINT32) currentThread;
 
+#ifdef ARIEL_DEBUG
 	printf("Requested: %llu, but expanded to: %llu (on thread: %lu) \n", size, real_req_size,
 		thr);
+#endif
 
 	void* real_ptr = 0;
 	posix_memalign(&real_ptr, 4096, real_req_size);
@@ -236,14 +255,20 @@ void* ariel_tlvl_malloc(size_t size) {
 
         write(pipe_id[thr], buffer, BUFFER_LENGTH);
 
+#ifdef ARIEL_DEBUG
 	printf("Ariel tlvl_malloc call allocates data at address: %llu\n",
 		(uint64_t) real_ptr);
+#endif
+
+	free(buffer);
 
 	return real_ptr;
 }
 
 void ariel_tlvl_free(void* ptr) {
+#ifdef ARIEL_DEBUG
 	printf("Perform a tlvl_free from Ariel (pointer = %p)\n", ptr);
+#endif
 	free(ptr);
 }
 
