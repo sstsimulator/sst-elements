@@ -13,6 +13,7 @@
 #include "sst/core/serialization.h"
 #include "sst/core/element.h"
 #include <sst/core/params.h>
+#include <sst/core/simulation.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -204,6 +205,7 @@ uint64_t Ariel::translateAddress(uint64_t addr) {
 Ariel::Ariel(ComponentId_t id, Params& params) :
   Component(id) {
   printf("In Ariel creating output...\n");
+
   int verbose = params.find_integer("verbose", 0);
   output = new Output("SSTArielComponent: ", verbose, 0, SST::Output::STDOUT);
 
@@ -384,12 +386,15 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   }
 
   // Configure optional link to DMA engine
-  dmaLink = configureLink("dmaLink");
+  dmaLink = configureLink("dmaLink", new Event::Handler<Ariel>(this, &Ariel::handleDMAEvent));
   if ( NULL != dmaLink ) {
-    output->verbose(CALL_INFO, 2, 0, "DMA Attached\n");
+    	output->verbose(CALL_INFO, 2, 0, "DMA Attached\n");
+	dma_pending_events = (MemEvent::id_type*) malloc(sizeof(MemEvent::id_type) * core_count);
   } else {
     output->verbose(CALL_INFO, 2, 0, "NO DMA Attached\n");
   }
+
+  output->verbose(CALL_INFO, 1, 0, "Ariel configuration phase is complete.\n");
 }
 
 void Ariel::allocateInFastMemory(uint64_t vAddr, uint64_t length) {
@@ -510,6 +515,36 @@ void Ariel::handleEvent(Event *ev)
 	}
 }
 
+void Ariel::handleDMAEvent(Event* ev) {
+	output->verbose(CALL_INFO, 4, 0, "DMA Event handler called in Ariel\n");
+
+	DMACommand *cmd = dynamic_cast<DMACommand*>(ev);
+
+	if(cmd) {
+		MemEvent::id_type cmdID = cmd->getID();
+		bool processed = false;
+
+		for(uint32_t i = 0; i < core_count; ++i) {
+			if(core_masks[i] == 0) {
+				if(dma_pending_events[i] == cmdID) {
+					// Remove the pending event and core mask so the core can continue
+					core_masks[i] = 1;
+					processed = true;
+					break;
+				}
+			}
+		}
+
+		if(processed) {
+			output->verbose(CALL_INFO, 4, 0, "DMA event was successfully processed.\n");
+		} else {
+			output->fatal(CALL_INFO, -16, 0, 0, "Unknown DMA was recieved by Ariel, did not match any pending event.\n");
+		}
+	} else {
+		output->fatal(CALL_INFO, -16, 0, 0, "Unknown event type received in DMA handler.\n");
+	}
+}
+
 bool Ariel::tick( Cycle_t ) {
 	output->verbose(CALL_INFO, 64, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
 	output->verbose(CALL_INFO, 64, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
@@ -609,6 +644,18 @@ bool Ariel::tick( Cycle_t ) {
 					output->verbose(CALL_INFO, 1, 0, "Request to perform a DMA from: %" PRIu64 " to %" PRIu64 " length of: %" PRIu32 " bytes on thread: %" PRIu32 "\n",
 						startFromAddress, startToAddress, copyLength, core_counter);
 
+					uint64_t physStartFrom = translateAddress(startFromAddress);
+					uint64_t physStartTo   = translateAddress(startToAddress);
+
+					if(NULL != dmaLink) {
+						DMACommand *cmd = new DMACommand(this, physStartFrom,
+							physStartTo, copyLength);
+						dmaLink->send(cmd);
+
+						dma_pending_events[core_counter] = cmd->getID();
+						core_masks[core_counter] = 0;
+						output->verbose(CALL_INFO, 2, 0, "Issued DMA for core: %" PRIu32 "\n", core_counter);
+					}
 					break;
 				}
 

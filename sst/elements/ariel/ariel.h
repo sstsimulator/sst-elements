@@ -19,6 +19,7 @@
 #include <sst/core/timeConverter.h>
 
 #include <sst/core/interfaces/memEvent.h>
+#include <sst/core/interfaces/dmacmd.h>
 #include <sst/core/output.h>
 #include <sst/elements/memHierarchy/dmaEngine.h>
 
@@ -49,6 +50,7 @@ public:
   void finish();
 
   void handleEvent(SST::Event* event);
+  void handleDMAEvent(SST::Event* event);
 private:
   Ariel();  // for serialization only
   Ariel(const Ariel&); // do not implement
@@ -88,6 +90,7 @@ private:
 //  IDToTagMap_t outstandingDMACmds;
 
   int* core_masks;
+  MemEvent::id_type* dma_pending_events;
 
   uint32_t core_count;
   uint32_t max_transactions;
