@@ -54,9 +54,6 @@ using namespace std;
 using namespace SST;
 using namespace SST::Scheduler;
 
-// from nodeComponent.cc
-extern unsigned short int * yumyumRand48State;
-
 //necessary for sorting a list of pointers to completion events
 //can't overload < because that does not work with pointers
 bool compareCEPointers(CompletionEvent* ev1, CompletionEvent* ev2) 
@@ -74,6 +71,25 @@ schedComponent::~schedComponent()
     delete scheduler;
     if (FSTtype > 0) delete calcFST;
 }
+
+
+void readSeed( Params & params, std::string paramName, unsigned short * PRNG48State ){
+	long int XMLseed;
+
+	if( params.find( paramName ) != params.end() ){
+		XMLseed = atoi( params[ paramName ].c_str() );
+	}else if( params.find( "seed" ) != params.end() ){
+		XMLseed = atoi( params[ "seed" ].c_str() );
+	}else{
+		XMLseed = time( NULL );
+	}
+
+	PRNG48State[0] = 0x330E;
+	PRNG48State[1] = XMLseed & 0xFFFF;
+	PRNG48State[2] = XMLseed >> 16;
+}
+
+
 schedComponent::schedComponent(ComponentId_t id, Params& params) :
     Component(id) 
 {
@@ -90,20 +106,20 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     // tell the simulator not to end without us
     registerThis();
 
-    // get the PRNG seed we'll use
+    // get the PRNG seeds we'll use
 
-    long int seed;
-    yumyumRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumErrorLatencyRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumErrorCorrectionRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumJobKillRand48State = (unsigned short *) malloc(3 * sizeof(short));
 
-    if (params.find("seed") == params.end()) {
-        seed = time(NULL);
-    } else {
-        seed = atoi(params["seed"].c_str());
-    }
+    readSeed( params, std::string( "faultSeed" ), yumyumFaultRand48State );
+    readSeed( params, std::string( "errorLogSeed" ), yumyumErrorLogRand48State );
+    readSeed( params, std::string( "errorLatencySeed" ), yumyumErrorLatencyRand48State );
+    readSeed( params, std::string( "errorCorrectionSeed" ), yumyumErrorCorrectionRand48State );
+    readSeed( params, std::string( "jobKillSeed" ), yumyumJobKillRand48State );
 
-    yumyumRand48State[0] = 0x330E;
-    yumyumRand48State[1] = seed & 0xFFFF;
-    yumyumRand48State[2] = seed >> 16;
 
     //set up the all-important self-link
     selfLink = configureSelfLink("linkToSelf", new Event::Handler<schedComponent>(this, &schedComponent::handleJobArrivalEvent));
@@ -189,7 +205,27 @@ void schedComponent::setup()
     for( vector<SST::Link *>::iterator nodeIter = nodes.begin(); nodeIter != nodes.end(); nodeIter ++ ){
         // ask the newly-connected node for its ID
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
-        (*nodeIter)->send( getID ); 
+        (*nodeIter)->send( getID );
+
+	long int * payload = (long int *) malloc( sizeof( long int ) );
+	*payload = jrand48( yumyumFaultRand48State );
+	(*nodeIter)->send( new CommunicationEvent( SEED_FAULT, payload ) );
+	
+	payload = (long int *) malloc( sizeof( long int ) );
+	*payload = jrand48( yumyumErrorLogRand48State );
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LOG, payload ) );
+	
+	payload = (long int *) malloc( sizeof( long int ) );
+	*payload = jrand48( yumyumErrorLatencyRand48State );
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LATENCY, payload ) );
+
+	payload = (long int *) malloc( sizeof( long int ) );
+	*payload = jrand48( yumyumErrorCorrectionRand48State );
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_CORRECTION, payload ) );
+
+	payload = (long int *) malloc( sizeof( long int ) );
+	*payload = jrand48( yumyumJobKillRand48State );
+	(*nodeIter)->send( new CommunicationEvent( SEED_JOB_KILL, payload ) );
     }
 
     // done setting up the links, now read the job list
@@ -466,7 +502,10 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
 {
     if (dynamic_cast<CommunicationEvent *>(ev)) {
         CommunicationEvent * CommEvent = dynamic_cast<CommunicationEvent *> (ev);
-        nodeIDs.insert(nodeIDs.begin() + node, *(std::string*)CommEvent->payload);
+	if( CommEvent->CommType == RETRIEVE_ID &&
+	    CommEvent->reply == true ){
+        	nodeIDs.insert(nodeIDs.begin() + node, *(std::string*)CommEvent->payload);
+	}
         delete ev;
     } else if (dynamic_cast<CompletionEvent*>(ev)) {
         CompletionEvent *event = dynamic_cast<CompletionEvent*>(ev);

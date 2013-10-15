@@ -41,8 +41,6 @@ using namespace std;
 static std::ofstream faultLog;
 static std::ofstream errorLog;
 
-unsigned short int * yumyumRand48State;
-
 void readCSVpairsIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer, std::map<std::string, float> * Map )
 {
     std::vector<std::string> tokens;
@@ -138,6 +136,12 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params["jobFailureProbability"]), &jobKillProbability);
 
 
+    yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumErrorLatencyRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumErrorCorrectionRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    yumyumJobKillRand48State = (unsigned short *) malloc(3 * sizeof(short));
+    
     //set our clock
     setDefaultTimeBase(registerTimeBase(SCHEDULER_TIME_BASE));
 }
@@ -210,11 +214,11 @@ void nodeComponent::handleJobKillEvent(JobKillEvent * killEvent)
  * finds the latency that should be used when passing a fault to a child node.
  * if the user didn't specify a bound, it will be zero.
  */
-unsigned int genFaultLatency( std::map<std::string, std::pair<unsigned int, unsigned int> > * FaultLatencyBounds, std::string faultName )
+unsigned int nodeComponent::genFaultLatency( std::string faultName )
 {
     unsigned int latency = 0;
-    if (FaultLatencyBounds -> find(faultName) != FaultLatencyBounds -> end()){
-        std::pair<unsigned int, unsigned int> bounds = (*FaultLatencyBounds -> find(faultName)).second;
+    if (FaultLatencyBounds.find(faultName) != FaultLatencyBounds.end()){
+        std::pair<unsigned int, unsigned int> bounds = (*FaultLatencyBounds.find(faultName)).second;
         if (bounds.first == 0 && bounds.second == 0){    // bounds of [0, 0] were specified, so use latency of zero
             //      std::cout << "no bounds, using 0" << std::endl;
         } else if (bounds.second == bounds.first){    // no upper bound, so just use the lower bound as our latency
@@ -222,7 +226,7 @@ unsigned int genFaultLatency( std::map<std::string, std::pair<unsigned int, unsi
             latency = bounds.first;
         } else {      // we have an upper bound, so find a random latency.
             //      std::cout << "both bounds, calculating: " << bounds.first << " --- " << bounds.second << std::endl;
-            latency = (((unsigned int)jrand48( yumyumRand48State )) % (bounds.second - bounds.first + 1)) + bounds.first;
+            latency = (((unsigned int)jrand48( yumyumErrorLatencyRand48State )) % (bounds.second - bounds.first + 1)) + bounds.first;
             // random number uniformly distributed between the bounds.
         }
     }
@@ -241,7 +245,7 @@ unsigned int genFaultLatency( std::map<std::string, std::pair<unsigned int, unsi
 bool nodeComponent::canCorrectError( FaultEvent * error )
 {
     return errorCorrectionProbability.find( error -> faultType ) != errorCorrectionProbability.end() &&
-        erand48( yumyumRand48State ) < (errorCorrectionProbability.find( error -> faultType ) -> second);
+        erand48( yumyumErrorCorrectionRand48State ) < (errorCorrectionProbability.find( error -> faultType ) -> second);
 }
 
 
@@ -272,13 +276,13 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
                  */
                 if (faultEvent -> shouldKillJob == FAULT_EVENT_SHOULDKILL
                     || (jobKillProbability.find( faultEvent -> faultType ) == jobKillProbability.end()
-                        || erand48( yumyumRand48State ) < jobKillProbability.find( faultEvent -> faultType ) -> second) ) {
+                        || erand48( yumyumJobKillRand48State ) < jobKillProbability.find( faultEvent -> faultType ) -> second) ) {
 
                     //SelfLink->send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) ); 
 
                     faultEvent -> jobNum = jobNum;
                     faultEvent -> nodeNumber = nodeNum;
-                    Scheduler -> send((unsigned int)genFaultLatency(&FaultLatencyBounds, faultEvent -> faultType), faultEvent -> copy()); 
+                    Scheduler -> send((unsigned int)genFaultLatency(faultEvent -> faultType), faultEvent -> copy()); 
                     // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
 
                 }
@@ -286,12 +290,12 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
                 if (faultEvent->shouldKillJob == FAULT_EVENT_UNDECIDED &&
                     jobKillProbability.find( faultEvent -> faultType ) != jobKillProbability.end()) {
                     // undecided if fault should kill a job, and we have a JobKillProbability for this fault type
-                    if (erand48(yumyumRand48State) < jobKillProbability.find(faultEvent -> faultType) -> second) {
+                    if (erand48(yumyumJobKillRand48State) < jobKillProbability.find(faultEvent -> faultType) -> second) {
                         faultEvent -> shouldKillJob = FAULT_EVENT_SHOULDKILL;
                     }
                 }
                 for (std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
-                    (*it) -> send((unsigned int)genFaultLatency( &FaultLatencyBounds, faultEvent -> faultType ), faultEvent -> copy()); 
+                    (*it) -> send((unsigned int)genFaultLatency( faultEvent -> faultType ), faultEvent -> copy()); 
                 }
             }
         }
@@ -305,13 +309,49 @@ void nodeComponent::handleEvent(Event *ev) {
     if (dynamic_cast<CommunicationEvent *>( ev )){
         CommunicationEvent * event = dynamic_cast<CommunicationEvent*>(ev);
 
-        if (event -> CommType == RETRIEVE_ID) {
+	if( event->CommType == SEED_FAULT ){
+		long int seed = *(long int *)event->payload;
+
+		yumyumFaultRand48State[0] = 0x330E;
+		yumyumFaultRand48State[1] = seed & 0xFFFF;
+		yumyumFaultRand48State[2] = seed >> 16;
+	}else if( event->CommType == SEED_ERROR_LOG ){
+		long int seed = *(long int *)event->payload;
+
+		yumyumErrorLogRand48State[0] = 0x330E;
+		yumyumErrorLogRand48State[1] = seed & 0xFFFF;
+		yumyumErrorLogRand48State[2] = seed >> 16;
+	}else if( event->CommType == SEED_ERROR_LATENCY ){
+		long int seed = *(long int *)event->payload;
+
+		yumyumErrorLatencyRand48State[0] = 0x330E;
+		yumyumErrorLatencyRand48State[1] = seed & 0xFFFF;
+		yumyumErrorLatencyRand48State[2] = seed >> 16;
+	}else if( event->CommType == SEED_ERROR_CORRECTION ){
+		long int seed = *(long int *)event->payload;
+
+		yumyumErrorCorrectionRand48State[0] = 0x330E;
+		yumyumErrorCorrectionRand48State[1] = seed & 0xFFFF;
+		yumyumErrorCorrectionRand48State[2] = seed >> 16;
+	}else if( event->CommType == SEED_JOB_KILL ){
+		long int seed = *(long int *)event->payload;
+
+		yumyumJobKillRand48State[0] = 0x330E;
+		yumyumJobKillRand48State[1] = seed & 0xFFFF;
+		yumyumJobKillRand48State[2] = seed >> 16;
+	}else if (event -> CommType == RETRIEVE_ID) {
             event -> payload = &this -> ID;
             event -> reply = true;
 
             Scheduler -> send(event); 
             return;
-        }
+        }else{
+		std::cerr << "Error: unhandled event" << std::endl;
+	}
+
+	delete event;
+	return;
+
     } else if (dynamic_cast<ObjectRetrievalEvent*>(ev)){
         ObjectRetrievalEvent * event = dynamic_cast<ObjectRetrievalEvent*>(ev);
 
@@ -390,17 +430,17 @@ void nodeComponent::handleSelfEvent(Event *ev)
 }
 
 
-double urand() 
+double urand( unsigned short int * seed ) 
 {
     //	return(rand() + 1.0)/(RAND_MAX + 1.0);
-    return (((int)nrand48(yumyumRand48State)) + 1.0) / (pow(2.0, 31) + 1.0);
+    return (((int)nrand48(seed)) + 1.0) / (pow(2.0, 31) + 1.0);
     // using nrand48 which I can use to better control the seed.
 }
 
-SimTime_t genexp(double lambda)
+SimTime_t genexp(double lambda, unsigned short int * seed)
 {
     double u,x;
-    u = urand();
+    u = urand( seed );
     x = (-1 / lambda) * log(u);
     return llabs(x);
 }
@@ -415,7 +455,7 @@ void nodeComponent::sendNextFault(std::string faultType)
 
     uint32_t lambdaScale = 86400;     // lambda scaled from seconds to days
 
-    SimTime_t fail_time = genexp(Faults.find(faultType.c_str()) -> second / lambdaScale);
+    SimTime_t fail_time = genexp(Faults.find(faultType.c_str()) -> second / lambdaScale, yumyumFaultRand48State);
 
 #ifdef JRSDEBUG
     cerr << getCurrentSimTime() << ": in sendNextFault for node " << this -> ID << " with lambda " << Faults.find(faultType.c_str()) -> second << ", next faultTime is " << fail_time << endl;
@@ -458,7 +498,7 @@ void nodeComponent::logError(FaultEvent * faultEvent)
      * c) there is no probability associated with this type of fault
      */
     if ((this -> errorLogProbability.find(faultEvent -> faultType) != this -> errorLogProbability.end() &&
-         erand48(yumyumRand48State) < this -> errorLogProbability.find(faultEvent -> faultType) -> second) ||
+         erand48(yumyumErrorLogRand48State) < this -> errorLogProbability.find(faultEvent -> faultType) -> second) ||
         this -> errorLogProbability.find(faultEvent -> faultType) == this -> errorLogProbability.end()) {
         errorLog << getCurrentSimTime() << "," << this -> ID << "," << faultEvent -> faultType << endl;
     }

@@ -61,6 +61,12 @@ namespace SST {
 
 
             private:
+		unsigned short int * yumyumFaultRand48State;
+		unsigned short int * yumyumErrorLogRand48State;
+		unsigned short int * yumyumErrorLatencyRand48State;
+		unsigned short int * yumyumErrorCorrectionRand48State;
+		unsigned short int * yumyumJobKillRand48State;
+
                 unsigned long lastfinaltime;
                 schedComponent();  // for serialization only
                 schedComponent(const schedComponent&); // do not implement

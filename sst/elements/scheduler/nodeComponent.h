@@ -48,6 +48,12 @@ namespace SST {
             virtual std::string getID();
 
             private:
+		unsigned short int * yumyumFaultRand48State;
+		unsigned short int * yumyumErrorLogRand48State;
+		unsigned short int * yumyumErrorLatencyRand48State;
+		unsigned short int * yumyumErrorCorrectionRand48State;
+		unsigned short int * yumyumJobKillRand48State;
+
             nodeComponent();  // for serialization only
             nodeComponent(const nodeComponent&); // do not implement
             void operator=(const nodeComponent&); // do not implement
@@ -56,6 +62,7 @@ namespace SST {
             void handleSelfEvent(SST::Event* ev);
             void handleFaultEvent(SST::Event* ev);
             bool canCorrectError(FaultEvent* error);
+            unsigned int genFaultLatency( std::string faultName );
 
             void handleJobKillEvent(JobKillEvent * killEvent);
 

@@ -206,7 +206,7 @@ checking the file for a new modification time.
 yumyum PRNG
 ---
 
-The seed used for the PRNG used for the yumyum functionality discussed here can
+The seeds used for the PRNG used for the yumyum functionality discussed here can
 be specified as a param to the schedComponent in the XML, like so:
 
   <params>
@@ -218,6 +218,29 @@ a one second resolution.
 
 This seed is used only for yumyum functionality; all other SST functionality
 remains the same, as does functionality in other elements.
+
+Various parts of the simulator use different RNGs.  Fault Activation, Error Log
+Probability, Error Latency, Error Correction, and Job Kill Probability can all
+be seeded seperately.  This can be used to change the RNG of one part of the
+simulation while leaving the rest the same.  Whatever seeds are not specified
+will be seeded using the main <seed> parameter, or the current time if a <seed>
+parameter is not given.  For example:
+
+  <params>
+    <seed>42</seed>
+    <faultSeed>101</faultSeed>
+  </params>
+
+will seed all parts of the simulation with 42, except for the fault activation
+which will be seeded with 101.  The seed parameters are:
+
+Fault Activation: <faultSeed></faultSeed>
+Error Log Probability: <errorLogSeed></errorLogSeed>
+Error Latency Determination: <errorLatencySeed></errorLatencySeed>
+Error Correction Probability: <errorCorrectionSeed></errorCorrectionSeed>
+Job Kill Probability: <jobKillSeed></jobKillSeed>
+
+Any combination of seed parameters may be used with each other.
 
 ---
 yumyum functionality tests
