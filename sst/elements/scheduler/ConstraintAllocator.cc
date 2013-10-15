@@ -61,6 +61,13 @@ ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile,
         lineStream.clear(); //so we can write to it again
     }
 
+    long int seed = 42;
+
+    allocPRNGstate = (unsigned short *) malloc( 3 * sizeof( short ) );
+
+    allocPRNGstate[ 0 ] = 0x330E;
+    allocPRNGstate[ 1 ] = seed & 0xFFFF;
+    allocPRNGstate[ 2 ] = seed >> 16;
 }
 
 //external process (python) will read analysis output and create a file
@@ -119,7 +126,7 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 		if( top_allocation != NULL ){
 			allocation = generate_AllocInfo( top_allocation );
 		}else{
-			allocation = generate_LinearAllocInfo( job );
+			allocation = generate_RandomAllocInfo( job );
 		}
 
 		while( ! possible_allocations.empty() ){
@@ -135,14 +142,17 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 }
 
 
-AllocInfo * ConstraintAllocator::generate_LinearAllocInfo( Job * job ){
+AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 	AllocInfo * alloc = new AllocInfo( job );
 	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->freeProcessors();
 
 	for( int node_counter = 0; node_counter < job->getProcsNeeded(); node_counter ++ ){
-		alloc->nodeIndices[ node_counter ] = (*free_comp_nodes)[ node_counter ];
+		std::vector<int>::iterator node_iter = free_comp_nodes->begin();
+		std::advance( node_iter, (nrand48( allocPRNGstate ) % free_comp_nodes->size()) );
+		alloc->nodeIndices[ node_counter ] = *node_iter;
+		free_comp_nodes->erase( node_iter );
 	}
-
+	
 	delete free_comp_nodes;
 
 	return alloc;
@@ -261,15 +271,19 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 	int constrained_nodes_needed = std::min( nodes_needed - unconstrained_nodes_needed, (int) free_constrained_nodes.size() );
 	unconstrained_nodes_needed = nodes_needed - constrained_nodes_needed;
 
-	for( std::set<int>::iterator unconstrained_node_iter = free_unconstrained_nodes.begin();
-	     unconstrained_node_iter != free_unconstrained_nodes.end() and unconstrained_nodes_needed > 0; ++ unconstrained_node_iter ){
+	while( unconstrained_nodes_needed > 0 ){
+		std::set<int>::iterator unconstrained_node_iter = free_unconstrained_nodes.begin();
+		std::advance( unconstrained_node_iter, (nrand48( allocPRNGstate ) % free_unconstrained_nodes.size()) );
 		new_allocation->unconstrained_nodes.insert( *unconstrained_node_iter );
+		free_unconstrained_nodes.erase( unconstrained_node_iter );
 		-- unconstrained_nodes_needed;
 	}
 
-	for( std::set<int>::iterator constrained_node_iter = free_constrained_nodes.begin();
-	     constrained_node_iter != free_constrained_nodes.end() and constrained_nodes_needed > 0; ++ constrained_node_iter ){
+	while( constrained_nodes_needed > 0 ){
+		std::set<int>::iterator constrained_node_iter = free_constrained_nodes.begin();
+		std::advance( constrained_node_iter, (nrand48( allocPRNGstate ) % free_constrained_nodes.size()) );
 		new_allocation->constrained_nodes.insert( *constrained_node_iter );
+		free_constrained_nodes.erase( constrained_node_iter );
 		-- constrained_nodes_needed;
 	}
 
