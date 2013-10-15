@@ -24,10 +24,14 @@ using namespace SST::Prospero;
 prospero::prospero(ComponentId_t id, Params& params) :
   Component(id) {
 
+  trace_format = 0;
+
   // Work out how much we're supposed to be reporting.
   if( params.find("outputlevel") != params.end() ) {
 	output_level = params.find_integer("outputlevel", 0);
   }
+
+  trace_format = (uint32_t) params.find_integer("traceformat", 0);
 
   if( params.find("maximum_items") == params.end() ) {
   	max_trace_count = 4611686018427390000;
@@ -47,7 +51,7 @@ prospero::prospero(ComponentId_t id, Params& params) :
 	// set to be 1GB
 	phys_limit = 1024 * 1024 * 1024;
   } else {
-	phys_limit = atoi( params[ "physlimit" ].c_str() ) * 1024 * 1024;
+	phys_limit = (uint64_t) atol( params[ "physlimit" ].c_str() ) * 1024 * 1024;
 
 	if(output_level > 0) {
 		std::cout << "TRACE:  Set maximum address to be " << phys_limit << std::endl;
@@ -62,7 +66,14 @@ prospero::prospero(ComponentId_t id, Params& params) :
 		std::cout << "TRACE:  Load trace information from: " << params[ "trace" ] << std::endl;
 	}
 
-	trace_input = fopen(params["trace"].c_str(), "rb");
+	if(trace_format == 0) {
+		trace_input = fopen(params["trace"].c_str(), "rb");
+	} else if (trace_format == 1) {
+		trace_input = fopen(params["trace"].c_str(), "rt");
+	} else {
+		printf("Unknown trace format? %" PRIu32 "\n", trace_format);
+		exit(-2);
+	}
 
 	if(trace_input == NULL) {
 		std::cerr << "TRACE:  Unable to open trace file: " <<
@@ -183,26 +194,50 @@ read_trace_return prospero::readNextRequest(memory_request* req) {
 		return READ_FAILED_EOF;
 	}
 
-	const int record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
-	char record_buffer[ record_length ];
-	fread(record_buffer, record_length, 1, trace_input);
+	if(trace_format == 0) {
+		const int record_length = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
+		char record_buffer[ record_length ];
+		fread(record_buffer, record_length, 1, trace_input);
 
-	char op_type;
+		char op_type;
 
-	copy(&(req->instruction_count), record_buffer, 0, sizeof(uint64_t));
-	copy(&op_type, record_buffer, sizeof(uint64_t), sizeof(char));
-	copy(&(req->memory_address), record_buffer, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t));
-	copy(&(req->size), record_buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
+		copy(&(req->instruction_count), record_buffer, 0, sizeof(uint64_t));
+		copy(&op_type, record_buffer, sizeof(uint64_t), sizeof(char));
+		copy(&(req->memory_address), record_buffer, sizeof(uint64_t) + sizeof(char), sizeof(uint64_t));
+		copy(&(req->size), record_buffer, sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t), sizeof(uint32_t));
 
-	// decode memory operation to category the upstream components can use
-	if(op_type == 0) 
-		req->memory_op_type = READ;
-	else if (op_type == 1)
-		req->memory_op_type = WRITE;
-	else {
-		std::cerr << "TRACE:  Unknown memory operation type (setting to read), request number: " << requests_generated << std::endl;
-		req->memory_op_type = READ;
+		// decode memory operation to category the upstream components can use
+		if(op_type == 0) 
+			req->memory_op_type = READ;
+		else if (op_type == 1)
+			req->memory_op_type = WRITE;
+		else {
+			std::cerr << "TRACE:  Unknown memory operation type (setting to read), request number: " << requests_generated << std::endl;
+			req->memory_op_type = READ;
+		}
+	} else if (trace_format == 1) {
+		uint64_t tmp_addr;
+		uint64_t tmp_cycle;
+		char tmp_op_type;
+		uint32_t tmp_length;
+
+		fscanf(trace_input, "%" PRIu64 " %c %" PRIu64 " %" PRIu32 "",
+			&tmp_cycle, &tmp_op_type, &tmp_addr, &tmp_length);
+
+		req->instruction_count = tmp_cycle;
+		req->memory_address = tmp_addr;
+		req->size = tmp_length;
+
+		if(tmp_op_type == 'R')
+			req->memory_op_type = READ;
+		else if(tmp_op_type == 'W')
+			req->memory_op_type = WRITE;
+		else {
+			printf("ERROR: UNKNOWN OPERATION: %c\n", tmp_op_type);
+			exit(-4);
+		}
 	}
+
 
         if(output_level > 0) {
 		std::cout << "TRACE:  Performing page table lookup..." << std::endl;
@@ -372,7 +407,7 @@ void prospero::createPendingRequest(memory_request mem_req) {
 bool prospero::tick( Cycle_t ) {
 	if(keep_generating) {
 	if(output_level > 0) {
-		std::cout << "TRACE: Tick count " << tick_count << std::endl;
+//		std::cout << "TRACE: Tick count " << tick_count << std::endl;
 	}
 
 	// hold result for any trace reads we need to do

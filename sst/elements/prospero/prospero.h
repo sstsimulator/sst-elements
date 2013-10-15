@@ -130,6 +130,7 @@ private:
 
   FILE* trace_input;
   memory_request next_request;
+  uint32_t trace_format;
   uint64_t total_bytes_read;
   uint64_t total_bytes_written;
   uint64_t max_trace_count;
