@@ -31,6 +31,7 @@ int* pipe_id;
 #define PERFORM_WRITE 4
 #define START_DMA 8
 #define ISSUE_TLM_MAP 80
+#define ISSUE_TLM_FREE 100
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
@@ -266,10 +267,23 @@ void* ariel_tlvl_malloc(size_t size) {
 }
 
 void ariel_tlvl_free(void* ptr) {
+	THREADID currentThread = PIN_ThreadId();
+	UINT32 thr = (UINT32) currentThread;
+
 #ifdef ARIEL_DEBUG
-	printf("Perform a tlvl_free from Ariel (pointer = %p)\n", ptr);
+	printf("Perform a tlvl_free from Ariel (pointer = %p) on thread %lu\n", ptr, thr);
 #endif
 	free(ptr);
+	
+	const uint8_t issueFree = (uint8_t) ISSUE_TLM_FREE;
+	const uint64_t virtAddr = (uint64_t) ptr;
+	const int BUFFER_LENGTH = sizeof(issueFree) + sizeof(virtAddr);
+	
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+	copy(&buffer[0], &issueFree, sizeof(issueFree));
+	copy(&buffer[sizeof(issueFree)], &virtAddr, sizeof(virtAddr));
+	
+	write(pipe_id[thr], buffer, BUFFER_LENGTH);	
 }
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
@@ -285,11 +299,11 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
 		printf("Replacement complete.\n");
-	} else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
+	} /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
 	//	printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
 	//	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
 	//	printf("Replacement complete.\n");
-	}
+	}*/
 }
 
 /* ===================================================================== */
