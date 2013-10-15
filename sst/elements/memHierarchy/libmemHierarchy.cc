@@ -118,6 +118,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
+    {"traceFile",       "File name (optional) of a trace-file to generate."},
     {NULL, NULL}
 };
 

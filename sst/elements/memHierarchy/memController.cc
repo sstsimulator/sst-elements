@@ -41,6 +41,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
     dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
+    bool tfFound = false;
+    std::string traceFile = params.find_string("traceFile", "", tfFound);
+    if ( tfFound ) {
+        traceFP = fopen(traceFile.c_str(), "w+");
+    } else {
+        traceFP = NULL;
+    }
+
     unsigned int ramSize = (unsigned int)params.find_integer("mem_size", 0);
 	if ( 0 == ramSize )
 		_abort(MemController, "Must specify RAM size (mem_size) in MB\n");
@@ -176,6 +184,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 
 MemController::~MemController()
 {
+    if ( traceFP ) fclose(traceFP);
     while ( requests.size() ) {
         DRAMReq *req = requests.front();
         requests.pop_front();
@@ -427,6 +436,10 @@ bool MemController::clock(Cycle_t cycle)
         if ( req->amt_in_process >= req->size ) {
             dbg.output(CALL_INFO, "Completed issue of request\n");
             performRequest(req);
+            if ( traceFP ) {
+                fprintf(traceFP, "%c 0x%08"PRIx64" %"PRIu64"\n",
+                        req->isWrite ? 'w' : 'r', req->addr, cycle);
+            }
             requestQueue.pop_front();
         }
     }

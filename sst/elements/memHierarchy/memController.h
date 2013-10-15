@@ -200,6 +200,7 @@ private:
     Addr interleaveStep;
     bool respondToInvalidates;
 
+    FILE *traceFP;
     Output::output_location_t statsOutputTarget;
     uint64_t numReadsSupplied;
     uint64_t numReadsCanceled;
