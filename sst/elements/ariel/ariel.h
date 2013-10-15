@@ -19,7 +19,6 @@
 #include <sst/core/timeConverter.h>
 
 #include <sst/core/interfaces/memEvent.h>
-#include <sst/core/interfaces/dmacmd.h>
 #include <sst/core/output.h>
 #include <sst/elements/memHierarchy/dmaEngine.h>
 
@@ -35,6 +34,7 @@
 
 using namespace std;
 using namespace SST::Interfaces;
+using namespace SST::MemHierarchy;
 
 namespace SST {
 class Event;
@@ -59,6 +59,7 @@ private:
   virtual bool tick( SST::Cycle_t );
   int create_pinchild(char* prog_binary, char** arg_list);
   void allocateInFastMemory(uint64_t vAddr, uint64_t length);
+  void freeFastMemory(uint64_t addr);
 
   uint64_t max_inst;
   char* named_pipe;

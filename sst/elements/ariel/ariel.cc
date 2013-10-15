@@ -33,6 +33,7 @@ using namespace SST::ArielComponent;
 #define START_DMA 8  // Format: Destination:64 Source:64 Size:32 Tag:32
 #define WAIT_DMA 16  // Format: Tag:32
 #define ISSUE_TLM_MAP 80 // issue a Two level memory allocation
+#define ISSUE_TLM_FREE 100
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
 
@@ -397,6 +398,41 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   output->verbose(CALL_INFO, 1, 0, "Ariel configuration phase is complete.\n");
 }
 
+void Ariel::freeFastMemory(uint64_t addr) {
+	output->verbose(CALL_INFO, 1, 0, "Free fast memory allocation: %" PRIu64 "\n",
+		addr);
+	std::map<uint64_t, uint64_t>::iterator allocation_finder =
+		fastmem_alloc_to_size->find(addr);
+		
+	if(allocation_finder != fastmem_alloc_to_size->end()) {
+		output->verbose(CALL_INFO, 2, 0, "Found allocation entry %" PRIu64 ", allocation of %" PRIu64 " bytes, free list has: %" PRIu32 " free pages (before de-allocate)\n",
+			addr, allocation_finder->second, (uint32_t) free_pages_fastmem->size());
+	
+		uint32_t alloc_page_count = allocation_finder->second / page_size;
+		
+		// Loop over each allocated page and free it in turn
+		for(uint32_t page_counter = 0; page_counter < alloc_page_count; ++page_counter) {
+			std::map<uint64_t, uint64_t>::iterator mapper = page_table_fastmem->find(addr + (page_counter * page_size));
+			
+			if(mapper != page_table_fastmem->end()) {
+				// Put page back on free list
+				free_pages_fastmem->push_back(mapper->second);
+				// Erase entry from mapping table
+				page_table_fastmem->erase(mapper);
+			} /*else {
+				output->fatal(CALL_INFO, -32, 0, 0, "Free of page at address: %" PRIu64 " failed.\n",
+					(addr + (page_counter * page_size)));
+			}*/
+		}
+		
+		output->verbose(CALL_INFO, 2, 0, "Deallocation of fast memory is complete, free page count now: %" PRIu32 " entries\n",
+			(uint32_t) free_pages_fastmem->size());
+	} else {
+		output->fatal(CALL_INFO, -32, 0, 0, "Unable to free address: %" PRIu64 " because it is not in the allocation table\n",
+			addr);
+	}
+}
+
 void Ariel::allocateInFastMemory(uint64_t vAddr, uint64_t length) {
 	// We need to map a physical address range into fast memory.
 	uint64_t page_count = length / page_size;
@@ -475,7 +511,7 @@ void Ariel::finish() {
   output->verbose(CALL_INFO, 0, 0, "Std mem ops:      %" PRIu64 "\n", mem_access_count);
   output->verbose(CALL_INFO, 0, 0, "FPge Translates:  %" PRIu64 "\n", fastpage_translation_count);
   output->verbose(CALL_INFO, 0, 0, "Pge Translates:   %" PRIu64 "\n", page_translation_count);
-
+  output->verbose(CALL_INFO, 0, 0, "Time (ns):        %" PRIu64 "\n", getCurrentSimTimeNano());
 }
 
 Ariel::Ariel() :
@@ -629,6 +665,16 @@ bool Ariel::tick( Cycle_t ) {
 					allocateInFastMemory(virtualAddress, allocationLength);
 
 					// We are done with this cycle
+					break;
+				}
+				
+				if(command == ISSUE_TLM_FREE) {
+					uint64_t virtualAddress = 0;
+					read(pipe_id[core_counter], &virtualAddress, sizeof(virtualAddress));
+					
+					output->verbose(CALL_INFO, 1, 0, "Request to perform a two-level free of virtual address: %" PRIu64 "\n", virtualAddress);
+					
+					freeFastMemory(virtualAddress);
 					break;
 				}
 
