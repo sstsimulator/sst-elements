@@ -102,11 +102,40 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 		cache_link[thrID]->send(e_lower);
 		cache_link[thrID]->send(e_upper);
 
-		if(isRead) {
-			split_read_ops++;
-		} else {
-			split_write_ops++;
-		}
+			if(core_trace_mode == 1) {
+				char thisOp = (isRead ? 0 : 1);
+				uint32_t reqSize = (uint32_t) cache_left_size;
+
+				fwrite(&currentCycle, sizeof(uint64_t), 1, core_traces[thrID]);
+				fwrite(&thisOp, sizeof(char), 1, core_traces[thrID]);
+				fwrite(&phys_cache_left_addr, sizeof(uint64_t), 1, core_traces[thrID]);
+				fwrite(&reqSize, sizeof(uint32_t), 1, core_traces[thrID]);
+
+				reqSize = (uint32_t) cache_right_size;
+				fwrite(&currentCycle, sizeof(uint64_t), 1, core_traces[thrID]);
+				fwrite(&thisOp, sizeof(char), 1, core_traces[thrID]);
+				fwrite(&phys_cache_right_addr, sizeof(uint64_t), 1, core_traces[thrID]);
+				fwrite(&reqSize, sizeof(uint32_t), 1, core_traces[thrID]);
+
+				fflush(core_traces[thrID]);
+			} else if(core_trace_mode == 2) {
+				uint32_t reqSize = (uint32_t) cache_left_size;
+
+				fprintf(core_traces[thrID], "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
+					currentCycle, (isRead ? "R" : "W"), phys_cache_left_addr, reqSize);
+
+				reqSize = (uint32_t) cache_right_size;
+				fprintf(core_traces[thrID], "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
+					currentCycle, (isRead ? "R" : "W"), phys_cache_right_addr, reqSize);
+
+				fflush(core_traces[thrID]);
+			}
+
+			if(isRead) {
+				split_read_ops++;
+			} else {
+				split_write_ops++;
+			}
 		}
 	} else {
 		uint64_t physical_addr = translateAddress(addr);
@@ -133,6 +162,26 @@ void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
 			fastmem_access_count++;
 		} else {
 			mem_access_count++;
+		}
+
+		if(core_trace_mode == 1) {
+			uint32_t data_size = (uint32_t) length;
+			char thisOp = (isRead ? 0 : 1);
+
+			fwrite(&currentCycle, sizeof(uint64_t), 1, core_traces[thrID]);
+			fwrite(&thisOp, sizeof(char), 1, core_traces[thrID]);
+			fwrite(&physical_addr, sizeof(uint64_t), 1, core_traces[thrID]);
+			fwrite(&data_size, sizeof(uint32_t), 1, core_traces[thrID]);
+
+			fflush(core_traces[thrID]);
+		} else if (core_trace_mode == 2) {
+			uint32_t data_size = (uint32_t) length;
+			char thisOp = (isRead ? 0 : 1);
+
+			fprintf(core_traces[thrID], "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
+				currentCycle, (isRead ? "R" : "W"), physical_addr, data_size);
+
+			fflush(core_traces[thrID]);
 		}
 
 		cache_link[thrID]->send(ev);
@@ -207,6 +256,8 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   Component(id) {
   printf("In Ariel creating output...\n");
 
+  currentCycle = 0;
+
   int verbose = params.find_integer("verbose", 0);
   output = new Output("SSTArielComponent: ", verbose, 0, SST::Output::STDOUT);
 
@@ -265,6 +316,22 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   // are shared across the processor as a whole.
   core_count = (uint32_t) params.find_integer("corecount", 1);
   output->verbose(CALL_INFO, 1, 0, "Creating processing for %" PRIu32 " cores.\n", core_count);
+
+  core_trace_mode = (uint32_t) params.find_integer("tracecores", 0);
+  output->verbose(CALL_INFO, 1, 0, "Core tracing set to: %" PRIu32 "\n", core_trace_mode);
+  core_traces = (FILE**) malloc(sizeof(FILE*) * core_count);
+  if(core_trace_mode > 0) {
+	for(uint32_t core_counter = 0; core_counter < core_count; core_counter++) {
+		char core_trace_buffer[256];
+		sprintf(core_trace_buffer, "core_trace_%" PRIu32, core_counter);
+
+		if(core_trace_mode == 1) {
+			core_traces[core_counter] = fopen(core_trace_buffer, "wb");
+		} else {
+			core_traces[core_counter] = fopen(core_trace_buffer, "wt");
+		}
+        }
+  }
 
   output->verbose(CALL_INFO, 1, 0, "Creating processor core masks...\n");
   core_masks = (int*) malloc(sizeof(int) * core_count);
@@ -483,6 +550,7 @@ void Ariel::finish() {
 
   for(uint32_t i = 0; i < core_count; ++i) {
   	close(pipe_id[i]);
+	fclose(core_traces[i]);
   }
 
   output->verbose(CALL_INFO, 2, 0, "Pipes have been closed, attempting to free resources...\n");
@@ -581,9 +649,11 @@ void Ariel::handleDMAEvent(Event* ev) {
 	}
 }
 
-bool Ariel::tick( Cycle_t ) {
+bool Ariel::tick( Cycle_t thisCycle ) {
 	output->verbose(CALL_INFO, 64, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
 	output->verbose(CALL_INFO, 64, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
+
+        currentCycle = (uint64_t) thisCycle;
 
 /*	// Check for events from the optional DMA unit
 	if (NULL != dmaLink) {

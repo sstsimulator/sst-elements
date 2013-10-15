@@ -67,6 +67,7 @@ private:
   std::string user_binary;
   Output* output;
 
+  uint64_t currentCycle;
   uint64_t memory_ops;
   uint64_t read_ops;
   uint64_t write_ops;
@@ -99,6 +100,9 @@ private:
   SST::Link* dmaLink;
   MemEvent* pending_transaction;
   uint32_t pending_transaction_core;
+
+  FILE** core_traces;
+  int core_trace_mode;
 
   uint64_t fastmem_access_count;
   uint64_t mem_access_count;
