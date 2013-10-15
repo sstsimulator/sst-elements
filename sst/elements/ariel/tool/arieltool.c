@@ -286,9 +286,9 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
 		printf("Replacement complete.\n");
 	} else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
-		printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
-		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
-		printf("Replacement complete.\n");
+	//	printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
+	//	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
+	//	printf("Replacement complete.\n");
 	}
 }
 
