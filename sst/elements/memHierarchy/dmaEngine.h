@@ -82,6 +82,10 @@ class DMAEngine : public Component {
     Output dbg;
     std::vector<MemNIC::ComponentInfo> directories;
     uint64_t blocksize;
+    Output::output_location_t statsOutputTarget;
+    uint64_t numTransfers;
+    uint64_t bytesTransferred;
+
 
     Link *commandLink;
     MemNIC *networkLink;
@@ -91,6 +95,7 @@ public:
     ~DMAEngine() {}
     virtual void init(unsigned int phase);
     virtual void setup();
+    virtual void finish();
 
 private:
     DMAEngine() {}; // For serialization

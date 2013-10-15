@@ -27,11 +27,12 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
 {
     dbg.init("@t:DMAEngine::@p():@l " + getName() + ": ", 0, 0,
             (Output::output_location_t)params.find_integer("debug", 0));
+    statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
     TimeConverter *tc = registerClock(params.find_string("clockRate", "1 GHz"),
             new Clock::Handler<DMAEngine>(this, &DMAEngine::clock));
     commandLink = configureLink("cmdLink", tc, NULL);
-    if ( NULL != commandLink ) dbg.fatal(CALL_INFO, 1, 0, 0, "Missing cmdLink\n");
+    if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, 0, 0, "Missing cmdLink\n");
 
     if ( !isPortConnected("netLink") ) dbg.fatal(CALL_INFO, 1, 0, 0, "Missing netLink\n");
 
@@ -79,6 +80,17 @@ void DMAEngine::setup(void)
 }
 
 
+void DMAEngine::finish(void)
+{
+    Output out("", 0, 0, statsOutputTarget);
+    out.output("DMA Controller %s stats:\n"
+            "\t # Transfers:        %"PRIu64"\n"
+            "\t Bytes Transferred:  %"PRIu64"\n",
+            getName().c_str(),
+            numTransfers,
+            bytesTransferred);
+}
+
 
 bool DMAEngine::clock(Cycle_t cycle)
 {
@@ -87,12 +99,17 @@ bool DMAEngine::clock(Cycle_t cycle)
      * If new command, check overlap, and delay if needed, otherwise process
      */
 
+    networkLink->clock();
+
     MemEvent *me = NULL;
     SST::Event *se = NULL;
 
     while ( NULL != (me = networkLink->recv()) ) {
         /* Process network packet */
         Request* req = findRequest(me->getResponseToID());
+        if ( NULL == req ) {
+            dbg.output(CALL_INFO, "Received Packet for which we have no response ID waiting.  ID received: (%"PRIu64", %d)\n", me->getResponseToID().first, me->getResponseToID().second);
+        }
         processPacket(req, me);
     }
 
@@ -132,6 +149,9 @@ bool DMAEngine::isIssuable(DMACommand *cmd) const
 
 void DMAEngine::startRequest(Request *req)
 {
+    dbg.output(CALL_INFO, "Received request to transfer from 0x%"PRIx64" to 0x%"PRIx64"\n",
+            req->getSrc(), req->getDst());
+    ++numTransfers;
     Addr ptr = req->getSrc();
     while ( ptr < (req->getSrc() + req->getSize()) ) {
         MemEvent *ev = new MemEvent(this, ptr, RequestData);
@@ -142,6 +162,7 @@ void DMAEngine::startRequest(Request *req)
         networkLink->send(ev);
         ptr += blocksize;
     }
+    activeRequests.insert(req);
 }
 
 
@@ -160,13 +181,17 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
         req->storeKeys.insert(storeEV->getID());
         networkLink->send(storeEV);
     } else if ( ev->getCmd() == WriteResp ) {
+        bytesTransferred += ev->getSize();
         req->storeKeys.erase(ev->getResponseToID());
         if ( req->storeKeys.empty() ) {
             // Done with this request.
             activeRequests.erase(req);
             commandLink->send(req->command);
+            dbg.output(CALL_INFO, "Request to transfer 0x%"PRIx64" to 0x%"PRIx64" is complete.\n", req->getSrc(), req->getDst());
             delete req;
         }
+    } else {
+	dbg.fatal(CALL_INFO, 1,0,0, "Received unexpected message %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
     }
 }
 
@@ -206,8 +231,8 @@ std::string DMAEngine::findTargetDirectory(Addr addr)
 {
     for ( std::vector<MemNIC::ComponentInfo>::iterator i = directories.begin() ; i != directories.end() ; ++i ) {
         MemNIC::ComponentTypeInfo &di = i->typeInfo;
-        dbg.output(CALL_INFO, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
-                addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
+        //dbg.output(CALL_INFO, "Comparing address 0x%"PRIx64" to %s [0x%"PRIx64" - 0x%"PRIx64" by 0x%"PRIx64", 0x%"PRIx64"]\n",
+        //        addr, i->name.c_str(), di.dirctrl.rangeStart, di.dirctrl.rangeEnd, di.dirctrl.interleaveStep, di.dirctrl.interleaveSize);
         if ( addr >= di.dirctrl.rangeStart && addr < di.dirctrl.rangeEnd ) {
             if ( 0 == di.dirctrl.interleaveSize ) {
                 return i->name;
@@ -224,4 +249,3 @@ std::string DMAEngine::findTargetDirectory(Addr addr)
     return "";
 }
 
-BOOST_CLASS_EXPORT(DMACommand);

@@ -445,7 +445,8 @@ void DirectoryController::finishInvalidate(DirEntry *entry, MemEvent *new_ev)
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
     entry->clearSharers();
-	entry->sharers[target_id] = true;
+    if ( !entry->activeReq->queryFlag(MemEvent::F_UNCACHED) )
+        entry->sharers[target_id] = true;
 	entry->dirty = true;
 
     dbg.output(CALL_INFO, "Setting dirty, with owner %s for 0x%"PRIx64".\n", nodeid_to_name[target_id].c_str(), entry->baseAddr);
@@ -530,7 +531,8 @@ void DirectoryController::finishFetch(DirEntry* entry, MemEvent *new_ev)
 		entry->dirty = false;
 	}
 
-	entry->sharers[node_id(entry->activeReq->getSrc())] = true;
+    if ( !entry->activeReq->queryFlag(MemEvent::F_UNCACHED) )
+        entry->sharers[node_id(entry->activeReq->getSrc())] = true;
 
 	MemEvent *ev = entry->activeReq->makeResponse(this);
 	ev->setPayload(new_ev->getPayload());
@@ -564,7 +566,8 @@ void DirectoryController::getExclusiveDataForRequest(DirEntry* entry, MemEvent *
 
 	uint32_t target_id = node_id(entry->activeReq->getSrc());
     entry->clearSharers();
-	entry->sharers[target_id] = true;
+    if ( !entry->activeReq->queryFlag(MemEvent::F_UNCACHED) )
+        entry->sharers[target_id] = true;
 	entry->dirty = true;
 
 	entry->nextFunc = &DirectoryController::sendRequestedData;
@@ -579,7 +582,8 @@ void DirectoryController::handleWriteback(DirEntry *entry, MemEvent *ev)
     assert(entry->dirty);
     assert(entry->findOwner() == node_lookup[entry->activeReq->getSrc()]);
     entry->dirty = false;
-    entry->sharers[node_id(entry->activeReq->getSrc())] = true;
+    if ( !entry->activeReq->queryFlag(MemEvent::F_UNCACHED) )
+        entry->sharers[node_id(entry->activeReq->getSrc())] = true;
     writebackData(entry->activeReq);
 	updateEntryToMemory(entry);
 }
@@ -659,16 +663,26 @@ void DirectoryController::updateCacheEntry(DirEntry *entry)
                 break;
             }
         }
-        entryCache.push_front(entry);
 
-        while ( entryCache.size() > entryCacheSize ) {
-            DirEntry *oldEntry = entryCache.back();
-            // If the oldest entry is still in progress, everything is in progress
-            if ( oldEntry->inProgress() ) break;
+        /* Find out if we're no longer cached, and just remove */
+        if ( (!entry->activeReq) && (0 == entry->countRefs()) ) {
+            dbg.output(CALL_INFO, "Entry for 0x%"PRIx64" has no referenes - purging\n", entry->baseAddr);
+            directory.erase(entry->baseAddr);
+            delete entry;
+            return;
+        } else {
 
-            dbg.output(CALL_INFO, "entryCache too large.  Evicting entry for 0x%"PRIx64"\n", oldEntry->baseAddr);
-            entryCache.pop_back();
-            sendEntryToMemory(oldEntry);
+            entryCache.push_front(entry);
+
+            while ( entryCache.size() > entryCacheSize ) {
+                DirEntry *oldEntry = entryCache.back();
+                // If the oldest entry is still in progress, everything is in progress
+                if ( oldEntry->inProgress() ) break;
+
+                dbg.output(CALL_INFO, "entryCache too large.  Evicting entry for 0x%"PRIx64"\n", oldEntry->baseAddr);
+                entryCache.pop_back();
+                sendEntryToMemory(oldEntry);
+            }
         }
     }
 }
@@ -676,8 +690,8 @@ void DirectoryController::updateCacheEntry(DirEntry *entry)
 
 void DirectoryController::updateEntryToMemory(DirEntry *entry)
 {
-    updateCacheEntry(entry);
     resetEntry(entry);
+    updateCacheEntry(entry);
 }
 
 

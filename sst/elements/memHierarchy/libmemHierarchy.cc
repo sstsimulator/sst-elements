@@ -153,6 +153,7 @@ static const ElementInfoParam dmaengine_params[] = {
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {"clockRate",       "Clock Rate for processing DMAs."},
     {"netAddr",         "Network address of component."},
+    {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
 
@@ -212,3 +213,5 @@ extern "C" {
 		components,
 	};
 }
+
+BOOST_CLASS_EXPORT(DMACommand)
