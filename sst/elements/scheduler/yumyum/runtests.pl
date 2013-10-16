@@ -465,8 +465,8 @@ my @test12KillRates = ( 0.1, 0.2, 0.4, 0.8, 1,
                         (1-0.9**7), (1-0.8**7), (1-0.6**7), (1-0.2**7), 1,
                         (1-0.9*0.7*0.5*0.3) );
 
-my $killRateAllowableError = 0.075;     # 7.5%
-my $errorRateAllowableError = 0.05;     # 5%
+my $killRateAllowableError = 0.1;     # 10%
+my $errorRateAllowableError = 0.075;     # 7.5%
 
 foreach $count (0 .. $#test12XML) {
 
