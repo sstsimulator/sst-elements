@@ -76,20 +76,13 @@ schedComponent::~schedComponent()
 void readSeed( Params & params, std::string paramName, unsigned short * PRNG48State ){
 	long int XMLseed;
 
-	std::cout << "seeding " << paramName << " from ";
-
 	if( params.find( paramName ) != params.end() ){
-		std::cout << paramName;
 		XMLseed = atoi( params[ paramName ].c_str() );
 	}else if( params.find( "seed" ) != params.end() ){
-		std::cout << "seed";
 		XMLseed = atoi( params[ "seed" ].c_str() );
 	}else{
-		std::cout << "time";
 		XMLseed = time( NULL );
 	}
-
-	std::cout << std::endl;
 
 	PRNG48State[0] = 0x330E;
 	PRNG48State[1] = XMLseed & 0xFFFF;

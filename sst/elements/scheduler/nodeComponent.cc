@@ -312,8 +312,6 @@ void nodeComponent::handleEvent(Event *ev) {
 	if( event->CommType == SEED_FAULT ){
 		long int seed = *(long int *)event->payload;
 
-		std::cout << "seeding fault with " << seed << std::endl;
-
 		yumyumFaultRand48State[0] = 0x330E;
 		yumyumFaultRand48State[1] = seed & 0xFFFF;
 		yumyumFaultRand48State[2] = seed >> 16;
