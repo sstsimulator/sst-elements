@@ -81,6 +81,7 @@ class CtrlMsg : public ProtocolAPI {
         ~CommReq() {
             if ( info ) delete info;
         }
+        enum { Send, Recv } type;
         BaseInfo*    info;
         bool done;
     };

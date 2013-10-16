@@ -282,6 +282,7 @@ void CtrlMsg::recvv(std::vector<IoVec>& ioVec, int src, int tag,
 
     req->info = new RecvInfo( ioVec, src, tag, group );
     req->done = false;
+    req->type = CommReq::Recv;
 
     m_postedQ.push_back( req );
 }
@@ -292,6 +293,7 @@ void CtrlMsg::sendv(std::vector<IoVec>& ioVec, int dest, int tag,
     m_dbg.verbose(CALL_INFO,1,0,"dest=%d tag=%#x group=%d\n", dest,tag,group);
     req->info = new SendInfo( ioVec, dest, tag, group );
     req->done = false;
+    req->type = CommReq::Send;
 
     m_sendQ.push_back( req );
 }
@@ -323,28 +325,31 @@ bool CtrlMsg::test( CommReq * req, int& delay )
     delay = 0;
 
     RecvReq* xxx;
-    if (( xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info), delay ) ))
-    {
-        m_dbg.verbose(CALL_INFO,1,0,"found match, delay=%d\n",delay);
-        size_t offset = 0;
+    if ( req->type == CommReq::Recv ) {
+        if (( xxx = searchUnexpected( *static_cast<RecvInfo*>(req->info), 
+                                                    delay ) ))
+        {
+            m_dbg.verbose(CALL_INFO,1,0,"found match, delay=%d\n",delay);
+            size_t offset = 0;
             
-        for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
-            memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
-                    req->info->ioVec[i].len );
-            offset += req->info->ioVec[i].len;
+            for ( unsigned int i=0; i < req->info->ioVec.size(); i++ ) {
+                memcpy( req->info->ioVec[i].ptr, &xxx->buf[offset], 
+                            req->info->ioVec[i].len );
+                offset += req->info->ioVec[i].len;
 
-            delay += getCopyDelay( req->info->ioVec[i].len );
-        }
-        req->done = true;
-        
-        std::deque<CommReq*>::iterator iter;
-        for ( iter = m_postedQ.begin(); iter != m_postedQ.end(); ++iter ) {
-            if ( *iter == req ) {
-                m_postedQ.erase( iter );
-                break; 
+                delay += getCopyDelay( req->info->ioVec[i].len );
             }
+            req->done = true;
+        
+            std::deque<CommReq*>::iterator iter;
+            for ( iter = m_postedQ.begin(); iter != m_postedQ.end(); ++iter ) {
+                if ( *iter == req ) {
+                    m_postedQ.erase( iter );
+                    break; 
+                }
+            }
+            delete xxx;
         }
-        delete xxx;
     }
     if ( req->done ) {
         delete req->info;
