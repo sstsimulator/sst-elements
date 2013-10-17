@@ -149,7 +149,6 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
 void nodeComponent::setup()
 {
-    SelfLink -> send(new CommunicationEvent(START_FAULTING)); 
 }
 
 
@@ -324,6 +323,7 @@ void nodeComponent::handleEvent(Event *ev) {
 		}
 
 		free( event->payload );
+		SelfLink -> send(new CommunicationEvent(START_FAULTING)); 
 
 	}else if( event->CommType == SEED_ERROR_LOG ){
 		long int seed = *(long int *)event->payload;
