@@ -73,9 +73,6 @@
             <interleaveSize> 4 </interleaveSize>
             <interleaveStep> 8 </interleaveStep>
 			<clock> 1GHz </clock>
-			<use_dramsim> 0 </use_dramsim>
-			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
-			<system_ini> system.ini </system_ini>
             <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=mem2_bus_link port=snoop_link latency=$buslat />

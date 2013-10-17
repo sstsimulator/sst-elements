@@ -57,7 +57,7 @@
       <mem_size> 512 </mem_size>
       <clock> 1GHz </clock>
       <debug> ${MEM_DEBUG} </debug>
-      <use_vaultSim> 1 </use_vaultSim>
+      <backend> memHierarchy.vaultsim </backend>
     </params>
     <link name=mem_bus_link port=snoop_link latency=$buslat />
     <link name=chain_c_0 port=cube_link latency=$buslat />

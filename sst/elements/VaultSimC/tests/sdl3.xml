@@ -113,7 +113,7 @@
         <!-- <access_time> 20ns </access_time> -->
         <mem_size>      4096 </mem_size>
         <clock>         1GHz </clock>
-        <use_dramsim>   1 </use_dramsim>
+        <backend>       memHierarchy.dramsim <\backend>
         <device_ini>    DDR3_micron_8M_8B_x16_sg15_bigLittle.ini </device_ini>
         <system_ini>    system.bigLittle.ini </system_ini>
         <debug>         ${MEM_DEBUG} </debug>
@@ -124,7 +124,7 @@
         <!-- <access_time> 20ns </access_time> -->
         <mem_size>      4096 </mem_size>
         <clock>         2GHz </clock>
-        <use_dramsim>   1 </use_dramsim>
+        <backend>       memHierarchy.dramsim <\backend>
         <device_ini>    DDR3_micron_8M_8B_x16_sg15_bigLittle.ini </device_ini>
         <system_ini>    system.bigLittle.ini </system_ini>
         <debug>         ${MEM_DEBUG} </debug>
@@ -134,8 +134,7 @@
     <VaultMemParams>
         <mem_size> 1024 </mem_size>
         <clock> 1GHz </clock>
-        <use_dramsim> 0 </use_dramsim>
-        <use_vaultSim> 1 </use_vaultSim>
+        <backend> memHierarchy.vaultsim <backend>
         <printStats> 1 </printStats>
     </VaultMemParams>
 
