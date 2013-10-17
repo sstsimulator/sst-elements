@@ -177,6 +177,10 @@ public:
     // the next event.
     RtrEvent* recv(int vc);
 
+    // Returns true if there is an event in the input buffer and false 
+    // otherwise.
+    inline bool eventToReceive( int vc ) { return ! input_buf[vc].empty(); }
+
     void sendInitData(RtrEvent *ev);
     Event* recvInitData();
 
