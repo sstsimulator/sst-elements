@@ -54,6 +54,8 @@ namespace SST {
 		unsigned short int * yumyumErrorCorrectionRand48State;
 		unsigned short int * yumyumJobKillRand48State;
 
+		bool faultsActivated;
+
             nodeComponent();  // for serialization only
             nodeComponent(const nodeComponent&); // do not implement
             void operator=(const nodeComponent&); // do not implement

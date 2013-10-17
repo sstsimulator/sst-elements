@@ -141,7 +141,9 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     yumyumErrorLatencyRand48State = (unsigned short *) malloc(3 * sizeof(short));
     yumyumErrorCorrectionRand48State = (unsigned short *) malloc(3 * sizeof(short));
     yumyumJobKillRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    
+ 
+    faultsActivated = false;
+
     //set our clock
     setDefaultTimeBase(registerTimeBase(SCHEDULER_TIME_BASE));
 }
@@ -323,7 +325,11 @@ void nodeComponent::handleEvent(Event *ev) {
 		}
 
 		free( event->payload );
-		SelfLink -> send(new CommunicationEvent(START_FAULTING)); 
+
+		if( !faultsActivated ){
+			SelfLink -> send(new CommunicationEvent(START_FAULTING)); 
+			faultsActivated = true;
+		}
 
 	}else if( event->CommType == SEED_ERROR_LOG ){
 		long int seed = *(long int *)event->payload;
