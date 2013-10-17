@@ -54,7 +54,7 @@
 			<access_time> 1000 ns </access_time>
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
-			<use_dramsim> 1 </use_dramsim>
+            <backend> memHierarchy.dramsim </backend>
 			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
 			<system_ini> system.ini </system_ini>
             <debug> ${MEM_DEBUG} </debug>

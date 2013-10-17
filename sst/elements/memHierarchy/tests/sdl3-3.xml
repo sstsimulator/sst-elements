@@ -85,7 +85,6 @@
 			<access_time> 1000 ns </access_time>
 			<mem_size> 512 </mem_size>
 			<clock> 1GHz </clock>
-			<use_dramsim> 0 </use_dramsim>
             <debug> ${MEM_DEBUG} </debug>
             <printStats> 1 </printStats>
 		</params>

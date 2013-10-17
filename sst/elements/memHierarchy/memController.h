@@ -15,6 +15,7 @@
 #include "sst_config.h"
 
 #include <sst/core/event.h>
+#include <sst/core/module.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
@@ -57,16 +58,11 @@ using namespace SST::Interfaces;
 namespace SST {
 namespace MemHierarchy {
 
+class MemBackend;
+
+
 class MemController : public SST::Component {
 public:
-    MemController(ComponentId_t id, Params &params);
-    void init(unsigned int);
-    void setup();
-    void finish();
-
-
-private:
-
     struct DRAMReq {
         enum Status_t {NEW, PROCESSING, RETURNED, DONE};
 
@@ -122,28 +118,16 @@ private:
 
     };
 
-    struct isDone {
-      bool operator() (DRAMReq *req) const {
-	return (DRAMReq::DONE == req->status);
-      }
-    };
+    MemController(ComponentId_t id, Params &params);
+    void init(unsigned int);
+    void setup();
+    void finish();
 
-    class MemCtrlEvent : public SST::Event {
-    public:
-        MemCtrlEvent(DRAMReq* req) : SST::Event(), req(req)
-        { }
+    void handleMemResponse(DRAMReq *req);
 
-        DRAMReq *req;
-    private:
-        friend class boost::serialization::access;
-        template<class Archive>
-            void
-            serialize(Archive & ar, const unsigned int version )
-            {
-                ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
-                ar & BOOST_SERIALIZATION_NVP(req);
-            }
-    };
+    Output dbg;
+
+private:
 
 
 
@@ -166,8 +150,6 @@ private:
 
     void sendResponse(DRAMReq *req);
 
-    void handleMemResponse(DRAMReq *req);
-    void handleSelfEvent(SST::Event *event);
     void handleCubeEvent(SST::Event *event);
 
     bool divert_DC_lookups;
@@ -175,10 +157,8 @@ private:
     bool use_vaultSim;
     bool use_hybridsim;
 
-    Output dbg;
-    SST::Link *self_link;
-    SST::Link *cube_link; // link to chain of cubes
     SST::Link *upstream_link;
+    MemBackend *backend;
     bool use_bus;
     bool bus_requested;
     std::deque<DRAMReq*> busReqs;
@@ -186,9 +166,6 @@ private:
     typedef std::deque<DRAMReq*> dramReq_t;
     dramReq_t requestQueue;
     dramReq_t requests;
-
-    typedef std::map<SST::Interfaces::MemEvent::id_type,DRAMReq*> memEventToDRAMMap_t;
-    memEventToDRAMMap_t outToCubes; // map of events sent out to the cubes
 
     int backing_fd;
     uint8_t *memBuffer;
@@ -205,24 +182,94 @@ private:
     uint64_t numReadsSupplied;
     uint64_t numReadsCanceled;
     uint64_t numWrites;
-    uint64_t numReqOutstanding;    
+    uint64_t numReqOutstanding;
     uint64_t numCycles;
 
+};
+
+class MemBackend : public Module {
+public:
+    MemBackend();
+    MemBackend(Component *comp, Params &params);
+    virtual bool issueRequest(MemController::DRAMReq *req) = 0;
+    virtual void setup() {}
+    virtual void finish() {}
+    virtual void clock() {}
+protected:
+    MemController *ctrl;
+};
+
+
+
+class SimpleMemory : public MemBackend {
+public:
+    SimpleMemory();
+    SimpleMemory(Component *comp, Params &params);
+    bool issueRequest(MemController::DRAMReq *req);
+private:
+    class MemCtrlEvent : public SST::Event {
+    public:
+        MemCtrlEvent(MemController::DRAMReq* req) : SST::Event(), req(req)
+        { }
+
+        MemController::DRAMReq *req;
+    private:
+        friend class boost::serialization::access;
+        template<class Archive>
+        void
+        serialize(Archive & ar, const unsigned int version )
+        {
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Event);
+            ar & BOOST_SERIALIZATION_NVP(req);
+        }
+    };
+
+    void handleSelfEvent(SST::Event *event);
+
+    Link *self_link;
+};
+
 #if defined(HAVE_LIBDRAMSIM)
+class DRAMSimMemory : public MemBackend {
+public:
+    DRAMSimMemory(Component *comp, Params &params);
+    bool issueRequest(MemController::DRAMReq *req);
+    void clock();
+    void finish();
+
+private:
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
     DRAMSim::MultiChannelMemorySystem *memSystem;
-
-    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<MemController::DRAMReq*> > dramReqs;
+};
 #endif
 
- // MARYLAND CHANGES
 #if defined(HAVE_LIBHYBRIDSIM)
+class HybridSimMemory : public MemBackend {
+public:
+    HybridSimMemory(Component *comp, Params &params);
+    bool issueRequest(MemController::DRAMReq *req);
+    void clock();
+    void finish();
+private:
     void hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
     HybridSim::HybridSystem *memSystem;
-    std::map<uint64_t, std::deque<DRAMReq*> > dramReqs;
+    std::map<uint64_t, std::deque<MemController::DRAMReq*> > dramReqs;
+};
 #endif
+
+class VaultSimMemory : public MemBackend {
+public:
+    VaultSimMemory(Component *comp, Params &params);
+    bool issueRequest(MemController::DRAMReq *req);
+private:
+    void handleCubeEvent(SST::Event *event);
+
+    typedef std::map<MemEvent::id_type,MemController::DRAMReq*> memEventToDRAMMap_t;
+    memEventToDRAMMap_t outToCubes; // map of events sent out to the cubes
+    SST::Link *cube_link;
 };
 
 

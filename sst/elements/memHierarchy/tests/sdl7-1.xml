@@ -58,9 +58,6 @@
 			<mem_size> 8 </mem_size>
             <rangeStart> 0x0000000 </rangeStart> <!-- Start at 0MB -->
 			<clock> 1GHz </clock>
-			<use_dramsim> 0 </use_dramsim>
-			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
-			<system_ini> system.ini </system_ini>
             <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=mem1_bus_link port=snoop_link latency=$buslat />
@@ -72,9 +69,6 @@
 			<mem_size> 8 </mem_size>
             <rangeStart> 0x800000 </rangeStart> <!-- Start at 8MB -->
 			<clock> 1GHz </clock>
-			<use_dramsim> 0 </use_dramsim>
-			<device_ini> DDR3_micron_32M_8B_x4_sg125.ini </device_ini>
-			<system_ini> system.ini </system_ini>
             <debug> ${MEM_DEBUG} </debug>
 		</params>
 		<link name=mem2_bus_link port=snoop_link latency=$buslat />

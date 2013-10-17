@@ -26,56 +26,70 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-static Component*
-create_Cache(SST::ComponentId_t id,
-		SST::Params& params)
+static Component* create_Cache(ComponentId_t id, Params& params)
 {
 	return new Cache( id, params );
 }
 
 
-static Component*
-create_Bus(SST::ComponentId_t id,
-		SST::Params& params)
+static Component* create_Bus(ComponentId_t id, Params& params)
 {
 	return new Bus( id, params );
 }
 
 
-static Component*
-create_trivialCPU(SST::ComponentId_t id,
-		SST::Params& params)
+static Component* create_trivialCPU(ComponentId_t id, Params& params)
 {
 	return new trivialCPU( id, params );
 }
 
-static Component*
-create_streamCPU(SST::ComponentId_t id,
-		SST::Params& params)
+static Component* create_streamCPU(ComponentId_t id, Params& params)
 {
 	return new streamCPU( id, params );
 }
 
 
-static Component*
-create_MemController(SST::ComponentId_t id,
-		SST::Params& params)
+static Component* create_MemController(ComponentId_t id, Params& params)
 {
 	return new MemController( id, params );
 }
 
-static Component*
-create_DirectoryController(SST::ComponentId_t id,
-		SST::Params& params)
+static Component* create_DirectoryController(ComponentId_t id, Params& params)
 {
 	return new DirectoryController( id, params );
 }
 
-static Component*
-create_DMAEngine(SST::ComponentId_t id, SST::Params& params)
+static Component* create_DMAEngine(ComponentId_t id, Params& params)
 {
 	return new DMAEngine( id, params );
 }
+
+
+static Module* create_Mem_SimpleSim(Component* comp, Params& params)
+{
+    return new SimpleMemory(comp, params);
+}
+
+#if defined(HAVE_LIBDRAMSIM)
+static Module* create_Mem_DRAMSim(Component* comp, Params& params)
+{
+    return new DRAMSimMemory(comp, params);
+}
+#endif
+
+#if defined(HAVE_LIBHYBRIDSIM)
+static Module* create_Mem_HybridSim(Component* comp, Params& params)
+{
+    return new HybridSimMemory(comp, params);
+}
+#endif
+
+static Module* create_Mem_VaultSim(Component* comp, Params& params)
+{
+    return new VaultSimMemory(comp, params);
+}
+
+
 
 static const ElementInfoParam cache_params[] = {
     {"prefetcher",      "Prefetcher to use with cache (loaded as a module)"},
@@ -109,11 +123,7 @@ static const ElementInfoParam memctrl_params[] = {
     {"memory_file",     "Optional backing-store file to pre-load memory, or store resulting state"},
     {"clock",           "Clock frequency of controller"},
     {"divert_DC_lookups",  "Divert Directory controller table lookups from the memory system, use a fixed latency (access_time). Default:0"},
-    {"use_dramsim",     "0 to not use DRAMSim, 1 to use DRAMSim"},
-    {"use_vaultSim",    "0 to not use vaults, 1 to use a connected chain of vaultSim components"},
-    {"device_ini",      "Name of DRAMSim Device config file"},
-    {"system_ini",      "Name of DRAMSim Device system file"},
-    {"access_time",     "When not using DRAMSim, latency of memory operation."},
+    {"backend",         "Timing backend to use:  Default to simpleMem"},
     {"request_width",   "Size of a DRAM request in bytes.  Should be a power of 2 - default 64"},
     {"direct_link_latency",   "Latency when using the 'direct_link', rather than 'snoop_link'"},
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
@@ -121,6 +131,33 @@ static const ElementInfoParam memctrl_params[] = {
     {"traceFile",       "File name (optional) of a trace-file to generate."},
     {NULL, NULL}
 };
+
+
+static const ElementInfoParam simpleMem_params[] = {
+    {"access_time",     "When not using DRAMSim, latency of memory operation."},
+    {NULL, NULL}
+};
+
+static const ElementInfoParam dramsimMem_params[] = {
+    {"device_ini",      "Name of DRAMSim Device config file"},
+    {"system_ini",      "Name of DRAMSim Device system file"},
+    {NULL, NULL}
+};
+
+static const ElementInfoParam hybdridsimMem_params[] = {
+    {"device_ini",      "Name of HybridSim Device config file"},
+    {"system_ini",      "Name of HybridSim Device system file"},
+    {NULL, NULL}
+};
+
+static const ElementInfoParam vaultsimMem_params[] = {
+    {"access_time",     "When not using DRAMSim, latency of memory operation."},
+    {NULL, NULL}
+};
+
+
+
+
 
 static const ElementInfoParam cpu_params[] = {
     {"workPerCycle",        "How much work to do per cycle."},
@@ -158,6 +195,46 @@ static const ElementInfoParam dmaengine_params[] = {
     {NULL, NULL}
 };
 
+
+static const ElementInfoModule modules[] = {
+    {
+        "simpleMem",
+        "Simple constant-access time memory",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_Mem_SimpleSim, /* Module Alloc w/ params */
+        simpleMem_params
+    },
+#if defined(HAVE_LIBDRAMSIM)
+    {
+        "dramsim",
+        "DRAMSim-driven memory timings",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_Mem_DRAMSim, /* Module Alloc w/ params */
+        dramsimMem_params
+    },
+#endif
+#if defined(HAVE_LIBHYBRIDSIM)
+    {
+        "hybridsim",
+        "HybridSim-driven memory timings",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_Mem_HybridSim, /* Module Alloc w/ params */
+        hybridsimMem_params
+    },
+#endif
+    {
+        "vaultsim",
+        "VaultSim Memory timings",
+        NULL, /* Advanced help */
+        NULL, /* ModuleAlloc */
+        create_Mem_VaultSim, /* Module Alloc w/ params */
+        vaultsimMem_params
+    },
+    {NULL, NULL, NULL, NULL, NULL, NULL}
+};
 
 
 static const ElementInfoComponent components[] = {
@@ -212,6 +289,9 @@ extern "C" {
 		"memHierarchy",
 		"Simple Memory Hierarchy",
 		components,
+        NULL, /* Events */
+        NULL, /* Introspectors */
+        modules,
 	};
 }
 
