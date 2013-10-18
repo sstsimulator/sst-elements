@@ -93,6 +93,7 @@ copyOut( Output& dbg, MerlinFireflyEvent& event, MerlinIO::Entry& entry );
 
 MerlinIO::MerlinIO( Component* owner, Params& params ) :
     Interface(),
+    m_recvEvent( NULL ),
     m_leaveLink( NULL ),
     m_sendEntry( NULL ),
     m_myNodeId( IO::AnyId ),
@@ -140,52 +141,51 @@ MerlinIO::MerlinIO( Component* owner, Params& params ) :
         new Merlin::LinkControl::Handler<MerlinIO>(this,&MerlinIO::sendNotify );
 }
 
+static inline  MerlinFireflyEvent* cast( Event* e )
+{
+    return static_cast<MerlinFireflyEvent*>(e);
+}
+
 bool MerlinIO::recvNotify( int vc )
 {
     m_dbg.verbose(CALL_INFO,2,0,"vc=%d\n", vc );
-    if ( ! m_leaveLink )  return false;
-    process();
+    assert( ! m_recvEvent );
+
+    m_recvEvent = m_linkControl->recv(vc);
+
+    assert( m_recvEvent );
+
+    bool flag = processRecv( m_recvEvent );
+
+    if ( cast(m_recvEvent)->buf.empty() ) {
+        m_recvEvent = NULL;
+    }
+
+    if ( flag ) {
+        leave();
+        m_dbg.verbose(CALL_INFO,2,0,"clear Notify Functors\n");
+        m_linkControl->setNotifyOnSend( NULL );
+        return false;
+    }
     return true;
 }
 
 bool MerlinIO::sendNotify( int vc )
 {
     m_dbg.verbose(CALL_INFO,2,0,"vc=%d\n", vc );
-    if ( ! m_leaveLink )  return false;
-    process();
+
+    if ( processSend() ) {
+        leave();
+        m_dbg.verbose(CALL_INFO,2,0,"clear Notify Functors\n");
+        m_linkControl->setNotifyOnReceive( NULL );
+        return false;
+    }
     return true;
 }
 
 void MerlinIO::_componentInit(unsigned int phase )
 {
     m_linkControl->init(phase);
-}
-
-bool MerlinIO::process()
-{
-    if ( m_eventQ.size() < MaxPendingEvents ) {
-        for ( int vc = 0; vc < m_numVC; vc++ ) {
-            m_lastVC = (m_lastVC + 1) % m_numVC;
-            MerlinFireflyEvent* ev = 
-                static_cast<MerlinFireflyEvent*>(m_linkControl->recv(m_lastVC));
-            if ( ev ) {
-                m_dbg.verbose(CALL_INFO,2,0,"got event from %d\n", ev->src );
-                m_eventQ.push_back( ev );
-            }
-        } 
-    }
-
-    // if m_leaveLink is not NULL it means we are in control
-    if ( m_leaveLink ) {
-        if ( processSend() ) {
-            leave(); 
-            return true;
-        } else if ( processRecv() ) {
-            leave();
-            return true;
-        }
-    } 
-    return false; 
 }
 
 bool MerlinIO::pending( )
@@ -200,13 +200,36 @@ void MerlinIO::enter( SST::Link* link  )
 {
     m_dbg.verbose(CALL_INFO,2,0,"\n");
     assert( ! m_leaveLink );
-    // the clockHandler will use m_leaveLink as a flag to start processing
+
     m_leaveLink = link;
 
-    if ( ! process() ) {
-        m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
-        m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+    if ( m_recvEvent ) {
+        bool flag = processRecv( m_recvEvent );
+        if ( cast(m_recvEvent)->buf.empty() ) {
+            m_recvEvent = NULL;
+        }
+        if ( flag ) {
+            leave();
+            return;
+        }
     }
+
+    for ( int vc = 0; vc < m_numVC; vc++ ) {
+        m_lastVC = (m_lastVC + 1) % m_numVC;
+        if ( m_linkControl->eventToReceive( m_lastVC ) ) {
+            if ( ! recvNotify( m_lastVC ) ) {
+                return; 
+            } 
+        }
+    }
+    
+    if ( ! sendNotify( 0 ) ) {
+        return;
+    }
+
+    m_dbg.verbose(CALL_INFO,2,0,"set Notify Functors\n");
+    m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
+    m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
 }
 
 void MerlinIO::leave()
@@ -227,7 +250,7 @@ bool MerlinIO::processSend()
 
         ev->setSrc( m_myNodeId );
         ev->setNumFlits( ev->buf.size() );
-#if 0 
+#if 0
         ev->setTraceType( Merlin::RtrEvent::FULL );
 #endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes %p\n",
@@ -245,37 +268,24 @@ bool MerlinIO::processSend()
     return ret;
 }
 
-bool MerlinIO::processRecv()
+bool MerlinIO::processRecv( Event* e )
 {
-    while( ! m_eventQ.empty() ) 
-    {
-        MerlinFireflyEvent* event = static_cast<MerlinFireflyEvent*>
-                    (m_eventQ.front() ); 
+    MerlinFireflyEvent* event = static_cast<MerlinFireflyEvent*>( e );
 
-        IO::NodeId src = event->src;
+    IO::NodeId src = event->src;
 
-        if ( m_recvEntryM.find( src ) == m_recvEntryM.end() ) {
-            m_dbg.verbose(CALL_INFO,1,0,"need a recv entry, src=%d\n", src);
-            return true;
-        }
-
-        if ( copyIn( m_dbg, *m_recvEntryM[ src ], *event ) ) {
-            delete m_recvEntryM[ src ];
-            m_recvEntryM[ src ] = NULL;
-        }
-
-        if ( event->buf.empty() ) {
-            m_dbg.verbose(CALL_INFO,1,0,"done with event, src=%d\n", src);
-            delete m_eventQ.front();
-            m_eventQ.pop_front();
-        } 
-
-        if ( ! m_recvEntryM[ src ] ) {
-            m_dbg.verbose(CALL_INFO,1,0,"recv entry done, src=%d\n",src );
-            m_recvEntryM.erase( src );
-            return true;
-        }
+    if ( m_recvEntryM.find( src ) == m_recvEntryM.end() ) {
+        m_dbg.verbose(CALL_INFO,1,0,"need a recv entry, src=%d\n", src);
+        return true;
     }
+
+    if ( copyIn( m_dbg, *m_recvEntryM[ src ], *event ) ) {
+        m_dbg.verbose(CALL_INFO,1,0,"recv entry done, src=%d\n",src );
+        delete m_recvEntryM[ src ];
+        m_recvEntryM.erase( src );
+        return true;
+    }
+
     return false;
 }
 
@@ -314,9 +324,9 @@ bool MerlinIO::recvv( IO::NodeId src, std::vector<IO::IoVec>& ioVec,
 IO::NodeId MerlinIO::peek( )
 {
     IO::NodeId src = IO::AnyId;
-    if ( ! m_eventQ.empty() ) {
+    if ( m_recvEvent ) {
         
-        IO::NodeId tmp = static_cast<Merlin::RtrEvent*>(m_eventQ.front())->src;
+        IO::NodeId tmp = static_cast<Merlin::RtrEvent*>(m_recvEvent)->src;
         if ( m_recvEntryM.find( tmp ) == m_recvEntryM.end() ) {
             src = tmp;
         }

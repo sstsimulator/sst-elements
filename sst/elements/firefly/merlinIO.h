@@ -31,8 +31,6 @@ class MerlinIO : public IO::Interface {
   public:
     MerlinIO(Component*, Params&);
 
-    static const size_t MaxPendingEvents = 1024;
-
     virtual void _componentInit(unsigned int phase );
 
     virtual IO::NodeId getNodeId() { return m_myNodeId; }
@@ -76,14 +74,13 @@ class MerlinIO : public IO::Interface {
 
     bool sendNotify(int); 
     bool recvNotify(int); 
-    bool process();
+    Event*      m_recvEvent; 
 
-    bool processRecv();
+    bool processRecv( Event* );
     bool processSend();
     void leave();
 
     SST::Link*              m_leaveLink;
-    std::deque<Event*>      m_eventQ;
 
     std::map< IO::NodeId, Entry* > m_recvEntryM;
     Entry*                  m_sendEntry;
