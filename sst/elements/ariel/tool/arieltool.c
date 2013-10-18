@@ -1,4 +1,5 @@
 
+#include <execinfo.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "pin.H"
@@ -85,7 +86,7 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
 	copy(&buffer[sizeof(writer_marker)], &addr64, sizeof(addr64));
 	copy(&buffer[sizeof(writer_marker) + sizeof(addr64)], &writeSize, sizeof(writeSize));
 
-	write(pipe_id[thr], buffer, BUFFER_LENGTH);
+	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr) {
@@ -101,15 +102,44 @@ VOID WriteEndInstructionMarker(UINT32 thr) {
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 	ADDRINT* writeAddr, UINT32 writeSize) {
 
-//	GetLock(&pipe_lock, (INT32) 0);
+	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
+        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
+	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
+        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
 
-//	std::cout << "Issuing an instruction R/W for thread: " << thr << std::endl;
+	const uint64_t wAddr64 = (uint64_t) writeAddr;
+	const uint32_t wSize   = (uint32_t) writeSize;
+        const uint64_t rAddr64 = (uint64_t) readAddr;
+        const uint32_t rSize   = (uint32_t) readSize;
 
-	WriteStartInstructionMarker(thr);
-	WriteInstructionRead(readAddr, readSize, thr);
-	WriteInstructionWrite(writeAddr, writeSize, thr);
-	WriteEndInstructionMarker(thr);
+	const uint32_t thrID = (uint32_t) thr;
 
+	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
+		sizeof(writer_marker) + sizeof(wAddr64) + sizeof(wSize) +
+		sizeof(read_marker) + sizeof(rAddr64) + sizeof(rSize));
+
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+	int index = 0;
+
+	copy(&buffer[index], &start_ins, sizeof(start_ins));
+	index += sizeof(start_ins);
+	copy(&buffer[index], &read_marker, sizeof(read_marker));
+	index += sizeof(read_marker);
+	copy(&buffer[index], &rAddr64, sizeof(rAddr64));
+	index += sizeof(rAddr64);
+	copy(&buffer[index], &rSize, sizeof(rSize));
+	index += sizeof(rSize);
+	copy(&buffer[index], &writer_marker, sizeof(writer_marker));
+	index += sizeof(writer_marker);
+	copy(&buffer[index], &wAddr64, sizeof(wAddr64));
+	index += sizeof(wAddr64);
+	copy(&buffer[index], &wSize, sizeof(wSize));
+	index += sizeof(wSize);
+	copy(&buffer[index], &end_ins, sizeof(end_ins));
+
+	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+
+	free(buffer);
 //	sync();
 
 //	ReleaseLock(&pipe_lock);
@@ -117,32 +147,68 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 
 VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) {
 
-//	GetLock(&pipe_lock, (INT32) 0);
+	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
+        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
+	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
+        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
 
-//	std::cout << "Issuing an instruction R for thread: " << thr << std::endl;
+       	const uint64_t rAddr64 = (uint64_t) readAddr;
+       	const uint32_t rSize   = (uint32_t) readSize;
 
-	WriteStartInstructionMarker(thr);
-	WriteInstructionRead(readAddr, readSize, thr);
-	WriteEndInstructionMarker(thr);
+	const uint32_t thrID = (uint32_t) thr;
 
-//	sync();
+       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
+               	sizeof(read_marker) + sizeof(rAddr64) + sizeof(rSize));
 
-//	ReleaseLock(&pipe_lock);
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+	int index = 0;
+
+       	copy(&buffer[index], &start_ins, sizeof(start_ins));
+	index += sizeof(start_ins);
+       	copy(&buffer[index], &read_marker, sizeof(read_marker));
+	index += sizeof(read_marker);
+       	copy(&buffer[index], &rAddr64, sizeof(rAddr64));
+	index += sizeof(rAddr64);
+       	copy(&buffer[index], &rSize, sizeof(rSize));
+	index += sizeof(rSize);
+        copy(&buffer[index], &end_ins, sizeof(end_ins));
+
+	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+	free(buffer);
+
 }
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
-//	GetLock(&pipe_lock, (INT32) 0);
+	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
+        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
+	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
+        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
 
-//	std::cout << "Issuing an instruction W for thread: " << thr << std::endl;
+       	const uint64_t wAddr64 = (uint64_t) writeAddr;
+       	const uint32_t wSize   = (uint32_t) writeSize;
 
-	WriteStartInstructionMarker(thr);
-	WriteInstructionWrite(writeAddr, writeSize, thr);
-	WriteEndInstructionMarker(thr);
+	const uint32_t thrID = (uint32_t) thr;
 
-//	sync();
+       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
+               	sizeof(writer_marker) + sizeof(wAddr64) + sizeof(wSize));
 
-//	ReleaseLock(&pipe_lock);
+	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+	int index = 0;
+
+       	copy(&buffer[index], &start_ins, sizeof(start_ins));
+	index += sizeof(start_ins);
+       	copy(&buffer[index], &writer_marker, sizeof(writer_marker));
+	index += sizeof(writer_marker);
+       	copy(&buffer[index], &wAddr64, sizeof(wAddr64));
+	index += sizeof(wAddr64);
+        copy(&buffer[index], &wSize, sizeof(wSize));
+	index += sizeof(wSize);
+        copy(&buffer[index], &end_ins, sizeof(end_ins));
+
+	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+	free(buffer);
+
 }
 
 VOID InstrumentInstruction(INS ins, VOID *v)
@@ -223,6 +289,14 @@ void* ariel_tlvl_malloc(size_t size) {
 #ifdef ARIEL_DEBUG
 	printf("Perform a tlvl_malloc from Ariel %llu\n", size);
 #endif
+	if(0 == size) {
+		printf("YOU REQUESTED ZERO BYTES\n");
+		void *bt_entries[64];
+		int entry_returned = backtrace(bt_entries, 64);
+		backtrace_symbols_fd(bt_entries, entry_returned, 1);
+		exit(-8);
+	}
+
 	size_t page_diff = (4096 - (size % ((size_t) 4096)));
 	size_t real_req_size = size;
 

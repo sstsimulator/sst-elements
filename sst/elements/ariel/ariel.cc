@@ -400,6 +400,8 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
   // Spawn the PIN process
   create_pinchild(execute_binary, execute_args);
 
+  next_core = 0;
+
   pipe_id = (int*) malloc(sizeof(int) * core_count);
   char* named_pipe_core = (char*) malloc(sizeof(char) * 255);
 
@@ -426,8 +428,12 @@ Ariel::Ariel(ComponentId_t id, Params& params) :
 
   pending_transaction = NULL;
 
+  string ariel_clock_rate = params.find_string("clock", "1GHz");
+
+  output->verbose(CALL_INFO, 1, 0, "Configuring Ariel clock to be: %s\n", ariel_clock_rate.c_str());
+
   // Register a clock for ourselves
-  registerClock( "1GHz",
+  registerClock( ariel_clock_rate,
                  new Clock::Handler<Ariel>(this, &Ariel::tick ) );
 
   // tell the simulator not to end without us
@@ -550,7 +556,10 @@ void Ariel::finish() {
 
   for(uint32_t i = 0; i < core_count; ++i) {
   	close(pipe_id[i]);
-	fclose(core_traces[i]);
+
+	if(core_trace_mode > 0) {
+		fclose(core_traces[i]);
+	}
   }
 
   output->verbose(CALL_INFO, 2, 0, "Pipes have been closed, attempting to free resources...\n");
@@ -702,7 +711,8 @@ bool Ariel::tick( Cycle_t thisCycle ) {
 
 		output->verbose(CALL_INFO, 64, 0, "Poll operation has completed.\n");
 
-		for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
+		for(uint32_t core_counter_outer = 0; core_counter_outer < core_count; ++core_counter_outer) {
+			uint32_t core_counter = (core_counter_outer + next_core) % core_count;
 			uint8_t command = 0;
 
 			output->verbose(CALL_INFO, 64, 0, "Core: %" PRIu32 " masks is: %d\n", core_counter, core_masks[core_counter]);
@@ -874,6 +884,7 @@ bool Ariel::tick( Cycle_t thisCycle ) {
 		}
 	}
 
+	next_core++;
 	return false;
 }
 

@@ -94,6 +94,7 @@ private:
   int* core_masks;
   MemEvent::id_type* dma_pending_events;
 
+  uint32_t next_core;
   uint32_t core_count;
   uint32_t max_transactions;
   SST::Link** cache_link;

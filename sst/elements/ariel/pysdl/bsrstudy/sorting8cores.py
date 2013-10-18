@@ -8,7 +8,7 @@ def sstcreatemodel():
         print "Verbose Model"
 
     id = sst.createcomponent("a0", "ariel.ariel")
-    sst.addcompparam(id, "verbose", "0")
+    sst.addcompparam(id, "verbose", "1")
     sst.addcompparam(id, "executable", "/home/sdhammo/xgc/xgc_co_design/sorting/spsort/bsr")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
     sst.addcompparam(id, "fastmempagecount", "131072")
@@ -76,6 +76,7 @@ def sstcreatemodel():
     sst.addcompparam(l2_q1, "access_time", "9ns")
     sst.addcompparam(l2_q1, "printStats", "1")
     sst.addcompparam(l2_q1, "net_addr", "2")
+    #sst.addcompparam(l2_q1, "debug", "3")
     sst.addcompparam(l2_q1, "mode", "INCLUSIVE")
     sst.addcomplink(l2_q1, "l2cache_0_link", "snoop_link", "1ns")
     sst.addcomplink(l2_q1, "l2cache_0_dirlink", "directory_link", "10ns")
@@ -87,6 +88,7 @@ def sstcreatemodel():
     sst.addcompparam(l2_q2, "access_time", "9ns")
     sst.addcompparam(l2_q2, "printStats", "1")
     sst.addcompparam(l2_q2, "net_addr", "3")
+    #sst.addcompparam(l2_q2, "debug", "3")
     sst.addcompparam(l2_q2, "mode", "INCLUSIVE")
     sst.addcomplink(l2_q2, "l2cache_1_link", "snoop_link", "1ns")
     sst.addcomplink(l2_q2, "l2cache_1_dirlink", "directory_link", "10ns")
@@ -98,11 +100,12 @@ def sstcreatemodel():
     print "Creating memController..."
     memory = sst.createcomponent("memory", "memHierarchy.MemController")
     sst.addcompparam(memory, "access_time", "70ns")
-    sst.addcompparam(memory, "rangeStart", "0x20000000")
+    sst.addcompparam(memory, "rangeStart", "0x00000000")
     sst.addcompparam(memory, "mem_size", "512")
     sst.addcompparam(memory, "clock", "1GHz")
     sst.addcompparam(memory, "printStats", "1")
     sst.addcompparam(memory, "use_dramsim", "0")
+    #sst.addcompparam(memory, "debug", "3")
     sst.addcompparam(memory, "device_ini", "DDR3_micron_32M_8B_x4_sg125.ini")
     sst.addcompparam(memory, "system_ini", "system_far.ini")
     sst.addcomplink(memory, "dir1_mem_link", "direct_link", "50ps")
@@ -115,13 +118,14 @@ def sstcreatemodel():
     sst.addcompparam(nearMemory, "mem_size", "512")
     sst.addcompparam(nearMemory, "printStats", "1")
     sst.addcompparam(nearMemory, "use_dramsim", "0")
+    #sst.addcompparam(nearMemory, "debug", "3")
     sst.addcompparam(nearMemory, "device_ini", "DDR3_micron_32M_8B_x4_sg125.ini")
     sst.addcompparam(nearMemory, "system_ini", "system_near.ini")
     sst.addcomplink(nearMemory, "dir0_mem_link", "direct_link", "50ps")
 
     print "Creating Merlin Network..."
     merlin = sst.createcomponent("chiprtr", "merlin.hr_router")
-    sst.addcompparam(merlin, "num_ports", "4")
+    sst.addcompparam(merlin, "num_ports", "5")
     sst.addcompparam(merlin, "num_vcs", "3")
     sst.addcompparam(merlin, "link_bw", "5GHz")
     sst.addcompparam(merlin, "xbar_bw", "5GHz")
@@ -131,6 +135,7 @@ def sstcreatemodel():
     sst.addcomplink(merlin, "dir1_net_link", "port1", "10ns")
     sst.addcomplink(merlin, "l2cache_0_dirlink", "port2", "10ns")
     sst.addcomplink(merlin, "l2cache_1_dirlink", "port3", "10ns")
+    sst.addcomplink(merlin, "dma_dirlink", "port4", "10ns")
 
     print "Creating directory controller..."
     dirctrl0 = sst.createcomponent("dirctrl0", "memHierarchy.DirectoryController")
@@ -141,6 +146,7 @@ def sstcreatemodel():
     sst.addcompparam(dirctrl0, "backingStoreSize", "0")
     sst.addcompparam(dirctrl0, "entryCacheSize", "16384")
     sst.addcompparam(dirctrl0, "printStats", "1")
+    sst.addcompparam(dirctrl0, "debug", "3")
     sst.addcomplink(dirctrl0, "dir0_mem_link", "memory", "50ps")
     sst.addcomplink(dirctrl0, "dir0_net_link", "network", "10ns")
 
@@ -154,8 +160,18 @@ def sstcreatemodel():
     sst.addcompparam(dirctrl1, "backingStoreSize", "0")
     sst.addcompparam(dirctrl1, "entryCacheSize", "16384")
     sst.addcompparam(dirctrl1, "printStats", "1")
+    #sst.addcompparam(dirctrl1, "debug", "3")
     sst.addcomplink(dirctrl1, "dir1_mem_link", "memory", "50ps")
     sst.addcomplink(dirctrl1, "dir1_net_link", "network", "10ns")
+
+    dmactrl = sst.createcomponent("dmactrl", "memHierarchy.DMAEngine")
+    sst.addcompparam(dmactrl, "debug", "3")
+    sst.addcompparam(dmactrl, "netAddr", "4")
+    sst.addcompparam(dmactrl, "clockRate", "1GHz")
+    sst.addcomplink(dmactrl, "dma_dirlink", "netLink", "10ns")
+    sst.addcomplink(dmactrl, "ariel_dma", "cmdLink", "1ns")
+
+    sst.addcomplink(id, "ariel_dma", "dmaLink", "1ns")
 
     print "done configuring SST"
 

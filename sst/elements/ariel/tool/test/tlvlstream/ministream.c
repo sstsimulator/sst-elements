@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
 	tlvl_memcpy(fast_c, c, sizeof(double) * LENGTH);
 
 	printf("Perfoming the fast_c compute loop...\n");
+	#pragma omp parallel for
 	for(i = 0; i < LENGTH; ++i) {
 		//printf("issuing a write to: %llu (fast_c)\n", ((unsigned long long int) &fast_c[i]));
 		fast_c[i] = 2.0 * a[i] + 1.5 * b[i];
