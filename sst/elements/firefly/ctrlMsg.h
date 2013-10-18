@@ -136,6 +136,7 @@ class CtrlMsg : public ProtocolAPI {
     std::deque< CommReq* > m_postedQ;
     std::deque< RecvReq* > m_unexpectedQ;
     bool m_sleep;
+    bool m_somethingCompleted;
     int m_matchTime;
     int m_copyTime;
     SST::Link* m_link;

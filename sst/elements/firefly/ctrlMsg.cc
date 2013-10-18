@@ -24,6 +24,7 @@ using namespace SST;
 CtrlMsg::CtrlMsg( SST::Params params, Info* info, SST::Link* link ) :
     m_info(info),
     m_sleep(false),
+    m_somethingCompleted(false),
     m_link( link ) 
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
@@ -73,6 +74,7 @@ CtrlMsg::Request* CtrlMsg::getSendReq( )
 
         m_dbg.verbose(CALL_INFO,1,0,"\n");
         req->nodeId = m_info->rankToNodeId( info.group, info.dest );
+        m_sleep = false;
         return req;
     }
     return NULL;
@@ -101,6 +103,7 @@ CtrlMsg::Request* CtrlMsg::sendIODone( Request* r )
     SendReq* req = static_cast<SendReq*>(r);
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     req->commReq->done = true;
+    m_somethingCompleted = true;
     delete req;
     return  NULL;
 }
@@ -234,6 +237,7 @@ CtrlMsg::Request* CtrlMsg::delayDone( Request* r )
         } else {
             req->commReq->done = true;
             delete req;
+            m_somethingCompleted = true;
             req = NULL;
         }
     } else {
@@ -244,6 +248,7 @@ CtrlMsg::Request* CtrlMsg::delayDone( Request* r )
             req->ioVec[0].len = req->buf.size();
             req->ioVec[0].ptr = &req->buf[0];
         } else {
+            m_somethingCompleted = true;
             req = NULL;
         } 
     }
@@ -314,6 +319,11 @@ void CtrlMsg::sleep()
 
 bool CtrlMsg::blocked()
 {
+    if ( m_somethingCompleted ) {
+        m_sleep = false;
+        m_somethingCompleted = false;
+        return false;
+    }
     return m_sleep;
 }
 
@@ -355,6 +365,11 @@ bool CtrlMsg::test( CommReq * req, int& delay )
         delete req->info;
         req->info = NULL;
     }
+    if ( req->type == CommReq::Send ) {
+        assert( req->done ); 
+    }
+
+    m_dbg.verbose(CALL_INFO,1,0,"req=%p %s\n",req, req->done?"done":"");
 
     return req->done;
 }
