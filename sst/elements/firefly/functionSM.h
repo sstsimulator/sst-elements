@@ -16,6 +16,7 @@
 
 #include "sst/elements/hermes/msgapi.h"
 #include "ioapi.h"
+#include "funcSM/api.h"
 
 #include "info.h"
 
@@ -25,8 +26,10 @@ namespace Firefly {
 class FunctionSMInterface;
 class ProtocolAPI;
 
-class FunctionSM {
 
+class FunctionSM  {
+
+    typedef FunctionSMInterface::Retval Retval;
   public:
     enum FunctionType {
         Init,
@@ -54,29 +57,31 @@ class FunctionSM {
                                         ProtocolAPI*, ProtocolAPI* ); 
     ~FunctionSM();
 
-    void start( SST::Event* );
-    void sendProgressEvent( SST::Event* );
     void setup();
+    void start(int type, Hermes::Functor* retFunc,  SST::Event* );
+    void enter( );
 
   private:
     void handleSelfEvent( SST::Event* );
     void handleStartEvent( SST::Event* );
     void handleToDriver(SST::Event*);
     void handleEnterEvent( SST::Event* );
+    void processRetval( Retval& );
     int myNodeId() { return m_info.nodeId(); }
     int myWorldRank() { return m_info.worldRank(); }
 
     std::vector<FunctionSMInterface*>  m_smV; 
-    FunctionSMInterface*  m_sm; 
+    FunctionSMInterface*    m_sm; 
+    int                 m_type;
+    Hermes::Functor*    m_retFunc;
+
     SST::Link*          m_fromDriverLink;    
     SST::Link*          m_toDriverLink;    
     SST::Link*          m_selfLink;
     SST::Link*          m_fromProgressLink;
     int                 m_nodeId;
     int                 m_worldRank;
-
     Info&               m_info;
-
     Output              m_dbg;
 
     struct FunctionTimes {

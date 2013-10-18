@@ -26,9 +26,8 @@ inline long mod( long a, long b )
 
 AlltoallvFuncSM::AlltoallvFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
-                    Info* info, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+                    Info* info, ProtocolAPI* ctrlMsg ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
     m_seq( 0 )
@@ -36,7 +35,7 @@ AlltoallvFuncSM::AlltoallvFuncSM(
     m_dbg.setPrefix("@t:AlltoallvFuncSM::@p():@l ");
 }
 
-void AlltoallvFuncSM::handleStartEvent( SST::Event *e ) 
+void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -61,17 +60,17 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e )
     m_ctrlMsg->enter();
 }
 
-void AlltoallvFuncSM::handleSelfEvent( SST::Event *e )
+void AlltoallvFuncSM::handleSelfEvent( SST::Event *e, Retval& retval )
 {
-    handleEnterEvent( e );
+    handleEnterEvent( e, retval );
 }
 
-void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
+void AlltoallvFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
     m_dbg.verbose(CALL_INFO,1,0,"m_count=%d\n",m_count);
     if ( m_count == m_size ) {
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMStartEvent*>(m_event), 0 );
+        retval.setExit(0);
         delete m_event;
         m_event = NULL;
         return;
@@ -93,12 +92,12 @@ void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
         m_waitSend = true;
         m_delay = 0;
     } else {
-        if ( m_waitSend) {
+        if ( m_waitSend ) {
             if ( ! m_delay ) {
                 m_test = m_ctrlMsg->test( &m_sendReq, m_delay );
                 if ( m_delay ) {
                     m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                    m_selfLink->send( m_delay, NULL );
+                    retval.setDelay( m_delay );
                     return;
                 }
             } else {
@@ -111,7 +110,7 @@ void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
             m_dbg.verbose(CALL_INFO,1,0,"send %d complete\n", m_count );
             m_waitSend = false;
             m_delay = 0;
-            handleEnterEvent(NULL);
+            handleEnterEvent( NULL, retval );
             return;
             
         } else {
@@ -119,7 +118,7 @@ void AlltoallvFuncSM::handleEnterEvent( SST::Event *e )
                 m_test = m_ctrlMsg->test( &m_recvReq, m_delay );
                 if ( m_delay ) {
                     m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                    m_selfLink->send( m_delay, NULL );
+                    retval.setDelay( m_delay );
                     return;
                 }
             } else {

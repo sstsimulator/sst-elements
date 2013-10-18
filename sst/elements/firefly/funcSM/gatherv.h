@@ -124,14 +124,13 @@ class GathervFuncSM :  public FunctionSMInterface
 
     static const int GathervTag = 0xf0020000;
 
-
   public:
     GathervFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, ProtocolAPI*, SST::Link* );
+                                        Info* info, ProtocolAPI* );
 
-    virtual void handleStartEvent( SST::Event *e );
-    virtual void handleEnterEvent( SST::Event *e);
-    virtual void handleSelfEvent( SST::Event *e);
+    virtual void handleStartEvent( SST::Event *e, Retval& );
+    virtual void handleEnterEvent( SST::Event *e, Retval& );
+    virtual void handleSelfEvent( SST::Event *e, Retval& );
 
     virtual const char* name() {
        return "Gatherv"; 
@@ -139,14 +138,13 @@ class GathervFuncSM :  public FunctionSMInterface
 
   private:
 
-    bool waitUp();
-    bool sendUp();
+    bool waitUp(Retval&);
+    bool sendUp(Retval&);
     void doRoot();
     uint32_t    genTag( int i = 0 ) {
         return GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
-    SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
     GatherStartEvent*  m_event;
     QQQ*                m_qqq;

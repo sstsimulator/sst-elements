@@ -27,7 +27,7 @@ SendFuncSM::SendFuncSM( int verboseLevel, Output::output_location_t loc,
     m_dbg.setPrefix("@t:SendFuncSM::@p():@l ");
 }
 
-void SendFuncSM::handleStartEvent( SST::Event *e) 
+void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -69,7 +69,7 @@ void SendFuncSM::handleStartEvent( SST::Event *e)
     m_dm->enter();
 }
 
-void SendFuncSM::handleEnterEvent( SST::Event *e )
+void SendFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
     assert( m_event );
     if (  m_event->entry.req == NULL && m_req.src == Hermes::AnySrc ) {
@@ -77,7 +77,7 @@ void SendFuncSM::handleEnterEvent( SST::Event *e )
         m_dm->sleep();
     } else {
         m_dbg.verbose(CALL_INFO,1,0,"done\n");
-        exit( static_cast<SMStartEvent*>(m_event), 0 );
+        retval.setExit(0);
         delete m_event;
         m_event = NULL;
     }

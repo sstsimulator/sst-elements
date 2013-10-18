@@ -19,15 +19,14 @@ using namespace SST::Firefly;
 
 BarrierFuncSM::BarrierFuncSM( 
             int verboseLevel, Output::output_location_t loc,
-            Info* info, ProtocolAPI* xxx, SST::Link* selfLink ) :
-    CollectiveTreeFuncSM(verboseLevel, loc, info, xxx, selfLink ) 
+            Info* info, ProtocolAPI* xxx ) :
+    CollectiveTreeFuncSM(verboseLevel, loc, info, xxx ) 
 {
     m_dbg.setPrefix("@t:BarrierFuncSM::@p():@l ");
 }
 
-void BarrierFuncSM::handleStartEvent( SST::Event *e) 
+void BarrierFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
-
     if ( m_setPrefix ) {
         char buffer[100];
         snprintf(buffer,100,"@t:%d:%d:BarrierFuncSM::@p():@l ",
@@ -39,18 +38,16 @@ void BarrierFuncSM::handleStartEvent( SST::Event *e)
 
     BarrierStartEvent* event = static_cast<BarrierStartEvent*>(e);
 
-    CollectiveStartEvent* tmp = new CollectiveStartEvent( 0,
-                event->retFunc, NULL, NULL, 0,
+    CollectiveStartEvent* tmp = new CollectiveStartEvent( NULL, NULL, 0,
                 Hermes::CHAR, Hermes::MAX, 0, Hermes::GroupWorld, true );
 
     delete event;
 
-    tmp->retLink = event->retLink;
-
-    CollectiveTreeFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp));
+    CollectiveTreeFuncSM::handleStartEvent(
+                        static_cast<SST::Event*>(tmp),retval);
 }
 
-void BarrierFuncSM::handleEnterEvent( SST::Event *e )
+void BarrierFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
-    CollectiveTreeFuncSM::handleEnterEvent(e);
+    CollectiveTreeFuncSM::handleEnterEvent( e, retval );
 }

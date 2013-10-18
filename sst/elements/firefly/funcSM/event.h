@@ -21,25 +21,21 @@
 namespace SST {
 namespace Firefly {
 
-class InitStartEvent : public SMStartEvent {
+class InitStartEvent : public Event {
   public:
-    InitStartEvent( int type, Hermes::Functor* retFunc ) :
-        SMStartEvent( type, retFunc )
+    InitStartEvent()
     { }
 };
 
-class FiniStartEvent : public SMStartEvent {
+class FiniStartEvent : public Event {
   public:
-    FiniStartEvent( int type, Hermes::Functor* retFunc ) :
-        SMStartEvent( type, retFunc )
+    FiniStartEvent()
     { }
 };
 
-class RankStartEvent : public SMStartEvent {
+class RankStartEvent : public Event {
   public:
-    RankStartEvent( int type, Hermes::Functor* retFunc,
-        Hermes::Communicator _group, int* _rank ) :
-        SMStartEvent( type, retFunc ),
+    RankStartEvent( Hermes::Communicator _group, int* _rank ) :
         group( _group ),
         rank( _rank )
     { }
@@ -48,11 +44,9 @@ class RankStartEvent : public SMStartEvent {
     int* rank;
 };
 
-class SizeStartEvent : public SMStartEvent {
+class SizeStartEvent : public Event {
   public:
-    SizeStartEvent( int type, Hermes::Functor* retFunc,
-        Hermes::Communicator _group, int* _size ) :
-        SMStartEvent( type, retFunc ),
+    SizeStartEvent( Hermes::Communicator _group, int* _size ) :
         group( _group ),
         size( _size )
     { }
@@ -61,26 +55,23 @@ class SizeStartEvent : public SMStartEvent {
     int* size;
 };
 
-class BarrierStartEvent : public SMStartEvent {
+class BarrierStartEvent : public Event {
   public:
-    BarrierStartEvent( int type, Hermes::Functor* retFunc,
-        Hermes::Communicator _group ) :
-        SMStartEvent( type, retFunc ),
+    BarrierStartEvent( Hermes::Communicator _group ) :
         group( _group )
     { }
 
     Hermes::Communicator group;
 };
 
-class RecvStartEvent : public SMStartEvent {
+class RecvStartEvent : public Event {
 
   public:
-    RecvStartEvent( int type, Hermes::Functor* retFunc,
+    RecvStartEvent(
             Hermes::Addr buf, uint32_t count,
             Hermes::PayloadDataType dtype, Hermes::RankID src,
             uint32_t tag, Hermes::Communicator group, 
             Hermes::MessageRequest* req, Hermes::MessageResponse* resp ) :
-        SMStartEvent( type, retFunc ),
         entry( buf, count, dtype, src, tag, group, resp, req )  
     {}
 
@@ -88,30 +79,28 @@ class RecvStartEvent : public SMStartEvent {
 };
 
 
-class SendStartEvent : public SMStartEvent {
+class SendStartEvent : public Event {
 
   public:
-    SendStartEvent( int type, Hermes::Functor* retFunc,
+    SendStartEvent(
                 Hermes::Addr buf, uint32_t count,
                 Hermes::PayloadDataType dtype, Hermes::RankID dest,
                 uint32_t tag, Hermes::Communicator group, 
                 Hermes::MessageRequest* req ) :
-        SMStartEvent( type, retFunc ),
         entry( buf, count, dtype, dest, tag, group, req )  
     {}
 
     SendEntry   entry;
 };
 
-class CollectiveStartEvent : public SMStartEvent {
+class CollectiveStartEvent : public Event {
 
   public:
-    CollectiveStartEvent(int type, Hermes::Functor* retFunc,
+    CollectiveStartEvent(
                 Hermes::Addr _mydata, Hermes::Addr _result, uint32_t _count,
                 Hermes::PayloadDataType _dtype, Hermes::ReductionOperation _op,
                 Hermes::RankID _root, Hermes::Communicator _group,
                 bool _all ) :
-        SMStartEvent( type, retFunc ),
         mydata(_mydata),
         result(_result),
         count(_count),
@@ -132,17 +121,15 @@ class CollectiveStartEvent : public SMStartEvent {
     bool  all;
 };
 
-class GatherBaseStartEvent : public SMStartEvent {
+class GatherBaseStartEvent : public Event {
 
   public:
-    GatherBaseStartEvent(int type, Hermes::Functor* retFunc,
-        Hermes::Addr _sendbuf, uint32_t _sendcnt,
-        Hermes::PayloadDataType _sendtype,
-        Hermes::Addr _recvbuf,
-        Hermes::PayloadDataType _recvtype,
-        Hermes::RankID _root, Hermes::Communicator _group ) :
-
-        SMStartEvent( type, retFunc ),
+    GatherBaseStartEvent(
+                Hermes::Addr _sendbuf, uint32_t _sendcnt,
+                Hermes::PayloadDataType _sendtype,
+                Hermes::Addr _recvbuf,
+                Hermes::PayloadDataType _recvtype,
+                Hermes::RankID _root, Hermes::Communicator _group ) :
         sendbuf(_sendbuf),
         recvbuf(_recvbuf),
         sendcnt(_sendcnt),
@@ -163,50 +150,50 @@ class GatherBaseStartEvent : public SMStartEvent {
 
 class GatherStartEvent : public GatherBaseStartEvent {
   public:
-    GatherStartEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
             Hermes::PayloadDataType recvtype,
             Hermes::RankID root, Hermes::Communicator group ) :
-        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, root, group ),
             recvcntPtr( _recvcnt),
             displsPtr( _displs ) 
     { }
 
-    GatherStartEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, uint32_t _recvcnt,
             Hermes::PayloadDataType recvtype,
             Hermes::RankID root, Hermes::Communicator group ) :
-        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, root, group ),
             recvcntPtr( 0 ),
             displsPtr( 0 ),
             recvcnt( _recvcnt) 
     { }
 
-    GatherStartEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, uint32_t _recvcnt,
             Hermes::PayloadDataType recvtype,
             Hermes::Communicator group ) :
-        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, 0, group ),
             recvcntPtr( 0 ),
             displsPtr( 0 ),
             recvcnt( _recvcnt) 
     { }
 
-    GatherStartEvent(int type, Hermes::Functor* retFunc,
+    GatherStartEvent(
             Hermes::Addr sendbuf, uint32_t sendcnt,
             Hermes::PayloadDataType sendtype,
             Hermes::Addr recvbuf, Hermes::Addr _recvcnt, Hermes::Addr _displs,
             Hermes::PayloadDataType recvtype, Hermes::Communicator group ) :
-        GatherBaseStartEvent( type, retFunc, sendbuf, sendcnt, sendtype,
+        GatherBaseStartEvent( sendbuf, sendcnt, sendtype,
             recvbuf, recvtype, 0, group ),
             recvcntPtr( _recvcnt),
             displsPtr( _displs )
@@ -217,15 +204,14 @@ class GatherStartEvent : public GatherBaseStartEvent {
     uint32_t recvcnt;
 };
 
-class AlltoallStartEvent: public SMStartEvent {
+class AlltoallStartEvent: public Event {
   public:
-    AlltoallStartEvent( int type, Hermes::Functor* retFunc,
+    AlltoallStartEvent(
             Hermes::Addr _sendbuf, uint32_t _sendcnt, 
             Hermes::PayloadDataType _sendtype, 
             Hermes::Addr _recvbuf, uint32_t _recvcnt, 
             Hermes::PayloadDataType _recvtype, 
             Hermes::Communicator _group  ) :
-        SMStartEvent( type, retFunc ),
         sendbuf( _sendbuf ),
         sendcnt( _sendcnt ),
         sendcnts( NULL ),
@@ -237,7 +223,7 @@ class AlltoallStartEvent: public SMStartEvent {
         group( _group )
     { } 
 
-    AlltoallStartEvent( int type, Hermes::Functor* retFunc,
+    AlltoallStartEvent(
             Hermes::Addr _sendbuf, Hermes::Addr _sendcnts,  
             Hermes::Addr _senddispls,
             Hermes::PayloadDataType _sendtype, 
@@ -245,7 +231,6 @@ class AlltoallStartEvent: public SMStartEvent {
             Hermes::Addr _recvdispls,
             Hermes::PayloadDataType _recvtype, 
             Hermes::Communicator _group ) :
-        SMStartEvent( type, retFunc ),
         sendbuf( _sendbuf ),
         sendcnts( _sendcnts ),
         senddispls( _senddispls ),
@@ -270,11 +255,10 @@ class AlltoallStartEvent: public SMStartEvent {
     Hermes::Communicator    group;
 };
 
-class WaitStartEvent : public SMStartEvent {
+class WaitStartEvent : public Event {
   public:
-    WaitStartEvent( int type, Hermes::Functor* retFunc,
+    WaitStartEvent(
         Hermes::MessageRequest* _req, Hermes::MessageResponse* _resp ) :
-        SMStartEvent( type, retFunc ),
         req(_req),
         resp(_resp)
     { }

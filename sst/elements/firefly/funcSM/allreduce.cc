@@ -19,11 +19,11 @@ using namespace SST::Firefly;
 
 AllreduceFuncSM::AllreduceFuncSM( 
             int verboseLevel, Output::output_location_t loc,
-            Info* info, ProtocolAPI* xxx, SST::Link* selfLink  ) :
-    CollectiveTreeFuncSM( verboseLevel, loc, info, xxx, selfLink ) 
+                                Info* info, ProtocolAPI* xxx ) :
+    CollectiveTreeFuncSM( verboseLevel, loc, info, xxx ) 
 {}
 
-void AllreduceFuncSM::handleStartEvent( SST::Event *e) 
+void AllreduceFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -34,10 +34,10 @@ void AllreduceFuncSM::handleStartEvent( SST::Event *e)
         m_setPrefix = false;
     }
 
-    CollectiveTreeFuncSM::handleStartEvent(e);
+    CollectiveTreeFuncSM::handleStartEvent(e,retval);
 }
 
-void AllreduceFuncSM::handleEnterEvent( SST::Event *e )
+void AllreduceFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
-    CollectiveTreeFuncSM::handleEnterEvent(e);
+    CollectiveTreeFuncSM::handleEnterEvent(e,retval);
 }

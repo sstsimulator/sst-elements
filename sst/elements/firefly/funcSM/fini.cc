@@ -18,13 +18,13 @@
 using namespace SST::Firefly;
 
 FiniFuncSM::FiniFuncSM( int verboseLevel, Output::output_location_t loc,
-                Info* info, ProtocolAPI* xxx, SST::Link* selfLink ) :
-    BarrierFuncSM( verboseLevel, loc, info, xxx, selfLink ) 
+                Info* info, ProtocolAPI* xxx ) :
+    BarrierFuncSM( verboseLevel, loc, info, xxx ) 
 {
     m_dbg.setPrefix("@t:FiniFuncSM::@p():@l ");
 }
 
-void FiniFuncSM::handleStartEvent( SST::Event *e) 
+void FiniFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -36,17 +36,14 @@ void FiniFuncSM::handleStartEvent( SST::Event *e)
     }
 
     FiniStartEvent* event = static_cast<FiniStartEvent*>(e);
-    BarrierStartEvent* tmp = new BarrierStartEvent( 0,
-                            event->retFunc, Hermes::GroupWorld  );
-
-    tmp->retLink = event->retLink;
+    BarrierStartEvent* tmp = new BarrierStartEvent( Hermes::GroupWorld  );
 
     delete event;
 
-    BarrierFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp));
+    BarrierFuncSM::handleStartEvent( static_cast<SST::Event*>(tmp), retval );
 }
 
-void FiniFuncSM::handleEnterEvent( SST::Event *e )
+void FiniFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
-    BarrierFuncSM::handleEnterEvent(e);
+    BarrierFuncSM::handleEnterEvent( e, retval );
 }

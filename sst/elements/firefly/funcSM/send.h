@@ -26,10 +26,10 @@ class SendFuncSM :  public FunctionSMInterface
     enum { } m_state;
   public:
     SendFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info* info, ProtocolAPI* );
+                                    Info* info, ProtocolAPI* );
 
-    virtual void handleStartEvent( SST::Event* );
-    virtual void handleEnterEvent( SST::Event* );
+    virtual void handleStartEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( SST::Event*, Retval& );
 
     virtual const char* name() {
        return "Send"; 

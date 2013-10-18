@@ -23,18 +23,17 @@ inline long mod( long a, long b )
 }
 
 AllgatherFuncSM::AllgatherFuncSM( 
-        int verboseLevel, Output::output_location_t loc, Info* info,
-        ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
-    FunctionSMInterface(verboseLevel,loc,info),
-    m_selfLink( selfLink ),
-    m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
+            int verboseLevel, Output::output_location_t loc, Info* info,
+                            ProtocolAPI* ctrlMsg ) :
+    FunctionSMInterface( verboseLevel, loc, info ),
+    m_ctrlMsg( static_cast<CtrlMsg*>( ctrlMsg ) ),
     m_event( NULL ),
     m_seq( 0 )
 {
     m_dbg.setPrefix("@t:AllgatherFuncSM::@p():@l ");
 }
 
-void AllgatherFuncSM::handleStartEvent( SST::Event *e) 
+void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -109,11 +108,10 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e)
     m_ctrlMsg->send( NULL, 0, m_dest[0], genTag(),
                                         m_event->group, &m_sendReq );
 
-    m_ctrlMsg->enter();
-
     m_state = WaitSendStart;
-
     m_delay = 0;
+
+    m_ctrlMsg->enter();
 }
 
 void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
@@ -159,7 +157,7 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
     }
 }
 
-void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
+void AllgatherFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
     switch( m_state ) {
     case WaitSendStart:
@@ -167,7 +165,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
             m_test = m_ctrlMsg->test( &m_sendReq, m_delay );
             if ( m_delay ) {
                 m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                m_selfLink->send( m_delay, NULL );
+                retval.setDelay( m_delay );
                 break;
             }
         } else {
@@ -187,7 +185,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
             m_test = m_ctrlMsg->test( &m_recvReq, m_delay );
             if ( m_delay ) {
                 m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                m_selfLink->send( m_delay, NULL );
+                retval.setDelay( m_delay );
                 break;
             }
         } else {
@@ -219,7 +217,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
                 m_test = m_ctrlMsg->test( & m_sendReq, m_delay );
                 if ( m_delay ) {
                     m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                    m_selfLink->send( m_delay, NULL );
+                    retval.setDelay( m_delay );
                     break;
                 }
             } else {
@@ -239,7 +237,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
             m_test = m_ctrlMsg->test( &m_recvReqV[m_currentStage], m_delay );
             if ( m_delay ) {
                 m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                m_selfLink->send( m_delay, NULL );
+                retval.setDelay( m_delay );
                 break;
             }
         } else {
@@ -251,7 +249,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
             if ( m_currentStage < m_dest.size() ) {
                 m_state = WaitSendData;
                 m_pending = false;
-                handleEnterEvent( NULL );
+                handleEnterEvent( NULL, retval );
                 
                 break;
             }  
@@ -260,7 +258,7 @@ void AllgatherFuncSM::handleEnterEvent( SST::Event *e )
             break;
         } 
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMStartEvent*>(m_event), 0 );
+        retval.setExit( 0 );
         delete m_event;
         m_event = NULL;
         m_pending = false;

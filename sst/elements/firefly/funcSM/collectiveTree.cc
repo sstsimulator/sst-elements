@@ -20,17 +20,16 @@ using namespace SST::Firefly;
 
 CollectiveTreeFuncSM::CollectiveTreeFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
-                    Info* info, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+                                        Info* info, ProtocolAPI* ctrlMsg ) :
     FunctionSMInterface(verboseLevel,loc,info),
     m_event( NULL ),
-    m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_seq( 0 )
 {
     m_dbg.setPrefix("@t:CollectiveTreeFuncSM::@p():@l ");
 }
 
-void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e) 
+void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     assert( NULL == m_event );
     m_event = static_cast< CollectiveStartEvent* >(e);
@@ -68,12 +67,12 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e)
     m_ctrlMsg->enter();
 }
 
-void CollectiveTreeFuncSM::handleSelfEvent( SST::Event *e )
+void CollectiveTreeFuncSM::handleSelfEvent( SST::Event *e, Retval& retval )
 {
-    handleEnterEvent( e );
+    handleEnterEvent( e, retval );
 }
 
-void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
+void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
     switch ( m_state ) {
     case WaitUp:
@@ -87,12 +86,13 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
                 }
                 m_count = 0;
                 m_pending = true;
+                m_delay = 0;
             } else {
                 if ( ! m_delay ) {
                     m_test = m_ctrlMsg->test(&m_recvReqV[m_count+1], m_delay);  
                     if ( m_delay ) {
                         m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                        m_selfLink->send( m_delay, NULL );
+                        retval.setDelay( m_delay );
                         break;
                     }
                 } else {
@@ -137,10 +137,23 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
                 }
                 m_ctrlMsg->enter();
                 m_pending = true;
+                m_delay = 0;
                 break;
             } else {
-                // we don't need to wait for the send to complete as  
-                // hades will not return until the send is complete 
+                if ( ! m_delay ) {
+                    m_test = m_ctrlMsg->test(&m_sendReq, m_delay);  
+                    if ( m_delay ) {
+                        m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                        retval.setDelay( m_delay );
+                        break;
+                    }
+                } else {
+                    m_delay = 0;
+                }
+                if ( ! m_test ) {
+                    m_ctrlMsg->sleep();
+                    break;
+                }
             }
         }
         m_pending = false;
@@ -155,6 +168,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
                 m_dbg.verbose(CALL_INFO,1,0,"post recv from parent %d\n",
                                                             m_yyy->parent());
                 m_pending = true;
+                m_delay = 0;
                 m_ctrlMsg->enter();
                 break;
             } else {
@@ -162,7 +176,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
                     m_test = m_ctrlMsg->test( &m_recvReqV[0], m_delay );
                     if ( m_delay ) {
                         m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                        m_selfLink->send( m_delay, NULL );
+                        retval.setDelay( m_delay );
                         break;
                     }
                 } else {
@@ -177,23 +191,49 @@ void CollectiveTreeFuncSM::handleEnterEvent( SST::Event *e )
                 }
             }
         }
-        m_pending = true;
+        m_pending = false;
         m_state = SendDown;
         m_count = 0;
 
     case SendDown:
         if ( m_event->all && m_yyy->numChildren() ) {
             m_dbg.verbose(CALL_INFO,1,0,"SendDown\n");
-            if ( m_count < m_yyy->numChildren() ) {
-                m_ctrlMsg->send( m_event->result, m_bufLen,
-                    m_yyy->calcChild(m_count++), 
-                    genTag(), m_event->group, &m_sendReq );
+            if ( ! m_pending ) {
+                if ( m_count < m_yyy->numChildren() ) {
+                    m_ctrlMsg->send( m_event->result, m_bufLen,
+                        m_yyy->calcChild(m_count), 
+                        genTag(), m_event->group, &m_sendReq );
+                    m_ctrlMsg->enter();
+                    m_pending = true;
+                    m_delay = 0;
+                    break;
+                } 
+            } else {
+                if ( ! m_delay ) {
+                    m_test = m_ctrlMsg->test(&m_sendReq, m_delay);  
+                    if ( m_delay ) {
+                        m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
+                        retval.setDelay( m_delay );
+                        break;
+                    }
+                } else {
+                    m_delay = 0;
+                }
+                if ( m_test ) {
+                    m_pending = false;
+                    ++m_count;
+                } else {
+                    m_ctrlMsg->sleep();
+                    break;
+                }
+            }
+            if ( m_count < m_yyy->numChildren() ) { 
                 m_ctrlMsg->enter();
                 break;
-            } 
+            }
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMStartEvent*>(m_event), 0 );
+        retval.setExit( 0 );
         for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
             free( m_bufV[i+1] );
         }

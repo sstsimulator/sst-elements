@@ -29,11 +29,11 @@ class RecvFuncSM :  public FunctionSMInterface
   public:
 
     RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info*, ProtocolAPI*, SST::Link* );
+                                    Info*, ProtocolAPI* );
 
-    virtual void handleStartEvent( SST::Event* );
-    virtual void handleEnterEvent( SST::Event* );
-    virtual void handleSelfEvent( SST::Event* );
+    virtual void handleStartEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleSelfEvent( SST::Event*, Retval& );
 
     virtual const char* name() {
        return "Recv"; 
@@ -42,7 +42,6 @@ class RecvFuncSM :  public FunctionSMInterface
   private:
     void finish( RecvEntry*, MsgEntry* );
     
-    SST::Link*      m_selfLink;
     DataMovement*   m_dm;
     RecvStartEvent* m_event;
     MsgEntry*       m_entry;

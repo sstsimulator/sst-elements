@@ -29,7 +29,7 @@ class RankFuncSM :  public FunctionSMInterface
         m_dbg.setPrefix("@t:RankFuncSM::@p():@l ");
     }
 
-    virtual void handleStartEvent( SST::Event *e) {
+    virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
 
         if ( m_setPrefix ) {
             char buffer[100];
@@ -44,7 +44,8 @@ class RankFuncSM :  public FunctionSMInterface
         *event->rank = m_info->getGroup(event->group)->getMyRank();
         
         m_dbg.verbose(CALL_INFO,1,0,"%d\n",*event->rank);
-        exit( static_cast<SMStartEvent*>(e), 0 );
+
+        retval.setExit(0);
         delete e;
     }
 

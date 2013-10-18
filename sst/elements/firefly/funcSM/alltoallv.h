@@ -26,11 +26,11 @@ class AlltoallvFuncSM :  public FunctionSMInterface
 
   public:
     AlltoallvFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, ProtocolAPI*, SST::Link* );
+                                        Info* info, ProtocolAPI* );
 
-    virtual void handleStartEvent( SST::Event* );
-    virtual void handleEnterEvent( SST::Event*);
-    virtual void handleSelfEvent( SST::Event* );
+    virtual void handleStartEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleSelfEvent( SST::Event*, Retval& );
 
     virtual const char* name() {
        return "Alltoallv"; 
@@ -95,7 +95,6 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    SST::Link*          m_selfLink;
     CtrlMsg*            m_ctrlMsg;
     AlltoallStartEvent* m_event;
     bool                m_pending;

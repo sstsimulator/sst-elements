@@ -28,10 +28,10 @@ class WaitFuncSM :  public FunctionSMInterface
 {
   public:
     WaitFuncSM( int verboseLevel, Output::output_location_t loc,
-        Info*, ProtocolAPI* );
+                                    Info*, ProtocolAPI* );
 
-    virtual void handleStartEvent( SST::Event* );
-    virtual void handleEnterEvent( SST::Event* );
+    virtual void handleStartEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( SST::Event*, Retval& );
     
     virtual const char* name() {
        return "Wait"; 

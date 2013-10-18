@@ -19,16 +19,15 @@
 using namespace SST::Firefly;
 
 RecvFuncSM::RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, ProtocolAPI* dm, SST::Link* selfLink ) :
+            Info* info, ProtocolAPI* dm ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_selfLink( selfLink ),
     m_dm( static_cast<DataMovement*>(dm) ),
     m_event( NULL )
 { 
     m_dbg.setPrefix("@t:RecvFuncSM::@p():@l ");
 }
 
-void RecvFuncSM::handleStartEvent( SST::Event *e ) 
+void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -64,7 +63,7 @@ void RecvFuncSM::handleStartEvent( SST::Event *e )
     m_dbg.verbose(CALL_INFO,1,0,"%s, match delay %d\n",
                         m_entry?"found match":"no match", delay);
     m_state = WaitMatch;
-    m_selfLink->send(delay,NULL);
+    retval.setDelay( delay );
 }
 
 void RecvFuncSM::finish( RecvEntry* rEntry, MsgEntry* mEntry )
@@ -80,7 +79,7 @@ void RecvFuncSM::finish( RecvEntry* rEntry, MsgEntry* mEntry )
     m_entry = NULL;
 }
 
-void RecvFuncSM::handleSelfEvent( SST::Event *e )
+void RecvFuncSM::handleSelfEvent( SST::Event *e, Retval& retval )
 {
     if ( m_state == WaitMatch ) {
         if ( m_entry ) {
@@ -88,7 +87,7 @@ void RecvFuncSM::handleSelfEvent( SST::Event *e )
                 memcpy( m_event->entry.buf, &m_entry->buffer[0],
                         m_entry->buffer.size() );
                 m_state = WaitCopy;
-                m_selfLink->send( m_dm->getCopyDelay(m_entry->buffer.size()), NULL );
+                retval.setDelay( m_dm->getCopyDelay(m_entry->buffer.size()) );
                 return;
             } else if ( 0 == m_entry->hdr.count ) {
                 finish( &m_event->entry, m_entry );
@@ -110,14 +109,14 @@ void RecvFuncSM::handleSelfEvent( SST::Event *e )
     m_dm->enter();
 }
 
-void RecvFuncSM::handleEnterEvent( SST::Event *e )
+void RecvFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
     assert( m_event );
     m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_event->entry.req ? "Irecv":"Recv");
     if ( m_event->entry.resp && m_event->entry.resp->src == Hermes::AnySrc  ) {
         m_dm->sleep();
     } else {
-        exit( static_cast< SMStartEvent*>(m_event), 0 );
+        retval.setExit( 0 );
         delete m_event;
         m_event = NULL;
     }

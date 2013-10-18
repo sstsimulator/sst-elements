@@ -142,13 +142,13 @@ void Hades::enterEventHandler(SST::Event* )
         runRecv();
     }
 
-    if ( m_io->pending() || functionIsBlocked()  ) {
+    if ( m_io->pending() || functionIsBlocked() ) {
         m_dbg.verbose(CALL_INFO,1,0,"pass control to I/O SM\n");
         m_io->enter( m_enterLink );
     } else if ( ! m_delay )  {
         // return to function SM
         m_dbg.verbose(CALL_INFO,1,0,"pass control to function SM\n");
-        m_functionSM->sendProgressEvent( NULL );
+        m_functionSM->enter( );
     }
 }
 

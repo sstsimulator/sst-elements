@@ -28,7 +28,7 @@ class InitFuncSM :  public FunctionSMInterface
         m_dbg.setPrefix("@t:InitFuncSM::@p():@l ");
     }
 
-    virtual void handleStartEvent( SST::Event *e ) {
+    virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
         if ( m_setPrefix ) {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:%d:InitFuncSM::@p():@l ",
@@ -39,7 +39,9 @@ class InitFuncSM :  public FunctionSMInterface
         }
 
         m_dbg.verbose(CALL_INFO,1,0,"\n");
-        exit( static_cast< SMStartEvent* >(e), 0 );
+
+        retval.setExit(0);
+
         delete e;
     }
 

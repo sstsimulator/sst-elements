@@ -23,35 +23,30 @@
 namespace SST {
 namespace Firefly {
 
-class DriverEvent : public SST::Event {
-  public:
-    DriverEvent( Hermes::Functor* _retFunc, int _retval ) :
-        Event(),
-        retFunc( _retFunc ),
-        retval( _retval )
-    { }
-    Hermes::Functor* retFunc;
-    int retval;
-  private:
-};
-
-class SMStartEvent : public SST::Event {
-  public:
-    SMStartEvent(int _type, Hermes::Functor* _retFunc ) :
-        Event(),
-        type( _type ),
-        retFunc( _retFunc )
-    {}
-
-    int              type;
-    SST::Link*       retLink;
-    Hermes::Functor* retFunc;
-};
-
 class FunctionSMInterface : public Module {
+
   public:
-    FunctionSMInterface( int verboseLevel, Output::output_location_t loc,
-                Info* info ) :
+    class Retval {
+      public:
+        Retval() : m_type( None ) {}
+        void setExit( int value ) {
+            m_type = Exit;
+            m_value = value;
+        }
+        void setDelay( int value ) {
+            m_type = Delay;
+            m_value = value;
+        }
+        bool isExit() { return ( Exit == m_type); }
+        bool isDelay() { return ( Delay == m_type); }
+        int value() { return m_value; }
+      private:
+        enum { None, Delay, Exit } m_type;  
+        int m_value;
+    };
+
+    FunctionSMInterface( int verboseLevel, 
+            Output::output_location_t loc, Info* info ) :
         m_info(info),
         m_setPrefix( true )
     {
@@ -59,16 +54,10 @@ class FunctionSMInterface : public Module {
     }
     virtual ~FunctionSMInterface() {} 
 
-    virtual void  handleStartEvent( SST::Event* ) = 0; 
-    virtual void  handleEnterEvent( SST::Event* ) { assert(0); }
-    virtual void  handleSelfEvent( SST::Event* ) { assert(0); }
+    virtual void  handleStartEvent( SST::Event*, Retval& ) = 0; 
+    virtual void  handleEnterEvent( SST::Event*, Retval& ) { assert(0); }
+    virtual void  handleSelfEvent( SST::Event*, Retval& ) { assert(0); }
     virtual const char* name() { return "No Name"; }
-
-    virtual void exit( SMStartEvent* event, int retval ) {
-        DriverEvent* x = new DriverEvent( event->retFunc, retval );
-        event->retLink->send( 0,  x);
-    }
-    
     virtual int myRank() { return m_info->worldRank(); }
     virtual int myNode() { return m_info->nodeId(); }
 

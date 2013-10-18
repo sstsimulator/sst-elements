@@ -19,9 +19,8 @@ using namespace SST::Firefly;
 
 GathervFuncSM::GathervFuncSM( 
                     int verboseLevel, Output::output_location_t loc,
-                    Info* info, ProtocolAPI* ctrlMsg, SST::Link* selfLink ) :
+                    Info* info, ProtocolAPI* ctrlMsg ) :
     FunctionSMInterface(verboseLevel,loc,info),
-    m_selfLink( selfLink ),
     m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
     m_event( NULL ),
     m_seq( 0 )
@@ -29,7 +28,7 @@ GathervFuncSM::GathervFuncSM(
     m_dbg.setPrefix("@t:GathervFuncSM::@p():@l ");
 }
 
-void GathervFuncSM::handleStartEvent( SST::Event *e ) 
+void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     if ( m_setPrefix ) {
         char buffer[100];
@@ -71,18 +70,18 @@ void GathervFuncSM::handleStartEvent( SST::Event *e )
     m_ctrlMsg->enter();
 }
 
-void GathervFuncSM::handleSelfEvent( SST::Event *e )
+void GathervFuncSM::handleSelfEvent( SST::Event *e, Retval& retval )
 {
-    handleEnterEvent( e );
+    handleEnterEvent( e, retval );
 }
 
-void GathervFuncSM::handleEnterEvent( SST::Event *e )
+void GathervFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     switch( m_state ) {
     case WaitUp:
         if ( m_qqq->numChildren() ) {
-            if ( waitUp() ) {
+            if ( waitUp(retval) ) {
                 break;
             };
         }
@@ -90,19 +89,19 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e )
         m_state = SendUp;
     case SendUp:
         if ( -1 != m_qqq->parent() ) {
-            if ( sendUp() ) {
+            if ( sendUp(retval) ) {
                 break;
             }
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        exit( static_cast<SMStartEvent*>(m_event), 0 );
+        retval.setExit(0);
         delete m_qqq;
         delete m_event;
         m_event = NULL;
     }
 }
 
-bool GathervFuncSM::waitUp()
+bool GathervFuncSM::waitUp(Retval& retval)
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     switch( m_waitUpState ) { 
@@ -124,7 +123,7 @@ bool GathervFuncSM::waitUp()
                 m_waitUpTest = m_ctrlMsg->test( &m_recvReqV[m_count], 
                                         m_waitUpDelay );
                 if ( m_waitUpDelay ) {
-                    m_selfLink->send( m_waitUpDelay, NULL );
+                    retval.setDelay( m_waitUpDelay );
                     return true;
                 }
             } else {
@@ -184,7 +183,7 @@ bool GathervFuncSM::waitUp()
             if ( ! m_waitUpDelay ) { 
                 m_waitUpTest = m_ctrlMsg->test( &m_sendReq, m_waitUpDelay );
                 if ( m_waitUpDelay ) {
-                    m_selfLink->send(m_waitUpDelay, NULL );
+                    retval.setDelay( m_waitUpDelay );
                     return true;
                 }
             } else {
@@ -215,7 +214,7 @@ bool GathervFuncSM::waitUp()
                 m_waitUpTest = 
                         m_ctrlMsg->test( &m_recvReqV[m_count], m_waitUpDelay );
                 if ( m_waitUpDelay ) {
-                    m_selfLink->send(m_waitUpDelay, NULL);
+                    retval.setDelay( m_waitUpDelay );
                     return true;
                 }
             } else {
@@ -295,7 +294,7 @@ void GathervFuncSM::doRoot()
 #endif
 }
 
-bool GathervFuncSM::sendUp()
+bool GathervFuncSM::sendUp(Retval& retval)
 { 
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
@@ -322,7 +321,7 @@ bool GathervFuncSM::sendUp()
             if ( ! m_sendUpDelay ) {
                 m_sendUpTest = m_ctrlMsg->test( &m_sendReq, m_sendUpDelay );
                 if ( m_sendUpDelay ) {
-                    m_selfLink->send(m_sendUpDelay,NULL);
+                    retval.setDelay(m_sendUpDelay);
                     return true;
                 }
             } else {
@@ -354,7 +353,7 @@ bool GathervFuncSM::sendUp()
             if ( ! m_sendUpDelay ) {
                 m_sendUpTest = m_ctrlMsg->test( &m_recvReq, m_sendUpDelay );
                 if ( m_sendUpDelay ) {
-                    m_selfLink->send(m_sendUpDelay,NULL);
+                    retval.setDelay(m_sendUpDelay);
                     return true;
                 }
             } else {
@@ -391,7 +390,7 @@ bool GathervFuncSM::sendUp()
             if ( ! m_sendUpDelay ) {
                 m_sendUpTest = m_ctrlMsg->test( &m_sendReq, m_sendUpDelay );
                 if ( m_sendUpDelay ) {
-                    m_selfLink->send( m_sendUpDelay, NULL );
+                    retval.setDelay( m_sendUpDelay );
                     return true;
                 }
             } else {
