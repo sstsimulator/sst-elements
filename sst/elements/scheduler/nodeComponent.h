@@ -48,10 +48,15 @@ namespace SST {
             virtual std::string getID();
 
             private:
+		long int yumyumFaultRand48Seed;
 		unsigned short int * yumyumFaultRand48State;
+		long int yumyumErrorLogRand48Seed;
 		unsigned short int * yumyumErrorLogRand48State;
+		long int yumyumErrorLatencyRand48Seed;
 		unsigned short int * yumyumErrorLatencyRand48State;
+		long int yumyumErrorCorrectionRand48Seed;
 		unsigned short int * yumyumErrorCorrectionRand48State;
+		long int yumyumJobKillRand48Seed;
 		unsigned short int * yumyumJobKillRand48State;
 
 		bool faultsActivated;
