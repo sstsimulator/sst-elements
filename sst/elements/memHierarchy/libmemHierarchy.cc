@@ -144,7 +144,7 @@ static const ElementInfoParam dramsimMem_params[] = {
     {NULL, NULL}
 };
 
-static const ElementInfoParam hybdridsimMem_params[] = {
+static const ElementInfoParam hybridsimMem_params[] = {
     {"device_ini",      "Name of HybridSim Device config file"},
     {"system_ini",      "Name of HybridSim Device system file"},
     {NULL, NULL}
