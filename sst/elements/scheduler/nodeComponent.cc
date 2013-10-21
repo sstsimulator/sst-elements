@@ -336,7 +336,7 @@ void nodeComponent::handleEvent(Event *ev) {
 			}
 
 			if( !faultsActivated ){
-				SelfLink -> send(new CommunicationEvent(START_FAULTING)); 
+				SelfLink -> send(1, new CommunicationEvent(START_FAULTING)); 
 				faultsActivated = true;
 			}
 		}
