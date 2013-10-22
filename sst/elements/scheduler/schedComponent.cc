@@ -73,20 +73,14 @@ schedComponent::~schedComponent()
 }
 
 
-void readSeed( Params & params, std::string paramName, unsigned short * PRNG48State ){
-	long int XMLseed;
-
+int readSeed( Params & params, std::string paramName ){
 	if( params.find( paramName ) != params.end() ){
-		XMLseed = atoi( params[ paramName ].c_str() );
+		return atoi( params[ paramName ].c_str() );
 	}else if( params.find( "seed" ) != params.end() ){
-		XMLseed = atoi( params[ "seed" ].c_str() );
+		return atoi( params[ "seed" ].c_str() );
 	}else{
-		XMLseed = time( NULL );
+		return time( NULL );
 	}
-
-	PRNG48State[0] = 0x330E;
-	PRNG48State[1] = XMLseed & 0xFFFF;
-	PRNG48State[2] = XMLseed >> 16;
 }
 
 
@@ -108,18 +102,11 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
 
     // get the PRNG seeds we'll use
 
-    yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumErrorLatencyRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumErrorCorrectionRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumJobKillRand48State = (unsigned short *) malloc(3 * sizeof(short));
-
-    readSeed( params, std::string( "faultSeed" ), yumyumFaultRand48State );
-    readSeed( params, std::string( "errorLogSeed" ), yumyumErrorLogRand48State );
-    readSeed( params, std::string( "errorLatencySeed" ), yumyumErrorLatencyRand48State );
-    readSeed( params, std::string( "errorCorrectionSeed" ), yumyumErrorCorrectionRand48State );
-    readSeed( params, std::string( "jobKillSeed" ), yumyumJobKillRand48State );
-
+    yumyumFaultRand48Seed = readSeed( params, std::string( "faultSeed" ) );
+    yumyumErrorLogRand48Seed = readSeed( params, std::string( "errorLogSeed" ) );
+    yumyumErrorLatencyRand48Seed = readSeed( params, std::string( "errorLatencySeed" ) );
+    yumyumErrorCorrectionRand48Seed = readSeed( params, std::string( "errorCorrectionSeed" ) );
+    yumyumJobKillRand48Seed = readSeed( params, std::string( "jobKillSeed" ) );
 
     //set up the all-important self-link
     selfLink = configureSelfLink("linkToSelf", new Event::Handler<schedComponent>(this, &schedComponent::handleJobArrivalEvent));
@@ -207,25 +194,25 @@ void schedComponent::setup()
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
         (*nodeIter)->send( getID );
 
-	long int * payload = (long int *) malloc( sizeof( long int ) );
-	*payload = jrand48( yumyumFaultRand48State );
-	(*nodeIter)->send( new CommunicationEvent( SEED_FAULT, payload ) );
+	int * seed = (int *) malloc( sizeof( int ) );
+	*seed = yumyumFaultRand48Seed;
+	(*nodeIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
+	 
+	seed = (int *) malloc( sizeof( int ) );
+	*seed = yumyumErrorLogRand48Seed;
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LOG, seed ) );
 	
-	payload = (long int *) malloc( sizeof( long int ) );
-	*payload = jrand48( yumyumErrorLogRand48State );
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LOG, payload ) );
+	seed = (int *) malloc( sizeof( int ) );
+	*seed = yumyumErrorLatencyRand48Seed;
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LATENCY, seed ) );
+
+	seed = (int *) malloc( sizeof( int ) );
+	*seed = yumyumErrorCorrectionRand48Seed;
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_CORRECTION, seed ) );
 	
-	payload = (long int *) malloc( sizeof( long int ) );
-	*payload = jrand48( yumyumErrorLatencyRand48State );
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LATENCY, payload ) );
-
-	payload = (long int *) malloc( sizeof( long int ) );
-	*payload = jrand48( yumyumErrorCorrectionRand48State );
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_CORRECTION, payload ) );
-
-	payload = (long int *) malloc( sizeof( long int ) );
-	*payload = jrand48( yumyumJobKillRand48State );
-	(*nodeIter)->send( new CommunicationEvent( SEED_JOB_KILL, payload ) );
+	seed = (int *) malloc( sizeof( int ) );
+	*seed = yumyumJobKillRand48Seed;
+	(*nodeIter)->send( new CommunicationEvent( SEED_JOB_KILL, seed ) );
     }
 
     // done setting up the links, now read the job list
