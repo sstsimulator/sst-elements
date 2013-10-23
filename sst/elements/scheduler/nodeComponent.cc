@@ -311,13 +311,11 @@ void nodeComponent::handleEvent(Event *ev) {
         CommunicationEvent * event = dynamic_cast<CommunicationEvent*>(ev);
 
 	if( event->CommType == SEED_FAULT ){
-		int seed = *(int *)event->payload;
+		int seed = event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			int * parentSeed = (int *) malloc( sizeof( int ) );
-			*parentSeed = seed;
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, parentSeed ) );
+			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
 		}
 
 		seed ^= nodeNum;
@@ -333,13 +331,11 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_ERROR_LOG ){
-		int seed = *(int *)event->payload;
+		int seed = event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			int * parentSeed = (int *) malloc( sizeof( int ) );
-			*parentSeed = seed;
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, parentSeed ) );
+			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
 		}
 
 		seed ^= nodeNum;
@@ -351,13 +347,11 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_ERROR_LATENCY ){
-		int seed = *(int *)event->payload;
+		int seed = event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			int * parentSeed = (int *) malloc( sizeof( int ) );
-			*parentSeed = seed;
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, parentSeed ) );
+			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
 		}
 		
 		seed ^= nodeNum;
@@ -369,13 +363,11 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_ERROR_CORRECTION ){
-		int seed = *(int *)event->payload;
+		int seed = event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			int * parentSeed = (int *) malloc( sizeof( int ) );
-			*parentSeed = seed;
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, parentSeed ) );
+			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
 		}
 		
 		seed ^= nodeNum;
@@ -387,13 +379,11 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_JOB_KILL ){
-		int seed = *(int *)event->payload;
+		int seed = event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			int * parentSeed = (int *) malloc( sizeof( int ) );
-			*parentSeed = seed;
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, parentSeed ) );
+			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
 		}
 		
 		seed ^= nodeNum;

@@ -194,25 +194,11 @@ void schedComponent::setup()
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
         (*nodeIter)->send( getID );
 
-	int * seed = (int *) malloc( sizeof( int ) );
-	*seed = yumyumFaultRand48Seed;
-	(*nodeIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
-	 
-	seed = (int *) malloc( sizeof( int ) );
-	*seed = yumyumErrorLogRand48Seed;
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LOG, seed ) );
-	
-	seed = (int *) malloc( sizeof( int ) );
-	*seed = yumyumErrorLatencyRand48Seed;
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LATENCY, seed ) );
-
-	seed = (int *) malloc( sizeof( int ) );
-	*seed = yumyumErrorCorrectionRand48Seed;
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_CORRECTION, seed ) );
-	
-	seed = (int *) malloc( sizeof( int ) );
-	*seed = yumyumJobKillRand48Seed;
-	(*nodeIter)->send( new CommunicationEvent( SEED_JOB_KILL, seed ) );
+	(*nodeIter)->send( new CommunicationEvent( SEED_FAULT, yumyumFaultRand48Seed ) );
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LOG, yumyumErrorLogRand48Seed ) );
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LATENCY, yumyumErrorLatencyRand48Seed ) );
+	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_CORRECTION, yumyumErrorCorrectionRand48Seed ) );
+	(*nodeIter)->send( new CommunicationEvent( SEED_JOB_KILL, yumyumJobKillRand48Seed ) );
     }
 
     // done setting up the links, now read the job list
