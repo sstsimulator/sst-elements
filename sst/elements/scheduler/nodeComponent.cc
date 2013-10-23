@@ -157,24 +157,24 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 void nodeComponent::setup()
 { 
 	yumyumFaultRand48State[0] = 0x330E;
-	yumyumFaultRand48State[1] = (yumyumFaultRand48Seed) & 0xFFFF;
-	yumyumFaultRand48State[2] = (yumyumFaultRand48Seed) >> 16;
+	yumyumFaultRand48State[1] = (yumyumFaultRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumFaultRand48State[2] = (yumyumFaultRand48Seed ^ nodeNum) >> 16;
 
 	yumyumErrorLogRand48State[0] = 0x330E;
-	yumyumErrorLogRand48State[1] = (yumyumErrorLogRand48Seed) & 0xFFFF;
-	yumyumErrorLogRand48State[2] = (yumyumErrorLogRand48Seed) >> 16;
+	yumyumErrorLogRand48State[1] = (yumyumErrorLogRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumErrorLogRand48State[2] = (yumyumErrorLogRand48Seed ^ nodeNum) >> 16;
 
 	yumyumErrorLatencyRand48State[0] = 0x330E;
-	yumyumErrorLatencyRand48State[1] = (yumyumErrorLatencyRand48Seed) & 0xFFFF;
-	yumyumErrorLatencyRand48State[2] = (yumyumErrorLatencyRand48Seed) >> 16;
+	yumyumErrorLatencyRand48State[1] = (yumyumErrorLatencyRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumErrorLatencyRand48State[2] = (yumyumErrorLatencyRand48Seed ^ nodeNum) >> 16;
 
 	yumyumErrorCorrectionRand48State[0] = 0x330E;
-	yumyumErrorCorrectionRand48State[1] = (yumyumErrorCorrectionRand48Seed) & 0xFFFF;
-	yumyumErrorCorrectionRand48State[2] = (yumyumErrorCorrectionRand48Seed) >> 16;
+	yumyumErrorCorrectionRand48State[1] = (yumyumErrorCorrectionRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumErrorCorrectionRand48State[2] = (yumyumErrorCorrectionRand48Seed ^ nodeNum) >> 16;
 
 	yumyumJobKillRand48State[0] = 0x330E;
-	yumyumJobKillRand48State[1] = (yumyumJobKillRand48Seed) & 0xFFFF;
-	yumyumJobKillRand48State[2] = (yumyumJobKillRand48Seed) >> 16;
+	yumyumJobKillRand48State[1] = (yumyumJobKillRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumJobKillRand48State[2] = (yumyumJobKillRand48Seed ^ nodeNum) >> 16;
 
 	faultsActivated = true;
 	SelfLink -> send(new CommunicationEvent(START_FAULTING));
