@@ -354,15 +354,15 @@ bool schedComponent::newYumYumJobLine(std::string line)
     uint64_t currentJobID;
     uint64_t lastJobID;
 
-    sscanf( ID, "%lu", &currentJobID );
-    sscanf( lastJobRead, "%lu", &lastJobID );
+    sscanf( ID, "%"PRIu64, &currentJobID );
+    sscanf( lastJobRead, "%"PRIu64, &lastJobID );
 
     if (lastJobRead[ 0 ] != '\0' && currentJobID <= lastJobID ){
         return false;       // We have read this job before, don't do it again.
     }
 
-    sscanf( tokens.at( 1 ).c_str(), "%lu", &duration );
-    sscanf( tokens.at( 2 ).c_str(), "%lu", &procs );
+    sscanf( tokens.at( 1 ).c_str(), "%"PRIu64, &duration );
+    sscanf( tokens.at( 2 ).c_str(), "%"PRIu64, &procs );
 
     strcpy( lastJobRead, ID );
 
@@ -766,7 +766,7 @@ void schedComponent::logJobFinish(IAI iai)
     } 
 
     if (getCurrentSimTime() < iai.ai->job->getStartTime()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%lu\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), getCurrentSimTime());
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), getCurrentSimTime());
     }
 }
 
@@ -791,7 +791,7 @@ void schedComponent::logJobFault(IAI iai, FaultEvent * faultEvent)
     } 
 
     if (getCurrentSimTime() < iai.ai -> job -> getStartTime()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%lu\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), (uint64_t)getCurrentSimTime());
+        schedout.fatal(CALL_INFO, 1, 0, 0, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), (uint64_t)getCurrentSimTime());
     }
 }
 
