@@ -54,6 +54,12 @@ using namespace std;
 using namespace SST;
 using namespace SST::Scheduler;
 
+extern int yumyumFaultRand48Seed;
+extern int yumyumErrorLogRand48Seed;
+extern int yumyumErrorLatencyRand48Seed;
+extern int yumyumErrorCorrectionRand48Seed;
+extern int yumyumJobKillRand48Seed;
+
 //necessary for sorting a list of pointers to completion events
 //can't overload < because that does not work with pointers
 bool compareCEPointers(CompletionEvent* ev1, CompletionEvent* ev2) 
@@ -193,12 +199,6 @@ void schedComponent::setup()
         // ask the newly-connected node for its ID
         SST::Event * getID = new CommunicationEvent( RETRIEVE_ID );
         (*nodeIter)->send( getID );
-
-	(*nodeIter)->send( new CommunicationEvent( SEED_FAULT, yumyumFaultRand48Seed ) );
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LOG, yumyumErrorLogRand48Seed ) );
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_LATENCY, yumyumErrorLatencyRand48Seed ) );
-	(*nodeIter)->send( new CommunicationEvent( SEED_ERROR_CORRECTION, yumyumErrorCorrectionRand48Seed ) );
-	(*nodeIter)->send( new CommunicationEvent( SEED_JOB_KILL, yumyumJobKillRand48Seed ) );
     }
 
     // done setting up the links, now read the job list

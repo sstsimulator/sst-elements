@@ -38,6 +38,11 @@ using namespace SST;
 using namespace SST::Scheduler;
 using namespace std;
 
+int yumyumFaultRand48Seed;
+int yumyumErrorLogRand48Seed;
+int yumyumErrorLatencyRand48Seed;
+int yumyumErrorCorrectionRand48Seed;
+int yumyumJobKillRand48Seed;
 
 static std::ofstream faultLog;
 static std::ofstream errorLog;
@@ -136,13 +141,13 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params["errorMessageProbability"]), &errorLogProbability);
     readCSVpairsIntoMap(boost::tokenizer< boost::escaped_list_separator<char> >(params["jobFailureProbability"]), &jobKillProbability);
 
-    yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumErrorLatencyRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumErrorCorrectionRand48State = (unsigned short *) malloc(3 * sizeof(short));
-    yumyumJobKillRand48State = (unsigned short *) malloc(3 * sizeof(short));
- 
-    faultsActivated = false;
+	yumyumFaultRand48State = (unsigned short *) malloc(3 * sizeof(short));
+	yumyumErrorLogRand48State = (unsigned short *) malloc(3 * sizeof(short));
+	yumyumErrorLatencyRand48State = (unsigned short *) malloc(3 * sizeof(short));
+	yumyumErrorCorrectionRand48State = (unsigned short *) malloc(3 * sizeof(short));
+	yumyumJobKillRand48State = (unsigned short *) malloc(3 * sizeof(short));
+
+	faultsActivated = false;
 
     //set our clock
     setDefaultTimeBase(registerTimeBase(SCHEDULER_TIME_BASE));
@@ -150,7 +155,29 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
 
 void nodeComponent::setup()
-{
+{ 
+	yumyumFaultRand48State[0] = 0x330E;
+	yumyumFaultRand48State[1] = (yumyumFaultRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumFaultRand48State[2] = (yumyumFaultRand48Seed ^ nodeNum) >> 16;
+
+	yumyumErrorLogRand48State[0] = 0x330E;
+	yumyumErrorLogRand48State[1] = (yumyumErrorLogRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumErrorLogRand48State[2] = (yumyumErrorLogRand48Seed ^ nodeNum) >> 16;
+
+	yumyumErrorLatencyRand48State[0] = 0x330E;
+	yumyumErrorLatencyRand48State[1] = (yumyumErrorLatencyRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumErrorLatencyRand48State[2] = (yumyumErrorLatencyRand48Seed ^ nodeNum) >> 16;
+
+	yumyumErrorCorrectionRand48State[0] = 0x330E;
+	yumyumErrorCorrectionRand48State[1] = (yumyumErrorCorrectionRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumErrorCorrectionRand48State[2] = (yumyumErrorCorrectionRand48Seed ^ nodeNum) >> 16;
+
+	yumyumJobKillRand48State[0] = 0x330E;
+	yumyumJobKillRand48State[1] = (yumyumJobKillRand48Seed ^ nodeNum) & 0xFFFF;
+	yumyumJobKillRand48State[2] = (yumyumJobKillRand48Seed ^ nodeNum) >> 16;
+
+	faultsActivated = true;
+	SelfLink -> send(new CommunicationEvent(START_FAULTING));
 }
 
 
@@ -309,92 +336,7 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
 void nodeComponent::handleEvent(Event *ev) {
     if (dynamic_cast<CommunicationEvent *>( ev )){
         CommunicationEvent * event = dynamic_cast<CommunicationEvent*>(ev);
-
-	if( event->CommType == SEED_FAULT ){
-		int seed = (int) event->payload;
-
-		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
-		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
-		}
-
-		seed ^= nodeNum;
-
-		yumyumFaultRand48State[0] = 0x330E;
-		yumyumFaultRand48State[1] = seed & 0xFFFF;
-		yumyumFaultRand48State[2] = seed >> 16;
-
-		if( !faultsActivated ){
-			SelfLink -> send(1, new CommunicationEvent(START_FAULTING)); 
-			faultsActivated = true;
-		}
-		free( event->payload );
-
-	}else if( event->CommType == SEED_ERROR_LOG ){
-		int seed = (int) event->payload;
-
-		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
-		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
-		}
-
-		seed ^= nodeNum;
-
-		yumyumErrorLogRand48State[0] = 0x330E;
-		yumyumErrorLogRand48State[1] = seed & 0xFFFF;
-		yumyumErrorLogRand48State[2] = seed >> 16;
-
-		free( event->payload );
-
-	}else if( event->CommType == SEED_ERROR_LATENCY ){
-		int seed = (int) event->payload;
-
-		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
-		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
-		}
-		
-		seed ^= nodeNum;
-
-		yumyumErrorLatencyRand48State[0] = 0x330E;
-		yumyumErrorLatencyRand48State[1] = seed & 0xFFFF;
-		yumyumErrorLatencyRand48State[2] = seed >> 16;
-
-		free( event->payload );
-
-	}else if( event->CommType == SEED_ERROR_CORRECTION ){
-		int seed = (int) event->payload;
-
-		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
-		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
-		}
-		
-		seed ^= nodeNum;
-
-		yumyumErrorCorrectionRand48State[0] = 0x330E;
-		yumyumErrorCorrectionRand48State[1] = seed & 0xFFFF;
-		yumyumErrorCorrectionRand48State[2] = seed >> 16;
-
-		free( event->payload );
-
-	}else if( event->CommType == SEED_JOB_KILL ){
-		int seed = (int) event->payload;
-
-		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
-		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
-			(*parentIter)->send( new CommunicationEvent( SEED_FAULT, seed ) );
-		}
-		
-		seed ^= nodeNum;
-
-		yumyumJobKillRand48State[0] = 0x330E;
-		yumyumJobKillRand48State[1] = seed & 0xFFFF;
-		yumyumJobKillRand48State[2] = seed >> 16;
-
-		free( event->payload );
-
-    }else if (event -> CommType == RETRIEVE_ID) {
+	if (event -> CommType == RETRIEVE_ID) {
             event -> payload = &this -> ID;
             event -> reply = true;
 
