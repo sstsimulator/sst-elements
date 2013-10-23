@@ -311,7 +311,7 @@ void nodeComponent::handleEvent(Event *ev) {
         CommunicationEvent * event = dynamic_cast<CommunicationEvent*>(ev);
 
 	if( event->CommType == SEED_FAULT ){
-		int seed = event->payload;
+		int seed = (int) event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
@@ -331,7 +331,7 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_ERROR_LOG ){
-		int seed = event->payload;
+		int seed = (int) event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
@@ -347,7 +347,7 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_ERROR_LATENCY ){
-		int seed = event->payload;
+		int seed = (int) event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
@@ -363,7 +363,7 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_ERROR_CORRECTION ){
-		int seed = event->payload;
+		int seed = (int) event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
@@ -379,7 +379,7 @@ void nodeComponent::handleEvent(Event *ev) {
 		free( event->payload );
 
 	}else if( event->CommType == SEED_JOB_KILL ){
-		int seed = event->payload;
+		int seed = (int) event->payload;
 
 		for( std::vector<SST::Link *>::iterator parentIter = ParentFaultLinks.begin();
 		     parentIter != ParentFaultLinks.end(); ++ parentIter ){
@@ -394,7 +394,7 @@ void nodeComponent::handleEvent(Event *ev) {
 
 		free( event->payload );
 
-}else if (event -> CommType == RETRIEVE_ID) {
+    }else if (event -> CommType == RETRIEVE_ID) {
             event -> payload = &this -> ID;
             event -> reply = true;
 
