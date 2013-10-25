@@ -27,167 +27,6 @@
 using namespace SST;
 using namespace SST::ArielComponent;
 
-#define PERFORM_EXIT 1
-#define PERFORM_READ 2
-#define PERFORM_WRITE 4
-#define START_DMA 8  // Format: Destination:64 Source:64 Size:32 Tag:32
-#define WAIT_DMA 16  // Format: Tag:32
-#define ISSUE_TLM_MAP 80 // issue a Two level memory allocation
-#define ISSUE_TLM_FREE 100
-#define START_INSTRUCTION 32
-#define END_INSTRUCTION 64
-
-void Ariel::issue(uint64_t addr, uint32_t length, bool isRead, uint32_t thrID) {
-	const uint64_t cache_offset = addr % ((uint64_t) cache_line_size);
-
-	if((cache_offset + length) > cache_line_size) {
-		uint64_t cache_left_address = addr;
-		uint32_t cache_left_size = cache_line_size - cache_offset;
-
-		// We need data from the next cache line along
-		uint64_t cache_right_address = (addr - cache_offset) + cache_line_size;
-		uint32_t cache_right_size = (addr + length) % cache_line_size;
-
-		uint64_t phys_cache_left_addr = translateAddress(cache_left_address);
-		uint64_t phys_cache_right_addr = translateAddress(cache_right_address);
-
-		output->verbose(CALL_INFO, 4, 0,
-			"Issue split-cache line operation A=%" PRIu64 ", Length=%" PRIu32
-			", A_L=%" PRIu64 ", S_L=%" PRIu32 ", A_R=%" PRIu64 ", S_R=%" PRIu32
-			", PhysA_L=%" PRIu64 ", PhysA_R=%" PRIu64 ", P_L=%" PRIu64 ", P_R=%" PRIu64 
-			", C_L=%" PRIu64 ", C_R=%" PRIu64 ", W/R=%s, TID=%" PRIu32 "\n",
-			addr, length, cache_left_address, cache_left_size,
-			cache_right_address, cache_right_size,
-			phys_cache_left_addr, phys_cache_right_addr,
-			phys_cache_left_addr / page_size,
-			phys_cache_right_addr / page_size,
-			phys_cache_left_addr / cache_line_size,
-			phys_cache_right_addr / cache_line_size,
-			isRead ? "READ" : "WRITE", thrID);
-
-/*		if((cache_left_size + cache_right_size) != length) {
-			std::cout << "cache length=" << length << " left=" << cache_left_size << " right=" << cache_right_size <<
-				" addr=" << addr << ", cache_offset=" << cache_offset << std::endl;
-			output->fatal(CALL_INFO, -4, 0, 0,
-			"Error issuing a cache operation, cache size left %" PRIu32 " != cache size right %" PRIu32 ", length=%" PRIu32 "\n",
-			cache_left_size, cache_right_size, length);
-		}
-*/
-		// Produce operations for the lower and upper halves of the transaction
-		if((cache_left_size + cache_right_size) == length) {
-		MemEvent *e_lower = new MemEvent(this, phys_cache_left_addr, isRead ? ReadReq : WriteReq);
-               	e_lower->setSize(cache_left_size);
-
-               	MemEvent *e_upper = new MemEvent(this, phys_cache_right_addr, isRead ? ReadReq : WriteReq);
-                e_upper->setSize(cache_right_size);
-
-		// Add transactions to our pending list for matching later
-		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_lower->getID(), e_lower) );
-		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(e_upper->getID(), e_upper) );
-
-		assert(thrID < core_count);
-
-		if(phys_cache_left_addr < (uint64_t) (fastmem_size * page_size)) {
-			fastmem_access_count++;
-		} else {
-			mem_access_count++;
-		}
-
-		if(phys_cache_right_addr < (uint64_t) (fastmem_size * page_size)) {
-			fastmem_access_count++;
-		} else {
-			mem_access_count++;
-		}
-
-		cache_link[thrID]->send(e_lower);
-		cache_link[thrID]->send(e_upper);
-
-			if(core_trace_mode == 1) {
-				char thisOp = (isRead ? 0 : 1);
-				uint32_t reqSize = (uint32_t) cache_left_size;
-
-				fwrite(&currentCycle, sizeof(uint64_t), 1, core_traces[thrID]);
-				fwrite(&thisOp, sizeof(char), 1, core_traces[thrID]);
-				fwrite(&phys_cache_left_addr, sizeof(uint64_t), 1, core_traces[thrID]);
-				fwrite(&reqSize, sizeof(uint32_t), 1, core_traces[thrID]);
-
-				reqSize = (uint32_t) cache_right_size;
-				fwrite(&currentCycle, sizeof(uint64_t), 1, core_traces[thrID]);
-				fwrite(&thisOp, sizeof(char), 1, core_traces[thrID]);
-				fwrite(&phys_cache_right_addr, sizeof(uint64_t), 1, core_traces[thrID]);
-				fwrite(&reqSize, sizeof(uint32_t), 1, core_traces[thrID]);
-
-				fflush(core_traces[thrID]);
-			} else if(core_trace_mode == 2) {
-				uint32_t reqSize = (uint32_t) cache_left_size;
-
-				fprintf(core_traces[thrID], "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
-					currentCycle, (isRead ? "R" : "W"), phys_cache_left_addr, reqSize);
-
-				reqSize = (uint32_t) cache_right_size;
-				fprintf(core_traces[thrID], "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
-					currentCycle, (isRead ? "R" : "W"), phys_cache_right_addr, reqSize);
-
-				fflush(core_traces[thrID]);
-			}
-
-			if(isRead) {
-				split_read_ops++;
-			} else {
-				split_write_ops++;
-			}
-		}
-	} else {
-		uint64_t physical_addr = translateAddress(addr);
-
-		output->verbose(CALL_INFO, 4, 0,
-			"Issue non-split cache line operation: A=%" PRIu64 ", Length=%" PRIu32
-			", PhysA=%" PRIu64 ", W/R=%s, TID=%" PRIu32 "\n",
-			addr, length, physical_addr,
-			isRead ? "READ" : "WRITE", thrID);
-
-		MemEvent *ev = new MemEvent(this, physical_addr, isRead ? ReadReq : WriteReq);
-		ev->setSize(length);
-
-		pending_requests.insert( std::pair<MemEvent::id_type, MemEvent*>(ev->getID(), ev) );
-
-		// Check we are not issuing to a random core.
-		if(thrID > core_count) {
-			output->fatal(CALL_INFO, -4, 0, 0,
-			"Error: threadID %" PRIu32 " is greater than number of cores: %" PRIu32 "\n",
-			thrID, core_count);
-		}
-
-		if(physical_addr < (uint64_t) (fastmem_size * page_size)) {
-			fastmem_access_count++;
-		} else {
-			mem_access_count++;
-		}
-
-		if(core_trace_mode == 1) {
-			uint32_t data_size = (uint32_t) length;
-			char thisOp = (isRead ? 0 : 1);
-
-			fwrite(&currentCycle, sizeof(uint64_t), 1, core_traces[thrID]);
-			fwrite(&thisOp, sizeof(char), 1, core_traces[thrID]);
-			fwrite(&physical_addr, sizeof(uint64_t), 1, core_traces[thrID]);
-			fwrite(&data_size, sizeof(uint32_t), 1, core_traces[thrID]);
-
-			fflush(core_traces[thrID]);
-		} else if (core_trace_mode == 2) {
-			uint32_t data_size = (uint32_t) length;
-			char thisOp = (isRead ? 0 : 1);
-
-			fprintf(core_traces[thrID], "%" PRIu64 " %s %" PRIu64 " %" PRIu32 "\n",
-				currentCycle, (isRead ? "R" : "W"), physical_addr, data_size);
-
-			fflush(core_traces[thrID]);
-		}
-
-		cache_link[thrID]->send(ev);
-	}
-}
-
 int Ariel::create_pinchild(char* prog_binary, char** arg_list) {
 	pid_t the_child;
 
@@ -216,339 +55,189 @@ int Ariel::create_pinchild(char* prog_binary, char** arg_list) {
 	return 0;
 }
 
-uint64_t Ariel::translateAddress(uint64_t addr) {
-	// Get address offset for this page.
-	uint64_t addr_offset = addr % page_size;
-
-	// Get the start of the virtual page for this address.
-	uint64_t addr_vpage_start = (addr - (addr_offset));
-
-	std::map<uint64_t, uint64_t>::iterator fastaddr_entry = page_table_fastmem->find(addr_vpage_start);
-	std::map<uint64_t, uint64_t>::iterator addr_entry = page_table->find(addr_vpage_start);
-
-	if(fastaddr_entry != page_table_fastmem->end()) {
-		// We found this page in fast memory
-		output->verbose(CALL_INFO, 2, 0, "Fast memory mapped: %" PRIu64 " to physical: %" PRIu64 "\n",
-			addr, (fastaddr_entry->second + addr_offset));
-
-		fastpage_translation_count++;
-
-		// Return the fast address map
-		return (fastaddr_entry->second + addr_offset);
-	}
-
-	if(addr_entry == page_table->end()) {
-		output->verbose(CALL_INFO, 2, 0, "Allocating virtual page: %" PRIu64 " to physical page: %" PRIu64 "\n",
-			addr_vpage_start, next_free_page_start);
-		page_table->insert( std::pair<uint64_t, uint64_t>(addr_vpage_start, next_free_page_start) );
-		next_free_page_start += page_size;
-
-		addr_entry = page_table->find(addr_vpage_start);
-	}
-
-	page_translation_count++;
-	output->verbose(CALL_INFO, 4, 0, "Mapped: %" PRIu64 " virtual to physical %" PRIu64 "\n", addr, 
-		(addr_entry->second + addr_offset));
-	return (addr_entry->second + addr_offset);
-}
-
 Ariel::Ariel(ComponentId_t id, Params& params) :
   Component(id) {
-  printf("In Ariel creating output...\n");
 
-  currentCycle = 0;
+	int verbose = params.find_integer("verbose", 0);
+  	output = new Output("SSTArielComponent: ", verbose, 0, SST::Output::STDOUT);
 
-  int verbose = params.find_integer("verbose", 0);
-  output = new Output("SSTArielComponent: ", verbose, 0, SST::Output::STDOUT);
+  	named_pipe = (char*) malloc(sizeof(char) * FILENAME_MAX);
+  	tmpnam(named_pipe);
 
-  // get the maximum number of instructions we can run using Ariel
-  max_inst = (uint64_t) atol(params.find_string("maxinst", "10000000000").c_str());
+  	output->verbose(CALL_INFO, 1, 0, "Named pipe: %s\n", named_pipe);
 
-  output->verbose(CALL_INFO, 1, 0, "Max instructions: %" PRIu64 " inst.\n", max_inst);
+  	user_binary = params.find_string("executable", "");
+  	if(user_binary == "") {
+		output->fatal(CALL_INFO, -1, 0, 0, "Did not specify a user executable (parameter: executable)\n");
+  	}
 
-  named_pipe = (char*) malloc(sizeof(char) * FILENAME_MAX);
-  tmpnam(named_pipe);
+  	std::string arieltool = params.find_string("arieltool", "");
+ 	if(arieltool == "") {
+		output->fatal(CALL_INFO, -1, 0, 0, "Model input did not specify a location of a tool to run against Ariel\n");
+  	}
 
-  output->verbose(CALL_INFO, 1, 0, "Named pipe: %s\n", named_pipe);
+	uint32_t memoryLevels = (uint32_t) params.find_integer("memorylevels", 1);
+	output->verbose(CALL_INFO, 1, 0, "Model will have: %" PRIu32 " levels of memory\n", memoryLevels);
 
-  user_binary = params.find_string("executable", "");
-  if(user_binary == "") {
-	output->fatal(CALL_INFO, -1, 0, 0, "Did not specify a user executable (parameter: executable)\n");
-  }
+	uint64_t* pageSizes = (uint64_t*) malloc(sizeof(uint64_t) * memoryLevels);
+	uint64_t* pageCounts = (uint64_t*) malloc(sizeof(uint64_t) * memoryLevels);
 
-  std::string arieltool = params.find_string("arieltool", "");
-  if(arieltool == "") {
-	output->fatal(CALL_INFO, -1, 0, 0, "Model input did not specify a location of a tool to run against Ariel\n");
-  }
+	for(uint32_t mCount = 0; mCount < memoryLevels; mCount++) {
+		char levelBuffer[256];
 
-  fastpage_translation_count = 0;
-  page_translation_count = 0;
-  fastmem_access_count = 0;
-  mem_access_count = 0;
+		sprintf(levelBuffer, "pagesize_%" PRIu32, mCount);
+		pageSizes[mCount] = (uint64_t) atol(params.find_string(levelBuffer, "4096").c_str());
 
-  page_size = (uint64_t) atol(params.find_string("pagesize", "4096").c_str());
-  output->verbose(CALL_INFO, 1, 0, "Page size configured for: %" PRIu64 "bytes.\n", page_size);
+		sprintf(levelBuffer, "pagecount_%" PRIu32, mCount);
+		pageCounts[mCount] = (uint64_t) atol(params.find_string(levelBuffer, "16384").c_str());
 
-  fastmem_size = (uint64_t) atol(params.find_string("fastmempagecount", "1048576").c_str());
-  output->verbose(CALL_INFO, 1, 0, "Mapping fast memory size to %" PRIu64 " page entries.\n", fastmem_size);
-
-  cache_line_size = (uint64_t) atol(params.find_string("cachelinsize", "64").c_str());
-  output->verbose(CALL_INFO, 1, 0, "Cache line size configured for: %" PRIu64 "bytes.\n", cache_line_size);
-
-  // Allocate free pages into the fast memory set, these are going to be used as a free pool
-  free_pages_fastmem = new std::vector<uint64_t>();
-  for(uint32_t page_counter = 0; page_counter < fastmem_size; page_counter++) {
-	free_pages_fastmem->push_back((uint64_t)(page_counter * page_size));
-  }
-
-  // Record the mallocs so we can free later (remember two level memory is precious)
-  fastmem_alloc_to_size = new std::map<uint64_t, uint64_t>();
-
-  // Allocate the (empty) page tables
-  page_table_fastmem = new std::map<uint64_t, uint64_t>();
-  page_table = new std::map<uint64_t, uint64_t>();
-  // Set the default pool (in DDR) to come from address space beyond the fast memory size
-  next_free_page_start = (fastmem_size + 1) * page_size;
-
-  int app_arg_count = params.find_integer("appargcount", 0);
-
-  // Get the number of virtual cores, defaults to 1 = serial, allow up to 32 entries per core (these
-  // are shared across the processor as a whole.
-  core_count = (uint32_t) params.find_integer("corecount", 1);
-  output->verbose(CALL_INFO, 1, 0, "Creating processing for %" PRIu32 " cores.\n", core_count);
-
-  core_trace_mode = (uint32_t) params.find_integer("tracecores", 0);
-  output->verbose(CALL_INFO, 1, 0, "Core tracing set to: %" PRIu32 "\n", core_trace_mode);
-  core_traces = (FILE**) malloc(sizeof(FILE*) * core_count);
-  if(core_trace_mode > 0) {
-	for(uint32_t core_counter = 0; core_counter < core_count; core_counter++) {
-		char core_trace_buffer[256];
-		sprintf(core_trace_buffer, "core_trace_%" PRIu32, core_counter);
-
-		if(core_trace_mode == 1) {
-			core_traces[core_counter] = fopen(core_trace_buffer, "wb");
-		} else {
-			core_traces[core_counter] = fopen(core_trace_buffer, "wt");
-		}
-        }
-  }
-
-  output->verbose(CALL_INFO, 1, 0, "Creating processor core masks...\n");
-  core_masks = (int*) malloc(sizeof(int) * core_count);
-  for(uint32_t core_mask_counter = 0; core_mask_counter < core_count; ++core_mask_counter) {
-	core_masks[core_mask_counter] = 1;
-  }
-  output->verbose(CALL_INFO, 1, 0, "Processor masks created.\n");
-
-  output->verbose(CALL_INFO, 1, 0, "User model wants application to have %d arguments.\n", app_arg_count);
-
-  char* execute_binary = PINTOOL_EXECUTABLE;
-  char** execute_args = (char**) malloc(sizeof(char*) * (14 + app_arg_count));
-
-  execute_args[0] = "pintool";
-  execute_args[1] = "-t";
-  execute_args[2] = (char*) malloc(sizeof(char) * (arieltool.size() + 1));
-  strcpy(execute_args[2], arieltool.c_str());
-  execute_args[3] = "-p";
-  execute_args[4] = (char*) malloc(sizeof(char) * (strlen(named_pipe) + 1));
-  strcpy(execute_args[4], named_pipe);
-  execute_args[5] = "-v";
-  execute_args[6] = (char*) malloc(sizeof(char) * 8);
-  sprintf(execute_args[6], "%d", verbose);
-  execute_args[7] = "-i";
-  execute_args[8] = (char*) malloc(sizeof(char) * 30);
-  sprintf(execute_args[8], "%" PRIu64, max_inst);
-  execute_args[9] = "-c";
-  execute_args[10] = (char*) malloc(sizeof(char) * 8);
-  sprintf(execute_args[10], "%" PRIu32, core_count);
-  execute_args[11] = "--";
-  execute_args[12] = (char*) malloc(sizeof(char) * (user_binary.size() + 1));
-  strcpy(execute_args[12], user_binary.c_str());
-
-  char arg_name_buffer[64];
-
-  output->verbose(CALL_INFO, 2, 0, "Found %d application arguments in model description\n", app_arg_count);
-
-  for(int app_arg_index = 13; app_arg_index < 13 + app_arg_count; ++app_arg_index) {
-	sprintf(arg_name_buffer, "apparg%d", app_arg_index - 13);
-        output->verbose(CALL_INFO, 2, 0, "Searching for application argument in input: %s ... \n", arg_name_buffer);
-	std::string app_arg_i = params.find_string(arg_name_buffer);
-        output->verbose(CALL_INFO, 2, 0, "Result is: %s\n", app_arg_i.c_str());
-
-	const int arg_string_size = (int) (app_arg_i.size() + 4);
-	output->verbose(CALL_INFO, 4, 0, "Found new application argument: [%s]=[%s], Length=%d, Tool command entry: %d\n", arg_name_buffer, app_arg_i.c_str(),
-		arg_string_size, app_arg_index);
-
-	execute_args[app_arg_index] = (char*) malloc(sizeof(char) * (arg_string_size));
-        strcpy(execute_args[app_arg_index], app_arg_i.c_str());
-	output->verbose(CALL_INFO, 2, 0, "Completed processing this argument\n");
-  }
-
-  execute_args[13 + app_arg_count] = NULL;
-
-  output->verbose(CALL_INFO, 1, 0, "Starting executable: %s\n", execute_binary);
-  output->verbose(CALL_INFO, 1, 0, "Call Arguments: %s %s %s %s %s %s %s %s %s %s %s %s %s (and application arguments)\n",
-	execute_args[0], execute_args[1], execute_args[2], execute_args[3],
-	execute_args[4], execute_args[5], execute_args[6], execute_args[7],
-	execute_args[8], execute_args[9], execute_args[10], execute_args[11],
-	execute_args[12]);
-
-  max_transactions = (uint32_t) params.find_integer("maxtransactions", core_count * 32);
-  output->verbose(CALL_INFO, 1, 0, "Configuring maximum transactions for %" PRIu32 ".\n", max_transactions);
-
-  output->verbose(CALL_INFO, 1, 0, "Launched child PIN process, will connect to PIPE...\n");
-  // Spawn the PIN process
-  create_pinchild(execute_binary, execute_args);
-
-  next_core = 0;
-
-  pipe_id = (int*) malloc(sizeof(int) * core_count);
-  char* named_pipe_core = (char*) malloc(sizeof(char) * 255);
-
-  for(uint32_t pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
-	output->verbose(CALL_INFO, 1, 0, "Generating name for pipe (thread %d)...\n", pipe_counter);
-	sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
-	output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", named_pipe_core);
-
-  	// We will create a pipe to talk to the PIN child.
-  	mkfifo(named_pipe_core, 0666);
-  	pipe_id[pipe_counter] = open(named_pipe_core, O_RDONLY | O_NONBLOCK);
-
-	if(pipe_id[pipe_counter] == -1) {
-		// File creation failed.
-		perror("Unable to create pipe\n");
-		output->fatal(CALL_INFO, -1, 0, 0, "Failed to create pipe: %s\n", named_pipe_core);
-	} else {
-		output->verbose(CALL_INFO, 2, 0, "Successfully created pipe: %s on file ID: %d (for core: %d)\n",
-			named_pipe_core, pipe_id[pipe_counter], pipe_counter);
+		output->verbose(CALL_INFO, 1, 0, "Configuring memory level %" PRIu32 " for page count of %" PRIu64 " and page size of %" PRIu64 "\n",
+			mCount, pageCounts[mCount], pageSizes[mCount]);
 	}
-  }
 
-  output->verbose(CALL_INFO, 2, 0, "Completed pipe opening, register clock and then will continue.\n");
+  	int app_arg_count = params.find_integer("appargcount", 0);
 
-  pending_transaction = NULL;
+  	// Get the number of virtual cores, defaults to 1 = serial, allow up to 32 entries per core (these
+  	// are shared across the processor as a whole.
+  	core_count = (uint32_t) params.find_integer("corecount", 1);
+  	output->verbose(CALL_INFO, 1, 0, "Creating processing for %" PRIu32 " cores.\n", core_count);
 
-  string ariel_clock_rate = params.find_string("clock", "1GHz");
+ 	//core_trace_mode = (uint32_t) params.find_integer("tracecores", 0);
+  	//output->verbose(CALL_INFO, 1, 0, "Core tracing set to: %" PRIu32 "\n", core_trace_mode);
+  	//core_traces = (FILE**) malloc(sizeof(FILE*) * core_count);
+  	//if(core_trace_mode > 0) {
+	//	for(uint32_t core_counter = 0; core_counter < core_count; core_counter++) {
+	//		char core_trace_buffer[256];
+	//		sprintf(core_trace_buffer, "core_trace_%" PRIu32, core_counter);
+	//
+	//		if(core_trace_mode == 1) {
+	//			core_traces[core_counter] = fopen(core_trace_buffer, "wb");
+	//		} else {
+	//			core_traces[core_counter] = fopen(core_trace_buffer, "wt");
+	//		}
+        //	}
+  	//}
 
-  output->verbose(CALL_INFO, 1, 0, "Configuring Ariel clock to be: %s\n", ariel_clock_rate.c_str());
+  	output->verbose(CALL_INFO, 1, 0, "User model wants application to have %d arguments.\n", app_arg_count);
 
-  // Register a clock for ourselves
-  registerClock( ariel_clock_rate,
+  	char* execute_binary = PINTOOL_EXECUTABLE;
+  	char** execute_args = (char**) malloc(sizeof(char*) * (14 + app_arg_count));
+
+  	execute_args[0] = "pintool";
+	execute_args[1] = "-t";
+	execute_args[2] = (char*) malloc(sizeof(char) * (arieltool.size() + 1));
+  	strcpy(execute_args[2], arieltool.c_str());
+  	execute_args[3] = "-p";
+  	execute_args[4] = (char*) malloc(sizeof(char) * (strlen(named_pipe) + 1));
+  	strcpy(execute_args[4], named_pipe);
+  	execute_args[5] = "-v";
+  	execute_args[6] = (char*) malloc(sizeof(char) * 8);
+  	sprintf(execute_args[6], "%d", verbose);
+  	execute_args[7] = "-i";
+  	execute_args[8] = (char*) malloc(sizeof(char) * 30);
+  	sprintf(execute_args[8], "%" PRIu64, max_inst);
+  	execute_args[9] = "-c";
+  	execute_args[10] = (char*) malloc(sizeof(char) * 8);
+  	sprintf(execute_args[10], "%" PRIu32, core_count);
+  	execute_args[11] = "--";
+  	execute_args[12] = (char*) malloc(sizeof(char) * (user_binary.size() + 1));
+  	strcpy(execute_args[12], user_binary.c_str());
+
+  	char arg_name_buffer[64];
+
+  	output->verbose(CALL_INFO, 2, 0, "Found %d application arguments in model description\n", app_arg_count);
+
+  	for(int app_arg_index = 13; app_arg_index < 13 + app_arg_count; ++app_arg_index) {
+		sprintf(arg_name_buffer, "apparg%d", app_arg_index - 13);
+        	output->verbose(CALL_INFO, 2, 0, "Searching for application argument in input: %s ... \n", arg_name_buffer);
+		std::string app_arg_i = params.find_string(arg_name_buffer);
+        	output->verbose(CALL_INFO, 2, 0, "Result is: %s\n", app_arg_i.c_str());
+
+		const int arg_string_size = (int) (app_arg_i.size() + 4);
+		output->verbose(CALL_INFO, 4, 0, "Found new application argument: [%s]=[%s], Length=%d, Tool command entry: %d\n", arg_name_buffer, app_arg_i.c_str(),
+			arg_string_size, app_arg_index);
+
+		execute_args[app_arg_index] = (char*) malloc(sizeof(char) * (arg_string_size));
+        	strcpy(execute_args[app_arg_index], app_arg_i.c_str());
+		output->verbose(CALL_INFO, 2, 0, "Completed processing this argument\n");
+  	}
+
+  	execute_args[13 + app_arg_count] = NULL;
+
+  	output->verbose(CALL_INFO, 1, 0, "Starting executable: %s\n", execute_binary);
+ 	output->verbose(CALL_INFO, 1, 0, "Call Arguments: %s %s %s %s %s %s %s %s %s %s %s %s %s (and application arguments)\n",
+		execute_args[0], execute_args[1], execute_args[2], execute_args[3],
+		execute_args[4], execute_args[5], execute_args[6], execute_args[7],
+		execute_args[8], execute_args[9], execute_args[10], execute_args[11],
+		execute_args[12]);
+
+  	output->verbose(CALL_INFO, 1, 0, "Launched child PIN process, will connect to PIPE...\n");
+  	// Spawn the PIN process
+  	create_pinchild(execute_binary, execute_args);
+
+  	pipe_id = (int*) malloc(sizeof(int) * core_count);
+  	char* named_pipe_core = (char*) malloc(sizeof(char) * 255);
+
+  	for(uint32_t pipe_counter = 0; pipe_counter < core_count; ++pipe_counter) {
+		output->verbose(CALL_INFO, 1, 0, "Generating name for pipe (thread %d)...\n", pipe_counter);
+		sprintf(named_pipe_core, "%s-%d", named_pipe, pipe_counter);
+		output->verbose(CALL_INFO, 1, 0, "Creating pipe: %s ...\n", named_pipe_core);
+
+  		// We will create a pipe to talk to the PIN child.
+  		mkfifo(named_pipe_core, 0666);
+  		pipe_id[pipe_counter] = open(named_pipe_core, O_RDONLY | O_NONBLOCK);
+
+		if(pipe_id[pipe_counter] == -1) {
+			// File creation failed.
+			perror("Unable to create pipe\n");
+			output->fatal(CALL_INFO, -1, 0, 0, "Failed to create pipe: %s\n", named_pipe_core);
+		} else {
+			output->verbose(CALL_INFO, 2, 0, "Successfully created pipe: %s on file ID: %d (for core: %d)\n",
+				named_pipe_core, pipe_id[pipe_counter], pipe_counter);
+		}
+  	}
+
+  	output->verbose(CALL_INFO, 2, 0, "Completed pipe opening, register clock and then will continue.\n");
+  	string ariel_clock_rate = params.find_string("clock", "1GHz");
+  	output->verbose(CALL_INFO, 1, 0, "Configuring Ariel clock to be: %s\n", ariel_clock_rate.c_str());
+
+	// Register a clock for ourselves
+  	registerClock( ariel_clock_rate,
                  new Clock::Handler<Ariel>(this, &Ariel::tick ) );
 
-  // tell the simulator not to end without us
-  registerAsPrimaryComponent();
-  primaryComponentDoNotEndSim();
+  	// tell the simulator not to end without us
+  	registerAsPrimaryComponent();
+  	primaryComponentDoNotEndSim();
 
-  memory_ops = 0;
-  read_ops = 0;
-  write_ops = 0;
-  instructions = 0;
-  split_read_ops = 0;
-  split_write_ops = 0;
+  	cache_link = (SST::Link**) malloc(sizeof(SST::Link*) * core_count);
 
-  cache_link = (SST::Link**) malloc(sizeof(SST::Link*) * core_count);
+  	for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
+		char name_buffer[256];
+		sprintf(name_buffer, "cache_link_%d", core_counter);
 
-  for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
-	char name_buffer[256];
-	sprintf(name_buffer, "cache_link_%d", core_counter);
-
-	output->verbose(CALL_INFO, 2, 0, "Creating a link: %s\n", name_buffer);
-  	cache_link[core_counter] = configureLink(name_buffer, new Event::Handler<Ariel>(this,
+		output->verbose(CALL_INFO, 2, 0, "Creating a link: %s\n", name_buffer);
+	  	cache_link[core_counter] = configureLink(name_buffer, new Event::Handler<Ariel>(this,
                                 &Ariel::handleEvent) );
-  	assert(cache_link);
-  }
+	  	assert(cache_link);
+  	}
 
-  // Configure optional link to DMA engine
-  dmaLink = configureLink("dmaLink", new Event::Handler<Ariel>(this, &Ariel::handleDMAEvent));
+	output->verbose(CALL_INFO, 1, 0, "Creating processor cores...\n");
+
+	cores = (ArielCore**) malloc(sizeof(ArielCore*) * core_count);
+	for(uint32_t i = 0; i < core_count; ++i) {
+		cores[i] = new ArielCore(pipe_id[i], cache_link[i], i, 32, output, 2, 64);
+	}
+
+	// Configure optional link to DMA engine
+  	/*dmaLink = configureLink("dmaLink", new Event::Handler<Ariel>(this, &Ariel::handleDMAEvent));
   if ( NULL != dmaLink ) {
     	output->verbose(CALL_INFO, 2, 0, "DMA Attached\n");
 	dma_pending_events = (MemEvent::id_type*) malloc(sizeof(MemEvent::id_type) * core_count);
   } else {
     output->verbose(CALL_INFO, 2, 0, "NO DMA Attached\n");
-  }
+  }*/
 
-  output->verbose(CALL_INFO, 1, 0, "Ariel configuration phase is complete.\n");
-}
-
-void Ariel::freeFastMemory(uint64_t addr) {
-	output->verbose(CALL_INFO, 1, 0, "Free fast memory allocation: %" PRIu64 "\n",
-		addr);
-	std::map<uint64_t, uint64_t>::iterator allocation_finder =
-		fastmem_alloc_to_size->find(addr);
-		
-	if(allocation_finder != fastmem_alloc_to_size->end()) {
-		output->verbose(CALL_INFO, 2, 0, "Found allocation entry %" PRIu64 ", allocation of %" PRIu64 " bytes, free list has: %" PRIu32 " free pages (before de-allocate)\n",
-			addr, allocation_finder->second, (uint32_t) free_pages_fastmem->size());
-	
-		uint32_t alloc_page_count = allocation_finder->second / page_size;
-		
-		// Loop over each allocated page and free it in turn
-		for(uint32_t page_counter = 0; page_counter < alloc_page_count; ++page_counter) {
-			std::map<uint64_t, uint64_t>::iterator mapper = page_table_fastmem->find(addr + (page_counter * page_size));
-			
-			if(mapper != page_table_fastmem->end()) {
-				// Put page back on free list
-				free_pages_fastmem->push_back(mapper->second);
-				// Erase entry from mapping table
-				page_table_fastmem->erase(mapper);
-			} /*else {
-				output->fatal(CALL_INFO, -32, 0, 0, "Free of page at address: %" PRIu64 " failed.\n",
-					(addr + (page_counter * page_size)));
-			}*/
-		}
-		
-		output->verbose(CALL_INFO, 2, 0, "Deallocation of fast memory is complete, free page count now: %" PRIu32 " entries\n",
-			(uint32_t) free_pages_fastmem->size());
-	} else {
-		output->fatal(CALL_INFO, -32, 0, 0, "Unable to free address: %" PRIu64 " because it is not in the allocation table\n",
-			addr);
-	}
-}
-
-void Ariel::allocateInFastMemory(uint64_t vAddr, uint64_t length) {
-	// We need to map a physical address range into fast memory.
-	uint64_t page_count = length / page_size;
-
-	// Catch a nonaligned page allocation, what a horrible mess.
-	if(page_count * page_size != length) {
-		page_count = page_count + 1;
-	}
-
-	output->verbose(CALL_INFO, 1, 0, "Allocation request to allocator (fast mem): address=%" PRIu64 ", length=%" PRIu64 ", pages=%" PRIu64 "\n",
-		vAddr, length, page_count);
-
-	if(free_pages_fastmem->size() < page_count) {
-		// We do not have enough memory, this is a fault
-		output->fatal(CALL_INFO, -8, 0, 0,
-			"Error - run out of fast memory space for a request\n");
-		exit(-8);
-	}
-
-	// Keep track of our allocations as we will want to free them at some point
-	fastmem_alloc_to_size->insert( std::pair<uint64_t, uint64_t>(vAddr, length) );
-
-	std::vector<uint64_t>::iterator fast_mem_free_page_itr = free_pages_fastmem->begin();
-	for(uint64_t page_counter = 0; page_counter < page_count; page_counter++) {
-		output->verbose(CALL_INFO, 2, 0, "Fast memory mapping virtual %" PRIu64 " to physical: %" PRIu64 "\n",
-			(vAddr + page_counter * page_size), *fast_mem_free_page_itr);
-
-		// Allocate into the table to a new address and then remove from our free list
-		page_table_fastmem->insert( std::pair<uint64_t, uint64_t>(vAddr + (page_counter * page_size), *fast_mem_free_page_itr) );
-		free_pages_fastmem->erase(fast_mem_free_page_itr);
-		++fast_mem_free_page_itr;
-	}
-
-	output->verbose(CALL_INFO, 2, 0, "Fast memory allocation is complete, pages remaining: %" PRIu32 " fast_page size: %" PRIu32 "\n",
-		(uint32_t) free_pages_fastmem->size(), (uint32_t) page_table_fastmem->size());
-	std::map<uint64_t, uint64_t>::iterator fast_tbl_itr;
-
-	output->verbose(CALL_INFO, 2, 0, "Page allocation (for fast memory):\n");
-	for(fast_tbl_itr = page_table_fastmem->begin() ; fast_tbl_itr != page_table_fastmem->end(); fast_tbl_itr++) {
-		output->verbose(CALL_INFO, 2, 0, "Entry: %" PRIu64 " -> %" PRIu64 "\n",
-			fast_tbl_itr->first, fast_tbl_itr->second);
-	}
-	output->verbose(CALL_INFO, 2, 0, "End of fast memory page table\n");
+  	output->verbose(CALL_INFO, 1, 0, "Ariel configuration phase is complete.\n");
 }
 
 void Ariel::finish() {
@@ -557,9 +246,9 @@ void Ariel::finish() {
   for(uint32_t i = 0; i < core_count; ++i) {
   	close(pipe_id[i]);
 
-	if(core_trace_mode > 0) {
-		fclose(core_traces[i]);
-	}
+//	if(core_trace_mode > 0) {
+//		fclose(core_traces[i]);
+//	}
   }
 
   output->verbose(CALL_INFO, 2, 0, "Pipes have been closed, attempting to free resources...\n");
@@ -577,7 +266,7 @@ void Ariel::finish() {
 	free(named_pipe_core);
   }
 
-  output->verbose(CALL_INFO, 2, 0, "Component finish completed.\n");
+  /*output->verbose(CALL_INFO, 2, 0, "Component finish completed.\n");
   output->verbose(CALL_INFO, 0, 0, "Insts:            %" PRIu64 "\n", instructions);
   output->verbose(CALL_INFO, 0, 0, "Memory ops:       %" PRIu64 "\n", memory_ops);
   output->verbose(CALL_INFO, 0, 0, "Read ops:         %" PRIu64 "\n", read_ops);
@@ -588,7 +277,7 @@ void Ariel::finish() {
   output->verbose(CALL_INFO, 0, 0, "Std mem ops:      %" PRIu64 "\n", mem_access_count);
   output->verbose(CALL_INFO, 0, 0, "FPge Translates:  %" PRIu64 "\n", fastpage_translation_count);
   output->verbose(CALL_INFO, 0, 0, "Pge Translates:   %" PRIu64 "\n", page_translation_count);
-  output->verbose(CALL_INFO, 0, 0, "Time (ns):        %" PRIu64 "\n", getCurrentSimTimeNano());
+  output->verbose(CALL_INFO, 0, 0, "Time (ns):        %" PRIu64 "\n", getCurrentSimTimeNano());*/
 }
 
 Ariel::Ariel() :
@@ -597,295 +286,21 @@ Ariel::Ariel() :
     // for serialization only
 }
 
-void Ariel::handleEvent(Event *ev)
-{
-	output->verbose(CALL_INFO, 4, 0, "Event being handled in Ariel component.\n");
-
-	MemEvent *event = dynamic_cast<MemEvent*>(ev);
-        if (event) {
-		output->verbose(CALL_INFO, 4, 0, "Event successfully cast into memory event type.\n");
-
-                // Branden says to ignore invalidates
-               	if ( event->getCmd() == Invalidate ) {
-                       	delete event;
-                       	return;
-               	}
-
-		// Get the ID the event responds to.
-		MemEvent::id_type ev_id = event->getResponseToID();
-		std::map<MemEvent::id_type, MemEvent*>::iterator pending_itr = pending_requests.find(ev_id);
-
-		if(pending_itr != pending_requests.end()) {
-			output->verbose(CALL_INFO, 4, 0, "Memory event to address %" PRIu64 " located in pending transactions, will be removed from list.\n",
-				(uint64_t) event->getAddr());
-			pending_requests.erase(ev_id);
-
-			// Delete the event so we free up memory, we are done processing this one.
-			delete event;
-		}
-	} else {
-		output->fatal(CALL_INFO, -1, 0, 0, "Unknown event type received by Ariel.\n");
-	}
-}
-
-void Ariel::handleDMAEvent(Event* ev) {
-	output->verbose(CALL_INFO, 4, 0, "DMA Event handler called in Ariel\n");
-
-	DMACommand *cmd = dynamic_cast<DMACommand*>(ev);
-
-	if(cmd) {
-		MemEvent::id_type cmdID = cmd->getID();
-		bool processed = false;
-
-		for(uint32_t i = 0; i < core_count; ++i) {
-			if(core_masks[i] == 0) {
-				if(dma_pending_events[i] == cmdID) {
-					// Remove the pending event and core mask so the core can continue
-					core_masks[i] = 1;
-					processed = true;
-					break;
-				}
-			}
-		}
-
-		if(processed) {
-			output->verbose(CALL_INFO, 4, 0, "DMA event was successfully processed.\n");
-		} else {
-			output->fatal(CALL_INFO, -16, 0, 0, "Unknown DMA was recieved by Ariel, did not match any pending event.\n");
-		}
-	} else {
-		output->fatal(CALL_INFO, -16, 0, 0, "Unknown event type received in DMA handler.\n");
-	}
-}
-
 bool Ariel::tick( Cycle_t thisCycle ) {
-	output->verbose(CALL_INFO, 64, 0, "Clock tick (is transaction pending? %s\n", (pending_transaction == NULL) ? "YES" : "NO");
-	output->verbose(CALL_INFO, 64, 0, "Pending Transaction size is: %" PRIu32 " elements\n", (uint32_t) pending_requests.size());
+	bool foundCoreHalt = false;
 
-        currentCycle = (uint64_t) thisCycle;
+	// Cycle over each core, ticking it as needed. If the core halts
+	// during this cycle then its time to halt the component
+	for(uint32_t i = 0; i < core_count; ++i) {
+		cores[i]->tick();
 
-/*	// Check for events from the optional DMA unit
-	if (NULL != dmaLink) {
-	  Event *e;
-	  while ( NULL != (e = dmaLink->recv()) ) {
-	    MemHierarchy::DMACommand *cmd = dynamic_cast<MemHierarchy::DMACommand *>(e);
-	    if (NULL != cmd) {
-	      MemEvent::id_type cmdID = cmd->getID();
-	      IDToTagMap_t::iterator outI = outstandingDMACmds.find(cmdID);
-	      if (outI != outstandingDMACmds.end()) {
-		uint32_t tag = outI->second;
-		outstandingDMACmds.erase(outI);
-		outstandingDMATags.erase(tag);
-	      } else {
-		output->fatal(CALL_INFO, -1, 0, 0, "Error: Recienved a DMA command completion for a DMA command we never issued\n");
-	      }
-	    } else {
-	      output->fatal(CALL_INFO, -1, 0, 0, "Error: Unexpected Event Type on DMA Command Link.\n");
-	    }
-	  }
-	}
-*/
-	if(pending_transaction != NULL) {
-		if(pending_requests.size() < max_transactions) {
-			assert(pending_transaction_core < core_count);
-			output->verbose(CALL_INFO, 4, 0, "Found a pending transaction on core %" PRIu32 " pushing to cache.", pending_transaction_core);
-
-			// Push pending transaction into the queue and then reset so
-			// we can read another next cycle round.
-			cache_link[pending_transaction_core]->send(pending_transaction);
-			pending_transaction = NULL;
-		}
-        } else if( pending_requests.size() >= max_transactions) {
-		output->verbose(CALL_INFO, 64, 0, "Pending transactions has reached limit of %" PRIu32 "\n", max_transactions);
-	} else if( pending_requests.size() < max_transactions) {
-		// Configure the polling set to read from the many thread pipes we have.
-		struct pollfd pipe_pollfd[core_count];
-		for(uint32_t core_counter = 0; core_counter < core_count; ++core_counter) {
-			pipe_pollfd[core_counter].fd = pipe_id[core_counter];
-			pipe_pollfd[core_counter].events = POLLIN;
-		}
-
-		output->verbose(CALL_INFO, 64, 0, "Polling for new data from the PIN tools...\n");
-		// Poll on the files remembering we wait
-		poll(pipe_pollfd, (unsigned int) core_count, 10);
-
-		output->verbose(CALL_INFO, 64, 0, "Poll operation has completed.\n");
-
-		for(uint32_t core_counter_outer = 0; core_counter_outer < core_count; ++core_counter_outer) {
-			uint32_t core_counter = (core_counter_outer + next_core) % core_count;
-			uint8_t command = 0;
-
-			output->verbose(CALL_INFO, 64, 0, "Core: %" PRIu32 " masks is: %d\n", core_counter, core_masks[core_counter]);
-
-			if((pipe_pollfd[core_counter].revents & POLLIN) &&
-				(core_masks[core_counter] > 0)) {
-
-				output->verbose(CALL_INFO, 64, 0, "Data available for core: %d\n", core_counter);
-
-				read(pipe_id[core_counter], &command, sizeof(command));
-
-				if(command == PERFORM_EXIT) {
-					output->verbose(CALL_INFO, 8, 0,
-						"Read an exit command from pipe stream\n");
-
-					// Exit
-					primaryComponentOKToEndSim();
-					return true;
-				}
-
-				if(command == ISSUE_TLM_MAP) {
-					uint64_t virtualAddress = 0;
-					uint64_t allocationLength = 0;
-
-					read(pipe_id[core_counter], &virtualAddress, sizeof(virtualAddress));
-					read(pipe_id[core_counter], &allocationLength, sizeof(allocationLength));
-
-					output->verbose(CALL_INFO, 1, 0, "Request to perform a two-level memory mapping from: %" PRIu64 " of length: %" PRIu64 "\n", virtualAddress, allocationLength);
-
-					allocateInFastMemory(virtualAddress, allocationLength);
-
-					// We are done with this cycle
-					break;
-				}
-				
-				if(command == ISSUE_TLM_FREE) {
-					uint64_t virtualAddress = 0;
-					read(pipe_id[core_counter], &virtualAddress, sizeof(virtualAddress));
-					
-					output->verbose(CALL_INFO, 1, 0, "Request to perform a two-level free of virtual address: %" PRIu64 "\n", virtualAddress);
-					
-					freeFastMemory(virtualAddress);
-					break;
-				}
-
-				if(command == START_DMA) {
-					uint64_t startFromAddress = 0;
-					uint64_t startToAddress = 0;
-					uint32_t copyLength = 0;
-
-					read(pipe_id[core_counter], &startFromAddress, sizeof(startFromAddress));
-					read(pipe_id[core_counter], &startToAddress, sizeof(startToAddress));
-					read(pipe_id[core_counter], &copyLength, sizeof(copyLength));
-
-					output->verbose(CALL_INFO, 1, 0, "Request to perform a DMA from: %" PRIu64 " to %" PRIu64 " length of: %" PRIu32 " bytes on thread: %" PRIu32 "\n",
-						startFromAddress, startToAddress, copyLength, core_counter);
-
-					uint64_t physStartFrom = translateAddress(startFromAddress);
-					uint64_t physStartTo   = translateAddress(startToAddress);
-
-					if(NULL != dmaLink) {
-						DMACommand *cmd = new DMACommand(this, physStartFrom,
-							physStartTo, copyLength);
-						dmaLink->send(cmd);
-
-						dma_pending_events[core_counter] = cmd->getID();
-						core_masks[core_counter] = 0;
-						output->verbose(CALL_INFO, 2, 0, "Issued DMA for core: %" PRIu32 "\n", core_counter);
-					}
-					break;
-				}
-
-				if(command == START_INSTRUCTION) {
-					output->verbose(CALL_INFO, 8, 0,
-						"Read a start instruction\n");
-					instructions++;
-				}
-
-				// Read the next instruction
-				read(pipe_id[core_counter], &command, sizeof(command));
-
-				while(command != END_INSTRUCTION) {
-					if(command == PERFORM_READ) {
-						uint64_t addr;
-						read(pipe_id[core_counter], &addr, sizeof(addr));
-						uint32_t read_size;
-						read(pipe_id[core_counter], &read_size, sizeof(read_size));
-
-						if(read_size > (uint32_t) cache_line_size) {
-							output->verbose(CALL_INFO, 2, 0, "Length of a read is larger than a cache line: %" PRIu32 "\n",
-								read_size);
-						}
-
-						issue(addr, read_size, true, (uint32_t) core_counter);
-
-						memory_ops++;
-						read_ops++;
-					} else if (command == PERFORM_WRITE) {
-						uint64_t addr;
-						read(pipe_id[core_counter], &addr, sizeof(addr));
-						uint32_t write_size;
-						read(pipe_id[core_counter], &write_size, sizeof(write_size));
-
-						if(write_size > (uint32_t) cache_line_size) {
-							output->verbose(CALL_INFO, 2, 0, "Length of write is larger than a cache line: %" PRIu32 "\n",
-								write_size);
-						}
-
-						issue(addr, write_size, false, (uint32_t) core_counter);
-
-						memory_ops++;
-						write_ops++;
-					} else if (command == START_DMA) {
-/*					  if (NULL != dmaLink) {
-					    // collect arguments
-					    uint64_t dst, src;
-					    read(pipe_id[core_counter], &dst, sizeof(dst));
-					    read(pipe_id[core_counter], &src, sizeof(src));
-					    uint32_t size;
-					    read(pipe_id[core_counter], &size, sizeof(size));
-					    uint32_t tag;
-					    read(pipe_id[core_counter], &tag, sizeof(tag));
-
-					    // construct and send DMA command
-					    MemHierarchy::DMACommand *cmd = new MemHierarchy::DMACommand(this, dst, src, size);
-					    MemEvent::id_type cmdID = cmd->getID();
-					    if (outstandingDMATags.find(tag) == outstandingDMATags.end()) {
-					      outstandingDMATags.insert(tagToIDMap_t::value_type(tag, cmdID));
-					      outstandingDMACmds.insert(IDToTagMap_t::value_type(cmdID, tag));
-					    } else {
-					      output->fatal(CALL_INFO, -1, 0, 0, "Error: Trying to start DMA for existing tag (%d)", tag);
-					    }
-					    dmaLink->send(cmd);
-					  } else {
-					    output->fatal(CALL_INFO, -1, 0, 0, "Error: no DMA unit configured / connected");
-					  }
-*/
-					} else if (command == WAIT_DMA) {
-/*					  if (NULL != dmaLink) {
-					    uint32_t tag;
-					    read(pipe_id[core_counter], &tag, sizeof(tag));
-					    // search for tag. 
-					    if (outstandingDMATags.find(tag) == outstandingDMATags.end()) {
-					      // couldn't find tag. Ergo, the DMA has finished (or was never started)
-					    } else {
-					      // Tag found. Ergo, the DMA has NOT finished
-					    }
-					  } else {
-					    output->fatal(CALL_INFO, -1, 0, 0, "Error: no DMA unit configured / connected");
-					  }
-*/
-					} else {
-						// So PIN may occassionally not get instrumentation correct and we get
-						// instruction records nested inside each other :(.
-						if(command == START_INSTRUCTION) {
-							instructions++;
-						} else {
-							output->fatal(CALL_INFO, -1, 0, 0,
-								"Error: unknown type of operation: %d\n", command);
-						}
-					}
-
-					read(pipe_id[core_counter], &command, sizeof(command));
-				}
-			} else {
-				output->verbose(CALL_INFO, 64, 0, "No data is available for core %" PRIu32 "\n",
-					core_counter);
-			}
+		if(cores[i]->isCoreHalted()) {
+			foundCoreHalt = true;
+			break;
 		}
 	}
 
-	next_core++;
-	return false;
+	return foundCoreHalt;
 }
 
 // Element Libarary / Serialization stuff
