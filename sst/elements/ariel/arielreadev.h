@@ -10,7 +10,6 @@
 
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
-#include <sst/elements/memHierarchy/dmaEngine.h>
 
 #include <map>
 

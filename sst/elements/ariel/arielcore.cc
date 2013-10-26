@@ -1,3 +1,9 @@
+#include "sst_config.h"
+#include "sst/core/serialization.h"
+#include "sst/core/element.h"
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
+
 #include "arielcore.h"
 
 ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen) {

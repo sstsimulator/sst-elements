@@ -20,7 +20,6 @@
 
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
-//#include <sst/elements/memHierarchy/dmaEngine.h>
 
 #include <cstring>
 #include <string>
@@ -36,11 +35,8 @@
 
 using namespace std;
 using namespace SST::Interfaces;
-using namespace SST::MemHierarchy;
 
 namespace SST {
-class Event;
-
 namespace ArielComponent {
 
 class Ariel : public SST::Component {

@@ -2,6 +2,12 @@
 #ifndef _H_SST_ARIEL_CORE
 #define _H_SST_ARIEL_CORE
 
+#include "sst_config.h"
+#include "sst/core/serialization.h"
+#include "sst/core/element.h"
+#include <sst/core/params.h>
+#include <sst/core/simulation.h>
+
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
@@ -10,12 +16,12 @@
 
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
-#include <sst/elements/memHierarchy/dmaEngine.h>
 
 #include <stdio.h>
 #include <stdint.h>
 #include <poll.h>
 
+#include <queue>
 #include <map>
 
 #include "arielevent.h"

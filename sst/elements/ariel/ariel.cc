@@ -314,11 +314,17 @@ create_ariel(SST::ComponentId_t id,
     return new Ariel( id, params );
 }
 
-static const ElementInfoComponent components[] = {
+static const ElementInfoParam ariel_params[] = {
+    {"corecount", "Number of processor cores used for the simulation."},
+    {NULL, NULL}
+};
+
+static const ElementInfoComponent ariel_components[] = {
     { "ariel",
       "PIN-based Memory Tracing Component",
       NULL,
-      create_ariel
+      create_ariel,
+      ariel_params
     },
     { NULL, NULL, NULL, NULL }
 };
@@ -327,6 +333,7 @@ extern "C" {
     ElementLibraryInfo ariel_eli = {
         "ariel",
         "PIN-based Memory Tracing Component",
-        components,
+        ariel_components,
     };
-}
+};
+
