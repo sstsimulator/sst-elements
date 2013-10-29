@@ -14,6 +14,8 @@
 #include "sst/core/serialization.h"
 #include "ioSwitch.h"
 
+#include <sstream>
+
 #include "sst/core/component.h"
 #include "sst/core/element.h"
 #include "sst/core/link.h"

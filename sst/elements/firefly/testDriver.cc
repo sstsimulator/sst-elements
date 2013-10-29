@@ -13,6 +13,8 @@
 #include "sst/core/serialization.h"
 #include "testDriver.h"
 
+#include <sstream>
+
 #include "sst/core/component.h"
 #include "sst/core/debug.h"
 #include "sst/core/element.h"

@@ -17,6 +17,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sstream>
 
 #if 0
 #define MMU_DBG( fmt, args... ) \
