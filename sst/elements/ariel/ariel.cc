@@ -10,6 +10,7 @@
 // distribution.
 
 #include "sst_config.h"
+
 #include "sst/core/serialization.h"
 #include "sst/core/element.h"
 #include <sst/core/params.h>
@@ -305,35 +306,3 @@ bool Ariel::tick( Cycle_t thisCycle ) {
 
 // Element Libarary / Serialization stuff
 BOOST_CLASS_EXPORT(Ariel)
-
-static Component*
-create_ariel(SST::ComponentId_t id,
-                  SST::Params& params)
-{
-    printf("Creating ariel..\n");
-    return new Ariel( id, params );
-}
-
-static const ElementInfoParam ariel_params[] = {
-    {"corecount", "Number of processor cores used for the simulation."},
-    {NULL, NULL}
-};
-
-static const ElementInfoComponent ariel_components[] = {
-    { "ariel",
-      "PIN-based Memory Tracing Component",
-      NULL,
-      create_ariel,
-      ariel_params
-    },
-    { NULL, NULL, NULL, NULL }
-};
-
-extern "C" {
-    ElementLibraryInfo ariel_eli = {
-        "ariel",
-        "PIN-based Memory Tracing Component",
-        ariel_components,
-    };
-};
-

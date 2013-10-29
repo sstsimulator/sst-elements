@@ -1,18 +1,16 @@
-#include "sst_config.h"
-#include "sst/core/serialization.h"
-#include "sst/core/element.h"
-#include <sst/core/params.h>
-#include <sst/core/simulation.h>
 
 #include "arielcore.h"
 
 ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen) {
 	output = out;
+	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	fd_input = fd_in;
 	cacheLink = coreToCacheLink;
 	coreID = thisCoreID;
 	maxPendingTransactions = maxPendTrans;
 	isHalted = false;
+	maxIssuePerCycle = maxIssuePerCyc;
+	maxQLength = maxQLen;
 
 	coreQ = new std::queue<ArielEvent*>();
 	pendingTransactions = new std::vector<MemEvent*>();
@@ -20,6 +18,14 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
 
 ArielCore::~ArielCore() {
 
+}
+
+void ArielCore::setCacheLink(SST::Link* newLink) {
+	cacheLink = newLink;
+}
+
+void ArielCore::handleEvent(SST::Event* event) {
+	
 }
 
 void ArielCore::halt() {
@@ -33,11 +39,19 @@ void ArielCore::closeInput() {
 void ArielCore::createReadEvent(uint64_t address, uint32_t length) {
 	ArielReadEvent* ev = new ArielReadEvent(address, length);
 	coreQ->push(ev);
+	
+	output->verbose(CALL_INFO, 4, 0, "Generated a READ event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length);
 }
 
 void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
 	ArielWriteEvent* ev = new ArielWriteEvent(address, length);
 	coreQ->push(ev);
+	
+	output->verbose(CALL_INFO, 4, 0, "Generated a WRITE event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length);
+}
+
+bool ArielCore::isCoreHalted() {
+	return isHalted;
 }
 
 bool ArielCore::refillQueue() {
@@ -49,9 +63,17 @@ bool ArielCore::refillQueue() {
 	bool added_data = false;
 
 	while(coreQ->size() < maxQLength) {
-		poll(&poll_input, (unsigned int) 1, 10);
+		output->verbose(CALL_INFO, 16, 0, "Attempting to fill events for core: %" PRIu32 " current queue size=%" PRIu32 ", max length=%" PRIu32 "\n",
+			coreID, (uint32_t) coreQ->size(), (uint32_t) maxQLength);
+			
+		int poll_result = poll(&poll_input, (unsigned int) 1, (int) 20);
+		if(poll_result == -1) {
+			output->fatal(CALL_INFO, -2, 0, 0, "Attempt to poll failed.\n");
+			break;
+		}
 
 		if(poll_input.revents & POLLIN) {
+			output->verbose(CALL_INFO, 1, 0, "READ DATA ON CORE: %" PRIu32 "\n", coreID);
 			// There is data on the pipe
 			added_data = true;
 
@@ -95,6 +117,8 @@ bool ArielCore::refillQueue() {
 			case ARIEL_PERFORM_EXIT:
 				break;
 			}
+		} else {
+			return added_data;
 		}
 	}
 
@@ -108,10 +132,15 @@ bool ArielCore::processNextEvent() {
 	if(coreQ->empty()) {
 		bool addedItems = refillQueue();
 
+		output->verbose(CALL_INFO, 16, 0, "Attempted a queue fill, %s data\n",
+			(addedItems ? "added" : "did not add"));
+
 		if(! addedItems) {
 			return false;
 		}
 	}
+	
+	output->verbose(CALL_INFO, 8, 0, "Processing next event in core %" PRIu32 "...\n", coreID);
 
 	ArielEvent* nextEvent = coreQ->front();
 	bool removeEvent = false;
@@ -142,6 +171,8 @@ bool ArielCore::processNextEvent() {
 
 	// If the event has actually been processed this cycle then remove it from the queue
 	if(removeEvent) {
+		output->verbose(CALL_INFO, 8, 0, "Removing event from pending queue, there are %" PRIu32 " events in the queue before deletion.\n", 
+			(uint32_t) coreQ->size());
 		coreQ->pop();
 		return true;
 	} else {
@@ -151,7 +182,9 @@ bool ArielCore::processNextEvent() {
 
 void ArielCore::tick() {
 	if(! isHalted) {
-		for(int i = 0; i < maxIssuePerCycle; ++i) {
+		output->verbose(CALL_INFO, 16, 0, "Ticking core id %" PRIu32 "\n", coreID);
+		for(uint32_t i = 0; i < maxIssuePerCycle; ++i) {
+			output->verbose(CALL_INFO, 16, 0, "Issuing event %" PRIu32 " out of max issue: %" PRIu32 "...\n", i, maxIssuePerCycle);
 			bool didProcess = processNextEvent();
 
 			if(didProcess || isHalted) {

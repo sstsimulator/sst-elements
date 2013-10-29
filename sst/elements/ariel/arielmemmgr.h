@@ -2,12 +2,6 @@
 #ifndef _H_ARIEL_MEM_MANAGER
 #define _H_ARIEL_MEM_MANAGER
 
-#include <sst/core/sst_types.h>
-#include <sst/core/event.h>
-#include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
-
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/core/output.h>
 

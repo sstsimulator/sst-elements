@@ -180,6 +180,8 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) 
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
+	//std::cout << "Writing a WRITE only instruction addr=" << writeAddr << std::endl;
+
 	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
         const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
 	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;

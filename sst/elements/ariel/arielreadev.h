@@ -2,17 +2,6 @@
 #ifndef _H_SST_ARIEL_READ_EVENT
 #define _H_SST_ARIEL_READ_EVENT
 
-#include <sst/core/sst_types.h>
-#include <sst/core/event.h>
-#include <sst/core/component.h>
-#include <sst/core/link.h>
-#include <sst/core/timeConverter.h>
-
-#include <sst/core/interfaces/memEvent.h>
-#include <sst/core/output.h>
-
-#include <map>
-
 #include "arielevent.h"
 
 using namespace SST;
