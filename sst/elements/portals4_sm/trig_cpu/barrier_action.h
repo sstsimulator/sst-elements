@@ -56,17 +56,27 @@ public:
 	Simulation *sim = Simulation::getSimulation();
 
 // 	printf("Current time: %lu\n", sim->getTimeLord()->getNano()->convertFromCoreTime(sim->getCurrentSimCycle()));
-	
+
+#ifdef HAVE_MPI	
 	boost::mpi::communicator world;
+#endif
 
 	// Figure out how many still need to report
 	int value = wake_up.size() - num_reporting;
 	int out;
-	
+
+#ifdef HAVE_MPI	
 	all_reduce( world, &value, 1, &out, std::plus<int>() );  
-	
+#else
+        out = value;
+#endif	
+
 	if ( 0 == out ) {
+#ifdef HAVE_MPI
             all_reduce(world, &add_count, 1, &out, std::plus<int>() );
+#else
+            out = add_count;
+#endif
             if (0 != out) {
                 // Barrier is done, exchange data
                 SimTime_t total_num = wake_up.size();
@@ -74,12 +84,22 @@ public:
                 SimTime_t min_a;
                 SimTime_t max_a;
                 SimTime_t total_time_a;
+                int rank;
+
+#ifdef HAVE_MPI
                 all_reduce( world, &total_num , 1, &total_num_a, std::plus<SimTime_t>() );
                 all_reduce( world, &min, 1, &min_a, boost::mpi::minimum<SimTime_t>() );
                 all_reduce( world, &max, 1, &max_a, boost::mpi::maximum<SimTime_t>() );
                 all_reduce( world, &total_time, 1, &total_time_a, std::plus<SimTime_t>() );
-
-                if ( world.rank() == 0 ) {
+                rank = world.rank();
+#else
+                max_a = max;
+                min_a = min;
+                total_time_a = total_time;
+                total_num_a = total_num;
+                rank = 0;
+#endif
+                if ( rank == 0 ) {
                     printf("Max time: %lu ns\n", (unsigned long) max_a);
                     printf("Min time: %lu ns\n", (unsigned long) min_a);
                     printf("Avg time: %lu ns\n", (unsigned long) (total_time_a/total_num_a));
