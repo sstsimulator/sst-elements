@@ -40,6 +40,7 @@ namespace SST {
                 Machine* getMachine(SST::Params& params, int numProcs, schedComponent* sc);
                 Allocator* getAllocator(SST::Params& params, Machine* m);
                 int getFST(SST::Params& params);
+                double getTimePerDistance(SST::Params& params);
             private:
                 std::vector<std::string>* parseparams(std::string inparam);
 

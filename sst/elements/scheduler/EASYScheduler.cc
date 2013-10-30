@@ -169,7 +169,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
         started -> estComp = time + (*job) -> getEstimatedRunningTime();
         Job* temp = *job;
         toRun -> erase(job); //remove the job from toRun list
-        multiset<RunningInfo*, RunningInfo>::iterator justinserted = running -> insert(started); //add to running list       
+        running -> insert(started); //add to running list       
         temp -> start(time, mach, allocInfo, stats);
 
         if (first) { //update the guarantee if starting the first job
@@ -252,7 +252,7 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
         }
         prevFirstJobNum = (*firstJob) -> getJobNum();
     } else {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "EASY unable to make reservation for first job (%ld)",(*firstJob)->getJobNum());
+        schedout.fatal(CALL_INFO, 1, 0, 0, "EASY unable to make reservation for first job (%ld)\n", (*firstJob)->getJobNum());
     }
 }
 

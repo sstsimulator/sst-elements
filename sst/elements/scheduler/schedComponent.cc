@@ -46,6 +46,7 @@
 #include "JobStartEvent.h"
 #include "Machine.h"
 #include "MachineMesh.h"
+#include "MeshAllocInfo.h"
 #include "misc.h"
 #include "Scheduler.h"
 #include "Statistics.h"
@@ -144,6 +145,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     scheduler = factory.getScheduler(params, nodes.size());
     theAllocator = factory.getAllocator(params, machine);
     FSTtype = factory.getFST(params);
+    timePerDistance = factory.getTimePerDistance(params);
     string trace = params["traceName"].c_str();
     if (FSTtype > 0) {
         calcFST = new FST(FSTtype);  //must call calcFST -> setup() once we know the number of jobs (in other words, in setup())
@@ -699,10 +701,23 @@ void schedComponent::startJob(AllocInfo* ai)
 {
     Job* j = ai -> job;
     int* jobNodes = ai -> nodeIndices;
+    unsigned long communicationTime = 0;
+    unsigned long actualRunningTime = j-> getActualTime();
+    if (timePerDistance != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
+        communicationTime = timePerDistance * ((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors);
+        actualRunningTime = .7 * actualRunningTime + .3 * (19.6666 + communicationTime);
+    }
+    //printf("Job %ld L1Distance %ld\n", j -> getJobNum(),((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
+
+    if (actualRunningTime > j -> getEstimatedRunningTime()) {
+        //schedout.fatal(CALL_INFO, 1, 0, 0, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));
+        schedout.output("WARNING: Job %lu has running time %lu, which is longer than estimated running time %lu\nUsing estimated time instead\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); 
+        actualRunningTime = j -> getEstimatedRunningTime();
+    }
 
     // send to each person in the node list
     for (int i = 0; i < j -> getProcsNeeded(); ++i) {
-        JobStartEvent *ec = new JobStartEvent(j -> getActualTime(), j -> getJobNum());
+        JobStartEvent *ec = new JobStartEvent(actualRunningTime, j -> getJobNum());
         nodes[jobNodes[i]] -> send(ec); 
     }
 

@@ -410,6 +410,21 @@ int Factory::getFST(SST::Params& params)
     return 0; 
 }
 
+double Factory::getTimePerDistance(SST::Params& params)
+{
+    if(params.find("timeperdistance") == params.end()){
+        //default: FIFO queue priority scheduler
+        //schedout.verbose(CALL_INFO, 4, 0, "Defaulting to no FST");
+        return 0;
+    } else {
+        vector<string>* tpdparams = parseparams(params["timeperdistance"]);
+        return atof(tpdparams -> at(0).c_str());
+    }
+    //schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse timeperdistance; should be a floating point integer");
+    return 0; 
+}
+
+
 //takes in a parameter and breaks it down from class[arg,arg,...]
 //into {class, arg, arg}
 vector<string>* Factory::parseparams(string inparam)

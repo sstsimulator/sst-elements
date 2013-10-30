@@ -110,6 +110,7 @@ namespace SST {
                 std::vector<std::string> nodeIDs;
                 SST::Link* selfLink;
                 std::map<int, IAI> runningJobs;
+                double timePerDistance; //used if we want to add time to the jobs proportional to the L1 distance
 
                 std::string jobListFileName;
                 boost::filesystem::path jobListFileNamePath;

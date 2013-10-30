@@ -546,7 +546,7 @@ void StatefulScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
 //for debugging; prints planned schedule to stderr
 void StatefulScheduler::printPlan() 
 {
-    bool first = true;
+    //bool first = true;
     int procs = freeProcs;
     schedout.debug(CALL_INFO, 7, 0, "Planned Schedule: \n");
     for (set<SchedChange*, SCComparator>::iterator it = estSched -> begin(); it != estSched -> end(); ++it) {
@@ -554,7 +554,7 @@ void StatefulScheduler::printPlan()
         procs += sc -> freeProcChange();
         schedout.debug(CALL_INFO, 7, 0, "%d procs free so far|", procs);
         sc -> print();
-        first = false;
+        //first = false;
     }
     if (estSched -> empty())
         schedout.debug(CALL_INFO, 7, 0, "No jobs in estimated schedule\n");
@@ -1086,7 +1086,7 @@ void StatefulScheduler::EvenLessManager::backfillfunc(unsigned long time)
         for (set<Job*, JobComparator>::iterator it = backfill -> begin(); it != backfill -> end(); it++) {
             SchedChange* js = (scheduler -> jobToEvents -> find(*it) -> second);
 
-            set<SchedChange*,SCComparator>::iterator lower = scheduler -> estSched -> lower_bound(js -> getPartner());
+            //set<SchedChange*,SCComparator>::iterator lower = scheduler -> estSched -> lower_bound(js -> getPartner());
             set<SchedChange*,SCComparator>::iterator upper = scheduler -> estSched -> upper_bound(js -> getPartner());
             --upper;
 
@@ -1278,7 +1278,7 @@ void StatefulScheduler::EvenLessManager::start(Job* j, unsigned long time)
     SchedChange* js = guarJobToEvents -> find(j) -> second;
     //guarJobToEvents -> erase(j);
     guarantee -> erase(js);
-    set<SchedChange*, SCComparator>::iterator temp2 = guarantee -> find(js -> getPartner());
+    //set<SchedChange*, SCComparator>::iterator temp2 = guarantee -> find(js -> getPartner());
     guarantee -> erase(js -> getPartner());
     backfill -> erase(j);
     SchedChange* temp = new SchedChange(time + j -> getEstimatedRunningTime(), j, true);
