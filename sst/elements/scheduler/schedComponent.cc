@@ -146,6 +146,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     theAllocator = factory.getAllocator(params, machine);
     FSTtype = factory.getFST(params);
     timePerDistance = factory.getTimePerDistance(params);
+    //schedout.output("%f %f %f %f", timePerDistance -> at(0),timePerDistance -> at(1),timePerDistance -> at(2),timePerDistance -> at(3));
     string trace = params["traceName"].c_str();
     if (FSTtype > 0) {
         calcFST = new FST(FSTtype);  //must call calcFST -> setup() once we know the number of jobs (in other words, in setup())
@@ -703,9 +704,10 @@ void schedComponent::startJob(AllocInfo* ai)
     int* jobNodes = ai -> nodeIndices;
     unsigned long communicationTime = 0;
     unsigned long actualRunningTime = j-> getActualTime();
-    if (timePerDistance != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
-        communicationTime = timePerDistance * ((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors);
-        actualRunningTime = .7 * actualRunningTime + .3 * (19.6666 + communicationTime);
+    //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
+    if (timePerDistance -> size() != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
+        communicationTime = timePerDistance -> at(3) * ((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors);
+        actualRunningTime = timePerDistance -> at(0) * actualRunningTime + timePerDistance -> at(1) * (timePerDistance -> at(2) + communicationTime);
     }
     //printf("Job %ld L1Distance %ld\n", j -> getJobNum(),((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
 

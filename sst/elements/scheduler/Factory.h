@@ -20,6 +20,7 @@
 #include "sst/core/serialization.h"
 #include "sst/core/element.h"
 #include <string>
+#include <vector>
 
 namespace SST {
     class Params;
@@ -40,7 +41,7 @@ namespace SST {
                 Machine* getMachine(SST::Params& params, int numProcs, schedComponent* sc);
                 Allocator* getAllocator(SST::Params& params, Machine* m);
                 int getFST(SST::Params& params);
-                double getTimePerDistance(SST::Params& params);
+                std::vector<double>* getTimePerDistance(SST::Params& params);
             private:
                 std::vector<std::string>* parseparams(std::string inparam);
 
