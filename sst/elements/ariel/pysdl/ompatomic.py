@@ -8,7 +8,9 @@ def sstcreatemodel():
         print "Verbose Model"
 
     id = sst.createcomponent("a0", "ariel.ariel")
-    sst.addcompparam(id, "verbose", "8")
+    sst.addcompparam(id, "verbose", "0")
+    sst.addcompparam(id, "maxcorequeue", "64")
+    sst.addcompparam(id, "pipetimeout", "5")
     sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/test/testSuites/testopenMP/ompatomic/ompatomic.x")
 #    sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/test/testSuites/testM5/ompatomic/ompatomic.x")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
@@ -42,7 +44,7 @@ def sstcreatemodel():
     sst.addcomplink(membus, "mem_bus_link", "port%d"%(corecount), "50ps")
 
     memory = sst.createcomponent("memory", "memHierarchy.MemController")
-    sst.addcompparam(memory, "access_time", "1000ns")
+    sst.addcompparam(memory, "access_time", "10ns")
     sst.addcompparam(memory, "mem_size", "512")
     sst.addcompparam(memory, "clock", "1GHz")
     sst.addcompparam(memory, "use_dramsim", "0")

@@ -21,9 +21,11 @@
 #include <map>
 
 
+#include "arielmemmgr.h"
 #include "arielevent.h"
 #include "arielreadev.h"
 #include "arielwriteev.h"
+#include "arielexitev.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -45,7 +47,10 @@ namespace ArielComponent {
 class ArielCore {
 
 	public:
-		ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans, Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen);
+		ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans, 
+			Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen, int pipeTimeO, 
+			uint64_t cacheLineSz, SST::Component* owner,
+			ArielMemoryManager* memMgr);
 		~ArielCore();
 		bool isCoreHalted();
 		void tick();
@@ -53,8 +58,11 @@ class ArielCore {
 		void halt();
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
+		void createExitEvent();
 		void setCacheLink(SST::Link* newCacheLink);
 		void handleEvent(SST::Event* event);
+		void handleReadRequest(ArielReadEvent* wEv);
+		void handleWriteRequest(ArielWriteEvent* wEv);
 
 	private:
 		bool processNextEvent();
@@ -66,9 +74,13 @@ class ArielCore {
 		bool isHalted;
 		SST::Link* cacheLink;
 		int fd_input;
-		std::vector<MemEvent*>* pendingTransactions;
+		std::map<MemEvent::id_type, MemEvent*>* pendingTransactions;
 		uint32_t maxIssuePerCycle;
 		uint32_t maxQLength;
+		int readPipeTimeOut;
+		uint64_t cacheLineSize;
+		SST::Component* owner;
+		ArielMemoryManager* memmgr;
 
 };
 

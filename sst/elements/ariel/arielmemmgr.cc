@@ -7,9 +7,12 @@ ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint6
 	output = out;
 	memoryLevels = mLevels;
 	defaultLevel = defLevel;
+	
+	output->verbose(CALL_INFO, 2, 0, "Creating a memory hierarchy of %" PRIu32 " levels.\n", mLevels);
 
 	pageSizes = (uint64_t*) malloc(sizeof(uint64_t) * memoryLevels);
 	for(uint32_t i = 0; i < mLevels; ++i) {
+		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page size is %" PRIu64 "\n", i, pSizes[i]);
 		pageSizes[i] = pSizes[i];
 	}
 
@@ -18,10 +21,13 @@ ArielMemoryManager::ArielMemoryManager(uint32_t mLevels, uint64_t* pSizes, uint6
 	for(uint32_t i = 0; i < mLevels; ++i) {
 		freePages[i] = new std::queue<uint64_t>();
 
+		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " page count is %" PRIu64 "\n", i, stdPCounts[i]);
 		for(uint64_t j = 0; j < stdPCounts[i]; ++j) {
 			freePages[i]->push(nextMemoryAddress);
 			nextMemoryAddress += pageSizes[i];
 		}
+		output->verbose(CALL_INFO, 2, 0, "Level %" PRIu32 " usable (free) page queue contains %" PRIu32 " entries\n", i, 
+			(uint32_t) freePages[i]->size());
 	}
 
 	pageAllocations = (std::map<uint64_t, uint64_t>**) malloc(sizeof(std::map<uint64_t, uint64_t>*) * memoryLevels);
@@ -41,16 +47,23 @@ ArielMemoryManager::~ArielMemoryManager() {
 
 void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
 	assert(level < memoryLevels);
+	
+	output->verbose(CALL_INFO, 4, 0, "Requesting a memory allocation of %" PRIu64 " bytes, in level: %" PRIu32 ", Virtual mapping=%" PRIu64 "\n",
+		size, level, virtualAddress);
 
-	uint64_t pageSize = pageSizes[level];
+	const uint64_t pageSize = pageSizes[level];
 
 	uint64_t roundedSize = size;
 	uint64_t remainder = size % pageSize;
+	
 	// We will do all of our allocated based on whole pages, inefficient maybe but much
 	// simpler to implement and debug
 	if(roundedSize > 0) {
 		roundedSize += (pageSize - remainder);
 	}
+
+	output->verbose(CALL_INFO, 4, 0, "Requesting rounded to %" PRIu64 " bytes\n",
+		roundedSize);
 
 	uint64_t nextVirtPage = virtualAddress;
 	for(uint64_t bytesLeft = 0; bytesLeft < roundedSize; bytesLeft += pageSize) {
@@ -59,12 +72,18 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 				level, size);
 		}
 
-		uint64_t nextPhysPage = freePages[level]->front();
+		const uint64_t nextPhysPage = freePages[level]->front();
 		freePages[level]->pop();
 		pageTables[level]->insert( std::pair<uint64_t, uint64_t>(nextVirtPage, nextPhysPage) );
 
+		output->verbose(CALL_INFO, 4, 0, "Allocating memory page, physical page=%" PRIu64 ", virtual page=%" PRIu64 "\n",
+			nextPhysPage, nextVirtPage);
+
 		nextVirtPage += pageSize;
 	}
+	
+	output->verbose(CALL_INFO, 4, 0, "Request leaves: %" PRIu32 " free pages at level: %" PRIu32 "\n",
+		(uint32_t) freePages[level]->size(), level);
 
 	// Record the complete entry in the allocation table (what we allocated in size against the virtual address)
 	// this means we know how much to free and can translate the address successfully.
@@ -78,6 +97,9 @@ uint32_t ArielMemoryManager::countMemoryLevels() {
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	uint64_t physAddr = (uint64_t) -1;
 	bool found = false;
+	
+	output->verbose(CALL_INFO, 4, 0, "Translate virtual address %" PRIu64 "\n",
+		virtAddr);
 
 	// We will have to search every memory level to find where the address lies
 	for(uint32_t i = 0; i < memoryLevels; ++i) {
@@ -86,8 +108,9 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 			const uint64_t pageSize = pageSizes[i];
 
 			for(page_itr = pageTables[i]->begin(); page_itr != pageTables[i]->end(); page_itr++) {
-				if((virtAddr >= page_itr->second) &&
-					(virtAddr < page_itr->second + pageSize)) {
+				if((virtAddr >= page_itr->first) &&
+					(virtAddr < page_itr->first + pageSize)) {
+					
 					physAddr = page_itr->second + (virtAddr % pageSize);
 
 					found = true;

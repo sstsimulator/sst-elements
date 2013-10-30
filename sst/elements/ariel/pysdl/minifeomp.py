@@ -9,6 +9,8 @@ def sstcreatemodel():
 
     id = sst.createcomponent("a0", "ariel.ariel")
     sst.addcompparam(id, "verbose", "0")
+    sst.addcompparam(id, "maxcorequeue", "128")
+    sst.addcompparam(id, "pipetimeout", "2")
     sst.addcompparam(id, "executable", "/home/sdhammo/subversion/mantevo/trunk/packages/miniFE/miniFE_openmp/miniFE.x")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
 
@@ -17,7 +19,7 @@ def sstcreatemodel():
     sst.addcompparam(id, "corecount", str(corecount))
     sst.addcompparam(id, "appargcount", "2")
     sst.addcompparam(id, "apparg0", "-nx")
-    sst.addcompparam(id, "apparg1", "50")
+    sst.addcompparam(id, "apparg1", "5")
 
     membus = sst.createcomponent("membus", "memHierarchy.Bus")
     sst.addcompparam(membus, "numPorts", str(corecount + 1))

@@ -178,27 +178,6 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) 
 
 }
 
-VOID WriteInstructionNoOperations(THREADID thr) {
-
-	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
-        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
-
-	const uint32_t thrID = (uint32_t) thr;
-
-       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins);
-
-	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
-	int index = 0;
-
-       	copy(&buffer[index], &start_ins, sizeof(start_ins));
-	index += sizeof(start_ins);
-        copy(&buffer[index], &end_ins, sizeof(end_ins));
-
-	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
-	free(buffer);
-
-}
-
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
 	//std::cout << "Writing a WRITE only instruction addr=" << writeAddr << std::endl;
@@ -254,11 +233,6 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			WriteInstructionWriteOnly,
 			IARG_THREAD_ID,
 			IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
-			IARG_END);
-	} else {
-		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
-			WriteInstructionNoOperations,
-			IARG_THREAD_ID,
 			IARG_END);
 	}
 
@@ -461,7 +435,7 @@ int main(int argc, char *argv[])
 
 //    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
-    RTN_AddInstrumentFunction(InstrumentRoutine, 0);
+//    RTN_AddInstrumentFunction(InstrumentRoutine, 0);
 
     PIN_StartProgram();
 

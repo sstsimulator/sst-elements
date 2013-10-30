@@ -46,6 +46,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t maxIssuesPerCycle   = (uint32_t) params.find_integer("maxissuepercycle", 1);
 	uint32_t maxCoreQueueLen     = (uint32_t) params.find_integer("maxcorequeue", 64);
 	uint32_t maxPendingTransCore = (uint32_t) params.find_integer("maxtranscore", 16);
+	int      pipeReadTimeOut     = (int)      params.find_integer("pipetimeout", 10);
+	uint64_t cacheLineSize       = (uint64_t) params.find_integer("cachelinesize", 64);
 	
 	/////////////////////////////////////////////////////////////////////////////////////
 	
@@ -159,7 +161,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	for(uint32_t i = 0; i < core_count; ++i) {
 		sprintf(link_buffer, "cache_link_%" PRIu32, i);
 	
-		cpu_cores[i] = new ArielCore(pipe_fds[i], NULL, i, maxPendingTransCore, output, maxIssuesPerCycle, maxCoreQueueLen);
+		cpu_cores[i] = new ArielCore(pipe_fds[i], NULL, i, maxPendingTransCore, output, 
+			maxIssuesPerCycle, maxCoreQueueLen, pipeReadTimeOut, cacheLineSize, this,
+			memmgr);
 		cpu_to_cache_links[i] = configureLink( link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent) );
 		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 	}
@@ -222,6 +226,11 @@ bool ArielCPU::tick( SST::Cycle_t ) {
 			stopTicking = true;
 			break;
 		}
+	}
+	
+	// Its time to end, that's all folks
+	if(stopTicking) {
+		primaryComponentOKToEndSim();
 	}
 	
 	return stopTicking;

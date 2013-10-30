@@ -15,6 +15,8 @@ libariel_la_SOURCES = \
 	arielmemmgr.h \
 	arielreadev.cc \
 	arielreadev.h \
+	arielexitev.h \
+	arielexitev.cc \
 	arielwriteev.cc \
 	arielwriteev.h \
 	arielevent.cc \
