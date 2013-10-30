@@ -282,3 +282,25 @@ calculations (i.e. average or maximum (actualStartTime - FST)) are performed.
 An example of the sdl file with strict FST calculations would be
 
 ./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random strict > testsdl.sdl 
+
+        Allocation Based Timing:
+
+The scheduler component can change the runtime of jobs based on their
+allocation.  Currently, this is based on the sum of the L1 distance between
+each pair of nodes allocated for the job.  Therefore, a mesh is required for
+this metric to be used.  
+
+The details are given in the parameter <timeperdistance> in the sdl file.  The
+format is a[b,c,d]; then the total time for a job is
+
+a * (ActualRunTime) + b* (c + d * (SumofL1Distances))
+
+An important detail is that this may be larger than the Estimated Run Time for
+some simulations.  If this happens, SST uses the Estimated Run Time instead of
+the L1-based run time.  SST does not throw an error, but does display a warning
+message.
+
+makesdl.pl can also incorporate the allocation based timing.  An example with a
+= .7, b = .3, c = 19.6666, d = 1.9161 is
+
+./makeSDL.pl 4008 LLNL.sim easy["largefirst"] mesh[24,167] random none .7[.3,19.6666,1.9161] > testsdl.sdl 
