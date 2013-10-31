@@ -63,6 +63,8 @@ class ArielCore {
 		void handleEvent(SST::Event* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
+		
+		void printCoreStatistics();
 
 	private:
 		bool processNextEvent();
@@ -81,6 +83,11 @@ class ArielCore {
 		uint64_t cacheLineSize;
 		SST::Component* owner;
 		ArielMemoryManager* memmgr;
+		
+		uint64_t read_requests;
+		uint64_t write_requests;
+		uint64_t split_read_requests;
+		uint64_t split_write_requests;
 
 };
 

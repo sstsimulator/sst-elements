@@ -185,6 +185,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	fflush(stdout);
 }
 
+void ArielCPU::finish() {
+	output->verbose(CALL_INFO, 1, 0, "Ariel Component Statistics (By Core)\n");
+	for(uint32_t i = 0; i < core_count; ++i) {
+		cpu_cores[i]->printCoreStatistics();
+	}
+}
+
 int ArielCPU::forkPINChild(const char* app, char** args) {
 	pid_t the_child;
 

@@ -21,7 +21,7 @@ class ArielCPU : public SST::Component {
 		ArielCPU(ComponentId_t id, Params& params);
 		~ArielCPU();
 		virtual void setup() {}
-        virtual void finish() {}
+        virtual void finish();
         virtual bool tick( SST::Cycle_t );
         int forkPINChild(const char* app, char** args);
         	

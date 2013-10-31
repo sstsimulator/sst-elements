@@ -22,6 +22,11 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
 
 	coreQ = new std::queue<ArielEvent*>();
 	pendingTransactions = new std::map<MemEvent::id_type, MemEvent*>();
+	
+	read_requests = 0;
+	write_requests = 0;
+	split_read_requests = 0;
+	split_write_requests = 0;
 }
 
 ArielCore::~ArielCore() {
@@ -240,8 +245,12 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(rightEvent->getID(), rightEvent) );
 		
 		cacheLink->send(leftEvent);
-		cacheLink->send(rightEvent);			
+		cacheLink->send(rightEvent);	
+		
+		split_read_requests++;		
 	}
+	
+	read_requests++;
 }
 
 void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
@@ -317,8 +326,21 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(rightEvent->getID(), rightEvent) );
 		
 		cacheLink->send(leftEvent);
-		cacheLink->send(rightEvent);			
+		cacheLink->send(rightEvent);	
+		
+		split_write_requests++;		
 	}
+	
+	write_requests++;
+}
+
+void ArielCore::printCoreStatistics() {
+	output->verbose(CALL_INFO, 1, 0, "Core %" PRIu32 " Statistics:\n", coreID);
+	output->verbose(CALL_INFO, 1, 0, "- Total Read Requests:         %" PRIu64 "\n", read_requests);
+	output->verbose(CALL_INFO, 1, 0, "- Split Read Requests:         %" PRIu64 "\n", split_read_requests);
+	output->verbose(CALL_INFO, 1, 0, "- Total Write Requests:        %" PRIu64 "\n", write_requests);
+	output->verbose(CALL_INFO, 1, 0, "- Split Write Requests:        %" PRIu64 "\n", split_write_requests);
+	output->verbose(CALL_INFO, 1, 0, "- Total Requests:              %" PRIu64 "\n", (read_requests + write_requests));
 }
 
 bool ArielCore::processNextEvent() {

@@ -8,9 +8,9 @@ def sstcreatemodel():
         print "Verbose Model"
 
     id = sst.createcomponent("a0", "ariel.ariel")
-    sst.addcompparam(id, "verbose", "0")
+    sst.addcompparam(id, "verbose", "1")
     sst.addcompparam(id, "maxcorequeue", "256")
-    sst.addcompparam(id, "pipetimeout", "2")
+    sst.addcompparam(id, "pipetimeout", "0")
     sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/test/testSuites/testopenMP/ompatomic/ompatomic.x")
 #    sst.addcompparam(id, "executable", "/home/sdhammo/subversion/sst-simulator/test/testSuites/testM5/ompatomic/ompatomic.x")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
