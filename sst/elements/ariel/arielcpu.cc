@@ -186,6 +186,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 }
 
 void ArielCPU::finish() {
+	output->verbose(CALL_INFO, 1, 0, "Ariel Processor Information:\n");
+	output->verbose(CALL_INFO, 1, 0, "Completed at: %" PRIu64 " nanoseconds.\n", (uint64_t) getCurrentSimTimeNano() );
 	output->verbose(CALL_INFO, 1, 0, "Ariel Component Statistics (By Core)\n");
 	for(uint32_t i = 0; i < core_count; ++i) {
 		cpu_cores[i]->printCoreStatistics();
