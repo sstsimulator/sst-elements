@@ -1,5 +1,6 @@
 
 #include <execinfo.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "pin.H"
@@ -69,6 +70,7 @@ VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
 	copy(&buffer[sizeof(read_marker)], &addr64, sizeof(addr64));
 	copy(&buffer[sizeof(read_marker) + sizeof(addr64)], &readSize, sizeof(readSize));
 
+	assert(thr < core_count);
 	write(pipe_id[thr], buffer, BUFFER_LENGTH);
 }
 
@@ -102,6 +104,7 @@ VOID WriteEndInstructionMarker(UINT32 thr) {
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 	ADDRINT* writeAddr, UINT32 writeSize) {
 
+	if(thr < core_count) {
 	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
         const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
 	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
@@ -137,9 +140,11 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 	index += sizeof(wSize);
 	copy(&buffer[index], &end_ins, sizeof(end_ins));
 
+	assert(thr < core_count);
 	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
 
 	free(buffer);
+	}
 //	sync();
 
 //	ReleaseLock(&pipe_lock);
@@ -147,6 +152,7 @@ VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 
 VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) {
 
+	if(thr < core_count) {
 	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
         const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
 	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
@@ -175,11 +181,13 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) 
 
 	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
 	free(buffer);
+	}
 
 }
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
+	if(thr < core_count) {
 	//std::cout << "Writing a WRITE only instruction addr=" << writeAddr << std::endl;
 
 	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
@@ -208,8 +216,10 @@ VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSiz
 	index += sizeof(wSize);
         copy(&buffer[index], &end_ins, sizeof(end_ins));
 
+	assert(thr < core_count);
 	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
 	free(buffer);
+	}
 
 }
 
@@ -431,7 +441,10 @@ int main(int argc, char *argv[])
             }
     }
 
-    sleep(5);
+	printf("ARIEL-SST PIN tool activating with %lu threads\n", core_count);
+	fflush(stdout);
+
+    sleep(1);
 
 //    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);

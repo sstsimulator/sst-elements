@@ -98,39 +98,52 @@ uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {
 	uint64_t physAddr = (uint64_t) -1;
 	bool found = false;
 	
-	output->verbose(CALL_INFO, 4, 0, "Translate virtual address %" PRIu64 "\n",
-		virtAddr);
-
+	output->verbose(CALL_INFO, 4, 0, "Page Table: translate virtual address %" PRIu64 "\n", virtAddr);
+	
 	// We will have to search every memory level to find where the address lies
 	for(uint32_t i = 0; i < memoryLevels; ++i) {
 		if(! found) {
 			std::map<uint64_t, uint64_t>::iterator page_itr;
 			const uint64_t pageSize = pageSizes[i];
+			const uint64_t page_offset = virtAddr % pageSize;
 
 			for(page_itr = pageTables[i]->begin(); page_itr != pageTables[i]->end(); page_itr++) {
 				if((virtAddr >= page_itr->first) &&
-					(virtAddr < page_itr->first + pageSize)) {
+					(virtAddr < (page_itr->first + pageSize))) {
 					
-					physAddr = page_itr->second + (virtAddr % pageSize);
+					physAddr = page_itr->second + page_offset;
+
+					output->verbose(CALL_INFO, 4, 0, "Page table hit: virtual address=%" PRIu64 " hit in level: %" PRIu32 ", virtual page start=%" PRIu64 ", virtual end=%" PRIu64 ", translates to phys page start=%" PRIu64 " translates to: phys address: %" PRIu64 " (offset added to phys start=%" PRIu64 ")\n",
+						virtAddr, i, page_itr->first, page_itr->first + pageSize, page_itr->second, physAddr, page_offset);
 
 					found = true;
 					break;
 				}
 			}
+		} else {
+			break;
 		}
 	}
 
 	if(found) {
 		return physAddr;
 	} else {
+		output->verbose(CALL_INFO, 4, 0, "Page table miss for virtual address: %" PRIu64 "\n", virtAddr);
+		
 		// We did not find the address in memory, that means we should allocate it one from our default pool
 		uint64_t offset = virtAddr % pageSizes[defaultLevel];
+		
+		output->verbose(CALL_INFO, 4, 0, "Page offset calculation (generating a new page allocation request) for address %" PRIu64 ", offset=%" PRIu64 ", requesting virtual map to address: %" PRIu64 "\n", 
+			virtAddr, offset, (virtAddr - offset));
+		
 		// Perform an allocation so we can then re-find the address
 		allocate(8, defaultLevel, virtAddr - offset);
 
 		// Now attempt to refind it
-		uint64_t newPhysPage = translateAddress(virtAddr);
+		const uint64_t newPhysAddr = translateAddress(virtAddr);
+		
+		output->verbose(CALL_INFO, 4, 0, "Page allocation routine mapped to address: %" PRIu64 "\n", newPhysAddr );
 
-		return newPhysPage + offset;
+		return newPhysAddr;
 	}
 }

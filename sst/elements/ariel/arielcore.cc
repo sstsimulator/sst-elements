@@ -112,7 +112,7 @@ bool ArielCore::refillQueue() {
 		}
 
 		if(poll_input.revents & POLLIN) {
-			output->verbose(CALL_INFO, 1, 0, "READ DATA ON CORE: %" PRIu32 "\n", coreID);
+			output->verbose(CALL_INFO, 32, 0, "Pipe poll reads data on core: %" PRIu32 "\n", coreID);
 			// There is data on the pipe
 			added_data = true;
 
@@ -171,46 +171,70 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a read event...\n", coreID);
 	
 	const uint64_t readAddress = rEv->getAddress();
-	const uint32_t readLength  = rEv->getLength();
+	const uint64_t readLength  = (uint64_t) rEv->getLength();
 	
-	const uint64_t addr_offset  = readAddress % cacheLineSize;
+	if(readLength > cacheLineSize) {
+		output->verbose(CALL_INFO, 4, 0, "Potential error? request for a read of length=%" PRIu64 " is larger than cache line which is not allowed (coreID=%" PRIu32 ", cache line: %" PRIu64 "\n",
+			readLength, coreID, cacheLineSize);
+		return;
+	}
 	
-	if(addr_offset + readLength < cacheLineSize) {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu32 "\n",
+	const uint64_t addr_offset  = readAddress % ((uint64_t) cacheLineSize);
+	
+	if((addr_offset + readLength) < cacheLineSize) {
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
 	
 		// We do not need to perform a split operation
 		const uint64_t physAddr = memmgr->translateAddress(readAddress);
 		
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu32 ", PhysAddr=%" PRIu64 "\n", 
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing read, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, readAddress, readLength, physAddr);
 			
-		MemEvent* memEvent = new MemEvent(owner, (Addr) physAddr, ReadReq);
-		memEvent->setSize(readLength);
+		MemEvent* memEvent = new MemEvent(owner, physAddr, ReadReq);
+		memEvent->setSize((uint32_t) readLength);
 
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
 				
 		// Actually send the event to the cache
 		cacheLink->send(memEvent);
 	} else {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu32 "\n",
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split read request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, readAddress, readLength);
 	
 		// We need to perform a split operation
 		const uint64_t leftAddr = readAddress;
-		const uint32_t leftSize = cacheLineSize - addr_offset;
+		const uint64_t leftSize = cacheLineSize - addr_offset;
 		
-		const uint64_t rightAddr = (readAddress - addr_offset) + cacheLineSize;
-		const uint32_t rightSize = (readAddress + readLength) % cacheLineSize;
+		const uint64_t rightAddr = (readAddress - addr_offset) + ((uint64_t) cacheLineSize);
+		const uint64_t rightSize = (readAddress + ((uint64_t) readLength)) % ((uint64_t) cacheLineSize);
 		
 		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
 		
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address read, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu32 ", RightSize=%" PRIu32 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address read, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
 			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
+			
+		if( (leftSize + rightSize) != readLength ) {
+			output->fatal(CALL_INFO, -4, 0, 0, "Core %" PRIu32 " read request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal read length (cache line of length %" PRIu64 ")\n",
+				coreID, readAddress, readLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
+		}
+		
+		if( ((leftAddr + leftSize) % cacheLineSize) != 0) {
+			output->fatal(CALL_INFO, -4, 0, 0, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+				leftAddr, leftSize, cacheLineSize);
+		}
+		
+		if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
+			output->fatal(CALL_INFO, -4, 0, 0, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+				leftAddr, leftSize, cacheLineSize);
+		}
 				
-		MemEvent* leftEvent  = new MemEvent(owner, (Addr) physLeftAddr, ReadReq);
-		MemEvent* rightEvent = new MemEvent(owner, (Addr) physRightAddr, ReadReq);
+		MemEvent* leftEvent  = new MemEvent(owner, physLeftAddr, ReadReq);
+		MemEvent* rightEvent = new MemEvent(owner, physRightAddr, ReadReq);
+		
+		leftEvent->setSize((uint32_t) leftSize);
+		rightEvent->setSize((uint32_t) rightSize);
 		
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(leftEvent->getID(), leftEvent) );
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(rightEvent->getID(), rightEvent) );
@@ -224,46 +248,70 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a write event...\n", coreID);
 	
 	const uint64_t writeAddress = wEv->getAddress();
-	const uint32_t writeLength  = wEv->getLength();
+	const uint64_t writeLength  = wEv->getLength();
 	
-	const uint64_t addr_offset  = writeAddress % cacheLineSize;
+	if(writeLength > cacheLineSize) {
+		output->verbose(CALL_INFO, 4, 0, "Potential error? request for a write of length=%" PRIu64 " is larger than cache line which is not allowed (coreID=%" PRIu32 ", cache line: %" PRIu64 "\n",
+			writeLength, coreID, cacheLineSize);
+		return;
+	}
 	
-	if(addr_offset + writeLength < cacheLineSize) {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu32 "\n",
+	const uint64_t addr_offset  = writeAddress % ((uint64_t) cacheLineSize);
+	
+	if((addr_offset + writeLength) < cacheLineSize) {
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, writeAddress, writeLength);
 	
 		// We do not need to perform a split operation
-		const uint64_t physAddr = (Addr) memmgr->translateAddress(writeAddress);
+		const uint64_t physAddr = memmgr->translateAddress(writeAddress);
 		
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu32 ", PhysAddr=%" PRIu64 "\n", 
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing write, VAddr=%" PRIu64 ", Size=%" PRIu64 ", PhysAddr=%" PRIu64 "\n", 
 			coreID, writeAddress, writeLength, physAddr);
 			
-		MemEvent* memEvent = new MemEvent(owner, (Addr) physAddr, WriteReq);
-		memEvent->setSize(writeLength);
+		MemEvent* memEvent = new MemEvent(owner, physAddr, WriteReq);
+		memEvent->setSize((uint32_t) writeLength);
 
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(memEvent->getID(), memEvent) );
 				
 		// Actually send the event to the cache
 		cacheLink->send(memEvent);
 	} else {
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu32 "\n",
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
 			coreID, writeAddress, writeLength);
 	
 		// We need to perform a split operation
 		const uint64_t leftAddr = writeAddress;
-		const uint32_t leftSize = cacheLineSize - addr_offset;
+		const uint64_t leftSize = cacheLineSize - addr_offset;
 		
-		const uint64_t rightAddr = (writeAddress - addr_offset) + cacheLineSize;
-		const uint32_t rightSize = (writeAddress + writeLength) % cacheLineSize;
+		const uint64_t rightAddr = (writeAddress - addr_offset) + ((uint64_t) cacheLineSize);
+		const uint64_t rightSize = (writeAddress + ((uint64_t) writeLength)) % ((uint64_t) cacheLineSize);
 		
 		const uint64_t physLeftAddr = memmgr->translateAddress(leftAddr);
 		const uint64_t physRightAddr = memmgr->translateAddress(rightAddr);
 		
-		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu32 ", RightSize=%" PRIu32 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
+		output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " issuing split-address write, LeftVAddr=%" PRIu64 ", RightVAddr=%" PRIu64 ", LeftSize=%" PRIu64 ", RightSize=%" PRIu64 ", LeftPhysAddr=%" PRIu64 ", RightPhysAddr=%" PRIu64 "\n", 
 			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
+			
+		if( (leftSize + rightSize) != writeLength ) {
+			output->fatal(CALL_INFO, -4, 0, 0, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
+				coreID, writeAddress, writeLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
+		}
+		
+		if( ((leftAddr + leftSize) % cacheLineSize) != 0) {
+			output->fatal(CALL_INFO, -4, 0, 0, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+				leftAddr, leftSize, cacheLineSize);
+		}
+		
+		if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
+			output->fatal(CALL_INFO, -4, 0, 0, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+				leftAddr, leftSize, cacheLineSize);
+		}
 				
-		MemEvent* leftEvent  = new MemEvent(owner, (Addr) physLeftAddr, WriteReq);
-		MemEvent* rightEvent = new MemEvent(owner, (Addr) physRightAddr, WriteReq);
+		MemEvent* leftEvent  = new MemEvent(owner, physLeftAddr, WriteReq);
+		MemEvent* rightEvent = new MemEvent(owner, physRightAddr, WriteReq);
+		
+		leftEvent->setSize( (uint32_t) leftSize);
+		rightEvent->setSize( (uint32_t) rightSize);
 		
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(leftEvent->getID(), leftEvent) );
 		pendingTransactions->insert( std::pair<MemEvent::id_type, MemEvent*>(rightEvent->getID(), rightEvent) );
