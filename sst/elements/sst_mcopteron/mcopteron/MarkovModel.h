@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "InstructionInfo.h"
+#include "Random.h"
 //class InstructionInfo;
 //using namespace std; 
 
@@ -34,6 +35,12 @@ class MarkovModel{
    MarkovModel(int order, InstructionInfo *head, const char* filename);
    ~MarkovModel();
 	InstructionInfo *nextInstruction();
+  void setRandFunc(RandomFunc_t _R){rand.setrand_function(_R);}
+  void setSeedFunc(SeedFunc_t _S){rand.setseed_function(_S);}
+  void seedRandom(uint32_t _s){rand.seed(_s);}
+ private:
+  double genRandomProbability(){return rand.next();}
+  Random rand;
 };
 }//end namepsace McOpteron
 #endif

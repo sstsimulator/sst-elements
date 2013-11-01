@@ -157,7 +157,7 @@ int InstructionQueue::scheduleInstructions(CycleCount currentCycle)
          // first check to see if insn needs to use an AGU for address
          // generation (what about FP insns that need addressing?)
          if (t->aguOperandsReady(currentCycle) && t->needsAddressGeneration() && 
-             ((fu->getType() == AGU && fu->isAvailable(currentCycle)))) {
+             ((fu->getType() == FunctionalUnitType::AGU && fu->isAvailable(currentCycle)))) {
             //  || type == FLOAT)) 
             // assign AGU to token
             // token must keep place in queue since it will do another
@@ -232,18 +232,18 @@ bool InstructionQueue::canHandleInstruction(Token *token, CycleCount atCycle)
       return false;
    } 
    // easy int instructions can use any int queue
-   if(Debug>=5) cerr<<"IQ: token=getType()->getCategory()="<<token->getType()->getCategory()<<endl;
-   if ((type == INT || type == INTMUL || type == INTSP) &&
-       token->getType()->getCategory() == GENERICINT)
+   if(Debug>=5) cerr<<"IQ: token=getType()->getCategory()="<<static_cast<uint8_t>(token->getType()->getCategory())<<endl;
+   if ((type == QType::INT || type == QType::INTMUL || type == QType::INTSP) &&
+       token->getType()->getCategory() == Category::GENERICINT)
        return true;
    // int multiplies need the intmul queue
-   else if (type == INTMUL && token->getType()->getCategory() == MULTINT)
+   else if (type == QType::INTMUL && token->getType()->getCategory() == Category::MULTINT)
        return true;
    // int multiplies need the intmul queue
-   else if (type == INTSP && token->getType()->getCategory() == SPECIALINT)
+   else if (type == QType::INTSP && token->getType()->getCategory() == Category::SPECIALINT)
        return true;
    // float instructions need the float queue
-   else if (type == FLOAT && token->getType()->getCategory() == McOpteron::FLOAT)
+   else if (type == QType::FLOAT && token->getType()->getCategory() == Category::FLOAT)
        return true;
    else{
       if(Debug>=5)cerr<<"IQ: No Type Match"<<endl;

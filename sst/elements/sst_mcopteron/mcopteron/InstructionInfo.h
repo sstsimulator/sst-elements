@@ -5,6 +5,30 @@
 #include "OpteronDefs.h"
 namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts as library
 
+enum class OperandSize : uint8_t { 
+  UNKNOWN = 0,
+  OPSIZE8 = 1, 
+  OPSIZE16 = 2, 
+  OPSIZE32 = 4, 
+  OPSIZE64 = 8, 
+  OPSIZE128 = 16
+};
+enum class DataDirection : uint16_t {
+  UNKNOWN=0,
+  IREG2IREG = 1, 
+  IREG2MEM = 2, 
+  IREG2FREG = 4,
+  FREG2FREG = 8,
+  FREG2MEM = 16,
+  FREG2IREG = 32,
+  MEM2IREG = 64, 
+  MEM2MEM = 128, 
+  MEM2FREG = 256,
+};
+
+ENUMOR(OperandSize,uint8_t);
+ENUMOR(DataDirection,uint16_t);
+
 //-------------------------------------------------------------------
 /// @brief Holds the static information about an instruction type
 ///
@@ -16,11 +40,6 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 class InstructionInfo
 {
  public:
-   enum OperandSize { OPSIZE8 = 1, OPSIZE16 = 2, OPSIZE32 = 4, OPSIZE64 = 8, OPSIZE128 = 16 };
-   enum DataDirection {
-      IREG2IREG = 1, IREG2MEM = 2, IREG2FREG = 4,
-      FREG2FREG = 8, FREG2MEM = 16, FREG2IREG = 32,
-      MEM2IREG = 64, MEM2MEM = 128, MEM2FREG = 256 };
    static bool separateSizeRecords;
    
    InstructionInfo();
@@ -63,12 +82,18 @@ class InstructionInfo
 	unsigned int getSourceOps() {return sourceOps;}
 	unsigned int getMops() {return mops;}
 	void allocateHistograms(unsigned int d); 
-   bool handlesLoad() {return (allowedDataDirs & (MEM2IREG|MEM2MEM|MEM2FREG)) != 0;}
-   bool handlesStore() {return (allowedDataDirs & (IREG2MEM|FREG2MEM|MEM2MEM)) != 0;}
-   bool needsLoadAddress() {return (!isStackOp || loadProbability < 0.99);}
-   bool needsStoreAddress() {return (!isStackOp || storeProbability < 0.99);}
-   bool needsFunctionalUnit(FunctionalUnitTypes fut) { return (execUnitMask & fut);}
-   bool isFPUInstruction() {return execUnitMask & (FADD|FMUL|FSTORE);}
+   bool handlesLoad() {
+     return (allowedDataDirs & (DataDirection::MEM2IREG|DataDirection::MEM2MEM|DataDirection::MEM2FREG)) != DataDirection::UNKNOWN;
+   }
+   bool handlesStore() {
+     return (allowedDataDirs & (DataDirection::IREG2MEM|DataDirection::FREG2MEM|DataDirection::MEM2MEM)) != DataDirection::UNKNOWN;
+   }
+   bool needsLoadAddress() {return (!isStackOp || loadProbability > 0.00);}
+   bool needsStoreAddress() {return (!isStackOp || storeProbability > 0.00);}
+   bool needsFunctionalUnit(FunctionalUnitType fut) { return (execUnitMask & fut)!=FunctionalUnitType::UNKNOWN;}
+   bool isFPUInstruction() {
+     return (execUnitMask & (FunctionalUnitType::FADD|FunctionalUnitType::FMUL|FunctionalUnitType::FSTORE)) != FunctionalUnitType::UNKNOWN;
+   }
    unsigned long long getSimulationCount() {return actualOccurs;}
    void incSimulationCount() {actualOccurs++;}
    void incDependenceDists(unsigned int d) {actualDepDists+=d;}
@@ -88,16 +113,24 @@ class InstructionInfo
    char *name;              ///< Instruction type name
    unsigned long long actualOccurs; ///< actual # of occurs in simulation
    unsigned long long actualDepDists; ///< actual distances of use deps in simulation
-   unsigned long execUnitMask; ///< Bit mask that encodes FU usage
+   
+   FunctionalUnitType execUnitMask; //Scoggin: Typed Enums
+   //unsigned long execUnitMask; ///< Bit mask that encodes FU usage
+   
    unsigned int latency;    ///< Instruction type latency
    unsigned int throughputDem; ///< Throughput (HOW TO USE THIS???)
    bool isStackOp;
 
    unsigned int decodeUnitCost; ///< number of decode units needed (1/2/3 for single/double/vector)
-   unsigned int opSize; ///< OR'd bits of OperandSize (8/16/32/64)
-   unsigned int allowedDataDirs; ///< OR'd bits of DataDirection types
+
+   OperandSize opSize; //Scoggin: typed enums
+//   unsigned int opSize; ///< OR'd bits of OperandSize (8/16/32/64)
+   
+   DataDirection allowedDataDirs; //Scoggin :typed Enums
+   //unsigned int allowedDataDirs; ///< OR'd bits of DataDirection types
+
    unsigned long long totalOccurs; ///< accumulated total occurs from i-mix file
-   unsigned int memLatency; ///< Memory latency (not used??)
+   unsigned int memLatency; ///< Memory latency (used only for FP (X)MM Instr)
    unsigned int throughputNum; ///< Throughput (HOW TO USE THIS???)
    double ** depHistograms; ///< Dependence histograms for each source register
    class InstructionInfo *next;  ///< List ptr

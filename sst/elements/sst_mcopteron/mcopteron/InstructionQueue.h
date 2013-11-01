@@ -12,6 +12,14 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 
 #define MAXFUNITS 5
 
+enum class QType : uint8_t {
+  UNKNOWN = 0,
+  INT = 1,
+  INTMUL = 2, 
+  INTSP = 4, 
+  FLOAT = 8
+};
+ENUMOR(QType,uint8_t);
 //-------------------------------------------------------------------
 /// @brief Represents an instruction queue in the CPU
 ///
@@ -25,7 +33,6 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 class InstructionQueue
 {
  public:
-   enum QType {UNKNOWN,INT, INTMUL, INTSP, FLOAT};
    InstructionQueue(QType type, string name, unsigned int id, unsigned int size, unsigned int acceptRate);
    ~InstructionQueue();
    void setNext(InstructionQueue *other);

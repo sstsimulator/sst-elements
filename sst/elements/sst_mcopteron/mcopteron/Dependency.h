@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "OpteronDefs.h"
+#include "Random.h"
 
 #include "Token.h"
 namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts as library
@@ -23,6 +24,12 @@ class Dependency{
    unsigned int numReady;  // # of input registers that have become ready
    InstructionCount *producers; // instructionCount of instructions that produce each input register
    Dependency *next; // used to create a linked-list
+  void setRandFunc(RandomFunc_t _R){rand.setrand_function(_R);}
+  void setSeedFunc(SeedFunc_t _S){rand.setseed_function(_S);}
+  void seedRandom(uint32_t _s){rand.seed(_s);}
+ private:
+  double genRandomProbability(){return rand.next();}
+  Random rand;
 };
 
 }//End namespace McOpteron
