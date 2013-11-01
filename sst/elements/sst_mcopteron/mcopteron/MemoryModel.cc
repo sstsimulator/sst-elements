@@ -4,7 +4,6 @@
 #include <assert.h>
 
 #include "MemoryModel.h"
-#include "mersenne.h" //default rand functions
 
 namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts as library
 /// @brief Memory model constructor
@@ -12,7 +11,7 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 /// This routine just zero's out fields. Use the init methods to 
 /// populate the object with real data 
 ///
-MemoryModel::MemoryModel():rand()
+MemoryModel::MemoryModel()
 {
    memQHead = memQTail = 0;
    numLoadsInQ = numStoresInQ = 0;
@@ -24,10 +23,6 @@ MemoryModel::MemoryModel():rand()
    numIMemoryHits = numITLB1Misses = numITLB2Misses = 0;
    numSTBHits = numStores = numLoads = 0;
    lastLoad = lastStore = 0;
-   latencyL1=latencyL2=latencyL3=0; //Scoggin: added initializations
-   latencyMem=0;                    //Scoggin: added initializations
-   latencyTLB1=latencyTLB2=0;       //Scoggin: init
-   numILoads=0;                     //Scoggin: init
 }
 
 
@@ -99,9 +94,6 @@ void MemoryModel::initProbabilities(double pSTBHit,  double pL1Miss,
    // set up a cumulative distribution function to map a single 
    // probability to multiple "hit" levels; the formula for the
    // L1-L3 values is an algebraically simplified form
-#if 0
-//Waleed: I'm chaning the way we compute prob because the input file already takes care of the fact
-// that we access L2 when we miss L1! 
    cdfSTBHit = pSTBHit;
    cdfL1Hit = 1.0 + cdfSTBHit*pL1Miss - pL1Miss;
    cdfL2Hit = 1.0 + cdfL1Hit*pL2Miss - pL2Miss;
@@ -113,19 +105,6 @@ void MemoryModel::initProbabilities(double pSTBHit,  double pL1Miss,
    cdfIL3Hit = 1.0 + cdfIL2Hit*pL3Miss - pL3Miss;
    cdfITLB1Hit = 1.0 - pITLB1Miss;
    cdfITLB2Hit = 1.0 + cdfITLB1Hit*pITLB2Miss - pITLB2Miss;
-#endif 	
-   cdfSTBHit = pSTBHit;
-   cdfL1Hit = 1.0 - pL1Miss;
-   cdfL2Hit = 1.0 - pL2Miss;
-   cdfL3Hit = 1.0 - pL3Miss;
-   cdfTLB1Hit = 1.0 - pTLB1Miss;
-   cdfTLB2Hit = 1.0 - pTLB2Miss;
-   cdfICHit = 1.0 - pICMiss;
-   cdfIL2Hit = 1.0 - pL2Miss;
-   cdfIL3Hit = 1.0 - pL3Miss;
-   cdfITLB1Hit = 1.0 - pITLB1Miss;
-   cdfITLB2Hit = 1.0 - pITLB2Miss;
-
    if (Debug) fprintf(stderr, "Data hit CDF %%: STB %g L1 %g L2 %g L3 %g\n",
                       pSTBHit, cdfL1Hit, cdfL2Hit, cdfL3Hit);
    if (Debug) fprintf(stderr, "Inst hit CDF %%: IC %g L2 %g L3 %g\n",
@@ -144,7 +123,7 @@ void MemoryModel::initProbabilities(double pSTBHit,  double pL1Miss,
 /// @return the cycle count at which the load will be satisfied
 ///
 CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
-                                  unsigned int numBytes, Token *tkn)
+                                  unsigned int numBytes)
 {
 	CycleCount satisfiedCycle = currentCycle;
    double p;
@@ -160,59 +139,6 @@ CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
    // All memops might suffer a TLB miss, so adjust if this happens
    // -- JEC: this should have a separate cpi accounting category
    p = genRandomProbability();
-  if (p <= cdfTLB1Hit) { // do nothing
-  } else { 
-      p = genRandomProbability();
-      if (p <= cdfTLB2Hit) { 
-         numTLB1Misses++;
-         satisfiedCycle += latencyTLB1;
-         tkn->setDTLB1(true);
-      } else {
-         numTLB1Misses++;  // missed both!
-         numTLB2Misses++;
-         satisfiedCycle += latencyTLB2;
-         tkn->setDTLB1(true);
-         tkn->setDTLB2(true);
-      }
-  }
-   p = genRandomProbability();
-   // Now step through memory hierarchy (including store buffer)
-   if (p <= cdfSTBHit) { 
-   	// Load is satisfied from store buffer
-      numSTBHits++;
-      satisfiedCycle += Cost::LoadFromSTB; 
-   } else {
-      p = genRandomProbability();
-      if (p <= cdfL1Hit) { 
-   	// Load is satisfied in L1 cache
-      numL1Hits++;
-      satisfiedCycle += latencyL1;
-      tkn->setL1(true);
-      } else {
-         p = genRandomProbability();
-         if (p <= cdfL2Hit) {
-            // load satisfied in L2
-            numL2Hits++;
-            satisfiedCycle += latencyL2;
-            tkn->setL2(true);
-         } else { 
-            p = genRandomProbability();
-            if (p <= cdfL3Hit) {
-               // load satisfied in L3
-               numL3Hits++;
-               satisfiedCycle += latencyL3;
-              tkn->setL3(true);
-            } else { 
-               // load satisfied in Memory
-               numMemoryHits++;
-               satisfiedCycle += latencyMem;
-               tkn->setMem(true);
-            } // end not L3 hit
-         } // end not L2 hit
-      } // end not L1 hit
-   } // end not stb hit
-	  
-#if 0
    if (p > cdfTLB1Hit) {
       numTLB1Misses++;
       satisfiedCycle += latencyTLB1;
@@ -221,6 +147,7 @@ CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
       numTLB2Misses++;
       satisfiedCycle += latencyTLB2;
    }
+
    p = genRandomProbability();
    // Now step through memory hierarchy (including store buffer)
    if (p <= cdfSTBHit) { 
@@ -244,7 +171,6 @@ CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
       numMemoryHits++;
       satisfiedCycle += latencyMem;
    }
-#endif
    // add this load to the mem Q
    //addToMemoryQ(satisfiedCycle, MEMLOAD);
    return satisfiedCycle;
@@ -260,7 +186,7 @@ CycleCount MemoryModel::serveLoad(CycleCount currentCycle, Address address,
 /// @return the cycle count at which the load will be satisfied
 ///
 CycleCount MemoryModel::serveILoad(CycleCount currentCycle, Address address,
-                                   unsigned int numBytes, CPIStack *cpiStack)
+                                   unsigned int numBytes)
 {
 	CycleCount satisfiedCycle = currentCycle;
    double p;
@@ -273,52 +199,6 @@ CycleCount MemoryModel::serveILoad(CycleCount currentCycle, Address address,
 
    // All memops might suffer a TLB miss, so adjust if this happens
    p = genRandomProbability();
-  // Waleed: change the way we handle tlb misses
-   if (p <= cdfITLB1Hit) { // do nothing
-   } else {
-      p = genRandomProbability();
-      if (p <= cdfITLB2Hit) { 
-         numITLB1Misses++;
-         satisfiedCycle += latencyTLB1;
-         cpiStack->iTLBMiss += (double)latencyTLB1; 
-      } else {
-         numITLB1Misses++;  // missed both!
-         numITLB2Misses++;
-         satisfiedCycle += latencyTLB2;
-         cpiStack->iTLBMiss += (double)latencyTLB2; 
-      }
-   }
-   p = genRandomProbability();
-   // Now step through memory hierarchy
-   if (p <= cdfICHit) { 
-   	// Load is satisfied in I cache
-      numICHits++;
-      //satisfiedCycle += 0;  // no cost to hit i-cache
-   } else {
-      p = genRandomProbability();
-      if (p <= cdfIL2Hit) {
-         // load satisfied in L2
-         numIL2Hits++;
-         satisfiedCycle += latencyL2;
-         cpiStack->iCacheMiss += (double)latencyL2; 
-      } else {
-         p = genRandomProbability();
-         if (p <= cdfIL3Hit) {
-            // load satisfied in L3
-            numIL3Hits++;
-            satisfiedCycle += latencyL3;
-            cpiStack->iCacheMiss += (double)latencyL3; 
-         } else {
-            // load satisfied in Memory
-            numIMemoryHits++;
-            satisfiedCycle += latencyMem;
-            cpiStack->iCacheMiss += (double)latencyMem; 
-         }
-      }
-   }
-
-
-#if 0
    if (p > cdfITLB1Hit) {
       numITLB1Misses++;
       satisfiedCycle += latencyTLB1;
@@ -327,6 +207,7 @@ CycleCount MemoryModel::serveILoad(CycleCount currentCycle, Address address,
       numITLB2Misses++;
       satisfiedCycle += latencyTLB2;
    }
+
    p = genRandomProbability();
    // Now step through memory hierarchy
    if (p <= cdfICHit) { 
@@ -355,7 +236,6 @@ CycleCount MemoryModel::serveILoad(CycleCount currentCycle, Address address,
       }
       //addToMemoryQ(satisfiedCycle, MEMLOAD);
    }
-#endif
 
    return satisfiedCycle;
 }
@@ -390,7 +270,7 @@ CycleCount MemoryModel::serveStore(CycleCount currentCycle, Address address,
       // store buffer is full, must stall until an open slot
       // find first store in Q
       MemoryOp *firstStore = memQHead;
-      while (firstStore && firstStore->op != MemOpType::MEMSTORE)
+      while (firstStore && firstStore->op != MEMSTORE)
          firstStore = firstStore->next;
       if (!firstStore) assert(0);
       stallUntilCycle = firstStore->satisfiedCycle+1;
@@ -417,7 +297,7 @@ int MemoryModel::addToMemoryQ(CycleCount whenSatisfied, MemOpType type)
    m->satisfiedCycle = whenSatisfied;
    m->op = type;
    m->next = 0;
-   if (type == MemOpType::MEMSTORE) {
+   if (type == MEMSTORE) {
       lastStore = m;
       numStoresInQ++;
    } else {
@@ -447,7 +327,7 @@ double MemoryModel::purgeMemoryQ(CycleCount upToCycle)
    while (memQHead && memQHead->satisfiedCycle <= upToCycle) {
       p = memQHead;
       memQHead = memQHead->next;
-      if (p->op == MemOpType::MEMLOAD)
+      if (p->op == MEMLOAD)
          numLoadsInQ--;
       else
          numStoresInQ--;
@@ -471,9 +351,9 @@ double MemoryModel::purgeMemoryQ(CycleCount upToCycle)
 ///
 unsigned int MemoryModel::numberInMemoryQ(MemOpType memOp)
 {
-   if (memOp == MemOpType::MEMLOAD)
+   if (memOp == MEMLOAD)
       return numLoadsInQ;
-   else if (memOp == MemOpType::MEMSTORE)
+   else if (memOp == MEMSTORE)
       return numStoresInQ;
    return 0;
 }

@@ -10,7 +10,7 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 /// @param numSlots is the total number of instruction slots in the buffer
 /// @param numRetireablePerCycle is the maximum # of instructions retireable per cycle
 ///
-ReorderBuffer::ReorderBuffer(unsigned int numSlots, unsigned int numRetireablePerCycle, CPIStack *cpistack)
+ReorderBuffer::ReorderBuffer(unsigned int numSlots, unsigned int numRetireablePerCycle)
 {
    this->numSlots = numSlots;
    numPerCycle = numRetireablePerCycle;
@@ -20,7 +20,6 @@ ReorderBuffer::ReorderBuffer(unsigned int numSlots, unsigned int numRetireablePe
    retireSlot = 0;
    totalRetired = totalAnulled = 0;
    fullStalls = 0;
-	cpiStack = cpistack; 
    for (unsigned int i=0; i < numSlots; i++)
       tokenBuffer[i] = 0;
 }
@@ -129,46 +128,24 @@ int ReorderBuffer::updateStatus(CycleCount currentCycle)
       // don't show for fake buffer
       if(Debug>1)
       fprintf(stderr, "ROB: ROB Empty!\n");
-      cpiStack->totalBackend +=1.0; 
-		cpiStack->ROBEmpty +=1.0;   
       return 0;
    }			
 	
-	int emptySlots = 0; 
    // first check to see if numPerCycle can be retired -- a whole
    // reorder buffer line can be retired together
    for (i=0; i < numPerCycle; i++) {
       ix = (retireSlot+i) % numSlots;
-      if (tokenBuffer[ix] == 0) {
-         emptySlots++;
-         continue; // empty token
-      }
+      if (tokenBuffer[ix] == 0) continue; // empty token
       if (!tokenBuffer[ix] || !tokenBuffer[ix]->isCompleted(currentCycle) 
           || tokenBuffer[ix]->issuedAt() != retireIssueCycle )
          break;
    }
    canRetire = i;
-   // now if we can't retire the ROB line, account for cycles lost
-   // that is, identify the token that's not yet done, and see why
-   if (canRetire == 0 || canRetire != numPerCycle) { 
-      for (i=0; i <= canRetire; i++) {
-         ix = (retireSlot+i) % numSlots;
-         if (tokenBuffer[ix] == 0 || !tokenBuffer[ix] ) continue; // empty token
-         if (!tokenBuffer[ix]->isCompleted(currentCycle)) { // this token has not yet completed
-            tokenBuffer[ix]->updateCPIStack();
-            cpiStack->ROBNotReady +=1.0;   
-            break; // that's all
-         }
-       }
-      cpiStack->totalBackend +=1.0; 
-      return 0; // return from this function
-   }
-   // If I'm here, that means I have numPerCycle tokens that can be retired
-   // However, some of those are empty slots, so count lost cycle opportunities 
-   if(emptySlots>0) { 
-      cpiStack->totalBackend +=(double)(numPerCycle-emptySlots)/numPerCycle; 
-      cpiStack->ROBNotFull  +=(double)(numPerCycle-emptySlots)/numPerCycle;
-   }
+	//if(numPerCycle>1)
+	//fprintf(stderr, "OKAY, canRetire = %d and numPercycle= %d \n", canRetire, numPerCycle);
+   // there's nothing that can be retired now or not a whole line can retire
+   if (canRetire == 0 || canRetire != numPerCycle)  
+      return 0;
 
    // now retire the whole line, taking care if we encounter a
    // mispredicted branch

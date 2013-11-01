@@ -11,7 +11,7 @@ MEMDEBUGL =
 CXXFLAGS = -I. -Wall -O3 $(MEMDEBUGI)
 LDFLAGS = -g
 OBJECTS = FunctionalUnit.o InstructionQueue.o McOpteron.o Dependency.o MarkovModel.o Token.o InstructionInfo.o \
-          Random.o LoadStoreUnit.o MemoryModel.o ReorderBuffer.o ConfigVars.o OpteronDefs.o Random.o mersenne.o
+          Random.o LoadStoreUnit.o MemoryModel.o ReorderBuffer.o ConfigVars.o OpteronDefs.o
 
 mcopteron: $(OBJECTS)
 	$(CXX) $(LDFLAGS) $^ -o mcopteron $(MEMDEBUGL)

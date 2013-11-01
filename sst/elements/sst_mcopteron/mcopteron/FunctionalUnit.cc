@@ -6,13 +6,13 @@
 namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts as library
 /// @brief Constructor
 ///
-FunctionalUnit::FunctionalUnit(FunctionalUnitType _type, const char *_name, unsigned int _id)
+FunctionalUnit::FunctionalUnit(FunctionalUnitTypes type, const char *name, unsigned int id)
 {
    occupiedUntilCycle = 0;
    numFreeCycles = numOccupiedCycles = latestCycle = 0;
-   type = _type;
-   name = _name;
-   id = _id;
+   this->type = type;
+   this->name = name;
+   this->id = id;
    next = 0;
    occupied = false;
 }
@@ -44,7 +44,7 @@ FunctionalUnit* FunctionalUnit::getNext()
 
 
 /// @brief Retrieve unit type
-FunctionalUnitType FunctionalUnit::getType()
+FunctionalUnitTypes FunctionalUnit::getType()
 {
    return type;
 }

@@ -27,11 +27,11 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 class FunctionalUnit
 {
  public:
-   FunctionalUnit(FunctionalUnitType type, const char *name, unsigned int id);
+   FunctionalUnit(FunctionalUnitTypes type, const char *name, unsigned int id);
    ~FunctionalUnit();
    void setNext(FunctionalUnit *other);
    FunctionalUnit* getNext();
-   FunctionalUnitType getType();
+   FunctionalUnitTypes getType();
    CycleCount occupiedUntil(CycleCount atCycle);
    int occupy(CycleCount atCycle, CycleCount numCycles);
    int updateStatus(CycleCount currentCycle);
@@ -40,7 +40,7 @@ class FunctionalUnit
    double dutyCycle();
  private:
    const char *name;              ///< Name of this unit
-   FunctionalUnitType type;      ///< Type of this unit
+   FunctionalUnitTypes type;      ///< Type of this unit
    unsigned int id;               ///< Unique unit ID
    CycleCount occupiedUntilCycle; ///< Cycle that current insn is occupying this until
    bool occupied;                 ///< True if currently occupied

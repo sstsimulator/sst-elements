@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef __APPLE__
   //#ifdef __MACH__
@@ -20,12 +21,12 @@ InstructionInfo::InstructionInfo()
    name = operands = operation = decodeUnit = execUnits = 0;
    latency = throughputNum = throughputDem = memLatency = 0;
    occurProbability = loadProbability = storeProbability = 0.0;
-   category = Category::UNKNOWN;
+   category = UNKNOWN;
    isStackOp = false;
-   opSize = OperandSize::UNKNOWN; 
+   opSize = 0; 
    totalOccurs = actualOccurs = 0;
-   execUnitMask = FunctionalUnitType::UNKNOWN;
-   allowedDataDirs = DataDirection::UNKNOWN;
+   execUnitMask = 0;
+   allowedDataDirs = 0;
    next = 0;
    depHistograms = 0;
    op1[0] = '\0';   
@@ -34,8 +35,7 @@ InstructionInfo::InstructionInfo()
    info[0]= '\0';  
 	sourceOps = 0;   
 	mops = 1; // initial macro-ops
-  decodeUnitCost=0;//Scoggin: Init
-  actualDepDists=0;//Scoggin: Init
+
 }
 
 void InstructionInfo::allocateHistograms(unsigned int s) { 
@@ -73,17 +73,6 @@ InstructionInfo::InstructionInfo(const InstructionInfo& ii)
    next = 0;
    //for (int i=0; i < HISTOGRAMSIZE; i++)
    //   toUseHistogram[i] = 0.0;
-   //TODO: Fix following
-   //Scoggin: Init
-   for(int i=0;i<6;++i){
-     op1[i] = ii.op1[i];
-     op2[i] = ii.op2[i];
-     op3[i] = ii.op3[i];
-   }
-   for(int i=0;i<256;++i)
-     info[i] = ii.info[i];
-   sourceOps = ii.sourceOps;
-   mops= ii.mops;
 }
 
 
@@ -116,12 +105,12 @@ void InstructionInfo::dumpDebugInfo()
 ///
 unsigned int InstructionInfo::getMaxOpSize()
 {
-   if (opSize && OperandSize::OPSIZE128) return 128;
-   if (opSize && OperandSize::OPSIZE64) return 64;
-   if (opSize && OperandSize::OPSIZE32) return 32;
-   if (opSize && OperandSize::OPSIZE16) return 16;
-   if (opSize && OperandSize::OPSIZE8) return 8;
-   return 0; // never happen?
+   if (opSize & OPSIZE128) return 128;
+   if (opSize & OPSIZE64) return 64;
+   if (opSize & OPSIZE32) return 32;
+   if (opSize & OPSIZE16) return 16;
+   if (opSize & OPSIZE8) return 8;
+   return 64; // never happen?
 }
 
 double InstructionInfo::getAvgUseDist()
@@ -132,22 +121,21 @@ double InstructionInfo::getAvgUseDist()
 
 /// @brief Initializer
 ///
-// TODO: Check if _category and category are confused....
-void InstructionInfo::initStaticInfo(char *_name, char *_operands, char *_operation,
-                                     char *decodeUnit, char *execUnits, char *_category)
+void InstructionInfo::initStaticInfo(char *name, char *operands, char *operation,
+                                     char *decodeUnit, char *execUnits, char *category)
 {
-   if (_name) {
-      if (_name[0] == '*')
-         name = strdup(_name+1);
+   if (name) {
+      if (name[0] == '*')
+         this->name = strdup(name+1);
       else
-         name = strdup(_name);
+         this->name = strdup(name);
    }
    // Waleed: parse operands and save a simple form of operand 1,2, and 3
    // this is needed to simplify finding a record that match mnemonic, opSize, and operands
    // the operands must be simple such as reg, imm, mem only; the opSize takes care of the rest
-   if (_operands) { 
-      operands = strdup(_operands);
-      char *ops_cpy = strdup(_operands); 
+   if (operands) { 
+      this->operands = strdup(operands);
+      char *ops_cpy = strdup(operands); 
       char *op1 = strtok(ops_cpy, ",");
       char *op2 = strtok(0, ",");
       char *op3 = strtok(0, ",");
@@ -198,54 +186,54 @@ void InstructionInfo::initStaticInfo(char *_name, char *_operands, char *_operat
       free(ops_cpy);
    } // end processing operands
    
-   if (_operation) operation = strdup(_operation);
+   if (operation) this->operation = strdup(operation);
    if (decodeUnit) this->decodeUnit = strdup(decodeUnit);
    if (execUnits) this->execUnits = strdup(execUnits);
    // process exec units to figure out execution paths
    if (execUnits) {
       if (strstr(execUnits,"ALU0")) {
-         category = Category::MULTINT;
-         execUnitMask = FunctionalUnitType::ALU0;
+         this->category = MULTINT;
+         execUnitMask = ALU0;
       } else if (strstr(execUnits,"ALU2")) {
-         category = Category::SPECIALINT;
-         execUnitMask = FunctionalUnitType::ALU2;
+         this->category = SPECIALINT;
+         execUnitMask = ALU2;
       } else if (strstr(execUnits,"AGU")) {
-         category = Category::GENERICINT;
-         execUnitMask = FunctionalUnitType::AGU;
+         this->category = GENERICINT;
+         execUnitMask = AGU;
       } else if (strstr(execUnits,"FADD")) {
-         category = Category::FLOAT;
-         execUnitMask = FunctionalUnitType::FADD;
+         this->category = FLOAT;
+         execUnitMask = FADD;
       } else if (strstr(execUnits,"FMUL")) {
-         category = Category::FLOAT;
-         execUnitMask = FunctionalUnitType::FMUL;
+         this->category = FLOAT;
+         execUnitMask = FMUL;
       } else if (strstr(execUnits,"FSTORE")) {
-         category = Category::FLOAT;
-         execUnitMask = FunctionalUnitType::FSTORE;
+         this->category = FLOAT;
+         execUnitMask = FSTORE;
       } else {
-         category = Category::GENERICINT;
-         execUnitMask = FunctionalUnitType::ALU0 | FunctionalUnitType::ALU1 | FunctionalUnitType::ALU2;
+         this->category = GENERICINT;
+         execUnitMask = ALU0 | ALU1 | ALU2;
       }
    }
    // check if a stack instruction (these do not need to
    // use an AGU for address generation)
-   if (_operation && strstr(_operation, "STACK"))
+   if (operation && strstr(operation, "STACK"))
       isStackOp = true;
    // process operands to find data direction and size
-   while (_operands) { // really an if, but we want to use break
+   while (operands) { // really an if, but we want to use break
       char *dest, *src, *opcopy;
-      if (strstr(_operands,"128") || strstr(_operands,"xmm"))
-         opSize = opSize | OperandSize::OPSIZE128;
-      else if (strstr(_operands,"64") || (strstr(_operands,"mm") && !strstr(_operands,"imm")))
-         opSize = opSize | OperandSize::OPSIZE64;
-      else if (strstr(_operands,"32"))
-         opSize = opSize | OperandSize::OPSIZE32;
-      else if (strstr(_operands,"16"))
-         opSize = opSize | OperandSize::OPSIZE16;
-      else if (strstr(_operands,"8"))
-         opSize = opSize | OperandSize::OPSIZE8;
-      if (opSize == OperandSize::UNKNOWN)
-         opSize = opSize | OperandSize::OPSIZE64; // default
-      opcopy = strdup(_operands);
+      if (strstr(operands,"128") || strstr(operands,"xmm"))
+         opSize |= OPSIZE128;
+      else if (strstr(operands,"64") || (strstr(operands,"mm") && !strstr(operands,"imm")))
+         opSize |= OPSIZE64;
+      else if (strstr(operands,"32"))
+         opSize |= OPSIZE32;
+      else if (strstr(operands,"16"))
+         opSize |= OPSIZE16;
+      else if (strstr(operands,"8"))
+         opSize |= OPSIZE8;
+      if (!opSize)
+         opSize |= OPSIZE64; // default
+      opcopy = strdup(operands);
       dest = strtok(opcopy, ",");
       src = strtok(0,",");
       if (!dest) {
@@ -254,33 +242,33 @@ void InstructionInfo::initStaticInfo(char *_name, char *_operands, char *_operat
       }
       if (strstr(dest,"reg")) {
          if (!src) // unary op
-            allowedDataDirs = allowedDataDirs | DataDirection::IREG2IREG;
+            allowedDataDirs |= IREG2IREG;
          if (src && strstr(src,"reg"))
-            allowedDataDirs = allowedDataDirs | DataDirection::IREG2IREG;
+            allowedDataDirs |= IREG2IREG;
          if (src && strstr(src,"mem"))
-            allowedDataDirs = allowedDataDirs | DataDirection::MEM2IREG;
+            allowedDataDirs |= MEM2IREG;
          if (src && strstr(src,"mm"))
-            allowedDataDirs = allowedDataDirs | DataDirection::FREG2IREG;
+            allowedDataDirs |= FREG2IREG;
       }
       if (strstr(dest,"mm")) {
          if (!src) // unary op
-            allowedDataDirs = allowedDataDirs | DataDirection::FREG2FREG;
+            allowedDataDirs |= FREG2FREG;
          if (src && strstr(src,"reg"))
-            allowedDataDirs = allowedDataDirs | DataDirection::IREG2FREG;
+            allowedDataDirs |= IREG2FREG;
          if (src && strstr(src,"mem"))
-            allowedDataDirs = allowedDataDirs | DataDirection::MEM2FREG;
+            allowedDataDirs |= MEM2FREG;
          if (src && strstr(src,"mm"))
-            allowedDataDirs = allowedDataDirs | DataDirection::FREG2FREG;
+            allowedDataDirs |= FREG2FREG;
       }
       if (strstr(dest,"mem")) {
          if (!src) // unary op
-            allowedDataDirs = allowedDataDirs | DataDirection::MEM2MEM;
+            allowedDataDirs |= MEM2MEM;
          if (src && strstr(src,"reg"))
-            allowedDataDirs = allowedDataDirs | DataDirection::IREG2MEM;
+            allowedDataDirs |= IREG2MEM;
          if (src && strstr(src,"mem"))
-            allowedDataDirs = allowedDataDirs | DataDirection::MEM2MEM;
+            allowedDataDirs |= MEM2MEM;
          if (src && strstr(src,"mm"))
-            allowedDataDirs = allowedDataDirs | DataDirection::FREG2MEM;
+            allowedDataDirs |= FREG2MEM;
       }
       free(opcopy);
       break; // make the while an if
@@ -302,8 +290,8 @@ void InstructionInfo::initStaticInfo(char *_name, char *_operands, char *_operat
 
    if (Debug>2)
       fprintf(stderr, "IInfo-si: (%s) (%s)%u:%u (%s) (%s) (%u) (%s)\n",
-              _name, _operands, opSize, allowedDataDirs, decodeUnit, 
-              execUnits, _category, _operation);
+              this->name, operands, opSize, allowedDataDirs, decodeUnit, 
+              execUnits, this->category, operation);
 }
 
 /// @brief Initializer
@@ -311,8 +299,7 @@ void InstructionInfo::initStaticInfo(char *_name, char *_operands, char *_operat
 void InstructionInfo::initTimings(unsigned int baseLatency, unsigned int memLatency,
                                   unsigned int throughputNum, unsigned int throughputDem)
 {
-   //Waleed: add the memLatency to base latency, this is only for FP (X)MM instrs with mem ops
-   this->latency = baseLatency; //+memLatency;
+   this->latency = baseLatency;
    this->memLatency = memLatency;
    this->throughputNum = throughputNum;
    this->throughputDem = throughputDem;
@@ -338,20 +325,18 @@ InstructionInfo* InstructionInfo::accumProbabilities(unsigned int opSize,
                                double occurProb, unsigned long long occurs,
                                unsigned long long loads, unsigned long long stores, bool newiMix)
 {
-   //int i; //Scoggin: improper scope
-   OperandSize mopSize=OperandSize::UNKNOWN;
+   int i; unsigned int mopSize;
    InstructionInfo* ni;
    // if no occurs, don't do anything
    if (occurs == 0)
       return this;
-   mopSize = OperandSize::OPSIZE64;
-   if (opSize == 8)   mopSize = OperandSize::OPSIZE8;
-   else if (opSize == 16)  mopSize = OperandSize::OPSIZE16;
-   if (opSize == 32)  mopSize = OperandSize::OPSIZE32;
-   //else if (opSize == 64)  mopSize = OperandSize::OPSIZE64;
-   else if (opSize == 128) mopSize = OperandSize::OPSIZE128;
-
-   if (separateSizeRecords && (this->opSize != mopSize) && !newiMix) {
+   mopSize = OPSIZE64;
+   if (opSize == 8)   mopSize = OPSIZE8;
+   if (opSize == 16)  mopSize = OPSIZE16;
+   if (opSize == 32)  mopSize = OPSIZE32;
+   if (opSize == 64)  mopSize = OPSIZE64;
+   if (opSize == 128) mopSize = OPSIZE128;
+   if (separateSizeRecords && this->opSize != mopSize && !newiMix) {
       // new behavior: create a new info record for this size
       // -- assuming it is subsumed and we'll separate it out
       fprintf(stderr,"removing %s/%d from old record\n",name,opSize);
@@ -359,7 +344,7 @@ InstructionInfo* InstructionInfo::accumProbabilities(unsigned int opSize,
       ni->next = next;
       next = ni;
       ni->opSize = mopSize;
-      this->opSize = this->opSize & ~mopSize; // remove this opSize from old record
+      this->opSize &= ~mopSize; // remove this opSize from old record
       ni->accumProbabilities(opSize, occurProb, occurs, loads, stores);
       return ni;
    }
@@ -375,7 +360,7 @@ InstructionInfo* InstructionInfo::accumProbabilities(unsigned int opSize,
       if(!newiMix)       
          storeProbability = storeProbability * totalOccurs / (totalOccurs + occurs);
       for(unsigned int s=0; s<sourceOps; s++) {
-		   for (int i=0; i < HISTOGRAMSIZE; i++)
+		   for (i=0; i < HISTOGRAMSIZE; i++)
             depHistograms[s][i] = depHistograms[s][i] * totalOccurs / (totalOccurs + occurs);
       }
    }
@@ -426,7 +411,7 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
 {
    char *searchName=0; 
    char *p;
-   OperandSize opSize=OperandSize::UNKNOWN;
+   OperandSize opSize;
    InstructionInfo *it = this, *first = 0;
    if (!mnemonic) return 0;
    // convert all conditional jumps into a generic JCC
@@ -449,12 +434,12 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
    if ((p=strstr(searchName,"_XMM")))
       *p = '\0';
    switch (iOpSize) {
-    case 8: opSize = OperandSize::OPSIZE8; break;
-    case 16: opSize = OperandSize::OPSIZE16; break;
-    case 32: opSize = OperandSize::OPSIZE32; break;
-    //case 64: opSize = OperandSize::OPSIZE64; break;
-    case 128: opSize = OperandSize::OPSIZE128; break;
-    default: opSize = OperandSize::OPSIZE64; 
+    case 8: opSize = OPSIZE8; break;
+    case 16: opSize = OPSIZE16; break;
+    case 32: opSize = OPSIZE32; break;
+    case 64: opSize = OPSIZE64; break;
+    case 128: opSize = OPSIZE128; break;
+    default: opSize = OPSIZE64; 
    }
    if (Debug>2) fprintf(stderr, "findII: searching for (%s)...", searchName);
    first = 0;
@@ -462,7 +447,7 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
       if (!strcmp(it->name, searchName)) {
          if (!first)
             first = it;
-         if (opSize && it->opSize) // matched name and op size, so done!
+         if (opSize & it->opSize) // matched name and op size, so done!
             break;
       }
       it = it->next;
@@ -519,12 +504,12 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
 	searchName = strdup(mnemonic);
 
    switch (iOpSize) {
-   case 8: opSize = OperandSize::OPSIZE8; break;
-    case 16: opSize = OperandSize::OPSIZE16; break;
-    case 32: opSize = OperandSize::OPSIZE32; break;
-    //case 64: opSize = OperandSize::OPSIZE64; break;
-    case 128: opSize = OperandSize::OPSIZE128; break;
-    default: opSize = OperandSize::OPSIZE64; 
+    case 8: opSize = OPSIZE8; break;
+    case 16: opSize = OPSIZE16; break;
+    case 32: opSize = OPSIZE32; break;
+    case 64: opSize = OPSIZE64; break;
+    case 128: opSize = OPSIZE128; break;
+    default: opSize = OPSIZE64; 
    }
    if (Debug>2) 
       fprintf(stderr, "findII: searching for %s %s %s %s and opSize %u\n", searchName, opp1, opp2, opp3, opSize);
@@ -539,7 +524,7 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
          // match based on operands
          if(!strcmp(it->op1, opp1) && !strcmp(it->op2, opp2) && !strcmp(it->op3, opp3) ) { 
             // match also based on opSize
-            if (opSize && it->opSize) { 
+            if (opSize & it->opSize) { 
                flag = 0; 
                break;
             }   
@@ -566,7 +551,7 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
             // match based on operands
             if(!strcmp(it->op1, opp1) && !strcmp(it->op2, opp2) && !strcmp(it->op3, opp3) ) { 
                // match also based on opSize
-               if (opSize && it->opSize) { 
+               if (opSize & it->opSize) { 
                   flag = 0; 
                   break;
                }   
@@ -589,7 +574,7 @@ InstructionInfo* InstructionInfo::findInstructionRecord(const char *mnemonic,
             // match based on operands
             if(!strcmp(it->op1, opp1) && !strcmp(it->op2, opp2) && !strcmp(it->op3, opp3) ) { 
                // match also based on opSize
-               if (opSize && it->opSize) { 
+               if (opSize & it->opSize) { 
                   flag = 0; 
                   break;
                }   
@@ -625,9 +610,8 @@ unsigned int InstructionInfo::findInstructionRecord(const char *mnemonic,
 {
    char *searchName=0; 
    char *p;
-   OperandSize opSize = OperandSize::UNKNOWN;
-   InstructionInfo *it = this;
-   //InstructionInfo *first = 0; //Scoggin: never used
+   OperandSize opSize;
+   InstructionInfo *it = this, *first = 0;
    if (!mnemonic) return 0;
    // convert all conditional jumps into a generic JCC
    if (mnemonic[0] == 'J' && strcmp(mnemonic,"JMP") && !strstr(mnemonic,"CXZ"))
@@ -649,19 +633,19 @@ unsigned int InstructionInfo::findInstructionRecord(const char *mnemonic,
    if ((p=strstr(searchName,"_XMM")))
       *p = '\0';
    switch (iOpSize) {
-   case 8: opSize = OperandSize::OPSIZE8; break;
-    case 16: opSize = OperandSize::OPSIZE16; break;
-    case 32: opSize = OperandSize::OPSIZE32; break;
-    //case 64: opSize = OperandSize::OPSIZE64; break;
-    case 128: opSize = OperandSize::OPSIZE128; break;
-    default: opSize = OperandSize::OPSIZE64; 
+    case 8: opSize = OPSIZE8; break;
+    case 16: opSize = OPSIZE16; break;
+    case 32: opSize = OPSIZE32; break;
+    case 64: opSize = OPSIZE64; break;
+    case 128: opSize = OPSIZE128; break;
+    default: opSize = OPSIZE64; 
    }
    if (Debug>2) fprintf(stderr, "findII: searching for (%s)...", searchName);
-   //first = 0; //Scoggin: Never Used
+   first = 0;
    int counter=0; 
    while (it) {
       // match based on mnemonic and opSize and add found record to result array
-      if (!strcmp(it->name, searchName) && (opSize && it->opSize)) 
+      if (!strcmp(it->name, searchName) && (opSize & it->opSize)) 
          founds[counter++] = it;      
       it = it->next;
    }

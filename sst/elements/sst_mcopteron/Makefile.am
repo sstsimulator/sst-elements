@@ -4,7 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) \
-	$(MPI_CPPFLAGS) -DNOTSTANDALONE -std=c++11
+	$(MPI_CPPFLAGS) -DNOTSTANDALONE
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsst_mcopteron.la
@@ -23,7 +23,6 @@ libsst_mcopteron_la_SOURCES = \
 	mcopteron/LoadStoreUnit.cc \
 	mcopteron/Random.cc \
 	mcopteron/MarkovModel.cc \
-	mcopteron/OpteronDefs.cc \
-	mcopteron/mersenne.cc
+	mcopteron/OpteronDefs.cc
 
 libsst_mcopteron_la_LDFLAGS = -module -avoid-version

@@ -18,7 +18,7 @@ class Token
 {
  public:
    Token(InstructionInfo *type, InstructionCount number,
-         CycleCount atCycle, bool isFake, CPIStack *cpiStack);
+         CycleCount atCycle, bool isFake);
    Token(CycleCount atCycle);	// create empty token
    ~Token();
    void dumpDebugInfo();
@@ -57,13 +57,6 @@ class Token
    bool isMispredictedJump();
    void retireInstruction(CycleCount atCycle);
    void cancelInstruction(CycleCount atCycle);
-   void updateCPIStack();
-   void setDTLB1(bool c) { dtlb1 = c; }
-   void setDTLB2(bool c) { dtlb2 = c; }
-   void setL1(bool c) { L1 = c; }
-   void setL2(bool c) { L2 = c; }
-   void setL3(bool c) { L3 = c; }
-   void setMem(bool c) { mem = c; }
    static unsigned int totalTokensCreated, totalTokensDeleted;
    static InstructionCount lastTokenDone; 
  private:
@@ -80,8 +73,7 @@ class Token
    bool fake;
    bool canceled;         ///< True if was canceled
    bool retired;             ///< True if was retired
-   bool loadSatisfied;        ///< True if load data has been fetched from cache or memory
-   bool storeSatisfied;       ///< True if store has been issued from the LSQ
+   bool loadSatisfied;
    bool hasAddressOperand;   ///< True if insn needs address generated
    bool addressGenerated;    ///< True if address has already been generated
    bool hasLoad;             ///< True if insn does a memory load
@@ -89,14 +81,6 @@ class Token
    bool completed;           ///< True if instruction has finished
    Dependency *inDependency;  ///< record for input dependencies
    bool wasMispredicted;     ///< True if this is a branch and it was mispredicted
-   CPIStack *cpiStack;       ///< A pointer to the CPI stack variable in McOpteron
-   // variables for CPI stack
-   bool dtlb1;
-   bool dtlb2;
-   bool L1;
-   bool L2;
-   bool L3;
-   bool mem;
 };
 }//end namespace McOpteron
 #endif
