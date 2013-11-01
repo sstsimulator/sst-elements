@@ -77,7 +77,7 @@ void readDelaysIntoMap( boost::tokenizer< boost::escaped_list_separator<char> > 
         if (upperLatencyBound < lowerLatencyBound){
             //std::cerr << "nodeNum " << nodeNum << "'s fault delay upper bound is lower than its lower bound: " << tokens.at(counter) << ", " << tokens.at(counter + 1) << ", " << tokens.at(counter + 2) <<  std::endl;
             //error("Bad delay bounds");
-            schedout.fatal(CALL_INFO, 1, 0, 0, "nodeNum %d's fault delay upper bound is lower than its lower bound: %s, %s, %s\nBad delay bounds", nodeNum, tokens.at(counter).c_str(), tokens.at(counter + 1).c_str(), tokens.at(counter + 2).c_str());
+            schedout.fatal(CALL_INFO, 1, "nodeNum %d's fault delay upper bound is lower than its lower bound: %s, %s, %s\nBad delay bounds", nodeNum, tokens.at(counter).c_str(), tokens.at(counter + 1).c_str(), tokens.at(counter + 2).c_str());
         }
 
         FaultLatencyBounds -> insert(std::pair<std::string, std::pair<unsigned int, unsigned int> >(faultName, std::pair<unsigned int, unsigned int>(lowerLatencyBound, upperLatencyBound)));
@@ -127,7 +127,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
     }
 
     if(!( (((int) ChildFaultLinks.size()) > 0) || Scheduler) ){
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Node number %d has neither children nor a link to the scheduler.\nInvalid node", nodeNum);
+        schedout.fatal(CALL_INFO, 1, "Node number %d has neither children nor a link to the scheduler.\nInvalid node", nodeNum);
         //std::cerr << "Node number " << nodeNum << " has neither children nor a link to the scheduler." << std::endl;
         //error("Invalid node");
     }
@@ -199,7 +199,7 @@ void nodeComponent::addLink(SST::Link * link, enum linkTypes type){
 
 void nodeComponent::rmLink(SST::Link * link, enum linkTypes type)
 {
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Can't remove links just yet\n");
+    schedout.fatal(CALL_INFO, 1, "Can't remove links just yet\n");
     //internal_error("Can't remove links just yet\n");
 }
 
@@ -365,7 +365,7 @@ void nodeComponent::handleEvent(Event *ev) {
             jobNum = event -> jobNum;
             SelfLink -> send(event -> time, event); 
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Error?! Already running a job, but given a new one!\n");
+            schedout.fatal(CALL_INFO, 1, "Error?! Already running a job, but given a new one!\n");
             //internal_error("Error?! Already running a job, but given a new one!\n");
         }
     } else if(dynamic_cast<FaultEvent*>(ev)){
@@ -379,7 +379,7 @@ void nodeComponent::handleEvent(Event *ev) {
         //char errorMessage[1024];
         //snprintf(errorMessage, 1023,"Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
         //internal_error(errorMessage);
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Error! Bad Event Type %s\n", typeid( *ev ).name());
+        schedout.fatal(CALL_INFO, 1, "Error! Bad Event Type %s\n", typeid( *ev ).name());
     }
 }
 
@@ -397,7 +397,7 @@ void nodeComponent::handleSelfEvent(Event *ev)
             Scheduler -> send(ec); 
             jobNum = -1;
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Error!! We are not running this job we're supposed to finish!\n");
+            schedout.fatal(CALL_INFO, 1, "Error!! We are not running this job we're supposed to finish!\n");
             //internal_error("Error!! We are not running this job we're supposed to finish!\n");
         }
         delete ev;
@@ -422,7 +422,7 @@ void nodeComponent::handleSelfEvent(Event *ev)
         //char errorMessage[1024];
         //snprintf(errorMessage, 1023, "Error! Bad Event Type %s in %s in %s:%d\n", typeid( *ev ).name(), __func__, __FILE__, __LINE__ );
         //internal_error(errorMessage);
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Error! Bad Event Type %s\n", typeid( *ev ).name());
+        schedout.fatal(CALL_INFO, 1, "Error! Bad Event Type %s\n", typeid( *ev ).name());
     }
 }
 
@@ -446,7 +446,7 @@ SimTime_t genexp(double lambda, unsigned short int * seed)
 void nodeComponent::sendNextFault(std::string faultType)
 {
     if (Faults.find( faultType.c_str() ) == Faults.end()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Error, recieved a fault with a type that is unknown.\n");
+        schedout.fatal(CALL_INFO, 1, "Error, recieved a fault with a type that is unknown.\n");
         //internal_error("Error, recieved a fault with a type that is unknown.\n");
     }
 

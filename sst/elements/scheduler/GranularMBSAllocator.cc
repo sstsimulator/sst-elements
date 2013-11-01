@@ -161,7 +161,7 @@ Block* GranularMBSAllocator::nextBlock(int d, Block* first)
 {
     if (d < 0 || d > 2) {
         //error("Index out of bounds in nextBlock");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Index out of bounds in nextBlock");
+        schedout.fatal(CALL_INFO, 1, "Index out of bounds in nextBlock");
     }
     if (d == 0) {
         return lookX(first);
@@ -173,7 +173,7 @@ Block* GranularMBSAllocator::nextBlock(int d, Block* first)
         return lookZ(first);
     }
     //error("nextBlock returning NULL!");
-    schedout.fatal(CALL_INFO, 1, 0, 0, "nextBlock returning NULL!");
+    schedout.fatal(CALL_INFO, 1, "nextBlock returning NULL!");
     return NULL;
 }
 
@@ -209,7 +209,7 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
 
     if (haystack -> count(needle) == 0){
         //error("nextBlock not currently in FBR");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "nextBlock not currently in FBR");
+        schedout.fatal(CALL_INFO, 1, "nextBlock not currently in FBR");
         return NULL;
     }
 
@@ -217,14 +217,14 @@ Block* GranularMBSAllocator::FBRGet(Block* needle)
     std::set<Block*, Block>::iterator it = haystack -> begin();
     if (it == haystack -> end()) {
         //error("no blocks of correct rank in FBR when searching for nextBlock");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "no blocks of correct rank in FBR when searching for nextBlock");
+        schedout.fatal(CALL_INFO, 1, "no blocks of correct rank in FBR when searching for nextBlock");
         return NULL;
     }
     retVal = *it;
     while (!needle -> equals(retVal)) {
         if (it == haystack -> end()) {
             //error("nextBlock not found in correct rank of FBR");
-            schedout.fatal(CALL_INFO, 1, 0, 0, "nextBlock not found in correct rank of FBR");
+            schedout.fatal(CALL_INFO, 1, "nextBlock not found in correct rank of FBR");
             return NULL;
         }
         ++it;
@@ -238,7 +238,7 @@ Block* GranularMBSAllocator::mergeBlocks(Block* first, Block* second)
 {
     if (first -> equals(second) || !first -> dimension -> equals(second -> dimension)){
         //error("merging two idential blocks, or blocks of different sizes");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "merging two idential blocks, or blocks of different sizes");
+        schedout.fatal(CALL_INFO, 1, "merging two idential blocks, or blocks of different sizes");
     }
     //do some std::setup
     MeshLocation* dimension = new MeshLocation(0,0,0);

@@ -123,7 +123,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
 
                     if ((NULL == (MachineMesh*)machine) && ((ALLOC == i) || (VISUAL == i))) {
                         //error(string(logName) + " log only implemented for meshes");
-                        schedout.fatal(CALL_INFO, 1, 0, 0, "%s log only implemented for meshes", string(logName).c_str());
+                        schedout.fatal(CALL_INFO, 1, "%s log only implemented for meshes", string(logName).c_str());
                     }
 
                     initializeLog(logName);
@@ -146,7 +146,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
 
                     if ((NULL == (MachineMesh*)machine) && ((ALLOC == i) || (VISUAL == i))) {
                         //error(string(logName) + " log only implemented for meshes");
-                        schedout.fatal(CALL_INFO, 1, 0, 0, "%s log only implemented for meshes", string(logName).c_str());
+                        schedout.fatal(CALL_INFO, 1, "%s log only implemented for meshes", string(logName).c_str());
                     }
 
                     initializeLog(logName);
@@ -167,7 +167,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc,
         }
         if (!found) {
             //error(string("invalid log name: ") + logName);
-            schedout.fatal(CALL_INFO, 1, 0, 0, "%s%s", string("invalid log name: ").c_str(), logName);
+            schedout.fatal(CALL_INFO, 1, "%s%s", string("invalid log name: ").c_str(), logName);
         }
 
         logName = strtok(NULL, ",");
@@ -373,7 +373,7 @@ void Statistics::initializeLog(string extension)
         file << fileHeader;
     } else {
         //error("Unable to open file " + name);
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Unable to open file %s", name.c_str());
+        schedout.fatal(CALL_INFO, 1, "Unable to open file %s", name.c_str());
     }
     file.close();
 }
@@ -386,7 +386,7 @@ void Statistics::appendToLog(string mesg, string extension)
         file << mesg;
     } else {
         //error("Unable to open file " + name);
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Unable to open file %s", name.c_str());
+        schedout.fatal(CALL_INFO, 1, "Unable to open file %s", name.c_str());
     }
     file.close();
 }

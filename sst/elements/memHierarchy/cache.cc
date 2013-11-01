@@ -2399,7 +2399,7 @@ void Cache::BusQueue::clearToSend(BusEvent *busEvent)
                 Bus::key_t key = makeBusKey(*i);
                 comp->dbg.output(CALL_INFO, "%s:  Bus Queue:  (%"PRIu64", %d)\n", comp->getName().c_str(), key.first, key.second);
                 if (busEvent->getKey() == key) {
-                    comp->dbg.fatal(CALL_INFO, 0, 0, 0,  "%s: Bus asked for event (%"PRIu64", %d), which is in the queue, but not at the top.  This should not happen.\n",
+                    comp->dbg.fatal(CALL_INFO, 0, "%s: Bus asked for event (%"PRIu64", %d), which is in the queue, but not at the top.  This should not happen.\n",
                             comp->getName().c_str(), busEvent->getKey().first, busEvent->getKey().second);
                 }
             }

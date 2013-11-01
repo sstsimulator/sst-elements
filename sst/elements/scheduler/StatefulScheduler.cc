@@ -161,7 +161,7 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
             for (vector<Job*>::iterator it2 = inrunning -> begin(); !found && it2 != inrunning -> end(); it2++) {
                 schedout.output("%s\n", (*it2) -> toString().c_str());
             } 
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find deep copy for %s\nwhen copying StatefulScheduler estSched for FST\n", (*it) -> j -> toString().c_str());
+            schedout.fatal(CALL_INFO, 1, "Could not find deep copy for %s\nwhen copying StatefulScheduler estSched for FST\n", (*it) -> j -> toString().c_str());
         }
     } 
     //now the SchedChanges in newEstSched are not pointing to their correct partner (they're pointing to the old version)
@@ -183,7 +183,7 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
                 } 
                 schedout.output("===========================================\n");
                 (*it)->print();
-                schedout.fatal(CALL_INFO, 1, 0, 0, "Was not able to find partner\n"); 
+                schedout.fatal(CALL_INFO, 1, "Was not able to find partner\n"); 
             }
         }
     }
@@ -219,7 +219,7 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
         }
         if (!found) {
             printPlan();
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find deep copy for %s\nwhen copying StatefulScheduler jobToEvents for FST\n", it -> first -> toString().c_str());
+            schedout.fatal(CALL_INFO, 1, "Could not find deep copy for %s\nwhen copying StatefulScheduler jobToEvents for FST\n", it -> first -> toString().c_str());
         }
     }
 
@@ -251,7 +251,7 @@ void SchedChange::print()
 
 SchedChange::SchedChange(unsigned long intime, Job* inj, bool end, SchedChange* inpartner) 
 {
-    if (NULL == inpartner && !end) schedout.fatal(CALL_INFO, 1, 0, 0, "Schedchange beginning not given partner");
+    if (NULL == inpartner && !end) schedout.fatal(CALL_INFO, 1, "Schedchange beginning not given partner");
     partner = inpartner;
     time = intime;
     j = inj;
@@ -419,7 +419,7 @@ unsigned long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched
         } else { //ran out of changes before anchor point so can use it
             if (currentFree != numProcs) {
                 printPlan();
-                schedout.fatal(CALL_INFO, 1, 0, 0, "Scheduler got to end of estimated schedule with %d processors free out of %d total\n", currentFree, numProcs);
+                schedout.fatal(CALL_INFO, 1, "Scheduler got to end of estimated schedule with %d processors free out of %d total\n", currentFree, numProcs);
             }
             done = true;
         }
@@ -505,7 +505,7 @@ unsigned long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched
         avaProcs += procsChangeDueToZero;
         if (avaProcs != numProcs) {
             printPlan();
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Scheduler got to end of estimated schedule w/o all processors being free");
+            schedout.fatal(CALL_INFO, 1, "Scheduler got to end of estimated schedule w/o all processors being free");
         }
     }
     return lookAtTime;
@@ -523,10 +523,10 @@ void StatefulScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
         unsigned long scTime = sc -> getTime();
         if (scTime < time) {
             printPlan();
-            schedout.fatal(CALL_INFO, 1, 0, 0, "expecting events in the past");
+            schedout.fatal(CALL_INFO, 1, "expecting events in the past");
         }
         if (sc -> j -> getJobNum() == j -> getJobNum()) {
-            if (!sc -> isEnd) schedout.fatal(CALL_INFO, 1, 0, 0, "Job finished before scheduler started it");
+            if (!sc -> isEnd) schedout.fatal(CALL_INFO, 1, "Job finished before scheduler started it");
             success = true;
             freeProcs += j -> getProcsNeeded();
             estSched -> erase(sc);
@@ -539,7 +539,7 @@ void StatefulScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
         }
     }
     heart -> earlyFinish(j,time);
-    if (!success) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find finishing job in running list");
+    if (!success) schedout.fatal(CALL_INFO, 1, "Could not find finishing job in running list");
     delete sc;
 }
 
@@ -591,7 +591,7 @@ AllocInfo* StatefulScheduler::tryToStart(Allocator* alloc, unsigned long time, M
         unsigned long scTime = sc -> getTime();
         if (scTime < time) {
             printPlan();
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Expecting events in the past");
+            schedout.fatal(CALL_INFO, 1, "Expecting events in the past");
         }
         if (scTime > time) {
             schedout.debug(CALL_INFO, 7, 0, "returning null\n");
@@ -642,7 +642,7 @@ StatefulScheduler::JobComparator* StatefulScheduler::JobComparator::Make(string 
             return new StatefulScheduler::JobComparator(compTable[i].val);
         }
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Cannot find the comparator named:%s", typeName.c_str());
+    schedout.fatal(CALL_INFO, 1, "Cannot find the comparator named:%s", typeName.c_str());
     return NULL;
 }
 
@@ -680,7 +680,7 @@ void StatefulScheduler::Manager::compress(unsigned long time)
             unsigned long scTime = sc -> getTime();
             //scheduleJob will create two new SchedChanges and add them to EstSched
             unsigned long newStartTime = scheduler -> scheduleJob(sc -> j, time);
-            if (newStartTime > scTime) schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to delay estimated start of Job");
+            if (newStartTime > scTime) schedout.fatal(CALL_INFO, 1, "Attempt to delay estimated start of Job");
             delete sc; 
         } else if (NULL == sc -> j) {
             //these were duplicated; if not null it was copied directly and we don't want to delete it
@@ -732,7 +732,7 @@ StatefulScheduler::PrioritizeCompressionManager* StatefulScheduler::PrioritizeCo
         }
         if (!found) notfound++;
     }
-    if (notfound > 1) schedout.fatal(CALL_INFO, 1, 0, 0, "Prioritize Compression Manager could not find two jobs for its new backfill in copy()");
+    if (notfound > 1) schedout.fatal(CALL_INFO, 1, "Prioritize Compression Manager could not find two jobs for its new backfill in copy()");
     return new PrioritizeCompressionManager(this, newbackfill);
 }
 
@@ -783,7 +783,7 @@ void StatefulScheduler::PrioritizeCompressionManager::earlyFinish(Job* j, unsign
                 }
                 schedout.verbose(CALL_INFO, 4, 0, "old: %ld, new:%ld\nbackfilling: %s\n", oldTime, newTime, (*it) -> toString().c_str());
                 oldStartTime -> print();
-                schedout.fatal(CALL_INFO, 1, 0, 0, "PrioritizeCompression Backfilling gave a new reservation that was later than previous one");
+                schedout.fatal(CALL_INFO, 1, "PrioritizeCompression Backfilling gave a new reservation that was later than previous one");
             }
             delete oldStartTime;
 
@@ -843,7 +843,7 @@ StatefulScheduler::DelayedCompressionManager* StatefulScheduler::DelayedCompress
         }
         if (!found) notfound++;
     }
-    if (notfound > 1) schedout.fatal(CALL_INFO, 1, 0, 0, "Delayed Compression Manager could not find two jobs for its new backfill in copy()");
+    if (notfound > 1) schedout.fatal(CALL_INFO, 1, "Delayed Compression Manager could not find two jobs for its new backfill in copy()");
     return new DelayedCompressionManager(this, newbackfill);
 }
 
@@ -983,7 +983,7 @@ StatefulScheduler::EvenLessManager::EvenLessManager(EvenLessManager* inmanager, 
     //       }
     //       if (!found) notfound++;
     //   }
-    //   if (notfound > 1) schedout.fatal(CALL_INFO, 1, 0, 0, "Prioritize Compression Manager could not find two jobs for its new backfill in copy()");
+    //   if (notfound > 1) schedout.fatal(CALL_INFO, 1, "Prioritize Compression Manager could not find two jobs for its new backfill in copy()");
     //   return new PrioritizeCompressionManager(this, newbackfill);
 
     scheduler = inmanager -> scheduler;
@@ -1010,7 +1010,7 @@ StatefulScheduler::EvenLessManager* StatefulScheduler::EvenLessManager::copy(std
         }
         if (!found) notfound++;
     }
-    if (notfound > 1) schedout.fatal(CALL_INFO, 1, 0, 0, "Even Less Conservative Manager could not find two jobs for its new backfill in copy()");
+    if (notfound > 1) schedout.fatal(CALL_INFO, 1, "Even Less Conservative Manager could not find two jobs for its new backfill in copy()");
     EvenLessManager* ret = new EvenLessManager(this, newbackfill);
     //must match pointers in gJTE and backfill because we will later index into
     //gJTE using the job pointer from backfill; also fill in guarantee 
@@ -1041,7 +1041,7 @@ StatefulScheduler::EvenLessManager* StatefulScheduler::EvenLessManager::copy(std
                 tempsched -> print();
             }
         }
-        if (!found) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find %s in new backfill\n", it -> first -> toString().c_str());
+        if (!found) schedout.fatal(CALL_INFO, 1, "Could not find %s in new backfill\n", it -> first -> toString().c_str());
     } 
     printPlan();
     ret -> printPlan();
@@ -1182,7 +1182,7 @@ void StatefulScheduler::EvenLessManager::backfillfunc(unsigned long time)
             } else if (start > old) {
                 schedout.output("%lu: Backfilling error, plan:\n", time);
                 scheduler -> printPlan();
-                schedout.fatal(CALL_INFO, 1, 0, 0, "ELC gave a worse start time to %s. Old: %lu, New: %lu\n", (*it)->toString().c_str(), old, start);
+                schedout.fatal(CALL_INFO, 1, "ELC gave a worse start time to %s. Old: %lu, New: %lu\n", (*it)->toString().c_str(), old, start);
             } else {
                 scheduler -> printPlan();
                 schedout.debug(CALL_INFO, 7, 0, "Unable to backfill\n");
@@ -1255,10 +1255,10 @@ void StatefulScheduler::EvenLessManager::onTimeFinish(Job* j, unsigned long time
         for (map<Job*, SchedChange*, JobComparator>::iterator it = guarJobToEvents -> begin(); it != guarJobToEvents -> end(); it++) {
             it -> second -> print();
         }
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find %s in guarJobToEvents\n", j -> toString().c_str());
+        schedout.fatal(CALL_INFO, 1, "Could not find %s in guarJobToEvents\n", j -> toString().c_str());
     }
     SchedChange* sc = guarJobToEvents -> find(j) -> second;
-    if (sc == NULL) schedout.fatal(CALL_INFO, 1, 0, 0, "SchedChange for %s is %p", j -> toString().c_str(), sc);
+    if (sc == NULL) schedout.fatal(CALL_INFO, 1, "SchedChange for %s is %p", j -> toString().c_str(), sc);
     guarantee -> erase(sc);
     guarJobToEvents -> erase(j);
     /*
@@ -1395,7 +1395,7 @@ bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
         return j2 -> getJobNum() > j1 -> getJobNum();
 
     default:
-        schedout.fatal(CALL_INFO, 1, 0, 0, "operator() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, "operator() called on JobComparator w/ invalid type");
         return true; //never reach here
     }
 }
@@ -1417,7 +1417,7 @@ string StatefulScheduler::JobComparator::toString()
     case BETTERFIT:
         return "BestFitComparator";
     default:
-        schedout.fatal(CALL_INFO, 1, 0, 0, "toString() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, "toString() called on JobComparator w/ invalid type");
     }
     return ""; //never reach here...
 }

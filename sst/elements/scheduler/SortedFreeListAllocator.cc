@@ -39,7 +39,7 @@ SortedFreeListAllocator::SortedFreeListAllocator(std::vector<std::string>* param
     //}
     schedout.debug(CALL_INFO, 1, 0, "Constructing SortedFreeListAllocator\n");
     if (NULL == dynamic_cast<MachineMesh*>(mach)) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a mesh");
+        schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
     }
 }
 

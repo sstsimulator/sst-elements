@@ -59,7 +59,7 @@ int LinearAllocator::MeshLocationOrdering::valtox(int x, int xoff, int y, int yo
     case 2: return x - mirror * xoff;
     case 3: return x + mirror * yoff;
             //default: error("rotate value too large in LinearAllocator.cc:" + rotate);
-    default: schedout.fatal(CALL_INFO, 1, 0, 0, "rotate value too large in LinearAllocator.cc: %d", rotate);
+    default: schedout.fatal(CALL_INFO, 1, "rotate value too large in LinearAllocator.cc: %d", rotate);
              return 0;
     } 
 }
@@ -72,7 +72,7 @@ int LinearAllocator::MeshLocationOrdering::valtoy(int x, int xoff, int y, int yo
     case 2: return y - mirror * yoff;
     case 3: return y + mirror * xoff;
             //default: error("rotate value too large in LinearAllocator.cc:" + rotate);
-    default: schedout.fatal(CALL_INFO, 1, 0, 0, "rotate value too large in LinearAllocator.cc: %d", rotate);
+    default: schedout.fatal(CALL_INFO, 1, "rotate value too large in LinearAllocator.cc: %d", rotate);
              return 0;
     } 
 }
@@ -247,7 +247,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
 {
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     //if (NULL == m) error("Linear Allocators Require Mesh Machine");
-    if (NULL == m) schedout.fatal(CALL_INFO, 1, 0, 0, "Linear Allocators Require Mesh Machine");
+    if (NULL == m) schedout.fatal(CALL_INFO, 1, "Linear Allocators Require Mesh Machine");
 
     if (SORT) {
         set<int> dimordering;
@@ -318,7 +318,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
 
             while(curxd > 1 && curyd > 1) {
                 if ((curxd % 2 != 0 && 1 != curxd) || (curyd % 2 != 0 && 1 != curyd))
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "Hilbert Curve requires dimensions to be powers of two currently");
+                    schedout.fatal(CALL_INFO, 1, "Hilbert Curve requires dimensions to be powers of two currently");
                 //error("Hilbert Curve requires dimensions to be powers of two currently");
 
                 //mark the four points appropriately
@@ -631,7 +631,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 for (int index = 0; index < xdim * ydim * zdim; index++) {
                     if(rank[index] == rankin) {
                         if (flag) {
-                            schedout.fatal(CALL_INFO, 1, 0, 0, "error: double");
+                            schedout.fatal(CALL_INFO, 1, "error: double");
                         }
                         schedout.debug(CALL_INFO, 4, 0, "(%d,%d,%d),  ", index % xdim, (index % (xdim * ydim)) / xdim, index / (xdim * ydim));
                         if ((rankin + 1) % xdim == 0) schedout.debug(CALL_INFO, 4, 0, "\n");
@@ -640,7 +640,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                     }
                 }
                 if (!flag) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "error: %d not found", rankin);
+                    schedout.fatal(CALL_INFO, 1, "error: %d not found", rankin);
                 }
             } 
 
@@ -731,7 +731,7 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
     schedout.init("", 8, 0, Output::STDOUT);
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a MachineMesh* machine");
+        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MachineMesh* machine");
         //error("Linear allocators require a MachineMesh* machine");
     }
 
@@ -753,7 +753,7 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
         } else if ("snake" == params -> at (0)) {
             hilbert = false;
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Argument to Linear Allocator must be sort, nosort, hilbert, or snake:%s", params -> at(0).c_str());
+            schedout.fatal(CALL_INFO, 1, "Argument to Linear Allocator must be sort, nosort, hilbert, or snake:%s", params -> at(0).c_str());
         }
         break;
     case 2:
@@ -762,14 +762,14 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach)
         } else if ("nosort" == params -> at(0)) {
             sort = false;
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "First argument to Linear Allocator must be sort or nosort:%s", params -> at(0).c_str());
+            schedout.fatal(CALL_INFO, 1, "First argument to Linear Allocator must be sort or nosort:%s", params -> at(0).c_str());
         }
         if ("hilbert" == params -> at (1)) {
             hilbert = true;
         } else if ("snake" == params -> at (1)) {
             hilbert = false;
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Second argument to Linear Allocator must be hilbert or snake:%s", params -> at(1).c_str());
+            schedout.fatal(CALL_INFO, 1, "Second argument to Linear Allocator must be hilbert or snake:%s", params -> at(1).c_str());
         }
         break;
     }

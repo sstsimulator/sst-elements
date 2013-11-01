@@ -142,7 +142,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::processRequest(map<int,int>* RBR, Job* jo
 
         //if there exists blocks in FBR to support, add it
         if (key >= (int)FBR -> size())
-            schedout.fatal(CALL_INFO, 1, 0, 0, "key in RBR does not correspond to FBR");
+            schedout.fatal(CALL_INFO, 1, "key in RBR does not correspond to FBR");
 
         int numberAvailable = FBR -> at(key) -> size();
 
@@ -319,7 +319,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocateBlocks(MBSMeshAllocInfo* retVal, 
  */
 map<int,int>* RoundUpMBSAllocator::reduceRequest(int key, int value)
 {
-    if (key <= 0) schedout.fatal(CALL_INFO, 1, 0, 0, "can't factor a requested block of rank 0");
+    if (key <= 0) schedout.fatal(CALL_INFO, 1, "can't factor a requested block of rank 0");
 
     map<int,int>* retVal = new map<int,int>();
     double size = ordering -> at(key);
@@ -344,7 +344,7 @@ map<int,int>* RoundUpMBSAllocator::reduceRequest(int key, int value)
     if (remainder > 0) {
         int smallerIndex = distance(ordering -> begin(), find(ordering -> begin(), ordering -> end(), remainder));
         if (smallerIndex == -1) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "The remainder is not a block size!");
+            schedout.fatal(CALL_INFO, 1, "The remainder is not a block size!");
         }
         if (0 == retVal -> count(smallerIndex)) {
             retVal -> insert(pair<int,int>(smallerIndex,1));

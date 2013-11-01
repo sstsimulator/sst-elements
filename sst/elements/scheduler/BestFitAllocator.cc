@@ -43,7 +43,7 @@ BestFitAllocator::BestFitAllocator(vector<string>* params, Machine* mach): Linea
 {
     schedout.init("", 8, 0, Output::STDOUT);
     schedout.debug(CALL_INFO, 0, 0, "Constructing BestFitAllocator\n");
-    if (NULL == dynamic_cast<MachineMesh*>(mach)) schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a mesh");
+    if (NULL == dynamic_cast<MachineMesh*>(mach)) schedout.fatal(CALL_INFO, 1, "Linear allocators require a mesh");
 }
 
 string BestFitAllocator::getSetupInfo(bool comment)

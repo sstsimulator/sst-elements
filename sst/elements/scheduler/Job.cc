@@ -123,7 +123,7 @@ void Job::start(unsigned long time, Machine* machine, AllocInfo* allocInfo,
                 Statistics* stats) 
 {
     if ((unsigned long)-1 != startTime) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "attempt to start an already-running job: %s\n", toString().c_str());
+        schedout.fatal(CALL_INFO, 1, "attempt to start an already-running job: %s\n", toString().c_str());
         //std::string mesg = "attempt to start an already-running job: ";
         //mesg += toString();
         //internal_error(mesg);

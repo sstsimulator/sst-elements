@@ -43,7 +43,7 @@ MBSAllocator::MBSAllocator(Machine* mach)
     schedout.init("", 8, 0, Output::STDOUT);
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "MBS Allocator requires a mesh machine");
+        schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
     }
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
@@ -69,7 +69,7 @@ MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach)
 { 
     MachineMesh* m = dynamic_cast<MachineMesh*>(mach);
     if (NULL == m) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "MBS Allocator requires a mesh machine");
+        schedout.fatal(CALL_INFO, 1, "MBS Allocator requires a mesh machine");
     }
     meshMachine = m; //make us happy
     machine = m;     //make Allocator happy
@@ -250,7 +250,7 @@ MBSMeshAllocInfo* MBSAllocator::allocate(Job* job)
     while (allocated < job -> getProcsNeeded()){
         //Start trying allocate the largest blocks
         if (RBR -> empty()) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "RBR empty in allocate()");
+            schedout.fatal(CALL_INFO, 1, "RBR empty in allocate()");
         }
         int currentRank = RBR -> rbegin() -> first; //this gives us the largest key in RBR
 
@@ -335,7 +335,7 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
             if (ordering -> size() == 1) {
                 size = ordering -> at(0);
             } else {
-                schedout.fatal(CALL_INFO, 1, 0, 0, "while loop never ran in MBSAllocator");
+                schedout.fatal(CALL_INFO, 1, "while loop never ran in MBSAllocator");
             }
         }
 
@@ -367,12 +367,12 @@ std::map<int,int>* MBSAllocator::factorRequest(Job* j)
 
 void MBSAllocator::splitRequest(std::map<int,int>* RBR, int rank){
     if (RBR -> count(rank) == 0)
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Out of bounds in MBSAllocator::splitRequest()");
+        schedout.fatal(CALL_INFO, 1, "Out of bounds in MBSAllocator::splitRequest()");
     if (rank <= 0)
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Cannot split a request of size 0");
+        schedout.fatal(CALL_INFO, 1, "Cannot split a request of size 0");
     if (RBR -> find(rank) -> second == 0){
         //throw new UnsupportedOperationException("Cannot split a block of size 0");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Cannot split a block of size 0");
+        schedout.fatal(CALL_INFO, 1, "Cannot split a block of size 0");
         return;
     }
 
@@ -443,7 +443,7 @@ void MBSAllocator::deallocate(AllocInfo* alloc)
     schedout.debug(CALL_INFO, 7, 0, "Deallocating job with %d procs\n",alloc -> job -> getProcsNeeded());
     //check to make sure it is a MBSMeshAllocInfo->->->                        
     if (NULL == dynamic_cast<MBSMeshAllocInfo*>(alloc)) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "MBS allocator can only deallocate instances of MBSMeshAllocInfo");
+        schedout.fatal(CALL_INFO, 1, "MBS allocator can only deallocate instances of MBSMeshAllocInfo");
     } else {
         unallocate((MBSMeshAllocInfo*) alloc);
     }
@@ -502,7 +502,7 @@ void MBSAllocator::printFBR(std::string msg)
 {
     schedout.debug(CALL_INFO, 7, 0, "%s\n",msg.c_str());
     if (ordering -> size() != FBR -> size()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Ordering vs FBR size mismatch");
+        schedout.fatal(CALL_INFO, 1, "Ordering vs FBR size mismatch");
     }
     for (int i = 0;i < (int)ordering -> size(); i++) { 
         schedout.debug(CALL_INFO, 7, 0, "Rank: %d for size %d\n", i, ordering -> at(i));
@@ -518,7 +518,7 @@ std::string MBSAllocator::stringFBR()
 {
     std::stringstream retVal;
     if (ordering -> size() != FBR -> size()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Ordering vs FBR size mismatch");
+        schedout.fatal(CALL_INFO, 1, "Ordering vs FBR size mismatch");
     }
     for (int i = 0;i < (int)ordering->size();i++) {
         retVal << "Rank: " << i << " for size " << ordering -> at(i) << "\n";

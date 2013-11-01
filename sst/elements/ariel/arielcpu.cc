@@ -60,12 +60,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	
 	std::string ariel_tool = params.find_string("arieltool", "");
 	if("" == ariel_tool) {
-		output->fatal(CALL_INFO, -1, 0, 0, "The arieltool parameter specifying which PIN tool to run was not specified\n");
+		output->fatal(CALL_INFO, -1, "The arieltool parameter specifying which PIN tool to run was not specified\n");
 	}
 	
 	std::string executable = params.find_string("executable", "");
 	if("" == executable) {
-		output->fatal(CALL_INFO, -1, 0, 0, "The input deck did not specify an executable to be run against PIN\n");
+		output->fatal(CALL_INFO, -1, "The input deck did not specify an executable to be run against PIN\n");
 	}
 	
 	uint32_t app_argc = (uint32_t) params.find_integer("appargcount", 0);
@@ -140,7 +140,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		pipe_fds[i] = open(pipe_buffer, O_RDONLY | O_NONBLOCK);
 
 		if(-1 == pipe_fds[i]) {
-			output->fatal(CALL_INFO, -1, 0, 0, "Creation of pipe %s failed.\n", pipe_buffer);
+			output->fatal(CALL_INFO, -1, "Creation of pipe %s failed.\n", pipe_buffer);
 		} else {
 			output->verbose(CALL_INFO, 2, 0, "Created successfully.\n");
 		}
@@ -214,7 +214,7 @@ int ArielCPU::forkPINChild(const char* app, char** args) {
 		output->verbose(CALL_INFO, 1, 0,
 			"Call to execvp returned: %d\n", ret_code);
 
-		output->fatal(CALL_INFO, -1, 0, 0,
+		output->fatal(CALL_INFO, -1, 
 			"Error executing: %s under a PIN fork\n",
 			app);
 	}

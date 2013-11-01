@@ -48,7 +48,7 @@ FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* 
     schedout.debug(CALL_INFO, 1, 0, "Constructing FirstFitAllocator\n");
 
     if (dynamic_cast<MachineMesh*>(mach) == NULL) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Linear allocators require a MachineMesh* machine");
+        schedout.fatal(CALL_INFO, 1, "Linear allocators require a MachineMesh* machine");
         //error("Linear allocators require a MachineMesh* machine");
     }
 }
@@ -72,7 +72,7 @@ AllocInfo* FirstFitAllocator::allocate(Job* job)
     //if (DEBUG) {
     //    printf("Allocating %s procs: ", job -> toString().c_str());
     //}
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Allocating %s procs: ", job -> toString().c_str());
+    schedout.fatal(CALL_INFO, 1, "Allocating %s procs: ", job -> toString().c_str());
 
     if (!canAllocate(job)) {  //check if we have enough free processors
         return NULL;

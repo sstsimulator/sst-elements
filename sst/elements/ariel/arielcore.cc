@@ -60,7 +60,7 @@ void ArielCore::handleEvent(SST::Event* event) {
 			pendingTransactions->erase(find_entry);
 			delete memEv;
 		} else {
-			output->fatal(CALL_INFO, -4, 0, 0, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
+			output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
 		}
 	}
 }
@@ -112,7 +112,7 @@ bool ArielCore::refillQueue() {
 			
 		int poll_result = poll(&poll_input, (unsigned int) 1, (int) readPipeTimeOut);
 		if(poll_result == -1) {
-			output->fatal(CALL_INFO, -2, 0, 0, "Attempt to poll failed.\n");
+			output->fatal(CALL_INFO, -2, "Attempt to poll failed.\n");
 			break;
 		}
 
@@ -221,17 +221,17 @@ void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
 			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
 			
 		if( (leftSize + rightSize) != readLength ) {
-			output->fatal(CALL_INFO, -4, 0, 0, "Core %" PRIu32 " read request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal read length (cache line of length %" PRIu64 ")\n",
+			output->fatal(CALL_INFO, -4, "Core %" PRIu32 " read request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal read length (cache line of length %" PRIu64 ")\n",
 				coreID, readAddress, readLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
 		}
 		
 		if( ((leftAddr + leftSize) % cacheLineSize) != 0) {
-			output->fatal(CALL_INFO, -4, 0, 0, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+			output->fatal(CALL_INFO, -4, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 				leftAddr, leftSize, cacheLineSize);
 		}
 		
 		if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
-			output->fatal(CALL_INFO, -4, 0, 0, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+			output->fatal(CALL_INFO, -4, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 				leftAddr, leftSize, cacheLineSize);
 		}
 				
@@ -302,17 +302,17 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 			coreID, leftAddr, rightAddr, leftSize, rightSize, physLeftAddr, physRightAddr);
 			
 		if( (leftSize + rightSize) != writeLength ) {
-			output->fatal(CALL_INFO, -4, 0, 0, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
+			output->fatal(CALL_INFO, -4, "Core %" PRIu32 " write request for address %" PRIu64 ", length=%" PRIu64 ", split into left address=%" PRIu64 ", left size=%" PRIu64 ", right address=%" PRIu64 ", right size=%" PRIu64 " does not equal write length (cache line of length %" PRIu64 ")\n",
 				coreID, writeAddress, writeLength, leftAddr, leftSize, rightAddr, rightSize, cacheLineSize);
 		}
 		
 		if( ((leftAddr + leftSize) % cacheLineSize) != 0) {
-			output->fatal(CALL_INFO, -4, 0, 0, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+			output->fatal(CALL_INFO, -4, "Error leftAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 				leftAddr, leftSize, cacheLineSize);
 		}
 		
 		if( ((rightAddr + rightSize) % cacheLineSize) > cacheLineSize ) {
-			output->fatal(CALL_INFO, -4, 0, 0, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
+			output->fatal(CALL_INFO, -4, "Error rightAddr=%" PRIu64 " + size=%" PRIu64 " is not a multiple of cache line size: %" PRIu64 "\n",
 				leftAddr, leftSize, cacheLineSize);
 		}
 				
@@ -399,7 +399,7 @@ bool ArielCore::processNextEvent() {
 		return true;
 
 	default:
-		output->fatal(CALL_INFO, -4, 0, 0, "Unknown event type has arrived on core %" PRIu32 "\n", coreID);
+		output->fatal(CALL_INFO, -4, "Unknown event type has arrived on core %" PRIu32 "\n", coreID);
 		break;
 	}
 

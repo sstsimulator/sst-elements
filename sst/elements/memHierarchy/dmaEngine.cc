@@ -32,9 +32,9 @@ DMAEngine::DMAEngine(ComponentId_t id, Params &params) :
     TimeConverter *tc = registerClock(params.find_string("clockRate", "1 GHz"),
             new Clock::Handler<DMAEngine>(this, &DMAEngine::clock));
     commandLink = configureLink("cmdLink", tc, NULL);
-    if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, 0, 0, "Missing cmdLink\n");
+    if ( NULL == commandLink ) dbg.fatal(CALL_INFO, 1, "Missing cmdLink\n");
 
-    if ( !isPortConnected("netLink") ) dbg.fatal(CALL_INFO, 1, 0, 0, "Missing netLink\n");
+    if ( !isPortConnected("netLink") ) dbg.fatal(CALL_INFO, 1, "Missing netLink\n");
 
     MemNIC::ComponentInfo myInfo;
     myInfo.link_port = "netLink";
@@ -170,7 +170,7 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
 {
     if ( ev->getCmd() == SupplyData ) {
         if ( !req->loadKeys.count(ev->getResponseToID()) ) {
-            dbg.fatal(CALL_INFO, 1, 0, 0, "Received Response of SupplyData, but that wasn't in our LoadKeys!\n");
+            dbg.fatal(CALL_INFO, 1, "Received Response of SupplyData, but that wasn't in our LoadKeys!\n");
         }
         size_t offset = ev->getAddr() - req->getSrc();
         req->loadKeys.erase(ev->getResponseToID());
@@ -191,7 +191,7 @@ void DMAEngine::processPacket(Request *req, MemEvent *ev)
             delete req;
         }
     } else {
-	dbg.fatal(CALL_INFO, 1,0,0, "Received unexpected message %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
+	dbg.fatal(CALL_INFO, 1, "Received unexpected message %s 0x%"PRIx64" from %s\n", CommandString[ev->getCmd()], ev->getAddr(), ev->getSrc().c_str());
     }
 }
 

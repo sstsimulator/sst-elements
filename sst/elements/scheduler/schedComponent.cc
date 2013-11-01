@@ -243,7 +243,7 @@ void schedComponent::readJobs()
     if(!input.is_open())
         input.open(trace.c_str());  //try without directory                     
     if(!input.is_open()){
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Unable to open job trace file: %s", jobListFileName.c_str());
+        schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s", jobListFileName.c_str());
     }
 
     LastJobFileModTime = boost::filesystem::last_write_time( jobListFileNamePath );
@@ -300,7 +300,7 @@ bool schedComponent::validateJob( Job * j, vector<Job> * jobs, long runningTime 
         ok = false;
     }
     if (ok && j -> getProcsNeeded() > machine -> getNumFreeProcessors()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Job %ld requires %d processors but only %d are in the machine", 
+        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine", 
                        j -> getJobNum(), j -> getProcsNeeded(), machine -> getNumFreeProcessors());
     }
     if (ok) {
@@ -370,7 +370,7 @@ bool schedComponent::newYumYumJobLine(std::string line)
     strcpy( lastJobRead, ID );
 
     if (tokens.size() != 3) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Poorly formatted input line: %s", line.c_str());
+        schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s", line.c_str());
     } else {
         if (useYumYumTraceFormat) {
             jobs.push_back(Job(getCurrentSimTime() + 1, procs, duration, duration + 1, std::string(ID)));
@@ -398,7 +398,7 @@ bool schedComponent::newJobLine(std::string line)
     unsigned long estRunningTime;
     int num = sscanf(line.c_str(), "%ld %d %ld %ld", &arrivalTime,
                      &procsNeeded, &runningTime, &estRunningTime);
-    if (num < 3) schedout.fatal(CALL_INFO, 1, 0, 0, "Poorly formatted input line: %s",  line.c_str());
+    if (num < 3) schedout.fatal(CALL_INFO, 1, "Poorly formatted input line: %s",  line.c_str());
     if (3 == num) {
         jobs.push_back(Job(arrivalTime, procsNeeded, runningTime, runningTime));
     } else { //read all 4                                                        
@@ -576,7 +576,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
 
             delete ev;
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "S: Error! Bad Event Type!\n");
+            schedout.fatal(CALL_INFO, 1, "S: Error! Bad Event Type!\n");
         }
     }  
 }
@@ -684,7 +684,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
 
             startNextJob();
         } else {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Arriving event was not an arrival nor finaltime event");
+            schedout.fatal(CALL_INFO, 1, "Arriving event was not an arrival nor finaltime event");
         }
     }
     schedout.debug(CALL_INFO, 4, 0, "finishing arrival event\n");
@@ -712,7 +712,7 @@ void schedComponent::startJob(AllocInfo* ai)
     //printf("Job %ld L1Distance %ld\n", j -> getJobNum(),((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
 
     if (actualRunningTime > j -> getEstimatedRunningTime()) {
-        //schedout.fatal(CALL_INFO, 1, 0, 0, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));
+        //schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));
         schedout.output("WARNING: Job %lu has running time %lu, which is longer than estimated running time %lu\nUsing estimated time instead\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); 
         actualRunningTime = j -> getEstimatedRunningTime();
     }
@@ -755,7 +755,7 @@ void schedComponent::logJobStart(IAI iai)
 
         jobLog << endl;
     } else {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
+        schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
     }
 }
 
@@ -779,11 +779,11 @@ void schedComponent::logJobFinish(IAI iai)
         //char errorMessage[ 1024 ];
         //snprintf( errorMessage, 1023, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
         //error( errorMessage );
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
+        schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
     } 
 
     if (getCurrentSimTime() < iai.ai->job->getStartTime()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), getCurrentSimTime());
+        schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), getCurrentSimTime());
     }
 }
 
@@ -804,11 +804,11 @@ void schedComponent::logJobFault(IAI iai, FaultEvent * faultEvent)
 
         jobLog << endl;
     }else{
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
+        schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
     } 
 
     if (getCurrentSimTime() < iai.ai -> job -> getStartTime()) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), (uint64_t)getCurrentSimTime());
+        schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%"PRIu64"\n", (*iai.ai -> job -> getID()).c_str(), iai.ai -> job -> getStartTime(), (uint64_t)getCurrentSimTime());
     }
 }
 

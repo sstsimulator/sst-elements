@@ -90,7 +90,7 @@ void SimpleMachine::allocate(AllocInfo* allocInfo)
         //char mesg[100];
         //sprintf(mesg, "Attempt to allocate %d processors when only %d are available", num, numAvail);
         //internal_error(std::string(mesg));
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate %d processors when only %d are available", num, numAvail);
+        schedout.fatal(CALL_INFO, 1, "Attempt to allocate %d processors when only %d are available", num, numAvail);
     }
 
     numAvail -= num;
@@ -123,7 +123,7 @@ void SimpleMachine::deallocate(AllocInfo* allocInfo)
     schedout.debug(CALL_INFO, 7, 0, "deallocate(%s); %d processors free\n", allocInfo -> job ->toString().c_str(), numAvail + num);
 
     if(num > (numProcs - numAvail)) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to deallocate %d processors when only %d are busy", num, (numProcs-numAvail));
+        schedout.fatal(CALL_INFO, 1, "Attempt to deallocate %d processors when only %d are busy", num, (numProcs-numAvail));
         //char mesg[100];
         //sprintf(mesg, "Attempt to deallocate %d processors when only %d are busy",
         //        num, (numProcs-numAvail));

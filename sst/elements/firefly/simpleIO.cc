@@ -34,14 +34,14 @@ SimpleIO::SimpleIO( Params& params ) :
     m_link = owner->configureLink( "link", "50 ps",
             new Event::Handler<SimpleIO>(this, &SimpleIO::handleEvent));
     if ( NULL == m_link ) {
-        m_dbg.fatal(CALL_INFO,0,0,0,"configureLink failed\n");
+        m_dbg.fatal(CALL_INFO,0,"configureLink failed\n");
     } 
 
     m_selfLink = owner->configureSelfLink("SimpleIO", "1 ps",
         new Event::Handler<SimpleIO>(this,&SimpleIO::handleSelfLink));
 
     if ( NULL == m_selfLink ) {
-        m_dbg.fatal(CALL_INFO,0,0,0,"configureLink failed\n");
+        m_dbg.fatal(CALL_INFO,0,"configureLink failed\n");
     } 
 }
 

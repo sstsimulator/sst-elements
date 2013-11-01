@@ -175,7 +175,7 @@ void MachineMesh::allocate(AllocInfo* allocInfo)
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (!isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate a busy processor: " );
+            schedout.fatal(CALL_INFO, 1, "Attempt to allocate a busy processor: " );
         }
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = false;
     }
@@ -190,7 +190,7 @@ void MachineMesh::deallocate(AllocInfo* allocInfo) {
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate a busy processor: " );
+            schedout.fatal(CALL_INFO, 1, "Attempt to allocate a busy processor: " );
         }
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = true;
     }

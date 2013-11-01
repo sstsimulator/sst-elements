@@ -63,7 +63,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
     MachineMesh* m = (MachineMesh*) mach;
     if (NULL == m) {
         //error("Nearest allocators require a Mesh machine");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Nearest allocators require a Mesh machine");
+        schedout.fatal(CALL_INFO, 1, "Nearest allocators require a Mesh machine");
     }
 
     if (params -> at(0) == "MM") {
@@ -92,7 +92,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
             cg = new IntersectionCenterGen(m);
         } else {
             //error("Unknown center generator " + cgstr);
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Unknown center generator %s", cgstr.c_str());
+            schedout.fatal(CALL_INFO, 1, "Unknown center generator %s", cgstr.c_str());
         }
 
         std::string pcstr=params -> at(2);
@@ -105,7 +105,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
             pc = new GreedyLInfPointCollector();
         } else {
             //error("Unknown point collector " + pcstr);
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Unknown point collector %s", pcstr.c_str());
+            schedout.fatal(CALL_INFO, 1, "Unknown point collector %s", pcstr.c_str());
         }
 
 
@@ -116,7 +116,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
         } else if(pcstr == ("linf")) {
             if (m -> getXDim() > 1 && m -> getYDim() > 1 && m -> getZDim() > 1) {
                 //error("\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
-                schedout.fatal(CALL_INFO, 1, 0, 0, "\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
+                schedout.fatal(CALL_INFO, 1, "\nTiebreaker (and therefore MC1x1 and LInf scorer) only implemented for 2D meshes");
             }
             long TB = 0;
             long af = 1;
@@ -155,7 +155,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
             sc = new PairwiseL1DistScorer();
         } else {
             //error("Unknown scorer " + pcstr);
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Unknown scorer %s", pcstr.c_str());
+            schedout.fatal(CALL_INFO, 1, "Unknown scorer %s", pcstr.c_str());
         }
 
         centerGenerator = cg;
@@ -166,7 +166,7 @@ NearestAllocator::NearestAllocator(std::vector<std::string>* params, Machine* ma
     params = NULL;
     if(NULL == centerGenerator || NULL == pointCollector || NULL == scorer) {
         //error("Nearest input not correctly parsed");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Nearest input not correctly parsed");
+        schedout.fatal(CALL_INFO, 1, "Nearest input not correctly parsed");
     }
 }
 

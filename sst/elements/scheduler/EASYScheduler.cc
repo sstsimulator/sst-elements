@@ -113,7 +113,7 @@ void EASYScheduler::jobFinishes(Job* j, unsigned long time, Machine* mach)
         }
         it++;
     }
-    if (!success) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find finishing job in running list\n%s\n", j -> toString().c_str());
+    if (!success) schedout.fatal(CALL_INFO, 1, "Could not find finishing job in running list\n%s\n", j -> toString().c_str());
     giveGuarantee(time, mach);
 }
 
@@ -139,7 +139,7 @@ AllocInfo* EASYScheduler::tryToStart(Allocator* alloc, unsigned long time,
     AllocInfo* allocInfo = NULL;
     set<Job*, JobComparator>::iterator job = toRun -> begin();
     if (time > guaranteedStart) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Failed to start job #%ld at guaranteed time \nTime: %lu Guarantee: %lu\n", (*job)->getJobNum(), time, guaranteedStart);
+        schedout.fatal(CALL_INFO, 1, "Failed to start job #%ld at guaranteed time \nTime: %lu Guarantee: %lu\n", (*job)->getJobNum(), time, guaranteedStart);
     }
     if (alloc -> canAllocate(*job)) {
         succeeded = true;
@@ -247,12 +247,12 @@ void EASYScheduler::giveGuarantee(unsigned long time, Machine* mach)
                 schedout.output("%ld ", (*it3) -> getJobNum());
             }
             schedout.output("\n");
-            schedout.fatal(CALL_INFO, 1, 0, 0, "last guarantee: %ld new guarantee %ld\n EASY scheduler gave new guarantee worse than previous\nFor %s", lastGuarantee, guaranteedStart, (*firstJob)->toString().c_str()); 
+            schedout.fatal(CALL_INFO, 1, "last guarantee: %ld new guarantee %ld\n EASY scheduler gave new guarantee worse than previous\nFor %s", lastGuarantee, guaranteedStart, (*firstJob)->toString().c_str()); 
 
         }
         prevFirstJobNum = (*firstJob) -> getJobNum();
     } else {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "EASY unable to make reservation for first job (%ld)\n", (*firstJob)->getJobNum());
+        schedout.fatal(CALL_INFO, 1, "EASY unable to make reservation for first job (%ld)\n", (*firstJob)->getJobNum());
     }
 }
 
@@ -331,7 +331,7 @@ EASYScheduler* EASYScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job
                 found = true;
             }
         }
-        if (!found) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find deep copy for %s\nwhen copying EASYScheduler for FST\n", (*it) -> toString().c_str());
+        if (!found) schedout.fatal(CALL_INFO, 1, "Could not find deep copy for %s\nwhen copying EASYScheduler for FST\n", (*it) -> toString().c_str());
     } 
 
     //call the constructor and return
@@ -426,7 +426,7 @@ bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
 
     default:
         //internal_error("operator() called on JobComparator w/ invalid type");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "operator() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, "operator() called on JobComparator w/ invalid type");
         return true;  //never reach here
     }
 }
@@ -447,7 +447,7 @@ string EASYScheduler::JobComparator::toString()
     case BETTERFIT:
         return "BetterFitComparator";
     default:
-        schedout.fatal(CALL_INFO, 1, 0, 0, "toString() called on JobComparator w/ invalid type %d", (int)type);
+        schedout.fatal(CALL_INFO, 1, "toString() called on JobComparator w/ invalid type %d", (int)type);
     }
     return "";  //never reach here...
 }

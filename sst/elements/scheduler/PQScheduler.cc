@@ -101,7 +101,7 @@ PQScheduler* PQScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job*>* 
         for (vector<Job*>::iterator it2 = intoRun -> begin(); it2 != intoRun -> end(); it2++) {
             schedout.output("%s\n", (*it2) -> toString().c_str());
         }
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find %d jobs when copying toRun for FST\n", notfound);
+        schedout.fatal(CALL_INFO, 1, "Could not find %d jobs when copying toRun for FST\n", notfound);
     }
     delete copyToRun;
 
@@ -261,7 +261,7 @@ bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2)
 
     default:
         //internal_error("operator() called on JobComparator w/ invalid type");
-        schedout.fatal(CALL_INFO, 1, 0, 0, "operator() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, "operator() called on JobComparator w/ invalid type");
         return true;  //never reach here
     }
 }
@@ -282,7 +282,7 @@ string PQScheduler::JobComparator::toString()
     case BETTERFIT:
         return "BetterFitComparator";     
     default:
-        schedout.fatal(CALL_INFO, 1, 0, 0, "toString() called on JobComparator w/ invalid type");
+        schedout.fatal(CALL_INFO, 1, "toString() called on JobComparator w/ invalid type");
     }
     return "";  //never reach here...
 }

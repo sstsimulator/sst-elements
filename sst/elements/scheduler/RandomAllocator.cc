@@ -28,7 +28,7 @@ RandomAllocator::RandomAllocator(Machine* mesh)
     schedout.init("", 8, ~0, Output::STDOUT);
     machine = dynamic_cast<MachineMesh*>(mesh);
     if (machine == NULL) {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Random Allocator requires Mesh");
+        schedout.fatal(CALL_INFO, 1, "Random Allocator requires Mesh");
     }
     srand(0);
 }

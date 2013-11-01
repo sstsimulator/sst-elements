@@ -42,7 +42,7 @@ FST::FST(int inrelaxed)
     } else if (inrelaxed == 2) {
         relaxed = true;
     } else {
-        schedout.fatal(CALL_INFO, 1, 0, 0, "Passed %d to FST constructor; should be 1 or 2", inrelaxed);
+        schedout.fatal(CALL_INFO, 1, "Passed %d to FST constructor; should be 1 or 2", inrelaxed);
     }
 }
 
@@ -102,7 +102,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     for (unsigned int x = 0; x < running -> size(); x++) {
         AllocInfo* ai = alloc -> allocate(running -> at(x));
-        if (NULL == ai) schedout.fatal(CALL_INFO, 1, 0, 0, "in FST could not allocate running job\nMachine had %d processors for %s", mach -> getNumFreeProcessors(), running -> at(x) -> toString().c_str());
+        if (NULL == ai) schedout.fatal(CALL_INFO, 1, "in FST could not allocate running job\nMachine had %d processors for %s", mach -> getNumFreeProcessors(), running -> at(x) -> toString().c_str());
         mach -> allocate(ai);
         jobToAi -> insert(pair<Job*, AllocInfo*>(running -> at(x), ai));
     }
@@ -176,9 +176,9 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
                 found = true;
             }
         } 
-        if (!found) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find %s in running or toRun", endtimes->begin()->first->toString().c_str());
+        if (!found) schedout.fatal(CALL_INFO, 1, "Could not find %s in running or toRun", endtimes->begin()->first->toString().c_str());
 
-        if(jobToAi -> find(endtimes -> begin() -> first) == jobToAi -> end()) schedout.fatal(CALL_INFO, 1, 0, 0, "couldn't find %s in jobToAi", endtimes ->begin() -> first -> toString().c_str());
+        if(jobToAi -> find(endtimes -> begin() -> first) == jobToAi -> end()) schedout.fatal(CALL_INFO, 1, "couldn't find %s in jobToAi", endtimes ->begin() -> first -> toString().c_str());
 
         //tell our simulated scheduler etc that the job completed
         mach -> deallocate(jobToAi -> find(endtimes -> begin() -> first) -> second);
@@ -210,7 +210,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
             }
         } 
     }
-    if (!success) schedout.fatal(CALL_INFO, 1, 0, 0, "Could not find time for %s in FST\n", j -> toString().c_str());
+    if (!success) schedout.fatal(CALL_INFO, 1, "Could not find time for %s in FST\n", j -> toString().c_str());
 
     //clean up
     delete sched;
@@ -274,7 +274,7 @@ void FST::jobCompletes(Job* j)
             return;
         }
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "FST could not find completing job in its currently-running list\n");
+    schedout.fatal(CALL_INFO, 1, "FST could not find completing job in its currently-running list\n");
 }
 
 //when a job starts, we must move it to running from toRun
@@ -292,13 +292,13 @@ void FST::jobStarts(Job* j, unsigned long time)
             return;
         } 
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Job %ld started before FST was aware it arrived\n", j -> getJobNum());
+    schedout.fatal(CALL_INFO, 1, "Job %ld started before FST was aware it arrived\n", j -> getJobNum());
 }
 
 //returns the FST value for job num
 unsigned long FST::getFST(int num)
 {
-    if(num < 0 || num >= numjobs) schedout.fatal(CALL_INFO, 1, 0, 0, "trying to get FST value out of range: %d", num);
+    if(num < 0 || num >= numjobs) schedout.fatal(CALL_INFO, 1, "trying to get FST value out of range: %d", num);
     return jobFST[num];
 }
 
@@ -395,7 +395,7 @@ do {
     if (ai != NULL) {
         if (ai -> job == j) {
             //our job has been scheduled!  record the time
-            //schedout.fatal(CALL_INFO, 1, 0, 0, "success!");
+            //schedout.fatal(CALL_INFO, 1, "success!");
             jobFST[j -> getJobNum()] = time;
 
             delete endtimes;
@@ -487,7 +487,7 @@ while (!endtimes -> empty()) {
         } 
     } while (ai != NULL);
 }
-schedout.fatal(CALL_INFO, 1, 0, 0, "Could not get FST for %s", j -> toString().c_str() );
+schedout.fatal(CALL_INFO, 1, "Could not get FST for %s", j -> toString().c_str() );
 
 */
 

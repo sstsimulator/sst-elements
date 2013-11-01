@@ -68,7 +68,7 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 	uint64_t nextVirtPage = virtualAddress;
 	for(uint64_t bytesLeft = 0; bytesLeft < roundedSize; bytesLeft += pageSize) {
 		if(freePages[level]->empty()) {
-			output->fatal(CALL_INFO, -1, 0, 0, "Requested a memory allocation at level: %" PRIu32 " of size: %" PRIu64 " which failed due to not having enough free pages\n",
+			output->fatal(CALL_INFO, -1, "Requested a memory allocation at level: %" PRIu32 " of size: %" PRIu64 " which failed due to not having enough free pages\n",
 				level, size);
 		}
 

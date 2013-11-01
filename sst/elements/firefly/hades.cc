@@ -57,7 +57,7 @@ Hades::Hades( Component* owner, Params& params ) :
     m_io = dynamic_cast<IO::Interface*>(owner->loadModuleWithComponent( 
                         moduleName, owner, ioParams ) );
     if ( !m_io ) {
-        m_dbg.fatal(CALL_INFO,0,1,0," Unable to find Hermes '%s'\n",
+        m_dbg.fatal(CALL_INFO,0," Unable to find Hermes '%s'\n",
                                         moduleName.c_str());
     }
 
@@ -70,7 +70,7 @@ Hades::Hades( Component* owner, Params& params ) :
 
     int numRanks = params.find_integer("numRanks");
     if ( numRanks <= 0 ) {
-        m_dbg.fatal(CALL_INFO,0,1,0,"How many global ranks?\n");
+        m_dbg.fatal(CALL_INFO,0,"How many global ranks?\n");
     }
     m_dbg.verbose(CALL_INFO,1,0,"numRanks %d\n", numRanks);
 
@@ -97,7 +97,7 @@ Hades::Hades( Component* owner, Params& params ) :
 #endif
     } else {
         group = NULL; // get rid of compiler warning
-        m_dbg.fatal(CALL_INFO,0,1,0,"unknown load policy `j%s` ",
+        m_dbg.fatal(CALL_INFO,0,"unknown load policy `j%s` ",
                                             policy.c_str() );
     }
     m_info.addGroup( Hermes::GroupWorld, group);
@@ -195,7 +195,7 @@ Hermes::RankID Hades::myWorldRank()
     int rank = _myWorldRank();
     m_dbg.verbose(CALL_INFO,1,0,"rank=%d\n",rank);
     if ( -1 == rank ) {
-        m_dbg.fatal(CALL_INFO,0,1,0,"%s() rank not set yet\n",__func__);
+        m_dbg.fatal(CALL_INFO,0,"%s() rank not set yet\n",__func__);
         return -1; 
     } else {
         return rank;

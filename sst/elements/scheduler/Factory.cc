@@ -107,7 +107,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
         int filltimes = 0;
         vector<string>* schedparams = parseparams(params["scheduler"]);
         if(schedparams->size() == 0)
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Error in parsing scheduler parameter");
+            schedout.fatal(CALL_INFO, 1, "Error in parsing scheduler parameter");
         switch(schedulername(schedparams->at(0)))
         {
             //Priority Queue Scheduler
@@ -127,11 +127,11 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
             } else if (schedparams -> size() == 2) {
                 EASYScheduler::JobComparator* comp = EASYScheduler::JobComparator::Make(schedparams->at(1));
                 if (comp == NULL) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "Argument to Easy Scheduler parameter not found:%s", schedparams->at(1).c_str());
+                    schedout.fatal(CALL_INFO, 1, "Argument to Easy Scheduler parameter not found:%s", schedparams->at(1).c_str());
                 }
                 return new EASYScheduler(comp);
             } else {
-                schedout.fatal(CALL_INFO, 1, 0, 0, "EASY Scheduler requires 1 or 0 parameters (determines type of queue or defaults to FIFO");
+                schedout.fatal(CALL_INFO, 1, "EASY Scheduler requires 1 or 0 parameters (determines type of queue or defaults to FIFO");
             }
             break;
 
@@ -149,7 +149,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
         case PRIORITIZE:
             schedout.debug(CALL_INFO, 4, 0, "Prioritize Scheduler\n");
             if (schedparams -> size() == 1) {
-                schedout.fatal(CALL_INFO, 1, 0, 0, "PrioritizeCompression scheduler requires number of backfill times as an argument");
+                schedout.fatal(CALL_INFO, 1, "PrioritizeCompression scheduler requires number of backfill times as an argument");
             }
             filltimes = strtol(schedparams->at(1).c_str(),NULL,0);
             if (2 == schedparams -> size()) {
@@ -175,7 +175,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
             //if(DEBUG) printf("Even Less Convervative Scheduler\n");
             schedout.debug(CALL_INFO, 4, 0, "Even Less Convervative Scheduler\n");
             if (schedparams -> size() == 1) {
-                schedout.fatal(CALL_INFO, 1, 0, 0, "Even Less Conservative scheduler requires number of backfill times as an argument");
+                schedout.fatal(CALL_INFO, 1, "Even Less Conservative scheduler requires number of backfill times as an argument");
             }
             filltimes = strtol(schedparams->at(1).c_str(),NULL,0);
             if (schedparams -> size() == 2) {
@@ -187,7 +187,7 @@ Scheduler* Factory::getScheduler(SST::Params& params, int numProcs)
 
             //Default: scheduler name not matched
         default:
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse name of scheduler");
+            schedout.fatal(CALL_INFO, 1, "Could not parse name of scheduler");
         }
 
     }
@@ -220,7 +220,7 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
                 schedout.debug(CALL_INFO, 4, 0, "Mesh Machine\n");
 
                 if (schedparams -> size() != 3 && schedparams -> size() != 4) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "Wrong number of arguments for Mesh Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
+                    schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Mesh Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
                 }
                 int x = strtol(schedparams -> at(1).c_str(), NULL, 0); 
                 int y = strtol(schedparams -> at(2).c_str(), NULL, 0); 
@@ -231,14 +231,14 @@ Machine* Factory::getMachine(SST::Params& params, int numProcs, schedComponent* 
                     z = 1;
                 }
                 if (x * y * z != numProcs) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "The dimensions of the mesh do not correspond to the number of processors");
+                    schedout.fatal(CALL_INFO, 1, "The dimensions of the mesh do not correspond to the number of processors");
                 }
                 return new MachineMesh(x,y,z,sc);
                 break;
 
             }
         default:
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse name of machine");
+            schedout.fatal(CALL_INFO, 1, "Could not parse name of machine");
         }
     }
     return NULL; //control never reaches here
@@ -254,7 +254,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
         //printf("Defaulting to Simple Allocator\n");
         SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
         if (mach == NULL) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Simple Allocator requires SimpleMachine");
+            schedout.fatal(CALL_INFO, 1, "Simple Allocator requires SimpleMachine");
         }
         return new SimpleAllocator(mach);
     } else {
@@ -270,7 +270,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
 
                 SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
                 if (mach == NULL) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "SimpleAllocator requires SimpleMachine");
+                    schedout.fatal(CALL_INFO, 1, "SimpleAllocator requires SimpleMachine");
                 }
                 return new SimpleAllocator(mach);
                 break;
@@ -365,14 +365,14 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
         case CONSTRAINT:
             {
                 if (params.find("ConstraintAllocatorDependencies") == params.end()) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "Constraint Allocator requires ConstraintAllocatorDependencies scheduler parameter");
+                    schedout.fatal(CALL_INFO, 1, "Constraint Allocator requires ConstraintAllocatorDependencies scheduler parameter");
                 }
                 if (params.find("ConstraintAllocatorConstraints") == params.end()) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "Constraint Allocator requires ConstraintAllocatorConstraints scheduler parameter");
+                    schedout.fatal(CALL_INFO, 1, "Constraint Allocator requires ConstraintAllocatorConstraints scheduler parameter");
                 }
                 SimpleMachine* mach = dynamic_cast<SimpleMachine*>(m);
                 if (NULL == mach) {
-                    schedout.fatal(CALL_INFO, 1, 0, 0, "ConstraintAllocator requires SimpleMachine");
+                    schedout.fatal(CALL_INFO, 1, "ConstraintAllocator requires SimpleMachine");
                 }
                 // will get these file names from schedparams eventually
                 return new ConstraintAllocator(mach, params.find("ConstraintAllocatorDependencies") -> second, params.find("ConstraintAllocatorConstraints") -> second );
@@ -380,7 +380,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m)
             }
 
         default:
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse name of allocator");
+            schedout.fatal(CALL_INFO, 1, "Could not parse name of allocator");
         }
     }
     return NULL; //control never reaches here
@@ -403,10 +403,10 @@ int Factory::getFST(SST::Params& params)
         case RELAXED:
             return 2;
         default:
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse FST type; should be none, strict, or relaxed");
+            schedout.fatal(CALL_INFO, 1, "Could not parse FST type; should be none, strict, or relaxed");
         }
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse FST type; should be none, strict, or relaxed");
+    schedout.fatal(CALL_INFO, 1, "Could not parse FST type; should be none, strict, or relaxed");
     return 0; 
 }
 
@@ -429,7 +429,7 @@ vector<double>* Factory::getTimePerDistance(SST::Params& params)
         return ret;
         //return atof(tpdparams -> at(0).c_str());
     }
-    //schedout.fatal(CALL_INFO, 1, 0, 0, "Could not parse timeperdistance; should be a floating point integer");
+    //schedout.fatal(CALL_INFO, 1, "Could not parse timeperdistance; should be a floating point integer");
     return ret; 
 }
 
@@ -460,7 +460,7 @@ Factory::SchedulerType Factory::schedulername(string inparam)
     for (int i = 0; i < numSchedTableEntries; i++) {
         if (inparam == schedTable[i].name) return schedTable[i].val;
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Scheduler name not found:%s", inparam.c_str());
+    schedout.fatal(CALL_INFO, 1, "Scheduler name not found:%s", inparam.c_str());
     exit(0); // control never reaches here
 }
 
@@ -469,7 +469,7 @@ Factory::MachineType Factory::machinename(string inparam)
     for(int i = 0; i < numMachTableEntries; i++) {
         if (inparam == machTable[i].name) return machTable[i].val;
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Machine name not found:%s", inparam.c_str());
+    schedout.fatal(CALL_INFO, 1, "Machine name not found:%s", inparam.c_str());
     exit(0);
 }
 
@@ -478,7 +478,7 @@ Factory::AllocatorType Factory::allocatorname(string inparam)
     for(int i = 0; i < numAllocTableEntries; i++) {
         if (inparam == allocTable[i].name) return allocTable[i].val;
     }
-    schedout.fatal(CALL_INFO, 1, 0, 0, "Allocator name not found:%s", inparam.c_str());
+    schedout.fatal(CALL_INFO, 1, "Allocator name not found:%s", inparam.c_str());
     exit(0);
 }
 
@@ -487,6 +487,6 @@ Factory::FSTType Factory::FSTname(string inparam)
     for(int i = 0; i < numFSTTableEntries; i++) {
         if (inparam == FSTTable[i].name) return FSTTable[i].val;
     } 
-    schedout.fatal(CALL_INFO, 1, 0, 0, "FST name not found:%s", inparam.c_str());
+    schedout.fatal(CALL_INFO, 1, "FST name not found:%s", inparam.c_str());
     exit(0);
 }
