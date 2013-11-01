@@ -49,7 +49,7 @@ def sstcreatemodel():
     sst.addcomplink(membus, "mem_bus_link", "port%d"%(corecount), "50ps")
 
     memory = sst.createcomponent("memory", "memHierarchy.MemController")
-    sst.addcompparam(memory, "access_time", "40ns")
+    sst.addcompparam(memory, "access_time", "50ns")
     sst.addcompparam(memory, "mem_size", "512")
     sst.addcompparam(memory, "clock", "1GHz")
     sst.addcompparam(memory, "use_dramsim", "0")
