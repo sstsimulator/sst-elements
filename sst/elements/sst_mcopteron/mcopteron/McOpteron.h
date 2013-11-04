@@ -13,7 +13,7 @@
 #include "ReorderBuffer.h"
 #include "ConfigVars.h"
 #include "MarkovModel.h"
-#include "Random.h"
+
 //class FunctionalUnit;
 //class InstructionQueue;
 //class LoadStoreUnit;
@@ -47,122 +47,115 @@ namespace McOpteron{		//Scoggin: Added a namespace to reduce possible conflicts 
 class McOpteron
 {
  public:
-  McOpteron();
-  ~McOpteron();
-  int readConfigFile(string filename);
-  //int init(const char* definitionFilename, const char* mixFilename, 
-  //         const char *traceFilename=0, const char* newIMixFilename=0);
-  int init(string appDirectory, string definitionFilename, 
-           string mixFilename, string traceFilename, bool repeatTrace,
-           string newIMixFilename, string instrSizeFile, string fetchSizeFile, 
-           string transFile);
-  int finish(bool printInstMix);
-  int simCycle();
-  CycleCount currentCycles();
-  double currentCPI();
-  void printStaticIMix();
-  bool treatImmAsNone;	//Scoggin: Removed Static, life is simpler
-  int TraceTokens;	//Scoggin: relocated here from global
-  int local_debug;	//Scoggin: Added to pass Debug level around in library form
-  void setRandFunc(RandomFunc_t _R){rand.setrand_function(_R);}
-  void setSeedFunc(SeedFunc_t _S){rand.setseed_function(_S);}
-  void seedRandom(uint32_t _s){rand.seed(_s);}
+   McOpteron();
+   ~McOpteron();
+   int readConfigFile(string filename);
+   //int init(const char* definitionFilename, const char* mixFilename, 
+   //         const char *traceFilename=0, const char* newIMixFilename=0);
+   int init(string appDirectory, string definitionFilename, 
+            string mixFilename, string traceFilename, bool repeatTrace,
+            string newIMixFilename, string instrSizeFile, string fetchSizeFile, 
+				string transFile);
+   int finish(bool printInstMix);
+   int simCycle();
+   CycleCount currentCycles();
+   double currentCPI();
+   void printStaticIMix();
+   bool treatImmAsNone;	//Scoggin: Removed Static, life is simpler
+   int TraceTokens;	//Scoggin: relocated here from global
+   int local_debug;	//Scoggin: Added to pass Debug level around in library form
  private:
-  double genRandomProbability(){return rand.next();}
-  Random rand;
-  Token* generateToken();
-  Token* getNextTraceToken();
-  bool allQueuesEmpty();
-  int updateFunctionalUnits();
-  int scheduleNewInstructions();
-  int flushInstructions();
-  // Waleed: old fetch/decode method
-  //int refillInstructionQueues();
-  // Waleed: added following three methods	
-  int fetchInstructions();
-  int decodeInstructions();
-  int dispatchInstructions();
-  int readIMixFile(string filename, string newIMixFilename);
-  int readNewIMixFile(string filename);
-  int readIDefFile(string filename, bool newImix);
-  void createInstructionMixCDF();
-  //Dependency* checkForDependencies(InstructionCount insn);
-  //Dependency* addNewDependency(Token *t, unsigned int *);
+   Token* generateToken();
+   Token* getNextTraceToken();
+   bool allQueuesEmpty();
+   int updateFunctionalUnits();
+   int scheduleNewInstructions();
+   int flushInstructions();
+   // Waleed: old fetch/decode method
+   //int refillInstructionQueues();
+   // Waleed: added following three methods	
+   int fetchInstructions();
+   int decodeInstructions();
+   int dispatchInstructions();
+   int readIMixFile(string filename, string newIMixFilename);
+   int readNewIMixFile(string filename);
+   int readIDefFile(string filename, bool newImix);
+   void createInstructionMixCDF();
+   //Dependency* checkForDependencies(InstructionCount insn);
+   //Dependency* addNewDependency(Token *t, unsigned int *);
 
-  MarkovModel *markovModel;                 ///< Markov-based token generator
-  FunctionalUnit *functionalUnitsHead;      ///< Functional units list
-  InstructionQueue *instructionQueuesHead;  ///< Instruction queues list
-  int numInstrQueues;                       ///< Number of instruction queues 
-  CycleCount currentCycle;                  ///< Current simulation cycle
-  InstructionCount totalInstructions;       ///< Total instructions so far
-  CPIStack *cpiStack;                        ///< CPI stack
-  double* instructionClassProbabilities;    ///< Instruction type CDF
-  InstructionInfo **instructionClasses;     ///< Instruction type ptrs
-  InstructionInfo *instructionClassesHead,  ///< Instruction type list
-                  *instructionClassesTail;  ///< Instruction type list tail
-  unsigned int numInstructionClasses;       ///< Number of instruction types
-  // Waleed: added following 
-  double * instructionSizeProbabilities;    ///< Instruction size CDF
-  double * fetchSizeProbabilities;          ///< Fetch size CDF
-  int maxInstrSize;
-  int fetchBuffSize;
-  int fetchBufferIndex;
-  int usedFetchBuffBytes; 
-  int decodeWidth; 
-  void createInstrSizeCDF(string filename);
-  int  generateInstrSize(); 
-  void createFetchSizeCDF(string filename);
-  int  generateFetchSize(); 
-  InstructionInfo *infoLEA;  ///< direct ptr to LEA insn for fast access
-  //Dependency *dependenciesHead; ///< inter-insn operand dependency list
-  //Dependency *dependenciesTail;
-  LoadStoreUnit *loadStoreUnit;
-  MemoryModel *memoryModel;
-  ReorderBuffer *reorderBuffer;
-  ReorderBuffer *fakeIBuffer;
-  double lastCPI, measuredCPI;
-  Token *lastToken; ///< Must remember last token generated but not used
-  double probBranchMispredict;
-  double probTakenBranch; 
-  int branchMissPenalty;
-  CycleCount nextAvailableFetch;
-  unsigned long long fetchStallCycles;
-  FILE *traceF;
-  Address fakeAddress;
-  ConfigVars *config;
-  bool repeatTrace;
-  //Waleed: fetchedBuffer contains the tokens newly fetched from i-cache and still not decoded
-  Token** fetchedBuffer;
-  //Waleed: decodeBuffer contains tokens that have been decoded; upto decodeWidth
-  Token** decodeBuffer; 
+   MarkovModel *markovModel;                 ///< Markov-based token generator
+   FunctionalUnit *functionalUnitsHead;      ///< Functional units list
+   InstructionQueue *instructionQueuesHead;  ///< Instruction queues list
+   CycleCount currentCycle;                  ///< Current simulation cycle
+   InstructionCount totalInstructions;       ///< Total instructions so far
+   double* instructionClassProbabilities;    ///< Instruction type CDF
+   InstructionInfo **instructionClasses;     ///< Instruction type ptrs
+   InstructionInfo *instructionClassesHead,  ///< Instruction type list
+                   *instructionClassesTail;  ///< Instruction type list tail
+   unsigned int numInstructionClasses;       ///< Number of instruction types
+   // Waleed: added following 
+	double * instructionSizeProbabilities;    ///< Instruction size CDF
+	double * fetchSizeProbabilities;          ///< Fetch size CDF
+	int maxInstrSize;
+   int fetchBuffSize;
+	int fetchBufferIndex;
+	int usedFetchBuffBytes; 
+   int decodeWidth;  
+	void createInstrSizeCDF(string filename);
+	int  generateInstrSize(); 
+	void createFetchSizeCDF(string filename);
+	int  generateFetchSize(); 
+   InstructionInfo *infoLEA;  ///< direct ptr to LEA insn for fast access
+   //Dependency *dependenciesHead; ///< inter-insn operand dependency list
+   //Dependency *dependenciesTail;
+   LoadStoreUnit *loadStoreUnit;
+   MemoryModel *memoryModel;
+   ReorderBuffer *reorderBuffer;
+   ReorderBuffer *fakeIBuffer;
+   double lastCPI, measuredCPI;
+   Token *lastToken; ///< Must remember last token generated but not used
+   double probBranchMispredict;
+   double probTakenBranch; 
+   int instructionsPerCycle, instructionsPerFetch, branchMissPenalty;
+   CycleCount nextAvailableFetch;
+   unsigned long long fetchStallCycles;
+   FILE *traceF;
+   Address fakeAddress;
+   ConfigVars *config;
+   bool repeatTrace;
+   //Waleed: fetchedBuffer contains the tokens newly fetched from i-cache and still not decoded
+   Token** fetchedBuffer;
+   //Waleed: decodeBuffer contains tokens that have been decoded; upto decodeWidth
+   Token** decodeBuffer; 
 };
 }//End namespace McOpteron
 
 #define READIntConfigVar(name, variable) \
-    if ((v = config->findVariable(name))) \
-variable = atoi(v); \
-else { \
-  fprintf(stderr, "Error: must specify var (%s)...quitting\n", name); \
-  exit(1); \
-}
+      if ((v = config->findVariable(name))) \
+         variable = atoi(v); \
+      else { \
+         fprintf(stderr, "Error: must specify var (%s)...quitting\n", name); \
+         exit(1); \
+      }
 #define READStringConfigVar(name, variable) \
-    if ((v = config->findVariable(name))) \
-variable = strdup(v); \
-else { \
-  fprintf(stderr, "Error: must specify var (%s)...quitting\n", name); \
-  exit(1); \
-}
+      if ((v = config->findVariable(name))) \
+         variable = strdup(v); \
+      else { \
+         fprintf(stderr, "Error: must specify var (%s)...quitting\n", name); \
+         exit(1); \
+      }
 #define READRealConfigVar(name, variable) \
-    if ((v = config->findVariable(name))) \
-variable = atof(v); \
-else { \
-  fprintf(stderr, "Error: must specify var (%s)...quitting\n", name); \
-  exit(1); \
-}
+      if ((v = config->findVariable(name))) \
+         variable = atof(v); \
+      else { \
+         fprintf(stderr, "Error: must specify var (%s)...quitting\n", name); \
+         exit(1); \
+      }
 #define READRealOptionalVar(name, variable) \
-    if ((v = config->findVariable(name))) {\
-      variable = atof(v); \
-    }
+      if ((v = config->findVariable(name))) {\
+         variable = atof(v); \
+      }
 
 
 #endif

@@ -14,7 +14,7 @@ InstructionCount Token::lastTokenDone = 0; // last token retired/canceled
 /// @brief Constructor
 ///
 Token::Token(InstructionInfo *Type, InstructionCount Number, 
-             CycleCount atCycle, bool isFake, CPIStack *cpistack)
+             CycleCount atCycle, bool isFake)
 {
    number=Number;//this->number = number;
    issueCycle = atCycle;
@@ -29,7 +29,7 @@ Token::Token(InstructionInfo *Type, InstructionCount Number,
    optionalProb = 0.0;
    hasAddressOperand = false; //( number % 2 == 0 );
    hasLoad = hasStore = false;
-   loadSatisfied = storeSatisfied = false;
+   loadSatisfied = false;
    addressGenerated = false;
    completed = false;
    retired = false;
@@ -39,8 +39,6 @@ Token::Token(InstructionInfo *Type, InstructionCount Number,
    inDependency = 0;
    deleteListener = 0;
    totalTokensCreated++;
-	cpiStack = cpistack; 
-   dtlb1 = dtlb2 = L1 = L2 = L3 = mem = false;
 }
 
 /// @brief: Destructor
@@ -108,7 +106,6 @@ void Token::setMemoryStoreInfo(Address address, unsigned int numBytes)
    if (type->needsStoreAddress())
       hasAddressOperand = true;
    hasStore = true;
-   storeSatisfied = false;
 }
 
 
@@ -158,11 +155,14 @@ void Token::setInDependency(Dependency *dep)
 bool Token::needsAddressGeneration()
 {
    if (type && type->isFPUInstruction() && hasAddressOperand) {
-      // Waleed: for now, assume address is always ready for fp instructions
-      // waleed: we are doing this because the extra delay for processing mem ops
-		// waleed: is already incorporated in the instr latency (see instruction table)!!
-		// waleed: before, we used to generate a fake LEA to compute address, but not anymore
+      // Waleed: for now, assume address is always redy for fp instructions
+      // waleed: we are doing this for now because we are ignoring FAKE LEA
       addressGenerated = true; 
+      // rely on fake LEA to indicate address is generated
+      // - it will increment the dependency ready count,
+      //   this is not quite accurate but should be close
+      //if (inDependency && inDependency->numReady > 0)
+      //   addressGenerated = true;
    }
    if (hasAddressOperand && !addressGenerated)
       return true;
@@ -186,7 +186,7 @@ bool Token::needsFunctionalUnit(FunctionalUnit *fu)
    // the FU. this must also consider sequencing, such as ALU after
    // AGU 
    if (hasAddressOperand && !addressGenerated) {
-      if (fu->getType() == FunctionalUnitType::AGU) // || fu->getType() == FADD)
+      if (fu->getType() == AGU) // || fu->getType() == FADD)
          return true;
       else
          return false;
@@ -213,12 +213,6 @@ bool Token::aguOperandsReady(CycleCount atCycle)
 bool Token::allOperandsReady(CycleCount atCycle)
 {
    Dependency *dep = inDependency;
-   // sanity check: check if address needs to be generated
-   if(this->needsAddressGeneration()) { 
-      if (Debug>=3) 
-         fprintf(stderr, "Token %llu still waiting for address to be generated\n", number);
-      return false;
-   }	
 	if(!checkDependency()) { 
       if (Debug>=3) 
          fprintf(stderr, "Token %llu still waiting for dependencies %u %u\n",
@@ -256,7 +250,6 @@ void Token::loadSatisfiedAt(CycleCount atCycle)
 
 void Token::storeSatisfiedAt(CycleCount atCycle)
 {
-   storeSatisfied = true; // store has been issued from the LSQ
 }
 
 
@@ -274,12 +267,8 @@ bool Token::isExecuting(CycleCount currentCycle)
       // has finished some exec step
       if (needsAddress) //hasAddressOperand && !addressGenerated) 
          // we assume the first step must have been to generate an address
+         // - maybe we should check the unit (AGU or FADD??)
          addressGenerated = true;
-      else if (hasStore && !storeSatisfied) {
-         if (Debug>=3) 
-            fprintf(stderr, "Token %llu still waiting for memory store to issue\n", number);
-         return true; 
-      }				
       else {
          completed = true;
          if (Debug>=3)
@@ -290,51 +279,6 @@ bool Token::isExecuting(CycleCount currentCycle)
    }
 }
 
-// check if instruction is still executing or not yet started and update CPI stack component accordingly as to why
-// assumes this funciton is called by tokens NOT yet completed. 
-void Token::updateCPIStack() { 
-    static bool firstTime = true;
-   // sanity check
-   //if(completed) 
-     // return; 
-	// if still executing
-   if(execEndCycle != 0 && firstTime) { 
-      cpiStack->insLatency +=1.0;
-   } else if(execEndCycle != 0 && !firstTime) { // if it's NOW executing after having suffered a delay before 
-      if(dtlb1 || dtlb2)
-          cpiStack->dTLBMiss +=1.0; 
-      else if(L1)
-         cpiStack->L1 +=1.0;
-      else if(L2)
-         cpiStack->L2 +=1.0;
-      else if(L3)
-         cpiStack->L3 +=1.0;
-      else if(mem)
-         cpiStack->mem +=1.0;
-      else  // tru data dependence?
-         cpiStack->dataDep +=1.0; 
-   } else { // not yet started executing?
-      if(!checkDependency() || this->needsAddressGeneration()) { 
-         cpiStack->dataDep +=1.0;
-      } else if (hasLoad && !loadSatisfied) { // token is waiting for load to be satisfied
-         if(dtlb1 || dtlb2)
-            cpiStack->dTLBMiss +=1.0; 
-         else if(L1)
-            cpiStack->L1 +=1.0;
-         else if(L2)
-            cpiStack->L2 +=1.0;
-         else if(L3)
-            cpiStack->L3 +=1.0;
-         else 
-            cpiStack->mem +=1.0;
-      } else {
-         cpiStack->dataDep +=1.0;
-      }
-      firstTime = false; 
-   }
-   //if (!updated) 
-	//   fprintf(stderr, "***********************\nCHECK CHECK: was not able to updated CPI STACK\n********************\n"); 
-} 
 
 /// @brief True if instruction has been completed
 ///

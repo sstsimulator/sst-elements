@@ -87,8 +87,6 @@ SSTMcOpteron::SSTMcOpteron(ComponentId_t id, Params& params):Component(id){
 	//cout<<"  Reading seed"<<endl;
 	if ( params.find("seed") == params.end() ) seed=100;
 	else seed = strtol( params[ "seed" ].c_str(), NULL, 0 );
-  rng = new RNG::MersenneRNG(seed);
-  the_cpu->setRandFunc( [&] () -> double {return rng->nextUniform();} );
 	//traceFile (default=null)
 	//cout<<"  Reading traceFile"<<endl;
 	if ( params.find("traceFile") == params.end() ) traceFile="";
@@ -156,7 +154,7 @@ bool SSTMcOpteron::tic(Cycle_t){
 void SSTMcOpteron::setup(){  
 	the_cpu->local_debug=debug;
 	the_cpu->init(appDirectory, defFile, mixFile, traceFile, repeatTrace, newIMixFile, instrSizeFile, fetchSizeFile, transFile);
-	//the_cpu->seedRandom(seed);
+	McOpteron::seedRandom(seed);
 	if (printStaticIMix)
 		the_cpu->printStaticIMix();
 	cyclecount=0;

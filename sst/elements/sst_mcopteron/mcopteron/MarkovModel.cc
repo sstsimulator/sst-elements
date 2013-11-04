@@ -5,7 +5,6 @@
 #include <map>
 
 #include "MarkovModel.h"
-#include "mersenne.h"
 
 //using namespace std;
 
@@ -23,7 +22,7 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 ///     Prob            Instr the sequence transitions to
 ///     100.000000      CMP 8 reg, mem  
 /// **Repeat the above sequence for every 3-instr sequence 
-MarkovModel::MarkovModel(int order, InstructionInfo *head, const char* filename):rand()
+MarkovModel::MarkovModel(int order, InstructionInfo *head, const char* filename)
 {
 
    char line[128];
