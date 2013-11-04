@@ -22,7 +22,7 @@ namespace McOpteron{ //Scoggin: Added a namespace to reduce possible conflicts a
 class ReorderBuffer
 {
  public:
-   ReorderBuffer(unsigned int numSlots, unsigned int numRetireablePerCycle);
+   ReorderBuffer(unsigned int numSlots, unsigned int numRetireablePerCycle, CPIStack *cpistack);
    ~ReorderBuffer();
    bool dispatch(Token *token, CycleCount atCycle); 
    bool dispatchEmpty(CycleCount atCycle);
@@ -41,6 +41,8 @@ class ReorderBuffer
    unsigned long long totalRetired; ///< statistic: total retired instructions
    unsigned long long totalAnulled; ///< statistic: total canceled instructions
    unsigned long long fullStalls; ///< statistic: total stalls due to full buffer
+   CPIStack *cpiStack;            ///< pointer to CPI stack variable in McOpteron
+
 };
 }//End namespace McOpteron
 #endif

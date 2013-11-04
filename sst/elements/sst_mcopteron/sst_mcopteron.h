@@ -28,6 +28,7 @@
 #define SST_MCOPTERON_H_
 
 #include <sst/core/component.h>
+#include <sst/core/rng/mersenne.h>
 
 #include "mcopteron/McOpteron.h"
 namespace SST {
@@ -67,7 +68,8 @@ public:
 	//bookkeeping
 	long cyclecount;
 	bool converged;
-
+  
+  RNG::SSTRandom* rng;
 };
 }
 }
