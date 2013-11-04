@@ -703,11 +703,14 @@ void schedComponent::startJob(AllocInfo* ai)
     Job* j = ai -> job;
     int* jobNodes = ai -> nodeIndices;
     unsigned long communicationTime = 0;
-    unsigned long actualRunningTime = j-> getActualTime();
+    unsigned long actualRunningTime = j -> getActualTime();
+    
     //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
-    if (timePerDistance -> size() != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
-        communicationTime = timePerDistance -> at(3) * ((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors);
-        actualRunningTime = timePerDistance -> at(0) * actualRunningTime + timePerDistance -> at(1) * (timePerDistance -> at(2) + communicationTime);
+    if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
+        if (NULL != ((MeshAllocInfo*)ai) -> processors) {
+            communicationTime = timePerDistance -> at(3) * ((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors);
+            actualRunningTime = timePerDistance -> at(0) * actualRunningTime + timePerDistance -> at(1) * (timePerDistance -> at(2) + communicationTime);
+        }
     }
     //printf("Job %ld L1Distance %ld\n", j -> getJobNum(),((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
 
