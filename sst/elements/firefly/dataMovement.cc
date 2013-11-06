@@ -9,26 +9,24 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst_config.h"
-#include "sst/core/serialization.h"
+#include <sst_config.h>
 #include <sst/core/link.h>
-#include "dataMovement.h"
+#include <sst/core/params.h>
 
-#include "ioapi.h"
+#include "dataMovement.h"
 #include "entry.h"
 #include "info.h"
-#include "sst/elements/hermes/msgapi.h"
-#include "sst/core/params.h"
 
 using namespace SST::Firefly;
 using namespace SST;
 
 DataMovement::DataMovement( SST::Params params, Info* info, SST::Link* link ) :
     m_info(info),
-    m_sleep( false ),
+    m_outLink( link ),
+    m_retLink( NULL ),
     m_sendReqKey( 0 ),
     m_recvReqKey( 0 ),
-    m_link( link )
+    m_blockedReq( NULL )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc =
@@ -62,7 +60,6 @@ DataMovement::Request* DataMovement::getRecvReq( IO::NodeId src )
     req->ioVec[0].len = sizeof(hdr);
     req->state = RecvReq::RecvHdr;
     
-    m_sleep = false;
     return req;
 }
 
@@ -158,16 +155,12 @@ DataMovement::Request* DataMovement::sendIODone( Request *r )
                     m_info->sizeofDataType(req->entry->dtype);
 
         if ( len <= ShortMsgLength ) {
-            // this is just a flag to tell that the send has completed
-            req->entry->req->src = 1;  
-            delete req->entry;
+            req->entry->setDone();
             delete req;
         }
     } else {
         if ( req->entry ) {
-            // this is just a flag to tell that the send has completed
-            req->entry->req->src = 1;  
-            delete req->entry;
+            req->entry->setDone();
         }
         delete req;
     }
@@ -285,11 +278,10 @@ void DataMovement::completeLongMsg( MsgEntry* msgEntry, RecvEntry* recvEntry )
     m_dbg.verbose(CALL_INFO,1,0,"queue LongMsgReq\n");
     
     RecvReq* req = new RecvReq;
-    req->recvEntry = new RecvEntry;
-    *req->recvEntry = *recvEntry;
-    req->nodeId = msgEntry->srcNodeId;   
-    req->hdr.mHdr = msgEntry->hdr;
-    req->hdr.sendKey = msgEntry->sendKey;
+    req->recvEntry = recvEntry; 
+    req->nodeId = static_cast<MsgEntry*>(msgEntry)->srcNodeId;   
+    req->hdr.mHdr = static_cast<MsgEntry*>(msgEntry)->hdr;
+    req->hdr.sendKey = static_cast<MsgEntry*>(msgEntry)->sendKey;
     req->hdr.recvKey = saveRecvReq( req );
     m_longMsgReqQ.push_back( req );
 }
@@ -298,62 +290,90 @@ void  DataMovement::finishRecv( Request* r )
 {
     RecvReq* req = static_cast<RecvReq*>(r);
 
-    if ( req->recvEntry->req ) {
-        m_dbg.verbose(CALL_INFO,1,0,"finish up non blocking match\n");
-        req->recvEntry->req->tag = req->hdr.mHdr.tag;  
-        req->recvEntry->req->src = req->hdr.mHdr.srcRank;  
-    } else if ( req->recvEntry->resp ) {
-        m_dbg.verbose(CALL_INFO,1,0,"finish up blocking match\n");
+    req->recvEntry->setDone();  
+    if ( req->recvEntry->resp ) {
+        m_dbg.verbose(CALL_INFO,1,0,"finish up blocking match %p\n",
+                                            req->recvEntry);
         req->recvEntry->resp->tag = req->hdr.mHdr.tag;  
         req->recvEntry->resp->src = req->hdr.mHdr.srcRank;  
     }
-    delete req->recvEntry;
     delete req; 
 }
 
-bool DataMovement::blocked()
+bool DataMovement::unblocked()
 {
-    return m_sleep; 
+    if ( m_blockedReq && m_blockedReq->isDone()) {
+        delete m_blockedReq;
+        m_blockedReq = NULL;
+        m_dbg.verbose(CALL_INFO,1,0,"pass control to Function\n");
+        m_retLink->send(0,NULL);
+        return true;
+    } 
+    return false; 
 }
 
-void DataMovement::enter()
+void DataMovement::wait( Hermes::MessageRequestBase* req )
 {
-    m_link->send(0,NULL);
+    m_dbg.verbose(CALL_INFO,1,0,"block %p\n", req);
+    assert( !m_blockedReq );
+    m_blockedReq = req;
+    m_outLink->send(0,NULL);
 }
 
-void DataMovement::sleep()
+void DataMovement::postSendEntry( SendEntry* entry )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"sleep\n");
-    m_sleep = true;
-    m_link->send(0,NULL);
+    // We should block until there is room but for now punt  
+    assert( m_sendQ.size() < MaxNumSends );
+
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    m_sendQ.push_back( entry );
+
+    m_retLink->send(0,NULL);
 }
 
-bool DataMovement::canPostSend()
+void DataMovement::postRecvEntry( RecvEntry* recvEntry )
 {
-    return ( m_sendQ.size() < MaxNumSends );
+    // We should block until there is room but for now punt  
+    assert( m_postedQ.size() < MaxNumPostedRecvs );
+
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
+
+    int delay = 0;
+    MsgEntry* msgEntry = searchUnexpected( recvEntry, delay );
+
+    if ( msgEntry ) {
+        m_dbg.verbose(CALL_INFO,1,0,"found unexpected message\n");
+
+        if ( recvEntry->resp ) {
+            recvEntry->resp->src = msgEntry->hdr.srcRank;
+            recvEntry->resp->tag = msgEntry->hdr.tag;
+        }
+
+        size_t len = recvEntry->count *
+                        m_info->sizeofDataType( recvEntry->dtype );
+        if ( len <= ShortMsgLength ) {
+            m_dbg.verbose(CALL_INFO,1,0,"complete short msg\n");
+            memcpy( recvEntry->buf, &msgEntry->buffer[0],
+                                    msgEntry->buffer.size());
+            delay += getCopyDelay( msgEntry->buffer.size() );
+
+            recvEntry->setDone();
+        } else {
+            completeLongMsg( msgEntry, recvEntry );
+        }
+    } else {
+        m_postedQ.push_back( recvEntry );
+    }
+    
+    m_dbg.verbose(CALL_INFO,1,0,"delay %d\n",delay);
+    m_retLink->send(delay,NULL);
 }
 
-void DataMovement::postSendEntry( SendEntry entry )
-{
-    SendEntry* tmp = new SendEntry;
-    *tmp = entry; 
-    m_sendQ.push_back( tmp );
-}
-
-bool DataMovement::canPostRecv()
-{
-    return ( m_postedQ.size() < MaxNumPostedRecvs );
-}
-
-void DataMovement::postRecvEntry( RecvEntry entry )
-{
-    RecvEntry* tmp = new RecvEntry;
-    *tmp = entry;
-    m_postedQ.push_back( tmp );
-}
-MsgEntry* DataMovement::searchUnexpected( RecvEntry* entry, int& delay )
+MsgEntry* DataMovement::searchUnexpected( RecvEntry* e, int& delay )
 {
     delay = 0;
+    RecvEntry* entry = static_cast<RecvEntry*>(e);
     m_dbg.verbose(CALL_INFO,1,0,"unexpected size %lu\n",
                                             m_unexpectedMsgQ.size() );
     std::deque< MsgEntry* >::iterator iter = m_unexpectedMsgQ.begin();

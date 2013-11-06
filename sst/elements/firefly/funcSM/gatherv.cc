@@ -11,33 +11,21 @@
 
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include "funcSM/gatherv.h"
+#include "info.h"
 
 using namespace SST::Firefly;
 
-GathervFuncSM::GathervFuncSM( 
-                    int verboseLevel, Output::output_location_t loc,
-                    Info* info, ProtocolAPI* ctrlMsg ) :
-    FunctionSMInterface(verboseLevel,loc,info),
-    m_ctrlMsg( static_cast<CtrlMsg*>(ctrlMsg) ),
+GathervFuncSM::GathervFuncSM( SST::Params& params ) :
+    FunctionSMInterface(params),
     m_event( NULL ),
     m_seq( 0 )
 {
-    m_dbg.setPrefix("@t:GathervFuncSM::@p():@l ");
 }
 
 void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
-    if ( m_setPrefix ) {
-        char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:GathervFuncSM::@p():@l ",
-                    m_info->nodeId(), m_info->worldRank());
-        m_dbg.setPrefix(buffer);
-
-        m_setPrefix = false;
-    }
     ++m_seq;
 
     assert( NULL == m_event );
@@ -55,43 +43,26 @@ void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         m_dbg.verbose(CALL_INFO,1,0,"child[%d]=%d\n",i,m_qqq->calcChild(i));
     }
 
-    m_sendUpPending = false;
-    m_waitUpPending = false;
-    m_waitUpState = WaitUpRecv;
-    m_sendUpState = SendUpSend;
     m_state = WaitUp;
-    m_pending = true;
-    m_waitUpDelay = 0;
-    m_sendUpDelay = 0;
 
     m_recvReqV.resize(m_qqq->numChildren());
     m_waitUpSize.resize(m_qqq->numChildren());
 
-    m_ctrlMsg->enter();
+    handleEnterEvent( retval );
 }
 
-void GathervFuncSM::handleSelfEvent( SST::Event *e, Retval& retval )
-{
-    handleEnterEvent( e, retval );
-}
-
-void GathervFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
+void GathervFuncSM::handleEnterEvent( Retval& retval )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     switch( m_state ) {
     case WaitUp:
-        if ( m_qqq->numChildren() ) {
-            if ( waitUp(retval) ) {
-                break;
-            };
+        if ( m_qqq->numChildren() && waitUp(retval) ) {
+            return;
         }
-        m_pending = false;
         m_state = SendUp;
     case SendUp:
-        if ( -1 != m_qqq->parent() ) {
-            if ( sendUp(retval) ) {
-                break;
-            }
+        if ( -1 != m_qqq->parent() && sendUp(retval) ) {
+            return;
         }
         m_dbg.verbose(CALL_INFO,1,0,"leave\n");
         retval.setExit(0);
@@ -103,143 +74,113 @@ void GathervFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
 
 bool GathervFuncSM::waitUp(Retval& retval)
 {
+    int len;
     m_dbg.verbose(CALL_INFO,1,0,"\n");
-    switch( m_waitUpState ) { 
-    case WaitUpRecv:
-        if ( ! m_waitUpPending ) {
-            for ( unsigned int i = 0; i < m_qqq->numChildren(); i++ ) { 
-                m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n", 
-                                 i, m_qqq->calcChild(i) );
-                m_ctrlMsg->recv( &m_waitUpSize[i], sizeof(m_waitUpSize[i]),
-                        m_qqq->calcChild(i),
-                        genTag(1), m_event->group, &m_recvReqV[i] );
-            }    
-            m_waitUpPending = true;
-            m_ctrlMsg->enter();
-            m_count = 0;
-            return true;
-        } else {
-            if ( ! m_waitUpDelay ) {
-                m_waitUpTest = m_ctrlMsg->test( &m_recvReqV[m_count], 
-                                        m_waitUpDelay );
-                if ( m_waitUpDelay ) {
-                    retval.setDelay( m_waitUpDelay );
-                    return true;
-                }
-            } else {
-                m_waitUpDelay = 0;
-            }
-            if ( m_waitUpTest) {
-                m_dbg.verbose(CALL_INFO,1,0,"got message from child %d[%d]\n", 
-                                 m_count, m_qqq->calcChild(m_count) );
-                ++m_count;
-            } else {
-                m_ctrlMsg->sleep();
-                return true;
-            }
+    switch( m_waitUpState.state ) { 
+
+      case WaitUpState::PostSizeRecvs:
+
+        m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n", 
+                 m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
+
+        proto()->irecv( &m_waitUpSize[m_waitUpState.count], 
+                    sizeof(m_waitUpSize[m_waitUpState.count]),
+                    m_qqq->calcChild(m_waitUpState.count),
+                    genTag(1), 
+                    m_event->group, 
+                    &m_recvReqV[m_waitUpState.count] );
+
+        ++m_waitUpState.count;
+
+        if ( m_waitUpState.count == m_qqq->numChildren() ) {
+            m_waitUpState.state = WaitUpState::WaitSizeRecvs;
+            m_waitUpState.count = 0;
         }
-        if ( m_count < m_qqq->numChildren() ) {
-            m_ctrlMsg->enter();
-            return true;
-        } else {
-            m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
-            int len = m_info->sizeofDataType( m_event->sendtype ) * 
-                                                        m_event->sendcnt;
-            for ( unsigned int i = 0; i < m_qqq->numChildren(); i++ ) {
+        return true;
+
+      case WaitUpState::WaitSizeRecvs:
+
+        m_dbg.verbose(CALL_INFO,1,0,"wait for Size msg from child %d[%d]\n",
+                 m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
+        proto()->wait( &m_recvReqV[m_waitUpState.count] );
+
+        ++m_waitUpState.count;
+
+        if ( m_waitUpState.count == m_qqq->numChildren() ) {
+            m_waitUpState.state = WaitUpState::Setup;
+        }
+        return true;
+
+      case WaitUpState::Setup:
+        m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
+        // calculate the size of receive buffer
+        // this nodes part of buffer
+        len = m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
+        for ( unsigned int i = 0; i < m_qqq->numChildren(); i++ ) {
                 
-                m_dbg.verbose(CALL_INFO,1,0,"child %d[%d] has %d bytes\n",
+            m_dbg.verbose(CALL_INFO,1,0,"child %d[%d] has %d bytes\n",
                                i, m_qqq->calcChild(i), m_waitUpSize[i] );
-                len += m_waitUpSize[i];
-            }
-            m_recvBuf.resize( len );
-            len = m_info->sizeofDataType( m_event->sendtype ) *
-                                                        m_event->sendcnt;
-            for ( unsigned int i = 0; i < m_qqq->numChildren(); i++ ) {
-                m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n",
-                               i, m_qqq->calcChild(i) );
-                m_ctrlMsg->recv( &m_recvBuf[len], m_waitUpSize[i],
-                        m_qqq->calcChild(i),
-                        genTag(2), m_event->group, &m_recvReqV[i] );
-                len += m_waitUpSize[i];
-            }
+            // childs part of buffer
+            len += m_waitUpSize[i];
+        }
+        m_recvBuf.resize( len );
+        m_waitUpState.state = WaitUpState::PostDataRecv;
+        m_waitUpState.count = 0;
+        m_waitUpState.len = 
+            m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
+
+      case WaitUpState::PostDataRecv:
+
+        m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n",
+                   m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
+        proto()->irecv( &m_recvBuf[m_waitUpState.len],
+                    m_waitUpSize[m_waitUpState.count],
+                    m_qqq->calcChild(m_waitUpState.count),
+                    genTag(2), m_event->group, 
+                    &m_recvReqV[m_waitUpState.count] );
+        m_waitUpState.len += m_waitUpSize[m_waitUpState.count];
+
+        ++m_waitUpState.count;
+        if ( m_waitUpState.count == m_qqq->numChildren() ) {
+            m_waitUpState.state = WaitUpState::SendSize;
+            m_waitUpState.count = 0;
         }
 
-        m_waitUpState = WaitUpSend;
-        m_waitUpPending = false;
-        m_count = 0;
-        m_dbg.verbose(CALL_INFO,1,0,"switch to WaitUpSend\n");
-            
-    case WaitUpSend:
-        if ( ! m_waitUpPending ) {
-            m_dbg.verbose(CALL_INFO,1,0,"send I'm ready message to"
-                " child %d[%d]\n", m_count, m_qqq->calcChild( m_count ) );
-            m_ctrlMsg->send( NULL, 0, 
-                            m_qqq->calcChild( m_count ),
-                            genTag(3), m_event->group, &m_sendReq );
-            m_ctrlMsg->enter();
-            m_waitUpPending = true;
-            return true;
-        } else {
-            if ( ! m_waitUpDelay ) { 
-                m_waitUpTest = m_ctrlMsg->test( &m_sendReq, m_waitUpDelay );
-                if ( m_waitUpDelay ) {
-                    retval.setDelay( m_waitUpDelay );
-                    return true;
-                }
-            } else {
-                m_waitUpDelay = 0;
-            }
-            if ( m_waitUpTest ) {
-                m_dbg.verbose(CALL_INFO,1,0,"send completed %d[%d]\n",
-                                    m_count, m_qqq->calcChild( m_count ) );
-                ++m_count;
-            } else {
-                m_ctrlMsg->sleep();
-                return true;
-            }
-            if ( m_count < m_qqq->numChildren() ) {
-                m_ctrlMsg->enter();
-                m_waitUpPending = false;
-                return true;
-            }
-        } 
-        m_waitUpState = WaitUpRecvBody;
-        m_waitUpPending = false;
-        m_count = 0;
-        m_dbg.verbose(CALL_INFO,1,0,"switch to WaitUpRecvBody\n");
+        return true;
 
-    case WaitUpRecvBody:
-        if ( m_count < m_qqq->numChildren() ) {
-            if ( ! m_waitUpDelay ) {
-                m_waitUpTest = 
-                        m_ctrlMsg->test( &m_recvReqV[m_count], m_waitUpDelay );
-                if ( m_waitUpDelay ) {
-                    retval.setDelay( m_waitUpDelay );
-                    return true;
-                }
-            } else {
-                m_waitUpDelay = 0;
-            }
-            if ( m_waitUpTest ) {
-                m_dbg.verbose(CALL_INFO,1,0,"got message from %d\n", m_count);
-                ++m_count;
-            } else {
-                m_ctrlMsg->sleep();
-                return true;
-            }
-            if ( m_count < m_qqq->numChildren() ) {
-                m_ctrlMsg->enter();
-                return true;
-            } else {
-                m_dbg.verbose(CALL_INFO,1,0,"got all messages\n");
-                if ( -1 == m_qqq->parent() ) {
+    case WaitUpState::SendSize:
+        m_dbg.verbose(CALL_INFO,1,0,"send I'm ready message to"
+                " child %d[%d]\n", m_waitUpState.count, 
+                m_qqq->calcChild( m_waitUpState.count ) );
+        proto()->send( NULL, 0, m_qqq->calcChild( m_waitUpState.count ),
+                            genTag(3), m_event->group );
 
-                    doRoot( );
-                }
-            }
+        ++m_waitUpState.count;
+        if ( m_waitUpState.count == m_qqq->numChildren() ) {
+            m_waitUpState.state = WaitUpState::WaitDataRecv;
+            m_waitUpState.count = 0;
         }
-        m_waitUpState = WaitUpRecv;
-        m_waitUpPending = false;
+
+        return true;
+
+    case WaitUpState::WaitDataRecv:
+        m_dbg.verbose(CALL_INFO,1,0,"wait for data from %d\n",
+                            m_waitUpState.count );
+
+        proto()->wait( &m_recvReqV[m_waitUpState.count] );
+
+        ++m_waitUpState.count;
+        if ( m_waitUpState.count == m_qqq->numChildren() ) {
+            m_waitUpState.state = WaitUpState::DoRoot;
+        }
+
+        return true;
+
+    case WaitUpState::DoRoot:
+        m_dbg.verbose(CALL_INFO,1,0,"doRoot\n");
+        if ( -1 == m_qqq->parent() ) {
+            doRoot( );
+        }
     }
     return false;
 }
@@ -296,116 +237,51 @@ void GathervFuncSM::doRoot()
 
 bool GathervFuncSM::sendUp(Retval& retval)
 { 
+    size_t len;
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-    switch ( m_sendUpState ) {
-    case SendUpSend:
-        if ( ! m_sendUpPending ) {
-            size_t len = m_info->sizeofDataType( m_event->sendtype ) *
+    switch ( m_sendUpState.state ) {
+    case SendUpState::SendSize:
+        len = m_info->sizeofDataType( m_event->sendtype ) *
                     m_event->sendcnt;
-            if ( 0 == m_qqq->numChildren() ) {
-                m_recvBuf.resize( len );
-            }
-            memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
-            m_intBuf = m_recvBuf.size();
-            m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
+        if ( 0 == m_qqq->numChildren() ) {
+            m_recvBuf.resize( len );
+        }
+        memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
+        m_intBuf = m_recvBuf.size();
+        m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
                                                 m_intBuf, m_qqq->parent());
-            m_ctrlMsg->send( &m_intBuf, sizeof(m_intBuf), 
-                            m_qqq->parent(),
-                            genTag(1), m_event->group, &m_sendReq );
-            
-            m_sendUpPending = true;
-            m_ctrlMsg->enter();
-            return true;
-        } else {
-            if ( ! m_sendUpDelay ) {
-                m_sendUpTest = m_ctrlMsg->test( &m_sendReq, m_sendUpDelay );
-                if ( m_sendUpDelay ) {
-                    retval.setDelay(m_sendUpDelay);
-                    return true;
-                }
-            } else {
-                m_sendUpDelay = 0;
-            }
-            if ( m_sendUpTest ) {
-                m_dbg.verbose(CALL_INFO,1,0,"send completed\n");
-            } else {
-                m_ctrlMsg->sleep();
-                return true;
-            }
-        }
+        proto()->send( &m_intBuf, sizeof(m_intBuf), m_qqq->parent(),
+                            genTag(1), m_event->group );
 
-        m_sendUpPending = false;
-        m_sendUpState = SendUpWait;
+        m_sendUpState.state = SendUpState::RecvGo;
+        return true;
 
-        m_dbg.verbose(CALL_INFO,1,0,"move to SendUpWait\n");
-
-    case SendUpWait:
-        if ( ! m_sendUpPending ) {
-            m_dbg.verbose(CALL_INFO,1,0,"post Go Msg receive for parent %d\n", 
+    case SendUpState::RecvGo:
+        m_dbg.verbose(CALL_INFO,1,0,"post receive for Go msg, parrent=%d\n",
                                         m_qqq->parent());
-            m_ctrlMsg->recv( NULL, 0, m_qqq->parent(),
-                        genTag(3), m_event->group, &m_recvReq );
-            m_sendUpPending = true;
-            m_ctrlMsg->enter();
-            return true;
-        } else {
-            if ( ! m_sendUpDelay ) {
-                m_sendUpTest = m_ctrlMsg->test( &m_recvReq, m_sendUpDelay );
-                if ( m_sendUpDelay ) {
-                    retval.setDelay(m_sendUpDelay);
-                    return true;
-                }
-            } else {
-                m_sendUpDelay = 0;
-            }
-            if ( m_sendUpTest ) {
-                m_dbg.verbose(CALL_INFO,1,0,"got message from parent %d\n", 
-                                        m_qqq->parent());
-            } else {
-                m_ctrlMsg->sleep();
-                return true;
-            }
-        }
-        m_sendUpPending = false;
-        m_sendUpState = SendUpSendBody;
-        m_dbg.verbose(CALL_INFO,1,0,"move to SendUpSendBody\n");
+        proto()->recv( NULL, 0, m_qqq->parent(),
+                        genTag(3), m_event->group );
 
-    case SendUpSendBody:
+        m_sendUpState.state = SendUpState::SendBody;
+        return true;
 
-        if ( ! m_sendUpPending ) {
-            m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
+    case SendUpState::SendBody:
+
+        m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
-            m_ctrlMsg->send( &m_recvBuf[0], m_recvBuf.size(), m_qqq->parent(),
-                            genTag(2), m_event->group, &m_sendReq );
+        proto()->send( &m_recvBuf[0], m_recvBuf.size(), m_qqq->parent(),
+                            genTag(2), m_event->group );
 #if 0 // print debug 
-            for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
-                printf("%#03x\n", m_recvBuf[i]);
-            }
-#endif
-            m_sendUpPending = true;
-            m_ctrlMsg->enter();
-            return true;
-        }  else {
-            if ( ! m_sendUpDelay ) {
-                m_sendUpTest = m_ctrlMsg->test( &m_sendReq, m_sendUpDelay );
-                if ( m_sendUpDelay ) {
-                    retval.setDelay( m_sendUpDelay );
-                    return true;
-                }
-            } else {
-                m_sendUpDelay = 0;
-            }
-            if ( m_sendUpTest ) {
-                m_dbg.verbose(CALL_INFO,1,0,"sent body to parent %d\n", 
-                                            m_qqq->parent());
-            } else {
-                m_ctrlMsg->sleep();
-                return true;
-            }
+        for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
+            printf("%#03x\n", m_recvBuf[i]);
         }
-        m_sendUpPending = false;
-        m_sendUpState = SendUpSend;
+#endif
+        m_sendUpState.state = SendUpState::SentBody;
+        return true;
+    
+      case SendUpState::SentBody:
+        break;
     }
     return false;
 }

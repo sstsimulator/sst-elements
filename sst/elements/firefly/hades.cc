@@ -10,12 +10,12 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 #include "hades.h"
 
-#include "sst/core/debug.h"
-#include "sst/core/component.h"
-#include "sst/core/params.h"
+#include <sst/core/debug.h>
+#include <sst/core/component.h>
+#include <sst/core/params.h>
+#include <sst/core/link.h>
 
 #include <stdlib.h>
 
@@ -106,20 +106,22 @@ Hades::Hades( Component* owner, Params& params ) :
 
     m_protocolM[0] = new DataMovement( 
                             params.find_prefix_params("dataMovement."), 
-                            &m_info,
-                            m_enterLink );
+                            &m_info, m_enterLink );
+
+    m_protocolMapByName[ m_protocolM[0]->name() ] = m_protocolM[0];
 
     m_protocolM[1] = new CtrlMsg( 
                             params.find_prefix_params("ctrlMsg."), 
-                            &m_info,
-                            m_enterLink );
+                            &m_info, m_enterLink );
+
+    m_protocolMapByName[ m_protocolM[1]->name() ] = m_protocolM[1];
 
     m_sendIter = m_protocolM.begin();
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
     m_functionSM = new FunctionSM( funcParams, owner, m_info, m_enterLink,
-                                    m_protocolM[0], m_protocolM[1] );
+                                    m_protocolMapByName );
 }
 
 void Hades::enterEventHandler(SST::Event* )
@@ -132,6 +134,7 @@ void Hades::enterEventHandler(SST::Event* )
 
     if ( m_completedIO ) {
         completedIO();
+        if ( m_delay ) return;
     }
 
     if ( ! pendingSend() ) {
@@ -142,14 +145,12 @@ void Hades::enterEventHandler(SST::Event* )
         runRecv();
     }
 
-    if ( m_io->pending() || functionIsBlocked() ) {
-        m_dbg.verbose(CALL_INFO,1,0,"pass control to I/O SM\n");
-        m_io->enter( m_enterLink );
-    } else if ( ! m_delay )  {
-        // return to function SM
-        m_dbg.verbose(CALL_INFO,1,0,"pass control to function SM\n");
-        m_functionSM->enter( );
+    if ( X() ) {
+        return;
     }
+
+    m_dbg.verbose(CALL_INFO,1,0,"pass control to I/O SM\n");
+    m_io->enter( m_enterLink );
 }
 
 void Hades::completedDelay()
@@ -229,6 +230,13 @@ void Hades::_componentSetup()
     m_protocolM[1]->setup();
 
     m_functionSM->setup();
+
+#if 0
+    if ( m_info.nodeId() == 8 ) {
+    m_dbg.setVerboseLevel( 1 );
+    m_dbg.setOutputLocation( (Output::output_location_t)1 );
+    }
+#endif
 }
 
 Group* Hades::initAdjacentMap( int numRanks, 
@@ -277,11 +285,12 @@ void Hades::_componentInit(unsigned int phase )
     m_io->_componentInit(phase);
 }
 
-bool Hades::functionIsBlocked() {
+bool Hades::X() {
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
     std::map<int,ProtocolAPI*>::iterator iter ;
     for ( iter = m_protocolM.begin(); iter != m_protocolM.end(); ++iter ) {
-        if ( iter->second->blocked() ) {
-            m_dbg.verbose(CALL_INFO,1,0,"blocked\n"); 
+        if ( iter->second->unblocked() ) {
+            m_dbg.verbose(CALL_INFO,1,0,"unblocked\n"); 
             return true;
         } 
     }
@@ -290,7 +299,7 @@ bool Hades::functionIsBlocked() {
 
 bool Hades::runSend( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    //m_dbg.verbose(CALL_INFO,1,0,"\n");
 
 here:
     ProtocolAPI::Request* req = m_sendIter->second->getSendReq();
@@ -303,7 +312,7 @@ here:
         aaa->request = req;
         aaa->ioType = AAA::SendWireHdrDone;
 
-        std::vector<IO::IoVec> ioVec; 
+        std::vector<IoVec> ioVec; 
         ioVec.resize(1);
         ioVec[0].ptr = &aaa->protoType;
         ioVec[0].len = sizeof(aaa->protoType); 
@@ -348,7 +357,7 @@ IO::Entry* Hades::sendWireHdrDone( IO::Entry* e )
 IO::Entry* Hades::sendIODone( IO::Entry* e )
 {
     AAA* aaa = static_cast<AAA*>(e);
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    //m_dbg.verbose(CALL_INFO,1,0,"\n");
     m_protocolM[ aaa->protoType ]->sendIODone( aaa->request ); 
     --m_pendingSends;
     return e;
@@ -370,7 +379,7 @@ void Hades::runRecv()
     aaa->callback  = new IO_Functor(this, &Hades::ioDone, aaa);
     aaa->ioType = AAA::RecvWireHdrDone;
 
-    std::vector<IO::IoVec> vec; 
+    std::vector<IoVec> vec; 
 
     vec.resize(1);
     vec[0].ptr = &aaa->protoType;
@@ -383,7 +392,8 @@ IO::Entry* Hades::recvWireHdrDone( IO::Entry* e )
 {
     AAA* aaa = static_cast<AAA*>(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"type=%d\n", aaa->protoType );
+    m_dbg.verbose(CALL_INFO,1,0,"type=%d src=%d\n",
+                            aaa->protoType, aaa->srcNodeId );
 
     aaa->ioType = AAA::RecvIODone;
     aaa->request = m_protocolM[aaa->protoType]->getRecvReq( aaa->srcNodeId );
@@ -415,7 +425,8 @@ IO::Entry* Hades::recvIODone( IO::Entry* e )
         e = NULL;
     
     } else {
-        m_dbg.verbose(CALL_INFO,1,0,"receive stream finished\n");
+        m_dbg.verbose(CALL_INFO,1,0,"receive stream %d finished\n",
+                                            aaa->srcNodeId);
     }
     return e;
 }

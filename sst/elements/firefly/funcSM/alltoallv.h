@@ -20,28 +20,47 @@
 namespace SST {
 namespace Firefly {
 
+#undef FOREACH_ENUM
+
+#define FOREACH_ENUM(NAME) \
+    NAME( PostRecv ) \
+    NAME( Send ) \
+    NAME( WaitRecv ) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
 class AlltoallvFuncSM :  public FunctionSMInterface
 {
     static const int AlltoallvTag = 0xf0030000;
 
+    enum StateEnum {
+         FOREACH_ENUM(GENERATE_ENUM)
+    } m_state;
+
+    static const char *m_enumName[];
+
+    std::string stateName( StateEnum i ) {
+        return m_enumName[i];
+    }
+
   public:
-    AlltoallvFuncSM( int verboseLevel, Output::output_location_t loc,
-                                        Info* info, ProtocolAPI* );
+    AlltoallvFuncSM( SST::Params& params ) :
+        FunctionSMInterface( params ),
+        m_event( NULL ),
+        m_seq( 0 )
+    { }
 
     virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
-    virtual void handleSelfEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( Retval& );
 
-    virtual const char* name() {
-       return "Alltoallv"; 
-    }
+    virtual std::string protocolName() { return "CtrlMsg"; }
 
   private:
 
     uint32_t    genTag() {
         return AlltoallvTag | (( m_seq & 0xff) << 8 );
     }
-
 
     unsigned char* sendChunkPtr( int rank ) {
         unsigned char* ptr = (unsigned char*) m_event->sendbuf;
@@ -95,18 +114,14 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         return size;
     }
 
-    CtrlMsg*            m_ctrlMsg;
+    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+
     AlltoallStartEvent* m_event;
-    bool                m_pending;
-    CtrlMsg::CommReq    m_sendReq; 
     CtrlMsg::CommReq    m_recvReq; 
     unsigned int        m_count; 
     int                 m_seq;
     unsigned int        m_size;
     int                 m_rank;
-    int                 m_delay;
-    bool                m_test;
-    bool                m_waitSend;
 };
         
 }

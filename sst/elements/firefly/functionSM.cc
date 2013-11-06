@@ -10,29 +10,17 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
+#include <sst/core/link.h>
 
 #include "functionSM.h"
-#include "funcSM/init.h"
-#include "funcSM/fini.h"
-#include "funcSM/rank.h"
-#include "funcSM/size.h"
-#include "funcSM/send.h"
-#include "funcSM/recv.h"
-#include "funcSM/wait.h"
-#include "funcSM/barrier.h"
-#include "funcSM/allreduce.h"
-#include "funcSM/gatherv.h"
-#include "funcSM/allgather.h"
-#include "funcSM/alltoallv.h"
-
 #include "ctrlMsg.h"
-
-#include "sst/core/link.h"
-#include "sst/core/params.h"
 
 using namespace SST::Firefly;
 using namespace Hermes;
+
+const char* FunctionSM::m_functionName[] = {
+    FOREACH_FUNCTION(GENERATE_STRING)
+};
 
 class DriverEvent : public SST::Event {
   public:
@@ -46,50 +34,19 @@ class DriverEvent : public SST::Event {
   private:
 };
 
-
 FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info, 
-        SST::Link* toProgressLink, ProtocolAPI* dm, ProtocolAPI* ctrlMsg ) :
+        SST::Link* toProgressLink, std::map<std::string,ProtocolAPI*>& proto ) :
     m_sm( NULL ),
-    m_nodeId( -1 ),
-    m_worldRank( -1 ),
-    m_info( info )
+    m_info( info ),
+    m_params( params ),
+    m_owner( obj ),
+    m_proto( proto )
 {
     int verboseLevel = params.find_integer("verboseLevel",0);
     Output::output_location_t loc = 
             (Output::output_location_t)params.find_integer("debug", 0);
 
     m_dbg.init("@t:FunctionSM::@p():@l ", verboseLevel, 0, loc );
-
-    m_smV.resize( NumFunctions );
-
-    m_funcLat.resize(NumFunctions);
-
-    Params timeParams = params.find_prefix_params("times.");
-    
-    int defaultTime = timeParams.find_integer("default",0);
-
-    setFunctionTimes( Init, timeParams.find_integer("Init", defaultTime ) );
-    setFunctionTimes( Fini, timeParams.find_integer("Fini", defaultTime ) );
-    setFunctionTimes( Rank, timeParams.find_integer("Rank", defaultTime ) );
-    setFunctionTimes( Size, timeParams.find_integer("Size", defaultTime ) );
-    setFunctionTimes( Send, timeParams.find_integer("Send", defaultTime ));
-    setFunctionTimes( Recv, timeParams.find_integer("Recv", defaultTime ) );
-    setFunctionTimes( Wait, timeParams.find_integer("Wait", defaultTime ) );
-    setFunctionTimes( Barrier, timeParams.find_integer("Barrier", defaultTime ) );
-    setFunctionTimes( Allreduce, timeParams.find_integer("Allreduce",
-                                                        defaultTime ) );
-    setFunctionTimes( Reduce, timeParams.find_integer("Reduce", defaultTime ) );
-    setFunctionTimes( Allgather, timeParams.find_integer("Allgather",
-                                                        defaultTime ) );
-    setFunctionTimes( Allgatherv, timeParams.find_integer("Allgatherv",
-                                                        defaultTime ) );
-    setFunctionTimes( Gather, timeParams.find_integer("Gather", defaultTime ) );
-    setFunctionTimes( Gatherv, timeParams.find_integer("Gatherv",
-                                                        defaultTime ));
-    setFunctionTimes( Alltoall, timeParams.find_integer("Alltoall",
-                                                        defaultTime ) );
-    setFunctionTimes( Alltoallv, timeParams.find_integer("Alltoallv",
-                                                        defaultTime ));
 
     m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
@@ -98,30 +55,15 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj, Info& info,
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleStartEvent));
     assert( m_fromDriverLink );
 
-    m_fromProgressLink = obj->configureSelfLink("FromProgress", "1 ps",
+    m_toMeLink = obj->configureSelfLink("ToMe", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
-    assert( m_fromProgressLink );
+    assert( m_toMeLink );
 
-    m_selfLink = obj->configureSelfLink("funtionSMselfLink", "1 ps",
-        new Event::Handler<FunctionSM>(this,&FunctionSM::handleSelfEvent));
-    assert( m_selfLink );
-
-    m_smV[Init] = new InitFuncSM( verboseLevel, loc, &info );
-    m_smV[Fini] = new FiniFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Rank] = new RankFuncSM( verboseLevel, loc, &info );
-    m_smV[Size] = new SizeFuncSM( verboseLevel, loc, &info );
-    m_smV[Send] = new SendFuncSM( verboseLevel, loc, &info, dm );
-    m_smV[Wait] = new WaitFuncSM( verboseLevel, loc, &info, dm );
-    m_smV[Recv] = new RecvFuncSM( verboseLevel, loc, &info, dm );
-    m_smV[Barrier] =   new BarrierFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Allreduce] = new AllreduceFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Reduce] =    new AllreduceFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Allgather] = new AllgatherFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Allgatherv] =new AllgatherFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Gather] =    new GathervFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Gatherv] =   new GathervFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Alltoall] =  new AlltoallvFuncSM( verboseLevel, loc, &info, ctrlMsg );
-    m_smV[Alltoallv] = new AlltoallvFuncSM( verboseLevel, loc, &info, ctrlMsg );
+    std::map<std::string,ProtocolAPI*>::iterator iter = proto.begin();
+    while ( iter != proto.end() ) {
+        iter->second->setRetLink( m_toMeLink );
+        ++iter;
+    }
 }
 
 FunctionSM::~FunctionSM()
@@ -133,18 +75,80 @@ FunctionSM::~FunctionSM()
     delete m_fromDriverLink;
 }
 
+
 void FunctionSM::setup()
 {
     char buffer[100];
     snprintf(buffer,100,"@t:%d:%d:FunctionSM::@p():@l ",m_info.nodeId(),
                                                 m_info.worldRank());
     m_dbg.setPrefix(buffer);
+
+    m_smV.resize( NumFunctions );
+
+    Params defaultParams;
+    defaultParams[ "module" ] = m_params.find_string("defaultModule","firefly");
+    defaultParams[ "latency" ] = m_params.find_string("defaultLatency","0");
+    defaultParams[ "debug" ]   = m_params.find_string("defaultDebug","0");
+    defaultParams[ "verbose" ] = m_params.find_string("defaultVerbose","0"); 
+    std::ostringstream tmp;
+    tmp <<  m_info.nodeId(); 
+    defaultParams[ "nodeId" ] = tmp.str();
+    tmp.str("");
+    tmp << m_info.worldRank(); 
+    defaultParams[ "worldRank" ] = tmp.str();
+
+    for ( int i = 0; i < NumFunctions; i++ ) {
+        std::string name = functionName( (FunctionEnum) i );
+        Params tmp = m_params.find_prefix_params( name + "." );  
+        defaultParams[ "name" ] = name;
+        initFunction( m_owner, &m_info, (FunctionEnum) i,
+                                        name, defaultParams, tmp ); 
+    }
+}
+
+void FunctionSM::initFunction( SST::Component* obj, Info* info,
+    FunctionEnum num, std::string name, Params& defaultParams, Params& params)
+{
+    std::string module = params.find_string("module"); 
+    if ( module.empty() ) {
+        module = defaultParams["module"];
+    }
+
+    m_dbg.verbose(CALL_INFO,3,0,"func=`%s` module=`%s`\n",
+                            name.c_str(),module.c_str());
+
+    if ( params.find_string("name").empty() ) {
+        params["name"] = defaultParams[ "name" ];
+    }
+
+    if ( params.find_string("verbose").empty() ) {
+        params["verbose"] = defaultParams[ "verbose" ];
+    }
+
+    if ( params.find_string("debug").empty() ) {
+        params["debug"] = defaultParams[ "debug" ];
+    }
+
+    params["nodeId"] = defaultParams[ "nodeId" ];
+    params["worldRank"] = defaultParams[ "worldRank" ];
+
+    m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
+                             params );
+
+    assert( m_smV[ Init ] );
+    m_smV[ num ]->setInfo( info ); 
+
+    if ( ! m_smV[ num ]->protocolName().empty() ) {
+        ProtocolAPI* proto = m_proto[ m_smV[ num ]->protocolName() ];
+        m_dbg.verbose(CALL_INFO,3,0,"%p\n", proto );
+        m_smV[ num ]->setProtocol( proto ); 
+    }
 }
 
 void FunctionSM::enter( )
 {
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
-    m_fromProgressLink->send( NULL );
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
+    m_toMeLink->send( NULL );
 }
 
 void FunctionSM::start( int type, Hermes::Functor* retFunc, SST::Event* e )
@@ -153,27 +157,16 @@ void FunctionSM::start( int type, Hermes::Functor* retFunc, SST::Event* e )
     m_retFunc = retFunc;
     assert( ! m_sm );
     m_sm = m_smV[ type ];
-    m_dbg.verbose(CALL_INFO,3,0,"%s enter\n",m_sm->name());
-    m_fromDriverLink->send( m_funcLat[type].enterTime, e );
+    m_dbg.verbose(CALL_INFO,3,0,"%s enter\n",m_sm->name().c_str());
+    m_fromDriverLink->send( m_sm->enterLatency(), e );
 }
-
-void FunctionSM::handleSelfEvent( SST::Event* e  )
-{
-    Retval retval;
-    m_dbg.verbose(CALL_INFO,3,0,"\n");
-    assert( m_sm );
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
-    m_sm->handleSelfEvent( e, retval );
-    processRetval( retval );
-}
-
 
 void FunctionSM::handleStartEvent( SST::Event* e )
 {
     Retval retval;
     assert( e );
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
     m_sm->handleStartEvent( e, retval );
     processRetval( retval );
 }
@@ -182,9 +175,9 @@ void FunctionSM::handleStartEvent( SST::Event* e )
 void FunctionSM::handleEnterEvent( SST::Event* e )
 {
     assert( m_sm );
-    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name());
+    m_dbg.verbose(CALL_INFO,3,0,"%s\n",m_sm->name().c_str());
     Retval retval;
-    m_sm->handleEnterEvent( e, retval );
+    m_sm->handleEnterEvent( retval );
     processRetval( retval );
 }
 
@@ -196,7 +189,7 @@ void FunctionSM::processRetval(  Retval& retval )
         m_toDriverLink->send( 0, x ); 
     } else if ( retval.isDelay() ) {
         m_dbg.verbose(CALL_INFO,3,0,"Delay %d\n", retval.value() );
-        m_selfLink->send( retval.value(), NULL ); 
+        m_toMeLink->send( retval.value(), NULL ); 
     } else {
     }
 }

@@ -9,114 +9,54 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include "funcSM/recv.h"
-#include "dataMovement.h"
 
 using namespace SST::Firefly;
 
-RecvFuncSM::RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info, ProtocolAPI* dm ) :
-    FunctionSMInterface(verboseLevel,loc,info),
-    m_dm( static_cast<DataMovement*>(dm) ),
+RecvFuncSM::RecvFuncSM( SST::Params& params ) :
+    FunctionSMInterface(params),
     m_event( NULL )
 { 
-    m_dbg.setPrefix("@t:RecvFuncSM::@p():@l ");
 }
 
 void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
-    if ( m_setPrefix ) {
-        char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:RecvFuncSM::@p():@l ",
-                    m_info->nodeId(), m_info->worldRank());
-        m_dbg.setPrefix(buffer);
-
-        m_setPrefix = false;
-    }
-
     assert( NULL == m_event ); 
     m_event = static_cast< RecvStartEvent* >(e);
 
     m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d src=%d tag=%#x \n",
-                m_event->entry.req ? "Irecv":"Recv", 
-                m_event->entry.buf,
-                m_event->entry.count,
-                m_event->entry.dtype,
-                m_event->entry.src,
-                m_event->entry.tag );
+                m_event->entry->req ? "Irecv":"Recv", 
+                m_event->entry->buf,
+                m_event->entry->count,
+                m_event->entry->dtype,
+                m_event->entry->src,
+                m_event->entry->tag );
 
-    if ( m_event->entry.req ) {
-        m_event->entry.req->src = Hermes::AnySrc;
+    // if blocking recv 
+    if ( m_event->entry->req == NULL ) {
+        m_state = Wait;
+    } else {
+        m_state = Exit;
+        *m_event->entry->req = m_event->entry;
     }
 
-    if ( m_event->entry.resp ) {
-        m_event->entry.resp->src = Hermes::AnySrc;
-    }
-    
-    int delay;
-    m_entry = m_dm->searchUnexpected( &m_event->entry, delay );
-
-    m_dbg.verbose(CALL_INFO,1,0,"%s, match delay %d\n",
-                        m_entry?"found match":"no match", delay);
-    m_state = WaitMatch;
-    retval.setDelay( delay );
+    proto()->postRecvEntry( m_event->entry );
 }
 
-void RecvFuncSM::finish( RecvEntry* rEntry, MsgEntry* mEntry )
+void RecvFuncSM::handleEnterEvent( Retval& retval )
 {
-    if ( rEntry->req ) {
-        rEntry->req->src = mEntry->hdr.srcRank;
-        rEntry->req->tag = mEntry->hdr.tag;
-    } else {
-        rEntry->resp->src = mEntry->hdr.srcRank;
-        rEntry->resp->tag = mEntry->hdr.tag;
-    }
-    delete m_entry;
-    m_entry = NULL;
-}
+    switch( m_state ) {
+      case Wait:
+        m_dbg.verbose(CALL_INFO,1,0,"waiting\n");
+        proto()->wait( m_event->entry );
+        m_state = Exit;
+        return;
 
-void RecvFuncSM::handleSelfEvent( SST::Event *e, Retval& retval )
-{
-    if ( m_state == WaitMatch ) {
-        if ( m_entry ) {
-            if (!  m_entry->buffer.empty() ) { 
-                memcpy( m_event->entry.buf, &m_entry->buffer[0],
-                        m_entry->buffer.size() );
-                m_state = WaitCopy;
-                retval.setDelay( m_dm->getCopyDelay(m_entry->buffer.size()) );
-                return;
-            } else if ( 0 == m_entry->hdr.count ) {
-                finish( &m_event->entry, m_entry );
-            } else {
-                m_dm->completeLongMsg( m_entry, &m_event->entry );
-            }
-
-        } else if ( m_dm->canPostRecv() ) {
-            m_dm->postRecvEntry( m_event->entry );
-        } else {
-            assert(0);
-        }    
-
-    } else if ( m_state == WaitCopy ) {
-        finish( &m_event->entry, m_entry );
-    } else {
-        assert(0);
-    }
-    m_dm->enter();
-}
-
-void RecvFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
-{
-    assert( m_event );
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_event->entry.req ? "Irecv":"Recv");
-    if ( m_event->entry.resp && m_event->entry.resp->src == Hermes::AnySrc  ) {
-        m_dm->sleep();
-    } else {
-        retval.setExit( 0 );
+      case Exit:
+        m_dbg.verbose(CALL_INFO,1,0,"done\n");
+        retval.setExit(0);
         delete m_event;
         m_event = NULL;
     }

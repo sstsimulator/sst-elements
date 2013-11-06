@@ -36,10 +36,17 @@ typedef struct MessageResponse {
     RankID      src; 
 } MessageResponse;
 
-typedef struct MessageRequest {
-    uint32_t    tag;  
-    RankID      src; 
-} MessageRequest;
+class MessageRequestBase {
+  public:
+    MessageRequestBase() : m_done(false) {}
+    virtual ~MessageRequestBase() {};
+    void setDone() { m_done = true; }
+    bool isDone() { return m_done; } 
+  private:
+    bool m_done;
+};
+
+typedef MessageRequestBase* MessageRequest;
 
 enum PayloadDataType {
     CHAR,

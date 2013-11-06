@@ -12,14 +12,12 @@
 #ifndef COMPONENTS_FIREFLY_ENTRY_H
 #define COMPONENTS_FIREFLY_ENTRY_H
 
-#include <vector>
-#include "ioapi.h"
 #include "sst/elements/hermes/msgapi.h"
 
 namespace SST {
 namespace Firefly {
 
-class SendEntry {
+class SendEntry : public Hermes::MessageRequestBase {
   public:
     SendEntry() {}
 
@@ -44,7 +42,7 @@ class SendEntry {
     Hermes::MessageRequest*     req;
 };
 
-class RecvEntry {
+class RecvEntry : public Hermes::MessageRequestBase {
   public:
     RecvEntry() {}
     RecvEntry(Hermes::Addr _buf, uint32_t _count,

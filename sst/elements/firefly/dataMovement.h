@@ -13,6 +13,7 @@
 #define COMPONENTS_FIREFLY_DATAMOVEMENT_H
 
 #include <sst/core/output.h>
+
 #include "protocolAPI.h"
 #include "sst/elements/hermes/msgapi.h"
 
@@ -22,8 +23,8 @@ namespace Firefly {
 class Info;
 class SendEntry;
 class RecvEntry;
+class EntryBase;
 class RecvReq;
-
 
 struct MatchHdr {
     uint32_t                count;
@@ -97,35 +98,33 @@ class DataMovement : public ProtocolAPI
         return tmp;
     }
 
-
   public:
+
     DataMovement( SST::Params, Info* info, SST::Link* );
- 
+
+    // this group of function is used by hades
+    virtual void     setup();
+    std::string      name() { return "DataMovement"; }
     virtual Request* getSendReq( );
     virtual Request* getRecvReq( IO::NodeId src );
     virtual Request* sendIODone( Request* );
     virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
-    virtual bool blocked();
-    virtual void setup();
+    virtual bool     unblocked();
+    void             setRetLink(SST::Link* link) { m_retLink = link; }
 
-    MsgEntry* searchUnexpected(RecvEntry*,int& delay);
-    bool canPostSend();
-    void postSendEntry(SendEntry);
-    bool canPostRecv();
-    void postRecvEntry(RecvEntry);
-    void completeLongMsg( MsgEntry*, RecvEntry* );
-    void sleep();
-    void enter();
-
-    int getCopyDelay( int nbytes ) {
-        return m_copyTime * nbytes;
-    }
+    // this group of functions is used by the function state machine
+    void wait( Hermes::MessageRequestBase* ); 
+    void postSendEntry(SendEntry*);
+    void postRecvEntry(RecvEntry*);
 
   private:
+
+    MsgEntry*  searchUnexpected(RecvEntry*, int& delay);
+    void       completeLongMsg( MsgEntry*, RecvEntry* );
     RecvEntry* findMatch( MatchHdr&, int& delay );
-    void handleMatchDelay( SST::Event* );
-    void finishRecv( Request* );
+    void       finishRecv( Request* );
+    int        getCopyDelay( int nbytes ) { return m_copyTime * nbytes; }
 
     Info*                   m_info;
     std::deque<MsgEntry*>   m_unexpectedMsgQ;
@@ -135,7 +134,8 @@ class DataMovement : public ProtocolAPI
     std::deque<RecvReq*>    m_longMsgRespQ;
     int                     m_matchTime;
     int                     m_copyTime;
-    bool                    m_sleep;
+    SST::Link*              m_outLink;
+    SST::Link*              m_retLink;
 
     std::map<unsigned char,SendReq*>    m_sendReqM;
     unsigned char                       m_sendReqKey;
@@ -143,7 +143,8 @@ class DataMovement : public ProtocolAPI
     std::map<unsigned char,RecvReq*>    m_recvReqM;
     unsigned char                       m_recvReqKey;
 
-    SST::Link*              m_link;
+
+    Hermes::MessageRequestBase* m_blockedReq;
 };
 
 }

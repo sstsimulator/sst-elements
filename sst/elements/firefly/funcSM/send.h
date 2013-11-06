@@ -14,31 +14,28 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
+#include "dataMovement.h"
 
 namespace SST {
 namespace Firefly {
 
-class DataMovement;
-class ProtocolAPI;
-
 class SendFuncSM :  public FunctionSMInterface
 {
-    enum { } m_state;
+    enum { Wait, Exit } m_state;
+
   public:
-    SendFuncSM( int verboseLevel, Output::output_location_t loc,
-                                    Info* info, ProtocolAPI* );
+    SendFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( Retval& );
 
-    virtual const char* name() {
-       return "Send"; 
-    }
+    virtual std::string protocolName() { return "DataMovement"; }
 
   private:
-    DataMovement*           m_dm;
+
+    DataMovement* proto() { return static_cast<DataMovement*>(m_proto); }
+
     SendStartEvent*         m_event;
-    Hermes::MessageRequest  m_req; 
 };
 
 }

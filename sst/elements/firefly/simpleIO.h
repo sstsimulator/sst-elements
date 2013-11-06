@@ -34,12 +34,12 @@ class SimpleIO : public IO::Interface {
     virtual IO::NodeId getNodeId() { return m_myNodeId; }
 
     virtual size_t peek(IO::NodeId& src);
-    virtual bool sendv(IO::NodeId dest, std::vector<IO::IoVec>&,
+    virtual bool sendv(IO::NodeId dest, std::vector<IoVec>&,
                                                         IO::Entry::Functor*);
-    virtual bool recvv(IO::NodeId src, std::vector<IO::IoVec>&,
+    virtual bool recvv(IO::NodeId src, std::vector<IoVec>&,
                                                         IO::Entry::Functor*);
-    bool _sendv(IO::NodeId dest, std::vector<IO::IoVec>&, IO::Entry::Functor*);
-    bool _recvv(IO::NodeId src, std::vector<IO::IoVec>&, IO::Entry::Functor*);
+    bool _sendv(IO::NodeId dest, std::vector<IoVec>&, IO::Entry::Functor*);
+    bool _recvv(IO::NodeId src, std::vector<IoVec>&, IO::Entry::Functor*);
 
   private:
     void handleEvent(SST::Event*);

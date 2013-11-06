@@ -14,7 +14,6 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "info.h"
 #include "ctrlMsg.h"
 
 namespace SST {
@@ -89,23 +88,50 @@ class YYY {
     int m_parent;
 };
 
+#define FOREACH_ENUM(NAME) \
+    NAME( WaitUp ) \
+    NAME( SendUp ) \
+    NAME( WaitDown ) \
+    NAME( SendDown ) \
+    NAME( Exit ) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
 class CollectiveTreeFuncSM :  public FunctionSMInterface
 {
-    enum { WaitUp, SendUp, WaitDown, SendDown } m_state;
-
     static const int CollectiveTag = 0xf0000000;
 
+    enum StateEnum { 
+        FOREACH_ENUM(GENERATE_ENUM)
+    } m_state;
+
+    static const char *m_enumName[];
+
+    std::string stateName( StateEnum i ) {
+        return m_enumName[i];
+    }
+
+    struct WaitUpState {
+        WaitUpState() : count(0), state(Posting) {}
+        unsigned int count;
+        enum { Posting, Waiting, DoOp } state;
+    };
+
+    struct SendDownState {
+        SendDownState() : count(0) {}
+        unsigned int count;
+    };
+
   public:
-    CollectiveTreeFuncSM( int verboseLevel, Output::output_location_t loc,
-                                                Info* info, ProtocolAPI* );
+    CollectiveTreeFuncSM( SST::Params& params ) :
+        FunctionSMInterface( params ),
+        m_event( NULL ),
+        m_seq( 0 )
+    { }
 
     virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
-    virtual void handleSelfEvent( SST::Event*, Retval&  );
-
-    virtual const char* name() {
-       return "CollectiveTree"; 
-    }
+    virtual void handleEnterEvent( Retval& );
 
   private:
 
@@ -113,15 +139,14 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
         return CollectiveTag | (m_seq & 0xffff);
     }
 
-    bool                    m_test;
-    int                     m_delay;
-    bool                    m_pending;
+    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+
+    WaitUpState         m_waitUpState;
+    SendDownState       m_sendDownState;
+
     CollectiveStartEvent*   m_event;
-    CtrlMsg*                m_ctrlMsg;
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
     std::vector<void*>  m_bufV;
-    CtrlMsg::CommReq    m_sendReq; 
-    unsigned int        m_count;
     size_t              m_bufLen;
     YYY*                m_yyy;
     int                 m_seq;

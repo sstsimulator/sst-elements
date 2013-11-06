@@ -50,6 +50,7 @@ T doOp( T x, T y, Hermes::ReductionOperation op )
         retval = max( x, y );
         break;
     } 
+//    printf("%x %x %x\n",retval,x,y);
     return retval;
 } 
 

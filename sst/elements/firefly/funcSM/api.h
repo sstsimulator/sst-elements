@@ -13,15 +13,17 @@
 #define COMPONENTS_FIREFLY_FUNCSM_API_H 
 
 #include <sst/core/event.h>
-#include <sst/core/link.h>
 #include <sst/core/module.h>
 #include <sst/core/output.h>
+#include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
-#include "info.h"
 
 namespace SST {
 namespace Firefly {
+
+class Info;
+class ProtocolAPI;
 
 class FunctionSMInterface : public Module {
 
@@ -45,26 +47,41 @@ class FunctionSMInterface : public Module {
         int m_value;
     };
 
-    FunctionSMInterface( int verboseLevel, 
-            Output::output_location_t loc, Info* info ) :
-        m_info(info),
-        m_setPrefix( true )
+    FunctionSMInterface( SST::Params& params ) :
+        m_info( NULL ),
+        m_proto( NULL ),
+        m_name( params.find_string("name","???") ),
+        m_enterLatency( params.find_integer("latency",0) )
     {
-        m_dbg.init("@t:XXXFuncSM::@p():@l ", verboseLevel, 0, loc );
+        char buffer[100];
+
+        snprintf(buffer,100,"@t:%ld:%ld:%sFunc::@p():@l ",
+                    params.find_integer("nodeId"), 
+                    params.find_integer("worldRank"),
+                    m_name.c_str() );
+
+        m_dbg.init( buffer, params.find_integer("verbose",0), 0,
+            (Output::output_location_t)params.find_integer("debug", 0) );
+    
+        m_dbg.verbose(CALL_INFO,1,0,"\n");
     }
+
     virtual ~FunctionSMInterface() {} 
 
+    void setInfo( Info* info ) { m_info = info; }
+    void setProtocol( ProtocolAPI* proto ) { m_proto = proto; }
     virtual void  handleStartEvent( SST::Event*, Retval& ) = 0; 
-    virtual void  handleEnterEvent( SST::Event*, Retval& ) { assert(0); }
-    virtual void  handleSelfEvent( SST::Event*, Retval& ) { assert(0); }
-    virtual const char* name() { return "No Name"; }
-    virtual int myRank() { return m_info->worldRank(); }
-    virtual int myNode() { return m_info->nodeId(); }
+    virtual void  handleEnterEvent( Retval& ) { assert(0); }
+    virtual std::string  name() { return m_name; }
+    virtual int enterLatency() { return m_enterLatency; }
+    virtual std::string protocolName() { return ""; }
 
   protected:
-    Info*   m_info;
-    Output  m_dbg;
-    bool    m_setPrefix;
+    Info*           m_info;
+    ProtocolAPI*    m_proto;
+    Output          m_dbg;
+    std::string     m_name;
+    int             m_enterLatency;
 };
 
 }

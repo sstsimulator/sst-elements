@@ -12,34 +12,26 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_WAIT_H
 #define COMPONENTS_FIREFLY_FUNCSM_WAIT_H
 
-#include <sst/core/output.h>
-
-#include "info.h"
 #include "funcSM/api.h"
 #include "funcSM/event.h"
+#include "dataMovement.h"
 
 namespace SST {
 namespace Firefly {
 
-class ProtocolAPI;
-class DataMovement;
-
 class WaitFuncSM :  public FunctionSMInterface
 {
   public:
-    WaitFuncSM( int verboseLevel, Output::output_location_t loc,
-                                    Info*, ProtocolAPI* );
+    WaitFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( Retval& );
     
-    virtual const char* name() {
-       return "Wait"; 
-    }
+    virtual std::string protocolName() { return "DataMovement"; }
 
   private:
+    DataMovement* proto() { return static_cast<DataMovement*>(m_proto); }
 
-    DataMovement*   m_dm;
     WaitStartEvent* m_event;
 };
 

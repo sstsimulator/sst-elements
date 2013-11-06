@@ -20,15 +20,23 @@ namespace Firefly {
 class FiniFuncSM :  public BarrierFuncSM 
 {
   public:
-    FiniFuncSM( int verboseLevel, Output::output_location_t loc,
-                                    Info* info, ProtocolAPI* api );
+    FiniFuncSM( SST::Params& params ) : BarrierFuncSM( params ) {}
 
-    virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleStartEvent( SST::Event* e, Retval& retval) {
 
-    virtual const char* name() {
-       return "Fini"; 
+        FiniStartEvent* event = static_cast<FiniStartEvent*>( e );
+        BarrierStartEvent* tmp = new BarrierStartEvent( Hermes::GroupWorld  );
+
+        delete event;
+
+        BarrierFuncSM::handleStartEvent(static_cast<SST::Event*>(tmp), retval );
     }
+
+    virtual void handleEnterEvent( Retval& retval ) {
+        BarrierFuncSM::handleEnterEvent( retval );
+    }
+
+    virtual std::string protocolName() { return "CtrlMsg"; }
 };
 
 }

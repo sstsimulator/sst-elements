@@ -72,10 +72,10 @@ class RecvStartEvent : public Event {
             Hermes::PayloadDataType dtype, Hermes::RankID src,
             uint32_t tag, Hermes::Communicator group, 
             Hermes::MessageRequest* req, Hermes::MessageResponse* resp ) :
-        entry( buf, count, dtype, src, tag, group, resp, req )  
+        entry( new RecvEntry( buf, count, dtype, src, tag, group, resp, req ) )
     {}
 
-    RecvEntry   entry;
+    RecvEntry*   entry;
 };
 
 
@@ -87,10 +87,10 @@ class SendStartEvent : public Event {
                 Hermes::PayloadDataType dtype, Hermes::RankID dest,
                 uint32_t tag, Hermes::Communicator group, 
                 Hermes::MessageRequest* req ) :
-        entry( buf, count, dtype, dest, tag, group, req )  
+        entry( new SendEntry( buf, count, dtype, dest, tag, group, req ) ) 
     {}
 
-    SendEntry   entry;
+    SendEntry*   entry;
 };
 
 class CollectiveStartEvent : public Event {

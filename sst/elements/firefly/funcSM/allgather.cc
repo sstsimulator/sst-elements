@@ -11,38 +11,23 @@
 
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
 
 #include "funcSM/allgather.h"
 
 using namespace SST::Firefly;
 
-inline long mod( long a, long b )
-{
-    return (a % b + b) % b;
-}
+const char* AllgatherFuncSM::m_enumName[] = {
+    FOREACH_ENUM(GENERATE_STRING)
+};
 
-AllgatherFuncSM::AllgatherFuncSM( 
-            int verboseLevel, Output::output_location_t loc, Info* info,
-                            ProtocolAPI* ctrlMsg ) :
-    FunctionSMInterface( verboseLevel, loc, info ),
-    m_ctrlMsg( static_cast<CtrlMsg*>( ctrlMsg ) ),
+AllgatherFuncSM::AllgatherFuncSM( SST::Params& params ) :
+    FunctionSMInterface( params ),
     m_event( NULL ),
     m_seq( 0 )
-{
-    m_dbg.setPrefix("@t:AllgatherFuncSM::@p():@l ");
-}
+{ }
 
 void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
-    if ( m_setPrefix ) {
-        char buffer[100];
-        snprintf(buffer,100,"@t:%d:%d:AllgatherFuncSM::@p():@l ",
-                    m_info->nodeId(), m_info->worldRank());
-        m_dbg.setPrefix(buffer);
-
-        m_setPrefix = false;
-    }
     ++m_seq;
 
     assert( NULL == m_event );
@@ -50,71 +35,134 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_rank = m_info->getGroup(m_event->group)->getMyRank();
     m_size = m_info->getGroup(m_event->group)->size();
-    int offset = 1;
 
     int numStages = ceil( log2(m_size) );
     m_dbg.verbose(CALL_INFO,1,0,"numStages=%d rank=%d size=%d\n",
-                                        numStages,m_rank,m_size);
+                                        numStages, m_rank, m_size );
     
     m_recvReqV.resize( numStages );
     m_numChunks.resize( numStages );
     m_sendStartChunk.resize( numStages );
     m_dest.resize( numStages );
 
-    for ( int i = 0; i < numStages; i++ ) {
-        int src = ( m_rank - offset );
-        src = src < 0 ? m_size + src : src;
-
-        m_dest[i] = mod( m_rank + offset, m_size );
-
-        m_dbg.verbose(CALL_INFO,1,0,"setup stage %d, src %d, dest %d\n",
-                                                        i, src, m_dest[i] ); 
-
-        m_numChunks[i] = offset;
-        int recvStartChunk;
-        if ( i < numStages - 1 ) {  
-            recvStartChunk = 
-                        mod( (m_rank + 1) + ( offset * (m_size-2)), m_size );
-            m_sendStartChunk[i] = 
-                        mod( ( m_rank + 1) - ( offset + m_size), m_size );
-        } else {
-            m_numChunks[i]  = m_size - offset;
-            recvStartChunk = mod( m_rank + 1, m_size);
-            m_sendStartChunk[i] = mod( ( m_rank + 1) + offset, m_size );
-        }
-        m_dbg.verbose(CALL_INFO,1,0," 2^stage %d, sendStart %d, recvStart %d "
-                    "numChunks %d\n", offset, m_sendStartChunk[i], 
-                    recvStartChunk, m_numChunks[i] );
-
-        std::vector<CtrlMsg::IoVec> ioVec;
-
-        initIoVec(ioVec,recvStartChunk,m_numChunks[i]);
-
-        m_ctrlMsg->recvv( ioVec, src, genTag() + i + 1, 
-                            m_event->group, &m_recvReqV[i] );
-
-        if ( i == 0 ) {
-            m_ctrlMsg->recv( NULL, 0, src, genTag(),
-                                        m_event->group, &m_recvReq );
-        }
-
-        offset *= 2;
-    }
-
-    memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
+    m_state = Setup;
     m_currentStage = 0;
 
-    m_dbg.verbose(CALL_INFO,1,0,"send ready\n");
-    m_ctrlMsg->send( NULL, 0, m_dest[0], genTag(),
-                                        m_event->group, &m_sendReq );
-
-    m_state = WaitSendStart;
-    m_delay = 0;
-
-    m_ctrlMsg->enter();
+    handleEnterEvent( retval );
 }
 
-void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
+bool AllgatherFuncSM::setup( Retval& retval )
+{
+    std::vector<IoVec> ioVec;
+    int recvStartChunk;
+    int src; 
+
+    switch ( m_setupState.state ) {
+
+      case SetupState::PostStartMsgRecv:
+
+        src = calcSrc( m_setupState.offset );
+        m_dbg.verbose(CALL_INFO,1,0,"post recv for ready msg from %d\n", src);
+        proto()->irecv( NULL, 0, src, genTag(), m_event->group, &m_recvReq );
+        m_setupState.state = SetupState::PostStageRecv;
+        return false;
+
+      case SetupState::PostStageRecv:
+
+        src = calcSrc( m_setupState.offset );
+        m_dest[m_setupState.stage] = mod(m_rank + m_setupState.offset, m_size);
+
+        m_dbg.verbose(CALL_INFO,1,0,"setup stage %d, src %d, dest %d\n",
+                   m_setupState.stage, src, m_dest[m_setupState.stage] ); 
+
+        if ( m_setupState.stage < m_dest.size() - 1 ) {  
+            m_numChunks[m_setupState.stage] = m_setupState.offset;
+            recvStartChunk = 
+               mod( (m_rank + 1) + (m_setupState.offset * (m_size-2)), m_size );
+            m_sendStartChunk[m_setupState.stage] = 
+               mod( (m_rank + 1) - (m_setupState.offset + m_size), m_size );
+        } else {
+            m_numChunks[m_setupState.stage]  = m_size - m_setupState.offset;
+            recvStartChunk = mod( m_rank + 1, m_size);
+            m_sendStartChunk[m_setupState.stage] = 
+               mod( ( m_rank + 1) + m_setupState.offset, m_size );
+        }
+        m_dbg.verbose(CALL_INFO,1,0," 2^stage %d, sendStart %d, recvStart %d "
+                    "numChunks %d\n", m_setupState.offset, 
+                    m_sendStartChunk[ m_setupState.stage], 
+                    recvStartChunk, m_numChunks[m_setupState.stage] );
+
+        initIoVec( ioVec, recvStartChunk, m_numChunks[m_setupState.stage] );
+
+        proto()->irecvv( ioVec, src, genTag() + m_setupState.stage + 1, 
+                            m_event->group, &m_recvReqV[m_setupState.stage] );
+
+        m_setupState.offset *= 2;
+        ++m_setupState.stage;
+
+        if ( m_setupState.stage == m_dest.size()  ) {
+            m_setupState.state = SetupState::SendStartMsg;
+        }
+        return false;
+
+      case SetupState::SendStartMsg:
+
+        memcpy( chunkPtr(m_rank), m_event->sendbuf, chunkSize(m_rank) );
+
+        m_dbg.verbose(CALL_INFO,1,0,"send ready message to %d\n",m_dest[0]);
+        proto()->send( NULL, 0, m_dest[0], genTag(), m_event->group );
+    }
+    return true;
+}
+
+void AllgatherFuncSM::handleEnterEvent( Retval& retval )
+{
+    std::vector<IoVec> ioVec;
+    m_dbg.verbose(CALL_INFO,1,0,"%s\n", stateName(m_state).c_str());
+
+    switch( m_state ) {
+    case Setup:
+        if ( setup( retval ) ) {
+            m_state = WaitForStartMsg;
+        }
+        return;
+
+    case WaitForStartMsg:
+        m_dbg.verbose(CALL_INFO,1,0,"wait for Start message to arrive\n");
+        proto()->wait( &m_recvReq );
+        m_state = SendData;
+        return;
+
+    case SendData:
+        initIoVec( ioVec, m_sendStartChunk[m_currentStage],
+                            m_numChunks[m_currentStage] );
+
+        m_dbg.verbose(CALL_INFO,1,0,"send stage %d\n", m_currentStage);
+        proto()->sendv( ioVec, m_dest[m_currentStage], 
+               genTag() + m_currentStage + 1, m_event->group );
+        m_state = WaitRecvData;
+        return;
+
+    case WaitRecvData:
+        m_dbg.verbose(CALL_INFO,1,0,"wait stage %d\n", m_currentStage);
+        proto()->wait( &m_recvReqV[m_currentStage] );
+        ++m_currentStage;
+        if ( m_currentStage < m_dest.size() ) {
+            m_state = SendData;
+        } else {
+            m_state = Exit;
+        }
+        return;
+
+    case Exit:
+        m_dbg.verbose(CALL_INFO,1,0,"leave\n");
+        retval.setExit( 0 );
+        delete m_event;
+        m_event = NULL;
+    }
+}
+
+void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
                     int startChunk, int numChunks  )
 {
     int currentChunk = startChunk;
@@ -126,7 +174,7 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
 
     while ( countDown ) {  
         --countDown;
-        CtrlMsg::IoVec jjj;
+        IoVec jjj;
         jjj.ptr = chunkPtr( currentChunk ); 
         jjj.len = chunkSize( currentChunk );
         
@@ -154,113 +202,5 @@ void AllgatherFuncSM::initIoVec( std::vector<CtrlMsg::IoVec>& ioVec,
         }
         currentChunk = nextChunk;
         nextChunk = ( currentChunk + 1 ) % m_size; 
-    }
-}
-
-void AllgatherFuncSM::handleEnterEvent( SST::Event *e, Retval& retval )
-{
-    switch( m_state ) {
-    case WaitSendStart:
-        if ( ! m_delay ) {
-            m_test = m_ctrlMsg->test( &m_sendReq, m_delay );
-            if ( m_delay ) {
-                m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                retval.setDelay( m_delay );
-                break;
-            }
-        } else {
-            m_delay = 0;
-        }
-        if ( ! m_test ) {
-            m_ctrlMsg->sleep();
-            break;
-        }
-        m_dbg.verbose(CALL_INFO,1,0,"switch to WaitRecvStart\n");
-        m_state = WaitRecvStart;
-        m_pending = false;
-
-    case WaitRecvStart:
-
-        if ( ! m_delay ) {
-            m_test = m_ctrlMsg->test( &m_recvReq, m_delay );
-            if ( m_delay ) {
-                m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                retval.setDelay( m_delay );
-                break;
-            }
-        } else {
-            m_delay = 0;
-        }
-        if ( ! m_test ) {
-            m_ctrlMsg->sleep();
-            break;
-        }
-        m_dbg.verbose(CALL_INFO,1,0,"switch to WaitSendData\n");
-        m_state = WaitSendData;
-        m_pending = false;
-
-    case WaitSendData:
-        if ( ! m_pending ) {
-            std::vector<CtrlMsg::IoVec> ioVec;
-
-            initIoVec( ioVec, m_sendStartChunk[m_currentStage],
-                            m_numChunks[m_currentStage] );
-
-            m_dbg.verbose(CALL_INFO,1,0,"send data\n");
-            m_ctrlMsg->sendv( ioVec, m_dest[m_currentStage], 
-                genTag() + m_currentStage + 1, m_event->group, &m_sendReq );
-            m_pending = true;
-            m_ctrlMsg->enter();
-            break;
-        } else {
-            if ( ! m_delay ) {
-                m_test = m_ctrlMsg->test( & m_sendReq, m_delay );
-                if ( m_delay ) {
-                    m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                    retval.setDelay( m_delay );
-                    break;
-                }
-            } else {
-                m_delay = 0;
-            }
-            if ( ! m_test ) {
-                m_ctrlMsg->sleep();
-                break;
-            } 
-        }
-        m_dbg.verbose(CALL_INFO,1,0,"switch to WaitRecvData\n");
-        m_state = WaitRecvData;
-        m_pending = false;
-
-    case WaitRecvData:
-        if ( ! m_delay ) {
-            m_test = m_ctrlMsg->test( &m_recvReqV[m_currentStage], m_delay );
-            if ( m_delay ) {
-                m_dbg.verbose(CALL_INFO,1,0,"delay %d\n", m_delay );
-                retval.setDelay( m_delay );
-                break;
-            }
-        } else {
-            m_delay = 0;
-        }
-        if ( m_test ) {
-            m_dbg.verbose(CALL_INFO,1,0,"stage %d complete\n", m_currentStage);
-            ++m_currentStage;
-            if ( m_currentStage < m_dest.size() ) {
-                m_state = WaitSendData;
-                m_pending = false;
-                handleEnterEvent( NULL, retval );
-                
-                break;
-            }  
-        } else {
-            m_ctrlMsg->sleep();
-            break;
-        } 
-        m_dbg.verbose(CALL_INFO,1,0,"leave\n");
-        retval.setExit( 0 );
-        delete m_event;
-        m_event = NULL;
-        m_pending = false;
     }
 }

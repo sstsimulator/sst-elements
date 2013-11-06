@@ -13,6 +13,7 @@
 #define COMPONENTS_FIREFLY_FUNCSM_SIZE_H
 
 #include "funcSM/api.h"
+#include "event.h"
 
 namespace SST {
 namespace Firefly {
@@ -20,21 +21,9 @@ namespace Firefly {
 class SizeFuncSM :  public FunctionSMInterface
 {
   public:
-    SizeFuncSM( int verboseLevel, Output::output_location_t loc, Info* info ) :
-        FunctionSMInterface(verboseLevel,loc,info)
-    { 
-        m_dbg.setPrefix("@t:SizeFuncSM::@p():@l ");
-    }
+    SizeFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}
 
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
-        if ( m_setPrefix ) {
-            char buffer[100];
-            snprintf(buffer,100,"@t:%d:%d:SizeFuncSM::@p():@l ",
-                    m_info->nodeId(), m_info->worldRank());
-            m_dbg.setPrefix(buffer);
-
-            m_setPrefix = false;
-        }
 
         SizeStartEvent* event = static_cast< SizeStartEvent* >(e);
 
@@ -44,10 +33,6 @@ class SizeFuncSM :  public FunctionSMInterface
 
         retval.setExit(0);
         delete event;
-    }
-
-    virtual const char* name() {
-       return "Size"; 
     }
 };
 

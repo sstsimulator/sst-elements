@@ -10,17 +10,16 @@
 // distribution.
 
 
-#include "sst_config.h"
-#include "sst/core/serialization.h"
-#include "ioSwitch.h"
+#include <sst_config.h>
 
 #include <sstream>
 
-#include "sst/core/component.h"
-#include "sst/core/element.h"
-#include "sst/core/link.h"
-#include "sst/core/params.h"
+#include <sst/core/component.h>
+#include <sst/core/element.h>
+#include <sst/core/link.h>
+#include <sst/core/params.h>
 
+#include "ioSwitch.h"
 #include "ioEvent.h"
 
 using namespace SST;

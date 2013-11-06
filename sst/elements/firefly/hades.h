@@ -164,7 +164,8 @@ class Hades : public Hermes::MessageInterface
     bool runSend();
     void runRecv();
     bool pendingSend() { return m_pendingSends > 0; }
-    bool functionIsBlocked();
+
+    bool X();
 
     IO::Entry* recvWireHdrDone(IO::Entry*);
     IO::Entry* sendWireHdrDone(IO::Entry*);
@@ -194,6 +195,7 @@ class Hades : public Hermes::MessageInterface
     AAA*                m_completedIO;
     AAA*                m_delay;
 
+    std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
     std::map<int,ProtocolAPI*>::iterator m_sendIter;
 };

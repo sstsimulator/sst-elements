@@ -14,41 +14,63 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "info.h"
 #include "ctrlMsg.h"
+#include "info.h"
 
 namespace SST {
 namespace Firefly {
 
+#undef FOREACH_ENUM
+
+#define FOREACH_ENUM(NAME) \
+    NAME(Setup) \
+    NAME(WaitForStartMsg) \
+    NAME(SendData) \
+    NAME(WaitRecvData) \
+    NAME(Exit) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
+
 class AllgatherFuncSM :  public FunctionSMInterface
 {
-    enum { WaitSendStart, WaitRecvStart, WaitSendData, WaitRecvData } m_state;
-
     static const unsigned int AllgatherTag = 0xf0010000;
 
+    enum StateEnum {
+        FOREACH_ENUM(GENERATE_ENUM)
+    } m_state;
+
+    struct SetupState {
+        SetupState() : count(0), state( PostStartMsgRecv ), 
+                offset(1), stage(0) {}
+        unsigned int count;
+        enum { PostStartMsgRecv, PostStageRecv, SendStartMsg} state;
+        int offset;
+        unsigned int stage;
+    };
+
   public:
-    AllgatherFuncSM( int verboseLevel, Output::output_location_t loc,
-                                        Info* info, ProtocolAPI* );
+    AllgatherFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( Retval& );
 
-    virtual const char* name() {
-       return "Allgather"; 
-    }
+    virtual std::string protocolName() { return "CtrlMsg"; }
 
   private:
 
-    CtrlMsg*            m_ctrlMsg;
-    GatherStartEvent*   m_event;
-    bool                m_pending;
-    CtrlMsg::CommReq    m_sendReq; 
-    CtrlMsg::CommReq    m_recvReq; 
-    std::vector<CtrlMsg::CommReq>  m_recvReqV;
-    int                 m_seq;
+    bool setup( Retval& );
+    void initIoVec(std::vector<IoVec>& ioVec, int startChunk, int numChunks);
 
-    uint32_t    genTag() {
-        return AllgatherTag | (( m_seq & 0xff) << 8 );
+    std::string stateName( StateEnum i ) { return m_enumName[i]; }
+
+    long mod( long a, long b ) { return (a % b + b) % b; }
+
+    uint32_t genTag() { return AllgatherTag | (( m_seq & 0xff) << 8 ); }
+
+    int calcSrc ( int offset) {
+        int src = ( m_rank - offset );
+        return  src < 0 ? m_size + src : src;
     }
 
     unsigned char* chunkPtr( int rank ) {
@@ -76,17 +98,21 @@ class AllgatherFuncSM :  public FunctionSMInterface
         return size;
     }
 
+    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+
+    std::vector<CtrlMsg::CommReq>  m_recvReqV;
+    CtrlMsg::CommReq    m_recvReq; 
+    GatherStartEvent*   m_event;
+    int                 m_seq;
+    SetupState          m_setupState;
     std::vector<int>    m_numChunks;
     std::vector<int>    m_sendStartChunk;
     std::vector<int>    m_dest;
     int                 m_rank; 
     int                 m_size; 
     unsigned int        m_currentStage;
-    int                 m_delay;
-    bool                m_test;
+    static const char*  m_enumName[];
 
-    void initIoVec(std::vector<CtrlMsg::IoVec>& ioVec,
-                                    int startChunk, int numChunks);
 };
         
 }

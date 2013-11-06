@@ -12,15 +12,17 @@
 #ifndef COMPONENTS_FIREFLY_PROTOCOLAPI_H
 #define COMPONENTS_FIREFLY_PROTOCOLAPI_H
 
+#include <sst/core/module.h>
 #include <sst/core/output.h>
 
 #include <vector>
 #include "ioapi.h"
+#include "ioVec.h"
 
 namespace SST {
 namespace Firefly {
 
-class ProtocolAPI 
+class ProtocolAPI : public SST::Module 
 {
   public:
     struct Request {
@@ -28,23 +30,26 @@ class ProtocolAPI
         Request() : delay(0) {} 
         virtual ~Request() {}
 
-        std::vector<IO::IoVec>  ioVec;
-        int                     delay;
-        IO::NodeId              nodeId; 
+        std::vector<IoVec>  ioVec;
+        int                 delay;
+        IO::NodeId          nodeId; 
     }; 
 
     virtual ~ProtocolAPI() {}
+    virtual void setup() {};
+
     virtual Request* getSendReq( ) = 0;
     virtual Request* getRecvReq( IO::NodeId src ) = 0;
     virtual Request* sendIODone( Request* ) = 0;
     virtual Request* recvIODone( Request* ) = 0;
     virtual Request* delayDone( Request* ) = 0;
-    virtual void setup() = 0;
-    virtual bool blocked() = 0;
-    virtual void enter() = 0;
+    virtual bool unblocked() = 0;
+    virtual std::string name() = 0;
+    virtual void setRetLink(SST::Link* link) { assert(0); } 
 
     Output m_dbg;
 };
+
 }
 }
 #endif

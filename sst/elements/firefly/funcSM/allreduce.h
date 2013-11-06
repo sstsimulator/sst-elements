@@ -20,15 +20,17 @@ namespace Firefly {
 class AllreduceFuncSM :  public CollectiveTreeFuncSM 
 {
   public:
-    AllreduceFuncSM( int verboseLevel, Output::output_location_t loc,
-                                        Info* info, ProtocolAPI* api );
+    AllreduceFuncSM( SST::Params& params ) : CollectiveTreeFuncSM( params ) { }
 
-    virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
-
-    virtual const char* name() {
-       return "Allreduce"; 
+    virtual void handleStartEvent( SST::Event* e, Retval& retval ) {
+        CollectiveTreeFuncSM::handleStartEvent( e, retval );
     }
+
+    virtual void handleEnterEvent( Retval& retval) {
+        CollectiveTreeFuncSM::handleEnterEvent( retval );
+    }
+
+    virtual std::string protocolName() { return "CtrlMsg"; }
 };
 
 }

@@ -12,10 +12,10 @@
 #ifndef COMPONENTS_FIREFLY_FUNCTIONSM_H
 #define COMPONENTS_FIREFLY_FUNCTIONSM_H
 
-#include "sst/core/output.h"
+#include <sst/core/output.h>
+#include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
-#include "ioapi.h"
 #include "funcSM/api.h"
 
 #include "info.h"
@@ -26,35 +26,45 @@ namespace Firefly {
 class FunctionSMInterface;
 class ProtocolAPI;
 
+#define FOREACH_FUNCTION(NAME) \
+        NAME(Init)   \
+        NAME(Fini)  \
+        NAME(Rank)   \
+        NAME(Size)   \
+        NAME(Barrier)   \
+        NAME(Allreduce)   \
+        NAME(Reduce)   \
+        NAME(Allgather)   \
+        NAME(Allgatherv)   \
+        NAME(Gather)   \
+        NAME(Gatherv)   \
+        NAME(Alltoall)   \
+        NAME(Alltoallv)   \
+        NAME(Irecv)   \
+        NAME(Isend)   \
+        NAME(Send)   \
+        NAME(Recv)   \
+        NAME(Wait)   \
+        NAME(NumFunctions)  \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
 
 class FunctionSM  {
 
     typedef FunctionSMInterface::Retval Retval;
+
+    static const char *m_functionName[];
+
   public:
-    enum FunctionType {
-        Init,
-        Fini,
-        Rank,
-        Size,
-        Barrier,
-        Allreduce,
-        Reduce,
-        Allgather,
-        Allgatherv,
-        Gather,
-        Gatherv,
-        Alltoall,
-        Alltoallv,
-        Irecv,
-        Isend,
-        Send,
-        Recv,
-        Wait,
-        NumFunctions
+    enum FunctionEnum{
+        FOREACH_FUNCTION(GENERATE_ENUM)
     };
 
+    const char *functionName( FunctionEnum x) {return m_functionName[x]; }
+
     FunctionSM( SST::Params& params, SST::Component*, Info&, SST::Link*, 
-                                        ProtocolAPI*, ProtocolAPI* ); 
+                        std::map<std::string,ProtocolAPI*>& );
     ~FunctionSM();
 
     void setup();
@@ -62,39 +72,26 @@ class FunctionSM  {
     void enter( );
 
   private:
-    void handleSelfEvent( SST::Event* );
     void handleStartEvent( SST::Event* );
     void handleToDriver(SST::Event*);
     void handleEnterEvent( SST::Event* );
     void processRetval( Retval& );
-    int myNodeId() { return m_info.nodeId(); }
-    int myWorldRank() { return m_info.worldRank(); }
+    
+    void initFunction( SST::Component*, Info*, FunctionEnum,
+                                    std::string, Params&, Params& );
 
     std::vector<FunctionSMInterface*>  m_smV; 
     FunctionSMInterface*    m_sm; 
-    int                 m_type;
     Hermes::Functor*    m_retFunc;
 
     SST::Link*          m_fromDriverLink;    
     SST::Link*          m_toDriverLink;    
-    SST::Link*          m_selfLink;
-    SST::Link*          m_fromProgressLink;
-    int                 m_nodeId;
-    int                 m_worldRank;
+    SST::Link*          m_toMeLink;
     Info&               m_info;
     Output              m_dbg;
-
-    struct FunctionTimes {
-        int enterTime;
-    };
-
-    std::vector<FunctionTimes>    m_funcLat;
-
-    void setFunctionTimes( FunctionType type, int enterTime ) {
-        FunctionTimes tmp;
-        tmp.enterTime = enterTime;
-        m_funcLat[type] = tmp;
-    }
+    SST::Params         m_params;
+    SST::Component*     m_owner;
+    std::map<std::string,ProtocolAPI*>& m_proto;
 };
 
 }

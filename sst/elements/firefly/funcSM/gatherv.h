@@ -14,11 +14,19 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "info.h"
 #include "ctrlMsg.h"
 
 namespace SST {
 namespace Firefly {
+
+#undef FOREACH_ENUM
+
+#define FOREACH_ENUM(NAME) \
+    NAME(WaitUp) \
+    NAME(SendUp) \
+
+#define GENERATE_ENUM(ENUM) ENUM,
+#define GENERATE_STRING(STRING) #STRING,
 
 class QQQ {
 
@@ -117,24 +125,36 @@ class QQQ {
 
 class GathervFuncSM :  public FunctionSMInterface
 {
-    enum { WaitUp, SendUp } m_state;
-
-    enum { WaitUpRecv, WaitUpSend, WaitUpRecvBody } m_waitUpState;
-    enum { SendUpSend, SendUpWait, SendUpSendBody } m_sendUpState;
 
     static const int GathervTag = 0xf0020000;
 
+    enum StateEnum {
+        FOREACH_ENUM(GENERATE_ENUM)
+    } m_state;
+
+    struct WaitUpState {
+        WaitUpState() : state(PostSizeRecvs), count(0) {} 
+        enum { PostSizeRecvs, WaitSizeRecvs, Setup, PostDataRecv, 
+            SendSize, WaitDataRecv, DoRoot } state;
+        unsigned int    count;
+        size_t          len;
+    };
+
+    struct SendUpState {
+        SendUpState() : state(SendSize) {}
+        enum { SendSize, RecvGo, SendBody, SentBody } state;
+    };
+
+    SendUpState m_sendUpState;
+    WaitUpState m_waitUpState;
+
   public:
-    GathervFuncSM( int verboseLevel, Output::output_location_t loc,
-                                        Info* info, ProtocolAPI* );
+    GathervFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event *e, Retval& );
-    virtual void handleEnterEvent( SST::Event *e, Retval& );
-    virtual void handleSelfEvent( SST::Event *e, Retval& );
+    virtual void handleEnterEvent( Retval& );
 
-    virtual const char* name() {
-       return "Gatherv"; 
-    }
+    virtual std::string protocolName() { return "CtrlMsg"; }
 
   private:
 
@@ -145,27 +165,16 @@ class GathervFuncSM :  public FunctionSMInterface
         return GathervTag | i << 8 | (m_seq & 0xff);
     } 
 
-    CtrlMsg*            m_ctrlMsg;
-    GatherStartEvent*  m_event;
+    CtrlMsg* proto() { return static_cast<CtrlMsg*>(m_proto); }
+
+    GatherStartEvent*   m_event;
     QQQ*                m_qqq;
-    bool                m_pending;
-    CtrlMsg::CommReq    m_sendReq; 
-    CtrlMsg::CommReq    m_recvReq; 
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
 
-    bool                m_waitUpPending;
     std::vector<int>    m_waitUpSize;
     std::vector<unsigned char>  m_recvBuf;
     int                 m_intBuf;
-
-    unsigned int        m_count; 
-    bool                m_sendUpPending;
     int                 m_seq;
-    int                 m_waitUpDelay;
-    bool                m_waitUpTest;
-
-    int                 m_sendUpDelay;
-    bool                m_sendUpTest;
 };
         
 }

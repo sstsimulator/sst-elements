@@ -1,6 +1,7 @@
 rank
 size
-send
+isend
 barrier
 recv
+wait
 fini

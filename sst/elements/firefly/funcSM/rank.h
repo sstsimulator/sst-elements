@@ -12,9 +12,8 @@
 #ifndef COMPONENTS_FIREFLY_FUNCSM_RANK_H
 #define COMPONENTS_FIREFLY_FUNCSM_RANK_H
 
-#include <sst/core/output.h>
-
 #include "funcSM/api.h"
+#include "event.h"
 
 namespace SST {
 namespace Firefly {
@@ -22,23 +21,9 @@ namespace Firefly {
 class RankFuncSM :  public FunctionSMInterface
 {
   public:
-    RankFuncSM( int verboseLevel, Output::output_location_t loc,
-            Info* info ) :
-        FunctionSMInterface(verboseLevel,loc,info)
-    {
-        m_dbg.setPrefix("@t:RankFuncSM::@p():@l ");
-    }
+    RankFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}
 
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
-
-        if ( m_setPrefix ) {
-            char buffer[100];
-            snprintf(buffer,100,"@t:%d:%d:RankFuncSM::@p():@l ",
-                    m_info->nodeId(), m_info->worldRank());
-            m_dbg.setPrefix(buffer);
-
-            m_setPrefix = false;
-        }
 
         RankStartEvent* event = static_cast< RankStartEvent* >(e);
         *event->rank = m_info->getGroup(event->group)->getMyRank();
@@ -47,10 +32,6 @@ class RankFuncSM :  public FunctionSMInterface
 
         retval.setExit(0);
         delete e;
-    }
-
-    virtual const char* name() {
-       return "Rank"; 
     }
 };
 

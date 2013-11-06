@@ -20,15 +20,25 @@ namespace Firefly {
 class BarrierFuncSM :  public CollectiveTreeFuncSM 
 {
   public:
-    BarrierFuncSM( int verboseLevel, Output::output_location_t loc,
-                                        Info* info, ProtocolAPI* api );
+    BarrierFuncSM( SST::Params& params ) : CollectiveTreeFuncSM( params ) {}
 
-    virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
+    virtual void handleStartEvent( SST::Event* e, Retval& retval ) {
+        BarrierStartEvent* event = static_cast<BarrierStartEvent*>( e );
 
-    virtual const char* name() {
-       return "Barrier"; 
+        CollectiveStartEvent* tmp = new CollectiveStartEvent( NULL, NULL, 0,
+                Hermes::CHAR, Hermes::MAX, 0, Hermes::GroupWorld, true );
+
+        delete event;
+
+        CollectiveTreeFuncSM::handleStartEvent(
+                        static_cast<SST::Event*>( tmp ), retval );
     }
+
+    virtual void handleEnterEvent( Retval& retval ) {
+        CollectiveTreeFuncSM::handleEnterEvent( retval );
+    }
+
+    virtual std::string protocolName() { return "CtrlMsg"; }
 };
 
 }

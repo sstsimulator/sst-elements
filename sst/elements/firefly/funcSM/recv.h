@@ -14,37 +14,28 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
+#include "dataMovement.h"
 
 namespace SST {
 namespace Firefly {
 
-class DataMovement;
-class Info;
-class MsgEntry;
-class ProtocolAPI;
-
 class RecvFuncSM :  public FunctionSMInterface
 {
-    enum { WaitMatch, WaitCopy } m_state;
-  public:
+    enum { Wait, Exit } m_state;
 
-    RecvFuncSM( int verboseLevel, Output::output_location_t loc,
-                                    Info*, ProtocolAPI* );
+  public:
+    RecvFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event*, Retval& );
-    virtual void handleEnterEvent( SST::Event*, Retval& );
-    virtual void handleSelfEvent( SST::Event*, Retval& );
+    virtual void handleEnterEvent( Retval& );
 
-    virtual const char* name() {
-       return "Recv"; 
-    }
+    virtual std::string protocolName() { return "DataMovement"; }
 
   private:
-    void finish( RecvEntry*, MsgEntry* );
+
+    DataMovement* proto() { return static_cast<DataMovement*>(m_proto); }
     
-    DataMovement*   m_dm;
-    RecvStartEvent* m_event;
-    MsgEntry*       m_entry;
+    RecvStartEvent*         m_event;
 };
 
 }

@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "sst/elements/hermes/functor.h"
+#include "ioVec.h"
 
 namespace SST {
 namespace Firefly {
@@ -27,11 +28,6 @@ namespace IO {
 
 typedef uint32_t NodeId;
 static const NodeId AnyId = -1;
-
-struct IoVec {
-    void*  ptr;
-    size_t len;
-};
 
 class Entry {
   public:

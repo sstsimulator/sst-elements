@@ -13,21 +13,18 @@
 #ifndef COMPONENTS_FIREFLY_CTRLMSG_H
 #define COMPONENTS_FIREFLY_CTRLMSG_H
 
-#include "sst/core/output.h"
+#include <sst/core/output.h>
 #include "protocolAPI.h"
 
 namespace SST {
+
 class Params;
+
 namespace Firefly {
 
 class Info;
 
 class CtrlMsg : public ProtocolAPI {
-  public: 
-    struct IoVec {
-        void*  ptr;
-        size_t len;
-    };
 
   private:
 
@@ -75,15 +72,36 @@ class CtrlMsg : public ProtocolAPI {
 
   public:
 
-
-    struct CommReq {
-        CommReq() : info( NULL ) {}
+    class CommReq {
+      public:
+        CommReq() : m_info( NULL ) {}
         ~CommReq() {
-            if ( info ) delete info;
+            if ( m_info ) delete m_info;
         }
-        enum { Send, Recv } type;
-        BaseInfo*    info;
-        bool done;
+        void initRecv( std::vector<IoVec>& ioVec, int src, int tag, int group ) 
+        {
+            assert( ! m_info );
+            m_info = new RecvInfo( ioVec, src, tag, group );
+            m_type = CommReq::Recv;
+        }
+        void initSend( std::vector<IoVec>& ioVec, int src, int tag, int group ) 
+        {
+            assert( ! m_info );
+            m_info = new SendInfo( ioVec, src, tag, group );
+            m_type = CommReq::Send;
+        }
+        void setDone() {
+            assert( m_info );
+            delete m_info;
+            m_info = NULL;
+        }
+        bool isSend() { return m_type == Send; }
+        bool isDone() { return m_info == NULL; }
+        BaseInfo* info() { assert( m_info); return m_info; }
+
+      private:
+        enum { Send, Recv } m_type;
+        BaseInfo*           m_info;
     };
 
   private:
@@ -106,40 +124,52 @@ class CtrlMsg : public ProtocolAPI {
 
     CtrlMsg( SST::Params, Info*, SST::Link* );
 
+    // this group of function is used by hades 
+    void setup();
+    std::string name() { return "CtrlMsg"; }
     virtual Request* getSendReq( );
     virtual Request* getRecvReq( IO::NodeId src );
     virtual Request* sendIODone( Request* );
     virtual Request* recvIODone( Request* );
     virtual Request* delayDone( Request* );
-    virtual bool blocked();
-    virtual void enter();
+    virtual bool unblocked();
+    void setRetLink(SST::Link* link) { m_retLink = link;}
 
-    void recv( void* buf, size_t len, int src,  int tag, int group, CommReq* );
-    void recvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq* );
-    void send( void* buf, size_t len, int dest, int tag, int group, CommReq* );
-    void sendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq* );
-    bool test( CommReq*, int& delay  );
-    void setup();
-    void sleep();
+    // this group of functions is used by the function state machine
+    void send( void* buf, size_t len, int dest, int tag, int group );
+    void sendv( std::vector<IoVec>&, int dest, int tag, int group );
+    void recv( void* buf, size_t len, int src, int tag, int group );
+    void irecv( void* buf, size_t len, int src, int tag, int group, CommReq* );
+    void irecvv( std::vector<IoVec>&, int src,  int tag, int group, CommReq* );
+    void wait( CommReq* );
 
   private:
 
-    int getCopyDelay( int nbytes ) {
-        return m_copyTime * nbytes;
-    }
+    int getCopyDelay( int nbytes ) { return m_copyTime * nbytes; }
 
+    void _recv( void* buf, size_t len, int src, int tag, int group, CommReq* );
+    void _recvv( std::vector<IoVec>&, int src, int tag, int group, CommReq* );
+    void _send( void* buf, size_t len, int dest, int tag, int group, CommReq* );
+    void _sendv( std::vector<IoVec>&, int dest, int tag, int group, CommReq* );
+
+    bool test( CommReq* r, int& delay ); 
     CommReq* findMatch( Hdr&, int& delay );
     RecvReq* searchUnexpected( RecvInfo& info, int& delay );
 
     Info* m_info;
+
     std::deque< CommReq* > m_sendQ;
     std::deque< CommReq* > m_postedQ;
     std::deque< RecvReq* > m_unexpectedQ;
-    bool m_sleep;
-    bool m_somethingCompleted;
+
+    CommReq* m_blockedReq;
+    CommReq  m_xxxReq;
+
     int m_matchTime;
     int m_copyTime;
-    SST::Link* m_link;
+
+    SST::Link* m_outLink;
+    SST::Link* m_retLink;
 };
 
 }

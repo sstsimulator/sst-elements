@@ -16,7 +16,6 @@ libfirefly_la_SOURCES = \
 	libfirefly.cc \
 	functionSM.cc \
 	functionSM.h \
-	funcSM/fini.cc \
 	funcSM/fini.h \
 	funcSM/alltoallv.h \
 	funcSM/alltoallv.cc \
@@ -24,12 +23,10 @@ libfirefly_la_SOURCES = \
 	funcSM/gatherv.cc \
 	funcSM/allgather.cc \
 	funcSM/allgather.h \
-	funcSM/allreduce.cc \
 	funcSM/allreduce.h \
 	funcSM/collectiveOps.h \
 	funcSM/collectiveTree.cc \
 	funcSM/collectiveTree.h \
-	funcSM/barrier.cc \
 	funcSM/barrier.h \
 	funcSM/recv.cc \
 	funcSM/recv.h \

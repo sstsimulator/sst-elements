@@ -10,10 +10,10 @@
 // distribution.
 
 #include <sst_config.h>
-#include "sst/core/serialization.h"
-#include "sst/core/component.h"
-#include "sst/core/timeLord.h"
-#include "sst/core/module.h"
+#include <sst/core/component.h>
+#include <sst/core/timeLord.h>
+#include <sst/core/module.h>
+
 #include "sst/elements/merlin/linkControl.h"
 
 #include "merlinIO.h"
@@ -93,7 +93,6 @@ copyOut( Output& dbg, MerlinFireflyEvent& event, MerlinIO::Entry& entry );
 
 MerlinIO::MerlinIO( Component* owner, Params& params ) :
     Interface(),
-    m_recvEvent( NULL ),
     m_leaveLink( NULL ),
     m_sendEntry( NULL ),
     m_myNodeId( IO::AnyId ),
@@ -118,7 +117,7 @@ MerlinIO::MerlinIO( Component* owner, Params& params ) :
     m_dbg.verbose(CALL_INFO,1,0,"id=%d num_vcs=%d link_bw=%s\n",
                 m_myNodeId, num_vcs, link_bw.c_str());
 
-    int buffer_size = params.find_integer("buffer_size",128);
+    int buffer_size = params.find_integer("buffer_size",2048);
 
     std::vector<int> buf_size;
     buf_size.resize(m_numVC);
@@ -149,24 +148,16 @@ static inline  MerlinFireflyEvent* cast( Event* e )
 bool MerlinIO::recvNotify( int vc )
 {
     m_dbg.verbose(CALL_INFO,2,0,"vc=%d\n", vc );
-    assert( ! m_recvEvent );
 
-    m_recvEvent = m_linkControl->recv(vc);
+    m_recvEventQ.push_back( m_linkControl->recv(vc) );
 
-    assert( m_recvEvent );
-
-    bool flag = processRecv( m_recvEvent );
-
-    if ( cast(m_recvEvent)->buf.empty() ) {
-        m_recvEvent = NULL;
-    }
-
-    if ( flag ) {
+    if ( processRecv() ) {
         leave();
         m_dbg.verbose(CALL_INFO,2,0,"clear Notify Functors\n");
         m_linkControl->setNotifyOnSend( NULL );
         return false;
     }
+
     return true;
 }
 
@@ -203,33 +194,34 @@ void MerlinIO::enter( SST::Link* link  )
 
     m_leaveLink = link;
 
-    if ( m_recvEvent ) {
-        bool flag = processRecv( m_recvEvent );
-        if ( cast(m_recvEvent)->buf.empty() ) {
-            m_recvEvent = NULL;
-        }
-        if ( flag ) {
-            leave();
-            return;
-        }
+    drainInput();
+
+    if( processRecv() ) {
+        leave();
+        return;
     }
 
-    for ( int vc = 0; vc < m_numVC; vc++ ) {
-        m_lastVC = (m_lastVC + 1) % m_numVC;
-        if ( m_linkControl->eventToReceive( m_lastVC ) ) {
-            if ( ! recvNotify( m_lastVC ) ) {
-                return; 
-            } 
-        }
-    }
-    
-    if ( ! sendNotify( 0 ) ) {
+    if ( processSend() ) {
+        leave();
         return;
     }
 
     m_dbg.verbose(CALL_INFO,2,0,"set Notify Functors\n");
     m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
     m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
+}
+
+void MerlinIO::drainInput()
+{
+    for ( int vc = 0; vc < m_numVC; vc++ ) {
+        m_lastVC = (m_lastVC + 1) % m_numVC;
+        m_dbg.verbose(CALL_INFO,2,0,"check VC %d\n", m_lastVC);
+        while ( m_linkControl->eventToReceive( m_lastVC ) ) {
+            
+            m_dbg.verbose(CALL_INFO,2,0,"got event from VC %d\n", m_lastVC);
+            m_recvEventQ.push_back( m_linkControl->recv(m_lastVC) );
+        }
+    }
 }
 
 void MerlinIO::leave()
@@ -250,8 +242,8 @@ bool MerlinIO::processSend()
 
         ev->setSrc( m_myNodeId );
         ev->setNumFlits( ev->buf.size() );
-#if 0
-        ev->setTraceType( Merlin::RtrEvent::FULL );
+#if 0 
+        ev->setTraceType( Merlin::RtrEvent::ROUTE );
 #endif
         m_dbg.verbose(CALL_INFO,2,0,"sending event with %lu bytes %p\n",
                                                         ev->buf.size(), ev);
@@ -268,7 +260,26 @@ bool MerlinIO::processSend()
     return ret;
 }
 
-bool MerlinIO::processRecv( Event* e )
+bool MerlinIO::processRecv(  )
+{
+    bool leaveFlag = false;
+    while ( ! m_recvEventQ.empty() ) {
+        m_dbg.verbose(CALL_INFO,2,0,"processRecv\n");
+        leaveFlag = processRecvEvent( m_recvEventQ.front() );
+
+        if ( cast(m_recvEventQ.front())->buf.empty() ) {
+            delete m_recvEventQ.front();
+            m_recvEventQ.pop_front();
+        }
+
+        if ( leaveFlag ) {
+            break;
+        }
+    }
+    return leaveFlag; 
+}
+
+bool MerlinIO::processRecvEvent( Event* e )
 {
     MerlinFireflyEvent* event = static_cast<MerlinFireflyEvent*>( e );
 
@@ -289,7 +300,7 @@ bool MerlinIO::processRecv( Event* e )
     return false;
 }
 
-bool MerlinIO::sendv( IO::NodeId dest, std::vector<IO::IoVec>& ioVec,
+bool MerlinIO::sendv( IO::NodeId dest, std::vector<IoVec>& ioVec,
                                                IO::Entry::Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu\n",
@@ -305,7 +316,7 @@ bool MerlinIO::sendv( IO::NodeId dest, std::vector<IO::IoVec>& ioVec,
     return true;
 }
 
-bool MerlinIO::recvv( IO::NodeId src, std::vector<IO::IoVec>& ioVec, 
+bool MerlinIO::recvv( IO::NodeId src, std::vector<IoVec>& ioVec, 
                                                 IO::Entry::Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%d ioVec.size()=%lu\n", src, ioVec.size());
@@ -324,9 +335,9 @@ bool MerlinIO::recvv( IO::NodeId src, std::vector<IO::IoVec>& ioVec,
 IO::NodeId MerlinIO::peek( )
 {
     IO::NodeId src = IO::AnyId;
-    if ( m_recvEvent ) {
-        
-        IO::NodeId tmp = static_cast<Merlin::RtrEvent*>(m_recvEvent)->src;
+    if ( !m_recvEventQ.empty() ) {
+        IO::NodeId tmp = 
+                static_cast<Merlin::RtrEvent*>(m_recvEventQ.front())->src;
         if ( m_recvEntryM.find( tmp ) == m_recvEntryM.end() ) {
             src = tmp;
         }
@@ -349,7 +360,6 @@ copyIn( Output& dbg, MerlinIO::Entry& entry, MerlinFireflyEvent& event )
     dbg.verbose(CALL_INFO,2,0,"dest=%d ioVec.size()=%lu\n",
                                             entry.node, entry.ioVec.size() );
 
-    print( dbg, &event.buf[0], event.buf.size());
 
     for ( ; entry.currentVec < entry.ioVec.size(); 
                 entry.currentVec++, entry.currentPos = 0 ) {
@@ -359,12 +369,13 @@ copyIn( Output& dbg, MerlinIO::Entry& entry, MerlinFireflyEvent& event )
             size_t fromLen = event.buf.size();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            dbg.verbose(CALL_INFO,2,0,"toBufSpace=%lu fromAvail=%lu, "
-                            "memcpy len=%lu\n", toLen,fromLen,len);
             char* toPtr = (char*) entry.ioVec[entry.currentVec].ptr + 
                                                         entry.currentPos;
+            dbg.verbose(CALL_INFO,2,0,"toBufSpace=%lu fromAvail=%lu, "
+                            "memcpy len=%lu\n", toLen,fromLen,len);
 
-    
+            print( dbg, &event.buf[0], len );
+
             memcpy( toPtr, &event.buf[0], len );
             event.buf.erase(0,len);
 

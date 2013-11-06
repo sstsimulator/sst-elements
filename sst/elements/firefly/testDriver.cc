@@ -10,19 +10,18 @@
 // distribution.
 
 #include "sst_config.h"
-#include "sst/core/serialization.h"
-#include "testDriver.h"
 
 #include <sstream>
 
-#include "sst/core/component.h"
-#include "sst/core/debug.h"
-#include "sst/core/element.h"
-#include "sst/core/link.h"
-#include "sst/core/module.h"
-#include "sst/core/params.h"
-#include "sst/core/timeLord.h"
+#include <sst/core/component.h>
+#include <sst/core/debug.h>
+#include <sst/core/element.h>
+#include <sst/core/link.h>
+#include <sst/core/module.h>
+#include <sst/core/params.h>
+#include <sst/core/timeLord.h>
 
+#include "testDriver.h"
 
 using namespace Hermes;
 using namespace SST;
@@ -188,6 +187,14 @@ void TestDriver::handle_event( Event* ev )
                                 GroupWorld, 
                                 &m_functor);
 
+    } else if ( m_funcName.compare( "isend" ) == 0 ) {
+        m_hermes->isend( &m_sendBuf[0], m_sendBuf.size(), CHAR,
+                                (my_rank + 1 ) % 2,
+                                0xdead, 
+                                GroupWorld, 
+                                &my_req,
+                                &m_functor);
+
     } else if ( m_funcName.compare( "barrier" ) == 0 ) {
         m_hermes->barrier( GroupWorld, &m_functor );
     } else if ( m_funcName.compare( "allgather" ) == 0 ) {
@@ -244,7 +251,7 @@ void TestDriver::funcDone( int retval )
         alltoallvReturn();
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"allreduce %s\n", 
-          m_collectiveOut== ((my_size*(my_size+1))/2) - my_size ? "passed": "failed" );
+          m_collectiveOut == ((my_size*(my_size+1))/2) - my_size ? "passed": "failed" );
     } else if ( m_funcName.compare( "reduce" ) == 0 ) {
         if ( m_root == my_rank ) {
             m_dbg.verbose(CALL_INFO,1,0,"reduce %s\n", 
@@ -270,7 +277,7 @@ void TestDriver::recvReturn( )
 void TestDriver::waitReturn( )
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu\n",
-                my_req.src, my_req.tag,m_recvBuf.size());
+                my_resp.src, my_resp.tag, m_recvBuf.size());
     for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
         if ( m_recvBuf[i] != (i&0xff) ) {
             printf("ERROR %d != %d\n",i,m_recvBuf[i]);
