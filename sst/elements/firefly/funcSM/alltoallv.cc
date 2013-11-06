@@ -12,6 +12,8 @@
 
 #include <sst_config.h>
 
+#include <string.h>
+
 #include "funcSM/alltoallv.h"
 
 using namespace SST::Firefly;

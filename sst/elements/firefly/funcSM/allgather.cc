@@ -12,6 +12,9 @@
 
 #include <sst_config.h>
 
+#include <string.h>
+
+
 #include "funcSM/allgather.h"
 
 using namespace SST::Firefly;

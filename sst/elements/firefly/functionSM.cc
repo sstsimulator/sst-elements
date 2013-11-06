@@ -10,6 +10,10 @@
 // distribution.
 
 #include <sst_config.h>
+
+#include <string.h>
+#include <sstream>
+
 #include <sst/core/link.h>
 
 #include "functionSM.h"

@@ -12,6 +12,8 @@
 
 #include <sst_config.h>
 
+#include <string.h>
+
 #include "funcSM/gatherv.h"
 #include "info.h"
 

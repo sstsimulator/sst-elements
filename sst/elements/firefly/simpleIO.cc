@@ -11,6 +11,8 @@
 
 #include <sst_config.h>
 
+#include <string.h>
+
 #include <sst/core/component.h>
 #include <sst/core/interfaces/stringEvent.h>
 #include <sst/core/link.h>
