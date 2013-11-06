@@ -517,7 +517,10 @@ void MemController::cancelEvent(MemEvent* ev)
             if ( !requests[i]->isWrite && !requests[i]->canceled ) {
                 requests[i]->canceled = true;
                 numReadsCanceled++;
-                dbg.output(CALL_INFO, "Canceling request 0x%"PRIx64" (%"PRIu64", %d).\n", requests[i]->addr, requests[i]->respEvent->getID().first, requests[i]->respEvent->getID().second);
+                if ( NULL != requests[i]->respEvent )
+                    dbg.output(CALL_INFO, "Canceling request 0x%"PRIx64" (%"PRIu64", %d).\n", requests[i]->addr, requests[i]->respEvent->getID().first, requests[i]->respEvent->getID().second);
+                else
+                    dbg.output(CALL_INFO, "Canceling request 0x%"PRIx64" (Not yet processed).\n", requests[i]->addr);
                 if ( DRAMReq::RETURNED == requests[i]->status ) {
                     sendBusCancel(requests[i]->respEvent->getID());
                 }
