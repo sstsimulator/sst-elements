@@ -62,6 +62,8 @@ void ArielCore::handleEvent(SST::Event* event) {
 		} else {
 			output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
 		}
+	} else {
+		delete event;
 	}
 }
 
@@ -408,6 +410,8 @@ bool ArielCore::processNextEvent() {
 		output->verbose(CALL_INFO, 8, 0, "Removing event from pending queue, there are %" PRIu32 " events in the queue before deletion.\n", 
 			(uint32_t) coreQ->size());
 		coreQ->pop();
+
+		delete nextEvent;
 		return true;
 	} else {
 		output->verbose(CALL_INFO, 8, 0, "Event removal was not requested, pending transaction queue length=%" PRIu32 ", maximum transactions: %" PRIu32 "\n",
