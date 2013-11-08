@@ -13,7 +13,7 @@ def sstcreatemodel():
     sst.addcompparam(id, "pipetimeout", "0")
     sst.addcompparam(id, "maxissuepercycle", "4")
     sst.addcompparam(id, "maxtranscore", "32")
-    sst.addcompparam(id, "clock", "2.5GHz")
+    sst.addcompparam(id, "clock", "3.5GHz")
     sst.addcompparam(id, "executable", "/home/sdhammo/exmatex/cachestudy/lulesh/2013-10-31/lulesh2.0")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
 
@@ -24,7 +24,7 @@ def sstcreatemodel():
     sst.addcompparam(id, "apparg0", "-i")
     sst.addcompparam(id, "apparg1", "2")
     sst.addcompparam(id, "apparg2", "-s")
-    sst.addcompparam(id, "apparg3", "10")
+    sst.addcompparam(id, "apparg3", "50")
 
     membus = sst.createcomponent("membus", "memHierarchy.Bus")
     sst.addcompparam(membus, "numPorts", str(corecount + corecount + 2))
@@ -55,7 +55,7 @@ def sstcreatemodel():
        sst.addcompparam(l2id, "num_ways", "8")
        sst.addcompparam(l2id, "num_rows", "256")
        sst.addcompparam(l2id, "blocksize", "64")
-       sst.addcompparam(l2id, "access_time", "6ns")
+       sst.addcompparam(l2id, "access_time", "5ns")
        sst.addcompparam(l2id, "printStats", "1")
        sst.addcompparam(l2id, "next_level", "l3cache")
        sst.addcomplink(membus, "l2cache_" + str(x) + "_link", "port" + str(corecount + x), "50ps")
