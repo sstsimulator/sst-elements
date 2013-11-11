@@ -22,6 +22,10 @@
 #include <sst/core/output.h>
 #include <map>
 
+#ifdef HAVE_LIBZ
+#include <zlib.h>
+#endif
+
 #include <sst/core/interfaces/memEvent.h>
 using namespace SST::Interfaces;
 
@@ -177,7 +181,12 @@ private:
     Addr interleaveStep;
     bool respondToInvalidates;
 
+#ifdef HAVE_LIBZ
+    gzFile traceFP;
+#else
     FILE *traceFP;
+#endif
+
     Output::output_location_t statsOutputTarget;
     uint64_t numReadsSupplied;
     uint64_t numReadsCanceled;

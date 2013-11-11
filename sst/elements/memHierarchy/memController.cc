@@ -259,7 +259,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
     bool tfFound = false;
     std::string traceFile = params.find_string("traceFile", "", tfFound);
     if ( tfFound ) {
+#ifdef HAVE_LIBZ
+	traceFP = gzopen(traceFile.c_str(), "w");
+	gzsetparams(traceFP, 9, Z_DEFAULT_STRATEGY);
+#else
         traceFP = fopen(traceFile.c_str(), "w+");
+#endif
     } else {
         traceFP = NULL;
     }
@@ -340,7 +345,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 
 MemController::~MemController()
 {
+#ifdef HAVE_LIBZ
+   if ( traceFP ) gzclose(traceFP);
+#else
     if ( traceFP ) fclose(traceFP);
+#endif
     while ( requests.size() ) {
         DRAMReq *req = requests.front();
         requests.pop_front();
@@ -552,10 +561,17 @@ bool MemController::clock(Cycle_t cycle)
         if ( req->amt_in_process >= req->size ) {
             dbg.output(CALL_INFO, "Completed issue of request\n");
             performRequest(req);
+#ifdef HAVE_LIBZ
+            if ( traceFP ) {
+                gzprintf(traceFP, "%c 0x%08"PRIx64" %"PRIu64"\n",
+                        req->isWrite ? 'w' : 'r', req->addr, cycle);
+            }
+#else
             if ( traceFP ) {
                 fprintf(traceFP, "%c 0x%08"PRIx64" %"PRIu64"\n",
                         req->isWrite ? 'w' : 'r', req->addr, cycle);
             }
+#endif
             requestQueue.pop_front();
         }
     }

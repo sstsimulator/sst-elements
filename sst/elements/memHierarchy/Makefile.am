@@ -32,15 +32,21 @@ libmemHierarchy_la_SOURCES = \
 
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
+libmemHierarchy_la_LIBADD =
 
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
-libmemHierarchy_la_LIBADD = $(DRAMSIM_LIB)
+libmemHierarchy_la_LIBADD += $(DRAMSIM_LIB)
 AM_CPPFLAGS += $(DRAMSIM_CPPFLAGS) -DHAVE_LIBDRAMSIM
 endif
 
 if HAVE_HYBRIDSIM
 libmemHierarchy_la_LDFLAGS += $(HYBRIDSIM_LDFLAGS)
-libmemHierarchy_la_LIBADD = $(HYBRIDSIM_LIB)
+libmemHierarchy_la_LIBADD += $(HYBRIDSIM_LIB)
 AM_CPPFLAGS += $(HYBRIDSIM_CPPFLAGS) -DHAVE_LIBHYBRIDSIM
+endif
+
+if USE_LIBZ
+libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
 endif
