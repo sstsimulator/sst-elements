@@ -4,6 +4,7 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
+	$(LIBZ_CPPFLAGS) \
 	-g
 
 compdir = $(pkglibdir)
