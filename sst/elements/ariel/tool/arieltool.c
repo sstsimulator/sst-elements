@@ -23,10 +23,13 @@ KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool",
     "v", "0", "SST verbosity level");
 KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool",
     "c", "1", "Maximum core count to use for data pipes.");
+KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
+    "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled");
 
 //PIN_LOCK pipe_lock;
 UINT32 core_count;
 int* pipe_id;
+bool enable_output;
 
 #define PERFORM_EXIT 1
 #define PERFORM_READ 2
@@ -59,36 +62,40 @@ VOID copy(void* dest, const void* input, UINT32 length) {
 }
 
 VOID WriteInstructionRead(ADDRINT* address, UINT32 readSize, THREADID thr) {
-	const uint8_t read_marker = PERFORM_READ;
-	uint64_t addr64 = (uint64_t) address;
-	uint32_t thrID = (uint32_t) thr;
+	if(enable_output) {
+		const uint8_t read_marker = PERFORM_READ;
+		uint64_t addr64 = (uint64_t) address;
+		uint32_t thrID = (uint32_t) thr;
 
-	const UINT32 BUFFER_LENGTH = sizeof(read_marker) + sizeof(addr64) + sizeof(readSize);
+		const UINT32 BUFFER_LENGTH = sizeof(read_marker) + sizeof(addr64) + sizeof(readSize);
 
-	char buffer[BUFFER_LENGTH];
-	copy(&buffer[0], &read_marker, sizeof(read_marker));
-	copy(&buffer[sizeof(read_marker)], &addr64, sizeof(addr64));
-	copy(&buffer[sizeof(read_marker) + sizeof(addr64)], &readSize, sizeof(readSize));
+		char buffer[BUFFER_LENGTH];
+		copy(&buffer[0], &read_marker, sizeof(read_marker));
+		copy(&buffer[sizeof(read_marker)], &addr64, sizeof(addr64));
+		copy(&buffer[sizeof(read_marker) + sizeof(addr64)], &readSize, sizeof(readSize));
 
-	assert(thr < core_count);
-	write(pipe_id[thr], buffer, BUFFER_LENGTH);
+		assert(thr < core_count);
+		write(pipe_id[thr], buffer, BUFFER_LENGTH);
+	}
 }
 
 VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr) {
-	const uint8_t writer_marker = PERFORM_WRITE;
-	uint64_t addr64 = (uint64_t) address;
-	uint32_t thrID = (uint32_t) thr;
+	if(enable_output) {
+		const uint8_t writer_marker = PERFORM_WRITE;
+		uint64_t addr64 = (uint64_t) address;
+		uint32_t thrID = (uint32_t) thr;
 
-	size_t write_size;
+		size_t write_size;
 
-	const UINT32 BUFFER_LENGTH = sizeof(writer_marker) + sizeof(addr64) + sizeof(writeSize);
-	char buffer[BUFFER_LENGTH];
+		const UINT32 BUFFER_LENGTH = sizeof(writer_marker) + sizeof(addr64) + sizeof(writeSize);
+		char buffer[BUFFER_LENGTH];
 
-	copy(&buffer[0], &writer_marker, sizeof(writer_marker));
-	copy(&buffer[sizeof(writer_marker)], &addr64, sizeof(addr64));
-	copy(&buffer[sizeof(writer_marker) + sizeof(addr64)], &writeSize, sizeof(writeSize));
+		copy(&buffer[0], &writer_marker, sizeof(writer_marker));
+		copy(&buffer[sizeof(writer_marker)], &addr64, sizeof(addr64));
+		copy(&buffer[sizeof(writer_marker) + sizeof(addr64)], &writeSize, sizeof(writeSize));
 
-	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+		write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+	}
 }
 
 VOID WriteStartInstructionMarker(UINT32 thr) {
@@ -104,121 +111,123 @@ VOID WriteEndInstructionMarker(UINT32 thr) {
 VOID WriteInstructionReadWrite(THREADID thr, ADDRINT* readAddr, UINT32 readSize,
 	ADDRINT* writeAddr, UINT32 writeSize) {
 
-	if(thr < core_count) {
-	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
-        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
-	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
-        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
+	if(enable_output) {
+		if(thr < core_count) {
+			const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
+		        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
+			const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
+		        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
 
-	const uint64_t wAddr64 = (uint64_t) writeAddr;
-	const uint32_t wSize   = (uint32_t) writeSize;
-        const uint64_t rAddr64 = (uint64_t) readAddr;
-        const uint32_t rSize   = (uint32_t) readSize;
+			const uint64_t wAddr64 = (uint64_t) writeAddr;
+			const uint32_t wSize   = (uint32_t) writeSize;
+		        const uint64_t rAddr64 = (uint64_t) readAddr;
+		        const uint32_t rSize   = (uint32_t) readSize;
 
-	const uint32_t thrID = (uint32_t) thr;
+			const uint32_t thrID = (uint32_t) thr;
 
-	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
-		sizeof(writer_marker) + sizeof(wAddr64) + sizeof(wSize) +
-		sizeof(read_marker) + sizeof(rAddr64) + sizeof(rSize));
+			const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
+				sizeof(writer_marker) + sizeof(wAddr64) + sizeof(wSize) +
+				sizeof(read_marker) + sizeof(rAddr64) + sizeof(rSize));
 
-	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
-	int index = 0;
+			char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+			int index = 0;
 
-	copy(&buffer[index], &start_ins, sizeof(start_ins));
-	index += sizeof(start_ins);
-	copy(&buffer[index], &read_marker, sizeof(read_marker));
-	index += sizeof(read_marker);
-	copy(&buffer[index], &rAddr64, sizeof(rAddr64));
-	index += sizeof(rAddr64);
-	copy(&buffer[index], &rSize, sizeof(rSize));
-	index += sizeof(rSize);
-	copy(&buffer[index], &writer_marker, sizeof(writer_marker));
-	index += sizeof(writer_marker);
-	copy(&buffer[index], &wAddr64, sizeof(wAddr64));
-	index += sizeof(wAddr64);
-	copy(&buffer[index], &wSize, sizeof(wSize));
-	index += sizeof(wSize);
-	copy(&buffer[index], &end_ins, sizeof(end_ins));
+			copy(&buffer[index], &start_ins, sizeof(start_ins));
+			index += sizeof(start_ins);
+			copy(&buffer[index], &read_marker, sizeof(read_marker));
+			index += sizeof(read_marker);
+			copy(&buffer[index], &rAddr64, sizeof(rAddr64));
+			index += sizeof(rAddr64);
+			copy(&buffer[index], &rSize, sizeof(rSize));
+			index += sizeof(rSize);
+			copy(&buffer[index], &writer_marker, sizeof(writer_marker));
+			index += sizeof(writer_marker);
+			copy(&buffer[index], &wAddr64, sizeof(wAddr64));
+			index += sizeof(wAddr64);
+			copy(&buffer[index], &wSize, sizeof(wSize));
+			index += sizeof(wSize);
+			copy(&buffer[index], &end_ins, sizeof(end_ins));
 
-	assert(thr < core_count);
-	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+			assert(thr < core_count);
+			write(pipe_id[thrID], buffer, BUFFER_LENGTH);
 
-	free(buffer);
+			free(buffer);
+		}
 	}
-//	sync();
 
-//	ReleaseLock(&pipe_lock);
 }
 
 VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) {
 
-	if(thr < core_count) {
-	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
-        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
-	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
-        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
+	if(enable_output) {
+		if(thr < core_count) {
+			const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
+		        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
+			const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
+		        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
 
-       	const uint64_t rAddr64 = (uint64_t) readAddr;
-       	const uint32_t rSize   = (uint32_t) readSize;
+		       	const uint64_t rAddr64 = (uint64_t) readAddr;
+		       	const uint32_t rSize   = (uint32_t) readSize;
 
-	const uint32_t thrID = (uint32_t) thr;
+			const uint32_t thrID = (uint32_t) thr;
 
-       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
-               	sizeof(read_marker) + sizeof(rAddr64) + sizeof(rSize));
+		       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
+		               	sizeof(read_marker) + sizeof(rAddr64) + sizeof(rSize));
 
-	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
-	int index = 0;
+			char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+			int index = 0;
 
-       	copy(&buffer[index], &start_ins, sizeof(start_ins));
-	index += sizeof(start_ins);
-       	copy(&buffer[index], &read_marker, sizeof(read_marker));
-	index += sizeof(read_marker);
-       	copy(&buffer[index], &rAddr64, sizeof(rAddr64));
-	index += sizeof(rAddr64);
-       	copy(&buffer[index], &rSize, sizeof(rSize));
-	index += sizeof(rSize);
-        copy(&buffer[index], &end_ins, sizeof(end_ins));
+		       	copy(&buffer[index], &start_ins, sizeof(start_ins));
+			index += sizeof(start_ins);
+		       	copy(&buffer[index], &read_marker, sizeof(read_marker));
+			index += sizeof(read_marker);
+		       	copy(&buffer[index], &rAddr64, sizeof(rAddr64));
+			index += sizeof(rAddr64);
+		       	copy(&buffer[index], &rSize, sizeof(rSize));
+			index += sizeof(rSize);
+		        copy(&buffer[index], &end_ins, sizeof(end_ins));
 
-	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
-	free(buffer);
+			write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+			free(buffer);
+		}
 	}
 
 }
 
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
-	if(thr < core_count) {
-	//std::cout << "Writing a WRITE only instruction addr=" << writeAddr << std::endl;
+	if(enable_output) {
+		if(thr < core_count) {
+			const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
+		        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
+			const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
+		        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
 
-	const uint8_t start_ins     = (uint8_t) START_INSTRUCTION;
-        const uint8_t end_ins       = (uint8_t) END_INSTRUCTION;
-	const uint8_t writer_marker = (uint8_t) PERFORM_WRITE;
-        const uint8_t read_marker   = (uint8_t) PERFORM_READ;
+		       	const uint64_t wAddr64 = (uint64_t) writeAddr;
+		       	const uint32_t wSize   = (uint32_t) writeSize;
 
-       	const uint64_t wAddr64 = (uint64_t) writeAddr;
-       	const uint32_t wSize   = (uint32_t) writeSize;
+			const uint32_t thrID = (uint32_t) thr;
 
-	const uint32_t thrID = (uint32_t) thr;
+		       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
+		               	sizeof(writer_marker) + sizeof(wAddr64) + sizeof(wSize));
 
-       	const UINT32 BUFFER_LENGTH = (uint32_t) (sizeof(start_ins) + sizeof(end_ins) +
-               	sizeof(writer_marker) + sizeof(wAddr64) + sizeof(wSize));
+			char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+			int index = 0;
 
-	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
-	int index = 0;
+		       	copy(&buffer[index], &start_ins, sizeof(start_ins));
+			index += sizeof(start_ins);
+		       	copy(&buffer[index], &writer_marker, sizeof(writer_marker));
+			index += sizeof(writer_marker);
+		       	copy(&buffer[index], &wAddr64, sizeof(wAddr64));
+			index += sizeof(wAddr64);
+		        copy(&buffer[index], &wSize, sizeof(wSize));
+			index += sizeof(wSize);
+		        copy(&buffer[index], &end_ins, sizeof(end_ins));
 
-       	copy(&buffer[index], &start_ins, sizeof(start_ins));
-	index += sizeof(start_ins);
-       	copy(&buffer[index], &writer_marker, sizeof(writer_marker));
-	index += sizeof(writer_marker);
-       	copy(&buffer[index], &wAddr64, sizeof(wAddr64));
-	index += sizeof(wAddr64);
-        copy(&buffer[index], &wSize, sizeof(wSize));
-	index += sizeof(wSize);
-        copy(&buffer[index], &end_ins, sizeof(end_ins));
-
-	assert(thr < core_count);
-	write(pipe_id[thrID], buffer, BUFFER_LENGTH);
-	free(buffer);
+			assert(thr < core_count);
+			write(pipe_id[thrID], buffer, BUFFER_LENGTH);
+			free(buffer);
+		}
 	}
 
 }
@@ -372,8 +381,13 @@ void ariel_tlvl_free(void* ptr) {
 	write(pipe_id[thr], buffer, BUFFER_LENGTH);	
 }
 
+void mapped_ariel_enable() {
+	printf("ARIEL: Enabling memory and instruction tracing from program control.\n");
+ 	enable_output = true;
+}
+
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
-	if(RTN_Name(rtn) == "malloc") {
+/*	if(RTN_Name(rtn) == "malloc") {
 		// We need to replace with something here
 		std::cout << "Identified a malloc replacement function." << std::endl;
 	} else if (RTN_Name(rtn) == "tlvl_malloc") {
@@ -385,7 +399,14 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
 		printf("Replacement complete.\n");
-	} /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
+	} else*/ if (RTN_Name(rtn) == "ariel_enable") {
+		printf("Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
+		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
+		printf("Replacement complete.\n");
+ 	}
+
+
+ /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
 	//	printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
 	//	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_memcpy);
 	//	printf("Replacement complete.\n");
@@ -446,9 +467,17 @@ int main(int argc, char *argv[])
 
     sleep(1);
 
+    if(StartupMode.Value() == 1) {
+	printf("ARIEL: Tool is configured to begin with profiling immediately.\n");
+	enable_output = true;
+    } else if (StartupMode.Value() == 0) {
+	printf("ARIEL: Tool is configured to suspend profiling until program control\n");
+	enable_output = false;
+    }
+
 //    InitLock(&pipe_lock);
     INS_AddInstrumentFunction(InstrumentInstruction, 0);
-//    RTN_AddInstrumentFunction(InstrumentRoutine, 0);
+    RTN_AddInstrumentFunction(InstrumentRoutine, 0);
 
     PIN_StartProgram();
 
