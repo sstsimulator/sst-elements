@@ -71,10 +71,11 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	uint32_t app_argc = (uint32_t) params.find_integer("appargcount", 0);
 	output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
 	
-	
+	uint32_t pin_startup_mode = (uint32_t) params.find_integer("arielmode", 1);
 	
 	const char* execute_binary = PINTOOL_EXECUTABLE;
-  	char** execute_args = (char**) malloc(sizeof(char*) * (14 + app_argc));
+	const uint32_t pin_arg_count = 16;
+  	char** execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
 	output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
 
@@ -94,17 +95,20 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
   	execute_args[9] = "-c";
   	execute_args[10] = (char*) malloc(sizeof(char) * 8);
   	sprintf(execute_args[10], "%" PRIu32, core_count);
-  	execute_args[11] = "--";
-  	execute_args[12] = (char*) malloc(sizeof(char) * (executable.size() + 1));
-  	strcpy(execute_args[12], executable.c_str());
+	execute_args[11] = "-s";
+	execute_args[12] = (char*) malloc(sizeof(char) * 8);
+	sprintf(execute_args[12], "%" PRIu32, pin_startup_mode);
+  	execute_args[13] = "--";
+  	execute_args[14] = (char*) malloc(sizeof(char) * (executable.size() + 1));
+  	strcpy(execute_args[14], executable.c_str());
 	
 	char* argv_buffer = (char*) malloc(sizeof(char) * 256);
-	for(uint32_t i = 13; i < 13 + app_argc; ++i) {
+	for(uint32_t i = (pin_arg_count - 1); i < (pin_arg_count - 1) + app_argc; ++i) {
 		sprintf(argv_buffer, "apparg%" PRIu32, i - 13);
 		std::string argv_i = params.find_string(argv_buffer, "");
 		
 		output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n", 
-			i - 13, argv_buffer, argv_i.c_str());
+			i - (pin_arg_count - 1), argv_buffer, argv_i.c_str());
 		execute_args[i] = (char*) malloc(sizeof(char) * (argv_i.size() + 1));
 		strcpy(execute_args[i], argv_i.c_str());
 	}
@@ -113,7 +117,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Completed processing application arguments.\n");
 	
 	// Remember that the list of arguments must be NULL terminated for execution
-	execute_args[13 + app_argc] = NULL;
+	execute_args[(pin_arg_count - 1) + app_argc] = NULL;
 	
 	char* pipe_buffer = (char*) malloc(sizeof(char) * 256);
 	pipe_fds = (int*) malloc(sizeof(int) * core_count);
