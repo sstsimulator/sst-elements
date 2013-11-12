@@ -4,8 +4,8 @@
 
 AM_CPPFLAGS = \
 	$(BOOST_CPPFLAGS) $(MPI_CPPFLAGS) \
-	$(LIBZ_CPPFLAGS) \
 	-g
+
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmemHierarchy.la
@@ -33,7 +33,7 @@ libmemHierarchy_la_SOURCES = \
 
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
-libmemHierarchy_la_LIBADD =
+libmemHierarchy_la_LIBADD = 
 
 if HAVE_DRAMSIM
 libmemHierarchy_la_LDFLAGS += $(DRAMSIM_LDFLAGS)
@@ -50,4 +50,5 @@ endif
 if USE_LIBZ
 libmemHierarchy_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(LIBZ_LIB)
+AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 endif
