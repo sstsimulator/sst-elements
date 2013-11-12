@@ -5,7 +5,7 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
 	uint32_t maxPendTrans, Output* out, uint32_t maxIssuePerCyc, 
 	uint32_t maxQLen, int pipeTO, uint64_t cacheLineSz, SST::Component* own,
 			ArielMemoryManager* memMgr) {
-	
+
 	output = out;
 	output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
 	fd_input = fd_in;
@@ -22,11 +22,26 @@ ArielCore::ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID,
 
 	coreQ = new std::queue<ArielEvent*>();
 	pendingTransactions = new std::map<MemEvent::id_type, MemEvent*>();
-	
+
 	read_requests = 0;
 	write_requests = 0;
 	split_read_requests = 0;
 	split_write_requests = 0;
+
+	if(0 == thisCoreID) {
+		output->verbose(CALL_INFO, 1, 0, "Waiting for core 0 to poll for initial data (means application will have launched and attached)\n");
+
+		struct pollfd poll_input;
+	        poll_input.fd = fd_in;
+       		poll_input.events = POLLIN;
+
+		// Configure for an infinite timeout waiting for core 0 to begin.
+		int poll_result = poll(&poll_input, (unsigned int) 1, (int) -1);
+
+		if(poll_result == -1) {
+                        output->fatal(CALL_INFO, -2, "Attempt to poll failed.\n");
+                }
+	}
 }
 
 ArielCore::~ArielCore() {
