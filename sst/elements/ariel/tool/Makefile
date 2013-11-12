@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PINDIR=$(HOME)/pin/2.12-gcc
+PINDIR=/home/projects/pin/2.12.61206/gcc/
 CXX=g++
 PREPROC=-DBIGARRAY_MULTIPLIER=1 -DUSING_XED -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX
 LD=g++
@@ -22,7 +22,7 @@ arieltool.so: arieltool.o
 		-L$(PINDIR)/extras/xed2-intel64/lib \
 		-L$(PINDIR)/intel64/lib \
 		-L$(PINDIR)/intel64/lib-ext -lpin  -lxed -ldwarf \
-		-lelf -ldl -lgmp
+		-lelf -ldl
 
 arieltool.o: arieltool.c
 	$(CXX) -g -c -O3 -fomit-frame-pointer \
@@ -38,3 +38,9 @@ arieltool.o: arieltool.c
 
 clean:
 	rm *.o arieltool.so
+
+client: ariel_client.o
+	$(CXX) -O3 -fPIC -shared -o libariel_client.so ariel_client.o
+
+ariel_client.o: ariel_client.c
+	$(CXX) -O3 -fPIC -I./ -o ariel_client.o -c ariel_client.c
