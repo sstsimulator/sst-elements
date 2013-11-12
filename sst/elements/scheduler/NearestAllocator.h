@@ -84,6 +84,8 @@ namespace SST {
                 void OldMC1x1Allocator(MachineMesh* m); 
 
                 void MC1x1Allocator(MachineMesh* m); 
+
+                void CoolingAllocator(MachineMesh* m);
         };
 
     }

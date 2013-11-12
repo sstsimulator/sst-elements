@@ -25,6 +25,7 @@
  MC1x1 - try centering at open places
  select L_inf closest points
  eval with L_inf distance from center
+ Cooling - use MC1x1 but use cooling information to obtain centers
  */
 
 #include "sst_config.h"
@@ -294,6 +295,14 @@ void NearestAllocator::MC1x1Allocator(MachineMesh* m) {
     configName = "MC1x1";
     machine = m;
     centerGenerator = new FreeCenterGenerator(m);
+    pointCollector = new GreedyLInfPointCollector();
+    scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
+} 
+
+void NearestAllocator::CoolingAllocator(MachineMesh* m) {
+    configName = "cooling";
+    machine = m;
+    centerGenerator = new CoolingGenerator(m);
     pointCollector = new GreedyLInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
 }

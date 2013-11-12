@@ -69,6 +69,29 @@ string FreeCenterGenerator::getSetupInfo(bool comment)
     return com + "FreeCenterGenerator";
 }
 
+vector<MeshLocation*>* CoolingGenerator::getCenters(vector<MeshLocation*>* available)//, MachineMesh* m) 
+{
+    //returns vector containing contents of available (deep copy to match Intersection version)
+    //only returns the ones with smallest cooling cost
+    vector<MeshLocation*>* retVal = new vector<MeshLocation*>();
+    for (unsigned int x = 0; x < available -> size(); x++) {
+        retVal -> push_back(new MeshLocation((*available)[x]));
+    }
+    return retVal;
+}
+
+string CoolingGenerator::getSetupInfo(bool comment)
+{
+    string com;
+    if (comment)  {
+        com="# ";
+    } else  {
+        com="";
+    }
+    return com + "CoolingGenerator";
+}
+
+
 bool contains(vector<int>* vec, int i)
 {
     bool ret = false;
@@ -257,7 +280,7 @@ vector<MeshLocation*>* GreedyLInfPointCollector::getNearest(MeshLocation* center
         //recalculate all the other distances adding this point into the inner group.
         newouterProcs -> clear(); //don't have to do deletes because all pointers
         //are in outerProcs anyway
-        if (totalSelected < num){	//TODO bad form?
+        if (totalSelected < num) {	//TODO bad form?
             for (set<PointInfo*, PointInfo>::iterator info = outerProcs -> begin(); info != outerProcs -> end(); info++){
                 if ((*info) -> L1toGroup < 0) {
                     exit(0);

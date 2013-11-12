@@ -133,6 +133,16 @@ namespace SST {
 
         };
 
+        class CoolingGenerator : public CenterGenerator {
+            //find the free nodes with best cooling properties
+
+            public:
+                CoolingGenerator(MachineMesh* m) : CenterGenerator(m) { } 
+                std::vector<MeshLocation*>* getCenters(std::vector<MeshLocation*>* available);//, MachineMesh* m); 
+                std::string getSetupInfo(bool comment); 
+        };
+
+
 
         class IntersectionCenterGen : public CenterGenerator {
             //guaranted list contains all intersections of free locations
