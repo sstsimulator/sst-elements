@@ -387,6 +387,10 @@ void mapped_ariel_enable() {
 }
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
+	if(SSTVerbosity.Value() > 0) {
+		printf("ARIEL: Examining routine [%s] for instrumentation\n", RTN_Name(rtn).c_str());
+	}
+
 /*	if(RTN_Name(rtn) == "malloc") {
 		// We need to replace with something here
 		std::cout << "Identified a malloc replacement function." << std::endl;
@@ -399,10 +403,13 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
 		printf("Replacement complete.\n");
-	} else*/ if (RTN_Name(rtn) == "ariel_enable") {
+	} else*/ 
+
+	if (RTN_Name(rtn) == "ariel_enable") {
 		printf("Identified routine: ariel_enable, replacing with Ariel equivalent...\n");
 		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
 		printf("Replacement complete.\n");
+		return;
  	}
 
 

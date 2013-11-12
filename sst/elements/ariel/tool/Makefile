@@ -40,7 +40,7 @@ clean:
 	rm *.o arieltool.so
 
 client: ariel_client.o
-	$(CXX) -O3 -fPIC -shared -o libariel_client.so ariel_client.o
+	$(CC) -O3 -fPIC -shared -o libariel_client.so ariel_client.o
 
 ariel_client.o: ariel_client.c
-	$(CXX) -O3 -fPIC -I./ -o ariel_client.o -c ariel_client.c
+	$(CC) -O3 -fPIC -I./ -o ariel_client.o -c ariel_client.c
