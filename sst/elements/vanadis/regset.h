@@ -2,22 +2,30 @@
 #ifndef _H_VANADIS_REG_SET
 #define _H_VANADIS_REG_SET
 
+#include <sst_config.h>
+
+#include <stdint.h>
+
 namespace SST {
 namespace Vanadis {
 
-class RegisterSet {
+class VanadisRegisterSet {
 
-   private:
-      void* fp_reg;
-      void* int_reg;
-      uint32_t threadID;
+   protected:
+      char* register_contents;
+      const uint32_t registerWidthBytes;
+      const uint32_t registerCount;
+      const uint32_t threadID;
+
+      inline uint32_t calculateIndex(uint32_t index, uint32_t lane);
+      inline void copy(void* dest, const void* src, uint32_t length);
 
    public:
-      RegisterSet(uint32_t fpRegisterWidth,
-		uint32_t fpRegCount,
-		uint32_t intRegisterWidth,
-		uint32_t intRegCount,
-		uint32_t threadID);
+      VanadisRegisterSet(
+		uint32_t threadID,
+		uint32_t registerCount,
+		uint32_t registerWidthBytes
+		);
 
       uint32_t getThreadID();
 
@@ -26,7 +34,7 @@ class RegisterSet {
       int32_t getInt32RegisterValue(uint32_t index, uint32_t lane);
       int64_t getInt64RegisterValue(uint32_t index, uint32_t lane);
 
-      uint8_t getUInt8RegisterValue(uint32_t index, uint32_t lane);
+      uint8_t  getUInt8RegisterValue(uint32_t index, uint32_t lane);
       uint16_t getUInt16RegisterValue(uint32_t index, uint32_t lane);
       uint32_t getUInt32RegisterValue(uint32_t index, uint32_t lane);
       uint64_t getUInt64RegisterValue(uint32_t index, uint32_t lane);
@@ -47,7 +55,7 @@ class RegisterSet {
       void setDoubleRegisterValue(uint32_t index, uint32_t lane, double value);
       void setFloatRegisterValue(uint32_t index, uint32_t lane, float value);
 
-}
+};
 
 }
 }
