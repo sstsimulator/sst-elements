@@ -104,7 +104,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	
 	char* argv_buffer = (char*) malloc(sizeof(char) * 256);
 	for(uint32_t i = (pin_arg_count - 1); i < (pin_arg_count - 1) + app_argc; ++i) {
-		sprintf(argv_buffer, "apparg%" PRIu32, i - 13);
+		sprintf(argv_buffer, "apparg%" PRIu32, i - (pin_arg_count - 1));
 		std::string argv_i = params.find_string(argv_buffer, "");
 		
 		output->verbose(CALL_INFO, 1, 0, "Found application argument %" PRIu32 " (%s) = %s\n", 
