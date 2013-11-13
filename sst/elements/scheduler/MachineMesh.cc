@@ -175,7 +175,7 @@ void MachineMesh::allocate(AllocInfo* allocInfo)
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (!isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate a busy processor: " );
+            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy processor: " );
         }
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = false;
     }
@@ -190,7 +190,7 @@ void MachineMesh::deallocate(AllocInfo* allocInfo) {
 
     for (unsigned int i = 0; i < procs -> size(); i++) {
         if (isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z]) {
-            schedout.fatal(CALL_INFO, 1, 0, 0, "Attempt to allocate a busy processor: " );
+            schedout.fatal(CALL_INFO, 0, "Attempt to allocate a busy processor: " );
         }
         isFree[((*procs)[i]) -> x][((*procs)[i]) -> y][((*procs)[i]) -> z] = true;
     }
@@ -225,11 +225,11 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
 	//std::cout<<"Hello: IsFree[0][0]="<<isFree[0][0].size()<<"; isFree[0]="<<isFree[0].size()<<"; isFree="<<isFree.size()<<std::endl;
 
 	std::string tempstring= "";
-	for (int k=0; k<isFree[0][0].size(); k++) {
+	for (unsigned int k = 0; k < isFree[0][0].size(); k++) {
 		tempstring= "";
-		for (int j = isFree[0].size()-1; j>=0; j--) {
+		for (int j = isFree[0].size() - 1; j >= 0; j--) {
 			//std::cout<<"Hello: k="<<k<<"; j="<<j<<std::endl;
-			for (int i=0; i < isFree.size(); i++) {
+			for (unsigned int i = 0; i < isFree.size(); i++) {
 				if(isFree[i][j][k]) {
 					tempstring += "0";
                                 } else {
@@ -473,87 +473,89 @@ double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs) {
 	};
 
 
-	for(k=0; k<isFree[0][0].size(); k++) {
-        for(i=isFree.size()-1; i>=0; i--)
-        	for(j=isFree[0].size()-1; j>=0; j--) {
-			{
-                if(isFree[i][j][k])
-                    allocation_index.push_back(0);
-                else
-                    allocation_index.push_back(1);
-			}
+        for (k = 0; k < (int)isFree[0][0].size(); k++) {
+            for (i = (int)isFree.size() - 1; i >= 0; i--) {
+                for (j = (int)isFree[0].size() - 1; j >= 0; j--) {
+                        if (isFree[i][j][k]) {
+                            allocation_index.push_back(0);
+                        } else {
+                            allocation_index.push_back(1);
+                        }
+                    }
+                }
+            }
+
+
+            for (j = 0; j < (int)allocation_index.size(); j++)
+            {
+                for (i = 0; i < (int)allocation_index.size(); i++)
+                {
+                    sum_inlet += DMatrix[j][i] * (Pidle + Putil * allocation_index[i]);
+                    //std::cout<<"DMatrix["<<j<<"]["<<i<<"]="<<DMatrix[j][i]<<"; sum_inlet("<<i<<")="<<sum_inlet<<std::endl;
+                }
+                //std::cout<<"DP("<<j<<")="<<sum_inlet<<std::endl;
+                inlet_temperature.push_back(Tsup+sum_inlet);
+                sum_inlet = 0;
+            }
+
+            for (i = 0; i < (int)allocation_index.size(); i++)
+            {
+                //std::cout<<"index="<<i<<"; allocation:"<<allocation_index[i]<<"; inlet_temperature is="<<inlet_temperature[i]<<"C."<<std::endl;
+                if (max_inlet < inlet_temperature[i]) {
+                    max_inlet = inlet_temperature[i];
+                }
+                if (allocation_index[i]) {
+                    busynodes++;	
+                }
+            }
+
+            // Total power of data center
+            Pcompute = busynodes * Putil + allocation_index.size() * Pidle;
+
+            // Supply temperature
+            Tsup = Tsup + Tred-max_inlet;
+
+            // Coefficient of performance
+            COP = 0.0068 * Tsup * Tsup + 0.0008 * Tsup + 0.458;
+
+            // Cooling power in kW
+            Scaling_Factor = 214.649 / 120;
+            Pcooling = 0.001 * Pcompute * (1 / COP) / Scaling_Factor;
+
+            //std::cout<<"Maximum Temperature is: "<<max_inlet<<"C."<<std::endl;
+            return  Pcooling;
+
         }
-    }
 
-	
-	for (j=0; j<allocation_index.size(); j++)
-	{
-		for (i=0; i<allocation_index.size(); i++)
-		{
-			sum_inlet+=DMatrix[j][i]*(Pidle+Putil*allocation_index[i]);
-			//std::cout<<"DMatrix["<<j<<"]["<<i<<"]="<<DMatrix[j][i]<<"; sum_inlet("<<i<<")="<<sum_inlet<<std::endl;
-		}
-		//std::cout<<"DP("<<j<<")="<<sum_inlet<<std::endl;
-		inlet_temperature.push_back(Tsup+sum_inlet);
-		sum_inlet=0;
-	}
-
-	for (i=0; i<allocation_index.size(); i++)
-	{
-		//std::cout<<"index="<<i<<"; allocation:"<<allocation_index[i]<<"; inlet_temperature is="<<inlet_temperature[i]<<"C."<<std::endl;
-		if(max_inlet<inlet_temperature[i])
-			max_inlet=inlet_temperature[i];
-		if(allocation_index[i])
-			busynodes++;	
-	}
-
-	// Total power of data center
-	Pcompute=busynodes*Putil+allocation_index.size()*Pidle;
-
-	// Supply temperature
-    Tsup=Tsup+Tred-max_inlet;
-
-    // Coefficient of performance
-    COP=0.0068*Tsup*Tsup+0.0008*Tsup+0.458;
-
-    // Cooling power in kW
-	Scaling_Factor=214.649/120;
-    Pcooling=0.001*Pcompute*(1/COP)/Scaling_Factor;
-	
-	//std::cout<<"Maximum Temperature is: "<<max_inlet<<"C."<<std::endl;
-	return  Pcooling;
-
-}
-
-//Jie: end editing Oct2013	
+        //Jie: end editing Oct2013	
 
 
 
 
 
 
-/*
-   std::string MachineMesh::tostd::string(){
-//returns human readable view of which processors are free
-//presented in layers by z-coordinate (0 first), with the
-//  (0,0) position of each layer in the bottom left
-//uses "X" and "." to denote free and busy processors respectively
+        /*
+           std::string MachineMesh::tostd::string(){
+        //returns human readable view of which processors are free
+        //presented in layers by z-coordinate (0 first), with the
+        //  (0,0) position of each layer in the bottom left
+        //uses "X" and "." to denote free and busy processors respectively
 
-std::string retVal = "";
-for(int k=0; k<isFree[0][0].size(); k++) {
-for(int j=isFree[0].length-1; j>=0; j--) {
-for(int i=0; i<isFree.length; i++)
-if(isFree[i][j][k]) retVal += "X";
-else
-retVal += ".";
-retVal += "\n";
-}
+        std::string retVal = "";
+        for(int k=0; k<isFree[0][0].size(); k++) {
+        for(int j=isFree[0].length-1; j>=0; j--) {
+        for(int i=0; i<isFree.length; i++)
+        if(isFree[i][j][k]) retVal += "X";
+        else
+        retVal += ".";
+        retVal += "\n";
+        }
 
-if(k != isFree[0][0].length-1)  //add blank line between layers
-retVal += "\n";
-}
+        if(k != isFree[0][0].length-1)  //add blank line between layers
+        retVal += "\n";
+        }
 
-return retVal;
-}
-*/
+        return retVal;
+        }
+        */
 
