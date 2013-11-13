@@ -206,7 +206,7 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
     //returns total pairwise L_1 distance between 1st num members of array
     long retVal = 0;
 
-	std::cout<<"Allocation decision for a job needs "<<num<<" nodes:"<<std::endl;	
+	//std::cout<<"Allocation decision for a job needs "<<num<<" nodes:"<<std::endl;	
     for (int i = 0; i < num; i++) {
 
 		//Jie: start editing Oct2013	
@@ -222,21 +222,23 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
         }
     }
 
-	std::cout<<"Hello: IsFree[0][0]="<<isFree[0][0].size()<<"; isFree[0]="<<isFree[0].size()<<"; isFree="<<isFree.size()<<std::endl;
+	//std::cout<<"Hello: IsFree[0][0]="<<isFree[0][0].size()<<"; isFree[0]="<<isFree[0].size()<<"; isFree="<<isFree.size()<<std::endl;
 
 	std::string tempstring= "";
-	for(int k=0; k<isFree[0][0].size(); k++) {
+	for (int k=0; k<isFree[0][0].size(); k++) {
 		tempstring= "";
-		for(int j=isFree[0].size()-1; j>=0; j--) {
-			std::cout<<"Hello: k="<<k<<"; j="<<j<<std::endl;
-			for(int i=0; i<isFree.size(); i++)
-				if(isFree[i][j][k])
+		for (int j = isFree[0].size()-1; j>=0; j--) {
+			//std::cout<<"Hello: k="<<k<<"; j="<<j<<std::endl;
+			for (int i=0; i < isFree.size(); i++) {
+				if(isFree[i][j][k]) {
 					tempstring += "0";
-				else
+                                } else {
 					tempstring += "1";
+                                }
+                        }
 			tempstring += "\n";
 		}
-    	std::cout<<tempstring;
+    	//std::cout<<tempstring;
 	}
 
   return retVal;
@@ -518,7 +520,7 @@ double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs) {
 	Scaling_Factor=214.649/120;
     Pcooling=0.001*Pcompute*(1/COP)/Scaling_Factor;
 	
-	std::cout<<"Maximum Temperature is: "<<max_inlet<<"C."<<std::endl;
+	//std::cout<<"Maximum Temperature is: "<<max_inlet<<"C."<<std::endl;
 	return  Pcooling;
 
 }
