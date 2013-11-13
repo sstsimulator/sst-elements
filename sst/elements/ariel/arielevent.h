@@ -14,7 +14,9 @@ enum ArielEventType {
 	WRITE_ADDRESS,
 	START_DMA_TRANSFER,
 	WAIT_ON_DMA_TRANSFER,
-	CORE_EXIT
+	CORE_EXIT,
+	NOOP,
+	MALLOC
 };
 
 class ArielEvent {

@@ -11,10 +11,12 @@ def sstcreatemodel():
     sst.addcompparam(id, "verbose", "1")
     sst.addcompparam(id, "executable", "/home/sdhammo/xgc/xgc_co_design/sorting/spsort/bsr")
     sst.addcompparam(id, "arieltool", "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so")
-    sst.addcompparam(id, "fastmempagecount", "131072")
+    sst.addcompparam(id, "maxcorequeue", "256")
+    sst.addcompparam(id, "maxissuepercycle", "2")
+    sst.addcompparam(id, "pipetimeout", "0")
 
     sst.addcompparam(id, "appargcount", "6")
-    sst.addcompparam(id, "apparg0", "10000")
+    sst.addcompparam(id, "apparg0", "100000")
     sst.addcompparam(id, "apparg1", "1")
     sst.addcompparam(id, "apparg2", "1048576")
     sst.addcompparam(id, "apparg3", "512")
@@ -73,7 +75,7 @@ def sstcreatemodel():
     sst.addcompparam(l2_q1, "num_ways", "16")
     sst.addcompparam(l2_q1, "num_rows", "512")
     sst.addcompparam(l2_q1, "blocksize", "64")
-    sst.addcompparam(l2_q1, "access_time", "9ns")
+    sst.addcompparam(l2_q1, "access_time", "5ns")
     sst.addcompparam(l2_q1, "printStats", "1")
     sst.addcompparam(l2_q1, "net_addr", "2")
     #sst.addcompparam(l2_q1, "debug", "3")
@@ -85,7 +87,7 @@ def sstcreatemodel():
     sst.addcompparam(l2_q2, "num_ways", "16")
     sst.addcompparam(l2_q2, "num_rows", "512")
     sst.addcompparam(l2_q2, "blocksize", "64")
-    sst.addcompparam(l2_q2, "access_time", "9ns")
+    sst.addcompparam(l2_q2, "access_time", "5ns")
     sst.addcompparam(l2_q2, "printStats", "1")
     sst.addcompparam(l2_q2, "net_addr", "3")
     #sst.addcompparam(l2_q2, "debug", "3")
@@ -149,7 +151,6 @@ def sstcreatemodel():
     sst.addcompparam(dirctrl0, "debug", "3")
     sst.addcomplink(dirctrl0, "dir0_mem_link", "memory", "50ps")
     sst.addcomplink(dirctrl0, "dir0_net_link", "network", "10ns")
-
 
     print "Creating second directory controller..."
     dirctrl1 = sst.createcomponent("dirctrl1", "memHierarchy.DirectoryController")

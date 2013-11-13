@@ -97,6 +97,14 @@ void ArielCore::createReadEvent(uint64_t address, uint32_t length) {
 	output->verbose(CALL_INFO, 4, 0, "Generated a READ event, addr=%" PRIu64 ", length=%" PRIu32 "\n", address, length);
 }
 
+void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level) {
+	ArielAllocateEvent* ev = new ArielAllocateEvent(vAddr, length, level);
+	coreQ->push(ev);
+
+	output->verbose(CALL_INFO, 2, 0, "Generated an allocate event, vAddr(map)=%" PRIu64 ", length=%" PRIu64 " in level %" PRIu32 "\n",
+		vAddr, length, level);
+}
+
 void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
 	ArielWriteEvent* ev = new ArielWriteEvent(address, length);
 	coreQ->push(ev);
@@ -173,6 +181,19 @@ bool ArielCore::refillQueue() {
 						break;
 					}
 				}
+				break;
+
+			case ARIEL_ISSUE_TLM_MAP:
+				uint64_t tlm_map_vaddr;
+				uint64_t tlm_alloc_len;
+				uint32_t tlm_alloc_level;
+
+				read(fd_input, &tlm_map_vaddr, sizeof(tlm_map_vaddr));
+				read(fd_input, &tlm_alloc_len, sizeof(tlm_alloc_len));
+				read(fd_input, &tlm_alloc_level, sizeof(tlm_alloc_level));
+
+				createAllocateEvent(tlm_map_vaddr, tlm_alloc_len, tlm_alloc_level);
+
 				break;
 
 			case ARIEL_PERFORM_EXIT:
@@ -351,6 +372,13 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 	write_requests++;
 }
 
+void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
+	output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 "\n",
+		aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel());
+
+	memmgr->allocate(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
+}
+
 void ArielCore::printCoreStatistics() {
 	output->verbose(CALL_INFO, 1, 0, "Core %" PRIu32 " Statistics:\n", coreID);
 	output->verbose(CALL_INFO, 1, 0, "- Total Read Requests:         %" PRIu64 "\n", read_requests);
@@ -406,6 +434,15 @@ bool ArielCore::processNextEvent() {
 		break;
 
 	case WAIT_ON_DMA_TRANSFER:
+		removeEvent = true;
+		break;
+
+	case MALLOC:
+		removeEvent = true;
+		handleAllocationEvent(dynamic_cast<ArielAllocateEvent*>(nextEvent));
+		break;
+
+	case NOOP:
 		removeEvent = true;
 		break;
 

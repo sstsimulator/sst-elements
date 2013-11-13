@@ -306,7 +306,7 @@ int ariel_tlvl_memcpy(void* dest, void* source, size_t size) {
 	return 0;
 }
 
-void* ariel_tlvl_malloc(size_t size) {
+void* ariel_tlvl_malloc(size_t size, int level) {
 #ifdef ARIEL_DEBUG
 	printf("Perform a tlvl_malloc from Ariel %llu\n", size);
 #endif
@@ -339,15 +339,19 @@ void* ariel_tlvl_malloc(size_t size) {
 	const uint8_t  issueTLMMarker = (uint8_t) ISSUE_TLM_MAP;
 	const uint64_t virtualAddress = (uint64_t) real_ptr;
 	const uint64_t allocationLength = (uint64_t) real_req_size;
+	const uint32_t allocationLevel = (uint32_t) level;
 
 	const int BUFFER_LENGTH = sizeof(issueTLMMarker) +
-		sizeof(virtualAddress) + sizeof(allocationLength);
+		sizeof(virtualAddress) + sizeof(allocationLength) + sizeof(allocationLevel);
+
 	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
 
 	copy(&buffer[0], &issueTLMMarker, sizeof(issueTLMMarker));
 	copy(&buffer[sizeof(issueTLMMarker)], &virtualAddress, sizeof(virtualAddress));
 	copy(&buffer[sizeof(issueTLMMarker) + sizeof(virtualAddress)], &allocationLength,
 		sizeof(allocationLength));
+	copy(&buffer[sizeof(issueTLMMarker) + sizeof(virtualAddress) + sizeof(allocationLength)],
+		&allocationLevel, sizeof(allocationLevel));
 
         write(pipe_id[thr], buffer, BUFFER_LENGTH);
 

@@ -20,10 +20,11 @@ libariel_la_SOURCES = \
 	arielwriteev.cc \
 	arielwriteev.h \
 	arielevent.cc \
-	arielevent.h
-
-#        ariel.h \
-#        ariel.cc
+	arielevent.h \
+	arielnoop.h \
+	arielnoop.cc \
+	arielallocev.h \
+	arielallocev.cc
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_CPPFLAGS = -DARIEL_TRACE_LIB=$(libdir)/sst \

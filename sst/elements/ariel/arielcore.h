@@ -26,6 +26,7 @@
 #include "arielreadev.h"
 #include "arielwriteev.h"
 #include "arielexitev.h"
+#include "arielallocev.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -37,9 +38,9 @@ namespace ArielComponent {
 #define ARIEL_PERFORM_EXIT 1
 #define ARIEL_PERFORM_READ 2
 #define ARIEL_PERFORM_WRITE 4
-#define ARIEL_START_DMA 8  // Format: Destination:64 Source:64 Size:32 Tag:32
-#define ARIEL_WAIT_DMA 16  // Format: Tag:32
-#define ARIEL_ISSUE_TLM_MAP 80 // issue a Two level memory allocation
+#define ARIEL_START_DMA 8
+#define ARIEL_WAIT_DMA 16
+#define ARIEL_ISSUE_TLM_MAP 80
 #define ARIEL_ISSUE_TLM_FREE 100
 #define ARIEL_START_INSTRUCTION 32
 #define ARIEL_END_INSTRUCTION 64
@@ -58,12 +59,13 @@ class ArielCore {
 		void halt();
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
+		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level);
 		void createExitEvent();
 		void setCacheLink(SST::Link* newCacheLink);
 		void handleEvent(SST::Event* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
-		
+		void handleAllocationEvent(ArielAllocateEvent* aEv);
 		void printCoreStatistics();
 
 	private:

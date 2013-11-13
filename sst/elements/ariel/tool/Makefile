@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PINDIR=/home/projects/pin/2.12.61206/gcc/
+PINDIR=/home/sdhammo/pin/2.12-gcc/
 CXX=g++
 PREPROC=-DBIGARRAY_MULTIPLIER=1 -DUSING_XED -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX
 LD=g++
