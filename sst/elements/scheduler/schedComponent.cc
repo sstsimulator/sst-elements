@@ -719,12 +719,15 @@ void schedComponent::startJob(AllocInfo* ai)
 
             double additiveTerm = timePerDistance -> at(4) * averagePairwiseDistance * randomNumber;
 
-            printf("Random Number: %f\n", additiveTerm);
-            communicationTime = timePerDistance -> at(3) * averagePairwiseDistance;
+            communicationTime = timePerDistance -> at(3) * averagePairwiseDistance; 
 
             actualRunningTime = timePerDistance -> at(0) * actualRunningTime
                 + timePerDistance -> at(1) * (timePerDistance -> at(2) +
-                                  communicationTime)  + additiveTerm;
+                                  communicationTime);
+
+            if (actualRunningTime >= -additiveTerm) {
+                actualRunningTime += additiveTerm;
+            }
         } 
     }
     //printf("Job %ld L1Distance %ld\n", j ->
