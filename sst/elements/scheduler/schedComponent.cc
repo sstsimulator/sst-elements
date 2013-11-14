@@ -18,7 +18,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/tokenizer.hpp>        // for reading YumYum jobs
+#include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -139,6 +141,8 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
         }
     }
     schedout.output("\n");
+
+    srand(time(0));
 
     Factory factory;
     machine = factory.getMachine(params, nodes.size(), this);
@@ -704,15 +708,28 @@ void schedComponent::startJob(AllocInfo* ai)
     int* jobNodes = ai -> nodeIndices;
     unsigned long communicationTime = 0;
     unsigned long actualRunningTime = j -> getActualTime();
+    double randomNumber = 0;
     
     //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
     if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
-            communicationTime = timePerDistance -> at(3) * ((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors);
-            actualRunningTime = timePerDistance -> at(0) * actualRunningTime + timePerDistance -> at(1) * (timePerDistance -> at(2) + communicationTime);
-        }
+            randomNumber = (rand() % 80000 - 40000)/100000.0;
+
+            unsigned long averagePairwiseDistance = ((MachineMesh*)(machine)) -> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)/((MeshAllocInfo*)ai) -> processors -> size();
+
+            double additiveTerm = timePerDistance -> at(4) * averagePairwiseDistance * randomNumber;
+
+            printf("Random Number: %f\n", additiveTerm);
+            communicationTime = timePerDistance -> at(3) * averagePairwiseDistance;
+
+            actualRunningTime = timePerDistance -> at(0) * actualRunningTime
+                + timePerDistance -> at(1) * (timePerDistance -> at(2) +
+                                  communicationTime)  + additiveTerm;
+        } 
     }
-    //printf("Job %ld L1Distance %ld\n", j -> getJobNum(),((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
+    //printf("Job %ld L1Distance %ld\n", j ->
+    //getJobNum(),((MachineMesh*)(machine))->
+    //pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)); 
 
     if (actualRunningTime > j -> getEstimatedRunningTime()) {
         //schedout.fatal(CALL_INFO, 1, "Job %lu has running time %lu, which is longer than estimated running time %lu\n", j -> getJobNum(), actualRunningTime, j -> getEstimatedRunningTime()); //, communicationTime,((MachineMesh*)(machine))-> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors));

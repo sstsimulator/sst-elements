@@ -246,7 +246,8 @@ long MachineMesh::pairwiseL1Distance(std::vector<MeshLocation*>* locs, int num) 
 
 
 //Jie: start editing Oct2013	
-double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs) {
+double MachineMesh::getCoolingPower(std::vector<MeshLocation*>* locs) 
+{
 
 
 	int Putil=2000;

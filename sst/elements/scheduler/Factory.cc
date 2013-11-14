@@ -413,7 +413,7 @@ int Factory::getFST(SST::Params& params)
 vector<double>* Factory::getTimePerDistance(SST::Params& params)
 {
     vector<double>* ret = new vector<double>;
-    for (int x = 0; x < 4; x++) {
+    for (int x = 0; x < 5; x++) {
         ret -> push_back(0);
     }
     if(params.find("timeperdistance") == params.end()){
