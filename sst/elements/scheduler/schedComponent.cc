@@ -142,7 +142,6 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     }
     schedout.output("\n");
 
-    srand(time(0));
 
     Factory factory;
     machine = factory.getMachine(params, nodes.size(), this);
@@ -713,6 +712,7 @@ void schedComponent::startJob(AllocInfo* ai)
     //schedout.output("%f %f %f %f", timePerDistance.at(0),timePerDistance.at(1),timePerDistance.at(2),timePerDistance.at(3));
     if (timePerDistance -> at(0) != 0 && NULL != (MachineMesh*)(machine) && NULL != (MeshAllocInfo*) ai) { 
         if (NULL != ((MeshAllocInfo*)ai) -> processors) {
+            srand(time(0));
             randomNumber = (rand() % 80000 - 40000)/100000.0;
 
             unsigned long averagePairwiseDistance = ((MachineMesh*)(machine)) -> pairwiseL1Distance(((MeshAllocInfo*)ai) -> processors)/((MeshAllocInfo*)ai) -> processors -> size();
@@ -723,7 +723,7 @@ void schedComponent::startJob(AllocInfo* ai)
 
             actualRunningTime = timePerDistance -> at(0) * actualRunningTime
                 + timePerDistance -> at(1) * (timePerDistance -> at(2) +
-                                  communicationTime);
+                                  communicationTime) * actualRunningTime;
 
             if (actualRunningTime >= -additiveTerm) {
                 actualRunningTime += additiveTerm;
