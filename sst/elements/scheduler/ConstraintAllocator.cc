@@ -31,7 +31,7 @@
 #include "output.h"
 #include "SimpleMachine.h"
 
-#define DEBUG true
+#define DEBUG false
 
 using namespace SST::Scheduler;
 
