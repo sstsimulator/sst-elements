@@ -31,7 +31,7 @@
 #include "output.h"
 #include "SimpleMachine.h"
 
-#define DEBUG false
+#define DEBUG true
 
 using namespace SST::Scheduler;
 
@@ -50,11 +50,11 @@ ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile,
     while (std::getline(DepsStream, curline)) { //for each line in file
         lineStream << curline;
         lineStream >> u; // line is u followed by elements of D[u]
-        //if( DEBUG ) std::cout << "------------------Dependencies of " << u << std::endl;
+        if( DEBUG ) std::cout << "------------------Dependencies of " << u << std::endl;
         schedout.debug(CALL_INFO, 7, 0, "------------------Dependencies of %s", u.c_str());
         while (lineStream >> v) {
             D[u].insert(v);
-            //if( DEBUG ) std::cout << v << " ";
+            if( DEBUG ) std::cout << v << " ";
             schedout.debug(CALL_INFO, 7, 0, "%s ", v.c_str());
         }
         if( DEBUG ) std::cout << std::endl;
@@ -115,17 +115,27 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 
 		std::list<ConstrainedAllocation *> possible_allocations;
 
-		for( std::list<std::set<std::string> * >::iterator constraint_iter = constraint_leaves.begin();
-		     constraint_iter != constraint_leaves.end(); ++ constraint_iter ){
-			ConstrainedAllocation * tmp = allocate_constrained( job, *constraint_iter ); 
-			possible_allocations.push_back( tmp );
-		}
+		ConstrainedAllocation * top_allocation = NULL;
 
-		ConstrainedAllocation * top_allocation = get_top_allocation( possible_allocations );
+                int i = 1;
+		for( std::list<std::vector<std::string> * >::iterator constraint_iter = constraints.begin();
+		     constraint_iter != constraints.end(); ++ constraint_iter ){
+                            if (DEBUG) std::cout << "Attempting constraint " << i 
+                                        << " for jobid " << *(job->getID()) << std::endl;
+			top_allocation = allocate_constrained( job, *constraint_iter ); 
+                        if (top_allocation != NULL) {
+                            if (DEBUG) std::cout << " SUCCESS in satisfying constraint " << i 
+                                        << " for jobid " << *(job->getID()) << std::endl;
+                            break; // stop searching as soon as a constraint is satisfied
+                        }
+                        i++;
+		}
 
 		if( top_allocation != NULL ){
 			allocation = generate_AllocInfo( top_allocation );
 		}else{
+                        if (DEBUG) std::cout << " FAILED to satisfy any constraint" 
+                                        << " for jobid " << *(job->getID()) << std::endl;
 			allocation = generate_RandomAllocInfo( job );
 		}
 
@@ -147,8 +157,16 @@ AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->freeProcessors();
 
 	for( int node_counter = 0; node_counter < job->getProcsNeeded(); node_counter ++ ){
+#define LINEAR_FROM_TOP true
+#ifdef LINEAR_FROM_TOP
+                // mimic the simple allocator by selecting nodes linearly, from the top
+                std::vector<int>::iterator node_iter = free_comp_nodes->end();
+                node_iter--;
+#else
+                // otherwise, randomize the node selection (which reduces uncertainty in faultiness estimates)
 		std::vector<int>::iterator node_iter = free_comp_nodes->begin();
 		std::advance( node_iter, (nrand48( allocPRNGstate ) % free_comp_nodes->size()) );
+#endif
 		alloc->nodeIndices[ node_counter ] = *node_iter;
 		free_comp_nodes->erase( node_iter );
 	}
@@ -180,21 +198,6 @@ AllocInfo * ConstraintAllocator::generate_AllocInfo( ConstrainedAllocation * con
 }
 
 
-ConstrainedAllocation * ConstraintAllocator::get_top_allocation( std::list<ConstrainedAllocation *> possible_allocations ){
-	ConstrainedAllocation * top_allocation = NULL;
-
-	for( std::list<ConstrainedAllocation *>::iterator allocation_iter = possible_allocations.begin();
-	     allocation_iter != possible_allocations.end(); ++ allocation_iter ){
-		if( top_allocation == NULL or
-		    top_allocation->constrained_nodes.size() > (*allocation_iter)->constrained_nodes.size() ){
-			top_allocation = *allocation_iter;
-		}
-	}
-
-	return top_allocation;
-}
-
-
 bool ConstraintAllocator::constraints_changed(){
 	return true;
 }
@@ -209,16 +212,22 @@ void ConstraintAllocator::read_constraints(){
 		constraint_leaves.pop_back();
 	}
 
+	while( !constraints.empty() ){
+		delete constraints.back();
+		constraints.pop_back();
+	}
+
 	while(!ConstraintsStream.eof() and ConstraintsStream.is_open()){
 		std::string curline;
-		std::vector<std::string> CurrentCluster;
+		std::vector<std::string> * CurrentCluster = new std::vector<std::string>();
 
 		getline(ConstraintsStream, curline);
 		boost::tokenizer< boost::char_separator<char> > tok( curline, space_separator );
 		for (boost::tokenizer< boost::char_separator<char> >::iterator iter = tok.begin(); iter != tok.end(); ++iter) {
-			CurrentCluster.push_back(*iter);
+			CurrentCluster->push_back(*iter);
 		}
 
+		this->constraints.push_back( CurrentCluster );
 		this->constraint_leaves.push_back( get_constrained_leaves( CurrentCluster ) );
 	}
 
@@ -226,11 +235,11 @@ void ConstraintAllocator::read_constraints(){
 }
 
 
-std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::vector<std::string> constraint ){
+std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::vector<std::string> * constraint ){
 	std::set< std::string > * leaves = new std::set<std::string>;
 
-	for( std::vector<std::string>::iterator constraint_iter = constraint.begin();
-	     constraint_iter != constraint.end(); ++ constraint_iter ){
+	for( std::vector<std::string>::iterator constraint_iter = constraint->begin();
+	     constraint_iter != constraint->end(); ++ constraint_iter ){
 		std::set<std::string> constraint_children = D[ *constraint_iter ];
 		for( std::set<std::string>::iterator constraint_child_iter = constraint_children.begin();
 		     constraint_child_iter != constraint_children.end(); ++ constraint_child_iter ){
@@ -244,50 +253,165 @@ std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::vect
 }
 
 
-//allocates job if possible
-//returns information on the allocation or null if it wasn't possible
-ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::set<std::string> * constrained_leaves ){
-	std::vector<int> * free_comp_nodes = ((SimpleMachine *)machine)->freeProcessors();
+std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::string constraint ){
+	std::set< std::string > * leaves = new std::set<std::string>;
 
-	std::set<int> free_constrained_nodes;
-	std::set<int> free_unconstrained_nodes;
+	std::set<std::string> constraint_children = D[ constraint ];
+	for( std::set<std::string>::iterator constraint_child_iter = constraint_children.begin();
+	     constraint_child_iter != constraint_children.end(); ++ constraint_child_iter ){
+		if( 1 == D[ *constraint_child_iter ].size() ){
+			leaves->insert( *constraint_child_iter );
+		}
+	}
 
-	int nodes_needed = job->getProcsNeeded();
+	return leaves;
+}
+
+
+// returns an allocation satisifying the given constraint, or NULL if it can not be satisifed 
+ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::vector<std::string> * nodes_on_constraint_line ){
+	std::vector<int> * all_available_compute_nodes = ((SimpleMachine *)machine)->freeProcessors();
+	std::vector<int> * unconstrained_compute_nodes = ((SimpleMachine *)machine)->freeProcessors();
+	std::list<std::vector<int> *> * constrained_compute_nodes = new std::list<std::vector<int> *>(); 
+
+	std::sort( all_available_compute_nodes->begin(), all_available_compute_nodes->end() );
+	std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
+
+	int num_constrained_needed = 0;
+
+	for( std::vector<std::string>::iterator constraint_node = nodes_on_constraint_line->begin();
+	     constraint_node != nodes_on_constraint_line->end(); ++ constraint_node ){
+		std::set<std::string> * dependent_compute_node_IDs = this->get_constrained_leaves( *constraint_node );
+		std::vector<int> * dependent_compute_nodes = new std::vector<int>();
+		
+		for( std::vector<int>::iterator comp_node_iter = all_available_compute_nodes->begin();
+		     comp_node_iter != all_available_compute_nodes->end(); ++ comp_node_iter ){
+			if( dependent_compute_node_IDs->find( ((SimpleMachine*)machine)->getNodeID( *comp_node_iter ) ) !=
+			    dependent_compute_node_IDs->end() ){
+				dependent_compute_nodes->push_back( *comp_node_iter );
+				
+			}
+		}
+
+		std::sort( dependent_compute_nodes->begin(), dependent_compute_nodes->end() );
+		constrained_compute_nodes->push_back( dependent_compute_nodes );
+		
+		std::vector<int> * new_unconstrained_compute_nodes = new std::vector<int>( unconstrained_compute_nodes->size() );
+		std::vector<int>::iterator unconstrained_iter = std::set_difference(
+			unconstrained_compute_nodes->begin(),
+			unconstrained_compute_nodes->end(),
+			dependent_compute_nodes->begin(),
+			dependent_compute_nodes->end(),
+			new_unconstrained_compute_nodes->begin() );
+		new_unconstrained_compute_nodes->resize( unconstrained_iter - new_unconstrained_compute_nodes->begin() );
+		unconstrained_compute_nodes = new_unconstrained_compute_nodes;
+		std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
+	}
+	
+
+	if( unconstrained_compute_nodes->size() > (unsigned) job->getProcsNeeded() ){
+		num_constrained_needed = 1;
+	}else{
+		num_constrained_needed = job->getProcsNeeded() - unconstrained_compute_nodes->size();
+	}
+
+	if( !try_to_remove_constraint_set( num_constrained_needed, constrained_compute_nodes ) ){
+		/* cleanup */
+		return NULL;
+	}
+	
+
+	while( try_to_remove_constraint_set( num_constrained_needed, constrained_compute_nodes ) ){}
 
 	ConstrainedAllocation * new_allocation = new ConstrainedAllocation();
 	new_allocation->job = job;
 
-	for( std::vector<int>::iterator comp_node_iter = free_comp_nodes->begin();
-	     comp_node_iter != free_comp_nodes->end(); ++ comp_node_iter ){
-		if( constrained_leaves->find( ((SimpleMachine*)machine)->getNodeID( *comp_node_iter ) ) !=
-		    constrained_leaves->end() ){
-			free_constrained_nodes.insert( *comp_node_iter );
-		}else{
-			free_unconstrained_nodes.insert( *comp_node_iter );
+//	new_allocation->unconstrained_nodes;
+//	new_allocation->constrained_nodes;
+
+	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
+	     constraint_node != constrained_compute_nodes->end(); ++constraint_node ){
+		for( std::vector<int>::reverse_iterator constrained_node = (*constraint_node)->rbegin();
+		     (constrained_node != (*constraint_node)->rend()) && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < (unsigned) job->getProcsNeeded()); ++constrained_node ){
+			if (DEBUG) std::cout << " Adding constrained node: " << *constrained_node << std::endl;
+			new_allocation->constrained_nodes.insert( *constrained_node );
 		}
 	}
 
-	int unconstrained_nodes_needed = std::min( nodes_needed - 1, (int) free_unconstrained_nodes.size() );
-	int constrained_nodes_needed = std::min( nodes_needed - unconstrained_nodes_needed, (int) free_constrained_nodes.size() );
-	unconstrained_nodes_needed = nodes_needed - constrained_nodes_needed;
 
-	while( unconstrained_nodes_needed > 0 ){
-		std::set<int>::iterator unconstrained_node_iter = free_unconstrained_nodes.begin();
-		std::advance( unconstrained_node_iter, (nrand48( allocPRNGstate ) % free_unconstrained_nodes.size()) );
-		new_allocation->unconstrained_nodes.insert( *unconstrained_node_iter );
-		free_unconstrained_nodes.erase( unconstrained_node_iter );
-		-- unconstrained_nodes_needed;
+	for( std::vector<int>::reverse_iterator unconstrained_node = unconstrained_compute_nodes->rbegin();
+	     unconstrained_node != unconstrained_compute_nodes->rend() && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < (unsigned) job->getProcsNeeded()); ++unconstrained_node ){
+		if (DEBUG) std::cout << " Adding unconstrained node: " << *unconstrained_node << std::endl;
+		new_allocation->unconstrained_nodes.insert( *unconstrained_node );
 	}
 
-	while( constrained_nodes_needed > 0 ){
-		std::set<int>::iterator constrained_node_iter = free_constrained_nodes.begin();
-		std::advance( constrained_node_iter, (nrand48( allocPRNGstate ) % free_constrained_nodes.size()) );
-		new_allocation->constrained_nodes.insert( *constrained_node_iter );
-		free_constrained_nodes.erase( constrained_node_iter );
-		-- constrained_nodes_needed;
-	}
 
-	delete free_comp_nodes;
+	/* cleanup */
 
 	return new_allocation;
 }
+
+
+bool ConstraintAllocator::try_to_remove_constraint_set( unsigned int num_constrained_needed, std::list<std::vector<int> *> * constrained_compute_nodes ){
+	std::vector<int> * all_nodes = new std::vector<int>();
+
+	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
+	     constraint_node != constrained_compute_nodes->end(); ++ constraint_node ){
+		std::vector<int> * tmp_all_nodes = new std::vector<int>( all_nodes->size() + (*constraint_node)->size() );
+		std::vector<int>::iterator iter = std::set_union(
+			all_nodes->begin(),
+			all_nodes->end(),
+			(*constraint_node)->begin(),
+			(*constraint_node)->end(),
+			tmp_all_nodes->begin() );
+		tmp_all_nodes->resize( iter - tmp_all_nodes->begin() );
+		all_nodes = tmp_all_nodes;
+	std::sort( all_nodes->begin(), all_nodes->end() );
+	}
+
+        int i=1;
+	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
+	     constraint_node != constrained_compute_nodes->end(); ++ constraint_node ){
+
+		if( (all_nodes->size() - (*constraint_node)->size()) >= num_constrained_needed ){
+		    if (DEBUG) std::cout << " Removing node " << i << ": allsize-thissize >= needed (" << 
+                                        all_nodes->size() << "-" << (*constraint_node)->size() << " >= " <<  
+                                        num_constrained_needed << ")" << std::endl;
+			std::vector<int> * removed_constraint = *constraint_node;
+			constrained_compute_nodes->erase( constraint_node );
+			for( std::list<std::vector<int> *>::iterator inner_constraint_node = constrained_compute_nodes->begin();
+			     inner_constraint_node != constrained_compute_nodes->end(); ++ inner_constraint_node ){
+				std::vector<int> * tmp_constraint = new std::vector<int>( (*inner_constraint_node)->size() );
+				std::vector<int>::iterator iter = std::set_difference(
+					(*inner_constraint_node)->begin(),
+					(*inner_constraint_node)->end(),
+					removed_constraint->begin(),
+					removed_constraint->end(),
+					tmp_constraint->begin() );
+				tmp_constraint->resize( iter - tmp_constraint->begin() );
+				std::sort( tmp_constraint->begin(), tmp_constraint->end() );
+				(*inner_constraint_node)->assign( tmp_constraint->begin(), tmp_constraint->end() );
+			}
+			++constraint_node;
+                        i++;
+			/* cleanup */
+			return true;
+		}
+	}
+	/* cleanup */
+	return false;
+}
+
+
+std::list<std::vector<int> *> * deep_copy_set_list( std::list<std::vector<int> *> * list ){
+	std::list<std::vector<int> *> * new_list = new std::list<std::vector<int> *>();
+	for( std::list<std::vector<int> *>::iterator list_iter = list->begin();
+	     list_iter != list->end(); ++ list_iter ){
+		std::vector<int> * new_set = new std::vector<int>();
+		new_set->assign( (*list_iter)->begin(), (*list_iter)->end() );
+		new_list->push_back( new_set );
+	}
+
+	return new_list;
+}
+

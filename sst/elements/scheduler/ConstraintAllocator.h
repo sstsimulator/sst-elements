@@ -55,7 +55,7 @@ namespace SST {
                 std::string getSetupInfo(bool comment);
 
                 AllocInfo* allocate(Job* job);
-                ConstrainedAllocation * allocate_constrained(Job* job, std::set<std::string> * constrained_leaves );
+                ConstrainedAllocation * allocate_constrained(Job* job, std::vector<std::string> * constrained_leaves );
 
             private:
                 //constraints
@@ -65,8 +65,9 @@ namespace SST {
 
 		AllocInfo * generate_RandomAllocInfo( Job * job );
 		AllocInfo * generate_AllocInfo( ConstrainedAllocation * constrained_alloc );
-		ConstrainedAllocation * get_top_allocation( std::list<ConstrainedAllocation *> possible_allocations );
-		std::set< std::string > * get_constrained_leaves( std::vector<std::string> constraint );
+		std::set< std::string > * get_constrained_leaves( std::vector<std::string> * constraint );
+		std::set< std::string > * get_constrained_leaves( std::string constraint );
+		bool try_to_remove_constraint_set( unsigned int num_constrained_needed, std::list<std::vector<int> *> * constrained_compute_nodes );
 		bool constraints_changed();
 		void read_constraints();
 
@@ -75,6 +76,7 @@ namespace SST {
                 std::string ConstraintsFileName;
 
 		std::list< std::set< std::string > * > constraint_leaves;
+		std::list< std::vector< std::string > * > constraints;
 
 		unsigned short * allocPRNGstate;
         };
