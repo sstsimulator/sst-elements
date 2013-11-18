@@ -612,8 +612,12 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     if (NULL != arevent) {
         finishingarr.push_back(arevent);
         FinalTimeEvent* fte = new FinalTimeEvent();
-        // due to a race condition, we may need to force this FTE if we're still expecting jobs
-        fte -> forceExecute = useYumYumSimulationKill;	
+        if (useYumYumSimulationKill xor YumYumSimulationKillFlag) {
+            fte -> forceExecute = true; // avoid intermittent hangs when using yumyum
+        }
+        else {
+            fte -> forceExecute = false; // otherwise keep previous behavior
+        }
         //send back an event at the same time so we know it finished 
         selfLink -> send(0, fte); 
     } else {
