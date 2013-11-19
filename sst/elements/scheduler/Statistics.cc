@@ -251,8 +251,9 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
 {
 
     unsigned long arrival = allocInfo -> job -> getArrivalTime();
-    unsigned long runtime = allocInfo -> job -> getActualTime();
+    //unsigned long runtime = allocInfo -> job -> getActualTime();
     unsigned long startTime = allocInfo -> job -> getStartTime();
+    unsigned long runtime = time - startTime;
     int procsneeded = allocInfo -> job -> getProcsNeeded();
     long jobNum = allocInfo -> job -> getJobNum();
 
