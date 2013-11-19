@@ -269,6 +269,7 @@ std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::stri
 
 
 // returns an allocation satisifying the given constraint, or NULL if it can not be satisifed 
+// satisfied means: at least one constrained node used and one constraint node avoided
 ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::vector<std::string> * nodes_on_constraint_line ){
 	std::vector<int> * all_available_compute_nodes = ((SimpleMachine *)machine)->freeProcessors();
 	std::vector<int> * unconstrained_compute_nodes = ((SimpleMachine *)machine)->freeProcessors();
@@ -277,8 +278,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 	std::sort( all_available_compute_nodes->begin(), all_available_compute_nodes->end() );
 	std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
 
-	int num_constrained_needed = 0;
-
+        // identify available compute nodes as unconstrained, or by which constraint node(s) they depend on
 	for( std::vector<std::string>::iterator constraint_node = nodes_on_constraint_line->begin();
 	     constraint_node != nodes_on_constraint_line->end(); ++ constraint_node ){
 		std::set<std::string> * dependent_compute_node_IDs = this->get_constrained_leaves( *constraint_node );
@@ -308,27 +308,26 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
 	}
 	
-
-	if( unconstrained_compute_nodes->size() > (unsigned) job->getProcsNeeded() ){
+	int num_constrained_needed = 0;
+	if( unconstrained_compute_nodes->size() >= (unsigned) job->getProcsNeeded() ){
 		num_constrained_needed = 1;
 	}else{
 		num_constrained_needed = job->getProcsNeeded() - unconstrained_compute_nodes->size();
 	}
 
+        // try to remove at least one constraint node (including those with no available compute nodes)
 	if( !try_to_remove_constraint_set( num_constrained_needed, constrained_compute_nodes ) ){
 		/* cleanup */
 		return NULL;
 	}
-	
 
+        // at least one constraint node is removed, try to remove more
 	while( try_to_remove_constraint_set( num_constrained_needed, constrained_compute_nodes ) ){}
 
 	ConstrainedAllocation * new_allocation = new ConstrainedAllocation();
 	new_allocation->job = job;
 
-//	new_allocation->unconstrained_nodes;
-//	new_allocation->constrained_nodes;
-
+        // ok, allocate as many nodes from the remainining constrained sets as possible
 	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
 	     constraint_node != constrained_compute_nodes->end(); ++constraint_node ){
 		for( std::vector<int>::reverse_iterator constrained_node = (*constraint_node)->rbegin();
@@ -339,6 +338,7 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 	}
 
 
+        // and fill the balance with unconstrained nodes
 	for( std::vector<int>::reverse_iterator unconstrained_node = unconstrained_compute_nodes->rbegin();
 	     unconstrained_node != unconstrained_compute_nodes->rend() && ((new_allocation->constrained_nodes.size() + new_allocation->unconstrained_nodes.size()) < (unsigned) job->getProcsNeeded()); ++unconstrained_node ){
 		if (DEBUG) std::cout << " Adding unconstrained node: " << *unconstrained_node << std::endl;
@@ -355,8 +355,19 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 bool ConstraintAllocator::try_to_remove_constraint_set( unsigned int num_constrained_needed, std::list<std::vector<int> *> * constrained_compute_nodes ){
 	std::vector<int> * all_nodes = new std::vector<int>();
 
+        if (constrained_compute_nodes->size() == 1 ) { // must use at least one constrained compute node
+            return false;
+        }
+
+        int zero_size_sets = false;
 	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
-	     constraint_node != constrained_compute_nodes->end(); ++ constraint_node ){
+	     constraint_node != constrained_compute_nodes->end();){
+             if ((*constraint_node)->size() == 0) {  // remove all zero-size sets
+                zero_size_sets = true;
+                if (DEBUG) std::cout << " Removing zero-size set" << std::endl;
+                constraint_node = constrained_compute_nodes->erase(constraint_node);
+             }
+             else {
 		std::vector<int> * tmp_all_nodes = new std::vector<int>( all_nodes->size() + (*constraint_node)->size() );
 		std::vector<int>::iterator iter = std::set_union(
 			all_nodes->begin(),
@@ -366,8 +377,17 @@ bool ConstraintAllocator::try_to_remove_constraint_set( unsigned int num_constra
 			tmp_all_nodes->begin() );
 		tmp_all_nodes->resize( iter - tmp_all_nodes->begin() );
 		all_nodes = tmp_all_nodes;
-	std::sort( all_nodes->begin(), all_nodes->end() );
+	        std::sort( all_nodes->begin(), all_nodes->end() );
+                ++constraint_node;
+             }
 	}
+
+        if (all_nodes->size() == 0) { // must use at least one constrained compute node
+            return false;
+        }
+        else if (zero_size_sets) { // we successfully removed at least one constraint node
+            return true;
+        }
 
         int i=1;
 	for( std::list<std::vector<int> *>::iterator constraint_node = constrained_compute_nodes->begin();
@@ -378,7 +398,8 @@ bool ConstraintAllocator::try_to_remove_constraint_set( unsigned int num_constra
                                         all_nodes->size() << "-" << (*constraint_node)->size() << " >= " <<  
                                         num_constrained_needed << ")" << std::endl;
 			std::vector<int> * removed_constraint = *constraint_node;
-			constrained_compute_nodes->erase( constraint_node );
+			constrained_compute_nodes->erase( constraint_node ); // remove this constraint node
+                        // and its compute nodes from the other sets
 			for( std::list<std::vector<int> *>::iterator inner_constraint_node = constrained_compute_nodes->begin();
 			     inner_constraint_node != constrained_compute_nodes->end(); ++ inner_constraint_node ){
 				std::vector<int> * tmp_constraint = new std::vector<int>( (*inner_constraint_node)->size() );
