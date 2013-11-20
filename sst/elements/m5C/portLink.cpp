@@ -27,6 +27,10 @@
 namespace SST {
 namespace M5 {
 
+static const uint32_t LOCKED                      = 0x00100000;
+static const uint32_t UNCACHED                    = 0x00001000;
+
+
 
 PortLink::PortLink( M5& comp, Gem5Object_t& obj, const SST::Params& params ) :
 	m_doTranslate( false ),
@@ -174,22 +178,16 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 
 SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 {
-	//fprintf(stderr, "%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
 	SST::Interfaces::MemEvent *ev = new SST::Interfaces::MemEvent(&m_comp, pkt->addr, SST::Interfaces::NULLCMD);
-	ev->setPayload(pkt->size, pkt->data);
-
-	/* From ${GEM5}/src/mem/request.hh */
-    static const uint32_t LOCKED                      = 0x00100000;
-    static const uint32_t UNCACHED                    = 0x00001000;
-
-	if ( pkt->req.flags & LOCKED ) {
-		ev->setFlags(SST::Interfaces::MemEvent::F_LOCKED);
-		ev->setLockID(((uint64_t)(pkt->req.contextId) <<32) | (uint64_t)(pkt->req.threadId));
-	}
+    ev->setSize(pkt->size);
 
     if ( pkt->req.flags & UNCACHED ) {
         ev->setFlags(SST::Interfaces::MemEvent::F_UNCACHED);
     }
+	else if ( pkt->req.flags & LOCKED ) {
+		ev->setFlags(SST::Interfaces::MemEvent::F_LOCKED);
+		ev->setLockID(((uint64_t)(pkt->req.contextId) <<32) | (uint64_t)(pkt->req.threadId));
+	}
 
 
 	switch ( (::MemCmd::Command)pkt->cmd) {
@@ -199,9 +197,11 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 		break;
 	case ::MemCmd::WriteReq:
 		ev->setCmd(SST::Interfaces::WriteReq);
+        ev->setPayload(pkt->size, pkt->data);
 		break;
 	case ::MemCmd::Writeback:
 		ev->setCmd(SST::Interfaces::WriteReq);
+        ev->setPayload(pkt->size, pkt->data);
 		ev->setFlags(SST::Interfaces::MemEvent::F_WRITEBACK);
 		break;
 
