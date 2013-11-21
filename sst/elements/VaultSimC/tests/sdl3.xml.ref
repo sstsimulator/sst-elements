@@ -2,15 +2,12 @@ M5:configFile `stream-8coreVault_1.6GHz-M5.xml`
 M5:registering exit
  Connected 16 Vaults
  Connected 16 Vaults
-warn: instruction 'fnstcw_Mw' unimplemented
-warn: instruction 'fldcw_Mw' unimplemented
 -------------------------------------------------------------
 STREAM version $Revision: 5.10 $
 -------------------------------------------------------------
 This system uses 8 bytes per array element.
 -------------------------------------------------------------
 Array size = 10000 (elements), Offset = 0 (elements)
-warn: instruction 'emms' unimplemented
 Memory per array = 0.1 MiB (= 0.0 GiB).
 Total memory required = 0.2 MiB (= 0.0 GiB).
 Each kernel will be executed 2 times.
@@ -37,7 +34,6 @@ Triad:           1860.7     0.000129     0.000129     0.000129
 -------------------------------------------------------------
 Solution Validates: avg error less than 1.000000e-13 on all three arrays
 -------------------------------------------------------------
-hack: be nice to actually delete the event here
 M5:exiting: curTick()=1705204216 cause=`target called exit()` code=0
 Memory memory0 stats:
 	 # Reads:             17225
@@ -61,7 +57,5 @@ Prefetches Issued:         31641
 Next Block Prefetch Engine:
 Cache Miss Events:         0
 Cache Hit Events:          0
-Cache Miss Rate (%):       nan
-Cache Hit Rate (%):        nan
 Prefetches Issued:         0
 --------------------------------------------------------------------
