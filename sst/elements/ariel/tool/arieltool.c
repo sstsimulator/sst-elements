@@ -346,6 +346,8 @@ void* ariel_tlvl_malloc(size_t size, int level) {
 
 	char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
 
+	printf("TLVL_MALLOC_LEVEL=%llu \n", allocationLevel);
+
 	copy(&buffer[0], &issueTLMMarker, sizeof(issueTLMMarker));
 	copy(&buffer[sizeof(issueTLMMarker)], &virtualAddress, sizeof(virtualAddress));
 	copy(&buffer[sizeof(issueTLMMarker) + sizeof(virtualAddress)], &allocationLength,
@@ -391,9 +393,9 @@ void mapped_ariel_enable() {
 }
 
 VOID InstrumentRoutine(RTN rtn, VOID* args) {
-	if(SSTVerbosity.Value() > 0) {
-		printf("ARIEL: Examining routine [%s] for instrumentation\n", RTN_Name(rtn).c_str());
-	}
+//	if(SSTVerbosity.Value() > 0) {
+//		printf("ARIEL: Examining routine [%s] for instrumentation\n", RTN_Name(rtn).c_str());
+//	}
 
 /*	if(RTN_Name(rtn) == "malloc") {
 		// We need to replace with something here
@@ -414,8 +416,16 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
 		printf("Replacement complete.\n");
 		return;
- 	}
-
+ 	} else if (RTN_Name(rtn) == "tlvl_malloc") {
+		// This means we want a special malloc to be used (needs a TLB map inside the virtual core)
+               	printf("Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
+               	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_malloc);
+               	printf("Replacement complete.\n");
+	} else if (RTN_Name(rtn) == "tlvl_free") {
+		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
+               	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
+               	printf("Replacement complete.\n");
+	}
 
  /*else if (RTN_Name(rtn) == "tlvl_memcpy" ) {
 	//	printf("Identified routine: tlvl_memcpy, replacing with Ariel equivalent...\n");
