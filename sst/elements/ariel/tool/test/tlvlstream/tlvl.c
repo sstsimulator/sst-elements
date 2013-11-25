@@ -5,7 +5,7 @@
 
 #define PAGE_SIZE 4096
 
-void* tlvl_malloc(size_t size) {
+void* tlvl_malloc(size_t size, int level) {
 	if(size == 0) {
 		printf("ZERO BYTE MALLOC\n");
 		void* bt_entries[64];
@@ -13,6 +13,11 @@ void* tlvl_malloc(size_t size) {
 		backtrace_symbols_fd(bt_entries, entries, 1);
 		exit(-1);
 	}
+
+#ifdef TLVL_DEBUG
+	printf("Performing a TLVL Malloc for size %llu\n", size);
+#endif
+
 	return malloc(size);
 }
 

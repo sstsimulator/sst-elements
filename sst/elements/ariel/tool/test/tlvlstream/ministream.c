@@ -7,9 +7,9 @@ int main(int argc, char* argv[]) {
 	const int LENGTH = 2000;
 
 	printf("Allocating arrays of size %d elements.\n", LENGTH);
-	double* a = (double*) tlvl_malloc(sizeof(double) * LENGTH);
-	double* b = (double*) tlvl_malloc(sizeof(double) * LENGTH);
-	double* fast_c = (double*) tlvl_malloc(sizeof(double) * LENGTH);
+	double* a = (double*) tlvl_malloc(sizeof(double) * LENGTH, 0);
+	double* b = (double*) tlvl_malloc(sizeof(double) * LENGTH, 0);
+	double* fast_c = (double*) tlvl_malloc(sizeof(double) * LENGTH, 0);
 
 	printf("Allocation for fast_c is %llu\n", (unsigned long long int) fast_c);
 	double* c = (double*) malloc(sizeof(double) * LENGTH);
