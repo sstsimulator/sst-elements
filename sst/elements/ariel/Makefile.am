@@ -24,7 +24,9 @@ libariel_la_SOURCES = \
 	arielnoop.h \
 	arielnoop.cc \
 	arielallocev.h \
-	arielallocev.cc
+	arielallocev.cc \
+	arielfreeev.h \
+	arielfreeev.cc
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_CPPFLAGS = -DARIEL_TRACE_LIB=$(libdir)/sst \

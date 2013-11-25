@@ -33,7 +33,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 		page_sizes[i] = (uint64_t) params.find_integer(level_buffer, 4096);
 		
 		sprintf(level_buffer, "pagecount%" PRIu32, i);
-		page_counts[i] = (uint64_t) params.find_integer(level_buffer, 16777216);
+		page_counts[i] = (uint64_t) params.find_integer(level_buffer, 131072);
 	}
 	free(level_buffer);
 	

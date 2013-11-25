@@ -46,8 +46,11 @@ ArielMemoryManager::~ArielMemoryManager() {
 }
 
 void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
-	assert(level < memoryLevels);
-	
+	if(level >= memoryLevels) {
+		output->fatal(CALL_INFO, -1, "Requested memory allocation of %" PRIu64 " bytes, in level: %" PRIu32 ", but only have: %" PRIu32 " levels.\n",
+			size, level, memoryLevels);
+	}
+
 	output->verbose(CALL_INFO, 4, 0, "Requesting a memory allocation of %" PRIu64 " bytes, in level: %" PRIu32 ", Virtual mapping=%" PRIu64 "\n",
 		size, level, virtualAddress);
 
@@ -92,6 +95,40 @@ void ArielMemoryManager::allocate(const uint64_t size, const uint32_t level, con
 
 uint32_t ArielMemoryManager::countMemoryLevels() {
 	return memoryLevels;
+}
+
+void ArielMemoryManager::free(uint64_t virtAddress) {
+	output->verbose(CALL_INFO, 4, 0, "Memory manager attempting to free virtual address: %" PRIu64 "\n", virtAddress);
+	bool found = false;
+
+	for(uint32_t i = 0; i < memoryLevels; ++i) {
+		std::map<uint64_t, uint64_t>* level_allocations = pageAllocations[i];
+		std::map<uint64_t, uint64_t>::iterator level_check = level_allocations->find(virtAddress);
+
+		if(level_check != level_allocations->end()) {
+			output->verbose(CALL_INFO, 4, 0, "Found entry for virtual address: %" PRIu64 " in the free process (level=%" PRIu32 ")\n",
+				virtAddress, i);
+
+			// We have found the allocation
+			uint64_t allocation_length = level_check->second;
+			uint64_t page_size = pageSizes[i];
+
+			for(uint64_t free_size = 0; free_size < allocation_length; free_size += page_size) {
+				uint64_t phys_addr = translateAddress(virtAddress + free_size);
+
+				freePages[i]->push(phys_addr);
+				pageTables[i]->erase(virtAddress + free_size);
+			}
+
+			found = true;
+			break;
+		}
+	}
+
+	if(! found) {
+		output->fatal(CALL_INFO, -1, "Error: asked to free virtual address: %" PRIu64 " but entry was not found in allocation map.\n",
+			virtAddress);
+	}
 }
 
 uint64_t ArielMemoryManager::translateAddress(uint64_t virtAddr) {

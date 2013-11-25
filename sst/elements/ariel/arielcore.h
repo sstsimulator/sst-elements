@@ -27,6 +27,7 @@
 #include "arielwriteev.h"
 #include "arielexitev.h"
 #include "arielallocev.h"
+#include "arielfreeev.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -60,12 +61,14 @@ class ArielCore {
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
 		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level);
+		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
 		void setCacheLink(SST::Link* newCacheLink);
 		void handleEvent(SST::Event* event);
 		void handleReadRequest(ArielReadEvent* wEv);
 		void handleWriteRequest(ArielWriteEvent* wEv);
 		void handleAllocationEvent(ArielAllocateEvent* aEv);
+		void handleFreeEvent(ArielFreeEvent* aFE);
 		void printCoreStatistics();
 
 	private:

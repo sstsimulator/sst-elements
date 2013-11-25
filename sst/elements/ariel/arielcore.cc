@@ -105,6 +105,13 @@ void ArielCore::createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t le
 		vAddr, length, level);
 }
 
+void ArielCore::createFreeEvent(uint64_t vAddr) {
+	ArielFreeEvent* ev = new ArielFreeEvent(vAddr);
+	coreQ->push(ev);
+
+	output->verbose(CALL_INFO, 2, 0, "Generated a free event for virtual address=%" PRIu64 "\n", vAddr);
+}
+
 void ArielCore::createWriteEvent(uint64_t address, uint32_t length) {
 	ArielWriteEvent* ev = new ArielWriteEvent(address, length);
 	coreQ->push(ev);
@@ -196,6 +203,15 @@ bool ArielCore::refillQueue() {
 
 				break;
 
+			case ARIEL_ISSUE_TLM_FREE:
+				uint64_t tlm_free_vaddr;
+
+				read(fd_input, &tlm_free_vaddr, sizeof(tlm_free_vaddr));
+
+				createFreeEvent(tlm_free_vaddr);
+
+				break;
+
 			case ARIEL_PERFORM_EXIT:
 				createExitEvent();
 				break;
@@ -208,6 +224,12 @@ bool ArielCore::refillQueue() {
 	output->verbose(CALL_INFO, 16, 0, "Refilling event queue for core %" PRIu32 " is complete, added data? %s\n", coreID,
 		(added_data ? "yes" : "no"));
 	return added_data;
+}
+
+void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
+	output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress());
+
+	memmgr->free(rFE->getVirtualAddress());
 }
 
 void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
@@ -408,6 +430,7 @@ bool ArielCore::processNextEvent() {
 
 	switch(nextEvent->getEventType()) {
 	case READ_ADDRESS:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is READ_ADDRESS\n", coreID);
 		if(pendingTransactions->size() < maxPendingTransactions) {
 			output->verbose(CALL_INFO, 16, 0, "Found a read event, fewer pending transactions than permitted so will process...\n");
 			removeEvent = true;
@@ -419,6 +442,7 @@ bool ArielCore::processNextEvent() {
 		break;
 
 	case WRITE_ADDRESS:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WRITE_ADDRESS\n", coreID);
 		if(pendingTransactions->size() < maxPendingTransactions) {
 			output->verbose(CALL_INFO, 16, 0, "Found a write event, fewer pending transactions than permitted so will process...\n");
 			removeEvent = true;
@@ -430,23 +454,34 @@ bool ArielCore::processNextEvent() {
 		break;
 
 	case START_DMA_TRANSFER:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is START_DMA_TRANSFER\n", coreID);
 		removeEvent = true;
 		break;
 
 	case WAIT_ON_DMA_TRANSFER:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is WAIT_ON_DMA_TRANSFER\n", coreID);
 		removeEvent = true;
 		break;
 
+	case FREE:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is FREE\n", coreID);
+		removeEvent = true;
+		handleFreeEvent(dynamic_cast<ArielFreeEvent*>(nextEvent));
+		break;
+
 	case MALLOC:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is MALLOC\n", coreID);
 		removeEvent = true;
 		handleAllocationEvent(dynamic_cast<ArielAllocateEvent*>(nextEvent));
 		break;
 
 	case NOOP:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is NOOP\n", coreID);
 		removeEvent = true;
 		break;
 
 	case CORE_EXIT:
+		output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 " next event is CORE_EXIT\n", coreID);
 		isHalted = true;
 		std::cout << "CORE ID: " << coreID << " PROCESSED AN EXIT EVENT" << std::endl;
 		output->verbose(CALL_INFO, 2, 0, "Core %" PRIu32 " has called exit.\n", coreID);

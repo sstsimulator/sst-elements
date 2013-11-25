@@ -16,7 +16,8 @@ enum ArielEventType {
 	WAIT_ON_DMA_TRANSFER,
 	CORE_EXIT,
 	NOOP,
-	MALLOC
+	MALLOC,
+	FREE
 };
 
 class ArielEvent {

@@ -19,6 +19,8 @@ class ArielMemoryManager {
 		ArielMemoryManager(uint32_t memoryLevels, uint64_t* pageSize, uint64_t* stdPageCount, Output* output, uint32_t defLevel);
 		~ArielMemoryManager();
 		void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
+		void free(const uint64_t vAddr);
+
 		uint32_t countMemoryLevels();
 		uint64_t translateAddress(uint64_t virtAddr);
 
