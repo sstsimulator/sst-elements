@@ -97,7 +97,8 @@ MerlinIO::MerlinIO( Component* owner, Params& params ) :
     m_sendEntry( NULL ),
     m_myNodeId( IO::AnyId ),
     m_numVC( 2 ),
-    m_lastVC( 0 )
+    m_lastVC( 0 ),
+    m_haveCtrl( false )
 {
     m_myNodeId = params.find_integer("nid", IO::AnyId);
     assert( m_myNodeId != IO::AnyId );
@@ -138,6 +139,9 @@ MerlinIO::MerlinIO( Component* owner, Params& params ) :
 
     m_sendNotifyFunctor = 
         new Merlin::LinkControl::Handler<MerlinIO>(this,&MerlinIO::sendNotify );
+
+    m_selfLink = owner->configureSelfLink("MerlinIOselfLink", "1 ps",
+        new Event::Handler<MerlinIO>(this,&MerlinIO::selfHandler));
 }
 
 static inline  MerlinFireflyEvent* cast( Event* e )
@@ -152,7 +156,6 @@ bool MerlinIO::recvNotify( int vc )
     m_recvEventQ.push_back( m_linkControl->recv(vc) );
 
     if ( processRecv() ) {
-        leave();
         m_dbg.verbose(CALL_INFO,2,0,"clear Notify Functors\n");
         m_linkControl->setNotifyOnSend( NULL );
         return false;
@@ -166,7 +169,6 @@ bool MerlinIO::sendNotify( int vc )
     m_dbg.verbose(CALL_INFO,2,0,"vc=%d\n", vc );
 
     if ( processSend() ) {
-        leave();
         m_dbg.verbose(CALL_INFO,2,0,"clear Notify Functors\n");
         m_linkControl->setNotifyOnReceive( NULL );
         return false;
@@ -179,34 +181,21 @@ void MerlinIO::_componentInit(unsigned int phase )
     m_linkControl->init(phase);
 }
 
-bool MerlinIO::pending( )
+void MerlinIO::enter( )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"%s\n",
-    ( ( NULL != m_sendEntry ) || ! m_recvEntryM.empty() ) ? "true" : "false" );
-
-    return ( ( NULL != m_sendEntry ) || ! m_recvEntryM.empty() );
-}
-
-void MerlinIO::enter( SST::Link* link  )
-{
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    assert( ! m_leaveLink );
-
-    m_leaveLink = link;
+    m_dbg.verbose(CALL_INFO,1,0,"\n");
 
     drainInput();
 
     if( processRecv() ) {
-        leave();
         return;
     }
 
     if ( processSend() ) {
-        leave();
         return;
     }
 
-    m_dbg.verbose(CALL_INFO,2,0,"set Notify Functors\n");
+    m_dbg.verbose(CALL_INFO,1,0,"set Notify Functors\n");
     m_linkControl->setNotifyOnSend( m_sendNotifyFunctor );
     m_linkControl->setNotifyOnReceive( m_recvNotifyFunctor );
 }
@@ -222,13 +211,6 @@ void MerlinIO::drainInput()
             m_recvEventQ.push_back( m_linkControl->recv(m_lastVC) );
         }
     }
-}
-
-void MerlinIO::leave()
-{
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    m_leaveLink->send(0,NULL);
-    m_leaveLink = NULL;
 }
 
 bool MerlinIO::processSend()
@@ -253,11 +235,41 @@ bool MerlinIO::processSend()
 
         if ( ret ) {
             m_dbg.verbose(CALL_INFO,1,0,"send Entry done\n");
-            delete m_sendEntry;
+            m_selfLink->send( new SelfEvent( m_sendEntry ) );
             m_sendEntry = NULL;
         }
     }
     return ret;
+}
+
+void MerlinIO::selfHandler( Event* e )
+{
+    SelfEvent* event = static_cast<SelfEvent*>(e);
+
+    if ( e ) {
+        m_dbg.verbose(CALL_INFO,2,0,"\n");
+        if ( event->entry ) {
+            if ( event->entry->functor ) {
+                m_dbg.verbose(CALL_INFO,2,0,"call functor\n");
+                IO::Entry* tmp = (*event->entry->functor)();
+                if ( tmp ) {
+                    delete tmp;
+                }
+            } else {
+                m_leaveLink->send(0,NULL);
+            }
+            delete event->entry;
+        } else {
+            m_leaveLink->send(0,NULL);
+        }
+        assert( m_haveCtrl );
+        m_haveCtrl = false;
+        delete e;
+    } else {
+        assert( ! m_haveCtrl );
+        m_haveCtrl = true;
+        enter();
+    }
 }
 
 bool MerlinIO::processRecv(  )
@@ -287,12 +299,13 @@ bool MerlinIO::processRecvEvent( Event* e )
 
     if ( m_recvEntryM.find( src ) == m_recvEntryM.end() ) {
         m_dbg.verbose(CALL_INFO,1,0,"need a recv entry, src=%d\n", src);
+        m_selfLink->send( new SelfEvent( NULL ) );
         return true;
     }
 
     if ( copyIn( m_dbg, *m_recvEntryM[ src ], *event ) ) {
         m_dbg.verbose(CALL_INFO,1,0,"recv entry done, src=%d\n",src );
-        delete m_recvEntryM[ src ];
+        m_selfLink->send( new SelfEvent( m_recvEntryM[ src ] ) );
         m_recvEntryM.erase( src );
         return true;
     }
@@ -303,8 +316,9 @@ bool MerlinIO::processRecvEvent( Event* e )
 bool MerlinIO::sendv( IO::NodeId dest, std::vector<IoVec>& ioVec,
                                                IO::Entry::Functor* functor )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu\n",
-                                                dest, ioVec.size() );
+    m_dbg.verbose(CALL_INFO,1,0,"dest=%d ioVec.size()=%lu functor=%p\n",
+                                                dest, ioVec.size(), functor );
+
     for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         m_dbg.verbose(CALL_INFO,1,0,"ptr=%p len=%lu\n", 
                                     ioVec[i].ptr, ioVec[i].len );
@@ -313,6 +327,7 @@ bool MerlinIO::sendv( IO::NodeId dest, std::vector<IoVec>& ioVec,
     assert( ! m_sendEntry );
 
     m_sendEntry = new Entry( dest, ioVec, functor );
+    m_selfLink->send( NULL );
     return true;
 }
 
@@ -320,6 +335,7 @@ bool MerlinIO::recvv( IO::NodeId src, std::vector<IoVec>& ioVec,
                                                 IO::Entry::Functor* functor )
 {
     m_dbg.verbose(CALL_INFO,1,0,"src=%d ioVec.size()=%lu\n", src, ioVec.size());
+
 
     for ( unsigned int i = 0; i < ioVec.size(); i++ ) {
         m_dbg.verbose(CALL_INFO,1,0,"ptr=%p len=%lu\n", 
@@ -329,7 +345,14 @@ bool MerlinIO::recvv( IO::NodeId src, std::vector<IoVec>& ioVec,
     assert( m_recvEntryM.find(src) == m_recvEntryM.end() );
 
     m_recvEntryM[src] = new Entry( src, ioVec, functor );
+    m_selfLink->send( NULL );
     return true;
+}
+
+void MerlinIO::wait()
+{
+    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_selfLink->send( NULL );
 }
 
 IO::NodeId MerlinIO::peek( )

@@ -79,6 +79,10 @@ FunctionSM::~FunctionSM()
     delete m_fromDriverLink;
 }
 
+void FunctionSM::printStatus( Output& out )
+{
+    m_sm->printStatus(out); 
+}
 
 void FunctionSM::setup()
 {

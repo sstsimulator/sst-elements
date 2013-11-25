@@ -43,6 +43,13 @@ class AllgatherFuncSM :  public FunctionSMInterface
     struct SetupState {
         SetupState() : count(0), state( PostStartMsgRecv ), 
                 offset(1), stage(0) {}
+        void init() { 
+            count = 0;
+            state = PostStartMsgRecv;
+            offset = 1;
+            stage = 0;
+        }
+
         unsigned int count;
         enum { PostStartMsgRecv, PostStageRecv, SendStartMsg} state;
         int offset;

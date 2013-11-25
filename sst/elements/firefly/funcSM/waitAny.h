@@ -9,8 +9,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_FUNCSM_WAIT_H
-#define COMPONENTS_FIREFLY_FUNCSM_WAIT_H
+#ifndef COMPONENTS_FIREFLY_FUNCSM_WAITANY_H
+#define COMPONENTS_FIREFLY_FUNCSM_WAITANY_H
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
@@ -19,10 +19,10 @@
 namespace SST {
 namespace Firefly {
 
-class WaitFuncSM :  public FunctionSMInterface
+class WaitAnyFuncSM :  public FunctionSMInterface
 {
   public:
-    WaitFuncSM( SST::Params& params );
+    WaitAnyFuncSM( SST::Params& params );
 
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
@@ -32,7 +32,7 @@ class WaitFuncSM :  public FunctionSMInterface
   private:
     LongMsgProtocol* proto() { return static_cast<LongMsgProtocol*>(m_proto); }
 
-    WaitStartEvent* m_event;
+    WaitAnyStartEvent* m_event;
 };
 
 }

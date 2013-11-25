@@ -31,6 +31,7 @@ class TestDriver : public SST::Component {
     ~TestDriver();
     void setup(void); 
     void init(unsigned int phase);
+    void printStatus( Output& );
 
   private:
     typedef Arg_Functor<TestDriver, int> DerivedFunctor;
@@ -50,7 +51,10 @@ class TestDriver : public SST::Component {
     void alltoallEnter();
     void alltoallReturn();
     void recvReturn();
-    void waitReturn();
+    void waitRecvReturn();
+    void waitanyRecvReturn();
+    void waitallReturn();
+    void waitanyReturn();
 
     bool                        m_sharedTraceFile;
     std::string                 m_traceFileName;
@@ -62,8 +66,12 @@ class TestDriver : public SST::Component {
 
     std::deque<std::string>     m_fileBuffer;
 
-    Hermes::MessageRequest  my_req;
-    Hermes::MessageResponse my_resp;
+    enum { SendReq, RecvReq };
+
+    int                     my_index;
+    Hermes::MessageRequest  my_req[2];
+    Hermes::MessageResponse my_resp[2];
+    Hermes::MessageResponse* my_respPtr[2];
     Hermes::RankID          my_rank;
     int                     my_size;
     Hermes::RankID          m_root;

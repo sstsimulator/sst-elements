@@ -179,14 +179,28 @@ void Hades::probe(RankID source, uint32_t tag,
 {
 }
 
-void Hades::wait(MessageRequest* req, MessageResponse* resp,
+void Hades::wait( MessageRequest req, MessageResponse* resp,
         Functor* retFunc )
 {
     m_functionSM->start( FunctionSM::Wait, retFunc,
                              new WaitStartEvent( req, resp) );
 }
 
-void Hades::test(MessageRequest* req, int& flag, MessageResponse* resp,
+void Hades::waitany( int count, MessageRequest req[], int* index,
+                            MessageResponse* resp, Functor* retFunc )
+{
+    m_functionSM->start( FunctionSM::WaitAny, retFunc,
+                             new WaitAnyStartEvent( count, req, index, resp) );
+}
+
+void Hades::waitall( int count, MessageRequest req[],
+                            MessageResponse* resp[], Functor* retFunc )
+{
+    m_functionSM->start( FunctionSM::WaitAll, retFunc,
+                             new WaitAllStartEvent( count, req, resp) );
+}
+
+void Hades::test(MessageRequest req, int& flag, MessageResponse* resp,
         Functor* retFunc)
 {
 }

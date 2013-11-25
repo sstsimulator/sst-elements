@@ -8,10 +8,10 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libfirefly.la
 
 libfirefly_la_SOURCES = \
+	longMsgProtocol.cc \
+	longMsgProtocol.h \
 	ctrlMsg.cc \
 	ctrlMsg.h \
-	dataMovement.cc \
-	dataMovement.h \
 	entry.h \
 	libfirefly.cc \
 	functionSM.cc \
@@ -34,6 +34,11 @@ libfirefly_la_SOURCES = \
 	funcSM/send.h \
 	funcSM/wait.cc \
 	funcSM/wait.h \
+	funcSM/waitAny.cc \
+	funcSM/waitAny.h \
+	funcSM/waitAll.cc \
+	funcSM/waitAll.h \
+	hades.h \
 	hades.h \
 	hades.cc \
 	hadesAPI.cc \

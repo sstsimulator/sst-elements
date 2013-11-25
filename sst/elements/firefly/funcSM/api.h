@@ -67,6 +67,7 @@ class FunctionSMInterface : public Module {
     }
 
     virtual ~FunctionSMInterface() {} 
+    virtual void printStatus( Output& ) {}
 
     void setInfo( Info* info ) { m_info = info; }
     void setProtocol( ProtocolAPI* proto ) { m_proto = proto; }

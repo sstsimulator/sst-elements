@@ -34,14 +34,22 @@ void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
                 m_event->entry->dest,
                 m_event->entry->tag );
 
+    SendEntry* sendEntry;
+
     if ( m_event->entry->req == NULL ) {
         m_state = Wait;
+        sendEntry = m_event->entry;
     } else {
         m_state = Exit;
-        *m_event->entry->req = m_event->entry;
+        sendEntry = new SendEntry;
+        *sendEntry = *m_event->entry;
+
+        sendEntry->resp = new Hermes::MessageResponse;
+
+        *sendEntry->req = sendEntry;
     }
 
-    proto()->postSendEntry( m_event->entry );
+    proto()->postSendEntry( sendEntry );
 }
 
 void SendFuncSM::handleEnterEvent( Retval& retval )

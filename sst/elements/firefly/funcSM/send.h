@@ -14,7 +14,7 @@
 
 #include "funcSM/api.h"
 #include "funcSM/event.h"
-#include "dataMovement.h"
+#include "longMsgProtocol.h"
 
 namespace SST {
 namespace Firefly {
@@ -29,11 +29,11 @@ class SendFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
 
-    virtual std::string protocolName() { return "DataMovement"; }
+    virtual std::string protocolName() { return "LongMsgProtocol"; }
 
   private:
 
-    DataMovement* proto() { return static_cast<DataMovement*>(m_proto); }
+    LongMsgProtocol* proto() { return static_cast<LongMsgProtocol*>(m_proto); }
 
     SendStartEvent*         m_event;
 };

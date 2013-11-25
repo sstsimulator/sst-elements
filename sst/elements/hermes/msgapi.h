@@ -31,9 +31,21 @@ typedef void*    Addr;
 typedef uint32_t Communicator;
 typedef uint32_t RankID;
 
+enum PayloadDataType {
+    CHAR,
+	INT,
+	LONG,
+	DOUBLE,
+	FLOAT,
+	COMPLEX
+};
+
 typedef struct MessageResponse {
-    uint32_t    tag;  
-    RankID      src; 
+    uint32_t        tag;  
+    RankID          src; 
+    uint32_t        count;
+    PayloadDataType dtype;
+    bool            status;
 } MessageResponse;
 
 class MessageRequestBase {
@@ -48,14 +60,6 @@ class MessageRequestBase {
 
 typedef MessageRequestBase* MessageRequest;
 
-enum PayloadDataType {
-    CHAR,
-	INT,
-	LONG,
-	DOUBLE,
-	FLOAT,
-	COMPLEX
-};
 
 enum ReductionOperation {
 	SUM,
@@ -79,6 +83,7 @@ class MessageInterface : public Module {
 
     MessageInterface() {}
     virtual ~MessageInterface() {}
+    virtual void printStatus( Output& ) {}
 
     virtual int sizeofDataType( PayloadDataType ) { assert(0); }
     virtual void _componentInit(unsigned int phase ) {}
@@ -148,8 +153,14 @@ class MessageInterface : public Module {
     virtual void probe( int source, uint32_t tag, 
         Communicator group, MessageResponse* resp, Functor* ) {} 
 
-    virtual void wait( MessageRequest* req, MessageResponse* resp,
+    virtual void wait( MessageRequest req, MessageResponse* resp,
         Functor* ) {};
+
+    virtual void waitany( int count, MessageRequest req[], int *index,
+                MessageResponse* resp, Functor* ) {};
+
+    virtual void waitall( int count, MessageRequest req[],
+                MessageResponse* resp[], Functor* ) {};
 
     virtual void test( MessageRequest* req, int& flag, MessageResponse* resp,
         Functor* ) {};

@@ -41,8 +41,8 @@ class MerlinIO : public IO::Interface {
     virtual bool recvv(IO::NodeId src, std::vector<IoVec>&,
                                                         IO::Entry::Functor*);
 
-    virtual void enter( SST::Link* );
-    virtual bool pending();
+    virtual void wait();
+    virtual void setReturnLink(SST::Link* link) { m_leaveLink = link; }
 
     struct Entry { 
         Entry( IO::NodeId _node, std::vector<IoVec> _ioVec, 
@@ -52,16 +52,7 @@ class MerlinIO : public IO::Interface {
             functor( _functor ),
             currentVec(0),
             currentPos(0) 
-        { 
-        } 
-        ~Entry() {
-            if ( functor ) {
-                IO::Entry* tmp = (*functor)();
-                if ( tmp ) {
-                    delete tmp;
-                }
-            }
-        }
+        { } 
 
         IO::NodeId              node;
         std::vector<IoVec>      ioVec;
@@ -72,17 +63,25 @@ class MerlinIO : public IO::Interface {
 
   private:
 
+    class SelfEvent : public SST::Event {
+      public:
+        SelfEvent( Entry* e) : Event(), entry(e) {}
+        Entry* entry;
+    };
+
+    void selfHandler( Event* );
+    void enter();
     bool sendNotify(int); 
     bool recvNotify(int); 
-    std::deque<Event*>      m_recvEventQ; 
 
     bool processRecv( );
     bool processRecvEvent( Event* );
     bool processSend();
-    void leave();
     void drainInput();
 
+    std::deque<Event*>      m_recvEventQ; 
     SST::Link*              m_leaveLink;
+    SST::Link*              m_selfLink;
 
     std::map< IO::NodeId, Entry* > m_recvEntryM;
     Entry*                  m_sendEntry;
@@ -93,6 +92,8 @@ class MerlinIO : public IO::Interface {
 
     int                     m_numVC;
     int                     m_lastVC;
+    bool                    m_haveCtrl;
+
     Merlin::LinkControl::Handler<MerlinIO> * m_recvNotifyFunctor;
     Merlin::LinkControl::Handler<MerlinIO> * m_sendNotifyFunctor;
 };

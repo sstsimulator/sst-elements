@@ -258,14 +258,46 @@ class AlltoallStartEvent: public Event {
 class WaitStartEvent : public Event {
   public:
     WaitStartEvent(
-        Hermes::MessageRequest* _req, Hermes::MessageResponse* _resp ) :
+        Hermes::MessageRequest _req, Hermes::MessageResponse* _resp ) :
         req(_req),
         resp(_resp)
     { }
 
-    Hermes::MessageRequest* req;
+    Hermes::MessageRequest req;
     Hermes::MessageResponse* resp;
 };
+
+class WaitAnyStartEvent : public Event {
+  public:
+    WaitAnyStartEvent( int _count, Hermes::MessageRequest _req[], 
+                            int* _index, Hermes::MessageResponse* _resp ) :
+        count( _count ),
+        req( _req ),
+        index( _index ),
+        resp( _resp )
+    { }
+
+    int count;
+    Hermes::MessageRequest* req;
+    int* index;
+    Hermes::MessageResponse* resp;
+};
+
+class WaitAllStartEvent : public Event {
+  public:
+    WaitAllStartEvent( int _count, Hermes::MessageRequest _req[], 
+                            Hermes::MessageResponse* _resp[] ) :
+        count( _count ),
+        req( _req ),
+        resp( _resp )
+    { }
+
+    int count;
+    Hermes::MessageRequest*  req;
+    Hermes::MessageResponse** resp;
+};
+
+
 
 }
 }

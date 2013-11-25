@@ -116,11 +116,13 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
         WaitUpState() : count(0), state(Posting) {}
         unsigned int count;
         enum { Posting, Waiting, DoOp } state;
+        void init() { state = Posting; count = 0; }
     };
 
     struct SendDownState {
         SendDownState() : count(0) {}
         unsigned int count;
+        void init() { count = 0; }
     };
 
   public:

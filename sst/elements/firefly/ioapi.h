@@ -54,8 +54,8 @@ class Interface : public SST::Module {
                                             { assert(0); }
     virtual bool recvv(NodeId src, std::vector<IoVec>&, Entry::Functor*) 
                                             { assert(0); }
-    virtual void enter(SST::Link*) { assert(0);}
-    virtual bool pending() { assert(0); }
+    virtual void wait() { assert(0);}
+    virtual void setReturnLink( SST::Link* ) { assert(0); }
 };
 
 }

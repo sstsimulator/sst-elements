@@ -53,6 +53,8 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         assert( m_bufV[i+1] );
     }
 
+    m_waitUpState.init();
+    m_sendDownState.init();
     m_state = WaitUp;
     handleEnterEvent( retval );
 }
@@ -146,6 +148,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
         }
 
     case Exit:
+        m_dbg.verbose(CALL_INFO,1,0,"Exit\n" );
         retval.setExit( 0 );
         for ( unsigned int i = 0; i < m_yyy->numChildren(); i++ ) {
             free( m_bufV[i+1] );

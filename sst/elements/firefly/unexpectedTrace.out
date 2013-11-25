@@ -3,5 +3,5 @@ size
 isend
 barrier
 recv
-wait
+waitSend
 fini

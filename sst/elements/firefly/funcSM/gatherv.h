@@ -134,6 +134,10 @@ class GathervFuncSM :  public FunctionSMInterface
 
     struct WaitUpState {
         WaitUpState() : state(PostSizeRecvs), count(0) {} 
+        void init() {
+            state = PostSizeRecvs;
+            count = 0;
+        }
         enum { PostSizeRecvs, WaitSizeRecvs, Setup, PostDataRecv, 
             SendSize, WaitDataRecv, DoRoot } state;
         unsigned int    count;
@@ -142,6 +146,9 @@ class GathervFuncSM :  public FunctionSMInterface
 
     struct SendUpState {
         SendUpState() : state(SendSize) {}
+        void init() {
+            state = SendSize;
+        }
         enum { SendSize, RecvGo, SendBody, SentBody } state;
     };
 

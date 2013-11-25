@@ -51,6 +51,7 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_state = Setup;
     m_currentStage = 0;
 
+    m_setupState.init();
     handleEnterEvent( retval );
 }
 
@@ -140,7 +141,8 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         initIoVec( ioVec, m_sendStartChunk[m_currentStage],
                             m_numChunks[m_currentStage] );
 
-        m_dbg.verbose(CALL_INFO,1,0,"send stage %d\n", m_currentStage);
+        m_dbg.verbose(CALL_INFO,1,0,"send stage %d, dest %d\n",
+                        m_currentStage,m_dest[m_currentStage] );
         proto()->sendv( ioVec, m_dest[m_currentStage], 
                genTag() + m_currentStage + 1, m_event->group );
         m_state = WaitRecvData;

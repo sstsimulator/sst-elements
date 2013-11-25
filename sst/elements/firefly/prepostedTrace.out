@@ -3,6 +3,11 @@ rank
 size
 irecv
 barrier
-send
-wait
+#send
+isend
+waitanySend
+waitanyRecv
+#waitall
+#waitSend
+#waitRecv
 fini

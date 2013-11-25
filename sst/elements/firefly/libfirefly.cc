@@ -32,6 +32,10 @@
 #include <funcSM/recv.h>
 #include <funcSM/send.h>
 #include <funcSM/wait.h>
+#include <funcSM/waitAny.h>
+#include <funcSM/waitAll.h>
+#include <ctrlMsg.h>
+#include <longMsgProtocol.h>
 
 using namespace Firefly;
 
@@ -141,6 +145,30 @@ static Module*
 load_hermesWaitSM(Params& params)
 {
     return new WaitFuncSM(params);
+}
+
+static Module*
+load_hermesWaitAnySM(Params& params)
+{
+    return new WaitAnyFuncSM(params);
+}
+
+static Module*
+load_hermesWaitAllSM(Params& params)
+{
+    return new WaitAllFuncSM(params);
+}
+
+static Module*
+load_ctrlMsgProtocol( Component* comp, Params& params )
+{
+    return new CtrlMsg( comp, params );
+}
+
+static Module*
+load_LongMsgProtocol( Component* comp, Params& params )
+{
+    return new LongMsgProtocol( comp, params );
 }
 
 static void init_MerlinFireflyEvent()
@@ -293,6 +321,32 @@ static const ElementInfoModule modules[] = {
       "Hermes Wait Function State Machine",
       NULL,
       load_hermesWaitSM,
+      NULL,
+    },
+    { "WaitAny",
+      "Hermes WaitAny Function State Machine",
+      NULL,
+      load_hermesWaitAnySM,
+      NULL,
+    },
+    { "WaitAll",
+      "Hermes WaitAll Function State Machine",
+      NULL,
+      load_hermesWaitAllSM,
+      NULL,
+    },
+    { "CtrlMsg",
+      "CtrlMsg protocol",
+      NULL,
+      NULL,
+      load_ctrlMsgProtocol,
+      NULL,
+    },
+    { "LongMsgProto",
+      "Long Message Pootocol",
+      NULL,
+      NULL,
+      load_LongMsgProtocol,
       NULL,
     },
     { NULL, NULL, NULL, NULL, NULL }

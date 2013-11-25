@@ -82,6 +82,12 @@ TestDriver::~TestDriver()
 {
 }
 
+void TestDriver::printStatus( Output& out )
+{
+    m_dbg.verbose(CALL_INFO,2,0, "\n" );
+    m_hermes->printStatus( m_dbg );
+}
+
 void TestDriver::init( unsigned int phase )
 {
     m_dbg.verbose(CALL_INFO,3,0,"\n");
@@ -169,7 +175,7 @@ void TestDriver::handle_event( Event* ev )
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
                                     GroupWorld, 
-                                    &my_resp, 
+                                    &my_resp[RecvReq], 
                                     &m_functor);
 
     } else if ( m_funcName.compare( "irecv" ) == 0 ) {
@@ -177,7 +183,7 @@ void TestDriver::handle_event( Event* ev )
                                     (my_rank + 1) % 2, 
                                     AnyTag, 
                                     GroupWorld, 
-                                    &my_req, 
+                                    &my_req[RecvReq], 
                                     &m_functor);
 
     } else if ( m_funcName.compare( "send" ) == 0 ) {
@@ -192,7 +198,7 @@ void TestDriver::handle_event( Event* ev )
                                 (my_rank + 1 ) % 2,
                                 0xdead, 
                                 GroupWorld, 
-                                &my_req,
+                                &my_req[SendReq],
                                 &m_functor);
 
     } else if ( m_funcName.compare( "barrier" ) == 0 ) {
@@ -215,8 +221,18 @@ void TestDriver::handle_event( Event* ev )
     } else if ( m_funcName.compare( "allreduce" ) == 0 ) {
         m_hermes->allreduce( &m_collectiveIn, &m_collectiveOut, 1, INT,
                                 SUM, GroupWorld, &m_functor );
-    } else if ( m_funcName.compare( "wait" ) == 0 ) {
-        m_hermes->wait( &my_req, &my_resp, &m_functor );
+    } else if ( m_funcName.compare( "waitSend" ) == 0 ) {
+        m_hermes->wait( my_req[SendReq], &my_resp[SendReq], &m_functor );
+    } else if ( m_funcName.compare( "waitRecv" ) == 0 ) {
+        m_hermes->wait( my_req[RecvReq], &my_resp[RecvReq], &m_functor );
+    } else if ( m_funcName.compare( "waitall" ) == 0 ) {
+        my_respPtr[0] = &my_resp[0];
+        my_respPtr[1] = &my_resp[1];
+        m_hermes->waitall( 2, &my_req[0], &my_respPtr[0], &m_functor );
+    } else if ( m_funcName.compare( "waitanySend" ) == 0 ) {
+        m_hermes->waitany( 2, &my_req[0], &my_index, &my_resp[0], &m_functor );
+    } else if ( m_funcName.compare( "waitanyRecv" ) == 0 ) {
+        m_hermes->waitany( 1, &my_req[1], &my_index, &my_resp[0], &m_functor );
     } else if ( m_funcName.compare( "fini" ) == 0 ) {
 
         m_hermes->fini( &m_functor );
@@ -233,8 +249,12 @@ void TestDriver::funcDone( int retval )
     } else if ( m_funcName.compare( "rank" ) == 0 ) {
         m_dbg.verbose(CALL_INFO,1,0,"`%s` rank=%d\n" , m_funcName.c_str(),
              my_rank);
-    } else if ( m_funcName.compare( "wait" ) == 0 ) {
-        waitReturn();
+    } else if ( m_funcName.compare( "waitRecv" ) == 0 ) {
+        waitRecvReturn();
+    } else if ( m_funcName.compare( "waitall" ) == 0 ) {
+        waitallReturn();
+    } else if ( m_funcName.compare( "waitanyRecv" ) == 0 ) {
+        waitanyRecvReturn();
     } else if ( m_funcName.compare( "recv" ) == 0 ) {
         recvReturn();
     } else if ( m_funcName.compare( "allgather" ) == 0 ) {
@@ -265,8 +285,14 @@ void TestDriver::funcDone( int retval )
 
 void TestDriver::recvReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0," src=%d tag=%#x len=%lu\n",
-                my_resp.src, my_resp.tag,m_recvBuf.size());
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+                my_resp[RecvReq].src, my_resp[RecvReq].tag, 
+                my_resp[RecvReq].dtype, my_resp[RecvReq].count,
+                my_resp[RecvReq].status );
+    if ( my_resp[RecvReq].count != m_recvBuf.size() ) {
+        printf("ERROR %d != %lu\n", my_resp[RecvReq].count, m_recvBuf.size());
+        return;
+    }
     for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
         if ( m_recvBuf[i] != (i&0xff) ) {
             printf("ERROR %d != %d\n",i,m_recvBuf[i]);
@@ -274,10 +300,16 @@ void TestDriver::recvReturn( )
     }
 }
 
-void TestDriver::waitReturn( )
+void TestDriver::waitRecvReturn( )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu\n",
-                my_resp.src, my_resp.tag, m_recvBuf.size());
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+                my_resp[RecvReq].src, my_resp[RecvReq].tag, 
+                my_resp[RecvReq].dtype, my_resp[RecvReq].count,
+                my_resp[RecvReq].status );
+    if ( my_resp[RecvReq].count != m_recvBuf.size() ) {
+        printf("ERROR %d != %lu\n", my_resp[RecvReq].count, m_recvBuf.size());
+        return;
+    }
     for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
         if ( m_recvBuf[i] != (i&0xff) ) {
             printf("ERROR %d != %d\n",i,m_recvBuf[i]);
@@ -285,6 +317,42 @@ void TestDriver::waitReturn( )
     }
 }
 
+void TestDriver::waitanyRecvReturn( )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+                my_resp[my_index].src, my_resp[my_index].tag, 
+                my_resp[my_index].dtype, my_resp[my_index].count,
+                my_resp[my_index].status );
+    if ( my_resp[my_index].count != m_recvBuf.size() ) {
+        printf("ERROR %d != %lu\n", my_resp[my_index].count, m_recvBuf.size());
+        return;
+    }
+    for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
+        if ( m_recvBuf[i] != (i&0xff) ) {
+            printf("ERROR %d != %d\n",i,m_recvBuf[i]);
+        }
+    }
+}
+
+void TestDriver::waitallReturn( )
+{
+    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x dtype=%d count=%d status=%d\n",
+                my_resp[RecvReq].src, my_resp[RecvReq].tag, 
+                my_resp[RecvReq].dtype, my_resp[RecvReq].count,
+                my_resp[RecvReq].status );
+
+    m_dbg.verbose(CALL_INFO,1,0,"status=%d\n", my_resp[SendReq].status );
+
+    if ( my_resp[RecvReq].count != m_recvBuf.size() ) {
+        printf("ERROR %d != %lu\n", my_resp[RecvReq].count, m_recvBuf.size());
+        return;
+    }
+    for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
+        if ( m_recvBuf[i] != (i&0xff) ) {
+            printf("ERROR %d != %d\n",i,m_recvBuf[i]);
+        }
+    }
+}
 
 void TestDriver::alltoallEnter( )
 {

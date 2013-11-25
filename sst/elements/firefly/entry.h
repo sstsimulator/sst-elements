@@ -30,6 +30,7 @@ class SendEntry : public Hermes::MessageRequestBase {
     dest( _dest ),
     tag( _tag ),
     group( _group ),
+    resp( NULL ),
     req( _req )
     {}
 
@@ -39,6 +40,7 @@ class SendEntry : public Hermes::MessageRequestBase {
     Hermes::RankID              dest;
     uint32_t                    tag;
     Hermes::Communicator        group;
+    Hermes::MessageResponse*    resp;
     Hermes::MessageRequest*     req;
 };
 

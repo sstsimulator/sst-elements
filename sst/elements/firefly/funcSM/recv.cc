@@ -34,15 +34,27 @@ void RecvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
                 m_event->entry->src,
                 m_event->entry->tag );
 
+    RecvEntry* recvEntry;
+
     // if blocking recv 
     if ( m_event->entry->req == NULL ) {
+
         m_state = Wait;
+        recvEntry = m_event->entry;
+
     } else {
+
         m_state = Exit;
-        *m_event->entry->req = m_event->entry;
+
+        recvEntry = new RecvEntry;
+        *recvEntry = *m_event->entry; 
+
+        recvEntry->resp = new Hermes::MessageResponse;
+
+        *recvEntry->req = recvEntry;
     }
 
-    proto()->postRecvEntry( m_event->entry );
+    proto()->postRecvEntry( recvEntry );
 }
 
 void RecvFuncSM::handleEnterEvent( Retval& retval )
@@ -50,7 +62,7 @@ void RecvFuncSM::handleEnterEvent( Retval& retval )
     switch( m_state ) {
       case Wait:
         m_dbg.verbose(CALL_INFO,1,0,"waiting\n");
-        proto()->wait( m_event->entry );
+        proto()->wait( m_event->entry, m_event->entry->resp );
         m_state = Exit;
         return;
 

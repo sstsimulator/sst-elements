@@ -11,27 +11,27 @@
 
 #include <sst_config.h>
 
-#include "funcSM/wait.h"
+#include "funcSM/waitAll.h"
 
 using namespace SST::Firefly;
 
-WaitFuncSM::WaitFuncSM( SST::Params& params ) :
+WaitAllFuncSM::WaitAllFuncSM( SST::Params& params ) :
     FunctionSMInterface( params ),
     m_event( NULL )
 {
 }
 
-void WaitFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void WaitAllFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     assert( NULL == m_event );
     m_dbg.verbose(CALL_INFO,1,0,"\n");
 
-    m_event = static_cast< WaitStartEvent* >(e);
+    m_event = static_cast< WaitAllStartEvent* >(e);
 
-    proto()->wait( m_event->req, m_event->resp );
+    proto()->waitAll( m_event->count, m_event->req, m_event->resp );
 }
 
-void WaitFuncSM::handleEnterEvent( Retval& retval )
+void WaitAllFuncSM::handleEnterEvent( Retval& retval )
 {
     m_dbg.verbose(CALL_INFO,1,0,"\n");
     retval.setExit(0);

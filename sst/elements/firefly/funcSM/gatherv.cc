@@ -46,6 +46,8 @@ void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     }
 
     m_state = WaitUp;
+    m_waitUpState.init();
+    m_sendUpState.init();
 
     m_recvReqV.resize(m_qqq->numChildren());
     m_waitUpSize.resize(m_qqq->numChildren());
@@ -192,7 +194,7 @@ void GathervFuncSM::doRoot()
     std::vector<int> map = m_qqq->getMap();
 
     int len = m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
-    m_dbg.verbose(CALL_INFO,1,0,"I'm root %lu\n", m_recvBuf.size());
+    m_dbg.verbose(CALL_INFO,1,0,"I'm root buf.size()=%lu\n", m_recvBuf.size());
 
     memcpy( &m_recvBuf[0], m_event->sendbuf, len ); 
 

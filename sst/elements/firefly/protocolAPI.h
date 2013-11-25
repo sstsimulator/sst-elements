@@ -22,28 +22,28 @@
 namespace SST {
 namespace Firefly {
 
+class Info;
+
 class ProtocolAPI : public SST::Module 
 {
   public:
-    struct Request {
-      public:
-        Request() : delay(0) {} 
-        virtual ~Request() {}
 
-        std::vector<IoVec>  ioVec;
-        int                 delay;
-        IO::NodeId          nodeId; 
-    }; 
+    class OutBase {
+      public:
+        virtual ~OutBase() {}
+        virtual bool sendv(int dest, std::vector<IoVec>&, IO::Entry::Functor*) = 0;
+        virtual bool recvv(int src, std::vector<IoVec>&, IO::Entry::Functor*) = 0;
+    };
 
     virtual ~ProtocolAPI() {}
+    virtual void printStatus( Output& ) {}
     virtual void setup() {};
+    virtual void init( OutBase*, Info*, Link* ) = 0;  
 
-    virtual Request* getSendReq( ) = 0;
-    virtual Request* getRecvReq( IO::NodeId src ) = 0;
-    virtual Request* sendIODone( Request* ) = 0;
-    virtual Request* recvIODone( Request* ) = 0;
-    virtual Request* delayDone( Request* ) = 0;
-    virtual bool unblocked() = 0;
+    virtual IO::NodeId canSend() = 0;
+    virtual void startSendStream( IO::NodeId ) = 0;
+    virtual void startRecvStream( IO::NodeId ) = 0;
+
     virtual std::string name() = 0;
     virtual void setRetLink(SST::Link* link) { assert(0); } 
 

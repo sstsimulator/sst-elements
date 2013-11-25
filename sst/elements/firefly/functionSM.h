@@ -45,6 +45,8 @@ class ProtocolAPI;
         NAME(Send)   \
         NAME(Recv)   \
         NAME(Wait)   \
+        NAME(WaitAny)   \
+        NAME(WaitAll)   \
         NAME(NumFunctions)  \
 
 #define GENERATE_ENUM(ENUM) ENUM,
@@ -66,6 +68,7 @@ class FunctionSM  {
     FunctionSM( SST::Params& params, SST::Component*, Info&, SST::Link*, 
                         std::map<std::string,ProtocolAPI*>& );
     ~FunctionSM();
+    void printStatus( Output& );
 
     void setup();
     void start(int type, Hermes::Functor* retFunc,  SST::Event* );

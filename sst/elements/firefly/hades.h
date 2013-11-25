@@ -33,27 +33,34 @@ class Hades : public Hermes::MessageInterface
     typedef StaticArg_Functor<Hades, IO::Entry*, IO::Entry*>   IO_Functor;
     typedef Arg_Functor<Hades, IO::NodeId>                     IO_Functor2;
 
-    class AAA : public IO::Entry {
-    
+    class IORequest : public IO::Entry {
       public:
-        enum {  SendWireHdrDone,
-                SendIODone,
-                RecvWireHdrDone,
-                RecvIODone}     ioType;
         int                     protoType;
-        ProtocolAPI::Request*   request;
-        IO_Functor*             functor;
-        IO::NodeId              srcNodeId;
+        IO::NodeId              nodeId;
     };
 
     class SelfEvent : public SST::Event {
       public:
         SelfEvent() : Event() {}
-        AAA* aaa;
+        IORequest* aaa;
+    };
+
+    class Out : public ProtocolAPI::OutBase {
+      public:
+        Out( IO::Interface* obj ) : m_obj(obj) { }
+
+        bool sendv(int dest, std::vector<IoVec>&vec, IO::Entry::Functor* func) {
+            return m_obj->sendv(dest,vec,func);
+        }
+        bool recvv(int src, std::vector<IoVec>& vec, IO::Entry::Functor* func) {
+            return m_obj->recvv(src,vec,func);
+        }
+        IO::Interface* m_obj;
     };
 
   public:
     Hades(Component*, Params&);
+    virtual void printStatus( Output& );
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
     virtual void init(Hermes::Functor*);
@@ -134,15 +141,23 @@ class Hades : public Hermes::MessageInterface
         Hermes::Communicator group, Hermes::MessageResponse* resp,
         Hermes::Functor*);
 
-    virtual void wait(Hermes::MessageRequest* req,
+    virtual void wait(Hermes::MessageRequest req,
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
-    virtual void test(Hermes::MessageRequest* req, int& flag, 
+    virtual void waitany( int count, Hermes::MessageRequest req[], int *index,
+                 Hermes::MessageResponse* resp, Hermes::Functor* );
+ 
+    virtual void waitall( int count, Hermes::MessageRequest req[],
+                 Hermes::MessageResponse* resp[], Hermes::Functor* );
+
+    virtual void test(Hermes::MessageRequest req, int& flag, 
         Hermes::MessageResponse* resp, Hermes::Functor*);
 
     Hermes::RankID myWorldRank();
 
   private:
+
+    enum { WaitFunc, WaitIO } m_state;
 
     int myNodeId() { 
         if ( m_io ) {
@@ -160,30 +175,19 @@ class Hades : public Hermes::MessageInterface
         return m_info.sizeofDataType(type); 
     }
 
-    int m_pendingSends;
     bool runSend();
-    void runRecv();
-    bool pendingSend() { return m_pendingSends > 0; }
+    bool runRecv();
 
-    bool X();
+    void enterEventHandler(SST::Event*);
 
     IO::Entry* recvWireHdrDone(IO::Entry*);
     IO::Entry* sendWireHdrDone(IO::Entry*);
 
-    IO::Entry* ioDone(IO::Entry*);
-
-    IO::Entry* sendIODone(IO::Entry*);
-    IO::Entry* recvIODone(IO::Entry*);
-    IO::Entry* delayDone(AAA*);
-
-    void enterEventHandler(SST::Event*);
-    void leaveEventHandler(SST::Event*);
-
-    void completedIO();
-    void completedDelay();
-
     Group* initAdjacentMap( int numRanks, int numCores, std::ifstream& );
     Group* initRoundRobinMap( int numRanks, int numCores, std::ifstream& );
+
+    bool sendv(int dest, std::vector<IoVec>&, IO::Entry::Functor*);
+    bool recvv(int src, std::vector<IoVec>&, IO::Entry::Functor*);
 
     SST::Link*          m_enterLink;  
     IO::Interface*      m_io;
@@ -191,13 +195,22 @@ class Hades : public Hermes::MessageInterface
     Info                m_info;
     FunctionSM*         m_functionSM;
     Output              m_dbg;
-
-    AAA*                m_completedIO;
-    AAA*                m_delay;
+    Out*                m_out;
 
     std::map<std::string,ProtocolAPI*>   m_protocolMapByName;
     std::map<int,ProtocolAPI*>           m_protocolM;
+
     std::map<int,ProtocolAPI*>::iterator m_sendIter;
+
+    std::map<int,ProtocolAPI*>::iterator currentSendIterator( ) {
+        return m_sendIter;
+    } 
+
+    void advanceSendIterator() {
+        ++m_sendIter;
+        if ( m_sendIter == m_protocolM.end() ) 
+            m_sendIter = m_protocolM.begin();
+    }
 };
 
 } // namesapce Firefly 
