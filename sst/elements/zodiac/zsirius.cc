@@ -302,7 +302,7 @@ void ZodiacSiriusTraceReader::handleWaitEvent(ZodiacEvent* zEv) {
 	zOut.verbose(__LINE__, __FILE__, "handleWaitEvent",
 		2, 1, "Processing a Wait event.\n");
 
-	msgapi->wait(msgReq, currentRecv, &retFunctor);
+	msgapi->wait( *msgReq, currentRecv, &retFunctor);
 	zWaitCount++;
 }
 
