@@ -1,16 +1,18 @@
 import sst
+import os
 
 sst.setProgramOption("timebase", "1ns")
 
+sst_root = os.getenv( "SST_ROOT" )
 ariel = sst.Component("a0", "ariel.ariel")
 ariel.addParams({
         "verbose" : "1",
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",
-        "executable" : "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/test/tlvlstream/ministream",
+        "executable" : sst_root + "/sst/elements/ariel/tool/test/tlvlstream/ministream",
         "arielmode" : "1",
-        "arieltool" : "/home/sdhammo/subversion/sst-simulator/sst/elements/ariel/tool/arieltool.so",
+        "arieltool" : sst_root + "/sst/elements/ariel/tool/arieltool.so",
 	"memorylevels" : "2",
 	"defaultlevel" : "1"
         })
