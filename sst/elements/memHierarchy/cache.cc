@@ -75,7 +75,12 @@ Cache::Cache(ComponentId_t id, Params& params) :
 			upstream_links[i] = configureLink( ln, "50 ps",
 					new Event::Handler<Cache, SourceType_t>(this,
 						&Cache::handleIncomingEvent, UPSTREAM) );
-			assert(upstream_links[i]);
+
+			if(NULL == upstream_links[i]) {
+				dbg.fatal(CALL_INFO, -1, "Link: %s configuration failed.\n",
+					linkName.str().c_str());
+			}
+
 			upstreamLinkMap[upstream_links[i]->getId()] = i;
             dbg.output(CALL_INFO, "upstream_links[%d]->getId() = %ld\n", i, upstream_links[i]->getId());
 		}
