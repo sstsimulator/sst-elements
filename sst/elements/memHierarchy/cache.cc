@@ -148,7 +148,7 @@ Cache::Cache(ComponentId_t id, Params& params) :
     num_invalidates = 0;
 
     maxResponseTimeAllowed = params.find_integer("maxL1ResponseTime", 0);
-    registerClock("1 GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
+    registerClock("2 GHz", new Clock::Handler<Cache>(this, &Cache::clockTick));
 
     std::string prefetcher = params.find_string("prefetcher");
     if ( prefetcher == "" ) {
@@ -399,6 +399,8 @@ void Cache::handleIncomingEvent(SST::Event *event, SourceInfo_t src, bool firstT
             ev->getID().first, ev->getID().second,
             ev->getSrc().c_str(), ev->getDst().c_str(),
             CommandString[ev->getCmd()], ev->getAddr(), ev->getSize());
+
+    //std::cout << "inst addr: " << std::hex << ev->getAddr() << std::endl;
     switch (ev->getCmd()) {
     case ReadReq:
     case WriteReq:
@@ -624,7 +626,7 @@ void Cache::sendCPUResponse(MemEvent *ev, CacheBlock *block, SourceInfo_t src)
 
     clearCPURequest(ev->getResponseToID());
 
-	upstream_links[upstreamLinkMap[src.id]]->send(ev);
+	upstream_links[upstreamLinkMap[src.id]]->send(1,ev);
 
     /* release events pending on this row */
     CacheRow *row = findRow(ev->getAddr());
@@ -667,7 +669,7 @@ void Cache::issueInvalidate(MemEvent *ev, SourceInfo_t src, Addr addr, ForwardDi
 
     if ( direction == SEND_DOWN || direction == SEND_BOTH ) {
         if ( downstream_link && NO_NEXT_LEVEL != next_level_name ) {
-            downstream_link->send(new MemEvent(invalidateEvent));
+            downstream_link->send(1, new MemEvent(invalidateEvent));
             inv.waitingACKs++;
         }
         if ( directory_link ) {
@@ -688,7 +690,7 @@ void Cache::issueInvalidate(MemEvent *ev, SourceInfo_t src, Addr addr, ForwardDi
              *             match the event's address
              */
             if ( upstream_links[i]->getId() != ev->getLinkId() || (addrToBlockAddr(ev->getAddr()) != addr) ) {
-                upstream_links[i]->send(new MemEvent(invalidateEvent));
+                upstream_links[i]->send(1, new MemEvent(invalidateEvent));
                 inv.waitingACKs++;
             }
         }
@@ -1918,11 +1920,11 @@ void Cache::respondNACK(MemEvent *ev, SourceInfo_t src)
         break;
     case UPSTREAM:
         dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" upstream\n", CommandString[ev->getCmd()], ev->getAddr());
-        upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(nack);
+        upstream_links[upstreamLinkMap[ev->getLinkId()]]->send(1,nack);
         break;
     case DOWNSTREAM:
         dbg.output(CALL_INFO, "Sending NACK for %s 0x%"PRIx64" downstream\n", CommandString[ev->getCmd()], ev->getAddr());
-        downstream_link->send(nack);
+        downstream_link->send(1,nack);
         break;
     case DIRECTORY:
         assert(false); // Don't send to directory
@@ -2379,7 +2381,7 @@ bool Cache::BusQueue::cancelRequest(MemEvent *event)
     std::map<MemEvent*, BusHandlers>::iterator i = map.find(event);
     if ( map.end() != i ) {
         map.erase(i);
-        link->send(new BusEvent(BusEvent::CancelRequest, makeBusKey(event)));
+        link->send(1, new BusEvent(BusEvent::CancelRequest, makeBusKey(event)));
         comp->dbg.output(CALL_INFO, "%s: Sending cancel for req (%"PRIu64", %d)\n", comp->getName().c_str(), event->getID().first, event->getID().second);
         retval = true;
     } else {

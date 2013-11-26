@@ -253,7 +253,8 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event)
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id)
 {
-    dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    //dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)params.find_integer("debug", 0));
+    dbg.init("@t:Memory::@p():@l " + getName() + ": ", 0, 0, (Output::output_location_t)0);
     statsOutputTarget = (Output::output_location_t)params.find_integer("printStats", 0);
 
     bool tfFound = false;
@@ -642,6 +643,16 @@ void MemController::performRequest(DRAMReq *req)
 		for ( size_t i = 0 ; i < req->reqEvent->getSize() ; i++ ) {
 			memBuffer[localAddr + i] = req->reqEvent->getPayload()[i];
 		}
+
+
+        /*
+        std::cout << std::hex << localAddr << " write: ";
+
+        for(int i = 0; i < resp->getSize(); i++){
+            std::cout << std::hex << (int)memBuffer[localAddr + i];
+        }
+        std::cout << std::endl;
+        */
         dbg.output(CALL_INFO, "Writing Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
                 req->size, req->addr,
                 memBuffer[localAddr + 0], memBuffer[localAddr + 1],
@@ -652,6 +663,16 @@ void MemController::performRequest(DRAMReq *req)
 		for ( size_t i = 0 ; i < resp->getSize() ; i++ ) {
 			resp->getPayload()[i] = memBuffer[localAddr + i];
 		}
+
+
+/*
+        std::cout << std::hex << localAddr << " read: ";
+        for(int i = 0; i < resp->getSize(); i++){
+            std::cout << std::hex << (int)memBuffer[localAddr + i];
+        }
+        std::cout << std::endl;
+  */         
+
         dbg.output(CALL_INFO, "Reading Memory: %zu bytes beginning at 0x%"PRIx64" [0x%02x%02x%02x%02x%02x%02x%02x%02x...\n",
                 req->size, req->addr,
                 memBuffer[localAddr + 0], memBuffer[localAddr + 1],
