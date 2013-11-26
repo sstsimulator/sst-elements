@@ -465,97 +465,84 @@ static FUPool* newFUPool( string prefix )
 	string fuName;
 	string opName; 
 
-	// Integer Pipe (ALU0 + AGU) + Mult/Div *****************************
-	opV.clear();
+	// IntALU  *****************************
 	fuName = prefix + "0";
-	opV.push_back( newOpDesc( IntAluOp, 2, 1, fuName + ".opList0" ) );
-	opV.push_back( newOpDesc( IntMultOp, 3, 1, fuName + ".opList1" ) );
-	opV.push_back( newOpDesc( IntDivOp, 12, 11, fuName  + ".opList2" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 1, fuName) );
+	opV.push_back( newOpDesc( IntAluOp, 1, 1, fuName + ".opList" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 12, fuName) );
 
-
-	// Integer Pipe (ALU1 + AGU) *****************************
+	// IntMultDiv  *****************************
 	opV.clear();
 	fuName = prefix + "1";
-	opV.push_back( newOpDesc( MemReadOp, 2, 1, fuName + ".opList0" ) );
-	opV.push_back( newOpDesc( MemWriteOp, 2, 1, fuName + ".opList1" ) );
-	opV.push_back( newOpDesc( IntAluOp, 2, 1, fuName + ".opList2" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 1, fuName) );
+	opV.push_back( newOpDesc( IntMultOp, 3, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( IntDivOp, 20, 19, fuName  + ".opList1" ) );
 
-
-	// Integer Pipe (ALU2 + AGU) *****************************
-	opV.clear();
-	fuName = prefix + "2";
-	opV.push_back( newOpDesc( MemReadOp, 2, 1, fuName + ".opList0" ) );
-	opV.push_back( newOpDesc( MemWriteOp, 2, 1, fuName + ".opList1" ) );
-	opV.push_back( newOpDesc( IntAluOp, 2, 1, fuName + ".opList2" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 1, fuName) );
-
+	fuPool->FUList.push_back( newFUDesc( opV, 8, fuName) );
 
 	// FP_ALU  *****************************
 	opV.clear();
-	fuName = prefix + "3";
-
-	opV.push_back( newOpDesc( SimdAddOp, 4, 1, fuName + ".opList0" ) );
-	opV.push_back( newOpDesc( SimdAddAccOp, 4, 1, fuName + ".opList1" ) );
-	opV.push_back( newOpDesc( SimdAluOp, 4, 1, fuName + ".opList2" ) );
-	opV.push_back( newOpDesc( SimdCmpOp, 4, 1, fuName + ".opList3" ) );
-	opV.push_back( newOpDesc( SimdCvtOp, 3, 1, fuName + ".opList4" ) );
-	opV.push_back( newOpDesc( SimdMiscOp, 3, 1, fuName + ".opList5" ) );
-	opV.push_back( newOpDesc( SimdMultOp, 5, 1, fuName + ".opList6" ) );
-	opV.push_back( newOpDesc( SimdMultAccOp, 5, 1, fuName + ".opList7" ) );
-	opV.push_back( newOpDesc( SimdShiftOp, 3, 1, fuName + ".opList8" ) );
-	opV.push_back( newOpDesc( SimdShiftAccOp, 3, 1, fuName + ".opList9" ) );
-	opV.push_back( newOpDesc( SimdSqrtOp, 9, 1, fuName + ".opList10" ) );
-	opV.push_back( newOpDesc( SimdFloatAddOp, 5, 1, fuName + ".opList11" ) );
-	opV.push_back( newOpDesc( SimdFloatAluOp, 5, 1, fuName + ".opList12" ) );
-	opV.push_back( newOpDesc( SimdFloatCmpOp, 3, 1, fuName + ".opList13" ) );
-	opV.push_back( newOpDesc( SimdFloatCvtOp, 3, 1, fuName + ".opList14" ) );
-	opV.push_back( newOpDesc( SimdFloatDivOp, 3, 1, fuName + ".opList15" ) );
-	opV.push_back( newOpDesc( SimdFloatMiscOp, 3, 1, fuName + ".opList16" ) );
-	opV.push_back( newOpDesc( SimdFloatMultOp, 3, 1, fuName + ".opList17" ) );
-	opV.push_back( newOpDesc( SimdFloatMultAccOp, 1, 1, fuName + ".opList18" ));
-	opV.push_back( newOpDesc( SimdFloatSqrtOp, 9, 1, fuName + ".opList19" ) );
-
-	opV.push_back( newOpDesc( FloatAddOp, 4, 1, fuName + ".opList20" ) );  //in ARM, = 5
-	opV.push_back( newOpDesc( FloatCmpOp, 2, 1, fuName + ".opList21" ) );  //in ARM, = 5
-	opV.push_back( newOpDesc( FloatCvtOp, 2, 1, fuName + ".opList22" ) );  //in ARM, = 5
-
-	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
+	fuName = prefix + "2";
+	opV.push_back( newOpDesc( FloatAddOp, 1, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( FloatCmpOp, 1, 1, fuName + ".opList1" ) );
+	opV.push_back( newOpDesc( FloatCvtOp, 1, 1, fuName + ".opList2" ) );
+	opV.push_back( newOpDesc( FloatMultOp, 2, 1, fuName + ".opList3" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 16, fuName) );
 
 	// FP_MultDiv  *****************************
 	opV.clear();
-	fuName = prefix + "4";
-	opV.push_back( newOpDesc( SimdAddOp, 4, 1, fuName + ".opList0" ) );
-	opV.push_back( newOpDesc( SimdAddAccOp, 4, 1, fuName + ".opList1" ) );
-	opV.push_back( newOpDesc( SimdAluOp, 4, 1, fuName + ".opList2" ) );
-	opV.push_back( newOpDesc( SimdCmpOp, 4, 1, fuName + ".opList3" ) );
-	opV.push_back( newOpDesc( SimdCvtOp, 3, 1, fuName + ".opList4" ) );
-	opV.push_back( newOpDesc( SimdMiscOp, 3, 1, fuName + ".opList5" ) );
-	opV.push_back( newOpDesc( SimdMultOp, 5, 1, fuName + ".opList6" ) );
-	opV.push_back( newOpDesc( SimdMultAccOp, 5, 1, fuName + ".opList7" ) );
-	opV.push_back( newOpDesc( SimdShiftOp, 3, 1, fuName + ".opList8" ) );
-	opV.push_back( newOpDesc( SimdShiftAccOp, 3, 1, fuName + ".opList9" ) );
-	opV.push_back( newOpDesc( SimdSqrtOp, 9, 1, fuName + ".opList10" ) );
-	opV.push_back( newOpDesc( SimdFloatAddOp, 5, 1, fuName + ".opList11" ) );
-	opV.push_back( newOpDesc( SimdFloatAluOp, 5, 1, fuName + ".opList12" ) );
-	opV.push_back( newOpDesc( SimdFloatCmpOp, 3, 1, fuName + ".opList13" ) );
-	opV.push_back( newOpDesc( SimdFloatCvtOp, 3, 1, fuName + ".opList14" ) );
-	opV.push_back( newOpDesc( SimdFloatDivOp, 3, 1, fuName + ".opList15" ) );
-	opV.push_back( newOpDesc( SimdFloatMiscOp, 3, 1, fuName + ".opList16" ) );
-	opV.push_back( newOpDesc( SimdFloatMultOp, 3, 1, fuName + ".opList17" ) );
+	fuName = prefix + "3";
+	opV.push_back( newOpDesc( FloatMultOp, 4, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( FloatDivOp, 12, 12, fuName + ".opList1" ) );
+	opV.push_back( newOpDesc( FloatSqrtOp, 24, 24, fuName + ".opList2" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 4, fuName) );
+
+    // SIMD_Unit
+	opV.clear();
+	fuName = prefix + "8";
+	opV.push_back( newOpDesc( SimdAddOp, 1, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( SimdAddAccOp, 1, 1, fuName + ".opList1" ) );
+	opV.push_back( newOpDesc( SimdAluOp, 1, 1, fuName + ".opList2" ) );
+	opV.push_back( newOpDesc( SimdCmpOp, 1, 1, fuName + ".opList3" ) );
+	opV.push_back( newOpDesc( SimdCvtOp, 1, 1, fuName + ".opList4" ) );
+	opV.push_back( newOpDesc( SimdMiscOp, 1, 1, fuName + ".opList5" ) );
+	opV.push_back( newOpDesc( SimdMultOp, 1, 1, fuName + ".opList6" ) );
+	opV.push_back( newOpDesc( SimdMultAccOp, 1, 1, fuName + ".opList7" ) );
+	opV.push_back( newOpDesc( SimdShiftOp, 1, 1, fuName + ".opList8" ) );
+	opV.push_back( newOpDesc( SimdShiftAccOp, 1, 1, fuName + ".opList9" ) );
+	opV.push_back( newOpDesc( SimdSqrtOp, 1, 1, fuName + ".opList10" ) );
+	opV.push_back( newOpDesc( SimdFloatAddOp, 1, 1, fuName + ".opList11" ) );
+	opV.push_back( newOpDesc( SimdFloatAluOp, 1, 1, fuName + ".opList12" ) );
+	opV.push_back( newOpDesc( SimdFloatCmpOp, 1, 1, fuName + ".opList13" ) );
+	opV.push_back( newOpDesc( SimdFloatCvtOp, 1, 1, fuName + ".opList14" ) );
+	opV.push_back( newOpDesc( SimdFloatDivOp, 1, 1, fuName + ".opList15" ) );
+	opV.push_back( newOpDesc( SimdFloatMiscOp, 1, 1, fuName + ".opList16" ) );
+	opV.push_back( newOpDesc( SimdFloatMultOp, 1, 1, fuName + ".opList17" ) );
 	opV.push_back( newOpDesc( SimdFloatMultAccOp, 1, 1, fuName + ".opList18" ));
-	opV.push_back( newOpDesc( SimdFloatSqrtOp, 9, 1, fuName + ".opList19" ) );
+	opV.push_back( newOpDesc( SimdFloatSqrtOp, 1, 1, fuName + ".opList19" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 4, fuName) );
 
-	opV.push_back( newOpDesc( FloatMultOp, 4, 1, fuName + ".opList20" ) );
-	opV.push_back( newOpDesc( FloatDivOp, 12, 11, fuName + ".opList21" ) );
-	opV.push_back( newOpDesc( FloatSqrtOp, 24, 24, fuName + ".opList22" ) );
-	fuPool->FUList.push_back( newFUDesc( opV, 2, fuName) );
+	// ReadPort *****************************
+	opV.clear();
+	fuName = prefix + "4";
+	opV.push_back( newOpDesc( MemReadOp, 1, 1, fuName + ".opList" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 0, fuName) );
 
+
+	// WritePort *****************************
+	opV.clear();
+	fuName = prefix + "5";
+	opV.push_back( newOpDesc( MemWriteOp, 1, 1, fuName + ".opList" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 0, fuName) );
+
+	//RdWrPort *****************************
+	opV.clear();
+	fuName = prefix + "6";
+	opV.push_back( newOpDesc( MemReadOp, 1, 1, fuName + ".opList0" ) );
+	opV.push_back( newOpDesc( MemWriteOp, 1, 1, fuName + ".opList1" ) );
+	fuPool->FUList.push_back( newFUDesc( opV, 8, fuName) );
 
 	// IprPort *****************************
 	opV.clear();
-	fuName = prefix + "5";
+	fuName = prefix + "7";
 	opV.push_back( newOpDesc( IprAccessOp, 3, 3, fuName + ".opList" ) );
 	fuPool->FUList.push_back( newFUDesc( opV, 1, fuName) );
 

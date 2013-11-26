@@ -197,8 +197,6 @@ std::pair<LinkId_t, Bus::key_t> Bus::arbitrateNext(void)
 
 
 // incoming events are scanned and deleted
-
-
 void Bus::handleEvent(Event *ev) {
 	BusEvent *event = static_cast<BusEvent*>(ev);
     LinkId_t link_id = event->getLinkId();
@@ -250,7 +248,7 @@ void Bus::busFinish(void)
 
 // incoming events are scanned and deleted
 void Bus::handleSelfEvent(Event *ev) {
-    SelfEvent *event = dynamic_cast<SelfEvent*>(ev);
+	SelfEvent *event = dynamic_cast<SelfEvent*>(ev);
 	if (event) {
         dbg.output(CALL_INFO, "Received selfEvent type %d\n", event->type);
 		switch(event->type)

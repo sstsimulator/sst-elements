@@ -165,19 +165,6 @@ MemPkt* PortLink::convertSSTtoGEM5( SST::Event *e )
 	assert(pkt->size <= (unsigned)MemPkt::DataSize);
 	memcpy(pkt->data, &(sstev->getPayload()[0]), pkt->size);
 
-    /*
-	std::cout << "Sent Addr: " << std::hex << pkt->addr;
-    if(sstev->getCmd() == SST::Interfaces::ReadResp){
-        std::cout << " R, D: ";
-        for(int i = 0; i < pkt->size; i++){
-            std::cout << std::hex << (int)pkt->data[i];
-        }
-    }
-    else std::cout << " W";
-
-    std::cout << std::endl;
-    */
-
 	/* Swap src/dst */
 	int tmp = pkt->src;
 	pkt->src = pkt->dest;
@@ -223,23 +210,7 @@ SST::Interfaces::MemEvent* PortLink::convertGEM5toSST( MemPkt *pkt )
 				pkt->cmd);
 	}
 	m_g5events.push_back(pkt);
-
-
-    //std::cout << "Tr. Received Event. Addr: " << std::hex <<  (uint64_t)pkt->addr << std::endl;
-	/*
-    std::cout << "Received Addr: " << std::hex << pkt->addr;
-    /*if(ev->getCmd() == SST::Interfaces::ReadReq){
-       std::cout << " R";
-    }
-    else{ 
-        std::cout << " W, D: ";
-        for(int i = 0; i < pkt->size; i++){
-            std::cout << std::hex << (int)pkt->data[i];
-        }
-    }
-    std::cout << std::endl;
-    */
-    //fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
+	//fprintf(stderr, "%s:%d %s: Storing patcket %zu\n", __FILE__, __LINE__, __FUNCTION__, pkt->pktId);
 	return ev;
 }
 
