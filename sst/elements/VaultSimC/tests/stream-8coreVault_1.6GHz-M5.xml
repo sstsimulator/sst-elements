@@ -124,7 +124,7 @@
 
 
         <physicalMemory.start>                  0x00000000       </physicalMemory.start>
-        <physicalMemory.end>                    0x1fdffffff       </physicalMemory.end>
+        <physicalMemory.end>                    0x3dffffff       </physicalMemory.end>
         <physicalMemory.use_external>                    1       </physicalMemory.use_external>
         <physicalMemory.system>                   system.0       </physicalMemory.system>
         <system>                                   system.0      </system>
@@ -266,7 +266,7 @@
 
         <base.process>                            process.0      </base.process>
         <physicalMemory.start>                   0x00000000      </physicalMemory.start>
-        <physicalMemory.end>                     0x1fdffffff      </physicalMemory.end>
+        <physicalMemory.end>                     0x3dffffff      </physicalMemory.end>
         <physicalMemory.use_external>                     1      </physicalMemory.use_external>
         <physicalMemory.system>                    system.0      </physicalMemory.system>
         <system>                                   system.0      </system>
