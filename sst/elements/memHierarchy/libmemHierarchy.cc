@@ -26,6 +26,13 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+
+static const char * memEvent_port_events[] = {"interfaces.MemEvent"};
+static const char * bus_port_events[] = {"memHierarchy.BusEvent"};
+static const char * net_port_events[] = {"memHierarchy.MemRtrEvent"};
+
+
+
 static Component* create_Cache(ComponentId_t id, Params& params)
 {
 	return new Cache( id, params );
@@ -48,10 +55,10 @@ static const ElementInfoParam cache_params[] = {
 };
 
 static const ElementInfoPort cache_ports[] = {
-    {"upstream%d",      "Upstream ports, directly connected, count dependant on parameter 'numUpstream'", NULL},
-    {"downstream",      "Downstream, directly connected, port", NULL},
-    {"snoop_link",      "Link to a Snoopy Bus port", NULL},
-    {"directory",       "Network link port", NULL},
+    {"upstream%d",      "Upstream ports, directly connected, count dependant on parameter 'numUpstream'", memEvent_port_events},
+    {"downstream",      "Downstream, directly connected, port", memEvent_port_events},
+    {"snoop_link",      "Link to a Snoopy Bus port", bus_port_events},
+    {"directory",       "Network link port", net_port_events},
     {NULL, NULL, NULL}
 };
 
@@ -73,7 +80,8 @@ static const ElementInfoParam bus_params[] = {
 
 
 static const ElementInfoPort bus_ports[] = {
-    {"port%d",          "Ports, range from 0 to numPorts-1.", NULL},
+    {"port%d",          "Ports, range from 0 to numPorts-1.", bus_port_events},
+    {NULL, NULL, NULL}
 };
 
 
@@ -126,9 +134,10 @@ static const ElementInfoParam memctrl_params[] = {
 
 
 static const ElementInfoPort memctrl_ports[] = {
-    {"snoop_link",      "Connect to a memHiearchy.bus", NULL},
-    {"direct_link",     "Directly connect to another component (like a Directory Controller).", NULL},
+    {"snoop_link",      "Connect to a memHiearchy.bus", bus_port_events},
+    {"direct_link",     "Directly connect to another component (like a Directory Controller).", memEvent_port_events},
     {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
+    {NULL, NULL, NULL}
 };
 
 
@@ -208,7 +217,8 @@ static const ElementInfoParam dirctrl_params[] = {
 
 static const ElementInfoPort dirctrl_ports[] = {
     {"memory",      "Link to Memory Controller", NULL},
-    {"network",     "Network Link", NULL}
+    {"network",     "Network Link", NULL},
+    {NULL, NULL, NULL}
 };
 
 
@@ -228,7 +238,8 @@ static const ElementInfoParam dmaengine_params[] = {
 
 
 static const ElementInfoPort dmaengine_ports[] = {
-    {"netLink",     "Network Link", NULL}
+    {"netLink",     "Network Link",     net_port_events},
+    {NULL, NULL, NULL}
 };
 
 
