@@ -92,6 +92,7 @@ static Component* create_trivialCPU(ComponentId_t id, Params& params)
 
 
 static const ElementInfoParam cpu_params[] = {
+    {"verbose", 	    "Determine how verbose the output from the CPU is"},
     {"workPerCycle",        "How much work to do per cycle."},
     {"commFreq",            "How often to do a memory operation."},
     {"memSize",             "Size of physical memory."},
