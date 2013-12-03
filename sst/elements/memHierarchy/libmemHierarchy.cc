@@ -31,66 +31,6 @@ static Component* create_Cache(ComponentId_t id, Params& params)
 	return new Cache( id, params );
 }
 
-
-static Component* create_Bus(ComponentId_t id, Params& params)
-{
-	return new Bus( id, params );
-}
-
-
-static Component* create_trivialCPU(ComponentId_t id, Params& params)
-{
-	return new trivialCPU( id, params );
-}
-
-static Component* create_streamCPU(ComponentId_t id, Params& params)
-{
-	return new streamCPU( id, params );
-}
-
-
-static Component* create_MemController(ComponentId_t id, Params& params)
-{
-	return new MemController( id, params );
-}
-
-static Component* create_DirectoryController(ComponentId_t id, Params& params)
-{
-	return new DirectoryController( id, params );
-}
-
-static Component* create_DMAEngine(ComponentId_t id, Params& params)
-{
-	return new DMAEngine( id, params );
-}
-
-
-static Module* create_Mem_SimpleSim(Component* comp, Params& params)
-{
-    return new SimpleMemory(comp, params);
-}
-
-#if defined(HAVE_LIBDRAMSIM)
-static Module* create_Mem_DRAMSim(Component* comp, Params& params)
-{
-    return new DRAMSimMemory(comp, params);
-}
-#endif
-
-#if defined(HAVE_LIBHYBRIDSIM)
-static Module* create_Mem_HybridSim(Component* comp, Params& params)
-{
-    return new HybridSimMemory(comp, params);
-}
-#endif
-
-static Module* create_Mem_VaultSim(Component* comp, Params& params)
-{
-    return new VaultSimMemory(comp, params);
-}
-
-
-
 static const ElementInfoParam cache_params[] = {
     {"prefetcher",      "Prefetcher to use with cache (loaded as a module)"},
     {"num_ways",        "Associativity of the cache."},
@@ -107,6 +47,22 @@ static const ElementInfoParam cache_params[] = {
     {NULL, NULL}
 };
 
+static const ElementInfoPort cache_ports[] = {
+    {"upstream%d",      "Upstream ports, directly connected, count dependant on parameter 'numUpstream'", NULL},
+    {"downstream",      "Downstream, directly connected, port", NULL},
+    {"snoop_link",      "Link to a Snoopy Bus port", NULL},
+    {"directory",       "Network link port", NULL},
+    {NULL, NULL, NULL}
+};
+
+
+
+
+static Component* create_Bus(ComponentId_t id, Params& params)
+{
+	return new Bus( id, params );
+}
+
 static const ElementInfoParam bus_params[] = {
     {"numPorts",        "Number of Ports on the bus."},
     {"busDelay",        "Delay time for the bus."},
@@ -114,6 +70,42 @@ static const ElementInfoParam bus_params[] = {
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
 };
+
+
+static const ElementInfoPort bus_ports[] = {
+    {"port%d",          "Ports, range from 0 to numPorts-1.", NULL},
+};
+
+
+static Component* create_trivialCPU(ComponentId_t id, Params& params)
+{
+	return new trivialCPU( id, params );
+}
+
+
+static const ElementInfoParam cpu_params[] = {
+    {"workPerCycle",        "How much work to do per cycle."},
+    {"commFreq",            "How often to do a memory operation."},
+    {"memSize",             "Size of physical memory."},
+    {"do_write",            "Enable writes to memory (versus just reads)."},
+    {"num_loadstore",       "Stop after this many reads and writes."},
+    {"uncachedRangeStart",  "Beginning of range of addresses that are uncacheable."},
+    {"uncachedRangeEnd",    "End of range of addresses that are uncacheable."},
+    {NULL, NULL}
+};
+
+
+static Component* create_streamCPU(ComponentId_t id, Params& params)
+{
+	return new streamCPU( id, params );
+}
+
+
+
+static Component* create_MemController(ComponentId_t id, Params& params)
+{
+	return new MemController( id, params );
+}
 
 static const ElementInfoParam memctrl_params[] = {
     {"mem_size",        "Size of physical memory in MB"},
@@ -133,10 +125,30 @@ static const ElementInfoParam memctrl_params[] = {
 };
 
 
+static const ElementInfoPort memctrl_ports[] = {
+    {"snoop_link",      "Connect to a memHiearchy.bus", NULL},
+    {"direct_link",     "Directly connect to another component (like a Directory Controller).", NULL},
+    {"cube_link",       "Link to VaultSim.", NULL}, /* TODO:  Make this generic */
+};
+
+
+static Module* create_Mem_SimpleSim(Component* comp, Params& params)
+{
+    return new SimpleMemory(comp, params);
+}
+
 static const ElementInfoParam simpleMem_params[] = {
     {"access_time",     "When not using DRAMSim, latency of memory operation."},
     {NULL, NULL}
 };
+
+
+#if defined(HAVE_LIBDRAMSIM)
+static Module* create_Mem_DRAMSim(Component* comp, Params& params)
+{
+    return new DRAMSimMemory(comp, params);
+}
+
 
 static const ElementInfoParam dramsimMem_params[] = {
     {"device_ini",      "Name of DRAMSim Device config file"},
@@ -144,11 +156,27 @@ static const ElementInfoParam dramsimMem_params[] = {
     {NULL, NULL}
 };
 
+#endif
+
+#if defined(HAVE_LIBHYBRIDSIM)
+static Module* create_Mem_HybridSim(Component* comp, Params& params)
+{
+    return new HybridSimMemory(comp, params);
+}
+
+
 static const ElementInfoParam hybridsimMem_params[] = {
     {"device_ini",      "Name of HybridSim Device config file"},
     {"system_ini",      "Name of HybridSim Device system file"},
     {NULL, NULL}
 };
+
+#endif
+
+static Module* create_Mem_VaultSim(Component* comp, Params& params)
+{
+    return new VaultSimMemory(comp, params);
+}
 
 static const ElementInfoParam vaultsimMem_params[] = {
     {"access_time",     "When not using DRAMSim, latency of memory operation."},
@@ -158,18 +186,10 @@ static const ElementInfoParam vaultsimMem_params[] = {
 
 
 
-
-static const ElementInfoParam cpu_params[] = {
-    {"workPerCycle",        "How much work to do per cycle."},
-    {"commFreq",            "How often to do a memory operation."},
-    {"memSize",             "Size of physical memory."},
-    {"do_write",            "Enable writes to memory (versus just reads)."},
-    {"num_loadstore",       "Stop after this many reads and writes."},
-    {"uncachedRangeStart",  "Beginning of range of addresses that are uncacheable."},
-    {"uncachedRangeEnd",    "End of range of addresses that are uncacheable."},
-    {NULL, NULL}
-};
-
+static Component* create_DirectoryController(ComponentId_t id, Params& params)
+{
+	return new DirectoryController( id, params );
+}
 
 static const ElementInfoParam dirctrl_params[] = {
     {"network_addr",        "Network address of component."},
@@ -186,6 +206,17 @@ static const ElementInfoParam dirctrl_params[] = {
     {NULL, NULL}
 };
 
+static const ElementInfoPort dirctrl_ports[] = {
+    {"memory",      "Link to Memory Controller", NULL},
+    {"network",     "Network Link", NULL}
+};
+
+
+
+static Component* create_DMAEngine(ComponentId_t id, Params& params)
+{
+	return new DMAEngine( id, params );
+}
 
 static const ElementInfoParam dmaengine_params[] = {
     {"debug",           "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
@@ -193,6 +224,11 @@ static const ElementInfoParam dmaengine_params[] = {
     {"netAddr",         "Network address of component."},
     {"printStats",      "0 (default): Don't print, 1: STDOUT, 2: STDERR, 3: FILE."},
     {NULL, NULL}
+};
+
+
+static const ElementInfoPort dmaengine_ports[] = {
+    {"netLink",     "Network Link", NULL}
 };
 
 
@@ -242,31 +278,36 @@ static const ElementInfoComponent components[] = {
 		"Cache Component",
 		NULL,
         create_Cache,
-        cache_params
+        cache_params,
+        cache_ports
 	},
 	{ "Bus",
 		"Mem Hierarchy Bus Component",
 		NULL,
 		create_Bus,
-        bus_params
+        bus_params,
+        bus_ports
 	},
 	{"MemController",
 		"Memory Controller Component",
 		NULL,
 		create_MemController,
-        memctrl_params
+        memctrl_params,
+        memctrl_ports
 	},
 	{"DirectoryController",
 		"Coherencey Directory Controller Component",
 		NULL,
 		create_DirectoryController,
-        dirctrl_params
+        dirctrl_params,
+        dirctrl_ports,
 	},
 	{"DMAEngine",
 		"DMA Engine Component",
 		NULL,
 		create_DMAEngine,
-        dmaengine_params
+        dmaengine_params,
+        dmaengine_ports,
 	},
 	{"trivialCPU",
 		"Simple Demo CPU for testing",

@@ -15,7 +15,6 @@
 
 #include <assert.h>
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/memEvent.h>
