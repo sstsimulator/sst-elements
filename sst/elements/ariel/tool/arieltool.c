@@ -25,6 +25,8 @@ KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool",
     "c", "1", "Maximum core count to use for data pipes.");
 KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
     "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled");
+KNOB<UINT32> InterceptMultiLevelMemory(KNOB_MODE_WRITEONCE, "pintool",
+    "m", "1", "Should intercept multi-level memory allocations, copies and frees, 1 = start enabled, 0 = start disabled");
 
 //PIN_LOCK pipe_lock;
 UINT32 core_count;
@@ -39,6 +41,7 @@ bool enable_output;
 #define ISSUE_TLM_FREE 100
 #define START_INSTRUCTION 32
 #define END_INSTRUCTION 64
+#define ISSUE_NOOP 128
 
 VOID Fini(INT32 code, VOID *v)
 {
@@ -194,6 +197,21 @@ VOID WriteInstructionReadOnly(THREADID thr, ADDRINT* readAddr, UINT32 readSize) 
 
 }
 
+VOID WriteNoOp(THREADID thr) {
+	if(enable_output) {
+		if(thr < core_count) {
+			const uint8_t noop_marker = ISSUE_NOOP;
+			const UINT32 BUFFER_LENGTH = sizeof(noop_marker);
+
+			char* buffer = (char*) malloc(sizeof(char) * BUFFER_LENGTH);
+			copy(&buffer[0], &noop_marker, sizeof(noop_marker));
+
+			write(pipe_id[thr], buffer, BUFFER_LENGTH);
+			free(buffer);
+		}
+	}
+}
+
 VOID WriteInstructionWriteOnly(THREADID thr, ADDRINT* writeAddr, UINT32 writeSize) {
 
 	if(enable_output) {
@@ -252,6 +270,11 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 			WriteInstructionWriteOnly,
 			IARG_THREAD_ID,
 			IARG_MEMORYWRITE_EA, IARG_UINT32, INS_MemoryWriteSize(ins),
+			IARG_END);
+	} else {
+		INS_InsertPredicatedCall(ins, IPOINT_BEFORE, (AFUNPTR)
+			WriteNoOp,
+			IARG_THREAD_ID,
 			IARG_END);
 	}
 
@@ -416,12 +439,12 @@ VOID InstrumentRoutine(RTN rtn, VOID* args) {
 		RTN_Replace(rtn, (AFUNPTR) mapped_ariel_enable);
 		printf("Replacement complete.\n");
 		return;
- 	} else if (RTN_Name(rtn) == "tlvl_malloc") {
+ 	} else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_malloc") {
 		// This means we want a special malloc to be used (needs a TLB map inside the virtual core)
                	printf("Identified routine: tlvl_malloc, replacing with Ariel equivalent...\n");
                	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_malloc);
                	printf("Replacement complete.\n");
-	} else if (RTN_Name(rtn) == "tlvl_free") {
+	} else if ((InterceptMultiLevelMemory.Value() > 0) && RTN_Name(rtn) == "tlvl_free") {
 		printf("Identified routine: tlvl_free, replacing with Ariel equivalent...\n");
                	RTN_Replace(rtn, (AFUNPTR) ariel_tlvl_free);
                	printf("Replacement complete.\n");

@@ -9,7 +9,7 @@ def sstcreatemodel():
 
     id = sst.createcomponent("a0", "ariel.ariel")
     sst.addcompparam(id, "verbose", "1")
-    sst.addcompparam(id, "maxcorequeue", "1024")
+    sst.addcompparam(id, "maxcorequeue", "32")
     sst.addcompparam(id, "pipetimeout", "0")
     sst.addcompparam(id, "maxissuepercycle", "4")
     sst.addcompparam(id, "maxtranscore", "32")
@@ -24,7 +24,7 @@ def sstcreatemodel():
     sst.addcompparam(id, "apparg0", "-i")
     sst.addcompparam(id, "apparg1", "2")
     sst.addcompparam(id, "apparg2", "-s")
-    sst.addcompparam(id, "apparg3", "50")
+    sst.addcompparam(id, "apparg3", "20")
 
     membus = sst.createcomponent("membus", "memHierarchy.Bus")
     sst.addcompparam(membus, "numPorts", str(corecount + corecount + 2))

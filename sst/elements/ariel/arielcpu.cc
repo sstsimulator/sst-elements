@@ -20,7 +20,10 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
 	core_count = (uint32_t) params.find_integer("corecount", 1);
 	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " cores...\n", core_count);
-	
+
+	uint32_t perform_checks = (uint32_t) params.find_integer("checkaddresses", 0);
+	output->verbose(CALL_INFO, 1, 0, "Configuring for check addresses = %s\n", (perform_checks > 0) ? "yes" : "no");
+
 	memory_levels = (uint32_t) params.find_integer("memorylevels", 1);
 	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " memory levels.\n", memory_levels);
 	
@@ -72,9 +75,19 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Model specifies that there are %" PRIu32 " application arguments\n", app_argc);
 	
 	uint32_t pin_startup_mode = (uint32_t) params.find_integer("arielmode", 1);
-	
+	uint32_t intercept_multilev_mem = (uint32_t) params.find_integer("arielinterceptcalls", 1);
+
+	switch(intercept_multilev_mem) {
+	case 0:
+		output->verbose(CALL_INFO, 1, 0, "Interception and re-instrumentation of multi-level memory calls is DISABLED.\n");
+		break;
+	default:
+		output->verbose(CALL_INFO, 1, 0, "Interception and instrumentation of multi-level memory calls is ENABLED\n");
+		break;
+	}
+
 	const char* execute_binary = PINTOOL_EXECUTABLE;
-	const uint32_t pin_arg_count = 16;
+	const uint32_t pin_arg_count = 18;
   	char** execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
 	output->verbose(CALL_INFO, 1, 0, "Processing application arguments...\n");
@@ -98,9 +111,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	execute_args[11] = "-s";
 	execute_args[12] = (char*) malloc(sizeof(char) * 8);
 	sprintf(execute_args[12], "%" PRIu32, pin_startup_mode);
-  	execute_args[13] = "--";
-  	execute_args[14] = (char*) malloc(sizeof(char) * (executable.size() + 1));
-  	strcpy(execute_args[14], executable.c_str());
+	execute_args[13] = "-m";
+	execute_args[14] = (char*) malloc(sizeof(char) * 8);
+	sprintf(execute_args[14], "%" PRIu32, intercept_multilev_mem);
+  	execute_args[15] = "--";
+  	execute_args[16] = (char*) malloc(sizeof(char) * (executable.size() + 1));
+  	strcpy(execute_args[16], executable.c_str());
 	
 	char* argv_buffer = (char*) malloc(sizeof(char) * 256);
 	for(uint32_t i = (pin_arg_count - 1); i < (pin_arg_count - 1) + app_argc; ++i) {
@@ -167,7 +183,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 	
 		cpu_cores[i] = new ArielCore(pipe_fds[i], NULL, i, maxPendingTransCore, output, 
 			maxIssuesPerCycle, maxCoreQueueLen, pipeReadTimeOut, cacheLineSize, this,
-			memmgr);
+			memmgr, perform_checks);
 		cpu_to_cache_links[i] = configureLink( link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent) );
 		cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 	}

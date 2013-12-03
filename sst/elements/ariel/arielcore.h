@@ -28,6 +28,7 @@
 #include "arielexitev.h"
 #include "arielallocev.h"
 #include "arielfreeev.h"
+#include "arielnoop.h"
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -45,6 +46,7 @@ namespace ArielComponent {
 #define ARIEL_ISSUE_TLM_FREE 100
 #define ARIEL_START_INSTRUCTION 32
 #define ARIEL_END_INSTRUCTION 64
+#define ARIEL_NOOP 128
 
 class ArielCore {
 
@@ -52,7 +54,7 @@ class ArielCore {
 		ArielCore(int fd_in, SST::Link* coreToCacheLink, uint32_t thisCoreID, uint32_t maxPendTans, 
 			Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen, int pipeTimeO, 
 			uint64_t cacheLineSz, SST::Component* owner,
-			ArielMemoryManager* memMgr);
+			ArielMemoryManager* memMgr, const uint32_t perform_address_checks);
 		~ArielCore();
 		bool isCoreHalted();
 		void tick();
@@ -61,6 +63,7 @@ class ArielCore {
 		void createReadEvent(uint64_t addr, uint32_t size);
 		void createWriteEvent(uint64_t addr, uint32_t size);
 		void createAllocateEvent(uint64_t vAddr, uint64_t length, uint32_t level);
+		void createNoOpEvent();
 		void createFreeEvent(uint64_t vAddr);
 		void createExitEvent();
 		void setCacheLink(SST::Link* newCacheLink);
@@ -88,11 +91,15 @@ class ArielCore {
 		uint64_t cacheLineSize;
 		SST::Component* owner;
 		ArielMemoryManager* memmgr;
-		
+		uint32_t verbosity;
+		const uint32_t perform_checks;
+
+		uint64_t pending_transaction_count;
 		uint64_t read_requests;
 		uint64_t write_requests;
 		uint64_t split_read_requests;
 		uint64_t split_write_requests;
+		uint64_t noop_count;
 
 };
 
