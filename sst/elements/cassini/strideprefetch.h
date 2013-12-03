@@ -12,6 +12,8 @@
 #include <sst/core/interfaces/memEvent.h>
 #include <sst/elements/memHierarchy/cacheListener.h>
 
+#include <sst/core/output.h>
+
 using namespace SST;
 using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
@@ -31,9 +33,14 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 	void printStats(Output &out);
 
     private:
+	Output* output;
 	const SST::Component* owner;
         std::vector<Event::HandlerBase*> registeredCallbacks;
+	std::deque<uint64_t>* prefetchHistory;
+	uint32_t prefetchHistoryCount;
         uint64_t blockSize;
+	bool overrunPageBoundary;
+	uint64_t pageSize;
 	Addr* recentAddrList;
 	uint32_t recentAddrListCount;
 	uint32_t nextRecentAddressIndex;
@@ -45,6 +52,10 @@ class StridePrefetcher : public SST::MemHierarchy::CacheListener {
         uint64_t prefetchEventsIssued;
         uint64_t missEventsProcessed;
         uint64_t hitEventsProcessed;
+	uint64_t prefetchIssueCanceledByPageBoundary;
+	uint32_t verbosity;
+	uint64_t prefetchIssueCanceledByHistory;
+	uint64_t prefetchOpportunities;
 };
 
 } //namespace Cassini
