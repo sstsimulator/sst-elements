@@ -27,9 +27,9 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 
-static const char * memEvent_port_events[] = {"interfaces.MemEvent"};
-static const char * bus_port_events[] = {"memHierarchy.BusEvent"};
-static const char * net_port_events[] = {"memHierarchy.MemRtrEvent"};
+static const char * memEvent_port_events[] = {"interfaces.MemEvent", NULL};
+static const char * bus_port_events[] = {"memHierarchy.BusEvent", NULL};
+static const char * net_port_events[] = {"memHierarchy.MemRtrEvent", NULL};
 
 
 
