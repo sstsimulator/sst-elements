@@ -20,6 +20,7 @@
 
 #include <sst/core/rng/distrib.h>
 #include <sst/core/rng/expon.h>
+#include <sst/core/rng/gaussian.h>
 
 #include <sst/core/rng/sstrand.h>
 #include <sst/core/rng/mersenne.h>
@@ -32,7 +33,7 @@ using namespace SST;
 using namespace SST::RNG;
 
 namespace SST {
-namespace SimpleDistribComponent {
+namespace SimpleRandomDistribComponent {
 
 class SimpleDistribComponent : public SST::Component {
 public:
@@ -48,8 +49,8 @@ private:
 
   virtual bool tick( SST::Cycle_t );
 
-  SSTRandom* rng;
-  std::string rng_type;
+  SSTRandomDistribution* comp_distrib;
+
   int rng_max_count;
   int rng_count;
 
@@ -60,7 +61,6 @@ private:
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
     ar & BOOST_SERIALIZATION_NVP(rng_count);
     ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-    ar & BOOST_SERIALIZATION_NVP(rng_type);
   }
 
   template<class Archive>
@@ -69,7 +69,6 @@ private:
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Component);
     ar & BOOST_SERIALIZATION_NVP(rng_count);
     ar & BOOST_SERIALIZATION_NVP(rng_max_count);
-    ar & BOOST_SERIALIZATION_NVP(rng_type);
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER()

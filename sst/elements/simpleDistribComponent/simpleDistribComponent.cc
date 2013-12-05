@@ -20,7 +20,7 @@
 
 using namespace SST;
 using namespace SST::RNG;
-using namespace SST::SimpleDistribComponent;
+using namespace SST::SimpleRandomDistribComponent;
 
 SimpleDistribComponent::SimpleDistribComponent(ComponentId_t id, Params& params) :
   Component(id) {
@@ -29,8 +29,25 @@ SimpleDistribComponent::SimpleDistribComponent(ComponentId_t id, Params& params)
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 
+  rng_max_count = params.find_integer("count", 1000);
+  rng_count = 0;
+
+  std::string distrib_type = params.find_string("distrib", "gaussian");
+  if("gaussian" == distrib_type || "normal" == distrib_type) {
+	double mean = params.find_floating("mean", 1.0);
+	double stddev = params.find_floating("stddev", 0.2);
+
+	comp_distrib = new SSTGaussianDistribution(mean, stddev);
+  } else if("exponential" == distrib_type) {
+	double lambda = params.find_floating("lambda", 1.0);
+	comp_distrib = new SSTExponentialDistribution(lambda);
+  } else {
+	std::cerr << "Unknown distribution type." << std::endl;
+	exit(-1);
+  }
+
   //set our clock
-  registerClock( "1GHz", new Clock::Handler<simpleDistribComponent>(this,
+  registerClock( "1GHz", new Clock::Handler<SimpleDistribComponent>(this,
 			&SimpleDistribComponent::tick ) );
 }
 
@@ -40,9 +57,18 @@ SimpleDistribComponent::SimpleDistribComponent() :
     // for serialization only
 }
 
-bool SimpleDistribComponent::tick( Cycle_t ) {
-      	primaryComponentOKToEndSim();
-	return true;
+bool SimpleDistribComponent::tick( Cycle_t cyc ) {
+
+	std::cout << "Tick " << cyc << " " << comp_distrib->getNextDouble() << std::endl;
+
+	rng_count++;
+
+	if(rng_max_count == rng_count) {
+      		primaryComponentOKToEndSim();
+		return true;
+	}
+
+	return false;
 }
 
 // Element Library / Serialization stuff
